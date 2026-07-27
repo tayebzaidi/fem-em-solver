@@ -13,6 +13,7 @@ from mpi4py import MPI
 # Import solver components
 from fem_em_solver.core.solvers import MagnetostaticSolver, MagnetostaticProblem
 from fem_em_solver.io.mesh import MeshGenerator
+from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.analytical import AnalyticalSolutions, ErrorMetrics
 from fem_em_solver.utils.constants import MU_0
 
@@ -29,18 +30,24 @@ class TestConvergence:
         """
         comm = MPI.COMM_WORLD
         
-        # Problem parameters
+        # Problem parameters. Sized to match tests/validation/test_straight_wire.py
+        # so both stay inside the runtime budget: a fat wire meshes cheaply and,
+        # for uniform current density, has an external field identical to a
+        # filament for r > a. See MAG-9.
         current = 1.0
-        wire_length = 0.5
-        wire_radius = 0.001
-        
-        # Mesh resolutions to test (reduced for speed)
-        resolutions = [0.02, 0.01]
+        wire_length = 0.2
+        wire_radius = 0.003
+        domain_radius = 0.03
+
+        # Mesh resolutions to test (coarse -> fine)
+        resolutions = [0.005, 0.003]
         errors = []
-        
-        # Evaluation points (along x-axis, away from wire)
+
+        # Evaluation points along +x at the midplane, outside the conductor and
+        # inside the region perturbed by the natural BC (n x H = 0) on the
+        # outer cylinder.
         n_points = 10
-        r_eval = np.linspace(0.005, 0.04, n_points)
+        r_eval = np.linspace(2.0 * wire_radius, 0.4 * domain_radius, n_points)
         points = np.zeros((n_points, 3))
         points[:, 0] = r_eval
         points[:, 2] = 0.0
@@ -59,7 +66,7 @@ class TestConvergence:
             mesh, cell_tags, _ = MeshGenerator.straight_wire_domain(
                 wire_length=wire_length,
                 wire_radius=wire_radius,
-                domain_radius=0.05,
+                domain_radius=domain_radius,
                 resolution=res,
                 comm=comm
             )
@@ -77,8 +84,9 @@ class TestConvergence:
             solver.solve(current_density=current_density, subdomain_id=1)
             B = solver.compute_b_field()
             
-            # Evaluate
-            B_num = B.eval(points, np.arange(n_points))
+            # Evaluate in the cells actually containing each point.
+            B_num, valid = evaluate_vector_field_parallel(B, points, comm=comm)
+            assert valid.all(), f"{(~valid).sum()}/{n_points} sample points outside mesh"
             B_num_mag = np.linalg.norm(B_num, axis=1)
             
             # Error
@@ -88,14 +96,17 @@ class TestConvergence:
             if comm.rank == 0:
                 print(f"    Relative L2 error: {rel_error:.4%}")
         
-        # Compute convergence rate
-        # Fit log(error) = log(C) - rate * log(h)
+        # Compute convergence rate.
+        # For error ~ C * h^p we have log(error) = log(C) + p*log(h), so the
+        # rate is the slope of log(error) against log(h) -- positive when the
+        # error shrinks with the mesh. An earlier revision negated this slope,
+        # which reported a negative rate for genuinely convergent data and
+        # tripped the assertion below.
         log_h = np.log(resolutions)
         log_err = np.log(errors)
-        
+
         # Linear regression
-        n = len(resolutions)
-        rate = -np.sum((log_h - np.mean(log_h)) * (log_err - np.mean(log_err))) / np.sum((log_h - np.mean(log_h))**2)
+        rate = np.sum((log_h - np.mean(log_h)) * (log_err - np.mean(log_err))) / np.sum((log_h - np.mean(log_h))**2)
         
         if comm.rank == 0:
             print(f"\n  Convergence Results:")

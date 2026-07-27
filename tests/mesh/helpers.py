@@ -14,6 +14,19 @@ from fem_em_solver.io.mesh_qa import (
 )
 
 
+def global_cell_tag_set(mesh, cell_tags) -> set[int]:
+    """Union of cell tag values across all MPI ranks.
+
+    ``cell_tags.values`` is rank-local. Under domain decomposition a rank can
+    legitimately own no cells of a given tag -- a small wire volume easily lands
+    entirely on one rank -- so asserting tag presence against the local array
+    produces failures that depend on rank count rather than on mesh validity.
+    Always compare against this global set instead.
+    """
+    local = set(int(v) for v in np.unique(cell_tags.values).tolist())
+    return set().union(*mesh.comm.allgather(local))
+
+
 REQUIRED_COIL_PHANTOM_TAGS = {
     1: "coil_1",
     2: "coil_2",

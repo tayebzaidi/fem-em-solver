@@ -6,6 +6,7 @@ from mpi4py import MPI
 
 from fem_em_solver.core.solvers import MagnetostaticProblem, MagnetostaticSolver
 from fem_em_solver.io.mesh import MeshGenerator
+from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.constants import MU_0
 
 from tests.tolerances import (
@@ -66,7 +67,9 @@ def test_two_cylinder_solver_centerline_field_is_roughly_constant():
     points = np.zeros((n_points, 3))
     points[:, 2] = z_eval
 
-    b_center = b_field.eval(points, np.arange(n_points))
+    # Evaluate in the cells actually containing each point.
+    b_center, valid = evaluate_vector_field_parallel(b_field, points)
+    assert valid.all(), f"{(~valid).sum()}/{n_points} centerline points outside mesh"
     b_mag = np.linalg.norm(b_center, axis=1)
 
     mean_mag = float(np.mean(b_mag))

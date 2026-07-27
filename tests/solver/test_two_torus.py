@@ -1,9 +1,9 @@
 """Mesh test for two-torus Helmholtz prototype geometry."""
 
-import numpy as np
 from mpi4py import MPI
 
 from fem_em_solver.io.mesh import MeshGenerator
+from tests.mesh.helpers import global_cell_tag_set
 
 
 def test_two_torus_mesh_generates_with_two_wire_volumes():
@@ -19,7 +19,9 @@ def test_two_torus_mesh_generates_with_two_wire_volumes():
     n_cells = mesh.topology.index_map(3).size_global
     assert n_cells > 0, "Mesh must contain cells"
 
-    unique_tags = np.unique(cell_tags.values)
+    # Tag presence must be checked globally: cell_tags.values is rank-local, and a
+    # wire volume can land entirely on one rank under decomposition.
+    unique_tags = global_cell_tag_set(mesh, cell_tags)
     assert 1 in unique_tags, "Missing wire_1 volume tag"
     assert 2 in unique_tags, "Missing wire_2 volume tag"
     assert 3 in unique_tags, "Missing domain volume tag"

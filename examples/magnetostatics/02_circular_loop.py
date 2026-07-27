@@ -11,6 +11,7 @@ from pathlib import Path
 
 from fem_em_solver.core.solvers import MagnetostaticSolver, MagnetostaticProblem
 from fem_em_solver.io.mesh import MeshGenerator
+from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.analytical import AnalyticalSolutions, ErrorMetrics
 from fem_em_solver.utils.constants import MU_0
 from fem_em_solver.io.paraview_utils import write_combined_paraview_output
@@ -87,7 +88,11 @@ def main():
     points = np.zeros((n_points, 3))
     points[:, 2] = z_eval  # z positions along axis
     
-    B_num = B.eval(points, np.arange(n_points))
+    # Evaluate in the cells actually containing each point. Passing np.arange(n)
+    # evaluates in arbitrary cells and yields meaningless values.
+    B_num, valid = evaluate_vector_field_parallel(B, points)
+    if not valid.all():
+        print(f"  WARNING: {(~valid).sum()}/{n_points} sample points outside mesh")
     B_num_z = B_num[:, 2]  # z-component only
     
     # Analytical solution

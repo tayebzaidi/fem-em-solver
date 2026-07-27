@@ -52,10 +52,12 @@ import time
 
 import numpy as np
 import ufl
+from dolfinx import fem
 from mpi4py import MPI
 
 from fem_em_solver.core.solvers import MagnetostaticProblem, MagnetostaticSolver
 from fem_em_solver.io.mesh import MeshGenerator
+from fem_em_solver.io.paraview_utils import write_combined_paraview_output
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.analytical import AnalyticalSolutions
 from fem_em_solver.utils.constants import MU_0
@@ -93,6 +95,8 @@ def run_case(
     comm,
     air_padding=None,
     far_resolution=None,
+    output_dir=None,
+    basename="helmholtz",
 ):
     """Solve at one wire resolution; return diagnostics dict on rank 0."""
     t0 = time.time()
@@ -114,11 +118,32 @@ def run_case(
         mesh=mesh, cell_tags=cell_tags, facet_tags=facet_tags, mu=MU_0
     )
     solver = MagnetostaticSolver(problem, degree=1)
-    solver.solve(
+    a_field = solver.solve(
         current_density=build_current_density(major_radius, minor_radius, separation)
     )
     b_field = solver.compute_b_field()
     t_solve = time.time() - t0
+
+    written_files = {}
+    if output_dir is not None:
+        # XDMF point data requires a Lagrange space; A lives in N1curl and B in DG,
+        # so interpolate both to CG1 vectors for export.
+        v_lag = fem.functionspace(mesh, ("Lagrange", 1, (3,)))
+
+        a_lag = fem.Function(v_lag, name="A")
+        a_lag.interpolate(a_field)
+
+        b_lag = fem.Function(v_lag, name="B")
+        b_lag.interpolate(b_field)
+
+        written_files = write_combined_paraview_output(
+            output_dir,
+            basename,
+            mesh,
+            cell_tags,
+            {"A": (a_field, a_lag), "B": (b_field, b_lag)},
+            comm=comm,
+        )
 
     # Sample the on-axis line across the full coil span.
     z_eval = np.linspace(-0.6 * separation, 0.6 * separation, n_points)
@@ -159,6 +184,7 @@ def run_case(
 
     centre = int(np.argmin(np.abs(z_eval)))
     return {
+        "written_files": written_files,
         "resolution": resolution,
         "n_cells": n_cells,
         "t_mesh": t_mesh,
@@ -219,6 +245,19 @@ def main() -> int:
         "refinement, so --resolutions then controls the size at the wire only. "
         "Required to keep a large air box affordable.",
     )
+    p.add_argument(
+        "--output-dir",
+        type=str,
+        default=None,
+        help="Write ParaView output (XDMF/HDF5 + on-axis CSV) to this directory. "
+        "Only the finest resolution in the sweep is exported.",
+    )
+    p.add_argument(
+        "--basename",
+        type=str,
+        default="helmholtz",
+        help="Base filename for ParaView output.",
+    )
     args = p.parse_args()
 
     comm = MPI.COMM_WORLD
@@ -237,10 +276,13 @@ def main() -> int:
         print()
 
     results = []
-    for res in sorted(args.resolutions, reverse=True):
+    ordered = sorted(args.resolutions, reverse=True)
+    for res in ordered:
         if rank0:
             print(f"--- resolution h = {res:.4g} m "
                   f"(h/a = {res / args.minor_radius:.2f}) ---", flush=True)
+        # Export only the finest case; coarse sweep levels would just overwrite it.
+        export_dir = args.output_dir if res == ordered[-1] else None
         r = run_case(
             res,
             args.major_radius,
@@ -250,6 +292,8 @@ def main() -> int:
             comm,
             air_padding=args.air_padding,
             far_resolution=args.far_resolution,
+            output_dir=export_dir,
+            basename=args.basename,
         )
         if rank0 and r is not None:
             results.append(r)
@@ -288,7 +332,34 @@ def main() -> int:
     print("Interpretation: if 'centre rel err' stops improving as h shrinks, you have")
     print("hit the systematic floor from finite wire thickness (a/R) and the tight")
     print("domain box -- not a discretization limit. Reduce --minor-radius to close")
-    print("the first gap; the second needs a larger air box in two_torus_domain.")
+    print("the first gap; the second needs a larger --air-padding (use >= 2*R).")
+
+    if args.output_dir:
+        from pathlib import Path
+
+        out = Path(args.output_dir)
+        # On-axis FEM vs analytic, for overlaying on the field plot in ParaView.
+        csv_path = out / f"{args.basename}_on_axis.csv"
+        with open(csv_path, "w") as fh:
+            fh.write("z_m,Bz_fem_T,Bz_analytic_T,rel_error\n")
+            for i in range(len(finest["z"])):
+                if not finest["valid"][i]:
+                    continue
+                z, bn, ba = finest["z"][i], finest["bz_num"][i], finest["bz_ana"][i]
+                rel = abs(bn - ba) / abs(ba) if ba != 0 else float("nan")
+                fh.write(f"{z:.8e},{bn:.8e},{ba:.8e},{rel:.8e}\n")
+
+        print()
+        print("=" * 72)
+        print(f"ParaView output (resolution h = {finest['resolution']:.4g} m)")
+        print("=" * 72)
+        for name, path in sorted(finest["written_files"].items()):
+            print(f"  {name:>10}: {path}")
+        print(f"  {'on-axis':>10}: {csv_path}")
+        print()
+        print("  Open the *_combined.xdmf file in ParaView: it carries the mesh,")
+        print("  cell tags (1/2 = wire tori, 3 = air), and A and B on a single grid,")
+        print("  so a Threshold on the tags works together with the field data.")
     return 0
 
 

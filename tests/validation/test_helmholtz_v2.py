@@ -3,10 +3,10 @@
 import numpy as np
 import ufl
 from mpi4py import MPI
-from dolfinx import geometry
 
 from fem_em_solver.core.solvers import MagnetostaticProblem, MagnetostaticSolver
 from fem_em_solver.io.mesh import MeshGenerator
+from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.constants import MU_0
 
 
@@ -64,19 +64,11 @@ def test_helmholtz_field_uniformity_two_torus():
     points = np.zeros((n_points, 3), dtype=np.float64)
     points[:, 2] = z_eval
 
-    bb_tree = geometry.bb_tree(mesh, mesh.topology.dim)
-    candidate_cells = geometry.compute_collisions_points(bb_tree, points)
-    colliding_cells = geometry.compute_colliding_cells(mesh, candidate_cells, points)
-
-    eval_points = []
-    eval_cells = []
-    for i, p in enumerate(points):
-        links = colliding_cells.links(i)
-        assert len(links) > 0, f"Point {p} is outside local mesh"
-        eval_points.append(p)
-        eval_cells.append(links[0])
-
-    b_vals = b_field.eval(np.array(eval_points, dtype=np.float64), np.array(eval_cells, dtype=np.int32))
+    # Locate points across ranks. A per-rank collision search asserting
+    # len(links) > 0 fails as soon as the axis is not owned by every rank --
+    # this test passed at 1-4 ranks and failed at 8 for exactly that reason.
+    b_vals, valid = evaluate_vector_field_parallel(b_field, points, comm=MPI.COMM_WORLD)
+    assert valid.all(), f"{(~valid).sum()}/{n_points} sample points outside mesh"
     b_z = b_vals[:, 2]
 
     mean_bz = float(np.mean(b_z))
