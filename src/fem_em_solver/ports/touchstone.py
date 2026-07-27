@@ -89,13 +89,34 @@ def export_touchstone(
     output_dir: str | Path = ".",
     output_path: str | Path | None = None,
     write_csv_companion: bool = True,
+    allow_placeholder: bool = False,
 ) -> Path:
     """Write S-parameter sweeps to Touchstone 1.0 (RI format).
 
     Data layout follows Touchstone ordering for each frequency point:
     ``S11, S21, ... SN1, S12, ... SNN``.
+
+    Parameters
+    ----------
+    allow_placeholder:
+        Required to export sweeps flagged ``is_placeholder``. Those S-matrices
+        come from a hardcoded coupling heuristic rather than the solved field
+        (see PORT-0/PORT-1), so the resulting ``.sNp`` file would look like
+        authoritative simulation output while containing no electromagnetics.
+        Export refuses by default; pass True only for format/round-trip testing,
+        never to produce data for downstream tuning.
     """
     port_ids, z0_ohm = _validate_sweeps(sweep_results, ports)
+
+    placeholder = [s for s in sweep_results if getattr(s, "is_placeholder", False)]
+    if placeholder and not allow_placeholder:
+        raise ValueError(
+            f"Refusing to export {len(placeholder)}/{len(sweep_results)} sweep "
+            "point(s) whose S-matrix came from the placeholder coupling model "
+            "rather than the solved field. These numbers are not simulation "
+            "results and a Touchstone file would misrepresent them as such. "
+            "Pass allow_placeholder=True only for format testing. See PORT-0."
+        )
 
     output_dir_path = Path(output_dir)
     output_dir_path.mkdir(parents=True, exist_ok=True)
@@ -116,6 +137,13 @@ def export_touchstone(
 
     with touchstone_path.open("w", encoding="utf-8") as handle:
         handle.write("! FEM-EM Solver Touchstone export\n")
+        if placeholder:
+            handle.write(
+                "! WARNING: PLACEHOLDER DATA -- NOT A SIMULATION RESULT.\n"
+                "! S-parameters below come from a hardcoded coupling heuristic,\n"
+                "! not from the solved electromagnetic field. Do not use for\n"
+                "! tuning, matching, or any engineering decision. See PORT-0.\n"
+            )
         handle.write(f"! generated_utc: {generated_utc.isoformat().replace('+00:00', 'Z')}\n")
         handle.write(f"! port_order: {','.join(port_ids)}\n")
         handle.write(f"! frequency_points_hz: {','.join(f'{f:.9e}' for f in frequency_values)}\n")

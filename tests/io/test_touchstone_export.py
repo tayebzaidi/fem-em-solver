@@ -6,7 +6,10 @@ import numpy as np
 import pytest
 
 from fem_em_solver.ports import PortDefinition
-from fem_em_solver.ports.sparameters import SParameterSweepResult
+from fem_em_solver.ports.sparameters import (
+    SParameterSweepResult,
+    summarize_sparameter_sanity,
+)
 from fem_em_solver.ports.touchstone import export_touchstone, load_touchstone
 
 
@@ -28,6 +31,13 @@ def test_touchstone_export_and_roundtrip_loader(tmp_path):
                 dtype=np.complex128,
             ),
             excitation_results={},
+            sanity_report=summarize_sparameter_sanity(
+                np.array(
+                    [[0.1 + 0.0j, 0.2 + 0.0j], [0.2 + 0.0j, 0.4 + 0.0j]],
+                    dtype=np.complex128,
+                )
+            ),
+            is_placeholder=False,
         ),
         SParameterSweepResult(
             frequency_hz=110.0e6,
@@ -40,6 +50,13 @@ def test_touchstone_export_and_roundtrip_loader(tmp_path):
                 dtype=np.complex128,
             ),
             excitation_results={},
+            sanity_report=summarize_sparameter_sanity(
+                np.array(
+                    [[0.1 + 0.0j, 0.2 + 0.0j], [0.2 + 0.0j, 0.4 + 0.0j]],
+                    dtype=np.complex128,
+                )
+            ),
+            is_placeholder=False,
         ),
     ]
 
@@ -118,3 +135,57 @@ def test_touchstone_loader_rejects_z0_metadata_mismatch(tmp_path):
 
     with pytest.raises(ValueError, match="z0_ohm metadata does not match Touchstone option line"):
         load_touchstone(bad_touchstone_path)
+
+
+def _placeholder_sweep(is_placeholder: bool) -> SParameterSweepResult:
+    """One synthetic sweep point, flagged as requested."""
+    s_matrix = np.array(
+        [[0.1 + 0.0j, 0.2 + 0.0j], [0.2 + 0.0j, 0.4 + 0.0j]], dtype=np.complex128
+    )
+    return SParameterSweepResult(
+        frequency_hz=100.0e6,
+        port_ids=("P1", "P2"),
+        s_matrix=s_matrix,
+        excitation_results={},
+        sanity_report=summarize_sparameter_sanity(s_matrix),
+        is_placeholder=is_placeholder,
+    )
+
+
+def _two_ports() -> list[PortDefinition]:
+    return [
+        PortDefinition(port_id="P1", positive_tag=11, negative_tag=12, orientation="cw", z0_ohm=50.0),
+        PortDefinition(port_id="P2", positive_tag=21, negative_tag=22, orientation="cw", z0_ohm=50.0),
+    ]
+
+
+def test_touchstone_export_refuses_placeholder_data_by_default(tmp_path):
+    """Fabricated S-parameters must not be written as if they were results.
+
+    The port coupling model is a heuristic, not a field solve (PORT-0), so a
+    Touchstone file built from it would misrepresent invented numbers as
+    simulation output.
+    """
+    with pytest.raises(ValueError, match="placeholder"):
+        export_touchstone(
+            [_placeholder_sweep(True)],
+            _two_ports(),
+            output_dir=tmp_path,
+            write_csv_companion=False,
+        )
+
+
+def test_touchstone_export_allows_placeholder_when_explicit(tmp_path):
+    """Format/round-trip testing can opt in, and the file says so."""
+    path = export_touchstone(
+        [_placeholder_sweep(True)],
+        _two_ports(),
+        output_dir=tmp_path,
+        write_csv_companion=False,
+        allow_placeholder=True,
+    )
+
+    assert path.exists()
+    header = path.read_text(encoding="utf-8")
+    assert "PLACEHOLDER DATA" in header
+    assert "NOT A SIMULATION RESULT" in header

@@ -85,7 +85,7 @@ def test_n_port_sweep_assembles_finite_matrix_with_expected_shape(monkeypatch):
             solve_context=solve_context,
         )
 
-    monkeypatch.setattr(sparam_module, "run_single_port_excitation_case", _fake_single_port_case)
+    monkeypatch.setattr(sparam_module, "run_placeholder_port_coupling_case", _fake_single_port_case)
 
     result = run_n_port_sparameter_sweep(
         _DummyProblem(),
@@ -162,7 +162,7 @@ def test_n_port_sweep_rejects_zero_incident_drive(monkeypatch):
             solve_context=solve_context,
         )
 
-    monkeypatch.setattr(sparam_module, "run_single_port_excitation_case", _fake_zero_incident)
+    monkeypatch.setattr(sparam_module, "run_placeholder_port_coupling_case", _fake_zero_incident)
 
     with pytest.raises(ValueError, match="incident wave.*is zero"):
         run_n_port_sparameter_sweep(_DummyProblem(), ports)

@@ -32,6 +32,7 @@ from .ports import (
     load_touchstone,
     plan_frequency_sweep,
     run_n_port_sparameter_sweep,
+    run_placeholder_port_coupling_case,
     run_single_port_excitation_case,
     validate_required_port_tags_exist,
 )
@@ -58,6 +59,7 @@ __all__ = [
     "load_touchstone",
     "plan_frequency_sweep",
     "run_n_port_sparameter_sweep",
+    "run_placeholder_port_coupling_case",
     "run_single_port_excitation_case",
     "validate_required_port_tags_exist",
 ]

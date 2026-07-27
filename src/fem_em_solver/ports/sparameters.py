@@ -11,7 +11,7 @@ from ..core import TimeHarmonicProblem
 from .definitions import PortDefinition
 from .excitation import (
     SinglePortExcitationResult,
-    run_single_port_excitation_case,
+    run_placeholder_port_coupling_case,
 )
 
 
@@ -28,13 +28,20 @@ class SMatrixSanityReport:
 
 @dataclass(frozen=True)
 class SParameterSweepResult:
-    """Container for one frequency-point N-port S-parameter sweep."""
+    """Container for one frequency-point N-port S-parameter sweep.
+
+    ``is_placeholder`` is True whenever any contributing excitation came from
+    the heuristic coupling model rather than the solved field, in which case the
+    S-matrix and its sanity metrics are physically meaningless. Touchstone
+    export refuses such data unless explicitly allowed. See PORT-0/PORT-1.
+    """
 
     frequency_hz: float
     port_ids: tuple[str, ...]
     s_matrix: np.ndarray
     excitation_results: dict[str, SinglePortExcitationResult]
     sanity_report: SMatrixSanityReport
+    is_placeholder: bool = True
 
 
 def _power_waves(voltage_v: complex, current_a: complex, z0_ohm: float) -> tuple[complex, complex]:
@@ -177,7 +184,7 @@ def run_n_port_sparameter_sweep(
 
     excitation_results: dict[str, SinglePortExcitationResult] = {}
     for drive_idx, port in enumerate(ports):
-        excitation_results[port.port_id] = run_single_port_excitation_case(
+        excitation_results[port.port_id] = run_placeholder_port_coupling_case(
             problem,
             ports,
             driven_port_id=port.port_id,
@@ -229,4 +236,5 @@ def run_n_port_sparameter_sweep(
         s_matrix=s_matrix,
         excitation_results=excitation_results,
         sanity_report=sanity_report,
+        is_placeholder=any(r.is_placeholder for r in excitation_results.values()),
     )

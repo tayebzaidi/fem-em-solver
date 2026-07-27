@@ -6,7 +6,11 @@ import numpy as np
 import pytest
 
 from fem_em_solver.core import HomogeneousMaterial
-from fem_em_solver.ports import PortDefinition, run_n_port_sparameter_sweep, run_single_port_excitation_case
+from fem_em_solver.ports import (
+    PortDefinition,
+    run_n_port_sparameter_sweep,
+    run_placeholder_port_coupling_case,
+)
 
 
 class _DummyComm:
@@ -65,8 +69,8 @@ def test_port_orientation_flip_changes_induced_voltage_sign(monkeypatch):
         PortDefinition(port_id="P2", positive_tag=21, negative_tag=22, orientation="ccw"),
     ]
 
-    aligned = run_single_port_excitation_case(problem, aligned_ports, driven_port_id="P1")
-    flipped = run_single_port_excitation_case(problem, flipped_ports, driven_port_id="P1")
+    aligned = run_placeholder_port_coupling_case(problem, aligned_ports, driven_port_id="P1")
+    flipped = run_placeholder_port_coupling_case(problem, flipped_ports, driven_port_id="P1")
 
     aligned_v = aligned.responses["P2"].voltage_v
     flipped_v = flipped.responses["P2"].voltage_v

@@ -22,6 +22,7 @@ from .excitation import (
     PortSolveContext,
     PortVoltageCurrentEstimate,
     SinglePortExcitationResult,
+    run_placeholder_port_coupling_case,
     run_single_port_excitation_case,
 )
 from .sparameters import (
@@ -53,6 +54,7 @@ __all__ = [
     "PortSolveContext",
     "PortVoltageCurrentEstimate",
     "SinglePortExcitationResult",
+    "run_placeholder_port_coupling_case",
     "run_single_port_excitation_case",
     "SMatrixSanityReport",
     "SParameterSweepResult",

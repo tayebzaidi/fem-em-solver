@@ -1,7 +1,33 @@
-"""Single-port excitation helper for MVP lumped-port workflows (chunk E3/D2)."""
+"""Placeholder lumped-port coupling model (chunks E3/D2).
+
+.. warning::
+
+   **This module does not compute port quantities from the solved field.**
+
+   ``run_placeholder_port_coupling_case`` runs the frequency-domain solve, then
+   discards the resulting field and derives port voltages and currents from a
+   hardcoded proximity heuristic::
+
+       coupling   = +/-0.20 / (1 + wrapped_ring_distance)
+       admittance = material_response * (1e-3 * cell_count)
+
+   The 0.20 is arbitrary and ``1e-3 * cell_count`` is dimensionally meaningless.
+   Port orientation is compared as a *string label*, not a geometric normal.
+
+   Everything downstream -- S-matrices, reciprocity and passivity metrics,
+   Touchstone exports -- therefore describes this heuristic's arithmetic and
+   not electromagnetics. The outputs are well-formed and physically meaningless.
+   Do not use them for tuning, matching, or any downstream engineering decision,
+   and do not cite them as simulation results.
+
+   Tracked as PORT-0 (quarantine) and PORT-1 (replace with a real port
+   excitation derived from the solved field). PORT-1 in turn depends on TH-1,
+   since the time-harmonic solver is itself currently a proxy.
+"""
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Callable, Mapping, Optional, Sequence
 
@@ -37,14 +63,32 @@ class PortSolveContext:
     termination_ohm: float
 
 
+class PlaceholderPortModelWarning(UserWarning):
+    """Raised whenever port quantities come from the heuristic, not the field."""
+
+
+PLACEHOLDER_PORT_MODEL_NOTICE = (
+    "Port voltages/currents come from a hardcoded proximity heuristic, NOT from "
+    "the solved field. S-parameters, sanity metrics, and Touchstone exports "
+    "derived from them are physically meaningless. See PORT-0/PORT-1."
+)
+
+
 @dataclass(frozen=True)
 class SinglePortExcitationResult:
-    """Output container for one driven-port frequency-domain solve."""
+    """Output container for one driven-port frequency-domain solve.
+
+    ``is_placeholder`` marks results produced by the heuristic coupling model.
+    It propagates into :class:`SParameterSweepResult` and gates Touchstone
+    export, so fabricated data cannot be written to a file that looks like
+    simulation output without an explicit opt-in.
+    """
 
     driven_port_id: str
     frequency_hz: float
     responses: dict[str, PortVoltageCurrentEstimate]
     solve_context: dict[str, PortSolveContext]
+    is_placeholder: bool = True
 
 
 def _material_response_mean(fields: TimeHarmonicFields, fallback: HomogeneousMaterial) -> complex:
@@ -135,7 +179,7 @@ def _normalize_passive_termination_map(
     return normalized
 
 
-def run_single_port_excitation_case(
+def run_placeholder_port_coupling_case(
     problem: TimeHarmonicProblem,
     ports: Sequence[PortDefinition],
     *,
@@ -152,15 +196,19 @@ def run_single_port_excitation_case(
 ) -> SinglePortExcitationResult:
     """Run one driven-port case and return per-port V/I estimates.
 
-    Notes
-    -----
-    This is an MVP excitation hook intended for deterministic S-parameter assembly.
-    It uses a simple coupling/termination proxy model:
+    .. warning::
+       Results are **not** derived from the solved field. See the module
+       docstring. This function emits :class:`PlaceholderPortModelWarning` on
+       every call and marks its result ``is_placeholder=True``.
+
+    The heuristic is:
     - driven port voltage is fixed to ``drive_voltage_v``
     - passive port induced voltages are scaled by inverse ring-distance coupling
     - passive ports are terminated by ``terminated_port_impedance_ohm`` or
       ``passive_port_terminations_ohm`` overrides.
     """
+    warnings.warn(PLACEHOLDER_PORT_MODEL_NOTICE, PlaceholderPortModelWarning, stacklevel=2)
+
     if not ports:
         raise ValueError("ports must be non-empty")
 
@@ -266,6 +314,7 @@ def run_single_port_excitation_case(
         )
 
     if comm.rank == 0:
+        print("*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***")
         print("single-port excitation diagnostics:")
         print(f"  driven_port: {driven_port_id} (index={driven_index})")
         print(f"  frequency [Hz]: {problem.frequency_hz:.6e}")
@@ -289,4 +338,22 @@ def run_single_port_excitation_case(
         frequency_hz=problem.frequency_hz,
         responses=responses,
         solve_context=solve_context,
+        is_placeholder=True,
     )
+
+
+def run_single_port_excitation_case(*args, **kwargs) -> SinglePortExcitationResult:
+    """Deprecated alias for :func:`run_placeholder_port_coupling_case`.
+
+    The original name implied the result came from a port excitation solve. It
+    does not -- see the module docstring. Renamed under PORT-0; this alias is
+    kept so existing callers fail loudly rather than at import time.
+    """
+    warnings.warn(
+        "run_single_port_excitation_case() is a misleading name for a "
+        "placeholder model and will be removed; use "
+        "run_placeholder_port_coupling_case(). " + PLACEHOLDER_PORT_MODEL_NOTICE,
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return run_placeholder_port_coupling_case(*args, **kwargs)
