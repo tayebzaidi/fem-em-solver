@@ -5,7 +5,15 @@ This checklist defines minimum evidence required to declare **v1 achieved** for 
 Status guidance:
 - Mark item **PASS** only when linked logs/artifacts are present and criteria are met.
 - Mark **BLOCKED** when a required prerequisite test cannot run (for example, environment unavailable).
-- Keep this file aligned with `ROADMAP.md` and `docs/testing/pending-tests.md`.
+- Keep this file aligned with `PROJECT_PLAN.md` §7 and `docs/testing/pending-tests.md`.
+- Chunk IDs below are legacy (`B1`, `C2`, `D3`, …). Resolve them via the mapping
+  table in `PROJECT_PLAN.md` §8.
+
+> **v1 is not currently attainable.** Sections covering field plausibility and
+> S-parameter sanity depend on `TH-1` (a real time-harmonic formulation) and
+> `PORT-1` (port quantities derived from the solved field). Until those land, the
+> underlying numbers are placeholder-derived and no evidence gathered against them
+> can support a v1 signoff. See `PROJECT_PLAN.md` §2.
 
 ---
 

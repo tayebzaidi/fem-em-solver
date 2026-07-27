@@ -6,14 +6,28 @@
 
 A finite element method (FEM) solver for electromagnetic simulations of MRI coils with gelled saline phantoms, built on [FEniCSX/DolfinX](https://fenicsproject.org/).
 
+> **Project status: early alpha.** Magnetostatics is implemented and validated
+> against analytic solutions. The time-harmonic path is currently a **proxy**
+> (`E = -jωA`), not a Maxwell solve — material properties do not yet affect computed
+> fields, and exported S-parameters come from a placeholder coupling model rather
+> than the solved field. See [PROJECT_PLAN.md](PROJECT_PLAN.md) §2 before relying on
+> any frequency-domain output.
+
 ## Features
 
-- **Magnetostatics**: Magnetic vector potential formulation for static problems
-- **Time-Harmonic**: Full Maxwell equations for frequency-domain analysis
-- **Coil Models**: Loop coils, birdcage coils, TEM coils
-- **Material Models**: Complex permittivity, dispersion models, gelled saline phantoms
+**Working today**
+- **Magnetostatics**: magnetic vector potential formulation, N1curl elements, gauge penalty
+- **Meshing**: parametric Gmsh geometry generation with region tagging and mesh QA
+- **Validation**: field uniformity in a Helmholtz configuration (`CV < 1%`). The
+  analytic wire/loop comparisons are currently **broken** — see
+  [PROJECT_PLAN.md](PROJECT_PLAN.md) §2.3b
+
+**Planned** (see [PROJECT_PLAN.md](PROJECT_PLAN.md))
+- **Time-Harmonic**: full Maxwell equations for frequency-domain analysis
+- **Coil Models**: loop coils, birdcage coils, TEM coils
+- **Material Models**: complex permittivity, dispersion models, gelled saline phantoms
 - **MRI-Focused**: B1+ mapping, SAR calculation, coil loading analysis
-- **Validation**: Benchmarked against analytic solutions and Ansys HFSS
+- **HFSS comparison**: quantitative benchmarking against commercial solvers
 
 ## Quick Start
 
@@ -45,12 +59,32 @@ sudo usermod -aG docker $USER
 docker ps  # Should show containers without sudo
 ```
 
-**If you get permission errors** after adding to docker group, you need to log out and back in, or run:
+**If you get permission errors** after adding to the docker group, your shell's
+process credentials predate the group edit (check: `getent group docker` lists you,
+but `id` doesn't show it). Log out and back in, or pick the group up in place:
+
 ```bash
-newgrp docker  # Applies group change to current shell (temporary)
+sg docker -c 'docker ps'     # runs one command with the group applied
+newgrp docker                # or start a subshell with the group applied
 ```
 
 **Note:** Modern Docker uses `docker compose` (space). Older versions use `docker-compose` (hyphen).
+
+### Running tests
+
+```bash
+cd docker && docker compose up -d          # start the service (once per session)
+docker compose ps                          # confirm STATUS is "Up"
+
+# from the repo root — logs to docs/testing/
+scripts/testing/run_and_log.sh <CHUNK-ID> \
+  "docker compose exec -T fem-em-solver bash -lc 'cd /workspace && ./run_tests.sh --smoke'"
+```
+
+The repo is bind-mounted at `/workspace`, so source edits take effect without a
+rebuild. Use `exec -T` for scripted runs. See
+[PROJECT_PLAN.md](PROJECT_PLAN.md) §5 for runtime budget tiers and the full chunk
+verification workflow.
 
 #### Option 2: Conda Environment
 
@@ -119,24 +153,34 @@ fem-em-solver/
 
 ## Development Phases
 
-1. **Phase 0**: Infrastructure & setup
-2. **Phase 1**: Magnetostatics foundation
-3. **Phase 2**: Time-harmonic Maxwell equations
-4. **Phase 3**: Material models & phantoms
-5. **Phase 4**: Coil modeling
-6. **Phase 5**: Full MRI system integration
-7. **Phase 6**: Advanced features
+| Phase | Scope | State |
+|---|---|---|
+| 0 | Infrastructure & setup | Partial |
+| 1 | Magnetostatics foundation | **Complete** |
+| 2 | Time-harmonic Maxwell equations | Not started |
+| 3 | Material models & phantoms | Inert presets only |
+| 4 | Coil modeling & ports | Placeholder-backed |
+| 5 | Full MRI system integration | Blocked on 2–4 |
+| 6 | Advanced features | Deferred |
 
-See [PROJECT_PLAN.md](PROJECT_PLAN.md) for detailed roadmap.
+See [PROJECT_PLAN.md](PROJECT_PLAN.md) for the chunk backlog, sequencing, and
+definition of done.
 
 ## Validation
 
-The solver is validated against:
-- Analytic solutions (wire, loop, Helmholtz coil)
-- Commercial software (Ansys HFSS)
-- Literature data and measured results
+**Current state: one sound check.** `tests/validation/test_helmholtz_v2.py` verifies
+central-region field uniformity (`CV < 1%`).
 
-See `docs/validation/` for validation reports.
+The analytic comparisons for straight wire, circular loop, and h-convergence are
+present but **do not work** — they evaluate fields in arbitrary mesh cells rather
+than the cells containing the sample points, so their numbers are meaningless. This
+is tracked as `MAG-7` and is the project's top priority. Do not cite these tests as
+validation until it is fixed.
+
+Planned: closed-form magnitude comparison, commercial-software comparison (Ansys
+HFSS), and literature/measured data.
+
+See `docs/status.md` for the per-test breakdown.
 
 ## Citation
 
