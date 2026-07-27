@@ -14,30 +14,39 @@ result. Most of the surrounding test suite is still broken or unverified.
 
 | Phase | State |
 |---|---|
-| 0 — Infrastructure | Docker verification toolchain works. CI still runs only `tests/unit`. |
-| 1 — Magnetostatics | **Solver verified to 0.04%.** Several older tests still broken. |
+| 0 — Infrastructure | Docker toolchain works; CI now runs the real validation suite. |
+| 1 — Magnetostatics | **Complete and verified to 0.04%.** Full suite green. |
 | 2 — Time-harmonic Maxwell | **Not started.** See the caveats below. |
 | 3 — Materials & phantoms | Presets exist but do not affect solved fields. |
-| 4 — Coil modeling & ports | Implemented against a placeholder coupling model. |
+| 4 — Coil modeling & ports | Placeholder coupling model, now quarantined. |
 | 5 — Full MRI integration | Blocked on Phases 2–4. |
 | 6 — Advanced features | Deferred. |
 
 ## Phase 1 — actual test status
 
+The full magnetostatics suite now runs green — `10 passed, 2 skipped` in 150 s on
+8 ranks (`docs/testing/logs/20260727T190008Z_MAG-7.log`). It had never completed
+before, and repairing it surfaced six independent defects, **none in the solver**:
+broken point evaluation at 7 sites; an axial current density driving a torus that
+lies in the xy-plane (on-axis `B_z` came out ~1000× too small); current applied
+over the whole domain instead of the wire; an inverted convergence-rate sign; an
+analytic expectation that was 2× wrong (the *test*, not the implementation); and
+meshes that exhausted 16 GB or ran past 400 s.
+
 | Test / example | Status |
 |---|---|
-| `examples/.../04_helmholtz_analytic_comparison.py` | **Verified.** 0.04% centre, 0.83% mean vs analytic. |
-| `test_helmholtz_v2.py` | Sound. Proper point location; asserts uniformity `CV < 1%`. |
-| `test_straight_wire.py` | **Broken** — bad point evaluation *and* current applied over the whole domain. Also >400 s, over budget. |
-| `test_circular_loop.py` | **Broken** — bad point evaluation. |
-| `test_helmholtz.py` | **Broken** — bad point evaluation. Superseded by `_v2`. |
-| `test_convergence.py` | **Broken** — bad point evaluation. |
-| `test_two_torus.py` | **Fails at `mpiexec -n 4`** — asserts on rank-local `cell_tags.values`; a rank owning no wire cells trips it. Pre-existing. |
+| `examples/.../04_helmholtz_analytic_comparison.py` | ✅ 0.04% centre, 0.83% mean vs analytic |
+| `test_helmholtz_v2.py` | ✅ uniformity `CV < 1%` |
+| `test_straight_wire.py` | ✅ 18.3%, converging ~O(h) — see caveat below |
+| `test_circular_loop.py` | ✅ 8.9% on-axis vs analytic |
+| `test_convergence.py` | ✅ h-convergence rate +0.81 |
+| `test_two_cylinder.py`, `test_two_torus.py` | ✅ pass at 1/2/4/8 ranks |
+| `test_helmholtz.py`, `examples/03` | deleted — superseded by `_v2` and example `04` |
 
-The common defect is `B.eval(points, np.arange(n))`, which evaluates each point in an
-arbitrary cell rather than the one containing it, producing meaningless numbers. The
-correct machinery already exists in `src/fem_em_solver/post/evaluation.py`. Tracked as
-`MAG-7`; example `04` is the reference pattern for the fix.
+Straight-wire sits at ~18% by design: resolving a `1/r` field near a thin
+conductor on a uniform mesh is intrinsically hard, and the same solver reproduces
+the smooth Helmholtz field to 0.04%. That test checks the `1/r` trend and
+azimuthal direction; the Helmholtz comparison carries the quantitative claim.
 
 ### Getting a meaningful analytic comparison
 
@@ -64,20 +73,21 @@ B1+ figure produced today is physically meaningful.
 
 **Exported S-parameters are not simulation output.**
 `ports/excitation.py` derives port voltages from a hardcoded coupling heuristic
-rather than from the solved field. Touchstone `.s2p` files the project emits are
-well-formed and physically meaningless. Do not use them downstream.
+rather than from the solved field. As of `PORT-0` this is quarantined: the entry
+point is named `run_placeholder_port_coupling_case`, it warns on every call, and
+Touchstone export refuses such data unless you pass `allow_placeholder=True` —
+in which case the file is stamped `PLACEHOLDER DATA — NOT A SIMULATION RESULT`.
+The numbers are unchanged and still meaningless; `PORT-1` is the real fix.
 
-Both are tracked as `TH-1` and `PORT-0`/`PORT-1` in the plan, and both are on the
-critical path.
+Both are tracked as `TH-1` and `PORT-1` in the plan, and both are on the critical
+path.
 
 ## Next work
 
-1. `MAG-7` — route validation tests through `post/evaluation.py` instead of `np.arange`
-2. `MAG-8` — restrict straight-wire current density to the wire subdomain
-3. `MAG-9` — re-size validation meshes into the 3-minute `standard` budget
-4. Re-run all of MAG to find out whether the solver actually matches closed-form results
-5. `OPS-2` — put the repaired suite in CI
-6. `PORT-0` — quarantine the placeholder port model
-7. `TH-1` + `TH-6` — real complex time-harmonic formulation, landed with an analytic gate
+1. `TH-1` + `TH-6` — real complex time-harmonic formulation, landed with an analytic gate
+2. `MAT-2` — prove materials measurably affect solved fields
+3. `PORT-1` — real port excitation derived from the solved field
+4. `MAG-10` — investigate why N1curl degree 2 diverges (gauge-penalty suspect)
+5. Generalize the air-box/graded-meshing fix to the remaining `io/mesh.py` fixtures
 
 See `PROJECT_PLAN.md` §9 for full sequencing.

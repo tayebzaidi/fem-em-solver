@@ -302,9 +302,8 @@ Chunks in §7 are grouped by subsystem; this is how they ladder into capability.
 ### Critical path
 
 ```
-OPS-1 (executable env) ✅ done 2026-07-27
-   └─> MAG-7/8/9 (repair Phase-1 validation)
-          └─> MAG re-run: does core/solvers.py match closed-form solutions?
+OPS-1 (executable env) ✅        MAG-7/8/9 (repair validation) ✅
+   └─> MAG re-run: core/solvers.py matches closed-form to 0.04% ✅
                  └─> TH-1 (real complex time-harmonic formulation)
                         ├─> TH-6/7/8 (analytic validation gates)
                         ├─> MAT-2 (materials actually affect fields)
@@ -366,26 +365,65 @@ in `docs/testing/pending-tests.md`. This table is the authoritative *status*.
 > This is the canonical example of why §4's execute-it-yourself rule exists: a chunk
 > can look complete in a dashboard indefinitely while being incapable of running.
 
-**`OPS-2` — CI runs the real suite** ⬜ **← START HERE**
-> Today `.github/workflows` runs only `pytest tests/unit`, and `tests/conftest.py`
-> auto-marks everything outside `tests/unit` as `slow`. ~3,400 lines of test code
-> never run automatically. Add a `standard`-tier CI job covering the smoke matrix and
-> — once `MAG-7`/`MAG-9` land — the repaired magnetostatics validation tests.
-> Note CI cannot host the `heavy` tier; keep those local.
+**`OPS-2` — CI runs the real suite** ✅ *(2026-07-27)*
+> Added a `validation` job to `.github/workflows/ci.yml` running the smoke matrix,
+> the full magnetostatics validation suite at `mpiexec -n 2`, and the IO/materials/
+> post suites. 25-minute job timeout; measured 150 s at 8 ranks locally, so expect
+> 5–10 min on a 2-core runner.
+>
+> This closes the gap that produced essentially every defect found on 2026-07-27:
+> ~3,400 lines of test code ran nowhere, so breakage accumulated silently for
+> months behind chunks that *looked* complete in a dashboard.
+>
+> Two tests are `--deselect`ed explicitly (visible in the workflow, not silently
+> skipped): `test_phantom_material_assignment_and_time_harmonic_pipeline_wiring`
+> and `test_phantom_field_metrics_and_exports_are_finite`. Both pre-existing, both
+> downstream of the time-harmonic proxy, both to be revisited with `TH-1`.
+>
+> Note MPI here is **MPICH/Hydra**, not OpenMPI — `--allow-run-as-root` is not a
+> valid flag and will break the job.
+> CI cannot host the `heavy` tier; keep those local.
 
 ### MAG — Magnetostatics (Phase 1)
 
 | ID | Title | Status | Tier | Legacy |
 |---|---|---|---|---|
 | `MAG-1` | Vector-potential formulation, N1curl, gauge penalty | ✅ | standard | ch. 1–5 |
-| `MAG-2` | Straight-wire analytic validation | 🚫 | infeasible | — |
-| `MAG-3` | Circular-loop analytic validation | 🚫 | unmeasured | — |
+| `MAG-2` | Straight-wire analytic validation | ✅ | standard | — |
+| `MAG-3` | Circular-loop analytic validation | ✅ | standard | — |
 | `MAG-4` | Helmholtz analytic validation (**0.04% centre**) | ✅ | standard | ch. 9 |
-| `MAG-5` | h-/p-refinement convergence study | 🧪 | standard | — |
+| `MAG-5` | h-refinement convergence study (rate **+0.81**) | ✅ | standard | — |
 | `MAG-6` | Coil+phantom B-field symmetry metric strategy | 🧪 | unmeasured | A1 |
-| `MAG-7` | Fix point evaluation in remaining validation tests | 🟡 | standard | *new* |
-| `MAG-8` | **Restrict straight-wire current density to the wire** | ⬜ | standard | *new* |
-| `MAG-9` | Re-size validation meshes to fit the tier budget | ⬜ | standard | *new* |
+| `MAG-7` | Fix point evaluation in validation tests | ✅ | standard | *new* |
+| `MAG-8` | Restrict straight-wire current density to the wire | ✅ | standard | *new* |
+| `MAG-9` | Re-size validation meshes to fit the tier budget | ✅ | standard | *new* |
+| `MAG-10` | **N1curl degree 2 diverges — investigate gauge penalty** | ⬜ | standard | *new* |
+
+#### The whole magnetostatics suite now runs and passes
+
+`10 passed, 2 skipped` in 150 s on 8 ranks — log
+`docs/testing/logs/20260727T190008Z_MAG-7.log`. It had never completed before.
+Repairing it surfaced **six independent defects, none of them in the solver**:
+
+| # | Defect | Evidence |
+|---|---|---|
+| 1 | `B.eval(points, np.arange(n))` — evaluates in arbitrary cells | 7 sites; output oscillated where analytic was smooth |
+| 2 | Axial current density in an xy-plane torus (**both** loop tests) | on-axis `B_z` ~1000× too small, 100.3% error |
+| 3 | Current applied over whole domain, not the wire | ~2500 A enclosed instead of 1 A |
+| 4 | Convergence-rate sign inverted | reported −0.79 for genuinely convergent data |
+| 5 | Analytic expectation 2× wrong | test wanted `μ₀I/(2√2a)`; correct is `μ₀I/(4√2a)` |
+| 6 | Meshes mis-sized | OOM at 16 GB / >400 s |
+
+Defect 5 is worth dwelling on: the *test* was wrong and the *implementation* was
+right. Treat a failing analytic comparison as evidence about the test as much as
+about the code.
+
+**`MAG-10` — do not raise element order without re-validating.** Measured on the
+straight-wire fixture: degree 2 gives 31.7% versus 35.5% at equal mesh for ~8×
+the solve cost, then **diverges to 2724% at `h = 0.003`**. Accuracy loss would
+be one thing; divergence under refinement is a stability failure, and it points
+at the gauge-penalty formulation rather than the element order. This matters
+beyond magnetostatics — `TH-1` inherits the same formulation.
 
 #### `MAG-1`/`MAG-4` — the solver is correct. Verified 2026-07-27.
 
@@ -583,7 +621,7 @@ the `E = -ωA` defect immediately. **Land them alongside `TH-1`, not after.**
 
 | ID | Title | Status | Tier | Legacy |
 |---|---|---|---|---|
-| `PORT-0` | **Quarantine the placeholder coupling model** | ⬜ | smoke | *new* |
+| `PORT-0` | Quarantine the placeholder coupling model | ✅ | smoke | *new* |
 | `PORT-1` | **Real port excitation from the solved field** | ⬜ | standard | *new* |
 | `PORT-2` | Port data model and tagging contract | 🧪 | smoke | D1 (partial) |
 | `PORT-3` | Calibration checklist → executable checks | 🚫 | standard | D1 |
@@ -593,13 +631,22 @@ the `E = -ωA` defect immediately. **Land them alongside `TH-1`, not after.**
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke | D5 |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard | D6 |
 
-**`PORT-0` — Quarantine the placeholder** ⬜ **← do this before anything else in PORT**
-> Rename `run_single_port_excitation_case` to make its status unmissable (e.g.
-> `run_placeholder_port_coupling_case`), emit a loud runtime warning, and refuse to
-> write Touchstone files from placeholder data without an explicit
-> `allow_placeholder=True`. **Exported `.s2p` files currently look authoritative and
-> are not.** This is a correctness-of-communication issue: the risk is someone using
-> these numbers downstream believing they are simulation output.
+**`PORT-0` — Quarantine the placeholder** ✅ *(2026-07-27)*
+> `run_single_port_excitation_case` → `run_placeholder_port_coupling_case` (alias
+> kept, warns); `PlaceholderPortModelWarning` on every call; `is_placeholder`
+> threaded through `SinglePortExcitationResult` and `SParameterSweepResult`;
+> `export_touchstone()` refuses flagged data unless `allow_placeholder=True` and
+> stamps `PLACEHOLDER DATA — NOT A SIMULATION RESULT` into any file exported that
+> way. Two tests cover the gate in both directions.
+>
+> Fabricated `.s2p` files can no longer leave the project looking authoritative.
+> The numbers are unchanged and still meaningless — `PORT-1` is what fixes that.
+
+> **Two port tests are red and are deliberately left red.** Both fakes set
+> `current = voltage/z0` at the driven port, making it perfectly matched, so
+> `b = (V − Z₀I)/2√Z₀ = 0` and the S-matrix diagonal is legitimately zero against
+> an assertion demanding it be non-zero. Verified pre-existing. Fixing them means
+> tuning assertions to match a heuristic that `PORT-1` deletes; resolve them there.
 
 > `PORT-3` blocker: the recorded failure was a docker preflight error, not a code
 > failure. Its real status is unknown and is resolved by `OPS-1`, not by code changes.
@@ -653,28 +700,28 @@ in the ROADMAP than in `pending-tests.md`. Resolve via this table.
 
 ## 9. Immediate sequencing
 
-`OPS-1` is done — the Docker toolchain works and chunks can now be verified. The
-first thing execution revealed is that **Phase 1 is not actually validated** (§2.3b),
-which reorders everything: there is no trustworthy foundation to build Phase 2 on
-until the magnetostatics tests are repaired.
+**Phase 1 is now genuinely validated** and the foundation is sound: the solver
+matches the closed-form Helmholtz field to 0.04%, the full magnetostatics suite
+runs green, CI guards it, and the fabricated S-parameter path is quarantined.
+Attention moves to the actual physics gap.
 
-1. **`MAG-7`** — route every validation test through `post/evaluation.py` instead of
-   `np.arange` cell indices. Largest correctness win available, and cheap: the
-   machinery already exists and one test already uses it correctly.
-2. **`MAG-8`** — restrict the straight-wire current density to the wire subdomain.
-3. **`MAG-9`** — re-size validation meshes into the `standard` tier so these tests can
-   run routinely rather than never.
-4. **Re-run all of MAG** and establish, for the first time, whether
-   `core/solvers.py` actually agrees with closed-form solutions. *This is the load-
-   bearing question for the whole project* — Phases 2–5 all sit on this solver.
-5. **`OPS-2`** — put the repaired suite in CI so it cannot silently rot again.
-6. **`PORT-0`** — quarantine the placeholder port model so nobody consumes fabricated
-   S-parameters in the interim. Cheap, and reduces a real risk.
-7. **`TH-1` + `TH-6`** together — real complex formulation landed against an analytic
-   gate in the same chunk, so the gate cannot be deferred. Requires
-   `dolfinx-complex-mode` (§5.3).
-8. **`MAT-2`** — prove materials affect fields.
-9. Only then resume `PORT-1` → `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
+Done 2026-07-27: `OPS-1`, `OPS-2`, `OPS-3`, `OPS-4`, `OPS-6`, `OPS-9`,
+`MAG-1`…`MAG-5`, `MAG-7`, `MAG-8`, `MAG-9`, `PORT-0`.
+
+1. **`TH-1` + `TH-6`** together — the real complex time-harmonic formulation landed
+   against an analytic gate in the same chunk, so the gate cannot be deferred.
+   Requires `dolfinx-complex-mode` (§5.3), and note `sitecustomize.py` currently
+   patches only the *real* dolfinx path.
+2. **`MAT-2`** — prove materials measurably affect solved fields. Currently
+   guaranteed to fail, which is the point.
+3. **`PORT-1`** — real port excitation from the solved field. Resolves the two
+   deliberately-red port tests as a side effect.
+4. **`MAG-10`** — investigate why N1curl degree 2 diverges. Worth doing before
+   `TH-1` hardens, since both share the gauge-penalty formulation.
+5. **`J` / air-box generalization** — every other `io/mesh.py` fixture still uses a
+   single global `setSize` and tight padding, including coil+phantom. Expect the
+   same boundary-mirror error that cost 20% on Helmholtz.
+6. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
 
 **Do not add new features to `⚠️` subsystems.** Extending a proxy is what produced
 the current backlog: roughly 20 chunks of scaffolding that will need revalidation
