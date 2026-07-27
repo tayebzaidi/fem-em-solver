@@ -1,7 +1,53 @@
 """ParaView output utilities for FEM-EM solver."""
 
+import os
 from pathlib import Path
+
 from mpi4py import MPI
+
+
+def adopt_host_ownership(output_dir, comm=MPI.COMM_WORLD) -> int:
+    """Give files under ``output_dir`` the same owner as the directory holding it.
+
+    The dev container runs as root while the repository is bind-mounted from the
+    host, so anything written lands root-owned and the host user cannot delete or
+    overwrite it without sudo. Re-owning to match the enclosing directory (which
+    the bind mount keeps as the host user) removes that papercut.
+
+    No-op when not running as root, when the ids already match, or when the
+    filesystem refuses the change -- output should never be lost to a
+    housekeeping step, so failures here are swallowed deliberately.
+
+    Returns the number of paths successfully re-owned (0 on non-zero ranks).
+    """
+    if comm.rank != 0:
+        return 0
+
+    output_dir = Path(output_dir)
+    if not output_dir.exists() or not hasattr(os, "geteuid") or os.geteuid() != 0:
+        return 0
+
+    try:
+        reference = output_dir.parent.stat()
+    except OSError:
+        return 0
+
+    uid, gid = reference.st_uid, reference.st_gid
+    if uid == 0 and gid == 0:
+        return 0
+
+    changed = 0
+    targets = [output_dir, *output_dir.rglob("*")]
+    for path in targets:
+        try:
+            info = path.stat()
+            if (info.st_uid, info.st_gid) != (uid, gid):
+                os.chown(path, uid, gid)
+                changed += 1
+        except OSError:
+            continue
+
+    return changed
 
 
 def write_xdmf_with_tags(filename, mesh, cell_tags, functions, comm=MPI.COMM_WORLD):
@@ -108,5 +154,8 @@ def write_combined_paraview_output(
     )
     if xdmf_file:
         written_files["combined"] = xdmf_file
+
+    # Container runs as root; hand the results back to the host user.
+    adopt_host_ownership(output_dir, comm=comm)
 
     return written_files

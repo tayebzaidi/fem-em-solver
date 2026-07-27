@@ -57,7 +57,10 @@ from mpi4py import MPI
 
 from fem_em_solver.core.solvers import MagnetostaticProblem, MagnetostaticSolver
 from fem_em_solver.io.mesh import MeshGenerator
-from fem_em_solver.io.paraview_utils import write_combined_paraview_output
+from fem_em_solver.io.paraview_utils import (
+    adopt_host_ownership,
+    write_combined_paraview_output,
+)
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.analytical import AnalyticalSolutions
 from fem_em_solver.utils.constants import MU_0
@@ -348,6 +351,10 @@ def main() -> int:
                 z, bn, ba = finest["z"][i], finest["bz_num"][i], finest["bz_ana"][i]
                 rel = abs(bn - ba) / abs(ba) if ba != 0 else float("nan")
                 fh.write(f"{z:.8e},{bn:.8e},{ba:.8e},{rel:.8e}\n")
+
+        # The CSV is written after write_combined_paraview_output() has already
+        # re-owned the directory, so claim it too.
+        adopt_host_ownership(out, comm=comm)
 
         print()
         print("=" * 72)
