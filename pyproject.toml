@@ -92,6 +92,11 @@ addopts = [
     "-v",
     "--strict-markers",
     "--tb=short",
+    # tests/solver/ and tests/validation/ both contain test_tolerance_policy.py.
+    # With no __init__.py in the test tree, the default "prepend" import mode
+    # derives module names from basename alone and the second file fails to
+    # collect with "import file mismatch". importlib mode uses the full path.
+    "--import-mode=importlib",
 ]
 markers = [
     "unit: Unit tests",
