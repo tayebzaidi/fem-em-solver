@@ -92,10 +92,14 @@ closed-form magnitude.
 
 ### 2.4 What is genuinely trustworthy
 
-- The magnetostatic formulation in `core/solvers.py` *reads* correct — N1curl weak
-  form `∫μ⁻¹(∇×A)·(∇×v) dx = ∫J·v dx` with gauge penalty — and produces a uniform
-  central field in a Helmholtz configuration. **It has never been quantitatively
-  checked against a closed-form solution** (§2.3b). Plausible, unproven.
+- **The magnetostatic formulation in `core/solvers.py` is verified.** N1curl weak
+  form `∫μ⁻¹(∇×A)·(∇×v) dx = ∫J·v dx` with gauge penalty, matching the closed-form
+  on-axis Helmholtz field to **0.04% at centre / 0.83% mean**, with monotone
+  convergence in both domain size and mesh resolution. See `MAG-1`/`MAG-4` in §7.
+  This is the project's one solid foundation — and note it took fixing the *tests*
+  and the *air box*, not the solver, to demonstrate it.
+- `examples/magnetostatics/04_helmholtz_analytic_comparison.py` — the working
+  analytic comparison, and the reference pattern for repairing the other tests
 - `tests/validation/test_helmholtz_v2.py` — correct point location, real tolerance
 - `src/fem_em_solver/post/evaluation.py` — correct bounding-box/collision machinery,
   which the broken tests simply don't use
@@ -373,15 +377,66 @@ in `docs/testing/pending-tests.md`. This table is the authoritative *status*.
 
 | ID | Title | Status | Tier | Legacy |
 |---|---|---|---|---|
-| `MAG-1` | Vector-potential formulation, N1curl, gauge penalty | 🧪 | standard | ch. 1–5 |
+| `MAG-1` | Vector-potential formulation, N1curl, gauge penalty | ✅ | standard | ch. 1–5 |
 | `MAG-2` | Straight-wire analytic validation | 🚫 | infeasible | — |
 | `MAG-3` | Circular-loop analytic validation | 🚫 | unmeasured | — |
-| `MAG-4` | Helmholtz coil uniformity validation (`CV < 1%`) | 🧪 | unmeasured | ch. 9 |
-| `MAG-5` | h-/p-refinement convergence study | 🚫 | unmeasured | — |
+| `MAG-4` | Helmholtz analytic validation (**0.04% centre**) | ✅ | standard | ch. 9 |
+| `MAG-5` | h-/p-refinement convergence study | 🧪 | standard | — |
 | `MAG-6` | Coil+phantom B-field symmetry metric strategy | 🧪 | unmeasured | A1 |
-| `MAG-7` | **Fix point evaluation in all validation tests** | ⬜ | standard | *new* |
+| `MAG-7` | Fix point evaluation in remaining validation tests | 🟡 | standard | *new* |
 | `MAG-8` | **Restrict straight-wire current density to the wire** | ⬜ | standard | *new* |
 | `MAG-9` | Re-size validation meshes to fit the tier budget | ⬜ | standard | *new* |
+
+#### `MAG-1`/`MAG-4` — the solver is correct. Verified 2026-07-27.
+
+`examples/magnetostatics/04_helmholtz_analytic_comparison.py` compares on-axis `B_z`
+against the closed-form Helmholtz solution using proper collision-based point
+location. Log: `docs/testing/logs/20260727T171928Z_MAG-4.log`, 26 s on 8 ranks.
+
+**Result: 0.04% centre-field error, 0.83% mean along the axis, central `CV = 0.003%`.**
+This clears the plan's `<5%` MVP criterion by two orders of magnitude and is the
+first quantitative analytic validation the project has ever had.
+
+Reaching it required fixing the air box (below). Two independent convergence studies
+confirm the result is real rather than error cancellation:
+
+| air padding | cells | centre err | | wire `h` @ 4R pad | cells | centre err | mean err |
+|---|---|---|---|---|---|---|---|
+| 0.5 R | 40k | 20.42% | | 0.004 | 89k | 0.11% | 1.07% |
+| 1 R | 51k | 7.43% | | 0.003 | 127k | 0.04% | 0.84% |
+| 2 R | 76k | 1.73% | | 0.002 | 228k | 0.05% | 0.51% |
+| 4 R | 163k | **0.01%** | | | | | |
+
+Boundary error falls monotonically with domain size; discretization error falls
+monotonically with `h`. `MAG-1` is therefore `✅` — `core/solvers.py` reproduces
+closed-form magnetostatics.
+
+#### The air box was the dominant error, not mesh resolution
+
+`two_torus_domain` hardcoded `box_half = R + 3a`, coupling the air gap to the *wire
+radius*. The outer boundary carries the natural condition
+`n×(μ⁻¹∇×A) = 0` ⟹ `n×H = 0`, which acts as a **perfect magnetic conductor** and
+mirrors flux back into the domain, inflating the on-axis field. Because of the
+coupling, making the wire *thinner* shrank the air box and made agreement *worse*
+(43.7% at `a = 0.003` vs 20.5% at `a = 0.005`) — the opposite of the expected trend,
+which is what identified the boundary as the culprit.
+
+Fixed by adding to `MeshGenerator.two_torus_domain`:
+- `air_padding` — decouples the box from `minor_radius`. Use `>= 2*major_radius` for
+  free-space comparisons. Defaults to the legacy `2*minor_radius`, so existing
+  callers are unaffected.
+- `wire_resolution` / `far_resolution` — graded sizing via a gmsh Distance+Threshold
+  field, fine at the tori and coarse at the boundary. **This is what makes a large
+  box affordable**: 76k cells instead of ~626k for equivalent wire fidelity, an ~8×
+  saving. Without grading the 4R-padding study would not fit the compute budget.
+
+This discharges the substance of `GEO-4` ("air-box and boundary sizing heuristics")
+for the two-torus fixture. `GEO-4` itself stays 🧪 until its own test is executed.
+
+> **Generalize this.** Every other fixture in `io/mesh.py` uses a single global
+> `setSize` and similarly tight padding, including the coil+phantom geometry that all
+> MRI work depends on. Expect the same boundary-mirror error there, and expect graded
+> sizing to be equally necessary once air boxes grow.
 
 #### Phase 1 is not as validated as previously documented
 
@@ -436,14 +491,10 @@ test. For scale, an 8,210-cell case runs in 3.4 s total (0.9 s mesh + 2.5 s solv
 so cost here is almost entirely mesh-size driven. Re-parameterize to land inside
 `standard`.
 
-> **What still stands:** `test_helmholtz_v2.py` is methodologically sound and is the
-> one Phase-1 result with real support — but it asserts *field uniformity*
-> (`CV < 1%`), not agreement with an analytic magnitude. So the solver is plausibly
-> correct and has never been quantitatively validated against a closed-form solution.
-> `MAG-1` is therefore `🧪`, not `✅`.
->
-> Note this is a defect in the *tests*, not necessarily in `core/solvers.py`. The
-> formulation may well be right. Establishing that is what `MAG-7`+`MAG-8` are for.
+> **This was a defect in the *tests*, not in `core/solvers.py`.** Confirmed: once
+> field evaluation and the air box were fixed, the solver matched the closed-form
+> Helmholtz solution to 0.04% (see `MAG-1`/`MAG-4` above). The remaining broken tests
+> are still broken and still need `MAG-7`/`MAG-8`, but the formulation is sound.
 
 > `MAG-6` note: the predecessor test failed with `max relative |B| mismatch = 0.322`
 > against a `< 0.30` limit. The fix added interface-aware sampling offsets. **The

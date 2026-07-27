@@ -761,11 +761,43 @@ class MeshGenerator:
         resolution: float = 0.02,
         comm: MPI.Intracomm = MPI.COMM_WORLD,
         rank: int = 0,
+        *,
+        air_padding: Optional[float] = None,
+        wire_resolution: Optional[float] = None,
+        far_resolution: Optional[float] = None,
     ) -> Tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]:
         """Generate mesh with two tori inside a box domain.
 
         Uses non-fragmenting geometry construction: two separate torus volumes
         plus one enclosing domain volume, each explicitly tagged.
+
+        Parameters
+        ----------
+        air_padding:
+            Clearance between the coil envelope and the outer box [m]. When
+            ``None`` (default) this is ``2 * minor_radius``, which preserves the
+            historical box size but couples the air gap to the wire radius --
+            making the wire thinner shrinks the air box.
+
+            That coupling matters physically. The outer boundary carries the
+            natural condition ``n x (mu^-1 curl A) = 0``, i.e. ``n x H = 0``,
+            which behaves as a perfect *magnetic* conductor and mirrors flux
+            back into the domain, inflating the on-axis field. Measured centre-
+            field error against the analytic Helmholtz solution:
+
+                box half-width 1.45R -> 43.7%
+                box half-width 1.75R -> 20.5%   (historical default)
+                box half-width 2.50R ->  4.4%
+
+            For free-space comparisons pass ``air_padding >= 2 * major_radius``.
+        wire_resolution:
+            Target mesh size on the torus surfaces [m]. When ``None``, a single
+            uniform size (``resolution``) is used everywhere, as before. Setting
+            this enables graded refinement so a large air box stays affordable:
+            cell count is otherwise driven by the box volume, not the wire.
+        far_resolution:
+            Target mesh size at the outer boundary [m]. Defaults to
+            ``resolution`` when grading is enabled.
         """
         if comm.rank == rank:
             gmsh.initialize()
@@ -776,10 +808,14 @@ class MeshGenerator:
             wire_1 = gmsh.model.occ.addTorus(0, 0, -z_offset, major_radius, minor_radius)
             wire_2 = gmsh.model.occ.addTorus(0, 0, z_offset, major_radius, minor_radius)
 
+            padding = 2.0 * minor_radius if air_padding is None else float(air_padding)
+            if padding <= 0.0:
+                raise ValueError(f"air_padding must be positive, got {padding!r}")
+
             radial_extent = major_radius + minor_radius
-            box_half_x = radial_extent + 2.0 * minor_radius
-            box_half_y = radial_extent + 2.0 * minor_radius
-            box_half_z = z_offset + minor_radius + 2.0 * minor_radius
+            box_half_x = radial_extent + padding
+            box_half_y = radial_extent + padding
+            box_half_z = z_offset + minor_radius + padding
 
             domain = gmsh.model.occ.addBox(
                 -box_half_x,
@@ -815,7 +851,42 @@ class MeshGenerator:
                 gmsh.model.addPhysicalGroup(2, boundary_surfaces, tag=1)
                 gmsh.model.setPhysicalName(2, 1, "outer_boundary")
 
-            gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
+            if wire_resolution is None:
+                gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
+            else:
+                # Graded sizing: fine on the tori, coarsening with distance so a
+                # large air box does not blow up the cell count.
+                h_wire = float(wire_resolution)
+                h_far = float(resolution if far_resolution is None else far_resolution)
+                if h_wire <= 0.0 or h_far <= 0.0:
+                    raise ValueError("wire_resolution and far_resolution must be positive")
+
+                wire_surfaces = []
+                for vol in (wire_1, wire_2):
+                    wire_surfaces.extend(
+                        surf
+                        for _, surf in gmsh.model.getBoundary(
+                            [(3, vol)], oriented=False, recursive=False
+                        )
+                    )
+
+                dist = gmsh.model.mesh.field.add("Distance")
+                gmsh.model.mesh.field.setNumbers(dist, "SurfacesList", wire_surfaces)
+                gmsh.model.mesh.field.setNumber(dist, "Sampling", 200)
+
+                thr = gmsh.model.mesh.field.add("Threshold")
+                gmsh.model.mesh.field.setNumber(thr, "InField", dist)
+                gmsh.model.mesh.field.setNumber(thr, "SizeMin", h_wire)
+                gmsh.model.mesh.field.setNumber(thr, "SizeMax", h_far)
+                gmsh.model.mesh.field.setNumber(thr, "DistMin", minor_radius)
+                gmsh.model.mesh.field.setNumber(thr, "DistMax", major_radius + padding)
+
+                gmsh.model.mesh.field.setAsBackgroundMesh(thr)
+                # Background field must win over point/curve-derived sizing.
+                gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+                gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
+                gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
+
             gmsh.model.mesh.generate(3)
             gmsh.model.mesh.optimize("Netgen")
 

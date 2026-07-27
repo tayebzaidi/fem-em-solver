@@ -7,38 +7,52 @@ Snapshot date: 2026-07-27.
 
 ## Where the project actually stands
 
-**Nothing is validated against a closed-form solution yet.** This page previously
-claimed "Phase 1 — COMPLETE"; running the tests on 2026-07-27 did not support that.
+**The magnetostatic solver is validated against a closed-form solution: 0.04%
+centre-field error on a Helmholtz coil** (2026-07-27, log
+`docs/testing/logs/20260727T171928Z_MAG-4.log`). That is the project's one solid
+result. Most of the surrounding test suite is still broken or unverified.
 
 | Phase | State |
 |---|---|
 | 0 — Infrastructure | Docker verification toolchain works. CI still runs only `tests/unit`. |
-| 1 — Magnetostatics | Solver plausible; **its analytic validation tests are broken.** |
+| 1 — Magnetostatics | **Solver verified to 0.04%.** Several older tests still broken. |
 | 2 — Time-harmonic Maxwell | **Not started.** See the caveats below. |
 | 3 — Materials & phantoms | Presets exist but do not affect solved fields. |
 | 4 — Coil modeling & ports | Implemented against a placeholder coupling model. |
-| 5 — Full MRI integration | Blocked on Phases 1–4. |
+| 5 — Full MRI integration | Blocked on Phases 2–4. |
 | 6 — Advanced features | Deferred. |
 
 ## Phase 1 — actual test status
 
-| Test | Status |
+| Test / example | Status |
 |---|---|
+| `examples/.../04_helmholtz_analytic_comparison.py` | **Verified.** 0.04% centre, 0.83% mean vs analytic. |
 | `test_helmholtz_v2.py` | Sound. Proper point location; asserts uniformity `CV < 1%`. |
 | `test_straight_wire.py` | **Broken** — bad point evaluation *and* current applied over the whole domain. Also >400 s, over budget. |
 | `test_circular_loop.py` | **Broken** — bad point evaluation. |
 | `test_helmholtz.py` | **Broken** — bad point evaluation. Superseded by `_v2`. |
 | `test_convergence.py` | **Broken** — bad point evaluation. |
+| `test_two_torus.py` | **Fails at `mpiexec -n 4`** — asserts on rank-local `cell_tags.values`; a rank owning no wire cells trips it. Pre-existing. |
 
 The common defect is `B.eval(points, np.arange(n))`, which evaluates each point in an
 arbitrary cell rather than the one containing it, producing meaningless numbers. The
-correct machinery already exists in `src/fem_em_solver/post/evaluation.py` and is used
-by `test_helmholtz_v2.py`. Tracked as `MAG-7`.
+correct machinery already exists in `src/fem_em_solver/post/evaluation.py`. Tracked as
+`MAG-7`; example `04` is the reference pattern for the fix.
 
-The magnetostatic formulation in `src/fem_em_solver/core/solvers.py` implements the
-N1curl weak form `∫μ⁻¹(∇×A)·(∇×v) dx = ∫J·v dx` with a gauge penalty and produces a
-uniform central field in a Helmholtz configuration. It is plausible — and unproven
-against any analytic magnitude.
+### Getting a meaningful analytic comparison
+
+Domain size dominates accuracy here, not mesh resolution. The outer boundary imposes
+`n×H = 0`, a perfect magnetic conductor that mirrors flux inward and inflates the
+field. Use `air_padding >= 2*major_radius` together with graded sizing
+(`wire_resolution`/`far_resolution`), or results will be tens of percent high
+regardless of refinement:
+
+| air padding | centre error |
+|---|---|
+| 0.5 R | 20.4% |
+| 1 R | 7.4% |
+| 2 R | 1.7% |
+| 4 R | 0.01% |
 
 ## Important caveats
 
