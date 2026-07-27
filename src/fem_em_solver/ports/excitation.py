@@ -34,6 +34,7 @@ from typing import Callable, Mapping, Optional, Sequence
 import numpy as np
 
 from ..core import HomogeneousMaterial, TimeHarmonicFields, TimeHarmonicProblem, TimeHarmonicSolver
+from ..core.solvers import DEFAULT_GAUGE_PENALTY
 from ..utils.constants import EPSILON_0
 from .definitions import PortDefinition, validate_required_port_tags_exist
 
@@ -191,7 +192,7 @@ def run_placeholder_port_coupling_case(
     current_density: Optional[Callable] = None,
     subdomain_id: Optional[int] = None,
     subdomain_ids: Optional[Sequence[int]] = None,
-    gauge_penalty: float = 1e-3,
+    gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
     degree: int = 1,
 ) -> SinglePortExcitationResult:
     """Run one driven-port case and return per-port V/I estimates.

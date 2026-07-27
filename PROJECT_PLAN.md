@@ -397,7 +397,7 @@ in `docs/testing/pending-tests.md`. This table is the authoritative *status*.
 | `MAG-7` | Fix point evaluation in validation tests | ✅ | standard | *new* |
 | `MAG-8` | Restrict straight-wire current density to the wire | ✅ | standard | *new* |
 | `MAG-9` | Re-size validation meshes to fit the tier budget | ✅ | standard | *new* |
-| `MAG-10` | **N1curl degree 2 diverges — investigate gauge penalty** | ⬜ | standard | *new* |
+| `MAG-10` | Gauge penalty was below the safe window | ✅ | standard | *new* |
 
 #### The whole magnetostatics suite now runs and passes
 
@@ -418,12 +418,64 @@ Defect 5 is worth dwelling on: the *test* was wrong and the *implementation* was
 right. Treat a failing analytic comparison as evidence about the test as much as
 about the code.
 
-**`MAG-10` — do not raise element order without re-validating.** Measured on the
-straight-wire fixture: degree 2 gives 31.7% versus 35.5% at equal mesh for ~8×
-the solve cost, then **diverges to 2724% at `h = 0.003`**. Accuracy loss would
-be one thing; divergence under refinement is a stability failure, and it points
-at the gauge-penalty formulation rather than the element order. This matters
-beyond magnetostatics — `TH-1` inherits the same formulation.
+#### `MAG-10` — the degree-2 divergence was a silently-corrupting default ✅
+
+Diagnosed 2026-07-27. The blow-up at N1curl degree 2 was **not** an element-order
+problem. The default `gauge_penalty = 1e-3` sat *below* the numerically safe
+window, and the resulting corruption was invisible to every existing diagnostic.
+
+**Mechanism.** The weak form is
+`∫μ⁻¹(∇×A)·(∇×v) dx + gauge·∫A·v dx`. The penalty removes the curl-curl
+operator's gradient null space, and it fixes the magnitude of the null-space
+component of `A` as `|A_gradient| ∝ 1/gauge`. With `gauge = 1e-3` against
+`μ⁻¹ ≈ 8×10⁵`, that component ran ~9 orders larger than the physical field.
+`B = ∇×A` annihilates a gradient exactly in *exact* arithmetic; in floating
+point the physical signal is destroyed by cancellation. Degree 2 has a larger
+gradient null space, so it crosses the precision limit first — degree 1 merely
+*hid* the problem.
+
+**Measured** (straight-wire fixture, `h = 0.003`, 88k cells, 8 ranks):
+
+| degree | gauge | L2 error | `max\|A\|` | KSP reason | residual |
+|---|---|---|---|---|---|
+| 1 | 1e-3 | 24.84% | 4.39e+04 | 4 (converged) | 0.0 |
+| 1 | ≥1e0 | 24.67% | 5.23e+01 | 4 | 0.0 |
+| 2 | **1e-3** | **919.85%** | **3.46e+07** | **4 (converged)** | **0.0** |
+| 2 | ≥1e0 | **19.59%** | 4.26e+01 | 4 | 0.0 |
+
+Raising the penalty fixes degree 2 outright, and it then beats degree 1 as
+theory predicts (19.59% vs 24.67%). `max|A| ∝ 1/gauge` exactly, confirming the
+mechanism. `B` is insensitive to the value across **1e0…1e6**, verified on two
+independent geometries (straight wire and Helmholtz two-torus, the latter
+unchanged at 1.55% → 1.54%). There is no accuracy reason to go below 1.
+
+**The failure was silent.** The default solver is a direct LU
+(`ksp_type: preonly, pc_type: lu`), so PETSc reported *converged, residual 0.0*
+for the 919% answer. `LinearSolveDiagnostics` could not have caught it. Anyone
+raising the element degree would have received quietly wrong results.
+
+**Fix.** `DEFAULT_GAUGE_PENALTY = 1.0` in `core/solvers.py`, shared by the
+magnetostatic solver, the time-harmonic solver, and both port entry points so
+the value cannot drift between them. `GaugeContaminationWarning` fires whenever
+a caller passes something below the validated floor.
+
+> **A solution-based guard was tried and rejected.** The natural metric —
+> `||A|| / (L·||curl A||)`, since a physical potential satisfies `|A| ~ |B|·L` —
+> does not discriminate. It reads ~5e8 for a *known-good* solve on this fixture,
+> and degree 1 at `gauge = 1e-3` carries a similarly large ratio while staying
+> accurate to within 0.2% of the well-conditioned answer. The catastrophe needs
+> a large null-space component *and* degree-2 conditioning, so no threshold on
+> the ratio alone separates good from bad without false alarms — and a warning
+> that cries wolf on good solves is worse than none. The ratio is still computed
+> and returned for diagnostics; it is simply not a trigger. Recalibrating it
+> properly would need a study across degrees and mesh sizes.
+
+**Open.** The penalty is a workaround, not a gauge. A proper treatment
+(tree-cotree gauging, or an A-V saddle-point formulation with a Lagrange
+multiplier) would remove the null space instead of pricing it. Worth considering
+before `TH-1` hardens, since the time-harmonic solver inherits this formulation
+— and inherits it in complex arithmetic, where cancellation behaviour is not
+obviously the same.
 
 #### `MAG-1`/`MAG-4` — the solver is correct. Verified 2026-07-27.
 

@@ -20,6 +20,7 @@ Boundary conditions:
 """
 
 from typing import Optional, Callable, Union, List, Sequence, Mapping, Any
+import warnings
 import numpy as np
 from dataclasses import dataclass
 
@@ -32,6 +33,29 @@ from mpi4py import MPI
 import gmsh
 
 from ..utils.constants import MU_0
+
+# Coefficient of the gauge-regularisation term added to the curl-curl operator
+# to remove its gradient null space (see MagnetostaticSolver.solve).
+#
+# Was 1e-3, which is below the numerically safe window and silently corrupts
+# results. The penalty fixes the magnitude of the null-space component of A as
+# |A_gradient| ~ 1/gauge; at 1e-3 that part runs ~9 orders larger than the
+# physical field. B = curl(A) annihilates a gradient exactly in exact
+# arithmetic, but in floating point the physical signal is swamped. Measured on
+# the straight-wire fixture at N1curl degree 2, h=0.003: 920% error at 1e-3,
+# 19.6% at 1e0. Degree 1 hides the problem (24.84% vs 24.67%) because its null
+# space is smaller -- so raising the element degree without raising this was a
+# trap.
+#
+# B is insensitive to the exact value across at least 1e0..1e6, verified on two
+# independent geometries (straight wire and Helmholtz two-torus). 1.0 sits in
+# that window with margin on the low side, where the failure is catastrophic.
+DEFAULT_GAUGE_PENALTY = 1.0
+
+
+class GaugeContaminationWarning(UserWarning):
+    """A is dominated by its gradient null space; B may be roundoff-corrupted."""
+
 
 
 @dataclass
@@ -154,7 +178,7 @@ class MagnetostaticSolver:
               bc_functions: Optional[List] = None,
               subdomain_id: Optional[int] = None,
               subdomain_ids: Optional[Sequence[int]] = None,
-              gauge_penalty: float = 1e-3,
+              gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
               petsc_options: Optional[Mapping[str, Any]] = None,
               collect_solver_diagnostics: bool = False) -> fem.Function:
         """Solve the magnetostatic problem.
@@ -262,7 +286,75 @@ class MagnetostaticSolver:
         self._solved = True
         self._last_solve_diagnostics = self._extract_ksp_diagnostics(problem.solver)
 
+        self._warn_if_gauge_contaminated(gauge_penalty)
+
         return self.A
+
+    def _warn_if_gauge_contaminated(self, gauge_penalty: float) -> float:
+        """Warn when the gauge penalty is below the numerically safe window.
+
+        The penalty leaves a gradient null-space component in A whose magnitude
+        scales as 1/gauge_penalty. ``B = curl(A)`` cancels a gradient exactly in
+        exact arithmetic, but once that component is orders larger than the
+        physical field, floating-point cancellation destroys B.
+
+        This failure is silent through every other channel: the default solver is
+        a direct LU, so PETSc reports converged with residual 0.0 even when the
+        result is off by a factor of ten. Measured at N1curl degree 2, h=0.003,
+        gauge 1e-3: 920% field error, KSP reason 4, residual 0.0.
+
+        The check is on the *parameter*, not the solution. A solution-based
+        metric was tried first -- ``||A|| / (L * ||curl A||)``, on the reasoning
+        that a physical potential satisfies |A| ~ |B|*L -- but it does not
+        discriminate: that ratio is ~5e8 for a known-good solve on this fixture,
+        and degree 1 at gauge 1e-3 carries a similarly large ratio while
+        remaining accurate to within 0.2% of the well-conditioned answer. The
+        catastrophe needs a large null-space component *and* degree-2
+        conditioning, so no threshold on the ratio alone separates good from bad
+        without false alarms. The ratio is still computed and returned for
+        diagnostics; it is simply not used as a trigger.
+
+        Returns ``||A|| / (L * ||curl A||)`` (``inf`` if ``curl A`` vanishes,
+        ``nan`` if it could not be evaluated).
+        """
+        if gauge_penalty < DEFAULT_GAUGE_PENALTY:
+            warnings.warn(
+                f"gauge_penalty={gauge_penalty:.3e} is below the validated floor "
+                f"of {DEFAULT_GAUGE_PENALTY:g}. The penalty controls the gradient "
+                "null space of the curl-curl operator; too small a value lets it "
+                "dominate A and corrupt B = curl(A) through round-off. Measured "
+                "at N1curl degree 2, h=0.003: 920% field error at 1e-3 versus "
+                "19.6% at 1e0. B is insensitive across 1e0..1e6, so there is no "
+                "accuracy reason to go lower. Note the linear solve reports "
+                "success regardless -- a direct LU always converges.",
+                GaugeContaminationWarning,
+                stacklevel=3,
+            )
+
+        try:
+            comm = self.mesh.comm
+            a_sq = fem.assemble_scalar(fem.form(inner(self.A, self.A) * dx))
+            c_sq = fem.assemble_scalar(fem.form(inner(curl(self.A), curl(self.A)) * dx))
+            a_norm = np.sqrt(max(comm.allreduce(a_sq, op=MPI.SUM), 0.0))
+            c_norm = np.sqrt(max(comm.allreduce(c_sq, op=MPI.SUM), 0.0))
+        except Exception:
+            return float("nan")
+
+        # Characteristic domain length, used to make the ratio dimensionless.
+        try:
+            extents = self.mesh.geometry.x
+            local_span = float(np.max(extents) - np.min(extents)) if extents.size else 0.0
+            length = comm.allreduce(local_span, op=MPI.MAX)
+        except Exception:
+            length = 0.0
+
+        if length <= 0.0 or not np.isfinite(a_norm):
+            return float("nan")
+
+        if c_norm <= 0.0:
+            return float("inf")
+
+        return float(a_norm / (length * c_norm))
     
     def compute_b_field(self) -> fem.Function:
         """Compute magnetic flux density B = ∇ × A.

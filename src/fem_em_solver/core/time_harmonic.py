@@ -12,7 +12,12 @@ from dolfinx import fem
 
 from ..materials import GelledSalinePhantomMaterial
 from ..utils.constants import EPSILON_0, MU_0
-from .solvers import LinearSolveDiagnostics, MagnetostaticProblem, MagnetostaticSolver
+from .solvers import (
+    DEFAULT_GAUGE_PENALTY,
+    LinearSolveDiagnostics,
+    MagnetostaticProblem,
+    MagnetostaticSolver,
+)
 
 
 class TimeHarmonicBoundaryCondition(str, Enum):
@@ -220,7 +225,7 @@ class TimeHarmonicSolver:
         current_density: Optional[Callable] = None,
         subdomain_id: Optional[int] = None,
         subdomain_ids: Optional[Sequence[int]] = None,
-        gauge_penalty: float = 1e-3,
+        gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
     ) -> TimeHarmonicFields:
         """Run a minimal frequency-domain solve and return E-field phasor parts."""
         material = self.problem.material

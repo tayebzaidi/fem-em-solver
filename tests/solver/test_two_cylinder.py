@@ -59,7 +59,17 @@ def test_two_cylinder_solver_centerline_field_is_roughly_constant():
 
     b_values = np.asarray(b_field.x.array)
     assert np.isfinite(b_values).all(), "B-field contains non-finite values"
-    assert np.any(np.abs(b_values) > B_FIELD_MAX_NONTRIVIAL_ABS_MIN), "B-field should be non-zero"
+
+    # Non-triviality is asserted below on *located* field samples rather than on
+    # raw DOF values. max|b_field.x.array| is the largest coefficient anywhere in
+    # the mesh, including cells where the gauge-regularised gradient component of
+    # A leaves a large spurious curl; that quantity scales as 1/gauge_penalty and
+    # says nothing about the physical field. Probed properly, B is
+    # gauge-independent for penalties >= 1e-3 (measured 1.009e-9, 9.978e-10,
+    # 9.978e-10 T at 1e-3, 1e0, 1e3). Asserting on the raw array made this test
+    # a function of the regularisation parameter -- it began failing purely
+    # because MAG-10 corrected the gauge default. Same defect family as MAG-7:
+    # never read fields out of a DOF array when you mean a value at a point.
 
     # Check B-field along centerline (x=0, y=0, varying z)
     n_points = 11
@@ -71,6 +81,17 @@ def test_two_cylinder_solver_centerline_field_is_roughly_constant():
     b_center, valid = evaluate_vector_field_parallel(b_field, points)
     assert valid.all(), f"{(~valid).sum()}/{n_points} centerline points outside mesh"
     b_mag = np.linalg.norm(b_center, axis=1)
+
+    # Non-triviality, probed outboard of cylinder 1 where the field is strong.
+    # The centerline is a poor place for this: both conductors carry current in
+    # the same direction, so their contributions oppose at x=0.
+    probe = np.array([[-x_offset - 2.0 * radius, 0.0, 0.0]])
+    b_probe, probe_valid = evaluate_vector_field_parallel(b_field, probe)
+    assert probe_valid.all(), "non-triviality probe point fell outside the mesh"
+    b_probe_mag = float(np.linalg.norm(b_probe[0]))
+    assert b_probe_mag > B_FIELD_MAX_NONTRIVIAL_ABS_MIN, (
+        f"B-field should be non-zero outboard of the conductor, got {b_probe_mag:.3e} T"
+    )
 
     mean_mag = float(np.mean(b_mag))
     std_mag = float(np.std(b_mag))

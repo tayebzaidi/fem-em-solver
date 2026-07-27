@@ -8,6 +8,7 @@ from typing import Callable, Optional, Sequence
 import numpy as np
 
 from ..core import TimeHarmonicProblem
+from ..core.solvers import DEFAULT_GAUGE_PENALTY
 from .definitions import PortDefinition
 from .excitation import (
     SinglePortExcitationResult,
@@ -168,7 +169,7 @@ def run_n_port_sparameter_sweep(
     current_density: Optional[Callable] = None,
     subdomain_id: Optional[int] = None,
     subdomain_ids: Optional[Sequence[int]] = None,
-    gauge_penalty: float = 1e-3,
+    gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
     degree: int = 1,
 ) -> SParameterSweepResult:
     """Run an N-port excitation sweep and assemble an NxN S-matrix."""

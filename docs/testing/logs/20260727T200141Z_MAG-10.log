@@ -1,0 +1,212 @@
+# Test Run
+- Chunk: MAG-10
+- Commit: 0561a61fc876969b0afb3b4ff8861841207bc82b
+- Time (UTC): 2026-07-27 20:01:41
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.3.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src mpiexec -n 8 python3 -m pytest tests/validation tests/solver tests/mesh tests/io tests/materials tests/post tests/unit -q --deselect tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring --deselect tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 16
+drwxr-xr-x  2 taz5297 taz5297 4096 Mar 24 00:02 .
+drwxr-xr-x 13 taz5297 taz5297 4096 Jul 27 14:55 ..
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.3.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src mpiexec -n 8 python3 -m pytest tests/validation tests/solver tests/mesh tests/io tests/materials tests/post tests/unit -q --deselect tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring --deselect tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 73 items / 2 deselected / 71 selected
+
+tests/validation/test_circular_loop.py ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 73 items / 2 deselected / 71 selected
+
+tests/validation/test_circular_loop.py ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 73 items / 2 deselected / 71 selected
+
+tests/validation/test_circular_loop.py ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 73 items / 2 deselected / 71 selected
+
+tests/validation/test_circular_loop.py ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 73 items / 2 deselected / 71 selected
+
+tests/validation/test_circular_loop.py ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 73 items / 2 deselected / 71 selected
+
+tests/validation/test_circular_loop.py ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 73 items / 2 deselected / 71 selected
+
+tests/validation/test_circular_loop.py ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 73 items / 2 deselected / 71 selected
+
+tests/validation/test_circular_loop.py ........................                               [  4%]
+tests/validation/test_coil_phantom_bfield_metrics.py                                [  4%]
+tests/validation/test_coil_phantom_bfield_metrics.py                                [  4%]
+tests/validation/test_coil_phantom_bfield_metrics.py                                [  4%]                               [  4%]                               [  4%]                               [  4%]
+tests/validation/test_coil_phantom_bfield_metrics.py 
+tests/validation/test_coil_phantom_bfield_metrics.py 
+tests/validation/test_coil_phantom_bfield_metrics.py                                [  4%]
+tests/validation/test_coil_phantom_bfield_metrics.py 
+tests/validation/test_coil_phantom_bfield_metrics.py FFF                   [  5%]
+tests/validation/test_convergence.py F                   [  5%]
+tests/validation/test_convergence.py F                   [  5%]
+tests/validation/test_convergence.py F                   [  5%]
+tests/validation/test_convergence.py F                   [  5%]
+tests/validation/test_convergence.py                    [  5%]
+tests/validation/test_convergence.py                    [  5%]
+tests/validation/test_convergence.py F                   [  5%]
+tests/validation/test_convergence.py ........sssssssssssssss                                 [  9%]
+tests/validation/test_field_consistency_metrics.py                                  [  9%]
+tests/validation/test_field_consistency_metrics.py                                  [  9%]
+tests/validation/test_field_consistency_metrics.py                                  [  9%]
+tests/validation/test_field_consistency_metrics.py                                  [  9%]
+tests/validation/test_field_consistency_metrics.py                                  [  9%]
+tests/validation/test_field_consistency_metrics.py                                  [  9%]
+tests/validation/test_field_consistency_metrics.py .......s......                                 [  9%].
+tests/validation/test_field_consistency_metrics.py                     [ 12%]
+tests/validation/test_helmholtz_v2.py                     [ 12%]
+tests/validation/test_helmholtz_v2.py                     [ 12%]
+tests/validation/test_helmholtz_v2.py                     [ 12%]
+tests/validation/test_helmholtz_v2.py                     [ 12%]
+tests/validation/test_helmholtz_v2.py                     [ 12%]
+tests/validation/test_helmholtz_v2.py                     [ 12%].
+tests/validation/test_helmholtz_v2.py .                    [ 12%]
+tests/validation/test_helmholtz_v2.py ........                                  [ 14%]
+tests/validation/test_straight_wire.py                                   [ 14%]                                  [ 14%]                                  [ 14%]
+tests/validation/test_straight_wire.py                                   [ 14%]
+tests/validation/test_straight_wire.py                                   [ 14%]
+tests/validation/test_straight_wire.py                                   [ 14%]
+tests/validation/test_straight_wire.py 
+tests/validation/test_straight_wire.py 
+tests/validation/test_straight_wire.py                                   [ 14%]
+tests/validation/test_straight_wire.py ........................                               [ 18%]                               [ 18%]
+tests/validation/test_tolerance_policy.py                                [ 18%]
+tests/validation/test_tolerance_policy.py                                [ 18%]
+tests/validation/test_tolerance_policy.py 
+tests/validation/test_tolerance_policy.py                                [ 18%]                               [ 18%]
+tests/validation/test_tolerance_policy.py                                [ 18%]
+tests/validation/test_tolerance_policy.py 
+tests/validation/test_tolerance_policy.py                                [ 18%]
+tests/validation/test_tolerance_policy.py ........                              [ 19%]                              [ 19%]
+tests/solver/test_boundary_condition_selection.py                               [ 19%]
+tests/solver/test_boundary_condition_selection.py                               [ 19%]
+tests/solver/test_boundary_condition_selection.py 
+tests/solver/test_boundary_condition_selection.py                               [ 19%]                              [ 19%]                              [ 19%]
+tests/solver/test_boundary_condition_selection.py 
+tests/solver/test_boundary_condition_selection.py 
+tests/solver/test_boundary_condition_selection.py                               [ 19%]
+tests/solver/test_boundary_condition_selection.py .........................                   [ 25%]
+tests/solver/test_coil_phantom_magnetostatics.py ......                   [ 25%]                   [ 25%]                   [ 25%]
+tests/solver/test_coil_phantom_magnetostatics.py                    [ 25%]
+tests/solver/test_coil_phantom_magnetostatics.py 
+tests/solver/test_coil_phantom_magnetostatics.py 
+tests/solver/test_coil_phantom_magnetostatics.py                    [ 25%]
+tests/solver/test_coil_phantom_magnetostatics.py .                   [ 25%]
+tests/solver/test_coil_phantom_magnetostatics.py                    [ 25%]
+tests/solver/test_coil_phantom_magnetostatics.py ........                       [ 26%]
+tests/solver/test_convergence_diagnostics.py                        [ 26%]
+tests/solver/test_convergence_diagnostics.py                        [ 26%]
+tests/solver/test_convergence_diagnostics.py                        [ 26%]
+tests/solver/test_convergence_diagnostics.py                        [ 26%]
+tests/solver/test_convergence_diagnostics.py                        [ 26%]
+tests/solver/test_convergence_diagnostics.py                        [ 26%]
+tests/solver/test_convergence_diagnostics.py                        [ 26%]
+tests/solver/test_convergence_diagnostics.py FFFFFFFFF                          [ 29%]
+tests/solver/test_cylinder.py FFFFFFF                          [ 29%]
+tests/solver/test_cylinder.py                           [ 29%]                          [ 29%]                          [ 29%]
+tests/solver/test_cylinder.py                           [ 29%]
+tests/solver/test_cylinder.py 
+tests/solver/test_cylinder.py 
+tests/solver/test_cylinder.py                           [ 29%]
+tests/solver/test_cylinder.py                           [ 29%]
+tests/solver/test_cylinder.py .                                          [ 30%]
+tests/solver/test_gauge_penalty.py ........                                          [ 30%]
+tests/solver/test_gauge_penalty.py                                           [ 30%]
+tests/solver/test_gauge_penalty.py                                           [ 30%]
+tests/solver/test_gauge_penalty.py                                           [ 30%]
+tests/solver/test_gauge_penalty.py                                           [ 30%]
+tests/solver/test_gauge_penalty.py                                           [ 30%]
+tests/solver/test_gauge_penalty.py                                           [ 30%]
+tests/solver/test_gauge_penalty.py ...............................                                  [ 36%]                                  [ 36%]                                  [ 36%]                                  [ 36%]                                  [ 36%]                                  [ 36%]
+tests/solver/test_single_port_excitation.py 
+tests/solver/test_single_port_excitation.py 
+tests/solver/test_single_port_excitation.py                                   [ 36%]
+tests/solver/test_single_port_excitation.py 
+tests/solver/test_single_port_excitation.py 
+tests/solver/test_single_port_excitation.py 
+tests/solver/test_single_port_excitation.py                                   [ 36%]
+tests/solver/test_single_port_excitation.py FFFFFFFF........................                         [ 42%]                         [ 42%]
+tests/solver/test_time_harmonic_smoke.py                          [ 42%]
+tests/solver/test_time_harmonic_smoke.py                          [ 42%]
+tests/solver/test_time_harmonic_smoke.py                          [ 42%]
+tests/solver/test_time_harmonic_smoke.py                          [ 42%]
+tests/solver/test_time_harmonic_smoke.py                          [ 42%]
+tests/solver/test_time_harmonic_smoke.py 
+tests/solver/test_time_harmonic_smoke.py                          [ 42%]
+tests/solver/test_time_harmonic_smoke.py ................................                            [ 47%]                            [ 47%]                            [ 47%]                            [ 47%]                            [ 47%]                            [ 47%]                            [ 47%]                            [ 47%]
+tests/solver/test_tolerance_policy.py 
+tests/solver/test_tolerance_policy.py 
+tests/solver/test_tolerance_policy.py 
+tests/solver/test_tolerance_policy.py 
+tests/solver/test_tolerance_policy.py 
+tests/solver/test_tolerance_policy.py 
+tests/solver/test_tolerance_policy.py 
+tests/solver/test_tolerance_policy.py ........                                  [ 49%]
+tests/solver/test_two_cylinder.py                                   [ 49%]
+tests/solver/test_two_cylinder.py                                   [ 49%]
+tests/solver/test_two_cylinder.py                                   [ 49%]
+tests/solver/test_two_cylinder.py                                   [ 49%]
+tests/solver/test_two_cylinder.py                                   [ 49%]
+tests/solver/test_two_cylinder.py                                   [ 49%]
+tests/solver/test_two_cylinder.py                                   [ 49%]
+tests/solver/test_two_cylinder.py FFF                                      [ 50%]                                      [ 50%]
+tests/solver/test_two_torus.py 
+tests/solver/test_two_torus.py                                       [ 50%]
+tests/solver/test_two_torus.py 

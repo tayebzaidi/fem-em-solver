@@ -82,12 +82,23 @@ The numbers are unchanged and still meaningless; `PORT-1` is the real fix.
 Both are tracked as `TH-1` and `PORT-1` in the plan, and both are on the critical
 path.
 
+## Solver defaults worth knowing
+
+`gauge_penalty` defaults to **1.0** (`DEFAULT_GAUGE_PENALTY` in `core/solvers.py`).
+It was `1e-3`, which sits below the numerically safe window and silently corrupts
+higher-order solves: at N1curl degree 2 the field error was **920%** while PETSc
+reported *converged, residual 0.0*, because the default solver is a direct LU that
+always "succeeds". `B` is insensitive across 1e0–1e6, so there is no accuracy
+reason to lower it. Passing anything below 1.0 raises
+`GaugeContaminationWarning`. See `PROJECT_PLAN.md` §7 `MAG-10`.
+
 ## Next work
 
 1. `TH-1` + `TH-6` — real complex time-harmonic formulation, landed with an analytic gate
 2. `MAT-2` — prove materials measurably affect solved fields
 3. `PORT-1` — real port excitation derived from the solved field
-4. `MAG-10` — investigate why N1curl degree 2 diverges (gauge-penalty suspect)
-5. Generalize the air-box/graded-meshing fix to the remaining `io/mesh.py` fixtures
+4. Generalize the air-box/graded-meshing fix to the remaining `io/mesh.py` fixtures
+5. Consider proper gauging (tree-cotree or A-V saddle point) before `TH-1` hardens —
+   the penalty is a workaround, and the time-harmonic solver inherits it
 
 See `PROJECT_PLAN.md` §9 for full sequencing.
