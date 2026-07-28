@@ -554,10 +554,44 @@ floor. Do not loosen that assertion when it happens — fix the boundary.
 
 Fix: impose the analytic solution as Dirichlet data through the existing
 `bc_functions` path (wire: `A_z = −μ₀I/(2π)·ln r` on the outer boundary; loop:
-closed-form on-axis/dipole form). The continuum limit then *is* the analytic
+closed-form off-axis form). The continuum limit then *is* the analytic
 field, tolerances tighten from 25%/10% toward single digits, and rates get fit
 over ≥ 3 resolutions instead of 2. The same treatment removes the ~(a/R)³
 PMC-image bias the loop test currently hides inside its 10% tolerance.
+
+**Implementation plan (Batch 2 — documented 2026-07-28, not yet executed):**
+
+1. `utils/analytical.py`: add the off-axis loop vector potential (Jackson
+   eq. 5.37): `A_φ(ρ,z) = (μ₀I/π)·√(a/ρ)·[(1 − k²/2)K(k) − E(k)]/k` with
+   `k² = 4aρ/((a+ρ)² + z²)`, via `scipy.special.ellipk/ellipe`.
+   **Two traps:** scipy's elliptic functions take the *parameter* `m = k²`,
+   not the modulus `k` — passing `k` is a silent factor error; and the ρ → 0
+   limit needs the explicit `A_φ = 0` branch. Verify scipy imports in the
+   container at chunk start — it is the long pole if absent. The wire
+   potential (`straight_wire_vector_potential`) already exists.
+2. New small helper (`core/solvers.py` or `utils/`): build a Dirichlet BC on
+   the exterior boundary of an N1curl space from a callable `A(x)` —
+   interpolate into V, locate exterior dofs topologically (the pattern
+   already exists in `TimeHarmonicSolver.build_boundary_conditions`), return
+   `fem.dirichletbc`. Constraining all exterior dofs of the interpolant
+   imposes its tangential trace, which is what the formulation needs.
+3. `test_straight_wire.py`: pass the BC via `bc_functions`; the sampling
+   window may widen back toward the boundary; tighten the 0.25 bound to a
+   *measured* single-digit value. Note `J·n ≠ 0` at the end caps remains
+   after the BC fix; if a floor persists, cap the wire short of the end
+   faces in `straight_wire_domain` so `J·n = 0` — decide on measurement,
+   not speculation (the `MAG-15` multiplier spread is the instrument).
+4. `test_circular_loop.py`: same treatment with the elliptic-integral A;
+   tolerance from 0.10 to a measured single-digit value.
+5. `test_convergence.py`: ≥ 3 resolutions; assert the fitted rate in
+   [0.7, 1.5] rather than `> 0.5` (N1curl degree 1 predicts ~1.0, and an
+   upper bound catches a superconvergent-looking artifact as well).
+6. Tier: `standard` per test, but cost-probe first per §5.1 — Dirichlet rows
+   change the matrix, not the mesh, so existing measured sizes should hold.
+
+Done when: wire and loop L2 errors < 5% (or the measured
+discretization-limited value, recorded with the log), h-rate ≈ 1 over ≥ 3
+resolutions, all recorded via `run_and_log.sh`.
 
 #### `MAG-14` — promote the Helmholtz analytic comparison into the test suite ⬜
 
@@ -568,6 +602,26 @@ untouched. The magnitude check — the 0.04% result that justifies `MAG-1`/
 which CI never executes. Land it as a test at budget size with a ≤ 5%
 centre-field tolerance, giving the suite one test that is simultaneously
 correctly-evaluated, quantitative, and scale-sensitive.
+
+**Implementation plan (Batch 2 — documented 2026-07-28, not yet executed):**
+
+- New `tests/validation/test_helmholtz_magnitude.py`, adapted from example 04
+  (same mesh helper, same point evaluation, same current normalization — the
+  normalization is the entire point, since CV cannot see it).
+- Air box: start from `air_padding = 2R` with graded `wire_resolution` /
+  `far_resolution` (76k cells, 1.73% centre error measured). The 4R study
+  (163k cells, 0.01%) ran 26 s at 8 ranks; cost-probe before assuming it fits
+  `standard` at `-n 2`, and fall back to 2R if not — 5% tolerance has margin
+  either way.
+- Assert: centre `B_z` within 5% of the closed form `(4/5)^{3/2}·μ₀I/R`;
+  mean on-axis error < 5% over the central window; keep a CV assertion as a
+  secondary check so this test supersedes rather than duplicates `_v2`.
+- Add to the CI `mpiexec -n 2` step only if the measured runtime permits;
+  otherwise it stays in the local validation set with its log recorded.
+
+Done when: the magnitude assertions pass at a measured runtime inside
+`standard`, recorded via `run_and_log.sh`, and the chunk entry states whether
+CI carries it.
 
 #### `MAG-1`/`MAG-4` — the solver is correct. Verified 2026-07-27.
 
@@ -743,6 +797,37 @@ Independent of the §2.1 physics defect; meshes are meshes.
 >   empty-coil sweeps, or an energy-continuity check across sweep points),
 >   verified by stepping deliberately close to a `TH-9` cavity mode and
 >   observing the guard fire.
+>
+> **Implementation plan (Batch 3, after `TH-9` — documented 2026-07-28, not
+> yet executed):**
+> 0. **Environment first, as its own logged smoke chunk.** Extend
+>    `src/sitecustomize.py` (or set `PYTHONPATH` explicitly in the chunk
+>    commands) for `/usr/local/dolfinx-complex`, then verify
+>    `PETSc.ScalarType == complex128` inside the container. Environment
+>    failures must not masquerade as formulation failures (§5.3).
+> 1. Assemble the sesquilinear form
+>    `∫μᵣ⁻¹(∇×E)·(∇×v̄) − k₀²ε_c E·v̄ dx` with `ε_c = εᵣ − jσ/(ωε₀)` built
+>    from the existing DG0 machinery (`build_material_fields` carries over
+>    unchanged); load `−jωμ₀∫J·v̄ dx`. **`ufl.inner` conjugates its second
+>    argument in complex mode — using `ufl.dot` for the load silently flips
+>    the sign convention.**
+> 2. Direct solve, MUMPS. PEC = zero-tangential-E on exterior/tagged facets
+>    (pattern exists in `build_boundary_conditions`); natural = PMC, as today.
+> 3. Replace the `E = −jωA` body of `TimeHarmonicSolver.solve`; keep the
+>    `TimeHarmonicFields` container (e_real/e_imag split from the complex
+>    vector) so downstream `⚠️` chunks recompile without edits.
+>    `B = ∇×E/(−jω)` is the post-processing route to B1+ later.
+> 4. Gates in the same chunk: `TH-6` — impose the analytic lossy-half-space
+>    total field as Dirichlet data on a box and compare interior decay
+>    constant and phase against the closed-form skin depth — plus the `MAT-2`
+>    sensitivity assertion (low-σ vs high-σ phantom fields differ beyond a
+>    stated threshold).
+> 5. The resonance guard from the notes above, verified against a `TH-9`
+>    mode.
+>
+> Risks, in likelihood order: complex-path plumbing in `sitecustomize`;
+> sign-convention mismatch between solver and gates; near-mode
+> ill-conditioning read as a formulation bug.
 
 > `TH-4` is marked 🧪 rather than ⚠️ because PETSc residual/conditioning diagnostics
 > are meaningful regardless of which weak form is assembled.
@@ -759,6 +844,34 @@ verified against.
 > RF shield, so a **PEC outer boundary is physically correct** for the Phase-5
 > deliverables. ABC/PML is needed only for unshielded free-space validation
 > geometries; do not let it block Phase 5.
+
+**`TH-9` — PEC rectangular-cavity resonance gate** ⬜ *(Batch 3 step 1 — plan
+documented 2026-07-28, not yet executed)*
+> The first executable deliverable of Phase 2, landing *before* the driven
+> solver — and it needs **only the real-scalar build**: a lossless source-free
+> cavity eigenproblem is real symmetric, so this chunk is deliberately
+> decoupled from the complex-mode environment work in the `TH-1` plan.
+>
+> Design: assemble stiffness `∫(∇×E)·(∇×v) dx` and mass `∫E·v dx` on N1curl
+> over a PEC box (zero tangential E on all exterior facets), solve the
+> generalized eigenproblem with SLEPc (shift-and-invert near the first
+> physical mode; verify `slepc4py` imports in the image at chunk start), and
+> compare against `f_mnp = (c/2)·√((m/a)² + (n/b)² + (p/d)²)`. Use unequal
+> edges — e.g. 1.0 × 0.7 × 0.5 m, fundamental ≈ 335 MHz, MRI-adjacent — so
+> modes are non-degenerate and ordering is unambiguous.
+>
+> This pins two things nothing else can:
+> - the curl-curl **and** mass assembly (any sign/scaling error moves every
+>   eigenvalue);
+> - correct N1curl null-space behavior: the solver must return the gradient
+>   modes as a zero cluster cleanly separated from the physical spectrum.
+>   **Count and discard** the near-zero eigenvalues against a stated cutoff —
+>   their number is itself a diagnostic — rather than silently skipping them.
+>
+> Done when: the first 3–5 non-zero eigenfrequencies match the closed form to
+> < 1% at a budgeted mesh, improving monotonically under one refinement step,
+> recorded via `run_and_log.sh`. Tier: `standard` (cost-probe per §5.1; edge
+> counts at λ/20 in a half-metre box are modest).
 
 ### MAT — Materials & phantoms (Phase 3)
 
@@ -905,15 +1018,22 @@ Done 2026-07-27: `OPS-1`, `OPS-2`, `OPS-3`, `OPS-4`, `OPS-6`, `OPS-9`,
 Done 2026-07-28: `MAG-11`, `MAG-12`, `MAG-15` (and the `MAG-10` "open" item is
 closed by decision — see its entry).
 
-1. **`MAG-13` + `MAG-14`** — harden the analytic foundation `TH-1` is gated on:
-   analytic-Dirichlet boundaries turn the wire/loop cases into true convergence
-   gates, and promoting example 04 gives the suite its one scale-sensitive test.
-   Both are small and independent of everything below.
-2. **`TH-9` → `TH-1` + `TH-6`** — the cavity gate first (purest assembly check,
-   and the fixture the resonance guard is verified against), then the real
-   complex formulation landed against the lossy plane-wave gate in the same
-   chunk. Requires `dolfinx-complex-mode` (§5.3), and note `sitecustomize.py`
-   currently patches only the *real* dolfinx path.
+Steps 1 and 2 below carry **per-chunk implementation plans in their §7
+entries** (added 2026-07-28): concrete file lists, formulas with their known
+traps, acceptance criteria, and tier guidance. An implementing agent should
+start from those entries, not from this summary.
+
+1. **Batch 2 — `MAG-13` + `MAG-14`** — harden the analytic foundation `TH-1`
+   is gated on: analytic-Dirichlet boundaries turn the wire/loop cases into
+   true convergence gates, and promoting example 04 gives the suite its one
+   scale-sensitive test. Both are small and independent of everything below.
+2. **Batch 3 — `TH-9` → `TH-1` + `TH-6`** — the cavity gate first (purest
+   assembly check, the resonance-guard fixture, and **real-mode only**, so it
+   is not blocked on environment work), then the complex formulation landed
+   against the lossy plane-wave gate in the same chunk. `TH-1` requires
+   `dolfinx-complex-mode` (§5.3); its plan makes the environment work a
+   separate logged smoke chunk because `sitecustomize.py` currently patches
+   only the *real* dolfinx path.
 3. **`MAT-2` + `MAT-6`** — prove materials measurably affect solved fields
    (currently guaranteed to fail, which is the point), then pin the loading
    physics against the Dodd–Deeds closed form.
