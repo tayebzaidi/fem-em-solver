@@ -305,7 +305,7 @@ Chunks in §7 are grouped by subsystem; this is how they ladder into capability.
 |---|---|---|---|
 | 0 | Infrastructure, packaging, CI, meshing | `OPS-1`, `OPS-2` | Partially done; CI validates almost nothing |
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Substantially complete and trustworthy** |
-| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-8` | **Not started** — §2.1 blocks everything |
+| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | **Not started** — §2.1 blocks everything |
 | 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-5` | Presets exist but are inert |
 | 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-8` | Placeholder-backed |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 |
@@ -317,7 +317,7 @@ Chunks in §7 are grouped by subsystem; this is how they ladder into capability.
 OPS-1 (executable env) ✅        MAG-7/8/9 (repair validation) ✅
    └─> MAG re-run: core/solvers.py matches closed-form to 0.04% ✅
                  └─> TH-1 (real complex time-harmonic formulation)
-                        ├─> TH-6/7/8 (analytic validation gates)
+                        ├─> TH-9/6/7/8 (analytic validation gates; TH-9 first)
                         ├─> MAT-2 (materials actually affect fields)
                         └─> PORT-1 (real port excitation) ──> PORT-2…8
                                                                 └─> WF-5…8 (MRI deliverables)
@@ -410,6 +410,11 @@ in `docs/testing/pending-tests.md`. This table is the authoritative *status*.
 | `MAG-8` | Restrict straight-wire current density to the wire | ✅ | standard | *new* |
 | `MAG-9` | Re-size validation meshes to fit the tier budget | ✅ | standard | *new* |
 | `MAG-10` | Gauge penalty was below the safe window | ✅ | standard | *new* |
+| `MAG-11` | Parallel energy was rank-local (missing allreduce) | ✅ | smoke | *new* |
+| `MAG-12` | `evaluate_at_points` still used the MAG-7 broken pattern | ✅ | smoke | *new* |
+| `MAG-13` | Analytic-Dirichlet outer boundary for wire/loop fixtures | ⬜ | standard | *new* |
+| `MAG-14` | Promote the Helmholtz analytic comparison into the test suite | ⬜ | standard | *new* |
+| `MAG-15` | Lagrange-multiplier Coulomb gauge (parameter-free cross-check) | ✅ | smoke | *new* |
 
 #### The whole magnetostatics suite now runs and passes
 
@@ -482,12 +487,87 @@ a caller passes something below the validated floor.
 > and returned for diagnostics; it is simply not a trigger. Recalibrating it
 > properly would need a study across degrees and mesh sizes.
 
-**Open.** The penalty is a workaround, not a gauge. A proper treatment
-(tree-cotree gauging, or an A-V saddle-point formulation with a Lagrange
-multiplier) would remove the null space instead of pricing it. Worth considering
-before `TH-1` hardens, since the time-harmonic solver inherits this formulation
-— and inherits it in complex arithmetic, where cancellation behaviour is not
-obviously the same.
+**Resolved by decision (2026-07-28).** `MAG-15` landed the saddle-point Lagrange
+gauge as a parameter-free cross-check; the penalty at 1.0 stays the production
+default on cost grounds. Tree-cotree gauging is rejected outright: `TH-1`'s
+E-field formulation has no static null space at ω > 0 (the operator acts as
+−k₀²ε_c on the gradient subspace), so further magnetostatic gauge machinery has
+no Phase-2 payoff. The Phase-2 analog to guard against instead is near-resonance
+ill-conditioning — see the `TH-1` formulation notes.
+
+#### `MAG-15` — Lagrange-multiplier Coulomb gauge ✅ *(2026-07-28)*
+
+Solves (A, p) in N1curl × H1, enforcing div(A) = 0 weakly. The null space is
+*removed* rather than priced: no parameter to choose, A comes out physically
+scaled (max|A| ~ 1.6e-9 vs ~5e1 for the penalty on the straight-wire fixture),
+and B needs no floating-point cancellation. Costs ~2× the penalty at degree 1,
+~7.5× at degree 2 — hence cross-check, not default. Full measurements live in
+the `GaugeMethod` docstring in `core/solvers.py`.
+
+Two properties earn it trust as a cross-check, both pinned in
+`tests/solver/test_gauge_lagrange.py`: agreement with the penalty B field
+(< 5% bound; measured identical analytic error to 4 significant figures), and
+null-space removal (Lagrange max|A| < 1e-6 × penalty's; measured ~1e-11).
+A non-zero multiplier spread additionally diagnoses an incompatible source
+(div J ≠ 0, or J·n ≠ 0 on the boundary) — the straight-wire fixture trips it
+by construction, which is `MAG-13`'s subject. 7 passed in 13 s at `-n 2`;
+log `20260728T193524Z_MAG-15.log`.
+
+Bonus discovered under `MAG-11`: the Lagrange solution satisfies the clean
+work-energy identity `W = ½∫J·A` (the constraint row with q = p zeroes the
+gauge term exactly), which the penalty solution provably cannot provide — its
+identity buries the ~1e-8 signal under O(1) terms carrying the operator's full
+null-space conditioning (measured 1.4e-3 identity error, sign flipped; log
+`20260728T194622Z_MAG-11.log`).
+
+#### `MAG-11`/`MAG-12` — two API defects survived the 2026-07-27 audit ✅ *(2026-07-28)*
+
+Nothing in-tree called either method, which is exactly why they survived the
+audit that fixed the same defects everywhere else:
+
+- `compute_magnetic_energy()` returned the rank-local `assemble_scalar`
+  contribution — under `mpiexec -n N` every caller saw ~1/N of the true
+  energy, including both flagship magnetostatics examples. Fixed with an
+  allreduce. Guards: exact agreement with an explicitly reduced assembly
+  (catches a missing reduction at factor ~N under the CI `-n 2` job), plus
+  the `W = ½∫J·A` identity on a Lagrange solve.
+- `evaluate_at_points()` still did `f.eval(points, np.arange(n))` — the
+  arbitrary-cells pattern `MAG-7` eradicated from the tests, surviving in the
+  public API itself. Now routed through `post.evaluation`; out-of-mesh points
+  raise `ValueError` instead of returning extrapolated garbage.
+
+Logs `20260728T195016Z_MAG-11.log`, `20260728T195031Z_MAG-12.log`. The guard
+file joined the CI validation job's `mpiexec -n 2` step — the only environment
+where a missing reduction is visible at all.
+
+#### `MAG-13` — analytic-Dirichlet boundaries for the wire/loop fixtures ⬜
+
+The straight-wire fixture cannot converge to `μ₀I/(2πr)` at any resolution:
+the natural BC `n×H = 0` on the side wall contradicts Ampère's law for any net
+axial current (`∮H·dl = I` vs `H_φ(R) = 0` forced at the wall), and the wire
+terminates on the end caps so `J·n ≠ 0` — an incompatible source the gauge
+term absorbs (the `MAG-15` multiplier spread measures it directly). The
+observed 18–25% error is therefore substantially a **modeling floor**, not
+discretization error, and `test_h_refinement_straight_wire`'s `rate > 0.5`
+assertion will eventually fail on a *correct* solver as h approaches the
+floor. Do not loosen that assertion when it happens — fix the boundary.
+
+Fix: impose the analytic solution as Dirichlet data through the existing
+`bc_functions` path (wire: `A_z = −μ₀I/(2π)·ln r` on the outer boundary; loop:
+closed-form on-axis/dipole form). The continuum limit then *is* the analytic
+field, tolerances tighten from 25%/10% toward single digits, and rates get fit
+over ≥ 3 resolutions instead of 2. The same treatment removes the ~(a/R)³
+PMC-image bias the loop test currently hides inside its 10% tolerance.
+
+#### `MAG-14` — promote the Helmholtz analytic comparison into the test suite ⬜
+
+`test_helmholtz_v2.py` asserts only `CV < 1%`, which is **scale-invariant**: a
+solver wrong by any constant factor (μ₀, current normalization) passes it
+untouched. The magnitude check — the 0.04% result that justifies `MAG-1`/
+`MAG-4` — lives only in `examples/magnetostatics/04_helmholtz_analytic_comparison.py`,
+which CI never executes. Land it as a test at budget size with a ≤ 5%
+centre-field tolerance, giving the suite one test that is simultaneously
+correctly-evaluated, quantitative, and scale-sensitive.
 
 #### `MAG-1`/`MAG-4` — the solver is correct. Verified 2026-07-27.
 
@@ -629,6 +709,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `TH-6` | **Validation: plane wave in lossy half-space** | ⬜ | standard | *new* |
 | `TH-7` | **Validation: waveguide cutoff / coaxial line** | ⬜ | standard | *new* |
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ⬜ | standard | *new* |
+| `TH-9` | **Validation: PEC rectangular-cavity resonances** | ⬜ | standard | *new* |
 
 **`TH-1` — Real complex time-harmonic formulation** ⬜ **← the critical chunk**
 > Replace the `E = -ωA` proxy with an actual frequency-domain solve:
@@ -643,12 +724,41 @@ Independent of the §2.1 physics defect; meshes are meshes.
 > changing phantom σ **measurably changes the field** — the property the current
 > code provably lacks.
 > Blocks: `MAT-2`, `PORT-1`, and all of Phase 5.
+>
+> **Formulation notes (2026-07-28 theory review):**
+> - **The sign convention is part of the spec.** The equation above assumes
+>   `e^{+jωt}`, matching `ε_c = εᵣ − j·σ/(ωε₀)`. Every analytic gate
+>   (`TH-6`…`TH-9`) must be derived in the same convention, or validation will
+>   fail spuriously with conjugated fields.
+> - **Do not port the gauge penalty.** At ω > 0 the operator acts as `−k₀²ε_c`
+>   on the gradient subspace — nonzero everywhere, dissipative wherever σ > 0.
+>   The `MAG-10` disease is statics-only; a penalty term here would *add* error
+>   rather than remove a null space.
+> - **Phase 2's silent-failure mode is near-resonance ill-conditioning.** With
+>   PEC boundaries and lossless air, the matrix is exactly singular at cavity
+>   eigenfrequencies — and an MRI coil is deliberately operated near resonance.
+>   MUMPS returns clean exit codes on near-singular systems: the same shape as
+>   `MAG-10`'s "converged, residual 0.0, 920% error". Done-when therefore also
+>   includes a **resonance guard** (condition estimate, a small loss floor for
+>   empty-coil sweeps, or an energy-continuity check across sweep points),
+>   verified by stepping deliberately close to a `TH-9` cavity mode and
+>   observing the guard fire.
 
 > `TH-4` is marked 🧪 rather than ⚠️ because PETSc residual/conditioning diagnostics
 > are meaningful regardless of which weak form is assembled.
 
-`TH-6`/`TH-7`/`TH-8` are cheap closed-form gates. Any one of them would have caught
-the `E = -ωA` defect immediately. **Land them alongside `TH-1`, not after.**
+`TH-6`…`TH-9` are cheap closed-form gates. Any one of them would have caught
+the `E = -ωA` defect immediately. **Land them alongside `TH-1`, not after** —
+and `TH-9` first: closed-form eigenfrequencies
+`f = (c/2)·√((m/a)² + (n/b)² + (p/d)²)` make it the purest check of the
+curl-curl + mass assembly, with no material or source modeling in the way. It
+also supplies the known-frequency fixture the `TH-1` resonance guard is
+verified against.
+
+> `TH-5` demoted off the MVP path (2026-07-28): a birdcage operates inside an
+> RF shield, so a **PEC outer boundary is physically correct** for the Phase-5
+> deliverables. ABC/PML is needed only for unshielded free-space validation
+> geometries; do not let it block Phase 5.
 
 ### MAT — Materials & phantoms (Phase 3)
 
@@ -659,12 +769,20 @@ the `E = -ωA` defect immediately. **Land them alongside `TH-1`, not after.**
 | `MAT-3` | Debye/Cole-Cole dispersion models | ⬜ | smoke | *new* |
 | `MAT-4` | SAR computation `σ|E|²/(2ρ)` | ⬜ | standard | *new* |
 | `MAT-5` | Temperature-dependent conductivity | ⬜ | smoke | *new* |
+| `MAT-6` | **Dodd–Deeds coil-over-lossy-half-space impedance benchmark** | ⬜ | standard | *new* |
 
 > `MAT-1` is `⚠️` not because the preset table is wrong, but because nothing
 > consumes it. `MAT-2` is the chunk that makes `MAT-1` mean something: assert that
 > a low-σ and a high-σ phantom produce fields differing by more than a stated
 > threshold. It is currently guaranteed to fail — which is precisely why it is worth
 > writing.
+
+> `MAT-6` (2026-07-28) is the quantitative teeth for `MAT-2`. Dodd & Deeds
+> (1968) gives the closed-form impedance change of a circular coil above a
+> layered conductive half-space — the project's headline physics, *"the phantom
+> loads the coil"*, in closed form. It upgrades `MAT-2` from "fields differ by
+> more than a threshold" to "the coil impedance change matches a published
+> solution", and it is the natural bridge between `TH-1` and `PORT-1`.
 
 ### POST — Post-processing & field extraction
 
@@ -705,6 +823,18 @@ the `E = -ωA` defect immediately. **Land them alongside `TH-1`, not after.**
 >
 > Fabricated `.s2p` files can no longer leave the project looking authoritative.
 > The numbers are unchanged and still meaningless — `PORT-1` is what fixes that.
+
+**`PORT-1` — Real port excitation from the solved field** ⬜ *(design sketched 2026-07-28)*
+> Gap-voltage lumped ports, the standard approach for MRI coils at 64–300 MHz:
+> excite one port per solve with an impressed gap source; recover
+> `V_i = −∫E·dl` across each port gap and terminal currents from the solved
+> field; assemble the Z-matrix column-by-column from N single-port solves;
+> convert `S = (Z − Z₀I)(Z + Z₀I)⁻¹`.
+> Done when: `‖Z − Zᵀ‖/‖Z‖` (reciprocity) sits below a stated tolerance — a
+> real, failable identity that replaces the placeholder-arithmetic assertions,
+> and resolves known-issues entry 3 exactly the way that file prescribes
+> ("resolve them there"). Depends on `TH-1`; wave ports are out of scope at
+> these frequencies.
 
 > **Two port tests are red and are deliberately left red.** Both fakes set
 > `current = voltage/z0` at the driven port, making it perfectly matched, so
@@ -772,17 +902,24 @@ Attention moves to the actual physics gap.
 Done 2026-07-27: `OPS-1`, `OPS-2`, `OPS-3`, `OPS-4`, `OPS-6`, `OPS-9`,
 `MAG-1`…`MAG-5`, `MAG-7`, `MAG-8`, `MAG-9`, `PORT-0`.
 
-1. **`TH-1` + `TH-6`** together — the real complex time-harmonic formulation landed
-   against an analytic gate in the same chunk, so the gate cannot be deferred.
-   Requires `dolfinx-complex-mode` (§5.3), and note `sitecustomize.py` currently
-   patches only the *real* dolfinx path.
-2. **`MAT-2`** — prove materials measurably affect solved fields. Currently
-   guaranteed to fail, which is the point.
-3. **`PORT-1`** — real port excitation from the solved field. Resolves the two
-   deliberately-red port tests as a side effect.
-4. **`MAG-10`** — investigate why N1curl degree 2 diverges. Worth doing before
-   `TH-1` hardens, since both share the gauge-penalty formulation.
-5. **`J` / air-box generalization** — every other `io/mesh.py` fixture still uses a
+Done 2026-07-28: `MAG-11`, `MAG-12`, `MAG-15` (and the `MAG-10` "open" item is
+closed by decision — see its entry).
+
+1. **`MAG-13` + `MAG-14`** — harden the analytic foundation `TH-1` is gated on:
+   analytic-Dirichlet boundaries turn the wire/loop cases into true convergence
+   gates, and promoting example 04 gives the suite its one scale-sensitive test.
+   Both are small and independent of everything below.
+2. **`TH-9` → `TH-1` + `TH-6`** — the cavity gate first (purest assembly check,
+   and the fixture the resonance guard is verified against), then the real
+   complex formulation landed against the lossy plane-wave gate in the same
+   chunk. Requires `dolfinx-complex-mode` (§5.3), and note `sitecustomize.py`
+   currently patches only the *real* dolfinx path.
+3. **`MAT-2` + `MAT-6`** — prove materials measurably affect solved fields
+   (currently guaranteed to fail, which is the point), then pin the loading
+   physics against the Dodd–Deeds closed form.
+4. **`PORT-1`** — real port excitation from the solved field, per the design
+   sketch in §7. Resolves the two deliberately-red port tests as a side effect.
+5. **Air-box generalization** — every other `io/mesh.py` fixture still uses a
    single global `setSize` and tight padding, including coil+phantom. Expect the
    same boundary-mirror error that cost 20% on Helmholtz.
 6. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).

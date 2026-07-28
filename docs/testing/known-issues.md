@@ -107,17 +107,39 @@ cells will trip it at higher rank counts — the same defect already fixed in
 on request, as the birdcage geometry is slated for rework alongside a proper analytic
 reference. Left untouched intentionally.
 
-### The gauge penalty is a workaround, not a gauge
+### The gauge penalty is a workaround, not a gauge — closed by decision (2026-07-28)
 
 `DEFAULT_GAUGE_PENALTY = 1.0` prices the curl-curl operator's gradient null space
-rather than removing it. See `PROJECT_PLAN.md` §7 `MAG-10` for the measurements.
+rather than removing it (`PROJECT_PLAN.md` §7 `MAG-10`). This was previously the
+highest-risk open item; the decision is recorded here so it is not reopened:
 
-**This is the highest-risk open item.** Its failure mode is silent: at the previous
-default the field error reached **920%** while PETSc reported *converged, residual
-0.0*, because the default solver is a direct LU that always succeeds. `TH-1` inherits
-this formulation **in complex arithmetic**, where the cancellation behaviour is not
-obviously the same. Tree-cotree gauging or an A-V saddle-point formulation would
-remove the null space instead. Worth settling before Phase 2 hardens.
+- `MAG-15` landed `GaugeMethod.LAGRANGE` — an (A, p) saddle point that removes the
+  null space with no parameter — as a cross-check and diagnostic
+  (`tests/solver/test_gauge_lagrange.py`). The penalty at 1.0 stays the production
+  default on cost grounds (~2× at degree 1, ~7.5× at degree 2).
+- Tree-cotree gauging is rejected: `TH-1`'s E-field formulation has no static null
+  space at ω > 0 (the operator acts as −k₀²ε_c on the gradient subspace), so deeper
+  magnetostatic gauge machinery has no Phase-2 payoff.
+- The risk does **not** transfer to `TH-1` as gauge cancellation. The Phase-2
+  silent-failure analog is *near-resonance ill-conditioning*, tracked in the
+  `TH-1` formulation notes in `PROJECT_PLAN.md` §7.
+
+### Straight-wire fixture has a modeling floor (MAG-13)
+
+The wire/loop validation cases cannot converge to their analytic references as
+posed. On the straight wire: the natural BC `n×H = 0` on the side wall contradicts
+Ampère's law for any net axial current (`∮H·dl = I` on any loop around the wire vs
+`H_φ(R) = 0` forced at the wall), and the wire terminates on the domain end caps,
+so `J·n ≠ 0` — an incompatible source the gauge term absorbs (the `MAG-15`
+multiplier spread measures it directly). The observed 18–25% error is therefore
+substantially modeling error, not discretization error.
+
+**Symptom to expect:** `test_h_refinement_straight_wire`'s `rate > 0.5` assertion
+fails at some future, finer resolution pair *while the solver is correct* — the
+error plateaus at the floor and the fitted rate collapses. **Do not loosen the
+assertion; fix the boundary** (`MAG-13`: impose the analytic solution as Dirichlet
+data via `bc_functions`). The loop test hides the same class of bias — a ~(a/R)³
+PMC-image term — inside its 10% tolerance.
 
 ### Air-box sizing is not generalised
 
