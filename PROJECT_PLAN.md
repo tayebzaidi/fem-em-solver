@@ -1078,6 +1078,41 @@ start from those entries, not from this summary.
    same boundary-mirror error that cost 20% on Helmholtz.
 6. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
 
+### 🚫 Automation blocker — scheduled sessions cannot reach the Docker daemon
+
+Found by the 2026-07-28 17:42 CDT implementer run (the first scheduled run
+after `25d99d3` replaced `--dangerously-skip-permissions` with the sandboxed
+allowlist). **This blocks every chunk, not just the one on deck** — no
+verification can execute, so nothing can reach §4-done.
+
+```
+$ docker compose exec -T fem-em-solver bash -lc 'echo container-alive'
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+```
+
+Log: `docs/testing/logs/20260728T224240Z_PREFLIGHT.log` (exit 1, 1 s). Client-only
+commands still work (`docker compose version`, `docker compose config --services`
+both succeed); only calls that reach the daemon fail. Inside the session `id`
+reports `uid=1000(taz5297) gid=1000(taz5297) groups=1000(taz5297),65534(nogroup)`
+and the socket appears as `srw-rw---- 65534 65534`, while `/etc/group` on the host
+has `docker:x:989:taz5297` — i.e. the session's view of ids is namespace-remapped
+and the `docker` group membership the human relies on interactively is not usable
+here. No rootless daemon exists (`/run/user/1000/docker.sock` absent).
+
+**Needs a human decision** — the agent cannot fix this from inside the sandbox
+(`sudo`, host package managers and `scripts/automation/**` edits are all denied):
+
+1. Permit the Docker socket for these sessions — sandbox write access to
+   `/var/run/docker.sock`, or run the cron sessions unsandboxed. Note the
+   current policy reports `dangerouslyDisableSandbox` as disabled, so this is a
+   settings/managed-policy change, not a flag the wrapper can pass.
+2. Or decouple verification from the agent: a host-side runner (cron/systemd)
+   consumes a queue file the agent writes and drops the `run_and_log.sh` output
+   back into `docs/testing/logs/`. Slower loop, immune to sandbox policy.
+
+Until one of these lands, scheduled runs can only produce parked branches and
+attempts.md entries. See `docs/testing/attempts.md` 2026-07-28T22:46Z.
+
 ### On deck — maintained by the scheduled daily review
 
 The next scheduled implementer run takes the **first** item below that is not
@@ -1085,6 +1120,12 @@ marked done or blocked (see `docs/automation/implementer-run.md`). Exactly
 three items, ordered, each sized for one run: ≤ 1 h wall clock, ≤ 10 min per
 compute command. Items that fail twice get rescoped by the daily review
 before they may reappear.
+
+The order below is **unchanged** by the run above: `MAG-14` is not itself
+blocked, the environment is. Do not re-order or mark items blocked on account
+of it — the next run with a working daemon should take `MAG-14` and start from
+the parked branch `attempt/MAG-14-20260728T224647Z` (an unverified test file,
+never executed).
 
 1. `MAG-14` — Helmholtz magnitude test (plan in its §7 entry)
 2. `MAG-13` — **wire fixture only** (§7 entry steps 1–3 and 6; the loop
