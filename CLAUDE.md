@@ -49,3 +49,20 @@ Implementation work is delegated per chunk to the `implementer` agent
 (.claude/agents/implementer.md, pinned to Opus) — one chunk ID per invocation:
 "Use the implementer agent to execute MAG-13." Planning, chunk design, and
 review of returned diffs stay in the main (Fable) session.
+
+## Scheduled automation
+
+System cron runs headless sessions via `scripts/automation/`:
+
+- **Daily review** (Fable, 06:12 local) — audits results against §4,
+  rescopes failed attempts, maintains the §9 "On deck" queue. Protocol:
+  docs/automation/daily-review.md.
+- **Implementer runs** (Opus, 09:42/13:42/17:42 local) — each attempts the
+  top On-deck item inside a 1-hour timebox; incomplete work is parked on
+  `attempt/*` branches and journaled in docs/testing/attempts.md, never left
+  on main. Protocol: docs/automation/implementer-run.md.
+
+If you are one of these scheduled sessions, your protocol document is
+authoritative; read it before acting. If you are an interactive session,
+expect these runs to exist: check `git log` and attempts.md before assuming
+the tree is as you left it.

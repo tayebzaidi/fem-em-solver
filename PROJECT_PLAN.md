@@ -1078,6 +1078,20 @@ start from those entries, not from this summary.
    same boundary-mirror error that cost 20% on Helmholtz.
 6. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
 
+### On deck — maintained by the scheduled daily review
+
+The next scheduled implementer run takes the **first** item below that is not
+marked done or blocked (see `docs/automation/implementer-run.md`). Exactly
+three items, ordered, each sized for one run: ≤ 1 h wall clock, ≤ 10 min per
+compute command. Items that fail twice get rescoped by the daily review
+before they may reappear.
+
+1. `MAG-14` — Helmholtz magnitude test (plan in its §7 entry)
+2. `MAG-13` — **wire fixture only** (§7 entry steps 1–3 and 6; the loop
+   fixture and the convergence-test rework are a later run)
+3. `TH-9` — PEC cavity resonance gate (plan in its §7 entry; real mode, no
+   complex-environment dependency)
+
 **Do not add new features to `⚠️` subsystems.** Extending a proxy is what produced
 the current backlog: roughly 20 chunks of scaffolding that will need revalidation
 regardless of how carefully they were written.
