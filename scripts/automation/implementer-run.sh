@@ -24,9 +24,12 @@ cd "$REPO"
 START="$(date '+%Y-%m-%d %H:%M %Z')"
 
 # 60 min budget for the session, killed at 65 as the hard backstop.
+# Permissions come from .claude/settings.json (allowlist + denies); acceptEdits
+# auto-approves file edits inside the repo only. Web and subagent tools are off.
 timeout --kill-after=120 3900 "$CLAUDE_BIN" \
   --model claude-opus-5 \
-  --dangerously-skip-permissions \
+  --permission-mode acceptEdits \
+  --disallowedTools WebFetch WebSearch Task Agent \
   -p "Scheduled implementer run, started ${START}. You have 60 minutes of wall clock (externally enforced at 65); start no new implementation work after minute 45. Read docs/automation/implementer-run.md and execute it exactly." \
   >> "$LOG" 2>&1
 STATUS=$?

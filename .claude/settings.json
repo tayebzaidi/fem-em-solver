@@ -1,0 +1,58 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(scripts/testing/run_and_log.sh *)",
+      "Bash(./run_tests.sh *)",
+      "Bash(docker compose *)",
+      "Bash(cd *)",
+      "Bash(git *)",
+      "Bash(date)",
+      "Bash(date *)",
+      "Bash(pwd)"
+    ],
+    "ask": [
+      "Bash(git push*)",
+      "Bash(git fetch*)",
+      "Bash(git pull*)",
+      "Bash(git remote *)",
+      "Bash(git config --global*)",
+      "Bash(docker compose down*)",
+      "Bash(docker compose build*)",
+      "Bash(docker compose rm*)",
+      "Bash(crontab *)",
+      "Bash(claude *)",
+      "Bash(gh *)",
+      "Edit(.claude/**)",
+      "Edit(scripts/automation/**)",
+      "Edit(docker/**)"
+    ],
+    "deny": [
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(rsync *)",
+      "Bash(nc *)",
+      "Bash(ncat *)",
+      "Bash(sudo *)",
+      "Bash(su *)",
+      "Bash(apt *)",
+      "Bash(apt-get *)",
+      "Bash(pip *)",
+      "Bash(pip3 *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Read(//home/taz5297/.ssh/**)",
+      "Read(//home/taz5297/.aws/**)",
+      "Read(//home/taz5297/.gnupg/**)",
+      "Read(//home/taz5297/.config/**)",
+      "Edit(//home/taz5297/.ssh/**)",
+      "Edit(//home/taz5297/.config/**)"
+    ],
+    "disableBypassPermissionsMode": "disable"
+  },
+  "env": {
+    "BASH_DEFAULT_TIMEOUT_MS": "240000",
+    "BASH_MAX_TIMEOUT_MS": "660000"
+  }
+}

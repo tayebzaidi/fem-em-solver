@@ -42,6 +42,11 @@ frequency-domain output, S-parameter, or green test downstream of it.
   `f.eval(points, np.arange(n))`.
 - Commit code, tests, harness logs, and PROJECT_PLAN/known-issues updates
   together.
+- The project permission allowlist (.claude/settings.json) funnels all compute
+  through `run_and_log.sh` / `docker compose` and blocks host package managers,
+  network commands, and reads of files outside this repo. Prefer Read/Grep/Glob
+  tools over shell readers. For multi-line commit messages use
+  `git commit -F <file>` — `$(...)` substitution in commands is denied.
 
 ## Chunk execution
 

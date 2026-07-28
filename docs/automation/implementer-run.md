@@ -47,3 +47,22 @@ Everything in `.claude/agents/implementer.md` applies unchanged: all
 verification through `run_and_log.sh`, tier ceilings with kill-and-shrink on
 overrun, never loosen assertions, rank-safety reductions, no work on ⚠️
 subsystems, known-issues.md discipline for unrelated failures.
+
+## Working inside the permission allowlist
+
+Scheduled sessions run against `.claude/settings.json` with no human to
+answer prompts — a denied tool call is simply denied. Consequences:
+
+- All compute goes through `scripts/testing/run_and_log.sh ...` or
+  `docker compose exec ...` at the **top level** of the Bash command. Host
+  `python3`/`pytest` are not allowed and the host lacks dolfinx anyway.
+- Read files with the Read/Grep/Glob tools, not `cat`/`sed`/`head` — the
+  generic readers are not allowlisted, deliberately.
+- Multi-line commit messages: write the message to a file with the Write
+  tool and use `git commit -F <file>` (then delete the file via the same
+  commit's `git add` scope or leave it untracked in the scratch area).
+  Command substitution like `git commit -m "$(cat ...)"` is treated as
+  injection by the permission layer and will be denied.
+- If a genuinely needed command is denied, do not fight it: document the
+  denial in your attempts.md entry so the daily review can propose an
+  allowlist change to the human.

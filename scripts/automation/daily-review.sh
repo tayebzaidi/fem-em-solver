@@ -24,9 +24,12 @@ cd "$REPO"
 START="$(date '+%Y-%m-%d %H:%M %Z')"
 
 # 30 min wall-clock cap; review is documentation work and should be well under.
+# Permissions come from .claude/settings.json (allowlist + denies); acceptEdits
+# auto-approves file edits inside the repo only. Web and subagent tools are off.
 timeout --kill-after=60 1800 "$CLAUDE_BIN" \
   --model claude-fable-5 \
-  --dangerously-skip-permissions \
+  --permission-mode acceptEdits \
+  --disallowedTools WebFetch WebSearch Task Agent \
   -p "Scheduled daily review session, started ${START}. Read docs/automation/daily-review.md and execute it exactly. Documentation work only: no solves, no meshing." \
   >> "$LOG" 2>&1
 STATUS=$?
