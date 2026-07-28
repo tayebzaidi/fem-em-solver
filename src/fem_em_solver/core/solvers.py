@@ -594,7 +594,10 @@ class MagnetostaticSolver:
         """Compute total magnetic energy in the domain.
         
         W = ½ ∫ B · H dx = ½ ∫ μ⁻¹ |∇ × A|² dx
-        
+
+        Collective: every rank must call this together; the result is the
+        global energy, identical on all ranks.
+
         Returns
         -------
         float
@@ -602,28 +605,34 @@ class MagnetostaticSolver:
         """
         if not self._solved:
             raise RuntimeError("Must call solve() before computing energy")
-        
+
         if callable(self.mu):
             x = ufl.SpatialCoordinate(self.mesh)
             mu_inv = 1.0 / self.mu(x)
         else:
             mu_inv = 1.0 / self.mu
-        
+
         energy_expr = 0.5 * inner(mu_inv * curl(self.A), curl(self.A)) * dx
-        energy = fem.assemble_scalar(fem.form(energy_expr))
-        
-        return energy
+        # assemble_scalar returns only this rank's contribution; without the
+        # reduction every parallel caller saw ~1/n_ranks of the energy (MAG-11).
+        local_energy = fem.assemble_scalar(fem.form(energy_expr))
+
+        return float(self.mesh.comm.allreduce(local_energy, op=MPI.SUM))
     
     def evaluate_at_points(self, points: np.ndarray, field: str = "A") -> np.ndarray:
         """Evaluate field at specific points.
-        
+
+        Collective: every rank must call this together. Each point must lie
+        inside the mesh; a point no rank can locate raises ValueError rather
+        than returning a silently wrong value.
+
         Parameters
         ----------
         points : np.ndarray
             Array of shape (n_points, 3) with coordinates
         field : str
             Field to evaluate: "A", "B", or "H"
-            
+
         Returns
         -------
         np.ndarray
@@ -637,9 +646,22 @@ class MagnetostaticSolver:
             f = self.compute_h_field()
         else:
             raise ValueError(f"Unknown field: {field}")
-        
-        # Use dolfinx interpolation for evaluation
-        values = f.eval(points, np.arange(len(points)))
+
+        # Function.eval(points, cells) requires cells[i] to be the cell
+        # containing points[i]. The previous np.arange(n) evaluated each point
+        # in an arbitrary cell, extrapolating basis functions far outside
+        # their support -- the same defect MAG-7 removed from the tests
+        # (MAG-12). Route through the collision-based machinery instead.
+        from ..post.evaluation import evaluate_vector_field_parallel
+
+        pts = np.asarray(points, dtype=np.float64)
+        values, valid = evaluate_vector_field_parallel(f, pts, comm=self.mesh.comm)
+        if not np.all(valid):
+            missing = np.flatnonzero(~valid)
+            raise ValueError(
+                f"{missing.size}/{pts.shape[0]} points lie outside the mesh; "
+                f"first missing indices: {missing[:5].tolist()}"
+            )
         return values
     
     def save_to_vtk(self, filename: str, fields: Optional[List[str]] = None):
