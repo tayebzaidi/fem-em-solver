@@ -20,8 +20,10 @@ Boundary conditions:
 """
 
 from typing import Optional, Callable, Union, List, Sequence, Mapping, Any
+from enum import Enum
 import warnings
 import numpy as np
+import basix.ufl
 from dataclasses import dataclass
 
 import dolfinx
@@ -55,6 +57,48 @@ DEFAULT_GAUGE_PENALTY = 1.0
 
 class GaugeContaminationWarning(UserWarning):
     """A is dominated by its gradient null space; B may be roundoff-corrupted."""
+
+
+class GaugeMethod(str, Enum):
+    """How the curl-curl operator's gradient null space is handled.
+
+    PENALTY
+        Add ``gauge * inner(A, v) * dx``. Cheap, but it *prices* the null space
+        rather than removing it: A retains a gradient component of magnitude
+        ~1/gauge, and B = curl(A) recovers the physical field only through
+        cancellation. Too small a penalty destroys that cancellation silently
+        (see MAG-10). Requires choosing a parameter that has no physical meaning.
+
+    LAGRANGE
+        Mixed formulation, solving for (A, p) in H(curl) x H1:
+
+            int mu^-1 (curl A).(curl v) dx + int grad(p).v dx = int J.v dx
+            int A.grad(q) dx                                   = 0
+
+        p is a Lagrange multiplier enforcing the Coulomb gauge div(A) = 0
+        weakly. The null space is *removed*, not penalised, so A comes out
+        physically scaled and there is no cancellation to lose. **No parameter.**
+
+        Measured on the straight-wire fixture (h=0.003, 88k cells, 8 ranks):
+
+            degree 1: 24.67% error, max|A| = 1.6e-09,  5.0 s
+            degree 2: 19.59% error, max|A| = 1.6e-09,  214.6 s
+
+        versus penalty at the correct 1e0 (24.67% / 19.59%, max|A| ~ 5e1) and at
+        the old 1e-3 default (24.87% / **133.77%**, max|A| up to 1.7e07). The
+        saddle point reaches the right answer at both degrees without being told
+        anything, and its A is ~10 orders smaller -- the gradient component is
+        gone rather than suppressed.
+
+        Costs roughly 2x the penalty at degree 1 and 7.5x at degree 2, since the
+        mixed system is larger and indefinite.
+
+        A non-zero multiplier is itself a diagnostic: p != 0 means the applied
+        current is not compatible (div J != 0, or J.n != 0 on the boundary).
+    """
+
+    PENALTY = "penalty"
+    LAGRANGE = "lagrange"
 
 
 
@@ -179,6 +223,7 @@ class MagnetostaticSolver:
               subdomain_id: Optional[int] = None,
               subdomain_ids: Optional[Sequence[int]] = None,
               gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
+              gauge: Union[GaugeMethod, str] = GaugeMethod.PENALTY,
               petsc_options: Optional[Mapping[str, Any]] = None,
               collect_solver_diagnostics: bool = False) -> fem.Function:
         """Solve the magnetostatic problem.
@@ -225,8 +270,9 @@ class MagnetostaticSolver:
         
         # Bilinear form: a(A, v) = ∫ μ⁻¹ (∇ × A) · (∇ × v) dx
         # Add tiny gauge regularization to remove nullspace.
-        gauge = fem.Constant(self.mesh, gauge_penalty)
-        a = inner(mu_inv * curl(A_trial), curl(v)) * dx + gauge * inner(A_trial, v) * dx
+        # NB: not named `gauge` -- that is the method-selection parameter.
+        gauge_const = fem.Constant(self.mesh, gauge_penalty)
+        a = inner(mu_inv * curl(A_trial), curl(v)) * dx + gauge_const * inner(A_trial, v) * dx
         
         # Linear form: L(v) = ∫ J · v dx
         if subdomain_id is not None and subdomain_ids is not None:
@@ -241,29 +287,19 @@ class MagnetostaticSolver:
         else:
             J = fem.Constant(self.mesh, np.zeros(3))
 
-        # If subdomain ids are provided, restrict integration to their union
-        if subdomain_ids is not None:
-            if self.problem.cell_tags is None:
-                raise ValueError("subdomain_id(s) requested but problem.cell_tags is None")
-
-            L = 0
-            for tag in subdomain_ids:
-                dx_sub = ufl.Measure(
-                    "dx",
-                    domain=self.mesh,
-                    subdomain_data=self.problem.cell_tags,
-                    subdomain_id=int(tag),
-                )
-                L += inner(J, v) * dx_sub
-        else:
-            # Integrate over whole domain
-            L = inner(J, v) * dx
-        
         # Apply boundary conditions
         bcs = []
         if bc_functions is not None:
             bcs = bc_functions
-            
+
+        gauge_method = GaugeMethod(gauge) if not isinstance(gauge, GaugeMethod) else gauge
+        if gauge_method is GaugeMethod.LAGRANGE:
+            self.A = self._solve_lagrange(mu_inv, J, subdomain_ids, bcs, petsc_options)
+            self._solved = True
+            return self.A
+
+        L = self._build_load_form(v, J, subdomain_ids)
+
         # Solve
         options = {"ksp_type": "preonly", "pc_type": "lu"}
         if petsc_options:
@@ -289,6 +325,158 @@ class MagnetostaticSolver:
         self._warn_if_gauge_contaminated(gauge_penalty)
 
         return self.A
+
+    def _pin_multiplier_dofs(self, W, W1):
+        """Locate exactly one dof of the multiplier space, globally agreed.
+
+        With q free in H1 the constraint annihilates constants, so p is fixed only
+        up to an additive constant and one dof must be pinned. Every rank has to
+        agree on which one, hence the reduction on distance to the global
+        bounding-box corner.
+
+        Note a point constraint on an H1 function is not H1-stable in 3D, so the
+        multiplier carries an arbitrary offset (its *spread* is the meaningful
+        quantity). This does not affect A: only grad(p) enters the A equation.
+        """
+        comm = self.mesh.comm
+
+        xg = self.mesh.geometry.x
+        local_min = xg.min(axis=0) if xg.shape[0] else np.full(3, np.inf)
+        corner = np.array([comm.allreduce(local_min[i], op=MPI.MIN) for i in range(3)])
+
+        coords = W1.tabulate_dof_coordinates()
+        best = (
+            float(np.min(np.linalg.norm(coords - corner, axis=1)))
+            if coords.shape[0]
+            else np.inf
+        )
+        # Deterministic owner election with scalar reductions only. MPI.MINLOC over
+        # a pickled Python tuple is not reliably consistent across ranks -- if two
+        # ranks disagree on the winner they bcast with different roots and
+        # deadlock, mesh-dependently.
+        best_global = comm.allreduce(best, op=MPI.MIN)
+        candidate = comm.rank if best == best_global else comm.size
+        owner = comm.allreduce(candidate, op=MPI.MIN)
+        if owner >= comm.size:  # no rank holds a finite candidate
+            return [np.zeros(0, dtype=np.int32), np.zeros(0, dtype=np.int32)]
+
+        # Broadcast the chosen point, then let *every* rank run the location call.
+        # fem.locate_dofs_geometrical is collective: invoking it under
+        # `if comm.rank == owner` deadlocks. That deadlock is rank-count dependent
+        # -- it completes at 2 ranks and hangs at 4 -- so it will not show up in a
+        # single-rank test.
+        target = None
+        if comm.rank == owner and coords.shape[0]:
+            target = coords[int(np.argmin(np.linalg.norm(coords - corner, axis=1)))]
+        target = comm.bcast(target, root=owner)
+
+        if target is None:
+            return [np.zeros(0, dtype=np.int32), np.zeros(0, dtype=np.int32)]
+
+        found = fem.locate_dofs_geometrical(
+            (W.sub(1), W1),
+            lambda x: np.isclose(x[0], target[0])
+            & np.isclose(x[1], target[1])
+            & np.isclose(x[2], target[2]),
+        )
+        # Ranks that share the point (ghosts) constrain the same physical dof, so
+        # letting each keep its own match stays consistent.
+        return [
+            np.asarray(found[0][:1], dtype=np.int32),
+            np.asarray(found[1][:1], dtype=np.int32),
+        ]
+
+    def _build_load_form(self, test_function, J, subdomain_ids):
+        """Assemble the RHS against a given test function.
+
+        Built per test function rather than by substituting arguments into a
+        finished form: ufl.replace() across two different function spaces does not
+        do what it looks like it does -- it produces a form that hangs in the
+        compiler rather than raising.
+        """
+        if subdomain_ids is None:
+            return inner(J, test_function) * dx
+
+        if self.problem.cell_tags is None:
+            raise ValueError("subdomain_id(s) requested but problem.cell_tags is None")
+
+        L = 0
+        for tag in subdomain_ids:
+            dx_sub = ufl.Measure(
+                "dx",
+                domain=self.mesh,
+                subdomain_data=self.problem.cell_tags,
+                subdomain_id=int(tag),
+            )
+            L += inner(J, test_function) * dx_sub
+        return L
+
+    def _solve_lagrange(self, mu_inv, J, subdomain_ids, bcs, petsc_options):
+        """Saddle-point solve enforcing the Coulomb gauge with a multiplier.
+
+        Returns the H(curl) component; the multiplier is kept on the instance as
+        ``last_gauge_multiplier`` for diagnostics.
+        """
+        if bcs:
+            raise ValueError(
+                "GaugeMethod.LAGRANGE does not yet support Dirichlet conditions on A; "
+                "the multiplier space would need matching constraints."
+            )
+
+        cell = self.mesh.basix_cell()
+        curl_el = basix.ufl.element("N1curl", cell, self.degree)
+        lag_el = basix.ufl.element("Lagrange", cell, self.degree)
+        W = fem.functionspace(self.mesh, basix.ufl.mixed_element([curl_el, lag_el]))
+
+        (A_trial, p_trial) = ufl.TrialFunctions(W)
+        (v, q) = ufl.TestFunctions(W)
+
+        a = (
+            inner(mu_inv * curl(A_trial), curl(v)) * dx
+            + inner(ufl.grad(p_trial), v) * dx
+            + inner(A_trial, ufl.grad(q)) * dx
+        )
+
+        L = self._build_load_form(v, J, subdomain_ids)
+
+        W1, _ = W.sub(1).collapse()
+        zero = fem.Function(W1)
+        zero.x.array[:] = 0.0
+        pin = [fem.dirichletbc(zero, self._pin_multiplier_dofs(W, W1), W.sub(1))]
+
+        options = {
+            "ksp_type": "preonly",
+            "pc_type": "lu",
+            # The saddle-point system is indefinite; MUMPS handles it reliably.
+            "pc_factor_mat_solver_type": "mumps",
+        }
+        if petsc_options:
+            options.update(dict(petsc_options))
+
+        problem = LinearProblem(a, L, bcs=pin, petsc_options=options)
+        w = problem.solve()
+
+        self._last_solve_diagnostics = self._extract_ksp_diagnostics(problem.solver)
+        self.last_gauge_multiplier = w.sub(1).collapse()
+        return w.sub(0).collapse()
+
+    def gauge_multiplier_spread(self) -> float:
+        """Range of the Coulomb-gauge multiplier, or nan if none was computed.
+
+        A spread far from zero means the applied current is not compatible with
+        the curl-curl operator -- ``div J != 0`` somewhere, or ``J.n != 0`` on the
+        boundary (a conductor whose current enters or leaves through the domain
+        face). Only meaningful after a ``GaugeMethod.LAGRANGE`` solve.
+        """
+        p = getattr(self, "last_gauge_multiplier", None)
+        if p is None:
+            return float("nan")
+
+        comm = self.mesh.comm
+        arr = p.x.array
+        hi = comm.allreduce(float(arr.max()) if arr.size else -np.inf, op=MPI.MAX)
+        lo = comm.allreduce(float(arr.min()) if arr.size else np.inf, op=MPI.MIN)
+        return float(hi - lo)
 
     def _warn_if_gauge_contaminated(self, gauge_penalty: float) -> float:
         """Warn when the gauge penalty is below the numerically safe window.

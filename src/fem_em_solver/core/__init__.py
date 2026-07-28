@@ -1,6 +1,9 @@
 """Core FEM formulations and solvers."""
 
 from .solvers import (
+    DEFAULT_GAUGE_PENALTY,
+    GaugeContaminationWarning,
+    GaugeMethod,
     LinearSolveDiagnostics,
     MagnetostaticProblem,
     MagnetostaticSolver,
@@ -17,6 +20,9 @@ from .time_harmonic import (
 )
 
 __all__ = [
+    "DEFAULT_GAUGE_PENALTY",
+    "GaugeContaminationWarning",
+    "GaugeMethod",
     "LinearSolveDiagnostics",
     "MagnetostaticProblem",
     "MagnetostaticSolver",
