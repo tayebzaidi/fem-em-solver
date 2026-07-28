@@ -12,6 +12,7 @@ nav:
   - Validation:
       - Helmholtz Coil: validation/helmholtz.md
   - Testing:
+      - Known Issues: testing/known-issues.md
       - Pending Manual Tests: testing/pending-tests.md
       - Test Results Log: testing/test-results.md
 

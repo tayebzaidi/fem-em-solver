@@ -102,9 +102,10 @@ jobs:
 
     # IO/materials/post, minus two tests that were already failing before this
     # job existed. They are deselected explicitly rather than silently skipped
-    # so the debt stays visible here. Both depend on the time-harmonic proxy
-    # (TH-1) and are expected to be revisited with it -- do not paper over them
-    # by loosening assertions.
+    # so the debt stays visible here. Both fail on the same stale test double
+    # (DummyMagnetostaticSolver lacks last_solve_diagnostics) -- see
+    # docs/testing/known-issues.md, entry 1. That is a small self-contained fix,
+    # not blocked on TH-1; remove these deselects when it lands.
     - name: IO / materials / post suites
       run: |
         python3 -m pytest tests/io tests/materials tests/post -v --tb=short \

@@ -109,6 +109,18 @@ closed-form magnitude.
 
 ---
 
+### 2.5 Before you debug a failing test
+
+**Check [`docs/testing/known-issues.md`](docs/testing/known-issues.md) first.** It
+lists every currently-failing test with its symptom, the commit it was verified
+failing at, and the diagnosed cause where one exists.
+
+Nine tests fail on `main` for reasons unrelated to any change you are likely to be
+making. Establishing that after the fact costs a `git stash` and re-run per failure.
+That file exists so you do not pay it again.
+
+---
+
 ## 3. Status legend
 
 | Symbol | Meaning |

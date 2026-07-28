@@ -82,6 +82,14 @@ The numbers are unchanged and still meaningless; `PORT-1` is the real fix.
 Both are tracked as `TH-1` and `PORT-1` in the plan, and both are on the critical
 path.
 
+## Known failing tests
+
+Nine tests fail on `main` for reasons predating current work — stale test doubles, a
+classifier/expectation disagreement, assertions against the placeholder port model,
+and two undiagnosed cases. Each is catalogued with its symptom, the commit it was
+verified failing at, and its cause in
+[Known Issues](testing/known-issues.md). **Check there before debugging a failure.**
+
 ## Solver defaults worth knowing
 
 `gauge_penalty` defaults to **1.0** (`DEFAULT_GAUGE_PENALTY` in `core/solvers.py`).
