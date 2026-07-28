@@ -520,6 +520,40 @@ identity buries the ~1e-8 signal under O(1) terms carrying the operator's full
 null-space conditioning (measured 1.4e-3 identity error, sign flipped; log
 `20260728T194622Z_MAG-11.log`).
 
+**Two implementation traps**, both of which cost real time and neither of which a
+single-rank test will catch:
+
+- `p` must live in the **full `H¹`**, not `H¹₀`. Restricting the multiplier to
+  `H¹₀` leaves gradients of boundary-nonzero functions unconstrained, so the
+  system stays singular — and it returns `NaN`/`inf` rather than failing loudly.
+  With `q` free in `H¹` the constraint annihilates constants, hence the pinned dof.
+- `fem.locate_dofs_geometrical` is **collective**. Calling it under
+  `if comm.rank == owner` deadlocks, and the deadlock is *rank-count dependent*:
+  it completes at 2 ranks and hangs at 4. Broadcast the target, then let every
+  rank make the call. `MPI.MINLOC` over a pickled Python tuple is likewise not
+  reliably consistent across ranks; owner election uses scalar reductions only.
+
+**Not done — `MAG-15` is a working option, not a finished subsystem:**
+
+- **Dirichlet conditions on `A` are rejected** (`bc_functions` raises). The
+  multiplier space would need matching constraints. Only the natural-BC path works,
+  which is the path all current fixtures use — but `TimeHarmonicBoundaryCondition.PEC`
+  would not.
+- The point-pin on `p` is **not `H¹`-stable in 3D**, so the multiplier carries an
+  arbitrary offset. Its *spread* is the meaningful quantity — use
+  `gauge_multiplier_spread()`, not `max|p|` (which read 8e13 in one probe and is
+  nearly all constant offset). A mean-zero constraint would be cleaner.
+- **Not wired through** `TimeHarmonicSolver` or the port entry points; those still
+  take `gauge_penalty` only.
+- The degree-2 cost (~7.5×) is **unprofiled**. The mixed system is indefinite and
+  goes to MUMPS direct with no preconditioner strategy; whether that is the right
+  approach at scale is untested.
+- **Tree-cotree was not attempted.** It is exact for lowest-order Nédélec (a
+  spanning tree has exactly `#vertices−1` edges, matching the null-space
+  dimension), but a global spanning tree across MPI ranks is research-grade work,
+  and the saddle point already removes the null space without it. See the rejection
+  rationale above.
+
 #### `MAG-11`/`MAG-12` — two API defects survived the 2026-07-27 audit ✅ *(2026-07-28)*
 
 Nothing in-tree called either method, which is exactly why they survived the
