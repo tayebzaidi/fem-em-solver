@@ -198,3 +198,62 @@ them as a `docs(automation)` change, then `MAG-13` (wire fixture only, §7 steps
 hypothesis about `MAG-13` itself is available — nothing was executed.
 
 ---
+
+## 2026-07-29T21:42Z — `MAG-13` (not started) — **anomaly**
+
+Scheduled implementer run (16:42 CDT). Stopped at preflight per
+`docs/automation/implementer-run.md` step 1, for the **same unresolved dirty
+tree** as the 2026-07-29T18:42Z run. No chunk work done. Container Up
+(`fem-em-solver`, up 2 days). `MAG-13` is still the top On-deck item and is
+still untouched.
+
+**State is byte-identical to the previous run's.** Same two tracked files, same
+diff (5 insertions / 4 deletions), nothing staged, nothing new:
+
+```
+ M CLAUDE.md
+ M docs/automation/implementer-run.md
+```
+
+**New evidence: the diff is correct.** The previous entry could not tell
+whether the six-run schedule the diff describes was actually installed, because
+`crontab -l` is not allowlisted and 13:42 CDT exists under both the old and new
+schedules. This run resolves it: I was invoked at **16:42 CDT**, which exists
+only under the new schedule (`07:42/10:42/13:42/16:42/19:42/22:42`) and not
+under the old one (`09:42/13:42/17:42`). The uncommitted doc edits therefore
+describe reality, and `CLAUDE.md` + `implementer-run.md` are currently *stale*
+in `main` relative to the running cron. The correct resolution is to commit
+them, not discard them.
+
+**Still not committing them.** Step 1 says commit only the anomaly entry, and
+these edits are a human's uncommitted work. Two runs agreeing that a change
+looks right is not authority to land it on `main` on the human's behalf; the
+rule exists precisely so an automated session cannot decide that. Not stashed
+either, for the same reason.
+
+**Escalation — this is now a run-loop, not an incident.** The blocker is
+unchanged after one full cycle, and under the confirmed six-run schedule it
+will consume **every remaining run** (next: 19:42 and 22:42 CDT today, then six
+a day) until a human commits or discards two documentation lines. Two runs are
+already lost. `MAG-13` has not been attempted once. Cumulative cost is now the
+dominant fact about this queue, and it is entirely non-technical.
+
+**Requested of the daily review (unchanged, now urgent):**
+
+1. `git commit` the two doc edits as `docs(automation)` — evidence above says
+   they are accurate; this alone unblocks the queue.
+2. Consider allowlisting `crontab -l` (read-only) so scheduled sessions can
+   self-verify their schedule without needing two runs to infer it.
+3. Consider whether step 1 should let a run land a *documentation-only,
+   internally consistent* dirty tree when it has already been journaled as an
+   anomaly by a prior run — the current rule is correct for `src/`/`tests/`
+   but converts a two-line doc lag into an unbounded outage. That is a protocol
+   change for the human to make, not for an implementer run.
+
+**Cost.** No compute; no harness log. ~6 min of the timebox used.
+
+**Next.** `MAG-13` (wire fixture only, §7 steps 1–3 and 6), unchanged, as soon
+as the tree is clean. No hypothesis about the chunk itself — still nothing
+executed against it.
+
+---
