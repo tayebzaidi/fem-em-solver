@@ -413,7 +413,7 @@ in `docs/testing/pending-tests.md`. This table is the authoritative *status*.
 | `MAG-11` | Parallel energy was rank-local (missing allreduce) | ✅ | smoke | *new* |
 | `MAG-12` | `evaluate_at_points` still used the MAG-7 broken pattern | ✅ | smoke | *new* |
 | `MAG-13` | Analytic-Dirichlet outer boundary for wire/loop fixtures | ⬜ | standard | *new* |
-| `MAG-14` | Promote the Helmholtz analytic comparison into the test suite | ⬜ | standard | *new* |
+| `MAG-14` | Promote the Helmholtz analytic comparison into the test suite | ✅ | smoke | 11 s, `-n 2` |
 | `MAG-15` | Lagrange-multiplier Coulomb gauge (parameter-free cross-check) | ✅ | smoke | *new* |
 
 #### The whole magnetostatics suite now runs and passes
@@ -627,7 +627,27 @@ Done when: wire and loop L2 errors < 5% (or the measured
 discretization-limited value, recorded with the log), h-rate ≈ 1 over ≥ 3
 resolutions, all recorded via `run_and_log.sh`.
 
-#### `MAG-14` — promote the Helmholtz analytic comparison into the test suite ⬜
+#### `MAG-14` — promote the Helmholtz analytic comparison into the test suite ✅
+
+**Done 2026-07-29** (scheduled implementer run). `tests/validation/test_helmholtz_magnitude.py`
+executed at `mpiexec -n 2`: **53941 cells, centre `B_z` error 1.731%** against the
+closed form `(4/5)^{3/2}·μ₀I/R` (FEM 3.592162e-09 T vs 3.531057e-09 T), mean
+on-axis error 1.730% over `|z| ≤ 0.25R`, central `CV = 0.0216%`; the analytic
+helper agrees with the closed form to `< 1e-12`. **11 s wall clock — `smoke`
+tier**, not `standard` as planned, so the test is now in the CI `mpiexec -n 2`
+magnetostatics step (`.github/workflows/ci.yml`). Log:
+`docs/testing/logs/20260729T144331Z_MAG-14.log` (cost probe:
+`20260729T144309Z_MAG-14-probe.log`).
+
+The measured 1.731% matches the padding study's predicted 1.73% at 2R exactly,
+which is the useful part: the air-box error model in the `MAG-1`/`MAG-4` table
+predicts this fixture. Cell count is 53.9k rather than the table's 76k because
+the graded wire/far sizing differs from the study mesh; the error is unchanged.
+The suite now has one test that is simultaneously correctly-evaluated,
+quantitative, and scale-sensitive — a missing `μ₀` or a mis-normalized current
+fails it, where `test_helmholtz_v2.py`'s `CV` check passes untouched.
+
+Original plan, retained for the record:
 
 `test_helmholtz_v2.py` asserts only `CV < 1%`, which is **scale-invariant**: a
 solver wrong by any constant factor (μ₀, current normalization) passes it
@@ -1151,13 +1171,13 @@ three items, ordered, each sized for one run: ≤ 1 h wall clock, ≤ 10 min per
 compute command. Items that fail twice get rescoped by the daily review
 before they may reappear.
 
-Last reviewed 2026-07-29 (daily review; order confirmed). The 2026-07-28
-Docker blocker is resolved (§9 above; preflight exit 0), so `MAG-14` is fully
-runnable — it counts one *blocked* attempt, zero failed ones. Start from the
-parked branch `attempt/MAG-14-20260728T224647Z`, which holds a
-written-but-never-executed test; do not rewrite it (details in the §7 entry).
+Last reviewed 2026-07-29 (daily review; order confirmed). `MAG-14` was
+completed by the 2026-07-29 09:42 implementer run — the parked branch
+`attempt/MAG-14-20260728T224647Z` was cherry-picked and executed unchanged; it
+passed at 11 s on `-n 2` and is now in CI (§7 entry).
 
-1. `MAG-14` — Helmholtz magnitude test (plan in its §7 entry)
+1. ~~`MAG-14` — Helmholtz magnitude test~~ — **done 2026-07-29**, 1.731% centre
+   error, log `20260729T144331Z_MAG-14.log`
 2. `MAG-13` — **wire fixture only** (§7 entry steps 1–3 and 6; the loop
    fixture and the convergence-test rework are a later run)
 3. `TH-9` — PEC cavity resonance gate (plan in its §7 entry; real mode, no

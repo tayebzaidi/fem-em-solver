@@ -76,3 +76,32 @@ Thumbs.db
 # Scheduled-automation session logs (top-level only; docs/testing/logs stays tracked)
 /logs/
 
+# Bash-sandbox masking artifacts. The sandbox shells into the repo root with the
+# user's profile, and masks personal dotfiles/config by bind-mounting /dev/null
+# over them -- they show up as untracked character devices in the repo and would
+# otherwise fail the scheduled implementer run's "git status must be clean"
+# preflight (docs/automation/implementer-run.md step 1). .vscode/ and .idea/ are
+# listed above as directories; the sandbox creates them as files, so the
+# trailing-slash patterns do not match and they need their own entries.
+/.bash_profile
+/.bashrc
+/.gitconfig
+/.gitmodules
+/.mcp.json
+/.profile
+/.ripgreprc
+/.zprofile
+/.zshrc
+/.idea
+/.vscode
+/.claude/commands
+/.claude/hooks
+/.claude/launch.json
+/.claude/loop.md
+/.claude/output-styles
+/.claude/routines
+/.claude/scheduled_tasks.json
+/.claude/settings.local.json
+/.claude/skills
+/.claude/workflows
+

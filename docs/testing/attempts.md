@@ -89,3 +89,61 @@ The next scheduled run should pass preflight and can pick up MAG-14, including
 the unverified test parked on `attempt/MAG-14-20260728T224647Z`.
 
 ---
+
+## 2026-07-29T14:42Z — `MAG-14` — **complete**
+
+Scheduled implementer run (09:42 CDT). Top On-deck item; the Docker blocker
+from 2026-07-28 is genuinely gone (`docker compose ps` Up, harness exit 0).
+
+**What was tried.** Cherry-picked `b81b958` from
+`attempt/MAG-14-20260728T224647Z` onto `main` unchanged, per §9's instruction
+not to rewrite the parked test. Cost-probed by running the real test at the
+`smoke` ceiling (`timeout 30`) rather than building a shrunken variant — if it
+had overrun, 30 s was the whole cost and the fallback was the `standard` tier.
+It passed in 12 s, so no `standard` run was ever needed.
+
+**Measured** (`mpiexec -n 2`, identical across all three runs):
+
+| quantity | value |
+|---|---|
+| cells | 53941 |
+| centre `B_z` FEM | 3.592162e-09 T |
+| centre `B_z` closed form `(4/5)^{3/2}·μ₀I/R` | 3.531057e-09 T |
+| centre rel err | **1.731%** (tolerance 5%) |
+| mean on-axis rel err, `|z| ≤ 0.25R` | 1.730% |
+| central `CV` | 0.0216% |
+| analytic-helper vs closed form | `< 1e-12` |
+| wall clock | 11 s — `smoke`, not `standard` |
+
+The predicted value for 2R padding was 1.73%; the measurement is 1.731%. The
+air-box error model in the `MAG-1`/`MAG-4` table predicts this fixture, which
+is worth more than the pass itself. Cell count came in at 53.9k, not the
+plan's 76k — the graded wire/far sizing differs from the padding study's mesh
+while giving the same error; the plan's figure was the study mesh, and the
+test docstring now records both. No assertion was touched.
+
+**Logs.** `20260729T144309Z_MAG-14-probe.log` (cost probe),
+`20260729T144331Z_MAG-14.log` (verification, `-s` for the printed numbers),
+`20260729T144434Z_MAG-14-final.log` (re-run after a docstring-only edit, so
+the committed file is byte-for-byte what executed).
+
+**Also.** 11 s permits CI, so the test joined the `mpiexec -n 2`
+magnetostatics step in `.github/workflows/ci.yml` — the plan made this
+conditional on measured runtime. Separately, preflight `git status` was *not*
+clean: the Bash sandbox masks personal dotfiles by bind-mounting `/dev/null`
+over them inside the repo root, leaving ~21 untracked character devices
+(`.bashrc`, `.mcp.json`, `.claude/skills`, …). These are sandbox artifacts,
+not half-applied chunk work — nothing under `src/`, `tests/`, or `docs/` was
+dirty — so I proceeded rather than filing an anomaly, and added them to
+`.gitignore` so future preflights are honestly clean. `.vscode/` and `.idea/`
+were already ignored as *directories*; the sandbox creates them as files, so
+they needed separate entries.
+
+**Next.** On deck advances to `MAG-13` (wire fixture only, §7 steps 1–3 and 6).
+Hypothesis for it: nothing here suggests trouble, but note that this run's one
+surprise was a *cell count* off by 30% from the plan while the error matched
+exactly — treat §7's mesh-size figures as indicative and the error figures as
+predictive. The parked branch `attempt/MAG-14-20260728T224647Z` can be deleted
+whenever the daily review is satisfied; it is fully contained in `main` now.
+
+---

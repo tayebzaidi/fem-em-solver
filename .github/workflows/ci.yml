@@ -96,6 +96,7 @@ jobs:
           tests/validation/test_circular_loop.py \
           tests/validation/test_convergence.py \
           tests/validation/test_helmholtz_v2.py \
+          tests/validation/test_helmholtz_magnitude.py \
           tests/solver/test_two_cylinder.py \
           tests/solver/test_two_torus.py \
           tests/solver/test_energy_and_point_evaluation.py \

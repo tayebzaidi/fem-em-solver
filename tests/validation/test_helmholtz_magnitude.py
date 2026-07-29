@@ -36,6 +36,12 @@ Measured centre-field error at wire `h = 0.003` with graded far-field sizing:
 5% tolerance has margin over the 1.73% measured there. If the measured error at
 2R ever approaches the bound, the fix is a larger air box (`AIR_PADDING = 4 * R`),
 never a looser tolerance.
+
+Measured 2026-07-29 at `mpiexec -n 2` (`docs/testing/logs/20260729T144331Z_MAG-14.log`):
+53941 cells, centre error 1.731%, mean on-axis 1.730%, central CV 0.0216%, 11 s
+wall clock -- inside the `smoke` tier, so CI carries this test. The 76k figure
+in the table above is the padding study's mesh; this fixture's graded sizing
+lands lower for the same 1.73% error.
 """
 
 from __future__ import annotations
