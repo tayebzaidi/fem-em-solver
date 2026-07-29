@@ -653,6 +653,17 @@ correctly-evaluated, quantitative, and scale-sensitive.
 - Add to the CI `mpiexec -n 2` step only if the measured runtime permits;
   otherwise it stays in the local validation set with its log recorded.
 
+**Parked work (noted by the 2026-07-29 review):** the 2026-07-28 scheduled
+run wrote `tests/validation/test_helmholtz_magnitude.py` on branch
+`attempt/MAG-14-20260728T224647Z` (commit `b81b958`) before the
+since-resolved Docker blocker stopped it. The file implements this plan —
+2R padding, 0.003/0.010 graded resolution, centre/on-axis/CV assertions,
+analytic helper self-checked against the closed form to 1e-12 — but **has
+never executed**; only `ast.parse` passed. Next attempt: cherry-pick
+`b81b958`, cost-probe at `mpiexec -n 2` (~76k cells), then run under
+`standard`. Expect ~1.7% centre error; if it exceeds 5%, raise `AIR_PADDING`
+to `4 * MAJOR_RADIUS`, never the tolerance.
+
 Done when: the magnitude assertions pass at a measured runtime inside
 `standard`, recorded via `run_and_log.sh`, and the chunk entry states whether
 CI carries it.
@@ -1140,11 +1151,11 @@ three items, ordered, each sized for one run: ≤ 1 h wall clock, ≤ 10 min per
 compute command. Items that fail twice get rescoped by the daily review
 before they may reappear.
 
-The order below is **unchanged** by the run above: `MAG-14` is not itself
-blocked, the environment is. Do not re-order or mark items blocked on account
-of it — the next run with a working daemon should take `MAG-14` and start from
-the parked branch `attempt/MAG-14-20260728T224647Z` (an unverified test file,
-never executed).
+Last reviewed 2026-07-29 (daily review; order confirmed). The 2026-07-28
+Docker blocker is resolved (§9 above; preflight exit 0), so `MAG-14` is fully
+runnable — it counts one *blocked* attempt, zero failed ones. Start from the
+parked branch `attempt/MAG-14-20260728T224647Z`, which holds a
+written-but-never-executed test; do not rewrite it (details in the §7 entry).
 
 1. `MAG-14` — Helmholtz magnitude test (plan in its §7 entry)
 2. `MAG-13` — **wire fixture only** (§7 entry steps 1–3 and 6; the loop
