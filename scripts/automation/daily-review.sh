@@ -28,6 +28,7 @@ START="$(date '+%Y-%m-%d %H:%M %Z')"
 # auto-approves file edits inside the repo only. Web and subagent tools are off.
 timeout --kill-after=60 1800 "$CLAUDE_BIN" \
   --model claude-fable-5 \
+  --effort high \
   --permission-mode acceptEdits \
   --disallowedTools WebFetch WebSearch Task Agent \
   -p "Scheduled daily review session, started ${START}. Read docs/automation/daily-review.md and execute it exactly. Documentation work only: no solves, no meshing." \
