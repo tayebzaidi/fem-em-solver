@@ -147,3 +147,54 @@ predictive. The parked branch `attempt/MAG-14-20260728T224647Z` can be deleted
 whenever the daily review is satisfied; it is fully contained in `main` now.
 
 ---
+
+## 2026-07-29T18:42Z — `MAG-13` (not started) — **anomaly**
+
+Scheduled implementer run (13:42 CDT). Stopped at preflight per
+`docs/automation/implementer-run.md` step 1: `git status` was not clean, so no
+chunk work was done. `MAG-13` was the top On-deck item and remains untouched.
+
+**What was found.** Two tracked files modified, uncommitted, nothing staged:
+
+```
+ M CLAUDE.md
+ M docs/automation/implementer-run.md
+```
+
+Both edits are documentation-only and say the same thing: the implementer cron
+schedule changed from three runs a day (`09:42 / 13:42 / 17:42` local) to six
+(`every 3 h at :42, 07:42–22:42` local). No change under `src/`, `tests/`,
+`scripts/`, or `PROJECT_PLAN.md`; the full diff is 5 insertions / 4 deletions
+and touches only the two "Scheduled automation" blurbs. Container was Up.
+
+**Assessment — not half-applied chunk work.** This is the failure mode step 1
+exists to catch, and this is not it: the two edits are mutually consistent,
+complete, and describe a config change no implementer run would make. Last
+commit to either file was `25d99d3` (2026-07-28), so the edits post-date it and
+were almost certainly made by hand between runs and left uncommitted. I did not
+commit them — step 1 says commit *only* the anomaly entry — and I did not stash
+them, since silently moving a human's uncommitted work is worse than tripping
+one preflight.
+
+Note this is a *different* anomaly class from the 2026-07-29T14:42Z run's
+sandbox-artifact dirtiness (untracked `/dev/null` bind-mounts, no content).
+That one was correctly proceeded through. This one is real tracked content, so
+it is not covered by the same reasoning and I stopped.
+
+**Denied command.** `crontab -l` is not in the allowlist, so I could not verify
+whether the installed schedule actually is the six-run one the diff claims. The
+run time (13:42 CDT) exists under both the old and new schedules, so my own
+invocation does not discriminate either. If the daily review wants scheduled
+sessions to be able to self-check their cron config, `crontab -l` would need
+allowlisting — a read-only command.
+
+**Cost.** No compute; no harness log. ~5 min of the timebox used.
+
+**Next.** This will trip *every* subsequent implementer run until resolved —
+six a day now, if the diff is accurate. Resolution is one human action: commit
+the two doc edits (or discard them). Recommended for the daily review: commit
+them as a `docs(automation)` change, then `MAG-13` (wire fixture only, §7 steps
+1–3 and 6) is unblocked and should be the next run's item unchanged. No
+hypothesis about `MAG-13` itself is available — nothing was executed.
+
+---
