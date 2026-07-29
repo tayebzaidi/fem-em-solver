@@ -1078,7 +1078,26 @@ start from those entries, not from this summary.
    same boundary-mirror error that cost 20% on Helmholtz.
 6. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
 
-### 🚫 Automation blocker — scheduled sessions cannot reach the Docker daemon
+### ✅ RESOLVED 2026-07-28 — scheduled sessions cannot reach the Docker daemon
+
+**Resolution (2026-07-28 21:20 CDT, interactive session):** root cause was the
+Bash sandbox, not group membership — the sandbox's user namespace strips the
+`docker` supplementary group, so nothing running inside it can open
+`/var/run/docker.sock`. Per the Claude Code sandboxing docs, `docker` is
+incompatible with the sandbox and belongs in `sandbox.excludedCommands`.
+`.claude/settings.json` now excludes `docker *` and
+`scripts/testing/run_and_log.sh *`; both run outside the sandbox and are still
+gated by the existing permission allowlist (`Bash(docker compose *)`,
+`Bash(scripts/testing/run_and_log.sh *)`), so headless runs stay auto-approved
+and `docker compose down/build/rm` remain ask-gated. Verified: the exact
+failing preflight re-run through the harness passes —
+`docs/testing/logs/20260729T022156Z_PREFLIGHT.log` (exit 0, 1 s). Same fix
+also moves automation session logs from `~/fem-em-automation/logs` to
+`logs/automation/` in-repo (gitignored). The parked MAG-14 test on
+`attempt/MAG-14-20260728T224647Z` is now runnable. Original report kept below
+for the record.
+
+### 🚫 Automation blocker (original report) — scheduled sessions cannot reach the Docker daemon
 
 Found by the 2026-07-28 17:42 CDT implementer run (the first scheduled run
 after `25d99d3` replaced `--dangerously-skip-permissions` with the sandboxed

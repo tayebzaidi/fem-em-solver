@@ -51,6 +51,12 @@
     ],
     "disableBypassPermissionsMode": "disable"
   },
+  "sandbox": {
+    "excludedCommands": [
+      "docker *",
+      "scripts/testing/run_and_log.sh *"
+    ]
+  },
   "env": {
     "BASH_DEFAULT_TIMEOUT_MS": "240000",
     "BASH_MAX_TIMEOUT_MS": "660000"

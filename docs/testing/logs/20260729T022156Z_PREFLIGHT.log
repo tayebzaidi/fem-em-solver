@@ -1,0 +1,38 @@
+# Test Run
+- Chunk: PREFLIGHT
+- Commit: 1fa26339a505dc7f1bec8a5ff2e3125c821fbbb8
+- Time (UTC): 2026-07-29 02:21:56
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.3.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'echo container-alive'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 28 21:19 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Jul 28 21:21 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 28 21:19 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.3.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''echo container-alive'\'''
+container-alive
+
+## Exit
+- Status: 0
+- Elapsed (s): 1

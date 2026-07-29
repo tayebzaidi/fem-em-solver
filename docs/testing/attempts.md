@@ -73,3 +73,19 @@ Entry format:
   tolerance.
 
 ---
+
+## 2026-07-28T21:20 CDT — environment fix — Docker blocker resolved
+
+Interactive session. Root cause of the 2026-07-28T22:46Z blocker was the Bash
+sandbox: its user namespace strips the `docker` supplementary group, so no
+sandboxed command can open `/var/run/docker.sock`. Fix per the Claude Code
+sandboxing docs: `docker *` and `scripts/testing/run_and_log.sh *` added to
+`sandbox.excludedCommands` in `.claude/settings.json`; they run outside the
+sandbox, still gated by the permission allowlist. Verified by re-running the
+exact failed preflight through the harness:
+`docs/testing/logs/20260729T022156Z_PREFLIGHT.log` (exit 0, 1 s).
+Also moved automation session logs to `logs/automation/` in-repo (gitignored).
+The next scheduled run should pass preflight and can pick up MAG-14, including
+the unverified test parked on `attempt/MAG-14-20260728T224647Z`.
+
+---

@@ -5,7 +5,7 @@ set -euo pipefail
 
 REPO="/home/taz5297/Development/fem-em-solver"
 LOCK="$HOME/.fem-em-automation.lock"
-LOGDIR="$HOME/fem-em-automation/logs"
+LOGDIR="$REPO/logs/automation"
 CLAUDE_BIN="$HOME/.local/bin/claude"
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
 

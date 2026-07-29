@@ -73,3 +73,6 @@ Thumbs.db
 *.tmp
 *.bak
 
+# Scheduled-automation session logs (top-level only; docs/testing/logs stays tracked)
+/logs/
+
