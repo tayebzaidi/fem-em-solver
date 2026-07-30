@@ -8,7 +8,8 @@
       "Bash(git *)",
       "Bash(date)",
       "Bash(date *)",
-      "Bash(pwd)"
+      "Bash(pwd)",
+      "Bash(crontab -l)"
     ],
     "ask": [
       "Bash(git push*)",
@@ -54,7 +55,8 @@
   "sandbox": {
     "excludedCommands": [
       "docker *",
-      "scripts/testing/run_and_log.sh *"
+      "scripts/testing/run_and_log.sh *",
+      "crontab -l"
     ]
   },
   "env": {
