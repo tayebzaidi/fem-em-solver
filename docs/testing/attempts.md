@@ -374,3 +374,90 @@ wire half as fixed and the loop half as open.
 
 ---
 
+## 2026-07-30T12:42Z — `MAG-13` (loop fixture + convergence rework, §7 steps 4–5) — **complete**
+
+Preflight clean, container Up 2 days. Top On-deck item taken as written.
+
+**`MAG-13` is now ✅ in full** (wire half `a30682c`, this run steps 4–5). Batch 2
+is complete; `TH-9` is next on deck.
+
+**What landed.** `test_circular_loop.py` rewired onto a shared
+`solve_loop(params, comm, resolution=None, analytic_bc=True)` helper +
+`loop_potential_interp`, imposing the Jackson 5.37 off-axis `A_φ` on the outer
+sphere through `exterior_dirichlet_bc`; both loop tests use it.
+`test_convergence.py::test_h_refinement_straight_wire` now uses the analytic BC,
+three resolutions, and a two-sided fitted-rate bound.
+
+**Measured** (`mpiexec -n 2`, on-axis `B_z` L2 error over `|z| ≤ 0.4 R_domain`):
+
+| h | cells | natural `n×H = 0` | analytic Dirichlet |
+|---|---|---|---|
+| 0.0035 | 82.8k | 14.98% | 16.23% |
+| 0.0025 | 208.0k | 8.86% | 10.37% |
+| 0.002 | 411.4k | — | **7.07%** |
+
+**The prior run's hypothesis was right about the direction and wrong about the
+sign: the loop does not improve, it gets ~20% worse at fixed h.** The wire's
+natural BC contradicts Ampère's law (an error refinement cannot touch, 35.13% →
+22.19%); the loop's is only a PMC image term of order `(a/R)³ ≈ 3.7%`, which is
+*smaller* than the O(h) error that degree-1 interpolation of `A_φ` injects
+through the boundary data itself. The Dirichlet wall's payoff is the limit:
+16.23% → 10.37% → 7.07% converges monotonically (fitted ≈ 1.4) to the analytic
+field, while the natural wall converges to a different field.
+
+Consequences, all decided on measurement rather than convenience:
+
+- The loop tolerance tightens **10% → 8% at h = 0.002**, not at the old
+  h = 0.0025 where the analytic BC would have needed ~12%. Nothing was loosened
+  to accommodate the better boundary condition; the resolution moved instead.
+- Sampling window kept at `0.4 R` (the natural-BC revision's metric), so the two
+  walls are compared on the same thing. Widening to `0.8 R` reports 6.28%
+  instead of 7.07% purely by adding far-field points where `B` is small — that
+  would have made the tightened bound meaningless. (The *wire* test's 0.8 R
+  window stays: there the widening was measured to be neutral, 12.48% vs 12.75%.)
+- No `test_analytic_bc_improves_on_natural_bc` analogue for the loop: measurement
+  says that claim is false on this fixture, so asserting it would be fiction.
+  The comparison lives in the docstring, §7, and known-issues.md instead.
+
+**Convergence rate** (wire, analytic BC): 22.19% → 12.75% → 9.26% at
+h = 0.004/0.0025/0.0018 → fitted **1.10**, asserted in `[0.7, 1.5]`. The upper
+bound is deliberate: an inflated rate means an anomalous resolution, not better
+convergence. Two candidate triples were rejected on measurement — h = 0.005 gives
+30.34% at 23.2k cells (5 mm cells cannot resolve the 3 mm wire; a geometry
+artifact that inflates the fit), and h = 0.0035 gives 11.77%, *below* the
+h = 0.0025 value, so any sequence containing it is non-monotone. Cell-wise
+constant `curl A` means every resolution carries O(h) pointwise sampling noise;
+that noise, not the boundary, is what dominates the loop error at affordable h.
+
+**Verification.** `20260730T125223Z_MAG-13.log` — loop file, **3 passed, 167 s**;
+`20260730T125522Z_MAG-13.log` — convergence + wire, **5 passed 2 skipped,
+196 s**. Both `mpiexec -n 2`, **heavy** tier (`timeout 300`/`400`), well under
+the 10-min ceiling; §7 and the §7 table now say `heavy` for this chunk, since the
+loop's analytic test alone is 124 s at 411k cells. Probes:
+`20260730T124356Z_MAG-13-loop-probe.log` (h=0.0035 both walls, 31 s),
+`20260730T124523Z_MAG-13-loop-probe2.log` (h=0.0025 both walls, 95 s),
+`20260730T124829Z_MAG-13-loop-probe3.log` (h=0.002 BC only, 126 s),
+`20260730T124832Z/124930Z_MAG-13-conv*.log` (the rejected resolution triple).
+No denied commands. Probe script left in `scratch/` and deleted before commit.
+
+**CI.** The `validation` job runs both files; they went from ~100 s to ~330 s on
+the dev box, so `timeout-minutes` is raised 25 → 45 with the measurement in the
+comment. This is the one cost the daily review may want to revisit: if 45 min is
+too much runner time for the value, the cheap lever is dropping the loop's
+analytic test to h = 0.0025 in CI only — but that needs the 12% bound, so it
+would have to be an explicit, documented CI-vs-local split, not a quiet
+loosening.
+
+**Next.** `TH-9` (PEC cavity resonance gate) is now the top On-deck item; verify
+`slepc4py` imports at chunk start — the §9 note flags it as the long pole. For
+`MAG-13`'s residue, nothing is open that blocks anything: the wire's < 5% target
+needs h ≈ 0.00125 (~1.1M cells, > 5 min at `-n 2`) and the loop's error is
+dominated by pointwise sampling of a cell-wise constant `curl A`, so the lever
+for both is graded refinement (`MAG-9` machinery) or a smoothed error functional,
+not more uniform h. Hypothesis worth one probe someday: recovering `B` in an
+H(div) space (or comparing cell-averaged rather than pointwise `B_z`) should cut
+the loop's error roughly in half at fixed h, because the O(h) noise it measures
+is an artifact of the evaluation, not of the solve.
+
+---
+

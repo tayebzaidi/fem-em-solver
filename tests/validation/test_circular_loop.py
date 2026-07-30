@@ -6,11 +6,21 @@ solution for B_z on the axis of a circular current loop.
 
 Analytical solution on axis (z-axis):
     B_z(z) = μ₀Ia² / (2(a² + z²)^(3/2))  [Tesla]
-    
+
 Where:
     a = loop radius
     I = current
     z = distance along axis from loop center
+
+The outer sphere carries the analytic vector potential as Dirichlet data
+(MAG-13 step 4, ``exterior_dirichlet_bc`` + the Jackson 5.37 off-axis
+``A_φ``). The natural condition ``n × H = 0`` is a PMC wall, i.e. a physical
+statement about the truncation surface rather than a neutral one; for this
+fixture it images the loop and biases the on-axis field at O((a/R_domain)³) ≈
+3.7%. Measured, that bias is *not* the dominant error at the resolutions this
+test can afford — see the table on ``test_circular_loop_on_axis`` — but the
+Dirichlet wall is the condition whose continuum limit is the analytic field, so
+it is what the fixture converges under.
 """
 
 import pytest
@@ -19,7 +29,11 @@ from mpi4py import MPI
 
 import ufl
 
-from fem_em_solver.core.solvers import MagnetostaticSolver, MagnetostaticProblem
+from fem_em_solver.core.solvers import (
+    MagnetostaticProblem,
+    MagnetostaticSolver,
+    exterior_dirichlet_bc,
+)
 from fem_em_solver.io.mesh import MeshGenerator
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.analytical import AnalyticalSolutions, ErrorMetrics
@@ -47,6 +61,56 @@ def azimuthal_current_density(j_magnitude):
     return current_density
 
 
+def loop_potential_interp(current, loop_radius):
+    """Analytic loop A in dolfinx interpolation convention (3, n) -> (3, n).
+
+    ``utils.analytical`` uses the (n, 3) convention, so both ends transpose.
+    The Jackson 5.37 form diverges on the wire itself (m -> 1), but only
+    exterior-boundary dofs of the interpolant are constrained and the outer
+    sphere is 3x the loop radius away, so the constrained values are smooth.
+    """
+
+    def field(x):
+        points = np.ascontiguousarray(x[:3].T)
+        return AnalyticalSolutions.circular_loop_vector_potential(
+            points, current, loop_radius
+        ).T
+
+    return field
+
+
+def solve_loop(params, comm, resolution=None, analytic_bc=True):
+    """Mesh and solve the circular-loop problem; return (mesh, B)."""
+    resolution = params['resolution'] if resolution is None else resolution
+    mesh, cell_tags, _ = MeshGenerator.circular_loop_domain(
+        loop_radius=params['loop_radius'],
+        wire_radius=params['wire_radius'],
+        domain_radius=params['domain_radius'],
+        resolution=resolution,
+        comm=comm,
+    )
+
+    problem = MagnetostaticProblem(mesh=mesh, cell_tags=cell_tags, mu=MU_0)
+    solver = MagnetostaticSolver(problem, degree=1)
+
+    j_magnitude = params['current'] / (np.pi * params['wire_radius'] ** 2)
+    bcs = None
+    if analytic_bc:
+        bcs = [
+            exterior_dirichlet_bc(
+                solver.V,
+                loop_potential_interp(params['current'], params['loop_radius']),
+            )
+        ]
+
+    solver.solve(
+        current_density=azimuthal_current_density(j_magnitude),
+        subdomain_id=1,
+        bc_functions=bcs,
+    )
+    return mesh, solver.compute_b_field()
+
+
 class TestCircularLoop:
     """Validation tests for circular current loop."""
     
@@ -71,69 +135,72 @@ class TestCircularLoop:
             'domain_radius': 0.06,    # 6 cm domain (3x loop radius)
             'resolution': 0.0025,     # 2.5 mm mesh size
         }
-    
+
+    # Resolution for the analytic-comparison test. Finer than the fixture
+    # default because the analytic Dirichlet wall costs accuracy at fixed h on
+    # this geometry (see the table on test_circular_loop_on_axis); 0.002 is
+    # what makes the 10% -> 8% tightening honest rather than a re-tuned bound.
+    ON_AXIS_RESOLUTION = 0.002
+
     def test_circular_loop_on_axis(self, loop_params, tmp_path):
         """Test B_z on axis matches analytical solution.
-        
+
         This test:
         1. Creates a torus mesh for the loop
-        2. Solves magnetostatic problem
+        2. Solves magnetostatic problem with the analytic A on the outer sphere
         3. Extracts B_z along the z-axis
         4. Compares with analytical solution
         5. Checks that relative error is within tolerance
+
+        Measured, `mpiexec -n 2`, on-axis B_z L2 error over |z| <= 0.4 R_domain
+        (MAG-13 step 4; logs 20260730T124356Z / 124523Z / 124829Z
+        _MAG-13-loop-probe*):
+
+        | h      | cells | natural n x H = 0 | analytic Dirichlet |
+        |--------|-------|-------------------|--------------------|
+        | 0.0035 | 82.8k | 14.98%            | 16.23%             |
+        | 0.0025 | 208k  |  8.86%            | 10.37%             |
+        | 0.002  | 411k  | --                |  7.07%             |
+
+        The analytic wall is ~20% *worse* at fixed h here, unlike the wire
+        (35.13% -> 22.19%), and this is the chunk's real finding: the wire's
+        natural-BC error is a contradiction of Ampere's law that no refinement
+        removes, whereas the loop's is a PMC image term of order (a/R)^3 ~ 3.7%
+        -- smaller than the O(h) error the degree-1 interpolation of A_phi
+        injects through the boundary data itself. What the Dirichlet wall buys
+        is the limit: it converges monotonically (16.23 -> 10.37 -> 7.07,
+        fitted rate ~1.4) to the analytic field, while the natural wall
+        converges to a field that differs from it. Do not swap back to the
+        natural BC for the lower number at coarse h.
         """
         comm = MPI.COMM_WORLD
-        
+
         # Parameters
         current = loop_params['current']
         loop_radius = loop_params['loop_radius']
         wire_radius = loop_params['wire_radius']
         domain_radius = loop_params['domain_radius']
-        resolution = loop_params['resolution']
-        
+        resolution = self.ON_AXIS_RESOLUTION
+
         print(f"\nCircular loop test:")
         print(f"  Loop radius: {loop_radius} m")
         print(f"  Wire radius: {wire_radius} m")
         print(f"  Current: {current} A")
-        
-        # Generate mesh
-        print("  Generating mesh...")
-        mesh, cell_tags, facet_tags = MeshGenerator.circular_loop_domain(
-            loop_radius=loop_radius,
-            wire_radius=wire_radius,
-            domain_radius=domain_radius,
-            resolution=resolution,
-            comm=comm
+        print(f"  Resolution: {resolution} m")
+
+        print("  Meshing and solving (analytic Dirichlet outer boundary)...")
+        mesh, B = solve_loop(
+            loop_params, comm, resolution=resolution, analytic_bc=True
         )
-        print(f"  Mesh created: {mesh.topology.index_map(3).size_global} cells")
-        
-        # Create problem
-        problem = MagnetostaticProblem(
-            mesh=mesh, 
-            cell_tags=cell_tags,
-            mu=MU_0
-        )
-        
-        # Create solver
-        solver = MagnetostaticSolver(problem, degree=1)
-        
-        # Define current density in wire
-        wire_cross_section = np.pi * wire_radius**2
-        J_magnitude = current / wire_cross_section
-        
-        current_density = azimuthal_current_density(J_magnitude)
-        
-        # Solve with current restricted to wire subdomain (tag=1)
-        print("  Solving...")
-        A = solver.solve(current_density=current_density, subdomain_id=1)
-        
-        # Compute B-field
-        print("  Computing B-field...")
-        B = solver.compute_b_field()
-        
-        # Evaluate along z-axis, staying well inside the outer boundary. The
-        # natural BC (n x H = 0) perturbs the field near it, so sampling is
-        # limited to |z| <= 0.4 * domain_radius.
+        n_cells = mesh.topology.index_map(mesh.topology.dim).size_global
+        print(f"  Mesh: {n_cells} cells")
+
+        # Evaluate along the z-axis. The window stays at |z| <= 0.4 *
+        # domain_radius, unchanged from the natural-BC revision of this test, so
+        # the two walls are compared on the same metric -- widening it to 0.8 R
+        # lowers the reported error (6.28% vs 7.07% at h=0.002) by adding
+        # far-field points where B is small, which would make the tightened
+        # bound below meaningless.
         n_points = 15
         z_max = 0.4 * domain_radius
         z_eval = np.linspace(-z_max, z_max, n_points)
@@ -162,8 +229,10 @@ class TestCircularLoop:
         print(f"    Relative L2 error: {rel_error:.4%}")
         print(f"    Max relative error: {max_error:.4%}")
         
-        # Assert error is within tolerance
-        assert rel_error < 0.10, f"Relative error {rel_error:.4%} exceeds 10%"
+        # Bound set from measurement: 7.07% at h=0.002 with the analytic
+        # Dirichlet wall (log 20260730T124829Z_MAG-13-loop-probe3). Tightened
+        # from the previous 10%, which the natural-BC revision met at 8.86%.
+        assert rel_error < 0.08, f"Relative error {rel_error:.4%} exceeds 8%"
     
     def test_circular_loop_field_symmetry(self, loop_params):
         """Test that B-field has expected symmetry.
@@ -178,29 +247,13 @@ class TestCircularLoop:
         # Parameters
         current = loop_params['current']
         loop_radius = loop_params['loop_radius']
-        wire_radius = loop_params['wire_radius']
-        
-        # Generate mesh
-        mesh, cell_tags, _ = MeshGenerator.circular_loop_domain(
-            loop_radius=loop_radius,
-            wire_radius=wire_radius,
-            domain_radius=loop_params['domain_radius'],
-            resolution=loop_params['resolution'],
-            comm=comm
-        )
-        
-        # Create and solve
-        problem = MagnetostaticProblem(mesh=mesh, cell_tags=cell_tags, mu=MU_0)
-        solver = MagnetostaticSolver(problem, degree=1)
-        
-        wire_cross_section = np.pi * wire_radius**2
-        J_magnitude = current / wire_cross_section
-        
-        solver.solve(
-            current_density=azimuthal_current_density(J_magnitude), subdomain_id=1
-        )
-        B = solver.compute_b_field()
-        
+
+        # Same analytic Dirichlet wall as the on-axis test, at the cheaper
+        # fixture resolution: this test's tolerances are set by the pointwise
+        # sampling of a cell-wise constant curl(A), not by the boundary, so it
+        # does not need h = 0.002.
+        _, B = solve_loop(loop_params, comm, analytic_bc=True)
+
         # Evaluate at symmetric points
         z = 0.4 * loop_params['domain_radius']  # inside the perturbed boundary layer
         points = np.array([[0, 0, z], [0, 0, -z]])

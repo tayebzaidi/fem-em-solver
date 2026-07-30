@@ -412,7 +412,7 @@ in `docs/testing/pending-tests.md`. This table is the authoritative *status*.
 | `MAG-10` | Gauge penalty was below the safe window | ✅ | standard | *new* |
 | `MAG-11` | Parallel energy was rank-local (missing allreduce) | ✅ | smoke | *new* |
 | `MAG-12` | `evaluate_at_points` still used the MAG-7 broken pattern | ✅ | smoke | *new* |
-| `MAG-13` | Analytic-Dirichlet outer boundary for wire/loop fixtures | 🟡 | standard | wire done, 72 s `-n 2`; loop + rate rework open |
+| `MAG-13` | Analytic-Dirichlet outer boundary for wire/loop fixtures | ✅ | heavy | wire 12.75%, loop 7.07%, 3-point rate 1.10; 167 s + 196 s `-n 2` |
 | `MAG-14` | Promote the Helmholtz analytic comparison into the test suite | ✅ | smoke | 11 s, `-n 2` |
 | `MAG-15` | Lagrange-multiplier Coulomb gauge (parameter-free cross-check) | ✅ | smoke | *new* |
 
@@ -574,15 +574,57 @@ Logs `20260728T195016Z_MAG-11.log`, `20260728T195031Z_MAG-12.log`. The guard
 file joined the CI validation job's `mpiexec -n 2` step — the only environment
 where a missing reduction is visible at all.
 
-#### `MAG-13` — analytic-Dirichlet boundaries for the wire/loop fixtures 🟡
+#### `MAG-13` — analytic-Dirichlet boundaries for the wire/loop fixtures ✅
 
-**Wire half done 2026-07-30** (scheduled implementer run; steps 1–3 and 6, the
-scope the §9 On-deck item carried). Steps 4–5 — the loop fixture and the
-convergence-test rework — remain open; the analytic ingredient step 5 needs
-(`AnalyticalSolutions.circular_loop_vector_potential`, Jackson 5.37) is already
-in and unit-tested, so the follow-up run is fixture work only.
+**Done 2026-07-30.** Wire half (steps 1–3, 6) landed in `a30682c`; the loop
+fixture and convergence rework (steps 4–5) in the 07:42 run, both scheduled
+implementer runs.
 
-Landed:
+**Steps 4–5 (loop + convergence rate).** `test_circular_loop.py` now solves
+through a shared `solve_loop(..., analytic_bc=True)` helper that imposes the
+Jackson 5.37 off-axis `A_φ` on the outer sphere via `exterior_dirichlet_bc`;
+`test_convergence.py::test_h_refinement_straight_wire` uses the analytic BC and
+fits the rate over **three** resolutions instead of two.
+
+Measured, `mpiexec -n 2`, on-axis `B_z` L2 error over `|z| ≤ 0.4 R_domain`:
+
+| h | cells | natural `n×H = 0` | analytic Dirichlet |
+|---|---|---|---|
+| 0.0035 | 82.8k | 14.98% | 16.23% |
+| 0.0025 | 208.0k | 8.86% | 10.37% |
+| 0.002 | 411.4k | — | **7.07%** |
+
+**The plan's premise was wrong for the loop, and the measurement is the
+deliverable.** The analytic wall is ~20% *worse* at fixed h, the opposite of the
+wire (35.13% → 22.19%). Reason: the wire's natural BC contradicts Ampère's law
+for net axial current — an error no refinement removes — whereas the loop's is a
+PMC image term of order `(a/R)³ ≈ 3.7%`, *smaller* than the O(h) error that
+degree-1 interpolation of `A_φ` injects through the boundary data itself. What
+the Dirichlet wall buys is the limit: 16.23% → 10.37% → 7.07% converges
+monotonically (fitted ≈ 1.4) to the analytic field, while the natural wall
+converges to a field that differs from it. So the tolerance tightens
+**10% → 8% at h = 0.002**, not at the old h = 0.0025 where the analytic BC would
+have needed 12%; nothing was loosened to accommodate the better BC. The
+sampling window stays at `0.4 R` deliberately — widening to `0.8 R` reports
+6.28% instead of 7.07% by adding far-field points where `B` is small.
+
+Convergence rate, wire, analytic BC, three resolutions:
+22.19% → 12.75% → 9.26% at h = 0.004/0.0025/0.0018, fitted **1.10**, bound
+`[0.7, 1.5]` (two-sided: an inflated rate means an anomalous resolution, not
+better convergence). Two candidate sequences were rejected on measurement:
+h = 0.005 gives 30.34% at 23.2k cells (5 mm cells cannot resolve the 3 mm wire —
+a geometry artifact that inflates the fit), and h = 0.0035 gives 11.77%, *below*
+the h = 0.0025 value, so any triple containing it is non-monotone — cell-wise
+constant `curl A` gives each resolution O(h) pointwise sampling noise.
+
+Verification: `20260730T125223Z_MAG-13.log` (loop, 3 passed, **167 s**) and
+`20260730T125522Z_MAG-13.log` (convergence + wire, 5 passed 2 skipped,
+**196 s**), both `mpiexec -n 2`, **heavy** tier — the loop's analytic test alone
+is 124 s at 411k cells, so this fixture is no longer `standard`. Probes:
+`20260730T124356Z`, `20260730T124523Z`, `20260730T124829Z_MAG-13-loop-probe*`,
+`20260730T124930Z_MAG-13-conv2`.
+
+Landed in the wire half (`a30682c`):
 
 - `AnalyticalSolutions.straight_wire_vector_potential(..., wire_radius=a)` —
   finite-conductor branch, gauged to `A_z(a) = 0`, so the potential is finite
@@ -624,7 +666,9 @@ Logs: `20260730T034941Z_MAG-13.log` (9 passed, 72 s, standard tier);
 probes `20260730T034541Z_MAG-13-probe.log` (BC vs natural at h=0.004),
 `20260730T034614Z_MAG-13-probe2.log` (h-refinement).
 
-**Original analysis and plan (steps 4–5 still to do):**
+**Original analysis and plan, retained for the record (all steps now executed;
+step 3's "cap the wire short of the end faces" option was never needed and is
+left unmeasured):**
 
 The straight-wire fixture cannot converge to `μ₀I/(2πr)` at any resolution:
 the natural BC `n×H = 0` on the side wall contradicts Ampère's law for any net
@@ -1136,18 +1180,18 @@ Done 2026-07-28: `MAG-11`, `MAG-12`, `MAG-15` (and the `MAG-10` "open" item is
 closed by decision — see its entry).
 
 Done 2026-07-29: `MAG-14` (scheduled run, 1.731% vs closed form, in CI).
-Done 2026-07-30: `MAG-13` **wire half** (steps 1–3 and 6); steps 4–5 (loop
-fixture + convergence rework) are On deck below. Batch 2 is otherwise complete.
+Done 2026-07-30: `MAG-13` in full — wire half (steps 1–3, 6) in the 22:42 run of
+2026-07-29, loop fixture + convergence rework (steps 4–5) in the 07:42 run.
+**Batch 2 is complete**; the next item is Batch 3 (`TH-9`).
 
 Steps 1 and 2 below carry **per-chunk implementation plans in their §7
 entries** (added 2026-07-28): concrete file lists, formulas with their known
 traps, acceptance criteria, and tier guidance. An implementing agent should
 start from those entries, not from this summary.
 
-1. **Batch 2 — `MAG-13` + `MAG-14`** — harden the analytic foundation `TH-1`
-   is gated on: analytic-Dirichlet boundaries turn the wire/loop cases into
-   true convergence gates, and promoting example 04 gives the suite its one
-   scale-sensitive test. Both are small and independent of everything below.
+1. ~~**Batch 2 — `MAG-13` + `MAG-14`**~~ — done 2026-07-29/30. The wire and loop
+   cases are now true convergence gates (three-resolution fitted rate, analytic
+   Dirichlet walls) and example 04 is a scale-sensitive test in CI.
 2. **Batch 3 — `TH-9` → `TH-1` + `TH-6`** — the cavity gate first (purest
    assembly check, the resonance-guard fixture, and **real-mode only**, so it
    is not blocked on environment work), then the complex formulation landed
@@ -1239,14 +1283,14 @@ self-heal journaled doc-only drift). Tree was clean at review time — nothing
 to clear. Parked branch `attempt/MAG-14-20260728T224647Z` deleted: its single
 commit `b81b958` was cherry-picked to main and verified on 2026-07-29.
 
-1. `MAG-13` **steps 4–5** (§7 entry) — loop fixture + convergence rework:
-   rewire `test_circular_loop.py` onto `circular_loop_vector_potential` +
-   `exterior_dirichlet_bc` (both landed and unit-tested — fixture work only),
-   then `test_convergence.py` to ≥ 3 resolutions, fitted rate in [0.7, 1.5].
-   Expect a more modest gain than the wire's (the loop's bias is a ~(a/R)³
-   PMC-image term, not an Ampère-law contradiction); a measured bound is an
-   acceptable done-when — record it rather than chasing < 5% with uniform
-   refinement (see the wire half's cost extrapolation).
+1. ~~`MAG-13` **steps 4–5** — loop fixture + convergence rework.~~ **Done
+   2026-07-30** (07:42 run): loop on the analytic wall at h = 0.002, 7.07% vs
+   the Jackson closed form, tolerance 10% → 8%; wire rate fitted over three
+   resolutions, 1.10 in [0.7, 1.5]. The expected "more modest gain" was in fact
+   *negative* at fixed h — the loop's PMC-image bias is smaller than the O(h)
+   interpolation error of the BC data — so the gain is monotone convergence to
+   the analytic field, not a lower number on the same mesh. Both fixtures are
+   now **heavy** tier. See the §7 entry.
 2. `TH-9` — PEC cavity resonance gate (plan in its §7 entry; real mode, no
    complex-environment dependency; verify `slepc4py` imports at chunk start —
    it is the long pole if absent).

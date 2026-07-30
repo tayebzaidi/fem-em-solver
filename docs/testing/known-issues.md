@@ -124,7 +124,7 @@ highest-risk open item; the decision is recorded here so it is not reopened:
   silent-failure analog is *near-resonance ill-conditioning*, tracked in the
   `TH-1` formulation notes in `PROJECT_PLAN.md` §7.
 
-### Loop fixture still has a modeling floor (MAG-13, wire half fixed)
+### ✅ RESOLVED 2026-07-30 — truncation-wall modeling floor on the wire/loop fixtures (MAG-13)
 
 The natural BC `n×H = 0` on a truncation wall contradicts Ampère's law for any net
 enclosed current (`∮H·dl = I` vs `H_φ(R) = 0` forced at the wall), so it puts a
@@ -137,13 +137,26 @@ same mesh, and 22.19% → 12.75% → 9.26% across h = 0.004/0.0025/0.0018, i.e. 
 converging at ~O(h^1.2) with no plateau. `J·n ≠ 0` at the end caps remains (the
 `MAG-15` multiplier spread measures it) but is not what was dominating.
 
-**`test_circular_loop.py` is untreated** and hides the same class of bias — a
-~(a/R)³ PMC-image term — inside its 10% tolerance. **Symptom to expect:** a
-convergence assertion on the loop fails at some future, finer resolution pair
-*while the solver is correct* — the error plateaus at the floor and the fitted rate
-collapses. **Do not loosen the assertion; fix the boundary** — `MAG-13` steps 4–5,
-for which the off-axis `AnalyticalSolutions.circular_loop_vector_potential` and the
-BC helper are already in place.
+**Loop: fixed 2026-07-30** (`MAG-13` steps 4–5). `test_circular_loop.py` now
+imposes the Jackson 5.37 off-axis `A_φ` on the outer sphere through the same
+helper, and `test_convergence.py::test_h_refinement_straight_wire` fits the rate
+over three resolutions (**1.10**, bound `[0.7, 1.5]`) instead of two.
+
+One measurement worth keeping: on the *loop*, the analytic wall is ~20% **worse**
+at fixed h than the natural one (16.23% vs 14.98% at h=0.0035; 10.37% vs 8.86% at
+h=0.0025, on-axis `B_z` over `|z| ≤ 0.4 R`). Unlike the wire's Ampère-law
+contradiction, the loop's natural-BC bias is a PMC image term of order
+`(a/R)³ ≈ 3.7%`, which is *smaller* than the O(h) error that degree-1
+interpolation of `A_φ` injects through the boundary data. What the Dirichlet wall
+buys is the limit: 16.23% → 10.37% → 7.07% at h = 0.0035/0.0025/0.002 converges
+monotonically to the analytic field (fitted ~1.4), where the natural wall
+converges to a different field. The loop tolerance is therefore tightened
+10% → 8% *at h = 0.002* (411k cells) rather than at the old h = 0.0025 — no
+assertion was loosened to accommodate the better boundary condition.
+
+Remaining, not blocking: `J·n ≠ 0` at the wire end caps, and the < 5% wire target
+needs h ≈ 0.00125 (~1.1M cells, > 5 min at `-n 2`) — graded refinement (`MAG-9`),
+not more uniform h.
 
 ### Air-box sizing is not generalised
 

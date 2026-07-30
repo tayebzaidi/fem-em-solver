@@ -68,7 +68,12 @@ jobs:
   # first time the suite was actually executed. Keep this job green.
   validation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 25 -> 45 for MAG-13 steps 4-5: the analytic-Dirichlet loop test moved to
+    # h = 0.002 (411k cells, 124 s at -n 2 on the dev box) and the convergence
+    # test to three resolutions including 383k cells, taking the two files from
+    # ~100 s to ~330 s locally. Runners are slower than the dev box, so the
+    # margin under the old ceiling was gone.
+    timeout-minutes: 45
     container:
       image: dolfinx/dolfinx:v0.7.2
 
@@ -87,9 +92,10 @@ jobs:
       run: ./run_tests.sh --smoke
 
     - name: Magnetostatics validation (analytic comparisons)
-      # Measured 150s at 8 ranks on the dev box; GitHub runners give 2 cores,
-      # so expect roughly 5-10 min. `slow` must be selected explicitly since
-      # conftest.py marks every non-unit test with it.
+      # Measured 150s at 8 ranks on the dev box before MAG-13 steps 4-5; the
+      # loop and convergence fixtures are now heavy tier (167 s and 196 s at
+      # -n 2 on the dev box), so expect 15-25 min here. `slow` must be selected
+      # explicitly since conftest.py marks every non-unit test with it.
       run: |
         mpiexec -n 2 python3 -m pytest \
           tests/validation/test_straight_wire.py \
