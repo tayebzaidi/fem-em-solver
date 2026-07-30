@@ -723,7 +723,9 @@ correctly-evaluated, quantitative, and scale-sensitive.
 - Add to the CI `mpiexec -n 2` step only if the measured runtime permits;
   otherwise it stays in the local validation set with its log recorded.
 
-**Parked work (noted by the 2026-07-29 review):** the 2026-07-28 scheduled
+**Parked work (noted by the 2026-07-29 review; branch deleted by the
+2026-07-30 review — commit `b81b958` was cherry-picked to main and verified):**
+the 2026-07-28 scheduled
 run wrote `tests/validation/test_helmholtz_magnitude.py` on branch
 `attempt/MAG-14-20260728T224647Z` (commit `b81b958`) before the
 since-resolved Docker blocker stopped it. The file implements this plan —
@@ -1133,6 +1135,10 @@ Done 2026-07-27: `OPS-1`, `OPS-2`, `OPS-3`, `OPS-4`, `OPS-6`, `OPS-9`,
 Done 2026-07-28: `MAG-11`, `MAG-12`, `MAG-15` (and the `MAG-10` "open" item is
 closed by decision — see its entry).
 
+Done 2026-07-29: `MAG-14` (scheduled run, 1.731% vs closed form, in CI).
+Done 2026-07-30: `MAG-13` **wire half** (steps 1–3 and 6); steps 4–5 (loop
+fixture + convergence rework) are On deck below. Batch 2 is otherwise complete.
+
 Steps 1 and 2 below carry **per-chunk implementation plans in their §7
 entries** (added 2026-07-28): concrete file lists, formulas with their known
 traps, acceptance criteria, and tier guidance. An implementing agent should
@@ -1221,21 +1227,35 @@ three items, ordered, each sized for one run: ≤ 1 h wall clock, ≤ 10 min per
 compute command. Items that fail twice get rescoped by the daily review
 before they may reappear.
 
-Last reviewed 2026-07-29 (daily review; order confirmed). `MAG-14` was
-completed by the 2026-07-29 09:42 implementer run — the parked branch
-`attempt/MAG-14-20260728T224647Z` was cherry-picked and executed unchanged; it
-passed at 11 s on `-n 2` and is now in CI (§7 entry).
+Last reviewed 2026-07-30 (daily review). Since the previous review: `MAG-14`
+✅ (09:42 run; §4 audit passed — agent-executed harness log
+`20260729T144331Z_MAG-14.log`, quantitative 1.731% vs closed form, 11 s
+recorded) and the `MAG-13` wire half done (22:42 run; entry stays 🟡 for
+steps 4–5). Three runs (13:42/16:42/19:42) were lost to the uncommitted
+schedule-doc edits journaled in attempts.md; the human cleared the tree
+interactively at 22:17–22:20 (`e9e49cb`, `c8d5201`) before the 22:42 slot, and
+both journal requests landed with it (`crontab -l` allowlisted; protocols now
+self-heal journaled doc-only drift). Tree was clean at review time — nothing
+to clear. Parked branch `attempt/MAG-14-20260728T224647Z` deleted: its single
+commit `b81b958` was cherry-picked to main and verified on 2026-07-29.
 
-1. ~~`MAG-14` — Helmholtz magnitude test~~ — **done 2026-07-29**, 1.731% centre
-   error, log `20260729T144331Z_MAG-14.log`
-2. ~~`MAG-13` — **wire fixture only** (§7 entry steps 1–3 and 6)~~ — **done
-   2026-07-30**, 12.75% at h=0.0025 over `2a → 0.8R` (was 25% bound / 0.4R
-   window), O(h^1.2) over three meshes, log `20260730T034941Z_MAG-13.log`.
-   Follow-up for the daily review to queue: `MAG-13` steps 4–5 (loop fixture +
-   convergence-test rework) — the elliptic-integral `A_φ` and the
-   `exterior_dirichlet_bc` helper are already landed and unit-tested.
-3. `TH-9` — PEC cavity resonance gate (plan in its §7 entry; real mode, no
-   complex-environment dependency)
+1. `MAG-13` **steps 4–5** (§7 entry) — loop fixture + convergence rework:
+   rewire `test_circular_loop.py` onto `circular_loop_vector_potential` +
+   `exterior_dirichlet_bc` (both landed and unit-tested — fixture work only),
+   then `test_convergence.py` to ≥ 3 resolutions, fitted rate in [0.7, 1.5].
+   Expect a more modest gain than the wire's (the loop's bias is a ~(a/R)³
+   PMC-image term, not an Ampère-law contradiction); a measured bound is an
+   acceptable done-when — record it rather than chasing < 5% with uniform
+   refinement (see the wire half's cost extrapolation).
+2. `TH-9` — PEC cavity resonance gate (plan in its §7 entry; real mode, no
+   complex-environment dependency; verify `slepc4py` imports at chunk start —
+   it is the long pole if absent).
+3. `TH-1` **step 0 only** — complex-mode environment smoke (§7 `TH-1` plan
+   step 0): extend `src/sitecustomize.py` (or set `PYTHONPATH` explicitly) for
+   `/usr/local/dolfinx-complex`, then assert `PETSc.ScalarType == complex128`
+   inside the container, logged via the harness. Smoke tier. Environment
+   failures must not masquerade as formulation failures (§5.3); landing this
+   before `TH-1` proper is the point.
 
 **Do not add new features to `⚠️` subsystems.** Extending a proxy is what produced
 the current backlog: roughly 20 chunks of scaffolding that will need revalidation
