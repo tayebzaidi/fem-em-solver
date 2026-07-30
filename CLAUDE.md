@@ -16,8 +16,9 @@ frequency-domain output, S-parameter, or green test downstream of it.
 
 ## Hard rules
 
-- **Shared 36-core box.** Declare a tier (smoke 30 s / standard 180 s /
-  heavy 600 s), wrap runs in `timeout` at the ceiling, never exceed 10 minutes.
+- **Shared 36-core box, 12 cores max for this project.** Declare a tier
+  (smoke 30 s / standard 180 s / heavy 1200 s), wrap runs in `timeout` at the
+  ceiling, never exceed 20 minutes for a single compute command.
   Overrun ⇒ kill and shrink the case; never just raise the timeout.
 - **All verification runs in Docker through the logging harness** (service must
   be Up — `docker compose -f docker/docker-compose.yml ps`):
@@ -28,7 +29,9 @@ frequency-domain output, S-parameter, or green test downstream of it.
     mpiexec -n 2 python3 -m pytest <paths> -v --tb=short'"
   ```
 
-- Prefer `mpiexec -n 2`; wider runs need explicit human approval.
+- `mpiexec -n 12` is the hard ceiling; use the smallest rank count that fits the
+  tier, and keep `-n 2` for anything a rank-local bug could hide in (that is the
+  only width where a missing reduction is visible in CI).
 - A chunk is ✅ only per §4: verification executed by the agent itself, at
   least one quantitative assertion (closed form, convergence rate, or a
   conservation/reciprocity identity), elapsed time recorded. Finiteness-only

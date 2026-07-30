@@ -58,8 +58,8 @@ logs is fine. You are maintaining the plan, not executing it.
 
 6. Refresh **"On deck"** in §9: top it up to **at least 5** items not done or
    blocked — the 4 runs before the next review, plus one spare — ordered, each
-   sized for one implementer run (≤ 1 h wall clock, ≤ 10 min per compute
-   command). An item that has failed twice must be rescoped before it may be
+   sized for one implementer run (≤ 1 h wall clock, ≤ 20 min per compute
+   command, ≤ 12 ranks). An item that has failed twice must be rescoped before it may be
    listed again. If fewer than 5 ready items exist, list what exists and say
    so — step 5 still forbids inventing work.
 

@@ -131,18 +131,24 @@ Never for routine pass/fail.
 
 ### 5.1 Compute budget — shared machine
 
-The development server is **shared**. Every verification command declares a tier
-and must not exceed it:
+The development server is a **shared 36-core box; this project may use at most 12
+cores.** Every verification command declares a tier and must not exceed it:
 
 | Tier | Ceiling | Use for |
 |---|---|---|
 | `smoke` | 30 s | Imports, pure-Python logic, config validation |
 | `standard` | 3 min | Coarse meshes, single small solves — the default |
-| `heavy` | 10 min | Convergence studies, sweeps — must be labeled `heavy` |
+| `heavy` | 20 min | Convergence studies, sweeps — must be labeled `heavy` |
 
 - Wrap commands in `timeout` at the tier ceiling. **If a run overruns, kill it and
-  redesign the case smaller.** Never re-run with a longer timeout.
-- Prefer `mpiexec -n 2`. Wider runs require explicit human approval.
+  redesign the case smaller.** Never re-run with a longer timeout. 20 minutes is a
+  hard ceiling for any single compute command regardless of tier.
+- **`mpiexec -n 12` is the hard rank ceiling.** Use the smallest count that fits
+  the tier — more ranks on a fixed mesh stop paying quickly, and a bigger mesh is
+  usually a better use of the budget than more ranks on a small one. Keep `-n 2`
+  for anything a rank-local bug could hide in (`MAG-11` was a missing allreduce
+  visible only under MPI), and note that CI runs at `-n 2`, so a test that only
+  passes at wider ranks is not CI-portable.
 - Record real elapsed time in `docs/testing/test-results.md`.
 - **A tier is a measurement, not an intention.** A chunk whose runtime has never
   been measured is `unmeasured`. Cost-probe first: build the mesh, print the cell
@@ -282,9 +288,11 @@ These tables are the authoritative *status*; per-chunk historical detail is in
   `max relative |B| mismatch = 0.322` against a `< 0.30` limit — treat that figure
   as unreliable, it came from the `MAG-7` broken evaluation path.
 - `MAG-13` did not reach the < 5% target on the wire. Extrapolating the measured
-  rate puts it at h ≈ 0.00125, ~1.1M cells, > 5 min at `-n 2` — outside the tier.
-  The residual is uniform-mesh discretization of a 1/r field next to a thin
-  conductor, so **graded refinement is the cheap route, not more uniform h**.
+  rate puts it at h ≈ 0.00125, ~1.1M cells, > 5 min at `-n 2` — which was outside
+  the budget when `heavy` was 10 min at 2 ranks, and **is now plausibly inside it**
+  at 20 min and up to 12 ranks. Cost-probe before assuming so. The residual is
+  uniform-mesh discretization of a 1/r field next to a thin conductor, so graded
+  refinement is still the cheaper route than more uniform h.
   `J·n ≠ 0` at the end caps also still stands; capping the wire short of the end
   faces was never needed and is unmeasured.
 - `MAG-15` is a working option, not a finished subsystem: Dirichlet conditions on
@@ -558,7 +566,7 @@ status in §7 that is not `✅` should be read as "unknown", not "probably fine"
 The next scheduled implementer run takes the **first** item below that is not
 marked done or blocked (see `docs/automation/implementer-run.md`). At least five
 open items — the four runs before the next review, plus a spare — ordered, each
-sized for one run: ≤ 1 h wall clock, ≤ 10 min per compute command. Prefer items
+sized for one run: ≤ 1 h wall clock, ≤ 20 min per compute command. Prefer items
 that do not depend on each other; where the critical path is genuinely serial,
 say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done, the implementer falls back to the "obvious

@@ -13,8 +13,8 @@ grid spacing exceeds the 65-minute hard kill, and all runs share one `flock`.
 65). Note the start time immediately; **start no new implementation work
 after minute 45** — the final 15 minutes are for documentation and leaving a
 clean tree. The per-command compute budget is unchanged and non-negotiable:
-§5.1 tiers, 10-minute hard ceiling, `timeout` at the tier ceiling, shared
-machine.
+§5.1 tiers, 20-minute hard ceiling per compute command, `mpiexec -n 12` max,
+`timeout` at the tier ceiling, shared machine.
 
 ## Steps
 

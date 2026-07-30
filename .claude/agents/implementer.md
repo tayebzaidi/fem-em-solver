@@ -34,13 +34,15 @@ If the prompt names none, or more than one, stop and say so.
     mpiexec -n 2 python3 -m pytest <test paths> -v --tb=short'"
   ```
 
-- Tiers (§5.1): smoke 30 s, standard 180 s, heavy 600 s. Wrap in `timeout` at
+- Tiers (§5.1): smoke 30 s, standard 180 s, heavy 1200 s. Wrap in `timeout` at
   the tier ceiling. If a run overruns, kill it and shrink the case (mesh size
-  first) — never re-run with a longer timeout. Hard cap 10 minutes; this is a
-  shared machine.
+  first) — never re-run with a longer timeout. Hard cap 20 minutes per compute
+  command; this is a shared machine.
 - Cost-probe unmeasured cases first: build the mesh, print the cell count,
   solve a deliberately tiny variant, extrapolate, then size the real run.
-- Prefer `mpiexec -n 2`. Wider runs need explicit human approval.
+- `mpiexec -n 12` is the hard rank ceiling (12 of the box's 36 cores). Use the
+  smallest count that fits the tier; keep `-n 2` where a rank-local bug could
+  hide, and remember CI runs at `-n 2`.
 
 ## Non-negotiables
 
