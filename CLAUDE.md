@@ -62,7 +62,8 @@ System cron runs headless sessions via `scripts/automation/`:
 - **Daily review** (Fable, 06:12 local) — audits results against §4,
   rescopes failed attempts, maintains the §9 "On deck" queue. Protocol:
   docs/automation/daily-review.md.
-- **Implementer runs** (Opus, 09:42/13:42/17:42 local) — each attempts the
+- **Implementer runs** (Opus, six daily: every 3 h at :42, 07:42–22:42
+  local) — each attempts the
   top On-deck item inside a 1-hour timebox; incomplete work is parked on
   `attempt/*` branches and journaled in docs/testing/attempts.md, never left
   on main. Protocol: docs/automation/implementer-run.md.

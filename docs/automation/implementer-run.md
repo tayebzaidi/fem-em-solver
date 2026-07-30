@@ -1,8 +1,8 @@
 # Implementer run protocol (Opus, scheduled)
 
-Run by `scripts/automation/implementer-run.sh` via cron (09:42 / 13:42 /
-17:42 local). One run = one attempt at the **top "On deck" item** in
-PROJECT_PLAN.md §9.
+Run by `scripts/automation/implementer-run.sh` via cron, six times daily
+(every 3 h at :42, 07:42–22:42 local). One run = one attempt at the **top
+"On deck" item** in PROJECT_PLAN.md §9.
 
 ## Timebox
 
