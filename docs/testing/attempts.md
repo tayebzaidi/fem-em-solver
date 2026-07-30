@@ -584,3 +584,66 @@ is an artifact of the evaluation, not of the solve.
   `FEM_EM_REQUIRE_COMPLEX=1`, and `tests/environment` should be the first
   thing in the pytest path list so an environment regression fails before the
   formulation tests get blamed.
+
+---
+
+## 2026-07-30T21:42Z — (no chunk) — **anomaly**
+
+- **Outcome:** no chunk work attempted. **On deck (§9) is empty** — all three
+  items are struck through and marked done (`MAG-13` steps 4–5, 07:42 run;
+  `TH-9`, 10:42 run; `TH-1` step 0, 13:42 run), and §9 itself says "On deck is
+  empty after this item — the next daily review must refill it".
+  `docs/automation/implementer-run.md` step 2 is unambiguous: take the first
+  item that is not done or blocked, *do not choose a different item for any
+  reason*, and if the list is empty append an entry here and stop. So this run
+  stops. No verification command was executed; nothing under `src/`, `tests/`
+  or `scripts/` was touched.
+- **Preflight:** `git status --porcelain` empty on `main` at `1a9f44b`;
+  `fem-em-solver` container **Up** (3 days). No dirty tree, so the step-1
+  already-journaled-drift exception did not apply and was not used.
+- **Why this is filed as `anomaly` and not `complete`:** the queue draining
+  mid-day is a scheduling gap, not a chunk result. Three implementer slots
+  (16:42, 19:42, 22:42) fall between now and the 06:12 daily review; on the
+  current protocol **all three will land here and stop for the same reason**,
+  i.e. ~3 h of Opus timebox produces three journal entries and no physics. That
+  is the finding worth acting on, and it is the daily review's call, not mine —
+  the same protocol line that stops this run also forbids me from refilling §9.
+  Two ways out, for the human/review to choose between:
+  (a) keep §9 authoritative but have the daily review always leave ≥ 3 items
+      queued (it is sized "exactly three", which is exactly one day of runs at
+      six runs/day — the list is structurally guaranteed to drain);
+  (b) give the implementer protocol a documented fallback: when On deck is
+      empty, take the next chunk named in §9's own "obvious next entry"
+      sentence. Today that sentence already names the item precisely.
+- **Ready-to-take proposal, if the review wants to paste it into §9** (grounded
+  in the §7 `TH-1` plan, lines 1004–1022, not invented here):
+  1. `TH-1` **steps 1–3** — sesquilinear form
+     `∫μᵣ⁻¹(∇×E)·(∇×v̄) − k₀²ε_c E·v̄ dx` with `ε_c = εᵣ − jσ/(ωε₀)` from the
+     existing DG0 `build_material_fields`, load `−jωμ₀∫J·v̄ dx` (**`ufl.inner`
+     conjugates its second argument — `ufl.dot` on the load silently flips the
+     `e^{+jωt}` convention**; that trap is already pinned numerically by
+     `tests/environment/test_complex_mode.py`), MUMPS direct solve with PEC via
+     `build_boundary_conditions`, then replace the `E = −jωA` body of
+     `TimeHarmonicSolver.solve` keeping the `TimeHarmonicFields` container so
+     the downstream `⚠️` chunks still import. Standard tier.
+  2. `TH-1` **steps 4–5** — `TH-6` lossy-half-space gate (interior decay
+     constant + phase vs closed-form skin depth) plus the `MAT-2` σ-sensitivity
+     assertion, and the resonance guard verified against a `TH-9` mode.
+  3. A third item of the review's choosing, so the queue does not drain again
+     before 06:12.
+  Every `TH-1` command from here needs
+  `source /usr/local/bin/dolfinx-complex-mode` **and**
+  `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest path
+  list — carried over from the 18:42Z entry.
+- **Measured numbers / harness logs:** none — no compute was run, deliberately.
+  Nothing to add to `docs/testing/test-results.md`.
+- **Branch (if parked):** none. `main` left clean at `1a9f44b` plus this entry.
+- **Denied commands:** one Bash call rejected for shape, not content
+  (`cd docker && docker compose ps` — the `cd`-before-git guard); re-issued as
+  `docker compose -f docker/docker-compose.yml ps` and it worked. Worth folding
+  the absolute-path form into CLAUDE.md's preflight snippet, which currently
+  shows the `cd docker && ...` version that gets denied in scheduled sessions.
+- **Next-attempt hypothesis:** the 19:42Z run will hit this identical wall
+  unless §9 is refilled first. If a human sees this before then, pasting item 1
+  above into §9 is enough to unblock the next slot; otherwise expect two more
+  `anomaly` entries with this shape before the 06:12 review.
