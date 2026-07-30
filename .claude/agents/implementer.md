@@ -21,8 +21,11 @@ If the prompt names none, or more than one, stop and say so.
 ## Environment
 
 - All solves run in the `fem-em-solver` container. Preflight:
-  `cd docker && docker compose ps` — STATUS must be "Up" (`docker compose up -d`
-  if not). The repo is bind-mounted at /workspace; source edits need no rebuild.
+  `docker compose -f docker/docker-compose.yml ps` — STATUS must be "Up"
+  (`docker compose -f docker/docker-compose.yml up -d` if not). Do not use the
+  `cd docker && ...` form: a `cd` in a compound command prompts for permission
+  regardless of the allowlist, which fails in scheduled sessions. The repo is
+  bind-mounted at /workspace; source edits need no rebuild.
 - Verification always goes through the harness so a log lands in docs/testing/:
 
   ```
