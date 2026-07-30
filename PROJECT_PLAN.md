@@ -267,9 +267,13 @@ source /usr/local/bin/dolfinx-complex-mode   # petsc4py ScalarType -> numpy.comp
 
 > **Why the chunk commands set `PYTHONPATH=/workspace/src`:** that override drops the
 > container's dolfinx path. `src/sitecustomize.py` re-appends
-> `/usr/local/dolfinx-real/lib/python3.10/dist-packages` so imports still resolve.
-> `TH-1` will need to extend that shim, or set PYTHONPATH explicitly, to work under
-> complex mode.
+> the dist-packages directory matching the active `PETSC_ARCH`, so imports still
+> resolve in **either** mode. Verified under complex mode 2026-07-30 (`TH-1`
+> step 0): `source /usr/local/bin/dolfinx-complex-mode` plus
+> `PYTHONPATH=/workspace/src` yields `PETSc.ScalarType == complex128` and
+> dolfinx 0.7.2 from `/usr/local/dolfinx-complex`. The gate is
+> `tests/environment/test_complex_mode.py`; set `FEM_EM_REQUIRE_COMPLEX=1` on
+> any run that is supposed to be complex so its real-mode skips become failures.
 
 #### If `docker` gives "permission denied ... /var/run/docker.sock"
 
@@ -916,7 +920,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 
 | ID | Title | Status | Tier | Legacy |
 |---|---|---|---|---|
-| `TH-1` | **Real complex time-harmonic formulation** | ⬜ | standard | *new* |
+| `TH-1` | **Real complex time-harmonic formulation** | 🟡 | standard | step 0 (environment) done 2026-07-30; steps 1–5 open |
 | `TH-2` | Time-harmonic API hardening | ⚠️ | standard | C1 |
 | `TH-3` | Boundary-condition option set | ⚠️ | standard | C3 |
 | `TH-4` | Convergence/conditioning diagnostics | 🧪 | standard | C6 |
@@ -961,11 +965,42 @@ Independent of the §2.1 physics defect; meshes are meshes.
 >
 > **Implementation plan (Batch 3, after `TH-9` — documented 2026-07-28, not
 > yet executed):**
-> 0. **Environment first, as its own logged smoke chunk.** Extend
+> 0. ~~**Environment first, as its own logged smoke chunk.** Extend
 >    `src/sitecustomize.py` (or set `PYTHONPATH` explicitly in the chunk
 >    commands) for `/usr/local/dolfinx-complex`, then verify
 >    `PETSc.ScalarType == complex128` inside the container. Environment
->    failures must not masquerade as formulation failures (§5.3).
+>    failures must not masquerade as formulation failures (§5.3).~~
+>    **Done 2026-07-30** (13:42 run), smoke tier, 1–3 s at `mpiexec -n 2`.
+>    `src/sitecustomize.py` already keys off `PETSC_ARCH` and needed no change:
+>    under `source /usr/local/bin/dolfinx-complex-mode` with
+>    `PYTHONPATH=/workspace/src` the container resolves
+>    `/usr/local/dolfinx-complex/.../dolfinx` and `PETSc.ScalarType ==
+>    complex128`. The gate is `tests/environment/test_complex_mode.py`, four
+>    tests, quantitative:
+>    - `∫_Ω c dx = 2 − 3j` exactly on the unit cube (|Δ| < 1e-13);
+>    - the step-1 conjugation trap pinned as numbers —
+>      `∫ inner(f,g) dx = 11 + 2j` vs `∫ dot(f,g) dx = −5 + 10j` for
+>      `f = (1+2j)x̂`, `g = (3+4j)x̂`; measured 11.000000000000+2.000000000000j
+>      and −5.000000000000+10.000000000000j;
+>    - the ε_c-weighted N1curl mass matrix equals `ε_c·M` entry for entry
+>      (‖M_c − ε_c M‖_F = 4.45e-16 against ‖M‖_F = 1.041, i.e. 4e-16 relative);
+>    - scalar type / `PETSC_ARCH` / imported dolfinx build agree — this one
+>      asserts in **both** modes, since the failure it guards is the mismatch.
+>
+>    `FEM_EM_REQUIRE_COMPLEX=1` converts the real-mode skips into failures so a
+>    run that was meant to be complex cannot pass by skipping; negative control
+>    verified (real mode + that flag ⇒ 3 failed, 1 passed,
+>    `20260730T184503Z_TH-1-step0-negctl.log`). Logs:
+>    `20260730T184446Z_TH-1-step0-complex.log` (complex, 4 passed),
+>    `20260730T184454Z_TH-1-step0-realmode.log` (real, 1 passed 3 skipped).
+>    CI runs the real-mode half; the complex invocation joins CI with `TH-1`
+>    proper.
+>
+>    **A/B against the real build:** the whole `TH-9` cavity gate re-run under
+>    `dolfinx-complex` returns the *same* physics — 0.0436% max error at (6,5,4),
+>    refinement rate 3.85, 8/8 null modes below cutoff, 3 passed in 7 s
+>    (`20260730T184634Z_TH-1-step0-cavity-ab.log`). So a failure in `TH-1`
+>    steps 1–5 is formulation, not environment; that risk is retired.
 > 1. Assemble the sesquilinear form
 >    `∫μᵣ⁻¹(∇×E)·(∇×v̄) − k₀²ε_c E·v̄ dx` with `ε_c = εᵣ − jσ/(ωε₀)` built
 >    from the existing DG0 machinery (`build_material_fields` carries over
@@ -1215,9 +1250,11 @@ Done 2026-07-29: `MAG-14` (scheduled run, 1.731% vs closed form, in CI).
 Done 2026-07-30: `MAG-13` in full — wire half (steps 1–3, 6) in the 22:42 run of
 2026-07-29, loop fixture + convergence rework (steps 4–5) in the 07:42 run.
 Also done 2026-07-30 (10:42 run): `TH-9`, the PEC cavity resonance gate —
-Batch 3 step 1, real-scalar build only.
-**Batch 2 is complete**; Batch 3 is under way — `TH-9` ✅, next `TH-1`
-(starting with its environment step 0) + `TH-6`.
+Batch 3 step 1, real-scalar build only. And (13:42 run) `TH-1` **step 0**, the
+complex-mode environment gate: complex scalars verified inside the container
+and `tests/environment/test_complex_mode.py` added.
+**Batch 2 is complete**; Batch 3 is under way — `TH-9` ✅, `TH-1` step 0 ✅,
+next `TH-1` steps 1–3 + `TH-6`.
 
 Steps 1 and 2 below carry **per-chunk implementation plans in their §7
 entries** (added 2026-07-28): concrete file lists, formulas with their known
@@ -1334,12 +1371,21 @@ commit `b81b958` was cherry-picked to main and verified on 2026-07-29.
    refinement at a fitted rate of 3.85 in h, and the N1curl gradient modes come
    back as a machine-zero cluster (8/8 below 1e-8·k₁²). 3 s at `mpiexec -n 2`;
    log `20260730T154846Z_TH-9.log`. See the §7 entry.
-3. `TH-1` **step 0 only** — complex-mode environment smoke (§7 `TH-1` plan
-   step 0): extend `src/sitecustomize.py` (or set `PYTHONPATH` explicitly) for
-   `/usr/local/dolfinx-complex`, then assert `PETSc.ScalarType == complex128`
-   inside the container, logged via the harness. Smoke tier. Environment
-   failures must not masquerade as formulation failures (§5.3); landing this
-   before `TH-1` proper is the point.
+3. ~~`TH-1` **step 0 only** — complex-mode environment smoke.~~ **Done
+   2026-07-30** (13:42 run): `sitecustomize.py` already keyed off `PETSC_ARCH`,
+   so no source change was needed — the work was the gate,
+   `tests/environment/test_complex_mode.py`. Complex mode confirmed
+   (`PETSc.ScalarType == complex128`, dolfinx from `/usr/local/dolfinx-complex`)
+   and the step-1 conjugation trap pinned quantitatively:
+   `∫ inner(f,g) dx = 11+2j` vs `∫ dot(f,g) dx = −5+10j`, and
+   `‖M_c − ε_c M‖_F / ‖M‖_F = 4e-16` on N1curl. 1 s at `mpiexec -n 2`;
+   log `20260730T184446Z_TH-1-step0-complex.log`. See the §7 entry.
+
+**On deck is empty** after this item — the next daily review must refill it.
+The obvious next entry is `TH-1` steps 1–3 (sesquilinear form, MUMPS solve,
+`TimeHarmonicSolver.solve` body), with steps 4–5 (`TH-6` gate + resonance
+guard) behind them; the environment risk that headed the chunk's risk list is
+now retired.
 
 **Do not add new features to `⚠️` subsystems.** Extending a proxy is what produced
 the current backlog: roughly 20 chunks of scaffolding that will need revalidation

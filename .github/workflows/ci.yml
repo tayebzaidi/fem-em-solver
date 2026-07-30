@@ -91,6 +91,16 @@ jobs:
     - name: Smoke matrix
       run: ./run_tests.sh --smoke
 
+    # TH-1 step 0. In real mode (this job's default) only the scalar-type /
+    # dolfinx-build consistency test runs; the three complex-only tests skip.
+    # That is still the guard worth having here: it catches a PETSC_ARCH that
+    # disagrees with the imported dolfinx, which is how the old hardcoded
+    # sitecustomize path handed back a real build under complex mode. The
+    # complex-mode invocation is exercised through the harness in the container
+    # (see PROJECT_PLAN §7 TH-1 step 0) and moves into CI with TH-1 proper.
+    - name: Complex-mode environment gate (real-mode half)
+      run: python3 -m pytest tests/environment -v --tb=short
+
     - name: Analytic validation (magnetostatics + PEC cavity resonances)
       # Measured 150s at 8 ranks on the dev box before MAG-13 steps 4-5; the
       # loop and convergence fixtures are now heavy tier (167 s and 196 s at

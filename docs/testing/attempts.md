@@ -515,3 +515,72 @@ is an artifact of the evaluation, not of the solve.
   `dolfinx-complex` if the environment is sound. Worth 30 s of the TH-1 run.
 
 ---
+
+
+## 2026-07-30T18:42Z — TH-1 step 0 — complete
+
+- **Tried:** preflight clean (`git status --porcelain` empty on `main`,
+  container Up 3 days), top On-deck item taken as written: `TH-1` step 0, the
+  complex-mode environment smoke. First finding: **no source change was
+  needed.** `src/sitecustomize.py` was already reworked to key off `PETSC_ARCH`
+  (its docstring names TH-1 explicitly), so with
+  `source /usr/local/bin/dolfinx-complex-mode` plus `PYTHONPATH=/workspace/src`
+  the container resolves `/usr/local/dolfinx-complex/.../dolfinx` 0.7.2 and
+  `PETSc.ScalarType` is `complex128` (probe log
+  `20260730T184310Z_TH-1-step0-probe.log`, 1 s). The chunk's real content was
+  therefore the gate, not the plumbing: new
+  `tests/environment/test_complex_mode.py`, four tests.
+- **Measured:** `∫_Ω c dx` over the unit cube = **2 − 3j** to |Δ| < 1e-13.
+  The step-1 conjugation trap pinned as numbers, since "inner conjugates its
+  second argument" is the single named risk of TH-1 step 1: with
+  `f = (1+2j)x̂`, `g = (3+4j)x̂`, `∫ inner(f,g) dx = 11.000000000000 +
+  2.000000000000j` and `∫ dot(f,g) dx = −5.000000000000 + 10.000000000000j`,
+  i.e. the two differ and the sign flip is now a red test rather than a wrong
+  field. On the element family TH-1 actually uses: the ε_c-weighted N1curl mass
+  matrix equals `ε_c·M` entry for entry — `‖M_c − ε_c M‖_F = 4.449e-16` against
+  `‖M‖_F = 1.041233`, **4e-16 relative**. The fourth test (scalar type /
+  `PETSC_ARCH` / imported dolfinx build agree) asserts in *both* modes, because
+  the failure it guards is the mismatch the old hardcoded-path shim produced.
+- **Skip discipline:** an environment gate that skips is worthless in the run
+  that was meant to exercise it, so `FEM_EM_REQUIRE_COMPLEX=1` turns the
+  real-mode skips into failures. Negative control executed, not assumed: real
+  mode + that flag ⇒ **3 failed, 1 passed** with the intended message
+  ("PETSc.ScalarType is float64 ... complex build was not picked up") —
+  `20260730T184503Z_TH-1-step0-negctl.log`.
+- **A/B against the real build** (suggested by the TH-9 entry's next-attempt
+  note, and it was worth the 8 s): the entire `TH-9` cavity gate re-run under
+  `dolfinx-complex` returns identical physics — max error 0.0436% at (6,5,4),
+  refinement rate 3.85, 8/8 null modes below cutoff, 3 passed in 7 s
+  (`20260730T184634Z_TH-1-step0-cavity-ab.log`). A `TH-1` failure from here on
+  is formulation, not environment.
+- **CI:** added a real-mode `pytest tests/environment` step to the validation
+  job (verified in the exact serial form CI uses: 1 passed, 3 skipped, 1 s,
+  `20260730T184657Z_TH-1-step0-ciform.log`). The complex invocation is left out
+  of CI deliberately until `TH-1` proper needs it — I could not execute a CI
+  run here, and a step that only ever ran locally does not belong in a job
+  whose value is being green.
+- **Tier / cost:** smoke, 1–3 s per run at `mpiexec -n 2`; the A/B was standard
+  tier (180 s ceiling, actual 8 s). Whole chunk well inside the timebox.
+- **Logs:** `20260730T184310Z_TH-1-step0-probe.log`,
+  `20260730T184426Z_TH-1-step0.log` (first pass, pytest captured stdout),
+  `20260730T184446Z_TH-1-step0-complex.log` — **the log of record**, re-run with
+  `-s` so the numbers are visible (4 passed, 1 s),
+  `20260730T184454Z_TH-1-step0-realmode.log`,
+  `20260730T184503Z_TH-1-step0-negctl.log` (negative control, exit 1 by
+  design), `20260730T184634Z_TH-1-step0-cavity-ab.log`,
+  `20260730T184657Z_TH-1-step0-ciform.log`.
+- **Branch (if parked):** none; landed on `main`. `TH-1` in the §7 table moves
+  ⬜ → 🟡 (step 0 done, steps 1–5 open).
+- **Denied commands:** none affecting the work. Two Bash calls were rejected for
+  shape, not content (`cd docker && docker compose ps`, and a trailing
+  `echo "EXIT=$?"`); both were re-issued with absolute paths / split commands.
+- **Next-attempt hypothesis:** **On deck is now empty** — the daily review must
+  refill it before the next implementer run has anything to take. The natural
+  entry is `TH-1` steps 1–3 (sesquilinear form + MUMPS + replacing the
+  `E = −jωA` body), sized as one run, with steps 4–5 (`TH-6` lossy plane-wave
+  gate and the resonance guard) as the following item. Note for whoever takes
+  it: every chunk command must now carry
+  `source /usr/local/bin/dolfinx-complex-mode` **and**
+  `FEM_EM_REQUIRE_COMPLEX=1`, and `tests/environment` should be the first
+  thing in the pytest path list so an environment regression fails before the
+  formulation tests get blamed.
