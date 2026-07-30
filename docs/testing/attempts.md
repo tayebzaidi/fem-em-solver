@@ -308,3 +308,69 @@ stand unchanged and are for the human, not for a scheduled session.
 as the tree is clean. Still nothing executed against the chunk.
 
 ---
+## 2026-07-30T03:42Z — `MAG-13` (wire fixture, §7 steps 1–3 and 6) — **complete**
+
+Scheduled implementer run (22:42 CDT). Preflight **clean** — the dirty tree that
+cost the four preceding runs was landed as `c8d5201`/`e9e49cb` before this slot,
+so no exception path was needed. Container Up. Took On-deck item 2 unchanged.
+
+**What was done.** Steps 1–3 and 6 of the §7 plan:
+
+- `AnalyticalSolutions.straight_wire_vector_potential(..., wire_radius=a)` —
+  finite-conductor branch gauged to `A_z(a)=0`. Not optional: the
+  `straight_wire_domain` end caps cross `r = 0`, where the filament `ln r`
+  diverges, so interpolating the filament form as BC data would have injected
+  garbage on two of the three boundary surfaces.
+- `AnalyticalSolutions.circular_loop_vector_potential` — Jackson 5.37 off-axis
+  `A_φ` via `scipy.special.ellipk/ellipe` (scipy 1.11.3 confirmed in the
+  container first, per the plan). Unit test curls it back to the on-axis closed
+  form at three `z` values, rtol 1e-6 — that is what catches the `m = k²`
+  convention trap; a magnitude-only check would not.
+- `core.solvers.exterior_dirichlet_bc(V, field)` — generic: interpolate a
+  callable into an N1curl space, constrain all topologically-located exterior
+  dofs. The loop fixture (step 4) reuses it unchanged.
+- `tests/validation/test_straight_wire.py` rewired to use it.
+
+**Measured** (`mpiexec -n 2`, |B| L2 error over `2a → 0.8 R_domain`):
+
+| h | cells | natural `n×H = 0` | analytic Dirichlet |
+|---|---|---|---|
+| 0.004 | 38.8k | 35.13% | 22.19% |
+| 0.0025 | 145.9k | — | 12.75% |
+| 0.0018 | 383.2k | — | 9.26% |
+
+Fitted rate ≈ O(h^1.2) with **no plateau** — the modeling floor this chunk was
+written against is gone. Bound tightened 25% → 15% (measured 12.75%), sampling
+window widened 0.4R → 0.8R, and a new test
+`test_analytic_bc_improves_on_natural_bc` asserts the BC beats the natural wall
+on the *same* mesh (measured 0.63×, bound 0.85) — the chunk’s physical claim
+rather than a tolerance. No assertion was loosened; the `B_z < 0.10·B_ref`
+azimuthality check was left untouched and passes at 9.54%.
+
+**Not reached:** the < 5% target, and steps 4–5 (loop fixture, convergence-test
+rework) which were out of scope for this run. §7 is 🟡, not ✅, with both stated.
+Extrapolating the measured rate puts < 5% at h ≈ 0.00125 (~1.1M cells, > 5 min
+at `-n 2`) — outside the standard tier, so uniform refinement is the wrong lever;
+graded refinement (MAG-9 machinery) is the cheap one. `J·n ≠ 0` at the end caps
+still stands but was evidently not dominating, so step 3’s "cap the wire short of
+the end faces" option was left unmeasured.
+
+**Cost.** Three harness runs, all inside tier: `20260730T034541Z_MAG-13-probe.log`
+(BC vs natural at h=0.004, 12 s), `20260730T034614Z_MAG-13-probe2.log`
+(h-refinement 0.0025 + 0.0018, 121 s), `20260730T034941Z_MAG-13.log`
+(**9 passed, 72 s**, standard tier — `tests/unit/test_analytical_lightweight.py`
++ `tests/validation/test_straight_wire.py`). ~45 min of the timebox. No denied
+commands. `test_straight_wire.py` is already in the CI validation job, so the new
+test rides along (+~13 s); no workflow change.
+
+**Next.** `MAG-13` steps 4–5: `test_circular_loop.py` gets the same treatment
+with `circular_loop_vector_potential` + `exterior_dirichlet_bc` (both landed and
+unit-tested, so it is fixture work only), then `test_convergence.py` to ≥ 3
+resolutions with a fitted rate in [0.7, 1.5]. Hypothesis: the loop will improve
+less dramatically than the wire — its PMC-image bias is ~(a/R)³ rather than an
+Ampère-law contradiction — and the honest outcome there may again be a measured
+bound rather than the planned single digits. known-issues.md now carries the
+wire half as fixed and the loop half as open.
+
+---
+

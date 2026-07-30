@@ -69,15 +69,28 @@ class AnalyticalSolutions:
         points: np.ndarray,
         current: float,
         wire_position: np.ndarray = None,
-        A_ref: float = 0.0
+        A_ref: float = 0.0,
+        wire_radius: float = None
     ) -> np.ndarray:
         """Analytical A-field for infinite straight wire.
-        
+
         The magnetic vector potential for a wire along z-axis:
             A_z = -μ₀I / (2π) * ln(r/r_ref)
-        
+
         Choosing r_ref such that A=0 at some reference point.
-        
+
+        With ``wire_radius = a`` the uniform-current-density conductor form is
+        used instead, gauged so that A_z(a) = 0::
+
+            A_z(r) = -μ₀I/(2π) · ln(r/a)          r ≥ a
+            A_z(r) =  μ₀I/(4π) · (1 - r²/a²)      r ≤ a
+
+        Both branches have the same curl as the filament solution outside the
+        conductor, and the interior branch is *finite on the axis*. That
+        matters when this field is imposed as Dirichlet data (MAG-13): the
+        domain end caps of ``straight_wire_domain`` cross r = 0, where the
+        filament form diverges logarithmically.
+
         Parameters
         ----------
         points : np.ndarray
@@ -88,7 +101,11 @@ class AnalyticalSolutions:
             (x, y) position of wire
         A_ref : float
             Reference potential (gauge choice)
-            
+        wire_radius : float, optional
+            Conductor radius [m]. If given, use the finite-conductor form
+            above; if None (default) the pure filament form ``-μ₀I/(2π)·ln r``
+            is returned unchanged.
+
         Returns
         -------
         np.ndarray
@@ -96,22 +113,109 @@ class AnalyticalSolutions:
         """
         if wire_position is None:
             wire_position = np.array([0.0, 0.0])
-        
+
         mu_0 = 4 * np.pi * 1e-7
-        
+
         x = points[:, 0] - wire_position[0]
         y = points[:, 1] - wire_position[1]
         r = np.sqrt(x**2 + y**2)
-        
-        # Avoid log(0)
-        r = np.maximum(r, 1e-10)
-        
+
         # A has only z-component
         A = np.zeros_like(points)
-        A[:, 2] = -mu_0 * current / (2 * np.pi) * np.log(r) + A_ref
-        
+
+        if wire_radius is None:
+            # Avoid log(0)
+            r = np.maximum(r, 1e-10)
+            A[:, 2] = -mu_0 * current / (2 * np.pi) * np.log(r) + A_ref
+            return A
+
+        if wire_radius <= 0:
+            raise ValueError(f"wire_radius must be positive, got {wire_radius!r}")
+
+        outside = r >= wire_radius
+        a_z = np.empty_like(r)
+        a_z[outside] = (
+            -mu_0 * current / (2 * np.pi) * np.log(r[outside] / wire_radius)
+        )
+        a_z[~outside] = (
+            mu_0 * current / (4 * np.pi) * (1.0 - (r[~outside] / wire_radius) ** 2)
+        )
+        A[:, 2] = a_z + A_ref
         return A
-    
+
+    @staticmethod
+    def circular_loop_vector_potential(
+        points: np.ndarray,
+        current: float,
+        radius: float,
+        loop_center: float = 0.0
+    ) -> np.ndarray:
+        """Off-axis vector potential of a circular current loop (Jackson 5.37).
+
+        For a loop of radius ``a`` in the plane z = z0, carrying current I
+        counter-clockwise seen from +z, the only non-zero component is
+        azimuthal::
+
+            A_φ(ρ,z) = (μ₀I/π)·√(a/ρ)·[(1 − k²/2)·K(k) − E(k)] / k
+            k² = 4aρ / ((a+ρ)² + (z−z0)²)
+
+        Two conventions matter here. ``scipy.special.ellipk``/``ellipe`` take
+        the *parameter* ``m = k²``, not the modulus ``k`` — passing ``k`` is a
+        silent factor error. And ρ → 0 needs its own branch: A_φ = 0 on the
+        axis by symmetry, while the formula there is 0/0.
+
+        Parameters
+        ----------
+        points : np.ndarray
+            Array of shape (n, 3) with evaluation points
+        current : float
+            Loop current [A]
+        radius : float
+            Loop radius ``a`` [m]
+        loop_center : float
+            z-position of the loop plane [m]
+
+        Returns
+        -------
+        np.ndarray
+            A-field at points in Cartesian components, shape (n, 3)
+        """
+        from scipy.special import ellipe, ellipk
+
+        if radius <= 0:
+            raise ValueError(f"radius must be positive, got {radius!r}")
+
+        mu_0 = 4 * np.pi * 1e-7
+
+        x = points[:, 0]
+        y = points[:, 1]
+        z = points[:, 2] - loop_center
+        rho = np.sqrt(x**2 + y**2)
+
+        A = np.zeros_like(points)
+        # On-axis (and at the wire itself, where the potential diverges) the
+        # azimuthal direction is undefined; A_φ = 0 is the symmetry answer.
+        on_axis = rho < 1e-14 * radius
+        active = ~on_axis
+        if not np.any(active):
+            return A
+
+        rho_a = rho[active]
+        z_a = z[active]
+        m = 4.0 * radius * rho_a / ((radius + rho_a) ** 2 + z_a**2)  # m = k²
+        k = np.sqrt(m)
+        a_phi = (
+            mu_0 * current / np.pi
+            * np.sqrt(radius / rho_a)
+            * ((1.0 - m / 2.0) * ellipk(m) - ellipe(m))
+            / k
+        )
+
+        # φ̂ = (-y, x, 0)/ρ
+        A[active, 0] = -a_phi * y[active] / rho_a
+        A[active, 1] = a_phi * x[active] / rho_a
+        return A
+
     @staticmethod
     def circular_loop_magnetic_field_on_axis(
         z: np.ndarray,

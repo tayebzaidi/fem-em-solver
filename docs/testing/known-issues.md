@@ -124,22 +124,26 @@ highest-risk open item; the decision is recorded here so it is not reopened:
   silent-failure analog is *near-resonance ill-conditioning*, tracked in the
   `TH-1` formulation notes in `PROJECT_PLAN.md` §7.
 
-### Straight-wire fixture has a modeling floor (MAG-13)
+### Loop fixture still has a modeling floor (MAG-13, wire half fixed)
 
-The wire/loop validation cases cannot converge to their analytic references as
-posed. On the straight wire: the natural BC `n×H = 0` on the side wall contradicts
-Ampère's law for any net axial current (`∮H·dl = I` on any loop around the wire vs
-`H_φ(R) = 0` forced at the wall), and the wire terminates on the domain end caps,
-so `J·n ≠ 0` — an incompatible source the gauge term absorbs (the `MAG-15`
-multiplier spread measures it directly). The observed 18–25% error is therefore
-substantially modeling error, not discretization error.
+The natural BC `n×H = 0` on a truncation wall contradicts Ampère's law for any net
+enclosed current (`∮H·dl = I` vs `H_φ(R) = 0` forced at the wall), so it puts a
+floor under these fixtures that no refinement removes.
 
-**Symptom to expect:** `test_h_refinement_straight_wire`'s `rate > 0.5` assertion
-fails at some future, finer resolution pair *while the solver is correct* — the
-error plateaus at the floor and the fitted rate collapses. **Do not loosen the
-assertion; fix the boundary** (`MAG-13`: impose the analytic solution as Dirichlet
-data via `bc_functions`). The loop test hides the same class of bias — a ~(a/R)³
-PMC-image term — inside its 10% tolerance.
+**Straight wire: fixed 2026-07-30** (`MAG-13` steps 1–3). `test_straight_wire.py`
+now imposes the analytic `A_z` on the exterior via
+`core.solvers.exterior_dirichlet_bc`; measured 35.13% → 22.19% at h=0.004 on the
+same mesh, and 22.19% → 12.75% → 9.26% across h = 0.004/0.0025/0.0018, i.e. still
+converging at ~O(h^1.2) with no plateau. `J·n ≠ 0` at the end caps remains (the
+`MAG-15` multiplier spread measures it) but is not what was dominating.
+
+**`test_circular_loop.py` is untreated** and hides the same class of bias — a
+~(a/R)³ PMC-image term — inside its 10% tolerance. **Symptom to expect:** a
+convergence assertion on the loop fails at some future, finer resolution pair
+*while the solver is correct* — the error plateaus at the floor and the fitted rate
+collapses. **Do not loosen the assertion; fix the boundary** — `MAG-13` steps 4–5,
+for which the off-axis `AnalyticalSolutions.circular_loop_vector_potential` and the
+BC helper are already in place.
 
 ### Air-box sizing is not generalised
 

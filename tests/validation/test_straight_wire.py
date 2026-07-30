@@ -16,12 +16,16 @@ Three modelling points govern how this test is set up (see MAG-7/8/9):
    ``post.evaluation.evaluate_vector_field_parallel``. Passing
    ``np.arange(n)`` as cell indices evaluates in arbitrary cells and returns
    meaningless values.
-3. Sampling stays well inside the outer boundary. The natural condition
-   ``n x (mu^-1 curl A) = 0`` means ``n x H = 0``, which on the outer cylinder
-   forces the azimuthal H to zero -- exactly the component being compared.
-   That boundary is incompatible with the free-space 1/r solution, so its
-   influence is kept small by sampling at r <= 0.4 * domain_radius rather than
-   the 0.8 used previously.
+3. The outer wall carries the analytic potential as Dirichlet data (MAG-13).
+   The natural condition ``n x (mu^-1 curl A) = 0`` means ``n x H = 0``, which
+   on the outer cylinder forces the azimuthal H to zero -- exactly the
+   component being compared -- and contradicts Ampere's law for a net axial
+   current. That is a modeling error no refinement removes; it was previously
+   hidden by sampling only at r <= 0.4 * domain_radius. Imposing
+   ``A_z = -mu_0 I/(2 pi) ln(r/a)`` on the exterior instead makes the continuum
+   limit the analytic field, lets sampling run back out to 0.8 * domain_radius,
+   and restores clean O(h^1.2) convergence (22.19% -> 12.75% -> 9.26% at
+   h = 0.004 / 0.0025 / 0.0018).
 
 A *fat* wire costs no accuracy here: for uniform current density the external
 field of a cylindrical conductor is identical to a filament for r > a. So the
@@ -35,7 +39,11 @@ import numpy as np
 import pytest
 from mpi4py import MPI
 
-from fem_em_solver.core.solvers import MagnetostaticProblem, MagnetostaticSolver
+from fem_em_solver.core.solvers import (
+    MagnetostaticProblem,
+    MagnetostaticSolver,
+    exterior_dirichlet_bc,
+)
 from fem_em_solver.io.mesh import MeshGenerator
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.analytical import AnalyticalSolutions, ErrorMetrics
@@ -54,8 +62,27 @@ CURRENT = 1.0
 R_MIN = 2.0 * WIRE_RADIUS
 R_MAX = 0.4 * DOMAIN_RADIUS
 
+# With the analytic Dirichlet BC of MAG-13 the outer wall no longer forces
+# H_phi = 0, so samples may run out to it. Measured at h=0.0025: 12.48% over
+# 2a -> 0.4R vs 12.75% over 2a -> 0.8R, i.e. the near-boundary region is no
+# longer where the error lives.
+R_MAX_BC = 0.8 * DOMAIN_RADIUS
 
-def _solve_straight_wire(resolution, comm):
+
+def _wire_potential_interp(x):
+    """Analytic wire A in dolfinx interpolation convention (3, n) -> (3, n).
+
+    The finite-conductor branch is required: the domain end caps of
+    ``straight_wire_domain`` cross r = 0, where the filament ln r diverges.
+    """
+    points = np.ascontiguousarray(x[:3].T)
+    A = AnalyticalSolutions.straight_wire_vector_potential(
+        points, CURRENT, wire_radius=WIRE_RADIUS
+    )
+    return A.T
+
+
+def _solve_straight_wire(resolution, comm, analytic_bc=True):
     """Mesh and solve the straight-wire problem at one resolution."""
     mesh, cell_tags, facet_tags = MeshGenerator.straight_wire_domain(
         wire_length=WIRE_LENGTH,
@@ -84,13 +111,14 @@ def _solve_straight_wire(resolution, comm):
 
         return ufl.as_vector([0.0, 0.0, j_magnitude])
 
-    solver.solve(current_density=current_density, subdomain_id=1)
+    bcs = [exterior_dirichlet_bc(solver.V, _wire_potential_interp)] if analytic_bc else None
+    solver.solve(current_density=current_density, subdomain_id=1, bc_functions=bcs)
     return mesh, solver.compute_b_field()
 
 
-def _sample_radial(b_field, n_points, comm):
+def _sample_radial(b_field, n_points, comm, r_min=R_MIN, r_max=R_MAX):
     """Return (r, |B|_numeric, |B|_analytic) along +x at the wire midplane."""
-    r_test = np.linspace(R_MIN, R_MAX, n_points)
+    r_test = np.linspace(r_min, r_max, n_points)
     points = np.zeros((n_points, 3))
     points[:, 0] = r_test
     points[:, 2] = 0.0  # midplane, where the finite-length error is smallest
@@ -113,7 +141,9 @@ class TestStraightWire:
         mesh, b_field = _solve_straight_wire(RESOLUTION, comm)
 
         n_points = 10
-        r_test, b_num_mag, b_ana_mag, values = _sample_radial(b_field, n_points, comm)
+        r_test, b_num_mag, b_ana_mag, values = _sample_radial(
+            b_field, n_points, comm, R_MIN, R_MAX_BC
+        )
 
         # Field should be azimuthal: negligible axial component.
         b_z_max = float(np.max(np.abs(values[:, 2])))
@@ -129,21 +159,61 @@ class TestStraightWire:
             print("\nStraight wire validation:")
             print(f"  Cells: {n_cells}")
             print(f"  Current: {CURRENT} A (restricted to wire tag 1)")
-            print(f"  Sampling r: {R_MIN:.4f} -> {R_MAX:.4f} m "
+            print(f"  Sampling r: {R_MIN:.4f} -> {R_MAX_BC:.4f} m "
                   f"(a={WIRE_RADIUS}, R_domain={DOMAIN_RADIUS})")
             print(f"  Relative L2 error: {rel_error:.4%}")
             for r, bn, ba in zip(r_test, b_num_mag, b_ana_mag):
                 print(f"    r={r:.4f}  |B|_num={bn:.4e}  |B|_ana={ba:.4e}  "
                       f"rel={abs(bn - ba) / ba:.2%}")
 
-        # Measured 18.2% at this resolution, converging ~O(h) (35.5% at h=0.005).
-        # The residual is dominated by resolving a 1/r field on a uniform mesh
-        # near a thin conductor, not by a formulation error: the same solver
-        # reproduces the Helmholtz field to 0.04% where the field is smooth.
-        # This test therefore checks the 1/r *trend* and the azimuthal direction;
-        # quantitative validation lives in the Helmholtz comparison. Tightening
-        # this bound requires graded refinement in straight_wire_domain (MAG-9).
-        assert rel_error < 0.25, f"Relative error {rel_error:.4%} exceeds 25%"
+        # Bound set from measurement (MAG-13, log 20260730T034614Z_MAG-13-probe2),
+        # analytic Dirichlet BC, sampling 2a -> 0.8 R_domain, mpiexec -n 2:
+        #   h=0.004   38.8k cells   22.19%
+        #   h=0.0025  145.9k cells  12.75%   <- this test
+        #   h=0.0018  383.2k cells   9.26%
+        # i.e. O(h^1.2), still converging: there is no plateau left to hit, which
+        # is the point of the BC. With the natural n x H = 0 wall the same meshes
+        # give 35.13% at h=0.004 (see test_analytic_bc_improves_on_natural_bc) and
+        # the error stops responding to refinement.
+        # Reaching the < 5% target needs h ~ 0.00125 (~1.1M cells, > 5 min at
+        # -n 2), which is outside the standard tier; the remaining error is
+        # discretization of a 1/r field on a uniform mesh near a thin conductor,
+        # so graded refinement (MAG-9) is the cheaper route, not more uniform h.
+        assert rel_error < 0.15, f"Relative error {rel_error:.4%} exceeds 15%"
+
+    def test_analytic_bc_improves_on_natural_bc(self):
+        """The analytic Dirichlet wall beats n x H = 0 on the same mesh.
+
+        This is the MAG-13 claim stated as a test: the natural condition
+        ``n x H = 0`` on the outer cylinder contradicts Ampere's law for a net
+        axial current, so it is a modeling error, not a discretization one, and
+        removing it must lower the error at fixed h. Run at the coarse
+        resolution so both solves fit the smoke budget.
+        """
+        comm = MPI.COMM_WORLD
+        res = 0.004
+        n_points = 10
+        errors = {}
+
+        for use_bc in (False, True):
+            _, b_field = _solve_straight_wire(res, comm, analytic_bc=use_bc)
+            _, b_num_mag, b_ana_mag, _ = _sample_radial(
+                b_field, n_points, comm, R_MIN, R_MAX_BC
+            )
+            errors[use_bc] = ErrorMetrics.l2_relative_error(b_num_mag, b_ana_mag)
+
+        if comm.rank == 0:
+            print(f"\n  h={res}: natural BC {errors[False]:.4%}, "
+                  f"analytic BC {errors[True]:.4%}")
+
+        # Measured at h=0.004, -n 2 (log 20260730T034541Z_MAG-13-probe):
+        # 35.13% natural -> 22.19% analytic, a factor 0.63. The 0.85 bound
+        # leaves room for mesh-partition noise while still failing if the BC
+        # stops being applied at all.
+        assert errors[True] < 0.85 * errors[False], (
+            f"Analytic BC {errors[True]:.4%} should beat natural BC "
+            f"{errors[False]:.4%} at h={res}"
+        )
 
     def test_straight_wire_convergence(self):
         """Error decreases as the mesh is refined."""

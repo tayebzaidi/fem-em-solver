@@ -55,6 +55,46 @@ from ..utils.constants import MU_0
 DEFAULT_GAUGE_PENALTY = 1.0
 
 
+def exterior_dirichlet_bc(V: fem.FunctionSpace, field: Callable) -> fem.DirichletBC:
+    """Constrain an H(curl) space to an analytic field on the exterior boundary.
+
+    The natural condition of the curl-curl form is ``n × (μ⁻¹ curl A) = 0``,
+    i.e. ``n × H = 0``, which on a truncation boundary is a physical statement
+    (a perfect magnetic conductor) rather than a neutral one — for a wire
+    carrying net axial current it directly contradicts Ampère's law and puts a
+    floor under the achievable error (MAG-13). Imposing a known ``A`` on that
+    boundary instead makes the continuum limit of the discrete problem the
+    analytic field.
+
+    Constraining *all* exterior dofs of the interpolant imposes its tangential
+    trace, which is the only part an H(curl) Dirichlet condition can carry.
+
+    Parameters
+    ----------
+    V : fem.FunctionSpace
+        H(curl) (N1curl) space of the unknown.
+    field : callable
+        Field in dolfinx interpolation convention: takes ``x`` of shape
+        ``(3, n)`` and returns the vector field of shape ``(3, n)``. Note this
+        is the transpose of the ``(n, 3)`` convention used by
+        ``utils.analytical`` — adapt at the call site.
+
+    Returns
+    -------
+    fem.DirichletBC
+        Suitable for ``MagnetostaticSolver.solve(bc_functions=[bc])``.
+    """
+    domain = V.mesh
+    fdim = domain.topology.dim - 1
+    domain.topology.create_connectivity(fdim, domain.topology.dim)
+    exterior_facets = dolfinx.mesh.exterior_facet_indices(domain.topology)
+    exterior_dofs = fem.locate_dofs_topological(V, fdim, exterior_facets)
+
+    g = fem.Function(V)
+    g.interpolate(field)
+    return fem.dirichletbc(g, exterior_dofs)
+
+
 class GaugeContaminationWarning(UserWarning):
     """A is dominated by its gradient null space; B may be roundoff-corrupted."""
 

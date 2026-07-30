@@ -412,7 +412,7 @@ in `docs/testing/pending-tests.md`. This table is the authoritative *status*.
 | `MAG-10` | Gauge penalty was below the safe window | ✅ | standard | *new* |
 | `MAG-11` | Parallel energy was rank-local (missing allreduce) | ✅ | smoke | *new* |
 | `MAG-12` | `evaluate_at_points` still used the MAG-7 broken pattern | ✅ | smoke | *new* |
-| `MAG-13` | Analytic-Dirichlet outer boundary for wire/loop fixtures | ⬜ | standard | *new* |
+| `MAG-13` | Analytic-Dirichlet outer boundary for wire/loop fixtures | 🟡 | standard | wire done, 72 s `-n 2`; loop + rate rework open |
 | `MAG-14` | Promote the Helmholtz analytic comparison into the test suite | ✅ | smoke | 11 s, `-n 2` |
 | `MAG-15` | Lagrange-multiplier Coulomb gauge (parameter-free cross-check) | ✅ | smoke | *new* |
 
@@ -574,7 +574,57 @@ Logs `20260728T195016Z_MAG-11.log`, `20260728T195031Z_MAG-12.log`. The guard
 file joined the CI validation job's `mpiexec -n 2` step — the only environment
 where a missing reduction is visible at all.
 
-#### `MAG-13` — analytic-Dirichlet boundaries for the wire/loop fixtures ⬜
+#### `MAG-13` — analytic-Dirichlet boundaries for the wire/loop fixtures 🟡
+
+**Wire half done 2026-07-30** (scheduled implementer run; steps 1–3 and 6, the
+scope the §9 On-deck item carried). Steps 4–5 — the loop fixture and the
+convergence-test rework — remain open; the analytic ingredient step 5 needs
+(`AnalyticalSolutions.circular_loop_vector_potential`, Jackson 5.37) is already
+in and unit-tested, so the follow-up run is fixture work only.
+
+Landed:
+
+- `AnalyticalSolutions.straight_wire_vector_potential(..., wire_radius=a)` —
+  finite-conductor branch, gauged to `A_z(a) = 0`, so the potential is finite
+  on the axis. Required: the `straight_wire_domain` end caps cross `r = 0`,
+  where the filament `ln r` diverges and interpolation would poison the BC.
+- `AnalyticalSolutions.circular_loop_vector_potential` — off-axis `A_φ` via
+  `scipy.special.ellipk/ellipe` (scipy 1.11.3 present in the container), with
+  the `ρ → 0` branch. Unit-tested by curling it back to the on-axis closed form
+  at three `z` (rtol 1e-6), which is what catches the `m = k²` convention trap.
+- `core.solvers.exterior_dirichlet_bc(V, field)` — interpolate a callable into
+  an N1curl space, constrain all topologically-located exterior dofs. Generic;
+  the loop fixture reuses it unchanged.
+
+**Measured** (`mpiexec -n 2`, |B| L2 error over `2a → 0.8 R_domain`):
+
+| h | cells | natural `n×H = 0` | analytic Dirichlet |
+|---|---|---|---|
+| 0.004 | 38.8k | 35.13% | 22.19% |
+| 0.0025 | 145.9k | — | 12.75% |
+| 0.0018 | 383.2k | — | 9.26% |
+
+Fitted rate ≈ **O(h^1.2)** across the three, with no plateau — the modeling
+floor this chunk was written against is gone. The test bound tightens
+**25% → 15%** at h = 0.0025 (measured 12.75%) and the sampling window widens
+from `0.4 R` back to `0.8 R`; a new test
+`test_analytic_bc_improves_on_natural_bc` asserts the BC beats the natural wall
+on the *same* mesh (measured factor 0.63, bound 0.85), which is the chunk's
+physical claim rather than a tolerance.
+
+Not reached: the < 5% target. Extrapolating the measured rate puts it at
+h ≈ 0.00125, ~1.1M cells and > 5 min at `-n 2` — outside the standard tier.
+The residual is uniform-mesh discretization of a 1/r field next to a thin
+conductor, so graded refinement (`MAG-9` machinery) is the cheap route, not
+more uniform h. `J·n ≠ 0` at the end caps also still stands; step 3's
+"cap the wire short of the end faces" option was not needed to clear the floor
+and was left unmeasured.
+
+Logs: `20260730T034941Z_MAG-13.log` (9 passed, 72 s, standard tier);
+probes `20260730T034541Z_MAG-13-probe.log` (BC vs natural at h=0.004),
+`20260730T034614Z_MAG-13-probe2.log` (h-refinement).
+
+**Original analysis and plan (steps 4–5 still to do):**
 
 The straight-wire fixture cannot converge to `μ₀I/(2πr)` at any resolution:
 the natural BC `n×H = 0` on the side wall contradicts Ampère's law for any net
@@ -1178,8 +1228,12 @@ passed at 11 s on `-n 2` and is now in CI (§7 entry).
 
 1. ~~`MAG-14` — Helmholtz magnitude test~~ — **done 2026-07-29**, 1.731% centre
    error, log `20260729T144331Z_MAG-14.log`
-2. `MAG-13` — **wire fixture only** (§7 entry steps 1–3 and 6; the loop
-   fixture and the convergence-test rework are a later run)
+2. ~~`MAG-13` — **wire fixture only** (§7 entry steps 1–3 and 6)~~ — **done
+   2026-07-30**, 12.75% at h=0.0025 over `2a → 0.8R` (was 25% bound / 0.4R
+   window), O(h^1.2) over three meshes, log `20260730T034941Z_MAG-13.log`.
+   Follow-up for the daily review to queue: `MAG-13` steps 4–5 (loop fixture +
+   convergence-test rework) — the elliptic-integral `A_φ` and the
+   `exterior_dirichlet_bc` helper are already landed and unit-tested.
 3. `TH-9` — PEC cavity resonance gate (plan in its §7 entry; real mode, no
    complex-environment dependency)
 
