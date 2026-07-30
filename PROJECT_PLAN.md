@@ -305,7 +305,7 @@ Chunks in §7 are grouped by subsystem; this is how they ladder into capability.
 |---|---|---|---|
 | 0 | Infrastructure, packaging, CI, meshing | `OPS-1`, `OPS-2` | Partially done; CI validates almost nothing |
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Substantially complete and trustworthy** |
-| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | **Not started** — §2.1 blocks everything |
+| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | **Barely started** — `TH-9` (cavity gate) ✅ 2026-07-30; the driven solver is still §2.1-blocked |
 | 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-5` | Presets exist but are inert |
 | 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-8` | Placeholder-backed |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 |
@@ -924,7 +924,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `TH-6` | **Validation: plane wave in lossy half-space** | ⬜ | standard | *new* |
 | `TH-7` | **Validation: waveguide cutoff / coaxial line** | ⬜ | standard | *new* |
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ⬜ | standard | *new* |
-| `TH-9` | **Validation: PEC rectangular-cavity resonances** | ⬜ | standard | *new* |
+| `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard | *new* |
 
 **`TH-1` — Real complex time-harmonic formulation** ⬜ **← the critical chunk**
 > Replace the `E = -ωA` proxy with an actual frequency-domain solve:
@@ -1006,8 +1006,40 @@ verified against.
 > deliverables. ABC/PML is needed only for unshielded free-space validation
 > geometries; do not let it block Phase 5.
 
-**`TH-9` — PEC rectangular-cavity resonance gate** ⬜ *(Batch 3 step 1 — plan
-documented 2026-07-28, not yet executed)*
+**`TH-9` — PEC rectangular-cavity resonance gate** ✅ *(Batch 3 step 1 —
+executed 2026-07-30, `src/fem_em_solver/core/cavity.py` +
+`tests/validation/test_cavity_resonances.py`, harness log
+`20260730T154846Z_TH-9.log`, 3 s at `mpiexec -n 2`)*
+> **Result.** Cavity 1.0 × 0.8 × 0.6 m (edges non-commensurate so the first
+> four modes are non-degenerate: 239.95 / 291.35 / 312.28 / 346.40 MHz, closest
+> pair 7% apart; the fifth at 353.53 MHz is only 2% above the fourth, which is
+> why the gate stops at four). N1curl degree 2, `mpiexec -n 2`:
+>
+> | divisions | cells | dofs | per-mode error (%) | max |
+> |---|---|---|---|---|
+> | (6, 5, 4) | 720 | 5330 | 0.0123 / 0.0153 / 0.0201 / 0.0436 | 0.0436% |
+> | (9, 7, 6) | 2268 | 15998 | 0.0030 / 0.0025 / 0.0049 / 0.0102 | 0.0102% |
+>
+> Every mode improves under the refinement; the fitted max-error rate is
+> **3.85** in h, consistent with the O(h^{2k}) eigenvalue convergence of
+> degree-2 edge elements (assertion floor 2.0). Null space: the 8 eigenvalues
+> nearest zero are all below 1e-8·k₁² — measured max |λ|/k₁² = 3.2e-15 — i.e.
+> the gradient modes come back as a clean machine-zero cluster, counted rather
+> than skipped. Zero null modes leaked into the physical band.
+>
+> **Constrained-dof handling** (the trap): the PEC rows are assembled with a
+> large diagonal in `A` (1e4·k₄²) and unit diagonal in `B`, which keeps `B`
+> SPD — so SLEPc sees a genuine GHEP — and parks the spurious eigenvalues far
+> above the band, where a cutoff drops them. Assembling `B` with a zero
+> diagonal instead makes it singular and invalidates the GHEP orthogonalisation.
+> The shift-and-invert target is the midpoint of the analytic k₁²…k₄² band;
+> that is preconditioning only, and the returned eigenvalues are compared with
+> the closed form independently.
+>
+> This chunk needed only the real-scalar build, as planned — it is the
+> known-frequency fixture the `TH-1` resonance guard will be verified against.
+>
+> Original plan, retained:
 > The first executable deliverable of Phase 2, landing *before* the driven
 > solver — and it needs **only the real-scalar build**: a lossless source-free
 > cavity eigenproblem is real symmetric, so this chunk is deliberately
@@ -1182,7 +1214,10 @@ closed by decision — see its entry).
 Done 2026-07-29: `MAG-14` (scheduled run, 1.731% vs closed form, in CI).
 Done 2026-07-30: `MAG-13` in full — wire half (steps 1–3, 6) in the 22:42 run of
 2026-07-29, loop fixture + convergence rework (steps 4–5) in the 07:42 run.
-**Batch 2 is complete**; the next item is Batch 3 (`TH-9`).
+Also done 2026-07-30 (10:42 run): `TH-9`, the PEC cavity resonance gate —
+Batch 3 step 1, real-scalar build only.
+**Batch 2 is complete**; Batch 3 is under way — `TH-9` ✅, next `TH-1`
+(starting with its environment step 0) + `TH-6`.
 
 Steps 1 and 2 below carry **per-chunk implementation plans in their §7
 entries** (added 2026-07-28): concrete file lists, formulas with their known
@@ -1192,10 +1227,11 @@ start from those entries, not from this summary.
 1. ~~**Batch 2 — `MAG-13` + `MAG-14`**~~ — done 2026-07-29/30. The wire and loop
    cases are now true convergence gates (three-resolution fitted rate, analytic
    Dirichlet walls) and example 04 is a scale-sensitive test in CI.
-2. **Batch 3 — `TH-9` → `TH-1` + `TH-6`** — the cavity gate first (purest
-   assembly check, the resonance-guard fixture, and **real-mode only**, so it
-   is not blocked on environment work), then the complex formulation landed
-   against the lossy plane-wave gate in the same chunk. `TH-1` requires
+2. **Batch 3 — ~~`TH-9`~~ → `TH-1` + `TH-6`** — the cavity gate landed
+   2026-07-30 (purest assembly check, the resonance-guard fixture, and
+   **real-mode only**, so it was not blocked on environment work); next the
+   complex formulation landed against the lossy plane-wave gate in the same
+   chunk. `TH-1` requires
    `dolfinx-complex-mode` (§5.3); its plan makes the environment work a
    separate logged smoke chunk because `sitecustomize.py` currently patches
    only the *real* dolfinx path.
@@ -1291,9 +1327,13 @@ commit `b81b958` was cherry-picked to main and verified on 2026-07-29.
    interpolation error of the BC data — so the gain is monotone convergence to
    the analytic field, not a lower number on the same mesh. Both fixtures are
    now **heavy** tier. See the §7 entry.
-2. `TH-9` — PEC cavity resonance gate (plan in its §7 entry; real mode, no
-   complex-environment dependency; verify `slepc4py` imports at chunk start —
-   it is the long pole if absent).
+2. ~~`TH-9` — PEC cavity resonance gate.~~ **Done 2026-07-30** (10:42 run):
+   `slepc4py` 3.20.0 is present in the image, so the feared long pole was a
+   non-issue. First four modes of a 1.0 × 0.8 × 0.6 m box match the closed form
+   to 0.0436% at the budgeted mesh (tolerance 1%), every mode improves under one
+   refinement at a fitted rate of 3.85 in h, and the N1curl gradient modes come
+   back as a machine-zero cluster (8/8 below 1e-8·k₁²). 3 s at `mpiexec -n 2`;
+   log `20260730T154846Z_TH-9.log`. See the §7 entry.
 3. `TH-1` **step 0 only** — complex-mode environment smoke (§7 `TH-1` plan
    step 0): extend `src/sitecustomize.py` (or set `PYTHONPATH` explicitly) for
    `/usr/local/dolfinx-complex`, then assert `PETSc.ScalarType == complex128`

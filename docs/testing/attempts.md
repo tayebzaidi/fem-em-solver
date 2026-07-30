@@ -461,3 +461,57 @@ is an artifact of the evaluation, not of the solve.
 
 ---
 
+
+## 2026-07-30T15:42Z — TH-9 — complete
+
+- **Tried:** preflight clean (`git status --porcelain` empty on `main`,
+  container Up 3 days), top On-deck item taken as written. Implemented the §7
+  plan: new `src/fem_em_solver/core/cavity.py` assembling the N1curl pencil
+  `∫(∇×E)·(∇×v) dx = k² ∫E·v dx` on a PEC box with `dolfinx.mesh.create_box`,
+  solved as a SLEPc GHEP with shift-and-invert (MUMPS LU), plus
+  `tests/validation/test_cavity_resonances.py` (three tests). `slepc4py` 3.20.0
+  imports in the image and `PETSc.ScalarType` is `float64` — the §9 note flagged
+  slepc as the long pole; it was a non-issue, and the real build is all this
+  chunk needs.
+- **Result / measured:** cavity 1.0 × 0.8 × 0.6 m. The plan's suggested
+  1.0 × 0.7 × 0.5 m was **rejected before any solve**: `d = a/2` makes
+  `(0,1,1)` and `(2,1,0)` exactly degenerate at 368.5 MHz, which is precisely
+  the ordering ambiguity the plan wanted to avoid. With 0.8/0.6 the first four
+  modes are 239.95 / 291.35 / 312.28 / 346.40 MHz, closest pair 7% apart; the
+  fifth (353.53 MHz) is only 2% above the fourth, so the gate stops at four
+  rather than five. N1curl degree 2, `mpiexec -n 2`:
+  (6,5,4) → 720 cells / 5330 dofs / max error **0.0436%** (tolerance 1%);
+  (9,7,6) → 2268 cells / 15998 dofs / max error **0.0102%**. Every mode
+  improves; fitted max-error rate **3.85** in h (assertion floor 2.0),
+  consistent with O(h^{2k}) for degree-2 edge elements. Null space: the 8
+  eigenvalues nearest zero are all below 1e-8·k₁², max |λ|/k₁² = **3.2e-15**,
+  counted and asserted rather than skipped; zero null modes leaked into the
+  physical band. Cost probe first (three configurations, 180 s ceiling, actual
+  2.8 s); the verification run itself was **3 s** at standard tier — the tier
+  is kept at `standard` per §7 rather than demoted, since the mesh is a budget
+  knob a future TH-1 fixture may turn up.
+- **Trap worth recording:** the PEC-constrained rows. Assembling `B` with a
+  zero diagonal (the obvious way to send the constrained dofs to infinity)
+  makes `B` singular and invalidates the GHEP B-orthogonalisation. Instead `A`
+  gets a large diagonal (1e4·k₄²) and `B` unit diagonal: `B` stays SPD, the
+  spurious eigenvalues park at 1e4·k₄², and a stated cutoff drops them. The
+  shift target is the midpoint of the analytic k₁²…k₄² band, chosen so every
+  requested mode is strictly closer to the shift than the zero cluster is —
+  that is why `null_mode_count == 0` is an assertion and not an accident.
+- **Logs:** `docs/testing/logs/20260730T154616Z_TH-9.log` (first pass; pytest
+  captured stdout, so the numbers are not in the log — kept for the record),
+  `20260730T154626Z_TH-9.log` (re-run with `-s`, numbers visible), and
+  `20260730T154846Z_TH-9.log` — **the log of record**: the same run repeated
+  after two code comments were corrected to the measured rate (3.85, not the
+  3.58 I had estimated by hand), so the log matches the committed source
+  byte-for-byte. All three: 3 passed, 3 s.
+- **Branch (if parked):** none; landed on `main`.
+- **Denied commands:** none.
+- **Next-attempt hypothesis:** On-deck now advances to `TH-1` step 0, the
+  complex-mode environment smoke. Note for whoever takes it: this chunk
+  confirms the real build is healthy, so a `TH-1` failure after the switch is
+  environment or formulation, not assembly — `cavity.py` gives a cheap
+  A/B, since the same eigenproblem must return the same frequencies under
+  `dolfinx-complex` if the environment is sound. Worth 30 s of the TH-1 run.
+
+---

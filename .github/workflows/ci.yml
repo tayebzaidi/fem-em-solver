@@ -91,11 +91,12 @@ jobs:
     - name: Smoke matrix
       run: ./run_tests.sh --smoke
 
-    - name: Magnetostatics validation (analytic comparisons)
+    - name: Analytic validation (magnetostatics + PEC cavity resonances)
       # Measured 150s at 8 ranks on the dev box before MAG-13 steps 4-5; the
       # loop and convergence fixtures are now heavy tier (167 s and 196 s at
       # -n 2 on the dev box), so expect 15-25 min here. `slow` must be selected
-      # explicitly since conftest.py marks every non-unit test with it.
+      # explicitly since conftest.py marks every non-unit test with it. The
+      # TH-9 cavity gate adds 3 s (measured at -n 2, TH-9 run of 2026-07-30).
       run: |
         mpiexec -n 2 python3 -m pytest \
           tests/validation/test_straight_wire.py \
@@ -103,6 +104,7 @@ jobs:
           tests/validation/test_convergence.py \
           tests/validation/test_helmholtz_v2.py \
           tests/validation/test_helmholtz_magnitude.py \
+          tests/validation/test_cavity_resonances.py \
           tests/solver/test_two_cylinder.py \
           tests/solver/test_two_torus.py \
           tests/solver/test_energy_and_point_evaluation.py \
