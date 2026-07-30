@@ -19,6 +19,26 @@ machine.
    append an `anomaly` entry to `docs/testing/attempts.md` describing what
    you found, commit only that, and stop. Confirm the container is Up per
    CLAUDE.md.
+
+   **Exception — already-journaled documentation drift.** If a *prior* run's
+   attempts.md anomaly entry already describes this exact dirty tree, you may
+   land it and proceed with chunk work, provided ALL of the following hold
+   (verify each; do not assume):
+   - the current diff is **byte-identical** to the one the prior entry
+     journaled (same files, same `git diff` content);
+   - it touches **documentation only** — nothing under `src/`, `tests/`,
+     `scripts/`, and no §7 status or done-when change in PROJECT_PLAN.md;
+   - the edits are internally consistent and complete (they read as a
+     finished change, not half of one).
+
+   Commit the diff **by itself** first (`docs: land dirty tree journaled
+   <UTC timestamp of the anomaly entry>`), note in your own attempts.md
+   entry that you landed it and why the conditions held, then continue at
+   step 2. If any condition fails — new or different dirtiness, anything
+   non-documentation, no prior journal entry — the original rule applies
+   unchanged: anomaly entry, commit only that, stop. Never discard or stash
+   a human's edits; landing an already-journaled doc diff is the only
+   permitted action.
 2. Take the FIRST item under "On deck" in §9 that is not marked done or
    blocked. Do not choose a different item for any reason. If the list is
    empty, append an attempts.md entry saying so and stop.
