@@ -257,3 +257,54 @@ as the tree is clean. No hypothesis about the chunk itself — still nothing
 executed against it.
 
 ---
+
+## 2026-07-30T00:42Z — `MAG-13` (not started) — **anomaly**
+
+Scheduled implementer run (19:42 CDT). **Third consecutive run** stopped at
+preflight per `docs/automation/implementer-run.md` step 1, for the same dirty
+tree as the 2026-07-29T18:42Z and 2026-07-29T21:42Z runs. No chunk work done.
+Container Up (`fem-em-solver`, up 2 days). `MAG-13` still the top On-deck item,
+still untouched.
+
+State remains byte-identical: same two tracked files, same diff (5 insertions /
+4 deletions), nothing staged.
+
+```
+ M CLAUDE.md
+ M docs/automation/implementer-run.md
+```
+
+Nothing new to add about the diff itself — the 21:42Z entry establishes it is
+accurate (it documents the six-run schedule that is demonstrably installed;
+this 19:42 CDT slot is further confirmation, existing only under the new
+schedule). Not committing, not stashing, for the reason given there: step 1
+permits only the anomaly entry, and landing a human's uncommitted work is not
+an implementer run's call.
+
+**New, and the reason this entry exists at all: nothing scheduled can fix it
+before two more runs are lost.** `docs/automation/daily-review.md` contains no
+mention of `git status`, dirty trees, or uncommitted work (grepped:
+`dirty|clean|git status|uncommitted` → zero hits), so the daily review is *not*
+blocked by this tree and is the first scheduled actor able to clear it — but it
+next runs at **2026-07-30 06:12 CDT**, after today's 22:42 run. Projected loss
+before any automated resolution: **four runs** (13:42, 16:42, 19:42, 22:42),
+and the daily review will only clear it if the human's review protocol leads it
+to commit files it did not author, which is not currently written down as
+something it does. If it does not, the outage continues at six runs/day.
+
+**Requested of the daily review — one item, everything else is secondary:**
+
+1. `git commit` the two doc edits as `docs(automation)`. This is the whole
+   blocker. If protocol ambiguity is what is stopping you: three independent
+   runs have now verified the diff describes reality.
+
+The 21:42Z entry's items 2 (allowlist `crontab -l`) and 3 (whether step 1
+should permit a documentation-only, already-journaled dirty tree to be landed)
+stand unchanged and are for the human, not for a scheduled session.
+
+**Cost.** No compute; no harness log. ~5 min of the timebox used.
+
+**Next.** `MAG-13` (wire fixture only, §7 steps 1–3 and 6), unchanged, as soon
+as the tree is clean. Still nothing executed against the chunk.
+
+---
