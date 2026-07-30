@@ -98,7 +98,7 @@ higher-order solves: at N1curl degree 2 the field error was **920%** while PETSc
 reported *converged, residual 0.0*, because the default solver is a direct LU that
 always "succeeds". `B` is insensitive across 1e0–1e6, so there is no accuracy
 reason to lower it. Passing anything below 1.0 raises
-`GaugeContaminationWarning`. See `PROJECT_PLAN.md` §7 `MAG-10`.
+`GaugeContaminationWarning`. See `docs/project-history.md` (`MAG-10`).
 
 ## Next work
 

@@ -22,7 +22,7 @@ which is checked here both against `AnalyticalSolutions.helmholtz_coil_field_on_
 (so a bug in that helper cannot hide) and against the FEM solution.
 
 Sizing (measured, `docs/testing/logs/20260727T171928Z_MAG-4.log` and the
-`MAG-1`/`MAG-4` convergence table in PROJECT_PLAN.md §7)
+`MAG-1`/`MAG-4` convergence table in docs/project-history.md)
 ------------------------------------------------------
 Accuracy here is dominated by the air box, not by `h`: the outer boundary
 carries `n x H = 0`, a perfect *magnetic* conductor that mirrors flux back in.
