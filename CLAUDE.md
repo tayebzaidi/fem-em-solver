@@ -20,7 +20,7 @@ frequency-domain output, S-parameter, or green test downstream of it.
   heavy 600 s), wrap runs in `timeout` at the ceiling, never exceed 10 minutes.
   Overrun ⇒ kill and shrink the case; never just raise the timeout.
 - **All verification runs in Docker through the logging harness** (service must
-  be Up — `cd docker && docker compose ps`):
+  be Up — `docker compose -f docker/docker-compose.yml ps`):
 
   ```
   scripts/testing/run_and_log.sh <CHUNK-ID> "docker compose exec -T fem-em-solver \
