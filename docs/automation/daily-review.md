@@ -46,9 +46,12 @@ reading harness logs is fine. You are maintaining the plan, not executing it.
    §4-compliant done-whens, implementation plans with known traps named). If
    no gap exists, do not invent work.
 
-6. Refresh **"On deck"** in §9: exactly 3 items, ordered, each sized for one
-   implementer run (≤ 1 h wall clock, ≤ 10 min per compute command). An item
-   that has failed twice must be rescoped before it may be listed again.
+6. Refresh **"On deck"** in §9: at least 6 items not done or blocked (one
+   full day of implementer slots), ordered, each sized for one implementer
+   run (≤ 1 h wall clock, ≤ 10 min per compute command). An item that has
+   failed twice must be rescoped before it may be listed again. If fewer
+   than 6 ready items exist, list what exists and say so — step 5 still
+   forbids inventing work.
 
 7. Commit everything as `docs(plan): daily review YYYY-MM-DD`. If nothing
    needs changing, **commit nothing** — §5.2 explicitly prohibits audit-note

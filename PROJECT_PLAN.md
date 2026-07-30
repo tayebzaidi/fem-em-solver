@@ -1339,10 +1339,11 @@ attempts.md entries. See `docs/testing/attempts.md` 2026-07-28T22:46Z.
 ### On deck — maintained by the scheduled daily review
 
 The next scheduled implementer run takes the **first** item below that is not
-marked done or blocked (see `docs/automation/implementer-run.md`). Exactly
-three items, ordered, each sized for one run: ≤ 1 h wall clock, ≤ 10 min per
-compute command. Items that fail twice get rescoped by the daily review
-before they may reappear.
+marked done or blocked (see `docs/automation/implementer-run.md`). At least
+six open items — one full day of implementer slots — ordered, each sized for
+one run: ≤ 1 h wall clock, ≤ 10 min per compute command. Items that fail twice
+get rescoped by the daily review before they may reappear. If every item is
+done, the implementer falls back to the "obvious next entry" named below.
 
 Last reviewed 2026-07-30 (daily review). Since the previous review: `MAG-14`
 ✅ (09:42 run; §4 audit passed — agent-executed harness log
@@ -1380,12 +1381,25 @@ commit `b81b958` was cherry-picked to main and verified on 2026-07-29.
    `∫ inner(f,g) dx = 11+2j` vs `∫ dot(f,g) dx = −5+10j`, and
    `‖M_c − ε_c M‖_F / ‖M‖_F = 4e-16` on N1curl. 1 s at `mpiexec -n 2`;
    log `20260730T184446Z_TH-1-step0-complex.log`. See the §7 entry.
+4. `TH-1` **steps 1–3** — sesquilinear form
+   `∫μᵣ⁻¹(∇×E)·(∇×v̄) − k₀²ε_c E·v̄ dx` with `ε_c = εᵣ − jσ/(ωε₀)` from the
+   existing DG0 `build_material_fields`, load `−jωμ₀∫J·v̄ dx`, MUMPS direct
+   solve with PEC via `build_boundary_conditions`, then replace the `E = −jωA`
+   body of `TimeHarmonicSolver.solve` keeping the `TimeHarmonicFields`
+   container so downstream `⚠️` chunks still import. See the §7 entry
+   (steps 1–3) for the full plan and traps. Standard tier.
+5. `TH-1` **steps 4–5** — `TH-6` lossy-half-space gate (interior decay
+   constant + phase vs closed-form skin depth) and the `MAT-2` σ-sensitivity
+   assertion, plus the resonance guard verified against a `TH-9` mode.
 
-**On deck is empty** after this item — the next daily review must refill it.
-The obvious next entry is `TH-1` steps 1–3 (sesquilinear form, MUMPS solve,
-`TimeHarmonicSolver.solve` body), with steps 4–5 (`TH-6` gate + resonance
-guard) behind them; the environment risk that headed the chunk's risk list is
-now retired.
+Every `TH-1` command needs `source /usr/local/bin/dolfinx-complex-mode` **and**
+`FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest path
+list, so an environment regression fails before the formulation tests get
+blamed.
+
+The obvious next entry after these is `MAT-6` (Dodd–Deeds loading gate), per
+the sequencing above; the next daily review should refill On deck to at least
+six items per `docs/automation/daily-review.md`.
 
 **Do not add new features to `⚠️` subsystems.** Extending a proxy is what produced
 the current backlog: roughly 20 chunks of scaffolding that will need revalidation

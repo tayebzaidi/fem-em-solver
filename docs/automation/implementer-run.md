@@ -40,8 +40,11 @@ machine.
    a human's edits; landing an already-journaled doc diff is the only
    permitted action.
 2. Take the FIRST item under "On deck" in §9 that is not marked done or
-   blocked. Do not choose a different item for any reason. If the list is
-   empty, append an attempts.md entry saying so and stop.
+   blocked. Do not choose a different item for any reason. If every item is
+   done or blocked, fall back to the chunk named in §9's "obvious next entry"
+   sentence, scoped to one run; note in attempts.md that you used the
+   fallback. If that sentence names nothing, append an attempts.md entry
+   saying so and stop.
 3. Execute the chunk following `.claude/agents/implementer.md` (read it
    first) and the chunk's §7 entry, which carries the implementation plan.
 4. Outcome:
