@@ -57,16 +57,20 @@ review of returned diffs stay in the main (Fable) session.
 
 ## Scheduled automation
 
-System cron runs headless sessions via `scripts/automation/`:
+System cron runs headless sessions via `scripts/automation/` on a 90-minute
+grid — 3 reviews and 12 implementer runs a day, four runs after each review:
 
-- **Daily review** (Fable, 06:12 local) — audits results against §4,
-  rescopes failed attempts, maintains the §9 "On deck" queue. Protocol:
+- **Plan review** (Fable, 03:00 / 10:30 / 18:00 local) — audits results
+  against §4, rescopes failed attempts, disposes of `recovered/*` branches,
+  tops the §9 "On deck" queue up to 5 items. Protocol:
   docs/automation/daily-review.md.
-- **Implementer runs** (Opus, six daily: every 3 h at :42, 07:42–22:42
-  local) — each attempts the
-  top On-deck item inside a 1-hour timebox; incomplete work is parked on
-  `attempt/*` branches and journaled in docs/testing/attempts.md, never left
-  on main. Protocol: docs/automation/implementer-run.md.
+- **Implementer runs** (Opus, 04:30 / 06:00 / 07:30 / 09:00 and the same
+  offsets after each later review) — each attempts the top On-deck item
+  inside a 1-hour timebox; incomplete work is parked on `attempt/*` branches
+  and journaled in docs/testing/attempts.md, never left on main. A dirty tree
+  stops the first run that meets it and is parked on `recovered/*` by the
+  second, so an outage costs two slots rather than the rest of the day.
+  Protocol: docs/automation/implementer-run.md.
 
 If you are one of these scheduled sessions, your protocol document is
 authoritative; read it before acting. If you are an interactive session,

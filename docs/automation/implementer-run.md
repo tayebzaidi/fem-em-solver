@@ -1,8 +1,11 @@
 # Implementer run protocol (Opus, scheduled)
 
-Run by `scripts/automation/implementer-run.sh` via cron, six times daily
-(every 3 h at :42, 07:42–22:42 local). One run = one attempt at the **top
-"On deck" item** in PROJECT_PLAN.md §9.
+Run by `scripts/automation/implementer-run.sh` via cron, twelve times daily on
+a 90-minute grid shared with the daily review (04:30, 06:00, 07:30, 09:00,
+12:00, 13:30, 15:00, 16:30, 19:30, 21:00, 22:30, 00:00 local — four runs after
+each of the three reviews at 03:00 / 10:30 / 18:00). One run = one attempt at
+the **top "On deck" item** in PROJECT_PLAN.md §9. Sessions never overlap: the
+grid spacing exceeds the 65-minute hard kill, and all runs share one `flock`.
 
 ## Timebox
 
@@ -39,6 +42,22 @@ machine.
    unchanged: anomaly entry, commit only that, stop. Never discard or stash
    a human's edits; landing an already-journaled doc diff is the only
    permitted action.
+
+   **Second encounter — park it and proceed.** If a prior run's attempts.md
+   anomaly entry already journaled a dirty tree and the tree is *still* dirty
+   now, the tree is stuck and stopping again just burns the rest of the day's
+   slots. Whatever the diff contains:
+   - commit it **as-is** to a new branch `recovered/<UTC-timestamp>` (create
+     the branch, commit there, return to a clean `main`);
+   - journal in your attempts.md entry what you parked, the branch name, and
+     the timestamp of the prior entry that made this the second encounter;
+   - then continue at step 2 and do chunk work normally.
+
+   Parking preserves the content — nothing is discarded or stashed, and the
+   branch is recoverable with one `git checkout`. The first encounter still
+   stops, so a human editing interactively is never interrupted mid-change;
+   only a tree that survived a full slot unattended gets moved. Never delete a
+   `recovered/*` branch; the daily review disposes of it.
 2. Take the FIRST item under "On deck" in §9 that is not marked done or
    blocked. Do not choose a different item for any reason. If every item is
    done or blocked, fall back to the chunk named in §9's "obvious next entry"

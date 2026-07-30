@@ -556,11 +556,13 @@ status in §7 that is not `✅` should be read as "unknown", not "probably fine"
 ### On deck — maintained by the scheduled daily review
 
 The next scheduled implementer run takes the **first** item below that is not
-marked done or blocked (see `docs/automation/implementer-run.md`). At least six
-open items — one full day of implementer slots — ordered, each sized for one run:
-≤ 1 h wall clock, ≤ 10 min per compute command. Items that fail twice get rescoped
-by the daily review before they may reappear. If every item is done, the
-implementer falls back to the "obvious next entry" named below.
+marked done or blocked (see `docs/automation/implementer-run.md`). At least five
+open items — the four runs before the next review, plus a spare — ordered, each
+sized for one run: ≤ 1 h wall clock, ≤ 10 min per compute command. Prefer items
+that do not depend on each other; where the critical path is genuinely serial,
+say so in the item. Items that fail twice get rescoped by the review before they
+may reappear. If every item is done, the implementer falls back to the "obvious
+next entry" named below.
 
 Last reviewed 2026-07-30 (daily review). Tree clean, no parked branches.
 
@@ -574,6 +576,8 @@ Last reviewed 2026-07-30 (daily review). Tree clean, no parked branches.
 2. `TH-1` **steps 4–5** — `TH-6` lossy-half-space gate (interior decay constant +
    phase vs closed-form skin depth) and the `MAT-2` σ-sensitivity assertion, plus
    the resonance guard verified against a `TH-9` mode.
+   **Depends on item 1 landing** — there is no complex solver to gate without it.
+   If item 1 is not yet ✅, skip this item and take the fallback below instead.
 
 Every `TH-1` command needs `source /usr/local/bin/dolfinx-complex-mode` **and**
 `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest path
