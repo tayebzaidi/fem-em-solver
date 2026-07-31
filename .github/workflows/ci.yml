@@ -149,8 +149,11 @@ jobs:
   validation-complex:
     runs-on: ubuntu-latest
     # 46 s at -n 2 on the dev box for the whole list below (OPS-10 run of
-    # 2026-07-31). Runners are slower and the meshes are gmsh-generated, so 30
-    # minutes is generous headroom rather than a measured bound.
+    # 2026-07-31), plus ~30 s for the POST-3 Poynting-balance file added
+    # 2026-07-31 (four solves, one at 24^3, log
+    # 20260731T140404Z_POST-3-step1-gate.log). Runners are slower and the meshes
+    # are gmsh-generated, so 30 minutes is generous headroom rather than a
+    # measured bound.
     timeout-minutes: 30
     container:
       image: dolfinx/dolfinx:v0.7.2
@@ -177,6 +180,7 @@ jobs:
           tests/validation/test_time_harmonic_mms.py \
           tests/validation/test_lossy_plane_wave.py \
           tests/validation/test_waveguide_cutoff.py \
+          tests/validation/test_poynting_balance.py \
           tests/validation/test_resonance_guard.py \
           tests/validation/test_dodd_deeds_impedance.py \
           tests/solver/test_time_harmonic_smoke.py \

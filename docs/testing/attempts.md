@@ -1091,3 +1091,67 @@ Same session as the entry above; step 4 was committed first (`99f3d4f`) so
   `POST-3` step 1 (Poynting balance on the `TH-6` fixture); `TH-8` (item 6) is
   the last cheap closed-form gate and is the one that still needs a tagged
   sphere-in-box fixture, so it is the one worth cost-probing first.
+
+## 2026-07-31T14:10Z — POST-3 step 1 (Poynting power balance) — complete
+
+- **Chunk:** `POST-3` step 1, taken as §9 On-deck item 4 (items 1–3 already
+  struck through as done). Scheduled implementer run, 09:00 CDT slot.
+- **Preflight:** tree clean, container Up 3 days, no `attempt/*` or
+  `recovered/*` branches. No anomaly.
+- **What was built:** `src/fem_em_solver/post/power_balance.py` with
+  `poynting_power_balance(e_complex, omega, sigma, mu_r, comm)`, which assembles
+  `½∫σ|E|²dV` and the complex Poynting flux `½∮(E×H̄)·n̂dS` with
+  `H = ∇×E/(−jωμ₀μᵣ)` and returns dissipated power, net *inward* real power,
+  the reactive part, and their relative imbalance. Both integrals are reduced
+  over the communicator before being combined (`assemble_scalar` is rank-local).
+  Gate: `tests/validation/test_poynting_balance.py`, two tests on the `TH-6`
+  lossy plane wave, importing the fixture constants and `_exact_factory` from
+  `test_lossy_plane_wave.py` so the two gates cannot drift apart.
+- **Measured:** imbalance **8.1857% at 12³** (10368 cells) → **4.1307% at 24³**
+  (82944 cells), **rate 0.9867 in h**; dissipated 1.2413e−04 W against net
+  inward 1.1900e−04 W at 24³; reactive flux 6.3985e−05 var (reported, not
+  asserted — it carries `2ω(W_m − W_e)`, which nothing here pins down).
+  Negative control: identical solve with the *solver's* σ zeroed but scored
+  against σ = 0.7 S/m gives **95.2125%** imbalance, **11.6×** the honest solve.
+- **Assertions:** imbalance falls under refinement; fine-mesh imbalance < 5%
+  (§10's MVP bar, the same one `TH-6` is held to on this very fixture — stated
+  before the run, not fitted to 4.13%); net real power is **inward** (a sign
+  flip is what a conjugated `e^{+jωt}` convention produces); dissipated power
+  > 0; and for the control, imbalance > 10× the honest solve **and** > 0.5.
+- **Tier and time:** standard, `timeout 180`, actual **39 s** at `-n 2`, 8
+  passed (4 environment + 2 `POST-3` + 2 `TH-6`/`MAT-2` regression). Real-mode
+  `tests/post` + `test_field_consistency_metrics.py` re-run separately at 1 s,
+  6 passed 1 skipped — the deprecation edits break nothing.
+- **Logs:** `20260731T140238Z_POST-3-probe.log` (first run; the gate passed,
+  the negative control errored — see below), `20260731T140404Z_POST-3-step1-gate.log`
+  (**log of record**), `20260731T140500Z_POST-3-step1-realmode.log` (real-mode
+  regression).
+- **Deprecation (the second half of the §9 item):** `e_to_b_mean_ratio` is now
+  documented as not-a-gate in `post/consistency.py`'s module docstring, with
+  the `≈ ω|A|/|∇×A|` argument and a pointer to `poynting_power_balance`, and
+  the quick-look line is relabelled "shape ratios, non-physical". The keys
+  themselves stay: `POST-2`'s report consumers and four tests read them, and
+  removing them is a separate change from removing their authority.
+- **CI:** added to the `validation-complex` job; its timeout comment now
+  accounts for the ~30 s the file adds.
+- **Branch (if parked):** none — `main` is clean and green.
+- **Denied commands:** none.
+- **Judgement calls worth reviewing.** (a) The negative control's first form
+  solved the *lossless* problem with lossless boundary data, which trips
+  `_wavenumber`'s decaying-branch assertion at σ = 0 (visible in the probe log).
+  Reformulated to keep the σ = 0.7 boundary data and zero only the material —
+  strictly the better control, since it isolates one variable. (b) `POST-3` is
+  left **🟡, not ✅**: the identity is real and gated, but the chunk's title is
+  "replace vacuous consistency metrics" and this replaces them only on a
+  homogeneous box. `poynting_power_balance` takes a scalar σ, so the
+  coil+phantom case — where the metric would actually earn its keep — needs the
+  σ argument generalised to the solver's `sigma_field`. Claiming ✅ here would
+  repeat the pattern §2 warns about. (c) The 5% bound is the pre-existing MVP
+  criterion rather than a number chosen after seeing 4.13%; had the measurement
+  landed above 5% the mesh would have moved, per the `TH-6` precedent.
+- **Next-attempt hypothesis:** `POST-3` step 2 is a small, well-defined follow-up
+  — swap the scalar σ for the `sigma_field` the solver already builds and
+  re-gate on a two-material fixture; the boundary-trace term is the O(h) leg, so
+  expect the same rate and a similar tolerance. The queue's next open item is 5
+  (retire known-issues entry 1, smoke tier), then 6 (`TH-8`), which still needs
+  its sphere-in-box fixture cost-probed.

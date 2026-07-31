@@ -1,4 +1,19 @@
-"""Field-metric consistency diagnostics for coarse solver sanity checks."""
+"""Field-metric consistency diagnostics for coarse solver sanity checks.
+
+**Deprecated as the flagship consistency metric** (`POST-3`, 2026-07-31).
+``e_to_b_mean_ratio`` and its siblings here are shape indicators, not physics:
+with ``B = ∇×A`` and ``E ≈ −jωA`` the ratio is ``≈ ω|A|/|∇×A|``, i.e. a mesh
+length scale times ω.  It stays finite and unremarkable however wrong the solve
+is — the `POST-3` σ-blind negative control passes it — so it must not be quoted
+as evidence that a solve is right.
+
+Use :func:`fem_em_solver.post.power_balance.poynting_power_balance` for that:
+it compares ``−∮½Re(E×H̄)·n̂dS`` against ``½∫σ|E|²dV``, an identity with no free
+parameters that separates a correct solve (4.1% at 24³, log
+``20260731T140238Z_POST-3-probe.log``) from a σ-blind one (order 1) by two
+orders of magnitude.  The functions below are kept for the quick-look report,
+where "is the field shape suspicious?" is all they ever claimed to answer.
+"""
 
 from __future__ import annotations
 
@@ -17,7 +32,8 @@ def compute_field_consistency_diagnostics(
 
     The diagnostics are intentionally lightweight and warning-oriented.
     They are not strict physical acceptance checks; they flag suspicious
-    field-shape behavior for human follow-up.
+    field-shape behavior for human follow-up.  See the module docstring: none
+    of these values can gate correctness — ``poynting_power_balance`` does.
     """
 
     e_min = float(e_stats["min"])

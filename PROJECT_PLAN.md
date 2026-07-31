@@ -751,12 +751,40 @@ heavy tier, complex build)*
 |---|---|---|---|
 | `POST-1` | Interface-aware field extraction reliability | ⚠️ | standard |
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
-| `POST-3` | Replace vacuous consistency metrics | ⬜ | standard |
+| `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
 
 > The current flagship metric `e_to_b_mean_ratio` is by construction
 > `≈ ω·|A|/|∇×A|` — it measures a mesh length scale, not physics, and cannot
 > detect that the solver is wrong. After `TH-1`, replace it with checks that can
 > fail for real reasons: Poynting flux balance, `∇·(σE)` residual, or reciprocity.
+
+> **`POST-3` step 1 — done 2026-07-31, 09:00 implementer run.**
+> `post/power_balance.py::poynting_power_balance` computes the complex-Poynting
+> real-power identity `−∮½Re(E×H̄)·n̂dS = ½∫σ|E|²dV` with `H = ∇×E/(−jωμ₀μᵣ)`,
+> and `tests/validation/test_poynting_balance.py` gates it on the `TH-6` lossy
+> plane wave. Measured on that fixture (log
+> `20260731T140404Z_POST-3-step1-gate.log`, 8 tests, 39 s at `-n 2`, standard
+> tier): imbalance **8.19% at 12³ → 4.13% at 24³**, rate **0.987 in h** — O(h),
+> as expected for the N1curl-degree-1 curl trace on the boundary, which is the
+> weakest link (the volume side converges faster). Asserted: imbalance falls
+> under refinement, fine-mesh imbalance < 5% (§10's MVP bar, the same one `TH-6`
+> uses on this fixture — not fitted), and net real power flows *inward*
+> (`+1.190e−04 W`; an outward sign would mean the `e^{+jωt}` convention is
+> conjugated between Faraday's law and the flux integral). Negative control: the
+> identical solve with the solver's σ zeroed but scored against σ = 0.7 S/m
+> gives **95.2%** imbalance against the honest solve's 8.19% — the metric moves
+> by 11.6× where `e_to_b_mean_ratio` does not move at all. The reactive part of
+> the flux is reported (`6.40e−05 var`) and deliberately not asserted on: it
+> carries `2ω(W_m − W_e)`, which no closed form here pins down.
+> `e_to_b_mean_ratio` is now documented as deprecated-as-a-gate in
+> `post/consistency.py` and relabelled "shape ratios, non-physical" in the
+> quick-look report; its keys stay so `POST-2`'s consumers keep working.
+> **Still open for `POST-3`:** the identity is only exercised on a homogeneous
+> box — `poynting_power_balance` takes a scalar σ and μᵣ, so a piecewise
+> material (the coil+phantom case, where this metric would be most useful)
+> needs the σ argument generalised to the `sigma_field` the solver already
+> builds. `∇·(σE)` residual and reciprocity, the other two candidates in the
+> note above, are untouched.
 
 ### PORT — Ports & S-parameters (Phase 4)
 
@@ -857,8 +885,9 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
 2. ~~**`TH-7`**~~ — **done 2026-07-31** (γ to 0.006%). **`TH-8`** is the last of
    the cheap closed-form gates on the frequency-domain solver; one run in the
    `TH-6` mould.
-3. **`POST-3`** — replace the vacuous consistency metrics with identities that
-   can fail (Poynting balance), now unblocked by `TH-1`.
+3. **`POST-3`** — 🟡: step 1 landed 2026-07-31 (Poynting real-power balance,
+   4.13% on the `TH-6` fixture, σ-blind control at 95.2%). What remains is the
+   piecewise-material case and the other candidate identities.
 4. **`PORT-1`** — real port excitation from the solved field. Resolves the two
    deliberately-red port tests as a side effect. **Needs a §7-grade
    implementation plan before it can be queued — writing that plan is the next
@@ -947,7 +976,14 @@ attempts.md and the §7 entries; this is a fresh queue.
    there is no resonance risk; if an above-cutoff β case is added, place f away
    from the box's discrete modes and show the resonance guard stays quiet, or
    drop that half. Same `e^{+jωt}` convention discipline as every TH gate.
-4. **`POST-3` step 1 — power-balance identity on the `TH-6` fixture**,
+4. ~~**`POST-3` step 1 — power-balance identity on the `TH-6` fixture.**~~
+   **Done 2026-07-31, 09:00 implementer run.** Imbalance 8.19% at 12³ → 4.13%
+   at 24³, rate 0.987 in h, asserted < 5%; σ-blind negative control 95.2%
+   (11.6× the honest solve). 8 tests, 39 s at `-n 2`, log
+   `20260731T140404Z_POST-3-step1-gate.log`; added to `validation-complex`.
+   `e_to_b_mean_ratio` deprecated as a gate in the same commit. `POST-3` stays
+   🟡 — see the §7 step-1 entry for what is still open (piecewise-material σ,
+   `∇·(σE)`, reciprocity). Original text kept for the record:
    independent. Complex build, standard tier. On the lossy plane-wave solve:
    absorbed power `½∫σ|E|²dV` vs net inward Poynting flux `−∮½Re(E×H̄)·n̂ dS`
    with `H = ∇×E/(−jωμ₀)`; assert the relative imbalance below a stated

@@ -92,7 +92,9 @@ def format_phantom_quicklook_report(report: dict[str, Any]) -> str:
             f"{s['b_min']:.6e} / {s['b_max']:.6e} / {s['b_mean']:.6e}"
         ),
         (
-            "  consistency ratios (mean/max): "
+            # Shape indicators only (POST-3): a mesh length scale times ω, not
+            # a correctness gate.  Labelled so no reader mistakes them for one.
+            "  shape ratios, non-physical (mean/max): "
             f"{s['e_to_b_mean_ratio']:.6e} / {s['e_to_b_max_ratio']:.6e}"
         ),
         f"  mean-balance relative diff: {s['mean_balance_rel_diff']:.6f}",
