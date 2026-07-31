@@ -27,16 +27,27 @@ alternatives (Elmer, OpenEMS) lack MRI-specific features. This is the gap.
 A **validated magnetostatics core**, and a large body of scaffolding whose green
 tests do not mean what they appear to mean.
 
-### 2.1 The time-harmonic solver does not solve Maxwell's equations
+### 2.1 The time-harmonic solver — proxy replaced 2026-07-31, gates incomplete
 
-`core/time_harmonic.py` runs the *magnetostatic* solver for `A`, then sets
+**Was:** `core/time_harmonic.py` ran the *magnetostatic* solver for `A`, then set
 `E_real ≡ 0`, `E_imag = −ω·A`. No `ω²εE` term, no `jωσ` term, no complex system;
-the material response `σ + jωε₀εᵣ` is computed and discarded.
+the material response `σ + jωε₀εᵣ` was computed and discarded, so phantom
+conductivity and permittivity had zero effect on any computed field.
 
-**Consequence:** phantom conductivity and permittivity have zero effect on any
-computed field. Coil loading by the phantom — the point of the project — is not
-modeled, so every downstream phantom metric, SAR figure, and consistency
-diagnostic is physically meaningless however well-formed. `TH-1` is the fix.
+**Now:** `TH-1` steps 1–3 landed — a complex N1curl curl-curl solve of
+`∇×(μᵣ⁻¹∇×E) − k₀²ε_c E = −jωμ₀J` with MUMPS, gated by a manufactured solution
+that converges at the discretisation rate (`0.9929` measured in `h`, N1curl
+degree 1) and by the complex-symmetric-but-not-Hermitian structure of the
+assembled operator. `ε_c` now enters the matrix, and the run requires the
+complex DolfinX build (real mode raises rather than silently dropping the loss
+term).
+
+**Still open (`TH-1` steps 4–5), and this is the part that licenses downstream
+trust:** the `TH-6` lossy-half-space comparison against the closed-form skin
+depth, the `MAT-2` σ-sensitivity assertion, and the near-resonance guard. Until
+those land, the solve is *formulated* correctly but has never been checked
+against a physical closed form — phantom metrics and SAR figures downstream of
+it remain unvalidated.
 
 ### 2.2 The S-parameters are heuristic, not computed
 
@@ -48,8 +59,11 @@ returns `−1.0` when two orientation *strings* differ. `PORT-1` is the fix.
 ### 2.3 Test assertions cannot detect either problem
 
 Finiteness checks (`np.isfinite`, `> 0`) dominate the solver, port, material, and
-post-processing suites. A solver returning `E = −ωA` passes every time-harmonic,
-port, and workflow test in the repo.
+post-processing suites. A solver returning `E = −ωA` passed every time-harmonic,
+port, and workflow test in the repo — every one of those tests still passes
+against the real complex solve, which is the measure of how little they assert.
+The quantitative gates are `tests/validation/test_time_harmonic_mms.py` and
+(pending) `TH-6`.
 
 ### 2.3b Phase-1 analytic validation was also broken (repaired 2026-07-27/30)
 
@@ -361,6 +375,30 @@ Independent of the §2.1 physics defect; meshes are meshes.
 >   MUMPS returns clean exit codes on near-singular systems, the same shape as
 >   `MAG-10`'s "converged, residual 0.0, 920% error".
 >
+> **Steps 1–3 done 2026-07-31** (`core/time_harmonic.py` rewritten,
+> `tests/validation/test_time_harmonic_mms.py`, logs
+> `20260731T003553Z_TH-1-steps123-mms.log` 6 s and
+> `20260731T003535Z_TH-1-steps123-probe.log` 3 s, both `-n 2`). Manufactured
+> field `E_ex = (sin ky, sin kz, sin kx)`, `k = π/L`, satisfies
+> `∇×∇×E_ex = k²E_ex` exactly, so the source `−jωμ₀J = (k²/μᵣ − k₀²ε_c)E_ex` is
+> analytic: relative L2 error **11.26% → 5.66%** from 3072 to 24576 cells,
+> **measured rate 0.9929** against the O(h) expectation for N1curl degree 1;
+> `max|Im E|/max|Re E| = 3.0e-3` where the exact phasor is real (the retired
+> proxy had `e_real ≡ 0` identically). The assembled operator is complex
+> symmetric to `‖A−Aᵀ‖_F/‖A‖_F < 1e-10` and **not** Hermitian — the structural
+> signature that the `−jσ/(ωε₀)` term survived assembly.
+>
+> Two things the next attempt needs to know. `solve()` now raises in real mode
+> (`require_complex_mode`), after argument validation so bad-unit/bad-tag errors
+> still report in both builds; the five legacy tests that solve carry
+> `@complex_only` from `tests/complex_mode.py` and therefore **no longer run in
+> CI**, which is a real coverage loss until CI gains a complex job. And
+> `build_material_fields` still returns σ and εᵣ only, so `μᵣ` is taken from the
+> scalar `problem.material` — a per-tag `μᵣ` needs that function extended.
+> The hook `TH-6` needs already exists: `TimeHarmonicProblem.dirichlet_e_field`
+> is interpolated onto the exterior N1curl dofs under the PEC mode, which is how
+> an analytic total field is imposed on a truncation box.
+>
 > **Implementation plan.** Step 0 (complex-mode environment gate) is **done**
 > 2026-07-30: `tests/environment/test_complex_mode.py`, 4 tests, which pins the
 > step-1 conjugation trap numerically (`∫ inner(f,g) dx = 11+2j` vs
@@ -368,14 +406,14 @@ Independent of the §2.1 physics defect; meshes are meshes.
 > relative. The `TH-9` cavity gate re-run under the complex build returns
 > identical physics, so a failure in steps 1–5 is formulation, not environment.
 >
-> 1. Assemble the sesquilinear form
+> 1. ✅ Assemble the sesquilinear form
 >    `∫μᵣ⁻¹(∇×E)·(∇×v̄) − k₀²ε_c E·v̄ dx` with `ε_c = εᵣ − jσ/(ωε₀)` built from
 >    the existing DG0 `build_material_fields` (carries over unchanged); load
 >    `−jωμ₀∫J·v̄ dx`. **`ufl.inner` conjugates its second argument in complex
 >    mode — using `ufl.dot` for the load silently flips the sign convention.**
-> 2. Direct solve, MUMPS. PEC = zero-tangential-E on exterior/tagged facets
+> 2. ✅ Direct solve, MUMPS. PEC = zero-tangential-E on exterior/tagged facets
 >    (pattern exists in `build_boundary_conditions`); natural = PMC, as today.
-> 3. Replace the `E = −jωA` body of `TimeHarmonicSolver.solve`; keep the
+> 3. ✅ Replace the `E = −jωA` body of `TimeHarmonicSolver.solve`; keep the
 >    `TimeHarmonicFields` container (e_real/e_imag split from the complex vector)
 >    so downstream `⚠️` chunks recompile without edits. `B = ∇×E/(−jω)` is the
 >    post-processing route to B1+ later.
@@ -574,7 +612,7 @@ next entry" named below.
 
 Last reviewed 2026-07-30 (daily review). Tree clean, no parked branches.
 
-1. `TH-1` **steps 1–3** — sesquilinear form
+1. ✅ **done 2026-07-31** (19:30 implementer run) — `TH-1` **steps 1–3** — sesquilinear form
    `∫μᵣ⁻¹(∇×E)·(∇×v̄) − k₀²ε_c E·v̄ dx` with `ε_c = εᵣ − jσ/(ωε₀)` from the
    existing DG0 `build_material_fields`, load `−jωμ₀∫J·v̄ dx`, MUMPS direct solve
    with PEC via `build_boundary_conditions`, then replace the `E = −jωA` body of
@@ -584,8 +622,15 @@ Last reviewed 2026-07-30 (daily review). Tree clean, no parked branches.
 2. `TH-1` **steps 4–5** — `TH-6` lossy-half-space gate (interior decay constant +
    phase vs closed-form skin depth) and the `MAT-2` σ-sensitivity assertion, plus
    the resonance guard verified against a `TH-9` mode.
-   **Depends on item 1 landing** — there is no complex solver to gate without it.
-   If item 1 is not yet ✅, skip this item and take the fallback below instead.
+   **Item 1 has landed**, so the complex solver this gates now exists;
+   `TimeHarmonicProblem.dirichlet_e_field` is the hook for imposing the analytic
+   total field on the box. Standard tier.
+3. **A complex-mode CI job** (or a complex leg of the existing validation job)
+   running `tests/environment tests/validation/test_time_harmonic_mms.py` with
+   `FEM_EM_REQUIRE_COMPLEX=1`. Steps 1–3 moved five solving tests behind
+   `@complex_only`, so CI currently executes **no** time-harmonic solve at all —
+   the new gates guard nothing until this lands. Smoke tier; independent of
+   item 2.
 
 Every `TH-1` command needs `source /usr/local/bin/dolfinx-complex-mode` **and**
 `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest path

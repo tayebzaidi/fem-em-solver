@@ -16,9 +16,11 @@ from fem_em_solver.core import (
 from fem_em_solver.io.mesh import MeshGenerator
 from fem_em_solver.post import evaluate_vector_field_parallel
 
+from tests.complex_mode import complex_only
 from tests.tolerances import E_FIELD_MAX_NONTRIVIAL_ABS_MIN
 
 
+@complex_only
 def test_time_harmonic_smoke_returns_finite_e_field_values():
     """Solve a small frequency-domain case and verify finite nontrivial E-field."""
     comm = MPI.COMM_WORLD

@@ -14,6 +14,8 @@ from fem_em_solver.core import (
 )
 from fem_em_solver.io.mesh import MeshGenerator
 
+from tests.complex_mode import complex_only
+
 
 def test_classify_residual_trend_summaries_are_deterministic():
     assert classify_residual_trend([]) == "unavailable"
@@ -24,6 +26,7 @@ def test_classify_residual_trend_summaries_are_deterministic():
     assert classify_residual_trend([0.1, 0.2, 0.3, 0.5]) == "mostly-increasing"
 
 
+@complex_only
 def test_time_harmonic_solver_emits_optional_solve_health_diagnostics():
     comm = MPI.COMM_WORLD
 

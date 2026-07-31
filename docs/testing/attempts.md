@@ -647,3 +647,76 @@ is an artifact of the evaluation, not of the solve.
   unless §9 is refilled first. If a human sees this before then, pasting item 1
   above into §9 is enough to unblock the next slot; otherwise expect two more
   `anomaly` entries with this shape before the 06:12 review.
+
+
+## 2026-07-31T00:45Z — TH-1 steps 1–3 — complete
+
+- **Tried:** preflight clean (`git status --porcelain` empty on `main` at
+  `68587f8`, container Up 3 days), top On-deck item taken as written. Rewrote
+  `core/time_harmonic.py`: the sesquilinear form
+  `∫μᵣ⁻¹(∇×E)·(∇×v̄) − k₀²ε_c E·v̄ dx` with `ε_c = εᵣ − jσ/(ωε₀)` from the
+  existing DG0 `build_material_fields`, load
+  `−jωμ₀∫J·v̄ dx` (`ufl.inner`, never `ufl.dot`), MUMPS via `LinearProblem`,
+  PEC through `build_boundary_conditions`. The `E = −jωA` body is gone;
+  `TimeHarmonicFields` is unchanged apart from a new `e_complex` carrying the
+  N1curl solution, so `ports/excitation.py` and the post-processing chunks
+  import and run without edits. `gauge_penalty` is accepted and ignored (no
+  null space at ω > 0 — §7 formulation note); `MagnetostaticSolver` is no
+  longer on the path at all.
+- **Gate — manufactured solution.** `E_ex = (sin ky, sin kz, sin kx)`,
+  `k = π/L` on an `L = 0.2 m` box satisfies `∇×∇×E_ex = k²E_ex` *exactly*, so
+  `−jωμ₀J = (k²/μᵣ − k₀²ε_c)E_ex` is an analytic source with no consistency
+  error — the whole residual is discretisation error, which is what makes the
+  rate assertable. Measured at 127.74 MHz in εᵣ = 78, σ = 0.7 S/m (chosen so
+  `k₀²|ε_c| ≈ 5.6e2 m⁻²` is within an order of magnitude of the curl term; at
+  εᵣ = 1 the mass term is swamped and the gate would be blind to ε_c):
+  relative L2 error **1.126e-1 → 5.659e-2** from 3072 to 24576 cells,
+  **fitted rate 0.9929** against the O(h) expectation for N1curl degree 1.
+  Step 3 in the same test: `max|Re E| = 1.098` (amplitude 1 field) and
+  `max|Im E|/max|Re E| = 2.97e-3` where the exact phasor is real — the retired
+  proxy returned `e_real ≡ 0` by construction, so this number is the direct
+  negative control on the replacement.
+- **Gate — operator structure.** `‖A − Aᵀ‖_F < 1e-10‖A‖_F` (complex symmetric)
+  while `‖A − Aᴴ‖_F > 1e-6‖A‖_F` (**not** Hermitian). The second half is the
+  point: a Hermitian operator here means the `−jσ/(ωε₀)` term was dropped, which
+  is exactly what a real build would do silently. 2 s.
+- **Real-mode discipline.** `solve()` raises `RuntimeError` in a real build
+  rather than discarding Im(ε_c). Placed *after* argument validation — the first
+  attempt put it before, and the two `frequency_unit`/`material_map` error tests
+  went red because they never reached their own `ValueError`
+  (`20260731T003715Z_TH-1-steps123-realmode.log`, 5 failed); moved, and they
+  pass (`...realmode2.log`). The five legacy tests that actually solve now carry
+  `@complex_only` from the new `tests/complex_mode.py`.
+- **Measured regressions.** Real mode over `tests/environment`, the four legacy
+  time-harmonic suites, `tests/ports` and the new gate: **3 failed, 26 passed,
+  10 skipped, 1.2 s** — all three failures are known-issues entries 2 and 3,
+  none new (`20260731T003748Z_TH-1-steps123-realmode2.log`). Complex mode with
+  `FEM_EM_REQUIRE_COMPLEX=1` over the same set minus ports: **2 failed, 20
+  passed, 12.0 s**, both failures known-issues entry 2
+  (`20260731T003802Z_TH-1-steps123-complexsuite.log`). Every legacy proxy test
+  passes unchanged against the real solve — a measurement of how little they
+  assert, recorded in §2.3.
+- **Coverage loss, named:** CI runs real mode, so those five `@complex_only`
+  tests plus the new MMS gate now execute in **no** CI job. §9 item 3 is a
+  complex-mode CI leg; until it lands the gates guard nothing automatically.
+- **Tier / cost:** smoke-to-standard, 3 s (probe) / 6 s (MMS) / 2 s (realmode2)
+  / 13 s (complex suite) at `mpiexec -n 2`, all far inside the ceilings. Whole
+  chunk ~35 min of the timebox.
+- **Logs:** `20260731T003535Z_TH-1-steps123-probe.log`,
+  `20260731T003553Z_TH-1-steps123-mms.log` (**the log of record** — the
+  convergence numbers), `20260731T003715Z_TH-1-steps123-realmode.log` (exit 1,
+  the misplaced-guard failure described above),
+  `20260731T003748Z_TH-1-steps123-realmode2.log`,
+  `20260731T003802Z_TH-1-steps123-complexsuite.log`.
+- **Branch (if parked):** none; landed on `main`. `TH-1` stays 🟡 — steps 4–5
+  (`TH-6` closed form, `MAT-2` sensitivity, resonance guard) are open, and §2.1
+  now says explicitly that the solve is formulated but not yet checked against
+  any physical closed form.
+- **Denied commands:** one — a `python3 - <<'PY'` heredoc for a bulk test patch
+  ("Contains brace with quote character"). Re-done with five `Edit` calls; no
+  allowlist change needed.
+- **Next-attempt hypothesis:** `TH-6` should be cheap now — impose the analytic
+  lossy half-space through `dirichlet_e_field` on a box exactly as the MMS gate
+  imposes `E_ex`, and compare the interior decay against δ = √(2/(ωμσ)). The
+  risk is not the machinery but the convention: the gate must be derived in
+  `e^{+jωt}` or it will disagree with a correct solver by a conjugation.

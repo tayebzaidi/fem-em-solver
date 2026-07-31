@@ -1,0 +1,176 @@
+# Test Run
+- Chunk: TH-1-steps123-complexsuite
+- Commit: 68587f885bb488f5c2f967095628693e24dbd83c
+- Time (UTC): 2026-07-31 00:38:02
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.3.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 300 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_time_harmonic_mms.py tests/solver/test_time_harmonic_smoke.py tests/solver/test_boundary_condition_selection.py tests/solver/test_convergence_diagnostics.py tests/materials/test_phantom_material_model.py tests/post/test_phantom_field_metrics.py -v --tb=line'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Jul 30 19:37 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.3.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 300 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_time_harmonic_mms.py tests/solver/test_time_harmonic_smoke.py tests/solver/test_boundary_condition_selection.py tests/solver/test_convergence_diagnostics.py tests/materials/test_phantom_material_model.py tests/post/test_phantom_field_metrics.py -v --tb=line'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 22 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  4%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 22 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  4%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [  9%]PASSED [  9%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 13%]PASSED [ 13%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 18%]PASSED [ 18%]
+tests/validation/test_time_harmonic_mms.py::test_manufactured_solution_converges_at_first_order 
+tests/validation/test_time_harmonic_mms.py::test_manufactured_solution_converges_at_first_order PASSED [ 22%]
+tests/validation/test_time_harmonic_mms.py::test_operator_is_complex_symmetric PASSED [ 22%]
+tests/validation/test_time_harmonic_mms.py::test_operator_is_complex_symmetric PASSED [ 27%]PASSED [ 27%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_returns_finite_e_field_values 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_returns_finite_e_field_values PASSED [ 31%]PASSED [ 31%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve PASSED [ 36%]PASSED [ 36%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_material_map_without_cell_tags_before_solve 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_material_map_without_cell_tags_before_solve PASSED [ 40%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve PASSED [ 40%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve PASSED [ 45%]PASSED [ 45%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values 
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values PASSED [ 50%]PASSED [ 50%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value 
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value PASSED [ 54%]PASSED [ 54%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set 
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set PASSED [ 59%]PASSED [ 59%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path 
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path PASSED [ 63%]PASSED [ 63%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic 
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic FAILED [ 68%]FAILED [ 68%]
+tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics 
+tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics FAILED [ 72%]FAILED [ 72%]
+tests/materials/test_phantom_material_model.py::test_gelled_saline_preset_table_supports_low_mid_high_conductivity_variants 
+tests/materials/test_phantom_material_model.py::test_gelled_saline_preset_table_supports_low_mid_high_conductivity_variants PASSED [ 77%]PASSED [ 77%]
+tests/materials/test_phantom_material_model.py::test_gelled_saline_frequency_adjustment_hook_produces_finite_terms 
+tests/materials/test_phantom_material_model.py::test_gelled_saline_frequency_adjustment_hook_produces_finite_terms PASSED [ 81%]PASSED [ 81%]
+tests/materials/test_phantom_material_model.py::test_gelled_saline_material_container_frequency_term_is_finite 
+tests/materials/test_phantom_material_model.py::test_gelled_saline_material_container_frequency_term_is_finite PASSED [ 86%]PASSED [ 86%]
+tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring 
+tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring PASSED [ 90%]PASSED [ 90%]
+tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite 
+tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite PASSED [ 95%]
+tests/post/test_phantom_field_metrics.py::test_evaluate_on_cells_fallback_skips_invalid_cell_point_pairs PASSED [100%]PASSED [ 95%]
+tests/post/test_phantom_field_metrics.py::test_evaluate_on_cells_fallback_skips_invalid_cell_point_pairs PASSED [100%]
+
+=================================== FAILURES ===================================
+/workspace/tests/solver/test_convergence_diagnostics.py:24: AssertionError: assert 'mixed' == 'mostly-decreasing'
+/workspace/tests/solver/test_convergence_diagnostics.py:66: AssertionError: assert False
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring
+  /workspace/tests/materials/test_phantom_material_model.py:33: ComplexWarning: Casting complex values to real discards the imaginary part
+    local_min = float(np.min(local_vals))
+
+tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring
+  /workspace/tests/materials/test_phantom_material_model.py:34: ComplexWarning: Casting complex values to real discards the imaginary part
+    local_max = float(np.max(local_vals))
+
+tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite
+  /workspace/src/fem_em_solver/post/phantom_fields.py:88: ComplexWarning: Casting complex values to real discards the imaginary part
+    values = np.asarray(values, dtype=np.float64)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic
+FAILED tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics
+================== 2 failed, 20 passed, 11 warnings in 12.04s ==================
+
+
+=================================== FAILURES ===================================
+/workspace/tests/solver/test_convergence_diagnostics.py:24: AssertionError: assert 'mixed' == 'mostly-decreasing'
+/workspace/tests/solver/test_convergence_diagnostics.py:66: AssertionError: assert False
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/solver/test_time_harmonic_smoke.py: 8 warnings
+tests/materials/test_phantom_material_model.py: 2 warnings
+  /usr/local/lib/python3.10/dist-packages/ufl/core/expr.py:275: DeprecationWarning: Expr.ufl_domain() is deprecated, please use extract_unique_domain(expr) instead.
+    warnings.warn("Expr.ufl_domain() is deprecated, please "
+
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_returns_finite_e_field_values
+  /workspace/src/fem_em_solver/post/evaluation.py:71: ComplexWarning: Casting complex values to real discards the imaginary part
+    values[rank_indices] = rank_values
+
+tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring
+  /workspace/tests/materials/test_phantom_material_model.py:33: ComplexWarning: Casting complex values to real discards the imaginary part
+    local_min = float(np.min(local_vals))
+
+tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring
+  /workspace/tests/materials/test_phantom_material_model.py:34: ComplexWarning: Casting complex values to real discards the imaginary part
+    local_max = float(np.max(local_vals))
+
+tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite
+  /workspace/src/fem_em_solver/post/phantom_fields.py:88: ComplexWarning: Casting complex values to real discards the imaginary part
+    values = np.asarray(values, dtype=np.float64)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic
+FAILED tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics
+================== 2 failed, 20 passed, 22 warnings in 12.01s ==================
+WARNING! There are options you set that were not used!
+WARNING! could be spelling mistake, etc!
+There is one unused database option. It is:
+Option left: name:-dolfinx_solve_132481798980704pc_factor_mat_solver_type value: mumps source: code
+
+## Exit
+- Status: 1
+- Elapsed (s): 13

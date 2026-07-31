@@ -16,6 +16,8 @@ from fem_em_solver.core import (
 from fem_em_solver.io.mesh import MeshGenerator
 from fem_em_solver.materials import GelledSalinePhantomMaterial
 
+from tests.complex_mode import complex_only
+
 
 def _global_bounds_for_tagged_cells(field: fem.Function, cell_tags, tag: int, comm: MPI.Intracomm):
     """Return global (min, max, sample_count) over DG0 dofs in cells with given tag."""
@@ -82,6 +84,7 @@ def test_gelled_saline_material_container_frequency_term_is_finite():
     assert material.conduction_plus_displacement > material.sigma
 
 
+@complex_only
 def test_phantom_material_assignment_and_time_harmonic_pipeline_wiring():
     """Assign phantom material to phantom-tagged cells and verify solver returns these fields."""
     comm = MPI.COMM_WORLD

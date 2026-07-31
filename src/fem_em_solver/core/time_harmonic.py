@@ -1,4 +1,22 @@
-"""Minimal time-harmonic solver scaffold for frequency-domain EM workflows."""
+"""Time-harmonic (frequency-domain) Maxwell solver.
+
+Solves the complex curl-curl equation in the ``e^{+jωt}`` convention
+
+.. math::
+
+    ∇×(μᵣ⁻¹ ∇×E) − k₀² ε_c E = −jωμ₀ J,
+    ε_c = εᵣ − j σ/(ω ε₀),   k₀² = ω² μ₀ ε₀
+
+with N1curl elements and a MUMPS direct solve (`TH-1` steps 1–3). The former
+``E = −jωA`` magnetostatic proxy is gone; see PROJECT_PLAN §2.1 for why it was
+never a Maxwell solve.
+
+**This module requires the complex DolfinX build.** ``ε_c`` and the load are
+complex, and in a real build the imaginary parts are silently discarded rather
+than raising, so :meth:`TimeHarmonicSolver.solve` refuses to run in real mode.
+Run with ``source /usr/local/bin/dolfinx-complex-mode`` (see
+``tests/environment/test_complex_mode.py``).
+"""
 
 from __future__ import annotations
 
@@ -7,15 +25,17 @@ from enum import Enum
 from typing import Callable, Mapping, Optional, Sequence
 
 import numpy as np
+import ufl
 import dolfinx
 from dolfinx import fem
+from dolfinx.fem.petsc import LinearProblem
+from petsc4py import PETSc
 
 from ..materials import GelledSalinePhantomMaterial
 from ..utils.constants import EPSILON_0, MU_0
 from .solvers import (
     DEFAULT_GAUGE_PENALTY,
     LinearSolveDiagnostics,
-    MagnetostaticProblem,
     MagnetostaticSolver,
 )
 
@@ -82,13 +102,21 @@ class TimeHarmonicProblem:
     phantom_material: Optional[GelledSalinePhantomMaterial] = None
     phantom_tag: int = 3
     boundary_condition: TimeHarmonicBoundaryCondition | str = TimeHarmonicBoundaryCondition.NATURAL
+    dirichlet_e_field: Optional[Callable] = None
     solver_petsc_options: Optional[Mapping[str, object]] = None
     collect_solver_diagnostics: bool = False
 
 
 @dataclass
 class TimeHarmonicFields:
-    """Frequency-domain electric field represented as real/imag vector fields."""
+    """Frequency-domain electric field represented as real/imag vector fields.
+
+    ``e_real``/``e_imag`` are DG-interpolated split parts of the solved phasor
+    (kept so downstream chunks keep working); ``e_complex`` is the N1curl
+    solution itself, which is what any analytic gate should compare against.
+    In complex mode every ``fem.Function`` is complex-valued, so ``e_real``
+    carries the real part with a zero imaginary part, not a real dtype.
+    """
 
     e_real: fem.Function
     e_imag: fem.Function
@@ -98,6 +126,7 @@ class TimeHarmonicFields:
     boundary_condition: TimeHarmonicBoundaryCondition = TimeHarmonicBoundaryCondition.NATURAL
     dirichlet_dof_count: int = 0
     solve_diagnostics: Optional[LinearSolveDiagnostics] = None
+    e_complex: Optional[fem.Function] = None
 
     @property
     def omega(self) -> float:
@@ -179,17 +208,29 @@ def build_material_fields(
     return sigma_field, epsilon_r_field
 
 
+def require_complex_mode(context: str = "time-harmonic solve") -> None:
+    """Raise unless PETSc scalars are complex.
+
+    A real build does not fail on ``ε_c = εᵣ − jσ/(ωε₀)`` — it drops the
+    imaginary part and returns a lossless answer, which is the exact class of
+    silent defect §2.1 is about. Refuse instead.
+    """
+    if not np.issubdtype(np.dtype(PETSc.ScalarType), np.complexfloating):
+        raise RuntimeError(
+            f"{context} requires the complex DolfinX build, but PETSc.ScalarType "
+            f"is {np.dtype(PETSc.ScalarType)}. Run "
+            "'source /usr/local/bin/dolfinx-complex-mode' first; in real mode "
+            "the imaginary part of the complex permittivity would be discarded "
+            "silently."
+        )
+
+
 class TimeHarmonicSolver:
-    """Minimal scaffold that returns a finite phasor E-field object.
+    """Complex frequency-domain curl-curl solver (`TH-1`).
 
-    Notes
-    -----
-    This is intentionally narrow for chunk D1. It computes a proxy electric
-    field from the magnetostatic vector potential via:
-
-        E~ = -j * omega * A
-
-    where scalar potential terms are not yet included.
+    Assembles ``∫ μᵣ⁻¹(∇×E)·(∇×v̄) − k₀² ε_c E·v̄ dx = −jωμ₀ ∫ J·v̄ dx`` on
+    N1curl elements and solves it directly with MUMPS. Requires the complex
+    DolfinX build; see :func:`require_complex_mode`.
     """
 
     def __init__(self, problem: TimeHarmonicProblem, degree: int = 1):
@@ -197,27 +238,41 @@ class TimeHarmonicSolver:
         self.degree = degree
         self.mesh = problem.mesh
         self._fields: Optional[TimeHarmonicFields] = None
+        self._function_space: Optional[fem.FunctionSpace] = None
+
+    def function_space(self) -> fem.FunctionSpace:
+        """N1curl space the E-field is solved in (cached, shared with BCs)."""
+        if self._function_space is None:
+            self._function_space = fem.functionspace(self.mesh, ("N1curl", self.degree))
+        return self._function_space
 
     def build_boundary_conditions(
         self,
     ) -> tuple[list, TimeHarmonicBoundaryCondition, int]:
-        """Build BC objects from selected mode and return diagnostics."""
+        """Build BC objects from selected mode and return diagnostics.
+
+        PEC constrains the tangential trace of E on the exterior boundary — to
+        zero, or to ``problem.dirichlet_e_field`` when one is supplied (that is
+        how an analytic gate imposes a known total field on a truncation box).
+        NATURAL leaves the boundary term alone, which is PMC.
+        """
         mode = normalize_boundary_condition(self.problem.boundary_condition)
 
         if mode == TimeHarmonicBoundaryCondition.NATURAL:
             return [], mode, 0
 
-        # MVP PEC-like option: constrain A to zero on exterior boundary.
-        # Use same N1curl space as MagnetostaticSolver.
-        v_space = fem.functionspace(self.mesh, ("N1curl", self.degree))
+        v_space = self.function_space()
         fdim = self.mesh.topology.dim - 1
         self.mesh.topology.create_connectivity(fdim, self.mesh.topology.dim)
         exterior_facets = dolfinx.mesh.exterior_facet_indices(self.mesh.topology)
         exterior_dofs = fem.locate_dofs_topological(v_space, fdim, exterior_facets)
 
-        zero = fem.Function(v_space)
-        zero.x.array[:] = 0.0
-        bcs = [fem.dirichletbc(zero, exterior_dofs)]
+        boundary_value = fem.Function(v_space)
+        if self.problem.dirichlet_e_field is None:
+            boundary_value.x.array[:] = 0.0
+        else:
+            boundary_value.interpolate(self.problem.dirichlet_e_field)
+        bcs = [fem.dirichletbc(boundary_value, exterior_dofs)]
         return bcs, mode, int(exterior_dofs.size)
 
     def solve(
@@ -227,7 +282,13 @@ class TimeHarmonicSolver:
         subdomain_ids: Optional[Sequence[int]] = None,
         gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
     ) -> TimeHarmonicFields:
-        """Run a minimal frequency-domain solve and return E-field phasor parts."""
+        """Solve the complex curl-curl problem and return the phasor E-field.
+
+        ``gauge_penalty`` is accepted for call-site compatibility and ignored:
+        at ω > 0 the operator acts as ``−k₀²ε_c`` on the gradient subspace, so
+        there is no null space to price and a penalty would only add error
+        (PROJECT_PLAN §7, `TH-1` formulation notes).
+        """
         material = self.problem.material
         if not np.isfinite(self.problem.frequency_hz) or self.problem.frequency_hz <= 0:
             raise ValueError(f"frequency_hz must be finite and positive (Hz), got {self.problem.frequency_hz!r}")
@@ -259,44 +320,56 @@ class TimeHarmonicSolver:
             phantom_tag=self.problem.phantom_tag,
         )
 
-        mu = material.mu_r * MU_0
+        # After the input validation above, so a bad frequency_unit or an
+        # unknown material_map tag still reports itself in either build.
+        require_complex_mode()
 
-        mag_problem = MagnetostaticProblem(
-            mesh=self.mesh,
-            cell_tags=self.problem.cell_tags,
-            facet_tags=self.problem.facet_tags,
-            mu=mu,
-        )
-        mag_solver = MagnetostaticSolver(mag_problem, degree=self.degree)
+        omega = 2.0 * np.pi * self.problem.frequency_hz
+        v_space = self.function_space()
+        v = ufl.TestFunction(v_space)
+        a = self.bilinear_form(sigma_field, epsilon_r_field)
 
         bcs, selected_bc, dirichlet_dof_count = self.build_boundary_conditions()
 
-        A = mag_solver.solve(
-            current_density=current_density,
-            bc_functions=bcs,
-            subdomain_id=subdomain_id,
-            subdomain_ids=subdomain_ids,
-            gauge_penalty=gauge_penalty,
-            petsc_options=self.problem.solver_petsc_options,
-            collect_solver_diagnostics=self.problem.collect_solver_diagnostics,
-        )
+        current = None if current_density is None else current_density(ufl.SpatialCoordinate(self.mesh))
+        if current is None:
+            zero = fem.Constant(self.mesh, np.zeros(3, dtype=PETSc.ScalarType))
+            L = ufl.inner(zero, v) * ufl.dx
+        else:
+            # ufl.inner conjugates the test function — using ufl.dot here would
+            # silently flip the e^{+jωt} convention.
+            load_factor = fem.Constant(self.mesh, PETSc.ScalarType(-1j * omega * MU_0))
+            L = load_factor * ufl.inner(current, v) * self._current_measure(
+                subdomain_id=subdomain_id, subdomain_ids=subdomain_ids
+            )
+
+        options = {
+            "ksp_type": "preonly",
+            "pc_type": "lu",
+            "pc_factor_mat_solver_type": "mumps",
+        }
+        if self.problem.solver_petsc_options:
+            options.update(dict(self.problem.solver_petsc_options))
+
+        problem = LinearProblem(a, L, bcs=bcs, petsc_options=options)
+        e_complex = problem.solve()
+        e_complex.name = "E"
+        e_complex.x.scatter_forward()
+
+        diagnostics = None
+        if self.problem.collect_solver_diagnostics:
+            diagnostics = MagnetostaticSolver._extract_ksp_diagnostics(problem.solver)
 
         dg = fem.functionspace(self.mesh, ("DG", self.degree, (3,)))
-
-        a_dg = fem.Function(dg, name="A_fd")
-        a_dg.interpolate(A)
+        e_dg = fem.Function(dg, name="E_dg")
+        e_dg.interpolate(e_complex)
 
         e_real = fem.Function(dg, name="E_real")
-        e_real.x.array[:] = 0.0
-
-        omega = 2.0 * np.pi * self.problem.frequency_hz
+        e_real.x.array[:] = np.real(e_dg.x.array)
         e_imag = fem.Function(dg, name="E_imag")
-        e_imag_expr = fem.Expression(-omega * a_dg, dg.element.interpolation_points())
-        e_imag.interpolate(e_imag_expr)
-
-        # Explicitly evaluate the material-response proxy so phantom-tagged material
-        # assignment is wired into the solve pipeline for diagnostics/future formulation.
-        _ = sigma_field.x.array + omega * EPSILON_0 * epsilon_r_field.x.array
+        e_imag.x.array[:] = np.imag(e_dg.x.array)
+        e_real.x.scatter_forward()
+        e_imag.x.scatter_forward()
 
         self._fields = TimeHarmonicFields(
             e_real=e_real,
@@ -306,9 +379,55 @@ class TimeHarmonicSolver:
             epsilon_r_field=epsilon_r_field,
             boundary_condition=selected_bc,
             dirichlet_dof_count=dirichlet_dof_count,
-            solve_diagnostics=mag_solver.last_solve_diagnostics,
+            solve_diagnostics=diagnostics,
+            e_complex=e_complex,
         )
         return self._fields
+
+    def bilinear_form(self, sigma_field: fem.Function, epsilon_r_field: fem.Function):
+        """Sesquilinear form ``∫ μᵣ⁻¹(∇×E)·(∇×v̄) − k₀² ε_c E·v̄ dx``.
+
+        Split out of :meth:`solve` so the operator can be assembled and probed
+        on its own (matrix symmetry, conditioning) without a right-hand side.
+        ``ufl.inner`` conjugates its SECOND argument in complex mode — that is
+        what makes the form sesquilinear; ``ufl.dot`` would flip the sign
+        convention silently (pinned in ``tests/environment/test_complex_mode.py``).
+        """
+        require_complex_mode("TimeHarmonicSolver.bilinear_form")
+        omega = 2.0 * np.pi * self.problem.frequency_hz
+        k0_squared = omega * omega * MU_0 * EPSILON_0
+        epsilon_c = epsilon_r_field - 1j * sigma_field / (omega * EPSILON_0)
+        mu_r_inv = 1.0 / float(self.problem.material.mu_r)
+
+        v_space = self.function_space()
+        e_trial = ufl.TrialFunction(v_space)
+        v = ufl.TestFunction(v_space)
+        return (
+            mu_r_inv * ufl.inner(ufl.curl(e_trial), ufl.curl(v)) * ufl.dx
+            - k0_squared * ufl.inner(epsilon_c * e_trial, v) * ufl.dx
+        )
+
+    def _current_measure(
+        self,
+        *,
+        subdomain_id: Optional[int] = None,
+        subdomain_ids: Optional[Sequence[int]] = None,
+    ):
+        """Integration measure for the source term (whole domain or tagged cells)."""
+        if subdomain_id is not None and subdomain_ids is not None:
+            raise ValueError("Use either subdomain_id or subdomain_ids, not both")
+        if subdomain_ids is None and subdomain_id is not None:
+            subdomain_ids = [subdomain_id]
+        if subdomain_ids is None:
+            return ufl.dx
+        if self.problem.cell_tags is None:
+            raise ValueError("subdomain_id(s) requested but problem.cell_tags is None")
+        return ufl.Measure(
+            "dx",
+            domain=self.mesh,
+            subdomain_data=self.problem.cell_tags,
+            subdomain_id=tuple(int(tag) for tag in subdomain_ids),
+        )
 
     def fields(self) -> TimeHarmonicFields:
         """Return last computed fields."""

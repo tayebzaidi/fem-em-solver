@@ -1,9 +1,13 @@
 # FEM-EM Solver — agent onboarding
 
 FEniCSX/DolfinX FEM solver for MRI coils loaded with gelled saline phantoms.
-Magnetostatics is validated against closed forms; the time-harmonic path is a
-**proxy, not a Maxwell solve** — read PROJECT_PLAN.md §2 before trusting any
-frequency-domain output, S-parameter, or green test downstream of it.
+Magnetostatics is validated against closed forms. The time-harmonic path is a
+real complex curl-curl solve since 2026-07-31 (`TH-1` steps 1–3) but **has not
+been checked against any physical closed form yet** (`TH-6` is open), and the
+S-parameters are still a heuristic — read PROJECT_PLAN.md §2 before trusting any
+frequency-domain output, S-parameter, or green test downstream of it. Anything
+that solves in the frequency domain needs the complex DolfinX build
+(`source /usr/local/bin/dolfinx-complex-mode`); real mode raises.
 
 ## Read these before working
 

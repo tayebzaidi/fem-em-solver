@@ -17,7 +17,10 @@ from fem_em_solver.materials import GelledSalinePhantomMaterial
 from fem_em_solver.post import compute_phantom_eb_metrics_and_export
 from fem_em_solver.post.phantom_fields import _evaluate_on_cells
 
+from tests.complex_mode import complex_only
 
+
+@complex_only
 def test_phantom_field_metrics_and_exports_are_finite():
     """Compute phantom |E|/|B| stats and verify phantom-only exports are written."""
     comm = MPI.COMM_WORLD

@@ -15,6 +15,8 @@ from fem_em_solver.core import (
 )
 from fem_em_solver.io.mesh import MeshGenerator
 
+from tests.complex_mode import complex_only
+
 
 def _make_problem(boundary_condition: TimeHarmonicBoundaryCondition | str) -> TimeHarmonicProblem:
     mesh, cell_tags, facet_tags = MeshGenerator.cylindrical_domain(
@@ -57,6 +59,7 @@ def test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set():
     assert dirichlet_dof_count == 0
 
 
+@complex_only
 def test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path():
     solver = TimeHarmonicSolver(_make_problem("pec_zero_tangential_a"), degree=1)
 
