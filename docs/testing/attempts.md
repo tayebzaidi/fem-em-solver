@@ -1155,3 +1155,26 @@ Same session as the entry above; step 4 was committed first (`99f3d4f`) so
   expect the same rate and a similar tolerance. The queue's next open item is 5
   (retire known-issues entry 1, smoke tier), then 6 (`TH-8`), which still needs
   its sphere-in-box fixture cost-probed.
+
+### Addendum (post-commit regression check, `88ffbf0`)
+
+`post/__init__.py` gained an import, so the tree was re-checked beyond the
+`POST-3` gate itself.
+
+- **Overrun, killed and shrunk (§5.1).** `pytest tests -m "not integration"` at
+  `-n 2` hit the 180 s `timeout` (status 124, log
+  `20260731T140702Z_POST-3-step1-mainsmoke.log`). Cause is already in
+  known-issues: `tests/mesh/test_birdcage_port_tags.py` alone takes ~10 minutes.
+  Per the rule the case was shrunk rather than the timeout raised — that whole
+  selection is simply over budget and should not be run as one command.
+- **Shrunk re-run:** `pytest tests/mesh --ignore=.../test_birdcage_port_tags.py`
+  → **1 failed, 13 passed in 8.9 s** (log
+  `20260731T141038Z_POST-3-step1-meshcheck.log`). The single failure is
+  known-issues entry 5,
+  `test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent`,
+  `assert 0.09 > 0.09` at line 62 — pure geometry arithmetic, no solve, so no
+  post-processing change can reach it. `tests/mesh/test_coil_phantom_mesh.py`
+  passes 6/6; the `FF` against it in the timed-out log was two ranks'
+  progress output interleaving, not a failure.
+- **Net:** `main` is green apart from the documented pre-existing entries. No
+  new known-issues entry is warranted.
