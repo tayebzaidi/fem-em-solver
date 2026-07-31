@@ -990,3 +990,62 @@ Same session as the entry above; step 4 was committed first (`99f3d4f`) so
   r_wire ≤ 1.25 mm *first* (h/r_wire ≥ 16) and only then grow the box — the
   finite-section spread is 30%, larger than the 5.6% of box motion left, so
   spending cells on a bigger box before thinning the wire buys nothing.
+
+## 2026-07-31T11:10Z — MAT-6 step 2b (the FEM loading gate) — complete
+
+- **Run:** scheduled implementer, 06:00 local. On-deck item 2. Tree clean at
+  start (`0844afe`), container Up. **`MAT-6` is closed.**
+- **What was built:** the FEM half of
+  `tests/validation/test_dodd_deeds_impedance.py` — the step-2a probe's ΔZ
+  extraction turned into four tests behind a module-scoped fixture (one mesh,
+  three solves), exactly the configuration the step-2a table fixed. No new
+  source code: `io/mesh.py` and the solver were already sufficient, which is
+  what step 2a existed to establish.
+- **Numbers (log of record `20260731T110515Z_MAT-6-step2b-gate-numbers.log`):**
+  W = 0.15, **138 619 cells**, solves 25.6 / 23.8 / 23.9 s, meshed loop current
+  0.919690 A.
+  - **ΔR = +3.276882e−01 Ω vs closed form +3.225961e−01 Ω → 1.58%**, asserted
+    < 5%. This reproduces the step-2a W = 0.15 probe value to every printed
+    digit — the test measures what the probe measured.
+  - ΔX = −5.002739e−01 Ω vs −6.158675e−01 Ω, ratio **0.8123**; gated on sign
+    and `0.5 < ratio < 2.0` only, with the reason (unconverged in box size,
+    30% filamentary-reference spread over h ± r_wire) in the test docstring.
+  - **Null control:** same mesh solved with the slab tagged σ = 0 versus with
+    no material map at all — physically identical media — gives
+    ΔZ = +0 + j7.82e−09 Ω, i.e. **1.31e−08** of |ΔZ_loaded|, asserted < 1e−3.
+    So the tagging and the reaction extraction manufacture nothing; the ΔR the
+    gate compares is field physics. A σ-blind solver returns ΔZ = 0 and fails
+    the gate by 100%.
+  - A fourth test asserts the three eddy-current regime inequalities the
+    reference needs (loss tangent 1.798e5 > 1e2; δ = 15.915 mm at 3.18
+    near-cells; slab 9.42 δ deep; k₀·diag = 0.1089 < 0.2). It needs no solve,
+    so it is not `@complex_only` and runs in the real build too.
+- **Tier / cost:** heavy (declared), `timeout 600`, actual **85 s** at `-n 2`,
+  10 passed. Well inside the ceiling; no command overran.
+- **Logs:** `20260731T110310Z_MAT-6-step2b-collect.log` (collect-only smoke),
+  `20260731T110321Z_MAT-6-step2b-gate.log` (10 passed, 85.06 s — but pytest
+  captured the prints, so it carries no numbers),
+  `20260731T110515Z_MAT-6-step2b-gate-numbers.log` (**log of record**, same run
+  with `-s`, 10 passed, 84.74 s). One wasted 0 s run
+  (`20260731T110458Z_…`): `-k fem or zero_conductivity` inside the already
+  single-quoted container command split into stray argv entries — pass `-k`
+  expressions as a single shell word or just run the file.
+- **CI:** the file is added to the `validation-complex` job (`OPS-10`) with its
+  85 s cost noted in a comment. It was in no CI job before this commit — step 1
+  landed it without wiring it up.
+- **Branch (if parked):** none — `main` is clean and green.
+- **Denied commands:** none.
+- **What stays open, and why it is not a loosened tolerance:** ΔX. Step 2a
+  measured −35.3% / −18.8% / −14.3% across W = 0.10/0.15/0.20 with 5.57% of box
+  motion left, and could not split that between PEC-wall imaging and the finite
+  wire section. Per the earlier hypothesis, the wire should be thinned first
+  (r_wire ≤ 1.25 mm, h/r_wire ≥ 16) and only then the box grown — the 30%
+  finite-section spread dominates the 5.6% box motion. Also still open: the
+  eddy-current kernel means this licenses loading at 10 MHz / σ = 100 S/m, not
+  gelled saline at 127.74 MHz (loss tangent ≈ 1.26); the full-wave kernel
+  upgrade is the follow-up, and `MAT-4` (SAR) remains ungated. §2.1 and the §7
+  step-2b entry say this in the plan.
+- **Next-attempt hypothesis:** none for `MAT-6` itself. The natural follow-ups
+  are (a) a `MAT-7`-style full-wave-kernel chunk if a saline-regime loading
+  number is ever wanted, and (b) a ΔX-convergence run at r_wire = 1.25 mm,
+  W = 0.25 — cost-probe it first, W = 0.20 was already 69 s per solve.

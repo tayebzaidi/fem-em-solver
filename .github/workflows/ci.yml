@@ -177,9 +177,16 @@ jobs:
           tests/validation/test_time_harmonic_mms.py \
           tests/validation/test_lossy_plane_wave.py \
           tests/validation/test_resonance_guard.py \
+          tests/validation/test_dodd_deeds_impedance.py \
           tests/solver/test_time_harmonic_smoke.py \
           tests/solver/test_boundary_condition_selection.py \
           -v --tb=short
+
+    # test_dodd_deeds_impedance.py is the `MAT-6` loading gate and costs 85 s of
+    # the total (one 138k-cell mesh, three solves, measured at -n 2 on the dev
+    # box, log 20260731T110515Z_MAT-6-step2b-gate-numbers.log). Its step-1 half
+    # runs in either build, but the file is listed only here so the FEM half is
+    # actually executed rather than skipped.
 
     # Three `@complex_only` tests are deliberately absent from the list above,
     # all of them blocked on pre-existing failures rather than on complex mode:

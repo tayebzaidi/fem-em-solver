@@ -58,10 +58,16 @@ points from stored-energy continuity (`S = |dlnW/dlnf| ≈ 2f/|f−f₀|`, thres
 energy rise matching the `|f−f₀|⁻²` pole law to 3.16%. **`TH-1` is closed.**
 
 **What this does and does not license.** The frequency-domain *formulation* is
-now validated against a physical closed form in a homogeneous medium. It is not
-yet validated against a *loaded coil*: `MAT-6` (Dodd–Deeds) is the gate that
-would license SAR and coil-loading figures, and §2.2's heuristic S-parameters
-are untouched by any of this — `PORT-1` still owns that.
+now validated against a physical closed form in a homogeneous medium, **and, as
+of 2026-07-31, against a loaded coil**: `MAT-6` closed with the FEM coil
+resistance change over a conductive half-space matching Dodd–Deeds to **1.58%**
+(§7). The loading claim is real but bounded — it is established in the *eddy-
+current* regime (10 MHz, σ = 100 S/m, loss tangent 1.8e5), and the reactive part
+ΔX is gated only on sign and magnitude, so "the phantom loads the coil at
+127.74 MHz" (loss tangent ≈ 1.26, displacement current not negligible) is an
+extrapolation, not a validated result: it needs the full-wave kernel named in
+the `MAT-6` step-2 entry. §2.2's heuristic S-parameters are untouched by any of
+this — `PORT-1` still owns that.
 
 ### 2.2 The S-parameters are heuristic, not computed
 
@@ -243,7 +249,7 @@ needs `-f docker/docker-compose.yml`.
 | 0 | Infrastructure, packaging, CI, meshing | `OPS-1`, `OPS-2` | Done |
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Complete and trustworthy** |
 | 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — `TH-1`/`TH-6`/`TH-9` ✅; `TH-7`/`TH-8` open |
-| 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` step 1 done, step 2 is the loading gate |
+| 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58%, eddy-current regime); SAR still ungated |
 | 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-8` | Placeholder-backed |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 |
 | 6 | Advanced: MPI scaling, AMR, sweeps, optimization | — | Deferred |
@@ -551,7 +557,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `MAT-3` | Debye/Cole-Cole dispersion models | ⬜ | smoke |
 | `MAT-4` | SAR computation `σ|E|²/(2ρ)` | ⬜ | standard |
 | `MAT-5` | Temperature-dependent conductivity | ⬜ | smoke |
-| `MAT-6` | **Dodd–Deeds coil-over-lossy-half-space impedance** | 🟡 | standard |
+| `MAT-6` | **Dodd–Deeds coil-over-lossy-half-space impedance** | ✅ | heavy |
 
 > `MAT-1` is `⚠️` not because the preset table is wrong but because nothing
 > consumes it.
@@ -594,7 +600,7 @@ run, `src/fem_em_solver/utils/dodd_deeds.py` +
 > off vacuum — log `20260731T050326Z_MAT-6-step1.log`). Gelled saline at
 > 127.74 MHz has loss tangent ≈ 1.26, i.e. **outside** this kernel's regime.
 
-**`MAT-6` step 2 — the FEM gate** ⬜ *(the part that actually closes the chunk)*
+**`MAT-6` step 2 — the FEM gate** ✅ *(closed 2026-07-31 by step 2b, below)*
 > Solve a filamentary loop over a lossy half-space with `TimeHarmonicSolver`
 > and extract ΔZ by the reaction integral `ΔZ = −(1/I²)∫(E_loaded − E_free)·J dV`
 > over the source region, i.e. two solves differing only in the half-space σ, so
@@ -660,6 +666,42 @@ complex build)*
 > only on **sign and order of magnitude** until the wire is thinned (h/r_wire
 > ≥ 16, i.e. r_wire ≤ 1.25 mm) or the box reaches W ≥ 0.25. Do not close
 > `MAT-6` on a tolerance widened to swallow 14%.
+
+**`MAT-6` step 2b — the gate** ✅ *(2026-07-31, 06:00 implementer run,
+`tests/validation/test_dodd_deeds_impedance.py` FEM half, log
+`20260731T110515Z_MAT-6-step2b-gate-numbers.log`, 10 tests, **85 s** at `-n 2`,
+heavy tier, complex build)*
+> **`MAT-6` is closed. The coil-loading claim is now quantitative.** One mesh
+> (`loop_over_half_space_domain` at W = 0.15, **138 619 cells**) and three
+> solves at 25.6 / 23.8 / 23.9 s, in a module-scoped fixture:
+>
+> | quantity | FEM | closed form | gate |
+> |---|---|---|---|
+> | ΔR | **+0.3276882 Ω** | +0.3225961 Ω | **1.58%**, asserted < 5% |
+> | ΔX | −0.5002739 Ω | −0.6158675 Ω | ratio **0.8123**, sign + O(1) only |
+> | null control | +0 + j7.82e−09 Ω | 0 | 1.31e−08 of \|ΔZ\|, asserted < 1e−3 |
+>
+> ΔR reproduces the step-2a W = 0.15 probe number to every printed digit, which
+> is the check that the test measures what the probe measured. The **5% bound is
+> sized from measurement, not chosen**: 1.58% at W = 0.15, 1.85% at W = 0.20,
+> 0.268% of box motion between them. A σ-blind solver returns ΔZ = 0 and fails
+> by 100%; the null control (same mesh solved with the slab tagged σ = 0 versus
+> no material map at all — physically identical media) shows the tagging and the
+> reaction extraction manufacture nothing on their own, so the ΔR the gate
+> compares is field physics.
+>
+> **ΔX is deliberately not gated tightly, and the test says so in code.** It is
+> not converged (−35.3% → −18.8% → −14.3% across W = 0.10/0.15/0.20, 5.57% still
+> moving) and step 2a could not split the residual between PEC-wall imaging and
+> the finite wire section (the filamentary reference spreads ΔX by 30% over
+> h ± r_wire). Tightening it would need h/r_wire ≥ 16 or W ≥ 0.25 — a follow-up
+> chunk, not a widened tolerance (MAG defect-5 note).
+>
+> **What stays open, deliberately.** This gates the *eddy-current* regime
+> (10 MHz, σ = 100 S/m). Gelled saline at 127.74 MHz has loss tangent ≈ 1.26 and
+> is **outside** it; the full-wave kernel (`α₀ = √(α²−k₀²)`, `α/α₀` weight) named
+> in the step-2 entry is what would extend the claim there, and `SAR`/`MAT-4`
+> figures at Larmor frequency are still unlicensed. See §2.1.
 
 > **Trap found, costs a run if rediscovered.** `ufl.max_value` does not compile
 > in the complex build — UFL refuses conditionals on complex-valued operands —
@@ -775,8 +817,10 @@ the ROADMAP than in `pending-tests.md`. Resolve via this table.
 Phase 1 is complete and CI guards it. `TH-1` closed 2026-07-31 against the lossy
 plane-wave closed form; attention moves to the loaded-coil gate and ports.
 
-1. **`MAT-6` step 2** — the Dodd–Deeds FEM loading gate, split into probe + gate
-   in On deck below. This is what licenses coil-loading and SAR claims.
+1. ~~**`MAT-6` step 2**~~ — **done 2026-07-31** (steps 2a + 2b): ΔR matches
+   Dodd–Deeds to 1.58%, so coil loading is licensed *in the eddy-current
+   regime*. The saline/Larmor case needs the full-wave kernel; SAR (`MAT-4`)
+   is still ungated.
 2. **`TH-7`/`TH-8`** — the remaining cheap closed-form gates on the
    frequency-domain solver; each is one run in the `TH-6` mould.
 3. **`POST-3`** — replace the vacuous consistency metrics with identities that
@@ -832,7 +876,14 @@ attempts.md and the §7 entries; this is a fresh queue.
    Product: the chosen configuration plus both numbers in the §7 entry, and a
    first *unasserted* ΔZ against `utils/dodd_deeds.py`. Graded mesh — the
    known-issues air-box note applies to exactly this kind of fixture.
-2. **`MAT-6` step 2b — the gate.** Item 1 landed, so the configuration and the
+2. ~~**`MAT-6` step 2b — the gate.**~~ **Done 2026-07-31, 06:00 implementer
+   run — `MAT-6` is closed.** ΔR = +0.3276882 Ω against the closed form's
+   +0.3225961 Ω (**1.58%**, asserted < 5%); ΔX gated on sign + ratio 0.8123;
+   null control 1.31e−08 of |ΔZ|. 10 tests, 85 s at `-n 2`, log
+   `20260731T110515Z_MAT-6-step2b-gate-numbers.log`. See the §7 step-2b entry
+   for what stays open (ΔX convergence, the saline/full-wave regime). Original
+   text kept for the record:
+   Item 1 landed, so the configuration and the
    tolerance budget are fixed by the §7 step-2a table: run
    `MeshGenerator.loop_over_half_space_domain` at **W = 0.15** (138 619 cells,
    ~27 s per solve at `-n 2`; two solves + mesh ≈ 75 s, **standard tier fits,
@@ -900,7 +951,9 @@ blamed.
   constants each match their own closed form and their ratio is 10.3232 vs the
   closed-form 10.3116, `MAT-2`; εᵣ: at εᵣ = 78 the measured β = 27.03 rad/m
   matches the εᵣ-dependent closed form 27.02 to 0.059% where vacuum would give
-  2.68, `TH-6`. The loaded-**coil** claim stays open until `MAT-6` step 2.)*
+  2.68, `TH-6`. The loaded-**coil** claim landed 2026-07-31: the FEM ΔR of a
+  loop over a conductive half-space matches Dodd–Deeds to 1.58%, `MAT-6` step
+  2b — in the eddy-current regime, not yet at saline/Larmor.)*
 
 ### Target (end of Phase 4)
 - [ ] Loaded birdcage + phantom simulation runs end to end
