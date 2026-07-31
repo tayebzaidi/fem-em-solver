@@ -248,7 +248,7 @@ needs `-f docker/docker-compose.yml`.
 |---|---|---|---|
 | 0 | Infrastructure, packaging, CI, meshing | `OPS-1`, `OPS-2` | Done |
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Complete and trustworthy** |
-| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — `TH-1`/`TH-6`/`TH-9` ✅; `TH-7`/`TH-8` open |
+| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — `TH-1`/`TH-6`/`TH-7`/`TH-9` ✅; `TH-8` open |
 | 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58%, eddy-current regime); SAR still ungated |
 | 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-8` | Placeholder-backed |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 |
@@ -398,7 +398,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `TH-4` | Convergence/conditioning diagnostics | 🧪 | standard |
 | `TH-5` | Absorbing boundary condition (ABC) | ⬜ | standard |
 | `TH-6` | **Validation: plane wave in lossy half-space** | ✅ | standard |
-| `TH-7` | **Validation: waveguide cutoff / coaxial line** | ⬜ | standard |
+| `TH-7` | **Validation: waveguide cutoff / coaxial line** | ✅ | standard |
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ⬜ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 
@@ -538,8 +538,41 @@ Independent of the §2.1 physics defect; meshes are meshes.
 > follow the function's own dtype; it had simply never been called under the
 > complex build before.
 
-> `TH-7`/`TH-8` are cheap closed-form gates in the same mould; any one of them,
-> or `TH-6`, would have caught the `E = −ωA` defect immediately.
+**`TH-7` — Validation: waveguide cutoff** ✅ *(2026-07-31)*
+> Evanescent TE₁₀ below cutoff in a PEC a×b×L box, `tests/validation/
+> test_waveguide_cutoff.py`. `E = ŷ sin(πx/a) e^{−γz}` with `γ = √(k_c² − k₀²)`
+> is an exact source-free solution at `εᵣ = μᵣ = 1, σ = 0` (`∇·E = 0` ⇒
+> `∇×∇×E = −∇²E = k₀²E`) and satisfies PEC on the four side walls identically.
+> Imposed on the whole boundary via `dirichlet_e_field`; the *interior*
+> log-amplitude slope along z is fitted, and the boundary data pins only the two
+> end faces.
+>
+> **Why it is not a repeat of `TH-6`.** `TH-6` measures decay driven by
+> `Im ε_c` — the mass term's imaginary part. Here the medium is **lossless** and
+> the decay comes from the transverse geometry against the operator's *real*
+> part. A solver that dropped `k₀²ε` entirely still decays, at `γ = k_c` exactly;
+> at `f = 2.4 GHz` that is 66% high, which is why `γ < k_c` is asserted
+> separately from the 5% closed-form bound.
+>
+> **Measured** (a = 0.05 m, b = 0.025 m, L = 0.05 m, f_c = 2.998 GHz;
+> `20260731T123411Z_TH-7-gate-final.log`, 6 tests / **9.8 s** at `-n 2`,
+> standard tier): at f = 2.4 GHz, `γ = 37.650399` vs the closed form
+> `37.652670 Np/m` (**0.006%**); relative L2 `8.821e-2 → 4.407e-2` from 5184 to
+> 41472 cells, **rate 1.0013** in `h`. Frequency sweep at 1.0 / 2.4 / 2.8 GHz:
+> each γ within 0.066% of its own closed form, end-to-end ratio 2.6373 vs 2.6383
+> (**0.038%**) — the negative control a k₀-blind solver fails with a ratio of 1.
+> Residual `|Im E_y|/|Re E_y|` is **exactly 0.0** (real operator, real data), the
+> cheapest available check on the `e^{+jωt}` convention.
+>
+> The `TH-1` step-5 energy guard is asserted **quiet** rather than worked around:
+> below cutoff γ is real, so the operator has no pole in the band, and the guard
+> reports `max |dlnW/dlnf| = 2.769` against its threshold of 50. The above-cutoff
+> β case was deliberately dropped — it buys nothing the phase fits in `TH-6` and
+> `TH-9` do not already cover, and would have to be placed away from the box's
+> discrete modes.
+
+> `TH-8` is a cheap closed-form gate in the same mould; it, `TH-7`, or `TH-6`
+> would have caught the `E = −ωA` defect immediately.
 
 > `TH-4` is 🧪 rather than ⚠️ because PETSc residual/conditioning diagnostics are
 > meaningful regardless of which weak form is assembled.
@@ -821,8 +854,9 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
    Dodd–Deeds to 1.58%, so coil loading is licensed *in the eddy-current
    regime*. The saline/Larmor case needs the full-wave kernel; SAR (`MAT-4`)
    is still ungated.
-2. **`TH-7`/`TH-8`** — the remaining cheap closed-form gates on the
-   frequency-domain solver; each is one run in the `TH-6` mould.
+2. ~~**`TH-7`**~~ — **done 2026-07-31** (γ to 0.006%). **`TH-8`** is the last of
+   the cheap closed-form gates on the frequency-domain solver; one run in the
+   `TH-6` mould.
 3. **`POST-3`** — replace the vacuous consistency metrics with identities that
    can fail (Poynting balance), now unblocked by `TH-1`.
 4. **`PORT-1`** — real port excitation from the solved field. Resolves the two
@@ -898,7 +932,14 @@ attempts.md and the §7 entries; this is a fresh queue.
    wire section (the filamentary reference spreads 30% over h ± r_wire).
    Closing `MAT-6` on a tolerance widened to swallow that 14% is exactly the
    move §7's MAG defect-5 note forbids. Complex build.
-3. **`TH-7` — waveguide-cutoff gate**, independent; the `TH-6` pattern on a new
+3. ~~**`TH-7` — waveguide-cutoff gate.**~~ **Done 2026-07-31, 07:30 implementer
+   run — `TH-7` is closed.** γ = 37.650399 vs the closed form 37.652670 Np/m
+   (**0.006%**), L2 rate 1.0013 in h, sweep ratio 2.6373 vs 2.6383 (0.038%),
+   guard clear at `max |dlnW/dlnf| = 2.769`. 6 tests, 9.8 s at `-n 2`, log
+   `20260731T123411Z_TH-7-gate-final.log`; added to the `validation-complex` CI
+   job. The above-cutoff β half was dropped — see the §7 entry. Original text
+   kept for the record:
+   independent; the `TH-6` pattern on a new
    closed form. PEC a×b×L box, complex build, standard tier: impose the analytic
    evanescent TE₁₀ field `E_y = sin(πx/a)·e^{−γz}`, `γ = √(k_c² − k₀²)`, on all
    faces via `dirichlet_e_field` at f **below cutoff** and fit the interior

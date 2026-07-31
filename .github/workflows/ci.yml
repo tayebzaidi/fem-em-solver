@@ -176,6 +176,7 @@ jobs:
           tests/environment \
           tests/validation/test_time_harmonic_mms.py \
           tests/validation/test_lossy_plane_wave.py \
+          tests/validation/test_waveguide_cutoff.py \
           tests/validation/test_resonance_guard.py \
           tests/validation/test_dodd_deeds_impedance.py \
           tests/solver/test_time_harmonic_smoke.py \

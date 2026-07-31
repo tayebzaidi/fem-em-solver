@@ -1049,3 +1049,45 @@ Same session as the entry above; step 4 was committed first (`99f3d4f`) so
   are (a) a `MAT-7`-style full-wave-kernel chunk if a saline-regime loading
   number is ever wanted, and (b) a ΔX-convergence run at r_wire = 1.25 mm,
   W = 0.25 — cost-probe it first, W = 0.20 was already 69 s per solve.
+
+## 2026-07-31T12:35Z — TH-7 (waveguide-cutoff gate) — complete
+
+- **Item:** §9 On-deck item 3, taken as the first item not done or blocked
+  (items 1 and 2 were closed by the 04:30 and 06:00 runs). Preflight: tree
+  clean, container Up, no `attempt/*` or `recovered/*` branches.
+- **What was built:** `tests/validation/test_waveguide_cutoff.py`, two tests, no
+  `src/` change — the gate needed nothing the solver did not already have.
+  Evanescent TE₁₀ below cutoff in a PEC box, `E = ŷ sin(πx/a) e^{−γz}` with
+  `γ = √(k_c² − k₀²)`, imposed on the whole boundary via `dirichlet_e_field` and
+  fitted on the interior. a = 0.05 m (f_c = 2.998 GHz), b = 0.025, L = 0.05,
+  f = 2.4 GHz ⇒ γL ≈ 1.88.
+- **Measured:** γ = 37.650399 vs closed form 37.652670 Np/m (**0.006%**);
+  relative L2 8.821e−2 → 4.407e−2 across 5184 → 41472 cells, **rate 1.0013** in
+  h; sweep at 1.0/2.4/2.8 GHz each within 0.066%, ratio 2.6373 vs 2.6383
+  (0.038%); residual |Im E_y|/|Re E_y| **exactly 0.0**; resonance guard clear at
+  `max |dlnW/dlnf| = 2.769` (threshold 50).
+- **Tier and time:** standard, `timeout 180`, actual **9.8 s** at `-n 2`, 6
+  passed (4 environment + 2 gate). Far inside the ceiling; no command overran,
+  so no cost probe was needed beyond the `TH-6` precedent (82944 cells fit the
+  same tier; the fine mesh here is half that).
+- **Logs:** `20260731T123256Z_TH-7-gate.log` (6 passed, 18.8 s — first run,
+  prints captured by pytest, so it carries no numbers),
+  `20260731T123328Z_TH-7-gate-numbers.log` (same run with `-s`, the numbers),
+  `20260731T123411Z_TH-7-gate-final.log` (**log of record**, after the
+  `imag_ratio` assertion was added, 6 passed, 9.84 s).
+- **CI:** added to the `validation-complex` job (`OPS-10`).
+- **Branch (if parked):** none — `main` is clean and green.
+- **Denied commands:** none.
+- **Judgement calls worth reviewing.** (a) The above-cutoff β half named as
+  optional in the §9 item was **dropped**, not attempted: it buys no term the
+  `TH-6`/`TH-9` phase fits do not already exercise, and would need placement
+  away from the box's discrete modes. (b) `imag_ratio < 1e-10` was added as an
+  assertion only *after* measuring 0.0 — the docstring had claimed the check and
+  the first version only printed it. (c) γ < k_c is asserted separately from the
+  5% bound because the k₀-blind failure mode lands at exactly k_c (66% high
+  here), and a 5% bound alone would already catch it — the separate assertion
+  names the mechanism in the failure message.
+- **Next-attempt hypothesis:** none for `TH-7`. The queue's next open item is
+  `POST-3` step 1 (Poynting balance on the `TH-6` fixture); `TH-8` (item 6) is
+  the last cheap closed-form gate and is the one that still needs a tagged
+  sphere-in-box fixture, so it is the one worth cost-probing first.
