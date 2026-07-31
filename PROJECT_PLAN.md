@@ -614,6 +614,62 @@ run, `src/fem_em_solver/utils/dodd_deeds.py` +
 > saline-regime (full-wave) version can become a follow-up chunk if it is ever
 > needed. Decision (b) is the §9 item-1 probe. Split as On-deck items 1–2.
 
+**`MAT-6` step 2a — fixture + cost/air-box probe** ✅ *(2026-07-31, 04:30
+implementer run, `MeshGenerator.loop_over_half_space_domain` +
+`scripts/probes/mat6_step2a_probe.py`, logs
+`20260731T094211Z_MAT-6-step2a-boxprobe.log` (96 s) and
+`20260731T094411Z_MAT-6-step2a-boxprobe-w20.log` (196 s), `-n 2`, heavy tier,
+complex build)*
+> **Configuration chosen** (all three eddy-current constraints checked, not
+> assumed): f = 10 MHz, σ = 100 S/m, εᵣ = 1, a = 0.04 m, h = 0.02 m,
+> r_wire = 0.0025 m. Loss tangent σ/(ωε₀) = **1.80e5**; δ = **15.915 mm** at
+> **3.18** near-cells per δ with the slab **6.28 δ** deep (it fills the whole
+> lower half-box, so the PEC floor sits where the field is already dead);
+> k₀·(box diagonal) = **0.073 / 0.109 / 0.145** at W = 0.10 / 0.15 / 0.20 m.
+> Low f with high σ is what satisfies δ-resolvable and k₀·box ≪ 1 at once —
+> δ ∝ 1/√(fσ) but k₀ ∝ f.
+>
+> **Both probe numbers, at three box half-widths** (graded mesh: 2 mm on the
+> wire, 5 mm in the near box, 25 mm far; ΔZ by the reaction integral
+> `−(1/I²)∫(E_loaded−E_free)·J dV` over the wire):
+>
+> | W [m] | cells | ΔR [Ω] | ΔX [Ω] | vs closed form | solve [s] |
+> |---|---|---|---|---|---|
+> | 0.10 | 96 726 | +0.30952 | −0.39841 | ΔR −4.05%, ΔX −35.3% | 14.4 |
+> | 0.15 | 138 619 | +0.32769 | −0.50027 | ΔR +1.58%, ΔX −18.8% | 26.5 |
+> | 0.20 | 205 327 | +0.32857 | −0.52812 | ΔR +1.85%, ΔX −14.3% | 69.0 |
+>
+> Closed form (filamentary, step 1): ΔZ = +0.322596 − j0.615868 Ω.
+> **(i) Box sensitivity**: 0.10→0.15 moves ΔR by 5.87% and ΔX by 25.6%;
+> 0.15→0.20 moves ΔR by **0.268%** and ΔX by **5.57%**. **(ii) Wall clock per
+> solve** at `-n 2`: 14.4 / 26.5 / 69.0 s, plus 6.5 / 9.9 / 14.5 s of meshing;
+> a full four-solve two-box sweep is 196 s — heavy tier, not standard.
+>
+> **The two parts of ΔZ are not equally gateable, and that is the step-2b
+> finding.** ΔR is converged in box size by W = 0.15 (0.27% left) and sits
+> **1.6–1.9%** off the closed form. ΔX is still drifting monotonically toward
+> the reference (−35% → −19% → −14%) and has 5.6% of box motion left at
+> W = 0.20. Two contributions are not separated yet: PEC-wall imaging of the
+> induced currents, and the **finite wire section** — the reference is
+> filamentary, and re-evaluating it at h ± r_wire spreads ΔR by 38% and ΔX by
+> 30%, so a fat torus is a first-order modelling error, not a rounding one.
+>
+> **Recommendation for step 2b** (rescope, not a free pass): assert ΔR against
+> the closed form at a tolerance sized from the measurement — 5% covers the
+> 1.9% offset plus the 0.27% box motion — plus the σ = 0 control, and gate ΔX
+> only on **sign and order of magnitude** until the wire is thinned (h/r_wire
+> ≥ 16, i.e. r_wire ≤ 1.25 mm) or the box reaches W ≥ 0.25. Do not close
+> `MAT-6` on a tolerance widened to swallow 14%.
+
+> **Trap found, costs a run if rediscovered.** `ufl.max_value` does not compile
+> in the complex build — UFL refuses conditionals on complex-valued operands —
+> so the magnetostatic loop fixture's `azimuthal_current_density`
+> (`tests/validation/test_circular_loop.py`) cannot be reused verbatim in any
+> frequency-domain solve. The probe regularises inside the square root instead
+> (`sqrt(x²+y²+1e-24)`). A killed run also leaves a stale FFCx lock that makes
+> the *next* run fail with "JIT compilation timed out, probably due to a failed
+> previous compile"; clear it with `rm -rf ~/.cache/fenics` in the container.
+
 ### POST — Post-processing & field extraction
 
 | ID | Title | Status | Tier |
@@ -758,7 +814,10 @@ logs, quantitative assertions, and elapsed times all present; nothing demoted.
 The four struck-through items from the previous queue are recorded in
 attempts.md and the §7 entries; this is a fresh queue.
 
-1. **`MAT-6` step 2a — loop-over-half-space FEM fixture + cost/box probe.**
+1. ~~**`MAT-6` step 2a — loop-over-half-space FEM fixture + cost/box probe.**~~
+   **Done 2026-07-31, 04:30 implementer run** — see the `MAT-6` step-2a entry in
+   §7 for the chosen configuration, both probe numbers, and the ΔR/ΔX split that
+   rescopes item 2 below. Original text kept for the record:
    Complex build, standard tier. Pick the gate parameters *first*, inside the
    step-1 kernel's regime rather than upgrading the kernel (decision (a) in the
    §7 entry): εᵣ = 1 half-space, and (f, σ) chosen so that loss tangent
@@ -773,12 +832,21 @@ attempts.md and the §7 entries; this is a fresh queue.
    Product: the chosen configuration plus both numbers in the §7 entry, and a
    first *unasserted* ΔZ against `utils/dodd_deeds.py`. Graded mesh — the
    known-issues air-box note applies to exactly this kind of fixture.
-2. **`MAT-6` step 2b — the gate** (depends on item 1 landing; if it did not,
-   skip to item 3). Turn the probe configuration into a
-   `tests/validation/test_dodd_deeds_impedance.py` FEM test asserting ΔR and ΔX
-   separately against the step-1 closed form, tolerance sized from item 1's
-   measured box sensitivity, plus a σ = 0 control (the reaction-integral
-   difference ≈ 0). Closes `MAT-6`. Complex build, standard tier.
+2. **`MAT-6` step 2b — the gate.** Item 1 landed, so the configuration and the
+   tolerance budget are fixed by the §7 step-2a table: run
+   `MeshGenerator.loop_over_half_space_domain` at **W = 0.15** (138 619 cells,
+   ~27 s per solve at `-n 2`; two solves + mesh ≈ 75 s, **standard tier fits,
+   heavy tier if the σ = 0 control is a third solve**) and turn the probe's ΔZ
+   extraction into a `tests/validation/test_dodd_deeds_impedance.py` FEM test.
+   **Assert ΔR against the closed form at 5%** (measured offset 1.6–1.9%, box
+   motion 0.27% — this is a measurement, not a fitted bound) plus the σ = 0
+   control (the reaction-integral difference ≈ 0, the negative control a
+   σ-blind solver fails). **ΔX gets sign + order of magnitude only** and an
+   explicit code comment saying why: 14.3% residual at W = 0.20 that the probe
+   could not split between PEC-wall imaging (5.6% still moving) and the finite
+   wire section (the filamentary reference spreads 30% over h ± r_wire).
+   Closing `MAT-6` on a tolerance widened to swallow that 14% is exactly the
+   move §7's MAG defect-5 note forbids. Complex build.
 3. **`TH-7` — waveguide-cutoff gate**, independent; the `TH-6` pattern on a new
    closed form. PEC a×b×L box, complex build, standard tier: impose the analytic
    evanescent TE₁₀ field `E_y = sin(πx/a)·e^{−γz}`, `γ = √(k_c² − k₀²)`, on all

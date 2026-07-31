@@ -931,3 +931,62 @@ Same session as the entry above; step 4 was committed first (`99f3d4f`) so
   run should cost-probe the mesh before committing to a box size, and settle the
   kernel question (high-σ gate vs full-wave upgrade) first, since it decides the
   material parameters the mesh is built for.
+
+## 2026-07-31T09:50Z — MAT-6 step 2a (loop-over-half-space fixture + box probe) — complete
+
+- **On-deck item:** §9 item 1 (first open item; taken as written, not rescoped).
+- **What landed:** `MeshGenerator.loop_over_half_space_domain` (torus over a
+  slab-filled lower half-box, graded three-scale sizing: wire / near-field /
+  far) and `scripts/probes/mat6_step2a_probe.py`, which solves loaded + free at
+  each box size and extracts `ΔZ = −(1/I²)∫(E_loaded−E_free)·J dV` over the wire.
+  Nothing is asserted — step 2a's product is the measurement, and the §7 entry
+  now carries it. `MAT-6` stays 🟡; step 2b is the gate.
+- **Configuration chosen, all three eddy-current constraints checked:**
+  f = 10 MHz, σ = 100 S/m, εᵣ = 1, a = 0.04 m, h = 0.02 m, r_wire = 0.0025 m.
+  Loss tangent 1.80e5; δ = 15.915 mm at 3.18 near-cells per δ; slab 6.28 δ deep;
+  k₀·(box diagonal) = 0.073/0.109/0.145 at W = 0.10/0.15/0.20 m. Low f with high
+  σ is the combination that satisfies "δ resolvable" and "k₀·box ≪ 1" together.
+- **Measured numbers (the deliverable):** closed form +0.322596 − j0.615868 Ω.
+  W = 0.10 (96 726 cells) ΔZ = +0.30952 − j0.39841; W = 0.15 (138 619)
+  +0.32769 − j0.50027; W = 0.20 (205 327) +0.32857 − j0.52812.
+  (i) **Box sensitivity** 0.10→0.15: ΔR 5.87%, ΔX 25.6%; 0.15→0.20: ΔR 0.268%,
+  ΔX 5.57%. (ii) **Wall clock per solve** at `-n 2`: 14.4 / 26.5 / 69.0 s, mesh
+  6.5 / 9.9 / 14.5 s.
+- **The finding that matters:** ΔR converges (1.6–1.9% off the closed form,
+  box-insensitive by W = 0.15); ΔX does not (−35% → −19% → −14%, still moving
+  5.6% per box step). Re-evaluating the *filamentary* reference at h ± r_wire
+  spreads ΔR by 38% and ΔX by 30%, so the finite torus section is a first-order
+  modelling error the probe could not separate from PEC-wall imaging. §9 item 2
+  is rescoped accordingly: gate ΔR at 5% + a σ = 0 control, ΔX on sign and order
+  of magnitude only, with the reason in a code comment.
+- **Two traps, each cost a run:** (1) `ufl.max_value` does not compile in the
+  complex build (UFL refuses conditionals on complex operands), so
+  `test_circular_loop.py::azimuthal_current_density` cannot be reused verbatim
+  in a frequency-domain solve — regularise inside the sqrt instead. (2) A killed
+  run leaves a stale FFCx lock and the *next* run dies with "JIT compilation
+  timed out, probably due to a failed previous compile"; `rm -rf ~/.cache/fenics`
+  in the container clears it. Both are recorded in §7.
+- **Also fixed while measuring:** ΔZ ∝ 1/I², and the meshed torus is 8% short of
+  the analytic volume, so the probe divides by the *meshed* loop current
+  (∫J dV / 2πa) rather than the nominal 1 A. Uncorrected this is a ~17% ΔZ error
+  that looks like physics.
+- **Tier / cost:** heavy. Two probe runs of 96 s and 196 s; three earlier
+  cost-probe/diagnostic runs of 180 s (timed out on a cold JIT compile), 0 s
+  (stale lock) and 8 s / 13 s. No command exceeded its `timeout`.
+- **Logs:** `20260731T093422Z_MAT-6-step2a-costprobe.log` (cold-JIT timeout),
+  `20260731T093914Z_MAT-6-step2a-costprobe3.log` (pipeline first working),
+  `20260731T094030Z_MAT-6-step2a-diag.log` (Z_free/Z_loaded split),
+  `20260731T094211Z_MAT-6-step2a-boxprobe.log` and
+  `20260731T094411Z_MAT-6-step2a-boxprobe-w20.log` (**logs of record**),
+  `20260731T094911Z_MAT-6-step2a-regression.log` (`tests/mesh` minus birdcage +
+  `tests/unit`, 18 passed / 1 failed in 8.8 s — the failure is known-issues
+  entry 5, `test_coil_phantom_domain_sizing_...`, pre-existing and untouched by
+  the additive `io/mesh.py` change).
+- **Branch (if parked):** none — `main` is clean and green.
+- **Denied commands:** none. (One Bash call was rejected for unanalyzable shell
+  syntax — a `$(...)` inside a compound command — and was re-issued split up.)
+- **Next-attempt hypothesis:** step 2b's ΔR gate should pass at W = 0.15 as
+  measured. If ΔX is wanted quantitatively later, thin the wire to
+  r_wire ≤ 1.25 mm *first* (h/r_wire ≥ 16) and only then grow the box — the
+  finite-section spread is 30%, larger than the 5.6% of box motion left, so
+  spending cells on a bigger box before thinning the wire buys nothing.

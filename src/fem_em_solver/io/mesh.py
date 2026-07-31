@@ -900,6 +900,189 @@ class MeshGenerator:
         return mesh, cell_tags, facet_tags
 
     @staticmethod
+    def loop_over_half_space_domain(
+        loop_radius: float = 0.04,
+        wire_radius: float = 0.005,
+        liftoff: float = 0.015,
+        box_half_width: float = 0.10,
+        resolution_wire: float = 0.004,
+        resolution_near: float = 0.005,
+        resolution_far: float = 0.02,
+        near_half_width: float = 0.06,
+        near_depth: float = 0.05,
+        near_height: float = 0.025,
+        comm: MPI.Intracomm = MPI.COMM_WORLD,
+        rank: int = 0,
+    ) -> Tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]:
+        """Filamentary loop at height ``liftoff`` over a conductive half-space.
+
+        `MAT-6` step 2: the FEM counterpart of
+        :func:`~fem_em_solver.utils.dodd_deeds.coil_impedance_change`.  A torus
+        of major radius ``loop_radius`` and minor radius ``wire_radius`` sits in
+        the plane ``z = liftoff``; the cube ``[-W, W]³`` around it is split at
+        ``z = 0`` into an upper air region and a lower slab that stands in for
+        the half-space.  The slab fills the whole lower half of the box, so the
+        PEC truncation plane below it sits many skin depths into the conductor
+        and the half-space is only truncated where the fields are already dead.
+
+        Cell tags: ``1`` wire, ``2`` air (``z > 0``), ``3`` slab (``z < 0``).
+        Facet tag ``1`` is the outer boundary of the cube.
+
+        Sizing is **graded**, deliberately: a single global ``setSize`` fine
+        enough to put 3–4 cells across the skin depth would be unaffordable over
+        the whole air box, and the tight-padding/uniform-size pattern is exactly
+        what cost 20% on Helmholtz (docs/testing/known-issues.md).  Three scales:
+        ``resolution_wire`` on the torus surface, ``resolution_near`` inside the
+        near-field box ``|x|,|y| ≤ near_half_width``,
+        ``−near_depth ≤ z ≤ near_height`` (which must contain the coil and the
+        skin layer), and ``resolution_far`` everywhere else.
+
+        Parameters
+        ----------
+        loop_radius, wire_radius, liftoff : float
+            Loop major radius ``a``, wire minor radius, and the height ``h`` of
+            the loop plane above the conductor surface [m].  The wire must clear
+            the interface: ``liftoff > wire_radius``.
+        box_half_width : float
+            Half side ``W`` of the cubic truncation box [m].  This is the knob
+            the `MAT-6` step-2a probe sweeps: ``ΔZ`` is extracted from a
+            loaded/free *difference*, so the coil self-impedance cancels, but
+            the PEC wall still images the induced currents.
+        resolution_wire, resolution_near, resolution_far : float
+            Target mesh sizes [m] for the three zones described above.
+        near_half_width, near_depth, near_height : float
+            Extent of the fine near-field box [m]: lateral half-width, depth
+            below the interface, height above it.
+        """
+        if liftoff <= wire_radius:
+            raise ValueError(
+                f"liftoff={liftoff!r} must exceed wire_radius={wire_radius!r} so the "
+                "wire clears the half-space interface"
+            )
+        if box_half_width <= loop_radius + wire_radius:
+            raise ValueError(
+                f"box_half_width={box_half_width!r} must exceed the loop outer radius "
+                f"{loop_radius + wire_radius!r}"
+            )
+        for name, value in (
+            ("resolution_wire", resolution_wire),
+            ("resolution_near", resolution_near),
+            ("resolution_far", resolution_far),
+        ):
+            if value <= 0.0:
+                raise ValueError(f"{name} must be positive, got {value!r}")
+
+        W = float(box_half_width)
+
+        if comm.rank == rank:
+            gmsh.initialize()
+            gmsh.model.add("loop_over_half_space")
+
+            wire = gmsh.model.occ.addTorus(0, 0, liftoff, loop_radius, wire_radius)
+            air = gmsh.model.occ.addBox(-W, -W, 0.0, 2 * W, 2 * W, W)
+            slab = gmsh.model.occ.addBox(-W, -W, -W, 2 * W, 2 * W, W)
+
+            gmsh.model.occ.fragment([(3, air), (3, slab)], [(3, wire)])
+            gmsh.model.occ.synchronize()
+
+            # Identify the three volumes by mass and centroid rather than by the
+            # tags fragment happens to hand back: the wire is orders of magnitude
+            # the smallest, and air/slab are told apart by the sign of z̄.
+            wire_volume = None
+            air_volume = None
+            slab_volume = None
+            torus_mass = 2.0 * np.pi**2 * loop_radius * wire_radius**2
+            for dim, tag in gmsh.model.getEntities(dim=3):
+                mass = gmsh.model.occ.getMass(dim, tag)
+                _, _, zc = gmsh.model.occ.getCenterOfMass(dim, tag)
+                if mass < 10.0 * torus_mass:
+                    wire_volume = tag
+                elif zc > 0.0:
+                    air_volume = tag
+                else:
+                    slab_volume = tag
+
+            if wire_volume is None or air_volume is None or slab_volume is None:
+                raise RuntimeError(
+                    "loop_over_half_space_domain: fragment did not produce the expected "
+                    f"wire/air/slab volumes (got {gmsh.model.getEntities(dim=3)})"
+                )
+
+            gmsh.model.addPhysicalGroup(3, [wire_volume], tag=1)
+            gmsh.model.setPhysicalName(3, 1, "wire")
+            gmsh.model.addPhysicalGroup(3, [air_volume], tag=2)
+            gmsh.model.setPhysicalName(3, 2, "air")
+            gmsh.model.addPhysicalGroup(3, [slab_volume], tag=3)
+            gmsh.model.setPhysicalName(3, 3, "slab")
+
+            tol = 1e-9
+            boundary_surfaces = []
+            for dim, surf in gmsh.model.getEntities(dim=2):
+                x0, y0, z0, x1, y1, z1 = gmsh.model.getBoundingBox(dim, surf)
+                on_wall = (
+                    abs(x0 + W) < tol and abs(x1 + W) < tol
+                    or abs(x0 - W) < tol and abs(x1 - W) < tol
+                    or abs(y0 + W) < tol and abs(y1 + W) < tol
+                    or abs(y0 - W) < tol and abs(y1 - W) < tol
+                    or abs(z0 + W) < tol and abs(z1 + W) < tol
+                    or abs(z0 - W) < tol and abs(z1 - W) < tol
+                )
+                if on_wall:
+                    boundary_surfaces.append(surf)
+            if boundary_surfaces:
+                gmsh.model.addPhysicalGroup(2, boundary_surfaces, tag=1)
+                gmsh.model.setPhysicalName(2, 1, "outer_boundary")
+
+            wire_surfaces = [
+                surf
+                for _, surf in gmsh.model.getBoundary(
+                    [(3, wire_volume)], oriented=False, recursive=False
+                )
+            ]
+
+            dist = gmsh.model.mesh.field.add("Distance")
+            gmsh.model.mesh.field.setNumbers(dist, "SurfacesList", wire_surfaces)
+            gmsh.model.mesh.field.setNumber(dist, "Sampling", 200)
+
+            wire_thr = gmsh.model.mesh.field.add("Threshold")
+            gmsh.model.mesh.field.setNumber(wire_thr, "InField", dist)
+            gmsh.model.mesh.field.setNumber(wire_thr, "SizeMin", resolution_wire)
+            gmsh.model.mesh.field.setNumber(wire_thr, "SizeMax", resolution_far)
+            gmsh.model.mesh.field.setNumber(wire_thr, "DistMin", wire_radius)
+            gmsh.model.mesh.field.setNumber(wire_thr, "DistMax", W)
+
+            near = gmsh.model.mesh.field.add("Box")
+            gmsh.model.mesh.field.setNumber(near, "VIn", resolution_near)
+            gmsh.model.mesh.field.setNumber(near, "VOut", resolution_far)
+            gmsh.model.mesh.field.setNumber(near, "XMin", -near_half_width)
+            gmsh.model.mesh.field.setNumber(near, "XMax", near_half_width)
+            gmsh.model.mesh.field.setNumber(near, "YMin", -near_half_width)
+            gmsh.model.mesh.field.setNumber(near, "YMax", near_half_width)
+            gmsh.model.mesh.field.setNumber(near, "ZMin", -near_depth)
+            gmsh.model.mesh.field.setNumber(near, "ZMax", near_height)
+            # Blend over one far-cell so the near/far jump is not a mesh shock.
+            gmsh.model.mesh.field.setNumber(near, "Thickness", resolution_far)
+
+            combined = gmsh.model.mesh.field.add("Min")
+            gmsh.model.mesh.field.setNumbers(combined, "FieldsList", [wire_thr, near])
+            gmsh.model.mesh.field.setAsBackgroundMesh(combined)
+
+            gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+            gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
+            gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
+
+            gmsh.model.mesh.generate(3)
+
+        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+            gmsh.model, comm, rank, gdim=3
+        )
+
+        if comm.rank == rank:
+            gmsh.finalize()
+
+        return mesh, cell_tags, facet_tags
+
+    @staticmethod
     def coil_phantom_domain_sizing_diagnostics(
         *,
         coil_major_radius: float,
