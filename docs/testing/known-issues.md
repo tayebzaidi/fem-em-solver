@@ -183,8 +183,9 @@ reference yet. See `PROJECT_PLAN.md` §9.
 
 ### `two_torus_domain` is not a conforming mesh — its tori are disconnected islands
 
-Found 2026-07-31 by the `PORT-1` step-1 probe at commit `08fe566`; **not
-diagnosed beyond the cause below, and nothing is being fixed here.**
+Found 2026-07-31 by the `PORT-1` step-1 probe at commit `08fe566`; diagnosed
+by code reading at the 18:00 review (below); **nothing is fixed yet** — the
+fix is `GEO-8`.
 
 `MeshGenerator.two_torus_domain` (`src/fem_em_solver/io/mesh.py`) adds two tori
 and then `occ.addBox` over them, calls `occ.synchronize()`, and **never
@@ -202,17 +203,30 @@ torus separately, sharing no nodes. Measured at padding 0.08 m, 31953 cells
 Symptom for `PORT-1`: the two-loop reaction Z-matrix has `Z₁₂ = Z₂₁ = 0`
 identically where the closed form gives `ωM₁₂ = 1.2418 Ω`.
 
-**The open question is what this means for the fixture's existing users** —
+**The open question was what this means for the fixture's existing users** —
 `tests/validation/test_helmholtz_v2.py`,
 `tests/validation/test_helmholtz_magnitude.py` and
 `tests/solver/test_two_torus.py`. Those tests pass today, and the Helmholtz
 centre-field agreement is quoted at 0.04% in §10, which is *not* what a
-disconnected source-to-centre path should produce. Either the magnetostatic
-path is insensitive to the disconnection in a way nobody has written down, or
-one of the two claims is wrong. Resolve that before changing the fixture: a
-`fragment` fix will move whatever those tests currently measure.
+disconnected source-to-centre path should produce.
 
-Resolved by: the `PORT-1` step-1 unblocking chunk (§9 item 4).
+**Answered by code reading (18:00 review, 2026-07-31; numerically
+unverified).** Both Helmholtz tests define J as a *geometric UFL expression*
+(`in_wire` from coordinates) assembled over the whole mesh, so the solid box's
+own cells inside the torus regions carry a full copy of the current — the
+centre field is sourced through a connected path and both claims are
+consistent. The torus islands carry a second copy of the source and solve a
+private problem nobody samples. The parked `PORT-1` probe instead passed
+`subdomain_ids=[torus tag]`, putting the source *only* on the islands — hence
+the zero coupling. `test_two_torus.py` asserts tag presence only, no solve.
+Consequence: the fragment fix is safe to make, but the Helmholtz numbers will
+*move* (the geometric J stops stair-stepping through box cells), so the fix
+must record before/after per the `GEO-8` plan. `two_cylinder_domain` shares
+the deliberate non-fragmenting pattern; its one user is qualitative and it is
+out of `GEO-8`'s scope.
+
+Resolved by: `GEO-8` (§9 On-deck item 1), then `PORT-1` step 1 re-runs the
+parked probe.
 
 ---
 

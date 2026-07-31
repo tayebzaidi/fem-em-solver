@@ -381,12 +381,63 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-5` | Region-specific mesh resolution policy | 🧪 | standard |
 | `GEO-6` | Geometry sanity report utility | 🧪 | smoke |
 | `GEO-7` | Mesh-tag QA diagnostic hardening | 🧪 | standard |
+| `GEO-8` | **Make `two_torus_domain` a conforming mesh** | ⬜ | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
 > fixture in `io/mesh.py` still uses a single global `setSize` and tight padding,
 > including coil+phantom** — expect the same boundary-mirror error that cost 20%
 > on Helmholtz, and expect graded sizing to be equally necessary.
+
+**`GEO-8` — make `two_torus_domain` a conforming mesh** ⬜ *(created
+2026-07-31, 18:00 review, from the `PORT-1` step-1 block)*
+> The fixture adds two tori and a box and never fragments — the docstring even
+> advertises "non-fragmenting geometry construction" — so gmsh meshes three
+> disconnected components. Measurements are in known-issues
+> ("`two_torus_domain` is not a conforming mesh"): the box is meshed solid
+> through the torus regions, a driven torus's field is confined to its island
+> (`∫|E|²` over the air tag exactly 0), and the `PORT-1` reaction Z-matrix has
+> `Z₁₂ ≡ 0` against a closed-form `ωM₁₂ = 1.2418 Ω`.
+>
+> **Why the fixture's validation users pass anyway — code reading, 18:00
+> review, numerically unverified.** `test_helmholtz_v2.py` and
+> `test_helmholtz_magnitude.py` define J as a *geometric UFL expression*
+> (`in_wire` from coordinates) assembled over the whole mesh, so the solid
+> box's own cells inside the torus regions carry a full copy of the current:
+> the centre field is sourced through a connected path and the 0.04% §10 claim
+> is genuine. The torus islands carry a second copy of the source and solve a
+> private problem nobody samples — they are inert duplicates, not part of the
+> measurement. The parked `PORT-1` probe instead passed
+> `subdomain_ids=[torus tag]`, which puts the source *only* on the islands —
+> hence zero coupling. `test_two_torus.py` asserts tag presence only (no
+> solve); `two_cylinder_domain` shares the deliberate non-fragmenting pattern
+> (`io/mesh.py`) but its one user is qualitative — out of scope here.
+>
+> **Plan (one run).**
+> 1. Re-run the three users through the harness *first* and record what they
+>    measure today (centre-field and mean/cv errors, global tag sets) — the
+>    "before" side this fix must publish.
+> 2. `occ.fragment` the box against both tori; re-derive physical groups 1/2/3
+>    from the fragment map by centroid/measure as `loop_over_half_space_domain`
+>    does — do **not** trust gmsh's returned tag order. Keep tag numbering and
+>    the `air_padding`/`wire_resolution`/`far_resolution` semantics; the graded
+>    sizing references torus surfaces whose entity ids change under fragment,
+>    so re-derive those too. Fix the now-false docstring.
+> 3. Conformity gate (new smoke test): global mesh volume within the linear-tet
+>    curvature deficit of the analytic box (today it *exceeds* the box by
+>    1.002633×, the overlap signature); air-tag volume < box minus the meshed
+>    tori; and the field check from the parked diagnostic — drive torus 1 with
+>    tag-restricted J and assert `∫|E|² dV` over tag 3 > 0 where today it is
+>    exactly 0.
+> 4. Re-run the three users and record the after-numbers next to the
+>    before-numbers. Expect the Helmholtz numbers to *move* — the geometric J
+>    now integrates over cells aligned to the torus surface instead of
+>    stair-stepping through box cells. Bounds move only if the fix improves
+>    them; never loosened.
+>
+> Done when: conformity assertions pass through the harness, the three users
+> are green with both sides recorded, and the known-issues entry is retired in
+> the same commit. Unblocks `PORT-1` steps 1–2 (§9 items 2 and 5).
 
 ### TH — Time-harmonic Maxwell (Phase 2)
 
@@ -645,6 +696,34 @@ Independent of the §2.1 physics defect; meshes are meshes.
 > `MAT-1` is `⚠️` not because the preset table is wrong but because nothing
 > consumes it.
 
+**`MAT-4` — SAR computation** ⬜ *(implementation plan 2026-07-31, 18:00
+review)*
+> **Step 1 — the lossy-sphere gate (one run).** Extend the `TH-8` fixture
+> (`sphere_in_box_domain` + the `test_dielectric_sphere.py` machinery) to
+> σ > 0: the same closed form holds with complex permittivity,
+> `E_in = 3E₀/(ε_c + 2)`, `ε_c = εᵣ − j·σ/(ωε₀)`, entering both the exterior
+> Dirichlet data (the dipole coefficient) and the reference. Implement
+> pointwise `SAR = σ|E|²/(2ρ)` (in `post/`, peak-phasor convention per §11)
+> and gate the interior mean SAR against the closed-form
+> `σ·|3E₀/(ε_c+2)|²/(2ρ)` at two resolutions. This is the first quantitative
+> assertion anywhere on the **imaginary axis of ε_c** — `TH-8` measured
+> `|Im E_z|/|Re E_z|` exactly 0 by construction, so the lossy path of the
+> material model is currently ungated.
+> Traps: (i) do **not** route the field through `post/phantom_fields.py` —
+> its `dtype=np.float64` cast discards `Im(E)` (the `POST-1` defect recorded
+> below); compute SAR in UFL from the solution directly. (ii) Check
+> quasi-static validity *numerically in the test*: `|k_in|·R ≪ 1` with
+> `k_in = k₀√ε_c` — loss inflates `|ε_c|`, so a σ that looks physically mild
+> can leave the closed form's regime silently; print `σ/(ωε₀)` and `|k_in|R`.
+> (iii) State the ½ (peak-phasor) convention in the docstring and keep it
+> consistent with `poynting_power_balance`. Controls: a σ-blind control in the
+> `TH-8` ε-blind mould, and two σ values each gated against its own closed
+> form (the `MAT-2` two-decay pattern). Complex build, standard tier — the
+> `TH-8` suite runs in 16 s; expect similar.
+> **Step 2 (later, do not improvise in step 1):** mass-averaged SAR
+> (1 g / 10 g) on the phantom mesh — needs ρ as a field and an averaging-volume
+> decision.
+
 **`MAT-2` — conductivity demonstrably drives the solved field** ✅ *(2026-07-31,
 `tests/validation/test_lossy_plane_wave.py::test_conductivity_measurably_changes_the_field`,
 log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
@@ -868,9 +947,31 @@ heavy tier, complex build)*
 >
 > **Still open for `POST-3`:** μᵣ is still scalar — a piecewise μᵣ also enters
 > `H` inside the boundary integral, so it waits for a magnetic phantom.
-> `∇·(σE)` residual and reciprocity, the other two candidates in the note
-> above, are untouched, and the `POST-1` cast defect recorded above still means
+> Reciprocity waits for `GEO-8` + `PORT-1` step 1, which produce a two-source
+> fixture for free. And the `POST-1` cast defect recorded above still means
 > the *phantom-field* metrics are taken on `Re(E)`.
+>
+> **Step 3 plan — total-current divergence residual (2026-07-31, 18:00
+> review).** The identity is on the **total** current:
+> `∇·(ε_c E) = 0`, i.e. `∇·((σ + jωε₀εᵣ)E) = 0` — *not* `∇·(σE)` as the note
+> above loosely named it, which is legitimately nonzero at a σ interface
+> (surface charge accumulates), so the piecewise fixture would fail it for
+> physics reasons. Two traps are the whole design:
+> (i) **Vacuity.** For `v ∈ CG1` vanishing on the wall, `∇v` lies inside the
+> degree-1 N1curl test space, so `∫ε_c E·∇v̄ dV` matches the source term
+> *identically by Galerkin orthogonality* — a CG1-weak residual is enforced,
+> not emergent, and can never fail: exactly the vacuous-metric class `POST-3`
+> exists to remove. Test against `∇(CG2)` instead (not a subspace of the
+> test space), normalised by a `‖ε_c E‖·‖∇v‖`-type scale.
+> (ii) **Source divergence.** Taking div of Ampère gives
+> `∇·(ε_c E) ∝ −∇·J_imp`, nonzero inside a volumetric source. The existing
+> piecewise-σ fixture (`test_poynting_balance.py`) is boundary-driven — no
+> volume source — so it is clean; on a coil drive the identity holds only
+> outside the source support.
+> Gate on the piecewise-σ fixture: residual falls under refinement with a
+> recorded rate, and a negative control — score the residual with σ dropped
+> from ε_c on the honest solve; the interface jump in `jωε₀εᵣE_n` alone must
+> then surface. Complex build, standard tier (the step-2 suite is 64 s).
 
 ### PORT — Ports & S-parameters (Phase 4)
 
@@ -1070,8 +1171,11 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
 4. **`PORT-1`** — real port excitation from the solved field. Resolves the two
    deliberately-red port tests as a side effect. §7-grade implementation plan
    written 2026-07-31 (10:30 review): reaction Z-matrix on the two-torus
-   fixture first (steps 1–2, On-deck items 4–5), gap-voltage birdcage ports as
-   step 3 after those report.
+   fixture first (steps 1–2), gap-voltage birdcage ports as step 3 after those
+   report. **Step 1 attempted at the 16:30 run and blocked on the fixture:**
+   `two_torus_domain` is three disconnected meshes (known-issues), so `GEO-8`
+   (new, 18:00 review) must land first — the critical path is now
+   `GEO-8` → step 1 → step 2, On-deck items 1, 2 and 5.
 5. **Air-box generalization** — every other `io/mesh.py` fixture still uses a
    single global `setSize` and tight padding, including coil+phantom.
 6. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
@@ -1094,89 +1198,53 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done, the implementer falls back to the "obvious
 next entry" named below.
 
-Last reviewed 2026-07-31, 10:30 daily review. Tree clean, no `attempt/*` or
-`recovered/*` branches; all four runs since 03:00 completed their items with no
-anomalies. Audit: both statuses that flipped ✅ since the last review (`MAT-6`,
-`TH-7`) are §4-compliant — logs of record
-`20260731T110515Z_MAT-6-step2b-gate-numbers.log` (ΔR vs closed form 1.58%,
-10 passed, 84.74 s) and `20260731T123411Z_TH-7-gate-final.log` (γ 0.006%, L2
-rate 1.0013, 6 passed, 9.84 s) carry quantitative closed-form assertions and
-elapsed times; nothing demoted. `POST-3` was correctly held at 🟡 by its own
-implementer (scalar-σ only). The four struck items from the previous queue are
-recorded in attempts.md and §7; this is a fresh queue — items 1 and 3 carry
-over unattempted from the previous queue's items 5 and 6.
+Last reviewed 2026-07-31, 18:00 daily review. Tree clean; no `recovered/*`
+branches. One `attempt/*` branch, `attempt/PORT-1-step1-20260731T213516Z` —
+**kept deliberately**: the probe script on it re-runs unchanged once `GEO-8`
+lands, so its content is not yet captured by the plan; item 2 deletes it when
+it lands the probe. All four runs since 10:30 resolved cleanly: known-issues
+entry 1 retired, `POST-3` step 2 and `TH-8` done, `PORT-1` step 1 blocked and
+parked per protocol. Audit: the one status that flipped ✅ since the last
+review (`TH-8`) is §4-compliant — log of record
+`20260731T200457Z_TH-8-gate-final.log`, 6 passed in 16.24 s at `-n 2`,
+closed-form interior field to 2.443% with fitted rate 1.9675 and an ε-blind
+negative control; the entry-1 retirement is likewise log-backed
+(`20260731T170152Z`, `20260731T170140Z`); nothing demoted. Queue rebuilt:
+items 1–3 of the previous queue are done (struck text preserved in git at
+`424faed`), item 4 is blocked on the fixture defect `GEO-8` now owns, and the
+open question it raised about the Helmholtz users is answered by code reading
+in the `GEO-8` entry (numerically unverified; `GEO-8` step 1 records the
+numbers). New plans written this review: `GEO-8`, `POST-3` step 3, `MAT-4`
+step 1 — items 3 and 4 are deliberately independent of the `PORT-1` chain.
 
-1. ~~**Retire known-issues entry 1**~~ — **done 2026-07-31** (12:00 implementer
-   run). Both tests re-verified through the harness: complex build 10 passed in
-   4.6 s (`20260731T170152Z_KI-1-retire-gate.log`), real build the CI command
-   with the `--deselect`s removed, 15 passed / 2 skipped
-   (`20260731T170140Z_KI-1-real-mode-iomatpost.log`). Deselects removed, both
-   files added to `validation-complex`, entry 1 marked retired (heading kept so
-   entries 2–6 keep their numbers), test-side `ComplexWarning` casts fixed, and
-   the `phantom_fields.py:88` cast recorded as a `POST-1` defect in §7.
-   Original text: independent, smoke tier. Both
-   `DummyMagnetostaticSolver` tests **passed** under the complex build in
-   `20260731T003802Z_TH-1-steps123-complexsuite.log` — `TH-1` deleted the
-   attribute read they were failing in. Re-verify through the harness, remove
-   the two `--deselect`s from the `validation` job, add both files to
-   `validation-complex`, and delete the known-issues entry in the same commit.
-   While there: the run emits `ComplexWarning` (complex→real casts) at
-   `tests/materials/test_phantom_material_model.py:33-34` and
-   `src/fem_em_solver/post/phantom_fields.py:88` — fix the test-side casts; the
-   `phantom_fields.py` one is `POST-1` territory, record it there if not fixed.
-2. ~~**`POST-3` step 2 — piecewise-σ power balance**~~ — **done 2026-07-31**
-   (13:30 implementer run). `sigma` takes a `fem.Function`; gated on a two-slab
-   σ = 0.1 | 1.4 S/m solve at 8.93% (16³) → 4.49% (32³), rate 0.9915 in h,
-   σ-blind control 99.19% vs 11.85%, scalar path pinned to `rtol = 1e-12`.
-   Log `20260731T183707Z_POST-3-step2-gate-final.log`, 9 passed, 64.5 s at `-n 2`.
-   Note for the review: the item said to re-gate "on the two-material
-   configuration `MAT-2` already solves" — `MAT-2` in fact solves two
-   *homogeneous* boxes, not one piecewise one, so the fixture was built new
-   (same σ pair, `material_map` + `cell_tags`, interface on a mesh plane).
-   `POST-3` stays 🟡 as planned. Original text: Generalise `poynting_power_balance`'s scalar `sigma`
-   to also accept a `fem.Function` (the `sigma_field` the solver already
-   returns in `TimeHarmonicFields`), keeping the scalar path working, and
-   re-gate on the two-material configuration `MAT-2` already solves in
-   `test_lossy_plane_wave.py` — the volume term becomes `½∫σ(x)|E|²dV`, the
-   boundary flux term is unchanged. Assert imbalance falls under refinement
-   and sits under a bound stated from the measurement (step 1's O(h)
-   boundary-trace leg sets the rate; expect numbers near step 1's 8%→4%, and
-   move the mesh, not the bound, if worse). Keep the σ-blind negative control
-   working against the field-σ path. `POST-3` stays 🟡 after this too —
-   `∇·(σE)` and reciprocity remain — but the metric becomes usable on
-   coil+phantom solves, which is where it earns its keep.
-3. ~~**`TH-8` — sphere in a uniform quasi-static field**~~ — **done 2026-07-31**
-   (15:00 implementer run). Interior `E_z` matches `3/(ε+2)E₀` to **2.443%** at
-   39693 cells, converging 9.546% → 4.270% → 2.443% with a **fitted rate of
-   1.9675** in `h`; interior spread 0.080%, transverse 0.085%, `|Im|/|Re|`
-   exactly 0. ε-blind control lands at 0.918 V/m (2348% off, within 8% of `E₀`).
-   New `MeshGenerator.sphere_in_box_domain` fixture; file wired into
-   `validation-complex`. Log `20260731T200457Z_TH-8-gate-final.log`, 6 passed,
-   16.2 s at `-n 2`, standard tier. This closes the last open Phase-2 analytic
-   gate. Original text: Dielectric sphere, closed-form interior field `E_in = 3/(ε_c + 2)·E₀`:
-   impose the full exterior solution (uniform + dipole) on the box boundary,
-   assert the interior field's magnitude and uniformity. Needs a tagged
-   sphere-in-box gmsh fixture (pattern exists in `io/mesh.py`); choose f so
-   k₀R ≪ 1, and cost-probe before sizing. Complex build, standard tier.
-4. 🚫 **`PORT-1` step 1 — two-loop reaction Z-matrix probe**, independent.
-   **Attempted 2026-07-31 (16:30 run), blocked: `two_torus_domain` does not
-   fragment its air box against the tori, so the mesh is three disconnected
-   components and `Z₁₂ = Z₂₁ = 0` identically.** Full measurements in the §7
-   `PORT-1` entry; probe parked on
-   `attempt/PORT-1-step1-20260731T213516Z`. The unblocking item — fragment the
-   box in `two_torus_domain` and re-verify the existing Helmholtz users of the
-   fixture — is a §7-sized chunk the review should scope before this item
-   reappears.
-   Execute step 1 of the §7 `PORT-1` implementation plan (written this
-   review): `two_torus_domain`, air-only, drive each torus in turn with the
-   regularised azimuthal J, extract the 2×2 reaction Z with **meshed** loop
-   currents, and record the reciprocity residual, `Im Z₁₂` vs `ωM₁₂` from
-   `circular_loop_vector_potential`, filament and box sensitivity, and
-   wall-clock in the §7 entry. **Product is measurements — assert nothing.**
-   Complex build; standard tier unless the cost probe says heavy.
-5. **`PORT-1` step 2 — the reciprocity gate** (spare). **Depends on item 4
-   having landed; if it did not, skip this and journal — do not improvise the
-   probe and the gate in one run.** Turn the step-1 numbers into
+1. **`GEO-8` — make `two_torus_domain` conforming**, independent; unblocks
+   the `PORT-1` chain. Execute the §7 `GEO-8` plan: record what the three
+   existing users measure today, fragment the box against both tori
+   re-deriving the physical groups from the fragment map, land the conformity
+   gate (mesh-volume arithmetic + the driven-torus field-leakage check), then
+   re-run the users and record before/after. Standard tier; the mesh is 32k
+   cells / 6 s, the magnetostatic users are the only meaningful cost.
+2. **`PORT-1` step 1 — two-loop reaction Z-matrix probe.** **Depends on
+   item 1 having landed; if it did not, skip to item 3 and journal.** Re-apply
+   the parked probe from `attempt/PORT-1-step1-20260731T213516Z`
+   (`scripts/probes/port1_step1_probe.py`) and run it unchanged per the §7
+   `PORT-1` step-1 plan; product is measurements, assert nothing. Cost is
+   known: 2.8–3.0 s per solve at `-n 2`, the whole sweep ~2 min. Delete the
+   attempt branch in the same commit — its content is then fully landed.
+3. **`POST-3` step 3 — total-current divergence residual**, independent.
+   Execute the §7 `POST-3` step-3 plan on the existing piecewise-σ fixture.
+   The two traps (CG1 vacuity by Galerkin orthogonality — test against
+   `∇(CG2)`; and the identity is on total current, not `σE` alone) are the
+   whole design and are written in the entry. Complex build, standard tier.
+4. **`MAT-4` step 1 — the lossy-sphere SAR gate**, independent. Execute the
+   §7 `MAT-4` plan: extend the `TH-8` sphere fixture to σ > 0, gate interior
+   SAR against `σ|3E₀/(ε_c+2)|²/(2ρ)` with complex ε_c — the first assertion
+   on the imaginary axis of ε_c (`TH-8` measured `|Im E_z|` exactly 0 by
+   construction). Do not route fields through `post/phantom_fields.py` (the
+   `POST-1` cast defect). Complex build, standard tier.
+5. **`PORT-1` step 2 — the reciprocity gate** (spare). **Depends on item 2
+   having produced its numbers; if it did not, stop and journal — do not
+   improvise the probe and the gate in one run.** Turn the step-1 numbers into
    `tests/validation/test_port_reaction_impedance.py` per the §7 plan:
    reciprocity residual and `ωM₁₂` bounds stated from the step-1 measurement,
    lossless `Re/Im` check, diagonals on sign and order only, S-conversion
