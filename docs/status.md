@@ -3,23 +3,27 @@
 > **Planning lives in [PROJECT_PLAN.md](https://github.com/awarru/fem-em-solver/blob/main/PROJECT_PLAN.md).**
 > This page is a human-readable snapshot. When the two disagree, the plan wins.
 
-Snapshot date: 2026-07-27.
+Snapshot date: 2026-07-31.
 
 ## Where the project actually stands
 
-**The magnetostatic solver is validated against a closed-form solution: 0.04%
-centre-field error on a Helmholtz coil** (2026-07-27, log
-`docs/testing/logs/20260727T171928Z_MAG-4.log`). That is the project's one solid
-result. Most of the surrounding test suite is still broken or unverified.
+Two solid results now. **The magnetostatic solver is validated against a
+closed form: 0.04% centre-field error on a Helmholtz coil** (2026-07-27, log
+`docs/testing/logs/20260727T171928Z_MAG-4.log`). And **the time-harmonic solver
+is a real complex curl-curl solve validated against the analytic lossy plane
+wave** (2026-07-31, `TH-1`/`TH-6`: decay and phase constants to 0.019%/0.059%,
+field L2 3.61%, O(h) rate 0.9998; conductivity sensitivity matches its closed
+form to 0.113%, `MAT-2`). What is *not* yet validated: any loaded-coil quantity
+(`MAT-6` step 2 is that gate) and everything S-parameter-shaped (`PORT-1`).
 
 | Phase | State |
 |---|---|
-| 0 — Infrastructure | Docker toolchain works; CI now runs the real validation suite. |
+| 0 — Infrastructure | Docker toolchain works; CI runs the real validation suite, plus a complex-mode job (`OPS-10`) — **not yet exercised on a GitHub runner; local `main` has not been pushed since 2026-07-27**. |
 | 1 — Magnetostatics | **Complete and verified to 0.04%.** Full suite green. |
-| 2 — Time-harmonic Maxwell | **Not started.** See the caveats below. |
-| 3 — Materials & phantoms | Presets exist but do not affect solved fields. |
-| 4 — Coil modeling & ports | Placeholder coupling model, now quarantined. |
-| 5 — Full MRI integration | Blocked on Phases 2–4. |
+| 2 — Time-harmonic Maxwell | **Formulation validated** (`TH-1`, `TH-6`, `TH-9` ✅); `TH-7`/`TH-8` gates open. |
+| 3 — Materials & phantoms | σ and εᵣ demonstrably drive the solved field (`MAT-2` ✅); Dodd–Deeds closed form landed, FEM loading gate open (`MAT-6`). |
+| 4 — Coil modeling & ports | Placeholder coupling model, quarantined. `PORT-1` is next on the critical path. |
+| 5 — Full MRI integration | Blocked on Phases 3–4. |
 | 6 — Advanced features | Deferred. |
 
 ## Phase 1 — actual test status
@@ -65,11 +69,14 @@ regardless of refinement:
 
 ## Important caveats
 
-**The time-harmonic solver is a proxy, not a Maxwell solve.**
-`core/time_harmonic.py` computes `E = -jωA` from the magnetostatic vector potential.
-There is no `ω²εE` term and no `jωσ` term. Phantom conductivity and permittivity
-currently have **no effect on any computed field**, so no phantom-loading, SAR, or
-B1+ figure produced today is physically meaningful.
+**The time-harmonic solver is validated in a homogeneous medium, not on a
+loaded coil.** The old `E = −jωA` proxy is gone (2026-07-31): `core/time_harmonic.py`
+now solves the complex curl-curl system with `ε_c = εᵣ − jσ/(ωε₀)` in the mass
+term, gated by a manufactured-solution convergence rate and the lossy
+plane-wave closed form. It requires the complex DolfinX build
+(`source /usr/local/bin/dolfinx-complex-mode`); real mode raises rather than
+silently dropping the loss term. What remains unlicensed: coil-loading, SAR,
+and B1+ figures wait on the Dodd–Deeds FEM gate (`MAT-6` step 2).
 
 **Exported S-parameters are not simulation output.**
 `ports/excitation.py` derives port voltages from a hardcoded coupling heuristic
@@ -79,12 +86,11 @@ Touchstone export refuses such data unless you pass `allow_placeholder=True` —
 in which case the file is stamped `PLACEHOLDER DATA — NOT A SIMULATION RESULT`.
 The numbers are unchanged and still meaningless; `PORT-1` is the real fix.
 
-Both are tracked as `TH-1` and `PORT-1` in the plan, and both are on the critical
-path.
+`PORT-1` is the fix, and it is the critical path now that `TH-1` is closed.
 
 ## Known failing tests
 
-Nine tests fail on `main` for reasons predating current work — stale test doubles, a
+A handful of tests fail on `main` for reasons predating current work — a
 classifier/expectation disagreement, assertions against the placeholder port model,
 and two undiagnosed cases. Each is catalogued with its symptom, the commit it was
 verified failing at, and its cause in
@@ -102,11 +108,15 @@ reason to lower it. Passing anything below 1.0 raises
 
 ## Next work
 
-1. `TH-1` + `TH-6` — real complex time-harmonic formulation, landed with an analytic gate
-2. `MAT-2` — prove materials measurably affect solved fields
-3. `PORT-1` — real port excitation derived from the solved field
-4. Generalize the air-box/graded-meshing fix to the remaining `io/mesh.py` fixtures
-5. Consider proper gauging (tree-cotree or A-V saddle point) before `TH-1` hardens —
-   the penalty is a workaround, and the time-harmonic solver inherits it
+1. `MAT-6` step 2 — the Dodd–Deeds FEM loading gate ("the phantom loads the coil",
+   in closed form)
+2. `TH-7`/`TH-8` — remaining cheap closed-form gates on the frequency-domain solver
+3. `POST-3` — Poynting power-balance identity, replacing the vacuous consistency metrics
+4. `PORT-1` — real port excitation derived from the solved field
+5. Generalize the air-box/graded-meshing fix to the remaining `io/mesh.py` fixtures
+
+(Gauging is settled by decision — see known-issues, "closed by decision
+2026-07-28": the penalty stays for statics, and the E-field formulation has no
+static null space at ω > 0.)
 
 See `PROJECT_PLAN.md` §9 for full sequencing.

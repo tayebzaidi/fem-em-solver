@@ -37,6 +37,7 @@ unless fixing it is the task.
 | **Cause** | `TimeHarmonicSolver.solve()` reads `mag_solver.last_solve_diagnostics` when building `TimeHarmonicFields`. The chunk that added solver health diagnostics (`TH-4`, legacy C6) did not update the test doubles that stand in for `MagnetostaticSolver`. |
 | **Fix** | Add a `last_solve_diagnostics = None` attribute to both doubles. Small and self-contained — this is *not* blocked on `TH-1`. |
 | **Status** | `--deselect`ed in the CI `validation` job, visibly, so the debt is not silently skipped. Both are also `@complex_only`, and `OPS-10` kept them out of the `validation-complex` job for the same reason — fixing this entry should add both files there. |
+| **Status update (2026-07-31 review)** | **Likely stale.** `TH-1` steps 1–3 removed `MagnetostaticSolver` (and the `last_solve_diagnostics` read) from the time-harmonic path entirely, and both tests **passed** under the complex build in `20260731T003802Z_TH-1-steps123-complexsuite.log` — no code fix ever landed for this entry; the failing code path was deleted out from under it. Retirement is §9 On-deck item 5: re-verify through the harness, un-`--deselect`, add both files to `validation-complex`, and remove this entry in that commit. That run also emitted `ComplexWarning` (complex→real casts) at `test_phantom_material_model.py:33-34` and `post/phantom_fields.py:88` — address or record while there. |
 | **Verified pre-existing at** | `b2715ab` and earlier |
 
 ### 2. Residual-trend classifier disagrees with its test

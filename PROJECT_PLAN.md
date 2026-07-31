@@ -242,8 +242,8 @@ needs `-f docker/docker-compose.yml`.
 |---|---|---|---|
 | 0 | Infrastructure, packaging, CI, meshing | `OPS-1`, `OPS-2` | Done |
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Complete and trustworthy** |
-| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — `TH-9` ✅, `TH-1` step 0 ✅ |
-| 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | Presets exist but are inert |
+| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — `TH-1`/`TH-6`/`TH-9` ✅; `TH-7`/`TH-8` open |
+| 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` step 1 done, step 2 is the loading gate |
 | 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-8` | Placeholder-backed |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 |
 | 6 | Advanced: MPI scaling, AMR, sweeps, optimization | — | Deferred |
@@ -257,8 +257,10 @@ TH-1 (real complex time-harmonic formulation)
    └─> PORT-1 (real port excitation) ──> PORT-2…8 ──> WF-5…8
 ```
 
-**Nothing downstream of `TH-1` should be extended until `TH-1` lands.** Adding
-features to a proxy solver is what produced the `⚠️` backlog.
+**`TH-1` landed 2026-07-31; the constraint moves one link down the chain.** The
+`⚠️` backlog still may not be extended until revalidated against the real solve,
+and nothing S-parameter-shaped should grow until `PORT-1` replaces the heuristic.
+Adding features to a proxy is what produced the `⚠️` backlog in the first place.
 
 ---
 
@@ -299,8 +301,19 @@ converts the skips into failures so the job cannot pass by skipping. Verified
 `PYTHONPATH` override, package from `pip install -e`), and the real-mode
 negative control fails 3 of 4 environment tests with "the complex build was not
 picked up" rather than skipping. Three `@complex_only` tests are still outside
-any job, all blocked on known-issues.md entries 1 and 2, not on complex mode;
-the CI file names them at the point they should be added.
+any job; the CI file names them at the point they should be added. *(2026-07-31
+review: the claim that all three are blocked on known-issues entries 1 and 2 is
+half stale — entry 1's two tests actually **passed** under the complex build in
+`20260731T003802Z_TH-1-steps123-complexsuite.log`, because `TH-1` deleted the
+code path they were failing in. Retiring entry 1 and adding those files to the
+job is a §9 On-deck item. Entry 2 remains genuinely open.)*
+>
+> **This job has never executed on a GitHub runner.** Local `main` is 47 commits
+> ahead of `origin/main` — nothing has been pushed since 2026-07-27 — so every
+> "in CI" claim in this file is verified by local reproduction of the CI
+> invocation only. The runner-environment caveat in the 2026-07-31T03:35Z
+> attempts entry (image paths, `source` in the runner shell) settles on the
+> first push, which is a human action, not a scheduled-session one.
 
 > CI notes for anyone editing `.github/workflows/ci.yml`: MPI here is
 > **MPICH/Hydra**, so `--allow-run-as-root` is not a valid flag and will break the
@@ -591,6 +604,15 @@ run, `src/fem_em_solver/utils/dodd_deeds.py` +
 > full-wave kernel (`α₀ = √(α²−k₀²)` above, `α₁ = √(α²−ω²μ₀ε₀ε_c)` below, with an
 > `α/α₀` weight) so saline is in range; (b) size the air box so the PEC outer
 > boundary does not contaminate ΔZ — cost-probe this, it is the likely time sink.
+>
+> **Decision (a) taken by the 2026-07-31 review: gate inside the eddy-current
+> kernel's regime; defer the full-wave upgrade.** A σ that is both eddy-valid
+> and meshable exists — the constraint set is loss tangent σ/(ωε₀) ≳ 10² *and*
+> δ = √(2/(ωμ₀σ)) resolvable (≥ 3–4 cells, slab ≥ 3δ) *and* k₀·box ≪ 1, and at
+> a few tens of MHz with σ of a few S/m all three hold with δ at centimetres.
+> Frequency is a free knob here: nothing ties this gate to 127.74 MHz, and the
+> saline-regime (full-wave) version can become a follow-up chunk if it is ever
+> needed. Decision (b) is the §9 item-1 probe. Split as On-deck items 1–2.
 
 ### POST — Post-processing & field extraction
 
@@ -694,18 +716,22 @@ the ROADMAP than in `pending-tests.md`. Resolve via this table.
 
 ## 9. Immediate sequencing
 
-Phase 1 is complete and CI guards it. Attention is on the §2.1 physics gap.
+Phase 1 is complete and CI guards it. `TH-1` closed 2026-07-31 against the lossy
+plane-wave closed form; attention moves to the loaded-coil gate and ports.
 
-1. **`TH-1` steps 1–5 + `TH-6`** — the complex formulation landed against the
-   lossy plane-wave gate. Step 0 (environment) is done. Start from the §7 entry,
-   which carries the full plan and traps.
-2. **`MAT-2` + `MAT-6`** — prove materials measurably affect solved fields, then
-   pin the loading physics against the Dodd–Deeds closed form.
-3. **`PORT-1`** — real port excitation from the solved field. Resolves the two
-   deliberately-red port tests as a side effect.
-4. **Air-box generalization** — every other `io/mesh.py` fixture still uses a
+1. **`MAT-6` step 2** — the Dodd–Deeds FEM loading gate, split into probe + gate
+   in On deck below. This is what licenses coil-loading and SAR claims.
+2. **`TH-7`/`TH-8`** — the remaining cheap closed-form gates on the
+   frequency-domain solver; each is one run in the `TH-6` mould.
+3. **`POST-3`** — replace the vacuous consistency metrics with identities that
+   can fail (Poynting balance), now unblocked by `TH-1`.
+4. **`PORT-1`** — real port excitation from the solved field. Resolves the two
+   deliberately-red port tests as a side effect. **Needs a §7-grade
+   implementation plan before it can be queued — writing that plan is the next
+   review's first job.**
+5. **Air-box generalization** — every other `io/mesh.py` fixture still uses a
    single global `setSize` and tight padding, including coil+phantom.
-5. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
+6. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
 
 **Do not add new features to `⚠️` subsystems.** Extending a proxy is what produced
 the current backlog: roughly 20 chunks of scaffolding needing revalidation.
@@ -725,46 +751,75 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done, the implementer falls back to the "obvious
 next entry" named below.
 
-Last reviewed 2026-07-30 (daily review). Tree clean, no parked branches.
+Last reviewed 2026-07-31, 03:00 daily review. Tree clean, no `attempt/*` or
+`recovered/*` branches. Audit: every status that flipped ✅ since the last review
+(`MAG-13`, `TH-9`, `TH-1`, `TH-6`, `MAT-2`, `OPS-10`) is §4-compliant — harness
+logs, quantitative assertions, and elapsed times all present; nothing demoted.
+The four struck-through items from the previous queue are recorded in
+attempts.md and the §7 entries; this is a fresh queue.
 
-1. ✅ **done 2026-07-31** (19:30 implementer run) — `TH-1` **steps 1–3** — sesquilinear form
-   `∫μᵣ⁻¹(∇×E)·(∇×v̄) − k₀²ε_c E·v̄ dx` with `ε_c = εᵣ − jσ/(ωε₀)` from the
-   existing DG0 `build_material_fields`, load `−jωμ₀∫J·v̄ dx`, MUMPS direct solve
-   with PEC via `build_boundary_conditions`, then replace the `E = −jωA` body of
-   `TimeHarmonicSolver.solve` keeping the `TimeHarmonicFields` container so
-   downstream `⚠️` chunks still import. See the §7 entry for the full plan and
-   traps. Standard tier.
-2. ✅ **done 2026-07-31** (21:00 implementer run) — `TH-1` **steps 4–5**, which
-   closes `TH-1` entirely. Step 4: `TH-6` (α 0.019%, β 0.059%) and `MAT-2`
-   (α ratio 10.3232 vs 10.3116) in `tests/validation/test_lossy_plane_wave.py`.
-   Step 5: the energy-continuity resonance guard, `core/resonance.py` +
-   `tests/validation/test_resonance_guard.py`, fires 1.5% from the `TH-9`
-   fundamental with the energy rise matching the pole law to 3.16%.
-3. ✅ **done 2026-07-31** (22:30 implementer run) — the complex-mode CI job,
-   landed as `OPS-10`: a `validation-complex` job running `tests/environment`
-   plus the five frequency-domain test files under `FEM_EM_REQUIRE_COMPLEX=1`
-   (18 tests, 32 s at `-n 2`, real-mode negative control fails loudly). Ten of
-   the thirteen `@complex_only` tests now execute in CI; the remaining three are
-   blocked on known-issues.md entries 1 and 2, not on complex mode.
+1. **`MAT-6` step 2a — loop-over-half-space FEM fixture + cost/box probe.**
+   Complex build, standard tier. Pick the gate parameters *first*, inside the
+   step-1 kernel's regime rather than upgrading the kernel (decision (a) in the
+   §7 entry): εᵣ = 1 half-space, and (f, σ) chosen so that loss tangent
+   σ/(ωε₀) ≳ 10², skin depth δ = √(2/(ωμ₀σ)) spans ≥ 3–4 cells with the slab
+   ≥ 3δ deep, and k₀·(box diagonal) ≪ 1 (the kernel neglects air-side
+   retardation). Tens of MHz with σ of a few S/m lands δ at a few cm — compute
+   these, don't trust this sentence. Reuse the volumetric loop-current source
+   pattern from the magnetostatic loop fixture for J. Then the probe: solve
+   loaded and free at **two air-box sizes**, extract
+   `ΔZ = −(1/I²)∫(E_loaded − E_free)·J dV` over the source region both times,
+   and record (i) the box-size sensitivity of ΔZ and (ii) wall-clock per solve.
+   Product: the chosen configuration plus both numbers in the §7 entry, and a
+   first *unasserted* ΔZ against `utils/dodd_deeds.py`. Graded mesh — the
+   known-issues air-box note applies to exactly this kind of fixture.
+2. **`MAT-6` step 2b — the gate** (depends on item 1 landing; if it did not,
+   skip to item 3). Turn the probe configuration into a
+   `tests/validation/test_dodd_deeds_impedance.py` FEM test asserting ΔR and ΔX
+   separately against the step-1 closed form, tolerance sized from item 1's
+   measured box sensitivity, plus a σ = 0 control (the reaction-integral
+   difference ≈ 0). Closes `MAT-6`. Complex build, standard tier.
+3. **`TH-7` — waveguide-cutoff gate**, independent; the `TH-6` pattern on a new
+   closed form. PEC a×b×L box, complex build, standard tier: impose the analytic
+   evanescent TE₁₀ field `E_y = sin(πx/a)·e^{−γz}`, `γ = √(k_c² − k₀²)`, on all
+   faces via `dirichlet_e_field` at f **below cutoff** and fit the interior
+   decay against γ exactly as `test_lossy_plane_wave.py` fits α. Below cutoff
+   there is no resonance risk; if an above-cutoff β case is added, place f away
+   from the box's discrete modes and show the resonance guard stays quiet, or
+   drop that half. Same `e^{+jωt}` convention discipline as every TH gate.
+4. **`POST-3` step 1 — power-balance identity on the `TH-6` fixture**,
+   independent. Complex build, standard tier. On the lossy plane-wave solve:
+   absorbed power `½∫σ|E|²dV` vs net inward Poynting flux `−∮½Re(E×H̄)·n̂ dS`
+   with `H = ∇×E/(−jωμ₀)`; assert the relative imbalance below a stated
+   tolerance at two resolutions and that it shrinks with h. Traps: facet-normal
+   sign, and `assemble_scalar` is rank-local — reduce both integrals before
+   comparing. Deprecate `e_to_b_mean_ratio` as the flagship metric in the same
+   commit (§7 POST note).
+5. **Retire known-issues entry 1**, independent, smoke tier. Both
+   `DummyMagnetostaticSolver` tests **passed** under the complex build in
+   `20260731T003802Z_TH-1-steps123-complexsuite.log` — `TH-1` deleted the
+   attribute read they were failing in. Re-verify through the harness, remove
+   the two `--deselect`s from the `validation` job, add both files to
+   `validation-complex`, and delete the known-issues entry in the same commit.
+   While there: the run emits `ComplexWarning` (complex→real casts) at
+   `tests/materials/test_phantom_material_model.py:33-34` and
+   `src/fem_em_solver/post/phantom_fields.py:88` — fix the test-side casts; the
+   `phantom_fields.py` one is `POST-1` territory, record it there if not fixed.
+6. **`TH-8` — sphere in a uniform quasi-static field** (spare), independent.
+   Dielectric sphere, closed-form interior field `E_in = 3/(ε_c + 2)·E₀`:
+   impose the full exterior solution (uniform + dipole) on the box boundary,
+   assert the interior field's magnitude and uniformity. Needs a tagged
+   sphere-in-box gmsh fixture (pattern exists in `io/mesh.py`); choose f so
+   k₀R ≪ 1, and cost-probe before sizing. Complex build, standard tier.
 
-4. 🟡 **partial 2026-07-31** (00:00 implementer run, fallback — On deck was
-   empty) — `MAT-6` **step 1**, the Dodd–Deeds closed form, landed and gated
-   (image-limit cross-check 0.0002%, see the §7 entry). **`MAT-6` step 2, the
-   FEM gate, is the chunk's actual teeth and is still open** — its §7 entry
-   carries the reaction-integral plan and the two decisions it must make first.
+If the queue drains: take `TH-8` if still open; otherwise stop and journal —
+`PORT-1` is next on the critical path but needs the review to write its §7-grade
+plan first, and an implementer run should not improvise it.
 
-**On deck is empty — the next scheduled run falls back to `MAT-6` step 2**, the
-FEM gate, per the §7 entry. The next daily review must refill this list; note
-that step 2 is a bigger-than-one-run item as written and should be split (kernel
-choice / air-box cost probe / the gate itself) when it is queued.
-
-Every `TH-1` command needs `source /usr/local/bin/dolfinx-complex-mode` **and**
-`FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest path
-list, so an environment regression fails before the formulation tests get blamed.
-
-The obvious next entry after these is `MAT-6` (Dodd–Deeds loading gate). The next
-daily review should refill On deck to at least six items per
-`docs/automation/daily-review.md`.
+Every frequency-domain command needs `source /usr/local/bin/dolfinx-complex-mode`
+**and** `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest
+path list, so an environment regression fails before the formulation tests get
+blamed.
 
 ---
 
@@ -773,7 +828,11 @@ daily review should refill On deck to at least six items per
 ### MVP (end of Phase 2)
 - [x] Time-harmonic solver reproduces the analytic lossy plane-wave solution to < 5% *(3.61% in L2; decay constant 0.019%, `TH-6`)*
 - [x] Helmholtz coil magnetostatic result matches analytic to < 5% *(0.04%)*
-- [ ] Phantom σ and εᵣ measurably change the solved field
+- [x] Phantom σ and εᵣ measurably change the solved field *(σ: interior decay
+  constants each match their own closed form and their ratio is 10.3232 vs the
+  closed-form 10.3116, `MAT-2`; εᵣ: at εᵣ = 78 the measured β = 27.03 rad/m
+  matches the εᵣ-dependent closed form 27.02 to 0.059% where vacuum would give
+  2.68, `TH-6`. The loaded-**coil** claim stays open until `MAT-6` step 2.)*
 
 ### Target (end of Phase 4)
 - [ ] Loaded birdcage + phantom simulation runs end to end
