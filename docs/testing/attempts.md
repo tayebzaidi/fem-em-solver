@@ -775,3 +775,51 @@ is an artifact of the evaluation, not of the solve.
   `TH-9`'s 1.0 × 0.8 × 0.6 m PEC box is the fixture with known mode frequencies
   to make it fire on demand and stay quiet away from them.
 
+## 2026-07-31T02:20Z — TH-1 step 5 (resonance guard) — complete
+
+Same session as the entry above; step 4 was committed first (`99f3d4f`) so
+`main` was clean and green before this was started. **`TH-1` is now closed.**
+
+- **What was built:** `src/fem_em_solver/core/resonance.py` —
+  `stored_electric_energy(fields)` = `(ε₀/4)∫εᵣ|E|²dx` (rank-reduced) and
+  `check_energy_continuity(frequencies, energies)` returning a
+  `ResonanceGuardReport`. The energy-continuity option from the §7 menu, chosen
+  because it is the only one of the three that is *calibrated* rather than
+  tuned: near a mode `W ∼ |f−f₀|⁻²`, so `S = |dlnW/dlnf| ≈ 2f/|f−f₀|` and the
+  default threshold 50 means precisely "within 4% of a pole". `2/S` is exposed
+  as `implied_detuning_fraction`, which turns the guard from a boolean into a
+  physical read-out. It needs no eigen-solve and no extra solves.
+- **Measured** (`20260731T021521Z_TH-1-step5b.log`, the log of record): driven
+  at the `TH-9` fixture's **discrete** fundamental `f₁ = 2.399584e8 Hz` (taken
+  from `solve_pec_cavity_modes` on the same mesh and degree, not the closed
+  form — at 1% detuning the discretisation shift matters), `f₂ = 2.913659e8 Hz`.
+  Approach at 4%/2%/1% below `f₁`: energies `5.8742e-7 → 2.3992e-6 → 9.6953e-6`
+  J, **amplification 16.505× against the pole law's 16.0× (3.156%)**,
+  `S = 137.554`, implied detuning **1.454%** vs the ~1.5% the interval sits at.
+  Midband control at `(f₁+f₂)/2`: `S = 21.951`, clear. Both verdicts hold with
+  2× margin on the threshold, which is what the test asserts rather than a bare
+  fired/didn't-fire.
+- **The first control sweep was misplaced, and the guard said so.** At
+  `f₁ + 0.35(f₂−f₁)` the "quiet" sweep measured `S = 48.9` — just under
+  threshold, separation only 2.81× (`20260731T021415Z_TH-1-step5.log`, 1
+  failed). That point is 6% above `f₁` and the guard's implied detuning read
+  4.1%: the guard was right and the control was wrong. Moved the control to the
+  midband; the threshold was not touched. This is worth remembering because it
+  is the pole model validating itself on data it was not fitted to.
+- **Tier / cost:** standard. 20 s (first, failing) / 21 s (green) / 1 s
+  (real-mode smoke), all `mpiexec -n 2`.
+- **Real-mode check:** `20260731T021554Z_TH-1-step5-realmode.log` — the new
+  `core.resonance` import is real-mode clean and the input-validation test runs
+  there on purpose (it is pure numpy, no `@complex_only`): 2 passed, 6 skipped.
+- **Logs:** `20260731T021415Z_TH-1-step5.log` (exit 1, misplaced control),
+  `20260731T021521Z_TH-1-step5b.log` (**log of record**),
+  `20260731T021554Z_TH-1-step5-realmode.log`.
+- **Branch (if parked):** none; landed on `main`. `TH-1` flips 🟡 → ✅.
+- **Denied commands:** none beyond the one noted in the previous entry.
+- **Next-attempt hypothesis:** §9 item 3, the complex-mode CI leg, is now both
+  the top open item and materially more urgent — this run added three more
+  `@complex_only` tests, so eight tests, including every closed-form gate on
+  the frequency-domain solver, currently execute in no CI job. It is smoke tier
+  and should fit one run with time to spare. After that, `MAT-6` (Dodd–Deeds)
+  is the gate that would license loaded-coil numbers; nothing in `TH-1` does.
+

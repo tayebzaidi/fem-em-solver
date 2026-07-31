@@ -9,6 +9,12 @@ from .solvers import (
     MagnetostaticSolver,
     classify_residual_trend,
 )
+from .resonance import (
+    DEFAULT_SLOPE_THRESHOLD,
+    ResonanceGuardReport,
+    check_energy_continuity,
+    stored_electric_energy,
+)
 from .time_harmonic import (
     HomogeneousMaterial,
     TimeHarmonicBoundaryCondition,
@@ -27,6 +33,10 @@ __all__ = [
     "MagnetostaticProblem",
     "MagnetostaticSolver",
     "classify_residual_trend",
+    "DEFAULT_SLOPE_THRESHOLD",
+    "ResonanceGuardReport",
+    "check_energy_continuity",
+    "stored_electric_energy",
     "HomogeneousMaterial",
     "TimeHarmonicBoundaryCondition",
     "TimeHarmonicFields",

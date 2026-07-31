@@ -1,0 +1,130 @@
+# Test Run
+- Chunk: TH-1-step5
+- Commit: 99f3d4f2b2a43eb1262c2bc9cb016e5598ab0b99
+- Time (UTC): 2026-07-31 02:14:15
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.3.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_resonance_guard.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Jul 30 21:14 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.3.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_resonance_guard.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 6 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build 
+[TH-1 step 0] PETSC_ARCH='linux-gnu-complex128-32' ScalarType=complex128 dolfinx=/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/__init__.py version=0.7.2
+PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 6 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSEDPASSED
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not [TH-1 step 0] inner=(11.00000000000001+1.9999999999999993j) dot=(-5.000000000000001+10.000000000000002j)
+PASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly [TH-1 step 0] ||M||_F=1.041233e+00 ||M_c - eps_c*M||_F=4.449e-16
+PASSEDPASSED
+tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode 
+tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode FAILED
+tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps PASSED
+
+=================================== FAILURES ===================================
+____________ test_energy_continuity_guard_fires_near_a_cavity_mode _____________
+tests/validation/test_resonance_guard.py:141: in test_energy_continuity_guard_fires_near_a_cavity_mode
+    assert separation > 10.0, (
+E   AssertionError: near-resonant and quiet slopes differ by only 2.81x, which is not enough separation for a threshold to be meaningful
+E   assert 2.813841833245082 > 10.0
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode
+=================== 1 failed, 5 passed, 8 warnings in 20.03s ===================
+
+[TH-1 step 5] resonance guard against the TH-9 fixture:
+  discrete modes: f1 = 2.399584e+08 Hz, f2 = 2.913659e+08 Hz
+  approach sweep ['2.3036e+08', '2.3516e+08', '2.3756e+08']
+    energies ['5.8742e-07', '2.3992e-06', '9.6953e-06']
+    resonance guard: NEAR-RESONANT; max |dlnW/dlnf| = 137.554 (threshold 50.0) on [2.351592e+08, 2.375588e+08] Hz; implied detuning 1.454%
+  quiet sweep    ['2.4763e+08', '2.5279e+08', '2.5537e+08']
+    energies ['9.8786e-07', '3.6053e-07', '2.5245e-07']
+    resonance guard: clear; max |dlnW/dlnf| = 48.885 (threshold 50.0) on [2.476330e+08, 2.527920e+08] Hz; implied detuning 4.091%
+  energy amplification over the approach: 16.505x
+  slope separation near/quiet: 2.814x
+FAILED
+tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps PASSED
+
+=================================== FAILURES ===================================
+____________ test_energy_continuity_guard_fires_near_a_cavity_mode _____________
+tests/validation/test_resonance_guard.py:141: in test_energy_continuity_guard_fires_near_a_cavity_mode
+    assert separation > 10.0, (
+E   AssertionError: near-resonant and quiet slopes differ by only 2.81x, which is not enough separation for a threshold to be meaningful
+E   assert 2.813841833245082 > 10.0
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/validation/test_resonance_guard.py: 48 warnings
+  /usr/local/lib/python3.10/dist-packages/ufl/core/expr.py:275: DeprecationWarning: Expr.ufl_domain() is deprecated, please use extract_unique_domain(expr) instead.
+    warnings.warn("Expr.ufl_domain() is deprecated, please "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode
+================== 1 failed, 5 passed, 56 warnings in 20.07s ===================
+
+## Exit
+- Status: 1
+- Elapsed (s): 21

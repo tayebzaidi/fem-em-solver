@@ -52,9 +52,16 @@ the same gate: σ = 0.1 → 1.4 S/m moves the decay constant by **10.32×**, aga
 a closed-form **10.3116×** (0.113%), each α matching its own closed form to
 < 0.24%. Conductivity now demonstrably drives the solved field.
 
-**Still open (`TH-1` step 5):** the near-resonance guard. The `MAT-6` Dodd–Deeds
-coil-loading gate is still the thing that would license SAR and port figures
-downstream; §2.2's S-parameters are unaffected by any of this.
+**Step 5 landed the same day:** `core/resonance.py` flags near-resonant sweep
+points from stored-energy continuity (`S = |dlnW/dlnf| ≈ 2f/|f−f₀|`, threshold
+50 ⇒ 4% detuning), verified firing at 1.5% from the `TH-9` fundamental with the
+energy rise matching the `|f−f₀|⁻²` pole law to 3.16%. **`TH-1` is closed.**
+
+**What this does and does not license.** The frequency-domain *formulation* is
+now validated against a physical closed form in a homogeneous medium. It is not
+yet validated against a *loaded coil*: `MAT-6` (Dodd–Deeds) is the gate that
+would license SAR and coil-loading figures, and §2.2's heuristic S-parameters
+are untouched by any of this — `PORT-1` still owns that.
 
 ### 2.2 The S-parameters are heuristic, not computed
 
@@ -347,7 +354,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 
 | ID | Title | Status | Tier |
 |---|---|---|---|
-| `TH-1` | **Real complex time-harmonic formulation** | 🟡 | standard |
+| `TH-1` | **Real complex time-harmonic formulation** | ✅ | standard |
 | `TH-2` | Time-harmonic API hardening | ⚠️ | standard |
 | `TH-3` | Boundary-condition option set | ⚠️ | standard |
 | `TH-4` | Convergence/conditioning diagnostics | 🧪 | standard |
@@ -357,7 +364,8 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ⬜ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 
-**`TH-1` — Real complex time-harmonic formulation** 🟡 **← the critical chunk**
+**`TH-1` — Real complex time-harmonic formulation** ✅ *(all five steps,
+2026-07-30/31)* **← was the critical chunk**
 > Replace the `E = −ωA` proxy with an actual frequency-domain solve:
 >
 > ```
@@ -430,12 +438,27 @@ Independent of the §2.1 physics defect; meshes are meshes.
 >    below. The convention risk flagged here was real but benign: the wave
 >    decays, `Im k < 0`, and the measured α is positive, which the test asserts
 >    explicitly as the conjugation control.
-> 5. The resonance guard (condition estimate, a small loss floor for empty-coil
->    sweeps, or an energy-continuity check across sweep points), verified by
->    stepping deliberately close to a `TH-9` cavity mode and observing it fire.
+> 5. ✅ The resonance guard, 2026-07-31: `core/resonance.py` takes the
+>    energy-continuity option. Stored energy `W = (ε₀/4)∫εᵣ|E|²dx` behaves as
+>    `W ∼ |f−f₀|⁻²` near a mode, so `S = |dlnW/dlnf| ≈ 2f/|f−f₀|` is a
+>    *calibrated* detector — the default threshold 50 fires at exactly 4%
+>    fractional detuning — and it costs nothing beyond the solves a sweep is
+>    already doing. Verified in `tests/validation/test_resonance_guard.py`
+>    against the `TH-9` fixture, driven at its **discrete** fundamental (taken
+>    from the `TH-9` eigen-solver on the same mesh, not from the closed form):
+>    sweeping 4% → 2% → 1% below `f₁ = 2.399584e8 Hz` raises the stored energy
+>    **16.505×** against the pole law's **16.0×** (3.16%), `S = 137.554`
+>    (implied detuning 1.454%, against the ~1.5% the sweep was placed at), while
+>    the midband control at `(f₁+f₂)/2` stays clear at `S = 21.951`. Both
+>    verdicts hold with a factor of two of margin on the threshold.
 >
-> Remaining risks: sign-convention mismatch between solver and gates;
-> near-mode ill-conditioning read as a formulation bug.
+> The two risks flagged during planning both materialised and both were benign.
+> The convention risk resolved as a positive measured α (asserted). The
+> "near-mode ill-conditioning read as a formulation bug" risk showed up in the
+> guard's own control sweep: the first mid-band placement at `f₁ + 0.35(f₂−f₁)`
+> measured `S = 48.9` and looked like a false positive, but it is 6% above `f₁`
+> and the guard's implied detuning read 4.1% — the *guard was right and the
+> control was misplaced* (`20260731T021415Z_TH-1-step5.log`).
 
 **`TH-9` — PEC cavity resonance gate** ✅ *(2026-07-30, `core/cavity.py` +
 `tests/validation/test_cavity_resonances.py`, log `20260730T154846Z_TH-9.log`,
@@ -659,18 +682,22 @@ Last reviewed 2026-07-30 (daily review). Tree clean, no parked branches.
    `TimeHarmonicSolver.solve` keeping the `TimeHarmonicFields` container so
    downstream `⚠️` chunks still import. See the §7 entry for the full plan and
    traps. Standard tier.
-2. 🟡 **partly done 2026-07-31** (21:00 implementer run) — `TH-1` **steps 4–5**.
-   Step 4 landed in full: `TH-6` (α 0.019%, β 0.059%) and the `MAT-2`
-   σ-sensitivity assertion (α ratio 10.3232 vs 10.3116) are ✅ in
-   `tests/validation/test_lossy_plane_wave.py`. **Step 5, the near-resonance
-   guard verified against a `TH-9` mode, is still open** and is the whole of
-   what remains on `TH-1`. Standard tier.
+2. ✅ **done 2026-07-31** (21:00 implementer run) — `TH-1` **steps 4–5**, which
+   closes `TH-1` entirely. Step 4: `TH-6` (α 0.019%, β 0.059%) and `MAT-2`
+   (α ratio 10.3232 vs 10.3116) in `tests/validation/test_lossy_plane_wave.py`.
+   Step 5: the energy-continuity resonance guard, `core/resonance.py` +
+   `tests/validation/test_resonance_guard.py`, fires 1.5% from the `TH-9`
+   fundamental with the energy rise matching the pole law to 3.16%.
 3. **A complex-mode CI job** (or a complex leg of the existing validation job)
    running `tests/environment tests/validation/test_time_harmonic_mms.py` with
    `FEM_EM_REQUIRE_COMPLEX=1`. Steps 1–3 moved five solving tests behind
    `@complex_only`, so CI currently executes **no** time-harmonic solve at all —
    the new gates guard nothing until this lands. Smoke tier; independent of
-   item 2.
+   item 2. **Now the top open item, and the coverage hole it names has grown**:
+   item 2 added `test_lossy_plane_wave.py` (2 tests) and
+   `test_resonance_guard.py` (1 of 2), so eight `@complex_only` tests —
+   including every closed-form check on the frequency-domain solver — run in no
+   CI job at all.
 
 Every `TH-1` command needs `source /usr/local/bin/dolfinx-complex-mode` **and**
 `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest path
