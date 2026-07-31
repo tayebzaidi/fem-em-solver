@@ -720,3 +720,58 @@ is an artifact of the evaluation, not of the solve.
   imposes `E_ex`, and compare the interior decay against δ = √(2/(ωμσ)). The
   risk is not the machinery but the convention: the gate must be derived in
   `e^{+jωt}` or it will disagree with a correct solver by a conjugation.
+
+## 2026-07-31T02:10Z — TH-1 step 4 (`TH-6` + `MAT-2`) — complete
+
+- **On-deck item:** §9 item 2, `TH-1` steps 4–5. Step 4 is complete; **step 5
+  (the near-resonance guard) is not** and is left as the top open item.
+  Preflight clean, container Up.
+- **What was built:** `tests/validation/test_lossy_plane_wave.py`, two gates.
+  `E = ẑe^{−jkx}` with `k = k₀√(ε_c)` on the `Im k < 0` branch is an exact
+  *source-free* solution of the solved PDE, so the test imposes it as Dirichlet
+  data on all six faces of a 0.1 m box via `dirichlet_e_field` and fits the
+  **interior** amplitude and phase along a probe line. Boundary data cannot
+  dictate the interior decay rate — only `ε_c` in the mass term can — so this
+  is a genuine test of the physics, not of the BC machinery. The predicted
+  (α, β) are computed twice by algebraically distinct routes (`k₀√(ε_c)` and
+  the loss-tangent formulas) so a wrong branch choice cannot cancel out.
+- **Measured — `TH-6`:** α = 13.069460 vs closed-form 13.067043 Np/m
+  (**0.019%**, δ = 76.528 mm); β = 27.031165 vs 27.015150 rad/m (**0.059%**);
+  relative L2 **7.217852e-2 → 3.609441e-2** from 10368 to 82944 cells, **rate
+  0.9998** in h. Clears §10's < 5% MVP criterion at 3.61%.
+- **Measured — `MAT-2`:** σ = 0.1 S/m → α = 2.119307 vs 2.124260 (0.233%);
+  σ = 1.4 S/m → α = 21.878059 vs 21.904469 (0.121%); ratio **10.3232 vs
+  10.3116** (0.113%). The retired proxy would return ratio 1.
+- **First run failed and the mesh moved, not the tolerance.** At 8³/16³ the
+  field error was 5.4139e-2, just over the 5% bar, while α/β were already at
+  0.226%/0.132% (`20260731T020308Z_TH-6-gate.log`, exit 1). N1curl degree 1 is
+  O(h), so 12³/24³ was the fix; the failing number is recorded in the §7 entry
+  because it is the useful fact — the L2 norm is a much harsher gate on this
+  problem than the log-slope fit, by roughly a factor of 50.
+- **Bug found and fixed in `post/evaluation.py`:** `evaluate_vector_field_parallel`
+  allocated its gather buffers as `float64`, which raises a casting error the
+  first time it is handed a complex-mode Function. It now follows the
+  function's own dtype. It had never been called under the complex build
+  before — every prior caller is magnetostatic. Real-mode regression over the
+  point-evaluation users (`test_energy_and_point_evaluation`, `test_straight_wire`,
+  `test_circular_loop`, `test_helmholtz_magnitude`, `tests/environment`):
+  **13 passed, 3 skipped, 254 s** (`20260731T020541Z_TH-6-regress.log`), no
+  change in any measured value.
+- **Tier / cost:** standard. 14 s (first, failing) / 21 s (12³–24³) / 21 s
+  (re-run with `-s` to get the numbers into the log of record) / 255 s
+  (real-mode regression), all `mpiexec -n 2`, all inside the ceilings.
+- **Logs:** `20260731T020308Z_TH-6-gate.log` (exit 1, the 5.41% miss),
+  `20260731T020356Z_TH-6-gate2.log` (green, numbers captured by pytest),
+  `20260731T020427Z_TH-6-gate3.log` (**the log of record** — same run with
+  `-s`), `20260731T020541Z_TH-6-regress.log` (real-mode regression).
+- **Branch (if parked):** none; landed on `main`. `TH-6` and `MAT-2` flip to ✅;
+  `TH-1` stays 🟡 on step 5 alone.
+- **Denied commands:** one — a pipeline ending in `tail` on a `$(ls -t ...)`
+  substitution ("contains shell syntax that cannot be statically analyzed").
+  Re-run as two commands with a literal log path; no allowlist change needed.
+- **Next-attempt hypothesis:** step 5 is the last of `TH-1`. The cheapest guard
+  that is verifiable rather than decorative is energy continuity across sweep
+  points — stored `∫εᵣ|E|²` as a function of frequency spikes near a mode — and
+  `TH-9`'s 1.0 × 0.8 × 0.6 m PEC box is the fixture with known mode frequencies
+  to make it fire on demand and stay quiet away from them.
+

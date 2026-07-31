@@ -27,7 +27,7 @@ alternatives (Elmer, OpenEMS) lack MRI-specific features. This is the gap.
 A **validated magnetostatics core**, and a large body of scaffolding whose green
 tests do not mean what they appear to mean.
 
-### 2.1 The time-harmonic solver — proxy replaced 2026-07-31, gates incomplete
+### 2.1 The time-harmonic solver — proxy replaced 2026-07-31, closed form matched
 
 **Was:** `core/time_harmonic.py` ran the *magnetostatic* solver for `A`, then set
 `E_real ≡ 0`, `E_imag = −ω·A`. No `ω²εE` term, no `jωσ` term, no complex system;
@@ -42,12 +42,19 @@ assembled operator. `ε_c` now enters the matrix, and the run requires the
 complex DolfinX build (real mode raises rather than silently dropping the loss
 term).
 
-**Still open (`TH-1` steps 4–5), and this is the part that licenses downstream
-trust:** the `TH-6` lossy-half-space comparison against the closed-form skin
-depth, the `MAT-2` σ-sensitivity assertion, and the near-resonance guard. Until
-those land, the solve is *formulated* correctly but has never been checked
-against a physical closed form — phantom metrics and SAR figures downstream of
-it remain unvalidated.
+**Step 4 landed 2026-07-31** (`tests/validation/test_lossy_plane_wave.py`): the
+solve now reproduces a *physical* closed form. Driving a box with the analytic
+lossy plane wave `E = ẑe^{−jkx}`, `k = k₀√(ε_c)`, on its boundary and measuring
+the **interior** decay and phase gives `α = 13.0695` vs `13.0670 Np/m` (**0.019%**)
+and `β = 27.0312` vs `27.0152 rad/m` (**0.059%**), with the field itself at
+**3.61%** relative L2 and a measured `O(h)` rate of `0.9998`. `MAT-2` rides on
+the same gate: σ = 0.1 → 1.4 S/m moves the decay constant by **10.32×**, against
+a closed-form **10.3116×** (0.113%), each α matching its own closed form to
+< 0.24%. Conductivity now demonstrably drives the solved field.
+
+**Still open (`TH-1` step 5):** the near-resonance guard. The `MAT-6` Dodd–Deeds
+coil-loading gate is still the thing that would license SAR and port figures
+downstream; §2.2's S-parameters are unaffected by any of this.
 
 ### 2.2 The S-parameters are heuristic, not computed
 
@@ -63,7 +70,7 @@ post-processing suites. A solver returning `E = −ωA` passed every time-harmon
 port, and workflow test in the repo — every one of those tests still passes
 against the real complex solve, which is the measure of how little they assert.
 The quantitative gates are `tests/validation/test_time_harmonic_mms.py` and
-(pending) `TH-6`.
+`tests/validation/test_lossy_plane_wave.py` (`TH-6` + `MAT-2`).
 
 ### 2.3b Phase-1 analytic validation was also broken (repaired 2026-07-27/30)
 
@@ -345,7 +352,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `TH-3` | Boundary-condition option set | ⚠️ | standard |
 | `TH-4` | Convergence/conditioning diagnostics | 🧪 | standard |
 | `TH-5` | Absorbing boundary condition (ABC) | ⬜ | standard |
-| `TH-6` | **Validation: plane wave in lossy half-space** | ⬜ | standard |
+| `TH-6` | **Validation: plane wave in lossy half-space** | ✅ | standard |
 | `TH-7` | **Validation: waveguide cutoff / coaxial line** | ⬜ | standard |
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ⬜ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
@@ -417,10 +424,12 @@ Independent of the §2.1 physics defect; meshes are meshes.
 >    `TimeHarmonicFields` container (e_real/e_imag split from the complex vector)
 >    so downstream `⚠️` chunks recompile without edits. `B = ∇×E/(−jω)` is the
 >    post-processing route to B1+ later.
-> 4. Gates in the same chunk: `TH-6` — impose the analytic lossy-half-space total
->    field as Dirichlet data on a box, compare interior decay constant and phase
->    against the closed-form skin depth — plus the `MAT-2` sensitivity assertion
->    (low-σ vs high-σ phantom fields differ beyond a stated threshold).
+> 4. ✅ Gates in the same chunk: `TH-6` (interior decay/phase vs `k = k₀√(ε_c)`)
+>    plus the `MAT-2` sensitivity assertion. Both landed 2026-07-31 in
+>    `tests/validation/test_lossy_plane_wave.py`; numbers in the `TH-6` entry
+>    below. The convention risk flagged here was real but benign: the wave
+>    decays, `Im k < 0`, and the measured α is positive, which the test asserts
+>    explicitly as the conjugation control.
 > 5. The resonance guard (condition estimate, a small loss floor for empty-coil
 >    sweeps, or an energy-continuity check across sweep points), verified by
 >    stepping deliberately close to a `TH-9` cavity mode and observing it fire.
@@ -445,8 +454,31 @@ Independent of the §2.1 physics defect; meshes are meshes.
 > This is the known-frequency fixture the `TH-1` resonance guard is verified
 > against.
 
-> `TH-6`…`TH-8` are cheap closed-form gates; any one would have caught the
-> `E = −ωA` defect immediately. **Land them alongside `TH-1`, not after.**
+**`TH-6` — lossy plane wave vs closed form** ✅ *(2026-07-31,
+`tests/validation/test_lossy_plane_wave.py`, log `20260731T020427Z_TH-6-gate3.log`,
+21 s at `-n 2`, complex build)*
+> `E = ẑ e^{−jkx}` with `k = k₀√(ε_c)` on the `Im k < 0` branch is an exact
+> **source-free** solution of the solved PDE, so the gate imposes it as Dirichlet
+> data on all six faces of a 0.1 m box (εᵣ = 78, σ = 0.7 S/m, 127.74 MHz) and
+> measures the *interior* slopes — nothing in the boundary data says how fast the
+> field must decay, that is `ε_c` acting through the mass term. Measured:
+> `α = 13.0695` vs `13.0670 Np/m` (**0.019%**, δ = 76.53 mm), `β = 27.0312` vs
+> `27.0152 rad/m` (**0.059%**), relative L2 `7.218e-2 → 3.609e-2` from 10368 to
+> 82944 cells, **rate 0.9998** in `h`. Clears §10's "< 5% vs the analytic lossy
+> plane wave" MVP criterion.
+>
+> **Three things worth keeping.** The 5% bar is on the *field norm*, and N1curl
+> degree 1 at 16³ lands at 5.41% — just over (`20260731T020308Z_TH-6-gate.log`);
+> the fix was mesh, not tolerance, and α/β were already at 0.2% there, so the
+> log-slope fit is far more forgiving than the L2 norm. The probe line sits at
+> `0.5137·L` in y and z so it never lands on a facet plane of the structured
+> mesh. And `post/evaluation.py` gathered into a `float64` buffer, which throws a
+> casting error the moment it is handed a complex-mode Function — fixed here to
+> follow the function's own dtype; it had simply never been called under the
+> complex build before.
+
+> `TH-7`/`TH-8` are cheap closed-form gates in the same mould; any one of them,
+> or `TH-6`, would have caught the `E = −ωA` defect immediately.
 
 > `TH-4` is 🧪 rather than ⚠️ because PETSc residual/conditioning diagnostics are
 > meaningful regardless of which weak form is assembled.
@@ -460,16 +492,24 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | ID | Title | Status | Tier |
 |---|---|---|---|
 | `MAT-1` | Gelled saline presets (low/mid/high σ) | ⚠️ | smoke |
-| `MAT-2` | Materials demonstrably affect solved fields | ⬜ | standard |
+| `MAT-2` | Materials demonstrably affect solved fields | ✅ | standard |
 | `MAT-3` | Debye/Cole-Cole dispersion models | ⬜ | smoke |
 | `MAT-4` | SAR computation `σ|E|²/(2ρ)` | ⬜ | standard |
 | `MAT-5` | Temperature-dependent conductivity | ⬜ | smoke |
 | `MAT-6` | **Dodd–Deeds coil-over-lossy-half-space impedance** | ⬜ | standard |
 
 > `MAT-1` is `⚠️` not because the preset table is wrong but because nothing
-> consumes it. `MAT-2` makes it mean something: assert that low-σ and high-σ
-> phantoms produce fields differing by more than a stated threshold. It is
-> currently guaranteed to fail, which is why it is worth writing.
+> consumes it.
+
+**`MAT-2` — conductivity demonstrably drives the solved field** ✅ *(2026-07-31,
+`tests/validation/test_lossy_plane_wave.py::test_conductivity_measurably_changes_the_field`,
+log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
+> Stronger than the "differ by a stated threshold" originally planned: σ = 0.1
+> and σ = 1.4 S/m are solved on the same 24³ box at 127.74 MHz and each interior
+> decay constant is compared with *its own* closed form — 2.1193 vs 2.1243 Np/m
+> (0.233%) and 21.8781 vs 21.9045 Np/m (0.121%) — and the **ratio** 10.3232 is
+> compared with the closed-form 10.3116 (0.113%). A σ-independent solver (the
+> retired proxy) returns ratio 1. `MAT-6` still owns the coil-loading claim.
 
 > `MAT-6` is the quantitative teeth for `MAT-2`. Dodd & Deeds (1968) gives the
 > closed-form impedance change of a circular coil above a layered conductive
@@ -619,12 +659,12 @@ Last reviewed 2026-07-30 (daily review). Tree clean, no parked branches.
    `TimeHarmonicSolver.solve` keeping the `TimeHarmonicFields` container so
    downstream `⚠️` chunks still import. See the §7 entry for the full plan and
    traps. Standard tier.
-2. `TH-1` **steps 4–5** — `TH-6` lossy-half-space gate (interior decay constant +
-   phase vs closed-form skin depth) and the `MAT-2` σ-sensitivity assertion, plus
-   the resonance guard verified against a `TH-9` mode.
-   **Item 1 has landed**, so the complex solver this gates now exists;
-   `TimeHarmonicProblem.dirichlet_e_field` is the hook for imposing the analytic
-   total field on the box. Standard tier.
+2. 🟡 **partly done 2026-07-31** (21:00 implementer run) — `TH-1` **steps 4–5**.
+   Step 4 landed in full: `TH-6` (α 0.019%, β 0.059%) and the `MAT-2`
+   σ-sensitivity assertion (α ratio 10.3232 vs 10.3116) are ✅ in
+   `tests/validation/test_lossy_plane_wave.py`. **Step 5, the near-resonance
+   guard verified against a `TH-9` mode, is still open** and is the whole of
+   what remains on `TH-1`. Standard tier.
 3. **A complex-mode CI job** (or a complex leg of the existing validation job)
    running `tests/environment tests/validation/test_time_harmonic_mms.py` with
    `FEM_EM_REQUIRE_COMPLEX=1`. Steps 1–3 moved five solving tests behind
@@ -645,7 +685,7 @@ daily review should refill On deck to at least six items per
 ## 10. Success criteria
 
 ### MVP (end of Phase 2)
-- [ ] Time-harmonic solver reproduces the analytic lossy plane-wave solution to < 5%
+- [x] Time-harmonic solver reproduces the analytic lossy plane-wave solution to < 5% *(3.61% in L2; decay constant 0.019%, `TH-6`)*
 - [x] Helmholtz coil magnetostatic result matches analytic to < 5% *(0.04%)*
 - [ ] Phantom σ and εᵣ measurably change the solved field
 

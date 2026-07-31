@@ -39,6 +39,11 @@ def evaluate_vector_field_parallel(function, points: np.ndarray, comm: MPI.Intra
     value_shape = function.function_space.element.value_shape
     value_size = int(np.prod(value_shape)) if len(value_shape) > 0 else 1
 
+    # Follow the function's own scalar dtype: in the complex DolfinX build
+    # ``function.eval`` returns complex128, and gathering it into a float64
+    # buffer raises a casting error (or, worse, would drop the phase).
+    scalar_dtype = np.asarray(function.x.array).dtype
+
     bb_tree = geometry.bb_tree(mesh, mesh.topology.dim)
     candidate_cells = geometry.compute_collisions_points(bb_tree, points)
     colliding_cells = geometry.compute_colliding_cells(mesh, candidate_cells, points)
@@ -58,13 +63,13 @@ def evaluate_vector_field_parallel(function, points: np.ndarray, comm: MPI.Intra
         local_cells_arr = np.asarray(local_cells, dtype=np.int32)
         local_values = function.eval(local_points, local_cells_arr)
     else:
-        local_values = np.zeros((0, value_size), dtype=np.float64)
+        local_values = np.zeros((0, value_size), dtype=scalar_dtype)
 
     gathered_values = comm.gather(local_values, root=0)
     gathered_indices = comm.gather(local_point_idx_arr, root=0)
 
     if comm.rank == 0:
-        values = np.zeros((n_points, value_size), dtype=np.float64)
+        values = np.zeros((n_points, value_size), dtype=scalar_dtype)
         valid_mask = np.zeros(n_points, dtype=bool)
         for rank_values, rank_indices in zip(gathered_values, gathered_indices):
             if rank_indices.size > 0:
