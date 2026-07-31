@@ -181,6 +181,39 @@ pattern produced a **20.4% error that did not improve across a 7× refinement**,
 was invisible until an analytic comparison existed. Coil+phantom has no analytic
 reference yet. See `PROJECT_PLAN.md` §9.
 
+### `two_torus_domain` is not a conforming mesh — its tori are disconnected islands
+
+Found 2026-07-31 by the `PORT-1` step-1 probe at commit `08fe566`; **not
+diagnosed beyond the cause below, and nothing is being fixed here.**
+
+`MeshGenerator.two_torus_domain` (`src/fem_em_solver/io/mesh.py`) adds two tori
+and then `occ.addBox` over them, calls `occ.synchronize()`, and **never
+fragments**. gmsh therefore meshes the box as a solid box *and* meshes each
+torus separately, sharing no nodes. Measured at padding 0.08 m, 31953 cells
+(log `20260731T213423Z_PORT-1-step1-meshconformity.log`):
+
+* total mesh volume `1.315956e-02 m³` vs analytic box `1.312500e-02 m³`
+  (ratio `1.002633`); the excess is exactly the two meshed torus volumes;
+* tag 3 ("domain") covers the **whole** box, torus interiors included;
+* driving torus 1 time-harmonically, `∫|E|² dV` over tags (1, 2, 3) =
+  `2.0537e-04, 0, 0` — the field cannot leave the driven island
+  (log `20260731T213312Z_PORT-1-step1-diagnostic.log`).
+
+Symptom for `PORT-1`: the two-loop reaction Z-matrix has `Z₁₂ = Z₂₁ = 0`
+identically where the closed form gives `ωM₁₂ = 1.2418 Ω`.
+
+**The open question is what this means for the fixture's existing users** —
+`tests/validation/test_helmholtz_v2.py`,
+`tests/validation/test_helmholtz_magnitude.py` and
+`tests/solver/test_two_torus.py`. Those tests pass today, and the Helmholtz
+centre-field agreement is quoted at 0.04% in §10, which is *not* what a
+disconnected source-to-centre path should produce. Either the magnetostatic
+path is insensitive to the disconnection in a way nobody has written down, or
+one of the two claims is wrong. Resolve that before changing the fixture: a
+`fragment` fix will move whatever those tests currently measure.
+
+Resolved by: the `PORT-1` step-1 unblocking chunk (§9 item 4).
+
 ---
 
 ## Recording a new entry

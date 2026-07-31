@@ -949,6 +949,42 @@ heavy tier, complex build)*
 > compute budget (known-issues) — the gate must run on a reduced-rung fixture,
 > not the full birdcage mesh.
 >
+> **Step 1 attempted 2026-07-31 (16:30 run) — 🚫 blocked on the fixture, not on
+> the method.** The probe (parked on `attempt/PORT-1-step1-20260731T213516Z`,
+> logs `20260731T213222Z_PORT-1-step1-costprobe.log`,
+> `…213312Z_…-diagnostic.log`, `…213423Z_…-meshconformity.log`) runs end to end
+> and returns a 2×2 Z whose **off-diagonals are exactly zero**:
+> `Z₁₁ = +6.724232e-01j`, `Z₂₂ = +6.730717e-01j`, `Z₁₂ = Z₂₁ = 0` against a
+> closed-form `ωM₁₂ = +1.241755e+00 Ω`. Two independent measurements say the
+> cause is `MeshGenerator.two_torus_domain`, which **never fragments** the box
+> against the tori (`io/mesh.py` — `occ.addBox` then `occ.synchronize()`, no
+> `fragment`/`cut`):
+>
+> * volume arithmetic at padding 0.08, 31953 cells — total mesh volume
+>   `1.315956e-02 m³`, tag-3 ("domain") volume `1.312500e-02 m³` = the **whole**
+>   analytic box, ratio total/box = `1.002633`, and the excess `3.456e-05 m³` is
+>   exactly the two meshed torus volumes. The box is meshed as a solid box and
+>   the tori are meshed a *second* time as separate islands;
+> * the solved field itself — driving torus 1, `∫|E|² dV` over tags (1, 2, 3) is
+>   `2.0537e-04, 0, 0`. The field is confined to the driven island because there
+>   is no shared node between the components, so no coupling path exists.
+>
+> Consequence for step 1: the reaction Z-matrix is correct arithmetic on a
+> geometry that is not the intended one, and no reciprocity or `ωM₁₂` number
+> from this fixture means anything. **Unblocking is a fixture change**, not a
+> probe change: fragment the box against the two tori in `two_torus_domain`
+> (`occ.fragment`, re-derive the physical groups from the fragment map, keep the
+> `air_padding`/graded-sizing knobs) and re-run the parked probe unchanged. The
+> meshed-current bookkeeping already works — meshed/exact torus volume is
+> −12.5% at `h_wire = 0.005`, giving meshed currents 0.875149 / 0.875583 A, so
+> the two tori discretise to within 0.05% of each other. Cost is not the
+> problem: 31953 cells, 6.0 s to mesh, 2.8–3.0 s per solve at `-n 2`.
+>
+> The same non-conformity affects **every** existing user of this fixture
+> (`test_helmholtz_v2.py`, `test_helmholtz_magnitude.py`, `test_two_torus.py`) —
+> recorded in `docs/testing/known-issues.md`, not diagnosed here, and it needs a
+> decision before the fix lands.
+>
 > Session traps that cost runs this week, all applicable here: stale FFCx lock
 > after a killed run (`rm -rf ~/.cache/fenics` in the container); `-k`
 > expressions splitting inside the single-quoted container command; numbers
@@ -1122,7 +1158,15 @@ over unattempted from the previous queue's items 5 and 6.
    assert the interior field's magnitude and uniformity. Needs a tagged
    sphere-in-box gmsh fixture (pattern exists in `io/mesh.py`); choose f so
    k₀R ≪ 1, and cost-probe before sizing. Complex build, standard tier.
-4. **`PORT-1` step 1 — two-loop reaction Z-matrix probe**, independent.
+4. 🚫 **`PORT-1` step 1 — two-loop reaction Z-matrix probe**, independent.
+   **Attempted 2026-07-31 (16:30 run), blocked: `two_torus_domain` does not
+   fragment its air box against the tori, so the mesh is three disconnected
+   components and `Z₁₂ = Z₂₁ = 0` identically.** Full measurements in the §7
+   `PORT-1` entry; probe parked on
+   `attempt/PORT-1-step1-20260731T213516Z`. The unblocking item — fragment the
+   box in `two_torus_domain` and re-verify the existing Helmholtz users of the
+   fixture — is a §7-sized chunk the review should scope before this item
+   reappears.
    Execute step 1 of the §7 `PORT-1` implementation plan (written this
    review): `two_torus_domain`, air-only, drive each torus in turn with the
    regularised azimuthal J, extract the 2×2 reaction Z with **meshed** loop

@@ -1327,3 +1327,66 @@ pushing `k₀R` down is where low-frequency breakdown would first show.
 Z-matrix probe) is next and is the critical path; item 5 depends on it landing.
 This run closed the last open Phase-2 analytic gate, so nothing in §9 blocks on
 `TH-*` any more.
+
+---
+
+## 2026-07-31T21:35Z — `PORT-1` step 1 (§9 On-deck item 4) — blocked
+
+**Outcome: blocked on the fixture.** The method is fine and the probe is
+written and runs; the geometry it runs on is not the geometry the plan
+describes. Code parked on `attempt/PORT-1-step1-20260731T213516Z`
+(`scripts/probes/port1_step1_probe.py`, commit `2700efe`); `main` carries only
+the three harness logs, this entry, the §7 `PORT-1` annotation and a new
+known-issues entry.
+
+**What was tried.** The §7 step-1 plan verbatim: `two_torus_domain` at
+a = 0.04 m, r_wire = 0.005 m, d = 0.04 m, f = 10 MHz, air only, PEC box,
+`air_padding = 0.08 = 2·a` as the docstring requires; regularised-sqrt
+azimuthal J with `subdomain_ids=[driven tag]` (the `MAT-6` step-2a pattern, not
+`ufl.max_value`); `Z_ik = −(1/(I_k·I_i))∫_{torus i} E_k·J_i dV` with meshed loop
+currents. Cost probe first at `h_wire = 0.005`, `h_far = 0.03`.
+
+**Measured.**
+
+* Cost: 31953 cells, 6.0 s to mesh, **2.8–3.0 s per solve at `-n 2`** — step 2
+  is comfortably standard tier, not heavy, once the fixture works.
+* Meshed torus volumes `1.727475e-05` / `1.728332e-05 m³` vs exact
+  `1.973921e-05` (−12.49% / −12.44%), meshed currents **0.875149 / 0.875583 A**
+  — the two tori discretise to within 0.05% of each other, so the
+  meshed-current bookkeeping the plan insisted on is working.
+* `Z = [[+6.724232e-01j, 0], [0, +6.730717e-01j]]` Ω. Off-diagonals **exactly**
+  zero. Closed form `M₁₂ = 1.976...e-08 H`, `ωM₁₂ = +1.241755e+00 Ω`, so the
+  measurement is not "off by x%", it is absent. `M(2d)/M(d)` and the finite-
+  section spread were computed but are not worth quoting until a real Z₁₂ exists.
+
+**Cause — two independent measurements, both in the logs.**
+`MeshGenerator.two_torus_domain` adds the air box with `occ.addBox` over the two
+tori and never fragments (`io/mesh.py`: `addBox` → `synchronize`, no
+`fragment`/`cut`). So (i) total mesh volume `1.315956e-02 m³` exceeds the
+analytic box `1.312500e-02 m³` by exactly the two torus volumes (ratio
+1.002633) and tag 3 covers the whole box; and (ii) driving torus 1,
+`∫|E|² dV` over tags (1, 2, 3) = `2.0537e-04, 0, 0`. The mesh is three
+disconnected components and the field cannot leave the driven island. No
+reciprocity residual or `ωM₁₂` comparison from this fixture means anything.
+
+**Logs.** `20260731T213222Z_PORT-1-step1-costprobe.log` (first sighting of the
+zero off-diagonals), `20260731T213312Z_PORT-1-step1-diagnostic.log` (per-tag
+`∫|E|²`), `20260731T213423Z_PORT-1-step1-meshconformity.log` (volume
+arithmetic, `--mesh-only`, 14 s). All smoke tier, exit 0, ~15 s each.
+
+**For the review — this is bigger than `PORT-1`.** The same fixture backs
+`test_helmholtz_v2.py`, `test_helmholtz_magnitude.py` and `test_two_torus.py`,
+and §10 quotes 0.04% centre-field agreement against the analytic Helmholtz
+solution from it. A disconnected source-to-centre path should not produce that.
+Either those tests are measuring something other than what their names say, or
+the disconnection is not total in the magnetostatic path. I did not diagnose
+which — it is recorded in known-issues.md as an open question, because the
+answer changes what the fix is allowed to break. **Do not queue "fragment the
+box" as a one-line fix without that answer.**
+
+**Next-attempt hypothesis:** the unblocking chunk is `occ.fragment` of the box
+against both tori in `two_torus_domain`, re-deriving physical groups 1/2/3 from
+the fragment map and keeping `air_padding`/`wire_resolution`/`far_resolution`
+intact, gated by re-running the three existing users *first* to record what they
+measure today. Then the parked probe re-runs unchanged and step 1 completes in
+one slot — the cost numbers above say the whole two-padding sweep is ~2 minutes.
