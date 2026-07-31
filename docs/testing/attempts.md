@@ -872,3 +872,62 @@ Same session as the entry above; step 4 was committed first (`99f3d4f`) so
   to `MAT-6` (Dodd–Deeds loading gate) per §9's "obvious next entry" sentence.
   That is a genuinely new closed form rather than a rescope, so it may want the
   review to size it first; the review is also overdue to refill On deck to six.
+
+## 2026-07-31T05:05Z — MAT-6 step 1 (Dodd–Deeds closed form) — partial
+
+- **Outcome:** partial. `MAT-6` step 1 (the closed form) is landed and gated on
+  `main`; step 2 (the FEM gate, which is what actually closes the chunk) is not
+  started. §7 status `⬜` → `🟡` with both steps written out.
+- **Item selection:** every On-deck item was done, so this is the §9 **fallback**
+  to `MAT-6` per `implementer-run.md` step 2. Scoped to one run by splitting the
+  chunk: closed form now, FEM comparison next.
+- **What was built:** `src/fem_em_solver/utils/dodd_deeds.py` —
+  `ΔZ = jωπμ₀a²∫₀^∞ Γ(α)J₁(αa)²e^{−2αh}dα` with `Γ = (μᵣα−α₁)/(μᵣα+α₁)`,
+  `α₁ = √(α²+jωμ₀μᵣσ)`, integrated piecewise between the zeros of `J₁(αa)`
+  (one semi-infinite oscillatory `quad` under-resolves silently) and truncated
+  where `e^{−2αh}` has killed the integrand. Plus
+  `tests/validation/test_dodd_deeds_impedance.py`, 6 tests, no dolfinx, real
+  build.
+- **Measured numbers:**
+  - **Anchor** — perfect-conductor limit: `ΔL` from the Hankel integral at
+    σ = 1e12 S/m is `−6.753682e−08 H`; minus the image mutual inductance
+    `−2πa·A_φ(a,2h)` from the elliptic-integral `A_φ` in `AnalyticalSolutions`
+    is `−6.753694e−08 H`. **0.0002%.** Two derivations sharing no algebra
+    beyond μ₀ — this is what pins the `jωπμ₀a²` prefactor and the sign of Γ.
+  - σ = 0 gives `|ΔZ|/|ΔZ_pec| < 1e−12` (Γ ≡ 0 identically, not just small).
+  - σ = 1e6 S/m: `ΔZ = 9.7728e−02 − 5.4108e+01j Ω` — dissipates, expels flux.
+  - Thin-skin identity `ΔR/(ΔX−ΔX_pec)` → 0.99148, 0.99729, 0.99914, 0.99973
+    for σ = 1e5…1e8 S/m: monotone to 1, as `Γ+1 ≈ αδ(1−j)` requires.
+  - `ΔR ∝ ω^0.5009` over a decade at σ = 1e7 (expect exactly 0.5).
+- **The one real dead end, kept as evidence:** the first draft used the full
+  complex permittivity `ε_c` in the half-space while keeping the
+  magnetoquasistatic `e^{−α|z−h|}` kernel in free space. Inconsistent, and the
+  σ = 0 test caught it immediately — vacuum reflected `Γ = −1` at α = 0
+  (log `20260731T050326Z_MAT-6-step1.log`, the only failing run). Fixed by going
+  consistently eddy-current, which is what Dodd & Deeds (1968) actually is.
+  **Consequence the reviewer must not lose:** the kernel needs loss tangent
+  `σ/(ωε₀εᵣ) ≫ 1`, and gelled saline at 127.74 MHz sits at **≈ 1.26**. So step 2
+  cannot point this at saline as written — it must either gate against a high-σ
+  half-space or upgrade to the full-wave kernel first. Both the module docstring
+  and the §7 entry say so.
+- **Tolerance tightened, not loosened:** the image-limit bound was drafted at
+  0.5% and moved to **2e−5** once the measurement came in at 0.0002%, with the
+  number and log in a code comment.
+- **Tier / cost:** smoke. 2 s at `-n 2` for the 6 new tests; 3 s for the final
+  run including `tests/unit` (11 passed). No solver runs at all this session.
+- **Logs:** `20260731T050326Z_MAT-6-step1.log` (the instructive failure),
+  `20260731T050449Z_MAT-6-step1b.log` (**log of record**, 6 passed),
+  `20260731T050500Z_MAT-6-step1-numbers.log` (printed measurements, `-s`),
+  `20260731T050515Z_MAT-6-step1-final.log` (tightened bound + unit regression).
+- **Branch (if parked):** none. The work is self-contained, green, and adds no
+  half-applied change, so it landed on `main` rather than an `attempt/*` branch;
+  `main` is clean.
+- **Denied commands:** none.
+- **Next-attempt hypothesis:** step 2's cost driver is the air box, not the
+  solve — the PEC outer boundary contaminates ΔZ unless it is far out. The
+  reaction-integral form `ΔZ = −(1/I²)∫(E_loaded − E_free)·J dV` over two solves
+  differing *only* in σ should cancel most of that truncation error along with
+  the coil self-impedance, which is why it is the recommended route in §7. Next
+  run should cost-probe the mesh before committing to a box size, and settle the
+  kernel question (high-σ gate vs full-wave upgrade) first, since it decides the
+  material parameters the mesh is built for.

@@ -1,0 +1,95 @@
+# Test Run
+- Chunk: MAT-6-step1b
+- Commit: b90f7711f691310212460504594315d09e9837fc
+- Time (UTC): 2026-07-31 05:04:49
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.3.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/validation/test_dodd_deeds_impedance.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Jul 31 00:03 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.3.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/validation/test_dodd_deeds_impedance.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 6 items
+
+tests/validation/test_dodd_deeds_impedance.py::test_nonconducting_half_space_is_exactly_invisible collected 6 items
+
+tests/validation/test_dodd_deeds_impedance.py::test_nonconducting_half_space_is_exactly_invisible PASSED [ 16%]
+tests/validation/test_dodd_deeds_impedance.py::test_perfect_conductor_limit_matches_image_mutual_inductance PASSED [ 16%]
+tests/validation/test_dodd_deeds_impedance.py::test_perfect_conductor_limit_matches_image_mutual_inductance PASSED [ 33%]
+tests/validation/test_dodd_deeds_impedance.py::test_lossy_half_space_dissipates_and_expels_flux PASSED [ 33%]
+tests/validation/test_dodd_deeds_impedance.py::test_lossy_half_space_dissipates_and_expels_flux PASSED [ 50%]
+tests/validation/test_dodd_deeds_impedance.py::test_thin_skin_departure_from_perfect_conductor_is_equal_parts PASSED [ 50%]
+tests/validation/test_dodd_deeds_impedance.py::test_thin_skin_departure_from_perfect_conductor_is_equal_parts PASSED [ 66%]
+tests/validation/test_dodd_deeds_impedance.py::test_loss_scales_as_sqrt_frequency_in_the_thin_skin_regime PASSED [ 66%]
+tests/validation/test_dodd_deeds_impedance.py::test_loss_scales_as_sqrt_frequency_in_the_thin_skin_regime PASSED [ 83%]
+tests/validation/test_dodd_deeds_impedance.py::test_liftoff_reduces_the_coupling_monotonically PASSED [ 83%]
+tests/validation/test_dodd_deeds_impedance.py::test_liftoff_reduces_the_coupling_monotonically PASSED [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 6 passed, 8 warnings in 1.10s =========================
+PASSED [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 6 passed, 8 warnings in 1.10s =========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 2

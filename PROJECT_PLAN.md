@@ -538,7 +538,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `MAT-3` | Debye/Cole-Cole dispersion models | ⬜ | smoke |
 | `MAT-4` | SAR computation `σ|E|²/(2ρ)` | ⬜ | standard |
 | `MAT-5` | Temperature-dependent conductivity | ⬜ | smoke |
-| `MAT-6` | **Dodd–Deeds coil-over-lossy-half-space impedance** | ⬜ | standard |
+| `MAT-6` | **Dodd–Deeds coil-over-lossy-half-space impedance** | 🟡 | standard |
 
 > `MAT-1` is `⚠️` not because the preset table is wrong but because nothing
 > consumes it.
@@ -558,6 +558,39 @@ log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
 > half-space — the project's headline physics, *"the phantom loads the coil"*, in
 > closed form. Upgrades `MAT-2` from "fields differ by a threshold" to "the coil
 > impedance change matches a published solution", and bridges `TH-1` to `PORT-1`.
+
+**`MAT-6` step 1 — the closed form itself** ✅ *(2026-07-31, 00:00 implementer
+run, `src/fem_em_solver/utils/dodd_deeds.py` +
+`tests/validation/test_dodd_deeds_impedance.py`, log
+`20260731T050449Z_MAT-6-step1b.log`, 6 tests, 2 s at `-n 2`, real build)*
+> `ΔZ = jωπμ₀a² ∫₀^∞ Γ(α) J₁(αa)² e^{−2αh} dα`, `Γ = (μᵣα−α₁)/(μᵣα+α₁)`,
+> `α₁ = √(α²+jωμ₀μᵣσ)`, integrated piecewise between the zeros of `J₁(αa)`.
+> The anchor is the **perfect-conductor limit**: at σ = 10¹² S/m the Hankel
+> integral gives `ΔL = −6.753682e−08 H` against `−6.753694e−08 H` from minus the
+> image mutual inductance `−2πa·A_φ(a,2h)` computed with the elliptic-integral
+> `A_φ` in `AnalyticalSolutions` — **0.0002%**, two derivations sharing no
+> algebra beyond μ₀, which is what pins the `jωπμ₀a²` prefactor and the sign of
+> Γ. Also gated: σ = 0 is *exactly* invisible; ΔR > 0 and ΔX < 0 for a real
+> conductor; the thin-skin identity `ΔR = ΔX − ΔX_pec` converging monotonically
+> to 0.99973 by σ = 10⁸ S/m; and `ΔR ∝ ω^0.5009` over a decade (expect 0.5).
+>
+> **Known limitation, deliberate.** This is the 1968 *eddy-current* kernel:
+> displacement current is neglected on both sides, which is exactly what makes
+> a σ = 0 half-space vanish identically (a first draft mixed a full-wave
+> half-space with a magnetoquasistatic free-space kernel and reflected Γ = −1
+> off vacuum — log `20260731T050326Z_MAT-6-step1.log`). Gelled saline at
+> 127.74 MHz has loss tangent ≈ 1.26, i.e. **outside** this kernel's regime.
+
+**`MAT-6` step 2 — the FEM gate** ⬜ *(the part that actually closes the chunk)*
+> Solve a filamentary loop over a lossy half-space with `TimeHarmonicSolver`
+> and extract ΔZ by the reaction integral `ΔZ = −(1/I²)∫(E_loaded − E_free)·J dV`
+> over the source region, i.e. two solves differing only in the half-space σ, so
+> the coil self-impedance and the PEC-truncation error cancel in the difference.
+> Two decisions step 2 must make before meshing: (a) gate against a **high-σ**
+> half-space where the step-1 kernel is valid, or first upgrade step 1 to the
+> full-wave kernel (`α₀ = √(α²−k₀²)` above, `α₁ = √(α²−ω²μ₀ε₀ε_c)` below, with an
+> `α/α₀` weight) so saline is in range; (b) size the air box so the PEC outer
+> boundary does not contaminate ΔZ — cost-probe this, it is the likely time sink.
 
 ### POST — Post-processing & field extraction
 
@@ -714,9 +747,16 @@ Last reviewed 2026-07-30 (daily review). Tree clean, no parked branches.
    the thirteen `@complex_only` tests now execute in CI; the remaining three are
    blocked on known-issues.md entries 1 and 2, not on complex mode.
 
-**On deck is empty — the next scheduled run falls back to `MAT-6`** (the
-Dodd–Deeds loading gate) per the sentence below, scoped to one run. The next
-daily review must refill this list.
+4. 🟡 **partial 2026-07-31** (00:00 implementer run, fallback — On deck was
+   empty) — `MAT-6` **step 1**, the Dodd–Deeds closed form, landed and gated
+   (image-limit cross-check 0.0002%, see the §7 entry). **`MAT-6` step 2, the
+   FEM gate, is the chunk's actual teeth and is still open** — its §7 entry
+   carries the reaction-integral plan and the two decisions it must make first.
+
+**On deck is empty — the next scheduled run falls back to `MAT-6` step 2**, the
+FEM gate, per the §7 entry. The next daily review must refill this list; note
+that step 2 is a bigger-than-one-run item as written and should be split (kernel
+choice / air-box cost probe / the gate itself) when it is queued.
 
 Every `TH-1` command needs `source /usr/local/bin/dolfinx-complex-mode` **and**
 `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest path
