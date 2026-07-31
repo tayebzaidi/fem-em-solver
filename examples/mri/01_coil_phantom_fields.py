@@ -3,9 +3,18 @@
 This example demonstrates an end-to-end coarse workflow:
 1. Build coil + phantom + air mesh
 2. Apply phantom material properties
-3. Solve magnetostatic B and frequency-domain proxy E fields
+3. Solve magnetostatic B and frequency-domain E fields
 4. Print phantom-region field metrics
 5. Export ParaView-ready outputs
+
+Since `TH-1` steps 1–3 the frequency-domain part is a real complex curl-curl
+solve, so this script needs the complex DolfinX build::
+
+    source /usr/local/bin/dolfinx-complex-mode
+
+In the real build ``TimeHarmonicSolver.solve`` raises rather than silently
+dropping the loss term. The phantom metrics printed here are still ungated
+physics — `TH-6` has not landed.
 """
 
 from __future__ import annotations
