@@ -1218,3 +1218,55 @@ Same session as the entry above; step 4 was committed first (`99f3d4f`) so
   balance) is next and is independent of this. Worth noting for whoever takes
   `POST-1`: the `phantom_fields.py:88` cast means the ⚠️ on `POST-1` is not just
   "unvalidated" — there is a located, understood defect behind it now.
+
+## 2026-07-31T18:37Z — `POST-3` step 2 (piecewise-σ power balance) — complete
+
+- **Run:** scheduled implementer, 13:30 CDT slot. Preflight clean, container Up.
+  Queue item 2 of the 10:30 queue; items 1 was already done by the 12:00 run.
+- **Change:** `post/power_balance.py::poynting_power_balance` now takes
+  `sigma: float | fem.Function`. The field path puts σ(x) straight into the
+  volume leg (`½∫σ(x)|E|²dV`); the boundary flux leg is untouched, since nothing
+  in the divergence-theorem derivation needs σ uniform. A same-mesh check
+  raises rather than integrating one material distribution against another
+  field. μᵣ deliberately stays scalar — a piecewise μᵣ also enters `H` inside
+  the boundary integral, so it waits for a magnetic phantom (noted in §7).
+- **Correction to the queue item:** it said to re-gate "on the two-material
+  configuration `MAT-2` already solves in `test_lossy_plane_wave.py`". `MAT-2`
+  solves **two homogeneous boxes** at σ = 0.1 and 1.4 S/m, not one piecewise
+  box — there was no piecewise solve to reuse. Built the fixture new with the
+  same σ pair: `material_map` + `cell_tags`, slabs split at x = L/2 (a mesh
+  plane for even n, so the DG0 σ is exactly the geometry; the helper asserts
+  every owned cell is tagged). Boundary data is the σ_low plane wave, which is
+  *not* the exact two-material solution and need not be — the identity has no
+  free parameters.
+- **Numbers** (log `20260731T183707Z_POST-3-step2-gate-final.log`, 9 passed,
+  64.5 s at `-n 2`, standard tier, complex build):
+  - piecewise imbalance **8.93% at 16³ → 4.49% at 32³**, rate **0.9915 in h** —
+    the same O(h) boundary-curl-trace leg as step 1; the interface does not
+    change the order.
+  - σ-blind negative control on the field path (both slabs zeroed in the solver,
+    scored against the honest σ(x)): **99.19% vs the honest 11.85%** at 12³.
+  - scalar-path regression (uniform DG0 σ vs float σ, no solve): equal to
+    `rtol = 1e-12` on all three power quantities.
+  - step 1's own two tests unchanged: 8.19% → 4.13%, control 95.2%.
+- **Mesh moved, not the bound:** at 12³→24³ this fixture gives 11.85% → 5.98%
+  (rate 0.987, log `20260731T183338Z_POST-3-step2-refine-probe.log`), and 5.98%
+  is just over step 1's 5% MVP bar. Since the leg is O(h), the fine level went
+  to 32³ — predicted 4.5%, measured 4.49% — and the bar stayed at 5%.
+- **One bound stated from measurement, and why:** the piecewise negative control
+  asserts `blind > 5 × honest`, not step 1's 10×. The blind imbalance saturates
+  just under 100% (the two legs differ by at most the scale), so on a fixture
+  whose honest imbalance is 11.85% the largest attainable ratio is
+  1/0.1185 = 8.4×; measured 8.4×. 10× is arithmetically unreachable here, not
+  merely unmet. Reason is in the test docstring as well as here.
+- **Latent rank-safety issue seen but not hit:** `build_material_fields` builds
+  its `known_tags` set from `np.asarray(cell_tags.values)`, which is rank-local,
+  so a `material_map` tag absent from one rank's partition would raise a
+  spurious "tags do not exist" error. At `-n 2` on this box both tags land on
+  both ranks and it passed; a wider run or a different partition could trip it.
+  Not fixed — out of scope for this item, and it needs an `allreduce` of the tag
+  set (`tests/mesh/helpers.py::global_cell_tag_set` is the pattern).
+- **Next-attempt hypothesis:** queue item 3 (`TH-8`, sphere in a uniform
+  quasi-static field) is next and independent. For `POST-3` itself, what is left
+  is `∇·(σE)` and reciprocity; the field-σ path now means the metric can be
+  pointed at a coil+phantom solve, which is worth doing as soon as one exists.

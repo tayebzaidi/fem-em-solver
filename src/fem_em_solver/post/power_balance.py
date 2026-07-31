@@ -12,11 +12,17 @@ and the complex Poynting vector is ``S = ½ E × H̄``.  Integrating
 ``∇·S = −½σ|E|² − 2jω(w_m − w_e)`` over the domain and taking the **real**
 part leaves a statement with no free parameters:
 
-    −∮ ½ Re(E × H̄)·n̂ dS  =  ½ ∫ σ|E|² dV
+    −∮ ½ Re(E × H̄)·n̂ dS  =  ½ ∫ σ(x)|E|² dV
 
 i.e. the real power entering through the boundary equals the Ohmic power
 dissipated inside it.  The imaginary part carries the reactive
 (stored-energy) imbalance and is reported but not asserted on.
+
+Nothing in the derivation needs σ to be uniform — the divergence theorem is
+applied to the whole domain, and a piecewise σ only changes the integrand of
+the volume leg (`POST-3` step 2).  ``sigma`` therefore accepts either a scalar
+or the DG0 ``sigma_field`` the solver already builds, which is what makes the
+identity usable on a coil+phantom solve.
 
 Both sides are computed from the same discrete ``E``, but by different
 operators — a volume mass term against a boundary curl trace — so the identity
@@ -30,7 +36,7 @@ term breaks it.
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import ufl
@@ -45,11 +51,11 @@ def poynting_power_balance(
     e_complex: fem.Function,
     *,
     omega: float,
-    sigma: float,
+    sigma: Union[float, fem.Function],
     mu_r: float = 1.0,
     comm: Optional[MPI.Comm] = None,
 ) -> dict[str, float]:
-    """Real-power balance for a time-harmonic solve on a homogeneous domain.
+    """Real-power balance for a time-harmonic solve.
 
     Parameters
     ----------
@@ -59,9 +65,18 @@ def poynting_power_balance(
     omega:
         Angular frequency in rad/s.
     sigma:
-        Conductivity in S/m, uniform over the mesh.
+        Conductivity in S/m: either a uniform scalar, or a
+        :class:`dolfinx.fem.Function` giving σ(x) cell-wise — pass the
+        ``sigma_field`` the solver returns in
+        :class:`~fem_em_solver.core.TimeHarmonicFields` and the volume term
+        becomes ``½∫σ(x)|E|²dV`` over the actual material distribution.  The
+        field must live on the same mesh as ``e_complex``; the identity is
+        scored against whatever σ is handed in, which is what makes the
+        σ-blind negative control possible.
     mu_r:
-        Relative permeability, uniform over the mesh.
+        Relative permeability, uniform over the mesh.  A piecewise μᵣ would
+        also have to enter ``H`` inside the boundary integral, so it is left
+        scalar until a magnetic phantom needs it.
     comm:
         Communicator to reduce over; defaults to the mesh's own.
 
@@ -77,11 +92,30 @@ def poynting_power_balance(
     if comm is None:
         comm = msh.comm
 
+    if isinstance(sigma, fem.Function):
+        if sigma.function_space.mesh is not msh:
+            raise ValueError(
+                "sigma field and e_complex must live on the same mesh; got "
+                "functions from two different meshes, which would silently "
+                "integrate one material distribution against another field"
+            )
+        sigma_ufl: object = sigma
+    else:
+        sigma_ufl = float(sigma)
+        if not np.isfinite(sigma_ufl) or sigma_ufl < 0.0:
+            raise ValueError(
+                f"sigma must be finite and non-negative (S/m), got {sigma!r}"
+            )
+
     normal = ufl.FacetNormal(msh)
     h_field = ufl.curl(e_complex) / (-1j * omega * MU_0 * mu_r)
 
     # ufl.inner conjugates its second argument, so inner(E, E) is |E|² already.
-    dissipated_form = fem.form(0.5 * sigma * ufl.inner(e_complex, e_complex) * ufl.dx)
+    # σ is real, so the product's imaginary part is round-off and Re() below is
+    # exact rather than a truncation — true for the DG0 field path too.
+    dissipated_form = fem.form(
+        0.5 * sigma_ufl * ufl.inner(e_complex, e_complex) * ufl.dx
+    )
     # Outward complex Poynting flux.  Written with an explicit conj() rather
     # than inner() so the cross product keeps the ½E×H̄ ordering of the theorem;
     # ufl.dot against the outward FacetNormal then gives the *outgoing* power.

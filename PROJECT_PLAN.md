@@ -789,12 +789,38 @@ heavy tier, complex build)*
 > `e_to_b_mean_ratio` is now documented as deprecated-as-a-gate in
 > `post/consistency.py` and relabelled "shape ratios, non-physical" in the
 > quick-look report; its keys stay so `POST-2`'s consumers keep working.
-> **Still open for `POST-3`:** the identity is only exercised on a homogeneous
-> box — `poynting_power_balance` takes a scalar σ and μᵣ, so a piecewise
-> material (the coil+phantom case, where this metric would be most useful)
-> needs the σ argument generalised to the `sigma_field` the solver already
-> builds. `∇·(σE)` residual and reciprocity, the other two candidates in the
-> note above, are untouched.
+> **`POST-3` step 2 — done 2026-07-31, 13:30 implementer run.** `sigma` now
+> accepts either a scalar or a `fem.Function`, so the volume leg is
+> `½∫σ(x)|E|²dV` over the DG0 `sigma_field` the solver already returns; the
+> boundary flux leg is untouched. Gated on a *piecewise* solve —
+> `test_poynting_balance.py::test_poynting_balance_holds_for_piecewise_sigma`
+> puts σ = 0.1 S/m for x < L/2 and 1.4 S/m beyond it (the `MAT-2` pair, but as
+> one two-material solve rather than two homogeneous ones; the interface lands
+> on a mesh plane, so the DG0 σ is exactly the geometry) and drives the box with
+> the σ_low plane wave, which is *not* the exact solution of the two-material
+> problem and does not need to be: the identity has no free parameters.
+> Measured (log `20260731T183707Z_POST-3-step2-gate-final.log`, 9 tests, 64.5 s at
+> `-n 2`, standard tier): imbalance **8.93% at 16³ → 4.49% at 32³**, rate
+> **0.9915 in h** — the same O(h) boundary-curl-trace leg as step 1, unchanged
+> by the interface. The mesh moved, not the bound: at 12³→24³ this fixture gives
+> 11.85% → 5.98% (rate 0.987, log
+> `20260731T183338Z_POST-3-step2-refine-probe.log`), 5.98% being just over
+> step 1's 5% MVP bar, and since the leg is O(h) the fine level went to 32³
+> (predicted 4.5%, measured 4.49%) rather than the bar going up.
+> Negative control on the field path: both slabs zeroed in the solver, scored
+> against the honest σ(x), gives **99.19% against the honest 11.85%** at 12³ —
+> 8.4×. That test asserts 5×, not step 1's 10×, because the blind imbalance
+> saturates just under 100% (the two legs differ by at most the scale), so
+> 1/0.1185 = 8.4× is the largest ratio this fixture can produce; the reason is
+> recorded in the test's docstring. A no-solve regression test
+> (`test_uniform_sigma_field_reproduces_the_scalar_path`) pins the scalar path:
+> a uniform DG0 σ reproduces the float σ numbers to `rtol = 1e-12`.
+>
+> **Still open for `POST-3`:** μᵣ is still scalar — a piecewise μᵣ also enters
+> `H` inside the boundary integral, so it waits for a magnetic phantom.
+> `∇·(σE)` residual and reciprocity, the other two candidates in the note
+> above, are untouched, and the `POST-1` cast defect recorded above still means
+> the *phantom-field* metrics are taken on `Re(E)`.
 
 ### PORT — Ports & S-parameters (Phase 4)
 
@@ -951,9 +977,10 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
 2. ~~**`TH-7`**~~ — **done 2026-07-31** (γ to 0.006%). **`TH-8`** is the last of
    the cheap closed-form gates on the frequency-domain solver; one run in the
    `TH-6` mould.
-3. **`POST-3`** — 🟡: step 1 landed 2026-07-31 (Poynting real-power balance,
-   4.13% on the `TH-6` fixture, σ-blind control at 95.2%). What remains is the
-   piecewise-material case and the other candidate identities.
+3. **`POST-3`** — 🟡: steps 1–2 landed 2026-07-31 (Poynting real-power balance,
+   4.13% on the `TH-6` fixture with a σ-blind control at 95.2%; then σ(x) as a
+   DG0 field, 4.49% on a two-slab σ = 0.1 | 1.4 S/m solve, control at 99.2%).
+   What remains is `∇·(σE)` and reciprocity.
 4. **`PORT-1`** — real port excitation from the solved field. Resolves the two
    deliberately-red port tests as a side effect. §7-grade implementation plan
    written 2026-07-31 (10:30 review): reaction Z-matrix on the two-torus
@@ -1011,8 +1038,16 @@ over unattempted from the previous queue's items 5 and 6.
    `tests/materials/test_phantom_material_model.py:33-34` and
    `src/fem_em_solver/post/phantom_fields.py:88` — fix the test-side casts; the
    `phantom_fields.py` one is `POST-1` territory, record it there if not fixed.
-2. **`POST-3` step 2 — piecewise-σ power balance**, independent, standard
-   tier, complex build. Generalise `poynting_power_balance`'s scalar `sigma`
+2. ~~**`POST-3` step 2 — piecewise-σ power balance**~~ — **done 2026-07-31**
+   (13:30 implementer run). `sigma` takes a `fem.Function`; gated on a two-slab
+   σ = 0.1 | 1.4 S/m solve at 8.93% (16³) → 4.49% (32³), rate 0.9915 in h,
+   σ-blind control 99.19% vs 11.85%, scalar path pinned to `rtol = 1e-12`.
+   Log `20260731T183707Z_POST-3-step2-gate-final.log`, 9 passed, 64.5 s at `-n 2`.
+   Note for the review: the item said to re-gate "on the two-material
+   configuration `MAT-2` already solves" — `MAT-2` in fact solves two
+   *homogeneous* boxes, not one piecewise one, so the fixture was built new
+   (same σ pair, `material_map` + `cell_tags`, interface on a mesh plane).
+   `POST-3` stays 🟡 as planned. Original text: Generalise `poynting_power_balance`'s scalar `sigma`
    to also accept a `fem.Function` (the `sigma_field` the solver already
    returns in `TimeHarmonicFields`), keeping the scalar path working, and
    re-gate on the two-material configuration `MAT-2` already solves in
