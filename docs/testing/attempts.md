@@ -1178,3 +1178,43 @@ Same session as the entry above; step 4 was committed first (`99f3d4f`) so
   progress output interleaving, not a failure.
 - **Net:** `main` is green apart from the documented pre-existing entries. No
   new known-issues entry is warranted.
+
+## 2026-07-31T17:05Z — retire known-issues entry 1 (§9 On-deck item 1) — complete
+
+- **Preflight:** tree clean at `424faed`, container Up, no `attempt/*` or
+  `recovered/*` branches. No anomaly.
+- **What was tried:** re-verified the two `DummyMagnetostaticSolver` tests the
+  entry blamed, in both builds, then removed the CI debt they carried.
+  - Complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first,
+    `-n 2`: **10 passed in 4.6 s** (smoke tier; pre-fix run
+    `20260731T170034Z_KI-1-precheck-complex.log`, log of record
+    `20260731T170152Z_KI-1-retire-gate.log`).
+  - Real build, the CI `validation` job's exact command with both `--deselect`s
+    removed: **15 passed, 2 skipped in 0.5 s**
+    (`20260731T170140Z_KI-1-real-mode-iomatpost.log`). The 2 skips are the
+    `@complex_only` pair, which is precisely why they also went into
+    `validation-complex`.
+- **Changes:** `ci.yml` — both `--deselect`s deleted from the `validation` job,
+  `tests/materials/test_phantom_material_model.py` and
+  `tests/post/test_phantom_field_metrics.py` added to `validation-complex`
+  (+6 s there, measured), comments updated. known-issues entry 1 marked
+  ✅ RETIRED with the two logs; the **heading was kept rather than deleted** so
+  entries 2–6 keep their numbers, which commits and CI comments cite.
+- **ComplexWarnings** (the queue item asked for both):
+  - `test_phantom_material_model.py:33-34` — **fixed.** `float(np.min(...))` on a
+    complex128 dof array; now takes `.real` explicitly and asserts the reduced
+    global `max|Im|` is exactly 0, so a genuinely complex material coefficient
+    fails instead of being silently truncated. The assert is after the
+    `allreduce`, on a value identical on every rank, so it cannot deadlock.
+  - `post/phantom_fields.py:88` — **not fixed, recorded under `POST-1` in §7.**
+    `np.asarray(field.eval(...), dtype=np.float64)` discards `Im(E)`, so every
+    phantom field metric is taken on `Re(E)` at phase 0 — phase-dependent, and
+    wrong by up to 100% for a field in quadrature. Fixing it means choosing the
+    metric's semantics (|phasor| vs. time average), which is `POST-1`'s job, and
+    `POST-1` is ⚠️ so an implementer run must not extend it in passing.
+- **Numbers:** 10 passed / 4.6 s complex, 15 passed + 2 skipped / 0.5 s real; no
+  assertion was loosened, one was added.
+- **Next-attempt hypothesis:** queue item 2 (`POST-3` step 2, piecewise-σ power
+  balance) is next and is independent of this. Worth noting for whoever takes
+  `POST-1`: the `phantom_fields.py:88` cast means the ⚠️ on `POST-1` is not just
+  "unvalidated" — there is a located, understood defect behind it now.

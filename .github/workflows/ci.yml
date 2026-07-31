@@ -120,17 +120,14 @@ jobs:
           tests/solver/test_energy_and_point_evaluation.py \
           -v --tb=short
 
-    # IO/materials/post, minus two tests that were already failing before this
-    # job existed. They are deselected explicitly rather than silently skipped
-    # so the debt stays visible here. Both fail on the same stale test double
-    # (DummyMagnetostaticSolver lacks last_solve_diagnostics) -- see
-    # docs/testing/known-issues.md, entry 1. That is a small self-contained fix,
-    # not blocked on TH-1; remove these deselects when it lands.
+    # IO/materials/post. Two tests here used to be `--deselect`ed on the stale
+    # DummyMagnetostaticSolver double (known-issues.md entry 1); TH-1 steps 1-3
+    # deleted the `last_solve_diagnostics` read they tripped on, so the deselects
+    # were removed 2026-07-31 and both files now also run in `validation-complex`
+    # below, which is where the two `@complex_only` tests actually execute.
     - name: IO / materials / post suites
       run: |
-        python3 -m pytest tests/io tests/materials tests/post -v --tb=short \
-          --deselect tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring \
-          --deselect tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite
+        python3 -m pytest tests/io tests/materials tests/post -v --tb=short
 
   # Frequency-domain validation, complex PETSc scalars.
   #
@@ -185,6 +182,8 @@ jobs:
           tests/validation/test_dodd_deeds_impedance.py \
           tests/solver/test_time_harmonic_smoke.py \
           tests/solver/test_boundary_condition_selection.py \
+          tests/materials/test_phantom_material_model.py \
+          tests/post/test_phantom_field_metrics.py \
           -v --tb=short
 
     # test_dodd_deeds_impedance.py is the `MAT-6` loading gate and costs 85 s of
@@ -193,13 +192,12 @@ jobs:
     # runs in either build, but the file is listed only here so the FEM half is
     # actually executed rather than skipped.
 
-    # Three `@complex_only` tests are deliberately absent from the list above,
-    # all of them blocked on pre-existing failures rather than on complex mode:
-    # test_convergence_diagnostics.py (known-issues.md entry 2, whose non-complex
-    # sibling fails too) and the two DummyMagnetostaticSolver tests in
-    # test_phantom_material_model.py / test_phantom_field_metrics.py
-    # (known-issues.md entry 1, already --deselect'ed in the `validation` job).
-    # Add them here in the commit that fixes those entries.
+    # The two phantom files were added 2026-07-31 when known-issues.md entry 1
+    # was retired; they cost 6 s at -n 2 (10 passed, log
+    # 20260731T170034Z_KI-1-precheck-complex.log). One `@complex_only` test is
+    # still deliberately absent: test_convergence_diagnostics.py (known-issues.md
+    # entry 2, whose non-complex sibling fails too). Add it here in the commit
+    # that fixes that entry.
 
   docs:
     runs-on: ubuntu-latest

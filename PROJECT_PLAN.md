@@ -753,6 +753,16 @@ heavy tier, complex build)*
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
 
+> **`POST-1` defect recorded 2026-07-31 (12:00 implementer run), not fixed.**
+> `post/phantom_fields.py:88` does `np.asarray(field.eval(...), dtype=np.float64)`,
+> which under the complex build silently discards the imaginary part of every
+> sampled E/B value — `ComplexWarning` at that line in
+> `20260731T170152Z_KI-1-retire-gate.log`. Every phantom field metric downstream
+> is therefore taken on `Re(E)` at phase 0, not on the phasor magnitude, so it
+> is phase-dependent and wrong by up to 100% for a field in quadrature. Fixing it
+> is choosing the metric semantics (|phasor| vs. a time average), which is this
+> chunk's job, not a cast change.
+
 > The current flagship metric `e_to_b_mean_ratio` is by construction
 > `≈ ω·|A|/|∇×A|` — it measures a mesh length scale, not physics, and cannot
 > detect that the solver is wrong. After `TH-1`, replace it with checks that can
@@ -983,7 +993,15 @@ implementer (scalar-σ only). The four struck items from the previous queue are
 recorded in attempts.md and §7; this is a fresh queue — items 1 and 3 carry
 over unattempted from the previous queue's items 5 and 6.
 
-1. **Retire known-issues entry 1**, independent, smoke tier. Both
+1. ~~**Retire known-issues entry 1**~~ — **done 2026-07-31** (12:00 implementer
+   run). Both tests re-verified through the harness: complex build 10 passed in
+   4.6 s (`20260731T170152Z_KI-1-retire-gate.log`), real build the CI command
+   with the `--deselect`s removed, 15 passed / 2 skipped
+   (`20260731T170140Z_KI-1-real-mode-iomatpost.log`). Deselects removed, both
+   files added to `validation-complex`, entry 1 marked retired (heading kept so
+   entries 2–6 keep their numbers), test-side `ComplexWarning` casts fixed, and
+   the `phantom_fields.py:88` cast recorded as a `POST-1` defect in §7.
+   Original text: independent, smoke tier. Both
    `DummyMagnetostaticSolver` tests **passed** under the complex build in
    `20260731T003802Z_TH-1-steps123-complexsuite.log` — `TH-1` deleted the
    attribute read they were failing in. Re-verify through the harness, remove

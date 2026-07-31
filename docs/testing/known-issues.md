@@ -28,17 +28,29 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### 1. Stale test double — `DummyMagnetostaticSolver`
+### 1. ✅ RETIRED 2026-07-31 — stale test double, `DummyMagnetostaticSolver`
 
-| | |
-|---|---|
-| **Tests** | `tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring`<br>`tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite` |
-| **Symptom** | `AttributeError: 'DummyMagnetostaticSolver' object has no attribute 'last_solve_diagnostics'` at `core/time_harmonic.py:309` |
-| **Cause** | `TimeHarmonicSolver.solve()` reads `mag_solver.last_solve_diagnostics` when building `TimeHarmonicFields`. The chunk that added solver health diagnostics (`TH-4`, legacy C6) did not update the test doubles that stand in for `MagnetostaticSolver`. |
-| **Fix** | Add a `last_solve_diagnostics = None` attribute to both doubles. Small and self-contained — this is *not* blocked on `TH-1`. |
-| **Status** | `--deselect`ed in the CI `validation` job, visibly, so the debt is not silently skipped. Both are also `@complex_only`, and `OPS-10` kept them out of the `validation-complex` job for the same reason — fixing this entry should add both files there. |
-| **Status update (2026-07-31 review)** | **Likely stale.** `TH-1` steps 1–3 removed `MagnetostaticSolver` (and the `last_solve_diagnostics` read) from the time-harmonic path entirely, and both tests **passed** under the complex build in `20260731T003802Z_TH-1-steps123-complexsuite.log` — no code fix ever landed for this entry; the failing code path was deleted out from under it. Retirement is §9 On-deck item 5: re-verify through the harness, un-`--deselect`, add both files to `validation-complex`, and remove this entry in that commit. That run also emitted `ComplexWarning` (complex→real casts) at `test_phantom_material_model.py:33-34` and `post/phantom_fields.py:88` — address or record while there. |
-| **Verified pre-existing at** | `b2715ab` and earlier |
+The two phantom tests
+(`tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring`,
+`tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite`)
+failed with `AttributeError: 'DummyMagnetostaticSolver' object has no attribute
+'last_solve_diagnostics'`. No fix ever landed: `TH-1` steps 1–3 deleted the
+`last_solve_diagnostics` read from the time-harmonic path, so the failing code
+path went away under the entry.
+
+Re-verified through the harness at `424faed`:
+`20260731T170152Z_KI-1-retire-gate.log` — complex build, `FEM_EM_REQUIRE_COMPLEX=1`,
+`-n 2`, **10 passed in 4.6 s**; and `20260731T170140Z_KI-1-real-mode-iomatpost.log`
+— real build, the CI `validation` job's exact command with the `--deselect`s
+removed, **15 passed, 2 skipped in 0.5 s**. Both `--deselect`s are gone from the
+`validation` job and both files are now listed in `validation-complex`, which is
+where the two `@complex_only` tests actually execute. The test-side
+`ComplexWarning` casts were fixed in the same commit; the remaining one at
+`post/phantom_fields.py:88` is recorded under `POST-1` in `PROJECT_PLAN.md` §7.
+
+The heading is kept (rather than deleted with the entries renumbered) so the
+numbering of entries 2–6 stays stable — several commits and CI comments refer to
+them by number.
 
 ### 2. Residual-trend classifier disagrees with its test
 

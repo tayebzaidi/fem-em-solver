@@ -30,17 +30,28 @@ def _global_bounds_for_tagged_cells(field: fem.Function, cell_tags, tag: int, co
         local_vals.extend(field.x.array[dofs])
 
     if local_vals:
-        local_min = float(np.min(local_vals))
-        local_max = float(np.max(local_vals))
+        # sigma / epsilon_r are real material coefficients, but the complex build
+        # stores every dof array as complex128. Drop the (identically zero)
+        # imaginary part explicitly instead of letting float() do it and emit a
+        # ComplexWarning; the max |Im| is asserted below on the reduced values.
+        local_array = np.asarray(local_vals).real
+        local_min = float(np.min(local_array))
+        local_max = float(np.max(local_array))
+        local_imag = float(np.max(np.abs(np.imag(np.asarray(local_vals)))))
         local_count = int(len(local_vals))
     else:
         local_min = float("inf")
         local_max = float("-inf")
+        local_imag = 0.0
         local_count = 0
 
     global_min = comm.allreduce(local_min, op=MPI.MIN)
     global_max = comm.allreduce(local_max, op=MPI.MAX)
+    global_imag = comm.allreduce(local_imag, op=MPI.MAX)
     global_count = comm.allreduce(local_count, op=MPI.SUM)
+    # Collective: every rank asserts the same reduced value, so a violation fails
+    # everywhere rather than deadlocking the surviving ranks at the next barrier.
+    assert global_imag == 0.0, f"material coefficient has a non-zero imaginary part: {global_imag}"
     return global_min, global_max, global_count
 
 
