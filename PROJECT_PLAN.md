@@ -812,6 +812,62 @@ heavy tier, complex build)*
 > failable identity replacing the placeholder-arithmetic assertions. Depends on
 > `TH-1`; wave ports are out of scope at these frequencies.
 
+> **Implementation plan (2026-07-31, 10:30 review).** Route the first real
+> Z-matrix through the reaction integral `MAT-6` step 2b just validated to 1.58%
+> against Dodd–Deeds, on a fixture and a closed form the repo already has;
+> gap-voltage extraction becomes step 3 once the identity machinery is proven.
+>
+> **Step 1 — two-loop reaction Z-matrix probe (one run; product is
+> measurements, nothing asserted — the `MAT-6` step-2a pattern).**
+> Fixture: `MeshGenerator.two_torus_domain` — two coaxial tagged tori, graded
+> sizing already supported (`wire_resolution`/`far_resolution`; the docstring's
+> PMC-boundary warning says use `air_padding ≥ 2·major_radius`). Air everywhere
+> (σ = 0, εᵣ = 1). Starting geometry a = 0.04 m, r_wire = 0.005 m, d = 0.04 m,
+> f = 10 MHz — check k₀·(box diagonal) ≪ 1 numerically before trusting the
+> quasistatic reference, and run `check_energy_continuity` even though box
+> resonances sit far above. Drive torus 1 only: azimuthal impressed J with the
+> regularised-sqrt pattern from `tests/validation/test_dodd_deeds_impedance.py`
+> (**not** `ufl.max_value` — it does not compile in the complex build), passing
+> `subdomain_ids=[torus-1 tag]`. Extract the column
+> `Z_i1 = −(1/(I₁·Iᵢ))·∫E₁·Jᵢ dV` where `Jᵢ` is torus i's *shape* current and
+> every `I` is the **meshed** loop current `∫J dV / (2πa)` — the nominal-current
+> shortfall was a 17% error that looked like physics in `MAT-6` step 2a. Swap
+> driven torus for the second column. Record in this entry: the 2×2 Z; the
+> reciprocity residual `‖Z − Zᵀ‖/‖Z‖`; `Im Z₁₂` vs the closed form
+> `ωM₁₂`, `M₁₂ = 2πa·A_φ(a, d)/I` from
+> `utils/analytical.py::circular_loop_vector_potential` (Jackson 5.37) — also
+> its filament sensitivity re-evaluated at a ± r_wire; box sensitivity at two
+> paddings; wall-clock per solve at `-n 2`.
+>
+> **Step 2 — the gate (one run; tier from the step-1 cost numbers).**
+> `tests/validation/test_port_reaction_impedance.py`: assert (i) reciprocity
+> residual below a bound **stated from the step-1 measurement**, (ii) `Im Z₁₂`
+> against `ωM₁₂` at a tolerance the measured box/filament sensitivity justifies,
+> (iii) `|Re Z₁₂|/|Im Z₁₂|` small — the domain is lossless, so a real part is
+> numerical, (iv) diagonal entries on sign and order only (the finite wire
+> section spread 30% on `MAT-6`'s ΔX; do not gate self-reactance tightly and do
+> not widen a bound to swallow it), and (v) if the budget allows a third solve,
+> a physics control: doubling d must scale `|Z₁₂|` by the closed-form
+> `M(2d)/M(d)`. Then convert through the existing
+> `S = (Z − Z₀I)(Z + Z₀I)⁻¹` path with `Z₀ = 50 Ω` and assert S symmetric and
+> passive (`‖S‖₂ ≤ 1`) — this is the first S-matrix in the repo derived from a
+> solved field. Wire the file into the `validation-complex` CI job.
+>
+> **Step 3 — gap-voltage ports on the tagged birdcage (directional; a later
+> review firms this up after steps 1–2 report).** The MRI-relevant form: excite
+> across the tagged gaps of `birdcage_port_domain`, recover `V = −∫E·dl` as a
+> volumetric average over the gap (not point sampling), cross-check gap-voltage
+> Z against reaction Z on a fixture where both apply, resolve the two
+> deliberately-red port tests (below), and thread `is_placeholder=False`
+> through to `export_touchstone`. Known trap: the birdcage suite is over the
+> compute budget (known-issues) — the gate must run on a reduced-rung fixture,
+> not the full birdcage mesh.
+>
+> Session traps that cost runs this week, all applicable here: stale FFCx lock
+> after a killed run (`rm -rf ~/.cache/fenics` in the container); `-k`
+> expressions splitting inside the single-quoted container command; numbers
+> logs need `pytest -s` or the prints are captured.
+
 > **Two port tests are red and deliberately left red.** Both fakes set
 > `current = voltage/z0` at the driven port, making it perfectly matched, so
 > `b = (V − Z₀I)/2√Z₀ = 0` and the S-matrix diagonal is legitimately zero against
@@ -889,9 +945,10 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
    4.13% on the `TH-6` fixture, σ-blind control at 95.2%). What remains is the
    piecewise-material case and the other candidate identities.
 4. **`PORT-1`** — real port excitation from the solved field. Resolves the two
-   deliberately-red port tests as a side effect. **Needs a §7-grade
-   implementation plan before it can be queued — writing that plan is the next
-   review's first job.**
+   deliberately-red port tests as a side effect. §7-grade implementation plan
+   written 2026-07-31 (10:30 review): reaction Z-matrix on the two-torus
+   fixture first (steps 1–2, On-deck items 4–5), gap-voltage birdcage ports as
+   step 3 after those report.
 5. **Air-box generalization** — every other `io/mesh.py` fixture still uses a
    single global `setSize` and tight padding, including coil+phantom.
 6. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
@@ -914,84 +971,19 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done, the implementer falls back to the "obvious
 next entry" named below.
 
-Last reviewed 2026-07-31, 03:00 daily review. Tree clean, no `attempt/*` or
-`recovered/*` branches. Audit: every status that flipped ✅ since the last review
-(`MAG-13`, `TH-9`, `TH-1`, `TH-6`, `MAT-2`, `OPS-10`) is §4-compliant — harness
-logs, quantitative assertions, and elapsed times all present; nothing demoted.
-The four struck-through items from the previous queue are recorded in
-attempts.md and the §7 entries; this is a fresh queue.
+Last reviewed 2026-07-31, 10:30 daily review. Tree clean, no `attempt/*` or
+`recovered/*` branches; all four runs since 03:00 completed their items with no
+anomalies. Audit: both statuses that flipped ✅ since the last review (`MAT-6`,
+`TH-7`) are §4-compliant — logs of record
+`20260731T110515Z_MAT-6-step2b-gate-numbers.log` (ΔR vs closed form 1.58%,
+10 passed, 84.74 s) and `20260731T123411Z_TH-7-gate-final.log` (γ 0.006%, L2
+rate 1.0013, 6 passed, 9.84 s) carry quantitative closed-form assertions and
+elapsed times; nothing demoted. `POST-3` was correctly held at 🟡 by its own
+implementer (scalar-σ only). The four struck items from the previous queue are
+recorded in attempts.md and §7; this is a fresh queue — items 1 and 3 carry
+over unattempted from the previous queue's items 5 and 6.
 
-1. ~~**`MAT-6` step 2a — loop-over-half-space FEM fixture + cost/box probe.**~~
-   **Done 2026-07-31, 04:30 implementer run** — see the `MAT-6` step-2a entry in
-   §7 for the chosen configuration, both probe numbers, and the ΔR/ΔX split that
-   rescopes item 2 below. Original text kept for the record:
-   Complex build, standard tier. Pick the gate parameters *first*, inside the
-   step-1 kernel's regime rather than upgrading the kernel (decision (a) in the
-   §7 entry): εᵣ = 1 half-space, and (f, σ) chosen so that loss tangent
-   σ/(ωε₀) ≳ 10², skin depth δ = √(2/(ωμ₀σ)) spans ≥ 3–4 cells with the slab
-   ≥ 3δ deep, and k₀·(box diagonal) ≪ 1 (the kernel neglects air-side
-   retardation). Tens of MHz with σ of a few S/m lands δ at a few cm — compute
-   these, don't trust this sentence. Reuse the volumetric loop-current source
-   pattern from the magnetostatic loop fixture for J. Then the probe: solve
-   loaded and free at **two air-box sizes**, extract
-   `ΔZ = −(1/I²)∫(E_loaded − E_free)·J dV` over the source region both times,
-   and record (i) the box-size sensitivity of ΔZ and (ii) wall-clock per solve.
-   Product: the chosen configuration plus both numbers in the §7 entry, and a
-   first *unasserted* ΔZ against `utils/dodd_deeds.py`. Graded mesh — the
-   known-issues air-box note applies to exactly this kind of fixture.
-2. ~~**`MAT-6` step 2b — the gate.**~~ **Done 2026-07-31, 06:00 implementer
-   run — `MAT-6` is closed.** ΔR = +0.3276882 Ω against the closed form's
-   +0.3225961 Ω (**1.58%**, asserted < 5%); ΔX gated on sign + ratio 0.8123;
-   null control 1.31e−08 of |ΔZ|. 10 tests, 85 s at `-n 2`, log
-   `20260731T110515Z_MAT-6-step2b-gate-numbers.log`. See the §7 step-2b entry
-   for what stays open (ΔX convergence, the saline/full-wave regime). Original
-   text kept for the record:
-   Item 1 landed, so the configuration and the
-   tolerance budget are fixed by the §7 step-2a table: run
-   `MeshGenerator.loop_over_half_space_domain` at **W = 0.15** (138 619 cells,
-   ~27 s per solve at `-n 2`; two solves + mesh ≈ 75 s, **standard tier fits,
-   heavy tier if the σ = 0 control is a third solve**) and turn the probe's ΔZ
-   extraction into a `tests/validation/test_dodd_deeds_impedance.py` FEM test.
-   **Assert ΔR against the closed form at 5%** (measured offset 1.6–1.9%, box
-   motion 0.27% — this is a measurement, not a fitted bound) plus the σ = 0
-   control (the reaction-integral difference ≈ 0, the negative control a
-   σ-blind solver fails). **ΔX gets sign + order of magnitude only** and an
-   explicit code comment saying why: 14.3% residual at W = 0.20 that the probe
-   could not split between PEC-wall imaging (5.6% still moving) and the finite
-   wire section (the filamentary reference spreads 30% over h ± r_wire).
-   Closing `MAT-6` on a tolerance widened to swallow that 14% is exactly the
-   move §7's MAG defect-5 note forbids. Complex build.
-3. ~~**`TH-7` — waveguide-cutoff gate.**~~ **Done 2026-07-31, 07:30 implementer
-   run — `TH-7` is closed.** γ = 37.650399 vs the closed form 37.652670 Np/m
-   (**0.006%**), L2 rate 1.0013 in h, sweep ratio 2.6373 vs 2.6383 (0.038%),
-   guard clear at `max |dlnW/dlnf| = 2.769`. 6 tests, 9.8 s at `-n 2`, log
-   `20260731T123411Z_TH-7-gate-final.log`; added to the `validation-complex` CI
-   job. The above-cutoff β half was dropped — see the §7 entry. Original text
-   kept for the record:
-   independent; the `TH-6` pattern on a new
-   closed form. PEC a×b×L box, complex build, standard tier: impose the analytic
-   evanescent TE₁₀ field `E_y = sin(πx/a)·e^{−γz}`, `γ = √(k_c² − k₀²)`, on all
-   faces via `dirichlet_e_field` at f **below cutoff** and fit the interior
-   decay against γ exactly as `test_lossy_plane_wave.py` fits α. Below cutoff
-   there is no resonance risk; if an above-cutoff β case is added, place f away
-   from the box's discrete modes and show the resonance guard stays quiet, or
-   drop that half. Same `e^{+jωt}` convention discipline as every TH gate.
-4. ~~**`POST-3` step 1 — power-balance identity on the `TH-6` fixture.**~~
-   **Done 2026-07-31, 09:00 implementer run.** Imbalance 8.19% at 12³ → 4.13%
-   at 24³, rate 0.987 in h, asserted < 5%; σ-blind negative control 95.2%
-   (11.6× the honest solve). 8 tests, 39 s at `-n 2`, log
-   `20260731T140404Z_POST-3-step1-gate.log`; added to `validation-complex`.
-   `e_to_b_mean_ratio` deprecated as a gate in the same commit. `POST-3` stays
-   🟡 — see the §7 step-1 entry for what is still open (piecewise-material σ,
-   `∇·(σE)`, reciprocity). Original text kept for the record:
-   independent. Complex build, standard tier. On the lossy plane-wave solve:
-   absorbed power `½∫σ|E|²dV` vs net inward Poynting flux `−∮½Re(E×H̄)·n̂ dS`
-   with `H = ∇×E/(−jωμ₀)`; assert the relative imbalance below a stated
-   tolerance at two resolutions and that it shrinks with h. Traps: facet-normal
-   sign, and `assemble_scalar` is rank-local — reduce both integrals before
-   comparing. Deprecate `e_to_b_mean_ratio` as the flagship metric in the same
-   commit (§7 POST note).
-5. **Retire known-issues entry 1**, independent, smoke tier. Both
+1. **Retire known-issues entry 1**, independent, smoke tier. Both
    `DummyMagnetostaticSolver` tests **passed** under the complex build in
    `20260731T003802Z_TH-1-steps123-complexsuite.log` — `TH-1` deleted the
    attribute read they were failing in. Re-verify through the harness, remove
@@ -1001,16 +993,45 @@ attempts.md and the §7 entries; this is a fresh queue.
    `tests/materials/test_phantom_material_model.py:33-34` and
    `src/fem_em_solver/post/phantom_fields.py:88` — fix the test-side casts; the
    `phantom_fields.py` one is `POST-1` territory, record it there if not fixed.
-6. **`TH-8` — sphere in a uniform quasi-static field** (spare), independent.
+2. **`POST-3` step 2 — piecewise-σ power balance**, independent, standard
+   tier, complex build. Generalise `poynting_power_balance`'s scalar `sigma`
+   to also accept a `fem.Function` (the `sigma_field` the solver already
+   returns in `TimeHarmonicFields`), keeping the scalar path working, and
+   re-gate on the two-material configuration `MAT-2` already solves in
+   `test_lossy_plane_wave.py` — the volume term becomes `½∫σ(x)|E|²dV`, the
+   boundary flux term is unchanged. Assert imbalance falls under refinement
+   and sits under a bound stated from the measurement (step 1's O(h)
+   boundary-trace leg sets the rate; expect numbers near step 1's 8%→4%, and
+   move the mesh, not the bound, if worse). Keep the σ-blind negative control
+   working against the field-σ path. `POST-3` stays 🟡 after this too —
+   `∇·(σE)` and reciprocity remain — but the metric becomes usable on
+   coil+phantom solves, which is where it earns its keep.
+3. **`TH-8` — sphere in a uniform quasi-static field**, independent.
    Dielectric sphere, closed-form interior field `E_in = 3/(ε_c + 2)·E₀`:
    impose the full exterior solution (uniform + dipole) on the box boundary,
    assert the interior field's magnitude and uniformity. Needs a tagged
    sphere-in-box gmsh fixture (pattern exists in `io/mesh.py`); choose f so
    k₀R ≪ 1, and cost-probe before sizing. Complex build, standard tier.
+4. **`PORT-1` step 1 — two-loop reaction Z-matrix probe**, independent.
+   Execute step 1 of the §7 `PORT-1` implementation plan (written this
+   review): `two_torus_domain`, air-only, drive each torus in turn with the
+   regularised azimuthal J, extract the 2×2 reaction Z with **meshed** loop
+   currents, and record the reciprocity residual, `Im Z₁₂` vs `ωM₁₂` from
+   `circular_loop_vector_potential`, filament and box sensitivity, and
+   wall-clock in the §7 entry. **Product is measurements — assert nothing.**
+   Complex build; standard tier unless the cost probe says heavy.
+5. **`PORT-1` step 2 — the reciprocity gate** (spare). **Depends on item 4
+   having landed; if it did not, skip this and journal — do not improvise the
+   probe and the gate in one run.** Turn the step-1 numbers into
+   `tests/validation/test_port_reaction_impedance.py` per the §7 plan:
+   reciprocity residual and `ωM₁₂` bounds stated from the step-1 measurement,
+   lossless `Re/Im` check, diagonals on sign and order only, S-conversion
+   symmetry + passivity, wired into `validation-complex`.
 
-If the queue drains: take `TH-8` if still open; otherwise stop and journal —
-`PORT-1` is next on the critical path but needs the review to write its §7-grade
-plan first, and an implementer run should not improvise it.
+If the queue drains: stop and journal — `PORT-1` step 3 (gap-voltage birdcage
+ports) is next on the critical path but its §7 plan is deliberately directional
+until steps 1–2 report their numbers, and an implementer run should not
+improvise it.
 
 Every frequency-domain command needs `source /usr/local/bin/dolfinx-complex-mode`
 **and** `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest
