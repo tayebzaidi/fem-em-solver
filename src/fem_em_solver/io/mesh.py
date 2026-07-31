@@ -1083,6 +1083,131 @@ class MeshGenerator:
         return mesh, cell_tags, facet_tags
 
     @staticmethod
+    def sphere_in_box_domain(
+        sphere_radius: float = 0.05,
+        box_half_width: float = 0.10,
+        resolution_sphere: float = 0.0125,
+        resolution_far: float = 0.025,
+        comm: MPI.Intracomm = MPI.COMM_WORLD,
+        rank: int = 0,
+    ) -> Tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]:
+        """Dielectric sphere centred in a cubic air box (`TH-8`).
+
+        Cell tags: ``1`` sphere, ``2`` air.  Facet tag ``1`` is the outer
+        boundary of the cube.
+
+        Sizing is graded through a ``Ball`` field rather than a single global
+        ``setSize``: the interior of the sphere is where the gate measures, and
+        an unsigned ``Distance`` field from the sphere *surface* would coarsen
+        towards the centre, which is exactly the region that must stay
+        resolved.  The far zone only has to carry a smooth exterior field, so
+        ``resolution_far`` may be several times ``resolution_sphere`` (the
+        tight-padding/uniform-size pattern that cost 20% on Helmholtz is
+        avoided by keeping the box independent of the sphere resolution).
+
+        Parameters
+        ----------
+        sphere_radius : float
+            Sphere radius ``R`` [m].
+        box_half_width : float
+            Half side ``W`` of the cubic truncation box [m].  `TH-8` imposes the
+            exact exterior (uniform + dipole) field on this wall, so ``W`` sets
+            how much air is discretised, not how wrong the truncation is.
+        resolution_sphere, resolution_far : float
+            Target mesh sizes [m] inside ``1.2 R`` and in the remaining air.
+        """
+        R = float(sphere_radius)
+        W = float(box_half_width)
+        if R <= 0.0:
+            raise ValueError(f"sphere_radius must be positive, got {sphere_radius!r}")
+        if W <= R:
+            raise ValueError(
+                f"box_half_width={box_half_width!r} must exceed sphere_radius={sphere_radius!r}"
+            )
+        for name, value in (
+            ("resolution_sphere", resolution_sphere),
+            ("resolution_far", resolution_far),
+        ):
+            if value <= 0.0:
+                raise ValueError(f"{name} must be positive, got {value!r}")
+
+        if comm.rank == rank:
+            gmsh.initialize()
+            gmsh.model.add("sphere_in_box")
+
+            sphere = gmsh.model.occ.addSphere(0.0, 0.0, 0.0, R)
+            box = gmsh.model.occ.addBox(-W, -W, -W, 2 * W, 2 * W, 2 * W)
+
+            gmsh.model.occ.fragment([(3, box)], [(3, sphere)])
+            gmsh.model.occ.synchronize()
+
+            # Identify by mass, not by the tags fragment hands back.
+            sphere_mass = 4.0 / 3.0 * np.pi * R**3
+            sphere_volume = None
+            air_volume = None
+            for dim, tag in gmsh.model.getEntities(dim=3):
+                mass = gmsh.model.occ.getMass(dim, tag)
+                if abs(mass - sphere_mass) < 0.05 * sphere_mass:
+                    sphere_volume = tag
+                else:
+                    air_volume = tag
+
+            if sphere_volume is None or air_volume is None:
+                raise RuntimeError(
+                    "sphere_in_box_domain: fragment did not produce the expected "
+                    f"sphere/air volumes (got {gmsh.model.getEntities(dim=3)})"
+                )
+
+            gmsh.model.addPhysicalGroup(3, [sphere_volume], tag=1)
+            gmsh.model.setPhysicalName(3, 1, "sphere")
+            gmsh.model.addPhysicalGroup(3, [air_volume], tag=2)
+            gmsh.model.setPhysicalName(3, 2, "air")
+
+            tol = 1e-9
+            boundary_surfaces = []
+            for dim, surf in gmsh.model.getEntities(dim=2):
+                x0, y0, z0, x1, y1, z1 = gmsh.model.getBoundingBox(dim, surf)
+                on_wall = (
+                    abs(x0 + W) < tol and abs(x1 + W) < tol
+                    or abs(x0 - W) < tol and abs(x1 - W) < tol
+                    or abs(y0 + W) < tol and abs(y1 + W) < tol
+                    or abs(y0 - W) < tol and abs(y1 - W) < tol
+                    or abs(z0 + W) < tol and abs(z1 + W) < tol
+                    or abs(z0 - W) < tol and abs(z1 - W) < tol
+                )
+                if on_wall:
+                    boundary_surfaces.append(surf)
+            if boundary_surfaces:
+                gmsh.model.addPhysicalGroup(2, boundary_surfaces, tag=1)
+                gmsh.model.setPhysicalName(2, 1, "outer_boundary")
+
+            ball = gmsh.model.mesh.field.add("Ball")
+            gmsh.model.mesh.field.setNumber(ball, "XCenter", 0.0)
+            gmsh.model.mesh.field.setNumber(ball, "YCenter", 0.0)
+            gmsh.model.mesh.field.setNumber(ball, "ZCenter", 0.0)
+            gmsh.model.mesh.field.setNumber(ball, "Radius", 1.2 * R)
+            gmsh.model.mesh.field.setNumber(ball, "VIn", resolution_sphere)
+            gmsh.model.mesh.field.setNumber(ball, "VOut", resolution_far)
+            # Blend over one far-cell so the near/far jump is not a mesh shock.
+            gmsh.model.mesh.field.setNumber(ball, "Thickness", resolution_far)
+            gmsh.model.mesh.field.setAsBackgroundMesh(ball)
+
+            gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+            gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
+            gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
+
+            gmsh.model.mesh.generate(3)
+
+        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+            gmsh.model, comm, rank, gdim=3
+        )
+
+        if comm.rank == rank:
+            gmsh.finalize()
+
+        return mesh, cell_tags, facet_tags
+
+    @staticmethod
     def coil_phantom_domain_sizing_diagnostics(
         *,
         coil_major_radius: float,

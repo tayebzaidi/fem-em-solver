@@ -1270,3 +1270,60 @@ Same session as the entry above; step 4 was committed first (`99f3d4f`) so
   quasi-static field) is next and independent. For `POST-3` itself, what is left
   is `∇·(σE)` and reciprocity; the field-σ path now means the metric can be
   pointed at a coil+phantom solve, which is worth doing as soon as one exists.
+
+## 2026-07-31T20:15Z — `TH-8` — complete
+
+**Item:** §9 On-deck item 3, `TH-8` — dielectric sphere in a uniform
+quasi-static field. Preflight clean (`e7e2d0c`), container Up 4 days.
+
+**What was built:**
+- `MeshGenerator.sphere_in_box_domain` — sphere fragmented into a cubic air box,
+  cell tags `1` sphere / `2` air, facet tag `1` outer wall. Sizing is a gmsh
+  **`Ball`** field, deliberately not the `Distance`-from-surface pattern the
+  other fixtures use: `Distance` is unsigned, so it coarsens towards the sphere
+  *centre*, which is exactly where this gate measures.
+- `tests/validation/test_dielectric_sphere.py` — exterior (uniform + dipole)
+  branch imposed as Dirichlet data on the box wall, interior probed on two
+  Fibonacci shells at 0.30 R / 0.55 R plus an off-centre point.
+- File added to the CI `validation-complex` job (with its measured ~16 s in the
+  job's timeout comment).
+
+**Measured** (log `20260731T200457Z_TH-8-gate-final.log`, **6 passed, 16.2 s**
+at `-n 2`, standard tier, complex build; `R = 0.05 m`, `W = 0.10 m`,
+`εᵣ = 78`, `σ = 0`, `k₀R = 5e-3` ⇒ `f = 4.7713 MHz`):
+- interior `E_z` vs the closed form `3/(ε+2)E₀ = 0.037500`:
+  **9.546% → 4.270% → 2.443%** at `h_sphere = 0.0125 / 0.00833 / 0.00625`
+  (5866 / 17670 / 39693 cells), **fitted rate 1.9675** in `h` over all three.
+- interior spread `0.877% → 0.342% → 0.080%`; transverse component
+  `2.038% → 0.244% → 0.085%`; `|Im E_z|/|Re E_z|` **exactly 0.0**.
+- ε-blind negative control (sphere dropped from `material_map`, same Dirichlet
+  data): **0.918 V/m**, 2348% off the closed form and within 8% of `E₀`.
+
+**Bounds:** the 5% MVP criterion at the finest mesh (2.443% measured); 1% for
+uniformity and transverse (0.080% / 0.085% measured); rate > 0.9. Nothing was
+loosened — the two failures in the intermediate run
+(`20260731T200423Z_TH-8-gate.log`) were both mine and were fixed, not
+accommodated: a sign error in the `polyfit` rate (reported −1.9675) and the
+negative-control leg running at the *coarse* mesh, whose 9.546% is legitimately
+outside the 5% bar it asserts — the control moved to the middle resolution.
+
+**Why the rate is ~2 and not the O(h) of `TH-6`/`TH-7`:** the asserted quantity
+is a probe-averaged interior functional of a field that is piecewise constant
+in the sphere, not a global L2 norm of an oscillating one. Superconvergence in
+the functional, not a better element. Recorded in the §7 entry so a future
+reader does not read it as evidence about the discretisation.
+
+**Cost:** the whole file is 5 gmsh solves and 16 s — well inside smoke tier in
+practice; declared standard because the mesh cost was unmeasured going in.
+
+**Not covered (both cheap, both worth queueing):** a *lossy* sphere (`σ > 0`,
+complex `ε_c` and a complex depolarisation factor) exercises the same closed
+form on the imaginary axis, which this run leaves entirely untested — note
+`|Im E_z|` is exactly 0 here by construction. And the low-frequency limit is
+unstressed: at `k₀R = 5e-3` the mass term is ~1e-4 of the curl block, and
+pushing `k₀R` down is where low-frequency breakdown would first show.
+
+**Next-attempt hypothesis:** §9 item 4 (`PORT-1` step 1, two-loop reaction
+Z-matrix probe) is next and is the critical path; item 5 depends on it landing.
+This run closed the last open Phase-2 analytic gate, so nothing in §9 blocks on
+`TH-*` any more.

@@ -248,7 +248,7 @@ needs `-f docker/docker-compose.yml`.
 |---|---|---|---|
 | 0 | Infrastructure, packaging, CI, meshing | `OPS-1`, `OPS-2` | Done |
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Complete and trustworthy** |
-| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — `TH-1`/`TH-6`/`TH-7`/`TH-9` ✅; `TH-8` open |
+| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — every analytic gate closed (`TH-1`/`TH-6`/`TH-7`/`TH-8`/`TH-9` ✅); `TH-2`/`TH-3` API hardening ⚠️ |
 | 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58%, eddy-current regime); SAR still ungated |
 | 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-8` | Placeholder-backed |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 |
@@ -399,7 +399,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `TH-5` | Absorbing boundary condition (ABC) | ⬜ | standard |
 | `TH-6` | **Validation: plane wave in lossy half-space** | ✅ | standard |
 | `TH-7` | **Validation: waveguide cutoff / coaxial line** | ✅ | standard |
-| `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ⬜ | standard |
+| `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ✅ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 
 **`TH-1` — Real complex time-harmonic formulation** ✅ *(all five steps,
@@ -570,6 +570,56 @@ Independent of the §2.1 physics defect; meshes are meshes.
 > β case was deliberately dropped — it buys nothing the phase fits in `TH-6` and
 > `TH-9` do not already cover, and would have to be placed away from the box's
 > discrete modes.
+
+**`TH-8` — Validation: dielectric sphere in a uniform quasi-static field** ✅
+*(2026-07-31, 15:00 implementer run)*
+> A sphere of radius `R` and permittivity `ε` in a uniform `E₀ẑ` polarises
+> uniformly: `E_in = 3/(ε+2)·E₀ ẑ` inside, uniform + point dipole outside with
+> `β = (ε−1)/(ε+2)`. Both branches are curl-free, so the pair solves
+> `∇×∇×E − k²E = 0` exactly up to the `O((kR)²)` the quasi-static limit drops.
+> The exterior branch is imposed as Dirichlet data on the wall of a cubic air
+> box (exact there — the exterior solution holds on any surface outside the
+> sphere) and the **interior** field is measured. Nothing in the boundary data
+> states the interior value: `3/(ε+2)` comes out of `ε` acting through the mass
+> term `−k₀²ε_c E` plus the normal-`D` jump at the sphere surface.
+>
+> **Measured** (`R = 0.05 m`, box half-width `0.10 m`, `εᵣ = 78`, `σ = 0`,
+> `k₀R = 5e-3` ⇒ `f = 4.7713 MHz`, so `k_in R = 4.4e-2` and the dropped
+> retardation is ~0.2%, an order of magnitude under the discretisation error;
+> `20260731T200457Z_TH-8-gate-final.log`, 6 tests / **16.2 s** at `-n 2`,
+> standard tier): closed form `E_in/E₀ = 0.037500`; measured
+> **9.546% → 4.270% → 2.443%** at `h_sphere = 0.0125 / 0.00833 / 0.00625`
+> (5866 / 17670 / 39693 cells), **fitted rate 1.9675** in `h` over the three
+> resolutions. Interior spread across probe points inside `0.55 R` falls
+> `0.877% → 0.342% → 0.080%` and the transverse component `2.038% → 0.085%`,
+> both against the closed form's *uniform, purely z-directed* interior.
+> `|Im E_z|/|Re E_z|` is **exactly 0.0** (lossless material, real boundary
+> data) — the same cheap `e^{+jωt}` convention check `TH-7` uses.
+>
+> The negative control is the discriminator that matters here: drop the sphere
+> from the `material_map` (vacuum everywhere, **same** Dirichlet data) and the
+> interior field goes to **0.918 V/m**, i.e. 2348% off the closed form and
+> within 8% of `E₀`. The asserted interior value is 26.7× smaller than `E₀`
+> while the dipole term contributes at most `2βR³/W³ ≈ 24%` of `E₀` at the
+> wall, so the gate cannot be passing by reading back its own boundary data.
+>
+> The rate is ~2 rather than the O(h) of `TH-6`/`TH-7` because the asserted
+> quantity is a probe-averaged interior functional of a field that is
+> *piecewise constant* in the sphere, not a global L2 norm of an oscillating
+> one — superconvergence in the functional, not a better element. The bound
+> asserted is the 5% MVP criterion at the finest mesh (2.443% measured), with
+> uniformity and transverse bounds at 1% (0.080% / 0.085% measured).
+>
+> New fixture: `MeshGenerator.sphere_in_box_domain` (cell tags `1` sphere,
+> `2` air; facet tag `1` outer wall). Sizing is a gmsh `Ball` field, not a
+> `Distance` field from the sphere surface — the latter is unsigned and would
+> coarsen towards the centre, which is precisely where the gate measures.
+>
+> Not covered: a *lossy* sphere (`σ > 0`, complex `ε_c`) would exercise the
+> same closed form with a complex depolarisation factor and is the obvious
+> cheap extension; and the low-frequency limit is not stressed — at
+> `k₀R = 5e-3` the mass term is ~1e-4 of the curl block, and pushing `k₀R`
+> further down is where a low-frequency-breakdown failure would first appear.
 
 > `TH-8` is a cheap closed-form gate in the same mould; it, `TH-7`, or `TH-6`
 > would have caught the `E = −ωA` defect immediately.
@@ -1059,8 +1109,15 @@ over unattempted from the previous queue's items 5 and 6.
    working against the field-σ path. `POST-3` stays 🟡 after this too —
    `∇·(σE)` and reciprocity remain — but the metric becomes usable on
    coil+phantom solves, which is where it earns its keep.
-3. **`TH-8` — sphere in a uniform quasi-static field**, independent.
-   Dielectric sphere, closed-form interior field `E_in = 3/(ε_c + 2)·E₀`:
+3. ~~**`TH-8` — sphere in a uniform quasi-static field**~~ — **done 2026-07-31**
+   (15:00 implementer run). Interior `E_z` matches `3/(ε+2)E₀` to **2.443%** at
+   39693 cells, converging 9.546% → 4.270% → 2.443% with a **fitted rate of
+   1.9675** in `h`; interior spread 0.080%, transverse 0.085%, `|Im|/|Re|`
+   exactly 0. ε-blind control lands at 0.918 V/m (2348% off, within 8% of `E₀`).
+   New `MeshGenerator.sphere_in_box_domain` fixture; file wired into
+   `validation-complex`. Log `20260731T200457Z_TH-8-gate-final.log`, 6 passed,
+   16.2 s at `-n 2`, standard tier. This closes the last open Phase-2 analytic
+   gate. Original text: Dielectric sphere, closed-form interior field `E_in = 3/(ε_c + 2)·E₀`:
    impose the full exterior solution (uniform + dipole) on the box boundary,
    assert the interior field's magnitude and uniformity. Needs a tagged
    sphere-in-box gmsh fixture (pattern exists in `io/mesh.py`); choose f so
