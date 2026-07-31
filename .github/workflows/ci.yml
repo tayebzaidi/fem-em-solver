@@ -96,8 +96,8 @@ jobs:
     # That is still the guard worth having here: it catches a PETSC_ARCH that
     # disagrees with the imported dolfinx, which is how the old hardcoded
     # sitecustomize path handed back a real build under complex mode. The
-    # complex-mode invocation is exercised through the harness in the container
-    # (see PROJECT_PLAN §7 TH-1 step 0) and moves into CI with TH-1 proper.
+    # complex half of this file now runs in the `validation-complex` job below
+    # (OPS-10); keep both, they assert opposite things about the same shim.
     - name: Complex-mode environment gate (real-mode half)
       run: python3 -m pytest tests/environment -v --tb=short
 
@@ -131,6 +131,63 @@ jobs:
         python3 -m pytest tests/io tests/materials tests/post -v --tb=short \
           --deselect tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring \
           --deselect tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite
+
+  # Frequency-domain validation, complex PETSc scalars.
+  #
+  # This exists because `TH-1` steps 1-3 made TimeHarmonicSolver.solve() an
+  # actual complex curl-curl solve, which cannot assemble in the real build at
+  # all. Every test that solves in the frequency domain therefore moved behind
+  # `@complex_only`, and since the `validation` job above runs real mode, CI
+  # executed *no* time-harmonic solve for the whole of TH-1: the MMS
+  # convergence gate, the lossy plane-wave closed form, and the resonance guard
+  # all skipped silently. This job is the only place they run.
+  #
+  # FEM_EM_REQUIRE_COMPLEX=1 turns those skips into failures, so the job cannot
+  # pass by skipping if the complex build fails to activate, and tests/environment
+  # is listed first so an environment regression fails before the formulation
+  # tests get blamed for it (PROJECT_PLAN §7 TH-1 step 0).
+  validation-complex:
+    runs-on: ubuntu-latest
+    # 46 s at -n 2 on the dev box for the whole list below (OPS-10 run of
+    # 2026-07-31). Runners are slower and the meshes are gmsh-generated, so 30
+    # minutes is generous headroom rather than a measured bound.
+    timeout-minutes: 30
+    container:
+      image: dolfinx/dolfinx:v0.7.2
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install additional dependencies
+      run: |
+        pip install gmsh pyvista meshio h5py tqdm pydantic pyyaml
+        pip install pytest pytest-xdist
+
+    - name: Install package
+      run: pip install -e ".[dev]"
+
+    # `source` sets PETSC_ARCH, PYTHONPATH and LD_LIBRARY_PATH for the complex
+    # build; unlike the container chunk commands we do not override PYTHONPATH
+    # afterwards, so src/sitecustomize.py is not involved here.
+    - name: Complex-mode frequency-domain validation
+      run: |
+        source /usr/local/bin/dolfinx-complex-mode
+        FEM_EM_REQUIRE_COMPLEX=1 mpiexec -n 2 python3 -m pytest \
+          tests/environment \
+          tests/validation/test_time_harmonic_mms.py \
+          tests/validation/test_lossy_plane_wave.py \
+          tests/validation/test_resonance_guard.py \
+          tests/solver/test_time_harmonic_smoke.py \
+          tests/solver/test_boundary_condition_selection.py \
+          -v --tb=short
+
+    # Three `@complex_only` tests are deliberately absent from the list above,
+    # all of them blocked on pre-existing failures rather than on complex mode:
+    # test_convergence_diagnostics.py (known-issues.md entry 2, whose non-complex
+    # sibling fails too) and the two DummyMagnetostaticSolver tests in
+    # test_phantom_material_model.py / test_phantom_field_metrics.py
+    # (known-issues.md entry 1, already --deselect'ed in the `validation` job).
+    # Add them here in the commit that fixes those entries.
 
   docs:
     runs-on: ubuntu-latest

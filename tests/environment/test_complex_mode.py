@@ -22,8 +22,10 @@ Run in complex mode as::
 
 ``FEM_EM_REQUIRE_COMPLEX=1`` turns the real-mode skips into failures, so a
 run that was *meant* to exercise complex mode cannot pass by skipping.
-In real mode (the default, and what CI runs) the consistency test below still
-asserts, and the complex-only tests skip.
+In real mode (the default, and what the `validation` CI job runs) the
+consistency test below still asserts, and the complex-only tests skip. The
+`validation-complex` job (`OPS-10`) runs this file the other way, under
+``FEM_EM_REQUIRE_COMPLEX=1``.
 """
 
 from __future__ import annotations

@@ -282,6 +282,25 @@ These tables are the authoritative *status*; per-chunk historical detail is in
 | `OPS-7` | Guided pending-test queue helper | 🧪 | smoke |
 | `OPS-8` | v1 milestone acceptance checklist | 🧪 | smoke |
 | `OPS-9` | Prune duplicate/stale entries from `pending-tests.md` | ✅ | smoke |
+| `OPS-10` | Complex-mode CI job for the frequency-domain gates | ✅ | smoke |
+
+**`OPS-10` — complex-mode CI job.** `TH-1` steps 1–5 put every frequency-domain
+test behind `@complex_only`, and the `validation` job runs real mode, so between
+steps 1–3 and this chunk CI executed **no** time-harmonic solve at all — the MMS
+convergence gate, the lossy plane-wave closed form (`TH-6`), the conductivity
+gate (`MAT-2`) and the resonance guard all skipped silently. The
+`validation-complex` job sources `/usr/local/bin/dolfinx-complex-mode` and runs
+`tests/environment` (first, so an environment regression is not blamed on the
+formulation) plus `test_time_harmonic_mms.py`, `test_lossy_plane_wave.py`,
+`test_resonance_guard.py`, `test_time_harmonic_smoke.py` and
+`test_boundary_condition_selection.py` under `FEM_EM_REQUIRE_COMPLEX=1`, which
+converts the skips into failures so the job cannot pass by skipping. Verified
+2026-07-31: 18 passed in 32 s at `-n 2` with the CI-fidelity invocation (no
+`PYTHONPATH` override, package from `pip install -e`), and the real-mode
+negative control fails 3 of 4 environment tests with "the complex build was not
+picked up" rather than skipping. Three `@complex_only` tests are still outside
+any job, all blocked on known-issues.md entries 1 and 2, not on complex mode;
+the CI file names them at the point they should be added.
 
 > CI notes for anyone editing `.github/workflows/ci.yml`: MPI here is
 > **MPICH/Hydra**, so `--allow-run-as-root` is not a valid flag and will break the
@@ -688,16 +707,16 @@ Last reviewed 2026-07-30 (daily review). Tree clean, no parked branches.
    Step 5: the energy-continuity resonance guard, `core/resonance.py` +
    `tests/validation/test_resonance_guard.py`, fires 1.5% from the `TH-9`
    fundamental with the energy rise matching the pole law to 3.16%.
-3. **A complex-mode CI job** (or a complex leg of the existing validation job)
-   running `tests/environment tests/validation/test_time_harmonic_mms.py` with
-   `FEM_EM_REQUIRE_COMPLEX=1`. Steps 1–3 moved five solving tests behind
-   `@complex_only`, so CI currently executes **no** time-harmonic solve at all —
-   the new gates guard nothing until this lands. Smoke tier; independent of
-   item 2. **Now the top open item, and the coverage hole it names has grown**:
-   item 2 added `test_lossy_plane_wave.py` (2 tests) and
-   `test_resonance_guard.py` (1 of 2), so eight `@complex_only` tests —
-   including every closed-form check on the frequency-domain solver — run in no
-   CI job at all.
+3. ✅ **done 2026-07-31** (22:30 implementer run) — the complex-mode CI job,
+   landed as `OPS-10`: a `validation-complex` job running `tests/environment`
+   plus the five frequency-domain test files under `FEM_EM_REQUIRE_COMPLEX=1`
+   (18 tests, 32 s at `-n 2`, real-mode negative control fails loudly). Ten of
+   the thirteen `@complex_only` tests now execute in CI; the remaining three are
+   blocked on known-issues.md entries 1 and 2, not on complex mode.
+
+**On deck is empty — the next scheduled run falls back to `MAT-6`** (the
+Dodd–Deeds loading gate) per the sentence below, scoped to one run. The next
+daily review must refill this list.
 
 Every `TH-1` command needs `source /usr/local/bin/dolfinx-complex-mode` **and**
 `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest path

@@ -36,7 +36,7 @@ unless fixing it is the task.
 | **Symptom** | `AttributeError: 'DummyMagnetostaticSolver' object has no attribute 'last_solve_diagnostics'` at `core/time_harmonic.py:309` |
 | **Cause** | `TimeHarmonicSolver.solve()` reads `mag_solver.last_solve_diagnostics` when building `TimeHarmonicFields`. The chunk that added solver health diagnostics (`TH-4`, legacy C6) did not update the test doubles that stand in for `MagnetostaticSolver`. |
 | **Fix** | Add a `last_solve_diagnostics = None` attribute to both doubles. Small and self-contained — this is *not* blocked on `TH-1`. |
-| **Status** | `--deselect`ed in the CI `validation` job, visibly, so the debt is not silently skipped |
+| **Status** | `--deselect`ed in the CI `validation` job, visibly, so the debt is not silently skipped. Both are also `@complex_only`, and `OPS-10` kept them out of the `validation-complex` job for the same reason — fixing this entry should add both files there. |
 | **Verified pre-existing at** | `b2715ab` and earlier |
 
 ### 2. Residual-trend classifier disagrees with its test
@@ -47,6 +47,7 @@ unless fixing it is the task.
 | **Symptom** | `assert 'mixed' == 'mostly-decreasing'` (line 22); `assert False` (line 63) |
 | **Cause** | Not diagnosed. `classify_residual_trend()` in `core/solvers.py` returns `mixed` for a sequence the test expects to be classified `mostly-decreasing`. Either the classifier's thresholds or the test's expectation is wrong — **do not assume it is the test**: the analytic expectation in `test_analytical_circular_loop` turned out to be the wrong side of exactly this kind of disagreement (it wanted `μ₀I/(2√2a)` where the correct value is `μ₀I/(4√2a)`). |
 | **Verified pre-existing at** | `ce92e8c` and earlier |
+| **Status** | Whole file left out of the `validation-complex` CI job (`OPS-10`): one of the two failures is `@complex_only` and the other is not, so there is nothing to select. Add the file when this entry is fixed. |
 
 ### 3. Port tests assert a non-zero S-matrix diagonal on a matched port
 

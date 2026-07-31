@@ -823,3 +823,52 @@ Same session as the entry above; step 4 was committed first (`99f3d4f`) so
   and should fit one run with time to spare. After that, `MAT-6` (Dodd–Deeds)
   is the gate that would license loaded-coil numbers; nothing in `TH-1` does.
 
+
+## 2026-07-31T03:35Z — OPS-10 (complex-mode CI job) — complete
+
+- **Item:** §9 On deck item 3, the complex-mode CI job. Given a chunk ID
+  (`OPS-10`) since §7 had none for it.
+- **Preflight:** tree clean, container Up 3 days, no parked branches.
+- **What landed:** a `validation-complex` job in `.github/workflows/ci.yml`.
+  It sources `/usr/local/bin/dolfinx-complex-mode` and runs, under
+  `FEM_EM_REQUIRE_COMPLEX=1` at `mpiexec -n 2`: `tests/environment` (first, so
+  an environment regression cannot be blamed on the formulation),
+  `test_time_harmonic_mms.py`, `test_lossy_plane_wave.py`,
+  `test_resonance_guard.py`, `test_time_harmonic_smoke.py`,
+  `test_boundary_condition_selection.py`. `timeout-minutes: 30`.
+- **Measured:** 18 passed, **46 s** for the harness-form invocation
+  (`PYTHONPATH=/workspace/src`) and **32 s** for the CI-fidelity invocation —
+  no `PYTHONPATH` override, `fem_em_solver` resolved through the installed
+  package exactly as `pip install -e ".[dev]"` leaves it in CI. That second run
+  is the one that matters: it proves `src/sitecustomize.py` is not load-bearing
+  for this job, because sourcing the mode script sets `PYTHONPATH` itself and
+  nothing overwrites it afterwards.
+- **Negative control:** the same file in **real** mode with
+  `FEM_EM_REQUIRE_COMPLEX=1` → 3 failed, 1 passed in 2 s, "FEM_EM_REQUIRE_COMPLEX=1
+  but PETSc.ScalarType is float64 … the complex build was not picked up". The
+  job therefore cannot go green by skipping, which was the whole failure mode
+  being guarded.
+- **Coverage delta:** 13 `@complex_only` tests exist; 10 now run in CI. The
+  three that do not are blocked on known-issues.md entries 1
+  (`DummyMagnetostaticSolver`, 2 tests) and 2 (residual-trend classifier, whose
+  non-complex sibling fails too, so the file has nothing selectable). Both
+  entries now say so, and the CI file carries a comment at the exact place the
+  files should be added when they are fixed.
+- **Tier / cost:** smoke. 46 s + 32 s + 2 s, all `mpiexec -n 2`, well inside
+  budget.
+- **Logs:** `20260731T033128Z_OPS-10-probe.log`,
+  `20260731T033311Z_OPS-10-ci-fidelity.log` (**log of record**),
+  `20260731T033355Z_OPS-10-negctl.log`.
+- **Branch (if parked):** none; landed on `main`.
+- **Denied commands:** none.
+- **Caveat for the reviewer:** the job is verified by local reproduction of its
+  invocation, not by a GitHub Actions run — nothing in this session can trigger
+  one. The residual risk is CI-environment-specific: whether
+  `dolfinx/dolfinx:v0.7.2` on a runner carries both builds at the same paths as
+  our image (it is the same tag our Dockerfile bases on, so this is likely but
+  unproven), and whether `source` behaves in the runner's default shell (it is
+  `bash -e {0}`, so yes). First push to `main` settles both.
+- **Next-attempt hypothesis:** On deck is now empty, so the next run falls back
+  to `MAT-6` (Dodd–Deeds loading gate) per §9's "obvious next entry" sentence.
+  That is a genuinely new closed form rather than a rescope, so it may want the
+  review to size it first; the review is also overdue to refill On deck to six.

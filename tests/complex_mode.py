@@ -3,8 +3,9 @@
 Since `TH-1` steps 1–3 the frequency-domain path is an actual complex
 curl-curl solve, so it cannot run in the real DolfinX build at all —
 ``TimeHarmonicSolver.solve`` raises rather than quietly dropping the
-imaginary part of ε_c. CI runs real mode, so tests that solve carry
-``@complex_only`` and are exercised by the complex-mode command in
+imaginary part of ε_c. The `validation` CI job runs real mode, so tests that
+solve carry ``@complex_only``; they are exercised by the `validation-complex`
+job (`OPS-10`) and by the complex-mode command in
 ``tests/validation/test_time_harmonic_mms.py``'s module docstring.
 
 ``FEM_EM_REQUIRE_COMPLEX=1`` turns the skip into a run (and therefore a loud
