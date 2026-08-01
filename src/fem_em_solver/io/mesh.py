@@ -768,8 +768,17 @@ class MeshGenerator:
     ) -> Tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]:
         """Generate mesh with two tori inside a box domain.
 
-        Uses non-fragmenting geometry construction: two separate torus volumes
-        plus one enclosing domain volume, each explicitly tagged.
+        The box is ``occ.fragment``-ed against both tori, so the three volumes
+        share conforming interfaces and the mesh is a single connected
+        component. Cell tags: ``1`` wire 1 (``z < 0``), ``2`` wire 2
+        (``z > 0``), ``3`` the air box minus the two tori. Facet tag ``1`` is
+        the outer boundary.
+
+        Until 2026-08-01 this fixture added the volumes without fragmenting
+        (`GEO-8`): gmsh then meshed the box *solid* through the torus regions
+        and the tori as two disconnected islands, so a source restricted to a
+        torus tag produced no field in the air (``PORT-1`` measured
+        ``Z12 == 0``). Do not remove the fragment call.
 
         Parameters
         ----------
@@ -826,25 +835,60 @@ class MeshGenerator:
                 2.0 * box_half_z,
             )
 
+            gmsh.model.occ.fragment([(3, domain)], [(3, wire_1), (3, wire_2)])
             gmsh.model.occ.synchronize()
 
-            gmsh.model.addPhysicalGroup(3, [wire_1], tag=1)
+            # Fragment renumbers volumes; identify them by mass and centroid
+            # rather than by the tags it hands back (same discipline as
+            # loop_over_half_space_domain). Each torus is orders of magnitude
+            # smaller than the air region, and the two tori are told apart by
+            # the sign of their centroid z.
+            torus_mass = 2.0 * np.pi**2 * major_radius * minor_radius**2
+            wire_1_volume = None
+            wire_2_volume = None
+            air_volume = None
+            for dim, tag in gmsh.model.getEntities(dim=3):
+                mass = gmsh.model.occ.getMass(dim, tag)
+                _, _, zc = gmsh.model.occ.getCenterOfMass(dim, tag)
+                if mass > 10.0 * torus_mass:
+                    air_volume = tag
+                elif zc < 0.0:
+                    wire_1_volume = tag
+                else:
+                    wire_2_volume = tag
+
+            if wire_1_volume is None or wire_2_volume is None or air_volume is None:
+                raise RuntimeError(
+                    "two_torus_domain: fragment did not produce the expected two "
+                    f"tori plus air volume (got {gmsh.model.getEntities(dim=3)})"
+                )
+
+            gmsh.model.addPhysicalGroup(3, [wire_1_volume], tag=1)
             gmsh.model.setPhysicalName(3, 1, "wire_1")
 
-            gmsh.model.addPhysicalGroup(3, [wire_2], tag=2)
+            gmsh.model.addPhysicalGroup(3, [wire_2_volume], tag=2)
             gmsh.model.setPhysicalName(3, 2, "wire_2")
 
-            gmsh.model.addPhysicalGroup(3, [domain], tag=3)
+            gmsh.model.addPhysicalGroup(3, [air_volume], tag=3)
             gmsh.model.setPhysicalName(3, 3, "domain")
 
+            # A face is on the outer boundary only if it is *flat against* a
+            # wall (both bounding-box extremes on it), not merely within one
+            # mesh size of it: fragment introduces interior faces, and the old
+            # `< resolution` test would have swept some of them into the BC.
+            tol = 1e-9
             boundary_surfaces = []
             for dim, surf in gmsh.model.getEntities(dim=2):
                 x_min, y_min, z_min, x_max, y_max, z_max = gmsh.model.getBoundingBox(dim, surf)
-                if (
-                    abs(abs(x_min) - box_half_x) < resolution or abs(abs(x_max) - box_half_x) < resolution
-                    or abs(abs(y_min) - box_half_y) < resolution or abs(abs(y_max) - box_half_y) < resolution
-                    or abs(abs(z_min) - box_half_z) < resolution or abs(abs(z_max) - box_half_z) < resolution
-                ):
+                on_wall = (
+                    abs(x_min + box_half_x) < tol and abs(x_max + box_half_x) < tol
+                    or abs(x_min - box_half_x) < tol and abs(x_max - box_half_x) < tol
+                    or abs(y_min + box_half_y) < tol and abs(y_max + box_half_y) < tol
+                    or abs(y_min - box_half_y) < tol and abs(y_max - box_half_y) < tol
+                    or abs(z_min + box_half_z) < tol and abs(z_max + box_half_z) < tol
+                    or abs(z_min - box_half_z) < tol and abs(z_max - box_half_z) < tol
+                )
+                if on_wall:
                     boundary_surfaces.append(surf)
 
             if boundary_surfaces:
@@ -862,7 +906,7 @@ class MeshGenerator:
                     raise ValueError("wire_resolution and far_resolution must be positive")
 
                 wire_surfaces = []
-                for vol in (wire_1, wire_2):
+                for vol in (wire_1_volume, wire_2_volume):
                     wire_surfaces.extend(
                         surf
                         for _, surf in gmsh.model.getBoundary(

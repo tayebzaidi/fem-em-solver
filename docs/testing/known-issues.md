@@ -100,6 +100,16 @@ them by number.
 | **Tool** | `tests/mesh/helpers.py::global_cell_tag_set()` exists for the tag case. `post.evaluation.evaluate_vector_field_parallel()` for the point-location case. |
 | **Verified pre-existing at** | `ce92e8c` and earlier |
 
+### 7. Birdcage and coil+phantom meshes fail to generate
+
+| | |
+|---|---|
+| **Tests** | `tests/mesh/test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags`<br>`tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_generates_required_tags_centered_preset`<br>`tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_off_center_preset_moves_phantom_without_overlap` |
+| **Symptom** | `gmsh.py:2006: Exception: Invalid boundary mesh (overlapping facets) on surface 3 surface 49` (birdcage) and `dolfinx/io/gmshio.py:118: AssertionError` ×2 (coil+phantom) — the meshes never reach dolfinx |
+| **Cause** | Not diagnosed. Found 2026-08-01 by the `GEO-8` run, which ran `tests/mesh` as a regression sweep; the whole directory is in no CI job, which is why these were invisible. Both fixtures are untouched by `GEO-8` (it changed `two_torus_domain` only). |
+| **Verified pre-existing at** | `63c94f2` — the `GEO-8` diff touches neither generator; log `20260801T004839Z_GEO-8-unrelated-failures.log`, 3 failed 2 passed in 3.5 s at `-n 2` |
+| **Note** | Likely the same overlapping-geometry family `GEO-8` just fixed for `two_torus_domain`: `coil_phantom_domain` and the birdcage fixture should be audited for missing `occ.fragment`. |
+
 ---
 
 ## Non-test issues
@@ -172,6 +182,23 @@ Remaining, not blocking: `J·n ≠ 0` at the wire end caps, and the < 5% wire ta
 needs h ≈ 0.00125 (~1.1M cells, > 5 min at `-n 2`) — graded refinement (`MAG-9`),
 not more uniform h.
 
+### ✅ RESOLVED 2026-08-01 — `two_torus_domain` was not a conforming mesh (`GEO-8`)
+
+The fixture added two tori and `occ.addBox` over them and never fragmented, so
+gmsh meshed a solid box plus two torus islands: total mesh volume exceeded the
+analytic box by exactly the two torus volumes (ratio `1.002633`), and driving
+torus 1 with a tag-restricted source gave `∫|E|² dV` over tags (1, 2, 3) =
+`2.0537e-04, 0, 0` — the field could not leave the driven island, which is why
+`PORT-1` measured `Z₁₂ ≡ 0`.
+
+Fixed by `occ.fragment` plus centroid/mass re-derivation of the physical
+groups. Both signatures are now gated by
+`tests/mesh/test_two_torus_conforming.py`: volume ratio `1.000000000`
+(log `20260801T003528Z_GEO-8-after.log`) and air/driven `∫|E|²` ratio
+`1.4118`, undriven/driven `5.2088e-08` (log
+`20260801T003600Z_GEO-8-field-gate-numbers.log`). The Helmholtz users improved
+rather than regressed: centre-field error `1.731% → 0.728%`.
+
 ### Air-box sizing is not generalised
 
 Only `two_torus_domain` has `air_padding` and graded sizing. Every other fixture in
@@ -181,52 +208,6 @@ pattern produced a **20.4% error that did not improve across a 7× refinement**,
 was invisible until an analytic comparison existed. Coil+phantom has no analytic
 reference yet. See `PROJECT_PLAN.md` §9.
 
-### `two_torus_domain` is not a conforming mesh — its tori are disconnected islands
-
-Found 2026-07-31 by the `PORT-1` step-1 probe at commit `08fe566`; diagnosed
-by code reading at the 18:00 review (below); **nothing is fixed yet** — the
-fix is `GEO-8`.
-
-`MeshGenerator.two_torus_domain` (`src/fem_em_solver/io/mesh.py`) adds two tori
-and then `occ.addBox` over them, calls `occ.synchronize()`, and **never
-fragments**. gmsh therefore meshes the box as a solid box *and* meshes each
-torus separately, sharing no nodes. Measured at padding 0.08 m, 31953 cells
-(log `20260731T213423Z_PORT-1-step1-meshconformity.log`):
-
-* total mesh volume `1.315956e-02 m³` vs analytic box `1.312500e-02 m³`
-  (ratio `1.002633`); the excess is exactly the two meshed torus volumes;
-* tag 3 ("domain") covers the **whole** box, torus interiors included;
-* driving torus 1 time-harmonically, `∫|E|² dV` over tags (1, 2, 3) =
-  `2.0537e-04, 0, 0` — the field cannot leave the driven island
-  (log `20260731T213312Z_PORT-1-step1-diagnostic.log`).
-
-Symptom for `PORT-1`: the two-loop reaction Z-matrix has `Z₁₂ = Z₂₁ = 0`
-identically where the closed form gives `ωM₁₂ = 1.2418 Ω`.
-
-**The open question was what this means for the fixture's existing users** —
-`tests/validation/test_helmholtz_v2.py`,
-`tests/validation/test_helmholtz_magnitude.py` and
-`tests/solver/test_two_torus.py`. Those tests pass today, and the Helmholtz
-centre-field agreement is quoted at 0.04% in §10, which is *not* what a
-disconnected source-to-centre path should produce.
-
-**Answered by code reading (18:00 review, 2026-07-31; numerically
-unverified).** Both Helmholtz tests define J as a *geometric UFL expression*
-(`in_wire` from coordinates) assembled over the whole mesh, so the solid box's
-own cells inside the torus regions carry a full copy of the current — the
-centre field is sourced through a connected path and both claims are
-consistent. The torus islands carry a second copy of the source and solve a
-private problem nobody samples. The parked `PORT-1` probe instead passed
-`subdomain_ids=[torus tag]`, putting the source *only* on the islands — hence
-the zero coupling. `test_two_torus.py` asserts tag presence only, no solve.
-Consequence: the fragment fix is safe to make, but the Helmholtz numbers will
-*move* (the geometric J stops stair-stepping through box cells), so the fix
-must record before/after per the `GEO-8` plan. `two_cylinder_domain` shares
-the deliberate non-fragmenting pattern; its one user is qualitative and it is
-out of `GEO-8`'s scope.
-
-Resolved by: `GEO-8` (§9 On-deck item 1), then `PORT-1` step 1 re-runs the
-parked probe.
 
 ---
 

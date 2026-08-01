@@ -1,0 +1,123 @@
+# Test Run
+- Chunk: GEO-8-unrelated-failures
+- Commit: 63c94f2a7253e10aefcfe6383f5e282e18d9d7c6
+- Time (UTC): 2026-08-01 00:48:39
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.3.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_port_tags.py tests/mesh/test_coil_phantom_mesh.py -v --tb=line'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Jul 31 19:48 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.3.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_port_tags.py tests/mesh/test_coil_phantom_mesh.py -v --tb=line'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 5 items
+
+tests/mesh/test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags collected 5 items
+
+tests/mesh/test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags FAILED [ 20%]
+tests/mesh/test_birdcage_port_tags.py::test_birdcage_port_layout_rejects_too_small_or_overlapping_port_regions PASSED [ 40%]
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_generates_required_tags_centered_preset FAILED [ 60%]
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_off_center_preset_moves_phantom_without_overlap FAILED [ 80%]
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_rejects_overlapping_off_center_placement PASSED [100%]
+
+=================================== FAILURES ===================================
+/usr/local/lib/gmsh.py:2006: Exception: Invalid boundary mesh (overlapping facets) on surface 3 surface 49
+/usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/io/gmshio.py:118: AssertionError
+/usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/io/gmshio.py:118: AssertionError
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/mesh/test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags
+FAILED tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_generates_required_tags_centered_preset
+FAILED tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_off_center_preset_moves_phantom_without_overlap
+=================== 3 failed, 2 passed, 8 warnings in 3.52s ====================
+
+Loguru caught a signal: SIGTERM
+Stack trace:
+26      0x5b2a2f6dfba5 _start + 37
+25      0x7694c207fe40 __libc_start_main + 128
+24      0x7694c207fd90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7694c207fd90]
+23      0x5b2a2f6dfcad Py_BytesMain + 45
+22      0x5b2a2f7092d3 Py_RunMain + 371
+21      0x5b2a2f717aaf Py_FinalizeEx + 95
+20      0x5b2a2f718738 python3(+0x265738) [0x5b2a2f718738]
+19      0x5b2a2f61064e python3(+0x15d64e) [0x5b2a2f61064e]
+18      0x7694b5bc7256 /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-real64-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x123256) [0x7694b5bc7256]
+17      0x5b2a2f60650b python3(+0x15350b) [0x5b2a2f60650b]
+16      0x7694b5bd6873 /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-real64-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x132873) [0x7694b5bd6873]
+15      0x7694b487d9f0 PetscGarbageCleanup + 64
+14      0x7694b48a1970 PetscCommDuplicate + 320
+13      0x7694ba970507 MPI_Comm_dup + 215
+12      0x7694bac0be6a /usr/local/lib/libmpi.so.12(+0x34fe6a) [0x7694bac0be6a]
+11      0x7694bac16024 /usr/local/lib/libmpi.so.12(+0x35a024) [0x7694bac16024]
+10      0x7694bac15c64 /usr/local/lib/libmpi.so.12(+0x359c64) [0x7694bac15c64]
+9       0x7694bac20331 /usr/local/lib/libmpi.so.12(+0x364331) [0x7694bac20331]
+8       0x7694babe7757 /usr/local/lib/libmpi.so.12(+0x32b757) [0x7694babe7757]
+7       0x7694babe75e7 /usr/local/lib/libmpi.so.12(+0x32b5e7) [0x7694babe75e7]
+6       0x7694bab5280e /usr/local/lib/libmpi.so.12(+0x29680e) [0x7694bab5280e]
+5       0x7694bac0861e /usr/local/lib/libmpi.so.12(+0x34c61e) [0x7694bac0861e]
+4       0x7694bac07ab3 /usr/local/lib/libmpi.so.12(+0x34bab3) [0x7694bac07ab3]
+3       0x7694babf6f6f /usr/local/lib/libmpi.so.12(+0x33af6f) [0x7694babf6f6f]
+2       0x7694bac7089b /usr/local/lib/libmpi.so.12(+0x3b489b) [0x7694bac7089b]
+1       0x7694bac6ca5d /usr/local/lib/libmpi.so.12(+0x3b0a5d) [0x7694bac6ca5d]
+0       0x7694c2098520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x7694c2098520]
+2026-08-01 00:51:39.961 ( 179.441s) [main            ]                       :0     FATL| Signal: SIGTERM
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 15583 RUNNING AT aefd79d41cfa
+=   EXIT CODE: 15
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Terminated (signal 15)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions
+
+## Exit
+- Status: 124
+- Elapsed (s): 180

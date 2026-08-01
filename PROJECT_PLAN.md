@@ -98,8 +98,9 @@ solutions" is now supported for magnetostatics — but only there. See
 - **The magnetostatic formulation in `core/solvers.py`.** N1curl weak form
   `∫μ⁻¹(∇×A)·(∇×v) dx` with gauge penalty, matching closed-form Helmholtz to
   **0.04% at centre / 0.83% mean**, monotone convergence in domain size and `h`.
-- The repaired validation suite: `test_helmholtz_magnitude.py` (1.731% vs closed
-  form), `test_circular_loop.py` (7.07%), `test_convergence.py` (fitted rate 1.10),
+- The repaired validation suite: `test_helmholtz_magnitude.py` (0.728% vs closed
+  form since the `GEO-8` fragment fix, 2026-08-01; 1.731% before),
+  `test_circular_loop.py` (7.07%), `test_convergence.py` (fitted rate 1.10),
   `test_cavity_resonances.py` (0.0436%), `test_gauge_lagrange.py`.
 - `post/evaluation.py` — correct bounding-box/collision point location. All point
   evaluation must go through it.
@@ -345,7 +346,7 @@ job is a §9 On-deck item. Entry 2 remains genuinely open.)*
 | `MAG-11` | Parallel energy was rank-local (missing allreduce) | ✅ | smoke | |
 | `MAG-12` | `evaluate_at_points` used the MAG-7 broken pattern | ✅ | smoke | |
 | `MAG-13` | Analytic-Dirichlet outer boundary for wire/loop | ✅ | heavy | wire 12.75%, loop 7.07%, rate 1.10; 167 s + 196 s |
-| `MAG-14` | Helmholtz magnitude comparison in the test suite | ✅ | smoke | 1.731% vs closed form; 11 s, in CI |
+| `MAG-14` | Helmholtz magnitude comparison in the test suite | ✅ | smoke | 0.728% vs closed form (1.731% before `GEO-8`); 11 s, in CI |
 | `MAG-15` | Lagrange-multiplier Coulomb gauge (cross-check) | ✅ | smoke | 7 passed, 13 s |
 
 **Open follow-ups in MAG** (none currently on deck):
@@ -381,7 +382,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-5` | Region-specific mesh resolution policy | 🧪 | standard |
 | `GEO-6` | Geometry sanity report utility | 🧪 | smoke |
 | `GEO-7` | Mesh-tag QA diagnostic hardening | 🧪 | standard |
-| `GEO-8` | **Make `two_torus_domain` a conforming mesh** | ⬜ | standard |
+| `GEO-8` | **Make `two_torus_domain` a conforming mesh** | ✅ | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -389,8 +390,48 @@ Independent of the §2.1 physics defect; meshes are meshes.
 > including coil+phantom** — expect the same boundary-mirror error that cost 20%
 > on Helmholtz, and expect graded sizing to be equally necessary.
 
-**`GEO-8` — make `two_torus_domain` a conforming mesh** ⬜ *(created
-2026-07-31, 18:00 review, from the `PORT-1` step-1 block)*
+**`GEO-8` — make `two_torus_domain` a conforming mesh** ✅ *(created
+2026-07-31, 18:00 review, from the `PORT-1` step-1 block; done 2026-08-01,
+19:30 implementer run)*
+> **Done.** `occ.fragment([(3, box)], [(3, torus_1), (3, torus_2)])` plus
+> centroid/mass re-derivation of the physical groups (fragment renumbers, so
+> its tag order is not trusted — same discipline as
+> `loop_over_half_space_domain`). The outer-boundary facet test tightened from
+> "within one `resolution` of a wall" to "flat against the wall" (both
+> bounding-box extremes, tol 1e-9): fragment creates interior faces the loose
+> test could have swept into the BC. Graded sizing now references the
+> fragmented wire volumes. Gate:
+> `tests/mesh/test_two_torus_conforming.py` (volume half real-mode,
+> field-leakage half `@complex_only`), added to both CI jobs.
+>
+> | quantity | before (non-conforming) | after (fragmented) |
+> |---|---|---|
+> | mesh volume / analytic box | 1.002633 | 1.000000000 |
+> | meshed torus / analytic `2π²Rr²` | n/a (box meshed through the tori) | 0.9801, 0.9801 |
+> | `∫\|E\|²` air / driven torus | 0 exactly | 1.4118 |
+> | `∫\|E\|²` undriven / driven torus | 0 exactly | 5.2088e-08 |
+> | Helmholtz centre-field error | 1.731% | **0.728%** |
+> | Helmholtz mean error, \|z\| ≤ 0.005 m | 1.730% | **0.644%** |
+> | Helmholtz central CV | 0.0216% | 0.1602% (bound 1%) |
+> | cells (magnitude fixture) | 53941 | 53365 |
+>
+> The Helmholtz improvement is the predicted effect: the geometric `in_wire` J
+> now integrates over cells aligned to the torus surface instead of
+> stair-stepping through box cells. No bound was loosened; the 5% and 1% CV
+> tolerances are unchanged. One measurement is worth keeping for future
+> fixtures: at the uniform `resolution=0.01` the meshed torus retains only
+> 0.598 of its analytic volume (5.905213e-06 vs 9.869604e-06 m³) — the wire
+> needs `wire_resolution ≲ 0.4·minor_radius` before any volume-based
+> conformity statement means anything, which is why the gate grades.
+>
+> Logs: `20260801T003039Z_GEO-8-before.log`,
+> `20260801T003108Z_GEO-8-before-numbers.log` (before),
+> `20260801T003415Z_GEO-8-gate.log`,
+> `20260801T003600Z_GEO-8-field-gate-numbers.log` (gates, 31.8 s at `-n 2`
+> complex), `20260801T003528Z_GEO-8-after.log` (gate + three users, 4 passed
+> 1 skipped in 19.7 s at `-n 2`). Standard tier. Unblocks `PORT-1` steps 1–2.
+>
+> *Original plan, for the record:*
 > The fixture adds two tori and a box and never fragments — the docstring even
 > advertises "non-fragmenting geometry construction" — so gmsh meshes three
 > disconnected components. Measurements are in known-issues
@@ -1217,7 +1258,10 @@ in the `GEO-8` entry (numerically unverified; `GEO-8` step 1 records the
 numbers). New plans written this review: `GEO-8`, `POST-3` step 3, `MAT-4`
 step 1 — items 3 and 4 are deliberately independent of the `PORT-1` chain.
 
-1. **`GEO-8` — make `two_torus_domain` conforming**, independent; unblocks
+1. ~~**`GEO-8` — make `two_torus_domain` conforming**~~ ✅ **done** 2026-08-01
+   (19:30 run) — mesh-volume ratio 1.000000000, air/driven `∫|E|²` 1.4118
+   where it was exactly 0, Helmholtz centre error 1.731% → 0.728%. Item 2 is
+   unblocked. Original text: **make `two_torus_domain` conforming**, independent; unblocks
    the `PORT-1` chain. Execute the §7 `GEO-8` plan: record what the three
    existing users measure today, fragment the box against both tori
    re-deriving the physical groups from the fragment map, land the conformity

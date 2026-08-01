@@ -117,6 +117,7 @@ jobs:
           tests/validation/test_cavity_resonances.py \
           tests/solver/test_two_cylinder.py \
           tests/solver/test_two_torus.py \
+          tests/mesh/test_two_torus_conforming.py \
           tests/solver/test_energy_and_point_evaluation.py \
           -v --tb=short
 
@@ -183,11 +184,17 @@ jobs:
           tests/validation/test_poynting_balance.py \
           tests/validation/test_resonance_guard.py \
           tests/validation/test_dodd_deeds_impedance.py \
+          tests/mesh/test_two_torus_conforming.py \
           tests/solver/test_time_harmonic_smoke.py \
           tests/solver/test_boundary_condition_selection.py \
           tests/materials/test_phantom_material_model.py \
           tests/post/test_phantom_field_metrics.py \
           -v --tb=short
+
+    # test_two_torus_conforming.py is the `GEO-8` conformity gate; its volume
+    # half runs in the `validation` job above and its `@complex_only` field-
+    # leakage half (one 10 MHz solve on a 22k-cell mesh, 32 s at -n 2, log
+    # 20260801T003600Z_GEO-8-field-gate-numbers.log) runs here.
 
     # test_dodd_deeds_impedance.py is the `MAT-6` loading gate and costs 85 s of
     # the total (one 138k-cell mesh, three solves, measured at -n 2 on the dev

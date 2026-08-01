@@ -1390,3 +1390,74 @@ the fragment map and keeping `air_padding`/`wire_resolution`/`far_resolution`
 intact, gated by re-running the three existing users *first* to record what they
 measure today. Then the parked probe re-runs unchanged and step 1 completes in
 one slot — the cost numbers above say the whole two-padding sweep is ~2 minutes.
+
+---
+
+## 2026-08-01T00:30Z — `GEO-8` — **complete**
+
+**On-deck item 1** (19:30 implementer run). Preflight clean, container Up.
+
+**What was done.** `two_torus_domain` now calls
+`occ.fragment([(3, box)], [(3, torus_1), (3, torus_2)])` and re-derives the
+physical groups from mass + centroid instead of trusting the tags fragment
+returns (mass `> 10·2π²Rr²` ⇒ air; the two tori split on the sign of `z̄`),
+the pattern `loop_over_half_space_domain` already used. Two follow-on edits the
+fragment forced: the outer-boundary facet test tightened from "within one
+`resolution` of a wall" to "flat against the wall" (fragment creates interior
+faces the loose test could have swept into the PEC BC), and the graded-sizing
+`Distance` field now references the fragmented wire volumes. The docstring's
+"non-fragmenting geometry construction" claim is gone.
+
+**Gate.** New `tests/mesh/test_two_torus_conforming.py`, both signatures from
+the known-issues entry: a real-mode volume-partition test and an
+`@complex_only` field-leakage test (drive torus 1 with `subdomain_ids=[1]`,
+compare `∫|E|²` per tag). Added to both CI jobs.
+
+**Measured, before → after** (before: `20260801T003039Z_GEO-8-before.log`,
+`20260801T003108Z_GEO-8-before-numbers.log`):
+
+| quantity | before | after |
+|---|---|---|
+| mesh volume / analytic box | 1.002633 | 1.000000000 |
+| meshed torus / `2π²Rr²` | — (box meshed through the tori) | 0.9801, 0.9801 |
+| `∫\|E\|²` air / driven torus | 0 exactly | 1.4118 |
+| `∫\|E\|²` undriven / driven | 0 exactly | 5.2088e-08 |
+| Helmholtz centre-field error | 1.731% | 0.728% |
+| Helmholtz mean error (\|z\| ≤ 5 mm) | 1.730% | 0.644% |
+| Helmholtz central CV | 0.0216% | 0.1602% (bound 1%) |
+
+The Helmholtz improvement is the effect the plan predicted (geometric `in_wire`
+J stops stair-stepping through box cells). No bound was loosened.
+
+**Logs.** `20260801T003415Z_GEO-8-gate.log` (2 passed 1 skipped, 11.1 s, real),
+`20260801T003600Z_GEO-8-field-gate-numbers.log` (2 passed, 31.8 s, complex,
+`FEM_EM_REQUIRE_COMPLEX=1`), `20260801T003528Z_GEO-8-after.log` (gate + all
+three users, 4 passed 1 skipped, 19.7 s). All `-n 2`, standard tier.
+
+**One assertion was re-sized with its measurement, not loosened.** The first
+draft of the torus-volume band ran the fixture at the uniform `resolution=0.01`
+and measured only 0.598 of the analytic torus volume
+(`20260801T003341Z_GEO-8-volume-gate.log`) — cells twice the wire minor radius,
+so the chordal deficit is a statement about resolution, not conformity. The
+gate now grades (`wire_resolution=0.002`) and the band `(0.80, 1.00)` holds at
+0.9801. Recorded in the test file and the §7 entry.
+
+**Unrelated failures found, not fixed — new known-issues entry 7.** A
+regression sweep over all of `tests/mesh` (`20260801T003800Z_GEO-8-regression.log`)
+**overran its 600 s ceiling and was killed (exit 124)** — the coil+phantom
+fixtures in that directory are far more expensive than the ceiling I chose;
+kill-and-shrink, not a longer timeout. Before dying it exposed three failures
+in fixtures `GEO-8` does not touch: `test_birdcage_port_tags.py` (gmsh
+`Invalid boundary mesh (overlapping facets) on surface 3 surface 49`) and two
+in `test_coil_phantom_mesh.py` (`gmshio.py:118: AssertionError`). Re-run alone
+in 3.5 s (`20260801T004839Z_GEO-8-unrelated-failures.log`) and journalled as
+entry 7. **`tests/mesh` is in no CI job**, which is why these were invisible.
+
+**Next-attempt hypothesis / for the review.** (a) On-deck item 2 (`PORT-1`
+step 1) is unblocked — the parked probe on
+`attempt/PORT-1-step1-20260731T213516Z` re-runs unchanged; expect a non-zero
+`Z₁₂` now that air/driven `∫|E|²` is 1.41. (b) Entry 7 smells like the same
+missing-`occ.fragment` family `GEO-8` just fixed, one directory over; worth a
+chunk. (c) Consider adding `tests/mesh` to the `validation` CI job once entry 7
+is fixed — at 3.5 s for the cheap files it is nearly free, and it would have
+caught entry 7 when it was introduced.
