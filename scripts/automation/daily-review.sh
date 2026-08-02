@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Scheduled daily plan review (Fable). Installed in crontab; see
+# Scheduled daily plan review (Opus, high effort). Installed in crontab; see
 # docs/automation/daily-review.md for the protocol the session follows.
 set -euo pipefail
 
@@ -27,7 +27,7 @@ START="$(date '+%Y-%m-%d %H:%M %Z')"
 # Permissions come from .claude/settings.json (allowlist + denies); acceptEdits
 # auto-approves file edits inside the repo only. Web and subagent tools are off.
 timeout --kill-after=60 1800 "$CLAUDE_BIN" \
-  --model claude-fable-5 \
+  --model claude-opus-5 \
   --effort high \
   --permission-mode acceptEdits \
   --disallowedTools WebFetch WebSearch Task Agent \

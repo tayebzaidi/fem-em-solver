@@ -1,4 +1,4 @@
-# Daily review protocol (Fable, scheduled)
+# Daily review protocol (Opus, scheduled)
 
 Run by `scripts/automation/daily-review.sh` via cron **three times daily**
 (03:00, 10:30, 18:00 local), each followed by four implementer runs on a shared
