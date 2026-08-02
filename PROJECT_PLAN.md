@@ -1132,6 +1132,78 @@ heavy tier, complex build)*
 > expressions splitting inside the single-quoted container command; numbers
 > logs need `pytest -s` or the prints are captured.
 
+> **Step 1 re-run 2026-08-02 (13:30 run) after `GEO-8` — ✅ done; the numbers
+> below size step 2.** The probe landed unchanged at
+> `scripts/probes/port1_step1_probe.py`; the attempt branch is deleted, its
+> content fully captured here. The fixture is conforming: total mesh volume /
+> analytic box = `1.000000` at both paddings, gmsh reports "3 volumes with 1
+> connected component", and the meshed/exact torus volume deficit improved
+> −12.5% → **−3.10%** (meshed current 0.969009 A, the two tori identical to
+> all printed digits). Off-diagonals are no longer zero.
+>
+> Measurements (all at `-n 2`, f = 10 MHz, a = 0.04, r_wire = 0.005, d = 0.04):
+>
+> | padding | h_far | cells | `Im Z₁₂` (Ω) | vs `ωM₁₂` | recip. `‖Z−Zᵀ‖/‖Z‖` | `Im Z₁₁`, `Im Z₂₂` (Ω) |
+> |---|---|---|---|---|---|---|
+> | 0.08 | 0.02 | 167906 | +1.126596 | −9.27% | 7.86e-14 | −40.693, −40.422 |
+> | 0.08 | 0.03 | 119738 | +1.125614 | −9.35% | 3.06e-13 | −41.086, −40.924 |
+> | 0.12 | 0.03 | 154493 | +1.184134 | −4.64% | 4.31e-13 | −40.969, −40.776 |
+>
+> Closed form `ωM₁₂ = +1.241755e+00 Ω` (`M₁₂ = 1.976314e-08 H`);
+> `M(2d)/M(d) = 0.287120` for the step-2 physics control.
+>
+> Reading of those columns, which is what step 2 needs:
+> * **Reciprocity is at machine precision** — 1e-13, not 1e-3. The step-2 bound
+>   is not sensitivity-limited; a bound of `1e-9` is still four orders of slack
+>   and would catch any real symmetry break.
+> * **`Re Z₁₂` is exactly `0.0`**, not small — in the lossless case the operator
+>   is real-symmetric, so the real part is structurally absent rather than
+>   numerically cancelled. Step 2 item (iii) should assert this as an equality-ish
+>   bound and note it is structural, not a convergence result.
+> * **The `ωM₁₂` gap is the box, not the mesh.** Coarsening h_far 0.02 → 0.03 at
+>   fixed padding moves `Im Z₁₂` by 0.09% (−9.27% → −9.35%); enlarging the box
+>   0.08 → 0.12 moves it **5.20%** and monotonically *toward* the closed form.
+>   The PEC wall images the loops back into the domain, exactly as the fixture
+>   docstring's `air_padding ≥ 2·major_radius` warning predicts (0.08 = 2a is the
+>   minimum, and is still 9% off). A step-2 tolerance on `ωM₁₂` of **10% at
+>   padding 0.08** is justified by measurement; tightening it means paying for a
+>   bigger box, not a finer mesh.
+> * **The filamentary reference is itself soft at this geometry**: re-evaluating
+>   `M₁₂` over ρ, z within ± r_wire spans `[1.3768e-08, 2.6917e-08] H` —
+>   **66.5% of nominal**. At d = a the loops are close enough that the finite wire
+>   section matters more than the solve error does. Do not tighten past 10% on the
+>   strength of the closed form; it does not support it.
+> * **The diagonal is wrong and step 2 must not gate it.** `Im Z₁₁ ≈ −40.9 Ω`:
+>   negative where a lossless loop must be inductive (`+ωL`), and ~6× too large
+>   against a Grover estimate `ωL ≈ ω·μ₀a(ln(8a/r_wire) − 2) ≈ 6.8 Ω`. The
+>   off-diagonal is right in sign and within 5–9% of its closed form while the
+>   diagonal is wrong in sign — so this is the self-term (the source's own
+>   singular field inside the driven wire entering `∫E·J` over the source
+>   region), not a global convention error. **Open question for step 2's author,
+>   and a reason to keep item (iv) to order-of-magnitude only or drop the
+>   diagonal assertion entirely.** Not diagnosed here.
+> * Energy continuity is quiet, as intended: over f ∈ [7, 14] MHz,
+>   `|d ln W/d ln f|max = 2.0000` against threshold 50, `triggered = False` —
+>   W ∝ f⁻² exactly, i.e. cleanly quasistatic, no box resonance anywhere near.
+>   `k₀·diag = 0.086` (0.08) and `0.115` (0.12).
+>
+> **Cost, and the step-2 tier — the one hard constraint this run found.**
+> Conforming meshing is 5.25× the old cell count at the same knobs (31953 →
+> 167906 at padding 0.08 / h_far 0.02), and solve cost went 2.8–3.0 s → 21–37 s
+> per solve. **Padding 0.12 at h_far 0.02 (237926 cells) does not fit the
+> standard tier**: it was killed at 180 s inside the MUMPS factorisation
+> (`20260802T183423Z_PORT-1-step1-solve012.log`, status 124) and the sweep was
+> re-run coarser per §5.1 rather than given more time. Step 2 should gate at
+> **padding 0.08 / h_far 0.03, standard tier** — 119738 cells, mesh 21 s + two
+> solves 21 s and 31 s = 152 s for the full two-padding sweep, so a single-box
+> two-solve gate lands near 75 s. A third solve for the `M(2d)/M(d)` control
+> needs its own mesh (different d ⇒ different box) and will not fit alongside;
+> either take the heavy tier or split it into its own test.
+>
+> Logs: `20260802T183045Z_PORT-1-step1-costprobe.log` (mesh-only, conformity),
+> `…183226Z_…-solve008.log`, `…183423Z_…-solve012.log` (the 180 s kill),
+> `…183747Z_…-boxsens.log` (the sensitivity pair), `…184031Z_…-energy.log`.
+
 > **Two port tests are red and deliberately left red.** Both fakes set
 > `current = voltage/z0` at the driven port, making it perfectly matched, so
 > `b = (V − Z₀I)/2√Z₀ = 0` and the S-matrix diagonal is legitimately zero against
@@ -1268,7 +1340,15 @@ step 1 — items 3 and 4 are deliberately independent of the `PORT-1` chain.
    gate (mesh-volume arithmetic + the driven-torus field-leakage check), then
    re-run the users and record before/after. Standard tier; the mesh is 32k
    cells / 6 s, the magnetostatic users are the only meaningful cost.
-2. **`PORT-1` step 1 — two-loop reaction Z-matrix probe.** **Depends on
+2. ~~**`PORT-1` step 1 — two-loop reaction Z-matrix probe**~~ ✅ **done**
+   2026-08-02 (13:30 run) — reciprocity residual 7.9e-14, `Im Z₁₂` +1.1266 Ω
+   vs closed-form `ωM₁₂` +1.2418 Ω (−9.27%), box sensitivity 5.20% and
+   monotone toward the closed form; probe landed, attempt branch deleted. Two
+   findings step 2 must absorb, both in the §7 entry: the diagonal is wrong in
+   sign (`Im Z₁₁ ≈ −40.9 Ω` where `+ωL ≈ 6.8 Ω` is expected — do not gate it),
+   and conforming meshing made solves 10× dearer, so the gate must sit at
+   padding 0.08 / h_far 0.03 (padding 0.12 at h_far 0.02 blew the standard
+   tier). Original text: **two-loop reaction Z-matrix probe.** **Depends on
    item 1 having landed; if it did not, skip to item 3 and journal.** Re-apply
    the parked probe from `attempt/PORT-1-step1-20260731T213516Z`
    (`scripts/probes/port1_step1_probe.py`) and run it unchanged per the §7

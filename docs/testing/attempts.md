@@ -1515,3 +1515,70 @@ to produce a non-zero `Z₁₂`. That is the 13:30 run's job.
 modified at 13:30, park it on `recovered/20260802T183000Z`-style branch per
 step 1 and take `PORT-1` step 1; if it has been committed by then, take
 `PORT-1` step 1 directly.
+
+## 2026-08-02T18:30Z — `PORT-1` step 1 (§9 On-deck item 2) — **complete**
+
+**Preflight clean.** The 12:00 anomaly resolved itself the human way: the
+modified `scripts/automation/daily-review.sh` was committed as `eff7009`
+(review → `--effort xhigh`) before this run started, so no landing, parking, or
+`recovered/*` branch was needed. Tree clean, container Up 6 days. The two-slot
+outage cost exactly one slot in the end.
+
+**What was done.** Restored `scripts/probes/port1_step1_probe.py` from
+`attempt/PORT-1-step1-20260731T213516Z` and ran it **unchanged** — not one line
+edited — per the §7 step-1 plan. `GEO-8` did the whole job: the fixture is
+conforming (total mesh volume / analytic box = `1.000000`, gmsh "3 volumes with
+1 connected component", torus volume deficit −12.5% → −3.10%) and the
+off-diagonals that were **identically zero** on 07-31 are now real numbers.
+
+**Headline measurements** (all `-n 2`, f = 10 MHz, a = 0.04, r_wire = 0.005,
+d = 0.04; full table + reading in the §7 `PORT-1` entry):
+
+| padding | h_far | cells | `Im Z₁₂` (Ω) | vs `ωM₁₂` | recip. `‖Z−Zᵀ‖/‖Z‖` |
+|---|---|---|---|---|---|
+| 0.08 | 0.02 | 167906 | +1.126596 | −9.27% | 7.86e-14 |
+| 0.08 | 0.03 | 119738 | +1.125614 | −9.35% | 3.06e-13 |
+| 0.12 | 0.03 | 154493 | +1.184134 | −4.64% | 4.31e-13 |
+
+Closed form `ωM₁₂ = +1.241755` Ω. `Re Z₁₂` exactly `0.0`. Energy continuity
+`|d ln W/d ln f|max = 2.0000` vs threshold 50, not triggered (W ∝ f⁻², cleanly
+quasistatic). `M(2d)/M(d) = 0.287120`.
+
+**The three things step 2 must not rediscover.**
+
+1. **Reciprocity is at machine precision (1e-13)**, so its bound is free —
+   `1e-9` still leaves four orders of slack. The identity is not the hard part.
+2. **The `ωM₁₂` gap is the PEC box, not the mesh.** Coarsening h_far 0.02 → 0.03
+   moves `Im Z₁₂` by 0.09%; enlarging the box 0.08 → 0.12 moves it 5.20%, and
+   monotonically toward the closed form. 10% at padding 0.08 is the
+   measurement-justified tolerance. Independently, the filamentary reference is
+   soft here: `M₁₂` re-evaluated over ρ, z within ± r_wire spans 66.5% of
+   nominal, so the closed form cannot support a tighter bound anyway.
+3. **The diagonal is wrong in sign** — `Im Z₁₁ ≈ −40.9 Ω` where a lossless loop
+   must give `+ωL ≈ 6.8 Ω` (Grover). The off-diagonal is right in sign and
+   within 5–9% while the diagonal is wrong in sign, which points at the
+   self-term (source's own singular field inside the driven wire entering
+   `∫E·J` over the source region), not a global convention error. **Not
+   diagnosed.** Step 2's item (iv) should be order-of-magnitude only or dropped.
+
+**Cost — the constraint this run discovered.** Conforming meshing is 5.25× the
+old cell count at the same knobs and solves went 2.8–3.0 s → 21–37 s. Padding
+0.12 at h_far 0.02 (237926 cells) **does not fit the standard tier**: killed at
+180 s inside the MUMPS factorisation (status 124), and per §5.1 the sweep was
+re-run coarser rather than given more time. Cleared `~/.cache/fenics` after the
+kill (the known stale-FFCx-lock trap) — the next run was clean.
+
+**Logs.** `20260802T183045Z_PORT-1-step1-costprobe.log` (mesh-only conformity),
+`…183226Z_…-solve008.log`, `…183423Z_…-solve012.log` (the 180 s kill),
+`…183747Z_…-boxsens.log`, `…184031Z_…-energy.log`. Elapsed 79 / 103 / 181 /
+152 / 77 s, standard tier throughout. Probe landed on `main`; attempt branch
+`attempt/PORT-1-step1-20260731T213516Z` deleted in the same commit, its content
+now fully captured. No permission denials.
+
+**Next-attempt hypothesis:** §9 item 5 (`PORT-1` step 2) is now unblocked and
+has its numbers. Write the gate at padding 0.08 / h_far 0.03, standard tier
+(~75 s for a single-box two-solve run); bound reciprocity at `1e-9`, `ωM₁₂` at
+10%, assert `Re Z₁₂` structurally zero, and **leave the diagonal ungated**
+pending a separate diagnosis of the self-term sign. The `M(2d)/M(d)` control
+needs its own mesh and will not fit alongside — make it its own test or take
+the heavy tier.
