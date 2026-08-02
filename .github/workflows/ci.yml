@@ -182,6 +182,7 @@ jobs:
           tests/validation/test_waveguide_cutoff.py \
           tests/validation/test_dielectric_sphere.py \
           tests/validation/test_poynting_balance.py \
+          tests/validation/test_current_divergence.py \
           tests/validation/test_resonance_guard.py \
           tests/validation/test_dodd_deeds_impedance.py \
           tests/mesh/test_two_torus_conforming.py \
@@ -195,6 +196,12 @@ jobs:
     # half runs in the `validation` job above and its `@complex_only` field-
     # leakage half (one 10 MHz solve on a 22k-cell mesh, 32 s at -n 2, log
     # 20260801T003600Z_GEO-8-field-gate-numbers.log) runs here.
+
+    # test_current_divergence.py is the `POST-3` step-3 gate: two solves on the
+    # piecewise-σ fixture plus four Poisson solves for the dual norms, 2.7 s at
+    # -n 2 (log 20260802T213238Z_POST-3-step3-gate-final.log). It must stay in
+    # this job — the residual is complex-valued and the real build cannot score
+    # the displacement current at all.
 
     # test_dodd_deeds_impedance.py is the `MAT-6` loading gate and costs 85 s of
     # the total (one 138k-cell mesh, three solves, measured at -n 2 on the dev

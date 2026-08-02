@@ -1651,3 +1651,53 @@ still wanted, the candidate is swapping σ between the two slabs while scoring
 against the honest σ(x) — untested, and it should be probed before it is
 gated. Cost is known: solve + residual is ~1.5 s at 12³, so a 16³/32³ pair
 sits inside the standard tier alongside the step-2 suite.
+
+## 2026-08-02T21:30Z — `POST-3` step 3 (§9 On-deck item 3) — **complete**
+
+Preflight clean, container Up, no fallback. Took item 3 (items 1–2 are done).
+Chunk is §4-done and the On-deck item is struck; `POST-3` itself stays 🟡
+(piecewise μᵣ and reciprocity are still open, and the `POST-1` cast defect is
+untouched).
+
+**What landed.** Attempt 1's parked branch `attempt/POST-3-step3-20260802T205600Z`
+came across **unchanged** — `post/current_divergence.py`, the probe, and the
+debug script, no edits to any of them — plus the new gate
+`tests/validation/test_current_divergence.py`, wired into the
+`validation-complex` CI job with a cost note.
+
+**Log of record** `20260802T213238Z_POST-3-step3-gate-final.log`: 7 passed in
+2.73 s at `-n 2` (4 s elapsed, standard tier, `tests/environment` first under
+`FEM_EM_REQUIRE_COMPLEX=1`). The gate prints every measured number, and they
+reproduce attempt 1's probe **to the printed digit**:
+
+| what | measured | gated at |
+|---|---|---|
+| CG2 rel. residual, 8³ | 9.316430e-2 | < 0.15 |
+| CG2 rel. residual, 12³ | 6.358255e-2 | < coarse |
+| rate in h | 0.942 | > 0.7 |
+| CG1 rel. residual, 8³ | 6.136073e-15 | < 1e-10 |
+| CG2/CG1 separation | 1.5e13 | > 1e6 |
+
+Three tests: the convergence gate, the vacuity control, and a cheap guard that
+`degree = 0` raises rather than returning a meaningless zero.
+
+**The control question is settled.** The step-3 plan's σ-dropped control is
+dead (attempt 1 measured 1.07×); the CG1-vs-CG2 contrast replaces it and is
+strictly better as a control — same solve, same field, same integral, only the
+test space changes, so the 1.5e13 separation isolates exactly the Galerkin
+orthogonality that would make the metric vacuous. The σ-swap candidate floated
+at the end of the previous entry was **not** pursued: it is not needed once the
+vacuity control is in place, and probing it would have been new work.
+
+**Cost correction for the plan's records.** Attempt 1 recorded the sweep at
+65 s; that was a cold JIT cache. Warm, the solves are 0.27 s (3072 cells) and
+0.89 s (10368 cells) and each dual-norm Poisson solve is 0.1–1.0 s, so the
+whole gate is under 3 s. There is room to add a third mesh if a later run wants
+a three-point rate instead of a two-point one.
+
+**Next.** Nothing outstanding on step 3. The open `POST-3` work is piecewise μᵣ
+(waits on a magnetic phantom) and reciprocity (now unblocked — `GEO-8` and
+`PORT-1` step 1 both landed, so the two-source fixture the §7 entry wanted
+exists). Trap (ii) — the identity on a coil drive, where it holds only outside
+the source support — is untested and is the natural extension when a driven
+fixture is available.

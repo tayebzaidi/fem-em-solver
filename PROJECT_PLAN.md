@@ -1034,6 +1034,29 @@ heavy tier, complex build)*
 > instead (same solve, 1e13× separation, mechanistic). Environment: `pc_type
 > hypre` aborts this image (SIGABRT in `hypre_ParCSRCommHandleDestroy`, log
 > `20260802T200303Z_POST-3-step3-probe.log`); use `gamg`.
+>
+> **Step 3 — ✅ done 2026-08-02, 16:30 implementer run.** Attempt 1's parked
+> module landed unchanged and the gate is written:
+> `tests/validation/test_current_divergence.py`, wired into `validation-complex`.
+> Log of record `20260802T213238Z_POST-3-step3-gate-final.log` — 7 passed in
+> 2.73 s at `-n 2` (standard tier, 4 s elapsed; the probe's 65 s was a cold JIT
+> cache, the solves themselves are 0.27 s at 8³ and 0.89 s at 12³). Three
+> assertions, all quantitative and all reproducing the probe to the printed
+> digit: the CG2 relative residual falls 9.316430e-2 (8³) → 6.358255e-2 (12³),
+> **rate 0.942 in h**, gated at `rate > 0.7` and `coarse < 0.15`; and the vacuity
+> control gates the CG1 residual at `< 1e-10` (measured 6.136073e-15) with a
+> CG2/CG1 separation gated at `> 1e6` (measured **1.5e13**). That contrast is the
+> negative control — same solve, same field, same integral, only the test space
+> changes — and it replaces the σ-dropped control the step-3 plan proposed, which
+> attempt 1 measured at 1.07× and disproved. The gate prints every measured
+> number to the log, so a later drift is separable from a regression.
+>
+> **What step 3 does *not* close.** The residual is scored on a boundary-driven
+> fixture with no volume source; on a coil drive the identity holds only outside
+> the source support (trap (ii)), and nothing here exercises that case yet. The
+> `POST-3` chunk itself stays 🟡 for the reasons listed above — piecewise μᵣ and
+> reciprocity are still open, and the `POST-1` cast defect still means the
+> *phantom-field* metrics are taken on `Re(E)`.
 
 ### PORT — Ports & S-parameters (Phase 4)
 
@@ -1300,8 +1323,10 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
    `TH-6` mould.
 3. **`POST-3`** — 🟡: steps 1–2 landed 2026-07-31 (Poynting real-power balance,
    4.13% on the `TH-6` fixture with a σ-blind control at 95.2%; then σ(x) as a
-   DG0 field, 4.49% on a two-slab σ = 0.1 | 1.4 S/m solve, control at 99.2%).
-   What remains is `∇·(σE)` and reciprocity.
+   DG0 field, 4.49% on a two-slab σ = 0.1 | 1.4 S/m solve, control at 99.2%);
+   step 3 landed 2026-08-02 (total-current divergence residual, 9.32e-2 → 6.36e-2
+   at rate 0.942 in h, with a CG1-vs-CG2 vacuity control separating by 1.5e13).
+   What remains is piecewise μᵣ and reciprocity.
 4. **`PORT-1`** — real port excitation from the solved field. Resolves the two
    deliberately-red port tests as a side effect. §7-grade implementation plan
    written 2026-07-31 (10:30 review): reaction Z-matrix on the two-torus
@@ -1376,7 +1401,15 @@ step 1 — items 3 and 4 are deliberately independent of the `PORT-1` chain.
    `PORT-1` step-1 plan; product is measurements, assert nothing. Cost is
    known: 2.8–3.0 s per solve at `-n 2`, the whole sweep ~2 min. Delete the
    attempt branch in the same commit — its content is then fully landed.
-3. **`POST-3` step 3 — total-current divergence residual**, independent.
+3. ~~**`POST-3` step 3 — total-current divergence residual**~~ ✅ **done**
+   2026-08-02 (16:30 run) — attempt 1's parked module landed unchanged and the
+   gate is written: `tests/validation/test_current_divergence.py`, in
+   `validation-complex`, log `20260802T213238Z_POST-3-step3-gate-final.log`,
+   7 passed in 2.73 s at `-n 2`. Gated on rate 0.942 in h (bound 0.7),
+   magnitude 9.32e-2 (bound 0.15), and the CG1-vs-CG2 vacuity control at 1.5e13
+   separation (bound 1e6). Attempt branch deleted — content fully landed.
+   `POST-3` stays 🟡: piecewise μᵣ and reciprocity remain. Original text:
+   **total-current divergence residual**, independent.
    🟡 **attempt 1 incomplete** (2026-08-02, 15:00 run) — metric written and
    measured (CG2 relative residual 9.32e-2 → 6.36e-2, rate 0.942 in h; CG1
    residual 6e-15, confirming trap (i)), gate test not written, parked on
