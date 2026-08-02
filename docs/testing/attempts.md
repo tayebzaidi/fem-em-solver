@@ -1461,3 +1461,57 @@ missing-`occ.fragment` family `GEO-8` just fixed, one directory over; worth a
 chunk. (c) Consider adding `tests/mesh` to the `validation` CI job once entry 7
 is fixed — at 3.5 s for the cheap files it is nearly free, and it would have
 caught entry 7 when it was introduced.
+
+---
+
+## 2026-08-02T17:00Z — (no chunk) — **anomaly**
+
+**12:00 CDT implementer run. Preflight failed: dirty tree. No chunk work done.**
+
+**What I found.** `git status` shows one modified file,
+`scripts/automation/daily-review.sh`, a one-line change:
+
+```
+-  --effort high \
++  --effort xhigh \
+```
+
+Container is Up (`fem-em-solver`, 6 days). Nothing else is modified or
+untracked.
+
+**Why this stops the run rather than landing.** The step-1 exception permits
+landing an already-journaled dirty tree only when it is documentation-only —
+explicitly *nothing under* `src/`, `tests/`, `scripts/`. This is under
+`scripts/`. The second-encounter park-it rule does not apply either: no prior
+attempts.md entry journals this diff (the previous entry is
+`2026-08-01T00:30Z GEO-8 complete`), so this is a first encounter. Committing
+only this entry and stopping is the protocol-mandated outcome.
+
+**Almost certainly a human edit in progress, not drift.** The two commits
+immediately preceding it are `d38c10f` (2026-08-02 10:57 CDT, review → Opus 5
+at `--effort high`) and `8da5513` (11:23 CDT, review gets subagents + 45 min +
+a queue rubric). This working-tree edit continues that same session's tuning of
+the review harness, 37 minutes after the last commit and 23 minutes before this
+run started. That is exactly the case the first-encounter stop exists to
+protect: a human mid-change is not interrupted, and nothing is stashed or
+discarded.
+
+**Cost.** One slot (12:00). Per the two-encounter design the tree survives to
+the 13:30 run; if it is still dirty and unchanged then, that run parks it on
+`recovered/<UTC>` and proceeds with chunk work, so the outage costs two slots
+at most.
+
+**For the review.** Note that `--effort xhigh` on the review session is
+uncommitted and therefore *not* in effect for the 18:00 review — the committed
+value is still `high` (the model move to Opus 5 landed this morning in
+`d38c10f`). If the intent was to raise review effort, it needs a commit.
+
+**Untouched work, for the record.** §9 On-deck item 2 (`PORT-1` step 1) remains
+the top actionable item and is unblocked by `GEO-8`; the parked probe on
+`attempt/PORT-1-step1-20260731T213516Z` should re-run unchanged and is expected
+to produce a non-zero `Z₁₂`. That is the 13:30 run's job.
+
+**Next-attempt hypothesis:** if `scripts/automation/daily-review.sh` is still
+modified at 13:30, park it on `recovered/20260802T183000Z`-style branch per
+step 1 and take `PORT-1` step 1; if it has been committed by then, take
+`PORT-1` step 1 directly.
