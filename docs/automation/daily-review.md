@@ -6,6 +6,16 @@ Run by `scripts/automation/daily-review.sh` via cron **three times daily**
 session, documentation work only — **no solves, no meshing**; reading harness
 logs is fine. You are maintaining the plan, not executing it.
 
+**Subagents are available to you, and web tools are not.** Because this session
+never solves or meshes, a subagent costs tokens rather than cores and does not
+touch the 12-core compute budget. Use them for the mechanical, parallel, read-
+heavy work — one auditor per newly-✅ chunk in step 3, an `Explore` sweep when
+step 5 asks whether the backlog still reaches §10 — and keep your own context
+for the judgement calls: what a negative result means, and what to queue next.
+A subagent's report is evidence, not a verdict; if one says a chunk passes §4,
+the log it cites is what you cite back in the commit. Do not delegate steps 2,
+6, or 7 — disposition, queue order, and the commit are yours.
+
 ## Steps
 
 1. Establish what happened since the last review:
@@ -53,15 +63,17 @@ logs is fine. You are maintaining the plan, not executing it.
 
 5. Assess against §10 success criteria: does the existing backlog still lead
    to the mission? If a gap exists, add new chunk entries (stable IDs,
-   §4-compliant done-whens, implementation plans with known traps named). If
-   no gap exists, do not invent work.
+   §4-compliant done-whens, implementation plans meeting the rubric below).
+   If no gap exists, do not invent work.
 
 6. Refresh **"On deck"** in §9: top it up to **at least 5** items not done or
    blocked — the 4 runs before the next review, plus one spare — ordered, each
    sized for one implementer run (≤ 1 h wall clock, ≤ 20 min per compute
    command, ≤ 12 ranks). An item that has failed twice must be rescoped before it may be
    listed again. If fewer than 5 ready items exist, list what exists and say
-   so — step 5 still forbids inventing work.
+   so — step 5 still forbids inventing work. Each listed item meets the rubric
+   below; an item that cannot yet state its anchor is not ready to queue, and
+   writing that anchor is itself the better queue item.
 
    **Prefer independent items over a dependency chain.** Four runs will take
    items 1–4 in order without waiting for each other's results, so an item
@@ -73,6 +85,51 @@ logs is fine. You are maintaining the plan, not executing it.
 7. Commit everything as `docs(plan): daily review YYYY-MM-DD`. If nothing
    needs changing, **commit nothing** — §5.2 explicitly prohibits audit-note
    commits, and that rule exists because of a 35-commit pile of them.
+
+## Rubric: what a queueable item states
+
+This is the standard the strongest items have already met — `PORT-1` step 1
+named its closed form, its meshed-vs-nominal current correction, and the two
+traps that had each cost a run, which is why it returned a decisive negative
+inside one slot instead of a confused half-result. Below that bar, the
+implementer spends its hour rescoping instead of measuring. Every item added in
+step 5 or listed in step 6 states all six:
+
+1. **The anchor** — the specific closed form, conservation/reciprocity
+   identity, or convergence rate the item will assert against, named with the
+   symbol or the function that computes it (`utils/analytical.py`, a paper's
+   kernel). "Check that it works" is not an anchor, and an item without one
+   cannot close a chunk under §4.
+2. **The negative control** — what a blind or broken solver returns on the same
+   fixture, and the separation to assert. Compute the *ceiling* before naming a
+   factor: `POST-3` step 2's blind imbalance saturates just under 100%, so
+   1/0.1185 = 8.4× is arithmetically the most that fixture can show and a 10×
+   bar would have been unreachable, not merely unmet.
+3. **Tier, ranks, and expected wall clock** — smoke 30 s / standard 180 s /
+   heavy 1200 s, the rank count, and a cost estimate taken from a prior
+   measurement where one exists (a probe's solve time, a comparable fixture).
+   An item nobody has costed is an item that overruns.
+4. **The traps already paid for** — name the failures this project has already
+   bought, so the run does not buy them twice: `ufl.max_value` does not compile
+   in the complex build; a killed run leaves a stale FFCx lock that fails the
+   next until `~/.cache/fenics` is cleared; `cell_tags.values` and
+   `assemble_scalar` are rank-local; pytest captures prints without `-s`;
+   `-k a or b` splits into stray argv inside an already-quoted container
+   command. Add to this list as runs discover more.
+5. **The scope boundary** — what the item does *not* close, stated so the
+   implementer holds the chunk at 🟡 rather than over-claiming. `POST-3` step 1
+   correctly stayed 🟡 because a scalar-σ identity does not gate the coil+
+   phantom case, which is where it would earn its keep.
+6. **What a negative result means** — the disposition if the measurement comes
+   back wrong or zero. The answer is always *report the measurement and stop*,
+   never fabricate a gate around it or loosen a bound to swallow it; the item
+   should say which artifact captures it (a §7 annotation, a known-issues
+   entry, an `attempt/*` branch).
+
+Prefer items where a negative result is still informative — those convert a
+failed hour into a finding. `PORT-1` step 1 measured exactly-zero mutual
+coupling and thereby found the unfragmented mesh that had been quietly
+corrupting three other fixtures.
 
 ## Constraints
 

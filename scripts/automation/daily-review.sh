@@ -23,14 +23,18 @@ fi
 cd "$REPO"
 START="$(date '+%Y-%m-%d %H:%M %Z')"
 
-# 30 min wall-clock cap; review is documentation work and should be well under.
+# 45 min wall-clock cap. Reviews ran 7-9 min against the old 30 min ceiling;
+# the headroom is for subagent fan-out (step 3 audit), and the next implementer
+# slot is 90 min out, so overrunning the cap cannot collide with it.
 # Permissions come from .claude/settings.json (allowlist + denies); acceptEdits
-# auto-approves file edits inside the repo only. Web and subagent tools are off.
-timeout --kill-after=60 1800 "$CLAUDE_BIN" \
+# auto-approves file edits inside the repo only. Web tools stay off; subagents
+# are ON for this session -- it is documentation-only, so they spend tokens,
+# not cores, and the 12-core compute budget is untouched.
+timeout --kill-after=120 2700 "$CLAUDE_BIN" \
   --model claude-opus-5 \
   --effort high \
   --permission-mode acceptEdits \
-  --disallowedTools WebFetch WebSearch Task Agent \
+  --disallowedTools WebFetch WebSearch \
   -p "Scheduled daily review session, started ${START}. Read docs/automation/daily-review.md and execute it exactly. Documentation work only: no solves, no meshing." \
   >> "$LOG" 2>&1
 STATUS=$?
