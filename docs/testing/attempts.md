@@ -1701,3 +1701,9 @@ a three-point rate instead of a two-point one.
 exists). Trap (ii) — the identity on a coil drive, where it holds only outside
 the source support — is untested and is the natural extension when a driven
 fixture is available.
+
+**Post-commit cohabitation check** (log `20260802T213440Z_POST-3-step3-cohabit.log`):
+the new file and `test_poynting_balance.py` — which it imports its fixture from —
+run in one session, 12 passed in 68.33 s at `-n 2`, standard tier. The 68 s is
+the step-2 Poynting suite's own cost; the step-3 gate adds ~3 s to the
+`validation-complex` job.
