@@ -108,11 +108,38 @@ them by number.
 | **Symptom** | `gmsh.py:2006: Exception: Invalid boundary mesh (overlapping facets) on surface 3 surface 49` (birdcage) and `dolfinx/io/gmshio.py:118: AssertionError` ×2 (coil+phantom) — the meshes never reach dolfinx |
 | **Cause** | Not diagnosed. Found 2026-08-01 by the `GEO-8` run, which ran `tests/mesh` as a regression sweep; the whole directory is in no CI job, which is why these were invisible. Both fixtures are untouched by `GEO-8` (it changed `two_torus_domain` only). |
 | **Verified pre-existing at** | `63c94f2` — the `GEO-8` diff touches neither generator; log `20260801T004839Z_GEO-8-unrelated-failures.log`, 3 failed 2 passed in 3.5 s at `-n 2` |
-| **Note** | Likely the same overlapping-geometry family `GEO-8` just fixed for `two_torus_domain`: `coil_phantom_domain` and the birdcage fixture should be audited for missing `occ.fragment`. |
+| **Note** | ~~Likely the same overlapping-geometry family `GEO-8` just fixed for `two_torus_domain`: `coil_phantom_domain` and the birdcage fixture should be audited for missing `occ.fragment`.~~ **Half wrong — corrected 2026-08-02, 18:00 review, by code reading (not by execution).** `coil_phantom_domain` **already fragments** (`io/mesh.py:1616`), so its cause is downstream of fragment; the visible fragility is the group re-derivation at `io/mesh.py:1622-1634`, which assumes fragment returns exactly four volumes and leaves any extra piece with no physical group — which is what `gmshio.py:118` asserts on. The **birdcage** does match the family, differently: it uses `occ.cut(..., removeTool=False)` (`io/mesh.py:1970`), so the conductors, phantom and port boxes are never booleaned against *each other* and the port boxes overlap the legs by construction — hence "overlapping facets". The birdcage's port boxes also receive no 3-D physical group (`io/mesh.py:1985-1988`). |
+| **Owned by** | `GEO-9` (created 2026-08-02): step 1 coil+phantom, step 2 birdcage. Two of the four §10 Target criteria route through these two fixtures. |
 
 ---
 
 ## Non-test issues
+
+### Reaction Z-matrix diagonal is negative where it must be inductive
+
+Found 2026-08-02 by `PORT-1` step 1; **not diagnosed, not fixed, and not gated by
+any test** — recorded here because the number is wrong in a way a later run would
+otherwise re-discover from scratch.
+
+On the two-torus air fixture (a = 0.04 m, r_wire = 0.005 m, d = 0.04 m,
+f = 10 MHz), the reaction integral `Z_i1 = −(1/(I₁Iᵢ))∫E₁·Jᵢ dV` returns
+`Im Z₁₁ ≈ −40.9 Ω` (`-4.069329e+01j` at
+`20260802T183226Z_PORT-1-step1-solve008.log:442`, and −41.09 / −40.97 at the two
+boxsens configurations). A lossless loop must be inductive, `+ωL`; a Grover
+estimate `ωL ≈ μ₀ωa(ln(8a/r_wire) − 2) ≈ 6.8 Ω` — **hand-evaluated, in no log**.
+So the diagonal is wrong in sign and ~6× in magnitude, while the *off*-diagonal
+on the same solve is right in sign and within 5–9% of its closed form. That
+contrast points at the self-term (the source's own singular field inside the
+driven wire entering `∫E·J` over the source region) rather than at a global
+convention error, but nothing has been measured to confirm it.
+
+**Consequence:** no input impedance and no `S₁₁` derived from this path means
+anything yet. `PORT-1` step 2 therefore leaves the diagonal **ungated** —
+deliberately, and *not* by widening a bound. `PORT-1` step 2b (§7) owns the
+diagnosis, and its anchor is the complex-power identity
+`Im Z₁₁ = 4ω(W_m − W_e)/|I₁|²` as an independent second derivation.
+
+Remove this entry with the commit that explains the sign.
 
 ### Birdcage suite is over the compute budget
 

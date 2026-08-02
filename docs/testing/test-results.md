@@ -1,6 +1,10 @@
-# FEM-EM Manual Test Results
+# FEM-EM Test Results
 
-This file is append-only and records test runs executed by the human operator.
+This file is append-only and is written by `scripts/testing/run_and_log.sh`.
+It records every harness run, whoever or whatever started it — in practice
+almost all of them are agent runs, since §4.2 requires the agent to execute its
+own verification. *(Header corrected 2026-08-02, 18:00 review: it previously
+said "executed by the human operator", which contradicts §4.2.)*
 Each run has a full log in `docs/testing/logs/`.
 
 | UTC Timestamp | Chunk | Commit | Elapsed (s) | Env | Exit | Log |
