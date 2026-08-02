@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Scheduled daily plan review (Opus, high effort). Installed in crontab; see
+# Scheduled daily plan review (Opus, xhigh effort). Installed in crontab; see
 # docs/automation/daily-review.md for the protocol the session follows.
 set -euo pipefail
 
@@ -32,7 +32,7 @@ START="$(date '+%Y-%m-%d %H:%M %Z')"
 # not cores, and the 12-core compute budget is untouched.
 timeout --kill-after=120 2700 "$CLAUDE_BIN" \
   --model claude-opus-5 \
-  --effort high \
+  --effort xhigh \
   --permission-mode acceptEdits \
   --disallowedTools WebFetch WebSearch \
   -p "Scheduled daily review session, started ${START}. Read docs/automation/daily-review.md and execute it exactly. Documentation work only: no solves, no meshing." \
