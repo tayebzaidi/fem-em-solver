@@ -1013,6 +1013,27 @@ heavy tier, complex build)*
 > recorded rate, and a negative control — score the residual with σ dropped
 > from ε_c on the honest solve; the interface jump in `jωε₀εᵣE_n` alone must
 > then surface. Complex build, standard tier (the step-2 suite is 64 s).
+>
+> **Step 3 attempt 1 — 🟡 incomplete, 2026-08-02 15:00 implementer run.** Metric
+> written and measured; gate test not written, so nothing flips. Parked on
+> `attempt/POST-3-step3-20260802T205600Z`
+> (`post/current_divergence.py::current_divergence_residual` + probe), journalled
+> in attempts.md 2026-08-02T20:00Z, log
+> `20260802T201000Z_POST-3-step3-probe2.log`. The residual is measured as a
+> **dual norm** — `sup |∫J_tot·∇v̄dV| / ‖∇v‖` over degree-p Lagrange vanishing on
+> the wall, computed exactly via the Riesz representer (a Poisson solve, 0.5–1 s,
+> `gamg`), normalised by `‖J_tot‖_{L²}` so it is dimensionless and ≤ 1.
+> Measured on the piecewise-σ fixture: CG2 relative residual 9.316e-2 (8³) →
+> 6.358e-2 (12³), **rate 0.942 in h**. Trap (i) confirmed hard: the CG1 residual
+> is **6e-15**, 1.5e13× smaller — Galerkin orthogonality, exactly as predicted.
+> **The negative control proposed above does not work and must be replaced:**
+> dropping σ from `J_tot` moves the relative residual by 1.07% — 9.32e-2 →
+> 9.96e-2 — and the absolute dual norm *falls*, because `‖J_tot‖` falls with it;
+> at 64 MHz the two currents are comparable and the O(h) N1curl interpolation
+> error dominates the interface jump. Use the CG1-vs-CG2 contrast as the control
+> instead (same solve, 1e13× separation, mechanistic). Environment: `pc_type
+> hypre` aborts this image (SIGABRT in `hypre_ParCSRCommHandleDestroy`, log
+> `20260802T200303Z_POST-3-step3-probe.log`); use `gamg`.
 
 ### PORT — Ports & S-parameters (Phase 4)
 
@@ -1356,6 +1377,13 @@ step 1 — items 3 and 4 are deliberately independent of the `PORT-1` chain.
    known: 2.8–3.0 s per solve at `-n 2`, the whole sweep ~2 min. Delete the
    attempt branch in the same commit — its content is then fully landed.
 3. **`POST-3` step 3 — total-current divergence residual**, independent.
+   🟡 **attempt 1 incomplete** (2026-08-02, 15:00 run) — metric written and
+   measured (CG2 relative residual 9.32e-2 → 6.36e-2, rate 0.942 in h; CG1
+   residual 6e-15, confirming trap (i)), gate test not written, parked on
+   `attempt/POST-3-step3-20260802T205600Z`. The next attempt lands that branch
+   and writes the gate; **the σ-dropped negative control in the plan below is
+   dead** (1.07× separation, measured) — use the CG1-vs-CG2 contrast instead.
+   See the §7 entry and attempts.md 2026-08-02T20:00Z.
    Execute the §7 `POST-3` step-3 plan on the existing piecewise-σ fixture.
    The two traps (CG1 vacuity by Galerkin orthogonality — test against
    `∇(CG2)`; and the identity is on total current, not `σE` alone) are the

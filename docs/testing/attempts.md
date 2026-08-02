@@ -1582,3 +1582,72 @@ has its numbers. Write the gate at padding 0.08 / h_far 0.03, standard tier
 pending a separate diagnosis of the self-term sign. The `M(2d)/M(d)` control
 needs its own mesh and will not fit alongside — make it its own test or take
 the heavy tier.
+
+## 2026-08-02T20:00Z — `POST-3` step 3 (§9 On-deck item 3) — **incomplete**
+
+Preflight clean, container Up, no fallback. Took item 3 (items 1–2 are done).
+Parked on `attempt/POST-3-step3-20260802T205600Z`: the metric is written and
+measured, the gate test is not, so nothing flips.
+
+**What was built.** `post/current_divergence.py::current_divergence_residual` —
+the weak residual of `∇·J_tot = 0`, `J_tot = (σ(x) + jωε₀εᵣ(x))E`, measured as
+a **dual norm** rather than a bare integral: `R(v) = ∫J_tot·∇v̄dV` over the
+degree-`p` Lagrange space vanishing on the wall, `‖R‖ = sup|R(v)|/‖∇v‖`. The
+supremum is computed exactly, not estimated — the Riesz representer `φ` of `R`
+under `∫∇u·∇v̄` solves a Poisson problem, and `‖R‖ = ‖∇φ‖`. Normalised by
+`‖J_tot‖_{L²}`, so the reported number is dimensionless and Cauchy-Schwarz
+bounds it by 1, which is the `‖ε_cE‖·‖∇v‖` scale the plan asked for. `degree`
+and `include_sigma` are arguments so the two traps can be *measured* rather
+than asserted in prose.
+
+**Measured** (log `20260802T201000Z_POST-3-step3-probe2.log`, standard tier,
+`-n 2`, 65 s total; probe `scripts/probes/post3_step3_probe.py`) on the
+existing piecewise-σ fixture (0.1 | 1.4 S/m across x = L/2, boundary-driven, no
+volume source):
+
+| n | cells | CG2 rel. residual | CG1 rel. residual | σ-dropped CG2 |
+|---|---|---|---|---|
+| 8 | 3072 | 9.316e-2 | 6.14e-15 | 9.96e-2 |
+| 12 | 10368 | 6.358e-2 | 1.77e-14 | 6.75e-2 |
+
+Rate **0.942 in h** — O(h), the same order as the step-1/2 Poynting leg. Solve
+cost is negligible: the CG2 Poisson is 0.5–1.0 s at 28–34 CG iterations.
+
+**Trap (i) is real and now quantified.** The CG1 residual is **6e-15**, i.e.
+1.5e13× smaller than the CG2 one at the same mesh: Galerkin orthogonality
+against the degree-1 N1curl test space enforces it identically, exactly as the
+plan predicted. That contrast is the strongest single number this run produced
+and should become a test on its own — it is the vacuity `POST-3` exists to
+remove, made executable.
+
+**The plan's negative control does not work.** Dropping σ from `J_tot` on the
+honest solve moves the relative residual by **1.07×** (9.32e-2 → 9.96e-2), and
+the *absolute* dual norm actually **falls** (2.61e-3 → 1.40e-3) because `‖J‖`
+falls with it. The interface jump in `jωε₀εᵣE_n` does not surface above the
+O(h) discretisation floor: at 64 MHz on this fixture the conduction and
+displacement currents are comparable in size, and the residual is dominated by
+the N1curl interpolation error, not by which current the σ term cancels. So
+this control cannot separate signal from floor and must not be gated on.
+
+**Two PETSc/environment findings.** (a) `pc_type hypre` / BoomerAMG **aborts
+this image** — `double free or corruption`, SIGABRT inside
+`hypre_ParCSRCommHandleDestroy` → `PMPI_Waitall`, at 6³ on two ranks
+(`20260802T200303Z_POST-3-step3-probe.log`); `gamg` is clean and is now the
+module default, with the reason in a code comment. (b) `preonly`/LU as the
+curl-curl solver uses would not fit the 32³ CG2 space (~275k dofs) anyway.
+
+No permission denials. Timebox: the hypre abort cost ~10 minutes of the hour
+and the gate test was not started before minute 45.
+
+**Next-attempt hypothesis:** the module is done; what is missing is the gate,
+and one of its two assertions needs replacing. Write
+`tests/validation/test_current_divergence.py` with (1) convergence — CG2
+relative residual falls 16³ → 32³ with rate > 0.85, reusing
+`_two_material_mesh`, and (2) the CG1-vs-CG2 vacuity contrast as the negative
+control **in place of the σ-dropped one**, asserting CG1 < 1e-10 and
+CG2/CG1 > 1e6: it is a real, large, mechanistic separation on the same solve,
+where the σ-drop is 1.07× and inside the floor. If a σ-sensitive control is
+still wanted, the candidate is swapping σ between the two slabs while scoring
+against the honest σ(x) — untested, and it should be probed before it is
+gated. Cost is known: solve + residual is ~1.5 s at 12³, so a 16³/32³ pair
+sits inside the standard tier alongside the step-2 suite.
