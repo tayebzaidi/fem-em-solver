@@ -203,6 +203,17 @@ Remove this entry with the commit that explains the sign.
 
 ### Birdcage suite is over the compute budget
 
+**Reinterpretation (2026-08-03, 10:30 review): the ~10-minute figure below is
+probably not meshing cost.** `GEO-9` step 2a established that a failing birdcage
+*hung* the process — pytest reported in ~3 s while the harness burned its whole
+`timeout` and exited 124 — and this entry's measurement predates that discovery,
+so "~10 minutes on its own" and "exceeded a 700 s bound" are consistent with a
+hang at the ceiling, not with 10 minutes of gmsh work. Post-2a the failure is
+prompt (exit 1 in ~13 s). The true meshing cost of a *fixed* geometry is
+unmeasured; `GEO-9` step 2b's cost probe settles this entry's figure — update it
+with whatever the probe finds. The rank-local tag bug below is also owned by
+step 2b (its plan switches the test to `global_cell_tag_set()`).
+
 `tests/mesh/test_birdcage_port_tags.py` takes **~10 minutes** on its own — the rest of
 `tests/mesh` runs in 9.7 s. A full `tests/mesh` run exceeded a 700 s bound; excluding
 birdcage it is trivial. Exclude it from routine runs:
