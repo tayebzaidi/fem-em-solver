@@ -222,6 +222,7 @@ jobs:
           tests/validation/test_dodd_deeds_impedance.py \
           tests/validation/test_port_reaction_impedance.py \
           tests/validation/test_port_self_impedance_energy.py \
+          tests/validation/test_port_gradient_load.py \
           tests/mesh/test_two_torus_conforming.py \
           tests/solver/test_time_harmonic_smoke.py \
           tests/solver/test_boundary_condition_selection.py \
@@ -247,6 +248,14 @@ jobs:
     # 20260803T050252Z_PORT-1-step2b-gate.log). It gates the complex-power
     # identity Im Z11 = 4w(W_m - W_e)/I^2 against the reaction diagonal, so it
     # is complex only and it shares the step-2 file's constants by import.
+
+    # test_port_gradient_load.py is the `PORT-1` step-2d measurement: the same
+    # mesh (21 s), one 10 MHz curl-curl solve (18 s) and one CG1 Poisson solve
+    # (1 s), 41.5 s in total at -n 2 (log 20260803T183556Z_PORT-1-step2d-gate.log).
+    # It gates the gradient-subspace identity int E.grad(q) = (j/(w.eps0))
+    # int J.grad(q) and reports ||P_G J||^2/(w.eps0.I^2) = 48.52 Ohm, i.e. the
+    # whole of the step-2b electric-energy excess. Complex only -- the identity's
+    # discriminating content is the factor j.
 
     # test_current_divergence.py is the `POST-3` step-3 gate: two solves on the
     # piecewise-σ fixture plus four Poisson solves for the dual norms, 2.7 s at

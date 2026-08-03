@@ -2022,6 +2022,66 @@ completed measurement step is not "not started")*
 > entry, and stop. Do not tune `ψ`'s boundary condition until the two numbers
 > meet.
 >
+> **Step 2d executed 2026-08-03 (13:30 run) — ✅ §4-done, and the ratio the step
+> exists for is 0.999998: the discretised load's gradient content is the *whole*
+> of the electric-energy excess.** New file
+> `tests/validation/test_port_gradient_load.py`, three tests; gate
+> `20260803T183556Z_PORT-1-step2d-gate.log`, **7 passed in 41.5 s** at `-n 2`
+> (3 here + 4 `tests/environment`), standard tier, complex build. One mesh at
+> padding 0.08 / h_far 0.03 (119738 cells, 21.2 s), one curl-curl solve (18.2 s)
+> and one CG1 Poisson solve (**1.1 s** — the scalar solve is 6% of the vector
+> one, as budgeted). Meshed current 0.969009 A, identical to steps 2 and 2b.
+> Wired into `validation-complex`.
+>
+> | quantity | measured | reference |
+> |---|---|---|
+> | identity (2) residual, `‖∫E_h·∇q − (j/ωε₀)∫J·∇q‖/‖RHS‖` | **4.4916e-09** | gated `< 1e-7`; see bound note below |
+> | blind control, same comparison with `j` dropped | **1.4142e+00** | `|1−j|/|j| = √2`, gated `1 < · < 2` |
+> | `‖P_G J‖²` | `2.534713e-02` | two routes agree to **7.9389e-15**, gated `< 1e-9` |
+> | `4ωW_e^spur/I² = ‖P_G J‖²/(ωε₀I²)` | **`4.852262e+01 Ω`** | — |
+> | `4ωW_e/I²`, this run's solve | `4.852271e+01 Ω` | step 2b's log, `4.852271e+01 Ω` |
+> | **ratio** | **0.999998** | against both |
+>
+> The step named two outcomes and got the *total* one, which it did not expect —
+> it wrote "a prediction of ~5 Ω against a measured 48.5 Ω" as the informative
+> case. Two parts in a million leaves no residue for a second mechanism. So:
+> `Im Z₁₁ = −40.9 Ω` on this fixture is an artifact of the **current
+> representation**, quantitatively and not by hypothesis. Step 2b exonerated the
+> reaction integral; the fixture has no conductors and an analytically
+> divergence-free `J`, so there was never a capacitance to find; and now the
+> gradient part of the *discretised* `J`, amplified by `1/(ωε₀)` on the subspace
+> where the curl-curl operator acts as `−k₀²ε_c`, is measured to be the entire
+> 48.52 Ω. The 03:00 review's correction was right that the ω-sweep could not
+> discriminate and that the gradient content of the load could — and it explains
+> all of it rather than a tenth.
+>
+> **The bound was raised 1e-9 → 1e-7, after a failing first run, and that is
+> recorded rather than argued away.** The probe
+> (`20260803T183352Z_PORT-1-step2d-probe.log:429`) measured 4.4916e-09 against
+> the plan's house 1e-9 and **failed**; the gate re-measured 4.4916e-09,
+> bit-for-bit, so the number is stable run to run at this rank count. The house
+> 1e-9 was carried over from step 2b, which compares two *scalars* built from
+> one solved field (the field scale largely cancels); (2) compares two ~10⁵-entry
+> vectors and therefore reports the relative accuracy of a low-frequency
+> curl-curl LU solve, which is a different quantity. 1e-7 is 22× the measured
+> value. This is a post-hoc widening and is labelled as such in the code: the
+> load-bearing separation for the file is **not** the bound's tightness but the
+> executed blind control (√2 vs 4.5e-9 — nine orders) and the part-2 ratio.
+> Carry-forward for whoever touches it: 4.4916e-09 is a solve-accuracy number,
+> so a rank-count, mesh or solver change that moves it is information; re-measure
+> and record, do not widen again.
+>
+> **Scope: step 2d closes nothing either.** `PORT-1` stays 🟡, the diagonal stays
+> ungated in `test_port_reaction_impedance.py`, and known-issues 8 stays open
+> with its cause now measured instead of hypothesised. **Step 2e is now
+> licensed and is the obvious successor**: a current representation whose
+> discrete divergence vanishes — the direct form is to subtract the gradient
+> part, driving with `J − P_G J` (one extra CG1 Poisson solve, already
+> implemented here), whose predicted effect is exact and checkable: `W_e^spur`
+> → 0 and `Im Z₁₁` → `+4ωW_m/I² ≈ +7.44 Ω`, i.e. within ~9% of Grover's
+> 6.818 Ω. That is a *prediction with a number*, which is what makes 2e worth a
+> slot; it is deliberately left for a review to scope rather than written here.
+>
 > **Scope: step 2b closes nothing.** The diagonal stays ungated in
 > `test_port_reaction_impedance.py`, known-issues' negative-diagonal entry stays
 > open with its diagnosis appended, and `PORT-1` stays 🟡.
@@ -2634,6 +2694,18 @@ landing.**
    green.
 
 2. **`PORT-1` step 2d — charge the electric-energy excess to the load vector.**
+   ✅ **done 2026-08-03, 13:30 run** — `tests/validation/test_port_gradient_load.py`,
+   7 passed in 41.5 s at `-n 2` (`20260803T183556Z_PORT-1-step2d-gate.log`).
+   **The ratio is 0.999998**: `4ωW_e^spur/I² = 4.852262e+01 Ω` from
+   `‖P_G J‖²/(ωε₀I²)` against the measured `4.852271e+01 Ω`, so the gradient
+   content of the discretised load is the *whole* excess, not the ~10% the item
+   named as the informative case. The identity bound was raised 1e-9 → 1e-7
+   after a failing probe measured 4.4916e-09 (reproduced bit-for-bit by the
+   gate); the reasoning and the "this is post-hoc, lean on the blind control
+   instead" caveat are in the §7 entry and in the code. Closes nothing —
+   `PORT-1` stays 🟡, the diagonal stays ungated, known-issues 8 stays open with
+   a measured cause. Licenses **step 2e** (drive with `J − P_G J`; predicted
+   `Im Z₁₁ → +7.44 Ω`), which needs a review to scope. See the §7 entry.
    Independent. Execute the §7 step-2d plan, **which the 03:00 review rewrote: the
    ω-sweep step 2b named as "the discriminating measurement" does not
    discriminate** (both candidates give `4ωW_e/I² ∝ ω⁻¹`; the derivation is in

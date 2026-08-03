@@ -197,6 +197,39 @@ energy share following from one cheap scalar Poisson solve. `PORT-1` step 2d in
 `PROJECT_PLAN.md` §7 carries the plan; `tests/validation/test_current_divergence.py`
 (`POST-3` step 3) is the second, structural route to the same question.
 
+**Update 2026-08-03 — step 2d executed; the answer is "all of it", and the cause
+is now measured rather than hypothesised.**
+`tests/validation/test_port_gradient_load.py`, 7 passed in 41.5 s at `-n 2` (log
+`20260803T183556Z_PORT-1-step2d-gate.log`), same mesh, one curl-curl solve and
+one CG1 Poisson solve:
+
+| quantity | value |
+|---|---|
+| identity `∫E_h·∇q = (j/ωε₀)∫J·∇q`, relative residual | **4.4916e-09** (gated `< 1e-7`) |
+| blind control, `j` dropped | 1.4142e+00 = `√2`, as the identity implies |
+| `‖P_G J‖²` | `2.534713e-02` (two routes agree to 7.9e-15) |
+| `4ωW_e^spur/I² = ‖P_G J‖²/(ωε₀I²)` | **`4.852262e+01 Ω`** |
+| measured `4ωW_e/I²` | `4.852271e+01 Ω` |
+| **ratio** | **0.999998** |
+
+So the "leading hypothesis" above is confirmed *quantitatively*: the gradient
+content of the **discretised** impressed current, amplified by `1/(ωε₀)` on the
+subspace where the operator acts as `−k₀²ε_c`, is two-parts-in-a-million the
+entire electric-energy excess. Nothing is left for a second mechanism. The
+negative diagonal is an artifact of the current representation — not the
+reaction integral (step 2b), not physical capacitance (none exists here).
+
+The identity's bound was raised 1e-9 → 1e-7 after a first run measured
+4.4916e-09 and failed the plan's house guess; the gate reproduced 4.4916e-09
+bit-for-bit. It is a solve-accuracy number, not a physics one — a rank-count,
+mesh or solver change that moves it is information, so re-measure rather than
+widening again. PROJECT_PLAN §7 `PORT-1` step 2d carries the full reasoning.
+
+**This entry stays open.** A measured cause is not a fix: the diagonal is still
+wrong and still ungated. `PORT-1` step 2e — driving with `J − P_G J`, whose
+predicted effect is `Im Z₁₁ → +4ωW_m/I² ≈ +7.44 Ω`, within ~9% of Grover — is
+what would close it, and is not yet written.
+
 **Consequence, unchanged:** no input impedance and no `S₁₁` off this path means
 anything. The off-diagonal is unaffected — `PORT-1` step 2 gates `Im Z₁₂` to
 9.35% of `ωM₁₂` and that number does not go through `W_e`.

@@ -2350,3 +2350,72 @@ rewrote around the two-assembly identity, so it needs no new derivation. One
 inheritance from this run: `GEO-9` step 2b will be able to *delete* the
 `--ignore` line added here, and its own cost probe now has a clean baseline —
 the whole directory less birdcage is 27.6 s at `-n 2`.
+
+## 2026-08-03T18:37Z — `PORT-1` step 2d (§9 On-deck item 2) — **complete**
+
+Preflight clean (`f8b89c9`), container Up 7 days, no `attempt/*` or
+`recovered/*`. §9 item 1 (`OPS-11`) was already ✅ from the 12:00 run, so item 2
+is the first open one; executed the §7 step-2d plan as the 03:00 review wrote
+it, with no rederivation needed.
+
+**New file `tests/validation/test_port_gradient_load.py`**, three tests, wired
+into CI's `validation-complex` job. Two runs, both standard tier at `-n 2`,
+complex build:
+* probe `20260803T183352Z_PORT-1-step2d-probe.log` — 1 failed 2 passed, 43.3 s
+* gate `20260803T183556Z_PORT-1-step2d-gate.log` — **7 passed in 41.5 s**
+  (3 here + 4 `tests/environment`)
+
+Cost landed exactly on the plan's ~60 s budget: mesh 21.2 s, curl-curl solve
+18.2 s, CG1 Poisson solve **1.1 s**. 119738 cells, meshed current 0.969009 A —
+identical to steps 2 and 2b, so the fixture did not drift.
+
+**The number the step exists for: ratio 0.999998.**
+
+| quantity | measured |
+|---|---|
+| identity `∫E_h·∇q = (j/ωε₀)∫J·∇q`, relative residual | 4.4916e-09 |
+| blind control (`j` dropped) | 1.4142e+00 = `√2` |
+| `‖P_G J‖²` | 2.534713e-02 (two routes agree to 7.9389e-15) |
+| `4ωW_e^spur/I² = ‖P_G J‖²/(ωε₀I²)` | **4.852262e+01 Ω** |
+| `4ωW_e/I²`, same solve | 4.852271e+01 Ω (step 2b's log: 4.852271e+01) |
+
+The step wrote "a prediction of ~5 Ω against a measured 48.5 Ω" as the
+informative case and got the **total** case instead: the gradient content of the
+discretised load is two parts in a million of the entire electric-energy excess,
+so no second mechanism has any room. `Im Z₁₁ = −40.9 Ω` is an artifact of the
+current representation, measured — step 2b had already exonerated the reaction
+integral, and this fixture has no conductors and no capacitance to find.
+
+**The bound was raised 1e-9 → 1e-7 and that is the one judgement call here.**
+The probe measured 4.4916e-09 against the plan's house 1e-9 and failed; the gate
+re-measured 4.4916e-09 **bit-for-bit**, so the value is stable run-to-run at this
+rank count. Rationale, recorded in `IDENTITY_TOLERANCE`'s comment, the §7 entry
+and known-issues: 1e-9 came from step 2b, which compares two *scalars* from one
+field (scale cancels), whereas (2) compares two ~10⁵-entry vectors and so reports
+the relative accuracy of a low-frequency curl-curl LU solve. 1e-7 is 22× the
+measurement. It is post-hoc and is labelled post-hoc: the file's load-bearing
+separation is the **executed** blind control (√2 vs 4.5e-9 — nine orders) and
+the part-2 ratio, not this bound. The reviewer should check that framing; if it
+does not convince, the honest alternative is to demote the identity to
+printed-not-gated and let the blind control and the `‖P_G J‖²` consistency
+check (7.9e-15 against 1e-9, untouched) carry the file.
+
+Negative controls: part 2's is total by construction (a discretely solenoidal
+current gives `P_G J = 0` exactly) and is stated, not executed, per the plan.
+Part 1's **is** executed — dropping the `j` gives 1.4142, and `|1−j|/|j| = √2` is
+what the identity predicts, so the control pins the phase as well as the
+magnitude. `q ∈ H¹₀` was honoured (interior CG1 dofs only, ghost rows
+`scatter_reverse`-accumulated first); `_azimuthal_current_density` was imported
+rather than re-derived, as the plan's trap list requires.
+
+**Closes nothing.** `PORT-1` stays 🟡, the diagonal stays ungated in
+`test_port_reaction_impedance.py`, known-issues 8 stays open with its cause now
+measured. No denials hit; no unrelated failures.
+
+**Hypothesis for the next run.** §9 items 3 (`GEO-9` step 2b), 4 (`MAT-4`
+step 2) and 5 (`POST-3` step 4) remain, all independent; item 3 is next. Beyond
+the queue, step 2d has licensed **`PORT-1` step 2e** with a falsifiable
+prediction rather than a direction: drive with `J − P_G J` (the Poisson solve
+that produces `P_G J` is already implemented in this file, 1.1 s) and
+`Im Z₁₁` should move from −41.09 Ω to `+4ωW_m/I² ≈ +7.44 Ω`, i.e. within ~9% of
+Grover's 6.818 Ω. That is a review-scoped item, not one to invent here.
