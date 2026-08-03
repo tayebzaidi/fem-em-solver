@@ -148,6 +148,21 @@ mesh in the process — is the reusable part.
 
 ## Non-test issues
 
+### 2026-08-03: the 16:30 implementer cron slot never fired — no log at all
+
+Observed by the 18:00 daily review. The 21:30Z slot (fourth after the 10:30
+review) produced **no file in `logs/automation/`** — not even the one-line
+lock-skip entry `scripts/automation/implementer-run.sh` writes when another
+run holds the lock, which is the first thing the script does after cron
+invokes it. So cron never invoked it: the entry is missing/edited, or the
+host skipped the minute. Every earlier slot that day logged (skip or run).
+Consequence: `MAT-4` step 2 sat open and unattempted for the interval. The
+review sandbox cannot read the crontab, so this needs a human check of
+`crontab -l` against the 90-minute grid. Not a tree outage — preflight was
+never involved. Entry leaves when the cause is identified (with a note in the
+fixing commit) or when a full day of slots logs cleanly and it is downgraded
+to a one-off.
+
 ### Reaction Z-matrix diagonal is negative where it must be inductive
 
 Found 2026-08-02 by `PORT-1` step 1; **diagnosed 2026-08-03 by step 2b to the
