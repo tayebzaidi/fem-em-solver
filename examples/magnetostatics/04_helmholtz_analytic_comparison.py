@@ -23,24 +23,22 @@ Accuracy floors (these do NOT shrink with mesh refinement)
 ----------------------------------------------------------
 1. Finite wire thickness. The analytic formula assumes a filament; the model uses a
    torus with a/R = 0.25 by default. This biases the centre field by O((a/R)^2),
-   on the order of several percent.
-2. Tight domain box. ``two_torus_domain`` builds a box only ~1.75*R in half-width
-   and applies magnetic insulation on it, whereas the analytic solution is free
-   space. This suppresses the field near the boundary.
-
-So do not expect agreement below a few percent no matter how fine the mesh. The
-useful signal is that the error *stops changing* as h shrinks -- at that point the
-discretization error is below the systematic floors, which is what refinement can
-actually buy you. Use --minor-radius to trade wire thinness against cost.
+   on the order of several percent. Use --minor-radius to trade wire thinness
+   against cost.
+2. Domain truncation. The outer box carries the natural condition
+   ``n x (mu^-1 curl A) = 0`` (a perfect magnetic conductor), which mirrors flux
+   back into the domain, whereas the analytic solution is free space. At the
+   legacy 2*minor_radius padding this alone cost ~20% at the centre
+   (docs/validation/helmholtz.md); the default is now 4*major_radius padding
+   with graded far-field refinement, which pushes this floor below 0.1%.
+   --air-padding overrides it.
 
 Cost
 ----
-``resolution`` is applied as a single global gmsh size, so cell count scales with
-the whole box volume, not just the wire. Roughly:
-
-    h=0.005 -> ~10k cells,  a few seconds
-    h=0.003 -> ~48k cells,  under a minute
-    h=0.0025 -> ~82k cells, a couple of minutes
+With the default graded refinement, ``resolution`` sets the mesh size at the
+wire and --far-resolution (default R/2) the size at the outer box, so the large
+default air box stays affordable — the validated 4R / h=0.003 case is ~127k
+cells and solves in under a minute on 8 ranks.
 
 Keep h <= a/2 or the wire is not resolved at all.
 """
@@ -258,17 +256,18 @@ def main() -> int:
         "--air-padding",
         type=float,
         default=None,
-        help="Clearance from coil envelope to outer box (m). Default reproduces the "
-        "legacy 2*minor_radius box, which is far too tight for a free-space "
-        "comparison. Use >= 2*major-radius.",
+        help="Clearance from coil envelope to outer box (m). Defaults to "
+        "4*major-radius, the validated free-space configuration "
+        "(docs/validation/helmholtz.md: 0.01%% centre error at 4R vs 20%% at "
+        "the legacy 2*minor_radius box).",
     )
     p.add_argument(
         "--far-resolution",
         type=float,
         default=None,
-        help="Mesh size at the outer boundary (m). Setting this enables graded "
-        "refinement, so --resolutions then controls the size at the wire only. "
-        "Required to keep a large air box affordable.",
+        help="Mesh size at the outer boundary (m). Defaults to major-radius/2, "
+        "which enables graded refinement so --resolutions controls the size at "
+        "the wire only — required to keep the large default air box affordable.",
     )
     p.add_argument(
         "--output-dir",
@@ -287,6 +286,13 @@ def main() -> int:
     )
     args = p.parse_args()
     args.output_dir = args.output_dir or None  # "" opts out of export
+    # Validated free-space defaults (docs/validation/helmholtz.md). The legacy
+    # 2*minor_radius box gives ~20% centre error from the n x H = 0 boundary
+    # mirroring flux back into the domain; 4R padding takes it below 0.1%.
+    if args.air_padding is None:
+        args.air_padding = 4.0 * args.major_radius
+    if args.far_resolution is None:
+        args.far_resolution = args.major_radius / 2.0
 
     comm = MPI.COMM_WORLD
     separation = args.separation if args.separation is not None else args.major_radius

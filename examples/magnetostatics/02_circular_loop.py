@@ -9,7 +9,11 @@ import numpy as np
 from mpi4py import MPI
 from pathlib import Path
 
-from fem_em_solver.core.solvers import MagnetostaticSolver, MagnetostaticProblem
+from fem_em_solver.core.solvers import (
+    MagnetostaticSolver,
+    MagnetostaticProblem,
+    exterior_dirichlet_bc,
+)
 from fem_em_solver.io.mesh import MeshGenerator
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.analytical import AnalyticalSolutions, ErrorMetrics
@@ -28,12 +32,18 @@ def main():
     print("Example: Magnetic field of circular current loop")
     print("=" * 60)
     
-    # Problem parameters
+    # Problem parameters. Geometry matches the gated fixture in
+    # tests/validation/test_circular_loop.py: the domain must be ~3x the loop
+    # radius because the natural boundary condition (n x H = 0) acts as a
+    # magnetic mirror and inflates the field when the wall is close.
     current = 1.0              # Current [A]
-    loop_radius = 0.05         # Loop radius [m] (5 cm)
-    wire_radius = 0.002        # Wire cross-section [m] (2 mm, increased for faster meshing)
-    domain_radius = 0.10       # Domain radius [m] (reduced from 0.15 for speed)
-    resolution = 0.008         # Mesh resolution [m] (coarser: 8mm vs 5mm)
+    loop_radius = 0.02         # Loop radius [m] (2 cm)
+    wire_radius = 0.003        # Wire cross-section [m] (fat wire, cheap to mesh;
+                               # on-axis field is insensitive to wire thickness)
+    domain_radius = 0.06       # Domain radius [m] (3x loop radius)
+    resolution = 0.002         # Mesh resolution [m]. The analytic Dirichlet
+                               # wall (below) needs this; 0.0025 costs ~2% extra
+                               # L2 error (see tests/validation/test_circular_loop.py)
     
     print(f"\nParameters:")
     print(f"  Current: {current} A")
@@ -69,12 +79,38 @@ def main():
     
     import ufl
     def current_density(x):
-        """Uniform current density."""
-        return ufl.as_vector([0.0, 0.0, J_magnitude])
+        """Azimuthal current density circulating around the loop.
+
+        The current flows along the wire, i.e. in the phi direction
+        (-y, x, 0)/rho — NOT uniformly in z. A z-directed J here produces
+        an on-axis B_z of ~zero (the field of straight vertical current
+        filaments cancels on the axis by symmetry).
+        """
+        rho = ufl.sqrt(x[0] ** 2 + x[1] ** 2)
+        rho_safe = ufl.max_value(rho, 1e-12)
+        return ufl.as_vector([
+            -x[1] / rho_safe * J_magnitude,
+            x[0] / rho_safe * J_magnitude,
+            0.0,
+        ])
     
+    # Constrain the outer sphere with the analytic vector potential (Jackson
+    # 5.37). The natural condition n x H = 0 is a perfect-magnetic-conductor
+    # wall that images the loop and biases the field at this domain size; the
+    # analytic Dirichlet data is the condition whose continuum limit is the
+    # free-space solution (same setup as tests/validation/test_circular_loop.py).
+    def loop_potential(x):
+        points = np.ascontiguousarray(x[:3].T)
+        return AnalyticalSolutions.circular_loop_vector_potential(
+            points, current, loop_radius
+        ).T
+
+    bcs = [exterior_dirichlet_bc(solver.V, loop_potential)]
+
     # Solve with current restricted to wire subdomain (tag=1)
     print("\nSolving magnetostatic problem...")
-    A = solver.solve(current_density=current_density, subdomain_id=1)
+    A = solver.solve(current_density=current_density, subdomain_id=1,
+                     bc_functions=bcs)
     print("  Solution computed!")
     
     # Compute B-field
@@ -82,8 +118,11 @@ def main():
     B = solver.compute_b_field()
     
     # Evaluate along z-axis
-    n_points = 25  # Reduced from 30 for faster evaluation
-    z_eval = np.linspace(-0.08, 0.08, n_points)  # Adjusted for smaller domain
+    n_points = 25
+    # Sample well inside the domain (0.4 * domain_radius, as in the gated
+    # test): the outermost mesh layer near the spherical wall carries the
+    # largest boundary-condition error.
+    z_eval = np.linspace(-0.4 * domain_radius, 0.4 * domain_radius, n_points)
     
     points = np.zeros((n_points, 3))
     points[:, 2] = z_eval  # z positions along axis
