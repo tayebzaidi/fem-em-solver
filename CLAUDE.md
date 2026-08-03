@@ -3,10 +3,15 @@
 FEniCSX/DolfinX FEM solver for MRI coils loaded with gelled saline phantoms.
 Magnetostatics is validated against closed forms. The time-harmonic path is a
 real complex curl-curl solve validated against the analytic lossy plane wave
-(`TH-1` closed 2026-07-31; decay/phase constants to < 0.06%, `TH-6`), but it is
-**not yet validated on a loaded coil** (`MAT-6` step 2 is that gate) and the
-S-parameters are still a heuristic (`PORT-1`) — read PROJECT_PLAN.md §2 before
-trusting any S-parameter or coil-loading/SAR figure. Anything
+(`TH-1` closed 2026-07-31; decay/phase constants to < 0.06%, `TH-6`). Coil
+loading **is** now gated, but only in the eddy-current regime — `MAT-6` closed
+2026-07-31 with ΔR matching Dodd–Deeds to 1.58% at 10 MHz, σ = 100 S/m; the
+saline/Larmor case is an extrapolation, not a result. SAR is gated against the
+lossy-sphere closed form to 3.5% (`MAT-4` step 1, 2026-08-03) on an **imposed
+uniform field**, never on a coil. The package's S-parameters are still a
+heuristic (`PORT-1`; one real S-matrix exists, in a test, on a two-loop air
+fixture) — read PROJECT_PLAN.md §2 before trusting any S-parameter or
+coil-loading/SAR figure. Anything
 that solves in the frequency domain needs the complex DolfinX build
 (`source /usr/local/bin/dolfinx-complex-mode`); real mode raises.
 

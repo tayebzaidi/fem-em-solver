@@ -87,8 +87,10 @@ them by number.
 | | |
 |---|---|
 | **Test** | `tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent` |
+| **Symptom** | `assert 0.09 > 0.09` |
 | **Cause** | Not diagnosed. Pure geometry arithmetic in `MeshGenerator.coil_phantom_domain_sizing_diagnostics` — no solve involved, so no solver change can affect it. |
-| **Verified pre-existing at** | `794d2f1` (pre-session) |
+| **Verified pre-existing at** | `794d2f1` (pre-session); still failing 2026-08-03 at `de6d40a` (`20260803T034252Z_GEO-9-step1-cohabit.log`, 1 failed 16 passed 1 skipped in 22.95 s) |
+| **Cited wrongly as "known-issues 6"** | Commit `3ac025c` and `docs/testing/attempts.md:1903,1907` both call this entry 6. **It is entry 5.** Entry 6 is the rank-dependent single-port excitation test in `tests/solver`, unrelated to `tests/mesh`. `attempts.md` is append-only so the correction lives here and in the `OPS-11` §7 entry; it matters because `OPS-11`'s exclusion set is **5 and birdcage**, not "6 and 7". |
 
 ### 6. Rank-dependent: single-port excitation
 
@@ -109,7 +111,8 @@ them by number.
 | **Cause** | **Diagnosed 2026-08-03 by `GEO-9` step 1, and it is a single cause, not two.** `birdcage_port_domain` raises inside its `comm.rank == rank` block (the overlapping-facets error) and therefore never reaches its `gmsh.finalize()`. The process is left with gmsh initialised and mid-command, so the *next* generator in the same pytest process gets `Warning : Gmsh has aleady been initialized` and `Info : I'm busy! Ask me that later...`, every subsequent `occ` call is silently refused, and `model_to_mesh` reads the stale birdcage model — whose mixed element types are what `gmshio.py:118` asserts on. **The coil+phantom generator is innocent:** in a fresh process all three of its tests pass in 4.8 s (`20260803T033050Z_GEO-9-before.log`), and they fail again the moment the birdcage file runs first (`20260803T033119Z_GEO-9-order-probe.log`, 3 failed 2 passed in 3.47 s — the same two failures). Found 2026-08-01 by the `GEO-8` run, which ran `tests/mesh` as a regression sweep; the whole directory is in no CI job, which is why these were invisible. Both fixtures are untouched by `GEO-8` (it changed `two_torus_domain` only). |
 | **Verified pre-existing at** | `63c94f2` — the `GEO-8` diff touches neither generator; log `20260801T004839Z_GEO-8-unrelated-failures.log`, 3 failed 2 passed in 3.5 s at `-n 2` |
 | **Note** | ~~Likely the same overlapping-geometry family `GEO-8` just fixed for `two_torus_domain`: `coil_phantom_domain` and the birdcage fixture should be audited for missing `occ.fragment`.~~ **Half wrong — corrected 2026-08-02, 18:00 review, by code reading (not by execution).** `coil_phantom_domain` **already fragments** (`io/mesh.py:1616`), so its cause is downstream of fragment; the visible fragility is the group re-derivation at `io/mesh.py:1622-1634`, which assumes fragment returns exactly four volumes and leaves any extra piece with no physical group — which is what `gmshio.py:118` asserts on. The **birdcage** does match the family, differently: it uses `occ.cut(..., removeTool=False)` (`io/mesh.py:1970`), so the conductors, phantom and port boxes are never booleaned against *each other* and the port boxes overlap the legs by construction — hence "overlapping facets". The birdcage's port boxes also receive no 3-D physical group (`io/mesh.py:1985-1988`). |
-| **Owned by** | `GEO-9` (created 2026-08-02): step 1 coil+phantom, step 2 birdcage. Two of the four §10 Target criteria route through these two fixtures. **Step 1 landed 2026-08-03** — the coil+phantom half is now gated by `tests/mesh/test_coil_phantom_conforming.py` (volume-partition identity, `20260803T033659Z_GEO-9-step1-gate.log`, 8 passed 1 skipped in 22.25 s) and the generator raises with the volume count and per-volume masses if fragment ever does return other than four grouped volumes. **All three tests above still fail in a shared process** and will until step 2 fixes the birdcage: `20260803T033733Z_GEO-9-order-probe-after.log` shows the new guards do *not* fire (gmsh is already busy, so they never execute), still `gmshio.py:118`. **Step 2's first action is the cheap half of this — wrap the birdcage's rank-0 block in `try/finally: gmsh.finalize()`**, which stops one broken generator from poisoning every later mesh in the process, independently of fixing the geometry. |
+| **Owned by** | `GEO-9` (created 2026-08-02): step 1 coil+phantom, step 2 birdcage. Two of the four §10 Target criteria route through these two fixtures. **Step 1 landed 2026-08-03** — the coil+phantom half is now gated by `tests/mesh/test_coil_phantom_conforming.py` (volume-partition identity, `20260803T033659Z_GEO-9-step1-gate.log`, 8 passed 1 skipped in 22.25 s) and the generator raises with the volume count and per-volume masses if fragment ever does return other than four grouped volumes. **All three tests above still fail in a shared process** and will until step 2 fixes the birdcage: `20260803T033733Z_GEO-9-order-probe-after.log` shows the new guards do *not* fire (gmsh is already busy, so they never execute), still `gmshio.py:118`. **Step 2's first action is the cheap half of this — wrap the birdcage's rank-0 block in `try/finally: gmsh.finalize()`**, which stops one broken generator from poisoning every later mesh in the process, independently of fixing the geometry. Split out as **`GEO-9` step 2a** at the 2026-08-03 03:00 review, with step 2b holding the `occ.fragment` geometry rewrite. |
+| **A poisoned process hangs — added 2026-08-03, 03:00 review** | Both `GEO-9` order probes report pytest finishing (3.47 s and 3.29 s) but the **harness** exits **124 at the 180 s ceiling**, with `Loguru caught a signal: SIGTERM` (`docs/testing/test-results.md:136,139`; logs `20260803T033119Z_GEO-9-order-probe.log`, `…033733Z_GEO-9-order-probe-after.log`). The step-1 prose quotes only the pytest wall time and does not say this. Two consequences: `tests/mesh` cannot enter CI with the birdcage in it (`OPS-11`) because the job would burn its whole `timeout-minutes` rather than fail fast; and `GEO-9` step 2a gets a sharper anchor than "the tests pass" — harness exit **124 at 180 s → 0 in seconds**. If a `try/finally` does not fix it, suspect an MPI collective the raising rank never reaches, not gmsh state. |
 
 ---
 
@@ -163,15 +166,33 @@ energy excess in the solved field.
 
 **Leading hypothesis, not yet measured:** low-frequency breakdown of the
 curl-curl formulation. At ω → 0 the operator acts on the gradient subspace as
-`−k₀²`, so any residual non-solenoidal component of the discretised impressed
+`−k₀²ε_c`, so any residual non-solenoidal component of the discretised impressed
 current — the analytic azimuthal `J` is exactly divergence-free and tangent to
 the torus surface, but the *faceted* meshed boundary is only approximately so —
-is amplified by `1/k₀²` into a spurious electrostatic field that contributes to
-`W_e` and to nothing else. **The discriminating measurement is the ω-scaling of
-`4ωW_e/I²` at fixed geometry**: a physical capacitance gives `∝ 1/ω`, an
-induction-driven electric energy gives `∝ ω`, and gradient-space contamination
-of this kind gives neither. That sweep is cheap (the mesh is reusable across
-frequencies — one mesh, three or four solves) and is the natural next step.
+is amplified into a spurious electrostatic field that contributes to `W_e` and to
+nothing else.
+
+**Correction 2026-08-03 (03:00 review): the ω-sweep named here as "the
+discriminating measurement" does not discriminate.** Restricting the solved
+equation to the gradient subspace gives `E_g = jωμ₀J_g/k₀² = jJ_g/(ωε₀) ∝ 1/ω`,
+hence `W_e ∝ ω⁻²` and `4ωW_e/I² ∝ ω⁻¹` — **the same `1/(ωC)` a physical
+capacitance gives.** Gradient-space contamination *is* a spurious electrostatic
+response, so it necessarily scales like one, and the sweep separates only the
+capacitive family (`ω⁻¹`) from an induction-driven `E = −jωA` (`4ωW_e/I² ∝ ω³`).
+It is a cheap sanity check, not the discriminator; do not spend a run on it
+expecting an answer.
+
+What does settle it, and why this fixture makes it decisive: the two-torus
+fixture has **no conductors** — the tori are tagged *air* subdomains carrying an
+impressed `J`, the only metal is the outer PEC wall, and `∇·J = 0` analytically
+means no charge. There is therefore **no physical capacitance available to
+find**, so the open question is quantitative: does the gradient content of the
+load account for all 48.52 Ω? Because the N1curl/CG1 discrete sequence is exact,
+that is answerable by two assemblies and no extra solve —
+`∫E_h·∇q dV = (j/(ωε₀))∫J·∇q dV` must hold for every `q ∈ CG1 ∩ H¹₀` — with the
+energy share following from one cheap scalar Poisson solve. `PORT-1` step 2d in
+`PROJECT_PLAN.md` §7 carries the plan; `tests/validation/test_current_divergence.py`
+(`POST-3` step 3) is the second, structural route to the same question.
 
 **Consequence, unchanged:** no input impedance and no `S₁₁` off this path means
 anything. The off-diagonal is unaffected — `PORT-1` step 2 gates `Im Z₁₂` to
