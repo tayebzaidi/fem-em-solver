@@ -29,6 +29,15 @@ What is gated, and why each bound is what it is (every number below is a
     toward the closed form.  The bound is **not** tightened here: the
     filamentary reference itself spans 66.5% of nominal when re-evaluated over
     ρ, z within ± r_wire, so at d = a it cannot support better.
+  * **the doubling control** (step 2c, 2026-08-03): ``|Z₁₂|`` measured at a
+    second separation ``2d = 0.08`` must fall to ``M(2d)/M(d) = 0.287120`` of
+    its value at ``d``, to the same 10%.  This is what turns (ii) from a single
+    magnitude into a *geometric* statement; a separation-blind solver returns
+    1.000 against 0.287.  It costs two extra meshes and two extra solves (122 s
+    measured): the ratio needs both separations in the *same* box, and that box
+    is a larger one than step 2's for a measured reason — see
+    ``AIR_PADDING_DOUBLING``.  One solve per separation suffices, since
+    reciprocity is 3e-13 here.
   * **``Re Z₁₂`` structurally zero.**  In the lossless case the curl-curl
     operator is real-symmetric, so the real part is *absent*, not cancelled —
     step 1 measured exactly ``0.0``.  Asserted at 1e-30, which no convergence
@@ -94,6 +103,7 @@ FREQUENCY_HZ = 10.0e6
 MAJOR_RADIUS = 0.04   # a
 MINOR_RADIUS = 0.005  # r_wire
 SEPARATION = 0.04     # d, centre to centre along z
+SEPARATION_DOUBLE = 0.08  # 2d, step 2c's doubling control
 CURRENT_A = 1.0
 
 # padding 0.08 / h_far 0.03 = 119738 cells, mesh 21 s + solves 21 s and 31 s
@@ -103,6 +113,25 @@ CURRENT_A = 1.0
 AIR_PADDING = 0.08
 H_FAR = 0.03
 H_WIRE = 0.0025
+
+# Step 2c's pair runs in a *larger* box than step 2's, and the size is measured,
+# not chosen: the PEC wall costs the wider separation more than the narrower one,
+# so the box error does not cancel out of the ratio.  Sweep of the ratio error
+# against padding, all at h_far 0.03 (logs 20260803T093329Z_PORT-1-step2c-gate,
+# 20260803T093617Z_PORT-1-step2c-boxsens, 20260803T110209Z_PORT-1-step2c-ratio12):
+#
+#   padding 0.08 -> -13.33%   (per-separation -9.36% at d, -21.4% at 2d)
+#   padding 0.10 ->  -8.78%   (-6.38%, -14.60%)
+#   padding 0.12 ->  -5.93%   (-4.64%, -10.30%)
+#
+# Monotone toward the closed form.  0.12 is taken over 0.10 because 8.78% against
+# a 10% bound is 1.1x of margin picked after seeing it pass; 5.93% is 1.69x.  The
+# cost is measured too (20260803T110058Z_PORT-1-step2c-costprobe12.log):
+# 154493 cells at d and 169502 at 2d, 1.29x and 1.42x step 2's box -- well clear
+# of the 237926-cell case (padding 0.12 at h_far 0.02) MUMPS was killed on.
+# Both separations of the ratio must share a padding, so step 2c pays for its own
+# two meshes rather than reusing step 2's; measured 122 s for the pair.
+AIR_PADDING_DOUBLING = 0.12
 
 TORUS_TAGS = (1, 2)
 REFERENCE_IMPEDANCE_OHM = 50.0
@@ -169,21 +198,23 @@ def scattering_from_impedance(z_matrix: np.ndarray, z0_ohm: float) -> np.ndarray
     return (z_matrix - z0_ohm * identity) @ np.linalg.inv(z_matrix + z0_ohm * identity)
 
 
-@pytest.fixture(scope="module")
-def reaction_z():
-    """One mesh, two solves — the whole cost of this file.
+def _solve_reaction_z(
+    separation: float, driven_tags, label: str, air_padding: float = AIR_PADDING
+) -> np.ndarray:
+    """One mesh at ``separation``, one solve per entry of ``driven_tags``.
 
-    Module-scoped so the four assertions below share it; every rank runs the
-    same fixture, so the collective calls inside stay matched.
+    Returns the 2×2 Z with the driven columns filled and the rest left at zero,
+    so step 2c can buy a second separation for one solve instead of two: it
+    needs only ``Z₂₁``, and reciprocity is measured at 3e-13 here.
     """
     comm = MPI.COMM_WORLD
     t_mesh = time.perf_counter()
     msh, cell_tags, _ = MeshGenerator.two_torus_domain(
-        separation=SEPARATION,
+        separation=separation,
         major_radius=MAJOR_RADIUS,
         minor_radius=MINOR_RADIUS,
         resolution=H_FAR,
-        air_padding=AIR_PADDING,
+        air_padding=air_padding,
         wire_resolution=H_WIRE,
         far_resolution=H_FAR,
         comm=comm,
@@ -201,7 +232,8 @@ def reaction_z():
 
     z_matrix = np.zeros((2, 2), dtype=complex)
     solve_times = []
-    for col, driven_tag in enumerate(TORUS_TAGS):
+    for driven_tag in driven_tags:
+        col = TORUS_TAGS.index(driven_tag)
         problem = TimeHarmonicProblem(
             mesh=msh,
             frequency_hz=FREQUENCY_HZ,
@@ -227,32 +259,65 @@ def reaction_z():
 
     if comm.rank == 0:
         k0 = OMEGA * np.sqrt(MU_0 * EPSILON_0)
-        half_x = MAJOR_RADIUS + MINOR_RADIUS + AIR_PADDING
-        half_z = SEPARATION / 2 + MINOR_RADIUS + AIR_PADDING
+        half_x = MAJOR_RADIUS + MINOR_RADIUS + air_padding
+        half_z = separation / 2 + MINOR_RADIUS + air_padding
         diag = 2.0 * np.sqrt(2.0 * half_x**2 + half_z**2)
         print(
-            f"\n[PORT-1 step 2] padding {AIR_PADDING} m, h_far {H_FAR} m, "
-            f"{ncells} cells, mesh {t_mesh:.1f} s, solves "
+            f"\n[{label}] d {separation} m, padding {air_padding} m, h_far "
+            f"{H_FAR} m, {ncells} cells, mesh {t_mesh:.1f} s, solves "
             + ", ".join(f"{t:.1f} s" for t in solve_times),
             flush=True,
         )
         print(
-            f"[PORT-1 step 2] k0*box_diagonal = {k0 * diag:.5f} (quasistatic), "
+            f"[{label}] k0*box_diagonal = {k0 * diag:.5f} (quasistatic), "
             f"meshed currents {currents[0]:.6f}, {currents[1]:.6f} A",
             flush=True,
         )
         print(
-            f"[PORT-1 step 2] Z = [[{z_matrix[0,0]:+.6e}, {z_matrix[0,1]:+.6e}],\n"
-            f"                     [{z_matrix[1,0]:+.6e}, {z_matrix[1,1]:+.6e}]] Ohm",
+            f"[{label}] Z = [[{z_matrix[0,0]:+.6e}, {z_matrix[0,1]:+.6e}],\n"
+            f"          [{z_matrix[1,0]:+.6e}, {z_matrix[1,1]:+.6e}]] Ohm",
             flush=True,
         )
-        # Not gated — PORT-1 step 2b owns the diagonal (wrong sign, undiagnosed).
+        # Not gated — PORT-1 step 2b owns the diagonal (wrong sign, an
+        # electric-energy excess W_e/W_m = 6.524, still undiagnosed as a fix).
         print(
-            f"[PORT-1 step 2] ungated diagonal: Im Z11, Im Z22 = "
+            f"[{label}] ungated diagonal: Im Z11, Im Z22 = "
             f"{z_matrix[0,0].imag:+.6e}, {z_matrix[1,1].imag:+.6e} Ohm",
             flush=True,
         )
     return z_matrix
+
+
+@pytest.fixture(scope="module")
+def reaction_z():
+    """One mesh, two solves — step 2's fixture at ``d = 0.04``.
+
+    Module-scoped so the assertions below share it; every rank runs the same
+    fixture, so the collective calls inside stay matched.
+    """
+    return _solve_reaction_z(SEPARATION, TORUS_TAGS, "PORT-1 step 2")
+
+
+@pytest.fixture(scope="module")
+def doubling_pair():
+    """Step 2c's pair: ``d`` and ``2d``, both at ``AIR_PADDING_DOUBLING``.
+
+    Two meshes, **one** solve each — only ``Z₂₁`` is read, and reciprocity is
+    3.06e-13 on this fixture, so the second column buys nothing but time.  The
+    pair does *not* reuse step 2's ``d`` solve: the ratio is only meaningful if
+    both separations sit in the same box, and step 2's box is the padding-0.08
+    one whose wall error the constant's comment tabulates.  Measured 122 s for
+    the pair (`20260803T110209Z_PORT-1-step2c-ratio12.log`).
+    """
+    return {
+        separation: _solve_reaction_z(
+            separation,
+            (TORUS_TAGS[0],),
+            "PORT-1 step 2c",
+            air_padding=AIR_PADDING_DOUBLING,
+        )
+        for separation in (SEPARATION, SEPARATION_DOUBLE)
+    }
 
 
 @complex_only
@@ -291,6 +356,53 @@ def test_mutual_impedance_matches_closed_form(reaction_z):
     assert abs(relative_error) < 0.10, (
         f"Im Z12 = {z12.imag:.6e} Ohm is {relative_error:+.2%} from the closed "
         f"form omega*M12 = {omega_m12:.6e} Ohm"
+    )
+
+
+@complex_only
+def test_mutual_impedance_falls_off_like_the_closed_form(doubling_pair):
+    """`PORT-1` step 2c: ``|Z₁₂(2d)|/|Z₁₂(d)|`` against ``M(2d)/M(d)``.
+
+    The step-2 gate compares one ``Im Z₁₂`` against one closed-form ``ωM₁₂``, so
+    a solver that got the *scale* right for the wrong reason passes it.  This
+    asserts the geometric fall-off instead: doubling the separation from
+    ``d = 0.04`` to ``2d = 0.08`` must divide the coupling by the ratio Jackson
+    5.37 gives for the same two loop radii, **0.287120** (evaluated here, not
+    quoted; the probe log reproduces it to six figures).
+
+    **Negative control.**  A solver blind to separation — one whose ``Z₁₂``
+    came from the source magnitude rather than the field between the loops —
+    returns ratio 1.000 against 0.287.  That is a 3.5× separation, which is the
+    ceiling this control can offer, and it is ample against a 10% bound.
+
+    10% is the bound step 2's ``Im Z₁₂`` carries, justified by the PEC box
+    sensitivity measured in step 1, and it is **not** tightened on this run's
+    margin.  The two boxes are not the same even at a shared padding (half_z
+    0.145 → 0.165 m), so part of the wall error cancels in the ratio and part
+    does not; that residue is exactly what forced the pair into the larger box —
+    see ``AIR_PADDING_DOUBLING``, whose comment tabulates the measured sweep
+    −13.33% / −8.78% / −5.93% at padding 0.08 / 0.10 / 0.12.  ``Z₂₁`` stands in
+    for ``Z₁₂`` — reciprocity is 3.06e-13 on this fixture, so the second solve
+    at each separation buys nothing but time.
+    """
+    ratio_closed_form = mutual_inductance(
+        MAJOR_RADIUS, MAJOR_RADIUS, SEPARATION_DOUBLE
+    ) / mutual_inductance(MAJOR_RADIUS, MAJOR_RADIUS, SEPARATION)
+    z12_d = doubling_pair[SEPARATION][1, 0]
+    z12_2d = doubling_pair[SEPARATION_DOUBLE][1, 0]
+    ratio_fem = abs(z12_2d) / abs(z12_d)
+    relative_error = ratio_fem / ratio_closed_form - 1.0
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"[PORT-1 step 2c] |Z12(d)| = {abs(z12_d):.6e} Ohm, "
+            f"|Z12(2d)| = {abs(z12_2d):.6e} Ohm; ratio {ratio_fem:.6f} vs "
+            f"closed form {ratio_closed_form:.6f} ({relative_error:+.2%}); "
+            f"separation-blind control would give 1.000000",
+            flush=True,
+        )
+    assert abs(relative_error) < 0.10, (
+        f"|Z12(2d)|/|Z12(d)| = {ratio_fem:.6f} is {relative_error:+.2%} from the "
+        f"closed-form M(2d)/M(d) = {ratio_closed_form:.6f}"
     )
 
 

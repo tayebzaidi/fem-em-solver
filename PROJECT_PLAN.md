@@ -1559,7 +1559,7 @@ completed measurement step is not "not started")*
 > | ii | `Im Z₁₂` vs `ωM₁₂ = 1.241755 Ω` | within **10%** | −9.35% at this exact configuration | the gap is the PEC box, not the mesh: h_far 0.02→0.03 moves it 0.09%, padding 0.08→0.12 moves it 5.20% and monotonically toward the closed form. **Do not tighten** — the filamentary reference itself spans 66.5% of nominal over ρ, z within ± r_wire, so the closed form cannot support better |
 > | iii | `Re Z₁₂` | `== 0.0` exactly, or `< 1e-30` | exactly `0.0` | structural, not a convergence result: the lossless operator is real-symmetric, so the real part is absent rather than cancelled. Assert it as structure and say so in the docstring |
 > | iv | diagonal | **not gated** | `Im Z₁₁ ≈ −40.9 Ω` vs an expected `+ωL ≈ 6.8 Ω` | the diagonal is wrong in sign and undiagnosed (step 2b). Gating "sign and order" would gate a known-bad number; leave it out, print it, and let step 2b own it |
-> | v | `M(2d)/M(d)` doubling | **split out — step 2c** | closed form 0.287120 | needs its own mesh (different d ⇒ different box), which does not fit alongside two solves in the standard tier |
+> | v | `M(2d)/M(d)` doubling | **✅ step 2c, 2026-08-03** | 0.270089 vs closed form 0.287120, −5.93% (bound 10%) | needed its own two meshes *and* a larger box (padding 0.12): the PEC wall costs the wider separation more, so its error does not cancel out of the ratio |
 >
 > Then convert through the existing `S = (Z − Z₀I)(Z + Z₀I)⁻¹` path with
 > `Z₀ = 50 Ω` and assert S symmetric and passive (`‖S‖₂ ≤ 1`) — this is the
@@ -1614,9 +1614,9 @@ completed measurement step is not "not started")*
 > **Left ungated on purpose:** the diagonal. The gate prints
 > `Im Z₁₁, Im Z₂₂ = −4.108550e+01, −4.092413e+01 Ω` and asserts nothing about
 > them — still negative where a lossless loop must be inductive, still `PORT-1`
-> step 2b's to diagnose. Also still open: step 2c (the `M(2d)/M(d)` doubling
-> control, which the new file is the natural home for), step 3 (gap-voltage
-> ports), and the two deliberately-red port tests (known-issues 3). `PORT-1`
+> step 2b's to diagnose. Step 2c (the `M(2d)/M(d)` doubling control) did land in
+> this file, ✅ 2026-08-03. Also still open: step 3 (gap-voltage
+> ports) and the two deliberately-red port tests (known-issues 3). `PORT-1`
 > therefore stays 🟡.
 >
 > **Audit (2026-08-03, 03:00 review) — ✅ stands, §4-compliant on every criterion;
@@ -1825,8 +1825,34 @@ completed measurement step is not "not started")*
 > test to `test_port_reaction_impedance.py`; if it has not, this is a standalone
 > file and does not wait. Negative result: report and stop.
 >
-> **Step 2c attempted 2026-08-03 (04:30 run) — NEGATIVE at the step-2
-> configuration, and the cause is measured, not guessed. Step 2c stays 🟡.**
+> **Step 2c ✅ 2026-08-03 (06:00 run), at padding 0.12 — option (b) below, and
+> the sweep's predicted landing point held.** Gate:
+> `20260803T110902Z_PORT-1-step2c-gate12-numbers.log:1256`, 5 passed in 167.7 s,
+> `-n 2`, heavy tier declared for an unmeasured solve but 168 s elapsed.
+> * **`|Z₁₂(2d)|/|Z₁₂(d)| = 0.270089` against the closed-form `0.287120`,
+>   −5.93%** inside the 10% bound — **1.69× of margin**, against the 1.1× that
+>   padding 0.10 would have bought. The bound was *not* touched.
+> * The per-separation box errors that caused the failure both shrank as
+>   predicted: **−4.64% at `d`, −10.30% at `2d`** (from −9.36% / −21.4% at
+>   padding 0.08). The gap between them, which is what the ratio actually sees,
+>   narrowed from 12.0 to 5.7 points.
+> * **Cost-probed first, and the 2.3×-cells fear was wrong**: 154493 cells at
+>   `d` and 169502 at `2d`, **1.29× and 1.42×** step 2's box, meshes 27 s and
+>   30 s (`20260803T110058Z_PORT-1-step2c-costprobe12.log:417,823`) — well clear
+>   of the 237926-cell case MUMPS was killed on. The ratio solve then measured
+>   122 s for the pair (`20260803T110209Z_PORT-1-step2c-ratio12.log:825`).
+> * **The probe and the test agree bit-for-bit** — `|Z₁₂(d)| = 1.184134e+00`,
+>   `|Z₁₂(2d)| = 3.198216e-01 Ω` in both — so the gate is not a second
+>   implementation of the physics that happened to land nearby.
+> * **Step 2's four assertions are untouched and still pass**, because step 2c
+>   pays for its own two meshes rather than re-siting the shared fixture: the
+>   ratio is only meaningful with both separations in one box, and step 2's box
+>   is the padding-0.08 one its own bounds were justified against. File cost is
+>   now ~168 s, which is the standard-tier ceiling — the next thing added here
+>   needs its own file.
+>
+> **Step 2c's first attempt, 2026-08-03 (04:30 run) — NEGATIVE at the step-2
+> configuration, kept because it is the measurement that sized the box above.**
 > The control was built as specified and executed; what fails is the *bound* at
 > padding 0.08, not the method. Numbers, all reproducible:
 > * **Anchor confirmed independently.** `M(2d)/M(d) = 0.287120` re-evaluated
@@ -1850,7 +1876,7 @@ completed measurement step is not "not started")*
 >   −14.60% at `2d`, **ratio 0.261901, −8.78%** — monotone toward the closed
 >   form and *inside* 10%. Both errors shrink and their gap narrows.
 >
-> **What was deliberately not done, and what the next run should weigh.** The
+> **What that attempt deliberately left to this one.** The
 > padding-0.10 result would pass the gate as written, and re-siting the fixture
 > there was left untaken: 8.78% against a 10% bound is 1.1× of margin, chosen
 > **after** seeing it pass — the "was this fitted?" pattern the review audits
@@ -1863,10 +1889,10 @@ completed measurement step is not "not started")*
 > that buys margin rather than redistributing it, and the sweep gives it a
 > predicted landing point. What is *not* available is asserting 10% at padding
 > 0.08.
-> The gate code is written and parked (branch named in `attempts.md`,
-> 2026-08-03 entry); the probe is on `main` and now has a `--solve-padding`
-> mode that reports the whole ratio for one padding in ~90 s, which is what
-> option (b) should be cost-probed and run through.
+> **(b) is what the 06:00 run executed, with the result above.** The parked gate
+> code came off `attempt/PORT-1-step2c-20260803T094412Z` essentially unchanged —
+> only the padding was parameterised — so the negative run's real product was
+> the sweep, not the code.
 >
 > **Step 3a — move the Z→S conversion into `src/`, and point `PORT-5`'s metrics
 > at a real matrix for the first time (one run; independent of 2c and 2d).**
@@ -2143,8 +2169,10 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
    ✅ as a diagnosis** (2026-08-03): the reaction integral is exonerated — two
    independent routes to `Im Z₁₁` agree to 1.8e-10 — and the negative diagonal
    is localised to an **electric-energy excess**, `W_e/W_m = 6.524`, so no
-   `Z_in` and no `S₁₁` may be read off this fixture's diagonal. Four spurs are
-   queued, all independent: **2c** the `M(2d)/M(d)` doubling control, **2d**
+   `Z_in` and no `S₁₁` may be read off this fixture's diagonal. **Step 2c is ✅
+   2026-08-03** — the coupling falls off like `M(2d)/M(d)` to −5.93% against a
+   10% bound, so `Z₁₂` is now gated as a *geometric* quantity, not one
+   magnitude. Three spurs remain, all independent: **2d**
    charging that `W_e` excess to the load vector, **3a** moving the Z→S
    conversion into `src/`, and **3b** gap-voltage birdcage ports — 3b alone
    needs `GEO-9` step 2.
@@ -2265,7 +2293,13 @@ invented; four existing entries were split or scoped.
 landing.** Six rather than five because `PORT-1` alone now offers three
 non-competing spurs.
 
-1. **`PORT-1` step 2c — the `M(2d)/M(d)` doubling control.** **Attempted once,
+1. ~~**`PORT-1` step 2c — the `M(2d)/M(d)` doubling control.**~~ — **done
+   2026-08-03 (06:00 run)** at padding 0.12, the §7 entry's option (b): ratio
+   **0.270089 vs 0.287120, −5.93%** against the untouched 10% bound (1.69× of
+   margin), per-separation errors −4.64% / −10.30%, gate
+   `20260803T110902Z_PORT-1-step2c-gate12-numbers.log`, 5 passed in 167.7 s.
+   The cost probe killed the 2.3×-cells fear (1.29× / 1.42×). Original item,
+   kept for the trap list the next `PORT-1` spur still needs: **Attempted once,
    2026-08-03 04:30 — negative, and the run answered the question rather than
    failing to reach it: ratio 0.248854 vs 0.287120 (−13.33%) at padding 0.08,
    because the PEC box costs −9.36% at `d` but −21.4% at `2d`.** A padding sweep

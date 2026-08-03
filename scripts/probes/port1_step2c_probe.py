@@ -194,6 +194,12 @@ def main() -> None:
         help="If given, solve both separations at this air padding and report "
              "the |Z12| ratio instead of running the mesh-only cost probe.",
     )
+    parser.add_argument(
+        "--mesh-padding",
+        type=float,
+        default=AIR_PADDING,
+        help="Air padding for the mesh-only cost probe (default: step 2's 0.08).",
+    )
     args = parser.parse_args()
 
     if args.solve_padding is not None:
@@ -201,6 +207,7 @@ def main() -> None:
         return
 
     comm = MPI.COMM_WORLD
+    padding = args.mesh_padding
 
     m_d = mutual_inductance(MAJOR_RADIUS, MAJOR_RADIUS, SEPARATION)
     m_2d = mutual_inductance(MAJOR_RADIUS, MAJOR_RADIUS, SEPARATION_DOUBLE)
@@ -219,7 +226,7 @@ def main() -> None:
             major_radius=MAJOR_RADIUS,
             minor_radius=MINOR_RADIUS,
             resolution=H_FAR,
-            air_padding=AIR_PADDING,
+            air_padding=padding,
             wire_resolution=H_WIRE,
             far_resolution=H_FAR,
             comm=comm,
@@ -228,10 +235,11 @@ def main() -> None:
         tdim = msh.topology.dim
         # index_map(...).size_local is rank-local.
         ncells = comm.allreduce(msh.topology.index_map(tdim).size_local, op=MPI.SUM)
-        half_z = separation / 2 + MINOR_RADIUS + AIR_PADDING
+        half_z = separation / 2 + MINOR_RADIUS + padding
         if comm.rank == 0:
             print(
-                f"[PORT-1 step 2c] d = {separation} m: half_z = {half_z:.3f} m, "
+                f"[PORT-1 step 2c] padding {padding} m, d = {separation} m: "
+                f"half_z = {half_z:.3f} m, "
                 f"{ncells} cells ({ncells / STEP2_CELLS:.3f}x step 2), "
                 f"mesh {t_mesh:.1f} s",
                 flush=True,

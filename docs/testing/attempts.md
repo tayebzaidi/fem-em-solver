@@ -2047,3 +2047,71 @@ branch and re-site the fixture there. If 0.12 is unaffordable, the fallback is
 the `MAG-10`/`MAG-15` precedent: keep padding 0.08 and set the bound to the
 measured box error with the two-point sweep quoted in the code comment. Do not
 re-run it unchanged at padding 0.08 — that number is now known.
+
+## 2026-08-03T11:15Z — `PORT-1` step 2c — **complete**
+
+Scheduled 06:00 implementer run. Preflight clean: `git status` empty, no
+`recovered/*`, one pre-existing `attempt/PORT-1-step2c-20260803T094412Z` (the
+04:30 run's parked gate code), container Up 6 days. Took On-deck item 1, which
+the 04:30 run had attempted once and left negative.
+
+**The item was a bound/fixture decision, not a rebuild, and the §7 entry's
+option (b) — padding 0.12 — is what was executed.** It held at its predicted
+landing point.
+
+* **Cost probe first, as the plan demanded, and the fear it was hedging against
+  was wrong.** Padding 0.12 at h_far 0.03 is **154493 cells at `d` and 169502 at
+  `2d` — 1.29× and 1.42× step 2's box**, meshes 27.3 s and 30.1 s, 58 s total
+  (`20260803T110058Z_PORT-1-step2c-costprobe12.log:417,823`). The §7 entry
+  estimated ~2.3× the cells; it is 1.4×, and nowhere near the 237926-cell case
+  MUMPS was killed on. Required a two-line `--mesh-padding` flag on the probe.
+* **Ratio at padding 0.12, probe path: 0.270089 vs closed form 0.287120,
+  −5.93%**, per-separation −4.64% at `d` and −10.30% at `2d`, 122 s for the pair
+  (`20260803T110209Z_PORT-1-step2c-ratio12.log:417,824,825`). Completes the
+  sweep −13.33% / −8.78% / −5.93% at padding 0.08 / 0.10 / 0.12 — monotone, and
+  the gap between the two per-separation errors narrows 12.0 → 5.7 points, which
+  is the quantity the ratio actually sees.
+* **Gate green: 5 passed in 167.7 s**, `-n 2`
+  (`20260803T110902Z_PORT-1-step2c-gate12-numbers.log:1256`). `|Z₁₂(d)| =
+  1.184134e+00`, `|Z₁₂(2d)| = 3.198216e-01 Ω`, ratio 0.270089, **−5.93% against
+  the untouched 10% bound — 1.69× of margin**, versus the 1.1× padding 0.10
+  would have bought. Separation-blind control gives 1.000000 against 0.287120.
+* **The bound was not touched and step 2 was not disturbed.** Step 2c pays for
+  its own two meshes at `AIR_PADDING_DOUBLING = 0.12` instead of re-siting the
+  shared fixture, because the ratio needs both separations in one box and step
+  2's box is the padding-0.08 one its own ✅ bounds were justified against. Step
+  2's four assertions still pass unchanged in the same run.
+* **The probe and the test agree bit-for-bit** on both `|Z₁₂|` values, so the
+  gate is not a second implementation that happened to land nearby.
+
+Parked code from `attempt/PORT-1-step2c-20260803T094412Z` was unparked and
+applied essentially verbatim — the only change is parameterising the padding
+through `_solve_reaction_z(..., air_padding=)` and replacing the
+`reaction_z_double` fixture with a `doubling_pair` fixture that solves `d` and
+`2d` in the same larger box. The 04:30 run's real product was the sweep, not the
+code. **Branch left in place for the daily review to dispose of.**
+
+Two runs were paid where one would have done: the first gate run
+(`20260803T110547Z_PORT-1-step2c-gate12.log`, 5 passed in 172.6 s) went green
+but pytest captured the fixtures' prints, so it was re-run with `-s` to get the
+measured numbers into a log. **Next time, put `-s` on a run whose printed
+diagnostics are the evidence** — 174 s of shared-machine time for a formatting
+mistake.
+
+Logs: `20260803T110058Z_PORT-1-step2c-costprobe12.log` (mesh-only cost probe at
+padding 0.12, exit 0, 58 s), `20260803T110209Z_PORT-1-step2c-ratio12.log`
+(probe-path ratio, exit 0, 122 s), `20260803T110547Z_PORT-1-step2c-gate12.log`
+(gate, 5 passed, 174 s, prints captured),
+`20260803T110902Z_PORT-1-step2c-gate12-numbers.log` (same gate with `-s`, 5
+passed, 168 s — **this is the citable one**). Heavy tier declared for the two
+solve runs since the padding-0.12 solve was unmeasured; both landed inside the
+standard ceiling, so **step 2c is a standard-tier item at padding 0.12 and can
+be quoted as such**.
+
+**Hypothesis for the next `PORT-1` run.** Take On-deck item 2 (`GEO-9` step 2a);
+items 3 and 4 are also untouched. Within `PORT-1`, the file is now at ~168 s,
+which is the standard-tier ceiling — **step 2d and step 3a must each open their
+own test file, not extend this one**. Note also that the box-error trend here is
+a fall-off measurement in its own right: −9.36 → −6.38 → −4.64% at `d` as
+padding grows, roughly halving per 0.04 m, which is the number to quote if
+anyone proposes an absorbing boundary as cheaper than a bigger box.
