@@ -1830,3 +1830,67 @@ it shares `sphere_in_box_domain` with — in one session, **7 passed in 54.6 s**
 at `-n 2`, standard tier. `TH-8` is unaffected: its own suite is 16 s and the
 sum is the two files' independent costs, so the lossy fixture's different R, f
 and complex Dirichlet data do not leak into the lossless one.
+
+## 2026-08-03T03:30Z — `GEO-9` step 1 (§9 On-deck item 3) — **complete**
+
+Tree clean at `c797d10`, container Up 6 days. Took On-deck item 3 as written.
+
+**The negative control did not reproduce, and that is the finding.** The §7
+plan required recording the before-state from a re-run rather than quoting
+known-issues. That run — `20260803T033050Z_GEO-9-before.log`, `-n 2`, standard
+tier — is **3 passed in 4.80 s**. `coil_phantom_domain` generates a mesh today,
+on both presets. The §7 hypothesis (fragment returning other than four volumes,
+leaving a piece ungrouped) is **wrong**: the generator's own new print reports
+`fragment volumes=4` with masses `1.579137e-04`, `1.579137e-04` (both exactly
+`2π²Rr²`), `5.026548e-04` (exactly `πr²h`) and `1.134952e-02` air.
+
+**Cause, measured not guessed.** The failure is **test-order contamination from
+the birdcage**, which is why the `GEO-8` sweep saw it and a single-file run does
+not: `20260803T033119Z_GEO-9-order-probe.log` runs `test_birdcage_port_tags.py`
+then `test_coil_phantom_mesh.py` in one process and reproduces the known-issues
+symptom exactly — 3 failed 2 passed in 3.47 s, the same two
+`gmshio.py:118: AssertionError`. `birdcage_port_domain` raises inside its
+`comm.rank == rank` block (overlapping facets) and never reaches
+`gmsh.finalize()`, so the next generator meets `Gmsh has aleady been
+initialized` / `I'm busy! Ask me that later...`, its `occ` calls are refused,
+and `model_to_mesh` reads the stale birdcage model. One defect, upstream of
+everything step 1 owns.
+
+**Landed anyway** — the anchor was the assertion whose absence let this present
+as a dolfinx internal assert:
+* `tests/mesh/test_coil_phantom_conforming.py`, the `GEO-8` volume-partition
+  identity on four regions, both presets;
+* two guards in `coil_phantom_domain` that raise with the volume count and the
+  per-volume masses if fragment returns ≠ 4 volumes or leaves any 3-D entity
+  without a physical group.
+
+Gate `20260803T033659Z_GEO-9-step1-gate.log`, standard tier, `-n 2`, **8 passed
+1 skipped in 22.25 s** (the skip is the `@complex_only` `GEO-8` field test, real
+build). Numbers: `V_mesh/V_box = 1.000000000000` and
+`Σ(tagged)/V_mesh = 1.000000000000`, both against a `1e-9` bound; phantom
+`4.943768e-04` m³ = **0.9835** of `πr²h`; coils 0.7547 / 0.7526 of `2π²Rr²`.
+The coil band is `(0.70, 1.00)` **set from that measurement** — the global
+`resolution=0.015` is larger than the 0.01 minor radius, so the chordal deficit
+is a resolution statement, recorded in a code comment with the log name.
+Off-centre preset partitions identically and keeps the phantom volume to all
+printed digits.
+
+**What is still red.** known-issues 7 as a suite. Post-change re-probe
+`20260803T033733Z_GEO-9-order-probe-after.log`: 3 failed 1 passed in 3.29 s,
+still `gmshio.py:118`. The new guards **do not fire** — gmsh is busy before they
+run, which is itself the confirmation that no defence inside
+`coil_phantom_domain` can help. Entry 7 and the §7 entry are rewritten with the
+diagnosis; `GEO-9` is 🟡 with step 1 ✅.
+
+**Not done / not attempted.** The birdcage (step 2) — deliberately, per the
+item's "do not improvise a geometry rewrite". known-issues 4 (B-field symmetry)
+and the air-box generalisation are untouched, as scoped.
+
+**Hypothesis for the next attempt.** Step 2 splits cleanly and the cheap half
+should land first: `try/finally: gmsh.finalize()` around the birdcage rank-0
+block turns a process-wide poison into one local failure and should flip both
+coil+phantom tests green inside the full `tests/mesh` sweep **without touching
+the geometry**. Only then the `occ.cut` → `occ.fragment` rewrite plus 3-D groups
+for the port boxes, on a reduced-rung fixture (the full birdcage suite is ~10
+min). If that ordering holds, `OPS-11` (put `tests/mesh` in CI) becomes safe
+immediately after.

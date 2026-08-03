@@ -418,7 +418,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-6` | Geometry sanity report utility | 🧪 | smoke |
 | `GEO-7` | Mesh-tag QA diagnostic hardening | 🧪 | standard |
 | `GEO-8` | **Make `two_torus_domain` a conforming mesh** | ✅ | standard |
-| `GEO-9` | **`coil_phantom_domain` / birdcage meshes do not generate** | ⬜ | standard |
+| `GEO-9` | **`coil_phantom_domain` / birdcage meshes do not generate** | 🟡 step 1 ✅ (coil+phantom gated; cause is the birdcage leaving gmsh un-finalized), step 2 open | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -526,8 +526,47 @@ Independent of the §2.1 physics defect; meshes are meshes.
 > are green with both sides recorded, and the known-issues entry is retired in
 > the same commit. Unblocks `PORT-1` steps 1–2 (§9 items 2 and 5).
 
-**`GEO-9` — `coil_phantom_domain` and the birdcage do not generate a mesh** ⬜
-*(created 2026-08-02, 18:00 review, from known-issues entry 7 and a §10 gap)*
+**`GEO-9` — `coil_phantom_domain` and the birdcage do not generate a mesh** 🟡
+*(created 2026-08-02, 18:00 review, from known-issues entry 7 and a §10 gap;
+step 1 ✅ 2026-08-03, step 2 open)*
+> **Step-1 result (2026-08-03, 22:30 implementer run) — the hypothesis below is
+> wrong, and the real cause is one defect, not two.** The negative control was
+> run first, as instructed, and **did not reproduce**: in a fresh process all
+> three `test_coil_phantom_mesh.py` tests **pass** in 4.80 s
+> (`20260803T033050Z_GEO-9-before.log`). They fail only when
+> `test_birdcage_port_tags.py` runs earlier **in the same process**
+> (`20260803T033119Z_GEO-9-order-probe.log`, 3 failed 2 passed in 3.47 s,
+> reproducing the known-issues symptom exactly). The birdcage generator raises
+> inside its `comm.rank == rank` block and so never reaches `gmsh.finalize()`;
+> gmsh is left initialised and mid-command (`Gmsh has aleady been initialized`,
+> `I'm busy! Ask me that later...`), every later `occ` call is refused, and
+> `model_to_mesh` reads the stale birdcage model — which is what `gmshio.py:118`
+> asserts on. **Fragment and the group re-derivation are innocent:** the
+> generator's own print reports `fragment volumes=4`, masses
+> `1.579137e-04, 1.579137e-04` (both exactly `2π²Rr²`), `5.026548e-04`
+> (exactly `πr²h`), `1.134952e-02` air.
+>
+> Landed anyway, because it is the assertion whose absence hid this:
+> `tests/mesh/test_coil_phantom_conforming.py` (the `GEO-8` volume-partition
+> identity on four regions) plus two guards in `coil_phantom_domain` that raise
+> with the volume count and per-volume masses if fragment returns other than
+> four volumes or leaves any 3-D entity ungrouped. Gate
+> `20260803T033659Z_GEO-9-step1-gate.log`, standard tier, `-n 2`, **8 passed
+> 1 skipped in 22.25 s**: `V_mesh/V_box = 1.000000000000` and
+> `Σ(tagged)/V_mesh = 1.000000000000` (both bounds `1e-9`), phantom
+> `4.943768e-04` = **0.9835** of `πr²h`, coils 0.7547 / 0.7526 of `2π²Rr²`
+> (the global `resolution=0.015` exceeds the 0.01 minor radius — a statement
+> about resolution, and the band is set from this measurement, not guessed).
+> Both presets partition identically and the off-centre phantom keeps the same
+> volume to all printed digits.
+>
+> **What step 1 does *not* fix:** known-issues 7 still fails as a suite. The new
+> guards do not fire under contamination — gmsh is already busy, so they never
+> execute (`20260803T033733Z_GEO-9-order-probe-after.log`, still
+> `gmshio.py:118`). **Step 2's first action is therefore the cheap half:** wrap
+> the birdcage rank-0 block in `try/finally: gmsh.finalize()`, so one broken
+> generator stops poisoning every later mesh in the process. That is separable
+> from, and should land before, the `occ.fragment` geometry rewrite.
 > **Why this is a chunk and not a nuisance.** Three `tests/mesh` tests have been
 > failing since before 2026-08-01 (known-issues 7, found by the `GEO-8`
 > regression sweep, invisible because **`tests/mesh` is in no CI job**): the
@@ -1860,8 +1899,15 @@ landing.
    **Does not close:** `MAT-4` — mass-averaged 1 g/10 g SAR is step 2 and needs
    ρ as a field. **Negative result:** report and stop; do not fall back to the
    2.5× control.
-3. **`GEO-9` step 1 — make `coil_phantom_domain` generate a mesh**,
-   independent. Execute the §7 `GEO-9` step-1 plan. Two of the four §10 Target
+3. ~~**`GEO-9` step 1 — make `coil_phantom_domain` generate a mesh**~~
+   **done 2026-08-03, 22:30 run** — negative control did not reproduce (the
+   fixture generates fine in a fresh process); the real cause is the birdcage
+   generator leaving gmsh un-finalized, so the coil+phantom half of
+   known-issues 7 is step 2's to close. Gate landed anyway:
+   `20260803T033659Z_GEO-9-step1-gate.log`, 8 passed 1 skipped in 22.25 s,
+   `V_mesh/V_box = Σ(tagged)/V_mesh = 1.000000000000` to `1e-9`, phantom 0.9835
+   of `πr²h`. See the §7 entry.
+   *(original scoping below)* independent. Execute the §7 `GEO-9` step-1 plan. Two of the four §10 Target
    criteria route through this fixture and it currently raises before dolfinx
    sees it (known-issues 7). **Anchor:** the `GEO-8` volume-partition identity —
    `V_mesh/V_box = 1` and `Σ(tagged volumes)/V_mesh = 1`, both to `1e-9`

@@ -1621,6 +1621,22 @@ class MeshGenerator:
 
             volumes = gmsh.model.getEntities(dim=3)
             masses = {tag: gmsh.model.occ.getMass(3, tag) for _, tag in volumes}
+
+            # GEO-9 step 1: the group re-derivation below assumes fragment
+            # returned exactly four volumes (air + two coils + phantom). An
+            # extra piece (an overlap split off) would silently receive no
+            # physical group and surface far downstream as a dolfinx gmshio
+            # `assert len(entity_types) == 1`; a merged pair would raise
+            # IndexError on the phantom_tag line. Fail here instead, with the
+            # count and the masses that identify which happened.
+            if len(volumes) != 4:
+                raise RuntimeError(
+                    "coil_phantom_domain: occ.fragment returned "
+                    f"{len(volumes)} volumes, expected exactly 4 "
+                    "(air + coil_1 + coil_2 + phantom); per-volume masses [m^3]: "
+                    + ", ".join(f"tag {tag}: {mass:.6e}" for tag, mass in sorted(masses.items()))
+                )
+
             air_tag = max(masses, key=masses.get)
 
             remaining = [tag for _, tag in volumes if tag != air_tag]
@@ -1641,6 +1657,27 @@ class MeshGenerator:
             gmsh.model.setPhysicalName(3, 3, "phantom")
             gmsh.model.addPhysicalGroup(3, [air_tag], tag=4)
             gmsh.model.setPhysicalName(3, 4, "air")
+
+            # Every 3-D entity must carry a marker; a cell with none is exactly
+            # what gmshio asserts on. Checked against the model, not against the
+            # four tags we just wrote, so a renumbering by fragment cannot hide.
+            grouped_volumes = set()
+            for _, group_tag in gmsh.model.getPhysicalGroups(dim=3):
+                grouped_volumes.update(gmsh.model.getEntitiesForPhysicalGroup(3, group_tag))
+            ungrouped = sorted({tag for _, tag in volumes} - grouped_volumes)
+            if ungrouped:
+                raise RuntimeError(
+                    "coil_phantom_domain: 3-D entities carry no physical group: "
+                    f"{ungrouped}; masses [m^3]: "
+                    + ", ".join(f"tag {tag}: {masses[tag]:.6e}" for tag in ungrouped)
+                )
+
+            print(
+                f"[coil-phantom-mesh] fragment volumes={len(volumes)} masses[m^3]: "
+                + ", ".join(f"{tag}:{mass:.6e}" for tag, mass in sorted(masses.items()))
+                + f" | air={air_tag} coil_1={coil_1_tag} coil_2={coil_2_tag} phantom={phantom_tag}",
+                flush=True,
+            )
 
             outer_boundary_surfaces = []
             box_half_x = radial_extent + effective_air_padding
