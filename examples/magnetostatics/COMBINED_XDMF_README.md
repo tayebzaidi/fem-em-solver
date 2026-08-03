@@ -15,9 +15,8 @@ We've created a custom XDMF writer (`fem_em_solver.io.paraview_utils.write_xdmf_
 After running the examples, you'll now get:
 
 **Individual files (standard DOLFINx output):**
-- `straight_wire_mesh.xdmf` - mesh with cell tags
-- `straight_wire_A.xdmf` - vector potential A
-- `straight_wire_B.xdmf` - magnetic field B
+- `straight_wire_A.xdmf` - vector potential A, on the mesh with its cell tags
+- `straight_wire_B.xdmf` - magnetic field B, on the mesh with its cell tags
 
 **NEW - Combined file (recommended):**
 - `straight_wire_combined.xdmf` - **mesh + cell tags + A + B on one grid** ✨

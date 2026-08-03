@@ -278,7 +278,7 @@ def main():
     print("\n  Alternative: Individual files")
     print("    - straight_wire_A.xdmf (vector potential)")
     print("    - straight_wire_B.xdmf (magnetic field)")
-    print("    - straight_wire_mesh.xdmf (mesh with tags)")
+    print("    Each also carries the mesh and cell tags.")
     print("\n  For VTX files (if available):")
     print("    - Open straight_wire_B.bp/ directory")
     print("=" * 60)

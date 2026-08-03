@@ -14,9 +14,12 @@ This will create a `paraview_output/` directory with visualization files.
 ## Output Files
 
 ### XDMF Format (Traditional)
-- `straight_wire_mesh.xdmf` + `.h5` - Mesh only
 - `straight_wire_A.xdmf` + `.h5` - Vector potential A field
 - `straight_wire_B.xdmf` + `.h5` - Magnetic field B
+- `straight_wire_combined.xdmf` + `.h5` - mesh + cell tags + A + B on one grid
+
+Every XDMF file above carries the mesh and its cell tags, so there is no
+separate mesh-only file to open.
 
 ### VTX Format (Modern, requires ADIOS2)
 - `straight_wire_A.bp/` - Vector potential A field
@@ -101,7 +104,7 @@ This shows the field in a 2D slice through the domain!
 
 If you just want to see the mesh structure:
 
-1. Open `straight_wire_mesh.xdmf`
+1. Open `straight_wire_combined.xdmf`
 2. In the toolbar, change representation from "Surface" to **"Wireframe"** or **"Surface with Edges"**
 
 ---
@@ -127,8 +130,8 @@ If you just want to see the mesh structure:
 - Use XDMF files instead - they work just as well
 
 ### "ParaView crashes when opening file"
-- Try opening only the mesh first: `straight_wire_mesh.xdmf`
-- If that works, then open the field files
+- Try opening a single-field file first: `straight_wire_B.xdmf`
+- If that works, then open the combined file
 - Check ParaView version - need 5.10+ for best XDMF support
 
 ---

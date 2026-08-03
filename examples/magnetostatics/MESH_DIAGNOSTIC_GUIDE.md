@@ -105,7 +105,7 @@ gmsh straight_wire.msh
 
 **Load mesh with tags:**
 ```
-Open: paraview_output/straight_wire_mesh.xdmf
+Open: paraview_output/straight_wire_combined.xdmf
 Reader: Xdmf3ReaderT
 Apply
 ```
