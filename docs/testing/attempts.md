@@ -1758,3 +1758,10 @@ offered from this run's numbers rather than tested: `Im Z₁₁ = −41 Ω` sits
 33× `ωM₁₂` while the off-diagonal is right to 9%, so whatever is wrong is
 confined to the source-region integral, and the energy route should be the
 arbiter exactly as the §7 plan says.
+
+**Post-commit cohabitation check** (log `20260803T003528Z_PORT-1-step2-cohabit.log`):
+the new gate and `tests/mesh/test_two_torus_conforming.py` — the other consumer
+of `two_torus_domain` — in one session, **6 passed in 86.31 s** at `-n 2`,
+standard tier. The 30 s over the gate's own 56 s is the `GEO-8` file's own
+solve; the two meshes are built independently and neither file perturbs the
+other.
