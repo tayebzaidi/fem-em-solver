@@ -2279,3 +2279,74 @@ verified its exclusion set (`--ignore` the birdcage file, `--deselect` the one
 known-issues-5 node id, nothing else) at 28.46 s. One note for whoever takes it:
 this run's command is a worked example of `--deselect` with a full node id
 surviving the already-quoted container command, which §9 flags as a trap.
+
+---
+
+## 2026-08-03T17:05Z — `OPS-11` (§9 On-deck item 1) — **complete**
+
+Preflight clean (`fa82c2d`), container Up 7 days, no `attempt/*` or
+`recovered/*` branches. Took the first open On-deck item as directed.
+
+**What landed.** The `validation` job in `.github/workflows/ci.yml` gained a
+`Mesh generation suite` step running the whole `tests/mesh` directory with
+exactly two exclusions — `--ignore=tests/mesh/test_birdcage_port_tags.py` and a
+`--deselect` of
+`test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent`.
+The single `tests/mesh/test_two_torus_conforming.py` line `GEO-8` had added to
+that job's analytic step was dropped, since the directory step now covers it;
+its `@complex_only` half still runs by name in `validation-complex`, and the
+comment there was corrected to say so.
+
+**The "those and only those" control was executed, not quoted** — §9 was
+explicit about this and the cohabit/sweep logs were not reused. Three harness
+runs, all `-n 2`, smoke/standard tier, 92 s of compute in total:
+
+| log | command | result |
+|---|---|---|
+| `20260803T170132Z_OPS-11-fullsweep.log` | `tests/mesh`, **no exclusions** | **2 failed, 18 passed, 1 skipped in 31.85 s**, harness exit 1 in 33 s |
+| `20260803T170047Z_OPS-11-negctl.log` | with both exclusions | 17 passed, 1 skipped, 1 deselected in 27.61 s, **exit 0**, 29 s |
+| `20260803T170248Z_OPS-11-cifidelity.log` | same, **no `PYTHONPATH` override** | 17 passed, 1 skipped, 1 deselected in 28.27 s, **exit 0**, 30 s |
+
+The two failures in the unexcluded run are exactly
+`test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags`
+(known-issues 7) and the off-centre sizing test (known-issues **5** — the
+numbering correction the 03:00 review made holds; nothing in `tests/mesh`
+touches entry 6). **Nothing else fails**, so neither exclusion is broader than
+the defect it names, which is the done-when's actual requirement. The
+CI-fidelity variant is the `OPS-10` precedent: it proves the job does not
+depend on the container's `PYTHONPATH=/workspace/src`.
+
+**§4.3 assertion.** A wiring chunk's comes from what it wires in: the
+volume-partition identities `V_mesh/V_box = 1` and `Σ(tagged)/V_mesh = 1`, both
+`< 1e-9`, now execute in CI for the first time — `GEO-9` step 1's two files
+(`test_coil_phantom_conforming.py:129,136,187,188`,
+`test_two_torus_conforming.py:97,104`) plus step 2a's post-poisoning form
+(`test_birdcage_finalize_isolation.py:116,121`).
+
+**The one trap §9 named is real, and the finding is a little larger than the
+item expected.** The birdcage `--ignore` no longer rests on the hang or the
+~10-minute budget figure: post-`GEO-9` step 2a the file fails **promptly** —
+exit 1 in 33 s for the whole directory, where the pre-2a order probes burned
+the full 180 s ceiling to exit 124. The CI comment and known-issues 7 now cite
+the current reason instead: deliberately red until `GEO-9` step 2b, and a
+permanently-red test hides regressions behind an expected failure. **Corollary
+worth keeping:** in that same unexcluded run the three coil+phantom tests pass
+*with the birdcage in the same process* (18 passed) — the step-2a poisoning fix
+holding under exactly the condition that used to break it, which no run had yet
+demonstrated on the full directory.
+
+**Does not close** known-issues 5 or 7. Both entries got an "Excluded from CI"
+row naming the exclusion and saying it must be removed by the commit that fixes
+the entry, per the done-when's "not carried".
+
+No denials hit; the `--deselect` node id survives the quoted container command,
+as the 09:00 run's note predicted. YAML re-parsed in-container after editing
+(`jobs` and the seven `validation` steps enumerate correctly).
+
+**Hypothesis for the next run.** On-deck items 2 (`PORT-1` step 2d), 3 (`GEO-9`
+step 2b), 4 (`MAT-4` step 2) and 5 (`POST-3` step 4) remain, all independent
+and untouched; item 2 is next and its §7 plan is the one the 03:00 review
+rewrote around the two-assembly identity, so it needs no new derivation. One
+inheritance from this run: `GEO-9` step 2b will be able to *delete* the
+`--ignore` line added here, and its own cost probe now has a clean baseline —
+the whole directory less birdcage is 27.6 s at `-n 2`.

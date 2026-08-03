@@ -320,10 +320,10 @@ These tables are the authoritative *status*; per-chunk historical detail is in
 | `OPS-8` | v1 milestone acceptance checklist | 🧪 | smoke |
 | `OPS-9` | Prune duplicate/stale entries from `pending-tests.md` | ✅ | smoke |
 | `OPS-10` | Complex-mode CI job for the frequency-domain gates | ✅ | smoke |
-| `OPS-11` | Put `tests/mesh` in CI — the directory no job runs | ⬜ | smoke |
+| `OPS-11` | Put `tests/mesh` in CI — the directory no job runs | ✅ | smoke |
 
-**`OPS-11` — `tests/mesh` is in no CI job** ⬜ *(created 2026-08-02, 18:00
-review; not queued — it is worth more once `GEO-9` step 1 lands)*
+**`OPS-11` — `tests/mesh` is in no CI job** ✅ *(created 2026-08-02, 18:00
+review; closed 2026-08-03, 12:00 implementer run)*
 > `GEO-8` added one file from `tests/mesh` to both jobs; the rest of the
 > directory has never run in CI, which is why known-issues 7 (three mesh
 > generators failing outright) sat undiscovered until a regression sweep
@@ -367,6 +367,47 @@ review; not queued — it is worth more once `GEO-9` step 1 lands)*
 > ~23 s at `-n 2`, carrying the `GEO-9` step-1 volume-partition identities
 > (`1e-9`) as its §4.3 assertion. Re-run at the working commit to confirm
 > "those and only those", per the done-when above — do not quote the cohabit log.
+>
+> **✅ Closed 2026-08-03 (12:00 implementer run), at `fa82c2d`.** The
+> `validation` job gained a `Mesh generation suite` step running the whole
+> directory with the two measured exclusions and nothing else; the single
+> `tests/mesh/test_two_torus_conforming.py` line `GEO-8` had added to that job's
+> analytic step was dropped, since the directory step now covers it (its
+> `@complex_only` half still runs by name in `validation-complex`).
+>
+> **The "those and only those" control was executed, not quoted**
+> (`20260803T170132Z_OPS-11-fullsweep.log`, `-n 2`, real mode, at this commit):
+> the *unexcluded* directory is **2 failed, 18 passed, 1 skipped in 31.85 s**,
+> harness exit 1 in 33 s — and the two failures are exactly
+> `test_birdcage_port_tags.py` (known-issues 7) and the off-centre sizing test
+> (known-issues **5**). Nothing else fails, so neither exclusion is wider than
+> the defect it names. With them applied: **17 passed, 1 skipped, 1 deselected
+> in 27.61 s**, exit 0 (`20260803T170047Z_OPS-11-negctl.log`), and the same
+> figures **28.27 s, exit 0** under the CI-fidelity invocation with no
+> `PYTHONPATH` override and the package from `pip install -e`
+> (`20260803T170248Z_OPS-11-cifidelity.log`) — the `OPS-10` precedent for
+> checking that a job does not depend on the container's path override.
+>
+> **§4.3 assertion (a wiring chunk's comes from what it wires in):** the
+> volume-partition identities `V_mesh/V_box = 1` and `Σ(tagged)/V_mesh = 1`,
+> each `< 1e-9`, now execute in CI for the first time — three files' worth
+> (`test_coil_phantom_conforming.py:129,136,187,188`,
+> `test_two_torus_conforming.py:97,104`, and post-poisoning in
+> `test_birdcage_finalize_isolation.py:116,121`).
+>
+> **One trap from the item's own text confirmed:** the birdcage `--ignore`
+> reason has changed and the CI comment states the current one. `GEO-9` step 2a
+> fixed the hang, so the file now fails **promptly** — the full-sweep run above
+> exited 1 in 33 s where the pre-2a order probes burned the whole 180 s ceiling
+> to exit 124. The exclusion therefore rests on "deliberately red until `GEO-9`
+> step 2b, and a red test hides regressions behind an expected failure", not on
+> the budget/hang argument this entry was written with. Corollary worth
+> recording: post-2a the coil+phantom tests pass *even with the birdcage in the
+> same process* (18 passed in the unexcluded sweep), which is the poisoning fix
+> holding under the one condition that used to break it.
+>
+> **Does not close:** known-issues 5 or 7. Both exclusions are annotated at
+> their entries and must be removed by the commits that fix them.
 
 
 **`OPS-10` — complex-mode CI job.** `TH-1` steps 1–5 put every frequency-domain
@@ -2554,7 +2595,14 @@ until 2b, and is noted here rather than invented as a premature entry.
 **All five items below are independent of each other; none waits on another
 landing.**
 
-1. **`OPS-11` — put `tests/mesh` in CI.** Independent.
+1. **`OPS-11` — put `tests/mesh` in CI.** ✅ **done 2026-08-03, 12:00 run** —
+   `validation` job gained a `Mesh generation suite` step; the unexcluded
+   control at the working commit gave 2 failed / 18 passed / 1 skipped with the
+   two failures being exactly known-issues 5 and 7, and the wired step is
+   17 passed 1 skipped 1 deselected in 27.6 s (28.3 s CI-fidelity), exit 0.
+   The birdcage `--ignore` reason was confirmed changed and is now cited as
+   "deliberately red until step 2b", not the hang. See the §7 entry.
+   Independent.
    Execute the §7 `OPS-11` entry **as rescoped at the 03:00 review** — its
    original exclusion set was wrong. **Anchor:** the `GEO-9` step-1
    volume-partition identities (`V_mesh/V_box` and `Σ(tagged)/V_mesh`, both

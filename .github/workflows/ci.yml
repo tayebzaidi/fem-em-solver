@@ -117,8 +117,43 @@ jobs:
           tests/validation/test_cavity_resonances.py \
           tests/solver/test_two_cylinder.py \
           tests/solver/test_two_torus.py \
-          tests/mesh/test_two_torus_conforming.py \
           tests/solver/test_energy_and_point_evaluation.py \
+          -v --tb=short
+
+    # OPS-11. Until now `tests/mesh` ran in no job except the single
+    # test_two_torus_conforming.py file `GEO-8` added (dropped from the step
+    # above, since the whole directory now runs here; its `@complex_only` half
+    # still runs in `validation-complex`). That gap is why known-issues 7 --
+    # three mesh generators failing outright -- sat undiscovered until a
+    # regression sweep tripped over it.
+    #
+    # Measured at this commit, `-n 2`, real mode, log
+    # 20260803T170132Z_OPS-11-fullsweep.log: the *unexcluded* directory is
+    # 2 failed, 18 passed, 1 skipped in 31.9 s, and the two failures are
+    # exactly the two excluded below -- nothing else fails, so neither
+    # exclusion is broader than the defect it names.
+    #
+    #   --ignore birdcage: test_birdcage_port_tags.py is deliberately red until
+    #     GEO-9 step 2b fixes the overlapping-facets geometry (known-issues 7).
+    #     A permanently-red test in CI hides regressions behind an expected
+    #     failure. It no longer *hangs* -- GEO-9 step 2a made the failure prompt
+    #     (exit 1 in ~13 s, was exit 124 at the 180 s ceiling) -- so the budget
+    #     argument this exclusion originally rested on no longer applies.
+    #   --deselect off-centre sizing: known-issues 5, `assert 0.09 > 0.09`,
+    #     pure geometry arithmetic with no solve.
+    #
+    # Remove each exclusion in the commit that fixes its entry; do not widen
+    # either one to make this job green.
+    #
+    # 27.6 s at -n 2 on the dev box (20260803T170047Z_OPS-11-negctl.log,
+    # 17 passed 1 skipped 1 deselected). Carries the GEO-9 step-1/2a
+    # volume-partition identities -- V_mesh/V_box and sum(tagged)/V_mesh, both
+    # to 1e-9 -- into CI for the first time.
+    - name: Mesh generation suite
+      run: |
+        mpiexec -n 2 python3 -m pytest tests/mesh \
+          --ignore=tests/mesh/test_birdcage_port_tags.py \
+          --deselect tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent \
           -v --tb=short
 
     # IO/materials/post. Two tests here used to be `--deselect`ed on the stale
@@ -195,9 +230,12 @@ jobs:
           -v --tb=short
 
     # test_two_torus_conforming.py is the `GEO-8` conformity gate; its volume
-    # half runs in the `validation` job above and its `@complex_only` field-
-    # leakage half (one 10 MHz solve on a 22k-cell mesh, 32 s at -n 2, log
-    # 20260801T003600Z_GEO-8-field-gate-numbers.log) runs here.
+    # half runs in the `validation` job above -- as of `OPS-11` through that
+    # job's whole-directory `tests/mesh` step rather than a file listing -- and
+    # its `@complex_only` field-leakage half (one 10 MHz solve on a 22k-cell
+    # mesh, 32 s at -n 2, log 20260801T003600Z_GEO-8-field-gate-numbers.log)
+    # runs here. It stays listed by name in this job because the rest of
+    # `tests/mesh` has nothing complex in it.
 
     # test_port_reaction_impedance.py is the `PORT-1` step-2 gate: one 119738-
     # cell two-torus mesh (21 s) and two 10 MHz solves (19 s and 15 s), 56 s in
