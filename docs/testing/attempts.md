@@ -1707,3 +1707,54 @@ the new file and `test_poynting_balance.py` — which it imports its fixture fro
 run in one session, 12 passed in 68.33 s at `-n 2`, standard tier. The 68 s is
 the step-2 Poynting suite's own cost; the step-3 gate adds ~3 s to the
 `validation-complex` job.
+
+## 2026-08-03T00:30Z — `PORT-1` step 2 (§9 On-deck item 1) — **complete**
+
+Preflight clean: no dirty tree, no `attempt/*` or `recovered/*` branches,
+container Up 6 days. Took the first On-deck item as written.
+
+**Result — 4 passed in 56.11 s** at `-n 2`, standard tier, complex build.
+New file `tests/validation/test_port_reaction_impedance.py`, one mesh at
+padding 0.08 / h_far 0.03 (119738 cells, 20.9 s) and two solves (19.2 s,
+15.2 s). Log `20260803T003217Z_PORT-1-step2-gate.log`. Wired into the
+`validation-complex` CI job with its measured cost in the comment block.
+
+| assertion | bound | measured | step-1 value it was sized from |
+|---|---|---|---|
+| `‖Z − Zᵀ‖/‖Z‖` | `< 1e-9` | 2.6497e-13 | 3.06e-13 |
+| `Im Z₁₂` vs `ωM₁₂ = 1.241755 Ω` | 10% | +1.125614 Ω, −9.35% | +1.125614 Ω, −9.35% |
+| `Re Z₁₂` | `< 1e-30` | exactly 0.0 | exactly 0.0 |
+| `‖S−Sᵀ‖/‖S‖`, `‖S‖₂` at `Z₀ = 50 Ω` | `< 1e-9`, `≤ 1` | 2.5993e-13, 1.000000000000 | new |
+
+The gate reproduces step 1 bit-for-bit on the two numbers they share, which is
+the strongest thing that could be said about the probe→gate handoff: the test
+is measuring the same quantity the probe measured, not a re-derivation of it.
+Nothing was loosened; every bound is the §7 step-2 table's, unchanged.
+
+**S is the new content.** `S = (Z − Z₀I)(Z + Z₀I)⁻¹` is three numpy lines in
+the test rather than a call into `ports/` — `ports/sparameters.py` has only the
+placeholder power-wave path (`_power_waves`, `_assemble_sparameter_matrix`),
+and there is no Z→S matrix conversion in `src/` to reuse. Deliberately left in
+the test: threading a real Z-matrix into the `ports/` API is `PORT-1` step 3's
+job and doing it here would have extended a ⚠️ subsystem. Because the domain is
+lossless and reciprocal, S is *unitary*, so the file asserts
+`|‖S‖₂ − 1| < 1e-9` in addition to passivity — measured 1.000000000000, and it
+is the assertion a real part leaking into Z would break first.
+
+**Left ungated as instructed:** the diagonal. Printed, not asserted —
+`Im Z₁₁, Im Z₂₂ = −41.0855, −40.9241 Ω`, still the wrong sign, still step 2b's.
+
+**Cost note for the plan.** The item predicted 75–90 s; actual 56 s. The gap is
+the second solve — step 1 measured 31 s for it in a sweep that had already
+solved two other boxes, whereas this file solves one box twice (19.2 s, 15.2 s;
+the second is faster, warm FFCx cache). Step 2c's "two meshes + two solves,
+150–180 s, at the edge of the tier" should be read against 56 s for one mesh +
+two solves, so it likely fits the standard tier after all — cost-probe it
+anyway, the second mesh at d = 0.08 is a bigger box.
+
+**Next.** Step 2c (item 5) is the natural follow-on and now has a home file to
+land in. Step 2b (item 4) is untouched and independent. Hypothesis for 2b,
+offered from this run's numbers rather than tested: `Im Z₁₁ = −41 Ω` sits at
+33× `ωM₁₂` while the off-diagonal is right to 9%, so whatever is wrong is
+confined to the source-region integral, and the energy route should be the
+arbiter exactly as the §7 plan says.

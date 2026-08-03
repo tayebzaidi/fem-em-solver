@@ -185,6 +185,7 @@ jobs:
           tests/validation/test_current_divergence.py \
           tests/validation/test_resonance_guard.py \
           tests/validation/test_dodd_deeds_impedance.py \
+          tests/validation/test_port_reaction_impedance.py \
           tests/mesh/test_two_torus_conforming.py \
           tests/solver/test_time_harmonic_smoke.py \
           tests/solver/test_boundary_condition_selection.py \
@@ -196,6 +197,11 @@ jobs:
     # half runs in the `validation` job above and its `@complex_only` field-
     # leakage half (one 10 MHz solve on a 22k-cell mesh, 32 s at -n 2, log
     # 20260801T003600Z_GEO-8-field-gate-numbers.log) runs here.
+
+    # test_port_reaction_impedance.py is the `PORT-1` step-2 gate: one 119738-
+    # cell two-torus mesh (21 s) and two 10 MHz solves (19 s and 15 s), 56 s in
+    # total at -n 2 (log 20260803T003217Z_PORT-1-step2-gate.log). Complex only —
+    # the whole file asserts on a complex Z-matrix and its S conversion.
 
     # test_current_divergence.py is the `POST-3` step-3 gate: two solves on the
     # piecewise-σ fixture plus four Poisson solves for the dual norms, 2.7 s at

@@ -76,6 +76,13 @@ invented constants (`1e-3 * support` is dimensionally meaningless; a `0.20`
 coupling factor is arbitrary). The orientation-flip test passes because a helper
 returns `−1.0` when two orientation *strings* differ. `PORT-1` is the fix.
 
+*(2026-08-02, `PORT-1` step 2: there is now **one** S-matrix in the repo that is
+not heuristic — `tests/validation/test_port_reaction_impedance.py` converts a
+reaction Z-matrix from a solved two-loop field through
+`S = (Z − Z₀I)(Z + Z₀I)⁻¹` and gates it symmetric, passive and unitary. It is a
+two-loop air fixture, not a coil, and `ports/excitation.py` is untouched: every
+S-parameter the **package** produces is still heuristic.)*
+
 ### 2.3 Test assertions cannot detect either problem
 
 Finiteness checks (`np.isfinite`, `> 0`) dominate the solver, port, material, and
@@ -137,7 +144,9 @@ real code and real logs, but §4.3 asks for an executed quantitative *assertion*
 and a script that only prints has none — so the probe step is `🧪` until its
 gate lands, however good its numbers are. This is a clarification of §4, not an
 exception to it: the fix is to write the gate, never to widen §4. Demoted on
-this ground 2026-08-02: `PORT-1` step 1, `MAT-6` step 2a.
+this ground 2026-08-02: `PORT-1` step 1, `MAT-6` step 2a. (`PORT-1` step 1 was
+restored to ✅ the same day when its gate, step 2, landed — which is exactly
+the intended route back.)
 
 ---
 
@@ -1349,6 +1358,43 @@ completed measurement step is not "not started")*
 > comes back missed, **report the measurement and stop**; annotate this entry
 > and open a known-issues entry rather than widening (ii) past 10%.
 >
+> **Step 2 executed 2026-08-02 (19:30 run) — ✅ §4-done, and it retroactively
+> closes step 1 (🧪 → ✅: the step-1 numbers now carry assertions).**
+> `tests/validation/test_port_reaction_impedance.py`, four tests, **4 passed in
+> 56.1 s** at `-n 2`, standard tier, complex build
+> (`20260803T003217Z_PORT-1-step2-gate.log`). One mesh at padding 0.08 /
+> h_far 0.03 — **119738 cells, mesh 20.9 s, solves 19.2 s and 15.2 s**, i.e.
+> the step-1 cost model held (predicted 75–90 s, measured 56 s; the second
+> solve is faster than step 1's 31 s because the file solves only this one
+> box). The file is wired into the `validation-complex` CI job.
+>
+> Every gated number reproduced the step-1 measurement it was sized from:
+>
+> | # | assertion | bound | measured 2026-08-02 | step-1 value |
+> |---|---|---|---|---|
+> | i | `‖Z − Zᵀ‖/‖Z‖` | `< 1e-9` | **2.6497e-13** | 3.06e-13 at this configuration |
+> | ii | `Im Z₁₂` vs `ωM₁₂ = +1.241755 Ω` | within 10% | **+1.125614 Ω, −9.35%** | +1.125614 Ω, −9.35% — bit-for-bit |
+> | iii | `Re Z₁₂` | `< 1e-30` | **exactly +0.000000e+00** | exactly 0.0 |
+> | iv | S symmetric + passive at `Z₀ = 50 Ω` | `‖S−Sᵀ‖/‖S‖ < 1e-9`, `‖S‖₂ ≤ 1` | **2.5993e-13** and **‖S‖₂ = 1.000000000000** | new here |
+>
+> `M₁₂ = 1.976314e-08 H`; `S₁₁ = −1.941026e-01 − 9.806119e-01j`,
+> `S₂₁ = −2.639550e-02 + 5.277699e-03j`; meshed currents 0.969009 A on both
+> tori, identical to all printed digits; `k₀·diag = 0.08618`. **This is the
+> first S-matrix in the repository derived from a solved field.** Because the
+> domain is lossless and reciprocal, S is unitary, so the file asserts
+> `|‖S‖₂ − 1| < 1e-9` as well as passivity — the sharper statement of the same
+> physics, and the one a real part leaking into Z would break. No bound was
+> loosened and no assertion was weakened from the step-2 table above; item (v)
+> stayed split out as step 2c.
+>
+> **Left ungated on purpose:** the diagonal. The gate prints
+> `Im Z₁₁, Im Z₂₂ = −4.108550e+01, −4.092413e+01 Ω` and asserts nothing about
+> them — still negative where a lossless loop must be inductive, still `PORT-1`
+> step 2b's to diagnose. Also still open: step 2c (the `M(2d)/M(d)` doubling
+> control, which the new file is the natural home for), step 3 (gap-voltage
+> ports), and the two deliberately-red port tests (known-issues 3). `PORT-1`
+> therefore stays 🟡.
+>
 > **Step 2b — the self-impedance diagnosis (one run; independent of step 2).**
 > *(New 2026-08-02, 18:00 review.)* Step 1's diagonal is not merely imprecise,
 > it is the wrong sign: `Im Z₁₁ ≈ −40.9 Ω` where a lossless loop must be
@@ -1449,8 +1495,10 @@ completed measurement step is not "not started")*
 > expressions splitting inside the single-quoted container command; numbers
 > logs need `pytest -s` or the prints are captured.
 
-> **Step 1 re-run 2026-08-02 (13:30 run) after `GEO-8` — 🧪; the numbers
-> below size step 2.** *(Demoted from ✅ by the 18:00 review audit. The step
+> **Step 1 re-run 2026-08-02 (13:30 run) after `GEO-8` — ✅ *(restored by the
+> 19:30 run: step 2's gate asserts these numbers, so the §4.3 defect the 18:00
+> audit found is discharged)*; the numbers below sized step 2.**
+> *(Demoted from ✅ by the 18:00 review audit. The step
 > executed cleanly, all five logs are registered, and every headline number
 > below was re-verified against them this review — but the committed
 > deliverable is `scripts/probes/port1_step1_probe.py`, which contains no
@@ -1721,7 +1769,11 @@ harness mid-write); left as-is rather than hand-writing a harness record.
 All five items below are independent of each other; none waits on another
 landing.
 
-1. **`PORT-1` step 2 — the reaction-Z gate.** Critical path, unblocked, and
+1. ~~**`PORT-1` step 2 — the reaction-Z gate.**~~ **done 2026-08-02, 19:30 run**
+   — 4 passed in 56.1 s, `20260803T003217Z_PORT-1-step2-gate.log`; reciprocity
+   2.65e-13, `Im Z₁₂` −9.35% of `ωM₁₂`, `Re Z₁₂` exactly 0, `‖S‖₂ = 1.000000000000`.
+   See the `PORT-1` §7 entry. Original item text follows.
+   Critical path, unblocked, and
    every bound is already measured — execute the §7 step-2 table as written.
    `tests/validation/test_port_reaction_impedance.py`, one mesh at **padding
    0.08 / h_far 0.03** (119738 cells), two solves. **Anchors:** reciprocity
