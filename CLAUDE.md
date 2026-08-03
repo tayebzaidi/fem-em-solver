@@ -73,7 +73,7 @@ review of returned diffs stay in the main (Fable) session.
 System cron runs headless sessions via `scripts/automation/` on a 90-minute
 grid — 3 reviews and 12 implementer runs a day, four runs after each review:
 
-- **Plan review** (Opus, xhigh effort, 03:00 / 10:30 / 18:00 local) — audits results
+- **Plan review** (Fable 5, xhigh effort, 03:00 / 10:30 / 18:00 local) — audits results
   against §4, rescopes failed attempts, disposes of `recovered/*` branches,
   tops the §9 "On deck" queue up to 5 items. Protocol:
   docs/automation/daily-review.md.
