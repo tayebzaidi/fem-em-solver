@@ -1765,3 +1765,61 @@ of `two_torus_domain` — in one session, **6 passed in 86.31 s** at `-n 2`,
 standard tier. The 30 s over the gate's own 56 s is the `GEO-8` file's own
 solve; the two meshes are built independently and neither file perturbs the
 other.
+
+---
+
+## 2026-08-03T02:00Z — `MAT-4` step 1 — **complete**
+
+Scheduled implementer run, 21:00 CDT slot. Preflight clean (`5b98bb0`),
+container Up 6 days. Took On-deck item 2 (item 1, `PORT-1` step 2, was marked
+done by the 19:30 run).
+
+**Delivered.** `src/fem_em_solver/post/sar.py` (`mean_sar`,
+`uniform_sphere_sar_closed_form`) and
+`tests/validation/test_lossy_sphere_sar.py`, one test, four solves.
+Log of record `20260803T020448Z_MAT-4-step1-gate.log`, **5 passed in 39.4 s**
+at `-n 2`, standard tier, complex build with `tests/environment` first. An
+earlier identical run without `-s` (`20260803T020355Z_MAT-4-step1-probe.log`,
+43 s) also passed; it is kept because it is the run that proved the gate before
+the printed numbers existed, but it carries none of them.
+
+**Measured** (f = 64 MHz, R = 0.01 m, εᵣ = 78, ρ = 1000, h = R/6 → R/10, 17785
+→ 74019 cells):
+
+| σ [S/m] | t = σ/(ωε₀) | \|k_in\|R | mean SAR [W/kg] | closed form | error | coarse error |
+|---|---|---|---|---|---|---|
+| 0.05 | 14.04 | 0.119 | 3.5273e-8 | 3.4105e-8 | 3.42% | 8.45% |
+| 0.57 | 160.09 | 0.179 | 8.2917e-8 | 8.0084e-8 | 3.54% | 8.75% |
+
+Interior `Im E_z/Re E_z` 0.1752 vs 0.1755 and 1.9900 vs 2.0011. Two-σ control:
+FEM ratio 2.3507, closed form 2.3481, σ-blind 11.4000 ⇒ **separation 4.850
+against the ceiling 4.855 the 18:00 review computed** — the review's arithmetic
+reproduced by the solver to 0.1%, which is itself a check on the ceiling.
+
+**No bound was loosened and none was moved.** Every bound was written before the
+first run and all passed on the first execution: 10% per-σ SAR (the closed
+form's own O((k_in R)²) ≈ 6%-in-SAR model error plus P1 error), 10% on the
+phase ratio, > 3 on the separation, plus monotone refinement and 2% interior
+uniformity. Margin is comfortable everywhere — the tightest is the SAR bound at
+3.5/10.
+
+**Two things worth the review's attention.**
+1. The plan's worked operating point was exactly right: `t₁ = 14.0/t₂ = 160`,
+   ceiling 4.85, `|k_in|R = 0.179` all reproduced to the digit. Pre-computing
+   control ceilings in the review is now 2-for-2 at saving a run.
+2. `Im E_z` is **twice** `Re E_z` at σ = 0.57. The `POST-1` `float64` cast in
+   `post/phantom_fields.py` would therefore have made SAR wrong by ~5× on this
+   fixture, not by a rounding error. `post/sar.py` deliberately does not touch
+   that module; known-issues should keep treating `phantom_fields` as unusable
+   for anything lossy.
+
+**Not closed.** `MAT-4` is 🟡, not ✅: step 2 (mass-averaged 1 g/10 g SAR) needs
+ρ as a field and an averaging-volume decision, untouched here. `MAT-4` step 1
+says nothing about SAR on a *coil* — the drive here is an imposed uniform
+field, not a port.
+
+**Next.** On-deck items 3 (`GEO-9` step 1), 4 (`PORT-1` step 2b) and 5
+(step 2c) are all untouched and independent. Hypothesis for whoever takes
+`MAT-4` step 2: `mean_sar` already takes `cell_tags`/`subdomain_ids` and a
+scalar ρ, so the step-2 work is a ρ *field* plus the averaging volume, not a
+rewrite of the integrand.

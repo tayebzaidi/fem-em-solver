@@ -855,16 +855,53 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `MAT-1` | Gelled saline presets (low/mid/high σ) | ⚠️ | smoke |
 | `MAT-2` | Materials demonstrably affect solved fields | ✅ | standard |
 | `MAT-3` | Debye/Cole-Cole dispersion models | ⬜ | smoke |
-| `MAT-4` | SAR computation `σ|E|²/(2ρ)` | ⬜ | standard |
+| `MAT-4` | SAR computation `σ|E|²/(2ρ)` | 🟡 | standard |
 | `MAT-5` | Temperature-dependent conductivity | ⬜ | smoke |
 | `MAT-6` | **Dodd–Deeds coil-over-lossy-half-space impedance** | ✅ | heavy |
 
 > `MAT-1` is `⚠️` not because the preset table is wrong but because nothing
 > consumes it.
 
-**`MAT-4` — SAR computation** ⬜ *(implementation plan 2026-07-31, 18:00
-review)*
-> **Step 1 — the lossy-sphere gate (one run).** Extend the `TH-8` fixture
+**`MAT-4` — SAR computation** 🟡 *(step 1 ✅ 2026-08-03; step 2 ⬜.
+Implementation plan 2026-07-31, 18:00 review)*
+> **Step 1 ✅ done 2026-08-03, 21:00 implementer run** —
+> `tests/validation/test_lossy_sphere_sar.py::test_lossy_sphere_mean_sar_matches_closed_form`
+> plus `src/fem_em_solver/post/sar.py`; log
+> `20260803T020448Z_MAT-4-step1-gate.log`, **5 passed in 39.4 s** at `-n 2`,
+> standard tier, complex build (a first run without `-s`,
+> `20260803T020355Z_MAT-4-step1-probe.log`, 43 s, passed identically — the
+> gate's numbers are only in the `-s` log).
+> Operating point exactly as the control-ceiling paragraph below prescribes:
+> f = 64 MHz, R = 0.01 m, εᵣ = 78, σ = 0.05 / 0.57 S/m, ρ = 1000 kg/m³, two
+> meshes at h = R/6 (17785 cells) and R/10 (74019 cells). Measured:
+> * **Mean SAR against `σ|3E₀/(ε_c+2)|²/(2ρ)`, each σ against its own closed
+>   form:** σ = 0.05 → 3.5273e-8 vs 3.4105e-8 W/kg (**3.42%**), converging
+>   from 8.45% at the coarse mesh; σ = 0.57 → 8.2917e-8 vs 8.0084e-8 W/kg
+>   (**3.54%**), from 8.75%. Both under the 10% bound, which is the closed
+>   form's own O((k_in R)²) ≈ 6%-in-SAR model error plus P1 discretisation,
+>   not a fitted tolerance. Quasi-statics holds and is printed:
+>   `|k_in|R = 0.119 / 0.179`, `t = σ/(ωε₀) = 14.04 / 160.09`.
+> * **The imaginary axis, directly:** interior `Im E_z/Re E_z` = 0.1752 vs the
+>   closed-form 0.1755 (0.17%) and 1.9900 vs 2.0011 (0.55%). `TH-8` measures
+>   this same quantity as exactly 0 by construction, so this is the first
+>   quantitative assertion anywhere on `Im ε_c`.
+> * **Two-σ negative control:** FEM `SAR₂/SAR₁ = 2.3507` against the closed
+>   form 2.3481 (0.11%); a σ-blind solver returns 11.4000 exactly. Separation
+>   **4.850 against the predicted ceiling 4.855** — the ceiling paragraph's
+>   arithmetic reproduced by the solver to 0.1%. Gated at > 3.
+> * Interior uniformity 0.07% / 0.11% spread inside 0.55 R; meshed sphere
+>   volume 0.9964 of `4πR³/3` at the fine mesh (0.9900 coarse), reported
+>   because it is the denominator of the mean as well as a field error.
+>
+> `post/sar.py` computes SAR in UFL from `e_complex` (`mean_sar`, subdomain-
+> restricted, allreduced) and never touches `post/phantom_fields.py`, whose
+> `float64` cast would discard `Im E` — on the σ = 0.57 sphere `Im E_z` is
+> **twice** `Re E_z`, so that route would have been wrong by ~5×. The ½
+> peak-phasor convention matches `poynting_power_balance`: `mean_sar`'s
+> `dissipated_power_w` is that identity's volume leg restricted to the sphere.
+>
+> **Step 1 — the lossy-sphere gate (one run).** *(original plan, executed as
+> written)* Extend the `TH-8` fixture
 > (`sphere_in_box_domain` + the `test_dielectric_sphere.py` machinery) to
 > σ > 0: the same closed form holds with complex permittivity,
 > `E_in = 3E₀/(ε_c + 2)`, `ε_c = εᵣ − j·σ/(ωε₀)`, entering both the exterior
@@ -1795,7 +1832,13 @@ landing.
    ungated**, it is wrong in sign and item 4 owns it. **Negative result:**
    report the measurement and stop; annotate the §7 entry and open a
    known-issues entry rather than widening the 10%.
-2. **`MAT-4` step 1 — the lossy-sphere SAR gate**, independent. Execute the §7
+2. ~~**`MAT-4` step 1 — the lossy-sphere SAR gate.**~~ **done 2026-08-03,
+   21:00 run** — 5 passed in 39.4 s, `20260803T020448Z_MAT-4-step1-gate.log`;
+   mean SAR 3.42% / 3.54% off its own closed form at σ = 0.05 / 0.57 S/m,
+   interior `Im/Re E_z` 0.1752 vs 0.1755 and 1.9900 vs 2.0011, two-σ
+   separation 4.850 against the computed ceiling 4.855. See the `MAT-4` §7
+   entry. Original item text follows.
+   Independent. Execute the §7
    `MAT-4` plan **including its new "control ceiling" paragraph, which changes
    the design**: extend the `TH-8` sphere fixture to σ > 0 and gate interior
    mean SAR against `σ|3E₀/(ε_c+2)|²/(2ρ)`, `ε_c = εᵣ − jσ/(ωε₀)` — the first
