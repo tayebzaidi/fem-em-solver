@@ -1504,6 +1504,63 @@ completed measurement step is not "not started")*
 > plus a known-issues entry, not a sign flip applied to make the number look
 > right.
 >
+> **Step 2b executed 2026-08-03 (00:00 run) — ✅ §4-done as a diagnosis, and it
+> answers the question with the outcome the step called "informative but
+> negative": the reaction integral is right, the fixture is the problem.**
+> New file `tests/validation/test_port_self_impedance_energy.py`, three tests,
+> **3 passed in 43.5 s** at `-n 2`, standard tier, complex build
+> (`20260803T050252Z_PORT-1-step2b-gate.log`). One mesh at padding 0.08 /
+> h_far 0.03 — 119738 cells, mesh 22.9 s — and **one** solve, 19.5 s; the file
+> imports the step-2 file's constants and helpers so the two cannot drift, and
+> it is wired into `validation-complex`. Meshed current 0.969009 A, identical to
+> step 2's.
+>
+> | quantity | measured | reference |
+> |---|---|---|
+> | `Im Z₁₁`, reaction integral | `−4.108550e+01 Ω` | step 2's ungated print, bit-for-bit |
+> | `Im Z₁₁`, complex power `4ω(W_m−W_e)/I²` | `−4.108550e+01 Ω` | — |
+> | relative disagreement | **1.8128e-10** | **gated `< 1e-9`** |
+> | `Re Z₁₁` | exactly `−0.000000e+00` | gated `< 1e-30`, structural |
+> | `4ωW_m/I²` | `+7.437 Ω` | Grover `ωL = 6.818 Ω`, **ratio 1.0908** — printed, not gated |
+> | `4ωW_e/I²` | `+48.52 Ω` | — |
+> | `W_e/W_m` | 6.524 | — |
+>
+> The step named two outcomes; this is the first one, sharpened. The two routes
+> agree to 1.8e-10, so **the self-term of the reaction integral is not the bug**
+> — the guess recorded in known-issues was wrong and is corrected there. Grover
+> then localises the anomaly to one half of the identity: `4ωW_m/I² = 7.437 Ω`
+> is the physical loop inductance to 9.1%, within what the PEC box at this
+> padding can account for, so the whole of `−40.9 = 7.44 − 48.52` is an
+> **electric-energy excess**. The two-torus box at 10 MHz is electric-energy
+> dominated by 6.5×, which invalidates any `Z_in` or `S₁₁` read off this
+> fixture's diagonal — exactly as the step warned, and now measured rather than
+> suspected. Grover's `ωL` is no longer prose-only: `grover_loop_inductance()`
+> computes it and the log prints 6.818343e+00 Ω.
+>
+> The identity's bound deserves one caveat for whoever touches it next: 1.81e-10
+> against 1e-9 is **5.5× of margin, not the four orders the other `PORT-1`
+> bounds carry**, because the residual is limited by the MUMPS solve and the
+> quadrature agreement of the two form pairs rather than by physics. If a rank
+> count, solver or mesh change moves it, re-measure and record — a drift there
+> is information about the solve, and widening the bound would discard it.
+>
+> **Leading hypothesis for the fix step (not measured, do not treat as
+> established):** low-frequency breakdown of the curl-curl formulation. At
+> ω → 0 the operator acts on the gradient subspace as `−k₀²`, so any residual
+> non-solenoidal component of the *discretised* impressed current — the analytic
+> azimuthal `J` is exactly divergence-free and tangent to the torus surface, but
+> the faceted meshed boundary is only approximately so — is amplified by `1/k₀²`
+> into a spurious electrostatic field that lands in `W_e` and nowhere else.
+> **The discriminating measurement is the ω-scaling of `4ωW_e/I²` at fixed
+> geometry:** a physical capacitance gives `∝ 1/ω`, an induction-driven electric
+> energy gives `∝ ω`, and this contamination gives neither. It is cheap — the
+> mesh is reusable across frequencies, so one mesh and three or four solves,
+> ~110 s — and `tests/validation/test_current_divergence.py` (`POST-3` step 3)
+> already scores a discrete divergence residual, which is the second, structural
+> route to the same question. **Scope: step 2b closes nothing.** The diagonal
+> stays ungated in `test_port_reaction_impedance.py`, known-issues' negative-
+> diagonal entry stays open with its diagnosis appended, and `PORT-1` stays 🟡.
+>
 > **Step 2c — the `M(2d)/M(d)` doubling control (one run; independent).**
 > Step 1's item (v), split out because a second separation needs a second mesh.
 > Anchor: `M(2d)/M(d) = 0.287120` from
@@ -1927,7 +1984,17 @@ landing.
    cause is not the four-volume assumption in the group re-derivation, **print
    the volume count and the per-volume masses, annotate the §7 entry and
    known-issues 7, and stop** — do not improvise a geometry rewrite.
-4. **`PORT-1` step 2b — diagnose the negative `Im Z₁₁`**, independent of item 1
+4. ~~**`PORT-1` step 2b — diagnose the negative `Im Z₁₁`**~~ **done 2026-08-03,
+   00:00 run** — 3 passed in 43.5 s, `20260803T050252Z_PORT-1-step2b-gate.log`;
+   the two routes to `Im Z₁₁` agree to **1.8128e-10**, so the reaction integral
+   is exonerated, and `4ωW_m/I² = 7.437 Ω` vs Grover's 6.818 Ω (ratio 1.0908)
+   localises the whole anomaly to an electric-energy excess
+   (`4ωW_e/I² = 48.52 Ω`, `W_e/W_m = 6.524`). Diagnosis only — nothing closed,
+   diagonal still ungated. New file
+   `tests/validation/test_port_self_impedance_energy.py`, wired into
+   `validation-complex`. Next measurement named in the §7 entry and
+   known-issues: the ω-scaling of `4ωW_e/I²`. Original item text follows.
+   Independent of item 1
    (step 2 deliberately does not gate the diagonal). Execute the §7 step-2b
    plan. **Anchor:** the complex-power identity as a second, independent
    derivation from the same solved field — `Im Z₁₁ = 4ω(W_m − W_e)/|I₁|²` with

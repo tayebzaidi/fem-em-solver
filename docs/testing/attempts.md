@@ -1906,3 +1906,86 @@ added lines entirely inside `coil_phantom_domain` while that test exercises the
 pure-arithmetic `coil_phantom_domain_sizing_diagnostics`. Not fixed in passing;
 worth noting for `OPS-11` that putting `tests/mesh` in CI needs known-issues 6
 and 7 closed first, or the job is red on arrival.
+
+---
+
+## 2026-08-03T05:10Z — `PORT-1` step 2b — **complete**
+
+Scheduled implementer run, 00:00 local slot. Preflight clean (`3ac025c`,
+container Up 6 days). Took On-deck item 4 (items 1–3 already struck through as
+done); executed the §7 step-2b plan as written, no rescoping.
+
+**What was tried.** New file `tests/validation/test_port_self_impedance_energy.py`
+— one mesh (padding 0.08 / h_far 0.03, 119738 cells, 22.9 s) and **one** solve
+(19.5 s, torus 1 driven), then `Im Z₁₁` computed twice from the same solved
+field: the reaction integral `−(1/I²)∫E·J dV` reusing the step-2 file's
+`_reaction`/`_tag_volume`/`_azimuthal_current_density` by import (so the two
+files cannot drift), and the complex-power route
+`Im Z₁₁ = 4ω(W_m − W_e)/I²` with `W_e` from
+`core.resonance.stored_electric_energy` and a new `stored_magnetic_energy`
+(`W_m = (1/(4μ₀ω²))∫|∇×E|²dV`, allreduced — `assemble_scalar` is rank-local).
+Grover's `L = μ₀a(ln(8a/r_wire) − 2)` is now computed in code, not prose.
+
+**Measured** (`20260803T050252Z_PORT-1-step2b-gate.log`, 3 passed in 43.5 s,
+`-n 2`, standard tier, complex build):
+
+| quantity | value |
+|---|---|
+| `Im Z₁₁` reaction | `−4.108550e+01 Ω` (bit-for-bit step 2's ungated print) |
+| `Im Z₁₁` complex power | `−4.108550e+01 Ω` |
+| relative disagreement | **1.8128e-10**, gated `< 1e-9` |
+| `Re Z₁₁` | exactly `−0.000000e+00`, gated `< 1e-30` |
+| `4ωW_m/I²` | `+7.437 Ω` vs Grover `ωL = 6.818343 Ω`, ratio **1.0908** |
+| `4ωW_e/I²` | `+48.52 Ω`; `W_e/W_m = 6.524` |
+| meshed current | 0.969009 A, identical to step 2 |
+
+**The answer.** The step named two outcomes and this is the first, sharpened by
+the Grover anchor. The two routes agree to 1.8e-10 ⇒ **the reaction integral's
+self-term is not the bug**, which contradicts the guess recorded in
+known-issues (corrected there). `4ωW_m/I²` is the physical loop inductance to
+9.1% ⇒ the magnetic half is sound, so all of `−40.9 = 7.44 − 48.52` is an
+**electric-energy excess**: the two-torus box at 10 MHz is electric-energy
+dominated by 6.5×, and no `Z_in`/`S₁₁` may be read off this diagonal. Reported
+and stopped, per the item — no sign flip applied.
+
+**Bound honesty.** 1.81e-10 against 1e-9 is 5.5× of margin, not the four orders
+the other `PORT-1` bounds carry, because the residual is solver- and
+quadrature-limited rather than physics-limited. Recorded in the docstring, the
+§7 entry and here: if a rank/solver/mesh change moves it, **re-measure**, do not
+widen.
+
+**Artifacts.** New test file (wired into `validation-complex` with a cost
+comment); §7 `PORT-1` step 2b annotated with the result table and the
+hypothesis; known-issues' negative-diagonal entry updated — still open, guess
+corrected, diagnosis appended; On-deck item 4 struck through. `PORT-1` stays 🟡
+and the diagonal stays ungated: a diagnosis closes nothing.
+
+**Not done / not attempted.** Step 2c (the `M(2d)/M(d)` doubling control, On-deck
+item 5) — out of scope for this slot. No fix attempted for the electric-energy
+excess; the plan reserves that for a separate step, correctly, since the cause
+is now a hypothesis rather than a measurement.
+
+**Hypothesis for the next attempt.** Low-frequency breakdown of the curl-curl
+formulation: at ω → 0 the operator acts on the gradient subspace as `−k₀²`, so
+any residual non-solenoidal component of the *discretised* impressed current
+(the analytic `J` is divergence-free and tangent to the torus, but the faceted
+meshed boundary is only approximately so) is amplified by `1/k₀²` into a
+spurious electrostatic field that lands in `W_e` and nowhere else. **The
+discriminating measurement is the ω-scaling of `4ωW_e/I²` at fixed geometry** —
+physical capacitance `∝ 1/ω`, induction-driven electric energy `∝ ω`, this
+contamination neither. Cheap: the mesh is reusable across frequencies, so one
+mesh plus three or four solves, ~110 s, standard tier. The second, structural
+route to the same question already exists — `tests/validation/test_current_divergence.py`
+(`POST-3` step 3) scores a discrete divergence residual. A reviewer sizing this
+should note it is a genuine physics question about the fixture, not a bug hunt:
+the honest outcome may be that the fixture needs a different excitation, not
+that the solver needs a patch.
+
+**Post-commit cohabitation check** (`20260803T050609Z_PORT-1-step2b-cohabit.log`):
+both port files in one pytest session — **7 passed in 98.01 s** at `-n 2`,
+standard tier, complex build. The new file's module-scoped fixture builds its
+own mesh and solve alongside step 2's without interference, and step 2's four
+assertions reproduce unchanged in the shared process, which is what matters
+given the new file imports its helpers. Two meshes and three solves is 98 s,
+still inside the standard tier, so listing both in `validation-complex` adds
+43.5 s to that job rather than a new mesh cost.

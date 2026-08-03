@@ -117,9 +117,10 @@ them by number.
 
 ### Reaction Z-matrix diagonal is negative where it must be inductive
 
-Found 2026-08-02 by `PORT-1` step 1; **not diagnosed, not fixed, and not gated by
-any test** — recorded here because the number is wrong in a way a later run would
-otherwise re-discover from scratch.
+Found 2026-08-02 by `PORT-1` step 1; **diagnosed 2026-08-03 by step 2b to the
+electric energy — see the update at the end of this entry — and still not
+fixed.** The diagonal remains ungated. Recorded here because the number is wrong
+in a way a later run would otherwise re-discover from scratch.
 
 On the two-torus air fixture (a = 0.04 m, r_wire = 0.005 m, d = 0.04 m,
 f = 10 MHz), the reaction integral `Z_i1 = −(1/(I₁Iᵢ))∫E₁·Jᵢ dV` returns
@@ -138,6 +139,43 @@ anything yet. `PORT-1` step 2 therefore leaves the diagonal **ungated** —
 deliberately, and *not* by widening a bound. `PORT-1` step 2b (§7) owns the
 diagnosis, and its anchor is the complex-power identity
 `Im Z₁₁ = 4ω(W_m − W_e)/|I₁|²` as an independent second derivation.
+
+**Update 2026-08-03 — step 2b executed; the reaction integral is exonerated and
+the anomaly is localised to the electric energy.**
+`tests/validation/test_port_self_impedance_energy.py`, 3 passed in 43.5 s at
+`-n 2` (log `20260803T050252Z_PORT-1-step2b-gate.log`), one mesh at padding
+0.08 / h_far 0.03 and one solve:
+
+| quantity | value |
+|---|---|
+| `Im Z₁₁`, reaction integral | `−4.108550e+01 Ω` |
+| `Im Z₁₁`, complex-power route `4ω(W_m−W_e)/I²` | `−4.108550e+01 Ω` |
+| relative disagreement | **1.8128e-10** (gated `< 1e-9`) |
+| `4ωW_m/I²` (inductive part) | `+7.437 Ω` vs Grover `ωL = 6.818 Ω`, **ratio 1.0908** |
+| `4ωW_e/I²` (capacitive part) | `+48.52 Ω` |
+| `W_e/W_m` | 6.524 |
+
+So the guess above — that the self-term of `∫E·J` is the bug — is **wrong**. The
+two derivations agree to 1.8e-10, and the magnetic half is the physical loop
+inductance to 9.1% of Grover, which is within what the PEC box at this padding
+can plausibly account for. The whole of `−40.9 = 7.44 − 48.52` is an *electric*
+energy excess in the solved field.
+
+**Leading hypothesis, not yet measured:** low-frequency breakdown of the
+curl-curl formulation. At ω → 0 the operator acts on the gradient subspace as
+`−k₀²`, so any residual non-solenoidal component of the discretised impressed
+current — the analytic azimuthal `J` is exactly divergence-free and tangent to
+the torus surface, but the *faceted* meshed boundary is only approximately so —
+is amplified by `1/k₀²` into a spurious electrostatic field that contributes to
+`W_e` and to nothing else. **The discriminating measurement is the ω-scaling of
+`4ωW_e/I²` at fixed geometry**: a physical capacitance gives `∝ 1/ω`, an
+induction-driven electric energy gives `∝ ω`, and gradient-space contamination
+of this kind gives neither. That sweep is cheap (the mesh is reusable across
+frequencies — one mesh, three or four solves) and is the natural next step.
+
+**Consequence, unchanged:** no input impedance and no `S₁₁` off this path means
+anything. The off-diagonal is unaffected — `PORT-1` step 2 gates `Im Z₁₂` to
+9.35% of `ωM₁₂` and that number does not go through `W_e`.
 
 Remove this entry with the commit that explains the sign.
 
