@@ -218,6 +218,15 @@ def main():
     A_lag = fem.Function(V_lag, name="A")
     A_lag.interpolate(A)
 
+    # Analytical B on the same grid, for direct FEM-vs-exact comparison in
+    # ParaView (e.g. Calculator: mag(B - B_analytical)).
+    B_analytical = fem.Function(V_lag, name="B_analytical")
+    B_analytical.interpolate(
+        lambda x: AnalyticalSolutions.straight_wire_magnetic_field(
+            x.T, current, wire_position_analytical
+        ).T
+    )
+
     try:
         written_files = write_combined_paraview_output(
             output_dir=output_dir,
@@ -227,6 +236,7 @@ def main():
             fields={
                 "A": (A, A_lag),
                 "B": (B, B_lag),
+                "B_analytical": (B_analytical, B_analytical),
             },
             comm=comm,
         )
@@ -265,20 +275,22 @@ def main():
     print("=" * 60)
     print("\n  RECOMMENDED: Use the combined file!")
     print("    File -> Open -> straight_wire_combined.xdmf")
-    print("    - Has BOTH cell tags AND B-field on same grid")
-    print("    - Cell tags available in Threshold filter!")
+    print("    - Cell tags are the 'CellTags' cell array, on the SAME grid")
+    print("      as A, B, and B_analytical (thresholds like any other array)")
     print("    - B field available for Glyph, Stream Tracer, etc.")
     print("\n  Filtering workflow:")
     print("    1. Apply Threshold filter:")
-    print("       - Scalars: 'Cell tags'")
+    print("       - Scalars: 'CellTags'")
     print("       - Min: 2, Max: 2 (removes wire cells)")
     print("    2. Apply Glyph filter to thresholded data:")
     print("       - Orientation/Scale: B")
-    print("    3. Enjoy clutter-free visualization!")
+    print("    3. Compare with exact field via Calculator:")
+    print("       - mag(B - B_analytical) gives the pointwise error")
     print("\n  Alternative: Individual files")
     print("    - straight_wire_A.xdmf (vector potential)")
     print("    - straight_wire_B.xdmf (magnetic field)")
-    print("    Each also carries the mesh and cell tags.")
+    print("    - straight_wire_B_analytical.xdmf (exact field)")
+    print("    Each also carries the mesh and the CellTags array.")
     print("\n  For VTX files (if available):")
     print("    - Open straight_wire_B.bp/ directory")
     print("=" * 60)

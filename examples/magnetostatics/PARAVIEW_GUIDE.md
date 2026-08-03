@@ -16,9 +16,11 @@ This will create a `paraview_output/` directory with visualization files.
 ### XDMF Format (Traditional)
 - `straight_wire_A.xdmf` + `.h5` - Vector potential A field
 - `straight_wire_B.xdmf` + `.h5` - Magnetic field B
-- `straight_wire_combined.xdmf` + `.h5` - mesh + cell tags + A + B on one grid
+- `straight_wire_B_analytical.xdmf` + `.h5` - Exact analytical B field
+- `straight_wire_combined.xdmf` + `.h5` - mesh + CellTags + A + B + B_analytical on one grid
 
-Every XDMF file above carries the mesh and its cell tags, so there is no
+Every XDMF file above carries the mesh and a `CellTags` cell array (an
+ordinary array like the fields, usable directly in Threshold), so there is no
 separate mesh-only file to open.
 
 ### VTX Format (Modern, requires ADIOS2)
@@ -165,9 +167,10 @@ For a straight wire carrying current I along the z-axis:
 - Example: Compute |B| = sqrt(B_X^2 + B_Y^2 + B_Z^2)
 
 ### 3. Compare with Analytical Solution
-- Export points from ParaView
-- Compare in Python/MATLAB with analytical solution
-- The example already does this comparison!
+- The combined file carries a `B_analytical` point array on the same grid
+- **Filters → Calculator**, expression `mag(B - B_analytical)` → pointwise error
+- Threshold on `CellTags` first to drop wire cells, where the filamentary
+  analytical formula does not apply
 
 ---
 

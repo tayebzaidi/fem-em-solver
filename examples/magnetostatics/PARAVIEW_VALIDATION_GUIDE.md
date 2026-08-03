@@ -29,7 +29,7 @@ For a straight wire carrying current **I** along the z-axis, the magnetic field 
 
 ### Step 1: Load the Data
 
-**RECOMMENDED:** Use the combined file which has cell tags and B-field on the same grid:
+**RECOMMENDED:** Use the combined file which has the `CellTags` cell array and the B/B_analytical fields on the same grid:
 ```
 File → Open → paraview_output/straight_wire_combined.xdmf
 Reader: Xdmf3ReaderT
@@ -42,7 +42,7 @@ File → Open → paraview_output/straight_wire_B.xdmf
 Reader: Xdmf3ReaderT
 Click "Apply"
 ```
-(Note: Individual files require extra steps to access cell tags)
+(Individual files also carry the `CellTags` array on the same grid)
 
 ### Step 2: Check Field Magnitude Distribution
 
@@ -94,7 +94,7 @@ Click "Apply"
 **IMPORTANT: First filter out the wire cells!**
 1. Before applying Glyph, apply **Threshold** filter:
    - Filters → Common → Threshold
-   - Scalars: "meshtags" or "cell_tags"
+   - Scalars: "CellTags"
    - Minimum: 2, Maximum: 2 (keeps only air domain)
    - Click Apply
 

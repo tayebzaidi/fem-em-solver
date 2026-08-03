@@ -142,6 +142,16 @@ def main():
     B_lag = fem.Function(V_lag, name="B")
     B_lag.interpolate(B)
 
+    # Analytical off-axis loop field (elliptic integrals) on the same grid,
+    # for direct FEM-vs-exact comparison in ParaView. The formula assumes a
+    # filament, so values inside the wire cross-section are not meaningful.
+    B_analytical = fem.Function(V_lag, name="B_analytical")
+    B_analytical.interpolate(
+        lambda x: AnalyticalSolutions.circular_loop_magnetic_field(
+            x.T, current, loop_radius
+        ).T
+    )
+
     written_files = write_combined_paraview_output(
         output_dir=output_dir,
         basename="circular_loop",
@@ -150,6 +160,7 @@ def main():
         fields={
             "A": (A, A_lag),
             "B": (B, B_lag),
+            "B_analytical": (B_analytical, B_analytical),
         },
         comm=comm,
     )
@@ -174,7 +185,10 @@ def main():
         print(f"    ⚠ VTX output failed (ADIOS2 may not be available): {e}")
 
     print("\n  ✓ ParaView files saved to paraview_output/")
-    print("    Open circular_loop_B.xdmf in ParaView to visualize")
+    print("    Open circular_loop_combined.xdmf in ParaView: it carries the")
+    print("    'CellTags' cell array plus A, B, and B_analytical on one grid,")
+    print("    so Threshold on CellTags and Calculator mag(B - B_analytical)")
+    print("    both work directly.")
 
     # Save results for plotting (text format)
     if comm.rank == 0:

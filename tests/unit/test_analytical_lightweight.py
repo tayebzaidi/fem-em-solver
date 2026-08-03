@@ -100,6 +100,56 @@ def test_loop_vector_potential_reproduces_on_axis_closed_form():
         assert np.isclose(b_z, expected, rtol=1e-6), f"z={z}: {b_z} vs {expected}"
 
 
+def test_loop_magnetic_field_matches_on_axis_closed_form_and_curl_of_A():
+    """Off-axis elliptic-integral B agrees with the on-axis closed form and
+    with the curl of the elliptic-integral vector potential off axis.
+
+    The on-axis check exercises both the dedicated rho -> 0 branch and the
+    rho -> 0 limit of the elliptic-integral branch; the curl check pins the
+    off-axis components against an independently validated expression.
+    """
+    current = 2.5
+    a = 0.05
+
+    # Exactly on axis (dedicated branch) vs the closed form.
+    z = np.array([-0.03, 0.0, 0.02, 0.08])
+    pts = np.zeros((len(z), 3))
+    pts[:, 2] = z
+    B = AnalyticalSolutions.circular_loop_magnetic_field(pts, current, a)
+    expected = AnalyticalSolutions.circular_loop_magnetic_field_on_axis(z, current, a)
+    assert np.allclose(B[:, 2], expected, rtol=1e-12)
+    assert np.all(B[:, :2] == 0.0)
+
+    # Slightly off axis (elliptic branch) must approach the same closed form.
+    pts_off = pts.copy()
+    pts_off[:, 0] = 1e-6 * a
+    B_off = AnalyticalSolutions.circular_loop_magnetic_field(pts_off, current, a)
+    assert np.allclose(B_off[:, 2], expected, rtol=1e-8)
+
+    # Off axis: B = curl A with A_phi from circular_loop_vector_potential.
+    # B_z = (1/rho) d(rho A_phi)/drho, B_rho = -dA_phi/dz, centred differences.
+    for rho0, z0 in ((0.02, 0.01), (0.03, -0.04), (0.08, 0.02)):
+        h = 1e-6 * a
+
+        def a_phi(rho, z):
+            A = AnalyticalSolutions.circular_loop_vector_potential(
+                np.array([[rho, 0.0, z]]), current, a
+            )
+            return A[0, 1]  # phi-hat = +y at (rho, 0, z)
+
+        b_z_fd = (
+            (rho0 + h) * a_phi(rho0 + h, z0) - (rho0 - h) * a_phi(rho0 - h, z0)
+        ) / (2 * h * rho0)
+        b_rho_fd = -(a_phi(rho0, z0 + h) - a_phi(rho0, z0 - h)) / (2 * h)
+
+        B = AnalyticalSolutions.circular_loop_magnetic_field(
+            np.array([[rho0, 0.0, z0]]), current, a
+        )[0]
+        assert np.isclose(B[2], b_z_fd, rtol=1e-6), f"B_z at rho={rho0}, z={z0}"
+        assert np.isclose(B[0], b_rho_fd, rtol=1e-6), f"B_rho at rho={rho0}, z={z0}"
+        assert B[1] == 0.0  # y = 0 plane: B_phi component vanishes
+
+
 def test_error_metrics_are_zero_for_identical_arrays():
     a = np.array([1.0, 2.0, 3.0])
     b = np.array([1.0, 2.0, 3.0])

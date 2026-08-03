@@ -50,9 +50,37 @@ def adopt_host_ownership(output_dir, comm=MPI.COMM_WORLD) -> int:
     return changed
 
 
+def cell_tags_to_function(mesh, cell_tags, name="CellTags"):
+    """Represent MeshTags as a DG0 function for ParaView output.
+
+    ``XDMFFile.write_meshtags`` stores tags in a separate XDMF grid, which
+    ParaView exposes as its own block — thresholding on the tags together with
+    the fields is then awkward. A DG0 function written with ``write_function``
+    lands as an ordinary cell-data array on the same grid as the fields, so
+    the Threshold filter sees it directly alongside A, B, etc.
+
+    Untagged cells get value 0 (no mesh generator tag uses 0).
+    """
+    from dolfinx import fem
+
+    V0 = fem.functionspace(mesh, ("DG", 0))
+    tags = fem.Function(V0, name=name)
+    tags.x.array[:] = 0.0
+    # One DG0 dof per cell; go through the dofmap rather than assuming
+    # dof index == cell index.
+    cell_dofs = V0.dofmap.list.reshape(-1)
+    tags.x.array[cell_dofs[cell_tags.indices]] = cell_tags.values
+    tags.x.scatter_forward()
+    return tags
+
+
 def write_xdmf_with_tags(filename, mesh, cell_tags, functions, comm=MPI.COMM_WORLD):
     """
     Write a single XDMF output containing mesh, optional cell tags, and fields.
+
+    Cell tags are written as a DG0 cell array named "CellTags" on the same
+    grid as the fields (see :func:`cell_tags_to_function`), so ParaView can
+    threshold on them like any other array.
 
     Parameters
     ----------
@@ -76,9 +104,7 @@ def write_xdmf_with_tags(filename, mesh, cell_tags, functions, comm=MPI.COMM_WOR
     with io.XDMFFile(comm, xdmf_file, "w") as xdmf:
         xdmf.write_mesh(mesh)
         if cell_tags is not None:
-            tdim = mesh.topology.dim
-            mesh.topology.create_connectivity(tdim, tdim)
-            xdmf.write_meshtags(cell_tags, mesh.geometry)
+            xdmf.write_function(cell_tags_to_function(mesh, cell_tags))
 
         for _, func in functions.items():
             xdmf.write_function(func)
@@ -130,15 +156,16 @@ def write_combined_paraview_output(
 
     written_files = {}
 
+    # Cell tags as a DG0 array, so every file carries them on the field grid.
+    tag_func = cell_tags_to_function(mesh, cell_tags) if cell_tags is not None else None
+
     # Individual files (one field per file)
     for name, (_, lagrange_func) in fields.items():
         xdmf_path = output_dir / f"{basename}_{name}.xdmf"
         with io.XDMFFile(comm, xdmf_path, "w") as xdmf:
             xdmf.write_mesh(mesh)
-            if cell_tags is not None:
-                tdim = mesh.topology.dim
-                mesh.topology.create_connectivity(tdim, tdim)
-                xdmf.write_meshtags(cell_tags, mesh.geometry)
+            if tag_func is not None:
+                xdmf.write_function(tag_func)
             xdmf.write_function(lagrange_func)
         written_files[name] = xdmf_path
 

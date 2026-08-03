@@ -127,6 +127,9 @@ def run_case(
     b_field = solver.compute_b_field()
     t_solve = time.time() - t0
 
+    # Total current implied by unit |J| over the wire cross-section.
+    current = 1.0 * np.pi * minor_radius**2
+
     written_files = {}
     if output_dir is not None:
         # XDMF point data requires a Lagrange space; A lives in N1curl and B in DG,
@@ -139,12 +142,33 @@ def run_case(
         b_lag = fem.Function(v_lag, name="B")
         b_lag.interpolate(b_field)
 
+        # Analytical field of the two filamentary loops (off-axis, elliptic
+        # integrals) on the same grid, for FEM-vs-exact comparison in ParaView.
+        # Filament model: values inside the wire tori are not meaningful, and
+        # the tight-box/finite-thickness floors from the module docstring apply.
+        def analytic_field(x):
+            pts = x.T
+            b = AnalyticalSolutions.circular_loop_magnetic_field(
+                pts, current, major_radius, -separation / 2.0
+            )
+            b += AnalyticalSolutions.circular_loop_magnetic_field(
+                pts, current, major_radius, separation / 2.0
+            )
+            return b.T
+
+        b_analytical = fem.Function(v_lag, name="B_analytical")
+        b_analytical.interpolate(analytic_field)
+
         written_files = write_combined_paraview_output(
             output_dir,
             basename,
             mesh,
             cell_tags,
-            {"A": (a_field, a_lag), "B": (b_field, b_lag)},
+            {
+                "A": (a_field, a_lag),
+                "B": (b_field, b_lag),
+                "B_analytical": (b_analytical, b_analytical),
+            },
             comm=comm,
         )
 
@@ -156,8 +180,6 @@ def run_case(
     values, valid = evaluate_vector_field_parallel(b_field, points, comm=comm)
     bz_num = values[:, 2]
 
-    # Total current implied by unit |J| over the wire cross-section.
-    current = 1.0 * np.pi * minor_radius**2
     bz_ana = AnalyticalSolutions.helmholtz_coil_field_on_axis(
         z_eval, current, major_radius, separation
     )
@@ -251,9 +273,11 @@ def main() -> int:
     p.add_argument(
         "--output-dir",
         type=str,
-        default=None,
-        help="Write ParaView output (XDMF/HDF5 + on-axis CSV) to this directory. "
-        "Only the finest resolution in the sweep is exported.",
+        default="paraview_output",
+        help="Write ParaView output (XDMF/HDF5 + on-axis CSV) to this directory "
+        "(default: paraview_output, matching the other examples; pass an empty "
+        "string to skip export). Only the finest resolution in the sweep is "
+        "exported.",
     )
     p.add_argument(
         "--basename",
@@ -262,6 +286,7 @@ def main() -> int:
         help="Base filename for ParaView output.",
     )
     args = p.parse_args()
+    args.output_dir = args.output_dir or None  # "" opts out of export
 
     comm = MPI.COMM_WORLD
     separation = args.separation if args.separation is not None else args.major_radius
@@ -365,8 +390,9 @@ def main() -> int:
         print(f"  {'on-axis':>10}: {csv_path}")
         print()
         print("  Open the *_combined.xdmf file in ParaView: it carries the mesh,")
-        print("  cell tags (1/2 = wire tori, 3 = air), and A and B on a single grid,")
-        print("  so a Threshold on the tags works together with the field data.")
+        print("  the 'CellTags' cell array (1/2 = wire tori, 3 = air), and A, B,")
+        print("  and B_analytical on a single grid — Threshold on CellTags and")
+        print("  Calculator mag(B - B_analytical) both work directly.")
     return 0
 
 

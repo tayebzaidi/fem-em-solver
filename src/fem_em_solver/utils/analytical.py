@@ -217,6 +217,93 @@ class AnalyticalSolutions:
         return A
 
     @staticmethod
+    def circular_loop_magnetic_field(
+        points: np.ndarray,
+        current: float,
+        radius: float,
+        loop_center: float = 0.0
+    ) -> np.ndarray:
+        """Off-axis B-field of a circular current loop (elliptic integrals).
+
+        For a loop of radius ``a`` in the plane z = z0, carrying current I
+        counter-clockwise seen from +z, with α² = (a−ρ)² + (z−z0)²,
+        β² = (a+ρ)² + (z−z0)² and parameter m = k² = 4aρ/β²::
+
+            B_ρ = μ₀I (z−z0) / (2π ρ α² β) · [(a² + ρ² + (z−z0)²)·E(m) − α²·K(m)]
+            B_z = μ₀I / (2π α² β) · [(a² − ρ² − (z−z0)²)·E(m) + α²·K(m)]
+
+        As with :meth:`circular_loop_vector_potential`, scipy's ``ellipk`` /
+        ``ellipe`` take the *parameter* m = k², not the modulus k. The ρ → 0
+        limit reduces to :meth:`circular_loop_magnetic_field_on_axis` and is
+        handled on a separate branch (B_ρ = 0 by symmetry). The field diverges
+        on the filament itself (α → 0); α² is clamped there so evaluation stays
+        finite for visualization, but values near the wire are not meaningful.
+
+        Parameters
+        ----------
+        points : np.ndarray
+            Array of shape (n, 3) with evaluation points
+        current : float
+            Loop current [A]
+        radius : float
+            Loop radius ``a`` [m]
+        loop_center : float
+            z-position of the loop plane [m]
+
+        Returns
+        -------
+        np.ndarray
+            B-field at points in Cartesian components, shape (n, 3)
+        """
+        from scipy.special import ellipe, ellipk
+
+        if radius <= 0:
+            raise ValueError(f"radius must be positive, got {radius!r}")
+
+        mu_0 = 4 * np.pi * 1e-7
+
+        x = points[:, 0]
+        y = points[:, 1]
+        z = points[:, 2] - loop_center
+        rho = np.sqrt(x**2 + y**2)
+
+        B = np.zeros_like(points, dtype=np.float64)
+
+        on_axis = rho < 1e-14 * radius
+        # On-axis branch: B_ρ = 0 by symmetry, closed-form B_z.
+        B[on_axis, 2] = AnalyticalSolutions.circular_loop_magnetic_field_on_axis(
+            points[on_axis, 2], current, radius, loop_center
+        )
+
+        active = ~on_axis
+        if not np.any(active):
+            return B
+
+        rho_a = rho[active]
+        z_a = z[active]
+
+        alpha2 = (radius - rho_a) ** 2 + z_a**2
+        beta = np.sqrt((radius + rho_a) ** 2 + z_a**2)
+        # Clamp the filament singularity so evaluation stays finite.
+        alpha2 = np.maximum(alpha2, (1e-6 * radius) ** 2)
+        m = 4.0 * radius * rho_a / beta**2
+        m = np.minimum(m, 1.0 - 1e-12)
+
+        K = ellipk(m)
+        E = ellipe(m)
+        pref = mu_0 * current / (2 * np.pi * alpha2 * beta)
+        s2 = radius**2 + rho_a**2 + z_a**2
+
+        B_rho = pref * (z_a / rho_a) * (s2 * E - alpha2 * K)
+        B_z = pref * ((radius**2 - rho_a**2 - z_a**2) * E + alpha2 * K)
+
+        # ρ̂ = (x, y, 0)/ρ
+        B[active, 0] = B_rho * x[active] / rho_a
+        B[active, 1] = B_rho * y[active] / rho_a
+        B[active, 2] = B_z
+        return B
+
+    @staticmethod
     def circular_loop_magnetic_field_on_axis(
         z: np.ndarray,
         current: float,

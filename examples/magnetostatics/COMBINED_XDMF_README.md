@@ -15,12 +15,17 @@ We've created a custom XDMF writer (`fem_em_solver.io.paraview_utils.write_xdmf_
 After running the examples, you'll now get:
 
 **Individual files (standard DOLFINx output):**
-- `straight_wire_A.xdmf` - vector potential A, on the mesh with its cell tags
-- `straight_wire_B.xdmf` - magnetic field B, on the mesh with its cell tags
+- `straight_wire_A.xdmf` - vector potential A, on the mesh with its `CellTags` array
+- `straight_wire_B.xdmf` - magnetic field B, on the mesh with its `CellTags` array
+- `straight_wire_B_analytical.xdmf` - exact analytical B on the same mesh
 
-**NEW - Combined file (recommended):**
-- `straight_wire_combined.xdmf` - **mesh + cell tags + A + B on one grid** ✨
+**Combined file (recommended):**
+- `straight_wire_combined.xdmf` - **mesh + CellTags + A + B + B_analytical on one grid** ✨
 - `straight_wire_combined.h5` - associated HDF5 data
+
+The cell tags are written as a DG0 *function* named `CellTags` (via
+`write_function`, not `write_meshtags`), so ParaView sees them as an ordinary
+cell array exactly like the field arrays. Untagged cells get value 0.
 
 ## Usage in ParaView
 
@@ -29,15 +34,15 @@ After running the examples, you'll now get:
 1. **File → Open** → `paraview_output/straight_wire_combined.xdmf`
 2. **Reader**: Select `Xdmf3ReaderT`
 3. **Properties panel**: Check both:
-   - ☑ Cell Arrays: `Cell tags`
-   - ☑ Point Arrays: `A`, `B`
+   - ☑ Cell Arrays: `CellTags`
+   - ☑ Point Arrays: `A`, `B`, `B_analytical`
 4. Click **Apply**
 
 ### Now Cell Tags Work Everywhere!
 
 **Apply Threshold Filter:**
 1. **Filters → Common → Threshold**
-2. **Scalars**: Select `Cell tags` (now it shows up!)
+2. **Scalars**: Select `CellTags` (now it shows up!)
 3. **Minimum**: 2, **Maximum**: 2
 4. Click **Apply**
 
@@ -56,7 +61,7 @@ Result: Clean B-field vectors without wire cell clutter!
 ### Color by Cell Tags
 
 You can also directly color the mesh by cell tags:
-- In the **Coloring** dropdown, select `Cell tags`
+- In the **Coloring** dropdown, select `CellTags`
 - Wire cells (value=1) show in one color
 - Air domain (value=2) shows in another
 
@@ -71,7 +76,7 @@ The XDMF file structure:
   <Geometry ...>       <!-- Node coordinates -->
 
   <!-- Cell data (one value per cell) -->
-  <Attribute Name="Cell tags" Center="Cell">
+  <Attribute Name="CellTags" Center="Cell">
     ...
   </Attribute>
 
@@ -115,12 +120,21 @@ write_xdmf_with_tags(
 
 It manually constructs the XDMF XML to ensure proper grid structure.
 
+## Comparing FEM vs analytical in ParaView
+
+Each example also writes a `B_analytical` point array (exact closed-form or
+elliptic-integral field) on the same grid. Use **Filters → Calculator** with
+`mag(B - B_analytical)` to visualize the pointwise error directly. Note the
+analytical formulas assume filamentary conductors — values inside the wire
+cells (threshold them away with `CellTags`) are not meaningful.
+
 ## Applied to All Examples
 
 This feature is now integrated into:
 - ✅ `01_straight_wire.py`
-- TODO: `02_circular_loop.py`
-- TODO: `03_helmholtz_coil.py`
+- ✅ `02_circular_loop.py`
+- ✅ `04_helmholtz_analytic_comparison.py` (writes to `paraview_output/` by
+  default; pass `--output-dir ''` to skip export)
 
 ## Validation
 
@@ -128,9 +142,9 @@ After running the straight wire example:
 
 1. Open `straight_wire_combined.xdmf` in ParaView
 2. Check Properties panel - you should see:
-   - Cell Arrays: `Cell tags`
-   - Point Arrays: `A`, `B`
-3. Apply Threshold → Scalars dropdown should show `Cell tags`
+   - Cell Arrays: `CellTags`
+   - Point Arrays: `A`, `B`, `B_analytical`
+3. Apply Threshold → Scalars dropdown should show `CellTags`
 4. Success! ✨
 
-If `Cell tags` doesn't appear in the Threshold filter, you're using the wrong file.
+If `CellTags` doesn't appear in the Threshold filter, you're using the wrong file.
