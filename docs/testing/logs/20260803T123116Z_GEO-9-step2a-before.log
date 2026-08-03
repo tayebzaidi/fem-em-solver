@@ -1,0 +1,119 @@
+# Test Run
+- Chunk: GEO-9-step2a-before
+- Commit: 5550f897435732c1c04abe750969335e885313c0
+- Time (UTC): 2026-08-03 12:31:16
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.3.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_port_tags.py tests/mesh/test_coil_phantom_mesh.py tests/mesh/test_coil_phantom_conforming.py -v --tb=line'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  3 07:31 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.3.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_port_tags.py tests/mesh/test_coil_phantom_mesh.py tests/mesh/test_coil_phantom_conforming.py -v --tb=line'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 7 items
+
+tests/mesh/test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags collected 7 items
+
+tests/mesh/test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags FAILED [ 14%]
+tests/mesh/test_birdcage_port_tags.py::test_birdcage_port_layout_rejects_too_small_or_overlapping_port_regions PASSED [ 28%]
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_generates_required_tags_centered_preset FAILED [ 42%]
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_off_center_preset_moves_phantom_without_overlap FAILED [ 57%]
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_rejects_overlapping_off_center_placement PASSED [ 71%]
+tests/mesh/test_coil_phantom_conforming.py::test_coil_phantom_volumes_partition_the_box FAILED [ 85%]
+tests/mesh/test_coil_phantom_conforming.py::test_coil_phantom_off_center_preset_partitions_and_conserves_phantom_volume FAILED [100%]
+
+=================================== FAILURES ===================================
+/usr/local/lib/gmsh.py:2006: Exception: Invalid boundary mesh (overlapping facets) on surface 3 surface 49
+/usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/io/gmshio.py:118: AssertionError
+/usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/io/gmshio.py:118: AssertionError
+/usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/io/gmshio.py:118: AssertionError
+/usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/io/gmshio.py:118: AssertionError
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/mesh/test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags
+FAILED tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_generates_required_tags_centered_preset
+FAILED tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_off_center_preset_moves_phantom_without_overlap
+FAILED tests/mesh/test_coil_phantom_conforming.py::test_coil_phantom_volumes_partition_the_box
+FAILED tests/mesh/test_coil_phantom_conforming.py::test_coil_phantom_off_center_preset_partitions_and_conserves_phantom_volume
+=================== 5 failed, 2 passed, 8 warnings in 3.16s ====================
+
+Loguru caught a signal: SIGTERM
+Stack trace:
+27      0x5657dc790ba5 _start + 37
+26      0x777f05669e40 __libc_start_main + 128
+25      0x777f05669d90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x777f05669d90]
+24      0x5657dc790cad Py_BytesMain + 45
+23      0x5657dc7ba2d3 Py_RunMain + 371
+22      0x5657dc7c8aaf Py_FinalizeEx + 95
+21      0x5657dc7c9738 python3(+0x265738) [0x5657dc7c9738]
+20      0x5657dc6c164e python3(+0x15d64e) [0x5657dc6c164e]
+19      0x777ef91b7256 /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-real64-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x123256) [0x777ef91b7256]
+18      0x5657dc6b750b python3(+0x15350b) [0x5657dc6b750b]
+17      0x777ef91c6873 /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-real64-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x132873) [0x777ef91c6873]
+16      0x777ef7e6d9f0 PetscGarbageCleanup + 64
+15      0x777ef7e91970 PetscCommDuplicate + 320
+14      0x777efdf5f507 MPI_Comm_dup + 215
+13      0x777efe1fae6a /usr/local/lib/libmpi.so.12(+0x34fe6a) [0x777efe1fae6a]
+12      0x777efe205024 /usr/local/lib/libmpi.so.12(+0x35a024) [0x777efe205024]
+11      0x777efe204c64 /usr/local/lib/libmpi.so.12(+0x359c64) [0x777efe204c64]
+10      0x777efe20f331 /usr/local/lib/libmpi.so.12(+0x364331) [0x777efe20f331]
+9       0x777efe1d6757 /usr/local/lib/libmpi.so.12(+0x32b757) [0x777efe1d6757]
+8       0x777efe1d65e7 /usr/local/lib/libmpi.so.12(+0x32b5e7) [0x777efe1d65e7]
+7       0x777efe14180e /usr/local/lib/libmpi.so.12(+0x29680e) [0x777efe14180e]
+6       0x777efe1f761e /usr/local/lib/libmpi.so.12(+0x34c61e) [0x777efe1f761e]
+5       0x777efe1f6ab3 /usr/local/lib/libmpi.so.12(+0x34bab3) [0x777efe1f6ab3]
+4       0x777efe1e5f6f /usr/local/lib/libmpi.so.12(+0x33af6f) [0x777efe1e5f6f]
+3       0x777efe25f89b /usr/local/lib/libmpi.so.12(+0x3b489b) [0x777efe25f89b]
+2       0x777efe25bd2a /usr/local/lib/libmpi.so.12(+0x3b0d2a) [0x777efe25bd2a]
+1       0x777efe25915c /usr/local/lib/libmpi.so.12(+0x3ae15c) [0x777efe25915c]
+0       0x777f05682520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x777f05682520]
+2026-08-03 12:34:16.946 ( 179.409s) [main            ]                       :0     FATL| Signal: SIGTERM
+
+## Exit
+- Status: 124
+- Elapsed (s): 180

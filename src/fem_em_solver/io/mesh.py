@@ -1936,121 +1936,44 @@ class MeshGenerator:
             min_port_center_separation=min_port_center_separation,
         )
 
+        # The generator below can raise (overlapping facets, GEO-9 step 2b). Two
+        # things must happen when it does, or the failure poisons the rest of the
+        # process: gmsh must be finalized (otherwise it stays initialised and
+        # mid-command, and every later `occ` call in this process is refused —
+        # that is known-issues 7), and the *other* ranks must be told, or they
+        # block forever in the collective `model_to_mesh` below that the raising
+        # rank never reaches. Both were measured: 20260803T123116Z log, 5 failed
+        # 2 passed in 3.16 s of pytest but harness exit 124 at the 180 s ceiling.
+        build_error: Optional[BaseException] = None
         if comm.rank == rank:
-            gmsh.initialize()
-            gmsh.model.add("birdcage_port_domain")
-
-            # Simplified conductor scaffold: two rings plus vertical legs.
-            z_ring_offset = 0.5 * leg_spacing
-            top_ring = gmsh.model.occ.addTorus(0, 0, z_ring_offset, ring_radius, ring_minor_radius)
-            bottom_ring = gmsh.model.occ.addTorus(0, 0, -z_ring_offset, ring_radius, ring_minor_radius)
-
-            leg_tags: List[int] = []
-            theta = np.linspace(0.0, 2.0 * np.pi, leg_count, endpoint=False)
-            for angle in theta:
-                x = ring_radius * np.cos(angle)
-                y = ring_radius * np.sin(angle)
-                leg = gmsh.model.occ.addCylinder(
-                    x,
-                    y,
-                    -0.5 * coil_length,
-                    0.0,
-                    0.0,
-                    coil_length,
-                    leg_radius_eff,
+            try:
+                MeshGenerator._build_birdcage_port_model(
+                    leg_count=leg_count,
+                    ring_radius=ring_radius,
+                    leg_radius_eff=leg_radius_eff,
+                    leg_spacing=leg_spacing,
+                    coil_length=coil_length,
+                    ring_minor_radius=ring_minor_radius,
+                    phantom_radius=phantom_radius,
+                    phantom_height=phantom_height,
+                    port_box_size=port_box_size,
+                    port_radius=port_diagnostics["port_radius_m"],
+                    air_padding=air_padding,
+                    resolution=resolution,
                 )
-                leg_tags.append(leg)
+            except BaseException as exc:  # noqa: BLE001 — re-raised below, on every rank
+                build_error = exc
+                if gmsh.isInitialized():
+                    gmsh.finalize()
 
-            phantom_tag = gmsh.model.occ.addCylinder(
-                0.0,
-                0.0,
-                -0.5 * phantom_height,
-                0.0,
-                0.0,
-                phantom_height,
-                phantom_radius,
+        # Collective: every rank learns whether the geometry exists before any of
+        # them enters `model_to_mesh`.
+        if comm.bcast(build_error is not None, root=rank):
+            if build_error is not None:
+                raise build_error
+            raise RuntimeError(
+                f"birdcage_port_domain geometry generation failed on rank {rank}"
             )
-
-            port_dx, port_dy, port_dz = port_box_size
-            port_radius = port_diagnostics["port_radius_m"]
-            port_tags: List[int] = []
-            for idx, angle in enumerate(theta):
-                next_angle = theta[(idx + 1) % leg_count]
-                midpoint_angle = np.arctan2(
-                    np.sin(angle) + np.sin(next_angle),
-                    np.cos(angle) + np.cos(next_angle),
-                )
-                cx = port_radius * np.cos(midpoint_angle)
-                cy = port_radius * np.sin(midpoint_angle)
-                port = gmsh.model.occ.addBox(
-                    cx - 0.5 * port_dx,
-                    cy - 0.5 * port_dy,
-                    -0.5 * port_dz,
-                    port_dx,
-                    port_dy,
-                    port_dz,
-                )
-                port_tags.append(port)
-
-            radial_extent = ring_radius + max(leg_radius_eff, ring_minor_radius) + port_dy + air_padding
-            z_extent = max(0.5 * coil_length, 0.5 * leg_spacing + ring_minor_radius, 0.5 * phantom_height) + air_padding
-            air_tag = gmsh.model.occ.addBox(
-                -radial_extent,
-                -radial_extent,
-                -z_extent,
-                2.0 * radial_extent,
-                2.0 * radial_extent,
-                2.0 * z_extent,
-            )
-
-            conductor_tags = [top_ring, bottom_ring] + leg_tags
-            cut_result, _ = gmsh.model.occ.cut(
-                [(3, air_tag)],
-                [(3, tag) for tag in conductor_tags + [phantom_tag] + port_tags],
-                removeObject=True,
-                removeTool=False,
-            )
-            gmsh.model.occ.synchronize()
-
-            if not cut_result:
-                raise RuntimeError("Failed to create air volume for birdcage_port_domain")
-            air_volume_tags = [tag for dim, tag in cut_result if dim == 3]
-            if not air_volume_tags:
-                raise RuntimeError("No 3D air volume returned by cut operation")
-            air_tag = air_volume_tags[0]
-
-            gmsh.model.addPhysicalGroup(3, conductor_tags, tag=1)
-            gmsh.model.setPhysicalName(3, 1, "conductor")
-            gmsh.model.addPhysicalGroup(3, [air_tag], tag=2)
-            gmsh.model.setPhysicalName(3, 2, "air")
-            gmsh.model.addPhysicalGroup(3, [phantom_tag], tag=3)
-            gmsh.model.setPhysicalName(3, 3, "phantom")
-
-            for idx, port_tag in enumerate(port_tags, start=1):
-                physical_tag = 100 + idx
-                gmsh.model.addPhysicalGroup(3, [port_tag], tag=physical_tag)
-                gmsh.model.setPhysicalName(3, physical_tag, f"port_P{idx}")
-
-            outer_boundary_surfaces = []
-            for dim, surf in gmsh.model.getEntities(dim=2):
-                x_min, y_min, z_min, x_max, y_max, z_max = gmsh.model.getBoundingBox(dim, surf)
-                if (
-                    abs(abs(x_min) - radial_extent) < resolution
-                    or abs(abs(x_max) - radial_extent) < resolution
-                    or abs(abs(y_min) - radial_extent) < resolution
-                    or abs(abs(y_max) - radial_extent) < resolution
-                    or abs(abs(z_min) - z_extent) < resolution
-                    or abs(abs(z_max) - z_extent) < resolution
-                ):
-                    outer_boundary_surfaces.append(surf)
-
-            if outer_boundary_surfaces:
-                gmsh.model.addPhysicalGroup(2, outer_boundary_surfaces, tag=1)
-                gmsh.model.setPhysicalName(2, 1, "outer_boundary")
-
-            gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
-            gmsh.model.mesh.generate(3)
-            gmsh.model.mesh.optimize("Netgen")
 
         mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
             gmsh.model, comm, rank, gdim=3
@@ -2060,3 +1983,134 @@ class MeshGenerator:
             gmsh.finalize()
 
         return mesh, cell_tags, facet_tags
+
+    @staticmethod
+    def _build_birdcage_port_model(
+        *,
+        leg_count: int,
+        ring_radius: float,
+        leg_radius_eff: float,
+        leg_spacing: float,
+        coil_length: float,
+        ring_minor_radius: float,
+        phantom_radius: float,
+        phantom_height: float,
+        port_box_size: Tuple[float, float, float],
+        port_radius: float,
+        air_padding: float,
+        resolution: float,
+    ) -> None:
+        """Build the birdcage gmsh model on the calling rank (see `birdcage_port_domain`)."""
+        gmsh.initialize()
+        gmsh.model.add("birdcage_port_domain")
+
+        # Simplified conductor scaffold: two rings plus vertical legs.
+        z_ring_offset = 0.5 * leg_spacing
+        top_ring = gmsh.model.occ.addTorus(0, 0, z_ring_offset, ring_radius, ring_minor_radius)
+        bottom_ring = gmsh.model.occ.addTorus(0, 0, -z_ring_offset, ring_radius, ring_minor_radius)
+
+        leg_tags: List[int] = []
+        theta = np.linspace(0.0, 2.0 * np.pi, leg_count, endpoint=False)
+        for angle in theta:
+            x = ring_radius * np.cos(angle)
+            y = ring_radius * np.sin(angle)
+            leg = gmsh.model.occ.addCylinder(
+                x,
+                y,
+                -0.5 * coil_length,
+                0.0,
+                0.0,
+                coil_length,
+                leg_radius_eff,
+            )
+            leg_tags.append(leg)
+
+        phantom_tag = gmsh.model.occ.addCylinder(
+            0.0,
+            0.0,
+            -0.5 * phantom_height,
+            0.0,
+            0.0,
+            phantom_height,
+            phantom_radius,
+        )
+
+        port_dx, port_dy, port_dz = port_box_size
+        port_tags: List[int] = []
+        for idx, angle in enumerate(theta):
+            next_angle = theta[(idx + 1) % leg_count]
+            midpoint_angle = np.arctan2(
+                np.sin(angle) + np.sin(next_angle),
+                np.cos(angle) + np.cos(next_angle),
+            )
+            cx = port_radius * np.cos(midpoint_angle)
+            cy = port_radius * np.sin(midpoint_angle)
+            port = gmsh.model.occ.addBox(
+                cx - 0.5 * port_dx,
+                cy - 0.5 * port_dy,
+                -0.5 * port_dz,
+                port_dx,
+                port_dy,
+                port_dz,
+            )
+            port_tags.append(port)
+
+        radial_extent = ring_radius + max(leg_radius_eff, ring_minor_radius) + port_dy + air_padding
+        z_extent = max(0.5 * coil_length, 0.5 * leg_spacing + ring_minor_radius, 0.5 * phantom_height) + air_padding
+        air_tag = gmsh.model.occ.addBox(
+            -radial_extent,
+            -radial_extent,
+            -z_extent,
+            2.0 * radial_extent,
+            2.0 * radial_extent,
+            2.0 * z_extent,
+        )
+
+        conductor_tags = [top_ring, bottom_ring] + leg_tags
+        cut_result, _ = gmsh.model.occ.cut(
+            [(3, air_tag)],
+            [(3, tag) for tag in conductor_tags + [phantom_tag] + port_tags],
+            removeObject=True,
+            removeTool=False,
+        )
+        gmsh.model.occ.synchronize()
+
+        if not cut_result:
+            raise RuntimeError("Failed to create air volume for birdcage_port_domain")
+        air_volume_tags = [tag for dim, tag in cut_result if dim == 3]
+        if not air_volume_tags:
+            raise RuntimeError("No 3D air volume returned by cut operation")
+        air_tag = air_volume_tags[0]
+
+        gmsh.model.addPhysicalGroup(3, conductor_tags, tag=1)
+        gmsh.model.setPhysicalName(3, 1, "conductor")
+        gmsh.model.addPhysicalGroup(3, [air_tag], tag=2)
+        gmsh.model.setPhysicalName(3, 2, "air")
+        gmsh.model.addPhysicalGroup(3, [phantom_tag], tag=3)
+        gmsh.model.setPhysicalName(3, 3, "phantom")
+
+        for idx, port_tag in enumerate(port_tags, start=1):
+            physical_tag = 100 + idx
+            gmsh.model.addPhysicalGroup(3, [port_tag], tag=physical_tag)
+            gmsh.model.setPhysicalName(3, physical_tag, f"port_P{idx}")
+
+        outer_boundary_surfaces = []
+        for dim, surf in gmsh.model.getEntities(dim=2):
+            x_min, y_min, z_min, x_max, y_max, z_max = gmsh.model.getBoundingBox(dim, surf)
+            if (
+                abs(abs(x_min) - radial_extent) < resolution
+                or abs(abs(x_max) - radial_extent) < resolution
+                or abs(abs(y_min) - radial_extent) < resolution
+                or abs(abs(y_max) - radial_extent) < resolution
+                or abs(abs(z_min) - z_extent) < resolution
+                or abs(abs(z_max) - z_extent) < resolution
+            ):
+                outer_boundary_surfaces.append(surf)
+
+        if outer_boundary_surfaces:
+            gmsh.model.addPhysicalGroup(2, outer_boundary_surfaces, tag=1)
+            gmsh.model.setPhysicalName(2, 1, "outer_boundary")
+
+        gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
+        gmsh.model.mesh.generate(3)
+        gmsh.model.mesh.optimize("Netgen")

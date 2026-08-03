@@ -2115,3 +2115,85 @@ own test file, not extend this one**. Note also that the box-error trend here is
 a fall-off measurement in its own right: −9.36 → −6.38 → −4.64% at `d` as
 padding grows, roughly halving per 0.04 m, which is the number to quote if
 anyone proposes an absorbing boundary as cheaper than a bigger box.
+
+## 2026-08-03T12:45Z — `GEO-9` step 2a (§9 On-deck item 2) — **complete**
+
+**Outcome: ✅ done.** A failed birdcage no longer poisons the process, and the
+180-second hang is gone.
+
+**The review's named trap was the whole difficulty, and it should be recorded as
+a hit rather than a caution.** §7 warned that "a naive `try/finally` still
+hangs" because "the other ranks are left waiting on a collective the raising
+rank never reaches". That is exactly what was there — **two independent
+defects**, not one:
+
+1. **gmsh contamination**, as step 1 diagnosed: `birdcage_port_domain` raised
+   inside its `comm.rank == rank` block and never reached `gmsh.finalize()`, so
+   gmsh stayed initialised and mid-command and every later `occ` call in the
+   process was refused.
+2. **MPI collective mismatch**, which step 1 did not see: rank 0 raised and
+   skipped the collective `gmshio.model_to_mesh`, so rank 1 blocked in it
+   forever. *This* is the exit 124 — it explains the otherwise strange log
+   signature the 03:00 audit found, pytest reporting in ~3 s while the harness
+   burned the full 180 s. Fixing only (1) would have left the hang untouched.
+
+**What changed** (`src/fem_em_solver/io/mesh.py`): the rank-0 body moved
+verbatim into a new `MeshGenerator._build_birdcage_port_model` static method
+(dedent only, one line deleted — `port_radius` is now a parameter instead of
+being re-read from `port_diagnostics`). The caller wraps the call in
+`try/except BaseException`, calls `gmsh.finalize()` under an
+`gmsh.isInitialized()` guard, and then `comm.bcast`es the failure flag so
+**every** rank raises before any of them enters `model_to_mesh`. Rank 0
+re-raises the original exception; other ranks raise a `RuntimeError` naming the
+builder rank. The birdcage still fails loudly with
+`Invalid boundary mesh (overlapping facets) on surface 3 surface 49` — the
+geometry is untouched, which is 2b's.
+
+**Measured numbers.**
+
+* **Before-state, re-run at the working commit rather than quoted**, as the
+  entry instructed — `20260803T123116Z_GEO-9-step2a-before.log`. Birdcage +
+  `test_coil_phantom_mesh.py` + `test_coil_phantom_conforming.py`, one process,
+  `-n 2`: **5 failed 2 passed in 3.16 s of pytest, harness exit 124 at 180 s**,
+  four `gmshio.py:118` assertions.
+* **After**, byte-identical command — `…123549Z_GEO-9-step2a-after.log`:
+  **1 failed 6 passed in 12.10 s, harness exit 1 at 13 s.** The one failure is
+  `test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags`,
+  which 2a explicitly does not fix.
+* **Gate** — `tests/mesh/test_birdcage_finalize_isolation.py`,
+  `…123657Z_GEO-9-step2a-gate.log`, smoke tier, `-n 2`, **1 passed in 5.30 s,
+  exit 0 in 6 s**. Anchor (ii) inside the contaminated process:
+  `V_mesh/V_box = 1.000000000000`, `Σ(tagged)/V_mesh = 1.000000000000` (both
+  `1e-9`), `V_phantom = 4.943768e-04` = **0.9835** of `πr²h` — matching step 1's
+  fresh-process figures to every printed digit.
+* **Regression sweep** — `…123714Z_GEO-9-step2a-sweep.log`, `tests/mesh` less
+  the birdcage file: **17 passed 1 skipped 1 failed in 28.46 s**. The failure is
+  known-issues **5** (off-centre sizing heuristic), pre-existing and unrelated —
+  exactly the measured exclusion set the 03:00 review computed for `OPS-11`.
+
+**A note on anchor (i) as written.** §9 asked the order probe to "exit **0** in
+seconds". It cannot: `test_birdcage_port_tags.py` is in that probe and stays red
+by design, so the honest form of anchor (i) is **exit 124 at 180 s → exit 1 at
+13 s** (hang → prompt failure), and the exit-0 statement lives in the gate file,
+which runs the same two generators in the same poisoning order without asserting
+the birdcage passes. Worth generalising: *an anchor phrased as an exit status is
+only usable when every test in the command is expected green.*
+
+The no-hang property is itself asserted, not merely observed: the gate calls
+`comm.allreduce` after the birdcage raises, so reaching that line at `-n 2`
+proves no rank is still parked in `model_to_mesh`. That is the assertion that
+would catch a regression of defect (2) alone, which the volume identities would
+not.
+
+**Cost:** four harness runs, 180 + 13 + 6 + 29 = 228 s of compute, all inside
+the declared ceilings. The 180 s is the before-state hang and was unavoidable —
+it *is* the measurement.
+
+**Hypothesis for the next run.** On-deck items 3 (`PORT-1` step 3a), 4
+(`OPS-11`), 5 (`PORT-1` step 2d) and 6 (`MAT-4` step 2) are all untouched and
+independent. **`OPS-11` is now the cheapest and has just had its premise
+verified by this run's sweep log** — the exclusion set is `--ignore` the
+birdcage file plus `--deselect` the one known-issues-5 node id, and *nothing
+else*, measured at 28.46 s. It should also carry forward the reason the birdcage
+`--ignore` is not merely a budget decision: before this commit it hung, and a
+hang in CI burns the whole `timeout-minutes` instead of going red.

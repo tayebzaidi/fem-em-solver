@@ -450,7 +450,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-6` | Geometry sanity report utility | 🧪 | smoke |
 | `GEO-7` | Mesh-tag QA diagnostic hardening | 🧪 | standard |
 | `GEO-8` | **Make `two_torus_domain` a conforming mesh** | ✅ | standard |
-| `GEO-9` | **`coil_phantom_domain` / birdcage meshes do not generate** | 🟡 step 1 ✅ (coil+phantom gated; cause is the birdcage leaving gmsh un-finalized), step 2a (`try/finally: gmsh.finalize()`) and 2b (geometry) open | standard |
+| `GEO-9` | **`coil_phantom_domain` / birdcage meshes do not generate** | 🟡 step 1 ✅ (coil+phantom gated), step 2a ✅ 2026-08-03 (finalize + `bcast` the failure: 180 s hang → 13 s, gate exit 0), step 2b (birdcage geometry) open | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -728,6 +728,47 @@ step 1 ✅ 2026-08-03, step 2 open)*
 > locates the hang in MPI collective mismatch rather than in gmsh state —
 > **report which, annotate this entry and known-issues 7, and stop.** Do not
 > start the geometry rewrite with the remaining time.
+>
+> **Step-2a result (2026-08-03, 07:30 implementer run) — ✅ done, and the
+> review's trap was the load-bearing half.** `try/finally: gmsh.finalize()`
+> alone would **not** have fixed the hang: there were two independent defects.
+> (1) gmsh contamination, as diagnosed. (2) **An MPI collective mismatch** —
+> rank 0 raised inside its rank-0 block and skipped the collective
+> `gmshio.model_to_mesh`, so rank 1 blocked in it forever. That is the exit 124,
+> and it is why pytest could report in 3 s while the harness burned 180 s.
+> The fix does both: the rank-0 body moved to `_build_birdcage_port_model`,
+> the caller catches, finalizes under `gmsh.isInitialized()`, and
+> `comm.bcast`es the failure so **every** rank raises before any enters
+> `model_to_mesh`. The birdcage still fails loudly with its own message
+> (`Invalid boundary mesh (overlapping facets) on surface 3 surface 49`) — the
+> geometry is untouched, as 2a requires.
+> **Before-state, re-run at the working commit as instructed rather than
+> quoted** (`20260803T123116Z_GEO-9-step2a-before.log`): birdcage +
+> `test_coil_phantom_mesh.py` + `test_coil_phantom_conforming.py`, one process,
+> `-n 2` — 5 failed 2 passed in 3.16 s of pytest, **harness exit 124 at the
+> 180 s ceiling**. **After** (`…123549Z_GEO-9-step2a-after.log`, byte-identical
+> command): **1 failed 6 passed in 12.10 s, harness exit 1 at 13 s** — the one
+> failure is `test_birdcage_port_tags.py` itself, which 2a explicitly does not
+> fix. Anchor (i) is therefore met as *180 s hang → 13 s*; the probe cannot
+> exit 0 while the birdcage file is in it, so anchor (i)'s exit-0 form lives in
+> the gate below instead.
+> **Gate:** `tests/mesh/test_birdcage_finalize_isolation.py`,
+> `20260803T123657Z_GEO-9-step2a-gate.log`, smoke tier, `-n 2`, **1 passed in
+> 5.30 s, exit 0 in 6 s**. One test, the poisoning order in one process: the
+> birdcage must raise with a non-empty message; `gmsh.isInitialized()` must be
+> `False` on rank 0 afterwards; an `allreduce` must complete (i.e. no rank is
+> still stuck in `model_to_mesh` — reaching that line at `-n 2` *is* the
+> no-hang assertion); and then anchor (ii), the coil+phantom volume-partition
+> identity evaluated in that contaminated process —
+> `V_mesh/V_box = 1.000000000000` and `Σ(tagged)/V_mesh = 1.000000000000`,
+> both at `1e-9`, phantom `4.943768e-04` = 0.9835 of `πr²h`. Those match step 1's
+> fresh-process figures to all printed digits, which is the point: the condition
+> that previously destroyed the identity now leaves it exact.
+> **Regression sweep:** `tests/mesh` less the birdcage file is 17 passed
+> 1 skipped 1 failed in 28.46 s (`…123714Z_GEO-9-step2a-sweep.log`); the single
+> failure is known-issues **5**, unrelated and pre-existing. This closes the
+> coil+phantom two-thirds of known-issues 7 and unblocks `OPS-11`'s measured
+> exclusion set.
 >
 > **Step 2b — the birdcage geometry (later, do not improvise inside 2a).**
 > Replace `occ.cut(..., removeTool=False)` with a single `occ.fragment` over the
@@ -2333,7 +2374,18 @@ non-competing spurs.
    `test_port_reaction_impedance.py`, which landed in the 19:30 run. **Negative
    result:** report and stop; annotate the §7 entry rather than widening the 10%.
 
-2. **`GEO-9` step 2a — stop the birdcage poisoning the process.** Independent;
+2. ~~**`GEO-9` step 2a — stop the birdcage poisoning the process.**~~ — **done
+   2026-08-03 (07:30 run).** The review's named trap was the load-bearing half:
+   `try/finally` alone would not have fixed it, because the hang is an **MPI
+   collective mismatch** (rank 0 skips `model_to_mesh`, rank 1 blocks in it) on
+   top of the gmsh contamination. Both fixed; the birdcage still raises its own
+   message. Order probe **exit 124 at 180 s → exit 1 at 13 s** (5 failed
+   2 passed → 1 failed 6 passed, the remaining one being the birdcage test
+   itself, which 2a does not fix), gate
+   `20260803T123657Z_GEO-9-step2a-gate.log` **1 passed in 5.30 s, exit 0**, with
+   `V_mesh/V_box = 1.000000000000` and `Σ(tagged)/V_mesh = 1.000000000000` at
+   `1e-9` in the contaminated process. Sweep: 17 passed 1 skipped 1 failed
+   (known-issues 5, unrelated). Original item, kept for its anchors: Independent;
    the cheap half of step 2, deliberately separated from the geometry rewrite.
    Execute the §7 `GEO-9` step-2a plan: `try/finally: gmsh.finalize()` around the
    `birdcage_port_domain` rank-0 block. **Anchors, two, both with a measured

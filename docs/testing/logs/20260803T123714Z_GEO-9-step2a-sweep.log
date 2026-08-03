@@ -1,0 +1,129 @@
+# Test Run
+- Chunk: GEO-9-step2a-sweep
+- Commit: 5550f897435732c1c04abe750969335e885313c0
+- Time (UTC): 2026-08-03 12:37:14
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.3.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/mesh --ignore=tests/mesh/test_birdcage_port_tags.py -v --tb=line'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  3 07:37 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.3.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/mesh --ignore=tests/mesh/test_birdcage_port_tags.py -v --tb=line'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 19 items
+
+tests/mesh/test_birdcage_finalize_isolation.py::test_failed_birdcage_leaves_gmsh_clean_and_later_meshes_still_conform collected 19 items
+
+tests/mesh/test_birdcage_finalize_isolation.py::test_failed_birdcage_leaves_gmsh_clean_and_later_meshes_still_conform PASSED [  5%]PASSED [  5%]
+tests/mesh/test_coil_phantom_conforming.py::test_coil_phantom_volumes_partition_the_box 
+tests/mesh/test_coil_phantom_conforming.py::test_coil_phantom_volumes_partition_the_box PASSED [ 10%]PASSED [ 10%]
+tests/mesh/test_coil_phantom_conforming.py::test_coil_phantom_off_center_preset_partitions_and_conserves_phantom_volume 
+tests/mesh/test_coil_phantom_conforming.py::test_coil_phantom_off_center_preset_partitions_and_conserves_phantom_volume PASSED [ 15%]PASSED [ 15%]
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_generates_required_tags_centered_preset 
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_generates_required_tags_centered_preset PASSED [ 21%]PASSED [ 21%]
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_off_center_preset_moves_phantom_without_overlap 
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_off_center_preset_moves_phantom_without_overlap PASSED [ 26%]PASSED [ 26%]
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_rejects_overlapping_off_center_placement 
+tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_rejects_overlapping_off_center_placement PASSED [ 31%]PASSED [ 31%]
+tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_defaults_are_not_undersized 
+tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_defaults_are_not_undersized PASSED [ 36%]PASSED [ 36%]
+tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_detects_small_padding_and_recommends_floor 
+tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_detects_small_padding_and_recommends_floor PASSED [ 42%]PASSED [ 42%]
+tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent 
+tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent FAILED [ 47%]FAILED [ 47%]
+tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_rejects_negative_air_padding 
+tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_rejects_negative_air_padding PASSED [ 52%]PASSED [ 52%]
+tests/mesh/test_geometry_sanity_report.py::test_coil_phantom_geometry_sanity_report_includes_expected_sections 
+tests/mesh/test_geometry_sanity_report.py::test_coil_phantom_geometry_sanity_report_includes_expected_sections PASSED [ 57%]PASSED [ 57%]
+tests/mesh/test_geometry_sanity_report.py::test_coil_phantom_geometry_sanity_report_warns_for_missing_required_tag 
+tests/mesh/test_geometry_sanity_report.py::test_coil_phantom_geometry_sanity_report_warns_for_missing_required_tag PASSED [ 63%]PASSED [ 63%]
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity 
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity PASSED [ 68%]PASSED [ 68%]
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity_with_region_resolution_policy 
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity_with_region_resolution_policy PASSED [ 73%]PASSED [ 73%]
+tests/mesh/test_region_resolution_policy.py::test_region_resolution_policy_defaults_to_global_resolution 
+tests/mesh/test_region_resolution_policy.py::test_region_resolution_policy_defaults_to_global_resolution PASSED [ 78%]PASSED [ 78%]
+tests/mesh/test_region_resolution_policy.py::test_region_resolution_policy_prefers_explicit_kwargs_over_mapping 
+tests/mesh/test_region_resolution_policy.py::test_region_resolution_policy_prefers_explicit_kwargs_over_mapping PASSED [ 84%]PASSED [ 84%]
+tests/mesh/test_region_resolution_policy.py::test_region_resolution_policy_rejects_unknown_mapping_keys 
+tests/mesh/test_region_resolution_policy.py::test_region_resolution_policy_rejects_unknown_mapping_keys PASSED [ 89%]PASSED [ 89%]
+tests/mesh/test_two_torus_conforming.py::test_two_torus_volumes_partition_the_box 
+tests/mesh/test_two_torus_conforming.py::test_two_torus_volumes_partition_the_box PASSED [ 94%]PASSED [ 94%]
+tests/mesh/test_two_torus_conforming.py::test_driven_torus_field_reaches_the_air_region 
+tests/mesh/test_two_torus_conforming.py::test_driven_torus_field_reaches_the_air_region SKIPPED64); source /usr/local/bin/dolfinx-complex-mode) [100%]SKIPPED64); source /usr/local/bin/dolfinx-complex-mode) [100%]
+
+=================================== FAILURES ===================================
+/workspace/tests/mesh/test_domain_sizing_heuristics.py:62: assert 0.09 > 0.09
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent
+============= 1 failed, 17 passed, 1 skipped, 8 warnings in 28.46s =============
+
+
+=================================== FAILURES ===================================
+/workspace/tests/mesh/test_domain_sizing_heuristics.py:62: assert 0.09 > 0.09
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent
+============= 1 failed, 17 passed, 1 skipped, 8 warnings in 28.46s =============
+
+## Exit
+- Status: 1
+- Elapsed (s): 29
