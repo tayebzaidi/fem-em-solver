@@ -408,6 +408,15 @@ review; closed 2026-08-03, 12:00 implementer run)*
 >
 > **Does not close:** known-issues 5 or 7. Both exclusions are annotated at
 > their entries and must be removed by the commits that fix them.
+>
+> **Update 2026-08-03, 15:00 run — half of that discharged as designed.**
+> `GEO-9` step 2b fixed the birdcage geometry and removed the `--ignore` in the
+> same commit, exactly as this entry required. The `Mesh generation suite` step
+> is now the whole directory less the known-issues-5 `--deselect`: **20 passed
+> 1 skipped 1 deselected in 42.15 s**, exit 0
+> (`20260803T200504Z_GEO-9-step2b-gate.log`), up from 27.6 s — the cost of the
+> birdcage rejoining. The `--deselect` for known-issues 5 is the only exclusion
+> left in the step.
 
 
 **`OPS-10` — complex-mode CI job.** `TH-1` steps 1–5 put every frequency-domain
@@ -500,7 +509,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-6` | Geometry sanity report utility | 🧪 | smoke |
 | `GEO-7` | Mesh-tag QA diagnostic hardening | 🧪 | standard |
 | `GEO-8` | **Make `two_torus_domain` a conforming mesh** | ✅ | standard |
-| `GEO-9` | **`coil_phantom_domain` / birdcage meshes do not generate** | 🟡 step 1 ✅ (coil+phantom gated), step 2a ✅ 2026-08-03 (finalize + `bcast` the failure: 180 s hang → 13 s, gate exit 0), step 2b (geometry rewrite) planned 2026-08-03 10:30 review and queued | standard |
+| `GEO-9` | **`coil_phantom_domain` / birdcage meshes do not generate** | ✅ 2026-08-03 — step 1 (coil+phantom gated), step 2a (finalize + `bcast`: 180 s hang → 13 s), step 2b (`occ.fragment` rewrite; both identities 1.000000000000, whole `tests/mesh` green in CI). Retires known-issues 7 | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -608,9 +617,10 @@ Independent of the §2.1 physics defect; meshes are meshes.
 > are green with both sides recorded, and the known-issues entry is retired in
 > the same commit. Unblocks `PORT-1` steps 1–2 (§9 items 2 and 5).
 
-**`GEO-9` — `coil_phantom_domain` and the birdcage do not generate a mesh** 🟡
+**`GEO-9` — `coil_phantom_domain` and the birdcage do not generate a mesh** ✅
 *(created 2026-08-02, 18:00 review, from known-issues entry 7 and a §10 gap;
-step 1 ✅ 2026-08-03, step 2 open)*
+steps 1, 2a and 2b all ✅ 2026-08-03 — the chunk is closed and known-issues 7
+retired; the step-2b result is at the end of this entry)*
 > **Step-1 result (2026-08-03, 22:30 implementer run) — the hypothesis below is
 > wrong, and the real cause is one defect, not two.** The negative control was
 > run first, as instructed, and **did not reproduce**: in a fresh process all
@@ -913,6 +923,63 @@ step 1 ✅ 2026-08-03, step 2 open)*
 > the failing surface pair and the fragment volume count/masses, annotate this
 > entry and known-issues 7, park the diff on `attempt/*`, and stop — do not
 > iterate blind on gmsh tolerances inside the slot.
+>
+> **Step-2b result (2026-08-03, 15:00 implementer run) — ✅, the plan executed
+> as written, and `GEO-9` closes.** One `occ.fragment` of the air box against
+> all tools (rings, legs, phantom, 4 port boxes) in place of the
+> `occ.cut(..., removeTool=False)`, with every physical group re-derived from
+> the fragment out-map. The geometry meshes on the **first attempt at the
+> default parameters** — no gmsh-tolerance iteration, no coarsening.
+>
+> | quantity | value | gate |
+> |---|---|---|
+> | `V_mesh/V_box` | **1.000000000000** | `< 1e-9` |
+> | `Σ(tagged)/V_mesh` | **1.000000000000** | `< 1e-9` |
+> | every port box, meshed/analytic `dx·dy·dz` | **1.000000** ×4 | `< 1e-9` |
+> | conductor, meshed/analytic sum | 0.7091 | band `(0.65, 1.00)` |
+> | phantom, meshed/analytic cylinder | 0.9734 | band `(0.90, 1.00)` |
+>
+> `V_box = 1.039680e-02 m³` analytic from the generator's own extents. Fragment
+> returns **26 volumes**: 20 conductor pieces (6 input solids split by the 8
+> leg∩ring junctions), 1 air, 1 phantom, 4 ports. The conductor's 0.7091 has
+> **two** causes at once, which is why it is banded and not gated at 1: the
+> analytic sum double-counts the junctions (the CAD masses alone give 0.9578),
+> and a global `setSize` of 0.015 against a 0.004 ring minor radius costs the
+> rest — step 1's tori kept 0.7547 for the second reason alone. The ports being
+> *exact* is the sharpest number here: they are rectangular boxes, so a
+> conforming linear-tet mesh of them is exact to roundoff, and before this
+> change they carried no 3-D physical group at all.
+>
+> **The rank-local tag bug was not latent — it fired.** With the geometry fixed,
+> `set(np.unique(cell_tags.values))` failed on *both* ranks for opposite reasons
+> at `-n 2`: rank 0 reported P2/P3 missing, rank 1 reported P1/P4
+> (`20260803T200151Z_GEO-9-step2b-probe.log`). Switched to
+> `global_cell_tag_set()` in the same commit, assertion content unchanged; the
+> mesh was already correct at the probe.
+>
+> **Cost — the known-issues "~10 minutes" figure is retired by measurement.**
+> The probe at default `resolution=0.015` is **8.95 s** of pytest / 10 s harness,
+> so the reduced rung the plan held in reserve was never needed and the old
+> figure is confirmed to have been the pre-2a hang burning the ceiling. Gate:
+> the CI command verbatim over all of `tests/mesh` less known-issues 5,
+> **20 passed 1 skipped 1 deselected in 42.15 s, exit 0**
+> (`20260803T200504Z_GEO-9-step2b-gate.log`, standard tier, `-n 2`; harness 44 s)
+> — up from 27.6 s, which is what the birdcage rejoining CI costs. The
+> `--ignore` is removed from `.github/workflows/ci.yml` in this commit.
+>
+> **The step-2a isolation gate was kept, not deleted**, per the plan: its fixture
+> now uses `ring_minor_radius=0.09 > ring_radius=0.07`, a self-intersecting
+> torus that `birdcage_port_layout_diagnostics` does not screen (it validates
+> ports, not ring topology), so the failure still happens inside
+> `_build_birdcage_port_model` after `gmsh.initialize()` — it raises
+> `Invalid boundary mesh (overlapping facets) on surface 65 surface 65` and the
+> coil+phantom identities still hold at `1.000000000000` afterwards in the same
+> process. **Negative control:** the before-state needs no re-run to be a
+> control — mesh-exists versus raises-before-any-mesh-exists is total
+> separation, and the 2a logs record the raise at the working commit.
+> **Does not close:** `PORT-1` step 3b (gap excitation is its own work),
+> known-issues 4, or `GEO-4` (the air-box generalisation — the birdcage still
+> uses one global `setSize`, which is exactly what the 0.7091 measures).
 
 ### TH — Time-harmonic Maxwell (Phase 2)
 
@@ -2541,10 +2608,14 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
    `gmsh.finalize()` and poisoning every later mesh in the process — which also
    *hangs* it (harness exit 124 at the ceiling). **Step 2a ✅ 2026-08-03**: the
    hang was two defects, gmsh contamination *and* an MPI collective mismatch,
-   both fixed — 180 s hang → 13 s prompt failure, isolation gate exit 0. Step
-   2b (the `occ.fragment` geometry rewrite) got its full plan at the 10:30
-   review and is queued. Two of the four §10 Target criteria route
-   through these fixtures, so this is on the critical path, not housekeeping.
+   both fixed — 180 s hang → 13 s prompt failure, isolation gate exit 0.
+   **Step 2b ✅ 2026-08-03, and the chunk is closed**: one `occ.fragment`
+   against all tools with the groups re-derived from the out-map; both volume
+   identities 1.000000000000 at `1e-9`, all four port boxes exact, whole
+   `tests/mesh` green in CI at 42.15 s. Known-issues 7 retires with it. Two of
+   the four §10 Target criteria route through these fixtures — **both birdcage
+   fixtures now generate**, so `PORT-1` step 3b (gap-voltage ports) is
+   unblocked and needs a review to firm up its plan against the measured mesh.
 6. **Air-box generalization** — every other `io/mesh.py` fixture still uses a
    single global `setSize` and tight padding, including coil+phantom. Distinct
    from `GEO-9`, which is about whether the mesh exists at all.
@@ -2733,7 +2804,24 @@ landing.**
    known-issues, stop; do not tune `ψ`'s boundary condition until the numbers
    meet.
 
-3. **`GEO-9` step 2b — fragment the birdcage geometry.** Independent of items
+3. **`GEO-9` step 2b — fragment the birdcage geometry.**
+   ✅ **done 2026-08-03, 15:00 run — and it closes `GEO-9` and retires
+   known-issues 7.** One `occ.fragment` against all tools with the groups
+   re-derived from the out-map (26 volumes, 20 of them conductor); the geometry
+   meshed on the first attempt at the default parameters, no gmsh-tolerance
+   iteration and no coarsening. `V_mesh/V_box` and `Σ(tagged)/V_mesh` are both
+   **1.000000000000** at `1e-9`, all four port boxes are exact to `1e-9` of
+   `dx·dy·dz` (they had no 3-D group at all before), conductor 0.7091 and
+   phantom 0.9734 banded from measurement. The rank-local tag read **fired**
+   rather than staying latent — rank 0 missing P2/P3, rank 1 missing P1/P4 —
+   and is now `global_cell_tag_set()`. Cost probe **8.95 s** at default
+   `resolution=0.015`, which retires the known-issues "~10 minutes" figure as
+   the pre-2a hang. Gate: the CI command over all of `tests/mesh` less
+   known-issues 5, **20 passed 1 skipped 1 deselected in 42.15 s, exit 0**
+   (`20260803T200504Z_GEO-9-step2b-gate.log`); the `--ignore` is gone from
+   `ci.yml`. **Unblocks `PORT-1` step 3b**, which now needs a review to firm it
+   up against this measured mesh. See the §7 entry.
+   Independent of items
    1 and 2. Execute the §7 step-2b plan, written this review. **Anchor:** the
    volume-partition identity of steps 1/2a — `V_mesh/V_box = 1` and
    `Σ(tagged)/V_mesh = 1`, both to `1e-9`, `V_box` analytic from the

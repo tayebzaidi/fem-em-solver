@@ -45,14 +45,24 @@ from tests.mesh.test_coil_phantom_conforming import (
 
 
 def _attempt_birdcage(comm):
-    """The `test_birdcage_port_tags.py` fixture, verbatim in its failing form."""
+    """A birdcage that fails *inside* the rank-0 build block.
+
+    `GEO-9` step 2b fixed the geometry this file was written against, so the
+    production parameter set now meshes and can no longer exercise the failure
+    path. The isolation property is the point of the file, not the particular
+    defect, so the fixture is given a deliberately invalid parameter set
+    instead: ``ring_minor_radius > ring_radius`` is a self-intersecting torus.
+    It passes ``birdcage_port_layout_diagnostics`` — which validates ports, not
+    ring topology — so the failure happens where this test needs it, in
+    ``_build_birdcage_port_model`` after ``gmsh.initialize()``.
+    """
     return MeshGenerator.birdcage_port_domain(
         leg_count=4,
         ring_radius=0.07,
         leg_width=0.012,
         leg_spacing=0.11,
         coil_length=0.14,
-        ring_minor_radius=0.004,
+        ring_minor_radius=0.09,  # > ring_radius: self-intersecting torus
         phantom_radius=0.03,
         phantom_height=0.08,
         port_box_size=(0.010, 0.008, 0.010),

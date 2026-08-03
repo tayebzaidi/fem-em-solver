@@ -103,7 +103,32 @@ them by number.
 | **Tool** | `tests/mesh/helpers.py::global_cell_tag_set()` exists for the tag case. `post.evaluation.evaluate_vector_field_parallel()` for the point-location case. |
 | **Verified pre-existing at** | `ce92e8c` and earlier |
 
-### 7. Birdcage mesh fails to generate *(coil+phantom half resolved 2026-08-03, `GEO-9` step 2a)*
+### 7. ✅ RETIRED 2026-08-03 — birdcage mesh fails to generate (`GEO-9`, steps 1 + 2a + 2b)
+
+All three tests are green and the whole of `tests/mesh` less known-issues 5 is
+`20 passed, 1 skipped, 1 deselected in 42.15 s`, exit 0
+(`20260803T200504Z_GEO-9-step2b-gate.log`, `-n 2`) — the CI command verbatim,
+with the birdcage `--ignore` removed in the same commit. **Step 2b** replaced the
+`occ.cut(..., removeTool=False)` with a single `occ.fragment` of the air box
+against every tool, so the legs and rings that pierce each other by construction
+are booleaned into conforming pieces instead of being meshed twice; the physical
+groups are re-derived from the fragment out-map (26 volumes, 20 of them
+conductor) and the port boxes get the 3-D groups they never had. Measured:
+`V_mesh/V_box = 1.000000000000` and `Σ(tagged)/V_mesh = 1.000000000000`, both
+gated to `1e-9`, and every port box exact to `1e-9` of `dx·dy·dz`. The
+rank-local `set(np.unique(cell_tags.values))` was fixed to `global_cell_tag_set()`
+in the same commit — it was real and it fired: at `-n 2` rank 0 reported P2/P3
+missing and rank 1 reported P1/P4 missing on an otherwise correct mesh
+(`20260803T200151Z_GEO-9-step2b-probe.log`).
+
+The history below is kept because several commits and the `GEO-9` §7 entry refer
+to it, and because the diagnosis — one poisoned generator hanging every later
+mesh in the process — is the reusable part.
+
+<details>
+<summary>Original entry (steps 1 and 2a)</summary>
+
+#### Birdcage mesh fails to generate *(coil+phantom half resolved 2026-08-03, `GEO-9` step 2a)*
 
 | | |
 |---|---|
@@ -115,7 +140,9 @@ them by number.
 | **Owned by** | `GEO-9` (created 2026-08-02): step 1 coil+phantom, step 2 birdcage. Two of the four §10 Target criteria route through these two fixtures. **Step 1 landed 2026-08-03** — the coil+phantom half is now gated by `tests/mesh/test_coil_phantom_conforming.py` (volume-partition identity, `20260803T033659Z_GEO-9-step1-gate.log`, 8 passed 1 skipped in 22.25 s) and the generator raises with the volume count and per-volume masses if fragment ever does return other than four grouped volumes. **All three tests above still fail in a shared process** and will until step 2 fixes the birdcage: `20260803T033733Z_GEO-9-order-probe-after.log` shows the new guards do *not* fire (gmsh is already busy, so they never execute), still `gmshio.py:118`. **Step 2's first action is the cheap half of this — wrap the birdcage's rank-0 block in `try/finally: gmsh.finalize()`**, which stops one broken generator from poisoning every later mesh in the process, independently of fixing the geometry. Split out as **`GEO-9` step 2a** at the 2026-08-03 03:00 review, with step 2b holding the `occ.fragment` geometry rewrite. |
 | **A poisoned process hangs — added 2026-08-03, 03:00 review** | Both `GEO-9` order probes report pytest finishing (3.47 s and 3.29 s) but the **harness** exits **124 at the 180 s ceiling**, with `Loguru caught a signal: SIGTERM` (`docs/testing/test-results.md:136,139`; logs `20260803T033119Z_GEO-9-order-probe.log`, `…033733Z_GEO-9-order-probe-after.log`). The step-1 prose quotes only the pytest wall time and does not say this. Two consequences: `tests/mesh` cannot enter CI with the birdcage in it (`OPS-11`) because the job would burn its whole `timeout-minutes` rather than fail fast; and `GEO-9` step 2a gets a sharper anchor than "the tests pass" — harness exit **124 at 180 s → 0 in seconds**. If a `try/finally` does not fix it, suspect an MPI collective the raising rank never reaches, not gmsh state. |
 | **Excluded from CI, and the reason has changed — `OPS-11`, 2026-08-03** | The `validation` job's `Mesh generation suite` step `--ignore`s `test_birdcage_port_tags.py`. The exclusion no longer rests on the hang or the budget: post-2a the file fails **promptly** (the unexcluded-directory control `20260803T170132Z_OPS-11-fullsweep.log` is 2 failed 18 passed 1 skipped in 31.85 s, harness exit 1 in 33 s, where the pre-2a probes exited 124 at the 180 s ceiling). It is ignored because it is deliberately red until `GEO-9` step 2b, and a permanently-red test in CI hides regressions behind an expected failure. **Remove the `--ignore` in the commit that fixes the geometry.** The same control also shows the coil+phantom tests now passing *with the birdcage in the same process* — the step-2a poisoning fix holding under the condition that used to break it. |
-| **✅ Two-thirds resolved 2026-08-03 by `GEO-9` step 2a — and the hang was *both* causes, not one** | The review's warning was right: `try/finally` alone would not have fixed the hang. Rank 0 raised and skipped the collective `gmshio.model_to_mesh`, so rank 1 blocked in it forever — that is the exit 124, and gmsh contamination is a second, independent defect. `birdcage_port_domain` now builds its model in `_build_birdcage_port_model`, calls `gmsh.finalize()` (guarded by `gmsh.isInitialized()`) when that raises, and `comm.bcast`es the failure so **every** rank raises before any enters `model_to_mesh`. The birdcage still fails loudly with the original message. **Before** (`20260803T123116Z_GEO-9-step2a-before.log`, re-run at the working commit, not quoted): 5 failed 2 passed in 3.16 s of pytest, harness **exit 124 at 180 s**. **After** (`20260803T123549Z_GEO-9-step2a-after.log`, same command): **1 failed 6 passed in 12.10 s, harness exit 1 at 13 s** — only the birdcage test itself. Gated by `tests/mesh/test_birdcage_finalize_isolation.py` (`20260803T123657Z_GEO-9-step2a-gate.log`, 1 passed in 5.30 s, **exit 0**), which runs the two generators in the poisoning order in one process and asserts `V_mesh/V_box = 1.000000000000` and `Σ(tagged)/V_mesh = 1.000000000000` to `1e-9` afterwards. `tests/mesh` less the birdcage file is now 17 passed 1 skipped, 1 failed in 28.46 s (`20260803T123714Z_GEO-9-step2a-sweep.log`) — the single failure is **entry 5**, unrelated. |
+| **✅ Two-thirds resolved 2026-08-03 by `GEO-9` step 2a — and the hang was *both* causes, not one** |<!-- retired: see the summary above --> The review's warning was right: `try/finally` alone would not have fixed the hang. Rank 0 raised and skipped the collective `gmshio.model_to_mesh`, so rank 1 blocked in it forever — that is the exit 124, and gmsh contamination is a second, independent defect. `birdcage_port_domain` now builds its model in `_build_birdcage_port_model`, calls `gmsh.finalize()` (guarded by `gmsh.isInitialized()`) when that raises, and `comm.bcast`es the failure so **every** rank raises before any enters `model_to_mesh`. The birdcage still fails loudly with the original message. **Before** (`20260803T123116Z_GEO-9-step2a-before.log`, re-run at the working commit, not quoted): 5 failed 2 passed in 3.16 s of pytest, harness **exit 124 at 180 s**. **After** (`20260803T123549Z_GEO-9-step2a-after.log`, same command): **1 failed 6 passed in 12.10 s, harness exit 1 at 13 s** — only the birdcage test itself. Gated by `tests/mesh/test_birdcage_finalize_isolation.py` (`20260803T123657Z_GEO-9-step2a-gate.log`, 1 passed in 5.30 s, **exit 0**), which runs the two generators in the poisoning order in one process and asserts `V_mesh/V_box = 1.000000000000` and `Σ(tagged)/V_mesh = 1.000000000000` to `1e-9` afterwards. `tests/mesh` less the birdcage file is now 17 passed 1 skipped, 1 failed in 28.46 s (`20260803T123714Z_GEO-9-step2a-sweep.log`) — the single failure is **entry 5**, unrelated. |
+
+</details>
 
 ---
 
@@ -236,33 +263,27 @@ anything. The off-diagonal is unaffected — `PORT-1` step 2 gates `Im Z₁₂` 
 
 Remove this entry with the commit that explains the sign.
 
-### Birdcage suite is over the compute budget
+### ✅ RESOLVED 2026-08-03 — "birdcage suite is over the compute budget" was the hang, not meshing cost
 
-**Reinterpretation (2026-08-03, 10:30 review): the ~10-minute figure below is
-probably not meshing cost.** `GEO-9` step 2a established that a failing birdcage
-*hung* the process — pytest reported in ~3 s while the harness burned its whole
-`timeout` and exited 124 — and this entry's measurement predates that discovery,
-so "~10 minutes on its own" and "exceeded a 700 s bound" are consistent with a
-hang at the ceiling, not with 10 minutes of gmsh work. Post-2a the failure is
-prompt (exit 1 in ~13 s). The true meshing cost of a *fixed* geometry is
-unmeasured; `GEO-9` step 2b's cost probe settles this entry's figure — update it
-with whatever the probe finds. The rank-local tag bug below is also owned by
-step 2b (its plan switches the test to `global_cell_tag_set()`).
+The 10:30 review's reinterpretation was right and `GEO-9` step 2b's cost probe
+settles the figure. The claim was that
+`tests/mesh/test_birdcage_port_tags.py` takes **~10 minutes** on its own and
+that a full `tests/mesh` run exceeded a 700 s bound. **Measured at the fixed
+geometry, default parameters, no coarsening:** the file is **8.95 s** of pytest,
+harness 10 s (`20260803T200151Z_GEO-9-step2b-probe.log`), and the whole
+directory at `-n 2` is **42.15 s**, exit 0
+(`20260803T200504Z_GEO-9-step2b-gate.log`). The old number was a poisoned
+process burning the harness `timeout` — pytest reported in ~3 s while the run
+exited 124 at 180 s — so `resolution` never had to be coarsened from 0.015 and
+the file needs no exclusion from routine runs. It is in CI as of this commit.
 
-`tests/mesh/test_birdcage_port_tags.py` takes **~10 minutes** on its own — the rest of
-`tests/mesh` runs in 9.7 s. A full `tests/mesh` run exceeded a 700 s bound; excluding
-birdcage it is trivial. Exclude it from routine runs:
-
-```bash
-pytest tests/mesh --ignore=tests/mesh/test_birdcage_port_tags.py
-```
-
-It also carries a **latent rank-local tag bug**: it asserts on
-`set(np.unique(cell_tags.values))`, which is per-rank, so a rank owning no port or leg
-cells will trip it at higher rank counts — the same defect already fixed in
-`test_two_torus.py`. A fix using `global_cell_tag_set()` was written and then reverted
-on request, as the birdcage geometry is slated for rework alongside a proper analytic
-reference. Left untouched intentionally.
+The **latent rank-local tag bug** recorded here is also fixed, and it was not
+latent: `set(np.unique(cell_tags.values))` is per-rank, and at `-n 2` on the
+newly-working mesh rank 0 reported P2/P3 missing while rank 1 reported P1/P4
+missing. `GEO-9` step 2b switched the test to
+`tests/mesh/helpers.py::global_cell_tag_set()` — the fix that was written and
+reverted on request pending exactly this rework. The assertion content (core +
+per-port tags all present) is unchanged.
 
 ### The gauge penalty is a workaround, not a gauge — closed by decision (2026-07-28)
 

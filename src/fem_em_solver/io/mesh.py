@@ -2067,32 +2067,109 @@ class MeshGenerator:
         )
 
         conductor_tags = [top_ring, bottom_ring] + leg_tags
-        cut_result, _ = gmsh.model.occ.cut(
+
+        # GEO-9 step 2b. The previous `occ.cut(..., removeTool=False)` carved the
+        # air box around the tools but never booleaned the tools against *each
+        # other*: the legs pierce both rings by construction, so those solids
+        # overlapped and gmsh failed with "Invalid boundary mesh (overlapping
+        # facets) on surface 3 surface 49" (known-issues 7). Fragment the box
+        # against ALL tools at once, so every pairwise overlap becomes its own
+        # conforming piece, and re-derive the physical groups from the fragment
+        # out-map — fragment renumbers and reorders, so absolute tags from before
+        # the call mean nothing afterwards.
+        tool_tags = conductor_tags + [phantom_tag] + port_tags
+        _, fragment_map = gmsh.model.occ.fragment(
             [(3, air_tag)],
-            [(3, tag) for tag in conductor_tags + [phantom_tag] + port_tags],
-            removeObject=True,
-            removeTool=False,
+            [(3, tag) for tag in tool_tags],
         )
         gmsh.model.occ.synchronize()
 
-        if not cut_result:
-            raise RuntimeError("Failed to create air volume for birdcage_port_domain")
-        air_volume_tags = [tag for dim, tag in cut_result if dim == 3]
-        if not air_volume_tags:
-            raise RuntimeError("No 3D air volume returned by cut operation")
-        air_tag = air_volume_tags[0]
+        # out-map is positional: one entry per input, objects first then tools.
+        input_tags = [air_tag] + tool_tags
+        if len(fragment_map) != len(input_tags):
+            raise RuntimeError(
+                "birdcage_port_domain: occ.fragment returned an out-map of "
+                f"{len(fragment_map)} entries for {len(input_tags)} inputs"
+            )
 
-        gmsh.model.addPhysicalGroup(3, conductor_tags, tag=1)
-        gmsh.model.setPhysicalName(3, 1, "conductor")
-        gmsh.model.addPhysicalGroup(3, [air_tag], tag=2)
-        gmsh.model.setPhysicalName(3, 2, "air")
-        gmsh.model.addPhysicalGroup(3, [phantom_tag], tag=3)
-        gmsh.model.setPhysicalName(3, 3, "phantom")
+        ancestors: Dict[int, set] = {}
+        for input_tag, pieces in zip(input_tags, fragment_map):
+            for dim, piece in pieces:
+                if dim == 3:
+                    ancestors.setdefault(piece, set()).add(input_tag)
 
-        for idx, port_tag in enumerate(port_tags, start=1):
-            physical_tag = 100 + idx
-            gmsh.model.addPhysicalGroup(3, [port_tag], tag=physical_tag)
-            gmsh.model.setPhysicalName(3, physical_tag, f"port_P{idx}")
+        conductor_set = set(conductor_tags)
+        port_ordinal = {tag: idx for idx, tag in enumerate(port_tags, start=1)}
+
+        # Piece policy. Metal wins over everything (a leg∩ring piece is conductor
+        # either way, and a port box grazing a conductor is metal, not an
+        # integration volume); the phantom outranks a port box for the same
+        # reason. Only pieces descended from a port box alone carry `100+i`, and
+        # what is left — descended from the air box only — is air.
+        group_of_piece: Dict[int, int] = {}
+        for piece, sources in ancestors.items():
+            if sources & conductor_set:
+                group_of_piece[piece] = 1
+            elif phantom_tag in sources:
+                group_of_piece[piece] = 3
+            elif sources & port_ordinal.keys():
+                group_of_piece[piece] = 100 + min(
+                    port_ordinal[tag] for tag in sources if tag in port_ordinal
+                )
+            else:
+                group_of_piece[piece] = 2
+
+        pieces_by_group: Dict[int, List[int]] = {}
+        for piece, group in sorted(group_of_piece.items()):
+            pieces_by_group.setdefault(group, []).append(piece)
+
+        group_names = {1: "conductor", 2: "air", 3: "phantom"}
+        for idx in port_ordinal.values():
+            group_names[100 + idx] = f"port_P{idx}"
+
+        missing_groups = [
+            group_names[tag]
+            for tag in [1, 2, 3] + [100 + i for i in port_ordinal.values()]
+            if tag not in pieces_by_group
+        ]
+        volumes = gmsh.model.getEntities(dim=3)
+        masses = {tag: gmsh.model.occ.getMass(3, tag) for _, tag in volumes}
+        if missing_groups:
+            raise RuntimeError(
+                "birdcage_port_domain: occ.fragment left no piece for "
+                f"{', '.join(missing_groups)}; {len(volumes)} volumes, "
+                "per-volume masses [m^3]: "
+                + ", ".join(f"tag {tag}: {mass:.6e}" for tag, mass in sorted(masses.items()))
+            )
+
+        for group, pieces in sorted(pieces_by_group.items()):
+            gmsh.model.addPhysicalGroup(3, pieces, tag=group)
+            gmsh.model.setPhysicalName(3, group, group_names[group])
+
+        # Every 3-D entity must carry a marker; a cell with none is exactly what
+        # `gmshio.py:118` asserts on. Checked against the model rather than
+        # against the out-map, so a piece the out-map never mentioned cannot
+        # hide (the `GEO-9` step-1 guard, same reasoning).
+        grouped_volumes = set()
+        for _, group_tag in gmsh.model.getPhysicalGroups(dim=3):
+            grouped_volumes.update(gmsh.model.getEntitiesForPhysicalGroup(3, group_tag))
+        ungrouped = sorted({tag for _, tag in volumes} - grouped_volumes)
+        if ungrouped:
+            raise RuntimeError(
+                "birdcage_port_domain: 3-D entities carry no physical group: "
+                f"{ungrouped}; {len(volumes)} volumes, masses [m^3]: "
+                + ", ".join(f"tag {tag}: {masses[tag]:.6e}" for tag in ungrouped)
+            )
+
+        print(
+            f"[birdcage-mesh] fragment volumes={len(volumes)} "
+            + " ".join(
+                f"{group_names[group]}={sum(masses[p] for p in pieces):.6e}"
+                f"({len(pieces)}p)"
+                for group, pieces in sorted(pieces_by_group.items())
+            ),
+            flush=True,
+        )
 
         outer_boundary_surfaces = []
         for dim, surf in gmsh.model.getEntities(dim=2):

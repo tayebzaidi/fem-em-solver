@@ -133,26 +133,24 @@ jobs:
     # exactly the two excluded below -- nothing else fails, so neither
     # exclusion is broader than the defect it names.
     #
-    #   --ignore birdcage: test_birdcage_port_tags.py is deliberately red until
-    #     GEO-9 step 2b fixes the overlapping-facets geometry (known-issues 7).
-    #     A permanently-red test in CI hides regressions behind an expected
-    #     failure. It no longer *hangs* -- GEO-9 step 2a made the failure prompt
-    #     (exit 1 in ~13 s, was exit 124 at the 180 s ceiling) -- so the budget
-    #     argument this exclusion originally rested on no longer applies.
+    #   (The birdcage --ignore was removed 2026-08-03 by GEO-9 step 2b, which
+    #    fragmented the geometry: the file now generates a mesh and passes,
+    #    carrying its own V_mesh/V_box and sum(tagged)/V_mesh identities --
+    #    both 1.000000000000 -- into CI. Log 20260803T200358Z_GEO-9-step2b-bands.)
     #   --deselect off-centre sizing: known-issues 5, `assert 0.09 > 0.09`,
     #     pure geometry arithmetic with no solve.
     #
     # Remove each exclusion in the commit that fixes its entry; do not widen
     # either one to make this job green.
     #
-    # 27.6 s at -n 2 on the dev box (20260803T170047Z_OPS-11-negctl.log,
-    # 17 passed 1 skipped 1 deselected). Carries the GEO-9 step-1/2a
-    # volume-partition identities -- V_mesh/V_box and sum(tagged)/V_mesh, both
-    # to 1e-9 -- into CI for the first time.
+    # 42.2 s at -n 2 on the dev box (20260803T200504Z_GEO-9-step2b-gate.log,
+    # 20 passed 1 skipped 1 deselected, exit 0) -- was 27.6 s before the
+    # birdcage rejoined. Carries the GEO-9 step-1/2a/2b volume-partition
+    # identities -- V_mesh/V_box and sum(tagged)/V_mesh on three fixtures, all
+    # to 1e-9 -- into CI.
     - name: Mesh generation suite
       run: |
         mpiexec -n 2 python3 -m pytest tests/mesh \
-          --ignore=tests/mesh/test_birdcage_port_tags.py \
           --deselect tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent \
           -v --tb=short
 

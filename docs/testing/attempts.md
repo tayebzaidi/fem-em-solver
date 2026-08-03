@@ -2419,3 +2419,98 @@ prediction rather than a direction: drive with `J − P_G J` (the Poisson solve
 that produces `P_G J` is already implemented in this file, 1.1 s) and
 `Im Z₁₁` should move from −41.09 Ω to `+4ωW_m/I² ≈ +7.44 Ω`, i.e. within ~9% of
 Grover's 6.818 Ω. That is a review-scoped item, not one to invent here.
+
+---
+
+## 2026-08-03T20:07Z — `GEO-9` step 2b — **complete**
+
+**Queue position:** §9 On deck item 3 (items 1 and 2 already done). Preflight
+clean; the container was **not** Up and was started with
+`docker compose -f docker/docker-compose.yml up -d` before any work.
+
+**What was tried, and it is what the plan said.** Replaced the
+`occ.cut(..., removeTool=False)` at the end of `_build_birdcage_port_model`
+with a single `occ.fragment` of the air box against all tools — 2 rings, 4
+legs, phantom, 4 port boxes — and re-derived every 3-D physical group from the
+fragment **out-map** (positional, objects then tools), never from absolute
+tags. Piece policy as specified: any conductor ancestor → tag 1, else phantom →
+3, else a port box alone → `100+i`, else air → 2. Added the step-1-style guard
+that raises with the volume count and per-volume masses if any group ends up
+empty or any 3-D entity ungrouped.
+
+**Measured numbers.**
+
+| quantity | value | gate |
+|---|---|---|
+| `V_mesh/V_box` (`V_box = 1.039680e-02 m³` analytic) | **1.000000000000** | `< 1e-9` |
+| `Σ(tagged)/V_mesh` | **1.000000000000** | `< 1e-9` |
+| each of 4 port boxes, meshed/`dx·dy·dz` | **1.000000** | `< 1e-9` |
+| conductor meshed/analytic sum | 0.7091 | band `(0.65, 1.00)` |
+| phantom meshed/analytic cylinder | 0.9734 | band `(0.90, 1.00)` |
+| fragment volumes | 26 (20 conductor, 1 air, 1 phantom, 4 port) | — |
+
+The conductor band is not a loosened identity: the analytic sum double-counts
+the 8 leg∩ring junctions (CAD masses alone give 0.9578) and the global 0.015
+`setSize` against a 0.004 ring minor radius costs the rest — step 1's tori kept
+0.7547 for the second reason alone. Bands were set from the measurement in the
+`-bands` log, per the plan, not guessed in advance. The port boxes being exact
+is the sharpest result: they are rectangular, so a conforming linear-tet mesh
+is exact to roundoff, and they carried **no 3-D physical group at all** before
+this commit.
+
+**Logs** (all `-n 2`, harness, standard tier):
+* `20260803T200151Z_GEO-9-step2b-probe.log` — cost probe at the **default**
+  parameters, exit 1 in 10 s (8.95 s pytest).
+* `20260803T200358Z_GEO-9-step2b-bands.log` — the two birdcage files, 4 passed
+  in 22.28 s, exit 0. Source of the bands.
+* `20260803T200504Z_GEO-9-step2b-gate.log` — **the gate**: the CI command
+  verbatim over all of `tests/mesh` less the known-issues-5 deselect,
+  **20 passed 1 skipped 1 deselected in 42.15 s, exit 0** (harness 44 s).
+
+**Three findings worth the next reader's time.**
+1. **The geometry meshed on the first attempt at the default parameters.** No
+   gmsh-tolerance iteration, no coarsening — the reduced rung the review left
+   to measurement was never needed. `resolution` stays 0.015.
+2. **The known-issues "~10 minutes" figure is dead, measured.** The birdcage
+   file is 8.95 s. The old number was the pre-2a hang burning the harness
+   ceiling, as the 10:30 review suspected. That entry is now marked resolved
+   with the measurement, and the `--ignore` is out of `ci.yml`.
+3. **The rank-local tag read was not latent — it fired.** With the mesh finally
+   correct, `set(np.unique(cell_tags.values))` failed on *both* ranks for
+   opposite reasons at `-n 2`: rank 0 reported P2/P3 missing, rank 1 reported
+   P1/P4. That is the probe log's only failure, and it is the cleanest
+   demonstration of the bug this repo has. Switched to `global_cell_tag_set()`
+   in the same commit; assertion content unchanged.
+
+**The step-2a isolation gate was kept, not deleted**, per the plan's
+instruction. Its fixture now uses `ring_minor_radius=0.09 > ring_radius=0.07` —
+a self-intersecting torus that `birdcage_port_layout_diagnostics` does not
+screen (it validates ports, not ring topology), so the failure still lands
+inside `_build_birdcage_port_model` *after* `gmsh.initialize()`, which is the
+only place that tests the finalize/`bcast` property. Verified: it raises
+`Invalid boundary mesh (overlapping facets) on surface 65 surface 65` and the
+coil+phantom identities still read 1.000000000000 in the same process.
+
+**Negative control:** not executed, and deliberately — mesh-exists versus
+raises-before-any-mesh-exists is total separation, and the 2a logs already
+record the raise at the working commit. Nothing quantitative was available to
+compare.
+
+**Closes `GEO-9`** (steps 1 + 2a + 2b) and **retires known-issues 7** — both
+`1e-9` identities gate green and the port-tags test passes rank-safely at
+`-n 2`, which is the plan's stated condition. Also discharges half of
+`OPS-11`'s carried exclusions; the known-issues-5 `--deselect` is the only one
+left in the `Mesh generation suite` step. No denials hit; no unrelated
+failures; nothing added to known-issues.
+
+**Hypothesis for the next run.** §9 items 4 (`MAT-4` step 2) and 5 (`POST-3`
+step 4) remain, both independent and both with full §7 plans — item 4 is next.
+The queue is down to two, so the 18:00 review needs to refill it. The obvious
+candidate it should now scope: **`PORT-1` step 3b**, deliberately blocked until
+this landed, and its plan can now be firmed up against a measured mesh — 26
+fragment volumes, 4 port regions of exactly 8.000000e-07 m³ each with real 3-D
+groups, whole fixture meshing in 8.95 s. Worth naming as a trap for whoever
+writes it: the conductor keeps only 0.7091 of its analytic volume under the
+global 0.015 `setSize`, so a gap-voltage port driven on that surface inherits a
+coarse conductor boundary — `GEO-4` (air-box/graded sizing generalisation) may
+turn out to be a prerequisite rather than a nicety.
