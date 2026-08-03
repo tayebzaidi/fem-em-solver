@@ -1823,3 +1823,10 @@ field, not a port.
 `MAT-4` step 2: `mean_sar` already takes `cell_tags`/`subdomain_ids` and a
 scalar ρ, so the step-2 work is a ρ *field* plus the averaging volume, not a
 rewrite of the integrand.
+
+**Post-commit cohabitation check** (log `20260803T020720Z_MAT-4-step1-cohabit.log`):
+the new gate and `tests/validation/test_dielectric_sphere.py` — the `TH-8` file
+it shares `sphere_in_box_domain` with — in one session, **7 passed in 54.6 s**
+at `-n 2`, standard tier. `TH-8` is unaffected: its own suite is 16 s and the
+sum is the two files' independent costs, so the lossy fixture's different R, f
+and complex Dirichlet data do not leak into the lossless one.
