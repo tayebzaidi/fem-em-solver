@@ -1894,3 +1894,15 @@ the geometry**. Only then the `occ.cut` → `occ.fragment` rewrite plus 3-D grou
 for the port boxes, on a reduced-rung fixture (the full birdcage suite is ~10
 min). If that ordering holds, `OPS-11` (put `tests/mesh` in CI) becomes safe
 immediately after.
+
+**Post-commit cohabitation check** (`20260803T034252Z_GEO-9-step1-cohabit.log`):
+all of `tests/mesh` **less the birdcage file** in one session — **16 passed,
+1 failed, 1 skipped in 22.95 s** at `-n 2`, standard tier. The new gate
+cohabits: with the poisoning file excluded, every coil+phantom test passes in a
+shared process, which is the positive half of the same experiment. The one
+failure is known-issues **6**, `test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent`
+(`assert 0.09 > 0.09`) — pre-existing and untouchable by this diff, which is 37
+added lines entirely inside `coil_phantom_domain` while that test exercises the
+pure-arithmetic `coil_phantom_domain_sizing_diagnostics`. Not fixed in passing;
+worth noting for `OPS-11` that putting `tests/mesh` in CI needs known-issues 6
+and 7 closed first, or the job is red on arrival.
