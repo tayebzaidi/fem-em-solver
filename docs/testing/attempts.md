@@ -1989,3 +1989,61 @@ assertions reproduce unchanged in the shared process, which is what matters
 given the new file imports its helpers. Two meshes and three solves is 98 s,
 still inside the standard tier, so listing both in `validation-complex` adds
 43.5 s to that job rather than a new mesh cost.
+
+---
+
+## 2026-08-03T09:31Z — `PORT-1` step 2c — **incomplete (negative result)**
+
+Scheduled implementer run, 04:30 CDT slot. Preflight clean: no dirty tree, no
+`attempt/*` or `recovered/*` branches, container Up 6 days. Took On-deck item 1
+as written.
+
+**What was tried.** The `M(2d)/M(d)` doubling control exactly as the §7 step-2c
+plan specifies: measure `|Z₁₂|` at `d = 0.04` and at `2d = 0.08`, assert the
+ratio against the Jackson-5.37 closed form at 10%. Implemented as one added
+assertion in `tests/validation/test_port_reaction_impedance.py`, with
+`_solve_reaction_z(separation, driven_tags, label)` factored out of the existing
+module fixture so the second separation buys **one** solve rather than two
+(only `Z₂₁` is needed; reciprocity is 3e-13 on this fixture).
+
+**Measured numbers.**
+* Anchor re-derived, not quoted: `M(2d)/M(d) = 0.287120` to six figures
+  (`20260803T093119Z_PORT-1-step2c-costprobe.log:34`).
+* Cost probe (the plan required it before sizing the tier): `d = 0.08` at
+  padding 0.08 / h_far 0.03 is **127763 cells, 1.067×** step 2's 119738, mesh
+  22.4 s, solve 14.5 s. **Step 2c is standard tier, not heavy** — the fear that
+  the taller box approached the killed 237926-cell case was unfounded.
+* **Gate FAILED: ratio 0.248854 vs 0.287120, −13.33%** against 10%
+  (`20260803T093329Z_PORT-1-step2c-gate.log:843`). The file's other four
+  assertions passed unchanged in the same session, so step 2 has not regressed.
+* Cause, measured: per-separation error is **−9.36% at `d`** (reproducing step
+  1's −9.35%) but **−21.4% at `2d`**. The PEC box costs the wider pair more, so
+  the ratio error is a difference of unequal box errors, not a fall-off error.
+* Padding sweep confirming it, via a new `--solve-padding` mode on the probe
+  (`20260803T093617Z_PORT-1-step2c-boxsens.log:417-818`): at padding 0.10,
+  −6.38% at `d`, −14.60% at `2d`, **ratio 0.261901, −8.78%** — monotone toward
+  the closed form. 135542 / 146446 cells, ~90 s for the whole ratio.
+
+**Disposition, and the judgement call in it.** Padding 0.10 would pass the gate
+as written, and I did **not** re-site the fixture there. 8.78% against 10% is
+1.1× of margin selected *after* seeing it pass, which is the fitted-bound
+pattern; and the §7 item says "negative result: report and stop; annotate rather
+than widen". So: the measurement, the probe, and the three logs land on `main`
+with the §7 annotation, and the **gate code is parked on
+`attempt/PORT-1-step2c-20260803T094412Z`** so `main` is neither red nor dirty.
+Nothing was discarded — one `git checkout` recovers the test.
+
+**Harness logs** (all registered in `test-results.md`):
+`20260803T093119Z_PORT-1-step2c-costprobe.log` (mesh-only probe, both
+separations, exit 0), `20260803T093329Z_PORT-1-step2c-gate.log` (full file,
+`-n 2`, complex build, 4 passed 1 failed, exit 1),
+`20260803T093617Z_PORT-1-step2c-boxsens.log` (padding 0.10 ratio, exit 0).
+
+**Hypothesis for the next attempt.** The box, not the physics, and it is a
+one-decision item rather than a rebuild: run the probe's `--solve-padding 0.12`
+(cost-probe first — ~2.3× the cells at `d = 0.08`, so it may need heavy tier or
+a coarser `h_far`), and if the ratio clears 10% with real margin, unpark the
+branch and re-site the fixture there. If 0.12 is unaffordable, the fallback is
+the `MAG-10`/`MAG-15` precedent: keep padding 0.08 and set the bound to the
+measured box error with the two-point sweep quoted in the code comment. Do not
+re-run it unchanged at padding 0.08 — that number is now known.

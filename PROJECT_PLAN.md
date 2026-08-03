@@ -1825,6 +1825,49 @@ completed measurement step is not "not started")*
 > test to `test_port_reaction_impedance.py`; if it has not, this is a standalone
 > file and does not wait. Negative result: report and stop.
 >
+> **Step 2c attempted 2026-08-03 (04:30 run) — NEGATIVE at the step-2
+> configuration, and the cause is measured, not guessed. Step 2c stays 🟡.**
+> The control was built as specified and executed; what fails is the *bound* at
+> padding 0.08, not the method. Numbers, all reproducible:
+> * **Anchor confirmed independently.** `M(2d)/M(d) = 0.287120` re-evaluated
+>   from `circular_loop_vector_potential`, matching the queued value to all six
+>   figures (`20260803T093119Z_PORT-1-step2c-costprobe.log:34`).
+> * **The second mesh is cheap** — the cost probe the plan demanded was worth
+>   running, but not for the reason feared: `d = 0.08` at padding 0.08 / h_far
+>   0.03 is **127763 cells, 1.067× step 2's**, mesh 22.4 s, solve 14.5 s. The
+>   taller box is nowhere near the 237926-cell case MUMPS was killed on, so
+>   step 2c is a **standard-tier** item, not heavy.
+> * **The gate fails: ratio 0.248854 vs 0.287120, −13.33%** against the 10%
+>   bound (`20260803T093329Z_PORT-1-step2c-gate.log:843`). The other four
+>   assertions in the file passed unchanged, so this is not a step-2 regression.
+> * **It fails because the PEC box hurts the wider pair more**, which the queued
+>   item anticipated in words ("some box error cancels in the ratio and some
+>   does not") but not in size. Per-separation: **−9.36% at `d`** (step 1's
+>   −9.35%, reproduced) but **−21.4% at `2d`**. The ratio error is the
+>   difference of two unequal box errors, not a fall-off error.
+> * **Confirmed by a padding sweep, and the direction is right.** At padding
+>   0.10 (`20260803T093617Z_PORT-1-step2c-boxsens.log:417-818`): −6.38% at `d`,
+>   −14.60% at `2d`, **ratio 0.261901, −8.78%** — monotone toward the closed
+>   form and *inside* 10%. Both errors shrink and their gap narrows.
+>
+> **What was deliberately not done, and what the next run should weigh.** The
+> padding-0.10 result would pass the gate as written, and re-siting the fixture
+> there was left untaken: 8.78% against a 10% bound is 1.1× of margin, chosen
+> **after** seeing it pass — the "was this fitted?" pattern the review audits
+> for. The honest options are (a) re-site at padding 0.10 **and** state the thin
+> margin in the test; (b) go to padding 0.12 — unmeasured, ~2.3× the cells at
+> `d = 0.08`, so cost-probe it first — where the trend says the ratio should
+> clear 10% with real margin; or (c) keep padding 0.08 and set the bound to the
+> *measured* box error with the sweep quoted in the code comment, which is the
+> `MAG-10`/`MAG-15` precedent. **(b) is the recommendation**: it is the only one
+> that buys margin rather than redistributing it, and the sweep gives it a
+> predicted landing point. What is *not* available is asserting 10% at padding
+> 0.08.
+> The gate code is written and parked (branch named in `attempts.md`,
+> 2026-08-03 entry); the probe is on `main` and now has a `--solve-padding`
+> mode that reports the whole ratio for one padding in ~90 s, which is what
+> option (b) should be cost-probed and run through.
+>
 > **Step 3a — move the Z→S conversion into `src/`, and point `PORT-5`'s metrics
 > at a real matrix for the first time (one run; independent of 2c and 2d).**
 > *(New 2026-08-03, 03:00 review — split out of step 3 because it does not need
@@ -2222,7 +2265,17 @@ invented; four existing entries were split or scoped.
 landing.** Six rather than five because `PORT-1` alone now offers three
 non-competing spurs.
 
-1. **`PORT-1` step 2c — the `M(2d)/M(d)` doubling control.** Carried over as the
+1. **`PORT-1` step 2c — the `M(2d)/M(d)` doubling control.** **Attempted once,
+   2026-08-03 04:30 — negative, and the run answered the question rather than
+   failing to reach it: ratio 0.248854 vs 0.287120 (−13.33%) at padding 0.08,
+   because the PEC box costs −9.36% at `d` but −21.4% at `2d`.** A padding sweep
+   to 0.10 moves it to −8.78%, monotone toward the closed form. **The next
+   attempt is a bound/fixture decision, not a rebuild** — the gate code is
+   written and parked, the probe has a `--solve-padding` mode, and the §7 entry
+   recommends padding 0.12 (cost-probe first, ~2.3× cells) over re-siting at
+   0.10 on 1.1× of margin. Do not re-run it at padding 0.08. Original item,
+   still the reference for the anchor and the traps:
+   Carried over as the
    untaken spare from the previous queue, unchanged and still fully specified;
    independent of everything below. Execute the §7 step-2c plan. **Anchor:** the
    closed-form ratio **0.287120** from
