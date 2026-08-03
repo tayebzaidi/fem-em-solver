@@ -56,6 +56,37 @@ def _power_waves(voltage_v: complex, current_a: complex, z0_ohm: float) -> tuple
     return a_wave, b_wave
 
 
+def sparameters_from_impedance(z_matrix: np.ndarray, *, z0_ohm: float) -> np.ndarray:
+    """Return ``S = (Z − Z₀I)(Z + Z₀I)⁻¹`` for a real reference impedance.
+
+    The packaged form of the conversion `PORT-1` step 2 first ran as three numpy
+    lines inside `tests/validation/test_port_reaction_impedance.py`.  Deliberately
+    pure numpy: it takes an impedance matrix from *any* source — the reaction
+    integral of a solved field, a measurement, a circuit model — and knows
+    nothing about `excitation.py`'s placeholder coupling path.  That separation
+    is the point of the step: it is what lets an S-matrix derived from a solved
+    field reach `summarize_sparameter_sanity` without routing through the
+    heuristic (`PORT-0`/`PORT-5`, known-issues 3).
+
+    ``Z₀`` is scalar here, matching the single-reference-impedance convention the
+    step-2 fixture uses.  Per-port references need the generalised (power-wave)
+    form and are not this function's job.
+    """
+    z = np.asarray(z_matrix)
+    if z.ndim != 2:
+        raise ValueError("z_matrix must be rank-2")
+    if z.shape[0] != z.shape[1]:
+        raise ValueError("z_matrix must be square")
+    if not np.all(np.isfinite(z.real)) or not np.all(np.isfinite(z.imag)):
+        raise ValueError("z_matrix contains non-finite values")
+    if z0_ohm <= 0.0:
+        raise ValueError("z0_ohm must be positive")
+
+    identity = np.eye(z.shape[0], dtype=np.complex128)
+    z0_identity = float(z0_ohm) * identity
+    return (z - z0_identity) @ np.linalg.inv(z + z0_identity)
+
+
 def summarize_sparameter_sanity(
     s_matrix: np.ndarray,
     *,

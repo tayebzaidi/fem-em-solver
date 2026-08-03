@@ -29,6 +29,7 @@ from .sparameters import (
     SMatrixSanityReport,
     SParameterSweepResult,
     run_n_port_sparameter_sweep,
+    sparameters_from_impedance,
     summarize_sparameter_sanity,
 )
 from .sweep import FrequencySweepPlan, plan_frequency_sweep
@@ -59,6 +60,7 @@ __all__ = [
     "SMatrixSanityReport",
     "SParameterSweepResult",
     "run_n_port_sparameter_sweep",
+    "sparameters_from_impedance",
     "summarize_sparameter_sanity",
     "FrequencySweepPlan",
     "plan_frequency_sweep",

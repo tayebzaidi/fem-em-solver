@@ -83,6 +83,15 @@ reaction Z-matrix from a solved two-loop field through
 two-loop air fixture, not a coil, and `ports/excitation.py` is untouched: every
 S-parameter the **package** produces is still heuristic.)*
 
+*(2026-08-03, `PORT-1` step 3a: the **conversion** now lives in `src/` —
+`ports.sparameters_from_impedance()`, pure numpy, gated bit-identical to the test
+path on that solved field, with `PORT-5`'s sanity metrics reporting
+`passivity_max_sigma = 1.000000000000` on a real matrix for the first time. This
+does not move the sentence above: `run_n_port_sparameter_sweep` still gets its
+port voltages from `excitation.py`, so **every S-parameter the package produces
+end to end is still heuristic**. What changed is that a caller holding an honest
+Z now has an honest conversion to call.)*
+
 ### 2.3 Test assertions cannot detect either problem
 
 Finiteness checks (`np.isfinite`, `> 0`) dominate the solver, port, material, and
@@ -1981,6 +1990,45 @@ completed measurement step is not "not started")*
 > lines, that is a finding about one of the two — report both matrices, annotate
 > this entry, and stop; do not adjust either until it is understood.
 >
+> **Step 3a done 2026-08-03 (09:00 run)**, gate
+> `20260803T140251Z_PORT-1-step3a-gate.log`, **9 passed 1 deselected in 58.0 s**,
+> standard tier, `-n 2`, exit 0. `sparameters_from_impedance(z, *, z0_ohm)` is in
+> `ports/sparameters.py` and exported from `ports/__init__.py`; it is pure numpy
+> and touches nothing in the `⚠️` path (`_power_waves`,
+> `_assemble_sparameter_matrix`, `run_n_port_sparameter_sweep` and
+> `excitation.py` are all unmodified — the diff adds one function and one test,
+> deleting nothing).
+> * **Code-path equivalence exceeded its bound: `max|S_pkg − S_test| = 0.0000e+00`
+>   against 1e-12** — bit-identical, not merely within tolerance, which is the
+>   available outcome when both paths do the same operations in the same order.
+> * **Cross-run agreement with the step-2 log:** `|ΔS₁₁| = 4.75e-08`,
+>   `|ΔS₂₁| = 4.51e-09` against the logged `−1.941026e-01 − 9.806119e-01j` and
+>   `−2.639550e-02 + 5.277699e-03j`. Held at 1e-6, not 1e-12, and the constant's
+>   comment says why: the log prints seven figures, so 5e-8 is the rounding of
+>   the printed value itself. Both residuals sit at that floor.
+> * **The sanity metrics ran on a real matrix for the first time:**
+>   `passivity_max_sigma = 1.000000000000` and `max column power sum =
+>   1.000000000000`, both asserted to 1e-9 as *identities* (a lossless reciprocal
+>   2-port is unitary, so unit column norms are exact, not fitted);
+>   `reciprocity_max_abs_delta = 3.4981e-13`, `max rel = 1.2995e-11`, `warnings =
+>   ()`. The run also confirms the arithmetic the test's comment claims: this
+>   run's `‖S−Sᵀ‖/‖S‖` printed `3.4981e-13`, **equal to `max|Sᵢⱼ−Sⱼᵢ|`**, because
+>   `‖S‖_F = √2` for a unitary 2×2. (The step-2 log's 2.5993e-13 is the same
+>   quantity at that run's partition; both are machine precision.)
+> * **Negative control, stated not measured, as the plan directed:** the
+>   placeholder path returns an identically-zero diagonal on two ports
+>   (known-issues 3 — the fakes set `current = voltage/z0`, so `b = 0` exactly)
+>   against the measured `|S₁₁| = 0.999638`. Total separation.
+> * Step 2c's doubling test was `--deselect`ed from this gate: it carries its own
+>   two meshes and two solves (122 s measured) and was gated in the 06:00 run;
+>   including it would have pushed a 58 s command past the standard tier for no
+>   new information. The other nine tests in the file, including all of step 2's,
+>   ran and passed.
+> * **Still open, and 3a does not touch any of it:** `PORT-5` stays `⚠️` — its
+>   *sweep-level* metrics still run on the placeholder — the two red port tests
+>   (known-issues 3) stay red for 3b, and §10 criterion 2 stays open because a
+>   two-loop air fixture is not a coil.
+>
 > **Step 3b — gap-voltage ports on the tagged birdcage (directional; a later
 > review firms this up, and it needs `GEO-9` step 2).** The MRI-relevant form:
 > excite across the tagged gaps of `birdcage_port_domain`, recover `V = −∫E·dl`
@@ -2413,7 +2461,21 @@ non-competing spurs.
    which, annotate §7 and known-issues 7, and **stop**; do not start the geometry
    rewrite with the remaining time.
 
-3. **`PORT-1` step 3a — move the Z→S conversion into `src/`.** Independent of
+3. ~~**`PORT-1` step 3a — move the Z→S conversion into `src/`.**~~ — **done
+   2026-08-03 (09:00 run).** `sparameters_from_impedance()` is in
+   `ports/sparameters.py`, pure numpy, and the `⚠️` path is untouched. The
+   equivalence anchor came back **bit-identical — `max|S_pkg − S_test| =
+   0.0000e+00`** against the 1e-12 bound; the step-2 log's entries reproduce to
+   `|ΔS₁₁| = 4.75e-08` / `|ΔS₂₁| = 4.51e-09`, which is the rounding floor of the
+   log's seven printed figures, so that assertion is held at 1e-6 and the
+   constant's comment says why. The metrics that earn the step:
+   `passivity_max_sigma = 1.000000000000` and `max column power sum =
+   1.000000000000` to 1e-9 as identities, `reciprocity_max_abs_delta =
+   3.4981e-13`, no warnings — `summarize_sparameter_sanity` has now seen a
+   matrix derived from a solved field. Gate
+   `20260803T140251Z_PORT-1-step3a-gate.log`, 9 passed 1 deselected in 58.0 s
+   (step 2c's doubling pair deselected; it costs 122 s of its own and was gated
+   at 06:00). Original item, kept for its anchors: Independent of
    items 1 and 2. Execute the §7 step-3a plan. **Anchor:** a code-path-equivalence
    identity against numbers already in a log — `sparameters_from_impedance()` in
    `ports/sparameters.py` (pure numpy, no import of `excitation.py`) must
@@ -2551,14 +2613,18 @@ blamed.
   birdcage mesh does not generate — `GEO-9` step 2, then `PORT-1` step 3b. The
   coil+phantom half is gated as of 2026-08-03, `GEO-9` step 1.)*
 - [ ] S-parameters derived from the solved field, not a coupling heuristic
-  *(partial: `PORT-1` step 2 derived one, 2026-08-02, but in a test and on a
-  two-loop air fixture; the **package** path is still the heuristic. `PORT-1`
-  step 3a moves the conversion into `src/`, 3b puts it on a coil.)*
+  *(partial: the **conversion** is now packaged — `PORT-1` step 3a, 2026-08-03,
+  `sparameters_from_impedance()` in `ports/sparameters.py`, gated bit-identical
+  to the test path on a solved field — but the only impedance matrix feeding it
+  is the two-loop air fixture's, and `run_n_port_sparameter_sweep` still calls
+  the heuristic. `PORT-1` step 3b puts it on a coil.)*
 - [ ] S-matrix satisfies reciprocity and passivity within stated tolerance
-  *(demonstrated on that same fixture — `‖S−Sᵀ‖/‖S‖ = 2.5993e-13`,
-  `‖S‖₂ = 1.000000000000`, both gated at `1e-9` — but `PORT-5`'s own metrics
-  have still only ever seen placeholder matrices. `PORT-1` step 3a is what
-  points them at a real one.)*
+  *(demonstrated on that same fixture, and as of `PORT-1` step 3a, 2026-08-03,
+  through **`PORT-5`'s own metrics** rather than the test's arithmetic:
+  `passivity_max_sigma = 1.000000000000` and unit column power sums to `1e-9`,
+  `reciprocity_max_abs_delta = 3.4981e-13`. Left open because the matrix is
+  still a two-loop air fixture's and `PORT-5`'s sweep-level path is untouched;
+  what step 3a removed was the "placeholder matrices only" objection.)*
 - [ ] B1+ field matches literature/measured data qualitatively *(routes through
   the coil+phantom fixture, which `GEO-9` step 1 gated on 2026-08-03; nothing
   has yet computed B1+ on it.)*

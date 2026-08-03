@@ -90,6 +90,10 @@ from fem_em_solver.core import (
     TimeHarmonicSolver,
 )
 from fem_em_solver.io.mesh import MeshGenerator
+from fem_em_solver.ports import (
+    sparameters_from_impedance,
+    summarize_sparameter_sanity,
+)
 from fem_em_solver.utils.analytical import AnalyticalSolutions
 from fem_em_solver.utils.constants import EPSILON_0, MU_0
 
@@ -135,6 +139,17 @@ AIR_PADDING_DOUBLING = 0.12
 
 TORUS_TAGS = (1, 2)
 REFERENCE_IMPEDANCE_OHM = 50.0
+
+# Step 3a's cross-run anchor: the S entries the step-2 gate printed, verbatim
+# from 20260803T003217Z_PORT-1-step2-gate.log:442.  They are quoted to seven
+# significant figures, so a re-run can only be held to the rounding of the
+# printed value (5e-8 on the mantissa's last digit); 1e-6 absolute is that with
+# an order of slack for mesh-partition round-off at a different rank count.  The
+# *code-path* equivalence below is the 1e-12 assertion — this one only pins the
+# fixture to the same physical answer it gave in the log.
+STEP2_LOGGED_S11 = -1.941026e-01 - 9.806119e-01j
+STEP2_LOGGED_S21 = -2.639550e-02 + 5.277699e-03j
+STEP2_LOGGED_S_TOLERANCE = 1e-6
 
 OMEGA = 2.0 * np.pi * FREQUENCY_HZ
 
@@ -445,3 +460,105 @@ def test_scattering_matrix_is_symmetric_and_passive(reaction_z):
     assert abs(spectral_norm - 1.0) < 1e-9, (
         f"lossless network must have unitary S, got ||S||_2 = {spectral_norm:.12f}"
     )
+
+
+@complex_only
+def test_packaged_conversion_and_sanity_metrics_on_a_solved_field(reaction_z):
+    """`PORT-1` step 3a: the *packaged* Z→S path, gated against a solved field.
+
+    Step 2 produced this repository's first S-matrix from a solved field, but as
+    three numpy lines inside this test file; the package itself still reached an
+    S-matrix only through `excitation.py`'s placeholder coupling model.  This
+    asserts three things about
+    :func:`fem_em_solver.ports.sparameters_from_impedance`:
+
+      * **code-path equivalence, 1e-12 entry by entry** against
+        ``scattering_from_impedance`` above — the two must be the same
+        conversion, not merely close, so the bound is set at the level where
+        only the ordering of the same floating-point operations can differ;
+      * **the same physical answer as the logged run**, ``S₁₁`` and ``S₂₁``
+        against `20260803T003217Z_PORT-1-step2-gate.log` to
+        ``STEP2_LOGGED_S_TOLERANCE`` (see that constant for why 1e-6 and not
+        1e-12 — the log prints seven figures);
+      * **the existing sanity metrics, evaluated on a real matrix for the first
+        time.**  ``summarize_sparameter_sanity`` has only ever seen placeholder
+        arithmetic, which is why `PORT-5` is ⚠️.  A lossless reciprocal 2-port
+        has unitary S, so both ``passivity_max_sigma`` and every column power
+        sum are **exactly** 1: asserted to 1e-9, an identity rather than a
+        tolerance, and the same physics the unitarity assertion above states.
+
+    **Negative control — total separation, not a ratio.**  The placeholder path
+    on two ports returns an *identically zero* diagonal: both fakes set
+    ``current = voltage/z0`` at the driven port, so ``b = (V − Z₀I)/(2√Z₀) = 0``
+    exactly (known-issues 3).  Here ``|S₁₁| = 0.9996``.  As with step 2's
+    pre-`GEO-8` ``Z₁₂ ≡ 0``, the honest and the broken path do not overlap.
+
+    **Does not close** `PORT-1`, `PORT-5` (its sweep-level metrics still run on
+    the placeholder path, untouched here), or §10 criterion 2 in full — a
+    two-loop air fixture is not a coil.
+    """
+    s_packaged = sparameters_from_impedance(
+        reaction_z, z0_ohm=REFERENCE_IMPEDANCE_OHM
+    )
+    s_test_path = scattering_from_impedance(reaction_z, REFERENCE_IMPEDANCE_OHM)
+    max_entry_difference = float(np.max(np.abs(s_packaged - s_test_path)))
+
+    report = summarize_sparameter_sanity(s_packaged)
+    column_power_sums = np.sum(np.abs(s_packaged) ** 2, axis=0)
+
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"[PORT-1 step 3a] packaged S: S11 = {s_packaged[0,0]:+.6e}, "
+            f"S21 = {s_packaged[1,0]:+.6e}; max|S_pkg - S_test| = "
+            f"{max_entry_difference:.4e}",
+            flush=True,
+        )
+        print(
+            f"[PORT-1 step 3a] vs step-2 log: |dS11| = "
+            f"{abs(s_packaged[0,0] - STEP2_LOGGED_S11):.4e}, |dS21| = "
+            f"{abs(s_packaged[1,0] - STEP2_LOGGED_S21):.4e}; |S11| = "
+            f"{abs(s_packaged[0,0]):.6f} (placeholder path gives 0 exactly)",
+            flush=True,
+        )
+        print(
+            f"[PORT-1 step 3a] sanity metrics on a solved field: "
+            f"passivity_max_sigma = {report.passivity_max_sigma:.12f}, "
+            f"max column power sum = "
+            f"{report.passivity_max_column_power_sum:.12f}, "
+            f"reciprocity max|Sij-Sji| = {report.reciprocity_max_abs_delta:.4e}, "
+            f"max rel = {report.reciprocity_max_rel_delta:.4e}, "
+            f"warnings = {report.warnings}",
+            flush=True,
+        )
+
+    assert max_entry_difference < 1e-12, (
+        f"packaged conversion differs from the test path by "
+        f"{max_entry_difference:.4e}; S_pkg = {s_packaged.tolist()}, "
+        f"S_test = {s_test_path.tolist()}"
+    )
+    for label, value, expected in (
+        ("S11", s_packaged[0, 0], STEP2_LOGGED_S11),
+        ("S21", s_packaged[1, 0], STEP2_LOGGED_S21),
+    ):
+        assert abs(value - expected) < STEP2_LOGGED_S_TOLERANCE, (
+            f"{label} = {value:+.6e} differs from the step-2 gate log's "
+            f"{expected:+.6e} by {abs(value - expected):.4e}"
+        )
+
+    # Unitarity, read through the packaged metrics: both are exact identities
+    # for a lossless reciprocal network, not fitted bounds.
+    assert abs(report.passivity_max_sigma - 1.0) < 1e-9, (
+        f"passivity_max_sigma = {report.passivity_max_sigma:.12f} is not the "
+        "unitary 1.0 a lossless 2-port must give"
+    )
+    assert np.max(np.abs(column_power_sums - 1.0)) < 1e-9, (
+        f"column power sums {column_power_sums.tolist()} are not unity"
+    )
+    # Reciprocity: step 2 measured ||S-S^T||/||S|| = 2.5993e-13 on this fixture,
+    # and for a 2x2 with ||S||_F = sqrt(2) that ratio *is* max|Sij-Sji|.  1e-11
+    # is two orders of slack on a machine-precision quantity.
+    assert report.reciprocity_max_abs_delta < 1e-11, (
+        f"reciprocity max|Sij-Sji| = {report.reciprocity_max_abs_delta:.4e} "
+        "exceeds 1e-11"
+    )
+    assert report.warnings == (), f"unexpected sanity warnings: {report.warnings}"

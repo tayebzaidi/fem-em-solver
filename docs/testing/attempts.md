@@ -2197,3 +2197,85 @@ birdcage file plus `--deselect` the one known-issues-5 node id, and *nothing
 else*, measured at 28.46 s. It should also carry forward the reason the birdcage
 `--ignore` is not merely a budget decision: before this commit it hung, and a
 hang in CI burns the whole `timeout-minutes` instead of going red.
+
+## 2026-08-03T14:10Z — `PORT-1` step 3a (§9 On-deck item 3) — **complete**
+
+**Outcome: ✅ done.** The Z→S conversion is in `src/`, and `PORT-5`'s sanity
+metrics have now been evaluated on a matrix derived from a solved field.
+
+**What changed.** Three files, all additive:
+
+* `src/fem_em_solver/ports/sparameters.py` — new
+  `sparameters_from_impedance(z_matrix, *, z0_ohm)`, pure numpy,
+  `S = (Z − Z₀I)(Z + Z₀I)⁻¹`, with shape/finiteness/positive-`Z₀` validation
+  matching the module's existing style.
+* `src/fem_em_solver/ports/__init__.py` — exported.
+* `tests/validation/test_port_reaction_impedance.py` — one new test,
+  `test_packaged_conversion_and_sanity_metrics_on_a_solved_field`, on the
+  existing module-scoped `reaction_z` fixture (no new solve).
+
+**The scope boundary held exactly.** `_power_waves`,
+`_assemble_sparameter_matrix`, `run_n_port_sparameter_sweep` and
+`excitation.py` are byte-unchanged; the diff deletes nothing and the two red
+port tests (known-issues 3) were not touched. This is a replacement path beside
+the `⚠️` subsystem, not an extension of it.
+
+**Measured numbers**, gate `20260803T140251Z_PORT-1-step3a-gate.log`,
+**9 passed 1 deselected in 58.0 s**, standard tier, `-n 2`, exit 0:
+
+| quantity | measured | bound |
+|---|---|---|
+| `max\|S_pkg − S_test\|` | **0.0000e+00** | 1e-12 |
+| `\|ΔS₁₁\|` vs step-2 log | 4.7521e-08 | 1e-6 |
+| `\|ΔS₂₁\|` vs step-2 log | 4.5101e-09 | 1e-6 |
+| `passivity_max_sigma` | 1.000000000000 | 1e-9 of 1 |
+| max column power sum | 1.000000000000 | 1e-9 of 1 |
+| `reciprocity_max_abs_delta` | 3.4981e-13 | 1e-11 |
+| `warnings` | `()` | empty |
+
+**Two things worth the daily review's attention.**
+
+1. **The equivalence anchor came back bit-identical, not merely inside 1e-12.**
+   That is the honest outcome for two expressions performing the same numpy
+   operations in the same order, and it means the 1e-12 bound was never
+   load-bearing. It is kept as written rather than tightened to `== 0`: a future
+   refactor of either side (a `solve` instead of an explicit `inv`, say) should
+   be allowed to move the last bits without going red.
+2. **The plan's 1e-12 against the *logged* `S₁₁`/`S₂₁` literals is not
+   achievable and was not attempted.** The step-2 log prints seven significant
+   figures, so the literals are only defined to ~5e-8; that assertion is held at
+   1e-6 with the reason written into the `STEP2_LOGGED_S_TOLERANCE` comment
+   beside the constants. Both residuals land at that rounding floor
+   (4.75e-08, 4.51e-09), i.e. the fixture reproduced the step-2 run exactly as
+   far as the log can tell. The 1e-12 lives on the code-path comparison, which
+   is where the §7 entry's sentence ("reproduces the step-2 gate's S") actually
+   has that much precision available.
+
+**An arithmetic claim the run confirmed.** This run printed
+`‖S−Sᵀ‖/‖S‖ = 3.4981e-13` and `reciprocity_max_abs_delta = 3.4981e-13` — equal,
+as the new test's comment predicts, because `‖S‖_F = √2` for a unitary 2×2 and
+`S−Sᵀ` has two entries of equal magnitude. So the review's "2.5993e-13 scale"
+target and the packaged metric are the same quantity, and the difference between
+2.60e-13 and 3.50e-13 is partition round-off, not a discrepancy.
+
+**Negative control: stated, not run**, as §7 directed. The placeholder path
+returns an identically-zero diagonal (known-issues 3) against the measured
+`|S₁₁| = 0.999638` — total separation, no ratio invented.
+
+**Deselection, declared.** Step 2c's `test_mutual_impedance_falls_off_like_the_closed_form`
+was `--deselect`ed: its `doubling_pair` fixture builds two more meshes and two
+more solves (122 s measured) and it was gated in the 06:00 run at padding 0.12.
+Including it would have taken a 58 s command past the 180 s standard ceiling for
+no new information. Everything else in the file ran, including all five of
+step 2's assertions.
+
+**Cost:** one harness run, 59 s of compute. No cost probe was needed — §7's ~60 s
+estimate came from step 2's measured 56.1 s and was accurate (58.0 s).
+
+**Hypothesis for the next run.** On-deck items 4 (`OPS-11`), 5 (`PORT-1`
+step 2d) and 6 (`MAT-4` step 2) remain, all independent and untouched.
+**`OPS-11` is still the cheapest and best-prepared** — the previous run's sweep
+verified its exclusion set (`--ignore` the birdcage file, `--deselect` the one
+known-issues-5 node id, nothing else) at 28.46 s. One note for whoever takes it:
+this run's command is a worked example of `--deselect` with a full node id
+surviving the already-quoted container command, which §9 flags as a trap.
