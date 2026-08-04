@@ -167,6 +167,12 @@ never involved. Entry leaves when the cause is identified (with a note in the
 fixing commit) or when a full day of slots logs cleanly and it is downgraded
 to a one-off.
 
+**Update 2026-08-04 (03:00 review):** no recurrence — every slot since has a
+session log (00:30Z preflight stop, 02:00Z, 03:30Z, 05:10Z runs; the 23:00Z
+review). One more clean review interval completes the "full day of slots" and
+downgrades this to a one-off; the crontab check by a human is still the faster
+route to closing it.
+
 ### Reaction Z-matrix diagonal is negative where it must be inductive
 
 Found 2026-08-02 by `PORT-1` step 1; **diagnosed 2026-08-03 by step 2b to the

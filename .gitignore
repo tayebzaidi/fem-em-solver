@@ -105,3 +105,8 @@ Thumbs.db
 /.claude/skills
 /.claude/workflows
 
+
+# Generated example output (examples write result tables into cwd;
+# tracked-output policy per d3d23c0 — example output does not live in git.
+# Unignored, these trip every implementer preflight: attempts.md 2026-08-04T00:30Z)
+circular_loop_results.txt

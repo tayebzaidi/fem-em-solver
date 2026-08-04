@@ -1626,6 +1626,44 @@ heavy tier, complex build)*
 > (`_interior_tagged_cells`, the boundary-adjacent drop, the ghost-cell question
 > in the tagged-cell aggregation) is still unrevalidated, and that, not the
 > cast, is what the ⚠️ now stands for.
+>
+> **`POST-1` step 1 — ghost-cell partition invariance of the tagged-cell
+> aggregation (plan written 2026-08-04, 03:00 review; §9 item 3).** The
+> `POST-3` step-4 run measured nothing here but left the sharp question:
+> `_tagged_cells` filters `cell_tags.indices` with **no owned-cell
+> restriction**, so a ghost cell can enter the sample set on two ranks at once
+> and make every reported statistic rank-count dependent; the
+> `prefer_interior=True` path *may* mask it (a ghost's neighbours are absent
+> from `tag_lookup`), the `prefer_interior=False` path has no such filter, and
+> neither identity gated in step 4 could see it (both compare the same sample
+> set through two paths). **Anchor — a partition-invariance identity:** on the
+> piecewise-σ fixture from `test_poynting_balance.py` (12³, one solve,
+> module-scoped — `POST-3` step 4's fixture unchanged), for each tag and for
+> both `prefer_interior` paths, the production path's count/min/max/mean must
+> equal an owned-cells-only reference built in the test
+> (`cell_tags.indices < topology.index_map(tdim).size_local`, then allreduce:
+> count exact, floats to `1e-12`), asserted at `-n 2` **and** `-n 4` in
+> separate harness commands. **Probe first for the separation ceiling:** print
+> the tagged ghost-cell count per rank at `-n 2`/`-n 4`; if it is 0 the
+> fixture cannot exhibit the defect and the run must say so rather than claim
+> exoneration (refine or re-partition before gating). **Negative control:** a
+> deliberately ghost-inclusive aggregation (no owned filter, straight
+> allreduce-sum) must differ from the owned reference by **exactly the tagged
+> ghost count** in `count` — separation measured in the probe, banded from
+> measurement. **Cost:** standard tier; step 4's gate ran 9 tests in 8.1 s at
+> `-n 2` on this fixture, so three commands (probe, gate `-n 2`, gate `-n 4`)
+> fit in well under 60 s each; `-n 4` stays inside the 12-core cap.
+> **Traps:** `cell_tags.indices`/`.values` are rank-local — reduce before
+> asserting; the owned/ghost split is `index_map.size_local`, not a tag
+> property; pytest needs `-s` for the numbers; complex build +
+> `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first. **Does not close:**
+> `POST-1` — the interface-guardrail *semantics* (`_interior_tagged_cells`,
+> the boundary-adjacent drop against an analytic interface field) stay
+> unrevalidated; this settles rank-safety of the aggregation only, so ⚠️
+> narrows again but stands. **Negative result:** if invariance fails, that IS
+> the measurement — fix by owned-cell restriction in `_tagged_cells` (both
+> paths) within the slot if it fits, else report the per-rank counts, annotate
+> this row and known-issues, stop. Never adjust a statistic to match.
 
 > The current flagship metric `e_to_b_mean_ratio` is by construction
 > `≈ ω·|A|/|∇×A|` — it measures a mesh length scale, not physics, and cannot
@@ -1879,6 +1917,40 @@ heavy tier, complex build)*
 > The `MAT-4` step-2 "do not route through `post/phantom_fields.py`" warning is
 > re-pointed below: the cast reason is gone, the samples-vs-volume-integral
 > reason stands.
+>
+> **Step 5 — piecewise μᵣ through the Poynting balance (plan written
+> 2026-08-04, 03:00 review; §9 item 5, the spare).** The "magnetic phantom"
+> this step has been waiting on is a fixture, and the two-slab pattern from
+> step 2 is it: μᵣ = 1 for x < L/2 and μᵣ = 2 beyond, σ uniform, interface on
+> a mesh plane so the DG0 field is exactly the geometry. Two code touches,
+> both mirroring the σ pattern from step 2: `time_harmonic.py:400` uses a
+> scalar `float(mu_r)` in the curl-curl term — make it a DG0 field through
+> `build_material_fields`; and `power_balance.py:111` builds
+> `H = ∇×E/(−jωμ₀μᵣ)` with a scalar — the same field must enter there. **The
+> vacuity trap is the whole design: μᵣ enters both the bilinear form and the
+> boundary-flux leg; fixing only one produces a metric that cannot fail for
+> the right reason.** (DG0 is single-valued on exterior facets, so the
+> boundary trace is well-defined.) **Anchor:** the parameter-free real-power
+> identity `−∮½Re(E×H̄)·n̂ dS = ½∫σ|E|² dV` on the two-μᵣ solve: imbalance
+> falls under refinement at ~O(h) (steps 1–2 measured 0.987/0.9915) and the
+> fine-mesh imbalance < 5% (§10's MVP bar, same as steps 1–2 — pick the fine
+> level from a refinement probe as step 2 did, do not move the bar); plus a
+> no-solve regression: uniform DG0 μᵣ = 1 reproduces the scalar-path numbers
+> to `rtol = 1e-12` (step 2's scalar-path pin, exactly). **Negative control,
+> ceiling measured first:** score the honest solve with μᵣ-blind H (μᵣ = 1
+> everywhere in the flux leg only); band the separation from the probe
+> measurement — steps 1–2's controls saturated near 1/imbalance, so compute
+> the ceiling before asserting a factor. **Cost:** standard tier, `-n 2`;
+> step 2's two-level piecewise gate ran 64.5 s — budget ~90 s, probe first.
+> **Traps:** `MaterialProperties.mu_r` validation currently rejects
+> non-scalars (`time_harmonic.py:85`) — extend the validation with the field,
+> not around it; keep the ½ peak-phasor convention; complex build +
+> `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; pytest `-s`.
+> **Does not close:** `POST-3` — the reciprocity leg still waits on the
+> two-source port fixture (`PORT-1` step 3b-ii). **Negative result:** report
+> imbalance and rate at both levels, annotate this entry, stop — an identity
+> that fails on piecewise μᵣ after passing on piecewise σ is information about
+> the μᵣ discretisation, not a tolerance problem.
 
 ### PORT — Ports & S-parameters (Phase 4)
 
@@ -2356,6 +2428,45 @@ completed measurement step is not "not started")*
 > review should scope it; the open question it must answer is where the CG1
 > Poisson solve belongs in the API, not whether it works.
 >
+> **Step 2f — make the projection the production port drive (plan written
+> 2026-08-04, 03:00 review; §9 item 2).** The API question step 2e left open is
+> decided here: a **keyword on `TimeHarmonicSolver.solve()`**,
+> `project_source: bool = True`, implemented by a helper
+> (`remove_gradient_content(mesh, current_density, ...)`) placed in `src/` beside
+> the solver — not a separate wrapper (a wrapper leaves every existing caller on
+> the unprojected path, which is exactly the state known-issues 8 describes) and
+> not a `PortExcitation` object (real API design, more than one slot). The
+> helper is step 2e's two-step recipe moved out of the test: CG1 Poisson for ψ
+> with homogeneous Dirichlet on the outer wall
+> (`create_connectivity` **before** `exterior_facet_indices`, per the step-2e
+> probe failure), `J′ = J − ∇ψ`, imaginary part of ψ discarded explicitly
+> (measured 0.000e+00 relative, step 2e). Because `J′` has support everywhere,
+> the load assembly must switch to the DG0-indicator form with
+> `subdomain_ids=None` (step 2e's implementation note) whenever projection is
+> on. **Anchor:** re-gate the diagonal of `test_port_reaction_impedance.py`:
+> `Im Z₁₁ > 0` a priori, ratio to Grover's `ωL = 6.818343 Ω` inside step 2e's
+> measured band `(1.042, 1.140)` (1.090770 measured on this identical mesh),
+> and the complex-power identity residual `< 1e-9`. Retire known-issues 8 **in
+> the same commit**, only if those gates run green. **Negative control:** the
+> unprojected `−4.108550e+01 Ω` on record
+> (`20260803T183556Z_PORT-1-step2d-gate.log`) — sign flip plus 48.5 Ω; cite, do
+> not re-solve. **Cost:** standard tier, `-n 2`; mesh 19.7 s + one curl-curl
+> 18 s per port solve + ~2 s Poisson, all measured in step 2e — budget ~120 s
+> for the gate, probe first; cohabit the four port test files afterwards
+> (~180 s ceiling). **Traps beyond the standing complex-build list:** the three
+> diagnosis files (2b, 2d, 2e tests) pin *unprojected* numbers
+> (`‖P_G J‖²/‖J′‖² = 8.175e-06`, `−41.09 Ω`) — any of them that routes through
+> `solve()` must pass `project_source=False` explicitly or the default flips
+> their physics; `stored_magnetic_energy()` lives in
+> `tests/validation/test_port_self_impedance_energy.py:117`, not in `src/`
+> (audit note above) — move it only if the step actually needs it in the
+> solver; a killed run leaves a stale FFCx lock (clear `~/.cache/fenics`).
+> **Does not close:** `PORT-1` (step 3b and the touchstone threading remain) or
+> known-issues 3 (the matched-port S-diagonal tests are a separate defect).
+> **Negative result:** if the re-gated diagonal is not Grover-consistent,
+> report `Im Z₁₁` and `4ωW_e/I′²`, hold known-issues 8 open with the
+> measurement appended, annotate this entry, stop.
+>
 > **Scope: step 2b closes nothing.** The diagonal stays ungated in
 > `test_port_reaction_impedance.py`, known-issues' negative-diagonal entry stays
 > open with its diagnosis appended, and `PORT-1` stays 🟡.
@@ -2583,7 +2694,8 @@ completed measurement step is not "not started")*
 > fixture is still the gapped two-torus pair, because it is the only geometry
 > with a closed-form anchor (`ωM₁₂ = 1.241755e+00 Ω`, step 1).
 >
-> **Step 3b-i — gapped two-torus fixture, mesh only (§9 item 4).** Give
+> **Step 3b-i — gapped two-torus fixture, mesh only (§9 item 1 as of the
+> 2026-08-04 03:00 review).** Give
 > `two_torus_domain` an opt-in port gap per torus, default **off** so the
 > seven existing test-file users and the CI mesh suite (42.15 s baseline) are
 > byte-unaffected:
@@ -2611,8 +2723,8 @@ completed measurement step is not "not started")*
 > volume count/masses, annotate here, park on `attempt/*`, stop — no blind
 > gmsh-tolerance iteration.
 >
-> **Step 3b-ii — gap-voltage `Z₁₂` against the closed form (§9 item 5;
-> depends on 3b-i landing).** Conductors become finite-σ material volumes
+> **Step 3b-ii — gap-voltage `Z₁₂` against the closed form (§9 item 4 as of
+> the 2026-08-04 03:00 review; depends on 3b-i landing).** Conductors become finite-σ material volumes
 > (the `MAT` machinery), the gap is driven with an imposed `E` across its
 > thickness, `V = −∫E·dl` as the gap volumetric average, `I` from a
 > cross-section integral of the solved current in the driven loop.
@@ -2905,189 +3017,92 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done, the implementer falls back to the "obvious
 next entry" named below.
 
-Last reviewed 2026-08-03, 18:00 daily review. Tree clean; no `attempt/*` and
-no `recovered/*` branches at review time; nothing to dispose.
+Last reviewed 2026-08-04, 03:00 daily review. Tree clean at review end; no
+`attempt/*` branches. One `recovered/*` branch found and disposed:
+`recovered/20260804T020013Z` held only the two untracked
+`circular_loop_results.txt` files (generated example-02 output, journaled at
+00:30Z, parked at 02:00Z per the second-encounter rule) — content fully
+captured in attempts.md, branch **deleted**, and the recurring cause ended by
+ignoring `circular_loop_results.txt` in `.gitignore`, the one-line disposition
+both journal entries requested. The dirty-tree source is named and closed, not
+just cleared: any interactive run of example 02 was arming the next slot's
+preflight, and it cost the queue exactly one slot (19:30 CDT) before the
+protocol's park-and-proceed path contained it.
 
-**3/4 slots — and the fourth never fired.** 12:00 `OPS-11` ✅; 13:30 `PORT-1`
-step 2d ✅; 15:00 `GEO-9` step 2b ✅, closing `GEO-9` and retiring known-issues
-7. Nine harness logs, all registered. The 16:30 slot (21:30Z) left **no
-session log in `logs/automation/` at all** — not even the lock-skip line
-`implementer-run.sh` writes when another run holds the lock — so cron never
-invoked it, and `MAT-4` step 2 sat open and unattempted. The review session's
-sandbox cannot read the crontab, so whether the entry is missing, was edited,
-or the host skipped the minute needs a human look; recorded in known-issues
-("Non-test issues") so consecutive silent slots do not pass unremarked. Not an
-outage in the tree — preflight was never tripped — but a scheduled slot that
-vanishes without a log is the failure mode the lock-skip line exists to make
-visible, and here it could not.
-
-**Interactive work alongside the grid — no disposition needed.** Two
-interactive sessions landed `d07a3e8` (DOCS-MESH-VIS: ParaView guides pointed
-at real files) and `d3d23c0`+`c3655d6` (VIZ-EXAMPLES: CellTags as a DG0 cell
-array, the off-axis circular-loop closed form in `utils/analytical.py` with
-lightweight unit tests, `B_analytical` point arrays in examples 01/02/04).
-Outside the chunk system but harness-logged (5 logs, exit 0, registered in
-test-results.md), purely additive, no gated bound touched, no chunk status
-claimed — nothing for this review to adjudicate. Worth noting: the
-off-axis loop field via elliptic integrals is a new closed form in
-`utils/analytical.py` that future MAG/visualisation work can anchor against.
+**4/4 slots fired — 3 completions, 1 designed preflight stop.** 19:30 CDT
+stopped clean on the untracked example output (first encounter, correct per
+implementer-run.md step 1); 21:00 landed `MAT-4` step 2; 22:30 landed `POST-3`
+step 4; 00:00 landed `PORT-1` step 2e. Eleven harness logs, all registered in
+test-results.md. The 2026-08-03 missing-16:30-slot anomaly did **not** recur —
+every slot since has a session log.
 
 **Audit of the three ✅ flips — all three stand, no demotions.** One auditor
-per flip, re-verifying the cited logs and `git show` for loosened bounds:
-* `OPS-11` — stands. All three logs are fresh executions at `fa82c2d` (not
-  re-quotes of the cohabit sweep); the unexcluded control shows exactly the
-  two known-issues-5/7 failures; the commit touches no test or source file;
-  current `ci.yml` matches the 15:00 update (only the known-issues-5
-  `--deselect` remains). Cosmetic: quoted 27.61/28.27 s vs the other rank's
-  27.57/28.28 s summary lines.
-* `PORT-1` step 2d — stands, **including the flagged judgement call**: the
-  1e-9 → 1e-7 widening is adjudicated sound and the adjudication is recorded
-  as an audit note in the §7 entry (short form: never-measured plan guess,
-  failing probe log committed, value stable bit-for-bit, headline ratio never
-  passes through the widened gate). One defect found — the test docstring
-  still said "to 1e-9" — fixed in this review commit; it gates nothing.
-* `GEO-9` step 2b (closes the chunk) — stands on every criterion: identities
-  asserted from allreduce-reduced quantities, bands match the `-bands` log
-  ("banded only from measurement" holds), no tolerance removed or widened
-  anywhere in `707ebb2`, the step-2a isolation gate kept with its new
-  self-intersecting fixture *executed on record* (surface 65/65 raise in the
-  bands log), and known-issues 7 retired in the same commit that fixes it.
+per flip, re-verifying the cited logs, the bounds' provenance, and `git show`
+for loosened assertions:
+* `MAT-4` step 2 — stands. Identity 0.999846 against a summed 0.26% budget,
+  kernel mass 0.040%, surface control 2.2094 within 1.00% of the sphere-sphere
+  **lens** ceiling 2.1875 — the plan's flat-interface 2 corrected by
+  re-derivation, and the replacement gate is tighter, not looser. The probe
+  failure was a code defect (`ufl.real` on a complex-typed comparison), fixed
+  without touching any tolerance.
+* `POST-3` step 4 — stands. Code-path agreement exactly 0.000e+00 over 5030
+  samples against a 1e-12 bound; statistics 9-digit-identical under both phase
+  rotations. The control band replaced a never-measured plan prediction with a
+  ±2 pp band around the measured 45.40% deficit, failing probe log committed —
+  the step-2d-precedent adjudication holds. The `test_lossy_sphere_sar.py`
+  diff is comment-only; no bound changed.
+* `PORT-1` step 2e — stands. Identity residual 1.6242e-14 against the a-priori
+  1e-9; Grover ratio 1.090770 inside the probe-banded (1.042, 1.140); nothing
+  widened after a failure. One framing caveat carried forward: the commit
+  title's "+7.44 Ω predicted" is a same-solver cross-route consistency number,
+  not an independent anchor — the independent physics anchor is Grover at 9%,
+  which is what the test actually gates.
+* Shared minor caveat, all three: the logs ran at the parent commit with the
+  work in-tree (the harness's normal pattern); the next suite-wide run closes
+  that provenance gap for free.
 
-**Plan work this review.** No invented chunks; the two successors the runs
-explicitly left "for a review to scope" got full §7 plans:
-* **`PORT-1` step 2e written** — drive with `J − P_G J`; anchor Grover's
-  6.818 Ω with the predicted `Im Z₁₁ → +4ωW_m/I² ≈ +7.44 Ω`, negative control
-  the measured −40.9 Ω already on record (sign flip + 48.5 Ω, ceiling total).
-* **`PORT-1` step 3b firmed** against the measured mesh and split into
-  **3b-i** (gapped two-torus fixture, mesh-only, identity anchors at `1e-9`
-  with the gap boxes exact per the 2b precedent) and **3b-ii** (gap-voltage
-  `Z₁₂` vs `ωM₁₂ = 1.241755 Ω`, reciprocity from a second solve). The
-  precomputed-constraint habit continues: 3b-ii's conductor σ ceiling is
-  derived in the plan (`σ ≤ 2/(ωμ₀r_tube²)`, ≈1.0e3 S/m at the fixture's
-  10 MHz and r_wire = 0.005 — skin depth must not undercut the tube radius or
-  the mesh cannot resolve the current path), and "do not gate `Z₁₁`" is
-  stated with its reason rather
-  than discovered mid-slot.
+**Plan work this review.** The two successors the runs explicitly left "for a
+review to scope" got full §7 plans, and the queue's spare got one:
+* **`PORT-1` step 2f written** — the projection into the production port path.
+  The API question step 2e posed is decided in the entry:
+  `project_source: bool = True` on `TimeHarmonicSolver.solve()` backed by a
+  `src/` helper — not a wrapper (leaves every caller unprojected, i.e. the
+  known-issues-8 state), not a `PortExcitation` object (more than one slot) —
+  with known-issues 8 retired only if the re-gated diagonal runs green.
+* **`POST-1` step 1 written** — ghost-cell partition invariance of the
+  tagged-cell aggregation, the carry-over the 22:30 run sharpened but could
+  not measure; probe-first, because a ghost-free tagged set at 12³ would make
+  an "exoneration" vacuous.
+* **`POST-3` step 5 written** — piecewise μᵣ through the Poynting balance; the
+  "magnetic phantom" it waited on is a two-slab μᵣ fixture in the step-2 mold.
+  Spare slot deliberately: it is the only queued item touching solver code in
+  two places, and its vacuity trap (μᵣ must enter both the bilinear form and
+  the flux leg) is stated in the entry.
 
-**Assessment against §10 (step 5).** Criterion 1's stated blocker — "the
-birdcage mesh does not generate" — is gone; the §10 text is corrected in this
-commit and the route is now `PORT-1` 3b-i → 3b-ii → ports on the birdcage
-itself (a later review scopes that against 3b-ii's findings, including
-whether `GEO-4`'s graded sizing is a prerequisite there; it is not one for
-the two-torus validation pair). Criterion 4's B1+ chunk stays a named gap,
-not an entry: it needs a solved field on a coil fixture, which is exactly
-what 3b-ii produces first. The backlog still reaches the mission; no new
-chunk is needed.
+**Assessment against §10 (step 5).** No gap. Criteria 1–3 route through
+`PORT-1` 2f → 3b-i → 3b-ii exactly as the 18:00 review left them — 2f
+strengthens the route rather than extending it (a positive, gated diagonal is
+what 3b-ii's "print `Z₁₁`, do not gate it" instruction currently works
+around). Criterion 4's B1+ chunk stays a named gap, deliberately held for a
+review to scope against 3b-ii's findings. No chunk was invented: all three new
+step plans were requested by the runs' own hypotheses or already named in a
+chunk's "still open" list.
 
-**Items 1–2 below are independent of everything; item 3 reuses `PORT-1` step
-2d's landed machinery but depends on nothing in this queue; item 5 is the
-one serial link (depends on item 4) and says so.**
+**Items 1–3 are mutually independent; item 4 is the one serial link (depends
+on item 1) and says so; item 5 is the spare, also independent.** Item 2
+changes a solver default — its §7 entry names the three diagnosis files that
+must pin `project_source=False`, which is what keeps items 2 and 4 from
+colliding even if both land before the next review.
 
-1. ✅ **DONE 2026-08-04, 21:00 run** (`20260804T020933Z_MAT-4-step2-gate2.log`,
-   3 passed in 54.8 s). Identity 0.999846 (budget 0.26%), kernel mass 0.040%
-   (budget 0.36%), surface control 2.2094 — **the plan's ceiling of 2 was the
-   flat-interface answer**; the sphere-sphere lens gives 2.1875 and the run
-   gates agreement with it to 5% as well as the `> 1.5` floor. `MAT-4` held at
-   🟡 as instructed. Original item:
-   **`MAT-4` step 2 — mass-averaged SAR.** Independent. Execute the §7
-   `MAT-4` step-2 plan, **scoped at the 03:00 review from one line, including the sizing
-   trap that decides the design**: at ρ = 1000 the step-1 sphere holds 4.19 g, so
-   a 1 g averaging volume is 0.62 R — larger than the uniform core — and 10 g
-   exceeds the phantom entirely. Growing R is not the escape (`|k_in|R = 0.179`
-   already). **Anchor:** gate the averaging *operator* at `m_avg = 0.05 g`
-   (radius 2.29 mm = 0.23 R, inside the uniform core): (i) the uniform-field
-   identity `SAR_avg/SAR_point = 1` in the deep interior, to a tolerance built
-   from step 1's **measured** 0.07%/0.11% interior spread plus the
-   averaging-volume discretisation — state the budget, do not pick a round
-   number; (ii) kernel mass conservation, `∫ρ dV` over the meshed averaging
-   region equal to `m_avg` to step 1's meshed-volume accuracy (0.9964 of
-   analytic). **Negative control, ceiling computed:** average at the sphere's
-   *surface*, where roughly half the volume is lossless exterior, giving
-   `≈ 0.5` against 1.0 — a **~2× separation, which is the arithmetic maximum**.
-   Assert > 1.5 and say why 2 is the ceiling. **Cost:** standard tier, `-n 2`,
-   **~45 s** — reuse the step-1 fixture and solves unchanged (39.4 s measured);
-   the averaging is post-processing. **Traps:** ρ becomes a DG0 field through
-   `build_material_fields`, not a float multiplied in afterwards; an averaging
-   volume straddles rank boundaries, so allreduce numerator *and* denominator
-   separately before dividing (`post/sar.py:123` is the pattern); do not route
-   through `post/phantom_fields.py` (the `POST-1` `float64` cast discards
-   `Im E`, ~5× wrong here); keep the ½ peak-phasor convention. **Does not
-   close:** `MAT-4` as an IEEE C95.3-conformant 1 g/10 g claim — that needs a
-   phantom large enough to hold the averaging volume with margin, which is the
-   coil+phantom fixture after `GEO-9` step 2. Hold `MAT-4` at 🟡. **Negative
-   result:** report the ratio, annotate the §7 entry, stop.
-
-2. ✅ **DONE 2026-08-04, 22:30 run** (`20260804T033506Z_POST-3-step4-gate.log`,
-   9 passed in 8.1 s; cohabit `20260804T033530Z_POST-3-step4-cohabit.log`,
-   17 passed in 68.0 s). Both identities came out **exact**: code-path
-   agreement 0.000e+00 over 5030 samples, statistics bit-identical under both
-   rotations. The negative control's *expectation* was wrong — the fixture's
-   phase span is 1.2667 rad, not a period, so `1 − 2/π` does not apply; the
-   measured `Re`-cast deficit is 45.40% at θ = 0 and swings 20.48%/75.91%
-   under the rotations, and the test bands the deficit and asserts the spread
-   as a floor. `POST-3` held at 🟡; `POST-1` ⚠️ retained for the interface
-   guardrails only, its row annotated. Original item:
-   **`POST-3` step 4 — phasor-magnitude semantics for the phantom-field
-   extraction**. Independent. Execute the §7 step-4 plan, written this
-   review. **Anchor:** two exact identities on the piecewise-σ fixture from
-   `test_poynting_balance.py` — (i) per-point magnitudes equal to `|·|` of
-   `evaluate_vector_field_parallel`'s complex samples at the same points to
-   `1e-12`; (ii) phase-rotation invariance of every reported statistic under
-   `× e^{jπ/2}` and `× e^{jπ/5}`, to `1e-12`. The current `float64` casts
-   (`phantom_fields.py:88` **and** the fallback at `:102`) can satisfy
-   neither. **Negative control, ceiling computed in the §7 plan:** the
-   `Re`-cast path's *deficit* against the honest magnitude — expected near
-   `1 − 2/π ≈ 36%` for phase-uniform samples; print the measured phase span —
-   not its rotation-variance, which stays small at every angle for exactly the
-   fields this fixture produces. Band the control assertion from the
-   measurement (`GEO-9` step-1 precedent). **Cost:** standard tier, `-n 2`,
-   ~60–90 s — one piecewise-σ solve, no new mesh; complex build +
-   `FEM_EM_REQUIRE_COMPLEX=1`. **Traps:** fix both cast sites or the guardrail
-   fallback silently reverts the semantics; allreduce any global statistic —
-   `POST-1` is `⚠️`, treat its existing aggregation as unverified; keep the ½
-   peak-phasor convention (§11); `-s` for the numbers log. **Does not close:**
-   `POST-3` (piecewise μᵣ still waits on a magnetic phantom) or `POST-1` (`⚠️`
-   — the interface-guardrail machinery stays unrevalidated). **Negative
-   result:** if the two paths disagree beyond `1e-12` at the same points,
-   report both sample sets, annotate §7 and the `POST-1` row, stop — do not
-   adjust either until it is understood.
-
-3. ✅ **DONE 2026-08-04, 00:00 run** (`20260804T050616Z_PORT-1-step2e-gate.log`,
-   9 passed in 41.8 s; probe `20260804T050406Z_PORT-1-step2e-probe2.log`).
-   `Im Z₁₁ = +7.437243 Ω` on both routes against the predicted `+7.44 Ω`,
-   Grover ratio 1.090770, identity residual 1.6242e-14,
-   `‖P_G J′‖²/‖J′‖² = 4.6e-33` (structural, not solve-limited — see the §7
-   note), `4ωW_e/I′²` collapsed 5.5e5× to 8.76e-5 Ω. `I′ = 0.969001 A`, 8 ppm
-   from `I`. `PORT-1` held at 🟡 and known-issues 8 held open: the production
-   driver still assembles the unprojected load. Original item:
-   **`PORT-1` step 2e — drive with the solenoidal projection.** Independent
-   of this queue (reuses step 2d's landed machinery). Execute the §7 step-2e
-   plan, written this review. **Anchor:** Grover's `ωL = 6.818 Ω`; predicted
-   `Im Z₁₁ → +4ωW_m/I² ≈ +7.44 Ω` (~9%) — probe first, band from measurement,
-   sign gateable a priori; second anchor `‖P_G J′‖²/‖J′‖²` collapsing to solve
-   accuracy. **Negative control:** the measured −40.9 Ω on the unprojected
-   drive, already on record (`20260803T183556Z_PORT-1-step2d-gate.log`) —
-   sign flip plus ~48.5 Ω, and the 48.52 Ω spur load is the ceiling; cite,
-   do not re-run. **Cost:** standard, `-n 2`, ~60 s (mesh 21.2 s + one
-   curl-curl 18.2 s + two Poisson ~2 s, all measured). **Traps:** re-measure
-   the meshed current `I′` (it is not 0.969009 A) and use `I′²` in every
-   denominator; `J′` is div-free only weakly against CG1; reuse the H¹₀
-   projection helper from `test_port_gradient_load.py`; standing complex-build
-   list. **Does not close:** `PORT-1`, the production port path, or
-   known-issues 8 — a green 2e licenses making the projection the excitation
-   default, which is its own step. **Negative result:** report `Im Z₁₁` and
-   `W_e^spur`, annotate §7 and known-issues 8, stop.
-
-4. **`PORT-1` step 3b-i — gapped two-torus fixture (mesh only).** Independent.
-   Execute the §7 step-3b-i plan, written this review. **Anchor:** the
+1. **`PORT-1` step 3b-i — gapped two-torus fixture (mesh only).** Independent.
+   Execute the §7 step-3b-i plan, written at the 18:00 review. **Anchor:** the
    volume-partition identities `V_mesh/V_box = 1` and `Σ(tagged)/V_mesh = 1`
    at `1e-9`, plus each rectangular gap box meshed/`dx·dy·dz` exact at `1e-9`
    (the `GEO-9` step-2b measured precedent); partial-torus conductor banded
    from measurement against `(angle/2π)·2π²Rr²`. Gap opt-in, **default off**,
    with an ungapped-identity regression in the same run so the seven existing
    test-file users and the 42.15 s CI mesh suite stay byte-unaffected.
-   **Negative
-   control:** the unfragmented ancestor's exactly-zero coupling and
+   **Negative control:** the unfragmented ancestor's exactly-zero coupling and
    solid-meshed box, on record in the `PORT-1` step-1 logs — cite it.
    **Cost:** smoke/standard, `-n 2` (mandatory), mesh-only; ungapped fixture
    meshes in ~6 s measured — cost-probe the gapped variant, `timeout 180`.
@@ -3097,19 +3112,66 @@ one serial link (depends on item 4) and says so.**
    result:** report the failing surface pair and fragment volume count/masses,
    annotate §7, park on `attempt/*`, stop — no blind gmsh-tolerance iteration.
 
-5. **`PORT-1` step 3b-ii — gap-voltage `Z₁₂` against the closed form**
-   (spare). **Depends on item 4 landing; if 3b-i did not land, stop and
+2. **`PORT-1` step 2f — make the solenoidal projection the production port
+   drive.** Independent (two-torus, no gap; reuses step 2e's landed recipe).
+   Execute the §7 step-2f plan, written this review — the API decision is
+   already made there (`project_source: bool = True` on `solve()`, helper in
+   `src/`; do not reopen it in-slot). **Anchor:** re-gate
+   `test_port_reaction_impedance.py`'s diagonal — `Im Z₁₁ > 0` a priori,
+   Grover ratio inside the measured band `(1.042, 1.140)` (step 2e's 1.090770
+   on this identical mesh), complex-power identity residual `< 1e-9`; retire
+   known-issues 8 in the same commit **only if green**. **Negative control:**
+   the unprojected `−4.108550e+01 Ω`, on record
+   (`20260803T183556Z_PORT-1-step2d-gate.log`) — sign flip plus 48.5 Ω; cite,
+   do not re-solve. **Cost:** standard, `-n 2`; ~120 s gate (mesh 19.7 s +
+   ~18 s curl-curl per port + ~2 s Poisson, all measured in step 2e), probe
+   first, then cohabit the four port test files inside the 180 s ceiling.
+   **Traps:** the 2b/2d/2e diagnosis tests pin *unprojected* numbers
+   (`8.175e-06`, `−41.09 Ω`) — any of them routing through `solve()` must pass
+   `project_source=False` explicitly; DG0-indicator load with
+   `subdomain_ids=None` when projecting; `create_connectivity` before
+   `exterior_facet_indices`; discard `Im ψ` explicitly; a killed run leaves a
+   stale FFCx lock. **Does not close:** `PORT-1` (3b and touchstone threading
+   remain) or known-issues 3. **Negative result:** report `Im Z₁₁` and
+   `4ωW_e/I′²`, hold known-issues 8 open with the measurement appended,
+   annotate §7, stop.
+
+3. **`POST-1` step 1 — ghost-cell partition invariance of the tagged-cell
+   aggregation.** Independent. Execute the §7 plan, written this review.
+   **Anchor:** the production `_tagged_cells` path's count/min/max/mean equal
+   to an owned-cells-only allreduced reference (count exact, floats to
+   `1e-12`), for both `prefer_interior` paths, at `-n 2` **and** `-n 4`, on
+   `POST-3` step 4's piecewise-σ fixture unchanged. **Probe first for the
+   ceiling:** print the tagged ghost-cell count per rank; if it is 0 the
+   fixture cannot exhibit the defect — say so rather than claim exoneration.
+   **Negative control:** a deliberately ghost-inclusive aggregation must
+   differ from the owned reference by exactly the tagged ghost count.
+   **Cost:** standard; three commands (probe, gate `-n 2`, gate `-n 4`), each
+   well under 60 s — step 4's nine tests ran 8.1 s at `-n 2` on this fixture;
+   `-n 4` stays inside the 12-core cap. **Traps:** `cell_tags.indices` /
+   `.values` are rank-local — reduce before asserting; the owned/ghost split
+   is `index_map.size_local`, not a tag property; pytest `-s`; complex build +
+   `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first. **Does not close:**
+   `POST-1` — the interface-guardrail semantics stay ⚠️; this settles
+   rank-safety of the aggregation only. **Negative result:** the failure IS
+   the measurement — fix by owned-cell restriction in-slot if it fits, else
+   report the per-rank counts, annotate the `POST-1` row and known-issues,
+   stop. Never adjust a statistic to match.
+
+4. **`PORT-1` step 3b-ii — gap-voltage `Z₁₂` against the closed form.**
+   **Depends on item 1 landing; if 3b-i did not land, skip to item 5 and
    journal rather than attempting this.** Execute the §7 step-3b-ii plan,
-   written this review. **Anchor:** `Im Z₁₂ = V₂/I₁` against
+   written at the 18:00 review. **Anchor:** `Im Z₁₂ = V₂/I₁` against
    `ωM₁₂ = 1.241755e+00 Ω` (step 1's closed form), band set from the probe
    with step 1's reaction-route 4.6% as the expectation scale; plus
    reciprocity `|Z₁₂ − Z₂₁|/|Z₁₂|` from the second-port solve, banded from
    measurement. **σ is a precomputed constraint:** `σ ≤ 2/(ωμ₀ r_tube²)`
    (skin depth ≥ tube radius; ≈1.0e3 S/m at the fixture's 10 MHz,
    r_wire = 0.005 — recompute if either changes and record). **Do not gate
-   `Z₁₁`** — it
-   inherits the gap's series C and the known-issues-8 artifact; print it.
-   **Negative control:** the unfragmented-mesh `Z₁₂ = 0` exactly
+   `Z₁₁`** — it inherits the gap's series C and the known-issues-8 artifact;
+   print it (if item 2 landed first, print it beside the Grover number and
+   still do not gate it this slot). **Negative control:** the
+   unfragmented-mesh `Z₁₂ = 0` exactly
    (`20260731T213222Z_PORT-1-step1-costprobe.log`) — total separation, on
    record. **Cost:** standard, `-n 2`, mesh ~6–10 s + two ~3 s solves
    (step-1 measurements), well under 60 s; probe first. **Traps:** `V` is a
@@ -3118,6 +3180,28 @@ one serial link (depends on item 4) and says so.**
    **Does not close:** `PORT-1` — known-issues 3's red tests and the
    touchstone threading come after. **Negative result:** report `Z₁₂`,
    `Z₂₁`, `V₂/I₁` and the σ/δ used, annotate §7 and known-issues 3, stop.
+
+5. **`POST-3` step 5 — piecewise μᵣ through the Poynting balance (spare).**
+   Independent. Execute the §7 step-5 plan, written this review. **Anchor:**
+   the parameter-free real-power identity on a two-slab μᵣ = 1|2 solve —
+   imbalance falls under refinement at ~O(h) (steps 1–2 measured
+   0.987/0.9915) with fine-mesh imbalance < 5% (§10's bar, unmoved; pick the
+   fine level from a refinement probe as step 2 did), plus the no-solve
+   scalar-path pin: uniform DG0 μᵣ = 1 reproduces the scalar-μᵣ numbers to
+   `rtol = 1e-12`. **Negative control, ceiling measured first:** μᵣ-blind
+   flux leg scored against the honest solve; band from the probe — steps
+   1–2's controls saturated near 1/imbalance, so compute the ceiling before
+   asserting a factor. **Cost:** standard, `-n 2`, ~90 s budget (step 2's
+   two-level gate measured 64.5 s); probe first. **Traps:** μᵣ enters the
+   bilinear form (`time_harmonic.py:400`) **and** the flux leg
+   (`power_balance.py:111`) — fixing only one is the vacuous version;
+   `MaterialProperties.mu_r` validation currently rejects non-scalars —
+   extend it with the field, not around it; ½ peak-phasor convention;
+   complex build + `FEM_EM_REQUIRE_COMPLEX=1`. **Does not close:** `POST-3` —
+   the reciprocity leg waits on 3b-ii's two-source fixture. **Negative
+   result:** report imbalance and rate at both levels, annotate §7, stop — an
+   identity failing on piecewise μᵣ after passing on piecewise σ is
+   information about the μᵣ discretisation, not a tolerance problem.
 
 If the queue drains: **stop and journal.** Do **not** improvise gap-voltage
 ports on the birdcage itself or a B1+ chunk — both are deliberately held for
