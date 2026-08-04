@@ -173,9 +173,11 @@ def _solve_lossy_sphere(sigma: float, resolution_sphere: float, resolution_far: 
     )
     fields = TimeHarmonicSolver(problem, degree=1).solve()
 
-    # SAR straight from the N1curl solution in UFL: routing through
-    # post/phantom_fields.py would cast away Im(E), which on a lossy sphere is
-    # most of the field (`POST-1` defect, PROJECT_PLAN §7).
+    # SAR straight from the N1curl solution in UFL, as an exact volume integral
+    # rather than centroid samples.  (Before `POST-3` step 4 there was a second
+    # reason: post/phantom_fields.py cast away Im(E), which on a lossy sphere is
+    # most of the field.  That cast is fixed; the integral-vs-samples reason
+    # stands.)
     sar = mean_sar(
         fields.e_complex,
         sigma=fields.sigma_field,

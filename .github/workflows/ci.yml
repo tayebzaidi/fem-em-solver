@@ -226,6 +226,7 @@ jobs:
           tests/solver/test_boundary_condition_selection.py \
           tests/materials/test_phantom_material_model.py \
           tests/post/test_phantom_field_metrics.py \
+          tests/post/test_phantom_phasor_semantics.py \
           -v --tb=short
 
     # test_two_torus_conforming.py is the `GEO-8` conformity gate; its volume

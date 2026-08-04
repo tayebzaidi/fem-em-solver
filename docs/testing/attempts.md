@@ -2676,3 +2676,89 @@ to a 1 g ball should re-measure that defect rather than inherit 0.04%.
 the ComplexComparisonError + deadlock), `20260804T020815Z_MAT-4-step2-gate.log`
 (2 passed, 19.7 s, before the lens ceiling was gated),
 `20260804T020933Z_MAT-4-step2-gate2.log` (the gate, 3 passed, 54.8 s).
+
+## 2026-08-04T03:30Z — `POST-3` step 4 (§9 On-deck item 2) — **complete**
+
+**Preflight clean.** No dirty tree, no untracked files, container Up 5 h. The
+`.gitignore` disposition the 00:30Z/02:00Z entries ask for is still open but did
+not bite this slot.
+
+**Executed the §7 `POST-3` step-4 plan as written.** Both `float64` cast sites in
+`post/phantom_fields.py::_evaluate_on_cells` (batch path and point-by-point
+fallback) now call `np.asarray(field.eval(...))` with no dtype, so samples keep
+the function's own scalar type; statistics are taken on the phasor magnitude
+`|F| = sqrt(Σ|F_i|²)` and the semantics are stated in the module docstring. New
+`tests/post/test_phantom_phasor_semantics.py` (3 tests) on the piecewise-σ
+fixture from `test_poynting_balance.py` at 12³, one solve, module-scoped.
+
+**Gate: `20260804T033506Z_POST-3-step4-gate.log`, 9 passed in 8.1 s**, `-n 2`,
+standard tier, complex build (`tests/environment` + the new file +
+`test_phantom_field_metrics.py` as the existing-user regression). Cohabit
+`20260804T033530Z_POST-3-step4-cohabit.log` — all of `tests/post` plus the
+fixture's own `tests/validation/test_poynting_balance.py`, **17 passed in
+68.0 s**. Real-mode collection check `20260804T033845Z_POST-3-step4-realmode.log`
+— the `validation` job's exact `tests/io tests/materials tests/post` step,
+**15 passed, 5 skipped in 0.7 s** (the three new `@complex_only` tests skip
+rather than erroring at import). The new file is added to the
+`validation-complex` job's list in `ci.yml`.
+
+**Both identities came out exact, not merely inside `1e-12`.**
+1. *Code-path equivalence*: worst relative disagreement between the module's
+   reported magnitudes and `|evaluate_vector_field_parallel|` at the same 5030
+   centroids is **0.000e+00** — bit-identical. Both paths now call the same
+   `eval` with no cast, so this is the strongest form the identity can take.
+2. *Phase-rotation invariance*: min/max/mean unchanged in all nine printed
+   digits at `θ = π/2` and `θ = π/5` —
+   `5.799772431e-01 / 8.849713219e-01 / 7.690447345e-01` at every angle.
+
+**The plan's negative-control expectation was wrong; corrected from
+measurement (probe log `20260804T033354Z_POST-3-step4-probe.log`, exit 1, 6 s,
+committed with its failing band).** The plan predicted a phase-uniform sample,
+hence a `Re`-cast deficit near `1 − 2/π = 36.34%` *at every rotation angle*,
+with the rotation variance small and the deficit the load-bearing number. The
+first probe measured a **phase span of 1.2667 rad** over the σ_high slab's
+centroids — about a fifth of a period — so the uniform-phase prediction simply
+does not describe this fixture. Measured deficits: **45.40%** at θ = 0,
+**20.48%** at π/2, **75.91%** at π/5, spread **0.554**. The test therefore bands
+the θ = 0 deficit at 45.40% ± 2 pp and asserts the rotation spread as a **floor**
+(> 0.30) rather than the ceiling the plan named: on this fixture the broken path
+is both badly wrong at phase 0 *and* wildly phase-dependent, which is a stronger
+control than the one that was scoped. Nothing was loosened — the band replaced a
+prediction that had never been measured, and the measurement is in the log.
+
+**One design decision the plan did not cover: the CSV schema.** A complex phasor
+cannot be written to one real column per component without becoming `Re` again —
+the same defect one layer out. `export_tagged_field_samples_csv` now emits
+`fx_re,fx_im,fy_re,fy_im,fz_re,fz_im,mag` **for complex fields only**; a real
+field keeps `x,y,z,fx,fy,fz,mag` byte-for-byte, which is what example 01 and
+`test_phantom_field_metrics` (a real `e_imag` field) exercise and what the
+regression run confirms.
+
+**Deliberately not done.** `POST-3` stays 🟡 — piecewise μᵣ still waits on a
+magnetic phantom. `POST-1` stays ⚠️, but its §7 row is annotated: the cast half
+of that defect is fixed, so the ⚠️ now stands for the interface-guardrail
+machinery (`_interior_tagged_cells`, the boundary-adjacent drop, and the
+ghost-cell question in the tagged-cell aggregation) alone. The three places that
+warned "do not route through `phantom_fields`, it discards `Im E`"
+(`post/sar.py`, `test_lossy_sphere_sar.py`, the `MAT-4` step-1/2 traps) are
+re-pointed rather than deleted: the cast reason is gone, the
+centroid-samples-are-not-a-volume-integral reason stands.
+
+**Hypothesis for the next run.** §9 item 3 (`PORT-1` step 2e) is next and
+independent of everything here. Carry-over worth a review's attention, stated as
+a question because this run did **not** measure it: `_tagged_cells` filters
+`cell_tags.indices` with no owned-cell restriction, so ghost cells can enter the
+sample set and be summed on two ranks at once, which would make the reported mean
+rank-count dependent. It may be masked in practice — a ghost's neighbours are
+absent from `tag_lookup`, so the `prefer_interior` filter should drop it — but
+that is an argument, not a measurement, and the `prefer_interior=False` path has
+no such filter. Neither identity gated here can see it (both compare the same
+sample set through two paths), which is why it was not fixed in passing. The
+cheap check is one run of the same stats at `-n 1` vs `-n 2` vs `-n 4`; it is the
+concrete next candidate under `POST-1`'s ⚠️ and would make a well-sized step.
+
+**Denials:** none. **Logs:** `20260804T033354Z_POST-3-step4-probe.log` (exit 1,
+the plan-band failure that produced the measurement),
+`20260804T033506Z_POST-3-step4-gate.log` (the gate, 9 passed, 8.1 s),
+`20260804T033530Z_POST-3-step4-cohabit.log` (17 passed, 68.0 s),
+`20260804T033845Z_POST-3-step4-realmode.log` (15 passed, 5 skipped, 0.7 s).

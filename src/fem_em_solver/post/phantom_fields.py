@@ -1,4 +1,25 @@
-"""Phantom-region field sampling, metrics, and export helpers."""
+"""Phantom-region field sampling, metrics, and export helpers.
+
+**Phasor semantics** (`POST-3` step 4).  Under the complex DolfinX build the
+sampled values are complex phasors, and every statistic this module reports is
+taken on the **phasor magnitude** ``|F| = sqrt(Σ_i |F_i|²)`` — the same
+peak-phasor convention as ``SAR = σ|E|²/2ρ`` (PROJECT_PLAN §11), and the same
+quantity :func:`fem_em_solver.post.evaluation.evaluate_vector_field_parallel`
+samples.  Two identities follow and are gated in
+``tests/post/test_phantom_phasor_semantics.py``: the reported per-point
+magnitudes equal ``|·|`` of that helper's complex samples at the same points,
+and every reported statistic is invariant under a global phase rotation
+``F → F e^{jθ}``.
+
+Until 2026-08-03 :func:`_evaluate_on_cells` cast every sample to ``float64`` at
+both of its evaluation sites, so under the complex build the statistics were
+``Re(F)`` at phase 0 — phase-dependent, and 45.4% low on the piecewise-σ
+fixture that test uses (measured, and swinging across 20%–76% under a global
+phase rotation that cannot be observable; see the negative control).  A
+``ComplexWarning`` was the only trace, and warnings do not fail CI.  The fix is
+the semantics rather than the dtype: samples keep whatever scalar type the
+function has, and the magnitude is taken afterwards.
+"""
 
 from __future__ import annotations
 
@@ -71,13 +92,26 @@ def _interior_tagged_cells(mesh, cell_tags, tag: int) -> np.ndarray:
     return np.asarray(interior_cells, dtype=np.int32)
 
 
+def _field_scalar_dtype(field) -> np.dtype:
+    """Scalar dtype of ``field``'s coefficients (``complex128`` on a complex build).
+
+    Only used to type the empty-sample arrays; populated samples take their
+    dtype from ``field.eval`` directly, so no cast can drop ``Im``.
+    """
+    try:
+        return np.asarray(field.x.array).dtype
+    except AttributeError:
+        return np.dtype(np.float64)
+
+
 def _evaluate_on_cells(field, points: np.ndarray, cells: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, int]:
     value_shape = field.function_space.element.value_shape
     value_size = int(np.prod(value_shape)) if value_shape else 1
+    scalar_dtype = _field_scalar_dtype(field)
 
     if points.shape[0] == 0:
         return (
-            np.zeros((0, value_size), dtype=np.float64),
+            np.zeros((0, value_size), dtype=scalar_dtype),
             np.zeros((0, 3), dtype=np.float64),
             np.zeros((0,), dtype=np.int32),
             0,
@@ -85,12 +119,16 @@ def _evaluate_on_cells(field, points: np.ndarray, cells: np.ndarray) -> tuple[np
 
     try:
         values = field.eval(points, cells)
-        values = np.asarray(values, dtype=np.float64)
+        # No dtype argument: on the complex build ``eval`` returns complex128 and
+        # casting it to float64 would silently discard ``Im`` (`POST-3` step 4).
+        values = np.asarray(values)
         if values.ndim == 1:
             values = values.reshape(-1, 1)
         return values, np.asarray(points, dtype=np.float64), np.asarray(cells, dtype=np.int32), 0
     except Exception:
         # Fallback: evaluate point-by-point and skip invalid cell-point pairs.
+        # Same no-cast rule as the batch path above — fixing only one site would
+        # let the guardrail branch silently revert the phasor semantics.
         kept_values: list[np.ndarray] = []
         kept_points: list[np.ndarray] = []
         kept_cells: list[int] = []
@@ -99,7 +137,7 @@ def _evaluate_on_cells(field, points: np.ndarray, cells: np.ndarray) -> tuple[np
         for point, cell in zip(points, cells):
             try:
                 one = field.eval(np.asarray([point], dtype=np.float64), np.asarray([cell], dtype=np.int32))
-                one = np.asarray(one, dtype=np.float64).reshape(-1)
+                one = np.asarray(one).reshape(-1)
                 kept_values.append(one)
                 kept_points.append(np.asarray(point, dtype=np.float64))
                 kept_cells.append(int(cell))
@@ -108,7 +146,7 @@ def _evaluate_on_cells(field, points: np.ndarray, cells: np.ndarray) -> tuple[np
 
         if not kept_values:
             return (
-                np.zeros((0, value_size), dtype=np.float64),
+                np.zeros((0, value_size), dtype=scalar_dtype),
                 np.zeros((0, 3), dtype=np.float64),
                 np.zeros((0,), dtype=np.int32),
                 invalid_count,
@@ -148,7 +186,12 @@ def compute_tagged_vector_magnitude_stats(
     comm: MPI.Intracomm | None = None,
     prefer_interior_samples: bool = True,
 ) -> dict[str, float]:
-    """Compute global min/max/mean |field| over robust tagged centroid samples."""
+    """Global min/max/mean of the **phasor magnitude** over tagged centroid samples.
+
+    ``|F| = sqrt(Σ_i |F_i|²)`` (module docstring): real-valued and
+    phase-rotation invariant on the complex build, and identical to the old
+    Euclidean norm when the field is real.
+    """
     mesh = field.function_space.mesh
     comm = comm or mesh.comm
 
@@ -163,7 +206,9 @@ def compute_tagged_vector_magnitude_stats(
     values, _valid_points, valid_cells, invalid_samples_local = _evaluate_on_cells(field, points, sampling_cells)
 
     if values.shape[0] > 0:
-        mags = np.linalg.norm(values, axis=1)
+        # ``norm`` of a complex row is sqrt(Σ|F_i|²) — the phasor magnitude, and
+        # a real number, so the reductions below stay well-defined.
+        mags = np.abs(np.linalg.norm(values, axis=1))
         local_count = int(mags.size)
         local_sum = float(np.sum(mags))
         local_min = float(np.min(mags))
@@ -215,7 +260,11 @@ def export_tagged_field_samples_csv(
 ) -> Path | None:
     """Export centroid samples for a tagged region to CSV on rank 0.
 
-    CSV columns: x,y,z,fx,fy,fz,mag
+    CSV columns: ``x,y,z,fx,fy,fz,mag`` for a real field.  For a complex
+    (phasor) field each component is written as a real/imaginary pair —
+    ``x,y,z,fx_re,fx_im,fy_re,fy_im,fz_re,fz_im,mag`` — because a single real
+    column per component could only hold ``Re`` and would misrepresent the
+    phasor (`POST-3` step 4).  ``mag`` is the phasor magnitude in both cases.
     """
     mesh = field.function_space.mesh
     comm = comm or mesh.comm
@@ -244,22 +293,27 @@ def export_tagged_field_samples_csv(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    is_complex = np.iscomplexobj(all_values)
+    if is_complex:
+        header = ["x", "y", "z", "fx_re", "fx_im", "fy_re", "fy_im", "fz_re", "fz_im", "mag"]
+    else:
+        header = ["x", "y", "z", "fx", "fy", "fz", "mag"]
+
     with output_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["x", "y", "z", "fx", "fy", "fz", "mag"])
+        writer.writerow(header)
         for point, vec in zip(all_points, all_values):
-            mag = float(np.linalg.norm(vec))
-            vec_pad = np.zeros(3, dtype=np.float64)
+            mag = float(np.abs(np.linalg.norm(vec)))
+            vec_pad = np.zeros(3, dtype=all_values.dtype)
             vec_pad[: min(3, vec.size)] = vec[: min(3, vec.size)]
-            writer.writerow([
-                float(point[0]),
-                float(point[1]),
-                float(point[2]),
-                float(vec_pad[0]),
-                float(vec_pad[1]),
-                float(vec_pad[2]),
-                mag,
-            ])
+            row = [float(point[0]), float(point[1]), float(point[2])]
+            if is_complex:
+                for component in vec_pad:
+                    row.extend([float(component.real), float(component.imag)])
+            else:
+                row.extend(float(component) for component in vec_pad)
+            row.append(mag)
+            writer.writerow(row)
 
     return output_path
 

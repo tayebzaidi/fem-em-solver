@@ -1273,7 +1273,10 @@ The chunk stays 🟡: neither step is an IEEE C95.3 1 g/10 g claim — see step 
 > `post/sar.py` computes SAR in UFL from `e_complex` (`mean_sar`, subdomain-
 > restricted, allreduced) and never touches `post/phantom_fields.py`, whose
 > `float64` cast would discard `Im E` — on the σ = 0.57 sphere `Im E_z` is
-> **twice** `Re E_z`, so that route would have been wrong by ~5×. The ½
+> **twice** `Re E_z`, so that route would have been wrong by ~5×. *(That cast
+> is fixed as of 2026-08-04, `POST-3` step 4; `post/sar.py` still does not route
+> through `phantom_fields` because centroid samples are not the volume integral
+> SAR is defined by.)* The ½
 > peak-phasor convention matches `poynting_power_balance`: `mean_sar`'s
 > `dissipated_power_w` is that identity's volume leg restricted to the sphere.
 >
@@ -1430,8 +1433,11 @@ The chunk stays 🟡: neither step is an IEEE C95.3 1 g/10 g claim — see step 
 > `assemble_scalar` is rank-local and an averaging volume straddles rank
 > boundaries — allreduce numerator *and* denominator separately before dividing,
 > as `post/sar.py:123` already does; do not route through
-> `post/phantom_fields.py` (the `POST-1` `float64` cast discards `Im E`, ~5×
-> wrong here); keep the ½ peak-phasor convention consistent with `mean_sar` and
+> `post/phantom_fields.py` (was: the `POST-1` `float64` cast discards `Im E`,
+> ~5× wrong here — **fixed 2026-08-04 by `POST-3` step 4**; the warning stands
+> on the remaining reason, that its centroid point samples are not the volume
+> integral a mass-averaged SAR is defined by);
+> keep the ½ peak-phasor convention consistent with `mean_sar` and
 > `poynting_power_balance`.
 > **Does not close:** `MAT-4` as an IEEE C95.3-conformant 1 g/10 g SAR — that
 > needs a phantom large enough to contain the averaging volume with margin, and
@@ -1613,6 +1619,13 @@ heavy tier, complex build)*
 > is phase-dependent and wrong by up to 100% for a field in quadrature. Fixing it
 > is choosing the metric semantics (|phasor| vs. a time average), which is this
 > chunk's job, not a cast change.
+>
+> **Fixed 2026-08-04 by `POST-3` step 4** (see that entry): both cast sites are
+> gone, statistics are taken on the phasor magnitude, and the two identities are
+> gated. `POST-1` stays ⚠️ — the *interface-guardrail* machinery
+> (`_interior_tagged_cells`, the boundary-adjacent drop, the ghost-cell question
+> in the tagged-cell aggregation) is still unrevalidated, and that, not the
+> cast, is what the ⚠️ now stands for.
 
 > The current flagship metric `e_to_b_mean_ratio` is by construction
 > `≈ ω·|A|/|∇×A|` — it measures a mesh length scale, not physics, and cannot
@@ -1829,6 +1842,43 @@ heavy tier, complex build)*
 > points, that is a finding about one of them — report both sets of samples,
 > annotate this entry and the `POST-1` row, and stop; do not adjust either
 > until it is understood.
+>
+> **Step 4 — done 2026-08-04, 22:30 implementer run.** Both cast sites removed
+> (`_evaluate_on_cells` batch path and point-by-point fallback now call
+> `np.asarray(field.eval(...))` with no dtype), statistics taken on the phasor
+> magnitude, semantics documented in the module docstring. CSV export grew a
+> real/imag column pair per component *for complex fields only* — a single real
+> column could hold only `Re` — leaving the real-field schema
+> (`x,y,z,fx,fy,fz,mag`) byte-unchanged, which is what example 01 and the
+> existing `test_phantom_field_metrics` (a real `e_imag` field) exercise.
+> Gate `20260804T033506Z_POST-3-step4-gate.log`, **9 passed in 8.1 s**, `-n 2`,
+> complex build, standard tier;
+> `20260804T033530Z_POST-3-step4-cohabit.log` runs all of `tests/post` plus the
+> fixture's own `test_poynting_balance.py`, **17 passed in 68.0 s**.
+> **Both identities are exact, not approximate.** (i) Code-path equivalence:
+> worst relative disagreement against `evaluate_vector_field_parallel` over
+> 5030 centroid samples is **0.000e+00** — bit-identical, not merely inside
+> `1e-12`. (ii) Phase rotation: min/max/mean are unchanged in all 9 printed
+> digits at `θ = π/2` and `θ = π/5`
+> (5.799772431e-01 / 8.849713219e-01 / 7.690447345e-01).
+> **The negative control's expectation was wrong and is corrected from
+> measurement.** The plan predicted a phase-uniform sample, deficit near
+> `1 − 2/π = 36.34%` *at every angle*, with the rotation variance small and the
+> deficit load-bearing. Measured (probe log
+> `20260804T033354Z_POST-3-step4-probe.log`): the phase span over the σ_high
+> slab's centroids is **1.2667 rad**, about a fifth of a period, so the
+> uniform-phase prediction does not apply here. The `Re`-cast deficit is
+> **45.40%** at `θ = 0`, **20.48%** at `π/2` and **75.91%** at `π/5` — spread
+> **0.554**. The test therefore bands the `θ = 0` deficit at 45.40% ± 2 pp and
+> asserts the rotation spread as a **floor** (> 0.30) rather than the ceiling
+> the plan anticipated: on this fixture the broken path is both badly wrong at
+> phase 0 and wildly phase-dependent. The probe log with the failing
+> plan-value band is committed alongside.
+> **Does not close `POST-3`** (piecewise μᵣ still waits on a magnetic phantom)
+> or `POST-1` (⚠️ retained for the interface guardrails; the row is annotated).
+> The `MAT-4` step-2 "do not route through `post/phantom_fields.py`" warning is
+> re-pointed below: the cast reason is gone, the samples-vs-volume-integral
+> reason stands.
 
 ### PORT — Ports & S-parameters (Phase 4)
 
@@ -2906,7 +2956,17 @@ one serial link (depends on item 4) and says so.**
    coil+phantom fixture after `GEO-9` step 2. Hold `MAT-4` at 🟡. **Negative
    result:** report the ratio, annotate the §7 entry, stop.
 
-2. **`POST-3` step 4 — phasor-magnitude semantics for the phantom-field
+2. ✅ **DONE 2026-08-04, 22:30 run** (`20260804T033506Z_POST-3-step4-gate.log`,
+   9 passed in 8.1 s; cohabit `20260804T033530Z_POST-3-step4-cohabit.log`,
+   17 passed in 68.0 s). Both identities came out **exact**: code-path
+   agreement 0.000e+00 over 5030 samples, statistics bit-identical under both
+   rotations. The negative control's *expectation* was wrong — the fixture's
+   phase span is 1.2667 rad, not a period, so `1 − 2/π` does not apply; the
+   measured `Re`-cast deficit is 45.40% at θ = 0 and swings 20.48%/75.91%
+   under the rotations, and the test bands the deficit and asserts the spread
+   as a floor. `POST-3` held at 🟡; `POST-1` ⚠️ retained for the interface
+   guardrails only, its row annotated. Original item:
+   **`POST-3` step 4 — phasor-magnitude semantics for the phantom-field
    extraction**. Independent. Execute the §7 step-4 plan, written this
    review. **Anchor:** two exact identities on the piecewise-σ fixture from
    `test_poynting_balance.py` — (i) per-point magnitudes equal to `|·|` of

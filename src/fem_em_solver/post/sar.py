@@ -14,11 +14,14 @@ The ½ is the same peak-phasor convention
 must not be allowed to drift apart.  An RMS-phasor code would drop the ½; this
 package does not use RMS phasors anywhere.
 
-Everything here reads ``e_complex`` (the N1curl solution) through UFL.  It
-deliberately does **not** go through :mod:`.phantom_fields`, whose
-``dtype=np.float64`` cast discards ``Im(E)`` (the `POST-1` defect): on a lossy
-material the imaginary part is the loss, so a SAR built from the real part
-alone would be silently wrong by a factor of ``|Re E|²/|E|²``.
+Everything here reads ``e_complex`` (the N1curl solution) through UFL — an
+exact volume integral, not point samples.  Until 2026-08-04 that also avoided a
+defect: :mod:`.phantom_fields` cast its samples to ``float64``, discarding
+``Im(E)``, so a SAR built through it would have been wrong by ``|Re E|²/|E|²``
+(45.4% low in the mean on the `POST-3` step-4 fixture).  That cast is gone —
+:mod:`.phantom_fields` now reports phasor magnitudes — but this module still
+does not route through it, because point samples at centroids are not the
+volume integral ``SAR`` is defined by.
 
 ``fem.assemble_scalar`` is rank-local; every integral below is reduced across
 the communicator before it is divided by another.

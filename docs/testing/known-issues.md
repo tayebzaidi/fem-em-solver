@@ -46,7 +46,11 @@ removed, **15 passed, 2 skipped in 0.5 s**. Both `--deselect`s are gone from the
 `validation` job and both files are now listed in `validation-complex`, which is
 where the two `@complex_only` tests actually execute. The test-side
 `ComplexWarning` casts were fixed in the same commit; the remaining one at
-`post/phantom_fields.py:88` is recorded under `POST-1` in `PROJECT_PLAN.md` §7.
+`post/phantom_fields.py:88` was recorded under `POST-1` in `PROJECT_PLAN.md` §7
+and is **fixed as of 2026-08-04** (`POST-3` step 4 — both cast sites removed,
+statistics taken on the phasor magnitude, gated by
+`tests/post/test_phantom_phasor_semantics.py`). `POST-1` stays ⚠️ for the
+interface-guardrail machinery, which is unrelated to the cast.
 
 The heading is kept (rather than deleted with the entries renumbered) so the
 numbering of entries 2–6 stays stable — several commits and CI comments refer to
