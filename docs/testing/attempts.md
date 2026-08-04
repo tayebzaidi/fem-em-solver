@@ -3349,3 +3349,79 @@ that is a review's call, not an improvisation.
 committed-red defect), `20260804T183654Z_POST-1-step2-gate-n2.log`,
 `20260804T183710Z_POST-1-step2-gate-n4.log`,
 `20260804T183724Z_POST-1-step2-regress.log`.
+
+## 2026-08-04T20:00Z — (no chunk) — **anomaly**
+
+**Preflight dirty; no chunk work done.** `git status` at 20:00Z (15:00 local,
+slot start) showed one modified file:
+
+```
+ M PROJECT_PLAN.md    (65 insertions, 15 deletions)
+```
+
+(By the end of the slot an untracked `docs/automation/weekly-review.md` had
+also appeared — see below.)
+
+Container was Up (21 h). The exception in implementer-run.md step 1 does **not**
+apply: this is a *first* encounter — no prior attempts.md anomaly entry
+describes this diff. The two runs before me both recorded a clean tree at start
+(2026-08-04T17:03Z and T18:33Z), so the dirtiness is new since 18:33Z.
+
+**The edits are almost certainly a human's, in progress right now.** `HEAD`
+(`c0f131a`, "docs(plan): compress closed-chunk journals") was committed at
+14:47 local, twelve minutes before this slot opened, and `PROJECT_PLAN.md`'s
+mtime is 15:00 local — i.e. the working-tree edit is minutes old, not a stale
+leftover. Stopping here is exactly the case step 1's first-encounter rule
+exists for: a human editing interactively must not be interrupted mid-change.
+Nothing was stashed, discarded, reverted, or landed.
+
+**What the diff contains** (documentation only — no `src/`, `tests/`,
+`scripts/`, and no §7 status or done-when change), recorded so the next run can
+compare byte-for-byte and so the daily review sees it even if it lands first:
+
+- **§1 Mission, rescoped 2026-08-04.** Reframes the target as "the MRI-safety
+  slice of HFSS, not HFSS": construct birdcage+phantom (often with an implant)
+  → tune at 64/128 MHz with EM + circuit co-simulation → drive and extract
+  B1+/SAR/S-params → long term couple to Pennes bioheat. Parity claims become
+  per-workflow, never per-product. Adds cross-validation against Ansys
+  Electronics Desktop as part of the method.
+- **New §5.4 "Examples and Ansys cross-validation."** Declares `examples/` a
+  maintained product surface (each phase keeps a runnable, ParaView-openable
+  example; a broken example is a defect), and specifies
+  `examples/ansys_benchmarks/<case>/` with `SPEC.md` + script + results +
+  `COMPARISON.md`. Cadence and adjudication of returned AED numbers are
+  assigned to a **weekly planning review**.
+- **§6 phase map.** Old Phase 6 (advanced/MPI/AMR) becomes Phase 9; new Phases
+  6 (birdcage tuning), 7 (implants), 8 (thermal/Pennes), each "Not started"
+  with subgoals owned by the weekly review.
+- **§10** retitled "Success criteria and long-horizon roadmap"; the three-line
+  "Stretch (Phase 6)" list is replaced by a seeded long-horizon roadmap for
+  Phases 5–8 with rules of engagement (rescope-or-kill at one month of no
+  movement; no goal without a named validation target).
+
+**The tree grew dirtier while this entry was being written, which settles the
+question of whether a human is live.** The diff refers to
+`docs/automation/weekly-review.md` three times (§5.4 cadence, §5.4
+adjudication, §10 ownership). At 20:00Z that file did not exist —
+`docs/automation/` held only `daily-review.md` and `implementer-run.md`. By
+20:0xZ, minutes later and with no action of mine, it was present as an
+**untracked** file. So the working tree at this slot is not a stale leftover
+but an edit in progress: the human is writing the weekly-review protocol to
+match the §1/§5.4/§6/§10 rescope. Second confirmation that stopping, rather
+than landing the doc diff under the step-1 exception, is the right call — the
+change is provably incomplete (an untracked protocol doc its own references
+depend on).
+
+Until that file is committed, §10's roadmap and §5.4's benchmark cadence have
+no owner in the automation, and no scheduled session is authorised to maintain
+them. The daily review should confirm the weekly review's slot and wiring
+(cron entry, model, effort) once the protocol doc lands.
+
+**Consequence for the schedule.** Per step 1 this run stops with no chunk
+attempted; §9 item 2 (the top item not marked done — item 1 carries the 12:00
+run's "do not re-attempt" marker) is untouched and remains the next run's
+target. If the tree is *still* dirty with this same diff at 16:30 local, that
+run is a second encounter and must park it on `recovered/<UTC-timestamp>` and
+proceed — one slot lost, not the rest of the day.
+
+**Denials:** none. **Branch:** none. **Logs:** none — no compute was run.
