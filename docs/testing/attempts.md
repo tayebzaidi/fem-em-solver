@@ -3182,3 +3182,78 @@ step 1's 10%, which is what the run failed against.
 `20260804T140354Z_PORT-1-step3bii-costprobe.log` (1 failed 3 passed, mutual
 +72.12%), `20260804T140612Z_PORT-1-step3bii-diagnostic.log` (1 failed 3 passed,
 the shadow-restricted comparison).
+
+## 2026-08-04T17:30Z — `PORT-1` step 3b-iii — **incomplete (negative, reported)**
+
+**Item:** §9 On-deck item 1 (12:00 scheduled implementer run). Tree clean at
+preflight, container Up 18 h. Code parked on
+`attempt/PORT-1-step3biii-20260804T173000Z`; docs, logs and test-results rows
+landed on `main`.
+
+**What was tried.** Both halves of the written plan, in order.
+
+*Mesh half (clean, and worth keeping).* `two_torus_domain`'s `gap_clearance`
+split into `gap_burial` (the ŷ half-length margin, validated strictly
+positive) and `gap_overhang` (the transverse `xz` margin, validated
+non-negative), both defaulting to `gap_clearance` — so the default gapped call
+is byte-identical and 3b-i's gate never sees the change. The resulting
+slab-shaped box (aspect ~1:10) meshes **exactly**: meshed/analytic
+`= 1.000000000000` on both ports at overhang 2e-4, asserted at `1e-9` in a new
+test in the file. 3b-i's exact-box identity does hold for any rectangular box,
+as predicted.
+
+*Measurement half.* The 3b-ii test file was copied from
+`attempt/PORT-1-step3bii-20260804T141200Z` (not rewritten) and re-run at
+`gap_overhang = 2e-4` (the planned probe point, ~24% fringe, avoiding the
+tangent-face `o = 0` fragment-fragility class), then at `5e-4` as a second
+sweep point to establish the trend.
+
+**Measured numbers.**
+
+| `gap_overhang` | fringe | `Im Z₁₂` [Ω] | `Im Z₁₂/ωM₁₂` | `I′` [A] | reciprocity | undriven ratio | shadow `V` [× ωM] |
+|---|---|---|---|---|---|---|---|
+| 1.0e-3 (3b-ii, on record) | 0.4546 | +2.137292 | **+1.7210** | 0.9151 | 2.2840e-04 | 2.32e-03 | 0.750 / 0.687 |
+| 5.0e-4 | 0.3509 | −0.296954 | **−0.2391** | 0.9506 | 1.4225e-04 | 1.69e-03 | 0.783 / 0.754 |
+| 2.0e-4 | 0.2739 | +0.411950 | **+0.3317** | 0.9731 | 1.1509e-04 | 1.42e-03 | 0.763 / 0.814 |
+
+`ωM₁₂ = 1.241755e+00 Ω` throughout. Gate red at **−66.83%** against the
+unmoved `MUTUAL_TOLERANCE = 0.10`. `Z₁₁ = +9.921806e+00 − 1.313871e+03j Ω` at
+2e-4, printed and never gated, as instructed.
+
+**What it means.** The full-box mutual is **non-monotone in the fringe fraction
+and changes sign** between 2e-4 and 5e-4. That kills 3b-ii's fringe hypothesis
+outright — an opposite-sign annulus shrinking toward zero predicts a smooth
+march toward 1 (the plan's own estimate was ≈ +30% at this fringe), not a sign
+flip. A volumetric average over a rectangular region is not a port voltage at
+*any* overhang: the corners sample fringe field whose sign depends on where the
+box face cuts the fringe pattern, not on how much of it there is, and the
+`1 − π/4 = 21.5%` corner floor guarantees the box never stops sampling them.
+This is the discrimination the step was written to buy, in its negative branch.
+
+Corroborating: every quantity *not* built on the box average improved
+monotonically as the overhang shrank — reciprocity 2.28e-04 → 1.15e-04,
+undriven ratio 2.32e-03 → 1.42e-03, and the driven current 0.9151 → 0.9731 A,
+closing 3b-ii's 8.5% impressed-current shortfall to 2.7%. So 3b-ii's third
+clue was right (the fringe annulus was eating impressed `J`) and it was simply
+not the thing that set `V`. The tube-shadow-restricted average is meanwhile
+stable and sign-consistent at 0.687–0.814 × ωM₁₂ across all three geometries.
+
+**No assertion was loosened and no bound moved.** `MUTUAL_TOLERANCE` is still
+step 1's 10%, which is what both attempts failed against.
+
+**Hypothesis for the next attempt.** Not a fourth box — the sign change rules
+out the whole family, so item 1 is closed negative and must not be relisted.
+The successor is §7 step 3b-v (facet-integral `V` over the arc-end discs) on
+the facet tags §9 item 5 / step 3b-iv emits; that item is now on the critical
+path rather than a hedge. Whoever scopes 3b-v should treat the shadow
+average's common ~0.78 deficit as the number to explain — it is stable enough
+to be a real effect and it is not obviously the PEC box, which step 1's
+reaction route measured at −9.35%.
+
+**Denials:** none. **Logs (on `main`):**
+`20260804T170301Z_PORT-1-step3biii-costprobe.log` (1 failed, 8 passed, 59.98 s,
+`-n 2`, incl. `tests/environment`),
+`20260804T170439Z_PORT-1-step3biii-sweep-o5e4.log` (1 failed, 4 passed,
+63.01 s, `-n 2`). The single failure in each is the 3b-iii gate itself; no
+unrelated test changed state, so no known-issues entry was added beyond the
+progress note on entry 3.

@@ -3134,6 +3134,63 @@ completed measurement step is not "not started")*
 > known-issues 3, park the numbers, stop — the successor is 3b-v on the
 > facet tags, not a third box geometry.
 >
+> **Step 3b-iii attempted 2026-08-04 (12:00 run) — 🟡 negative, and it is the
+> discriminating negative the step was written to buy.** Code parked on
+> `attempt/PORT-1-step3biii-20260804T173000Z`; logs on main,
+> `20260804T170301Z_PORT-1-step3biii-costprobe.log` (1 failed, 8 passed, 60.0 s)
+> and `20260804T170439Z_PORT-1-step3biii-sweep-o5e4.log` (1 failed, 4 passed,
+> 63.0 s); ~124 800 cells, mesh ~24 s + two solves ~16–20 s, standard tier at
+> `-n 2`.
+>
+> *Mesh half — done and clean.* `gap_clearance` is split into `gap_burial`
+> (ŷ half-length margin, must stay strictly positive) and `gap_overhang`
+> (transverse `xz` margin), both defaulting to `gap_clearance`, so the default
+> gapped call is byte-identical and 3b-i's gate is untouched. The new
+> slab-shaped box meshes **exactly**: meshed/analytic `= 1.000000000000` at
+> overhang 2e-4, both ports, asserted at `1e-9` in the file — 3b-i's exact-box
+> identity holds at aspect ratio ~1:10 as predicted.
+>
+> *Measurement half — the fringe hypothesis is refuted.* Varying only the
+> overhang:
+>
+> | `gap_overhang` | fringe | `Im Z₁₂` [Ω] | `Im Z₁₂/ωM₁₂` | `I′` [A] | shadow `V` [× ωM] |
+> |---|---|---|---|---|---|
+> | 1.0e-3 (3b-ii) | 0.4546 | +2.137292 | **+1.7210** | 0.9151 | 0.750 / 0.687 |
+> | 5.0e-4 | 0.3509 | −0.296954 | **−0.2391** | 0.9506 | 0.783 / 0.754 |
+> | 2.0e-4 | 0.2739 | +0.411950 | **+0.3317** | 0.9731 | 0.763 / 0.814 |
+>
+> The full-box mutual is **non-monotone in the fringe fraction and changes
+> sign** between 2e-4 and 5e-4. The 3b-ii hypothesis — a 45% annulus of
+> opposite-sign field inflating the average, which would march smoothly toward
+> 1 as the annulus shrank — predicted ≈ +30% at this fringe and is dead. The
+> right reading is that a volumetric average over a *rectangular* region is not
+> a port voltage at any overhang: the corners sample fringe field whose sign
+> depends on where the box face cuts the fringe pattern, not on how much of it
+> there is, and the `1 − π/4` corner floor guarantees the box never stops
+> sampling them. `MUTUAL_TOLERANCE` was **not moved**; the gate fails at
+> −66.83% and that failure is the result.
+>
+> *What did improve, and it corroborates the reading.* Every quantity that
+> does not depend on the box-average got better as the overhang shrank:
+> reciprocity `2.2840e-04 → 1.1509e-04`, undriven-port ratio
+> `2.32e-03 → 1.4162e-03`, and the driven current `0.9151 → 0.9731 A`, i.e.
+> the 8.5% impressed-current shortfall closed to 2.7% — so the fringe annulus
+> *was* eating impressed `J` (3b-ii's third clue was right), it just was not
+> what set `V`. And the tube-shadow-restricted average is stable and
+> sign-consistent across all three geometries at **0.687–0.814 × ωM₁₂**, a
+> spread that no longer shows the 9% inter-port asymmetry as a fixture defect
+> so much as a ~20–25% common deficit — consistent with an average over a
+> region that still includes non-conductor path length.
+>
+> **Successor: 3b-v, the facet-integral voltage, on 3b-iv's tags** — as the
+> 3b-iii plan's own negative branch said, and now with the box route excluded
+> by measurement rather than by argument. **Do not attempt a fourth box
+> geometry**; the sign change rules the family out, not one member of it.
+> Open question for whoever scopes 3b-v: the shadow average's ~0.78 common
+> deficit is the *next* number to explain, and it is not obviously the PEC box
+> (step 1's reaction route measured −9.35% there). `Z₁₁` stayed ungated
+> throughout, as instructed.
+>
 > **Step 3b-iv — facet tags on the arc-end discs (mesh only; written at the
 > 2026-08-04 10:30 review).** The prerequisite 3b-ii's ranked route 2 named:
 > the textbook lumped-port voltage is a facet integral over the
@@ -3496,7 +3553,15 @@ item 1 but not its outcome — runs are serial, take main as found.** Item 1 is
 the rescope of 3b-ii's single failure, relisted per the failed-once rule with
 the fixture cause removed from its path.
 
-1. **`PORT-1` step 3b-iii — split the gap box's overhang from its burial,
+1. 🟡 **ATTEMPTED 2026-08-04 (12:00 run) — negative, reported, parked on
+   `attempt/PORT-1-step3biii-20260804T173000Z`; do not re-attempt.** The mesh
+   split landed cleanly and the measurement discriminated: `Im Z₁₂/ωM₁₂` is
+   non-monotone and sign-changing in the overhang (+1.7210 / −0.2391 /
+   +0.3317 at fringe 0.4546 / 0.3509 / 0.2739), so the box-volume `V` is
+   structurally unfit and the fringe hypothesis is refuted. Successor is 3b-v
+   on item 5's facet tags — **not** a fourth box geometry. Full numbers in the
+   §7 3b-iii entry; next run takes item 2.
+   **`PORT-1` step 3b-iii — split the gap box's overhang from its burial,
    re-measure `Im Z₁₂`.** Independent; the rescope of 3b-ii's single failure.
    Execute the §7 step-3b-iii plan, written this review. **Anchor:**
    `Im Z₁₂ = V₂/I₁` against `ωM₁₂ = 1.241755e+00 Ω` at the unchanged 10%
