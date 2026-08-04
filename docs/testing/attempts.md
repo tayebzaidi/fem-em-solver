@@ -2762,3 +2762,100 @@ the plan-band failure that produced the measurement),
 `20260804T033506Z_POST-3-step4-gate.log` (the gate, 9 passed, 8.1 s),
 `20260804T033530Z_POST-3-step4-cohabit.log` (17 passed, 68.0 s),
 `20260804T033845Z_POST-3-step4-realmode.log` (15 passed, 5 skipped, 0.7 s).
+
+## 2026-08-04T05:10Z — `PORT-1` step 2e (§9 On-deck item 3) — **complete**
+
+Preflight clean, container Up 6 h. Took §9 item 3 (items 1–2 already ✅). New
+file `tests/validation/test_port_solenoidal_drive.py`, five tests, wired into
+`validation-complex`. §7 `PORT-1` and known-issues 8 annotated; `PORT-1` held
+🟡 and known-issues 8 held open, both as the plan instructed.
+
+**The step-2d prediction landed to three figures.** Driving the same two-torus
+fixture with `J′ = J − P_G J` gives `Im Z₁₁ = +7.437243 Ω` on both routes
+against the predicted `+7.44 Ω`, where the unprojected drive measured
+`−4.108550e+01 Ω` on this exact mesh — a sign flip plus 48.5 Ω, the full
+separation the step was scoped against. Gate
+`20260804T050616Z_PORT-1-step2e-gate.log`: **9 passed in 41.8 s** at `-n 2`
+(5 here + 4 `tests/environment`), standard tier, complex build. One mesh
+(119738 cells, 19.7 s), two CG1 Poisson solves (1.8 s / 1.1 s), **one**
+curl-curl solve (18.0 s) — the unprojected control was cited from the step-2b
+and step-2d logs rather than re-solved, which is what kept the file to one
+solve.
+
+| quantity | measured | gate |
+|---|---|---|
+| `Im Z₁₁`, reaction and energy routes | `+7.437243e+00 Ω` | `> 0`, a priori, both routes |
+| ratio to Grover `ωL = 6.818343 Ω` | 1.090770 | banded `(1.042, 1.140)` |
+| complex-power identity residual | 1.6242e-14 | `< 1e-9` (step 2b's bound) |
+| `‖P_G J′‖²/‖J′‖²` | 4.5758e-33 | `< 1e-24`; unprojected is 8.175e-06 |
+| `4ωW_e/I′²` | 8.761041e-05 Ω | `< 1e-4 ×` control 4.852271e+01 Ω; measured 1.8056e-06 × |
+| `4ωW_m/I′²` | `+7.437331e+00 Ω` | printed; step 2b's 7.437 Ω unchanged |
+| `I′` | 0.969001 A | printed beside `I = 0.969009 A` |
+
+Both bounds were banded from a probe
+(`20260804T050406Z_PORT-1-step2e-probe2.log`) that reproduced every gate number
+bit-for-bit. Nothing was widened after a failure; the two banded tests
+`pytest.skip`-ed in the probe with the band left `None`, which is why the probe
+reads 6 passed / 2 skipped.
+
+**The electric half is gone rather than reduced** — 48.52 Ω → 8.76e-5 Ω, a
+factor 5.5e5 — which is the consequence step 2d's 0.999998 demanded: had the
+gradient content explained a tenth, ~43 Ω would have survived the projection.
+`4ωW_m/I′²` is unchanged from step 2b because the projection moves `W_e` and
+not `W_m`, so the fixture's inductance was physical throughout and 1.0908 is a
+statement about the PEC box at padding 0.08 m, not about the drive.
+
+**Two traps the plan named came out smaller than predicted; recorded as
+measurements, not dropped.** (i) `I′` was expected to differ materially from
+0.969009 A — it differs by **8 ppm**. The re-measurement and the `I′²`
+denominators stay: 8 ppm is a fact about this fixture, not a licence to reuse
+`I`. (ii) `‖P_G J′‖²/‖J′‖²` was expected at the step-2d solve-accuracy scale
+(~1e-9) and is **4.6e-33** — structural, not solve-limited, because the second
+Poisson solve's right-hand side `∫J′·∇q` cancels at *assembly* for every
+interior `q`, leaving the round-off of that cancellation rather than an LU
+residual. The 1e-24 bound carries that reasoning in the code, with the note
+that a lift to ~1e-18 would be information about the assembly.
+
+**Two implementation decisions the plan did not cover.** `J′` has support on
+the whole domain (`∇ψ` does), so the load can no longer ride a tagged measure:
+the driven region is carried by a **DG0 indicator**, exact for a cellwise tag,
+and the solve is called with `subdomain_ids=None`. And `ψ` is real to round-off
+but lives in a complex space, so its imaginary part is discarded explicitly
+(measured `0.000e+00` relative, both solves) — that is what makes `ufl.inner`'s
+conjugation of `J′` a true no-op, as it already is for the real `J`. The
+plan's instruction to reuse `_interior_dofs` from `test_port_gradient_load.py`
+was **not** followed and the import was removed: that helper serves step 2d's
+vector-norm comparison over interior CG1 dofs, while step 2e needs only the
+homogeneous Dirichlet BC on the Poisson solve, which the shared
+`_solve_gradient_potential` helper here applies directly. Worth a reviewer's
+eye, since it is a deviation from a written plan.
+
+**Cohabitation checked:** `20260804T050818Z_PORT-1-step2e-cohabit.log`, the
+three `PORT-1` step-2 diagnosis files together (2b, 2d, 2e), **11 passed in
+119.6 s** at `-n 2` — the new file imports constants and helpers from both of
+the others, so the cross-module import path is exercised rather than assumed.
+
+**Deliberately not done.** `PORT-1` stays 🟡 and known-issues 8 stays open:
+`TimeHarmonicSolver.solve()` still assembles `−jωμ₀∫J·v̄` with no projection,
+so the diagonal in `test_port_reaction_impedance.py` is still negative and
+still ungated. Making the projection the port-excitation default is its own
+step and was explicitly out of scope.
+
+**Hypothesis for the next run.** The successor now has a measured warrant
+rather than a hypothesis, and is the obvious next entry for a review to scope:
+move the projection into the solver (or a port-excitation helper beside it),
+re-gate `test_port_reaction_impedance.py`'s diagonal against Grover, and retire
+known-issues 8 in that commit. The open design question is **where the CG1
+Poisson solve belongs in the API** — it costs ~1.5 s against an 18 s curl-curl
+solve, so cost is not the constraint; the question is whether it is a
+`TimeHarmonicSolver.solve()` keyword, a wrapper that returns a projected
+`current_density`, or a `PortExcitation` object. That is an API decision, not a
+physics one, which is why this run did not take it. Carry-over from the 03:30Z
+run (`POST-1` ghost cells in `_tagged_cells`) is untouched and still stands.
+
+**Denials:** none. **Logs:** `20260804T050320Z_PORT-1-step2e-probe.log` (exit 1,
+`RuntimeError: Facets have not been computed` — `exterior_facet_indices` before
+`create_connectivity`; fixed in the helper, no bound involved),
+`20260804T050406Z_PORT-1-step2e-probe2.log` (6 passed, 2 skipped, 44.7 s — the
+banding probe), `20260804T050616Z_PORT-1-step2e-gate.log` (the gate, 9 passed,
+41.8 s), `20260804T050818Z_PORT-1-step2e-cohabit.log` (11 passed, 119.6 s).

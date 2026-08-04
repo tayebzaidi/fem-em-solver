@@ -271,10 +271,30 @@ bit-for-bit. It is a solve-accuracy number, not a physics one — a rank-count,
 mesh or solver change that moves it is information, so re-measure rather than
 widening again. PROJECT_PLAN §7 `PORT-1` step 2d carries the full reasoning.
 
-**This entry stays open.** A measured cause is not a fix: the diagonal is still
-wrong and still ungated. `PORT-1` step 2e — driving with `J − P_G J`, whose
-predicted effect is `Im Z₁₁ → +4ωW_m/I² ≈ +7.44 Ω`, within ~9% of Grover — is
-what would close it, and is not yet written.
+**Step 2e executed 2026-08-04 — the fix works, and this entry still stays
+open.** `tests/validation/test_port_solenoidal_drive.py` drives the same mesh
+with `J′ = J − P_G J` and gets the prediction to three figures
+(`20260804T050616Z_PORT-1-step2e-gate.log`, 9 passed in 41.8 s at `-n 2`):
+
+| quantity | projected drive | unprojected (this entry) |
+|---|---|---|
+| `Im Z₁₁`, both routes | **`+7.437243e+00 Ω`** | `−4.108550e+01 Ω` |
+| ratio to Grover's `ωL = 6.818343 Ω` | **1.090770** | −6.03 |
+| `4ωW_e/I′²` | `8.761041e-05 Ω` | `4.852271e+01 Ω` |
+| `‖P_G J′‖²/‖J′‖²` | `4.5758e-33` | `8.175e-06` |
+| complex-power identity residual | `1.6242e-14` | `1.8128e-10` |
+| meshed current | `I′ = 0.969001 A` | `I = 0.969009 A` |
+
+`4ωW_m/I′² = 7.4373 Ω` is step 2b's number unchanged, as it must be — the
+projection moves `W_e`, not `W_m` — so the fixture's inductance was physical
+throughout and the sign is now explained *and* demonstrated, not just
+diagnosed.
+
+The entry stays open because **the production driver still builds the
+unprojected load**: `TimeHarmonicSolver.solve()` assembles
+`−jωμ₀∫J·v̄` from the caller's `current_density` with no projection, so the
+diagonal in `test_port_reaction_impedance.py` is still negative and still
+ungated. Making the projection the port-excitation default is its own step.
 
 **Consequence, unchanged:** no input impedance and no `S₁₁` off this path means
 anything. The off-diagonal is unaffected — `PORT-1` step 2 gates `Im Z₁₂` to

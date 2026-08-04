@@ -2295,6 +2295,67 @@ completed measurement step is not "not started")*
 > numbers, annotate this entry and known-issues 8, stop — do not tune the
 > projection's boundary condition inside the slot.
 >
+> **Step 2e executed 2026-08-04 (00:00 run) — ✅ §4-done, and the step-2d
+> prediction lands to three figures: `Im Z₁₁ = +7.437243 Ω` against the
+> predicted `+7.44 Ω`.** New file `tests/validation/test_port_solenoidal_drive.py`,
+> five tests; gate `20260804T050616Z_PORT-1-step2e-gate.log`, **9 passed in
+> 41.8 s** at `-n 2` (5 here + 4 `tests/environment`), standard tier, complex
+> build. One mesh (119738 cells, 19.7 s), two CG1 Poisson solves (1.8 s / 1.1 s)
+> and **one** curl-curl solve on `J′` (18.0 s) — the unprojected control was
+> cited from step 2b/2d rather than re-solved. Wired into `validation-complex`.
+>
+> | quantity | measured | reference |
+> |---|---|---|
+> | `Im Z₁₁`, reaction and energy routes | **`+7.437243e+00 Ω`** | control `−4.108550e+01 Ω`; sign gated a priori |
+> | ratio to Grover's `ωL = 6.818343 Ω` | **1.090770** | gated to the banded `(1.042, 1.140)` |
+> | complex-power identity residual | `1.6242e-14` | gated `< 1e-9` (step 2b's house bound, met there at 1.8e-10) |
+> | `‖P_G J′‖²/‖J′‖²` | `4.5758e-33` | gated `< 1e-24`; unprojected drive is `8.175e-06` |
+> | `4ωW_e/I′²` | `8.761041e-05 Ω` | gated `< 1e-4 ×` the control's `4.852271e+01 Ω`; measured `1.8056e-06 ×` |
+> | `4ωW_m/I′²` | `+7.437331e+00 Ω` | step 2b's `7.437 Ω`, unchanged |
+> | meshed current `I′` | `0.969001 A` | `I = 0.969009 A` (step 2d) |
+>
+> **What the numbers say.** The electric half is *gone*, not reduced: 48.52 Ω →
+> 8.76e-5 Ω, a factor 5.5e5, which is what step 2d's 0.999998 required — if the
+> gradient content had explained only a tenth, a 43 Ω residue would have
+> survived the projection. `4ωW_m/I′²` is bit-stable against step 2b because the
+> projection touches `W_e` alone, so the fixture's inductance was physical
+> throughout and 1.0908 is a statement about the PEC box at padding 0.08 m, not
+> about the drive. Both gated bounds were banded from a probe
+> (`20260804T050406Z_PORT-1-step2e-probe2.log`) that reproduced the gate's
+> numbers bit-for-bit; nothing was widened after a failure.
+>
+> **Two traps the plan named came out smaller than expected, and are recorded as
+> measurements rather than quietly dropped.** (i) `I′` was predicted to differ
+> from 0.969009 A; it differs by **8 ppm** (0.969001 A) — the projection's
+> azimuthal content inside the torus is real but tiny, and `I′` is still
+> re-measured with the same cross-section integral and used in every denominator,
+> because 8 ppm is a fact about this fixture and not a licence. (ii)
+> `‖P_G J′‖²/‖J′‖²` was expected at the step-2d solve-accuracy scale (~1e-9);
+> it is **4.6e-33**, i.e. structural rather than solve-limited — the second
+> Poisson solve's right-hand side `∫J′·∇q` cancels at *assembly* for every
+> interior `q`, so what remains is the round-off of that cancellation. The bound
+> is set at 1e-24 with that reasoning in the code; a change that lifts it to
+> ~1e-18 is information about the assembly, not noise.
+>
+> **Implementation notes for the step that makes this the default.** `J′` has
+> support on the whole domain (`∇ψ` does), so the tagged-measure load no longer
+> works; the driven region is carried by a **DG0 indicator**, which is exact for
+> a cellwise tag. `ψ` is real to round-off but lives in a complex space, so its
+> imaginary part is discarded explicitly (measured `0.000e+00` relative both
+> times) — that is what makes `ufl.inner`'s conjugation of `J′` a true no-op, as
+> it already is for the real `J`.
+>
+> **Scope: step 2e closes nothing.** `PORT-1` stays 🟡, the diagonal stays
+> ungated in `test_port_reaction_impedance.py`, and known-issues 8 stays open —
+> annotated with the table above — because `TimeHarmonicSolver.solve()` still
+> assembles `−jωμ₀∫J·v̄` with no projection. **The obvious successor is now
+> licensed with a measured warrant rather than a hypothesis:** move the
+> projection into the solver (or into a port-excitation helper beside it) so the
+> production path drives `J′`, then re-gate the diagonal of
+> `test_port_reaction_impedance.py` and retire known-issues 8 in that commit. A
+> review should scope it; the open question it must answer is where the CG1
+> Poisson solve belongs in the API, not whether it works.
+>
 > **Scope: step 2b closes nothing.** The diagonal stays ungated in
 > `test_port_reaction_impedance.py`, known-issues' negative-diagonal entry stays
 > open with its diagnosis appended, and `PORT-1` stays 🟡.
@@ -2991,7 +3052,15 @@ one serial link (depends on item 4) and says so.**
    report both sample sets, annotate §7 and the `POST-1` row, stop — do not
    adjust either until it is understood.
 
-3. **`PORT-1` step 2e — drive with the solenoidal projection.** Independent
+3. ✅ **DONE 2026-08-04, 00:00 run** (`20260804T050616Z_PORT-1-step2e-gate.log`,
+   9 passed in 41.8 s; probe `20260804T050406Z_PORT-1-step2e-probe2.log`).
+   `Im Z₁₁ = +7.437243 Ω` on both routes against the predicted `+7.44 Ω`,
+   Grover ratio 1.090770, identity residual 1.6242e-14,
+   `‖P_G J′‖²/‖J′‖² = 4.6e-33` (structural, not solve-limited — see the §7
+   note), `4ωW_e/I′²` collapsed 5.5e5× to 8.76e-5 Ω. `I′ = 0.969001 A`, 8 ppm
+   from `I`. `PORT-1` held at 🟡 and known-issues 8 held open: the production
+   driver still assembles the unprojected load. Original item:
+   **`PORT-1` step 2e — drive with the solenoidal projection.** Independent
    of this queue (reuses step 2d's landed machinery). Execute the §7 step-2e
    plan, written this review. **Anchor:** Grover's `ωL = 6.818 Ω`; predicted
    `Im Z₁₁ → +4ωW_m/I² ≈ +7.44 Ω` (~9%) — probe first, band from measurement,

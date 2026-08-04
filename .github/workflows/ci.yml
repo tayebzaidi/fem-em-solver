@@ -221,6 +221,7 @@ jobs:
           tests/validation/test_port_reaction_impedance.py \
           tests/validation/test_port_self_impedance_energy.py \
           tests/validation/test_port_gradient_load.py \
+          tests/validation/test_port_solenoidal_drive.py \
           tests/mesh/test_two_torus_conforming.py \
           tests/solver/test_time_harmonic_smoke.py \
           tests/solver/test_boundary_condition_selection.py \
@@ -255,6 +256,16 @@ jobs:
     # int J.grad(q) and reports ||P_G J||^2/(w.eps0.I^2) = 48.52 Ohm, i.e. the
     # whole of the step-2b electric-energy excess. Complex only -- the identity's
     # discriminating content is the factor j.
+
+    # test_port_solenoidal_drive.py is the `PORT-1` step-2e fix-side measurement:
+    # the same mesh (20 s), two CG1 Poisson solves (1.9 s + 1.6 s) and ONE
+    # curl-curl solve on J' = J - P_G J (18 s), 41.8 s at -n 2 (log
+    # 20260804T050616Z_PORT-1-step2e-gate.log). It gates Im Z11 > 0 (the
+    # unprojected drive measured -41.086 Ohm on this same mesh), the
+    # complex-power identity on the new drive, ||P_G J'||^2/||J'||^2, the
+    # collapse of 4wW_e/I'^2, and Im Z11 against Grover. Complex only. It does
+    # NOT re-run the unprojected control -- that is cited from the step-2b and
+    # step-2d logs, so the file's cost is one solve, not two.
 
     # test_current_divergence.py is the `POST-3` step-3 gate: two solves on the
     # piecewise-σ fixture plus four Poisson solves for the dual norms, 2.7 s at
