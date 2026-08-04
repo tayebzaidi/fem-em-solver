@@ -1,6 +1,7 @@
 """ParaView output utilities for FEM-EM solver."""
 
 import os
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from mpi4py import MPI
@@ -48,6 +49,54 @@ def adopt_host_ownership(output_dir, comm=MPI.COMM_WORLD) -> int:
             continue
 
     return changed
+
+
+def consolidate_xdmf_grids(xdmf_path, comm=MPI.COMM_WORLD):
+    """Merge every field grid in a dolfinx XDMF file into the mesh grid.
+
+    ``XDMFFile.write_function`` emits one top-level ``<Grid>`` (a temporal
+    collection referencing the mesh topology/geometry via xi:include) per
+    function. ParaView's Xdmf3 reader turns sibling grids into a
+    vtkMultiBlockDataSet: rendering filters cope, but point-probing filters
+    (Plot Over Line, Probe) only sample one block, so arrays from the other
+    grids come back all-NaN. Rewriting the light-data XML so all
+    ``<Attribute>`` elements live on the single mesh grid makes the file load
+    as one vtkUnstructuredGrid; the ``.h5`` heavy data is untouched.
+
+    Only valid when every attribute was written on the same mesh — true for
+    all output in this module, where cell tags go through
+    :func:`cell_tags_to_function` (a DG0 field on the field grid) rather than
+    ``write_meshtags`` (which writes its own, differently ordered, topology).
+
+    Single-timestep files only: time collections are collapsed and ``<Time>``
+    elements dropped. Rank 0 does the rewrite; collective barrier at the end.
+    """
+    if comm.rank == 0:
+        xdmf_path = Path(xdmf_path)
+        tree = ET.parse(xdmf_path)
+        domain = tree.getroot().find("Domain")
+
+        # The mesh grid is the uniform one that actually owns Topology/Geometry.
+        grids = domain.findall("Grid")
+        mesh_grid = next(
+            g for g in grids
+            if g.get("GridType", "Uniform") == "Uniform"
+            and g.find("Topology") is not None
+        )
+
+        for grid in grids:
+            if grid is mesh_grid:
+                continue
+            # Function grids are temporal collections; descend to every
+            # uniform grid inside and lift out its attributes.
+            for uniform in grid.iter("Grid"):
+                for attr in uniform.findall("Attribute"):
+                    mesh_grid.append(attr)
+            domain.remove(grid)
+
+        ET.indent(tree)
+        tree.write(xdmf_path, xml_declaration=True, encoding="utf-8")
+    comm.barrier()
 
 
 def cell_tags_to_function(mesh, cell_tags, name="CellTags"):
@@ -109,6 +158,10 @@ def write_xdmf_with_tags(filename, mesh, cell_tags, functions, comm=MPI.COMM_WOR
         for _, func in functions.items():
             xdmf.write_function(func)
 
+    # One grid per file, or ParaView loads a multiblock and Plot Over Line
+    # returns NaN for every array outside the first block.
+    consolidate_xdmf_grids(xdmf_file, comm=comm)
+
     if comm.rank == 0:
         return xdmf_file, h5_file
     return None, None
@@ -167,6 +220,7 @@ def write_combined_paraview_output(
             if tag_func is not None:
                 xdmf.write_function(tag_func)
             xdmf.write_function(lagrange_func)
+        consolidate_xdmf_grids(xdmf_path, comm=comm)
         written_files[name] = xdmf_path
 
     # Combined file (all fields + tags)
