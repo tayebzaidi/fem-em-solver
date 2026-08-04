@@ -2600,3 +2600,79 @@ here — should park them on `recovered/<UTC-timestamp>` and proceed to `MAT-4`
 step 2 normally. That is the protocol's designed outcome and costs the queue
 one slot, not the evening. If a human ignores or removes the files first,
 preflight is clean and `MAT-4` step 2 is simply the top item, unchanged.
+
+## 2026-08-04T02:00Z — `MAT-4` step 2 (§9 On-deck item 1) — **complete**
+
+**Preflight — second encounter, parked, proceeded.** The tree held the same two
+untracked files the 00:30Z entry above journals
+(`circular_loop_results.txt`, `examples/magnetostatics/circular_loop_results.txt`,
+byte-identical). That entry's own hypothesis called this outcome exactly. Per
+step 1's second-encounter rule they were committed as-is to
+**`recovered/20260804T020013Z`** (`79d804b`) and `main` returned clean; nothing
+stashed or discarded. The `.gitignore` disposition the 00:30Z entry proposes is
+still the fix and is still the daily review's call — **this cost the queue one
+slot on 00:30Z and will cost another every time a human runs example 02**, so it
+is worth one line of `.gitignore` rather than a third entry. Container Up.
+
+**Executed the §7 `MAT-4` step-2 plan as written.** New
+`tests/validation/test_mass_averaged_sar.py` (2 tests) over four new functions
+in `post/sar.py`: `build_density_field` (DG0 ρ), `averaging_ball_radius`,
+`mass_averaged_sar` (∫½σ|E|² / ∫ρ over a ball, both legs allreduced separately
+before dividing), `point_sar` (through `evaluate_vector_field_parallel`).
+
+**Gate: `20260804T020933Z_MAT-4-step2-gate2.log`, 3 passed in 54.8 s**, `-n 2`,
+standard tier, complex build — the two step-2 tests plus
+`test_lossy_sphere_sar.py` as a step-1 regression. One solve at step 1's fine
+operating point (σ = 0.57 S/m, R = 0.01 m, h = R/10); the averaging is
+post-processing, as the plan predicted. m_avg = 0.05 g ⇒ ball radius
+2.2854 mm = 0.229 R.
+* uniform-field identity `SAR_avg/SAR_point` = **0.999846** (0.0154% off)
+  against a **0.26%** budget summed from measured parts — 2 × step 1's 0.11%
+  interior spread (SAR ∝ |E|²) + the kernel's 0.04% volume defect. 17× inside.
+* kernel mass `∫ρ dV` = 4.997993e-5 kg vs 5e-5 kg, **0.040%**, gated at step 1's
+  meshed-sphere accuracy 0.36%. `V_kernel/V_exact` = 0.999599.
+* surface control separation **2.2094**.
+
+**The plan's control ceiling of 2 is wrong and the run corrects it — read this
+before treating 2.2094 as an overshoot.** "Half the ball lies outside" is the
+*flat-interface* answer. The interface is convex, so the ball keeps the
+sphere-sphere **lens** fraction `f = (8 − 3a/R)/16 = 0.4571`, not ½, and the
+true ceiling is `1/f = 2.1875`. Measured 2.2094 is **1.00%** off that. The test
+now gates both the plan's `> 1.5` floor and agreement with `1/f` to 5% (banded
+from the 1.00% measurement) — the latter is strictly sharper, since it asserts
+the kernel loses the geometrically *correct* share of the numerator, not merely
+some of it. **Had the plan's 2 been asserted as a ceiling this run would have
+read as a failure at +10.5%** — an instance of the standing rule that a failing
+analytic comparison is evidence about the test as much as the code, resolved by
+re-deriving the closed form rather than by touching a tolerance. No assertion
+anywhere was loosened; no existing test file was modified.
+
+**Defect found and fixed, probe log `20260804T020419Z_MAT-4-step2-probe.log`
+(exit 124, 181 s).** `ufl.conditional(ufl.lt(dot(offset, offset), a²), …)`
+raises `ComplexComparisonError` in the complex build for any **non-zero** centre
+— the literal centre vector is complex-typed there — while a **zero** centre
+simplifies away and passes. The identity test (centre at the origin) therefore
+passed and the surface control died in JIT, after which the ranks deadlocked in
+`MPI_Bcast` and the run burned its full 180 s timeout. `ufl.real` around the
+comparison argument is the fix, carrying that explanation as a code comment.
+Generalisable and cheap to remember: **a UFL comparison that works at the origin
+is not evidence it works anywhere else**, and a rank-asymmetric JIT failure
+inside `fem.form` presents as a timeout, not a traceback.
+
+**Deliberately not done.** `MAT-4` stays 🟡, exactly as the plan instructs: this
+gates the averaging *operator* on 0.05 g, and the fixture cannot carry an IEEE
+C95.3 1 g/10 g claim (1 g is 0.62 R on a 4.19 g phantom, 10 g exceeds it, and
+growing R leaves the quasi-static regime at `|k_in|R = 0.179`). The honest place
+for the standard is the coil+phantom fixture after `GEO-9` step 2.
+
+**Hypothesis for the next run.** §9 item 2 (`POST-3` step 4, phasor-magnitude
+semantics) is next and independent; nothing here touches it. One carry-over
+worth a review's attention: `mass_averaged_sar`'s ball is a quadrature-sampled
+indicator, so its accuracy is set by `quadrature_degree` (12 here, 0.04% volume
+at 2.29 cells per radius) — a coil+phantom fixture with a coarser mesh relative
+to a 1 g ball should re-measure that defect rather than inherit 0.04%.
+
+**Denials:** none. **Logs:** `20260804T020419Z_MAT-4-step2-probe.log` (exit 124,
+the ComplexComparisonError + deadlock), `20260804T020815Z_MAT-4-step2-gate.log`
+(2 passed, 19.7 s, before the lens ceiling was gated),
+`20260804T020933Z_MAT-4-step2-gate2.log` (the gate, 3 passed, 54.8 s).

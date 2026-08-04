@@ -1,0 +1,208 @@
+# Test Run
+- Chunk: MAT-4-step2-gate
+- Commit: f37238814ac0d222f2c12ff094c5701aca48776d
+- Time (UTC): 2026-08-04 02:08:15
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/validation/test_mass_averaged_sar.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  3 21:07 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/validation/test_mass_averaged_sar.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 2 items
+
+tests/validation/test_mass_averaged_sar.py::test_mass_averaging_is_the_identity_where_the_field_is_uniform collected 2 items
+
+tests/validation/test_mass_averaged_sar.py::test_mass_averaging_is_the_identity_where_the_field_is_uniform Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 40%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 60%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 80%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.0011468s, CPU 0.001149s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.179536s, CPU 0.179532s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 4377 nodes...
+Info    : Done tetrahedrizing 4385 nodes (Wall 0.0654919s, CPU 0.061843s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.131762s, CPU 0.116308s)
+Info    : Found volume 1
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 10.6284 (nodes removed 0 0)
+Info    : It. 500 - 498 nodes created - worst tet radius 2.31938 (nodes removed 0 2)
+Info    : It. 1000 - 998 nodes created - worst tet radius 1.91146 (nodes removed 0 2)
+Info    : It. 1500 - 1498 nodes created - worst tet radius 1.70789 (nodes removed 0 2)
+Info    : It. 2000 - 1998 nodes created - worst tet radius 1.56894 (nodes removed 0 2)
+Info    : It. 2500 - 2498 nodes created - worst tet radius 1.46767 (nodes removed 0 2)
+Info    : It. 3000 - 2998 nodes created - worst tet radius 1.3966 (nodes removed 0 2)
+Info    : It. 3500 - 3498 nodes created - worst tet radius 1.33482 (nodes removed 0 2)
+Info    : It. 4000 - 3998 nodes created - worst tet radius 1.28405 (nodes removed 0 2)
+Info    : It. 4500 - 4498 nodes created - worst tet radius 1.23673 (nodes removed 0 2)
+Info    : It. 5000 - 4998 nodes created - worst tet radius 1.19836 (nodes removed 0 2)
+Info    : It. 5500 - 5498 nodes created - worst tet radius 1.16389 (nodes removed 0 2)
+Info    : It. 6000 - 5998 nodes created - worst tet radius 1.13202 (nodes removed 0 2)
+Info    : It. 6500 - 6498 nodes created - worst tet radius 1.10598 (nodes removed 0 2)
+Info    : It. 7000 - 6998 nodes created - worst tet radius 1.08181 (nodes removed 0 2)
+Info    : It. 7500 - 7498 nodes created - worst tet radius 1.05739 (nodes removed 0 2)
+Info    : It. 8000 - 7998 nodes created - worst tet radius 1.03669 (nodes removed 0 2)
+Info    : It. 8500 - 8498 nodes created - worst tet radius 1.01638 (nodes removed 0 2)
+Info    : 3D refinement terminated (13359 nodes total):
+Info    :  - 2 Delaunay cavities modified for star shapeness
+Info    :  - 2 nodes could not be inserted
+Info    :  - 75370 tetrahedra created in 0.61241 sec. (123071 tets/s)
+Info    : Done meshing 3D (Wall 0.902058s, CPU 0.882369s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 4.17365e-06) with worst = 0.0302564 / average = 0.776201:
+Info    : 0.00 < quality < 0.10 :        39 elements
+Info    : 0.10 < quality < 0.20 :       137 elements
+Info    : 0.20 < quality < 0.30 :       232 elements
+Info    : 0.30 < quality < 0.40 :       375 elements
+Info    : 0.40 < quality < 0.50 :       537 elements
+Info    : 0.50 < quality < 0.60 :       915 elements
+Info    : 0.60 < quality < 0.70 :      1984 elements
+Info    : 0.70 < quality < 0.80 :      4698 elements
+Info    : 0.80 < quality < 0.90 :      7422 elements
+Info    : 0.90 < quality < 1.00 :      3509 elements
+Info    : 405 edge swaps, 19 node relocations (volume = 4.17365e-06): worst = 0.267739 / average = 0.789435 (Wall 0.00998162s, CPU 0.009924s)
+Info    : 407 edge swaps, 20 node relocations (volume = 4.17365e-06): worst = 0.267739 / average = 0.789456 (Wall 0.0122209s, CPU 0.012163s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         2 elements
+Info    : 0.30 < quality < 0.40 :       372 elements
+Info    : 0.40 < quality < 0.50 :       506 elements
+Info    : 0.50 < quality < 0.60 :       866 elements
+Info    : 0.60 < quality < 0.70 :      2002 elements
+Info    : 0.70 < quality < 0.80 :      4752 elements
+Info    : 0.80 < quality < 0.90 :      7460 elements
+Info    : 0.90 < quality < 1.00 :      3519 elements
+Info    : Optimizing volume 2
+Info    : Optimization starts (volume = 5.98263e-05) with worst = 0.00120684 / average = 0.772343:
+Info    : 0.00 < quality < 0.10 :       107 elements
+Info    : 0.10 < quality < 0.20 :       378 elements
+Info    : 0.20 < quality < 0.30 :       622 elements
+Info    : 0.30 < quality < 0.40 :       967 elements
+Info    : 0.40 < quality < 0.50 :      1484 elements
+Info    : 0.50 < quality < 0.60 :      2715 elements
+Info    : 0.60 < quality < 0.70 :      6369 elements
+Info    : 0.70 < quality < 0.80 :     13749 elements
+Info    : 0.80 < quality < 0.90 :     19626 elements
+Info    : 0.90 < quality < 1.00 :      9503 elements
+Info    : 1096 edge swaps, 37 node relocations (volume = 5.98263e-05): worst = 0.226447 / average = 0.784582 (Wall 0.0322158s, CPU 0.032201s)
+Info    : 1105 edge swaps, 40 node relocations (volume = 5.98263e-05): worst = 0.300099 / average = 0.784648 (Wall 0.0383934s, CPU 0.03838s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       973 elements
+Info    : 0.40 < quality < 0.50 :      1412 elements
+Info    : 0.50 < quality < 0.60 :      2678 elements
+Info    : 0.60 < quality < 0.70 :      6310 elements
+Info    : 0.70 < quality < 0.80 :     13916 elements
+Info    : 0.80 < quality < 0.90 :     19812 elements
+Info    : 0.90 < quality < 1.00 :      9436 elements
+Info    : Done optimizing mesh (Wall 0.153759s, CPU 0.149811s)
+Info    : 13359 nodes 83047 elements
+
+[MAT-4 step 2] m_avg = 0.050 g -> ball radius 2.2854 mm = 0.229 R, h_sphere = 1.000 mm (2.29 cells per radius), quadrature degree 12
+  centre: SAR_avg = 8.312427e-08 W/kg, SAR_point = 8.313705e-08 W/kg, ratio = 0.999846
+  kernel: meshed mass = 4.997993e-05 kg vs m_avg 5.000000e-05 (0.040%), V_kernel/V_exact = 0.999599, P_diss(ball) = 4.154545e-12 W
+PASSEDPASSED
+tests/validation/test_mass_averaged_sar.py::test_averaging_at_the_surface_loses_half_the_power 
+tests/validation/test_mass_averaged_sar.py::test_averaging_at_the_surface_loses_half_the_power   surface control: SAR_avg(0,0,R) = 3.762313e-08 W/kg vs centre 8.312427e-08 W/kg => separation 2.2094 (ceiling 2, all the power outside the phantom)
+    surface ball mass 4.994600e-05 kg (0.9989 of m_avg — uniform rho, so the denominator does not move)
+PASSEDPASSED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 2 passed, 8 warnings in 19.68s ========================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/validation/test_mass_averaged_sar.py: 18 warnings
+  /usr/local/lib/python3.10/dist-packages/ufl/core/expr.py:275: DeprecationWarning: Expr.ufl_domain() is deprecated, please use extract_unique_domain(expr) instead.
+    warnings.warn("Expr.ufl_domain() is deprecated, please "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 2 passed, 26 warnings in 19.70s ========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 21

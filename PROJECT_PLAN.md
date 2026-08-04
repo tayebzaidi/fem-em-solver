@@ -1238,8 +1238,9 @@ retired; the step-2b result is at the end of this entry)*
 > `MAT-1` is `⚠️` not because the preset table is wrong but because nothing
 > consumes it.
 
-**`MAT-4` — SAR computation** 🟡 *(step 1 ✅ 2026-08-03; step 2 ⬜.
-Implementation plan 2026-07-31, 18:00 review)*
+**`MAT-4` — SAR computation** 🟡 *(step 1 ✅ 2026-08-03; step 2 ✅ 2026-08-04.
+The chunk stays 🟡: neither step is an IEEE C95.3 1 g/10 g claim — see step 2's
+"does not close".  Implementation plan 2026-07-31, 18:00 review)*
 > **Step 1 ✅ done 2026-08-03, 21:00 implementer run** —
 > `tests/validation/test_lossy_sphere_sar.py::test_lossy_sphere_mean_sar_matches_closed_form`
 > plus `src/fem_em_solver/post/sar.py`; log
@@ -1345,9 +1346,55 @@ Implementation plan 2026-07-31, 18:00 review)*
 > exactly by construction and no run could tell you otherwise, but it is a
 > reasoned control rather than a measured one and should be described that way.
 >
+> **Step 2 ✅ done 2026-08-04, 21:00 implementer run** —
+> `tests/validation/test_mass_averaged_sar.py` (2 tests) plus
+> `build_density_field` / `averaging_ball_radius` / `mass_averaged_sar` /
+> `point_sar` in `src/fem_em_solver/post/sar.py`; gate log
+> `20260804T020933Z_MAT-4-step2-gate2.log`, **3 passed in 54.8 s** at `-n 2`
+> (the two step-2 tests plus `test_lossy_sphere_sar.py` as a regression),
+> standard tier, complex build. Operating point is step 1's fine mesh unchanged:
+> σ = 0.57 S/m, R = 0.01 m, h_sphere = R/10, one solve, the averaging is
+> post-processing.
+> * **The uniform-field identity** — `SAR_avg/SAR_point = 0.999846` at the
+>   centre, i.e. **0.0154%** off the identity against a budget of **0.26%**
+>   summed from measured parts (2× step 1's 0.11% interior field spread, since
+>   SAR goes as |E|², plus the kernel's own 0.04% volume defect). 17× inside.
+> * **Kernel mass conservation** — meshed `∫ρ dV = 4.997993e-5 kg` against
+>   `m_avg = 5e-5 kg`, **0.040%**, gated at step 1's meshed-sphere accuracy
+>   0.36% (`V_mesh/V_exact = 0.9964`). Kernel volume `V/V_exact = 0.999599`.
+> * **Surface control — the plan's ceiling of 2 was the flat-interface answer
+>   and is corrected here to 2.1875.** The interface is convex, so a ball of
+>   radius `a` centred on the surface keeps the sphere-sphere *lens* fraction
+>   `f = (8 − 3a/R)/16 = 0.4571`, not ½; the ceiling is `1/f = 2.1875`.
+>   Measured separation **2.2094**, which is `1.00%` off that ceiling — so the
+>   run gates both the plan's `> 1.5` floor **and** agreement with `1/f` to 5%
+>   (banded from the 1.00% measurement). The second assertion is the sharper
+>   one: it says the kernel loses the geometrically *correct* share of the
+>   numerator outside the phantom, not merely some of it. Had the plan's 2 been
+>   asserted as a ceiling, this run would have read as a failure at +10.5%.
+>
+> ρ is a DG0 field via a new `build_density_field` in `post/sar.py` rather than
+> a widened `build_material_fields`: ρ never enters the curl-curl operator, and
+> changing that function's two-tuple return would touch every solver caller for
+> a quantity none of them assembles. Its value is **uniform across the box**,
+> which the negative control requires — an air-density exterior would cut
+> numerator and denominator together and collapse the separation to ~1.
+>
+> **Defect found and fixed in the same run (probe log
+> `20260804T020419Z_MAT-4-step2-probe.log`):** the ball indicator
+> `ufl.conditional(ufl.lt(dot(offset, offset), a²), …)` raises
+> `ComplexComparisonError` in the complex build for any **non-zero** centre —
+> the literal centre vector is complex-typed there — while a zero centre
+> simplifies away and passes. So the identity test passed and the surface
+> control died in JIT, then deadlocked in `MPI_Bcast` to the 180 s timeout
+> (exit 124). `ufl.real` around the comparison argument is the fix and carries
+> that explanation as a code comment. Worth generalising: **a UFL comparison
+> that works at the origin is not evidence it works anywhere else.**
+>
 > **Step 2 — mass-averaged SAR (one run; independent of everything else in the
 > queue).** *(Scoped 2026-08-03, 03:00 review; previously one line reading
-> "needs ρ as a field and an averaging-volume decision".)*
+> "needs ρ as a field and an averaging-volume decision". Plan as written,
+> executed as written except the corrected control ceiling above.)*
 > **Read the sizing trap first — it is the whole design constraint.** At
 > ρ = 1000 kg/m³ the step-1 sphere (R = 0.01 m) has a total mass of
 > **4.19 g**, and a 1 g averaging volume is `1e-6 m³` ⇒ an equivalent sphere of
@@ -2825,7 +2872,13 @@ chunk is needed.
 2d's landed machinery but depends on nothing in this queue; item 5 is the
 one serial link (depends on item 4) and says so.**
 
-1. **`MAT-4` step 2 — mass-averaged SAR.** Independent. Execute the §7
+1. ✅ **DONE 2026-08-04, 21:00 run** (`20260804T020933Z_MAT-4-step2-gate2.log`,
+   3 passed in 54.8 s). Identity 0.999846 (budget 0.26%), kernel mass 0.040%
+   (budget 0.36%), surface control 2.2094 — **the plan's ceiling of 2 was the
+   flat-interface answer**; the sphere-sphere lens gives 2.1875 and the run
+   gates agreement with it to 5% as well as the `> 1.5` floor. `MAT-4` held at
+   🟡 as instructed. Original item:
+   **`MAT-4` step 2 — mass-averaged SAR.** Independent. Execute the §7
    `MAT-4` step-2 plan, **scoped at the 03:00 review from one line, including the sizing
    trap that decides the design**: at ρ = 1000 the step-1 sphere holds 4.19 g, so
    a 1 g averaging volume is 0.62 R — larger than the uniform core — and 10 g
