@@ -1,6 +1,11 @@
 # FEM-EM Solver — agent onboarding
 
-FEniCSX/DolfinX FEM solver for MRI coils loaded with gelled saline phantoms.
+FEniCSX/DolfinX FEM toolkit targeting the MRI-RF-safety slice of Ansys
+Electronics Desktop (HFSS + circuit solver first; Pennes bioheat long-term):
+construct birdcage coil + gelled saline phantom (± implant) simulations, tune
+the coil at 64/128 MHz, extract B1+/SAR/S-parameters. Scope rescoped
+2026-08-04 — see PROJECT_PLAN.md §1; parity claims are per-workflow, never
+"HFSS parity".
 Magnetostatics is validated against closed forms. The time-harmonic path is a
 real complex curl-curl solve validated against the analytic lossy plane wave
 (`TH-1` closed 2026-07-31; decay/phase constants to < 0.06%, `TH-6`). Coil
@@ -71,12 +76,19 @@ review of returned diffs stay in the main (Fable) session.
 ## Scheduled automation
 
 System cron runs headless sessions via `scripts/automation/` on a 90-minute
-grid — 3 reviews and 12 implementer runs a day, four runs after each review:
+grid — 3 reviews and 12 implementer runs a day, four runs after each review,
+plus one weekly planning review:
 
 - **Plan review** (Fable 5, medium effort, 03:00 / 10:30 / 18:00 local) — audits results
   against §4, rescopes failed attempts, disposes of `recovered/*` branches,
   tops the §9 "On deck" queue up to 5 items. Protocol:
   docs/automation/daily-review.md.
+- **Weekly planning review** (Fable 5, high effort, Sunday 01:30 local) —
+  owns the long horizon with brutal realism: §6 phase map and §10 roadmap
+  (phases → subgoals, dated pace-based assessments), examples/ health, and
+  commissioning/adjudicating `examples/ansys_benchmarks/` cases the human
+  operator replicates in Ansys Electronics Desktop (PROJECT_PLAN §5.4).
+  Never edits §9. Protocol: docs/automation/weekly-review.md.
 - **Implementer runs** (Opus, 04:30 / 06:00 / 07:30 / 09:00 and the same
   offsets after each later review) — each attempts the top On-deck item
   inside a 1-hour timebox; incomplete work is parked on `attempt/*` branches

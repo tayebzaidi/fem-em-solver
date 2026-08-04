@@ -64,7 +64,11 @@ the log it cites is what you cite back in the commit. Do not delegate steps 2,
 5. Assess against §10 success criteria: does the existing backlog still lead
    to the mission? If a gap exists, add new chunk entries (stable IDs,
    §4-compliant done-whens, implementation plans meeting the rubric below).
-   If no gap exists, do not invent work.
+   If no gap exists, do not invent work. **Scope boundary:** the §6 phase map
+   and §10's long-horizon roadmap (phases, subgoals, dated assessments)
+   belong to the weekly planning review (docs/automation/weekly-review.md) —
+   add chunks *within* the current phase's subgoals; do not restructure
+   phases or edit the roadmap here.
 
 6. Refresh **"On deck"** in §9: top it up to **at least 5** items not done or
    blocked — the 4 runs before the next review, plus one spare — ordered, each

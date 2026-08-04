@@ -6,19 +6,36 @@ nothing there is a task.
 
 ---
 
-## 1. Mission
+## 1. Mission *(rescoped 2026-08-04)*
 
-A FEniCSX/DolfinX finite element solver for electromagnetic simulation of MRI coils
-loaded with gelled saline phantoms. Target capability:
+A FEniCSX/DolfinX finite element toolkit that reproduces, for the slice of
+electromagnetics relevant to **MRI RF safety**, the workflow an engineer runs
+in Ansys Electronics Desktop — HFSS plus the circuit solver first, with the
+Pennes bioheat equation for thermal simulation as the long-term extension.
+The canonical workflow the tool must support end to end:
 
-1. Generate realistic birdcage coil + phantom geometry
-2. Solve magnetostatic and **time-harmonic** Maxwell problems with complex,
-   frequency-dependent materials
-3. Produce credible field diagnostics and ParaView-friendly outputs
-4. Produce lumped-port S-parameters usable for downstream tuning workflows
+1. **Construct** a birdcage coil + gelled saline phantom simulation from
+   parametric geometry — often with an implant inside the phantom.
+2. **Tune** the birdcage at 64 MHz (1.5 T) and 128 MHz (3 T): EM solve plus
+   circuit co-simulation to pick capacitor values, verify the mode spectrum,
+   and match the ports.
+3. **Drive** the tuned coil and extract the safety quantities: B1+ maps,
+   SAR (whole-phantom and local, including near-implant hot spots), and port
+   S-parameters.
+4. Long term: **couple to thermal** via the Pennes bioheat equation.
 
-Commercial solvers (HFSS, CST) are expensive and black-box; open-source
-alternatives (Elmer, OpenEMS) lack MRI-specific features. This is the gap.
+Commercial solvers are expensive and black-box; open-source alternatives lack
+the MRI-specific workflow. The scope is deliberately **the MRI-safety slice of
+HFSS, not HFSS**: general-purpose 3-D full-wave parity is out of reach for
+this project and is not the goal. Parity claims are made per-workflow ("tunes
+a shielded 8-rung birdcage at 128 MHz to within X of AED"), never
+per-product.
+
+**Cross-validation against Ansys is part of the method.** `examples/` carries
+runnable examples with XDMF outputs for visual review in ParaView, and
+periodically a benchmark case specified precisely enough for the human
+operator to replicate in Ansys Electronics Desktop; the returned numbers
+become gates (§5.4).
 
 ---
 
@@ -284,6 +301,31 @@ Use `exec -T` — without it `exec` allocates a TTY and can hang under an agent.
 harness exports `COMPOSE_FILE` itself; a bare `docker compose` outside `docker/`
 needs `-f docker/docker-compose.yml`.
 
+### 5.4 Examples and Ansys cross-validation
+
+- **`examples/` is a maintained product surface, not a scratch area.** Each
+  phase keeps at least one clean, runnable example demonstrating its current
+  capability, executed via `./run_examples.sh` and producing combined-XDMF
+  output that opens in ParaView — this is how the human operator reviews
+  progress independently of the test suite. When a chunk changes what an
+  example demonstrates, the same commit updates the example. A broken example
+  is a defect (known-issues discipline applies).
+- **Ansys benchmark cases** live in `examples/ansys_benchmarks/<case>/`, each
+  containing: `SPEC.md`, precise enough to replicate in Ansys Electronics
+  Desktop with no judgement calls (geometry with dimensions, materials,
+  boundary conditions, port definitions, frequencies, mesh guidance, and
+  exactly which quantities to export); the runnable script; our results
+  (metrics JSON + XDMF); and `COMPARISON.md` with our numbers filled in and
+  blank columns for the AED numbers.
+- **Cadence is the weekly planning review's call**
+  (docs/automation/weekly-review.md) — roughly one case per phase milestone,
+  and only on gated capability. A benchmark on ungated physics wastes a
+  licence-hour measuring noise.
+- **Returned AED numbers are adjudicated by the next weekly review**: recorded
+  in the case's `COMPARISON.md`, promoted into §7 gates where they agree, and
+  opened as known-issues/chunks where they disagree — a disagreement with the
+  commercial solver is a finding to diagnose, never to explain away.
+
 ---
 
 ## 6. Phase map
@@ -296,7 +338,15 @@ needs `-f docker/docker-compose.yml`.
 | 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58%, eddy-current regime); SAR still ungated |
 | 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-8` | Placeholder-backed |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 |
-| 6 | Advanced: MPI scaling, AMR, sweeps, optimization | — | Deferred |
+| 6 | Birdcage tuning at 64/128 MHz: mode spectrum, lumped capacitors, circuit co-simulation (the HFSS + Circuit split) | subgoals owned by the weekly review (§10) | Not started |
+| 7 | Implants: parametric implant geometry in the phantom, local SAR / near-implant hot spots | subgoals owned by the weekly review (§10) | Not started |
+| 8 | Thermal: Pennes bioheat driven by SAR | subgoals owned by the weekly review (§10) | Not started |
+| 9 | Advanced: MPI scaling, AMR, sweeps, optimization | — | Deferred |
+
+Phases 6–8 are the 2026-08-04 scope adjustment (§1). Their phase goals and
+subgoals live in §10's long-horizon roadmap and are **owned by the weekly
+planning review**; the daily review breaks current-phase subgoals into
+implementer-sized items and does not restructure phases.
 
 ### Critical path
 
@@ -1438,7 +1488,7 @@ blamed.
 
 ---
 
-## 10. Success criteria
+## 10. Success criteria and long-horizon roadmap
 
 ### MVP (end of Phase 2)
 - [x] Time-harmonic solver reproduces the analytic lossy plane-wave solution to < 5% *(3.61% in L2; decay constant 0.019%, `TH-6`)*
@@ -1473,10 +1523,44 @@ blamed.
   the coil+phantom fixture, which `GEO-9` step 1 gated on 2026-08-03; nothing
   has yet computed B1+ on it.)*
 
-### Stretch (Phase 6)
-- [ ] Multi-channel coil optimization
-- [ ] Validation results published
-- [ ] Community adoption
+### Long-horizon roadmap — owned by the weekly planning review
+
+The weekly review (docs/automation/weekly-review.md) maintains this section
+with brutal realism: phase goals, subgoals within phases, and dated
+assessments extrapolated from **measured pace**, never from hope. Rules of
+engagement: a subgoal that has not moved in a month is rescoped or killed, not
+carried; parity claims are per-workflow, never per-product (§1); a phase goal
+without a named validation target (closed form, literature value, or AED
+comparison) is not a goal; every phase milestone lands an `examples/` case
+and, where gated physics supports it, an Ansys benchmark case (§5.4).
+
+Seeded 2026-08-04 with the scope adjustment; the first weekly review
+re-derives all of this from measured pace and owns it thereafter:
+
+- **Phase 5 — loaded birdcage RF (current).** Ports on the birdcage
+  (`PORT-1` step 3b lineage), then B1+ maps and SAR on the coil+phantom
+  fixture at 64/128 MHz. The honest blocker stated plainly: saline at Larmor
+  frequency is outside every current gate's regime (§2.1) — full-wave
+  validation there is this phase's real content, not an afterthought, and no
+  Phase-6 tuning number means anything before it exists.
+- **Phase 6 — tuning.** Mode spectrum of the birdcage (the `TH-9` eigensolver
+  machinery on the birdcage mesh), lumped capacitors at the gap/port level,
+  and a circuit co-simulation loop: S-parameters from the EM solve, tuning
+  and matching in a circuit layer — the HFSS + Circuit split. Hard parts
+  named now: near-resonance solves are §2.1's ill-conditioning trap *by
+  construction* (tuning means operating at the singularity the resonance
+  guard exists to detect), and the whole phase is `PORT-1`-blocked until
+  gap-voltage ports gate.
+- **Phase 7 — implants.** Parametric implant geometry first (wires, rods,
+  plates in the phantom; CAD import later), mesh grading around thin
+  conductors (the `MAG-13` 1/r lesson, made worse by skin depth), local SAR
+  and near-implant hot spots. This is where AED comparisons matter most and
+  where published measured data exists to gate against.
+- **Phase 8 — thermal.** Pennes bioheat with SAR as the source term;
+  phantom-regime validation first (gel: no perfusion, so the equation reduces
+  to heat conduction + source, which analytic solutions cover).
+  Mathematically the easiest phase; the risk is validation data and the
+  EM–thermal interface, not the solver.
 
 ---
 

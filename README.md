@@ -4,30 +4,40 @@
 [![FEniCSX](https://img.shields.io/badge/FEniCSX-0.7+-green.svg)](https://fenicsproject.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A finite element method (FEM) solver for electromagnetic simulations of MRI coils with gelled saline phantoms, built on [FEniCSX/DolfinX](https://fenicsproject.org/).
+A finite element method (FEM) toolkit, built on
+[FEniCSX/DolfinX](https://fenicsproject.org/), targeting the **MRI RF safety**
+slice of what Ansys Electronics Desktop does (HFSS + circuit solver first,
+Pennes bioheat thermal long-term): construct birdcage coil + gelled saline
+phantom simulations (often with implants), tune the coil at 64 MHz (1.5 T) and
+128 MHz (3 T), and extract the safety quantities — B1+ maps, SAR including
+near-implant hot spots, and port S-parameters. The scope is deliberately that
+workflow, not general-purpose HFSS parity.
 
-> **Project status: early alpha.** Magnetostatics is implemented and validated
-> against analytic solutions. The time-harmonic path is currently a **proxy**
-> (`E = -jωA`), not a Maxwell solve — material properties do not yet affect computed
-> fields, and exported S-parameters come from a placeholder coupling model rather
-> than the solved field. See [PROJECT_PLAN.md](PROJECT_PLAN.md) §2 before relying on
-> any frequency-domain output.
+> **Project status: alpha.** Magnetostatics is validated against closed forms.
+> The time-harmonic path is a real complex curl-curl solve, validated against
+> analytic solutions (lossy plane wave, waveguide cutoff, dielectric sphere,
+> cavity resonances) and against Dodd–Deeds coil loading in the eddy-current
+> regime. S-parameters from the packaged sweep path are still a placeholder;
+> the first solved-field S-matrix exists on a two-loop validation fixture.
+> See [PROJECT_PLAN.md](PROJECT_PLAN.md) §2 for the honest current state
+> before relying on any figure.
 
 ## Features
 
 **Working today**
-- **Magnetostatics**: magnetic vector potential formulation, N1curl elements, gauge penalty
-- **Meshing**: parametric Gmsh geometry generation with region tagging and mesh QA
-- **Validation**: field uniformity in a Helmholtz configuration (`CV < 1%`). The
-  analytic wire/loop comparisons are currently **broken** — see
-  [PROJECT_PLAN.md](PROJECT_PLAN.md) §2.3b
+- **Magnetostatics**: vector potential formulation, N1curl elements, validated against closed forms
+- **Time-harmonic Maxwell**: complex curl-curl solve with lossy materials (`ε_c = εᵣ − jσ/ωε₀`), validated against analytic solutions
+- **Meshing**: parametric Gmsh geometry (two-loop, coil+phantom, birdcage with port regions) with conformity identities gated in CI
+- **Materials**: gelled saline phantom properties measurably drive the solved field (gated)
+- **SAR**: mean and mass-averaged SAR, gated against the lossy-sphere closed form
+- **Post-processing**: Poynting power balance, current-divergence residual, phasor-correct phantom field metrics, combined XDMF for ParaView
 
-**Planned** (see [PROJECT_PLAN.md](PROJECT_PLAN.md))
-- **Time-Harmonic**: full Maxwell equations for frequency-domain analysis
-- **Coil Models**: loop coils, birdcage coils, TEM coils
-- **Material Models**: complex permittivity, dispersion models, gelled saline phantoms
-- **MRI-Focused**: B1+ mapping, SAR calculation, coil loading analysis
-- **HFSS comparison**: quantitative benchmarking against commercial solvers
+**In progress / planned** (see [PROJECT_PLAN.md](PROJECT_PLAN.md) §6 and §10)
+- **Ports & S-parameters**: gap-voltage lumped ports from the solved field (`PORT-1`)
+- **Birdcage tuning**: mode spectrum, lumped capacitors, circuit co-simulation at 64/128 MHz
+- **Implants**: parametric implant geometry, local SAR / hot spots
+- **Thermal**: Pennes bioheat driven by SAR
+- **Ansys cross-validation**: benchmark cases under `examples/ansys_benchmarks/` specified for direct replication in Ansys Electronics Desktop, with returned numbers promoted into gates
 
 ## Quick Start
 
