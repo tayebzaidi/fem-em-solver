@@ -1,0 +1,80 @@
+# Test Run
+- Chunk: MAT-6-step1-numbers
+- Commit: b90f7711f691310212460504594315d09e9837fc
+- Time (UTC): 2026-07-31 05:05:00
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.3.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 1 python3 -m pytest tests/validation/test_dodd_deeds_impedance.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Jul 31 00:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.3.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 1 python3 -m pytest tests/validation/test_dodd_deeds_impedance.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 6 items
+
+tests/validation/test_dodd_deeds_impedance.py::test_nonconducting_half_space_is_exactly_invisible PASSED
+tests/validation/test_dodd_deeds_impedance.py::test_perfect_conductor_limit_matches_image_mutual_inductance 
+  ΔL image (elliptic) = -6.753694e-08 H
+  ΔL Hankel (σ=1e12)  = -6.753682e-08 H
+  relative difference = 0.0002%
+PASSED
+tests/validation/test_dodd_deeds_impedance.py::test_lossy_half_space_dissipates_and_expels_flux 
+  ΔZ(σ=1e6 S/m) = 9.772814e-02 + -5.410811e+01j Ω
+PASSED
+tests/validation/test_dodd_deeds_impedance.py::test_thin_skin_departure_from_perfect_conductor_is_equal_parts 
+  σ =  1.0e+05 S/m  δ = 1.408e-04 m  ΔR = 3.07233e-01 Ω  ΔR/(ΔX−ΔX_pec) = 0.99148
+  σ =  1.0e+06 S/m  δ = 4.453e-05 m  ΔR = 9.77281e-02 Ω  ΔR/(ΔX−ΔX_pec) = 0.99729
+  σ =  1.0e+07 S/m  δ = 1.408e-05 m  ΔR = 3.09618e-02 Ω  ΔR/(ΔX−ΔX_pec) = 0.99914
+  σ =  1.0e+08 S/m  δ = 4.453e-06 m  ΔR = 9.79672e-03 Ω  ΔR/(ΔX−ΔX_pec) = 0.99973
+PASSED
+tests/validation/test_dodd_deeds_impedance.py::test_loss_scales_as_sqrt_frequency_in_the_thin_skin_regime 
+  ΔR(f) = [0.00864376 0.01499086 0.02739138]
+  log-log slope = 0.5009 (expect 0.5)
+PASSED
+tests/validation/test_dodd_deeds_impedance.py::test_liftoff_reduces_the_coupling_monotonically PASSED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 6 passed, 8 warnings in 1.14s =========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 2

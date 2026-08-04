@@ -1,0 +1,244 @@
+# Test Run
+- Chunk: MAT-6-step2a-costprobe2
+- Commit: 262a0851d3db9ac6b5572e253b4462ff864a5146
+- Time (UTC): 2026-07-31 09:38:34
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.3.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 scripts/probes/mat6_step2a_probe.py --boxes 0.10 --h-wire 0.006 --h-near 0.014 --h-far 0.03'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Jul 31 04:37 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.3.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 scripts/probes/mat6_step2a_probe.py --boxes 0.10 --h-wire 0.006 --h-near 0.014 --h-far 0.03'\'''
+=== MAT-6 step 2a: loop over lossy half-space, probe ===
+  f = 1e+07 Hz, sigma = 100 S/m, eps_r = 1, a = 0.04 m, h = 0.015 m, r_wire = 0.005 m
+  loss tangent sigma/(w eps0 eps_r) = 1.798e+05  (want >> 1e2)
+  skin depth delta = 0.015915 m -> 1.14 near-cells per delta; slab depth/delta = 6.28
+  k0 * box diagonal (W=0.1) = 0.0726  (want << 1)
+
+  closed form (filamentary, h = 0.015): dZ = +4.767085e-01 + j(-8.383488e-01) Ohm
+  same at h -/+ r_wire: dR 7.2630e-01 .. 3.2260e-01, dX -1.1672e+00 .. -6.1587e-01  (finite-section spread: dR 84.7%, dX 65.8%)
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 50%] Meshing curve 11 (Line)
+Info    : [ 50%] Meshing curve 12 (Line)
+Info    : [ 60%] Meshing curve 13 (Line)
+Info    : [ 60%] Meshing curve 14 (Line)
+Info    : [ 70%] Meshing curve 15 (Line)
+Info    : [ 70%] Meshing curve 16 (Line)
+Info    : [ 80%] Meshing curve 17 (Line)
+Info    : [ 80%] Meshing curve 18 (Line)
+Info    : [ 90%] Meshing curve 19 (Line)
+Info    : [ 90%] Meshing curve 20 (Line)
+Info    : [100%] Meshing curve 21 (Line)
+Info    : [100%] Meshing curve 22 (Line)
+Info    : Done meshing 1D (Wall 0.107781s, CPU 0.106816s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.0595812s, CPU 0.059517s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 3 volumes with 1 connected component
+Info    : Tetrahedrizing 1100 nodes...
+Info    : Done tetrahedrizing 1108 nodes (Wall 0.015707s, CPU 0.015705s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.0290305s, CPU 0.029027s)
+Info    : Found volume 4
+Info    : Found volume 3
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 7.60108 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 1.36021 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 1.10386 (nodes removed 0 0)
+Info    : 3D refinement terminated (2512 nodes total):
+Info    :  - 0 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 14280 tetrahedra created in 0.103987 sec. (137324 tets/s)
+Info    : Done meshing 3D (Wall 0.165878s, CPU 0.165763s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 1.62982e-05) with worst = 0.0489173 / average = 0.581444:
+Info    : 0.00 < quality < 0.10 :         8 elements
+Info    : 0.10 < quality < 0.20 :        20 elements
+Info    : 0.20 < quality < 0.30 :        25 elements
+Info    : 0.30 < quality < 0.40 :        31 elements
+Info    : 0.40 < quality < 0.50 :        46 elements
+Info    : 0.50 < quality < 0.60 :       168 elements
+Info    : 0.60 < quality < 0.70 :       323 elements
+Info    : 0.70 < quality < 0.80 :        60 elements
+Info    : 0.80 < quality < 0.90 :         7 elements
+Info    : 0.90 < quality < 1.00 :        11 elements
+Info    : 39 edge swaps, 0 node relocations (volume = 1.62982e-05): worst = 0.0672543 / average = 0.597976 (Wall 0.000665718s, CPU 0.000582s)
+Info    : 47 edge swaps, 0 node relocations (volume = 1.62982e-05): worst = 0.174164 / average = 0.601798 (Wall 0.000866123s, CPU 0.000757s)
+Info    : 49 edge swaps, 0 node relocations (volume = 1.62982e-05): worst = 0.174164 / average = 0.602617 (Wall 0.000974927s, CPU 0.000852s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         1 elements
+Info    : 0.20 < quality < 0.30 :         4 elements
+Info    : 0.30 < quality < 0.40 :        38 elements
+Info    : 0.40 < quality < 0.50 :        62 elements
+Info    : 0.50 < quality < 0.60 :       171 elements
+Info    : 0.60 < quality < 0.70 :       319 elements
+Info    : 0.70 < quality < 0.80 :        57 elements
+Info    : 0.80 < quality < 0.90 :         7 elements
+Info    : 0.90 < quality < 1.00 :        11 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 0.004) with worst = 0.00297778 / average = 0.745194:
+Info    : 0.00 < quality < 0.10 :        12 elements
+Info    : 0.10 < quality < 0.20 :        30 elements
+Info    : 0.20 < quality < 0.30 :        47 elements
+Info    : 0.30 < quality < 0.40 :       104 elements
+Info    : 0.40 < quality < 0.50 :       133 elements
+Info    : 0.50 < quality < 0.60 :       359 elements
+Info    : 0.60 < quality < 0.70 :       652 elements
+Info    : 0.70 < quality < 0.80 :      1079 elements
+Info    : 0.80 < quality < 0.90 :      1183 elements
+Info    : 0.90 < quality < 1.00 :       629 elements
+Info    : 86 edge swaps, 1 node relocations (volume = 0.004): worst = 0.14987 / average = 0.757093 (Wall 0.00189715s, CPU 0.001898s)
+Info    : 89 edge swaps, 1 node relocations (volume = 0.004): worst = 0.301016 / average = 0.757545 (Wall 0.00227696s, CPU 0.002278s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       108 elements
+Info    : 0.40 < quality < 0.50 :       124 elements
+Info    : 0.50 < quality < 0.60 :       352 elements
+Info    : 0.60 < quality < 0.70 :       648 elements
+Info    : 0.70 < quality < 0.80 :      1104 elements
+Info    : 0.80 < quality < 0.90 :      1193 elements
+Info    : 0.90 < quality < 1.00 :       622 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 0.0039837) with worst = 0.0237101 / average = 0.763176:
+Info    : 0.00 < quality < 0.10 :        11 elements
+Info    : 0.10 < quality < 0.20 :        56 elements
+Info    : 0.20 < quality < 0.30 :       105 elements
+Info    : 0.30 < quality < 0.40 :       164 elements
+Info    : 0.40 < quality < 0.50 :       291 elements
+Info    : 0.50 < quality < 0.60 :       544 elements
+Info    : 0.60 < quality < 0.70 :      1283 elements
+Info    : 0.70 < quality < 0.80 :      2363 elements
+Info    : 0.80 < quality < 0.90 :      3024 elements
+Info    : 0.90 < quality < 1.00 :      1512 elements
+Info    : 168 edge swaps, 8 node relocations (volume = 0.0039837): worst = 0.300035 / average = 0.774083 (Wall 0.00376351s, CPU 0.003761s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       157 elements
+Info    : 0.40 < quality < 0.50 :       282 elements
+Info    : 0.50 < quality < 0.60 :       553 elements
+Info    : 0.60 < quality < 0.70 :      1267 elements
+Info    : 0.70 < quality < 0.80 :      2398 elements
+Info    : 0.80 < quality < 0.90 :      3042 elements
+Info    : 0.90 < quality < 1.00 :      1507 elements
+Info    : Done optimizing mesh (Wall 0.0213315s, CPU 0.017259s)
+Info    : 2512 nodes 16451 elements
+
+=== box half-width W = 0.1000 m ===
+  mesh: 14029 cells, generated in 1.0 s
+  wire volume (meshed / exact torus): 1.629816e-05 / 1.973921e-05 m^3  (-17.43%); meshed loop current 0.825674 A
+Traceback (most recent call last):
+  File "/workspace/scripts/probes/mat6_step2a_probe.py", line 290, in <module>
+Traceback (most recent call last):
+  File "/workspace/scripts/probes/mat6_step2a_probe.py", line 290, in <module>
+    main()
+  File "/workspace/scripts/probes/mat6_step2a_probe.py", line 264, in main
+    results = [run_box(W, args, comm) for W in args.boxes]
+  File "/workspace/scripts/probes/mat6_step2a_probe.py", line 264, in <listcomp>
+    results = [run_box(W, args, comm) for W in args.boxes]
+  File "/workspace/scripts/probes/mat6_step2a_probe.py", line 186, in run_box
+    e_loaded, t_loaded = _solve(msh, cell_tags, SIGMA_SLAB, comm)
+  File "/workspace/scripts/probes/mat6_step2a_probe.py", line 108, in _solve
+    fields = solver.solve(
+  File "/workspace/src/fem_em_solver/core/time_harmonic.py", line 354, in solve
+    main()
+  File "/workspace/scripts/probes/mat6_step2a_probe.py", line 264, in main
+    problem = LinearProblem(a, L, bcs=bcs, petsc_options=options)
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/petsc.py", line 590, in __init__
+    self._L = _create_form(L, form_compiler_options=form_compiler_options, jit_options=jit_options)
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py", line 188, in form
+    results = [run_box(W, args, comm) for W in args.boxes]
+  File "/workspace/scripts/probes/mat6_step2a_probe.py", line 264, in <listcomp>
+    return _create_form(form)
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py", line 183, in _create_form
+    return _form(form)
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py", line 141, in _form
+    ufcx_form, module, code = jit.ffcx_jit(mesh.comm, form,
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/jit.py", line 91, in mpi_jit
+    raise RuntimeError(f"Failed just-in-time compilation of form: {error_msg}")
+RuntimeError: Failed just-in-time compilation of form: Compilation failed on root node.
+    results = [run_box(W, args, comm) for W in args.boxes]
+  File "/workspace/scripts/probes/mat6_step2a_probe.py", line 186, in run_box
+    e_loaded, t_loaded = _solve(msh, cell_tags, SIGMA_SLAB, comm)
+  File "/workspace/scripts/probes/mat6_step2a_probe.py", line 108, in _solve
+    fields = solver.solve(
+  File "/workspace/src/fem_em_solver/core/time_harmonic.py", line 354, in solve
+    problem = LinearProblem(a, L, bcs=bcs, petsc_options=options)
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/petsc.py", line 590, in __init__
+    self._L = _create_form(L, form_compiler_options=form_compiler_options, jit_options=jit_options)
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py", line 188, in form
+    return _create_form(form)
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py", line 183, in _create_form
+    return _form(form)
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py", line 141, in _form
+    ufcx_form, module, code = jit.ffcx_jit(mesh.comm, form,
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/jit.py", line 91, in mpi_jit
+    raise RuntimeError(f"Failed just-in-time compilation of form: {error_msg}")
+RuntimeError: Failed just-in-time compilation of form: JIT compilation timed out, probably due to a failed previous compile.
+        Try cleaning cache (e.g. remove /root/.cache/fenics/libffcx_forms_c3c8a5b94391b247a79dd58fea33d589bbf560bd.c) or increase timeout option.
+Exception ignored in: <function LinearProblem.__del__ at 0x72b95215f010>
+Traceback (most recent call last):
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/petsc.py", line 627, in __del__
+    self._solver.destroy()
+AttributeError: 'LinearProblem' object has no attribute '_solver'
+Exception ignored in: <function LinearProblem.__del__ at 0x78a74a38f010>
+Traceback (most recent call last):
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/petsc.py", line 627, in __del__
+    self._solver.destroy()
+AttributeError: 'LinearProblem' object has no attribute '_solver'
+
+## Exit
+- Status: 1
+- Elapsed (s): 13

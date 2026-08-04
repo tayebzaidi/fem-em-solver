@@ -14,14 +14,14 @@
         <link rel="prev" href="../../status/">
       
       
-        <link rel="next" href="../../testing/pending-tests/">
+        <link rel="next" href="../../testing/known-issues/">
       
       
         
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -396,6 +396,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#geometry-and-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -407,10 +418,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#validation-test" class="md-nav__link">
+  <a href="#quantitative-validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Validation test
+        Quantitative validation
       
     </span>
   </a>
@@ -418,10 +429,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#acceptance-criterion" class="md-nav__link">
+  <a href="#the-air-box-dominates-accuracy-not-mesh-resolution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Acceptance criterion
+        The air box dominates accuracy — not mesh resolution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uniformity-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uniformity check
       
     </span>
   </a>
@@ -509,14 +531,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/pending-tests/" class="md-nav__link">
+      <a href="../../testing/known-issues/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Pending Manual Tests
+    Known Issues
   
 
     
@@ -603,6 +625,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#geometry-and-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -614,10 +647,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#validation-test" class="md-nav__link">
+  <a href="#quantitative-validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Validation test
+        Quantitative validation
       
     </span>
   </a>
@@ -625,10 +658,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#acceptance-criterion" class="md-nav__link">
+  <a href="#the-air-box-dominates-accuracy-not-mesh-resolution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Acceptance criterion
+        The air box dominates accuracy — not mesh resolution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uniformity-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uniformity check
       
     </span>
   </a>
@@ -668,32 +712,166 @@
 
 <h1 id="helmholtz-coil-validation-phase-1">Helmholtz Coil Validation (Phase 1)<a class="headerlink" href="#helmholtz-coil-validation-phase-1" title="Permanent link">&para;</a></h1>
 <h2 id="objective">Objective<a class="headerlink" href="#objective" title="Permanent link">&para;</a></h2>
-<p>Validate that the FEM magnetostatic solver reproduces the expected near-uniform magnetic field in the center of a Helmholtz coil pair.</p>
+<p>Validate that the FEM magnetostatic solver reproduces the analytic on-axis field
+of a Helmholtz coil pair, quantitatively.</p>
+<h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
+<p><strong>Validated to 0.04% against the closed-form solution</strong> (2026-07-27).</p>
+<p>An earlier version of this page concluded "Phase 1 Helmholtz validation is
+complete" on the strength of a <em>uniformity</em> check alone (<code>CV &lt; 1%</code>). Uniformity
+is a necessary but far weaker condition than agreement with an analytic
+magnitude — a solver can produce a beautifully uniform field of entirely the
+wrong strength. The quantitative comparison below is what actually closes this.</p>
 <h2 id="geometry-and-setup">Geometry and setup<a class="headerlink" href="#geometry-and-setup" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Coil model: two torus wire volumes</li>
-<li>Major radius: <code>0.02 m</code></li>
-<li>Minor radius: <code>0.005 m</code></li>
-<li>Coil separation: <code>0.02 m</code> (Helmholtz spacing, equal to major radius)</li>
+<li>Major radius <code>R</code>: <code>0.02 m</code></li>
+<li>Minor radius <code>a</code>: <code>0.005 m</code></li>
+<li>Coil separation: <code>0.02 m</code> (Helmholtz spacing, equal to <code>R</code>)</li>
 <li>Mesh generator: <code>MeshGenerator.two_torus_domain(...)</code></li>
 <li>Material: <code>mu = MU_0</code></li>
-<li>Current model: azimuthal current density in both torus wire volumes</li>
+<li>Current: azimuthal current density in both torus volumes, unit magnitude, so
+  the current per loop is <code>I = |J| * pi * a^2</code></li>
 </ul>
-<h2 id="validation-test">Validation test<a class="headerlink" href="#validation-test" title="Permanent link">&para;</a></h2>
-<p>Command used:</p>
-<pre><code class="language-bash">python3 -m pytest tests/validation/test_helmholtz_v2.py -v
+<h2 id="quantitative-validation">Quantitative validation<a class="headerlink" href="#quantitative-validation" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">mpiexec -n 8 python3 examples/magnetostatics/04_helmholtz_analytic_comparison.py \
+  --major-radius 0.02 --minor-radius 0.005 \
+  --air-padding 0.08 --far-resolution 0.010 --resolutions 0.003 --points 21
 </code></pre>
-<p>Expected/observed result:</p>
-<pre><code class="language-text">tests/validation/test_helmholtz_v2.py::test_helmholtz_field_uniformity_two_torus PASSED
+<p>Reference: the filamentary on-axis Helmholtz field,</p>
+<pre><code>B_z(z) = sum_i  mu_0 * I * R^2 / (2 * (R^2 + (z - z_i)^2)^{3/2})
 </code></pre>
-<h2 id="acceptance-criterion">Acceptance criterion<a class="headerlink" href="#acceptance-criterion" title="Permanent link">&para;</a></h2>
-<p>The test enforces central-region field uniformity:
-- Evaluate <code>Bz</code> on axis for <code>z in [-0.1R, +0.1R]</code>
-- Compute coefficient of variation <code>CV = std(Bz) / |mean(Bz)|</code>
-- Require <code>CV &lt; 1%</code></p>
-<p>Result: <strong>PASS</strong>.</p>
+<p>Result (log <code>docs/testing/logs/20260727T171928Z_MAG-4.log</code>, 127k cells, 26 s):</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Centre <code>B_z</code>, FEM</td>
+<td><code>3.529697e-09 T</code></td>
+</tr>
+<tr>
+<td>Centre <code>B_z</code>, analytic</td>
+<td><code>3.531057e-09 T</code></td>
+</tr>
+<tr>
+<td><strong>Centre relative error</strong></td>
+<td><strong>0.04%</strong></td>
+</tr>
+<tr>
+<td>Mean on-axis relative error</td>
+<td>0.83%</td>
+</tr>
+<tr>
+<td>Central uniformity <code>CV</code></td>
+<td>0.003%</td>
+</tr>
+</tbody>
+</table>
+<p>This clears the project's <code>&lt;5%</code> MVP criterion by two orders of magnitude.</p>
+<h2 id="the-air-box-dominates-accuracy-not-mesh-resolution">The air box dominates accuracy — not mesh resolution<a class="headerlink" href="#the-air-box-dominates-accuracy-not-mesh-resolution" title="Permanent link">&para;</a></h2>
+<p>The single most important result from this validation is <em>why</em> it initially
+disagreed. At the historical domain size the error was <strong>20.5% and did not
+improve across a 7x refinement</strong> (10k → 70k cells). It is not a discretization
+error.</p>
+<p>The outer boundary carries the natural condition <code>n x (mu^-1 curl A) = 0</code>, i.e.
+<code>n x H = 0</code>. That is a perfect <strong>magnetic</strong> conductor: it mirrors flux back into
+the domain and inflates the on-axis field. <code>two_torus_domain</code> originally
+hardcoded <code>box_half = R + 3a</code>, tying the air gap to the <em>wire radius</em>, so making
+the wire thinner shrank the air box. That inverted trend — a thinner wire giving
+<em>worse</em> agreement, 43.7% at <code>a = 0.003</code> versus 20.5% at <code>a = 0.005</code> — is what
+identified the boundary as the cause.</p>
+<table>
+<thead>
+<tr>
+<th>Air padding</th>
+<th>Cells</th>
+<th>Centre error</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.5 R</td>
+<td>40k</td>
+<td>20.42%</td>
+</tr>
+<tr>
+<td>1 R</td>
+<td>51k</td>
+<td>7.43%</td>
+</tr>
+<tr>
+<td>2 R</td>
+<td>76k</td>
+<td>1.73%</td>
+</tr>
+<tr>
+<td><strong>4 R</strong></td>
+<td>163k</td>
+<td><strong>0.01%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Two independent convergence studies confirm the result is real rather than error
+cancellation — boundary error falls monotonically with domain size, and
+discretization error falls monotonically with <code>h</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Wire <code>h</code> at 4R padding</th>
+<th>Cells</th>
+<th>Centre error</th>
+<th>Mean error</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.004</td>
+<td>89k</td>
+<td>0.11%</td>
+<td>1.07%</td>
+</tr>
+<tr>
+<td>0.003</td>
+<td>127k</td>
+<td>0.04%</td>
+<td>0.84%</td>
+</tr>
+<tr>
+<td>0.002</td>
+<td>228k</td>
+<td>0.05%</td>
+<td>0.51%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Use <code>air_padding &gt;= 2 * major_radius</code> for any free-space comparison.</strong> Pair it
+with <code>wire_resolution</code>/<code>far_resolution</code> graded sizing, or cost becomes
+prohibitive: grading gives ~76k cells where a uniform mesh of equivalent wire
+fidelity needs ~626k.</p>
+<h2 id="uniformity-check">Uniformity check<a class="headerlink" href="#uniformity-check" title="Permanent link">&para;</a></h2>
+<p><code>tests/validation/test_helmholtz_v2.py</code> remains as a cheap regression guard:</p>
+<pre><code class="language-bash">mpiexec -n 2 python3 -m pytest tests/validation/test_helmholtz_v2.py -v
+</code></pre>
+<ul>
+<li>Evaluate <code>Bz</code> on axis for <code>z in [-0.1R, +0.1R]</code></li>
+<li>Require <code>CV = std(Bz)/|mean(Bz)| &lt; 1%</code></li>
+</ul>
+<p>Note this test previously located sample points with a per-rank collision
+search asserting <code>len(links) &gt; 0</code>, which passed at 1–4 ranks and failed at 8. It
+now uses <code>post.evaluation.evaluate_vector_field_parallel</code>.</p>
 <h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
-<p>Phase 1 Helmholtz validation is complete: the two-torus Helmholtz configuration produces a non-zero, near-uniform central magnetic field within the specified tolerance.</p>
+<p>The magnetostatic formulation in <code>core/solvers.py</code> — the N1curl weak form
+<code>∫ mu^-1 (curl A)·(curl v) dx = ∫ J·v dx</code> with gauge penalty — reproduces the
+closed-form Helmholtz field to 0.04%. This is the project's one quantitatively
+validated component and the foundation the time-harmonic work (<code>TH-1</code>) builds on.</p>
+<p>Caveat for higher order: N1curl degree 2 was measured on the straight-wire
+fixture and <strong>diverged</strong> (2724% error at <code>h = 0.003</code>), which points at the
+gauge-penalty formulation rather than element order. Do not raise the element
+degree without re-validating.</p>
 
 
 
@@ -746,7 +924,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

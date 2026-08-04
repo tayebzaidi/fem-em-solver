@@ -1,0 +1,1656 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="MRI-focused FEM EM solver documentation">
+      
+      
+      
+      
+        <link rel="prev" href="../../validation/helmholtz/">
+      
+      
+        <link rel="next" href="../test-results/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Known Issues - FEM Electromagnetics Solver</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#known-issues-failing-tests-and-open-defects" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="FEM Electromagnetics Solver" class="md-header__button md-logo" aria-label="FEM Electromagnetics Solver" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            FEM Electromagnetics Solver
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Known Issues
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/awarru/fem-em-solver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    awarru/fem-em-solver
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="FEM Electromagnetics Solver" class="md-nav__button md-logo" aria-label="FEM Electromagnetics Solver" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    FEM Electromagnetics Solver
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/awarru/fem-em-solver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    awarru/fem-em-solver
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Validation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../validation/helmholtz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Helmholtz Coil
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Testing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-check-a-failure-against-this-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to check a failure against this baseline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#failing-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failing tests
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Failing tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-retired-2026-07-31-stale-test-double-dummymagnetostaticsolver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. ✅ RETIRED 2026-07-31 — stale test double, DummyMagnetostaticSolver
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-residual-trend-classifier-disagrees-with-its-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Residual-trend classifier disagrees with its test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-port-tests-assert-a-non-zero-s-matrix-diagonal-on-a-matched-port" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Port tests assert a non-zero S-matrix diagonal on a matched port
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-coilphantom-b-field-symmetry-exceeds-tolerance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Coil+phantom B-field symmetry exceeds tolerance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-domain-sizing-heuristic-off-centre-phantom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Domain sizing heuristic, off-centre phantom
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-rank-dependent-single-port-excitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Rank-dependent: single-port excitation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-retired-2026-08-03-birdcage-mesh-fails-to-generate-geo-9-steps-1-2a-2b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. ✅ RETIRED 2026-08-03 — birdcage mesh fails to generate (GEO-9, steps 1 + 2a + 2b)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-test-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-test issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Non-test issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2026-08-03-the-1630-implementer-cron-slot-never-fired-no-log-at-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-08-03: the 16:30 implementer cron slot never fired — no log at all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retired-2026-08-04-reaction-z-matrix-diagonal-is-negative-where-it-must-be-inductive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ RETIRED 2026-08-04 — reaction Z-matrix diagonal is negative where it must be inductive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-2026-08-03-birdcage-suite-is-over-the-compute-budget-was-the-hang-not-meshing-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ RESOLVED 2026-08-03 — "birdcage suite is over the compute budget" was the hang, not meshing cost
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-gauge-penalty-is-a-workaround-not-a-gauge-closed-by-decision-2026-07-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The gauge penalty is a workaround, not a gauge — closed by decision (2026-07-28)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-2026-07-30-truncation-wall-modeling-floor-on-the-wireloop-fixtures-mag-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ RESOLVED 2026-07-30 — truncation-wall modeling floor on the wire/loop fixtures (MAG-13)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-2026-08-01-two_torus_domain-was-not-a-conforming-mesh-geo-8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ RESOLVED 2026-08-01 — two_torus_domain was not a conforming mesh (GEO-8)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#air-box-sizing-is-not-generalised" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Air-box sizing is not generalised
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recording-a-new-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recording a new entry
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../test-results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Results Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-check-a-failure-against-this-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to check a failure against this baseline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#failing-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failing tests
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Failing tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-retired-2026-07-31-stale-test-double-dummymagnetostaticsolver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. ✅ RETIRED 2026-07-31 — stale test double, DummyMagnetostaticSolver
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-residual-trend-classifier-disagrees-with-its-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Residual-trend classifier disagrees with its test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-port-tests-assert-a-non-zero-s-matrix-diagonal-on-a-matched-port" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Port tests assert a non-zero S-matrix diagonal on a matched port
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-coilphantom-b-field-symmetry-exceeds-tolerance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Coil+phantom B-field symmetry exceeds tolerance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-domain-sizing-heuristic-off-centre-phantom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Domain sizing heuristic, off-centre phantom
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-rank-dependent-single-port-excitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Rank-dependent: single-port excitation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-retired-2026-08-03-birdcage-mesh-fails-to-generate-geo-9-steps-1-2a-2b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. ✅ RETIRED 2026-08-03 — birdcage mesh fails to generate (GEO-9, steps 1 + 2a + 2b)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-test-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-test issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Non-test issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2026-08-03-the-1630-implementer-cron-slot-never-fired-no-log-at-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-08-03: the 16:30 implementer cron slot never fired — no log at all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retired-2026-08-04-reaction-z-matrix-diagonal-is-negative-where-it-must-be-inductive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ RETIRED 2026-08-04 — reaction Z-matrix diagonal is negative where it must be inductive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-2026-08-03-birdcage-suite-is-over-the-compute-budget-was-the-hang-not-meshing-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ RESOLVED 2026-08-03 — "birdcage suite is over the compute budget" was the hang, not meshing cost
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-gauge-penalty-is-a-workaround-not-a-gauge-closed-by-decision-2026-07-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The gauge penalty is a workaround, not a gauge — closed by decision (2026-07-28)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-2026-07-30-truncation-wall-modeling-floor-on-the-wireloop-fixtures-mag-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ RESOLVED 2026-07-30 — truncation-wall modeling floor on the wire/loop fixtures (MAG-13)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-2026-08-01-two_torus_domain-was-not-a-conforming-mesh-geo-8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ RESOLVED 2026-08-01 — two_torus_domain was not a conforming mesh (GEO-8)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#air-box-sizing-is-not-generalised" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Air-box sizing is not generalised
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recording-a-new-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recording a new entry
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="known-issues-failing-tests-and-open-defects">Known Issues — failing tests and open defects<a class="headerlink" href="#known-issues-failing-tests-and-open-defects" title="Permanent link">&para;</a></h1>
+<p><strong>Purpose: tell you whether a failure is yours.</strong></p>
+<p>Every entry below was verified failing <em>before</em> the work recorded against it, by
+checking out the stated commit and re-running. If you hit one of these, you did not
+break it. If you hit something not listed here, you probably did.</p>
+<p>That distinction is the whole point of this file. Establishing it after the fact
+costs a <code>git stash</code> / re-run cycle per failure; it was done five times over on
+2026-07-27 and is not worth repeating.</p>
+<p>Last audited: 2026-07-27 against <code>ce92e8c</code>.</p>
+<h2 id="how-to-check-a-failure-against-this-baseline">How to check a failure against this baseline<a class="headerlink" href="#how-to-check-a-failure-against-this-baseline" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># Is this failure mine, or was it already there?
+git stash                              # or: git checkout &lt;base&gt; -- &lt;paths&gt;
+mpiexec -n 8 python3 -m pytest &lt;the failing test&gt; -q
+git stash pop
+</code></pre>
+<p>If it fails at the base commit too, add it here rather than fixing it in passing —
+unless fixing it is the task.</p>
+<hr />
+<h2 id="failing-tests">Failing tests<a class="headerlink" href="#failing-tests" title="Permanent link">&para;</a></h2>
+<h3 id="1-retired-2026-07-31-stale-test-double-dummymagnetostaticsolver">1. ✅ RETIRED 2026-07-31 — stale test double, <code>DummyMagnetostaticSolver</code><a class="headerlink" href="#1-retired-2026-07-31-stale-test-double-dummymagnetostaticsolver" title="Permanent link">&para;</a></h3>
+<p>The two phantom tests
+(<code>tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring</code>,
+<code>tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite</code>)
+failed with <code>AttributeError: 'DummyMagnetostaticSolver' object has no attribute
+'last_solve_diagnostics'</code>. No fix ever landed: <code>TH-1</code> steps 1–3 deleted the
+<code>last_solve_diagnostics</code> read from the time-harmonic path, so the failing code
+path went away under the entry.</p>
+<p>Re-verified through the harness at <code>424faed</code>:
+<code>20260731T170152Z_KI-1-retire-gate.log</code> — complex build, <code>FEM_EM_REQUIRE_COMPLEX=1</code>,
+<code>-n 2</code>, <strong>10 passed in 4.6 s</strong>; and <code>20260731T170140Z_KI-1-real-mode-iomatpost.log</code>
+— real build, the CI <code>validation</code> job's exact command with the <code>--deselect</code>s
+removed, <strong>15 passed, 2 skipped in 0.5 s</strong>. Both <code>--deselect</code>s are gone from the
+<code>validation</code> job and both files are now listed in <code>validation-complex</code>, which is
+where the two <code>@complex_only</code> tests actually execute. The test-side
+<code>ComplexWarning</code> casts were fixed in the same commit; the remaining one at
+<code>post/phantom_fields.py:88</code> was recorded under <code>POST-1</code> in <code>PROJECT_PLAN.md</code> §7
+and is <strong>fixed as of 2026-08-04</strong> (<code>POST-3</code> step 4 — both cast sites removed,
+statistics taken on the phasor magnitude, gated by
+<code>tests/post/test_phantom_phasor_semantics.py</code>). <code>POST-1</code> stays ⚠️ for the
+interface-guardrail machinery, which is unrelated to the cast.</p>
+<p>The heading is kept (rather than deleted with the entries renumbered) so the
+numbering of entries 2–6 stays stable — several commits and CI comments refer to
+them by number.</p>
+<h3 id="2-residual-trend-classifier-disagrees-with-its-test">2. Residual-trend classifier disagrees with its test<a class="headerlink" href="#2-residual-trend-classifier-disagrees-with-its-test" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic</code><br><code>tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics</code></td>
+</tr>
+<tr>
+<td><strong>Symptom</strong></td>
+<td><code>assert 'mixed' == 'mostly-decreasing'</code> (line 22); <code>assert False</code> (line 63)</td>
+</tr>
+<tr>
+<td><strong>Cause</strong></td>
+<td>Not diagnosed. <code>classify_residual_trend()</code> in <code>core/solvers.py</code> returns <code>mixed</code> for a sequence the test expects to be classified <code>mostly-decreasing</code>. Either the classifier's thresholds or the test's expectation is wrong — <strong>do not assume it is the test</strong>: the analytic expectation in <code>test_analytical_circular_loop</code> turned out to be the wrong side of exactly this kind of disagreement (it wanted <code>μ₀I/(2√2a)</code> where the correct value is <code>μ₀I/(4√2a)</code>).</td>
+</tr>
+<tr>
+<td><strong>Verified pre-existing at</strong></td>
+<td><code>ce92e8c</code> and earlier</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>Whole file left out of the <code>validation-complex</code> CI job (<code>OPS-10</code>): one of the two failures is <code>@complex_only</code> and the other is not, so there is nothing to select. Add the file when this entry is fixed.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="3-port-tests-assert-a-non-zero-s-matrix-diagonal-on-a-matched-port">3. Port tests assert a non-zero S-matrix diagonal on a matched port<a class="headerlink" href="#3-port-tests-assert-a-non-zero-s-matrix-diagonal-on-a-matched-port" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape</code><br><code>tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign</code></td>
+</tr>
+<tr>
+<td><strong>Symptom</strong></td>
+<td><code>assert np.all(np.abs(diagonal) &gt; 0.0)</code> fails on <code>array([0.+0.j, 0.+0.j, 0.+0.j])</code></td>
+</tr>
+<tr>
+<td><strong>Cause</strong></td>
+<td>Both fakes set <code>current = voltage / port.z0_ohm</code> at the driven port, i.e. a perfectly matched port. The reflected power wave is then <code>b = (V − Z₀I)/(2√Z₀) = 0</code> exactly, so the diagonal is <em>legitimately</em> zero and the assertion cannot hold.</td>
+</tr>
+<tr>
+<td><strong>Fix</strong></td>
+<td><strong>Deliberately not fixed.</strong> These exercise the placeholder coupling model's arithmetic (see <code>PORT-0</code>). Repairing them means tuning assertions to match a heuristic that <code>PORT-1</code> deletes. Resolve them there.</td>
+</tr>
+<tr>
+<td><strong>Verified pre-existing at</strong></td>
+<td><code>53f6428</code> and earlier</td>
+</tr>
+<tr>
+<td><strong>Progress 2026-08-04</strong></td>
+<td><code>PORT-1</code> step 3b-ii, the step that would replace these fakes with a driven gap port, was <strong>attempted and parked</strong> (<code>attempt/PORT-1-step3bii-20260804T141200Z</code>). The drive works — reciprocity <code>2.2840e-04</code>, undriven port open at <code>2.32e-03</code> — but <code>Im Z₁₂</code> is +72.12% off <code>ωM₁₂</code>, traced to the gap box's 1.83×-oversized cross-section rather than to the solve. These two tests stay red and unchanged; see PROJECT_PLAN §7 <code>PORT-1</code> step 3b-ii for the measurement and the ranked successor.</td>
+</tr>
+<tr>
+<td><strong>Progress 2026-08-04 (2)</strong></td>
+<td>Step 3b-iii tested that diagnosis and <strong>refuted it</strong> (parked on <code>attempt/PORT-1-step3biii-20260804T173000Z</code>; logs <code>20260804T170301Z_PORT-1-step3biii-costprobe.log</code>, <code>20260804T170439Z_PORT-1-step3biii-sweep-o5e4.log</code>). Shrinking only the transverse overhang gives <code>Im Z₁₂/ωM₁₂</code> = <code>+1.7210</code> (fringe 0.4546), <code>−0.2391</code> (0.3509), <code>+0.3317</code> (0.2739) — non-monotone and <strong>sign-changing</strong>, so a box-volume average is not a port voltage at any overhang. The shadow-restricted average is stable at <code>0.687–0.814 ×</code> across the same three geometries. The replacement route is now the facet-integral voltage (§7 step 3b-v on 3b-iv's tags); these two tests stay red and unchanged.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-coilphantom-b-field-symmetry-exceeds-tolerance">4. Coil+phantom B-field symmetry exceeds tolerance<a class="headerlink" href="#4-coilphantom-b-field-symmetry-exceeds-tolerance" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Test</strong></td>
+<td><code>tests/validation/test_coil_phantom_bfield_metrics.py::test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric</code></td>
+</tr>
+<tr>
+<td><strong>Symptom</strong></td>
+<td><code>max_rel_diff=0.557</code> against a <code>0.350</code> tolerance; <code>max_abs_diff=7.090e-07</code> against <code>6.523e-08</code></td>
+</tr>
+<tr>
+<td><strong>Cause</strong></td>
+<td>Not diagnosed. Tracked as <code>MAG-6</code> (legacy A1). Its predecessor failed at <code>0.322</code> against <code>0.30</code>; interface-aware sampling was added in response and the revised test has still never passed.</td>
+</tr>
+<tr>
+<td><strong>Note</strong></td>
+<td>The coil+phantom fixture uses a single global <code>setSize</code> and tight air padding — the same pattern that cost <strong>20% error</strong> on Helmholtz until <code>air_padding</code> was decoupled (see <code>docs/validation/helmholtz.md</code>). A boundary-mirror artifact is a plausible contributor and should be ruled out before the tolerance is touched.</td>
+</tr>
+<tr>
+<td><strong>Verified pre-existing at</strong></td>
+<td><code>ce92e8c</code> and earlier (0.559 at <code>HEAD</code>, 0.557 after the gauge change — the gauge default is not the cause)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="5-domain-sizing-heuristic-off-centre-phantom">5. Domain sizing heuristic, off-centre phantom<a class="headerlink" href="#5-domain-sizing-heuristic-off-centre-phantom" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Test</strong></td>
+<td><code>tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent</code></td>
+</tr>
+<tr>
+<td><strong>Symptom</strong></td>
+<td><code>assert 0.09 &gt; 0.09</code></td>
+</tr>
+<tr>
+<td><strong>Cause</strong></td>
+<td>Not diagnosed. Pure geometry arithmetic in <code>MeshGenerator.coil_phantom_domain_sizing_diagnostics</code> — no solve involved, so no solver change can affect it.</td>
+</tr>
+<tr>
+<td><strong>Verified pre-existing at</strong></td>
+<td><code>794d2f1</code> (pre-session); still failing 2026-08-03 at <code>de6d40a</code> (<code>20260803T034252Z_GEO-9-step1-cohabit.log</code>, 1 failed 16 passed 1 skipped in 22.95 s)</td>
+</tr>
+<tr>
+<td><strong>Excluded from CI</strong></td>
+<td>Since <code>OPS-11</code> (2026-08-03) the <code>validation</code> job's <code>Mesh generation suite</code> step <code>--deselect</code>s this node id by name. <strong>Remove that <code>--deselect</code> in the commit that fixes this entry</strong> — it is the only thing keeping the test out of CI, and the rest of the file runs there.</td>
+</tr>
+<tr>
+<td><strong>Cited wrongly as "known-issues 6"</strong></td>
+<td>Commit <code>3ac025c</code> and <code>docs/testing/attempts.md:1903,1907</code> both call this entry 6. <strong>It is entry 5.</strong> Entry 6 is the rank-dependent single-port excitation test in <code>tests/solver</code>, unrelated to <code>tests/mesh</code>. <code>attempts.md</code> is append-only so the correction lives here and in the <code>OPS-11</code> §7 entry; it matters because <code>OPS-11</code>'s exclusion set is <strong>5 and birdcage</strong>, not "6 and 7".</td>
+</tr>
+</tbody>
+</table>
+<h3 id="6-rank-dependent-single-port-excitation">6. Rank-dependent: single-port excitation<a class="headerlink" href="#6-rank-dependent-single-port-excitation" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Test</strong></td>
+<td><code>tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates</code></td>
+</tr>
+<tr>
+<td><strong>Symptom</strong></td>
+<td>Passes at 1 rank, fails at <code>mpiexec -n 8</code></td>
+</tr>
+<tr>
+<td><strong>Cause</strong></td>
+<td>Not diagnosed. Two rank-local bugs of this family were already fixed on 2026-07-27 (<code>tests/solver/test_two_torus.py</code> asserted on rank-local <code>cell_tags.values</code>; <code>test_helmholtz_v2.py</code> did a per-rank collision search). Suspect the same pattern — a quantity that is rank-local being treated as global.</td>
+</tr>
+<tr>
+<td><strong>Tool</strong></td>
+<td><code>tests/mesh/helpers.py::global_cell_tag_set()</code> exists for the tag case. <code>post.evaluation.evaluate_vector_field_parallel()</code> for the point-location case.</td>
+</tr>
+<tr>
+<td><strong>Verified pre-existing at</strong></td>
+<td><code>ce92e8c</code> and earlier</td>
+</tr>
+</tbody>
+</table>
+<h3 id="7-retired-2026-08-03-birdcage-mesh-fails-to-generate-geo-9-steps-1-2a-2b">7. ✅ RETIRED 2026-08-03 — birdcage mesh fails to generate (<code>GEO-9</code>, steps 1 + 2a + 2b)<a class="headerlink" href="#7-retired-2026-08-03-birdcage-mesh-fails-to-generate-geo-9-steps-1-2a-2b" title="Permanent link">&para;</a></h3>
+<p>All three tests are green and the whole of <code>tests/mesh</code> less known-issues 5 is
+<code>20 passed, 1 skipped, 1 deselected in 42.15 s</code>, exit 0
+(<code>20260803T200504Z_GEO-9-step2b-gate.log</code>, <code>-n 2</code>) — the CI command verbatim,
+with the birdcage <code>--ignore</code> removed in the same commit. <strong>Step 2b</strong> replaced the
+<code>occ.cut(..., removeTool=False)</code> with a single <code>occ.fragment</code> of the air box
+against every tool, so the legs and rings that pierce each other by construction
+are booleaned into conforming pieces instead of being meshed twice; the physical
+groups are re-derived from the fragment out-map (26 volumes, 20 of them
+conductor) and the port boxes get the 3-D groups they never had. Measured:
+<code>V_mesh/V_box = 1.000000000000</code> and <code>Σ(tagged)/V_mesh = 1.000000000000</code>, both
+gated to <code>1e-9</code>, and every port box exact to <code>1e-9</code> of <code>dx·dy·dz</code>. The
+rank-local <code>set(np.unique(cell_tags.values))</code> was fixed to <code>global_cell_tag_set()</code>
+in the same commit — it was real and it fired: at <code>-n 2</code> rank 0 reported P2/P3
+missing and rank 1 reported P1/P4 missing on an otherwise correct mesh
+(<code>20260803T200151Z_GEO-9-step2b-probe.log</code>).</p>
+<p>The history below is kept because several commits and the <code>GEO-9</code> §7 entry refer
+to it, and because the diagnosis — one poisoned generator hanging every later
+mesh in the process — is the reusable part.</p>
+<details>
+<summary>Original entry (steps 1 and 2a)</summary>
+
+#### Birdcage mesh fails to generate *(coil+phantom half resolved 2026-08-03, `GEO-9` step 2a)*
+
+| | |
+|---|---|
+| **Tests** | `tests/mesh/test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags` — **still red**, the overlapping-facets geometry is `GEO-9` step 2b<br>~~`tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_generates_required_tags_centered_preset`~~ **passes since 2026-08-03**<br>~~`tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_off_center_preset_moves_phantom_without_overlap`~~ **passes since 2026-08-03** |
+| **Symptom** | `gmsh.py:2006: Exception: Invalid boundary mesh (overlapping facets) on surface 3 surface 49` (birdcage) and `dolfinx/io/gmshio.py:118: AssertionError` ×2 (coil+phantom) — the meshes never reach dolfinx |
+| **Cause** | **Diagnosed 2026-08-03 by `GEO-9` step 1, and it is a single cause, not two.** `birdcage_port_domain` raises inside its `comm.rank == rank` block (the overlapping-facets error) and therefore never reaches its `gmsh.finalize()`. The process is left with gmsh initialised and mid-command, so the *next* generator in the same pytest process gets `Warning : Gmsh has aleady been initialized` and `Info : I'm busy! Ask me that later...`, every subsequent `occ` call is silently refused, and `model_to_mesh` reads the stale birdcage model — whose mixed element types are what `gmshio.py:118` asserts on. **The coil+phantom generator is innocent:** in a fresh process all three of its tests pass in 4.8 s (`20260803T033050Z_GEO-9-before.log`), and they fail again the moment the birdcage file runs first (`20260803T033119Z_GEO-9-order-probe.log`, 3 failed 2 passed in 3.47 s — the same two failures). Found 2026-08-01 by the `GEO-8` run, which ran `tests/mesh` as a regression sweep; the whole directory is in no CI job, which is why these were invisible. Both fixtures are untouched by `GEO-8` (it changed `two_torus_domain` only). |
+| **Verified pre-existing at** | `63c94f2` — the `GEO-8` diff touches neither generator; log `20260801T004839Z_GEO-8-unrelated-failures.log`, 3 failed 2 passed in 3.5 s at `-n 2` |
+| **Note** | ~~Likely the same overlapping-geometry family `GEO-8` just fixed for `two_torus_domain`: `coil_phantom_domain` and the birdcage fixture should be audited for missing `occ.fragment`.~~ **Half wrong — corrected 2026-08-02, 18:00 review, by code reading (not by execution).** `coil_phantom_domain` **already fragments** (`io/mesh.py:1616`), so its cause is downstream of fragment; the visible fragility is the group re-derivation at `io/mesh.py:1622-1634`, which assumes fragment returns exactly four volumes and leaves any extra piece with no physical group — which is what `gmshio.py:118` asserts on. The **birdcage** does match the family, differently: it uses `occ.cut(..., removeTool=False)` (`io/mesh.py:1970`), so the conductors, phantom and port boxes are never booleaned against *each other* and the port boxes overlap the legs by construction — hence "overlapping facets". The birdcage's port boxes also receive no 3-D physical group (`io/mesh.py:1985-1988`). |
+| **Owned by** | `GEO-9` (created 2026-08-02): step 1 coil+phantom, step 2 birdcage. Two of the four §10 Target criteria route through these two fixtures. **Step 1 landed 2026-08-03** — the coil+phantom half is now gated by `tests/mesh/test_coil_phantom_conforming.py` (volume-partition identity, `20260803T033659Z_GEO-9-step1-gate.log`, 8 passed 1 skipped in 22.25 s) and the generator raises with the volume count and per-volume masses if fragment ever does return other than four grouped volumes. **All three tests above still fail in a shared process** and will until step 2 fixes the birdcage: `20260803T033733Z_GEO-9-order-probe-after.log` shows the new guards do *not* fire (gmsh is already busy, so they never execute), still `gmshio.py:118`. **Step 2's first action is the cheap half of this — wrap the birdcage's rank-0 block in `try/finally: gmsh.finalize()`**, which stops one broken generator from poisoning every later mesh in the process, independently of fixing the geometry. Split out as **`GEO-9` step 2a** at the 2026-08-03 03:00 review, with step 2b holding the `occ.fragment` geometry rewrite. |
+| **A poisoned process hangs — added 2026-08-03, 03:00 review** | Both `GEO-9` order probes report pytest finishing (3.47 s and 3.29 s) but the **harness** exits **124 at the 180 s ceiling**, with `Loguru caught a signal: SIGTERM` (`docs/testing/test-results.md:136,139`; logs `20260803T033119Z_GEO-9-order-probe.log`, `…033733Z_GEO-9-order-probe-after.log`). The step-1 prose quotes only the pytest wall time and does not say this. Two consequences: `tests/mesh` cannot enter CI with the birdcage in it (`OPS-11`) because the job would burn its whole `timeout-minutes` rather than fail fast; and `GEO-9` step 2a gets a sharper anchor than "the tests pass" — harness exit **124 at 180 s → 0 in seconds**. If a `try/finally` does not fix it, suspect an MPI collective the raising rank never reaches, not gmsh state. |
+| **Excluded from CI, and the reason has changed — `OPS-11`, 2026-08-03** | The `validation` job's `Mesh generation suite` step `--ignore`s `test_birdcage_port_tags.py`. The exclusion no longer rests on the hang or the budget: post-2a the file fails **promptly** (the unexcluded-directory control `20260803T170132Z_OPS-11-fullsweep.log` is 2 failed 18 passed 1 skipped in 31.85 s, harness exit 1 in 33 s, where the pre-2a probes exited 124 at the 180 s ceiling). It is ignored because it is deliberately red until `GEO-9` step 2b, and a permanently-red test in CI hides regressions behind an expected failure. **Remove the `--ignore` in the commit that fixes the geometry.** The same control also shows the coil+phantom tests now passing *with the birdcage in the same process* — the step-2a poisoning fix holding under the condition that used to break it. |
+| **✅ Two-thirds resolved 2026-08-03 by `GEO-9` step 2a — and the hang was *both* causes, not one** |<!-- retired: see the summary above --> The review's warning was right: `try/finally` alone would not have fixed the hang. Rank 0 raised and skipped the collective `gmshio.model_to_mesh`, so rank 1 blocked in it forever — that is the exit 124, and gmsh contamination is a second, independent defect. `birdcage_port_domain` now builds its model in `_build_birdcage_port_model`, calls `gmsh.finalize()` (guarded by `gmsh.isInitialized()`) when that raises, and `comm.bcast`es the failure so **every** rank raises before any enters `model_to_mesh`. The birdcage still fails loudly with the original message. **Before** (`20260803T123116Z_GEO-9-step2a-before.log`, re-run at the working commit, not quoted): 5 failed 2 passed in 3.16 s of pytest, harness **exit 124 at 180 s**. **After** (`20260803T123549Z_GEO-9-step2a-after.log`, same command): **1 failed 6 passed in 12.10 s, harness exit 1 at 13 s** — only the birdcage test itself. Gated by `tests/mesh/test_birdcage_finalize_isolation.py` (`20260803T123657Z_GEO-9-step2a-gate.log`, 1 passed in 5.30 s, **exit 0**), which runs the two generators in the poisoning order in one process and asserts `V_mesh/V_box = 1.000000000000` and `Σ(tagged)/V_mesh = 1.000000000000` to `1e-9` afterwards. `tests/mesh` less the birdcage file is now 17 passed 1 skipped, 1 failed in 28.46 s (`20260803T123714Z_GEO-9-step2a-sweep.log`) — the single failure is **entry 5**, unrelated. |
+
+</details>
+
+<hr />
+<h2 id="non-test-issues">Non-test issues<a class="headerlink" href="#non-test-issues" title="Permanent link">&para;</a></h2>
+<h3 id="2026-08-03-the-1630-implementer-cron-slot-never-fired-no-log-at-all">2026-08-03: the 16:30 implementer cron slot never fired — no log at all<a class="headerlink" href="#2026-08-03-the-1630-implementer-cron-slot-never-fired-no-log-at-all" title="Permanent link">&para;</a></h3>
+<p>Observed by the 18:00 daily review. The 21:30Z slot (fourth after the 10:30
+review) produced <strong>no file in <code>logs/automation/</code></strong> — not even the one-line
+lock-skip entry <code>scripts/automation/implementer-run.sh</code> writes when another
+run holds the lock, which is the first thing the script does after cron
+invokes it. So cron never invoked it: the entry is missing/edited, or the
+host skipped the minute. Every earlier slot that day logged (skip or run).
+Consequence: <code>MAT-4</code> step 2 sat open and unattempted for the interval. The
+review sandbox cannot read the crontab, so this needs a human check of
+<code>crontab -l</code> against the 90-minute grid. Not a tree outage — preflight was
+never involved. Entry leaves when the cause is identified (with a note in the
+fixing commit) or when a full day of slots logs cleanly and it is downgraded
+to a one-off.</p>
+<p><strong>Update 2026-08-04 (03:00 review):</strong> no recurrence — every slot since has a
+session log (00:30Z preflight stop, 02:00Z, 03:30Z, 05:10Z runs; the 23:00Z
+review). One more clean review interval completes the "full day of slots" and
+downgrades this to a one-off; the crontab check by a human is still the faster
+route to closing it.</p>
+<h3 id="retired-2026-08-04-reaction-z-matrix-diagonal-is-negative-where-it-must-be-inductive">✅ RETIRED 2026-08-04 — reaction Z-matrix diagonal is negative where it must be inductive<a class="headerlink" href="#retired-2026-08-04-reaction-z-matrix-diagonal-is-negative-where-it-must-be-inductive" title="Permanent link">&para;</a></h3>
+<p><strong>Fixed by <code>PORT-1</code> step 2f</strong>: <code>TimeHarmonicSolver.solve()</code> now drives with the
+CG1-weakly-solenoidal part of the prescribed current by default
+(<code>project_source=True</code>, helper
+<code>src/fem_em_solver/core/source_projection.py</code>), and the diagonal of
+<code>test_port_reaction_impedance.py</code> is <strong>gated</strong>, not printed. Gate
+<code>20260804T111102Z_PORT-1-step2f-gate.log</code>, 12 passed 1 deselected in 58.9 s at
+<code>-n 2</code>, on the same fixture every measurement below was taken on:</p>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>production path, projected</th>
+<th>this entry's unprojected number</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Im Z₁₁</code>, reaction / energy routes</td>
+<td><strong><code>+7.437243e+00 Ω</code></strong> (both)</td>
+<td><code>−4.108550e+01 Ω</code></td>
+</tr>
+<tr>
+<td><code>Im Z₂₂</code>, reaction / energy routes</td>
+<td><strong><code>+7.436633e+00 Ω</code></strong> (both)</td>
+<td><code>−4.092413e+01 Ω</code></td>
+</tr>
+<tr>
+<td>ratio to Grover <code>ωL = 6.818343 Ω</code></td>
+<td><strong>1.090770 / 1.090680</strong></td>
+<td>−6.03</td>
+</tr>
+<tr>
+<td>complex-power identity residual</td>
+<td><code>4.0412e-11</code> / <code>9.1813e-11</code> (gated <code>&lt; 1e-9</code>)</td>
+<td><code>1.8128e-10</code></td>
+</tr>
+<tr>
+<td>driven current</td>
+<td><code>I′ = 0.969001 A</code></td>
+<td><code>I = 0.969009 A</code></td>
+</tr>
+</tbody>
+</table>
+<p>The three gates are <code>test_projected_port_diagonal_is_inductive</code> (sign, a
+priori, both ports, both routes), <code>..._satisfies_the_complex_power_identity</code>
+(bookkeeping, <code>&lt; 1e-9</code>) and <code>..._matches_grover</code> (the independent physics
+anchor, band <code>(1.042, 1.140)</code> carried over from step 2e's measurement, which
+the production path reproduced to 2e-5). The number reproduced step 2e's
+hand-rolled <code>+7.437243e+00 Ω</code> to all seven printed figures — same physics,
+now on the path callers actually use.</p>
+<p>Nothing was widened to retire this: the diagonal moved from <em>ungated</em> to
+gated, and the three files that pin the unprojected numbers (steps 2b, 2d, 2e)
+now pass <code>project_source=False</code> explicitly and reproduce them unchanged
+(<code>20260804T111221Z_PORT-1-step2f-regress-diagnosis.log</code>,
+<code>20260804T111607Z_PORT-1-step2f-regress-remainder.log</code>). The original entry
+follows, unedited, because the diagnosis chain in it is the reason the fix is
+believable.</p>
+<hr />
+<p>Found 2026-08-02 by <code>PORT-1</code> step 1; <strong>diagnosed 2026-08-03 by step 2b to the
+electric energy — see the update at the end of this entry — and still not
+fixed.</strong> The diagonal remains ungated. Recorded here because the number is wrong
+in a way a later run would otherwise re-discover from scratch.</p>
+<p>On the two-torus air fixture (a = 0.04 m, r_wire = 0.005 m, d = 0.04 m,
+f = 10 MHz), the reaction integral <code>Z_i1 = −(1/(I₁Iᵢ))∫E₁·Jᵢ dV</code> returns
+<code>Im Z₁₁ ≈ −40.9 Ω</code> (<code>-4.069329e+01j</code> at
+<code>20260802T183226Z_PORT-1-step1-solve008.log:442</code>, and −41.09 / −40.97 at the two
+boxsens configurations). A lossless loop must be inductive, <code>+ωL</code>; a Grover
+estimate <code>ωL ≈ μ₀ωa(ln(8a/r_wire) − 2) ≈ 6.8 Ω</code> — <strong>hand-evaluated, in no log</strong>.
+So the diagonal is wrong in sign and ~6× in magnitude, while the <em>off</em>-diagonal
+on the same solve is right in sign and within 5–9% of its closed form. That
+contrast points at the self-term (the source's own singular field inside the
+driven wire entering <code>∫E·J</code> over the source region) rather than at a global
+convention error, but nothing has been measured to confirm it.</p>
+<p><strong>Consequence:</strong> no input impedance and no <code>S₁₁</code> derived from this path means
+anything yet. <code>PORT-1</code> step 2 therefore leaves the diagonal <strong>ungated</strong> —
+deliberately, and <em>not</em> by widening a bound. <code>PORT-1</code> step 2b (§7) owns the
+diagnosis, and its anchor is the complex-power identity
+<code>Im Z₁₁ = 4ω(W_m − W_e)/|I₁|²</code> as an independent second derivation.</p>
+<p><strong>Update 2026-08-03 — step 2b executed; the reaction integral is exonerated and
+the anomaly is localised to the electric energy.</strong>
+<code>tests/validation/test_port_self_impedance_energy.py</code>, 3 passed in 43.5 s at
+<code>-n 2</code> (log <code>20260803T050252Z_PORT-1-step2b-gate.log</code>), one mesh at padding
+0.08 / h_far 0.03 and one solve:</p>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Im Z₁₁</code>, reaction integral</td>
+<td><code>−4.108550e+01 Ω</code></td>
+</tr>
+<tr>
+<td><code>Im Z₁₁</code>, complex-power route <code>4ω(W_m−W_e)/I²</code></td>
+<td><code>−4.108550e+01 Ω</code></td>
+</tr>
+<tr>
+<td>relative disagreement</td>
+<td><strong>1.8128e-10</strong> (gated <code>&lt; 1e-9</code>)</td>
+</tr>
+<tr>
+<td><code>4ωW_m/I²</code> (inductive part)</td>
+<td><code>+7.437 Ω</code> vs Grover <code>ωL = 6.818 Ω</code>, <strong>ratio 1.0908</strong></td>
+</tr>
+<tr>
+<td><code>4ωW_e/I²</code> (capacitive part)</td>
+<td><code>+48.52 Ω</code></td>
+</tr>
+<tr>
+<td><code>W_e/W_m</code></td>
+<td>6.524</td>
+</tr>
+</tbody>
+</table>
+<p>So the guess above — that the self-term of <code>∫E·J</code> is the bug — is <strong>wrong</strong>. The
+two derivations agree to 1.8e-10, and the magnetic half is the physical loop
+inductance to 9.1% of Grover, which is within what the PEC box at this padding
+can plausibly account for. The whole of <code>−40.9 = 7.44 − 48.52</code> is an <em>electric</em>
+energy excess in the solved field.</p>
+<p><strong>Leading hypothesis, not yet measured:</strong> low-frequency breakdown of the
+curl-curl formulation. At ω → 0 the operator acts on the gradient subspace as
+<code>−k₀²ε_c</code>, so any residual non-solenoidal component of the discretised impressed
+current — the analytic azimuthal <code>J</code> is exactly divergence-free and tangent to
+the torus surface, but the <em>faceted</em> meshed boundary is only approximately so —
+is amplified into a spurious electrostatic field that contributes to <code>W_e</code> and to
+nothing else.</p>
+<p><strong>Correction 2026-08-03 (03:00 review): the ω-sweep named here as "the
+discriminating measurement" does not discriminate.</strong> Restricting the solved
+equation to the gradient subspace gives <code>E_g = jωμ₀J_g/k₀² = jJ_g/(ωε₀) ∝ 1/ω</code>,
+hence <code>W_e ∝ ω⁻²</code> and <code>4ωW_e/I² ∝ ω⁻¹</code> — <strong>the same <code>1/(ωC)</code> a physical
+capacitance gives.</strong> Gradient-space contamination <em>is</em> a spurious electrostatic
+response, so it necessarily scales like one, and the sweep separates only the
+capacitive family (<code>ω⁻¹</code>) from an induction-driven <code>E = −jωA</code> (<code>4ωW_e/I² ∝ ω³</code>).
+It is a cheap sanity check, not the discriminator; do not spend a run on it
+expecting an answer.</p>
+<p>What does settle it, and why this fixture makes it decisive: the two-torus
+fixture has <strong>no conductors</strong> — the tori are tagged <em>air</em> subdomains carrying an
+impressed <code>J</code>, the only metal is the outer PEC wall, and <code>∇·J = 0</code> analytically
+means no charge. There is therefore <strong>no physical capacitance available to
+find</strong>, so the open question is quantitative: does the gradient content of the
+load account for all 48.52 Ω? Because the N1curl/CG1 discrete sequence is exact,
+that is answerable by two assemblies and no extra solve —
+<code>∫E_h·∇q dV = (j/(ωε₀))∫J·∇q dV</code> must hold for every <code>q ∈ CG1 ∩ H¹₀</code> — with the
+energy share following from one cheap scalar Poisson solve. <code>PORT-1</code> step 2d in
+<code>PROJECT_PLAN.md</code> §7 carries the plan; <code>tests/validation/test_current_divergence.py</code>
+(<code>POST-3</code> step 3) is the second, structural route to the same question.</p>
+<p><strong>Update 2026-08-03 — step 2d executed; the answer is "all of it", and the cause
+is now measured rather than hypothesised.</strong>
+<code>tests/validation/test_port_gradient_load.py</code>, 7 passed in 41.5 s at <code>-n 2</code> (log
+<code>20260803T183556Z_PORT-1-step2d-gate.log</code>), same mesh, one curl-curl solve and
+one CG1 Poisson solve:</p>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>identity <code>∫E_h·∇q = (j/ωε₀)∫J·∇q</code>, relative residual</td>
+<td><strong>4.4916e-09</strong> (gated <code>&lt; 1e-7</code>)</td>
+</tr>
+<tr>
+<td>blind control, <code>j</code> dropped</td>
+<td>1.4142e+00 = <code>√2</code>, as the identity implies</td>
+</tr>
+<tr>
+<td><code>‖P_G J‖²</code></td>
+<td><code>2.534713e-02</code> (two routes agree to 7.9e-15)</td>
+</tr>
+<tr>
+<td><code>4ωW_e^spur/I² = ‖P_G J‖²/(ωε₀I²)</code></td>
+<td><strong><code>4.852262e+01 Ω</code></strong></td>
+</tr>
+<tr>
+<td>measured <code>4ωW_e/I²</code></td>
+<td><code>4.852271e+01 Ω</code></td>
+</tr>
+<tr>
+<td><strong>ratio</strong></td>
+<td><strong>0.999998</strong></td>
+</tr>
+</tbody>
+</table>
+<p>So the "leading hypothesis" above is confirmed <em>quantitatively</em>: the gradient
+content of the <strong>discretised</strong> impressed current, amplified by <code>1/(ωε₀)</code> on the
+subspace where the operator acts as <code>−k₀²ε_c</code>, is two-parts-in-a-million the
+entire electric-energy excess. Nothing is left for a second mechanism. The
+negative diagonal is an artifact of the current representation — not the
+reaction integral (step 2b), not physical capacitance (none exists here).</p>
+<p>The identity's bound was raised 1e-9 → 1e-7 after a first run measured
+4.4916e-09 and failed the plan's house guess; the gate reproduced 4.4916e-09
+bit-for-bit. It is a solve-accuracy number, not a physics one — a rank-count,
+mesh or solver change that moves it is information, so re-measure rather than
+widening again. PROJECT_PLAN §7 <code>PORT-1</code> step 2d carries the full reasoning.</p>
+<p><strong>Step 2e executed 2026-08-04 — the fix works, and this entry still stays
+open.</strong> <code>tests/validation/test_port_solenoidal_drive.py</code> drives the same mesh
+with <code>J′ = J − P_G J</code> and gets the prediction to three figures
+(<code>20260804T050616Z_PORT-1-step2e-gate.log</code>, 9 passed in 41.8 s at <code>-n 2</code>):</p>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>projected drive</th>
+<th>unprojected (this entry)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Im Z₁₁</code>, both routes</td>
+<td><strong><code>+7.437243e+00 Ω</code></strong></td>
+<td><code>−4.108550e+01 Ω</code></td>
+</tr>
+<tr>
+<td>ratio to Grover's <code>ωL = 6.818343 Ω</code></td>
+<td><strong>1.090770</strong></td>
+<td>−6.03</td>
+</tr>
+<tr>
+<td><code>4ωW_e/I′²</code></td>
+<td><code>8.761041e-05 Ω</code></td>
+<td><code>4.852271e+01 Ω</code></td>
+</tr>
+<tr>
+<td><code>‖P_G J′‖²/‖J′‖²</code></td>
+<td><code>4.5758e-33</code></td>
+<td><code>8.175e-06</code></td>
+</tr>
+<tr>
+<td>complex-power identity residual</td>
+<td><code>1.6242e-14</code></td>
+<td><code>1.8128e-10</code></td>
+</tr>
+<tr>
+<td>meshed current</td>
+<td><code>I′ = 0.969001 A</code></td>
+<td><code>I = 0.969009 A</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>4ωW_m/I′² = 7.4373 Ω</code> is step 2b's number unchanged, as it must be — the
+projection moves <code>W_e</code>, not <code>W_m</code> — so the fixture's inductance was physical
+throughout and the sign is now explained <em>and</em> demonstrated, not just
+diagnosed.</p>
+<p>The entry stays open because <strong>the production driver still builds the
+unprojected load</strong>: <code>TimeHarmonicSolver.solve()</code> assembles
+<code>−jωμ₀∫J·v̄</code> from the caller's <code>current_density</code> with no projection, so the
+diagonal in <code>test_port_reaction_impedance.py</code> is still negative and still
+ungated. Making the projection the port-excitation default is its own step.</p>
+<p><strong>Consequence, unchanged:</strong> no input impedance and no <code>S₁₁</code> off this path means
+anything. The off-diagonal is unaffected — <code>PORT-1</code> step 2 gates <code>Im Z₁₂</code> to
+9.35% of <code>ωM₁₂</code> and that number does not go through <code>W_e</code>.</p>
+<p>Remove this entry with the commit that explains the sign.</p>
+<p><em>(That step is 2f and it landed 2026-08-04 — see the retirement header at the
+top of this entry. The off-diagonal did move slightly, as the projection
+changes the field and not only its gradient part: <code>Im Z₁₂</code> went from
+<code>+1.125614e+00 Ω</code> (−9.35% of <code>ωM₁₂</code>) to <code>+1.142011e+00 Ω</code> (</em><em>−8.03%</em><em>), toward
+the closed form, under the unchanged 10% gate.)</em></p>
+<h3 id="resolved-2026-08-03-birdcage-suite-is-over-the-compute-budget-was-the-hang-not-meshing-cost">✅ RESOLVED 2026-08-03 — "birdcage suite is over the compute budget" was the hang, not meshing cost<a class="headerlink" href="#resolved-2026-08-03-birdcage-suite-is-over-the-compute-budget-was-the-hang-not-meshing-cost" title="Permanent link">&para;</a></h3>
+<p>The 10:30 review's reinterpretation was right and <code>GEO-9</code> step 2b's cost probe
+settles the figure. The claim was that
+<code>tests/mesh/test_birdcage_port_tags.py</code> takes <strong>~10 minutes</strong> on its own and
+that a full <code>tests/mesh</code> run exceeded a 700 s bound. <strong>Measured at the fixed
+geometry, default parameters, no coarsening:</strong> the file is <strong>8.95 s</strong> of pytest,
+harness 10 s (<code>20260803T200151Z_GEO-9-step2b-probe.log</code>), and the whole
+directory at <code>-n 2</code> is <strong>42.15 s</strong>, exit 0
+(<code>20260803T200504Z_GEO-9-step2b-gate.log</code>). The old number was a poisoned
+process burning the harness <code>timeout</code> — pytest reported in ~3 s while the run
+exited 124 at 180 s — so <code>resolution</code> never had to be coarsened from 0.015 and
+the file needs no exclusion from routine runs. It is in CI as of this commit.</p>
+<p>The <strong>latent rank-local tag bug</strong> recorded here is also fixed, and it was not
+latent: <code>set(np.unique(cell_tags.values))</code> is per-rank, and at <code>-n 2</code> on the
+newly-working mesh rank 0 reported P2/P3 missing while rank 1 reported P1/P4
+missing. <code>GEO-9</code> step 2b switched the test to
+<code>tests/mesh/helpers.py::global_cell_tag_set()</code> — the fix that was written and
+reverted on request pending exactly this rework. The assertion content (core +
+per-port tags all present) is unchanged.</p>
+<h3 id="the-gauge-penalty-is-a-workaround-not-a-gauge-closed-by-decision-2026-07-28">The gauge penalty is a workaround, not a gauge — closed by decision (2026-07-28)<a class="headerlink" href="#the-gauge-penalty-is-a-workaround-not-a-gauge-closed-by-decision-2026-07-28" title="Permanent link">&para;</a></h3>
+<p><code>DEFAULT_GAUGE_PENALTY = 1.0</code> prices the curl-curl operator's gradient null space
+rather than removing it (<code>PROJECT_PLAN.md</code> §7 <code>MAG-10</code>). This was previously the
+highest-risk open item; the decision is recorded here so it is not reopened:</p>
+<ul>
+<li><code>MAG-15</code> landed <code>GaugeMethod.LAGRANGE</code> — an (A, p) saddle point that removes the
+  null space with no parameter — as a cross-check and diagnostic
+  (<code>tests/solver/test_gauge_lagrange.py</code>). The penalty at 1.0 stays the production
+  default on cost grounds (~2× at degree 1, ~7.5× at degree 2).</li>
+<li>Tree-cotree gauging is rejected: <code>TH-1</code>'s E-field formulation has no static null
+  space at ω &gt; 0 (the operator acts as −k₀²ε_c on the gradient subspace), so deeper
+  magnetostatic gauge machinery has no Phase-2 payoff.</li>
+<li>The risk does <strong>not</strong> transfer to <code>TH-1</code> as gauge cancellation. The Phase-2
+  silent-failure analog is <em>near-resonance ill-conditioning</em>, tracked in the
+  <code>TH-1</code> formulation notes in <code>PROJECT_PLAN.md</code> §7.</li>
+</ul>
+<h3 id="resolved-2026-07-30-truncation-wall-modeling-floor-on-the-wireloop-fixtures-mag-13">✅ RESOLVED 2026-07-30 — truncation-wall modeling floor on the wire/loop fixtures (MAG-13)<a class="headerlink" href="#resolved-2026-07-30-truncation-wall-modeling-floor-on-the-wireloop-fixtures-mag-13" title="Permanent link">&para;</a></h3>
+<p>The natural BC <code>n×H = 0</code> on a truncation wall contradicts Ampère's law for any net
+enclosed current (<code>∮H·dl = I</code> vs <code>H_φ(R) = 0</code> forced at the wall), so it puts a
+floor under these fixtures that no refinement removes.</p>
+<p><strong>Straight wire: fixed 2026-07-30</strong> (<code>MAG-13</code> steps 1–3). <code>test_straight_wire.py</code>
+now imposes the analytic <code>A_z</code> on the exterior via
+<code>core.solvers.exterior_dirichlet_bc</code>; measured 35.13% → 22.19% at h=0.004 on the
+same mesh, and 22.19% → 12.75% → 9.26% across h = 0.004/0.0025/0.0018, i.e. still
+converging at ~O(h^1.2) with no plateau. <code>J·n ≠ 0</code> at the end caps remains (the
+<code>MAG-15</code> multiplier spread measures it) but is not what was dominating.</p>
+<p><strong>Loop: fixed 2026-07-30</strong> (<code>MAG-13</code> steps 4–5). <code>test_circular_loop.py</code> now
+imposes the Jackson 5.37 off-axis <code>A_φ</code> on the outer sphere through the same
+helper, and <code>test_convergence.py::test_h_refinement_straight_wire</code> fits the rate
+over three resolutions (<strong>1.10</strong>, bound <code>[0.7, 1.5]</code>) instead of two.</p>
+<p>One measurement worth keeping: on the <em>loop</em>, the analytic wall is ~20% <strong>worse</strong>
+at fixed h than the natural one (16.23% vs 14.98% at h=0.0035; 10.37% vs 8.86% at
+h=0.0025, on-axis <code>B_z</code> over <code>|z| ≤ 0.4 R</code>). Unlike the wire's Ampère-law
+contradiction, the loop's natural-BC bias is a PMC image term of order
+<code>(a/R)³ ≈ 3.7%</code>, which is <em>smaller</em> than the O(h) error that degree-1
+interpolation of <code>A_φ</code> injects through the boundary data. What the Dirichlet wall
+buys is the limit: 16.23% → 10.37% → 7.07% at h = 0.0035/0.0025/0.002 converges
+monotonically to the analytic field (fitted ~1.4), where the natural wall
+converges to a different field. The loop tolerance is therefore tightened
+10% → 8% <em>at h = 0.002</em> (411k cells) rather than at the old h = 0.0025 — no
+assertion was loosened to accommodate the better boundary condition.</p>
+<p>Remaining, not blocking: <code>J·n ≠ 0</code> at the wire end caps, and the &lt; 5% wire target
+needs h ≈ 0.00125 (~1.1M cells, &gt; 5 min at <code>-n 2</code>) — graded refinement (<code>MAG-9</code>),
+not more uniform h.</p>
+<h3 id="resolved-2026-08-01-two_torus_domain-was-not-a-conforming-mesh-geo-8">✅ RESOLVED 2026-08-01 — <code>two_torus_domain</code> was not a conforming mesh (<code>GEO-8</code>)<a class="headerlink" href="#resolved-2026-08-01-two_torus_domain-was-not-a-conforming-mesh-geo-8" title="Permanent link">&para;</a></h3>
+<p>The fixture added two tori and <code>occ.addBox</code> over them and never fragmented, so
+gmsh meshed a solid box plus two torus islands: total mesh volume exceeded the
+analytic box by exactly the two torus volumes (ratio <code>1.002633</code>), and driving
+torus 1 with a tag-restricted source gave <code>∫|E|² dV</code> over tags (1, 2, 3) =
+<code>2.0537e-04, 0, 0</code> — the field could not leave the driven island, which is why
+<code>PORT-1</code> measured <code>Z₁₂ ≡ 0</code>.</p>
+<p>Fixed by <code>occ.fragment</code> plus centroid/mass re-derivation of the physical
+groups. Both signatures are now gated by
+<code>tests/mesh/test_two_torus_conforming.py</code>: volume ratio <code>1.000000000</code>
+(log <code>20260801T003528Z_GEO-8-after.log</code>) and air/driven <code>∫|E|²</code> ratio
+<code>1.4118</code>, undriven/driven <code>5.2088e-08</code> (log
+<code>20260801T003600Z_GEO-8-field-gate-numbers.log</code>). The Helmholtz users improved
+rather than regressed: centre-field error <code>1.731% → 0.728%</code>.</p>
+<h3 id="air-box-sizing-is-not-generalised">Air-box sizing is not generalised<a class="headerlink" href="#air-box-sizing-is-not-generalised" title="Permanent link">&para;</a></h3>
+<p>Only <code>two_torus_domain</code> has <code>air_padding</code> and graded sizing. Every other fixture in
+<code>io/mesh.py</code> — including the coil+phantom geometry all MRI work depends on — still
+uses a single global <code>setSize</code> with padding tied to feature size. On Helmholtz that
+pattern produced a <strong>20.4% error that did not improve across a 7× refinement</strong>, and it
+was invisible until an analytic comparison existed. Coil+phantom has no analytic
+reference yet. See <code>PROJECT_PLAN.md</code> §9.</p>
+<hr />
+<h2 id="recording-a-new-entry">Recording a new entry<a class="headerlink" href="#recording-a-new-entry" title="Permanent link">&para;</a></h2>
+<p>Add an entry when you find a failure you are <strong>not</strong> fixing. Include: the test id, the
+literal symptom, the commit you verified it against, the cause (or an explicit "not
+diagnosed" — an honest gap is more useful than a guess), and which chunk resolves it.</p>
+<p>Remove the entry in the same commit that fixes the test.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

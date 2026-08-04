@@ -1,0 +1,119 @@
+# Test Run
+- Chunk: OPS-10-ci-fidelity
+- Commit: d1a4154e3a2581ac05e970b4e5f372219668576c
+- Time (UTC): 2026-07-31 03:33:12
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.3.1
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && FEM_EM_REQUIRE_COMPLEX=1 timeout 600 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_time_harmonic_mms.py tests/validation/test_lossy_plane_wave.py tests/validation/test_resonance_guard.py tests/solver/test_time_harmonic_smoke.py tests/solver/test_boundary_condition_selection.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Jul 30 22:32 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.3.1
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && FEM_EM_REQUIRE_COMPLEX=1 timeout 600 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_time_harmonic_mms.py tests/validation/test_lossy_plane_wave.py tests/validation/test_resonance_guard.py tests/solver/test_time_harmonic_smoke.py tests/solver/test_boundary_condition_selection.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 18 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  5%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 18 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  5%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 11%]PASSED [ 11%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 16%]PASSED [ 16%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 22%]PASSED [ 22%]
+tests/validation/test_time_harmonic_mms.py::test_manufactured_solution_converges_at_first_order 
+tests/validation/test_time_harmonic_mms.py::test_manufactured_solution_converges_at_first_order PASSED [ 27%]
+tests/validation/test_time_harmonic_mms.py::test_operator_is_complex_symmetric PASSED [ 27%]
+tests/validation/test_time_harmonic_mms.py::test_operator_is_complex_symmetric PASSED [ 33%]PASSED [ 33%]
+tests/validation/test_lossy_plane_wave.py::test_lossy_plane_wave_matches_closed_form 
+tests/validation/test_lossy_plane_wave.py::test_lossy_plane_wave_matches_closed_form PASSED [ 38%]PASSED [ 38%]
+tests/validation/test_lossy_plane_wave.py::test_conductivity_measurably_changes_the_field 
+tests/validation/test_lossy_plane_wave.py::test_conductivity_measurably_changes_the_field PASSED [ 44%]PASSED [ 44%]
+tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode 
+tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode PASSED [ 50%]PASSED [ 50%]
+tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps 
+tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps PASSED [ 55%]PASSED [ 55%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_returns_finite_e_field_values 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_returns_finite_e_field_values PASSED [ 61%]PASSED [ 61%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve PASSED [ 66%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_material_map_without_cell_tags_before_solve PASSED [ 66%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_material_map_without_cell_tags_before_solve PASSED [ 72%]PASSED [ 72%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve PASSED [ 77%]PASSED [ 77%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values 
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values PASSED [ 83%]PASSED [ 83%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value 
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value PASSED [ 88%]PASSED [ 88%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set 
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set PASSED [ 94%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path PASSED [ 94%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path PASSED [100%]PASSED [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 18 passed, 8 warnings in 31.41s ========================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 18 passed, 8 warnings in 31.43s ========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 32

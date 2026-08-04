@@ -1,0 +1,877 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="MRI-focused FEM EM solver documentation">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Project history — resolved defects and decisions - FEM Electromagnetics Solver</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#project-history-resolved-defects-and-decisions" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="FEM Electromagnetics Solver" class="md-header__button md-logo" aria-label="FEM Electromagnetics Solver" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            FEM Electromagnetics Solver
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Project history — resolved defects and decisions
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/awarru/fem-em-solver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    awarru/fem-em-solver
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="FEM Electromagnetics Solver" class="md-nav__button md-logo" aria-label="FEM Electromagnetics Solver" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    FEM Electromagnetics Solver
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/awarru/fem-em-solver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    awarru/fem-em-solver
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Validation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../validation/helmholtz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Helmholtz Coil
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Testing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/known-issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/test-results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Results Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-2026-07-27-audit-nothing-had-ever-executed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The 2026-07-27 audit — nothing had ever executed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-air-box-not-mesh-resolution-was-the-dominant-magnetostatics-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The air box, not mesh resolution, was the dominant magnetostatics error
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mag-10-the-gauge-penalty-default-was-silently-corrupting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MAG-10 — the gauge penalty default was silently corrupting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mag-15-lagrange-multiplier-gauge-two-traps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MAG-15 — Lagrange-multiplier gauge, two traps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mag-13-the-analytic-dirichlet-wall-and-a-wrong-premise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MAG-13 — the analytic Dirichlet wall, and a wrong premise
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scheduled-sessions-could-not-reach-the-docker-daemon-resolved-2026-07-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduled sessions could not reach the Docker daemon (resolved 2026-07-28)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on-deck-queue-drained-by-midday-resolved-2026-07-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On-deck queue drained by midday (resolved 2026-07-30)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#superseded-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Superseded documents
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="project-history-resolved-defects-and-decisions">Project history — resolved defects and decisions<a class="headerlink" href="#project-history-resolved-defects-and-decisions" title="Permanent link">&para;</a></h1>
+<p>Archive of <em>why</em> things are the way they are. Not reviewed regularly; nothing
+here is a task. Open work lives in <code>PROJECT_PLAN.md</code>.</p>
+<hr />
+<h2 id="the-2026-07-27-audit-nothing-had-ever-executed">The 2026-07-27 audit — nothing had ever executed<a class="headerlink" href="#the-2026-07-27-audit-nothing-had-ever-executed" title="Permanent link">&para;</a></h2>
+<p>CI ran only <code>tests/unit</code>. ~3,400 lines of test code ran nowhere, so <code>docs/status.md</code>
+claimed "Phase 1 COMPLETE" and the README claimed analytic validation while the
+suite was incapable of passing. Executing it surfaced six independent defects,
+<strong>none in the solver</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Defect</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>B.eval(points, np.arange(n))</code> evaluates in arbitrary cells</td>
+<td>7 sites; output oscillated where analytic was smooth</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Axial current density in an xy-plane torus (both loop tests)</td>
+<td>on-axis <code>B_z</code> ~1000× too small</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Wire current applied over the whole domain</td>
+<td>~2500 A enclosed instead of 1 A</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Convergence-rate sign inverted</td>
+<td>reported −0.79 for convergent data</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Analytic expectation 2× wrong</td>
+<td>test wanted <code>μ₀I/(2√2a)</code>; correct is <code>μ₀I/(4√2a)</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Meshes mis-sized</td>
+<td>OOM at 16 GB / &gt;400 s</td>
+</tr>
+</tbody>
+</table>
+<p>Defect 5 is why the plan forbids loosening a failing analytic comparison: the
+<em>test</em> was wrong and the <em>implementation</em> was right.</p>
+<p><code>OPS-3</code>/<code>OPS-4</code> had sat at <code>AWAITING-HUMAN-TEST</code> for months while being
+<strong>unrunnable</strong> — two test files sharing a basename with no <code>__init__.py</code>, so
+pytest's <code>prepend</code> import mode failed to collect the second and the smoke matrix
+exited 2 every time. Fixed with <code>--import-mode=importlib</code>. That is the canonical
+argument for §4's execute-it-yourself rule.</p>
+<p>A related pathology: human-gated completion plus a "cron-safe mode forbids
+solves" policy produced ~35 consecutive commits of <em>"record audit note: no new
+human test logs found"</em>, and 19 byte-identical status blocks in
+<code>pending-tests.md</code>. Hence §5.2.</p>
+<h2 id="the-air-box-not-mesh-resolution-was-the-dominant-magnetostatics-error">The air box, not mesh resolution, was the dominant magnetostatics error<a class="headerlink" href="#the-air-box-not-mesh-resolution-was-the-dominant-magnetostatics-error" title="Permanent link">&para;</a></h2>
+<p><code>two_torus_domain</code> hardcoded <code>box_half = R + 3a</code>, coupling the air gap to the
+<em>wire radius</em>. The natural outer condition <code>n×H = 0</code> acts as a perfect magnetic
+conductor and mirrors flux inward. Because of the coupling, a <em>thinner</em> wire
+shrank the box and made agreement <em>worse</em> (43.7% at <code>a = 0.003</code> vs 20.5% at
+<code>a = 0.005</code>) — the inverted trend is what identified the boundary as the culprit.</p>
+<p>Fixed with <code>air_padding</code> (decoupled from <code>minor_radius</code>) plus graded
+<code>wire_resolution</code>/<code>far_resolution</code> via a gmsh Distance+Threshold field. Grading
+is what makes a large box affordable: 76k cells instead of ~626k for equivalent
+wire fidelity. Two convergence studies then confirmed 0.04% centre-field error
+was real rather than error cancellation:</p>
+<table>
+<thead>
+<tr>
+<th>air padding</th>
+<th>cells</th>
+<th>centre err</th>
+<th></th>
+<th>wire <code>h</code> @ 4R pad</th>
+<th>cells</th>
+<th>centre err</th>
+<th>mean err</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.5 R</td>
+<td>40k</td>
+<td>20.42%</td>
+<td></td>
+<td>0.004</td>
+<td>89k</td>
+<td>0.11%</td>
+<td>1.07%</td>
+</tr>
+<tr>
+<td>1 R</td>
+<td>51k</td>
+<td>7.43%</td>
+<td></td>
+<td>0.003</td>
+<td>127k</td>
+<td>0.04%</td>
+<td>0.84%</td>
+</tr>
+<tr>
+<td>2 R</td>
+<td>76k</td>
+<td>1.73%</td>
+<td></td>
+<td>0.002</td>
+<td>228k</td>
+<td>0.05%</td>
+<td>0.51%</td>
+</tr>
+<tr>
+<td>4 R</td>
+<td>163k</td>
+<td><strong>0.01%</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="mag-10-the-gauge-penalty-default-was-silently-corrupting"><code>MAG-10</code> — the gauge penalty default was silently corrupting<a class="headerlink" href="#mag-10-the-gauge-penalty-default-was-silently-corrupting" title="Permanent link">&para;</a></h2>
+<p>The degree-2 blow-up was not an element-order problem. <code>gauge_penalty = 1e-3</code>
+sat below the safe window; the penalty fixes <code>|A_gradient| ∝ 1/gauge</code>, so against
+<code>μ⁻¹ ≈ 8×10⁵</code> the null-space component ran ~9 orders larger than the physical
+field and <code>B = ∇×A</code> lost it to cancellation. Degree 1 merely hid the problem.</p>
+<table>
+<thead>
+<tr>
+<th>degree</th>
+<th>gauge</th>
+<th>L2 error</th>
+<th><code>max\|A\|</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1e-3</td>
+<td>24.84%</td>
+<td>4.39e+04</td>
+</tr>
+<tr>
+<td>1</td>
+<td>≥1e0</td>
+<td>24.67%</td>
+<td>5.23e+01</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>1e-3</strong></td>
+<td><strong>919.85%</strong></td>
+<td><strong>3.46e+07</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>≥1e0</td>
+<td><strong>19.59%</strong></td>
+<td>4.26e+01</td>
+</tr>
+</tbody>
+</table>
+<p>The failure was silent: with direct LU, PETSc reported <em>converged, residual 0.0</em>
+for the 919% answer — the same shape as the near-resonance risk <code>TH-1</code> must guard
+against. Fix: <code>DEFAULT_GAUGE_PENALTY = 1.0</code>, shared by every entry point, plus
+<code>GaugeContaminationWarning</code> below the floor. <code>B</code> is insensitive across 1e0…1e6 on
+two independent geometries.</p>
+<p>A solution-based guard was <strong>tried and rejected</strong>: <code>||A||/(L·||curl A||)</code> reads
+~5e8 for a known-good solve, so no threshold separates good from bad without false
+alarms. It is still computed for diagnostics, just not a trigger.</p>
+<p>Tree-cotree gauging is rejected outright: <code>TH-1</code>'s E-field formulation has no
+static null space at ω &gt; 0, so further magnetostatic gauge machinery has no
+Phase-2 payoff.</p>
+<h2 id="mag-15-lagrange-multiplier-gauge-two-traps"><code>MAG-15</code> — Lagrange-multiplier gauge, two traps<a class="headerlink" href="#mag-15-lagrange-multiplier-gauge-two-traps" title="Permanent link">&para;</a></h2>
+<p>Two implementation traps, neither caught by a single-rank test:</p>
+<ul>
+<li><code>p</code> must live in the <strong>full <code>H¹</code></strong>, not <code>H¹₀</code>. Restricting the multiplier leaves
+  gradients of boundary-nonzero functions unconstrained; the system stays singular
+  and returns <code>NaN</code>/<code>inf</code> rather than failing loudly.</li>
+<li><code>fem.locate_dofs_geometrical</code> is <strong>collective</strong>. Calling it under
+  <code>if comm.rank == owner</code> deadlocks <em>rank-count dependently</em> — completes at 2 ranks,
+  hangs at 4. <code>MPI.MINLOC</code> over a pickled tuple is likewise not reliably consistent;
+  owner election uses scalar reductions only.</li>
+</ul>
+<h2 id="mag-13-the-analytic-dirichlet-wall-and-a-wrong-premise"><code>MAG-13</code> — the analytic Dirichlet wall, and a wrong premise<a class="headerlink" href="#mag-13-the-analytic-dirichlet-wall-and-a-wrong-premise" title="Permanent link">&para;</a></h2>
+<p>The wire's natural BC contradicts Ampère's law for net axial current, an error no
+refinement removes: 35.13% → 22.19% at fixed h once the analytic wall replaced it.</p>
+<p>For the <strong>loop</strong> the plan's premise was wrong in sign, and the measurement was the
+deliverable. The analytic wall is ~20% <em>worse</em> at fixed h (16.23% vs 14.98% at
+h = 0.0035), because the loop's natural-BC bias is only a PMC image term of order
+<code>(a/R)³ ≈ 3.7%</code> — smaller than the O(h) error that degree-1 interpolation of <code>A_φ</code>
+injects through the boundary data itself. What it buys is the limit:
+16.23% → 10.37% → <strong>7.07%</strong> converges monotonically to the analytic field, while
+the natural wall converges to a field that differs from it. So the bound tightened
+10% → 8% <em>at h = 0.002</em>, not at the old h = 0.0025 where the analytic BC would have
+needed 12% — the resolution moved, not the bound.</p>
+<p>Convergence triples rejected on measurement: h = 0.005 gives 30.34% (5 mm cells
+cannot resolve a 3 mm wire), and h = 0.0035 gives 11.77%, <em>below</em> the h = 0.0025
+value, making any triple containing it non-monotone.</p>
+<h2 id="scheduled-sessions-could-not-reach-the-docker-daemon-resolved-2026-07-28">Scheduled sessions could not reach the Docker daemon (resolved 2026-07-28)<a class="headerlink" href="#scheduled-sessions-could-not-reach-the-docker-daemon-resolved-2026-07-28" title="Permanent link">&para;</a></h2>
+<p>Root cause was the Bash sandbox, not group membership: the sandbox's user
+namespace strips the <code>docker</code> supplementary group, so nothing inside it can open
+<code>/var/run/docker.sock</code>. Fixed by putting <code>docker *</code> and
+<code>scripts/testing/run_and_log.sh *</code> in <code>sandbox.excludedCommands</code>; both still gated
+by the permission allowlist. Automation logs also moved to <code>logs/automation/</code>.</p>
+<p>Related, 2026-07-30: the documented preflight <code>cd docker &amp;&amp; docker compose ps</code> is
+denied in scheduled sessions — a <code>cd</code> inside a compound command prompts regardless
+of the allowlist, and headless runs have nobody to approve. Use
+<code>docker compose -f docker/docker-compose.yml ps</code>.</p>
+<h2 id="on-deck-queue-drained-by-midday-resolved-2026-07-30">On-deck queue drained by midday (resolved 2026-07-30)<a class="headerlink" href="#on-deck-queue-drained-by-midday-resolved-2026-07-30" title="Permanent link">&para;</a></h2>
+<p>The daily review sized "On deck" at exactly 3 items while cron runs the
+implementer 6× daily, so the last three slots of the day stopped with <code>anomaly</code>
+entries and no chunk work. Fixed by raising the floor to 6 items and giving the
+implementer a fallback to §9's "obvious next entry" sentence.</p>
+<h2 id="superseded-documents">Superseded documents<a class="headerlink" href="#superseded-documents" title="Permanent link">&para;</a></h2>
+<p><code>ROADMAP.md</code> merged into <code>PROJECT_PLAN.md</code>; <code>docs/status.md</code> is a generated
+snapshot, not a plan. Per-chunk historical detail (files changed, pass signals,
+commit hashes) was in <code>docs/testing/pending-tests.md</code>, removed 2026-08-04 along
+with the human-gated <code>AWAITING-HUMAN-TEST</code> queue it implemented — recover it
+from git history if needed.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

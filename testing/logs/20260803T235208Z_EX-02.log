@@ -1,0 +1,515 @@
+# Test Run
+- Chunk: EX-02
+- Commit: 94b886b6d2dccb4886799153f5bfba40105025e0
+- Time (UTC): 2026-08-03 23:52:08
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace/examples/magnetostatics && PYTHONPATH=/workspace/src timeout 600 mpiexec -n 4 python3 02_circular_loop.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  3 18:49 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace/examples/magnetostatics && PYTHONPATH=/workspace/src timeout 600 mpiexec -n 4 python3 02_circular_loop.py'\'''
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 20%] Meshing curve 2 (Circle)
+Info    : [ 60%] Meshing curve 4 (Circle)
+Info    : Done meshing 1D (Wall 0.000354998s, CPU 0.000299s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 2 (Sphere, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.60475s, CPU 0.600174s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 9266 nodes...
+Info    : Done tetrahedrizing 9274 nodes (Wall 0.0882818s, CPU 0.076366s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.264603s, CPU 0.240575s)
+Info    : Found volume 2
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 13.3084 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 3.6836 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 2.9896 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 2.64394 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 2.41384 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 2.2605 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 2.13342 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 2.03547 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 1.94833 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 1.88272 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 1.81951 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 1.76613 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 1.72165 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 1.6782 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 1.63651 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 1.60117 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 1.56946 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 1.54011 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 1.5135 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 1.48742 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 1.46198 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 1.43922 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 1.41812 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 1.39913 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 1.38118 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 1.36431 (nodes removed 0 0)
+Info    : It. 13000 - 13000 nodes created - worst tet radius 1.34853 (nodes removed 0 0)
+Info    : It. 13500 - 13500 nodes created - worst tet radius 1.33216 (nodes removed 0 0)
+Info    : It. 14000 - 14000 nodes created - worst tet radius 1.31433 (nodes removed 0 0)
+Info    : It. 14500 - 14500 nodes created - worst tet radius 1.29953 (nodes removed 0 0)
+Info    : It. 15000 - 15000 nodes created - worst tet radius 1.28522 (nodes removed 0 0)
+Info    : It. 15500 - 15500 nodes created - worst tet radius 1.27213 (nodes removed 0 0)
+Info    : It. 16000 - 16000 nodes created - worst tet radius 1.25875 (nodes removed 0 0)
+Info    : It. 16500 - 16500 nodes created - worst tet radius 1.24749 (nodes removed 0 0)
+Info    : It. 17000 - 17000 nodes created - worst tet radius 1.23607 (nodes removed 0 0)
+Info    : It. 17500 - 17500 nodes created - worst tet radius 1.22571 (nodes removed 0 0)
+Info    : It. 18000 - 18000 nodes created - worst tet radius 1.21463 (nodes removed 0 0)
+Info    : It. 18500 - 18500 nodes created - worst tet radius 1.2047 (nodes removed 0 0)
+Info    : It. 19000 - 19000 nodes created - worst tet radius 1.19375 (nodes removed 0 0)
+Info    : It. 19500 - 19500 nodes created - worst tet radius 1.18348 (nodes removed 0 0)
+Info    : It. 20000 - 20000 nodes created - worst tet radius 1.17372 (nodes removed 0 0)
+Info    : It. 20500 - 20500 nodes created - worst tet radius 1.16436 (nodes removed 0 0)
+Info    : It. 21000 - 21000 nodes created - worst tet radius 1.15609 (nodes removed 0 0)
+Info    : It. 21500 - 21500 nodes created - worst tet radius 1.14766 (nodes removed 0 0)
+Info    : It. 22000 - 22000 nodes created - worst tet radius 1.13972 (nodes removed 0 0)
+Info    : It. 22500 - 22500 nodes created - worst tet radius 1.13115 (nodes removed 0 0)
+Info    : It. 23000 - 23000 nodes created - worst tet radius 1.12284 (nodes removed 0 0)
+Info    : It. 23500 - 23500 nodes created - worst tet radius 1.11549 (nodes removed 0 0)
+Info    : It. 24000 - 24000 nodes created - worst tet radius 1.10793 (nodes removed 0 0)
+Info    : It. 24500 - 24500 nodes created - worst tet radius 1.10068 (nodes removed 0 0)
+Info    : It. 25000 - 25000 nodes created - worst tet radius 1.09387 (nodes removed 0 0)
+Info    : It. 25500 - 25500 nodes created - worst tet radius 1.08679 (nodes removed 0 0)
+Info    : It. 26000 - 26000 nodes created - worst tet radius 1.08012 (nodes removed 0 0)
+Info    : It. 26500 - 26500 nodes created - worst tet radius 1.07384 (nodes removed 0 0)
+Info    : It. 27000 - 27000 nodes created - worst tet radius 1.06741 (nodes removed 0 0)
+Info    : It. 27500 - 27500 nodes created - worst tet radius 1.06148 (nodes removed 0 0)
+Info    : It. 28000 - 28000 nodes created - worst tet radius 1.05522 (nodes removed 0 0)
+Info    : It. 28500 - 28500 nodes created - worst tet radius 1.04891 (nodes removed 0 0)
+Info    : It. 29000 - 29000 nodes created - worst tet radius 1.04317 (nodes removed 0 0)
+Info    : It. 29500 - 29500 nodes created - worst tet radius 1.03766 (nodes removed 0 0)
+Info    : It. 30000 - 30000 nodes created - worst tet radius 1.03198 (nodes removed 0 0)
+Info    : It. 30500 - 30500 nodes created - worst tet radius 1.02668 (nodes removed 0 0)
+Info    : It. 31000 - 31000 nodes created - worst tet radius 1.02135 (nodes removed 0 0)
+Info    : It. 31500 - 31500 nodes created - worst tet radius 1.01597 (nodes removed 0 0)
+Info    : It. 32000 - 32000 nodes created - worst tet radius 1.01096 (nodes removed 0 0)
+Info    : It. 32500 - 32500 nodes created - worst tet radius 1.00606 (nodes removed 0 0)
+Info    : It. 33000 - 33000 nodes created - worst tet radius 1.0011 (nodes removed 0 0)
+Info    : 3D refinement terminated (42384 nodes total):
+Info    :  - 3 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 241320 tetrahedra created in 2.49917 sec. (96559 tets/s)
+Info    : Done meshing 3D (Wall 3.17894s, CPU 3.1227s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 3.25926e-06) with worst = 0.0683353 / average = 0.797256:
+Info    : 0.00 < quality < 0.10 :         1 elements
+Info    : 0.10 < quality < 0.20 :         4 elements
+Info    : 0.20 < quality < 0.30 :         8 elements
+Info    : 0.30 < quality < 0.40 :        23 elements
+Info    : 0.40 < quality < 0.50 :        19 elements
+Info    : 0.50 < quality < 0.60 :        22 elements
+Info    : 0.60 < quality < 0.70 :       120 elements
+Info    : 0.70 < quality < 0.80 :       333 elements
+Info    : 0.80 < quality < 0.90 :       468 elements
+Info    : 0.90 < quality < 1.00 :       279 elements
+Info    : 13 edge swaps, 0 node relocations (volume = 3.25926e-06): worst = 0.303096 / average = 0.803658 (Wall 0.000369398s, CPU 0.000369s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        23 elements
+Info    : 0.40 < quality < 0.50 :        16 elements
+Info    : 0.50 < quality < 0.60 :        25 elements
+Info    : 0.60 < quality < 0.70 :       118 elements
+Info    : 0.70 < quality < 0.80 :       336 elements
+Info    : 0.80 < quality < 0.90 :       469 elements
+Info    : 0.90 < quality < 1.00 :       279 elements
+Info    : Optimizing volume 2
+Info    : Optimization starts (volume = 0.00090095) with worst = 0.00720461 / average = 0.783415:
+Info    : 0.00 < quality < 0.10 :       448 elements
+Info    : 0.10 < quality < 0.20 :      1480 elements
+Info    : 0.20 < quality < 0.30 :      2642 elements
+Info    : 0.30 < quality < 0.40 :      4170 elements
+Info    : 0.40 < quality < 0.50 :      6606 elements
+Info    : 0.50 < quality < 0.60 :     10944 elements
+Info    : 0.60 < quality < 0.70 :     22095 elements
+Info    : 0.70 < quality < 0.80 :     52488 elements
+Info    : 0.80 < quality < 0.90 :     92134 elements
+Info    : 0.90 < quality < 1.00 :     47036 elements
+Info    : 4524 edge swaps, 112 node relocations (volume = 0.00090095): worst = 0.179099 / average = 0.795323 (Wall 0.18133s, CPU 0.18131s)
+Info    : 4543 edge swaps, 112 node relocations (volume = 0.00090095): worst = 0.281236 / average = 0.795377 (Wall 0.232874s, CPU 0.232854s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         2 elements
+Info    : 0.30 < quality < 0.40 :      4132 elements
+Info    : 0.40 < quality < 0.50 :      6362 elements
+Info    : 0.50 < quality < 0.60 :     10531 elements
+Info    : 0.60 < quality < 0.70 :     21999 elements
+Info    : 0.70 < quality < 0.80 :     53298 elements
+Info    : 0.80 < quality < 0.90 :     92931 elements
+Info    : 0.90 < quality < 1.00 :     46726 elements
+Info    : Done optimizing mesh (Wall 0.748261s, CPU 0.700243s)
+Info    : 42384 nodes 255920 elements
+Info    : Optimizing mesh (Netgen)...
+Info    : Optimizing volume 1
+Info    : CalcLocalH: 501 Points 1266 Elements 930 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 75 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 14.6435 
+Info    : 19 splits performed 
+Info    : SwapImprove  
+Info    : 6 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 18 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1636.46 
+Info    : Total badness = 1609.96 
+Info    : SplitImprove 
+Info    : badmax = 7.81152 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1609.96 
+Info    : Total badness = 1609.49 
+Info    : SwapImprove  
+Info    : 18 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1590.7 
+Info    : Total badness = 1585.89 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1579.98 
+Info    : Total badness = 1579.85 
+Info    : SplitImprove 
+Info    : badmax = 3.84918 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1579.85 
+Info    : Total badness = 1579.85 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1579.84 
+Info    : Total badness = 1579.45 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1579.45 
+Info    : Total badness = 1579.44 
+Info    : SplitImprove 
+Info    : badmax = 3.84936 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1579.44 
+Info    : Total badness = 1579.44 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1579.44 
+Info    : Total badness = 1579.44 
+Info    : Optimizing volume 2
+Info    : CalcLocalH: 42348 Points 235981 Elements 18528 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 2332 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 298912 
+Info    : Total badness = 285397 
+Info    : SplitImprove 
+Info    : badmax = 12.0093 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 285397 
+Info    : Total badness = 283459 
+Info    : SwapImprove  
+Info    : 12556 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 261348 
+Info    : Total badness = 255210 
+Info    : CombineImprove 
+Info    : 490 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 250921 
+Info    : Total badness = 249975 
+Info    : SplitImprove 
+Info    : badmax = 8.78082 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 249975 
+Info    : Total badness = 249803 
+Info    : SwapImprove  
+Info    : 1555 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 248606 
+Info    : Total badness = 247622 
+Info    : CombineImprove 
+Info    : 130 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 246530 
+Info    : Total badness = 246320 
+Info    : SplitImprove 
+Info    : badmax = 8.71374 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 246320 
+Info    : Total badness = 246273 
+Info    : SwapImprove  
+Info    : 422 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 246098 
+Info    : Total badness = 245817 
+Info    : Done optimizing mesh (Wall 21.8514s, CPU 21.7788s)
+============================================================
+Example: Magnetic field of circular current loop
+============================================================
+
+Parameters:
+  Current: 1.0 A
+  Loop radius: 0.02 m (2.0 cm)
+  Wire radius: 0.003 m (3.0 mm)
+  Domain radius: 0.06 m
+  Mesh resolution: 0.0025 m
+
+Generating mesh...
+  Mesh created: 208049 cells
+
+Solving magnetostatic problem...
+  Solution computed!
+
+Computing B-field...
+
+Results:
+  B_z at center (numerical): 2.931794e-05 T
+  B_z at center (analytical): 3.141593e-05 T
+  Max B_z (analytical): 3.141593e-05 T
+  Relative L2 error: 7.8916%
+  Max relative error: 19.4546%
+
+  Expected B_z(0) = μ₀I/(2a) = 3.141593e-05 T
+
+  Magnetic energy: 2.359418e-08 J
+
+============================================================
+Saving results for ParaView visualization...
+============================================================
+
+  Writing XDMF files (traditional + combined)...
+
+  Writing VTX files...
+    ⚠ VTX output failed (ADIOS2 may not be available): Only (discontinuous) Lagrange functions are supported. Interpolate Functions before output.
+
+  ✓ ParaView files saved to paraview_output/
+    Open circular_loop_combined.xdmf in ParaView: it carries the
+    'CellTags' cell array plus A, B, and B_analytical on one grid,
+    so Threshold on CellTags and Calculator mag(B - B_analytical)
+    both work directly.
+
+============================================================
+Example completed successfully!
+============================================================
+============================================================
+Example: Magnetic field of circular current loop
+============================================================
+
+Parameters:
+  Current: 1.0 A
+  Loop radius: 0.02 m (2.0 cm)
+  Wire radius: 0.003 m (3.0 mm)
+  Domain radius: 0.06 m
+  Mesh resolution: 0.0025 m
+
+Generating mesh...
+  Mesh created: 208049 cells
+
+Solving magnetostatic problem...
+  Solution computed!
+
+Computing B-field...
+
+Results:
+  B_z at center (numerical): 2.931794e-05 T
+  B_z at center (analytical): 3.141593e-05 T
+  Max B_z (analytical): 3.141593e-05 T
+  Relative L2 error: 7.8916%
+  Max relative error: 19.4546%
+
+  Expected B_z(0) = μ₀I/(2a) = 3.141593e-05 T
+
+  Magnetic energy: 2.359418e-08 J
+
+============================================================
+Saving results for ParaView visualization...
+============================================================
+
+  Writing XDMF files (traditional + combined)...
+
+  Writing VTX files...
+    ⚠ VTX output failed (ADIOS2 may not be available): Only (discontinuous) Lagrange functions are supported. Interpolate Functions before output.
+
+  ✓ ParaView files saved to paraview_output/
+    Open circular_loop_combined.xdmf in ParaView: it carries the
+    'CellTags' cell array plus A, B, and B_analytical on one grid,
+    so Threshold on CellTags and Calculator mag(B - B_analytical)
+    both work directly.
+
+============================================================
+Example completed successfully!
+============================================================
+============================================================
+Example: Magnetic field of circular current loop
+============================================================
+
+Parameters:
+  Current: 1.0 A
+  Loop radius: 0.02 m (2.0 cm)
+  Wire radius: 0.003 m (3.0 mm)
+  Domain radius: 0.06 m
+  Mesh resolution: 0.0025 m
+
+Generating mesh...
+  Mesh created: 208049 cells
+
+Solving magnetostatic problem...
+  Solution computed!
+
+Computing B-field...
+
+Results:
+  B_z at center (numerical): 2.931794e-05 T
+  B_z at center (analytical): 3.141593e-05 T
+  Max B_z (analytical): 3.141593e-05 T
+  Relative L2 error: 7.8916%
+  Max relative error: 19.4546%
+
+  Expected B_z(0) = μ₀I/(2a) = 3.141593e-05 T
+
+  Magnetic energy: 2.359418e-08 J
+
+============================================================
+Saving results for ParaView visualization...
+============================================================
+
+  Writing XDMF files (traditional + combined)...
+
+  Writing VTX files...
+    ⚠ VTX output failed (ADIOS2 may not be available): Only (discontinuous) Lagrange functions are supported. Interpolate Functions before output.
+
+  ✓ ParaView files saved to paraview_output/
+    Open circular_loop_combined.xdmf in ParaView: it carries the
+    'CellTags' cell array plus A, B, and B_analytical on one grid,
+    so Threshold on CellTags and Calculator mag(B - B_analytical)
+    both work directly.
+
+============================================================
+Example completed successfully!
+============================================================
+============================================================
+Example: Magnetic field of circular current loop
+============================================================
+
+Parameters:
+  Current: 1.0 A
+  Loop radius: 0.02 m (2.0 cm)
+  Wire radius: 0.003 m (3.0 mm)
+  Domain radius: 0.06 m
+  Mesh resolution: 0.0025 m
+
+Generating mesh...
+  Mesh created: 208049 cells
+
+Solving magnetostatic problem...
+  Solution computed!
+
+Computing B-field...
+
+Results:
+  B_z at center (numerical): 2.931794e-05 T
+  B_z at center (analytical): 3.141593e-05 T
+  Max B_z (analytical): 3.141593e-05 T
+  Relative L2 error: 7.8916%
+  Max relative error: 19.4546%
+
+  Expected B_z(0) = μ₀I/(2a) = 3.141593e-05 T
+
+  Magnetic energy: 2.359418e-08 J
+
+============================================================
+Saving results for ParaView visualization...
+============================================================
+
+  Writing XDMF files (traditional + combined)...
+    ✓ Standardized XDMF export complete
+    ✓ Combined file saved to circular_loop_combined.xdmf
+
+  Writing VTX files...
+    ⚠ VTX output failed (ADIOS2 may not be available): Only (discontinuous) Lagrange functions are supported. Interpolate Functions before output.
+
+  ✓ ParaView files saved to paraview_output/
+    Open circular_loop_combined.xdmf in ParaView: it carries the
+    'CellTags' cell array plus A, B, and B_analytical on one grid,
+    so Threshold on CellTags and Calculator mag(B - B_analytical)
+    both work directly.
+
+  Saving results...
+  Results saved to: circular_loop_results.txt
+
+  Sample values:
+    z [m]        B_z num [T]     B_z ana [T]     Error     
+    ----------------------------------------------------
+    -0.0240      8.649964e-06    8.242617e-06    4.94      %
+    -0.0120      1.768938e-05    1.980804e-05    10.70     %
+    0.0000       2.931794e-05    3.141593e-05    6.68      %
+    0.0120       1.812346e-05    1.980804e-05    8.50      %
+    0.0240       7.561440e-06    8.242617e-06    8.26      %
+
+============================================================
+Example completed successfully!
+============================================================
+
+## Exit
+- Status: 0
+- Elapsed (s): 44

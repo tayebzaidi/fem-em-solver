@@ -17,7 +17,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -25,7 +25,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -401,14 +401,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../pending-tests/" class="md-nav__link">
+      <a href="../known-issues/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Pending Manual Tests
+    Known Issues
   
 
     
@@ -730,7 +730,16 @@
 <p>Status guidance:
 - Mark item <strong>PASS</strong> only when linked logs/artifacts are present and criteria are met.
 - Mark <strong>BLOCKED</strong> when a required prerequisite test cannot run (for example, environment unavailable).
-- Keep this file aligned with <code>ROADMAP.md</code> and <code>docs/testing/pending-tests.md</code>.</p>
+- Keep this file aligned with <code>PROJECT_PLAN.md</code> §7.
+- Chunk IDs below are legacy (<code>B1</code>, <code>C2</code>, <code>D3</code>, …). Resolve them via the mapping
+  table in <code>PROJECT_PLAN.md</code> §8.</p>
+<blockquote>
+<p><strong>v1 is not currently attainable.</strong> Sections covering field plausibility and
+S-parameter sanity depend on <code>TH-1</code> (a real time-harmonic formulation) and
+<code>PORT-1</code> (port quantities derived from the solved field). Until those land, the
+underlying numbers are placeholder-derived and no evidence gathered against them
+can support a v1 signoff. See <code>PROJECT_PLAN.md</code> §2.</p>
+</blockquote>
 <hr />
 <h2 id="1-geometry-validity">1) Geometry validity<a class="headerlink" href="#1-geometry-validity" title="Permanent link">&para;</a></h2>
 <h3 id="required-chunk-evidence">Required chunk evidence<a class="headerlink" href="#required-chunk-evidence" title="Permanent link">&para;</a></h3>
@@ -832,9 +841,9 @@
 <p>Mark <strong>v1 achieved</strong> only when all statements below are true:</p>
 <ul>
 <li>[ ] No required chunk in sections 1-4 is in <code>🚫 BLOCKED</code> state.</li>
-<li>[ ] Every required chunk has a human-run logged result with successful exit in <code>docs/testing/test-results.md</code>.</li>
+<li>[ ] Every required chunk has a logged result with successful exit in <code>docs/testing/test-results.md</code>.</li>
 <li>[ ] Required artifact files are present and referenced by logs.</li>
-<li>[ ] Any WARN-level diagnostics are reviewed and accepted as non-blocking with notes recorded in <code>docs/testing/pending-tests.md</code>.</li>
+<li>[ ] Any WARN-level diagnostics are reviewed and accepted as non-blocking with notes recorded in <code>PROJECT_PLAN.md</code> §7.</li>
 </ul>
 <h2 id="v1-signoff-record">v1 signoff record<a class="headerlink" href="#v1-signoff-record" title="Permanent link">&para;</a></h2>
 <ul>
@@ -895,7 +904,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
