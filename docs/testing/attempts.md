@@ -3425,3 +3425,92 @@ run is a second encounter and must park it on `recovered/<UTC-timestamp>` and
 proceed — one slot lost, not the rest of the day.
 
 **Denials:** none. **Branch:** none. **Logs:** none — no compute was run.
+
+---
+
+## 2026-08-04T21:30Z — `MAT-6` step 3 (§9 On-deck item 3) — **complete**
+
+**Preflight.** Tree clean, container Up 23 h. §9 item 1 carries the 12:00 run's
+"do not re-attempt", item 2 is done — item 3 is the first open item, taken as
+written. No `recovered/*` action needed; the 20:00Z anomaly's dirty tree is
+gone (the human's weekly-review commit landed as `436199c`).
+
+**What was tried.** Re-gate `MAT-6`'s coil-loading ΔR on the *production*
+default drive (`project_source=True`), which the landed 1.58% never used.
+New module `tests/validation/test_dodd_deeds_projected_drive.py`, five tests,
+no `src/` change of any kind — the step-2f default was already there; this
+measures it.
+
+Two design decisions worth reusing:
+
+* **Separate module, importing the fixture.** The geometry constants, the
+  regularised `_azimuthal_current_density` and the tags are imported from
+  `test_dodd_deeds_impedance.py` instead of restated, so there is one
+  definition of the fixture and the `project_source=False` pins are physically
+  untouched (the §7 plan's first trap). Adding two solves to the existing
+  module-scoped fixture would also have put one pytest command at ~155 s
+  against the 180 s standard ceiling; two commands of ~70 s is the split the
+  plan asked for.
+* **The like-for-like precondition is measured, not assumed.**
+  `remove_gradient_content` takes only the mesh, `J` and the cell tags — never
+  the material — so the loaded and free solves must be driven by the identical
+  `J′`, or their reaction difference measures the drive change instead of the
+  half-space. That is now an assertion:
+  `||J′_loaded − J′_free||²/||J′||² = 0.0` on both gate runs, `8.774e-39` on
+  the probe, bounded at `1e-24`.
+
+**Measured numbers** (identical to every printed digit across all three runs;
+138 619 cells, W = 0.15, `-n 2`):
+
+| quantity | projected (default) | pinned (step 2b) | closed form |
+|---|---|---|---|
+| ΔR | `+3.2770406e-01 Ω` | `+3.276882e-01 Ω` | `+3.2259615e-01 Ω` |
+| ΔR error | **1.5834%** | 1.58% | — |
+| ΔX | `−5.6657895e-01 Ω` | (ratio 0.8123) | `−6.1586749e-01 Ω` |
+| ΔX ratio | **0.9200** | 0.8123 | — |
+| `I′` | `0.919666 A` (0.999974 of meshed `I`) | `I = 0.919690 A` | — |
+
+Gated: ΔR < 5% (step 2b's ceiling, inherited unchanged — never widened);
+ΔR > 0; ΔX < 0 and within an order of magnitude; drive mismatch < 1e-24;
+`0.95 < I′/I < 1.05`. Negative controls cited, not re-run, per the plan: the
+σ-blind `ΔZ = 0` (100% separation) and the `1.31e-08` null tagging control in
+`20260731T110515Z_MAT-6-step2b-gate-numbers.log`.
+
+**Result: the projection is a no-op on the gated number** (5e-5 relative), for
+the reason step 2f predicted — a closed loop current is already solenoidal, so
+`P_G J` here is a purely discrete artefact, 26 ppm of `I`. §2.1's
+"unprojected-drive" caveat on the coil-loading claim is retired **by
+measurement**, and the pinned test keeps its provenance.
+
+**The one finding for the reader.** ΔX moved 0.8123 → 0.9200 — 13% — while ΔR
+moved 5e-5. I did **not** claim that as an improvement and did not tighten the
+ΔX gate: step 2a measured 5.57% of box motion still left at W = 0.20 and a 30%
+filamentary spread over `h ± r_wire`, both larger than the shift, so this
+fixture cannot attribute it. Adjudicating it needs the converged fixture step
+2b already named (`h/r_wire ≥ 16` or `W ≥ 0.25`).
+
+**Hypothesis for the next attempt** (a review's to scope, not queued here): the
+ΔX shift is the projection removing spurious discrete gradient content from the
+reactive part — the same mechanism as `PORT-1` step 2e's `W_e^spur` collapse,
+which moved `Im Z₁₁` by a factor 5.5e5 on a lossless fixture. If so, a converged
+box would show projected ΔX closer to Dodd–Deeds than unprojected at *every*
+box size, which is a cheap two-point test on the W-sweep the step-2a probe
+script already builds. If instead the two paths converge to the same ΔX, the
+0.9200 is box error re-shuffled and the finding dies.
+
+**Cost.** Three commands, standard tier, `-n 2`, `timeout 180` each, all green:
+probe 71 s, gate 65 s, final gate 65 s (the last two differ only in a docstring
+sentence; the final one matches the committed bytes). Well inside the slot.
+
+**Denials:** one — `Write` to `.git/ATTEMPT_ENTRY.md` for the commit message
+was refused as a sensitive path. Worked around with `commit-msg.tmp` at the
+repo root, which `.gitignore`'s `*.tmp` already covers, so `git commit -F`
+works and the tree stays clean without a delete step. No allowlist change
+needed; recorded so the daily review knows `.git/` is not a scratch area and
+`*.tmp` is the one that works.
+
+**Branch:** none — landed on `main`. **Logs:**
+`20260804T213232Z_MAT-6-step3-probe.log`,
+`20260804T213435Z_MAT-6-step3-gate.log`,
+`20260804T213600Z_MAT-6-step3-gate-final.log` (8 passed each, incl. the four
+`tests/environment` guards). **Next run takes §9 item 4** (`POST-3` step 5).

@@ -117,10 +117,24 @@ loop to `+7.437243 Ω`, 1.0908× Grover's `ωL`. So the two-loop fixture's Z is
 now gated in every entry rather than three of four. This still does not move
 the sentence above — `excitation.py` is untouched and every S-parameter the
 **package** produces end to end is still heuristic — and it is still a
-two-loop air fixture, not a coil. Note for anyone reading a coil-loading
-number: `MAT-6`'s ΔR-to-1.58% result is explicitly an **unprojected**-drive
-measurement, pinned that way in its test and not yet re-gated under the
-projection.)*
+two-loop air fixture, not a coil.)*
+
+*(2026-08-04, `MAT-6` step 3 — **the coil-loading number now holds on the
+production default path.** The caveat that stood here since 2f, that `MAT-6`'s
+ΔR-to-1.58% was an unprojected-drive measurement, is retired by measurement,
+not by argument: the same W = 0.15 fixture solved with `project_source` at its
+default gives **ΔR = +3.2770406e-01 Ω, 1.5834% off Dodd–Deeds**, against the
+pinned path's +3.276882e-01 Ω / 1.58% — the two drives agree on the gated
+number to 5e-5 relative, because the projection barely moves a closed loop
+current (`I′/I = 0.999974`). The original test keeps its `project_source=False`
+pins as the landed number's provenance; the default path is gated separately in
+`tests/validation/test_dodd_deeds_projected_drive.py`
+(`20260804T213600Z_MAT-6-step3-gate-final.log`, 8 passed, 65 s). **Still
+unchanged:** the licence is the eddy-current regime only — 10 MHz, σ = 100 S/m —
+and saline at the Larmor frequency remains an extrapolation, not a result.
+`ΔX` moved from ratio 0.8123 to 0.9200 under the projection, reported and not
+gated: this fixture is not converged in `ΔX` and cannot say whether that is an
+improvement.)*
 
 ### 2.3 Test assertions cannot detect either problem
 
@@ -335,7 +349,7 @@ needs `-f docker/docker-compose.yml`.
 | 0 | Infrastructure, packaging, CI, meshing | `OPS-1`, `OPS-2` | Done |
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Complete and trustworthy** |
 | 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — every analytic gate closed (`TH-1`/`TH-6`/`TH-7`/`TH-8`/`TH-9` ✅); `TH-2`/`TH-3` API hardening ⚠️ |
-| 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58%, eddy-current regime); SAR still ungated |
+| 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58% pinned / 1.5834% on the production projected drive, step 3; eddy-current regime); SAR still ungated |
 | 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-8` | Placeholder-backed |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 |
 | 6 | Birdcage tuning at 64/128 MHz: mode spectrum, lumped capacitors, circuit co-simulation (the HFSS + Circuit split) | subgoals owned by the weekly review (§10) | Not started |
@@ -766,9 +780,42 @@ log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
 > the *next* run fail with "JIT compilation timed out, probably due to a failed
 > previous compile"; clear it with `rm -rf ~/.cache/fenics` in the container.
 
-**`MAT-6` step 3 — re-gate ΔR under the solenoidal projection** *(written at
-the 2026-08-04 10:30 review; opened by `PORT-1` step 2f, whose run asked a
-review to queue exactly this)*
+**`MAT-6` step 3 — re-gate ΔR under the solenoidal projection** ✅
+*(2026-08-04, 16:30 run; `tests/validation/test_dodd_deeds_projected_drive.py`,
+`20260804T213600Z_MAT-6-step3-gate-final.log`, 8 passed, 65 s, standard, `-n 2`,
+138 619 cells, two solves at 27.9 / 25.7 s)*
+> **The projection is a no-op on this fixture, to 5e-5 in the gated number.**
+> Default-path `ΔR = +3.2770406e-01 Ω` vs Dodd–Deeds `+3.2259615e-01 Ω` —
+> **1.5834%**, against the pinned path's `+3.276882e-01 Ω` / 1.58%; asserted
+> under step 2b's 5% ceiling, inherited unchanged and not widened. `I′ = 0.919666 A`
+> against the meshed `I = 0.919690 A` (ratio 0.999974, 26 ppm) — a closed loop
+> drive is already solenoidal, so `P_G J` here is purely a discrete artefact,
+> as step 2f predicted. Both solves are driven by the *identical* `J′`
+> (`||J′_loaded − J′_free||²/||J′||² = 0.0` on the gate, 8.774e-39 on the probe):
+> `remove_gradient_content` never sees the material, so the reaction difference
+> measures the half-space and not the drive — measured, not assumed, and the
+> assertion that would catch a material-dependent drive is in the file.
+> All three runs (probe + two gates) reproduce every printed digit of `ΔZ`.
+>
+> **The one thing that moved: `ΔX` ratio 0.8123 → 0.9200** (`−5.6657895e-01 Ω`
+> vs exact `−6.1586749e-01 Ω`) while `ΔR` moved 5e-5. Reported, gated only on
+> sign and order of magnitude exactly as step 2b gates it, and *not* claimed as
+> an improvement: this fixture has 5.57% of box motion left in `ΔX` and a 30%
+> filamentary spread over `h ± r_wire`, which is more than the 13% shift. The
+> converged fixture step 2b named (`h/r_wire ≥ 16` or `W ≥ 0.25`) is what could
+> adjudicate it; that is a follow-up chunk for a review to scope, never a
+> tightened tolerance here.
+>
+> **Method note for reuse.** The step-3 tests live in their own module and
+> *import* the geometry, current density and tags from
+> `test_dodd_deeds_impedance.py` rather than restating them: one definition of
+> the fixture, the `project_source=False` pins untouched, and two pytest
+> commands of ~70 s instead of one ~155 s command against a 180 s ceiling.
+> **Does not close / does not reopen:** `MAT-6` stays ✅; what changed is that
+> the claim now covers the production default drive. Saline/Larmor stays
+> unlicensed (eddy-current kernel, §2.1).
+>
+> *Original plan, for the record:*
 > Since 2f, `TimeHarmonicSolver.solve()` projects the drive by default, but
 > `test_dodd_deeds_impedance.py` pins `project_source=False` to preserve the
 > landed 1.58% — so the package's headline coil-loading number is now a
@@ -1055,8 +1102,10 @@ review to queue exactly this)*
 >   diagnosis files (their subject *is* the unprojected load),
 >   `test_time_harmonic_mms.py` (the manufactured source is the exact RHS),
 >   and `test_dodd_deeds_impedance.py` — **`MAT-6`'s landed 1.58% is
->   explicitly an unprojected-drive result; re-gating it under the projection
->   is `MAT-6` step 3**. Bookkeeping gap (10:30 audit): the live fixture's
+>   explicitly an unprojected-drive result** *(re-gated 2026-08-04 by `MAT-6`
+>   step 3: the pin stays, and the default path measures 1.5834% on the same
+>   fixture — the projection moves the gated number by 5e-5 relative)*.
+>   Bookkeeping gap (10:30 audit): the live fixture's
 >   S-matrix has no cross-run numeric pin — capture a projected-drive S
 >   baseline whenever the S conversion is next touched; fold into the
 >   touchstone-threading step, not a slot of its own.
@@ -1409,7 +1458,20 @@ the fixture cause removed from its path.
    in-slot if it fits, else report per-rank counts, annotate §7 and
    known-issues, stop. Never adjust a statistic to match.
 
-3. **`MAT-6` step 3 — Dodd–Deeds ΔR under the production (projected)
+3. ✅ **DONE 2026-08-04 (16:30 run).** The projection is a no-op on this
+   fixture: default-path `ΔR = +3.2770406e-01 Ω` = **1.5834%** off Dodd–Deeds
+   against the pinned path's 1.58%, inside the unmoved 5% ceiling, with
+   `I′/I = 0.999974` and both solves provably driven by the identical `J′`
+   (mismatch 0.0). `MAT-6`'s coil-loading claim now covers the production
+   default drive — §2.1's "unprojected-drive" caveat is retired by measurement
+   and the `project_source=False` pins are untouched (new module imports the
+   fixture instead). One finding logged, not gated: `ΔX` ratio moved
+   0.8123 → 0.9200 while `ΔR` moved 5e-5; this fixture is not converged in
+   `ΔX` and cannot adjudicate it — a review should scope the converged fixture
+   (`h/r_wire ≥ 16` or `W ≥ 0.25`) step 2b named. Gate
+   `20260804T213600Z_MAT-6-step3-gate-final.log`, 8 passed, 65 s. Next run
+   takes item 4.
+   **`MAT-6` step 3 — Dodd–Deeds ΔR under the production (projected)
    drive.** Independent. Execute the §7 step-3 plan, written this review.
    **Anchor:** the closed form `ΔR = +0.3225961 Ω`; band set from the probe
    (step-2d precedent) with the existing **5% as a hard ceiling, not a
@@ -1499,7 +1561,8 @@ blamed.
   matches the εᵣ-dependent closed form 27.02 to 0.059% where vacuum would give
   2.68, `TH-6`. The loaded-**coil** claim landed 2026-07-31: the FEM ΔR of a
   loop over a conductive half-space matches Dodd–Deeds to 1.58%, `MAT-6` step
-  2b — in the eddy-current regime, not yet at saline/Larmor.)*
+  2b — in the eddy-current regime, not yet at saline/Larmor; step 3 extended it
+  to the production projected drive at 1.5834%, 2026-08-04.)*
 
 ### Target (end of Phase 4)
 - [ ] Loaded birdcage + phantom simulation runs end to end *(the mesh half is
