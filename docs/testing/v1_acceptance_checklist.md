@@ -5,7 +5,7 @@ This checklist defines minimum evidence required to declare **v1 achieved** for 
 Status guidance:
 - Mark item **PASS** only when linked logs/artifacts are present and criteria are met.
 - Mark **BLOCKED** when a required prerequisite test cannot run (for example, environment unavailable).
-- Keep this file aligned with `PROJECT_PLAN.md` §7 and `docs/testing/pending-tests.md`.
+- Keep this file aligned with `PROJECT_PLAN.md` §7.
 - Chunk IDs below are legacy (`B1`, `C2`, `D3`, …). Resolve them via the mapping
   table in `PROJECT_PLAN.md` §8.
 
@@ -114,9 +114,9 @@ Status guidance:
 Mark **v1 achieved** only when all statements below are true:
 
 - [ ] No required chunk in sections 1-4 is in `🚫 BLOCKED` state.
-- [ ] Every required chunk has a human-run logged result with successful exit in `docs/testing/test-results.md`.
+- [ ] Every required chunk has a logged result with successful exit in `docs/testing/test-results.md`.
 - [ ] Required artifact files are present and referenced by logs.
-- [ ] Any WARN-level diagnostics are reviewed and accepted as non-blocking with notes recorded in `docs/testing/pending-tests.md`.
+- [ ] Any WARN-level diagnostics are reviewed and accepted as non-blocking with notes recorded in `PROJECT_PLAN.md` §7.
 
 ## v1 signoff record
 

@@ -101,18 +101,23 @@ pip install -e ".[dev,docs]"
 # List available examples
 ./run_examples.sh --list
 
-# Run one example by number
+# Run one magnetostatics example by number
 ./run_examples.sh --example 1
 
 # Run multiple examples and set MPI ranks
 ./run_examples.sh --example 1,3 --nproc 4
 
-# Run all examples
+# Run the MRI coil+phantom example (complex DolfinX build, sourced automatically)
+./run_examples.sh --example mri:1
+
+# Run all magnetostatics examples / absolutely everything
+./run_examples.sh --example all-mag
 ./run_examples.sh --example all --nproc 2
 ```
 
 The script automatically targets `docker/docker-compose.yml` and runs each selected example as:
-`docker compose exec fem-em-solver ... mpiexec -n <nproc> python3 <example>`
+`docker compose exec fem-em-solver ... timeout <s> mpiexec -n <nproc> python3 <example>`
+(MRI examples are prefixed with `source /usr/local/bin/dolfinx-complex-mode`).
 
 ### Python API Example
 

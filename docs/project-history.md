@@ -139,4 +139,6 @@ implementer a fallback to §9's "obvious next entry" sentence.
 
 `ROADMAP.md` merged into `PROJECT_PLAN.md`; `docs/status.md` is a generated
 snapshot, not a plan. Per-chunk historical detail (files changed, pass signals,
-commit hashes) is in `docs/testing/pending-tests.md`.
+commit hashes) was in `docs/testing/pending-tests.md`, removed 2026-08-04 along
+with the human-gated `AWAITING-HUMAN-TEST` queue it implemented — recover it
+from git history if needed.

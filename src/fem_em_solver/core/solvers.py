@@ -32,6 +32,7 @@ from dolfinx import fem, mesh, io
 from dolfinx.fem.petsc import LinearProblem
 from ufl import curl, inner, dx, TrialFunction, TestFunction
 from mpi4py import MPI
+from petsc4py import PETSc
 import gmsh
 
 from ..utils.constants import MU_0
@@ -305,13 +306,13 @@ class MagnetostaticSolver:
         if callable(self.mu):
             mu = self.mu(ufl.SpatialCoordinate(self.mesh))
         else:
-            mu = fem.Constant(self.mesh, self.mu)
+            mu = fem.Constant(self.mesh, PETSc.ScalarType(self.mu))
         mu_inv = 1.0 / mu
         
         # Bilinear form: a(A, v) = ∫ μ⁻¹ (∇ × A) · (∇ × v) dx
         # Add tiny gauge regularization to remove nullspace.
         # NB: not named `gauge` -- that is the method-selection parameter.
-        gauge_const = fem.Constant(self.mesh, gauge_penalty)
+        gauge_const = fem.Constant(self.mesh, PETSc.ScalarType(gauge_penalty))
         a = inner(mu_inv * curl(A_trial), curl(v)) * dx + gauge_const * inner(A_trial, v) * dx
         
         # Linear form: L(v) = ∫ J · v dx
@@ -325,7 +326,7 @@ class MagnetostaticSolver:
             x = ufl.SpatialCoordinate(self.mesh)
             J = current_density(x)
         else:
-            J = fem.Constant(self.mesh, np.zeros(3))
+            J = fem.Constant(self.mesh, np.zeros(3, dtype=PETSc.ScalarType))
 
         # Apply boundary conditions
         bcs = []
@@ -623,8 +624,8 @@ class MagnetostaticSolver:
             x = ufl.SpatialCoordinate(self.mesh)
             mu = self.mu(x)
         else:
-            mu = fem.Constant(self.mesh, self.mu)
-        
+            mu = fem.Constant(self.mesh, PETSc.ScalarType(self.mu))
+
         H_expr = fem.Expression(B / mu, DG.element.interpolation_points())
         H.interpolate(H_expr)
         

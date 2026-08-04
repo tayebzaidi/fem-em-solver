@@ -1,56 +1,42 @@
-# Testing on a Fresh Clone (Other Computer)
+# Testing
 
-Use this when you clone `fem-em-solver` on another machine and want to run pending manual tests reliably.
+Verification is executed by agents through the logging harness — there is no
+human-gated test queue. (The old `pending-tests.md` queue and its
+`bootstrap_pending_tests.sh` / `run_pending_tests.sh` tooling were removed
+2026-08-04; see git history.)
 
-## 1) Clone and enter repo
+## Running verification
 
-```bash
-git clone <repo-url>
-cd fem-em-solver
-```
-
-## 2) One-command bootstrap + run (recommended)
+Start the Docker service once per session:
 
 ```bash
-./bootstrap_pending_tests.sh
+docker compose -f docker/docker-compose.yml up -d
+docker compose -f docker/docker-compose.yml ps   # STATUS must be "Up"
 ```
 
-This single command:
-- starts/builds the Docker service (`fem-em-solver`)
-- runs preflight checks
-- executes all pending tests and logs results in-repo
+Run any verification command through the harness so it is logged in-repo:
 
-## 3) Common options
-
-List pending commands:
 ```bash
-./bootstrap_pending_tests.sh --list
+scripts/testing/run_and_log.sh <CHUNK-ID> "docker compose exec -T fem-em-solver \
+  bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 180 \
+  mpiexec -n 2 python3 -m pytest <paths> -v --tb=short'"
 ```
 
-Run a single chunk:
+See `PROJECT_PLAN.md` §4 (definition of done) and §5 (compute budget, tiers,
+Docker) for the rules that govern these runs.
+
+## Lightweight smoke matrix
+
 ```bash
-./bootstrap_pending_tests.sh --chunk E3
+./run_tests.sh --smoke
 ```
 
-Dry-run (no execution):
-```bash
-./bootstrap_pending_tests.sh --dry-run
-```
-
-(You can still use `./run_tests.sh` directly if environment is already prepared.)
-
----
+This is the fast, solver-free matrix CI runs; it is not sufficient to close a
+chunk.
 
 ## Output locations
 
 - Full logs: `docs/testing/logs/*.log`
 - Summary index: `docs/testing/test-results.md`
-- Pending queue source: `docs/testing/pending-tests.md`
-
----
-
-## Notes
-
-- `run_tests.sh` routes to `scripts/testing/run_pending_tests.sh`.
-- Per-test execution is wrapped by `scripts/testing/run_and_log.sh`.
-- If your compose file is in the standard path (`docker/docker-compose.yml`), no extra setup is needed.
+- Known pre-existing failures on main: `docs/testing/known-issues.md` — check
+  this before debugging any failing test.

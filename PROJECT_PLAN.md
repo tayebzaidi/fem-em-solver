@@ -238,8 +238,10 @@ minutes, and CI cannot host the `heavy` tier.
 - Agents implement **and verify**. Human-gated completion is prohibited (§4.2).
 - **No-op guard:** if a work cycle produces only documentation edits and executes
   no verification command, stop and escalate rather than commit an audit note.
-- **Do not append duplicate status blocks.** Status lives in §7 tables;
-  `docs/testing/pending-tests.md` is an append-only *log*, not a status store.
+- **Do not append duplicate status blocks.** Status lives in §7 tables. (The
+  legacy human-gated queue `docs/testing/pending-tests.md` and its
+  `AWAITING-HUMAN-TEST` status were removed 2026-08-04 — verification is
+  agent-executed per §4; the old queue survives in git history.)
 
 ### 5.3 Verification environment — Docker
 
@@ -315,9 +317,9 @@ Adding features to a proxy is what produced the `⚠️` backlog in the first pl
 ## 7. Chunk backlog
 
 IDs are prefixed by subsystem and **globally unique and stable**. Legacy
-`A1`/`B2`/`C3` IDs in commit messages and `pending-tests.md` map here via §8.
-These tables are the authoritative *status*; per-chunk historical detail is in
-`docs/testing/pending-tests.md`.
+`A1`/`B2`/`C3` IDs in commit messages and old logs map here via §8.
+These tables are the authoritative *status*; per-chunk historical detail lived
+in `docs/testing/pending-tests.md` (removed 2026-08-04, see git history).
 
 ### OPS — Infrastructure & testing operations
 
@@ -329,7 +331,7 @@ These tables are the authoritative *status*; per-chunk historical detail is in
 | `OPS-4` | Lightweight smoke matrix | ✅ | smoke |
 | `OPS-5` | Testing status dashboard | ✅ | smoke |
 | `OPS-6` | Expanded run-and-log metadata | ✅ | smoke |
-| `OPS-7` | Guided pending-test queue helper | 🧪 | smoke |
+| `OPS-7` | Guided pending-test queue helper *(retired 2026-08-04 — queue tooling removed; verification is agent-executed per §4)* | 🧪 | smoke |
 | `OPS-8` | v1 milestone acceptance checklist | 🧪 | smoke |
 | `OPS-9` | Prune duplicate/stale entries from `pending-tests.md` | ✅ | smoke |
 | `OPS-10` | Complex-mode CI job for the frequency-domain gates | ✅ | smoke |
@@ -3386,8 +3388,9 @@ completed measurement step is not "not started")*
 
 ## 8. Legacy ID mapping
 
-Commit messages, `docs/testing/pending-tests.md`, and `docs/testing/logs/*.log`
-use older IDs. Two generations collided — `E1`–`E4` refer to *different chunks* in
+Commit messages, `docs/testing/logs/*.log`, and the retired
+`docs/testing/pending-tests.md` (removed 2026-08-04; in git history) use older
+IDs. Two generations collided — `E1`–`E4` refer to *different chunks* in
 the ROADMAP than in `pending-tests.md`. Resolve via this table.
 
 | Legacy (ROADMAP gen-2) | New ID | | Legacy (gen-1, in `pending-tests.md`) | New ID |
