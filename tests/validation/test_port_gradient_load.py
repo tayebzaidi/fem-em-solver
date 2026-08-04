@@ -219,6 +219,10 @@ def gradient_load():
     fields = solver.solve(
         current_density=_azimuthal_current_density(j_magnitude),
         subdomain_ids=[DRIVEN_TAG],
+        # Step 2d measures the gradient content OF the unprojected load
+        # (||P_G J||^2/||J||^2 = 8.175e-06 and its 48.52 Ohm) — projecting it
+        # away here would make the file's subject vanish.  Explicitly off.
+        project_source=False,
     )
     comm.Barrier()
     t_solve = time.perf_counter() - t_solve

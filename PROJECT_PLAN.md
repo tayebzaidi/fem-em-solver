@@ -92,6 +92,19 @@ port voltages from `excitation.py`, so **every S-parameter the package produces
 end to end is still heuristic**. What changed is that a caller holding an honest
 Z now has an honest conversion to call.)*
 
+*(2026-08-04, `PORT-1` step 2f: the **port diagonal** of that Z is now gated
+too, and honest — `TimeHarmonicSolver.solve()` drives with the
+CG1-weakly-solenoidal part of the prescribed current by default
+(`project_source=True`), which moves `Im Z₁₁` from `−41.09 Ω` on a lossless
+loop to `+7.437243 Ω`, 1.0908× Grover's `ωL`. So the two-loop fixture's Z is
+now gated in every entry rather than three of four. This still does not move
+the sentence above — `excitation.py` is untouched and every S-parameter the
+**package** produces end to end is still heuristic — and it is still a
+two-loop air fixture, not a coil. Note for anyone reading a coil-loading
+number: `MAT-6`'s ΔR-to-1.58% result is explicitly an **unprojected**-drive
+measurement, pinned that way in its test and not yet re-gated under the
+projection.)*
+
 ### 2.3 Test assertions cannot detect either problem
 
 Finiteness checks (`np.isfinite`, `> 0`) dominate the solver, port, material, and
@@ -2467,6 +2480,85 @@ completed measurement step is not "not started")*
 > report `Im Z₁₁` and `4ωW_e/I′²`, hold known-issues 8 open with the
 > measurement appended, annotate this entry, stop.
 >
+> **Step 2f executed 2026-08-04 (06:00 run) — ✅; the port diagonal is gated and
+> known-issues 8 is retired. `PORT-1` stays 🟡.** `project_source: bool = True`
+> on `TimeHarmonicSolver.solve()`, backed by
+> `src/fem_em_solver/core/source_projection.py::remove_gradient_content` — the
+> API the plan decided, with no wrapper and no `PortExcitation` object. Probe
+> `20260804T110411Z_PORT-1-step2f-probe.log` (status 124 at the 180 s ceiling:
+> the `-k` selection also caught step 2c's doubling pair, two extra meshes; the
+> fixture's numbers had already printed, and the gate below deselects that test
+> rather than raising the timeout). Gate
+> `20260804T111102Z_PORT-1-step2f-gate.log`, **12 passed 1 deselected in
+> 58.86 s** at `-n 2`, standard tier.
+>
+> | quantity | projected (production) | unprojected control |
+> |---|---|---|
+> | `Im Z₁₁`, reaction / energy | **`+7.437243e+00 Ω`** (both) | `−4.108550e+01 Ω` |
+> | `Im Z₂₂`, reaction / energy | **`+7.436633e+00 Ω`** (both) | `−4.092413e+01 Ω` |
+> | Grover ratio, band `(1.042, 1.140)` | **1.090770 / 1.090680** | −6.03 |
+> | identity residual, gated `< 1e-9` | `4.0412e-11` / `9.1813e-11` | `1.8128e-10` |
+> | `I′` vs prescribed `I` | `0.969001 A` | `0.969009 A` |
+>
+> **The production path reproduced step 2e's hand-rolled `+7.437243e+00 Ω` to
+> all seven printed figures** — the helper is that recipe moved into `src/`, so
+> exact agreement is the correct expectation and its absence would have been
+> the finding. The identity residual is ~2500× step 2e's `1.6242e-14` because
+> the reaction route here reuses the tag-restricted `∫_tag E·J` the Z-matrix
+> already assembled rather than re-integrating `∫_Ω E·J′`; the two differ by
+> `∫E·∇ψ`, which the Galerkin equation annihilates only up to the LU residual.
+> Still 25× inside the a-priori bound, and it is bookkeeping, not physics.
+>
+> **What the projection is allowed to change, measured rather than assumed.**
+> `Im Z₁₂` moved `+1.125614e+00 → +1.142011e+00 Ω`, i.e. −9.35% → **−8.03%** of
+> `ωM₁₂`, *toward* the closed form and well inside the unchanged 10% gate: the
+> projection changes the solved field, not merely its gradient part, so the
+> mutual was never guaranteed invariant. Reciprocity tightened 3.06e-13 →
+> 8.59e-14.
+>
+> **One anchor had to move, and it was strengthened, not rebaselined.** The
+> step-3a test pinned the *live* fixture's `S₁₁`/`S₂₁` to the step-2 gate log —
+> a claim about the Z→S conversion that was coupled to the drive, so the new
+> default broke it by construction. It now converts the **logged Z** from that
+> same log and holds the result to the logged S at 1e-6 (`STEP2_LOGGED_Z`).
+> Same cross-run claim, made against the run it came from, now independent of
+> the drive; the live fixture keeps its drive-independent gates (unitarity,
+> symmetry, passivity, code-path equivalence at 1e-12). Rebaselining the logged
+> S to the projected run would have discarded executed history instead.
+>
+> **Callers pinned to the unprojected path, each for a stated reason:** the
+> three diagnosis files (steps 2b/2d/2e — their subject *is* the unprojected
+> load, or they project by hand), and two more the plan did not name.
+> `test_time_harmonic_mms.py`: the manufactured source is the exact right-hand
+> side of the exact solution, gradient content included, so projecting it would
+> solve a different problem than the L2 error is measured against.
+> `test_dodd_deeds_impedance.py`: `MAT-6`'s landed 1.58% agreement was measured
+> on the unprojected drive, and silently re-baselining a gated result on a
+> drive nobody has re-verified there is not this step's call — **re-gating the
+> eddy-current fixture under the projection is open work**, and the honest
+> statement is that `MAT-6`'s number is now explicitly an unprojected-drive
+> result.
+>
+> **Regression, four logs, all green:** diagnosis files reproduce their
+> unprojected numbers unchanged (`−4.108550e+01`, `4.852271e+01`, ratio
+> 0.999998 — `20260804T111221Z_PORT-1-step2f-regress-diagnosis.log`, 6 passed
+> 78.05 s); the complex-CI subset that now projects by default —
+> MMS, `test_current_divergence`, the time-harmonic smoke, BC selection,
+> phantom material and the two-torus mesh conformity file — 23 passed in 41.49 s
+> (`20260804T111507Z_PORT-1-step2f-regress-complex.log`); step 2e plus the
+> resonance guard and phantom field metrics, 9 passed in 65.79 s
+> (`20260804T111607Z_PORT-1-step2f-regress-remainder.log`); Dodd–Deeds collects
+> and its 7 analytic tests pass (`20260804T111728Z_...-regress-dodddeeds.log`).
+> A fifth run (`20260804T111358Z_PORT-1-step2f-regress-solver.log`, 8 failed 7
+> errors) is **a bad selection, not a regression**: it ran the *magnetostatic*
+> `tests/solver` files in the complex build, where they fail on
+> `Form_complex128` vs `float64` and a `LinearProblem._solver` attribute — no
+> code path in it touches `TimeHarmonicSolver`. Logged rather than deleted.
+>
+> **Does not close `PORT-1`:** step 3b (gap-voltage ports on the fixture that
+> now meshes) and the touchstone threading remain, and known-issues 3's
+> matched-port S-diagonal tests are a separate defect, untouched.
+>
 > **Scope: step 2b closes nothing.** The diagonal stays ungated in
 > `test_port_reaction_impedance.py`, known-issues' negative-diagonal entry stays
 > open with its diagnosis appended, and `PORT-1` stays 🟡.
@@ -3168,8 +3260,19 @@ colliding even if both land before the next review.
    result:** report the failing surface pair and fragment volume count/masses,
    annotate §7, park on `attempt/*`, stop — no blind gmsh-tolerance iteration.
 
-2. **`PORT-1` step 2f — make the solenoidal projection the production port
-   drive.** Independent (two-torus, no gap; reuses step 2e's landed recipe).
+2. ~~**`PORT-1` step 2f — make the solenoidal projection the production port
+   drive.**~~ — **done 2026-08-04 (06:00 run)**: `project_source=True` by
+   default on `solve()`, `Im Z₁₁ = +7.437243e+00 Ω` on both routes (step 2e's
+   hand-rolled value to seven figures), Grover ratio 1.090770/1.090680 inside
+   the banded `(1.042, 1.140)`, identity 4.04e-11/9.18e-11 against 1e-9;
+   **known-issues 8 retired**. Gate
+   `20260804T111102Z_PORT-1-step2f-gate.log`. Two callers beyond the three
+   named diagnosis files needed `project_source=False` — MMS (manufactured
+   source) and Dodd–Deeds (preserves `MAT-6`'s landed 1.58%, whose re-gating
+   under the projection is now open work). The step-3a cross-run S anchor was
+   re-pointed at the logged **Z**; see the §7 entry before touching it.
+   Original item text follows. Independent.
+   Independent (two-torus, no gap; reuses step 2e's landed recipe).
    Execute the §7 step-2f plan, written this review — the API decision is
    already made there (`project_source: bool = True` on `solve()`, helper in
    `src/`; do not reopen it in-slot). **Anchor:** re-gate

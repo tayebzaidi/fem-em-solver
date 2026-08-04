@@ -1,0 +1,103 @@
+# Test Run
+- Chunk: PORT-1-step2f-regress-complex
+- Commit: 35bc43583580a3d796fbb21d55ec65a1ae51965a
+- Time (UTC): 2026-08-04 11:15:07
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_time_harmonic_mms.py tests/validation/test_current_divergence.py tests/solver/test_time_harmonic_smoke.py tests/solver/test_boundary_condition_selection.py tests/materials/test_phantom_material_model.py tests/mesh/test_two_torus_conforming.py -q --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  4 06:14 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_time_harmonic_mms.py tests/validation/test_current_divergence.py tests/solver/test_time_harmonic_smoke.py tests/solver/test_boundary_condition_selection.py tests/materials/test_phantom_material_model.py tests/mesh/test_two_torus_conforming.py -q --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 23 items
+
+tests/environment/test_complex_mode.py ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 23 items
+
+tests/environment/test_complex_mode.py ........                              [ 17%]                              [ 17%]
+tests/validation/test_time_harmonic_mms.py 
+tests/validation/test_time_harmonic_mms.py ....                            [ 26%]
+tests/validation/test_current_divergence.py                             [ 26%]
+tests/validation/test_current_divergence.py ......                          [ 39%]
+tests/solver/test_time_harmonic_smoke.py                           [ 39%]
+tests/solver/test_time_harmonic_smoke.py ........                            [ 56%]                            [ 56%]
+tests/solver/test_boundary_condition_selection.py 
+tests/solver/test_boundary_condition_selection.py ........                   [ 73%]                   [ 73%]
+tests/materials/test_phantom_material_model.py 
+tests/materials/test_phantom_material_model.py ........                      [ 91%]                      [ 91%]
+tests/mesh/test_two_torus_conforming.py 
+tests/mesh/test_two_torus_conforming.py ....                               [100%]                               [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 23 passed, 8 warnings in 41.49s ========================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/validation/test_time_harmonic_mms.py::test_manufactured_solution_converges_at_first_order
+tests/validation/test_time_harmonic_mms.py::test_manufactured_solution_converges_at_first_order
+tests/validation/test_time_harmonic_mms.py::test_manufactured_solution_converges_at_first_order
+tests/validation/test_time_harmonic_mms.py::test_manufactured_solution_converges_at_first_order
+tests/validation/test_time_harmonic_mms.py::test_manufactured_solution_converges_at_first_order
+  /usr/local/lib/python3.10/dist-packages/ufl/core/expr.py:275: DeprecationWarning: Expr.ufl_domain() is deprecated, please use extract_unique_domain(expr) instead.
+    warnings.warn("Expr.ufl_domain() is deprecated, please "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 23 passed, 13 warnings in 41.49s =======================
+
+## Exit
+- Status: 0
+- Elapsed (s): 42

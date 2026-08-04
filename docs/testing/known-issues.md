@@ -173,7 +173,41 @@ review). One more clean review interval completes the "full day of slots" and
 downgrades this to a one-off; the crontab check by a human is still the faster
 route to closing it.
 
-### Reaction Z-matrix diagonal is negative where it must be inductive
+### ✅ RETIRED 2026-08-04 — reaction Z-matrix diagonal is negative where it must be inductive
+
+**Fixed by `PORT-1` step 2f**: `TimeHarmonicSolver.solve()` now drives with the
+CG1-weakly-solenoidal part of the prescribed current by default
+(`project_source=True`, helper
+`src/fem_em_solver/core/source_projection.py`), and the diagonal of
+`test_port_reaction_impedance.py` is **gated**, not printed. Gate
+`20260804T111102Z_PORT-1-step2f-gate.log`, 12 passed 1 deselected in 58.9 s at
+`-n 2`, on the same fixture every measurement below was taken on:
+
+| quantity | production path, projected | this entry's unprojected number |
+|---|---|---|
+| `Im Z₁₁`, reaction / energy routes | **`+7.437243e+00 Ω`** (both) | `−4.108550e+01 Ω` |
+| `Im Z₂₂`, reaction / energy routes | **`+7.436633e+00 Ω`** (both) | `−4.092413e+01 Ω` |
+| ratio to Grover `ωL = 6.818343 Ω` | **1.090770 / 1.090680** | −6.03 |
+| complex-power identity residual | `4.0412e-11` / `9.1813e-11` (gated `< 1e-9`) | `1.8128e-10` |
+| driven current | `I′ = 0.969001 A` | `I = 0.969009 A` |
+
+The three gates are `test_projected_port_diagonal_is_inductive` (sign, a
+priori, both ports, both routes), `..._satisfies_the_complex_power_identity`
+(bookkeeping, `< 1e-9`) and `..._matches_grover` (the independent physics
+anchor, band `(1.042, 1.140)` carried over from step 2e's measurement, which
+the production path reproduced to 2e-5). The number reproduced step 2e's
+hand-rolled `+7.437243e+00 Ω` to all seven printed figures — same physics,
+now on the path callers actually use.
+
+Nothing was widened to retire this: the diagonal moved from *ungated* to
+gated, and the three files that pin the unprojected numbers (steps 2b, 2d, 2e)
+now pass `project_source=False` explicitly and reproduce them unchanged
+(`20260804T111221Z_PORT-1-step2f-regress-diagnosis.log`,
+`20260804T111607Z_PORT-1-step2f-regress-remainder.log`). The original entry
+follows, unedited, because the diagnosis chain in it is the reason the fix is
+believable.
+
+---
 
 Found 2026-08-02 by `PORT-1` step 1; **diagnosed 2026-08-03 by step 2b to the
 electric energy — see the update at the end of this entry — and still not
@@ -307,6 +341,12 @@ anything. The off-diagonal is unaffected — `PORT-1` step 2 gates `Im Z₁₂` 
 9.35% of `ωM₁₂` and that number does not go through `W_e`.
 
 Remove this entry with the commit that explains the sign.
+
+*(That step is 2f and it landed 2026-08-04 — see the retirement header at the
+top of this entry. The off-diagonal did move slightly, as the projection
+changes the field and not only its gradient part: `Im Z₁₂` went from
+`+1.125614e+00 Ω` (−9.35% of `ωM₁₂`) to `+1.142011e+00 Ω` (**−8.03%**), toward
+the closed form, under the unchanged 10% gate.)*
 
 ### ✅ RESOLVED 2026-08-03 — "birdcage suite is over the compute budget" was the hang, not meshing cost
 

@@ -296,7 +296,12 @@ def solenoidal_drive():
     # subdomain_ids=None: the load is assembled over the whole domain because
     # J' is supported there.  The callable ignores its argument — j_prime is
     # already a UFL expression on this mesh's SpatialCoordinate.
-    fields = solver.solve(current_density=lambda _x: j_prime)
+    # project_source=False: this file does the projection by hand — that is its
+    # subject — so the step-2f default would apply P_G a second time.  It is
+    # idempotent (test_projection_is_idempotent_on_its_own_output measures
+    # 4.6e-33), so the difference would be round-off and one wasted Poisson
+    # solve; off explicitly so the file keeps measuring its own recipe.
+    fields = solver.solve(current_density=lambda _x: j_prime, project_source=False)
     comm.Barrier()
     t_solve = time.perf_counter() - t_solve
 

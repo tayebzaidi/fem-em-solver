@@ -2923,3 +2923,99 @@ the volumetric average over the gap tag — which is now exactly a
 (1 failed 1 passed, 23.36 s — the failure was the pre-probe guessed conductor
 band, replaced by the measurement), `20260804T093552Z_PORT-1-step3bi-gate.log`
 (27 passed 1 known-issue failure, 101.51 s).
+
+## 2026-08-04T11:19Z — `PORT-1` step 2f (§9 On-deck item 2) — **complete**
+
+Scheduled implementer run, 06:00 CDT slot. Preflight clean, container Up, no
+`attempt/*` branches. §9 item 1 was already done (04:30 run), so the top open
+item was item 2. Standard tier throughout, `-n 2`, seven harness runs.
+
+**What landed.** `project_source: bool = True` on
+`TimeHarmonicSolver.solve()`, backed by a new
+`src/fem_em_solver/core/source_projection.py::remove_gradient_content` — step
+2e's two-step recipe (CG1 Poisson for ψ with homogeneous Dirichlet on the outer
+wall, `J′ = χJ − ∇ψ`, `Im ψ` discarded explicitly, DG0 indicator so the load
+assembles on `ufl.dx`) moved out of the test and into `src/`. Exactly the API
+the 03:00 review decided: no wrapper, no `PortExcitation` object. A
+`solver.projection()` accessor was added so a caller can integrate the *driven*
+current `I′` from the same `J′` the load was built from instead of rebuilding
+the recipe.
+
+**Measured (gate `20260804T111102Z_PORT-1-step2f-gate.log`, 12 passed 1
+deselected in 58.86 s).**
+
+| quantity | projected (production path) | unprojected control |
+|---|---|---|
+| `Im Z₁₁`, reaction / energy | `+7.437243e+00 Ω` (both) | `−4.108550e+01 Ω` |
+| `Im Z₂₂`, reaction / energy | `+7.436633e+00 Ω` (both) | `−4.092413e+01 Ω` |
+| Grover ratio, band `(1.042, 1.140)` | 1.090770 / 1.090680 | −6.03 |
+| identity residual, gated `< 1e-9` | 4.0412e-11 / 9.1813e-11 | 1.8128e-10 |
+| `I′` vs prescribed `I` | 0.969001 A | 0.969009 A |
+
+The production path reproduced step 2e's hand-rolled `+7.437243e+00 Ω` to all
+seven printed figures. Three gates replace the printed-not-gated diagonal: sign
+(a priori, both ports, both routes), the complex-power identity, and Grover.
+**known-issues 8 retired in this commit**, with the original diagnosis chain
+kept below the retirement header.
+
+**Two things the plan did not anticipate, both decided in-slot and recorded.**
+
+1. *The step-3a cross-run S anchor conflicted by construction.* It pinned the
+   **live** fixture's `S₁₁`/`S₂₁` to the step-2 gate log, i.e. a claim about
+   the Z→S conversion that was coupled to the drive; the new default moves Z,
+   so the live S legitimately no longer matches. Rebaselining the logged S to
+   the projected run would have thrown executed history away, so the anchor now
+   converts the **logged Z** (new `STEP2_LOGGED_Z`, same log lines 430–431) and
+   holds the result to the logged S at the same 1e-6. Same claim, made against
+   the run it came from, now drive-independent; the live fixture keeps
+   unitarity, symmetry, passivity and code-path equivalence at 1e-12.
+2. *Two callers beyond the three named diagnosis files needed pinning.* MMS
+   (`project_source=False`: the manufactured source is the exact RHS of the
+   exact solution, gradient content included) and Dodd–Deeds (`False`:
+   `MAT-6`'s landed 1.58% was measured on the unprojected drive). The
+   Dodd–Deeds pin is a deliberate scope line, not a fix — **re-gating the
+   eddy-current fixture under the projection is open work**, and `MAT-6`'s
+   number is now explicitly an unprojected-drive result. Worth a queue item.
+
+**Things that moved and were measured rather than assumed.** `Im Z₁₂` went
+`+1.125614e+00 → +1.142011e+00 Ω`, −9.35% → −8.03% of `ωM₁₂`: toward the
+closed form, inside the unchanged 10% gate. Reciprocity tightened 3.06e-13 →
+8.59e-14. The identity residual is ~2500× step 2e's 1.6242e-14 because the
+reaction route reuses the tag-restricted `∫_tag E·J` the Z-matrix already
+assembled instead of re-integrating `∫_Ω E·J′`; the two differ by `∫E·∇ψ`,
+which the Galerkin equation annihilates only to the LU residual. Still 25×
+inside the a-priori bound.
+
+**Two runs that were not clean, both mine and neither a code defect.** The
+probe (`20260804T110411Z_PORT-1-step2f-probe.log`, status 124) hit the 180 s
+ceiling because my `-k` string also selected step 2c's doubling pair — two
+extra meshes. The fixture's numbers had already printed, and the gate
+**deselects that test rather than raising the timeout**. The solver-regression
+run (`20260804T111358Z_PORT-1-step2f-regress-solver.log`, 8 failed 7 errors) is
+**a bad selection, not a regression**: I ran the magnetostatic `tests/solver`
+files in the complex build, where they fail on `Form_complex128` vs `float64`
+and `LinearProblem._solver`. Nothing in that selection touches
+`TimeHarmonicSolver`. Logged rather than deleted, and re-run correctly against
+the `validation-complex` CI list instead.
+
+**Regression, all green:** diagnosis files reproduce their unprojected numbers
+unchanged (6 passed 78.05 s); the complex-CI subset that now projects by
+default — MMS, current divergence, time-harmonic smoke, BC selection, phantom
+material, two-torus conformity — 23 passed 41.49 s; step 2e + resonance guard +
+phantom field metrics 9 passed 65.79 s; Dodd–Deeds collects, 7 analytic tests
+pass.
+
+**Hypothesis for the next run.** §9 item 3 (`POST-1` step 1) and item 4
+(`PORT-1` step 3b-ii) are both unblocked and independent of this; 3b-ii's
+instruction to print-but-not-gate `Z₁₁` can now be revisited, since the
+diagonal's known-issues-8 artifact is gone — what remains on the *gapped*
+fixture is the gap's series C, which is physics, not an artifact. A review
+should also decide whether to queue the Dodd–Deeds re-gate.
+
+**Denials:** none. **Logs:** `20260804T110411Z_PORT-1-step2f-probe.log`
+(status 124, ceiling, see above), `20260804T111102Z_PORT-1-step2f-gate.log`
+(12 passed 1 deselected, 58.86 s), `20260804T111221Z_...-regress-diagnosis.log`
+(6 passed, 78.05 s), `20260804T111358Z_...-regress-solver.log` (bad selection,
+see above), `20260804T111507Z_...-regress-complex.log` (23 passed, 41.49 s),
+`20260804T111607Z_...-regress-remainder.log` (9 passed, 65.79 s),
+`20260804T111728Z_...-regress-dodddeeds.log` (7 passed 3 deselected, 1.31 s).

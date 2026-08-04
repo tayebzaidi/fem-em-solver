@@ -33,6 +33,7 @@ from petsc4py import PETSc
 
 from ..materials import GelledSalinePhantomMaterial
 from ..utils.constants import EPSILON_0, MU_0
+from .source_projection import remove_gradient_content
 from .solvers import (
     DEFAULT_GAUGE_PENALTY,
     LinearSolveDiagnostics,
@@ -239,6 +240,9 @@ class TimeHarmonicSolver:
         self.mesh = problem.mesh
         self._fields: Optional[TimeHarmonicFields] = None
         self._function_space: Optional[fem.FunctionSpace] = None
+        # The last solve's solenoidal projection (None when it was off or the
+        # solve had no source); keeps ψ and χ alive for the assembled form.
+        self._projection = None
 
     def function_space(self) -> fem.FunctionSpace:
         """N1curl space the E-field is solved in (cached, shared with BCs)."""
@@ -281,6 +285,7 @@ class TimeHarmonicSolver:
         subdomain_id: Optional[int] = None,
         subdomain_ids: Optional[Sequence[int]] = None,
         gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
+        project_source: bool = True,
     ) -> TimeHarmonicFields:
         """Solve the complex curl-curl problem and return the phasor E-field.
 
@@ -288,6 +293,19 @@ class TimeHarmonicSolver:
         at ω > 0 the operator acts as ``−k₀²ε_c`` on the gradient subspace, so
         there is no null space to price and a penalty would only add error
         (PROJECT_PLAN §7, `TH-1` formulation notes).
+
+        ``project_source`` (default **on**, `PORT-1` step 2f) drives with the
+        CG1-weakly-solenoidal part ``J′ = J − ∇ψ`` of ``current_density``
+        instead of ``J`` itself; see
+        :func:`~fem_em_solver.core.source_projection.remove_gradient_content`.
+        The discrete gradient content of a prescribed loop current is what made
+        the port diagonal capacitive (``Im Z₁₁ = −41.09 Ω`` unprojected against
+        ``+7.44 Ω`` projected, Grover ``+6.82 Ω``), so a port drive wants it
+        removed.  Pass ``project_source=False`` when the prescribed ``J`` *is*
+        the physics rather than a stand-in for a port — a manufactured MMS
+        source, or a diagnosis that pins unprojected numbers.  It costs one CG1
+        Poisson solve (~2 s on the 120k-cell port fixture) and is a no-op when
+        ``current_density`` is ``None``.
         """
         material = self.problem.material
         if not np.isfinite(self.problem.frequency_hz) or self.problem.frequency_hz <= 0:
@@ -339,9 +357,24 @@ class TimeHarmonicSolver:
             # ufl.inner conjugates the test function — using ufl.dot here would
             # silently flip the e^{+jωt} convention.
             load_factor = fem.Constant(self.mesh, PETSc.ScalarType(-1j * omega * MU_0))
-            L = load_factor * ufl.inner(current, v) * self._current_measure(
-                subdomain_id=subdomain_id, subdomain_ids=subdomain_ids
-            )
+            if project_source:
+                # J′ has support everywhere (∇ψ does), so the tag restriction
+                # moves into the integrand as a DG0 indicator and the load is
+                # assembled on the whole domain — same integrand cell for cell.
+                self._projection = remove_gradient_content(
+                    self.mesh,
+                    current,
+                    cell_tags=self.problem.cell_tags,
+                    subdomain_ids=self._normalized_subdomain_ids(
+                        subdomain_id=subdomain_id, subdomain_ids=subdomain_ids
+                    ),
+                )
+                L = load_factor * ufl.inner(self._projection.current, v) * ufl.dx
+            else:
+                self._projection = None
+                L = load_factor * ufl.inner(current, v) * self._current_measure(
+                    subdomain_id=subdomain_id, subdomain_ids=subdomain_ids
+                )
 
         options = {
             "ksp_type": "preonly",
@@ -407,6 +440,24 @@ class TimeHarmonicSolver:
             - k0_squared * ufl.inner(epsilon_c * e_trial, v) * ufl.dx
         )
 
+    @staticmethod
+    def _normalized_subdomain_ids(
+        *,
+        subdomain_id: Optional[int] = None,
+        subdomain_ids: Optional[Sequence[int]] = None,
+    ) -> Optional[Sequence[int]]:
+        """The two spellings of the source restriction collapsed into one.
+
+        ``None`` means "whole domain" — shared by the load measure and by the
+        projection's indicator so the two can never disagree about which cells
+        carry the source.
+        """
+        if subdomain_id is not None and subdomain_ids is not None:
+            raise ValueError("Use either subdomain_id or subdomain_ids, not both")
+        if subdomain_ids is None and subdomain_id is not None:
+            return [subdomain_id]
+        return subdomain_ids
+
     def _current_measure(
         self,
         *,
@@ -414,10 +465,9 @@ class TimeHarmonicSolver:
         subdomain_ids: Optional[Sequence[int]] = None,
     ):
         """Integration measure for the source term (whole domain or tagged cells)."""
-        if subdomain_id is not None and subdomain_ids is not None:
-            raise ValueError("Use either subdomain_id or subdomain_ids, not both")
-        if subdomain_ids is None and subdomain_id is not None:
-            subdomain_ids = [subdomain_id]
+        subdomain_ids = self._normalized_subdomain_ids(
+            subdomain_id=subdomain_id, subdomain_ids=subdomain_ids
+        )
         if subdomain_ids is None:
             return ufl.dx
         if self.problem.cell_tags is None:
@@ -428,6 +478,17 @@ class TimeHarmonicSolver:
             subdomain_data=self.problem.cell_tags,
             subdomain_id=tuple(int(tag) for tag in subdomain_ids),
         )
+
+    def projection(self):
+        """The last solve's :class:`GradientProjection`, or ``None``.
+
+        ``None`` means the solve had no source or ran with
+        ``project_source=False``.  Exposed so a caller that needs the *driven*
+        current ``I′`` — which is not the prescribed ``I`` once ``∇ψ`` is
+        subtracted — can integrate the same ``J′`` the load was built from
+        instead of rebuilding the recipe.
+        """
+        return self._projection
 
     def fields(self) -> TimeHarmonicFields:
         """Return last computed fields."""

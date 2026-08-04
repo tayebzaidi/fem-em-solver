@@ -120,7 +120,11 @@ def _solve_mms(n: int, comm) -> tuple[float, float, float, float, int]:
         dirichlet_e_field=_exact_numpy,
     )
     solver = TimeHarmonicSolver(problem, degree=1)
-    fields = solver.solve(current_density=_manufactured_current)
+    # project_source=False: the manufactured source is not a port drive — it is
+    # the exact right-hand side of the exact solution, gradient content and all
+    # (J ∝ E_exact here).  Removing that content would solve a different
+    # problem than the one the L2 error is measured against.
+    fields = solver.solve(current_density=_manufactured_current, project_source=False)
 
     e_h = fields.e_complex
     x = ufl.SpatialCoordinate(msh)

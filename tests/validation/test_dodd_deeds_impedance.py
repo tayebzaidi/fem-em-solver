@@ -275,6 +275,11 @@ def _solve_loop(msh, cell_tags, sigma_slab, comm, *, tag_the_slab=True):
     fields = solver.solve(
         current_density=_azimuthal_current_density(j_magnitude),
         subdomain_ids=[WIRE_TAG],
+        # `MAT-6`'s landed 1.58% agreement with Dodd-Deeds was measured on the
+        # unprojected drive.  Step 2f pins it there rather than silently
+        # re-baselining a gated result on a drive nobody has re-verified here;
+        # re-gating this fixture under the projection is its own chunk.
+        project_source=False,
     )
     comm.Barrier()
     return fields.e_complex, time.perf_counter() - t0

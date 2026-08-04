@@ -76,6 +76,7 @@ Run (complex build required)::
 from __future__ import annotations
 
 import time
+from typing import Optional
 
 import numpy as np
 import pytest
@@ -89,6 +90,7 @@ from fem_em_solver.core import (
     TimeHarmonicProblem,
     TimeHarmonicSolver,
 )
+from fem_em_solver.core.resonance import stored_electric_energy
 from fem_em_solver.io.mesh import MeshGenerator
 from fem_em_solver.ports import (
     sparameters_from_impedance,
@@ -140,16 +142,54 @@ AIR_PADDING_DOUBLING = 0.12
 TORUS_TAGS = (1, 2)
 REFERENCE_IMPEDANCE_OHM = 50.0
 
-# Step 3a's cross-run anchor: the S entries the step-2 gate printed, verbatim
-# from 20260803T003217Z_PORT-1-step2-gate.log:442.  They are quoted to seven
-# significant figures, so a re-run can only be held to the rounding of the
-# printed value (5e-8 on the mantissa's last digit); 1e-6 absolute is that with
-# an order of slack for mesh-partition round-off at a different rank count.  The
-# *code-path* equivalence below is the 1e-12 assertion — this one only pins the
-# fixture to the same physical answer it gave in the log.
+# Step 3a's cross-run anchor: the Z and S the step-2 gate printed, verbatim from
+# 20260803T003217Z_PORT-1-step2-gate.log:430-431 and :442.
+#
+# **Re-pointed at Z by step 2f (2026-08-04).**  Until 2f the anchor compared the
+# *live* fixture's S against the logged S.  That coupled a statement about the
+# Z→S conversion to the drive: 2f makes the solenoidal projection the default,
+# which deliberately moves the diagonal from Im Z11 = -4.108550e+01 Ohm to
+# +7.437122e+00 Ohm, so the live S legitimately no longer matches the logged S.
+# Rebaselining the logged S to the projected run would have thrown away the
+# executed history rather than preserved it, so the anchor now converts the
+# **logged Z** — the matrix that log actually printed — and holds the result to
+# the logged S.  That is the same cross-run claim about the conversion, made
+# against the run it came from, and it is now independent of which drive the
+# fixture uses.  The live fixture keeps its own drive-independent gates
+# (unitarity, symmetry, passivity, code-path equivalence at 1e-12).
+#
+# Seven significant figures printed, so a comparison can only be held to the
+# rounding of the printed value (5e-8 on the mantissa's last digit); 1e-6
+# absolute is that with an order of slack.
+STEP2_LOGGED_Z = np.array(
+    [
+        [-4.108550e01j, +1.125614e00j],
+        [+1.125614e00j, -4.092413e01j],
+    ],
+    dtype=complex,
+)
 STEP2_LOGGED_S11 = -1.941026e-01 - 9.806119e-01j
 STEP2_LOGGED_S21 = -2.639550e-02 + 5.277699e-03j
 STEP2_LOGGED_S_TOLERANCE = 1e-6
+
+# Step 2f: the projected diagonal, gated below.  Grover's omega*L = 6.818343 Ohm
+# for this loop; step 2e measured Im Z11/omega*L = 1.090770 on the *hand*
+# projection of this identical mesh and banded it (1.042, 1.140) — +-4.5%, a
+# statement about this fixture's PEC box at padding 0.08 rather than about
+# Grover.  The production path measured 1.090752 (Z11) and 1.090663 (Z22) in the
+# step-2f probe (20260804T110411Z_PORT-1-step2f-probe.log:444), i.e. the same
+# number to 2e-5, so the band is carried over unchanged rather than re-derived.
+GROVER_RATIO_BAND = (1.042, 1.140)
+
+# The unprojected control, executed history, cited not re-run: the same fixture,
+# mesh, padding and frequency gave Im Z11 = -4.108550e+01 Ohm
+# (20260803T003217Z_PORT-1-step2-gate.log:432).  A sign flip plus 48.5 Ohm.
+UNPROJECTED_IM_Z11_OHM = -4.108550e01
+
+# Step 2b's house bound for the complex-power identity Im Z11 = 4*omega*(W_m -
+# W_e)/I'^2, met at 1.8128e-10 there and 1.6242e-14 on step 2e's hand-projected
+# drive.  Exact for the discrete solution, so it gates bookkeeping, not physics.
+IDENTITY_TOLERANCE = 1e-9
 
 OMEGA = 2.0 * np.pi * FREQUENCY_HZ
 
@@ -213,8 +253,17 @@ def scattering_from_impedance(z_matrix: np.ndarray, z0_ohm: float) -> np.ndarray
     return (z_matrix - z0_ohm * identity) @ np.linalg.inv(z_matrix + z0_ohm * identity)
 
 
+def _reduced_real(form, comm) -> float:
+    """``assemble_scalar`` is rank-local — reduce, then take the real part."""
+    return float(np.real(comm.allreduce(fem.assemble_scalar(fem.form(form)), op=MPI.SUM)))
+
+
 def _solve_reaction_z(
-    separation: float, driven_tags, label: str, air_padding: float = AIR_PADDING
+    separation: float,
+    driven_tags,
+    label: str,
+    air_padding: float = AIR_PADDING,
+    diagonal_out: Optional[dict] = None,
 ) -> np.ndarray:
     """One mesh at ``separation``, one solve per entry of ``driven_tags``.
 
@@ -247,6 +296,15 @@ def _solve_reaction_z(
 
     z_matrix = np.zeros((2, 2), dtype=complex)
     solve_times = []
+    # Step 2f's diagonal bookkeeping, filled per driven column: the *driven*
+    # current I' (the projected J', not the prescribed J) and the two routes to
+    # Im Z_ii.  Cheap — assemblies on the field the column already solved for.
+    # ``stored_magnetic_energy`` is imported here, not at module scope: the
+    # module it lives in imports *this* one for the fixture constants.
+    from tests.validation.test_port_self_impedance_energy import stored_magnetic_energy
+
+    diagonal = {} if diagonal_out is None else diagonal_out
+    x_ufl = ufl.SpatialCoordinate(msh)
     for driven_tag in driven_tags:
         col = TORUS_TAGS.index(driven_tag)
         problem = TimeHarmonicProblem(
@@ -272,6 +330,32 @@ def _solve_reaction_z(
                 currents[col], currents[row], comm,
             )
 
+        # --- Step 2f: the diagonal on the drive that was actually applied. ----
+        # ∫E·∇q = 0 for every interior CG1 q at ω > 0 (the Galerkin equation
+        # with test function ∇q, whose load ∫J'·∇q the projection annihilated),
+        # so ∫_tag E·J = ∫_Ω E·J' exactly: the reaction number above needs no
+        # re-assembly, only the driven current I' in place of the prescribed I.
+        projection = solver.projection()
+        i_prime = _reduced_real(
+            ufl.inner(projection.current, _azimuthal_current_density(1.0)(x_ufl))
+            * ufl.Measure(
+                "dx", domain=msh, subdomain_data=cell_tags, subdomain_id=(driven_tag,)
+            ),
+            comm,
+        ) / (2.0 * np.pi * MAJOR_RADIUS)
+        w_e = stored_electric_energy(fields, comm=comm)
+        w_m = stored_magnetic_energy(fields.e_complex, comm)
+        diagonal[driven_tag] = {
+            "reaction": complex(
+                z_matrix[col, col] * (currents[col] ** 2) / (i_prime**2)
+            ).imag,
+            "energy": 4.0 * OMEGA * (w_m - w_e) / i_prime**2,
+            "x_electric": 4.0 * OMEGA * w_e / i_prime**2,
+            "current_prime": i_prime,
+            "current": currents[col],
+            "imag_ratio": projection.imag_ratio,
+        }
+
     if comm.rank == 0:
         k0 = OMEGA * np.sqrt(MU_0 * EPSILON_0)
         half_x = MAJOR_RADIUS + MINOR_RADIUS + air_padding
@@ -293,14 +377,35 @@ def _solve_reaction_z(
             f"          [{z_matrix[1,0]:+.6e}, {z_matrix[1,1]:+.6e}]] Ohm",
             flush=True,
         )
-        # Not gated — PORT-1 step 2b owns the diagonal (wrong sign, an
-        # electric-energy excess W_e/W_m = 6.524, still undiagnosed as a fix).
+        # Gated from step 2f (it was "ungated — step 2b owns the diagonal"
+        # while the prescribed drive made it capacitive).  Both the prescribed
+        # normalisation, kept for continuity with the logs, and the driven one.
         print(
-            f"[{label}] ungated diagonal: Im Z11, Im Z22 = "
-            f"{z_matrix[0,0].imag:+.6e}, {z_matrix[1,1].imag:+.6e} Ohm",
+            f"[{label}] diagonal (prescribed I): Im Z11, Im Z22 = "
+            f"{z_matrix[0,0].imag:+.6e}, {z_matrix[1,1].imag:+.6e} Ohm "
+            f"(unprojected control {UNPROJECTED_IM_Z11_OHM:+.6e} Ohm)",
             flush=True,
         )
+        for tag, d in diagonal.items():
+            print(
+                f"[{label}] tag {tag} driven: I = {d['current']:.6f} A, "
+                f"I' = {d['current_prime']:.6f} A (ratio "
+                f"{d['current_prime'] / d['current']:.6f}); Im Z = "
+                f"{d['reaction']:+.6e} Ohm (reaction) / {d['energy']:+.6e} Ohm "
+                f"(energy), residual "
+                f"{abs(d['reaction'] - d['energy']) / abs(d['reaction']):.4e}; "
+                f"4*omega*W_e/I'^2 = {d['x_electric']:+.6e} Ohm; "
+                f"Im(psi)/max|psi| = {d['imag_ratio']:.3e}",
+                flush=True,
+            )
     return z_matrix
+
+
+# Filled by the ``reaction_z`` fixture's solves and read by ``reaction_diagonal``
+# so the step-2f gates below cost no extra solve.  Module-level rather than a
+# second fixture return value because every existing test takes ``reaction_z``
+# as the bare matrix.
+_REACTION_DIAGONAL: dict = {}
 
 
 @pytest.fixture(scope="module")
@@ -310,7 +415,15 @@ def reaction_z():
     Module-scoped so the assertions below share it; every rank runs the same
     fixture, so the collective calls inside stay matched.
     """
-    return _solve_reaction_z(SEPARATION, TORUS_TAGS, "PORT-1 step 2")
+    return _solve_reaction_z(
+        SEPARATION, TORUS_TAGS, "PORT-1 step 2", diagonal_out=_REACTION_DIAGONAL
+    )
+
+
+@pytest.fixture(scope="module")
+def reaction_diagonal(reaction_z):
+    """Step 2f's per-port diagonal bookkeeping from the same two solves."""
+    return _REACTION_DIAGONAL
 
 
 @pytest.fixture(scope="module")
@@ -422,6 +535,97 @@ def test_mutual_impedance_falls_off_like_the_closed_form(doubling_pair):
 
 
 @complex_only
+def test_projected_port_diagonal_is_inductive(reaction_diagonal):
+    """``Im Z_ii > 0`` on the production port path — gateable a priori.
+
+    `PORT-1` step 2f's point.  A lossless loop in air stores more magnetic than
+    electric energy, so the diagonal of a reaction Z-matrix must be inductive;
+    with the prescribed (unprojected) drive this fixture measured
+    ``−4.108550e+01 Ω`` (`20260803T003217Z_PORT-1-step2-gate.log:432`), because
+    the discrete gradient content of ``J`` carried 48.52 Ω of spurious electric
+    energy (step 2d, ratio 0.999998 of the excess).  The control is therefore a
+    sign flip, not a margin.  Asserted on both routes so that neither a sign
+    slip in the reaction bookkeeping nor one in the energies passes alone, and
+    on **both** ports so a rank-local or tag-specific error cannot hide in one.
+    """
+    assert reaction_diagonal, "the reaction fixture recorded no diagonal"
+    for tag, d in reaction_diagonal.items():
+        if MPI.COMM_WORLD.rank == 0:
+            print(
+                f"[PORT-1 step 2f] tag {tag}: Im Z = {d['reaction']:+.6e} Ohm "
+                f"(reaction), {d['energy']:+.6e} Ohm (energy); control "
+                f"{UNPROJECTED_IM_Z11_OHM:+.6e} Ohm",
+                flush=True,
+            )
+        assert d["reaction"] > 0.0, (
+            f"tag {tag}: Im Z = {d['reaction']:.6e} Ohm (reaction) is not "
+            f"inductive; the production drive is still unprojected "
+            f"(control {UNPROJECTED_IM_Z11_OHM:.6e} Ohm)"
+        )
+        assert d["energy"] > 0.0, (
+            f"tag {tag}: Im Z = {d['energy']:.6e} Ohm (energy) is not "
+            f"inductive; W_e still exceeds W_m"
+        )
+
+
+@complex_only
+def test_projected_port_diagonal_satisfies_the_complex_power_identity(reaction_diagonal):
+    """``Im Z_ii = 4ω(W_m − W_e)/I′²`` to 1e-9 through ``solve()``.
+
+    Exact for the discrete solution, so it gates the *bookkeeping* of the
+    production path rather than its physics: the reaction route integrates
+    ``E·J`` over the driven tag while the energy route never sees the source at
+    all, so a wrong ``I′`` cancels (it divides both) but a load assembled on the
+    wrong measure, an indicator that missed cells, or an unreduced rank does
+    not.  This is the assertion that would catch ``project_source=True``
+    building ``J′`` from one tag set and normalising by another.
+    """
+    for tag, d in reaction_diagonal.items():
+        residual = abs(d["reaction"] - d["energy"]) / abs(d["reaction"])
+        if MPI.COMM_WORLD.rank == 0:
+            print(
+                f"[PORT-1 step 2f] tag {tag}: identity residual = "
+                f"{residual:.4e}; I = {d['current']:.6f} A, I' = "
+                f"{d['current_prime']:.6f} A",
+                flush=True,
+            )
+        assert residual < IDENTITY_TOLERANCE, (
+            f"tag {tag}: complex-power identity broken on the production "
+            f"projected drive: reaction {d['reaction']:.6e} Ohm vs energy "
+            f"{d['energy']:.6e} Ohm, relative {residual:.4e}"
+        )
+
+
+@complex_only
+def test_projected_port_diagonal_matches_grover(reaction_diagonal):
+    """``Im Z_ii/ωL_Grover`` inside step 2e's measured band.
+
+    The independent physics anchor of the step: Grover's closed form for a
+    circular loop of round cross-section, ``ωL = 6.818343 Ω`` here.  The band
+    is measured rather than derived — the PEC box at padding 0.08 m perturbs
+    the isolated-loop inductance by an amount nobody has measured — and it is
+    step 2e's band on the hand-rolled projection, carried over unchanged
+    because the production path reproduced that run's ratio to 2e-5.
+    """
+    from tests.validation.test_port_self_impedance_energy import grover_loop_inductance
+
+    omega_l = OMEGA * grover_loop_inductance(MAJOR_RADIUS, MINOR_RADIUS)
+    low, high = GROVER_RATIO_BAND
+    for tag, d in reaction_diagonal.items():
+        ratio = d["energy"] / omega_l
+        if MPI.COMM_WORLD.rank == 0:
+            print(
+                f"[PORT-1 step 2f] tag {tag}: Im Z/omega*L_Grover = "
+                f"{ratio:.6f} ({d['energy']:+.6e} / {omega_l:+.6e} Ohm)",
+                flush=True,
+            )
+        assert low < ratio < high, (
+            f"tag {tag}: Im Z/omega*L_Grover = {ratio:.6f} is outside the "
+            f"banded [{low}, {high}]"
+        )
+
+
+@complex_only
 def test_mutual_impedance_real_part_is_structurally_zero(reaction_z):
     """``Re Z₁₂`` is absent, not small.
 
@@ -476,10 +680,11 @@ def test_packaged_conversion_and_sanity_metrics_on_a_solved_field(reaction_z):
         ``scattering_from_impedance`` above — the two must be the same
         conversion, not merely close, so the bound is set at the level where
         only the ordering of the same floating-point operations can differ;
-      * **the same physical answer as the logged run**, ``S₁₁`` and ``S₂₁``
-        against `20260803T003217Z_PORT-1-step2-gate.log` to
-        ``STEP2_LOGGED_S_TOLERANCE`` (see that constant for why 1e-6 and not
-        1e-12 — the log prints seven figures);
+      * **the same physical answer as the logged run** — the logged ``Z``
+        converted to the logged ``S₁₁``/``S₂₁``
+        (`20260803T003217Z_PORT-1-step2-gate.log`) to
+        ``STEP2_LOGGED_S_TOLERANCE`` (see ``STEP2_LOGGED_Z`` for why 1e-6 and
+        not 1e-12, and why step 2f moved this anchor off the live fixture);
       * **the existing sanity metrics, evaluated on a real matrix for the first
         time.**  ``summarize_sparameter_sanity`` has only ever seen placeholder
         arithmetic, which is why `PORT-5` is ⚠️.  A lossless reciprocal 2-port
@@ -536,13 +741,26 @@ def test_packaged_conversion_and_sanity_metrics_on_a_solved_field(reaction_z):
         f"{max_entry_difference:.4e}; S_pkg = {s_packaged.tolist()}, "
         f"S_test = {s_test_path.tolist()}"
     )
+    # The cross-run anchor, on the logged *Z* (see STEP2_LOGGED_Z for why it
+    # moved there in step 2f): the packaged conversion must still reproduce the
+    # S that run printed, from the Z that run printed.
+    s_logged = sparameters_from_impedance(
+        STEP2_LOGGED_Z, z0_ohm=REFERENCE_IMPEDANCE_OHM
+    )
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"[PORT-1 step 3a] logged-Z anchor: S11 = {s_logged[0,0]:+.6e} vs "
+            f"{STEP2_LOGGED_S11:+.6e}, S21 = {s_logged[1,0]:+.6e} vs "
+            f"{STEP2_LOGGED_S21:+.6e}",
+            flush=True,
+        )
     for label, value, expected in (
-        ("S11", s_packaged[0, 0], STEP2_LOGGED_S11),
-        ("S21", s_packaged[1, 0], STEP2_LOGGED_S21),
+        ("S11", s_logged[0, 0], STEP2_LOGGED_S11),
+        ("S21", s_logged[1, 0], STEP2_LOGGED_S21),
     ):
         assert abs(value - expected) < STEP2_LOGGED_S_TOLERANCE, (
-            f"{label} = {value:+.6e} differs from the step-2 gate log's "
-            f"{expected:+.6e} by {abs(value - expected):.4e}"
+            f"{label} = {value:+.6e} from the logged Z differs from the step-2 "
+            f"gate log's {expected:+.6e} by {abs(value - expected):.4e}"
         )
 
     # Unitarity, read through the packaged metrics: both are exact identities

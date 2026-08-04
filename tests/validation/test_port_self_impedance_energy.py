@@ -178,6 +178,10 @@ def self_impedance_routes():
     fields = solver.solve(
         current_density=_azimuthal_current_density(j_magnitude),
         subdomain_ids=[DRIVEN_TAG],
+        # Step 2b is the diagnosis of the *unprojected* drive: every number in
+        # this file (Im Z11 = -41.09 Ohm, 4*omega*W_e/I^2 = 48.52 Ohm) is the
+        # measurement that step 2f's default would remove.  Explicitly off.
+        project_source=False,
     )
     comm.Barrier()
     t_solve = time.perf_counter() - t_solve
