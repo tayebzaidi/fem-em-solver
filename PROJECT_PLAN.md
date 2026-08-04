@@ -1809,6 +1809,74 @@ review to queue exactly this)*
 > measurement — apply the global-fallback fix in-slot if it fits, else
 > report the per-rank counts, annotate here and known-issues, stop. Never
 > adjust a statistic to match.
+>
+> **`POST-1` step 2 — done 2026-08-04, 13:30 implementer run. The per-rank
+> fallback was real, is reproduced by an integer identity, and is fixed.** No
+> field is solved anywhere in the step; the anchor is a **sentinel DG0 field**
+> (magnitude `k` on interior tag-`k` cells, `100·k` on interface-adjacent ones,
+> adjacency computed in the test from facet connectivity over the *full* tag
+> set), so interface contamination is two orders of magnitude in `max`, not a
+> perturbation of the mean.
+>
+> *The probe cost one fixture iteration, and that is itself the finding.* The
+> first attempt built the interior-free tag as a one-layer slab of
+> **tetrahedra** and it was not interior-free: the six-tet decomposition of a
+> hex leaves two tets per hex with no facet on either bounding plane, so 32 of
+> 96 cells were interior (`20260804T183351Z_POST-1-step2-probe-n2.log`). A
+> one-cell layer is only one cell thick in the facet-adjacency sense for
+> **hexahedra**, and both constructed fixtures now use them. Anyone building a
+> "thin" tagged region for a guardrail test should read that as a rule.
+>
+> Probe against the unfixed code, committed red
+> (`20260804T183513Z_POST-1-step2-probe2-n2.log`, `…probe2-n4`, `…probe2-n8`):
+> the piecewise-σ fixture is in the **interior** regime at every width (no
+> sliver rank at `-n 2/4/8`), so — per the plan's instruction not to claim
+> exoneration — the mixed regime is carried by a constructed fixture: a long
+> hexahedral box carrying a thick tag-2 blob plus a distant one-cell sliver.
+> That fixture realises the mixed regime at **all three widths** (1 sliver rank
+> each), and the defect is an exact integer: production sampled **32 cells
+> against the interior-only reference's 28 — excess 4, precisely the sliver
+> rank's tagged-cell count — with the sentinel `max` at 200.0 where the
+> interior-only answer is 2.0.** The same numbers at `-n 2`, `-n 4` and `-n 8`.
+>
+> Fixed by taking the fallback decision on the **allreduced** interior count:
+> the guardrail falls back to the full tagged set only when *no* rank has an
+> interior cell. Two secondary rank-safety defects fell out of making that
+> decision collective and are fixed with it — the rank-local early return for
+> an empty tagged set (a rank owning none of the tag would have skipped the new
+> allreduce and hung), and `_interior_tagged_cells` skipping
+> `create_connectivity` on such a rank; connectivity is now built
+> unconditionally, before the empty check.
+>
+> Gates: `20260804T183654Z_POST-1-step2-gate-n2.log` and
+> `20260804T183710Z_POST-1-step2-gate-n4.log`, 12 passed in 3.0 s / 1.3 s,
+> standard tier. All three regimes hold and the counts are **identical across
+> rank counts** — interior regime 4896 for both tags, global fallback 16, mixed
+> regime 28 with excess 0 and `max` back to 2.0 — which is partition
+> independence stated rather than inferred. The global-fallback regime keeps
+> its `max` of 200.0 by construction: every cell of a one-cell-thick tag *is*
+> interface adjacent, and the guardrail is still allowed to give up there — it
+> must now give up everywhere at once.
+>
+> No bound was touched and no statistic adjusted; the tolerance is `1e-12`
+> round-off on identities whose two sides differ only in summation order.
+> `POST-3` step 4's `RE_CAST_DEFICIT_BAND` was not at risk this time — the real
+> fixture is in the interior regime, so its sample set is unchanged at 4896.
+> Regression `20260804T183724Z_POST-1-step2-regress.log` (`tests/post`, 27
+> passed, 8.3 s) covers every user of the API. The step-1 audit's escape hatch
+> is pinned rather than fixed: `test_owned_cell_count_escape_hatch_is_characterised`
+> asserts that a tags-like object without `.topology` returns `None` from
+> `_owned_cell_count` and gets **no** ghost filter, so the day a caller passes
+> something other than a real `MeshTags` that is a documented behaviour change.
+>
+> **`POST-1` stays ⚠️, narrowed a third time.** The cast (`POST-3` step 4), the
+> ghost double-count (step 1) and the guardrail's rank-safety (step 2) are all
+> closed. What remains is the one thing constructed fields cannot settle:
+> whether the boundary-adjacent **drop set** is the right semantics for a
+> *solved* field — the guardrail discards 234 of 5073 tag-1 cells but 234 of 385
+> tag-2 cells on the minority-tag rank, and no analytic interface field has ever
+> been compared against what survives. That is the step to scope next; the
+> review adjudicates the symbol.
 
 > The current flagship metric `e_to_b_mean_ratio` is by construction
 > `≈ ω·|A|/|∇×A|` — it measures a mesh length scale, not physics, and cannot
@@ -3587,7 +3655,17 @@ the fixture cause removed from its path.
    annotate §7 and known-issues 3, stop; the successor is 3b-v on item 5's
    facet tags, not a third box geometry.
 
-2. **`POST-1` step 2 — interface-guardrail fallback rank-safety and drop-set
+2. ✅ **DONE 2026-08-04 (13:30 run).** The per-rank fallback was real and is
+   fixed: on a constructed mixed-regime fixture production sampled 32 cells
+   against the interior-only 28 — excess 4, exactly the sliver rank's tagged
+   count, sentinel `max` 200.0 vs 2.0 — identically at `-n 2/4/8`; after the
+   allreduced-interior fix all three regimes hold with counts identical across
+   rank counts (gates `20260804T183654Z_POST-1-step2-gate-n2.log`,
+   `…-gate-n4.log`, 12 passed each). Two collateral rank-safety defects fixed
+   with it. `POST-1` stays ⚠️ for the drop-set *semantics* on a solved field.
+   Fixture lesson recorded in §7: a one-layer **tet** slab is not interior-free.
+   Next run takes item 3.
+   **`POST-1` step 2 — interface-guardrail fallback rank-safety and drop-set
    validation.** Independent; no solves anywhere. Execute the §7 step-2 plan,
    written this review. **Anchor:** sentinel-DG0 exactness — production
    `prefer_interior=True` statistics equal the test's interior-only reference

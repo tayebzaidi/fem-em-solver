@@ -3257,3 +3257,95 @@ reaction route measured at −9.35%.
 63.01 s, `-n 2`). The single failure in each is the 3b-iii gate itself; no
 unrelated test changed state, so no known-issues entry was added beyond the
 progress note on entry 3.
+
+## 2026-08-04T18:33Z — `POST-1` step 2 (§9 On-deck item 2) — **complete**
+
+Tree clean at start, container Up, no preflight anomaly. §9 item 1 carried the
+12:00 run's "do not re-attempt" marker, so this run took item 2 as the protocol
+directs. New file `tests/post/test_interface_guardrail_fallback.py`; production
+change in `src/fem_em_solver/post/phantom_fields.py`. **No field is solved
+anywhere in this step** — the anchor is a sentinel DG0 field, magnitude `k` on
+interior tag-`k` cells and `100·k` on interface-adjacent ones, with the
+adjacency computed in the test from facet connectivity over the *full* tag set
+(step 1's ghosts-inform-classification rule, restated independently of the
+production helper).
+
+**One fixture iteration was needed, and it is worth recording as a rule.** The
+first interior-free tag was a one-layer slab of **tetrahedra**, and it was not
+interior-free: the six-tet decomposition of a hex leaves two tets per hex with
+no facet on either bounding plane, so 32 of 96 cells came back interior
+(`20260804T183351Z_POST-1-step2-probe-n2.log`, which is on `main` as the
+committed-red first probe). A one-cell layer is one cell thick in the
+facet-adjacency sense only for **hexahedra**; both constructed fixtures use
+them now.
+
+**Probe against unfixed code, committed red** (`…probe2-n2/n4/n8`). The real
+piecewise-σ fixture is in the *interior* regime at every width — 0 sliver ranks
+at `-n 2`, `-n 4` and `-n 8` — so, per the plan's explicit instruction, this run
+does **not** claim the mixed regime was exonerated on it. The mixed regime is
+carried by a constructed fixture (long hexahedral box: thick tag-2 blob plus a
+distant one-cell sliver), which realises it at all three widths, 1 sliver rank
+each. The defect is an exact integer, not a band:
+
+| width | production count | interior-only ref | excess | sentinel `max` |
+|---|---|---|---|---|
+| `-n 2` | 32 | 28 | **4** | 200.0 vs 2.0 |
+| `-n 4` | 32 | 28 | **4** | 200.0 vs 2.0 |
+| `-n 8` | 32 | 28 | **4** | 200.0 vs 2.0 |
+
+4 is exactly the sliver rank's tagged-cell count — the per-rank fallback
+contributing its whole tagged set while every other rank sampled interiors.
+
+**Fix:** the fallback decision now uses the **allreduced** interior count —
+fall back to the full tagged set only when *no* rank has an interior cell. Two
+collateral rank-safety defects fell out of making the helper collective and are
+fixed with it: the rank-local early return for an empty tagged set (a rank
+owning none of the tag would have skipped the new allreduce and hung), and
+`_interior_tagged_cells` skipping `create_connectivity` on such a rank. `comm`
+is threaded from both production call sites so the collective uses the caller's
+communicator.
+
+**Gates:** `20260804T183654Z_POST-1-step2-gate-n2.log` (12 passed, 3.03 s) and
+`20260804T183710Z_POST-1-step2-gate-n4.log` (12 passed, 1.25 s), standard tier,
+both with `tests/environment` first. All three regimes hold and the counts are
+**identical across rank counts** — interior 4896 (both tags), global fallback
+16, mixed 28 with excess 0 and `max` back to 2.0. The global-fallback regime
+keeps `max = 200.0` by construction and that is correct: every cell of a
+one-cell-thick tag is interface adjacent, and the guardrail may still give up
+there — it must now give up everywhere at once.
+
+**No assertion was loosened and no bound moved.** The only tolerance is `1e-12`
+round-off on identities whose two sides differ solely in summation order.
+`POST-3` step 4's `RE_CAST_DEFICIT_BAND` was not at risk this time: the real
+fixture is in the interior regime, so its sample set is unchanged at 4896.
+Regression `20260804T183724Z_POST-1-step2-regress.log` (`tests/environment` +
+`tests/post`, 27 passed, 8.30 s) covers every user of the API — grep confirms
+`compute_tagged_vector_magnitude_stats` / `export_tagged_field_samples_csv`
+have no callers outside `tests/post` and `post/__init__.py`. No unrelated test
+changed state, so no known-issues entry was added.
+
+The step-1 audit's escape hatch is **pinned, not fixed**:
+`test_owned_cell_count_escape_hatch_is_characterised` asserts that a tags-like
+object without `.topology` yields `None` from `_owned_cell_count` and gets no
+ghost filter, so a future caller passing something other than a real `MeshTags`
+is a documented behaviour change rather than a rediscovery.
+
+**Hypothesis for the next attempt.** `POST-1` stays ⚠️ and now stands for
+exactly one thing: whether the boundary-adjacent **drop set** is the right
+semantics for a *solved* field. Constructed sentinels cannot settle it — the
+guardrail discards 234 of 5073 tag-1 cells but 234 of 385 tag-2 cells on the
+minority-tag rank, and no analytic interface field has been compared against
+what survives. A step 3 should score the guardrail's surviving statistic against
+a known discontinuous-ε interface solution (the `TH-8` sphere is the obvious
+fixture) and ask whether dropping the interface layer improves or degrades it;
+that is a review's call, not an improvisation.
+
+**Denials:** none. **Branch:** none — landed on `main`. **Logs (all on
+`main`):** `20260804T183351Z_POST-1-step2-probe-n2.log` (1 failed, 10 passed,
+1 skipped, 3.82 s — the tet-fixture finding),
+`20260804T183513Z_POST-1-step2-probe2-n2.log`,
+`20260804T183530Z_POST-1-step2-probe2-n4.log`,
+`20260804T183532Z_POST-1-step2-probe2-n8.log` (1 failed, 7 passed each — the
+committed-red defect), `20260804T183654Z_POST-1-step2-gate-n2.log`,
+`20260804T183710Z_POST-1-step2-gate-n4.log`,
+`20260804T183724Z_POST-1-step2-regress.log`.

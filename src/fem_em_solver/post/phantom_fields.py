@@ -85,15 +85,19 @@ def _cell_centroids(mesh, cells: np.ndarray) -> np.ndarray:
 
 def _interior_tagged_cells(mesh, cell_tags, tag: int) -> np.ndarray:
     """Return tagged cells that are at least one facet away from non-tagged cells."""
-    cells = _tagged_cells(cell_tags, tag)
-    if cells.size == 0:
-        return cells
-
+    # Connectivity first, unconditionally: a rank that owns no cell of this tag
+    # must still take part, because ``create_connectivity`` is a topology
+    # operation the other ranks are performing at the same time.
     topology = mesh.topology
     tdim = topology.dim
     fdim = tdim - 1
     topology.create_connectivity(tdim, fdim)
     topology.create_connectivity(fdim, tdim)
+
+    cells = _tagged_cells(cell_tags, tag)
+    if cells.size == 0:
+        return cells
+
     c_to_f = topology.connectivity(tdim, fdim)
     f_to_c = topology.connectivity(fdim, tdim)
 
@@ -189,21 +193,55 @@ def _evaluate_on_cells(field, points: np.ndarray, cells: np.ndarray) -> tuple[np
         )
 
 
-def _sampling_cells_with_interface_guardrails(mesh, cell_tags, tag: int, *, prefer_interior: bool = True) -> tuple[np.ndarray, int]:
+def _sampling_cells_with_interface_guardrails(
+    mesh,
+    cell_tags,
+    tag: int,
+    *,
+    prefer_interior: bool = True,
+    comm: MPI.Intracomm | None = None,
+) -> tuple[np.ndarray, int]:
+    """Rank-local sampling cells for ``tag``, chosen by a **global** rule.
+
+    **Collective** when ``prefer_interior`` is true (`POST-1` step 2): every
+    rank must call it, because the fallback decision is taken on the allreduced
+    interior count.
+
+    The guardrail prefers cells at least one facet from an interface, and falls
+    back to the full tagged set when there are none — a one-cell-thick tag must
+    still produce a statistic.  Taking that decision *per rank*, as this did
+    until 2026-08-04, makes the reported statistics depend on the partition: a
+    rank owning only a sliver of the tag has an empty interior set and silently
+    samples interface-adjacent cells while every other rank samples interiors.
+    Measured on the constructed mixed-regime fixture in
+    ``tests/post/test_interface_guardrail_fallback.py`` (probe log
+    ``20260804T183513Z_POST-1-step2-probe2-n2.log``), that was 4 contaminated
+    samples out of 32 at ``-n 2``, ``-n 4`` and ``-n 8`` alike, with a sentinel
+    ``max`` of 200.0 where the interior-only answer is 2.0.
+
+    So the fallback is now all-or-nothing: it triggers only when *no* rank has
+    an interior cell, and in that regime the sample set is the full owned tagged
+    set on every rank.  Both regimes are then partition invariant, which is what
+    `POST-1` step 1 established for the ghost filter one layer down.
+    """
     tagged_cells = _tagged_cells(cell_tags, tag)
-    if tagged_cells.size == 0:
-        return tagged_cells, 0
 
     if not prefer_interior:
         return tagged_cells, 0
 
+    # No rank-local early return above this point: the allreduce below is
+    # collective, so a rank that owns none of the tag has to reach it too.
     interior_cells = _interior_tagged_cells(mesh, cell_tags, tag)
     dropped = int(tagged_cells.size - interior_cells.size)
 
-    if interior_cells.size > 0:
+    comm = comm or mesh.comm
+    global_interior = comm.allreduce(int(interior_cells.size), op=MPI.SUM)
+
+    if global_interior > 0:
         return interior_cells, dropped
 
     # Guardrail fallback: do not fail if every tagged cell touches an interface.
+    # Global by construction — every rank sees the same ``global_interior``.
     return tagged_cells, 0
 
 
@@ -230,6 +268,7 @@ def compute_tagged_vector_magnitude_stats(
         cell_tags,
         tag,
         prefer_interior=prefer_interior_samples,
+        comm=comm,
     )
     points = _cell_centroids(mesh, sampling_cells)
     values, _valid_points, valid_cells, invalid_samples_local = _evaluate_on_cells(field, points, sampling_cells)
@@ -303,6 +342,7 @@ def export_tagged_field_samples_csv(
         cell_tags,
         tag,
         prefer_interior=prefer_interior_samples,
+        comm=comm,
     )
     points = _cell_centroids(mesh, sampling_cells)
     values, valid_points, valid_cells, _ = _evaluate_on_cells(field, points, sampling_cells)
