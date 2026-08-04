@@ -2935,6 +2935,53 @@ completed measurement step is not "not started")*
 > gap-driven port, nothing more. **Negative result:** report `Z₁₂`, `Z₂₁`,
 > `V₂/I₁` and the σ/δ actually used, annotate here and known-issues 3, stop.
 >
+> **Step 3b-ii attempted 2026-08-04 (09:00 run) — 🟡 incomplete, parked on
+> `attempt/PORT-1-step3bii-20260804T141200Z`.** The gap-driven port machinery
+> runs end to end and **two of the three claims are green**, but the anchor is
+> +72.12% out and the cause is the fixture's gap *region*, not the solve. Logs
+> (on the branch) `20260804T140354Z_PORT-1-step3bii-costprobe.log`,
+> `20260804T140612Z_PORT-1-step3bii-diagnostic.log`; 124916 cells, mesh ~23 s +
+> two solves ~16–18 s, standard tier at `-n 2`.
+>
+> * σ = 8.0e2 S/m, δ = 5.626977e-03 m = 1.125 `r_wire`, inside the computed
+>   ceiling 1.013212e+03 S/m — and the test *asserts* the inequality rather
+>   than trusting the comment;
+> * **reciprocity `|Z₁₂ − Z₂₁|/|Z₁₂| = 2.2840e-04`** from two solves on one
+>   mesh, with `V` and `I` assembled on different tags and different
+>   integrands — a network identity here, not the reaction route's algebraic
+>   symmetry;
+> * **the undriven port is open**, `|I_undriven/I_driven| = 2.32e-03` both
+>   ways, which is the precondition `Z₁₂ = jωM` needs;
+> * **the anchor fails**: `|Im Z₁₂| = 2.137292e+00 Ω` against
+>   `ωM₁₂ = 1.241755e+00 Ω`, i.e. **+72.12%**, stable at 1.7210/1.7214 × ωM
+>   across the two drives. `Z₁₁ = +1.807726e+01 − 3.037040e+03j Ω` printed,
+>   not gated, as instructed.
+>
+> **Diagnosis, and it is actionable.** `gap_clearance` is used for *two*
+> different jobs in `io/mesh.py`: the burial depth along the arc (where it must
+> be positive — the tilted end planes cannot be met flush, 3b-i's recorded
+> deviation) **and** the radial/axial half-size `minor_radius + gap_clearance`
+> (where it need not be). The second makes the gap box's cross-section
+> 1.440000e-04 m², **1.83×** the tube's `π r² = 7.854e-05`, so 45% of the
+> ŷ-lines the volumetric `V` averages never pass through conductor at either
+> end. Restricting the identical average to the tube's shadow gives 0.750 and
+> 0.687 × ωM and **flips the sign of `Im V`** (`−1.955824e+00` → `+8.523388e-01`
+> V): the fringe annulus carries a large opposite-sign contribution that
+> dominates the box average. That restriction is *not* the fix — it is 9%
+> asymmetric between the two ports where the full-box average is reciprocal to
+> 2.3e-04 — so nothing was landed and no bound was moved; `MUTUAL_TOLERANCE` is
+> still step 1's 10%, which is what the run failed against.
+>
+> **Successor (needs a review to scope; the run's own ranking).** Split
+> `gap_clearance` into `gap_burial` and `gap_overhang` in `two_torus_domain`,
+> take `gap_overhang → 0` so the gap tag *is* the tube cross-section, and
+> re-measure — mesh-only, and 3b-i's exact-box identity holds for any
+> rectangular box. If the fringe survives that, move `V` off the volume
+> entirely and onto a facet integral over the two arc end faces, which needs
+> facet tags this fixture does not emit. Secondary clue for either route: the
+> driven current is 0.9151 A against the 1.0 A impressed, an 8.5% shortfall the
+> gap displacement current (ωCV ≈ 0.016 A at C = 9.14e-14 F) does not explain.
+>
 > **Step 1 attempted 2026-07-31 (16:30 run) — 🚫 blocked on the fixture, not on
 > the method.** The probe (parked on `attempt/PORT-1-step1-20260731T213516Z`,
 > logs `20260731T213222Z_PORT-1-step1-costprobe.log`,
@@ -3372,6 +3419,16 @@ colliding even if both land before the next review.
    stop. Never adjust a statistic to match.
 
 4. **`PORT-1` step 3b-ii — gap-voltage `Z₁₂` against the closed form.**
+   🟡 **attempted 2026-08-04 (09:00 run), incomplete — parked on
+   `attempt/PORT-1-step3bii-20260804T141200Z`.** Reciprocity 2.2840e-04 and the
+   open-port precondition 2.32e-03 are green; the anchor is +72.12%
+   (`|Im Z₁₂| = 2.137292e+00` vs `1.241755e+00 Ω`), localised by a diagnostic
+   run to the gap box's 1.83× oversized cross-section rather than to the solve.
+   **Do not re-attempt as written** — the successor is a fixture change
+   (`gap_clearance` split into burial vs overhang) that belongs to `3b-i`'s
+   mesh code; see the §7 entry, which carries the measurement and the ranked
+   plan. First failure of this item; the review rescopes before it reappears.
+   Original item text follows.
    **Depends on item 1 landing; if 3b-i did not land, skip to item 5 and
    journal rather than attempting this.** Execute the §7 step-3b-ii plan,
    written at the 18:00 review. **Anchor:** `Im Z₁₂ = V₂/I₁` against

@@ -3090,3 +3090,95 @@ run.
 `20260804T123257Z_POST-1-step1-gate-n2.log` (14 passed, 8 s),
 `20260804T123320Z_POST-1-step1-gate-n4.log` (16 passed, 6 s),
 `20260804T123346Z_POST-1-step1-regress.log` (23 passed, 10 s).
+
+## 2026-08-04T14:12Z — `PORT-1` step 3b-ii (§9 On-deck item 4) — **incomplete**
+
+Parked on `attempt/PORT-1-step3bii-20260804T141200Z` (test file + both logs +
+the test-results.md rows). `main` carries only this entry and the §7/§9
+annotations. The dependency held: item 1 (3b-i) landed at 09:40Z, so item 4 was
+the correct pick.
+
+**What was built.** `tests/validation/test_port_gap_voltage_impedance.py`: the
+3b-i gapped fixture at step 2's geometry (a = 0.04, d = 0.04, padding 0.08,
+h_far 0.03, h_wire 0.0025, `gap_angle` 0.30, `gap_clearance` 1e-3), conductors
+given `material_map` σ = 8.0e2 S/m, and port *k* driven by an impressed
+ŷ-directed `J` over gap tag `100+k` with `project_source=False` — the gap
+source's divergence is the physics (it terminates on the arc ends where σE
+closes the loop), not the step-2f discrete-gradient artefact. Both lumped
+quantities are volumetric as the plan required: `I = σ∫_wire E·φ̂ dV / L_arc`
+with `L_arc = V_wire/(π r²)` from the *meshed* conductor (0.22991/0.22984 m
+against the analytic 0.23933 — the gap box ate the arc ends, exactly 3b-i's
+0.9636), and `V = −∫_gap E·ŷ dV / A_gap`, never a point `eval`.
+
+**σ is a computed constraint and the test asserts it.** δ = √(2/(ωμ₀σ)) =
+5.626977e-03 m = 1.125 r_wire at 8.0e2 S/m, inside the ceiling
+σ ≤ 2/(ωμ₀ r_wire²) = 1.013212e+03 S/m at f = 10 MHz, r_wire = 0.005.
+
+**Two of the three claims are green, and they are not the cheap ones.**
+
+* **reciprocity** `|Z₁₂ − Z₂₁|/|Z₁₂| = 2.2840e-04`, two solves on one mesh.
+  This is a real network identity here rather than the reaction route's
+  algebraic tautology — `V` and `I` are assembled on different tags with
+  different integrands, sharing nothing but the matrix.
+* **the undriven port is open**, `|I_undriven/I_driven| = 2.3208e-03` and
+  `2.3271e-03`, which is the precondition `Z₁₂ = V₂/I₁ = jωM` needs.
+
+**The anchor fails.** `|Im Z₁₂| = 2.137292e+00 Ω` against
+`ωM₁₂ = 1.241755e+00 Ω`: **+72.12%**, and stable — 1.7210 and 1.7214 × ωM from
+the two independent drives. Full matrix, port-1 drive:
+`Z₁₁ = +1.807726e+01 − 3.037040e+03j`, `Z₂₁ = +3.508868e-02 − 2.137048e+00j`;
+port-2 drive `Z₂₂ = +1.828406e+01 − 3.077621e+03j`,
+`Z₁₂ = +3.510598e-02 − 2.137536e+00j` Ω. `Z₁₁` was printed, never gated, per
+the plan.
+
+**The diagnostic localises it to the measurement region, not the solve** — and
+this is the run's actual result. The gap box overhangs the tube by
+`gap_clearance` in *x* and *z* as well as in *y*, so its cross-section
+1.440000e-04 m² is **1.83×** the tube's `π r² = 7.854e-05`: 45% of the ŷ-lines
+the volumetric average integrates never pass through conductor at either end.
+Re-running the identical average restricted to the tube's shadow
+(`χ = 1` where `(x−a)² + (z−z_c)² < r²`) gives **0.750 and 0.687 × ωM** and
+**flips the sign of `Im V`** (full box `−1.955824e+00` V, shadow
+`+8.523388e-01` V). So the fringe annulus carries a large opposite-sign
+contribution that dominates the box average — the +72% is not a wall effect and
+not mesh error.
+
+**The shadow restriction is not the fix, which is why nothing was landed.** It
+is 9% asymmetric between the two ports (0.750 vs 0.687) where the full-box
+average is reciprocal to 2.3e-04. Both averages are answering a question about
+a region, and the region is wrong in both cases; picking whichever lands nearer
+1.0 would be exactly the "adjust a statistic to match" the protocol forbids.
+
+**Cost.** Standard tier, `-n 2`, `timeout 180`, two commands: 124916 cells,
+mesh 23.0 s + solves 18.2/15.6 s (probe) and mesh 22.5 s + solves 17.8/16.3 s
+(diagnostic). Both far inside the ceiling; no overrun, no kill-and-shrink. No
+assertion was loosened and no bound was invented — `MUTUAL_TOLERANCE` is still
+step 1's 10%, which is what the run failed against.
+
+**Hypothesis for the next attempt, in priority order.**
+
+1. **The transverse clearance is the defect, and it is a `3b-i` fixture
+   parameter, not a measurement choice.** `io/mesh.py` uses one
+   `gap_clearance` for *both* the burial depth along the arc (where it must be
+   positive — the tilted end planes cannot be met flush, 3b-i's recorded
+   deviation) and the radial/axial half-size `minor_radius + gap_clearance`
+   (where it need not be, and costs 45% of the cross-section). Splitting it
+   into `gap_burial` and `gap_overhang`, with `gap_overhang → 0`, makes the gap
+   tag the tube's own cross-section and should collapse both averages onto each
+   other. Cheap: mesh-only change, and 3b-i's exact-box identity still holds
+   for any rectangular box. This is the one I would run first.
+2. If the fringe survives a zero overhang, the measurement itself should move
+   off the volume: `V` as the potential difference between the two arc **end
+   faces** (a facet integral on the fragment's internal surfaces) is the
+   textbook lumped-port voltage and has no region ambiguity at all. That needs
+   facet tags the fixture does not currently emit.
+3. Worth checking cheaply in either case: the driven current is 0.9151 A
+   against the 1.0 A impressed, an 8.5% shortfall that is *not* explained by
+   the gap displacement current (ωCV ≈ 0.016 A at C = 9.14e-14 F). Some of the
+   impressed `J` in the fringe annulus is likely never entering the conductor.
+   Same root cause as (1) if so, and the same fix tests it.
+
+**Denials:** none. **Logs (on the attempt branch):**
+`20260804T140354Z_PORT-1-step3bii-costprobe.log` (1 failed 3 passed, mutual
++72.12%), `20260804T140612Z_PORT-1-step3bii-diagnostic.log` (1 failed 3 passed,
+the shadow-restricted comparison).
