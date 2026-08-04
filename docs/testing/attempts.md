@@ -2514,3 +2514,89 @@ writes it: the conductor keeps only 0.7091 of its analytic volume under the
 global 0.015 `setSize`, so a gap-voltage port driven on that surface inherits a
 coarse conductor boundary — `GEO-4` (air-box/graded sizing generalisation) may
 turn out to be a prerequisite rather than a nicety.
+
+---
+
+## 2026-08-04T00:30Z — `MAT-4` step 2 (not started) — **anomaly**
+
+Scheduled implementer run, 19:30 CDT slot (session log
+`logs/automation/20260804T003001Z_implementer.log`). Stopped at preflight per
+`docs/automation/implementer-run.md` step 1: `git status` was not clean, so no
+chunk work was done. §9 On-deck item 1, **`MAT-4` step 2, remains untouched**;
+items 2–5 likewise.
+
+**What was found.** Nothing staged, no tracked file modified — two *untracked*
+files:
+
+```
+?? circular_loop_results.txt
+?? examples/magnetostatics/circular_loop_results.txt
+```
+
+Both are output of `examples/magnetostatics/02_circular_loop.py`: a 25-line
+`# z[m] Bz_num[T] Bz_ana[T] error[T]` table, 1348 bytes each, owned by
+`nobody:nogroup` (i.e. written from inside the container). They are two
+*different* runs of the same example — identical to 6 significant figures,
+differing only in the last printed digit (`7.990012e-06` vs `7.990011e-06` at
+z = −2.4 cm), which is solver-tolerance noise, not a physics difference. The
+repo-root copy is the one written when the example is invoked from
+`/workspace`; the `examples/magnetostatics/` copy is the one written from the
+example's own directory. Neither path has ever been tracked
+(`git log --all -- '*circular_loop_results.txt'` is empty) and neither is
+covered by `.gitignore`.
+
+Timestamps: `examples/magnetostatics/circular_loop_results.txt` 18:57 CDT,
+`circular_loop_results.txt` 19:07 CDT — i.e. **23 minutes before this slot
+opened**, and minutes after the interactive commit `d9950cb`
+(*"02 drove the loop with a z-directed current"*, 18:58 CDT). This is a human
+re-running example 02 to check that fix, still working, not a half-applied
+chunk.
+
+**Why the exceptions do not apply, checked individually.**
+* *Already-journaled documentation drift* — no. No prior attempts.md entry
+  journals this diff; the last entry is 2026-08-03T20:07Z (`GEO-9` step 2b,
+  complete, preflight clean). First encounter.
+* *Second encounter — park it* — no, for the same reason: there is no prior
+  entry to make this a second encounter. Nothing goes to `recovered/*`.
+* *The 2026-07-29T14:43Z precedent* (proceeded through a dirty tree) — does
+  **not** cover this. That tree held ~21 zero-byte character devices the Bash
+  sandbox bind-mounts over dotfiles: artifacts with no content and no author.
+  These two files have real content and a human author who was demonstrably
+  mid-session. Interrupting that is exactly what step 1's first-encounter stop
+  exists to prevent, so the strict rule was applied.
+
+Nothing was stashed, deleted, or committed except this entry. The files are
+left exactly as found.
+
+**Container** was Up before the check (`fem-em-solver`, up 2 hours) — not the
+problem this time. No denials hit; no compute was run, so no harness logs.
+
+**For the daily review — the disposition question is one line of
+`.gitignore`.** These are *generated example output*, not results anyone
+intends to track: `d3d23c0` ("Remove old example data and add circular loop
+results", 17:32 CDT) deleted the committed `paraview_output/*.bp` artifacts and
+added no `.txt`, so the project's own recent direction is that example output
+does not live in git. As long as `02_circular_loop.py` writes
+`circular_loop_results.txt` into the cwd and that path is unignored, **every
+interactive run of example 02 arms the next implementer slot's preflight** —
+this is a recurring-cost anomaly, not a one-off. Two candidate fixes, review's
+call:
+1. add `circular_loop_results.txt` (or `examples/**/*_results.txt`) to
+   `.gitignore` — one line, no code change; or
+2. have the examples write under an already-ignored output directory.
+
+Either way the human's two files can simply be left in place once ignored.
+
+**Note on the slot grid.** The 16:30 CDT / 21:30Z slot the 18:00 review flagged
+as having produced no session log at all is still the only gap;
+`logs/automation/` shows 17:00Z, 18:30Z, 20:00Z implementer logs, the 23:00Z
+review, and this run's 00:30Z log. So cron fired normally for this slot — the
+missing-entry problem the review recorded in known-issues has not recurred.
+
+**Hypothesis for the next run.** If `.gitignore` is not amended before then,
+the tree will very likely still be dirty at 21:00 CDT with these same two
+files, and that run — as a *second* encounter with this exact diff journaled
+here — should park them on `recovered/<UTC-timestamp>` and proceed to `MAT-4`
+step 2 normally. That is the protocol's designed outcome and costs the queue
+one slot, not the evening. If a human ignores or removes the files first,
+preflight is clean and `MAT-4` step 2 is simply the top item, unchanged.
