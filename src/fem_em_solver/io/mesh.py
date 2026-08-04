@@ -752,6 +752,9 @@ class MeshGenerator:
         air_padding: Optional[float] = None,
         wire_resolution: Optional[float] = None,
         far_resolution: Optional[float] = None,
+        port_gap: bool = False,
+        gap_angle: float = 0.30,
+        gap_clearance: float = 1.0e-3,
     ) -> Tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]:
         """Generate mesh with two tori inside a box domain.
 
@@ -760,6 +763,13 @@ class MeshGenerator:
         component. Cell tags: ``1`` wire 1 (``z < 0``), ``2`` wire 2
         (``z > 0``), ``3`` the air box minus the two tori. Facet tag ``1`` is
         the outer boundary.
+
+        With ``port_gap=True`` each torus additionally carries a lumped-port
+        gap (``PORT-1`` step 3b-i): the torus becomes a partial torus of
+        opening ``2*pi - gap_angle`` centred on the ``+x`` axis, and a
+        rectangular gap box bridges the two arc ends, tagged ``101`` (wire 1)
+        and ``102`` (wire 2). Default is **off**, so every existing caller
+        meshes exactly as before.
 
         Until 2026-08-01 this fixture added the volumes without fragmenting
         (`GEO-8`): gmsh then meshed the box *solid* through the torus regions
@@ -794,6 +804,15 @@ class MeshGenerator:
         far_resolution:
             Target mesh size at the outer boundary [m]. Defaults to
             ``resolution`` when grading is enabled.
+        port_gap:
+            Opt in to the gapped (lumped-port) variant. Default ``False``
+            reproduces the ungapped fixture byte for byte.
+        gap_angle:
+            Angular opening of the removed wedge [rad], centred on ``+x``.
+        gap_clearance:
+            Margin by which the gap box overhangs the conductor tube [m]. It
+            sets the box's radial and axial half-size (``minor_radius +
+            gap_clearance``) and how far the box buries into each arc end.
         """
         if comm.rank == rank:
             gmsh.initialize()
@@ -801,8 +820,54 @@ class MeshGenerator:
 
             z_offset = separation / 2
 
-            wire_1 = gmsh.model.occ.addTorus(0, 0, -z_offset, major_radius, minor_radius)
-            wire_2 = gmsh.model.occ.addTorus(0, 0, z_offset, major_radius, minor_radius)
+            if port_gap:
+                if not 0.0 < gap_angle < np.pi:
+                    raise ValueError(
+                        f"gap_angle must be in (0, pi), got {gap_angle!r}"
+                    )
+                if gap_clearance <= 0.0:
+                    raise ValueError(
+                        f"gap_clearance must be positive, got {gap_clearance!r}"
+                    )
+                # Partial torus: OCC sweeps from phi = 0 to phi = angle, so
+                # rotating by +gap_angle/2 leaves the wedge centred on +x.
+                wire_1 = gmsh.model.occ.addTorus(
+                    0, 0, -z_offset, major_radius, minor_radius,
+                    angle=2.0 * np.pi - gap_angle,
+                )
+                wire_2 = gmsh.model.occ.addTorus(
+                    0, 0, z_offset, major_radius, minor_radius,
+                    angle=2.0 * np.pi - gap_angle,
+                )
+                for wire in (wire_1, wire_2):
+                    gmsh.model.occ.rotate(
+                        [(3, wire)], 0, 0, 0, 0, 0, 1, 0.5 * gap_angle
+                    )
+                # The box must *cross* both arc ends, not stop short of them:
+                # a box face flush with a tilted arc end is not constructible
+                # (the two end planes meet at gap_angle), so the box buries
+                # `gap_clearance` past the end-face centres and the gap group
+                # takes precedence over the conductor below. That makes the
+                # gap the box exactly -- planar faces, meshed to roundoff --
+                # and the conductor the arc minus what the box swallowed.
+                gap_half_xz = minor_radius + gap_clearance
+                gap_half_y = major_radius * np.sin(0.5 * gap_angle) + gap_clearance
+                gap_size = (2.0 * gap_half_xz, 2.0 * gap_half_y, 2.0 * gap_half_xz)
+                gap_1 = gmsh.model.occ.addBox(
+                    major_radius - gap_half_xz,
+                    -gap_half_y,
+                    -z_offset - gap_half_xz,
+                    *gap_size,
+                )
+                gap_2 = gmsh.model.occ.addBox(
+                    major_radius - gap_half_xz,
+                    -gap_half_y,
+                    z_offset - gap_half_xz,
+                    *gap_size,
+                )
+            else:
+                wire_1 = gmsh.model.occ.addTorus(0, 0, -z_offset, major_radius, minor_radius)
+                wire_2 = gmsh.model.occ.addTorus(0, 0, z_offset, major_radius, minor_radius)
 
             padding = 2.0 * minor_radius if air_padding is None else float(air_padding)
             if padding <= 0.0:
@@ -822,42 +887,133 @@ class MeshGenerator:
                 2.0 * box_half_z,
             )
 
-            gmsh.model.occ.fragment([(3, domain)], [(3, wire_1), (3, wire_2)])
+            tool_tags = [wire_1, wire_2]
+            if port_gap:
+                tool_tags += [gap_1, gap_2]
+            _, fragment_map = gmsh.model.occ.fragment(
+                [(3, domain)], [(3, tag) for tag in tool_tags]
+            )
             gmsh.model.occ.synchronize()
 
-            # Fragment renumbers volumes; identify them by mass and centroid
-            # rather than by the tags it hands back (same discipline as
-            # loop_over_half_space_domain). Each torus is orders of magnitude
-            # smaller than the air region, and the two tori are told apart by
-            # the sign of their centroid z.
-            torus_mass = 2.0 * np.pi**2 * major_radius * minor_radius**2
-            wire_1_volume = None
-            wire_2_volume = None
-            air_volume = None
-            for dim, tag in gmsh.model.getEntities(dim=3):
-                mass = gmsh.model.occ.getMass(dim, tag)
-                _, _, zc = gmsh.model.occ.getCenterOfMass(dim, tag)
-                if mass > 10.0 * torus_mass:
-                    air_volume = tag
-                elif zc < 0.0:
-                    wire_1_volume = tag
-                else:
-                    wire_2_volume = tag
+            if port_gap:
+                # Groups re-derived from the fragment out-map (`GEO-9` step 2b
+                # machinery): fragment renumbers, so absolute tags from before
+                # the call mean nothing after it. The out-map is positional,
+                # objects first then tools.
+                input_tags = [domain] + tool_tags
+                if len(fragment_map) != len(input_tags):
+                    raise RuntimeError(
+                        "two_torus_domain: occ.fragment returned an out-map of "
+                        f"{len(fragment_map)} entries for {len(input_tags)} inputs"
+                    )
+                ancestors: Dict[int, set] = {}
+                for input_tag, pieces in zip(input_tags, fragment_map):
+                    for dim, piece in pieces:
+                        if dim == 3:
+                            ancestors.setdefault(piece, set()).add(input_tag)
 
-            if wire_1_volume is None or wire_2_volume is None or air_volume is None:
-                raise RuntimeError(
-                    "two_torus_domain: fragment did not produce the expected two "
-                    f"tori plus air volume (got {gmsh.model.getEntities(dim=3)})"
+                wire_of = {wire_1: 1, wire_2: 2}
+                gap_of = {gap_1: 101, gap_2: 102}
+                group_of_piece: Dict[int, int] = {}
+                for piece, sources in ancestors.items():
+                    # Gap wins over metal: the box IS the dielectric gap, and
+                    # its exact volume is what the step-3b-i anchor measures.
+                    hit_gap = sources & gap_of.keys()
+                    hit_wire = sources & wire_of.keys()
+                    if hit_gap:
+                        group_of_piece[piece] = min(gap_of[t] for t in hit_gap)
+                    elif hit_wire:
+                        group_of_piece[piece] = min(wire_of[t] for t in hit_wire)
+                    else:
+                        group_of_piece[piece] = 3
+
+                pieces_by_group: Dict[int, List[int]] = {}
+                for piece, group in sorted(group_of_piece.items()):
+                    pieces_by_group.setdefault(group, []).append(piece)
+
+                group_names = {1: "wire_1", 2: "wire_2", 3: "domain",
+                               101: "gap_1", 102: "gap_2"}
+                volumes = gmsh.model.getEntities(dim=3)
+                masses = {tag: gmsh.model.occ.getMass(3, tag) for _, tag in volumes}
+                missing = [group_names[g] for g in (1, 2, 3, 101, 102)
+                           if g not in pieces_by_group]
+                if missing:
+                    raise RuntimeError(
+                        "two_torus_domain: occ.fragment left no piece for "
+                        f"{', '.join(missing)}; {len(volumes)} volumes, "
+                        "per-volume masses [m^3]: "
+                        + ", ".join(f"tag {t}: {m:.6e}" for t, m in sorted(masses.items()))
+                    )
+
+                for group, pieces in sorted(pieces_by_group.items()):
+                    gmsh.model.addPhysicalGroup(3, pieces, tag=group)
+                    gmsh.model.setPhysicalName(3, group, group_names[group])
+
+                # Every 3-D entity must carry a marker; a cell with none is
+                # what `gmshio.py:118` asserts on. Checked against the model,
+                # not the out-map, so an unmentioned piece cannot hide.
+                grouped_volumes = set()
+                for _, group_tag in gmsh.model.getPhysicalGroups(dim=3):
+                    grouped_volumes.update(
+                        gmsh.model.getEntitiesForPhysicalGroup(3, group_tag)
+                    )
+                ungrouped = sorted({tag for _, tag in volumes} - grouped_volumes)
+                if ungrouped:
+                    raise RuntimeError(
+                        "two_torus_domain: 3-D entities carry no physical group: "
+                        f"{ungrouped}; {len(volumes)} volumes, masses [m^3]: "
+                        + ", ".join(f"tag {t}: {masses[t]:.6e}" for t in ungrouped)
+                    )
+
+                print(
+                    f"[two-torus-mesh] gapped fragment volumes={len(volumes)} "
+                    + " ".join(
+                        f"{group_names[g]}={sum(masses[p] for p in pieces):.6e}"
+                        f"({len(pieces)}p)"
+                        for g, pieces in sorted(pieces_by_group.items())
+                    )
+                    + f" gap_box_analytic={gap_size[0] * gap_size[1] * gap_size[2]:.6e}",
+                    flush=True,
                 )
 
-            gmsh.model.addPhysicalGroup(3, [wire_1_volume], tag=1)
-            gmsh.model.setPhysicalName(3, 1, "wire_1")
+                wire_volumes = {1: pieces_by_group[1], 2: pieces_by_group[2]}
 
-            gmsh.model.addPhysicalGroup(3, [wire_2_volume], tag=2)
-            gmsh.model.setPhysicalName(3, 2, "wire_2")
+            else:
+                # Fragment renumbers volumes; identify them by mass and centroid
+                # rather than by the tags it hands back (same discipline as
+                # loop_over_half_space_domain). Each torus is orders of magnitude
+                # smaller than the air region, and the two tori are told apart by
+                # the sign of their centroid z.
+                torus_mass = 2.0 * np.pi**2 * major_radius * minor_radius**2
+                wire_1_volume = None
+                wire_2_volume = None
+                air_volume = None
+                for dim, tag in gmsh.model.getEntities(dim=3):
+                    mass = gmsh.model.occ.getMass(dim, tag)
+                    _, _, zc = gmsh.model.occ.getCenterOfMass(dim, tag)
+                    if mass > 10.0 * torus_mass:
+                        air_volume = tag
+                    elif zc < 0.0:
+                        wire_1_volume = tag
+                    else:
+                        wire_2_volume = tag
 
-            gmsh.model.addPhysicalGroup(3, [air_volume], tag=3)
-            gmsh.model.setPhysicalName(3, 3, "domain")
+                if wire_1_volume is None or wire_2_volume is None or air_volume is None:
+                    raise RuntimeError(
+                        "two_torus_domain: fragment did not produce the expected two "
+                        f"tori plus air volume (got {gmsh.model.getEntities(dim=3)})"
+                    )
+
+                gmsh.model.addPhysicalGroup(3, [wire_1_volume], tag=1)
+                gmsh.model.setPhysicalName(3, 1, "wire_1")
+
+                gmsh.model.addPhysicalGroup(3, [wire_2_volume], tag=2)
+                gmsh.model.setPhysicalName(3, 2, "wire_2")
+
+                gmsh.model.addPhysicalGroup(3, [air_volume], tag=3)
+                gmsh.model.setPhysicalName(3, 3, "domain")
+
+                wire_volumes = {1: [wire_1_volume], 2: [wire_2_volume]}
 
             # A face is on the outer boundary only if it is *flat against* a
             # wall (both bounding-box extremes on it), not merely within one
@@ -892,14 +1048,21 @@ class MeshGenerator:
                 if h_wire <= 0.0 or h_far <= 0.0:
                     raise ValueError("wire_resolution and far_resolution must be positive")
 
-                wire_surfaces = []
-                for vol in (wire_1_volume, wire_2_volume):
-                    wire_surfaces.extend(
+                # Refine on the conductors and, when gapped, on the gap boxes
+                # too -- the gap is the smallest feature in the model. Pieces
+                # share surfaces after fragment, so de-duplicate.
+                refine_volumes = list(wire_volumes[1]) + list(wire_volumes[2])
+                if port_gap:
+                    refine_volumes += pieces_by_group[101] + pieces_by_group[102]
+                wire_surfaces = sorted(
+                    {
                         surf
+                        for vol in refine_volumes
                         for _, surf in gmsh.model.getBoundary(
                             [(3, vol)], oriented=False, recursive=False
                         )
-                    )
+                    }
+                )
 
                 dist = gmsh.model.mesh.field.add("Distance")
                 gmsh.model.mesh.field.setNumbers(dist, "SurfacesList", wire_surfaces)

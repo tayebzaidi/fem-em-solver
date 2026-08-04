@@ -2859,3 +2859,67 @@ run (`POST-1` ghost cells in `_tagged_cells`) is untouched and still stands.
 `20260804T050406Z_PORT-1-step2e-probe2.log` (6 passed, 2 skipped, 44.7 s — the
 banding probe), `20260804T050616Z_PORT-1-step2e-gate.log` (the gate, 9 passed,
 41.8 s), `20260804T050818Z_PORT-1-step2e-cohabit.log` (11 passed, 119.6 s).
+
+## 2026-08-04T09:40Z — `PORT-1` step 3b-i (§9 On-deck item 1) — **complete**
+
+**Preflight** clean, container Up 11 h. Took §9 item 1 as written.
+
+**What was built.** `MeshGenerator.two_torus_domain` gains `port_gap: bool =
+False`, `gap_angle = 0.30 rad`, `gap_clearance = 1e-3 m`. When on: each torus
+is an `occ.addTorus(..., angle=2π−gap_angle)` rotated by `+gap_angle/2` so the
+wedge is centred on `+x`, and a rectangular box bridges the arc ends. One
+`occ.fragment` of the air box against both arcs and both boxes; groups
+re-derived from the positional out-map (never absolute tags), plus the `GEO-9`
+step-1 "every 3-D entity carries a group" guard. Tags `1/2` conductor,
+`101/102` gap, `3` air. The `port_gap=False` path is the old code untouched,
+inside an `else`.
+
+**Numbers** (gate `20260804T093552Z_PORT-1-step3bi-gate.log`, 27 passed 1
+failed, 101.51 s at `-n 2`; probe `20260804T093449Z_PORT-1-step3bi-costprobe.log`,
+23.36 s, standard tier, `timeout 180` both):
+`V_mesh/V_box = 1.000000000000`, `Σ(tagged)/V_mesh = 1.000000000000`, both at
+`1e-9`; gap boxes `1.148763643e-06 m³` vs `dx·dy·dz = 1.148763643e-06`, ratio
+`1.000000000000`; conductor `9.056573e-06 / 9.057729e-06 m³` = `0.963633 /
+0.963756` of the analytic partial torus `9.398366e-06`; ungapped regression in
+the same run `{1,2,3}` only, ratio `1.000000000000`, torus `0.980079`.
+9 fragment volumes (gap = 3 pieces each, conductor = 1 piece each, so the arc
+stayed connected).
+
+**The one failure is not mine:**
+`test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent`
+(`assert 0.09 > 0.09`) is the existing known-issues entry — pure geometry
+arithmetic in `coil_phantom_domain_sizing_diagnostics`, red before this change,
+untouched by it. No known-issues edit needed.
+
+**Deviation, deliberate, and 3b-ii must know.** The plan's piece policy was
+"torus-i ancestor → tag i, gap-i-only → 100+i". Under it the gap group is the
+box *minus* the conductor and cannot equal `dx·dy·dz`, contradicting the step's
+own anchor — because the two arc-end planes meet at `gap_angle`, so no box is
+flush with both and the box must cross them. Policy implemented as
+gap-wins-over-conductor: gap = the box exactly, conductor = arc minus what the
+box took. Recorded in §7 and in the test docstring.
+
+**Band provenance.** The plan predicted a conductor ratio of 0.75–0.88 from
+`setSize`-meshed precedents; measured 0.9636 because this fixture grades to
+`wire_resolution = 0.002`. Nothing was loosened: the band `(0.955, 0.975)` was
+set from the probe, and the reason it is legitimate is the factorisation in the
+log — gmsh's exact arc mass is 98.30% of analytic (the box swallowed 1.70%) and
+`9.056573/9.238604 = 0.98030` is the chordal deficit, matching the ungapped
+fixture's 0.980079 to 4 digits. A vacuity control asserts the conductor is
+*below* 0.9790, i.e. the box really does cut the arc; a box that fell short
+would sit at 0.9801 and fail.
+
+**Cost note for the queue.** `tests/mesh` is now 101.51 s (was a 42.15 s
+`GEO-9` baseline without `tests/environment`); the two new tests are 23.36 s of
+that.
+
+**Hypothesis for the next run.** 3b-ii (§9 item 4) is unblocked and its σ
+constraint is unchanged; it should drive the `101`/`102` tags and take `V` as
+the volumetric average over the gap tag — which is now exactly a
+`0.012 × 0.007978 × 0.012 m` box, so the `∫E·dl` lever arm is the box's
+`dy = 7.977519e-03 m`, known to roundoff rather than banded.
+
+**Denials:** none. **Logs:** `20260804T093449Z_PORT-1-step3bi-costprobe.log`
+(1 failed 1 passed, 23.36 s — the failure was the pre-probe guessed conductor
+band, replaced by the measurement), `20260804T093552Z_PORT-1-step3bi-gate.log`
+(27 passed 1 known-issue failure, 101.51 s).

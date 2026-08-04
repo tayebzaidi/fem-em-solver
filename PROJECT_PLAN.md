@@ -2723,6 +2723,55 @@ completed measurement step is not "not started")*
 > volume count/masses, annotate here, park on `attempt/*`, stop — no blind
 > gmsh-tolerance iteration.
 >
+> **Step 3b-i executed 2026-08-04 (04:30 run) — ✅ as a fixture; `PORT-1` stays
+> 🟡.** `two_torus_domain(port_gap=True, gap_angle=0.30, gap_clearance=1e-3)`
+> meshes a gapped two-torus pair; probe
+> `20260804T093449Z_PORT-1-step3bi-costprobe.log` (23.36 s, `-n 2`), gate
+> `20260804T093552Z_PORT-1-step3bi-gate.log`, **27 passed 1 failed in 101.51 s**
+> at `-n 2` — the one failure is the known-issues entry for
+> `test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent`
+> (`0.09 > 0.09`, pure geometry arithmetic, red before this change), and both
+> new tests are green. Measured on 9 fragment volumes (`wire_i` 1 piece each,
+> `gap_i` 3 pieces each, air 1):
+>
+> * `V_mesh/V_box = 1.000000000000` and `Σ(tagged)/V_mesh = 1.000000000000`,
+>   both against `1e-9` — the unfragmented ancestor's 1.002633 is nine orders
+>   away;
+> * each gap box `1.148763643e-06 m³` against `dx·dy·dz = 1.148763643e-06`,
+>   ratio `1.000000000000` at `1e-9`, and the two boxes equal to `1e-9` — the
+>   `GEO-9` 2b "rectangular boxes mesh exactly" precedent reproduces;
+> * conductor `9.056573e-06 / 9.057729e-06 m³`, `0.963633 / 0.963756` of the
+>   analytic partial torus `(1 − g/2π)·2π²Rr² = 9.398366e-06`. The band
+>   `(0.955, 0.975)` is that measurement. It sits **above** the plan's predicted
+>   0.75–0.88 because this fixture grades to `wire_resolution = 0.002`, not the
+>   global `setSize` those figures came from; the two factors separate in the
+>   log — gmsh's exact arc mass `9.238604e-06` is 98.30% of analytic (the gap
+>   box swallowed 1.70%) and `9.056573/9.238604 = 0.98030` is the chordal
+>   deficit, the *same* 0.980079 the ungapped fixture measures. That agreement,
+>   not the ratio itself, is the evidence the arc is intact;
+> * ungapped regression in the same run: default `port_gap=False` yields tags
+>   `{1,2,3}` only, `V_mesh/V_box = 1.000000000000`, meshed/analytic torus
+>   `0.980079` — the seven existing callers are unaffected.
+>
+> **Vacuity control, and it bites:** a gap box that failed to reach the arc ends
+> would leave the conductor at the pure chordal deficit 0.980079; the test
+> asserts `< 0.9790`, which the measured 0.9636 clears and a non-bridging box
+> could not.
+>
+> **One deliberate deviation from the plan's piece policy**, recorded because
+> 3b-ii depends on it: the plan wrote "torus-i ancestor → tag i, gap-i-only →
+> `100+i`", but the two arc-end planes meet at `gap_angle`, so **no** box can be
+> flush with both — the box must cross the ends, and under torus-wins the gap
+> group would fall short of `dx·dy·dz` and contradict this step's own anchor.
+> The gap therefore wins over the conductor: the gap *is* the box exactly, and
+> the conductor is the arc minus what the box took. Physically that is the right
+> way round — a dielectric gap with metal in it is not a gap.
+>
+> **Does not close:** anything. No field was solved on this mesh; the
+> `Im Z₁₂ = V₂/I₁` gate is 3b-ii, now unblocked. Cost note for it: the whole
+> `tests/mesh` suite is 101.51 s with these two tests added (23.36 s of it),
+> against the 42.15 s `GEO-9` baseline that did not include `tests/environment`.
+>
 > **Step 3b-ii — gap-voltage `Z₁₂` against the closed form (§9 item 4 as of
 > the 2026-08-04 03:00 review; depends on 3b-i landing).** Conductors become finite-σ material volumes
 > (the `MAT` machinery), the gap is driven with an imposed `E` across its
@@ -3094,7 +3143,14 @@ changes a solver default — its §7 entry names the three diagnosis files that
 must pin `project_source=False`, which is what keeps items 2 and 4 from
 colliding even if both land before the next review.
 
-1. **`PORT-1` step 3b-i — gapped two-torus fixture (mesh only).** Independent.
+1. ~~**`PORT-1` step 3b-i — gapped two-torus fixture (mesh only).**~~ —
+   **done 2026-08-04 (04:30 run)**: both partition identities and both gap
+   boxes at `1.000000000000` against `1e-9`, conductor `0.963633/0.963756` of
+   the analytic partial torus, ungapped default unaffected. Gate
+   `20260804T093552Z_PORT-1-step3bi-gate.log`. The piece policy is
+   gap-wins-over-conductor, not the plan's torus-wins — see the §7 entry before
+   writing 3b-ii, which is now unblocked. Original item text follows.
+   Independent.
    Execute the §7 step-3b-i plan, written at the 18:00 review. **Anchor:** the
    volume-partition identities `V_mesh/V_box = 1` and `Σ(tagged)/V_mesh = 1`
    at `1e-9`, plus each rectangular gap box meshed/`dx·dy·dz` exact at `1e-9`
