@@ -34,9 +34,38 @@ from mpi4py import MPI
 from .consistency import compute_field_consistency_diagnostics
 
 
+def _owned_cell_count(cell_tags) -> int | None:
+    """Number of cells this rank owns, or ``None`` if it cannot be determined."""
+    try:
+        return int(cell_tags.topology.index_map(int(cell_tags.dim)).size_local)
+    except AttributeError:
+        return None
+
+
 def _tagged_cells(cell_tags, tag: int) -> np.ndarray:
-    cells = cell_tags.indices[cell_tags.values == int(tag)]
-    return np.asarray(cells, dtype=np.int32)
+    """Tagged cells **owned by this rank**, in local numbering.
+
+    The owned-cell restriction is load-bearing (`POST-1` step 1).  A ``MeshTags``
+    built from ``locate_entities`` tags ghost cells too, so filtering by value
+    alone puts each shared cell in the sample set on *two* ranks and makes every
+    downstream statistic rank-count dependent: measured on the piecewise-σ
+    fixture at ``-n 2``, that was 108–302 duplicated samples out of ~5000 (2–6%),
+    a mean off by up to 0.9%, and — for ``tag=2``, ``prefer_interior=True`` — a
+    reported ``max`` of 0.884971 where the partition-invariant answer is
+    0.879575, i.e. an extremum contributed by a cell another rank owns.  Owned
+    cells partition the mesh exactly once across ranks, so restricting here is
+    what makes the statistics equal their serial values
+    (``tests/post/test_tagged_cell_partition_invariance.py``).
+
+    ``_interior_tagged_cells`` still builds its neighbour lookup from the *full*
+    tag set, so ghosts keep informing the boundary-adjacency test — only the
+    sampled set shrinks, never the information used to classify it.
+    """
+    cells = np.asarray(cell_tags.indices[cell_tags.values == int(tag)], dtype=np.int32)
+    n_owned = _owned_cell_count(cell_tags)
+    if n_owned is None:
+        return cells
+    return cells[cells < n_owned]
 
 
 def _cell_centroids(mesh, cells: np.ndarray) -> np.ndarray:

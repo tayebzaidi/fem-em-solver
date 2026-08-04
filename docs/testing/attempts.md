@@ -3019,3 +3019,74 @@ should also decide whether to queue the Dodd–Deeds re-gate.
 see above), `20260804T111507Z_...-regress-complex.log` (23 passed, 41.49 s),
 `20260804T111607Z_...-regress-remainder.log` (9 passed, 65.79 s),
 `20260804T111728Z_...-regress-dodddeeds.log` (7 passed 3 deselected, 1.31 s).
+
+## 2026-08-04T12:34Z — `POST-1` step 1 — complete
+
+Scheduled implementer run, 07:30 CDT slot. Preflight clean (no dirty tree, no
+`attempt/*`), container Up 14 h. §9 On deck items 1 and 2 already done, so
+item 3 — ghost-cell partition invariance of the tagged-cell aggregation.
+
+**The defect was real.** The plan left open whether the fixture could exhibit
+it at all and whether `prefer_interior=True` masks it; the probe
+(`20260804T123213Z_POST-1-step1-probe.log`, run against the *unfixed* code,
+which is why it is on record) answers both: 578 tagged ghost cells at `-n 2`,
+and all four invariance assertions failing, including both `prefer_interior`
+paths. Measured overcount: 108 samples for `prefer_interior=True` and 302 for
+`False`, out of ~5000 — 2%–6% of the sample set counted twice — with the mean
+off by up to 0.9%. The sharpest number is `tag=2`, `prefer_interior=True`:
+the reported **`max`** was 0.884971 where the partition-invariant answer is
+0.879575, so a cell another rank owns was supplying the extremum. That makes
+this more than a mean-weighting error.
+
+**Fix.** `_tagged_cells` now restricts to `cells < index_map.size_local`; both
+`prefer_interior` paths route through it, so one change covers both.
+`_interior_tagged_cells` deliberately keeps building `tag_lookup` from the full
+tag set — ghosts must still inform boundary-adjacency, or owned cells at the
+partition boundary would be misclassified as interior. Only the sampled set
+shrinks, never the information used to classify it. The owned-count lookup
+degrades to no-restriction if `cell_tags` exposes no topology, so a non-DolfinX
+tag object cannot crash the path.
+
+**Gates.** `20260804T123257Z_POST-1-step1-gate-n2.log` — 14 passed, 8 s.
+`20260804T123320Z_POST-1-step1-gate-n4.log` — 16 passed, 6 s. Production
+statistics equal the owned-cells-only reference exactly in `count` and to
+`1e-12` in min/max/mean, for both tags and both paths, at both rank counts.
+Two things beyond what the plan asked for: the counts are *identical across
+rank counts* (4896 / 4896 / 5184 / 5184 at `-n 2` and `-n 4`, floats agreeing
+to 1e-15), which states rank-count independence directly instead of inferring
+it from two separate comparisons; and the negative control separates by an
+exact integer at both widths (excess 276/302 at `-n 2`, 580/580 at `-n 4`,
+each equal to the tagged ghost count), so the invariance is a property of the
+fix rather than of a fixture that happens to have no ghosts.
+
+**No assertion was loosened.** `POST-3` step 4's `RE_CAST_DEFICIT_BAND` was the
+one bound at risk, since the fix moves that test's sample set from 5030 to 4896
+centroids. It survived unwidened: deficit 45.40% → 44.39%, inside the banded
+(43.40%, 47.40%); phase span 1.2667 → 1.2386 rad; identity 1 still exactly
+0.000e+00. Regression `20260804T123346Z_POST-1-step1-regress.log` — all of
+`tests/post` plus the phantom material model, 23 passed, 10 s.
+
+**Cost.** Standard tier throughout, `timeout 180`, four commands at 6/8/6/10 s
+elapsed — far inside the tier, as the plan predicted from step 4's 8.1 s. `-n 4`
+stays inside the 12-core cap. No overrun, no kill-and-shrink.
+
+**Scope held.** `POST-1` stays ⚠️ — this settles rank-safety of the
+aggregation only. The interface-guardrail *semantics* are still unvalidated,
+and I did not touch them.
+
+**Hypothesis for the next run.** The successor is `_interior_tagged_cells`'s
+boundary-adjacent drop against an analytic interface field, and this run
+measured the fact that scopes it: the guardrail discards 234 of 5073 tagged
+cells on the majority-tag rank but 234 of 385 on the minority-tag rank — i.e.
+where a tag is thin on a rank, the guardrail throws away most of it, and on a
+rank holding only a sliver it would fall through to the "every cell touches an
+interface" fallback and silently sample the interface cells anyway. That
+fallback is untested and is where I would point a review next. Unrelated: the
+Dodd–Deeds re-gate under the solenoidal projection, still queued by the 06:00
+run.
+
+**Denials:** none. **Logs:** `20260804T123213Z_POST-1-step1-probe.log`
+(4 failed 7 passed — the pre-fix measurement, intentionally red),
+`20260804T123257Z_POST-1-step1-gate-n2.log` (14 passed, 8 s),
+`20260804T123320Z_POST-1-step1-gate-n4.log` (16 passed, 6 s),
+`20260804T123346Z_POST-1-step1-regress.log` (23 passed, 10 s).

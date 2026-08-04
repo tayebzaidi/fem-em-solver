@@ -1677,6 +1677,47 @@ heavy tier, complex build)*
 > the measurement — fix by owned-cell restriction in `_tagged_cells` (both
 > paths) within the slot if it fits, else report the per-rank counts, annotate
 > this row and known-issues, stop. Never adjust a statistic to match.
+>
+> **`POST-1` step 1 — done 2026-08-04, 07:30 implementer run. The defect was
+> real and is fixed.** The probe (`20260804T123213Z_POST-1-step1-probe.log`, at
+> the unfixed code) found 578 tagged ghost cells at `-n 2` and all four
+> invariance assertions failing: the production aggregation overcounted by 108
+> (`prefer_interior=True`) to 302 (`False`) samples out of ~5000 — 2%–6% — with
+> the mean off by up to 0.9%. `prefer_interior=True` did **not** mask it, the
+> outcome the plan flagged as merely *possible*: 54–68 ghosts survived the
+> interior filter on each rank. The sharpest single number is `tag=2`,
+> `prefer_interior=True`, where the reported **`max` itself was wrong** —
+> 0.884971 against the partition-invariant 0.879575, an extremum contributed by
+> a cell another rank owns, so this was never only a mean-weighting error.
+>
+> Fixed in `_tagged_cells` by restricting to `cells < index_map.size_local`
+> (both `prefer_interior` paths route through it); `_interior_tagged_cells`
+> keeps building its neighbour lookup from the *full* tag set, so ghosts still
+> inform boundary-adjacency and only the sampled set shrinks. Gates:
+> `20260804T123257Z_POST-1-step1-gate-n2.log` (14 passed, 8 s) and
+> `20260804T123320Z_POST-1-step1-gate-n4.log` (16 passed, 6 s) — production
+> equals the owned-cells-only reference exactly in `count` and to `1e-12` in
+> min/max/mean, for both tags and both paths, at both rank counts. Stronger than
+> the plan asked: the counts are *identical across rank counts* (4896 / 4896 /
+> 5184 / 5184 at `-n 2` and `-n 4`) and the floats agree to 1e-15, which is the
+> rank-count independence stated directly rather than inferred. The negative
+> control separates by an exact integer at both widths (excess 276/302 at `-n 2`,
+> 580/580 at `-n 4`, each equal to the tagged ghost count), so the invariance is
+> a property of the fix, not of a ghost-free fixture.
+>
+> No bound was touched. `POST-3` step 4's `RE_CAST_DEFICIT_BAND` was the one
+> thing at risk — the fix changes its sample set from 5030 to 4896 — and it
+> survived unwidened: the deficit moved 45.40% → 44.39%, inside the banded
+> (43.40%, 47.40%). Regression `20260804T123346Z_POST-1-step1-regress.log`
+> (`tests/post` + phantom material, 23 passed, 10 s).
+>
+> **`POST-1` stays ⚠️, narrowed again.** What remains is the
+> interface-guardrail *semantics* — `_interior_tagged_cells`'s boundary-adjacent
+> drop has never been validated against an analytic interface field, and this
+> run measured how much it discards (234 of 5073 cells for tag 1, but 234 of 385
+> for tag 2 — i.e. on the minority-tag rank the guardrail drops the *majority*
+> of the tagged set), which is the obvious next step to scope. The cast defect
+> and the ghost-cell aggregation are both now closed; only that is left.
 
 > The current flagship metric `e_to_b_mean_ratio` is by construction
 > `≈ ω·|A|/|∇×A|` — it measures a mesh length scale, not physics, and cannot
@@ -3295,8 +3336,21 @@ colliding even if both land before the next review.
    `4ωW_e/I′²`, hold known-issues 8 open with the measurement appended,
    annotate §7, stop.
 
-3. **`POST-1` step 1 — ghost-cell partition invariance of the tagged-cell
-   aggregation.** Independent. Execute the §7 plan, written this review.
+3. ~~**`POST-1` step 1 — ghost-cell partition invariance of the tagged-cell
+   aggregation.**~~ — **done 2026-08-04 (07:30 run)**: the defect was real, not
+   exonerated. Probe found 578 tagged ghosts at `-n 2` and all four invariance
+   assertions failing — 2%–6% duplicated samples, mean off by 0.9%, and for
+   `tag=2`/`prefer_interior=True` a wrong reported **`max`** (0.884971 vs
+   0.879575). `prefer_interior=True` did not mask it. Fixed by an owned-cell
+   restriction in `_tagged_cells`; gates
+   `20260804T123257Z_POST-1-step1-gate-n2.log` (14 passed) and
+   `20260804T123320Z_POST-1-step1-gate-n4.log` (16 passed) agree exactly in
+   `count` and to 1e-12 in min/max/mean, with counts *identical across rank
+   counts*. No bound touched — `POST-3` step 4's deficit band survived the
+   sample-set change (45.40% → 44.39%, band unwidened). `POST-1` stays ⚠️ for
+   the interface-guardrail semantics only; see the §7 entry for the measured
+   drop rates that scope the successor. Original item text follows. Independent.
+   Execute the §7 plan, written this review.
    **Anchor:** the production `_tagged_cells` path's count/min/max/mean equal
    to an owned-cells-only allreduced reference (count exact, floats to
    `1e-12`), for both `prefer_interior` paths, at `-n 2` **and** `-n 4`, on
