@@ -50,5 +50,5 @@ healthy. When something lands here, it is the thing to do next.
 
 ---
 
-*Maintained by `docs/automation/daily-review.md` step 8. Notification policy
-and ledger: `docs/automation/notifications.md`.*
+*Maintained by `docs/automation/daily-review.md` step 7. The Waiting-on-you
+section above is the alerting channel — check it after each review interval.*

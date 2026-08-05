@@ -58,10 +58,10 @@ means — for yourself.
      materials, BCs, ports, frequencies, quantities to export — no judgement
      calls left to the operator) and a §7 chunk to implement the runnable
      half. Keep the case small enough that one AED session replicates it.
-     A commissioned case that is ready for the operator to replicate is a
-     notification-worthy event — follow `docs/automation/notifications.md`
-     (categories, 2-per-7-days ledger) and put it at the top of the
-     dashboard's Waiting-on-you list either way.
+     A commissioned case that is ready for the operator to replicate goes at
+     the top of the dashboard's Waiting-on-you list
+     (`docs/status/dashboard.md`, daily-review.md step 7) — that list is how
+     the operator learns about it.
    - *Adjudicate:* if any `COMPARISON.md` gained AED numbers from the human
      operator since last week, adjudicate them now — agreements promote into
      §7 gates with the AED value as the reference; disagreements open a
