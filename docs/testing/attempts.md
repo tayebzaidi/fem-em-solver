@@ -3581,3 +3581,83 @@ is the review's call, not this run's.
 `20260805T003945Z_POST-3-step5-preexisting.log`.
 **Next run takes §9 item 2** (`PORT-1` step 3b-iv, facet tags on the arc-end
 discs — item 5 depends on it landing).
+
+---
+
+## 2026-08-05T02:00Z — `PORT-1` step 3b-iv (§9 On-deck item 2) — **incomplete**
+
+Preflight clean at `2fba4d9`, container Up 27 h. Took §9 item 2 (item 1 was
+marked done by the 19:30 run). Code parked on
+**`attempt/PORT-1-step3biv-20260805T021000Z`**; `main` carries only logs, the
+§7/§9 annotations and two known-issues entries.
+
+**The mesh half is done and it is right.** Intersecting the fragment's
+gap-piece boundary with its conductor-piece boundary returns **exactly 2
+surfaces per port** — the two planar cuts at the gap box's `y`-faces, emitted
+as physical groups `201`/`202`. No blind surface hunting was needed and no
+absolute tag is used.
+
+**The plan's anchor was 2.16% low, and the run says so with two independent
+routes.** `2πr² = 1.570796e-04 m²` assumes the cut is normal to the tube axis.
+It is not: the box overhangs the tube in `x`/`z`, so the arc leaves only
+through the `y`-faces, which it crosses at `φ ≈ 0.2` rad — an oblique section.
+Exact area `A(y₀) = ∫_{R−r}^{R+r} 2√(r²−(s−R)²)·s/√(s²−y₀²) ds` (→ `πr²` at
+`y₀ = 0`) gives **1.604721580e-04 m²** by quadrature; OCC's `getMass(2, ·)` on
+the CAD surfaces gives **1.604721e-04 m²**. Every printed digit agrees.
+
+| quantity | measured |
+|---|---|
+| facet-group area 201 / 202 | 1.563786482e-04 m², identical to < 1e-12 |
+| meshed / analytic oblique cut | **0.974490841** both ports |
+| exact / naive `2πr²` | 1.021597 |
+| gap-box `y`-face pair (vacuity ceiling) | 2.88e-04 m² = `1.7947 ×` |
+| ungapped control | facet-tag set contains no `2xx` — exact |
+
+The plan expected "far tighter than the volume's 0.980": **refuted.** 0.9745
+is the same chordal deficit the volume shows (0.980079 ungapped, 0.98030 on
+the arc) — a planar section of an inscribed linear-tet solid inherits the
+solid's deficit. The band was set from the probe at `(0.970, 0.980)` with the
+measurement in a code comment. Nothing was loosened: my first guess
+`(0.990, 1.002)` was written *before* any measurement and the probe replaced
+it, which is what the item's "banded from the probe" instruction asks for.
+
+**Why it is parked.** At `-n 2` the run hangs inside `gmshio.model_to_mesh`,
+before a single line of test code, and `timeout` kills it at the 180 s
+ceiling. Both ranks' stacks are `MPI_Testall ← compute_graph_edges_nbx ←
+IndexMap::index_to_dest_ranks ← Topology::create_entity_permutations`; gmsh
+itself finishes in ~10 s (`Done optimizing mesh (Wall 7.14s)`), so ~168 s is
+pure hang. Bounded from both sides: `-n 1` runs the identical case in 22.5 s
+green, and `-n 2` on this fixture *without* the new groups is green today.
+So it is neither cost nor the gapped geometry — it is distributing tags on
+facets that are **interior** to the partition, which `201`/`202` are this
+fixture's first instance of. Filed as **known-issues 9** with the stack. CI
+is `-n 2`, so landing it would hang the suite: parked, not landed.
+
+**Second finding, pre-existing and unrelated.** The fixture's `outer_boundary`
+physical group reaches the dolfinx facet tags from **neither** path — gapped
+set is `[201, 202]`, ungapped is `[]`. Two validation tests pass `facet_tags=`
+from this fixture into a solver; whether either depends on tag `1` is
+unchecked. **Known-issues 10**, not fixed in passing (`GEO`/`MAG` work, and
+changing what the fixture emits could move Helmholtz numbers).
+
+**Cost.** Three commands, all standard tier: costprobe `-n 2` **exit 124 at
+181 s** (the hang, killed at the ceiling — not re-run with a longer timeout),
+serial isolation 24 s, serial gate 24 s. No denial, no overrun beyond the one
+deliberate timeout kill. Roughly 25 minutes of the slot went to the hang and
+its isolation.
+
+**Hypothesis for the next attempt.** The tags are finished; do not re-derive
+them. Start from the parked branch and known-issues 9 and attack
+`distribute_entity_data` for interior facets — first cheap discriminator: does
+the hang survive if the `2xx` groups are added but the mesh is requested with
+an explicit `GhostMode.shared_facet` partitioner, and does a fixture that
+already tags an interior surface exist anywhere in `io/mesh.py` to compare
+against? A serial-only gate is **not** an acceptable fallback: 3b-v solves on
+this mesh at `-n 2`.
+
+**Branch:** `attempt/PORT-1-step3biv-20260805T021000Z` (commit `c42978b`).
+**Logs:** `20260805T020301Z_PORT-1-step3biv-costprobe.log` (exit 124),
+`20260805T020659Z_PORT-1-step3biv-serial-isolation.log`,
+`20260805T020843Z_PORT-1-step3biv-serial-gate.log` (2 passed, 22.5 s).
+**Next run takes §9 item 2 again** (still open, first failure) — as the
+retry described above, not as the original plan; item 5 stays blocked.

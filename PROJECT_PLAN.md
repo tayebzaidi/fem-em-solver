@@ -1342,6 +1342,58 @@ written 2026-08-04, 18:00 review; the follow-up step 3 asked for)*
 > shared-surface pairs found and their areas, annotate here, stop — no
 > blind surface hunting.
 >
+> **Step 3b-iv attempted 2026-08-05 (21:00 run) — 🟡 incomplete: the mesh
+> half is measured and right, the parallel half hangs.** Code parked on
+> `attempt/PORT-1-step3biv-20260805T021000Z`; logs on main,
+> `20260805T020301Z_PORT-1-step3biv-costprobe.log` (exit 124, 181 s),
+> `20260805T020659Z_…-serial-isolation.log` (2 failed, 24 s — the probe that
+> set the band) and `20260805T020843Z_…-serial-gate.log` (**2 passed, 22.5 s**
+> at `-n 1`).
+>
+> *What the tags are.* Intersecting the fragment's gap-piece and
+> conductor-piece boundaries yields **exactly 2 surfaces per port** — no blind
+> hunting, no absolute tags — emitted as physical groups `201`/`202`.
+>
+> *The analytic anchor in the plan was wrong, and the measurement says by how
+> much.* The gap box overhangs the tube in `x` and `z`, so the arc leaves it
+> only through the two `y`-faces, and those planes are **not** normal to the
+> tube axis (the arc crosses at `φ = arcsin(gap_half_y/R) ≈ 0.2` rad). Each
+> cut is an oblique section of the solid torus, not a circle. Its exact area,
+> `A(y₀) = ∫_{R−r}^{R+r} 2√(r²−(s−R)²)·s/√(s²−y₀²) ds` (which reduces to `πr²`
+> at `y₀ = 0`), gives **1.604721580e-04 m²** for the pair — `1.0216 ×` the
+> plan's `2πr² = 1.570796e-04`. Two independent routes agree: OCC's own
+> `getMass(2, ·)` on the CAD surfaces returns **1.604721e-04 m²**, every
+> printed digit.
+>
+> | quantity | measured |
+> |---|---|
+> | facet-group area, ports 201 / 202 | 1.563786482e-04 m² (identical to < 1e-12) |
+> | meshed / analytic oblique cut | **0.974490841**, both ports |
+> | exact cut / naive `2πr²` | 1.021597 |
+> | gap-box `y`-face pair (vacuity ceiling) | 2.88e-04 m², `1.7947 ×` — total separation |
+>
+> The plan predicted "far tighter than the volume's 0.980"; **refuted** —
+> 0.9745 is the *same* chordal deficit the volume shows (0.980079 ungapped,
+> 0.98030 on the arc). A planar section of an inscribed linear-tet solid
+> inherits the solid's deficit rather than improving on it. The band was set
+> from the probe at `(0.970, 0.980)` and the measurement recorded in a code
+> comment; nothing was loosened.
+>
+> *The blocker.* At `-n 2` the run hangs inside `gmshio.model_to_mesh` — before
+> any test code — and is killed at the 180 s ceiling; both ranks spin in
+> `MPI_Testall ← compute_graph_edges_nbx ← create_entity_permutations`. `-n 1`
+> completes the identical case in 22.5 s, and `-n 2` on this fixture *without*
+> the new groups is green, so it is neither cost nor geometry: it is the
+> distribution of tags on facets that are **interior** to the partition, which
+> `201`/`202` are the fixture's first instance of. Filed as **known-issues 9**
+> with the stack. CI is `-n 2`, so the diff stays parked. **Successor:** find
+> where `distribute_entity_data` diverges for interior facets (compare against
+> a fixture that already tags an interior surface, if one exists); a serial-only
+> gate is *not* an acceptable fallback here — 3b-v solves on this mesh at `-n 2`.
+> A second finding, unrelated and pre-existing: the fixture's `outer_boundary`
+> group reaches the dolfinx facet tags from **neither** path (gapped set is
+> `[201, 202]`, ungapped is `[]`) — **known-issues 10**, not fixed in passing.
+>
 > **Step 3b-v — the facet-integral port voltage on 3b-iv's tags (plan
 > written 2026-08-04, 18:00 review; depends on 3b-iv landing).** The
 > estimator 3b-ii ranked as route 2, now the only route left: the
@@ -1566,6 +1618,16 @@ entries; both new ✅ steps audited §4-compliant this review.
    problem.
 
 2. **`PORT-1` step 3b-iv — facet tags on the arc-end discs (mesh only).**
+   🟡 **attempted once, 2026-08-05 21:00 run — still open, and the retry is a
+   different job from the original plan.** The tags themselves are done and
+   measured (2 surfaces per port; area 0.974490841 of the exact oblique cut
+   `1.604721580e-04 m²`, which is `1.0216 ×` this item's `2πr²` anchor —
+   see the §7 3b-iv entry), parked on
+   `attempt/PORT-1-step3biv-20260805T021000Z` and green at `-n 1` in 22.5 s.
+   The blocker is **known-issues 9**: at `-n 2` `gmshio.model_to_mesh` hangs
+   distributing tags on interior facets. **A retry should attack the hang, not
+   re-derive the tags** — start from the parked branch and the stack trace in
+   known-issues 9. Item 5 stays blocked until this lands on `main`.
    Independent, and now on the critical path — item 5 consumes its tags.
    Execute the §7 step-3b-iv plan, written at the 10:30 review. **Anchor:**
    each port's facet-group area against the analytic
