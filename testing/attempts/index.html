@@ -1050,6 +1050,83 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#2026-08-04t2000z-no-chunk-anomaly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-08-04T20:00Z — (no chunk) — anomaly
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2026-08-04t2130z-mat-6-step-3-9-on-deck-item-3-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-08-04T21:30Z — MAT-6 step 3 (§9 On-deck item 3) — complete
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2026-08-05t0030z-post-3-step-5-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-08-05T00:30Z — POST-3 step 5 — complete
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2026-08-05t0200z-port-1-step-3b-iv-9-on-deck-item-2-incomplete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-08-05T02:00Z — PORT-1 step 3b-iv (§9 On-deck item 2) — incomplete
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2026-08-05t0330z-port-1-step-3b-iv-9-on-deck-item-2-incomplete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-08-05T03:30Z — PORT-1 step 3b-iv (§9 On-deck item 2) — incomplete
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2026-08-05t1700z-port-1-step-3b-iv-9-on-deck-item-1-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-08-05T17:00Z — PORT-1 step 3b-iv (§9 On-deck item 1) — complete
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2026-08-05t1832z-post-1-step-3-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-08-05T18:32Z — POST-1 step 3 — complete
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4590,6 +4667,588 @@ that is a review's call, not an improvisation.</p>
 committed-red defect), <code>20260804T183654Z_POST-1-step2-gate-n2.log</code>,
 <code>20260804T183710Z_POST-1-step2-gate-n4.log</code>,
 <code>20260804T183724Z_POST-1-step2-regress.log</code>.</p>
+<h2 id="2026-08-04t2000z-no-chunk-anomaly">2026-08-04T20:00Z — (no chunk) — <strong>anomaly</strong><a class="headerlink" href="#2026-08-04t2000z-no-chunk-anomaly" title="Permanent link">&para;</a></h2>
+<p><strong>Preflight dirty; no chunk work done.</strong> <code>git status</code> at 20:00Z (15:00 local,
+slot start) showed one modified file:</p>
+<pre><code> M PROJECT_PLAN.md    (65 insertions, 15 deletions)
+</code></pre>
+<p>(By the end of the slot an untracked <code>docs/automation/weekly-review.md</code> had
+also appeared — see below.)</p>
+<p>Container was Up (21 h). The exception in implementer-run.md step 1 does <strong>not</strong>
+apply: this is a <em>first</em> encounter — no prior attempts.md anomaly entry
+describes this diff. The two runs before me both recorded a clean tree at start
+(2026-08-04T17:03Z and T18:33Z), so the dirtiness is new since 18:33Z.</p>
+<p><strong>The edits are almost certainly a human's, in progress right now.</strong> <code>HEAD</code>
+(<code>c0f131a</code>, "docs(plan): compress closed-chunk journals") was committed at
+14:47 local, twelve minutes before this slot opened, and <code>PROJECT_PLAN.md</code>'s
+mtime is 15:00 local — i.e. the working-tree edit is minutes old, not a stale
+leftover. Stopping here is exactly the case step 1's first-encounter rule
+exists for: a human editing interactively must not be interrupted mid-change.
+Nothing was stashed, discarded, reverted, or landed.</p>
+<p><strong>What the diff contains</strong> (documentation only — no <code>src/</code>, <code>tests/</code>,
+<code>scripts/</code>, and no §7 status or done-when change), recorded so the next run can
+compare byte-for-byte and so the daily review sees it even if it lands first:</p>
+<ul>
+<li><strong>§1 Mission, rescoped 2026-08-04.</strong> Reframes the target as "the MRI-safety
+  slice of HFSS, not HFSS": construct birdcage+phantom (often with an implant)
+  → tune at 64/128 MHz with EM + circuit co-simulation → drive and extract
+  B1+/SAR/S-params → long term couple to Pennes bioheat. Parity claims become
+  per-workflow, never per-product. Adds cross-validation against Ansys
+  Electronics Desktop as part of the method.</li>
+<li><strong>New §5.4 "Examples and Ansys cross-validation."</strong> Declares <code>examples/</code> a
+  maintained product surface (each phase keeps a runnable, ParaView-openable
+  example; a broken example is a defect), and specifies
+  <code>examples/ansys_benchmarks/&lt;case&gt;/</code> with <code>SPEC.md</code> + script + results +
+  <code>COMPARISON.md</code>. Cadence and adjudication of returned AED numbers are
+  assigned to a <strong>weekly planning review</strong>.</li>
+<li><strong>§6 phase map.</strong> Old Phase 6 (advanced/MPI/AMR) becomes Phase 9; new Phases
+  6 (birdcage tuning), 7 (implants), 8 (thermal/Pennes), each "Not started"
+  with subgoals owned by the weekly review.</li>
+<li><strong>§10</strong> retitled "Success criteria and long-horizon roadmap"; the three-line
+  "Stretch (Phase 6)" list is replaced by a seeded long-horizon roadmap for
+  Phases 5–8 with rules of engagement (rescope-or-kill at one month of no
+  movement; no goal without a named validation target).</li>
+</ul>
+<p><strong>The tree grew dirtier while this entry was being written, which settles the
+question of whether a human is live.</strong> The diff refers to
+<code>docs/automation/weekly-review.md</code> three times (§5.4 cadence, §5.4
+adjudication, §10 ownership). At 20:00Z that file did not exist —
+<code>docs/automation/</code> held only <code>daily-review.md</code> and <code>implementer-run.md</code>. By
+20:0xZ, minutes later and with no action of mine, it was present as an
+<strong>untracked</strong> file. So the working tree at this slot is not a stale leftover
+but an edit in progress: the human is writing the weekly-review protocol to
+match the §1/§5.4/§6/§10 rescope. Second confirmation that stopping, rather
+than landing the doc diff under the step-1 exception, is the right call — the
+change is provably incomplete (an untracked protocol doc its own references
+depend on).</p>
+<p>Until that file is committed, §10's roadmap and §5.4's benchmark cadence have
+no owner in the automation, and no scheduled session is authorised to maintain
+them. The daily review should confirm the weekly review's slot and wiring
+(cron entry, model, effort) once the protocol doc lands.</p>
+<p><strong>Consequence for the schedule.</strong> Per step 1 this run stops with no chunk
+attempted; §9 item 2 (the top item not marked done — item 1 carries the 12:00
+run's "do not re-attempt" marker) is untouched and remains the next run's
+target. If the tree is <em>still</em> dirty with this same diff at 16:30 local, that
+run is a second encounter and must park it on <code>recovered/&lt;UTC-timestamp&gt;</code> and
+proceed — one slot lost, not the rest of the day.</p>
+<p><strong>Denials:</strong> none. <strong>Branch:</strong> none. <strong>Logs:</strong> none — no compute was run.</p>
+<hr />
+<h2 id="2026-08-04t2130z-mat-6-step-3-9-on-deck-item-3-complete">2026-08-04T21:30Z — <code>MAT-6</code> step 3 (§9 On-deck item 3) — <strong>complete</strong><a class="headerlink" href="#2026-08-04t2130z-mat-6-step-3-9-on-deck-item-3-complete" title="Permanent link">&para;</a></h2>
+<p><strong>Preflight.</strong> Tree clean, container Up 23 h. §9 item 1 carries the 12:00 run's
+"do not re-attempt", item 2 is done — item 3 is the first open item, taken as
+written. No <code>recovered/*</code> action needed; the 20:00Z anomaly's dirty tree is
+gone (the human's weekly-review commit landed as <code>436199c</code>).</p>
+<p><strong>What was tried.</strong> Re-gate <code>MAT-6</code>'s coil-loading ΔR on the <em>production</em>
+default drive (<code>project_source=True</code>), which the landed 1.58% never used.
+New module <code>tests/validation/test_dodd_deeds_projected_drive.py</code>, five tests,
+no <code>src/</code> change of any kind — the step-2f default was already there; this
+measures it.</p>
+<p>Two design decisions worth reusing:</p>
+<ul>
+<li><strong>Separate module, importing the fixture.</strong> The geometry constants, the
+  regularised <code>_azimuthal_current_density</code> and the tags are imported from
+  <code>test_dodd_deeds_impedance.py</code> instead of restated, so there is one
+  definition of the fixture and the <code>project_source=False</code> pins are physically
+  untouched (the §7 plan's first trap). Adding two solves to the existing
+  module-scoped fixture would also have put one pytest command at ~155 s
+  against the 180 s standard ceiling; two commands of ~70 s is the split the
+  plan asked for.</li>
+<li><strong>The like-for-like precondition is measured, not assumed.</strong>
+  <code>remove_gradient_content</code> takes only the mesh, <code>J</code> and the cell tags — never
+  the material — so the loaded and free solves must be driven by the identical
+  <code>J′</code>, or their reaction difference measures the drive change instead of the
+  half-space. That is now an assertion:
+  <code>||J′_loaded − J′_free||²/||J′||² = 0.0</code> on both gate runs, <code>8.774e-39</code> on
+  the probe, bounded at <code>1e-24</code>.</li>
+</ul>
+<p><strong>Measured numbers</strong> (identical to every printed digit across all three runs;
+138 619 cells, W = 0.15, <code>-n 2</code>):</p>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>projected (default)</th>
+<th>pinned (step 2b)</th>
+<th>closed form</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ΔR</td>
+<td><code>+3.2770406e-01 Ω</code></td>
+<td><code>+3.276882e-01 Ω</code></td>
+<td><code>+3.2259615e-01 Ω</code></td>
+</tr>
+<tr>
+<td>ΔR error</td>
+<td><strong>1.5834%</strong></td>
+<td>1.58%</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ΔX</td>
+<td><code>−5.6657895e-01 Ω</code></td>
+<td>(ratio 0.8123)</td>
+<td><code>−6.1586749e-01 Ω</code></td>
+</tr>
+<tr>
+<td>ΔX ratio</td>
+<td><strong>0.9200</strong></td>
+<td>0.8123</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>I′</code></td>
+<td><code>0.919666 A</code> (0.999974 of meshed <code>I</code>)</td>
+<td><code>I = 0.919690 A</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Gated: ΔR &lt; 5% (step 2b's ceiling, inherited unchanged — never widened);
+ΔR &gt; 0; ΔX &lt; 0 and within an order of magnitude; drive mismatch &lt; 1e-24;
+<code>0.95 &lt; I′/I &lt; 1.05</code>. Negative controls cited, not re-run, per the plan: the
+σ-blind <code>ΔZ = 0</code> (100% separation) and the <code>1.31e-08</code> null tagging control in
+<code>20260731T110515Z_MAT-6-step2b-gate-numbers.log</code>.</p>
+<p><strong>Result: the projection is a no-op on the gated number</strong> (5e-5 relative), for
+the reason step 2f predicted — a closed loop current is already solenoidal, so
+<code>P_G J</code> here is a purely discrete artefact, 26 ppm of <code>I</code>. §2.1's
+"unprojected-drive" caveat on the coil-loading claim is retired <strong>by
+measurement</strong>, and the pinned test keeps its provenance.</p>
+<p><strong>The one finding for the reader.</strong> ΔX moved 0.8123 → 0.9200 — 13% — while ΔR
+moved 5e-5. I did <strong>not</strong> claim that as an improvement and did not tighten the
+ΔX gate: step 2a measured 5.57% of box motion still left at W = 0.20 and a 30%
+filamentary spread over <code>h ± r_wire</code>, both larger than the shift, so this
+fixture cannot attribute it. Adjudicating it needs the converged fixture step
+2b already named (<code>h/r_wire ≥ 16</code> or <code>W ≥ 0.25</code>).</p>
+<p><strong>Hypothesis for the next attempt</strong> (a review's to scope, not queued here): the
+ΔX shift is the projection removing spurious discrete gradient content from the
+reactive part — the same mechanism as <code>PORT-1</code> step 2e's <code>W_e^spur</code> collapse,
+which moved <code>Im Z₁₁</code> by a factor 5.5e5 on a lossless fixture. If so, a converged
+box would show projected ΔX closer to Dodd–Deeds than unprojected at <em>every</em>
+box size, which is a cheap two-point test on the W-sweep the step-2a probe
+script already builds. If instead the two paths converge to the same ΔX, the
+0.9200 is box error re-shuffled and the finding dies.</p>
+<p><strong>Cost.</strong> Three commands, standard tier, <code>-n 2</code>, <code>timeout 180</code> each, all green:
+probe 71 s, gate 65 s, final gate 65 s (the last two differ only in a docstring
+sentence; the final one matches the committed bytes). Well inside the slot.</p>
+<p><strong>Denials:</strong> one — <code>Write</code> to <code>.git/ATTEMPT_ENTRY.md</code> for the commit message
+was refused as a sensitive path. Worked around with <code>commit-msg.tmp</code> at the
+repo root, which <code>.gitignore</code>'s <code>*.tmp</code> already covers, so <code>git commit -F</code>
+works and the tree stays clean without a delete step. No allowlist change
+needed; recorded so the daily review knows <code>.git/</code> is not a scratch area and
+<code>*.tmp</code> is the one that works.</p>
+<p><strong>Branch:</strong> none — landed on <code>main</code>. <strong>Logs:</strong>
+<code>20260804T213232Z_MAT-6-step3-probe.log</code>,
+<code>20260804T213435Z_MAT-6-step3-gate.log</code>,
+<code>20260804T213600Z_MAT-6-step3-gate-final.log</code> (8 passed each, incl. the four
+<code>tests/environment</code> guards). <strong>Next run takes §9 item 4</strong> (<code>POST-3</code> step 5).</p>
+<hr />
+<h2 id="2026-08-05t0030z-post-3-step-5-complete">2026-08-05T00:30Z — <code>POST-3</code> step 5 — <strong>complete</strong><a class="headerlink" href="#2026-08-05t0030z-post-3-step-5-complete" title="Permanent link">&para;</a></h2>
+<p><strong>Slot:</strong> 19:30 local implementer run. Preflight clean (<code>aabb0a7</code>), container Up
+26 h. Took §9 item 1 as written.</p>
+<p><strong>What landed.</strong> μᵣ became a DG0 field on <strong>both</strong> legs the step is about.
+<code>build_mu_r_field</code> (new, <code>core/time_harmonic.py</code>, split out of
+<code>build_material_fields</code> rather than added to its two-tuple return so no caller
+changes shape) is built by <code>TimeHarmonicSolver.solve</code>, exposed on
+<code>TimeHarmonicFields.mu_r_field</code>, and passed to <code>bilinear_form</code> (<code>1/μᵣ(x)</code> in the
+curl-curl term, scalar fallback when <code>None</code>); <code>poynting_power_balance</code>'s <code>mu_r</code>
+now takes a <code>fem.Function</code> beside a float, with the same-mesh guard <code>sigma</code>
+has, so <code>H = ∇×E/(−jωμ₀μᵣ)</code> sees the same field. <code>HomogeneousMaterial.validate</code>
+was <strong>not</strong> relaxed — μᵣ stays one scalar per material and the piecewise field
+is assembled from the <code>material_map</code> scalars, which is the plan's "extend the
+validation with the field, not around it" satisfied by not needing to.</p>
+<p><strong>Measured.</strong> Two-slab μᵣ = 2 | 1 across x = L/2, σ = 0.7 S/m uniform,
+<code>TH-6</code> box: imbalance <strong>8.6101% (16³) → 4.3284% (32³)</strong>, <strong>rate 0.9922 in h</strong>
+(steps 1–2 measured 0.987/0.9915), under the unmoved 5% §10 MVP bar. Scalar
+pin: uniform DG0 μᵣ = 1 reproduces the float path to <code>rtol = 1e-12</code> on all
+three powers. Controls at 12³ against honest 11.4409%: μᵣ-blind <strong>flux leg</strong>
+42.2557% (<strong>3.693×</strong>), μᵣ-blind <strong>operator</strong> 58.3013% (<strong>5.096×</strong>), ceiling
+1/0.1144 = <strong>8.741×</strong>; asserted 3× / 4×.</p>
+<p><strong>The finding worth keeping — orientation decides whether the control can
+fire.</strong> Round 1 put μᵣ = 2 on the <em>far</em> slab and measured a flux-blind
+separation of <strong>1.141×</strong> (7.9058% vs 6.9304%): the lossy plane wave has
+decayed to nothing by the time it reaches the magnetic half, so blinding the
+flux leg there corrupts almost no real power. Honest convergence looked fine
+(6.9304% → 3.5038%, rate 0.9840) — i.e. the fixture would have passed a gate
+whose negative control was vacuous, which is exactly the failure mode <code>POST-3</code>
+exists to prevent. Moving the magnetic slab to the entry side fixed it. Probe
+logs for both orientations are committed; the operator-side control was added
+beyond the plan's single flux-leg control, and both are asserted.</p>
+<p><strong>Regression.</strong> <code>tests/environment tests/solver
+tests/validation/{test_lossy_plane_wave,test_dielectric_sphere,test_time_harmonic_mms}.py</code>
+at <code>-n 2</code>, complex build: <strong>36 passed, 4 failed, 75 s</strong>. Two failures are
+known-issues 2. The other two (<code>tests/solver/test_energy_and_point_evaluation.py</code>,
+<code>TypeError: float() argument … not 'complex'</code> in
+<code>MagnetostaticSolver.compute_magnetic_energy</code>) are <strong>new known-issues 8</strong>,
+verified pre-existing at <code>aabb0a7</code> by re-running with the diff stashed
+(<code>2 failed, 2 passed in 4.46 s</code>). Not fixed in passing: it is <code>MAG</code> work and
+the complex-build energy value has never been checked against the real-build
+one.</p>
+<p><strong>Cost.</strong> Four commands, all standard tier, <code>-n 2</code>, <code>timeout 180</code> (600 for the
+regression sweep): probe 22 s, probe-2 21 s, gate 114 s, regression 75 s,
+pre-existing check 5 s. Well inside the slot; no overrun, no denial.</p>
+<p><strong>§7/§9.</strong> Step 5 entry flipped ✅ with the numbers; <code>POST-3</code> left <strong>🟡
+deliberately</strong> — its §9 item said "does not close <code>POST-3</code>", and the only
+remaining leg (reciprocity) is discharged at <code>PORT-1</code> step 3b-v, so the symbol
+is the review's call, not this run's.</p>
+<p><strong>Branch:</strong> none — landed on <code>main</code>. <strong>Logs:</strong>
+<code>20260805T003302Z_POST-3-step5-probe.log</code>,
+<code>20260805T003431Z_POST-3-step5-probe2.log</code>,
+<code>20260805T003551Z_POST-3-step5-gate.log</code> (12 passed, 114 s),
+<code>20260805T003806Z_POST-3-step5-regression.log</code>,
+<code>20260805T003945Z_POST-3-step5-preexisting.log</code>.
+<strong>Next run takes §9 item 2</strong> (<code>PORT-1</code> step 3b-iv, facet tags on the arc-end
+discs — item 5 depends on it landing).</p>
+<hr />
+<h2 id="2026-08-05t0200z-port-1-step-3b-iv-9-on-deck-item-2-incomplete">2026-08-05T02:00Z — <code>PORT-1</code> step 3b-iv (§9 On-deck item 2) — <strong>incomplete</strong><a class="headerlink" href="#2026-08-05t0200z-port-1-step-3b-iv-9-on-deck-item-2-incomplete" title="Permanent link">&para;</a></h2>
+<p>Preflight clean at <code>2fba4d9</code>, container Up 27 h. Took §9 item 2 (item 1 was
+marked done by the 19:30 run). Code parked on
+<strong><code>attempt/PORT-1-step3biv-20260805T021000Z</code></strong>; <code>main</code> carries only logs, the
+§7/§9 annotations and two known-issues entries.</p>
+<p><strong>The mesh half is done and it is right.</strong> Intersecting the fragment's
+gap-piece boundary with its conductor-piece boundary returns <strong>exactly 2
+surfaces per port</strong> — the two planar cuts at the gap box's <code>y</code>-faces, emitted
+as physical groups <code>201</code>/<code>202</code>. No blind surface hunting was needed and no
+absolute tag is used.</p>
+<p><strong>The plan's anchor was 2.16% low, and the run says so with two independent
+routes.</strong> <code>2πr² = 1.570796e-04 m²</code> assumes the cut is normal to the tube axis.
+It is not: the box overhangs the tube in <code>x</code>/<code>z</code>, so the arc leaves only
+through the <code>y</code>-faces, which it crosses at <code>φ ≈ 0.2</code> rad — an oblique section.
+Exact area <code>A(y₀) = ∫_{R−r}^{R+r} 2√(r²−(s−R)²)·s/√(s²−y₀²) ds</code> (→ <code>πr²</code> at
+<code>y₀ = 0</code>) gives <strong>1.604721580e-04 m²</strong> by quadrature; OCC's <code>getMass(2, ·)</code> on
+the CAD surfaces gives <strong>1.604721e-04 m²</strong>. Every printed digit agrees.</p>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>measured</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>facet-group area 201 / 202</td>
+<td>1.563786482e-04 m², identical to &lt; 1e-12</td>
+</tr>
+<tr>
+<td>meshed / analytic oblique cut</td>
+<td><strong>0.974490841</strong> both ports</td>
+</tr>
+<tr>
+<td>exact / naive <code>2πr²</code></td>
+<td>1.021597</td>
+</tr>
+<tr>
+<td>gap-box <code>y</code>-face pair (vacuity ceiling)</td>
+<td>2.88e-04 m² = <code>1.7947 ×</code></td>
+</tr>
+<tr>
+<td>ungapped control</td>
+<td>facet-tag set contains no <code>2xx</code> — exact</td>
+</tr>
+</tbody>
+</table>
+<p>The plan expected "far tighter than the volume's 0.980": <strong>refuted.</strong> 0.9745
+is the same chordal deficit the volume shows (0.980079 ungapped, 0.98030 on
+the arc) — a planar section of an inscribed linear-tet solid inherits the
+solid's deficit. The band was set from the probe at <code>(0.970, 0.980)</code> with the
+measurement in a code comment. Nothing was loosened: my first guess
+<code>(0.990, 1.002)</code> was written <em>before</em> any measurement and the probe replaced
+it, which is what the item's "banded from the probe" instruction asks for.</p>
+<p><strong>Why it is parked.</strong> At <code>-n 2</code> the run hangs inside <code>gmshio.model_to_mesh</code>,
+before a single line of test code, and <code>timeout</code> kills it at the 180 s
+ceiling. Both ranks' stacks are <code>MPI_Testall ← compute_graph_edges_nbx ←
+IndexMap::index_to_dest_ranks ← Topology::create_entity_permutations</code>; gmsh
+itself finishes in ~10 s (<code>Done optimizing mesh (Wall 7.14s)</code>), so ~168 s is
+pure hang. Bounded from both sides: <code>-n 1</code> runs the identical case in 22.5 s
+green, and <code>-n 2</code> on this fixture <em>without</em> the new groups is green today.
+So it is neither cost nor the gapped geometry — it is distributing tags on
+facets that are <strong>interior</strong> to the partition, which <code>201</code>/<code>202</code> are this
+fixture's first instance of. Filed as <strong>known-issues 9</strong> with the stack. CI
+is <code>-n 2</code>, so landing it would hang the suite: parked, not landed.</p>
+<p><strong>Second finding, pre-existing and unrelated.</strong> The fixture's <code>outer_boundary</code>
+physical group reaches the dolfinx facet tags from <strong>neither</strong> path — gapped
+set is <code>[201, 202]</code>, ungapped is <code>[]</code>. Two validation tests pass <code>facet_tags=</code>
+from this fixture into a solver; whether either depends on tag <code>1</code> is
+unchecked. <strong>Known-issues 10</strong>, not fixed in passing (<code>GEO</code>/<code>MAG</code> work, and
+changing what the fixture emits could move Helmholtz numbers).</p>
+<p><strong>Cost.</strong> Three commands, all standard tier: costprobe <code>-n 2</code> <strong>exit 124 at
+181 s</strong> (the hang, killed at the ceiling — not re-run with a longer timeout),
+serial isolation 24 s, serial gate 24 s. No denial, no overrun beyond the one
+deliberate timeout kill. Roughly 25 minutes of the slot went to the hang and
+its isolation.</p>
+<p><strong>Hypothesis for the next attempt.</strong> The tags are finished; do not re-derive
+them. Start from the parked branch and known-issues 9 and attack
+<code>distribute_entity_data</code> for interior facets — first cheap discriminator: does
+the hang survive if the <code>2xx</code> groups are added but the mesh is requested with
+an explicit <code>GhostMode.shared_facet</code> partitioner, and does a fixture that
+already tags an interior surface exist anywhere in <code>io/mesh.py</code> to compare
+against? A serial-only gate is <strong>not</strong> an acceptable fallback: 3b-v solves on
+this mesh at <code>-n 2</code>.</p>
+<p><strong>Branch:</strong> <code>attempt/PORT-1-step3biv-20260805T021000Z</code> (commit <code>c42978b</code>).
+<strong>Logs:</strong> <code>20260805T020301Z_PORT-1-step3biv-costprobe.log</code> (exit 124),
+<code>20260805T020659Z_PORT-1-step3biv-serial-isolation.log</code>,
+<code>20260805T020843Z_PORT-1-step3biv-serial-gate.log</code> (2 passed, 22.5 s).
+<strong>Next run takes §9 item 2 again</strong> (still open, first failure) — as the
+retry described above, not as the original plan; item 5 stays blocked.</p>
+<h2 id="2026-08-05t0330z-port-1-step-3b-iv-9-on-deck-item-2-incomplete">2026-08-05T03:30Z — <code>PORT-1</code> step 3b-iv (§9 On-deck item 2) — <strong>incomplete</strong><a class="headerlink" href="#2026-08-05t0330z-port-1-step-3b-iv-9-on-deck-item-2-incomplete" title="Permanent link">&para;</a></h2>
+<p>Second attempt, run as the retry the item asks for: attack the hang, do not
+re-derive the tags. Tree clean at start, container Up, no anomaly. The
+attempt's own conclusion is that <strong>known-issues 9's diagnosis was wrong</strong>, and
+the correction is the durable output of this slot.</p>
+<p><strong>What was changed.</strong> The gmsh dim-2 physical groups are gone. The
+fragment-boundary intersection stays in <code>two_torus_domain</code> as a CAD
+cross-check only (it prints <code>201: 2 surface(s) area=1.604721e-04</code> per port,
+matching the parked branch's OCC number digit for digit), and the same facet
+set is rebuilt on the dolfinx side by a new <code>_interface_facet_tags(mesh,
+cell_tags, {201: (101, 1), 202: (102, 2)}, existing)</code>: the facets whose two
+cells carry a gap tag and a conductor tag. Cell tags distribute fine, so the
+interface is derivable from data every rank already holds. Rank-safety: a
+partition-boundary facet's second cell is a ghost and ghost cells are not
+carried by <code>cell_tags</code>, so the tag is pushed through a DG0 function and
+<code>scatter_forward</code>ed rather than read from <code>cell_tags.values</code>.</p>
+<p><strong>Measured — the mesh is innocent.</strong> A marker probe
+(<code>tests/mesh/probe_two_torus_facets.py</code>, one print per rank around every
+collective) runs the gate's own mesh at <code>-n 2</code> to completion, <strong>exit 0 in
+14 s</strong>: mesh built (39578 / 39956 cells), <code>create_entities(fdim)</code> returns,
+<code>create_connectivity(fdim, tdim)</code> returns, and each port's interface is found
+with <strong>116 facets</strong>. A coarser variant is exit 0 in 6 s. So neither
+<code>model_to_mesh</code> nor the facet creation hangs — the entry that said they did is
+retitled and half-refuted in place.</p>
+<p><strong>The hang that remains, and where it is.</strong> The gate itself still times out at
+<code>-n 2</code> (<code>timeout 150</code>, killed; the earlier full-tier attempt at <code>timeout 180</code>
+died the same way). The mesh generator's two prints land, nothing after. So the
+hang is downstream of the tags, in <code>_facet_group_area</code>'s <code>dS</code> assembly. The two
+ranks' SIGTERM stacks are <strong>different</strong> this time, which is the useful clue:
+one is in <code>Topology::create_entity_permutations ← create_entities ←
+index_to_dest_ranks ← compute_graph_edges_nbx</code>, the other is in mpi4py's
+<code>MPI_Comm_dup</code> — a mismatched collective, not a slow one.</p>
+<p><strong>Hypothesis for the next attempt, in priority order.</strong> (1) <strong>Ghost mode.</strong>
+<code>gmshio.model_to_mesh</code> passes no partitioner, and the probe measures
+<code>cells_ghost=0</code> on both ranks. An interior-facet integral needs both cells
+behind every facet; a mesh with no ghost cells cannot supply one on a
+partition-boundary facet. First move is a <code>shared_facet</code> partitioner into
+<code>model_to_mesh</code>, then re-measure the probe <em>and</em> the gate — this also makes
+<code>_interface_facet_tags</code>'s <code>counts == 2</code> test complete rather than lucky.
+(2) The same probe shows each rank seeing exactly <strong>one</strong> port (rank 0: 201,
+rank 1: 202), so a per-port area is rank-local until reduced — the gate already
+allreduces, but a per-port ratio assertion must not be evaluated where the
+count is zero. (3) If (1) does not fix it, instrument <code>_facet_group_area</code>
+itself with the same marker pattern: <code>fem.form</code> (JIT), <code>assemble_scalar</code>, and
+the allreduce are three separate suspects and the probe pattern separates them
+in one run.</p>
+<p><strong>Cost.</strong> Four commands, standard tier: <code>-n 2</code> gate exit 124 at 181 s (killed
+at the ceiling, not re-run longer), coarse probe 6 s, fine probe 14 s, <code>-n 2</code>
+gate retry killed at 150 s. No denials. Roughly 20 minutes of the slot went to
+the two localisation probes, which is what produced the correction.</p>
+<p><strong>Branch:</strong> <code>attempt/PORT-1-step3biv-20260805T034500Z</code> (commit <code>e3fd31f</code>) —
+carries <code>_interface_facet_tags</code>, the CAD cross-check print, the gate file, and
+the marker probe. The earlier <code>attempt/PORT-1-step3biv-20260805T021000Z</code> is
+<strong>superseded</strong>: its gmsh-side interior physical groups are the thing this
+attempt removed; keep it only until the review reads both.
+<strong>Logs:</strong> <code>20260805T033458Z_PORT-1-step3biv-parallel-probe.log</code> (exit 124),
+<code>20260805T033928Z_PORT-1-step3biv-hang-localise.log</code> (exit 0, 6 s),
+<code>20260805T034007Z_PORT-1-step3biv-hang-localise-fine.log</code> (exit 0, 14 s),
+<code>20260805T034058Z_PORT-1-step3biv-parallel-retry.log</code> (killed at 150 s).
+<strong>Next run takes §9 item 2 again</strong> — second failure, so the review rescopes it
+before a third attempt per §9's own rule; item 5 stays blocked.</p>
+<h2 id="2026-08-05t1700z-port-1-step-3b-iv-9-on-deck-item-1-complete">2026-08-05T17:00Z — <code>PORT-1</code> step 3b-iv (§9 On-deck item 1) — <strong>complete</strong><a class="headerlink" href="#2026-08-05t1700z-port-1-step-3b-iv-9-on-deck-item-1-complete" title="Permanent link">&para;</a></h2>
+<p>Third attempt, executed as the 10:30 review rescoped it. Tree clean at start,
+container was Down and was brought Up, no anomaly. Started from
+<code>attempt/PORT-1-step3biv-20260805T034500Z</code> (<code>e3fd31f</code>) by checking out only its
+three code paths (<code>src/fem_em_solver/io/mesh.py</code>,
+<code>tests/mesh/test_two_torus_port_facets.py</code>,
+<code>tests/mesh/probe_two_torus_facets.py</code>) onto <code>main</code>; the branch's doc files are
+stale and were left alone. No derivation was rewritten.</p>
+<p><strong>Outcome: green at <code>-n 2</code>, and known-issues 9 is diagnosed rather than worked
+around.</strong> <code>20260805T171107Z_PORT-1-step3biv-parallel-gate-fixed.log</code>, <strong>2
+passed, 20 s</strong>, standard tier, <code>timeout 180</code>. The parallel numbers reproduce
+the <code>-n 1</code> gate digit for digit, so the areas carry no rank-count dependence:</p>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th><code>-n 2</code> measured</th>
+<th>anchor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>A_201</code>, <code>A_202</code></td>
+<td>1.563786482e-04 m²</td>
+<td>equal to 1.000000000000</td>
+</tr>
+<tr>
+<td>meshed / analytic oblique cut</td>
+<td><strong>0.974490841</strong> both ports</td>
+<td>band <code>(0.970, 0.980)</code></td>
+</tr>
+<tr>
+<td>analytic cut pair</td>
+<td>1.604721580e-04 m²</td>
+<td><code>1.021597487 ×</code> naive <code>2πr²</code></td>
+</tr>
+<tr>
+<td>gap-box <code>y</code>-face vacuity ceiling</td>
+<td>2.880000000e-04 m²</td>
+<td><code>1.794704 ×</code> the cut pair</td>
+</tr>
+<tr>
+<td>ungapped negative control</td>
+<td>facet tags <code>[]</code></td>
+<td>exact separation</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Route (1) — ghosting — was necessary but not sufficient.</strong> A <code>shared_facet</code>
+cell partitioner is now passed to <code>two_torus_domain</code>'s <code>model_to_mesh</code> (that
+fixture only). It did what the rescope predicted: <code>cells_ghost</code> <strong>0 → 239 / 231</strong>
+per rank, <code>20260805T170109Z_PORT-1-step3biv-ghostprobe.log</code>, 14 s, per-port
+facet counts unchanged at 116 and each rank still seeing exactly one port. The
+gate was then re-run and <strong>still hung</strong> — exit 124 at 181 s,
+<code>20260805T170140Z_PORT-1-step3biv-parallel-gate.log</code>, one rank in
+<code>create_entity_permutations</code>, the other in mpi4py <code>MPI_Comm_dup</code>. That is the
+second exit-124 the item names as the stop signal for route (3), so route (3)
+ran next rather than another blind iteration.</p>
+<p><strong>Route (3) named the call, via a discriminator the plan did not anticipate.</strong>
+Extending the marker probe with the gate's own <code>dS</code> assembly showed the whole
+computation completing at <code>-n 2</code> <strong>as a script</strong> — exit 0, 12 s,
+<code>20260805T170545Z_PORT-1-step3biv-dS-localise.log</code>, local areas
+1.563786482e-04 / 0.0 on rank 0 and 0.0 / 1.563786482e-04 on rank 1, both
+allreduces returning. Markers added inside the gate then pinned its hang to
+<code>_facet_group_area</code> at tag 201 (<code>20260805T170743Z_PORT-1-step3biv-pytest-localise.log</code>,
+exit 124). Same mesh, same form, same rank count — and the script's only extra
+call was an explicit <code>msh.topology.create_entity_permutations()</code>.</p>
+<p><strong>Cause.</strong> That call is a collective, and the dolfinx assembler reaches it
+<em>lazily</em> — only on a rank that actually owns integration entities for the
+form's subdomain id. This partition gives each rank the facets of exactly one
+port, so assembling tag 201 put rank 0 inside the collective while rank 1 went
+straight past it. A mismatched collective, which is why the two SIGTERM stacks
+differed. <strong>Fix:</strong> hoist <code>create_entity_permutations()</code> to the top of
+<code>_facet_group_area</code>, unconditional on every rank, with the measurement in a
+code comment. One line. Nothing was loosened; the band and every assertion are
+the ones attempt 1 measured.</p>
+<p><strong>Regression.</strong> <code>tests/mesh</code> at <code>-n 2</code>: 24 passed, 1 skipped, <strong>1 failed</strong>,
+72 s, <code>20260805T171139Z_PORT-1-step3biv-mesh-regression.log</code>. The failure is
+<code>test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent</code> —
+known-issues 5, pre-existing, and untouched by this diff.</p>
+<p><strong>Landed on <code>main</code>:</strong> the partitioner, <code>_interface_facet_tags</code>, the gate file,
+the probe (kept — the markers are what localise this class of hang), the
+docstring note on the ghost-mode requirement, known-issues 9 retired, §7 and
+§9 item 1 flipped. Nothing parked. <code>attempt/PORT-1-step3biv-20260805T034500Z</code>
+is now fully landed and the review may delete it;
+<code>attempt/PORT-1-step3biii-20260804T173000Z</code> is still needed by 3b-v.</p>
+<p><strong>Left open, deliberately.</strong> Known-issues 10 (<code>outer_boundary</code> never reaching
+the dolfinx facet tags) is untouched. And the standing hazard: <em>any</em> <code>dS</code>
+integral over a subdomain that some rank does not touch has this same shape.
+Only this fixture is fixed — a sweep of the other interior-facet integrals is a
+review's call, not this slot's.</p>
+<p><strong>Next attempt hypothesis.</strong> §9 item 5 (<code>PORT-1</code> step 3b-v) is unblocked: its
+dependency was 3b-iv's tags reaching <code>main</code>, which they now have. Whoever takes
+it should expect the same lazy-collective trap in the voltage's own facet
+integrals and hoist <code>create_entity_permutations()</code> there before debugging
+anything else.</p>
+<hr />
+<h2 id="2026-08-05t1832z-post-1-step-3-complete">2026-08-05T18:32Z — <code>POST-1</code> step 3 — <strong>complete</strong><a class="headerlink" href="#2026-08-05t1832z-post-1-step-3-complete" title="Permanent link">&para;</a></h2>
+<p>Scheduled implementer run, 13:30 CDT slot. Tree clean at start, container Up,
+no anomaly. §9 item 1 was marked done by the 12:00 run, so this slot took
+<strong>item 2</strong>, <code>POST-1</code> step 3 — drop-set semantics on the solved <code>TH-8</code> sphere.
+Landed on <code>main</code>; nothing parked.</p>
+<p><strong>What was built.</strong> <code>tests/post/test_drop_set_semantics_sphere.py</code> — one solve
+of the <code>TH-8</code> dielectric sphere at its middle resolution (<code>h_sphere = 0.00833</code>),
+then three statistics of the phasor magnitude <code>|E|</code> over the sphere tag scored
+against <code>|E_in| = 3/(ε+2)E₀ = 0.037500</code>. The fixture's constants, exact
+exterior Dirichlet trace and material map are <strong>imported</strong> from
+<code>tests/validation/test_dielectric_sphere.py</code>, not restated; only the solve
+wrapper differs, because <code>TH-8</code>'s own helper reduces the mesh, tags and field
+objects away before returning. Production's reduction is reused via the
+<code>phantom_fields</code> privates, so the drop-set statistic is not a
+reimplementation — same centroids, same <code>eval</code>, same <code>|F| = sqrt(Σ|F_i|²)</code>,
+same allreduces.</p>
+<p><strong>Measured</strong> (<code>20260805T183328Z_POST-1-step3-gate-n2.log</code>, <code>-n 2</code>, 5 passed
+4.42 s; every digit below reproduces at <code>-n 4</code>,
+<code>…183344Z…gate-n4.log</code>, 2.21 s):</p>
+<table>
+<thead>
+<tr>
+<th>set</th>
+<th>n</th>
+<th>mean</th>
+<th>error</th>
+<th>min</th>
+<th>max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(a) <code>prefer_interior=True</code></td>
+<td>3327</td>
+<td>0.039095</td>
+<td>4.253%</td>
+<td>0.035692</td>
+<td>0.043769</td>
+</tr>
+<tr>
+<td>(b) full owned tagged set</td>
+<td>4431</td>
+<td>0.039099</td>
+<td>4.263%</td>
+<td>0.033788</td>
+<td>0.044560</td>
+</tr>
+<tr>
+<td>(c) drop set alone</td>
+<td>1104</td>
+<td>0.039110</td>
+<td>4.293%</td>
+<td>0.033788</td>
+<td>0.044560</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The plan's expected separation is refuted, for the mean.</strong> The drop layer is
+24.92% of the tag, and (c)'s error is 1.009× (a)'s — the three means agree to
+0.04% of each other. Discarding a quarter of the sample set moves the reported
+mean by 0.01 percentage points, 1/400th of the 4.25% error itself. The 4.25% is
+bulk discretisation; no sampling rule reaches it. So the interface layer is not
+biased against the interior closed form the way the step-3 plan assumed when it
+called (c) "the separation scale".</p>
+<p><strong>Where the layer does separate: the spread.</strong> (c) contains the full tag's
+minimum <em>and</em> maximum exactly, and the full range is 1.334× the surviving
+range. That is what the negative control now gates (ceiling 1.2, read off the
+probe per <code>POST-3</code> step 2's rule) — the separation that exists, not the one
+that was expected.</p>
+<p><strong>Gates.</strong> (a)'s error inside a probe band <code>(3.75%, 4.75%)</code> whose upper end
+sits inside <code>TH-8</code>'s own 5% MVP tolerance on the same fixture; the exact
+integer partition identity <code>3327 + 1104 = 4431</code> globally; production's sampled
+counts equal the classification's; the surviving range strictly inside the full
+range; range ratio &gt; 1.2. The <strong>(a)-vs-(b) comparison is printed and never
+gated</strong> — that is the review's adjudication, and a test asserting a preference
+would be choosing the statistic that flatters it.</p>
+<p><strong>Probe first, then gate</strong>, as the plan required: probe
+<code>20260805T183210Z_POST-1-step3-probe.log</code> (4.48 s) carried only the partition
+identity; every band above was written from its numbers afterwards. Nothing was
+loosened; no existing assertion was touched.</p>
+<p><strong>Regressions.</strong> <code>tests/post</code> real build <code>-n 2</code>: 12 passed, 12 skipped, 1.51 s
+(<code>20260805T183359Z_POST-1-step3-regression-real.log</code>) — the new file collects
+and skips correctly in real mode, which the <code>validation</code> CI job runs. Complex
+build <code>-n 2</code> with <code>tests/environment</code> first: 28 passed, 9.23 s
+(<code>…183409Z…regression-complex.log</code>). No new known-issues entries; none of the
+standing failures were touched.</p>
+<p><strong>Does not close <code>POST-1</code></strong> — deliberately. It stays ⚠️. This step put numbers
+under the symbol; the review decides it. The finding to decide <em>from</em>: the
+guardrail is protecting a mean that does not need protecting, at a 24.92% cost
+in sample count, while the quantity it actually moves is the extremum — and
+SAR peaks are extrema, so a rule that discards the interface layer discards the
+peak.</p>
+<p><strong>Next attempt hypothesis.</strong> Two confounds are unseparated and neither was this
+slot's to resolve: the sphere's curved boundary puts chordal geometry error in
+the same cell layer as the material discontinuity, so "interface effect" and
+"geometry error" are still one number here. A <strong>planar</strong> interface fixture with
+a closed form — the <code>MAT-2</code> piecewise-σ slab is the obvious candidate — would
+tell them apart, and would also test the extremum claim on a geometry where the
+drop layer is not curved. That is a review's call to scope, not an improvisation
+for the next slot.</p>
 
 
 

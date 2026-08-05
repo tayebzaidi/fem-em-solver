@@ -21,7 +21,7 @@
     
     
       
-        <title>Daily review protocol (Fable 5, scheduled) - FEM Electromagnetics Solver</title>
+        <title>FEM-EM Solver — status - FEM Electromagnetics Solver</title>
       
     
     
@@ -62,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#daily-review-protocol-fable-5-scheduled" class="md-skip">
+        <a href="#fem-em-solver-status" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +98,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Daily review protocol (Fable 5, scheduled)
+              FEM-EM Solver — status
             
           </span>
         </div>
@@ -245,7 +245,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../status/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -484,10 +484,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#steps" class="md-nav__link">
+  <a href="#waiting-on-you" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Steps
+        Waiting on you
       
     </span>
   </a>
@@ -495,10 +495,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#rubric-what-a-queueable-item-states" class="md-nav__link">
+  <a href="#honest-current-state-digest-of-2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rubric: what a queueable item states
+        Honest current state (digest of §2)
       
     </span>
   </a>
@@ -506,10 +506,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#constraints" class="md-nav__link">
+  <a href="#recent-activity-last-24-h" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Constraints
+        Recent activity (last ~24 h)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automation-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automation health
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on-deck-9-top-of-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On deck (§9, top of queue)
       
     </span>
   </a>
@@ -536,172 +558,82 @@
   
 
 
-<h1 id="daily-review-protocol-fable-5-scheduled">Daily review protocol (Fable 5, scheduled)<a class="headerlink" href="#daily-review-protocol-fable-5-scheduled" title="Permanent link">&para;</a></h1>
-<p>Run by <code>scripts/automation/daily-review.sh</code> via cron <strong>three times daily</strong>
-(03:00, 10:30, 18:00 local), each followed by four implementer runs on a shared
-90-minute grid. "Daily" is historical; read it as "each review interval". One
-session, documentation work only — <strong>no solves, no meshing</strong>; reading harness
-logs is fine. You are maintaining the plan, not executing it.</p>
-<p><strong>Subagents are available to you, and web tools are not.</strong> Because this session
-never solves or meshes, a subagent costs tokens rather than cores and does not
-touch the 12-core compute budget. Use them for the mechanical, parallel, read-
-heavy work — one auditor per newly-✅ chunk in step 3, an <code>Explore</code> sweep when
-step 5 asks whether the backlog still reaches §10 — and keep your own context
-for the judgement calls: what a negative result means, and what to queue next.
-A subagent's report is evidence, not a verdict; if one says a chunk passes §4,
-the log it cites is what you cite back in the commit. Do not delegate steps 2,
-6, 7, or 8 — disposition, queue order, the dashboard/notification call, and
-the commit are yours.</p>
-<h2 id="steps">Steps<a class="headerlink" href="#steps" title="Permanent link">&para;</a></h2>
-<ol>
-<li>Establish what happened since the last review:</li>
-<li><code>git log</code> since the previous <code>docs(plan): daily review</code> commit (or 24 h
-     if none exists)</li>
-<li>new rows in <code>docs/testing/test-results.md</code> and logs in
-     <code>docs/testing/logs/</code></li>
-<li>new entries in <code>docs/testing/attempts.md</code></li>
-<li><code>git branch --list 'attempt/*'</code> for parked incomplete work</li>
-<li>
-<p><code>git status --porcelain -uno</code> — dirty tracked files at review time mean
-     every implementer run since they appeared has been tripping preflight</p>
-</li>
-<li>
-<p><strong>Clear any stalled tree, and dispose of <code>recovered/*</code> branches.</strong> A dirty
-   tracked tree older than one implementer cycle (90 min) is an outage, not a
-   curiosity, and this review is the scheduled actor responsible for ending
-   it. Read the diff and the attempts.md anomaly entries about it, then
-   resolve it now: commit the changes (accurate message, its own commit) if
-   they describe reality, or revert them if they do not, and record which
-   you did and why in the review commit. Documentation-only diffs that a
-   prior run journaled as an anomaly should normally have been landed by the
-   next implementer run (implementer-run.md step 1 exception); if one is
-   still sitting here, also note why that didn't happen. Never leave the
-   tree dirty at the end of the review.</p>
-</li>
-</ol>
-<p><code>git branch --list 'recovered/*'</code> lists trees a <em>second</em> implementer
-   encounter parked rather than stopped for (implementer-run.md step 1). Each
-   one is a change nobody has adjudicated: read it, then land it, fold it into
-   a §7 entry, or delete the branch — and say which in the review commit. An
-   accumulating <code>recovered/*</code> list means the tree keeps going dirty from a
-   source nobody has found; name that in the commit rather than clearing it
-   silently.</p>
-<ol>
-<li>
-<p><strong>Audit every chunk whose status changed to ✅ since the last review</strong>
-   against PROJECT_PLAN.md §4: does a harness log exist, was the verification
-   executed by the agent itself, is at least one assertion quantitative
-   (closed form / convergence rate / conservation, reciprocity, or symmetry
-   identity), is elapsed time recorded? Demote anything non-compliant to 🧪
-   with a dated note. Do not re-run anything.</p>
-</li>
-<li>
-<p>For each incomplete attempt (attempts.md entries + <code>attempt/*</code> branches):
-   diagnose from the logs and the parked diff; rescope the chunk's §7 entry —
-   smaller case, sharper implementation plan, or split into two chunks — and
-   record the diagnosis in the entry. Delete an attempt branch only when its
-   useful content is fully captured in the plan.</p>
-</li>
-<li>
-<p>Assess against §10 success criteria: does the existing backlog still lead
-   to the mission? If a gap exists, add new chunk entries (stable IDs,
-   §4-compliant done-whens, implementation plans meeting the rubric below).
-   If no gap exists, do not invent work. <strong>Scope boundary:</strong> the §6 phase map
-   and §10's long-horizon roadmap (phases, subgoals, dated assessments)
-   belong to the weekly planning review (docs/automation/weekly-review.md) —
-   add chunks <em>within</em> the current phase's subgoals; do not restructure
-   phases or edit the roadmap here.</p>
-</li>
-<li>
-<p>Refresh <strong>"On deck"</strong> in §9: top it up to <strong>at least 5</strong> items not done or
-   blocked — the 4 runs before the next review, plus one spare — ordered, each
-   sized for one implementer run (≤ 1 h wall clock, ≤ 20 min per compute
-   command, ≤ 12 ranks). An item that has failed twice must be rescoped before it may be
-   listed again. If fewer than 5 ready items exist, list what exists and say
-   so — step 5 still forbids inventing work. Each listed item meets the rubric
-   below; an item that cannot yet state its anchor is not ready to queue, and
-   writing that anchor is itself the better queue item.</p>
-</li>
-</ol>
-<p><strong>Prefer independent items over a dependency chain.</strong> Four runs will take
-   items 1–4 in order without waiting for each other's results, so an item
-   that only works if the item above it landed will fail for reasons that are
-   not about that item. Where the critical path is genuinely serial, say so
-   explicitly in the item ("depends on item 1 landing; if it did not, skip to
-   item 3") rather than leaving the run to discover it.</p>
-<ol>
-<li><strong>Refresh the status dashboard and decide on notifications.</strong> Rewrite
-   <code>docs/status/dashboard.md</code> from what steps 1–6 established — Waiting-on-you
-   first, then the §2 digest (only when §2 changed), recent activity,
-   automation health, on-deck summary. Keep it a digest: no content that
-   exists only there. Then republish it with the Artifact tool to the
-   recorded URL:</li>
-</ol>
-<p><code>https://claude.ai/code/artifact/d5040a1e-ae6c-42dd-8e11-2330e0b9bbc8</code></p>
-<p>(pass that as <code>url</code> so the link stays stable; if the Artifact tool is
-   unavailable in this session, the file update alone is fine — the next
-   session republishes). Finally, check the events of this interval against
-   <code>docs/automation/notifications.md</code>; send a push only if that policy's
-   categories and 2-per-7-days ledger both allow it, and update the ledger
-   either way. Dashboard staleness alone does not justify a commit — fold
-   the refresh into a commit the other steps already earned, or skip it this
-   interval.</p>
-<ol>
-<li>Commit everything as <code>docs(plan): daily review YYYY-MM-DD</code>. If nothing
-   needs changing, <strong>commit nothing</strong> — §5.2 explicitly prohibits audit-note
-   commits, and that rule exists because of a 35-commit pile of them.</li>
-</ol>
-<h2 id="rubric-what-a-queueable-item-states">Rubric: what a queueable item states<a class="headerlink" href="#rubric-what-a-queueable-item-states" title="Permanent link">&para;</a></h2>
-<p>This is the standard the strongest items have already met — <code>PORT-1</code> step 1
-named its closed form, its meshed-vs-nominal current correction, and the two
-traps that had each cost a run, which is why it returned a decisive negative
-inside one slot instead of a confused half-result. Below that bar, the
-implementer spends its hour rescoping instead of measuring. Every item added in
-step 5 or listed in step 6 states all six:</p>
-<ol>
-<li><strong>The anchor</strong> — the specific closed form, conservation/reciprocity
-   identity, or convergence rate the item will assert against, named with the
-   symbol or the function that computes it (<code>utils/analytical.py</code>, a paper's
-   kernel). "Check that it works" is not an anchor, and an item without one
-   cannot close a chunk under §4.</li>
-<li><strong>The negative control</strong> — what a blind or broken solver returns on the same
-   fixture, and the separation to assert. Compute the <em>ceiling</em> before naming a
-   factor: <code>POST-3</code> step 2's blind imbalance saturates just under 100%, so
-   1/0.1185 = 8.4× is arithmetically the most that fixture can show and a 10×
-   bar would have been unreachable, not merely unmet.</li>
-<li><strong>Tier, ranks, and expected wall clock</strong> — smoke 30 s / standard 180 s /
-   heavy 1200 s, the rank count, and a cost estimate taken from a prior
-   measurement where one exists (a probe's solve time, a comparable fixture).
-   An item nobody has costed is an item that overruns.</li>
-<li><strong>The traps already paid for</strong> — name the failures this project has already
-   bought, so the run does not buy them twice: <code>ufl.max_value</code> does not compile
-   in the complex build; a killed run leaves a stale FFCx lock that fails the
-   next until <code>~/.cache/fenics</code> is cleared; <code>cell_tags.values</code> and
-   <code>assemble_scalar</code> are rank-local; pytest captures prints without <code>-s</code>;
-   <code>-k a or b</code> splits into stray argv inside an already-quoted container
-   command. Add to this list as runs discover more.</li>
-<li><strong>The scope boundary</strong> — what the item does <em>not</em> close, stated so the
-   implementer holds the chunk at 🟡 rather than over-claiming. <code>POST-3</code> step 1
-   correctly stayed 🟡 because a scalar-σ identity does not gate the coil+
-   phantom case, which is where it would earn its keep.</li>
-<li><strong>What a negative result means</strong> — the disposition if the measurement comes
-   back wrong or zero. The answer is always <em>report the measurement and stop</em>,
-   never fabricate a gate around it or loosen a bound to swallow it; the item
-   should say which artifact captures it (a §7 annotation, a known-issues
-   entry, an <code>attempt/*</code> branch).</li>
-</ol>
-<p>Prefer items where a negative result is still informative — those convert a
-failed hour into a finding. <code>PORT-1</code> step 1 measured exactly-zero mutual
-coupling and thereby found the unfragmented mesh that had been quietly
-corrupting three other fixtures.</p>
-<h2 id="constraints">Constraints<a class="headerlink" href="#constraints" title="Permanent link">&para;</a></h2>
+<h1 id="fem-em-solver-status">FEM-EM Solver — status<a class="headerlink" href="#fem-em-solver-status" title="Permanent link">&para;</a></h1>
+<p><strong>Updated:</strong> 2026-08-05 (interactive setup — subsequent updates come from the
+scheduled daily review). Source of truth is <code>PROJECT_PLAN.md</code>; this page is a
+read-only digest for the human operator.</p>
+<h2 id="waiting-on-you">Waiting on you<a class="headerlink" href="#waiting-on-you" title="Permanent link">&para;</a></h2>
+<p><em>Nothing pending.</em> No Ansys benchmark cases are commissioned yet
+(<code>examples/ansys_benchmarks/</code> holds only its README), and automation is
+healthy. When something lands here, it is the thing to do next.</p>
+<h2 id="honest-current-state-digest-of-2">Honest current state (digest of §2)<a class="headerlink" href="#honest-current-state-digest-of-2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>State</th>
+<th>Gate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Magnetostatics</td>
+<td>✅ validated</td>
+<td>closed forms</td>
+</tr>
+<tr>
+<td>Time-harmonic curl-curl</td>
+<td>✅ validated</td>
+<td>lossy plane wave, &lt; 0.06% (TH-1/TH-6)</td>
+</tr>
+<tr>
+<td>Coil loading</td>
+<td>⚠️ eddy-current regime only</td>
+<td>Dodd–Deeds ΔR 1.58% @ 10 MHz (MAT-6); Larmor case is extrapolation</td>
+</tr>
+<tr>
+<td>SAR</td>
+<td>⚠️ imposed uniform field only</td>
+<td>lossy sphere 3.5% (MAT-4 step 1); never gated on a coil</td>
+</tr>
+<tr>
+<td>S-parameters</td>
+<td>🧪 heuristic</td>
+<td>one real S-matrix, two-loop air fixture in a test (PORT-1)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="recent-activity-last-24-h">Recent activity (last ~24 h)<a class="headerlink" href="#recent-activity-last-24-h" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Never loosen a test bound or a done-when to make history look better.</li>
-<li>known-issues.md discipline applies: failures observed but not fixed get an
-  entry; entries leave only with the commit that fixes them.</li>
-<li>Your session transcript is not durable. Anything worth keeping goes into
-  the repo in this session's commit.</li>
+<li><strong>PORT-1 step 3b-iv landed</strong> — port facet tags green at <code>-n 2</code> in 20 s;
+  the hang was a rank-asymmetric <code>create_entity_permutations()</code>; known-issues
+  9 retired. Item 5's dependency is satisfied.</li>
+<li><strong>POST-1 step 3 landed</strong> — drop-set semantics on the solved TH-8 sphere;
+  green at <code>-n 2</code> (4.42 s), bit-identical at <code>-n 4</code>; layer separates in
+  spread (1.334×) but not in mean.</li>
+<li><strong>POST-3 step 5 landed</strong> — piecewise μᵣ through both legs of the Poynting
+  balance.</li>
 </ul>
+<h2 id="automation-health">Automation health<a class="headerlink" href="#automation-health" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Last daily review: 2026-08-05 10:30 (next: 18:00 / 03:00 / 10:30 grid).</li>
+<li>Parked branches: <code>attempt/PORT-1-step3biii-…</code> (kept for item 5's test
+  file), <code>attempt/PORT-1-step3biv-…</code> (superseded once 3b-iv landed — next
+  review disposes). No <code>recovered/*</code> branches.</li>
+<li>Open known-issues entries: see <code>docs/testing/known-issues.md</code>.</li>
+<li>Origin push is manual: local <code>main</code> is ahead of <code>origin/main</code> until the
+  operator pushes.</li>
+</ul>
+<h2 id="on-deck-9-top-of-queue">On deck (§9, top of queue)<a class="headerlink" href="#on-deck-9-top-of-queue" title="Permanent link">&para;</a></h2>
+<ol>
+<li>~~PORT-1 step 3b-iv (ghost cells)~~ — <strong>done 2026-08-05</strong></li>
+<li>~~POST-1 step 3 (drop-set semantics)~~ — <strong>done 2026-08-05</strong></li>
+<li>–5. remaining §9 items — see PROJECT_PLAN.md §9 (item 5, the port gap
+   voltage/impedance test, is now unblocked by item 1).</li>
+</ol>
+<hr />
+<p><em>Maintained by <code>docs/automation/daily-review.md</code> step 8. Notification policy
+and ledger: <code>docs/automation/notifications.md</code>.</em></p>
 
 
 

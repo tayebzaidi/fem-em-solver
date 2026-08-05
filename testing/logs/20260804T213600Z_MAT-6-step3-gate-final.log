@@ -1,0 +1,297 @@
+# Test Run
+- Chunk: MAT-6-step3-gate-final
+- Commit: 436199c9930d7923b68dd5e72de1f114e5544184
+- Time (UTC): 2026-08-04 21:36:00
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_dodd_deeds_projected_drive.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  4 16:35 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_dodd_deeds_projected_drive.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 8 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 8 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build 
+[TH-1 step 0] PETSC_ARCH='linux-gnu-complex128-32' ScalarType=complex128 dolfinx=/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/__init__.py version=0.7.2
+PASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form 
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSEDPASSED
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not [TH-1 step 0] inner=(11.00000000000001+1.9999999999999993j) dot=(-5.000000000000001+10.000000000000002j)
+PASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly [TH-1 step 0] ||M||_F=1.041233e+00 ||M_c - eps_c*M||_F=4.449e-16
+PASSEDPASSED
+tests/validation/test_dodd_deeds_projected_drive.py::test_both_solves_are_driven_by_the_same_projected_current 
+tests/validation/test_dodd_deeds_projected_drive.py::test_both_solves_are_driven_by_the_same_projected_current Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 50%] Meshing curve 11 (Line)
+Info    : [ 50%] Meshing curve 12 (Line)
+Info    : [ 60%] Meshing curve 13 (Line)
+Info    : [ 60%] Meshing curve 14 (Line)
+Info    : [ 70%] Meshing curve 15 (Line)
+Info    : [ 70%] Meshing curve 16 (Line)
+Info    : [ 80%] Meshing curve 17 (Line)
+Info    : [ 80%] Meshing curve 18 (Line)
+Info    : [ 90%] Meshing curve 19 (Line)
+Info    : [ 90%] Meshing curve 20 (Line)
+Info    : [100%] Meshing curve 21 (Line)
+Info    : [100%] Meshing curve 22 (Line)
+Info    : Done meshing 1D (Wall 0.0735977s, CPU 0.073598s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.170679s, CPU 0.166642s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 3 volumes with 1 connected component
+Info    : Tetrahedrizing 3691 nodes...
+Info    : Done tetrahedrizing 3699 nodes (Wall 0.0618019s, CPU 0.054078s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.121951s, CPU 0.102145s)
+Info    : Found volume 4
+Info    : Found volume 3
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 34.6011 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 3.35428 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 2.60678 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 2.28255 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 2.07757 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 1.93491 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 1.82461 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 1.75247 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 1.69319 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 1.59774 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 1.54401 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 1.49993 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 1.45584 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 1.4202 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 1.38557 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 1.35341 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 1.3255 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 1.29944 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 1.27492 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 1.25625 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 1.25377 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 1.2161 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 1.19857 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 1.18152 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 1.16404 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 1.14928 (nodes removed 0 0)
+Info    : It. 13000 - 13000 nodes created - worst tet radius 1.13494 (nodes removed 0 0)
+Info    : It. 13500 - 13500 nodes created - worst tet radius 1.12204 (nodes removed 0 0)
+Info    : It. 14000 - 14000 nodes created - worst tet radius 1.1091 (nodes removed 0 0)
+Info    : It. 14500 - 14500 nodes created - worst tet radius 1.09601 (nodes removed 0 0)
+Info    : It. 15000 - 15000 nodes created - worst tet radius 1.08481 (nodes removed 0 0)
+Info    : It. 15500 - 15500 nodes created - worst tet radius 1.07217 (nodes removed 0 0)
+Info    : It. 16000 - 16000 nodes created - worst tet radius 1.06141 (nodes removed 0 0)
+Info    : It. 16500 - 16500 nodes created - worst tet radius 1.05117 (nodes removed 0 0)
+Info    : It. 17000 - 17000 nodes created - worst tet radius 1.04037 (nodes removed 0 0)
+Info    : It. 17500 - 17500 nodes created - worst tet radius 1.03018 (nodes removed 0 0)
+Info    : It. 18000 - 18000 nodes created - worst tet radius 1.02067 (nodes removed 0 0)
+Info    : It. 18500 - 18500 nodes created - worst tet radius 1.01162 (nodes removed 0 0)
+Info    : It. 19000 - 19000 nodes created - worst tet radius 1.00359 (nodes removed 0 0)
+Info    : 3D refinement terminated (22892 nodes total):
+Info    :  - 2 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 141062 tetrahedra created in 1.64901 sec. (85543 tets/s)
+Info    : Done meshing 3D (Wall 1.99231s, CPU 1.97224s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 4.53849e-06) with worst = 0.115162 / average = 0.811785:
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :        10 elements
+Info    : 0.20 < quality < 0.30 :        22 elements
+Info    : 0.30 < quality < 0.40 :        21 elements
+Info    : 0.40 < quality < 0.50 :        49 elements
+Info    : 0.50 < quality < 0.60 :        62 elements
+Info    : 0.60 < quality < 0.70 :       230 elements
+Info    : 0.70 < quality < 0.80 :       735 elements
+Info    : 0.80 < quality < 0.90 :      1322 elements
+Info    : 0.90 < quality < 1.00 :       725 elements
+Info    : 32 edge swaps, 0 node relocations (volume = 4.53849e-06): worst = 0.301137 / average = 0.818744 (Wall 0.0010197s, CPU 0.00102s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        19 elements
+Info    : 0.40 < quality < 0.50 :        48 elements
+Info    : 0.50 < quality < 0.60 :        59 elements
+Info    : 0.60 < quality < 0.70 :       230 elements
+Info    : 0.70 < quality < 0.80 :       734 elements
+Info    : 0.80 < quality < 0.90 :      1328 elements
+Info    : 0.90 < quality < 1.00 :       728 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 0.0135) with worst = 0.00549795 / average = 0.770819:
+Info    : 0.00 < quality < 0.10 :        86 elements
+Info    : 0.10 < quality < 0.20 :       281 elements
+Info    : 0.20 < quality < 0.30 :       495 elements
+Info    : 0.30 < quality < 0.40 :       835 elements
+Info    : 0.40 < quality < 0.50 :      1305 elements
+Info    : 0.50 < quality < 0.60 :      2302 elements
+Info    : 0.60 < quality < 0.70 :      4771 elements
+Info    : 0.70 < quality < 0.80 :      9919 elements
+Info    : 0.80 < quality < 0.90 :     14618 elements
+Info    : 0.90 < quality < 1.00 :      7784 elements
+Info    : 850 edge swaps, 25 node relocations (volume = 0.0135): worst = 0.114719 / average = 0.783487 (Wall 0.0270232s, CPU 0.027022s)
+Info    : 856 edge swaps, 25 node relocations (volume = 0.0135): worst = 0.300335 / average = 0.783588 (Wall 0.0328648s, CPU 0.032832s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       805 elements
+Info    : 0.40 < quality < 0.50 :      1250 elements
+Info    : 0.50 < quality < 0.60 :      2243 elements
+Info    : 0.60 < quality < 0.70 :      4746 elements
+Info    : 0.70 < quality < 0.80 :     10130 elements
+Info    : 0.80 < quality < 0.90 :     14708 elements
+Info    : 0.90 < quality < 1.00 :      7737 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 0.0134955) with worst = 0.0121491 / average = 0.778797:
+Info    : 0.00 < quality < 0.10 :       183 elements
+Info    : 0.10 < quality < 0.20 :       566 elements
+Info    : 0.20 < quality < 0.30 :      1073 elements
+Info    : 0.30 < quality < 0.40 :      1728 elements
+Info    : 0.40 < quality < 0.50 :      2645 elements
+Info    : 0.50 < quality < 0.60 :      4480 elements
+Info    : 0.60 < quality < 0.70 :      9605 elements
+Info    : 0.70 < quality < 0.80 :     22170 elements
+Info    : 0.80 < quality < 0.90 :     35176 elements
+Info    : 0.90 < quality < 1.00 :     17862 elements
+Info    : 1805 edge swaps, 59 node relocations (volume = 0.0134955): worst = 0.209449 / average = 0.790668 (Wall 0.0678126s, CPU 0.067813s)
+Info    : 1819 edge swaps, 59 node relocations (volume = 0.0134955): worst = 0.300242 / average = 0.790772 (Wall 0.0841177s, CPU 0.084113s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :      1694 elements
+Info    : 0.40 < quality < 0.50 :      2573 elements
+Info    : 0.50 < quality < 0.60 :      4265 elements
+Info    : 0.60 < quality < 0.70 :      9601 elements
+Info    : 0.70 < quality < 0.80 :     22533 elements
+Info    : 0.80 < quality < 0.90 :     35444 elements
+Info    : 0.90 < quality < 1.00 :     17742 elements
+Info    : Done optimizing mesh (Wall 0.366064s, CPU 0.346138s)
+Info    : 22892 nodes 146406 elements
+
+[MAT-6 step 3] mesh 138619 cells in 9.1 s at W = 0.15 m; solves (incl. CG1 Poisson): loaded 27.9 s, free 25.7 s
+[MAT-6 step 3] I (unprojected, meshed) = 0.919690 A, I' (projected) = 0.919666 A, ratio 0.999974
+[MAT-6 step 3] drive mismatch ||J'_loaded - J'_free||^2/||J'||^2 = 0.000e+00
+[MAT-6 step 3] FEM   dZ = +3.2770406e-01 + j(-5.6657895e-01) Ohm
+[MAT-6 step 3] exact dZ = +3.2259615e-01 + j(-6.1586749e-01) Ohm
+[MAT-6 step 3] dR rel. error 1.5834%, dX ratio 0.9200
+
+  ||J'_loaded - J'_free||^2 / ||J'||^2 = 0.000e+00
+PASSED
+tests/validation/test_dodd_deeds_projected_drive.py::test_projection_barely_moves_the_loop_current 
+  I' / I = 0.919666 / 0.919690 = 0.999974
+PASSED
+  ||J'_loaded - J'_free||^2 / ||J'||^2 = 0.000e+00
+PASSED
+tests/validation/test_dodd_deeds_projected_drive.py::test_projected_resistance_change_matches_dodd_deeds 
+tests/validation/test_dodd_deeds_projected_drive.py::test_projection_barely_moves_the_loop_current 
+  ΔR: FEM 3.2770406e-01 Ω vs exact 3.2259615e-01 Ω → 1.5834%
+PASSED
+  I' / I = 0.919666 / 0.919690 = 0.999974
+PASSED
+tests/validation/test_dodd_deeds_projected_drive.py::test_projected_reactance_change_has_the_right_sign_and_magnitude 
+tests/validation/test_dodd_deeds_projected_drive.py::test_projected_resistance_change_matches_dodd_deeds 
+  ΔX: FEM -5.6657895e-01 Ω vs exact -6.1586749e-01 Ω → ratio 0.9200
+PASSED
+  ΔR: FEM 3.2770406e-01 Ω vs exact 3.2259615e-01 Ω → 1.5834%
+PASSED
+tests/validation/test_dodd_deeds_projected_drive.py::test_projected_reactance_change_has_the_right_sign_and_magnitude 
+  ΔX: FEM -5.6657895e-01 Ω vs exact -6.1586749e-01 Ω → ratio 0.9200
+PASSED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================== 8 passed, 8 warnings in 63.99s (0:01:03) ===================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================== 8 passed, 8 warnings in 63.99s (0:01:03) ===================
+
+## Exit
+- Status: 0
+- Elapsed (s): 65

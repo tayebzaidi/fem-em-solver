@@ -21,7 +21,7 @@
     
     
       
-        <title>Daily review protocol (Fable 5, scheduled) - FEM Electromagnetics Solver</title>
+        <title>Weekly planning review protocol (Fable 5, scheduled) - FEM Electromagnetics Solver</title>
       
     
     
@@ -62,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#daily-review-protocol-fable-5-scheduled" class="md-skip">
+        <a href="#weekly-planning-review-protocol-fable-5-scheduled" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +98,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Daily review protocol (Fable 5, scheduled)
+              Weekly planning review protocol (Fable 5, scheduled)
             
           </span>
         </div>
@@ -495,10 +495,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#rubric-what-a-queueable-item-states" class="md-nav__link">
+  <a href="#realism-rules-the-reason-this-review-exists" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rubric: what a queueable item states
+        Realism rules (the reason this review exists)
       
     </span>
   </a>
@@ -536,170 +536,109 @@
   
 
 
-<h1 id="daily-review-protocol-fable-5-scheduled">Daily review protocol (Fable 5, scheduled)<a class="headerlink" href="#daily-review-protocol-fable-5-scheduled" title="Permanent link">&para;</a></h1>
-<p>Run by <code>scripts/automation/daily-review.sh</code> via cron <strong>three times daily</strong>
-(03:00, 10:30, 18:00 local), each followed by four implementer runs on a shared
-90-minute grid. "Daily" is historical; read it as "each review interval". One
-session, documentation work only — <strong>no solves, no meshing</strong>; reading harness
-logs is fine. You are maintaining the plan, not executing it.</p>
-<p><strong>Subagents are available to you, and web tools are not.</strong> Because this session
-never solves or meshes, a subagent costs tokens rather than cores and does not
-touch the 12-core compute budget. Use them for the mechanical, parallel, read-
-heavy work — one auditor per newly-✅ chunk in step 3, an <code>Explore</code> sweep when
-step 5 asks whether the backlog still reaches §10 — and keep your own context
-for the judgement calls: what a negative result means, and what to queue next.
-A subagent's report is evidence, not a verdict; if one says a chunk passes §4,
-the log it cites is what you cite back in the commit. Do not delegate steps 2,
-6, 7, or 8 — disposition, queue order, the dashboard/notification call, and
-the commit are yours.</p>
+<h1 id="weekly-planning-review-protocol-fable-5-scheduled">Weekly planning review protocol (Fable 5, scheduled)<a class="headerlink" href="#weekly-planning-review-protocol-fable-5-scheduled" title="Permanent link">&para;</a></h1>
+<p>Run by <code>scripts/automation/weekly-review.sh</code> via cron <strong>weekly</strong> (Sunday
+01:30 local, in the buffer slot before that day's 03:00 daily review; the
+shared flock prevents overlap). One session, documentation work only — <strong>no
+solves, no meshing</strong>; reading harness logs is fine.</p>
+<p>You are the project's <strong>long-horizon planner</strong>. The division of labour is
+strict and two-way:</p>
+<ul>
+<li><strong>You own</strong> §1 fidelity, the §6 phase map, §10's long-horizon roadmap
+  (phases, subgoals, dated assessments), examples/ health policy, and Ansys
+  benchmark commissioning and adjudication (§5.4).</li>
+<li><strong>The daily review owns</strong> §7 chunk entries and the §9 On-deck queue. Do not
+  edit §9. Where a subgoal needs implementer work, express it as a §7 chunk
+  (stable ID, §4-compliant done-when) and let the daily review queue it.</li>
+</ul>
+<p>Subagents are available and web tools are not — same economics as the daily
+review: this session never solves, so subagents cost tokens, not cores. Use
+them for the read-heavy sweeps (pace measurement, examples audit); keep the
+judgement calls — what to kill, what to rescope, what a comparison result
+means — for yourself.</p>
 <h2 id="steps">Steps<a class="headerlink" href="#steps" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Establish what happened since the last review:</li>
-<li><code>git log</code> since the previous <code>docs(plan): daily review</code> commit (or 24 h
-     if none exists)</li>
-<li>new rows in <code>docs/testing/test-results.md</code> and logs in
-     <code>docs/testing/logs/</code></li>
-<li>new entries in <code>docs/testing/attempts.md</code></li>
-<li><code>git branch --list 'attempt/*'</code> for parked incomplete work</li>
 <li>
-<p><code>git status --porcelain -uno</code> — dirty tracked files at review time mean
-     every implementer run since they appeared has been tripping preflight</p>
+<p><strong>Establish the week.</strong> <code>git log</code> since the last <code>docs(plan): weekly
+   review</code> commit (or 7 days if none): chunks/steps closed vs opened, the
+   daily-review commits, growth in <code>docs/testing/test-results.md</code>, attempts
+   parked, known-issues opened/retired.</p>
 </li>
 <li>
-<p><strong>Clear any stalled tree, and dispose of <code>recovered/*</code> branches.</strong> A dirty
-   tracked tree older than one implementer cycle (90 min) is an outage, not a
-   curiosity, and this review is the scheduled actor responsible for ending
-   it. Read the diff and the attempts.md anomaly entries about it, then
-   resolve it now: commit the changes (accurate message, its own commit) if
-   they describe reality, or revert them if they do not, and record which
-   you did and why in the review commit. Documentation-only diffs that a
-   prior run journaled as an anomaly should normally have been landed by the
-   next implementer run (implementer-run.md step 1 exception); if one is
-   still sitting here, also note why that didn't happen. Never leave the
-   tree dirty at the end of the review.</p>
-</li>
-</ol>
-<p><code>git branch --list 'recovered/*'</code> lists trees a <em>second</em> implementer
-   encounter parked rather than stopped for (implementer-run.md step 1). Each
-   one is a change nobody has adjudicated: read it, then land it, fold it into
-   a §7 entry, or delete the branch — and say which in the review commit. An
-   accumulating <code>recovered/*</code> list means the tree keeps going dirty from a
-   source nobody has found; name that in the commit rather than clearing it
-   silently.</p>
-<ol>
-<li>
-<p><strong>Audit every chunk whose status changed to ✅ since the last review</strong>
-   against PROJECT_PLAN.md §4: does a harness log exist, was the verification
-   executed by the agent itself, is at least one assertion quantitative
-   (closed form / convergence rate / conservation, reciprocity, or symmetry
-   identity), is elapsed time recorded? Demote anything non-compliant to 🧪
-   with a dated note. Do not re-run anything.</p>
+<p><strong>Measure pace, brutally.</strong> Count §4-closed steps this week and attribute
+   each to a §10 phase. Extrapolate the current phase's completion from the
+   measured rate — write the number down even when it is embarrassing, with
+   the arithmetic. No date may appear in §10 without a pace measurement
+   behind it. If the extrapolation says a phase goal is more than ~a quarter
+   away at current pace, that is a scoping problem to fix now (cut the goal,
+   not the honesty).</p>
 </li>
 <li>
-<p>For each incomplete attempt (attempts.md entries + <code>attempt/*</code> branches):
-   diagnose from the logs and the parked diff; rescope the chunk's §7 entry —
-   smaller case, sharper implementation plan, or split into two chunks — and
-   record the diagnosis in the entry. Delete an attempt branch only when its
-   useful content is fully captured in the plan.</p>
+<p><strong>Audit the roadmap against the mission.</strong> Is §10's phase/subgoal
+   structure still the shortest path to §1 (AED-parity for the MRI-safety
+   workflow: construct → tune at 64/128 MHz → drive with saline phantom ±
+   implant → safety quantities; bioheat long-term)? Rescope or kill any
+   subgoal that has not moved in a month. Add subgoals only where a phase
+   lacks a next step concrete enough for the daily review to break down.
+   Keep the §6 phase-map states current.</p>
 </li>
 <li>
-<p>Assess against §10 success criteria: does the existing backlog still lead
-   to the mission? If a gap exists, add new chunk entries (stable IDs,
-   §4-compliant done-whens, implementation plans meeting the rubric below).
-   If no gap exists, do not invent work. <strong>Scope boundary:</strong> the §6 phase map
-   and §10's long-horizon roadmap (phases, subgoals, dated assessments)
-   belong to the weekly planning review (docs/automation/weekly-review.md) —
-   add chunks <em>within</em> the current phase's subgoals; do not restructure
-   phases or edit the roadmap here.</p>
+<p><strong>Examples health.</strong> <code>./run_examples.sh --list</code>; for each example, find
+   its most recent verified run in <code>docs/testing/logs/</code> (or note there is
+   none) and whether its XDMF outputs still reflect current capability.
+   You may not solve — a stale or broken example becomes a §7 chunk with the
+   staleness stated. §5.4's bar: at least one clean runnable example per
+   active phase, XDMF that opens in ParaView.</p>
 </li>
 <li>
-<p>Refresh <strong>"On deck"</strong> in §9: top it up to <strong>at least 5</strong> items not done or
-   blocked — the 4 runs before the next review, plus one spare — ordered, each
-   sized for one implementer run (≤ 1 h wall clock, ≤ 20 min per compute
-   command, ≤ 12 ranks). An item that has failed twice must be rescoped before it may be
-   listed again. If fewer than 5 ready items exist, list what exists and say
-   so — step 5 still forbids inventing work. Each listed item meets the rubric
-   below; an item that cannot yet state its anchor is not ready to queue, and
-   writing that anchor is itself the better queue item.</p>
+<p><strong>Ansys benchmarks (§5.4), both directions.</strong></p>
+</li>
+<li><em>Commission:</em> should a new <code>examples/ansys_benchmarks/&lt;case&gt;/</code> be
+     opened? Yes only when a phase milestone has landed on <strong>gated</strong> physics
+     since the last case. If yes: write the <code>SPEC.md</code> skeleton (geometry,
+     materials, BCs, ports, frequencies, quantities to export — no judgement
+     calls left to the operator) and a §7 chunk to implement the runnable
+     half. Keep the case small enough that one AED session replicates it.
+     A commissioned case that is ready for the operator to replicate is a
+     notification-worthy event — follow <code>docs/automation/notifications.md</code>
+     (categories, 2-per-7-days ledger) and put it at the top of the
+     dashboard's Waiting-on-you list either way.</li>
+<li>
+<p><em>Adjudicate:</em> if any <code>COMPARISON.md</code> gained AED numbers from the human
+     operator since last week, adjudicate them now — agreements promote into
+     §7 gates with the AED value as the reference; disagreements open a
+     known-issues entry and a diagnosis chunk. A disagreement is a finding,
+     never something to explain away.</p>
+</li>
+<li>
+<p><strong>Commit</strong> as <code>docs(plan): weekly review YYYY-MM-DD</code>. If nothing needs
+   changing, commit nothing — §5.2's audit-note prohibition applies here
+   too.</p>
 </li>
 </ol>
-<p><strong>Prefer independent items over a dependency chain.</strong> Four runs will take
-   items 1–4 in order without waiting for each other's results, so an item
-   that only works if the item above it landed will fail for reasons that are
-   not about that item. Where the critical path is genuinely serial, say so
-   explicitly in the item ("depends on item 1 landing; if it did not, skip to
-   item 3") rather than leaving the run to discover it.</p>
-<ol>
-<li><strong>Refresh the status dashboard and decide on notifications.</strong> Rewrite
-   <code>docs/status/dashboard.md</code> from what steps 1–6 established — Waiting-on-you
-   first, then the §2 digest (only when §2 changed), recent activity,
-   automation health, on-deck summary. Keep it a digest: no content that
-   exists only there. Then republish it with the Artifact tool to the
-   recorded URL:</li>
-</ol>
-<p><code>https://claude.ai/code/artifact/d5040a1e-ae6c-42dd-8e11-2330e0b9bbc8</code></p>
-<p>(pass that as <code>url</code> so the link stays stable; if the Artifact tool is
-   unavailable in this session, the file update alone is fine — the next
-   session republishes). Finally, check the events of this interval against
-   <code>docs/automation/notifications.md</code>; send a push only if that policy's
-   categories and 2-per-7-days ledger both allow it, and update the ledger
-   either way. Dashboard staleness alone does not justify a commit — fold
-   the refresh into a commit the other steps already earned, or skip it this
-   interval.</p>
-<ol>
-<li>Commit everything as <code>docs(plan): daily review YYYY-MM-DD</code>. If nothing
-   needs changing, <strong>commit nothing</strong> — §5.2 explicitly prohibits audit-note
-   commits, and that rule exists because of a 35-commit pile of them.</li>
-</ol>
-<h2 id="rubric-what-a-queueable-item-states">Rubric: what a queueable item states<a class="headerlink" href="#rubric-what-a-queueable-item-states" title="Permanent link">&para;</a></h2>
-<p>This is the standard the strongest items have already met — <code>PORT-1</code> step 1
-named its closed form, its meshed-vs-nominal current correction, and the two
-traps that had each cost a run, which is why it returned a decisive negative
-inside one slot instead of a confused half-result. Below that bar, the
-implementer spends its hour rescoping instead of measuring. Every item added in
-step 5 or listed in step 6 states all six:</p>
-<ol>
-<li><strong>The anchor</strong> — the specific closed form, conservation/reciprocity
-   identity, or convergence rate the item will assert against, named with the
-   symbol or the function that computes it (<code>utils/analytical.py</code>, a paper's
-   kernel). "Check that it works" is not an anchor, and an item without one
-   cannot close a chunk under §4.</li>
-<li><strong>The negative control</strong> — what a blind or broken solver returns on the same
-   fixture, and the separation to assert. Compute the <em>ceiling</em> before naming a
-   factor: <code>POST-3</code> step 2's blind imbalance saturates just under 100%, so
-   1/0.1185 = 8.4× is arithmetically the most that fixture can show and a 10×
-   bar would have been unreachable, not merely unmet.</li>
-<li><strong>Tier, ranks, and expected wall clock</strong> — smoke 30 s / standard 180 s /
-   heavy 1200 s, the rank count, and a cost estimate taken from a prior
-   measurement where one exists (a probe's solve time, a comparable fixture).
-   An item nobody has costed is an item that overruns.</li>
-<li><strong>The traps already paid for</strong> — name the failures this project has already
-   bought, so the run does not buy them twice: <code>ufl.max_value</code> does not compile
-   in the complex build; a killed run leaves a stale FFCx lock that fails the
-   next until <code>~/.cache/fenics</code> is cleared; <code>cell_tags.values</code> and
-   <code>assemble_scalar</code> are rank-local; pytest captures prints without <code>-s</code>;
-   <code>-k a or b</code> splits into stray argv inside an already-quoted container
-   command. Add to this list as runs discover more.</li>
-<li><strong>The scope boundary</strong> — what the item does <em>not</em> close, stated so the
-   implementer holds the chunk at 🟡 rather than over-claiming. <code>POST-3</code> step 1
-   correctly stayed 🟡 because a scalar-σ identity does not gate the coil+
-   phantom case, which is where it would earn its keep.</li>
-<li><strong>What a negative result means</strong> — the disposition if the measurement comes
-   back wrong or zero. The answer is always <em>report the measurement and stop</em>,
-   never fabricate a gate around it or loosen a bound to swallow it; the item
-   should say which artifact captures it (a §7 annotation, a known-issues
-   entry, an <code>attempt/*</code> branch).</li>
-</ol>
-<p>Prefer items where a negative result is still informative — those convert a
-failed hour into a finding. <code>PORT-1</code> step 1 measured exactly-zero mutual
-coupling and thereby found the unfragmented mesh that had been quietly
-corrupting three other fixtures.</p>
+<h2 id="realism-rules-the-reason-this-review-exists">Realism rules (the reason this review exists)<a class="headerlink" href="#realism-rules-the-reason-this-review-exists" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Measured pace or no estimate.</strong> Every dated assessment cites the week's
+  closure count and the arithmetic. "On track" without a number is deleted
+  on sight.</li>
+<li><strong>Per-workflow parity claims only.</strong> "Tunes a shielded 8-rung birdcage at
+  128 MHz to within X of AED" is a claim; "HFSS parity" is not.</li>
+<li><strong>A goal names its validation target</strong> — closed form, published
+  measurement, or AED comparison — or it is not a goal yet, and writing the
+  target is the subgoal.</li>
+<li><strong>Kill stalled subgoals in writing.</strong> A subgoal rescoped or killed gets a
+  dated one-line epitaph in §10 saying why; silent deletion hides the lesson.</li>
+<li><strong>Do not let scaffolding outrun physics.</strong> The ⚠️ backlog came from
+  building features on a proxy (§2). A phase may not open implementation
+  subgoals while its predecessor's validation gate is red.</li>
+</ul>
 <h2 id="constraints">Constraints<a class="headerlink" href="#constraints" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Never loosen a test bound or a done-when to make history look better.</li>
-<li>known-issues.md discipline applies: failures observed but not fixed get an
-  entry; entries leave only with the commit that fixes them.</li>
-<li>Your session transcript is not durable. Anything worth keeping goes into
+<li>§9 On deck belongs to the daily review; never edit it here.</li>
+<li>Never loosen a test bound, a done-when, or a §10 criterion to make history
+  look better.</li>
+<li>known-issues.md discipline applies.</li>
+<li>Your session transcript is not durable; anything worth keeping goes into
   the repo in this session's commit.</li>
 </ul>
 

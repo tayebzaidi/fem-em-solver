@@ -556,6 +556,67 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#8-magnetostatic-energy-raises-typeerror-in-the-complex-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Magnetostatic energy raises TypeError in the complex build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-retired-2026-08-05-n-2-hang-on-two_torus_domains-port-facets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. ✅ RETIRED 2026-08-05 — -n 2 hang on two_torus_domain's port facets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. ✅ RETIRED 2026-08-05 — -n 2 hang on two_torus_domain&#39;s port facets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#superseded-diagnosis-2026-08-05-2230-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Superseded diagnosis, 2026-08-05 (22:30 run)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#original-entry-2026-08-05-2100-run-the-model_to_mesh-attribution-is-superseded-above" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Original entry, 2026-08-05 (21:00 run) — the model_to_mesh attribution is superseded above
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-two_torus_domains-outer-boundary-facet-group-never-reaches-the-dolfinx-facet-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. two_torus_domain's outer-boundary facet group never reaches the dolfinx facet tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#7-retired-2026-08-03-birdcage-mesh-fails-to-generate-geo-9-steps-1-2a-2b" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -829,6 +890,67 @@
     <span class="md-ellipsis">
       
         6. Rank-dependent: single-port excitation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-magnetostatic-energy-raises-typeerror-in-the-complex-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Magnetostatic energy raises TypeError in the complex build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-retired-2026-08-05-n-2-hang-on-two_torus_domains-port-facets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. ✅ RETIRED 2026-08-05 — -n 2 hang on two_torus_domain's port facets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. ✅ RETIRED 2026-08-05 — -n 2 hang on two_torus_domain&#39;s port facets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#superseded-diagnosis-2026-08-05-2230-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Superseded diagnosis, 2026-08-05 (22:30 run)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#original-entry-2026-08-05-2100-run-the-model_to_mesh-attribution-is-superseded-above" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Original entry, 2026-08-05 (21:00 run) — the model_to_mesh attribution is superseded above
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-two_torus_domains-outer-boundary-facet-group-never-reaches-the-dolfinx-facet-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. two_torus_domain's outer-boundary facet group never reaches the dolfinx facet tags
       
     </span>
   </a>
@@ -1183,6 +1305,140 @@ them by number.</p>
 <tr>
 <td><strong>Verified pre-existing at</strong></td>
 <td><code>ce92e8c</code> and earlier</td>
+</tr>
+</tbody>
+</table>
+<h3 id="8-magnetostatic-energy-raises-typeerror-in-the-complex-build">8. Magnetostatic energy raises <code>TypeError</code> in the complex build<a class="headerlink" href="#8-magnetostatic-energy-raises-typeerror-in-the-complex-build" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_explicitly_reduced_assembly</code><br><code>tests/solver/test_energy_and_point_evaluation.py::test_energy_satisfies_discrete_work_energy_identity</code></td>
+</tr>
+<tr>
+<td><strong>Symptom</strong></td>
+<td><code>TypeError: float() argument must be a string or a real number, not 'complex'</code> at <code>src/fem_em_solver/core/solvers.py:661</code> (<code>MagnetostaticSolver.compute_magnetic_energy</code>)</td>
+</tr>
+<tr>
+<td><strong>Cause</strong></td>
+<td>Not diagnosed beyond the mechanism: in the complex build every <code>fem.Function</code> is complex, so the assembled energy scalar is complex-typed (with a round-off imaginary part) and the unconditional <code>float(...)</code> refuses it. The magnetostatic energy is real by construction, so the fix is presumably <code>np.real(...)</code> before the cast — but that is <code>MAG</code> work and the value has never been checked against the real-build number, so it is recorded rather than patched in passing. Both tests pass in the real build.</td>
+</tr>
+<tr>
+<td><strong>Verified pre-existing at</strong></td>
+<td><code>aabb0a7</code> — reproduced with the <code>POST-3</code> step-5 diff stashed: <code>2 failed, 2 passed in 4.46 s</code> (<code>20260805T003945Z_POST-3-step5-preexisting.log</code>, <code>-n 2</code>, complex build). Found by that step's regression sweep, which is the first time this file was run under <code>dolfinx-complex-mode</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Owned by chunk <code>MAG-16</code> (§7, written by the 2026-08-05 10:30 review); this
+entry leaves with <code>MAG-16</code>'s fixing commit.</p>
+<h3 id="9-retired-2026-08-05-n-2-hang-on-two_torus_domains-port-facets">9. ✅ RETIRED 2026-08-05 — <code>-n 2</code> hang on <code>two_torus_domain</code>'s port facets<a class="headerlink" href="#9-retired-2026-08-05-n-2-hang-on-two_torus_domains-port-facets" title="Permanent link">&para;</a></h3>
+<p><strong>Diagnosed and fixed 2026-08-05 (12:00 run); <code>tests/mesh/test_two_torus_port_facets.py</code>
+is on <code>main</code> and green at <code>-n 2</code> in 20 s
+(<code>20260805T171107Z_PORT-1-step3biv-parallel-gate-fixed.log</code>, 2 passed).</strong></p>
+<p><strong>Cause: a lazy collective, reached on only one rank.</strong> An interior-facet
+(<code>dS</code>) assembly requires <code>Topology::create_entity_permutations()</code>, and the
+dolfinx assembler calls it <em>lazily</em> — only once a rank finds integration
+entities for the form's subdomain id. Under this fixture's partition each rank
+owns the facets of exactly one port (rank 0 → tag 201, rank 1 → tag 202), so
+assembling tag 201 put rank 0 inside that collective while rank 1, with no
+201 facets, sailed past it into the next one. Hence the two ranks' <em>different</em>
+SIGTERM stacks (<code>create_entity_permutations</code> vs mpi4py <code>MPI_Comm_dup</code>) — a
+mismatched collective, not a slow one. The fix is one hoisted line in
+<code>_facet_group_area</code>: call <code>create_entity_permutations()</code> unconditionally on
+every rank before building the form.</p>
+<p><strong>What the discriminating run was.</strong> The same computation, marker-instrumented,
+ran to completion as a <em>script</em> at <code>-n 2</code> (exit 0, 12 s,
+<code>20260805T170545Z_PORT-1-step3biv-dS-localise.log</code>) while the pytest gate hung
+— and the script's only extra call was the explicit
+<code>create_entity_permutations()</code>. Markers inside the gate then pinned the hang to
+<code>_facet_group_area</code> at tag 201
+(<code>20260805T170743Z_PORT-1-step3biv-pytest-localise.log</code>, exit 124).</p>
+<p><strong>The ghost-mode hypothesis was necessary but not sufficient.</strong> The
+<code>shared_facet</code> partitioner now plumbed into <code>two_torus_domain</code> does what the
+entry below predicted — <code>cells_ghost</code> 0 → 239/231 per rank
+(<code>20260805T170109Z_PORT-1-step3biv-ghostprobe.log</code>, 14 s) — but the gate still
+hung with it alone (<code>20260805T170140Z_…-parallel-gate.log</code>, exit 124, 181 s).
+Both changes are kept: an interior-facet integral does need both cells of every
+facet, and the fixture's docstring records the requirement.</p>
+<p><strong>Generalisation, untested elsewhere:</strong> any <code>dS</code> integral over a subdomain that
+some rank does not touch is exposed to this. Only this fixture is fixed.</p>
+<h4 id="superseded-diagnosis-2026-08-05-2230-run">Superseded diagnosis, 2026-08-05 (22:30 run)<a class="headerlink" href="#superseded-diagnosis-2026-08-05-2230-run" title="Permanent link">&para;</a></h4>
+<p><strong>Retitled and half-refuted 2026-08-05 (22:30 run).</strong> The mesh is innocent: with
+the gmsh dim-2 physical groups removed entirely and the identical facet set
+rebuilt on the dolfinx side from the distributed cell tags, <code>model_to_mesh</code>,
+<code>create_entities(fdim)</code> and <code>create_connectivity(fdim, tdim)</code> all return at
+<code>-n 2</code> on the gate's own mesh in <strong>14 s</strong> (marker probe
+<code>20260805T034007Z_PORT-1-step3biv-hang-localise-fine.log</code>, exit 0; 39578/39956
+cells per rank, 116 interface facets found per port). The <code>-n 2</code> gate still
+times out, so <em>something</em> on this path hangs — but it is downstream of the tags,
+in the <code>dS</code> facet-area assembly, and the paragraph below misattributes it.</p>
+<p><strong>Leading hypothesis for the next attempt, measured not guessed:</strong>
+<code>gmshio.model_to_mesh</code> passes no partitioner, so the mesh is built with the
+default ghost mode and the probe measures <code>cells_ghost=0</code> on <strong>both</strong> ranks. An
+interior-facet (<code>dS</code>) integral needs both cells behind every facet, which a mesh
+with no ghost cells cannot supply on a partition-boundary facet. First move:
+hand <code>model_to_mesh</code> a <code>shared_facet</code> partitioner and re-measure. Second
+observation from the same probe, relevant either way: with the current
+partition each rank sees exactly <strong>one</strong> port (rank 0 tag 201, rank 1 tag 202),
+so any per-port assertion is rank-local until it is reduced.</p>
+<p>The original entry follows, kept because its serial measurements stand.</p>
+<h4 id="original-entry-2026-08-05-2100-run-the-model_to_mesh-attribution-is-superseded-above">Original entry, 2026-08-05 (21:00 run) — the <code>model_to_mesh</code> attribution is superseded above<a class="headerlink" href="#original-entry-2026-08-05-2100-run-the-model_to_mesh-attribution-is-superseded-above" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>tests/mesh/test_two_torus_port_facets.py</code> (both tests) — <strong>not on <code>main</code></strong>; the file and the mesh change were parked <em>because</em> of this, so nothing on <code>main</code> is red. <em>(The branch this row named, <code>…021000Z</code>, was deleted by the 2026-08-05 10:30 review; the current code is on <code>attempt/PORT-1-step3biv-20260805T034500Z</code>.)</em></td>
+</tr>
+<tr>
+<td><strong>Symptom</strong></td>
+<td>With <code>PORT-1</code> step 3b-iv's dim-2 physical groups <code>201</code>/<code>202</code> (the gap↔conductor shared surfaces, which are <strong>interior</strong> facets) added to the gapped fixture, <code>mpiexec -n 2</code> hangs inside <code>gmshio.model_to_mesh</code> and is killed by <code>timeout</code> at the 180 s ceiling. Both ranks' loguru stacks are identical and spinning in <code>MPI_Testall</code> ← <code>MPI::compute_graph_edges_nbx</code> ← <code>IndexMap::index_to_dest_ranks</code> ← <code>Topology::create_entity_permutations</code> ← <code>create_entities</code>. gmsh finishes (<code>Done optimizing mesh (Wall 7.14s)</code>) ~10 s in; the remaining ~168 s is the hang. No test code runs — the hang is before <code>model_to_mesh</code> returns. Log: <code>20260805T020301Z_PORT-1-step3biv-costprobe.log</code>, exit 124.</td>
+</tr>
+<tr>
+<td><strong>Cause</strong></td>
+<td>Not diagnosed. Bounded from two sides by measurement: <code>-n 1</code> completes the identical case in 22.5 s with correct areas (<code>20260805T020843Z_PORT-1-step3biv-serial-gate.log</code>, 2 passed), and <code>-n 2</code> on the same fixture <strong>without</strong> the new facet groups is green today (<code>tests/mesh/test_two_torus_gapped.py</code>). So it is neither cost nor the gapped geometry: it is the distribution of facet tags whose facets are interior to the partitioned mesh. The <code>2xx</code> groups are the fixture's first interior dim-2 groups — the only pre-existing one is the outer boundary.</td>
+</tr>
+<tr>
+<td><strong>Verified pre-existing at</strong></td>
+<td>Not pre-existing — introduced by the parked branch, which is why it is parked. Recorded here so the next attempt starts from the stack trace instead of re-deriving it.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="10-two_torus_domains-outer-boundary-facet-group-never-reaches-the-dolfinx-facet-tags">10. <code>two_torus_domain</code>'s outer-boundary facet group never reaches the dolfinx facet tags<a class="headerlink" href="#10-two_torus_domains-outer-boundary-facet-group-never-reaches-the-dolfinx-facet-tags" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tests</strong></td>
+<td>None asserts it, which is how it survived. Measured by <code>tests/mesh/test_two_torus_port_facets.py</code>, which is on <code>main</code> as of 2026-08-05 and prints the tag set in both configurations without asserting tag <code>1</code>.</td>
+</tr>
+<tr>
+<td><strong>Symptom</strong></td>
+<td>The third return value of <code>two_torus_domain</code> carries <strong>no</strong> tag <code>1</code>. Measured 2026-08-05 at <code>-n 1</code>: the ungapped fixture's global facet-tag set is <code>[]</code> (empty), and the gapped fixture's is <code>[201, 202]</code> — the <code>outer_boundary</code> physical group added at <code>mesh.py:1038</code> is absent from both (<code>20260805T020843Z_PORT-1-step3biv-serial-gate.log</code>).</td>
+</tr>
+<tr>
+<td><strong>Cause</strong></td>
+<td>Not diagnosed. <code>two_torus_domain</code> is consumed by <code>tests/validation/test_helmholtz_v2.py</code> and <code>test_helmholtz_magnitude.py</code>, both of which pass <code>facet_tags=</code> into a solver; whether either actually depends on tag <code>1</code> being populated is <strong>unchecked</strong>. Those tests' current status is unaffected by this entry — they pass or fail today exactly as they did before it was written. Not fixed in passing: it is <code>GEO</code>/<code>MAG</code> work and changing what the fixture emits could move Helmholtz numbers.</td>
+</tr>
+<tr>
+<td><strong>Verified pre-existing at</strong></td>
+<td><code>2fba4d9</code> — the measurement is read-only and the ungapped path is untouched by the parked diff.</td>
 </tr>
 </tbody>
 </table>
