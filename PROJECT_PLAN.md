@@ -563,12 +563,88 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-7` | Mesh-tag QA diagnostic hardening | 🧪 | standard |
 | `GEO-8` | **Make `two_torus_domain` a conforming mesh** | ✅ | standard |
 | `GEO-9` | **`coil_phantom_domain` / birdcage meshes do not generate** | ✅ 2026-08-03 — step 1 (coil+phantom gated), step 2a (finalize + `bcast`: 180 s hang → 13 s), step 2b (`occ.fragment` rewrite; both identities 1.000000000000, whole `tests/mesh` green in CI). Retires known-issues 7 | standard |
+| `GEO-10` | **`two_torus_domain` never emits its `outer_boundary` facet tag** (known-issues 10) | ⬜ *(chunk written 2026-08-05, 18:00 review)* | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
 > fixture in `io/mesh.py` still uses a single global `setSize` and tight padding,
 > including coil+phantom** — expect the same boundary-mirror error that cost 20%
 > on Helmholtz, and expect graded sizing to be equally necessary.
+
+**`GEO-4` step 1 — off-centre domain sizing: diagnose and fix known-issues 5**
+*(plan written 2026-08-05, 18:00 review)*.
+> The oldest standing failure on `main`:
+> `tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent`
+> fails `assert 0.09 > 0.09` — pure geometry arithmetic in
+> `MeshGenerator.coil_phantom_domain_sizing_diagnostics`, no solve involved,
+> pre-existing since before this session's history (`794d2f1`). It has been
+> `--deselect`ed from CI since `OPS-11` and pollutes every `tests/mesh`
+> regression sweep as a standing "1 failed". The exact-equality symptom says
+> the heuristic sizes the domain to *exactly* the off-centre phantom extent
+> with zero margin — diagnose which side is wrong: either the heuristic omits
+> the clearance/padding term for the off-centre preset (fix the arithmetic),
+> or the test's strict `>` encodes an intent the heuristic never had (then
+> the *intent* must be established from the sizing docstring/call sites
+> before any code moves — per the never-loosen rule, the assertion is
+> evidence, and relaxing `>` to `>=` without that provenance is forbidden).
+> **Anchor:** the geometric identity the fix must gate — domain half-extent
+> `≥ |offset| + phantom half-extent + stated clearance`, asserted
+> quantitatively with the clearance term explicit, plus the centered preset's
+> current passing numbers reproduced unchanged (print both presets' extents).
+> **Negative control:** on record — the failing `assert 0.09 > 0.09` at
+> `794d2f1`..today (`20260803T034252Z_GEO-9-step1-cohabit.log`); after the
+> fix, a zero-clearance call must still be *detected* (the diagnostics
+> function exists to catch exactly that). **Cost:** smoke — the sizing
+> diagnostics run without meshing; the full `tests/mesh` regression at `-n 2`
+> is 72 s on record; `timeout 180`. **Traps:** known-issues 5 has been
+> miscited as "6" (commit `3ac025c`, attempts.md) — it is 5; **remove the
+> `OPS-11` `--deselect` in the fixing commit** — it is the only thing keeping
+> the test out of CI, and the entry leaves only with that commit; do not
+> touch birdcage exclusions, which are separate; `tests/mesh` at `-n 2`
+> should then be 25 passed 1 skipped — any other failure is new information,
+> not this chunk's. **Does not close:** `GEO-4` — the graded-sizing
+> generalization to other fixtures (§9 air-box item) is separate work; this
+> step retires known-issues 5 only. **Negative result:** if the intent
+> genuinely cannot be established from the code and history, journal the
+> archaeology in the known-issues entry and stop — the test stays deselected,
+> and adjudicating intent becomes an operator question on the dashboard.
+
+**`GEO-10` — `two_torus_domain` never emits its `outer_boundary` facet tag
+(known-issues 10)** *(chunk written 2026-08-05, 18:00 review)*.
+> Measured 2026-08-05: the fixture's third return value carries **no** tag
+> `1` — the ungapped global facet-tag set is `[]`, the gapped set is
+> `[201, 202]`, while `mesh.py:1038` adds an `outer_boundary` physical group
+> that never survives to the dolfinx tags
+> (`20260805T020843Z_PORT-1-step3biv-serial-gate.log`). Diagnose where the
+> group is lost — prime suspect is the `GEO-8` fragment renumbering the box
+> boundary surfaces after the dim-2 group is declared (the "fragment
+> renumbers — never trust its returned tag order" lesson, applied to
+> surfaces), in which case the fix is re-deriving the outer-surface group
+> from the fragment out-map exactly as `GEO-9` step 2b did for volumes.
+> **Anchor:** the tagged outer-boundary facet area must equal the analytic
+> box surface area `2(LW + LH + WH)` — planar facets partition the boundary
+> exactly, so this is an identity gated at `1e-9` like `GEO-9`'s volume
+> identities, allreduced, at `-n 1` and `-n 2`; plus tag-set assertions
+> `{1}` ungapped and `{1, 201, 202}` gapped. **Negative control:** on
+> record, cite — today's empty tag set is the broken-state measurement; the
+> port-facet gate's areas (`1.563786482e-04 m²`, band `(0.970, 0.980)`) must
+> reproduce digit for digit, since adding a boundary group must not move
+> interface tags. **Cost:** standard, `-n 2`; the port-facet gate is 20 s
+> and `tests/mesh` 72 s on record; `timeout 180`. **Traps:** dim-2 physical
+> groups must be declared after `synchronize` and re-derived after fragment;
+> the two Helmholtz consumers (`test_helmholtz_v2.py`,
+> `test_helmholtz_magnitude.py`) pass `facet_tags=` into a solver — run both
+> as regression and **their gated numbers must not move** (`MAG-14`'s 0.728%
+> is in CI); whether either actually depends on tag `1` is unchecked — check
+> and record it in the known-issues retirement; `create_entity_permutations`
+> before any per-tag facet assembly (the 3b-iv lazy-collective lesson);
+> pytest `-s`. **Does not close:** nothing downstream — this is fixture
+> hygiene that unblocks any future ABC/radiation boundary work on this
+> fixture; `PORT-1` does not depend on tag `1`. **Negative result:** if the
+> group is lost somewhere other than fragment renumbering and the diagnosis
+> exceeds the slot, journal the named loss point in known-issues 10 and stop
+> — do not restructure `two_torus_domain` in-slot; it feeds five validated
+> gates.
 
 **`GEO-8` — make `two_torus_domain` a conforming mesh** ✅ *(2026-08-01,
 19:30 run; full narrative archived in `docs/planning/plan-archive.md`)*
@@ -1011,26 +1087,75 @@ log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
 > and both ΔR numbers, annotate the step-3 entry, stop — an ambiguous
 > split (closer at one size, not the other) is also report-and-stop.
 
+**`MAT-6` step 5 — separate the last ~1.5% of ΔX: wire resolution at fixed
+box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
+> Step 4 left the projected-drive ΔX ratio at 0.9849 with two unseparated
+> residual terms: box truncation (still moving ~+0.06 per 0.10 m of W, so
+> not exhausted at W = 0.25) and the filamentary reference's own ~30% spread
+> over `h ± r_wire`, which no box can remove. The other knob step 2b named —
+> `h/r_wire ≥ 16` local refinement **at fixed W = 0.15** — moves only the
+> wire-discretisation term, so the two become separable: a ΔX ratio that
+> moves under wire refinement at fixed box is finite-wire error; what
+> remains after both knobs saturate is the filamentary-reference ambiguity,
+> and only then would a quantitative ΔX gate be defensible. **Anchor:**
+> Dodd–Deeds `ΔX = −6.1586749e-01 Ω` / `ΔR = +3.2259615e-01 Ω`, step 2b's
+> gates unchanged (ΔR < 5% ceiling; ΔX sign + order of magnitude; **never**
+> a ΔX band tightened in-slot — convergence of ΔX is the thing under test).
+> The reported result is the projected + pinned ΔX ratios at the refined
+> wire beside the four on record from step 4. **Negative control:** on
+> record, cite — σ-blind `ΔZ = 0`, null tagging `1.31e-08`; and step 4's
+> own W-series is the comparison baseline (any refinement effect must
+> exceed the < 0.01 pp ΔR wobble measured there before it is called real).
+> **Cost — probe before committing, the step-4 discipline:** current
+> `h/r_wire` and the refined cell count are unmeasured; run the mesh + one-
+> solve cost probe first (extend `scripts/probes/mat6_step4_probe.py`; heavy
+> `timeout 1200`, `-n 4` allowed for the probe only). If one solve exceeds
+> ~300 s at `-n 4`, report the measured cost and stop — the rescope is a
+> smaller `h/r_wire` target, never a raised timeout (§5.1). Gates at `-n 2`
+> (allreduced current + reaction integral), split by `-k` into per-drive
+> commands if four solves exceed one command's ceiling, exactly as step 4
+> did. **Traps:** `project_source=False` pins stay; separate module
+> importing the step-2b/3/4 fixtures (nothing restated); local refinement
+> means `resolution_far` stays put — refine the wire region only, or the
+> far-field cell count explodes; stale FFCx lock; `ufl.max_value`; complex
+> build + `FEM_EM_REQUIRE_COMPLEX=1`. **Does not close / reopen:** `MAT-6`
+> stays ✅ regardless; ΔX becomes gateable only in a *later* step once both
+> knobs are saturated, never in this one; saline/Larmor stays unlicensed.
+> **Negative result:** a ratio that does not move under refinement says the
+> residual is reference ambiguity + box tail — that is the finding; report
+> all ratios, annotate this entry, stop.
+
 ### POST — Post-processing & field extraction
 
 | ID | Title | Status | Tier |
 |---|---|---|---|
-| `POST-1` | Interface-aware field extraction reliability | ⚠️ | standard |
+| `POST-1` | Interface-aware field extraction reliability | 🟡 *(adjudicated 2026-08-05, 18:00 review — mean semantics decided, extremum semantics is step 4)* | standard |
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
 
 > *(Closed-step plans, execution journals and audits below are archived
 > verbatim in `docs/planning/plan-archive.md`.)*
 >
-> **`POST-1` — what the ⚠️ now stands for.** Three defects found and closed:
-> the complex→float64 cast that scored every phantom metric on `Re(E)` at
-> phase 0 (fixed by `POST-3` step 4); the ghost-cell double-count in the
-> tagged-cell aggregation (step 1); and the guardrail's rank-local fallback
-> (step 2). **What remains — and the next step to scope:** whether the
-> boundary-adjacent **drop set** is the right semantics for a *solved* field —
-> the guardrail discards 234 of 5073 tag-1 cells but **234 of 385** tag-2
-> cells on the minority-tag rank, and no analytic interface field has ever
-> been compared against what survives. The review adjudicates the symbol.
+> **`POST-1` — what the symbol stands for** *(⚠️ → 🟡, adjudicated 2026-08-05,
+> 18:00 review)*. Three defects found and closed: the complex→float64 cast
+> that scored every phantom metric on `Re(E)` at phase 0 (fixed by `POST-3`
+> step 4); the ghost-cell double-count in the tagged-cell aggregation
+> (step 1); and the guardrail's rank-local fallback (step 2). Step 3 then
+> measured the drop-set semantics on a solved field, and this review reads
+> the numbers as follows. **For means, the guardrail is adjudicated
+> harmless and stays:** (a) vs (b) is 4.253% vs 4.263% — 0.01 pp on an
+> error that is 4.25% of bulk discretisation — so no landed mean-statistic
+> claim (including `MAT-4`'s 3.5% mean SAR) is disturbed by either keeping
+> or bypassing it, and no production change is warranted on the mean's
+> account. **For extrema, the rule is adjudicated *unsafe pending step 4*:**
+> both tag extrema live in the drop layer (full range 1.334× surviving),
+> and SAR peaks are extrema — so no peak/extremum statistic may be reported
+> through `prefer_interior=True` until step 4 separates interface smearing
+> from the sphere's chordal geometry error on a planar fixture. Nothing
+> currently gates a peak through this path, which is why this is a scoping
+> decision, not a defect entry. The chunk is 🟡, not ✅: step 4 below is the
+> remaining work, and the coil+phantom application is where the chunk
+> ultimately earns its ✅.
 >
 > * **`POST-1` step 1 — ghost-cell partition invariance** ✅ *(2026-08-04,
 >   07:30 run)*. The defect was real: 578 tagged ghost cells at `-n 2`,
@@ -1100,6 +1225,48 @@ log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
 >   Two confounds are unseparated and neither is this step's to resolve: the
 >   sphere's curved boundary puts chordal geometry error in the same layer, and
 >   a smooth-interface fixture would tell them apart.
+>
+> **`POST-1` step 4 — drop-set semantics on a planar interface (plan written
+> 2026-08-05, 18:00 review; the separation step 3's two confounds require,
+> and the extremum adjudication above waits on).** Fixture: the `POST-3`
+> step-2 **two-slab** solve (σ = 0.1 | 1.4 S/m, planar interface;
+> `20260731T183453Z_POST-3-step2-gate.log`) — the one solved interface field
+> where the boundary layer carries **zero** chordal geometry error, because
+> planar facets are represented exactly. Import that fixture and its
+> piecewise closed form; do not restate either. Solve once; score `|E|`
+> sampled at cell centroids against the closed form **evaluated at those same
+> centroids** (the field decays, so a single interior value is not the
+> anchor — the pointwise closed form is), for the three sets of the slab-2
+> tag: (a) `prefer_interior=True` survivors, (b) full owned tagged set,
+> (c) drop set alone. **Anchor:** the per-centroid closed-form error of (a),
+> gated at a probe-set band inside the fixture's existing tolerance (4.49%
+> landed), plus the exact partition identity n(a) + n(c) = n(b) globally.
+> The reported result is the (c)/(a) mean-error ratio — on this geometry it
+> is the interface-smearing term *alone*, which the sphere could not give.
+> **The extremum claim, now closed-form-predictable:** the decaying field's
+> true maximum over the slab sits at the interface itself, so the closed
+> form *predicts* the surviving-set max deficit — approximately the decay
+> across the dropped layer's thickness, computable from the probe's printed
+> layer geometry before any factor is asserted. Probe first, print the
+> per-set extrema and the predicted deficit, then gate full-set max against
+> the closed-form entry-face value at a probe-set band; the surviving-vs-full
+> max comparison is printed beside its prediction, gated only if the probe
+> shows clean separation (`POST-3` step 2's ceiling rule). **Negative
+> control:** step 3's sphere numbers, on record — mean ratio 1.009 with
+> curvature confounded; if the planar (c)/(a) ratio lands at ~1.0 too, the
+> interface-smearing hypothesis is refuted outright. **Cost:** standard,
+> `-n 2`, `timeout 180`; the two-slab gate ran 66 s harness-total on record,
+> so probe + gate fit in two commands. **Traps:** complex build +
+> `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; ghosts classify but
+> never contribute samples; allreduce counts and extrema; pytest `-s`; thin
+> tagged layers and tet decomposition (step 2's hexahedra lesson) — the drop
+> layer here is whatever the classifier emits, print its cell count per
+> class; import, don't restate. **Does not close:** `POST-1` — the coil+
+> phantom application is still where the chunk earns ✅; this step decides
+> only the extremum-semantics rule. **Negative result:** no separation on
+> the planar fixture ⇒ the drop rule protects nothing measurable anywhere —
+> report all ratios, annotate this entry, and the next review decides
+> whether `prefer_interior` remains the default; report-and-stop either way.
 >
 > **`POST-1` step 3 — drop-set semantics on a solved field (plan written
 > 2026-08-04, 18:00 review; the adjudication the ⚠️ waits on).** Steps 1–2
@@ -1706,7 +1873,14 @@ log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
 > groups after `synchronize`; `create_connectivity(fdim, tdim)` before any
 > facet→cell map; facet integrals assemble rank-locally — allreduce;
 > `gap_burial` strictly positive; stale FFCx lock; pytest `-s`; complex
-> build + `FEM_EM_REQUIRE_COMPLEX=1`. **Does not close:** `PORT-1` —
+> build + `FEM_EM_REQUIRE_COMPLEX=1`; **and the 3b-iv lazy collective
+> (added 2026-08-05, 18:00 review):** any facet integral over a subdomain
+> some rank does not touch reaches `create_entity_permutations()` on only
+> the ranks that own entities — this partition gives each rank exactly one
+> port, so call `msh.topology.create_entity_permutations()` unconditionally
+> on every rank before assembling any per-port form, exactly as
+> `_facet_group_area` now does; if a `-n 2` command hangs, suspect this
+> first, not the physics. **Does not close:** `PORT-1` —
 > known-issues 3 and the touchstone threading come after; `Z₁₁` stays
 > printed, never gated, on this fixture. **Negative result:** report
 > `V/ωM` for both ports beside the shadow numbers at the same geometry,
@@ -1811,9 +1985,13 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
    10% bound, so `Z₁₂` is now gated as a *geometric* quantity, not one
    magnitude. **Step 3a is ✅ 2026-08-03** — `sparameters_from_impedance()` is
    in `ports/sparameters.py` and `PORT-5`'s sanity metrics have now scored a
-   real matrix. Two spurs remain, independent: **2d** charging that `W_e`
-   excess to the load vector, and **3b** gap-voltage birdcage ports — 3b alone
-   needs `GEO-9` step 2b.
+   real matrix. *(Updated 2026-08-05, 18:00 review: the `W_e` spur is fully
+   discharged — step 2d explained it to ratio 0.999998, step 2e removed it by
+   solenoidal projection, step 2f made the projection the production drive.)*
+   What remains is **3b** gap-voltage ports on the two-torus validation pair:
+   3b-i (gapped fixture) and 3b-iv (port facet tags, green at `-n 2`
+   2026-08-05) are landed; **3b-v**, the facet-integral port voltage on those
+   tags, is the open step and the top of the queue.
 5. **`GEO-9`** — 🟡: created 2026-08-02 from known-issues 7, **step 1 ✅
    2026-08-03**, and step 1 refuted the hypothesis it was written on.
    `coil_phantom_domain` generates fine in a fresh process; the whole of
@@ -1852,172 +2030,142 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done, the implementer falls back to the "obvious
 next entry" named below.
 
-Last reviewed 2026-08-05, 10:30 daily review. Tree clean at review start and
-end; no `recovered/*` branches. Branch disposition this review:
-`attempt/PORT-1-step3biv-20260805T021000Z` **deleted** — superseded by the
-22:30 attempt, whose whole point was removing that branch's gmsh-side
-interior physical groups; its measurements (areas, bands, the OCC
-cross-check) are journaled in attempts.md and the §7 3b-iv entry.
-`attempt/PORT-1-step3biv-20260805T034500Z` **kept**: item 1 starts from it.
-`attempt/PORT-1-step3biii-20260804T173000Z` **kept** (unchanged reason:
-item 5 reuses its `test_port_gap_voltage_impedance.py`; delete only when
-3b-v lands that file on main). The 19:30–04:30 slot outcomes (POST-3 step 5
-complete — audited §4-compliant this review against the 114 s gate log —
-and two 3b-iv incompletes, the second refuting known-issues 9's diagnosis)
-are journaled in attempts.md and the §7 entries. New chunk `MAG-16` written
-this review to own known-issues 8.
+Last reviewed 2026-08-05, 18:00 daily review. Tree clean at review start and
+end; no `recovered/*` branches. **All four slots since the 10:30 review
+completed and landed on `main`** — `PORT-1` step 3b-iv (third attempt; the
+hang was a lazily-reached `create_entity_permutations()`, known-issues 9
+retired), `POST-1` step 3, `MAT-6` step 4, and `MAG-16` (known-issues 8
+retired) — the first review interval of this automation with a 4/4 slate.
+`MAG-16`'s 🧪→✅ audited §4-compliant this review against the in-slot harness
+logs at `0ab1ee3` (10 passed complex `-n 2` 4.90 s, quantitative cross-build
+pin + imag-ratio band, pre-fix negative control captured first). `POST-1`
+adjudicated ⚠️ → 🟡 this review (mean semantics decided, extremum semantics
+scoped as step 4 — see the §7 entry). Branch disposition:
+`attempt/PORT-1-step3biv-20260805T034500Z` **deleted** — fully landed by the
+12:00 run, which said so explicitly. `attempt/PORT-1-step3biii-20260804T173000Z`
+**kept** (unchanged reason: item 1 reuses its
+`test_port_gap_voltage_impedance.py`; delete only when 3b-v lands that file
+on main). New plans this review: `POST-1` step 4, `MAT-6` step 5, `GEO-4`
+step 1 (owns known-issues 5), `GEO-10` (owns known-issues 10).
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
 `docs/planning/plan-archive.md`, not here.)*
 
-**Items 1–4 are mutually independent; item 5 depends on item 1 landing** and
-says so in its own text.
+**Items are mutually independent — no item below depends on another landing.**
+Item 4 edits the same fixture file (`io/mesh.py`, `two_torus_domain`) whose
+tags item 1 consumes; queue order already puts item 1 first, and item 4's
+regression re-gates what item 1 used, so a parked item 1 does not block
+item 4. Item 5 is the spare and the only heavy-tier item.
 
-1. ~~**`PORT-1` step 3b-iv, third attempt — ghost cells into the port-facet
-   mesh.**~~ — **done 2026-08-05 (12:00 run)**: tags on `main`, gate green at
-   `-n 2` in 20 s, `A = 1.563786482e-04 m²` per port at 0.974490841 of the
-   analytic cut, ports equal to 1.000000000000. Ghosting was necessary but not
-   sufficient; the hang was a lazily-reached `create_entity_permutations()`
-   entered on one rank only. Known-issues 9 retired. **Item 5's dependency is
-   satisfied.** Original text follows.
-   *On the critical path — item 5 consumes
-   its tags. Failed twice; this rescope replaces the original plan per
-   §9's rule, and the job has narrowed to one discriminating experiment.
-   Start from `attempt/PORT-1-step3biv-20260805T034500Z` (`e3fd31f`) —
-   tags, gate, and marker probe are done; write no new derivation. Execute
-   the §7 third-attempt plan: (1) pass a `shared_facet` cell partitioner
-   into the fixture's `model_to_mesh` call and re-run the marker probe —
-   `cells_ghost` must go nonzero on both ranks before anything else runs;
-   (2) only then the `-n 2` gate; green ⇒ land on main and retire
-   known-issues 9 in the same commit; (3) still hanging ⇒ move the marker
-   pattern into `_facet_group_area` and name which of `fem.form` /
-   `assemble_scalar` / the allreduce hangs — that name is the slot's
-   deliverable in the failure case. **Anchor** (on record from attempt 1):
-   per-port facet area in the probe-set band `(0.970, 0.980)` of the exact
-   oblique cut `1.604721580e-04 m²`, ports equal to `< 1e-12`; the `-n 2`
-   gate must reproduce the `-n 1` numbers
-   (`20260805T020843Z…serial-gate.log`, 2 passed, 22.5 s) — a
-   rank-count-dependent area is a missing reduction. **Negative control**
-   (on record, cite): ungapped fixture yields no interface tags (exact);
-   gap-box `y`-face pair ceiling `2.88e-04 m² = 1.7947×`, total
-   separation. **Cost:** standard, `-n 2`; probe 14 s and serial gate
-   22.5 s measured; `timeout 180` per command, and a second exit-124 on
-   the gate is the stop signal for route (3), not a retry. **Traps, all
-   bought this week:** `cells_ghost=0` under the default partitioner —
-   measure it changed before re-running the gate; each rank currently
-   holds exactly one port, so per-port counts/areas are rank-local until
-   allreduced and no assertion may divide by an empty rank's zero; the two
-   ranks died in *different* collectives (`create_entity_permutations` vs
-   `MPI_Comm_dup`), so code between mesh build and assembly must be
-   collective-symmetric; a killed run leaves a stale FFCx lock; pytest
-   `-s`. **Does not close:** anything — mesh-only, no field solved; the
-   voltage is item 5; `PORT-1` stays 🟡. **Negative result:** ghosting
-   measured on but the `dS` leg still hangs ⇒ the named hanging call goes
-   into known-issues 9 with the probe log, the branch stays parked,
-   annotate §7, stop — the workaround (submesh reformulation or a
-   dolfinx-version pin) is a review's call, not this slot's.*
+1. **`PORT-1` step 3b-v — the facet-integral port voltage.** The critical
+   path (§10 S-parameter criteria route through it); 3b-iv's tags landed
+   2026-08-05, so the dependency is satisfied on `main`. Execute the §7
+   step-3b-v plan; reuse `test_port_gap_voltage_impedance.py` from
+   `attempt/PORT-1-step3biii-20260804T173000Z` — do not rewrite it.
+   **Anchor:** `Im Z₁₂ = V₂/I₁` against `ωM₁₂ = 1.241755e+00 Ω` at the
+   unmoved 10% `MUTUAL_TOLERANCE`; reciprocity and open-port precondition
+   at 3b-iii's overhang-2e-4 scales (1.1509e-04, 1.42e-03). Probe first:
+   print each port's two disc integrals separately — normal orientation is
+   half the step. **Negative controls:** on record, cite — the box
+   family's sign flip and the unfragmented mesh's exact-zero `Z₁₂`; the
+   shadow average's ~0.78 deficit is the number to close or inherit, and
+   inheriting it is a finding. **Cost:** standard, `-n 2`, ~60 s per
+   configuration measured; one geometry (overhang 2e-4). **Traps:**
+   gap-wins policy; `create_connectivity` before facet→cell; facet
+   integrals allreduce; `gap_burial` strictly positive; FFCx lock; pytest
+   `-s`; complex build; **and 3b-iv's lazy collective:** call
+   `create_entity_permutations()` unconditionally on every rank before any
+   per-port facet assembly — each rank owns exactly one port here, and a
+   hang at `-n 2` is this before it is physics. **Does not close:**
+   `PORT-1` — known-issues 3 and touchstone threading come after; `Z₁₁`
+   printed, never gated. **Negative result:** report `V/ωM` beside the
+   shadow numbers, annotate §7 and known-issues 3, stop — the tolerance
+   does not move; a third estimator is a review's call.
 
-2. ~~**`POST-1` step 3 — drop-set semantics on the solved `TH-8` sphere.**~~
-   — **done 2026-08-05 (13:30 run)**: gated green at `-n 2` (4.42 s) and
-   bit-identical at `-n 4`. (a) 4.253%, (b) 4.263%, (c) 4.293% against
-   `3/(ε+2)E₀`; the drop layer is 24.92% of the tag and separates in spread
-   (1.334×) but **not** in mean (1.009×) — the plan's expected separation is
-   refuted for the mean, which is the reported result. `POST-1` stays ⚠️: the
-   review reads (a) vs (b) and decides the symbol. Original text follows.
-   *Independent; the adjudication `POST-1`'s ⚠️ waits on. Execute the §7
-   step-3 plan, written this review. **Anchor:** the `TH-8` closed form
-   `|E_in| = 3/(εᵣ+2)·E₀` (gated to 2.44%, 2026-07-31) — probe, then gate
-   the guardrail-surviving mean at a probe-set band inside `TH-8`'s
-   existing tolerance; the surviving-vs-full-set comparison is printed and
-   reported, never gated. **Negative control:** the drop set alone samples
-   the smeared discontinuity — ceiling from the probe before asserting a
-   factor. **Cost:** standard, `-n 2`; the `TH-8` gate-final ran 16.2 s
-   including the solve — two ~30 s commands, `timeout 180`. **Traps:**
-   complex build; ghosts classify but never contribute samples; allreduce
+2. **`POST-1` step 4 — drop-set semantics on a planar interface.**
+   Independent; the extremum adjudication (⚠️→🟡 this review) waits on it.
+   Execute the §7 step-4 plan, written this review, on the `POST-3` step-2
+   two-slab fixture — the interface layer with zero chordal geometry
+   error. **Anchor:** the piecewise closed form evaluated at cell
+   centroids (the field decays — pointwise, not a single value); (a)'s
+   error gated at a probe-set band inside the landed 4.49%; partition
+   identity n(a) + n(c) = n(b) exact; full-set max against the closed-form
+   entry-face value. **Negative control:** step 3's sphere ratio 1.009 on
+   record — a planar (c)/(a) ratio of ~1.0 refutes interface smearing
+   outright, and that refutation is a reportable result. **Cost:**
+   standard, `-n 2`, `timeout 180`; the two-slab gate ran 66 s on record.
+   **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` first; ghosts classify, never sample; allreduce
    counts and extrema; pytest `-s`; import the fixture, don't restate it.
-   **Does not close:** `POST-1` — the review reads the comparison and
-   decides the symbol. **Negative result:** surviving-set scoring *worse*
-   than full-set is the answer, not a defect — report all three errors,
-   annotate §7, stop.*
+   **Does not close:** `POST-1` — this decides the extremum-semantics
+   rule; the coil+phantom application earns the ✅ later. **Negative
+   result:** no separation ⇒ the drop rule protects nothing measurable —
+   report all ratios, annotate §7, stop; the default's fate is the next
+   review's call.
 
-3. ~~**`MAT-6` step 4 — adjudicate the ΔX shift on the converged box.**~~ —
-   **done 2026-08-05 (15:00 run)**: on `main`, both gates green at `-n 2`
-   (271 s / 260 s, 300 591 cells). The four ΔX ratios are 0.8123 / 0.8740
-   (pinned, W = 0.15 / 0.25) and 0.9200 / 0.9849 (projected) — the projected
-   drive is closer at both sizes and the 0.11 gap does not shrink with the box,
-   so the step-3 finding **survives**; ΔR held at 1.5713% / 1.5763%, i.e. the
-   box change moved nothing resistive. Cost probe measured first, as §7
-   required: 81.0 s per solve at `-n 4`, inside the 300 s stop rule. Original
-   text follows.
-   *Independent. Execute the §7 step-4 plan, written this review.
-   **Anchor:** Dodd–Deeds `ΔX = −6.1586749e-01 Ω` /
-   `ΔR = +3.2259615e-01 Ω` with step 2b's gates unchanged on a W = 0.25
-   fixture (ΔR < 5% ceiling; ΔX sign + order of magnitude; never a
-   tightened ΔX band in-slot); the reported result is the four ΔX numbers,
-   projected/pinned × two box sizes. **Negative control:** on record, cite
-   — σ-blind `ΔZ = 0`, null tagging `1.31e-08`. **Cost:** probe the
-   W = 0.25 mesh + one solve first (heavy `timeout 1200` for the probe
-   only, `-n 4` allowed); if one solve exceeds ~300 s, report the cost and
-   stop — rescope is `h/r_wire ≥ 16` refinement, never a raised timeout.
-   **Traps:** `project_source=False` pins stay; separate module importing
-   the fixture; stale FFCx lock; `ufl.max_value`; complex build. **Does
-   not close / reopen:** `MAT-6` stays ✅ regardless. **Negative result:**
-   report all six numbers, annotate the step-3 entry, stop — ambiguous is
-   also report-and-stop.*
+3. **`GEO-4` step 1 — off-centre domain sizing (known-issues 5).**
+   Independent, smoke-sized. The oldest standing failure on `main`
+   (`assert 0.09 > 0.09`, pure geometry arithmetic, `--deselect`ed from CI
+   since `OPS-11`) — every `tests/mesh` regression this week carried its
+   "1 failed". Execute the §7 `GEO-4` step-1 plan, written this review.
+   **Anchor:** domain half-extent `≥ |offset| + phantom half-extent +
+   stated clearance`, clearance term explicit; centered preset reproduced
+   unchanged. **Negative control:** the failing assertion itself, on
+   record since `794d2f1`; a zero-clearance call must still be detected.
+   **Cost:** smoke, `-n 2`; sizing diagnostics run without meshing;
+   `tests/mesh` regression 72 s on record; `timeout 180`. **Traps:** the
+   entry is 5, not 6 (miscited twice); remove the `OPS-11` `--deselect` in
+   the fixing commit and no other exclusion; never relax `>` to `>=`
+   without establishing intent from the code first — the assertion is
+   evidence. **Does not close:** `GEO-4` (graded-sizing generalization is
+   separate). **Negative result:** intent unestablishable ⇒ journal the
+   archaeology in known-issues 5, leave the test deselected, stop — it
+   becomes an operator question on the dashboard.
 
-4. ~~**`MAG-16` — complex-build-safe magnetostatic energy (known-issues 8).**~~
-   — **done 2026-08-05 (16:30 run)**: on `main`, complex gate 10 passed at
-   `-n 2` in 4.9 s with both identity assertions unchanged. `np.real` reduction
-   plus a `1e-8` refusal guard; the real-build pin was captured before the fix
-   (`1.121469318858e-08` / `1.121466766900e-08 J`) and the complex build
-   reproduces it to `2.9e-07` (penalty, whose LU is not bit-reproducible) and
-   `1.3e-13` (Lagrange). The discarded imaginary part is **exactly 0.0** in both
-   gauges — the reduction throws away nothing. The complex-mode `tests/solver`
-   sweep went 4 failed → 2 (both known-issues 2); known-issues 8 retired and the
-   file added to `validation-complex`. Original text follows.
-   *Independent; new chunk, written this review. Execute the §7 `MAG-16`
-   plan. **Anchor:** the existing discrete work-energy identity test — a
-   conservation identity, already quantitative and unchanged — passing at
-   `-n 2` under `dolfinx-complex-mode`, plus a cross-build pin: the
-   complex-build energy matches the real-build value captured in the same
-   slot (capture it *before* the fix commit, or it pins nothing) at a
-   stated rtol, and the discarded imaginary part is asserted small against
-   a probe-measured band, not a guessed one. **Negative control:** on
-   record, cite — the `TypeError` reproduced at `aabb0a7`
-   (`20260805T003945Z_POST-3-step5-preexisting.log`, 2 failed 4.46 s); the
-   imag/real ratio is what a wrong reduction would move. **Cost:** smoke
-   tier in a standard slot, `-n 2`: the 4-test file measured 4.46 s; one
-   real-build run + one complex-build run + a `tests/solver` regression,
-   `timeout 180` each. **Traps:** grep every `float(` cast on the energy
-   path in `core/solvers.py`, not just line 661; `tests/environment` first
-   in the complex command; do not touch the time-harmonic power paths
-   (`POST-3` owns those); known-issues 8 retires only in the fixing
-   commit. **Does not close:** known-issues 2 (the other two standing
-   regression failures); no field-accuracy claim — the closed-form `MAG`
-   gates are untouched. **Negative result:** if the imaginary part is
-   genuinely non-small, that is a formulation finding — report the number,
-   leave the `TypeError` unpatched, annotate known-issues 8, stop.*
+4. **`GEO-10` — `two_torus_domain`'s missing `outer_boundary` facet tag
+   (known-issues 10).** Independent of items 1–3 landing; touches the same
+   fixture file item 1 reads, which queue order already handles. Execute
+   the §7 `GEO-10` plan, written this review; prime suspect is fragment
+   surface renumbering (the `GEO-8` lesson applied to dim-2 groups).
+   **Anchor:** tagged outer-boundary facet area equal to the analytic box
+   surface area at `1e-9` (planar facets — an identity, not a band),
+   allreduced, `-n 1` and `-n 2`; tag sets `{1}` / `{1, 201, 202}`.
+   **Negative control:** on record — today's empty tag set
+   (`20260805T020843Z…serial-gate.log`); the port-facet gate's
+   `1.563786482e-04 m²` must reproduce digit for digit. **Cost:**
+   standard, `-n 2`; port gate 20 s, `tests/mesh` 72 s on record;
+   `timeout 180`. **Traps:** dim-2 groups after `synchronize` and
+   re-derived after fragment; both Helmholtz consumers run as regression
+   and their gated numbers must not move (`MAG-14`'s 0.728% is in CI);
+   `create_entity_permutations` before per-tag facet assembly; pytest
+   `-s`. **Does not close:** anything downstream — fixture hygiene.
+   **Negative result:** loss point not at fragment renumbering and the
+   diagnosis exceeds the slot ⇒ name the loss point in known-issues 10,
+   stop — never restructure `two_torus_domain` in-slot; five validated
+   gates feed on it.
 
-5. **`PORT-1` step 3b-v — the facet-integral port voltage (spare).**
-   **Depends on item 1 landing; if 3b-iv's tags are not on main when this
-   item comes up, stop and journal — do not improvise the tags in-slot.**
-   Execute the §7 step-3b-v plan, written this review. **Anchor:**
-   `Im Z₁₂ = V₂/I₁` against `ωM₁₂ = 1.241755e+00 Ω` at the unmoved 10%
-   `MUTUAL_TOLERANCE`; reciprocity and open-port precondition at 3b-iii's
-   overhang-2e-4 scales (1.1509e-04, 1.42e-03). Probe first: print each
-   port's two disc integrals separately — normal orientation is half the
-   step. **Negative controls:** on record, cite — the box family's sign
-   flip and the unfragmented mesh's exact-zero `Z₁₂`; the shadow average's
-   ~0.78 deficit is the number to close or inherit, and inheriting it is a
-   finding. **Cost:** standard, `-n 2`, ~60 s per configuration measured;
-   one geometry (overhang 2e-4). **Traps:** gap-wins policy;
-   `create_connectivity` before facet→cell; facet integrals allreduce;
-   `gap_burial` strictly positive; FFCx lock; pytest `-s`; complex build.
-   **Does not close:** `PORT-1` — known-issues 3 and touchstone threading
-   come after; `Z₁₁` printed, never gated. **Negative result:** report
-   `V/ωM` beside the shadow numbers, annotate §7 and known-issues 3, stop
-   — the tolerance does not move; a third estimator is a review's call.
+5. **`MAT-6` step 5 — wire resolution at fixed box (spare; the only
+   heavy item).** Independent. Execute the §7 step-5 plan, written this
+   review: `h/r_wire ≥ 16` local refinement at W = 0.15 separates the two
+   residual ΔX terms step 4 left entangled (box tail vs filamentary-
+   reference spread). **Anchor:** Dodd–Deeds `ΔX = −6.1586749e-01 Ω` /
+   `ΔR = +3.2259615e-01 Ω`, step 2b's gates unchanged — never a ΔX band
+   tightened in-slot; the result is the refined-wire ratios beside step
+   4's four. **Negative control:** on record — σ-blind `ΔZ = 0`, null
+   tagging `1.31e-08`; step 4's < 0.01 pp ΔR wobble is the reality floor
+   any refinement effect must exceed. **Cost:** unmeasured — probe first
+   (extend `scripts/probes/mat6_step4_probe.py`, heavy `timeout 1200`,
+   `-n 4` probe only); one solve > ~300 s at `-n 4` ⇒ report cost and
+   stop, rescope is a smaller `h/r_wire`, never a raised timeout. Gates
+   `-n 2`, split by `-k` per drive as step 4 did. **Traps:**
+   `project_source=False` pins stay; refine the wire region only —
+   `resolution_far` stays put; separate module importing the fixtures;
+   FFCx lock; `ufl.max_value`; complex build. **Does not close / reopen:**
+   `MAT-6` stays ✅; ΔX gating waits for both knobs to saturate. **Negative
+   result:** a ratio that does not move under refinement is the finding
+   (residual = reference ambiguity + box tail) — report all ratios,
+   annotate §7, stop.
 
 If the queue drains: **stop and journal.** Do **not** improvise gap-voltage
 ports on the birdcage itself or a B1+ chunk — both are deliberately held for

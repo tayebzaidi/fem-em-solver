@@ -99,6 +99,10 @@ them by number.
 | **Excluded from CI** | Since `OPS-11` (2026-08-03) the `validation` job's `Mesh generation suite` step `--deselect`s this node id by name. **Remove that `--deselect` in the commit that fixes this entry** — it is the only thing keeping the test out of CI, and the rest of the file runs there. |
 | **Cited wrongly as "known-issues 6"** | Commit `3ac025c` and `docs/testing/attempts.md:1903,1907` both call this entry 6. **It is entry 5.** Entry 6 is the rank-dependent single-port excitation test in `tests/solver`, unrelated to `tests/mesh`. `attempts.md` is append-only so the correction lives here and in the `OPS-11` §7 entry; it matters because `OPS-11`'s exclusion set is **5 and birdcage**, not "6 and 7". |
 
+Owned by `GEO-4` step 1 (§7, written by the 2026-08-05 18:00 review); this
+entry leaves with that step's fixing commit, which also removes the `OPS-11`
+`--deselect`.
+
 ### 6. Rank-dependent: single-port excitation
 
 | | |
@@ -227,6 +231,9 @@ The original entry follows, kept because its serial measurements stand.
 | **Symptom** | The third return value of `two_torus_domain` carries **no** tag `1`. Measured 2026-08-05 at `-n 1`: the ungapped fixture's global facet-tag set is `[]` (empty), and the gapped fixture's is `[201, 202]` — the `outer_boundary` physical group added at `mesh.py:1038` is absent from both (`20260805T020843Z_PORT-1-step3biv-serial-gate.log`). |
 | **Cause** | Not diagnosed. `two_torus_domain` is consumed by `tests/validation/test_helmholtz_v2.py` and `test_helmholtz_magnitude.py`, both of which pass `facet_tags=` into a solver; whether either actually depends on tag `1` being populated is **unchecked**. Those tests' current status is unaffected by this entry — they pass or fail today exactly as they did before it was written. Not fixed in passing: it is `GEO`/`MAG` work and changing what the fixture emits could move Helmholtz numbers. |
 | **Verified pre-existing at** | `2fba4d9` — the measurement is read-only and the ungapped path is untouched by the parked diff. |
+
+Owned by chunk `GEO-10` (§7, written by the 2026-08-05 18:00 review); this
+entry leaves with `GEO-10`'s fixing commit.
 
 ### 7. ✅ RETIRED 2026-08-03 — birdcage mesh fails to generate (`GEO-9`, steps 1 + 2a + 2b)
 
