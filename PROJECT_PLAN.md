@@ -460,6 +460,37 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `MAG-13` | Analytic-Dirichlet outer boundary for wire/loop | ✅ | heavy | wire 12.75%, loop 7.07%, rate 1.10; 167 s + 196 s |
 | `MAG-14` | Helmholtz magnitude comparison in the test suite | ✅ | smoke | 0.728% vs closed form (1.731% before `GEO-8`); 11 s, in CI |
 | `MAG-15` | Lagrange-multiplier Coulomb gauge (cross-check) | ✅ | smoke | 7 passed, 13 s |
+| `MAG-16` | Complex-build-safe magnetostatic energy | 🧪 | smoke | owns known-issues 8 |
+
+**`MAG-16` — complex-build-safe magnetostatic energy** 🧪 *(chunk written
+2026-08-05, 10:30 review; owns known-issues 8)*
+> `MagnetostaticSolver.compute_magnetic_energy` (`core/solvers.py:661`) casts
+> the assembled energy with an unconditional `float(...)`, which raises
+> `TypeError` in the complex build — 2 of the 4 standing regression failures
+> in every complex-mode sweep since `POST-3` step 5's regression first ran
+> `tests/solver/test_energy_and_point_evaluation.py` under
+> `dolfinx-complex-mode` (reproduced pre-existing at `aabb0a7`,
+> `20260805T003945Z_POST-3-step5-preexisting.log`). The energy is real by
+> construction; the presumed fix is a real-part reduction with a guard, but
+> the value has never been compared across builds, so the fix must pin it.
+> Done when: both energy tests pass at `-n 2` under `dolfinx-complex-mode`
+> with their identity assertions unchanged (the discrete work-energy identity
+> is the quantitative anchor — already a conservation identity); the
+> complex-build energy matches a real-build value captured in the same slot
+> *before* the fix commit, at a stated rtol; the discarded imaginary part is
+> asserted small relative to the real part at a probe-measured band; and
+> known-issues 8 is retired in the fixing commit. Negative control on record:
+> the `TypeError` itself, plus the imag/real ratio a wrong reduction (e.g.
+> `abs()` swallowing a genuinely large imaginary part) would move. Cost:
+> smoke-tier compute in a standard slot — the 4-test file measured 4.46 s at
+> `-n 2`; roughly one real-build run, one complex-build run, one
+> `tests/solver` regression, `timeout 180` each. Traps: grep every `float(`
+> cast on the energy path in `core/solvers.py`, not just line 661;
+> `tests/environment` first in the complex command; do not touch the
+> time-harmonic power paths (`POST-3` owns those). Does not close:
+> known-issues 2; no field-accuracy claim. Negative result: a genuinely
+> non-small imaginary part is a formulation finding — report the number,
+> leave the cast unpatched, annotate known-issues 8, stop.
 
 **Open follow-ups in MAG** (none currently on deck):
 
@@ -1430,6 +1461,47 @@ written 2026-08-04, 18:00 review; the follow-up step 3 asked for)*
 > **Second failure**, so §9's own rule applies: the review rescopes this item
 > before a third attempt.
 >
+> **Step 3b-iv, third attempt — rescoped 2026-08-05, 10:30 review. One
+> discriminating experiment: ghost cells.** Start from
+> `attempt/PORT-1-step3biv-20260805T034500Z` (`e3fd31f`); the tags, the gate
+> file, and the marker probe are done — write no new derivation. (1) Hand the
+> fixture's `model_to_mesh` call a `shared_facet` cell partitioner
+> (`dolfinx.mesh.create_cell_partitioner(GhostMode.shared_facet)`), plumbed
+> through `two_torus_domain` only — not every fixture — and re-run the marker
+> probe: it already prints `cells_ghost`, which must go nonzero on both
+> ranks, and the per-port facet counts, which may change now that both ranks
+> can see both ports' facets. (2) Only then run the gate at `-n 2`; green ⇒
+> land the branch on main and retire known-issues 9 in the same commit,
+> noting the ghost-mode requirement in the fixture docstring. (3) If the
+> gate still hangs, do not iterate blind: move the marker pattern into
+> `_facet_group_area` — `fem.form` (JIT), `assemble_scalar`, and the
+> allreduce are three separable suspects and one probe run names the hanging
+> one; that name is the slot's deliverable in the failure case. **Anchor**
+> (unchanged, all numbers on record from attempt 1): per-port meshed facet
+> area in the probe-set band `(0.970, 0.980)` of the exact oblique cut
+> `1.604721580e-04 m²`; ports equal to `< 1e-12`; the `-n 2` gate reproduces
+> the `-n 1` numbers (`20260805T020843Z…serial-gate.log`, 2 passed, 22.5 s)
+> — a rank-count-dependent area is a missing reduction, not a tolerance
+> problem. **Negative control** (on record, cite): the ungapped fixture
+> yields no interface tags (exact); the gap-box `y`-face pair ceiling
+> `2.88e-04 m² = 1.7947×`, total separation. **Cost:** standard, `-n 2`;
+> marker probe 14 s and serial gate 22.5 s measured; `timeout 180` per
+> command; a second exit-124 on the gate is the stop signal for route (3),
+> not a retry. **Traps, all bought this week:** `cells_ghost=0` under the
+> default partitioner — measure it changed before re-running the gate;
+> per-port quantities are rank-local (today each rank holds exactly one
+> port) — allreduce before asserting, and never divide on a rank whose
+> local count is zero; the two ranks died in *different* collectives, so
+> any code between mesh build and assembly must be collective-symmetric
+> (no rank-conditional early returns); a killed run leaves a stale FFCx
+> lock; pytest `-s`. **Does not close:** anything — mesh-only, no field
+> solved; the voltage is 3b-v; `PORT-1` stays 🟡. **Negative result:**
+> ghosting measured on but the `dS` assembly still hangs ⇒ record the named
+> hanging call in known-issues 9 with the probe log, keep the branch
+> parked, annotate here, stop — the workaround (an exterior-facet
+> reformulation on a submesh, or a dolfinx-version pin) is a review's call,
+> not this slot's.
+>
 > **Step 3b-v — the facet-integral port voltage on 3b-iv's tags (plan
 > written 2026-08-04, 18:00 review; depends on 3b-iv landing).** The
 > estimator 3b-ii ranked as route 2, now the only route left: the
@@ -1608,95 +1680,67 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done, the implementer falls back to the "obvious
 next entry" named below.
 
-Last reviewed 2026-08-04, 18:00 daily review. Tree clean at review start and
+Last reviewed 2026-08-05, 10:30 daily review. Tree clean at review start and
 end; no `recovered/*` branches. Branch disposition this review:
-`attempt/PORT-1-step3bii-20260804T141200Z` **deleted** — its test file was
-copied to (and superseded on) `attempt/PORT-1-step3biii-20260804T173000Z`,
-and its measured numbers and diagnosis are journaled in attempts.md and the
-§7 3b-ii entry. `attempt/PORT-1-step3biii-20260804T173000Z` **kept
-deliberately**: it carries the `gap_burial`/`gap_overhang` mesh split and
-the current `test_port_gap_voltage_impedance.py`, which item 5 (step 3b-v)
-reuses — delete it only when 3b-v lands that file on main.
+`attempt/PORT-1-step3biv-20260805T021000Z` **deleted** — superseded by the
+22:30 attempt, whose whole point was removing that branch's gmsh-side
+interior physical groups; its measurements (areas, bands, the OCC
+cross-check) are journaled in attempts.md and the §7 3b-iv entry.
+`attempt/PORT-1-step3biv-20260805T034500Z` **kept**: item 1 starts from it.
+`attempt/PORT-1-step3biii-20260804T173000Z` **kept** (unchanged reason:
+item 5 reuses its `test_port_gap_voltage_impedance.py`; delete only when
+3b-v lands that file on main). The 19:30–04:30 slot outcomes (POST-3 step 5
+complete — audited §4-compliant this review against the 114 s gate log —
+and two 3b-iv incompletes, the second refuting known-issues 9's diagnosis)
+are journaled in attempts.md and the §7 entries. New chunk `MAG-16` written
+this review to own known-issues 8.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
 `docs/planning/plan-archive.md`, not here.)*
 
-**Items 1–4 are mutually independent; item 5 depends on item 2 landing** and
-says so in its own text. The 12:00–16:30 slot outcomes (3b-iii decisive
-negative, POST-1 step 2 complete, 15:00 human-edit anomaly resolved by
-`436199c`, MAT-6 step 3 complete) are journaled in attempts.md and the §7
-entries; both new ✅ steps audited §4-compliant this review.
+**Items 1–4 are mutually independent; item 5 depends on item 1 landing** and
+says so in its own text.
 
-1. ~~**`POST-3` step 5 — piecewise μᵣ through the Poynting balance.**~~
-   ✅ **done** (2026-08-04, 19:30 run; 4.3284% at 32³, rate 0.9922, both
-   vacuity controls firing at 3.69×/5.10× — see the §7 step-5 entry).
-   Independent. Execute the §7 step-5 plan, written at the 03:00 review.
-   **Anchor:** the parameter-free real-power identity on a two-slab
-   μᵣ = 1|2 solve — imbalance falls under refinement at ~O(h) (steps 1–2
-   measured 0.987/0.9915) with fine-mesh imbalance < 5% (§10's bar,
-   unmoved; pick the fine level from a refinement probe as step 2 did),
-   plus the no-solve scalar-path pin: uniform DG0 μᵣ = 1 reproduces the
-   scalar-μᵣ numbers to `rtol = 1e-12`. **Negative control, ceiling
-   measured first:** μᵣ-blind flux leg scored against the honest solve;
-   band from the probe — steps 1–2's controls saturated near 1/imbalance,
-   so compute the ceiling before asserting a factor. **Cost:** standard,
-   `-n 2`, ~90 s budget (step 2's two-level gate measured 64.5 s); probe
-   first. **Traps:** μᵣ enters the bilinear form (`time_harmonic.py:400`)
-   **and** the flux leg (`power_balance.py:111`) — fixing only one is the
-   vacuous version; `MaterialProperties.mu_r` validation currently rejects
-   non-scalars — extend it with the field, not around it; ½ peak-phasor
-   convention; complex build + `FEM_EM_REQUIRE_COMPLEX=1`. **Does not
-   close:** `POST-3` — the reciprocity leg is discharged at `PORT-1`.
-   **Negative result:** report imbalance and rate at both levels, annotate
-   §7, stop — an identity failing on piecewise μᵣ after passing on
-   piecewise σ is information about the μᵣ discretisation, not a tolerance
-   problem.
+1. **`PORT-1` step 3b-iv, third attempt — ghost cells into the port-facet
+   mesh (rescoped this review).** On the critical path — item 5 consumes
+   its tags. Failed twice; this rescope replaces the original plan per
+   §9's rule, and the job has narrowed to one discriminating experiment.
+   Start from `attempt/PORT-1-step3biv-20260805T034500Z` (`e3fd31f`) —
+   tags, gate, and marker probe are done; write no new derivation. Execute
+   the §7 third-attempt plan: (1) pass a `shared_facet` cell partitioner
+   into the fixture's `model_to_mesh` call and re-run the marker probe —
+   `cells_ghost` must go nonzero on both ranks before anything else runs;
+   (2) only then the `-n 2` gate; green ⇒ land on main and retire
+   known-issues 9 in the same commit; (3) still hanging ⇒ move the marker
+   pattern into `_facet_group_area` and name which of `fem.form` /
+   `assemble_scalar` / the allreduce hangs — that name is the slot's
+   deliverable in the failure case. **Anchor** (on record from attempt 1):
+   per-port facet area in the probe-set band `(0.970, 0.980)` of the exact
+   oblique cut `1.604721580e-04 m²`, ports equal to `< 1e-12`; the `-n 2`
+   gate must reproduce the `-n 1` numbers
+   (`20260805T020843Z…serial-gate.log`, 2 passed, 22.5 s) — a
+   rank-count-dependent area is a missing reduction. **Negative control**
+   (on record, cite): ungapped fixture yields no interface tags (exact);
+   gap-box `y`-face pair ceiling `2.88e-04 m² = 1.7947×`, total
+   separation. **Cost:** standard, `-n 2`; probe 14 s and serial gate
+   22.5 s measured; `timeout 180` per command, and a second exit-124 on
+   the gate is the stop signal for route (3), not a retry. **Traps, all
+   bought this week:** `cells_ghost=0` under the default partitioner —
+   measure it changed before re-running the gate; each rank currently
+   holds exactly one port, so per-port counts/areas are rank-local until
+   allreduced and no assertion may divide by an empty rank's zero; the two
+   ranks died in *different* collectives (`create_entity_permutations` vs
+   `MPI_Comm_dup`), so code between mesh build and assembly must be
+   collective-symmetric; a killed run leaves a stale FFCx lock; pytest
+   `-s`. **Does not close:** anything — mesh-only, no field solved; the
+   voltage is item 5; `PORT-1` stays 🟡. **Negative result:** ghosting
+   measured on but the `dS` leg still hangs ⇒ the named hanging call goes
+   into known-issues 9 with the probe log, the branch stays parked,
+   annotate §7, stop — the workaround (submesh reformulation or a
+   dolfinx-version pin) is a review's call, not this slot's.
 
-2. **`PORT-1` step 3b-iv — facet tags on the arc-end discs (mesh only).**
-   🟡 **attempted twice — 2026-08-05 21:00 and 22:30 runs — still open. Second
-   failure, so this item is due a rescope by the review before a third
-   attempt** (§9's own rule). The 22:30 run refuted the blocker below rather
-   than removing it: the tags now come from the distributed cell tags instead
-   of gmsh physical groups, and `model_to_mesh` + facet creation are **green at
-   `-n 2` in 14 s** (marker probe, 116 facets per port); what still hangs is the
-   `dS` facet-area assembly downstream, most likely because the mesh is built
-   with no ghost cells (`cells_ghost=0` measured on both ranks). Code on
-   `attempt/PORT-1-step3biv-20260805T034500Z`, which supersedes the 02:10
-   branch; ranked next moves in the §7 3b-iv entry. The paragraph below is the
-   first attempt's framing, kept for the history:**
-
-   ~~attempted once, 2026-08-05 21:00 run — still open, and the retry is a
-   different job from the original plan.~~ The tags themselves are done and
-   measured (2 surfaces per port; area 0.974490841 of the exact oblique cut
-   `1.604721580e-04 m²`, which is `1.0216 ×` this item's `2πr²` anchor —
-   see the §7 3b-iv entry), parked on
-   `attempt/PORT-1-step3biv-20260805T021000Z` and green at `-n 1` in 22.5 s.
-   The blocker is **known-issues 9**: at `-n 2` `gmshio.model_to_mesh` hangs
-   distributing tags on interior facets. **A retry should attack the hang, not
-   re-derive the tags** — start from the parked branch and the stack trace in
-   known-issues 9. Item 5 stays blocked until this lands on `main`.
-   Independent, and now on the critical path — item 5 consumes its tags.
-   Execute the §7 step-3b-iv plan, written at the 10:30 review. **Anchor:**
-   each port's facet-group area against the analytic
-   `2·πr² = 1.570796e-04 m²` (two planar discs of radius
-   `r_wire = 0.005` per port), banded from the probe — planar-disc meshing
-   carries only boundary chordal deficit, expect far tighter than the
-   volume's 0.980; the two ports equal at `1e-9`. **Negative control:**
-   the ungapped fixture emits no `2xx` facet groups (exact), and a group
-   mistakenly placed on the full box face measures `≈1.83×` the disc pair
-   — assert the measured area sits below that, total separation. **Cost:**
-   standard, `-n 2`, mesh-only, ~25 s per mesh measured, `timeout 180`.
-   **Traps:** dim-2 physical groups added after `synchronize`; shared 2-D
-   boundaries from the fragment out-map, never absolute tags;
-   `model_to_mesh` must be asked for facet tags; `create_connectivity`
-   before any facet→cell map; facet areas assemble rank-locally —
-   allreduce before asserting; pytest `-s`. **Does not close:** anything —
-   no field is solved; the voltage measurement is item 5. **Negative
-   result:** report the shared-surface pairs found and their areas,
-   annotate §7, stop — no blind surface hunting.
-
-3. **`POST-1` step 3 — drop-set semantics on the solved `TH-8` sphere.**
+2. **`POST-1` step 3 — drop-set semantics on the solved `TH-8` sphere.**
    Independent; the adjudication `POST-1`'s ⚠️ waits on. Execute the §7
    step-3 plan, written this review. **Anchor:** the `TH-8` closed form
    `|E_in| = 3/(εᵣ+2)·E₀` (gated to 2.44%, 2026-07-31) — probe, then gate
@@ -1713,7 +1757,7 @@ entries; both new ✅ steps audited §4-compliant this review.
    than full-set is the answer, not a defect — report all three errors,
    annotate §7, stop.
 
-4. **`MAT-6` step 4 — adjudicate the ΔX shift on the converged box.**
+3. **`MAT-6` step 4 — adjudicate the ΔX shift on the converged box.**
    Independent. Execute the §7 step-4 plan, written this review.
    **Anchor:** Dodd–Deeds `ΔX = −6.1586749e-01 Ω` /
    `ΔR = +3.2259615e-01 Ω` with step 2b's gates unchanged on a W = 0.25
@@ -1730,8 +1774,32 @@ entries; both new ✅ steps audited §4-compliant this review.
    report all six numbers, annotate the step-3 entry, stop — ambiguous is
    also report-and-stop.
 
+4. **`MAG-16` — complex-build-safe magnetostatic energy (known-issues 8).**
+   Independent; new chunk, written this review. Execute the §7 `MAG-16`
+   plan. **Anchor:** the existing discrete work-energy identity test — a
+   conservation identity, already quantitative and unchanged — passing at
+   `-n 2` under `dolfinx-complex-mode`, plus a cross-build pin: the
+   complex-build energy matches the real-build value captured in the same
+   slot (capture it *before* the fix commit, or it pins nothing) at a
+   stated rtol, and the discarded imaginary part is asserted small against
+   a probe-measured band, not a guessed one. **Negative control:** on
+   record, cite — the `TypeError` reproduced at `aabb0a7`
+   (`20260805T003945Z_POST-3-step5-preexisting.log`, 2 failed 4.46 s); the
+   imag/real ratio is what a wrong reduction would move. **Cost:** smoke
+   tier in a standard slot, `-n 2`: the 4-test file measured 4.46 s; one
+   real-build run + one complex-build run + a `tests/solver` regression,
+   `timeout 180` each. **Traps:** grep every `float(` cast on the energy
+   path in `core/solvers.py`, not just line 661; `tests/environment` first
+   in the complex command; do not touch the time-harmonic power paths
+   (`POST-3` owns those); known-issues 8 retires only in the fixing
+   commit. **Does not close:** known-issues 2 (the other two standing
+   regression failures); no field-accuracy claim — the closed-form `MAG`
+   gates are untouched. **Negative result:** if the imaginary part is
+   genuinely non-small, that is a formulation finding — report the number,
+   leave the `TypeError` unpatched, annotate known-issues 8, stop.
+
 5. **`PORT-1` step 3b-v — the facet-integral port voltage (spare).**
-   **Depends on item 2 landing; if 3b-iv's tags are not on main when this
+   **Depends on item 1 landing; if 3b-iv's tags are not on main when this
    item comes up, stop and journal — do not improvise the tags in-slot.**
    Execute the §7 step-3b-v plan, written this review. **Anchor:**
    `Im Z₁₂ = V₂/I₁` against `ωM₁₂ = 1.241755e+00 Ω` at the unmoved 10%
