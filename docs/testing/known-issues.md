@@ -121,7 +121,44 @@ them by number.
 Owned by chunk `MAG-16` (§7, written by the 2026-08-05 10:30 review); this
 entry leaves with `MAG-16`'s fixing commit.
 
-### 9. `-n 2` hangs on `two_torus_domain`'s port facets — *not* in `model_to_mesh`
+### 9. ✅ RETIRED 2026-08-05 — `-n 2` hang on `two_torus_domain`'s port facets
+
+**Diagnosed and fixed 2026-08-05 (12:00 run); `tests/mesh/test_two_torus_port_facets.py`
+is on `main` and green at `-n 2` in 20 s
+(`20260805T171107Z_PORT-1-step3biv-parallel-gate-fixed.log`, 2 passed).**
+
+**Cause: a lazy collective, reached on only one rank.** An interior-facet
+(`dS`) assembly requires `Topology::create_entity_permutations()`, and the
+dolfinx assembler calls it *lazily* — only once a rank finds integration
+entities for the form's subdomain id. Under this fixture's partition each rank
+owns the facets of exactly one port (rank 0 → tag 201, rank 1 → tag 202), so
+assembling tag 201 put rank 0 inside that collective while rank 1, with no
+201 facets, sailed past it into the next one. Hence the two ranks' *different*
+SIGTERM stacks (`create_entity_permutations` vs mpi4py `MPI_Comm_dup`) — a
+mismatched collective, not a slow one. The fix is one hoisted line in
+`_facet_group_area`: call `create_entity_permutations()` unconditionally on
+every rank before building the form.
+
+**What the discriminating run was.** The same computation, marker-instrumented,
+ran to completion as a *script* at `-n 2` (exit 0, 12 s,
+`20260805T170545Z_PORT-1-step3biv-dS-localise.log`) while the pytest gate hung
+— and the script's only extra call was the explicit
+`create_entity_permutations()`. Markers inside the gate then pinned the hang to
+`_facet_group_area` at tag 201
+(`20260805T170743Z_PORT-1-step3biv-pytest-localise.log`, exit 124).
+
+**The ghost-mode hypothesis was necessary but not sufficient.** The
+`shared_facet` partitioner now plumbed into `two_torus_domain` does what the
+entry below predicted — `cells_ghost` 0 → 239/231 per rank
+(`20260805T170109Z_PORT-1-step3biv-ghostprobe.log`, 14 s) — but the gate still
+hung with it alone (`20260805T170140Z_…-parallel-gate.log`, exit 124, 181 s).
+Both changes are kept: an interior-facet integral does need both cells of every
+facet, and the fixture's docstring records the requirement.
+
+**Generalisation, untested elsewhere:** any `dS` integral over a subdomain that
+some rank does not touch is exposed to this. Only this fixture is fixed.
+
+#### Superseded diagnosis, 2026-08-05 (22:30 run)
 
 **Retitled and half-refuted 2026-08-05 (22:30 run).** The mesh is innocent: with
 the gmsh dim-2 physical groups removed entirely and the identical facet set
@@ -158,7 +195,7 @@ The original entry follows, kept because its serial measurements stand.
 
 | | |
 |---|---|
-| **Tests** | None asserts it, which is how it survived. Measured by `tests/mesh/test_two_torus_port_facets.py` on the parked branch. |
+| **Tests** | None asserts it, which is how it survived. Measured by `tests/mesh/test_two_torus_port_facets.py`, which is on `main` as of 2026-08-05 and prints the tag set in both configurations without asserting tag `1`. |
 | **Symptom** | The third return value of `two_torus_domain` carries **no** tag `1`. Measured 2026-08-05 at `-n 1`: the ungapped fixture's global facet-tag set is `[]` (empty), and the gapped fixture's is `[201, 202]` — the `outer_boundary` physical group added at `mesh.py:1038` is absent from both (`20260805T020843Z_PORT-1-step3biv-serial-gate.log`). |
 | **Cause** | Not diagnosed. `two_torus_domain` is consumed by `tests/validation/test_helmholtz_v2.py` and `test_helmholtz_magnitude.py`, both of which pass `facet_tags=` into a solver; whether either actually depends on tag `1` being populated is **unchecked**. Those tests' current status is unaffected by this entry — they pass or fail today exactly as they did before it was written. Not fixed in passing: it is `GEO`/`MAG` work and changing what the fixture emits could move Helmholtz numbers. |
 | **Verified pre-existing at** | `2fba4d9` — the measurement is read-only and the ungapped path is untouched by the parked diff. |

@@ -3730,3 +3730,81 @@ attempt removed; keep it only until the review reads both.
 `20260805T034058Z_PORT-1-step3biv-parallel-retry.log` (killed at 150 s).
 **Next run takes §9 item 2 again** — second failure, so the review rescopes it
 before a third attempt per §9's own rule; item 5 stays blocked.
+
+## 2026-08-05T17:00Z — `PORT-1` step 3b-iv (§9 On-deck item 1) — **complete**
+
+Third attempt, executed as the 10:30 review rescoped it. Tree clean at start,
+container was Down and was brought Up, no anomaly. Started from
+`attempt/PORT-1-step3biv-20260805T034500Z` (`e3fd31f`) by checking out only its
+three code paths (`src/fem_em_solver/io/mesh.py`,
+`tests/mesh/test_two_torus_port_facets.py`,
+`tests/mesh/probe_two_torus_facets.py`) onto `main`; the branch's doc files are
+stale and were left alone. No derivation was rewritten.
+
+**Outcome: green at `-n 2`, and known-issues 9 is diagnosed rather than worked
+around.** `20260805T171107Z_PORT-1-step3biv-parallel-gate-fixed.log`, **2
+passed, 20 s**, standard tier, `timeout 180`. The parallel numbers reproduce
+the `-n 1` gate digit for digit, so the areas carry no rank-count dependence:
+
+| quantity | `-n 2` measured | anchor |
+|---|---|---|
+| `A_201`, `A_202` | 1.563786482e-04 m² | equal to 1.000000000000 |
+| meshed / analytic oblique cut | **0.974490841** both ports | band `(0.970, 0.980)` |
+| analytic cut pair | 1.604721580e-04 m² | `1.021597487 ×` naive `2πr²` |
+| gap-box `y`-face vacuity ceiling | 2.880000000e-04 m² | `1.794704 ×` the cut pair |
+| ungapped negative control | facet tags `[]` | exact separation |
+
+**Route (1) — ghosting — was necessary but not sufficient.** A `shared_facet`
+cell partitioner is now passed to `two_torus_domain`'s `model_to_mesh` (that
+fixture only). It did what the rescope predicted: `cells_ghost` **0 → 239 / 231**
+per rank, `20260805T170109Z_PORT-1-step3biv-ghostprobe.log`, 14 s, per-port
+facet counts unchanged at 116 and each rank still seeing exactly one port. The
+gate was then re-run and **still hung** — exit 124 at 181 s,
+`20260805T170140Z_PORT-1-step3biv-parallel-gate.log`, one rank in
+`create_entity_permutations`, the other in mpi4py `MPI_Comm_dup`. That is the
+second exit-124 the item names as the stop signal for route (3), so route (3)
+ran next rather than another blind iteration.
+
+**Route (3) named the call, via a discriminator the plan did not anticipate.**
+Extending the marker probe with the gate's own `dS` assembly showed the whole
+computation completing at `-n 2` **as a script** — exit 0, 12 s,
+`20260805T170545Z_PORT-1-step3biv-dS-localise.log`, local areas
+1.563786482e-04 / 0.0 on rank 0 and 0.0 / 1.563786482e-04 on rank 1, both
+allreduces returning. Markers added inside the gate then pinned its hang to
+`_facet_group_area` at tag 201 (`20260805T170743Z_PORT-1-step3biv-pytest-localise.log`,
+exit 124). Same mesh, same form, same rank count — and the script's only extra
+call was an explicit `msh.topology.create_entity_permutations()`.
+
+**Cause.** That call is a collective, and the dolfinx assembler reaches it
+*lazily* — only on a rank that actually owns integration entities for the
+form's subdomain id. This partition gives each rank the facets of exactly one
+port, so assembling tag 201 put rank 0 inside the collective while rank 1 went
+straight past it. A mismatched collective, which is why the two SIGTERM stacks
+differed. **Fix:** hoist `create_entity_permutations()` to the top of
+`_facet_group_area`, unconditional on every rank, with the measurement in a
+code comment. One line. Nothing was loosened; the band and every assertion are
+the ones attempt 1 measured.
+
+**Regression.** `tests/mesh` at `-n 2`: 24 passed, 1 skipped, **1 failed**,
+72 s, `20260805T171139Z_PORT-1-step3biv-mesh-regression.log`. The failure is
+`test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent` —
+known-issues 5, pre-existing, and untouched by this diff.
+
+**Landed on `main`:** the partitioner, `_interface_facet_tags`, the gate file,
+the probe (kept — the markers are what localise this class of hang), the
+docstring note on the ghost-mode requirement, known-issues 9 retired, §7 and
+§9 item 1 flipped. Nothing parked. `attempt/PORT-1-step3biv-20260805T034500Z`
+is now fully landed and the review may delete it;
+`attempt/PORT-1-step3biii-20260804T173000Z` is still needed by 3b-v.
+
+**Left open, deliberately.** Known-issues 10 (`outer_boundary` never reaching
+the dolfinx facet tags) is untouched. And the standing hazard: *any* `dS`
+integral over a subdomain that some rank does not touch has this same shape.
+Only this fixture is fixed — a sweep of the other interior-facet integrals is a
+review's call, not this slot's.
+
+**Next attempt hypothesis.** §9 item 5 (`PORT-1` step 3b-v) is unblocked: its
+dependency was 3b-iv's tags reaching `main`, which they now have. Whoever takes
+it should expect the same lazy-collective trap in the voltage's own facet
+integrals and hoist `create_entity_permutations()` there before debugging
+anything else.

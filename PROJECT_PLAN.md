@@ -1502,6 +1502,42 @@ written 2026-08-04, 18:00 review; the follow-up step 3 asked for)*
 > reformulation on a submesh, or a dolfinx-version pin) is a review's call,
 > not this slot's.
 >
+> **Step 3b-iv ✅ 2026-08-05 (12:00 run), third attempt — the tags are on
+> `main` and the gate is green at `-n 2`.** `20260805T171107Z_PORT-1-step3biv-parallel-gate-fixed.log`,
+> **2 passed, 20 s**, `-n 2`, standard tier. The parallel numbers reproduce
+> the `-n 1` gate to every printed digit: `A_201 = A_202 = 1.563786482e-04 m²`,
+> **0.974490841** of the exact oblique cut `1.604721580e-04 m²` (inside the
+> probe-set band `(0.970, 0.980)`), port-to-port ratio **1.000000000000**, and
+> the gap-box `y`-face vacuity ceiling `2.880000000e-04 m²` stays `1.794704×`
+> away. The ungapped negative control emits facet tags `[]` — exact
+> separation. `attempt/PORT-1-step3biv-20260805T034500Z` is landed and may be
+> deleted by the review. `tests/mesh` otherwise unchanged: 24 passed, 1
+> skipped, 1 failed at `-n 2` in 72 s
+> (`20260805T171139Z_PORT-1-step3biv-mesh-regression.log`) — the failure is
+> known-issues 5, the off-centre sizing heuristic, untouched here.
+>
+> *The blocker was a lazy collective, and the review's ghost hypothesis was
+> half of it.* `shared_facet` partitioning is now plumbed into
+> `two_torus_domain` and does exactly what the rescope predicted —
+> `cells_ghost` 0 → **239 / 231** per rank
+> (`20260805T170109Z_PORT-1-step3biv-ghostprobe.log`, 14 s) — but the gate
+> **still hung** with it alone (`20260805T170140Z_…-parallel-gate.log`, exit
+> 124 at 181 s). Route (3) then named the call. The instrumented `dS`
+> assembly ran to completion at `-n 2` as a *script* (exit 0, 12 s,
+> `20260805T170545Z_…-dS-localise.log`) while markers inside the gate pinned
+> its hang to `_facet_group_area` at tag 201
+> (`20260805T170743Z_…-pytest-localise.log`, exit 124) — and the script's one
+> extra call was an explicit `create_entity_permutations()`. That is the bug:
+> the assembler reaches that collective lazily, only on a rank that owns
+> integration entities for the subdomain id, and this partition gives each
+> rank exactly one port. Rank 0 entered it for tag 201; rank 1 did not. Hence
+> the two ranks dying in *different* collectives. The fix is one hoisted line
+> in `_facet_group_area`, with the measurement in a code comment. Known-issues
+> 9 retires in the same commit. **Standing hazard, not swept up here:** any
+> `dS` integral over a subdomain some rank does not touch has this shape; only
+> this fixture is fixed. Known-issues 10 (the missing `outer_boundary` tag) is
+> untouched and still open.
+>
 > **Step 3b-v — the facet-integral port voltage on 3b-iv's tags (plan
 > written 2026-08-04, 18:00 review; depends on 3b-iv landing).** The
 > estimator 3b-ii ranked as route 2, now the only route left: the
@@ -1702,8 +1738,14 @@ this review to own known-issues 8.
 **Items 1–4 are mutually independent; item 5 depends on item 1 landing** and
 says so in its own text.
 
-1. **`PORT-1` step 3b-iv, third attempt — ghost cells into the port-facet
-   mesh (rescoped this review).** On the critical path — item 5 consumes
+1. ~~**`PORT-1` step 3b-iv, third attempt — ghost cells into the port-facet
+   mesh.**~~ — **done 2026-08-05 (12:00 run)**: tags on `main`, gate green at
+   `-n 2` in 20 s, `A = 1.563786482e-04 m²` per port at 0.974490841 of the
+   analytic cut, ports equal to 1.000000000000. Ghosting was necessary but not
+   sufficient; the hang was a lazily-reached `create_entity_permutations()`
+   entered on one rank only. Known-issues 9 retired. **Item 5's dependency is
+   satisfied.** Original text follows.
+   *On the critical path — item 5 consumes
    its tags. Failed twice; this rescope replaces the original plan per
    §9's rule, and the job has narrowed to one discriminating experiment.
    Start from `attempt/PORT-1-step3biv-20260805T034500Z` (`e3fd31f`) —
@@ -1738,7 +1780,7 @@ says so in its own text.
    measured on but the `dS` leg still hangs ⇒ the named hanging call goes
    into known-issues 9 with the probe log, the branch stays parked,
    annotate §7, stop — the workaround (submesh reformulation or a
-   dolfinx-version pin) is a review's call, not this slot's.
+   dolfinx-version pin) is a review's call, not this slot's.*
 
 2. **`POST-1` step 3 — drop-set semantics on the solved `TH-8` sphere.**
    Independent; the adjudication `POST-1`'s ⚠️ waits on. Execute the §7

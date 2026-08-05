@@ -8,9 +8,88 @@ import dolfinx
 from dolfinx.io import gmshio
 
 
+def _interface_facet_tags(
+    mesh: "dolfinx.mesh.Mesh",
+    cell_tags: "dolfinx.mesh.MeshTags",
+    interfaces: Dict[int, Tuple[int, int]],
+    existing: Optional["dolfinx.mesh.MeshTags"] = None,
+) -> "dolfinx.mesh.MeshTags":
+    """Tag the facets shared by two differently-tagged cell regions.
+
+    ``interfaces`` maps a facet tag to the pair of *cell* tags whose common
+    facets carry it (order irrelevant). The result merges those facets into
+    ``existing``'s tags when one is given.
+
+    Why this is done here and not in gmsh: dim-2 physical groups on facets
+    that are **interior** to the partitioned mesh hang ``model_to_mesh`` at
+    ``-n 2`` inside ``distribute_entity_data`` (known-issues 9, measured
+    2026-08-05; ``-n 1`` completes the identical case in 22.5 s). Cell tags
+    distribute fine, and an interface is exactly derivable from them, so the
+    interface is reconstructed on the dolfinx side where every rank already
+    holds the data it needs.
+
+    Rank-safety: the classification needs the tag of *both* cells behind a
+    facet, and one of them is a ghost on a partition-boundary facet. Ghost
+    cells are not necessarily carried by ``cell_tags``, so the tag is pushed
+    through a DG0 function and ``scatter_forward``ed rather than read from
+    ``cell_tags.values`` directly.
+    """
+    tdim = mesh.topology.dim
+    fdim = tdim - 1
+    mesh.topology.create_entities(fdim)
+    mesh.topology.create_connectivity(fdim, tdim)
+
+    marker_space = dolfinx.fem.functionspace(mesh, ("DG", 0))
+    marker = dolfinx.fem.Function(marker_space)
+    marker.x.array[:] = 0.0
+    cell_to_dof = marker_space.dofmap.list.reshape(-1)
+    marker.x.array[cell_to_dof[cell_tags.indices]] = cell_tags.values
+    marker.x.scatter_forward()
+    cell_value = np.rint(np.real(marker.x.array[cell_to_dof])).astype(np.int32)
+
+    facet_to_cell = mesh.topology.connectivity(fdim, tdim)
+    offsets = facet_to_cell.offsets
+    links = facet_to_cell.array
+    counts = offsets[1:] - offsets[:-1]
+    interior = np.flatnonzero(counts == 2)
+    side_a = cell_value[links[offsets[interior]]]
+    side_b = cell_value[links[offsets[interior] + 1]]
+
+    indices: List[np.ndarray] = []
+    values: List[np.ndarray] = []
+    if existing is not None and existing.indices.size:
+        indices.append(np.asarray(existing.indices, dtype=np.int32))
+        values.append(np.asarray(existing.values, dtype=np.int32))
+
+    for facet_tag, (tag_a, tag_b) in sorted(interfaces.items()):
+        on_interface = ((side_a == tag_a) & (side_b == tag_b)) | (
+            (side_a == tag_b) & (side_b == tag_a)
+        )
+        found = interior[on_interface]
+        indices.append(found.astype(np.int32))
+        values.append(np.full(found.size, facet_tag, dtype=np.int32))
+
+    if indices:
+        all_indices = np.concatenate(indices)
+        all_values = np.concatenate(values)
+    else:
+        all_indices = np.empty(0, dtype=np.int32)
+        all_values = np.empty(0, dtype=np.int32)
+
+    order = np.argsort(all_indices, kind="stable")
+    all_indices = all_indices[order]
+    all_values = all_values[order]
+    if np.unique(all_indices).size != all_indices.size:
+        raise RuntimeError(
+            "_interface_facet_tags: a facet was claimed by more than one tag; "
+            f"{all_indices.size} entries, {np.unique(all_indices).size} unique"
+        )
+    return dolfinx.mesh.meshtags(mesh, fdim, all_indices, all_values)
+
+
 class MeshGenerator:
     """Generate meshes for common geometries using Gmsh."""
-    
+
     @staticmethod
     def straight_wire_domain(
         wire_length: float = 1.0,
@@ -771,6 +850,13 @@ class MeshGenerator:
         and ``102`` (wire 2). Default is **off**, so every existing caller
         meshes exactly as before.
 
+        This fixture is partitioned with ``GhostMode.shared_facet`` (unlike
+        the rest of `io/mesh.py`, which takes gmshio's ghost-free default):
+        the port facets are interior, so both the tag reconstruction and any
+        ``dS`` integral over them need the cell on the far side of a
+        partition-boundary facet. See :func:`_interface_facet_tags` and
+        known-issues 9.
+
         Until 2026-08-01 this fixture added the volumes without fragmenting
         (`GEO-8`): gmsh then meshed the box *solid* through the torus regions
         and the tori as two disconnected islands, so a source restricted to a
@@ -978,6 +1064,63 @@ class MeshGenerator:
 
                 wire_volumes = {1: pieces_by_group[1], 2: pieces_by_group[2]}
 
+                # `PORT-1` step 3b-iv: the port facet groups (`201` / `202`)
+                # are the surfaces each gap piece shares with its conductor
+                # piece -- exactly the two planar cuts where the gap box's
+                # y-faces cross the arc, since the box overhangs the tube in x
+                # and z (`gap_half_xz > minor_radius`) and the tube can only
+                # leave it through those faces. That is the gap-conductor
+                # interface a lumped-port voltage integrates over (step 3b-v).
+                #
+                # They are NOT emitted as gmsh physical groups: dim-2 groups on
+                # facets interior to the partition hang `model_to_mesh` at
+                # `-n 2` (known-issues 9). The identical facet set is rebuilt
+                # from the distributed *cell* tags after `model_to_mesh`, via
+                # `_interface_facet_tags`. What is computed here is the CAD
+                # cross-check -- OCC's own area for the surfaces, printed so
+                # the meshed area has an independent number to be scored
+                # against. Derived from the fragment's own boundaries;
+                # absolute tags from before the fragment call mean nothing
+                # after it.
+                cad_areas = {}
+                for gap_group, wire_group, facet_group in ((101, 1, 201),
+                                                           (102, 2, 202)):
+                    gap_boundary = {
+                        surf
+                        for vol in pieces_by_group[gap_group]
+                        for _, surf in gmsh.model.getBoundary(
+                            [(3, vol)], oriented=False, recursive=False
+                        )
+                    }
+                    conductor_boundary = {
+                        surf
+                        for vol in pieces_by_group[wire_group]
+                        for _, surf in gmsh.model.getBoundary(
+                            [(3, vol)], oriented=False, recursive=False
+                        )
+                    }
+                    shared = sorted(gap_boundary & conductor_boundary)
+                    if not shared:
+                        raise RuntimeError(
+                            "two_torus_domain: gap group "
+                            f"{group_names[gap_group]} shares no surface with "
+                            f"{group_names[wire_group]}; the gap box is not "
+                            "crossing the arc ends"
+                        )
+                    cad_areas[facet_group] = (
+                        len(shared),
+                        sum(gmsh.model.occ.getMass(2, s) for s in shared),
+                    )
+
+                print(
+                    "[two-torus-mesh] port interfaces (CAD) "
+                    + " ".join(
+                        f"{tag}: {n} surface(s) area={area:.6e}"
+                        for tag, (n, area) in sorted(cad_areas.items())
+                    ),
+                    flush=True,
+                )
+
             else:
                 # Fragment renumbers volumes; identify them by mass and centroid
                 # rather than by the tags it hands back (same discipline as
@@ -1084,12 +1227,32 @@ class MeshGenerator:
             gmsh.model.mesh.generate(3)
             gmsh.model.mesh.optimize("Netgen")
 
+        # `PORT-1` step 3b-iv: gmshio's default partitioner is
+        # `GhostMode.none`, which leaves `cells_ghost = 0` on every rank. The
+        # port facets rebuilt below are *interior* to the mesh, so classifying
+        # one needs the tag of the cell on both sides — and on a partition
+        # boundary one of those cells lives on the other rank. `shared_facet`
+        # is what makes that cell present as a ghost; it is also what a `dS`
+        # integral over those facets needs. Plumbed here only, so no other
+        # fixture changes partition.
+        partitioner = dolfinx.mesh.create_cell_partitioner(
+            dolfinx.mesh.GhostMode.shared_facet
+        )
         mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
-            gmsh.model, comm, rank, gdim=3
+            gmsh.model, comm, rank, gdim=3, partitioner=partitioner
         )
 
         if comm.rank == rank:
             gmsh.finalize()
+
+        if port_gap:
+            # `PORT-1` step 3b-iv: rebuild the port facet groups from the
+            # distributed cell tags (see the CAD-side comment above and
+            # known-issues 9). gap_1 <-> wire_1 is port 201, gap_2 <-> wire_2
+            # is port 202.
+            facet_tags = _interface_facet_tags(
+                mesh, cell_tags, {201: (101, 1), 202: (102, 2)}, facet_tags
+            )
 
         return mesh, cell_tags, facet_tags
 
