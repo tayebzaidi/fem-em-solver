@@ -19,6 +19,7 @@ from .core import (
     TimeHarmonicProblem,
     TimeHarmonicSolver,
     build_material_fields,
+    build_mu_r_field,
     normalize_boundary_condition,
 )
 from .materials import GelledSalinePhantomMaterial
@@ -48,6 +49,7 @@ __all__ = [
     "TimeHarmonicProblem",
     "TimeHarmonicSolver",
     "build_material_fields",
+    "build_mu_r_field",
     "normalize_boundary_condition",
     "GelledSalinePhantomMaterial",
     "FrequencySweepPlan",

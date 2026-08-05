@@ -22,6 +22,7 @@ from .time_harmonic import (
     TimeHarmonicProblem,
     TimeHarmonicSolver,
     build_material_fields,
+    build_mu_r_field,
     normalize_boundary_condition,
 )
 
@@ -43,5 +44,6 @@ __all__ = [
     "TimeHarmonicProblem",
     "TimeHarmonicSolver",
     "build_material_fields",
+    "build_mu_r_field",
     "normalize_boundary_condition",
 ]

@@ -36,7 +36,7 @@ from fem_em_solver.core import (
     TimeHarmonicProblem,
     TimeHarmonicSolver,
 )
-from fem_em_solver.core import build_material_fields
+from fem_em_solver.core import build_material_fields, build_mu_r_field
 from fem_em_solver.post.power_balance import poynting_power_balance
 
 from tests.complex_mode import complex_only
@@ -448,4 +448,258 @@ def test_piecewise_balance_fails_when_the_solve_ignores_sigma():
     assert blind["relative_imbalance"] > 0.5, (
         "the sigma-blind control should absorb essentially none of the power it "
         f"is credited with; imbalance was {blind['relative_imbalance']:.4%}"
+    )
+
+
+# `POST-3` step 5: the same two-slab pattern, now on μᵣ.  σ is uniform and the
+# permeability jumps at x = L/2 (μᵣ = 1 on the entry side, 2 beyond it), so the
+# only thing that changed relative to step 2 is which coefficient is piecewise.
+# μᵣ enters BOTH legs of the identity — the curl-curl operator through
+# `bilinear_form` and H = ∇×E/(−jωμ₀μᵣ) in the boundary flux — and a version
+# that fixed only one of the two could not fail for the right reason.
+MU_ENTRY = 2.0
+MU_FAR = 1.0
+# Mesh pair and separation factors, all set from measurement (probe logs
+# 20260805T003302Z / 20260805T003431Z_POST-3-step5-probe*.log).  Orientation
+# matters and was measured, not assumed: with the magnetic slab on the *far*
+# side the plane wave has already decayed where μᵣ ≠ 1, and the μᵣ-blind flux
+# leg separated by only 1.141× — a control that cannot fail is no control.  On
+# the entry side the honest imbalance is 11.44% (12³) → 5.76% (24³) at rate
+# 0.9899 in h, so the 5% MVP bar (unmoved, step 1's) needs 32³: predicted
+# 5.76% × 24/32 = 4.32%.  The 16³/32³ pair keeps the exact factor of 2 the
+# rate measurement needs, exactly as step 2 did.
+MU_N_COARSE = 16
+MU_N_FINE = 32
+MU_IMBALANCE_BOUND = 0.05
+# Both controls measured at 12³ against the honest 11.44%: flux-blind 42.26%
+# (3.693×), solve-blind 58.30% (5.096×), against an arithmetic ceiling of
+# 1/0.1144 = 8.741× — the imbalance cannot exceed 1.  The asserted factors sit
+# below the measurements with room, and far below the ceiling.
+MU_FLUX_BLIND_FACTOR = 3.0
+MU_SOLVE_BLIND_FACTOR = 4.0
+
+
+def _solve_two_mu_and_balance(
+    n: int,
+    *,
+    mu_r_for_flux: float | None = None,
+    mu_material_blind: bool = False,
+    mu_entry: float = MU_ENTRY,
+    mu_far: float = MU_FAR,
+):
+    """Solve the piecewise-μᵣ box and score the balance against μᵣ(x).
+
+    ``mu_r_for_flux`` overrides the permeability the *flux leg* is scored with
+    while the solve keeps the honest μᵣ(x); passing 1.0 is the μᵣ-blind
+    negative control (the H it computes is wrong by a factor of 2 over half the
+    boundary-adjacent material).  Left at ``None`` the identity is scored with
+    the very DG0 field the solver assembled its curl-curl term from.
+    """
+    comm = MPI.COMM_WORLD
+    msh, cell_tags = _two_material_mesh(n)
+
+    mu_map = {
+        TAG_LOW: HomogeneousMaterial(
+            sigma=SIGMA, epsilon_r=EPSILON_R, mu_r=mu_entry
+        ),
+        TAG_HIGH: HomogeneousMaterial(
+            sigma=SIGMA, epsilon_r=EPSILON_R, mu_r=mu_far
+        ),
+    }
+    solve_map = (
+        {
+            tag: HomogeneousMaterial(sigma=m.sigma, epsilon_r=m.epsilon_r, mu_r=1.0)
+            for tag, m in mu_map.items()
+        }
+        if mu_material_blind
+        else mu_map
+    )
+
+    # As in step 2 the Dirichlet data is a plane wave of the *entry-side*
+    # material; it is not the exact solution of the two-material problem (the
+    # μᵣ jump reflects), and the identity does not need it to be.
+    exact_numpy, _ = _exact_factory(SIGMA)
+    problem = TimeHarmonicProblem(
+        mesh=msh,
+        frequency_hz=FREQUENCY_HZ,
+        material=HomogeneousMaterial(sigma=SIGMA, epsilon_r=EPSILON_R, mu_r=1.0),
+        material_map=solve_map,
+        cell_tags=cell_tags,
+        boundary_condition="pec_zero_tangential_a",
+        dirichlet_e_field=exact_numpy,
+    )
+    fields = TimeHarmonicSolver(problem, degree=1).solve()
+    assert fields.mu_r_field is not None, "solver did not expose the DG0 mu_r field"
+
+    # The honest μᵣ(x), built independently of the solve so the operator-side
+    # control can disagree with the solver on purpose (step 2's pattern).
+    honest_mu = build_mu_r_field(
+        msh,
+        HomogeneousMaterial(sigma=SIGMA, epsilon_r=EPSILON_R, mu_r=1.0),
+        cell_tags=cell_tags,
+        material_map=mu_map,
+    )
+
+    balance = poynting_power_balance(
+        fields.e_complex,
+        omega=OMEGA,
+        sigma=fields.sigma_field,
+        mu_r=honest_mu if mu_r_for_flux is None else mu_r_for_flux,
+        comm=comm,
+    )
+    balance["ncells"] = int(
+        comm.allreduce(msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM)
+    )
+    return balance
+
+
+@complex_only
+def test_uniform_mu_r_field_reproduces_the_scalar_path():
+    """Step 5 must not move the scalar path: a constant μᵣ(x) gives the same numbers.
+
+    No solve — the same arbitrary interpolated field the σ pin uses, because the
+    two calls differ only in how μᵣ reaches the boundary flux leg.  Agreement to
+    round-off means the DG0 field enters ``H = ∇×E/(−jωμ₀μᵣ)`` exactly where the
+    float did.
+    """
+    comm = MPI.COMM_WORLD
+    msh = dmesh.create_box(
+        comm,
+        [np.array([0.0, 0.0, 0.0]), np.array([BOX_L, BOX_L, BOX_L])],
+        [4, 4, 4],
+        cell_type=dmesh.CellType.tetrahedron,
+    )
+    space = fem.functionspace(msh, ("N1curl", 1))
+    e_field = fem.Function(space)
+    e_field.interpolate(
+        lambda x: np.array(
+            [
+                np.sin(3.0 * x[1] / BOX_L) + 0j,
+                np.cos(2.0 * x[2] / BOX_L) + 0.5j * x[0] / BOX_L,
+                np.exp(-x[0] / BOX_L) + 0j,
+            ]
+        )
+    )
+
+    mu_field = build_mu_r_field(
+        msh, HomogeneousMaterial(sigma=SIGMA, epsilon_r=EPSILON_R, mu_r=1.0)
+    )
+    scalar = poynting_power_balance(
+        e_field, omega=OMEGA, sigma=SIGMA, mu_r=1.0, comm=comm
+    )
+    fielded = poynting_power_balance(
+        e_field, omega=OMEGA, sigma=SIGMA, mu_r=mu_field, comm=comm
+    )
+
+    if comm.rank == 0:
+        print("\n[POST-3] scalar vs uniform-field mu_r path (4^3, no solve):")
+        _report("scalar mu_r", dict(scalar, ncells=0))
+        _report("field  mu_r", dict(fielded, ncells=0))
+
+    assert abs(scalar["net_inward_power_w"]) > 0.0, "the test field carries no flux"
+    for key in ("dissipated_power_w", "net_inward_power_w", "reactive_inward_power_var"):
+        assert np.isclose(scalar[key], fielded[key], rtol=1e-12, atol=0.0), (
+            f"{key} moved when mu_r was passed as a uniform DG0 field: "
+            f"{scalar[key]:.12e} vs {fielded[key]:.12e}"
+        )
+
+
+@complex_only
+@pytest.mark.integration
+def test_poynting_balance_holds_for_piecewise_mu_r():
+    """`POST-3` step 5: the identity survives a two-permeability solve.
+
+    μᵣ = 2 for x < L/2 and 1 beyond it, σ uniform — the mirror image of step 2,
+    with the piecewise coefficient moved from the volume term into the operator
+    *and* the boundary flux.  The rate is still set by step 1's weakest link,
+    the O(h) N1curl curl trace on the boundary; the μᵣ interface adds a second
+    O(h) source without changing the order (0.9899 measured at 12³ → 24³).
+    """
+    comm = MPI.COMM_WORLD
+
+    coarse = _solve_two_mu_and_balance(MU_N_COARSE)
+    fine = _solve_two_mu_and_balance(MU_N_FINE)
+    rate = float(
+        np.log(coarse["relative_imbalance"] / fine["relative_imbalance"])
+        / np.log(2.0)
+    )
+
+    if comm.rank == 0:
+        print(
+            f"\n[POST-3] piecewise-mu_r balance, mu_r = {MU_ENTRY} | {MU_FAR}"
+            f" across x = L/2, sigma = {SIGMA} S/m, eps_r = {EPSILON_R}:"
+        )
+        _report(f"coarse {MU_N_COARSE}^3", coarse)
+        _report(f"fine   {MU_N_FINE}^3", fine)
+        print(f"  measured imbalance rate in h: {rate:.4f}")
+
+    assert rate > 0.9, (
+        f"measured imbalance rate {rate:.3f} is below the O(h) expectation the "
+        "boundary curl trace sets — steps 1-2 measured 0.987/0.9915 and the "
+        "mu_r interface should not change the order"
+    )
+    assert coarse["dissipated_power_w"] > 0.0, (
+        "no Ohmic dissipation from the piecewise-mu_r solve"
+    )
+    assert fine["relative_imbalance"] < coarse["relative_imbalance"], (
+        "power imbalance did not fall under refinement: "
+        f"{coarse['relative_imbalance']:.4e} -> {fine['relative_imbalance']:.4e}"
+    )
+    assert fine["relative_imbalance"] < MU_IMBALANCE_BOUND, (
+        f"relative power imbalance {fine['relative_imbalance']:.4%} exceeds the "
+        f"{MU_IMBALANCE_BOUND:.1%} bound: the boundary Poynting flux and the "
+        "volumetric Ohmic loss disagree about how much power this "
+        "two-permeability solve absorbs"
+    )
+    assert fine["net_inward_power_w"] > 0.0, (
+        f"net real power flows *out* of a passive lossy box "
+        f"({fine['net_inward_power_w']:.4e} W)"
+    )
+
+
+@complex_only
+@pytest.mark.integration
+def test_piecewise_mu_r_balance_fails_when_a_leg_ignores_mu_r():
+    """Negative control on both legs μᵣ enters — the vacuity trap of step 5.
+
+    ``flux-blind`` keeps the honest two-μᵣ solve and scores the boundary flux
+    with μᵣ = 1, i.e. the state of the code before this step; ``solve-blind``
+    does the opposite, solving a uniform-μᵣ operator and scoring it with the
+    honest μᵣ(x).  Both must break the identity, because a version that fixed
+    only one of the two legs would be a metric that cannot fail for the right
+    reason.  Factors are banded from the probe (3.693× / 5.096× measured
+    against an 8.741× arithmetic ceiling — the imbalance saturates at 1).
+    """
+    comm = MPI.COMM_WORLD
+
+    honest = _solve_two_mu_and_balance(12)
+    flux_blind = _solve_two_mu_and_balance(12, mu_r_for_flux=1.0)
+    solve_blind = _solve_two_mu_and_balance(12, mu_material_blind=True)
+
+    if comm.rank == 0:
+        print("\n[POST-3] negative controls, piecewise mu_r (12^3):")
+        _report("honest solve     ", honest)
+        _report("mu-blind flux leg", flux_blind)
+        _report("mu-blind operator", solve_blind)
+        for label, b in (("flux", flux_blind), ("solve", solve_blind)):
+            print(
+                f"  {label}-blind separation: "
+                f"{b['relative_imbalance'] / honest['relative_imbalance']:.3f}x"
+            )
+
+    assert flux_blind["relative_imbalance"] > MU_FLUX_BLIND_FACTOR * honest[
+        "relative_imbalance"
+    ], (
+        "scoring the honest two-mu_r solve with mu_r = 1 in the flux leg gave an "
+        f"imbalance of only {flux_blind['relative_imbalance']:.4%} against the "
+        f"honest {honest['relative_imbalance']:.4%} — H in the boundary integral "
+        "is not seeing mu_r(x)"
+    )
+    assert solve_blind["relative_imbalance"] > MU_SOLVE_BLIND_FACTOR * honest[
+        "relative_imbalance"
+    ], (
+        "a uniform-mu_r solve scored against the honest mu_r(x) gave an imbalance "
+        f"of only {solve_blind['relative_imbalance']:.4%} against the honest "
+        f"{honest['relative_imbalance']:.4%} — mu_r(x) is not reaching the "
+        "curl-curl operator"
     )

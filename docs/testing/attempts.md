@@ -3514,3 +3514,70 @@ needed; recorded so the daily review knows `.git/` is not a scratch area and
 `20260804T213435Z_MAT-6-step3-gate.log`,
 `20260804T213600Z_MAT-6-step3-gate-final.log` (8 passed each, incl. the four
 `tests/environment` guards). **Next run takes §9 item 4** (`POST-3` step 5).
+
+---
+
+## 2026-08-05T00:30Z — `POST-3` step 5 — **complete**
+
+**Slot:** 19:30 local implementer run. Preflight clean (`aabb0a7`), container Up
+26 h. Took §9 item 1 as written.
+
+**What landed.** μᵣ became a DG0 field on **both** legs the step is about.
+`build_mu_r_field` (new, `core/time_harmonic.py`, split out of
+`build_material_fields` rather than added to its two-tuple return so no caller
+changes shape) is built by `TimeHarmonicSolver.solve`, exposed on
+`TimeHarmonicFields.mu_r_field`, and passed to `bilinear_form` (`1/μᵣ(x)` in the
+curl-curl term, scalar fallback when `None`); `poynting_power_balance`'s `mu_r`
+now takes a `fem.Function` beside a float, with the same-mesh guard `sigma`
+has, so `H = ∇×E/(−jωμ₀μᵣ)` sees the same field. `HomogeneousMaterial.validate`
+was **not** relaxed — μᵣ stays one scalar per material and the piecewise field
+is assembled from the `material_map` scalars, which is the plan's "extend the
+validation with the field, not around it" satisfied by not needing to.
+
+**Measured.** Two-slab μᵣ = 2 | 1 across x = L/2, σ = 0.7 S/m uniform,
+`TH-6` box: imbalance **8.6101% (16³) → 4.3284% (32³)**, **rate 0.9922 in h**
+(steps 1–2 measured 0.987/0.9915), under the unmoved 5% §10 MVP bar. Scalar
+pin: uniform DG0 μᵣ = 1 reproduces the float path to `rtol = 1e-12` on all
+three powers. Controls at 12³ against honest 11.4409%: μᵣ-blind **flux leg**
+42.2557% (**3.693×**), μᵣ-blind **operator** 58.3013% (**5.096×**), ceiling
+1/0.1144 = **8.741×**; asserted 3× / 4×.
+
+**The finding worth keeping — orientation decides whether the control can
+fire.** Round 1 put μᵣ = 2 on the *far* slab and measured a flux-blind
+separation of **1.141×** (7.9058% vs 6.9304%): the lossy plane wave has
+decayed to nothing by the time it reaches the magnetic half, so blinding the
+flux leg there corrupts almost no real power. Honest convergence looked fine
+(6.9304% → 3.5038%, rate 0.9840) — i.e. the fixture would have passed a gate
+whose negative control was vacuous, which is exactly the failure mode `POST-3`
+exists to prevent. Moving the magnetic slab to the entry side fixed it. Probe
+logs for both orientations are committed; the operator-side control was added
+beyond the plan's single flux-leg control, and both are asserted.
+
+**Regression.** `tests/environment tests/solver
+tests/validation/{test_lossy_plane_wave,test_dielectric_sphere,test_time_harmonic_mms}.py`
+at `-n 2`, complex build: **36 passed, 4 failed, 75 s**. Two failures are
+known-issues 2. The other two (`tests/solver/test_energy_and_point_evaluation.py`,
+`TypeError: float() argument … not 'complex'` in
+`MagnetostaticSolver.compute_magnetic_energy`) are **new known-issues 8**,
+verified pre-existing at `aabb0a7` by re-running with the diff stashed
+(`2 failed, 2 passed in 4.46 s`). Not fixed in passing: it is `MAG` work and
+the complex-build energy value has never been checked against the real-build
+one.
+
+**Cost.** Four commands, all standard tier, `-n 2`, `timeout 180` (600 for the
+regression sweep): probe 22 s, probe-2 21 s, gate 114 s, regression 75 s,
+pre-existing check 5 s. Well inside the slot; no overrun, no denial.
+
+**§7/§9.** Step 5 entry flipped ✅ with the numbers; `POST-3` left **🟡
+deliberately** — its §9 item said "does not close `POST-3`", and the only
+remaining leg (reciprocity) is discharged at `PORT-1` step 3b-v, so the symbol
+is the review's call, not this run's.
+
+**Branch:** none — landed on `main`. **Logs:**
+`20260805T003302Z_POST-3-step5-probe.log`,
+`20260805T003431Z_POST-3-step5-probe2.log`,
+`20260805T003551Z_POST-3-step5-gate.log` (12 passed, 114 s),
+`20260805T003806Z_POST-3-step5-regression.log`,
+`20260805T003945Z_POST-3-step5-preexisting.log`.
+**Next run takes §9 item 2** (`PORT-1` step 3b-iv, facet tags on the arc-end
+discs — item 5 depends on it landing).

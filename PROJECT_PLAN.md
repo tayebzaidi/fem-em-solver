@@ -1016,11 +1016,39 @@ written 2026-08-04, 18:00 review; the follow-up step 3 asked for)*
 > step** *(decision, 18:00 review 2026-08-02)*: `‖Z − Zᵀ‖/‖Z‖` on the
 > two-torus reaction Z-matrix **is** the field-level reciprocity
 > `∫E₁·J₂ = ∫E₂·J₁`, measured at machine precision and gated there. `POST-3`
-> therefore has exactly one open leg of its own — piecewise μᵣ, step 5 below —
-> and stays 🟡 until it lands.
+> had exactly one open leg of its own — piecewise μᵣ, step 5 — and that landed
+> 2026-08-04. It stays 🟡 pending the review's call: every `POST-3` step of its
+> own is now ✅, and what remains is the borrowed reciprocity leg at `PORT-1`
+> step 3b-v. **The 19:30 run did not flip the symbol** — its §9 item said "does
+> not close `POST-3`", and closing on someone else's open chunk is the review's
+> adjudication, not an implementer's.
 >
-> **Step 5 — piecewise μᵣ through the Poynting balance (plan written
-> 2026-08-04, 03:00 review; §9 item 1 as of the 18:00 review).** The "magnetic phantom"
+> * **`POST-3` step 5 — piecewise μᵣ through the Poynting balance** ✅
+>   *(2026-08-04, 19:30 run; gate `20260805T003551Z_POST-3-step5-gate.log`,
+>   12 passed 114 s, `-n 2`, complex build)*. μᵣ is now a DG0 field on **both**
+>   legs — `build_mu_r_field` feeds `bilinear_form`'s curl-curl term and the
+>   same field is passed to `poynting_power_balance`'s
+>   `H = ∇×E/(−jωμ₀μᵣ)`. Two-slab μᵣ = 2 | 1 across x = L/2 at σ = 0.7 S/m:
+>   imbalance 8.6101% (16³) → **4.3284%** (32³), **rate 0.9922 in h**, under
+>   the unmoved 5% MVP bar. Scalar-path pin exact (uniform DG0 μᵣ = 1
+>   reproduces the float path to `rtol = 1e-12` on all three reported powers).
+>   **Both vacuity controls fire**, which is the point of the step: μᵣ-blind
+>   *flux leg* 42.2557% (3.693×) and μᵣ-blind *operator* 58.3013% (5.096×)
+>   against the honest 11.4409% at 12³, ceiling 1/0.1144 = 8.741×; asserted at
+>   3× / 4×. **Orientation was measured, not assumed** (probe
+>   `20260805T003302Z`): with the magnetic slab on the *far* side the wave has
+>   decayed where μᵣ ≠ 1 and the flux-leg control separated by only **1.141×**
+>   — a fixture whose control cannot fire. The entry-side orientation
+>   (`20260805T003431Z`) is what the gate uses. `HomogeneousMaterial.validate`
+>   was **not** relaxed: μᵣ stays one scalar per material and the piecewise
+>   field is assembled from the `material_map`'s scalars. Regression
+>   `20260805T003806Z_POST-3-step5-regression.log`: 36 passed / 4 failed, all
+>   four pre-existing (known-issues 2, and new known-issues 8 — the
+>   magnetostatic-energy `float(complex)` this sweep surfaced, verified at
+>   `aabb0a7` with the diff stashed).
+>
+> **Step 5 plan as written (2026-08-04, 03:00 review; §9 item 1 as of the 18:00
+> review).** The "magnetic phantom"
 > this step has been waiting on is a fixture, and the two-slab pattern from
 > step 2 is it: μᵣ = 1 for x < L/2 and μᵣ = 2 beyond, σ uniform, interface on
 > a mesh plane so the DG0 field is exactly the geometry. Two code touches,
@@ -1434,7 +1462,10 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
    DG0 field, 4.49% on a two-slab σ = 0.1 | 1.4 S/m solve, control at 99.2%);
    step 3 landed 2026-08-02 (total-current divergence residual, 9.32e-2 → 6.36e-2
    at rate 0.942 in h, with a CG1-vs-CG2 vacuity control separating by 1.5e13).
-   What remains is piecewise μᵣ and reciprocity.
+   Step 5 landed 2026-08-04 (piecewise μᵣ = 2 | 1 through **both** legs,
+   4.33% at 32³ at rate 0.9922, flux-blind and operator-blind controls at
+   3.69× / 5.10×). What remains is only the reciprocity leg, which `PORT-1`
+   discharges — the symbol is the review's to flip.
 4. **`PORT-1`** — 🟡, and the most active chunk in the plan. `GEO-8` unblocked
    the fixture 2026-08-01; **steps 1 and 2 are ✅** (2026-08-02: reciprocity
    2.65e-13, `Im Z₁₂` within 9.35% of the closed-form `ωM₁₂`, `Re Z₁₂`
@@ -1509,7 +1540,9 @@ negative, POST-1 step 2 complete, 15:00 human-edit anomaly resolved by
 `436199c`, MAT-6 step 3 complete) are journaled in attempts.md and the §7
 entries; both new ✅ steps audited §4-compliant this review.
 
-1. **`POST-3` step 5 — piecewise μᵣ through the Poynting balance.**
+1. ~~**`POST-3` step 5 — piecewise μᵣ through the Poynting balance.**~~
+   ✅ **done** (2026-08-04, 19:30 run; 4.3284% at 32³, rate 0.9922, both
+   vacuity controls firing at 3.69×/5.10× — see the §7 step-5 entry).
    Independent. Execute the §7 step-5 plan, written at the 03:00 review.
    **Anchor:** the parameter-free real-power identity on a two-slab
    μᵣ = 1|2 solve — imbalance falls under refinement at ~O(h) (steps 1–2

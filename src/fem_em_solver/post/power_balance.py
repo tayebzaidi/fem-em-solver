@@ -52,7 +52,7 @@ def poynting_power_balance(
     *,
     omega: float,
     sigma: Union[float, fem.Function],
-    mu_r: float = 1.0,
+    mu_r: Union[float, fem.Function] = 1.0,
     comm: Optional[MPI.Comm] = None,
 ) -> dict[str, float]:
     """Real-power balance for a time-harmonic solve.
@@ -74,9 +74,14 @@ def poynting_power_balance(
         scored against whatever σ is handed in, which is what makes the
         σ-blind negative control possible.
     mu_r:
-        Relative permeability, uniform over the mesh.  A piecewise μᵣ would
-        also have to enter ``H`` inside the boundary integral, so it is left
-        scalar until a magnetic phantom needs it.
+        Relative permeability: a uniform scalar, or the DG0 ``mu_r_field`` the
+        solver built (`POST-3` step 5).  A piecewise μᵣ enters ``H`` inside the
+        boundary integral as well as the curl-curl operator, and scoring a
+        two-μᵣ solve with a scalar here is exactly the vacuous version of this
+        identity — so the field path exists on both sides.  DG0 is
+        single-valued on exterior facets, so the boundary trace of ``μᵣ`` is
+        well-defined; the identity is scored against whatever μᵣ is handed in,
+        which is what makes the μᵣ-blind negative control possible.
     comm:
         Communicator to reduce over; defaults to the mesh's own.
 
@@ -107,8 +112,23 @@ def poynting_power_balance(
                 f"sigma must be finite and non-negative (S/m), got {sigma!r}"
             )
 
+    if isinstance(mu_r, fem.Function):
+        if mu_r.function_space.mesh is not msh:
+            raise ValueError(
+                "mu_r field and e_complex must live on the same mesh; got "
+                "functions from two different meshes, which would silently "
+                "score one material distribution against another field"
+            )
+        mu_r_ufl: object = mu_r
+    else:
+        mu_r_ufl = float(mu_r)
+        if not np.isfinite(mu_r_ufl) or mu_r_ufl <= 0.0:
+            raise ValueError(
+                f"mu_r must be finite and positive, got {mu_r!r}"
+            )
+
     normal = ufl.FacetNormal(msh)
-    h_field = ufl.curl(e_complex) / (-1j * omega * MU_0 * mu_r)
+    h_field = ufl.curl(e_complex) / (-1j * omega * MU_0 * mu_r_ufl)
 
     # ufl.inner conjugates its second argument, so inner(E, E) is |E|² already.
     # σ is real, so the product's imaginary part is round-off and Re() below is

@@ -124,6 +124,7 @@ class TimeHarmonicFields:
     frequency_hz: float
     sigma_field: Optional[fem.Function] = None
     epsilon_r_field: Optional[fem.Function] = None
+    mu_r_field: Optional[fem.Function] = None
     boundary_condition: TimeHarmonicBoundaryCondition = TimeHarmonicBoundaryCondition.NATURAL
     dirichlet_dof_count: int = 0
     solve_diagnostics: Optional[LinearSolveDiagnostics] = None
@@ -132,6 +133,60 @@ class TimeHarmonicFields:
     @property
     def omega(self) -> float:
         return float(2.0 * np.pi * self.frequency_hz)
+
+
+def _validate_material_map_tags(
+    cell_tags: Optional[dolfinx.mesh.MeshTags],
+    material_map: Mapping[int, HomogeneousMaterial],
+) -> None:
+    """Every tag a material_map names must exist in the mesh's cell tags."""
+    if cell_tags is None:
+        raise ValueError(
+            "material_map requires problem.cell_tags so each requested tag can be assigned a material"
+        )
+
+    known_tags = {int(tag) for tag in np.asarray(cell_tags.values)}
+    missing_tags = sorted(int(tag) for tag in material_map if int(tag) not in known_tags)
+    if missing_tags:
+        raise ValueError(
+            "material_map references tags that do not exist in problem.cell_tags: "
+            f"{missing_tags}. Known tags: {sorted(known_tags)}"
+        )
+
+
+def build_mu_r_field(
+    mesh: dolfinx.mesh.Mesh,
+    default_material: HomogeneousMaterial,
+    *,
+    cell_tags: Optional[dolfinx.mesh.MeshTags] = None,
+    material_map: Optional[Mapping[int, HomogeneousMaterial]] = None,
+) -> fem.Function:
+    """Build the DG0 μᵣ(x) field the curl-curl term and the Poynting flux share.
+
+    Split out of :func:`build_material_fields` rather than added to its
+    two-tuple return so no existing caller changes shape (`POST-3` step 5).
+    μᵣ is still declared per material — one scalar per tag — so
+    :meth:`HomogeneousMaterial.validate` keeps rejecting a non-scalar μᵣ; what
+    becomes piecewise is the *field assembled from* those scalars.
+
+    ``phantom_material`` takes no part here: the gelled-saline phantom is
+    non-magnetic, so phantom cells keep ``default_material.mu_r``.
+    """
+    q0 = fem.functionspace(mesh, ("DG", 0))
+    mu_r_field = fem.Function(q0, name="mu_r")
+    mu_values = mu_r_field.x.array
+    mu_values[:] = float(default_material.mu_r)
+
+    if material_map:
+        _validate_material_map_tags(cell_tags, material_map)
+        for tag, tagged_material in material_map.items():
+            tagged_material.validate(context=f"material_map[{int(tag)}]")
+            tag_cells = cell_tags.indices[cell_tags.values == int(tag)]
+            for cell in tag_cells:
+                mu_values[q0.dofmap.cell_dofs(int(cell))] = float(tagged_material.mu_r)
+
+    mu_r_field.x.scatter_forward()
+    return mu_r_field
 
 
 def build_material_fields(
@@ -162,18 +217,7 @@ def build_material_fields(
     epsilon_values[:] = float(default_material.epsilon_r)
 
     if material_map:
-        if cell_tags is None:
-            raise ValueError(
-                "material_map requires problem.cell_tags so each requested tag can be assigned a material"
-            )
-
-        known_tags = {int(tag) for tag in np.asarray(cell_tags.values)}
-        missing_tags = sorted(int(tag) for tag in material_map if int(tag) not in known_tags)
-        if missing_tags:
-            raise ValueError(
-                "material_map references tags that do not exist in problem.cell_tags: "
-                f"{missing_tags}. Known tags: {sorted(known_tags)}"
-            )
+        _validate_material_map_tags(cell_tags, material_map)
 
         for tag, tagged_material in material_map.items():
             tagged_material.validate(context=f"material_map[{int(tag)}]")
@@ -337,6 +381,12 @@ class TimeHarmonicSolver:
             phantom_material=self.problem.phantom_material,
             phantom_tag=self.problem.phantom_tag,
         )
+        mu_r_field = build_mu_r_field(
+            self.mesh,
+            material,
+            cell_tags=self.problem.cell_tags,
+            material_map=self.problem.material_map,
+        )
 
         # After the input validation above, so a bad frequency_unit or an
         # unknown material_map tag still reports itself in either build.
@@ -345,7 +395,7 @@ class TimeHarmonicSolver:
         omega = 2.0 * np.pi * self.problem.frequency_hz
         v_space = self.function_space()
         v = ufl.TestFunction(v_space)
-        a = self.bilinear_form(sigma_field, epsilon_r_field)
+        a = self.bilinear_form(sigma_field, epsilon_r_field, mu_r_field=mu_r_field)
 
         bcs, selected_bc, dirichlet_dof_count = self.build_boundary_conditions()
 
@@ -410,6 +460,7 @@ class TimeHarmonicSolver:
             frequency_hz=self.problem.frequency_hz,
             sigma_field=sigma_field,
             epsilon_r_field=epsilon_r_field,
+            mu_r_field=mu_r_field,
             boundary_condition=selected_bc,
             dirichlet_dof_count=dirichlet_dof_count,
             solve_diagnostics=diagnostics,
@@ -417,7 +468,13 @@ class TimeHarmonicSolver:
         )
         return self._fields
 
-    def bilinear_form(self, sigma_field: fem.Function, epsilon_r_field: fem.Function):
+    def bilinear_form(
+        self,
+        sigma_field: fem.Function,
+        epsilon_r_field: fem.Function,
+        *,
+        mu_r_field: Optional[fem.Function] = None,
+    ):
         """Sesquilinear form ``∫ μᵣ⁻¹(∇×E)·(∇×v̄) − k₀² ε_c E·v̄ dx``.
 
         Split out of :meth:`solve` so the operator can be assembled and probed
@@ -425,12 +482,22 @@ class TimeHarmonicSolver:
         ``ufl.inner`` conjugates its SECOND argument in complex mode — that is
         what makes the form sesquilinear; ``ufl.dot`` would flip the sign
         convention silently (pinned in ``tests/environment/test_complex_mode.py``).
+
+        ``mu_r_field`` is the DG0 μᵣ(x) of `POST-3` step 5; passing ``None``
+        falls back to the uniform ``problem.material.mu_r``, which is what a
+        caller assembling the operator on its own gets.  The *same* field must
+        also reach ``H = ∇×E/(−jωμ₀μᵣ)`` in the Poynting flux leg — a piecewise
+        μᵣ in only one of the two makes the power identity vacuous.
         """
         require_complex_mode("TimeHarmonicSolver.bilinear_form")
         omega = 2.0 * np.pi * self.problem.frequency_hz
         k0_squared = omega * omega * MU_0 * EPSILON_0
         epsilon_c = epsilon_r_field - 1j * sigma_field / (omega * EPSILON_0)
-        mu_r_inv = 1.0 / float(self.problem.material.mu_r)
+        mu_r_inv = (
+            1.0 / float(self.problem.material.mu_r)
+            if mu_r_field is None
+            else 1.0 / mu_r_field
+        )
 
         v_space = self.function_space()
         e_trial = ufl.TrialFunction(v_space)
