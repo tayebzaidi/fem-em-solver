@@ -97,6 +97,15 @@ plus one weekly planning review:
   second, so an outage costs two slots rather than the rest of the day.
   Protocol: docs/automation/implementer-run.md.
 
+The daily review also maintains a status dashboard for the human operator
+(`docs/status/dashboard.md`, republished as a Claude artifact — URL in
+daily-review.md step 7) and may send push notifications strictly per
+`docs/automation/notifications.md` (human-gated events only, hard cap 2 per
+rolling 7 days, ledger-enforced). A PreToolUse hook
+(`scripts/automation/hooks/bash_guard.py`, wired in .claude/settings.json)
+mechanically denies `mpiexec` rank counts above 12 and pytest runs that
+bypass the logging harness.
+
 If you are one of these scheduled sessions, your protocol document is
 authoritative; read it before acting. If you are an interactive session,
 expect these runs to exist: check `git log` and attempts.md before assuming

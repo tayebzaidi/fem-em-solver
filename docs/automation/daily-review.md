@@ -14,7 +14,8 @@ step 5 asks whether the backlog still reaches §10 — and keep your own context
 for the judgement calls: what a negative result means, and what to queue next.
 A subagent's report is evidence, not a verdict; if one says a chunk passes §4,
 the log it cites is what you cite back in the commit. Do not delegate steps 2,
-6, or 7 — disposition, queue order, and the commit are yours.
+6, 7, or 8 — disposition, queue order, the dashboard/notification call, and
+the commit are yours.
 
 ## Steps
 
@@ -86,7 +87,25 @@ the log it cites is what you cite back in the commit. Do not delegate steps 2,
    explicitly in the item ("depends on item 1 landing; if it did not, skip to
    item 3") rather than leaving the run to discover it.
 
-7. Commit everything as `docs(plan): daily review YYYY-MM-DD`. If nothing
+7. **Refresh the status dashboard and decide on notifications.** Rewrite
+   `docs/status/dashboard.md` from what steps 1–6 established — Waiting-on-you
+   first, then the §2 digest (only when §2 changed), recent activity,
+   automation health, on-deck summary. Keep it a digest: no content that
+   exists only there. Then republish it with the Artifact tool to the
+   recorded URL:
+
+   `https://claude.ai/code/artifact/d5040a1e-ae6c-42dd-8e11-2330e0b9bbc8`
+
+   (pass that as `url` so the link stays stable; if the Artifact tool is
+   unavailable in this session, the file update alone is fine — the next
+   session republishes). Finally, check the events of this interval against
+   `docs/automation/notifications.md`; send a push only if that policy's
+   categories and 2-per-7-days ledger both allow it, and update the ledger
+   either way. Dashboard staleness alone does not justify a commit — fold
+   the refresh into a commit the other steps already earned, or skip it this
+   interval.
+
+8. Commit everything as `docs(plan): daily review YYYY-MM-DD`. If nothing
    needs changing, **commit nothing** — §5.2 explicitly prohibits audit-note
    commits, and that rule exists because of a 35-commit pile of them.
 
