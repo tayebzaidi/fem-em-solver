@@ -1,0 +1,39 @@
+# Test Run
+- Chunk: PORT-1-step3biv-parallel-retry
+- Commit: ec604df48da95fde4353b90dade80aca22fa7306
+- Time (UTC): 2026-08-05 03:40:58
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 150 mpiexec -n 2 python3 -m pytest tests/mesh/test_two_torus_port_facets.py -v --tb=short -s 2>&1 | grep -a "3b-iv\|PASS\|FAIL\|passed\|failed\|Error\|assert\|two-torus-mesh"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  4 22:40 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 150 mpiexec -n 2 python3 -m pytest tests/mesh/test_two_torus_port_facets.py -v --tb=short -s 2>&1 | grep -a "3b-iv\|PASS\|FAIL\|passed\|failed\|Error\|assert\|two-torus-mesh"'\'''
+tests/mesh/test_two_torus_port_facets.py::test_port_facet_groups_are_the_arc_end_discs [two-torus-mesh] gapped fragment volumes=9 wire_1=9.238604e-06(1p) wire_2=9.238604e-06(1p) domain=3.712253e-04(1p) gap_1=1.148764e-06(3p) gap_2=1.148764e-06(3p) gap_box_analytic=1.148764e-06
+[two-torus-mesh] port interfaces (CAD) 201: 2 surface(s) area=1.604721e-04 202: 2 surface(s) area=1.604721e-04
+
+## Exit
+- Status: 0
+- Elapsed (s): 151

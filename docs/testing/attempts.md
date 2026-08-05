@@ -3661,3 +3661,72 @@ this mesh at `-n 2`.
 `20260805T020843Z_PORT-1-step3biv-serial-gate.log` (2 passed, 22.5 s).
 **Next run takes §9 item 2 again** (still open, first failure) — as the
 retry described above, not as the original plan; item 5 stays blocked.
+
+## 2026-08-05T03:30Z — `PORT-1` step 3b-iv (§9 On-deck item 2) — **incomplete**
+
+Second attempt, run as the retry the item asks for: attack the hang, do not
+re-derive the tags. Tree clean at start, container Up, no anomaly. The
+attempt's own conclusion is that **known-issues 9's diagnosis was wrong**, and
+the correction is the durable output of this slot.
+
+**What was changed.** The gmsh dim-2 physical groups are gone. The
+fragment-boundary intersection stays in `two_torus_domain` as a CAD
+cross-check only (it prints `201: 2 surface(s) area=1.604721e-04` per port,
+matching the parked branch's OCC number digit for digit), and the same facet
+set is rebuilt on the dolfinx side by a new `_interface_facet_tags(mesh,
+cell_tags, {201: (101, 1), 202: (102, 2)}, existing)`: the facets whose two
+cells carry a gap tag and a conductor tag. Cell tags distribute fine, so the
+interface is derivable from data every rank already holds. Rank-safety: a
+partition-boundary facet's second cell is a ghost and ghost cells are not
+carried by `cell_tags`, so the tag is pushed through a DG0 function and
+`scatter_forward`ed rather than read from `cell_tags.values`.
+
+**Measured — the mesh is innocent.** A marker probe
+(`tests/mesh/probe_two_torus_facets.py`, one print per rank around every
+collective) runs the gate's own mesh at `-n 2` to completion, **exit 0 in
+14 s**: mesh built (39578 / 39956 cells), `create_entities(fdim)` returns,
+`create_connectivity(fdim, tdim)` returns, and each port's interface is found
+with **116 facets**. A coarser variant is exit 0 in 6 s. So neither
+`model_to_mesh` nor the facet creation hangs — the entry that said they did is
+retitled and half-refuted in place.
+
+**The hang that remains, and where it is.** The gate itself still times out at
+`-n 2` (`timeout 150`, killed; the earlier full-tier attempt at `timeout 180`
+died the same way). The mesh generator's two prints land, nothing after. So the
+hang is downstream of the tags, in `_facet_group_area`'s `dS` assembly. The two
+ranks' SIGTERM stacks are **different** this time, which is the useful clue:
+one is in `Topology::create_entity_permutations ← create_entities ←
+index_to_dest_ranks ← compute_graph_edges_nbx`, the other is in mpi4py's
+`MPI_Comm_dup` — a mismatched collective, not a slow one.
+
+**Hypothesis for the next attempt, in priority order.** (1) **Ghost mode.**
+`gmshio.model_to_mesh` passes no partitioner, and the probe measures
+`cells_ghost=0` on both ranks. An interior-facet integral needs both cells
+behind every facet; a mesh with no ghost cells cannot supply one on a
+partition-boundary facet. First move is a `shared_facet` partitioner into
+`model_to_mesh`, then re-measure the probe *and* the gate — this also makes
+`_interface_facet_tags`'s `counts == 2` test complete rather than lucky.
+(2) The same probe shows each rank seeing exactly **one** port (rank 0: 201,
+rank 1: 202), so a per-port area is rank-local until reduced — the gate already
+allreduces, but a per-port ratio assertion must not be evaluated where the
+count is zero. (3) If (1) does not fix it, instrument `_facet_group_area`
+itself with the same marker pattern: `fem.form` (JIT), `assemble_scalar`, and
+the allreduce are three separate suspects and the probe pattern separates them
+in one run.
+
+**Cost.** Four commands, standard tier: `-n 2` gate exit 124 at 181 s (killed
+at the ceiling, not re-run longer), coarse probe 6 s, fine probe 14 s, `-n 2`
+gate retry killed at 150 s. No denials. Roughly 20 minutes of the slot went to
+the two localisation probes, which is what produced the correction.
+
+**Branch:** `attempt/PORT-1-step3biv-20260805T034500Z` (commit `e3fd31f`) —
+carries `_interface_facet_tags`, the CAD cross-check print, the gate file, and
+the marker probe. The earlier `attempt/PORT-1-step3biv-20260805T021000Z` is
+**superseded**: its gmsh-side interior physical groups are the thing this
+attempt removed; keep it only until the review reads both.
+**Logs:** `20260805T033458Z_PORT-1-step3biv-parallel-probe.log` (exit 124),
+`20260805T033928Z_PORT-1-step3biv-hang-localise.log` (exit 0, 6 s),
+`20260805T034007Z_PORT-1-step3biv-hang-localise-fine.log` (exit 0, 14 s),
+`20260805T034058Z_PORT-1-step3biv-parallel-retry.log` (killed at 150 s).
+**Next run takes §9 item 2 again** — second failure, so the review rescopes it
+before a third attempt per §9's own rule; item 5 stays blocked.

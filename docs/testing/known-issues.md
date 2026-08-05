@@ -118,7 +118,31 @@ them by number.
 | **Cause** | Not diagnosed beyond the mechanism: in the complex build every `fem.Function` is complex, so the assembled energy scalar is complex-typed (with a round-off imaginary part) and the unconditional `float(...)` refuses it. The magnetostatic energy is real by construction, so the fix is presumably `np.real(...)` before the cast — but that is `MAG` work and the value has never been checked against the real-build number, so it is recorded rather than patched in passing. Both tests pass in the real build. |
 | **Verified pre-existing at** | `aabb0a7` — reproduced with the `POST-3` step-5 diff stashed: `2 failed, 2 passed in 4.46 s` (`20260805T003945Z_POST-3-step5-preexisting.log`, `-n 2`, complex build). Found by that step's regression sweep, which is the first time this file was run under `dolfinx-complex-mode`. |
 
-### 9. `model_to_mesh` hangs at `-n 2` when `two_torus_domain` tags interior facets
+### 9. `-n 2` hangs on `two_torus_domain`'s port facets — *not* in `model_to_mesh`
+
+**Retitled and half-refuted 2026-08-05 (22:30 run).** The mesh is innocent: with
+the gmsh dim-2 physical groups removed entirely and the identical facet set
+rebuilt on the dolfinx side from the distributed cell tags, `model_to_mesh`,
+`create_entities(fdim)` and `create_connectivity(fdim, tdim)` all return at
+`-n 2` on the gate's own mesh in **14 s** (marker probe
+`20260805T034007Z_PORT-1-step3biv-hang-localise-fine.log`, exit 0; 39578/39956
+cells per rank, 116 interface facets found per port). The `-n 2` gate still
+times out, so *something* on this path hangs — but it is downstream of the tags,
+in the `dS` facet-area assembly, and the paragraph below misattributes it.
+
+**Leading hypothesis for the next attempt, measured not guessed:**
+`gmshio.model_to_mesh` passes no partitioner, so the mesh is built with the
+default ghost mode and the probe measures `cells_ghost=0` on **both** ranks. An
+interior-facet (`dS`) integral needs both cells behind every facet, which a mesh
+with no ghost cells cannot supply on a partition-boundary facet. First move:
+hand `model_to_mesh` a `shared_facet` partitioner and re-measure. Second
+observation from the same probe, relevant either way: with the current
+partition each rank sees exactly **one** port (rank 0 tag 201, rank 1 tag 202),
+so any per-port assertion is rank-local until it is reduced.
+
+The original entry follows, kept because its serial measurements stand.
+
+#### Original entry, 2026-08-05 (21:00 run) — the `model_to_mesh` attribution is superseded above
 
 | | |
 |---|---|

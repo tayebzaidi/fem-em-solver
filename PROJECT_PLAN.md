@@ -1394,6 +1394,42 @@ written 2026-08-04, 18:00 review; the follow-up step 3 asked for)*
 > group reaches the dolfinx facet tags from **neither** path (gapped set is
 > `[201, 202]`, ungapped is `[]`) — **known-issues 10**, not fixed in passing.
 >
+> **Step 3b-iv attempted a second time 2026-08-05 (22:30 run) — 🟡 still
+> incomplete, and the blocker moved: known-issues 9 was misdiagnosed.** Code
+> parked on `attempt/PORT-1-step3biv-20260805T034500Z` (`e3fd31f`), which
+> supersedes the 02:10 branch. The gmsh dim-2 physical groups on interior
+> facets are **removed**; the fragment-boundary intersection stays only as a
+> CAD cross-check print (`201: 2 surface(s) area=1.604721e-04` per port,
+> matching the first attempt's OCC number), and the identical facet set is
+> rebuilt on the dolfinx side from the distributed *cell* tags —
+> `_interface_facet_tags` in `io/mesh.py`, gap piece `101`/`102` against
+> conductor `1`/`2`, with the ghost-cell tag pushed through a DG0
+> `scatter_forward` because `cell_tags` does not carry ghosts.
+>
+> *The mesh is not what hangs.* A per-rank marker probe
+> (`tests/mesh/probe_two_torus_facets.py`, on the branch) runs the gate's own
+> mesh at `-n 2` to completion, **exit 0 in 14 s**
+> (`20260805T034007Z_PORT-1-step3biv-hang-localise-fine.log`): 39578/39956
+> cells per rank, `create_entities(fdim)` and `create_connectivity(fdim, tdim)`
+> both return, **116 interface facets found per port**. The coarse variant is
+> 6 s. So `model_to_mesh` and facet creation are cleared by measurement, and
+> known-issues 9 is retitled and half-refuted in place.
+>
+> *What still hangs.* The gate itself times out at `-n 2` after the generator's
+> prints and before any assertion — the `dS` facet-area assembly. The two
+> ranks' SIGTERM stacks now **differ** (one in `create_entity_permutations`,
+> one in mpi4py `MPI_Comm_dup`), so it is a mismatched collective, not a slow
+> one. **Ranked hypothesis, in the next attempt's order:** (1) ghost mode —
+> `model_to_mesh` takes no partitioner and the probe measures `cells_ghost=0`
+> on both ranks, while an interior-facet integral needs both cells of every
+> facet; hand it a `shared_facet` partitioner and re-measure. (2) Each rank
+> sees exactly one port under the current partition (rank 0 → 201, rank 1 →
+> 202), so per-port quantities are rank-local until reduced. (3) Failing (1),
+> instrument `_facet_group_area` with the same marker pattern — `fem.form`
+> (JIT), `assemble_scalar` and the allreduce are three separable suspects.
+> **Second failure**, so §9's own rule applies: the review rescopes this item
+> before a third attempt.
+>
 > **Step 3b-v — the facet-integral port voltage on 3b-iv's tags (plan
 > written 2026-08-04, 18:00 review; depends on 3b-iv landing).** The
 > estimator 3b-ii ranked as route 2, now the only route left: the
@@ -1618,8 +1654,20 @@ entries; both new ✅ steps audited §4-compliant this review.
    problem.
 
 2. **`PORT-1` step 3b-iv — facet tags on the arc-end discs (mesh only).**
-   🟡 **attempted once, 2026-08-05 21:00 run — still open, and the retry is a
-   different job from the original plan.** The tags themselves are done and
+   🟡 **attempted twice — 2026-08-05 21:00 and 22:30 runs — still open. Second
+   failure, so this item is due a rescope by the review before a third
+   attempt** (§9's own rule). The 22:30 run refuted the blocker below rather
+   than removing it: the tags now come from the distributed cell tags instead
+   of gmsh physical groups, and `model_to_mesh` + facet creation are **green at
+   `-n 2` in 14 s** (marker probe, 116 facets per port); what still hangs is the
+   `dS` facet-area assembly downstream, most likely because the mesh is built
+   with no ghost cells (`cells_ghost=0` measured on both ranks). Code on
+   `attempt/PORT-1-step3biv-20260805T034500Z`, which supersedes the 02:10
+   branch; ranked next moves in the §7 3b-iv entry. The paragraph below is the
+   first attempt's framing, kept for the history:**
+
+   ~~attempted once, 2026-08-05 21:00 run — still open, and the retry is a
+   different job from the original plan.~~ The tags themselves are done and
    measured (2 surfaces per port; area 0.974490841 of the exact oblique cut
    `1.604721580e-04 m²`, which is `1.0216 ×` this item's `2πr²` anchor —
    see the §7 3b-iv entry), parked on
