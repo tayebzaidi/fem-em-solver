@@ -965,6 +965,47 @@ written 2026-08-04, 18:00 review; the follow-up step 3 asked for)*
 >   decomposition leaves interior tets) — thin tagged regions for guardrail
 >   tests must be hexahedra.
 >
+> * **`POST-1` step 3 — drop-set semantics on a solved field: measured** ✅
+>   *(2026-08-05, 13:30 run;
+>   `tests/post/test_drop_set_semantics_sphere.py`)*. The three statistics of
+>   `|E|` over the `TH-8` sphere tag, against the closed form
+>   `3/(ε+2)E₀ = 0.037500` at `h_sphere = 0.00833`
+>   (`20260805T183328Z_POST-1-step3-gate-n2.log`, 5 passed 4.42 s; identical to
+>   the last printed digit at `-n 4`, `…183344Z…gate-n4.log`, 2.21 s):
+>
+>   | set | n | mean | error |
+>   |---|---|---|---|
+>   | (a) `prefer_interior=True` (production) | 3327 | 0.039095 | **4.253%** |
+>   | (b) full owned tagged set | 4431 | 0.039099 | **4.263%** |
+>   | (c) drop set alone | 1104 | 0.039110 | **4.293%** |
+>
+>   **The answer to the semantics question is that on this field it does not
+>   matter — for the mean.** The drop layer is 24.92% of the tag and its error
+>   is 1.009× the surviving set's, so discarding it moves the reported mean by
+>   0.01 percentage points, 1/400th of the 4.25% error itself. That 4.25% is
+>   bulk discretisation, which no sampling rule can touch; the plan's
+>   expectation that (c) would sample the smeared `ε = 78` discontinuity and
+>   separate is **refuted for the mean** — the interface layer is not biased
+>   against the interior closed form.
+>
+>   Where it separates is the **spread**: surviving `[0.035692, 0.043769]` vs
+>   full `[0.033788, 0.044560]` — both extrema of the tag come from the drop
+>   layer, and the full range is 1.334× the surviving range. That is the gated
+>   separation (ceiling 1.2, probe-measured), together with the exact partition
+>   identity `3327 + 1104 = 4431` and (a) inside a probe band
+>   `(3.75%, 4.75%)` that sits inside `TH-8`'s own 5%. The (a)-vs-(b)
+>   comparison is printed, never gated. Probe
+>   `20260805T183210Z_POST-1-step3-probe.log`; regressions 12 passed /
+>   12 skipped real, 28 passed complex (`…183359Z…`, `…183409Z…`).
+>
+>   **For the review to adjudicate.** The guardrail is defensible but is
+>   protecting a mean that does not need protecting, at a 24.92% cost in
+>   sample count; the quantity it *does* move is the extremum, and SAR peaks
+>   are extrema — a rule that discards the interface layer discards the peak.
+>   Two confounds are unseparated and neither is this step's to resolve: the
+>   sphere's curved boundary puts chordal geometry error in the same layer, and
+>   a smooth-interface fixture would tell them apart.
+>
 > **`POST-1` step 3 — drop-set semantics on a solved field (plan written
 > 2026-08-04, 18:00 review; the adjudication the ⚠️ waits on).** Steps 1–2
 > made the guardrail rank-safe; nothing has ever asked whether dropping the
@@ -1782,8 +1823,14 @@ says so in its own text.
    annotate §7, stop — the workaround (submesh reformulation or a
    dolfinx-version pin) is a review's call, not this slot's.*
 
-2. **`POST-1` step 3 — drop-set semantics on the solved `TH-8` sphere.**
-   Independent; the adjudication `POST-1`'s ⚠️ waits on. Execute the §7
+2. ~~**`POST-1` step 3 — drop-set semantics on the solved `TH-8` sphere.**~~
+   — **done 2026-08-05 (13:30 run)**: gated green at `-n 2` (4.42 s) and
+   bit-identical at `-n 4`. (a) 4.253%, (b) 4.263%, (c) 4.293% against
+   `3/(ε+2)E₀`; the drop layer is 24.92% of the tag and separates in spread
+   (1.334×) but **not** in mean (1.009×) — the plan's expected separation is
+   refuted for the mean, which is the reported result. `POST-1` stays ⚠️: the
+   review reads (a) vs (b) and decides the symbol. Original text follows.
+   *Independent; the adjudication `POST-1`'s ⚠️ waits on. Execute the §7
    step-3 plan, written this review. **Anchor:** the `TH-8` closed form
    `|E_in| = 3/(εᵣ+2)·E₀` (gated to 2.44%, 2026-07-31) — probe, then gate
    the guardrail-surviving mean at a probe-set band inside `TH-8`'s
@@ -1797,7 +1844,7 @@ says so in its own text.
    **Does not close:** `POST-1` — the review reads the comparison and
    decides the symbol. **Negative result:** surviving-set scoring *worse*
    than full-set is the answer, not a defect — report all three errors,
-   annotate §7, stop.
+   annotate §7, stop.*
 
 3. **`MAT-6` step 4 — adjudicate the ΔX shift on the converged box.**
    Independent. Execute the §7 step-4 plan, written this review.

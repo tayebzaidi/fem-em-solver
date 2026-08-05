@@ -3808,3 +3808,85 @@ dependency was 3b-iv's tags reaching `main`, which they now have. Whoever takes
 it should expect the same lazy-collective trap in the voltage's own facet
 integrals and hoist `create_entity_permutations()` there before debugging
 anything else.
+
+---
+
+## 2026-08-05T18:32Z — `POST-1` step 3 — **complete**
+
+Scheduled implementer run, 13:30 CDT slot. Tree clean at start, container Up,
+no anomaly. §9 item 1 was marked done by the 12:00 run, so this slot took
+**item 2**, `POST-1` step 3 — drop-set semantics on the solved `TH-8` sphere.
+Landed on `main`; nothing parked.
+
+**What was built.** `tests/post/test_drop_set_semantics_sphere.py` — one solve
+of the `TH-8` dielectric sphere at its middle resolution (`h_sphere = 0.00833`),
+then three statistics of the phasor magnitude `|E|` over the sphere tag scored
+against `|E_in| = 3/(ε+2)E₀ = 0.037500`. The fixture's constants, exact
+exterior Dirichlet trace and material map are **imported** from
+`tests/validation/test_dielectric_sphere.py`, not restated; only the solve
+wrapper differs, because `TH-8`'s own helper reduces the mesh, tags and field
+objects away before returning. Production's reduction is reused via the
+`phantom_fields` privates, so the drop-set statistic is not a
+reimplementation — same centroids, same `eval`, same `|F| = sqrt(Σ|F_i|²)`,
+same allreduces.
+
+**Measured** (`20260805T183328Z_POST-1-step3-gate-n2.log`, `-n 2`, 5 passed
+4.42 s; every digit below reproduces at `-n 4`,
+`…183344Z…gate-n4.log`, 2.21 s):
+
+| set | n | mean | error | min | max |
+|---|---|---|---|---|---|
+| (a) `prefer_interior=True` | 3327 | 0.039095 | 4.253% | 0.035692 | 0.043769 |
+| (b) full owned tagged set | 4431 | 0.039099 | 4.263% | 0.033788 | 0.044560 |
+| (c) drop set alone | 1104 | 0.039110 | 4.293% | 0.033788 | 0.044560 |
+
+**The plan's expected separation is refuted, for the mean.** The drop layer is
+24.92% of the tag, and (c)'s error is 1.009× (a)'s — the three means agree to
+0.04% of each other. Discarding a quarter of the sample set moves the reported
+mean by 0.01 percentage points, 1/400th of the 4.25% error itself. The 4.25% is
+bulk discretisation; no sampling rule reaches it. So the interface layer is not
+biased against the interior closed form the way the step-3 plan assumed when it
+called (c) "the separation scale".
+
+**Where the layer does separate: the spread.** (c) contains the full tag's
+minimum *and* maximum exactly, and the full range is 1.334× the surviving
+range. That is what the negative control now gates (ceiling 1.2, read off the
+probe per `POST-3` step 2's rule) — the separation that exists, not the one
+that was expected.
+
+**Gates.** (a)'s error inside a probe band `(3.75%, 4.75%)` whose upper end
+sits inside `TH-8`'s own 5% MVP tolerance on the same fixture; the exact
+integer partition identity `3327 + 1104 = 4431` globally; production's sampled
+counts equal the classification's; the surviving range strictly inside the full
+range; range ratio > 1.2. The **(a)-vs-(b) comparison is printed and never
+gated** — that is the review's adjudication, and a test asserting a preference
+would be choosing the statistic that flatters it.
+
+**Probe first, then gate**, as the plan required: probe
+`20260805T183210Z_POST-1-step3-probe.log` (4.48 s) carried only the partition
+identity; every band above was written from its numbers afterwards. Nothing was
+loosened; no existing assertion was touched.
+
+**Regressions.** `tests/post` real build `-n 2`: 12 passed, 12 skipped, 1.51 s
+(`20260805T183359Z_POST-1-step3-regression-real.log`) — the new file collects
+and skips correctly in real mode, which the `validation` CI job runs. Complex
+build `-n 2` with `tests/environment` first: 28 passed, 9.23 s
+(`…183409Z…regression-complex.log`). No new known-issues entries; none of the
+standing failures were touched.
+
+**Does not close `POST-1`** — deliberately. It stays ⚠️. This step put numbers
+under the symbol; the review decides it. The finding to decide *from*: the
+guardrail is protecting a mean that does not need protecting, at a 24.92% cost
+in sample count, while the quantity it actually moves is the extremum — and
+SAR peaks are extrema, so a rule that discards the interface layer discards the
+peak.
+
+**Next attempt hypothesis.** Two confounds are unseparated and neither was this
+slot's to resolve: the sphere's curved boundary puts chordal geometry error in
+the same cell layer as the material discontinuity, so "interface effect" and
+"geometry error" are still one number here. A **planar** interface fixture with
+a closed form — the `MAT-2` piecewise-σ slab is the obvious candidate — would
+tell them apart, and would also test the extremum claim on a geometry where the
+drop layer is not curved. That is a review's call to scope, not an improvisation
+for the next slot.
+
