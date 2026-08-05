@@ -3965,3 +3965,84 @@ convergence knob step 2b named — `h/r_wire ≥ 16` local refinement at fixed W
 and only then would a quantitative ΔX gate be defensible. That is a review's
 call to scope; a third box size would just re-measure the term already
 characterised here.
+
+---
+
+## 2026-08-05T21:30Z — `MAG-16` (§9 On-deck item 4) — **complete**
+
+Scheduled implementer run, 16:30 CDT slot. Preflight clean, container Up. Items
+1–3 were marked done by earlier slots, so item 4 was the first open one.
+
+**Outcome: `MAG-16` closed and known-issues 8 retired**, on `main`. The energy
+tests pass in the complex build with their identity assertions unchanged, the
+value is pinned across builds, and the discarded imaginary part turned out to be
+exactly zero rather than round-off.
+
+**The fix.** `MagnetostaticSolver.compute_magnetic_energy` reduced the assembled
+scalar with an unconditional `float(...)` (`core/solvers.py:661`), which raises
+in the complex build. It now takes `np.real` of the allreduced scalar and
+**raises** when `abs(Im W)/abs(Re W) > ENERGY_IMAG_RTOL = 1e-8`. `abs()` was
+considered and rejected: it would return a plausible positive number while
+absorbing both a genuine imaginary part and a negative real one. `float(` was
+grepped across `core/solvers.py` as §7 required — the other casts are on
+diagnostics (`gauge_multiplier_spread`, `_warn_if_gauge_contaminated`,
+`_extract_ksp_diagnostics`), and `tests/solver/test_gauge_lagrange.py` was run
+under `dolfinx-complex-mode` to check the first of those: **3 passed in 4.6 s**
+(`20260805T213458Z_MAG-16-gaugespread-complex.log`), so nothing else on this
+class needed touching and no new known-issues entry was opened.
+
+**Measured, all `-n 2` on the coarse straight-wire fixture:**
+
+| quantity | penalty gauge | Lagrange gauge |
+|---|---|---|
+| real-build `W`, captured **before** the fix | `1.121469318858e-08 J` | `1.121466766900e-08 J` |
+| complex-build `W`, after the fix | `1.121469648297e-08 J` | `1.121466766900e-08 J` |
+| deviation from the pin | `2.938e-07` | `1.278e-13` |
+| `abs(Im W)/abs(Re W)` | `0.0` exactly | `0.0` exactly |
+
+The imaginary part is exactly zero for a reason, not by luck: the magnetostatic
+load is real, so `A` has no imaginary part, and `ufl.inner` conjugates its
+second argument — the integrand is `mu^-1|curl A|^2/2` either way. The complex
+build stores a real number in a complex slot; the reduction discards nothing.
+
+**Bands, set from measurement not guessed.** `IMAG_RATIO_BAND = 1e-12` (measured
+0.0, and asserted in-test to sit inside the solver's own 1e-8 refusal
+threshold). `PIN_RTOL` was written at 1e-6 from the first two runs (3.3e-08) and
+**moved to 1e-5** once the penalty gauge was seen wandering to 2.9e-07 across
+four runs — its operator carries the gauge null space at kappa ~ 1e10, so the
+direct LU is not bit-reproducible on it, while Lagrange repeats to 1.3e-13. That
+is a new test's bound being set from measurement, not a failing assertion being
+loosened; the defects the pin exists to catch (a missing allreduce, `abs()` of a
+complex scalar with real imaginary content) are O(1), five decades away.
+
+**Logs.** Negative controls, both pre-fix and both in-slot:
+`20260805T213144Z_MAG-16-probe-real.log` (5 passed, 6.47 s — the pin capture,
+taken before the reduction existed, so the fix cannot have influenced it) and
+`20260805T213201Z_MAG-16-probe-complex-prefix.log` (2 failed 7 passed, 5.67 s —
+the `TypeError` at `solvers.py:661` reproduced at this commit). Gates:
+`20260805T213601Z_MAG-16-gate-complex-final.log` (10 passed, 4.90 s, complex,
+`tests/environment` first, `FEM_EM_REQUIRE_COMPLEX=1`) and
+`20260805T213357Z_MAG-16-gate-real.log` (6 passed, 2.95 s, real). Regressions:
+`20260805T213408Z_MAG-16-regress-complex.log` (`tests/solver`, 2 failed 34
+passed, 28.34 s) and `20260805T213514Z_MAG-16-regress-real.log` (1 failed 28
+passed 3 skipped, 18.43 s). **The complex-mode standing failures went 4 -> 2**,
+and both survivors are known-issues 2 (`test_convergence_diagnostics.py`,
+`assert 'mixed' == 'mostly-decreasing'` and `assert False`) — unchanged, and
+explicitly out of `MAG-16`'s scope. Smoke tier throughout, `timeout 180` per
+command, no command over 30 s.
+
+**CI.** `tests/solver/test_energy_and_point_evaluation.py` was added to the
+`validation-complex` job. Nothing had ever run it under the complex build until
+a `POST-3` step-5 regression sweep did so by hand, which is exactly how this
+defect survived; the real-build listing in `validation` stays.
+
+**Does not close.** known-issues 2. No field-accuracy claim — the closed-form
+`MAG` gates and every `MAG` tolerance are untouched, and this is a typing fix
+with a cross-build pin, not new physics.
+
+**Next attempt hypothesis.** Nothing pending on `MAG-16` itself. The
+generalisable observation for whoever meets the next one: the complex build hides
+`float()` casts until something actually executes under it, and the cheapest
+audit is not grepping but *listing more real-mode files in the
+`validation-complex` job* — the two casts found this week both surfaced from a
+sweep, not from reading. `post/` and `io/` have never been run there.

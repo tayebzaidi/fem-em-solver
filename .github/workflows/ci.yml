@@ -225,10 +225,20 @@ jobs:
           tests/mesh/test_two_torus_conforming.py \
           tests/solver/test_time_harmonic_smoke.py \
           tests/solver/test_boundary_condition_selection.py \
+          tests/solver/test_energy_and_point_evaluation.py \
           tests/materials/test_phantom_material_model.py \
           tests/post/test_phantom_field_metrics.py \
           tests/post/test_phantom_phasor_semantics.py \
           -v --tb=short
+
+    # test_energy_and_point_evaluation.py is magnetostatic, not frequency
+    # domain, and also runs in the `validation` job above. It is listed here
+    # too because the complex build is where it used to raise (known-issues 8:
+    # an unconditional `float()` on a complex-typed energy scalar), and nothing
+    # ran it under `dolfinx-complex-mode` until a POST-3 regression sweep did by
+    # hand. `MAG-16` fixed the cast and pinned the value across builds; this
+    # line is what keeps that from regressing. 5.2 s at -n 2
+    # (20260805T213327Z_MAG-16-gate-complex.log, 10 passed with tests/environment).
 
     # test_two_torus_conforming.py is the `GEO-8` conformity gate; its volume
     # half runs in the `validation` job above -- as of `OPS-11` through that

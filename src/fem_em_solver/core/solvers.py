@@ -55,6 +55,14 @@ from ..utils.constants import MU_0
 # that window with margin on the low side, where the failure is catastrophic.
 DEFAULT_GAUGE_PENALTY = 1.0
 
+# MAG-16. Largest |Im W| / |Re W| the magnetostatic energy may carry before
+# compute_magnetic_energy() refuses to reduce it to a real number. The energy is
+# real by construction and the measured ratio in the complex build is exactly
+# 0.0 (coarse straight wire, -n 2, both gauges, 2026-08-05,
+# 20260805T213201Z_MAG-16-probe-complex-prefix.log), so this bound is pure
+# headroom against a future formulation change rather than a fitted tolerance.
+ENERGY_IMAG_RTOL = 1e-8
+
 
 def exterior_dirichlet_bc(V: fem.FunctionSpace, field: Callable) -> fem.DirichletBC:
     """Constrain an H(curl) space to an analytic field on the exterior boundary.
@@ -657,8 +665,29 @@ class MagnetostaticSolver:
         # assemble_scalar returns only this rank's contribution; without the
         # reduction every parallel caller saw ~1/n_ranks of the energy (MAG-11).
         local_energy = fem.assemble_scalar(fem.form(energy_expr))
+        total_energy = self.mesh.comm.allreduce(local_energy, op=MPI.SUM)
 
-        return float(self.mesh.comm.allreduce(local_energy, op=MPI.SUM))
+        # MAG-16: in the complex build every fem.Function is complex, so this
+        # scalar is complex-typed even though the integrand is real by
+        # construction -- ufl.inner conjugates its second argument, making it
+        # mu^-1|curl A|^2/2. Take the real part, never abs(): abs() would
+        # silently absorb both a spurious imaginary part and a negative real
+        # one rather than failing. Measured |Im|/|Re| on the coarse
+        # straight-wire fixture at -n 2, both gauges, 2026-08-05: exactly 0.0
+        # (the magnetostatic load is real, so A has no imaginary part).
+        real_energy = float(np.real(total_energy))
+        imag_energy = float(np.imag(total_energy))
+        if abs(imag_energy) > ENERGY_IMAG_RTOL * abs(real_energy):
+            raise ValueError(
+                f"magnetic energy has a non-negligible imaginary part: "
+                f"{total_energy!r} (|Im|/|Re| = "
+                f"{abs(imag_energy) / abs(real_energy) if real_energy else float('inf'):.3e} "
+                f"> {ENERGY_IMAG_RTOL:g}). W = 1/2 int mu^-1|curl A|^2 is real "
+                "by construction, so this is a formulation or assembly defect, "
+                "not a rounding artifact -- do not discard it."
+            )
+
+        return real_energy
     
     def evaluate_at_points(self, points: np.ndarray, field: str = "A") -> np.ndarray:
         """Evaluate field at specific points.

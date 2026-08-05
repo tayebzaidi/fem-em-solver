@@ -44,6 +44,7 @@ from dolfinx import fem
 
 from fem_em_solver.core.solvers import (
     DEFAULT_GAUGE_PENALTY,
+    ENERGY_IMAG_RTOL,
     GaugeMethod,
     MagnetostaticProblem,
     MagnetostaticSolver,
@@ -57,6 +58,25 @@ DOMAIN_RADIUS = 0.03
 WIRE_LENGTH = 0.20
 RESOLUTION = 0.006  # coarse: these tests probe reductions, not accuracy
 J_MAGNITUDE = 1.0 / (np.pi * WIRE_RADIUS**2)
+
+# MAG-16 cross-build pin. Measured in the *real* build at -n 2 on this fixture
+# before compute_magnetic_energy() gained its real-part reduction, so the
+# complex build is pinned to a number the fix cannot have influenced
+# (20260805T213144Z_MAG-16-probe-real.log). Rank-count independent: both tests
+# below assemble globally reduced quantities.
+REAL_BUILD_ENERGY_J = {
+    GaugeMethod.PENALTY: 1.121469318858e-08,
+    GaugeMethod.LAGRANGE: 1.121466766900e-08,
+}
+# Measured deviations from the pins across four -n 2 runs (two real, two
+# complex): the Lagrange gauge reproduces to 1.3e-13, the penalty gauge
+# wanders 1.9e-08 .. 2.9e-07 run to run -- its operator carries the gauge null
+# space at kappa ~ 1e10 (see the module docstring), so the direct LU is not
+# bit-reproducible on it. The bound is set two decades above the largest
+# observed wander; the defects it exists to catch (a missing allreduce, or
+# abs() of a complex scalar with real imaginary content) are O(1), not O(1e-7).
+PIN_RTOL = 1e-5
+IMAG_RATIO_BAND = 1e-12  # measured |Im W| / |Re W| = 0.0 in both builds
 
 
 @pytest.fixture(scope="module")
@@ -87,10 +107,89 @@ def solved_wire():
     return mesh, cell_tags, solvers
 
 
-def _global_scalar(mesh, form_expr):
-    """Assemble a scalar form with an explicit global reduction."""
+def _global_complex_scalar(mesh, form_expr):
+    """Assemble a scalar form with an explicit global reduction, unreduced type.
+
+    In the complex build every ``fem.Function`` is complex, so
+    ``assemble_scalar`` returns a complex scalar even for an integrand that is
+    real by construction; the caller decides what to do with the imaginary
+    part (MAG-16).
+    """
     local = fem.assemble_scalar(fem.form(form_expr))
-    return float(mesh.comm.allreduce(local, op=MPI.SUM))
+    return mesh.comm.allreduce(local, op=MPI.SUM)
+
+
+def _global_scalar(mesh, form_expr):
+    """Assemble a scalar form with an explicit global reduction, real part."""
+    return float(np.real(_global_complex_scalar(mesh, form_expr)))
+
+
+def _energy_integrand(solver):
+    """The integrand of ``compute_magnetic_energy`` for this fixture (mu = MU_0)."""
+    return 0.5 * (1.0 / MU_0) * ufl.inner(ufl.curl(solver.A), ufl.curl(solver.A)) * ufl.dx
+
+
+def test_energy_matches_the_real_build_value(solved_wire, capsys):
+    """MAG-16 cross-build pin: the complex build must reproduce the real one.
+
+    ``compute_magnetic_energy`` discards an imaginary part in the complex
+    build, and a wrong reduction (``abs()``, or the magnitude of a complex
+    scalar) would still return a plausible positive number -- so the value
+    itself is pinned against the real-build reference measured on this same
+    fixture at ``-n 2`` before the reduction was written
+    (``20260805T213144Z_MAG-16-probe-real.log``, pre-fix). Measured deviation
+    of the complex build from those references
+    (``20260805T213201Z_MAG-16-probe-complex-prefix.log``): 3.3e-08 for the
+    penalty gauge and 0.0 -- bit-identical -- for the Lagrange gauge. The rtol
+    below is two decades of headroom on that, not a fitted value; both builds
+    solve the same real linear system, so anything larger is a real change.
+    """
+    _, _, solvers = solved_wire
+
+    for method, expected in REAL_BUILD_ENERGY_J.items():
+        w = solvers[method].compute_magnetic_energy()
+        rel = abs(w - expected) / expected
+        with capsys.disabled():
+            print(f"MAG-16 {method.name}: W={w:.12e} J, real-build pin rel={rel:.3e}")
+        assert isinstance(w, float), f"{method.name}: energy is {type(w)}, not float"
+        assert rel < PIN_RTOL, (
+            f"{method.name}: energy {w:.12e} deviates from the real-build value "
+            f"{expected:.12e} by {rel:.3e} (> {PIN_RTOL:g})"
+        )
+
+
+def test_discarded_imaginary_part_of_the_energy_is_negligible(solved_wire, capsys):
+    """The part ``compute_magnetic_energy`` throws away must be nothing.
+
+    The magnetostatic load is real, so ``A`` is real-valued even when the build
+    stores it as complex, and ``ufl.inner`` conjugates its second argument --
+    the integrand is ``mu^-1|curl A|^2/2``. Measured ratio: exactly 0.0 in both
+    builds and both gauges at ``-n 2`` (the two probe logs cited above); the
+    band below is headroom. This is the assertion that makes the real-part
+    reduction in ``core/solvers.py`` honest rather than a cast that hides
+    whatever it is handed.
+    """
+    mesh, _, solvers = solved_wire
+
+    for method, solver in solvers.items():
+        total = _global_complex_scalar(mesh, _energy_integrand(solver))
+        real = float(np.real(total))
+        imag = float(np.imag(total))
+        assert real > 0.0
+        ratio = abs(imag) / real
+        with capsys.disabled():
+            print(
+                f"MAG-16 {method.name}: W_re={real:.12e} W_im={imag:.12e} "
+                f"|Im/Re|={ratio:.3e} dtype={np.asarray(total).dtype}"
+            )
+        assert ratio < IMAG_RATIO_BAND, (
+            f"{method.name}: energy carries |Im/Re| = {ratio:.3e}, above the "
+            f"probe-measured band {IMAG_RATIO_BAND:g} -- the real-part "
+            "reduction would be discarding physics"
+        )
+        # The test's band must sit inside the solver's own refusal threshold,
+        # or a ratio this test accepts would make the solver raise.
+        assert IMAG_RATIO_BAND <= ENERGY_IMAG_RTOL
 
 
 def test_energy_matches_explicitly_reduced_assembly(solved_wire):

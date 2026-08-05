@@ -460,10 +460,46 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `MAG-13` | Analytic-Dirichlet outer boundary for wire/loop | ✅ | heavy | wire 12.75%, loop 7.07%, rate 1.10; 167 s + 196 s |
 | `MAG-14` | Helmholtz magnitude comparison in the test suite | ✅ | smoke | 0.728% vs closed form (1.731% before `GEO-8`); 11 s, in CI |
 | `MAG-15` | Lagrange-multiplier Coulomb gauge (cross-check) | ✅ | smoke | 7 passed, 13 s |
-| `MAG-16` | Complex-build-safe magnetostatic energy | 🧪 | smoke | owns known-issues 8 |
+| `MAG-16` | Complex-build-safe magnetostatic energy | ✅ 2026-08-05 | smoke | 10 passed complex `-n 2` in 4.9 s; cross-build pin 2.9e-07, `Im W` exactly 0; retires known-issues 8 |
 
-**`MAG-16` — complex-build-safe magnetostatic energy** 🧪 *(chunk written
-2026-08-05, 10:30 review; owns known-issues 8)*
+**`MAG-16` — complex-build-safe magnetostatic energy** ✅ *(2026-08-05,
+16:30 run; retires known-issues 8)*
+> **Done.** `compute_magnetic_energy()` now reduces the assembled scalar with
+> `np.real` and **raises** if `|Im W|/|Re W|` exceeds `ENERGY_IMAG_RTOL = 1e-8`
+> — `abs()` was rejected deliberately: it would absorb both a spurious
+> imaginary part and a negative real one. Measurements, all `-n 2` on the
+> coarse straight-wire fixture (`tests/solver/test_energy_and_point_evaluation.py`):
+>
+> | quantity | penalty gauge | Lagrange gauge |
+> |---|---|---|
+> | real-build `W` (captured **before** the fix commit) | `1.121469318858e-08 J` | `1.121466766900e-08 J` |
+> | complex-build `W` after the fix | `1.121469648297e-08 J` | `1.121466766900e-08 J` |
+> | deviation from the real-build pin | `2.938e-07` (`1.9e-08…2.9e-07` over four runs) | `1.278e-13` |
+> | ratio `abs(Im W) / abs(Re W)` | **0.0 exactly** | **0.0 exactly** |
+>
+> The imaginary part is exactly zero because the magnetostatic load is real and
+> `ufl.inner` conjugates its second argument, so the integrand is
+> `μ⁻¹|curl A|²/2` — the reduction discards nothing, which is what the second
+> new test asserts (band `1e-12`, inside the solver's own `1e-8` refusal
+> threshold). The penalty gauge is not bit-reproducible run to run (its
+> operator carries the gauge null space at κ ~ 1e10), hence `PIN_RTOL = 1e-5`,
+> two decades above the observed wander and five below the O(1) defects the pin
+> exists to catch. The two pre-existing identity assertions are **unchanged**
+> and now pass in the complex build. Logs: pre-fix negative control
+> `20260805T213201Z_MAG-16-probe-complex-prefix.log` (2 failed 7 passed, the
+> `TypeError` at `solvers.py:661`) and `20260805T213144Z_MAG-16-probe-real.log`
+> (the pin capture, 5 passed 6.5 s); gates
+> `20260805T213601Z_MAG-16-gate-complex-final.log` (10 passed 4.9 s) and
+> `20260805T213357Z_MAG-16-gate-real.log` (6 passed 3.0 s); regressions
+> `20260805T213408Z_MAG-16-regress-complex.log` (`tests/solver` 2 failed 34
+> passed 28.3 s — the standing complex-mode failures went 4 → 2 and the
+> remaining two are known-issues 2) and `20260805T213514Z_MAG-16-regress-real.log`
+> (1 failed 28 passed 3 skipped 18.4 s, same entry). The file joins the
+> `validation-complex` CI job in this commit, which is what stops the cast from
+> coming back. Not closed here: known-issues 2, and no field-accuracy claim —
+> the `MAG` closed-form gates are untouched.
+>
+> Original entry follows *(chunk written 2026-08-05, 10:30 review)*:
 > `MagnetostaticSolver.compute_magnetic_energy` (`core/solvers.py:661`) casts
 > the assembled energy with an unconditional `float(...)`, which raises
 > `TypeError` in the complex build — 2 of the 4 standing regression failures
@@ -1930,8 +1966,17 @@ says so in its own text.
    report all six numbers, annotate the step-3 entry, stop — ambiguous is
    also report-and-stop.*
 
-4. **`MAG-16` — complex-build-safe magnetostatic energy (known-issues 8).**
-   Independent; new chunk, written this review. Execute the §7 `MAG-16`
+4. ~~**`MAG-16` — complex-build-safe magnetostatic energy (known-issues 8).**~~
+   — **done 2026-08-05 (16:30 run)**: on `main`, complex gate 10 passed at
+   `-n 2` in 4.9 s with both identity assertions unchanged. `np.real` reduction
+   plus a `1e-8` refusal guard; the real-build pin was captured before the fix
+   (`1.121469318858e-08` / `1.121466766900e-08 J`) and the complex build
+   reproduces it to `2.9e-07` (penalty, whose LU is not bit-reproducible) and
+   `1.3e-13` (Lagrange). The discarded imaginary part is **exactly 0.0** in both
+   gauges — the reduction throws away nothing. The complex-mode `tests/solver`
+   sweep went 4 failed → 2 (both known-issues 2); known-issues 8 retired and the
+   file added to `validation-complex`. Original text follows.
+   *Independent; new chunk, written this review. Execute the §7 `MAG-16`
    plan. **Anchor:** the existing discrete work-energy identity test — a
    conservation identity, already quantitative and unchanged — passing at
    `-n 2` under `dolfinx-complex-mode`, plus a cross-build pin: the
@@ -1952,7 +1997,7 @@ says so in its own text.
    regression failures); no field-accuracy claim — the closed-form `MAG`
    gates are untouched. **Negative result:** if the imaginary part is
    genuinely non-small, that is a formulation finding — report the number,
-   leave the `TypeError` unpatched, annotate known-issues 8, stop.
+   leave the `TypeError` unpatched, annotate known-issues 8, stop.*
 
 5. **`PORT-1` step 3b-v — the facet-integral port voltage (spare).**
    **Depends on item 1 landing; if 3b-iv's tags are not on main when this

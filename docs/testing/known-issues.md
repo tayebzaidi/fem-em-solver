@@ -109,7 +109,34 @@ them by number.
 | **Tool** | `tests/mesh/helpers.py::global_cell_tag_set()` exists for the tag case. `post.evaluation.evaluate_vector_field_parallel()` for the point-location case. |
 | **Verified pre-existing at** | `ce92e8c` and earlier |
 
-### 8. Magnetostatic energy raises `TypeError` in the complex build
+### 8. ✅ RETIRED 2026-08-05 — magnetostatic energy raised `TypeError` in the complex build
+
+**Fixed 2026-08-05 (16:30 run) by `MAG-16`.** Both tests pass at `-n 2` under
+`dolfinx-complex-mode` with their identity assertions untouched
+(`20260805T213601Z_MAG-16-gate-complex-final.log`, 10 passed in 4.9 s with
+`tests/environment` first), and the complex-mode `tests/solver` sweep went from
+4 standing failures to 2 — the remaining two are **entry 2**, unrelated
+(`20260805T213408Z_MAG-16-regress-complex.log`, 2 failed 34 passed in 28.3 s).
+
+`compute_magnetic_energy` now takes `np.real` of the reduced scalar and raises
+if `abs(Im W)/abs(Re W)` exceeds `ENERGY_IMAG_RTOL = 1e-8`; `abs()` was
+rejected on purpose, since it would swallow a genuine imaginary part *and* a
+negative real one. The suspicion recorded below — that the imaginary part is
+round-off — was **too pessimistic**: it is **exactly 0.0** in both gauges,
+because the magnetostatic load is real and `ufl.inner` conjugates its second
+argument, so the assembled integrand is `μ⁻¹|curl A|²/2` and the complex build
+merely stores a real number in a complex slot.
+
+The value had indeed never been compared across builds, so it was pinned before
+being trusted: the real-build energies were captured *pre-fix*
+(`20260805T213144Z_MAG-16-probe-real.log` — `1.121469318858e-08 J` penalty,
+`1.121466766900e-08 J` Lagrange) and the complex build reproduces them to
+`2.9e-07` and `1.3e-13` respectively. The penalty gauge's run-to-run wander
+(`1.9e-08…2.9e-07`) is its κ ~ 1e10 operator, not the reduction.
+
+The file is now listed in the `validation-complex` CI job, which is what stops
+this from recurring — nothing had ever run it under the complex build until a
+`POST-3` step-5 regression sweep did by hand. Original entry follows.
 
 | | |
 |---|---|
@@ -119,7 +146,8 @@ them by number.
 | **Verified pre-existing at** | `aabb0a7` — reproduced with the `POST-3` step-5 diff stashed: `2 failed, 2 passed in 4.46 s` (`20260805T003945Z_POST-3-step5-preexisting.log`, `-n 2`, complex build). Found by that step's regression sweep, which is the first time this file was run under `dolfinx-complex-mode`. |
 
 Owned by chunk `MAG-16` (§7, written by the 2026-08-05 10:30 review); this
-entry leaves with `MAG-16`'s fixing commit.
+entry leaves with `MAG-16`'s fixing commit — which is the commit carrying the
+retirement header above.
 
 ### 9. ✅ RETIRED 2026-08-05 — `-n 2` hang on `two_torus_domain`'s port facets
 
