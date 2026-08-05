@@ -837,6 +837,11 @@ log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
 > adjudicate it; that is a follow-up chunk for a review to scope, never a
 > tightened tolerance here.
 >
+> **Adjudicated 2026-08-05 by step 4 below: the shift is real.** At W = 0.25 the
+> ratios are 0.8740 (pinned) / 0.9849 (projected) — both drives gain ~+0.06 from
+> the larger box, but the 0.11 gap between them does not shrink, so the 13% here
+> was not reshuffled box error.
+>
 > **Method note for reuse.** The step-3 tests live in their own module and
 > *import* the geometry, current density and tags from
 > `test_dodd_deeds_impedance.py` rather than restating them: one definition of
@@ -882,8 +887,62 @@ log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
 > (the coil-loading claim then explicitly excludes the production drive),
 > add a known-issues entry, stop.
 
-**`MAT-6` step 4 — adjudicate the ΔX shift on the converged box** *(plan
-written 2026-08-04, 18:00 review; the follow-up step 3 asked for)*
+**`MAT-6` step 4 — adjudicate the ΔX shift on the converged box** ✅
+*(2026-08-05, 15:00 run; `tests/validation/test_dodd_deeds_reactance_box_size.py`,
+`20260805T200455Z_MAT-6-step4-projected-w25.log` (6 passed, 271 s) and
+`20260805T200938Z_MAT-6-step4-pinned-w25.log` (6 passed, 260 s), heavy, `-n 2`,
+300 591 cells / 353 201 dofs, four solves at 116–127 s; cost probe
+`20260805T200132Z_MAT-6-step4-probe.log`)*
+> **The step-3 finding survives: the projected drive is closer to Dodd–Deeds in
+> ΔX at *both* box sizes, and the two paths do not converge.** The four ΔX
+> ratios `ΔX_FEM/ΔX_exact` (exact `−6.1586749e-01 Ω`):
+>
+> | drive | W = 0.15 | W = 0.25 |
+> |---|---|---|
+> | pinned (`project_source=False`) | 0.8123 | **0.8740** (`−5.3826816e-01 Ω`) |
+> | projected (production default) | 0.9200 | **0.9849** (`−6.0655648e-01 Ω`) |
+>
+> Both drives improve by ~+0.06 as the box grows — that is the box-truncation
+> term, common to both — while the projected-minus-pinned gap is **0.1077 at
+> W = 0.15 and 0.1109 at W = 0.25**, i.e. it does not shrink with box size. That
+> is the discriminator this step was written for: had the 0.9200 been reshuffled
+> truncation error, the two paths would have closed on each other as W grew.
+> They did not, so the reactive part carries a drive-dependent offset consistent
+> with `PORT-1` step 2e's spurious-gradient (`W_e^spur`) mechanism. Note what is
+> *not* claimed: this shows the projection moves ΔX toward the closed form
+> systematically, not that ΔX is converged — at W = 0.25 the projected ratio is
+> still 1.5% short and still moving with W, and the filamentary reference's 30%
+> spread over `h ± r_wire` is untouched by any of this.
+>
+> **The ΔR control holds, which is what makes the ΔX reading legible.** At
+> W = 0.25, projected `ΔR = +3.2768109e-01 Ω` (1.5763%) and pinned
+> `+3.2766511e-01 Ω` (1.5713%), against 1.5834% / 1.58% at W = 0.15 — ΔR moves
+> < 0.01 percentage-point across a 2.17× change in cell count and is identical
+> between drives to 5e-5 relative, so the box change did not move the resistive
+> physics and the drives differ *only* in the reactive part. `I` = 0.919690 A
+> (meshed) vs `I′` = 0.919666 A (projected), the same 26 ppm as step 3.
+> Gates are step 2b's, inherited unchanged: ΔR under the 5% hard ceiling, ΔX on
+> sign and order of magnitude only. No ΔX band was tightened to the measured
+> ratios — the box convergence of ΔX is the thing under test, so a band sized to
+> this run would assert its own conclusion.
+>
+> **Cost, measured before the tier was chosen** (the §7 stop rule was one solve
+> > 300 s at `-n 4`): W = 0.25 is 300 591 cells — 2.17×, not the ~4.6× the box
+> volume grew, because the added volume is all far-field at
+> `resolution_far = 0.025` — meshing in 18–22 s, one projected solve 81.0 s at
+> `-n 4` and 116–127 s at `-n 2`. Four solves do not fit one standard command,
+> so the drives are split by `-k` into two ~4.5 min commands, each meshing once
+> and solving its own loaded/free pair; `-n 2` (not the permitted `-n 4`) because
+> the current and the reaction integral are allreduced. The module restates
+> nothing: geometry, current density, tags, both solve routines and the pinned
+> reaction integral are imported from the step-2b and step-3 modules, so the box
+> is provably the only difference from the recorded W = 0.15 numbers.
+> **Does not close / does not reopen:** `MAT-6` stays ✅ — this adjudicates a
+> finding, not the chunk. No claim moves in §2.1: the landed 1.58% ΔR is
+> untouched, saline/Larmor stays unlicensed (eddy-current kernel), and ΔX is
+> still not a gated quantity anywhere.
+>
+> *Original plan, for the record:*
 > Step 3 measured the ΔX ratio move 0.8123 → 0.9200 under projection while
 > ΔR moved 5e-5, and this fixture cannot attribute it (5.57% box motion
 > left in ΔX at W = 0.20, 30% filamentary spread). Hypothesis, from the
@@ -1846,8 +1905,16 @@ says so in its own text.
    than full-set is the answer, not a defect — report all three errors,
    annotate §7, stop.*
 
-3. **`MAT-6` step 4 — adjudicate the ΔX shift on the converged box.**
-   Independent. Execute the §7 step-4 plan, written this review.
+3. ~~**`MAT-6` step 4 — adjudicate the ΔX shift on the converged box.**~~ —
+   **done 2026-08-05 (15:00 run)**: on `main`, both gates green at `-n 2`
+   (271 s / 260 s, 300 591 cells). The four ΔX ratios are 0.8123 / 0.8740
+   (pinned, W = 0.15 / 0.25) and 0.9200 / 0.9849 (projected) — the projected
+   drive is closer at both sizes and the 0.11 gap does not shrink with the box,
+   so the step-3 finding **survives**; ΔR held at 1.5713% / 1.5763%, i.e. the
+   box change moved nothing resistive. Cost probe measured first, as §7
+   required: 81.0 s per solve at `-n 4`, inside the 300 s stop rule. Original
+   text follows.
+   *Independent. Execute the §7 step-4 plan, written this review.
    **Anchor:** Dodd–Deeds `ΔX = −6.1586749e-01 Ω` /
    `ΔR = +3.2259615e-01 Ω` with step 2b's gates unchanged on a W = 0.25
    fixture (ΔR < 5% ceiling; ΔX sign + order of magnitude; never a
@@ -1861,7 +1928,7 @@ says so in its own text.
    the fixture; stale FFCx lock; `ufl.max_value`; complex build. **Does
    not close / reopen:** `MAT-6` stays ✅ regardless. **Negative result:**
    report all six numbers, annotate the step-3 entry, stop — ambiguous is
-   also report-and-stop.
+   also report-and-stop.*
 
 4. **`MAG-16` — complex-build-safe magnetostatic energy (known-issues 8).**
    Independent; new chunk, written this review. Execute the §7 `MAG-16`

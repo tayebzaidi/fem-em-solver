@@ -3890,3 +3890,78 @@ tell them apart, and would also test the extremum claim on a geometry where the
 drop layer is not curved. That is a review's call to scope, not an improvisation
 for the next slot.
 
+
+---
+
+## 2026-08-05T20:15Z — `MAT-6` step 4 — **complete**
+
+Scheduled implementer run, 15:00 local slot. Preflight clean, container Up. On
+deck items 1 and 2 were marked done by the 12:00 and 13:30 runs, so this slot
+took item 3, the first open one: adjudicate step 3's ΔX shift on a larger box.
+
+**Result: the step-3 finding survives.** The four ΔX ratios against the exact
+`ΔX = −6.1586749e-01 Ω`:
+
+| drive | W = 0.15 (on record) | W = 0.25 (this slot) |
+|---|---|---|
+| pinned `project_source=False` | 0.8123 | 0.8740 (`−5.3826816e-01 Ω`) |
+| projected (production default) | 0.9200 | 0.9849 (`−6.0655648e-01 Ω`) |
+
+Both drives gain ~+0.06 from the larger box — that is box truncation, common to
+both — but the projected-minus-pinned gap is 0.1077 at W = 0.15 and 0.1109 at
+W = 0.25, so it does **not** shrink with the box. The plan's discriminator was
+exactly this: convergent paths would have killed the finding. They diverge
+slightly instead, consistent with `PORT-1` step 2e's `W_e^spur` mechanism.
+Not claimed: convergence of ΔX itself — the projected ratio is still 1.5% short
+at W = 0.25 and still moving, and the filamentary reference's 30% spread over
+`h ± r_wire` is untouched.
+
+**ΔR control.** W = 0.25 projected `+3.2768109e-01 Ω` (1.5763%), pinned
+`+3.2766511e-01 Ω` (1.5713%), against 1.5834% / 1.58% at W = 0.15. ΔR moves
+< 0.01 percentage-point across a 2.17× cell-count change and the two drives
+agree to 5e-5, so the box change moved nothing resistive and the drives differ
+only in the reactive part. `I = 0.919690 A` vs `I′ = 0.919666 A` (26 ppm, the
+same as step 3). Gates are step 2b's, inherited unchanged — ΔR < 5% ceiling,
+ΔX sign and order of magnitude only. **No ΔX band was tightened to the measured
+ratios**: the box convergence of ΔX is the thing under test, so a band sized to
+this run would assert its own conclusion. Nothing was loosened either.
+
+**Cost, probed before any tier was committed** (`scripts/probes/mat6_step4_probe.py`,
+`20260805T200132Z_MAT-6-step4-probe.log`): W = 0.25 is **300 591 cells /
+353 201 dofs** — 2.17×, not the 4.63× the box volume grew, because the added
+volume is all far-field at `resolution_far = 0.025`, which is why this fit in a
+slot at all. Mesh 18.0 s, one projected solve **81.0 s at `-n 4`**, inside §7's
+"stop if > 300 s" rule, so the adjudication proceeded rather than rescoping to
+`h/r_wire ≥ 16`.
+
+**Gate runs.** Four solves do not fit one command, so the drives are split by
+`-k`, each command meshing once and solving its own loaded/free pair, with
+`tests/environment` first:
+
+* `20260805T200455Z_MAT-6-step4-projected-w25.log` — 6 passed, 2 deselected,
+  271 s (mesh 21.6 s, solves 126.7 + 121.2 s)
+* `20260805T200938Z_MAT-6-step4-pinned-w25.log` — 6 passed, 2 deselected,
+  260 s (mesh 20.9 s, solves 122.0 + 115.9 s)
+
+Heavy tier, `timeout 900`, `-n 2` — not the `-n 4` §7 permitted, because the
+current and the reaction integral are allreduced and `-n 2` is the width where a
+missing reduction shows. New module
+`tests/validation/test_dodd_deeds_reactance_box_size.py` restates nothing:
+geometry, current density, tags, `_solve_loop`, `_solve_projected` and
+`_reaction_impedance` are imported from the step-2b and step-3 modules, so the
+box is provably the only difference from the recorded W = 0.15 numbers, and the
+`project_source=False` pins were never touched.
+
+**Does not close / reopen anything.** `MAT-6` stays ✅; §2.1's coil-loading claim
+is unchanged (the landed 1.58% ΔR is untouched, saline/Larmor stays unlicensed);
+ΔX is still not a gated quantity anywhere. No new known-issues entries; no
+standing failure was touched.
+
+**Next attempt hypothesis.** The remaining ~1.5% of projected ΔX is now two
+unseparated terms: residual box truncation (still ~+0.06 per 0.10 m of W, so not
+exhausted at W = 0.25) and the filamentary reference's own 30% spread over
+`h ± r_wire`, which no box size can remove. Separating them needs the *other*
+convergence knob step 2b named — `h/r_wire ≥ 16` local refinement at fixed W —
+and only then would a quantitative ΔX gate be defensible. That is a review's
+call to scope; a third box size would just re-measure the term already
+characterised here.
