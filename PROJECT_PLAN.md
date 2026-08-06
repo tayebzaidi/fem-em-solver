@@ -2217,6 +2217,57 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 > the same solve, annotate this entry and known-issues 3, stop —
 > `MUTUAL_TOLERANCE` does not move, and a fourth estimator family is a
 > review's call.
+>
+> **Step 3b-vi attempted 2026-08-06 (04:30 implementer slot) — 🟡 negative
+> result, parked on `attempt/PORT-1-step3bvi-20260806T094500Z` (`ee5f0cb`).**
+> The path integral was built exactly as planned (Gauss–Legendre on the
+> centreline arc, `evaluate_vector_field_parallel`, four estimators on one
+> solve at `gap_overhang = 2e-4`, 124 753 cells, mesh 25.5 s + solves
+> 16.4/16.0 s, 136 s at `-n 2`;
+> `20260806T093808Z_PORT-1-step3bvi-quadrature-sweep-n2.log`). Two independent
+> findings.
+>
+> *First — the value.* Mutual, off one solve, the four estimators now read:
+>
+>     path    0.468933 / 0.499728  x omega*M12   (3b-vi)
+>     facet   4.801707 / 4.889116                (3b-v, excluded)
+>     box     0.331729 / 0.331767                (3b-ii/iii, excluded)
+>     shadow  0.763430 / 0.814325                (3b-iii)
+>
+> The path route does **not** close the ~0.78 deficit; it lands *below* the
+> shadow family at ~0.48, a **third** distinct value, at −51.6% against the
+> unmoved 10% `MUTUAL_TOLERANCE`, with reciprocity `|Z₁₂−Z₂₁|/|Z₁₂| = 6.3e-2`
+> against the 1e-2 band. Four estimator families, four answers spanning a
+> factor 15 on one solved field: the spread is now itself the evidence, and it
+> says the disagreement is not in any one sampling geometry.
+>
+> *Second, and the reason this is parked rather than reported as a clean
+> negative — the plan's own precondition fails.* The proposed `(33, 65)`
+> quadrature pair disagrees by **1.07e-1**, two orders above the 1e-3 gate.
+> Extending the sequence to 4097 nodes off the same solve measures the rate:
+> 1.07e-1 (65), 1.07e-1 (129), 3.82e-2 (257), 5.23e-3 (513), 7.43e-3 (1025),
+> 2.58e-3 (2049), 8.12e-4 (4097) — non-monotone, roughly `O(1/n)`, plateauing
+> at ~1e-3…2e-3 and never reaching the precondition. This is structural, not a
+> node count to raise: N1curl guarantees continuity of the **facet**-tangential
+> component only, the arc's own tangent is not facet-tangential, so `E·t̂` jumps
+> at every cell crossing, and with `h_wire = 2.5e-3` against arc length
+> `a·g = 1.2e-2` only ~5 cells span the whole path. A line integral cannot be
+> resolved to 0.1% through 5 elements of a discontinuous integrand at any node
+> count. **The successor is mesh refinement along the arc, not more quadrature
+> nodes** — and if the ~0.48 survives refinement, the estimator-family question
+> is settled negatively and the next suspects are the ones the 3b-vi plan
+> already named (finite-σ terminal penetration; the `ωM₁₂` reference itself).
+>
+> Preconditions that *do* hold, measured: all 4097 arc nodes located and every
+> one in a **gap**-tagged cell at both ports (through the same
+> `evaluate_vector_field_parallel` locate path the field sampling uses, on a
+> DG0 `(gap, wire, air)` indicator); gap-box identity 1.000000000000;
+> open-port 1.4162e-03 / 1.4129e-03. Carried forward onto the branch and
+> re-applied to current `main`: the `gap_burial`/`gap_overhang` split of
+> `two_torus_domain()`'s single `gap_clearance`. Incidental, for the review:
+> `test_port_discs_are_the_arc_end_cut`'s per-disc `y`-split identity fails at
+> 1.1e-8 against its 1e-9 tolerance — a facet-area sum over ~1e5 cells is not
+> reproducible to 1e-9 between the two halves.
 
 > **Two port tests are red and deliberately left red.** Both fakes set
 > `current = voltage/z0` at the driven port, making it perfectly matched, so
@@ -2406,7 +2457,15 @@ disjoint behaviour (item 2 adds a scoring table to a test; item 3 flips a
 `src/` default and pins the old path) — either lands without the other. Item 5
 is the spare and the only heavy-tier item.
 
-1. **`PORT-1` step 3b-vi — the tangential path-integral port voltage.** The
+1. 🟡 **Attempted 2026-08-06, 04:30 slot — negative result, parked on
+   `attempt/PORT-1-step3bvi-20260806T094500Z`; not done, and the review must
+   rescope before it reappears.** Path V measured at 0.468933 / 0.499728 ×
+   ωM₁₂ (a *third* distinct value, below the shadow family), but the plan's own
+   quadrature precondition fails structurally — `(33, 65)` disagree by 1.07e-1
+   and the sequence plateaus at ~1e-3 only by 4097 nodes, because only ~5 cells
+   span the gap arc and `E·t̂` jumps at every cell crossing. The successor is
+   arc refinement, not more nodes. Full numbers in §7 and attempts.md.
+   **`PORT-1` step 3b-vi — the tangential path-integral port voltage.** The
    critical path (§10 S-parameter criteria route through it). Execute the §7
    step-3b-vi plan, written this review; reuse
    `test_port_gap_voltage_impedance.py` from

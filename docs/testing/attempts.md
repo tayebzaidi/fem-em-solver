@@ -4351,3 +4351,111 @@ that forced it is in the code comment, the §7 entry, and known-issues 10.
 **Next attempt hypothesis:** none — `GEO-10` is closed and known-issues 10 is
 retired. §9 item 5 (`MAT-6` step 5, the heavy spare) is the only open item
 left; items 1–4 are done or blocked-pending-review, so the queue is one deep.
+
+---
+
+## 2026-08-06T09:45Z — `PORT-1` step 3b-vi — **incomplete** (parked)
+
+Slot: scheduled implementer run, 04:30 local. §9 On-deck item 1, taken as
+written. Preflight clean; container Up. Branch:
+**`attempt/PORT-1-step3bvi-20260806T094500Z`** (`ee5f0cb`).
+
+**What was tried.** The plan's estimator exactly: `V_i = −∫E·t̂ dl` along the
+torus centreline arc through port `i`'s gap, `t̂(φ) = (−sin φ, cos φ, 0)`,
+Gauss–Legendre in `φ ∈ (−g/2, +g/2)` — Legendre nodes are strictly interior, so
+the terminals (where a point locates ambiguously across the material interface)
+are never sampled and the plan's endpoint trap is discharged by construction
+rather than by an offset. Sampling through
+`post.evaluation.evaluate_vector_field_parallel` on `fields.e_complex`, never
+`f.eval`. `t̂(0) = +ŷ`, so the sign convention matches the box/shadow/facet
+estimators and all four numbers are comparable off one solve. Geometry
+unchanged from 3b-v: `gap_burial = 1e-3`, `gap_overhang = 2e-4`.
+
+The reused test file needed one src carry-forward: the
+`gap_burial`/`gap_overhang` split of `two_torus_domain()`'s single
+`gap_clearance` lives on `attempt/PORT-1-step3bv-20260806T004500Z`, not on
+`main`, and the first run died at `TypeError: unexpected keyword argument
+'gap_burial'` (`20260806T093500Z…gate-n2.log`). That branch predates `GEO-10`
+and `GEO-4` step 1 and cherry-picking it wholesale would revert both, so the
+split was **re-applied by hand** onto current `main` — parameter added, both
+defaulting to `gap_clearance`, step 3b-i's geometry byte-identical.
+
+**Measured — finding 1, the value.** Four estimators, one solve
+(`20260806T093808Z_PORT-1-step3bvi-quadrature-sweep-n2.log`; 124 753 cells,
+mesh 25.5 s, solves 16.4 s / 16.0 s, 136.13 s total, `-n 2`, standard tier):
+
+| estimator | port 1 | port 2 | status |
+|---|---|---|---|
+| **path (3b-vi)** | **0.468933** | **0.499728** | this step |
+| facet (3b-v) | 4.801707 | 4.889116 | excluded |
+| full box (3b-ii/iii) | 0.331729 | 0.331767 | excluded |
+| tube shadow (3b-iii) | 0.763430 | 0.814325 | printed |
+
+(× `ωM₁₂ = 1.241755e+00 Ω`.) The path route does **not** close the ~0.78
+deficit: it lands *below* the shadow family at ~0.48 — a **third** distinct
+value — at −51.6% against the unmoved 10% `MUTUAL_TOLERANCE`, with reciprocity
+`|Z₁₂ − Z₂₁|/|Z₁₂| = 6.3e-2` against the 1e-2 band (1.70e-1 at the plan's
+order 65). Four families, four answers spanning a factor 15 on one solved
+field.
+
+**Measured — finding 2, and the reason this is parked rather than reported as a
+clean negative: the plan's own precondition fails.** The proposed `(33, 65)`
+pair disagrees by **1.07e-1**, two orders above the 1e-3 gate, so by the plan's
+own rule the number may not be compared to anything. The sequence was extended
+to 4097 nodes off the same solve to measure the rate rather than assert a
+converged value at a node count picked a priori — successive `|ΔV|/|V|`,
+port 1 driven, port 1:
+
+    1.07e-1 (65)   1.07e-1 (129)   3.82e-2 (257)   5.23e-3 (513)
+    7.43e-3 (1025) 2.58e-3 (2049)  8.12e-4 (4097)
+
+Non-monotone, roughly `O(1/n)`, plateauing at ~1e-3…2e-3; the other three
+port/drive combinations behave the same (worst 1.52e-3 at 4097). **This is
+structural, not a node count to raise.** N1curl guarantees continuity of the
+*facet*-tangential component only; the arc's own tangent is not
+facet-tangential, so `E·t̂` jumps at every cell crossing, and with
+`h_wire = 2.5e-3` against arc length `a·g = 1.2e-2` only **~5 cells** span the
+whole path. A line integral through 5 elements of a discontinuous integrand
+cannot be resolved to 0.1% at any node count.
+
+**Preconditions that hold, measured.** All 4097 arc quadrature nodes located,
+and every one of them in a **gap**-tagged cell, at both ports — taken through
+the same `evaluate_vector_field_parallel` locate path the field sampling uses,
+on a DG0 `(gap, wire, air)` indicator, so the containment claim is not
+arithmetic on nominal geometry. Gap-box identity `1.000000000000`; open-port
+`1.4162e-03` / `1.4129e-03`; port-disc areas equal to 12 digits.
+
+| log | result |
+|---|---|
+| `20260806T093500Z_PORT-1-step3bvi-gate-n2.log` | 5 passed 7 errors, 1.81 s — `gap_burial` not on `main` |
+| `20260806T093603Z_PORT-1-step3bvi-gate-n2.log` | 4 failed 8 passed, 64.30 s — `(33, 65)` disagree 1.07e-1 |
+| `20260806T093808Z_PORT-1-step3bvi-quadrature-sweep-n2.log` | 4 failed 4 passed, 136.13 s — the convergence sweep above |
+
+**No assertion was loosened.** `MUTUAL_TOLERANCE` (10%),
+`RECIPROCITY_TOLERANCE` (1e-2) and the 1e-3 quadrature precondition are all
+unmoved, and all three are red on the branch — which is why nothing landed on
+`main`. One assertion was **removed**, deliberately and per the item's explicit
+instruction not to gate on the 2xx facet areas at this overhang: the
+`meshed/exact` band in `test_port_discs_are_the_arc_end_cut` (known-issues 11).
+The measured 1.024132405 is still printed, and the two mirror-symmetry
+identities the test also carries are still gated.
+
+**Incidental, not fixed, handed to the review.** That same test's per-disc
+`y`-split identity fails at **1.1e-8** (8.217236898e-05 vs 8.217236808e-05 m²)
+against a 1e-9 tolerance. Not physics: a facet-area sum over ~10⁵ cells is not
+reproducible to 1e-9 between the two halves. It is on a parked branch, so no
+known-issues entry was opened; if the branch's file ever lands, that tolerance
+needs a measured value.
+
+**Nothing denied this slot.**
+
+**Next attempt hypothesis.** The estimator is not refuted — it is unresolved,
+and by a mesh property rather than by the physics. The cheapest decisive
+experiment is **refinement along the arc, not more quadrature nodes**: drop
+`H_WIRE` (or add a local size field on the gap arc) until ~40+ cells span
+`a·g = 1.2e-2`, re-run the same sweep, and see whether the plateau falls below
+1e-3 and whether the ~0.48 moves. If ~0.48 survives refinement, the
+estimator-family question is settled negatively — four geometries, four answers
+— and the next suspects are the ones the 3b-vi plan already named (finite-σ
+terminal penetration at `δ = 1.125 r_wire`; the `ωM₁₂` reference itself), which
+is a review's adjudication and not another estimator.
