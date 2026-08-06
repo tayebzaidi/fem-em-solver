@@ -1,0 +1,50 @@
+# Test Run
+- Chunk: GEO-10-probe
+- Commit: 63b6561e225f637d26a72da25205397a03508295
+- Time (UTC): 2026-08-06 05:01:44
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 120 python3 scripts/probes/geo10_probe.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  6 00:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 120 python3 scripts/probes/geo10_probe.py'\'''
+[geo10] box halves = (0.035, 0.035, 0.04)
+[geo10] dim-2 entities: 8
+[geo10] surf   1 area=3.947841760e-03 nearest_wall=z- residual_max=2.000e-02 on_wall=False
+[geo10] surf   2 area=3.947841760e-03 nearest_wall=z+ residual_max=2.000e-02 on_wall=False
+[geo10] surf   3 area=5.600000000e-03 nearest_wall=x- residual_max=1.000e-07 on_wall=False
+[geo10] surf   4 area=5.600000000e-03 nearest_wall=y- residual_max=1.000e-07 on_wall=False
+[geo10] surf   5 area=4.900000000e-03 nearest_wall=z+ residual_max=1.000e-07 on_wall=False
+[geo10] surf   6 area=5.600000000e-03 nearest_wall=y+ residual_max=1.000e-07 on_wall=False
+[geo10] surf   7 area=4.900000000e-03 nearest_wall=z- residual_max=1.000e-07 on_wall=False
+[geo10] surf   8 area=5.600000000e-03 nearest_wall=x+ residual_max=1.000e-07 on_wall=False
+[geo10] boundary_surfaces (tol=1e-9) = []
+[geo10] analytic box surface area = 3.220000000000e-02
+[geo10] dim-2 physical groups = []
+
+## Exit
+- Status: 0
+- Elapsed (s): 2

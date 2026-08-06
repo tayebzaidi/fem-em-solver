@@ -565,7 +565,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-7` | Mesh-tag QA diagnostic hardening | 🧪 | standard |
 | `GEO-8` | **Make `two_torus_domain` a conforming mesh** | ✅ | standard |
 | `GEO-9` | **`coil_phantom_domain` / birdcage meshes do not generate** | ✅ 2026-08-03 — step 1 (coil+phantom gated), step 2a (finalize + `bcast`: 180 s hang → 13 s), step 2b (`occ.fragment` rewrite; both identities 1.000000000000, whole `tests/mesh` green in CI). Retires known-issues 7 | standard |
-| `GEO-10` | **`two_torus_domain` never emits its `outer_boundary` facet tag** (known-issues 10) | ⬜ *(chunk written 2026-08-05, 18:00 review)* | standard |
+| `GEO-10` | **`two_torus_domain` never emits its `outer_boundary` facet tag** (known-issues 10) | ✅ *(2026-08-06, 00:00 run; known-issues 10 retired)* | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -645,7 +645,32 @@ Independent of the §2.1 physics defect; meshes are meshes.
 > and adjudicating intent becomes an operator question on the dashboard.
 
 **`GEO-10` — `two_torus_domain` never emits its `outer_boundary` facet tag
-(known-issues 10)** *(chunk written 2026-08-05, 18:00 review)*.
+(known-issues 10)** ✅ *(2026-08-06, 00:00 run)*.
+> **What it was — not the prime suspect.** The group was never *declared*, so
+> no renumbering could lose it. gmsh inflates an OCC entity's bounding box by
+> its geometric tolerance, measured at exactly **`1.000e-07`** on all six walls
+> (`20260806T050143Z_GEO-10-probe.log`), and the fixture's flat-against-wall
+> test used `tol = 1e-9`: every wall failed, `boundary_surfaces` came out
+> empty, and the `if boundary_surfaces:` guard skipped `addPhysicalGroup`
+> silently. Fragment renumbering is refuted — the group is re-derived from
+> bounding boxes *after* `fragment` + `synchronize`. Fix: that one tolerance,
+> `1e-9` → `1e-6`, 10× above the measured padding and four orders below the
+> nearest interior face's `2.000e-02` residual, so the interior-face
+> protection the tight test existed for is intact. Fixture-local: every other
+> `outer_boundary` derivation in `io/mesh.py` uses a `< resolution` test.
+> **Gate** `tests/mesh/test_two_torus_outer_boundary.py` — tag sets exactly
+> `{1}` / `{1, 201, 202}`, and tagged `ds` area = analytic box surface
+> `3.220000000000e-02 m²` at ratio **`1.000000000000000`** (`-n 2`, 25 s,
+> `20260806T050313Z_GEO-10-gate-n2.log`) and `1.000000000000001` (`-n 1`,
+> 24 s). An identity at `1e-9`, not a band: the walls are planar.
+> **Nothing moved.** The open question is answered — *neither* Helmholtz
+> consumer depends on tag `1`: both are digit-identical with the group present,
+> `MAG-14`'s centre-field error still `0.728%`
+> (`…050656Z_GEO-10-helmholtz-regression.log`). Port facets reproduce
+> `1.563786482e-04 m²` at `0.974490841` (`…050620Z_…-portfacet-digits.log`);
+> full `tests/mesh` **29 passed, 1 skipped, 107.64 s**
+> (`…050421Z_GEO-10-mesh-regression.log`). Known-issues 10 retired.
+> *(Original chunk text below, written 2026-08-05, 18:00 review.)*
 > Measured 2026-08-05: the fixture's third return value carries **no** tag
 > `1` — the ungapped global facet-tag set is `[]`, the gapped set is
 > `[201, 202]`, while `mesh.py:1038` adds an `outer_boundary` physical group
@@ -2313,8 +2338,22 @@ item 4. Item 5 is the spare and the only heavy-tier item.
    archaeology in known-issues 5, leave the test deselected, stop — it
    becomes an operator question on the dashboard.
 
-4. **`GEO-10` — `two_torus_domain`'s missing `outer_boundary` facet tag
-   (known-issues 10).** Independent of items 1–3 landing; touches the same
+4. ~~**`GEO-10` — `two_torus_domain`'s missing `outer_boundary` facet tag
+   (known-issues 10).**~~ — **done 2026-08-06 (00:00 run)**, ✅ per §4. The
+   prime suspect is **refuted**: nothing lost the group, it was never
+   declared. gmsh pads OCC bounding boxes by `1.000e-07` and the fixture's
+   wall test used `tol = 1e-9`, so `boundary_surfaces` was empty and the
+   `if boundary_surfaces:` guard skipped `addPhysicalGroup` silently. One
+   tolerance changed (`1e-9` → `1e-6`); the identity gates at ratio
+   **`1.000000000000000`** (`-n 2`, `20260806T050313Z_GEO-10-gate-n2.log`,
+   25 s) / `1.000000000000001` (`-n 1`). Neither Helmholtz consumer depends
+   on tag `1` — `MAG-14`'s `0.728%` and the port facets' `1.563786482e-04 m²`
+   both digit-identical; `tests/mesh` 29 passed, 1 skipped, 107.64 s.
+   Known-issues 10 retired. One item for the review: the same
+   bounding-box padding sits under every `< resolution` wall test in
+   `io/mesh.py` — loose enough to be safe today, unmeasured as a margin.
+   See the §7 entry. *(Original item text below.)*
+   Independent of items 1–3 landing; touches the same
    fixture file item 1 reads, which queue order already handles. Execute
    the §7 `GEO-10` plan, written this review; prime suspect is fragment
    surface renumbering (the `GEO-8` lesson applied to dim-2 groups).

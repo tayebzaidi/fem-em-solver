@@ -239,7 +239,7 @@ def test_ungapped_fixture_emits_no_port_facet_groups():
     assert not (set(PORT_FACET_TAGS) & tags_present), (
         f"the ungapped path emitted port facet tags: {sorted(tags_present)}"
     )
-    # Nothing is asserted about the outer-boundary group (tag 1) here: measured
-    # 2026-08-05, it does not reach the dolfinx facet tags from *either* path
-    # (the gapped mesh reports [201, 202] only). That is pre-existing and is
-    # filed in known-issues.md, not fixed in passing.
+    # Nothing is asserted about the outer-boundary group (tag 1) here; that is
+    # `GEO-10`'s gate, `test_two_torus_outer_boundary.py`. Until 2026-08-06 it
+    # did not reach the dolfinx facet tags from *either* path (known-issues 10,
+    # since retired); the tag set this test prints is now [1] / [1, 201, 202].

@@ -227,17 +227,41 @@ The original entry follows, kept because its serial measurements stand.
 | **Cause** | Not diagnosed. Bounded from two sides by measurement: `-n 1` completes the identical case in 22.5 s with correct areas (`20260805T020843Z_PORT-1-step3biv-serial-gate.log`, 2 passed), and `-n 2` on the same fixture **without** the new facet groups is green today (`tests/mesh/test_two_torus_gapped.py`). So it is neither cost nor the gapped geometry: it is the distribution of facet tags whose facets are interior to the partitioned mesh. The `2xx` groups are the fixture's first interior dim-2 groups — the only pre-existing one is the outer boundary. |
 | **Verified pre-existing at** | Not pre-existing — introduced by the parked branch, which is why it is parked. Recorded here so the next attempt starts from the stack trace instead of re-deriving it. |
 
-### 10. `two_torus_domain`'s outer-boundary facet group never reaches the dolfinx facet tags
+### 10. ✅ RETIRED 2026-08-06 — `two_torus_domain`'s outer-boundary facet group never reached the dolfinx facet tags (`GEO-10`)
 
-| | |
-|---|---|
-| **Tests** | None asserts it, which is how it survived. Measured by `tests/mesh/test_two_torus_port_facets.py`, which is on `main` as of 2026-08-05 and prints the tag set in both configurations without asserting tag `1`. |
-| **Symptom** | The third return value of `two_torus_domain` carries **no** tag `1`. Measured 2026-08-05 at `-n 1`: the ungapped fixture's global facet-tag set is `[]` (empty), and the gapped fixture's is `[201, 202]` — the `outer_boundary` physical group added at `mesh.py:1038` is absent from both (`20260805T020843Z_PORT-1-step3biv-serial-gate.log`). |
-| **Cause** | Not diagnosed. `two_torus_domain` is consumed by `tests/validation/test_helmholtz_v2.py` and `test_helmholtz_magnitude.py`, both of which pass `facet_tags=` into a solver; whether either actually depends on tag `1` being populated is **unchecked**. Those tests' current status is unaffected by this entry — they pass or fail today exactly as they did before it was written. Not fixed in passing: it is `GEO`/`MAG` work and changing what the fixture emits could move Helmholtz numbers. |
-| **Verified pre-existing at** | `2fba4d9` — the measurement is read-only and the ungapped path is untouched by the parked diff. |
+The group was never *declared*, so nothing downstream could lose it. gmsh
+inflates an OCC entity's bounding box by its geometric tolerance — measured at
+exactly **`1.000e-07`** on all six walls of this box
+(`20260806T050143Z_GEO-10-probe.log`) — and the fixture's flat-against-wall
+test used `tol = 1e-9`. All six walls failed it, `boundary_surfaces` came out
+empty, and the `if boundary_surfaces:` guard silently skipped
+`addPhysicalGroup`. The chunk's prime suspect, fragment renumbering, is
+**refuted**: the group is re-derived from bounding boxes after `fragment` +
+`synchronize`, so renumbering never reaches it.
 
-Owned by chunk `GEO-10` (§7, written by the 2026-08-05 18:00 review); this
-entry leaves with `GEO-10`'s fixing commit.
+Fixed by widening that one tolerance to `1e-6` — 10× above the measured
+padding and four orders below the nearest interior face's `2.000e-02`
+residual, so the interior-face protection the tight test existed for is
+intact. No other fixture is affected: the rest of `io/mesh.py` uses a
+`< resolution` wall test (loose by ~4 orders), and only `two_torus_domain` had
+tightened it.
+
+Gated by `tests/mesh/test_two_torus_outer_boundary.py`: tag sets exactly `{1}`
+ungapped and `{1, 201, 202}` gapped, and the assembled `ds` area over tag `1`
+equals the analytic box surface `2(LW+LH+WH) = 3.220000000000e-02 m²` at
+ratio **`1.000000000000000`** (`-n 2`,
+`20260806T050313Z_GEO-10-gate-n2.log`, 25 s) and `1.000000000000001` (`-n 1`,
+`…050350Z_…-n1.log`, 24 s) — planar walls, so this is an identity at `1e-9`,
+not a band.
+
+The open question the entry recorded is now answered: **neither Helmholtz
+consumer depends on tag `1`.** Both were re-run with the group present and
+their gated numbers are digit-identical — `MAG-14`'s centre-field error is
+still `0.728%` (`…050656Z_GEO-10-helmholtz-regression.log`, 2 passed, 11 s).
+The port-facet gate likewise reproduces `A_201 = A_202 = 1.563786482e-04 m²`
+at `0.974490841` of analytic (`…050620Z_GEO-10-portfacet-digits.log`), so
+adding a boundary group moved no interface tag. Full `tests/mesh` at `-n 2`:
+**29 passed, 1 skipped, 107.64 s** (`…050421Z_GEO-10-mesh-regression.log`).
 
 ### 7. ✅ RETIRED 2026-08-03 — birdcage mesh fails to generate (`GEO-9`, steps 1 + 2a + 2b)
 

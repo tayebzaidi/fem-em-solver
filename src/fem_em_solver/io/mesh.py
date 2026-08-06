@@ -1162,7 +1162,16 @@ class MeshGenerator:
             # wall (both bounding-box extremes on it), not merely within one
             # mesh size of it: fragment introduces interior faces, and the old
             # `< resolution` test would have swept some of them into the BC.
-            tol = 1e-9
+            #
+            # `GEO-10`: the tolerance may not be roundoff-tight. gmsh inflates
+            # an OCC entity's bounding box by its geometric tolerance, measured
+            # 2026-08-06 at exactly **1.000e-07** on all six walls of this box
+            # (`20260806T050143Z_GEO-10-probe.log`) — so `tol = 1e-9` rejected
+            # every wall, `boundary_surfaces` came out empty, and the group was
+            # never declared at all (known-issues 10). 1e-6 clears that padding
+            # by 10x while staying four orders below the nearest interior face,
+            # whose residual in the same probe is 2.000e-02.
+            tol = 1e-6
             boundary_surfaces = []
             for dim, surf in gmsh.model.getEntities(dim=2):
                 x_min, y_min, z_min, x_max, y_max, z_max = gmsh.model.getBoundingBox(dim, surf)

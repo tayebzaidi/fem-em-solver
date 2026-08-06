@@ -4274,3 +4274,80 @@ strictly stronger set, with the reason it cannot hold recorded in three places.
 **Next attempt hypothesis:** none for this step — it is closed. `GEO-4` stays
 🧪; its graded-sizing generalization to the other `io/mesh.py` fixtures is the
 open half, and §9 item 4 (`GEO-10`) is untouched and next.
+
+## 2026-08-06T05:10Z — `GEO-10` (§9 On-deck item 4) — complete
+
+Slot: 00:00 local implementer run. Preflight clean, container Up. §9 items 1–3
+were skipped as directed: item 1 is 🟡 with "do not re-run as written" and its
+successor is explicitly the review's to scope; items 2 and 3 landed in the two
+prior slots. Item 4 is the first open one.
+
+**The prime suspect is refuted, and the answer is one number.** The chunk
+guessed fragment renumbering (the `GEO-8` lesson applied to dim-2 groups). It
+is not that, and it could not have been: `two_torus_domain` re-derives the
+`outer_boundary` surfaces from bounding boxes *after* `fragment` +
+`synchronize`, so no renumbering reaches them. The group was never **declared**
+at all. gmsh inflates an OCC entity's bounding box by its geometric tolerance;
+a CAD-only probe (`scripts/probes/geo10_probe.py`, no meshing, seconds) printed
+the residual of every dim-2 entity against its nearest wall:
+
+| surfaces | nearest-wall residual |
+|---|---|
+| the six box walls (3–8) | **`1.000e-07`** each, all six |
+| the two torus surfaces (1–2) | `2.000e-02` |
+
+The fixture's flat-against-wall test used `tol = 1e-9`. All six walls failed
+it, `boundary_surfaces` came out `[]`, and the `if boundary_surfaces:` guard
+skipped `addPhysicalGroup` without a word — which is why the defect survived to
+be found by a print rather than a failure. Probe log
+`20260806T050143Z_GEO-10-probe.log`; the CAD area of the six walls sums to the
+analytic `3.220000000000e-02 m²` exactly, confirming the wall set is right and
+only the test rejecting it was wrong.
+
+**Fix:** that one tolerance, `1e-9` → `1e-6`, with both measured numbers in the
+comment. 10× above the padding, four orders below the nearest interior face, so
+the interior-face protection the tight test was written for (see its own
+comment about the old `< resolution` test) is intact. Fixture-local — every
+other `outer_boundary` derivation in `io/mesh.py` (lines ~676, ~2025, ~2515)
+uses `< resolution`, loose by ~4 orders, so none is affected.
+
+**Gate** `tests/mesh/test_two_torus_outer_boundary.py`, two tests: tag set
+exactly `{1}` ungapped and `{1, 201, 202}` gapped, and the assembled `ds` area
+over tag `1` against the analytic box surface. Planar walls partition exactly,
+so this is an identity at `1e-9` relative, not a band — the plan's anchor,
+unchanged.
+
+| log | result |
+|---|---|
+| `20260806T050143Z_GEO-10-probe.log` | CAD probe, diagnosis |
+| `20260806T050313Z_GEO-10-gate-n2.log` | 2 passed, 25 s; ratio **`1.000000000000000`** both configurations |
+| `20260806T050350Z_GEO-10-gate-n1.log` | 2 passed, 24 s; `1.000000000000000` / `1.000000000000001` |
+| `20260806T050421Z_GEO-10-mesh-regression.log` | whole `tests/mesh`, **29 passed 1 skipped, 107.64 s** |
+| `20260806T050620Z_GEO-10-portfacet-digits.log` | 2 passed, 23 s; `A_201 = A_202 = 1.563786482e-04 m²`, `0.974490841` |
+| `20260806T050656Z_GEO-10-helmholtz-regression.log` | 2 passed, 11 s; centre-field rel err **`0.728%`** |
+
+Negative control cited, not re-run (the plan says on record): the broken tag
+sets `[]` / `[201, 202]` in `20260805T020843Z_PORT-1-step3biv-serial-gate.log`.
+The 29 in the `tests/mesh` sweep is the 27 that landed with `GEO-4` step 1 plus
+this gate's two; nothing else changed count or behaviour.
+
+**The entry's open question is answered: neither Helmholtz consumer depends on
+tag `1`.** Both were re-run with the group now present and are digit-identical
+— `MAG-14`'s `0.728%` is untouched, and the port-facet areas reproduce to all
+nine printed digits, so adding a boundary group moved no interface tag. That is
+recorded in the known-issues retirement as the chunk required.
+
+**Handed to the review, not acted on:** the same OCC bounding-box padding sits
+under every `< resolution` wall test in `io/mesh.py`. Those are loose enough to
+be safe at today's resolutions, but the margin is unmeasured, and a fixture
+that ever runs at `resolution ≲ 1e-6` would inherit this exact failure — a
+silent empty boundary group, not an error. A cheap sweep of the same probe over
+the other fixtures would put a number on it.
+
+**Nothing denied this slot.** No assertion loosened; the tolerance changed is a
+CAD-side classification threshold, not a physics bound, and the measurement
+that forced it is in the code comment, the §7 entry, and known-issues 10.
+
+**Next attempt hypothesis:** none — `GEO-10` is closed and known-issues 10 is
+retired. §9 item 5 (`MAT-6` step 5, the heavy spare) is the only open item
+left; items 1–4 are done or blocked-pending-review, so the queue is one deep.
