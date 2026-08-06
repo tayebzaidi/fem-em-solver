@@ -1,0 +1,105 @@
+# Test Run
+- Chunk: MAG-16-gaugespread-complex
+- Commit: 0ab1ee3078bdd74cade45a4189caf6bb705a3030
+- Time (UTC): 2026-08-05 21:34:58
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/solver/test_gauge_lagrange.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  5 16:34 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/solver/test_gauge_lagrange.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 3 items
+
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field collected 3 items
+
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field PASSED [ 33%]PASSED [ 33%]
+tests/solver/test_gauge_lagrange.py::test_lagrange_removes_null_space_component 
+tests/solver/test_gauge_lagrange.py::test_lagrange_removes_null_space_component PASSED [ 66%]PASSED [ 66%]
+tests/solver/test_gauge_lagrange.py::test_gauge_multiplier_spread_is_reported 
+tests/solver/test_gauge_lagrange.py::test_gauge_multiplier_spread_is_reported PASSED [100%]PASSED [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field
+  /workspace/src/fem_em_solver/core/solvers.py:526: ComplexWarning: Casting complex values to real discards the imaginary part
+    hi = comm.allreduce(float(arr.max()) if arr.size else -np.inf, op=MPI.MAX)
+
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field
+  /workspace/src/fem_em_solver/core/solvers.py:527: ComplexWarning: Casting complex values to real discards the imaginary part
+    lo = comm.allreduce(float(arr.min()) if arr.size else np.inf, op=MPI.MIN)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 3 passed, 10 warnings in 4.58s ========================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field
+  /workspace/src/fem_em_solver/core/solvers.py:526: ComplexWarning: Casting complex values to real discards the imaginary part
+    hi = comm.allreduce(float(arr.max()) if arr.size else -np.inf, op=MPI.MAX)
+
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field
+  /workspace/src/fem_em_solver/core/solvers.py:527: ComplexWarning: Casting complex values to real discards the imaginary part
+    lo = comm.allreduce(float(arr.min()) if arr.size else np.inf, op=MPI.MIN)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 3 passed, 10 warnings in 4.57s ========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 5

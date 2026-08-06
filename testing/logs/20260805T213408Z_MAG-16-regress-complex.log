@@ -1,0 +1,225 @@
+# Test Run
+- Chunk: MAG-16-regress-complex
+- Commit: 0ab1ee3078bdd74cade45a4189caf6bb705a3030
+- Time (UTC): 2026-08-05 21:34:08
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/environment tests/solver -q --tb=line'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  5 16:33 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 2 python3 -m pytest tests/environment tests/solver -q --tb=line'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 36 items
+
+tests/environment/test_complex_mode.py ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 36 items
+
+tests/environment/test_complex_mode.py ........                              [ 11%]                              [ 11%]
+tests/solver/test_boundary_condition_selection.py 
+tests/solver/test_boundary_condition_selection.py ........                   [ 22%]                   [ 22%]
+tests/solver/test_coil_phantom_magnetostatics.py 
+tests/solver/test_coil_phantom_magnetostatics.py ..                       [ 25%]                       [ 25%]
+tests/solver/test_convergence_diagnostics.py 
+tests/solver/test_convergence_diagnostics.py FFFF                          [ 30%]                          [ 30%]
+tests/solver/test_cylinder.py 
+tests/solver/test_cylinder.py .                                          [ 33%]
+tests/solver/test_energy_and_point_evaluation.py .                                          [ 33%]
+tests/solver/test_energy_and_point_evaluation.py MAG-16 PENALTY: W=1.121469594174e-08 J, real-build pin rel=2.455e-07
+MAG-16 LAGRANGE: W=1.121466766900e-08 J, real-build pin rel=1.280e-13
+.MAG-16 PENALTY: W=1.121469594174e-08 J, real-build pin rel=2.455e-07
+MAG-16 LAGRANGE: W=1.121466766900e-08 J, real-build pin rel=1.280e-13
+.MAG-16 PENALTY: W_re=1.121469594174e-08 W_im=0.000000000000e+00 |Im/Re|=0.000e+00 dtype=complex128
+MAG-16 LAGRANGE: W_re=1.121466766900e-08 W_im=0.000000000000e+00 |Im/Re|=0.000e+00 dtype=complex128
+.MAG-16 PENALTY: W_re=1.121469594174e-08 W_im=0.000000000000e+00 |Im/Re|=0.000e+00 dtype=complex128
+MAG-16 LAGRANGE: W_re=1.121466766900e-08 W_im=0.000000000000e+00 |Im/Re|=0.000e+00 dtype=complex128
+.........                  [ 50%]                  [ 50%]
+tests/solver/test_gauge_lagrange.py 
+tests/solver/test_gauge_lagrange.py .....                                  [ 58%].
+tests/solver/test_gauge_penalty.py .                                  [ 58%]
+tests/solver/test_gauge_penalty.py .......                                  [ 69%]
+tests/solver/test_single_port_excitation.py                                   [ 69%]
+tests/solver/test_single_port_excitation.py ........                         [ 80%]                         [ 80%]
+tests/solver/test_time_harmonic_smoke.py 
+tests/solver/test_time_harmonic_smoke.py ........                            [ 91%]
+tests/solver/test_tolerance_policy.py                             [ 91%]
+tests/solver/test_tolerance_policy.py ..                                  [ 94%]
+tests/solver/test_two_cylinder.py                                   [ 94%]
+tests/solver/test_two_cylinder.py ..                                      [ 97%]                                      [ 97%]
+tests/solver/test_two_torus.py 
+tests/solver/test_two_torus.py ..                                         [100%]                                         [100%]
+
+=================================== FAILURES ===================================
+/workspace/tests/solver/test_convergence_diagnostics.py:24: AssertionError: assert 'mixed' == 'mostly-decreasing'
+/workspace/tests/solver/test_convergence_diagnostics.py:66: AssertionError: assert False
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_bfield_is_finite_and_nontrivial_in_phantom
+  /workspace/tests/solver/test_coil_phantom_magnetostatics.py:49: GaugeContaminationWarning: gauge_penalty=1.000e-03 is below the validated floor of 1. The penalty controls the gradient null space of the curl-curl operator; too small a value lets it dominate A and corrupt B = curl(A) through round-off. Measured at N1curl degree 2, h=0.003: 920% field error at 1e-3 versus 19.6% at 1e0. B is insensitive across 1e0..1e6, so there is no accuracy reason to go lower. Note the linear solve reports success regardless -- a direct LU always converges.
+    solver.solve(
+
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field
+  /workspace/src/fem_em_solver/core/solvers.py:526: ComplexWarning: Casting complex values to real discards the imaginary part
+    hi = comm.allreduce(float(arr.max()) if arr.size else -np.inf, op=MPI.MAX)
+
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field
+  /workspace/src/fem_em_solver/core/solvers.py:527: ComplexWarning: Casting complex values to real discards the imaginary part
+    lo = comm.allreduce(float(arr.min()) if arr.size else np.inf, op=MPI.MIN)
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+  /workspace/tests/solver/test_single_port_excitation.py:78: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    result = run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_missing_required_tags
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_driven_index_mismatch
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/src/fem_em_solver/ports/excitation.py:360: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    return run_placeholder_port_coupling_case(*args, **kwargs)
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+  /workspace/src/fem_em_solver/ports/excitation.py:102: ComplexWarning: Casting complex values to real discards the imaginary part
+    sigma_values = np.asarray(fields.sigma_field.x.array, dtype=np.float64)
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+  /workspace/src/fem_em_solver/ports/excitation.py:103: ComplexWarning: Casting complex values to real discards the imaginary part
+    epsilon_values = np.asarray(fields.epsilon_r_field.x.array, dtype=np.float64)
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_missing_required_tags
+  /workspace/tests/solver/test_single_port_excitation.py:119: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_driven_index_mismatch
+  /workspace/tests/solver/test_single_port_excitation.py:158: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/tests/solver/test_single_port_excitation.py:198: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/tests/solver/test_single_port_excitation.py:206: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic
+FAILED tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics
+================== 2 failed, 34 passed, 22 warnings in 28.34s ==================
+
+
+=================================== FAILURES ===================================
+/workspace/tests/solver/test_convergence_diagnostics.py:24: AssertionError: assert 'mixed' == 'mostly-decreasing'
+/workspace/tests/solver/test_convergence_diagnostics.py:66: AssertionError: assert False
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_bfield_is_finite_and_nontrivial_in_phantom
+  /workspace/tests/solver/test_coil_phantom_magnetostatics.py:49: GaugeContaminationWarning: gauge_penalty=1.000e-03 is below the validated floor of 1. The penalty controls the gradient null space of the curl-curl operator; too small a value lets it dominate A and corrupt B = curl(A) through round-off. Measured at N1curl degree 2, h=0.003: 920% field error at 1e-3 versus 19.6% at 1e0. B is insensitive across 1e0..1e6, so there is no accuracy reason to go lower. Note the linear solve reports success regardless -- a direct LU always converges.
+    solver.solve(
+
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field
+  /workspace/src/fem_em_solver/core/solvers.py:526: ComplexWarning: Casting complex values to real discards the imaginary part
+    hi = comm.allreduce(float(arr.max()) if arr.size else -np.inf, op=MPI.MAX)
+
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field
+  /workspace/src/fem_em_solver/core/solvers.py:527: ComplexWarning: Casting complex values to real discards the imaginary part
+    lo = comm.allreduce(float(arr.min()) if arr.size else np.inf, op=MPI.MIN)
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+  /workspace/tests/solver/test_single_port_excitation.py:78: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    result = run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_missing_required_tags
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_driven_index_mismatch
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/src/fem_em_solver/ports/excitation.py:360: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    return run_placeholder_port_coupling_case(*args, **kwargs)
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+  /workspace/src/fem_em_solver/ports/excitation.py:102: ComplexWarning: Casting complex values to real discards the imaginary part
+    sigma_values = np.asarray(fields.sigma_field.x.array, dtype=np.float64)
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+  /workspace/src/fem_em_solver/ports/excitation.py:103: ComplexWarning: Casting complex values to real discards the imaginary part
+    epsilon_values = np.asarray(fields.epsilon_r_field.x.array, dtype=np.float64)
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_missing_required_tags
+  /workspace/tests/solver/test_single_port_excitation.py:119: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_driven_index_mismatch
+  /workspace/tests/solver/test_single_port_excitation.py:158: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/tests/solver/test_single_port_excitation.py:198: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/tests/solver/test_single_port_excitation.py:206: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic
+FAILED tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics
+================== 2 failed, 34 passed, 22 warnings in 28.36s ==================
+WARNING! There are options you set that were not used!
+WARNING! could be spelling mistake, etc!
+There is one unused database option. It is:
+Option left: name:-dolfinx_solve_123428882798896pc_factor_mat_solver_type value: mumps source: code
+
+## Exit
+- Status: 1
+- Elapsed (s): 30

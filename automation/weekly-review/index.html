@@ -587,8 +587,15 @@ means — for yourself.</p>
    its most recent verified run in <code>docs/testing/logs/</code> (or note there is
    none) and whether its XDMF outputs still reflect current capability.
    You may not solve — a stale or broken example becomes a §7 chunk with the
-   staleness stated. §5.4's bar: at least one clean runnable example per
-   active phase, XDMF that opens in ParaView.</p>
+   staleness stated. §5.4's bar is a ramp: an in-progress phase owes
+   <code>min(5, gating chunks closed ✅)</code> clean runnable examples, each
+   demonstrating gated capability from a distinct angle (geometry, materials,
+   drive, or output quantity), XDMF that opens in ParaView; a completed phase
+   owes the full five. Count each phase against its ramp. The daily review
+   enqueues an example chunk after each gate closure (daily-review.md step
+   5), so a shortfall here means that mechanism missed — open the missing §7
+   chunks yourself and state the per-phase count and shortfall in the
+   review.</p>
 </li>
 <li>
 <p><strong>Ansys benchmarks (§5.4), both directions.</strong></p>
@@ -599,10 +606,10 @@ means — for yourself.</p>
      materials, BCs, ports, frequencies, quantities to export — no judgement
      calls left to the operator) and a §7 chunk to implement the runnable
      half. Keep the case small enough that one AED session replicates it.
-     A commissioned case that is ready for the operator to replicate is a
-     notification-worthy event — follow <code>docs/automation/notifications.md</code>
-     (categories, 2-per-7-days ledger) and put it at the top of the
-     dashboard's Waiting-on-you list either way.</li>
+     A commissioned case that is ready for the operator to replicate goes at
+     the top of the dashboard's Waiting-on-you list
+     (<code>docs/status/dashboard.md</code>, daily-review.md step 7) — that list is how
+     the operator learns about it.</li>
 <li>
 <p><em>Adjudicate:</em> if any <code>COMPARISON.md</code> gained AED numbers from the human
      operator since last week, adjudicate them now — agreements promote into

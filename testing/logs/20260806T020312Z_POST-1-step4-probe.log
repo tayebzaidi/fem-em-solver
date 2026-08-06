@@ -1,0 +1,58 @@
+# Test Run
+- Chunk: POST-1-step4-probe
+- Commit: 7a3848f6a3da544012dd400031481178e8c39a46
+- Time (UTC): 2026-08-06 02:03:13
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src:/workspace timeout 180 mpiexec -n 2 python3 scripts/probes/post1_step4_probe.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  5 21:02 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src:/workspace timeout 180 mpiexec -n 2 python3 scripts/probes/post1_step4_probe.py'\'''
+
+[POST-1 step 4 probe] two-slab planar interface
+  k1 (sigma=0.1) = 2.373991e+01-2.124260e+00j   k2 (sigma=1.4) = 3.223161e+01-2.190447e+01j
+  R = -0.256210+0.243406j   T = 0.743790+0.243406j   |R| = 0.353398  |T| = 0.782605
+  interface at x = 0.0500 m, box L = 0.1 m
+  closed-form |E| at interface = 0.703744, at exit face = 0.235378
+  slab-2 decay length 1/alpha2 = 4.565278e-02 m
+  n = 16:   24576 cells, rel L2 vs closed form = 4.3147%  (4.9 s)
+  n = 32:  196608 cells, rel L2 vs closed form = 2.1568%  (45.5 s)
+  convergence rate in h: 1.0004
+
+  cell classes (global, owned): tagged 98304, interior 96256, drop 2048 (2.08% of the tag)
+  (a) prefer_interior=True : n = 96256  mean rel err = 61.8232%  max rel err = 98.5222%  |E| in [0.006552, 0.432921]  x in [0.051562, 0.099219]
+  (b) full tagged set      : n = 98304  mean rel err = 61.2842%  max rel err = 98.5222%  |E| in [0.006552, 0.443748]  x in [0.050781, 0.099219]
+  (c) drop set alone       : n =  2048  mean rel err = 35.9493%  max rel err = 36.0564%  |E| in [0.442364, 0.443748]  x in [0.050781, 0.050781]
+  separation (c)/(a) in mean error: 0.5815x   (sphere: 1.009x)
+  (a) vs (b): 61.8232% vs 61.2842%
+  predicted max: closed form at x_a = 0.051562 -> 0.680066; at x_b = 0.050781 -> 0.691804; at interface -> 0.703744
+  measured max:  (a) 0.432921  (b) 0.443748
+  max ratio (b)/(a) = 1.0250x   predicted 1.0173x
+  full-set max vs closed-form entry-face value: 36.9447%
+
+## Exit
+- Status: 0
+- Elapsed (s): 57

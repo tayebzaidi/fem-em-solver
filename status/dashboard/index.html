@@ -495,10 +495,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#honest-current-state-digest-of-2" class="md-nav__link">
+  <a href="#honest-current-state-digest-of-2-unchanged-this-interval" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Honest current state (digest of §2)
+        Honest current state (digest of §2 — unchanged this interval)
       
     </span>
   </a>
@@ -506,10 +506,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#recent-activity-last-24-h" class="md-nav__link">
+  <a href="#recent-activity-since-the-0300-review" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recent activity (last ~24 h)
+        Recent activity (since the 03:00 review)
       
     </span>
   </a>
@@ -528,10 +528,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#on-deck-9-top-of-queue" class="md-nav__link">
+  <a href="#on-deck-9-refreshed-this-review" class="md-nav__link">
     <span class="md-ellipsis">
       
-        On deck (§9, top of queue)
+        On deck (§9, refreshed this review)
       
     </span>
   </a>
@@ -559,14 +559,19 @@
 
 
 <h1 id="fem-em-solver-status">FEM-EM Solver — status<a class="headerlink" href="#fem-em-solver-status" title="Permanent link">&para;</a></h1>
-<p><strong>Updated:</strong> 2026-08-05 (interactive setup — subsequent updates come from the
-scheduled daily review). Source of truth is <code>PROJECT_PLAN.md</code>; this page is a
-read-only digest for the human operator.</p>
+<p><strong>Updated:</strong> 2026-08-06, 10:30 daily review. Source of truth is
+<code>PROJECT_PLAN.md</code>; this page is a read-only digest for the human operator.</p>
 <h2 id="waiting-on-you">Waiting on you<a class="headerlink" href="#waiting-on-you" title="Permanent link">&para;</a></h2>
-<p><em>Nothing pending.</em> No Ansys benchmark cases are commissioned yet
-(<code>examples/ansys_benchmarks/</code> holds only its README), and automation is
-healthy. When something lands here, it is the thing to do next.</p>
-<h2 id="honest-current-state-digest-of-2">Honest current state (digest of §2)<a class="headerlink" href="#honest-current-state-digest-of-2" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Housekeeping: local <code>main</code> is well ahead of <code>origin/main</code> (this review
+   makes 18 unpushed commits); push when convenient. No Ansys benchmark
+   cases commissioned yet (the weekly review owns that).</li>
+<li>Your 10:12/10:17 examples-bar change (five per phase, accruing with gate
+   closures) is now wired in: the first §5.4 ramp chunk (<code>EX-1</code>, a two-torus
+   mesh/tags example) is queued this interval. No action needed unless the
+   ramp rule isn't what you intended.</li>
+</ol>
+<h2 id="honest-current-state-digest-of-2-unchanged-this-interval">Honest current state (digest of §2 — unchanged this interval)<a class="headerlink" href="#honest-current-state-digest-of-2-unchanged-this-interval" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -579,7 +584,7 @@ healthy. When something lands here, it is the thing to do next.</p>
 <tr>
 <td>Magnetostatics</td>
 <td>✅ validated</td>
-<td>closed forms</td>
+<td>closed forms; energy safe in both builds (MAG-16)</td>
 </tr>
 <tr>
 <td>Time-harmonic curl-curl</td>
@@ -603,37 +608,73 @@ healthy. When something lands here, it is the thing to do next.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="recent-activity-last-24-h">Recent activity (last ~24 h)<a class="headerlink" href="#recent-activity-last-24-h" title="Permanent link">&para;</a></h2>
+<h2 id="recent-activity-since-the-0300-review">Recent activity (since the 03:00 review)<a class="headerlink" href="#recent-activity-since-the-0300-review" title="Permanent link">&para;</a></h2>
+<p>Third consecutive 4/4 interval — three landed, one disciplined park:</p>
 <ul>
-<li><strong>PORT-1 step 3b-iv landed</strong> — port facet tags green at <code>-n 2</code> in 20 s;
-  the hang was a rank-asymmetric <code>create_entity_permutations()</code>; known-issues
-  9 retired. Item 5's dependency is satisfied.</li>
-<li><strong>POST-1 step 3 landed</strong> — drop-set semantics on the solved TH-8 sphere;
-  green at <code>-n 2</code> (4.42 s), bit-identical at <code>-n 4</code>; layer separates in
-  spread (1.334×) but not in mean.</li>
-<li><strong>POST-3 step 5 landed</strong> — piecewise μᵣ through both legs of the Poynting
-  balance.</li>
+<li><strong>PORT-1 step 3b-vi</strong> — the tangential path-integral port voltage measured
+  ~0.48 × the closed form: a <em>third</em> distinct estimator value, and the four
+  families now span a factor 15 off one solved field. Parked, not landed —
+  correctly, because the plan's own quadrature-convergence precondition
+  fails structurally: only ~5 mesh cells span the gap arc and the integrand
+  jumps at every cell crossing, so no node count can resolve it. This
+  review's rescope (step 3b-vii, queue item 1) refines the mesh along the
+  arc; if ~0.48 survives refinement, the sampling-geometry question is
+  settled and suspicion moves to the field scale in the gap or the closed-
+  form reference itself.</li>
+<li><strong>POST-1 step 4b</strong> — the sphere drop-set table re-scored on |E| is
+  <em>digit-identical</em> (2e-16) to the Re E table, because the lossless
+  real-data fixture's phasor is exactly real (max|Im E| = 0). Step 3's
+  conclusions transfer unchanged, and the reason is now a 1e-12 gate that
+  fails the moment a fixture acquires a phase — which is exactly when the
+  Re E substitution becomes the 62% error step 4 measured on the planar
+  fixture.</li>
+<li><strong>POST-1 step 5</strong> — <code>prefer_interior=False</code> is now the production default
+  at all four entry points; the retired guardrail's 2.157× peak penalty is
+  pinned as the negative control, measured through production. The drop-set
+  thread (steps 1–5) is complete; a cheap parity gate on the CSV export
+  path is queued as step 6.</li>
+<li><strong>GEO-11</strong> — the CAD-only margin sweep closed the chunk and found GEO-10's
+  defect <strong>live in two more fixtures</strong>: <code>loop_over_half_space_domain</code> and
+  <code>sphere_in_box_domain</code> never declare their outer-boundary group
+  (tolerance 100× below the OCC padding). Latent — every caller discards
+  the tags — but real; known-issues 12/13 opened. This review took the
+  reserved tolerance decision: chunk <strong>GEO-12</strong> (queued) widens both to
+  1e-6 and finally gates the group's existence.</li>
 </ul>
+<p>All three ✅ flips (GEO-11, POST-1 steps 4b and 5) audited §4-compliant this
+review by independent read-only auditors — logs, quantitative assertions,
+elapsed times verified; pinned assertions confirmed to execute before their
+skips. No demotions. One audit catch fixed in this commit: a mis-transcribed
+digit string in a GEO-11 test comment.</p>
 <h2 id="automation-health">Automation health<a class="headerlink" href="#automation-health" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Last daily review: 2026-08-05 10:30 (next: 18:00 / 03:00 / 10:30 grid).</li>
-<li>Parked branches: <code>attempt/PORT-1-step3biii-…</code> (kept for item 5's test
-  file), <code>attempt/PORT-1-step3biv-…</code> (superseded once 3b-iv landed — next
-  review disposes). No <code>recovered/*</code> branches.</li>
-<li>Open known-issues entries: see <code>docs/testing/known-issues.md</code>.</li>
-<li>Origin push is manual: local <code>main</code> is ahead of <code>origin/main</code> until the
-  operator pushes.</li>
+<li>The grid has now run clean since 08-05 15:30Z — 12 consecutive slots,
+  including three 4/4 implementer slates in a row.</li>
+<li>Tree clean at review start and end; no <code>recovered/*</code> branches.</li>
+<li>Parked branches: <code>attempt/PORT-1-step3bvi-…</code> only (kept — queue item 1
+  continues on it). The superseded 3b-v branch was deleted this review
+  after confirming its content was carried forward.</li>
+<li>Known-issues: entries 12 and 13 opened this interval (boundary-group
+  classification, both latent); entry 12's fix is queued as GEO-12; the
+  08-05 cron-gap entry closed after you confirmed host downtime.</li>
 </ul>
-<h2 id="on-deck-9-top-of-queue">On deck (§9, top of queue)<a class="headerlink" href="#on-deck-9-top-of-queue" title="Permanent link">&para;</a></h2>
+<h2 id="on-deck-9-refreshed-this-review">On deck (§9, refreshed this review)<a class="headerlink" href="#on-deck-9-refreshed-this-review" title="Permanent link">&para;</a></h2>
 <ol>
-<li>~~PORT-1 step 3b-iv (ghost cells)~~ — <strong>done 2026-08-05</strong></li>
-<li>~~POST-1 step 3 (drop-set semantics)~~ — <strong>done 2026-08-05</strong></li>
-<li>–5. remaining §9 items — see PROJECT_PLAN.md §9 (item 5, the port gap
-   voltage/impedance test, is now unblocked by item 1).</li>
+<li><strong>PORT-1 step 3b-vii</strong> — the path-integral port voltage on an
+   arc-refined mesh (critical path; ≥ 40 cells across the gap arc so the
+   quadrature can converge).</li>
+<li><strong>GEO-12</strong> — widen the two 1e-9 wall tolerances to 1e-6 and gate the
+   outer-boundary group's existence (fixes known-issues 12).</li>
+<li><strong>POST-1 step 6</strong> — CSV-export/stats sampling parity gate (integer count
+   identity both modes).</li>
+<li><strong>EX-1</strong> — first §5.4 ramp example: the two-torus port fixture's mesh,
+   cell tags, and facet tags in ParaView.</li>
+<li><strong>MAT-6 step 5</strong> (spare, heavy) — wire refinement at fixed box to
+   separate the last ~1.5% of ΔX.</li>
 </ol>
 <hr />
-<p><em>Maintained by <code>docs/automation/daily-review.md</code> step 8. Notification policy
-and ledger: <code>docs/automation/notifications.md</code>.</em></p>
+<p><em>Maintained by <code>docs/automation/daily-review.md</code> step 7. The Waiting-on-you
+section above is the alerting channel — check it after each review interval.</em></p>
 
 
 
