@@ -2541,6 +2541,62 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 > adjudication, not this slot's: report all four numbers off the refined
 > solve, annotate this entry and known-issues 3, park the branch, stop —
 > `MUTUAL_TOLERANCE` does not move.
+>
+> **Step 3b-vii attempted 2026-08-06 (12:00 implementer slot) — 🟡 the
+> plan's negative result, parked on
+> `attempt/PORT-1-step3bvii-20260806T170000Z` (`bc8c04e`).** The refinement
+> was built as planned and *worked as a mesh change*; the value did not move.
+>
+> `two_torus_domain` gained `gap_arc_resolution` / `gap_arc_tube_radius`: a
+> `MathEval` distance-to-the-gap-arc field (distance to the centreline circle
+> plus `max(0,|y|−a sin(g/2))` and `max(0,−x)` penalties, both spelled with
+> `sqrt` so the expression needs no `fabs`/`max` from gmsh's parser),
+> `Threshold`-ramped at slope 0.3 and `Min`-composed with the existing wire
+> grading — coordinate-defined on the *fragmented* model, per the trap.
+> Measured cost before the gate
+> (`20260806T170559Z_PORT-1-step3bvii-probe.log`): 124 753 → 178 055 cells
+> (1.427×), mesh 29.2 → 41.4 s, gap-tagged cells 1569 → 24 430 per port, i.e.
+> the arc is genuinely resolved at 40 cells across `a·g`. The gate
+> (`20260806T170835Z_PORT-1-step3bvii-gate-n2.log`, 165 s at `-n 2`, 10 passed
+> 2 failed; mesh 37.4 s, solves 22.9/22.1 s) then split cleanly in two.
+>
+> *What refinement fixed.* Reciprocity `|Z₁₂−Z₂₁|/|Z₁₂|` went **6.3e-2 →
+> 3.8823e-3**, inside the 1e-2 band for the first time on this estimator. The
+> quadrature residual at fixed order improved ~3× (129→257 now 1.14e-2 against
+> 3b-vi's 3.82e-2). Both are what a resolved integrand should do.
+>
+> *What it did not fix — and this is the finding.* The precondition still
+> fails: (129, 257) disagree by **1.1444e-2**, an order above the 1e-3 gate,
+> and the high-order plateau is essentially where 3b-vi left it (5.96e-4 at
+> 2049, 8.76e-4 at 4097 vs 2.58e-4/8.12e-4). More importantly the **converged
+> value is unchanged**: path `V` reads **0.493653 / 0.491744 × ωM₁₂** at order
+> 257 (and 0.4808 at 4097) against 3b-vi's 0.468933 / 0.499728 — a shift of a
+> few percent, i.e. discretization level. `Im Z₁₂` is −50.73% against the
+> unmoved 10% `MUTUAL_TOLERANCE`.
+>
+> *The built-in control passed, which is what makes the negative clean.* All
+> four families re-read off the refined solve moved only at discretization
+> level, so the solve did not change underneath the estimator:
+>
+>     family   refined (3b-vii)      unrefined (3b-vi)
+>     path     0.493653 / 0.491744   0.468933 / 0.499728
+>     facet    5.164602 / 5.168622   4.801707 / 4.889116
+>     box      0.349567 / 0.349227   0.331729 / 0.331767
+>     shadow   0.856617 / 0.838592   0.763430 / 0.814325
+>
+> Preconditions that hold: gap boxes meshed/analytic 1.000000000000, every arc
+> node located in a gap-tagged cell, open-port 1.4062e-03.
+>
+> **So the estimator-family question is settled negatively, exactly as this
+> plan defined it**: four sampling geometries, four answers off one field,
+> and the ~0.48 survives a 1.43× refinement that fixed reciprocity. The
+> deficit is not the sampling geometry. The remaining suspects are the two
+> 3b-vi already named — finite-σ terminal penetration at `δ = 1.125 r_wire`,
+> and the filamentary `ωM₁₂` reference itself — and adjudicating between them
+> is a review's call, not an implementer slot's. Incidental, for the review:
+> the per-disc `y`-split tolerance was set from 3b-vi's 1.1e-8 measurement to
+> 1e-7 on the branch (two independent ~1e5-cell facet-area sums have a float
+> floor there; a misassigned split is O(1)).
 
 > **Two port tests are red and deliberately left red.** Both fakes set
 > `current = voltage/z0` at the driven port, making it perfectly matched, so
@@ -2788,7 +2844,18 @@ sphere fixtures read; item 3 lives in `tests/post`; item 4 adds a new file
 under `examples/meshing/` against the unmodified `two_torus_domain`. Item 5 is
 the spare and the only heavy-tier item.
 
-1. **`PORT-1` step 3b-vii — the path integral on an arc-refined mesh.** The
+1. ~~**`PORT-1` step 3b-vii**~~ — **attempted 2026-08-06, 12:00 slot; the
+   plan's declared negative result, parked on
+   `attempt/PORT-1-step3bvii-20260806T170000Z` (`bc8c04e`).** Refinement to
+   40 cells across the arc (124 753 → 178 055 cells) fixed reciprocity
+   (6.3e-2 → 3.8823e-3) and left the value at 0.4937/0.4917 × ωM₁₂; the
+   built-in box/shadow control moved only a few %. Four sampling geometries,
+   four answers — the deficit is not the sampling geometry. **Do not re-run
+   this step**; the successors (the filamentary `ωM₁₂` reference at
+   `r/a = 0.125`, which is closed-form and needs no solve; finite-σ terminal
+   penetration) are a review's adjudication per the §7 entry. Original item
+   text follows for the review's record.
+   **`PORT-1` step 3b-vii — the path integral on an arc-refined mesh.** The
    critical path (§10 S-parameter criteria route through it); the rescope of
    3b-vi, which is parked *unresolved* (quadrature plateau is a mesh
    property: ~5 cells across the gap arc). Execute the §7 step-3b-vii plan,

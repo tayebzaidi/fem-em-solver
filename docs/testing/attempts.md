@@ -4724,3 +4724,108 @@ whole `tests/mesh` at `-n 2` is **31 passed, 4 skipped, 108.04 s**, exit 0
 (`20260806T140740Z_GEO-11-mesh-regression.log`) — exactly the pre-existing
 29 passed / 1 skipped plus this file's 2 passed / 3 skipped. No poisoning, no
 landed gate moved.
+
+## 2026-08-06T17:12Z — `PORT-1` step 3b-vii (§9 On-deck item 1) — **incomplete (the plan's negative result)**
+
+Parked on `attempt/PORT-1-step3bvii-20260806T170000Z` (`bc8c04e`). `main` gets
+the two harness logs, the test-results rows, the §7 annotation, known-issues 3's
+fourth progress row, and this entry — no code.
+
+**Preflight.** Tree clean, container Up, no `recovered/*`. The 3b-vi branch
+(`ee5f0cb`) cherry-picked onto current `main`; one conflict, in
+`docs/testing/test-results.md` only (both sides appended rows), resolved by
+keeping both. `io/mesh.py` did not conflict, as the plan predicted.
+
+**What was built.** `two_torus_domain` gained `gap_arc_resolution` and
+`gap_arc_tube_radius`. The plan asked for a `Distance`+`Threshold` field per gap
+arc, defined by coordinates on the fragmented model. `Distance` cannot do it:
+the arc is not a model entity — it runs through the gap box's interior — and
+adding gmsh points for it would have put orphan nodes into the mesh. So the
+distance is written out as a `MathEval`:
+
+    sqrt( (sqrt(x^2+y^2)-a)^2 + (z-z0)^2 + max(0,|y|-a sin(g/2))^2 + max(0,-x)^2 )
+
+— the distance to the centreline circle, plus a penalty outside the wedge's `y`
+band so only the gap arc is refined and not all `2*pi*a` of conductor, plus one
+in `-x` so the circle's far branch is excluded. `max(0,u)` is spelled
+`(u+sqrt(u^2))/2` and `|y|` as `sqrt(y^2)`, so the expression needs neither
+`fabs` nor `max` from gmsh's parser (I did not want to bet the slot on which
+functions it carries). That feeds a `Threshold` (SizeMin `h_gap`, SizeMax
+`h_far`, DistMin = tube, DistMax = tube + (h_far-h_gap)/0.3 — slope 0.3 is about
+1.3x growth per cell), and a `Min` composes it with the existing wire grading.
+`SizeMax = h_far` rather than `h_wire` is load-bearing: `Min` against a field
+that saturates at `h_wire` would clamp the whole air box to the wire size.
+
+**Cost, probed before the gate** (`…170559Z…probe.log`, 71 s, both variants in
+one process):
+
+    h_gap   cells     mesh    gap-tagged cells/port
+    none    124 753   29.2 s  1 569        <- reproduces 3b-vi exactly
+    3e-4    178 055   41.4 s  24 430
+
+1.427x, inside the plan's 1.5-2x estimate; 40 cells across `a*g = 1.2e-2`, and
+the projection for mesh + two solves was ~90 s against the 300 s abort
+threshold, so `h_gap = 6e-4` was not needed.
+
+**Gate** (`…170835Z…gate-n2.log`, **165 s at `-n 2`**, 10 passed 2 failed; mesh
+37.4 s, solves 22.9 / 22.1 s, 178 055 cells). The result splits in two.
+
+*Refinement fixed the discretization.* Reciprocity `|Z12-Z21|/|Z12|` went
+**6.3e-2 -> 3.8823e-3** — inside the 1e-2 band for the first time on this
+estimator, and that test now passes. The fixed-order quadrature residual
+improved ~3x (129->257: 3.82e-2 -> 1.1444e-2).
+
+*It did not touch the value.* The precondition still fails — (129, 257) at
+1.1444e-2 against 1e-3 — and the high-order plateau is where 3b-vi left it
+(5.96e-4 at 2049, 8.76e-4 at 4097). The converged path voltage reads
+
+    path     0.493653 / 0.491744 x omega*M12   (0.4808 at 4097 nodes)
+    3b-vi    0.468933 / 0.499728
+
+i.e. unchanged to within discretization. `Im Z12` is **-50.73%** against the
+unmoved 10% `MUTUAL_TOLERANCE`.
+
+**The control the plan built in passed**, which is what makes this a clean
+negative rather than an ambiguous one. All four families re-read off the
+*refined* solve moved only a few percent, so the solve did not change underneath
+the estimator:
+
+    family   refined (3b-vii)      unrefined (3b-vi)
+    path     0.493653 / 0.491744   0.468933 / 0.499728
+    facet    5.164602 / 5.168622   4.801707 / 4.889116
+    box      0.349567 / 0.349227   0.331729 / 0.331767
+    shadow   0.856617 / 0.838592   0.763430 / 0.814325
+
+Other preconditions, measured: gap boxes meshed/analytic 1.000000000000, every
+arc quadrature node located and in a gap-tagged cell, open-port 1.4062e-03.
+Nothing loosened; `MUTUAL_TOLERANCE` untouched.
+
+**One tolerance set from measurement**, on the branch only: 3b-vi flagged
+`test_port_discs_are_the_arc_end_cut`'s per-disc `y`-split identity at 1.1e-8
+against an assumed 1e-9, and the plan instructed me to set it from the
+measurement if the file lands. 1e-9 -> 1e-7, with the reasoning in a code
+comment: the two half-discs are independent sums of ~1e5-cell facet areas and
+have a float floor there, while a misassigned split is O(1). The *port* ratio
+(same mesh mirrored in z) keeps its 1e-9.
+
+| log | result |
+|---|---|
+| `20260806T170535Z_PORT-1-step3bvii-probe.log` | exit 1, 3 s — my own probe imported the tests package; no compute |
+| `20260806T170559Z_PORT-1-step3bvii-probe.log` | exit 0, 71 s (`timeout 600`, `-n 1`) — the cost measurement above |
+| `20260806T170835Z_PORT-1-step3bvii-gate-n2.log` | 2 failed 10 passed, 165 s (`timeout 600`, `-n 2`) — the gate |
+
+**Nothing denied this slot.**
+
+**Next attempt hypothesis — and I do not think it is another estimator.** The
+plan said a converged ~0.48 settles the family question negatively, and that is
+what happened: four sampling geometries, four answers spanning a factor 15, and
+the one that is literally `-∫E·t̂ dl` does not move under a 1.43x refinement
+that demonstrably fixed reciprocity. The next suspects are the two already
+named, and they are cheaply separable: the `ωM₁₂` reference is filamentary while
+the fixture's wire is a finite tube of `r/a = 0.125`, and the internal-inductance
+and finite-cross-section corrections to Jackson 5.37 at that ratio are a
+closed-form calculation needing **no solve at all**. That is the one I would run
+first — if the corrected reference moves toward 0.5, the estimator was right all
+along and the reference was wrong. The finite-σ terminal-penetration suspect
+needs a σ sweep (two more solves) and should wait behind it. Both are review
+adjudications per the plan; I am recording the ranking, not taking it.
