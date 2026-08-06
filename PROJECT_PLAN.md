@@ -1886,6 +1886,61 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 > `V/ωM` for both ports beside the shadow numbers at the same geometry,
 > annotate this entry and known-issues 3, stop — the tolerance does not
 > move, and a third estimator is a review's call, not a fourth box.
+>
+> **Step 3b-v attempted 2026-08-06 (19:30 run) — 🟡 negative result, taken as
+> the plan's negative branch instructs.** The estimator is mechanically sound
+> and physically wrong. Code parked on
+> `attempt/PORT-1-step3bv-20260806T004500Z` (`49fa50e`); log on main,
+> `20260806T003559Z_PORT-1-step3bv-gate.log` — **3 failed, 7 passed, 67.6 s**
+> at `-n 2`, standard tier, 124 753 cells (mesh 24.8 s, solves 16.3 / 16.4 s).
+>
+> *The parallel half is fine.* No hang: `create_entity_permutations()` is
+> hoisted unconditionally onto every rank before any per-port `dS` form,
+> exactly as 3b-iv's fix prescribed, and the run completed first time. That
+> hazard is now discharged twice on this fixture.
+>
+> *The measurement.* `V_i = −⟨E·ŷ⟩_{disc pair i, gap side} · L_gap`, with the
+> restriction picked by a DG0 indicator of the gap tag (not `avg`, not an
+> uncontrolled `('+')`), gives
+>
+> | estimator | `\|Im Z₁₂\|/ωM₁₂` | reciprocity |
+> |---|---|---|
+> | facet (this step), ports 1 / 2 | **4.845** (4.802 / 4.889) | 1.79e-2 |
+> | full-box volume (3b-iii) | 0.332 | 1.15e-4 |
+> | tube-shadow volume (3b-iii) | 0.763 / 0.814 | — |
+>
+> all three off **one** solve at one geometry, so the comparison is no longer
+> across logs. The facet route does not land in the shadow's 0.687–0.814 band:
+> it neither closes the ~0.78 deficit nor inherits it — it is a third and worse
+> number, at +384.54% with `MUTUAL_TOLERANCE` unmoved. The open-port
+> precondition (1.4162e-03) and the exact gap-box identity (1.000000000000)
+> both still hold, so the fixture is not what moved.
+>
+> *Why, and this is the durable part.* `E·ŷ` on a conductor terminal is the
+> facet-**normal** component — surface-charge-dominated and discontinuous by
+> construction; the measured wire/gap jump ratio is 2.9e-5 to 4.6e-5, five
+> orders. A two-endpoint trapezoid over a quantity that is *peaked at exactly
+> those two endpoints* must overestimate, and 4.8× is the size of the peak. The
+> volumetric shadow average, whatever its 22% deficit, at least integrates
+> along the whole path. **Route 2 is therefore excluded on the same footing as
+> the box family**: not a tuning failure, a category error about which
+> component of `E` a terminal facet carries. A successor should integrate along
+> the path (a line/tube integral inside the shadow with the *tangential*
+> component), not sample its ends.
+>
+> *Second, independent finding — the fixture at small overhang.* At
+> `gap_overhang = 2e-4` the tube protrudes **0.2018 mm** through the gap box's
+> `−x` face over `2.821 mm < |y| < 3.989 mm` (arithmetic: box `min x` =
+> 1.480000e-02, tube `min x` at `y = half_y` = 1.459821e-02), so facet tag
+> `201`/`202` is the arc-end disc pair **plus two lateral strips**. Measured
+> `1.643447371e-04 m²` per port, `1.0241 ×` 3b-iv's exact oblique cut
+> `1.604721580e-04` — *above* it, where an inscribed linear-tet section must
+> sit below. 3b-iv's anchor was measured at overhang 1e-3, where the tube
+> clears the face by 0.598 mm; it does not transfer, and the band assertion
+> this attempt inherited from it is wrong for this geometry rather than the
+> mesh being wrong. Whoever revisits the fixture at small overhang owes it a
+> geometry note: the "gap box contains the arc ends" invariant fails below
+> overhang ≈ 6e-4.
 
 > **Two port tests are red and deliberately left red.** Both fakes set
 > `current = voltage/z0` at the driven port, making it perfectly matched, so
@@ -2058,7 +2113,15 @@ tags item 1 consumes; queue order already puts item 1 first, and item 4's
 regression re-gates what item 1 used, so a parked item 1 does not block
 item 4. Item 5 is the spare and the only heavy-tier item.
 
-1. **`PORT-1` step 3b-v — the facet-integral port voltage.** The critical
+1. 🟡 **Attempted 2026-08-06 (19:30 run), negative result — do not re-run as
+   written.** The facet-integral voltage measured `4.845 × ωM₁₂` (+384.54%)
+   against the box route's 0.332 and the shadow route's 0.763/0.814 on one
+   solve; `E·ŷ` on a terminal is the surface-charge-dominated normal
+   component, so route 2 is excluded the way the box family was. Code parked
+   on `attempt/PORT-1-step3bv-20260806T004500Z`; see the §7 3b-v entry and
+   attempts.md `2026-08-06T00:45Z`. A successor integrating the *tangential*
+   component along the gap path is the review's to scope.
+   **`PORT-1` step 3b-v — the facet-integral port voltage.** The critical
    path (§10 S-parameter criteria route through it); 3b-iv's tags landed
    2026-08-05, so the dependency is satisfied on `main`. Execute the §7
    step-3b-v plan; reuse `test_port_gap_voltage_impedance.py` from

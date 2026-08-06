@@ -4046,3 +4046,70 @@ generalisable observation for whoever meets the next one: the complex build hide
 audit is not grepping but *listing more real-mode files in the
 `validation-complex` job* — the two casts found this week both surfaced from a
 sweep, not from reading. `post/` and `io/` have never been run there.
+
+---
+
+## 2026-08-06T00:45Z — `PORT-1` step 3b-v (§9 On-deck item 1) — **incomplete (negative result)**
+
+Branch: `attempt/PORT-1-step3bv-20260806T004500Z` (`49fa50e`). Log on `main`:
+`20260806T003559Z_PORT-1-step3bv-gate.log` — **3 failed, 7 passed, 67.6 s**,
+`-n 2`, standard tier, `timeout 180`, 124 753 cells (mesh 24.8 s, solves 16.3 /
+16.4 s). One compute command this slot. Tree clean at start and end.
+
+**What was tried.** Exactly the §7 3b-v plan. `test_port_gap_voltage_impedance.py`
+was reused from `attempt/PORT-1-step3biii-20260804T173000Z` (not rewritten), and
+its `gap_burial`/`gap_overhang` split was carried forward onto current `main`'s
+`io/mesh.py`. The estimator: `V_i = −⟨E·ŷ⟩_{disc pair i, gap side} · L_gap` over
+3b-iv's facet tags `201`/`202`, with the `dS` restriction picked by a DG0
+indicator of the gap tag — not `avg`, not an uncontrolled `('+')` — because
+`E·ŷ` there is the facet-*normal* component and jumps. Both sides and both
+discs of each port are assembled and printed separately, as the plan's
+probe-first instruction required.
+
+**Measured, all off one solve at overhang 2e-4:**
+
+| estimator | `|Im Z₁₂|/ωM₁₂` | reciprocity |
+|---|---|---|
+| facet (3b-v), ports 1 / 2 | **4.845** (4.802 / 4.889) | 1.79e-2 |
+| full-box volume (3b-iii) | 0.332 | 1.15e-4 |
+| tube-shadow volume (3b-iii) | 0.763 / 0.814 | — |
+
+Gate red at **+384.54%**; `MUTUAL_TOLERANCE` unmoved at 10%. Preconditions all
+held: open-port ratio 1.4162e-03, gap box meshed/analytic 1.000000000000, skin
+depth 5.627e-03 m = 1.125 r_wire. Per-disc `⟨E·ŷ⟩` agree within 0.9–3.8%, so no
+sign or orientation error between the two discs; wire/gap jump ratio 2.9e-5 to
+4.6e-5.
+
+**Reading.** The facet number does not land in the shadow's 0.687–0.814 band, so
+it neither closes nor inherits the ~0.78 deficit — it is a third and worse
+number. `E·ŷ` on a conductor terminal is surface-charge-dominated and
+discontinuous by construction, so a two-endpoint trapezoid samples exactly where
+the integrand peaks; 4.8× is the size of that peak. Route 2 is excluded on the
+same footing as the box family — a category error about which component of `E` a
+terminal facet carries, not a tuning failure.
+
+**Second finding, independent and about the fixture.** At `gap_overhang = 2e-4`
+the tube protrudes **0.2018 mm** through the gap box's `−x` face over
+`2.821 mm < |y| < 3.989 mm` (box `min x` = 1.480000e-02, tube `min x` at
+`y = half_y` = 1.459821e-02), so tag `201`/`202` is the disc pair **plus two
+lateral strips**: measured `1.643447371e-04 m²`, `1.0241 ×` 3b-iv's exact
+oblique cut, i.e. *above* a number an inscribed section must sit below. 3b-iv
+measured at overhang 1e-3, where the tube clears by 0.598 mm. The disc-area band
+this attempt inherited is therefore wrong for this geometry — the mesh is not.
+The "gap box contains the arc ends" invariant fails below overhang ≈ 6e-4.
+
+**No hang.** `create_entity_permutations()` hoisted unconditionally onto every
+rank before any per-port `dS` form, per 3b-iv; the run completed first time at
+`-n 2`. That hazard is discharged twice on this fixture now.
+
+**Nothing loosened, nothing denied.** No assertion was moved. No permission
+denial hit this slot.
+
+**Next attempt hypothesis.** Both estimator families that sample a *region* or
+its *ends* are now excluded by measurement, so the next one should integrate the
+**tangential** `E` along the gap path itself — a line (or thin-tube) integral
+inside the conductor shadow from terminal to terminal, which is what `−∫E·dl`
+literally is and what neither previous route computed. That is a review's call
+per the plan's negative branch, not this slot's. Whoever scopes it should first
+raise `GAP_OVERHANG` back above ~6e-4 or accept the lateral strips, because at
+2e-4 the terminal surface is no longer the disc pair.
