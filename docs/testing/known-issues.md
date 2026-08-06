@@ -243,9 +243,13 @@ empty, and the `if boundary_surfaces:` guard silently skipped
 Fixed by widening that one tolerance to `1e-6` — 10× above the measured
 padding and four orders below the nearest interior face's `2.000e-02`
 residual, so the interior-face protection the tight test existed for is
-intact. No other fixture is affected: the rest of `io/mesh.py` uses a
+intact. ~~No other fixture is affected: the rest of `io/mesh.py` uses a
 `< resolution` wall test (loose by ~4 orders), and only `two_torus_domain` had
-tightened it.
+tightened it.~~ **Corrected 2026-08-06 by `GEO-11` measurement:** two other
+fixtures had also tightened it to `1e-9` and have the identical defect —
+`loop_over_half_space_domain` and `sphere_in_box_domain`, see entry 12. This
+retirement stands (its own gate is unaffected); only the generality claim was
+wrong.
 
 Gated by `tests/mesh/test_two_torus_outer_boundary.py`: tag sets exactly `{1}`
 ungapped and `{1, 201, 202}` gapped, and the assembled `ds` area over tag `1`
@@ -274,6 +278,30 @@ adding a boundary group moved no interface tag. Full `tests/mesh` at `-n 2`:
 | **Verified at** | `main` fixture geometry as of `7747999`; the failing band assertion lives only on the parked branch |
 | **Fix options, neither taken in-slot** | Raise `GAP_OVERHANG` back above ~6e-4 (changes the comparison geometry all 3b measurements share), or make the band overhang-aware (the strip area is computable from the same arithmetic above). A per-geometry decision for whoever next gates on these tags. |
 | **Owned by** | `PORT-1` step 3b-vi notes it as a trap (do not gate on the 2xx areas at overhang 2e-4); entry leaves with the commit that restores an exact terminal-area anchor at the geometry it is asserted on |
+
+### 12. `loop_over_half_space_domain` and `sphere_in_box_domain` never declare their `outer_boundary` group
+
+| | |
+|---|---|
+| **Test** | None fails. Measured and pinned by `tests/mesh/test_boundary_classification_margins.py` (`GEO-11`), which **skips** the margin assertion for these two after pinning their numbers |
+| **Symptom** | Both fixtures' wall test classifies **zero** surfaces — 0 of 12 and 0 of 7 dim-2 entities — so `boundary_surfaces` is empty and the `if boundary_surfaces:` guard silently skips `addPhysicalGroup`. Facet tag `1` does not exist in the returned `facet_tags` |
+| **Cause** | Measured, not guessed (`20260806T140325Z_GEO-11-probe.log`): identical to retired entry 10. Both use `tol = 1e-9` (`io/mesh.py` ~lines 1384 and 1532) against gmsh's OCC bounding-box padding, which is the same **`1.000e-07`** `GEO-10` measured on `two_torus_domain` — the tolerance sits **100× below** the padding it must clear. Retired entry 10's closing claim that "no other fixture is affected" was wrong: it checked the `< resolution` fixtures and missed these two, which had also tightened the test |
+| **Live impact** | **None — latent.** Every caller of both generators discards the facet tags (`msh, cell_tags, _ = MeshGenerator...`) in `test_dodd_deeds_impedance.py`, `test_dodd_deeds_projected_drive.py`, `test_dodd_deeds_reactance_box_size.py`, `test_dielectric_sphere.py`, `test_lossy_sphere_sar.py`, `test_mass_averaged_sar.py`, and imposes its wall condition geometrically instead. No landed `MAT-6`, `TH-8` or `MAT-4` number reads the missing group, so none of them is wrong |
+| **Verified at** | `main` as of `2cad984` |
+| **Fix, not taken in-slot** | Widen both to `1e-6`, exactly as `GEO-10` did — the nearest interior faces sit at `9.000e-02` and `1.500e-01`, so `1e-6` keeps 5 orders of interior-face protection. `GEO-11`'s plan reserves any tolerance change for a review with the numbers in hand, which these are. Whoever takes it must add a facet-tag assertion at the same time: the defect was invisible precisely because nothing gates the group |
+| **Owned by** | `GEO-11`; entry leaves with the commit that widens both tolerances and gates tag `1` on both fixtures |
+
+### 13. `cylindrical_domain`'s interior-face classification margin is 4.50× its tolerance
+
+| | |
+|---|---|
+| **Test** | None fails. Measured and pinned by `tests/mesh/test_boundary_classification_margins.py` (`GEO-11`), which skips the margin assertion after pinning the ratio |
+| **Symptom** | The nearest surface the wall test *rejects* sits at residual `8.999990e-02` = **`4.499995 ×`** `tol`, below the `10×` floor `GEO-11` asserts. The accepted side is fine (`5.000e-06 × tol`) |
+| **Cause** | Measured (`20260806T140325Z_GEO-11-probe.log`): the test is `abs(r_max - outer_radius) < resolution` with `tol = resolution = 0.02` at defaults. The inner cylinder's surface and end caps sit at `r_max = inner_radius = 0.01`, a residual of `0.09`. The margin is a ratio of geometry to *mesh size*, so it shrinks as either radius gap narrows or `resolution` coarsens — at `resolution ≥ 0.09` the inner cylinder would be swept into `outer_boundary` |
+| **Live impact** | **None at defaults.** `tests/mesh/test_cylindrical_domain.py` passes; the classification is correct today, only under-separated |
+| **Verified at** | `main` as of `2cad984` |
+| **Fix, not taken in-slot** | Either decouple the tolerance from `resolution` (a geometric fraction of `outer_radius - inner_radius` is the natural choice) or document the sizing precondition. A per-fixture decision for a review, per the `GEO-11` plan |
+| **Owned by** | `GEO-11` |
 
 ### 7. ✅ RETIRED 2026-08-03 — birdcage mesh fails to generate (`GEO-9`, steps 1 + 2a + 2b)
 

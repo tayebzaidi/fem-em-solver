@@ -566,7 +566,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-8` | **Make `two_torus_domain` a conforming mesh** | ✅ | standard |
 | `GEO-9` | **`coil_phantom_domain` / birdcage meshes do not generate** | ✅ 2026-08-03 — step 1 (coil+phantom gated), step 2a (finalize + `bcast`: 180 s hang → 13 s), step 2b (`occ.fragment` rewrite; both identities 1.000000000000, whole `tests/mesh` green in CI). Retires known-issues 7 | standard |
 | `GEO-10` | **`two_torus_domain` never emits its `outer_boundary` facet tag** (known-issues 10) | ✅ *(2026-08-06, 00:00 run; known-issues 10 retired)* | standard |
-| `GEO-11` | Boundary-classification margins under OCC bounding-box padding (CAD-only probe sweep) | ⬜ | smoke |
+| `GEO-11` | **Boundary-classification margins under OCC bounding-box padding (CAD-only probe sweep)** | ✅ | smoke |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -770,8 +770,53 @@ archived in `docs/planning/plan-archive.md`)*
 > `GEO-4` (air-box generalisation — the birdcage still uses one global
 > `setSize`, which is exactly what the 0.7091 measures).
 
-**`GEO-11` — boundary-classification margins under OCC bounding-box padding
-(plan written 2026-08-06, 03:00 review).** `GEO-10` found that gmsh inflates an
+**`GEO-11` — boundary-classification margins under OCC bounding-box padding**
+✅ *(2026-08-06, 09:00 run — gate landed and the sweep found two fixtures with
+`GEO-10`'s exact defect; known-issues 12 and 13 opened, no tolerance moved)*
+> **The sweep found the defect live in two more fixtures.**
+> `tests/mesh/test_boundary_classification_margins.py` replicates the CAD stage
+> only (build, fragment, synchronize — never mesh) of four fixtures, applies
+> each one's *own* classification predicate to every dim-2 entity, and asserts
+> the two-sided separation `max(accepted residual)/tol ≤ 0.1` and
+> `min(rejected residual)/tol ≥ 10`. Smoke, `-n 1`, **0.19 s**, 2 passed /
+> 3 skipped (`20260806T140517Z_GEO-11-gate.log`; the measuring probe run is
+> `…140325Z_GEO-11-probe.log`).
+> * `two_torus_domain` **meets both sides**: 6 of 8 accepted, wall ratio
+>   `1.000000e-01` (exactly the 10× `GEO-10` designed), interior `2.000010e+04`.
+>   The `GEO-10` known case is re-derived as its own test — the OCC padding is
+>   `1.000000e-07`, bracketed strictly inside `(1e-9, 1e-6)`, against the
+>   nearest interior face at `2.000010e-02`.
+> * `loop_over_half_space_domain` (`MAT-6`) accepts **0 of 12** and
+>   `sphere_in_box_domain` (`TH-8`/`MAT-4`) accepts **0 of 7** — both use
+>   `tol = 1e-9`, i.e. **100× below** the same `1.000e-07` padding, so their
+>   `outer_boundary` group is never declared. Retired known-issues 10's closing
+>   "no other fixture is affected" is **refuted by measurement** and annotated
+>   in place. **Latent, not a wrong result:** all six callers of the two
+>   generators discard `facet_tags` and impose the wall geometrically, verified
+>   by grep — no landed `MAT-6`/`TH-8`/`MAT-4` number reads the missing group.
+>   known-issues 12.
+> * `cylindrical_domain`'s interior margin is **`4.499995 ×` tol** (inner
+>   cylinder at `r = 0.01` vs outer wall `r = 0.1`, `tol = resolution = 0.02`),
+>   below the 10× floor. Correct today, under-separated. known-issues 13.
+>
+> **No tolerance was moved** — the plan reserves that for a review with the
+> numbers in hand, and it now has them. The two failing fixtures are instead
+> **pinned** at their measured ratios (surface counts, accepted counts,
+> wall/interior ratios at `rel=1e-6`) and the margin assertion is skipped with
+> the known-issues reference in the skip message, so the defect cannot drift
+> silently while the review holds it. Bound note: `two_torus_domain`'s wall
+> ratio lands on `0.1` to within double-precision noise
+> (`1.000000000000029e-01`, because `GEO-10` sized `tol` at exactly 10× the
+> padding), so the ceiling carries a `1e-6` relative slack — that is the float
+> representation, not a loosened bound.
+> **Not covered, deliberately:** `coil_phantom_domain` and
+> `birdcage_port_domain`. Their CAD stages are ~190 lines each and a copy would
+> drift from the original silently, which is worse than no gate; covering them
+> needs the CAD stage factored out of the generator, which is a review's call.
+> **Does not close:** `GEO-4`, or anything downstream — hygiene measurement.
+
+*(Original plan, 03:00 review, retained for the audit trail.)*
+> `GEO-10` found that gmsh inflates an
 OCC entity's bounding box by its geometric tolerance (measured `1.000e-07`) and
 that a wall-classification test tighter than that padding silently empties a
 boundary group — no error, just a missing physical group. The other
@@ -2636,7 +2681,18 @@ is the spare and the only heavy-tier item.
    gate moving by more than 0.01 pp is information — report the delta,
    annotate §7, stop; never widen the moved gate.
 
-4. **`GEO-11` — bounding-box classification margins, CAD-only probe sweep.**
+4. ✅ **Done 2026-08-06, 09:00 slot** — chunk closed, and the sweep was not a
+   formality: `loop_over_half_space_domain` (0 of 12) and `sphere_in_box_domain`
+   (0 of 7) have `GEO-10`'s exact defect at `tol = 1e-9` vs the `1.000e-07` OCC
+   padding, `cylindrical_domain`'s interior margin is `4.499995 ×` tol, and
+   `two_torus_domain` meets both sides at `1.000000e-01` / `2.000010e+04`.
+   All latent — every caller of the two broken fixtures discards `facet_tags`.
+   known-issues 12 and 13 opened, retired entry 10's over-general claim
+   annotated, **no tolerance moved** (the plan reserves that for a review;
+   the failing fixtures are pinned instead). Smoke, `-n 1`, 0.19 s, 2 passed /
+   3 skipped. Gates `20260806T140325Z…-probe.log`, `…140517Z…-gate.log`.
+   Numbers in §7.
+   **`GEO-11` — bounding-box classification margins, CAD-only probe sweep.**
    Independent, smoke-sized; from GEO-10's handed item. Execute the §7
    `GEO-11` plan, written this review: extend `scripts/probes/geo10_probe.py`
    into a gate asserting the two-sided margin for every `io/mesh.py` fixture

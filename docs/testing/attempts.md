@@ -4633,3 +4633,86 @@ gates its row count against the stats path, so a future divergence between the
 two sampling calls would be silent. That is a cheap next item if the review wants
 one. The larger open thing in `POST-1` is unchanged and unaffected by this slot:
 the coil+phantom application.
+
+## 2026-08-06T14:10Z — `GEO-11` (§9 On-deck item 4) — **complete**
+
+**Item taken.** §9 items 2 and 3 are ✅; item 1 (`PORT-1` step 3b-vi) is 🟡 with
+its own text saying "the review must rescope before it reappears", so it is not
+eligible this slot. Item 4, `GEO-11`, was the first open item. Tree clean at
+start, container Up 21 h.
+
+**What was built.** `tests/mesh/test_boundary_classification_margins.py` — a
+CAD-only gate (build the OCC model, fragment, synchronize, **never mesh**) that,
+for each fixture, applies that fixture's *own* `outer_boundary` predicate to
+every dim-2 entity and measures the two-sided margin the plan specified:
+`max(accepted residual)/tol ≤ 0.1` and `min(rejected residual)/tol ≥ 10`.
+gmsh is initialized/finalized per fixture inside `try/finally` (`GEO-9` step 2a's
+poisoning lesson). Two residual forms cover the four fixtures: the `and`-paired
+box test (`min` over six walls of the `max` of the two bbox extremes) and the
+radial `abs(r_max - R)` test.
+
+**Measured — the sweep found `GEO-10`'s defect live in two more fixtures.**
+
+| fixture | tol | accepted | worst wall / tol | nearest interior / tol |
+|---|---|---|---|---|
+| `two_torus_domain` | `1e-6` | 6 of 8 | `1.000000e-01` | `2.000010e+04` |
+| `loop_over_half_space_domain` | `1e-9` | **0 of 12** | — | `1.000000e+02` |
+| `sphere_in_box_domain` | `1e-9` | **0 of 7** | — | `1.000000e+02` |
+| `cylindrical_domain` | `2e-2` | 3 of 6 | `5.000000e-06` | **`4.499995e+00`** |
+
+`loop_over_half_space_domain` and `sphere_in_box_domain` classify **zero** walls:
+their `tol = 1e-9` sits 100× below the same `1.000e-07` OCC bounding-box padding
+`GEO-10` measured, so `boundary_surfaces` is empty and `addPhysicalGroup` is
+silently skipped — facet tag `1` does not exist. Retired known-issues 10's
+closing claim "no other fixture is affected" is **refuted by measurement** and
+annotated in place (the retirement itself stands; only the generality was wrong).
+
+**Latent, not a wrong result — checked before claiming it.** Grepped every
+caller of both generators: `test_dodd_deeds_impedance.py`,
+`test_dodd_deeds_projected_drive.py`, `test_dodd_deeds_reactance_box_size.py`,
+`test_dielectric_sphere.py`, `test_lossy_sphere_sar.py`,
+`test_mass_averaged_sar.py` — all six take `msh, cell_tags, _ = ...` and impose
+their wall condition geometrically. No landed `MAT-6`, `TH-8` or `MAT-4` number
+reads the missing group.
+
+**No tolerance was moved.** The plan's negative-result branch reserves that for a
+review with the numbers in hand. The two failing fixtures are **pinned** instead
+— surface count, accepted count, and both ratios at `rel=1e-6` — and the margin
+assertion is `pytest.skip`ped with the known-issues reference in the message, so
+the defect is held at its measured value and cannot drift silently. That is why
+the gate reports 2 passed / 3 skipped rather than 2 passed / 3 failed; the pinned
+assertions all execute before the skip.
+
+**One bound carries slack, with the measurement.** `two_torus_domain`'s wall
+ratio is `1.000000000000029e-01` — `GEO-10` sized that `tol` at exactly 10× the
+`1e-7` padding, so the anchor `≤ 0.1` lands on the boundary and fails on
+double-precision noise alone (2.9e-11 relative). The ceiling is asserted at
+`0.1 × (1 + 1e-6)`. Same for the floor. This is float representation, not a
+loosened bound. The probe run also corrected the `GEO-10` log's 3-decimal
+`2.000e-02` interior residual to its full `2.000010e-02` (the interior face
+carries the same padding).
+
+**Not covered, deliberately.** `coil_phantom_domain` and `birdcage_port_domain`
+— the two other fixtures the plan named. Their CAD stages are ~190 lines each;
+a hand copy would drift from the original silently, which is worse than no gate.
+Covering them needs the CAD stage factored out of the generator into something
+both the generator and the gate call. That is a review's scoping call, not an
+in-slot improvisation.
+
+| log | result |
+|---|---|
+| `20260806T140325Z_GEO-11-probe.log` | 5 failed, 1.17 s (smoke, `timeout 180`, `-n 1`) — the measuring run, before pinning; this is where every number above comes from |
+| `20260806T140517Z_GEO-11-gate.log` | 2 passed, 3 skipped, **0.19 s** (smoke, `timeout 180`, `-n 1`) — the landed gate |
+
+**Nothing denied this slot.**
+
+**Next attempt hypothesis.** The obvious follow-on is a two-line fix —
+`tol = 1e-9 → 1e-6` at `io/mesh.py` ~1384 and ~1532, which keeps 5 orders of
+interior-face protection (nearest interior faces `9.000e-02` and `1.500e-01`) —
+but it must land *with* a facet-tag assertion on both fixtures, because the
+defect survived this long precisely because nothing gates the group. That is a
+review's call, not an implementer's, since it changes what two validated
+fixtures return. The second, larger follow-on is factoring the CAD stage out of
+`coil_phantom_domain`/`birdcage_port_domain` so `GEO-11` can cover them; that is
+a refactor chunk with its own risk, worth scoping only if the review wants the
+remaining two fixtures measured.
