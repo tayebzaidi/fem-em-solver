@@ -8,12 +8,14 @@ set -euo pipefail
 #   ./scripts/run_examples.sh -e 1                # magnetostatics example 1
 #   ./scripts/run_examples.sh -e 1,3 -n 4         # magnetostatics examples 1 and 3
 #   ./scripts/run_examples.sh -e mri:1            # MRI example 1 (complex build)
+#   ./scripts/run_examples.sh -e mesh:1           # meshing example 1 (real build)
 #   ./scripts/run_examples.sh -e all-mag          # all magnetostatics examples
-#   ./scripts/run_examples.sh -e all -n 2         # everything (magnetostatics + MRI)
+#   ./scripts/run_examples.sh -e all -n 2         # everything (magnetostatics + MRI + meshing)
 #
 # Options:
-#   -e, --example   Selection: number (magnetostatics), 'mri:<number>', CSV of
-#                   either, 'all-mag' (magnetostatics only), or 'all' (everything)
+#   -e, --example   Selection: number (magnetostatics), 'mri:<number>',
+#                   'mesh:<number>', CSV of any, 'all-mag' (magnetostatics
+#                   only), or 'all' (everything)
 #   -n, --nproc     MPI process count (default: 2)
 #   -t, --timeout   Per-example timeout in seconds inside the container (default: 1200)
 #   --dry-run       Print the container commands without executing them
@@ -21,11 +23,14 @@ set -euo pipefail
 #
 # MRI examples solve in the frequency domain and are automatically run with the
 # complex DolfinX build sourced (/usr/local/bin/dolfinx-complex-mode); the
-# magnetostatics examples run in the default real build.
+# magnetostatics and meshing examples run in the default real build. The
+# meshing examples do not solve at all — they build a gated fixture, assert its
+# closed-form geometric identities, and export the tags for ParaView.
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MAG_DIR="$ROOT_DIR/examples/magnetostatics"
 MRI_DIR="$ROOT_DIR/examples/mri"
+MESH_DIR="$ROOT_DIR/examples/meshing"
 DEFAULT_COMPOSE_FILE="$ROOT_DIR/docker/docker-compose.yml"
 COMPLEX_MODE_SOURCE="/usr/local/bin/dolfinx-complex-mode"
 
@@ -81,9 +86,10 @@ done
 
 mapfile -t MAG_AVAILABLE < <(find "$MAG_DIR" -maxdepth 1 -type f -name '*.py' | sort)
 mapfile -t MRI_AVAILABLE < <(find "$MRI_DIR" -maxdepth 1 -type f -name '*.py' 2>/dev/null | sort)
+mapfile -t MESH_AVAILABLE < <(find "$MESH_DIR" -maxdepth 1 -type f -name '*.py' 2>/dev/null | sort)
 
-if [[ ${#MAG_AVAILABLE[@]} -eq 0 && ${#MRI_AVAILABLE[@]} -eq 0 ]]; then
-  echo "No examples found in $MAG_DIR or $MRI_DIR" >&2
+if [[ ${#MAG_AVAILABLE[@]} -eq 0 && ${#MRI_AVAILABLE[@]} -eq 0 && ${#MESH_AVAILABLE[@]} -eq 0 ]]; then
+  echo "No examples found in $MAG_DIR, $MRI_DIR or $MESH_DIR" >&2
   exit 1
 fi
 
@@ -104,8 +110,11 @@ if [[ "$MODE" == "list" ]]; then
   if [[ ${#MRI_AVAILABLE[@]} -gt 0 ]]; then
     list_group "mri (complex build, sourced automatically):" "mri:" "${MRI_AVAILABLE[@]}"
   fi
+  if [[ ${#MESH_AVAILABLE[@]} -gt 0 ]]; then
+    list_group "meshing (default real build, no solve):" "mesh:" "${MESH_AVAILABLE[@]}"
+  fi
   echo
-  echo "Selections: -e <n> | -e mri:<n> | -e all-mag | -e all"
+  echo "Selections: -e <n> | -e mri:<n> | -e mesh:<n> | -e all-mag | -e all"
   exit 0
 fi
 
@@ -145,6 +154,7 @@ case "$EXAMPLE_SPEC" in
   all)
     for p in "${MAG_AVAILABLE[@]}"; do select_path mag "$p"; done
     for p in "${MRI_AVAILABLE[@]}"; do select_path mri "$p"; done
+    for p in "${MESH_AVAILABLE[@]}"; do select_path mesh "$p"; done
     ;;
   all-mag|all-magnetostatics)
     for p in "${MAG_AVAILABLE[@]}"; do select_path mag "$p"; done
@@ -155,10 +165,12 @@ case "$EXAMPLE_SPEC" in
       token="$(echo "$t" | xargs)"
       if [[ "$token" =~ ^mri:([0-9]+)$ ]]; then
         select_by_number mri "$MRI_DIR" "${BASH_REMATCH[1]}"
+      elif [[ "$token" =~ ^mesh:([0-9]+)$ ]]; then
+        select_by_number mesh "$MESH_DIR" "${BASH_REMATCH[1]}"
       elif [[ "$token" =~ ^[0-9]+$ ]]; then
         select_by_number mag "$MAG_DIR" "$token"
       else
-        echo "Invalid example token: '$token' (expected <n>, mri:<n>, all-mag, or all)" >&2
+        echo "Invalid example token: '$token' (expected <n>, mri:<n>, mesh:<n>, all-mag, or all)" >&2
         exit 2
       fi
     done

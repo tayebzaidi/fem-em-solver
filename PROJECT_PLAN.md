@@ -2706,13 +2706,34 @@ quantitative gate (§5.4). Each is sized for one implementer run, executes via
 `./run_examples.sh`, produces combined-XDMF that opens in ParaView, and
 demonstrates a **gated** capability from an angle no existing example covers.
 Existing inventory (2026-08-06): four magnetostatics examples plus
-`examples/mri/01_coil_phantom_fields.py`; none shows a meshed validation
-fixture's cell/facet tags.
+`examples/mri/01_coil_phantom_fields.py`; none showed a meshed validation
+fixture's cell/facet tags until `EX-1` landed
+`examples/meshing/01_two_torus_ports.py` (2026-08-06).
 
 | ID | Title | Status | Tier |
 |---|---|---|---|
-| `EX-1` | Two-torus port fixture: conforming mesh, cell and facet tags in ParaView | ⬜ | standard |
+| `EX-1` | Two-torus port fixture: conforming mesh, cell and facet tags in ParaView | ✅ | standard |
 
+**`EX-1` closed 2026-08-06** (16:30 slot, `20260806T213439Z_EX-1-gate.log`,
+14 s at `-n 2`; probe run `20260806T213341Z_EX-1-example.log`, 15 s).
+`examples/meshing/01_two_torus_ports.py` builds the *gapped* fixture at the
+`GEO-8`/`GEO-10`/3b-i parameter set (79 534 cells, 12.4 s) and asserts three
+closed-form identities, all allreduced, all holding to every printed digit:
+`GEO-10` outer-boundary area `3.220000000000e-02 m²` / analytic box surface =
+**1.000000000000000**; `GEO-8` `V_mesh` `3.920000000e-04 m³` / analytic box =
+**1.000000000000** with `sum(tagged)/V_mesh` = **1.000000000000** over all
+five tags; and each gap box `1.148763643e-06 m³` / `dx·dy·dz` =
+**1.000000000000**. The wire ratios reproduce the landed
+`test_two_torus_gapped.py` record digit-for-digit (**0.963633** /
+**0.963756** of the analytic partial torus), and the tag inventory is exactly
+`{1, 2, 3, 101, 102}` / `{1, 201, 202}` — the pre-`GEO-10` facet set was `[]`
+(known-issues 10). New runner group: `./run_examples.sh -e mesh:1` (real
+build, no complex source, no solve); `examples/meshing/` is enumerated by
+`scripts/run_examples.sh` alongside `mag`/`mri` and is picked up by `-e all`.
+Two XDMF files, since facet tags live on `tdim-1` and cannot share the cell
+grid: `_combined` (mesh + DG0 `CellTags`) and `_facets` (mesh + `mesh_tags`),
+both verified to bind their arrays. No solve, no port voltage — `PORT-1`
+stays 🟡. Original plan follows.
 **`EX-1` — the two-torus port fixture, meshed and tagged, in ParaView (plan
 written 2026-08-06, 10:30 review; the §5.4 ramp entry for `GEO-11`'s
 closure, demonstrating the `GEO-8`/`GEO-10`/`GEO-11`-gated meshing
@@ -3020,7 +3041,17 @@ the spare and the only heavy-tier item.
    the finding — report both sides, open a known-issues entry, stop; do not
    patch the export in the same slot.
 
-4. **`EX-1` — two-torus port fixture: mesh, cell and facet tags in
+4. ~~**`EX-1`**~~ — **done 2026-08-06, 16:30 slot; chunk closed, ✅ in §7.**
+   All three identities hold to every printed digit
+   (`GEO-10` area ratio **1.000000000000000**, `GEO-8` volume ratio
+   **1.000000000000** with the five tags summing to **1.000000000000** of the
+   mesh, each gap box **1.000000000000** of `dx·dy·dz`), the wire ratios
+   reproduce the landed gapped-fixture record digit-for-digit
+   (**0.963633** / **0.963756**), and the new `mesh:<n>` runner group is
+   discovered by `--list` and by `-e all`. 79 534 cells, 14 s at `-n 2`.
+   No solve, no port voltage — `PORT-1` unmoved at 🟡. Original item text
+   follows.
+   **`EX-1` — two-torus port fixture: mesh, cell and facet tags in
    ParaView.** Independent; the first §5.4 ramp entry (triggered by
    `GEO-11`'s closure; demonstrates the `GEO-8`/`GEO-10`/`GEO-11`-gated
    meshing capability from an angle no existing example covers — no current

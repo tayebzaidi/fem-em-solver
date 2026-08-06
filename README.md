@@ -120,6 +120,10 @@ pip install -e ".[dev,docs]"
 # Run the MRI coil+phantom example (complex DolfinX build, sourced automatically)
 ./run_examples.sh --example mri:1
 
+# Run the meshing/tagging example — no solve; asserts the GEO-8/GEO-10 identities
+# and exports cell + facet tags for ParaView
+./run_examples.sh --example mesh:1
+
 # Run all magnetostatics examples / absolutely everything
 ./run_examples.sh --example all-mag
 ./run_examples.sh --example all --nproc 2

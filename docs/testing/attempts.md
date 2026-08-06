@@ -4977,3 +4977,86 @@ open item is §9 item 4, `EX-1` (two-torus port fixture in ParaView), which is
 independent and untouched by this slot. One observation for it: this fixture's
 export path gathers to rank 0, whereas `EX-1` writes XDMF collectively — do not
 carry the rank-0-only read pattern across.
+
+---
+
+## 2026-08-06T21:30Z — `EX-1` (§9 On-deck item 4) — **complete**
+
+**Preflight.** Tree clean at `d685cac`, container Up 28 h. Items 1–3 of the
+On-deck queue are struck through (3b-vii parked, `GEO-12` and `POST-1` step 6
+done), so item 4 is the first open one; taken as written, no substitution.
+
+**What landed.** `examples/meshing/01_two_torus_ports.py`, a new §5.4 ramp
+example that shows the *gapped* two-torus port fixture's geometry and tag
+structure and nothing else — no solve, no port voltage (`PORT-1` is 🟡, and the
+plan's trap list is explicit about it). Parameters are the set the
+`GEO-8`/`GEO-10`/`PORT-1` step-3b-i gates use, not the bare signature defaults:
+at the uniform `resolution = 0.02` the cells are four times the wire minor
+radius and the torus loses most of its volume to chordal deficit, which would
+make the wire ratio a statement about resolution rather than about the
+fragment. `port_gap=True` follows from the plan's own tag list — the gap cell
+tags (101/102) and the port facet groups (201/202) only exist on the gapped
+path.
+
+**Measured — three identities, every printed digit** (gate log
+`20260806T213439Z_EX-1-gate.log`, 14 s at `-n 2`; earlier identical run
+`20260806T213341Z_EX-1-example.log`, 15 s). 79 534 cells, meshed in 12.4 s.
+
+- `GEO-10`: summed `outer_boundary` (facet tag 1) area **3.220000000000e-02
+  m²** vs analytic box surface `2(LW+LH+WH)` = **3.220000000000e-02 m²**,
+  ratio **1.000000000000000** at a `1e-9` gate. Matches the 1.000000000000 on
+  record in the plan.
+- `GEO-8`: `V_mesh` **3.920000000e-04 m³** / analytic box volume =
+  **1.000000000000**, and the five tagged volumes sum to **1.000000000000** of
+  the mesh total. The non-fragmented ancestor gave 1.002633 here.
+- `PORT-1` step 3b-i: each gap box **1.148763643e-06 m³** vs `dx·dy·dz`
+  **1.148763643e-06 m³**, ratio **1.000000000000** — planar faces, meshed
+  exactly.
+
+**Cross-check against landed gates.** The wire ratios come out **0.963633** and
+**0.963756** of the analytic partial torus — digit-for-digit the numbers pinned
+in `tests/mesh/test_two_torus_gapped.py:145-151`, measured there on
+`20260804T093449Z_PORT-1-step3bi-costprobe.log`. The example is reproducing the
+gated fixture, not a variant of it. Tag inventory is exactly `{1, 2, 3, 101,
+102}` cells / `{1, 201, 202}` facets (3116 outer-boundary facets, 116 per port
+cut); the pre-`GEO-10` facet set was `[]` ungapped and `[201, 202]` gapped
+(known-issues 10), so the facet-set assertion is itself the regression guard.
+
+**Runner wiring.** `scripts/run_examples.sh` enumerated `MAG_DIR` and `MRI_DIR`
+explicitly — a new directory is *not* auto-discovered, exactly as the plan's
+trap warned. Added a third `mesh` group: `MESH_DIR`, `MESH_AVAILABLE`, a
+`mesh:<n>` token, the `--list` block, and inclusion in `-e all`. It takes no
+complex-mode prefix (the `if group == mri` branch is unchanged), which is
+correct — the example never solves. Verified by `--list`, which now prints
+`mesh:1 -> examples/meshing/01_two_torus_ports.py`. README's example block
+gained the `mesh:1` line.
+
+**XDMF, two files not one.** Facet tags live on `tdim-1` and cannot share the
+cell grid, and `consolidate_xdmf_grids` would merge grids that must stay
+separate. So: `_combined.xdmf` (mesh + DG0 `CellTags`, via the existing
+`write_xdmf_with_tags`, consolidated) and `_facets.xdmf` (mesh written first,
+then `write_meshtags(facet_tags, msh.geometry)`, *not* consolidated). Both were
+opened and their arrays confirmed present — `CellTags` in the first,
+`mesh_tags` in the second; the in-script hint text names `mesh_tags` because
+that is the name ParaView actually shows. Output goes to
+`examples/meshing/paraview_output/`, which `.gitignore:63` already covers by
+directory name, so nothing binary is committed.
+
+**Rank safety.** Every quantity asserted is allreduced — `assemble_scalar` for
+all volumes and the `ds` area, `allgather` for the tag sets, `SUM` for the tag
+counts. `create_entity_permutations()` is called unconditionally before the
+facet assembly (known-issues 9: a rank owning no tagged facet must still enter
+the collective). Ran at `-n 2`, the width where a missing reduction shows.
+
+**Nothing loosened, nothing else touched.** No `src/` change, no test change,
+no tolerance moved; the two `1e-9` gates in the example are the same ones the
+landed tests use. No known-issues entry opened — nothing unrelated failed.
+Nothing denied by the permission layer this slot.
+
+**Next attempt hypothesis.** Nothing carries forward; `EX-1` is closed and
+§5.4's inventory gap it was filed against is filled. The queue's only remaining
+open item is item 5, `MAT-6` step 5 (the heavy spare, wire resolution at fixed
+box) — unmeasured cost, so it must cost-probe first as its plan says. One note
+for whoever writes the next `EX-*`: the runner's group enumeration is explicit
+per directory, so every new `examples/<dir>/` needs the same five-line edit to
+`scripts/run_examples.sh` that this slot made.
