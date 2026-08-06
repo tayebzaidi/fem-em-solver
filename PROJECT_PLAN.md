@@ -318,12 +318,18 @@ needs `-f docker/docker-compose.yml`.
 ### 5.4 Examples and Ansys cross-validation
 
 - **`examples/` is a maintained product surface, not a scratch area.** Each
-  phase keeps at least one clean, runnable example demonstrating its current
-  capability, executed via `./run_examples.sh` and producing combined-XDMF
-  output that opens in ParaView — this is how the human operator reviews
-  progress independently of the test suite. When a chunk changes what an
-  example demonstrates, the same commit updates the example. A broken example
-  is a defect (known-issues discipline applies).
+  phase keeps **at least five** clean, runnable examples demonstrating its
+  capability from distinct angles (different geometries, materials, drives, or
+  output quantities — five trivial variations of one case do not count),
+  executed via `./run_examples.sh` and producing combined-XDMF output that
+  opens in ParaView — this is how the human operator reviews progress
+  independently of the test suite. When a chunk changes what an example
+  demonstrates, the same commit updates the example. A broken example is a
+  defect (known-issues discipline applies). Phases currently below the
+  five-example bar are a known gap, not a defect: the weekly review tracks the
+  shortfall (weekly-review.md step 4) and feeds example chunks into §7; new
+  examples are only written on gated capability, so a phase whose physics is
+  ungated fills its quota as gates close, not before.
 - **Ansys benchmark cases** live in `examples/ansys_benchmarks/<case>/`, each
   containing: `SPEC.md`, precise enough to replicate in Ansys Electronics
   Desktop with no judgement calls (geometry with dimensions, materials,

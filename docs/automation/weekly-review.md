@@ -48,8 +48,13 @@ means — for yourself.
    its most recent verified run in `docs/testing/logs/` (or note there is
    none) and whether its XDMF outputs still reflect current capability.
    You may not solve — a stale or broken example becomes a §7 chunk with the
-   staleness stated. §5.4's bar: at least one clean runnable example per
-   active phase, XDMF that opens in ParaView.
+   staleness stated. §5.4's bar: at least **five** clean runnable examples per
+   active phase, each demonstrating the capability from a distinct angle
+   (geometry, materials, drive, or output quantity), XDMF that opens in
+   ParaView. Count each phase's examples against that bar; where a phase is
+   short, open (or verify there already are) §7 chunks to close the gap —
+   but only on gated capability, and never more than the current pace can
+   absorb. State the per-phase count and shortfall in the review.
 
 5. **Ansys benchmarks (§5.4), both directions.**
    - *Commission:* should a new `examples/ansys_benchmarks/<case>/` be
