@@ -263,6 +263,17 @@ at `0.974490841` of analytic (`…050620Z_GEO-10-portfacet-digits.log`), so
 adding a boundary group moved no interface tag. Full `tests/mesh` at `-n 2`:
 **29 passed, 1 skipped, 107.64 s** (`…050421Z_GEO-10-mesh-regression.log`).
 
+### 11. `two_torus_domain` gap-box terminal facet tags include lateral strips below `gap_overhang ≈ 6e-4`
+
+| | |
+|---|---|
+| **Test** | `tests/validation/test_port_gap_voltage_impedance.py` disc-area band (on `attempt/PORT-1-step3bv-20260806T004500Z`, not on `main`) — and any future test that gates on the `201`/`202` facet areas at small overhang |
+| **Symptom** | Measured facet-group area `1.643447371e-04 m²` per port at `gap_overhang = 2e-4` — `1.0241 ×` the exact oblique cut `1.604721580e-04 m²`, i.e. **above** a value an inscribed linear-tet section must sit below |
+| **Cause** | Measured, not guessed (`PORT-1` step 3b-v, `20260806T003559Z_PORT-1-step3bv-gate.log`): at overhang 2e-4 the tube protrudes 0.2018 mm through the gap box's `−x` face over `2.821 mm < \|y\| < 3.989 mm` (box `min x` = 1.480000e-02, tube `min x` at `y = half_y` = 1.459821e-02), so the fragment-boundary intersection that defines tags `201`/`202` picks up the arc-end disc pair **plus two lateral strips**. The "gap box contains the arc ends" invariant fails below overhang ≈ 6e-4. 3b-iv's disc-area band was measured at overhang 1e-3, where the tube clears the face by 0.598 mm — it does not transfer to small overhang, and the mesh is not what is wrong. |
+| **Verified at** | `main` fixture geometry as of `7747999`; the failing band assertion lives only on the parked branch |
+| **Fix options, neither taken in-slot** | Raise `GAP_OVERHANG` back above ~6e-4 (changes the comparison geometry all 3b measurements share), or make the band overhang-aware (the strip area is computable from the same arithmetic above). A per-geometry decision for whoever next gates on these tags. |
+| **Owned by** | `PORT-1` step 3b-vi notes it as a trap (do not gate on the 2xx areas at overhang 2e-4); entry leaves with the commit that restores an exact terminal-area anchor at the geometry it is asserted on |
+
 ### 7. ✅ RETIRED 2026-08-03 — birdcage mesh fails to generate (`GEO-9`, steps 1 + 2a + 2b)
 
 All three tests are green and the whole of `tests/mesh` less known-issues 5 is
@@ -328,6 +339,21 @@ session log (00:30Z preflight stop, 02:00Z, 03:30Z, 05:10Z runs; the 23:00Z
 review). One more clean review interval completes the "full day of slots" and
 downgrades this to a one-off; the crontab check by a human is still the faster
 route to closing it.
+
+**Update 2026-08-06 (03:00 review): recurred, and worse — do not downgrade.**
+The **six consecutive slots** from 2026-08-05 **05:00Z through 14:00Z** (the
+00:00-local implementer, the 03:00-local daily review, and all four morning
+implementer slots) never fired: no file in `logs/automation/` — not even a
+lock-skip line — no commits, no attempts.md entries. The grid resumed cleanly
+at 15:30Z (the 10:30 review) and every slot since has logged (08-05 afternoon
+4/4, 08-06 overnight 4/4). Neither the 08-05 10:30 nor 18:00 review noticed the
+gap — reviews look back one interval, which is a blind spot this entry now
+documents. Unlike the 08-03 single-slot miss, this window is **contiguous
+(~9.5 h)**, which points at the host being down or asleep (WSL2) rather than a
+crontab edit. Needs the human operator: check `crontab -l` against the
+90-minute grid **and** host uptime/suspend history covering 2026-08-05
+00:00–09:00 local. On the dashboard under Waiting-on-you. Entry leaves when
+the cause is identified with a note in the closing commit.
 
 ### ✅ RETIRED 2026-08-04 — reaction Z-matrix diagonal is negative where it must be inductive
 
