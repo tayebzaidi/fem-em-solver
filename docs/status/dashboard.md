@@ -1,13 +1,17 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-06, 03:00 daily review. Source of truth is
+**Updated:** 2026-08-06, 10:30 daily review. Source of truth is
 `PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
 
 ## Waiting on you
 
-1. Housekeeping: local `main` is 9 commits ahead of `origin/main` (counting
-   this review's commit); push when convenient. No Ansys benchmark cases commissioned yet (weekly
-   review owns that).
+1. Housekeeping: local `main` is well ahead of `origin/main` (this review
+   makes 18 unpushed commits); push when convenient. No Ansys benchmark
+   cases commissioned yet (the weekly review owns that).
+2. Your 10:12/10:17 examples-bar change (five per phase, accruing with gate
+   closures) is now wired in: the first §5.4 ramp chunk (`EX-1`, a two-torus
+   mesh/tags example) is queued this interval. No action needed unless the
+   ramp rule isn't what you intended.
 
 ## Honest current state (digest of §2 — unchanged this interval)
 
@@ -19,66 +23,69 @@
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4 step 1); never gated on a coil |
 | S-parameters | 🧪 heuristic | one real S-matrix, two-loop air fixture in a test (PORT-1) |
 
-## Recent activity (since the 18:00 review)
+## Recent activity (since the 03:00 review)
 
-Second consecutive 4/4 interval — all four slots landed on `main`:
+Third consecutive 4/4 interval — three landed, one disciplined park:
 
-- **PORT-1 step 3b-v** — negative result, taken exactly as planned: the
-  facet-integral port voltage measured 4.845 × the closed form (the terminal
-  facet carries the surface-charge-dominated *normal* E-component), so the
-  second of the two candidate estimator families is excluded by measurement.
-  This review scoped the successor, step 3b-vi: the tangential path integral
-  along the gap arc — what −∫E·dl literally is, and what neither prior route
-  computed. A fixture geometry hazard found in the same run is now
-  known-issues 11.
-- **POST-1 step 4** — the drop-set guardrail is refuted with a sign on a
-  planar interface with zero geometry error: the dropped layer is 22% *more*
-  accurate than what survives, and dropping it doubles the peak error
-  (2.157×, closed-form priced). This review adjudicated both handed items:
-  `prefer_interior=True` is retired as the production default (queued as
-  step 5), and step 3's sphere table gets re-scored on |E| (queued as
-  step 4b) because it was scored on Re E.
-- **GEO-4 step 1** — the oldest standing `tests/mesh` failure was the test's
-  own assertion, unattainable by construction (the overlap guard means the
-  coil always governs the box). Replaced by exact containment/clearance
-  identities; known-issues 5 retired; `tests/mesh` now runs unexcluded in CI.
-- **GEO-10** — the missing outer-boundary tag was never *declared*: gmsh pads
-  OCC bounding boxes by 1e-7 and the wall test used 1e-9, so the group was
-  silently skipped. One tolerance fixed; the box-surface identity gates at
-  ratio 1.000000000000000; known-issues 10 retired; chunk closed. Its handed
-  hazard (unmeasured margins in the other fixtures' wall tests) is now
-  chunk GEO-11, queued.
+- **PORT-1 step 3b-vi** — the tangential path-integral port voltage measured
+  ~0.48 × the closed form: a *third* distinct estimator value, and the four
+  families now span a factor 15 off one solved field. Parked, not landed —
+  correctly, because the plan's own quadrature-convergence precondition
+  fails structurally: only ~5 mesh cells span the gap arc and the integrand
+  jumps at every cell crossing, so no node count can resolve it. This
+  review's rescope (step 3b-vii, queue item 1) refines the mesh along the
+  arc; if ~0.48 survives refinement, the sampling-geometry question is
+  settled and suspicion moves to the field scale in the gap or the closed-
+  form reference itself.
+- **POST-1 step 4b** — the sphere drop-set table re-scored on |E| is
+  *digit-identical* (2e-16) to the Re E table, because the lossless
+  real-data fixture's phasor is exactly real (max|Im E| = 0). Step 3's
+  conclusions transfer unchanged, and the reason is now a 1e-12 gate that
+  fails the moment a fixture acquires a phase — which is exactly when the
+  Re E substitution becomes the 62% error step 4 measured on the planar
+  fixture.
+- **POST-1 step 5** — `prefer_interior=False` is now the production default
+  at all four entry points; the retired guardrail's 2.157× peak penalty is
+  pinned as the negative control, measured through production. The drop-set
+  thread (steps 1–5) is complete; a cheap parity gate on the CSV export
+  path is queued as step 6.
+- **GEO-11** — the CAD-only margin sweep closed the chunk and found GEO-10's
+  defect **live in two more fixtures**: `loop_over_half_space_domain` and
+  `sphere_in_box_domain` never declare their outer-boundary group
+  (tolerance 100× below the OCC padding). Latent — every caller discards
+  the tags — but real; known-issues 12/13 opened. This review took the
+  reserved tolerance decision: chunk **GEO-12** (queued) widens both to
+  1e-6 and finally gates the group's existence.
 
-All three ✅ flips audited §4-compliant this review (independent read-only
-auditors; logs, quantitative assertions, and elapsed times verified). No
-demotions.
+All three ✅ flips (GEO-11, POST-1 steps 4b and 5) audited §4-compliant this
+review by independent read-only auditors — logs, quantitative assertions,
+elapsed times verified; pinned assertions confirmed to execute before their
+skips. No demotions. One audit catch fixed in this commit: a mis-transcribed
+digit string in a GEO-11 test comment.
 
 ## Automation health
 
-- The 08-05 morning six-slot gap is **resolved**: the human operator
-  confirmed on 2026-08-06 that the host was down during that window; the
-  known-issues cron entry is closed. The grid has run clean since 08-05
-  15:30Z, including 4/4 overnight into 08-06.
+- The grid has now run clean since 08-05 15:30Z — 12 consecutive slots,
+  including three 4/4 implementer slates in a row.
 - Tree clean at review start and end; no `recovered/*` branches.
-- Parked branches: `attempt/PORT-1-step3bv-…` only (kept — queue item 1
-  reuses its test file). The superseded 3b-iii branch was deleted this
-  review after its content was confirmed carried forward.
-- Standing failures all catalogued in `docs/testing/known-issues.md`:
-  entries 5 and 10 retired this interval; entry 11 (fixture geometry at
-  small gap overhang) opened.
+- Parked branches: `attempt/PORT-1-step3bvi-…` only (kept — queue item 1
+  continues on it). The superseded 3b-v branch was deleted this review
+  after confirming its content was carried forward.
+- Known-issues: entries 12 and 13 opened this interval (boundary-group
+  classification, both latent); entry 12's fix is queued as GEO-12; the
+  08-05 cron-gap entry closed after you confirmed host downtime.
 
 ## On deck (§9, refreshed this review)
 
-1. **PORT-1 step 3b-vi** — tangential path-integral port voltage vs the
-   closed-form `ωM₁₂` (the S-parameter critical path; third estimator
-   family, first that integrates along the gap path).
-2. **POST-1 step 4b** — re-score the sphere drop-set table on |E| (step 3
-   used Re E; the planar fixture showed that substitution can fabricate a
-   62% error).
-3. **POST-1 step 5** — retire `prefer_interior=True` as the production
-   default (adjudicated this review; old path pinned, not deleted).
-4. **GEO-11** — CAD-only probe sweep of boundary-classification margins
-   under OCC bounding-box padding (GEO-10's hazard, priced per fixture).
+1. **PORT-1 step 3b-vii** — the path-integral port voltage on an
+   arc-refined mesh (critical path; ≥ 40 cells across the gap arc so the
+   quadrature can converge).
+2. **GEO-12** — widen the two 1e-9 wall tolerances to 1e-6 and gate the
+   outer-boundary group's existence (fixes known-issues 12).
+3. **POST-1 step 6** — CSV-export/stats sampling parity gate (integer count
+   identity both modes).
+4. **EX-1** — first §5.4 ramp example: the two-torus port fixture's mesh,
+   cell tags, and facet tags in ParaView.
 5. **MAT-6 step 5** (spare, heavy) — wire refinement at fixed box to
    separate the last ~1.5% of ΔX.
 

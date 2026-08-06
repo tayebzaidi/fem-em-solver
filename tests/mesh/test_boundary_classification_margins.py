@@ -329,7 +329,8 @@ def test_wall_classification_margin(name, build):
     )
     # `GEO-10` sized two_torus_domain's tol at exactly 10x the measured 1e-7
     # padding, so wall_ratio lands on 0.1 to within double-precision noise
-    # (measured 1.000000000000029e-01). The 1e-6 relative slack is that noise,
+    # (measured 1.0000000000287557e-01, 2.9e-11 relative). The 1e-6 relative
+    # slack is that noise,
     # not a loosened bound.
     assert wall_ratio <= WALL_MARGIN * (1.0 + 1e-6), (
         f"{name}: an accepted surface sits at residual/tol = "
