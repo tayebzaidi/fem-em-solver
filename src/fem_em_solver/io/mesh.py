@@ -1580,6 +1580,19 @@ class MeshGenerator:
 
         The returned values are lightweight geometry heuristics (no meshing).
         They are used to flag undersized domains that can amplify boundary artifacts.
+
+        Sizing rule (the intent the numbers encode, `GEO-4` step 1): the air box is
+        **centred on the origin** (see `coil_phantom_domain`, which builds it from
+        these extents), so its half-width must contain every object's largest |x|:
+
+            half_width = max(coil_major + coil_minor, |offset| + phantom_radius)
+                         + padding
+
+        An off-centre phantom therefore enters through the second term of the max
+        and only *governs* the box once it reaches outside the coil envelope. Below
+        that it is masked by the coil, and the correct domain does not grow — the
+        clearance to the wall shrinks instead, which is what
+        `phantom_boundary_clearance_m` reports.
         """
         if min_air_padding_ratio <= 0.0:
             raise ValueError("min_air_padding_ratio must be > 0")
@@ -1600,7 +1613,20 @@ class MeshGenerator:
         recommended_min_padding = min_air_padding_ratio * reference_extent
         effective_air_padding = max(air_padding, recommended_min_padding)
 
+        # Clearance from the phantom's outermost radial point to the recommended
+        # wall. By construction of the max above this is >= recommended_min_padding,
+        # with equality exactly when the phantom governs the box.
+        phantom_outer_radial_extent = phantom_offset_radius + phantom_radius
+        recommended_domain_half_width = radial_extent_without_padding + recommended_min_padding
+        phantom_boundary_clearance = recommended_domain_half_width - phantom_outer_radial_extent
+
         return {
+            "phantom_offset_radius_m": float(phantom_offset_radius),
+            "phantom_outer_radial_extent_m": float(phantom_outer_radial_extent),
+            "phantom_boundary_clearance_m": float(phantom_boundary_clearance),
+            "phantom_governs_radial_extent": bool(
+                phantom_outer_radial_extent >= coil_major_radius + coil_minor_radius
+            ),
             "radial_extent_without_padding_m": float(radial_extent_without_padding),
             "z_extent_without_padding_m": float(z_extent_without_padding),
             "reference_extent_m": float(reference_extent),
@@ -1608,7 +1634,7 @@ class MeshGenerator:
             "recommended_min_air_padding_m": float(recommended_min_padding),
             "effective_air_padding_m": float(effective_air_padding),
             "is_domain_undersized": bool(air_padding < recommended_min_padding),
-            "recommended_domain_half_width_m": float(radial_extent_without_padding + recommended_min_padding),
+            "recommended_domain_half_width_m": float(recommended_domain_half_width),
             "recommended_domain_half_height_m": float(z_extent_without_padding + recommended_min_padding),
         }
 

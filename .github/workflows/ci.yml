@@ -137,22 +137,23 @@ jobs:
     #    fragmented the geometry: the file now generates a mesh and passes,
     #    carrying its own V_mesh/V_box and sum(tagged)/V_mesh identities --
     #    both 1.000000000000 -- into CI. Log 20260803T200358Z_GEO-9-step2b-bands.)
-    #   --deselect off-centre sizing: known-issues 5, `assert 0.09 > 0.09`,
-    #     pure geometry arithmetic with no solve.
+    #   (The off-centre sizing --deselect was removed 2026-08-06 by GEO-4
+    #    step 1, which retired known-issues 5: the `assert 0.09 > 0.09`
+    #    property is unattainable for any meshable placement, and the test now
+    #    gates the containment identity instead. This step no longer excludes
+    #    anything.)
     #
-    # Remove each exclusion in the commit that fixes its entry; do not widen
-    # either one to make this job green.
+    # Do not widen this job to make it green; add exclusions only with a
+    # known-issues entry, and remove each in the commit that fixes its entry.
     #
-    # 42.2 s at -n 2 on the dev box (20260803T200504Z_GEO-9-step2b-gate.log,
-    # 20 passed 1 skipped 1 deselected, exit 0) -- was 27.6 s before the
-    # birdcage rejoined. Carries the GEO-9 step-1/2a/2b volume-partition
-    # identities -- V_mesh/V_box and sum(tagged)/V_mesh on three fixtures, all
-    # to 1e-9 -- into CI.
+    # 85.3 s at -n 2 on the dev box (20260806T033327Z_GEO-4-step1-mesh-regression.log,
+    # 27 passed 1 skipped, exit 0) -- was 42.2 s on 2026-08-03 with the one
+    # test deselected. Carries the GEO-9 step-1/2a/2b
+    # volume-partition identities -- V_mesh/V_box and sum(tagged)/V_mesh on
+    # three fixtures, all to 1e-9 -- into CI.
     - name: Mesh generation suite
       run: |
-        mpiexec -n 2 python3 -m pytest tests/mesh \
-          --deselect tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent \
-          -v --tb=short
+        mpiexec -n 2 python3 -m pytest tests/mesh -v --tb=short
 
     # IO/materials/post. Two tests here used to be `--deselect`ed on the stale
     # DummyMagnetostaticSolver double (known-issues.md entry 1); TH-1 steps 1-3

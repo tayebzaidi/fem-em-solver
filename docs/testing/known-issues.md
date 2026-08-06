@@ -89,20 +89,23 @@ them by number.
 | **Note** | The coil+phantom fixture uses a single global `setSize` and tight air padding — the same pattern that cost **20% error** on Helmholtz until `air_padding` was decoupled (see `docs/validation/helmholtz.md`). A boundary-mirror artifact is a plausible contributor and should be ruled out before the tolerance is touched. |
 | **Verified pre-existing at** | `ce92e8c` and earlier (0.559 at `HEAD`, 0.557 after the gauge change — the gauge default is not the cause) |
 
-### 5. Domain sizing heuristic, off-centre phantom
+### 5. ✅ RETIRED 2026-08-06 — domain sizing heuristic, off-centre phantom
 
 | | |
 |---|---|
 | **Test** | `tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent` |
 | **Symptom** | `assert 0.09 > 0.09` |
-| **Cause** | Not diagnosed. Pure geometry arithmetic in `MeshGenerator.coil_phantom_domain_sizing_diagnostics` — no solve involved, so no solver change can affect it. |
-| **Verified pre-existing at** | `794d2f1` (pre-session); still failing 2026-08-03 at `de6d40a` (`20260803T034252Z_GEO-9-step1-cohabit.log`, 1 failed 16 passed 1 skipped in 22.95 s) |
-| **Excluded from CI** | Since `OPS-11` (2026-08-03) the `validation` job's `Mesh generation suite` step `--deselect`s this node id by name. **Remove that `--deselect` in the commit that fixes this entry** — it is the only thing keeping the test out of CI, and the rest of the file runs there. |
-| **Cited wrongly as "known-issues 6"** | Commit `3ac025c` and `docs/testing/attempts.md:1903,1907` both call this entry 6. **It is entry 5.** Entry 6 is the rank-dependent single-port excitation test in `tests/solver`, unrelated to `tests/mesh`. `attempts.md` is append-only so the correction lives here and in the `OPS-11` §7 entry; it matters because `OPS-11`'s exclusion set is **5 and birdcage**, not "6 and 7". |
+| **Was pre-existing at** | `794d2f1` (pre-session); reproduced one last time 2026-08-06 at `d4e278d` (`20260806T033155Z_GEO-4-step1-precontrol.log`, 1 failed 3 passed in 1.31 s) |
+| **Diagnosis** (`GEO-4` step 1) | **The test's assertion, not the arithmetic.** The air box is centred on the origin, so its half-width is `max(coil_major + coil_minor, |offset| + phantom_radius) + padding` — the off-centre phantom enters through the second term of the max. `coil_phantom_domain` rejects any placement with `|offset| + phantom_radius >= coil_major - coil_minor` (the `radial_clearance <= 0` guard), so the phantom's outer radius is **always** strictly below the coil's outer radius and the max is always won by the coil. The property "an offset phantom grows the box" is therefore unattainable for every meshable configuration, not merely unexercised by the chosen 0.03 m offset (phantom reaches 0.07 m vs the coil's 0.09 m). Test and code landed together in `2c52f05`; the test never passed. |
+| **Resolution** | The strict `>` was **not** relaxed. The test now gates the containment identity with the clearance term explicit — `half_width == max(coil_outer, |offset| + r_phantom) + padding` for both presets, and `clearance(centered) - clearance(shifted) == 0.03` exactly (the whole offset is spent out of the phantom's wall clearance). Two tests added: the phantom-governed branch of the max keeps a strict `>` alive where it exists (arithmetic only, outside the meshable envelope), and a zero-padding negative control still detects an undersized domain. `coil_phantom_domain_sizing_diagnostics` gained `phantom_outer_radial_extent_m`, `phantom_boundary_clearance_m`, `phantom_offset_radius_m`, `phantom_governs_radial_extent`; **no sizing number changed**, so no meshed fixture moved. |
+| **Verified at** | `20260806T033316Z_GEO-4-step1-gate.log` (6 passed, 1.36 s, `-n 2`) and `20260806T033327Z_GEO-4-step1-mesh-regression.log` (whole `tests/mesh`, no `--deselect`, **27 passed 1 skipped in 85.3 s**) |
+| **Back in CI** | The `OPS-11` `--deselect` was removed in the same commit; the `Mesh generation suite` step now excludes nothing. |
+| **Cited wrongly as "known-issues 6"** | Commit `3ac025c` and `docs/testing/attempts.md:1903,1907` call this entry 6. **It was entry 5.** Entry 6 is the rank-dependent single-port excitation test in `tests/solver`, unrelated to `tests/mesh`. |
 
-Owned by `GEO-4` step 1 (§7, written by the 2026-08-05 18:00 review); this
-entry leaves with that step's fixing commit, which also removes the `OPS-11`
-`--deselect`.
+**Open follow-up for a review (not a failing test):** because the overlap guard
+is z-blind, a *short* phantom that would clear the torus tubes in z is rejected
+just the same. If off-centre placements that radially govern the box are ever
+wanted, that guard — not the sizing heuristic — is what must change.
 
 ### 6. Rank-dependent: single-port excitation
 

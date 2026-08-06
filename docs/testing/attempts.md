@@ -4191,3 +4191,86 @@ production code changed; no permission denial this slot.
 fate as the production default — it now protects nothing measurable and
 demonstrably harms peaks, but changing a shipped default is not an implementer's
 call. (ii) Whether step 3's sphere numbers need re-running on `e_complex`.
+
+---
+
+## 2026-08-06T03:35Z — `GEO-4` step 1 (§9 On-deck item 3) — complete
+
+**Slot:** 22:30 local implementer run, 2026-08-05. Tree clean at start
+(`d4e278d`), container Up. §9 item 1 (`PORT-1` step 3b-v) is annotated 🟡
+"do not re-run as written — a successor is the review's to scope", item 2 is
+done, so item 3 was the first actionable entry. Smoke tier; three harness runs
+totalling ~90 s of compute.
+
+**Outcome: the failing assertion was wrong, and unattainable. The arithmetic
+was right all along.** Nothing was loosened — the strict `>` survives, moved to
+the regime where the property it names actually exists.
+
+**Archaeology (the plan required intent be established from the code first).**
+`coil_phantom_domain` builds an **origin-centred** air box from the
+diagnostics' extents (`mesh.py`, `occ.addBox(-(radial_extent + pad), …)`), so
+the sizing rule is containment:
+`half_width = max(coil_major + coil_minor, |offset| + r_phantom) + padding`.
+The off-centre phantom is already in that max, second term. But the same
+function guards placement with
+`radial_clearance = (coil_major − coil_minor) − (|offset| + r_phantom) > 0`, so
+for **every** placement this class can mesh, `|offset| + r_phantom <
+coil_major − coil_minor < coil_major + coil_minor` — the coil always wins the
+max. "An offset phantom grows the box" is false by construction, not merely
+unexercised by the test's 0.03 m offset (phantom reaches 0.07 m against the
+coil's 0.09 m; hence `assert 0.09 > 0.09`). Test and code landed in the same
+commit `2c52f05` — the test never passed once.
+
+**Negative control, executed first:**
+`20260806T033155Z_GEO-4-step1-precontrol.log` — 1 failed 3 passed in 1.31 s at
+`d4e278d`, `assert 0.09 > 0.09`, both ranks.
+
+**Fix.** Test rewritten around the identity, code left numerically untouched:
+- containment identity gated for both presets with the clearance term explicit:
+  `half_width == max(coil_outer, |offset| + r_phantom) + 0.35·reference`
+  (0.1215 m for both, reference 0.09 m, padding 0.0315 m);
+- exact clearance identity: `clearance(centered) − clearance(shifted) = 0.03 m`
+  — the entire offset is spent out of the phantom's wall clearance
+  (0.0815 → 0.0515 m), which is the physical content the old assertion was
+  groping for;
+- new `…_phantom_governed_branch_grows_the_box` keeps a **strict `>`** on the
+  max's second branch (0.02 m phantom at 0.10 m offset → extent 0.12 m,
+  half-width 0.162 m, clearance == padding exactly), explicitly labelled as
+  arithmetic outside the meshable envelope;
+- new `…_still_detects_zero_clearance` re-gates the plan's negative control:
+  `air_padding=0` ⇒ `is_domain_undersized True`, effective padding 0.0315 m.
+
+`coil_phantom_domain_sizing_diagnostics` gained four **reporting-only** keys
+(`phantom_offset_radius_m`, `phantom_outer_radial_extent_m`,
+`phantom_boundary_clearance_m`, `phantom_governs_radial_extent`) plus a
+docstring stating the sizing rule. No existing key's value changed, so no
+meshed fixture moved — confirmed by the regression below.
+
+**Gates** (both `-n 2`, real build, smoke tier, `timeout 180`):
+
+| log | result |
+|---|---|
+| `20260806T033316Z_GEO-4-step1-gate.log` | 6 passed, 1.36 s |
+| `20260806T033327Z_GEO-4-step1-mesh-regression.log` | whole `tests/mesh`, **no `--deselect`**, 27 passed 1 skipped, 85.3 s |
+
+The plan predicted 25 passed 1 skipped for the unexcluded directory; 27 is that
+plus the two tests added here, and nothing else in the directory changed
+behaviour. The `OPS-11` `--deselect` was removed from `.github/workflows/ci.yml`
+in this commit — the `Mesh generation suite` step now excludes nothing, and the
+`GEO-9` volume-partition identities keep running there. Known-issues 5 retired
+(the entry that has polluted every `tests/mesh` sweep this week).
+
+**Handed to the review, not acted on:** the overlap guard is **z-blind**. A
+short phantom that would clear the torus tubes in z is rejected on radial
+grounds alone, so the phantom-governed branch of the sizing max is dead code
+for meshing purposes. If radially governing off-centre placements are ever
+wanted, that guard is what must change — not the heuristic. Journalled in
+known-issues 5 and the §7 entry.
+
+**Nothing denied this slot.** No assertion loosened; the one assertion removed
+(`shifted > centered` on `radial_extent_without_padding_m`) is replaced by a
+strictly stronger set, with the reason it cannot hold recorded in three places.
+
+**Next attempt hypothesis:** none for this step — it is closed. `GEO-4` stays
+🧪; its graded-sizing generalization to the other `io/mesh.py` fixtures is the
+open half, and §9 item 4 (`GEO-10`) is untouched and next.

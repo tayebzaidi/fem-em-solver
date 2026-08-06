@@ -411,7 +411,9 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 > failing outright) sat undiscovered. The `validation` job's
 > `Mesh generation suite` step now runs the **whole directory** with exactly
 > one exclusion left: the known-issues-5 `--deselect` (off-centre sizing
-> arithmetic). **20 passed 1 skipped 1 deselected in 42.15 s, exit 0**
+> arithmetic) — **removed 2026-08-06 by `GEO-4` step 1; the step now excludes
+> nothing and runs 27 passed 1 skipped in 85.3 s**. **20 passed 1 skipped
+> 1 deselected in 42.15 s, exit 0**
 > (`20260803T200504Z_GEO-9-step2b-gate.log`; the birdcage `--ignore` was
 > removed by `GEO-9` step 2b as required). The "those and only those" control
 > was executed, not quoted (`20260803T170132Z_OPS-11-fullsweep.log`); the
@@ -572,7 +574,40 @@ Independent of the §2.1 physics defect; meshes are meshes.
 > on Helmholtz, and expect graded sizing to be equally necessary.
 
 **`GEO-4` step 1 — off-centre domain sizing: diagnose and fix known-issues 5**
-*(plan written 2026-08-05, 18:00 review)*.
+✅ *(plan written 2026-08-05, 18:00 review; executed 2026-08-06, 22:30 run)*.
+> **Result: the test's assertion was wrong, and unattainable — the arithmetic
+> is right.** The air box is origin-centred, so `half_width =
+> max(coil_major + coil_minor, |offset| + r_phantom) + padding`; the
+> off-centre phantom enters through the max's second term. But
+> `coil_phantom_domain` rejects any placement with
+> `|offset| + r_phantom >= coil_major - coil_minor` (the `radial_clearance
+> <= 0` guard), so the phantom's outer radius is **always** strictly below
+> the coil's and the coil **always** wins the max. "An offset phantom grows
+> the box" is therefore false for every meshable configuration — not merely
+> unexercised by the 0.03 m offset (phantom 0.07 m vs coil 0.09 m). Test and
+> code landed together in `2c52f05`; the test never passed. The strict `>`
+> was **not** relaxed: the test now gates the containment identity with the
+> clearance term explicit (`half_width == max(coil_outer, |offset| +
+> r_phantom) + 0.35·reference` for both presets) plus the exact clearance
+> identity `clearance(centered) − clearance(shifted) = 0.03 m` — the whole
+> offset is spent out of the phantom's wall clearance — and two new tests
+> keep a strict `>` alive on the phantom-governed branch (arithmetic only,
+> outside the meshable envelope) and re-gate zero-padding detection.
+> `coil_phantom_domain_sizing_diagnostics` gained four reporting keys
+> (`phantom_offset_radius_m`, `phantom_outer_radial_extent_m`,
+> `phantom_boundary_clearance_m`, `phantom_governs_radial_extent`); **no
+> sizing number changed**, so no meshed fixture moved. Negative control
+> executed first, not quoted: `20260806T033155Z_GEO-4-step1-precontrol.log`
+> (1 failed 3 passed, `assert 0.09 > 0.09`, 1.31 s). Gates
+> `20260806T033316Z_GEO-4-step1-gate.log` (6 passed, 1.36 s) and
+> `20260806T033327Z_GEO-4-step1-mesh-regression.log` (whole `tests/mesh`,
+> `--deselect` removed, **27 passed 1 skipped in 85.3 s**), both `-n 2`,
+> smoke tier. Known-issues 5 retired; the `OPS-11` exclusion is gone and
+> `tests/mesh` now runs unexcluded in CI. **Handed to the review:** the
+> overlap guard is z-blind, so a short phantom that would clear the torus
+> tubes in z is rejected too — if radially governing off-centre placements
+> are ever wanted, that guard is what must change, not the heuristic.
+> `GEO-4` itself stays 🧪 (graded-sizing generalization is separate).
 > The oldest standing failure on `main`:
 > `tests/mesh/test_domain_sizing_heuristics.py::test_coil_phantom_domain_sizing_accounts_for_off_center_phantom_extent`
 > fails `assert 0.09 > 0.09` — pure geometry arithmetic in
@@ -2249,7 +2284,17 @@ item 4. Item 5 is the spare and the only heavy-tier item.
    report all ratios, annotate §7, stop; the default's fate is the next
    review's call.
 
-3. **`GEO-4` step 1 — off-centre domain sizing (known-issues 5).**
+3. ~~**`GEO-4` step 1 — off-centre domain sizing (known-issues 5).**~~ —
+   **done 2026-08-06 (22:30 run)**, ✅ per §4. The assertion was wrong and
+   *unattainable*: `coil_phantom_domain`'s overlap guard forbids any
+   placement where the phantom could govern the box, so the coil always wins
+   the max. `>` was not relaxed — the containment identity is gated instead,
+   with the exact clearance identity `Δclearance = 0.03 m` = the offset.
+   Gates `20260806T033316Z_GEO-4-step1-gate.log` (6 passed, 1.36 s) and
+   `…033327Z_…-mesh-regression.log` (**27 passed 1 skipped, 85.3 s**,
+   `--deselect` removed). Known-issues 5 retired; `tests/mesh` runs
+   unexcluded in CI. One item handed to the review: the guard is z-blind.
+   See the §7 entry. *(Original item text below.)*
    Independent, smoke-sized. The oldest standing failure on `main`
    (`assert 0.09 > 0.09`, pure geometry arithmetic, `--deselect`ed from CI
    since `OPS-11`) — every `tests/mesh` regression this week carried its
