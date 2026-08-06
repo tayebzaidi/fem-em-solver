@@ -1250,7 +1250,9 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 > closed-form entry-face value). The rule protects nothing measurable and
 > demonstrably harms peaks.** **Both handed items adjudicated 2026-08-06,
 > 03:00 review:** (i) the production default flips — `prefer_interior=False`
-> becomes the default via step 5 below, parameter retained and the `True` path
+> becomes the default via step 5 below **(executed 2026-08-06, 07:30 run — the
+> flip is landed and gated on both fixtures)**, parameter retained and the
+> `True` path
 > pinned, on the evidence that the mean is insensitive (0.01 pp on both
 > fixtures) and the peak is measurably harmed (2.157×, with no geometry
 > confound left to blame); (ii) step 3's sphere gates stay ✅ — their
@@ -1473,8 +1475,44 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 >   in-slot.
 >
 > * **`POST-1` step 5 — retire `prefer_interior=True` as the production
->   default (plan written 2026-08-06, 03:00 review; the adjudication is
->   recorded in the chunk preamble).** Flip the defaults in
+>   default** ✅ *(2026-08-06, 07:30 run)*. All four defaults in
+>   `post/phantom_fields.py` are now `False`
+>   (`_sampling_cells_with_interface_guardrails`,
+>   `compute_tagged_vector_magnitude_stats`,
+>   `export_tagged_field_samples_csv`,
+>   `compute_phantom_eb_metrics_and_export`); the parameter is retained and the
+>   `True` path pinned, not deleted. **Anchor met on both fixtures.** Step 1's
+>   12³ piecewise-σ fixture, production called with *no* sampling kwarg vs the
+>   full-owned-set reference through step 1's own reduction: `count` 5184 =
+>   5184 for both tags, min/max/mean equal at `1e-12`, digit-identical at
+>   `-n 2` and `-n 4` (`20260806T123424Z_POST-1-step5-partition.log:116`,
+>   `…123943Z…-n4.log:168`). Step 4's 32³ planar fixture, production vs row
+>   (b): n = 98304, `|E| ∈ [0.237386, 0.698349]`, peak deficit **0.7666%** —
+>   the landed row (b) numbers digit-for-digit through the production entry
+>   point (`…123445Z_POST-1-step5-planar-n2.log:79`). **Negative control held:**
+>   `prefer_interior_samples=True` reproduces row (a) exactly — n = 96256, max
+>   0.692107, peak deficit 1.6537%, i.e. the landed **2.157×** penalty, now
+>   measured *through production* rather than through the test module's helper;
+>   on the step-1 fixture the guarded set is short by exactly the 288
+>   boundary-adjacent cells the guardrail drops (integer identity), and on tag 2
+>   the default's `max` 0.885040 exceeds the guarded 0.879575 — the extremum
+>   really does live in the dropped layer. **No landed gate moved:** 39 passed
+>   across `tests/environment tests/post tests/materials
+>   tests/validation/test_lossy_sphere_sar.py` in 157 s
+>   (`…123648Z_POST-1-step5-regression-n2.log`), `MAT-4`'s mean-SAR gate
+>   included — `post/sar.py` integrates over the tagged volume and never calls
+>   this sampler, so the insensitivity is structural, not just measured.
+>   Implicit-default call sites swept: `test_phantom_phasor_semantics.py` (3
+>   sites) now passes `True` explicitly so its 45.4% `Re`-cast deficit band is
+>   scored on the set it was measured on; `test_phantom_field_metrics.py`'s
+>   summary assertion flipped to `is False` — the one place the default is
+>   observable from outside the module. Tier standard, `-n 2`/`-n 4`, 8.8 s +
+>   103 s + 157 s + 3 s. **Does not close `POST-1`** — the coil+phantom
+>   application remains.
+>
+> * **`POST-1` step 5 — the plan as written (2026-08-06, 03:00 review;
+>   superseded by the result above, kept for the audit trail).** Flip the
+>   defaults in
 >   `post/phantom_fields.py` (`prefer_interior` at ~line 201,
 >   `prefer_interior_samples` at its three pass-through sites) to `False`,
 >   parameter retained, docstrings updated to cite the step-3/step-4
@@ -2566,7 +2604,18 @@ is the spare and the only heavy-tier item.
    overturned on `|E|` is the finding — report both tables, annotate the
    step-3 entry, stop; step 4's planar adjudication stands either way.
 
-3. **`POST-1` step 5 — retire `prefer_interior=True` as the production
+3. ✅ **Done 2026-08-06, 07:30 slot** — all four defaults flipped to `False`,
+   parameter retained and the `True` path pinned. Production (no kwarg) equals
+   the full-owned-set reference on step 1's fixture (count 5184 = 5184 both
+   tags, floats at 1e-12, identical at `-n 2`/`-n 4`) and reproduces step 4's
+   row (b) digit-for-digit on the planar fixture (n = 98304, max 0.698349,
+   peak deficit 0.7666%); `prefer_interior_samples=True` reproduces row (a)
+   (96256, 0.692107, 1.6537%, the 2.157× penalty) — now measured through
+   production rather than a test helper. Regression 39 passed in 157 s,
+   `MAT-4`'s mean-SAR gate included; no landed gate moved. Gates
+   `20260806T123424Z…-partition.log`, `…123445Z…-planar-n2.log`,
+   `…123648Z…-regression-n2.log`, `…123943Z…-partition-n4.log`. Numbers in §7.
+   **`POST-1` step 5 — retire `prefer_interior=True` as the production
    default.** Independent (disjoint from item 2's diff). Execute the §7
    step-5 plan, written this review; the adjudication and its evidence are
    in the chunk preamble. Flip the defaults in `post/phantom_fields.py`

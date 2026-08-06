@@ -1,0 +1,266 @@
+# Test Run
+- Chunk: POST-1-step5-partition-n4
+- Commit: b251d99d2e3bc9b3bdb258a5e0ea27657193dbae
+- Time (UTC): 2026-08-06 12:39:43
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 4 python3 -m pytest tests/environment tests/post/test_tagged_cell_partition_invariance.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  6 07:39 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 180 mpiexec -n 4 python3 -m pytest tests/environment tests/post/test_tagged_cell_partition_invariance.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 13 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 13 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build 
+[TH-1 step 0] PETSC_ARCH='linux-gnu-complex128-32' ScalarType=complex128 dolfinx=/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/__init__.py version=0.7.2
+PASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form 
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 13 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 13 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSEDPASSEDPASSEDPASSED
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not [TH-1 step 0] inner=(11.000000000000007+2.0000000000000004j) dot=(-5.000000000000003+10.000000000000005j)
+PASSEDPASSEDPASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly [TH-1 step 0] ||M||_F=1.041233e+00 ||M_c - eps_c*M||_F=4.673e-16
+PASSEDPASSEDPASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_probe_tagged_ghost_cell_separation 
+tests/post/test_tagged_cell_partition_invariance.py::test_probe_tagged_ghost_cell_separation 
+tests/post/test_tagged_cell_partition_invariance.py::test_probe_tagged_ghost_cell_separation 
+tests/post/test_tagged_cell_partition_invariance.py::test_probe_tagged_ghost_cell_separation 
+[POST-1 step 1] probe at -n 4:
+  rank 0: owned cells 2644, ghost cells 265
+    tag 1: tagged 2680 (owned 2536, ghost 144)
+      prefer_interior=True: sampling 2424 (ghost 0, boundary-dropped 112)
+      prefer_interior=False: sampling 2536 (ghost 0, boundary-dropped 0)
+    tag 2: tagged 229 (owned 108, ghost 121)
+      prefer_interior=True: sampling 60 (ghost 0, boundary-dropped 48)
+      prefer_interior=False: sampling 108 (ghost 0, boundary-dropped 0)
+
+[POST-1 step 1] probe at -n 4:
+  rank 1: owned cells 2531, ghost cells 331
+    tag 1: tagged 2710 (owned 2500, ghost 210)
+      prefer_interior=True: sampling 2386 (ghost 0, boundary-dropped 114)
+      prefer_interior=False: sampling 2500 (ghost 0, boundary-dropped 0)
+    tag 2: tagged 152 (owned 31, ghost 121)
+      prefer_interior=True: sampling 17 (ghost 0, boundary-dropped 14)
+      prefer_interior=False: sampling 31 (ghost 0, boundary-dropped 0)
+  total tagged ghost cells across ranks: 1160
+
+[POST-1 step 1] probe at -n 4:
+  rank 2: owned cells 2575, ghost cells 299
+    tag 1: tagged 111 (owned 0, ghost 111)
+      prefer_interior=True: sampling 0 (ghost 0, boundary-dropped 0)
+      prefer_interior=False: sampling 0 (ghost 0, boundary-dropped 0)
+    tag 2: tagged 2763 (owned 2575, ghost 188)
+      prefer_interior=True: sampling 2464 (ghost 0, boundary-dropped 111)
+      prefer_interior=False: sampling 2575 (ghost 0, boundary-dropped 0)
+
+[POST-1 step 1] probe at -n 4:
+  rank 3: owned cells 2618, ghost cells 265
+    tag 1: tagged 263 (owned 148, ghost 115)
+      prefer_interior=True: sampling 86 (ghost 0, boundary-dropped 62)
+      prefer_interior=False: sampling 148 (ghost 0, boundary-dropped 0)
+    tag 2: tagged 2620 (owned 2470, ghost 150)
+      prefer_interior=True: sampling 2355 (ghost 0, boundary-dropped 115)
+      prefer_interior=False: sampling 2470 (ghost 0, boundary-dropped 0)
+PASSEDPASSEDPASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-1] 
+[POST-1 step 1] tag 1, prefer_interior=True, -n 4:
+  count : production                     4896  owned-only                     4896
+  min   : production       0.5708276489752382  owned-only       0.5708276489752382
+  max   : production       0.9980976155749431  owned-only       0.9980976155749431
+  mean  : production       0.8286690987505584  owned-only       0.8286690987505584
+PASSEDPASSEDPASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[True-2] 
+[POST-1 step 1] tag 2, prefer_interior=True, -n 4:
+  count : production                     4896  owned-only                     4896
+  min   : production       0.5799772430927309  owned-only       0.5799772430927309
+  max   : production       0.8795752144642565  owned-only       0.8795752144642565
+  mean  : production       0.7700474428825709  owned-only       0.7700474428825709
+PASSEDPASSEDPASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-1] 
+[POST-1 step 1] tag 1, prefer_interior=False, -n 4:
+  count : production                     5184  owned-only                     5184
+  min   : production       0.5708276489752382  owned-only       0.5708276489752382
+  max   : production       0.9980976155749431  owned-only       0.9980976155749431
+  mean  : production       0.8205203318606584  owned-only       0.8205203318606584
+PASSEDPASSEDPASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_statistics_are_owned_cell_partition_invariant[False-2] 
+[POST-1 step 1] tag 2, prefer_interior=False, -n 4:
+  count : production                     5184  owned-only                     5184
+  min   : production       0.5776145445584544  owned-only       0.5776145445584544
+  max   : production       0.8850402333786894  owned-only       0.8850402333786894
+  mean  : production        0.765143263253708  owned-only        0.765143263253708
+PASSEDPASSEDPASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[1] 
+[POST-1 step 5] tag 1, -n 4, default sampling:
+  count : default                     5184  full-owned                     5184  prefer_interior=True                     4896
+  min   : default       0.5708276489752382  full-owned       0.5708276489752382  prefer_interior=True       0.5708276489752382
+  max   : default       0.9980976155749431  full-owned       0.9980976155749431  prefer_interior=True       0.9980976155749431
+  mean  : default       0.8205203318606584  full-owned       0.8205203318606584  prefer_interior=True       0.8286690987505584
+  guardrail drops 288 boundary-adjacent tagged cells (288 fewer samples)
+PASSEDPASSEDPASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set[2] 
+[POST-1 step 5] tag 2, -n 4, default sampling:
+  count : default                     5184  full-owned                     5184  prefer_interior=True                     4896
+  min   : default       0.5776145445584544  full-owned       0.5776145445584544  prefer_interior=True       0.5799772430927309
+  max   : default       0.8850402333786894  full-owned       0.8850402333786894  prefer_interior=True       0.8795752144642565
+  mean  : default        0.765143263253708  full-owned        0.765143263253708  prefer_interior=True       0.7700474428825709
+  guardrail drops 288 boundary-adjacent tagged cells (288 fewer samples)
+PASSEDPASSEDPASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[1] 
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[1] 
+[POST-1 step 1] negative control, tag 1, -n 4: ghost-inclusive count 5764, owned 5184, excess 580, tagged ghosts 580
+  mean: ghost-inclusive 8.134309833046e-01 vs owned 8.205203318607e-01
+PASSEDPASSEDPASSEDPASSED
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[2] 
+tests/post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count[2] 
+[POST-1 step 1] negative control, tag 2, -n 4: ghost-inclusive count 5764, owned 5184, excess 580, tagged ghosts 580
+  mean: ghost-inclusive 7.613670399259e-01 vs owned 7.651432632537e-01
+PASSEDPASSEDPASSEDPASSED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 13 passed, 8 warnings in 2.12s ========================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 13 passed, 8 warnings in 2.13s ========================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 13 passed, 8 warnings in 2.12s ========================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 13 passed, 8 warnings in 2.12s ========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 3

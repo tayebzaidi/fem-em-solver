@@ -116,7 +116,13 @@ def _solve_two_material_fixture(n: int):
 def _module_samples(field, cell_tags, tag: int):
     """Rank-local ``(points, complex values)`` exactly as the module samples them."""
     mesh = field.function_space.mesh
-    sampling_cells, _ = _sampling_cells_with_interface_guardrails(mesh, cell_tags, tag)
+    # ``prefer_interior=True`` passed explicitly since `POST-1` step 5 flipped the
+    # production default: this module's landed numbers (the 45.4% Re-cast deficit
+    # band) were measured on the guardrail's surviving set, and the identities
+    # here are about *what is sampled*, not about which set.
+    sampling_cells, _ = _sampling_cells_with_interface_guardrails(
+        mesh, cell_tags, tag, prefer_interior=True
+    )
     points = _cell_centroids(mesh, sampling_cells)
     values, valid_points, _cells, _invalid = _evaluate_on_cells(field, points, sampling_cells)
     return valid_points, values
@@ -215,7 +221,12 @@ def test_reported_statistics_are_phase_rotation_invariant(piecewise_sigma_field)
     comm = MPI.COMM_WORLD
     e_field, cell_tags = piecewise_sigma_field
 
-    base = compute_tagged_vector_magnitude_stats(e_field, cell_tags, TAG_HIGH, comm=comm)
+    # Explicit ``True`` since `POST-1` step 5 (see ``_module_samples``): the
+    # invariance holds on either set, and this keeps the sampled set the one the
+    # module's landed numbers were measured on.
+    base = compute_tagged_vector_magnitude_stats(
+        e_field, cell_tags, TAG_HIGH, comm=comm, prefer_interior_samples=True
+    )
 
     if comm.rank == 0:
         print("\n[POST-3 step 4] identity 2, phase-rotation invariance:")
@@ -227,7 +238,7 @@ def test_reported_statistics_are_phase_rotation_invariant(piecewise_sigma_field)
     for theta in ROTATION_ANGLES:
         rotated_field = _rotated_copy(e_field, theta)
         rotated = compute_tagged_vector_magnitude_stats(
-            rotated_field, cell_tags, TAG_HIGH, comm=comm
+            rotated_field, cell_tags, TAG_HIGH, comm=comm, prefer_interior_samples=True
         )
         if comm.rank == 0:
             print(

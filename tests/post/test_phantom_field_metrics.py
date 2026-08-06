@@ -130,7 +130,11 @@ def test_phantom_field_metrics_and_exports_are_finite():
         assert summary["phantom_tag"] == 3
         assert summary["E_magnitude"]["count"] > 0
         assert summary["B_magnitude"]["count"] > 0
-        assert summary["sampling"]["prefer_interior_samples"] is True
+        # `POST-1` step 5: the production default is the full owned tagged set.
+        # This call passes no ``prefer_interior_samples``, so the summary records
+        # what the default actually is — the one place the flip is observable
+        # from outside the module.
+        assert summary["sampling"]["prefer_interior_samples"] is False
         assert summary["sampling"]["requested_cells"] >= summary["sampling"]["sampling_cells"]
         assert summary["sampling"]["valid_sample_cells"] == summary["E_magnitude"]["count"]
         assert "consistency" in summary

@@ -4545,3 +4545,91 @@ touched `src/`, so step 5's diff is unaffected. The one thing a reader should
 *not* take from this result is that `e_real` is generally safe for magnitude
 statistics — the guard landed here says the opposite, and step 4's 61.8232% is
 what it is guarding against.
+
+---
+
+## 2026-08-06T12:30Z — `POST-1` step 5 — **complete**
+
+Scheduled implementer run, 07:30 local slot. Tree clean at start, container Up.
+On-deck item 1 is 🟡-parked awaiting a review rescope and item 2 landed at the
+06:00 slot, so this run took **item 3**, `POST-1` step 5: retire
+`prefer_interior=True` as the production default.
+
+**What was done.** All four defaults in `src/fem_em_solver/post/phantom_fields.py`
+flipped `True` → `False` — `_sampling_cells_with_interface_guardrails`
+(`prefer_interior`), `compute_tagged_vector_magnitude_stats`,
+`export_tagged_field_samples_csv` and `compute_phantom_eb_metrics_and_export`
+(`prefer_interior_samples`). The parameter is retained; the guardrail code is
+untouched and reachable by passing `True`. Docstrings at the module level and at
+each entry point now carry the step-3/step-4/step-4b measurements that justify
+the flip. Two gates added, both on fixtures that already exist:
+
+* `tests/post/test_tagged_cell_partition_invariance.py::test_production_default_samples_the_full_owned_tagged_set`
+  — production called with **no** sampling kwarg vs the full-owned-set
+  reference through the module's own reduction, plus the integer identity for
+  the retained `True` path.
+* `tests/post/test_drop_set_semantics_planar.py::test_production_default_reproduces_row_b_on_this_fixture`
+  — the production entry point vs step 4's rows (a) and (b). The 32³ solve is
+  now a module fixture shared with the step-4 test, so the file still costs
+  three solves, not four.
+
+**Measured.**
+
+| quantity | default (no kwarg) | reference | `prefer_interior_samples=True` |
+|---|---|---|---|
+| step-1 fixture, tag 1, count | 5184 | 5184 (full owned) | 4896 |
+| step-1 fixture, tag 1, mean | 0.8205203318606578 | identical | 0.8286690987505578 |
+| step-1 fixture, tag 2, max | 0.885040233378689 | identical | 0.8795752144642573 |
+| planar fixture, count | 98304 | 98304 = row (b) | 96256 = row (a) |
+| planar fixture, max \|E\| | 0.698349 | 0.698349 | 0.692107 |
+| planar peak deficit vs closed form | **0.7666%** | row (b) 0.7666% | 1.6537% = row (a) |
+
+min/max/mean equal to `1e-12` in every case; the `-n 4` re-run of the step-1
+gate is digit-identical to `-n 2`. The guarded set is short by exactly the 288
+boundary-adjacent tagged cells the guardrail drops — an integer identity, not a
+band. The retired default's peak penalty measures **2.157×** through production,
+matching the 2.157× step 4 measured through the test helper. Tag 2's default
+`max` (0.885040) exceeding the guarded `max` (0.879575) is the same story on the
+sphere-free fixture: the extremum sits in the dropped layer.
+
+**No landed gate moved.** `tests/environment tests/post tests/materials
+tests/validation/test_lossy_sphere_sar.py` — 39 passed, 157 s. `MAT-4`'s mean-SAR
+gate is in that set and passed; worth recording that its insensitivity is
+*structural*, not merely measured at 0.01 pp — `post/sar.py` integrates
+`σ|E|²/2ρ` over the tagged volume and never calls this sampler at all.
+
+**Implicit-default call sites swept** (the §7 trap). Only two files had any:
+`tests/post/test_phantom_phasor_semantics.py` (3 sites) now passes `True`
+explicitly, so its landed 45.4% `Re`-cast deficit band is still scored on the
+set it was measured on; `tests/post/test_phantom_field_metrics.py`'s
+`summary["sampling"]["prefer_interior_samples"] is True` became `is False` —
+that summary is the one place the default is observable from outside the module,
+so it is now the assertion that would catch a silent revert. Every other call
+site already passed the flag explicitly.
+
+**Harness logs.**
+
+| log | result |
+|---|---|
+| `20260806T123424Z_POST-1-step5-partition.log` | 18 passed, 8.83 s (standard, `timeout 180`, `-n 2`) — new default gate + phasor/metrics regression |
+| `20260806T123445Z_POST-1-step5-planar-n2.log` | 3 passed, 103 s (standard, `timeout 180`, `-n 2`) — row (b) through production |
+| `20260806T123648Z_POST-1-step5-regression-n2.log` | 39 passed, 157.5 s (`timeout 600`, `-n 2`) — `tests/post` + `tests/materials` + `MAT-4` SAR |
+| `20260806T123943Z_POST-1-step5-partition-n4.log` | 10 passed, 3 s (`-n 4`) — digit-identical to `-n 2` |
+
+The regression is wrapped at `timeout 600` for the same reason step 4b's was:
+`tests/post` plus the SAR gate is above the standard tier at 157 s, still far
+inside the 20-minute per-command ceiling. The gates themselves are standard-tier.
+
+**Does not close `POST-1`** — the coil+phantom application is still where the
+chunk earns ✅.
+
+**Nothing denied this slot.**
+
+**Next attempt hypothesis.** With step 5 landed, the drop-set thread is finished:
+steps 1–5 all have gates and the production path now reports what the closed
+forms say it should. What is *not* covered is the CSV export path — 
+`export_tagged_field_samples_csv`'s default moved with the rest, and nothing
+gates its row count against the stats path, so a future divergence between the
+two sampling calls would be silent. That is a cheap next item if the review wants
+one. The larger open thing in `POST-1` is unchanged and unaffected by this slot:
+the coil+phantom application.

@@ -19,6 +19,15 @@ phase rotation that cannot be observable; see the negative control).  A
 ``ComplexWarning`` was the only trace, and warnings do not fail CI.  The fix is
 the semantics rather than the dtype: samples keep whatever scalar type the
 function has, and the magnitude is taken afterwards.
+
+**Sampling set** (`POST-1` step 5, 2026-08-06).  Production samples the **full
+owned tagged set**: ``prefer_interior_samples`` defaults to ``False`` on every
+entry point here.  The interface guardrail that used to drop the tag's boundary
+layer is retained as an opt-in — it protects no mean measurably (0.01 pp) and
+costs 2.157x in peak error against a closed form, and SAR peaks are extrema.
+The measurements are in :func:`_sampling_cells_with_interface_guardrails` and
+gated in ``tests/post/test_tagged_cell_partition_invariance.py`` and
+``tests/post/test_drop_set_semantics_planar.py``.
 """
 
 from __future__ import annotations
@@ -198,10 +207,26 @@ def _sampling_cells_with_interface_guardrails(
     cell_tags,
     tag: int,
     *,
-    prefer_interior: bool = True,
+    prefer_interior: bool = False,
     comm: MPI.Intracomm | None = None,
 ) -> tuple[np.ndarray, int]:
     """Rank-local sampling cells for ``tag``, chosen by a **global** rule.
+
+    **The default is** ``prefer_interior=False`` **— the full owned tagged set**
+    (`POST-1` step 5, 2026-08-06).  The guardrail below is retained and reachable
+    by passing ``True``, but it is no longer what production does, on two
+    measurements taken against closed forms:
+
+    * the **mean** is insensitive to it — 4.253% vs 4.263% against the `TH-8`
+      lossy sphere (step 3, and identically on ``|E|`` at step 4b) and 1.1472%
+      vs 1.1420% on the planar two-slab fixture (step 4): 0.01 pp and 0.005 pp
+      on errors that are bulk discretisation, so it protects nothing measurable;
+    * the **peak** is measurably harmed — on the planar interface, where chordal
+      geometry error is identically zero, the true maximum sits *at* the
+      interface, so dropping the boundary layer costs 2.157× in peak error
+      (1.6536% vs 0.7666% against the closed-form entry-face value), and the
+      dropped layer is 22% *more* accurate than the interior it keeps
+      ((c)/(a) = 0.7822).  SAR peaks are extrema.
 
     **Collective** when ``prefer_interior`` is true (`POST-1` step 2): every
     rank must call it, because the fallback decision is taken on the allreduced
@@ -251,13 +276,17 @@ def compute_tagged_vector_magnitude_stats(
     tag: int,
     *,
     comm: MPI.Intracomm | None = None,
-    prefer_interior_samples: bool = True,
+    prefer_interior_samples: bool = False,
 ) -> dict[str, float]:
     """Global min/max/mean of the **phasor magnitude** over tagged centroid samples.
 
     ``|F| = sqrt(Σ_i |F_i|²)`` (module docstring): real-valued and
     phase-rotation invariant on the complex build, and identical to the old
     Euclidean norm when the field is real.
+
+    ``prefer_interior_samples`` defaults to ``False`` since `POST-1` step 5 —
+    the sample set is the full owned tagged set, boundary layer included.  See
+    :func:`_sampling_cells_with_interface_guardrails` for the measurements.
     """
     mesh = field.function_space.mesh
     comm = comm or mesh.comm
@@ -324,9 +353,13 @@ def export_tagged_field_samples_csv(
     output_path: str | Path,
     *,
     comm: MPI.Intracomm | None = None,
-    prefer_interior_samples: bool = True,
+    prefer_interior_samples: bool = False,
 ) -> Path | None:
     """Export centroid samples for a tagged region to CSV on rank 0.
+
+    ``prefer_interior_samples`` defaults to ``False`` since `POST-1` step 5, so
+    the exported rows are the full owned tagged set — the boundary layer is in
+    the CSV, which is where the field's extremum lives.
 
     CSV columns: ``x,y,z,fx,fy,fz,mag`` for a real field.  For a complex
     (phasor) field each component is written as a real/imaginary pair —
@@ -396,9 +429,13 @@ def compute_phantom_eb_metrics_and_export(
     output_dir: str | Path = "paraview_output",
     basename: str = "phantom_fields",
     comm: MPI.Intracomm | None = None,
-    prefer_interior_samples: bool = True,
+    prefer_interior_samples: bool = False,
 ) -> dict[str, Any]:
-    """Compute phantom |E|/|B| stats and export phantom-only centroid samples."""
+    """Compute phantom |E|/|B| stats and export phantom-only centroid samples.
+
+    ``prefer_interior_samples`` defaults to ``False`` since `POST-1` step 5; the
+    value actually used is recorded in ``summary["sampling"]``.
+    """
     mesh = e_field.function_space.mesh
     comm = comm or mesh.comm
 

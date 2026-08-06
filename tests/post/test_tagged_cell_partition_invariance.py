@@ -44,6 +44,7 @@ from mpi4py import MPI
 from fem_em_solver.post.phantom_fields import (
     _cell_centroids,
     _evaluate_on_cells,
+    _interior_tagged_cells,
     _sampling_cells_with_interface_guardrails,
     _tagged_cells,
     compute_tagged_vector_magnitude_stats,
@@ -224,6 +225,85 @@ def test_statistics_are_owned_cell_partition_invariant(
             f"{owned_reference[key]:.15e} at -n {comm.size} — the aggregation is "
             "not partition invariant"
         )
+
+
+@complex_only
+@pytest.mark.integration
+@pytest.mark.parametrize("tag", TAGS)
+def test_production_default_samples_the_full_owned_tagged_set(
+    piecewise_sigma_field, tag
+):
+    """`POST-1` step 5: the *default* path is the full owned tagged set.
+
+    Every other test in this file passes ``prefer_interior_samples`` explicitly,
+    so none of them can see which value the production entry point picks when a
+    caller passes nothing — and that is exactly what step 5 changed.  Here the
+    call carries **no** sampling kwarg, and its statistics are required to equal
+    the reference built over every owned tagged cell: ``count`` exactly, the
+    floats to ``1e-12``.  Reusing :func:`_stats_over_cells` keeps the reduction
+    identical, so the only degree of freedom is the default itself.
+
+    The negative control is the retired behaviour, still reachable: passing
+    ``prefer_interior_samples=True`` must sample **strictly fewer** cells, short
+    by exactly the number of boundary-adjacent tagged cells the guardrail drops.
+    If that difference were 0 the default would be unobservable on this fixture
+    and the assertion above would prove nothing.
+    """
+    comm = MPI.COMM_WORLD
+    e_field, cell_tags = piecewise_sigma_field
+    mesh = e_field.function_space.mesh
+
+    # No ``prefer_interior_samples`` — this is the production call.
+    production = compute_tagged_vector_magnitude_stats(e_field, cell_tags, tag, comm=comm)
+    full_owned = _stats_over_cells(e_field, _tagged_cells(cell_tags, tag), comm)
+
+    guarded = compute_tagged_vector_magnitude_stats(
+        e_field, cell_tags, tag, comm=comm, prefer_interior_samples=True
+    )
+    interior = _interior_tagged_cells(mesh, cell_tags, tag)
+    n_dropped = comm.allreduce(
+        int(_tagged_cells(cell_tags, tag).size - interior.size), op=MPI.SUM
+    )
+
+    if comm.rank == 0:
+        print(f"\n[POST-1 step 5] tag {tag}, -n {comm.size}, default sampling:")
+        for key in ("count", "min", "max", "mean"):
+            print(
+                f"  {key:<6}: default {production[key]!r:>24}  "
+                f"full-owned {full_owned[key]!r:>24}  "
+                f"prefer_interior=True {guarded[key]!r:>24}",
+                flush=True,
+            )
+        print(
+            f"  guardrail drops {n_dropped} boundary-adjacent tagged cells "
+            f"({production['count'] - guarded['count']} fewer samples)",
+            flush=True,
+        )
+
+    assert production["count"] == full_owned["count"], (
+        f"the default path sampled {production['count']} cells, not the "
+        f"{full_owned['count']} owned tagged cells: ``prefer_interior_samples`` "
+        "does not default to False"
+    )
+    for key in ("min", "max", "mean"):
+        assert np.isclose(
+            production[key], full_owned[key], rtol=IDENTITY_RTOL, atol=0.0
+        ), (
+            f"default '{key}' = {production[key]:.15e} vs full-owned-set "
+            f"{full_owned[key]:.15e} — the default path is not sampling the "
+            "full owned tagged set"
+        )
+
+    assert n_dropped > 0, (
+        f"the guardrail drops no cell of tag {tag} at -n {comm.size}; the two "
+        "sampling rules coincide here, so this fixture cannot see the default"
+    )
+    assert production["count"] - guarded["count"] == n_dropped, (
+        f"the retained ``prefer_interior_samples=True`` path sampled "
+        f"{guarded['count']} cells, {production['count'] - guarded['count']} "
+        f"fewer than the default, not the {n_dropped} boundary-adjacent cells "
+        "it drops: the old behaviour is not reproduced by passing True"
+    )
 
 
 @complex_only

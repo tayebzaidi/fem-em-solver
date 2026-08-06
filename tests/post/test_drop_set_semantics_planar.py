@@ -83,8 +83,14 @@ construction, and the closed form prices the loss in advance:
 So ``prefer_interior=True`` is unsafe for any peak statistic, which is what the
 2026-08-05 review's adjudication was waiting on: SAR peaks are extrema.  This
 module gates the full set's max against the closed form and gates the
-(a)-vs-(b) separation; it does **not** change the production default, which is
-the next review's call.
+(a)-vs-(b) separation.
+
+**The production default followed** (`POST-1` step 5, 2026-08-06):
+``prefer_interior_samples`` now defaults to ``False``, and
+:func:`test_production_default_reproduces_row_b_on_this_fixture` pins row (b) to
+the production entry point itself — the rows above were measured through this
+module's helper, which is not what a caller invokes.  The retired default is
+kept reachable and pinned to row (a) in the same test.
 
 **Does not close `POST-1`.**  The coil+phantom application is still where the
 chunk earns its ✅; this step decides only the extremum-semantics rule.
@@ -117,6 +123,7 @@ from fem_em_solver.post.phantom_fields import (
     _evaluate_on_cells,
     _interior_tagged_cells,
     _tagged_cells,
+    compute_tagged_vector_magnitude_stats,
 )
 
 from tests.complex_mode import complex_only
@@ -347,12 +354,23 @@ def test_supplied_closed_form_is_the_solution():
     )
 
 
+@pytest.fixture(scope="module")
+def fine_two_slab():
+    """One 32³ solve, shared by the step-4 semantics gate and the step-5 default gate.
+
+    Both need the *same* fixture — step 5's claim is that the production default
+    reproduces step 4's row (b) digit-for-digit — and a second solve of 196 608
+    cells would cost ~35 s for nothing.
+    """
+    return solve_two_slab(N_FINE)
+
+
 @complex_only
 @pytest.mark.integration
-def test_drop_set_semantics_on_a_planar_interface():
+def test_drop_set_semantics_on_a_planar_interface(fine_two_slab):
     """Score (a) survivors, (b) full set and (c) drop set against the closed form."""
     comm = MPI.COMM_WORLD
-    msh, cell_tags, fields = solve_two_slab(N_FINE)
+    msh, cell_tags, fields = fine_two_slab
     # The anchor is |E|, the phasor magnitude, so the sampled object is the
     # complex phasor.  ``e_real`` is a phase-0 snapshot of it and on this
     # propagating field crosses zero — it scores 61.8% against a 2.16% solve
@@ -455,4 +473,110 @@ def test_drop_set_semantics_on_a_planar_interface():
         f"{peak_err_surviving / peak_err_full:.3f}x in peak error (measured "
         f"2.157x); below {MIN_PEAK_ERROR_RATIO} the peak is not measurably "
         "harmed and prefer_interior=True would be safe for extrema after all"
+    )
+
+
+@complex_only
+@pytest.mark.integration
+def test_production_default_reproduces_row_b_on_this_fixture(fine_two_slab):
+    """`POST-1` step 5: the production entry point now reports row (b), not row (a).
+
+    Step 4 measured the three sets through this module's own reduction over
+    explicit cell sets.  The production statistic is
+    :func:`compute_tagged_vector_magnitude_stats`, and until step 5 it reported
+    row (a) — so the adjudication above was about a path production did not
+    take.  Here the same solved field goes through the production call with
+    **no** sampling kwarg, and its ``count``/``min``/``max`` must equal row
+    (b)'s to ``1e-12``: same cells, same centroids, same magnitude.  The peak
+    deficit against the closed-form entry-face value is then recomputed from
+    production's own ``max`` and held to the *same* landed ceiling.
+
+    The negative control is the retired default: ``prefer_interior_samples=True``
+    passed explicitly must reproduce row (a) — a strictly smaller set, a strictly
+    smaller ``max``, and the landed 2.157x peak-error penalty.  Both rows are
+    therefore pinned to production, not merely to this module's helper.
+    """
+    comm = MPI.COMM_WORLD
+    _msh, cell_tags, fields = fine_two_slab
+    field = fields.e_complex
+
+    tagged = _tagged_cells(cell_tags, TAG_HIGH)
+    interior = _interior_tagged_cells(_msh, cell_tags, TAG_HIGH)
+    row_b = pointwise_stats(field, tagged, comm)
+    row_a = pointwise_stats(field, interior, comm)
+
+    production = compute_tagged_vector_magnitude_stats(
+        field, cell_tags, TAG_HIGH, comm=comm
+    )
+    guarded = compute_tagged_vector_magnitude_stats(
+        field, cell_tags, TAG_HIGH, comm=comm, prefer_interior_samples=True
+    )
+
+    entry_face = float(closed_form_magnitude(np.array([INTERFACE_X]))[0])
+    peak_err_production = abs(production["max"] - entry_face) / entry_face
+    peak_err_guarded = abs(guarded["max"] - entry_face) / entry_face
+
+    if comm.rank == 0:
+        print(
+            f"\n[POST-1 step 5] production path on the step-4 planar fixture, "
+            f"-n {comm.size}; closed-form |E| at the interface = {entry_face:.6f}"
+        )
+        print(
+            f"  default (no kwarg)     : n = {production['count']:5d}  "
+            f"|E| in [{production['min']:.6f}, {production['max']:.6f}]  "
+            f"peak deficit {peak_err_production:.4%}   [row (b), measured 0.7666%]"
+        )
+        print(
+            f"  row (b) helper         : n = {int(row_b['count']):5d}  "
+            f"|E| in [{row_b['min_mag']:.6f}, {row_b['max_mag']:.6f}]"
+        )
+        print(
+            f"  prefer_interior=True   : n = {guarded['count']:5d}  "
+            f"|E| in [{guarded['min']:.6f}, {guarded['max']:.6f}]  "
+            f"peak deficit {peak_err_guarded:.4%}   [row (a), measured 1.6536%]"
+        )
+        print(
+            f"  row (a) helper         : n = {int(row_a['count']):5d}  "
+            f"|E| in [{row_a['min_mag']:.6f}, {row_a['max_mag']:.6f}]"
+        )
+        print(
+            f"  retired-default penalty: {peak_err_guarded / peak_err_production:.3f}x "
+            "(measured 2.157x)",
+            flush=True,
+        )
+
+    # The default path *is* row (b).
+    assert production["count"] == int(row_b["count"]), (
+        f"the production default sampled {production['count']} cells, not row "
+        f"(b)'s {int(row_b['count'])}: prefer_interior_samples does not default "
+        "to False"
+    )
+    for prod_key, row_key in (("min", "min_mag"), ("max", "max_mag")):
+        assert np.isclose(
+            production[prod_key], row_b[row_key], rtol=1e-12, atol=0.0
+        ), (
+            f"production '{prod_key}' = {production[prod_key]:.15e} vs row (b) "
+            f"{row_b[row_key]:.15e}: the default path is not scoring the set "
+            "step 4 adjudicated"
+        )
+    assert peak_err_production < MAX_FULL_SET_PEAK_ERROR, (
+        f"the production maximum |E| = {production['max']:.6f} is "
+        f"{peak_err_production:.4%} from the closed-form entry-face value "
+        f"{entry_face:.6f}, outside the landed {MAX_FULL_SET_PEAK_ERROR:.1%}"
+    )
+
+    # Negative control: the retired default, still reachable and still worse.
+    assert guarded["count"] == int(row_a["count"]), (
+        f"prefer_interior_samples=True sampled {guarded['count']} cells, not row "
+        f"(a)'s {int(row_a['count'])}: the old behaviour is not pinned"
+    )
+    assert np.isclose(guarded["max"], row_a["max_mag"], rtol=1e-12, atol=0.0), (
+        f"prefer_interior_samples=True max {guarded['max']:.15e} != row (a)'s "
+        f"{row_a['max_mag']:.15e}"
+    )
+    assert peak_err_guarded / peak_err_production > MIN_PEAK_ERROR_RATIO, (
+        f"through production, the retired default costs only "
+        f"{peak_err_guarded / peak_err_production:.3f}x in peak error (measured "
+        f"2.157x); below {MIN_PEAK_ERROR_RATIO} the flip is not measurably an "
+        "improvement on this fixture"
     )
