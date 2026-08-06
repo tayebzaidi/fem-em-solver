@@ -577,7 +577,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-9` | **`coil_phantom_domain` / birdcage meshes do not generate** | ✅ 2026-08-03 — step 1 (coil+phantom gated), step 2a (finalize + `bcast`: 180 s hang → 13 s), step 2b (`occ.fragment` rewrite; both identities 1.000000000000, whole `tests/mesh` green in CI). Retires known-issues 7 | standard |
 | `GEO-10` | **`two_torus_domain` never emits its `outer_boundary` facet tag** (known-issues 10) | ✅ *(2026-08-06, 00:00 run; known-issues 10 retired)* | standard |
 | `GEO-11` | **Boundary-classification margins under OCC bounding-box padding (CAD-only probe sweep)** | ✅ | smoke |
-| `GEO-12` | Widen the two `1e-9` wall tolerances and gate the `outer_boundary` group (known-issues 12) | ⬜ | standard |
+| `GEO-12` | **Widen the two `1e-9` wall tolerances and gate the `outer_boundary` group** (known-issues 12) | ✅ | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -901,6 +901,40 @@ not exactly the fixture's wall count, or the area identity misses, the
 classification predicate is wrong in a way `tol` cannot fix — report the
 measured counts and residuals, leave known-issues 12 open with the new
 numbers, revert nothing silently, stop.
+
+> **✅ 2026-08-06 (13:30 implementer slot).** Both tolerances widened to `1e-6`;
+> the negative result did not occur — the accepted count is exactly each
+> fixture's wall count and the area identity holds to the last digit.
+>
+> **CAD margin** (`20260806T183203Z_GEO-12-probe.log`): `loop_over_half_space`
+> accepts **10 of 12** dim-2 entities — the cube's four `z = 0`-split sides plus
+> top and bottom, which *is* its wall count, the two rejected being the torus
+> surface (`9.000010e-02`) and the air/slab interface (`1.000001e-01`) — and
+> `sphere_in_box` **6 of 7** (sphere surface rejected at `1.500001e-01`). Both
+> sit at wall ratio `1.0000000000287557e-01`, the same `1e-7/1e-6 = 0.1`
+> `GEO-10` designed, and interior ratios `9.000010e+04` / `1.500001e+05` —
+> five orders of interior-face protection, as predicted. The two
+> `pytest.skip`s in `tests/mesh/test_boundary_classification_margins.py` are
+> gone; that file now *asserts* the two-sided margin for these fixtures.
+>
+> **Meshed gate** (new `tests/mesh/test_wall_boundary_tag_areas.py`, `-n 2`,
+> `20260806T183328Z_GEO-12-gate.log`, 3.2 s): facet tag `1` present on both,
+> allreduced facet counts **1958** and **988**, and the assembled `ds` area
+> equals the analytic cube surface `6(2W)² = 2.400000000000e-01 m²` at ratio
+> **1.000000000000000** (loop) and **0.999999999999999** (sphere) — planar
+> walls, so an identity at `1e-9`, not a band.
+>
+> **Regression — the latency claim measured, not assumed.** All six discarding
+> callers plus `tests/post/test_drop_set_semantics_sphere.py` re-run: **no
+> landed number moved a digit.** `MAT-6` step 3 `dR` 1.5834% / `dX` 0.9200;
+> step 4 projected 1.5763% / 0.9849 and pinned 1.5713% / 0.8740, identical to
+> `20260805T200455Z` / `20260805T200938Z`; mass-averaged SAR ratio 0.999846;
+> `POST-1` sphere table 4.2530%. Logs
+> `20260806T183745Z_GEO-12-callers-A.log` (24 passed, 210 s) and
+> `20260806T184151Z_GEO-12-callers-B.log` (8 passed, 574 s, heavy). Whole
+> `tests/mesh` at `-n 2`: **35 passed, 2 skipped, 118.29 s**
+> (`20260806T183404Z_GEO-12-mesh-regression.log`). known-issues 12 retires with
+> this commit; **known-issues 13 stays open** as scoped.
 
 ### TH — Time-harmonic Maxwell (Phase 2)
 
@@ -2888,7 +2922,15 @@ the spare and the only heavy-tier item.
    suspects (finite-σ terminal penetration, the `ωM₁₂` reference) are a
    review's adjudication.
 
-2. **`GEO-12` — widen the two `1e-9` wall tolerances and gate the
+2. ~~**`GEO-12`**~~ — **done 2026-08-06, 13:30 slot; chunk closed, ✅ in §7.**
+   Both tolerances widened to `1e-6`; accepted counts are exactly each
+   fixture's wall count (10 of 12, 6 of 7), the meshed tag-`1` area identity
+   holds at **1.000000000000000** / **0.999999999999999** vs `2.4e-01 m²`
+   (1958 / 988 facets, `-n 2`), the two `GEO-11` skips are unpinned into live
+   margin assertions, and every downstream number is digit-identical
+   (`MAT-6` 1.5834% / 1.5763% / 1.5713%). known-issues 12 retired;
+   known-issues 13 left open as scoped. Original item text follows.
+   **`GEO-12` — widen the two `1e-9` wall tolerances and gate the
    `outer_boundary` group.** Independent; fixes known-issues 12 with the
    numbers `GEO-11` measured; the tolerance decision is taken by this
    review. Execute the §7 `GEO-12` plan, written this review: `tol = 1e-9 →

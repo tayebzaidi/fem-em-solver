@@ -4829,3 +4829,80 @@ first — if the corrected reference moves toward 0.5, the estimator was right a
 along and the reference was wrong. The finite-σ terminal-penetration suspect
 needs a σ sweep (two more solves) and should wait behind it. Both are review
 adjudications per the plan; I am recording the ranking, not taking it.
+
+---
+
+## 2026-08-06T18:30Z — `GEO-12` (§9 On-deck item 2) — **complete**
+
+Preflight clean, container Up 25 h. §9 item 1 (`PORT-1` step 3b-vii) is struck
+through with an explicit "do not re-run", so item 2 was the first open one.
+
+**What I did.** The plan verbatim: `tol = 1e-9 -> 1e-6` in `io/mesh.py` for
+`loop_over_half_space_domain` (~1384) and `sphere_in_box_domain` (~1532), each
+with the measured reason in a code comment; then the two gates that had to land
+with it.
+
+**CAD margin** (`20260806T183203Z_GEO-12-probe.log`, smoke). Post-fix the loop
+fixture accepts **10 of 12** dim-2 entities and the sphere **6 of 7**. 10 is not
+6 by accident and it is worth stating why the count is right: the loop's cube is
+built as two stacked boxes (air `z in [0, W]` over slab `z in [-W, 0]`), so each
+of the four sides is two surfaces — 8 sides + top + bottom = 10 wall surfaces,
+one cube's worth of area. The two rejected are the torus (`9.000010e-02`) and
+the `z = 0` air/slab interface (`1.000001e-01`); the sphere's one rejection is
+its own surface (`1.500001e-01`). Both fixtures land on wall ratio
+`1.0000000000287557e-01` — the same value `two_torus_domain` sits at, to the
+same digits, because it is the same `1.000e-07` OCC padding over the same
+`1e-6`. Interior ratios `9.000010e+04` / `1.500001e+05`, five orders of
+protection. The two `pytest.skip`s in
+`tests/mesh/test_boundary_classification_margins.py` are removed and the pins
+replaced with the post-fix numbers, so the margin is now *asserted* for all
+three box fixtures.
+
+**Meshed gate** (new `tests/mesh/test_wall_boundary_tag_areas.py`,
+`20260806T183328Z_GEO-12-gate.log`, `-n 2`, 3.2 s). Facet tag `1` present on
+both; allreduced facet counts **1958** (loop) and **988** (sphere); assembled
+`ds` area over tag `1` vs the analytic `6(2W)^2 = 2.400000000000e-01 m^2` at
+ratio **1.000000000000000** and **0.999999999999999**. Planar walls under a
+linear-tet surface mesh, so this is an identity at `1e-9`, not a band — the
+same anchor `GEO-10` used, which is why it is worth this little compute.
+
+**The latency claim, measured.** known-issues 12 asserted the defect was latent
+because all callers discard `facet_tags`. Declaring a new physical surface group
+*can* change what gmsh writes and hence dolfinx numbering, so I re-ran every
+caller rather than reasoning about it, and found the six named in the entry are
+actually five in `tests/validation` plus one in `tests/post` — the plan's
+`tests/materials` shorthand does not reach them, so I ran the files:
+
+| log | result |
+|---|---|
+| `20260806T183203Z_GEO-12-probe.log` | 2 failed 5 passed, 3 s — the deliberate pre-update probe that read the new ratios off the failing pins |
+| `20260806T183328Z_GEO-12-gate.log` | 6 passed 1 skipped, 4 s (`-n 2`) — the gate; the 1 skip is known-issues 13's `cylindrical_domain`, untouched |
+| `20260806T183404Z_GEO-12-mesh-regression.log` | **35 passed, 2 skipped, 118.29 s** (`-n 2`) — whole `tests/mesh` (was 31/4: +2 new tests, +2 unpinned skips) |
+| `20260806T183613Z_GEO-12-downstream-regression.log` | 9 passed, 47.8 s — `tests/materials` + `test_lossy_sphere_sar.py`, the plan's literal list |
+| `20260806T183745Z_GEO-12-callers-A.log` | 24 passed, 209.8 s — `dielectric_sphere`, `mass_averaged_sar`, `drop_set_semantics_sphere`, `dodd_deeds_impedance`, `dodd_deeds_projected_drive` |
+| `20260806T184151Z_GEO-12-callers-B.log` | 8 passed, 573.9 s (heavy, `timeout 900`) — `dodd_deeds_reactance_box_size` |
+
+No landed number moved a digit: `MAT-6` step 3 `dR` **1.5834%** / `dX` **0.9200**;
+step 4 projected **1.5763%** / **0.9849** and pinned **1.5713%** / **0.8740**,
+character-identical to `20260805T200455Z` / `20260805T200938Z`; mass-averaged SAR
+ratio **0.999846**; `POST-1` sphere table **4.2530%**. The latency claim now
+rests on measurement.
+
+**Scope held.** known-issues 13 (`cylindrical_domain`, 4.50x margin) is a
+different mechanism — tolerance coupled to `resolution` — and the plan says do
+not bundle it. It stays open and its fixture stays pinned and skipped. No
+tolerance anywhere else moved; no assertion loosened; the `1e-9` area gate is
+the plan's number, met with 15 digits to spare.
+
+**Nothing denied this slot.**
+
+**Next attempt hypothesis.** Nothing carries forward from `GEO-12` — the chunk
+is closed and its entry retired. The queue's next open item is `POST-1` step 6.
+One observation for whoever takes known-issues 13: the pattern that fixed
+`GEO-10` and now `GEO-12` is "tolerance must clear the `1.000e-07` OCC padding
+by 10x and stay well below the nearest interior face", and `cylindrical_domain`
+fails it from the *other* side — its `tol` is 2e-2, far above the padding, but
+only 4.5x below the interior face. A geometric fraction of
+`outer_radius - inner_radius` satisfies both bounds simultaneously and is one
+line; the two-sided margin test would gate it immediately, since the fixture is
+already parameterized there.

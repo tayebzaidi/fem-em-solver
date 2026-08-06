@@ -1381,7 +1381,15 @@ class MeshGenerator:
             gmsh.model.addPhysicalGroup(3, [slab_volume], tag=3)
             gmsh.model.setPhysicalName(3, 3, "slab")
 
-            tol = 1e-9
+            # `GEO-12`: 1e-9 -> 1e-6, exactly `GEO-10`'s fix and for the same
+            # measured reason. gmsh inflates an OCC entity's bounding box by its
+            # geometric tolerance — 1.000e-07 here as on `two_torus_domain`
+            # (`20260806T140325Z_GEO-11-probe.log`) — so `tol = 1e-9` sat 100x
+            # *below* the padding, accepted 0 of 12 surfaces, and the group was
+            # never declared (known-issues 12). The nearest interior face sits at
+            # 9.000e-02, five orders above 1e-6, so the interior-face protection
+            # the tight test existed for is intact.
+            tol = 1e-6
             boundary_surfaces = []
             for dim, surf in gmsh.model.getEntities(dim=2):
                 x0, y0, z0, x1, y1, z1 = gmsh.model.getBoundingBox(dim, surf)
@@ -1529,7 +1537,11 @@ class MeshGenerator:
             gmsh.model.addPhysicalGroup(3, [air_volume], tag=2)
             gmsh.model.setPhysicalName(3, 2, "air")
 
-            tol = 1e-9
+            # `GEO-12`: 1e-9 -> 1e-6, same measured defect as above and as
+            # `GEO-10`. The OCC bounding-box padding is 1.000e-07, so the old
+            # tolerance accepted 0 of 7 surfaces and never declared the group
+            # (known-issues 12); the nearest interior face is at 1.500e-01.
+            tol = 1e-6
             boundary_surfaces = []
             for dim, surf in gmsh.model.getEntities(dim=2):
                 x0, y0, z0, x1, y1, z1 = gmsh.model.getBoundingBox(dim, surf)

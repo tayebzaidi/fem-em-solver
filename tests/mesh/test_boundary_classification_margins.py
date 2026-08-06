@@ -28,24 +28,27 @@ the offending margin rather than just a boolean.
 CAD only, serial, no meshing: smoke tier, ``-n 1``.
 
 What it measured (2026-08-06, `20260806T140325Z_GEO-11-probe.log`).  Two of the
-four fixtures do not meet the margin, and one of them fails the `GEO-10` way:
+four fixtures did not meet the margin, and one of them failed the `GEO-10` way:
 
 * ``loop_over_half_space_domain`` (`MAT-6`) and ``sphere_in_box_domain``
-  (`TH-8`/`MAT-4`) classify **zero** walls — 0 of 12 and 0 of 7 — because their
-  ``tol = 1e-9`` sits 100x *below* the same ``1.000e-07`` OCC padding `GEO-10`
-  measured.  Their ``outer_boundary`` group is never declared.  This is
-  **latent, not a live wrong result**: every caller of both generators discards
-  ``facet_tags`` (``msh, cell_tags, _ = ...``) and imposes its wall condition
-  geometrically, so no landed gate reads the missing group.  known-issues 12.
+  (`TH-8`/`MAT-4`) classified **zero** walls — 0 of 12 and 0 of 7 — because
+  their ``tol = 1e-9`` sat 100x *below* the same ``1.000e-07`` OCC padding
+  `GEO-10` measured, so their ``outer_boundary`` group was never declared
+  (known-issues 12; latent, since every caller discarded ``facet_tags``).
+  **Fixed by `GEO-12`** (2026-08-06): both widened to ``1e-6``, and both now
+  meet the margin from either side — this file asserts it rather than pinning
+  it, and ``tests/mesh/test_wall_boundary_tag_areas.py`` gates the meshed
+  group the CAD stage here cannot see.
 * ``cylindrical_domain``'s interior margin is 4.50x its tolerance, below the
   10x floor — the inner cylinder's end caps sit at ``r = 0.01`` against an
-  outer wall at ``r = 0.1`` with ``tol = resolution = 0.02``.  known-issues 13.
+  outer wall at ``r = 0.1`` with ``tol = resolution = 0.02``.  known-issues 13,
+  still open: a different mechanism (tolerance coupled to ``resolution``), so
+  `GEO-12` deliberately did not bundle it.
 * ``two_torus_domain`` meets both sides, at exactly the 10x `GEO-10` designed.
 
-Per the `GEO-11` plan, this chunk does **not** move any tolerance — that is a
-per-fixture decision for a review with these numbers in hand.  The two failing
-fixtures are pinned at their measured ratios instead, so the defect cannot
-drift silently while the review holds it.
+Per the `GEO-11` plan, this chunk moved no tolerance itself — that was a
+per-fixture decision for a review with these numbers in hand, taken for two of
+them by the 2026-08-06 10:30 review as `GEO-12`.
 
 Scope.  The four fixtures gated here are the ones whose CAD stage is short
 enough to replicate faithfully.  ``coil_phantom_domain`` and
@@ -157,8 +160,8 @@ def _build_loop_over_half_space() -> tuple[Residual, float]:
     gmsh.model.occ.fragment([(3, air), (3, slab)], [(3, wire)])
     gmsh.model.occ.synchronize()
 
-    # tol as in io/mesh.py ~line 1384 — the value `GEO-10` showed can fail.
-    return _box_and_residual(W, W, W), 1e-9
+    # tol as in io/mesh.py ~line 1384, widened 1e-9 -> 1e-6 by `GEO-12`.
+    return _box_and_residual(W, W, W), 1e-6
 
 
 def _build_sphere_in_box() -> tuple[Residual, float]:
@@ -172,8 +175,8 @@ def _build_sphere_in_box() -> tuple[Residual, float]:
     gmsh.model.occ.fragment([(3, box)], [(3, sphere)])
     gmsh.model.occ.synchronize()
 
-    # tol as in io/mesh.py ~line 1532 — the value `GEO-10` showed can fail.
-    return _box_and_residual(W, W, W), 1e-9
+    # tol as in io/mesh.py ~line 1532, widened 1e-9 -> 1e-6 by `GEO-12`.
+    return _box_and_residual(W, W, W), 1e-6
 
 
 def _build_cylindrical() -> tuple[Residual, float]:
@@ -210,19 +213,19 @@ EXPECTATIONS = {
         n_surfaces=8, n_accepted=6,
         wall_ratio=1.000000e-01, interior_ratio=2.000010e04, pin=None,
     ),
+    # Both re-measured 2026-08-06 after `GEO-12` widened their tol to 1e-6
+    # (`20260806T183203Z_GEO-12-probe.log`): the walls are now accepted — 10 of
+    # 12 on the loop (the cube's 4+4 z-split sides plus top and bottom; the two
+    # rejected are the torus surface at 9.000010e-02 and the z = 0 air/slab
+    # interface at 1.000001e-01) and 6 of 7 on the sphere box — and both land on
+    # the same 1e-7/1e-6 = 0.1 wall ratio `GEO-10` designed.
     "loop_over_half_space_domain": dict(
-        n_surfaces=12, n_accepted=0,
-        wall_ratio=None, interior_ratio=1.000000e02,
-        pin="known-issues 12 — outer_boundary group never declared (tol 1e-9 "
-            "below the 1.000e-07 OCC padding). Latent: every caller discards "
-            "facet_tags and drives the wall geometrically.",
+        n_surfaces=12, n_accepted=10,
+        wall_ratio=1.000000e-01, interior_ratio=9.000010e04, pin=None,
     ),
     "sphere_in_box_domain": dict(
-        n_surfaces=7, n_accepted=0,
-        wall_ratio=None, interior_ratio=1.000000e02,
-        pin="known-issues 12 — outer_boundary group never declared (tol 1e-9 "
-            "below the 1.000e-07 OCC padding). Latent: every caller discards "
-            "facet_tags and drives the wall geometrically.",
+        n_surfaces=7, n_accepted=6,
+        wall_ratio=1.000000e-01, interior_ratio=1.500001e05, pin=None,
     ),
     "cylindrical_domain": dict(
         n_surfaces=6, n_accepted=3,

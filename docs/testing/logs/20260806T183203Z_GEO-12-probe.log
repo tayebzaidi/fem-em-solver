@@ -1,0 +1,125 @@
+# Test Run
+- Chunk: GEO-12-probe
+- Commit: ba77fda2e84ad6f300b98685e165eb3a2c2c827e
+- Time (UTC): 2026-08-06 18:32:04
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 60 python3 -m pytest tests/mesh/test_boundary_classification_margins.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  6 13:31 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 60 python3 -m pytest tests/mesh/test_boundary_classification_margins.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 5 items
+
+tests/mesh/test_boundary_classification_margins.py::test_wall_classification_margin[two_torus_domain] 
+[geo11] two_torus_domain: tol=1.000e-06, 8 dim-2 entities
+[geo11]   surf   1 residual=2.000010e-02 ratio=2.000010e+04 accepted=False
+[geo11]   surf   2 residual=2.000010e-02 ratio=2.000010e+04 accepted=False
+[geo11]   surf   3 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   4 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   5 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   6 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   7 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   8 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11] two_torus_domain: 6/8 accepted, wall_ratio=0.10000000000287557 (ceiling 0.1), interior_ratio=20000.100000000002 (floor 10.0), pin=no
+PASSED
+tests/mesh/test_boundary_classification_margins.py::test_wall_classification_margin[loop_over_half_space_domain] 
+[geo11] loop_over_half_space_domain: tol=1.000e-06, 12 dim-2 entities
+[geo11]   surf   1 residual=9.000010e-02 ratio=9.000010e+04 accepted=False
+[geo11]   surf   2 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   3 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   4 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   5 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   6 residual=1.000001e-01 ratio=1.000001e+05 accepted=False
+[geo11]   surf   7 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   8 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   9 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf  10 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf  11 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf  12 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11] loop_over_half_space_domain: 10/12 accepted, wall_ratio=0.10000000000287557 (ceiling 0.1), interior_ratio=90000.1 (floor 10.0), pin=yes
+FAILED
+tests/mesh/test_boundary_classification_margins.py::test_wall_classification_margin[sphere_in_box_domain] 
+[geo11] sphere_in_box_domain: tol=1.000e-06, 7 dim-2 entities
+[geo11]   surf   1 residual=1.500001e-01 ratio=1.500001e+05 accepted=False
+[geo11]   surf   2 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   3 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   4 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   5 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   6 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   7 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11] sphere_in_box_domain: 6/7 accepted, wall_ratio=0.10000000000287557 (ceiling 0.1), interior_ratio=150000.10000000003 (floor 10.0), pin=yes
+FAILED
+tests/mesh/test_boundary_classification_margins.py::test_wall_classification_margin[cylindrical_domain] 
+[geo11] cylindrical_domain: tol=2.000e-02, 6 dim-2 entities
+[geo11]   surf   1 residual=8.999990e-02 ratio=4.499995e+00 accepted=False
+[geo11]   surf   2 residual=8.999990e-02 ratio=4.499995e+00 accepted=False
+[geo11]   surf   3 residual=8.999990e-02 ratio=4.499995e+00 accepted=False
+[geo11]   surf   4 residual=1.000000e-07 ratio=5.000000e-06 accepted=True
+[geo11]   surf   5 residual=1.000000e-07 ratio=5.000000e-06 accepted=True
+[geo11]   surf   6 residual=1.000000e-07 ratio=5.000000e-06 accepted=True
+[geo11] cylindrical_domain: 3/6 accepted, wall_ratio=5.000000000143778e-06 (ceiling 0.1), interior_ratio=4.499995 (floor 10.0), pin=yes
+SKIPPED 4.50x tol, below the 10x floor
+(inner cylinder end caps at r=0.01 vs outer wall r=0.1, tol = resolution
+= 0.02).)
+tests/mesh/test_boundary_classification_margins.py::test_geo10_known_case_reproduces_the_measured_padding 
+[geo11] two_torus_domain (GEO-10 known case): tol=1.000e-06, 8 dim-2 entities
+[geo11]   surf   1 residual=2.000010e-02 ratio=2.000010e+04 accepted=False
+[geo11]   surf   2 residual=2.000010e-02 ratio=2.000010e+04 accepted=False
+[geo11]   surf   3 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   4 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   5 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   6 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   7 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+[geo11]   surf   8 residual=1.000000e-07 ratio=1.000000e-01 accepted=True
+PASSED
+
+=================================== FAILURES ===================================
+_________ test_wall_classification_margin[loop_over_half_space_domain] _________
+tests/mesh/test_boundary_classification_margins.py:300: in test_wall_classification_margin
+    assert len(accepted) == expected["n_accepted"], (
+E   AssertionError: loop_over_half_space_domain: the wall test accepted 10 of 12 surfaces, recorded 0 at tol=1.000e-06.
+E   assert 10 == 0
+E    +  where 10 = len([1.0000000000287557e-07, 1.0000000000287557e-07, 1.0000000000287557e-07, 1.0000000000287557e-07, 1.0000000000287557e-07, 1.0000000000287557e-07, ...])
+____________ test_wall_classification_margin[sphere_in_box_domain] _____________
+tests/mesh/test_boundary_classification_margins.py:300: in test_wall_classification_margin
+    assert len(accepted) == expected["n_accepted"], (
+E   AssertionError: sphere_in_box_domain: the wall test accepted 6 of 7 surfaces, recorded 0 at tol=1.000e-06.
+E   assert 6 == 0
+E    +  where 6 = len([1.0000000000287557e-07, 1.0000000000287557e-07, 1.0000000000287557e-07, 1.0000000000287557e-07, 1.0000000000287557e-07, 1.0000000000287557e-07])
+=========================== short test summary info ============================
+FAILED tests/mesh/test_boundary_classification_margins.py::test_wall_classification_margin[loop_over_half_space_domain]
+FAILED tests/mesh/test_boundary_classification_margins.py::test_wall_classification_margin[sphere_in_box_domain]
+==================== 2 failed, 2 passed, 1 skipped in 0.96s ====================
+
+## Exit
+- Status: 1
+- Elapsed (s): 3
