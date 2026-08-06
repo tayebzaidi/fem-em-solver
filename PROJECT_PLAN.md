@@ -1672,8 +1672,42 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 >   report the delta, annotate here, stop; never widen the moved gate
 >   in-slot.
 >
-> * **`POST-1` step 6 — CSV-export/stats sampling parity (plan written
->   2026-08-06, 10:30 review; from step 5's handed item).** Step 5 flipped
+> * **`POST-1` step 6 — CSV-export/stats sampling parity** ✅ *(2026-08-06,
+>   15:00 run)*. `tests/post/test_csv_export_stats_parity.py` gates
+>   `export_tagged_field_samples_csv` against
+>   `compute_tagged_vector_magnitude_stats` off one solve of step 1's 12³
+>   piecewise-σ fixture. **Anchor met in both sampling modes and at two rank
+>   counts.** Default (`prefer_interior_samples=False`): CSV data rows
+>   **5184 = 5184** stats samples on each tag, and the parsed `mag` column's
+>   min/max/mean equal the allreduced statistics **bit-for-bit** — tag 1
+>   `0.5708276489752246 / 0.9980976155749424 / 0.8205203318606578`, tag 2
+>   `0.577614544558443 / 0.8850402333786891 / 0.7651432632537083`, relative
+>   disagreement **0.000e+00** on all six numbers, not merely inside the
+>   `1e-12` gate (`20260806T200216Z_POST-1-step6-probe.log:82`). The
+>   round-trip is exact because `csv.writer` formats a float with `str`,
+>   which is the shortest round-tripping repr of a float64 — the probe
+>   measured that before anything was gated, per the plan. Guarded mode
+>   (`True` through *both* paths): **4896 = 4896** on each tag, so the
+>   agreement in the default mode is shared sampling and not a coincidence of
+>   two equal defaults. **Negative control held as an integer identity:**
+>   default rows − guarded rows = **5184 − 4896 = 288** = the
+>   boundary-adjacent cells `_interior_tagged_cells` drops, per tag — step 5's
+>   number, now measured through the *export*. **Rank-invariant:** every count
+>   above is digit-identical at `-n 4`
+>   (`…200248Z_POST-1-step6-gate-n4.log:109`), which is the check that matters
+>   for a path that gathers to rank 0. One identity beyond the plan: the CSV's
+>   `mag` column is recomputed from its own `fx_re/fx_im/…` columns and agrees
+>   to **4.120e-16** worst case — the export writes the phasor magnitude, not
+>   `Re` of anything (`POST-3` step 4's defect, now gated on the artefact the
+>   operator reads). **No divergence found, so nothing was patched.** No
+>   production code changed: this step is gate-only. Tier smoke-to-standard,
+>   `-n 2`/`-n 4`, 5 s + 5 s + 5 s; regression `tests/environment tests/post`
+>   41 passed in 124 s (`…200300Z_POST-1-step6-regression.log:145`), the 30
+>   pre-existing gates unmoved. **Does not close `POST-1`** — the coil+phantom
+>   application remains.
+>
+> * **`POST-1` step 6 — the plan as written (2026-08-06, 10:30 review;
+>   superseded by the result above, kept for the audit trail).** Step 5 flipped
 >   `export_tagged_field_samples_csv`'s default along with the stats path,
 >   but nothing gates the two sampling calls against each other — a future
 >   divergence (one path regaining a guardrail, a filter, an off-by-one in
@@ -2958,7 +2992,17 @@ the spare and the only heavy-tier item.
    in a way `tol` cannot fix — report the measured counts, leave
    known-issues 12 open with the new numbers, stop.
 
-3. **`POST-1` step 6 — CSV-export/stats sampling parity.** Independent,
+3. ~~**`POST-1` step 6**~~ — **done 2026-08-06, 15:00 slot; step closed, ✅ in
+   §7 (`POST-1` itself stays 🟡 — the coil+phantom application is the ✅).**
+   Row count = stats count exactly in both sampling modes (5184 = 5184
+   default, 4896 = 4896 guarded, each tag), the parsed `mag` column's
+   min/max/mean equal the allreduced statistics at **0.000e+00** relative
+   (exact float64 round-trip through `str`), the negative control holds as
+   the integer identity 5184 − 4896 = **288**, and every count is
+   digit-identical at `-n 4`. Gate-only — no production code changed, no
+   divergence to patch; `tests/environment tests/post` 41 passed in 124 s.
+   Original item text follows.
+   **`POST-1` step 6 — CSV-export/stats sampling parity.** Independent,
    small; from step 5's handed item. Execute the §7 step-6 plan, written
    this review: on step 1's 12³ fixture, gate
    `export_tagged_field_samples_csv` against

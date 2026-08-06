@@ -4906,3 +4906,74 @@ only 4.5x below the interior face. A geometric fraction of
 `outer_radius - inner_radius` satisfies both bounds simultaneously and is one
 line; the two-sided margin test would gate it immediately, since the fixture is
 already parameterized there.
+
+---
+
+## 2026-08-06T20:03Z — `POST-1` step 6 — **complete**
+
+Scheduled implementer run, 15:00 CDT slot. Preflight clean (`cf2c7b7`),
+container Up 27 h. Queue items 1 and 2 already struck through, so this took the
+first open one: §9 item 3, `POST-1` step 6 (CSV-export/stats sampling parity).
+Executed the §7 plan as written.
+
+**Gate-only step — no production code changed.** New file
+`tests/post/test_csv_export_stats_parity.py` (11 tests including
+`tests/environment`'s 3), on step 1's 12³ piecewise-σ fixture, one solve reused
+module-scope. `export_tagged_field_samples_csv` vs
+`compute_tagged_vector_magnitude_stats` off the same field and tag.
+
+| log | result |
+|---|---|
+| `20260806T200216Z_POST-1-step6-probe.log` | 5 passed, 5 s (`-n 2`) — the precision probe, run before any gate was set |
+| `20260806T200233Z_POST-1-step6-gate.log` | 11 passed, 5 s (`-n 2`) — the full gate |
+| `20260806T200248Z_POST-1-step6-gate-n4.log` | 11 passed, 5 s (`-n 4`) — rank invariance |
+| `20260806T200300Z_POST-1-step6-regression.log` | **41 passed, 122.25 s** (`-n 2`) — `tests/environment tests/post`, was 30 |
+
+**Anchor, both sampling modes, both tags.** Default
+(`prefer_interior_samples=False`): CSV data rows **5184 = 5184** stats samples.
+Guarded (`True` through *both* paths): **4896 = 4896**. Parametrising over both
+modes is what distinguishes "the two entry points share a sampling rule" from
+"the two entry points happen to have the same default" — the latter is all step
+5 established.
+
+**The float identity came out exact, not merely inside the band.** The probe
+measured the parsed `mag` column's min/max/mean against the allreduced
+statistics at **0.000e+00** relative on all six numbers — tag 1
+`0.5708276489752246 / 0.9980976155749424 / 0.8205203318606578`, tag 2
+`0.577614544558443 / 0.8850402333786891 / 0.7651432632537083`. Reason, checked
+in source rather than assumed: `csv.writer` formats a float with `str`, which
+in Python 3 is the shortest round-tripping repr of a float64, so the text
+carries the bits. The plan's trap — "float round-trip may cap agreement near
+1e-15–1e-12, probe the printed precision first" — is discharged as an equality.
+The gate stayed at the plan's `1e-12`; nothing was set from the measurement
+except the confidence that `1e-12` is attainable, and nothing was loosened.
+
+**Negative control held as an integer identity.** default rows − guarded rows =
+**5184 − 4896 = 288** per tag = the boundary-adjacent cells
+`_interior_tagged_cells` drops, allreduced in the test. That is step 5's number,
+now measured through the *export* rather than the stats path.
+
+**Rank invariance.** Every count above is digit-identical at `-n 4` — the check
+that actually matters here, because the export gathers to rank 0 and a count
+that depended on the partition would be exactly the silent divergence this step
+exists to catch. The read happens on rank 0 only, after a `comm.Barrier()`, and
+non-rank-0 is asserted to receive `None` back from the export.
+
+**One identity beyond the plan.** The CSV's `mag` column is recomputed in the
+test from its own `fx_re/fx_im/fy_re/…` columns and agrees to **4.120e-16**
+worst case. Cheap, and it gates `POST-3` step 4's defect (writing `Re` where the
+phasor magnitude belongs) on the artefact the human operator actually reads —
+the existing phasor gates all live upstream of the CSV.
+
+**No divergence found, so nothing was patched** — the plan's stop-and-report
+branch was not reached. No known-issues entry opened; no landed gate moved (the
+30 pre-existing `tests/post` gates all pass unchanged).
+
+**Nothing denied this slot.**
+
+**Next attempt hypothesis.** Nothing carries forward — the step is closed and
+`POST-1` stays 🟡 on the coil+phantom application, unchanged. The queue's next
+open item is §9 item 4, `EX-1` (two-torus port fixture in ParaView), which is
+independent and untouched by this slot. One observation for it: this fixture's
+export path gathers to rank 0, whereas `EX-1` writes XDMF collectively — do not
+carry the rank-0-only read pattern across.
