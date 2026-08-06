@@ -4113,3 +4113,81 @@ literally is and what neither previous route computed. That is a review's call
 per the plan's negative branch, not this slot's. Whoever scopes it should first
 raise `GAP_OVERHANG` back above ~6e-4 or accept the lateral strips, because at
 2e-4 the terminal surface is no longer the disc pair.
+
+## 2026-08-06T02:15Z — `POST-1` step 4 — complete
+
+**Slot.** 21:00 local implementer run, 2026-08-05. Preflight clean, container
+Up. On-deck item **1** (`PORT-1` step 3b-v) was skipped as **blocked**: the
+19:30 run left it annotated "negative result — do not re-run as written", with
+the successor estimator explicitly the review's to scope. Took item **2**.
+Three compute commands: two probes and two gates (`-n 2`, `-n 4`), standard
+tier, `timeout 180`, 57 / 54 / 98 / 62 s. Tree clean at start and end.
+
+**Outcome: complete, §4-done.** Gates
+`20260806T020812Z_POST-1-step4-gate-n2.log` (6 passed, 96.43 s) and
+`20260806T021009Z_POST-1-step4-gate-n4.log` (6 passed, 60.14 s), every printed
+digit identical across rank counts. New module
+`tests/post/test_drop_set_semantics_planar.py`, probe
+`scripts/probes/post1_step4_probe.py`. **No `src/` change** — this step
+measures the existing guardrail, it does not modify it.
+
+**The plan's fixture premise was wrong; recorded here because the review wrote
+it.** The plan says "import the fixture and its piecewise closed form". The
+`POST-3` step-2 two-slab fixture **has no closed form**: it imposes the σ_low
+plane wave on all six faces, which the module's own comment already says is not
+the two-material solution, and which on `y = 0`/`y = L` pins
+`E_z = e^{-j k_low x}` right through slab 2 where no piecewise solution can
+match it. A Poynting identity has no free parameters and does not care (step 2
+stands unchanged); a pointwise closed-form comparison does. Resolution: keep the
+mesh, tags and material map exactly, replace only the Dirichlet trace with the
+self-consistent normal-incidence transmission solution
+(`R = (k₁-k₂)/(k₁+k₂) `, `|R| = 0.353398`; `T = 2k₁/(k₁+k₂)`, `|T| = 0.782605`),
+then **prove** it is the solution instead of assuming: rel L2
+`4.3147% → 2.1568%` at rate **1.0004** in h, gated.
+
+**First probe was wrong, and the reason is worth propagating.** Sampling
+`fields.e_real` — what step 3 did on the sphere — gave a 61.8232% mean "error"
+against a solve whose global L2 error is 2.1568%
+(`20260806T020312Z_POST-1-step4-probe.log`). `e_real` is `np.real` of the
+phasor, a phase-0 snapshot; on this propagating decaying field it crosses zero
+and is not `|E|`. Switched to `e_complex`
+(`…020449Z…probe2.log`), and the numbers became interpretable. **Step 3's
+sphere measurement is therefore scored on `Re E`, not `|E|`.** Not reopened
+in-slot — it is a closed gate and the sphere's interior is nearly in-phase, so
+its conclusion is probably undisturbed — but nothing here establishes that, and
+the review should decide.
+
+**Measured** (per-centroid `|E|` vs the closed form at the *same* centroids,
+slab-2 tag, 32³ = 196 608 cells):
+
+| set | n | mean rel error | `|E|` range |
+|---|---|---|---|
+| (a) `prefer_interior=True` | 96256 | 1.1472% | [0.237386, 0.692107] |
+| (b) full owned tagged set | 98304 | 1.1420% | [0.237386, 0.698349] |
+| (c) drop set alone | 2048 | **0.8974%** | [0.697742, 0.698349] |
+
+**Result 1 — interface smearing is refuted with a sign.** `(c)/(a) = 0.7822`.
+With chordal error identically zero, the dropped layer is 22% *more* accurate
+than the interior the guardrail keeps. The sphere's 1.009 was consistent with
+"harmless"; this points the other way. Mechanism: the drop layer sits at the
+entry face, pinned by continuity to the well-resolved σ_low side, while the
+surviving set carries the accumulated phase-and-decay error of the whole slab.
+
+**Result 2 — the extremum, closed-form priced.** `|f₂|` decays monotonically, so
+the slab's true maximum is *at the interface*, `|E| = 0.703744`. Full set (b)
+max sits 0.7666% below it; surviving set (a) max 1.6537% below — **2.157×
+worse**. The guardrail discards the peak by construction and doubles the peak
+error. That is the adjudication the 18:00 review deferred.
+
+**Bands, all probe-measured, none moved in-slot:** rate > 0.9 (1.0004), fine L2
+< 5% (2.1568%), (a) mean error in (0.85%, 1.45%) (1.1472%), (c)/(a) < 0.95
+(0.7822), (b) peak error < 1.2% (0.7666%), peak ratio > 1.5 (2.157). Partition
+identity 96256 + 2048 = 98304 asserted exact and globally.
+
+**Nothing loosened, nothing denied.** No existing assertion was touched; no
+production code changed; no permission denial this slot.
+
+**For the next review, two calls, neither taken here.** (i) `prefer_interior`'s
+fate as the production default — it now protects nothing measurable and
+demonstrably harms peaks, but changing a shipped default is not an implementer's
+call. (ii) Whether step 3's sphere numbers need re-running on `e_complex`.

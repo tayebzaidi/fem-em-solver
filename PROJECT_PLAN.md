@@ -1153,8 +1153,14 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 > through `prefer_interior=True` until step 4 separates interface smearing
 > from the sphere's chordal geometry error on a planar fixture. Nothing
 > currently gates a peak through this path, which is why this is a scoping
-> decision, not a defect entry. The chunk is 🟡, not ✅: step 4 below is the
-> remaining work, and the coil+phantom application is where the chunk
+> decision, not a defect entry. **Step 4 settled it 2026-08-05 (21:00 run) and
+> the "pending" is discharged: on a chordal-error-free planar interface the
+> drop layer is 22% *more* accurate than the interior ((c)/(a) = 0.7822), and
+> dropping it costs 2.157× in peak error (1.6537% vs 0.7666% against the
+> closed-form entry-face value). The rule protects nothing measurable and
+> demonstrably harms peaks — the production default's fate is the next
+> review's call, and step 3's `Re E` sampling is a second item for it.** The
+> chunk is 🟡, not ✅: the coil+phantom application is where the chunk
 > ultimately earns its ✅.
 >
 > * **`POST-1` step 1 — ghost-cell partition invariance** ✅ *(2026-08-04,
@@ -1226,9 +1232,76 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 >   sphere's curved boundary puts chordal geometry error in the same layer, and
 >   a smooth-interface fixture would tell them apart.
 >
-> **`POST-1` step 4 — drop-set semantics on a planar interface (plan written
-> 2026-08-05, 18:00 review; the separation step 3's two confounds require,
-> and the extremum adjudication above waits on).** Fixture: the `POST-3`
+> * **`POST-1` step 4 — drop-set semantics on a planar interface: the
+>   guardrail is refuted for means *and* unsafe for extrema** ✅ *(2026-08-05,
+>   21:00 run; `tests/post/test_drop_set_semantics_planar.py`, probe
+>   `scripts/probes/post1_step4_probe.py`)*. Gates
+>   `20260806T020812Z_POST-1-step4-gate-n2.log` (6 passed, 96.43 s) and
+>   `…021009Z_POST-1-step4-gate-n4.log` (6 passed, 60.14 s) — **every printed
+>   digit identical across rank counts**, so both readings below are properties
+>   of the field, not the partition.
+>
+>   **The plan's fixture premise was wrong and is corrected here.** `POST-3`
+>   step 2 has **no closed form**: it imposes the σ_low plane wave on all six
+>   faces, which its own comment says is not the two-material solution, and
+>   which on `y = 0`/`y = L` pins `E_z = e^{-j k_low x}` right through slab 2
+>   where no piecewise solution can match it. A Poynting *identity* has no free
+>   parameters and does not care (step 2 stands); a *pointwise* comparison does.
+>   So this step keeps the mesh, tags and material map and replaces only the
+>   Dirichlet trace with the self-consistent normal-incidence transmission
+>   solution `f₁ = e^{-jk₁x} + R e^{-jk₁(2xᵢ-x)}`, `f₂ = T e^{-jk₁xᵢ}
+>   e^{-jk₂(x-xᵢ)}`, `R = (k₁-k₂)/(k₁+k₂)`, `T = 2k₁/(k₁+k₂)`. That pair is an
+>   exact curl-curl solution for `E = (0,0,f(x))`, and the module **proves it
+>   rather than assuming it**: rel L2 `4.3147% → 2.1568%` at rate **1.0004**
+>   in h (16³ → 32³), gated at rate > 0.9 and fine error < 5%.
+>
+>   **The sampled object had to change too, and this is the transferable
+>   lesson.** The anchor is `|E|`, so the sampled function is `e_complex`.
+>   Step 3 sampled `fields.e_real` — `np.real` of the phasor, a phase-0
+>   snapshot. On the sphere's nearly in-phase interior the two nearly agree; on
+>   this propagating decaying field `Re E` crosses zero and the identical
+>   measurement returns **61.8232%** error against a solve whose global L2 error
+>   is 2.1568% (`20260806T020312Z_POST-1-step4-probe.log`, before the switch;
+>   `…020449Z…probe2.log` after). **`POST-1` step 3's sphere numbers are
+>   therefore scored on `Re E`, not `|E|`** — for the review to adjudicate; the
+>   sphere's own conclusion is probably undisturbed but nothing here establishes
+>   that, and this step did not reopen a closed gate to find out.
+>
+>   Per-centroid `|E|` against the closed form at the *same* centroids, slab-2
+>   tag, 32³ = 196 608 cells:
+>
+>   | set | n | mean rel error | `|E|` range |
+>   |---|---|---|---|
+>   | (a) `prefer_interior=True` (production) | 96256 | 1.1472% | [0.237386, 0.692107] |
+>   | (b) full owned tagged set | 98304 | 1.1420% | [0.237386, 0.698349] |
+>   | (c) drop set alone | 2048 | **0.8974%** | [0.697742, 0.698349] |
+>
+>   **Interface smearing is refuted with a sign.** (c)/(a) = **0.7822** — with
+>   chordal error identically zero, the dropped layer is 22% **more** accurate
+>   than the interior the guardrail keeps. The sphere's 1.009 was consistent
+>   with "harmless"; this points the other way. The layer sits at the entry
+>   face, pinned by continuity to the well-resolved σ_low side, while the
+>   surviving set carries the accumulated phase-and-decay error of the whole
+>   slab. Gated at ratio < 0.95; partition identity 96256 + 2048 = 98304 exact.
+>
+>   **The extremum claim is now closed-form priced, and it is the adjudication
+>   the review was waiting on.** `|f₂|` decays monotonically, so the slab's true
+>   maximum sits *at the interface*: `|E| = 0.703744`. Measured: full set (b)
+>   max **0.7666%** below it, surviving set (a) max **1.6537%** below it —
+>   **2.157× worse**. Dropping the interface layer discards the peak by
+>   construction and doubles the peak error. `prefer_interior=True` is unsafe
+>   for any peak statistic, on a fixture with no geometry confound to blame.
+>   Gates: (b) peak error < 1.2%, (a) max strictly below (b) max, ratio > 1.5.
+>
+>   **What this does not do.** It does not change the production default —
+>   `prefer_interior=True` still ships — because that is the next review's call,
+>   and it does not close `POST-1`: the coil+phantom application is still where
+>   the chunk earns ✅. Two items for the review: the default's fate (the drop
+>   rule now protects nothing measurable and demonstrably harms peaks), and
+>   step 3's `e_real` sampling.
+>
+> **`POST-1` step 4 — the plan as written (2026-08-05, 18:00 review; superseded
+> by the result above, kept for the audit trail).** Fixture: the `POST-3`
 > step-2 **two-slab** solve (σ = 0.1 | 1.4 S/m, planar interface;
 > `20260731T183453Z_POST-3-step2-gate.log`) — the one solved interface field
 > where the boundary layer carries **zero** chordal geometry error, because
@@ -2146,7 +2219,16 @@ item 4. Item 5 is the spare and the only heavy-tier item.
    shadow numbers, annotate §7 and known-issues 3, stop — the tolerance
    does not move; a third estimator is a review's call.
 
-2. **`POST-1` step 4 — drop-set semantics on a planar interface.**
+2. ~~**`POST-1` step 4 — drop-set semantics on a planar interface.**~~ —
+   **done 2026-08-05 (21:00 run)**, ✅ per §4. `(c)/(a) = 0.7822` — the drop
+   layer is *more* accurate than the interior, so interface smearing is
+   refuted with a sign — and the surviving set's peak is **2.157×** worse
+   against the closed form (1.6537% vs 0.7666%), so `prefer_interior=True`
+   is unsafe for extrema. Gates `20260806T020812Z_POST-1-step4-gate-n2.log`
+   (6 passed, 96.43 s) / `…021009Z…-n4.log` (60.14 s), digit-identical.
+   Two items handed to the review: the production default's fate, and that
+   step 3 sampled `Re E` rather than `|E|`. See the §7 entry.
+   *(Original item text below.)*
    Independent; the extremum adjudication (⚠️→🟡 this review) waits on it.
    Execute the §7 step-4 plan, written this review, on the `POST-3` step-2
    two-slab fixture — the interface layer with zero chordal geometry
