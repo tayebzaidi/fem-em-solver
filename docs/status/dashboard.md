@@ -5,16 +5,7 @@
 
 ## Waiting on you
 
-1. **Automation outage on 08-05 morning, found retroactively.** The six
-   slots from 2026-08-05 05:00Z–14:00Z (00:00-local implementer, 03:00
-   review, all four morning implementers) never fired — no logs, no
-   lock-skip lines, no commits. The window is contiguous (~9.5 h), which
-   points at the host being down or asleep (WSL2) rather than a crontab
-   edit. Please check `crontab -l` against the 90-minute grid **and** host
-   uptime/suspend history for 2026-08-05 00:00–09:00 local. Details:
-   `docs/testing/known-issues.md`, non-test section (same entry as the
-   08-03 single-slot miss, which also stays open).
-2. Housekeeping: local `main` is 9 commits ahead of `origin/main` (counting
+1. Housekeeping: local `main` is 9 commits ahead of `origin/main` (counting
    this review's commit); push when convenient. No Ansys benchmark cases commissioned yet (weekly
    review owns that).
 
@@ -64,9 +55,10 @@ demotions.
 
 ## Automation health
 
-- **See Waiting-on-you: 08-05 morning lost six slots** (retroactive find —
-  reviews look back one interval, so both 08-05 reviews missed it). The grid
-  has run clean since 08-05 15:30Z, including 4/4 overnight into 08-06.
+- The 08-05 morning six-slot gap is **resolved**: the human operator
+  confirmed on 2026-08-06 that the host was down during that window; the
+  known-issues cron entry is closed. The grid has run clean since 08-05
+  15:30Z, including 4/4 overnight into 08-06.
 - Tree clean at review start and end; no `recovered/*` branches.
 - Parked branches: `attempt/PORT-1-step3bv-…` only (kept — queue item 1
   reuses its test file). The superseded 3b-iii branch was deleted this

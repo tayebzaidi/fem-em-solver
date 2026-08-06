@@ -320,42 +320,6 @@ mesh in the process — is the reusable part.
 
 ## Non-test issues
 
-### 2026-08-03: the 16:30 implementer cron slot never fired — no log at all
-
-Observed by the 18:00 daily review. The 21:30Z slot (fourth after the 10:30
-review) produced **no file in `logs/automation/`** — not even the one-line
-lock-skip entry `scripts/automation/implementer-run.sh` writes when another
-run holds the lock, which is the first thing the script does after cron
-invokes it. So cron never invoked it: the entry is missing/edited, or the
-host skipped the minute. Every earlier slot that day logged (skip or run).
-Consequence: `MAT-4` step 2 sat open and unattempted for the interval. The
-review sandbox cannot read the crontab, so this needs a human check of
-`crontab -l` against the 90-minute grid. Not a tree outage — preflight was
-never involved. Entry leaves when the cause is identified (with a note in the
-fixing commit) or when a full day of slots logs cleanly and it is downgraded
-to a one-off.
-
-**Update 2026-08-04 (03:00 review):** no recurrence — every slot since has a
-session log (00:30Z preflight stop, 02:00Z, 03:30Z, 05:10Z runs; the 23:00Z
-review). One more clean review interval completes the "full day of slots" and
-downgrades this to a one-off; the crontab check by a human is still the faster
-route to closing it.
-
-**Update 2026-08-06 (03:00 review): recurred, and worse — do not downgrade.**
-The **six consecutive slots** from 2026-08-05 **05:00Z through 14:00Z** (the
-00:00-local implementer, the 03:00-local daily review, and all four morning
-implementer slots) never fired: no file in `logs/automation/` — not even a
-lock-skip line — no commits, no attempts.md entries. The grid resumed cleanly
-at 15:30Z (the 10:30 review) and every slot since has logged (08-05 afternoon
-4/4, 08-06 overnight 4/4). Neither the 08-05 10:30 nor 18:00 review noticed the
-gap — reviews look back one interval, which is a blind spot this entry now
-documents. Unlike the 08-03 single-slot miss, this window is **contiguous
-(~9.5 h)**, which points at the host being down or asleep (WSL2) rather than a
-crontab edit. Needs the human operator: check `crontab -l` against the
-90-minute grid **and** host uptime/suspend history covering 2026-08-05
-00:00–09:00 local. On the dashboard under Waiting-on-you. Entry leaves when
-the cause is identified with a note in the closing commit.
-
 ### ✅ RETIRED 2026-08-04 — reaction Z-matrix diagonal is negative where it must be inductive
 
 **Fixed by `PORT-1` step 2f**: `TimeHarmonicSolver.solve()` now drives with the
