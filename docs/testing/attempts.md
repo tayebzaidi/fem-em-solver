@@ -4459,3 +4459,89 @@ estimator-family question is settled negatively — four geometries, four answer
 — and the next suspects are the ones the 3b-vi plan already named (finite-σ
 terminal penetration at `δ = 1.125 r_wire`; the `ωM₁₂` reference itself), which
 is a review's adjudication and not another estimator.
+
+---
+
+## 2026-08-06T11:00Z — `POST-1` step 4b — **complete**
+
+**Slot:** scheduled implementer run, 06:00 local. Tree clean at start, container
+Up. **Item selection:** On-deck item 1 (`PORT-1` step 3b-vi) was skipped — the
+03:00 review's own annotation on it reads "not done, and the review must rescope
+before it reappears", which is a block on this slot taking it. Item 2 taken
+instead, per the "first item not marked done or blocked" rule; recorded here so
+the review can correct the reading if it disagrees.
+
+**What was asked.** Step 3 scored its sphere drop-set table on `fields.e_real`
+— `np.real` of the phasor, a phase-0 snapshot — where the anchor
+`3/(ε_r+2)E₀ = 0.037500` is a magnitude. Step 4 had shown that substitution is
+not free: on its propagating, decaying planar field the identical measurement
+returned **61.8232%** against a solve whose global L2 error is 2.1568%. Re-score
+the same sphere fixture on `|E|` and report whether step 3's conclusions survive.
+
+**Result: they survive identically, and the reason is a property of the fixture
+that is now gated.**
+
+| set | n | mean | error on `Re E` | error on `\|E\|` |
+|---|---|---|---|---|
+| (a) `prefer_interior=True` | 3327 | 0.039095 | 4.2530% | 4.2530% |
+| (b) full owned tagged set | 4431 | 0.039099 | 4.2630% | 4.2630% |
+| (c) drop set alone | 1104 | 0.039110 | 4.2931% | 4.2931% |
+
+(c)/(a) = 1.0094× and spread ratio 1.3337× on **both** quantities. The two
+tables are not "close" — `max|Im E| = 0.000000e+00` over the tag, *exactly*
+zero, and the worst of the twelve statistics disagrees by **2.054e-16** at
+`-n 2` and 3.114e-16 at `-n 4` (different reduction order, same field). The
+sphere is lossless (`σ = 0` everywhere) with **real** exact-exterior Dirichlet
+data, so neither the operator nor the right-hand side carries a phase and the
+solved phasor is real to the last bit. The 03:00 review's "probably
+undisturbed" is therefore discharged as an equality, not an estimate.
+
+**What landed.** A second test in
+`tests/post/test_drop_set_semantics_sphere.py`,
+`test_drop_set_semantics_scored_on_the_phasor_magnitude`, scoring
+`fields.e_complex` off one solve beside the `Re E` table, plus
+`scripts/probes/post1_step4b_probe.py`. The step-3 test is **untouched** apart
+from a comment making its sampled function explicit. Gates: partition identity
+`3327 + 1104 = 4431` exact; (a) inside the unmoved `SURVIVING_ERROR_BAND`
+(3.75%, 4.75%); both extrema in the drop layer; spread ratio > 1.2 (unmoved);
+and the two new ones that carry the step's actual content —
+`max|Im E|/max|E| < 1e-12` and worst `|E|`-vs-`Re E` disagreement `< 1e-12`.
+Both are many orders under the measurement and both fail the moment the fixture
+acquires a phase (nonzero σ, complex trace, PML) — i.e. exactly when `Re E`
+stops being the magnitude. That is the transferable guard, not the table.
+
+**No assertion was loosened or widened.** The 1.2 range-ratio ceiling and the
+(3.75%, 4.75%) band are the step-3 values, reused unchanged because the
+disagreement gate is what licenses reusing them.
+
+**Negative control:** on record, not re-run — step 4's planar pair, 61.8232%
+(`Re E`) vs 1.1472% (`|E|`) on the same measurement
+(`20260806T020312Z_POST-1-step4-probe.log`). Without it the sphere's exact zero
+would be a foregone conclusion rather than a measurement.
+
+| log | result |
+|---|---|
+| `20260806T110135Z_POST-1-step4b-probe.log` | exit 0, 6 s — both tables, digit-identical |
+| `20260806T110235Z_POST-1-step4b-probe2.log` | exit 0, 6 s — `max\|Im E\| = 0`, per-statistic rel diffs ≤ 2.054e-16 |
+| `20260806T110400Z_POST-1-step4b-gate-n2.log` | 6 passed, 7.38 s (standard, `timeout 180`) |
+| `20260806T110428Z_POST-1-step4b-gate-n4.log` | 6 passed, 4.42 s — every printed digit identical to `-n 2` |
+| `20260806T110445Z_POST-1-step4b-regression.log` | `tests/post` 31 passed, 109.91 s |
+| `20260806T110813Z_POST-1-step4b-gate-n2-final.log` | 6 passed, 5.71 s — re-run after the docstring edit, the committed state |
+
+The regression was wrapped at `timeout 600` rather than the standard 180 —
+`tests/post` as a whole is above the standard tier; measured 111 s, well inside
+the 20-minute per-command ceiling. The gates themselves are standard-tier.
+
+**Does not close `POST-1`** — the coil+phantom application is still where the
+chunk earns ✅.
+
+**Nothing denied this slot.**
+
+**Next attempt hypothesis.** Step 5 (item 3, flip `prefer_interior` to `False`)
+is now better supported than it was this morning: the sphere's mean-insensitivity
+evidence is on the anchored quantity rather than on a snapshot, so the two
+fixtures backing the adjudication are both scored on `|E|`. Nothing in this slot
+touched `src/`, so step 5's diff is unaffected. The one thing a reader should
+*not* take from this result is that `e_real` is generally safe for magnitude
+statistics — the guard landed here says the opposite, and step 4's 61.8232% is
+what it is guarding against.

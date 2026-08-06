@@ -1257,7 +1257,10 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 > assertions are internally consistent and were executed — but the quantity
 > they scored is `Re E`, and step 4b re-scores the same fixture on `|E|` so
 > the step-3 conclusions rest on the anchored quantity rather than on
-> "probably undisturbed". The chunk is 🟡, not ✅: the coil+phantom
+> "probably undisturbed". **Step 4b executed 2026-08-06 (06:00 run) and (ii)
+> is discharged: the sphere phasor is exactly real (`max|Im E| = 0`), the two
+> tables agree to 2.054e-16, and step 3's conclusions transfer *identically*.**
+> The chunk is 🟡, not ✅: the coil+phantom
 > application is where the chunk ultimately earns its ✅.
 >
 > * **`POST-1` step 1 — ghost-cell partition invariance** ✅ *(2026-08-04,
@@ -1397,8 +1400,51 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 >   rule now protects nothing measurable and demonstrably harms peaks), and
 >   step 3's `e_real` sampling.
 >
-> * **`POST-1` step 4b — re-score the sphere on `|E|` (plan written
->   2026-08-06, 03:00 review).** Step 3's gates scored
+> * **`POST-1` step 4b — the sphere re-scored on `|E|`: step 3's conclusions
+>   survive *identically*, and the reason is now gated** ✅ *(2026-08-06,
+>   06:00 run; `tests/post/test_drop_set_semantics_sphere.py`, probe
+>   `scripts/probes/post1_step4b_probe.py`)*. Gates
+>   `20260806T110400Z_POST-1-step4b-gate-n2.log` (6 passed, 7.38 s) and
+>   `…110428Z…-gate-n4.log` (6 passed, 4.42 s); probes `…110135Z…probe.log`
+>   and `…110235Z…probe2.log`; regression `…110445Z…-regression.log`,
+>   `tests/post` 31 passed, 109.91 s.
+>
+>   Scored on `fields.e_complex`, off one solve, beside the `Re E` table:
+>
+>   | set | n | mean | error on `Re E` | error on `|E|` |
+>   |---|---|---|---|---|
+>   | (a) `prefer_interior=True` | 3327 | 0.039095 | 4.2530% | **4.2530%** |
+>   | (b) full owned tagged set | 4431 | 0.039099 | 4.2630% | **4.2630%** |
+>   | (c) drop set alone | 1104 | 0.039110 | 4.2931% | **4.2931%** |
+>
+>   **The two tables are the same table.** `max|Im E| = 0` over the tag —
+>   *exactly* zero, not small — and all twelve statistics agree to
+>   **2.054e-16** at `-n 2` / 3.114e-16 at `-n 4`, i.e. to reduction-order
+>   roundoff. (c)/(a) is 1.0094× and the spread ratio 1.3337× on **both**
+>   quantities. So step 3's two readings — the mean is unmoved by the
+>   guardrail, both extrema live in the drop layer — are properties of the
+>   anchored quantity, and the 03:00 review's "probably undisturbed" is
+>   discharged as an equality rather than an estimate.
+>
+>   **What makes it an equality is a property of the fixture, and that is what
+>   the new gate asserts.** The sphere is lossless (`σ = 0` everywhere) and its
+>   exact-exterior Dirichlet data is real, so neither the operator nor the data
+>   carries a phase and the solved phasor is real to the last bit. The test
+>   gates `max|Im E|/max|E| < 1e-12` and the worst `|E|`-vs-`Re E` disagreement
+>   `< 1e-12` — both many orders under the measurement, and both fail the moment
+>   the fixture acquires a phase (a nonzero σ, a complex trace, a PML), which is
+>   precisely when `Re E` would stop being the magnitude. The step-3 gates are
+>   left untouched and their sampled function is now explicit in a comment.
+>   Negative control on record, not re-run: step 4's planar pair — the identical
+>   substitution scoring **61.8232%** where `|E|` scores 1.1472%
+>   (`20260806T020312Z…probe.log`) — is what makes the sphere's zero a
+>   measurement worth having rather than a foregone conclusion.
+>
+>   **Does not close `POST-1`**: the coil+phantom application still does.
+>
+> * **`POST-1` step 4b — the plan as written (2026-08-06, 03:00 review;
+>   superseded by the result above, kept for the audit trail).** Step 3's gates
+>   scored
 >   `fields.e_real` — a phase-0 snapshot — where the anchor `3/(εᵣ+2)E₀ =
 >   0.037500` is a magnitude. On the sphere's nearly in-phase interior the two
 >   nearly agree, which is why the numbers looked sane; on the planar fixture
@@ -2496,7 +2542,13 @@ is the spare and the only heavy-tier item.
    the same solve, annotate §7 and known-issues 3, stop — the tolerance does
    not move; a fourth estimator family is a review's call.
 
-2. **`POST-1` step 4b — re-score the sphere drop-set table on `|E|`.**
+2. ✅ **Done 2026-08-06, 06:00 slot** — the `|E|` table is digit-identical to
+   the `Re E` table (worst disagreement 2.054e-16 at `-n 2`, 3.114e-16 at
+   `-n 4`) because `max|Im E| = 0` exactly on this lossless real-data fixture;
+   both step-3 conclusions transfer unchanged and the *reason* is now gated at
+   `1e-12`. Gates `20260806T110400Z…-gate-n2.log` / `…110428Z…-gate-n4.log`,
+   `tests/post` 31 passed. Numbers in §7.
+   **`POST-1` step 4b — re-score the sphere drop-set table on `|E|`.**
    Independent, small. Execute the §7 step-4b plan, written this review:
    step 3 scored `fields.e_real` (phase-0 snapshot) where the anchor is a
    magnitude; add the `e_complex`-scored table to
