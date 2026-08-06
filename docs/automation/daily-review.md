@@ -71,6 +71,16 @@ are yours.
    add chunks *within* the current phase's subgoals; do not restructure
    phases or edit the roadmap here.
 
+   **Example chunks (§5.4 ramp):** for each chunk that newly closed a
+   quantitative gate since the last review (the step-3 list, post-audit),
+   check whether an existing example already demonstrates that capability;
+   if not, add a standalone example chunk to §7 — sized for one implementer
+   run, executed via `./run_examples.sh`, producing combined-XDMF that opens
+   in ParaView, and demonstrating the capability from an angle no existing
+   example covers (geometry, materials, drive, or output quantity). Example
+   chunks are never riders on physics chunks and never target ungated
+   capability.
+
 6. Refresh **"On deck"** in §9: top it up to **at least 5** items not done or
    blocked — the 4 runs before the next review, plus one spare — ordered, each
    sized for one implementer run (≤ 1 h wall clock, ≤ 20 min per compute

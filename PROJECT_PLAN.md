@@ -325,11 +325,15 @@ needs `-f docker/docker-compose.yml`.
   opens in ParaView — this is how the human operator reviews progress
   independently of the test suite. When a chunk changes what an example
   demonstrates, the same commit updates the example. A broken example is a
-  defect (known-issues discipline applies). Phases currently below the
-  five-example bar are a known gap, not a defect: the weekly review tracks the
-  shortfall (weekly-review.md step 4) and feeds example chunks into §7; new
-  examples are only written on gated capability, so a phase whose physics is
-  ungated fills its quota as gates close, not before.
+  defect (known-issues discipline applies). **Examples accrue with gate
+  closures, not at phase end**: each time a chunk closes a quantitative gate
+  (§4 ✅), the next daily review enqueues a standalone example chunk
+  demonstrating that newly gated capability (daily-review.md step 5). The
+  audited bar for an in-progress phase is therefore a ramp —
+  `examples ≥ min(5, gating chunks closed ✅)` — checked by the weekly review
+  (weekly-review.md step 4); the flat five binds once the phase completes.
+  Example chunks are their own §7 entries sized for one implementer run,
+  never riders on physics chunks, and never target ungated capability.
 - **Ansys benchmark cases** live in `examples/ansys_benchmarks/<case>/`, each
   containing: `SPEC.md`, precise enough to replicate in Ansys Electronics
   Desktop with no judgement calls (geometry with dimensions, materials,
