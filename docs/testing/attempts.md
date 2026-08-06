@@ -4716,3 +4716,11 @@ fixtures return. The second, larger follow-on is factoring the CAD stage out of
 `coil_phantom_domain`/`birdcage_port_domain` so `GEO-11` can cover them; that is
 a refactor chunk with its own risk, worth scoping only if the review wants the
 remaining two fixtures measured.
+
+**Post-commit regression (same slot).** The gate initializes and finalizes gmsh
+per fixture, so the risk it introduced is process poisoning of the rest of
+`tests/mesh` (`GEO-9` step 2a's failure mode). Measured rather than assumed:
+whole `tests/mesh` at `-n 2` is **31 passed, 4 skipped, 108.04 s**, exit 0
+(`20260806T140740Z_GEO-11-mesh-regression.log`) — exactly the pre-existing
+29 passed / 1 skipped plus this file's 2 passed / 3 skipped. No poisoning, no
+landed gate moved.
