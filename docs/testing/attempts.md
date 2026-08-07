@@ -5519,3 +5519,83 @@ plan wanted, and the corrected 0.8945 can be gated against it at 3%. Cost:
 mesh is already built in-fixture, one extra solve ≈ 25 s, so ~300 s total —
 still standard tier. If that lands, the branch lands with it; the ωM₁₂ residual
 (−10.57%) remains 3b-xi's question, not this one's.
+
+## 2026-08-07T11:10Z — `PORT-1` step 3b-x-b — **incomplete** (parked), and the
+## anchor is computable at last: the two routes agree to 3.02% against a 3% bound
+
+The control solve the 3b-x entry named is built, runs, and produces exactly the
+reference the 03:00 review's anchor (2) asked for. The gate it feeds is **red by
+0.02 pp** and nothing was tuned to change that, so the branch is not landed.
+Parked on **`attempt/PORT-1-step3bxb-20260807T111036Z`** (one commit on top of
+`attempt/PORT-1-step3bx-20260807T095500Z`; `main` carries only this entry and
+the §7/§9 annotations). This is the **second** consecutive non-landing on §9
+item 1 — by the queue's own rule the item is now the review's to rescope.
+
+Standard tier, `-n 2`, `timeout 600`, one mesh at 178 055 cells: **298.6 s**,
+19 passed + the new gate failed —
+`20260807T110513Z_PORT-1-step3bxb-gate-n2.log` (collect check:
+`20260807T110501Z_PORT-1-step3bxb-collect.log`, 1.5 s, 16 tests). Nothing under
+`src/` changed. No tolerance moved. Nothing was denied by the permission layer.
+
+**1. The control, and why this shape.** 3b-x's hypothesis was "σ = 0 on both
+wire tags, impressed azimuthal current in wire 1". Executed literally that
+drives an *open arc* — the gap wedge is missing from the wire tag, so with
+σ = 0 there is nothing to carry the current onward and the source terminates on
+the arc-end faces with charge accumulation. The fix is one tag wider: drive over
+the **wire ∪ its own gap box**, the loop *footprint*, which is closed. Measured
+footprint volumes 1.959076e-05 / 1.957711e-05 m³ against the ideal torus
+πr²·2πa = 1.973921e-05 (0.75% low — the gap box bulges past the tube in x/z but
+undercuts it where the tube is buried). `project_source` stays at step 2f's
+default, unlike `_gap_drive`: the box bulge makes the uniform φ̂ density not
+quite solenoidal, and that divergence is discretisation, not physics.
+Measured `I'/I_prescribed = 0.998295`, projection `imag_ratio = 0.000e+00`,
+solve **25.4 s** — the 3b-x hypothesis's cost estimate was right.
+
+**2. The reference: `Im Z₂₁ = +1.145422659 Ω = 0.922423 × ωM₁₂`.**
+`Re Z₂₁ = +0.000000e+00 Ω` exactly, which is the structural check an
+impressed-current mutual in a lossless domain has to pass. Against the closed
+form it sits at **−7.76%** — note the *ungapped* reaction route sits at −9.35%,
+so the box residual is not the same number on the two meshes.
+
+The normalisation carries one assumption — that `E·φ̂` is azimuthally uniform,
+so an arc mean times the full `2πa` is the loop EMF — and it is **measured, not
+asserted**: the same reaction integral over the wire tag alone (94.4% of the
+loop, same full-loop normalisation) reads **0.918372 × ωM₁₂**, 0.44% from the
+footprint value. If uniformity were badly wrong these two would differ by the
+4.8% of loop the gap span occupies; they differ by a tenth of that.
+
+**3. The gate, and the 0.02 pp.** Corrected terminal-to-terminal estimator
+**0.894543** vs control **0.922423** ⇒ ratio **0.969776**, deviation
+**−3.0224e-02** against `REACTION_CONSISTENCY_TOLERANCE = 0.03`. Identical on
+both driven columns. The negative control sized for this gate works exactly as
+the review predicted: the wedge-only estimator would give ratio 0.5352 — 46%
+off, 15× the bound — so the gate discriminates the defect it was built to
+catch, and what it is now rejecting is a 3.0% agreement between two genuinely
+independent routes (a volume reaction integral over conductor 2; a line integral
+of `E·φ̂` between the port terminals) sharing only the discretisation.
+
+**4. Why the tolerance was not moved.** The 03:00 review sized 3% for a
+gapped/ungapped spread of "~1.2 pp" (closure sum −10.4% vs ungapped reaction
+−9.35%). The control now measures that spread directly at **2.8 pp** (−10.57%
+vs −7.76%). So the measurement contradicts the *premise the bound was derived
+from*, not the estimator — which is precisely the MAG-10/MAG-15 situation where
+a bound may be changed **with the measurement recorded**. That is a review
+decision, not an implementer's: moving a bound in the slot whose gate it fails,
+by the amount needed to pass, is the loosening the rules forbid however good the
+reasoning looks at minute 50.
+
+**Next attempt hypothesis — two dispositions, one review decision.**
+(a) *Re-size with the measurement.* The bound becomes 5% (or the spread + a
+margin), justified in a code comment by the measured 2.8 pp gapped/ungapped
+spread and the 0.44% uniformity check, negative control unchanged at 46%. One
+re-run of the parked branch lands it, ~300 s, no new code.
+(b) *Explain the 2.8 pp first.* The control's loop is closed and
+non-conducting; production's is gapped and σ = 800 S/m — different problems in
+the same PEC box, and step **3b-xi**'s padding sweep bears directly on how much
+of either residual is the box. A cheap discriminator inside (b): re-run the
+control at one larger `air_padding` on its own mesh and see whether 0.922423 and
+the estimator's 0.894543 converge or stay 3% apart. If they converge the box is
+the story; if they stay apart there is a real 3% estimator bias and the wedge
+correction is not the last one.
+(a) lands the corrected estimator today and is honest if the comment carries the
+numbers; (b) is the answer, at the cost of another slot.

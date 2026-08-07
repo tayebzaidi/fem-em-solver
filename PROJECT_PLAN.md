@@ -3065,6 +3065,49 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 >    `REACTION_CONSISTENCY_TOLERANCE = 0.03` is unmoved and ungated;
 >    nothing under `src/` changed.
 >
+> **Step 3b-x-b is 🟡 2026-08-07 (06:00 slot) — the control exists and the
+> anchor is now computable; the estimator misses the bound by 0.02 pp.**
+> Parked on `attempt/PORT-1-step3bxb-20260807T111036Z` (on top of the 3b-x
+> branch). `-n 2`, `timeout 600`, standard tier, **298.6 s, 19 passed +
+> the new gate red** — `20260807T110513Z_PORT-1-step3bxb-gate-n2.log`.
+> Nothing under `src/` changed; no tolerance moved.
+>
+> 1. **The control.** Same 178 055-cell gapped mesh, `material_map=None`
+>    (σ = 0 everywhere), impressed azimuthal current over loop 1's **wire +
+>    gap footprint** — the union, so the source is a closed loop rather than
+>    the open arc 3b-x's hypothesis worried about — and `project_source` at
+>    step 2f's default. One extra solve, **25.4 s**. `I'/I_prescribed =
+>    0.998295`, projection `imag_ratio = 0`. Both currents use the landed
+>    route's own normalisation `I = ∫J·φ̂ dV/(2πa)`.
+> 2. **The reference: `Im Z₂₁ = +1.145422659 Ω = 0.922423 × ωM₁₂`**
+>    (−7.76% vs the closed form; the *ungapped* reaction route sits at
+>    −9.35%, so the box residual is not identical between the two meshes).
+>    `Re Z₂₁ = 0` exactly, as an impressed-current mutual in a lossless
+>    domain must be. The normalisation's one assumption — that `E·φ̂` is
+>    azimuthally uniform, so an arc mean times `2πa` is the loop EMF — is
+>    **measured, not assumed**: the same integral over the wire tag alone
+>    (94.4% of the loop) reads 0.918372, **0.44% apart**.
+> 3. **The gate, red at 3.0224%.** Corrected estimator 0.894543 vs control
+>    0.922423 ⇒ ratio **0.969776**, deviation **−3.0224e-02** against
+>    `REACTION_CONSISTENCY_TOLERANCE = 0.03`. Same number on both driven
+>    columns. The negative control is in the same log and works as sized:
+>    the wedge-only estimator would give ratio 0.5352, 46% off, 15× the
+>    bound. So the two independent routes — a volume reaction integral over
+>    conductor 2 and a terminal-to-terminal line integral of `E·φ̂` —
+>    **agree to 3.0%**, and the pre-decided bound is 3.0%.
+> 4. **Not tuned, and the adjudication is the review's.** The bound was
+>    sized at 3% for a ~1.2 pp gapped/ungapped spread (−10.4% vs −9.35%);
+>    the control measures that spread at **2.8 pp** (−10.57% vs −7.76%)
+>    instead, so the premise the bound was sized from is what the
+>    measurement contradicts, not the estimator. Moving it in-slot is
+>    exactly the loosening the rules forbid. Two dispositions are open and
+>    both are one review decision: (a) re-size the bound *with* the measured
+>    gapped/ungapped spread recorded, per the MAG-10/MAG-15 precedent; or
+>    (b) treat the 2.8 pp as physics to be explained first — the control's
+>    closed non-conducting loop and the production gapped σ = 800 S/m loop
+>    are different problems in the same box, and 3b-xi's padding sweep bears
+>    directly on it.
+>
 > **Step 3b-xi — the PEC-box padding sweep** *(scoped 2026-08-07, 03:00
 > review; §9 item 2; independent of 3b-x — runs on `main`'s ungapped
 > fixture with the landed step-1/2 machinery)*. The box attribution rests
@@ -3449,8 +3492,22 @@ but does not depend on it landing); item 3 is a meshing-only example; item
 4 is an operator gate with no solve; item 5 is the spare and the only
 heavy-tier item besides item 2's declared ceiling.
 
-1. 🟡 **attempted 2026-08-07, 04:30 slot — not landed; successor is step
-   3b-x-b, one control solve** (see the §7 3b-x entry): the correction works
+1. 🟡 **attempted twice — 04:30 (3b-x) and 06:00 (3b-x-b) slots; not
+   landed. Second failure: this item is now the review's to rescope
+   before it may reappear** (see the §7 3b-x-b entry). The control solve
+   the 04:30 slot asked for now exists and works (25.4 s, σ = 0 on the
+   same gapped mesh, closed impressed loop, `I'/I = 0.998295`,
+   `Re Z₂₁ = 0`), so anchor (2) is computable at last: the reference is
+   **0.922423 × ωM₁₂**, and the corrected estimator's 0.894543 misses it
+   by **3.0224%** against the pre-decided 3% bound — 0.02 pp outside.
+   Nothing was tuned; the gate is red on
+   `attempt/PORT-1-step3bxb-20260807T111036Z`. What the measurement
+   contradicts is the *premise the bound was sized from*: the
+   gapped/ungapped spread is 2.8 pp, not the 1.2 pp assumed. The two
+   dispositions are laid out in §7 (re-size with the measurement
+   recorded, per MAG-10/MAG-15; or explain the 2.8 pp first, which 3b-xi
+   bears on) — an implementer slot may not choose between them.
+   *(Superseded 04:30 context:)* the correction works
    (0.894543 / 0.894022 × ωM₁₂, retiling identity 2.67e-4 / 2.29e-4 against
    1e-3, all 19 gates green in 271.8 s), but anchor (2) is not computable on
    this fixture — the landed reaction route needs a non-conducting closed
