@@ -3108,7 +3108,10 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 >    (b) treat the 2.8 pp as physics to be explained first — the control's
 >    closed non-conducting loop and the production gapped σ = 800 S/m loop
 >    are different problems in the same box, and 3b-xi's padding sweep bears
->    directly on it.
+>    directly on it. *(Adjudicated 2026-08-07, 10:30 review: neither picked
+>    blind — step 3b-xii below buys the discriminating measurement and
+>    pre-decides both outcomes; (a)'s re-size to 5% is authorized there iff
+>    the routes converge under box enlargement.)*
 >
 > * **Step 3b-xi — the PEC-box padding sweep** ✅ *(scoped 2026-08-07 03:00
 >   review, executed 2026-08-07 07:30 run; `§9 item 2`;
@@ -3153,6 +3156,56 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 >   none was attempted — the claim is directional); `MUTUAL_TOLERANCE`
 >   untouched at 10%, as the plan required regardless of outcome; known-issues
 >   3 unchanged; no symbol flips.
+>
+> * **Step 3b-xii — the box discriminator at padding 0.10, with both
+>   dispositions pre-decided** *(scoped 2026-08-07 10:30 review — the rescope
+>   of the twice-parked 3b-x/3b-x-b; works on
+>   `attempt/PORT-1-step3bxb-20260807T111036Z` (`b86861e`), which carries the
+>   full 3b-vi → 3b-x-b lineage)*. The 3% consistency gate is red by 0.02 pp
+>   and the premise it was sized from is measured wrong (gapped/ungapped
+>   spread 2.8 pp, not the assumed 1.2 pp); 3b-xi makes the box worth
+>   ~4.8 pp over padding 0.08 → 0.12 on the ungapped pair. One measurement
+>   chooses between 3b-x-b's two open dispositions: rebuild the **gapped**
+>   fixture at `air_padding = 0.10` (nothing else moves) and compute both
+>   routes on it — the corrected terminal-to-terminal estimator and the
+>   σ = 0 closed-footprint control.
+>   **Probe first, mesh-only:** gapped mesh at padding 0.10; > ~230 000 cells
+>   ⇒ report the count and stop (0.08 gives 178 055; the ungapped sweep grew
+>   1.132× at 0.10, so expect ~201k; 237 926 cells once died in MUMPS).
+>   **Anchor:** (1) fixture identity before anything new runs — the branch's
+>   padding-0.08 record byte-reproduces (estimator 0.894543 / 0.894022,
+>   control 0.922423, deviation −3.0224e-02); (2) the discriminator — the
+>   estimator/control deviation at padding 0.10 against the 0.08 record,
+>   adjudicated by thresholds this review pre-decides: **(i) converging**,
+>   deviation(0.10) ≤ 2.5% (a ≥ 0.5 pp move, 5× the 0.09% h_far mesh floor)
+>   ⇒ the box owns the spread; execute disposition (a) as authorized here:
+>   `REACTION_CONSISTENCY_TOLERANCE` 0.03 → **0.05**, the code comment
+>   carrying the measured 2.8 pp spread, the 46% wedge-only negative
+>   control, and both deviations; re-run the full padding-0.08 gate; all
+>   green ⇒ land the whole branch lineage onto `main` in one commit and
+>   delete the branch. **(ii) not converging**, deviation(0.10) > 2.5%
+>   (including the ambiguous band up to 3.02%) ⇒ a real estimator bias
+>   3b-x's correction did not remove, or an unresolved mix — park, report
+>   both deviations and all four route values, annotate this entry and
+>   known-issues 3; the escalation is the review's. Never tune to reach (i).
+>   **Negative control:** on record — the wedge-only estimator's ratio
+>   0.5352, 46% off, 9× even the re-sized bound. **Cost:** standard, `-n 2`;
+>   two commands, each `timeout 600` — the discriminator (mesh ~60 s + two
+>   drives ~2×30 s + control ~30 s at ~201k cells; 3b-x-b's full 0.08 run
+>   was 298.6 s at 178k) and, under (i) only, the 0.08 gate re-run (~300 s).
+>   **Traps:** all of 3b-vii/3b-ix/3b-x's (FFCx lock after a kill, pytest
+>   `-s`, complex build + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment`
+>   first); buried segments are gap-tagged; the control drives the closed
+>   **wire ∪ gap-footprint** union, never the open arc; `‖Z‖` normalisation
+>   if reaction machinery is reused; known-issues 11 — the terminal gate
+>   reads the tags' extreme reach, not the strip-contaminated ⟨y⟩; every
+>   digit-string pinned in the branch's gates is padding-0.08-specific —
+>   print the 0.10 numbers, pin nothing new in-slot. **Does not close:**
+>   `PORT-1` or known-issues 3; `MUTUAL_TOLERANCE` never moves; the ωM₁₂
+>   residual (−10.57% gapped) stays printed and tracked; no porting to the
+>   birdcage. **Negative result:** disposition (ii) *is* the negative
+>   result's disposition, and it is still a finding — the wedge correction
+>   was not the last defect.
 
 > **Two port tests are red and deliberately left red.** Both fakes set
 > `current = voltage/z0` at the driven port, making it perfectly matched, so
@@ -3342,6 +3395,21 @@ ParaView (plan written 2026-08-07, 03:00 review; the §5.4 ramp entry for
 > Measurement probe: `scripts/probes/ex2_probe.py`
 > (`20260807T140150Z_…`, `20260807T140258Z_EX-2-probe.log`). Closes nothing
 > physics-side; §5.4 inventory only.
+>
+> *Caller audit (2026-08-07, 10:30 review — the follow-up the attempts entry
+> flagged):* every repo caller of `cylindrical_domain` passes
+> `resolution ≥ 2 × inner_radius` (`tests/mesh/test_cylindrical_domain.py`
+> 0.02, `tests/solver/test_cylinder.py` 0.03,
+> `test_boundary_condition_selection.py` 0.04, `test_time_harmonic_smoke.py`
+> ×4 0.03, `test_convergence_diagnostics.py` 0.03 — all at
+> `inner_radius = 0.01`), so **every one of them gets the heptagonal-or-
+> coarser inner cylinder**. None asserts a closed form or a volume-dependent
+> quantity on the inner subdomain — they are smoke/finiteness and operator
+> fixtures — so the 28% inner-volume deficit is latent, not an active
+> defect, and no chunk is opened for it. The hazard arms the day a test
+> gates an inner-region quantity on one of these fixtures against an
+> analytic value; whoever writes that test must pass
+> `resolution ≪ inner_radius` or inherit the heptagon.
 
 New `examples/meshing/02_cylindrical_phantom.py` in
 the existing `mesh:` group: build `cylindrical_domain()` at the defaults
@@ -3463,9 +3531,15 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
    `GAP_BURIAL` places outside the nominal wedge and
    `_gap_arc_quadrature` never integrates: 0.8% of the loop's length
    carrying 45% of its EMF. Terminal to terminal the port voltage is
-   **0.8936 × ωM₁₂**, not 0.4937. Open: **3b-x** (correct the limits off
-   the port facet tags, land the parked branch) and **3b-xi** (padding
-   sweep — is the residual −10.6% the PEC box?), both scoped in §7.
+   **0.8936 × ωM₁₂**, not 0.4937. As of 2026-08-07 (10:30): **3b-x's
+   correction works** (0.8945 × ωM₁₂, all 19 gates green, parked —
+   its consistency gate vs the new σ = 0 control reads 3.0224% against a
+   3% bound whose premise the control disproved); **3b-xi is ✅** — the
+   box attribution holds as a three-point monotone trend (deficits
+   −8.03% / −5.03% / −3.27% at padding 0.08 / 0.10 / 0.12, 52.9× the
+   mesh control). Open: **3b-xii** (the discriminator at padding 0.10 on
+   the gapped fixture, dispositions pre-decided; lands the branch if the
+   routes converge), scoped in §7.
 5. **`GEO-9`** — 🟡: created 2026-08-02 from known-issues 7, **step 1 ✅
    2026-08-03**, and step 1 refuted the hypothesis it was written on.
    `coil_phantom_domain` generates fine in a fresh process; the whole of
@@ -3504,153 +3578,92 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done, the implementer falls back to the "obvious
 next entry" named below.
 
-Last reviewed 2026-08-07, 03:00 daily review. Tree clean at review start and
-end; no `recovered/*` branches. **All four slots since the 18:00 review
-executed — a fifth consecutive 4/4 slate, three landed + one disciplined
-park**: `EX-1` (✅ restored — the runner path is on record, every identity
-byte-matching the direct-invocation log), `PORT-1` step 3b-viii (the `ωM₁₂`
-reference **exonerated** in closed form: two routes agree to 1.5e-15, the
-finite-cross-section correction is +0.481% with the wrong sign to help, and
-the gate carries a live 140% vacuity control), `GEO-13` (✅ chunk closed —
-tolerance now `0.01 × (outer_radius − inner_radius)`, all four margin
-fixtures assert live, known-issues 13 retired), and `PORT-1` step 3b-ix
-(🟡 parked on `attempt/PORT-1-step3bix-20260807T050000Z`, **and the
-factor-2 question is answered**: the Faraday loop closes at 0.896 × ωM₁₂,
-both named suspects are dead, and the cause is `_gap_arc_quadrature`
-integrating the nominal wedge while the buried gap arc — 0.8% of the loop —
-carries 45% of the EMF; terminal to terminal the voltage is 0.8936 × ωM₁₂).
-Audits this review: `EX-1` and `GEO-13`, the two ✅ flips, both verified
-**§4-compliant** by independent read-only auditors — every claimed number
-found in the harness logs, no demotions. Branch disposition:
-`attempt/PORT-1-step3bvii-20260806T170000Z` **deleted** — the 3b-ix branch
-(`6caec85`) carries a strict superset (3b-vi/3b-vii cherry-picked forward,
-verified by diff; the 3b-vii logs already live on `main`);
-`attempt/PORT-1-step3bix-20260807T050000Z` **kept** — item 1 continues and
-lands it. Plan work this review: **step 3b-x scoped** (terminal-to-terminal
-limits read off the port facet tags; assertion re-anchored to the
-same-fixture reaction route, ωM comparison stays printed; lands the
-branch), **step 3b-xi scoped** (padding sweep on `main`'s ungapped fixture —
-adjudicates whether the residual −10.6% is the PEC box; independent of
-3b-x), **`MAT-4` step 3 scoped** (the averaging operator at 1 g/10 g on a
-sphere sized for the standard — the sizing gap step 2 named, no solve).
-§5.4 example check: `GEO-13` closed a quantitative gate and no example
-shows the cylindrical geometry or its classification — **`EX-2` chunked**;
-3b-viii's closure is a test-side reference audit, not a package
-capability — no example for it. §10 assessment: the critical path is
-moving fast — the gap-port voltage question that was a factor-2 mystery
-two reviews ago is now a measured integration-limits defect with a scoped
-one-slot fix and a scoped box adjudication behind it; no §10 gap found.
+Last reviewed 2026-08-07, 10:30 daily review. Tree clean at review start and
+end; no `recovered/*` branches. **All four slots since the 03:00 review
+executed — a sixth consecutive 4/4 slate, two landed + two disciplined
+parks on one thread**: `PORT-1` step 3b-x (🟡 parked — the terminal-to-
+terminal correction works, 0.894543 × ωM₁₂ with the retiling identity at
+2.7e-4, but the plan's reaction anchor is not computable on a σ = 800 S/m
+open arc), step 3b-x-b (🟡 parked — the σ = 0 closed-footprint control now
+exists, 25.4 s, `Re Z₂₁ = 0` exactly; the consistency gate reads 3.0224%
+against the 3% bound, and the measurement disproves the premise the bound
+was sized from: the gapped/ungapped spread is 2.8 pp, not 1.2 pp), step
+3b-xi (✅ — the PEC-box attribution is now a strictly monotone three-point
+trend, deficits −8.03% / −5.03% / −3.27% at padding 0.08/0.10/0.12, 52.9×
+the h_far control, padding 0.08 reproducing step 2f to 2.4e-5), and `EX-2`
+(✅ — `mesh:2` through the runner, the `GEO-13` identity byte-reproducing,
+and the inner cylinder discovered to be a *heptagonal prism* at generator
+defaults, gated in closed form to 1.11e-16 rather than banded). Audits
+this review: `PORT-1` step 3b-xi and `EX-2`, the two ✅ flips, both
+verified **§4-compliant** by independent read-only auditors — every
+claimed number found in the harness logs, exit codes 0, tiers honest
+(3b-xi heavy-declared/standard-actual), no demotions; EX-2's cap bound
+moved 1e-3 → 1e-12, the tightening direction. Branch disposition:
+`attempt/PORT-1-step3bix-…` and `attempt/PORT-1-step3bx-…` **deleted** —
+both verified strict ancestors (`git merge-base --is-ancestor`) of
+`attempt/PORT-1-step3bxb-20260807T111036Z` (`b86861e`), which **stays**
+as the one live lineage; item 1 works on it. Plan work this review: the
+twice-parked item 1 **rescoped as step 3b-xii** (§7 plan written — the
+padding-0.10 discriminator on the gapped fixture, both of 3b-x-b's
+dispositions pre-decided so no adjudication is left in-slot; the 5%
+re-size is authorized iff the routes converge under box enlargement);
+the 3b-x-b §7 entry carries the dated adjudication note; `EX-2`'s
+flagged caller audit executed in-review (grep, no compute): all
+`cylindrical_domain` callers pass `resolution ≥ 2 × inner_radius`, none
+gates an inner-subdomain quantity, finding recorded in the `EX-2` §7
+entry, latent — no chunk opened. §5.4 example check: 3b-xi is a
+test-fixture box-attribution measurement, not a package capability — no
+example (3b-viii precedent); `EX-2` is itself the §5.4 entry for
+`GEO-13`. §10 assessment: the critical path holds — the corrected port
+voltage has a measured owner for its residual and one scoped slot now
+separates the parked lineage from landing; the queue is **three ready
+items, not five** (see below), which is a fact about how much scoped,
+non-invented work exists, not a gap in §10 reach.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
 `docs/planning/plan-archive.md`, not here.)*
 
-**Items are mutually independent — no item below depends on another
-landing.** Item 1 works on its `attempt/*` branch; item 2 runs on `main`'s
-ungapped fixture with landed machinery (it *interprets* item 1's residual
-but does not depend on it landing); item 3 is a meshing-only example; item
-4 is an operator gate with no solve; item 5 is the spare and the only
-heavy-tier item besides item 2's declared ceiling.
+**Three ready items, not five.** That is the honest count: no other §7
+chunk has a rubric-compliant plan ready to execute, and inventing two more
+to round the number out is what step 5 forbids. Items are mutually
+independent — item 1 works on its `attempt/*` branch, item 2 is an
+operator gate on `main` with no solve, item 3 is the heavy spare. If a
+fourth run finds the queue drained, the drain instruction below applies:
+stop and journal.
 
-1. 🟡 **attempted twice — 04:30 (3b-x) and 06:00 (3b-x-b) slots; not
-   landed. Second failure: this item is now the review's to rescope
-   before it may reappear** (see the §7 3b-x-b entry). The control solve
-   the 04:30 slot asked for now exists and works (25.4 s, σ = 0 on the
-   same gapped mesh, closed impressed loop, `I'/I = 0.998295`,
-   `Re Z₂₁ = 0`), so anchor (2) is computable at last: the reference is
-   **0.922423 × ωM₁₂**, and the corrected estimator's 0.894543 misses it
-   by **3.0224%** against the pre-decided 3% bound — 0.02 pp outside.
-   Nothing was tuned; the gate is red on
-   `attempt/PORT-1-step3bxb-20260807T111036Z`. What the measurement
-   contradicts is the *premise the bound was sized from*: the
-   gapped/ungapped spread is 2.8 pp, not the 1.2 pp assumed. The two
-   dispositions are laid out in §7 (re-size with the measurement
-   recorded, per MAG-10/MAG-15; or explain the 2.8 pp first, which 3b-xi
-   bears on) — an implementer slot may not choose between them.
-   *(Superseded 04:30 context:)* the correction works
-   (0.894543 / 0.894022 × ωM₁₂, retiling identity 2.67e-4 / 2.29e-4 against
-   1e-3, all 19 gates green in 271.8 s), but anchor (2) is not computable on
-   this fixture — the landed reaction route needs a non-conducting closed
-   loop, and here it reads the ohmic `V_wire` term. Parked on
-   `attempt/PORT-1-step3bx-20260807T095500Z`. **`PORT-1` step 3b-x —
-   terminal-to-terminal limits; land the branch.**
-   Critical path; works on `attempt/PORT-1-step3bix-20260807T050000Z`
-   (`6caec85`). Execute the §7 step-3b-x plan, written this review:
-   read the terminal angles off the port facet tags (assert
-   `±arcsin(half_y/a) = ±0.175335` rad to 1e-6 before any solve), correct
-   `_gap_arc_quadrature` to integrate terminal to terminal, one σ×1 solve
-   per drive. **Anchor:** the retiling identity — corrected `V_gap` equals
-   3b-ix's wedge + buried sum (0.893625 / 0.893983 × ωM₁₂ on record) to
-   < 1e-3 — and agreement with the same-fixture reaction-route `Im Z₁₂` at
-   ≤ 3%. **Negative control:** on record — the wedge-only estimator is
-   ~45% off the reaction route, 15× the bound. **Gate dispositions are
-   pre-decided in the §7 plan** (ωM comparison stays printed and
-   known-issues-tracked; the refuted σ-monotonicity test is deleted; the
-   wire-quadrature bound gates the driven port) — execute, don't
-   re-adjudicate. **Cost:** standard, `-n 2`, `timeout 600`, ~150 s on
-   record. **Traps:** 3b-vii/3b-ix's list; buried segments are gap-tagged;
-   `‖Z‖` normalisation if reaction machinery is reused. **Does not
-   close:** `PORT-1` or known-issues 3. **Negative result:** a failed
-   retiling identity or > 3% reaction disagreement — park, report the
-   measured angles/ratios, stop; never tune.
+1. **`PORT-1` step 3b-xii — the box discriminator at padding 0.10; lands
+   the branch under disposition (i).** Critical path; the rescope of the
+   twice-parked 3b-x/3b-x-b, scoped this review — the previous item 1 may
+   not reappear unrescoped, and this is that rescope. Works on
+   `attempt/PORT-1-step3bxb-20260807T111036Z` (`b86861e`). Execute the §7
+   step-3b-xii plan: mesh-only probe of the **gapped** fixture at
+   `air_padding = 0.10` first (> ~230k cells ⇒ report and stop; expect
+   ~201k from the ungapped sweep's 1.132×), verify the branch's
+   padding-0.08 record byte-reproduces, then compute both routes at 0.10 —
+   corrected estimator and σ = 0 closed-footprint control. **Anchor and
+   dispositions are pre-decided in §7 — execute, don't adjudicate:**
+   deviation(0.10) ≤ 2.5% ⇒ the box owns the spread; re-size
+   `REACTION_CONSISTENCY_TOLERANCE` 0.03 → 0.05 with the measured numbers
+   in the comment (authorized by this review), re-run the 0.08 gate, all
+   green ⇒ land the branch lineage onto `main`, delete the branch.
+   Deviation > 2.5% ⇒ park, report both deviations and all four route
+   values, annotate §7 + known-issues 3. **Negative control:** on record —
+   wedge-only ratio 0.5352, 46% off, 9× even the re-sized bound. **Cost:**
+   standard, `-n 2`, two commands each `timeout 600` (~400 s + ~300 s;
+   3b-x-b's 0.08 run was 298.6 s at 178k cells). **Traps:** the §7 list —
+   FFCx lock, pytest `-s`, complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` first, buried segments gap-tagged, control drives
+   the closed wire ∪ gap-footprint union, known-issues 11 (gate the tags'
+   extreme reach, not ⟨y⟩), pinned digit-strings are 0.08-specific — print
+   the 0.10 numbers, pin nothing. **Does not close:** `PORT-1` or
+   known-issues 3; `MUTUAL_TOLERANCE` never moves. **Negative result:**
+   disposition (ii) is itself the finding — a real estimator bias the
+   wedge correction did not remove; park and report, never tune toward
+   (i).
 
-2. ✅ **done — 2026-08-07, 07:30 slot.** The box attribution holds as a
-   trend: deficits **−8.0324% / −5.0256% / −3.2733%** at padding
-   0.08 / 0.10 / 0.12, strictly monotone and all negative; the 0.08 → 0.12
-   move is **4.7591%** (band 3–7%, step 1's 5.20%), **52.9×** the h_far
-   control; padding 0.08 reproduces step 2f's landed −8.03% to 2.44e-05.
-   7 passed 153.7 s, `20260807T124038Z_PORT-1-step3bxi-gate.log`;
-   `MUTUAL_TOLERANCE` untouched, known-issues 3 unchanged. See the §7
-   step-3b-xi entry.
-   **`PORT-1` step 3b-xi — the PEC-box padding sweep.** Independent of
-   item 1: runs on `main`, ungapped fixture, landed step-1/2 machinery,
-   new test module. Execute the §7 step-3b-xi plan, written this review:
-   **mesh-only probe first** (cell counts at padding {0.08, 0.10, 0.12},
-   h_far 0.03; any count > ~250k ⇒ report and stop — 237 926 cells once
-   died in MUMPS at 180 s), then solve and report `Im Z₁₂/ωM₁₂` at each
-   padding, projected drive. **Anchor:** strictly monotone deficit
-   shrinkage, 0.08→0.12 delta in the 3–7% band around step 1's 5.20%.
-   **Negative control:** on record — h_far 0.02→0.03 moved 0.09%, 58×
-   smaller. **Cost:** heavy declared, `timeout 1200`, `-n 2`; ~2 solves ×
-   3 paddings at 20–60 s/solve (step 2c ran padding 0.12 in 167.7 s).
-   **Traps:** FFCx lock; step-2c's file is at the standard ceiling —
-   new module; `MUTUAL_TOLERANCE` never moves. **Does not close:**
-   known-issues 3. **Negative result:** a deficit that does not shrink
-   with padding kills the box attribution — report the three ratios,
-   annotate §7 + known-issues 3, stop; the escalation is the weekly
-   review's.
-
-3. ✅ **done — 2026-08-07, 09:00 slot.** Ships as `mesh:2`, dispatched
-   through the runner (`--list` + `-e mesh:2`, exit 0, 5 717 cells, 0.7 s;
-   `20260807T140515Z_EX-2-list.log`, `20260807T140554Z_EX-2.log`). The
-   `GEO-13` classification identity reproduces every digit of the record —
-   3 of 6 accepted, wall `1.111111e-04`, interior `9.999989e+01` — and the
-   partition identity is exact (`1.000000000000000`). One plan premise
-   corrected by measurement: the `(0.98, 1)` band is a *outer-wall*
-   statement (0.995260 / 0.998059 / 0.994172), not a per-tag one — the
-   inner cylinder is unresolved at these defaults (0.718170) and is gated
-   in closed form instead, its end caps equalling the inscribed heptagon
-   `(7/2π)·sin(2π/7)` to 1.11e-16. See the §7 `EX-2` entry.
-   **`EX-2` — the cylindrical phantom domain in ParaView.** Independent;
-   the §5.4 ramp entry for `GEO-13`'s closure. Execute the §7 `EX-2` plan,
-   written this review: `examples/meshing/02_cylindrical_phantom.py`,
-   combined-XDMF, closure logs must show **the runner** dispatching
-   (`--list` naming `mesh:2` + `-e mesh:2`) — the exact gap that cost
-   `EX-1` its first ✅. **Anchor:** the live two-sided classification
-   identity through the example path (3 of 6 accepted, wall
-   `1.111111e-04` ≤ 0.1, interior `9.999989e+01` ≥ 10, importing
-   `_WALL_TOL_FRACTION`) plus the signed volume band
-   (`V_mesh/V_analytic` in (0.98, 1) — inscribed, O(h²), printed).
-   **Negative control:** on record — the old predicate accepting 6 of 6
-   at `resolution = 0.09` (`20260807T033127Z_GEO-13-probe.log`). **Cost:**
-   standard, `timeout 180`, runner default `-n 2`. **Traps:** gmsh
-   `try/finally`; XDMF mesh-before-meshtags; allreduce before asserting.
-   **Does not close:** anything physics-side. **Negative result:**
-   margins differing from the `GEO-13` record are a regression finding —
-   do not ship, report measured vs logged, stop.
-
-4. **`MAT-4` step 3 — the averaging operator at 1 g / 10 g.** Independent;
-   no solve. Execute the §7 step-3 plan, written this review: impose the
+2. **`MAT-4` step 3 — the averaging operator at 1 g / 10 g.** Independent;
+   no solve. Execute the §7 step-3 plan, written the 03:00 review: impose the
    uniform field on a sphere sized for the standard (R = 0.03 m — the 1 g
    ball at 0.207 R, the 10 g ball at 0.446 R) and gate the operator at
    both masses. **Anchor:** `SAR_avg/SAR_point = 1` at both masses,
@@ -3666,7 +3679,7 @@ heavy-tier item besides item 2's declared ceiling.
    off 1 beyond budget at either mass — report both ratios + kernel mass
    error, annotate §7, stop.
 
-5. **`MAT-6` step 5 — wire resolution at fixed box (spare; the only
+3. **`MAT-6` step 5 — wire resolution at fixed box (spare; the only
    heavy item).** Independent. Execute the §7 step-5 plan, written
    2026-08-05: `h/r_wire ≥ 16` local refinement at W = 0.15 separates the
    two residual ΔX terms step 4 left entangled (box tail vs filamentary-
@@ -3690,12 +3703,13 @@ heavy-tier item besides item 2's declared ceiling.
 
 If the queue drains: **stop and journal.** Do **not** improvise gap-voltage
 ports on the birdcage itself or a B1+ chunk — both are deliberately held for
-a review to scope once 3b-x has landed the corrected estimator and 3b-xi has
-adjudicated the box residual; the terminal-to-terminal answer (0.8936 × ωM₁₂)
-is measured but not yet landed or gated, and porting the estimator to the
-birdcage before it lands would bake the wedge-limits defect in (also still
-open: whether `GEO-4`'s graded sizing is a birdcage prerequisite, per the
-0.7091 measurement).
+a review to scope once the corrected estimator has *landed* (3b-xii
+disposition (i)); 3b-xi has adjudicated the box residual, but the
+terminal-to-terminal answer (0.8945 × ωM₁₂) is still on the parked branch,
+ungated against its control, and porting the estimator to the birdcage
+before it lands would bake whatever 3b-xii finds into the birdcage (also
+still open: whether `GEO-4`'s graded sizing is a birdcage prerequisite, per
+the 0.7091 measurement).
 
 Every frequency-domain command needs `source /usr/local/bin/dolfinx-complex-mode`
 **and** `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest
