@@ -5131,3 +5131,119 @@ end to end for a *non-solving* example only, so the `mri:` group's
 complex-mode prefix (`run_examples.sh:191`) is still verified by inspection
 alone — if an audit ever wants that closed too, it is the same one-log remedy.
 
+## 2026-08-07T02:02Z — `PORT-1` step 3b-viii (§9 On-deck item 2) — **complete**
+
+**Slot.** Scheduled implementer run, 2026-08-06 21:00 CDT. Preflight clean:
+`git status` empty on `main`, container Up 33 hours. §9 item 1 (`EX-1` runner
+closure) was already struck through DONE by the 19:30 slot, so item 2 was the
+first open item — taken as written, no substitution.
+
+**What was asked.** Adjudicate the first of the two suspects left standing by
+step 3b-vii's negative result on the gap-voltage estimator families: is the
+`ωM₁₂` *reference* — the filamentary mutual inductance every `PORT-1` ratio is
+normalised by — wrong enough to explain `V_gap = 0.4937/0.4917 × ωM₁₂`? The
+plan queued it first because it is free (no solve, no mesh) and because the
+answer was *predicted*: step 2's reaction route agrees with this same reference
+at −9.35% field-level, with −9.36% attributable to the PEC box, so a legitimate
+finite-cross-section correction is bounded at ~10%.
+
+**What was built.** `tests/validation/test_mutual_inductance_reference.py`, one
+new standalone module, 7 tests, pure Python/scipy. Nothing under `src/` was
+touched and no existing test was modified.
+
+**Measured numbers** (log `20260807T020314Z_PORT-1-step3bviii-gate.log`,
+7 passed in **0.43 s** at `-n 1`, smoke tier, real build):
+
+1. *Two independent routes to one closed form.* The vector-potential route the
+   gates use (`mutual_inductance` → `circular_loop_vector_potential`) vs a
+   fresh elliptic-integral reimplementation of Maxwell's formula
+   `M = μ₀√(ab)[(2/k − k)K(k) − (2/k)E(k)]`, `k² = 4ab/((a+b)² + d²)`:
+
+       fixture d   (a=0.04, d=0.04)  M = 1.976313852319e-08 H   rel 1.507e-15
+       doubling 2d (d=0.08)          M = 5.674397048179e-09 H   rel 1.020e-15
+       near d/4    (d=0.01)          M = 7.551412300521e-08 H   rel 1.753e-16
+       far 4d      (d=0.16)          M = 1.039937984129e-09 H   rel 7.457e-14
+
+   against a 1e-9 gate. `ω·M = 1.241755 Ω` reproduces the value printed by the
+   step-1 box-sensitivity log to **3.093e-07**.
+
+2. *Vacuity control, added after the first run.* The plan named SciPy's
+   `m = k²` convention as the likeliest silent-wrong-reference trap, so that
+   mistake is now an executed control rather than a comment: passing the
+   modulus `k = 0.894427` where the parameter `m = 0.800000` belongs gives
+   `4.746062966215e-08 H` against the correct `1.976313852319e-08 H` — a
+   **140.1%** error, eleven orders above the 1e-9 gate that has to catch it.
+   Without it the two-route identity would prove only that both routes call the
+   same library.
+
+3. *The finite-cross-section correction.* Filament kernel averaged over both
+   minor discs at uniform current density (Gauss–Legendre in the minor radius
+   carrying the `s ds` Jacobian × periodic trapezoid in the minor angle,
+   normalised weights; the discs sit `d = 8 r_wire` apart, so no filament pair
+   coincides and the integrand is smooth):
+
+       (n_r, n_θ)   M_tube [H]              M_tube/M_fil
+       ( 4,  8)     1.985819921163e-08      1.004809999602
+       ( 6, 12)     1.985819906055e-08      1.004809991958
+       ( 8, 16)     1.985819906053e-08      1.004809991957
+       (10, 20)     1.985819906053e-08      1.004809991957
+
+   successive deltas 7.608e-09 → 8.899e-13 → **6.665e-16**, against the plan's
+   1e-6 convergence precondition. Result at `r/a = 0.125`:
+   **`M_tube/M_fil = 1.004809992`, a +0.4810% correction**;
+   `ωM_tube = 1.247727 Ω` vs `ωM_fil = 1.241755 Ω`.
+
+**The finding.** The reference is exonerated, and more strongly than the plan's
+ceiling required. 0.481% is two and a half orders below the factor 2 being
+hunted, and it carries the **wrong sign**: `M_tube > M_fil`, so adopting the
+corrected reference moves the gap-voltage ratio from 0.4937/0.4917 to
+0.4914/0.4894 × ωM — marginally *further* from 1, not closer. Two independent
+facts now agree the filamentary reference is sound (this calculation, and step
+2's −9.35% field-level agreement). No `× ωM₁₂` ratio anywhere in the port work
+is restated, and `MUTUAL_TOLERANCE` did not move.
+
+Uniform current density is a stated assumption, not a hidden one: it is the
+`δ ≳ r` limit, and the gapped fixture runs at `δ = 1.125 r_wire`, that limit's
+edge. It is also the conservative direction — a skin-concentrated distribution
+pushes current toward the surface, i.e. a *wider* spread of filament
+separations — so 0.481% is not an accidental floor. Recorded in the module
+docstring.
+
+**Cross-check beyond the plan.** The module is imported by nothing, but the
+`validation-complex` CI job collects `tests/validation`, so the file was also
+run under the complex build at `-n 2` with `tests/environment` first:
+`20260807T020439Z_PORT-1-step3bviii-complex.log`, **11 passed in 1.86 s**. No
+complex-mode collection or import hazard.
+
+**Logs.** `20260807T020243Z_PORT-1-step3bviii-probe.log` (6 passed, 1.56 s —
+the same gate before the vacuity control was added; kept because it is the
+pre-control run), `20260807T020314Z_PORT-1-step3bviii-gate.log` (7 passed,
+0.43 s, the record run), `20260807T020439Z_PORT-1-step3bviii-complex.log`
+(11 passed, 1.86 s, `-n 2`, complex build). Every number quoted above appears
+verbatim in the gate log.
+
+**Outcome.** Complete, §4-compliant: verification executed in-slot, assertions
+quantitative (a 1e-9 two-route identity, a 1e-6 quadrature convergence
+precondition, a 10% ceiling on the ratio), tier and elapsed time recorded, and
+the gate carries a live vacuity control. §7 step-3b-viii entry written with the
+numbers; §7 step-3b-ix annotated that no rescaling is warranted; known-issues 3
+gained a Progress 2026-08-07 row; §9 item 2 struck through DONE with its
+original text preserved; item 4's "benefits from item 2" clause replaced with
+item 2's actual answer. `PORT-1` stays 🟡 — this adjudicates one suspect and
+closes nothing. Nothing parked; `main` clean. Nothing was denied by the
+permission layer. Elapsed in the timebox: ~20 min, well inside the minute-45
+cutoff.
+
+**Next attempt hypothesis.** Item 3 (`GEO-13`) is next in queue order and is
+independent, but the *interesting* one is now item 4, `PORT-1` step 3b-ix: with
+the reference retired it carries the sole surviving named suspect, and its
+prediction is sharpened rather than merely inherited — if finite-σ terminal
+penetration is the mechanism, `V_wire` must supply very close to the whole
+missing half (`(V_gap + V_wire)/ωM₁₂ → 1` within ~10–15%), because there is no
+longer any reference slack to absorb a residual. Equally, if 3b-ix returns
+`V_wire` small and `V_gap` σ-flat, this slot has removed the last alternative
+explanation, so both named suspects die together and the escalation the 18:00
+review described — "what quantity a gap port should report", a weekly-review
+rescope of known-issues 3 — is triggered immediately rather than after another
+slot of hunting.
+

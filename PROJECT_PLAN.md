@@ -2757,6 +2757,50 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 > report (it would contradict the reaction-route agreement, and that
 > contradiction is the finding).
 >
+> **Step 3b-viii is ✅ 2026-08-07 (21:00 slot) — the reference is exonerated,
+> and the expected negative is the deliverable.**
+> `tests/validation/test_mutual_inductance_reference.py`, on `main`, green:
+> 7 passed in **0.43 s** at `-n 1`, smoke tier, real build, no solve and no
+> mesh (log `20260807T020314Z_PORT-1-step3bviii-gate.log`; the identical
+> pre-control run is `20260807T020243Z_PORT-1-step3bviii-probe.log`, 6 passed
+> in 1.56 s before the vacuity control was added).
+>
+> 1. **Two routes, one closed form.** The vector-potential route every
+>    `PORT-1` gate uses (`mutual_inductance` → `circular_loop_vector_potential`)
+>    and an independent elliptic-integral reimplementation of Maxwell's
+>    formula agree to **1.507e-15** relative at the fixture's `(a, d) =
+>    (0.04, 0.04)`, and to 1.02e-15 / 1.75e-16 / 7.46e-14 at `2d`, `d/4`, `4d`
+>    — round-off in two different transcendental evaluations, against a 1e-9
+>    gate. `ω·M_elliptic = 1.241755 Ω` reproduces the value printed by the
+>    step-1 box-sensitivity log to 3.1e-7.
+> 2. **The 1e-9 identity is not vacuous.** The plan named SciPy's `m = k²`
+>    convention as the likeliest way to get a silently-wrong reference, so
+>    that mistake is now a *control*: passing the modulus where the parameter
+>    belongs gives `4.746063e-08 H` against the correct `1.976314e-08 H`, a
+>    **140%** error — eleven orders above the gate that would have to catch it.
+> 3. **The finite-cross-section correction is 0.481%, and it has the wrong
+>    sign.** Averaging the filament kernel over both minor discs at uniform
+>    current density (Gauss–Legendre in the minor radius × periodic trapezoid
+>    in the minor angle; the discs are `d = 8·r_wire` apart, so the integrand
+>    is smooth) gives `M_tube = 1.985819906053e-08 H` against
+>    `M_fil = 1.976313852319e-08 H`, i.e. **`M_tube/M_fil = 1.004809992`**,
+>    converged to **6.7e-16** between the last two quadrature orders (deltas
+>    7.61e-09 → 8.90e-13 → 6.67e-16 over (4,8) … (10,20)). `ωM_tube =
+>    1.247727 Ω`. Uniform current density is the stated assumption (the
+>    `δ ≳ r` limit; the fixture sits at `δ = 1.125 r_wire`, its edge), and a
+>    skin-concentrated distribution would spread the current *further* out,
+>    not less, so 0.481% is not an accidental floor.
+>
+> **What this settles.** The correction is percent-scale exactly as the
+> ceiling predicted, and it is *positive*: a corrected reference makes the
+> gap-voltage deficit marginally **worse**, 0.4937/0.4917 → 0.4914/0.4894 ×
+> ωM. Two independent facts now agree that the filamentary reference is
+> sound — this calculation, and step 2's field-level `Im Z₁₂` at −9.35% with
+> −9.36% attributable to the PEC box. **The reference suspect is retired**,
+> and finite-σ terminal penetration (step 3b-ix) is the only named suspect
+> left for the factor 2. Recorded in known-issues 3's progress table.
+> `MUTUAL_TOLERANCE` unmoved; nothing under `src/` changed.
+>
 > **Step 3b-ix — the missing half is in the wire: loop-closure
 > decomposition + σ scaling (plan written 2026-08-06, 18:00 review).**
 > Continue on `attempt/PORT-1-step3bvii-20260806T170000Z` (`bc8c04e`) —
@@ -2793,8 +2837,10 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 > is small per-cell but the arc is long — do not assume it negligible,
 > that assumption is the thing under test; `MUTUAL_TOLERANCE` does not
 > move. **Does not close:** `PORT-1`; `Z₁₁` stays printed, never gated.
-> **Independent of 3b-viii landing** — but read its result first if it
-> has: a corrected reference rescales every `× ωM₁₂` ratio here.
+> **Independent of 3b-viii landing** — and 3b-viii has now landed
+> (2026-08-07): the reference is exonerated at +0.481%, so no rescaling of
+> the `× ωM₁₂` ratios below is warranted and none should be applied; this
+> step now carries the *only* surviving named suspect.
 > **Negative result:** if `V_wire` is small *and* `V_gap` is σ-flat, both
 > named suspects are dead — report all numbers, annotate this entry and
 > known-issues 3, park on the branch, stop; the follow-up (what quantity
@@ -3140,7 +3186,19 @@ and the only heavy-tier item.
    result:** if the `mesh:` branch does not dispatch, that is the finding —
    `EX-1` stays 🟡, report the runner failure, fix only the dispatch, stop.
 
-2. **`PORT-1` step 3b-viii — audit the `ωM₁₂` reference in closed form.**
+2. ~~**`PORT-1` step 3b-viii — audit the `ωM₁₂` reference in closed form.**~~
+   **DONE 2026-08-07, 21:00 slot.** The expected negative, delivered: the two
+   filament routes agree to 1.5e-15 (with a 140% modulus-convention vacuity
+   control), and the finite-cross-section correction at `r/a = 0.125` is
+   **`M_tube/M_fil = 1.004809992`, +0.481%**, converged to 6.7e-16 — and
+   *positive*, so it moves the gap-voltage deficit the wrong way (0.4937 →
+   0.4914 × ωM). The reference suspect is **retired**; step 3b-ix (item 4)
+   now carries the only surviving one. `tests/validation/test_mutual_inductance_reference.py`,
+   7 passed in 0.43 s at `-n 1`
+   (`20260807T020314Z_PORT-1-step3bviii-gate.log`); §7 and known-issues 3
+   updated. Original item text follows.
+
+   **`PORT-1` step 3b-viii — audit the `ωM₁₂` reference in closed form.**
    Critical path; **no solve, no mesh** — pure Python/scipy, smoke tier.
    Execute the §7 step-3b-viii plan, written this review: reimplement the
    coaxial-filament `M` via the elliptic-integral form and assert it
@@ -3196,9 +3254,10 @@ and the only heavy-tier item.
    `timeout 600`; mesh 37 s + ~23 s/solve on record → ~110 s + evaluation.
    **Traps:** all of 3b-vii's; wire-arc nodes verified wire-tagged via the
    DG0 indicator; find where `σ_wire` is set before sweeping;
-   `MUTUAL_TOLERANCE` does not move. Benefits from item 2's result (a
-   corrected reference rescales every ratio) but does not depend on it
-   landing. **Does not close:** `PORT-1`. **Negative result:** `V_wire`
+   `MUTUAL_TOLERANCE` does not move. Item 2 has landed and its answer is
+   **no rescaling** — the reference is exonerated at +0.481%, so every
+   `× ωM₁₂` ratio here stands as recorded, and this item now carries the
+   only surviving suspect. **Does not close:** `PORT-1`. **Negative result:** `V_wire`
    small *and* `V_gap` σ-flat kills both named suspects — report, annotate
    §7 + known-issues 3, park, stop; the rescope is the weekly review's.
 
