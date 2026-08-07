@@ -5686,3 +5686,89 @@ the whole story and the 3% bound survives on a bigger box; if they stay 3%
 apart there is a real estimator bias and the wedge correction was not the last
 one. That is ~1 extra solve on the parked 3b-x-b branch and would let a review
 choose between (a) and (b) on evidence rather than on judgement.
+
+---
+
+## 2026-08-07T14:00Z — `EX-2` — complete
+
+**Slot.** 09:00 CDT scheduled implementer run. Tree clean at preflight,
+container Up 45 h. §9 On-deck item 1 is 🟡 *blocked* (twice-failed `PORT-1`
+step 3b-x/3b-x-b, explicitly the review's to rescope before it may reappear)
+and item 2 is done, so this run took **item 3**, the first eligible item, per
+`implementer-run.md` step 2.
+
+**What was tried.** Authored `examples/meshing/02_cylindrical_phantom.py` per
+the §7 `EX-2` plan: `cylindrical_domain()` at generator defaults
+(`r_in = 0.01`, `r_out = 0.1`, `L = 0.2`, `resolution = 0.02`), combined-XDMF
+export of mesh + cell tags plus a second file for the facet groups, and the
+plan's two anchors as live assertions. Measurement first —
+`scripts/probes/ex2_probe.py` (new) sized the cost and, critically, measured
+the volume ratios *before* any band was written into the example.
+
+**Numbers.**
+
+* Anchor (1), the `GEO-13` classification identity, live through the example
+  path with `_WALL_TOL_FRACTION` imported from the generator:
+  `tol = 9.000000e-04`, **3 of 6** accepted, worst accepted
+  **1.111111e-04 × tol** (ceiling 0.1), nearest rejected
+  **9.999989e+01 × tol** (floor 10). Every digit matches
+  `20260807T033127Z_GEO-13-probe.log`. No regression.
+* Exact partition identity: `(V_inner + V_outer)/V_mesh = 1.000000000000000`.
+* Outer-wall inscription, all strictly < 1 and inside the plan's `(0.98, 1)`:
+  `V_mesh/cylinder = 0.995260198`, `V_outer/annulus = 0.998059093`,
+  `A_outer_boundary/(lateral + 2 caps) = 0.994172277`.
+* `V_inner/cylinder = 0.718169560` — **outside** the plan's band by a wide
+  margin; see below.
+* Inner end caps: `0.8710264` against the inscribed regular heptagon
+  `(7/2π)·sin(2π/7) = 0.8710264`, **1.11e-16 relative**.
+* Cost: 5 717 cells, mesh 0.7 s, example-internal 0.7 s, `-n 2`; standard
+  tier declared, nowhere near it.
+
+**The one plan premise the measurement contradicted.** The §7 plan asked for
+`V_mesh/V_analytic` inside `(0.98, 1)` as a *per-tag* check. That is an
+outer-wall statement: at the defaults `resolution` is **twice** `inner_radius`,
+so gmsh falls back to its 7-node minimum circle discretisation and the inner
+cylinder meshes as a heptagonal prism — a 28.2% volume deficit, not an O(h²)
+chordal one. Refining until the inner tag entered the band needs `h ≈ 0.0035`
+(~10⁶ cells), which leaves the standard tier and is not what the plan asked
+for. The band was therefore **not loosened to swallow the inner tag**; it is
+asserted where its premise holds (the three outer-wall ratios), and the inner
+tag is gated *harder* instead, in closed form: the cap-area identity above,
+plus a two-sided bracket on the inner volume between the degenerate-square
+floor `2/π = 0.636620` and the heptagonal-prism ceiling `0.871026`
+(measured 0.718170). Both ends are closed forms, neither is a pinned digit
+string.
+
+**A bound was tightened, not loosened.** The cap identity was first written at
+`rel < 1e-3`, sized from a hand-computed heptagon value. The first closure run
+(`20260807T140522Z_EX-2.log`) showed agreement at 1.11e-16 — the meshed cap
+*is* the inscribed heptagon, not merely near it — so `CAP_RTOL` was tightened
+to `1e-12` and the run repeated green (`20260807T140554Z_EX-2.log`).
+
+**Runner path on record**, which is the exact gap that cost `EX-1` its first
+✅: `--list` names `mesh:2 -> examples/meshing/02_cylindrical_phantom.py`
+(`20260807T140515Z_EX-2-list.log`) and `./run_examples.sh -e mesh:2 -n 2 -t 180`
+dispatches it, exit 0 (`20260807T140554Z_EX-2.log`). No change to
+`run_examples.sh` was needed — it globs `examples/meshing/*.py`.
+
+**Logs.** `20260807T140150Z_EX-2-probe.log`,
+`20260807T140258Z_EX-2-probe.log` (probe, +facet areas),
+`20260807T140515Z_EX-2-list.log`, `20260807T140522Z_EX-2.log` (first closure,
+1e-3 cap bound), `20260807T140554Z_EX-2.log` (final, 1e-12 cap bound).
+
+**Not done, deliberately.** No solve, no fields, no port quantities — `EX-2`
+is §5.4 inventory and closes nothing physics-side. No generator change: the
+`resolution`-vs-`inner_radius` coarseness is a *caller* property, and every
+caller in the repo passes its own resolution; flagging it in `cylindrical_domain`
+would be a `GEO-*` decision, not an example's. No known-issues changes; no
+denials; no unrelated failures.
+
+**Next attempt hypothesis.** Nothing follows for `EX-2`. Worth a review's
+attention, though: the inner cylinder being a 7-gon at default resolution is a
+property of *every* caller of `cylindrical_domain` that passes
+`resolution ≳ inner_radius` — `tests/solver/test_cylinder.py`,
+`test_time_harmonic_smoke.py` and `test_convergence_diagnostics.py` all call it,
+and a 28% volume error in the inner region is large enough to matter if any of
+them ever compares against a closed form on that subdomain. Cheap to check
+(their resolution arguments are one grep) and cheaper than discovering it inside
+a failed physics gate.

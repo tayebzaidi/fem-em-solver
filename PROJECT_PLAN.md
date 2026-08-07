@@ -3201,7 +3201,7 @@ fixture's cell/facet tags until `EX-1` landed
 | ID | Title | Status | Tier |
 |---|---|---|---|
 | `EX-1` | Two-torus port fixture: conforming mesh, cell and facet tags in ParaView | ✅ | standard |
-| `EX-2` | Cylindrical phantom domain: wall classification and tags in ParaView | ⬜ | standard |
+| `EX-2` | Cylindrical phantom domain: wall classification and tags in ParaView | ✅ | standard |
 
 > **✅ Restored 2026-08-07 (19:30 slot, §9 item 1).** The runner path is now
 > on record. `./run_examples.sh --list`
@@ -3299,7 +3299,51 @@ finding, not an example-authoring problem).
 
 **`EX-2` — the cylindrical phantom domain, meshed, classified and tagged, in
 ParaView (plan written 2026-08-07, 03:00 review; the §5.4 ramp entry for
-`GEO-13`'s closure).** New `examples/meshing/02_cylindrical_phantom.py` in
+`GEO-13`'s closure).**
+
+> **✅ Done 2026-08-07 (09:00 slot, §9 item 3).**
+> `examples/meshing/02_cylindrical_phantom.py` ships and dispatches through
+> the runner: `--list` names
+> `mesh:2 -> examples/meshing/02_cylindrical_phantom.py`
+> (`20260807T140515Z_EX-2-list.log`) and `./run_examples.sh -e mesh:2 -n 2 -t 180`
+> runs it (`20260807T140554Z_EX-2.log`, exit 0, 5 717 cells, 0.7 s
+> example-internal — the `EX-1` runner gap is not repeated).
+>
+> **Anchor (1) reproduces the `GEO-13` record exactly**, live through the
+> example path on its own CAD model with `_WALL_TOL_FRACTION` imported from
+> the generator: `tol = 9.000000e-04`, **3 of 6** surfaces accepted, worst
+> accepted **1.111111e-04 × tol** (ceiling 0.1), nearest rejected
+> **9.999989e+01 × tol** (floor 10) — every digit matching
+> `20260807T033127Z_GEO-13-probe.log`. No regression; the example asserts the
+> record to 1e-6 relative rather than re-deriving it.
+>
+> **Anchor (2), volumes, with one correction to the plan's premise.** The
+> exact partition identity holds — `(V_inner + V_outer)/V_mesh =
+> 1.000000000000000` — and the plan's `(0.98, 1)` inscription band holds
+> wherever the *outer* wall is what is being measured: `V_mesh/cylinder =
+> 0.995260198`, `V_outer/annulus = 0.998059093`, and (added here)
+> `A_outer_boundary/(lateral + 2 caps) = 0.994172277`, all strictly below 1.
+> **The plan's assumption that the band applies per tag is contradicted by
+> measurement**: at the defaults `resolution = 0.02` is *twice*
+> `inner_radius = 0.01`, so the inner cylinder is not resolved at all —
+> `V_inner/cylinder = 0.718169560`, a 28.2% deficit, nowhere near 0.98. That
+> is not a defect and not a tuning question; it is what these defaults mesh.
+> Rather than pin it, the example gates it in **closed form**: gmsh falls back
+> to its 7-node minimum circle discretisation, so the phantom is a heptagonal
+> prism, and the meshed inner end-cap area equals the inscribed regular
+> heptagon `(7/2π)·sin(2π/7) = 0.8710264` to **1.11e-16 relative** — an
+> identity at machine precision, asserted at 1e-12. The inner *volume* falls
+> further as the lateral triangulation cuts inside that prism, and is bracketed
+> two-sidedly between the degenerate-square floor `2/π = 0.636620` and that
+> heptagonal ceiling (measured 0.718170). Nothing was loosened: the cap bound
+> was *tightened* from the 1e-3 first written to 1e-12 once the first run
+> showed the agreement was exact (`20260807T140522Z_EX-2.log`).
+>
+> Measurement probe: `scripts/probes/ex2_probe.py`
+> (`20260807T140150Z_…`, `20260807T140258Z_EX-2-probe.log`). Closes nothing
+> physics-side; §5.4 inventory only.
+
+New `examples/meshing/02_cylindrical_phantom.py` in
 the existing `mesh:` group: build `cylindrical_domain()` at the defaults
 `GEO-13` swept, write combined-XDMF (mesh + cell tags, plus the facet file
 carrying the wall/interior classification), print a short report. Angle no
@@ -3576,7 +3620,18 @@ heavy-tier item besides item 2's declared ceiling.
    annotate §7 + known-issues 3, stop; the escalation is the weekly
    review's.
 
-3. **`EX-2` — the cylindrical phantom domain in ParaView.** Independent;
+3. ✅ **done — 2026-08-07, 09:00 slot.** Ships as `mesh:2`, dispatched
+   through the runner (`--list` + `-e mesh:2`, exit 0, 5 717 cells, 0.7 s;
+   `20260807T140515Z_EX-2-list.log`, `20260807T140554Z_EX-2.log`). The
+   `GEO-13` classification identity reproduces every digit of the record —
+   3 of 6 accepted, wall `1.111111e-04`, interior `9.999989e+01` — and the
+   partition identity is exact (`1.000000000000000`). One plan premise
+   corrected by measurement: the `(0.98, 1)` band is a *outer-wall*
+   statement (0.995260 / 0.998059 / 0.994172), not a per-tag one — the
+   inner cylinder is unresolved at these defaults (0.718170) and is gated
+   in closed form instead, its end caps equalling the inscribed heptagon
+   `(7/2π)·sin(2π/7)` to 1.11e-16. See the §7 `EX-2` entry.
+   **`EX-2` — the cylindrical phantom domain in ParaView.** Independent;
    the §5.4 ramp entry for `GEO-13`'s closure. Execute the §7 `EX-2` plan,
    written this review: `examples/meshing/02_cylindrical_phantom.py`,
    combined-XDMF, closure logs must show **the runner** dispatching
