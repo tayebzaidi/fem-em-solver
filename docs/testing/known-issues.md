@@ -327,7 +327,40 @@ margin is a different mechanism (tolerance coupled to `resolution`).
 | **Fix, not taken in-slot** | Widen both to `1e-6`, exactly as `GEO-10` did — the nearest interior faces sit at `9.000e-02` and `1.500e-01`, so `1e-6` keeps 5 orders of interior-face protection. `GEO-11`'s plan reserves any tolerance change for a review with the numbers in hand, which these are. Whoever takes it must add a facet-tag assertion at the same time: the defect was invisible precisely because nothing gates the group |
 | **Owned by** | `GEO-12` (commissioned by the 2026-08-06, 10:30 review — §9 item 2, with the tolerance decision taken); **discharged 2026-08-06, 13:30 implementer slot** — see the retirement note above |
 
-### 13. `cylindrical_domain`'s interior-face classification margin is 4.50× its tolerance
+### 13. ✅ RETIRED 2026-08-07 — `cylindrical_domain`'s classification margin was 4.50× its tolerance (`GEO-13`)
+
+The tolerance was the *mesh size*: `abs(r_max - outer_radius) < resolution`. It
+is now `0.01 × (outer_radius - inner_radius)` — a fraction of the radial gap,
+so the margin is a ratio of geometry to geometry and no longer moves when a
+caller coarsens the mesh. Measured across all four argument sets the repo calls
+the generator with (`20260807T033127Z_GEO-13-probe.log`): the fraction window
+where **both** sides of the `GEO-11` identity hold is `[1e-4, 0.05]`, and `0.01`
+sits in the middle of it. At defaults the interior margin goes
+**`4.499995×` → `99.99989×`** (floor `10×`) with the accepted side at
+`1.111111e-04×` (ceiling `0.1×`), and the classification itself is **unchanged**
+— still 3 of 6 surfaces, on every one of the four geometries.
+
+The failure mode the entry named is reproduced in the probe before the fix: at
+`resolution = 0.09` (the gap) the old predicate accepts **6 of 6** surfaces, the
+inner cylinder swept whole into `outer_boundary`.
+
+`tests/mesh/test_boundary_classification_margins.py` now **asserts** the
+two-sided margin for this fixture instead of pinning it — the pin and its skip
+are gone, and the file reads the fraction from the generator so the two cannot
+drift apart. All four fixtures in that file are now live: **5 passed in 1.05 s**
+(`20260807T033236Z_GEO-13-margins.log`, `-n 1`). Regression: whole `tests/mesh`
+**36 passed, 1 skipped in 110.34 s** (`20260807T033250Z_GEO-13-mesh-regression.log`,
+`-n 2`) — one skip fewer than the 35/2 on record, which is this fixture. Callers
+green at `-n 2`: `4 passed, 1 skipped in 0.97 s`
+(`20260807T033454Z_GEO-13-callers.log`; the skip is the complex-mode PEC test).
+
+**Live precondition, new:** the tolerance scales with the gap, so a gap below
+~`1e-4` m stops clearing the `1.000e-07` gmsh OCC bounding-box padding by 10×.
+Recorded at the use site in `io/mesh.py`; no caller is near it (smallest gap in
+the repo is `0.07` m).
+
+<details>
+<summary>Original entry</summary>
 
 | | |
 |---|---|
@@ -337,7 +370,9 @@ margin is a different mechanism (tolerance coupled to `resolution`).
 | **Live impact** | **None at defaults.** `tests/mesh/test_cylindrical_domain.py` passes; the classification is correct today, only under-separated |
 | **Verified at** | `main` as of `2cad984` |
 | **Fix, not taken in-slot** | Either decouple the tolerance from `resolution` (a geometric fraction of `outer_radius - inner_radius` is the natural choice) or document the sizing precondition. A per-fixture decision for a review, per the `GEO-11` plan |
-| **Owned by** | `GEO-13` (filed 2026-08-06, 18:00 review, with the geometric-fraction fix and the un-skip of the margin assertion; was `GEO-11`, whose sweep found it) |
+| **Owned by** | `GEO-13` (filed 2026-08-06, 18:00 review, with the geometric-fraction fix and the un-skip of the margin assertion; was `GEO-11`, whose sweep found it); **discharged 2026-08-07, 22:30 implementer slot** — see the retirement note above |
+
+</details>
 
 ### 7. ✅ RETIRED 2026-08-03 — birdcage mesh fails to generate (`GEO-9`, steps 1 + 2a + 2b)
 

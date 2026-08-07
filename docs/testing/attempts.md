@@ -5247,3 +5247,78 @@ review described — "what quantity a gap port should report", a weekly-review
 rescope of known-issues 3 — is triggered immediately rather than after another
 slot of hunting.
 
+
+---
+
+## 2026-08-07T03:26Z — `GEO-13` (22:30 implementer slot) — **complete**
+
+**Preflight.** `main` clean, container Up (34 h). §9 items 1 and 2 struck DONE
+by the two prior slots, so the first open item is 3: `GEO-13`.
+
+**What was tried.** The §7 plan verbatim. `scripts/probes/geo13_probe.py`
+(new, CAD-only, no meshing) replicates `cylindrical_domain`'s CAD stage and
+sweeps candidate tolerances over **all four argument sets the repo calls the
+generator with** — defaults / `test_cylinder` (gap `9.000000e-02`) and the
+time-harmonic / bc-selection pair (gap `7.000000e-02`) — reporting the
+`GEO-11` two-sided ratios for each fraction, for the outer *and* the inner
+predicate.
+
+**Measured** (`20260807T033127Z_GEO-13-probe.log`, smoke, 3 s):
+
+- The old `tol = resolution` fails on **every** geometry, not just at defaults:
+  interior ratios `4.499995`, `2.999997`, `2.333330`, `1.749998` — the last is
+  worse than the 4.50 known-issues 13 recorded, because `resolution = 0.04`
+  against a `0.07` gap.
+- The fraction window where both bounds hold is **`[1e-4, 0.05]`**, identical
+  on all four geometries (0.1 fails the interior floor at `9.999989`; `1e-5`
+  fails the wall ceiling at `1.111111e-01` — that edge is the `1.000e-07` OCC
+  padding, so the window is bounded by real physics on both sides, not by
+  arbitrary choice). **`0.01` taken** as its middle: interior `9.999989e+01`
+  vs floor `10`, wall `1.111111e-04` vs ceiling `0.1`.
+- **Negative control, executed rather than argued:** the old predicate at
+  `resolution = 0.09` (the gap itself) accepts **6 of 6** surfaces — the inner
+  cylinder swept whole into `outer_boundary`. known-issues 13 predicted this;
+  nothing had ever run it.
+- The new tolerance leaves the classification **bit-identical**: 3 of 6 accepted
+  on every geometry, for both the outer and the inner predicate. No landed
+  number could move, and the caller run confirms none did.
+
+**Landed.** `io/mesh.py`: module constant `_WALL_TOL_FRACTION = 0.01`;
+`tol = _WALL_TOL_FRACTION * (outer_radius - inner_radius)` replaces `resolution`
+in both predicates, with the sizing note and the new gap precondition
+(gap ≳ `1e-4` m to keep clearing the padding by 10×; smallest in repo is
+`0.07` m) at the use site. `tests/mesh/test_boundary_classification_margins.py`:
+the `cylindrical_domain` pin **and its `pytest.skip` are deleted**, replaced by
+the live two-sided assertion; the fixture imports `_WALL_TOL_FRACTION` from the
+generator so the gate cannot drift from the code it gates. All four fixtures in
+that file now assert; the `GEO-11` sweep is fully discharged.
+
+**Verification.** `20260807T033236Z_GEO-13-margins.log` — **5 passed in 1.05 s**,
+`-n 1`, smoke, no skips (was 4 passed 1 skipped).
+`20260807T033250Z_GEO-13-mesh-regression.log` — whole `tests/mesh` at `-n 2`,
+**36 passed, 1 skipped in 110.34 s**, against `GEO-12`'s 35/2 on record: one
+skip fewer, and it is this fixture. `20260807T033454Z_GEO-13-callers.log` —
+`tests/solver/test_cylinder.py` + `test_boundary_condition_selection.py` at
+`-n 2`, **4 passed, 1 skipped in 0.97 s** (the skip is the complex-mode PEC
+test in a real-mode run). No unrelated failure appeared, so no new
+known-issues entry.
+
+**Not done, deliberately.** No meshed wall-area gate, per the plan: the
+cylinder wall is curved and a linear-tet surface converges O(h²), so
+`GEO-12`'s exact planar identity does not transfer. No other fixture's
+tolerance moved.
+
+**Outcome.** Complete, §4-compliant: verification executed in-slot, the
+assertion is quantitative and two-sided (`≥ 10 × tol` rejected, `≤ 0.1 × tol`
+accepted) with a live negative control in the probe, tiers and elapsed times
+recorded. `GEO-13` ✅ in §7 with the closing note; known-issues 13 **retired**
+(original entry kept in a `<details>`); §9 item 3 struck through DONE with its
+text preserved. Nothing parked; `main` clean. Nothing was denied by the
+permission layer. Elapsed: ~35 min, inside the minute-45 cutoff.
+
+**Next attempt hypothesis.** Item 4, `PORT-1` step 3b-ix, unchanged and now the
+only queue item on the critical path: with the reference exonerated at +0.481%
+last slot, finite-σ terminal penetration must supply essentially the whole
+missing half via `V_wire`, or both named suspects die together. Nothing in this
+slot touches it — `GEO-13` was independent by construction, and the margins file
+it changed is not on any `PORT-1` path.

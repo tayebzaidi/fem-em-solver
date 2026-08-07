@@ -39,11 +39,14 @@ four fixtures did not meet the margin, and one of them failed the `GEO-10` way:
   meet the margin from either side — this file asserts it rather than pinning
   it, and ``tests/mesh/test_wall_boundary_tag_areas.py`` gates the meshed
   group the CAD stage here cannot see.
-* ``cylindrical_domain``'s interior margin is 4.50x its tolerance, below the
+* ``cylindrical_domain``'s interior margin was 4.50x its tolerance, below the
   10x floor — the inner cylinder's end caps sit at ``r = 0.01`` against an
-  outer wall at ``r = 0.1`` with ``tol = resolution = 0.02``.  known-issues 13,
-  still open: a different mechanism (tolerance coupled to ``resolution``), so
-  `GEO-12` deliberately did not bundle it.
+  outer wall at ``r = 0.1`` with ``tol = resolution = 0.02``.  That was a
+  different mechanism from the two above (tolerance coupled to *mesh size*,
+  not merely too tight), so `GEO-12` deliberately did not bundle it.
+  **Fixed by `GEO-13`** (2026-08-07): the tolerance is now
+  ``0.01 * (outer_radius - inner_radius)``, the margin is 100x, and this file
+  asserts it rather than pinning it — known-issues 13 retired.
 * ``two_torus_domain`` meets both sides, at exactly the 10x `GEO-10` designed.
 
 Per the `GEO-11` plan, this chunk moved no tolerance itself — that was a
@@ -180,11 +183,10 @@ def _build_sphere_in_box() -> tuple[Residual, float]:
 
 
 def _build_cylindrical() -> tuple[Residual, float]:
-    """``cylindrical_domain`` defaults; the wall test is ``< resolution``."""
+    """``cylindrical_domain`` defaults; the wall test is a fraction of the gap."""
     inner_radius = 0.01
     outer_radius = 0.1
     length = 0.2
-    resolution = 0.02
 
     gmsh.model.add("geo11_cylindrical")
     inner = gmsh.model.occ.addCylinder(0, 0, -length / 2, 0, 0, length, inner_radius)
@@ -192,8 +194,14 @@ def _build_cylindrical() -> tuple[Residual, float]:
     gmsh.model.occ.fragment([(3, outer)], [(3, inner)])
     gmsh.model.occ.synchronize()
 
-    # tol is the mesh resolution itself; see io/mesh.py ~line 682.
-    return _radial_residual(outer_radius), resolution
+    # tol as landed by `GEO-13`: was ``resolution`` (0.02), now a fraction of
+    # the radial gap.  Read from the generator so the two cannot drift apart.
+    from fem_em_solver.io.mesh import _WALL_TOL_FRACTION
+
+    return (
+        _radial_residual(outer_radius),
+        _WALL_TOL_FRACTION * (outer_radius - inner_radius),
+    )
 
 
 #: Measured 2026-08-06 (`20260806T140325Z_GEO-11-probe.log`).  Two fixtures do
@@ -227,12 +235,17 @@ EXPECTATIONS = {
         n_surfaces=7, n_accepted=6,
         wall_ratio=1.000000e-01, interior_ratio=1.500001e05, pin=None,
     ),
+    # Re-measured 2026-08-07 after `GEO-13` replaced ``tol = resolution``
+    # (0.02) with ``0.01 * (outer_radius - inner_radius)`` = 9.000e-04
+    # (`20260807T033127Z_GEO-13-probe.log`).  The classification is unchanged —
+    # still 3 of 6 — but the interior margin rises 4.499995x -> 99.99989x, and
+    # it no longer moves when a caller passes a coarser ``resolution``: the
+    # probe swept all four argument sets the repo calls the generator with and
+    # every one lands on these same two ratios (7e-4 tol on the r_out = 0.08
+    # geometry: wall 1.428571e-04, interior 9.999986e+01).
     "cylindrical_domain": dict(
         n_surfaces=6, n_accepted=3,
-        wall_ratio=5.000000e-06, interior_ratio=4.499995e00,
-        pin="known-issues 13 — interior margin 4.50x tol, below the 10x floor "
-            "(inner cylinder end caps at r=0.01 vs outer wall r=0.1, "
-            "tol = resolution = 0.02).",
+        wall_ratio=1.111111e-04, interior_ratio=9.999989e01, pin=None,
     ),
 }
 

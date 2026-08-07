@@ -578,7 +578,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-10` | **`two_torus_domain` never emits its `outer_boundary` facet tag** (known-issues 10) | ✅ *(2026-08-06, 00:00 run; known-issues 10 retired)* | standard |
 | `GEO-11` | **Boundary-classification margins under OCC bounding-box padding (CAD-only probe sweep)** | ✅ | smoke |
 | `GEO-12` | **Widen the two `1e-9` wall tolerances and gate the `outer_boundary` group** (known-issues 12) | ✅ | standard |
-| `GEO-13` | Decouple `cylindrical_domain`'s wall tolerance from `resolution` (known-issues 13) | ⬜ | standard |
+| `GEO-13` | **Decouple `cylindrical_domain`'s wall tolerance from `resolution`** (known-issues 13) | ✅ | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -937,6 +937,47 @@ numbers, revert nothing silently, stop.
 > (`20260806T183404Z_GEO-12-mesh-regression.log`). known-issues 12 retires with
 > this commit; **known-issues 13 stays open** as scoped.
 
+**`GEO-13` — decouple `cylindrical_domain`'s wall tolerance from `resolution`**
+✅ *(2026-08-07, 22:30 implementer slot; known-issues 13 retired)*
+> The tolerance is now `0.01 × (outer_radius − inner_radius)`, a fraction of the
+> radial gap, replacing `resolution` in **both** the outer- and inner-surface
+> predicates. The fraction was chosen from a sweep, not from the plan's
+> illustrative 0.05: `20260807T033127Z_GEO-13-probe.log` measured every
+> fraction in `{0.5 … 1e-5}` against all four argument sets the repo calls this
+> generator with (gaps `0.09` and `0.07`), and the window where **both** sides
+> of the `GEO-11` identity hold is `[1e-4, 0.05]` on all four — `0.01` is its
+> middle. **Anchor met, live:** at defaults the nearest rejected surface is
+> `9.999989e+01 × tol` (floor `10×`, was `4.499995×`) and the worst accepted is
+> `1.111111e-04 × tol` (ceiling `0.1×`); the r_out = 0.08 geometry lands on
+> `9.999986e+01` / `1.428571e-04`. The classification is **unchanged** — 3 of 6
+> surfaces on every geometry — so no landed number can move, and none did.
+> **Negative control reproduced in the same probe:** the old predicate at
+> `resolution = 0.09` accepts **6 of 6** surfaces, i.e. the inner cylinder swept
+> whole into `outer_boundary`, which is the failure known-issues 13 predicted
+> and nothing had ever executed.
+>
+> `tests/mesh/test_boundary_classification_margins.py`: the `cylindrical_domain`
+> pin and its `pytest.skip` are **gone**, replaced by the live two-sided
+> assertion — all four fixtures in that file now assert rather than pin, which
+> closes the `GEO-11` sweep. The test reads `_WALL_TOL_FRACTION` from
+> `io/mesh.py` so the gate and the generator cannot drift apart. **5 passed in
+> 1.05 s** (`20260807T033236Z_GEO-13-margins.log`, `-n 1`, smoke); whole
+> `tests/mesh` **36 passed, 1 skipped in 110.34 s**
+> (`20260807T033250Z_GEO-13-mesh-regression.log`, `-n 2`) — one skip fewer than
+> `GEO-12`'s 35/2, which is exactly this fixture going live; callers
+> `tests/solver/test_cylinder.py` + `test_boundary_condition_selection.py`
+> **4 passed, 1 skipped in 0.97 s** (`20260807T033454Z_GEO-13-callers.log`,
+> `-n 2`; the skip is the complex-mode PEC test). No meshed wall-area gate was
+> added, per the plan — the cylinder wall is curved and `GEO-12`'s exact planar
+> identity does not transfer.
+>
+> **New precondition, recorded at the use site:** the tolerance now scales with
+> the gap, so a gap below ~`1e-4` m stops clearing the `1.000e-07` OCC padding
+> by 10×. The smallest gap in the repo is `0.07` m.
+
+<details>
+<summary>Original plan (2026-08-06, 18:00 review)</summary>
+
 > **`GEO-13` — decouple `cylindrical_domain`'s wall tolerance from
 > `resolution` (plan written 2026-08-06, 18:00 review; fixes known-issues
 > 13).** The last open classification-margin defect, and the mechanism the
@@ -972,6 +1013,8 @@ numbers, revert nothing silently, stop.
 > tolerances do not move. **Negative result:** if no single fraction clears
 > both bounds at defaults, the radii are too close for a static fraction —
 > report the measured ratios, leave known-issues 13 open with them, stop.
+
+</details>
 
 ### TH — Time-harmonic Maxwell (Phase 2)
 
@@ -3219,7 +3262,18 @@ and the only heavy-tier item.
    record in §7 + known-issues 3); a large ratio contradicts the
    reaction-route agreement and that contradiction is the finding — stop.
 
-3. **`GEO-13` — decouple `cylindrical_domain`'s wall tolerance from
+3. ~~**`GEO-13` — decouple `cylindrical_domain`'s wall tolerance from
+   `resolution`.**~~ **DONE 2026-08-07, 22:30 slot.** `GEO-13` ✅, known-issues
+   13 retired. Tolerance is now `0.01 × (outer_radius − inner_radius)`, chosen
+   from a sweep over all four caller argument sets (window `[1e-4, 0.05]`,
+   `20260807T033127Z_GEO-13-probe.log`); interior margin `4.499995×` →
+   `9.999989e+01×`, wall `1.111111e-04×`, classification unchanged at 3 of 6.
+   The pin and skip are gone — all four fixtures in the margins file now assert
+   live (5 passed, 1.05 s); whole `tests/mesh` 36 passed / 1 skipped, 110.34 s.
+   The probe also reproduced the predicted failure: the old predicate at
+   `resolution = 0.09` accepts 6 of 6. Original item text follows.
+
+   **`GEO-13` — decouple `cylindrical_domain`'s wall tolerance from
    `resolution`.** Independent; fixes known-issues 13, the last open
    classification-margin defect. Execute the §7 `GEO-13` plan, written
    this review: replace `resolution` in the wall predicate with a

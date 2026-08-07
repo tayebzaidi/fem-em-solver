@@ -7,6 +7,11 @@ from mpi4py import MPI
 import dolfinx
 from dolfinx.io import gmshio
 
+#: `GEO-13`: ``cylindrical_domain``'s surface-classification tolerance, as a
+#: fraction of the radial gap ``outer_radius - inner_radius``.  Set from
+#: `20260807T033127Z_GEO-13-probe.log`; see the sizing note at its use site.
+_WALL_TOL_FRACTION = 0.01
+
 
 def _interface_facet_tags(
     mesh: "dolfinx.mesh.Mesh",
@@ -673,16 +678,30 @@ class MeshGenerator:
             outer_boundary_surfaces = []
             inner_boundary_surfaces = []
             
+            # `GEO-13`: the classification tolerance is a fraction of the radial
+            # gap, never `resolution` — a tolerance keyed to mesh size makes the
+            # margin geometry-over-mesh-size, and at `resolution >= 0.09` (the
+            # gap itself) the inner cylinder was swept into `outer_boundary`
+            # (known-issues 13, 6 of 6 surfaces accepted;
+            # `20260807T033127Z_GEO-13-probe.log`).  0.01 sits in the middle of
+            # the measured window [1e-4, 0.05] where both sides of the `GEO-11`
+            # two-sided margin hold on every geometry this generator is called
+            # with: worst accepted 1.1e-4 x tol (ceiling 0.1, the gmsh OCC
+            # bounding-box padding is 1.000e-07) and nearest rejected 1.0e+02 x
+            # tol (floor 10).  Precondition: the gap must exceed ~1e-4 m, or the
+            # tolerance stops clearing that padding by 10x.
+            tol = _WALL_TOL_FRACTION * (outer_radius - inner_radius)
+
             for surf in surfaces:
                 bbox = gmsh.model.getBoundingBox(surf[0], surf[1])
                 x_min, y_min, z_min, x_max, y_max, z_max = bbox
                 r_max = np.sqrt(max(x_max**2, y_max**2))
-                
+
                 # Outer cylindrical boundary
-                if abs(r_max - outer_radius) < resolution:
+                if abs(r_max - outer_radius) < tol:
                     outer_boundary_surfaces.append(surf[1])
                 # Inner cylinder surface
-                elif abs(r_max - inner_radius) < resolution:
+                elif abs(r_max - inner_radius) < tol:
                     inner_boundary_surfaces.append(surf[1])
             
             if outer_boundary_surfaces:
