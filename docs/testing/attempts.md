@@ -5418,3 +5418,104 @@ clears `MUTUAL_TOLERANCE` is then a question about the PEC box at padding 0.08
 — step 2c already attributes −9.36% to it — and the honest move is a padding
 sweep on this fixture rather than a tolerance edit. Nothing was denied by the
 permission layer.
+
+---
+
+## 2026-08-07T09:55Z — `PORT-1` step 3b-x — **incomplete** (parked)
+
+**Outcome.** `incomplete`. The step's substance landed and measures what the
+03:00 review predicted — the corrected terminal-to-terminal estimator gives
+**|Im Z₁₂|/ωM₁₂ = 0.894543 / 0.894022** against the wedge-limited 0.4937 that
+stood since 3b-vi, and **all 19 gates pass at `-n 2`** — but the plan's
+*second* anchor is not computable on this fixture, so the branch is not landed
+and `PORT-1` step 3b-x is not closed. Parked on
+**`attempt/PORT-1-step3bx-20260807T095500Z`** (`5a5980b`, on top of 3b-ix's
+lineage rebased onto `e814fa2`; `main` carries only this entry and the §7
+annotation).
+
+Standard tier, `-n 2`, `timeout 600`, one mesh at 178 055 cells: **271.8 s**
+— `20260807T094728Z_PORT-1-step3bx-gate2-n2.log` (19 passed). Two earlier runs
+on the branch: `20260807T093548Z_...-collect.log` (3 s) and
+`20260807T093604Z_...-gate-n2.log` / `20260807T093906Z_...-gate-n2.log`, both
+diagnostic and both quoted below.
+
+**1. The limits, and the gate that ties them to the mesh.**
+`_gap_arc_quadrature` and `_path_voltage` now integrate `(−φ_term, +φ_term)`
+with `φ_term = arcsin(half_y/a) = 0.175335123` rad, not the nominal wedge's
+`±0.15`. Before any solve the fixture reads the terminals off the 201/202
+facet tags and raises if they differ by ≥ 1e-6: measured deviation **5.6e-17 /
+2.8e-16 rad** on all four terminals.
+
+That gate did real work on its first form. Taking the *area-weighted mean* `⟨y⟩`
+over the tagged facets it measured **0.173852206 rad, 1.48e-3 short**
+(`20260807T093604Z`), and the cause is **known-issues 11**, not a geometry
+drift: at `GAP_OVERHANG = 2e-4 < 6e-4` the tube protrudes through the box's
+`−x` face, so the interface tag picks up lateral strips at `|y| < half_y`
+alongside the two planar discs. The gated quantity is therefore the
+interface's *extreme* reach (every strip point is inside the box; the box face
+is a plane and its nodes sit on it exactly); the contaminated mean is printed
+beside it as the measurement of known-issues 11 on this fixture.
+
+**2. Anchor (1), the retiling identity — green.** Corrected integral vs
+wedge + both buried segments off the same field at matched orders:
+**2.6704e-04 / 2.2937e-04**, tolerance 1e-3. 3b-ix's decomposition reproduces
+**bit for bit** (`V_gap` 0.493653 / 0.491744, `V_buried` 0.399972 / 0.402239,
+sum 0.896019 / 0.896299 × ωM₁₂), so only the limits moved between the two steps.
+
+**3. Quadrature, resolved not relaxed.** `PATH_QUADRATURE_GATE_ORDERS`
+129/257 → **2049/4097**. The wider span adds the buried end zones — where the
+terminal fields live, which is the whole reason the wedge lost 45% of the EMF —
+and the rule converged to 1.18e-3 at 257 over the wedge is not converged over
+the full span. Measured sweep (undriven port, gap 101 driven): 2.99e-3 (129),
+1.18e-3 (257), 6.29e-3 (513), 2.11e-3 (1025), 5.47e-4 (2049), **3.91e-4**
+(4097). `PATH_QUADRATURE_TOLERANCE` is unmoved at 1e-3 — 3b-vii's precedent,
+where the integrand was resolved rather than the bound moved. The closure
+segments keep 3b-ix's own orders (`GAP_SEGMENT_ORDERS`), which is why its
+record reproduces exactly.
+
+**4. Gate dispositions, executed as the review pre-decided.** The ωM₁₂
+comparison is printed and known-issues-3-tracked, not asserted (**−10.57%**,
+0.894283 × ωM₁₂ — 0.6 pp outside `MUTUAL_TOLERANCE`, as predicted);
+`test_gap_voltage_rises_monotonically_toward_the_emf_with_sigma` is deleted
+(its negative is on record in 3b-ix's log and entry);
+`test_wire_arc_quadrature_is_converged` keeps the 1e-2 bound, gates the driven
+port (5.67e-4 / 1.70e-4) and prints the undriven (2.01e-2).
+
+**5. The driven diagonal, newly print-only — a finding.** Under the corrected
+limits the *driven* port's path integral does not converge in the quadrature at
+all: |dV|/|V| = 2.6e-1, 1.7e-1, 1.6e-1, 5.4e-2, 3.2e-2, **2.3e-2 at 4097**,
+with `Im V` swinging 5.56–8.63 V. That path crosses the impressed source's own
+terminals. It is `Z₁₁`, which §7 already holds "printed, never gated", so the
+convergence precondition and the retiling identity gate the undriven port and
+print the driven one — the tolerances themselves are untouched. The mutual is
+built from the undriven port throughout.
+
+**6. Why this is parked: anchor (2) is not computable on this fixture.**
+Executed literally — the landed step-1/2 reaction route on this gapped fixture,
+off this solved field — it gives `Im Z_reaction = 4.5376e-3 Ω` against the
+estimator's 1.1108 Ω, a **factor 244**. The reason is structural and measured,
+not a defect in either route: the landed route drives an **impressed** current
+in a **non-conducting, closed** torus, so `−∫E·J₂` is the induced EMF; here the
+test region is a **σ = 800 S/m arc of an open loop**, whose interior field is
+the ohmic `E = J/σ`, and the integral returns **0.003654 × ωM₁₂ — 3b-ix's
+`V_wire` term (0.002394)**, not the mutual. A same-fixture reaction reference
+needs its own control solve with the wire tags set to σ = 0 and step 2f's
+`project_source` treatment of a source terminating on the arc ends. This slot
+did not buy that solve, and improvising the drive for an open arc inside the
+timebox would have been a coin flip, so the anchor is reported rather than
+guessed at. `REACTION_CONSISTENCY_TOLERANCE = 0.03` is unmoved and ungated.
+
+`MUTUAL_TOLERANCE` unmoved at 0.10. Nothing under `src/` changed this slot.
+The 3b-ix branch was rebased onto `e814fa2` before work started (its ref moved;
+content preserved, and `5a5980b`'s parent is that rebased lineage). Nothing was
+denied by the permission layer.
+
+**Next attempt hypothesis.** One solve closes this: on the *same* gapped mesh,
+solve once with `material_map` σ = 0 on both wire tags and an impressed
+azimuthal current in wire 1 (`project_source` per step 2f — the arc is open, so
+the source terminates on the end faces exactly as `_gap_drive` does), then
+`Z₂₁ = −∫E·J₂/(I₁I₂)` over wire 2 is the same-fixture reaction reference the
+plan wanted, and the corrected 0.8945 can be gated against it at 3%. Cost:
+mesh is already built in-fixture, one extra solve ≈ 25 s, so ~300 s total —
+still standard tier. If that lands, the branch lands with it; the ωM₁₂ residual
+(−10.57%) remains 3b-xi's question, not this one's.

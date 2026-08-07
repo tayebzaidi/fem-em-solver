@@ -3023,6 +3023,48 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 > the same solve is a genuine estimator defect that 3b-ix's closure could
 > not see — park, report, do not tune.
 >
+> **Step 3b-x is 🟡 2026-08-07 (04:30 slot) — the correction works and is
+> gated; the plan's second anchor turns out not to exist on this fixture.**
+> Parked on `attempt/PORT-1-step3bx-20260807T095500Z` (`5a5980b`; 3b-vi →
+> 3b-ix rebased onto `e814fa2`, then this step on top). One mesh, 178 055
+> cells, `-n 2`, `timeout 600`, **271.8 s, all 19 gates green** —
+> `20260807T094728Z_PORT-1-step3bx-gate2-n2.log`.
+>
+> 1. **Terminal to terminal, gated to the mesh.** The estimator integrates
+>    `(−φ_term, +φ_term)`, `φ_term = arcsin(half_y/a)`, and the fixture reads
+>    the terminals off the 201/202 facet tags and raises before any solve on a
+>    ≥ 1e-6 mismatch: measured **5.6e-17 / 2.8e-16 rad** on all four. The
+>    gate's first form used the area-weighted `⟨y⟩` and measured 1.48e-3
+>    short — that is **known-issues 11** (lateral strips in the tag at
+>    `gap_overhang = 2e-4`), so the gated quantity is the interface's extreme
+>    reach and the contaminated mean is printed beside it.
+> 2. **The corrected port voltage is 0.894543 / 0.894022 × ωM₁₂**, against
+>    0.4937 wedge-limited. The retiling identity (anchor 1) holds at
+>    **2.67e-4 / 2.29e-4** against 1e-3, and 3b-ix's decomposition reproduces
+>    bit for bit — only the limits moved. Against the closed form the mutual
+>    is **−10.57%**, printed and known-issues-3-tracked as this entry
+>    pre-decided.
+> 3. **Quadrature resolved, not relaxed.** `PATH_QUADRATURE_GATE_ORDERS`
+>    129/257 → 2049/4097 (the wider span adds the buried end zones; the sweep
+>    runs 2.99e-3 → 3.91e-4 across 129 → 4097). `PATH_QUADRATURE_TOLERANCE`
+>    and `MUTUAL_TOLERANCE` are unmoved; the closure segments keep 3b-ix's
+>    orders. Newly print-only, on the standing "`Z₁₁` stays printed" rule:
+>    the **driven** diagonal's path integral does not converge at all under
+>    the new limits (2.3e-2 at 4097) — its path crosses the impressed
+>    source's own terminals. The mutual is the undriven port throughout.
+> 4. **Why it is parked.** Anchor (2) executed literally reads
+>    `4.5376e-3 Ω` against the estimator's `1.1108 Ω`, a factor 244, and the
+>    cause is that the landed reaction route drives an impressed current in a
+>    **non-conducting closed** torus while this fixture's test region is a
+>    **σ = 800 S/m arc of an open loop** — so `−∫E·J₂` returns the ohmic
+>    `V_wire` term (0.003654 vs 3b-ix's 0.002394 × ωM₁₂), not the mutual.
+>    Not an estimator defect and not tunable: the anchor needs a control solve
+>    the slot did not buy (σ = 0 on the wire tags, impressed azimuthal drive
+>    in wire 1, `project_source` per step 2f), ≈ 25 s on the same mesh. Step
+>    **3b-x-b** is that solve plus the ≤ 3% gate, and it lands the branch.
+>    `REACTION_CONSISTENCY_TOLERANCE = 0.03` is unmoved and ungated;
+>    nothing under `src/` changed.
+>
 > **Step 3b-xi — the PEC-box padding sweep** *(scoped 2026-08-07, 03:00
 > review; §9 item 2; independent of 3b-x — runs on `main`'s ungapped
 > fixture with the landed step-1/2 machinery)*. The box attribution rests
@@ -3407,7 +3449,14 @@ but does not depend on it landing); item 3 is a meshing-only example; item
 4 is an operator gate with no solve; item 5 is the spare and the only
 heavy-tier item besides item 2's declared ceiling.
 
-1. **`PORT-1` step 3b-x — terminal-to-terminal limits; land the branch.**
+1. 🟡 **attempted 2026-08-07, 04:30 slot — not landed; successor is step
+   3b-x-b, one control solve** (see the §7 3b-x entry): the correction works
+   (0.894543 / 0.894022 × ωM₁₂, retiling identity 2.67e-4 / 2.29e-4 against
+   1e-3, all 19 gates green in 271.8 s), but anchor (2) is not computable on
+   this fixture — the landed reaction route needs a non-conducting closed
+   loop, and here it reads the ohmic `V_wire` term. Parked on
+   `attempt/PORT-1-step3bx-20260807T095500Z`. **`PORT-1` step 3b-x —
+   terminal-to-terminal limits; land the branch.**
    Critical path; works on `attempt/PORT-1-step3bix-20260807T050000Z`
    (`6caec85`). Execute the §7 step-3b-x plan, written this review:
    read the terminal angles off the port facet tags (assert

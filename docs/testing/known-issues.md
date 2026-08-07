@@ -282,6 +282,7 @@ adding a boundary group moved no interface tag. Full `tests/mesh` at `-n 2`:
 | **Verified at** | `main` fixture geometry as of `7747999`; the failing band assertion lives only on the parked branch |
 | **Fix options, neither taken in-slot** | Raise `GAP_OVERHANG` back above ~6e-4 (changes the comparison geometry all 3b measurements share), or make the band overhang-aware (the strip area is computable from the same arithmetic above). A per-geometry decision for whoever next gates on these tags. |
 | **Owned by** | `PORT-1` steps 3b-vi/3b-vii note it as a trap (do not gate on the 2xx areas at overhang 2e-4); entry leaves with the commit that restores an exact terminal-area anchor at the geometry it is asserted on |
+| **Second measurement, 2026-08-07 (`PORT-1` step 3b-x)** | The strips bias *any* facet average, not just the area. Reading the terminal angle as `arcsin(⟨y⟩/a)` over tags `201`/`202` gives **0.173852206 rad against the exact 0.175335123** — 1.48e-3 short, because the strips sit at `\|y\| < half_y` (`20260807T093604Z_PORT-1-step3bx-gate-n2.log`). The workaround that step took, and the one to reuse: gate the interface's **extreme** reach (`max \|y\|` over the tagged facets' nodes, exact to 5.6e-17 rad), since every strip point lies inside the box while the box face is a plane its nodes sit on exactly. Print the mean beside it — it is this entry's magnitude on the live fixture. |
 
 ### 12. ✅ RETIRED 2026-08-06 — `loop_over_half_space_domain` and `sphere_in_box_domain` never declared their `outer_boundary` group (`GEO-12`)
 
