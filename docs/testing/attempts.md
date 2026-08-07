@@ -5772,3 +5772,92 @@ and a 28% volume error in the inner region is large enough to matter if any of
 them ever compares against a closed form on that subdomain. Cheap to check
 (their resolution arguments are one grep) and cheaper than discovering it inside
 a failed physics gate.
+
+## 2026-08-07T17:00Z — `PORT-1` step 3b-xii — **incomplete** (parked): the box
+## moves both routes together, so the 3% residual is the estimator, not truncation
+
+**Outcome:** incomplete — **disposition (ii)**, which the 10:30 review
+pre-decided as a legitimate finding rather than a failure. Parked on
+`attempt/PORT-1-step3bxii-20260807T170000Z` (`87bf35d`), which carries the full
+3b-ix → 3b-x-b lineage plus this step. `main` clean; nothing under `src/`
+changed; no tolerance moved.
+
+**Queue item:** §9 item 1, taken as the first open item. Preflight clean, one
+container Up, no `recovered/*` branches.
+
+**Branch handling, worth a note for the review.** The item pointed at
+`attempt/PORT-1-step3bxb-20260807T111036Z` (`b86861e`), which forked from
+`e814fa2` and so predates `main`'s 3b-xi and `EX-2` commits. Rather than rebase
+three wip commits through their PROJECT_PLAN conflicts, I verified that `main`
+had **not** touched any file the branch changes under `src/` or `tests/`
+(`git log e814fa2..main -- src/fem_em_solver/io/mesh.py …` returns only the two
+probe-script additions), then rebuilt the lineage's code content on a fresh
+branch off `main`. The new branch is therefore `main` + the whole 3b-vi → 3b-xii
+code lineage, with no doc-history conflicts; `attempt/PORT-1-step3bxb-…` is now
+a strict content ancestor and the review may dispose of it.
+
+**What was tried.** The plan's mesh-only probe first
+(`scripts/probes/port1_step3bxii_probe.py`;
+`20260807T170143Z_PORT-1-step3bxii-probe.log`, 59 s): the **gapped** fixture at
+`air_padding = 0.10` meshes at **194 985 cells**, 1.0951× the 178 055 at 0.08
+and comfortably under the 230 000 stop rule (the ungapped sweep's 1.132× was the
+right expectation). Padding 0.08 re-meshed at **exactly 178 055** with the same
+cell and facet tag sets, so the fixture identity anchor holds at the mesh level
+before anything physical ran.
+
+Then the discriminator itself. I gave `_solve_gap_ports` an `air_padding`
+argument defaulting to the landed 0.08 and put the new module
+(`tests/validation/test_port_gap_voltage_padding.py`) on top of it, so both
+paddings drive **identical** machinery and a difference between them can only be
+the box. The module pins no digit-strings — every one in
+`test_port_gap_voltage_impedance.py` is 0.08-specific, as the plan warned — and
+gates only the deviation. `-n 2`, standard tier, `timeout 600`, **353 s, 5
+passed + the discriminator red**
+(`20260807T170430Z_PORT-1-step3bxii-disc-n2.log`).
+
+**Measured numbers — all four route values, as the plan requires:**
+
+| padding | estimator (× ωM₁₂) | σ = 0 control | deviation |
+|---|---|---|---|
+| 0.08 m | 0.894543 / 0.894022 | 0.922423 | −3.0224e-02 |
+| 0.10 m | **0.924103 / 0.923075** | **0.952868** | **−3.0188e-02 / −3.1267e-02** |
+
+Enlarging the box moved the estimator **+2.956 pp** and the control **+3.045
+pp** — both routes together, by nearly the same amount — leaving their
+difference at 3.02–3.13% against the pre-decided 2.5% threshold. The move off
+the 0.08 record is **−0.104 pp**: the wrong direction, and 5× smaller than the
+0.5 pp disposition (i) required.
+
+**Why this is a discriminator and not a null result.** The box demonstrably
+worked. This fixture's σ = 0 control reads 0.952868 at padding 0.10 against
+3b-xi's *ungapped* reaction route at 0.949744 on the same padding, and 0.922423
+against 0.919676 at padding 0.08 — a stable +0.27 / +0.31 pp gapped/ungapped
+offset under enlargement. So the truncation residual behaved exactly as 3b-xi
+measured it; what it did not do is close the gap **between** the two routes.
+Negative control, recomputed against this box's own reference rather than
+quoted forward: the uncorrected wedge-only estimator gives ratio 0.5181,
+deviation −0.4819, 15× the threshold — the gate is not passing everything.
+
+**Not tuned.** `REACTION_CONSISTENCY_TOLERANCE` stays at 0.03. The review
+authorized the re-size to 0.05 *iff* the routes converged under box enlargement;
+they did not, so it was not taken. `MUTUAL_TOLERANCE` unmoved at 0.10. The
+ωM₁₂ residual stays printed and tracked. No symbol flips, no porting to the
+birdcage, `PORT-1` and known-issues 3 both still open (3 annotated with the
+full measurement).
+
+**Hypothesis for the next attempt.** Three candidate owners of the ~3% have now
+been measured and excluded — the wedge integration limits (3b-x), the `ωM₁₂`
+reference (3b-viii), and the PEC truncation box (this step). One structural
+difference between the two routes survives: the production loop is **gapped and
+σ = 800 S/m**, the control's is **closed and lossless**. The discriminating
+measurement is a σ sweep *on the control side* — drive the closed wire ∪ gap
+footprint at the production σ (or, cheaper and on the same mesh, re-read the
+production estimator as σ → 0 while keeping the gap) — which separates
+gapped-vs-closed from lossy-vs-lossless in one solve each. If the deviation
+tracks σ, the estimator is picking up an ohmic term the mutual should not
+carry and the fix is in the voltage definition; if it tracks the gap instead,
+the two routes are measuring genuinely different quantities and the *control*
+is the wrong reference, not the estimator. Either way the branch should not
+land until one of those is on record. **Not a fourth blind attempt at the same
+comparison** — the review should scope this before it re-enters the queue, and
+§9 item 1 is marked closed so the 13:30 run takes item 2 (`MAT-4` step 3).

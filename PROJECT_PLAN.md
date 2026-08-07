@@ -3157,8 +3157,53 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 >   untouched at 10%, as the plan required regardless of outcome; known-issues
 >   3 unchanged; no symbol flips.
 >
-> * **Step 3b-xii — the box discriminator at padding 0.10, with both
->   dispositions pre-decided** *(scoped 2026-08-07 10:30 review — the rescope
+> * **Step 3b-xii — the box discriminator at padding 0.10** 🟡 *(executed
+>   2026-08-07 12:00 run; **disposition (ii)** — parked on
+>   `attempt/PORT-1-step3bxii-20260807T170000Z` (`87bf35d`), which carries the
+>   full 3b-ix → 3b-x-b lineage plus this step)*. **The box is not the
+>   residual.** Probe first, as the plan required: the gapped fixture meshes at
+>   **194 985 cells** at `air_padding = 0.10` (1.0951× the 178 055 at 0.08,
+>   under the 230 000 stop rule), and padding 0.08 re-meshed at **exactly**
+>   178 055 — mesh-level fixture identity
+>   (`20260807T170143Z_PORT-1-step3bxii-probe.log`, 59 s). The discriminator
+>   then ran both routes on the enlarged box through the *same*
+>   `_solve_gap_ports` the 0.08 gates use (`-n 2`, standard, **353 s**, 5
+>   passed + the discriminator red,
+>   `20260807T170430Z_PORT-1-step3bxii-disc-n2.log`):
+>
+>   | padding | estimator (× ωM₁₂) | σ = 0 control | deviation |
+>   |---|---|---|---|
+>   | 0.08 m | 0.894543 / 0.894022 | 0.922423 | **−3.0224e-02** |
+>   | 0.10 m | 0.924103 / 0.923075 | 0.952868 | **−3.0188e-02 / −3.1267e-02** |
+>
+>   Enlarging the box moved the estimator **+2.956 pp** and the control
+>   **+3.045 pp** — *both routes together* — so their difference stayed at
+>   3.02–3.13% against the pre-decided 2.5% threshold: a move of **−0.104 pp**,
+>   the wrong direction and 5× smaller than the 0.5 pp (i) demanded. The box
+>   itself behaved exactly as 3b-xi measured, which is what makes this a
+>   discriminator rather than a null result: the σ = 0 control reads 0.952868
+>   at padding 0.10 against 3b-xi's *ungapped* reaction route at 0.949744, and
+>   0.922423 against 0.919676 at 0.08 — a stable +0.27/+0.31 pp gapped/ungapped
+>   offset under enlargement. Negative control, recomputed against this box's
+>   own reference rather than quoted: the uncorrected wedge-only estimator
+>   gives ratio 0.5181, deviation −0.4819, **15×** the threshold.
+>   **Not tuned:** `REACTION_CONSISTENCY_TOLERANCE` stays at **0.03**. The
+>   review authorized the re-size to 0.05 *iff* the routes converged; they did
+>   not, so it is not taken. `MUTUAL_TOLERANCE` unmoved; nothing under `src/`
+>   changed; known-issues 3 annotated. **What it leaves for a review:** the two
+>   routes differ by ~3% for a reason that is neither truncation (this step)
+>   nor the wedge limits (3b-x). The one remaining structural difference
+>   between them is that the production loop is **gapped and σ = 800 S/m**
+>   while the control's is **closed and lossless** — 3b-x-b's disposition (b)
+>   ("explain the 2.8 pp first"), now the only surviving reading and no longer
+>   competing with a box hypothesis. The successor a review must scope is a σ
+>   sweep *on the control* (drive the closed footprint at the production σ, or
+>   the production loop at σ → 0) to isolate which of gap-vs-closed and
+>   lossy-vs-lossless carries the 3%; the branch does **not** land until that
+>   is answered, and the estimator is not ported to the birdcage before it
+>   lands. *(Original plan, 10:30 review, retained below for the record.)*
+>
+> * **Step 3b-xii — plan as scoped** *(scoped 2026-08-07 10:30 review — the rescope
 >   of the twice-parked 3b-x/3b-x-b; works on
 >   `attempt/PORT-1-step3bxb-20260807T111036Z` (`b86861e`), which carries the
 >   full 3b-vi → 3b-x-b lineage)*. The 3% consistency gate is red by 0.02 pp
@@ -3632,8 +3677,21 @@ operator gate on `main` with no solve, item 3 is the heavy spare. If a
 fourth run finds the queue drained, the drain instruction below applies:
 stop and journal.
 
-1. **`PORT-1` step 3b-xii — the box discriminator at padding 0.10; lands
-   the branch under disposition (i).** Critical path; the rescope of the
+1. ~~**`PORT-1` step 3b-xii — the box discriminator at padding 0.10; lands
+   the branch under disposition (i).**~~ — **executed 2026-08-07 12:00 run;
+   the measurement is in and it is disposition (ii)**, so the branch does
+   *not* land and this item is closed for the queue. Estimator +2.956 pp and
+   control +3.045 pp under box enlargement, deviation 3.02% → 3.13%
+   (threshold 2.5%): the box moves both routes together and owns none of the
+   difference. `REACTION_CONSISTENCY_TOLERANCE` stays 0.03 — the conditional
+   re-size was not triggered. Full numbers in the §7 3b-xii entry and
+   known-issues 3; branch `attempt/PORT-1-step3bxii-20260807T170000Z`
+   (`87bf35d`). **The successor is the review's to scope** — a σ sweep on
+   the σ = 0 control to separate gapped-vs-closed from lossy-vs-lossless,
+   the only structural difference left between the two routes. Do not
+   re-attempt 3b-xii; the next run takes item 2. *(Original scoping below.)*
+
+   Critical path; the rescope of the
    twice-parked 3b-x/3b-x-b, scoped this review — the previous item 1 may
    not reappear unrescoped, and this is that rescope. Works on
    `attempt/PORT-1-step3bxb-20260807T111036Z` (`b86861e`). Execute the §7
