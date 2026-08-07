@@ -628,10 +628,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#12-loop_over_half_space_domain-and-sphere_in_box_domain-never-declare-their-outer_boundary-group" class="md-nav__link">
+  <a href="#12-retired-2026-08-06-loop_over_half_space_domain-and-sphere_in_box_domain-never-declared-their-outer_boundary-group-geo-12" class="md-nav__link">
     <span class="md-ellipsis">
       
-        12. loop_over_half_space_domain and sphere_in_box_domain never declare their outer_boundary group
+        12. ✅ RETIRED 2026-08-06 — loop_over_half_space_domain and sphere_in_box_domain never declared their outer_boundary group (GEO-12)
       
     </span>
   </a>
@@ -639,10 +639,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#13-cylindrical_domains-interior-face-classification-margin-is-450-its-tolerance" class="md-nav__link">
+  <a href="#13-retired-2026-08-07-cylindrical_domains-classification-margin-was-450-its-tolerance-geo-13" class="md-nav__link">
     <span class="md-ellipsis">
       
-        13. cylindrical_domain's interior-face classification margin is 4.50× its tolerance
+        13. ✅ RETIRED 2026-08-07 — cylindrical_domain's classification margin was 4.50× its tolerance (GEO-13)
       
     </span>
   </a>
@@ -991,10 +991,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#12-loop_over_half_space_domain-and-sphere_in_box_domain-never-declare-their-outer_boundary-group" class="md-nav__link">
+  <a href="#12-retired-2026-08-06-loop_over_half_space_domain-and-sphere_in_box_domain-never-declared-their-outer_boundary-group-geo-12" class="md-nav__link">
     <span class="md-ellipsis">
       
-        12. loop_over_half_space_domain and sphere_in_box_domain never declare their outer_boundary group
+        12. ✅ RETIRED 2026-08-06 — loop_over_half_space_domain and sphere_in_box_domain never declared their outer_boundary group (GEO-12)
       
     </span>
   </a>
@@ -1002,10 +1002,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#13-cylindrical_domains-interior-face-classification-margin-is-450-its-tolerance" class="md-nav__link">
+  <a href="#13-retired-2026-08-07-cylindrical_domains-classification-margin-was-450-its-tolerance-geo-13" class="md-nav__link">
     <span class="md-ellipsis">
       
-        13. cylindrical_domain's interior-face classification margin is 4.50× its tolerance
+        13. ✅ RETIRED 2026-08-07 — cylindrical_domain's classification margin was 4.50× its tolerance (GEO-13)
       
     </span>
   </a>
@@ -1260,6 +1260,22 @@ them by number.</p>
 <tr>
 <td><strong>Progress 2026-08-06 (2)</strong></td>
 <td>Step 3b-vi ran the tangential path integral — <code>V = −∫E·t̂ dl</code> along the torus centreline arc through the gap, Gauss–Legendre nodes strictly interior to the arc, sampled via <code>post.evaluation.evaluate_vector_field_parallel</code> — and it is <strong>unresolved, not refuted</strong> (parked on <code>attempt/PORT-1-step3bvi-20260806T094500Z</code>, <code>ee5f0cb</code>; logs <code>20260806T093603Z_PORT-1-step3bvi-gate-n2.log</code> and <code>20260806T093808Z_PORT-1-step3bvi-quadrature-sweep-n2.log</code>, 4 failed / 4 passed, 136.13 s at <code>-n 2</code>). Value, off one solve: path <strong>0.468933 / 0.499728</strong> × ωM₁₂ against facet <code>4.802 / 4.889</code>, full-box <code>0.332</code>, tube-shadow <code>0.763 / 0.814</code> — a <em>third</em> distinct answer, below the shadow family, at −51.6% with reciprocity <code>6.3e-2</code>. But the plan's own quadrature precondition fails first: the proposed <code>(33, 65)</code> node pair disagrees by <code>1.07e-1</code>, and the sequence extended to 4097 nodes converges only at <code>O(1/n)</code> to a <code>~1e-3</code> plateau — because N1curl makes only the <em>facet</em>-tangential component continuous, the arc's tangent is not facet-tangential, and with <code>h_wire = 2.5e-3</code> against arc length <code>a·g = 1.2e-2</code> only ~5 cells span the path. Four estimator families now give four answers spanning a factor 15 on one solved field. The successor is <strong>arc refinement, not more quadrature nodes</strong>; if <code>~0.48</code> survives it, the family question is closed negatively and the suspects become finite-σ terminal penetration or the <code>ωM₁₂</code> reference. <code>MUTUAL_TOLERANCE</code> unmoved. These two tests stay red and unchanged.</td>
+</tr>
+<tr>
+<td><strong>Progress 2026-08-06 (3)</strong></td>
+<td>Step 3b-vii ran that arc refinement and <strong>the family question closes negatively</strong> (parked on <code>attempt/PORT-1-step3bvii-20260806T170000Z</code>, <code>bc8c04e</code>; probe <code>20260806T170559Z_PORT-1-step3bvii-probe.log</code>, gate <code>20260806T170835Z_PORT-1-step3bvii-gate-n2.log</code>, 2 failed / 10 passed, 165 s at <code>-n 2</code>). A coordinate-defined <code>MathEval</code>+<code>Threshold</code> size field on the fragmented model put <code>h_gap = 3e-4</code> — 40 cells across <code>a·g</code> — in a tube around each gap arc: 124 753 → 178 055 cells (1.427×), gap-tagged cells 1569 → 24 430 per port. It fixed the discretization and not the answer. Reciprocity <strong>6.3e-2 → 3.8823e-3</strong> (inside the 1e-2 band for the first time) and the fixed-order quadrature residual improved ~3×, but (129, 257) still disagree by <code>1.1444e-2</code> and the converged path value is <strong>0.493653 / 0.491744</strong> × ωM₁₂ (0.4808 at 4097 nodes) against 3b-vi's 0.468933 / 0.499728 — a discretization-level shift, <code>Im Z₁₂</code> at −50.73%. The built-in control holds: facet <code>5.165/5.169</code>, box <code>0.3496/0.3492</code>, shadow <code>0.8566/0.8386</code> all moved only a few % off the refined solve, so the solve did not change underneath the estimator. Four sampling geometries, four answers, and the ~0.48 survives refinement: <strong>the deficit is not the sampling geometry</strong>. Remaining suspects are finite-σ terminal penetration at <code>δ = 1.125 r_wire</code> and the filamentary <code>ωM₁₂</code> reference itself — a review's adjudication. <code>MUTUAL_TOLERANCE</code> unmoved. These two tests stay red and unchanged.</td>
+</tr>
+<tr>
+<td><strong>Progress 2026-08-07</strong></td>
+<td>Step 3b-viii audited the <strong><code>ωM₁₂</code> reference</strong> — the first of the two remaining suspects — in closed form, no solve and no mesh (<code>tests/validation/test_mutual_inductance_reference.py</code>, on <code>main</code> and green; log <code>20260807T020314Z_PORT-1-step3bviii-gate.log</code>, 7 passed in 0.43 s at <code>-n 1</code>, smoke). <strong>The suspect is retired.</strong> (i) The vector-potential route the gates use and an independent elliptic-integral reimplementation (<code>M = μ₀√(ab)[(2/k − k)K − (2/k)E]</code>, <code>m = k²</code>) agree to <strong>1.5e-15</strong> at the fixture's <code>d</code>, and to ≤ 7.5e-14 across <code>d/4 … 4d</code>; <code>ω·M</code> reproduces the logged <code>1.241755 Ω</code> to 3.1e-7. A vacuity control confirms the identity has teeth — feeding SciPy the modulus where the parameter belongs moves <code>M</code> by <strong>140%</strong>, eleven orders above the 1e-9 gate. (ii) The finite-cross-section correction at <code>r/a = 0.125</code>, the filament kernel averaged over both minor discs at uniform current density (Gauss–Legendre × periodic trapezoid, converged to 6.7e-16 between orders), is <strong><code>M_tube/M_fil = 1.004809992</code>, i.e. +0.481%</strong> — and it has the <em>wrong sign</em> to help, since a larger reference makes the deficit slightly worse (0.4937 → 0.4914 × ωM). A 0.5% correction cannot produce a factor 2, consistent with step 2's field-level agreement at −9.35%. <strong>The reference is exonerated; finite-σ terminal penetration (step 3b-ix) is now the only named suspect.</strong> <code>MUTUAL_TOLERANCE</code> unmoved. These two tests stay red and unchanged.</td>
+</tr>
+<tr>
+<td><strong>Progress 2026-08-07 (2)</strong></td>
+<td>Step 3b-ix closed the loop and <strong>found the cause of the factor 2 — it is not physics, it is the estimator's integration limits.</strong> Parked on <code>attempt/PORT-1-step3bix-20260807T050000Z</code> (<code>6caec85</code>); log <code>20260807T050654Z_PORT-1-step3bix-gate-n2.log</code> on that branch, 178 055 cells, <code>-n 2</code>, 227 s. Faraday on the closed centreline circle, tiled into four segments each verified against the DG0 material indicator before any solve (0 misassigned of 5392 nodes), gives on the undriven port: <code>V_gap = 0.493653 / 0.491744</code>, <strong><code>V_buried = 0.399972 / 0.402239</code></strong>, <code>V_wire = 0.002394 / 0.002316</code>, <strong>sum = 0.896019 / 0.896299 × ωM₁₂</strong> — inside the pre-set <code>1 ± 0.15</code> band and matching step 2's independent reaction route (−9.35%, of which −9.36% is the PEC box at padding 0.08). <strong>Finite-σ terminal penetration is retired</strong>: at <code>σ × {1, 2, 4}</code> (δ/r_wire 1.125 → 0.796 → 0.563) <code>V_wire/ωM</code> = 0.002394 → 0.001856 → 0.000727 — the signature is real and 200× too small to matter — while <code>V_gap/ωM</code> = 0.493653 → 0.490837 → 0.485059, i.e. it <em>falls</em>. The missing half is the <strong>buried</strong> dielectric: <code>GAP_BURIAL</code> puts the gap region out to <code>±arcsin(half_y/a) = ±0.175335</code> rad while <code>_gap_arc_quadrature</code> integrates only the nominal <code>±GAP_ANGLE/2 = ±0.15</code>, so 1.013 mm of arc per side — 0.8% of the loop's length, and exactly where the terminal fields live — carries 45% of its EMF. <strong>Terminal to terminal the gap-port voltage is 0.8936 × ωM₁₂, not 0.4937.</strong> Both suspects the 2026-08-06 review named are now dead. Successor <strong>step 3b-x</strong> (correct the limits off the port facet tags, then a box-padding sweep — the residual −10.6% is the PEC box's, and a <code>MUTUAL_TOLERANCE</code> edit is <em>not</em> the remedy) is written into PROJECT_PLAN §7 for a review to scope. <code>MUTUAL_TOLERANCE</code> unmoved at 0.10; nothing under <code>src/</code> changed. These two tests stay red and unchanged.</td>
+</tr>
+<tr>
+<td><strong>Scoped 2026-08-07 (03:00 review)</strong></td>
+<td>Both successors are now full §7 plans and queued (§9 items 1–2). <strong>3b-x</strong>: correct <code>_gap_arc_quadrature</code> to terminal-to-terminal limits read off the port facet tags, gate the corrected estimator against the <em>same-fixture</em> reaction-route <code>Im Z₁₂</code> (≤ 3%; the ωM₁₂ comparison stays printed and tracked here, expected ~−10.6%), delete the σ-monotonicity test whose premise 3b-ix refuted, and land the branch. <strong>3b-xi</strong>: padding sweep {0.08, 0.10, 0.12} on the ungapped fixture — if the deficit does not shrink monotonically with padding, the PEC-box attribution dies and this entry escalates to the weekly review. <code>MUTUAL_TOLERANCE</code> untouched by either.</td>
 </tr>
 </tbody>
 </table>
@@ -1571,9 +1587,43 @@ adding a boundary group moved no interface tag. Full <code>tests/mesh</code> at 
 <td><strong>Owned by</strong></td>
 <td><code>PORT-1</code> steps 3b-vi/3b-vii note it as a trap (do not gate on the 2xx areas at overhang 2e-4); entry leaves with the commit that restores an exact terminal-area anchor at the geometry it is asserted on</td>
 </tr>
+<tr>
+<td><strong>Second measurement, 2026-08-07 (<code>PORT-1</code> step 3b-x)</strong></td>
+<td>The strips bias <em>any</em> facet average, not just the area. Reading the terminal angle as <code>arcsin(⟨y⟩/a)</code> over tags <code>201</code>/<code>202</code> gives <strong>0.173852206 rad against the exact 0.175335123</strong> — 1.48e-3 short, because the strips sit at <code>\|y\| &lt; half_y</code> (<code>20260807T093604Z_PORT-1-step3bx-gate-n2.log</code>). The workaround that step took, and the one to reuse: gate the interface's <strong>extreme</strong> reach (<code>max \|y\|</code> over the tagged facets' nodes, exact to 5.6e-17 rad), since every strip point lies inside the box while the box face is a plane its nodes sit on exactly. Print the mean beside it — it is this entry's magnitude on the live fixture.</td>
+</tr>
 </tbody>
 </table>
-<h3 id="12-loop_over_half_space_domain-and-sphere_in_box_domain-never-declare-their-outer_boundary-group">12. <code>loop_over_half_space_domain</code> and <code>sphere_in_box_domain</code> never declare their <code>outer_boundary</code> group<a class="headerlink" href="#12-loop_over_half_space_domain-and-sphere_in_box_domain-never-declare-their-outer_boundary-group" title="Permanent link">&para;</a></h3>
+<h3 id="12-retired-2026-08-06-loop_over_half_space_domain-and-sphere_in_box_domain-never-declared-their-outer_boundary-group-geo-12">12. ✅ RETIRED 2026-08-06 — <code>loop_over_half_space_domain</code> and <code>sphere_in_box_domain</code> never declared their <code>outer_boundary</code> group (<code>GEO-12</code>)<a class="headerlink" href="#12-retired-2026-08-06-loop_over_half_space_domain-and-sphere_in_box_domain-never-declared-their-outer_boundary-group-geo-12" title="Permanent link">&para;</a></h3>
+<p>Fixed by widening both <code>tol</code> from <code>1e-9</code> to <code>1e-6</code> (<code>io/mesh.py</code>, the two sites
+below) — exactly <code>GEO-10</code>'s fix, for the identical measured cause. Post-fix
+(<code>20260806T183203Z_GEO-12-probe.log</code>): the loop fixture accepts <strong>10 of 12</strong>
+dim-2 entities (the cube's four <code>z = 0</code>-split sides plus top and bottom; the
+two rejected are the torus surface at <code>9.000010e-02</code> and the air/slab interface
+at <code>1.000001e-01</code>) and the sphere fixture <strong>6 of 7</strong> (the sphere surface is
+rejected at <code>1.500001e-01</code>). Both land on wall ratio
+<code>1.0000000000287557e-01</code> — the same <code>1e-7/1e-6 = 0.1</code> <code>GEO-10</code> designed — so
+<code>tests/mesh/test_boundary_classification_margins.py</code> now <em>asserts</em> the
+two-sided margin for them instead of pinning a defect; the two <code>pytest.skip</code>s
+are gone.</p>
+<p>The group was invisible because nothing gated it, so the tolerance landed with
+a meshed gate: <code>tests/mesh/test_wall_boundary_tag_areas.py</code> asserts per fixture
+that facet tag <code>1</code> exists, carries an allreduced facet count &gt; 0, and that its
+assembled <code>ds</code> area equals the analytic cube surface <code>6(2W)² = 2.4e-01 m²</code> —
+an identity on planar walls, gated at <code>1e-9</code> relative. Measured at <code>-n 2</code>
+(<code>20260806T183328Z_GEO-12-gate.log</code>, 3.2 s): loop <strong>1958 facets, ratio
+1.000000000000000</strong>; sphere <strong>988 facets, ratio 0.999999999999999</strong>.</p>
+<p>The latency claim is now measured, not assumed. All six downstream callers plus
+<code>tests/post/test_drop_set_semantics_sphere.py</code> were re-run and <strong>no landed
+number moved a digit</strong>: <code>MAT-6</code> step 3 <code>dR</code> rel. error <code>1.5834%</code> / <code>dX</code> ratio
+<code>0.9200</code>; step 4 <code>1.5763%</code> / <code>0.9849</code> (projected) and <code>1.5713%</code> / <code>0.8740</code>
+(pinned), identical to <code>20260805T200455Z</code>/<code>20260805T200938Z</code>; <code>TH-8</code>/<code>MAT-4</code>
+mass-averaged SAR ratio <code>0.999846</code> and the <code>POST-1</code> sphere table <code>4.2530%</code>
+(<code>20260806T183745Z_GEO-12-callers-A.log</code>, 24 passed 210 s;
+<code>20260806T184151Z_GEO-12-callers-B.log</code>, 8 passed 574 s). Whole <code>tests/mesh</code> at
+<code>-n 2</code>: <strong>35 passed, 2 skipped, 118.29 s</strong>
+(<code>20260806T183404Z_GEO-12-mesh-regression.log</code>).</p>
+<p>Entry 13 is <strong>not</strong> covered by this fix and stays open — <code>cylindrical_domain</code>'s
+margin is a different mechanism (tolerance coupled to <code>resolution</code>).</p>
 <table>
 <thead>
 <tr>
@@ -1584,7 +1634,7 @@ adding a boundary group moved no interface tag. Full <code>tests/mesh</code> at 
 <tbody>
 <tr>
 <td><strong>Test</strong></td>
-<td>None fails. Measured and pinned by <code>tests/mesh/test_boundary_classification_margins.py</code> (<code>GEO-11</code>), which <strong>skips</strong> the margin assertion for these two after pinning their numbers</td>
+<td>None fails. Measured and pinned by <code>tests/mesh/test_boundary_classification_margins.py</code> (<code>GEO-11</code>), which <strong>skipped</strong> the margin assertion for these two after pinning their numbers</td>
 </tr>
 <tr>
 <td><strong>Symptom</strong></td>
@@ -1608,49 +1658,52 @@ adding a boundary group moved no interface tag. Full <code>tests/mesh</code> at 
 </tr>
 <tr>
 <td><strong>Owned by</strong></td>
-<td><code>GEO-12</code> (commissioned by the 2026-08-06, 10:30 review — §9 item 2, with the tolerance decision taken); entry leaves with the commit that widens both tolerances and gates tag <code>1</code> on both fixtures</td>
+<td><code>GEO-12</code> (commissioned by the 2026-08-06, 10:30 review — §9 item 2, with the tolerance decision taken); <strong>discharged 2026-08-06, 13:30 implementer slot</strong> — see the retirement note above</td>
 </tr>
 </tbody>
 </table>
-<h3 id="13-cylindrical_domains-interior-face-classification-margin-is-450-its-tolerance">13. <code>cylindrical_domain</code>'s interior-face classification margin is 4.50× its tolerance<a class="headerlink" href="#13-cylindrical_domains-interior-face-classification-margin-is-450-its-tolerance" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th></th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Test</strong></td>
-<td>None fails. Measured and pinned by <code>tests/mesh/test_boundary_classification_margins.py</code> (<code>GEO-11</code>), which skips the margin assertion after pinning the ratio</td>
-</tr>
-<tr>
-<td><strong>Symptom</strong></td>
-<td>The nearest surface the wall test <em>rejects</em> sits at residual <code>8.999990e-02</code> = <strong><code>4.499995 ×</code></strong> <code>tol</code>, below the <code>10×</code> floor <code>GEO-11</code> asserts. The accepted side is fine (<code>5.000e-06 × tol</code>)</td>
-</tr>
-<tr>
-<td><strong>Cause</strong></td>
-<td>Measured (<code>20260806T140325Z_GEO-11-probe.log</code>): the test is <code>abs(r_max - outer_radius) &lt; resolution</code> with <code>tol = resolution = 0.02</code> at defaults. The inner cylinder's surface and end caps sit at <code>r_max = inner_radius = 0.01</code>, a residual of <code>0.09</code>. The margin is a ratio of geometry to <em>mesh size</em>, so it shrinks as either radius gap narrows or <code>resolution</code> coarsens — at <code>resolution ≥ 0.09</code> the inner cylinder would be swept into <code>outer_boundary</code></td>
-</tr>
-<tr>
-<td><strong>Live impact</strong></td>
-<td><strong>None at defaults.</strong> <code>tests/mesh/test_cylindrical_domain.py</code> passes; the classification is correct today, only under-separated</td>
-</tr>
-<tr>
-<td><strong>Verified at</strong></td>
-<td><code>main</code> as of <code>2cad984</code></td>
-</tr>
-<tr>
-<td><strong>Fix, not taken in-slot</strong></td>
-<td>Either decouple the tolerance from <code>resolution</code> (a geometric fraction of <code>outer_radius - inner_radius</code> is the natural choice) or document the sizing precondition. A per-fixture decision for a review, per the <code>GEO-11</code> plan</td>
-</tr>
-<tr>
-<td><strong>Owned by</strong></td>
-<td><code>GEO-11</code></td>
-</tr>
-</tbody>
-</table>
+<h3 id="13-retired-2026-08-07-cylindrical_domains-classification-margin-was-450-its-tolerance-geo-13">13. ✅ RETIRED 2026-08-07 — <code>cylindrical_domain</code>'s classification margin was 4.50× its tolerance (<code>GEO-13</code>)<a class="headerlink" href="#13-retired-2026-08-07-cylindrical_domains-classification-margin-was-450-its-tolerance-geo-13" title="Permanent link">&para;</a></h3>
+<p>The tolerance was the <em>mesh size</em>: <code>abs(r_max - outer_radius) &lt; resolution</code>. It
+is now <code>0.01 × (outer_radius - inner_radius)</code> — a fraction of the radial gap,
+so the margin is a ratio of geometry to geometry and no longer moves when a
+caller coarsens the mesh. Measured across all four argument sets the repo calls
+the generator with (<code>20260807T033127Z_GEO-13-probe.log</code>): the fraction window
+where <strong>both</strong> sides of the <code>GEO-11</code> identity hold is <code>[1e-4, 0.05]</code>, and <code>0.01</code>
+sits in the middle of it. At defaults the interior margin goes
+<strong><code>4.499995×</code> → <code>99.99989×</code></strong> (floor <code>10×</code>) with the accepted side at
+<code>1.111111e-04×</code> (ceiling <code>0.1×</code>), and the classification itself is <strong>unchanged</strong>
+— still 3 of 6 surfaces, on every one of the four geometries.</p>
+<p>The failure mode the entry named is reproduced in the probe before the fix: at
+<code>resolution = 0.09</code> (the gap) the old predicate accepts <strong>6 of 6</strong> surfaces, the
+inner cylinder swept whole into <code>outer_boundary</code>.</p>
+<p><code>tests/mesh/test_boundary_classification_margins.py</code> now <strong>asserts</strong> the
+two-sided margin for this fixture instead of pinning it — the pin and its skip
+are gone, and the file reads the fraction from the generator so the two cannot
+drift apart. All four fixtures in that file are now live: <strong>5 passed in 1.05 s</strong>
+(<code>20260807T033236Z_GEO-13-margins.log</code>, <code>-n 1</code>). Regression: whole <code>tests/mesh</code>
+<strong>36 passed, 1 skipped in 110.34 s</strong> (<code>20260807T033250Z_GEO-13-mesh-regression.log</code>,
+<code>-n 2</code>) — one skip fewer than the 35/2 on record, which is this fixture. Callers
+green at <code>-n 2</code>: <code>4 passed, 1 skipped in 0.97 s</code>
+(<code>20260807T033454Z_GEO-13-callers.log</code>; the skip is the complex-mode PEC test).</p>
+<p><strong>Live precondition, new:</strong> the tolerance scales with the gap, so a gap below
+~<code>1e-4</code> m stops clearing the <code>1.000e-07</code> gmsh OCC bounding-box padding by 10×.
+Recorded at the use site in <code>io/mesh.py</code>; no caller is near it (smallest gap in
+the repo is <code>0.07</code> m).</p>
+<details>
+<summary>Original entry</summary>
+
+| | |
+|---|---|
+| **Test** | None fails. Measured and pinned by `tests/mesh/test_boundary_classification_margins.py` (`GEO-11`), which skips the margin assertion after pinning the ratio |
+| **Symptom** | The nearest surface the wall test *rejects* sits at residual `8.999990e-02` = **`4.499995 ×`** `tol`, below the `10×` floor `GEO-11` asserts. The accepted side is fine (`5.000e-06 × tol`) |
+| **Cause** | Measured (`20260806T140325Z_GEO-11-probe.log`): the test is `abs(r_max - outer_radius) < resolution` with `tol = resolution = 0.02` at defaults. The inner cylinder's surface and end caps sit at `r_max = inner_radius = 0.01`, a residual of `0.09`. The margin is a ratio of geometry to *mesh size*, so it shrinks as either radius gap narrows or `resolution` coarsens — at `resolution ≥ 0.09` the inner cylinder would be swept into `outer_boundary` |
+| **Live impact** | **None at defaults.** `tests/mesh/test_cylindrical_domain.py` passes; the classification is correct today, only under-separated |
+| **Verified at** | `main` as of `2cad984` |
+| **Fix, not taken in-slot** | Either decouple the tolerance from `resolution` (a geometric fraction of `outer_radius - inner_radius` is the natural choice) or document the sizing precondition. A per-fixture decision for a review, per the `GEO-11` plan |
+| **Owned by** | `GEO-13` (filed 2026-08-06, 18:00 review, with the geometric-fraction fix and the un-skip of the margin assertion; was `GEO-11`, whose sweep found it); **discharged 2026-08-07, 22:30 implementer slot** — see the retirement note above |
+
+</details>
+
 <h3 id="7-retired-2026-08-03-birdcage-mesh-fails-to-generate-geo-9-steps-1-2a-2b">7. ✅ RETIRED 2026-08-03 — birdcage mesh fails to generate (<code>GEO-9</code>, steps 1 + 2a + 2b)<a class="headerlink" href="#7-retired-2026-08-03-birdcage-mesh-fails-to-generate-geo-9-steps-1-2a-2b" title="Permanent link">&para;</a></h3>
 <p>All three tests are green and the whole of <code>tests/mesh</code> less known-issues 5 is
 <code>20 passed, 1 skipped, 1 deselected in 42.15 s</code>, exit 0

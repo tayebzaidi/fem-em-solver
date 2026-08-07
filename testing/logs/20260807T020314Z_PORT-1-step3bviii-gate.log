@@ -1,0 +1,89 @@
+# Test Run
+- Chunk: PORT-1-step3bviii-gate
+- Commit: 09798e7a01649f1486b08bfa0b7744526004f198
+- Time (UTC): 2026-08-07 02:03:14
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 120 mpiexec -n 1 python3 -m pytest tests/validation/test_mutual_inductance_reference.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  6 21:02 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 120 mpiexec -n 1 python3 -m pytest tests/validation/test_mutual_inductance_reference.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 7 items
+
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[fixture d-0.04-0.04] 
+[3b-viii] fixture d    a = 0.0400 m, d = 0.0400 m: M_vecpot = 1.976313852319e-08 H, M_elliptic = 1.976313852319e-08 H, rel = 1.507e-15
+PASSED
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[doubling 2d-0.04-0.08] 
+[3b-viii] doubling 2d  a = 0.0400 m, d = 0.0800 m: M_vecpot = 5.674397048179e-09 H, M_elliptic = 5.674397048179e-09 H, rel = 1.020e-15
+PASSED
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[near d/4-0.04-0.01] 
+[3b-viii] near d/4     a = 0.0400 m, d = 0.0100 m: M_vecpot = 7.551412300521e-08 H, M_elliptic = 7.551412300521e-08 H, rel = 1.753e-16
+PASSED
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[far 4d-0.04-0.16] 
+[3b-viii] far 4d       a = 0.0400 m, d = 0.1600 m: M_vecpot = 1.039937984129e-09 H, M_elliptic = 1.039937984129e-09 H, rel = 7.457e-14
+PASSED
+tests/validation/test_mutual_inductance_reference.py::test_modulus_convention_control_is_detectable 
+[3b-viii] modulus-convention control: M(m=0.800000) = 1.976313852319e-08 H vs M(k=0.894427) = 4.746062966215e-08 H, rel = 1.401e+00
+PASSED
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_matches_logged_omega_m12 
+[3b-viii] omega*M12 (elliptic) = 1.241755 Ohm vs logged 1.241755 Ohm, rel = 3.093e-07
+PASSED
+tests/validation/test_mutual_inductance_reference.py::test_finite_cross_section_correction_is_percent_scale 
+[3b-viii] tube quadrature ( 4,  8): M_tube = 1.985819921163e-08 H, ratio = 1.004809999602
+
+[3b-viii] tube quadrature ( 6, 12): M_tube = 1.985819906055e-08 H, ratio = 1.004809991958
+
+[3b-viii] tube quadrature ( 8, 16): M_tube = 1.985819906053e-08 H, ratio = 1.004809991957
+
+[3b-viii] tube quadrature (10, 20): M_tube = 1.985819906053e-08 H, ratio = 1.004809991957
+[3b-viii] successive quadrature deltas: 7.608e-09, 8.899e-13, 6.665e-16
+[3b-viii] r/a = 0.125: M_tube/M_fil = 1.004809992 (+0.4810% correction); omega*M_tube = 1.247727 Ohm vs omega*M_fil = 1.241755 Ohm
+PASSED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 7 passed, 8 warnings in 0.43s =========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 1

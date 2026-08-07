@@ -1,0 +1,48 @@
+# Test Run
+- Chunk: EX-1-runner-list
+- Commit: e950f8a9834a419bfce42a0aa64bd4812fdc8fce
+- Time (UTC): 2026-08-07 00:30:37
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: ./run_examples.sh --list
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  6 19:30 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc './run_examples.sh --list'
+Available examples:
+magnetostatics (default real build):
+  1 -> examples/magnetostatics/01_straight_wire.py
+  2 -> examples/magnetostatics/02_circular_loop.py
+  4 -> examples/magnetostatics/04_helmholtz_analytic_comparison.py
+mri (complex build, sourced automatically):
+  mri:1 -> examples/mri/01_coil_phantom_fields.py
+meshing (default real build, no solve):
+  mesh:1 -> examples/meshing/01_two_torus_ports.py
+
+Selections: -e <n> | -e mri:<n> | -e mesh:<n> | -e all-mag | -e all
+
+## Exit
+- Status: 0
+- Elapsed (s): 0

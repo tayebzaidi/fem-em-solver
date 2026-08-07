@@ -559,17 +559,19 @@
 
 
 <h1 id="fem-em-solver-status">FEM-EM Solver — status<a class="headerlink" href="#fem-em-solver-status" title="Permanent link">&para;</a></h1>
-<p><strong>Updated:</strong> 2026-08-06, 10:30 daily review. Source of truth is
+<p><strong>Updated:</strong> 2026-08-07, 10:30 daily review. Source of truth is
 <code>PROJECT_PLAN.md</code>; this page is a read-only digest for the human operator.</p>
 <h2 id="waiting-on-you">Waiting on you<a class="headerlink" href="#waiting-on-you" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Housekeeping: local <code>main</code> is well ahead of <code>origin/main</code> (this review
-   makes 18 unpushed commits); push when convenient. No Ansys benchmark
-   cases commissioned yet (the weekly review owns that).</li>
-<li>Your 10:12/10:17 examples-bar change (five per phase, accruing with gate
-   closures) is now wired in: the first §5.4 ramp chunk (<code>EX-1</code>, a two-torus
-   mesh/tags example) is queued this interval. No action needed unless the
-   ramp rule isn't what you intended.</li>
+<li>Housekeeping: local <code>main</code> is <strong>15 commits ahead</strong> of <code>origin/main</code> after
+   this review — push when convenient (every "in CI" claim is a local
+   reproduction until then). No Ansys benchmark cases commissioned yet
+   (the weekly review owns that; next one is Sunday 01:30).</li>
+<li>FYI, no action needed: the corrected port voltage (0.8945 × ωM₁₂) is
+   validated against an independent control to 3.0% but sits 0.02 pp
+   outside a bound whose premise the control itself disproved. Rather than
+   moving the bound on judgement, queue item 1 buys the one measurement
+   that decides it (see On deck); both outcomes are pre-decided in §7.</li>
 </ol>
 <h2 id="honest-current-state-digest-of-2-unchanged-this-interval">Honest current state (digest of §2 — unchanged this interval)<a class="headerlink" href="#honest-current-state-digest-of-2-unchanged-this-interval" title="Permanent link">&para;</a></h2>
 <table>
@@ -609,66 +611,63 @@
 </tbody>
 </table>
 <h2 id="recent-activity-since-the-0300-review">Recent activity (since the 03:00 review)<a class="headerlink" href="#recent-activity-since-the-0300-review" title="Permanent link">&para;</a></h2>
-<p>Third consecutive 4/4 interval — three landed, one disciplined park:</p>
+<p>Sixth consecutive 4/4 interval — two landed, two disciplined parks, all
+four slots on or about the port-voltage thread:</p>
 <ul>
-<li><strong>PORT-1 step 3b-vi</strong> — the tangential path-integral port voltage measured
-  ~0.48 × the closed form: a <em>third</em> distinct estimator value, and the four
-  families now span a factor 15 off one solved field. Parked, not landed —
-  correctly, because the plan's own quadrature-convergence precondition
-  fails structurally: only ~5 mesh cells span the gap arc and the integrand
-  jumps at every cell crossing, so no node count can resolve it. This
-  review's rescope (step 3b-vii, queue item 1) refines the mesh along the
-  arc; if ~0.48 survives refinement, the sampling-geometry question is
-  settled and suspicion moves to the field scale in the gap or the closed-
-  form reference itself.</li>
-<li><strong>POST-1 step 4b</strong> — the sphere drop-set table re-scored on |E| is
-  <em>digit-identical</em> (2e-16) to the Re E table, because the lossless
-  real-data fixture's phasor is exactly real (max|Im E| = 0). Step 3's
-  conclusions transfer unchanged, and the reason is now a 1e-12 gate that
-  fails the moment a fixture acquires a phase — which is exactly when the
-  Re E substitution becomes the 62% error step 4 measured on the planar
-  fixture.</li>
-<li><strong>POST-1 step 5</strong> — <code>prefer_interior=False</code> is now the production default
-  at all four entry points; the retired guardrail's 2.157× peak penalty is
-  pinned as the negative control, measured through production. The drop-set
-  thread (steps 1–5) is complete; a cheap parity gate on the CSV export
-  path is queued as step 6.</li>
-<li><strong>GEO-11</strong> — the CAD-only margin sweep closed the chunk and found GEO-10's
-  defect <strong>live in two more fixtures</strong>: <code>loop_over_half_space_domain</code> and
-  <code>sphere_in_box_domain</code> never declare their outer-boundary group
-  (tolerance 100× below the OCC padding). Latent — every caller discards
-  the tags — but real; known-issues 12/13 opened. This review took the
-  reserved tolerance decision: chunk <strong>GEO-12</strong> (queued) widens both to
-  1e-6 and finally gates the group's existence.</li>
+<li><strong>PORT-1 step 3b-x (parked)</strong> — the terminal-to-terminal correction
+  <strong>works</strong>: 0.8945 × ωM₁₂ (vs the old wedge-limited 0.4937), the
+  retiling identity holds to 2.7e-4, all 19 gates green. Not landed
+  because the plan's second anchor (the reaction route) turned out not to
+  exist on a conducting open arc — it reads the ohmic term, a factor 244
+  off, for a structural reason, not a defect.</li>
+<li><strong>PORT-1 step 3b-x-b (parked)</strong> — the missing control now exists: a
+  σ = 0 closed-loop solve on the same mesh gives an independent reference
+  (0.9224 × ωM₁₂, <code>Re Z₂₁ = 0</code> exactly). The estimator agrees with it to
+  <strong>3.0224%</strong> against a pre-decided 3% bound — red by 0.02 pp — and the
+  slot correctly refused to move the bound: the control measures the
+  spread the bound was sized from at 2.8 pp, not the assumed 1.2 pp.</li>
+<li><strong>PORT-1 step 3b-xi ✅</strong> — the PEC-box attribution is now a <strong>trend,
+  not a point</strong>: deficits −8.03% / −5.03% / −3.27% at padding
+  0.08 / 0.10 / 0.12, strictly monotone, all the sign a PEC wall must
+  produce, 53× the mesh-resolution control. The residual on the corrected
+  port voltage has a named, measured owner.</li>
+<li><strong>EX-2 ✅</strong> — the cylindrical phantom ships as <code>mesh:2</code> through the
+  runner, and the example found something: at generator defaults the
+  inner cylinder meshes as a <strong>heptagonal prism</strong> (resolution is twice the
+  inner radius), a 28% inner-volume deficit. Gated in closed form — the
+  meshed cap equals the inscribed heptagon to 1.11e-16 — and this review
+  audited every caller: none gates an inner-subdomain quantity, so the
+  hazard is latent and recorded, not an active defect.</li>
 </ul>
-<p>All three ✅ flips (GEO-11, POST-1 steps 4b and 5) audited §4-compliant this
-review by independent read-only auditors — logs, quantitative assertions,
-elapsed times verified; pinned assertions confirmed to execute before their
-skips. No demotions. One audit catch fixed in this commit: a mis-transcribed
-digit string in a GEO-11 test comment.</p>
+<p>Audits: both ✅ flips (3b-xi, EX-2) verified §4-compliant by independent
+read-only auditors — every claimed number found in the harness logs, exit
+codes 0, no demotions; EX-2's one bound change was a <em>tightening</em>
+(1e-3 → 1e-12). Branch hygiene: the 3b-ix and 3b-x branches deleted after
+verifying both are strict ancestors of the 3b-x-b branch, which is now the
+single live lineage; queue item 1 lands or adjudicates it.</p>
 <h2 id="automation-health">Automation health<a class="headerlink" href="#automation-health" title="Permanent link">&para;</a></h2>
 <ul>
-<li>The grid has now run clean since 08-05 15:30Z — 12 consecutive slots,
-  including three 4/4 implementer slates in a row.</li>
-<li>Tree clean at review start and end; no <code>recovered/*</code> branches.</li>
-<li>Parked branches: <code>attempt/PORT-1-step3bvi-…</code> only (kept — queue item 1
-  continues on it). The superseded 3b-v branch was deleted this review
-  after confirming its content was carried forward.</li>
-<li>Known-issues: entries 12 and 13 opened this interval (boundary-group
-  classification, both latent); entry 12's fix is queued as GEO-12; the
-  08-05 cron-gap entry closed after you confirmed host downtime.</li>
+<li>The grid has run clean since 08-05 15:30Z — 24 consecutive slots, six
+  4/4 implementer slates in a row.</li>
+<li>Tree clean at review start and end; no <code>recovered/*</code> branches; one
+  <code>attempt/*</code> branch (the live PORT-1 lineage, deliberate).</li>
+<li>The twice-failed queue item 1 was caught by the queue's own rule
+  (implementers skipped it and took independent items) and is now
+  rescoped as step 3b-xii with dispositions pre-decided — the blocking
+  mechanism worked as designed.</li>
+<li><strong>Queue depth is 3, not 5</strong> — that is every rubric-compliant item that
+  exists; the fourth run before the 18:00 review will hit the
+  stop-and-journal drain instruction. Not an outage, just honest scoping.</li>
 </ul>
 <h2 id="on-deck-9-refreshed-this-review">On deck (§9, refreshed this review)<a class="headerlink" href="#on-deck-9-refreshed-this-review" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>PORT-1 step 3b-vii</strong> — the path-integral port voltage on an
-   arc-refined mesh (critical path; ≥ 40 cells across the gap arc so the
-   quadrature can converge).</li>
-<li><strong>GEO-12</strong> — widen the two 1e-9 wall tolerances to 1e-6 and gate the
-   outer-boundary group's existence (fixes known-issues 12).</li>
-<li><strong>POST-1 step 6</strong> — CSV-export/stats sampling parity gate (integer count
-   identity both modes).</li>
-<li><strong>EX-1</strong> — first §5.4 ramp example: the two-torus port fixture's mesh,
-   cell tags, and facet tags in ParaView.</li>
+<li><strong>PORT-1 step 3b-xii</strong> — the discriminator: rebuild the gapped fixture
+   at padding 0.10 and see whether estimator and control converge under
+   box enlargement. If yes, the 5% re-size is pre-authorized and the
+   whole branch lineage lands on <code>main</code>; if no, a real estimator bias has
+   been found. Either outcome is a finding.</li>
+<li><strong>MAT-4 step 3</strong> — the SAR averaging operator gated at the standard
+   1 g/10 g masses on a sphere that can hold them; no solve.</li>
 <li><strong>MAT-6 step 5</strong> (spare, heavy) — wire refinement at fixed box to
    separate the last ~1.5% of ΔX.</li>
 </ol>
