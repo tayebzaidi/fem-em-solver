@@ -5599,3 +5599,90 @@ the story; if they stay apart there is a real 3% estimator bias and the wedge
 correction is not the last one.
 (a) lands the corrected estimator today and is honest if the comment carries the
 numbers; (b) is the answer, at the cost of another slot.
+
+## 2026-08-07T12:30Z — `PORT-1` step 3b-xi — **complete**: the PEC box owns the
+## deficit, measured as a trend over three paddings
+
+**Slot:** 07:30 local implementer run. **§9 item taken:** item **2**. Item 1 was
+skipped deliberately and per protocol — it is marked "attempted twice … now the
+review's to rescope before it may reappear", i.e. blocked to an implementer, and
+its two dispositions are explicitly a review decision. Item 2 is marked
+independent of item 1 and runs on `main`.
+
+**Outcome: complete, §4-done.** Three quantitative gates, all green, nothing
+tuned. `tests/validation/test_port_box_padding_sweep.py` (new module — the
+step-2c file is at the standard ceiling), **7 passed in 153.7 s**
+(4 `tests/environment` + 3 sweep), `-n 2`, complex build,
+`FEM_EM_REQUIRE_COMPLEX=1`, heavy tier declared (`timeout 1200`), standard
+actual. Log `20260807T124038Z_PORT-1-step3bxi-gate.log`.
+
+**1. Cost probe first, as the plan required.**
+`scripts/probes/port1_step3bxi_probe.py`, mesh only, `timeout 180`, 57 s
+(`20260807T123435Z_PORT-1-step3bxi-probe.log`). Cell counts at h_far 0.03,
+d = 0.04: padding 0.08 → **119 738** (1.0000× the count on record from
+`20260802T183747Z_PORT-1-step1-boxsens.log`), 0.10 → **135 542** (never meshed
+at this h_far before), 0.12 → **154 493** (1.0000× step 2c's logged count).
+Growth 0.08 → 0.12 is 1.2903×. All three are far under the 250 000-cell stop
+line the plan set from the padding-0.12 / h_far-0.02 case (237 926 cells) that
+once died at 180 s inside MUMPS, so the sweep was cleared to solve. Both
+previously-logged counts reproducing to the digit is itself a small mesh-side
+reproducibility datum.
+
+**2. The measurement.** Ungapped two-torus pair, d = 0.04, h_far 0.03,
+**projected drive** (step 2f's production path — which is why the reference
+point is −8.03% and not step 1's unprojected −9.35%), one solve per padding:
+only `Z₂₁` is read, since reciprocity is 3.06e-13 on this fixture, the same
+trade step 2c's doubling pair made.
+
+| air padding | `Im Z₂₁` | `Im Z₁₂/ωM₁₂` | deficit |
+|---|---|---|---|
+| 0.08 m | +1.142011 Ω | 0.919676 | **−8.0324%** |
+| 0.10 m | +1.179349 Ω | 0.949744 | **−5.0256%** |
+| 0.12 m | +1.201108 Ω | 0.967267 | **−3.2733%** |
+
+`ωM₁₂ = +1.241755e+00 Ω` (Jackson 5.37, evaluated in the fixture, not quoted).
+
+**3. The three gates.**
+(i) *Fixture identity.* Padding 0.08 returns **−8.0324%** against step 2f's
+landed **−8.03%**, delta **2.44e-05** — so the two enlarged boxes differ from
+the landed configuration in the wall and nothing else. This gate exists because
+the sweep's entire argument is a difference, and a difference is only a box
+statement if the baseline is the landed one.
+(ii) *Monotone shrinkage, sign-definite.* `|deficit|` strictly decreasing,
+**8.0324% > 5.0256% > 3.2733%**, and all three deficits negative. The sign is
+the physically forced part: a PEC wall shorts the field it truncates, so it can
+only remove flux from the pickup loop. A mesh artefact or a reference error has
+no reason to track wall distance at all, and a sign-indefinite numerical wobble
+has no reason to track it in one direction three times running.
+(iii) *Size of the move.* 0.08 → 0.12 gives **+4.7591%**, inside the
+pre-decided **3–7%** band around step 1's 5.20%, and **52.9×** the h_far
+negative control (0.09%, cited from step 1's logs, not re-run). The band was
+loose by construction because step 1's figure was unprojected; landing at
+4.76% against 5.20% on a different drive is closer than the band demanded.
+
+**4. What this licenses and what it does not.** The box attribution that every
+`PORT-1` step since step 1 has leaned on was a two-point measurement; it is now
+a three-point monotone trend with a sign argument and a 53× separation from the
+mesh knob. 3b-x's corrected terminal-to-terminal port voltage at ~−10.6% now
+has a *named, measured* owner. This also feeds 3b-x-b's open adjudication: the
+box is worth ~4.8 pp of deficit over this padding range, comfortably larger
+than the 2.8 pp gapped/ungapped spread that the 3% bound's premise stumbled on
+— so disposition (b), "explain the 2.8 pp first", is not waiting on an unknown
+mechanism. **Not done, deliberately:** no extrapolation to a converged answer
+(three paddings inside a factor 1.5 cannot support a Richardson fit, and none
+was attempted — the claim is directional, and the module says so);
+`MUTUAL_TOLERANCE` untouched at 10%, which the plan required regardless of
+outcome; known-issues 3 unchanged; no symbol flips; `PORT-1` stays 🟡.
+
+**No denials, no unrelated failures, no known-issues changes.** Tree was clean
+at preflight and is clean at exit; container Up 44 h.
+
+**Next attempt hypothesis.** The cheap discriminator attempts.md named for
+3b-x-b disposition (b) is now half-bought: the *ungapped* control's padding
+response is measured. The remaining half is one solve of the 3b-x-b closed
+non-conducting control at padding 0.10 or 0.12 on its own mesh — if
+0.922423 and the estimator's 0.894543 converge under enlargement the box is
+the whole story and the 3% bound survives on a bigger box; if they stay 3%
+apart there is a real estimator bias and the wedge correction was not the last
+one. That is ~1 extra solve on the parked 3b-x-b branch and would let a review
+choose between (a) and (b) on evidence rather than on judgement.

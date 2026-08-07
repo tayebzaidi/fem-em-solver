@@ -2082,8 +2082,10 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 >   `Re Z₁₂` exactly 0.0 (structural — lossless operator is real-symmetric);
 >   `Im Z₁₂ = +1.125614 Ω` vs `ωM₁₂ = +1.241755e+00 Ω` (−9.35%), the gap owned
 >   by the PEC box, not the mesh (padding 0.08→0.12 moves it 5.20% toward the
->   closed form; h_far 0.02→0.03 moves it 0.09%). **The 10% mutual tolerance is
->   measurement-justified — do not tighten**: the filamentary reference itself
+>   closed form; h_far 0.02→0.03 moves it 0.09%) — *the two-point attribution
+>   became a three-point trend in step 3b-xi, 2026-08-07: 4.7591% on the
+>   projected drive, strictly monotone, 52.9× the h_far knob*. **The 10% mutual
+>   tolerance is measurement-justified — do not tighten**: the filamentary reference itself
 >   spans 66.5% of nominal over ρ, z within ±r_wire. Diagonal wrong in sign
 >   (`−40.9 Ω` vs Grover `+6.8 Ω`) — became step 2b. Cost ceiling: padding 0.12
 >   / h_far 0.02 (237926 cells) was killed at 180 s inside MUMPS; the gate
@@ -3108,35 +3110,49 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 >    are different problems in the same box, and 3b-xi's padding sweep bears
 >    directly on it.
 >
-> **Step 3b-xi — the PEC-box padding sweep** *(scoped 2026-08-07, 03:00
-> review; §9 item 2; independent of 3b-x — runs on `main`'s ungapped
-> fixture with the landed step-1/2 machinery)*. The box attribution rests
-> on a single point: step 1 measured padding 0.08 → 0.12 moving the
-> `Im Z₁₂` deficit 5.20% toward the closed form (h_far 0.02 → 0.03 moved
-> 0.09% — mesh, not box), and −8.03% is the projected-drive deficit at
-> padding 0.08 since step 2f. 3b-x's corrected port voltage will sit at
-> ~−10.6% *for the same reason, if the attribution is right* — measure it
-> as a trend, not a point: solve the ungapped pair at padding
-> {0.08, 0.10, 0.12}, h_far 0.03, projected drive, and report
-> `Im Z₁₂/ωM₁₂` at each. **Anchor:** strictly monotone shrinkage of the
-> deficit over the three paddings, and the 0.08 → 0.12 delta consistent
-> with step 1's 5.20% (band 3–7%; step 1's was unprojected, so the exact
-> figure may move). **Negative control:** on record — the h_far move at
-> 0.09%, 58× smaller than the padding move on the same fixture.
-> **Cost:** heavy declared (`timeout 1200`), `-n 2`, new test module —
-> the step-2c file is at the standard ceiling. **Probe first, mesh only:**
-> print cell counts for the three paddings at h_far 0.03; padding 0.12 /
-> h_far 0.02 (237 926 cells) was once killed at 180 s inside MUMPS, and
-> step 2c ran padding 0.12 / h_far 0.03 in 167.7 s — if any padding
-> exceeds ~250k cells, report the counts and stop. Expected ~2 solves ×
-> 3 paddings at 20–60 s/solve plus meshes. **Traps:** FFCx lock;
-> `MUTUAL_TOLERANCE` does not move regardless of outcome; complex build.
-> **Does not close:** known-issues 3; no symbol flips. **Negative
-> result:** a deficit that does *not* shrink with padding kills the box
-> attribution — the −10.6% then has no named owner and the escalation the
-> 2026-08-06 18:00 review described (what quantity a gap port should
-> report; weekly-review rescope of known-issues 3) triggers. Report the
-> three ratios, annotate §7 + known-issues 3, stop.
+> * **Step 3b-xi — the PEC-box padding sweep** ✅ *(scoped 2026-08-07 03:00
+>   review, executed 2026-08-07 07:30 run; `§9 item 2`;
+>   `tests/validation/test_port_box_padding_sweep.py`, 7 passed 153.7 s
+>   heavy-declared/standard-actual, `20260807T124038Z_PORT-1-step3bxi-gate.log`;
+>   mesh probe `20260807T123435Z_PORT-1-step3bxi-probe.log`, 57 s)*.
+>   **The box attribution is now a trend, not a point, and it holds.** Every
+>   `PORT-1` step since step 1 has charged the residual `Im Z₁₂` deficit to the
+>   PEC truncation box on the strength of two measurements (padding 0.08 → 0.12
+>   moving it 5.20%; h_far 0.02 → 0.03 moving it 0.09%). The ungapped pair at
+>   `d = 0.04`, h_far 0.03, **projected drive**, one solve per padding
+>   (`Z₂₁` only — reciprocity is 3.06e-13 here, step 2c's trade):
+>
+>   | air padding | `Im Z₂₁` | `Im Z₁₂/ωM₁₂` | deficit |
+>   |---|---|---|---|
+>   | 0.08 m | +1.142011 Ω | 0.919676 | **−8.0324%** |
+>   | 0.10 m | +1.179349 Ω | 0.949744 | **−5.0256%** |
+>   | 0.12 m | +1.201108 Ω | 0.967267 | **−3.2733%** |
+>
+>   All three gates green, none tuned: (i) padding 0.08 reproduces step 2f's
+>   landed **−8.03%** to `2.44e-05` — the sweep is on the fixture the
+>   attribution was made on, and the other two boxes differ only in the wall;
+>   (ii) `|deficit|` is **strictly decreasing**, 8.0324% > 5.0256% > 3.2733%,
+>   and every deficit is negative, which is the sign a PEC wall must produce
+>   (it shorts out the field it truncates, so it can only remove flux from the
+>   pickup loop); (iii) the 0.08 → 0.12 move is **4.7591%**, inside the
+>   pre-decided 3–7% band around step 1's 5.20% — measured on the projected
+>   drive where step 1's was unprojected — and **52.9×** the h_far control's
+>   0.09% on the same fixture, so mesh and box are cleanly separated knobs.
+>   Cost was probed mesh-only first as the plan required: 119 738 / 135 542 /
+>   154 493 cells (both end points byte-reproducing their logged counts;
+>   padding 0.10 had never been meshed at this h_far), all well under the
+>   250 000-cell line where padding 0.12 / h_far 0.02 once died in MUMPS.
+>   **What this licenses:** 3b-x's corrected terminal-to-terminal port voltage
+>   at ~−10.6% now has a *named, measured* owner rather than an asserted one,
+>   and 3b-x-b's open adjudication gains a datum — the box is worth ~4.8 pp of
+>   deficit over this padding range, comfortably more than the 2.8 pp
+>   gapped/ungapped spread that the 3% bound's premise stumbled on, so
+>   disposition (b) ("explain the 2.8 pp first") is not blocked on an unknown
+>   mechanism. **What it does not do:** no extrapolation to a converged answer
+>   (three paddings inside a factor 1.5 cannot support a Richardson fit, and
+>   none was attempted — the claim is directional); `MUTUAL_TOLERANCE`
+>   untouched at 10%, as the plan required regardless of outcome; known-issues
+>   3 unchanged; no symbol flips.
 
 > **Two port tests are red and deliberately left red.** Both fakes set
 > `current = voltage/z0` at the driven port, making it perfectly matched, so
@@ -3534,7 +3550,15 @@ heavy-tier item besides item 2's declared ceiling.
    retiling identity or > 3% reaction disagreement — park, report the
    measured angles/ratios, stop; never tune.
 
-2. **`PORT-1` step 3b-xi — the PEC-box padding sweep.** Independent of
+2. ✅ **done — 2026-08-07, 07:30 slot.** The box attribution holds as a
+   trend: deficits **−8.0324% / −5.0256% / −3.2733%** at padding
+   0.08 / 0.10 / 0.12, strictly monotone and all negative; the 0.08 → 0.12
+   move is **4.7591%** (band 3–7%, step 1's 5.20%), **52.9×** the h_far
+   control; padding 0.08 reproduces step 2f's landed −8.03% to 2.44e-05.
+   7 passed 153.7 s, `20260807T124038Z_PORT-1-step3bxi-gate.log`;
+   `MUTUAL_TOLERANCE` untouched, known-issues 3 unchanged. See the §7
+   step-3b-xi entry.
+   **`PORT-1` step 3b-xi — the PEC-box padding sweep.** Independent of
    item 1: runs on `main`, ungapped fixture, landed step-1/2 machinery,
    new test module. Execute the §7 step-3b-xi plan, written this review:
    **mesh-only probe first** (cell counts at padding {0.08, 0.10, 0.12},
