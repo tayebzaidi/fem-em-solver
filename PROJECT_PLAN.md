@@ -1167,6 +1167,39 @@ in `docs/planning/plan-archive.md`.)*
 >   in the complex build (the origin case simplifies away and passes) —
 >   `ufl.real` around the comparison argument; **a UFL comparison that works
 >   at the origin is not evidence it works anywhere else.**
+> * **Step 3 — the averaging operator at the standard masses** *(plan
+>   written 2026-08-07, 03:00 review; §9 item 4)*. Step 2 gated the
+>   operator at m = 0.05 g because the step-1 sphere cannot contain a 1 g
+>   ball — the sizing, not the operator, was the limit. Close that gap on a
+>   sphere sized for the standard: R = 0.03 m, ρ = 1000 kg/m³, so the 1 g
+>   ball (r = 6.20e-3 m, 0.207 R — the same relative size step 2 gated) and
+>   the 10 g ball (r = 1.337e-2 m, 0.446 R, surface clearance 1.24 ball
+>   radii) both sit inside with margin. **No solve:** impose the uniform
+>   field analytically on the new mesh, exactly as step 2's uniform-field
+>   identity does — the subject is the operator, and a solved field would
+>   only add the closed form's O((k_inR)²) model error, ~9× step 1's at
+>   this R. **Anchor:** `SAR_avg/SAR_point = 1` at **both** masses
+>   (0.999846 on record at 0.05 g; gate |ratio − 1| < 0.5%, sized as 2× the
+>   step-2 measured-parts budget of 0.26% for the coarser ball-to-mesh
+>   ratio), and kernel mass conservation < 0.1% (0.040% on record).
+>   **Negative control:** the surface ball — centre the 1 g ball at
+>   R − r_ball and assert the ratio drop against the convex-lens ceiling,
+>   recomputing `1/f` for this R/r before asserting anything (step 2's was
+>   2.1875 at its own geometry; floor > 1.5 and 5% agreement with the
+>   recomputed `1/f`, as step 2 gated). **Cost:** standard, `-n 2`,
+>   `timeout 180`; no solve — step 2's three gates ran 54.8 s *including*
+>   solves; mesh at h = R/10 is the step-1 density. **Traps:**
+>   `ComplexComparisonError` — a UFL comparison with a non-zero centre
+>   needs `ufl.real`, and the surface ball is exactly the non-origin case
+>   (step 2 paid for this); complex build sourced +
+>   `FEM_EM_REQUIRE_COMPLEX=1` since `post/sar.py` takes `e_complex`;
+>   density via `build_density_field`, never a literal; averaging-ball
+>   integrals allreduced. **Does not close:** `MAT-4` — a C95.3 1 g/10 g
+>   *claim* needs a solved coil+phantom field, which stays unlicensed
+>   (§2.1); this closes the operator's sizing gap only, so the chunk stays
+>   🟡. **Negative result:** a ratio off 1 beyond the budget at either
+>   mass is an operator defect at scale — report both ratios and the
+>   kernel mass error, annotate here, stop.
 >
 > **Does not close:** `MAT-4` as an IEEE C95.3-conformant 1 g/10 g SAR — that
 > needs a phantom large enough to contain the averaging volume with margin;
@@ -2938,14 +2971,87 @@ box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
 > Neither bound was moved, and `MUTUAL_TOLERANCE` is unmoved at 0.10; nothing
 > under `src/` changed.
 >
-> **Step 3b-x — for a review to scope, not an implementer's to improvise.**
-> Replace the wedge limits with the meshed dielectric extent (better: read
-> the terminals off the port facet tags so the limits cannot drift from the
-> geometry) and expect `|Im Z₁₂|/ωM = 0.894`. That still misses
-> `MUTUAL_TOLERANCE = 0.10` by 0.6 pp, and whether the remaining −10.6% is
-> the PEC box is a question step 2c already half-answers at −9.36% — the
-> honest next measurement is a padding sweep on *this* fixture, never a
-> tolerance edit.
+> **Step 3b-x — terminal-to-terminal limits for `_gap_arc_quadrature`; land
+> the branch** *(scoped 2026-08-07, 03:00 review; §9 item 1; works on
+> `attempt/PORT-1-step3bix-20260807T050000Z`, `6caec85`)*. One change of
+> substance: the gap-voltage estimator integrates terminal to terminal — the
+> meshed dielectric extent — not the nominal wedge. Derive the limits from
+> the geometry the mesh actually carries: read the terminal angles off the
+> port facet tags (201/202) and assert they match `±arcsin(half_y/a) =
+> ±0.175335` rad to 1e-6 *before* any solve, so the limits cannot drift from
+> the geometry (`GAP_BURIAL` is the on-record cause, 3b-ix). Then one σ×1
+> solve per drive on the same 178 055-cell mesh. **Anchor, both halves
+> pre-sized:** (1) the retiling identity — the corrected `V_gap` must equal
+> 3b-ix's wedge + buried segment sum off the same field (0.893625 /
+> 0.893983 × ωM₁₂ on record) to < 1e-3 relative: same integrand, same
+> field, different tiling; (2) estimator-vs-reaction consistency — compute
+> the reaction-route `Im Z₁₂` on *this gapped fixture* with the landed
+> step-1/2 machinery and gate the corrected gap-voltage mutual against it
+> at ≤ 3% (the closure sum sits −10.4% vs the ungapped reaction route's
+> −9.35%, ~1.2 pp apart; 3% leaves room for the gapped/ungapped
+> difference). **Negative control:** on record — the wedge-only estimator
+> at 0.4937 × ωM₁₂ is ~45% off the reaction route, 15× the bound.
+> **Gate dispositions, decided by this review so the slot does not
+> improvise:** (i) the ωM₁₂ closed-form comparison stays *printed* in the
+> log and tracked by known-issues 3, expected at ~−10.6% — outside
+> `MUTUAL_TOLERANCE = 0.10` by 0.6 pp; the *assertion* moves to the
+> same-fixture reaction route per anchor (2). That is a re-anchoring
+> recorded here, not an in-slot loosening: no tolerance moves, and whether
+> the −10.6% is the PEC box is 3b-xi's question. (ii)
+> `test_gap_voltage_rises_monotonically_toward_the_emf_with_sigma` asserts
+> a prediction 3b-ix measured to be false (`V_gap` *falls*, 0.493653 →
+> 0.485059) — delete it; the σ-sweep record lives in the 3b-ix log and
+> attempts entry. A hypothesis test that returned its negative is
+> finished, not red. (iii) `test_wire_arc_quadrature_is_converged`: keep
+> the 1e-2 bound, gate the driven port (5.7e-4 / 1.7e-4 on record), print
+> the undriven (2.01e-2 — a relative bound on a term worth 0.24% of the
+> loop; absolute stake 5e-5 × ωM), and record the split in the docstring.
+> **Landing:** all gates green at `-n 2` ⇒ land the branch lineage
+> (3b-vi → 3b-x: test file, probe, logs) onto `main` in one commit and
+> delete the branch; anything red beyond the expectations above ⇒ park and
+> report. **Cost:** standard, `-n 2`, `timeout 600` — mesh 37 s +
+> ~23 s/solve × 2 drives (~150 s; 3b-ix's full run was 227 s with three σ
+> solves). **Traps:** all of 3b-vii/3b-ix's (FFCx lock after a kill,
+> pytest `-s`, DG0 node verification before any solve, complex build +
+> `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first); the buried
+> segments are **gap-tagged, not wire-tagged**; if step-2 reaction
+> machinery is reused, mind the `‖Z‖` normalisation note (step 2's audit).
+> **Does not close:** `PORT-1` or known-issues 3 — the ωM residual
+> adjudication is 3b-xi's. **Negative result:** a failed retiling identity
+> means the new limits read the wrong tags — report the measured terminal
+> angles against ±0.175335 and stop; a reaction-route disagreement > 3% on
+> the same solve is a genuine estimator defect that 3b-ix's closure could
+> not see — park, report, do not tune.
+>
+> **Step 3b-xi — the PEC-box padding sweep** *(scoped 2026-08-07, 03:00
+> review; §9 item 2; independent of 3b-x — runs on `main`'s ungapped
+> fixture with the landed step-1/2 machinery)*. The box attribution rests
+> on a single point: step 1 measured padding 0.08 → 0.12 moving the
+> `Im Z₁₂` deficit 5.20% toward the closed form (h_far 0.02 → 0.03 moved
+> 0.09% — mesh, not box), and −8.03% is the projected-drive deficit at
+> padding 0.08 since step 2f. 3b-x's corrected port voltage will sit at
+> ~−10.6% *for the same reason, if the attribution is right* — measure it
+> as a trend, not a point: solve the ungapped pair at padding
+> {0.08, 0.10, 0.12}, h_far 0.03, projected drive, and report
+> `Im Z₁₂/ωM₁₂` at each. **Anchor:** strictly monotone shrinkage of the
+> deficit over the three paddings, and the 0.08 → 0.12 delta consistent
+> with step 1's 5.20% (band 3–7%; step 1's was unprojected, so the exact
+> figure may move). **Negative control:** on record — the h_far move at
+> 0.09%, 58× smaller than the padding move on the same fixture.
+> **Cost:** heavy declared (`timeout 1200`), `-n 2`, new test module —
+> the step-2c file is at the standard ceiling. **Probe first, mesh only:**
+> print cell counts for the three paddings at h_far 0.03; padding 0.12 /
+> h_far 0.02 (237 926 cells) was once killed at 180 s inside MUMPS, and
+> step 2c ran padding 0.12 / h_far 0.03 in 167.7 s — if any padding
+> exceeds ~250k cells, report the counts and stop. Expected ~2 solves ×
+> 3 paddings at 20–60 s/solve plus meshes. **Traps:** FFCx lock;
+> `MUTUAL_TOLERANCE` does not move regardless of outcome; complex build.
+> **Does not close:** known-issues 3; no symbol flips. **Negative
+> result:** a deficit that does *not* shrink with padding kills the box
+> attribution — the −10.6% then has no named owner and the escalation the
+> 2026-08-06 18:00 review described (what quantity a gap port should
+> report; weekly-review rescope of known-issues 3) triggers. Report the
+> three ratios, annotate §7 + known-issues 3, stop.
 
 > **Two port tests are red and deliberately left red.** Both fakes set
 > `current = voltage/z0` at the driven port, making it perfectly matched, so
@@ -2994,6 +3100,7 @@ fixture's cell/facet tags until `EX-1` landed
 | ID | Title | Status | Tier |
 |---|---|---|---|
 | `EX-1` | Two-torus port fixture: conforming mesh, cell and facet tags in ParaView | ✅ | standard |
+| `EX-2` | Cylindrical phantom domain: wall classification and tags in ParaView | ⬜ | standard |
 
 > **✅ Restored 2026-08-07 (19:30 slot, §9 item 1).** The runner path is now
 > on record. `./run_examples.sh --list`
@@ -3089,6 +3196,48 @@ require it. **Does not close:** nothing physics-side; §5.4 inventory only.
 measured ratio against the landed log and stop (that is a regression
 finding, not an example-authoring problem).
 
+**`EX-2` — the cylindrical phantom domain, meshed, classified and tagged, in
+ParaView (plan written 2026-08-07, 03:00 review; the §5.4 ramp entry for
+`GEO-13`'s closure).** New `examples/meshing/02_cylindrical_phantom.py` in
+the existing `mesh:` group: build `cylindrical_domain()` at the defaults
+`GEO-13` swept, write combined-XDMF (mesh + cell tags, plus the facet file
+carrying the wall/interior classification), print a short report. Angle no
+existing example covers: `mesh:1` shows a box-bounded two-conductor
+fixture; nothing shows the *cylindrical* geometry — curved outer wall,
+phantom-in-domain — or the boundary classification the margins gate
+protects, which is exactly what the operator eyeballs when a coil+phantom
+mesh looks wrong (the birdcage path runs through cylinders). **Gated
+capability only:** generation and classification margins are ✅ (`GEO-13`,
+2026-08-07); no solve, no fields, no port quantities. **Anchor (the example
+asserts, not just renders):** (1) the live two-sided classification
+identity reproduced through the example at the meshed defaults — accepted
+surfaces 3 of 6, wall ratio ≤ 0.1, interior ratio ≥ 10, importing
+`_WALL_TOL_FRACTION` from the generator exactly as the margins test does
+(on record: wall `1.111111e-04`, interior `9.999989e+01`,
+`20260807T033127Z_GEO-13-probe.log`); (2) the per-tag closed-form volume
+check with the curvature stated honestly — linear tets inscribe a curved
+wall, so assert `V_mesh/V_analytic < 1` **and** inside (0.98, 1) at the
+default resolution, printing the deficit beside the analytic cylinder
+volumes so the record shows the O(h²) chordal loss rather than hiding it
+(no exact identity exists here; `GEO-12`'s planar 1e-15 does not transfer —
+that is the `GEO-13` plan's own boundary, restated). **Negative control:**
+on record, cite in the report text — the old `tol = resolution` predicate
+accepting **6 of 6** surfaces at `resolution = 0.09`, the inner cylinder
+swept whole into `outer_boundary` (same probe log). **Cost:** standard;
+the CAD sweep is 0.19 s and the caller meshes are seconds on record;
+`timeout 180`, runner default `-n 2` — volume sums and counts allreduced,
+rank-local values never asserted. **Traps:** gmsh init/finalize in
+`try/finally`; XDMF mesh written before meshtags with matching names;
+`run_examples.sh` already enumerates `examples/meshing/` (`EX-1`) — the
+new file must appear as `mesh:2` in `--list`, and the closure logs must
+show *the runner* dispatching it (`--list` + `-e mesh:2`), the exact gap
+that cost `EX-1` its first ✅; real build, no complex source for a
+meshing-only script. **Does not close:** anything physics-side; §5.4
+inventory only. **Negative result:** classification counts or margins that
+differ from the `GEO-13` record through the example path are a regression
+finding against a chunk closed hours earlier — do not ship; report
+measured vs logged and stop.
+
 ---
 
 ## 8. Legacy ID mapping
@@ -3157,18 +3306,21 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
    real matrix. *(Updated 2026-08-05, 18:00 review: the `W_e` spur is fully
    discharged — step 2d explained it to ratio 0.999998, step 2e removed it by
    solenoidal projection, step 2f made the projection the production drive.)*
-   What remains is **3b** gap-voltage ports on the two-torus validation pair:
-   3b-i (gapped fixture) and 3b-iv (port facet tags, green at `-n 2`
-   2026-08-05) are landed; 3b-v measured the facet-integral voltage at
-   4.845 × ωM₁₂ and **excluded it** (2026-08-06 — the terminal facet carries
-   the normal, surface-charge-dominated component); 3b-vi measured the
-   tangential path integral at ~0.48 × ωM₁₂ but is **parked unresolved** —
-   its own quadrature precondition fails structurally with only ~5 cells
-   across the gap arc — so **3b-vii**, the same estimator on an arc-refined
-   mesh, is the open step and the top of the queue. Four estimator families
-   now span a factor 15 off one solved field; if the path value survives
-   refinement, the question moves from sampling geometry to the field scale
-   in the gap or the `ωM₁₂` reference itself.
+   What remains is **3b** gap-voltage ports on the two-torus validation pair,
+   and as of 2026-08-07 the factor-2 question that dominated it is
+   **answered**: 3b-i/3b-iv landed the gapped fixture and its port tags;
+   3b-v excluded the facet-integral estimator (4.845 × ωM₁₂ — normal,
+   surface-charge-dominated); 3b-vi/3b-vii measured the tangential path
+   voltage at 0.4937/0.4917 × ωM₁₂ and settled the estimator-family
+   question negatively; 3b-viii exonerated the `ωM₁₂` reference in closed
+   form (+0.481%, wrong sign to help); and 3b-ix closed the Faraday loop at
+   **0.896 × ωM₁₂** — the missing half is the **buried** gap arc that
+   `GAP_BURIAL` places outside the nominal wedge and
+   `_gap_arc_quadrature` never integrates: 0.8% of the loop's length
+   carrying 45% of its EMF. Terminal to terminal the port voltage is
+   **0.8936 × ωM₁₂**, not 0.4937. Open: **3b-x** (correct the limits off
+   the port facet tags, land the parked branch) and **3b-xi** (padding
+   sweep — is the residual −10.6% the PEC box?), both scoped in §7.
 5. **`GEO-9`** — 🟡: created 2026-08-02 from known-issues 7, **step 1 ✅
    2026-08-03**, and step 1 refuted the hypothesis it was written on.
    `coil_phantom_domain` generates fine in a fresh process; the whole of
@@ -3207,187 +3359,127 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done, the implementer falls back to the "obvious
 next entry" named below.
 
-Last reviewed 2026-08-06, 18:00 daily review. Tree clean at review start and
-end; no `recovered/*` branches. **All four slots since the 10:30 review
-executed — a fourth consecutive 4/4 slate, three landed + one disciplined
-park**: `PORT-1` step 3b-vii (🟡 parked on
-`attempt/PORT-1-step3bvii-20260806T170000Z` — the plan's declared negative:
-arc refinement to 40 cells fixed reciprocity, 6.3e-2 → 3.9e-3, and left the
-path voltage at 0.4937/0.4917 × ωM₁₂, settling the estimator-family question
-negatively), `GEO-12` (✅ chunk closed — both tolerances to 1e-6, wall-area
-identity exact, known-issues 12 retired), `POST-1` step 6 (✅ step closed —
-CSV/stats parity exact to the bit, gate-only), and `EX-1` (landed; see
-below). All three ✅ flips audited this review by independent read-only
-auditors against the harness logs. `GEO-12` and `POST-1` step 6:
-**§4-compliant**, every claimed number found verbatim in the logs.
-**`EX-1`: demoted ✅ → 🟡** — the identities and logs are fully compliant,
-but the §5.4 delivery mechanism (`./run_examples.sh` dispatching the new
-`mesh:` group) was never executed on record; both logs run the inner
-`mpiexec` command directly. The remedy is one logged runner invocation
-(item 1 below). Branch disposition:
-`attempt/PORT-1-step3bvi-20260806T094500Z` **deleted** — the 3b-vii branch
-(`bc8c04e`) carries a strict superset of its content (test file, mesh
-split, plus the arc-refinement fields), verified by diff before deletion;
-`attempt/PORT-1-step3bvii-20260806T170000Z` **kept** — item 4 continues on
-it. Adjudications this review: the 3b-vii successor question is taken —
-the filamentary-reference suspect is bounded at ~10% by step 2's reaction
-route and cannot explain 0.49, so `PORT-1` step 3b-viii (closed-form
-reference audit, no solve) runs first because it is free, and step 3b-ix
-(loop-closure decomposition + σ scaling, the stronger suspect) carries the
-physics; both plans written into §7. `GEO-13` filed for known-issues 13
-(the last open classification-margin defect) with the fraction-of-annulus
-fix the `GEO-12` slot's closing note sketched. §5.4 example check: `GEO-12`
-and `POST-1` step 6 closed gates this interval, but `GEO-12`'s capability
-(the `outer_boundary` group and its area identity) is exactly what `EX-1`'s
-example already asserts on the two-torus fixture, and step 6 is a parity
-gate on an existing artefact, not a new capability — no new example chunk;
-inventing one would violate step 5's no-gap rule. §10 assessment: the
-critical path (S-parameters) is unblocked and moving — 3b-vii converted an
-open question into a two-suspect adjudication, and both successors are
-queued; no §10 gap found.
+Last reviewed 2026-08-07, 03:00 daily review. Tree clean at review start and
+end; no `recovered/*` branches. **All four slots since the 18:00 review
+executed — a fifth consecutive 4/4 slate, three landed + one disciplined
+park**: `EX-1` (✅ restored — the runner path is on record, every identity
+byte-matching the direct-invocation log), `PORT-1` step 3b-viii (the `ωM₁₂`
+reference **exonerated** in closed form: two routes agree to 1.5e-15, the
+finite-cross-section correction is +0.481% with the wrong sign to help, and
+the gate carries a live 140% vacuity control), `GEO-13` (✅ chunk closed —
+tolerance now `0.01 × (outer_radius − inner_radius)`, all four margin
+fixtures assert live, known-issues 13 retired), and `PORT-1` step 3b-ix
+(🟡 parked on `attempt/PORT-1-step3bix-20260807T050000Z`, **and the
+factor-2 question is answered**: the Faraday loop closes at 0.896 × ωM₁₂,
+both named suspects are dead, and the cause is `_gap_arc_quadrature`
+integrating the nominal wedge while the buried gap arc — 0.8% of the loop —
+carries 45% of the EMF; terminal to terminal the voltage is 0.8936 × ωM₁₂).
+Audits this review: `EX-1` and `GEO-13`, the two ✅ flips, both verified
+**§4-compliant** by independent read-only auditors — every claimed number
+found in the harness logs, no demotions. Branch disposition:
+`attempt/PORT-1-step3bvii-20260806T170000Z` **deleted** — the 3b-ix branch
+(`6caec85`) carries a strict superset (3b-vi/3b-vii cherry-picked forward,
+verified by diff; the 3b-vii logs already live on `main`);
+`attempt/PORT-1-step3bix-20260807T050000Z` **kept** — item 1 continues and
+lands it. Plan work this review: **step 3b-x scoped** (terminal-to-terminal
+limits read off the port facet tags; assertion re-anchored to the
+same-fixture reaction route, ωM comparison stays printed; lands the
+branch), **step 3b-xi scoped** (padding sweep on `main`'s ungapped fixture —
+adjudicates whether the residual −10.6% is the PEC box; independent of
+3b-x), **`MAT-4` step 3 scoped** (the averaging operator at 1 g/10 g on a
+sphere sized for the standard — the sizing gap step 2 named, no solve).
+§5.4 example check: `GEO-13` closed a quantitative gate and no example
+shows the cylindrical geometry or its classification — **`EX-2` chunked**;
+3b-viii's closure is a test-side reference audit, not a package
+capability — no example for it. §10 assessment: the critical path is
+moving fast — the gap-port voltage question that was a factor-2 mystery
+two reviews ago is now a measured integration-limits defect with a scoped
+one-slot fix and a scoped box adjudication behind it; no §10 gap found.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
 `docs/planning/plan-archive.md`, not here.)*
 
 **Items are mutually independent — no item below depends on another
-landing.** Item 1 runs the example runner only; item 2 is pure
-Python/scipy with no solve; item 3 touches only `cylindrical_domain` and
-its margin test; item 4 works on its `attempt/*` branch (it benefits from
-item 2's result but does not depend on it landing); item 5 is the spare
-and the only heavy-tier item.
+landing.** Item 1 works on its `attempt/*` branch; item 2 runs on `main`'s
+ungapped fixture with landed machinery (it *interprets* item 1's residual
+but does not depend on it landing); item 3 is a meshing-only example; item
+4 is an operator gate with no solve; item 5 is the spare and the only
+heavy-tier item besides item 2's declared ceiling.
 
-1. ~~**`EX-1` closure — execute the runner on record.**~~ **DONE 2026-08-07,
-   19:30 slot.** Both runner invocations logged
-   (`20260807T003037Z_EX-1-runner-list.log`,
-   `20260807T003044Z_EX-1-runner-mesh1.log`); `mesh:1` dispatches, all
-   identities reproduce at every printed digit through the runner path, exit
-   0 in 16 s. `EX-1` restored to ✅ in §7. The `-T` trap did not fire, so the
-   runner is unchanged. Original item text follows.
+1. **`PORT-1` step 3b-x — terminal-to-terminal limits; land the branch.**
+   Critical path; works on `attempt/PORT-1-step3bix-20260807T050000Z`
+   (`6caec85`). Execute the §7 step-3b-x plan, written this review:
+   read the terminal angles off the port facet tags (assert
+   `±arcsin(half_y/a) = ±0.175335` rad to 1e-6 before any solve), correct
+   `_gap_arc_quadrature` to integrate terminal to terminal, one σ×1 solve
+   per drive. **Anchor:** the retiling identity — corrected `V_gap` equals
+   3b-ix's wedge + buried sum (0.893625 / 0.893983 × ωM₁₂ on record) to
+   < 1e-3 — and agreement with the same-fixture reaction-route `Im Z₁₂` at
+   ≤ 3%. **Negative control:** on record — the wedge-only estimator is
+   ~45% off the reaction route, 15× the bound. **Gate dispositions are
+   pre-decided in the §7 plan** (ωM comparison stays printed and
+   known-issues-tracked; the refuted σ-monotonicity test is deleted; the
+   wire-quadrature bound gates the driven port) — execute, don't
+   re-adjudicate. **Cost:** standard, `-n 2`, `timeout 600`, ~150 s on
+   record. **Traps:** 3b-vii/3b-ix's list; buried segments are gap-tagged;
+   `‖Z‖` normalisation if reaction machinery is reused. **Does not
+   close:** `PORT-1` or known-issues 3. **Negative result:** a failed
+   retiling identity or > 3% reaction disagreement — park, report the
+   measured angles/ratios, stop; never tune.
 
-   **`EX-1` closure — execute the runner on record.** Smallest item first:
-   the audit demoted `EX-1` to 🟡 solely because no log shows
-   `./run_examples.sh` dispatching the new `mesh:` group. Run, through the
-   harness: `./run_examples.sh --list` (assert the output names
-   `mesh:1 -> examples/meshing/01_two_torus_ports.py`) and
-   `./run_examples.sh -e mesh:1`. **Anchor:** the example's own gated
-   identities, on record at every printed digit (area ratio
-   1.000000000000000, volume ratios 1.000000000000) — the run must
-   reproduce them through the runner path. **Negative control:** on
-   record — the audit finding itself (no `mesh:1` string in any log).
-   **Cost:** standard; the meshed run is 14 s on record plus runner
-   overhead; the runner's own `timeout` is 1200 s, wrap the harness call
-   at `timeout 300`. **Traps:** the runner's `docker compose exec` omits
-   `-T` (`run_examples.sh:191`) — in a headless slot that can fail on TTY
-   allocation; if it does, adding `-T` handling to the runner is in-scope
-   for this item (it is a runner defect found by executing the runner) and
-   the fix lands with the log. The example itself must not change.
-   **Does not close:** anything beyond restoring `EX-1`'s ✅. **Negative
-   result:** if the `mesh:` branch does not dispatch, that is the finding —
-   `EX-1` stays 🟡, report the runner failure, fix only the dispatch, stop.
+2. **`PORT-1` step 3b-xi — the PEC-box padding sweep.** Independent of
+   item 1: runs on `main`, ungapped fixture, landed step-1/2 machinery,
+   new test module. Execute the §7 step-3b-xi plan, written this review:
+   **mesh-only probe first** (cell counts at padding {0.08, 0.10, 0.12},
+   h_far 0.03; any count > ~250k ⇒ report and stop — 237 926 cells once
+   died in MUMPS at 180 s), then solve and report `Im Z₁₂/ωM₁₂` at each
+   padding, projected drive. **Anchor:** strictly monotone deficit
+   shrinkage, 0.08→0.12 delta in the 3–7% band around step 1's 5.20%.
+   **Negative control:** on record — h_far 0.02→0.03 moved 0.09%, 58×
+   smaller. **Cost:** heavy declared, `timeout 1200`, `-n 2`; ~2 solves ×
+   3 paddings at 20–60 s/solve (step 2c ran padding 0.12 in 167.7 s).
+   **Traps:** FFCx lock; step-2c's file is at the standard ceiling —
+   new module; `MUTUAL_TOLERANCE` never moves. **Does not close:**
+   known-issues 3. **Negative result:** a deficit that does not shrink
+   with padding kills the box attribution — report the three ratios,
+   annotate §7 + known-issues 3, stop; the escalation is the weekly
+   review's.
 
-2. ~~**`PORT-1` step 3b-viii — audit the `ωM₁₂` reference in closed form.**~~
-   **DONE 2026-08-07, 21:00 slot.** The expected negative, delivered: the two
-   filament routes agree to 1.5e-15 (with a 140% modulus-convention vacuity
-   control), and the finite-cross-section correction at `r/a = 0.125` is
-   **`M_tube/M_fil = 1.004809992`, +0.481%**, converged to 6.7e-16 — and
-   *positive*, so it moves the gap-voltage deficit the wrong way (0.4937 →
-   0.4914 × ωM). The reference suspect is **retired**; step 3b-ix (item 4)
-   now carries the only surviving one. `tests/validation/test_mutual_inductance_reference.py`,
-   7 passed in 0.43 s at `-n 1`
-   (`20260807T020314Z_PORT-1-step3bviii-gate.log`); §7 and known-issues 3
-   updated. Original item text follows.
+3. **`EX-2` — the cylindrical phantom domain in ParaView.** Independent;
+   the §5.4 ramp entry for `GEO-13`'s closure. Execute the §7 `EX-2` plan,
+   written this review: `examples/meshing/02_cylindrical_phantom.py`,
+   combined-XDMF, closure logs must show **the runner** dispatching
+   (`--list` naming `mesh:2` + `-e mesh:2`) — the exact gap that cost
+   `EX-1` its first ✅. **Anchor:** the live two-sided classification
+   identity through the example path (3 of 6 accepted, wall
+   `1.111111e-04` ≤ 0.1, interior `9.999989e+01` ≥ 10, importing
+   `_WALL_TOL_FRACTION`) plus the signed volume band
+   (`V_mesh/V_analytic` in (0.98, 1) — inscribed, O(h²), printed).
+   **Negative control:** on record — the old predicate accepting 6 of 6
+   at `resolution = 0.09` (`20260807T033127Z_GEO-13-probe.log`). **Cost:**
+   standard, `timeout 180`, runner default `-n 2`. **Traps:** gmsh
+   `try/finally`; XDMF mesh-before-meshtags; allreduce before asserting.
+   **Does not close:** anything physics-side. **Negative result:**
+   margins differing from the `GEO-13` record are a regression finding —
+   do not ship, report measured vs logged, stop.
 
-   **`PORT-1` step 3b-viii — audit the `ωM₁₂` reference in closed form.**
-   Critical path; **no solve, no mesh** — pure Python/scipy, smoke tier.
-   Execute the §7 step-3b-viii plan, written this review: reimplement the
-   coaxial-filament `M` via the elliptic-integral form and assert it
-   matches the existing vector-potential route to < 1e-9; then average the
-   kernel over both minor discs at `r/a = 0.125` (2-D Gauss per disc,
-   convergence < 1e-6 between orders) and report `M_tube/M_fil`.
-   **Anchor:** the two-route filament identity + the converged tube ratio.
-   **Ceiling, computed before asserting anything:** the reaction route
-   bounds a legitimate correction at ~10% (−9.35% measured, ≈ −9.36%
-   attributable to the PEC box) — a "correction" near factor 2 means the
-   calculation is wrong, not the reference. **Cost:** smoke, `-n 1`,
-   seconds, real build. **Traps:** scipy `ellipk/ellipe` take `m = k²`
-   not `k`; the `μ₀/8π` internal-inductance term is self-L only, never
-   mutual; read `(a, r_wire, d)` from the fixture on the branch; decide
-   whether the reference is full-loop or `2π − g` wedge before comparing.
-   **Does not close:** `PORT-1`, known-issues 3. **Negative result:** a
-   percent-scale ratio is the expected deliverable (retires the suspect —
-   record in §7 + known-issues 3); a large ratio contradicts the
-   reaction-route agreement and that contradiction is the finding — stop.
-
-3. ~~**`GEO-13` — decouple `cylindrical_domain`'s wall tolerance from
-   `resolution`.**~~ **DONE 2026-08-07, 22:30 slot.** `GEO-13` ✅, known-issues
-   13 retired. Tolerance is now `0.01 × (outer_radius − inner_radius)`, chosen
-   from a sweep over all four caller argument sets (window `[1e-4, 0.05]`,
-   `20260807T033127Z_GEO-13-probe.log`); interior margin `4.499995×` →
-   `9.999989e+01×`, wall `1.111111e-04×`, classification unchanged at 3 of 6.
-   The pin and skip are gone — all four fixtures in the margins file now assert
-   live (5 passed, 1.05 s); whole `tests/mesh` 36 passed / 1 skipped, 110.34 s.
-   The probe also reproduced the predicted failure: the old predicate at
-   `resolution = 0.09` accepts 6 of 6. Original item text follows.
-
-   **`GEO-13` — decouple `cylindrical_domain`'s wall tolerance from
-   `resolution`.** Independent; fixes known-issues 13, the last open
-   classification-margin defect. Execute the §7 `GEO-13` plan, written
-   this review: replace `resolution` in the wall predicate with a
-   geometric fraction of `outer_radius − inner_radius` set from the probe,
-   un-skip the fixture in
-   `tests/mesh/test_boundary_classification_margins.py`, assert the
-   two-sided margin live. **Anchor:** wall ratio ≤ 0.1×(1+1e-6), interior
-   ratio ≥ 10 — the fourth and last fixture under the identity. **Negative
-   control:** on record — the pinned 4.499995× ratio
-   (`20260806T140325Z_GEO-11-probe.log`). **Cost:** smoke CAD sweep
-   (0.19 s on record) + whole `tests/mesh` regression at `-n 2` (118 s on
-   record), `timeout 180`. **Traps:** no meshed wall-area gate — the
-   cylinder wall is curved, O(h²), `GEO-12`'s exact planar identity does
-   not transfer; update the margin test's pinned constants and the
-   predicate in one commit; gmsh `try/finally`; pytest `-s`. **Does not
-   close:** anything outside known-issues 13. **Negative result:** no
-   fraction clears both bounds ⇒ report the measured ratios, leave 13
-   open with them, stop.
-
-4. ~~**`PORT-1` step 3b-ix — loop-closure decomposition + σ scaling.**~~
-   **ATTEMPTED 2026-08-07, 00:00 slot — 🟡 parked on
-   `attempt/PORT-1-step3bix-20260807T050000Z`, and the question is answered.**
-   The closure identity holds at **0.896019 / 0.896299 × ωM₁₂** (inside the
-   pre-set 1 ± 0.15 band, and matching step 2's reaction route to within the
-   PEC box's −9.36%), but the missing half is **not** the wire: `V_wire` is
-   0.0024 × ωM and *falls* under σ×{2,4} while `V_gap` falls too (0.493653 →
-   0.490837 → 0.485059). The missing half is `V_buried = 0.400 × ωM` — the
-   1.013 mm of dielectric per side that `GAP_BURIAL` puts *outside* the
-   nominal wedge, which `_gap_arc_quadrature` never integrates. Terminal to
-   terminal the port voltage is 0.8936 × ωM₁₂. Both named suspects retired;
-   the cause is the estimator's integration limits. Successor **step 3b-x**
-   (correct the limits, then a padding sweep — never a `MUTUAL_TOLERANCE`
-   edit) is written into §7 and needs a review to scope it. 227 s at `-n 2`,
-   `20260807T050654Z_PORT-1-step3bix-gate-n2.log` on the branch. Original
-   item text follows.
-
-   **`PORT-1` step 3b-ix — loop-closure decomposition + σ scaling.** The
-   stronger suspect for the 0.49; works on
-   `attempt/PORT-1-step3bvii-20260806T170000Z`. Execute the §7 step-3b-ix
-   plan, written this review: (1) off the σ×1 solve, integrate `−∫E·t̂ dl`
-   around the wire-interior centreline arc and test the loop-closure sum
-   `(V_gap + V_wire)/ωM₁₂` against ~1 (within the reference's own ~10–15%
-   bound), quadrature precondition (513, 1025) < 1e-2 first; (2) re-solve
-   at `σ_wire × {2, 4}` on the same mesh and report `V_gap/ωM₁₂` at each —
-   monotone rise toward 1 is the penetration signature; **never exceed
-   σ×4** (at σ×16 the skin layer is unresolved, δ < h_wire). **Anchor:**
-   the closure identity + the monotone trend. **Negative control:** on
-   record — 0.4937/0.4917 at σ×1. **Cost:** standard, `-n 2`,
-   `timeout 600`; mesh 37 s + ~23 s/solve on record → ~110 s + evaluation.
-   **Traps:** all of 3b-vii's; wire-arc nodes verified wire-tagged via the
-   DG0 indicator; find where `σ_wire` is set before sweeping;
-   `MUTUAL_TOLERANCE` does not move. Item 2 has landed and its answer is
-   **no rescaling** — the reference is exonerated at +0.481%, so every
-   `× ωM₁₂` ratio here stands as recorded, and this item now carries the
-   only surviving suspect. **Does not close:** `PORT-1`. **Negative result:** `V_wire`
-   small *and* `V_gap` σ-flat kills both named suspects — report, annotate
-   §7 + known-issues 3, park, stop; the rescope is the weekly review's.
+4. **`MAT-4` step 3 — the averaging operator at 1 g / 10 g.** Independent;
+   no solve. Execute the §7 step-3 plan, written this review: impose the
+   uniform field on a sphere sized for the standard (R = 0.03 m — the 1 g
+   ball at 0.207 R, the 10 g ball at 0.446 R) and gate the operator at
+   both masses. **Anchor:** `SAR_avg/SAR_point = 1` at both masses,
+   |ratio − 1| < 0.5% (0.999846 on record at 0.05 g); kernel mass
+   conservation < 0.1% (0.040% on record). **Negative control:** the 1 g
+   surface ball vs the recomputed convex-lens ceiling (`1/f` for this
+   R/r — compute before asserting; floor > 1.5). **Cost:** standard,
+   `-n 2`, `timeout 180` (step 2's gates ran 54.8 s *with* solves).
+   **Traps:** `ufl.real` on any non-origin UFL comparison (step 2 paid);
+   complex build + `FEM_EM_REQUIRE_COMPLEX=1`; `build_density_field`.
+   **Does not close:** `MAT-4` (stays 🟡 — a C95.3 claim needs a solved
+   coil+phantom field, unlicensed per §2.1). **Negative result:** a ratio
+   off 1 beyond budget at either mass — report both ratios + kernel mass
+   error, annotate §7, stop.
 
 5. **`MAT-6` step 5 — wire resolution at fixed box (spare; the only
    heavy item).** Independent. Execute the §7 step-5 plan, written
@@ -3413,10 +3505,12 @@ and the only heavy-tier item.
 
 If the queue drains: **stop and journal.** Do **not** improvise gap-voltage
 ports on the birdcage itself or a B1+ chunk — both are deliberately held for
-a review to scope once the 3b-viii/3b-ix adjudication reports — the gap-port
-voltage question is open at 0.49 × ωM₁₂ and porting it to the birdcage now
-would bake the defect in (also still open: whether `GEO-4`'s graded sizing is
-a birdcage prerequisite, per the 0.7091 measurement).
+a review to scope once 3b-x has landed the corrected estimator and 3b-xi has
+adjudicated the box residual; the terminal-to-terminal answer (0.8936 × ωM₁₂)
+is measured but not yet landed or gated, and porting the estimator to the
+birdcage before it lands would bake the wedge-limits defect in (also still
+open: whether `GEO-4`'s graded sizing is a birdcage prerequisite, per the
+0.7091 measurement).
 
 Every frequency-domain command needs `source /usr/local/bin/dolfinx-complex-mode`
 **and** `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest
