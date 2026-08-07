@@ -6033,3 +6033,77 @@ Dodd–Deeds. Testing additivity needs one run at W = 0.25 **and**
 measured growth factors (2.17 × 2.64 × 138 619), which is under the rung that
 OOM'd but was not probed. A review should scope it and require a fresh cost
 probe — the memory ceiling found here is the binding constraint, not time.
+
+---
+
+## 2026-08-07T21:30Z — *(no chunk — queue drained)* — **blocked**
+
+Scheduled implementer run, 16:30 CDT slot. Tree clean at start (`git status
+--porcelain` empty, branch `main` at `d06a128`), container `fem-em-solver` Up.
+No chunk work executed; **no compute was run** and nothing was committed but
+this entry.
+
+**Why: §9 "On deck" has no open item.** All three are struck through, and I
+verified each rather than trusting the strikethrough:
+
+1. `PORT-1` step 3b-xii — closed for the queue by the 12:00 run as disposition
+   (ii); the item's own text says "Do not re-attempt 3b-xii" and hands the
+   successor (a σ sweep on the σ = 0 control) to the review.
+2. `MAT-4` step 3 — done, 13:30 run.
+3. `MAT-6` step 5 — done, 15:00 run (the heavy spare, taken because 1 and 2
+   were already gone).
+
+The 15:00 entry above already noted the drain. Per protocol step 2 I looked for
+the fallback: §9's intro promises an "obvious next entry" sentence "named
+below", but **no such sentence exists in the file** — `grep -n "obvious next"`
+matches only the intro's forward reference at §9 line ~3725. The §9 drain
+instruction is explicit and takes precedence anyway: *"If the queue drains:
+stop and journal."* It also names what I must not improvise — gap-voltage
+ports on the birdcage and a B1+ chunk, both held for a review to scope once the
+corrected estimator has landed. So: stopping and journalling, which is the
+protocol-compliant outcome, not a failure to find work. This is the queue
+running out of *scoped* work at slot 4 of 4, exactly the case the 10:30
+review's "three ready items, not five" note predicted.
+
+**Incidental finding for the review — the branch-disposition ancestry test
+fails on the live `PORT-1` lineage, and the branches are nonetheless
+redundant.** Two branches exist, no `recovered/*`:
+
+- `attempt/PORT-1-step3bxb-20260807T111036Z` (`b86861e`)
+- `attempt/PORT-1-step3bxii-20260807T170000Z` (`87bf35d`)
+
+`git merge-base --is-ancestor 3bxb 3bxii` returns **false** — they diverge at
+`e814fa2`. The 12:00 run branched from `main` at `dc4eb66` and squashed the
+whole lineage into one commit (`87bf35d` re-adds the 3b-ix / 3b-x / 3b-x-b
+harness logs and the full 2184-line `test_port_gap_voltage_impedance.py`)
+rather than committing on top of `b86861e` as item 1 specified.
+
+The content is safe, and I checked directionally rather than assuming: the
+`src`/`tests`/`scripts` diff `3bxb → 3bxii` is **purely additive** (+852 / −3),
+and the only non-additive-looking hunk — 15 lines in
+`test_port_gap_voltage_impedance.py` — is a backward-compatible signature
+change (`_solve_gap_ports(comm, label, air_padding=AIR_PADDING)` plus the
+returned `air_padding` key), so no 3b-x-b work was dropped. **`3bxii` strictly
+supersedes `3bxb`; `3bxb` holds nothing unique.**
+
+The consequence is procedural: the 10:30 review deleted two branches on the
+strength of `--is-ancestor`, and that test will now say "keep both" for a pair
+where content says "keep one". A review applying it mechanically would either
+retain a redundant branch or, worse, read the divergence as unique work. I did
+**not** delete `3bxb` — branch disposition is the daily review's, per §9 — but
+the content check is done and recorded here so the review does not have to
+redo it.
+
+- Logs: none (no compute).
+- Branch (if parked): none — nothing to park.
+- **Next-attempt hypothesis.** There is nothing for the next implementer slot
+  to take until the 18:00 review refills §9, and the next slot (19:30) is after
+  it, so the grid self-heals without intervention. Two ready-to-scope
+  successors are already sitting in the journal, both with their cost
+  constraint measured: (a) the σ sweep on the σ = 0 closed-footprint control,
+  named by item 1 as the last structural difference between the two `PORT-1`
+  routes now that 3b-xi and 3b-xii have both cleared the box; and (b) the
+  `MAT-6` additivity test at W = 0.25 **and** `resolution_wire = 0.001`
+  together (~790 k cells by two measured growth factors), where the 15:00 entry
+  flags **memory, not time**, as the binding constraint — it needs a fresh cost
+  probe because the next rung up OOM-killed at `-n 4`.
