@@ -2847,7 +2847,29 @@ fixture's cell/facet tags until `EX-1` landed
 
 | ID | Title | Status | Tier |
 |---|---|---|---|
-| `EX-1` | Two-torus port fixture: conforming mesh, cell and facet tags in ParaView | 🟡 | standard |
+| `EX-1` | Two-torus port fixture: conforming mesh, cell and facet tags in ParaView | ✅ | standard |
+
+> **✅ Restored 2026-08-07 (19:30 slot, §9 item 1).** The runner path is now
+> on record. `./run_examples.sh --list`
+> (`20260807T003037Z_EX-1-runner-list.log`, 0 s) enumerates
+> `mesh:1 -> examples/meshing/01_two_torus_ports.py` under
+> "meshing (default real build, no solve)", so the `mesh:` group dispatches
+> from the listing the operator reads. `./run_examples.sh -e mesh:1`
+> (`20260807T003044Z_EX-1-runner-mesh1.log`, exit 0, 16 s harness-wall / 13.1 s
+> example-internal, `mpiexec -n 2`, smoke-to-standard) reproduces every gated
+> identity at every printed digit through the runner: `GEO-10` area ratio
+> **1.000000000000000**, `GEO-8` volume ratio **1.000000000000** with
+> `sum(tagged)/V_mesh` **1.000000000000**, both gap boxes
+> **1.000000000000**, and the wire ratios **0.963633** / **0.963756** — all
+> byte-matching the direct-invocation gate log. Tag inventory unchanged
+> (`{1, 2, 3, 101, 102}` / `{1, 201, 202}`). The predicted `-T` trap did
+> **not** fire: `run_examples.sh:199` omits `-T`, but `docker compose exec`
+> under the harness (`bash -lc`, no TTY) still ran to completion, so the
+> runner was left unmodified per the item's "fix only the dispatch" rule —
+> the missing `-T` remains a latent headless hazard, not a live defect, and
+> is not tracked as an issue because nothing has ever failed on it. No
+> source, test, or example file changed for this closure; the log is the
+> whole deliverable. The demotion note follows, for the record.
 
 > **🟡 Demoted from ✅ 2026-08-06, 18:00 review (audit finding).** The §4
 > substance is fully earned — both harness logs exist, every identity below
@@ -2866,7 +2888,7 @@ fixture's cell/facet tags until `EX-1` landed
 > ParaView hint text was edited between them; the *gate* log is the one
 > matching committed source).
 
-**`EX-1` landed 2026-08-06, closure pending the runner log** (16:30 slot, `20260806T213439Z_EX-1-gate.log`,
+**`EX-1` landed 2026-08-06, closed 2026-08-07 by the runner log** (16:30 slot, `20260806T213439Z_EX-1-gate.log`,
 14 s at `-n 2`; probe run `20260806T213341Z_EX-1-example.log`, 15 s).
 `examples/meshing/01_two_torus_ports.py` builds the *gapped* fixture at the
 `GEO-8`/`GEO-10`/3b-i parameter set (79 534 cells, 12.4 s) and asserts three
@@ -3089,7 +3111,15 @@ its margin test; item 4 works on its `attempt/*` branch (it benefits from
 item 2's result but does not depend on it landing); item 5 is the spare
 and the only heavy-tier item.
 
-1. **`EX-1` closure — execute the runner on record.** Smallest item first:
+1. ~~**`EX-1` closure — execute the runner on record.**~~ **DONE 2026-08-07,
+   19:30 slot.** Both runner invocations logged
+   (`20260807T003037Z_EX-1-runner-list.log`,
+   `20260807T003044Z_EX-1-runner-mesh1.log`); `mesh:1` dispatches, all
+   identities reproduce at every printed digit through the runner path, exit
+   0 in 16 s. `EX-1` restored to ✅ in §7. The `-T` trap did not fire, so the
+   runner is unchanged. Original item text follows.
+
+   **`EX-1` closure — execute the runner on record.** Smallest item first:
    the audit demoted `EX-1` to 🟡 solely because no log shows
    `./run_examples.sh` dispatching the new `mesh:` group. Run, through the
    harness: `./run_examples.sh --list` (assert the output names

@@ -5060,3 +5060,74 @@ box) — unmeasured cost, so it must cost-probe first as its plan says. One note
 for whoever writes the next `EX-*`: the runner's group enumeration is explicit
 per directory, so every new `examples/<dir>/` needs the same five-line edit to
 `scripts/run_examples.sh` that this slot made.
+
+---
+
+## 2026-08-07T00:30Z — `EX-1` — complete
+
+**Slot.** Scheduled implementer run, 19:30 local (2026-08-06). Preflight clean:
+`git status` empty, branch `main` at `e950f8a`, container `fem-em-solver` Up
+31 h. §9 item 1 taken as written (`EX-1` closure — execute the runner on
+record); no fallback, no substitution.
+
+**What was tried.** Exactly the two logged runner invocations the item
+specifies, nothing else. No source, test, example, or runner file was
+modified this slot — the deliverable is the log, and the item's scope is
+explicitly "does not close anything beyond restoring `EX-1`'s ✅".
+
+1. `scripts/testing/run_and_log.sh EX-1-runner-list "./run_examples.sh --list"`
+   → `20260807T003037Z_EX-1-runner-list.log`, exit 0, 0 s. Asserted string
+   present verbatim: `  mesh:1 -> examples/meshing/01_two_torus_ports.py`,
+   under the header `meshing (default real build, no solve):`. The `mesh:`
+   group is therefore enumerated in the listing an operator actually reads,
+   not only in code.
+2. `scripts/testing/run_and_log.sh EX-1-runner-mesh1 "timeout 300 ./run_examples.sh -e mesh:1"`
+   → `20260807T003044Z_EX-1-runner-mesh1.log`, exit 0, 16 s harness wall.
+   The runner announced `mpiexec -n 2`, `timeout 1200s`, and dispatched
+   `==> examples/meshing/01_two_torus_ports.py` with no complex-mode prefix
+   (correct — the meshing group is real build).
+
+**Measured numbers, all read out of the runner log, all matching the
+direct-invocation gate log (`20260806T213439Z_EX-1-gate.log`) digit for
+digit.** `GEO-10` `A_outer=3.220000000000e-02 m^2` / analytic → ratio
+**1.000000000000000** (gate `1e-9`). `GEO-8` `V_mesh=3.920000000e-04 m^3` /
+analytic box → **1.000000000000**, `sum(tagged)/V_mesh` → **1.000000000000**.
+3b-i gap boxes `V_gap1=V_gap2=1.148763643e-06 m^3` vs `dx*dy*dz` →
+**1.000000000000** each. Wires `0.963633` / `0.963756` of the analytic
+partial torus. Mesh 79 534 cells built in 13.0 s; tag inventory
+`{1: 5460, 2: 5516, 3: 65053, 101: 1990, 102: 1985}` cells and
+`{1: 3116, 201: 116, 202: 116}` facets. Example's own footer:
+`All identities hold. Total elapsed 13.1 s.` The 16 s − 13.1 s difference is
+runner + `docker compose exec` overhead.
+
+**The predicted `-T` trap did not fire.** `scripts/run_examples.sh:199` runs
+`docker compose exec fem-em-solver bash -lc "$inner"` with no `-T`, and the
+item pre-authorised adding `-T` handling if that broke headless. It did not:
+under `run_and_log.sh`'s `bash -lc` there is no TTY to allocate and Docker
+did not demand one, so the run completed normally. Per the item's "fix only
+the dispatch" instruction I left the runner untouched rather than making a
+speculative edit — a no-op change to a working script is exactly the drift
+this protocol tries to avoid. Recording it here so the next reader knows the
+omission is *known and deliberate*, not unnoticed: if a future scheduled slot
+ever sees `the input device is not a TTY` from the runner, `-T` at line 199 is
+the one-line fix and needs no re-diagnosis. Not filed in known-issues.md,
+which tracks observed failures; nothing has failed.
+
+**Outcome.** `EX-1` restored 🟡 → ✅ in §7 with the two log names, the ratios,
+and the `-T` note in the status block; §9 item 1 struck through and marked
+DONE with its original text preserved. Committed together: the two logs, the
+`test-results.md` rows, the §7 flip, the §9 mark, and this entry. `main` clean
+and green afterwards; no branch parked, nothing denied by the permission
+layer this slot. Elapsed inside the timebox: ~15 min, well before the minute-45
+cutoff.
+
+**Next attempt hypothesis.** `EX-1` needs nothing further — the §5.4 delivery
+mechanism is now exercised on record and the chunk's audit finding is fully
+answered. The queue's next open item is item 2, `PORT-1` step 3b-viii (the
+closed-form `ωM₁₂` reference audit — no solve, no mesh, smoke tier, pure
+scipy), which is on the critical path and cheap; it should be the 21:00 slot's
+work. One structural note for the reviewer: this slot proves the runner path
+end to end for a *non-solving* example only, so the `mri:` group's
+complex-mode prefix (`run_examples.sh:191`) is still verified by inspection
+alone — if an audit ever wants that closed too, it is the same one-log remedy.
+
