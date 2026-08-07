@@ -1390,7 +1390,12 @@ log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
 > is the discriminator this step was written for: had the 0.9200 been reshuffled
 > truncation error, the two paths would have closed on each other as W grew.
 > They did not, so the reactive part carries a drive-dependent offset consistent
-> with `PORT-1` step 2e's spurious-gradient (`W_e^spur`) mechanism. Note what is
+> with `PORT-1` step 2e's spurious-gradient (`W_e^spur`) mechanism.
+> *(**Superseded 2026-08-07 by step 5**: the gap does not shrink with the box,
+> but it collapses 0.1077 → 0.0005 under wire refinement at fixed W. The
+> offset is finite-wire discretisation error; the `W_e^spur` attribution in
+> this paragraph is withdrawn. The four ΔX numbers and the box reading below
+> stand.)* Note what is
 > *not* claimed: this shows the projection moves ΔX toward the closed form
 > systematically, not that ΔX is converged — at W = 0.25 the projected ratio is
 > still 1.5% short and still moving with W, and the filamentary reference's 30%
@@ -1458,7 +1463,74 @@ log `20260731T020427Z_TH-6-gate3.log`, 21 s at `-n 2`, complex build)*
 > split (closer at one size, not the other) is also report-and-stop.
 
 **`MAT-6` step 5 — separate the last ~1.5% of ΔX: wire resolution at fixed
-box** *(plan written 2026-08-05, 18:00 review; the follow-up step 4 named)*.
+box** ✅ *(2026-08-07, 15:00 run;
+`tests/validation/test_dodd_deeds_reactance_wire_resolution.py`,
+`20260807T201036Z_MAT-6-step5-projected.log` (8 passed, 492 s) and
+`20260807T201914Z_MAT-6-step5-pinned.log` (6 passed, 238 s), heavy, `-n 2`,
+W = 0.15 fixed, 366 207 cells / 426 722 dofs, four solves at 101–111 s; cost
+probes `20260807T200206Z_MAT-6-step5-probe.log` (ladder) and
+`20260807T200830Z_MAT-6-step5-probe-solve.log` (one solve, 80.1 s at `-n 4`))*
+> **Step 4's finding does not survive this knob: the two drives *converge* in
+> ΔX under wire refinement, so the drive-dependent offset was finite-wire
+> discretisation error, not the `W_e^spur` mechanism.** The ΔX ratios
+> `ΔX_FEM/ΔX_exact` (exact `−6.1586749e-01 Ω`) at fixed W = 0.15:
+>
+> | drive | `resolution_wire` 0.002 | 0.001 (**here**) |
+> |---|---|---|
+> | pinned (`project_source=False`) | 0.8123 | **0.9189** (`−5.6589001e-01 Ω`) |
+> | projected (production default) | 0.9200 | **0.9194** (`−5.6623884e-01 Ω`) |
+>
+> The projected drive does not move (−0.0006); the pinned drive moves +0.1066
+> and lands on it. The projected-minus-pinned gap collapses **0.1077 → 0.0005,
+> a factor of 215**, where step 4 measured that same gap *not* shrinking with
+> box size (0.1077 at W = 0.15, 0.1109 at W = 0.25). Read together: the
+> solenoidal projection was already delivering, on a coarse wire, the answer
+> the refined wire gives both drives — a real and useful property of the
+> projection, but the coarse-wire *difference* between the drives is a
+> discretisation artefact and step 4's attribution of it to `PORT-1` step 2e's
+> spurious-gradient mechanism is withdrawn. Note step 4's box result stands
+> unchanged; what is revised is only what the drive gap meant.
+>
+> **The refinement is real and second-order, measured independently of ΔZ.**
+> The faceted torus's volume deficit against `π r² · 2π a` goes
+> **8.0310% → 2.0114%, a 3.99× shrink against the O(h²) prediction of 4.00×**
+> (`I` = 0.919690 → 0.979886 A). That control is what makes the null projected
+> ΔX reading interpretable rather than vacuous: the mesh demonstrably changed
+> where it was supposed to, quadratically, and ΔX still did not follow.
+>
+> **ΔR moves, and the wire — not the box — owns its residual.** ΔR goes
+> 1.5834% (projected) / 1.58% (pinned) → **1.0562% / 1.0558%**: 0.53
+> percentage-points, i.e. **53× step 4's < 0.01 pp box wobble** across a 2.17×
+> cell change. So of the landed 1.58%, roughly a third was wire
+> discretisation. The landed number does not move — 1.58% is what the landed
+> fixture measures and stays §2.1's claim — but its error budget is now
+> attributed. Gates are step 2b's, inherited unchanged: ΔR under the 5% hard
+> ceiling, ΔX on sign and order of magnitude only. No ΔX band was tightened.
+>
+> **Step 2b's literal `h/r_wire ≥ 16` target is not reachable on this
+> machine**, and that is a measured statement, not an estimate. Read as cells
+> across the wire radius (`r_wire = 0.0025` m fixed), the ladder at W = 0.15
+> is 0.002 → 138 619 cells (r_wire/h = 1.25, byte-reproducing step 2b's
+> count), 0.001 → 366 207 (2.50), 0.0005 → 1 458 561 (5.00) — and that last
+> mesh **OOM-killed at `-n 4`** (signal 9, probe log). The target needs
+> `h ≤ 1.5625e-4`, two further doublings past a rung that already will not fit
+> in memory. §5.1 forbids buying it with a longer timeout, so 2.50 is the
+> refinement this step could execute: it *bounds* the wire-discretisation term
+> rather than exhausting it.
+>
+> **Does not close / does not reopen:** `MAT-6` stays ✅ — this adjudicates a
+> finding, not the chunk. No claim in §2.1 moves: the landed 1.58% ΔR is
+> untouched, saline/Larmor stays unlicensed (eddy-current kernel), and **ΔX is
+> still not gateable anywhere** — neither knob is saturated (the box was still
+> moving at W = 0.25; the wire knob is bounded by memory, not by convergence),
+> and the filamentary reference's 30% spread over `h ± r_wire` remains
+> untouched by either. Arithmetic worth recording but *not* tested: at
+> W = 0.25 the box was worth ~+0.065 and here the wire is worth ~0.000 on the
+> projected drive, so if the two knobs were additive a converged fixture would
+> land near 0.985 — which is step 4's W = 0.25 projected number. That is a
+> hypothesis for a later step, not a result; additivity was not measured.
+>
+> *Original plan, for the record:*
 > Step 4 left the projected-drive ΔX ratio at 0.9849 with two unseparated
 > residual terms: box truncation (still moving ~+0.06 per 0.10 m of W, so
 > not exhausted at W = 0.25) and the filamentary reference's own ~30% spread
@@ -3775,8 +3847,21 @@ stop and journal.
    off 1 beyond budget at either mass — report both ratios + kernel mass
    error, annotate §7, stop.
 
-3. **`MAT-6` step 5 — wire resolution at fixed box (spare; the only
-   heavy item).** Independent. Execute the §7 step-5 plan, written
+3. ~~**`MAT-6` step 5 — wire resolution at fixed box (spare; the only
+   heavy item).**~~ — **done, 2026-08-07 15:00 run**
+   (`…201036Z_MAT-6-step5-projected.log`, 8 passed 492 s;
+   `…201914Z_MAT-6-step5-pinned.log`, 6 passed 238 s). **Step 4's drive
+   attribution is withdrawn**: the projected-minus-pinned ΔX gap collapses
+   0.1077 → 0.0005 under wire refinement at fixed W = 0.15 (pinned 0.8123 →
+   0.9189, projected 0.9200 → 0.9194), where step 4 measured it unmoved by
+   the box — so the offset is finite-wire discretisation error, not
+   `W_e^spur`. ΔR moves 1.58% → 1.0558/1.0562%, 53× step 4's box wobble.
+   Refinement control: torus volume deficit 8.0310% → 2.0114%, shrink 3.99×
+   against the O(h²) prediction 4.00×. Step 2b's literal `h/r_wire ≥ 16` is
+   **unreachable** — the r_wire/h = 5 rung is 1 458 561 cells and OOM-killed
+   at `-n 4`; 2.50 (366 207 cells) is the finest affordable. `MAT-6` stays
+   ✅; ΔX still not gateable (neither knob saturated). Numbers in the §7
+   step-5 entry. *(Original scoping below.)* Independent. Execute the §7 step-5 plan, written
    2026-08-05: `h/r_wire ≥ 16` local refinement at W = 0.15 separates the
    two residual ΔX terms step 4 left entangled (box tail vs filamentary-
    reference spread). **Anchor:** Dodd–Deeds `ΔX = −6.1586749e-01 Ω` /

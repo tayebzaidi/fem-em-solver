@@ -5939,3 +5939,97 @@ sets the error. That needs a solved field with a known gradient — the lossy
 sphere's exterior dipole is one, and it is already on record from step 1 — and
 it is the last operator-level question before the coil+phantom fixture makes the
 C95.3 claim licensable. A review should scope it; I did not open it here.
+
+---
+
+## 2026-08-07T20:30Z — `MAT-6` step 5 — **complete**
+
+Scheduled implementer run, 15:00 CDT slot. Tree clean at start, container Up.
+§9 On-deck items 1 and 2 were already struck through (3b-xii closed as
+disposition (ii) by the 12:00 run; `MAT-4` step 3 by the 13:30 run), so this
+run took **item 3**, the heavy spare — the first item not marked done.
+
+**New:** `tests/validation/test_dodd_deeds_reactance_wire_resolution.py`
+(10 tests) and `scripts/probes/mat6_step5_probe.py`. Nothing about the fixture
+is restated: geometry, current density, tags, both solve routines and the
+pinned reaction integral are imported from the step-2b/3/4 modules, so
+`resolution_wire` is provably the only difference from the recorded W = 0.15
+numbers. `FEM_WIRE_RADIUS` deliberately did **not** move — that would have
+invalidated every imported routine, all of which derive `j` from it.
+
+**Interpretation recorded, since the plan's wording is ambiguous.** Step 2b's
+`h/r_wire ≥ 16` is read as *cells across the wire radius*, i.e. the mesh knob
+`resolution_wire`, not as a change to the wire's physical radius. The §7
+step-5 title ("wire *resolution* at fixed box"), its trap list ("refine the
+wire region only — `resolution_far` stays put") and its "nothing restated"
+requirement all force this reading; the geometric reading would have required
+restating the fixture. Flagging it for the review in case the other reading
+was intended — that would be a different, and separately affordable, step.
+
+**Cost, probed before the tier was chosen** (`…200206Z…probe.log` ladder,
+`…200830Z…probe-solve.log` one solve). W = 0.15 fixed, r_wire = 0.0025 m:
+
+| `resolution_wire` | r_wire/h | cells | note |
+|---|---|---|---|
+| 0.002 (landed) | 1.25 | 138 619 | byte-reproduces step 2b's count |
+| 0.001 | 2.50 | 366 207 | 80.1 s/solve at `-n 4` — used |
+| 0.0005 | 5.00 | 1 458 561 | **OOM-killed, signal 9, at `-n 4`** |
+
+So step 2b's literal target (`h ≤ 1.5625e-4`) is unreachable on this box: it
+is two doublings past a rung that already will not fit in memory. Per §5.1 the
+rescope is a smaller `h/r_wire`, never a raised timeout — 2.50 is what ran.
+Gates at `-n 2`, heavy, `timeout 600`, split by `-k`: 492 s (8 passed) and
+238 s (6 passed), both exit 0.
+
+**Measured numbers.** ΔX ratios `ΔX_FEM/ΔX_exact` (exact `−6.1586749e-01 Ω`),
+W = 0.15 throughout:
+
+| drive | `resolution_wire` 0.002 | 0.001 |
+|---|---|---|
+| pinned | 0.8123 | **0.9189** |
+| projected | 0.9200 | **0.9194** |
+
+- ΔR: 1.5834% / 1.58% → **1.0562% (projected) / 1.0558% (pinned)** — 0.53 pp,
+  i.e. **53×** step 4's < 0.01 pp box wobble.
+- Refinement control (independent of ΔZ): faceted-torus volume deficit
+  **8.0310% → 2.0114%**, shrink **3.99×** against the O(h²) prediction 4.00×;
+  `I` 0.919690 → 0.979886 A.
+- Cell-count gate: 366 207 asserted exactly (deterministic mesh), 2.64× the
+  landed 138 619 — confirms the refinement was wire-local.
+
+**The result is a withdrawal, and it is the point of the run.** Step 4 found
+the projected-minus-pinned ΔX gap *unmoved* by the box (0.1077 → 0.1109) and
+attributed it to `PORT-1` step 2e's `W_e^spur` mechanism. Under wire
+refinement that same gap collapses **0.1077 → 0.0005, a factor of 215**. The
+offset is finite-wire discretisation error; the `W_e^spur` attribution is
+withdrawn in both the step-4 and step-5 §7 entries. What survives, and is
+worth more: the solenoidal projection delivers on a *coarse* wire the answer
+the refined wire gives both drives.
+
+**No assertion was loosened, and one was corrected before it ran.** The volume
+control was first drafted with an unmeasured `deficit < 1%` bound; the
+coarse-wire current on record (0.919690 A → 8.031% deficit) showed that bound
+was wrong, so it was replaced *before execution* by a shrink factor against
+that recorded value, with the O(h²) prediction stated. ΔR keeps step 2b's 5%
+ceiling and ΔX keeps sign + order-of-magnitude only — no ΔX band tightened,
+per §7.
+
+**`MAT-6` stays ✅** (this adjudicates a finding, not the chunk) and no §2.1
+claim moves: the landed 1.58% is untouched, saline/Larmor stays unlicensed.
+
+**Note for the review: the On-deck queue is now drained** — all three items
+are struck through. Per the §9 drain instruction I did not improvise a fourth;
+this entry is the journal.
+
+**Hypothesis for the next attempt.** ΔX is still not gateable because neither
+knob is saturated, but the two are now separately characterised, and the
+arithmetic is suggestive: box worth ~+0.065 (step 4), wire worth ~0.000 on the
+projected drive, and step 4's W = 0.25 projected ratio is 0.9849. If the knobs
+are additive, a converged fixture lands near 0.985 and the residual ~1.5% is
+the filamentary reference's own ambiguity — which no mesh can remove and which
+would mean ΔX is gateable only against a *finite-wire* reference, not
+Dodd–Deeds. Testing additivity needs one run at W = 0.25 **and**
+`resolution_wire = 0.001` together; that mesh is ~790 k cells by the two
+measured growth factors (2.17 × 2.64 × 138 619), which is under the rung that
+OOM'd but was not probed. A review should scope it and require a fresh cost
+probe — the memory ceiling found here is the binding constraint, not time.
