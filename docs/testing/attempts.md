@@ -5322,3 +5322,99 @@ last slot, finite-σ terminal penetration must supply essentially the whole
 missing half via `V_wire`, or both named suspects die together. Nothing in this
 slot touches it — `GEO-13` was independent by construction, and the margins file
 it changed is not on any `PORT-1` path.
+
+---
+
+## 2026-08-07T05:00Z — `PORT-1` step 3b-ix — **incomplete (parked)**, and the
+## question is answered anyway
+
+**Slot.** Scheduled implementer run, 00:00 CDT grid slot. Preflight clean, tree
+clean, container Up 36 h, no `recovered/*`. §9 item 4 taken (items 1–3 done);
+branch `attempt/PORT-1-step3bix-20260807T050000Z`, commit `6caec85`, cut from
+`main` at `38d189d` with 3b-vi/3b-vii cherry-picked forward (one trivial
+`test-results.md` conflict, no code conflict, as the item predicted).
+
+**What was tried.** Both halves of the §7 step-3b-ix plan, off one mesh
+(178 055 cells), `-n 2`, `timeout 600`, elapsed **227 s** — inside the plan's
+estimate. Logs `20260807T050637Z_PORT-1-step3bix-collect.log` (collection
+probe, 4 s) and `20260807T050654Z_PORT-1-step3bix-gate-n2.log` (the gate),
+both on the branch.
+
+**Deviation from the plan, and the reason.** The plan tiles the centreline
+circle in two pieces, wedge + wire. It is three. `GAP_BURIAL` makes the
+dielectric *wider* than the nominal wedge: the box spans `|y| ≤ half_y` and the
+centreline has `y = a sin φ`, so the gap region reaches
+`±arcsin(half_y/a) = ±0.175335` rad against the wedge's `±0.15`. The two
+**buried** segments (1.013 mm of arc each, gap-tagged) had to be integrated
+separately or the "closure" would have skipped a piece of the loop. All four
+segments' nodes are verified against the DG0 material indicator before any
+solve — 0 misassigned of 5392, new gate, passes.
+
+**Measured numbers.** Undriven port, gap 101 driven / gap 102 driven:
+
+| term | × ωM₁₂ |
+|---|---|
+| `V_gap` (the wedge — 3b-vii's estimator, reproduced) | 0.493653 / 0.491744 |
+| `V_buried` (the two buried segments) | **0.399972 / 0.402239** |
+| `V_wire` (the whole conductor interior) | 0.002394 / 0.002316 |
+| **closure sum** | **0.896019 / 0.896299** |
+
+σ sweep, `σ × {1, 2, 4}` (δ/r_wire 1.125 → 0.796 → 0.563), one solve each at
+22.7 / 22.8 s, σ moved in *both* the material map and the
+`I = σ⟨E·φ̂⟩A` reconstruction:
+
+| | ×1 | ×2 | ×4 |
+|---|---|---|---|
+| `V_gap/ωM` | 0.493653 | 0.490837 | 0.485059 |
+| `V_wire/ωM` | 0.002394 | 0.001856 | 0.000727 |
+| closure | 0.896019 | 0.892940 | 0.886694 |
+
+Undriven port open at every scale (2.1e-3, 3.2e-3 < 1e-2, gated).
+
+**What it means.** The Faraday identity closes at **0.896 × ωM₁₂**, i.e.
+−10.40% / −10.37%, against step 2's independent reaction-route `Im Z₁₂` at
+−9.35% with −9.36% attributable to the PEC box at padding 0.08. Two estimators
+on entirely different machinery now agree with each other and with the closed
+form to within the box effect.
+
+So **the factor 2 was never physics — it is the estimator's integration
+limits.** `_gap_arc_quadrature` integrates the *nominal* wedge, while the
+terminals (the conductor/dielectric cut that tags 201/202 already mark) sit at
+`±arcsin(half_y/a)`. That 0.8% of the loop's length carries 45% of its EMF,
+because it is exactly where the terminal fields are. Terminal to terminal the
+port voltage is **0.8936 × ωM₁₂**, not 0.4937.
+
+Both suspects the 18:00 review named are now dead: the reference by 3b-viii
+(+0.481%), and finite-σ terminal penetration here — `V_wire` is 0.24% of ωM and
+*falls* under σ, exactly as penetration predicts but from a base 200× too small
+to matter. The plan's stated negative ("`V_wire` small *and* `V_gap` σ-flat")
+is delivered, together with the third cause the plan did not name.
+
+**Failing gates, deliberately not loosened.**
+`test_gap_voltage_rises_monotonically_toward_the_emf_with_sigma` asserts the
+penetration signature; it fails because the prediction is wrong, and that
+failure is the deliverable. `test_wire_arc_quadrature_is_converged` reaches
+2.01e-2 against the plan's 1e-2 on the *undriven* port only (driven port
+5.7e-4 / 1.7e-4) — a relative tolerance on a term worth 0.24% of the loop, so
+the absolute stake in the closure is 5e-5 × ωM; the bound was fixed by the plan
+before any measurement and stays. `test_path_voltage_is_converged_in_the_quadrature`
+and `test_gap_voltage_mutual_impedance_matches_closed_form` fail as they did on
+3b-vii, unchanged. `MUTUAL_TOLERANCE` unmoved at 0.10; nothing under `src/`
+changed this slot.
+
+**Why parked and not landed.** Correcting `_gap_arc_quadrature`'s limits is the
+obvious fix and it is *not* this slot's: it redefines `V_gap` for every gate in
+the file and for known-issues 3, the plan says "does not close `PORT-1`", and
+the corrected value (0.8936, −10.6%) still sits outside `MUTUAL_TOLERANCE = 0.10`
+by 0.6 pp — which is a tolerance question about the PEC box, not something an
+implementer slot may decide by editing the constant. Nothing landed on `main`
+but this entry and the §7 / known-issues annotation.
+
+**Next attempt hypothesis.** Step 3b-x, for a review to scope: replace the
+wedge limits in `_gap_arc_quadrature` with the meshed dielectric extent
+(`arcsin(half_y/a)`, or better, read off the port facet tags so it cannot drift
+from the geometry), re-run, and expect `|Im Z₁₂|/ωM = 0.894`. Whether that
+clears `MUTUAL_TOLERANCE` is then a question about the PEC box at padding 0.08
+— step 2c already attributes −9.36% to it — and the honest move is a padding
+sweep on this fixture rather than a tolerance edit. Nothing was denied by the
+permission layer.
