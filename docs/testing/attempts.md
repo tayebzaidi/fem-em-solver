@@ -5861,3 +5861,81 @@ is the wrong reference, not the estimator. Either way the branch should not
 land until one of those is on record. **Not a fourth blind attempt at the same
 comparison** — the review should scope this before it re-enters the queue, and
 §9 item 1 is marked closed so the 13:30 run takes item 2 (`MAT-4` step 3).
+
+---
+
+## 2026-08-07T18:35Z — `MAT-4` step 3 — **complete**
+
+Scheduled implementer run, 13:30 local slot. §9 item 1 was already closed by
+the 12:00 run, so this took **item 2** as written: the mass-averaging operator
+at the IEEE C95.3 masses. Tree clean at start, container Up, no preflight
+anomaly. Standard tier, `-n 2`, complex build; **no solve** anywhere in the
+chunk, per the §7 plan.
+
+**What was built.** `tests/validation/test_mass_averaged_sar_standard_masses.py`
+— the step-1 sphere scaled to R = 0.03 m (box 0.06, h = R/10, 74216 cells) so
+the 1 g ball (6.2035 mm, 0.207 R) and the 10 g ball (13.365 mm, 0.446 R) both
+fit with clearance, with the uniform complex interior phasor **imposed** on
+N1curl rather than solved. Degree-1 Nedelec contains the constants exactly, so
+the imposed field carries no interpolation error and every residual measured
+belongs to the averaging kernel — which is the point, since growing R to 0.03 m
+would have taken the step-1 closed form out of quasi-statics (~9× the model
+error) for no gain to a question about the operator. σ still comes from the
+production `build_material_fields`, ρ from `build_density_field`.
+
+**Measured (gate `20260807T183506Z_MAT-4-step3-gate2.log`, 7 passed, 17.4 s).**
+
+| quantity | 1 g | 10 g | budget |
+|---|---|---|---|
+| `SAR_avg/SAR_point` | 1.00000000 | 1.00000000 | \|r−1\| < 0.5% |
+| kernel mass error | 0.0120% | 0.0044% | < 0.1% |
+
+The pointwise leg agrees with the closed form `σ|E|²/(2ρ)` to **4.96e-16**, so
+the identity is exact to round-off at both standard masses, not merely inside
+budget. Negative control, the 1 g ball re-centred on `(0,0,R)`: separation
+**2.1894** against the sphere-sphere lens ceiling `1/f` **recomputed for this
+geometry** — 2.1681 at a/R = 0.2068, deliberately not step 2's 2.1875 —
+agreeing to **0.98%** against a 5% band, and clearing the plan's > 1.5 floor.
+
+**The one thing that did not go to plan, and it was worth the slot.** The first
+gate run (`…183256Z_MAT-4-step3-gate.log`, 1 failed / 6 passed) **failed the
+1 g kernel-mass gate at 0.3008%** against 0.1%, while 10 g passed at 0.0187% on
+the same mesh — so not truncation. Rather than move the budget, I measured:
+`scripts/probes/mat4_step3_quadrature_probe.py`
+(`…183401Z_MAT-4-step3-probe.log`, 27 s) sweeps the quadrature degree, which is
+what resolves the averaging ball's surface (the ball is a UFL `conditional`,
+and the module docstring already says the degree sets the accuracy of the
+*region*, not the integrand). 1 g mass error by degree:
+
+    degree      8        12        16        20        24        30
+    1 g     0.7637%   0.3008%   0.0120%   0.0145%   0.0039%   0.0036%
+    10 g    0.1523%   0.0187%   0.0044%   0.0069%   0.0044%   0.0021%
+    1 g @R  0.4294%   0.0291%   0.0027%   0.0002%   0.0456%   0.0038%
+
+Non-monotone — this is sampling noise of where the ball surface falls among the
+quadrature points, not a truncation order. Degree **16** was selected as the
+smallest at which all three placements sit an order of magnitude inside the
+0.1% budget, and the whole table is in a comment at the constant. **No
+assertion was loosened**: the budgets are the review's pre-decided 0.5% / 0.1%,
+unchanged; only the resolution of the region moved.
+
+**Latent finding for the reader, not a defect.** Step 2's 0.040% kernel mass at
+degree 12 was inside its own 0.36% budget and remains a valid landed number,
+but this sweep shows it was a lucky draw from the same noise rather than a
+floor — at ~2 cells per ball radius, degree 12 is worth a few tenths of a
+percent. Recorded in the §7 step-3 entry; no known-issues entry opened, since
+no landed number is wrong.
+
+**Does not close `MAT-4`** — it stays 🟡, as the plan required. This closes the
+operator's *sizing* gap only; an IEEE C95.3-conformant 1 g/10 g SAR claim needs
+a solved coil+phantom field, which is unlicensed per §2.1.
+
+**Hypothesis for the next attempt.** The averaging operator is now gated at the
+standard masses and has no known slack left on a uniform field, so the next
+honest question about it is the one this step deliberately did not ask: what the
+kernel does on a *non-uniform* field, where numerator and denominator no longer
+share a constant and the ball-to-gradient ratio, not the ball-to-cell ratio,
+sets the error. That needs a solved field with a known gradient — the lossy
+sphere's exterior dipole is one, and it is already on record from step 1 — and
+it is the last operator-level question before the coil+phantom fixture makes the
+C95.3 claim licensable. A review should scope it; I did not open it here.

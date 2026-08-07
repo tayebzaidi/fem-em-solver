@@ -1167,8 +1167,38 @@ in `docs/planning/plan-archive.md`.)*
 >   in the complex build (the origin case simplifies away and passes) —
 >   `ufl.real` around the comparison argument; **a UFL comparison that works
 >   at the origin is not evidence it works anywhere else.**
-> * **Step 3 — the averaging operator at the standard masses** *(plan
->   written 2026-08-07, 03:00 review; §9 item 4)*. Step 2 gated the
+> * **Step 3 — the averaging operator at the standard masses** ✅
+>   *(2026-08-07, 13:30 run; `tests/validation/test_mass_averaged_sar_standard_masses.py`,
+>   gate `20260807T183506Z_MAT-4-step3-gate2.log`, 7 passed 17.4 s at `-n 2`,
+>   standard tier, complex build)*. The sizing gap is closed: on R = 0.03 m
+>   with a uniform complex phasor **imposed** (no solve — degree-1 N1curl
+>   contains the constants exactly, so every residual below belongs to the
+>   kernel), the uniform-field identity is **exact at both standard masses**
+>   — `SAR_avg/SAR_point = 1.00000000` at 1 g (0.207 R) and 10 g (0.446 R),
+>   against a 0.5% budget, with the pointwise path agreeing with the closed
+>   form `σ|E|²/(2ρ)` to 5e-16. Kernel mass conservation **0.0120% / 0.0044%**
+>   against 0.1%. Negative control, the 1 g ball re-centred on `(0,0,R)`:
+>   separation **2.1894** against the lens ceiling `1/f` **recomputed for this
+>   geometry** — 2.1681 at a/R = 0.2068, *not* step 2's 2.1875 — agreeing to
+>   **0.98%** (band 5%, floor > 1.5). **Measured in-run, and it is a fact
+>   about the kernel, not the operator:** the first gate run
+>   (`…183256Z_MAT-4-step3-gate.log`) failed the 1 g mass gate at **0.3008%**
+>   at step 2's quadrature degree 12. The probe sweep
+>   (`…183401Z_MAT-4-step3-probe.log`) shows why — the averaging ball is a UFL
+>   `conditional`, so the degree resolves the ball's *surface*, and at 2.07
+>   cells per ball radius degree 12 is under-resolved: 1 g reads
+>   0.7637/0.3008/0.0120/0.0145/0.0039/0.0036% at degrees 8/12/16/20/24/30,
+>   non-monotone, i.e. sampling noise rather than a truncation order. Degree
+>   **16** was selected as the smallest at which all three placements (1 g,
+>   10 g, 1 g-at-surface) sit an order of magnitude inside the 0.1% budget;
+>   **no budget was moved**, only the resolution of the region. Consequence
+>   for step 2, latent and not a wrong number: its 0.040% at degree 12 was
+>   within its own 0.36% budget but is a lucky draw from the same noise, not
+>   a floor — a future kernel change should not read it as one. **`MAT-4`
+>   stays 🟡**: this closes the operator's sizing gap, not a C95.3 claim,
+>   which needs a solved coil+phantom field (§2.1). *(Original plan below.)*
+>
+>   Step 2 gated the
 >   operator at m = 0.05 g because the step-1 sphere cannot contain a 1 g
 >   ball — the sizing, not the operator, was the limit. Close that gap on a
 >   sphere sized for the standard: R = 0.03 m, ρ = 1000 kg/m³, so the 1 g
@@ -3720,7 +3750,15 @@ stop and journal.
    wedge correction did not remove; park and report, never tune toward
    (i).
 
-2. **`MAT-4` step 3 — the averaging operator at 1 g / 10 g.** Independent;
+2. ~~**`MAT-4` step 3 — the averaging operator at 1 g / 10 g.**~~ — **done,
+   2026-08-07 13:30 run** (`…183506Z_MAT-4-step3-gate2.log`, 7 passed 17.4 s).
+   Identity **exact at both masses** (ratio 1.00000000, budget 0.5%), kernel
+   mass 0.0120% / 0.0044% (budget 0.1%), surface control 2.1894 vs the
+   recomputed lens ceiling 2.1681 (0.98%). Quadrature degree moved 12 → 16 by
+   measured sweep — the 1 g ball reads 0.3008% at degree 12, which is the
+   kernel's resolution of its own surface, not the operator; no budget moved.
+   `MAT-4` stays 🟡 (a C95.3 claim needs a solved coil+phantom field). Numbers
+   in the §7 step-3 entry. *(Original scoping below.)* Independent;
    no solve. Execute the §7 step-3 plan, written the 03:00 review: impose the
    uniform field on a sphere sized for the standard (R = 0.03 m — the 1 g
    ball at 0.207 R, the 10 g ball at 0.446 R) and gate the operator at
