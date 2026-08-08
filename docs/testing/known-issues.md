@@ -113,7 +113,40 @@ membership assertion passed vacuously. Armed, and the test now gates
 | **Scoped 2026-08-07 (18:00 review)** | 3b-xii's disposition (ii) successor is now a full §7 plan and queued (§9 item 1): **step 3b-xiii**, the σ ladder {0, 200, 800} S/m on the closed-footprint control — nothing geometric moves, so σ becomes the only difference between the routes and the ~3% deviation gets an owner: loss or gap. Landing the parked branch (`attempt/PORT-1-step3bxii-20260807T170000Z`) is pre-authorized only under the (loss) disposition with the consistency bound unchanged at 0.03; the (gap) and (mixed) outcomes park and escalate to the weekly review. `attempt/PORT-1-step3bxb-…` was deleted this review as strictly superseded by content (+852/−3, verified — the ancestry test returns false only because the 12:00 run squashed the lineage). `MUTUAL_TOLERANCE` untouched regardless of outcome. |
 | **Scoped 2026-08-08 (03:00 review)** | 3b-xiii's successor is now a full §7 plan and queued (§9 item 1): **step 3b-xiv**, the non-degenerate half of the same sweep — hold the **production gapped** fixture fixed and run its σ down {800, 200, 0}; a lossless *gapped* loop has no shorted-turn current, so σ and gap separate in this direction. **Measurement only: every disposition parks and reports** — branch landing and any gate re-pointing stay with the weekly review (2026-08-10), per 3b-xiii's escalation; this step exists so that review adjudicates with the ladder in hand. Branch hygiene: `attempt/PORT-1-step3bxii-20260807T170000Z` deleted this review (verified strict ancestor of the 3b-xiii branch); `attempt/PORT-1-step3bxiii-20260808T005500Z` (`82bfb40`) is the one live lineage. The rank-safety `_validate_material_map_tags` fix that rode along is separately scoped for `main` as `OPS-13`. |
 
-### 4. Coil+phantom B-field symmetry exceeds tolerance
+### 4. ✅ RETIRED 2026-08-08 — coil+phantom B-field symmetry exceeded tolerance (`MAG-6` step 3)
+
+**Resolution.** The estimator, not the physics, owned every number below. Both
+sampled metrics in the test now go through **DG0** instead of CG1, and the
+fixture is refined one rung to `resolution = 0.010` m; **no tolerance moved**
+(`PHANTOM_SYMMETRY_REL_TOL = 0.35` and `PHANTOM_CENTERLINE_JUMP_RATIO_MAX =
+0.60` are untouched, and the symmetry assertion was *tightened* — the
+permissive `or max_abs_diff < …` escape is gone). Red first at `-n 1`
+(`max_rel_diff=0.728`, `20260808T170126Z_MAG-6-step3-redbaseline-n1.log`);
+green at `-n 1/2/4` with `max_rel_diff` = **0.323844 / 0.302661 / 0.308407**,
+three-way spread **7.00%** against the pre-registered ≤ 10%, the `-n 1`
+value byte-reproducing the step-2 record
+(`20260808T170549Z_MAG-6-step3-gatefinal-n1.log`,
+`…170529Z_…-n2.log`, `…170515Z_…-n4.log`).
+
+**What this test now gates: discretisation symmetry, not phantom physics.**
+`mu` is uniform, so the phantom is invisible to the solve and the exact
+mismatch is 0 by construction. The fixture caveat below is preserved in the
+test's module docstring; it was not "fixed", it was made explicit.
+
+**Carried forward, not closed:** the centerline smoothness metric is *also*
+CG1-owned and was re-pointed at DG0 in the same commit (CG1 read 0.705 and
+0.732 on two identical `-n 4` runs against a 0.60 bound — rank-dependent and
+not run-to-run reproducible; DG0 reads 0.227869 on the same solve). DG0 leaves
+it passing at all three rank counts but still **88%** rank-scattered
+(0.473300 / 0.268765 / 0.251746 at `-n 1/2/4`) — no rank-stability claim is
+made for it, and sizing that second estimator is unscoped work for a review.
+Related: the DG0 symmetry metric moved 6.8% between two identical `-n 2` runs
+(meshing is not bit-reproducible), inside the spread gate but relevant to any
+future tightening.
+
+<details>
+<summary>Historical record (the failing entry as it stood)</summary>
+
 
 | | |
 |---|---|
@@ -131,6 +164,8 @@ membership assertion passed vacuously. Armed, and the test now gates
 | **Verified at** (step 2) | `20260808T123206Z_MAG-6-step2-meshprobe.log` (cell counts), `20260808T123245Z_MAG-6-step2-hconv-n2.log` (35 s), `20260808T124355Z_MAG-6-step2-hconv-n4.log` (32 s), `20260808T123335Z_MAG-6-step2-hconv-n1.log` (**exit 124** — sequential LU 13.0 s → 132.4 s over rungs 1–2, rung 3 past the 600 s ceiling; that rung's `-n 1` control was dropped on cost per §7, not retried longer). |
 | **Estimator adjudicated 2026-08-08 (10:30 review)** | Candidate (i) is taken on step 2's licensed numbers: `MAG-6` step 3 (§7, queued §9 item 1) re-points the test's sampling at DG0 and refines the fixture to h = 0.010 m, gating against the **untouched** 0.350 with a ≤ 10% three-way rank-spread gate (6.40% on record). Candidate (ii) — real material contrast — is rejected for this chunk: it changes the physics under the metric; the uniform-μ caveat transfers into the test docstring instead. **This entry retires with step 3's landing commit.** |
 | **Superseded next step scoped 2026-08-08 (03:00 review)** | `MAG-6` step 2 (§7, queued §9 item 3): measure the **DG0 metric's `h`-convergence** on a three-rung refinement ladder — the one measurement that decides whether ~0.53 is coarse-mesh discretisation (it falls with `h`) or a mesh-independent defect (it plateaus). Candidates (i) re-point the estimator at DG0 and (ii) give the phantom real material contrast are deliberately deferred behind it: (i) would flip the test hard-red today with no licensed number to gate against, and (ii) changes the physics under the metric. The 0.350 tolerance stays untouched until step 2's bands read out. |
+
+</details>
 
 ### 5. ✅ RETIRED 2026-08-06 — domain sizing heuristic, off-centre phantom
 

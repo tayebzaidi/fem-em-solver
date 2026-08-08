@@ -795,7 +795,7 @@ do not "fix in passing", and do not read it as a chunk failure.
 | `MAG-3` | Circular-loop analytic validation | ✅ | standard | |
 | `MAG-4` | Helmholtz analytic validation | ✅ | standard | 0.04% centre / 0.83% mean |
 | `MAG-5` | h-refinement convergence study | ✅ | standard | |
-| `MAG-6` | Coil+phantom B-field symmetry metric strategy | 🧪 | metric rank-dependent 3.03× (0.7279 / 0.2405 / 0.3215 at `-n 1/2/4`); DG0 path stable to 4.8%; DG0 converges at p ≈ 1.07 (0.5347 / 0.3122 / 0.2552) and meets 0.350 at h = 0.010 | steps 1–2 ✅ 2026-08-08 — CG1 interpolation owns it (and does not converge under `h`); boundary and gauge exonerated; ~0.53 is discretisation; estimator adjudicated 2026-08-08 (10:30 review) — step 3 lands DG0 sampling + h = 0.010 against the untouched 0.350 (§9 item 1) |
+| `MAG-6` | Coil+phantom B-field symmetry metric strategy | ✅ | landed on DG0 at h = 0.010: mirror-symmetry `max_rel_diff` **0.323844 / 0.302661 / 0.308407** at `-n 1/2/4` vs the untouched 0.350, three-way rank spread **7.00%** (gate ≤ 10%); `-n 1` byte-reproduces the on-record 0.323844 | steps 1–3 ✅ 2026-08-08 — CG1 interpolation owned it (rank-dependent 3.03×, non-convergent under `h`); boundary and gauge exonerated; ~0.53 was discretisation (p ≈ 1.07); step 3 re-pointed **both** sampled metrics at DG0 and refined one rung, no tolerance touched; known-issues 4 retired. Gates discretisation symmetry, **not** phantom physics (uniform μ) |
 | `MAG-7` | Fix point evaluation in validation tests | ✅ | standard | |
 | `MAG-8` | Restrict straight-wire current density to the wire | ✅ | standard | |
 | `MAG-9` | Re-size validation meshes to fit the tier budget | ✅ | standard | |
@@ -1089,6 +1089,49 @@ h = 0.010 m, gated against the untouched 0.350** *(adjudicated and scoped
 > on-record numbers failing to reproduce (metric > 0.350 or spread > 10%)
 > is a reproduction failure — park on `attempt/*`, annotate known-issues 4,
 > touch nothing; the record is the evidence either way.
+
+**`MAG-6` step 3 — ✅ executed 2026-08-08 (12:00 run). The estimator landed;
+a *second* CG1-owned metric surfaced on the way and was fixed with it.**
+Test: `tests/validation/test_coil_phantom_bfield_metrics.py`. Full write-up in
+`docs/testing/attempts.md` (2026-08-08T17:10Z); known-issues 4 retired.
+> **Red first.** The test at `-n 1` on the pre-change fixture fails exactly as
+> known-issues 4 records: `max_rel_diff=0.728 (tol 0.350)`, `max_abs_diff`
+> also over its scale so the `or` branch did not rescue it
+> (`20260808T170126Z_MAG-6-step3-redbaseline-n1.log`, 20 s).
+> **The gate, green at three rank counts.** DG0 sampling, `resolution = 0.010`
+> m, probe grid pinned to the 0.015 m clearance (the ladder's fixed grid),
+> `PHANTOM_SYMMETRY_REL_TOL = 0.35` **untouched**: `max_rel_diff` =
+> **0.323844** (`-n 1`, 144 s), **0.302661** (`-n 2`, 10 s), **0.308407**
+> (`-n 4`, 10 s). Three-way spread `(max−min)/min` = **7.00%**, inside the
+> pre-registered ≤ 10% (6.40% on record). The `-n 1` reading **byte-reproduces
+> the step-2 record 0.323844**. Spread computed by this session across the
+> three harness logs — a single pytest process cannot span rank counts.
+> **The scoped change was not sufficient, and that is the finding.** Refining
+> to h = 0.010 with only the symmetry metric re-pointed left the test **red at
+> `-n 4`**: the *centerline smoothness* check — a separate assertion, sampling
+> the same CG1 interpolation — failed at jump ratio **0.705** against its 0.60
+> bound (`20260808T170334Z_MAG-6-step3-gate-n4.log`), where `-n 2` read
+> 0.318029. A second `-n 4` run of identical code read **0.732**: the CG1
+> centerline is not rank-stable *and* not run-to-run reproducible. Measured
+> on the same solve, DG0 read **0.227869**
+> (`20260808T170423Z_MAG-6-step3-centerline-diag-n4.log`), so the centerline
+> was re-pointed at DG0 too — same defect, same fix, tolerance untouched.
+> **Honest limit on the centerline metric.** DG0 shrinks its rank scatter but
+> does not remove it: 0.473300 / 0.268765 / 0.251746 at `-n 1/2/4` is an
+> **88%** three-way spread (CG1's is ~200%). All three pass the 0.60 bound,
+> but **no rank-stability claim is made for the centerline gate** — the ≤ 10%
+> gate is the symmetry metric's, and only it. Sizing that second estimator is
+> unscoped work, left for a review.
+> **Second-order caveat, measured:** the DG0 symmetry metric moved 0.323290 →
+> 0.302661 (6.8%) between two identical `-n 2` runs, with CG1 moving only 0.8%
+> — the meshing is not bit-reproducible run to run, and DG0 point sampling is
+> sensitive to which cell owns a point. Both readings sit inside the recorded
+> band and under 0.350; the ≤ 10% spread gate absorbs it, but a tighter future
+> band would have to account for it.
+> **Closes:** `MAG-6` ✅ and known-issues 4, both stating the metric gates
+> **discretisation symmetry, not phantom physics** (uniform μ — the phantom is
+> invisible to this solve); the caveat now lives in the test's module
+> docstring. **Cost:** standard tier, 5 commands, 20 / 12 / 9 / 10 / 10 / 144 s.
 
 **`MAG-13` step 2 — the < 5% wire at the budget the follow-up predicted:
 cost-probe, then the gate** *(scoped 2026-08-08, 10:30 review; queued §9
@@ -4707,7 +4750,13 @@ on a solved coil+phantom field (`MAT-4`'s C95.3 claim, `POST-1`'s final
 review will drain — the drain instruction below applies to it: **stop and
 journal.**
 
-1. **`MAG-6` step 3 — land the adjudicated estimator: DG0 sampling at
+1. ✅ **DONE 2026-08-08 (12:00 run)** — landed on `main`: `max_rel_diff`
+   0.323844 / 0.302661 / 0.308407 at `-n 1/2/4` against the untouched 0.350,
+   three-way spread 7.00% (gate ≤ 10%), red baseline 0.728 on record. The
+   centerline smoothness metric turned out to be CG1-owned as well and was
+   re-pointed with it; its residual 88% rank scatter is reported, not claimed
+   away. `MAG-6` ✅, known-issues 4 retired. See the §7 step-3 readings block.
+   **`MAG-6` step 3 — land the adjudicated estimator: DG0 sampling at
    h = 0.010, gated against the untouched 0.350.** Independent; `main`;
    real build; closes `MAG-6` and retires known-issues 4. Execute the §7
    step-3 plan: re-point `test_coil_phantom_bfield_metrics.py`'s sampling

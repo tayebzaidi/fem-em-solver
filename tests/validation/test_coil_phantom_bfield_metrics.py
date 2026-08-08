@@ -1,4 +1,26 @@
-"""Sanity metrics validation for coil+phantom magnetostatic B-field."""
+"""Sanity metrics validation for coil+phantom magnetostatic B-field.
+
+**What the symmetry metric gates: discretisation symmetry, not phantom
+physics.** ``MagnetostaticProblem`` is built here with a *uniform*
+``mu = MU_0``, so the phantom is physically invisible to the solve; the
+geometry is mirror-symmetric about ``x = 0`` by construction and the exact
+±x mismatch is therefore **0**. Every digit the metric reads is
+discretisation error, and no claim about phantom material behaviour may be
+drawn from it (`MAG-6` steps 1-3; known-issues 4's fixture caveat, which
+retires into this docstring).
+
+**Why the symmetry sampling goes through DG0** (`MAG-6` step 1/2, 2026-08-08):
+``curl A`` for N1curl degree 1 is cell-wise constant, so interpolating it
+into CG1 asks for a nodal value where the field jumps and gets it from
+whichever cell the partition supplies. On record, the CG1 path swings
+**3.03x** across rank counts (0.727907 / 0.240541 / 0.321468 at ``-n 1/2/4``
+on one unchanged mesh) and does **not** converge under refinement
+(0.240541 -> 0.760519 -> 0.723637 at ``-n 2`` on an h-ladder where DG0 falls
+monotonically). DG0 keeps the cell-wise value: it is rank-stable to 4.69%
+and falls at ``p ~ 1.07``, meeting the unchanged 0.350 bound at
+``resolution = 0.010`` m. The CG1 number is still printed for continuity —
+it is never gated.
+"""
 
 import numpy as np
 import ufl
@@ -26,7 +48,16 @@ def test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric():
 
     phantom_radius = 0.04
     phantom_height = 0.10
-    resolution = 0.015
+    # `MAG-6` step 3: one refinement rung below the historical 0.015 m.  The DG0
+    # metric was measured at 0.312197 / 0.304356 / 0.323844 (`-n 2/4/1`) here,
+    # against the untouched 0.350 bound; 55 784 cells, 6.4 s mesh + 2.0 s solve
+    # at `-n 2` (standard tier).
+    resolution = 0.010
+    # The ±x probe grid is pinned to the clearance the h-ladder was measured on
+    # (the 0.015 m fixture's), *not* to `resolution`: the recorded numbers above
+    # are for this fixed point set, and letting the grid track `h` would compare
+    # a metric of one point set against a metric of another.
+    sampling_clearance_resolution = 0.015
 
     mesh, cell_tags, facet_tags = MeshGenerator.coil_phantom_domain(
         coil_major_radius=0.08,
@@ -65,13 +96,26 @@ def test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric():
     b_lagrange = fem.Function(v_lagrange, name="B")
     b_lagrange.interpolate(b_field)
 
+    # The gated sampling path (see the module docstring): DG0 preserves the
+    # cell-wise `curl A` instead of averaging it across a jump at a node.
+    v_dg0 = fem.functionspace(mesh, ("DG", 0, (3,)))
+    b_dg0 = fem.Function(v_dg0, name="B_dg0")
+    b_dg0.interpolate(b_field)
+
     centerline_points = np.array(
         [[0.0, 0.0, z] for z in np.linspace(-0.03, 0.03, 9)],
         dtype=np.float64,
     )
 
+    # Both centerline metrics below go through DG0 for the same reason the
+    # symmetry metric does.  Measured 2026-08-08 at this rung: the CG1
+    # centerline jump ratio reads 0.318029 at `-n 2` but 0.705 / 0.732 on two
+    # *identical* `-n 4` runs — it is rank-dependent and not even run-to-run
+    # reproducible, because a nodal average of a cell-wise-constant field
+    # depends on which cells the partition hands the node.  DG0 reads 0.227869
+    # at `-n 4` on the same solve.  The 0.60 tolerance is untouched.
     centerline_b, centerline_valid = evaluate_vector_field_parallel(
-        b_lagrange,
+        b_dg0,
         centerline_points,
         comm=comm,
     )
@@ -83,6 +127,18 @@ def test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric():
 
     centerline_mag = np.linalg.norm(centerline_b, axis=1)
     assert np.isfinite(centerline_mag).all(), "Centerline |B| contains non-finite values"
+
+    # Continuity print only — never gated.
+    centerline_b_cg1, _ = evaluate_vector_field_parallel(
+        b_lagrange,
+        centerline_points,
+        comm=comm,
+    )
+    centerline_mag_cg1 = np.linalg.norm(centerline_b_cg1, axis=1)
+    cg1_jump = np.abs(np.diff(centerline_mag_cg1))
+    cg1_jump_ratio = float(np.max(cg1_jump)) / max(
+        float(np.max(centerline_mag_cg1)), FIELD_SCALE_FLOOR
+    )
 
     b_min = float(np.min(centerline_mag))
     b_max = float(np.max(centerline_mag))
@@ -100,13 +156,14 @@ def test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric():
     max_jump = float(np.max(point_to_point_jump)) if point_to_point_jump.size else 0.0
     jump_ratio = max_jump / max(b_max, FIELD_SCALE_FLOOR)
     assert jump_ratio < PHANTOM_CENTERLINE_JUMP_RATIO_MAX, (
-        "Centerline |B| is too jagged for a symmetric setup; "
-        f"max jump ratio={jump_ratio:.3f}"
+        "Centerline |B| is too jagged for a symmetric setup (DG0 sampling); "
+        f"max jump ratio={jump_ratio:.6f} (tol {PHANTOM_CENTERLINE_JUMP_RATIO_MAX:.3f}); "
+        f"CG1 print-only reads {cg1_jump_ratio:.6f}"
     )
 
     # Symmetry check for the symmetric two-coil setup.
     # Keep probes away from phantom interfaces to avoid boundary-cell artifacts.
-    sample_clearance = max(0.75 * resolution, 0.004)
+    sample_clearance = max(0.75 * sampling_clearance_resolution, 0.004)
     safe_radius = phantom_radius - sample_clearance
     safe_half_height = (phantom_height / 2.0) - sample_clearance
     assert safe_radius > 0.0 and safe_half_height > 0.0, (
@@ -127,7 +184,7 @@ def test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric():
         ],
         dtype=np.float64,
     )
-    symmetry_b, symmetry_valid = evaluate_vector_field_parallel(b_lagrange, symmetry_points, comm=comm)
+    symmetry_b, symmetry_valid = evaluate_vector_field_parallel(b_dg0, symmetry_points, comm=comm)
 
     assert symmetry_valid.all(), (
         "Expected all symmetry-check points to be evaluable, "
@@ -144,37 +201,55 @@ def test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric():
     max_pair_rel_diff = float(np.max(pair_rel_diff))
     mean_pair_rel_diff = float(np.mean(pair_rel_diff))
 
-    # Interpret relative mismatch together with an absolute scale:
-    # - relative catches material/coil asymmetry at nontrivial field strengths
-    # - absolute catches benign relative spikes when |B| is locally tiny
+    # The absolute scale is kept as a *diagnostic* only.  It used to sit on the
+    # permissive side of an `or`, which let a relative failure pass whenever the
+    # local field was small; on the rank-stable DG0 path there is a licensed
+    # number to gate against, so the relative bound is asserted outright.  The
+    # tolerance itself is unchanged (`PHANTOM_SYMMETRY_REL_TOL = 0.35`).
     symmetry_abs_tol = PHANTOM_SYMMETRY_ABS_TOL_FACTOR * b_max
     symmetry_rel_tol = PHANTOM_SYMMETRY_REL_TOL
-    symmetry_ok = (max_pair_rel_diff < symmetry_rel_tol) or (max_pair_abs_diff < symmetry_abs_tol)
 
-    assert symmetry_ok, (
-        "Symmetry sanity check failed for ±x phantom points after interface-aware sampling; "
-        f"max_abs_diff={max_pair_abs_diff:.3e} (tol {symmetry_abs_tol:.3e}), "
-        f"max_rel_diff={max_pair_rel_diff:.3f} (tol {symmetry_rel_tol:.3f})"
+    assert max_pair_rel_diff < symmetry_rel_tol, (
+        "Mirror-symmetry (discretisation) check failed for ±x phantom points on the "
+        f"DG0 sampling path; max_rel_diff={max_pair_rel_diff:.6f} (tol {symmetry_rel_tol:.3f}), "
+        f"max_abs_diff={max_pair_abs_diff:.3e} (diagnostic scale {symmetry_abs_tol:.3e}). "
+        "On record at this fixture: 0.312197 / 0.304356 / 0.323844 at -n 2/4/1."
     )
+
+    # Continuity print only — never gated.  CG1 is the retired path: 3.03x rank
+    # swing and non-monotone under refinement (see the module docstring).
+    cg1_b, cg1_valid = evaluate_vector_field_parallel(b_lagrange, symmetry_points, comm=comm)
+    cg1_mag = np.linalg.norm(cg1_b, axis=1).reshape(-1, 2)
+    cg1_ref = np.maximum(np.maximum(cg1_mag[:, 0], cg1_mag[:, 1]), FIELD_SCALE_FLOOR)
+    cg1_max_rel_diff = float(np.max(np.abs(cg1_mag[:, 0] - cg1_mag[:, 1]) / cg1_ref))
 
     if comm.rank == 0:
         print("coil+phantom B-field metrics:")
         print(f"  centerline points: {len(centerline_points)}")
-        print(f"  |B| min/max/mean on centerline: {b_min:.6e} / {b_max:.6e} / {b_mean:.6e}")
-        print(f"  centerline max jump ratio: {jump_ratio:.6f}")
+        print(f"  |B| min/max/mean on centerline (DG0): {b_min:.6e} / {b_max:.6e} / {b_mean:.6e}")
+        print(f"  centerline max jump ratio (DG0, gated): {jump_ratio:.6f}")
+        print(f"  RANKSPREAD_INPUT centerline_jump_ratio = {jump_ratio:.6f}")
+        print(f"  centerline max jump ratio (CG1, print-only): {cg1_jump_ratio:.6f}")
         print("  symmetry probe setup:")
-        print(f"    interface clearance: {sample_clearance:.6e} m")
+        print(f"    mesh resolution: {resolution:.6e} m")
+        print(
+            f"    interface clearance: {sample_clearance:.6e} m "
+            f"(pinned to h = {sampling_clearance_resolution:.6e} m)"
+        )
         print(f"    interior safe radius/half-height: {safe_radius:.6e} / {safe_half_height:.6e} m")
         print(f"    probe grid: {len(x_probe_positions)} x-positions × {len(z_probe_positions)} z-positions")
         print(f"    fixed y offset: {y_probe_offset:.6e} m")
-        print("  symmetry mismatch diagnostics (±x pairs):")
+        print("  symmetry mismatch, DG0 sampling (±x pairs) — the gated path:")
         print(
             "    abs diff max/mean: "
             f"{max_pair_abs_diff:.6e} / {mean_pair_abs_diff:.6e} "
-            f"(tol {symmetry_abs_tol:.6e})"
+            f"(diagnostic scale {symmetry_abs_tol:.6e})"
         )
         print(
             "    rel diff max/mean: "
             f"{max_pair_rel_diff:.6f} / {mean_pair_rel_diff:.6f} "
             f"(tol {symmetry_rel_tol:.6f})"
         )
+        print(f"    on record at h = {resolution:.3f} m: 0.312197 / 0.304356 / 0.323844 at -n 2/4/1")
+        print(f"    RANKSPREAD_INPUT max_rel_diff = {max_pair_rel_diff:.6f}")
+        print(f"  CG1 sampling, retired path (print-only, never gated): {cg1_max_rel_diff:.6f}")

@@ -6865,3 +6865,78 @@ the new port path a rank-count identity assertion at `-n 1/2/4` rather than
 finiteness. The 33.3% `P1.I` drift at `-n 1` vs `-n 2` is the concrete example
 of a green test hiding a rank-dependent number. Queue: §9 item 5
 (`MAT-6` step 6, the heavy spare) is the only selectable item left.
+
+## 2026-08-08T17:10Z — `MAG-6` step 3 — **complete** (✅ `MAG-6` closed on `main`): the adjudicated estimator landed, and the scoped change was not enough on its own
+
+**Chunk:** §9 item 1 / §7 `MAG-6` step 3 — re-point the coil+phantom symmetry
+metric at DG0, refine the fixture to `resolution = 0.010` m, gate against the
+**untouched** 0.350. Slot 12:00 CDT, ~55 min. Standard tier throughout,
+5 compute commands, no overrun, no kill. Tree clean at start; container Up.
+
+**Red first.** Pre-change test at `-n 1`: `max_rel_diff=0.728 (tol 0.350)`,
+`max_abs_diff=9.411e-07` against its `8.573e-08` scale — so the `or` branch did
+not rescue it either (`20260808T170126Z_MAG-6-step3-redbaseline-n1.log`, 20 s).
+That is known-issues 4's 0.727907, reproduced digit-consistent.
+
+**The gate.** DG0 sampling; `resolution = 0.010`; the ±x probe grid **pinned**
+to the 0.015 m clearance (the h-ladder's fixed grid — letting it track `h`
+would compare a metric of one point set against a metric of another, and the
+on-record numbers are for the fixed grid). `tests/tolerances.py` untouched.
+
+| ranks | `max_rel_diff` (DG0, gated) | on record | elapsed |
+|---|---|---|---|
+| `-n 1` | **0.323844** | 0.323844 | 144 s |
+| `-n 2` | **0.302661** | 0.312197 | 10 s |
+| `-n 4` | **0.308407** | 0.304356 | 10 s |
+
+Three-way spread `(max−min)/min` = **7.00%** vs the pre-registered ≤ 10%
+(6.40% on record). `-n 1` **byte-reproduces** the step-2 record. Logs
+`20260808T170549Z_…-gatefinal-n1.log`, `…170529Z_…-n2.log`,
+`…170515Z_…-n4.log`. The spread is computed by this session across the three
+logs — one pytest process cannot span rank counts; the in-test gate is 0.350.
+
+**The finding the plan did not predict: a second CG1-owned metric.** With only
+the symmetry metric re-pointed, the refined test went **red at `-n 4`** on a
+*different* assertion — centerline smoothness, jump ratio **0.705** vs its 0.60
+bound (`20260808T170334Z_MAG-6-step3-gate-n4.log`), where `-n 2` read 0.318029.
+A second `-n 4` run of identical code read **0.732**: that metric is
+rank-dependent *and* not run-to-run reproducible, for exactly the reason step 1
+identified for the symmetry metric — a nodal average of a cell-wise-constant
+`curl A`. On the same solve DG0 read **0.227869**
+(`20260808T170423Z_MAG-6-step3-centerline-diag-n4.log`), so the centerline was
+re-pointed at DG0 too: same defect, same fix, tolerance untouched. Refining the
+fixture is what exposed it — at h = 0.015 that assertion passed at `-n 4`.
+
+**Two honest limits, reported not argued away.**
+1. DG0 shrinks the centerline metric's rank scatter but does not remove it:
+   0.473300 / 0.268765 / 0.251746 at `-n 1/2/4` = **88%** spread (CG1's is
+   ~200%). All three pass 0.60; **no rank-stability claim is made** for that
+   gate. Sizing that second estimator is unscoped — a review's.
+2. The DG0 symmetry metric moved 0.323290 → 0.302661 (**6.8%**) between two
+   identical `-n 2` runs while CG1 moved 0.8%: meshing is not bit-reproducible
+   run to run, and DG0 point sampling is sensitive to cell ownership. Inside
+   the band and under 0.350 both times, but any future tightening must budget
+   it.
+
+**Assertion strengthened, never loosened.** The symmetry check's permissive
+`or max_abs_diff < 0.10·b_max` escape was removed — on the rank-stable path
+there is a licensed number, so the relative bound is asserted outright; the
+absolute scale stays a printed diagnostic. Both tolerance constants are
+byte-unchanged.
+
+**Landed:** `MAG-6` ✅ (§7 row + step-3 readings block), known-issues 4
+**retired** with its historical record folded into a `<details>` block, §9
+item 1 marked done. All three places state that the metric gates
+**discretisation symmetry, not phantom physics** — `mu` is uniform, so the
+phantom is invisible to this solve — and the caveat now also lives in the
+test's module docstring.
+
+**Next-attempt hypothesis:** the centerline smoothness gate is the same story
+one estimator behind. Its 0.60 bound has never been measured on the DG0 path
+under `h`, and an 88% rank scatter on a *passing* gate is the shape of a test
+that will surprise the next refinement. An `h`-ladder for the DG0 centerline
+jump ratio — what step 2 did for the symmetry metric — would license a real
+bound; until then that gate is a floor, not a measurement.
+
+**Queue after this run:** §9 items 2 (`MAT-6` step 6, heavy) and 3 (`MAG-13`
+step 2, heavy) remain selectable; item 1 is done.
