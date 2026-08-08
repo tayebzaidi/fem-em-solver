@@ -2194,10 +2194,71 @@ probes `20260807T200206Z_MAT-6-step5-probe.log` (ladder) and
 > residual is reference ambiguity + box tail — that is the finding; report
 > all ratios, annotate this entry, stop.
 
-**`MAT-6` step 6 — the additivity hypothesis: both knobs at once** *(scoped
-2026-08-07, 18:00 review — the step-5 entry's own "hypothesis for a later
-step", promoted now that both single-knob moves are measured. Heavy spare;
-memory, not time, is the binding constraint.)*
+**`MAT-6` step 6 — the additivity hypothesis: both knobs at once** 🚫
+*(attempted 2026-08-08, 13:30 run — **stopped on the entry's own pre-registered
+cost rule; the additivity ratio was not measured.** Probe logs
+`20260808T183121Z_MAT-6-step6-probe.log` (`-n 4`, 314 s, signal 9) and
+`20260808T183648Z_MAT-6-step6-probe-n8.log` (`-n 8`, 184 s, exit 137);
+`scripts/probes/mat6_step6_probe.py`. Scoped 2026-08-07, 18:00 review — the
+step-5 entry's own "hypothesis for a later step", promoted now that both
+single-knob moves are measured. Heavy spare; memory, not time, is the binding
+constraint.)*
+> **Result: the combined fixture meshes but does not solve inside the
+> container's memory, at either rank count the entry authorised — so the point
+> of no return closed and the step stopped, exactly as pre-registered.**
+> Measured:
+>
+> | run | ranks | cells | mesh | killed after | signal |
+> |---|---|---|---|---|---|
+> | probe | 4 | 697 401 | 51.9 s | ~262 s of solve | 9 |
+> | probe retry | 8 | 697 401 | 46.5 s | ~138 s of solve | 137 (128+9) |
+>
+> No ΔZ, no ΔX ratio, nothing to compare against the 0.9843 additive
+> prediction. The prediction stands unmeasured and the hypothesis is neither
+> confirmed nor killed.
+>
+> **The entry's retry rule rests on a false premise, and that is the reusable
+> finding.** "OOM ⇒ retry at `-n 8` (memory per rank halves)" only helps when
+> the limit is *per rank*. It is not: the container is capped at **16 G**
+> (`docker/docker-compose.yml`, `deploy.resources.limits.memory`) while the
+> host had **747 G of 754 G free** at probe time — so the binding constraint is
+> a cgroup ceiling on the job's **total** footprint, which more ranks cannot
+> lower and (through per-rank duplication) tends to raise. The `-n 8` retry
+> died sooner than `-n 4`, consistent with that reading. **This also re-reads
+> step 5's record:** its 1 458 561-cell rung "OOM-killed at `-n 4`" was the same
+> 16 G container ceiling, not a machine limit, and step 5's conclusion that
+> `h/r_wire ≥ 16` is "not reachable on this machine" is therefore an overstated
+> attribution — it is not reachable *in this container as configured*. Nothing
+> measured in step 5 changes; only the cause named for the ceiling does.
+>
+> **Mesh-count composition, measured in passing and worth keeping.** Against
+> the W = 0.15 coarse-wire baseline of 138 619 cells, the box knob alone gives
+> 300 591 (2.1685×) and the wire knob alone 366 207 (2.6418×), so a
+> multiplicative composition predicts 794 166 cells; the combined mesh is
+> **697 401, i.e. 87.8% of that — 12.2% sub-multiplicative**. Expected in sign
+> (the volume the larger box adds is all far-field at `resolution_far = 0.025`,
+> untouched by the wire knob) and it is why the entry's ~790 k estimate came in
+> high. The count reproduced **byte-identically at `-n 4` and `-n 8`**, so the
+> mesh is rank-independent as the fixtures assume. Note this says nothing about
+> ΔX additivity — cell counts are not the quantity under test.
+>
+> **Rescope for a review, not for a slot.** §5.1 forbids buying the run with a
+> longer timeout and this entry forbids improvising a different case in-slot,
+> so the run stopped. Three candidate routes, none of them taken here: (i)
+> raise the 16 G container limit — the machine plainly has the headroom, but
+> the compose file is shared infrastructure and the §5 budget never priced
+> memory, so it is a human/review decision; (ii) a smaller combined case
+> (W = 0.20 at `resolution_wire = 0.001`, or W = 0.25 at 0.0015) — cheaper but
+> it measures the composition of two knobs at settings neither single-knob run
+> used, which weakens the comparison against 0.9843; (iii) drop the step —
+> additivity is a convenience for extrapolating ΔX, and ΔX is ungateable either
+> way. The first is the only route that answers the question as posed.
+>
+> **Does not close / reopen:** `MAT-6` stays ✅; §2.1's 1.58% untouched; ΔX
+> stays ungateable, now for the additional reason that its extrapolation
+> shortcut is still unvalidated.
+
+*Original plan, for the record:*
 > Step 4 measured the box knob at coarse wire (projected ΔX ratio
 > 0.9200 → 0.9849 for W 0.15 → 0.25); step 5 measured the wire knob at fixed
 > box (0.9200 → 0.9194 at W = 0.15). If the knobs are additive, the combined
@@ -4777,7 +4838,18 @@ journal.**
    reproduction failure — park on `attempt/*`, annotate known-issues 4,
    touch nothing.
 
-2. **`MAT-6` step 6 — the additivity hypothesis: both knobs at once
+2. 🚫 **STOPPED 2026-08-08 (13:30 run)** — the pre-registered cost rule fired
+   and the additivity ratio was **not** measured: the combined mesh is 697 401
+   cells (12.2% under the ~790 k estimate, sub-multiplicative) and the solve was
+   killed at both authorised rank counts — `-n 4` signal 9 after ~262 s, `-n 8`
+   exit 137 after ~138 s. **The retry rule's premise is false:** the ceiling is
+   the container's 16 G `deploy.resources.limits.memory`, not per-rank memory
+   and not the host (747 G of 754 G free), so more ranks cannot help — and step
+   5's 1 458 561-cell "OOM at `-n 4`" was that same container cap, not a machine
+   limit. Raising the cap is the only rescope that still answers the question as
+   posed, and it is shared infrastructure the §5 budget never priced — **a
+   review decision, deliberately not taken in-slot.** See the §7 step-6 entry.
+   **`MAT-6` step 6 — the additivity hypothesis: both knobs at once
    (carried spare; heavy).** Independent; `main`. Execute the §7
    step-6 plan: W = 0.25 × `resolution_wire = 0.001`, projected drive
    only; additive prediction **0.9843** from the four single-knob ratios

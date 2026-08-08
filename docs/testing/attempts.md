@@ -6940,3 +6940,77 @@ bound; until then that gate is a floor, not a measurement.
 
 **Queue after this run:** §9 items 2 (`MAT-6` step 6, heavy) and 3 (`MAG-13`
 step 2, heavy) remain selectable; item 1 is done.
+
+## 2026-08-08T18:45Z — `MAT-6` step 6 — **blocked** (pre-registered cost rule fired; the additivity ratio was not measured, and the retry rule's premise turned out to be false)
+
+§9 item 2, taken as the first item not done or blocked (item 1 closed by the
+12:00 run). Tree clean at start, container Up. **Nothing under `tests/` was
+written** — the step never got past its own point of no return.
+
+**What was tried.** `scripts/probes/mat6_step6_probe.py` (new; modelled on
+`mat6_step5_probe.py`), the combined fixture the entry specifies — W = 0.25
+*and* `resolution_wire = 0.001`, projected drive, everything else imported
+from the step-2b/3 modules. Mesh, then **one** projected loaded solve, exactly
+the two-stage shape §7 prescribes.
+
+| run | ranks | cells | mesh | died after | exit | log |
+|---|---|---|---|---|---|---|
+| probe | 4 | 697 401 | 51.9 s | ~262 s of solve | 9 | `20260808T183121Z_MAT-6-step6-probe.log` |
+| retry | 8 | 697 401 | 46.5 s | ~138 s of solve | 137 | `20260808T183648Z_MAT-6-step6-probe-n8.log` |
+
+Both killed in the solve. Per the entry — "still OOM ⇒ report the measured cost
+and stop; the rescope is a smaller case, never a raised timeout" — the run
+stopped there. **No ΔZ, no ΔX ratio: the 0.9843 additive prediction stands
+unmeasured, neither confirmed nor killed.**
+
+**The finding worth more than the step.** The entry's retry rule says "OOM ⇒
+retry at `-n 8`, memory per rank halves". That only helps against a *per-rank*
+limit, and this is not one: the container is capped at **16 G**
+(`docker/docker-compose.yml`, `deploy.resources.limits.memory`) while the host
+showed **747 G of 754 G free** at probe time. The ceiling is a cgroup bound on
+the job's **total** footprint — more ranks cannot lower it and, through
+per-rank duplication, tend to raise it. The `-n 8` retry dying *sooner* than
+`-n 4` (138 s vs 262 s of solve) is consistent with exactly that. **Knock-on:**
+step 5's 1 458 561-cell rung "OOM-killed at `-n 4`" was this same 16 G
+container cap, so its "not reachable on this machine" is an overstated
+attribution — not reachable *in this container as configured*. No step-5
+measurement changes; only the cause named for its ceiling does.
+
+**Measured in passing, kept because it is cheap and reusable.** Cell counts do
+not compose multiplicatively across the two knobs: against the W = 0.15
+coarse-wire 138 619, the box knob alone is 300 591 (2.1685×) and the wire knob
+alone 366 207 (2.6418×), predicting 794 166 combined; the real mesh is
+**697 401 = 87.8% of that, 12.2% sub-multiplicative** — the box adds far-field
+volume at `resolution_far = 0.025` that the wire knob never touches. Count
+**byte-identical at `-n 4` and `-n 8`**, so the mesh is rank-independent as the
+fixtures assume. This is a statement about meshes, *not* evidence about ΔX
+additivity.
+
+**What was landed on `main`, and why nothing was parked.** The probe script,
+the two harness logs + `test-results.md` rows, the §7 step-6 annotation (🚫,
+blocker named) and the §9 item-2 mark. No `attempt/*` branch: there is no
+half-applied change to park — the probe is a complete standalone instrument,
+its two logs are cited by the §7 annotation, and parking it would make those
+cited numbers unreproducible from `main`. `main` is neither red nor dirty; no
+test file was touched.
+
+**Deliberately not done in-slot:** raising the 16 G cap. The machine plainly
+has the headroom, but the compose file is shared infrastructure and §5's
+budget prices cores and wall clock, never memory — that is a human/review call,
+and §7's rescope clause says "a smaller case", not "more memory".
+
+**Next-attempt hypothesis, for the review.** Route (i) — raise the container
+memory limit — is the only one of the three that measures the composition *at
+the settings the single-knob runs used*, which is what makes the comparison
+against 0.9843 mean anything; a smaller combined case (W = 0.20 fine wire, or
+W = 0.25 at 0.0015) buys affordability by changing the question. Worth pricing
+first: a peak-RSS measurement on a rung that *does* fit (366 207 cells solved
+in 492 s at `-n 2` in step 5) would say how far past 16 G the 697 401-cell case
+actually is, and that is a one-command answer. If the answer is "just over",
+route (i) is cheap and the step is a slot's work; if it is 3–4×, the step
+should probably be dropped — additivity is a convenience for extrapolating ΔX,
+and ΔX is ungateable either way.
+
+**Queue after this run:** §9 item 3 (`MAG-13` step 2, heavy) is the only
+selectable item left; items 1 (done) and 2 (blocked, this run) are closed to
+the next slot, so the 16:30 slot takes item 3 and the queue drains after it.
