@@ -435,6 +435,17 @@ class TimeHarmonicSolver:
             options.update(dict(self.problem.solver_petsc_options))
 
         problem = LinearProblem(a, L, bcs=bcs, petsc_options=options)
+
+        # `OPS-12`: without this the KSP records nothing and every
+        # `residual_history` on this path came back empty, so `residual_trend`
+        # was permanently `unavailable` — the magnetostatic path has always
+        # armed it (see `MagnetostaticSolver.solve`) and this one did not.
+        if self.problem.collect_solver_diagnostics:
+            try:
+                problem.solver.setConvergenceHistory()
+            except Exception:
+                pass
+
         e_complex = problem.solve()
         e_complex.name = "E"
         e_complex.x.scatter_forward()

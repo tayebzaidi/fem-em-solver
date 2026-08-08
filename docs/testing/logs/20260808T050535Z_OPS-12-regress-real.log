@@ -1,0 +1,152 @@
+# Test Run
+- Chunk: OPS-12-regress-real
+- Commit: 6c2ec08c03caae3dd92de2a1ce931e2feb93453a
+- Time (UTC): 2026-08-08 05:05:35
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/solver/test_energy_and_point_evaluation.py tests/solver/test_boundary_condition_selection.py -v --tb=short && flake8 src/fem_em_solver/core/solvers.py src/fem_em_solver/core/time_harmonic.py tests/solver/test_convergence_diagnostics.py scripts/probes/ops12_probe.py --max-line-length=100 --extend-ignore=E203,W503'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  8 00:05 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/solver/test_energy_and_point_evaluation.py tests/solver/test_boundary_condition_selection.py -v --tb=short && flake8 src/fem_em_solver/core/solvers.py src/fem_em_solver/core/time_harmonic.py tests/solver/test_convergence_diagnostics.py scripts/probes/ops12_probe.py --max-line-length=100 --extend-ignore=E203,W503'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 10 items
+
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_the_real_build_value collected 10 items
+
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_the_real_build_value MAG-16 PENALTY: W=1.121469340632e-08 J, real-build pin rel=1.942e-08
+MAG-16 LAGRANGE: W=1.121466766900e-08 J, real-build pin rel=1.278e-13
+PASSED [ 10%]MAG-16 PENALTY: W=1.121469340632e-08 J, real-build pin rel=1.942e-08
+MAG-16 LAGRANGE: W=1.121466766900e-08 J, real-build pin rel=1.278e-13
+PASSED [ 10%]
+tests/solver/test_energy_and_point_evaluation.py::test_discarded_imaginary_part_of_the_energy_is_negligible 
+tests/solver/test_energy_and_point_evaluation.py::test_discarded_imaginary_part_of_the_energy_is_negligible MAG-16 PENALTY: W_re=1.121469340632e-08 W_im=0.000000000000e+00 |Im/Re|=0.000e+00 dtype=float64
+MAG-16 LAGRANGE: W_re=1.121466766900e-08 W_im=0.000000000000e+00 |Im/Re|=0.000e+00 dtype=float64
+PASSED [ 20%]MAG-16 PENALTY: W_re=1.121469340632e-08 W_im=0.000000000000e+00 |Im/Re|=0.000e+00 dtype=float64
+MAG-16 LAGRANGE: W_re=1.121466766900e-08 W_im=0.000000000000e+00 |Im/Re|=0.000e+00 dtype=float64
+PASSED [ 20%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_explicitly_reduced_assembly 
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_explicitly_reduced_assembly PASSED [ 30%]PASSED [ 30%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_satisfies_discrete_work_energy_identity 
+tests/solver/test_energy_and_point_evaluation.py::test_energy_satisfies_discrete_work_energy_identity PASSED [ 40%]PASSED [ 40%]
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_matches_collision_based_evaluation 
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_matches_collision_based_evaluation PASSED [ 50%]PASSED [ 50%]
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_rejects_points_outside_mesh 
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_rejects_points_outside_mesh PASSED [ 60%]PASSED [ 60%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values 
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values PASSED [ 70%]PASSED [ 70%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value 
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value PASSED [ 80%]PASSED [ 80%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set 
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set PASSED [ 90%]PASSED [ 90%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path 
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [100%]SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================== 9 passed, 1 skipped, 8 warnings in 3.48s ===================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================== 9 passed, 1 skipped, 8 warnings in 3.49s ===================
+src/fem_em_solver/core/solvers.py:31:1: F401 'dolfinx.mesh' imported but unused
+src/fem_em_solver/core/solvers.py:36:1: F401 'gmsh' imported but unused
+src/fem_em_solver/core/solvers.py:154:1: E303 too many blank lines (3)
+src/fem_em_solver/core/solvers.py:240:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:243:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:251:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:257:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:260:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:265:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:298:64: W291 trailing whitespace
+src/fem_em_solver/core/solvers.py:307:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:340:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:347:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:353:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:623:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:626:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:634:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:639:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:643:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:645:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:648:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:655:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:658:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:667:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:669:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:672:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:719:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:764:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:767:1: W293 blank line contains whitespace
+src/fem_em_solver/core/solvers.py:777:1: W293 blank line contains whitespace
+src/fem_em_solver/core/time_harmonic.py:81:101: E501 line too long (106 > 100 characters)
+src/fem_em_solver/core/time_harmonic.py:84:101: E501 line too long (114 > 100 characters)
+src/fem_em_solver/core/time_harmonic.py:88:101: E501 line too long (104 > 100 characters)
+src/fem_em_solver/core/time_harmonic.py:145:101: E501 line too long (102 > 100 characters)
+src/fem_em_solver/core/time_harmonic.py:233:101: E501 line too long (106 > 100 characters)
+src/fem_em_solver/core/time_harmonic.py:237:101: E501 line too long (126 > 100 characters)
+src/fem_em_solver/core/time_harmonic.py:356:101: E501 line too long (113 > 100 characters)
+src/fem_em_solver/core/time_harmonic.py:364:101: E501 line too long (106 > 100 characters)
+src/fem_em_solver/core/time_harmonic.py:402:101: E501 line too long (104 > 100 characters)
+
+## Exit
+- Status: 1
+- Elapsed (s): 5

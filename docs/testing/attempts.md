@@ -6396,3 +6396,112 @@ raised; (iii) refine `h` (0.015 m gives ~2.7 cells across the 0.04 m phantom
 radius) and read the DG0 metric's convergence — the one route that would tell
 us whether 0.53 is discretisation or a defect. None of these may raise 0.350
 without that measurement first.
+
+---
+
+## 2026-08-08T05:00Z — `OPS-12` — **complete** (✅ on `main`; known-issues 2
+## retired): the classifier moved, not the test, and the file held three
+## defects rather than one
+
+**Slot.** 00:00 CDT scheduled implementer run. Tree clean at start, container
+Up. §9 On-deck items 1–3 were already marked done, so this run took item 4,
+the first open one, as the protocol requires.
+
+**Outcome: complete.** `OPS-12` is ✅, known-issues 2 is retired, and
+`tests/solver/test_convergence_diagnostics.py` is back in the
+`validation-complex` CI job — which known-issues 2's own status line named as
+its exit condition.
+
+**The adjudication.** The chunk asked which side of the
+`mixed` / `mostly-decreasing` disagreement was wrong, with an explicit warning
+not to assume it was the test. It was not the test. The classifier's
+documentation names **no thresholds at all** — the docstring describes only
+the input — so the only specification of the labels is the label names, and
+under their plain reading ("mostly X" = a strict majority of X steps) all six
+of the test's expectations follow exactly, including the disputed
+`[1.0, 0.4, 0.45, 0.1]` at decrease fraction `f = 2/3`. The shipped thresholds
+(`f >= 0.75` ⇒ `mostly-decreasing`, `f >= 0.5` ⇒ `mixed`) were additionally
+asymmetric with nothing to justify it — band width 0.5 for increases against
+0.25 for decreases — and had the consequence that **no non-monotone history of
+four or fewer samples could ever be labelled `mostly-decreasing`**. The three
+non-monotone labels now partition by the sign of `f - 0.5`; the docstring
+carries the table and the reason it moved; the test file's original six
+assertions are untouched.
+
+**Two further defects surfaced during the diagnosis, both code-side.**
+
+1. *The recorded symptom of the second failure was wrong.* known-issues 2 said
+   `assert diagnostics is not None` at line 63. The baseline run
+   (`20260808T050156Z_OPS-12-baseline.log`) shows it is
+   `assert diagnostics.converged` — `converged_reason = -3`
+   (`KSP_DIVERGED_ITS`), `iterations = 300`, `residual_norm = 1.4999e-06`. The
+   fixture asks for gmres+jacobi at `ksp_rtol = 1e-8` with
+   `ksp_max_it = 300`. A four-configuration probe
+   (`20260808T050338Z_OPS-12-probe.log`, 1405-cell fixture) measured what that
+   solve actually costs: gmres+jacobi **1409 iterations** to `4.26e-12`
+   (reason 2) at a 5000 cap, gmres+bjacobi/ilu 338, gmres+lu/mumps 1. So the
+   cap was under-resourced and the assertion was right; the cap moved to 5000
+   with the measurement in a comment, and `assert diagnostics.converged` is
+   unchanged. jacobi was kept deliberately rather than swapped for a stronger
+   preconditioner — it is what makes the residual history long enough to
+   classify non-trivially.
+2. *The classifier was unreachable in production.* The time-harmonic solve
+   path never called `ksp.setConvergenceHistory()` — the magnetostatic path
+   always has — so `residual_history` came back **empty** from every solve and
+   `residual_trend` was permanently `unavailable`. The test's membership
+   assertion (trend ∈ {six labels}) had therefore been passing **vacuously**
+   for as long as it has existed. Armed on the time-harmonic path, and the
+   test now gates `len(history) == iterations + 1` and
+   `trend == classify_residual_trend(history)`, which ties the unit identity
+   to the production path.
+
+**Quantitative anchor** (§4). The label is an exact discrete function of `f`,
+asserted with `==` and no tolerance on an 11-row parameterized family of
+synthesized histories with analytically known decrease fractions:
+`f` = 1, 0.875, 0.75, 0.625, 2/3, 0.5, 0.5, 0.375, 0.25, 1/3, 0. The family
+spans both sides of the specified threshold `f = 0.5` **and** both sides of
+the retired `f = 0.75`, so the four rows in `0.5 < f < 0.75` are exactly the
+ones the old thresholds mislabelled. Each row also re-derives `f` from the
+generated history and checks it against `n_down/(n_down+n_up)` exactly, so the
+fixture cannot drift out from under the identity. **Negative controls**, all
+green: an alternating history (`f = 0.5`) classifies `mixed`; a strictly
+increasing one classifies `mostly-increasing` and is separately asserted *not*
+to be either decreasing label; NaN, Inf and negative histories classify
+`invalid`. A wrong label is reachable, so the identity has teeth.
+
+**Cost.** Four commands, all standard tier, none within an order of magnitude
+of a ceiling. `20260808T050156Z_OPS-12-baseline.log` (exit 1, 4 s — 2 failed,
+4 passed, the pre-existing state captured before any edit);
+`20260808T050338Z_OPS-12-probe.log` (exit 0, 4 s — the KSP configuration
+sweep); `20260808T050500Z_OPS-12-gate.log` (exit 0, 4 s — 18 passed, 2.38 s of
+pytest); `20260808T050535Z_OPS-12-regress-real.log` (exit 1, 5 s — 9 passed,
+1 skipped on the two solver files the real-build CI job runs, plus a flake8
+pass whose non-zero exit is entirely pre-existing violations in untouched
+regions of `solvers.py`/`time_harmonic.py`; my added lines produced zero
+findings); `20260808T050622Z_OPS-12-gate-final.log` (exit 0, 1 s — 18 passed
+in 0.93 s, re-run after `black` reformatted the new test rows). All complex
+runs used `source /usr/local/bin/dolfinx-complex-mode`,
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-n 2`.
+
+**What was not touched.** No physics tolerance anywhere; no inner-region
+quantity is gated (the EX-2 caller-audit trap); the six original assertions in
+`test_classify_residual_trend_summaries_are_deterministic`; the six-label
+vocabulary. Nothing closes physics-side.
+
+**Note for the review — two items worth a decision.**
+(i) `black --check` and `isort --check-only` currently fail on `src` and
+`tests` from **pre-existing** state (e.g. W293 blank-line whitespace
+throughout `solvers.py`, E501 lines in `time_harmonic.py`), so the `lint` CI
+job cannot be green on `main` today. I did not fix it in passing per the
+known-issues discipline, and I did not add a known-issues entry for it because
+it is a repo-wide formatting question, not a test failure — but somebody
+should decide whether that job is expected to be red.
+(ii) known-issues 2 recorded a symptom that was not the actual assertion. That
+is the second time a never-diagnosed entry's *description* turned out to be
+wrong rather than merely incomplete; entries written without running the test
+are worth re-reading with that in mind.
+
+**Next-attempt hypothesis.** None for this chunk — it is closed. The one
+remaining never-diagnosed baseline failure is known-issues 4, which `MAG-6`
+step 1 rewrote earlier today and whose estimator strategy is a review's to
+pick.

@@ -224,6 +224,7 @@ jobs:
           tests/validation/test_port_gradient_load.py \
           tests/validation/test_port_solenoidal_drive.py \
           tests/mesh/test_two_torus_conforming.py \
+          tests/solver/test_convergence_diagnostics.py \
           tests/solver/test_time_harmonic_smoke.py \
           tests/solver/test_boundary_condition_selection.py \
           tests/solver/test_energy_and_point_evaluation.py \
@@ -292,10 +293,16 @@ jobs:
 
     # The two phantom files were added 2026-07-31 when known-issues.md entry 1
     # was retired; they cost 6 s at -n 2 (10 passed, log
-    # 20260731T170034Z_KI-1-precheck-complex.log). One `@complex_only` test is
-    # still deliberately absent: test_convergence_diagnostics.py (known-issues.md
-    # entry 2, whose non-complex sibling fails too). Add it here in the commit
-    # that fixes that entry.
+    # 20260731T170034Z_KI-1-precheck-complex.log).
+
+    # test_convergence_diagnostics.py was added 2026-08-08 by `OPS-12`, which
+    # retired known-issues.md entry 2. It has to run in *this* job rather than
+    # the real-build one: the file mixes a plain classifier test with an
+    # `@complex_only` solve, so only the complex build executes both halves.
+    # Under 2.4 s at -n 2 for the whole file including tests/environment — the
+    # solve is a 1405-cell `cylindrical_domain` case and gmres+jacobi takes
+    # 1409 iterations on it (18 passed, logs 20260808T050500Z_OPS-12-gate.log
+    # and 20260808T050622Z_OPS-12-gate-final.log).
 
   docs:
     runs-on: ubuntu-latest

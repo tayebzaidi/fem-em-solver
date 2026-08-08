@@ -56,15 +56,40 @@ The heading is kept (rather than deleted with the entries renumbered) so the
 numbering of entries 2–6 stays stable — several commits and CI comments refer to
 them by number.
 
-### 2. Residual-trend classifier disagrees with its test
+### 2. ~~Residual-trend classifier disagrees with its test~~ — RESOLVED 2026-08-08 (`OPS-12`)
+
+Both failures were on the **code** side, and they were two different defects,
+not one:
+
+1. `classify_residual_trend()` carried undocumented thresholds
+   (`f >= 0.75` ⇒ `mostly-decreasing`, `f >= 0.5` ⇒ `mixed`, where `f` is the
+   fraction of non-increasing steps). Nothing — not the docstring, not the
+   label names — licensed that asymmetry: it gave increases a band of width
+   0.5 and decreases 0.25, so a history that decreased on two of every three
+   iterations was reported `mixed`, and **no history of four or fewer samples
+   could reach `mostly-decreasing` at all**. The labels now partition by the
+   sign of `f - 0.5`, which is what their names mean, and the docstring states
+   the table. The test's `[1.0, 0.4, 0.45, 0.1] -> mostly-decreasing`
+   (`f = 2/3`) was right and is unchanged.
+2. The second failure was never `assert diagnostics is not None` — the
+   recorded symptom was wrong. It was `assert diagnostics.converged`, with
+   `converged_reason = -3` (`KSP_DIVERGED_ITS`): the fixture asked for
+   gmres+jacobi at `ksp_rtol = 1e-8` with `ksp_max_it = 300`, and that solve
+   needs **1409** iterations on the 1405-cell fixture. The cap was
+   under-resourced; the assertion was not wrong and was not touched.
+
+A third defect fell out of the diagnosis: the time-harmonic path never called
+`ksp.setConvergenceHistory()` (the magnetostatic path always has), so
+`residual_history` came back **empty** and `residual_trend` was permanently
+`unavailable` — the classifier was unreachable in production and the test's
+membership assertion passed vacuously. Armed, and the test now gates
+`len(history) == iterations + 1` and `trend == classify_residual_trend(history)`.
 
 | | |
 |---|---|
-| **Tests** | `tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic`<br>`tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics` |
-| **Symptom** | `assert 'mixed' == 'mostly-decreasing'` (line 22); `assert False` (line 63) |
-| **Cause** | Not diagnosed. `classify_residual_trend()` in `core/solvers.py` returns `mixed` for a sequence the test expects to be classified `mostly-decreasing`. Either the classifier's thresholds or the test's expectation is wrong — **do not assume it is the test**: the analytic expectation in `test_analytical_circular_loop` turned out to be the wrong side of exactly this kind of disagreement (it wanted `μ₀I/(2√2a)` where the correct value is `μ₀I/(4√2a)`). |
-| **Verified pre-existing at** | `ce92e8c` and earlier |
-| **Status** | Whole file left out of the `validation-complex` CI job (`OPS-10`): one of the two failures is `@complex_only` and the other is not, so there is nothing to select. Add the file when this entry is fixed. |
+| **Fixed in** | `OPS-12`, 2026-08-08 — `src/fem_em_solver/core/solvers.py`, `src/fem_em_solver/core/time_harmonic.py`, `tests/solver/test_convergence_diagnostics.py` |
+| **Gate** | 18 passed at `-n 2` under the complex build in 0.93 s (`20260808T050622Z_OPS-12-gate-final.log`); the classifier identity is asserted with `==` on an 11-row parameterized family spanning both sides of `f = 0.5` and of the retired `f = 0.75`, with negative controls |
+| **CI** | `tests/solver/test_convergence_diagnostics.py` is now in the `validation-complex` job, which is what this entry's old status line named as its exit condition |
 
 ### 3. Port tests assert a non-zero S-matrix diagonal on a matched port
 

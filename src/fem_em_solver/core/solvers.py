@@ -181,6 +181,34 @@ class LinearSolveDiagnostics:
 def classify_residual_trend(residual_history: Sequence[float]) -> str:
     """Classify residual progression for compact diagnostics.
 
+    Definition (exact, no tolerance). Let ``d`` be the first differences of the
+    history and ``f = |{i : d_i <= 0}| / |d|`` the *decrease fraction* — the
+    share of iterations that did not increase the residual. The label is a
+    function of ``f`` alone:
+
+    ==========================  =========================
+    condition                   label
+    ==========================  =========================
+    ``len(history) == 0``       ``unavailable``
+    ``len(history) == 1``       ``single-sample``
+    non-finite or negative      ``invalid``
+    ``f == 1``                  ``monotone-decrease``
+    ``f > 0.5``                 ``mostly-decreasing``
+    ``f == 0.5``                ``mixed``
+    ``f < 0.5``                 ``mostly-increasing``
+    ==========================  =========================
+
+    The three non-monotone labels partition by the sign of ``f - 0.5``, which
+    is what their names mean: "mostly decreasing" is a strict majority of
+    non-increasing steps, "mostly increasing" a strict majority of increasing
+    ones, and "mixed" the tie. `OPS-12` adjudicated this against the previous
+    thresholds (``f >= 0.75`` / ``f >= 0.5``), which were undocumented and
+    asymmetric — they gave increases a band of width 0.5 and decreases 0.25, so
+    a history that decreased on two of every three iterations was reported
+    ``mixed``, and no history of four or fewer samples could reach
+    ``mostly-decreasing`` at all. Nothing in the docstring or the label names
+    licensed that asymmetry, so the classifier moved, not the test.
+
     Parameters
     ----------
     residual_history:
@@ -200,9 +228,9 @@ def classify_residual_trend(residual_history: Sequence[float]) -> str:
 
     if np.all(deltas <= 0.0):
         return "monotone-decrease"
-    if decrease_fraction >= 0.75:
+    if decrease_fraction > 0.5:
         return "mostly-decreasing"
-    if decrease_fraction >= 0.5:
+    if decrease_fraction == 0.5:
         return "mixed"
     return "mostly-increasing"
 

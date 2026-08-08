@@ -414,7 +414,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-9` | Prune duplicate/stale entries from `pending-tests.md` | ✅ | smoke |
 | `OPS-10` | Complex-mode CI job for the frequency-domain gates | ✅ | smoke |
 | `OPS-11` | Put `tests/mesh` in CI — the directory no job runs | ✅ | smoke |
-| `OPS-12` | Adjudicate the residual-trend classifier (known-issues 2) and return `test_convergence_diagnostics.py` to CI | ⬜ | standard |
+| `OPS-12` | Adjudicate the residual-trend classifier (known-issues 2) and return `test_convergence_diagnostics.py` to CI | ✅ 2026-08-08 | standard |
 
 **`OPS-11` — `tests/mesh` in CI** ✅ *(created 2026-08-02, closed 2026-08-03,
 12:00 run; full narrative archived in `docs/planning/plan-archive.md`)*
@@ -454,10 +454,64 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 > be revisited with `TH-1`: `test_phantom_material_assignment_and_time_harmonic_pipeline_wiring`
 > and `test_phantom_field_metrics_and_exports_are_finite`.
 
-**`OPS-12` — adjudicate the residual-trend classifier** *(created 2026-08-07,
-18:00 review, from known-issues 2 — one of only two never-diagnosed failing
-tests left on the baseline, and the reason a whole diagnostics file sits
-outside the `validation-complex` job.)*
+**`OPS-12` — adjudicate the residual-trend classifier** ✅ *(created 2026-08-07,
+18:00 review; closed 2026-08-08, 00:00 run. Retires known-issues 2.)*
+> **Done, and the classifier moved, not the test.** The chunk asked which side
+> of the disagreement was wrong; the answer is the code, on all three counts —
+> the file held **three** defects, not the one it was written for.
+>
+> **1. The threshold (the chunk's actual question).** The classifier carried
+> `f >= 0.75` ⇒ `mostly-decreasing`, `f >= 0.5` ⇒ `mixed`, with `f` the
+> fraction of non-increasing steps. Nothing documented those numbers — the
+> docstring named no thresholds at all, so the only specification of the
+> labels is the label names, and under their plain reading ("mostly X" = a
+> strict majority of X steps) all six of the test's expectations follow
+> exactly, including the disputed `[1.0, 0.4, 0.45, 0.1]` at `f = 2/3`. The
+> old bands were also asymmetric with no stated justification — width 0.5 for
+> increases against 0.25 for decreases — and made `mostly-decreasing`
+> **unreachable** for any non-monotone history of four or fewer samples. The
+> three non-monotone labels now partition by the sign of `f - 0.5` and the
+> docstring states the table.
+> **2. The recorded symptom of the second failure was wrong.** known-issues 2
+> said `assert diagnostics is not None` (line 63). It was
+> `assert diagnostics.converged`, `converged_reason = -3`
+> (`KSP_DIVERGED_ITS`), 300 iterations, residual `1.4999e-06`: the fixture
+> requested gmres+jacobi at `ksp_rtol = 1e-8` with `ksp_max_it = 300`, and
+> that solve needs **1409** iterations on the 1405-cell fixture (probe log
+> `20260808T050338Z_OPS-12-probe.log`: reason 2 / 1409 its / `4.26e-12` at a
+> 5000 cap; bjacobi/ilu 338 its; lu/mumps 1). The cap was under-resourced, so
+> the cap moved and the assertion did not. jacobi was kept deliberately — it
+> is the weak preconditioner that makes the history long enough to classify.
+> **3. The classifier was unreachable in production.** The time-harmonic path
+> never called `ksp.setConvergenceHistory()` (the magnetostatic path always
+> has), so `residual_history` came back **empty** on every solve and
+> `residual_trend` was permanently `unavailable` — which means the test's
+> membership assertion had been passing vacuously the whole time. Armed; the
+> test now gates `len(history) == iterations + 1` and
+> `trend == classify_residual_trend(history)`, so the unit identity and the
+> production path are tied together.
+>
+> **Gate:** 18 passed at `-n 2` under the complex build with
+> `FEM_EM_REQUIRE_COMPLEX=1` and `tests/environment` first, 0.93 s
+> (`20260808T050622Z_OPS-12-gate-final.log`; first green run
+> `20260808T050500Z_OPS-12-gate.log` at 2.38 s, baseline
+> `20260808T050156Z_OPS-12-baseline.log` 2 failed / 4 passed). The quantitative
+> assertion is an exact discrete identity — the label as a function of `f`,
+> asserted with `==` on an 11-row parameterized family whose sequences have
+> analytically known decrease fractions spanning both sides of the specified
+> `f = 0.5` **and** both sides of the retired `f = 0.75`, so the four rows in
+> `0.5 < f < 0.75` are exactly the ones the old thresholds got wrong.
+> **Negative controls:** an alternating history (`f = 0.5`) classifies
+> `mixed`; a strictly increasing one classifies `mostly-increasing` and is
+> asserted *not* to be either decreasing label; non-finite and negative
+> histories classify `invalid`. Real-build regression on the two solver files
+> CI runs: 9 passed, 1 skipped
+> (`20260808T050535Z_OPS-12-regress-real.log`). CI: the file is now in
+> `validation-complex`, which was known-issues 2's own stated exit condition.
+> Nothing physics-side closes — no tolerance elsewhere moved and no
+> inner-region quantity is gated.
+
+*(Original entry text, for the record.)*
 > `classify_residual_trend()` (`core/solvers.py`) returns `mixed` where its
 > test expects `mostly-decreasing`; known-issues 2's own warning applies —
 > **do not assume it is the test** (the `MAG` closed-form precedent cut the
@@ -4220,8 +4274,25 @@ else on `main`.
    annotate both. **Negative result:** all three bands are informative;
    report, annotate known-issues 4, stop.
 
-4. **`OPS-12` — adjudicate the residual-trend classifier (known-issues
-   2).** Independent; `main`. Execute the §7 `OPS-12` plan: hand-derive
+4. ~~**`OPS-12` — adjudicate the residual-trend classifier (known-issues
+   2).**~~ — **done 2026-08-08 (00:00 run), ✅ on `main`; known-issues 2
+   retired.** The derivation went **against the code**, and the file held
+   three defects rather than one: the undocumented `f >= 0.75` threshold
+   (asymmetric, and it made `mostly-decreasing` unreachable for any
+   non-monotone history of ≤ 4 samples) — labels now partition by the sign of
+   `f - 0.5`, the docstring states the table, the test is unchanged; the
+   second failure's **recorded symptom was wrong** (not `diagnostics is not
+   None` but `assert diagnostics.converged`, `KSP_DIVERGED_ITS` — the
+   fixture's gmres+jacobi needs **1409** iterations against a 300 cap, so the
+   cap moved and the assertion did not); and the time-harmonic path never
+   armed `ksp.setConvergenceHistory()`, so `residual_history` was **always
+   empty** and the classifier was unreachable in production — the membership
+   assertion had been vacuous. 18 passed complex `-n 2` in 0.93 s
+   (`20260808T050622Z_OPS-12-gate-final.log`); the identity is asserted with
+   `==` on an 11-row family spanning both sides of `f = 0.5` and of the
+   retired `f = 0.75`. The file is back in `validation-complex`.
+
+   *(Original item text, for the record.)* Independent; `main`. Execute the §7 `OPS-12` plan: hand-derive
    the classification of the test's exact sequence from the classifier's
    documented definition; fix whichever side the derivation contradicts
    (do **not** assume it is the test — the MAG closed-form precedent);
