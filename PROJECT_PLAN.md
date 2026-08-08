@@ -416,7 +416,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-11` | Put `tests/mesh` in CI — the directory no job runs | ✅ | smoke |
 | `OPS-12` | Adjudicate the residual-trend classifier (known-issues 2) and return `test_convergence_diagnostics.py` to CI | ✅ 2026-08-08 | standard |
 | `OPS-13` | Land the rank-safe `_validate_material_map_tags` fix on `main` with its own gate | ✅ 2026-08-08 | standard |
-| `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ⬜ | standard |
+| `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 
 **`OPS-13` — land the rank-safe material-map validation on `main`** ✅
 *(scoped 2026-08-08, 03:00 review; closed 2026-08-08, 06:00 run.)*
@@ -535,7 +535,76 @@ any rank count.)*
 > skip the negative control.
 
 **`OPS-14` — diagnose the rank-dependence of `test_single_port_excitation`
-(known-issues 6)** ⬜ *(scoped 2026-08-08, 03:00 review. The last
+(known-issues 6)** ✅ *(scoped 2026-08-08, 03:00 review; closed as a diagnosis
+2026-08-08, 09:00 run.)*
+> **Done — and the entry's one-line symptom was right about the outcome and
+> wrong about the mechanism, which is now two defects, not one.** The failure
+> is not a test assertion at all: it is `ValueError: missing required port
+> tags: [21, 22]` (and `[12, 21, 22]`) raised from
+> `ports/definitions.py:99`, on 8/8 ranks. It is also red at **`-n 4`**
+> (`[22]`, 4/4 ranks) — `-n 8` is the count someone tried, not the threshold.
+> `-n 1` and `-n 2` are green, 4 passed each
+> (`20260808T140044Z_OPS-14-repro-n1.log`, `…140055Z…-n2.log`,
+> `…140056Z…-n8.log`; smoke, 3 s / 1 s / 1 s).
+>
+> **Defect 1 — the fixture (test-side).** `tags[cell_indices % 4]` runs over
+> **rank-local** indices, so the *global* tag set is itself rank-count
+> dependent. Measured global per-tag cell counts: `-n 1` `{11:3, 12:3, 21:3,
+> 22:3}`; `-n 2` `{4, 4, 2, 2}`; `-n 4` `{4, 4, 4, 0}`; `-n 8` `{8, 4, 0,
+> 0}`. At `-n 4` and `-n 8` the required tags are on **no** rank, so the
+> raise is *correct behaviour* — the mesh genuinely lacks them. The same
+> defect makes the placeholder's numbers rank-dependent while the test is
+> green: `P1.I` = `3.000000e-03+4.263898e-04j` at `-n 1` against
+> `4.000000e-03+5.685197e-04j` at `-n 2`, **+33.3%**, because `support` is a
+> tagged-cell count. Only the finiteness/inequality shape of the assertions
+> hides it.
+>
+> **Defect 2 — `excitation.py:249` (production-side).** It hands rank-local
+> `problem.cell_tags.values` to `validate_required_port_tags_exist`, so the
+> check is not collective: a rank owning no cell of a terminal region raises
+> while other ranks return. This is the family that cost `PORT-1` step
+> 3b-xiii a 601 s hang (one rank raising, the other entering a collective).
+>
+> **The two are separated by counterfactuals, each run in the probe on the
+> same solve** (`scripts/probes/ops14_rank_probe.py`; logs
+> `20260808T140412Z`/`140424Z`/`140426Z`/`140427Z_OPS-14-table-n{1,2,4,8}.log`,
+> smoke, ≤ 3 s each). **A** = collective validator argument, fixture
+> untouched ⇒ still raises at `-n 4/8` (`[22]` / `[21, 22]`), so defect 1
+> alone is fatal. **B** = fixture tags taken over *global* cell numbering,
+> production code untouched ⇒ global per-tag counts become exactly
+> `{3, 3, 3, 3}` at **every** rank count, and it *still* raises on 4/4 ranks
+> at `-n 4` and 8/8 at `-n 8`, so defect 2 alone is fatal. Neither fix works
+> without the other.
+>
+> **§4 anchor — the cross-rank identity.** Under counterfactual B the
+> quantities the test reads are **byte-identical** at `-n 1` and `-n 2`:
+> `P1.V = 1.000000000000e+00+0.000000000000e+00j`,
+> `P1.I = 3.000000000000e-03+4.263897544510e-04j`,
+> `P2.V = 5.000000000000e-02+0.000000000000e+00j`,
+> `P2.I = 1.000000000000e-03+0.000000000000e+00j`,
+> `coupling = 1.000000000000e-01`, `wrapped_ring_distance = 1` — against
+> production's 33.3% divergence across those same two rank counts. The
+> negative control (the reproduction itself: same command red at `-n 8`,
+> green at `-n 1`, before any change, both logs kept) executed as specified.
+>
+> **Disposition: the pre-registered not-to-fix branch, taken as written.**
+> Both defects are wholly inside the `PORT-0` placeholder `PORT-1` deletes —
+> defect 2 is a line of `run_placeholder_port_coupling_case`, defect 1 a
+> fixture that exists only to drive it. known-issues 6 is **re-pointed at
+> `PORT-1`**, not retired, exactly like entry 3. Shared-machinery survey (the
+> condition that would have forced a fix): no other non-collective tag read
+> remains in `src/` — `core/time_harmonic.py:162` was fixed by `OPS-13`,
+> `post/sar.py:184` already reduces with `allreduce(..., op=MPI.MAX)`,
+> `io/mesh.py:1711` with `SUM`. **Only change landed under `src/`:** a hazard
+> warning in `validate_required_port_tags_exist`'s docstring — behaviour
+> unchanged — so `PORT-1`'s real caller does not repeat defect 2. Regression
+> `20260808T140513Z_OPS-14-regress.log` (`tests/ports` + the entry's test,
+> `-n 2`, 4 s): **2 failed, 19 passed**, and both failures are known-issues 3
+> verbatim (matched-port zero diagonal), unrelated. Nothing re-pointed, no
+> assertion touched, `PORT-0` quarantine intact.
+>
+> *(Original plan below.)*
+> *(scoped 2026-08-08, 03:00 review. The last
 never-diagnosed baseline entry after `OPS-12` retired entry 2 and `MAG-6`
 step 1 re-characterised entry 4 — and both of those found the recorded
 symptom wrong or the green signal non-physical, so entry 6's description is
@@ -4660,7 +4729,21 @@ both §7 entries.
    every band is informative; (defect) is the more valuable outcome —
    report, annotate, stop.
 
-4. **`OPS-14` — diagnose the rank-dependence of
+4. **✅ DONE 2026-08-08 (09:00 run) — closed as a **diagnosis**, the
+   pre-registered not-to-fix branch. Two independent defects, each on its own
+   fatal: the fixture's rank-local `tags[cell_indices % 4]` makes the *global*
+   tag set rank-count dependent (`{3,3,3,3}` cells per tag at `-n 1`,
+   `{4,4,4,0}` at `-n 4`, `{8,4,0,0}` at `-n 8` — so the raise at `-n 4/8` is
+   correct behaviour), and `excitation.py:249` validates against rank-local
+   `cell_tags.values` so the check is not collective. Separated by two
+   counterfactuals on the same solve; anchor is the cross-rank identity —
+   byte-identical estimates at `-n 1` and `-n 2` under the global-index
+   fixture against production's **+33.3%** `P1.I` divergence. Also red at
+   `-n 4`, which the entry did not record. Both defects live in the `PORT-0`
+   placeholder, so known-issues 6 is re-pointed at `PORT-1`, not retired; the
+   only `src/` change is a docstring hazard warning. Full write-up in §7. Not
+   selectable — skip to item 5.** *(Original text below.)*
+   **`OPS-14` — diagnose the rank-dependence of
    `test_single_port_excitation` (known-issues 6).** Independent; `main`;
    diagnosis with a pre-registered disposition. Execute the §7 `OPS-14`
    plan: reproduce at `-n 1/2/8` first and capture the **actual** failing

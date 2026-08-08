@@ -85,12 +85,24 @@ def validate_required_port_tags_exist(
 ) -> None:
     """Validate that all required port tags exist in ``available_tags``.
 
+    .. warning::
+       ``available_tags`` must be a **globally reduced** tag set. Handing this
+       function ``cell_tags.values`` directly is a rank-local read: a rank that
+       owns no cell of a port's terminal region raises while other ranks
+       return, so the call is not collective. `OPS-14` measured exactly that at
+       ``excitation.py:249`` — with a mesh that globally carries all four
+       terminal tags, the call still raised on 4/4 ranks at ``-n 4`` and 8/8 at
+       ``-n 8`` (``20260808T140426Z_OPS-14-table-n4.log``). Reduce first (see
+       ``post/sar.py``'s ``allreduce(..., op=MPI.MAX)`` per tag, or
+       ``tests/mesh/helpers.py::global_cell_tag_set``).
+
     Parameters
     ----------
     ports
         Port definitions to validate.
     available_tags
-        Iterable of integer tag values present in the mesh tag data.
+        Iterable of integer tag values present in the mesh tag data, already
+        reduced across ranks.
     """
     expected = required_port_tags(ports)
     observed = {int(tag) for tag in available_tags}

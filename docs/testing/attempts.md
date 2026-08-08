@@ -6778,3 +6778,90 @@ DG0, the gate should pin `h = 0.010` *and* assert the `-n 2` vs `-n 4`
 identity at that h (6.40% on record), or the same partition luck that made
 step 1's CG1 green will reappear one refinement later. The queue's next
 selectable item is `OPS-14` (§9 item 4).
+
+---
+
+## 2026-08-08T14:10Z — `OPS-14` — **complete** (✅ as a *diagnosis*): the
+## entry was right about the outcome, wrong about the mechanism, and there
+## are **two** defects, neither of which alone explains the red
+
+**Slot.** 09:00 CDT scheduled implementer run. Tree clean at start, container
+Up, no preflight anomaly. §9 items 1–3 all carry DONE/not-selectable banners,
+so item 4 (`OPS-14`) was the first selectable one — no fallback used.
+
+**Reproduction first, symptom re-derived (the entry's own instruction).** The
+failure is **not a test assertion**. It is `ValueError: missing required port
+tags: [21, 22]` / `[12, 21, 22]` raised from `ports/definitions.py:99`, on
+8/8 ranks. And it is also red at **`-n 4`** (`[22]`, 4/4 ranks), which the
+entry never recorded — `-n 8` is the count someone tried, not the threshold.
+`-n 1` and `-n 2`: 4 passed each.
+
+**Two defects, separated by counterfactuals on the same solve.**
+1. **Fixture (test-side), `test_single_port_excitation.py:21-26`** —
+   `tags[cell_indices % 4]` over **rank-local** indices, so the *global* tag
+   set is itself rank-count dependent. Global per-tag cell counts measured:
+   `-n 1` `{11:3, 12:3, 21:3, 22:3}`; `-n 2` `{4,4,2,2}`; `-n 4` `{4,4,4,0}`;
+   `-n 8` `{8,4,0,0}`. At `-n 4/8` the tags are on **no** rank, so the raise
+   is *correct behaviour* — the mesh really lacks them. Same defect moves the
+   placeholder's own output while the test is green: `P1.I` =
+   `3.000000e-03+4.263898e-04j` at `-n 1` vs `4.000000e-03+5.685197e-04j` at
+   `-n 2`, **+33.3%**, because `support` counts tagged cells. Only the
+   finiteness/inequality shape of the assertions hides it.
+2. **`ports/excitation.py:249`** — hands rank-local `problem.cell_tags.values`
+   to `validate_required_port_tags_exist`; the check is therefore not
+   collective. Same family that cost `PORT-1` step 3b-xiii a 601 s hang.
+
+**Counterfactual A** (collective validator argument, fixture untouched):
+still raises at `-n 4/8` ⇒ defect 1 alone is fatal. **Counterfactual B**
+(fixture tags over *global* cell numbering, production code untouched):
+global per-tag counts become exactly `{3,3,3,3}` at **every** rank count and
+it *still* raises 4/4 at `-n 4`, 8/8 at `-n 8` ⇒ defect 2 alone is fatal.
+Neither fix works without the other — which is why "the prime suspect" as
+scoped (the fixture) would have been an incomplete answer.
+
+**§4 anchor — the cross-rank identity.** Under counterfactual B the
+quantities the test reads are **byte-identical** at `-n 1` and `-n 2`:
+`P1.V = 1.000000000000e+00+0.000000000000e+00j`,
+`P1.I = 3.000000000000e-03+4.263897544510e-04j`,
+`P2.V = 5.000000000000e-02+0.000000000000e+00j`,
+`P2.I = 1.000000000000e-03+0.000000000000e+00j`,
+`coupling = 1.000000000000e-01`, `wrapped_ring_distance = 1`. Production
+diverges 33.3% across the same two rank counts. Negative control (the
+reproduction: red at `-n 8`, green at `-n 1`, before any change) executed,
+both logs kept.
+
+**Disposition — the pre-registered not-to-fix branch, taken as written.**
+Both defects are wholly inside the `PORT-0` placeholder `PORT-1` deletes, so
+known-issues 6 is **re-pointed at `PORT-1`**, not retired (entry 3's logic).
+The shared-machinery survey that would have forced a fix came back clean: no
+other non-collective tag read remains in `src/` — `core/time_harmonic.py:162`
+fixed by `OPS-13`, `post/sar.py:184` already reduces with
+`allreduce(..., op=MPI.MAX)`, `io/mesh.py:1711` with `SUM`. Only `src/` change:
+a hazard warning in `validate_required_port_tags_exist`'s docstring naming the
+measured failure — behaviour unchanged.
+
+**Logs** (all smoke tier, `timeout 180`, ≤ 4 s each):
+- `20260808T140044Z_OPS-14-repro-n1.log` — 4 passed, exit 0
+- `20260808T140055Z_OPS-14-repro-n2.log` — 4 passed, exit 0
+- `20260808T140056Z_OPS-14-repro-n8.log` — 1 failed 3 passed, exit 1 (the red)
+- `20260808T140214Z/140225Z_OPS-14-probe-n{1,2}.log` — first probe revision
+- `20260808T140226Z_OPS-14-probe-n8.log` — exit 1; the probe's own
+  counterfactual raised before the table printed. Superseded by the `-table-`
+  logs, which print the table first and catch. Kept, disclosed, **not cited**.
+- `20260808T140412Z/140424Z/140426Z/140427Z_OPS-14-table-n{1,2,4,8}.log` —
+  the cited runs, exit 0 throughout
+- `20260808T140513Z_OPS-14-regress.log` — `tests/ports` + the entry's test at
+  `-n 2`: **2 failed, 19 passed**, both failures known-issues 3 verbatim
+  (matched-port zero diagonal), unrelated and pre-existing
+
+**Not touched.** No assertion loosened, no tolerance moved, no test edited,
+`PORT-0` quarantine intact, nothing re-pointed except known-issues 6's owner.
+
+**Next-attempt hypothesis.** For `PORT-1`, not a separate chunk: when the real
+gap-voltage port replaces the placeholder, the *test* fixture is the part more
+likely to be copied forward than the buggy call site — tag any port terminal
+off geometry or global cell numbering, never `arange(size_local)`, and give
+the new port path a rank-count identity assertion at `-n 1/2/4` rather than
+finiteness. The 33.3% `P1.I` drift at `-n 1` vs `-n 2` is the concrete example
+of a green test hiding a rank-dependent number. Queue: §9 item 5
+(`MAT-6` step 6, the heavy spare) is the only selectable item left.
