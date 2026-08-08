@@ -76,9 +76,16 @@ COIL_CURRENT_A = 1.0
 GAUGE_PENALTY = 1e-3
 
 
-def _symmetry_points() -> np.ndarray:
-    """The test's ±x probe grid, verbatim (depends on no padding-sensitive term)."""
-    sample_clearance = max(0.75 * RESOLUTION, 0.004)
+def _symmetry_points(resolution: float = RESOLUTION) -> np.ndarray:
+    """The test's ±x probe grid, verbatim (depends on no padding-sensitive term).
+
+    ``resolution`` enters only through the test's own ``sample_clearance``.  For
+    the step-2 ``h``-ladder the grid is held at the **default** resolution on
+    every rung: refining the mesh must not move the points, or the ladder would
+    compare a metric of one point set against a metric of another.  The
+    rung-native grid is measured too, print-only, for continuity with step 1.
+    """
+    sample_clearance = max(0.75 * resolution, 0.004)
     safe_radius = PHANTOM_RADIUS - sample_clearance
     safe_half_height = (PHANTOM_HEIGHT / 2.0) - sample_clearance
 
@@ -101,6 +108,7 @@ def _mesh(
     air_padding: float,
     phantom_offset_xy: Optional[Tuple[float, float]],
     comm: MPI.Intracomm,
+    resolution: float = RESOLUTION,
 ):
     return MeshGenerator.coil_phantom_domain(
         coil_major_radius=COIL_MAJOR_RADIUS,
@@ -109,7 +117,7 @@ def _mesh(
         phantom_radius=PHANTOM_RADIUS,
         phantom_height=PHANTOM_HEIGHT,
         air_padding=air_padding,
-        resolution=RESOLUTION,
+        resolution=resolution,
         phantom_placement_preset="centered" if phantom_offset_xy is None else "off_center",
         phantom_offset_xy=phantom_offset_xy,
         comm=comm,
@@ -128,10 +136,11 @@ def measure(
     comm: MPI.Intracomm,
     solve: bool,
     gauge_penalty: float = GAUGE_PENALTY,
+    resolution: float = RESOLUTION,
 ) -> dict:
     """Mesh (and optionally solve) one configuration; return its metrics."""
     t0 = time.time()
-    mesh, cell_tags, facet_tags = _mesh(air_padding, phantom_offset_xy, comm)
+    mesh, cell_tags, facet_tags = _mesh(air_padding, phantom_offset_xy, comm, resolution)
     mesh_s = time.time() - t0
     cells = _global_cell_count(mesh, comm)
 
@@ -140,6 +149,7 @@ def measure(
         "gauge_penalty": gauge_penalty,
         "air_padding_m": air_padding,
         "phantom_offset_xy": phantom_offset_xy,
+        "resolution_m": resolution,
         "cells": cells,
         "mesh_s": mesh_s,
     }
@@ -206,6 +216,22 @@ def measure(
     b_dg0_l2_local = fem.assemble_scalar(fem.form(ufl.inner(b_dg0, b_dg0) * ufl.dx))
     b_dg0_l2 = float(np.sqrt(comm.allreduce(b_dg0_l2_local, op=MPI.SUM)))
 
+    # Print-only continuity number: the same DG0 metric on the grid the test
+    # *would* build at this rung's resolution (sample_clearance tracks h).  The
+    # ladder is read off the fixed grid above; this only shows how much of any
+    # move a shifting point set could account for.
+    native_points = _symmetry_points(resolution)
+    if np.allclose(native_points, points):
+        dg0_native_max = float(np.max(dg0_rel))
+    else:
+        native_b, native_valid = evaluate_vector_field_parallel(b_dg0, native_points, comm=comm)
+        native_mag = np.linalg.norm(native_b, axis=1).reshape(-1, 2)
+        native_ref = np.maximum(
+            np.maximum(native_mag[:, 0], native_mag[:, 1]), FIELD_SCALE_FLOOR
+        )
+        dg0_native_max = float(np.max(np.abs(native_mag[:, 0] - native_mag[:, 1]) / native_ref))
+        record["dg0_native_all_valid"] = bool(native_valid.all())
+
     symmetry_mag = np.linalg.norm(symmetry_b, axis=1).reshape(-1, 2)
     pair_abs_diff = np.abs(symmetry_mag[:, 0] - symmetry_mag[:, 1])
     pair_ref = np.maximum(np.maximum(symmetry_mag[:, 0], symmetry_mag[:, 1]), FIELD_SCALE_FLOOR)
@@ -218,6 +244,7 @@ def measure(
             "b_dg0_l2": b_dg0_l2,
             "dg0_max_rel_diff": float(np.max(dg0_rel)),
             "dg0_mean_rel_diff": float(np.mean(dg0_rel)),
+            "dg0_native_max_rel_diff": dg0_native_max,
             "dg0_all_valid": bool(dg0_valid.all()),
             "pair_plus": symmetry_mag[:, 0].tolist(),
             "pair_minus": symmetry_mag[:, 1].tolist(),
@@ -240,6 +267,7 @@ def _report(rec: dict, comm: MPI.Intracomm) -> None:
     if comm.rank != 0:
         return
     print(f"[{rec['label']}] air_padding={rec['air_padding_m']:.4f} m  "
+          f"h={rec['resolution_m']:.6f} m  "
           f"offset={rec['phantom_offset_xy']}  gauge={rec['gauge_penalty']:g}")
     print(f"    cells (global): {rec['cells']}   mesh {rec['mesh_s']:.1f} s")
     if "max_rel_diff" in rec:
@@ -255,6 +283,8 @@ def _report(rec: dict, comm: MPI.Intracomm) -> None:
               f"mean = {rec['dg0_mean_rel_diff']:.6f}  "
               f"||B_dg0||_L2 = {rec['b_dg0_l2']:.12e}  "
               f"(all_valid={rec['dg0_all_valid']})")
+        print(f"    DG0 on rung-native grid (print-only): "
+              f"max_rel_diff = {rec['dg0_native_max_rel_diff']:.6f}")
         print("    per-pair |B(+x)| / |B(-x)| / rel:")
         for i, (bp, bm, rd) in enumerate(
             zip(rec["pair_plus"], rec["pair_minus"], rec["pair_rel_diff"])
@@ -263,9 +293,86 @@ def _report(rec: dict, comm: MPI.Intracomm) -> None:
     sys.stdout.flush()
 
 
+# `MAG-6` step 2: the h-refinement ladder.  Refinement goes through the
+# fixture's own resolution knob (§7 trap: never a manual re-mesh), padding and
+# every other setting frozen at the step-1 default.
+LADDER = (("h", 1.0), ("h/1.5", 1.5), ("h/2", 2.0))
+
+
+def _hconv(comm: MPI.Intracomm, args) -> int:
+    """DG0 metric vs `h` — is ~0.53 discretisation or a mesh-independent defect?"""
+    solve = args.stage == "hconv"
+    if comm.rank == 0:
+        print(f"MAG-6 step 2 probe — stage={args.stage}, ranks={comm.size}, "
+              f"gauge_penalty={args.gauge:g}")
+        print("DG0-sampled mirror metric on a fixed probe grid (default-h clearance)")
+        print("against the fixture's resolution knob; exact metric is 0 by construction.")
+        sys.stdout.flush()
+
+    rungs = []
+    for name, factor in LADDER:
+        rec = measure(
+            f"rung-{name}",
+            DEFAULT_AIR_PADDING,
+            None,
+            comm,
+            solve,
+            gauge_penalty=args.gauge,
+            resolution=RESOLUTION / factor,
+        )
+        rec["ladder_factor"] = factor
+        rungs.append(rec)
+        _report(rec, comm)
+
+    if not (solve and comm.rank == 0):
+        return 0
+
+    metrics = [r["dg0_max_rel_diff"] for r in rungs]
+    l2s = [r["b_dg0_l2"] for r in rungs]
+    print("")
+    print("MAG-6 step 2 readings — DG0 max_rel_diff vs h (fixed grid)")
+    for r, m in zip(rungs, metrics):
+        print(f"  {r['label']:<12} h={r['resolution_m']:.6f}  cells={r['cells']:>8}  "
+              f"metric={m:.6f}  ||B_dg0||_L2={r['b_dg0_l2']:.12e}  "
+              f"solve {r['solve_s']:.1f} s")
+    monotone = all(metrics[i] > metrics[i + 1] for i in range(len(metrics) - 1))
+    total_ratio = metrics[0] / metrics[-1] if metrics[-1] > 0.0 else float("inf")
+    total_move = abs(metrics[-1] - metrics[0]) / metrics[0] if metrics[0] > 0.0 else float("inf")
+    # Observed rate over the full ladder: metric ~ h^p  =>  p = ln(m0/mN)/ln(hN_factor).
+    rate = np.log(total_ratio) / np.log(LADDER[-1][1]) if total_ratio > 0.0 else float("nan")
+    print(f"  monotone decrease        : {monotone}")
+    print(f"  total ratio first/last   : {total_ratio:.4f}   (>= 1.5 with monotone => discretisation)")
+    print(f"  total relative move      : {total_move * 100:.2f}%  (< 20% => mesh-independent defect)")
+    print(f"  observed rate p (h^p)    : {rate:.4f}")
+    if monotone and total_ratio >= 1.5:
+        band = "(discretisation) ~0.53 is coarse-mesh error"
+    elif total_move < 0.20 or not monotone:
+        band = "(defect) asymmetry is mesh-independent — suspect the point set or the fixture"
+    else:
+        band = "(mixed) report all three rungs, stop"
+    print(f"  band                     : {band}")
+    print("  ||B_dg0||_L2 successive relative change (must itself converge):")
+    for i in range(len(l2s) - 1):
+        print(f"    {rungs[i]['label']} -> {rungs[i + 1]['label']}: "
+              f"{abs(l2s[i + 1] - l2s[i]) / l2s[i] * 100:.4f}%")
+    print("  rung-native-grid metric (print-only, not the ladder):")
+    for r in rungs:
+        print(f"    {r['label']:<12} {r['dg0_native_max_rel_diff']:.6f}")
+    sys.stdout.flush()
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--stage", choices=("mesh", "solve"), default="mesh")
+    parser.add_argument(
+        "--stage",
+        choices=("mesh", "solve", "hconv-mesh", "hconv"),
+        default="mesh",
+        help=(
+            "mesh/solve: the step-1 padding experiment. hconv-mesh/hconv: the "
+            "step-2 h-refinement ladder (cost probe / solves)."
+        ),
+    )
     parser.add_argument(
         "--gauge",
         type=float,
@@ -278,9 +385,13 @@ def main() -> int:
         ),
     )
     args = parser.parse_args()
-    solve = args.stage == "solve"
 
     comm = MPI.COMM_WORLD
+    if args.stage in ("hconv-mesh", "hconv"):
+        return _hconv(comm, args)
+
+    solve = args.stage == "solve"
+
     if comm.rank == 0:
         print(f"MAG-6 step 1 probe — stage={args.stage}, ranks={comm.size}, "
               f"gauge_penalty={args.gauge:g}")

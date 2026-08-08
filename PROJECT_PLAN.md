@@ -726,7 +726,7 @@ do not "fix in passing", and do not read it as a chunk failure.
 | `MAG-3` | Circular-loop analytic validation | ✅ | standard | |
 | `MAG-4` | Helmholtz analytic validation | ✅ | standard | 0.04% centre / 0.83% mean |
 | `MAG-5` | h-refinement convergence study | ✅ | standard | |
-| `MAG-6` | Coil+phantom B-field symmetry metric strategy | 🧪 | metric rank-dependent 3.03× (0.7279 / 0.2405 / 0.3215 at `-n 1/2/4`); DG0 path stable to 4.8% | step 1 ✅ 2026-08-08 — CG1 interpolation owns it; boundary and gauge both exonerated; estimator strategy open for a review |
+| `MAG-6` | Coil+phantom B-field symmetry metric strategy | 🧪 | metric rank-dependent 3.03× (0.7279 / 0.2405 / 0.3215 at `-n 1/2/4`); DG0 path stable to 4.8%; DG0 converges at p ≈ 1.07 (0.5347 / 0.3122 / 0.2552) and meets 0.350 at h = 0.010 | steps 1–2 ✅ 2026-08-08 — CG1 interpolation owns it (and does not converge under `h`); boundary and gauge exonerated; ~0.53 is discretisation; estimator strategy open for a review, now with a licensed number |
 | `MAG-7` | Fix point evaluation in validation tests | ✅ | standard | |
 | `MAG-8` | Restrict straight-wire current density to the wire | ✅ | standard | |
 | `MAG-9` | Re-size validation meshes to fit the tier budget | ✅ | standard | |
@@ -878,7 +878,8 @@ exonerated; the estimator is the finding.** Probe:
 > may not be raised before (iii) is measured.**
 
 **`MAG-6` step 2 — measure the DG0 metric's `h`-convergence: is ~0.53
-discretisation or a defect?** ⬜ *(scoped 2026-08-08, 03:00 review — step 1's
+discretisation or a defect?** ✅ *(executed 2026-08-08, 07:30 run — see the
+readings block below. Original plan text follows.)* *(scoped 2026-08-08, 03:00 review — step 1's
 candidate (iii), taken first deliberately: (i) re-pointing the test at DG0
 today would flip it hard-red (0.53 > 0.35) with no licensed number to gate
 against, and (ii) adding material contrast changes the physics under the
@@ -919,6 +920,65 @@ metric; (iii) is the measurement both of those decisions need.)*
 > convergence measured) or known-issues 4 — annotate both. **Negative
 > result:** every band is informative — (defect) is arguably the more
 > valuable outcome; report, annotate known-issues 4, stop.
+
+**`MAG-6` step 2 — ✅ executed 2026-08-08 (07:30 run). (discretisation): the
+DG0 metric converges at ~O(h), and it already meets 0.350 at `h/1.5`.** Probe:
+`scripts/probes/mag6_step1_probe.py --stage hconv`. Full write-up in
+`docs/testing/attempts.md` (2026-08-08T12:55Z); known-issues 4 annotated.
+> **The ladder reads (discretisation) at both rank counts that completed it.**
+> DG0 `max_rel_diff` on the **fixed** probe grid, `-n 2`
+> (`20260808T123245Z_MAG-6-step2-hconv-n2.log`): **0.534746** (h = 0.015,
+> 19 792 cells) → **0.312197** (h = 0.010, 55 784) → **0.255165**
+> (h = 0.0075, 124 179) — monotone, total ratio **2.0957** over the 2×
+> refinement (band needs ≥ 1.5), observed rate **p = 1.067** against the O(h)
+> ceiling N1curl degree 1 allows. At `-n 4`
+> (`20260808T124355Z_MAG-6-step2-hconv-n4.log`): 0.537750 → 0.304356 →
+> 0.292706, ratio **1.8372**, p = 0.878 — same band, independently.
+> **Rung 1 byte-reproduces step 1**: 0.534746 at `-n 2` and 0.513648 at
+> `-n 1`, digit for digit on an unchanged fixture.
+> **The negative control voids the finest rung, and the band survives it.**
+> Three-way rank spread `(max−min)/min` of the DG0 metric: rung `h`
+> **4.69%**, rung `h/1.5` **6.40%** — both inside the ≤ 10% control — but
+> rung `h/2` moves **14.71%** between `-n 2` and `-n 4` and is therefore
+> **void by its own control**, reported and not used. §7's two-rung fallback
+> carries the reading anyway: 0.534746 → 0.312197 is a **1.713×** monotone
+> drop across a **1.5×** refinement, already ≥ 1.5 on controlled rungs alone
+> (1.767× at `-n 4`). The `-n 1` control for rung `h/2` was **dropped on
+> cost**, per §7's > 300 s rule: sequential LU goes 13.0 s → 132.4 s over the
+> first two rungs and the third exceeded the 600 s ceiling
+> (`20260808T123335Z_MAG-6-step2-hconv-n1.log`, **exit 124**) — the rung was
+> not retried at a longer timeout.
+> **The solve is not what moved at rung 3.** Assembled `‖B_dg0‖_L2` converges
+> — 3.699608960472e-07 → 4.093187042167e-07 → 4.282577123172e-07, successive
+> moves 10.64% then **4.63%** — and its rank spread at rung `h/2` is
+> **0.0079%** (`-n 2` vs `-n 4`) against the metric's 14.71%. So the finest
+> rung's instability is in the **point sampling**, not the field: as cells
+> shrink under a fixed probe grid, which cell owns a point becomes a
+> partition question again. That is the ceiling on refining this estimator.
+> **Bonus, print-only (nothing asserted): CG1 does not converge on the same
+> ladder.** The test's own path reads 0.240541 → 0.760519 → 0.723637 at
+> `-n 2` (0.324167 → 0.555144 → 0.258471 at `-n 4`) — non-monotone and
+> mostly *rising* under refinement, on the identical solves where DG0 falls
+> monotonically. Step 1 localised the rank-dependence to CG1; this adds that
+> CG1 is not fixable by refinement either.
+> **Successor number, costed (§7's (discretisation) successor).** The
+> extrapolation is unnecessary — the ladder already contains the answer:
+> the DG0 metric meets the **existing untouched 0.350** at `h = 0.010`
+> (0.312197 at `-n 2`, 0.304356 at `-n 4`), i.e. at rung `h/1.5`, for
+> **55 784 cells, 6.4 s mesh + 2.0 s solve at `-n 2`** — comfortably
+> standard tier. Fitting p = 1.327 over the two controlled rungs puts the
+> 0.350 crossing at h ≈ 0.0109 m, consistent. **This licenses the number
+> candidate (i) lacked:** re-pointing the estimator at DG0 *and* refining the
+> fixture to h = 0.010 would gate green against 0.350 without touching the
+> tolerance. **The decision remains a review's** — nothing was re-pointed
+> here. **Nothing was touched:** the 0.350 tolerance, `tests/tolerances.py`,
+> and the test file are unchanged; the ladder refines through the fixture's
+> own `resolution` knob, and the probe grid is **frozen at the default-`h`
+> clearance** on every rung so refinement cannot move the points (the
+> rung-native grid is printed beside it: 0.534746 / 0.269491 / 0.274266).
+> **Does not close:** `MAG-6` (estimator strategy stays a review's) or
+> known-issues 4 — both annotated. **Cost:** 4 standard-tier commands, 27 s
+> / 35 s / 601 s (the exit-124 control) / 32 s.
 
 **Open follow-ups in MAG:**
 
@@ -4564,7 +4624,17 @@ both §7 entries.
    report the observed partition and use the allgather-verified fallback
    construction; never skip the negative control.
 
-3. **`MAG-6` step 2 — the DG0 metric's `h`-convergence: is ~0.53
+3. **✅ DONE 2026-08-08 (07:30 run) — band **(discretisation)** at both
+   `-n 2` and `-n 4`: the DG0 metric falls 0.534746 → 0.312197 → 0.255165
+   (ratio 2.0957, p = 1.067), rung 1 byte-reproduces step 1, and the metric
+   meets the untouched 0.350 at h = 0.010 m for 2.0 s of solve. The finest
+   rung is void by its own 14.71% rank control (the sampling, not the solve:
+   `‖B_dg0‖_L2` moves 0.0079% across the same ranks), so §7's two-rung
+   fallback carries the reading; the `-n 1` control for that rung was dropped
+   on cost (exit 124). CG1 is non-monotone on the same ladder. Full write-up
+   in §7; known-issues 4 annotated; nothing re-pointed. Not selectable — skip
+   to item 4.** *(Original text below.)*
+   **`MAG-6` step 2 — the DG0 metric's `h`-convergence: is ~0.53
    discretisation or a defect?** Independent; `main`; real build;
    measurement only. Execute the §7 step-2 plan: extend
    `scripts/probes/mag6_step1_probe.py`, solve the coil+phantom fixture at

@@ -6690,3 +6690,91 @@ ranks) — the fixture in the new test file is directly reusable.
 
 **Next-attempt hypothesis:** none needed for `OPS-13`. The queue's next
 selectable item is `MAG-6` step 2.
+
+---
+
+## 2026-08-08T12:55Z — `MAG-6` step 2 — **complete**
+
+**Slot:** 07:30 implementer run. **Outcome:** ✅ measurement complete, band
+**(discretisation)**, nothing re-pointed and no tolerance touched. Tree clean
+at start (no anomaly), container Up. §9 item 3 taken — items 1 and 2 are
+marked not-selectable by the queue itself.
+
+**What was tried.** Extended `scripts/probes/mag6_step1_probe.py` with an
+`hconv` stage: three rungs through the fixture's **own** `resolution` knob
+(h = 0.015 / 0.010 / 0.0075 m), everything else frozen at the step-1 default,
+DG0-sampled mirror metric read per rung. One design decision worth recording:
+the probe grid is **frozen at the default-`h` clearance on every rung**. The
+test's `sample_clearance = max(0.75*h, 0.004)` tracks the resolution, so a
+rung-native grid would move the points as the mesh refines and the "ladder"
+would compare metrics of different point sets. The rung-native numbers are
+printed beside the ladder (0.534746 / 0.269491 / 0.274266) and asserted on
+nowhere.
+
+**Measured — the ladder.** DG0 `max_rel_diff`, fixed grid:
+
+| rung | h (m) | cells | `-n 1` | `-n 2` | `-n 4` | rank spread |
+|---|---|---|---|---|---|---|
+| h | 0.015 | 19 792 | 0.513648 | **0.534746** | 0.537750 | **4.69%** ✅ |
+| h/1.5 | 0.010 | 55 784 | 0.323844 | **0.312197** | 0.304356 | **6.40%** ✅ |
+| h/2 | 0.0075 | 124 179 | — (cost) | **0.255165** | 0.292706 | **14.71%** ✗ void |
+
+`-n 2` total ratio **2.0957**, monotone, observed rate **p = 1.067**;
+`-n 4` ratio **1.8372**, p = 0.878. Both land (discretisation) (band needs
+monotone + ≥ 1.5). Rung 1 **byte-reproduces step 1** at both `-n 1` and
+`-n 2`, so the fixture has not drifted.
+
+**The negative control did real work.** Rung `h/2` fails the ≤ 10% rank band
+(14.71%, `-n 2` vs `-n 4`) and is reported **void**, not used. §7's two-rung
+fallback carries the reading unaided: 0.534746 → 0.312197 is a **1.713×**
+monotone drop across a **1.5×** refinement (1.767× at `-n 4`) — already ≥ 1.5
+on the two rungs whose controls passed. The `-n 1` control for rung 3 was
+**dropped on cost** under §7's > 300 s rule: sequential LU runs 13.0 s →
+132.4 s over rungs 1–2 and rung 3 blew the 600 s ceiling (exit 124). It was
+**not** retried at a longer timeout.
+
+**Why rung 3 destabilised — it is not the solve.** Assembled `‖B_dg0‖_L2`
+converges (3.699608960472e-07 → 4.093187042167e-07 → 4.282577123172e-07;
+successive moves 10.64%, 4.63%) and its rank spread at rung 3 is **0.0079%**
+against the metric's 14.71%. As cells shrink under a fixed probe grid, which
+cell owns a point becomes a partition question again — that is the ceiling on
+refining this estimator, and it is the reason the ladder cannot simply be
+extended.
+
+**Bonus finding, print-only.** On the identical solves the test's **CG1**
+path reads 0.240541 → 0.760519 → 0.723637 (`-n 2`) — non-monotone and mostly
+*rising* under refinement where DG0 falls. Step 1 showed CG1 owns the
+rank-dependence; step 2 adds that refinement does not rescue it either.
+
+**The number the estimator-vs-tolerance decision was waiting on.** No
+extrapolation needed — the ladder contains it: the DG0 metric meets the
+**unmodified 0.350** at **h = 0.010 m** (0.312197 at `-n 2`, 0.304356 at
+`-n 4`) for 55 784 cells, 6.4 s mesh + 2.0 s solve at `-n 2`, standard tier.
+Fitting p = 1.327 over the two controlled rungs puts the crossing at
+h ≈ 0.0109 m, consistent. So candidate (i) + one refinement rung would gate
+green **without raising 0.350** — which is exactly the licensed number §7
+said (i) lacked. **The decision stays a review's; nothing was re-pointed.**
+
+**Logs** (standard tier throughout, `timeout 600` except the mesh probe):
+- `20260808T123206Z_MAG-6-step2-meshprobe.log` — cost probe, cell counts, 27 s, exit 0
+- `20260808T123245Z_MAG-6-step2-hconv-n2.log` — the ladder, **35 s**, exit 0
+- `20260808T124355Z_MAG-6-step2-hconv-n4.log` — rank control, 32 s, exit 0
+- `20260808T123335Z_MAG-6-step2-hconv-n1.log` — rank control, **exit 124** at
+  601 s (rung 3 dropped on cost; rungs 1–2 captured)
+
+**What was not touched.** The 0.350 tolerance, `tests/tolerances.py`, and
+every assertion in `tests/validation/test_coil_phantom_bfield_metrics.py`.
+No `src/` change at all — this slot is probe + documentation, but it executed
+four verification commands, so the §5.2 no-op guard does not apply.
+known-issues 4 annotated (three new rows + the "still undiagnosed" clause in
+**Cause** corrected); `MAG-6` stays 🧪.
+
+**Next-attempt hypothesis.** For the review, not an implementer: the open
+question is no longer "discretisation or defect" but **how far DG0 can be
+refined before its own sampling goes partition-dependent** — rung 3 says the
+answer is between h = 0.010 and h = 0.0075, uncomfortably close to the
+h = 0.010 the 0.350 crossing needs. If a review re-points the estimator at
+DG0, the gate should pin `h = 0.010` *and* assert the `-n 2` vs `-n 4`
+identity at that h (6.40% on record), or the same partition luck that made
+step 1's CG1 green will reappear one refinement later. The queue's next
+selectable item is `OPS-14` (§9 item 4).
