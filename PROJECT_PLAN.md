@@ -415,6 +415,100 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-10` | Complex-mode CI job for the frequency-domain gates | ✅ | smoke |
 | `OPS-11` | Put `tests/mesh` in CI — the directory no job runs | ✅ | smoke |
 | `OPS-12` | Adjudicate the residual-trend classifier (known-issues 2) and return `test_convergence_diagnostics.py` to CI | ✅ 2026-08-08 | standard |
+| `OPS-13` | Land the rank-safe `_validate_material_map_tags` fix on `main` with its own gate | ⬜ | standard |
+| `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ⬜ | standard |
+
+**`OPS-13` — land the rank-safe material-map validation on `main`** ⬜
+*(scoped 2026-08-08, 03:00 review, from the `PORT-1` step 3b-xiii park. The
+fix exists, measured and documented, on
+`attempt/PORT-1-step3bxiii-20260808T005500Z` (`82bfb40`) — it is parked only
+because the protocol parks all code on an incomplete run, and any material
+map over a subdomain small enough to live on one rank hits the same trap at
+any rank count.)*
+> **What lands:** exactly one hunk from `82bfb40` —
+> `src/fem_em_solver/core/time_harmonic.py`,
+> `_validate_material_map_tags(mesh, cell_tags, material_map)` with the tag
+> set reduced via `mesh.comm.allgather` before it is tested, plus the two
+> call-site updates and the docstring that records the measurement. **Nothing
+> else from the branch rides along** — not the ladder test additions, not the
+> logs; take the hunk by hand (`git diff 82bfb40~1 82bfb40 --
+> src/.../time_harmonic.py`), do not cherry-pick the commit. `main`'s
+> `time_harmonic.py` has moved since the branch diverged (`OPS-12` armed
+> `setConvergenceHistory()` at ~line 438); the hunks do not overlap, but
+> verify by eye. **New gate** (new file, e.g.
+> `tests/materials/test_material_map_rank_safety.py`): on a small built-in
+> mesh at `-n 2`, tag exactly **one global cell** (pick deterministically:
+> the cell containing a fixed corner point, located via ownership query, tag
+> communicated to all ranks) and build a material map naming that tag —
+> `build_material_fields` / `build_mu_r_field` must succeed **on every
+> rank**. **Anchor:** the exact set identity — the allgathered tag set equals
+> the analytically known global tag set (constructed, so known by
+> enumeration), asserted with `==` on all ranks; and the DG0 σ field built
+> from the map integrates to the tagged cell's volume × σ exactly
+> (`assemble_scalar` + allreduce vs the cell volume computed the same way —
+> an identity, not a band). **Negative control:** a map naming a genuinely
+> absent tag must raise `ValueError` on **every** rank (collective agreement
+> — the failure mode being fixed is ranks *disagreeing*); assert with
+> `pytest.raises` on all ranks and require the error message to name the
+> missing tag. **Cost:** standard, `-n 2` then `-n 4` (asymmetric ownership),
+> `timeout 180`; no solve — build-only, seconds (the branch's failing session
+> was 246 s only because half the ranks hung to the ceiling). **Traps:** the
+> trap being fixed is the trap — do not assert on rank-local
+> `cell_tags.values` in the new test either; complex build not required
+> (build-only path) but run once under it since `time_harmonic.py` imports
+> there; a killed run leaves a stale FFCx lock. **Does not close:**
+> known-issues 6 (different code path — the placeholder port model; `OPS-14`
+> owns that question) or anything `PORT-1`; the parked branch keeps its own
+> copy of the fix — whichever lands second reconciles a near-identical hunk,
+> which is a trivial conflict and should be noted in the landing commit.
+> **Negative result:** if single-rank ownership cannot be forced
+> deterministically at `-n 2`, that is a fixture finding — report the
+> partition observed, fall back to a tag whose cells are verified (by
+> allgather) to be absent from ≥ 1 rank, and record the construction; never
+> skip the negative control.
+
+**`OPS-14` — diagnose the rank-dependence of `test_single_port_excitation`
+(known-issues 6)** ⬜ *(scoped 2026-08-08, 03:00 review. The last
+never-diagnosed baseline entry after `OPS-12` retired entry 2 and `MAG-6`
+step 1 re-characterised entry 4 — and both of those found the recorded
+symptom wrong or the green signal non-physical, so entry 6's description is
+to be re-derived, not trusted.)*
+> **Diagnosis, not necessarily a fix.** (1) Reproduce first: the recorded
+> symptom is "passes at 1 rank, fails at `mpiexec -n 8`" — run the test at
+> `-n 1`, `-n 2`, `-n 8` and capture the **actual** failing assertion and
+> values (known-issues 2's recorded symptom was wrong; treat entry 6's the
+> same way). (2) Locate the rank-local read. Named suspects, in order: the
+> fixture builds `cell_tags` as `tags[cell_indices % 4]` over **rank-local**
+> indices on a 12-cell unit cube, so at `-n 8` some ranks own ≤ 1 cell and
+> see a strict subset of `{11, 12, 21, 22}` — any code (or test assertion)
+> that treats the local tag set or a per-tag cell selection as global then
+> diverges across ranks; the consumer is
+> `run_placeholder_port_coupling_case` (`ports/excitation.py`), the
+> `PORT-0`-quarantined placeholder. (3) **Pre-registered disposition,
+> decided before running:** if the defect is wholly inside the placeholder
+> model that `PORT-1` deletes ⇒ do **not** fix it — annotate known-issues 6
+> with the located line and the known-issues-3 "resolve in `PORT-1`"
+> disposition, and the chunk closes as a diagnosis (the `PORT-1` step 2b
+> precedent); if it is in shared machinery (tag handling, result reduction,
+> anything `PORT-1` keeps) ⇒ fix it, gated. **Anchor (either branch):** the
+> cross-rank identity — the quantities the test reads must be equal across
+> `-n 1/2/8` (exact for tag sets and counts, and to round-off for reduced
+> scalars); on the fix branch, assert it; on the diagnosis branch, print the
+> per-rank-count table into the log as the §4 measurement. **Negative
+> control:** the reproduction itself — the same command red at `-n 8` and
+> green at `-n 1` *before* any change, both logs kept. **Cost:** standard,
+> `timeout 180` per command; the test is a 12-cell placeholder evaluation,
+> seconds per run — `-n 8` is authorized here because the defect *is* the
+> rank count (smallest-width rule satisfied: the failure needs ≥ 8).
+> **Traps:** `DeprecationWarning` from the alias is expected, not the
+> defect; pytest swallows prints without `-s`; do not "fix" by weakening the
+> finiteness assertions; nothing here may start gating the placeholder's
+> numbers as physics (`PORT-0` quarantine stands). **Does not close:**
+> `PORT-1`, `PORT-3`, or any physics claim; known-issues 6 leaves only with
+> a fixing commit, or is re-pointed at `PORT-1` if the disposition is
+> not-to-fix. **Negative result:** irreproducibility at `-n 8` is itself the
+> finding (the entry predates the current fixtures) — record the three-way
+> rank table in known-issues 6 and stop.
 
 **`OPS-11` — `tests/mesh` in CI** ✅ *(created 2026-08-02, closed 2026-08-03,
 12:00 run; full narrative archived in `docs/planning/plan-archive.md`)*
@@ -541,6 +635,20 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 > label, that is the finding — the classifier is unspecified, not broken;
 > report the derivation gap, annotate known-issues 2, propose the spec for
 > a review, stop.
+
+**Open follow-up in OPS — the `lint` CI job is red on `main`, and that is
+adjudicated as expected-red for now** *(surfaced by `OPS-12`'s regression
+log, decided 2026-08-08, 03:00 review)*. `flake8`/`black --check`/`isort
+--check-only` fail on `src` and `tests` from **pre-existing** debt (W293
+throughout `solvers.py`, E501 in `time_harmonic.py`, etc.) — no recent chunk
+introduced any of it (verified for `OPS-12`: zero findings on its added
+lines). A repo-wide reformat is deliberately **deferred until the `PORT-1`
+lineage lands**: `attempt/PORT-1-step3bxiii-…` carries a 2000+-line test
+file plus `src/` edits, and reformatting `main` underneath it would turn the
+eventual landing into a conflict festival for zero behavioral gain. Whoever
+lands that branch should scope the reformat as the next OPS chunk, in its
+own commit, immediately after. Until then: red `lint` is known and expected;
+do not "fix in passing", and do not read it as a chunk failure.
 
 ### MAG — Magnetostatics (Phase 1)
 
@@ -701,6 +809,49 @@ exonerated; the estimator is the finding.** Probe:
 > across the 0.04 m phantom radius — and read the DG0 metric's convergence, the
 > one route that decides whether ~0.53 is discretisation or a defect. **0.350
 > may not be raised before (iii) is measured.**
+
+**`MAG-6` step 2 — measure the DG0 metric's `h`-convergence: is ~0.53
+discretisation or a defect?** ⬜ *(scoped 2026-08-08, 03:00 review — step 1's
+candidate (iii), taken first deliberately: (i) re-pointing the test at DG0
+today would flip it hard-red (0.53 > 0.35) with no licensed number to gate
+against, and (ii) adding material contrast changes the physics under the
+metric; (iii) is the measurement both of those decisions need.)*
+> Measurement, not a fix — extend `scripts/probes/mag6_step1_probe.py`; the
+> test file and the 0.350 tolerance stay untouched. Solve the same
+> coil+phantom fixture at three resolutions — the default `h` (19 792 cells
+> on record) and two uniform refinements (target `h/1.5` and `h/2`; the
+> default meshes in 2–3 s per the step-1 meshprobe, so ~8× cells at `h/2` is
+> ~160 k, well inside standard) — and read the **DG0-sampled** `max_rel_diff`
+> and mean at each rung, `-n 2`. **Anchor:** the convergence claim itself —
+> if ~0.53 is discretisation, the DG0 metric must fall monotonically with
+> `h`; compute the observed rate from the three rungs (the metric is built
+> from a field that is O(h) at best for N1curl degree 1, so a rate ≫ 0 with
+> a monotone ladder is the signal, not a specific constant). Pre-decided
+> readings: **(discretisation)** monotone decrease, total drop ≥ 1.5× over
+> the 2× refinement ⇒ ~0.53 is coarse-mesh error; successor = extrapolate
+> the `h` where the DG0 metric meets 0.35, cost it, and only then decide
+> estimator vs tolerance; **(defect)** total move < 20%, or non-monotone ⇒
+> the asymmetry is mesh-independent — suspect the sampling-point set or the
+> fixture, and the tolerance question is moot until it is found; **(mixed)**
+> between ⇒ report all three rungs, stop. **Negative control:** rank
+> stability at every rung — the DG0 metric at `-n 1` vs `-n 2` must stay
+> within the step-1 spread (≤ 10%; 4.8% on record at the default `h`), or
+> the rung is measuring the partition again and the ladder is void; also
+> print the assembled DG0 `‖B‖_L2` per rung (0.09% rank-spread on record),
+> which must itself converge. **Cost:** standard, `-n 2`, `timeout 600` per
+> command; step-1 measured 0.5 s per solve at `-n 2` default-`h` and 12.9 s
+> at `-n 1` (sequential LU — the expensive way; keep `-n 1` runs to the
+> rank-stability checks). Mesh-probe the two refined rungs first; a rung
+> > 300 s ⇒ drop it and report two rungs plus the cost. **Traps:** step-1
+> list unchanged (rank-local point evaluation, reduce before asserting,
+> real build); refinement via the fixture's resolution knob, not a manual
+> re-mesh — the mesh must stay the fixture's own; do not touch
+> `tests/tolerances.py` or the test file; the CG1 numbers may be printed
+> beside DG0 for continuity but nothing may be asserted on them. **Does not
+> close:** `MAG-6` (the estimator strategy stays a review's, now with the
+> convergence measured) or known-issues 4 — annotate both. **Negative
+> result:** every band is informative — (defect) is arguably the more
+> valuable outcome; report, annotate known-issues 4, stop.
 
 **Open follow-ups in MAG:**
 
@@ -3610,7 +3761,62 @@ memory, not time, is the binding constraint.)*
 >   is now reduced with `mesh.comm.allgather` before it is tested. It is
 >   parked with the rest of the branch, but it is a standalone rank-safety
 >   defect fix and a review should consider landing it on its own.
+>   *(The fix is now scoped for `main` as `OPS-13`; the branch keeps its own
+>   copy, and whichever lands second reconciles a near-identical hunk.)*
 >   *(Original plan retained below for the record.)*
+>
+> * **Step 3b-xiv — the non-degenerate half of the sweep: the gapped loop at
+>   σ → 0** ⬜ *(scoped 2026-08-08, 03:00 review, from 3b-xiii's own
+>   next-attempt hypothesis. Scope note: 3b-xiii's (mixed) disposition hands
+>   the strategic adjudication — branch landing, gate re-pointing, fixture
+>   redesign — to the weekly review, and this step does **not** take any of
+>   that back. It is measurement only: the same sweep 3b-xiii attempted, run
+>   from the half that is not degenerate, so the Sunday weekly review
+>   adjudicates with the ladder in hand instead of commissioning it. Works on
+>   `attempt/PORT-1-step3bxiii-20260808T005500Z` (`82bfb40`), the one live
+>   lineage.)* 3b-xiii proved σ and closed-vs-gapped are confounded on the
+>   *closed* control — a closed lossy loop is a shorted turn (`|I_cond/I′|`
+>   up to 0.865). The reciprocal experiment has no such degeneracy: hold the
+>   **production gapped** fixture fixed and move only σ on the wire ∪
+>   gap-box footprints, σ ∈ {800 (the record), 200, 0}, through the same DG0
+>   material field — a lossless *gapped* loop carries no circulating current
+>   to confound the reading, and at σ = 0 the gap is the only structural
+>   difference left against the closed lossless control. **Anchor:** (1)
+>   fixture identity first — the branch's padding-0.08 record byte-reproduces
+>   (estimator 0.894543 / 0.894022, control(σ = 0) 0.922423, deviation
+>   −3.0224e-02) before any new solve; (2) the discriminator — where the
+>   terminal-to-terminal estimator on the gapped loop at **σ = 0** lands
+>   between the two on-record endpoints (2.81 pp apart), pre-decided bands at
+>   quarter-spread: **(loss owns it)** `|est(σ=0) − 0.9224| ≤ 0.7 pp` ⇒ the
+>   ~3% deviation was the loss, and the estimator-vs-control comparison was
+>   across a σ mismatch — report; the re-pointing and the branch landing are
+>   the weekly review's calls, now licensed by measurement; **(gap owns it)**
+>   `|est(σ=0) − 0.8945| ≤ 0.7 pp` ⇒ the deviation survives with loss
+>   removed — the gap geometry / estimator is the last suspect and the
+>   escalation is confirmed real; **(mixed)** between ⇒ report all three
+>   rungs and both distances. All three dispositions **park and report** —
+>   nothing is re-pointed, no branch lands in-slot. **Negative controls:**
+>   `|I_cond/I′|` must collapse toward 0 as σ → 0 on the gapped loop (print
+>   the column — it is the anti-shorted-turn check that separates this
+>   experiment from 3b-xiii's), and the σ = 200 rung must sit between its
+>   neighbours or the ladder measures noise; the wedge-only estimator
+>   (0.5181/0.5352, 15× the threshold) is on record, cite not recompute.
+>   **Cost:** standard, `-n 2`, one command `timeout 600` — the identical
+>   envelope 3b-xiii measured (344.6 s: mesh byte-reproduction + solves at
+>   ~25 s + estimator drives). **Traps:** the 3b-xiii list unchanged (FFCx
+>   lock, pytest `-s`, complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+>   `tests/environment` first, σ via the DG0 field never a global,
+>   known-issues 11); every pinned digit-string on the branch is
+>   σ = 800-specific — print the ladder, pin nothing in-slot;
+>   `REACTION_CONSISTENCY_TOLERANCE` stays 0.03 and `MUTUAL_TOLERANCE` stays
+>   0.10 under every band. **Does not close:** `PORT-1`, known-issues 3, or
+>   the branch's disposition — all weekly-review calls; this step only
+>   converts the idle slots before Sunday into the measurement that review
+>   needs. **Negative result:** every band is a finding; if σ = 0 makes the
+>   solve or the normalisation degenerate in some unforeseen way (the
+>   impressed-drive normalisation should be σ-independent, but that is an
+>   expectation, not a record), *that* is the measurement — report it and
+>   stop; never substitute a small σ > 0 silently.
 >
 > * **Step 3b-xiii — plan as scoped** *(scoped
 >   2026-08-07, 18:00 review — the successor 3b-xii's disposition (ii) handed
@@ -4065,10 +4271,16 @@ plane-wave closed form; attention moves to the loaded-coil gate and ports.
    mesh control); **3b-xii is executed (2026-08-07, 12:00 run) and lands on
    disposition (ii)** — the box moves both routes together (+2.956 pp /
    +3.045 pp), so the ~3% estimator-vs-control residual is real and the box
-   is exonerated as its owner. Open: **3b-xiii** (the σ ladder on the
-   closed-footprint control — loss vs gap, the last structural difference
-   between the routes; lands the branch under its (loss) disposition),
-   scoped in §7 by the 18:00 review.
+   is exonerated as its owner. **3b-xiii is executed (2026-08-08, 19:30 run)
+   and lands on disposition (mixed) with the experiment's premise disproved**
+   — a closed lossy loop is a shorted turn (`|I_cond/I′|` up to 0.865), so σ
+   and closed-vs-gapped are confounded on the closed control and that route
+   cannot separate them at any σ; the ~3% deviation is untouched and the
+   strategic adjudication (branch landing, gate re-pointing) escalates to
+   the weekly review. Open: **3b-xiv** (the reciprocal, non-degenerate half
+   — the *gapped* loop at σ → 0; measurement only, all dispositions park and
+   report), scoped in §7 by the 2026-08-08 03:00 review so Sunday's weekly
+   review adjudicates with the ladder in hand.
 5. **`GEO-9`** — 🟡: created 2026-08-02 from known-issues 7, **step 1 ✅
    2026-08-03**, and step 1 refuted the hypothesis it was written on.
    `coil_phantom_domain` generates fine in a fresh process; the whole of
@@ -4110,207 +4322,173 @@ promised an "obvious next entry named below" that was never written — the
 16:30 slot on 2026-08-07 hit that dangling reference and correctly fell
 through to the drain instruction; the reference is retired.)*
 
-Last reviewed 2026-08-07, 18:00 daily review. Tree clean at review start and
-end; no `recovered/*` branches. **All four slots since the 10:30 review
-executed — a seventh consecutive 4/4 slate: two chunk-steps landed, one
-disciplined park, and one protocol-correct drain stop.** `PORT-1` step
-3b-xii (🟡 parked, 12:00 run — the pre-decided box discriminator lands on
-**disposition (ii)**: enlarging the box moves estimator and control
-*together*, +2.956 pp / +3.045 pp, deviation stuck at 3.02–3.13% vs the
-2.5% threshold, so the ~3% residual is real and the box is exonerated;
-`REACTION_CONSISTENCY_TOLERANCE` stays 0.03, the conditional re-size not
-triggered); `MAT-4` step 3 (✅, 13:30 run — the averaging operator exact at
-1 g and 10 g, ratio 1.00000000 against a 0.5% budget, kernel mass 0.0120% /
-0.0044% against 0.1%, quadrature 12 → 16 by measured sweep with no budget
-moved); `MAT-6` step 5 (✅, 15:00 run — step 4's `W_e^spur` attribution
-withdrawn: the drive gap collapses 0.1077 → 0.0005 under wire refinement,
-ΔR 1.58% → 1.056%, the O(h²) control at 3.99× vs 4.00×, and `h/r_wire ≥ 16`
-measured unreachable — OOM at 1.46M cells); 16:30 slot — queue drained,
-stop-and-journal per the drain instruction (correct: the §9 fallback
-sentence it went looking for never existed; intro fixed this review).
-Audits this review: `MAT-4` step 3 and `MAT-6` step 5, the two ✅ flips,
-both verified **§4-compliant** by independent read-only auditors — every
-claimed number found in the harness logs, elapsed recorded, no gate
-loosened (MAT-6's OOM probe rung honestly logged at exit 9; MAT-4's failed
-first gate run preserved and diagnosed by probe); no demotions. Branch
-disposition: `attempt/PORT-1-step3bxb-…` **deleted** — *not* by ancestry
-(`--is-ancestor` returns false; the 12:00 run squashed the lineage into
-`87bf35d` instead of committing atop `b86861e`) but by content, verified
-in-review: the `src`/`tests`/`scripts` diff 3bxb → 3bxii is +852/−3 with
-the one non-additive hunk a backward-compatible signature change, so 3bxii
-strictly supersedes it. Recorded because the ancestry test alone would have
-said "keep both" — content is the criterion, ancestry only its cheap
-sufficient case. `attempt/PORT-1-step3bxii-20260807T170000Z` **stays** as
-the one live lineage; item 1 works on it. Plan work this review: **step
-3b-xiii scoped** (§7 — the σ ladder on the closed-footprint control, loss
-vs gap, the one remaining structural difference; landing the branch is
-pre-authorized under its (loss) disposition only); **`EX-3`** added (§5.4
-ramp entry for MAT-4 step 3's gate — first SAR quantity in any example);
-**`MAG-6` step 1** scoped (the never-executed symmetry metric, run as a
-boundary-mirror discriminator — in-phase, the B1+ fixture); **`OPS-12`**
-created from known-issues 2 (residual-trend classifier adjudication);
-**`MAT-6` step 6** promoted from step 5's own additivity hypothesis (heavy
-spare, memory-probed). §5.4 example check: MAT-4 step 3 → `EX-3` (queued);
-MAT-6 step 5 adjudicated a finding on an already-✅ chunk — no example
-(3b-xi precedent). §10 assessment: the critical path holds and is one slot
-shorter than yesterday — 3b-xiii is the single scoped measurement between
-the parked estimator lineage and landing, and the birdcage port step stays
-deliberately unscoped until it lands.
+Last reviewed 2026-08-08, 03:00 daily review. Tree clean at review start and
+end; no `recovered/*` branches. **All four slots since the 18:00 review
+executed — an eighth consecutive 4/4 slate: two chunks ✅, one measurement
+step complete, one disciplined park.** `PORT-1` step 3b-xiii (🟡 parked,
+19:30 run — the σ ladder is monotone but lands ~79 pp from both pre-decided
+bands, and the informative result is that the **experiment's premise is
+disproved**: a closed lossy loop is a shorted turn, `|I_cond/I′|` up to
+0.865, so σ is confounded with closed-vs-gapped on that control; nothing
+tuned, a standalone rank-safety `src/` fix rode along parked); `EX-3` (✅,
+21:00 run — first SAR quantity any example produces, every printed digit
+byte-matches the MAT-4 step-3 record through the runner, imposed-field
+caveat stated three ways); `MAG-6` step 1 (measurement complete, 22:30 run,
+chunk stays 🧪 — the symmetry metric is **rank-dependent 3.03×** and CI's
+green is a partition artifact; CG1 interpolation owns it, boundary and
+gauge both exonerated on the rank-stable DG0 path, known-issues 4 rewritten
+not retired); `OPS-12` (✅, 00:00 run — the classifier moved, not the test:
+three code-side defects including a classifier that production never
+reached; known-issues 2 retired, its recorded symptom corrected). Audits
+this review: `EX-3` and `OPS-12`, the two ✅ flips, both verified
+**§4-compliant** by independent read-only auditors — every claimed number
+found in the logs, exact-equality anchors confirmed in the test/example
+source, elapsed recorded, no assertion loosened (auditor notes: EX-3's
+"probe" log is a disclosed duplicate of the gate run, cite the gate log
+only; OPS-12's regress-real exit 1 is pre-existing flake8 debt, adjudicated
+below); no demotions. Branch disposition:
+`attempt/PORT-1-step3bxii-20260807T170000Z` **deleted** — verified a strict
+ancestor of `attempt/PORT-1-step3bxiii-20260808T005500Z` (`82bfb40`), which
+**stays** as the one live lineage; item 1 works on it. Plan work this
+review: **step 3b-xiv scoped** (§7 — the non-degenerate half of the sweep,
+the *gapped* loop at σ → 0; measurement only, every disposition parks and
+reports, the branch adjudication stays with Sunday's weekly review as
+3b-xiii's escalation decided); **`OPS-13`** created (land the parked
+rank-safe `_validate_material_map_tags` fix on `main` with its own gate);
+**`OPS-14`** created (diagnose known-issues 6, the last never-diagnosed
+baseline entry, with a pre-registered not-to-fix disposition if it is
+wholly inside the `PORT-0` placeholder); **`MAG-6` step 2** scoped (step
+1's candidate (iii) — the DG0 metric's `h`-convergence, the measurement the
+estimator-vs-tolerance decision needs); **lint job adjudicated
+expected-red** (§7 OPS follow-up — pre-existing repo-wide debt, reformat
+deferred until the PORT-1 lineage lands to avoid a conflict festival).
+§5.4 example check: no chunk newly closed a quantitative *physics* gate
+this interval (OPS-12 is infrastructure, EX-3 is itself an example, MAG-6
+step 1 closed nothing) — no new example chunk; the 18:00 review's
+no-example call on MAT-6 step 5 stands. §10 assessment: the critical path
+holds — 3b-xiii consumed its slot productively (the confound is a real
+finding), 3b-xiv is the one scoped measurement between here and the weekly
+review's branch adjudication, and the birdcage port step stays deliberately
+unscoped until the estimator lineage lands.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
 `docs/planning/plan-archive.md`, not here.)*
 
-**Five ready items.** Back to full depth for the first time since 2026-08-06:
-two §7 successors scoped from measured results (items 1, 5), one §5.4
-obligation (item 2), and two diagnosis steps on never-adjudicated baseline
-debt (items 3, 4). All five are mutually independent — no item depends on
-another landing first; item 1 works on its `attempt/*` branch, everything
-else on `main`.
+**Five ready items.** One critical-path measurement (item 1, on the
+`attempt/*` branch), one small defect landing (item 2), two measurements on
+adjudicated baseline debt (items 3, 4), and the standing heavy spare
+(item 5). All five are mutually independent — no item depends on another
+landing first. One soft interaction, not a dependency: items 1 and 2 both
+carry the same `_validate_material_map_tags` hunk (branch copy vs `main`
+copy); whichever lands second reconciles a near-identical diff, noted in
+both §7 entries.
 
-1. ~~**`PORT-1` step 3b-xiii**~~ — **done 2026-08-08 (19:30 run), disposition
-   (mixed); branch NOT landed.** The ladder is monotone (0.922423 → 0.496614
-   → 0.107556 × ωM₁₂) but the σ = 800 rung misses both 0.7 pp bands by ~79 pp:
-   a closed lossy loop is a shorted turn (`|I_cond/I′|` = 0.412 → 0.865), so σ
-   is confounded with closed-vs-gapped and the corner cannot be filled this
-   way. Fixture identity byte-reproduced first. Parked on
-   `attempt/PORT-1-step3bxiii-20260808T005500Z`; §7 and known-issues 3
-   annotated; a rank-safety fix to `_validate_material_map_tags` rode along
-   and wants a review's decision on landing it separately. The loss-vs-gap
-   question is open and escalates — the remaining half of the sweep is a
-   *gapped* control at σ → 0.
+1. **`PORT-1` step 3b-xiv — the non-degenerate half of the sweep: the
+   gapped loop at σ → 0. Measurement only; every disposition parks.**
+   Critical path. Works on
+   `attempt/PORT-1-step3bxiii-20260808T005500Z` (`82bfb40`). Execute the §7
+   step-3b-xiv plan: byte-reproduce the padding-0.08 record first
+   (estimator 0.894543 / 0.894022, control(σ = 0) 0.922423, deviation
+   −3.0224e-02), then re-run the **production gapped** fixture with the
+   wire ∪ gap-box σ at {200, 0} S/m through the same DG0 material field —
+   nothing geometric moves, and a lossless *gapped* loop has no
+   shorted-turn current to confound the reading (3b-xiii's degeneracy).
+   **Anchor:** where the terminal-to-terminal estimator at σ = 0 lands
+   between the on-record endpoints 0.8945 and 0.9224 (2.81 pp apart),
+   quarter-spread bands pre-decided in §7: within 0.7 pp of 0.9224 ⇒ loss
+   owns the ~3% deviation; within 0.7 pp of 0.8945 ⇒ the gap/estimator
+   owns it; between ⇒ mixed. **All three park and report — no re-pointing,
+   no landing in-slot; the branch adjudication is Sunday's weekly review's,
+   per 3b-xiii's escalation.** **Negative controls:** `|I_cond/I′|` must
+   collapse toward 0 as σ → 0 (print the column); σ = 200 must sit between
+   its neighbours; wedge-only 0.5181/0.5352 is on record, cite not
+   recompute. **Cost:** standard, `-n 2`, one command `timeout 600` —
+   3b-xiii's measured envelope (344.6 s). **Traps:** §7 3b-xiii list
+   unchanged; σ via the DG0 field, never a global; branch digit-strings
+   are σ = 800-specific — print, pin nothing;
+   `REACTION_CONSISTENCY_TOLERANCE` stays 0.03, `MUTUAL_TOLERANCE` stays
+   0.10 under every band. **Does not close:** `PORT-1`, known-issues 3, or
+   the branch's disposition. **Negative result:** every band is a finding;
+   a degenerate σ = 0 solve/normalisation is itself the measurement —
+   report it, never substitute a small σ > 0 silently.
 
-   *(Original item text, for the record.)* **The σ ladder on the control: loss
-   or gap? Lands the branch under its (loss) disposition.** Critical path.
-   Works on
-   `attempt/PORT-1-step3bxii-20260807T170000Z` (`87bf35d`). Execute the §7
-   step-3b-xiii plan: byte-reproduce the padding-0.08 record first
-   (estimator 0.894543 / 0.894022, control 0.922423, deviation
-   −3.0224e-02), then re-run the σ = 0 closed-footprint control with the
-   union's σ set to {200, 800} S/m through its own DG0 material field —
-   nothing geometric moves. **Anchor:** where `control(σ=800)` lands
-   between the two on-record endpoints (2.80 pp apart), bands pre-decided
-   in §7: within 0.7 pp of 0.8945 with a monotone ladder ⇒ loss owns the
-   deviation — re-point the consistency gate at the σ-matched control
-   (bound stays 0.03), re-run the 0.08 gate, all green ⇒ **land the branch,
-   delete it**; within 0.7 pp of 0.9224 ⇒ loss exonerated, the gap is the
-   last suspect — park, annotate, escalation is the weekly review's;
-   between ⇒ report the ladder, park. **Negative control:** on record —
-   wedge-only 0.5181/0.5352, 15× the threshold; σ = 200 must sit between
-   its neighbours. **Cost:** standard, `-n 2`, one command `timeout 600`
-   (mesh ~60 s + 2 control solves at 25.4 s on record + 2 drives ~30 s;
-   the full 0.08 run was 298.6 s). **Traps:** §7 3b-xii list unchanged;
-   σ via the DG0 field, never a global; branch digit-strings are
-   σ = 0-specific — print, pin nothing. **Does not close:** `PORT-1` or
-   known-issues 3 even if the branch lands; `MUTUAL_TOLERANCE` never
-   moves. **Negative result:** every band is a finding; never tune σ, the
-   bands, or the bound toward (loss).
+2. **`OPS-13` — land the rank-safe `_validate_material_map_tags` fix on
+   `main`, gated.** Independent; `main`; the fix already exists measured on
+   the parked branch. Execute the §7 `OPS-13` plan: take exactly the one
+   `time_harmonic.py` hunk from `82bfb40` by hand (do **not** cherry-pick
+   the commit — the branch commit carries 3b-xiii test material that must
+   not ride along; `main`'s file has moved under `OPS-12`, hunks disjoint
+   but verify), plus a new gate
+   `tests/materials/test_material_map_rank_safety.py`. **Anchor:** exact
+   set identity — the allgathered tag set equals the enumerated global tag
+   set, `==` on all ranks; and the DG0 σ field from a map over a
+   single-rank-owned cell integrates to exactly σ × that cell's volume
+   (allreduced identity). **Negative control:** a map naming an absent tag
+   raises `ValueError` on **every** rank — collective agreement is the
+   property being fixed; require the message to name the tag. **Cost:**
+   standard, `-n 2` then `-n 4`, `timeout 180`, build-only (seconds); run
+   once under the complex build too. **Traps:** do not assert on rank-local
+   `cell_tags.values` in the new test; stale FFCx lock after any kill.
+   **Does not close:** known-issues 6 (`OPS-14`'s question, different code
+   path) or anything `PORT-1`; the branch keeps its own copy of the hunk —
+   note the future trivial conflict in the landing commit. **Negative
+   result:** if deterministic single-rank ownership can't be forced,
+   report the observed partition and use the allgather-verified fallback
+   construction; never skip the negative control.
 
-2. ~~**`EX-3` — mass-averaged SAR in ParaView**~~ — **done 2026-08-08
-   (21:00 run), ✅ on `main`.** `examples/mri/02_mass_averaged_sar.py`
-   reproduces the `MAT-4` step-3 record through the runner at every printed
-   digit: ratio **1.00000000** at 1 g and 10 g, kernel mass **0.0120%** /
-   **0.0044%**, pointwise **4.96e-16**, surface control **2.1894** vs the
-   recomputed ceiling **2.1681** (0.98%). The DG0 `SAR` array ParaView shows
-   is checked too (**1.32e-15**). `--list` names `mri:2` and the gate log
-   reads `(complex build)`, so the `EX-1` runner gap is not repeated.
-   `20260808T020414Z_EX-3-gate.log`, exit 0, 14 s. `MAT-4` stays 🟡 — the
-   field is imposed and no C95.3 claim is made.
+3. **`MAG-6` step 2 — the DG0 metric's `h`-convergence: is ~0.53
+   discretisation or a defect?** Independent; `main`; real build;
+   measurement only. Execute the §7 step-2 plan: extend
+   `scripts/probes/mag6_step1_probe.py`, solve the coil+phantom fixture at
+   the default `h` and two uniform refinements (~1.5× and 2×; default
+   meshes in 2–3 s, ~160 k cells at 2×), read the **DG0-sampled**
+   `max_rel_diff` per rung at `-n 2`. **Anchor:** the convergence claim —
+   pre-decided bands: monotone decrease ≥ 1.5× total over the ladder ⇒
+   discretisation owns ~0.53 (successor: extrapolate the `h` that meets
+   0.35, cost it); < 20% total move or non-monotone ⇒ mesh-independent
+   defect, suspect the sampling-point set or fixture; between ⇒ report
+   all rungs, stop. **Negative control:** rank stability per rung — DG0
+   metric at `-n 1` vs `-n 2` within 10% (4.8% on record) or the rung is
+   void; assembled DG0 `‖B‖_L2` printed per rung and must itself
+   converge. **Cost:** standard, `-n 2`, `timeout 600` per command;
+   mesh-probe the refined rungs first, a rung > 300 s ⇒ drop it and
+   report two rungs plus cost (`-n 1` solves are the expensive way,
+   12.9 s vs 0.5 s — keep them to the stability checks). **Traps:**
+   step-1 list (rank-local evaluation, reduce before asserting);
+   refinement via the fixture's resolution knob only; do not touch
+   `tests/tolerances.py` or the test file; CG1 numbers print-only.
+   **Does not close:** `MAG-6` (estimator strategy stays a review's, with
+   this measured) or known-issues 4 — annotate both. **Negative result:**
+   every band is informative; (defect) is the more valuable outcome —
+   report, annotate, stop.
 
-   *(Original item text, for the record.)* Independent; no solve. Execute the §7 `EX-3` plan: new
-   `examples/mri/02_mass_averaged_sar.py` (the `mri:` group already
-   sources the complex build — no runner change), rebuild the step-3
-   fixture, write combined-XDMF with the pointwise SAR field, assert the
-   step-3 record through the example path. **Anchor:**
-   `SAR_avg/SAR_point` at 1 g/10 g, |ratio − 1| < 0.5% (1.00000000 on
-   record); kernel mass < 0.1% (0.0120%/0.0044%); pointwise vs
-   `σ|E|²/(2ρ)` < 1e-12 (4.96e-16 on record). **Negative control:** the
-   surface ball vs the lens ceiling 2.1681 (2.1894 on record, floor
-   > 1.5), printed. **Cost:** standard, runner `-n 2`, `timeout 180` (the
-   step-3 gate was 17.4 s with the mesh). **Traps:** `ufl.real` on the
-   non-origin ball; `build_density_field`; quadrature degree 16 imported,
-   not restated; closure logs must show the **runner** dispatching
-   (`--list` + `-e mri:2`) — the exact gap that cost `EX-1` its first ✅;
-   report text states the imposed-field caveat, no C95.3 claim. **Does
-   not close:** `MAT-4` (stays 🟡); §5.4 inventory only. **Negative
-   result:** any mismatch with the step-3 record is a same-day regression
-   finding — do not ship; report measured vs logged, stop.
-
-3. ~~**`MAG-6` step 1**~~ — **done 2026-08-08 (22:30 run), band (mirror
-   exonerated); on `main`, `MAG-6` stays 🧪.** The reproduction failed first
-   (record 0.557, measured 0.238291 — the test *passes* now), and the reason
-   is the finding: the metric is **rank-dependent by 3.03×** on one unchanged
-   19 792-cell mesh (0.727907 at `-n 1`, which **fails** the 0.350 tolerance /
-   0.240541 at `-n 2` / 0.321468 at `-n 4`), so CI's green signal is a
-   property of the partition. Located to the **CG1 interpolation of the
-   cell-wise-constant `curl A`**, not the solve: the DG0 sampling path is
-   stable to 4.8% and its assembled `‖B‖_L2` to **0.09%**, against 1.84%
-   through CG1. On that stable path the boundary is exonerated outright
-   (1.5× padding moves it **0.005%**), and the gauge penalty — 1e-3, below the
-   validated floor — is exonerated too (0.016% in `‖B‖_L2` at gauge 1.0). The
-   off-centre control is not directional because `mu` is uniform, so the
-   phantom is physically invisible. Tolerance and test file untouched;
-   known-issues 4 rewritten rather than retired. **The estimator strategy is
-   the review's to decide** — three ranked candidates are in §7.
-
-   *(Original item text, for the record.)* **Execute the never-run symmetry
-   metric as a boundary-mirror discriminator.** Independent; `main`; real build.
-   Execute the §7 `MAG-6` step-1 plan: probe script computes the
-   coil+phantom mirror-symmetry metric via
-   `evaluate_vector_field_parallel` at default padding and 1.5× it, plus
-   the offset-phantom asymmetry control. **Anchor:** the mirror identity
-   (exact value 0 by construction); readings pre-decided — drop ≥ 2×
-   under padding ⇒ boundary-mirror confirmed (successor: decouple
-   `air_padding`, the Helmholtz pattern); < 20% move ⇒ boundary
-   exonerated, suspect the metric/sampling path; reproduce known-issues
-   4's 0.557 (±10%) first or the drift is the finding. **Negative
-   control:** offset phantom must increase the metric (directional;
-   print the factor, assert nothing on it in-slot). **Cost:** unmeasured
-   — mesh probe, then one solve `-n 2` `timeout 600`; > 300 s ⇒ report
-   cost and stop (standard target). **Traps:** rank-local point
-   evaluation (the `MAG-7` bug family); reduce before asserting; do not
-   touch the 0.35 tolerance or the test file — the test stays red, this
-   buys the diagnosis. **Does not close:** `MAG-6` or known-issues 4 —
-   annotate both. **Negative result:** all three bands are informative;
-   report, annotate known-issues 4, stop.
-
-4. ~~**`OPS-12` — adjudicate the residual-trend classifier (known-issues
-   2).**~~ — **done 2026-08-08 (00:00 run), ✅ on `main`; known-issues 2
-   retired.** The derivation went **against the code**, and the file held
-   three defects rather than one: the undocumented `f >= 0.75` threshold
-   (asymmetric, and it made `mostly-decreasing` unreachable for any
-   non-monotone history of ≤ 4 samples) — labels now partition by the sign of
-   `f - 0.5`, the docstring states the table, the test is unchanged; the
-   second failure's **recorded symptom was wrong** (not `diagnostics is not
-   None` but `assert diagnostics.converged`, `KSP_DIVERGED_ITS` — the
-   fixture's gmres+jacobi needs **1409** iterations against a 300 cap, so the
-   cap moved and the assertion did not); and the time-harmonic path never
-   armed `ksp.setConvergenceHistory()`, so `residual_history` was **always
-   empty** and the classifier was unreachable in production — the membership
-   assertion had been vacuous. 18 passed complex `-n 2` in 0.93 s
-   (`20260808T050622Z_OPS-12-gate-final.log`); the identity is asserted with
-   `==` on an 11-row family spanning both sides of `f = 0.5` and of the
-   retired `f = 0.75`. The file is back in `validation-complex`.
-
-   *(Original item text, for the record.)* Independent; `main`. Execute the §7 `OPS-12` plan: hand-derive
-   the classification of the test's exact sequence from the classifier's
-   documented definition; fix whichever side the derivation contradicts
-   (do **not** assume it is the test — the MAG closed-form precedent);
-   then run the whole file under complex and remove the `OPS-10`
-   exclusion so `validation-complex` runs it. **Anchor:** the
-   hand-derived label is an exact discrete identity — assert it on a
-   parameterized family of synthesized sequences spanning both sides of
-   each documented threshold, exact equality. **Negative control:** an
-   alternating sequence classifies `mixed`; a strictly increasing one
-   must not classify `mostly-decreasing`. **Cost:** standard, `-n 2`,
-   `timeout 180`, complex + `FEM_EM_REQUIRE_COMPLEX=1` (the file mixes
-   `@complex_only` and plain tests — one build must execute both).
-   **Traps:** `tests/environment` first; nothing here may start gating
-   inner-region quantities on the heptagonal fixtures (EX-2 caller
-   audit). **Does not close:** anything physics-side; known-issues 2
-   leaves only with this commit. **Negative result:** an underivable
-   spec is the finding — report the ambiguity, annotate known-issues 2,
-   propose the spec for a review, stop.
+4. **`OPS-14` — diagnose the rank-dependence of
+   `test_single_port_excitation` (known-issues 6).** Independent; `main`;
+   diagnosis with a pre-registered disposition. Execute the §7 `OPS-14`
+   plan: reproduce at `-n 1/2/8` first and capture the **actual** failing
+   assertion — entry 6's recorded symptom is to be re-derived, not
+   trusted (entry 2's was wrong; entry 4's green was non-physical). Prime
+   suspect named in §7: the fixture tags `tags[cell_indices % 4]` over
+   rank-local indices on a 12-cell cube, so at `-n 8` ranks see strict
+   subsets of `{11, 12, 21, 22}`; consumer is the `PORT-0` placeholder
+   (`run_placeholder_port_coupling_case`). **Pre-registered:** defect
+   wholly inside the placeholder `PORT-1` deletes ⇒ do **not** fix —
+   annotate known-issues 6 with the located line, close as a diagnosis
+   (`PORT-1` step 2b precedent); in shared machinery ⇒ fix, gated.
+   **Anchor:** the cross-rank identity — quantities the test reads equal
+   across `-n 1/2/8` (exact for tag sets/counts, round-off for reduced
+   scalars); asserted if fixing, tabulated in the log if diagnosing.
+   **Negative control:** the reproduction itself — same command red at
+   `-n 8`, green at `-n 1`, before any change, both logs kept. **Cost:**
+   standard, `timeout 180` per command, seconds per run; `-n 8`
+   authorized because the defect *is* the rank count. **Traps:** the
+   `DeprecationWarning` alias is expected, not the defect; `-s` for
+   prints; never weaken the finiteness assertions; `PORT-0` quarantine
+   stands — no placeholder number becomes physics. **Does not close:**
+   `PORT-1`/`PORT-3` or any physics claim. **Negative result:**
+   irreproducibility at `-n 8` is the finding — record the three-way rank
+   table in known-issues 6, stop.
 
 5. **`MAT-6` step 6 — the additivity hypothesis: both knobs at once
    (spare; the only heavy item).** Independent; `main`. Execute the §7
@@ -4334,13 +4512,15 @@ else on `main`.
 
 If the queue drains: **stop and journal.** Do **not** improvise gap-voltage
 ports on the birdcage itself or a B1+ chunk — both are deliberately held for
-a review to scope once the corrected estimator has *landed* (now 3b-xiii's
-(loss) disposition); the box (3b-xi/3b-xii) and the wedge limits (3b-x) are
-adjudicated, but the terminal-to-terminal answer (0.8945 × ωM₁₂) is still on
-the parked branch, ungated against a σ-matched control, and porting the
-estimator to the birdcage before it lands would bake whatever 3b-xiii finds
-into the birdcage (also still open: whether `GEO-4`'s graded sizing is a
-birdcage prerequisite, per the 0.7091 measurement).
+a review to scope once the corrected estimator has *landed*, and the landing
+decision now belongs to the weekly review (3b-xiii's escalation), informed
+by 3b-xiv's ladder; the box (3b-xi/3b-xii), the wedge limits (3b-x), and the
+closed-lossy route (3b-xiii) are adjudicated, but the terminal-to-terminal
+answer (0.8945 × ωM₁₂) is still on the parked branch, ungated against a
+σ-matched control, and porting the estimator to the birdcage before it lands
+would bake the unresolved ~3% into the birdcage (also still open: whether
+`GEO-4`'s graded sizing is a birdcage prerequisite, per the 0.7091
+measurement).
 
 Every frequency-domain command needs `source /usr/local/bin/dolfinx-complex-mode`
 **and** `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest
