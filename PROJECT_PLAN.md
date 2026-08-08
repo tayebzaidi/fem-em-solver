@@ -3620,7 +3620,7 @@ fixture's cell/facet tags until `EX-1` landed
 |---|---|---|---|
 | `EX-1` | Two-torus port fixture: conforming mesh, cell and facet tags in ParaView | ✅ | standard |
 | `EX-2` | Cylindrical phantom domain: wall classification and tags in ParaView | ✅ | standard |
-| `EX-3` | Mass-averaged SAR on the standard-masses sphere: point and 1 g/10 g fields in ParaView | ⬜ | standard |
+| `EX-3` | Mass-averaged SAR on the standard-masses sphere: point and 1 g/10 g fields in ParaView | ✅ | standard |
 
 > **✅ Restored 2026-08-07 (19:30 slot, §9 item 1).** The runner path is now
 > on record. `./run_examples.sh --list`
@@ -3816,6 +3816,37 @@ inventory only. **Negative result:** classification counts or margins that
 differ from the `GEO-13` record through the example path are a regression
 finding against a chunk closed hours earlier — do not ship; report
 measured vs logged and stop.
+
+> **✅ 2026-08-08 (21:00 slot, §9 item 2).** `examples/mri/02_mass_averaged_sar.py`
+> lands and reproduces the `MAT-4` step-3 record through the example path at
+> every printed digit. Gate `./run_examples.sh -e mri:2 -n 2 -t 180`
+> (`20260808T020414Z_EX-3-gate.log`, exit 0, 14 s harness-wall / 13.4 s
+> example-internal, standard tier, complex build sourced by the runner —
+> the log line reads `(complex build)`), preceded by a probe at the same
+> settings (`20260808T020339Z_EX-3-probe.log`, exit 0, 17 s) and by
+> `./run_examples.sh --list` (`20260808T020407Z_EX-3-runner-list.log`, 0 s),
+> which enumerates `mri:2 -> examples/mri/02_mass_averaged_sar.py` under
+> "mri (complex build, sourced automatically)" — the `EX-1` runner gap is not
+> repeated. Measured, against the step-3 record: 74 216 cells, mesh 7.1 s,
+> imposed `E_z = 7.493197e-03 + 1.499490e-02j` V/m, closed form
+> **8.00835406e-08 W/kg**; `SAR_avg/SAR_point` = **1.00000000** at both 1 g and
+> 10 g (budget 0.5%); kernel mass **0.0120%** / **0.0044%** (budget 0.1%) —
+> both byte-matching the step-3 log; pointwise vs closed form **4.96e-16**,
+> also byte-matching. One identity the gate does not have: the DG0 `SAR` array
+> ParaView actually colours by is checked, not merely written — its
+> sphere-averaged value hits the same closed form to **1.32e-15**, so a
+> rendering that disagrees with the integrated quantity cannot ship silently.
+> Negative control reproduced: the 1 g ball re-centred on `(0, 0, R)` separates
+> by **2.1894** against the recomputed lens ceiling `1/f = 2.1681`
+> (`f = 0.4612`), **0.98%**, floor 1.5 — a `sigma`-blind kernel returns 1.0.
+> Every constant that could drift (`QUADRATURE_DEGREE = 16`, both budgets, the
+> geometry, the masses, `SIGMA_HIGH`, `RHO_KG_M3`, the interior closed form) is
+> **imported** from the step-3 test rather than restated; the runner puts only
+> `src` on `PYTHONPATH`, so the example puts the repo root on `sys.path`
+> explicitly — the one structural cost of the import-don't-restate rule, and
+> cheaper than a second copy of the numbers. **Closes nothing physics-side:**
+> `MAT-4` stays 🟡, the field is imposed, and the example's report text says so
+> in two places; §5.4 inventory only.
 
 **`EX-3` — mass-averaged SAR, point vs 1 g/10 g, in ParaView (plan written
 2026-08-07, 18:00 review; the §5.4 ramp entry for `MAT-4` step 3's closure,
@@ -4085,8 +4116,18 @@ else on `main`.
    moves. **Negative result:** every band is a finding; never tune σ, the
    bands, or the bound toward (loss).
 
-2. **`EX-3` — mass-averaged SAR in ParaView (§5.4 ramp for `MAT-4`
-   step 3).** Independent; no solve. Execute the §7 `EX-3` plan: new
+2. ~~**`EX-3` — mass-averaged SAR in ParaView**~~ — **done 2026-08-08
+   (21:00 run), ✅ on `main`.** `examples/mri/02_mass_averaged_sar.py`
+   reproduces the `MAT-4` step-3 record through the runner at every printed
+   digit: ratio **1.00000000** at 1 g and 10 g, kernel mass **0.0120%** /
+   **0.0044%**, pointwise **4.96e-16**, surface control **2.1894** vs the
+   recomputed ceiling **2.1681** (0.98%). The DG0 `SAR` array ParaView shows
+   is checked too (**1.32e-15**). `--list` names `mri:2` and the gate log
+   reads `(complex build)`, so the `EX-1` runner gap is not repeated.
+   `20260808T020414Z_EX-3-gate.log`, exit 0, 14 s. `MAT-4` stays 🟡 — the
+   field is imposed and no C95.3 claim is made.
+
+   *(Original item text, for the record.)* Independent; no solve. Execute the §7 `EX-3` plan: new
    `examples/mri/02_mass_averaged_sar.py` (the `mri:` group already
    sources the complex build — no runner change), rebuild the step-3
    fixture, write combined-XDMF with the pointwise SAR field, assert the

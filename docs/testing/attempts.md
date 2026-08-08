@@ -6198,3 +6198,84 @@ small subdomain hits the same trap at any rank count.
   same ~350 s envelope as this run. If that lands the estimator on the σ = 0
   control, loss owns the 3% and the branch lands; if it does not, the gap
   geometry is the last suspect and the escalation is real.
+
+---
+
+## 2026-08-08T02:10Z — `EX-3` — **complete** (✅ on `main`): mass-averaged SAR
+## is the first SAR quantity any example has produced
+
+**Outcome: complete.** §9 On-deck item 1 (`PORT-1` step 3b-xiii) was already
+marked done by the 19:30 run, so this slot took item 2. New
+`examples/mri/02_mass_averaged_sar.py` ships as `mri:2`; §7 `EX-3` flips
+⬜ → ✅ and the On-deck item is marked done in the same commit. Tree clean at
+start and end, container Up, no `recovered/*` branch, nothing parked.
+
+**What it does.** Rebuilds `MAT-4` step 3's fixture (R = 0.03 m sphere in a
+0.12 m box, σ = 0.57 S/m inside through the production DG0 material builder,
+uniform complex phasor **imposed** on N1curl — no solve), computes the
+pointwise SAR, the 1 g and 10 g mass-averaged values, the surface-placement
+negative control, and a DG0 `SAR` field, then writes combined-XDMF with the
+mesh, `CellTags` and `SAR`.
+
+**Measured, through the runner, against the step-3 record** (74 216 cells,
+mesh 7.1 s, imposed `E_z = 7.493197e-03 + 1.499490e-02j` V/m, closed form
+8.00835406e-08 W/kg):
+
+| quantity | this run | step-3 record | budget |
+|---|---|---|---|
+| `SAR_avg/SAR_point`, 1 g | 1.00000000 | 1.00000000 | 0.5% |
+| `SAR_avg/SAR_point`, 10 g | 1.00000000 | 1.00000000 | 0.5% |
+| kernel mass error, 1 g | 0.0120% | 0.0120% | 0.1% |
+| kernel mass error, 10 g | 0.0044% | 0.0044% | 0.1% |
+| pointwise vs closed form | 4.96e-16 | 4.96e-16 | 1e-12 |
+| surface separation | 2.1894 | 2.1894 | > 1.5, 5% of 2.1681 |
+
+Every one byte-matches. The one identity the gate does not have: the **DG0
+array ParaView colours by** is checked, not merely written — its
+sphere-averaged value hits the same closed form to **1.32e-15**, so a
+rendering that disagrees with the integrated quantity cannot ship silently.
+
+**The traps the plan named, and how each was paid.**
+- *Runner dispatch* (the gap that cost `EX-1` its first ✅): both logs are on
+  record — `--list` enumerates `mri:2 -> examples/mri/02_mass_averaged_sar.py`
+  under "mri (complex build, sourced automatically)", and the gate log's
+  dispatch line reads `(complex build)`. The example also raises if
+  `default_scalar_type` is not complex, so a real-build invocation fails loudly
+  rather than producing a plausible half-answer.
+- *Quadrature degree 16, imported not restated*: taken from the test's
+  `QUADRATURE_DEGREE`, along with both budgets, the geometry, the masses,
+  `SIGMA_HIGH`, `RHO_KG_M3`, `SPHERE_TAG` and `_interior_field_closed_form`.
+  The runner puts only `src` on `PYTHONPATH`, so the example inserts the repo
+  root on `sys.path` explicitly — the one structural cost of import-don't-
+  restate, and cheaper than a second copy of the numbers drifting.
+- *`ufl.real` / `ComplexComparisonError`*: did not fire. The non-origin ball
+  lives inside `mass_averaged_sar`, which already handles it; the example's own
+  UFL is `0.5·σ·inner(E,E)/ρ`, and `inner` conjugates its second argument in
+  complex UFL, so the DG0 field is the same expression the operator integrates
+  rather than a real-mode look-alike. Its imaginary part is dropped explicitly
+  so the ParaView array is unambiguous.
+- *Rank safety*: the sphere average reduces numerator and denominator
+  separately with `allreduce` before dividing; the cell count is reduced;
+  `assemble_scalar` is never asserted rank-local.
+- *dolfinx 0.7.2*: `element.interpolation_points` is a **method** here, not the
+  0.9 property — worth knowing for the next example that interpolates an
+  expression.
+- *XDMF ordering*: mesh before tags, via `write_xdmf_with_tags`.
+
+**Cost.** Standard tier, `-n 2`, three commands, none near a ceiling:
+`20260808T020339Z_EX-3-probe.log` (exit 0, 17 s),
+`20260808T020407Z_EX-3-runner-list.log` (exit 0, 0 s),
+`20260808T020414Z_EX-3-gate.log` (exit 0, 14 s harness-wall / 13.4 s
+example-internal). No failing runs, nothing shrunk, no assertion touched.
+
+**Closes nothing physics-side, deliberately.** `MAT-4` stays 🟡: the field is
+imposed, the example says so in its docstring and twice in its printed report,
+and it makes no C95.3 claim. §5.4 inventory only — `examples/` now carries
+four gated examples plus the coil+phantom one.
+
+**Next-attempt hypothesis** (for the review, not for this chunk). §5.4's ramp
+is satisfied for `MAT-4` step 3. The next example obligation with no entry yet
+is `MAT-6` step 5's wire-refinement result — the ΔR-vs-`h/r_wire` trend is a
+plottable gated quantity and nothing under `examples/` shows an eddy-current
+loading number. Worth a §7 entry if the review agrees the step-5 finding
+(rather than the already-✅ chunk) is what would be demonstrated.
