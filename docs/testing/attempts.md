@@ -6279,3 +6279,120 @@ is `MAT-6` step 5's wire-refinement result — the ΔR-vs-`h/r_wire` trend is a
 plottable gated quantity and nothing under `examples/` shows an eddy-current
 loading number. Worth a §7 entry if the review agrees the step-5 finding
 (rather than the already-✅ chunk) is what would be demonstrated.
+
+---
+
+## 2026-08-08T03:45Z — `MAG-6` step 1 — **complete** (measurement; `MAG-6`
+## stays 🧪): the symmetry metric is a partition lottery, and the test is
+## currently green for a non-physical reason
+
+**Outcome: complete as a step, closes nothing.** §7 scoped step 1 as a
+discriminator on the boundary-mirror hypothesis; it came back with a larger
+finding than either band anticipated, and known-issues 4 is re-characterised
+rather than retired.
+
+**The reproduction failed first, exactly as §7 said it might.** Known-issues 4
+records `max_rel_diff = 0.557` at default padding; the probe measures
+**0.240541** at `-n 2` and the test itself, run unchanged, prints
+**0.238291** against its 0.350 tolerance and **passes** (1 passed in 3.15 s,
+`20260808T033258Z_MAG-6-step1-testcheck.log` and
+`…033316Z_…-testmetrics.log`). Ratio to record 0.43, far outside the ±10%
+band, so §7's fallback applies: the fixture has drifted and that is the
+finding. It is not the whole finding.
+
+**The metric is rank-dependent, by a factor of three.** Same fixture, same
+19 792-cell mesh, only the rank count moves
+(`20260808T033401Z_MAG-6-step1-rankcheck.log`, `…034013Z_…-sampling.log`):
+
+| ranks | test `max_rel_diff` | verdict at tol 0.350 |
+|---|---|---|
+| 1 | **0.727907** | **fails** |
+| 2 | 0.240541 | passes |
+| 4 | 0.321468 | passes |
+
+So the green CI signal at `-n 2` is not evidence about the physics — the same
+code at `-n 1` fails the same assertion by 2.1×.
+
+**Located: the CG1 interpolation, not the solve.** `curl A` for N1curl degree 1
+is cell-wise constant, so interpolating it into CG1 asks for a nodal value
+where the field jumps, and which cell supplies that node is a property of the
+partition. Sampling the same field, at the same points, through a DG0 space
+instead separates the two cleanly:
+
+| quantity | n=1 | n=2 | n=4 | spread |
+|---|---|---|---|---|
+| CG1 `max_rel_diff` (the test's path) | 0.727907 | 0.240541 | 0.321468 | **3.03×** |
+| DG0 `max_rel_diff` | 0.513648 | 0.534746 | 0.538472 | 4.8% |
+| CG1 ‖B‖_L2, assembled | 3.432037e-07 | 3.370036e-07 | 3.380372e-07 | 1.84% |
+| DG0 ‖B‖_L2, assembled | 3.696967e-07 | 3.699609e-07 | 3.700284e-07 | **0.09%** |
+
+The assembled norm is a global reduction and cannot depend on the partition
+beyond round-off, so its 1.84% CG1 spread is itself the interpolation moving
+the field, while the DG0 field is stable to 0.09%. The solve is not the
+suspect; the sampling path is — which is §7's own **(mirror exonerated)**
+successor, reached by a different route than the padding band.
+
+**On the rank-stable estimator the boundary is exonerated outright.** DG0
+`max_rel_diff` at default padding 0.534746 vs 0.534772 at 1.5× padding
+(`-n 2`) — a **0.005%** move, against §7's "≥ 2× drop ⇒ boundary owns it".
+The CG1 path's padding reading is the mixed band (0.240541 → 0.339129, +41%
+in max while mean *falls* 24%), but that band is not interpretable now that the
+same estimator is known to swing 3× on rank count alone. Read together: the
+padding does not own the asymmetry, and ~0.53 is what the discretisation
+actually leaves on this fixture.
+
+**That number is the reason known-issues 4 must not be retired.** The
+rank-stable estimate 0.51–0.54 sits close to the historical 0.557 and *above*
+the 0.350 tolerance. The honest reading is that the record was never wrong;
+the test's estimator drifted into a partition where it happens to read low.
+Entry 4 is rewritten to say so, and gains the `-n 1` reproduction.
+
+**The negative control failed to be directional, and that is informative too.**
+An off-centre phantom must increase the metric — on the CG1 path at `-n 2` it
+does (0.499085 vs 0.240541, 2.06×), but on the rank-stable DG0 path it
+*decreases* it (0.476684 vs 0.534746). The fixture explains the discrepancy:
+`MagnetostaticProblem` is built with a **uniform** `mu = MU_0`, so the phantom
+is physically invisible and an "asymmetric phantom" moves nothing but the
+mesh. A control with no material contrast cannot be directional, and the
+CG1 factor of 2.06 was the partition lottery again. Printed, not asserted, per
+§7.
+
+**The gauge penalty was tested and exonerated.** The test solves at
+`gauge_penalty=1e-3` — 1000× below `DEFAULT_GAUGE_PENALTY = 1.0`, raising
+`GaugeContaminationWarning` on every run (those are the "9 warnings"), and
+`MAG-10` measured 920% field error there at degree 2. It is not the owner
+here: re-running at gauge 1.0 moves `max_rel_diff` 0.240541 → 0.241846 at
+`-n 2` and 0.727907 → 0.731996 at `-n 1`, with ‖B‖_L2 changing 0.016%
+(`20260808T033802Z_MAG-6-step1-gauge.log`). Consistent with the docstring's
+own account — the catastrophe needs degree 2, and this fixture is degree 1.
+
+**What was not touched**, per §7's traps: the 0.350 tolerance,
+`tests/tolerances.py`, and every assertion in
+`test_coil_phantom_bfield_metrics.py`. Point evaluation went through
+`evaluate_vector_field_parallel` throughout; both L2 norms `allreduce` before
+the square root; the cell count is reduced.
+
+**Cost.** Eight commands, all standard tier, none near a ceiling:
+`…033209Z_…-meshprobe.log` (mesh-only cost probe, exit 0, 10 s — 19 792 /
+28 442 / 19 560 cells, 2–3 s each), `…033232Z_…-solve.log` (exit 0, 11 s),
+`…033258Z_…-testcheck.log` (exit 0, 4 s), `…033316Z_…-testmetrics.log`
+(exit 0, 4 s), `…033401Z_…-rankcheck.log` (exit 0, 22 s),
+`…033459Z_…-ranklocate.log` (exit 0, 83 s), `…033802Z_…-gauge.log` (exit 0,
+81 s), `…034013Z_…-sampling.log` (exit 0, 92 s). The `-n 1` solve costs 12.9 s
+against 0.5 s at `-n 2` (sequential LU vs the parallel factorisation) — noted
+because it makes `-n 1` the expensive way to run this fixture, not because it
+indicates anything wrong.
+
+**Next-attempt hypothesis** (the strategy decision is a review's, per §7).
+The estimator, not the tolerance, is what needs deciding. Three candidates the
+measurements now support, in the order I would rank them: (i) sample the metric
+through a cell-native space (DG0) or evaluate `curl A` directly, which the DG0
+column shows is rank-stable to 4.8% and would make the test's verdict a
+property of the mesh rather than of `-n`; (ii) give the fixture the material
+contrast its control assumes — a phantom `mu` distinct from air would make the
+off-centre control directional and the symmetry claim physical, at which point
+~0.53 is a discretisation budget to be met by refinement, not a tolerance to be
+raised; (iii) refine `h` (0.015 m gives ~2.7 cells across the 0.04 m phantom
+radius) and read the DG0 metric's convergence — the one route that would tell
+us whether 0.53 is discretisation or a defect. None of these may raise 0.350
+without that measurement first.

@@ -497,7 +497,7 @@ outside the `validation-complex` job.)*
 | `MAG-3` | Circular-loop analytic validation | ✅ | standard | |
 | `MAG-4` | Helmholtz analytic validation | ✅ | standard | 0.04% centre / 0.83% mean |
 | `MAG-5` | h-refinement convergence study | ✅ | standard | |
-| `MAG-6` | Coil+phantom B-field symmetry metric strategy | 🧪 | unmeasured | never executed; step 1 scoped 2026-08-07 |
+| `MAG-6` | Coil+phantom B-field symmetry metric strategy | 🧪 | metric rank-dependent 3.03× (0.7279 / 0.2405 / 0.3215 at `-n 1/2/4`); DG0 path stable to 4.8% | step 1 ✅ 2026-08-08 — CG1 interpolation owns it; boundary and gauge both exonerated; estimator strategy open for a review |
 | `MAG-7` | Fix point evaluation in validation tests | ✅ | standard | |
 | `MAG-8` | Restrict straight-wire current density to the wire | ✅ | standard | |
 | `MAG-9` | Re-size validation meshes to fit the tier budget | ✅ | standard | |
@@ -611,6 +611,42 @@ fixture.)*
 > with these numbers) or known-issues 4 — annotate both. **Negative result:**
 > every band is informative — this is a discriminator; report and annotate
 > known-issues 4, stop.
+
+**`MAG-6` step 1 — ✅ executed 2026-08-08 (22:30 run). The boundary is
+exonerated; the estimator is the finding.** Probe:
+`scripts/probes/mag6_step1_probe.py`. Full write-up in
+`docs/testing/attempts.md` (2026-08-08T03:45Z); known-issues 4 rewritten.
+> **The reproduction failed, so §7's fallback applied:** the record 0.557 does
+> not reproduce — the test prints **0.238291** and **passes** its own 0.350
+> tolerance (`20260808T033316Z_MAG-6-step1-testmetrics.log`). The drift is not
+> a fix. **The metric is rank-dependent by 3.03×** on one unchanged
+> 19 792-cell mesh: `max_rel_diff` = **0.727907 (`-n 1`, fails)** / 0.240541
+> (`-n 2`) / 0.321468 (`-n 4`), so the green CI signal is a property of the
+> partition. **Located to the CG1 interpolation, not the solve:** `curl A` is
+> cell-wise constant at N1curl degree 1, and sampling the same field at the
+> same points through DG0 is rank-stable — 0.513648 / 0.534746 / 0.538472
+> (4.8% spread) with assembled `‖B‖_L2` stable to **0.09%**, against 1.84%
+> through CG1. **Both bands' hypotheses die on the rank-stable path:** growing
+> the padding 1.5× moves the DG0 metric **0.005%** (0.534746 → 0.534772), far
+> from the "≥ 2× drop" that would have confirmed the boundary; and the gauge
+> penalty — 1e-3, 1000× below the validated floor and the source of the run's
+> `GaugeContaminationWarning`s — is exonerated too, moving the metric 0.240541
+> → 0.241846 and `‖B‖_L2` by 0.016% at gauge 1.0. **The negative control is not
+> directional** on the rank-stable path (offset phantom 0.476684 vs centred
+> 0.534746, *down*), and the fixture says why: `mu = MU_0` is uniform, so the
+> phantom is physically invisible and the control moves only the mesh.
+> **Nothing was touched:** the 0.350 tolerance, `tests/tolerances.py`, and every
+> assertion in the test file are unchanged. **Cost:** 8 standard-tier commands,
+> longest 92 s.
+> **Open for a review — the estimator, not the tolerance.** Candidates, ranked
+> by what the measurements support: (i) make the metric cell-native (DG0, or
+> evaluate `curl A` directly) so the verdict is a property of the mesh rather
+> than of `-n`; (ii) give the fixture the material contrast its control
+> assumes (`mu_phantom ≠ mu_air`), which would make the control directional and
+> the symmetry claim physical; (iii) refine `h` — 0.015 m gives only ~2.7 cells
+> across the 0.04 m phantom radius — and read the DG0 metric's convergence, the
+> one route that decides whether ~0.53 is discretisation or a defect. **0.350
+> may not be raised before (iii) is measured.**
 
 **Open follow-ups in MAG:**
 
@@ -4146,8 +4182,25 @@ else on `main`.
    result:** any mismatch with the step-3 record is a same-day regression
    finding — do not ship; report measured vs logged, stop.
 
-3. **`MAG-6` step 1 — execute the never-run symmetry metric as a
-   boundary-mirror discriminator.** Independent; `main`; real build.
+3. ~~**`MAG-6` step 1**~~ — **done 2026-08-08 (22:30 run), band (mirror
+   exonerated); on `main`, `MAG-6` stays 🧪.** The reproduction failed first
+   (record 0.557, measured 0.238291 — the test *passes* now), and the reason
+   is the finding: the metric is **rank-dependent by 3.03×** on one unchanged
+   19 792-cell mesh (0.727907 at `-n 1`, which **fails** the 0.350 tolerance /
+   0.240541 at `-n 2` / 0.321468 at `-n 4`), so CI's green signal is a
+   property of the partition. Located to the **CG1 interpolation of the
+   cell-wise-constant `curl A`**, not the solve: the DG0 sampling path is
+   stable to 4.8% and its assembled `‖B‖_L2` to **0.09%**, against 1.84%
+   through CG1. On that stable path the boundary is exonerated outright
+   (1.5× padding moves it **0.005%**), and the gauge penalty — 1e-3, below the
+   validated floor — is exonerated too (0.016% in `‖B‖_L2` at gauge 1.0). The
+   off-centre control is not directional because `mu` is uniform, so the
+   phantom is physically invisible. Tolerance and test file untouched;
+   known-issues 4 rewritten rather than retired. **The estimator strategy is
+   the review's to decide** — three ranked candidates are in §7.
+
+   *(Original item text, for the record.)* **Execute the never-run symmetry
+   metric as a boundary-mirror discriminator.** Independent; `main`; real build.
    Execute the §7 `MAG-6` step-1 plan: probe script computes the
    coil+phantom mirror-symmetry metric via
    `evaluate_vector_field_parallel` at default padding and 1.5× it, plus
