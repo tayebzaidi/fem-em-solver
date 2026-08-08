@@ -1133,6 +1133,72 @@ Test: `tests/validation/test_coil_phantom_bfield_metrics.py`. Full write-up in
 > invisible to this solve); the caveat now lives in the test's module
 > docstring. **Cost:** standard tier, 5 commands, 20 / 12 / 9 / 10 / 10 / 144 s.
 
+**`MAG-6` step 4 — diagnose the centerline metric's 88% rank scatter
+(diagnosis only; `MAG-6` stays ✅)** *(scoped 2026-08-08, 18:00 review, from
+step 3's "left for a review" hand-off)*.
+> Step 3 landed the DG0 centerline jump-ratio metric passing its 0.60 bound at
+> all three rank counts but rank-scattered **88%** (0.473300 / 0.268765 /
+> 0.251746 at `-n 1/2/4`) where the mirror-symmetry metric on the *same
+> solves* spreads 7.00%. Step 3 also measured two candidate mechanisms without
+> separating them: DG0 point sampling is sensitive to which cell owns a point
+> (rank-partition dependent), and the meshing is not bit-reproducible run to
+> run (6.8% metric drift between identical `-n 2` runs). **The job: separate
+> those two, on the recorded fixture, without touching the gate.** Print the
+> centerline sample points' owning-cell ids (or a rank-ownership fingerprint)
+> and the per-point sampled values at `-n 1/2/4` plus one repeat at a fixed
+> rank count; attribute the scatter — partition-owned (values differ only
+> where ownership differs), mesh-noise-owned (repeat at fixed ranks moves as
+> much as ranks do), or a genuine rank-safety defect in the metric's reduction
+> path (the `PORT-1` step 3b-viii family — values that should be identical
+> after reduction are not). **Anchor:** a rank-invariance identity — after a
+> correct global reduction, a scalar metric on identical input must reproduce
+> across rank counts; quantify the residual scatter attributable to each
+> mechanism, with the mirror metric's 7.00% spread on the same runs as the
+> in-fixture control (same solves, same build — isolates the metric code
+> path). **Negative control:** on record, cite not recompute — CG1's ~200%
+> scatter and the 0.705/0.732 `-n 4` failures
+> (`20260808T170334Z_MAG-6-step3-gate-n4.log`). **Cost:** standard tier —
+> the gate solves are 10 s at `-n 2/4` and 144 s at `-n 1` on record; four
+> commands, `timeout 180` each. **Traps:** DG0 not CG1; point evaluation
+> through `evaluate_vector_field_parallel`, never rank-local eval; reduce
+> before asserting; stale FFCx lock after a kill; do not touch
+> `tests/tolerances.py`. **Does not close / reopen:** `MAG-6` stays ✅ — the
+> ≤ 10% rank-stability claim is the symmetry metric's alone and this step
+> does not extend it; no bound moves in-slot. **Negative result:** an
+> inconclusive attribution is still a finding — report the per-mechanism
+> numbers, annotate here; if a real reduction defect surfaces, it gets a
+> known-issues entry and a fix is scoped by a review, not improvised in-slot.
+
+**`MAG-13` step 2 — attempted 2026-08-08 (15:00 run): the mesh rung is priced;
+the solve is unobserved.** *(Annotated by the 18:00 review from the 16:30
+slot's anomaly journal (attempts.md, 20260808T21:52Z entry); the slot died
+mid-command and its artifacts were landed by the review in `8b8a706`.
+`MAG-13` stays ✅; the < 5% question stays open and this step stays queued.)*
+> **Stage 1 (mesh-only) is a real measurement:** h = 0.00125 m at `-n 4`
+> meshes to **1 097 873 cells in 192.7 s**, exit 0, 196 s elapsed
+> (`20260808T200126Z_MAG-13-step2-meshprobe.log`) — the §7 "~1.1 M cells"
+> extrapolation confirmed to 0.2%. **Stage 2 (the one solve) has no result:**
+> its log (`20260808T200451Z_MAG-13-step2-solve-n4.log`) ends mid-Netgen with
+> no `## Exit` block — the harness itself was terminated ~660 s in, well
+> inside its own `timeout 1200` and the slot's 65-minute kill. **No
+> relative-L2 number exists; the < 5% target is unmeasured, not missed** — do
+> not read the truncated log as a physics failure; see the known-issues
+> non-test entry on the unexplained termination. The probe
+> (`scripts/probes/mag13_step2_probe.py`) is a complete standalone instrument:
+> env-driven (`MAG13_STEP2_MESH_ONLY`, `MAG13_STEP2_RES`), imports the fixture
+> from `tests/validation/test_straight_wire.py`, touches no `src/`.
+> **Rescope (18:00 review): re-run stage 2 only** — the mesh rung is paid for;
+> skip the mesh-only probe. One solve at `-n 4` via the landed script,
+> `timeout 1200`. Watch for the **cgroup kill signature** (signal 9 /
+> exit 137): `MAT-6` step 6 established the container's 16 G total-footprint
+> cap, and 1.1 M real-build cells inside it is a hope, not a measurement — if
+> `MAT-6` step 7 (the 64 G cap raise) has landed first, note which cap was in
+> force in the log. OOM at 16 G ⇒ that *is* the measured cost; report it
+> beside the cap and stop — do not retry at more ranks (step 6 showed more
+> ranks cannot lower a total-footprint ceiling). A second unexplained harness
+> death ⇒ stop and escalate to the known-issues entry rather than burn a third
+> slot. All other terms of the original plan below stand unchanged.
+
 **`MAG-13` step 2 — the < 5% wire at the budget the follow-up predicted:
 cost-probe, then the gate** *(scoped 2026-08-08, 10:30 review; queued §9
 item 3; `MAG-13` stays ✅ — this extends a measurement, it does not reopen
@@ -2298,6 +2364,47 @@ constraint.)*
 > kills the extrapolation shortcut before anything downstream trusts it;
 > report the measured ratio beside the 0.9843 prediction, annotate here,
 > stop.
+
+**`MAT-6` step 7 — raise the container memory cap to 64 G, verify it took,
+and measure the additivity ratio step 6 could not** *(scoped 2026-08-08,
+18:00 review — this is the review decision step 6 escalated: route (i) taken.
+Rationale: the host had 747 G of 754 G free at probe time, §5.1 prices cores
+and wall clock and has never priced memory, and 64 G is 8.5% of the box and
+transient — 4× the current cap covers both the 697 401-cell combined case and
+step 5's 1 458 561-cell rung with headroom. The 12-core and 20-minute
+ceilings are untouched; this buys memory, not compute.)*
+> **Part 1, infrastructure:** edit `docker/docker-compose.yml`
+> `deploy.resources.limits.memory: 16G → 64G` (reservation stays 4G), recreate
+> the service (`docker compose -f docker/docker-compose.yml up -d`), and
+> verify the cap took *before* any solve: read the container's cgroup limit
+> (`docker compose exec -T fem-em-solver bash -lc 'cat
+> /sys/fs/cgroup/memory.max'` — expect 68719476736; fall back to `docker
+> stats --no-stream` if the cgroup path differs) and record the number in the
+> log. A recreate mid-grid is acceptable: each slot recreates nothing and the
+> harness preflight checks the service is Up. **Part 2, the measurement:**
+> re-run step 6's probe (`scripts/probes/mat6_step6_probe.py`) exactly as its
+> entry authorised — mesh count (697 401 on record, byte-identical at two
+> rank counts), then one solve at `-n 4`, `timeout 1200`; still OOM at 64 G
+> or > 600 s of solve ⇒ report the measured cost and stop (no retry at more
+> ranks — step 6 showed a total-footprint ceiling is rank-blind). **Anchor:**
+> step 6's, inherited verbatim — Dodd–Deeds refs with step 2b's gates
+> unchanged; the reading is the additivity defect vs **0.9843** with the
+> pre-decided bands (≤ 0.5 pp additive / > 1.5 pp cross-term / between
+> ambiguous). **Negative control:** step 6's two kill records on the same
+> fixture at 16 G (`-n 4` signal 9 at ~262 s, `-n 8` exit 137 at ~138 s) —
+> cite, never recompute; the O(h²) volume-deficit control re-asserted on the
+> new mesh per the step-6 plan. **Cost:** heavy tier, one solve command
+> `timeout 1200`; the mesh is 51.9 s on record; solve cost beyond ~262 s is
+> unmeasured — that is the point of the step. **Traps:** step 6's list
+> (complex build + `FEM_EM_REQUIRE_COMPLEX=1`, `project_source=False` pins,
+> FFCx lock after a kill, `ufl.max_value`); the compose edit must be
+> committed with the run, not left dirty; if the recreate fails, restore
+> 16 G and stop — a down service costs every later slot. **Does not close /
+> reopen:** `MAT-6` stays ✅; ΔX stays ungateable either way; §2.1
+> untouched; step 6 stays 🚫 as its own record. **Negative result:** OOM at
+> 64 G is a real per-cell memory measurement — report it beside the cap and
+> the cell count, annotate here, stop; a cross-term reading is the more
+> informative physics outcome, per step 6.
 
 ### POST — Post-processing & field extraction
 
@@ -4749,54 +4856,51 @@ promised an "obvious next entry named below" that was never written — the
 16:30 slot on 2026-08-07 hit that dangling reference and correctly fell
 through to the drain instruction; the reference is retired.)*
 
-Last reviewed 2026-08-08, 10:30 daily review. Tree clean at review start and
-end; no `recovered/*` branches. **All four slots since the 03:00 review
-executed — a ninth consecutive 4/4 slate: three chunks ✅, one measurement
-parked exactly as scoped.** `PORT-1` step 3b-xiv (🟡 parked, 04:30 run —
-the gapped-loop σ sweep is complete on
-`attempt/PORT-1-step3bxiv-20260808T095500Z`: the σ = 0 corner is
-degenerate as pre-registered (open circuit, a capacitive reading 350×
-outside the band), but the non-degenerate rungs answer by sensitivity —
-4× in σ moves the estimator +0.19 pp, **loss exonerated, the gap
-geometry/estimator is the last suspect**; adjudication and the
-topology-changing successor stay with Sunday's weekly review, per
-3b-xiii's escalation); `OPS-13` (✅, 06:00
-run — the rank-safe material-map check on `main` with a red-first
-baseline, closed-form volume identity at 1e-12); `MAG-6` step 2 (✅,
-07:30 run — band (discretisation): DG0 falls monotonically at p ≈ 1.07 and
-meets the untouched 0.350 at h = 0.010 for 2.0 s of solve; finest rung
-void by its own 14.71% rank control, two-rung fallback carries the
-reading); `OPS-14` (✅, 09:00 run — closed as a diagnosis on the
-pre-registered not-to-fix branch: two independent defects, both wholly
-inside the `PORT-0` placeholder, known-issues 6 re-pointed at `PORT-1`
-not retired). Audits this review: all three ✅ flips verified
-**§4-compliant** by independent read-only auditors — every claimed number
-found in the cited logs, quantitative anchors confirmed (closed-form
-volume identity; pre-registered convergence bands at two rank counts;
-cross-rank byte-identity), elapsed recorded, red baselines/reproductions
-on record, no assertion loosened; `OPS-14`'s not-to-fix disposition
-verified **pre-registered** in the plan text as of `d447571`, before the
-run. No demotions. Two audit notes for the record: `MAG-6` step 2's
-`…124711Z_…step1regress.log` is a mesh-only probe despite its label — the
-step-1 metric byte-reproduction lives in the hconv logs; `OPS-14`'s
-`…140226Z_…probe-n8.log` is a superseded probe revision,
-disclosed-not-cited. Branch disposition:
-`attempt/PORT-1-step3bxiii-20260808T005500Z` **deleted** — verified a
-strict ancestor of `attempt/PORT-1-step3bxiv-20260808T095500Z` (`5f34f88`),
-which **stays** as the one live lineage for the weekly review's
-adjudication (its `time_harmonic.py` hunk and `main`'s `OPS-13` copy now
-coexist; the reconciliation note in both §7 entries stands). Plan work
-this review: **`MAG-6` estimator adjudicated** — candidate (i) taken on
-step 2's licensed numbers, **step 3 scoped** (§7 — DG0 sampling +
-h = 0.010 against the untouched 0.350; closes `MAG-6`, retires
-known-issues 4); **`MAG-13` step 2 scoped** (§7 — the < 5% wire
-cost-probe + gate the follow-up predicted, now plausibly inside the heavy
-budget). §5.4 example check: no chunk newly closed a quantitative
-*physics* gate this interval (`OPS-13`/`OPS-14` are infrastructure;
-`MAG-6` step 2 measures a test estimator and the chunk stays 🧪) — no new
-example chunk. §10 assessment: the critical path holds — 3b-xiv's ladder
-is in hand for the weekly review, which owns the `PORT-1` branch landing;
-this queue is deliberately non-PORT, and it is short (see below).
+Last reviewed 2026-08-08, 18:00 daily review. **The 4/4 streak ended at
+nine: two slots produced, two were consumed by an outage, exactly per the
+two-slot design.** `MAG-6` step 3 (✅, 12:00 run — the DG0 estimator
+landed at h = 0.010 against the untouched 0.350; `MAG-6` ✅,
+known-issues 4 retired); `MAT-6` step 6 (🚫, 13:30 run — stopped on its
+own pre-registered cost rule: the combined 697 401-cell fixture will not
+solve inside the container's **16 G total-footprint cgroup cap**, which
+more ranks cannot lower; the 0.9843 additivity prediction stands
+unmeasured); `MAG-13` step 2 (15:00 run — **died mid-solve**: stage 1
+measured the mesh rung (1 097 873 cells, 192.7 s, confirming the ~1.1 M
+extrapolation to 0.2%), then the harness was terminated ~660 s into the
+solve, inside its own timeout — no result, no exit block; cause unknown,
+now a known-issues non-test entry); 16:30 slot (stopped and journaled the
+dirty tree per the first-encounter rule — the anomaly entry is the
+forensic record this review acted on). This review **landed the orphaned
+artifacts** (`8b8a706`, md5-verified against the anomaly journal: one
+harness row, two logs, the standalone probe script — documentation-plus-
+instrument, no `src/`); tree clean at review end, no `recovered/*`
+branches. Audit this review: the one ✅ flip (`MAG-6`) verified
+**§4-compliant** by an independent read-only auditor — all six gate/
+baseline logs complete with matching harness rows, both metrics
+quantitative (mirror-symmetry 0.323844/0.302661/0.308407 vs 0.35,
+spread 7.00% vs ≤ 10%; centerline 0.473300 vs 0.60), red baseline 0.728
+on record, tolerances unchanged since `529cc55` and the abs-tol escape
+*removed* (gate tightened, not loosened), elapsed recorded, no
+over-claim. No demotions. Branch disposition:
+`attempt/PORT-1-step3bxiv-20260808T095500Z` **stays**, untouched — the
+one live lineage for the weekly review's adjudication (tonight, Sunday
+01:30, after the 00:00 slot). Plan work this review: **the step-6
+escalation adjudicated — route (i) taken: `MAT-6` step 7 scoped** (§7 —
+raise the compose cap 16 G → 64 G, verify the cgroup limit before
+solving, then the additivity measurement as step 6 authorised it;
+rationale in the entry: host had 747 G free, §5 has never priced memory,
+cores and wall clock untouched); **`MAG-13` step 2 annotated and rescoped
+stage-2-only** (§7 — the mesh rung is paid for; one solve, watch for the
+16-vs-64 G cap and the cgroup kill signature; a second unexplained
+harness death escalates, not retries); **`MAG-6` step 4 scoped** (§7 —
+diagnose the centerline metric's 88% rank scatter, the step-3 hand-off;
+diagnosis only). §5.4 example check: `MAG-6` closed a quantitative gate,
+but it gates **discretisation symmetry, not a physics capability**
+(uniform μ — the phantom is invisible to the solve), and §5.4 examples
+demonstrate capabilities — no new example chunk. §10 assessment:
+unchanged from 10:30 — the critical path holds and is frozen for the
+weekly review, which runs *tonight* and owns the `PORT-1` landing; this
+queue is deliberately non-PORT.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
@@ -4804,93 +4908,84 @@ this queue is deliberately non-PORT, and it is short (see below).
 
 **Three ready items — fewer than five exist, stated per protocol rather
 than invented.** The `PORT-1` lineage — the critical path — is frozen for
-Sunday's weekly review by 3b-xiii's escalation, and everything else
-unlisted is blocked on it (`PORT-4`…`PORT-8`, the birdcage port step) or
-on a solved coil+phantom field (`MAT-4`'s C95.3 claim, `POST-1`'s final
-✅). Items 1–3 are mutually independent; the fourth run before the 18:00
+the weekly review (tonight, 01:30) by 3b-xiii's escalation, and everything
+else unlisted is blocked on it (`PORT-4`…`PORT-8`, the birdcage port step)
+or on a solved coil+phantom field (`MAT-4`'s C95.3 claim, `POST-1`'s final
+✅). Item 3 is fully independent; items 1 and 2 are runnable in either
+order but item 2 reads differently under item 1's cap (each item says
+how) — neither *requires* the other. The fourth slot before the 03:00
 review will drain — the drain instruction below applies to it: **stop and
 journal.**
 
-1. ✅ **DONE 2026-08-08 (12:00 run)** — landed on `main`: `max_rel_diff`
-   0.323844 / 0.302661 / 0.308407 at `-n 1/2/4` against the untouched 0.350,
-   three-way spread 7.00% (gate ≤ 10%), red baseline 0.728 on record. The
-   centerline smoothness metric turned out to be CG1-owned as well and was
-   re-pointed with it; its residual 88% rank scatter is reported, not claimed
-   away. `MAG-6` ✅, known-issues 4 retired. See the §7 step-3 readings block.
-   **`MAG-6` step 3 — land the adjudicated estimator: DG0 sampling at
-   h = 0.010, gated against the untouched 0.350.** Independent; `main`;
-   real build; closes `MAG-6` and retires known-issues 4. Execute the §7
-   step-3 plan: re-point `test_coil_phantom_bfield_metrics.py`'s sampling
-   at the DG0 path the probe validated, refine the fixture to
-   `resolution = 0.010` m, tolerance untouched. **Anchor:** the
-   mirror-symmetry identity `max_rel_diff < 0.350` at h = 0.010 —
-   on-record 0.312197 / 0.304356 / 0.323844 at `-n 2/4/1` — plus the
-   rank-stability gate: three-way spread across `-n 1/2/4` ≤ 10% (6.40%
-   on record). **Negative control:** the CG1 record (3.03× rank swing,
-   non-monotone under refinement) — cite, never recompute; a pinned print
-   at most. **Cost:** standard, three commands `timeout 180` — 2.0 s
-   solve at `-n 2`, 132.4 s at `-n 1`, all on record. **Traps:** reduce
-   before asserting; DG0 not CG1; stale FFCx lock after a kill; do not
-   touch `tests/tolerances.py`. **Does not license:** any phantom-physics
-   claim — the fixture's μ is uniform; the metric is a
-   discretisation-symmetry identity and the test docstring must say so.
-   **Negative result:** on-record numbers failing to reproduce is a
-   reproduction failure — park on `attempt/*`, annotate known-issues 4,
-   touch nothing.
+1. **`MAT-6` step 7 — raise the container memory cap to 64 G, verify it
+   took, and measure the additivity ratio (heavy).** `main`; complex
+   build. Execute the §7 step-7 plan: edit
+   `docker/docker-compose.yml` `limits.memory: 16G → 64G`, recreate the
+   service, **read the cgroup limit inside the container before any
+   solve** (expect 68719476736) and record it in the log; then step 6's
+   probe verbatim — mesh (697 401 cells on record), one solve `-n 4`,
+   `timeout 1200`; still OOM at 64 G or > 600 s of solve ⇒ report cost
+   and stop, no wider-rank retry (a total-footprint ceiling is
+   rank-blind). **Anchor:** step 6's, inherited — Dodd–Deeds with step
+   2b's gates unchanged; the reading is the additivity defect vs
+   **0.9843**, bands pre-decided (≤ 0.5 pp / > 1.5 pp / between ⇒
+   ambiguous, report). **Negative control:** the two 16 G kill records
+   on this exact fixture (`-n 4` signal 9 ~262 s; `-n 8` exit 137
+   ~138 s) — cite, never recompute. **Cost:** heavy; mesh 51.9 s on
+   record, solve unmeasured past ~262 s — measuring it is the point.
+   **Traps:** step 5's list; complex build + `FEM_EM_REQUIRE_COMPLEX=1`;
+   commit the compose edit with the run, never leave it dirty; recreate
+   fails ⇒ restore 16 G and stop (a down service costs every later
+   slot). **Does not close / reopen:** `MAT-6` stays ✅, step 6 stays 🚫,
+   §2.1 untouched. **Negative result:** OOM at 64 G is a per-cell memory
+   measurement — report beside cap and cell count, annotate §7, stop.
 
-2. 🚫 **STOPPED 2026-08-08 (13:30 run)** — the pre-registered cost rule fired
-   and the additivity ratio was **not** measured: the combined mesh is 697 401
-   cells (12.2% under the ~790 k estimate, sub-multiplicative) and the solve was
-   killed at both authorised rank counts — `-n 4` signal 9 after ~262 s, `-n 8`
-   exit 137 after ~138 s. **The retry rule's premise is false:** the ceiling is
-   the container's 16 G `deploy.resources.limits.memory`, not per-rank memory
-   and not the host (747 G of 754 G free), so more ranks cannot help — and step
-   5's 1 458 561-cell "OOM at `-n 4`" was that same container cap, not a machine
-   limit. Raising the cap is the only rescope that still answers the question as
-   posed, and it is shared infrastructure the §5 budget never priced — **a
-   review decision, deliberately not taken in-slot.** See the §7 step-6 entry.
-   **`MAT-6` step 6 — the additivity hypothesis: both knobs at once
-   (carried spare; heavy).** Independent; `main`. Execute the §7
-   step-6 plan: W = 0.25 × `resolution_wire = 0.001`, projected drive
-   only; additive prediction **0.9843** from the four single-knob ratios
-   on record. **Probe first and treat it as the point of no return:**
-   mesh count (~790 k predicted), one solve at `-n 4`; OOM ⇒ one retry at
-   `-n 8`; still OOM or > 300 s ⇒ report the measured cost and stop —
-   the 1 458 561-cell rung is already on record OOM-killed at `-n 4`.
-   **Anchor:** Dodd–Deeds refs with step 2b's gates inherited unchanged;
-   the reading is the additivity defect vs 0.9843 (≤ 0.5 pp additive /
-   > 1.5 pp cross-term / between ambiguous — all pre-decided). **Negative
-   control:** the O(h²) volume-deficit control re-asserted on the new
-   mesh (shrink > 1.5×). **Cost:** heavy, gate `-n 2` preferred, one
-   command `timeout 1200`; `-n 4` for the gate pre-authorized only if
-   the probe shows `-n 2` cannot fit. **Traps:** step 5's list; do not
-   re-run the pinned drive. **Does not close / reopen:** `MAT-6` stays
-   ✅; ΔX stays ungateable either way; §2.1 untouched. **Negative
-   result:** a cross-term is the more informative outcome — report the
-   ratio beside 0.9843, annotate §7, stop.
-
-3. **`MAG-13` step 2 — the < 5% wire at the budget the follow-up
-   predicted: cost-probe, then the gate (heavy).** Independent; `main`;
-   real build; `MAG-13` stays ✅ either way. Execute the §7 step-2 plan:
-   mesh-count probe at h ≈ 0.00125 (~1.1 M cells predicted), one solve at
-   `-n 4` as the point of no return — OOM ⇒ one retry `-n 8`; still OOM
-   or > 600 s ⇒ report the measured cost and stop. **Anchor:** the
-   straight-wire closed form
+2. **`MAG-13` step 2, stage 2 only — the < 5% wire solve the 15:00 slot
+   never observed (heavy).** `main`; real build; `MAG-13` stays ✅ either
+   way. The mesh rung is already paid for (1 097 873 cells, 192.7 s,
+   `8b8a706`) — do **not** re-run the mesh probe. One solve at `-n 4`
+   via the landed `scripts/probes/mag13_step2_probe.py`, `timeout 1200`.
+   **Anchor:** the straight-wire closed form
    `utils/analytical.py::straight_wire_magnetic_field` (B_θ = μ₀I/2πr),
    target < 5% vs the recorded 12.75% at rate 1.10; print the new
    two-rung rate beside 1.10. **Negative control:** on record, cite not
    recompute — the analytic-Dirichlet-vs-plain-box separation and the
-   rate fit. **Cost:** heavy, one solve command `timeout 1200`, smallest
-   rank count the probe shows fits; `MAT-6`'s 1 458 561-cell OOM at
-   `-n 4` is the cautionary record (complex build — lighter here is a
-   hope, not a measurement). **Traps:** `MAG-13`'s list — end-cap
-   `J·n ≠ 0` stands unmeasured; `evaluate_vector_field_parallel` for
-   points; stale FFCx lock after a kill. **Does not close / reopen:**
-   nothing — a green < 5% annotates the `MAG-13` entry; graded refinement
-   stays the named cheaper route, not to be improvised in-slot.
-   **Negative result:** still > 5% at the extrapolated `h`, or
-   unaffordable — both are findings; report error and cost beside the
-   prediction, annotate §7, stop.
+   rate fit. **Cost:** heavy, one solve command; solve cost unmeasured —
+   the truncated log died ~660 s in with the solver still meshing/setting
+   up. **Cap note:** if item 1 landed, 64 G is in force; if not, the
+   16 G cap stands and an OOM kill (signal 9 / exit 137) is itself the
+   measured cost — record which cap was in force, report, stop; no
+   wider-rank retry. A second unexplained harness death (log truncated,
+   no exit block, no OOM signature) ⇒ stop and update the known-issues
+   non-test entry, do not burn a third slot. **Traps:** `MAG-13`'s
+   list — end-cap `J·n ≠ 0` stands unmeasured;
+   `evaluate_vector_field_parallel` for points; stale FFCx lock after a
+   kill. **Does not close / reopen:** nothing — a green < 5% annotates
+   the `MAG-13` entry; graded refinement stays the named cheaper route,
+   not to be improvised in-slot. **Negative result:** still > 5% at the
+   extrapolated `h`, or unaffordable — both are findings; report error
+   and cost beside the prediction, annotate §7, stop.
+
+3. **`MAG-6` step 4 — diagnose the centerline metric's 88% rank scatter
+   (standard; diagnosis only).** Independent; `main`; real build;
+   `MAG-6` stays ✅. Execute the §7 step-4 plan: on the landed h = 0.010
+   fixture, print per-point sampled values plus an ownership fingerprint
+   at `-n 1/2/4` and one fixed-rank repeat; attribute the 88% scatter —
+   partition-owned point sampling, run-to-run mesh noise (6.8% on
+   record at fixed `-n 2`), or a reduction defect (the `PORT-1`
+   3b-viii family). **Anchor:** the rank-invariance identity for a
+   correctly reduced scalar metric, with the mirror metric's 7.00%
+   spread on the same solves as the in-fixture control. **Negative
+   control:** on record, cite not recompute — CG1's ~200% scatter and
+   the 0.705/0.732 `-n 4` failures. **Cost:** standard, four commands
+   `timeout 180`; gate solves are 10 s at `-n 2/4`, 144 s at `-n 1` on
+   record. **Traps:** DG0 not CG1; `evaluate_vector_field_parallel`;
+   reduce before asserting; do not touch `tests/tolerances.py`. **Does
+   not close / reopen:** `MAG-6` stays ✅; the ≤ 10% rank-stability claim
+   stays the symmetry metric's alone; no bound moves in-slot. **Negative
+   result:** an inconclusive attribution is still a finding — report the
+   per-mechanism numbers, annotate §7; a confirmed reduction defect gets
+   a known-issues entry, fix scoped by a review.
 
 If the queue drains: **stop and journal.** Do **not** improvise gap-voltage
 ports on the birdcage itself or a B1+ chunk — both are deliberately held for

@@ -498,6 +498,31 @@ mesh in the process — is the reusable part.
 
 ## Non-test issues
 
+### Unexplained mid-command termination of the logging harness (2026-08-08, 15:00 implementer slot)
+
+Observed once. During `MAG-13` step 2's stage-2 solve
+(`timeout 1200 mpiexec -n 4 python3 scripts/probes/mag13_step2_probe.py`,
+started 20:04:51Z), the harness died ~660 s in — the log
+(`20260808T200451Z_MAG-13-step2-solve-n4.log`) ends mid-Netgen with **no
+`## Exit` block** and no `test-results.md` row. That is not the command
+exiting: `run_and_log.sh` writes an Exit block even on non-zero status (it
+did so for the same slot's stage-1 run forty minutes earlier), so the
+harness process itself was killed from outside. The kill fell well inside
+the command's own `timeout 1200` and well before the slot's 65-minute hard
+kill (21:05Z). Not a container-cgroup OOM signature either — those
+manifest as the *command* dying with signal 9 / exit 137 and an Exit block
+written (see `MAT-6` step 6's two on-record examples). The session died
+with its harness: no attempts.md entry, nothing committed or parked
+(journaled by the 16:30 slot; artifacts landed by the 18:00 review,
+`8b8a706`).
+
+**Standing instruction:** a run that finds its log truncated this way
+should treat the measurement as *unobserved*, not failed. On a **second**
+occurrence, stop and update this entry with the new timestamp and any
+common factor (rank count, memory pressure, wall-clock position in the
+slot) rather than re-running a third time. Cause unknown; this entry
+leaves only with a commit that names and fixes it.
+
 ### ✅ RETIRED 2026-08-04 — reaction Z-matrix diagonal is negative where it must be inductive
 
 **Fixed by `PORT-1` step 2f**: `TimeHarmonicSolver.solve()` now drives with the

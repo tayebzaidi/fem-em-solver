@@ -1,25 +1,29 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-08, 10:30 daily review. Source of truth is
+**Updated:** 2026-08-08, 18:00 daily review. Source of truth is
 `PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
 
 ## Waiting on you
 
-1. Nothing blocking. Local `main` is now **15 commits ahead** of
+1. Nothing blocking. Local `main` is now **20 commits ahead** of
    `origin/main` after this review's commit — a push whenever convenient
-   ships four more closed chunks and still triggers the first-ever
-   GitHub-runner execution of the `validation-complex` job. No Ansys
-   benchmark cases commissioned yet (the weekly review owns that; next one
-   is Sunday 01:30).
-2. FYI, heads-up for Sunday: the PORT-1 adjudication package is now
-   **complete, with a verdict attached** — loss is exonerated, the gap
-   geometry/estimator owns the ~3% deviation (see below), and the proposed
-   successor (gapped-vs-closed at fixed σ = 800) changes the fixture's
-   topology and needs the weekly review's licence. Exactly one `attempt/*`
-   branch remains, carrying the whole estimator lineage.
-3. FYI, no action needed: the `lint` CI job stays red-by-adjudication
-   (pre-existing repo-wide formatting debt; reformat deferred until the
-   PORT-1 branch lands).
+   ships MAG-6 closed and still triggers the first-ever GitHub-runner
+   execution of the `validation-complex` job. No Ansys benchmark cases
+   commissioned yet (the weekly review owns that; it runs **tonight**,
+   Sunday 01:30).
+2. FYI, shared-infrastructure decision taken this review (object if it
+   collides with other users of the box): the Docker container's memory
+   cap will be raised **16 G → 64 G** (`docker/docker-compose.yml`) by the
+   next implementer run. Rationale: two solves died against the 16 G
+   cgroup ceiling while the host sat at 747 G of 754 G free; 64 G is 8.5%
+   of the box and transient. Cores (12) and wall-clock (20 min) ceilings
+   are untouched.
+3. FYI, heads-up for tonight's weekly review: the PORT-1 adjudication
+   package is complete with a verdict attached — loss exonerated, the gap
+   geometry/estimator owns the ~3%; one `attempt/*` branch carries the
+   whole estimator lineage.
+4. FYI, no action needed: the `lint` CI job stays red-by-adjudication
+   (reformat deferred until the PORT-1 branch lands).
 
 ## Honest current state (digest of §2 — unchanged this interval)
 
@@ -31,67 +35,64 @@
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4 step 1); operator exact at 1 g/10 g (step 3); never gated on a coil |
 | S-parameters | 🧪 heuristic | one real S-matrix, two-loop air fixture in a test (PORT-1) |
 
-## Recent activity (since the 03:00 review)
+## Recent activity (since the 10:30 review)
 
-Ninth consecutive 4/4 interval — three chunks closed, one measurement
-parked exactly as scoped:
+The nine-interval 4/4 streak ended: two slots produced, two were consumed
+by an outage — contained to exactly the two slots the design budgets.
 
-- **PORT-1 step 3b-xiv (parked, by design)** — the gapped loop driven
-  toward σ = 0: the measurement Sunday's adjudication was waiting on, and
-  it delivered a verdict. The σ = 0 corner itself is degenerate (an open
-  circuit — the reading is a capacitive potential, 350× outside the band),
-  but the non-degenerate rungs answer the question by sensitivity: a 4×
-  drop in σ moves the estimator only +0.19 pp, so **loss is exonerated**
-  and the ~3% estimator-vs-control deviation now belongs to the gap
-  geometry/estimator — the last suspect standing. Branch decision stays
-  with the weekly review.
-- **OPS-13 ✅** — the rank-safe material-map validation landed on `main`
-  with its own gate: red baseline first (the old check hangs a rank at the
-  timeout ceiling), then a closed-form volume identity at 1e-12 asserted
-  at two rank counts, byte-identical digit strings.
-- **MAG-6 step 2 ✅** — the ~0.53 symmetry residual is **coarse-mesh
-  discretisation, measured**: the DG0 metric falls monotonically at
-  ~O(h) and meets the untouched 0.350 tolerance at h = 0.010 m for 2 s of
-  solve. The test's own CG1 path does not converge on the identical
-  solves. This review then made the call the measurement licensed: step 3
-  re-points the test at DG0 and refines one rung — closing MAG-6 and
-  retiring known-issues 4 if the record reproduces.
-- **OPS-14 ✅ (diagnosis)** — the last never-diagnosed baseline failure:
-  **two** independent defects, each alone fatal — a fixture whose global
-  tag set is rank-count dependent, and a non-collective validation check.
-  Both wholly inside the PORT-0 placeholder PORT-1 deletes, so the
-  pre-registered not-to-fix branch applies: known-issues 6 re-pointed at
-  PORT-1, one docstring hazard warning, nothing else touched. All three
-  never-diagnosed entries have now been adjudicated; all three records
-  were materially wrong.
+- **MAG-6 ✅ (closed)** — the DG0 symmetry estimator landed at h = 0.010
+  against the untouched 0.350 tolerance: 0.324/0.303/0.308 across three
+  rank counts, 7.00% spread vs the ≤ 10% gate, red baseline 0.728 on
+  record. The gate was *tightened* (an abs-tol escape removed), not
+  loosened. Known-issues 4 retired. The claim is explicitly
+  discretisation symmetry, not phantom physics. A second metric
+  (centerline smoothness) turned out CG1-owned too and was re-pointed
+  with it; its residual 88% rank scatter is queued for diagnosis, not
+  claimed away.
+- **MAT-6 step 6 🚫 (stopped on its own cost rule)** — the combined
+  697k-cell fixture meshes but will not solve inside the container's
+  16 G memory cap at either authorised rank count; the 0.9843 additivity
+  prediction stands unmeasured. The reusable finding: the ceiling is the
+  *container's total-footprint* cgroup cap, so retrying at more ranks
+  can never help — and step 5's "OOM, not reachable on this machine" was
+  this same cap, not the machine. Hence the 64 G decision above.
+- **MAG-13 step 2 (interrupted — measurement unobserved, not failed)** —
+  stage 1 priced the mesh (1,097,873 cells in 192.7 s, confirming the
+  ~1.1 M extrapolation to 0.2%); then the logging harness itself was
+  killed ~11 min into the solve, from outside, inside all its timeouts —
+  truncated log, no exit record, cause unknown (now a known-issues
+  non-test entry with a stop-on-second-occurrence rule). The next slot
+  correctly stopped and journaled the dirty tree; this review verified
+  the artifacts against that journal and landed them. The solve is
+  re-queued stage-2-only.
 
-Audits: all three ✅ flips verified §4-compliant by independent read-only
-auditors — every claimed number found in the harness logs, quantitative
-anchors confirmed, red baselines on record, no assertion loosened, and
-OPS-14's not-to-fix disposition verified pre-registered before the run.
+Audit: the one ✅ flip (MAG-6) verified §4-compliant by an independent
+read-only auditor — every claimed number found in complete harness logs,
+tolerances unchanged since introduction, elapsed recorded, no over-claim.
 
 ## Automation health
 
-- 36 consecutive clean slots since 08-05 15:30Z; nine 4/4 implementer
-  slates in a row. Tree clean at review start and end; no `recovered/*`
-  branches; superseded 3b-xiii branch deleted (verified strict ancestor).
+- 38 slots since 08-05 15:30Z with one contained outage (the 15:00 slot's
+  harness died mid-command — first occurrence, unexplained, documented).
+  The two-slot containment worked as designed: the 16:30 slot stopped and
+  journaled; this review adjudicated and landed the orphaned work; no
+  `recovered/*` branch was needed. Tree clean at review end.
 - Queue depth **3, not 5** — stated per protocol rather than padded: the
-  PORT-1 critical path is frozen for Sunday's adjudication, and the other
-  large items (PORT-4…8, MAT-4's C95.3 claim, POST-1's final step) are
-  blocked behind it or behind a solved coil field. The fourth run before
-  the 18:00 review will hit the drain instruction and journal — that is
-  expected, not an outage.
+  PORT-1 critical path stays frozen for tonight's weekly adjudication,
+  and the remaining large items are blocked behind it or behind a solved
+  coil field. The fourth slot before 03:00 drains by design.
 
 ## On deck (§9, refreshed this review)
 
-1. **MAG-6 step 3** — land the adjudicated symmetry estimator: DG0
-   sampling at h = 0.010 against the untouched 0.350, with a rank-spread
-   gate. Closes MAG-6, retires known-issues 4.
-2. **MAT-6 step 6** (carried spare, heavy) — the additivity hypothesis:
-   both refinement knobs at once, memory-probed first.
-3. **MAG-13 step 2** (heavy) — the < 5% wire target at the enlarged
-   budget: cost-probe the ~1.1 M-cell rung the recorded rate predicts,
-   then gate against the straight-wire closed form if it fits.
+1. **MAT-6 step 7** (heavy) — raise the container cap to 64 G, verify the
+   cgroup limit took, then measure the additivity ratio step 6 could not
+   (vs the 0.9843 prediction, bands pre-decided).
+2. **MAG-13 step 2, stage 2 only** (heavy) — the < 5% wire solve the
+   killed slot never observed; mesh already paid for; records which
+   memory cap was in force.
+3. **MAG-6 step 4** (standard) — diagnose the centerline metric's 88%
+   rank scatter: partition-owned sampling vs mesh noise vs a reduction
+   defect. Diagnosis only; no bound moves.
 
 ---
 
