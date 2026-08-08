@@ -3765,8 +3765,56 @@ memory, not time, is the binding constraint.)*
 >   copy, and whichever lands second reconciles a near-identical hunk.)*
 >   *(Original plan retained below for the record.)*
 >
-> * **Step 3b-xiv — the non-degenerate half of the sweep: the gapped loop at
->   σ → 0** ⬜ *(scoped 2026-08-08, 03:00 review, from 3b-xiii's own
+> * **Step 3b-xiv — executed 2026-08-08 (04:30 run): the gapped σ = 0 corner
+>   is an open circuit, and loss is exonerated by sensitivity** 🟡 *(parked on
+>   `attempt/PORT-1-step3bxiv-20260808T095500Z` (`5f34f88`), which carries the
+>   full 3b-ix → 3b-xiii lineage plus this step. Measurement only; every
+>   disposition parks by plan.)* Fixture identity byte-reproduces the
+>   padding-0.08 record exactly (estimator 0.894543 / 0.894022, control(σ = 0)
+>   0.922423, deviation −3.0224e-02). σ went on `WIRE_TAGS` only — §9's
+>   "wire ∪ gap-box" phrasing is the *control*'s region, and giving the gap box
+>   σ closes the loop into 3b-xiii's degeneracy. New gate, the **bridge**: the
+>   ladder's σ = 800 rung on the record's own `I_cond` normalisation returns
+>   **0.894543** against the fixture's own production estimator, relative
+>   difference **3.442e-13** — the ladder is the production route, solved
+>   twice. Ladder (`-n 2`, standard, **448 s**, 17 passed + the known
+>   consistency gate red,
+>   `20260808T093445Z_PORT-1-step3bxiv-ladder-n2.log`):
+>
+>   | σ (S/m) | est on I′ | est on I_cond | \|I_cond/I′\| |
+>   |---|---|---|---|
+>   | 800 | 0.869401 | 0.894543 | 0.971942 |
+>   | 200 | 0.872123 | 0.896408 | 0.972936 |
+>   | 0 | 315.134574 | undefined | 0.000000 |
+>
+>   **(1) The σ = 0 corner is degenerate** — the pre-registered negative
+>   result. With the gap open and the wire lossless the impressed 1 A across
+>   the 1 mm gap box has no return path; it terminates as charge on the arc end
+>   faces, `V_undriven` = −3.913198e+02 V (purely imaginary), and the estimator
+>   reads 315.13 × ωM₁₂, **350×** the 2.788 pp band it was to be read inside.
+>   That is a capacitive potential, not a mutual EMF. The 2×2 therefore cannot
+>   be closed from **either** corner: closed+lossy is a short (3b-xiii),
+>   gapped+lossless is an open (here). **(2) The non-degenerate rungs answer
+>   the discriminator anyway, and they exonerate loss:** a 4× reduction in σ
+>   moves the gapped estimator **+0.19 pp** (0.894543 → 0.896408), so closing
+>   the 2.788 pp to control(σ = 0) needs ~4¹⁵ in σ. In the plan's bands this is
+>   the **(gap owns it)** reading, reached by sensitivity rather than by the
+>   degenerate σ = 0 point. With the wedge limits (3b-x), the ωM₁₂ reference
+>   (3b-viii), the PEC box (3b-xii) and now loss all excluded, the gapped
+>   estimator/geometry is the last suspect and 3b-xiii's escalation is
+>   confirmed real. **(3) §9's negative control is inverted on this route:**
+>   `|I_cond/I′|` here is a *series-continuity* number (0.97 = the impressed
+>   current returning through the wire as it must), not a shorted-turn number;
+>   only its exact collapse to 0 at σ = 0 transfers, and that is why the
+>   record's normalisation dies at the bottom rung. **Not tuned:**
+>   `REACTION_CONSISTENCY_TOLERANCE` 0.03, `MUTUAL_TOLERANCE` 0.10, nothing
+>   re-pinned or re-pointed, nothing landed. The successor the attempts.md
+>   entry proposes — *gapped-vs-closed at fixed σ = 800*, the one variable the
+>   two routes still differ in, at the σ where both are well-posed — changes
+>   the fixture's topology and needs the weekly review's licence.
+>   *(Original plan retained below for the record.)*
+>
+> * **Step 3b-xiv — plan as scoped** *(scoped 2026-08-08, 03:00 review, from 3b-xiii's own
 >   next-attempt hypothesis. Scope note: 3b-xiii's (mixed) disposition hands
 >   the strategic adjudication — branch landing, gate re-pointing, fixture
 >   redesign — to the weekly review, and this step does **not** take any of
@@ -4384,7 +4432,13 @@ carry the same `_validate_material_map_tags` hunk (branch copy vs `main`
 copy); whichever lands second reconciles a near-identical diff, noted in
 both §7 entries.
 
-1. **`PORT-1` step 3b-xiv — the non-degenerate half of the sweep: the
+1. **🟡 EXECUTED AND PARKED 2026-08-08T09:55Z (04:30 run) —
+   `attempt/PORT-1-step3bxiv-20260808T095500Z` (`5f34f88`). The measurement
+   is complete and is written up in §7 and attempts.md; do not repeat it.
+   Its successor changes the fixture's topology and is the weekly review's
+   call, so this item is **not selectable** by a scheduled run — skip to
+   item 2.** *(Original text below.)*
+   **`PORT-1` step 3b-xiv — the non-degenerate half of the sweep: the
    gapped loop at σ → 0. Measurement only; every disposition parks.**
    Critical path. Works on
    `attempt/PORT-1-step3bxiii-20260808T005500Z` (`82bfb40`). Execute the §7

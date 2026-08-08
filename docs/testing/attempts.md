@@ -6505,3 +6505,94 @@ are worth re-reading with that in mind.
 remaining never-diagnosed baseline failure is known-issues 4, which `MAG-6`
 step 1 rewrote earlier today and whose estimator strategy is a review's to
 pick.
+
+## 2026-08-08T09:55Z — `PORT-1` step 3b-xiv — **incomplete** (parked on
+## `attempt/PORT-1-step3bxiv-20260808T095500Z`; measurement only, all
+## dispositions park by plan): the gapped σ = 0 corner is an **open circuit**,
+## and the non-degenerate rungs exonerate loss anyway
+
+**What was tried.** §9 item 1 exactly as scoped: the reciprocal half of
+3b-xiii's sweep. Branched from `attempt/PORT-1-step3bxiii-20260808T005500Z`
+(`82bfb40`), added a σ ladder on the **production gapped** route inside
+`_solve_gap_ports` — same mesh, same drive, same gap boxes, same terminal-to-
+terminal estimator, σ on `WIRE_TAGS` through {800, 200, 0} via the same DG0
+material map — plus one new gate,
+`test_production_sigma_ladder_removes_the_loss_from_the_gapped_route`.
+
+**Reading of §9's "wire ∪ gap-box σ".** That phrasing is inherited from the
+*control*'s drive/test region, which is closed by construction. On the
+production route the gap box **is** the gap: giving it σ closes the loop and
+reproduces precisely the shorted-turn degeneracy 3b-xiv exists to avoid. σ
+therefore went on `WIRE_TAGS` only, and the σ = 800 rung reproducing the landed
+record to 3.4e-13 confirms that is the production configuration.
+
+**Fixture identity — byte-reproduced first, as required.** estimator
+0.894543 / 0.894022 × ωM₁₂, control(σ = 0) 0.922423, deviation −3.0224e-02.
+Nothing geometric moved.
+
+**The bridge (new, gated).** The ladder's σ = 800 rung read on the record's own
+`I_cond` normalisation returns **0.894543** against this fixture's own
+production estimator 0.894543 — relative difference **3.442e-13**. Same problem
+solved twice; the ladder is on the production route, not beside it.
+
+**The ladder** (`-n 2`, standard, **448 s**, 17 passed + the known consistency
+gate red, `20260808T093445Z_PORT-1-step3bxiv-ladder-n2.log`; collection check
+`20260808T093432Z_PORT-1-step3bxiv-collect.log`):
+
+| σ (S/m) | est on I′ (×ωM₁₂) | est on I_cond (×ωM₁₂) | \|I_cond/I′\| |
+|---|---|---|---|
+| 800 | 0.869401 | 0.894543 | 0.971942 |
+| 200 | 0.872123 | 0.896408 | 0.972936 |
+| 0 | 315.134574 | undefined | 0.000000 |
+
+**Finding 1 — the σ = 0 corner is degenerate, and the plan pre-registered that
+as a result.** With the gap open and the conductor lossless there is no return
+path for the impressed 1 A across the 1 mm gap box: it terminates as
+accumulated charge on the arc end faces, `V_undriven` = −3.913198e+02 V (purely
+imaginary), and the estimator reads 315.13 × ωM₁₂ — **350×** the 2.788 pp band
+it was to be read inside. That number is a capacitive potential, not a mutual
+EMF. Consequence for the plan: the 2×2 cannot be closed from **either** corner
+— closed+lossy is a short (3b-xiii, `|I_cond/I′|` → 0.865), gapped+lossless is
+an open (here, `|I_cond/I′|` → 0 exactly). σ is confounded with
+closed-vs-gapped on both routes, for opposite reasons.
+
+**Finding 2 — the non-degenerate rungs answer the discriminator, and they
+exonerate loss.** A **4× reduction** in σ (800 → 200) moves the gapped
+estimator by **+0.19 pp** on the record's normalisation (0.894543 → 0.896408).
+Reaching control(σ = 0) = 0.922423 from there is 2.788 pp, ~15 such steps, i.e.
+σ smaller by ~4¹⁵. In the plan's band language this is the **(gap owns it)**
+reading — obtained by *sensitivity* over the two rungs where both normalisations
+are defined, rather than by the degenerate σ = 0 point the bands assumed. The
+escalation 3b-xiii raised is real; the gap geometry / estimator is the last
+suspect standing, with the wedge limits (3b-x), the ωM₁₂ reference (3b-viii),
+the PEC box (3b-xii) and now loss all excluded.
+
+**Finding 3 — §9's negative control is inverted on this route.** `|I_cond/I′|`
+on the gapped loop is a **series-continuity** number, not a shorted-turn
+number: 0.97 at σ = 800 means the impressed gap current returns through the
+wire as it must. The same 0.865 on 3b-xiii's *closed* control meant a parallel
+short. The column still carries the property the step needed — it collapses to
+exactly 0 at σ = 0, which is *why* the record's normalisation cannot be carried
+to the bottom rung — but "collapses toward 0 ⇒ no short" does not transfer
+between the two routes and should not be reused as worded.
+
+**What was not touched.** `REACTION_CONSISTENCY_TOLERANCE` stays 0.03,
+`MUTUAL_TOLERANCE` stays 0.10, no digit-string re-pinned, nothing re-pointed,
+no branch landed, `main` untouched by the code. The one red test in the run is
+the known consistency gate (−3.0224e-02 vs 3%), red on this branch before this
+step and unchanged by it.
+
+**Why incomplete rather than complete.** By plan: every disposition parks and
+reports; `PORT-1`, known-issues 3 and the branch's fate are all the weekly
+review's calls. The measurement itself is done and gated.
+
+**Next-attempt hypothesis for the review.** Loss is excluded, so the remaining
+owner of the ~3% is the gapped estimator/geometry itself — and the σ = 0 result
+says the two routes are **not** connected by a continuous σ path, so no further
+rung of this ladder can bridge them. The productive successor is not another
+sweep but a *gapped-vs-closed at fixed σ* comparison: build the same fixture
+with the gap boxes tagged as conductor (closed) and σ = 800 on the union,
+drive it the production way, and read the estimator against the same control.
+That moves the one variable the two routes still differ in, at the σ where both
+are well-posed. It needs the weekly review's licence — it changes the fixture's
+topology, which no step so far has done.
