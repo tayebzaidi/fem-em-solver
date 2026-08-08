@@ -6107,3 +6107,94 @@ redo it.
   together (~790 k cells by two measured growth factors), where the 15:00 entry
   flags **memory, not time**, as the binding constraint — it needs a fresh cost
   probe because the next rung up OOM-killed at `-n 4`.
+
+## 2026-08-08T00:55Z — `PORT-1` step 3b-xiii — **incomplete** (parked): the
+## closed+lossy corner is degenerate, so the ladder cannot answer loss-vs-gap
+
+Scheduled implementer run, 19:30 CDT slot. Preflight clean (`f9bb988`),
+container Up. Took §9 On-deck item 1 as written, on
+`attempt/PORT-1-step3bxii-20260807T170000Z` (`87bf35d`).
+
+**Anchor (1) — fixture identity — holds byte-exactly.** Before any new solve,
+the branch's padding-0.08 record reproduced to every printed digit: estimator
+`0.894543 / 0.894022` × ωM₁₂, control(σ = 0) `0.922423`, deviation
+`−3.0224e-02` against the 3% bound. Nothing geometric moved and the mesh is
+the same 178 055-cell fixture.
+
+**Anchor (2) — the ladder.** σ applied to the wire ∪ gap-box footprints of
+*both* loops (so the control's loop stays electrically closed, which is the
+corner being filled) through the same DG0 material map the production solves
+use; same mesh, same impressed drive over loop 1's footprint, same
+`I′ = ∫J′·φ̂ dV/(2πa)` normalisation as the σ = 0 control — σ is the only
+moved variable in the code path.
+
+| control σ (S/m) | Im Z₂₁ (× ωM₁₂) | \|I_cond/I′\| | solve |
+|---|---|---|---|
+| 0 | 0.922423 | — | 23.8 s |
+| 200 | 0.496614 | 0.412 | 24.8 s |
+| 800 | 0.107556 | 0.865 | 24.9 s |
+
+Estimator on the same solve: 0.894283 (0.894543 / 0.894022).
+
+**Disposition: (mixed), and the branch is not landed.** The ladder is
+monotone decreasing — the new gate (`test_control_sigma_ladder_separates_
+loss_from_gap`) asserts the intermediate rung lies between the endpoints, an
+ordering identity that fails loudly if σ = 800 is noise or if σ leaks
+somewhere it should not — but the σ = 800 rung sits **78.673 pp** from the
+estimator and **81.487 pp** from control(σ = 0), against 0.7 pp bands on a
+2.814 pp endpoint spread. Neither band is reachable; nothing was re-pointed;
+`REACTION_CONSISTENCY_TOLERANCE` stays 0.03 and `MUTUAL_TOLERANCE` is
+unmoved.
+
+**The finding is about the experiment, not the estimator.** The premise the
+18:00 review scoped this on — that σ is a small perturbation filling the
+(closed, lossy) corner of a 2×2 — is disproved by measurement. A *closed*
+lossy loop is a shorted turn: the induced circulating current reaches 41% of
+the impressed current at σ = 200 and 87% at σ = 800, and its back-field
+cancels most of the mutual EMF the reaction integral reads. σ and
+closed-vs-gapped are confounded on this control, so this route cannot
+separate them at any σ. The ~3% deviation is untouched — three owners stay
+excluded (wedge limits 3b-x, the ωM₁₂ reference 3b-viii, the PEC box 3b-xii)
+and loss-vs-gap is still open.
+
+**Two measurement notes for the review.** (a) At σ > 0 the driven footprint
+carries conduction current as well as the impressed drive, so "which current
+normalises Z₂₁" is ambiguous. I kept the σ = 0 control's normalisation
+(projected impressed current) so the code path stays byte-identical, and
+printed the conduction current alongside; the |I_cond/I′| column is that
+diagnostic, and it is what diagnosed the degeneracy. (b) The negative control
+on record — the wedge-only estimator at 0.5181/0.5352, 15× the threshold — is
+cited, not recomputed; this run did not re-derive it.
+
+**A real `src/` defect the step tripped over, parked with the branch.**
+`_validate_material_map_tags` tested `cell_tags.values`, which is rank-local.
+A material map over the two 1 mm gap boxes is valid globally but absent from
+one rank of two, so that rank raised `ValueError: ... Known tags: [1, 2, 3]`
+while the other entered the solve and hung in the first collective until the
+ceiling: 16 errors and a 246.8 s pytest session that cost the command 601 s
+(exit 124). Fixed by reducing the tag set with `mesh.comm.allgather` before
+testing it, with the measurement in the docstring. **This is independent of
+`PORT-1` and would be a clean standalone landing** — it is parked only
+because the protocol parks all code on an incomplete run. A review should
+decide whether to cherry-pick it onto `main`; any future material map over a
+small subdomain hits the same trap at any rank count.
+
+- Logs: `20260808T003238Z_PORT-1-step3bxiii-ladder-n2.log` (the rank-local
+  failure, exit 124, 601 s — kept deliberately as the defect's evidence);
+  `20260808T004346Z_PORT-1-step3bxiii-ladder-b-n2.log` (the ladder, `-n 2`,
+  standard, 344.6 s, 20 passed + the known consistency gate red, exit 1).
+  Both are on `main`; the code is not.
+- Branch (parked): `attempt/PORT-1-step3bxiii-20260808T005500Z` (`82bfb40`),
+  carrying the full 3b-ix → 3b-xii lineage plus this step.
+  `attempt/PORT-1-step3bxii-20260807T170000Z` (`87bf35d`) is now strictly an
+  ancestor of it and is the review's to dispose of.
+- **Next-attempt hypothesis.** The other half of the sweep the 3b-xii note
+  offered is the one that is *not* degenerate: drive the **production** gapped
+  loop at σ → 0 and compare it to the same estimator. That moves σ while
+  holding the gap fixed, so the two variables separate in the direction that
+  works — the gapped fixture stays gapped, and a lossless gapped loop carries
+  no shorted-turn current to confound the reading. Cost should be one solve on
+  the existing 178 055-cell mesh (~25 s) plus the estimator drives, i.e. the
+  same ~350 s envelope as this run. If that lands the estimator on the σ = 0
+  control, loss owns the 3% and the branch lands; if it does not, the gap
+  geometry is the last suspect and the escalation is real.

@@ -3472,7 +3472,57 @@ memory, not time, is the binding constraint.)*
 >   result's disposition, and it is still a finding — the wedge correction
 >   was not the last defect.
 >
-> * **Step 3b-xiii — the σ ladder on the control: loss or gap?** *(scoped
+> * **Step 3b-xiii — executed 2026-08-08 (19:30 run), disposition (mixed):
+>   the closed+lossy corner is physically degenerate** 🟡 *(parked on
+>   `attempt/PORT-1-step3bxiii-20260808T005500Z` (`82bfb40`), which carries
+>   the full 3b-ix → 3b-xii lineage plus this step)*. Fixture identity first
+>   and it byte-reproduces the branch's record **exactly** — estimator
+>   0.894543 / 0.894022 × ωM₁₂, control(σ = 0) 0.922423, deviation
+>   **−3.0224e-02** — so nothing geometric moved. The ladder, σ applied to the
+>   wire ∪ gap-box footprints of both loops through the same DG0 material map
+>   the production solves use (`-n 2`, standard, **344.6 s**, 20 passed + the
+>   known consistency gate red,
+>   `20260808T004346Z_PORT-1-step3bxiii-ladder-b-n2.log`):
+>
+>   | control σ (S/m) | Im Z₂₁ (× ωM₁₂) | \|I_cond/I′\| |
+>   |---|---|---|
+>   | 0 | 0.922423 | — |
+>   | 200 | 0.496614 | 0.412 |
+>   | 800 | 0.107556 | 0.865 |
+>
+>   The ladder is **monotone decreasing** — the new ordering gate (the
+>   intermediate rung must lie between the endpoints, or the ladder measures
+>   noise rather than σ) passes — but it lands nowhere near either
+>   pre-decided band: control(σ = 800) sits **78.7 pp** from the estimator and
+>   **81.5 pp** from control(σ = 0), against 0.7 pp bands on a 2.81 pp
+>   endpoint spread. **Not tuned:** `REACTION_CONSISTENCY_TOLERANCE` stays
+>   **0.03**, nothing re-pointed, `MUTUAL_TOLERANCE` unmoved.
+>   **What it actually measured, which is a finding about the plan and not
+>   about the estimator:** the step's premise — that σ is a small perturbation
+>   filling the (closed, lossy) corner of a 2×2 — is **disproved**. A *closed*
+>   lossy loop is a shorted turn; the induced circulating current reaches 41%
+>   of the impressed current at σ = 200 and 87% at σ = 800, and its back-field
+>   cancels most of the mutual EMF the reaction integral reads. σ and
+>   closed-vs-gapped are therefore **not separable on this control** — the
+>   knob the review believed was independent is confounded with the very
+>   difference it was meant to isolate. The ~3% deviation is untouched by this
+>   step: three owners remain excluded (wedge limits 3b-x, the ωM₁₂ reference
+>   3b-viii, the PEC box 3b-xii) and the loss-vs-gap question is **still
+>   open**, but it now needs a *gapped* control (drive the production loop at
+>   σ → 0 — the other half of the sweep the 3b-xii note offered) rather than a
+>   lossy closed one. That is the escalation, and it is the weekly review's.
+>   **Also fixed here, and independent of `PORT-1`:**
+>   `_validate_material_map_tags` tested rank-local `cell_tags.values`, so a
+>   material map over the two 1 mm gap boxes — valid globally — raised on one
+>   rank of two while the other entered the solve and hung in the first
+>   collective until the ceiling: a 246 s test session cost 601 s and 16
+>   errors (`20260808T003238Z_PORT-1-step3bxiii-ladder-n2.log`). The tag set
+>   is now reduced with `mesh.comm.allgather` before it is tested. It is
+>   parked with the rest of the branch, but it is a standalone rank-safety
+>   defect fix and a review should consider landing it on its own.
+>   *(Original plan retained below for the record.)*
+>
+> * **Step 3b-xiii — plan as scoped** *(scoped
 >   2026-08-07, 18:00 review — the successor 3b-xii's disposition (ii) handed
 >   to a review. Works on `attempt/PORT-1-step3bxii-20260807T170000Z`
 >   (`87bf35d`), the one live lineage — 3b-x-b's branch was verified strictly
@@ -3997,8 +4047,21 @@ debt (items 3, 4). All five are mutually independent — no item depends on
 another landing first; item 1 works on its `attempt/*` branch, everything
 else on `main`.
 
-1. **`PORT-1` step 3b-xiii — the σ ladder on the control: loss or gap?
-   Lands the branch under its (loss) disposition.** Critical path. Works on
+1. ~~**`PORT-1` step 3b-xiii**~~ — **done 2026-08-08 (19:30 run), disposition
+   (mixed); branch NOT landed.** The ladder is monotone (0.922423 → 0.496614
+   → 0.107556 × ωM₁₂) but the σ = 800 rung misses both 0.7 pp bands by ~79 pp:
+   a closed lossy loop is a shorted turn (`|I_cond/I′|` = 0.412 → 0.865), so σ
+   is confounded with closed-vs-gapped and the corner cannot be filled this
+   way. Fixture identity byte-reproduced first. Parked on
+   `attempt/PORT-1-step3bxiii-20260808T005500Z`; §7 and known-issues 3
+   annotated; a rank-safety fix to `_validate_material_map_tags` rode along
+   and wants a review's decision on landing it separately. The loss-vs-gap
+   question is open and escalates — the remaining half of the sweep is a
+   *gapped* control at σ → 0.
+
+   *(Original item text, for the record.)* **The σ ladder on the control: loss
+   or gap? Lands the branch under its (loss) disposition.** Critical path.
+   Works on
    `attempt/PORT-1-step3bxii-20260807T170000Z` (`87bf35d`). Execute the §7
    step-3b-xiii plan: byte-reproduce the padding-0.08 record first
    (estimator 0.894543 / 0.894022, control 0.922423, deviation
