@@ -164,6 +164,16 @@ jobs:
       run: |
         python3 -m pytest tests/io tests/materials tests/post -v --tb=short
 
+    # The step above runs serially, where a rank-local read cannot fail. The
+    # OPS-13 gate's whole subject is ranks disagreeing about a material map, so
+    # it needs a width > 1 and a second one to catch an even/odd partition
+    # artifact. Green at -n 2 (2.45 s) and -n 4 (0.49 s) with byte-identical
+    # printed digit strings (20260808T110323Z / 20260808T110339Z_OPS-13-gate).
+    - name: Material-map rank safety (parallel widths)
+      run: |
+        mpiexec -n 2 python3 -m pytest tests/materials/test_material_map_rank_safety.py -v --tb=short
+        mpiexec -n 4 python3 -m pytest tests/materials/test_material_map_rank_safety.py -v --tb=short
+
   # Frequency-domain validation, complex PETSc scalars.
   #
   # This exists because `TH-1` steps 1-3 made TimeHarmonicSolver.solve() an
@@ -229,6 +239,7 @@ jobs:
           tests/solver/test_boundary_condition_selection.py \
           tests/solver/test_energy_and_point_evaluation.py \
           tests/materials/test_phantom_material_model.py \
+          tests/materials/test_material_map_rank_safety.py \
           tests/post/test_phantom_field_metrics.py \
           tests/post/test_phantom_phasor_semantics.py \
           -v --tb=short

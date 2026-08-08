@@ -415,10 +415,77 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-10` | Complex-mode CI job for the frequency-domain gates | ✅ | smoke |
 | `OPS-11` | Put `tests/mesh` in CI — the directory no job runs | ✅ | smoke |
 | `OPS-12` | Adjudicate the residual-trend classifier (known-issues 2) and return `test_convergence_diagnostics.py` to CI | ✅ 2026-08-08 | standard |
-| `OPS-13` | Land the rank-safe `_validate_material_map_tags` fix on `main` with its own gate | ⬜ | standard |
+| `OPS-13` | Land the rank-safe `_validate_material_map_tags` fix on `main` with its own gate | ✅ 2026-08-08 | standard |
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ⬜ | standard |
 
-**`OPS-13` — land the rank-safe material-map validation on `main`** ⬜
+**`OPS-13` — land the rank-safe material-map validation on `main`** ✅
+*(scoped 2026-08-08, 03:00 review; closed 2026-08-08, 06:00 run.)*
+> **Landed, gated, and the gate was proved red before the fix.** The hunk is
+> byte-identical to `82bfb40`'s (verified by diffing the two patches'
+> added/removed lines, not by eye alone) — signature gains `mesh`, the tag set
+> is reduced with `mesh.comm.allgather` before it is tested, both call sites
+> updated, and the docstring records the 3b-xiii measurement. `OPS-12`'s
+> `setConvergenceHistory()` edit at ~line 438 does not overlap; nothing else
+> from the branch rode along.
+>
+> **New gate** `tests/materials/test_material_map_rank_safety.py`, three tests.
+> The fixture is the worst case on purpose: **exactly one cell** of a 162-cell
+> unit cube is tagged, so at any rank count > 1 at least one rank's local tag
+> array is empty. The cell is chosen partition-independently (owned midpoint
+> nearest a fixed point, ties to the lowest rank), and the fixture asserts the
+> global tagged count is 1 by `allreduce`.
+> **Anchors, both asserted on every rank.** (1) Exact set identity — the
+> allgathered tag set `== {7}`, the enumerated global set, plus
+> `total_cells == 162`. (2) The volume identity, with σ_default = 0 so the
+> integral is a bare product: `∫σ dx = 1.23456790123456805e+00` against
+> `σ × V_tagged = 1.23456790123456828e+00` and against the closed form
+> `200/162 = 1.23456790123456805e+00` (rel 1e-12; the only slack is
+> floating-point summation order). `V_tagged = 6.17283950617284090e-03`
+> against the Kuhn-subdivision closed form `1/162 = 6.17283950617283916e-03`
+> — 2.8e-16 relative. μᵣ and εᵣ integrals are checked against the same
+> one-cell partition independently (2.0/1.0 and 4.0/1.0 weightings).
+> **Every printed digit string is identical at `-n 2` and `-n 4`** — the
+> partition-independence claim, measured rather than argued.
+> **Negative control:** a map naming absent tag 4242 raises `ValueError` on
+> **every** rank from both `build_material_fields` and `build_mu_r_field`, and
+> the message must name both 4242 *and* the surviving global tag 7 — under the
+> old code a rank owning no tagged cell reported `Known tags: []`. The
+> `cell_tags=None` guard is separately re-asserted, unchanged by the reduction.
+> **Red baseline (the gate has teeth):** with the one hunk stashed, the same
+> command at `-n 2` reproduces the 3b-xiii failure mode exactly — the accept
+> test `FAILED` on one rank while the other hung in a collective, session
+> killed at the ceiling, **exit 124 / 120 s**
+> (`20260808T110411Z_OPS-13-baseline-red-n2.log`).
+> **Gates:** 3 passed at `-n 2` in 2.45 s
+> (`20260808T110323Z_OPS-13-gate-n2.log`); 3 passed at `-n 4` in 0.49 s
+> (`20260808T110339Z_OPS-13-gate-n4.log`); 7 passed under the complex build
+> with `FEM_EM_REQUIRE_COMPLEX=1` and `tests/environment` first, 1.18 s
+> (`20260808T110348Z_OPS-13-gate-complex.log`); post-restore re-confirmation
+> 3 passed, 0.43 s (`20260808T110636Z_OPS-13-gate-final-n2.log`).
+> **Regression on every caller of the two builders** (complex,
+> `tests/environment` + `tests/materials` +
+> `test_current_divergence.py` + `test_poynting_balance.py`): **22 passed in
+> 120.46 s**, exit 0 (`20260808T110648Z_OPS-13-regress-complex.log`).
+> Standard tier throughout; no assertion anywhere was loosened and no
+> tolerance moved. **Closes nothing else:** known-issues 6 is a different code
+> path (`OPS-14`), and no `PORT-1` question is touched.
+>
+> **CI.** `tests/materials` runs in the `validation` job **serially**, where a
+> rank-local read cannot fail — so the file is added twice: to
+> `validation-complex`'s explicit list (it runs at `-n 2` there), and as a new
+> `validation` step running it at `-n 2` **and** `-n 4`, because one width
+> cannot distinguish a fix from an even-partition artifact. Verified with the
+> CI-fidelity invocation — no `PYTHONPATH` override, both widths — 3 passed
+> each, 0.43 s, exit 0 (`20260808T111107Z_OPS-13-ci-fidelity.log`).
+>
+> **Observed and deliberately left alone:** `build_material_fields`'s
+> `phantom_cells.size == 0` check (same file, phantom branch) reads the same
+> rank-local array and would raise on a rank owning no phantom cells. It is
+> out of `OPS-13`'s scope — one hunk was what this chunk authorized — and no
+> current fixture puts a phantom entirely on one rank, so it is unmeasured
+> rather than known-broken. Worth a review's scoping as its own chunk.
+>
+> *(Original scoping text below, for the record.)*
 *(scoped 2026-08-08, 03:00 review, from the `PORT-1` step 3b-xiii park. The
 fix exists, measured and documented, on
 `attempt/PORT-1-step3bxiii-20260808T005500Z` (`82bfb40`) — it is parked only
@@ -3761,8 +3828,9 @@ memory, not time, is the binding constraint.)*
 >   is now reduced with `mesh.comm.allgather` before it is tested. It is
 >   parked with the rest of the branch, but it is a standalone rank-safety
 >   defect fix and a review should consider landing it on its own.
->   *(The fix is now scoped for `main` as `OPS-13`; the branch keeps its own
->   copy, and whichever lands second reconciles a near-identical hunk.)*
+>   *(**Landed on `main` 2026-08-08 by `OPS-13`** (06:00 run) with its own
+>   gate; the branch keeps its own copy of the identical hunk, so whoever
+>   lands the branch resolves a trivial already-applied conflict.)*
 >   *(Original plan retained below for the record.)*
 >
 > * **Step 3b-xiv — executed 2026-08-08 (04:30 run): the gapped σ = 0 corner
@@ -4467,7 +4535,12 @@ both §7 entries.
    a degenerate σ = 0 solve/normalisation is itself the measurement —
    report it, never substitute a small σ > 0 silently.
 
-2. **`OPS-13` — land the rank-safe `_validate_material_map_tags` fix on
+2. **✅ DONE 2026-08-08 (06:00 run) — landed on `main` with its own gate;
+   red baseline exit 124 / 120 s, green 3 passed at `-n 2` and `-n 4` with
+   byte-identical digit strings, 22-passed caller regression under the
+   complex build. Full write-up in §7. Not selectable — skip to item 3.**
+   *(Original text below.)*
+   **`OPS-13` — land the rank-safe `_validate_material_map_tags` fix on
    `main`, gated.** Independent; `main`; the fix already exists measured on
    the parked branch. Execute the §7 `OPS-13` plan: take exactly the one
    `time_harmonic.py` hunk from `82bfb40` by hand (do **not** cherry-pick

@@ -6596,3 +6596,97 @@ drive it the production way, and read the estimator against the same control.
 That moves the one variable the two routes still differ in, at the σ where both
 are well-posed. It needs the weekly review's licence — it changes the fixture's
 topology, which no step so far has done.
+
+---
+
+## 2026-08-08T11:10Z — `OPS-13` — **complete** (✅ on `main`): the parked
+## rank-safety fix landed, and its gate was proved red before the fix went in
+
+**Slot:** scheduled implementer run, 06:00 CDT grid slot. Tree clean at
+preflight, container Up, no `recovered/*` branches. On-deck item 1
+(`PORT-1` step 3b-xiv) is marked executed-and-not-selectable by the 04:30 run,
+so item 2 was taken as the protocol directs.
+
+**What was done.** Took the single `time_harmonic.py` hunk from
+`attempt/PORT-1-step3bxiii-20260808T005500Z` (`82bfb40`) by hand — no
+cherry-pick, so none of the branch's 2000-line test file or its logs rode
+along. Verified the applied hunk is byte-identical to the branch's by diffing
+the two patches' added/removed lines against each other (not by eye):
+identical. `OPS-12` moved this file at ~line 438
+(`setConvergenceHistory()`); the hunks are disjoint, confirmed by reading the
+pre-image region. `_validate_material_map_tags` now takes `mesh` and reduces
+the tag set with `mesh.comm.allgather` before testing it; both call sites
+updated; the docstring carries the 3b-xiii measurement.
+
+**New gate:** `tests/materials/test_material_map_rank_safety.py`, 3 tests.
+Fixture is the worst case — **exactly one** cell of a 162-cell unit cube is
+tagged, so above one rank at least one rank's local tag array is empty. The
+cell is picked partition-independently (owned midpoint nearest a fixed point,
+ties to lowest rank); the global tagged count is `allreduce`-asserted to be 1.
+
+**Measured numbers** (all asserted on every rank):
+- exact set identity: allgathered tag set `== {7}`; `total_cells == 162`.
+- volume identity with σ_default = 0, so the integral is a bare product:
+  `∫σ dx = 1.23456790123456805e+00` vs `σ × V_tagged =
+  1.23456790123456828e+00` and vs the closed form `200/162 =
+  1.23456790123456805e+00`, rel 1e-12 (the only slack is summation order).
+- `V_tagged = 6.17283950617284090e-03` vs the Kuhn-subdivision closed form
+  `1/162 = 6.17283950617283916e-03` — **2.8e-16** relative.
+- μᵣ and εᵣ integrals checked independently against the same one-cell
+  partition (2.0/1.0 and 4.0/1.0 weightings), rel 1e-12.
+- **every printed digit string is identical at `-n 2` and `-n 4`** — the
+  partition-independence claim, measured rather than argued.
+
+**Negative controls.** (1) Absent tag 4242 raises `ValueError` on **every**
+rank from *both* builders, and the message must name 4242 *and* the surviving
+global tag 7 — under the old code a rank owning no tagged cell reported
+`Known tags: []`, so this half of the assertion is itself a regression test on
+the reduction. (2) The `cell_tags=None` guard re-asserted, unchanged.
+(3) **The red baseline.** With the one hunk stashed, the same command at
+`-n 2` reproduces the 3b-xiii failure mode exactly: the accept test `FAILED`
+on one rank while the other hung in a collective, session killed at the
+ceiling — **exit 124, 120 s**. The stash was popped immediately afterwards and
+the green run repeated to confirm the restore.
+
+**Logs** (standard tier throughout):
+- `20260808T110323Z_OPS-13-gate-n2.log` — 3 passed, 2.45 s, exit 0
+- `20260808T110339Z_OPS-13-gate-n4.log` — 3 passed, 0.49 s, exit 0
+- `20260808T110348Z_OPS-13-gate-complex.log` — 7 passed (env first,
+  `FEM_EM_REQUIRE_COMPLEX=1`), 1.18 s, exit 0
+- `20260808T110411Z_OPS-13-baseline-red-n2.log` — **red baseline**, exit 124,
+  120 s (fix stashed)
+- `20260808T110636Z_OPS-13-gate-final-n2.log` — post-restore, 3 passed, 0.43 s
+- `20260808T110648Z_OPS-13-regress-complex.log` — every caller of the two
+  builders (`tests/environment`, `tests/materials`,
+  `test_current_divergence.py`, `test_poynting_balance.py`) under the complex
+  build: **22 passed, 120.46 s**, exit 0
+- `20260808T111107Z_OPS-13-ci-fidelity.log` — the new CI step's exact
+  invocation (no `PYTHONPATH`), `-n 2` then `-n 4`: 3 passed each, 0.43 s,
+  exit 0
+
+**CI.** `tests/materials` runs serially in the `validation` job, where this
+class of bug cannot fail, so the file was added twice: to
+`validation-complex`'s list, and as a new `validation` step at `-n 2` **and**
+`-n 4` (one width cannot separate a fix from an even-partition artifact).
+
+**What was not touched.** No tolerance moved, no assertion loosened, no
+`PORT-1` question answered, known-issues 6 untouched (`OPS-14` owns it — a
+different code path). The parked branch keeps its own copy of the hunk, so
+whoever lands it resolves a trivial already-applied conflict; noted in the
+landing commit and in §7. The red `lint` job stays expected-red per the 03:00
+review's adjudication — not touched in passing.
+
+**One finding for the next review, deliberately not fixed.**
+`build_material_fields`'s phantom branch has the *same* shape of bug:
+`phantom_cells = cell_tags.indices[cell_tags.values == phantom_tag]` followed
+by `if phantom_cells.size == 0: raise ValueError(...)` reads the rank-local
+array, so a phantom living entirely on one rank would raise on the others —
+the identical collective-disagreement hang. It is out of `OPS-13`'s scope (one
+hunk was what the chunk authorized) and **unmeasured**, not known-broken: no
+current fixture puts a phantom on a single rank, and the phantom is large in
+every fixture that exists. Recommended as its own small OPS chunk, gated the
+same way this one was (one-cell phantom tag, assert build succeeds on all
+ranks) — the fixture in the new test file is directly reusable.
+
+**Next-attempt hypothesis:** none needed for `OPS-13`. The queue's next
+selectable item is `MAG-6` step 2.

@@ -136,16 +136,31 @@ class TimeHarmonicFields:
 
 
 def _validate_material_map_tags(
+    mesh: dolfinx.mesh.Mesh,
     cell_tags: Optional[dolfinx.mesh.MeshTags],
     material_map: Mapping[int, HomogeneousMaterial],
 ) -> None:
-    """Every tag a material_map names must exist in the mesh's cell tags."""
+    """Every tag a material_map names must exist in the mesh's cell tags.
+
+    ``cell_tags.values`` is **rank-local**: a subdomain small enough to live
+    entirely on one rank is simply absent from every other rank's array, so the
+    unreduced check rejects a perfectly valid map on some ranks and accepts it
+    on others.  That is worse than a wrong answer — the ranks then disagree
+    about whether to enter the solve, and the ones that do hang in the first
+    collective until the harness timeout kills them.  (Measured: PORT-1 step
+    3b-xiii, `20260808T003238Z_PORT-1-step3bxiii-ladder-n2.log` — a material
+    map over the two 1 mm gap boxes, valid globally, raised "Known tags:
+    [1, 2, 3]" on one of two ranks and cost the run 601 s to a 246 s test
+    session.)  The tag *set* is a global property of the mesh, so it is
+    reduced before it is tested.
+    """
     if cell_tags is None:
         raise ValueError(
             "material_map requires problem.cell_tags so each requested tag can be assigned a material"
         )
 
-    known_tags = {int(tag) for tag in np.asarray(cell_tags.values)}
+    local_tags = {int(tag) for tag in np.asarray(cell_tags.values)}
+    known_tags = set().union(*mesh.comm.allgather(local_tags))
     missing_tags = sorted(int(tag) for tag in material_map if int(tag) not in known_tags)
     if missing_tags:
         raise ValueError(
@@ -178,7 +193,7 @@ def build_mu_r_field(
     mu_values[:] = float(default_material.mu_r)
 
     if material_map:
-        _validate_material_map_tags(cell_tags, material_map)
+        _validate_material_map_tags(mesh, cell_tags, material_map)
         for tag, tagged_material in material_map.items():
             tagged_material.validate(context=f"material_map[{int(tag)}]")
             tag_cells = cell_tags.indices[cell_tags.values == int(tag)]
@@ -217,7 +232,7 @@ def build_material_fields(
     epsilon_values[:] = float(default_material.epsilon_r)
 
     if material_map:
-        _validate_material_map_tags(cell_tags, material_map)
+        _validate_material_map_tags(mesh, cell_tags, material_map)
 
         for tag, tagged_material in material_map.items():
             tagged_material.validate(context=f"material_map[{int(tag)}]")
