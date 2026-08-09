@@ -1314,8 +1314,37 @@ tolerance.*
 > numbers, annotate here; if a real reduction defect surfaces, it gets a
 > known-issues entry and a fix is scoped by a review, not improvised in-slot.
 
-**`MAG-13` step 2 diag — separate the harness death from the physics
-(MESH_ONLY discriminator)** *(scoped 2026-08-09, 03:00 review, from the
+**`MAG-13` step 2 diag — EXECUTED 2026-08-09 (07:30 slot): the mesh rung
+reproduces exactly; no stage owns the kill.** *(`MAG-13` stays ✅; the < 5%
+target stays unmeasured-not-missed; stage 2 stays blocked pending a review.)*
+> **Measured** (`20260809T123053Z_MAG-13-step2-meshonly-diag.log`, exit 0,
+> **188 s** harness-wall vs the 196 s record, heavy envelope, `-n 4`,
+> `timeout 1200`, real build, FFCx cache cleared first): the anchor is met —
+> **1 097 873 cells**, equal to the 2026-08-08 record digit for digit, mesh
+> 185.7 s (record 192.7 s, −3.6%), `## Exit` block present, `test-results.md`
+> row written, 668 lines. The log is structurally identical to the record's,
+> both `Done optimizing mesh` lines at line 486 / 663 (fine volume
+> optimisation 142.4 s vs 147.8 s). Container before *and* after:
+> `StartedAt = 2026-08-08T20:00:21Z`, `RestartCount = 0`, Up 17 h — unchanged
+> across this run and both deaths.
+> **Branch (a) fired literally, its inference did not.** MESH_ONLY completes,
+> but "the kill is specific to the longer/heavier solve stage" is refuted by
+> the second death's own position: `20260809T003125Z…-cap16G.log` stops
+> mid-Netgen **volume optimisation of the fine mesh** (`Total badness =
+> 1.36536e+06`, before any `Done optimizing mesh (Wall 14x s)`, before any
+> solve) — inside the phase MESH_ONLY has now completed twice at the same rank
+> count and resolution. One death in the mesh phase, one past it in the solve,
+> and the mesh phase runs clean on demand ⇒ **no stage owns the kill**. With
+> the 6.7× time-to-death spread and the never-restarted container, what
+> survives is a non-deterministic host-side kill of the process tree,
+> uncorrelated with the computation. **The physics is fully exonerated**, so
+> branch (b)'s *consequence* is the one taken: the known-issues entry is
+> updated and the host-side question (dmesg/journalctl at 20:15Z / 00:33Z,
+> WSL2 reclaim, session supervisor) is on the dashboard for the human —
+> unobservable from inside the container. Stage 2 was **not** run under any
+> outcome, per the plan. Nothing closes and nothing reopens.
+>
+> *Original plan, retained verbatim:* *(scoped 2026-08-09, 03:00 review, from the
 known-issues non-test entry's own next-step: two unexplained mid-command
 harness deaths on this probe's stage-2 solve (15:00 and 19:30 slots,
 2026-08-08) fired the pre-registered escalation — the solve is **not**
@@ -5410,7 +5439,16 @@ scoped after `EX-11` lands.
    report, stop, known-issues entry.
 
 3. **`MAG-13` step 2 diag — MESH_ONLY harness discriminator (heavy
-   envelope, ~200 s expected).** Execute the §7 step-2-diag plan: the
+   envelope, ~200 s expected).** ✅ **Done 2026-08-09, 07:30 run** —
+   the mesh rung reproduced **exactly** (1 097 873 cells, 185.7 s vs the
+   192.7 s record, exit 0, Exit block, 188 s harness-wall;
+   `20260809T123053Z_MAG-13-step2-meshonly-diag.log`), container
+   `RestartCount = 0` / `StartedAt` unchanged. Branch (a) fired literally but
+   **its inference is refuted**: the 19:30 death sits *inside* the mesh phase
+   this run completed twice, so **no stage owns the kill** — non-deterministic
+   host-side, physics exonerated, host-side observables now the human's ask
+   (dashboard). Stage 2 not run. See the §7 closure note and the updated
+   known-issues entry. Execute the §7 step-2-diag plan: the
    landed probe with `MAG13_STEP2_MESH_ONLY=1` at `-n 4`, `timeout 1200`;
    assert cell count 1 097 873 / exit 0 / Exit block present against the
    196 s record; record container uptime + `RestartCount` after. Do **not**

@@ -17,13 +17,18 @@
    shared infrastructure). Until one happens, `MAT-6` step 7 stays 🚫 and
    the additivity measurement stays open. The 16 G cap is confirmed at the
    kernel (`/sys/fs/cgroup/memory.max = 17179869184`).
-2. **FYI, reliability — the unexplained harness kill struck twice** (same
-   command, ~660 s then ~99 s in, no exit record, no OOM signature; the
-   container never restarted, so the kill is host-side, outside Docker).
-   A diagnostic slot is queued (item 3) that runs a stage that has already
-   completed once; if *that* also dies, the next review will ask you for
-   host-side observables (dmesg/journalctl, WSL2 memory reclaim) that
-   sessions cannot see from inside the container.
+2. **Host-side observables needed — the unexplained harness kill is now
+   diagnosed as far as we can see from inside.** The diagnostic ran
+   (2026-08-09, 07:30 slot): the mesh stage reproduced **exactly**
+   (1 097 873 cells, 185.7 s vs the 192.7 s record, clean exit), and the
+   container never restarted. Crucially, one of the two deaths happened
+   *inside that very stage* — so **no stage owns the kill**; it is a
+   non-deterministic host-side kill of the process tree, and the physics is
+   exonerated. What sessions cannot see: **`dmesg -T` / `journalctl -k`
+   around 2026-08-08 20:15Z and 2026-08-09 00:33Z**, WSL2 `vmmem` memory
+   reclaim, and any host cron/session supervisor that could reap a long
+   process tree. Anything you can paste from those unblocks the `MAG-13`
+   step 2 solve, which stays blocked pending a review.
 3. Local `main` is now ~25 commits ahead of `origin/main` — a push
    whenever convenient still triggers the first-ever GitHub-runner
    execution of `validation-complex`. First Ansys benchmark case is

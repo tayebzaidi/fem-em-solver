@@ -552,14 +552,44 @@ host-side process tree is being killed. The 6.7× spread in time-to-death also
 argues against a deterministic per-run resource ceiling, which would land at a
 repeatable point on a fixed fixture.
 
-**Standing instruction (unchanged in force, now escalated):** a run that finds
-its log truncated this way should treat the measurement as *unobserved*, not
-failed. Two occurrences are on record, so **do not spend a third slot on the
-`MAG-13` step 2 solve**; the next diagnostic step is to separate the harness
-from the physics — re-run the same probe with `MAG13_STEP2_MESH_ONLY` (a stage
-that has completed once, at 196 s, so a death there is diagnostic rather than
-ambiguous). Cause unknown; this entry leaves only with a commit that names and
-fixes it.
+**MESH_ONLY discriminator executed — 2026-08-09, 07:30 slot; the physics is
+exonerated and the kill is *not* stage-correlated.** The queued next step ran
+(`20260809T123053Z_MAG-13-step2-meshonly-diag.log`, exit 0, 188 s harness-wall,
+668 lines, `## Exit` block present, `test-results.md` row written): the same
+probe, same `-n 4`, same harness path, `MAG13_STEP2_MESH_ONLY=1`, FFCx cache
+cleared first. It **reproduced the mesh rung exactly** — **1 097 873 cells**,
+equal to the 2026-08-08 record digit for digit, in 185.7 s (record 192.7 s,
+−3.6%); the log is structurally identical to the record's, both with their two
+`Done optimizing mesh` lines at the same line numbers (486 / 663; fine
+volume-optimisation wall 142.4 s here vs 147.8 s on record). Container state
+before and after: `StartedAt = 2026-08-08T20:00:21Z`, `RestartCount = 0`, Up
+17 h — unchanged across this run and both deaths.
+
+**What that rules out, and the part that contradicts the pre-decided reading.**
+Branch (a) of the §7 plan fired literally — MESH_ONLY completes — but its
+inference ("the kill is specific to the longer/heavier solve stage") does **not
+survive this run's own comparison**: the 19:30 death stopped mid-Netgen *volume
+optimisation* of the fine mesh (`Total badness = 1.36536e+06`, before any
+`Done optimizing mesh (Wall 14x s)` line and before any solve), i.e. inside the
+very phase MESH_ONLY has now completed **twice** at the same rank count and
+resolution. So no stage owns the kill: one death is in the mesh phase, one past
+it in the solve, and the mesh phase runs clean on demand. Combined with the
+6.7× spread in time-to-death and the never-restarted container, the surviving
+hypothesis is a **non-deterministic host-side kill of the process tree,
+uncorrelated with the computation** — WSL2 memory reclaim / a host session
+supervisor are the live candidates, and none of it is observable from inside
+the container.
+
+**Standing instruction (unchanged in force):** a run that finds its log
+truncated this way should treat the measurement as *unobserved*, not failed.
+Do **not** spend a slot on the `MAG-13` step 2 solve — the stage-2 attempt
+stays blocked pending a review, and the diagnostic budget for it is spent
+(three data points, physics exonerated). What is left needs the **human
+operator**: host-side observables at the timestamps of the two deaths
+(20:15Z and 00:33Z on 2026-08-08/09) — `dmesg -T`, `journalctl -k`, WSL2
+`vmmem` reclaim, any host cron/session supervisor. On the dashboard's
+Waiting-on-you as of this slot. Cause unknown; this entry leaves only with a
+commit that names and fixes it.
 
 ### ✅ RETIRED 2026-08-09 — "rank-dependent DG0 centerline sample" was the probe's own bug (`MAG-6` step 4, second pass)
 

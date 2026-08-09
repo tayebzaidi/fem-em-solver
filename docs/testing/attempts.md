@@ -7538,3 +7538,62 @@ now has its compute path on record end to end (mesh → two solves → ΔR → |
 export, 71 s at `-n 2`), which was the stated reason it was held behind
 `EX-11`; the remaining §5.4 backfill (`EX-4`, `EX-12`, then `EX-5`…`EX-10`) is
 unaffected by this run and each still fits one slot.
+
+## 2026-08-09T12:35Z — `MAG-13` step 2 diag (MESH_ONLY discriminator) — **complete**: the mesh rung reproduces exactly, and the one death inside that same stage means no stage owns the kill
+
+**Slot:** 2026-08-09 07:30 CDT implementer run (12:30Z), §9 On-deck item 3
+(items 1 and 2 were already marked not-selectable / done). Tree clean at
+preflight, container Up 17 h, no `recovered/*` or `attempt/*` work needed.
+
+**What was run — one command, exactly the §7 step-2-diag plan.** FFCx cache
+cleared first (`rm -rf ~/.cache/fenics` inside the container, per the stale-lock
+trap), container state recorded before *and* after, then the landed probe
+unchanged with `MAG13_STEP2_MESH_ONLY=1` at `-n 4`, `timeout 1200`, real build,
+through `run_and_log.sh`. No `src/`, `tests/` or probe file was edited — this
+step is a measurement, and the instrument was already on record.
+
+**Measured** (`20260809T123053Z_MAG-13-step2-meshonly-diag.log`, exit 0, **188 s**
+harness-wall, heavy envelope, `-n 4`, 668 lines, `## Exit` block present,
+`test-results.md` row written):
+
+| | 2026-08-08 record | this run |
+|---|---|---|
+| cells | 1 097 873 | **1 097 873** (equal, digit for digit) |
+| mesh time | 192.7 s | 185.7 s (−3.6%) |
+| fine volume optimisation | 147.8 s (log line 663) | 142.4 s (log line 663) |
+| harness elapsed / exit | 196 s / 0 | 188 s / 0 |
+
+Container `StartedAt = 2026-08-08T20:00:21Z`, `RestartCount = 0`, Up 17 h —
+identical before and after this run, and unchanged across both deaths.
+
+**The reading: branch (a) fired literally, its inference is refuted.** MESH_ONLY
+completes, so per the plan that is branch (a) — but (a)'s inference, "the kill is
+specific to the longer/heavier solve stage", does not survive this run's own
+comparison. The 19:30 death (`20260809T003125Z…-cap16G.log`) stops **mid-Netgen
+volume optimisation of the fine mesh** (`Total badness = 1.36536e+06`, before any
+`Done optimizing mesh (Wall 14x s)` line and before any solve) — inside the phase
+this run has now completed twice at the same rank count and resolution. One death
+in the mesh phase, one past it in the solve, and the mesh phase runs clean on
+demand ⇒ **no stage owns the kill**. With the 6.7× time-to-death spread and the
+never-restarted container, the surviving hypothesis is a non-deterministic
+host-side kill of the process tree, uncorrelated with the computation. So
+branch (b)'s *consequence* is the one taken even though (a) is the branch that
+fired: physics fully exonerated, known-issues entry updated, host-side question
+escalated to the dashboard.
+
+**Not done, deliberately.** Stage 2 was not run under any outcome (plan trap);
+no gate moved, no bound touched, `MAG-13` stays ✅ and the < 5% target stays
+**unmeasured, not missed**. Nothing was retried and no third solve slot was spent.
+
+**Next-attempt hypothesis.** None for this step — the in-container diagnostic
+budget is spent (three data points). The `MAG-13` step 2 solve stays blocked
+pending a review, and the block is now waiting on the **human operator**:
+`dmesg -T` / `journalctl -k` around 2026-08-08 20:15Z and 2026-08-09 00:33Z,
+WSL2 `vmmem` reclaim, and any host cron/session supervisor that could reap a
+long process tree. If a review wants to spend one more in-container slot before
+that arrives, the cheapest untried discriminator is duration rather than stage:
+a long *no-op* (`sleep`-style or a trivially cheap loop) at the same `-n 4`
+harness path for ~700 s — if that also dies, the harness/session path is
+implicated with zero compute; if it survives, the kill needs memory pressure to
+fire and the 64 G cap raise (`MAT-6` step 7, Waiting-on-you 1) becomes the
+critical path for it too.
