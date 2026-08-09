@@ -7476,3 +7476,65 @@ gapped route has. If that reads within 0.7 pp of 0.922423 the gap owns the
 deviation after all. That is a one-solve change on this branch and fits the
 second licensed slot — but it is a *third* reading of a question the weekly
 review budgeted two slots for, so the licence call is the review's.
+
+---
+
+## 2026-08-09T11:05Z — `EX-11` — **complete**: the loaded-coil physics is now a runnable example, and it reproduces the `MAT-6` step-3 record digit for digit
+
+**Slot.** 06:00 implementer run, §9 item 2. Item 1 (`PORT-1` step 3b-xv) was
+already annotated "executed 2026-08-09, 04:30 run — not selectable again", so
+item 2 was the first open entry. Preflight: `main` clean at `118fad9`,
+container Up 15 h.
+
+**What was built.**
+
+* `examples/materials/01_dodd_deeds_coil_loading.py` — the `MAT-6` W = 0.15
+  fixture, two solves (σ = 100 / σ = 0 at 10 MHz), ΔR against
+  `utils.dodd_deeds.coil_impedance_change`, |J| exported into the slab.
+  Every constant, the mesh, the azimuthal drive and `_solve_projected` itself
+  are **imported** from `tests/validation/test_dodd_deeds_impedance.py` and
+  `tests/validation/test_dodd_deeds_projected_drive.py` — the example cannot
+  drift off the gate because it does not restate any of it.
+* `scripts/run_examples.sh` — a fourth group, `mat:` → `examples/materials/`,
+  complex build sourced exactly like `mri:`, included in `-e all` and in
+  `--list`. The example needs the complex build but is not an MRI case;
+  filing it under `mri:` would have made the listing lie to the operator.
+  `mesh:`/`mri:`/magnetostatics dispatch is untouched.
+
+**Measured** (`20260809T110326Z_EX-11-gate.log`, exit 0, 74 s harness-wall /
+70.8 s example-internal, standard tier, `-n 2`, `-t 180`, log line reads
+`(complex build)`): 138 619 cells (the record's count), mesh 10.8 s, solves
+29.4 s / 26.9 s, `I' = 0.919666` A, ΔZ = **+3.2770406e-01 + j(−5.6657895e-01)
+Ω** vs exact +3.2259615e-01 + j(−6.1586749e-01) Ω → ΔR **1.5834%** (2%
+ceiling) and ΔX ratio **0.9200** — every figure byte-identical to the `MAT-6`
+step-3 record, so the example path and the gate path are provably the same
+computation. Runner registration logged separately
+(`20260809T110317Z_EX-11-runner-list.log`, exit 0, 1 s):
+`mat:1 -> examples/materials/01_dodd_deeds_coil_loading.py` under
+"materials (complex build, sourced automatically)".
+
+**Two readings the gate does not have.** (i) Ohmic power in the slab from the
+solved field, `∫_slab (σ/2)|E|² dV` = **1.385836e-01 W**, against `½ ΔR I'²` =
+1.385836e-01 W from the reaction integral — ratio **1.0000**. Printed, not
+gated: the two are analytically the same statement, so it is a wiring check on
+the Poynting side, not independent evidence, and the plan licensed one anchor
+here. (ii) The |J| DG0 array ParaView colours by is asserted, not merely
+written — max **6.8396e+02 A/m²** loaded.
+
+**Negative control.** In-fixture and free: the σ = 0 half of the same solve
+pair dissipates **exactly 0.0 W** and carries **exactly 0.0 A/m²** of eddy
+current, asserted `== 0.0` with no tolerance (with σ zero cell by cell the
+integrand is identically zero — a tolerance here would only hide a σ-blind
+material map). Total separation against the loaded solve's finite values.
+
+**What was not claimed.** Nothing physics-side closes: 10 MHz, eddy-current
+regime, no Larmor/saline claim (§2.1), and the example prints that caveat on
+screen before it solves. ΔX is reported and explicitly not gated — unconverged
+in box size at W = 0.15 per `MAT-6` step 3. No test, no `src/` file and no
+tolerance was touched.
+
+**Next-attempt hypothesis.** None needed for `EX-11`. For the review: `ANS-1`
+now has its compute path on record end to end (mesh → two solves → ΔR → |J|
+export, 71 s at `-n 2`), which was the stated reason it was held behind
+`EX-11`; the remaining §5.4 backfill (`EX-4`, `EX-12`, then `EX-5`…`EX-10`) is
+unaffected by this run and each still fits one slot.

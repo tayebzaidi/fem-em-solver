@@ -4775,7 +4775,7 @@ mandate to displace the critical path.
 | `EX-8` | Resonance guard on a frequency sweep: the `TH-1` step-5 detector firing | ⬜ | standard |
 | `EX-9` | Measured h-convergence rate as an example output (Phase 1) | ⬜ | standard |
 | `EX-10` | Gauge cross-check: penalty vs Lagrange-multiplier Coulomb gauge (Phase 1) | ⬜ | standard |
-| `EX-11` | Dodd–Deeds coil loading: ΔR vs closed form, eddy currents in ParaView | ⬜ | standard |
+| `EX-11` | Dodd–Deeds coil loading: ΔR vs closed form, eddy currents in ParaView | ✅ | standard |
 | `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ⬜ | smoke |
 
 **`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
@@ -4834,6 +4834,45 @@ recorded.
 >   "saves `straight_wire.msh`" claim. Gate: a grep-style check that guides
 >   reference only files a run actually produces, plus re-run of `-e 1` and
 >   `-e mri:1` via the runner with their on-record numbers re-asserted.
+>
+> **`EX-11` ✅ 2026-08-09 (06:00 slot, §9 item 2).**
+> `examples/materials/01_dodd_deeds_coil_loading.py` lands and reproduces the
+> `MAT-6` step-3 record through the example path at every printed digit. Gate
+> `./run_examples.sh -e mat:1 -n 2 -t 180`
+> (`20260809T110326Z_EX-11-gate.log`, exit 0, 74 s harness-wall / 70.8 s
+> example-internal, standard tier, complex build sourced by the runner — the
+> log line reads `(complex build)`), preceded by `./run_examples.sh --list`
+> (`20260809T110317Z_EX-11-runner-list.log`, exit 0, 1 s), which enumerates
+> `mat:1 -> examples/materials/01_dodd_deeds_coil_loading.py` under
+> "materials (complex build, sourced automatically)" — the `EX-1` runner gap is
+> not repeated. **A new runner group.** The example needs the complex build but
+> is not an MRI case, so `scripts/run_examples.sh` gains a fourth group,
+> `mat:` → `examples/materials/`, sourced complex exactly like `mri:` and
+> included in `-e all`; `mesh:`/`mri:`/magnetostatics dispatch is untouched.
+> Measured, against the step-3 record: **138 619 cells** (the record's count),
+> mesh 10.8 s, solves 29.4 s / 26.9 s, `I' = 0.919666` A,
+> ΔZ = **+3.2770406e-01 + j(−5.6657895e-01) Ω** against exact
+> +3.2259615e-01 + j(−6.1586749e-01) Ω → ΔR **1.5834%** and ΔX ratio
+> **0.9200** — every figure byte-matching `MAT-6` step 3, so the example path
+> and the gate path are the same computation. Gated here at 2% on ΔR (the §7
+> `EX-11` plan's ceiling; the gate's own is 5%), plus the two signs (ΔR > 0,
+> ΔX < 0). ΔX is printed and explicitly *not* gated — unconverged in box size
+> at W = 0.15 per step 3. Two things the gate does not have: (i) the ohmic
+> power in the slab from the *solved field*, `∫_slab (σ/2)|E|² dV` =
+> **1.385836e-01 W**, against `½ ΔR I'²` = 1.385836e-01 W from the reaction
+> integral — ratio **1.0000**, a Poynting-side reading of the same physics
+> (analytically equivalent, so it is reported, not gated); (ii) the |J| array
+> ParaView colours by is checked, not merely written — **max |J| = 6.8396e+02
+> A/m²** loaded. Negative control, in-fixture and free: the σ = 0 half of the
+> same solve pair dissipates **exactly 0.0 W** and carries **exactly 0.0 A/m²**
+> of eddy current (asserted `== 0.0`, no tolerance — with σ zero cell by cell
+> the integrand is identically zero), against the loaded solve's finite values:
+> total separation. Every constant, the mesh, the azimuthal drive and the solve
+> itself are **imported** from `test_dodd_deeds_impedance.py` /
+> `test_dodd_deeds_projected_drive.py` rather than restated. **Closes nothing
+> physics-side:** 10 MHz, eddy-current regime; no Larmor/saline claim (§2.1),
+> and the example's report text says so on screen. Feeds `ANS-1`, which now has
+> its compute path on record, but does not start it.
 
 > **✅ Restored 2026-08-07 (19:30 slot, §9 item 1).** The runner path is now
 > on record. `./run_examples.sh --list`
@@ -5348,6 +5387,11 @@ scoped after `EX-11` lands.
    finding; report and park.
 
 2. **`EX-11` — Dodd–Deeds coil loading as a runnable example (standard).**
+   ✅ **Done 2026-08-09, 06:00 run** — `examples/materials/01_dodd_deeds_coil_loading.py`
+   plus a new `mat:` runner group; ΔR 1.5834% against Dodd–Deeds, every
+   figure byte-matching the `MAT-6` step-3 record, σ = 0 control at exactly
+   0.0 W / 0.0 A/m². Logs `20260809T110317Z_EX-11-runner-list.log`,
+   `20260809T110326Z_EX-11-gate.log` (74 s). See the §7 closure note.
    Execute the §7 `EX-4`…`EX-11` backfill plan's `EX-11` bullet: the
    `MAT-6` W = 0.15 fixture, two solves (σ = 100 / σ = 0 at 10 MHz),
    assert ΔR within 2% of the closed form (1.5834% on record, projected
