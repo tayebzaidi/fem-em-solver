@@ -1138,7 +1138,51 @@ Test: `tests/validation/test_coil_phantom_bfield_metrics.py`. Full write-up in
 > docstring. **Cost:** standard tier, 5 commands, 20 / 12 / 9 / 10 / 10 / 144 s.
 
 **`MAG-6` step 5 — re-point the gate fixture at the validated gauge floor**
-*(scoped 2026-08-09, 03:00 review — this is the review decision step 4
+✅ *(completed 2026-08-09, 12:00 run. **The gate now solves at the validated
+floor and both metrics landed on their step-4 predictions to better than
+0.01%, with the bounds untouched.** Three harness logs, standard tier:
+`20260809T170054Z` (`-n 2`, 15 s), `20260809T170117Z` (`-n 4`, 9 s),
+`20260809T170214Z` (`-n 2` confirming run after the docstring edits, 12 s),
+all `_MAG-6.log`.)*
+> **Readings, against step 4's on-record expectations.** Centerline jump ratio
+> (gated, ≤ 0.60): **0.250414** at `-n 2` and **0.250474** at `-n 4`, versus
+> the predicted 0.250416 / 0.250453 — deviations **0.0008%** and **0.008%**,
+> two to three orders inside the ~2% finding threshold. Mirror symmetry
+> (gated, ≤ 0.350): **0.311170 / 0.311166**, versus 0.311166 / 0.311157 —
+> **0.001%** and **0.003%**. Two-rank spread at the floor: **0.024%**
+> centerline, **0.001%** mirror. A third run of the same `-n 2` case read
+> 0.250404 / 0.311167, so run-to-run noise is ~0.03% — the 6.8% mesh noise on
+> record belongs to the old sub-floor fixture, as the step-5 scope predicted.
+> **The change is the one argument licensed** (`gauge_penalty=1e-3 → 1.0`),
+> plus in-file comment/print updates so the fixture's "on record" strings
+> quote the penalty-1.0 numbers rather than the retired sub-floor ones.
+> `tests/tolerances.py` is untouched; both bounds are untouched; no `src/`
+> change.
+> **In-fixture continuity observation.** The retired CG1 print-only path still
+> rank-swings at the validated floor — 0.323398 at `-n 2` against 0.714122 at
+> `-n 4`, **2.21×** — so the floor fixes the *gauge* contamination, not the
+> nodal-averaging defect that sent the sampling to DG0 in the first place.
+> The two mechanisms are independent and both remain correctly attributed.
+> **Finding for a review, not swept in-slot** (per the scope boundary): eight
+> other `gauge_penalty=1e-3` call sites remain —
+> `tests/solver/test_coil_phantom_magnetostatics.py:52`,
+> `test_convergence_diagnostics.py:148`, `test_boundary_condition_selection.py:75`,
+> `test_time_harmonic_smoke.py:52`, `tests/materials/test_phantom_material_model.py:165`,
+> `tests/post/test_phantom_field_metrics.py:79`,
+> `examples/mri/01_coil_phantom_fields.py:302` and `:334`, plus
+> `scripts/probes/ops12_probe.py:95`. Inspected, none is a quantitative
+> physics gate: the `tests/` ones assert finiteness, structure, or
+> material-field values (not solved-field magnitudes against a bound), so
+> the sub-floor solve cannot corrupt a gated number there. The one worth a
+> decision is **`examples/mri/01`**, which solves both legs sub-floor and
+> *does* carry on-record numbers — and `EX-12` is already queued to touch
+> that file, so the review may wish to fold it in.
+> **`MAG-6` stays ✅** and the ≤ 10% rank-stability claim stays the symmetry
+> metric's alone; the centerline's 0.024% at the floor is evidence toward
+> extending it, and remains a separate future decision.
+>
+> *Original scope, retained:*
+> *(scoped 2026-08-09, 03:00 review — this is the review decision step 4
 escalated, taken: the gate fixture
 (`tests/validation/test_coil_phantom_bfield_metrics.py`) solves at
 `gauge_penalty=1e-3`, below the validated floor of 1.0, and step 4 measured
@@ -5436,8 +5480,16 @@ the §5.4 backfill in the weekly review's own priority order. The `PORT-1`
 critical path is deliberately absent: the second licensed discriminator
 slot is the weekly review's to spend.
 
-1. **`MAG-6` step 5 — re-point the gate fixture at the validated gauge
-   floor (standard).** Execute the §7 step-5 plan: one argument in
+1. ~~**`MAG-6` step 5 — re-point the gate fixture at the validated gauge
+   floor (standard).**~~ — **done 2026-08-09 (12:00 run)**: the gate solves
+   at `gauge_penalty=1.0` with both bounds untouched, reading centerline
+   0.250414 / 0.250474 and mirror 0.311170 / 0.311166 at `-n 2/4` — within
+   0.008% of step 4's predictions, two-rank spread 0.024% / 0.001%. The
+   scope-boundary finding is filed in the §7 entry: eight other sub-floor
+   call sites, none a quantitative physics gate, but `examples/mri/01`
+   solves both legs sub-floor and carries on-record numbers — `EX-12`
+   already touches that file. *(Original item text follows.)* Execute the
+   §7 step-5 plan: one argument in
    `tests/validation/test_coil_phantom_bfield_metrics.py`
    (`gauge_penalty=1e-3 → 1.0`), bounds untouched (0.35 / 0.60), re-run at
    `-n 2/4`; expected readings on record from step 4 (centerline ~0.2505,

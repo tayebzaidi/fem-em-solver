@@ -20,6 +20,15 @@ monotonically). DG0 keeps the cell-wise value: it is rank-stable to 4.69%
 and falls at ``p ~ 1.07``, meeting the unchanged 0.350 bound at
 ``resolution = 0.010`` m. The CG1 number is still printed for continuity —
 it is never gated.
+
+**Why the solve runs at ``gauge_penalty=1.0``** (`MAG-6` step 5, 2026-08-09):
+1.0 is the validated gauge floor, and the fixture used to solve below it at
+1e-3. Step 4 measured the cost of the sub-floor solve — the centerline metric
+rank-scatters **88%** at 1e-3 and **0.341%** at 1.0 — so the gate now
+exercises the solver in its validated regime. Both bounds (0.350 / 0.60) are
+unchanged by that move, and both metrics tightened: at penalty 1.0 this
+fixture reads centerline 0.250414 / 0.250474 and mirror 0.311170 / 0.311166
+at ``-n 2/4``.
 """
 
 import numpy as np
@@ -85,10 +94,16 @@ def test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric():
     def current_density(x):
         return ufl.as_vector([0.0, 0.0, current_density_magnitude])
 
+    # `MAG-6` step 5 (2026-08-09): solve at the *validated* gauge floor.  The
+    # fixture used to run at 1e-3, below that floor, and step 4 measured what
+    # the sub-floor solve costs: the centerline metric rank-scatters 88%
+    # there, against 0.341% at penalty 1.0 (0.251272 / 0.250416 / 0.250453 at
+    # `-n 1/2/4`; the mirror metric moves 0.022%, 0.311226 / 0.311166 /
+    # 0.311157).  Both bounds are untouched by this change.
     solver.solve(
         current_density=current_density,
         subdomain_ids=[1, 2],
-        gauge_penalty=1e-3,
+        gauge_penalty=1.0,
     )
 
     b_field = solver.compute_b_field()
@@ -112,8 +127,10 @@ def test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric():
     # centerline jump ratio reads 0.318029 at `-n 2` but 0.705 / 0.732 on two
     # *identical* `-n 4` runs — it is rank-dependent and not even run-to-run
     # reproducible, because a nodal average of a cell-wise-constant field
-    # depends on which cells the partition hands the node.  DG0 reads 0.227869
-    # at `-n 4` on the same solve.  The 0.60 tolerance is untouched.
+    # depends on which cells the partition hands the node.  (At the step-5
+    # gauge floor the retired path still swings: 0.323398 / 0.714122 at
+    # `-n 2/4`, 2.21×.)  DG0 at the same floor reads 0.250414 / 0.250474 at
+    # `-n 2/4` — 0.024% apart.  The 0.60 tolerance is untouched.
     centerline_b, centerline_valid = evaluate_vector_field_parallel(
         b_dg0,
         centerline_points,
@@ -213,7 +230,8 @@ def test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric():
         "Mirror-symmetry (discretisation) check failed for ±x phantom points on the "
         f"DG0 sampling path; max_rel_diff={max_pair_rel_diff:.6f} (tol {symmetry_rel_tol:.3f}), "
         f"max_abs_diff={max_pair_abs_diff:.3e} (diagnostic scale {symmetry_abs_tol:.3e}). "
-        "On record at this fixture: 0.312197 / 0.304356 / 0.323844 at -n 2/4/1."
+        "On record at this fixture (gauge_penalty=1.0, `MAG-6` step 5): "
+        "0.311170 / 0.311166 at -n 2/4."
     )
 
     # Continuity print only — never gated.  CG1 is the retired path: 3.03x rank
@@ -250,6 +268,9 @@ def test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric():
             f"{max_pair_rel_diff:.6f} / {mean_pair_rel_diff:.6f} "
             f"(tol {symmetry_rel_tol:.6f})"
         )
-        print(f"    on record at h = {resolution:.3f} m: 0.312197 / 0.304356 / 0.323844 at -n 2/4/1")
+        print(
+            f"    on record at h = {resolution:.3f} m, gauge_penalty=1.0: "
+            "0.311170 / 0.311166 at -n 2/4"
+        )
         print(f"    RANKSPREAD_INPUT max_rel_diff = {max_pair_rel_diff:.6f}")
         print(f"  CG1 sampling, retired path (print-only, never gated): {cg1_max_rel_diff:.6f}")

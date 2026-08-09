@@ -7680,3 +7680,77 @@ makes a gated capability runnable and retires 1 of Phase 2's §5.4 shortfall of
 group is now in place, so `EX-5`…`EX-8` are each a single file plus a docstring
 with no runner work left to do, and the `return_fields` pattern generalises to
 any of them that need a field to export.
+
+---
+
+## 2026-08-09T17:05Z — `MAG-6` step 5 — **complete**: the gate solves at the validated gauge floor, and both metrics land on step 4's predictions to better than 0.01%
+
+**On-deck item 1**, taken as the first unblocked entry in §9. Tree clean at
+preflight, container Up, no `recovered/*` or new dirtiness — the two parked
+`attempt/PORT-1-*` branches are untouched.
+
+**What was changed.** Exactly the one argument the scope licensed:
+`gauge_penalty=1e-3 → 1.0` at
+`tests/validation/test_coil_phantom_bfield_metrics.py:91`. No `src/` change,
+no `tests/tolerances.py` change, and **both bounds untouched** (mirror 0.350,
+centerline 0.60). The rest of the diff is in-file prose: the module docstring
+gains a paragraph on why the solve runs at the floor, and the fixture's three
+"on record" strings — an assert message, a print, and the centerline comment —
+now quote the penalty-1.0 numbers instead of the retired sub-floor ones, which
+this change made stale.
+
+**Measured**, against step 4's on-record expectations:
+
+| metric (bound) | `-n 2` | `-n 4` | step-4 prediction | deviation |
+|---|---|---|---|---|
+| centerline jump ratio (≤ 0.60) | **0.250414** | **0.250474** | 0.250416 / 0.250453 | **0.0008% / 0.008%** |
+| mirror symmetry (≤ 0.350) | **0.311170** | **0.311166** | 0.311166 / 0.311157 | **0.001% / 0.003%** |
+
+Two-rank spread at the floor: **0.024%** centerline, **0.001%** mirror. Both
+deviations are two to three orders inside the ~2% threshold the scope set for
+"a real finding". A third run of the identical `-n 2` case read 0.250404 /
+0.311167, putting run-to-run noise at **~0.03%** — confirming the scope's
+reading that the 6.8% mesh noise on record belongs to the *old* sub-floor
+fixture and not to this solver.
+
+**Logs** (standard tier, all `_MAG-6.log`): `20260809T170054Z` (`-n 2`, 15 s),
+`20260809T170117Z` (`-n 4`, 9 s), `20260809T170214Z` (`-n 2`, confirming run
+after the prose edits, 12 s). 1 passed, exit 0, every time.
+
+**Negative control** — cited, not recomputed, per the scope: the sub-floor
+fixture's **88%** centerline rank scatter (step 4) and CG1's ~200% (step 1).
+Neither is re-measured here; both are what this change is against.
+
+**In-fixture continuity observation, worth the review's attention.** The
+retired CG1 print-only path *still* rank-swings at the validated floor:
+0.323398 at `-n 2` against 0.714122 at `-n 4`, **2.21×**. So the gauge floor
+fixes the gauge contamination and does nothing for the nodal-averaging defect
+that sent the sampling to DG0 — the two mechanisms are independent, and step
+1's attribution and step 4's attribution are both still correct. This is a
+reason not to read the floor as a general fix for rank scatter.
+
+**Finding, reported not swept** (the scope boundary said exactly this). Eight
+other `gauge_penalty=1e-3` call sites survive:
+`tests/solver/test_coil_phantom_magnetostatics.py:52`,
+`test_convergence_diagnostics.py:148`,
+`test_boundary_condition_selection.py:75`, `test_time_harmonic_smoke.py:52`,
+`tests/materials/test_phantom_material_model.py:165`,
+`tests/post/test_phantom_field_metrics.py:79`,
+`examples/mri/01_coil_phantom_fields.py:302` and `:334`, and
+`scripts/probes/ops12_probe.py:95`. I inspected their assertions: **none is a
+quantitative physics gate.** The `tests/` ones assert finiteness, structural
+invariants, or material-field values (σ and εᵣ read back off DG0), never a
+solved-field magnitude against a bound — so a sub-floor solve cannot corrupt a
+gated number in any of them, and no known-issues entry is warranted. The one
+that merits a decision is **`examples/mri/01_coil_phantom_fields.py`**, which
+solves *both* legs sub-floor and does carry on-record numbers; `EX-12` (§9
+item 4) is already queued to touch that file, so the review may want to fold
+the floor into it rather than spend a slot.
+
+**Next-attempt hypothesis.** None needed — complete, and the chunk-level
+question is closed: `MAG-6` stays ✅ with the gate now exercising the solver
+in its validated regime. For the review, one live decision: the ≤ 10%
+rank-stability claim is still the symmetry metric's alone, but the
+centerline's 0.024% at the floor is the first evidence it could earn the same
+claim. That is a tolerance-adjacent decision and deliberately not taken in a
+slot.
