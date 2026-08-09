@@ -1,27 +1,35 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-08, 18:00 daily review. Source of truth is
+**Updated:** 2026-08-09, 03:00 daily review. Source of truth is
 `PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
 
 ## Waiting on you
 
-1. Nothing blocking. Local `main` is now **20 commits ahead** of
-   `origin/main` after this review's commit — a push whenever convenient
-   ships MAG-6 closed and still triggers the first-ever GitHub-runner
-   execution of the `validation-complex` job. No Ansys benchmark cases
-   commissioned yet (the weekly review owns that; it runs **tonight**,
-   Sunday 01:30).
-2. FYI, shared-infrastructure decision taken this review (object if it
-   collides with other users of the box): the Docker container's memory
-   cap will be raised **16 G → 64 G** (`docker/docker-compose.yml`) by the
-   next implementer run. Rationale: two solves died against the 16 G
-   cgroup ceiling while the host sat at 747 G of 754 G free; 64 G is 8.5%
-   of the box and transient. Cores (12) and wall-clock (20 min) ceilings
-   are untouched.
-3. FYI, heads-up for tonight's weekly review: the PORT-1 adjudication
-   package is complete with a verdict attached — loss exonerated, the gap
-   geometry/estimator owns the ~3%; one `attempt/*` branch carries the
-   whole estimator lineage.
+1. **One-line decision needed — the 16 G → 64 G memory-cap raise is
+   blocked on permissions, not physics.** The implementer run that was to
+   edit `docker/docker-compose.yml` cannot: `Edit(docker/**)` sits under
+   `permissions.ask` in `.claude/settings.json`, and an `ask` rule in a
+   headless run is a denial. Three routes, smallest first: **(a)** make the
+   one-line edit yourself (`deploy.resources.limits.memory: 16G → 64G`,
+   then `docker compose -f docker/docker-compose.yml up -d`) and the next
+   review re-queues the measurement; **(b)** narrow-allow just that file;
+   **(c)** move `Edit(docker/**)` to `allow` (widest — hands scheduled runs
+   shared infrastructure). Until one happens, `MAT-6` step 7 stays 🚫 and
+   the additivity measurement stays open. The 16 G cap is confirmed at the
+   kernel (`/sys/fs/cgroup/memory.max = 17179869184`).
+2. **FYI, reliability — the unexplained harness kill struck twice** (same
+   command, ~660 s then ~99 s in, no exit record, no OOM signature; the
+   container never restarted, so the kill is host-side, outside Docker).
+   A diagnostic slot is queued (item 3) that runs a stage that has already
+   completed once; if *that* also dies, the next review will ask you for
+   host-side observables (dmesg/journalctl, WSL2 memory reclaim) that
+   sessions cannot see from inside the container.
+3. Local `main` is now ~25 commits ahead of `origin/main` — a push
+   whenever convenient still triggers the first-ever GitHub-runner
+   execution of `validation-complex`. First Ansys benchmark case is
+   commissioned (`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/`,
+   SPEC.md committed) but its runnable half (`ANS-1`) has not been built
+   yet — nothing to replicate in AED until it closes.
 4. FYI, no action needed: the `lint` CI job stays red-by-adjudication
    (reformat deferred until the PORT-1 branch lands).
 
@@ -35,64 +43,69 @@
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4 step 1); operator exact at 1 g/10 g (step 3); never gated on a coil |
 | S-parameters | 🧪 heuristic | one real S-matrix, two-loop air fixture in a test (PORT-1) |
 
-## Recent activity (since the 10:30 review)
+## Recent activity (since the 18:00 review)
 
-The nine-interval 4/4 streak ended: two slots produced, two were consumed
-by an outage — contained to exactly the two slots the design budgets.
+Zero of four slots produced chunk work — one permission block, one
+harness death, and the two-slot containment of the resulting dirty tree —
+but the interval still ended with a real finding:
 
-- **MAG-6 ✅ (closed)** — the DG0 symmetry estimator landed at h = 0.010
-  against the untouched 0.350 tolerance: 0.324/0.303/0.308 across three
-  rank counts, 7.00% spread vs the ≤ 10% gate, red baseline 0.728 on
-  record. The gate was *tightened* (an abs-tol escape removed), not
-  loosened. Known-issues 4 retired. The claim is explicitly
-  discretisation symmetry, not phantom physics. A second metric
-  (centerline smoothness) turned out CG1-owned too and was re-pointed
-  with it; its residual 88% rank scatter is queued for diagnosis, not
-  claimed away.
-- **MAT-6 step 6 🚫 (stopped on its own cost rule)** — the combined
-  697k-cell fixture meshes but will not solve inside the container's
-  16 G memory cap at either authorised rank count; the 0.9843 additivity
-  prediction stands unmeasured. The reusable finding: the ceiling is the
-  *container's total-footprint* cgroup cap, so retrying at more ranks
-  can never help — and step 5's "OOM, not reachable on this machine" was
-  this same cap, not the machine. Hence the 64 G decision above.
-- **MAG-13 step 2 (interrupted — measurement unobserved, not failed)** —
-  stage 1 priced the mesh (1,097,873 cells in 192.7 s, confirming the
-  ~1.1 M extrapolation to 0.2%); then the logging harness itself was
-  killed ~11 min into the solve, from outside, inside all its timeouts —
-  truncated log, no exit record, cause unknown (now a known-issues
-  non-test entry with a stop-on-second-occurrence rule). The next slot
-  correctly stopped and journaled the dirty tree; this review verified
-  the artifacts against that journal and landed them. The solve is
-  re-queued stage-2-only.
+- **MAG-6 step 4 ✅ (completed, and its first pass reversed)** — the
+  suspected "rank-safety defect on the DG0 evaluation path" was a **√3 bug
+  in the diagnostic probe itself** (`Function.eval` squeezes its return
+  for a single claimed point; the probe broadcast a scalar into three
+  components — measured as 1.7320508 to 8 digits at both affected points).
+  The production evaluation path is immune by construction; nothing under
+  `src/` was ever wrong. With the probe fixed, the gate's centerline
+  metric is rank-stable to **0.341%** across `-n 1/2/4` at the validated
+  gauge penalty; the 88% scatter lives only at the fixture's sub-floor
+  penalty setting, and re-pointing that fixture is now a queued one-line
+  chunk (bounds untouched).
+- **MAT-6 step 7 🚫** — blocked before any compute; see Waiting-on-you 1.
+- **MAG-13 step 2 (second harness death)** — the stage-2 solve died again,
+  ~99 s in, same signature as the first (truncated log, no exit block, no
+  OOM). Its pre-registered escalation fired: no third solve attempt; a
+  cheap MESH_ONLY discriminator is queued instead. The < 5% target remains
+  unmeasured, not missed. The dirty tree the dying slot left was journaled
+  (21:00), parked (22:30), and landed by this review with the branch
+  deleted.
+- **Weekly review (01:30)** restocked the backlog: licence granted for the
+  PORT-1 endgame discriminator (gapped vs closed at matched σ, two-slot
+  budget, disposition pre-registered), nine example chunks (`EX-4`…`EX-12`)
+  to backfill the §5.4 ramp, and the first Ansys benchmark case (`ANS-1`).
 
-Audit: the one ✅ flip (MAG-6) verified §4-compliant by an independent
-read-only auditor — every claimed number found in complete harness logs,
-tolerances unchanged since introduction, elapsed recorded, no over-claim.
+Audit: no chunk flipped ✅ this interval (step 4 completed inside
+already-✅ `MAG-6`); no demotions.
 
 ## Automation health
 
-- 38 slots since 08-05 15:30Z with one contained outage (the 15:00 slot's
-  harness died mid-command — first occurrence, unexplained, documented).
-  The two-slot containment worked as designed: the 16:30 slot stopped and
-  journaled; this review adjudicated and landed the orphaned work; no
-  `recovered/*` branch was needed. Tree clean at review end.
-- Queue depth **3, not 5** — stated per protocol rather than padded: the
-  PORT-1 critical path stays frozen for tonight's weekly adjudication,
-  and the remaining large items are blocked behind it or behind a solved
-  coil field. The fourth slot before 03:00 drains by design.
+- **Slot yield this interval: 0/4**, all non-physics causes: one
+  permissions denial (headless `ask` = deny), one host-side harness kill
+  (second occurrence, now under diagnosis), and the budgeted two-slot
+  dirty-tree containment, which worked exactly as designed
+  (journal → park → review lands and deletes `recovered/*`). Tree clean,
+  no `recovered/*` branches at review end.
+- The weekly review's pace ledger names **reliability, not physics** as
+  the top risk: at the measured 65% slot-completion rate, one lost day
+  ≈ 7 gated items. The two Waiting-on-you items above are both
+  reliability items.
+- Queue depth back to **6** (from 3) — the weekly restock plus this
+  review's scoping.
 
 ## On deck (§9, refreshed this review)
 
-1. **MAT-6 step 7** (heavy) — raise the container cap to 64 G, verify the
-   cgroup limit took, then measure the additivity ratio step 6 could not
-   (vs the 0.9843 prediction, bands pre-decided).
-2. **MAG-13 step 2, stage 2 only** (heavy) — the < 5% wire solve the
-   killed slot never observed; mesh already paid for; records which
-   memory cap was in force.
-3. **MAG-6 step 4** (standard) — diagnose the centerline metric's 88%
-   rank scatter: partition-owned sampling vs mesh noise vs a reduction
-   defect. Diagnosis only; no bound moves.
+1. **PORT-1 step 3b-xv** (standard) — the weekly-licensed discriminator:
+   gapped vs closed at fixed σ = 800; pre-decided quarter-spread bands;
+   every outcome parks and reports.
+2. **EX-11** (standard) — Dodd–Deeds coil loading as a runnable example
+   (ΔR vs closed form, eddy currents in ParaView); feeds ANS-1.
+3. **MAG-13 step 2 diag** (heavy envelope, ~200 s) — MESH_ONLY harness
+   discriminator: separates the unexplained kill from the solve.
+4. **EX-4** (standard) — lossy plane wave: the first time-harmonic example
+   (decay/phase vs closed form).
+5. **MAG-6 step 5** (standard) — re-point the gate fixture at the
+   validated gauge floor; bounds untouched.
+6. *(spare)* **EX-12** (smoke) — examples hygiene: stale claims, dead
+   references, the 2026-02 PNG.
 
 ---
 

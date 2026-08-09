@@ -1137,6 +1137,39 @@ Test: `tests/validation/test_coil_phantom_bfield_metrics.py`. Full write-up in
 > invisible to this solve); the caveat now lives in the test's module
 > docstring. **Cost:** standard tier, 5 commands, 20 / 12 / 9 / 10 / 10 / 144 s.
 
+**`MAG-6` step 5 — re-point the gate fixture at the validated gauge floor**
+*(scoped 2026-08-09, 03:00 review — this is the review decision step 4
+escalated, taken: the gate fixture
+(`tests/validation/test_coil_phantom_bfield_metrics.py`) solves at
+`gauge_penalty=1e-3`, below the validated floor of 1.0, and step 4 measured
+that the sub-floor solve is what makes its centerline metric rank-scatter 88%.
+A gate should exercise the solver in its validated regime; the change is one
+argument, gate-touching, and now licensed to a slot.)*
+> Change `gauge_penalty=1e-3 → 1.0` in the `MAG-6` gate fixture **only** —
+> the other `1e-3` call sites in the suite (smoke/diagnostic tests, other
+> gates) are out of scope; if any of them is also a quantitative gate that
+> deserves the same treatment, report it as a finding for a review, do not
+> sweep it in-slot. Re-run the gate at `-n 2` and `-n 4`. **Anchor:** the
+> gate's own bounds, **unchanged** — mirror-symmetry ≤ 0.35, centerline
+> ≤ 0.60 — with step 4's on-record readings at penalty 1.0 as the expected
+> values: centerline 0.251272 / 0.250416 / 0.250453 (`-n 1/2/4`, spread
+> 0.341%), mirror 0.311226 / 0.311166 / 0.311157 (0.022%). A gate value more
+> than ~2% from those (solver noise ceiling: 6.8% run-to-run mesh noise is
+> the *old* fixture's number; the step-4 solves repeated to well under 1%)
+> is a real finding — report, do not tune. **Negative control:** on record,
+> cite not recompute — the sub-floor fixture's 88% centerline rank scatter
+> (step 4) and CG1's ~200% (step 1). **Cost:** standard, two commands
+> `timeout 180`; gate solves are 10 s at `-n 2/4` on record. **Traps:** do
+> not touch `tests/tolerances.py`; DG0 not CG1;
+> `evaluate_vector_field_parallel` for points; the `1e-3` grep hits many
+> files — edit exactly one. **Does not close / reopen:** `MAG-6` stays ✅;
+> the ≤ 10% rank-stability claim stays the symmetry metric's alone (though
+> step 4's 0.341% suggests the centerline could earn it later — that is a
+> separate, future decision). **Negative result:** a gate that fails at the
+> validated floor with bounds untouched is evidence about the fixture or
+> the solver, not a reason to revert to 1e-3 silently — report the
+> readings, annotate here, known-issues entry if red persists.
+
 **`MAG-6` step 4 — diagnose the centerline metric's 88% rank scatter
 (diagnosis only; `MAG-6` stays ✅)** ✅ *(completed 2026-08-09, 00:00 run —
 second pass. **The attribution is gauge contamination, and the "rank-safety
@@ -1280,6 +1313,42 @@ tolerance.*
 > inconclusive attribution is still a finding — report the per-mechanism
 > numbers, annotate here; if a real reduction defect surfaces, it gets a
 > known-issues entry and a fix is scoped by a review, not improvised in-slot.
+
+**`MAG-13` step 2 diag — separate the harness death from the physics
+(MESH_ONLY discriminator)** *(scoped 2026-08-09, 03:00 review, from the
+known-issues non-test entry's own next-step: two unexplained mid-command
+harness deaths on this probe's stage-2 solve (15:00 and 19:30 slots,
+2026-08-08) fired the pre-registered escalation — the solve is **not**
+retryable, and this step spends one slot finding out whether the harness or
+the solve is the failing thing.)*
+> Run the landed probe with `MAG13_STEP2_MESH_ONLY=1` at `-n 4`,
+> `timeout 1200`, through the harness as usual — a stage that has completed
+> once (1 097 873 cells, 192.7 s, exit 0,
+> `20260808T200126Z_MAG-13-step2-meshprobe.log`), so a death here is
+> diagnostic rather than ambiguous. Immediately after (whatever the
+> outcome), record `docker compose ps` uptime and
+> `docker inspect` `StartedAt`/`RestartCount` in the log or the journal.
+> **Anchor:** reproduction of the on-record mesh rung — cell count equal to
+> **1 097 873**, exit 0, an `## Exit` block present, elapsed beside the
+> 196 s record. **Negative control:** the two truncated logs
+> (`20260808T200451Z…` at ~660 s, `20260809T003125Z…` at ~99 s), no Exit
+> block, no OOM signature — cite, never re-run stage 2. **Reading,
+> pre-decided:** (a) MESH_ONLY completes ⇒ the kill is specific to the
+> longer/heavier solve stage — memory pressure short of a cgroup kill or
+> duration-correlated host kill are the live hypotheses; report, and any
+> further stage-2 attempt stays blocked pending a review. (b) MESH_ONLY
+> also dies truncated ⇒ the harness/session path itself is the failing
+> thing at this rank/duration profile independent of the solve — a third
+> data point with the physics fully exonerated; update the known-issues
+> entry and put the host-side question (dmesg/journalctl, WSL2 memory
+> reclaim, session supervisor) on the dashboard for the human — it is not
+> observable from inside the container. **Cost:** heavy tier envelope, one
+> command, expected ~200 s on record. **Traps:** stale FFCx lock after the
+> prior kills — clear `~/.cache/fenics` first; do **not** run stage 2 under
+> any outcome; real build (no complex-mode source needed). **Does not
+> close / reopen:** nothing — `MAG-13` stays ✅; the < 5% target stays
+> unmeasured-not-missed. **Negative result:** both branches are findings by
+> construction; report which fired, annotate the known-issues entry, stop.
 
 **`MAG-13` step 2 — attempted 2026-08-08 (15:00 run): the mesh rung is priced;
 the solve is unobserved.** *(Annotated by the 18:00 review from the 16:30
@@ -3179,6 +3248,52 @@ ceilings are untouched; this buys memory, not compute.)*
 > The `_validate_material_map_tags` hunk it carries is already on `main` via
 > `OPS-13`; whoever lands the branch resolves that already-applied conflict
 > trivially, as the 3b-xiii note records.
+>
+> * **Step 3b-xv — the licensed discriminator: gapped vs closed at fixed
+>   σ = 800** *(scoped 2026-08-09, 03:00 review, under the weekly-review
+>   licence above — decision (1). Measurement only, on the
+>   `attempt/PORT-1-step3bxiv-20260808T095500Z` lineage (`5f34f88`); every
+>   disposition parks and reports, nothing lands in-slot, per decisions (2)
+>   and (3). This is the first of the two licensed slots.)* Hold σ = 800 on
+>   `WIRE_TAGS` (3b-xiv's σ placement — never the gap box, which closes the
+>   loop into 3b-xiii's degeneracy) and move only the topology: solve the
+>   **closed** loop at σ = 800 and read the terminal-to-terminal estimator
+>   beside the two on-record endpoints — gapped(σ = 800) **0.894543** and
+>   closed(σ = 0) **0.922423**, 2.788 pp apart. **Anchor:** (1) fixture
+>   identity first — byte-reproduce the padding-0.08 record (estimator
+>   0.894543 / 0.894022, control 0.922423, deviation −3.0224e-02) before any
+>   new solve; (2) the discriminator, pre-decided bands at quarter-spread
+>   (0.7 pp): **(gap owns it)** `|est_closed(σ=800) − 0.922423| ≤ 0.7 pp` ⇒
+>   closing the loop restores the control reading at matched σ; the ~3 pp is
+>   a physical property of the gapped fixture and the weekly review's
+>   pre-registered disposition (3) applies — report, park; the re-pointing
+>   commit is separate and must cite this log. **(topology does not move
+>   it)** `|est_closed(σ=800) − 0.894543| ≤ 0.7 pp` ⇒ the deviation survives
+>   matched topology, contradicting 3b-xiv's loss exoneration — back to the
+>   weekly review per decision (2), report all numbers. **(mixed)** between
+>   ⇒ report both distances, back to the weekly review. **Negative
+>   controls:** print `|I_cond/I′|` for the closed σ = 800 solve and label
+>   it — 3b-xiii's shorted-turn record (up to 0.865) is the expected
+>   signature and is *why* this rung reads as a diagnostic, not a
+>   consistency control; the gapped 0.971942 series-continuity value is on
+>   record, cite not recompute. **Cost:** standard, `-n 2`, one command
+>   `timeout 600` — 3b-xiii's measured envelope (344.6 s) covers mesh
+>   byte-reproduction plus ~25 s solves. **Traps:** the 3b-xiii list
+>   unchanged (FFCx lock, pytest `-s`, complex build +
+>   `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, σ via the DG0
+>   field never a global); every pinned digit-string on the branch is
+>   gapped-σ800-specific — print, pin nothing in-slot;
+>   `REACTION_CONSISTENCY_TOLERANCE` stays 0.03 and `MUTUAL_TOLERANCE`
+>   stays 0.10 under every band; the branch's `_validate_material_map_tags`
+>   hunk is already on `main` (resolve trivially only if landing, which no
+>   band does in-slot). **Does not close:** `PORT-1`, known-issues 3, the
+>   branch disposition, or the gate re-pointing — the last two stay the
+>   weekly review's per its decisions (3)/(4); this step only delivers the
+>   measurement they are conditioned on. **Negative result:** every band is
+>   a finding; a degenerate or unforeseen reading (e.g. the closed lossy
+>   solve refusing the impressed-drive normalisation) is itself the
+>   measurement — report and stop, never substitute a different σ or
+>   topology silently.
 >
 > **Closed steps** *(two-loop air fixture `two_torus_domain`, f = 10 MHz,
 > a = 0.04 m, r_wire = 0.005 m, d = 0.04 m; padding 0.08 / h_far 0.03,
@@ -5143,206 +5258,140 @@ promised an "obvious next entry named below" that was never written — the
 16:30 slot on 2026-08-07 hit that dangling reference and correctly fell
 through to the drain instruction; the reference is retired.)*
 
-Last reviewed 2026-08-08, 18:00 daily review. **The 4/4 streak ended at
-nine: two slots produced, two were consumed by an outage, exactly per the
-two-slot design.** `MAG-6` step 3 (✅, 12:00 run — the DG0 estimator
-landed at h = 0.010 against the untouched 0.350; `MAG-6` ✅,
-known-issues 4 retired); `MAT-6` step 6 (🚫, 13:30 run — stopped on its
-own pre-registered cost rule: the combined 697 401-cell fixture will not
-solve inside the container's **16 G total-footprint cgroup cap**, which
-more ranks cannot lower; the 0.9843 additivity prediction stands
-unmeasured); `MAG-13` step 2 (15:00 run — **died mid-solve**: stage 1
-measured the mesh rung (1 097 873 cells, 192.7 s, confirming the ~1.1 M
-extrapolation to 0.2%), then the harness was terminated ~660 s into the
-solve, inside its own timeout — no result, no exit block; cause unknown,
-now a known-issues non-test entry); 16:30 slot (stopped and journaled the
-dirty tree per the first-encounter rule — the anomaly entry is the
-forensic record this review acted on). This review **landed the orphaned
-artifacts** (`8b8a706`, md5-verified against the anomaly journal: one
-harness row, two logs, the standalone probe script — documentation-plus-
-instrument, no `src/`); tree clean at review end, no `recovered/*`
-branches. Audit this review: the one ✅ flip (`MAG-6`) verified
-**§4-compliant** by an independent read-only auditor — all six gate/
-baseline logs complete with matching harness rows, both metrics
-quantitative (mirror-symmetry 0.323844/0.302661/0.308407 vs 0.35,
-spread 7.00% vs ≤ 10%; centerline 0.473300 vs 0.60), red baseline 0.728
-on record, tolerances unchanged since `529cc55` and the abs-tol escape
-*removed* (gate tightened, not loosened), elapsed recorded, no
-over-claim. No demotions. Branch disposition:
-`attempt/PORT-1-step3bxiv-20260808T095500Z` **stays**, untouched — the
-one live lineage for the weekly review's adjudication (tonight, Sunday
-01:30, after the 00:00 slot). Plan work this review: **the step-6
-escalation adjudicated — route (i) taken: `MAT-6` step 7 scoped** (§7 —
-raise the compose cap 16 G → 64 G, verify the cgroup limit before
-solving, then the additivity measurement as step 6 authorised it;
-rationale in the entry: host had 747 G free, §5 has never priced memory,
-cores and wall clock untouched); **`MAG-13` step 2 annotated and rescoped
-stage-2-only** (§7 — the mesh rung is paid for; one solve, watch for the
-16-vs-64 G cap and the cgroup kill signature; a second unexplained
-harness death escalates, not retries); **`MAG-6` step 4 scoped** (§7 —
-diagnose the centerline metric's 88% rank scatter, the step-3 hand-off;
-diagnosis only). §5.4 example check: `MAG-6` closed a quantitative gate,
-but it gates **discretisation symmetry, not a physics capability**
-(uniform μ — the phantom is invisible to the solve), and §5.4 examples
-demonstrate capabilities — no new example chunk. §10 assessment:
-unchanged from 10:30 — the critical path holds and is frozen for the
-weekly review, which runs *tonight* and owns the `PORT-1` landing; this
-queue is deliberately non-PORT.
+Last reviewed 2026-08-09, 03:00 daily review. **Zero of four slots produced
+chunk work — the queue's own annotations say why, and none of it was
+physics.** 19:30 slot: item 1 blocked before any compute (`Edit(docker/**)`
+under `permissions.ask` — a headless denial), then died mid-mesh on item 2,
+the second unexplained harness death (~99 s vs ~660 s for the first; same
+signature, no Exit block, no OOM); its dirty tree cost the 21:00 slot
+(first-encounter journal) and part of the 22:30 slot (parked on
+`recovered/`, block re-verified onto `main`, item 2's pre-registered
+escalation executed into known-issues — container confirmed *not* restarted
+across either death, so the kill is host-side). 22:30 then ran item 3
+(first pass, 🟡) and 00:00 completed it — **reversing the first pass: the
+"rank-safety defect" was a √3 in the probe's own eval shim** (`Function.eval`
+squeezes to `(3,)` for a single claimed point), the production
+`evaluate_vector_field_parallel` is immune by construction, and step 3's 88%
+scatter is gauge contamination at the fixture's sub-floor
+`gauge_penalty=1e-3` after all (0.341% spread at the validated 1.0). This
+review: **landed the parked `recovered/20260809T033023Z`** (`7892da8`, both
+artefacts md5-matched to the anomaly journal; branch deleted) — the §7
+`MAT-6` step 7 🚫 annotation and the truncated cap16G log that three
+documents already cited by name. Step-3 audit: **no chunk flipped ✅ this
+interval** (`MAG-6` step 4 completed inside an already-✅ chunk; its six
+logs and harness rows are in `90b352e`); no demotions. §5.4 example check:
+no new quantitative gate closed → no new example chunk; the weekly review's
+`EX-4`…`EX-12`/`ANS-1` backfill enters this queue below at the daily
+review's pace. Plan work this review: **`PORT-1` step 3b-xv scoped** (§7 —
+the weekly-licensed gapped-vs-closed discriminator at fixed σ = 800,
+quarter-spread bands, first of the two licensed slots); **`MAG-6` step 5
+scoped** (§7 — the step-4 escalation adjudicated: re-point the gate fixture
+at the validated `gauge_penalty=1.0`, bounds untouched); **`MAG-13` step 2
+diag scoped** (§7 — the known-issues next-step: MESH_ONLY discriminator,
+harness vs solve). `MAT-6` step 7 stays 🚫 pending a one-line human
+decision, now at the top of the dashboard's Waiting-on-you.
+
+**Six ready items — independent unless stated.** The critical path (item 1)
+resumes under the weekly licence; the harness-reliability question (item 3)
+is the measured top risk to pace and runs on a stage that has already
+completed once; the rest is the §5.4 backfill in the weekly review's own
+priority order plus the `MAG-6` gate re-pointing. `ANS-1` is deliberately
+*not* queued yet: it shares its compute path with `EX-11` and reads better
+scoped after `EX-11` lands.
+
+1. **`PORT-1` step 3b-xv — the licensed discriminator: gapped vs closed at
+   fixed σ = 800 (standard).** On the
+   `attempt/PORT-1-step3bxiv-20260808T095500Z` lineage; measurement only,
+   every band parks and reports. Execute the §7 step 3b-xv plan: fixture
+   identity byte-reproduced first (estimator 0.894543 / control 0.922423 /
+   deviation −3.0224e-02), then the closed-loop solve at σ = 800 on
+   `WIRE_TAGS`, read against the two on-record endpoints with 0.7 pp
+   quarter-spread bands — (gap owns it) / (topology does not move it) /
+   (mixed); the last two go back to the weekly review per its two-slot
+   budget. **Anchor/negative control/traps:** in the §7 plan — print
+   `|I_cond/I′|` and expect 3b-xiii's shorted-turn signature; tolerances
+   0.03/0.10 untouched under every band. **Cost:** standard, `-n 2`,
+   `timeout 600`, 3b-xiii's 344.6 s envelope. **Does not close:** `PORT-1`,
+   the branch disposition, the gate re-pointing — all conditioned on this
+   measurement, none taken in-slot. **Negative result:** every band is a
+   finding; report and park.
+
+2. **`EX-11` — Dodd–Deeds coil loading as a runnable example (standard).**
+   Execute the §7 `EX-4`…`EX-11` backfill plan's `EX-11` bullet: the
+   `MAT-6` W = 0.15 fixture, two solves (σ = 100 / σ = 0 at 10 MHz),
+   assert ΔR within 2% of the closed form (1.5834% on record, projected
+   drive), export |J| in the slab; runner registration
+   (`./run_examples.sh --list` + `-e <id>`) is part of the chunk (the
+   `EX-1` demotion lesson). **Anchor:** Dodd–Deeds ΔR via
+   `utils/dodd_deeds.py`, tolerance citing the `MAT-6` gate log, looser
+   never tighter. **Negative control:** the σ = 0 solve is in-fixture — a
+   lossless solver reads ΔR = 0 against the full +3.277e-01 Ω, total
+   separation. **Cost:** standard, `-n 2`, ~27 s/solve at 138 619 cells on
+   record, `timeout 180`. **Traps:** complex build +
+   `FEM_EM_REQUIRE_COMPLEX=1`; ΔX reported, never gated. **Does not
+   close:** any Larmor-frequency claim — 10 MHz, eddy-current regime
+   (§2.1); feeds `ANS-1` but does not start it. **Negative result:** a ΔR
+   off the gated number at matched fixture is a regression finding —
+   report, stop, known-issues entry.
+
+3. **`MAG-13` step 2 diag — MESH_ONLY harness discriminator (heavy
+   envelope, ~200 s expected).** Execute the §7 step-2-diag plan: the
+   landed probe with `MAG13_STEP2_MESH_ONLY=1` at `-n 4`, `timeout 1200`;
+   assert cell count 1 097 873 / exit 0 / Exit block present against the
+   196 s record; record container uptime + `RestartCount` after. Do **not**
+   run stage 2 under any outcome. **Anchor/reading:** pre-decided in the §7
+   plan — completes ⇒ the kill is solve-stage-specific; dies truncated ⇒
+   the harness/session path is the failing thing with the physics
+   exonerated, dashboard escalation to the human (host-side observables).
+   **Traps:** clear the stale FFCx lock first; real build. **Negative
+   result:** both branches are findings by construction.
+
+4. **`EX-4` — lossy plane wave as the first time-harmonic example
+   (standard).** Execute the §7 backfill plan's `EX-4` bullet: the `TH-6`
+   box driven by the analytic lossy plane wave (σ = 0.6 S/m, εᵣ = 78,
+   127.74 MHz); assert interior decay and phase constants within 1% of
+   their closed forms (0.019% / 0.059% on the `TH-6` gate record); export
+   Re/Im E and |E| as combined-XDMF; runner registration included.
+   **Anchor:** the closed-form α/β from the `TH-6` gate, tolerance citing
+   its log. **Negative control:** structural — an undamped (σ = 0) wave has
+   zero decay constant against the analytic α; the `TH-6` gate log is the
+   on-record separation, cite not recompute. **Cost:** standard, `-n 2`,
+   `timeout 180` (the `TH-6` fixture solves in seconds on record).
+   **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` first; the example *asserts* allreduced, never just
+   renders. **Does not close:** nothing in TH — demonstration of an
+   already-gated capability. **Negative result:** report beside the gate
+   log's numbers, stop — a mismatch is a regression finding, not a
+   tolerance question.
+
+5. **`MAG-6` step 5 — re-point the gate fixture at the validated gauge
+   floor (standard).** Execute the §7 step-5 plan: one argument in
+   `tests/validation/test_coil_phantom_bfield_metrics.py`
+   (`gauge_penalty=1e-3 → 1.0`), bounds untouched (0.35 / 0.60), re-run at
+   `-n 2/4`; expected readings on record from step 4 (centerline ~0.2505,
+   mirror ~0.3112). **Scope boundary:** exactly one call site — the other
+   `1e-3` fixtures in the suite are a finding to report, not an in-slot
+   sweep. **Negative result:** a red gate at the validated floor is
+   evidence, not a revert — report, known-issues entry.
+
+6. *(spare)* **`EX-12` — examples hygiene (smoke, doc-only + one regen).**
+   Execute the §7 `EX-12` bullet verbatim: fix `mri:1`'s stale "`TH-6` has
+   not landed" docstring, delete/regenerate the 2026-02-18 PNG, fix the two
+   guide references to files no run produces; gate is the grep-style check
+   plus re-run of `-e 1` and `-e mri:1` with their on-record numbers
+   re-asserted. **Negative result:** a guide claim that cannot be made true
+   is a known-issues entry, not a deletion.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
 `docs/planning/plan-archive.md`, not here.)*
 
-**Three ready items — fewer than five exist, stated per protocol rather
-than invented.** The `PORT-1` lineage — the critical path — is frozen for
-the weekly review (tonight, 01:30) by 3b-xiii's escalation, and everything
-else unlisted is blocked on it (`PORT-4`…`PORT-8`, the birdcage port step)
-or on a solved coil+phantom field (`MAT-4`'s C95.3 claim, `POST-1`'s final
-✅). Item 3 is fully independent; items 1 and 2 are runnable in either
-order but item 2 reads differently under item 1's cap (each item says
-how) — neither *requires* the other. The fourth slot before the 03:00
-review will drain — the drain instruction below applies to it: **stop and
-journal.**
-
-1. 🚫 **BLOCKED — a scheduled session cannot make the edit this item
-   requires.** *(19:30 run hit it and its 🚫 annotation was parked on
-   `recovered/20260809T033023Z`; the 22:30 run re-verified the cause
-   independently and records it here so the block is on `main`.)*
-   `.claude/settings.json` lists `Edit(docker/**)` in the **`ask`** block
-   (line 28), and an `ask` rule in a headless run is a denial — there is no
-   human to answer it. Part 1 (the `limits.memory: 16G → 64G` compose edit)
-   therefore cannot start, and Part 2 has no raised cap to measure under.
-   Nothing was run; the 0.9843 additivity prediction stands unmeasured
-   exactly as step 6 left it. The 16 G cap is now confirmed **at the kernel**
-   (`/sys/fs/cgroup/memory.max = 17179869184`, printed inside a harness log),
-   so the diagnosis does not depend on a file read. **Unblocking is a
-   one-line human decision, not a physics question:** move `Edit(docker/**)`
-   to `allow`, narrow it to the single file, or have the human make the
-   16 G → 64 G edit by hand once and let a later slot run Part 2 against it —
-   the last is smallest and keeps the guard intact. For the daily review,
-   which owns allowlist proposals.
-
-   **`MAT-6` step 7 — raise the container memory cap to 64 G, verify it
-   took, and measure the additivity ratio (heavy).** `main`; complex
-   build. Execute the §7 step-7 plan: edit
-   `docker/docker-compose.yml` `limits.memory: 16G → 64G`, recreate the
-   service, **read the cgroup limit inside the container before any
-   solve** (expect 68719476736) and record it in the log; then step 6's
-   probe verbatim — mesh (697 401 cells on record), one solve `-n 4`,
-   `timeout 1200`; still OOM at 64 G or > 600 s of solve ⇒ report cost
-   and stop, no wider-rank retry (a total-footprint ceiling is
-   rank-blind). **Anchor:** step 6's, inherited — Dodd–Deeds with step
-   2b's gates unchanged; the reading is the additivity defect vs
-   **0.9843**, bands pre-decided (≤ 0.5 pp / > 1.5 pp / between ⇒
-   ambiguous, report). **Negative control:** the two 16 G kill records
-   on this exact fixture (`-n 4` signal 9 ~262 s; `-n 8` exit 137
-   ~138 s) — cite, never recompute. **Cost:** heavy; mesh 51.9 s on
-   record, solve unmeasured past ~262 s — measuring it is the point.
-   **Traps:** step 5's list; complex build + `FEM_EM_REQUIRE_COMPLEX=1`;
-   commit the compose edit with the run, never leave it dirty; recreate
-   fails ⇒ restore 16 G and stop (a down service costs every later
-   slot). **Does not close / reopen:** `MAT-6` stays ✅, step 6 stays 🚫,
-   §2.1 untouched. **Negative result:** OOM at 64 G is a per-cell memory
-   measurement — report beside cap and cell count, annotate §7, stop.
-
-2. 🚫 **BLOCKED by its own pre-registered escalation — do not retry.** This
-   item's text below says: *"A second unexplained harness death (log
-   truncated, no exit block, no OOM signature) ⇒ stop and update the
-   known-issues non-test entry, do not burn a third slot."* That second death
-   happened in the 19:30 slot (log
-   `20260809T003125Z_MAG-13-step2-solve-n4-cap16G.log`, truncated at ~99 s
-   against the first occurrence's ~660 s). The 22:30 run **executed the
-   escalation**: the known-issues non-test entry now records both
-   occurrences, their comparison, and one newly ruled-out cause — the
-   container did **not** restart across either death (`StartedAt`
-   2026-08-08T20:00:21Z, `RestartCount = 0`, continuously Up), so the kill is
-   host-side, outside Docker. The < 5% target remains **unmeasured, not
-   missed**. Next step is diagnostic, not another solve: re-run under
-   `MAG13_STEP2_MESH_ONLY`, a stage that has completed once at 196 s.
-
-   **`MAG-13` step 2, stage 2 only — the < 5% wire solve the 15:00 slot
-   never observed (heavy).** `main`; real build; `MAG-13` stays ✅ either
-   way. The mesh rung is already paid for (1 097 873 cells, 192.7 s,
-   `8b8a706`) — do **not** re-run the mesh probe. One solve at `-n 4`
-   via the landed `scripts/probes/mag13_step2_probe.py`, `timeout 1200`.
-   **Anchor:** the straight-wire closed form
-   `utils/analytical.py::straight_wire_magnetic_field` (B_θ = μ₀I/2πr),
-   target < 5% vs the recorded 12.75% at rate 1.10; print the new
-   two-rung rate beside 1.10. **Negative control:** on record, cite not
-   recompute — the analytic-Dirichlet-vs-plain-box separation and the
-   rate fit. **Cost:** heavy, one solve command; solve cost unmeasured —
-   the truncated log died ~660 s in with the solver still meshing/setting
-   up. **Cap note:** if item 1 landed, 64 G is in force; if not, the
-   16 G cap stands and an OOM kill (signal 9 / exit 137) is itself the
-   measured cost — record which cap was in force, report, stop; no
-   wider-rank retry. A second unexplained harness death (log truncated,
-   no exit block, no OOM signature) ⇒ stop and update the known-issues
-   non-test entry, do not burn a third slot. **Traps:** `MAG-13`'s
-   list — end-cap `J·n ≠ 0` stands unmeasured;
-   `evaluate_vector_field_parallel` for points; stale FFCx lock after a
-   kill. **Does not close / reopen:** nothing — a green < 5% annotates
-   the `MAG-13` entry; graded refinement stays the named cheaper route,
-   not to be improvised in-slot. **Negative result:** still > 5% at the
-   extrapolated `h`, or unaffordable — both are findings; report error
-   and cost beside the prediction, annotate §7, stop.
-
-3. ✅ **DONE 2026-08-09, 00:00 run (second pass) — step 4 is complete and its
-   first-pass conclusion is reversed.** The missing `-n 1` rung ran (152 s) and
-   the three-rung set on the gate's own evaluation path, at the validated
-   `gauge_penalty=1.0`, is **0.251272 / 0.250416 / 0.250453** at `-n 1/2/4` —
-   a **0.341%** three-way spread against the ≤ 10% band, mirror-symmetry
-   control 0.022% on the same solves. **The "rank-safety defect" is refuted:**
-   it was a √3 in the probe's own `instrumented_eval` (`Function.eval` squeezes
-   to `(3,)` for a single point; the scalar x-component was broadcast into all
-   three components), measured as `1.7320508` at both affected points and
-   fixed in one line. The production `evaluate_vector_field_parallel` is immune
-   by construction. So step 3's 88% scatter **is** gauge contamination, the
-   mechanism the first pass thought it had refuted using the corrupted numbers.
-   **No fix chunk on the DG0 evaluation path — do not scope one.** Open for the
-   review, and gate-touching so not a slot's: whether the fixture should stop
-   solving at the sub-floor `gauge_penalty=1e-3`. `MAG-6` stays ✅; the
-   known-issues entry the first pass wrote is retired in the same commit. Full
-   numbers in the §7 entry.
-
-   *First-pass status, retained for the record:* 🟡 **ATTEMPTED 2026-08-09,
-   22:30 run — attribution delivered, `-n 1` rung
-   not run, and the surviving mechanism is a defect needing a review-scoped
-   fix.** Both proposed mechanisms are refuted quantitatively (mesh identical
-   to 12 digits; ownership identical and unique, 0/9 multi-rank and 0/9
-   multi-cell), a third (gauge contamination at the fixture's sub-floor
-   `gauge_penalty=1e-3`) is refuted too, and what remains is one point
-   (i=1, z = -0.0225 m) reading 72% apart across rank counts **in the same
-   cell on the same mesh** — a rank-safety defect on the DG0 evaluation path.
-   Mirror-symmetry control on the same solves: 0.15% spread. No gate moved;
-   `MAG-6` stays ✅. Full numbers in the §7 entry; known-issues entry written.
-   **The follow-up is a fix chunk, not another diagnosis.**
-
-   **`MAG-6` step 4 — diagnose the centerline metric's 88% rank scatter
-   (standard; diagnosis only).** Independent; `main`; real build;
-   `MAG-6` stays ✅. Execute the §7 step-4 plan: on the landed h = 0.010
-   fixture, print per-point sampled values plus an ownership fingerprint
-   at `-n 1/2/4` and one fixed-rank repeat; attribute the 88% scatter —
-   partition-owned point sampling, run-to-run mesh noise (6.8% on
-   record at fixed `-n 2`), or a reduction defect (the `PORT-1`
-   3b-viii family). **Anchor:** the rank-invariance identity for a
-   correctly reduced scalar metric, with the mirror metric's 7.00%
-   spread on the same solves as the in-fixture control. **Negative
-   control:** on record, cite not recompute — CG1's ~200% scatter and
-   the 0.705/0.732 `-n 4` failures. **Cost:** standard, four commands
-   `timeout 180`; gate solves are 10 s at `-n 2/4`, 144 s at `-n 1` on
-   record. **Traps:** DG0 not CG1; `evaluate_vector_field_parallel`;
-   reduce before asserting; do not touch `tests/tolerances.py`. **Does
-   not close / reopen:** `MAG-6` stays ✅; the ≤ 10% rank-stability claim
-   stays the symmetry metric's alone; no bound moves in-slot. **Negative
-   result:** an inconclusive attribution is still a finding — report the
-   per-mechanism numbers, annotate §7; a confirmed reduction defect gets
-   a known-issues entry, fix scoped by a review.
-
 If the queue drains: **stop and journal.** Do **not** improvise gap-voltage
 ports on the birdcage itself or a B1+ chunk — both are deliberately held for
 a review to scope once the corrected estimator has *landed*, and the landing
-decision now belongs to the weekly review (3b-xiii's escalation), informed
-by 3b-xiv's ladder; the box (3b-xi/3b-xii), the wedge limits (3b-x), and the
+decision belongs to the weekly review (its 2026-08-09 adjudication, decisions
+(3)/(4)), conditioned on the 3b-xv discriminator queued above as item 1; the
+box (3b-xi/3b-xii), the wedge limits (3b-x), loss (3b-xiv), and the
 closed-lossy route (3b-xiii) are adjudicated, but the terminal-to-terminal
 answer (0.8945 × ωM₁₂) is still on the parked branch, ungated against a
 σ-matched control, and porting the estimator to the birdcage before it lands
