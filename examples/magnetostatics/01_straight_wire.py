@@ -291,8 +291,9 @@ def main():
     print("    - straight_wire_B.xdmf (magnetic field)")
     print("    - straight_wire_B_analytical.xdmf (exact field)")
     print("    Each also carries the mesh and the CellTags array.")
-    print("\n  For VTX files (if available):")
-    print("    - Open straight_wire_B.bp/ directory")
+    # The VTX attempt above always fails (VTXWriter cannot take the N1curl A),
+    # so there is no .bp directory to point at -- see PARAVIEW_GUIDE.md and
+    # docs/testing/known-issues.md. Do not advertise one.
     print("=" * 60)
     
     # Plot results

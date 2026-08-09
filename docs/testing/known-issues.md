@@ -961,6 +961,34 @@ was invisible until an analytic comparison existed. Coil+phantom has no analytic
 reference yet. See `PROJECT_PLAN.md` §9.
 
 
+### `01_straight_wire.py` never writes its VTX/`.bp` output
+
+**Test id:** none — `./run_examples.sh -e 1` (the example is not gated by a
+test; the surrounding numbers are).
+**Symptom** (verbatim, once per rank, exit status still 0):
+
+```
+⚠ VTX output failed (ADIOS2 may not be available): Only (discontinuous)
+Lagrange functions are supported. Interpolate Functions before output.
+```
+
+**Verified at:** `e54c628`, log `20260809T213342Z_EX-12-baseline-mag1.log`;
+also present unchanged in `20260804T174037Z_MAG-EX.log`, so it is not a
+regression.
+
+**Cause:** diagnosed, not a missing ADIOS2. The first `io.VTXWriter` is handed
+`A`, which lives in N1curl — `VTXWriter` accepts only (discontinuous) Lagrange
+— and the single `try` block wraps both writers, so `B` (which *is* writable)
+is never attempted either. The example already computes `A_lag`/`B_lag`
+interpolants for its XDMF path; passing those, and splitting the `try`, is the
+fix.
+
+**Not fixed here:** `EX-12` is a documentation chunk (smoke, doc-only + one
+regen); changing what the example exports is code, and the export is
+redundant with the XDMF path that works. `PARAVIEW_GUIDE.md` now says the
+format is unavailable instead of telling readers to open a `.bp` directory
+that a run never writes. **Resolved by:** unassigned — needs a chunk.
+
 ---
 
 ## Recording a new entry

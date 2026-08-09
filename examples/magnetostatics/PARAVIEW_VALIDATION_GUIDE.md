@@ -266,7 +266,7 @@ Expected error: < 10% for r > 2×wire_radius
 - **Off axis**: Field curves through loop
 - **Validation**: Compare B_z on axis to analytical solution
 
-### Helmholtz Coil (03_helmholtz_coil.py):
+### Helmholtz Coil (04_helmholtz_analytic_comparison.py):
 - **Expected**: Nearly uniform field in center region
 - **Key feature**: Flat B_z between the two coils
 - **Validation**: Plot B_z along axis - should be plateau in middle

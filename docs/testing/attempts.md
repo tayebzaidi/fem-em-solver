@@ -7933,3 +7933,94 @@ gated module, and `EX-8`'s sweep will want exactly the eigenvector access
 added here, so the `return_modes` kwarg is now on the shelf for it. `EX-6`
 (the `TH-8` sphere) has no equivalent gap — `test_dielectric_sphere.py`
 already solves and exposes its field.
+
+---
+
+## 2026-08-09T21:45Z — `EX-12` — **complete**: the four named doc defects fixed, and the gate written to catch them found two more
+
+§9 item 4 (items 1–3 done). Preflight clean, container Up 25 h, commit
+`e54c628`. Smoke tier declared; 21 s of harness wall across five runs.
+
+**The gate is a script, not a grep.** `scripts/testing/check_example_doc_references.py`
+scans every `*.md` under `examples/` for filename-shaped tokens and splits
+them two ways. A `*.py` reference must match a file that exists in the repo —
+that is what `03_helmholtz_coil.py` failed. An artifact reference
+(`.xdmf/.h5/.bp/.csv/.json/.png/.msh`) must either be committed in-tree (the
+`ans:` benchmark cases keep theirs beside `SPEC.md`) or sit in
+`paraview_output/` **newer than `--max-age-s`**. The freshness rule is the
+part that matters: `paraview_output/` is gitignored scratch holding files
+from months-old runs, so plain existence would let a stale leftover vouch for
+a reference no current run produces — precisely the failure mode `EX-12`
+exists to remove. One allowlist entry (`lineplot.csv`, created by the reader
+via a ParaView filter), reason recorded in the script; the regex refuses to
+read `matplotlib.pyplot` as `matplotlib.py`.
+
+**Measured.** 7 guides, 16 distinct references, 1 allowlisted.
+`20260809T213823Z_EX-12-refcheck.log`: PASS, exit 0, 1 s. Negative control
+`--max-age-s 1 --output-dir /tmp/empty-outdir`
+(`20260809T213828Z_EX-12-refcheck-negctl.log`): 5 references flagged, exit 1 —
+so the check discriminates rather than always passing, and the freshness rule
+is exercised rather than merely written. Re-run gate
+`./run_examples.sh -e 1,mri:1 -n 2 -t 180`
+(`20260809T213840Z_EX-12-gate.log`, exit 0, 11 s) after all edits reproduces
+every on-record number: `-e 1` relative L2 error **65.8739%**, max relative
+error **85.2499%**, identical to `20260804T174037Z_MAG-EX.log`; `mri:1`
+`residual_norm` **1.684628e+00** and all five centerline (|E|, |B|) pairs
+digit for digit against `20260804T174011Z_WF-1.log`. Baselines taken before
+the edits are `20260809T213342Z_EX-12-baseline-mag1.log` (8 s) and
+`20260809T213410Z_EX-12-baseline-mri1.log` (10 s).
+
+**Finding 1 — the VTX export has never worked, so three more references were
+dead.** Every run of `01_straight_wire.py` prints `⚠ VTX output failed
+(ADIOS2 may not be available): Only (discontinuous) Lagrange functions are
+supported`, and exits 0. The message misattributes it: ADIOS2 is present.
+`io.VTXWriter` is handed `A`, which lives in N1curl, and the single `try`
+block wraps both writers, so `B` — which *is* writable — is never attempted.
+No `.bp` directory has been produced since at least 2026-08-04 (same message
+in that log), yet `PARAVIEW_GUIDE.md` gave three sets of instructions for
+opening one and the example printed a fourth. Diagnosed, **not fixed**: the
+repair is code (pass the `A_lag`/`B_lag` interpolants the example already
+builds, split the `try`) and `EX-12` is a doc chunk. Known-issues entry
+filed with the literal symptom, cause, and "resolved by: unassigned"; the
+guide now states the format is unavailable and the false print is gone.
+
+**Finding 2 — `mri:1`'s aggregates moved for a good reason.** Phantom |E| max
+reads 3.200140e+02 against the 2026-08-04 record's 2.884886e+02. Not drift:
+sampling coverage went **239/493 → 493/493** (boundary-adjacent drops
+eliminated), so the aggregates are now taken over the whole phantom. The
+solve is unchanged — identical residual, identical centerline — which is what
+makes the diagnosis safe. The centerline, not the aggregates, is the stable
+thing to re-assert against for this example.
+
+**The `.msh` claim could not be made true.** `MESH_DIAGNOSTIC_GUIDE.md:84`
+said the code saves `straight_wire.msh`; nothing in the repo writes one, and
+nothing can cheaply — `MeshGenerator` drives gmsh in-process and hands the
+model to `gmshio` without it touching disk. Rather than delete the step, it
+now inspects the same physical groups through the combined XDMF a run does
+produce (`CellTags`, clip through the axis), which serves the step's purpose.
+
+**The PNG was regenerated, not deleted.** Both were sanctioned; regeneration
+keeps a readable artifact in the repo and is the less destructive of the two.
+The copy is from this run, and `PARAVIEW_GUIDE.md` now states its provenance
+and the numbers it shows, so the next reader can tell at a glance whether it
+has gone stale again. Noted there that the max-error last digit moves between
+runs (85.2498/85.2499%) — the L2 figure does not.
+
+**Two scope boundaries held.** `examples/mri/01` still solves both legs at
+`gauge_penalty=1e-3`, below the validated floor (the `MAG-6` step-5 finding,
+§7). Changing it changes the on-record numbers, which is a review decision,
+not hygiene — §7's `MAG-6` note is updated to say `EX-12` closed without
+folding it in, and it stays open. Nothing under `tests/` was touched.
+
+**Cost.** Smoke declared, 21 s total harness wall (1 + 1 + 8 + 10 + 11 s), no
+run near any ceiling.
+
+**Closes nothing physics-side.** No gate moved; this is examples hygiene, and
+the §5.4 ramp accounting is unchanged (`mri:1` remains the one ungated
+example — it is now labelled as such inside the file).
+
+**Next-attempt hypothesis.** None needed — complete. For the next run: the
+reference checker is cheap (1 s) and generic, so it is worth calling from any
+future chunk that edits a guide; the obvious extension, if a review wants it,
+is pointing `--docs-root` at `docs/` and seeing what the project-level
+documentation claims about files. Expect that to fail loudly the first time.

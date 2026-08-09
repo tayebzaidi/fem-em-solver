@@ -3,11 +3,11 @@
 ## Running the Example
 
 ```bash
-cd /home/taz5297/Development/fem-em-solver
-python examples/magnetostatics/01_straight_wire.py
+./run_examples.sh -e 1 -n 2 -t 180
 ```
 
-This will create a `paraview_output/` directory with visualization files.
+The example solves in the container; the host interpreter has no DolfinX. The
+run creates a `paraview_output/` directory with the visualization files below.
 
 ---
 
@@ -23,9 +23,32 @@ Every XDMF file above carries the mesh and a `CellTags` cell array (an
 ordinary array like the fields, usable directly in Threshold), so there is no
 separate mesh-only file to open.
 
-### VTX Format (Modern, requires ADIOS2)
-- `straight_wire_A.bp/` - Vector potential A field
-- `straight_wire_B.bp/` - Magnetic field B
+### Matplotlib summary
+- `straight_wire_validation.png` - |B| vs r, numerical against analytic
+
+A copy of this plot is checked in next to the example so it can be read
+without running anything. It is regenerated from a real run whenever the
+example changes; the copy in the repo is from 2026-08-09 and reads relative
+L2 error 65.8739%, max relative error 85.2498% (the last digit of the max
+moves between runs — 85.2499% is equally on record) — the numbers for
+this fixture, which is coarse on purpose (`resolution = 0.01 m`) so the
+scheduled runs stay cheap. The error is large because of the mesh, not
+because the comparison is wrong.
+
+### VTX Format (Modern, requires ADIOS2) — **not currently produced**
+
+The example attempts a VTX/ADIOS2 export and it fails every run, printing
+
+```
+⚠ VTX output failed (ADIOS2 may not be available): Only (discontinuous)
+Lagrange functions are supported. Interpolate Functions before output.
+```
+
+`VTXWriter` is handed the N1curl potential `A`, which it cannot write, and the
+one `try` block covers both writers, so no `.bp` directory is produced for `B`
+either. See `docs/testing/known-issues.md`. Use the XDMF files above; if you
+find a stale `.bp` directory in `paraview_output/`, it predates 2026-08-03
+and is not from your run.
 
 ---
 
@@ -44,12 +67,8 @@ You should now see the mesh loaded!
 
 ### Method 2: VTX Files (Modern)
 
-1. **Open ParaView**
-2. **File → Open**
-3. Navigate to `paraview_output/`
-4. Select the `straight_wire_B.bp` **directory**
-5. ParaView should auto-detect the format
-6. Click **"Apply"**
+Unavailable — the VTX export fails on every run (see "Output Files" above).
+XDMF is the only format the example writes.
 
 ---
 
@@ -128,8 +147,9 @@ If you just want to see the mesh structure:
 - For the straight wire, expect cylindrical symmetry
 
 ### "VTX files not created"
-- This is normal if ADIOS2 is not installed
-- Use XDMF files instead - they work just as well
+- Expected: the export fails on every run, and not because ADIOS2 is missing
+  (see "Output Files")
+- Use XDMF files instead - they carry every field this example writes
 
 ### "ParaView crashes when opening file"
 - Try opening a single-field file first: `straight_wire_B.xdmf`
@@ -195,7 +215,8 @@ For a straight wire carrying current I along the z-axis:
   - Requires ADIOS2 installation
   - Newer format, less widespread
 
-**Recommendation**: Use XDMF for maximum compatibility, VTX for performance.
+**Recommendation**: XDMF, which is also the only format this example
+successfully writes today.
 
 ---
 

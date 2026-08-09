@@ -1,5 +1,13 @@
 """Example: MRI-like two-coil + gelled saline phantom field workflow.
 
+**This is the one ungated example in the tree.** It is an end-to-end plumbing
+demonstration (`WF-1`): it shows that mesh, materials, both solvers and the
+export path connect, and nothing more. No number it prints is compared against
+a closed form or any other reference, so none of them is evidence about the
+physics — read PROJECT_PLAN.md §2 before quoting one. Every other example under
+`examples/` asserts an anchor from a gate that has closed; this one asserts
+nothing.
+
 This example demonstrates an end-to-end coarse workflow:
 1. Build coil + phantom + air mesh
 2. Apply phantom material properties
@@ -13,8 +21,15 @@ solve, so this script needs the complex DolfinX build::
     source /usr/local/bin/dolfinx-complex-mode
 
 In the real build ``TimeHarmonicSolver.solve`` raises rather than silently
-dropping the loss term. The phantom metrics printed here are still ungated
-physics — `TH-6` has not landed.
+dropping the loss term.
+
+`TH-6` (the lossy plane wave, closed 2026-07-31) gates the time-harmonic
+formulation itself, and `EX-4` demonstrates it as a runnable example. That
+gate says nothing about *this* geometry: the drive here is a coarse proxy on
+an unconverged mesh, the frequency-domain leg reports
+``converged=False (reason=-3)``, and the |E|/|B| balance check the script
+prints fails by eight orders of magnitude. Treat the metrics below as a smoke
+test of the pipeline, not as fields.
 """
 
 from __future__ import annotations

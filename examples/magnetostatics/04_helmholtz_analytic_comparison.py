@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Helmholtz coil: on-axis B_z compared against the analytic solution.
 
-This is the corrected counterpart to ``03_helmholtz_coil.py``, which evaluates
+This is the corrected counterpart to ``03_helmholtz_coil.py`` (since deleted;
+it is named here only to record what was wrong with it), which evaluates
 fields with ``B.eval(points, np.arange(n))`` -- that asks dolfinx to evaluate each
 point inside an *arbitrary* cell rather than the cell containing it, and produces
 meaningless numbers. Here we use ``post.evaluation.evaluate_vector_field_parallel``,

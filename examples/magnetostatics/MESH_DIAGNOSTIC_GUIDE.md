@@ -79,27 +79,25 @@ Cell tags found: [1 2]
 - ✓ Air domain has 50-100x more cells than wire
 - ✓ Total reasonable (~30,000-50,000 cells)
 
-### Step 2: Inspect Gmsh File
+### Step 2: Inspect the Geometry
 
-The code now saves `straight_wire.msh` for inspection.
+No run writes a `.msh` file. `MeshGenerator` drives Gmsh in-process and hands
+the model straight to `dolfinx.io.gmshio`, so the Gmsh model never touches
+disk — inspect the geometry through the combined XDMF the example *does*
+write, which carries the same physical groups as a `CellTags` array.
 
-**Open in Gmsh:**
-```bash
-gmsh straight_wire.msh
+**Open in ParaView:**
+```
+paraview_output/straight_wire_combined.xdmf
 ```
 
-**What to check:**
-1. Tools → Options → Mesh → Surface faces: Enable
-2. Tools → Options → Mesh → Volume faces: Enable
-3. Tools → Visibility:
-   - Check "Physical groups"
-   - You should see "wire" and "domain"
+**What to check** (colour by `CellTags`, then Filters → Clip through the axis):
+- ✓ Two distinct tag values, 1 (`wire`) and 2 (`domain`)
+- ✓ Wire is a thin cylinder on the axis, fully enclosed by the domain
+- ✓ Both regions are filled with tetrahedra, not hollow shells
 
-**In Gmsh 3D view:**
-- ✓ Should see two distinct volumes
-- ✓ Wire should be thin cylinder in center
-- ✓ Domain should surround wire
-- ✓ Both should be filled with tetrahedra (not just surfaces)
+Step 3 below covers the same file in more detail; this step is the quick
+"is the geometry even right" look that opening the mesh in Gmsh used to serve.
 
 ### Step 3: Check Cell Tags in ParaView
 

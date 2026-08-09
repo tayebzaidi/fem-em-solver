@@ -1175,8 +1175,11 @@ all `_MAG-6.log`.)*
 > material-field values (not solved-field magnitudes against a bound), so
 > the sub-floor solve cannot corrupt a gated number there. The one worth a
 > decision is **`examples/mri/01`**, which solves both legs sub-floor and
-> *does* carry on-record numbers — and `EX-12` is already queued to touch
-> that file, so the review may wish to fold it in.
+> *does* carry on-record numbers — and `EX-12` was already queued to touch
+> that file, so the review may wish to fold it in. **`EX-12` closed
+> 2026-08-09 without folding it in**: that chunk is doc-only, and changing
+> `gauge_penalty` there changes the on-record numbers, which is a decision
+> for the review rather than a hygiene run. Still open.
 > **`MAG-6` stays ✅** and the ≤ 10% rank-stability claim stays the symmetry
 > metric's alone; the centerline's 0.024% at the floor is evidence toward
 > extending it, and remains a separate future decision.
@@ -4831,7 +4834,8 @@ the accrual mechanism (adopted 2026-08-06, after Phase 2's gates closed
 **Phase 3** (`MAT-2` + `MAT-6` ✅, owes 2) has 1 (`mri:2`) — shortfall 1 →
 `EX-11`. **Phases 4/5** owe 0 (no gating chunk ✅ yet); `mesh:1`/`mesh:2`
 are bonus meshing coverage. `mri:1` is the one **ungated** example (WF-1
-🧪 end-to-end demo) and carries a stale docstring — hygiene is `EX-12`.
+🧪 end-to-end demo); its stale docstring was fixed by `EX-12` ✅ 2026-08-09,
+which also labels it in the file as the one example that asserts nothing.
 New chunks are ordered most-mission-relevant first (`EX-11` feeds `ANS-1`);
 the daily review queues them at its own pace — they are backlog, not a
 mandate to displace the critical path.
@@ -4849,7 +4853,7 @@ mandate to displace the critical path.
 | `EX-9` | Measured h-convergence rate as an example output (Phase 1) | ⬜ | standard |
 | `EX-10` | Gauge cross-check: penalty vs Lagrange-multiplier Coulomb gauge (Phase 1) | ⬜ | standard |
 | `EX-11` | Dodd–Deeds coil loading: ΔR vs closed form, eddy currents in ParaView | ✅ | standard |
-| `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ⬜ | smoke |
+| `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ✅ | smoke |
 
 **`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
 run each).** Common rules: gated capability only; the example *asserts* its
@@ -4922,7 +4926,43 @@ recorded.
 >   tier holds. Angle: the headline loaded-coil physics; doubles as the
 >   compute core of `ANS-1`. **Does not close:** any Larmor-frequency
 >   claim — 10 MHz, eddy-current regime, per §2.1.
-> * **`EX-12`** *(smoke, doc-only + one regen)* — fix `mri:1`'s docstring
+> * **`EX-12`** — ✅ **closed 2026-08-09 (16:30 run).** All four named defects
+>   fixed, plus two the gate itself found. The gate is a new script,
+>   `scripts/testing/check_example_doc_references.py`: it scans every `*.md`
+>   under `examples/`, requires each referenced `*.py` to exist in the repo,
+>   and requires each referenced artifact either to be committed in-tree (the
+>   `ans:` cases keep theirs beside `SPEC.md`) or to sit in `paraview_output/`
+>   **newer than `--max-age-s`** — existence alone would let a months-old
+>   leftover in that gitignored scratch dir vouch for a dead reference.
+>   16 distinct references checked across 7 guides, 1 allowlisted
+>   (`lineplot.csv`, user-created by a ParaView filter, reason recorded in the
+>   script). PASS at exit 0 (`20260809T213823Z_EX-12-refcheck.log`, 1 s);
+>   **negative control** `--max-age-s 1 --output-dir /tmp/empty-outdir` flags
+>   5 of them and exits 1 (`20260809T213828Z_EX-12-refcheck-negctl.log`), so
+>   the check discriminates rather than always passing. Re-run gate
+>   `./run_examples.sh -e 1,mri:1 -n 2 -t 180`
+>   (`20260809T213840Z_EX-12-gate.log`, exit 0, 11 s harness-wall, smoke tier)
+>   reproduces every on-record number after the edits: `-e 1` relative L2
+>   error **65.8739%** and max relative error **85.2499%** (2026-08-04 record
+>   `20260804T174037Z_MAG-EX.log`, identical), `mri:1` `residual_norm`
+>   **1.684628e+00** and all five centerline (|E|, |B|) pairs digit for digit
+>   against `20260804T174011Z_WF-1.log`. **Two findings the plan did not
+>   anticipate.** (i) The VTX/`.bp` export in `01_straight_wire.py` has never
+>   worked — `VTXWriter` is handed the N1curl `A` and the one `try` covers
+>   both writers, so `B` is never attempted either; three `.bp` references in
+>   `PARAVIEW_GUIDE.md` and one printed by the example were therefore dead.
+>   Diagnosed, **not fixed** (code, outside a doc chunk): known-issues entry
+>   filed, guide now states the format is unavailable, the false print
+>   removed. (ii) `mri:1`'s phantom aggregates have legitimately moved since
+>   the 2026-08-04 record (|E| max 2.884886e+02 → 3.200140e+02) because
+>   sampling coverage went 239/493 → 493/493; the solve itself is unchanged,
+>   which is why the centerline and residual match exactly. The `.msh` claim
+>   could not be made true — no code path writes one, `MeshGenerator` hands
+>   the gmsh model straight to `gmshio` — so that step now points at the
+>   combined XDMF, which a run does produce. The 2026-02-18 PNG was
+>   **regenerated** rather than deleted (from the same run that produced the
+>   gate numbers) and its provenance is now stated where it is referenced.
+>   *(Original plan text follows.)* fix `mri:1`'s docstring
 >   ("`TH-6` has not landed" — it closed 2026-07-31) and label it honestly
 >   as the ungated end-to-end demo; delete or regenerate the 2026-02-18
 >   `straight_wire_validation.png` (predates the example's 2026-08-03
@@ -5625,7 +5665,17 @@ slot is the weekly review's to spend.
    **Negative result:** a fundamental off the record at matched fixture is
    a regression finding — report beside the gate log, stop.
 
-4. **`EX-12` — examples hygiene (smoke, doc-only + one regen).**
+4. ~~**`EX-12` — examples hygiene (smoke, doc-only + one regen).**~~ —
+   **done 2026-08-09 (16:30 run)**: all four named defects fixed and gated by
+   a new `scripts/testing/check_example_doc_references.py` (16 references, 7
+   guides, PASS at exit 0 — negative control flags 5 and exits 1), with
+   `-e 1,mri:1` re-run green at 11 s reproducing L2 65.8739% / max 85.2499%
+   and `mri:1`'s residual 1.684628e+00 plus all five centerline pairs digit
+   for digit. Two extra findings in the §7 entry: the VTX/`.bp` export has
+   never worked (known-issues entry, diagnosed, code fix unassigned) and the
+   `.msh` claim could not be made true, so that step now points at the
+   combined XDMF. PNG regenerated, not deleted.
+   *(Original item text follows.)*
    Execute the §7 `EX-12` bullet verbatim: fix `mri:1`'s stale "`TH-6` has
    not landed" docstring, delete/regenerate the 2026-02-18 PNG, fix the two
    guide references to files no run produces; gate is the grep-style check
