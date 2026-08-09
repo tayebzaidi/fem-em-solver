@@ -7378,3 +7378,101 @@ gate-touching and therefore a review's call, not a slot's — `MAG-6` is ✅ eit
 way. Note also that §9's queue is now fully drained (items 1 and 2 🚫, item 3
 ✅) ahead of the 03:00 review.
 
+
+---
+
+## 2026-08-09T09:30Z — `PORT-1` step 3b-xv — **incomplete** (parked on
+## `attempt/PORT-1-step3bxv-20260809T093000Z`; measurement only, band
+## **(mixed)** by plan): the closed route's estimator is not σ-robust, so the
+## discriminator has no fixed reference to be read against
+
+**Slot:** scheduled implementer run, 04:30 CDT grid slot. Tree clean at
+preflight, container Up (13 h uptime), no `recovered/*` branches. §9 item 1
+taken as scoped.
+
+**What was tried.** The weekly review's licensed discriminator (decision (1)),
+exactly as §7 step 3b-xv scopes it. Branched from
+`attempt/PORT-1-step3bxiv-20260808T095500Z` (`5f34f88`) to
+`attempt/PORT-1-step3bxv-20260809T093000Z`; one new solve inside
+`_solve_gap_ports` plus one new reporting gate,
+`test_topology_discriminator_moves_only_the_topology`. The rung is the σ = 0
+control's own drive, normalisation (I′, the projected impressed current) and
+reaction code path — only the material map changes: σ = 800 S/m on
+`WIRE_TAGS` only, gap boxes left air, i.e. **byte-identical σ placement to
+3b-xiv's gapped ladder** with the *closed* topology of the control.
+
+**Fixture identity — byte-reproduced first, as required.** estimator
+0.894543 / 0.894022, control(σ = 0) 0.922423, deviation −3.0224e-02, ratio
+0.969776. Nothing geometric moved.
+
+**The measurement** (`-n 2`, standard, **475 s** inside `timeout 600`, 22
+passed + the known consistency gate red,
+`20260809T093317Z_PORT-1-step3bxv-disc-n2.log`; collection check
+`20260809T093302Z_PORT-1-step3bxv-collect.log`, 23 collected, 4 s):
+
+| topology | σ = 800 placement | estimator (× ωM₁₂) | \|I_cond/I′\| | source |
+|---|---|---|---|---|
+| gapped | `WIRE_TAGS` | 0.894543 | 0.971942 | 3b-xiv, re-reproduced here |
+| closed | `WIRE_TAGS` | **1.223696** | **0.005792** | **this step** |
+| closed | `WIRE_TAGS` ∪ `GAP_TAGS` | 0.107556 | (short, 0.865) | 3b-xiii |
+| closed | none (σ = 0) | 0.922423 | — | control, on record |
+
+Solve 24.7 s, `Im Z21 = +1.519530482e+00 Ω`, projection `imag_ratio` = 0.0,
+I′ = +9.907870e-01 A (identical to the σ = 0 control's I′ — the new gate
+asserts this to < 1e-9 relative, so the rung provably did not move its own
+normalisation).
+
+**Finding 1 — band (mixed), by 43×.** The reading sits **30.13 pp** from
+closed(σ = 0) and **32.92 pp** from gapped(σ = 800), against a 0.7 pp
+quarter-spread band. Per the weekly review's decision (2) this goes back to
+the next weekly review rather than burning the second licensed slot.
+
+**Finding 2 — why (mixed), and it is not a null result.** Holding topology
+*closed* and moving only where σ sits takes the estimator from **0.107556**
+(σ on wire ∪ gap box, 3b-xiii) to **1.223696** (σ on wire alone, here) — a
+factor 11.4 either side of the σ = 0 control's 0.922423. The closed route's
+reaction estimator therefore has no σ-independent value at all, so it cannot
+serve as the fixed endpoint the discriminator was to read the gapped route
+against. The mechanism is already on this lineage's record: step 3b-x
+measured that −∫E·J₂ over a **lossy test region** returns the ohmic/eddy
+response rather than the mutual EMF (factor 244 on the open loop,
+`20260807T093906Z`); `WIRE_TAGS` is both wires, so this rung made the
+*undriven* loop lossy too and bought a +32.7% version of the same
+contamination. The σ = 0 control is clean precisely because its test region
+is lossless.
+
+**Finding 3 — the negative control landed in neither camp.** `|I_cond/I′|` =
+0.005792: not 3b-xiii's 0.865 parallel short and not the gapped route's
+0.971942 series continuity. Electrically this rung is nearly the σ = 0
+control (conduction is 0.6% of the impressed current), which is what makes
+the 30 pp estimator move attributable to the *reading*, not to the circuit.
+
+**Consequence for the 2×2.** All four corners are now measured and none is a
+clean fixed-topology reference: closed+lossy-everywhere is a short (3b-xiii),
+gapped+lossless is an open (3b-xiv), and closed+lossy-on-wire — the last
+non-degenerate corner — is reaction-contaminated (here). The ~3.02 pp
+gapped-vs-closed deviation cannot be attributed by any σ/topology move
+available on this fixture, because the two routes do not share a
+σ-insensitive estimator.
+
+**What was not touched.** `REACTION_CONSISTENCY_TOLERANCE` stays 0.03,
+`MUTUAL_TOLERANCE` stays 0.10, no digit-string re-pinned, nothing re-pointed,
+no branch landed, `main` untouched by the code. The one red test is the known
+consistency gate (−3.0224e-02 vs 3%), red on this lineage before this step and
+unchanged by it.
+
+**Why incomplete rather than complete.** By plan: every band parks and
+reports; `PORT-1`, known-issues 3, the branch disposition and the gate
+re-pointing are all the weekly review's calls.
+
+**Next-attempt hypothesis for the (weekly) review.** The discriminator failed
+for a reason that is itself the answer to *how* to compare the two routes: the
+comparison must be made with a **lossless test region** on both sides, since
+that is the only configuration in which −∫E·J₂ measures the mutual EMF. The
+natural successor is therefore not another σ/topology corner but σ on the
+**driven** wire tag only (`WIRE_TAGS[0]`), leaving the undriven loop lossless
+so the reaction reading stays clean while the driven loop carries the loss the
+gapped route has. If that reads within 0.7 pp of 0.922423 the gap owns the
+deviation after all. That is a one-solve change on this branch and fits the
+second licensed slot — but it is a *third* reading of a question the weekly
+review budgeted two slots for, so the licence call is the review's.

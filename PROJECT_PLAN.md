@@ -3250,7 +3250,31 @@ ceilings are untouched; this buys memory, not compute.)*
 > trivially, as the 3b-xiii note records.
 >
 > * **Step 3b-xv — the licensed discriminator: gapped vs closed at fixed
->   σ = 800** *(scoped 2026-08-09, 03:00 review, under the weekly-review
+>   σ = 800** 🟡 *(executed 2026-08-09, 04:30 run; parked on
+>   `attempt/PORT-1-step3bxv-20260809T093000Z` (`a158c91`), measurement only,
+>   nothing landed. **Band (mixed), by 43×**: closed(σ = 800 on `WIRE_TAGS`,
+>   gap boxes air) reads **1.223696 × ωM₁₂** — 30.13 pp from closed(σ = 0)
+>   0.922423 and 32.92 pp from gapped(σ = 800) 0.894543, against the 0.7 pp
+>   quarter-spread. Fixture identity byte-reproduced first (0.894543 /
+>   0.894022 / 0.922423 / −3.0224e-02); `|I_cond/I′| = 0.005792`, neither
+>   3b-xiii's 0.865 short nor the gapped 0.971942 series continuity; I′
+>   identical to the control's to < 1e-9 (gated), so the rung did not move its
+>   own normalisation. **Why (mixed):** at fixed *closed* topology, moving only
+>   where σ sits takes the estimator 0.107556 (wire ∪ gap box, 3b-xiii) →
+>   1.223696 (wire alone) either side of the control's 0.922423, so the closed
+>   route has no σ-independent estimator to be the fixed endpoint — step 3b-x's
+>   already-measured mechanism (−∫E·J₂ over a **lossy test region** returns the
+>   ohmic term, factor 244 there, +32.7% here; `WIRE_TAGS` made the *undriven*
+>   loop lossy too). All four corners of the 2×2 are now measured and none is
+>   clean. Per decision (2) this returns to the **weekly review**, which holds
+>   the second licensed slot; the successor the run proposes is σ on the
+>   **driven** wire tag alone, keeping the test region lossless. Tolerances
+>   untouched (0.03 / 0.10). `-n 2`, 475 s inside `timeout 600`, 22 passed +
+>   the known consistency gate red;
+>   `20260809T093317Z_PORT-1-step3bxv-disc-n2.log`,
+>   `20260809T093302Z_PORT-1-step3bxv-collect.log` — both on the branch.
+>   Full journal: `docs/testing/attempts.md`, 2026-08-09T09:30Z.)*
+>   *(scoped 2026-08-09, 03:00 review, under the weekly-review
 >   licence above — decision (1). Measurement only, on the
 >   `attempt/PORT-1-step3bxiv-20260808T095500Z` lineage (`5f34f88`); every
 >   disposition parks and reports, nothing lands in-slot, per decisions (2)
@@ -5300,7 +5324,14 @@ priority order plus the `MAG-6` gate re-pointing. `ANS-1` is deliberately
 scoped after `EX-11` lands.
 
 1. **`PORT-1` step 3b-xv — the licensed discriminator: gapped vs closed at
-   fixed σ = 800 (standard).** On the
+   fixed σ = 800 (standard).** 🟡 **Executed 2026-08-09, 04:30 run — band
+   (mixed), parked on `attempt/PORT-1-step3bxv-20260809T093000Z`; not
+   selectable again.** The measurement landed (closed(σ = 800 on wire) =
+   1.223696 × ωM₁₂, 30.13 / 32.92 pp from the two endpoints) and, per weekly
+   decision (2), the question is back with the **weekly review** — which also
+   holds the second licensed slot, so no implementer slot may take a successor
+   rung without a fresh licence. See §7 step 3b-xv and attempts.md
+   2026-08-09T09:30Z. On the
    `attempt/PORT-1-step3bxiv-20260808T095500Z` lineage; measurement only,
    every band parks and reports. Execute the §7 step 3b-xv plan: fixture
    identity byte-reproduced first (estimator 0.894543 / control 0.922423 /
