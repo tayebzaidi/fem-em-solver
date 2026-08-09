@@ -1,42 +1,45 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-09, 10:30 daily review. Source of truth is
+**Updated:** 2026-08-09, 18:00 daily review. Source of truth is
 `PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
 
 ## Waiting on you
 
-1. **One-line decision needed — the 16 G → 64 G memory-cap raise is
-   blocked on permissions, not physics.** Unchanged since 03:00. The
-   implementer run that was to edit `docker/docker-compose.yml` cannot:
-   `Edit(docker/**)` sits under `permissions.ask` in
-   `.claude/settings.json`, and an `ask` rule in a headless run is a
-   denial. Three routes, smallest first: **(a)** make the one-line edit
-   yourself (`deploy.resources.limits.memory: 16G → 64G`, then
-   `docker compose -f docker/docker-compose.yml up -d`) and the next
-   review re-queues the measurement; **(b)** narrow-allow just that file;
-   **(c)** move `Edit(docker/**)` to `allow` (widest — hands scheduled
-   runs shared infrastructure). Until one happens, `MAT-6` step 7 stays 🚫
-   and the additivity measurement stays open. The 16 G cap is confirmed at
-   the kernel (`/sys/fs/cgroup/memory.max = 17179869184`).
-2. **Host-side observables needed — the harness kill is now confirmed to
-   belong to no stage.** The 07:30 diagnostic ran the mesh stage that one
-   of the two deaths occurred *inside*, and it reproduced digit for digit
-   (1 097 873 cells, 185.7 s vs the 192.7 s record, clean exit; container
-   never restarted). One death in the mesh phase, one in the solve, both
-   phases clean on demand ⇒ a non-deterministic host-side kill of the
-   process tree; the physics is exonerated and the in-container diagnostic
-   budget is spent (three data points). What sessions cannot see:
-   **`dmesg -T` / `journalctl -k` around 2026-08-08 20:15Z and 2026-08-09
-   00:33Z**, WSL2 `vmmem` memory reclaim, and any host cron/session
-   supervisor that could reap a long process tree. Anything you can paste
-   from those unblocks the `MAG-13` step 2 solve.
-3. Local `main` is now **30 commits ahead** of `origin/main` (last push
-   2026-08-07) — a push whenever convenient still triggers the first-ever
-   GitHub-runner execution of `validation-complex`. The first Ansys
-   benchmark's runnable half (`ANS-1`) is now **queued** (its compute path
-   was priced end to end by `EX-11` this interval); when it closes, this
-   section will tell you the case is ready to replicate in AED.
-4. FYI, no action needed: the `lint` CI job stays red-by-adjudication
+1. **NEW — the first Ansys benchmark is ready to replicate in AED.**
+   `ANS-1` closed this interval: the case at
+   `examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/` solves the
+   loop-over-lossy-slab at 10 MHz and pins itself to the `MAT-6` gate
+   (ΔR = +0.32770 Ω, **1.5834%** from the Dodd–Deeds closed form; 1.4e-08
+   from the gate's pin). `SPEC.md` box 1 is checked; the next two boxes
+   are yours: build the case in AED per `SPEC.md`, export the same
+   quantities, and fill the blank AED columns in `COMPARISON.md` — the
+   weekly review then adjudicates. Two things to know before comparing:
+   ΔX is **reported, never gated** (unconverged in box size — that
+   disagreement is *why* the case was commissioned), and our
+   Re Z(σ = 0) is exactly 0.0 by structure (real operator, real drive);
+   AED's will not be, since the AED coil carries body loss unless eddy
+   effects are disabled in the coil, which `SPEC.md` §Excitation
+   specifies.
+2. **One-line decision needed — the 16 G → 64 G memory-cap raise is
+   blocked on permissions, not physics.** Unchanged since 2026-08-09
+   03:00. `Edit(docker/**)` sits under `permissions.ask`, which a
+   headless run reads as denial. Smallest-first routes: **(a)** make the
+   edit yourself (`deploy.resources.limits.memory: 16G → 64G`, then
+   `docker compose -f docker/docker-compose.yml up -d`); **(b)**
+   narrow-allow just that file; **(c)** move `Edit(docker/**)` to
+   `allow`. Until then `MAT-6` step 7 stays 🚫.
+3. **Host-side observables needed for the `MAG-13` kill.** Unchanged
+   since 10:30: both death phases reproduce clean on demand, so the kill
+   is non-deterministic and host-side; sessions cannot see
+   **`dmesg -T` / `journalctl -k` around 2026-08-08 20:15Z and
+   2026-08-09 00:33Z**, WSL2 `vmmem` reclaim, or any host supervisor
+   reaping process trees. Anything you can paste unblocks the step-2
+   solve.
+4. Local `main` will be **36 commits ahead** of `origin/main` once this
+   review's commit lands (last push 2026-08-07). A push whenever
+   convenient still triggers the first-ever GitHub-runner execution of
+   `validation-complex`.
+5. FYI, no action needed: the `lint` CI job stays red-by-adjudication
    (reformat deferred until the PORT-1 branch lands).
 
 ## Honest current state (digest of §2 — unchanged this interval)
@@ -49,70 +52,70 @@
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4 step 1); operator exact at 1 g/10 g (step 3); never gated on a coil |
 | S-parameters | 🧪 heuristic | one real S-matrix, two-loop air fixture in a test (PORT-1) |
 
-Two capabilities became *runnable examples* this interval (coil loading:
-`./run_examples.sh -e mat:1`; time-harmonic: `-e th:1`), each reproducing
-its gate record digit for digit — demonstration, not new physics; the
-table above is unchanged.
+No gate moved this interval — the table is unchanged. What did move:
+the `MAG-6` B-field gate now solves in its validated gauge regime
+(metrics within 0.008% of prediction, bounds untouched), eigen-analysis
+became a runnable example (`./run_examples.sh -e th:2`), and the first
+commissioned AED benchmark is delivered on our side (Waiting-on-you 1).
 
-## Recent activity (since the 03:00 review)
+## Recent activity (since the 10:30 review)
 
-**Four of four slots produced — the first clean interval since
-2026-08-07.**
+**Four of four slots ✅ — the second consecutive clean interval, and the
+first in which every slot closed its item outright.**
 
-- **PORT-1 step 3b-xv (04:30) — band (mixed), and the finding is the
-  answer's shape.** Holding topology fixed and moving only where σ sits
-  swings the closed route's estimator by 11.4× either side of its own
-  σ = 0 control: the closed route has **no σ-independent estimator**, so
-  it cannot serve as the fixed endpoint the discriminator needed. All four
-  corners of the σ/topology square are now measured; none is a clean
-  reference. Parked per plan; the adjudication and the second licensed
-  slot belong to the **weekly review** (2026-08-16), which also holds the
-  run's proposed successor (loss on the driven wire only, keeping the
-  reaction test region lossless).
-- **EX-11 ✅ (06:00)** — Dodd–Deeds coil loading as a runnable example
-  (`mat:` runner group): ΔR 1.5834% vs the closed form, every figure
-  byte-matching the MAT-6 gate record, σ = 0 control at exactly 0.0 W /
-  0.0 A/m², eddy-current |J| in ParaView. Audited §4-compliant.
-- **MAG-13 step 2 diag ✅ (07:30)** — see Waiting-on-you 2: no stage owns
-  the kill; physics exonerated; host observables are now the ask.
-- **EX-4 ✅ (09:00)** — the first time-harmonic example in the repo
-  (`th:` runner group): decay/phase constants to 0.0185% / 0.0593%,
-  byte-matching the TH-6 gate record; the gate itself re-run green
-  (6 passed) against the one additive kwarg the example needed. Audited
-  §4-compliant.
+- **MAG-6 step 5 ✅ (12:00)** — the coil+phantom B-field gate re-pointed
+  at the validated gauge floor (`gauge_penalty 1e-3 → 1.0`, one
+  argument): centerline 0.250414, mirror 0.311170, each within 0.008% of
+  step 4's predictions, rank spread ≤ 0.024%, both bounds untouched.
+  Finding filed for review: eight other sub-floor call sites, none a
+  physics gate; the one that mattered (`examples/mri/01`) is now `EX-13`,
+  queued.
+- **ANS-1 ✅ (13:30)** — see Waiting-on-you 1. σ = 0 control exactly
+  0.0 W / 0.0 A/m²; energy identity ratio 1.0000; 70 s.
+- **EX-5 ✅ (15:00)** — PEC cavity resonances as the first eigenproblem
+  example (`th:2`): all four modes at the 0.5% ceiling (worst 0.0436%),
+  and the exported mode verified against the reported eigenvalue by
+  Rayleigh quotient to 3.5e-15 — ParaView colours the asserted mode, not
+  a look-alike. `TH-9` re-ran green against the one additive kwarg.
+- **EX-12 ✅ (16:30)** — examples hygiene, gated by a new doc-reference
+  checker (16 references, 7 guides; negative control flags 5, exit 1),
+  which also found the straight-wire VTX/`.bp` export has *never* worked
+  (known-issues entry; repair queued as `EX-14`).
 
-Audit: both chunks that flipped ✅ (`EX-11`, `EX-4`) verified against §4 —
-harness logs, closed-form assertions, exact-zero negative controls, no
-bound touched. No demotions.
+Audit: all four flipped chunks verified against §4 — harness logs,
+quantitative assertions, elapsed times, no bound loosened. **No
+demotions.** One caveat (the checker's freshness branch is untested)
+folded into `EX-14`. One plan correction: `EX-9`'s scoped fixture did not
+exist; its §7 bullet now names the real one.
 
 ## Automation health
 
-- **Slot yield this interval: 4/4** (two ✅, one complete diagnostic, one
-  parked-by-plan measurement — parking on a pre-registered band is the
-  plan working, not a failure). Tree clean at review end, no `recovered/*`
-  branches; both `attempt/PORT-1-*` branches stay parked under the weekly
-  licence.
-- The reliability risk the weekly review named is now sharper: the
-  unexplained kill is host-side and non-deterministic (Waiting-on-you 2),
-  and both open Waiting-on-you items remain reliability items, not
-  physics.
-- Queue depth **5** after refresh (four consumed, three added:
-  `ANS-1`, `EX-5`, spare `EX-6`).
+- **Slot yield this interval: 4/4, all ✅** — 8/8 across the day's two
+  intervals. Tree clean at review end, no `recovered/*`; both
+  `attempt/PORT-1-*` branches stay parked under the weekly licence — the
+  **weekly review (2026-08-16) holds the 3b-xv adjudication and the
+  second discriminator slot**, and also owes the next AED benchmark
+  commission now that §5.4's table is fully delivered on our side.
+- Both standing Waiting-on-you blockers remain reliability items, not
+  physics; the new top item is the first operator-side *physics* task
+  (AED replication).
+- Queue depth **6** after refresh (four consumed; `EX-13`/`EX-14`
+  created, `EX-10` promoted from backlog).
 
 ## On deck (§9, refreshed this review)
 
-1. **MAG-6 step 5** (standard) — re-point the gate fixture at the
-   validated gauge floor (`gauge_penalty=1e-3 → 1.0`, one argument);
-   bounds untouched.
-2. **ANS-1** (standard) — runnable half of the first commissioned AED
-   benchmark, sharing EX-11's now-priced compute path; on closure it
-   lands at the top of Waiting-on-you as ready-to-replicate.
-3. **EX-5** (standard) — PEC cavity resonances as an example (TH-9
-   machinery; fundamental vs closed form; first eigen-analysis example).
-4. **EX-12** (smoke) — examples hygiene: stale claims, dead references,
-   the 2026-02 PNG.
-5. *(spare)* **EX-6** (standard) — the TH-8 sphere, solved (not imposed)
-   material contrast vs the quasi-static closed form.
+1. **EX-6** (standard) — the TH-8 sphere: solved (not imposed) material
+   contrast vs the quasi-static closed form.
+2. **EX-7** (standard) — evanescent TE₁₀ waveguide decay vs closed form
+   (γ to 0.006% on record).
+3. **EX-8** (standard) — the resonance guard firing at 1.45% detuning,
+   pole-law energy rise within 10%.
+4. **EX-13** (standard) — `examples/mri/01` to the validated gauge
+   floor; rank spread measured floor vs sub-floor.
+5. **EX-10** (standard) — penalty vs Lagrange-multiplier gauge
+   cross-check as an example.
+6. *(spare)* **EX-14** (standard) — straight-wire VTX export repair +
+   the checker's freshness branch exercised.
 
 ---
 
