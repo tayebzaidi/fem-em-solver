@@ -5394,143 +5394,49 @@ promised an "obvious next entry named below" that was never written — the
 16:30 slot on 2026-08-07 hit that dangling reference and correctly fell
 through to the drain instruction; the reference is retired.)*
 
-Last reviewed 2026-08-09, 03:00 daily review. **Zero of four slots produced
-chunk work — the queue's own annotations say why, and none of it was
-physics.** 19:30 slot: item 1 blocked before any compute (`Edit(docker/**)`
-under `permissions.ask` — a headless denial), then died mid-mesh on item 2,
-the second unexplained harness death (~99 s vs ~660 s for the first; same
-signature, no Exit block, no OOM); its dirty tree cost the 21:00 slot
-(first-encounter journal) and part of the 22:30 slot (parked on
-`recovered/`, block re-verified onto `main`, item 2's pre-registered
-escalation executed into known-issues — container confirmed *not* restarted
-across either death, so the kill is host-side). 22:30 then ran item 3
-(first pass, 🟡) and 00:00 completed it — **reversing the first pass: the
-"rank-safety defect" was a √3 in the probe's own eval shim** (`Function.eval`
-squeezes to `(3,)` for a single claimed point), the production
-`evaluate_vector_field_parallel` is immune by construction, and step 3's 88%
-scatter is gauge contamination at the fixture's sub-floor
-`gauge_penalty=1e-3` after all (0.341% spread at the validated 1.0). This
-review: **landed the parked `recovered/20260809T033023Z`** (`7892da8`, both
-artefacts md5-matched to the anomaly journal; branch deleted) — the §7
-`MAT-6` step 7 🚫 annotation and the truncated cap16G log that three
-documents already cited by name. Step-3 audit: **no chunk flipped ✅ this
-interval** (`MAG-6` step 4 completed inside an already-✅ chunk; its six
-logs and harness rows are in `90b352e`); no demotions. §5.4 example check:
-no new quantitative gate closed → no new example chunk; the weekly review's
-`EX-4`…`EX-12`/`ANS-1` backfill enters this queue below at the daily
-review's pace. Plan work this review: **`PORT-1` step 3b-xv scoped** (§7 —
-the weekly-licensed gapped-vs-closed discriminator at fixed σ = 800,
-quarter-spread bands, first of the two licensed slots); **`MAG-6` step 5
-scoped** (§7 — the step-4 escalation adjudicated: re-point the gate fixture
-at the validated `gauge_penalty=1.0`, bounds untouched); **`MAG-13` step 2
-diag scoped** (§7 — the known-issues next-step: MESH_ONLY discriminator,
-harness vs solve). `MAT-6` step 7 stays 🚫 pending a one-line human
-decision, now at the top of the dashboard's Waiting-on-you.
+Last reviewed 2026-08-09, 10:30 daily review. **Four of four slots
+produced — the first clean interval since 2026-08-07, and every outcome is
+either ✅ or parked-by-plan.** 04:30: `PORT-1` step 3b-xv executed to band
+**(mixed)** and parked per plan on
+`attempt/PORT-1-step3bxv-20260809T093000Z` — moving only σ placement at
+fixed *closed* topology swings the reaction estimator from 0.107556 to
+1.223696 × ωM₁₂ (11.4× either side of the σ = 0 control), so **the closed
+route has no σ-independent estimator** and cannot serve as the
+discriminator's fixed endpoint; adjudication and the second licensed slot
+rest with the **weekly review** (its two-slot budget) — no successor rung
+may be queued here without a fresh licence, and the run's proposed
+successor (σ on the *driven* wire only, keeping the reaction test region
+lossless) is on record in attempts.md 2026-08-09T09:30Z for that review to
+license or decline. 06:00: `EX-11` ✅. 07:30: `MAG-13` step 2 diag complete
+— the mesh rung reproduced digit for digit (1 097 873 cells, exit 0), and
+since one of the two deaths sits *inside* that stage, **no stage owns the
+kill**: non-deterministic host-side, physics exonerated, host observables
+now the operator's ask (dashboard Waiting-on-you). 09:00: `EX-4` ✅.
+Step-3 audit: both chunks that flipped ✅ this interval audited compliant —
+`EX-11` (ΔR 1.5834% vs Dodd–Deeds, σ = 0 control asserted `== 0.0`, logs
+`20260809T110317Z`/`110326Z`, rows present, nothing under `tests/`
+touched) and `EX-4` (α 0.0185% / β 0.0593% vs closed form, rate 0.9998,
+σ = 0 control `== 0.0`, the `test_lossy_plane_wave.py` diff purely
+additive with the gate re-run at 6 passed, logs
+`20260809T140421Z`…`140531Z`); **no demotions**. Step 2: tree clean, no
+`recovered/*`; both `attempt/PORT-1-*` branches stay parked under the
+weekly licence. §5.4 example check: no new quantitative *gate* closed
+(`EX-4`/`EX-11` are examples of already-gated capability) → no new example
+chunks. Queue work: **`ANS-1` enters** — its stated hold ("reads better
+scoped after `EX-11` lands") is discharged, and `EX-11` priced its exact
+compute path at 74 s harness-wall; **`EX-5` enters** per the weekly
+review's order (`EX-4`'s `th:` runner group means no runner work remains);
+`MAG-6` step 5 and `EX-12` carry over; `EX-6` is the spare. `MAT-6` step 7
+stays 🚫 on the same one-line human decision (Waiting-on-you 1).
 
-**Six ready items — independent unless stated.** The critical path (item 1)
-resumes under the weekly licence; the harness-reliability question (item 3)
-is the measured top risk to pace and runs on a stage that has already
-completed once; the rest is the §5.4 backfill in the weekly review's own
-priority order plus the `MAG-6` gate re-pointing. `ANS-1` is deliberately
-*not* queued yet: it shares its compute path with `EX-11` and reads better
-scoped after `EX-11` lands.
+**Five ready items — independent, no serial dependencies.** Item 1 is the
+carried gate re-pointing; item 2 is the commissioned-benchmark half the
+operator is waiting on, now that `EX-11` has priced its path; the rest is
+the §5.4 backfill in the weekly review's own priority order. The `PORT-1`
+critical path is deliberately absent: the second licensed discriminator
+slot is the weekly review's to spend.
 
-1. **`PORT-1` step 3b-xv — the licensed discriminator: gapped vs closed at
-   fixed σ = 800 (standard).** 🟡 **Executed 2026-08-09, 04:30 run — band
-   (mixed), parked on `attempt/PORT-1-step3bxv-20260809T093000Z`; not
-   selectable again.** The measurement landed (closed(σ = 800 on wire) =
-   1.223696 × ωM₁₂, 30.13 / 32.92 pp from the two endpoints) and, per weekly
-   decision (2), the question is back with the **weekly review** — which also
-   holds the second licensed slot, so no implementer slot may take a successor
-   rung without a fresh licence. See §7 step 3b-xv and attempts.md
-   2026-08-09T09:30Z. On the
-   `attempt/PORT-1-step3bxiv-20260808T095500Z` lineage; measurement only,
-   every band parks and reports. Execute the §7 step 3b-xv plan: fixture
-   identity byte-reproduced first (estimator 0.894543 / control 0.922423 /
-   deviation −3.0224e-02), then the closed-loop solve at σ = 800 on
-   `WIRE_TAGS`, read against the two on-record endpoints with 0.7 pp
-   quarter-spread bands — (gap owns it) / (topology does not move it) /
-   (mixed); the last two go back to the weekly review per its two-slot
-   budget. **Anchor/negative control/traps:** in the §7 plan — print
-   `|I_cond/I′|` and expect 3b-xiii's shorted-turn signature; tolerances
-   0.03/0.10 untouched under every band. **Cost:** standard, `-n 2`,
-   `timeout 600`, 3b-xiii's 344.6 s envelope. **Does not close:** `PORT-1`,
-   the branch disposition, the gate re-pointing — all conditioned on this
-   measurement, none taken in-slot. **Negative result:** every band is a
-   finding; report and park.
-
-2. **`EX-11` — Dodd–Deeds coil loading as a runnable example (standard).**
-   ✅ **Done 2026-08-09, 06:00 run** — `examples/materials/01_dodd_deeds_coil_loading.py`
-   plus a new `mat:` runner group; ΔR 1.5834% against Dodd–Deeds, every
-   figure byte-matching the `MAT-6` step-3 record, σ = 0 control at exactly
-   0.0 W / 0.0 A/m². Logs `20260809T110317Z_EX-11-runner-list.log`,
-   `20260809T110326Z_EX-11-gate.log` (74 s). See the §7 closure note.
-   Execute the §7 `EX-4`…`EX-11` backfill plan's `EX-11` bullet: the
-   `MAT-6` W = 0.15 fixture, two solves (σ = 100 / σ = 0 at 10 MHz),
-   assert ΔR within 2% of the closed form (1.5834% on record, projected
-   drive), export |J| in the slab; runner registration
-   (`./run_examples.sh --list` + `-e <id>`) is part of the chunk (the
-   `EX-1` demotion lesson). **Anchor:** Dodd–Deeds ΔR via
-   `utils/dodd_deeds.py`, tolerance citing the `MAT-6` gate log, looser
-   never tighter. **Negative control:** the σ = 0 solve is in-fixture — a
-   lossless solver reads ΔR = 0 against the full +3.277e-01 Ω, total
-   separation. **Cost:** standard, `-n 2`, ~27 s/solve at 138 619 cells on
-   record, `timeout 180`. **Traps:** complex build +
-   `FEM_EM_REQUIRE_COMPLEX=1`; ΔX reported, never gated. **Does not
-   close:** any Larmor-frequency claim — 10 MHz, eddy-current regime
-   (§2.1); feeds `ANS-1` but does not start it. **Negative result:** a ΔR
-   off the gated number at matched fixture is a regression finding —
-   report, stop, known-issues entry.
-
-3. **`MAG-13` step 2 diag — MESH_ONLY harness discriminator (heavy
-   envelope, ~200 s expected).** ✅ **Done 2026-08-09, 07:30 run** —
-   the mesh rung reproduced **exactly** (1 097 873 cells, 185.7 s vs the
-   192.7 s record, exit 0, Exit block, 188 s harness-wall;
-   `20260809T123053Z_MAG-13-step2-meshonly-diag.log`), container
-   `RestartCount = 0` / `StartedAt` unchanged. Branch (a) fired literally but
-   **its inference is refuted**: the 19:30 death sits *inside* the mesh phase
-   this run completed twice, so **no stage owns the kill** — non-deterministic
-   host-side, physics exonerated, host-side observables now the human's ask
-   (dashboard). Stage 2 not run. See the §7 closure note and the updated
-   known-issues entry. Execute the §7 step-2-diag plan: the
-   landed probe with `MAG13_STEP2_MESH_ONLY=1` at `-n 4`, `timeout 1200`;
-   assert cell count 1 097 873 / exit 0 / Exit block present against the
-   196 s record; record container uptime + `RestartCount` after. Do **not**
-   run stage 2 under any outcome. **Anchor/reading:** pre-decided in the §7
-   plan — completes ⇒ the kill is solve-stage-specific; dies truncated ⇒
-   the harness/session path is the failing thing with the physics
-   exonerated, dashboard escalation to the human (host-side observables).
-   **Traps:** clear the stale FFCx lock first; real build. **Negative
-   result:** both branches are findings by construction.
-
-4. **`EX-4` — lossy plane wave as the first time-harmonic example
-   (standard).** ✅ **Done 2026-08-09, 09:00 run** —
-   `examples/time_harmonic/01_lossy_plane_wave.py` plus a new `th:` runner
-   group; fitted α = 13.069460 Np/m (0.0185%) and β = 27.031165 rad/m
-   (0.0593%) against the closed form at a 1% ceiling, L2 rate 0.9998, every
-   figure byte-matching the `TH-6` gate record, σ = 0 control α ≡ 0.0 exactly.
-   Logs `20260809T140421Z_EX-4-runner-list.log`,
-   `20260809T140510Z_EX-4-gate.log` (16 s),
-   `20260809T140531Z_EX-4-TH-6-regress.log` (6 passed, the gate re-run against
-   the additive `return_fields` kwarg). See the §7 closure note.
-   Execute the §7 backfill plan's `EX-4` bullet: the `TH-6`
-   box driven by the analytic lossy plane wave (σ = 0.6 S/m, εᵣ = 78,
-   127.74 MHz); assert interior decay and phase constants within 1% of
-   their closed forms (0.019% / 0.059% on the `TH-6` gate record); export
-   Re/Im E and |E| as combined-XDMF; runner registration included.
-   **Anchor:** the closed-form α/β from the `TH-6` gate, tolerance citing
-   its log. **Negative control:** structural — an undamped (σ = 0) wave has
-   zero decay constant against the analytic α; the `TH-6` gate log is the
-   on-record separation, cite not recompute. **Cost:** standard, `-n 2`,
-   `timeout 180` (the `TH-6` fixture solves in seconds on record).
-   **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
-   `tests/environment` first; the example *asserts* allreduced, never just
-   renders. **Does not close:** nothing in TH — demonstration of an
-   already-gated capability. **Negative result:** report beside the gate
-   log's numbers, stop — a mismatch is a regression finding, not a
-   tolerance question.
-
-5. **`MAG-6` step 5 — re-point the gate fixture at the validated gauge
+1. **`MAG-6` step 5 — re-point the gate fixture at the validated gauge
    floor (standard).** Execute the §7 step-5 plan: one argument in
    `tests/validation/test_coil_phantom_bfield_metrics.py`
    (`gauge_penalty=1e-3 → 1.0`), bounds untouched (0.35 / 0.60), re-run at
@@ -5540,13 +5446,90 @@ scoped after `EX-11` lands.
    sweep. **Negative result:** a red gate at the validated floor is
    evidence, not a revert — report, known-issues entry.
 
-6. *(spare)* **`EX-12` — examples hygiene (smoke, doc-only + one regen).**
+2. **`ANS-1` — runnable half of the first commissioned AED benchmark
+   (standard).** Execute the §7 `ANS-1` plan verbatim: a script in
+   `examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/` reusing the
+   `MAT-6` W = 0.15 fixture; per the plan's own instruction, **share
+   `EX-11`'s landed compute path**
+   (`examples/materials/01_dodd_deeds_coil_loading.py` already imports the
+   constants, mesh, drive and `_solve_projected` from the gate modules —
+   import from the same places, do not duplicate); write `metrics.json`
+   (R, X, ΔR, ΔX both solves + cell count + elapsed), combined-XDMF of |J|
+   in the slab, and `COMPARISON.md` with the closed-form column
+   regenerated from `utils/dodd_deeds.py` (never transcribed) and the AED
+   columns blank per `SPEC.md`; runner registration included
+   (implementer's call on the group — `mat:` already exists). **Anchor:**
+   ΔR within 2% of Dodd–Deeds (1.5834% on record) **and** within 1e-3
+   relative of the pinned `+3.2770406e-01 Ω` — a pin `EX-11` reproduced
+   digit for digit on 2026-08-09, so it is fresh. **Negative control:**
+   in-fixture — the σ = 0 solve reads ΔR = 0, 0.0 W, 0.0 A/m² exactly
+   (`EX-11` asserts it `== 0.0`, no tolerance). **Cost:** standard,
+   `-n 2`, `timeout 180`; `EX-11`'s whole pipeline (mesh + two solves +
+   export) ran in 74 s harness-wall. **Traps:** complex build +
+   `FEM_EM_REQUIRE_COMPLEX=1`; ΔX reported, never gated (unconverged in
+   box size, §7 `MAT-6` step 4); `SPEC.md` is the geometry/materials
+   authority — do not restate constants it derives from the gate.
+   **Does not close:** anything Larmor-frequency — the comparison is
+   commissioned in the eddy-current regime on purpose; the AED half is the
+   operator's. **On closure:** the next review puts the case at the top of
+   the dashboard's Waiting-on-you (§7 plan). **Negative result:** ΔR off
+   the pin at matched fixture is a regression finding — report, stop,
+   known-issues entry.
+
+3. **`EX-5` — PEC cavity resonances as a runnable example (standard).**
+   Execute the §7 backfill plan's `EX-5` bullet: the `TH-9` machinery
+   (`core/cavity.py`; import the fixture from
+   `tests/validation/test_cavity_resonances.py`, never restate it) on the
+   1.0 × 0.8 × 0.6 m cavity; assert the fundamental within 0.5% of the
+   (l,m,n) closed form (0.0436% on record at 720 cells); export one mode
+   field as combined-XDMF; register in the `th:` runner group (`EX-4`
+   built the group — no runner work remains, but the `--list` +
+   `-e th:<id>` logs are still part of the chunk). **Anchor:** the
+   closed-form eigenfrequency, tolerance citing
+   `20260730T154846Z_TH-9.log`. **Negative control:** on record in that
+   same gate, cite not recompute — the 8 gradient modes return as a
+   machine-zero cluster (3.2e-15) against the O(0.04%)-accurate physical
+   modes; the example prints the cluster so the separation is visible.
+   **Cost:** standard, `-n 2`, `timeout 180` (720–2268 cells; the gate
+   ran in seconds). **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` first; a 1.0 × 0.7 × 0.5 box is degenerate (two
+   modes coincide) — keep the gate's dimensions; PEC rows need a large
+   diagonal in `A` and **unit** diagonal in `B` or the GHEP
+   orthogonalisation is invalid. **Does not close:** nothing — a
+   demonstration of gated capability; Phase-6 tuning stays unstarted.
+   **Negative result:** a fundamental off the record at matched fixture is
+   a regression finding — report beside the gate log, stop.
+
+4. **`EX-12` — examples hygiene (smoke, doc-only + one regen).**
    Execute the §7 `EX-12` bullet verbatim: fix `mri:1`'s stale "`TH-6` has
    not landed" docstring, delete/regenerate the 2026-02-18 PNG, fix the two
    guide references to files no run produces; gate is the grep-style check
    plus re-run of `-e 1` and `-e mri:1` with their on-record numbers
    re-asserted. **Negative result:** a guide claim that cannot be made true
    is a known-issues entry, not a deletion.
+
+5. *(spare)* **`EX-6` — sphere in a uniform field, solved (standard).**
+   Execute the §7 backfill plan's `EX-6` bullet: the `TH-8` sphere in an
+   imposed uniform field (import the fixture from
+   `tests/validation/test_dielectric_sphere.py` —
+   `MeshGenerator.sphere_in_box_domain` — never restate it); assert the
+   interior/exterior ratio against the quasi-static `3/(εᵣ+2)` closed form
+   at the gated tolerance (2.443% on record at the finest mesh); export
+   the field showing the interface jump; the report text states the
+   `EX-3` distinction (`EX-3` *imposes* its field, this one *solves* it);
+   `th:` runner registration included. **Anchor:** the closed-form
+   interior ratio, tolerance citing `20260731T200457Z_TH-8-gate-final.log`.
+   **Negative control:** on record in that log, cite not recompute —
+   dropping the sphere from the `material_map` under the same Dirichlet
+   data moves the interior **2348%** off, so the gate cannot pass by
+   reading back its boundary data. **Cost:** standard, `-n 2`,
+   `timeout 180` (the gate's three-mesh sweep is on record; the example
+   needs one mesh). **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`;
+   the sizing field is a gmsh `Ball`, not `Distance` (unsigned would
+   coarsen toward the centre, where the assert reads); point probes via
+   `evaluate_vector_field_parallel`. **Does not close:** nothing — `MAT-4`
+   SAR stays imposed-field-only per §2. **Negative result:** a ratio off
+   the record at matched fixture is a regression finding — report, stop.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
@@ -5556,7 +5539,9 @@ If the queue drains: **stop and journal.** Do **not** improvise gap-voltage
 ports on the birdcage itself or a B1+ chunk — both are deliberately held for
 a review to scope once the corrected estimator has *landed*, and the landing
 decision belongs to the weekly review (its 2026-08-09 adjudication, decisions
-(3)/(4)), conditioned on the 3b-xv discriminator queued above as item 1; the
+(3)/(4)), conditioned on the 3b-xv discriminator — executed 2026-08-09,
+band (mixed): the closed route has no σ-independent estimator, so the
+adjudication now waits on the weekly review's second licensed slot; the
 box (3b-xi/3b-xii), the wedge limits (3b-x), loss (3b-xiv), and the
 closed-lossy route (3b-xiii) are adjudicated, but the terminal-to-terminal
 answer (0.8945 × ωM₁₂) is still on the parked branch, ungated against a
