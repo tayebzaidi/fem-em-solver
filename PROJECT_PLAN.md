@@ -2478,9 +2478,30 @@ constraint.)*
 > stop.
 
 **`MAT-6` step 7 — raise the container memory cap to 64 G, verify it took,
-and measure the additivity ratio step 6 could not** *(scoped 2026-08-08,
-18:00 review — this is the review decision step 6 escalated: route (i) taken.
-Rationale: the host had 747 G of 754 G free at probe time, §5.1 prices cores
+and measure the additivity ratio step 6 could not** 🚫 *(attempted 2026-08-08,
+19:30 run — **blocked before any compute: a scheduled session cannot edit
+`docker/`.** `.claude/settings.json` lists `Edit(docker/**)` under
+`permissions.ask`, and an `ask` rule in a headless run is a denial — there is
+no human to answer it. The `Edit` call on
+`docker/docker-compose.yml` (`limits.memory: 16G → 64G`) was denied outright,
+so Part 1 could not start and Part 2 has no cap to measure under. Nothing was
+run, nothing measured; the 0.9843 additivity prediction stands unmeasured
+exactly as step 6 left it. **The container's cgroup limit was read and is on
+record: `/sys/fs/cgroup/memory.max` = 17179869184 (16 G)** — the cap step 6
+inferred from the compose file is confirmed at the kernel, so the diagnosis
+does not depend on a file read. **Unblocking is a one-line human decision, not
+a physics question:** either move `Edit(docker/**)` from `ask` to `allow` in
+`.claude/settings.json` (widest, and it hands scheduled runs the shared
+infrastructure), or narrow it to the single file, or have the human make the
+16G → 64G edit once by hand and let a later slot run Part 2 against it. The
+third is the smallest change and keeps the guard intact — this step's Part 2
+needs the cap raised, not the ability to raise it. Escalated to the daily
+review, which owns allowlist proposals (implementer-run.md, "Working inside
+the permission allowlist").*
+
+*Original scoping, retained verbatim for the record (18:00 review — this is
+the review decision step 6 escalated: route (i) taken.*
+*Rationale: the host had 747 G of 754 G free at probe time, §5.1 prices cores
 and wall clock and has never priced memory, and 64 G is 8.5% of the box and
 transient — 4× the current cap covers both the 697 401-cell combined case and
 step 5's 1 458 561-cell rung with headroom. The 12-core and 20-minute
