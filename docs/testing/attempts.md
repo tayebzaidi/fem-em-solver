@@ -7099,3 +7099,122 @@ flags that as "a hope, not a measurement". The next attempt should re-run
 stage 2 unchanged and watch for the same cgroup kill signature (exit 9/137)
 rather than assuming a timeout; if it OOMs, step 2's stop rule ("report the
 measured cost and stop") fires with the cell count already in hand.
+
+## 2026-08-09T02:00Z — (no chunk) — **anomaly**
+
+**Preflight dirty; no chunk work done.** `git status` at 02:00Z (21:00 local,
+slot start), against `HEAD = 6429765` (the 18:00 daily review):
+
+```
+ M PROJECT_PLAN.md                                          (24 insertions, 3 deletions)
+?? docs/testing/logs/20260809T003125Z_MAG-13-step2-solve-n4-cap16G.log
+```
+
+Container Up (6 h). **This is a first encounter for *this* diff.** The prior
+anomaly entry (21:30Z) journaled a *different* dirty tree, and the 18:00
+review landed that one in `8b8a706`; the tree was clean at review end. So the
+second-encounter parking rule does not apply — its precondition is that the
+*same* tree survived a slot, and this one is new. Nothing was stashed,
+discarded, reverted, or landed; only this entry is committed.
+
+The already-journaled-doc-drift exception is independently disqualified even
+setting the above aside: the `PROJECT_PLAN.md` edit **is a §7 status change**
+(`MAT-6` step 7 annotated 🚫), which that exception excludes by name.
+
+**Fingerprints, for byte-comparison by the 22:30 slot:**
+
+| artefact | md5 | size | state |
+|---|---|---|---|
+| `git diff` (PROJECT_PLAN.md only) | `b06df8371418e00b8fa599f99eedf1fc` | 2 399 B | reads complete |
+| `…003125Z_MAG-13-step2-solve-n4-cap16G.log` | `b95f6cbe64040b1df738b9d166979f6f` | 43 437 B, 627 lines | **truncated — no `## Exit` block** |
+
+`docs/testing/test-results.md` is **unmodified**, consistent with the log
+never reaching its Exit block (the harness writes the row from there).
+
+**This is the 19:30 slot's own unfinished work, not a human's edit.** Both
+artefacts are machine-generated and carry `Commit: 6429765…` — HEAD as the
+19:30 slot found it. That slot left **no attempts.md entry at all**, so this
+is the second consecutive slot to die before step 5.
+
+**What the 19:30 slot got, reconstructed from the two artefacts:**
+
+- **§9 item 1 (`MAT-6` step 7) was attempted and blocked before any compute** —
+  its own words, in the uncommitted `PROJECT_PLAN.md` diff. `.claude/settings.json`
+  lists `Edit(docker/**)` under `permissions.ask`, and an `ask` rule in a
+  headless run is a denial; the `limits.memory: 16G → 64G` edit was refused, so
+  Part 1 could not start and Part 2 had no raised cap to measure under. Nothing
+  was run, nothing measured — the 0.9843 additivity prediction stands exactly
+  as step 6 left it. **This is an allowlist decision for the human, not a
+  physics question**, and the diff proposes three routes (widen `Edit(docker/**)`
+  to `allow`; narrow it to the single file; or have the human make the one-line
+  16 G → 64 G edit by hand and let a later slot run Part 2 against it — the
+  third is smallest and keeps the guard intact). Escalated to the daily review
+  per implementer-run.md, "Working inside the permission allowlist".
+- **It then took §9 item 2 (`MAG-13` step 2, stage 2) under the unchanged
+  16 G cap** — hence the `-cap16G` log name, which is item 2's "record which cap
+  was in force" instruction being followed. Command per the log header:
+  `timeout 1200 mpiexec -n 4 python3 scripts/probes/mag13_step2_probe.py`,
+  started 00:31:25Z.
+- **The 16 G cap is now confirmed at the kernel inside a harness log**, which is
+  the one new durable fact this slot recovers: `CGROUP_MEMORY_MAX=17179869184`
+  is printed at line 34, before any solve. Step 6 inferred the cap from the
+  compose file; it no longer depends on a file read.
+- **The solve produced no result.** The log contains the probe banner
+  (`solve at h = 0.00125 m, -n 4; target < 5% vs 12.75% on record at h = 0.0025`)
+  and then the gmsh/Netgen mesh phase, stopping mid-volume-optimisation
+  (`Total badness = 1.36536e+06`). **No probe output past the mesh, no
+  traceback, no OOM signature (no signal 9, no exit 137), no `## Exit` footer,
+  no `test-results.md` row.** Last write to the file: 00:33:04Z — **≈ 99 s
+  after start**, far inside the 1200 s `timeout` and far inside the slot's own
+  hard kill (which would have fallen at ~01:35Z). Caveat on that 99 s: mtime
+  bounds the last *flushed* output, not necessarily the moment of death.
+- **The < 5% target is still unmeasured** at `h = 0.00125` — neither met nor
+  missed, for the second slot running. Do not read either truncated log as a
+  failure of the physics; both are failures to observe.
+
+**Item 2's pre-registered escalation has fired.** Its §9 text says: *"A second
+unexplained harness death (log truncated, no exit block, no OOM signature) ⇒
+stop and update the known-issues non-test entry, do not burn a third slot."*
+That is exactly what happened, and it is now on the record — but updating
+known-issues is chunk work, and a dirty preflight forbids chunk work, so this
+slot commits only this entry. **The daily review should treat item 2 as
+escalated, not retryable**, and fold the second occurrence into the
+known-issues non-test entry at line ~503.
+
+**The two deaths compared** — same command, same signature, very different
+timing:
+
+| slot | log | died after | ended at |
+|---|---|---|---|
+| 15:00 | `…200451Z_MAG-13-step2-solve-n4.log` | ~660 s | `Done optimizing mesh (Wall 149.77s)` |
+| 19:30 | `…003125Z_…-cap16G.log` | ~99 s (flushed-output bound) | mid-volume-optimisation |
+
+Both are `run_and_log.sh` → `docker compose exec` → `mpiexec -n 4` on the same
+probe, both truncated with no Exit block, neither at its `timeout`, neither at
+its session hard kill, neither with a kernel OOM signature. The 6.7× spread in
+time-to-death argues **against** a deterministic per-run resource ceiling
+(a cgroup kill on a fixed fixture should land at a repeatable point) and
+**for** something killing the host-side process tree asynchronously.
+
+**Next-attempt hypothesis.** The failing thing is probably not `MAG-13` and
+probably not the solve: it is a long-running harness command inside a
+*scheduled* session dying without exiting. Worth separating before any more
+compute is spent on the physics — e.g. run the same probe with
+`MAG13_STEP2_MESH_ONLY` (a stage that has already completed once, at
+196 s, so a death there is diagnostic rather than ambiguous), and capture
+whether the container itself survives the event (`docker compose ps` uptime
+after the fact) to distinguish a container restart from a host-side kill of
+`run_and_log.sh`. If the container's uptime resets, the cause is inside
+Docker/WSL2; if it does not, the harness process is being killed from outside
+and no amount of shrinking the case will help.
+
+**Cost of this anomaly: two slots again, per design.** This slot (21:00) stops.
+The 22:30 slot will see this same tree as a *second* encounter and must park it
+on `recovered/<UTC-timestamp>` before doing chunk work — unless it is landed
+first. **Landing is the cheaper and, I think, correct path**, and the next
+review is not until 03:00, after both remaining slots: the `PROJECT_PLAN.md`
+edit is a complete, self-consistent 🚫 annotation of a step that genuinely was
+blocked, and the log is a real (if truncated) artefact whose one measurement —
+the kernel-confirmed 16 G cap — is worth keeping. It is nonetheless a §7 status
+change, which is precisely what a scheduled slot is not permitted to land under
+the drift exception, so the rule stands and this slot does not land it.
