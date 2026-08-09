@@ -561,7 +561,46 @@ that has completed once, at 196 s, so a death there is diagnostic rather than
 ambiguous). Cause unknown; this entry leaves only with a commit that names and
 fixes it.
 
-### Rank-dependent DG0 centerline sample on the coil+phantom fixture (2026-08-09, `MAG-6` step 4)
+### ✅ RETIRED 2026-08-09 — "rank-dependent DG0 centerline sample" was the probe's own bug (`MAG-6` step 4, second pass)
+
+**There is no rank-safety defect.** The 00:00 slot completed step 4's missing
+rungs and the claimed defect is **refuted with its own signature measured**:
+the probe's `instrumented_eval` inflated `|B|` by exactly **√3** at any point
+whose claiming rank held *only that one point*. `Function.eval` squeezes its
+return to shape `(3,)` for a single point, so `rank_vals[k]` was the scalar
+x-component and `values[i] = rank_vals[k]` broadcast it across all three
+components. Measured ratio at the two affected points
+(`20260809T050838Z_MAG-6.log`, `WRITECHECK` lines):
+`4.852607687905e-07 / 2.801654354883e-07 = 1.7320508` and
+`2.853753669222e-07 / 1.647615449126e-07 = 1.7320508` — √3 to 8 digits. The
+production path `post/evaluation.py::evaluate_vector_field_parallel` is
+**immune by construction**: it assigns `values[rank_indices] = rank_values`, and
+numpy broadcasts a `(3,)` row into a `(1, 3)` slice correctly. Nothing under
+`src/` was ever wrong; the one-line fix is in the probe
+(`scripts/probes/mag6_step4_probe.py`, `.reshape(-1, 3)`).
+
+**The rank-invariance identity holds.** On the gate's own evaluation path at
+the validated `gauge_penalty=1.0`, the centerline jump ratio reads
+**0.251272 / 0.250416 / 0.250453** at `-n 1 / -n 2 / -n 4` — a three-way spread
+of **0.341%**, against the ≤ 10% band, with the mirror-symmetry control on the
+same solves at 0.311226 / 0.311166 / 0.311157 (**0.022%**). Logs
+`20260809T050259Z` (`-n 1`, 152 s), `20260809T050621Z` (`-n 2`, 10 s),
+`20260809T050202Z` (`-n 4`, 12 s), all `_MAG-6.log`.
+
+**So step 3's 88% scatter is gauge contamination after all** — the mechanism
+the first pass believed it had refuted. It "refuted" it by comparing 0.250406
+at `-n 2` against 0.328496 at `-n 4`, but that `-n 4` number was a probe
+call-1 value carrying the √3 bug; the same run's library-path value is
+0.250417. At the sub-floor `gauge_penalty=1e-3` the gate fixture uses, the
+scatter is real; at 1.0 it is 0.341%. **A fix chunk on the DG0 evaluation path
+is not needed and must not be scoped.** Whether the *gate fixture* should stop
+solving below the validated gauge floor is a separate, live question for a
+review — `MAG-6` stays ✅ either way, passing its untouched 0.60 bound at every
+rank count measured. Confirming run after the probe fix:
+`20260809T050930Z_MAG-6.log` — all four evaluations in one process bitwise
+identical, zero `WRITECHECK` DIFF, metric 0.250457 at `-n 4`.
+
+*Original entry, retained for the record:*
 
 **One cell's `B` value depends on the rank count, on a mesh and an owning cell
 that are provably identical.** Diagnosing `MAG-6` step 3's 88% rank scatter in

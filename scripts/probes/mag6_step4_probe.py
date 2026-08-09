@@ -109,7 +109,15 @@ def instrumented_eval(function, points, comm):
     idx_arr = np.asarray(local_idx, dtype=np.int32)
     if idx_arr.size > 0:
         cells_arr = np.asarray(local_cells, dtype=np.int32)
-        local_values = function.eval(points[idx_arr], cells_arr)
+        # ``Function.eval`` squeezes to shape (3,) when a rank claims exactly
+        # ONE point.  ``rank_vals[k]`` is then the *scalar* x-component and
+        # ``values[i] = rank_vals[k]`` broadcasts it into all three components,
+        # inflating |B| by exactly sqrt(3) — measured 1.7320508 at points i=1
+        # and i=3, the only two the probe's first pass got wrong.  The library
+        # path is immune: it assigns `values[rank_indices] = rank_values`, and
+        # numpy broadcasts a (3,) row into a (1, 3) slice correctly.  Reshape
+        # so the two paths really are the same algorithm.
+        local_values = np.asarray(function.eval(points[idx_arr], cells_arr)).reshape(-1, 3)
         local_mids = mesh.geometry.x[mesh.geometry.dofmap[cells_arr]].mean(axis=1)
         ncand_arr = np.asarray(local_ncand, dtype=np.int32)
     else:
@@ -137,6 +145,18 @@ def instrumented_eval(function, points, comm):
                         int(rank_ncand[k]),
                     )
                 )
+    if comm.rank == 0 and os.environ.get("MAG6_STEP4_WRITECHECK") == "1":
+        # Write-time consistency check: ``values[i]`` and ``claims[i][-1]`` are
+        # written from the same ``rank_vals[k]`` one line apart, so they cannot
+        # disagree unless something after this loop mutates ``values``.  Print
+        # both here, before the bcast, to date the divergence.
+        for i in range(n_points):
+            if claims[i]:
+                w = float(np.linalg.norm(values[i]))
+                c = claims[i][-1][2]
+                print(f"WRITECHECK {i:>2} values={w:.12e} claim={c:.12e} "
+                      f"{'SAME' if w == c else 'DIFF'}", flush=True)
+
     values = comm.bcast(values, root=0)
     return values, claims
 
@@ -211,6 +231,27 @@ def main():
     lib_values, lib_valid = evaluate_vector_field_parallel(b_dg0, centerline_points, comm=comm)
     lib_mag = np.linalg.norm(lib_values, axis=1)
 
+    # Second signal (step 4, second pass): the two evaluations above read the
+    # *same unchanged* ``b_dg0`` at the *same* points inside one process, by two
+    # algorithmically identical code paths (both take ``links[0]`` and both let
+    # the highest-numbered claiming rank overwrite).  They must therefore agree
+    # bitwise.  The first pass printed only the boolean and saw it go False at
+    # ``-n 4``; print the magnitude here, and add a third call so a run-to-run
+    # drift (successive calls keep moving) can be told from a one-off
+    # instrumented-vs-library difference (call 2 and 3 agree, both differ from
+    # call 1).
+    lib2_values, _ = evaluate_vector_field_parallel(b_dg0, centerline_points, comm=comm)
+    lib2_mag = np.linalg.norm(lib2_values, axis=1)
+
+    # Third pass: repeat the *instrumented* evaluation so the two calls can be
+    # compared by their claim sets, not just their values.  If call 1 and call 4
+    # disagree the collision search itself is non-deterministic across identical
+    # calls; if they agree (and both differ from the library calls) the
+    # difference is between the two code paths, which are supposed to be
+    # algorithmically identical.
+    values_r, claims_r = instrumented_eval(b_dg0, centerline_points, comm)
+    mag_r = np.linalg.norm(values_r, axis=1)
+
     # In-fixture control on the SAME solve: the mirror-symmetry metric.
     sample_clearance = max(0.75 * sampling_clearance_resolution, 0.004)
     safe_radius = phantom_radius - sample_clearance
@@ -262,6 +303,32 @@ def main():
     print(f"LIB_AGREES_WITH_INSTRUMENTED = "
           f"{bool(np.allclose(mag, lib_mag, rtol=0, atol=0))} "
           f"(all_valid={bool(lib_valid.all())})")
+
+    # --- second signal, quantified -------------------------------------------
+    ref = np.maximum(np.maximum(np.abs(mag), np.abs(lib_mag)), FIELD_SCALE_FLOOR)
+    rel_1v2 = np.abs(mag - lib_mag) / ref
+    ref23 = np.maximum(np.maximum(np.abs(lib_mag), np.abs(lib2_mag)), FIELD_SCALE_FLOOR)
+    rel_2v3 = np.abs(lib_mag - lib2_mag) / ref23
+    print(f"LIB2_AGREES_WITH_LIB = "
+          f"{bool(np.allclose(lib_mag, lib2_mag, rtol=0, atol=0))}")
+    print(f"EVAL_REPEAT_MAXREL call1_vs_call2={float(np.max(rel_1v2)):.6e} "
+          f"call2_vs_call3={float(np.max(rel_2v3)):.6e}")
+    print("EVAL_REPEAT_PERPOINT i z |B|_call1 |B|_call2 |B|_call3 rel_1v2 rel_2v3")
+    for i, pt in enumerate(centerline_points):
+        print(f"EVAL_REPEAT {i:>2} {pt[2]:>9.4f} {mag[i]:.12e} {lib_mag[i]:.12e} "
+              f"{lib2_mag[i]:.12e} {rel_1v2[i]:.3e} {rel_2v3[i]:.3e}")
+    print(f"METRIC_FROM_CALL2 centerline_jump_ratio = {jump_ratio(lib_mag):.6f}")
+    print(f"METRIC_FROM_CALL3 centerline_jump_ratio = {jump_ratio(lib2_mag):.6f}")
+    print(f"INSTRUMENTED_REPEAT_AGREES = "
+          f"{bool(np.allclose(mag, mag_r, rtol=0, atol=0))} "
+          f"maxrel={float(np.max(np.abs(mag - mag_r) / ref)):.6e}")
+    print(f"METRIC_FROM_CALL4 centerline_jump_ratio = {jump_ratio(mag_r):.6f}")
+    print("--- claim sets, instrumented call 1 vs instrumented call 4 ---")
+    for i in range(len(centerline_points)):
+        c1 = [(r, f"{v:.12e}") for r, _m, v, _n in claims[i]]
+        c4 = [(r, f"{v:.12e}") for r, _m, v, _n in claims_r[i]]
+        flag = "SAME" if c1 == c4 else "DIFF"
+        print(f"CLAIMS {i:>2} {flag} call1={c1} call4={c4}")
 
     jr = jump_ratio(mag)
     print()

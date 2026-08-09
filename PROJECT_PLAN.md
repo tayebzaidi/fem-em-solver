@@ -1134,7 +1134,66 @@ Test: `tests/validation/test_coil_phantom_bfield_metrics.py`. Full write-up in
 > docstring. **Cost:** standard tier, 5 commands, 20 / 12 / 9 / 10 / 10 / 144 s.
 
 **`MAG-6` step 4 — diagnose the centerline metric's 88% rank scatter
-(diagnosis only; `MAG-6` stays ✅)** 🟡 *(attempted 2026-08-09, 22:30 run —
+(diagnosis only; `MAG-6` stays ✅)** ✅ *(completed 2026-08-09, 00:00 run —
+second pass. **The attribution is gauge contamination, and the "rank-safety
+defect" the first pass reported is refuted with its own signature measured.**
+Five harness logs, standard tier: `20260809T050202Z` (`-n 4`, 12 s),
+`20260809T050259Z` (`-n 1`, **152 s** — the missing rung), `20260809T050621Z`
+(`-n 2`, 10 s), `20260809T050706Z` (claim-set comparison, 10 s),
+`20260809T050838Z` (write-time check, 10 s), `20260809T050930Z` (confirming
+run after the probe fix, 9 s), all `_MAG-6.log`. Instrument:
+`scripts/probes/mag6_step4_probe.py`, standalone; **no `src/` change, no
+tolerance touched, no gate moved.**)*
+> **The rank-invariance identity holds — this is the quantitative result.** On
+> the gate's own evaluation path, at the validated `gauge_penalty=1.0`, the
+> centerline jump ratio reads **0.251272 / 0.250416 / 0.250453** at
+> `-n 1 / -n 2 / -n 4`: a three-way spread of **0.341%** against the ≤ 10%
+> band. In-fixture control on the same solves, the mirror-symmetry metric:
+> 0.311226 / 0.311166 / 0.311157, spread **0.022%**. Mesh fingerprint
+> `cells=55784 m1=-4.9768680987…e+00 m2=7.977798997317e+02` identical to 12
+> digits at all three rank counts, `-n 1` included.
+> **The first pass's defect was the probe's own bug, and it is a √3.**
+> `instrumented_eval` inflated `|B|` at any point whose claiming rank held
+> *only that one point*: `Function.eval` squeezes to shape `(3,)` for a single
+> point, so `rank_vals[k]` was the scalar x-component and
+> `values[i] = rank_vals[k]` broadcast it into all three components. The
+> write-time check dates the divergence to inside the write loop and gives the
+> ratio at both affected points: `4.852607687905e-07 / 2.801654354883e-07` and
+> `2.853753669222e-07 / 1.647615449126e-07`, both **1.7320508 = √3 to 8
+> digits**. `post/evaluation.py::evaluate_vector_field_parallel` is immune by
+> construction — it assigns `values[rank_indices] = rank_values`, and numpy
+> broadcasts a `(3,)` row into a `(1, 3)` slice correctly. The claim-set
+> comparison rules out non-determinism first: two instrumented calls in one
+> process produce **bitwise identical** claim sets (`SAME` at all 9 points,
+> `INSTRUMENTED_REPEAT_AGREES = True`), so the divergence is between the two
+> code paths, not between two runs.
+> **The "second signal" is the same bug, quantified at 42.02%.**
+> `EVAL_REPEAT_MAXREL call1_vs_call2 = 4.202249e-01`, `call2_vs_call3 = 0`. It
+> fires at `-n 4` and not at `-n 1` or `-n 2` for the obvious reason: only at 4
+> ranks does a rank end up holding exactly one centerline point.
+> **Therefore step 3's 88% scatter is gauge contamination** — the mechanism the
+> first pass believed it had refuted. That refutation compared 0.250406 at
+> `-n 2` against 0.328496 at `-n 4`, but the `-n 4` number was a call-1 value
+> carrying the √3; the same run's library-path value is 0.250417. At the
+> fixture's sub-floor `gauge_penalty=1e-3` the scatter is real; at the
+> validated 1.0 it is 0.341%.
+> **Probe fixed and confirmed** (`.reshape(-1, 3)`, one line, with the √3
+> measurement in the comment): `20260809T050930Z_MAG-6.log` — all four
+> evaluations in one process bitwise identical, zero `WRITECHECK` DIFF, metric
+> 0.250457 at `-n 4`.
+> **For the review — one thing to decide, and one not to.** *Not* to scope: a
+> fix chunk on the DG0 evaluation path; there is no defect there. *To* decide:
+> the gate fixture solves at `gauge_penalty=1e-3`, below the validated floor of
+> 1, which is what makes its centerline metric rank-scatter 88% — whether to
+> re-point the fixture at the validated floor is a gate-touching change and so
+> a review's, not a slot's. `MAG-6` stays ✅ either way: the 0.60 bound is
+> untouched and passes at every rank count measured, and the ≤ 10%
+> rank-stability claim remains the symmetry metric's alone.
+> **known-issues:** the first pass's "Rank-dependent DG0 centerline sample"
+> entry is **retired** in this commit, refutation recorded in place.
+>
+> *First-pass annotation, retained for the record:*
+> *(attempted 2026-08-09, 22:30 run —
 **the attribution is delivered and both proposed mechanisms are refuted, but
 the `-n 1` rung was not run and the mechanism that remains is a defect, not an
 explanation.** Six harness logs, 9–12 s each, standard tier:
@@ -5048,7 +5107,26 @@ journal.**
    extrapolated `h`, or unaffordable — both are findings; report error
    and cost beside the prediction, annotate §7, stop.
 
-3. 🟡 **ATTEMPTED 2026-08-09, 22:30 run — attribution delivered, `-n 1` rung
+3. ✅ **DONE 2026-08-09, 00:00 run (second pass) — step 4 is complete and its
+   first-pass conclusion is reversed.** The missing `-n 1` rung ran (152 s) and
+   the three-rung set on the gate's own evaluation path, at the validated
+   `gauge_penalty=1.0`, is **0.251272 / 0.250416 / 0.250453** at `-n 1/2/4` —
+   a **0.341%** three-way spread against the ≤ 10% band, mirror-symmetry
+   control 0.022% on the same solves. **The "rank-safety defect" is refuted:**
+   it was a √3 in the probe's own `instrumented_eval` (`Function.eval` squeezes
+   to `(3,)` for a single point; the scalar x-component was broadcast into all
+   three components), measured as `1.7320508` at both affected points and
+   fixed in one line. The production `evaluate_vector_field_parallel` is immune
+   by construction. So step 3's 88% scatter **is** gauge contamination, the
+   mechanism the first pass thought it had refuted using the corrupted numbers.
+   **No fix chunk on the DG0 evaluation path — do not scope one.** Open for the
+   review, and gate-touching so not a slot's: whether the fixture should stop
+   solving at the sub-floor `gauge_penalty=1e-3`. `MAG-6` stays ✅; the
+   known-issues entry the first pass wrote is retired in the same commit. Full
+   numbers in the §7 entry.
+
+   *First-pass status, retained for the record:* 🟡 **ATTEMPTED 2026-08-09,
+   22:30 run — attribution delivered, `-n 1` rung
    not run, and the surviving mechanism is a defect needing a review-scoped
    fix.** Both proposed mechanisms are refuted quantitatively (mesh identical
    to 12 digits; ownership identical and unique, 0/9 multi-rank and 0/9

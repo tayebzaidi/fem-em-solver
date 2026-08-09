@@ -7300,3 +7300,81 @@ explain why a second evaluation in the same process disagrees at `-n 4` only.
 Cheapest test: print the magnitude of the library-vs-instrumented difference,
 and re-evaluate after an explicit `b_dg0.x.scatter_forward()`. **For the
 review: the follow-up is a fix chunk, not another diagnosis.**
+
+---
+
+## 2026-08-09 05:00Z — `MAG-6` step 4 (second pass) — **complete**
+
+**Slot:** 00:00 local implementer run. Preflight clean, container Up (9 h),
+no `recovered/*` created. **Item taken:** §9 On-deck **item 3** — items 1 and
+2 are both 🚫 and item 3 was 🟡, so it is the first item not done or blocked.
+Its own annotation named exactly what was missing: the `-n 1` rung and the
+magnitude of the "second signal". Both are diagnosis, in scope for a
+diagnosis-only step; no fix chunk was improvised.
+
+**Outcome: step 4 is complete, and its first-pass conclusion is reversed.**
+
+**1. The missing `-n 1` rung, and the identity.** On the gate's own evaluation
+path at the validated `gauge_penalty=1.0` the centerline jump ratio reads
+**0.251272** (`-n 1`, `20260809T050259Z`, **152 s**) / **0.250416** (`-n 2`,
+`…050621Z`, 10 s) / **0.250453** (`-n 4`, `…050202Z`, 12 s) — a **0.341%**
+three-way spread against the ≤ 10% band. Mirror-symmetry control on the same
+solves: 0.311226 / 0.311166 / 0.311157, **0.022%**. Mesh fingerprint
+`cells=55784 m1=-4.9768680987…e+00 m2=7.977798997317e+02` identical to 12
+digits at all three rank counts. **The rank-invariance identity holds.**
+
+**2. The second signal, quantified — and it is the probe's own bug.**
+`EVAL_REPEAT_MAXREL call1_vs_call2 = 4.202249e-01` (42.0%),
+`call2_vs_call3 = 0`. Two steps to attribute it:
+
+- *Non-determinism ruled out first.* Repeating the **instrumented** call in the
+  same process gives bitwise identical claim sets — `SAME` at all nine points,
+  `INSTRUMENTED_REPEAT_AGREES = True`, `maxrel = 0` (`…050706Z`). So the
+  divergence is between the two code paths, not between two evaluations.
+- *Write-time check dates it and names it.* Printing `values[i]` beside
+  `claims[i][-1]` inside the write loop — one line apart, from the same
+  `rank_vals[k]` — shows them already DIFF at exactly the two bad points, ratio
+  `4.852607687905e-07 / 2.801654354883e-07 = 1.7320508` and
+  `2.853753669222e-07 / 1.647615449126e-07 = 1.7320508`. **√3 to 8 digits**
+  (`…050838Z`).
+
+`Function.eval` squeezes its return to shape `(3,)` when a rank claims exactly
+one point; `rank_vals[k]` is then the scalar x-component and
+`values[i] = rank_vals[k]` broadcasts it across all three components, so
+`|B|` comes out √3 too large. It fires at `-n 4` and not at `-n 1`/`-n 2`
+because only at 4 ranks does a rank hold exactly one centerline point.
+**`post/evaluation.py::evaluate_vector_field_parallel` is immune by
+construction** — `values[rank_indices] = rank_values` broadcasts a `(3,)` row
+into a `(1, 3)` slice correctly. Nothing under `src/` was ever wrong.
+
+**3. What that reverses.** The first pass's "rank-safety defect on the DG0
+evaluation path" is **refuted**; its 72%-apart point i=1 was a √3 artifact
+(1.7320508² ≈ 3.0, and 4.85/2.81 = 1.727 within run-to-run solver noise). It
+had also "refuted" gauge contamination by comparing 0.250406 at `-n 2` against
+0.328496 at `-n 4` — but that `-n 4` number was a call-1 value carrying the
+bug; the same run's library value is 0.250417. **So step 3's 88% scatter is
+gauge contamination after all**, at the fixture's sub-floor
+`gauge_penalty=1e-3`; at the validated 1.0 the spread is 0.341%.
+
+**Probe fixed** (`.reshape(-1, 3)`, one line, √3 measurement in the comment)
+and confirmed: `…050930Z`, all four evaluations in one process bitwise
+identical, zero `WRITECHECK` DIFF, metric 0.250457 at `-n 4`, 9 s.
+
+**Cost.** Six harness commands, standard tier, `timeout 180` each; 12 + 152 +
+10 + 10 + 10 + 9 = **203 s** of compute. No overrun, no kill, no rank count
+above 4.
+
+**Nothing loosened, nothing widened.** No `src/` change; `tests/tolerances.py`
+untouched; `MAG-6` stays ✅ and passes its untouched 0.60 bound at every rank
+count measured. The known-issues entry the first pass wrote is **retired** in
+this commit with the refutation recorded in place.
+
+**For the daily review — one thing to scope, one thing not to.** *Not*: a fix
+chunk on the DG0 evaluation path; there is no defect there, and item 3's
+first-pass text asking for one is superseded. *Yes*: the gate fixture solves at
+`gauge_penalty=1e-3`, below the validated floor of 1, and that is what makes
+its centerline metric scatter 88% across ranks. Re-pointing it at the floor is
+gate-touching and therefore a review's call, not a slot's — `MAG-6` is ✅ either
+way. Note also that §9's queue is now fully drained (items 1 and 2 🚫, item 3
+✅) ahead of the 03:00 review.
+
