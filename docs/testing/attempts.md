@@ -7848,3 +7848,88 @@ channel by which the operator learns it is ready. Note that `ANS-1` was the
 whole of §5.4's benchmark table, so with it closed the table is fully
 delivered on our side and the next benchmark needs a fresh weekly-review
 commission.
+
+## 2026-08-09T20:10Z — `EX-5` — **complete**: the first eigenproblem example in the repository, reproducing the `TH-9` record digit for digit
+
+**Queue position honoured.** Tree clean at 15:00 CDT, container Up (24 h),
+§9 On-deck items 1 and 2 struck through as done by the 12:00 and 13:30 runs,
+so item 3 — `EX-5` — was the first open one. No fallback, no anomaly.
+
+**What was built.** `examples/time_harmonic/02_pec_cavity_resonances.py`,
+dispatched as `th:2` in the runner group `EX-4` created — so, as the item
+predicted, **zero runner work**: `scripts/run_examples.sh` is untouched and
+the new script appears in `--list` purely because the group globs the
+directory (`20260809T200348Z_EX-5-runner-list.log`, `th:1` and `th:2` both
+listed). The fixture (`EDGES`, `N_MODES`) is imported from
+`tests/validation/test_cavity_resonances.py` and the solve from
+`core/cavity.py`; nothing is restated.
+
+**Measured, at `-n 2` on the gate's own (6, 5, 4) mesh, 720 cells / 5330
+dofs, 0.6 s of solve and 2 s harness-wall** (`20260809T200354Z_EX-5-gate.log`):
+
+| mode | solved (MHz) | closed form (MHz) | error |
+|---|---|---|---|
+| 1 | 239.9805 | 239.9510 | 0.0123% |
+| 2 | 291.3904 | 291.3459 | 0.0153% |
+| 3 | 312.3465 | 312.2838 | 0.0201% |
+| 4 | 346.5469 | 346.3958 | 0.0436% |
+
+Every one of the four is asserted against the plan's 0.5% ceiling, not just
+the fundamental the plan named — an example that gated only mode 1 could pass
+on one lucky eigenvalue. `null_mode_count == 0` is asserted too. These are the
+`TH-9` gate's numbers to the last printed digit
+(`20260730T154846Z_TH-9.log`), which is the point: the example path and the
+landed gate cannot have drifted.
+
+**The export is gated, not merely written — and this needed new machinery.**
+`core/cavity.py` never returned eigenvectors, so there was no way to write
+"the mode" without re-solving something else and hoping it matched. It gained
+an additive `return_modes=False` kwarg: `_solve_pencil` optionally returns the
+eigenvectors reordered by the same `argsort` that orders the eigenvalues (SLEPc
+returns them in shift-and-invert order, which is *not* the spectrum's — getting
+this wrong would silently export mode 3 as mode 1), and `CavitySpectrum` gained
+`mode_functions` / `mesh`, both `None` on the untouched path. Vector → Function
+goes through the owned-dofs block plus `scatter_forward`, so it is rank-safe.
+The gate was re-run to prove the kwarg is inert: **3 passed**,
+`20260809T200401Z_EX-5-TH-9-regress.log`, 4 s.
+
+Two assertions on the exported field itself, neither asked for by the plan:
+
+* the **Rayleigh quotient** `λ = ∫|∇×E|²/∫|E|²` of the exact function written
+  to XDMF, re-assembled in the example and converted back, reads 239.9805 MHz
+  — **3.48e-15** relative to the eigenvalue the solver reported. So what
+  ParaView colours *is* the asserted mode. Both integrals are allreduced.
+* the exported magnitude spans **2.31e-17 … 1.0** after peak normalisation:
+  a PEC mode must touch zero on the walls and peak inside, and that is a
+  statement about the written array with no reference to the solve.
+
+**Negative control, cited not recomputed, per the plan** — the 8/8 gradient
+modes at `max|λ|/k₁² ≈ 3.2e-15` from the same gate log. To keep the citation
+from rotting into decoration, the run asserts that the cited cluster and the
+measured worst-case physical error (4.36e-04) still straddle the gate's 1e-8
+cutoff; if a future refinement ever pushed the physical error below 1e-8 that
+assertion fires and the sentence gets rewritten instead of quietly lying.
+
+**Three harness runs.** `20260809T200323Z_EX-5-probe` was the first execution
+(passed on the first try, all assertions included); the two nits it exposed
+were textual only — a docstring saying the fundamental is 239.9540 MHz when
+the closed form prints 239.9510, and a control line whose "1.4e+11x below"
+read backwards. `20260809T200354Z_EX-5-gate` is the committed run, through the
+runner, physics byte-identical to the probe.
+
+**Cost.** Standard tier declared; actual 2 s + 4 s + 1 s of harness wall, the
+cheapest example in the backfill by a wide margin (`EX-11` cost 74 s, `EX-4`
+16 s). The `th:` group's complex build is sourced by the runner even though
+this eigenproblem is real symmetric — it solves identically in either build,
+and the group discipline is worth more than the exception.
+
+**Closes nothing physics-side** — `TH-9` was gated 2026-07-30. This is the
+§5.4 Phase-2 backfill; the phase's shortfall bookkeeping is the weekly
+review's to update.
+
+**Next-attempt hypothesis.** None needed — complete. For whoever takes the
+next §5.4 item: `EX-6` and `EX-8` both want a *field or spectrum* out of a
+gated module, and `EX-8`'s sweep will want exactly the eigenvector access
+added here, so the `return_modes` kwarg is now on the shelf for it. `EX-6`
+(the `TH-8` sphere) has no equivalent gap — `test_dielectric_sphere.py`
+already solves and exposes its field.

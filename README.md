@@ -131,6 +131,10 @@ pip install -e ".[dev,docs]"
 # constants vs their closed forms (complex build)
 ./run_examples.sh --example th:1
 
+# Run the PEC cavity eigen-analysis example — the first four resonances vs the
+# (l,m,n) closed form, one mode field exported (complex build)
+./run_examples.sh --example th:2
+
 # Run all magnetostatics examples / absolutely everything
 ./run_examples.sh --example all-mag
 ./run_examples.sh --example all --nproc 2

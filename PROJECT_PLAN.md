@@ -4842,7 +4842,7 @@ mandate to displace the critical path.
 | `EX-2` | Cylindrical phantom domain: wall classification and tags in ParaView | ✅ | standard |
 | `EX-3` | Mass-averaged SAR on the standard-masses sphere: point and 1 g/10 g fields in ParaView | ✅ | standard |
 | `EX-4` | Lossy plane wave: decay and phase vs closed form (first time-harmonic example) | ✅ | standard |
-| `EX-5` | PEC cavity resonances: eigenfrequencies vs closed form, mode field in ParaView | ⬜ | standard |
+| `EX-5` | PEC cavity resonances: eigenfrequencies vs closed form, mode field in ParaView | ✅ | standard |
 | `EX-6` | Sphere in a uniform field: solved quasi-static response vs closed form | ⬜ | standard |
 | `EX-7` | Waveguide/coax: the `TH-7` gated quantity as a runnable example | ⬜ | standard |
 | `EX-8` | Resonance guard on a frequency sweep: the `TH-1` step-5 detector firing | ⬜ | standard |
@@ -4868,7 +4868,29 @@ recorded.
 >   and phase constants within 1% of their closed forms (0.019% / 0.059% on
 >   record). Angle: the first example anywhere to show a solved
 >   time-harmonic field, and loss visibly attenuating it.
-> * **`EX-5`** — `TH-9` machinery on the rectangular PEC cavity: assert the
+> * **`EX-5`** — ✅ **closed 2026-08-09 (15:00 run).**
+>   `examples/time_harmonic/02_pec_cavity_resonances.py`, dispatched as `th:2`,
+>   reproduces the `TH-9` record digit for digit through the example path: all
+>   four modes asserted against the (l,m,n) closed form at the plan's 0.5%
+>   ceiling — 239.9805 / 291.3904 / 312.3465 / 346.5469 MHz, errors 0.0123% /
+>   0.0153% / 0.0201% / 0.0436% — with `null_mode_count == 0` and 720 cells /
+>   5330 dofs, 0.6 s of solve. Two further gates the plan did not ask for but
+>   the export needed: the **Rayleigh quotient** ∫|∇×E|²/∫|E|² of the exact
+>   function written to XDMF re-measures 239.9805 MHz, **3.48e-15** relative to
+>   the reported eigenvalue (so ParaView colours the asserted mode, not a
+>   look-alike), and the exported magnitude spans 2.31e-17 … 1.0 after peak
+>   normalisation, i.e. the PEC wall condition is visible in the array itself.
+>   Negative control cited not re-run per the plan (8/8 gradient modes at
+>   3.2e-15 relative, `20260730T154846Z_TH-9.log`), with an in-run assertion
+>   that the cited cluster and the measured 4.36e-04 physical error still
+>   straddle the gate's 1e-8 cutoff. `core/cavity.py` gained an additive
+>   `return_modes=False` kwarg (eigenvectors, sorted with their eigenvalues,
+>   `CavitySpectrum.mode_functions`/`.mesh`); no gate assertion depends on it
+>   and `TH-9` was re-run to prove it (3 passed, `-n 2`). Logs
+>   `20260809T200348Z_EX-5-runner-list.log`,
+>   `20260809T200354Z_EX-5-gate.log` (2 s),
+>   `20260809T200401Z_EX-5-TH-9-regress.log` (4 s). *(Original plan text
+>   follows.)* `TH-9` machinery on the rectangular PEC cavity: assert the
 >   fundamental within 0.5% of the (l,m,n) closed form (0.0436% on record);
 >   export one mode field. Angle: eigen-analysis, the Phase-6 tuning
 >   primitive.
@@ -5573,7 +5595,13 @@ slot is the weekly review's to spend.
    the pin at matched fixture is a regression finding — report, stop,
    known-issues entry.
 
-3. **`EX-5` — PEC cavity resonances as a runnable example (standard).**
+3. ~~**`EX-5` — PEC cavity resonances as a runnable example (standard).**~~
+   — **done 2026-08-09 (15:00 run)**: `th:2` asserts all four resonances at
+   the 0.5% ceiling (worst 0.0436%, fundamental 0.0123%), `null_mode_count`
+   0, and the exported mode's Rayleigh quotient back to 3.48e-15 of the
+   reported eigenvalue; `core/cavity.py` gained an additive `return_modes`
+   kwarg and `TH-9` re-ran green (3 passed). 2 s harness-wall, log
+   `20260809T200354Z_EX-5-gate.log`. *(Original item text follows.)*
    Execute the §7 backfill plan's `EX-5` bullet: the `TH-9` machinery
    (`core/cavity.py`; import the fixture from
    `tests/validation/test_cavity_resonances.py`, never restate it) on the

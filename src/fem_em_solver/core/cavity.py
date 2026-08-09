@@ -101,6 +101,11 @@ class CavitySpectrum:
     cell_size: float
     degree: int
     diagnostics: dict = field(default_factory=dict)
+    #: Populated only when ``solve_pec_cavity_modes(return_modes=True)``: the
+    #: N1curl eigenfunctions of ``frequencies_hz``, in the same order, and the
+    #: mesh they live on. Left ``None`` otherwise so the gate path is unchanged.
+    mode_functions: list = None
+    mesh: object = None
 
 
 def _cavity_forms(V, bc_diagonal: float):
@@ -128,8 +133,16 @@ def _cavity_forms(V, bc_diagonal: float):
     return A, B, boundary_dofs.size
 
 
-def _solve_pencil(A, B, target: float, nev: int, comm) -> Tuple[np.ndarray, int]:
-    """Shift-and-invert GHEP solve; returns (ascending eigenvalues, n_converged)."""
+def _solve_pencil(
+    A, B, target: float, nev: int, comm, return_vectors: bool = False
+) -> Tuple[np.ndarray, int]:
+    """Shift-and-invert GHEP solve; returns (ascending eigenvalues, n_converged).
+
+    With ``return_vectors`` the eigenvectors are returned as a third element, in
+    the same ascending order as the eigenvalues (SLEPc's own ordering follows the
+    shift-and-invert target, not the spectrum). Nothing else changes: no caller
+    that leaves the flag alone can observe the difference.
+    """
 
     eps = SLEPc.EPS().create(comm)
     eps.setOperators(A, B)
@@ -154,8 +167,20 @@ def _solve_pencil(A, B, target: float, nev: int, comm) -> Tuple[np.ndarray, int]
     values = np.array(
         [np.real(eps.getEigenvalue(i)) for i in range(n_converged)], dtype=float
     )
+    order = np.argsort(values)
+
+    vectors = None
+    if return_vectors:
+        vectors = []
+        for i in order:
+            vec = A.createVecRight()
+            eps.getEigenvector(int(i), vec)
+            vectors.append(vec)
+
     eps.destroy()
-    return np.sort(values), n_converged
+    if return_vectors:
+        return values[order], n_converged, vectors
+    return values[order], n_converged
 
 
 def solve_pec_cavity_modes(
@@ -165,12 +190,19 @@ def solve_pec_cavity_modes(
     n_modes: int = 4,
     comm: MPI.Comm = None,
     null_cutoff_fraction: float = 1e-4,
+    return_modes: bool = False,
 ) -> CavitySpectrum:
     """Solve for the lowest ``n_modes`` physical resonances of a PEC box.
 
     ``null_cutoff_fraction`` is expressed as a fraction of the analytic
     fundamental ``k²``: eigenvalues below it are gradient (null-space) modes and
     are counted, reported, and discarded.
+
+    ``return_modes`` additionally fills ``CavitySpectrum.mode_functions`` and
+    ``.mesh`` with the eigenfunctions behind the returned frequencies, so a
+    caller can export the very field its assertions were read from. It is purely
+    additive: with the flag off, the returned frequencies and every diagnostic
+    are bit-identical to before.
     """
 
     comm = MPI.COMM_WORLD if comm is None else comm
@@ -195,12 +227,18 @@ def solve_pec_cavity_modes(
     target = 0.5 * (lam[0] + lam[-1])
 
     A, B, n_bc = _cavity_forms(V, bc_diagonal)
-    values, n_converged = _solve_pencil(A, B, target, nev=n_modes + 4, comm=comm)
+    if return_modes:
+        values, n_converged, vectors = _solve_pencil(
+            A, B, target, nev=n_modes + 4, comm=comm, return_vectors=True
+        )
+    else:
+        values, n_converged = _solve_pencil(A, B, target, nev=n_modes + 4, comm=comm)
 
     null_cutoff = null_cutoff_fraction * lam[0]
     spurious_cutoff = 0.5 * bc_diagonal
     null_modes = values[values < null_cutoff]
-    physical = values[(values >= null_cutoff) & (values < spurious_cutoff)]
+    keep = (values >= null_cutoff) & (values < spurious_cutoff)
+    physical = values[keep]
 
     if physical.size < n_modes:
         raise RuntimeError(
@@ -208,6 +246,22 @@ def solve_pec_cavity_modes(
             f"[{null_cutoff:.3e}, {spurious_cutoff:.3e}); requested {n_modes}"
         )
     physical = physical[:n_modes]
+
+    mode_functions = None
+    if return_modes:
+        # Same mask, same order as the frequencies: mode_functions[i] is the
+        # eigenfunction of frequencies_hz[i]. The eigenvector's local block is
+        # owned-dofs-only, so the ghost values are filled by scatter_forward.
+        kept = [vec for vec, take in zip(vectors, keep) if take][:n_modes]
+        mode_functions = []
+        for index, vec in enumerate(kept):
+            f = fem.Function(V, name=f"E_mode_{index + 1}")
+            local = f.x.index_map.size_local * f.x.block_size
+            f.x.array[:local] = vec.getArray(readonly=True)
+            f.x.scatter_forward()
+            mode_functions.append(f)
+        for vec in vectors:
+            vec.destroy()
 
     n_dofs = V.dofmap.index_map.size_global * V.dofmap.index_map_bs
     n_cells = msh.topology.index_map(msh.topology.dim).size_global
@@ -232,6 +286,8 @@ def solve_pec_cavity_modes(
             "bc_diagonal": float(bc_diagonal),
             "n_constrained_dofs_local": int(n_bc),
         },
+        mode_functions=mode_functions,
+        mesh=msh if return_modes else None,
     )
 
 
