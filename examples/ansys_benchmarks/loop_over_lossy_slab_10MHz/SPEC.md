@@ -16,8 +16,12 @@ adjudication input, not a formality.
 
 ## Status
 
-- [ ] Runnable half implemented (`ANS-1`, PROJECT_PLAN §7) — script, metrics
-      JSON, XDMF, `COMPARISON.md` with our numbers filled in
+- [x] Runnable half implemented (`ANS-1`, PROJECT_PLAN §7) — script, metrics
+      JSON, XDMF, `COMPARISON.md` with our numbers filled in. **Done
+      2026-08-09**: `./run_examples.sh -e ans:1` (log
+      `docs/testing/logs/20260809T183731Z_ANS-1.log`, 70 s) reads
+      ΔR = +3.2770406e-01 Ω, 1.5834% from the closed form and 1.4e-08 from
+      the pin.
 - [ ] Operator replication in AED (goes to the dashboard Waiting-on-you list
       when the box above is checked)
 - [ ] Adjudication (next weekly review after AED numbers land)
