@@ -498,9 +498,13 @@ mesh in the process — is the reusable part.
 
 ## Non-test issues
 
-### Unexplained mid-command termination of the logging harness (2026-08-08, 15:00 implementer slot)
+### Unexplained mid-command termination of the logging harness (2026-08-08, 15:00 and 19:30 implementer slots)
 
-Observed once. During `MAG-13` step 2's stage-2 solve
+**Observed twice — the standing instruction below has fired; `MAG-13` step 2
+is escalated, not retryable.** The second occurrence is recorded after the
+first-occurrence text; the two are compared at the end of this entry.
+
+Observed first during `MAG-13` step 2's stage-2 solve
 (`timeout 1200 mpiexec -n 4 python3 scripts/probes/mag13_step2_probe.py`,
 started 20:04:51Z), the harness died ~660 s in — the log
 (`20260808T200451Z_MAG-13-step2-solve-n4.log`) ends mid-Netgen with **no
@@ -516,12 +520,102 @@ with its harness: no attempts.md entry, nothing committed or parked
 (journaled by the 16:30 slot; artifacts landed by the 18:00 review,
 `8b8a706`).
 
-**Standing instruction:** a run that finds its log truncated this way
-should treat the measurement as *unobserved*, not failed. On a **second**
-occurrence, stop and update this entry with the new timestamp and any
-common factor (rank count, memory pressure, wall-clock position in the
-slot) rather than re-running a third time. Cause unknown; this entry
-leaves only with a commit that names and fixes it.
+**Second occurrence — 2026-08-08, 19:30 slot.** The same command on the same
+probe (`timeout 1200 mpiexec -n 4 python3 scripts/probes/mag13_step2_probe.py`,
+started 00:31:25Z) died again, log
+`20260809T003125Z_MAG-13-step2-solve-n4-cap16G.log`: 43 437 B, 627 lines, no
+`## Exit` block, no `test-results.md` row, stopping mid-Netgen volume
+optimisation (`Total badness = 1.36536e+06`). Last flushed write 00:33:04Z —
+**≈ 99 s after start**, versus ~660 s for the first occurrence. That slot also
+left no attempts.md entry; its tree was journaled by the 21:00 slot and parked
+by the 22:30 slot on `recovered/20260809T033023Z`. The log's one durable
+measurement: `CGROUP_MEMORY_MAX=17179869184` (16 G) confirmed at the kernel
+before any solve, so `MAT-6` step 6's cap no longer rests on a compose-file
+read.
+
+**Common factors, and the ones ruled out (22:30 slot, 2026-08-09):**
+
+| | 15:00 slot | 19:30 slot |
+|---|---|---|
+| log | `…200451Z_…-n4.log` | `…003125Z_…-cap16G.log` |
+| died after | ~660 s | ~99 s (flushed-output bound) |
+| stage reached | `Done optimizing mesh (Wall 149.77s)` | mid-volume-optimisation |
+
+Shared: same probe, same `-n 4`, same `run_and_log.sh` → `docker compose exec`
+path, both truncated with no Exit block, neither at its `timeout`, neither at
+its session hard kill, neither with a kernel OOM signature. **Ruled out — the
+container did not restart.** `docker inspect` at 03:30Z reports
+`StartedAt = 2026-08-08T20:00:21Z`, `RestartCount = 0`; the container has been
+continuously Up across **both** deaths (20:15Z and 00:33Z). So the cause is not
+a container/cgroup restart, and it is not inside Docker's lifecycle — the
+host-side process tree is being killed. The 6.7× spread in time-to-death also
+argues against a deterministic per-run resource ceiling, which would land at a
+repeatable point on a fixed fixture.
+
+**Standing instruction (unchanged in force, now escalated):** a run that finds
+its log truncated this way should treat the measurement as *unobserved*, not
+failed. Two occurrences are on record, so **do not spend a third slot on the
+`MAG-13` step 2 solve**; the next diagnostic step is to separate the harness
+from the physics — re-run the same probe with `MAG13_STEP2_MESH_ONLY` (a stage
+that has completed once, at 196 s, so a death there is diagnostic rather than
+ambiguous). Cause unknown; this entry leaves only with a commit that names and
+fixes it.
+
+### Rank-dependent DG0 centerline sample on the coil+phantom fixture (2026-08-09, `MAG-6` step 4)
+
+**One cell's `B` value depends on the rank count, on a mesh and an owning cell
+that are provably identical.** Diagnosing `MAG-6` step 3's 88% rank scatter in
+the centerline jump-ratio metric, step 4 instrumented the point evaluation
+(`scripts/probes/mag6_step4_probe.py`; no `src/` change) and eliminated both
+mechanisms step 3 had proposed:
+
+- **Not mesh noise.** `MESH_FINGERPRINT` (global cell count plus reduced
+  midpoint moments) is `cells=55784 m1=-4.9768680987…e+00 m2=7.977798997317e+02`
+  in **every** run — `-n 2`, `-n 4`, and a fixed-rank repeat — agreeing to 12
+  significant digits (the last digit of `m1` moves with reduction order alone).
+  The mesh is reproducible run to run; step 3's 6.8% "mesh drift" attribution
+  does not survive.
+- **Not partition-owned sampling.** `CENTERLINE_MULTICLAIM = 0/9` and
+  `CENTERLINE_MULTICELL = 0/9` at both rank counts: every centerline point is
+  claimed by exactly one rank and collides with exactly one cell, so the
+  `links[0]` / rank-order-overwrite ambiguity in
+  `post/evaluation.py::evaluate_vector_field_parallel` never fires here. The
+  **chosen cell midpoints are identical across `-n 2` and `-n 4` for all nine
+  points**, printed to 9 decimals.
+- **Not gauge contamination.** The fixture solves at `gauge_penalty=1e-3`,
+  below the validated floor of 1, and raises `GaugeContaminationWarning`. Re-run
+  at `gauge_penalty=1.0` the scatter persists: jump ratio 0.250406 at `-n 2`
+  vs 0.328496 at `-n 4` (31%).
+
+**What is left.** At `gauge_penalty=1.0`, eight of the nine centerline points
+are rank-invariant to ~5 significant digits between `-n 2` and `-n 4`. The
+entire metric spread is set by **one point, i=1 at z = -0.0225 m**, whose
+sampled `|B|` reads `2.813455e-07` at `-n 2` and `4.852531e-07` at `-n 4` —
+**72% apart, in the same cell** (midpoint
+`(-1.204260909e-03, +4.174143551e-03, -2.041163735e-02)` in both). Same mesh,
+same cell, same field definition, different rank count. That is a rank-safety
+defect in the solve/interpolation path, not in the metric's reduction and not
+in the sampling.
+
+**A second, possibly related signal, not yet diagnosed:** the probe evaluates
+the same `Function` at the same points twice in one run — once instrumented,
+once through the library — and compares them exactly. They agree at `-n 2`
+(`LIB_AGREES_WITH_INSTRUMENTED = True`) and **disagree at `-n 4`** (`False`)
+in the same process, on the same unchanged `b_dg0`. Two identical evaluations
+inside one run should be bitwise equal. Whether this is the same defect or an
+independent one is unmeasured — the probe prints only the boolean, not the
+magnitude of the difference.
+
+**Impact and scope.** No gate is affected today: `MAG-6` stays ✅, the
+centerline jump ratio passes its untouched 0.60 bound at every rank count
+measured (0.250406–0.328496), and the ≤ 10% rank-stability claim belongs to the
+mirror-symmetry metric alone — which on these same solves reads
+0.306591 / 0.309126 / 0.310501 / 0.311161 / 0.311162, a **0.15% spread**, and is
+therefore the in-fixture control showing the defect is localised to the
+centerline sample rather than global to the solve. No fix is attempted here:
+step 4 is diagnosis-only and a fix is a review-scoped chunk, not an in-slot
+improvisation. Logs: `20260809T033322Z`, `…033350Z`, `…033403Z`, `…033514Z`,
+`…033555Z`, `…033608Z`, all `_MAG-6.log`.
 
 ### ✅ RETIRED 2026-08-04 — reaction Z-matrix diagonal is negative where it must be inductive
 

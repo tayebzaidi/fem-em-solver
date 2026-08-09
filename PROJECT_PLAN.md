@@ -1134,8 +1134,57 @@ Test: `tests/validation/test_coil_phantom_bfield_metrics.py`. Full write-up in
 > docstring. **Cost:** standard tier, 5 commands, 20 / 12 / 9 / 10 / 10 / 144 s.
 
 **`MAG-6` step 4 — diagnose the centerline metric's 88% rank scatter
-(diagnosis only; `MAG-6` stays ✅)** *(scoped 2026-08-08, 18:00 review, from
-step 3's "left for a review" hand-off)*.
+(diagnosis only; `MAG-6` stays ✅)** 🟡 *(attempted 2026-08-09, 22:30 run —
+**the attribution is delivered and both proposed mechanisms are refuted, but
+the `-n 1` rung was not run and the mechanism that remains is a defect, not an
+explanation.** Six harness logs, 9–12 s each, standard tier:
+`20260809T033322Z` / `…033350Z` / `…033403Z` / `…033514Z` / `…033555Z` /
+`…033608Z`, all `_MAG-6.log`. Instrument:
+`scripts/probes/mag6_step4_probe.py`, standalone, touches no `src/` and no
+tolerance.*
+> **Not mesh noise.** The mesh fingerprint — global cell count plus reduced
+> midpoint moments — is `cells=55784, m1=-4.9768680987…e+00,
+> m2=7.977798997317e+02` in every run at `-n 2`, `-n 4`, and a fixed-rank
+> repeat: identical to **12 significant digits**. Step 3's 6.8% "run-to-run
+> mesh drift" attribution does not survive; the mesh is reproducible.
+> **Not partition-owned sampling.** `CENTERLINE_MULTICLAIM = 0/9` and
+> `CENTERLINE_MULTICELL = 0/9` at both rank counts — each point is claimed by
+> exactly one rank and collides with exactly one cell, so the `links[0]` and
+> rank-order-overwrite ambiguities in `evaluate_vector_field_parallel` never
+> fire. The **chosen owning-cell midpoints are identical across `-n 2` and
+> `-n 4` for all nine points**, to 9 decimals.
+> **Not gauge contamination** (a mechanism neither step 3 nor this plan named,
+> surfaced by the fixture's own `GaugeContaminationWarning`: it solves at
+> `gauge_penalty=1e-3`, below the validated floor of 1). Re-run at 1.0 the
+> scatter persists — jump ratio **0.250406** at `-n 2` vs **0.328496** at
+> `-n 4`, 31%.
+> **What is left is a rank-safety defect.** At `gauge_penalty=1.0` eight of
+> nine centerline points are rank-invariant to ~5 significant digits; the whole
+> metric spread is set by **one point, i=1 at z = -0.0225 m**, reading
+> `2.813455e-07` at `-n 2` and `4.852531e-07` at `-n 4` — **72% apart in the
+> same cell, on the same mesh**. The rank-invariance identity this step was
+> anchored on is therefore *violated*, and violated locally.
+> **In-fixture control, same solves:** the mirror-symmetry metric reads
+> 0.306591 / 0.309126 / 0.310501 / 0.311161 / 0.311162 across all five runs — a
+> **0.15% spread** against the centerline metric's 31%. The defect is localised
+> to the centerline sample, not global to the solve.
+> **Second signal, undiagnosed:** the probe evaluates the same unchanged
+> `b_dg0` at the same points twice in one process and compares exactly; the two
+> agree at `-n 2` and **disagree at `-n 4`**. Two identical evaluations in one
+> run should be bitwise equal. The probe prints only the boolean, not the
+> magnitude — measuring that is the cheapest next step.
+> **Not done, and why:** the `-n 1` rung (144 s on record) was not run — the
+> slot ended first; the attribution above rests on `-n 2` vs `-n 4` plus one
+> fixed-rank repeat, which is sufficient to refute the two proposed mechanisms
+> but not to characterise the defect's rank dependence. **No gate moved and no
+> fix was attempted** — `MAG-6` stays ✅, the 0.60 bound is untouched and passed
+> at every rank count measured, and per this step's own terms a real reduction
+> defect "gets a known-issues entry and a fix is scoped by a review, not
+> improvised in-slot". The known-issues entry is written. **For the review:**
+> the follow-up is a fix chunk on the DG0 evaluation/interpolation path, not
+> another diagnosis of the metric.*
+>
+> *Original plan, retained verbatim:*
 > Step 3 landed the DG0 centerline jump-ratio metric passing its 0.60 bound at
 > all three rank counts but rank-scattered **88%** (0.473300 / 0.268765 /
 > 0.251746 at `-n 1/2/4`) where the mirror-symmetry metric on the *same
@@ -4917,7 +4966,25 @@ how) — neither *requires* the other. The fourth slot before the 03:00
 review will drain — the drain instruction below applies to it: **stop and
 journal.**
 
-1. **`MAT-6` step 7 — raise the container memory cap to 64 G, verify it
+1. 🚫 **BLOCKED — a scheduled session cannot make the edit this item
+   requires.** *(19:30 run hit it and its 🚫 annotation was parked on
+   `recovered/20260809T033023Z`; the 22:30 run re-verified the cause
+   independently and records it here so the block is on `main`.)*
+   `.claude/settings.json` lists `Edit(docker/**)` in the **`ask`** block
+   (line 28), and an `ask` rule in a headless run is a denial — there is no
+   human to answer it. Part 1 (the `limits.memory: 16G → 64G` compose edit)
+   therefore cannot start, and Part 2 has no raised cap to measure under.
+   Nothing was run; the 0.9843 additivity prediction stands unmeasured
+   exactly as step 6 left it. The 16 G cap is now confirmed **at the kernel**
+   (`/sys/fs/cgroup/memory.max = 17179869184`, printed inside a harness log),
+   so the diagnosis does not depend on a file read. **Unblocking is a
+   one-line human decision, not a physics question:** move `Edit(docker/**)`
+   to `allow`, narrow it to the single file, or have the human make the
+   16 G → 64 G edit by hand once and let a later slot run Part 2 against it —
+   the last is smallest and keeps the guard intact. For the daily review,
+   which owns allowlist proposals.
+
+   **`MAT-6` step 7 — raise the container memory cap to 64 G, verify it
    took, and measure the additivity ratio (heavy).** `main`; complex
    build. Execute the §7 step-7 plan: edit
    `docker/docker-compose.yml` `limits.memory: 16G → 64G`, recreate the
@@ -4940,7 +5007,22 @@ journal.**
    §2.1 untouched. **Negative result:** OOM at 64 G is a per-cell memory
    measurement — report beside cap and cell count, annotate §7, stop.
 
-2. **`MAG-13` step 2, stage 2 only — the < 5% wire solve the 15:00 slot
+2. 🚫 **BLOCKED by its own pre-registered escalation — do not retry.** This
+   item's text below says: *"A second unexplained harness death (log
+   truncated, no exit block, no OOM signature) ⇒ stop and update the
+   known-issues non-test entry, do not burn a third slot."* That second death
+   happened in the 19:30 slot (log
+   `20260809T003125Z_MAG-13-step2-solve-n4-cap16G.log`, truncated at ~99 s
+   against the first occurrence's ~660 s). The 22:30 run **executed the
+   escalation**: the known-issues non-test entry now records both
+   occurrences, their comparison, and one newly ruled-out cause — the
+   container did **not** restart across either death (`StartedAt`
+   2026-08-08T20:00:21Z, `RestartCount = 0`, continuously Up), so the kill is
+   host-side, outside Docker. The < 5% target remains **unmeasured, not
+   missed**. Next step is diagnostic, not another solve: re-run under
+   `MAG13_STEP2_MESH_ONLY`, a stage that has completed once at 196 s.
+
+   **`MAG-13` step 2, stage 2 only — the < 5% wire solve the 15:00 slot
    never observed (heavy).** `main`; real build; `MAG-13` stays ✅ either
    way. The mesh rung is already paid for (1 097 873 cells, 192.7 s,
    `8b8a706`) — do **not** re-run the mesh probe. One solve at `-n 4`
@@ -4966,7 +5048,19 @@ journal.**
    extrapolated `h`, or unaffordable — both are findings; report error
    and cost beside the prediction, annotate §7, stop.
 
-3. **`MAG-6` step 4 — diagnose the centerline metric's 88% rank scatter
+3. 🟡 **ATTEMPTED 2026-08-09, 22:30 run — attribution delivered, `-n 1` rung
+   not run, and the surviving mechanism is a defect needing a review-scoped
+   fix.** Both proposed mechanisms are refuted quantitatively (mesh identical
+   to 12 digits; ownership identical and unique, 0/9 multi-rank and 0/9
+   multi-cell), a third (gauge contamination at the fixture's sub-floor
+   `gauge_penalty=1e-3`) is refuted too, and what remains is one point
+   (i=1, z = -0.0225 m) reading 72% apart across rank counts **in the same
+   cell on the same mesh** — a rank-safety defect on the DG0 evaluation path.
+   Mirror-symmetry control on the same solves: 0.15% spread. No gate moved;
+   `MAG-6` stays ✅. Full numbers in the §7 entry; known-issues entry written.
+   **The follow-up is a fix chunk, not another diagnosis.**
+
+   **`MAG-6` step 4 — diagnose the centerline metric's 88% rank scatter
    (standard; diagnosis only).** Independent; `main`; real build;
    `MAG-6` stays ✅. Execute the §7 step-4 plan: on the landed h = 0.010
    fixture, print per-point sampled values plus an ownership fingerprint

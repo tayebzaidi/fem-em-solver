@@ -7218,3 +7218,85 @@ blocked, and the log is a real (if truncated) artefact whose one measurement —
 the kernel-confirmed 16 G cap — is worth keeping. It is nonetheless a §7 status
 change, which is precisely what a scheduled slot is not permitted to land under
 the drift exception, so the rule stands and this slot does not land it.
+
+## 2026-08-09T03:30Z — `MAG-6` step 4 — **incomplete** (attribution delivered, one rung short)
+
+**Preflight: second encounter, tree parked, chunk work done.** `git status` at
+03:30:23Z showed the identical tree the 21:00 slot journaled at 02:00Z. Both
+fingerprints were verified, not assumed: `git diff` md5
+`b06df8371418e00b8fa599f99eedf1fc` / 2 399 B and
+`…003125Z_MAG-13-step2-solve-n4-cap16G.log` md5
+`b95f6cbe64040b1df738b9d166979f6f` / 43 437 B — byte-identical to the journal.
+Second-encounter rule applied: committed as-is to
+**`recovered/20260809T033023Z`** (`76e79ad`), returned to clean `main` at
+`42fd45a`. Nothing stashed, discarded, or reverted; the branch is the daily
+review's to dispose of. Container Up, 8 h.
+
+**§9 items 1 and 2 were both blocked before selection, and both blocks are now
+recorded on `main`** (they were only ever recorded on the parked branch or in a
+pre-registered rule):
+
+- **Item 1 (`MAT-6` step 7)** — re-verified independently rather than trusting
+  the parked diff: `.claude/settings.json` line 28 puts `Edit(docker/**)` in
+  the **`ask`** block, and `ask` in a headless run is a denial. The 16 G → 64 G
+  compose edit cannot be made by a scheduled session, so Part 1 cannot start
+  and Part 2 has no cap to measure under. **Allowlist decision for the human**,
+  annotated 🚫 in §9 and §7.
+- **Item 2 (`MAG-13` step 2)** — its own pre-registered escalation had already
+  fired (second unexplained harness death, 19:30 slot). This run **executed
+  that escalation** instead of retrying: the known-issues non-test entry now
+  carries both occurrences and their comparison, plus one cause newly ruled
+  out — `docker inspect` gives `StartedAt = 2026-08-08T20:00:21Z`,
+  `RestartCount = 0`, so the container was **continuously Up across both
+  deaths** (20:15Z and 00:33Z). The kill is host-side, not a container or
+  cgroup restart. The < 5% target stays unmeasured, not missed.
+
+**Item 3 (`MAG-6` step 4) was the first runnable item and is what this slot
+worked.** Instrument: `scripts/probes/mag6_step4_probe.py` — standalone,
+no `src/` change, no tolerance touched. Six harness logs, standard tier, 9–12 s
+each: `20260809T033322Z` (`-n 2`), `…033350Z` (`-n 4`), `…033403Z` (`-n 4`
+repeat), `…033514Z` (`-n 2`, cell-level instrumentation), `…033555Z` (`-n 2`,
+gauge 1.0), `…033608Z` (`-n 4`, gauge 1.0), all `_MAG-6.log`.
+
+**Measured — both mechanisms step 3 proposed are refuted:**
+
+| claim | measurement | verdict |
+|---|---|---|
+| run-to-run mesh noise (step 3: 6.8%) | `cells=55784`, `m1=-4.9768680987…e+00`, `m2=7.977798997317e+02` in **all** runs, 12 digits | **refuted** |
+| partition-owned point sampling | `MULTICLAIM 0/9`, `MULTICELL 0/9`; owning-cell midpoints identical `-n 2` vs `-n 4` to 9 decimals | **refuted** |
+| gauge contamination (my own hypothesis) | at `gauge_penalty=1.0`: 0.250406 (`-n 2`) vs 0.328496 (`-n 4`), 31% | **refuted** |
+
+**What survives is a defect, not an explanation.** At `gauge_penalty=1.0`,
+eight of nine centerline points are rank-invariant to ~5 significant digits;
+the entire spread is one point — **i=1, z = -0.0225 m: `2.813455e-07` at
+`-n 2` vs `4.852531e-07` at `-n 4`, 72% apart, same mesh, same cell**
+(midpoint `(-1.204260909e-03, +4.174143551e-03, -2.041163735e-02)` in both).
+The step's anchor was a rank-invariance identity; it is violated, and locally.
+**In-fixture control on the same solves:** mirror-symmetry reads 0.306591 /
+0.309126 / 0.310501 / 0.311161 / 0.311162 — **0.15% spread**, so the defect is
+on the centerline sample, not global to the solve.
+
+**Undiagnosed second signal, worth the next slot's first ten minutes:** the
+probe evaluates the same unchanged `b_dg0` at the same points twice in one
+process and compares them exactly — they agree at `-n 2` and **disagree at
+`-n 4`**. Two identical evaluations in one run should be bitwise equal. The
+probe prints only the boolean; **printing the magnitude is a one-line change**
+and would say whether this is the same defect or an independent one.
+
+**Why incomplete rather than ✅:** the `-n 1` rung (144 s on record) was not
+run — the slot ended first. The refutations stand on `-n 2` vs `-n 4` plus a
+fixed-rank repeat, which is enough to kill both proposed mechanisms but not to
+characterise the defect's rank dependence. No gate moved, nothing was loosened,
+`MAG-6` stays ✅ and passes its untouched 0.60 bound at every rank count
+measured. No fix was attempted: this step is diagnosis-only and its own terms
+send a real defect to a review-scoped chunk.
+
+**Hypothesis for the next attempt.** The defect is on the DG0
+interpolation/evaluation path, not in the metric or the partitioner: a single
+cell's `curl A` differing 72% between rank counts on an identical mesh points
+at ghost-cell data for that cell being stale or unsynchronised at interpolation
+time (`b_dg0.interpolate(b_field)` with no `scatter_forward`), which would also
+explain why a second evaluation in the same process disagrees at `-n 4` only.
+Cheapest test: print the magnitude of the library-vs-instrumented difference,
+and re-evaluate after an explicit `b_dg0.x.scatter_forward()`. **For the
+review: the follow-up is a fix chunk, not another diagnosis.**
