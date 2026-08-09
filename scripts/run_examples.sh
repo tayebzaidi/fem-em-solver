@@ -10,20 +10,21 @@ set -euo pipefail
 #   ./scripts/run_examples.sh -e mri:1            # MRI example 1 (complex build)
 #   ./scripts/run_examples.sh -e mesh:1           # meshing example 1 (real build)
 #   ./scripts/run_examples.sh -e mat:1            # materials example 1 (complex build)
+#   ./scripts/run_examples.sh -e th:1             # time-harmonic example 1 (complex build)
 #   ./scripts/run_examples.sh -e all-mag          # all magnetostatics examples
-#   ./scripts/run_examples.sh -e all -n 2         # everything (magnetostatics + MRI + meshing + materials)
+#   ./scripts/run_examples.sh -e all -n 2         # everything (magnetostatics + MRI + meshing + materials + time-harmonic)
 #
 # Options:
 #   -e, --example   Selection: number (magnetostatics), 'mri:<number>',
-#                   'mesh:<number>', 'mat:<number>', CSV of any, 'all-mag'
-#                   (magnetostatics only), or 'all' (everything)
+#                   'mesh:<number>', 'mat:<number>', 'th:<number>', CSV of any,
+#                   'all-mag' (magnetostatics only), or 'all' (everything)
 #   -n, --nproc     MPI process count (default: 2)
 #   -t, --timeout   Per-example timeout in seconds inside the container (default: 1200)
 #   --dry-run       Print the container commands without executing them
 #   --list          List available examples and exit
 #
-# MRI and materials examples solve in the frequency domain and are automatically
-# run with the complex DolfinX build sourced
+# MRI, materials and time-harmonic examples solve in the frequency domain and are
+# automatically run with the complex DolfinX build sourced
 # (/usr/local/bin/dolfinx-complex-mode); the magnetostatics and meshing examples
 # run in the default real build. The
 # meshing examples do not solve at all — they build a gated fixture, assert its
@@ -34,6 +35,7 @@ MAG_DIR="$ROOT_DIR/examples/magnetostatics"
 MRI_DIR="$ROOT_DIR/examples/mri"
 MESH_DIR="$ROOT_DIR/examples/meshing"
 MAT_DIR="$ROOT_DIR/examples/materials"
+TH_DIR="$ROOT_DIR/examples/time_harmonic"
 DEFAULT_COMPOSE_FILE="$ROOT_DIR/docker/docker-compose.yml"
 COMPLEX_MODE_SOURCE="/usr/local/bin/dolfinx-complex-mode"
 
@@ -77,7 +79,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     -h|--help)
-      sed -n '4,25p' "$0"
+      sed -n '4,24p' "$0"
       exit 0
       ;;
     *)
@@ -91,10 +93,12 @@ mapfile -t MAG_AVAILABLE < <(find "$MAG_DIR" -maxdepth 1 -type f -name '*.py' | 
 mapfile -t MRI_AVAILABLE < <(find "$MRI_DIR" -maxdepth 1 -type f -name '*.py' 2>/dev/null | sort)
 mapfile -t MESH_AVAILABLE < <(find "$MESH_DIR" -maxdepth 1 -type f -name '*.py' 2>/dev/null | sort)
 mapfile -t MAT_AVAILABLE < <(find "$MAT_DIR" -maxdepth 1 -type f -name '*.py' 2>/dev/null | sort)
+mapfile -t TH_AVAILABLE < <(find "$TH_DIR" -maxdepth 1 -type f -name '*.py' 2>/dev/null | sort)
 
 if [[ ${#MAG_AVAILABLE[@]} -eq 0 && ${#MRI_AVAILABLE[@]} -eq 0 \
-      && ${#MESH_AVAILABLE[@]} -eq 0 && ${#MAT_AVAILABLE[@]} -eq 0 ]]; then
-  echo "No examples found in $MAG_DIR, $MRI_DIR, $MESH_DIR or $MAT_DIR" >&2
+      && ${#MESH_AVAILABLE[@]} -eq 0 && ${#MAT_AVAILABLE[@]} -eq 0 \
+      && ${#TH_AVAILABLE[@]} -eq 0 ]]; then
+  echo "No examples found in $MAG_DIR, $MRI_DIR, $MESH_DIR, $MAT_DIR or $TH_DIR" >&2
   exit 1
 fi
 
@@ -121,8 +125,11 @@ if [[ "$MODE" == "list" ]]; then
   if [[ ${#MAT_AVAILABLE[@]} -gt 0 ]]; then
     list_group "materials (complex build, sourced automatically):" "mat:" "${MAT_AVAILABLE[@]}"
   fi
+  if [[ ${#TH_AVAILABLE[@]} -gt 0 ]]; then
+    list_group "time-harmonic (complex build, sourced automatically):" "th:" "${TH_AVAILABLE[@]}"
+  fi
   echo
-  echo "Selections: -e <n> | -e mri:<n> | -e mesh:<n> | -e mat:<n> | -e all-mag | -e all"
+  echo "Selections: -e <n> | -e mri:<n> | -e mesh:<n> | -e mat:<n> | -e th:<n> | -e all-mag | -e all"
   exit 0
 fi
 
@@ -131,7 +138,7 @@ if [[ -z "$EXAMPLE_SPEC" ]]; then
   exit 2
 fi
 
-# SELECTED entries are "<group>|<path>" with group in {mag, mri, mesh, mat}.
+# SELECTED entries are "<group>|<path>" with group in {mag, mri, mesh, mat, th}.
 SELECTED=()
 declare -A SEEN=()
 
@@ -164,6 +171,7 @@ case "$EXAMPLE_SPEC" in
     for p in "${MRI_AVAILABLE[@]}"; do select_path mri "$p"; done
     for p in "${MESH_AVAILABLE[@]}"; do select_path mesh "$p"; done
     for p in "${MAT_AVAILABLE[@]}"; do select_path mat "$p"; done
+    for p in "${TH_AVAILABLE[@]}"; do select_path th "$p"; done
     ;;
   all-mag|all-magnetostatics)
     for p in "${MAG_AVAILABLE[@]}"; do select_path mag "$p"; done
@@ -178,10 +186,12 @@ case "$EXAMPLE_SPEC" in
         select_by_number mesh "$MESH_DIR" "${BASH_REMATCH[1]}"
       elif [[ "$token" =~ ^mat:([0-9]+)$ ]]; then
         select_by_number mat "$MAT_DIR" "${BASH_REMATCH[1]}"
+      elif [[ "$token" =~ ^th:([0-9]+)$ ]]; then
+        select_by_number th "$TH_DIR" "${BASH_REMATCH[1]}"
       elif [[ "$token" =~ ^[0-9]+$ ]]; then
         select_by_number mag "$MAG_DIR" "$token"
       else
-        echo "Invalid example token: '$token' (expected <n>, mri:<n>, mesh:<n>, mat:<n>, all-mag, or all)" >&2
+        echo "Invalid example token: '$token' (expected <n>, mri:<n>, mesh:<n>, mat:<n>, th:<n>, all-mag, or all)" >&2
         exit 2
       fi
     done
@@ -198,7 +208,7 @@ for entry in "${SELECTED[@]}"; do
   ex="${entry#*|}"
   rel="${ex#$ROOT_DIR/}"
   prefix=""
-  if [[ "$group" == "mri" || "$group" == "mat" ]]; then
+  if [[ "$group" == "mri" || "$group" == "mat" || "$group" == "th" ]]; then
     prefix="source $COMPLEX_MODE_SOURCE && "
   fi
   inner="cd /workspace && ${prefix}PYTHONPATH=/workspace/src timeout $TIMEOUT_S mpiexec -n $NPROC python3 $rel"

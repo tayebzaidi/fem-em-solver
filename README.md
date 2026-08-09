@@ -124,6 +124,13 @@ pip install -e ".[dev,docs]"
 # and exports cell + facet tags for ParaView
 ./run_examples.sh --example mesh:1
 
+# Run the coil-loading example — ΔR vs the Dodd-Deeds closed form (complex build)
+./run_examples.sh --example mat:1
+
+# Run the time-harmonic example — solved lossy plane wave, decay and phase
+# constants vs their closed forms (complex build)
+./run_examples.sh --example th:1
+
 # Run all magnetostatics examples / absolutely everything
 ./run_examples.sh --example all-mag
 ./run_examples.sh --example all --nproc 2
@@ -131,7 +138,8 @@ pip install -e ".[dev,docs]"
 
 The script automatically targets `docker/docker-compose.yml` and runs each selected example as:
 `docker compose exec fem-em-solver ... timeout <s> mpiexec -n <nproc> python3 <example>`
-(MRI examples are prefixed with `source /usr/local/bin/dolfinx-complex-mode`).
+(the frequency-domain groups — `mri:`, `mat:`, `th:` — are prefixed with
+`source /usr/local/bin/dolfinx-complex-mode`).
 
 ### Python API Example
 

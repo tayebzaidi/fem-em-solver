@@ -4797,7 +4797,7 @@ mandate to displace the critical path.
 | `EX-1` | Two-torus port fixture: conforming mesh, cell and facet tags in ParaView | ✅ | standard |
 | `EX-2` | Cylindrical phantom domain: wall classification and tags in ParaView | ✅ | standard |
 | `EX-3` | Mass-averaged SAR on the standard-masses sphere: point and 1 g/10 g fields in ParaView | ✅ | standard |
-| `EX-4` | Lossy plane wave: decay and phase vs closed form (first time-harmonic example) | ⬜ | standard |
+| `EX-4` | Lossy plane wave: decay and phase vs closed form (first time-harmonic example) | ✅ | standard |
 | `EX-5` | PEC cavity resonances: eigenfrequencies vs closed form, mode field in ParaView | ⬜ | standard |
 | `EX-6` | Sphere in a uniform field: solved quasi-static response vs closed form | ⬜ | standard |
 | `EX-7` | Waveguide/coax: the `TH-7` gated quantity as a runnable example | ⬜ | standard |
@@ -4817,7 +4817,9 @@ chunk, per the `EX-1` demotion lesson. Done-when for each: runner-dispatched
 harness log with the anchor asserted, combined-XDMF written, elapsed
 recorded.
 > * **`EX-4`** — the `TH-6` box driven by the analytic lossy plane wave
->   (`tests/validation/test_lossy_plane_wave.py` fixture, σ = 0.6 S/m,
+>   (`tests/validation/test_lossy_plane_wave.py` fixture, σ = 0.6 S/m
+>   — *the fixture's `SIGMA` is in fact **0.7**; corrected 2026-08-09 at
+>   execution, the example imports the constant rather than restating it*,
 >   εᵣ = 78 at 127.74 MHz): export Re/Im E and |E|; assert interior decay
 >   and phase constants within 1% of their closed forms (0.019% / 0.059% on
 >   record). Angle: the first example anywhere to show a solved
@@ -4902,6 +4904,48 @@ recorded.
 > physics-side:** 10 MHz, eddy-current regime; no Larmor/saline claim (§2.1),
 > and the example's report text says so on screen. Feeds `ANS-1`, which now has
 > its compute path on record, but does not start it.
+
+> **`EX-4` ✅ 2026-08-09 (09:00 slot, §9 item 4).**
+> `examples/time_harmonic/01_lossy_plane_wave.py` lands — **the first example in
+> the repository that runs a time-harmonic solve at all** — and reproduces the
+> `TH-6` gate record through the example path at every printed digit. Gate
+> `./run_examples.sh -e th:1 -n 2 -t 180`
+> (`20260809T140510Z_EX-4-gate.log`, exit 0, 16 s harness-wall / 14.8 s
+> example-internal, standard tier, complex build sourced by the runner — the log
+> line reads `(complex build)`), preceded by `./run_examples.sh --list`
+> (`20260809T140421Z_EX-4-runner-list.log`, exit 0, 1 s), which enumerates
+> `th:1 -> examples/time_harmonic/01_lossy_plane_wave.py` under "time-harmonic
+> (complex build, sourced automatically)" — the `EX-1` runner gap is not
+> repeated. **A new runner group.** `EX-4`…`EX-8` are frequency-domain but
+> neither MRI nor materials, so `scripts/run_examples.sh` gains a fifth group,
+> `th:` → `examples/time_harmonic/`, sourced complex exactly like `mri:`/`mat:`
+> and included in `-e all`; the other four groups' dispatch is untouched. The
+> README's runner section gains `th:` **and** the `mat:` line `EX-11` never
+> added. Measured, against `20260731T020427Z_TH-6-gate3.log`: closed form
+> α = **13.067043** Np/m, β = **27.015150** rad/m (δ = 76.53 mm, αL = 1.307,
+> βL = 2.702); coarse 12³ (10 368 cells) rel L2 **7.217852e-02**, fine 24³
+> (82 944 cells) rel L2 **3.609441e-02**, measured L2 rate in h **0.9998**, fitted
+> α = **13.069460** (**0.0185%**) and β = **27.031165** (**0.0593%**) — every
+> figure byte-matching the gate log, so the example path and the gate path are
+> the same computation. Gated here at **1%** on both constants (the §7 `EX-4`
+> plan's ceiling; the gate's own is the 5% §10 MVP criterion), plus α > 0 (the
+> conjugated-convention trap), plus the refinement and O(h) rate so a
+> coincidental match at one mesh size cannot pass. **The exported field is the
+> gated solve**, not a look-alike: `_solve_plane_wave` gained an additive
+> `return_fields=False` kwarg — no assertion in the gate depends on it, and the
+> gate was re-run to prove it (`20260809T140531Z_EX-4-TH-6-regress.log`, 6
+> passed, exit 0, 25 s, `tests/environment` first). One thing the gate does not
+> have: the `|E|` array ParaView colours by is **checked, not merely written** —
+> it spans 2.707108e-01 … 1.001903e+00 V/m, a **3.701×** drop against the
+> closed-form `e^{αL}` = **3.694×**. Negative control, per the plan structural
+> and *cited rather than recomputed*: the same closed form at σ = 0 gives
+> α ≡ **0.0** Np/m exactly (asserted `== 0.0`, no tolerance — a zero loss
+> tangent makes the radical identically zero) against 13.069460 measured; the
+> solved-field version stays on record as `MAT-2` in the same gate log (α ratio
+> 10.3232 vs 10.3116, 0.113%) and is not re-run. **Closes nothing physics-side:**
+> `TH-6`/`MAT-2` were already ✅ 2026-07-31; this is the Phase-2 §5.4 backfill
+> making a gated capability runnable, and it retires 1 of that phase's shortfall
+> of 5.
 
 > **✅ Restored 2026-08-07 (19:30 slot, §9 item 1).** The runner path is now
 > on record. `./run_examples.sh --list`
@@ -5460,7 +5504,16 @@ scoped after `EX-11` lands.
    result:** both branches are findings by construction.
 
 4. **`EX-4` — lossy plane wave as the first time-harmonic example
-   (standard).** Execute the §7 backfill plan's `EX-4` bullet: the `TH-6`
+   (standard).** ✅ **Done 2026-08-09, 09:00 run** —
+   `examples/time_harmonic/01_lossy_plane_wave.py` plus a new `th:` runner
+   group; fitted α = 13.069460 Np/m (0.0185%) and β = 27.031165 rad/m
+   (0.0593%) against the closed form at a 1% ceiling, L2 rate 0.9998, every
+   figure byte-matching the `TH-6` gate record, σ = 0 control α ≡ 0.0 exactly.
+   Logs `20260809T140421Z_EX-4-runner-list.log`,
+   `20260809T140510Z_EX-4-gate.log` (16 s),
+   `20260809T140531Z_EX-4-TH-6-regress.log` (6 passed, the gate re-run against
+   the additive `return_fields` kwarg). See the §7 closure note.
+   Execute the §7 backfill plan's `EX-4` bullet: the `TH-6`
    box driven by the analytic lossy plane wave (σ = 0.6 S/m, εᵣ = 78,
    127.74 MHz); assert interior decay and phase constants within 1% of
    their closed forms (0.019% / 0.059% on the `TH-6` gate record); export

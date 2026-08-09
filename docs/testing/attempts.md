@@ -7597,3 +7597,86 @@ harness path for ~700 s — if that also dies, the harness/session path is
 implicated with zero compute; if it survives, the kill needs memory pressure to
 fire and the 64 G cap raise (`MAT-6` step 7, Waiting-on-you 1) becomes the
 critical path for it too.
+
+## 2026-08-09T14:10Z — `EX-4` — **complete**: the first time-harmonic example in the repository, reproducing the `TH-6` gate record digit for digit
+
+**Slot.** 2026-08-09 09:00 CDT implementer run, §9 "On deck" item 4 (items 1–3
+were already marked done by the 04:30 / 06:00 / 07:30 slots). Clean preflight —
+`git status` empty, container Up 18 hours. Standard tier throughout.
+
+**What was built.** `examples/time_harmonic/01_lossy_plane_wave.py`, the §5.4
+Phase-2 backfill's first entry, and the first example anywhere under
+`examples/` that runs a time-harmonic solve at all. It imports its constants,
+fixture and solve from `tests/validation/test_lossy_plane_wave.py` — the module
+that closed `TH-6`/`MAT-2` on 2026-07-31 — rather than restating them, per the
+§7 backfill plan's common rules.
+
+**A fifth runner group.** `EX-4`…`EX-8` are frequency-domain but neither MRI nor
+materials, so `scripts/run_examples.sh` gains `th:` → `examples/time_harmonic/`,
+sourced complex exactly like `mri:`/`mat:` and included in `-e all`; the other
+four groups' dispatch is untouched (`--help`'s `sed` range was re-pointed for
+the one line the header lost). The README's runner section gains a `th:` line
+**and** the `mat:` line `EX-11` never added.
+
+**Measured**, against `20260731T020427Z_TH-6-gate3.log`:
+
+| quantity | this run | `TH-6` record |
+|---|---|---|
+| closed-form α | 13.067043 Np/m | 13.067043 |
+| closed-form β | 27.015150 rad/m | 27.015150 |
+| coarse 12³ (10 368 cells) rel L2 | 7.217852e-02 | 7.217852e-02 |
+| fine 24³ (82 944 cells) rel L2 | 3.609441e-02 | 3.609441e-02 |
+| measured L2 rate in h | 0.9998 | 0.9998 |
+| fitted α (error) | 13.069460 (**0.0185%**) | 0.019% |
+| fitted β (error) | 27.031165 (**0.0593%**) | 0.059% |
+
+Every figure byte-matches, so the example path and the gate path are the same
+computation. Gated at **1%** on both constants (the §7 `EX-4` plan's ceiling;
+the gate's own is the 5% §10 MVP criterion — tighter than the gate only in the
+sense that it is what the fixture delivers, never loosened), plus α > 0 (the
+conjugated-`e^{+jωt}` trap), plus refinement and the O(h) rate so a coincidental
+match at one mesh size cannot pass.
+
+**The exported field is the gated solve.** Rather than re-implement the solve to
+get a field to export — the drift the plan's "import, don't restate" rule
+exists to prevent — `_solve_plane_wave` gained an additive
+`return_fields=False` kwarg returning `(mesh, fields)` alongside the existing
+tuple. No assertion in the gate depends on it, and the gate was re-run to prove
+that: `20260809T140531Z_EX-4-TH-6-regress.log`, 6 passed, exit 0, 25 s, with
+`tests/environment` first in the path list.
+
+**One thing the gate does not have:** the `|E|` array ParaView colours by is
+checked, not merely written — it spans 2.707108e-01 … 1.001903e+00 V/m across
+the box, a **3.701×** drop against the closed-form `e^{αL}` = **3.694×** (0.19%).
+Re/Im E and |E| all go out on one CG1 grid as
+`lossy_plane_wave_combined.xdmf`.
+
+**Negative control**, per the plan structural and *cited rather than
+recomputed*: the same closed form at σ = 0 gives α ≡ **0.0** Np/m exactly
+(asserted `== 0.0`, no tolerance — a zero loss tangent makes the radical
+identically zero) against 13.069460 measured. The solved-field version stays on
+record as `MAT-2` in the same gate log (α ratio 10.3232 vs closed-form 10.3116,
+0.113%) and was deliberately not re-run.
+
+**Logs.** `20260809T140421Z_EX-4-runner-list.log` (exit 0, 1 s — enumerates
+`th:1` under "time-harmonic (complex build, sourced automatically)", so the
+`EX-1` runner gap is not repeated); `20260809T140510Z_EX-4-gate.log` (exit 0,
+16 s harness-wall / 14.8 s example-internal, `mpiexec -n 2`, `(complex build)`);
+`20260809T140531Z_EX-4-TH-6-regress.log` (exit 0, 25 s). A first gate run
+`20260809T140429Z_EX-4-gate.log` (exit 0, 23 s) is on record with identical
+physics and four `ComplexWarning`s from `float()` on the complex-dtype
+`E_magnitude` array; the cast was made explicit with `np.real` and the gate
+re-run clean. No compute command exceeded 25 s; nothing was killed or shrunk.
+
+**A plan typo found and corrected.** The §7 `EX-4` bullet says σ = 0.6 S/m; the
+fixture's `SIGMA` is **0.7**. The example imports the constant, so it is right
+regardless; the bullet is annotated in place rather than silently rewritten.
+
+**Closes nothing physics-side.** `TH-6`/`MAT-2` were already ✅ 2026-07-31. This
+makes a gated capability runnable and retires 1 of Phase 2's §5.4 shortfall of
+5 (`EX-5`…`EX-8` remain).
+
+**Next-attempt hypothesis.** None needed — complete. For the review: the `th:`
+group is now in place, so `EX-5`…`EX-8` are each a single file plus a docstring
+with no runner work left to do, and the `return_fields` pattern generalises to
+any of them that need a field to export.

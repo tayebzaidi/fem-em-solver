@@ -133,10 +133,14 @@ def _probe_points() -> np.ndarray:
     return np.column_stack([xs, np.full_like(xs, yz), np.full_like(xs, yz)])
 
 
-def _solve_plane_wave(n: int, sigma: float, degree: int = 1):
+def _solve_plane_wave(n: int, sigma: float, degree: int = 1, return_fields: bool = False):
     """Solve the source-free lossy plane wave on an n³ box.
 
-    Returns ``(rel_l2_error, alpha_fit, beta_fit, ncells)``.
+    Returns ``(rel_l2_error, alpha_fit, beta_fit, ncells)``, or the same tuple
+    followed by ``(mesh, fields)`` when ``return_fields`` is set.  The extra
+    return exists so `EX-4` can export the *gated* solve rather than a
+    look-alike re-implementation of it (examples/time_harmonic/01_...); no
+    assertion in this module depends on it.
     """
     comm = MPI.COMM_WORLD
     msh = dmesh.create_box(
@@ -187,6 +191,8 @@ def _solve_plane_wave(n: int, sigma: float, degree: int = 1):
     beta_fit = -float(np.polyfit(xs, np.unwrap(np.angle(ez)), 1)[0])
 
     ncells = comm.allreduce(msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM)
+    if return_fields:
+        return rel_error, alpha_fit, beta_fit, int(ncells), msh, fields
     return rel_error, alpha_fit, beta_fit, int(ncells)
 
 
