@@ -18,5 +18,11 @@ Each case is a directory `<case>/` containing:
   weekly review adjudicates (agreements become §7 gates, disagreements become
   known-issues entries and diagnosis chunks).
 
-No cases exist yet: the first is commissioned when a phase milestone lands on
-gated physics (see PROJECT_PLAN.md §10, long-horizon roadmap).
+## Cases
+
+- `loop_over_lossy_slab_10MHz/` — **ANS-1**, commissioned 2026-08-09
+  (weekly review). Coil-loading ΔZ of a circular loop over a σ = 100 S/m
+  slab at 10 MHz, on `MAT-6`'s gated physics (ΔR vs Dodd–Deeds to 1.58%).
+  `SPEC.md` committed; runnable half is §7 chunk `ANS-1`; ready for operator
+  replication when that chunk closes (it then goes to the dashboard's
+  Waiting-on-you list).

@@ -332,6 +332,10 @@ needs `-f docker/docker-compose.yml`.
   audited bar for an in-progress phase is therefore a ramp —
   `examples ≥ min(5, gating chunks closed ✅)` — checked by the weekly review
   (weekly-review.md step 4); the flat five binds once the phase completes.
+  *(Clarified 2026-08-09, weekly review: the ramp binds the physics phases
+  1+. Phase 0's infrastructure capability — Docker, CI, the harness, the
+  runner — is exercised by every example run and does not owe a separate
+  example set; its meshing slice is covered by the `mesh:` group.)*
   Example chunks are their own §7 entries sized for one implementer run,
   never riders on physics chunks, and never target ungated capability.
 - **Ansys benchmark cases** live in `examples/ansys_benchmarks/<case>/`, each
@@ -359,9 +363,9 @@ needs `-f docker/docker-compose.yml`.
 | 0 | Infrastructure, packaging, CI, meshing | `OPS-1`, `OPS-2` | Done |
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Complete and trustworthy** |
 | 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — every analytic gate closed (`TH-1`/`TH-6`/`TH-7`/`TH-8`/`TH-9` ✅); `TH-2`/`TH-3` API hardening ⚠️ |
-| 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58% pinned / 1.5834% on the production projected drive, step 3; eddy-current regime); SAR still ungated |
-| 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-8` | Placeholder-backed |
-| 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 |
+| 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58% pinned / 1.5834% on the production projected drive, step 3; eddy-current regime); SAR gated on an **imposed** uniform field only (`MAT-4` steps 1+3: lossy-sphere closed form 3.5%, mass-averaging exact at 1 g/10 g) — coil-driven SAR and the C95.3 claim still open |
+| 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-8` | Package path still heuristic (`PORT-1` 🟡); honest Z→S conversion packaged (step 3a) and the two-loop fixture's Z gated in every entry; the 3b diagnostic lineage is at its last suspect (gap geometry/estimator — weekly-review licence 2026-08-09, see the `PORT-1` entry) |
+| 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 for excitation; both meshes (coil+phantom, birdcage) generate and are identity-gated in CI (`GEO-9`, 2026-08-03) |
 | 6 | Birdcage tuning at 64/128 MHz: mode spectrum, lumped capacitors, circuit co-simulation (the HFSS + Circuit split) | subgoals owned by the weekly review (§10) | Not started |
 | 7 | Implants: parametric implant geometry in the phantom, local SAR / near-implant hot spots | subgoals owned by the weekly review (§10) | Not started |
 | 8 | Thermal: Pennes bioheat driven by SAR | subgoals owned by the weekly review (§10) | Not started |
@@ -3117,6 +3121,44 @@ ceilings are untouched; this buys memory, not compute.)*
 > journals and audit notes are archived verbatim in
 > `docs/planning/plan-archive.md` — grep there before re-deriving anything.)*
 >
+> **Weekly-review adjudication, 2026-08-09 (the 3b-xiii/3b-xiv escalation —
+> this is the licence those steps asked for).** The lineage's own record makes
+> the call almost mechanical: four owners of the ~3.02 pp estimator-vs-control
+> deviation are excluded by measurement (wedge limits 3b-x, ωM₁₂ reference
+> 3b-viii, PEC box 3b-xii, loss 3b-xiv's 4×-in-σ ⇒ +0.19 pp sensitivity), and
+> both corners of the intended 2×2 are degenerate (closed+lossy is a shorted
+> turn, gapped+lossless is an open circuit). Four decisions:
+> **(1) Licence granted** for the fixture-topology change 3b-xiv proposed:
+> *gapped vs closed at fixed σ = 800*, the one variable the two routes still
+> differ in, at the σ where both are well-posed. Measurement only, on the
+> `attempt/PORT-1-step3bxiv-20260808T095500Z` lineage; the daily review scopes
+> it as step 3b-xv with its usual anchors/bands.
+> **(2) Diagnostic budget: two more slots**, the discriminator plus at most
+> one follow-up. This lineage has spent six steps on a 3 pp deviation; that
+> was correct discipline (the estimator is the foundation every later port
+> number stands on) and it is now one suspect from done — but it does not get
+> an open-ended seventh-and-beyond. If the discriminator lands (mixed) or
+> contradicts 3b-xiv, the question comes back to the next weekly review
+> rather than burning further slots.
+> **(3) Pre-registered disposition** so the outcome is not adjudicated by the
+> slot that measures it: if the gap owns the deviation — the expected reading,
+> since everything else is excluded — then the ~3 pp is a *physical property
+> of the gapped fixture* (the gap's fringing/capacitive termination genuinely
+> changes the terminal-to-terminal reading), not an estimator defect. The
+> consistency gate is then re-pointed to compare at matched topology, the
+> −3.0224e-02 record is kept as the measured gapped-vs-closed offset with its
+> owner named, and the lineage proceeds to the deferred 3b-i/3b-ii port-pair
+> gate on the two-torus fixture carrying the stated systematic.
+> `REACTION_CONSISTENCY_TOLERANCE` (0.03) and `MUTUAL_TOLERANCE` (0.10) stay
+> untouched until that re-pointing commit, which must cite the discriminator's
+> log — never loosened to make the current red green.
+> **(4) Branch disposition:** `attempt/PORT-1-step3bxiv-20260808T095500Z`
+> stays the working lineage and **lands on `main` together with the first ✅
+> gate this lineage produces** — nothing lands from a 🟡 park without a gate.
+> The `_validate_material_map_tags` hunk it carries is already on `main` via
+> `OPS-13`; whoever lands the branch resolves that already-applied conflict
+> trivially, as the 3b-xiii note records.
+>
 > **Closed steps** *(two-loop air fixture `two_torus_domain`, f = 10 MHz,
 > a = 0.04 m, r_wire = 0.005 m, d = 0.04 m; padding 0.08 / h_far 0.03,
 > 119738 cells, unless stated; all gates `-n 2`, complex build, in
@@ -4544,16 +4586,94 @@ Standalone example chunks enqueued by the daily review when a chunk closes a
 quantitative gate (§5.4). Each is sized for one implementer run, executes via
 `./run_examples.sh`, produces combined-XDMF that opens in ParaView, and
 demonstrates a **gated** capability from an angle no existing example covers.
-Existing inventory (2026-08-06): four magnetostatics examples plus
-`examples/mri/01_coil_phantom_fields.py`; none showed a meshed validation
-fixture's cell/facet tags until `EX-1` landed
-`examples/meshing/01_two_torus_ports.py` (2026-08-06).
+
+**Ramp accounting (2026-08-09 weekly review, first full audit).** Seven
+registered examples. Per-phase against §5.4's
+`min(5, gating chunks closed ✅)`: **Phase 1** (complete, owes 5) has 3 —
+straight wire, circular loop, Helmholtz — shortfall 2 → `EX-9`, `EX-10`.
+**Phase 2** (5 of `TH-1`…`TH-9` ✅, owes 5) has **0** — no example runs a
+time-harmonic solve at all; shortfall 5 → `EX-4`…`EX-8`. The miss predates
+the accrual mechanism (adopted 2026-08-06, after Phase 2's gates closed
+2026-07-31), so it is a backfill, not a mechanism failure this week.
+**Phase 3** (`MAT-2` + `MAT-6` ✅, owes 2) has 1 (`mri:2`) — shortfall 1 →
+`EX-11`. **Phases 4/5** owe 0 (no gating chunk ✅ yet); `mesh:1`/`mesh:2`
+are bonus meshing coverage. `mri:1` is the one **ungated** example (WF-1
+🧪 end-to-end demo) and carries a stale docstring — hygiene is `EX-12`.
+New chunks are ordered most-mission-relevant first (`EX-11` feeds `ANS-1`);
+the daily review queues them at its own pace — they are backlog, not a
+mandate to displace the critical path.
 
 | ID | Title | Status | Tier |
 |---|---|---|---|
 | `EX-1` | Two-torus port fixture: conforming mesh, cell and facet tags in ParaView | ✅ | standard |
 | `EX-2` | Cylindrical phantom domain: wall classification and tags in ParaView | ✅ | standard |
 | `EX-3` | Mass-averaged SAR on the standard-masses sphere: point and 1 g/10 g fields in ParaView | ✅ | standard |
+| `EX-4` | Lossy plane wave: decay and phase vs closed form (first time-harmonic example) | ⬜ | standard |
+| `EX-5` | PEC cavity resonances: eigenfrequencies vs closed form, mode field in ParaView | ⬜ | standard |
+| `EX-6` | Sphere in a uniform field: solved quasi-static response vs closed form | ⬜ | standard |
+| `EX-7` | Waveguide/coax: the `TH-7` gated quantity as a runnable example | ⬜ | standard |
+| `EX-8` | Resonance guard on a frequency sweep: the `TH-1` step-5 detector firing | ⬜ | standard |
+| `EX-9` | Measured h-convergence rate as an example output (Phase 1) | ⬜ | standard |
+| `EX-10` | Gauge cross-check: penalty vs Lagrange-multiplier Coulomb gauge (Phase 1) | ⬜ | standard |
+| `EX-11` | Dodd–Deeds coil loading: ΔR vs closed form, eddy currents in ParaView | ⬜ | standard |
+| `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ⬜ | smoke |
+
+**`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
+run each).** Common rules: gated capability only; the example *asserts* its
+anchor (allreduced), never just renders; tolerances cite the gate log they
+come from and may be looser, never tighter, than the gated bound; complex
+build sourced + `FEM_EM_REQUIRE_COMPLEX=1` for `EX-4`…`EX-8`; runner
+registration (`./run_examples.sh --list` + `-e <id>` logs) is part of the
+chunk, per the `EX-1` demotion lesson. Done-when for each: runner-dispatched
+harness log with the anchor asserted, combined-XDMF written, elapsed
+recorded.
+> * **`EX-4`** — the `TH-6` box driven by the analytic lossy plane wave
+>   (`tests/validation/test_lossy_plane_wave.py` fixture, σ = 0.6 S/m,
+>   εᵣ = 78 at 127.74 MHz): export Re/Im E and |E|; assert interior decay
+>   and phase constants within 1% of their closed forms (0.019% / 0.059% on
+>   record). Angle: the first example anywhere to show a solved
+>   time-harmonic field, and loss visibly attenuating it.
+> * **`EX-5`** — `TH-9` machinery on the rectangular PEC cavity: assert the
+>   fundamental within 0.5% of the (l,m,n) closed form (0.0436% on record);
+>   export one mode field. Angle: eigen-analysis, the Phase-6 tuning
+>   primitive.
+> * **`EX-6`** — the `TH-8` sphere in an imposed uniform field: assert the
+>   interior/exterior field ratio against the quasi-static closed form at
+>   the gated tolerance; export the field showing the interface jump.
+>   Angle: material contrast in a solved field (`EX-3` *imposes* its field;
+>   this one solves it — state that distinction in the report text).
+> * **`EX-7`** — the `TH-7` waveguide/coax case: reproduce the gated cutoff
+>   or line-impedance quantity within its gate tolerance; export the mode
+>   profile. Angle: guided-wave/port-adjacent geometry.
+> * **`EX-8`** — sweep across the `TH-9` fundamental with
+>   `core/resonance.py`: assert the guard fires at the on-record detuning
+>   (1.5%) and the energy rise follows the |f−f₀|⁻² pole law within 10%
+>   (3.16% on record); output the S-metric table. Angle: diagnostics — the
+>   ill-conditioning trap Phase 6 will operate inside, made visible.
+> * **`EX-9`** — three-resolution Helmholtz (the `MAG-14` fixture, cheap):
+>   fit the convergence rate, assert ≥ 0.9 (1.10 on record, `MAG-13`);
+>   print the (h, error) table. Angle: the output quantity is the *rate* —
+>   no example shows convergence behaviour.
+> * **`EX-10`** — same magnetostatic fixture solved with the gauge penalty
+>   and the `MAG-15` Lagrange-multiplier gauge: assert the two B fields
+>   agree within the `MAG-15` gated tolerance; export both. Angle:
+>   formulation cross-validation.
+> * **`EX-11`** — the `MAT-6` W = 0.15 fixture, two solves (σ = 100, σ = 0
+>   at 10 MHz): assert ΔR within 2% of the Dodd–Deeds closed form (1.5834%
+>   on record, projected drive); export |J| in the slab so the eddy-current
+>   pattern is visible. ~27 s/solve at 138 619 cells on record — standard
+>   tier holds. Angle: the headline loaded-coil physics; doubles as the
+>   compute core of `ANS-1`. **Does not close:** any Larmor-frequency
+>   claim — 10 MHz, eddy-current regime, per §2.1.
+> * **`EX-12`** *(smoke, doc-only + one regen)* — fix `mri:1`'s docstring
+>   ("`TH-6` has not landed" — it closed 2026-07-31) and label it honestly
+>   as the ungated end-to-end demo; delete or regenerate the 2026-02-18
+>   `straight_wire_validation.png` (predates the example's 2026-08-03
+>   rewrite); fix `PARAVIEW_VALIDATION_GUIDE.md`'s reference to the removed
+>   `03_helmholtz_coil.py` and `MESH_DIAGNOSTIC_GUIDE.md:84`'s false
+>   "saves `straight_wire.msh`" claim. Gate: a grep-style check that guides
+>   reference only files a run actually produces, plus re-run of `-e 1` and
+>   `-e mri:1` via the runner with their on-record numbers re-asserted.
 
 > **✅ Restored 2026-08-07 (19:30 slot, §9 item 1).** The runner path is now
 > on record. `./run_examples.sh --list`
@@ -4818,6 +4938,44 @@ physics-side; §5.4 inventory only. **Negative result:** numbers that differ
 from the step-3 record through the example path are a regression finding
 against a chunk closed the same day — do not ship; report measured vs
 logged and stop.
+
+### ANS — Ansys benchmark cases (§5.4)
+
+Commissioned by the weekly planning review only, on gated physics only; the
+human operator replicates each case in Ansys Electronics Desktop and the
+next weekly review adjudicates the returned numbers.
+
+| ID | Title | Status | Tier |
+|---|---|---|---|
+| `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ⬜ | standard |
+
+**`ANS-1` — runnable half of the first commissioned benchmark** *(scoped
+2026-08-09, weekly review — the case is
+`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/`; `SPEC.md` is
+committed and is the authority for geometry/materials/BCs; the physics is
+`MAT-6`'s, gated at 1.58%/1.5834% vs Dodd–Deeds)*. Build a runnable script
+in the case directory reusing the `MAT-6` W = 0.15 fixture exactly
+(`tests/validation/test_dodd_deeds_impedance.py` constants; production
+projected drive): two solves (σ_slab = 100 and 0 S/m at 10 MHz), then write
+(1) `metrics.json` — R, X, ΔR, ΔX for both solves plus cell count and
+elapsed; (2) combined-XDMF of |J| in the slab; (3) `COMPARISON.md` with the
+closed-form column regenerated from `utils/dodd_deeds.py` (never
+transcribed), our columns filled, and the AED columns blank per the SPEC
+table. **Anchor:** ΔR within 2% of the closed form (1.5834% on record) and
+within 1e-3 relative of the pinned `+3.2770406e-01 Ω` — a drift from the
+pin at matched fixture is a regression finding, stop and report. The script
+registers in `./run_examples.sh` (its own group or `mesh:`-style prefix —
+implementer's call) and the closure log dispatches through the runner, per
+the case README and the `EX-1` lesson. **Cost:**
+standard, `-n 2`, ~27 s/solve at 138 619 cells on record, `timeout 180`.
+**Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`; the ΔX row is
+reported, never gated (unconverged in box size, §7 `MAT-6` step 4); if
+`EX-11` has landed first, share its compute path rather than duplicating
+it. **On closure:** the next daily review puts the case at the top of the
+dashboard's Waiting-on-you list (§5.4) — that is how the operator learns it
+is ready to replicate. **Does not close:** nothing Larmor-frequency; the
+comparison is commissioned in the eddy-current regime on purpose, where our
+number is gated.
 
 ---
 
@@ -5225,33 +5383,122 @@ without a named validation target (closed form, literature value, or AED
 comparison) is not a goal; every phase milestone lands an `examples/` case
 and, where gated physics supports it, an Ansys benchmark case (§5.4).
 
-Seeded 2026-08-04 with the scope adjustment; the first weekly review
-re-derives all of this from measured pace and owns it thereafter:
+First weekly review 2026-08-09: re-derived from measured pace per the
+seeding note; owned here thereafter. "Phase 5 (current)" is the organizing
+goal, not a claim that §6's phases 2–4 are closed — their open gates
+(`PORT-1`, the Larmor-regime validation, coil-driven SAR) *are* the content
+of the loaded-birdcage goal, and §6 stays authoritative for gate status.
 
-- **Phase 5 — loaded birdcage RF (current).** Ports on the birdcage
-  (`PORT-1` step 3b lineage), then B1+ maps and SAR on the coil+phantom
-  fixture at 64/128 MHz. The honest blocker stated plainly: saline at Larmor
-  frequency is outside every current gate's regime (§2.1) — full-wave
-  validation there is this phase's real content, not an afterthought, and no
-  Phase-6 tuning number means anything before it exists.
-- **Phase 6 — tuning.** Mode spectrum of the birdcage (the `TH-9` eigensolver
-  machinery on the birdcage mesh), lumped capacitors at the gap/port level,
-  and a circuit co-simulation loop: S-parameters from the EM solve, tuning
-  and matching in a circuit layer — the HFSS + Circuit split. Hard parts
-  named now: near-resonance solves are §2.1's ill-conditioning trap *by
-  construction* (tuning means operating at the singularity the resonance
-  guard exists to detect), and the whole phase is `PORT-1`-blocked until
-  gap-voltage ports gate.
-- **Phase 7 — implants.** Parametric implant geometry first (wires, rods,
-  plates in the phantom; CAD import later), mesh grading around thin
-  conductors (the `MAG-13` 1/r lesson, made worse by skin depth), local SAR
-  and near-implant hot spots. This is where AED comparisons matter most and
-  where published measured data exists to gate against.
-- **Phase 8 — thermal.** Pennes bioheat with SAR as the source term;
-  phantom-regime validation first (gel: no perfusion, so the equation reduces
-  to heat conduction + source, which analytic solutions cover).
-  Mathematically the easiest phase; the risk is validation data and the
-  EM–thermal interface, not the solver.
+**Pace ledger — week of 2026-08-02 01:30 → 2026-08-09 01:30 (the first
+measured week; every date below cites it).**
+- **47 items reached §4-✅** (14 chunks: `GEO-9`…`GEO-13`, `OPS-11`…`OPS-14`,
+  `MAG-6`, `MAG-16`, `EX-1`…`EX-3`; plus ~33 steps inside open chunks), from
+  72 journaled implementer slots (49 complete, 16 parked, 2 blocked,
+  5 anomalies; ~8 further slots lost to host downtime against the 84-slot
+  nominal grid). 115 commits, 260 harness rows, 13 known-issues retired vs
+  2 net-new still open.
+- Phase attribution of the 47: ports (Phase 4) **12** ✅ steps plus 11
+  parked diagnostic probes; post-processing **10**; meshing on the Phase-5
+  lineage (`GEO-9`…`GEO-13`) **7**; materials/SAR (Phase 3) **6**; Phase-1
+  hardening **6**; OPS **4**; examples **3**. Phase 2 added nothing (its
+  five analytic gates closed the previous week) — the measured TH-campaign
+  rate, **5 analytic gates in ~1 week** of focus (2026-07-27…31), is the
+  precedent used below for gate-type work.
+- **The measured risk to pace is reliability, not physics**: two unexplained
+  mid-command harness kills (open known-issues entry, fired twice on
+  `MAG-13` step 2 — its own rule now says escalate, not retry a third
+  slot), ~8 slots of host downtime, two dirty-tree incidents from live
+  human edits, and two items waiting on one-line human decisions (`MAT-6`
+  step 7's `Edit(docker/**)` allowlist move; origin push remains manual and
+  stale). At the measured 65% slot-completion rate, one lost day ≈ 7 gated
+  items.
+
+**Phase 5 — loaded birdcage RF (current).** Subgoals, each with its
+validation target:
+
+1. *Port-estimator adjudication* — the licensed gapped-vs-closed
+   discriminator at σ = 800 (weekly-review licence 2026-08-09 in the
+   `PORT-1` entry: two-slot budget, pre-registered disposition, branch
+   lands with the lineage's first ✅ gate). Target: matched-topology
+   consistency identity on the two-torus fixture.
+2. *Honest S-parameters from the package* — gap-voltage `V = −∫E·dl` ports,
+   `excitation.py` replaced, N-port Z from single-port solves, then the
+   same machinery on the birdcage mesh. Targets: cross-route identity
+   (gap-voltage Z vs reaction Z on the same solved field), reciprocity
+   below stated tolerance, and the `PORT-5` metrics on a package-produced
+   S-matrix. **Assessment 2026-08-09:** remaining work ≈ 20 ± 5 steps at
+   the landed grain (discriminator + re-point + the deferred 3b-i/ii pair
+   gate + V/I estimator + single-port Z + `excitation.py` + birdcage tags +
+   N-port assembly); measured port throughput 12 ✅ steps/week ⇒ 20/12 ≈
+   **1.7 weeks — ports on the birdcage ≈ 2026-08-19…26**.
+3. *Larmor-regime validation gate — this phase's real content.* Every
+   loading/SAR gate today is eddy-current (10 MHz) or imposed-field; saline
+   at 64/128 MHz is an extrapolation (§2.1). Named targets: the lossy
+   dielectric sphere in a full-wave field at 64/128 MHz against its
+   analytic series solution (the `TH-8` machinery carried into the
+   displacement-current regime), and the coil-loading trend vs frequency
+   crossing out of the eddy-current regime. **Assessment:** ≈ 8–12
+   gate-grain items; at the TH-campaign precedent (5 gates/week focused) ⇒
+   **≈ 1.5–2 weeks once queued**; not yet queued — the daily review should
+   start breaking this down as the port lineage clears, and a §7 chunk ID
+   should exist by the next weekly review.
+4. *B1+ and SAR maps on the coil+phantom fixture at 64/128 MHz.* Targets:
+   SAR through the `MAT-4`-gated averaging operator (its C95.3 claim closes
+   here); B1+ gated qualitatively against published birdcage homogeneity
+   behaviour and, once computed, an AED benchmark case (`ANS-2`, to be
+   commissioned when subgoals 2–3 close). Blocked on 2 + 3 by §6's
+   scaffolding rule.
+
+**Phase-5 exit assessment, 2026-08-09 (the arithmetic on record):** ports
+≈ 1.7 wk (subgoal 2) + Larmor gates ≈ 1.5–2 wk (subgoal 3, partly
+parallel) + maps ≈ 1 wk (subgoal 4) ⇒ **exit ≈ 2026-09-06…13 at measured
+pace, reliability permitting**. That is well inside a quarter, so no rescope
+is forced. The number honest people watch: if the port lineage's
+discriminator round does not convert to the 3b-i/ii pair gate within its
+two-slot budget, subgoal 2's 20-step estimate is wrong and the next weekly
+review re-plans rather than extends.
+
+**Phase 6 — tuning.** Mode spectrum of the birdcage (the `TH-9` eigensolver
+machinery on the birdcage mesh), lumped capacitors at the gap/port level,
+and a circuit co-simulation loop: S-parameters from the EM solve, tuning
+and matching in a circuit layer — the HFSS + Circuit split. Validation
+targets, named now: birdcage mode frequencies against the lumped-element
+ladder-network closed form; tuned S11/capacitor values against an AED
+HFSS + Circuit benchmark case. Hard parts unchanged: near-resonance solves
+are §2.1's ill-conditioning trap *by construction*, and the phase is
+`PORT-1`-blocked until gap-voltage ports gate. **Assessment 2026-08-09:**
+earliest meaningful start ≈ end of August (when subgoal-2 ports land); no
+completion date — no circuit co-simulation work of any kind exists in the
+repo, so there is no measured pace to extrapolate from, and inventing one
+is what this section exists to prevent. First date next review after its
+first steps land.
+
+**Phase 7 — implants.** Parametric implant geometry first (wires, rods,
+plates in the phantom; CAD import later), mesh grading around thin
+conductors (the `MAG-13` 1/r lesson, made worse by skin depth), local SAR
+and near-implant hot spots. Validation targets: published measured implant-
+heating data, and AED comparisons — this is where they matter most. No
+dated estimate: no measured pace for this work type exists.
+
+**Phase 8 — thermal.** Pennes bioheat with SAR as the source term;
+phantom-regime validation first (gel: no perfusion, so the equation reduces
+to heat conduction + source, which analytic solutions cover). Mathematically
+the easiest phase; the risk is validation data and the EM–thermal
+interface, not the solver. No dated estimate, same rule.
+
+**Epitaphs.** None this cycle: every subgoal above either moved this week
+(the port lineage logged 23 slot-outcomes) or is five days old — nothing
+qualifies as stalled. The rule stands: a subgoal unmoved for a month is
+rescoped or killed here, with a dated one-line epitaph.
+
+**Examples and benchmarks (2026-08-09).** The §5.4 ramp audit found an
+8-example shortfall (Phase 1: 2, Phase 2: 5, Phase 3: 1) — backfill chunks
+`EX-4`…`EX-12` opened in §7 with the accounting stated there. First Ansys
+benchmark commissioned: `ANS-1`
+(`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/SPEC.md`, on `MAT-6`'s
+gated physics; runnable half chunked, dashboard hand-off on closure). No
+`COMPARISON.md` has AED numbers yet, so there was nothing to adjudicate
+this cycle.
 
 ---
 
