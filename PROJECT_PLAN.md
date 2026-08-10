@@ -4850,7 +4850,7 @@ mandate to displace the critical path.
 | `EX-3` | Mass-averaged SAR on the standard-masses sphere: point and 1 g/10 g fields in ParaView | ✅ | standard |
 | `EX-4` | Lossy plane wave: decay and phase vs closed form (first time-harmonic example) | ✅ | standard |
 | `EX-5` | PEC cavity resonances: eigenfrequencies vs closed form, mode field in ParaView | ✅ | standard |
-| `EX-6` | Sphere in a uniform field: solved quasi-static response vs closed form | ⬜ | standard |
+| `EX-6` | Sphere in a uniform field: solved quasi-static response vs closed form | ✅ | standard |
 | `EX-7` | Waveguide/coax: the `TH-7` gated quantity as a runnable example | ⬜ | standard |
 | `EX-8` | Resonance guard on a frequency sweep: the `TH-1` step-5 detector firing | ⬜ | standard |
 | `EX-9` | Measured h-convergence rate as an example output (Phase 1) | ⬜ | standard |
@@ -4903,10 +4903,51 @@ recorded.
 >   fundamental within 0.5% of the (l,m,n) closed form (0.0436% on record);
 >   export one mode field. Angle: eigen-analysis, the Phase-6 tuning
 >   primitive.
-> * **`EX-6`** — the `TH-8` sphere in an imposed uniform field: assert the
->   interior/exterior field ratio against the quasi-static closed form at
->   the gated tolerance; export the field showing the interface jump.
->   Angle: material contrast in a solved field (`EX-3` *imposes* its field;
+> * **`EX-6`** — ✅ **closed 2026-08-09 (19:30 run).**
+>   `examples/time_harmonic/03_dielectric_sphere_in_uniform_field.py`, dispatched
+>   as `th:3`, reproduces the `TH-8` finest-mesh record **digit for digit**
+>   through the example path: interior `E_z` = 0.038416 V/m vs the closed-form
+>   3/(ε+2)·E₀ = 0.037500, **2.443%** against the gate's own 5% MVP ceiling —
+>   identical to `20260731T200457Z_TH-8-gate-final.log` — with spread **0.080%**,
+>   transverse/E_z **0.085%** and |Im|/|Re| **0.0e+00**, also identical, at 39 693
+>   cells and 7.3 s of solve. The fixture is imported (geometry, frequency, probe
+>   cloud, and the exterior Dirichlet callable), never restated.
+>   Two gates beyond the plan's ask, both for the export: the interior average is
+>   re-measured by a **volume integral** ∫_sphere E_z dx / ∫_sphere dx over the
+>   tagged cells — 0.038411 V/m, **0.014%** from the probe average, i.e. assembly
+>   over the whole ball agrees with point location on two shells, so what
+>   ParaView colours is the field the anchor was read from; and the tagged region
+>   is confirmed to *be* the sphere (assembled volume 5.206270e-04 m³ vs
+>   4/3πR³ = 5.235988e-04, **0.568%** — a faceted tetrahedral ball under-fills,
+>   which is what that reads). The **interface jump** is a number, not just a
+>   picture: E_out/E_in = **59.20×** over the pole (closed form 56.27×) and
+>   **11.46×** at the equator (11.83×), the sign reversal of the dipole lobe in
+>   one pair. Negative control cited not re-run per the plan (ε-blind solve, same
+>   Dirichlet data, E_z = 0.918143 V/m, **2348%** off — a factor 23.9 above this
+>   run), with an in-run assertion that the cited control and the measured error
+>   still straddle 100%.
+>   **One bound was set from measurement, not inherited:** the two *exterior*
+>   probes at r = 1.2 R sit in the far mesh (h_far = 0.0125 m = 0.25 R, twice the
+>   sphere's h, unrefined by the fixture) where the dipole falls as 1/r³, and
+>   they read 7.782% (pole) / 0.756% (equator) against their closed form. `TH-8`
+>   gates the interior only, so no gated bound existed to inherit; `EXTERIOR_RTOL`
+>   is 10% with both numbers and the reason recorded in the constant's comment.
+>   The interior anchor was **not** touched — it stands at the gate's own 5%.
+>   The pre-measurement 5% guess failing on the polar probe is why the first run
+>   is on record too. Logs `20260810T003330Z_EX-6-runner-list.log` (`th:3`
+>   registered), `20260810T003418Z_EX-6-run1.log` (exit 1, the exterior-bound
+>   finding, 13 s), `20260810T003510Z_EX-6-gate.log` (exit 0, 9 s harness-wall,
+>   7.8 s in-example), `20260810T003546Z_EX-6-refcheck.log` +
+>   `20260810T003557Z_EX-6-refcheck-refresh.log` +
+>   `20260810T003610Z_EX-6-refcheck2.log` (the `EX-12` doc-reference checker: it
+>   fired the **freshness** branch on the straight-wire artifacts, 3.0 h old
+>   against a 1.0 h window — the branch `EX-14` was created to exercise, hit here
+>   for real; re-running `-e 1` refreshed them and the checker is PASS at 16
+>   references). README example list extended with `th:3`.
+>   *(Original plan text follows.)* the `TH-8` sphere in an imposed uniform
+>   field: assert the interior/exterior field ratio against the quasi-static
+>   closed form at the gated tolerance; export the field showing the interface
+>   jump. Angle: material contrast in a solved field (`EX-3` *imposes* its field;
 >   this one solves it — state that distinction in the report text).
 > * **`EX-7`** — the `TH-7` waveguide/coax case: reproduce the gated cutoff
 >   or line-impedance quantity within its gate tolerance; export the mode
@@ -5654,7 +5695,12 @@ spare is the hygiene/known-issue repair. The `PORT-1` critical path is
 deliberately absent: the second licensed discriminator slot is the weekly
 review's (2026-08-16) to spend.
 
-1. **`EX-6` — sphere in a uniform field, solved (standard).**
+1. ✅ **done 2026-08-09 (19:30 run)** — `EX-6` closed: interior 2.443% vs
+   3/(ε+2) at the gate's 5% ceiling, the `TH-8` record reproduced digit for
+   digit, volume-average cross-check 0.014%, jump 59.20×/11.46×. See the §7
+   `EX-6` entry (one non-inherited bound recorded there: `EXTERIOR_RTOL` = 10%
+   for the two far-mesh exterior probes, set from measurement). *(Original item
+   text follows.)* **`EX-6` — sphere in a uniform field, solved (standard).**
    Execute the §7 backfill plan's `EX-6` bullet: the `TH-8` sphere in an
    imposed uniform field (import the fixture from
    `tests/validation/test_dielectric_sphere.py` —

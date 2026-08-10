@@ -8024,3 +8024,79 @@ reference checker is cheap (1 s) and generic, so it is worth calling from any
 future chunk that edits a guide; the obvious extension, if a review wants it,
 is pointing `--docs-root` at `docs/` and seeing what the project-level
 documentation claims about files. Expect that to fail loudly the first time.
+
+## 2026-08-10T00:36Z — `EX-6` — **complete**: the solved dielectric sphere, reproducing the `TH-8` interior record digit for digit, plus one bound set from measurement
+
+**Item.** §9 On-deck item 1 (`EX-6`), taken as the first not-done-or-blocked
+entry. Tree clean at preflight, container Up 28 h, no `recovered/*`.
+
+**What landed.** `examples/time_harmonic/03_dielectric_sphere_in_uniform_field.py`,
+auto-registered by the runner's filename glob as `th:3` (verified in
+`20260810T003330Z_EX-6-runner-list.log` — no runner edit was needed, the `th:`
+group globs `examples/time_harmonic/*.py`), plus the README example list.
+
+**The anchor reproduced the gate exactly.** At the `TH-8` gate's finest mesh
+(h_sphere 0.00625 / h_far 0.0125, 39 693 cells, 7.3 s solve, `-n 2`), the
+probe-averaged interior `E_z` = 0.038416 V/m vs the closed-form
+3/(ε+2)·E₀ = 0.037500 — **2.443%** against the gate's own 5% ceiling, identical
+to `20260731T200457Z_TH-8-gate-final.log`, as are spread **0.080%**,
+transverse/E_z **0.085%** and |Im|/|Re| **0.0e+00**. That the example path
+reproduces the gate to every printed digit is the point of importing the
+fixture (constants, probe cloud, exterior Dirichlet callable) rather than
+restating it.
+
+**Two gates the plan did not ask for, both about the export.** The interior
+average is re-measured by assembly — ∫_sphere E_z dx / ∫_sphere dx over the
+tagged cells = 0.038411 V/m, **0.014%** from the probe average — so the field
+written to XDMF is the field the anchor was read from, measured over the whole
+ball rather than two shells inside 0.55 R; and the tagged region is confirmed
+to be the sphere (assembled volume 5.206270e-04 m³ vs 4/3πR³ = 5.235988e-04,
+**0.568%** low, the faceting of a tetrahedral ball). The interface jump is
+asserted as a number: E_out/E_in = **59.20×** over the pole (closed form
+56.27×) and **11.46×** at the equator (11.83×) — the dipole lobe's sign
+reversal in one pair.
+
+**Finding — the exterior is not gated anywhere, and it shows.** The first run
+failed (`20260810T003418Z_EX-6-run1.log`, exit 1): the polar exterior probe at
+r = 1.2 R read **7.782%** off its closed form against a 5% bound I had guessed
+before measuring. The equatorial probe read **0.756%**. This is not a
+regression: `TH-8` asserts the *interior* only, the exterior probes sit one
+cell outside the interface in the **far** mesh (h_far = 0.25 R, twice the
+sphere's h, which the fixture refines and the far field does not), and the
+dipole term falls as 1/r³ there — the polar point carries the whole 2βR³/r³
+lobe, the equatorial one half of it with the opposite sign, which is exactly
+the 10× asymmetry measured. Bound restated at 10% **with both measurements and
+the reason in the constant's comment** (`EXTERIOR_RTOL`), per the MAG-10/MAG-15
+precedent. The interior anchor was not touched and stands at the gate's own 5%.
+
+**Negative control cited, not recomputed** (per the §7 plan): the ε-blind solve
+under identical Dirichlet data returns E_z = 0.918143 V/m, **2348%** off — a
+factor 23.9 above this run — with an in-run assertion that the cited control
+and the measured error still straddle 100%, so the citation cannot silently go
+stale.
+
+**The `EX-14` freshness branch fired for real.** The `EX-12` doc-reference
+checker failed on first call (`20260810T003546Z_EX-6-refcheck.log`, exit 1): 5
+straight-wire artifacts **3.0 h old against the 1.0 h window** — the freshness
+branch the 18:00 review noted `EX-12`'s negative control never exercises. It is
+now exercised in anger, and it did the right thing. Re-running `-e 1` (6 s,
+`20260810T003557Z_EX-6-refcheck-refresh.log`, exit 0) refreshed them and the
+checker is PASS at 16 references, 1 allowlisted
+(`20260810T003610Z_EX-6-refcheck2.log`). `EX-14` may want to note that the
+window makes the checker order-dependent: it must be called *after* the
+examples in the same session, or it reports staleness rather than deadness.
+
+**Cost.** Standard tier declared, `-n 2`, `timeout 180`; 29 s of harness wall
+across five runs (1 + 13 + 9 + 6 + 1 s), nothing near a ceiling.
+
+**Closes nothing physics-side.** `MAT-4` SAR stays imposed-field-only per §2;
+this is Phase-2 §5.4 backfill. Phase 2's example shortfall goes 5 → 2
+(`EX-7`, `EX-8` remain).
+
+**Next-attempt hypothesis.** None needed — complete. For whoever takes `EX-7`
+or `EX-8`: the runner must be invoked on the **host**, not inside the
+container — `run_and_log.sh EX-6-run1 "docker compose exec ... ./run_examples.sh"`
+fails with `docker: command not found` (status 127,
+`20260810T003341Z_EX-6-run1.log`, kept as the record of that dead end) because
+the script re-dispatches through `docker compose` itself. The bare
+`./run_examples.sh -e th:N -n 2 -t 180` form is correct and is what `EX-5` used.

@@ -135,6 +135,11 @@ pip install -e ".[dev,docs]"
 # (l,m,n) closed form, one mode field exported (complex build)
 ./run_examples.sh --example th:2
 
+# Run the dielectric-sphere example — the interior field SOLVED (not imposed)
+# against the quasi-static 3/(eps+2) closed form, interface jump exported
+# (complex build)
+./run_examples.sh --example th:3
+
 # Run all magnetostatics examples / absolutely everything
 ./run_examples.sh --example all-mag
 ./run_examples.sh --example all --nproc 2
