@@ -4869,8 +4869,10 @@ mandate to displace the critical path.
 | `EX-10` | Gauge cross-check: penalty vs Lagrange-multiplier Coulomb gauge (Phase 1) | ⬜ | standard |
 | `EX-11` | Dodd–Deeds coil loading: ΔR vs closed form, eddy currents in ParaView | ✅ | standard |
 | `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ✅ | smoke |
-| `EX-13` | `examples/mri/01` at the validated gauge floor: rank-spread measured, on-record numbers refreshed | 🟡 | standard |
+| `EX-13` | `examples/mri/01` at the validated gauge floor: rank-spread measured, on-record numbers refreshed | 🚫 | standard |
 | `EX-14` | Straight-wire VTX export repair + the refcheck freshness branch exercised | ⬜ | standard |
+| `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | ⬜ | standard |
+| `EX-16` | `examples/mri/01`: converge the frequency-domain solve, then re-measure the rank spread | ⬜ | standard |
 
 **`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
 run each).** Common rules: gated capability only; the example *asserts* its
@@ -5192,8 +5194,9 @@ scoping time; the split below is by runner group.
 **Traps:** on-record numbers are *copied* from §7/gate records, never
 re-measured — no solves are licensed here (checker runs are ~1 s; at most
 one `-e` refresh if the freshness branch fires, as it did twice on
-2026-08-09/10); `mri:1`'s numbers move if `EX-13` lands first — write that
-guide after `EX-13`, or state the sub-floor caveat explicitly; the sibling
+2026-08-09/10); `mri:1`'s numbers move if `EX-16` lands first (`EX-13`
+closed negative 2026-08-10; `EX-16` owns the record refresh) — write that
+guide after `EX-16`, or state the unconverged-solve caveat explicitly; the sibling
 `.md` files land next to scripts, so make sure the checker does not
 mistake them for referenced-artifact entries. **Does not close:** nothing
 physics-side; documentation surface only. **Negative result:** a guide
@@ -5272,6 +5275,62 @@ leave the example sub-floor, known-issues entry.
 > (`20260810T050349Z_EX-13-refcheck.log`) and exits 1 on
 > **artifact-freshness** for five `straight_wire*` files, unrelated to this
 > chunk — see the `EX-14` note below.
+
+> **`EX-13` 🚫 2026-08-10 (03:00 review) — both owed decisions taken; the
+> chunk closes negative and `EX-16` inherits the salvage.** (a) The
+> gauge-floor change does **not** land on this chunk's evidence: it is inert
+> on the E leg by construction (the solver ignores `gauge_penalty`) and
+> < 0.6% on |B| — a change justified only by "harmless" is churn against
+> on-record numbers that would have to be refreshed inside 23% rank noise.
+> It rides `EX-16` instead, so the record strings refresh once, on a
+> converged solve. (b) The rank-stability anchor is **not salvageable on
+> this fixture as-is**: an iterate returned at `ksp_max_it` with
+> `converged=False (reason=-3)` is partition-dependent no matter the gauge —
+> the 23% measures the unconverged GMRES, not the sampling. The salvage is
+> to make the solve converge and re-measure, scoped as `EX-16` below; the
+> known-issues entry is reassigned there. Do not re-run `EX-13` as written.
+
+**`EX-16` — `examples/mri/01`: converge the frequency-domain solve, then
+re-measure the rank spread** *(scoped 2026-08-10, 03:00 review — the two
+decisions the `EX-13` negative result asked for, taken; one run, standard
+tier).* The demo's time-harmonic leg overrides the solver's default direct
+path (`ksp_type=preonly` + MUMPS, `core/time_harmonic.py:445` — the path
+every `TH-6`/`TH-7`/`TH-8` gate solves through) with GMRES+Jacobi at
+`ksp_max_it` 180–450 (`examples/mri/01_coil_phantom_fields.py:340`), and
+that iteration stops at `reason=-3`, `residual_norm=1.684628e+00` on the
+debug preset — the returned iterate is what `EX-13` measured as 23%
+partition-dependent. Fix: drop the override (or pass the direct options
+explicitly) so the debug/coarse presets solve direct — 9261 cells of
+degree-1 N1curl is trivially within MUMPS range; keep
+`collect_solver_diagnostics=True` and require `converged=True` before any
+spread claim. In the same motion, flip the **magnetostatic** call site
+(`:317`) `1e-3 → 1.0` — the `EX-13` decision (a) rider — then re-run the
+`EX-13` measurement verbatim (`mri:1` at `-n 2`/`-n 4`), refresh every
+on-record string in the file and any guide that staled, and finish with
+`check_example_doc_references.py` green. **Anchor:** the `-n 2` vs `-n 4`
+max relative spread across the five centerline (|E|, |B|) pairs on a
+**converged** solve, asserted **< 5%** (KSP `converged=True` is the
+precondition, not the anchor — a convergence flag alone closes nothing
+under §4). **Negative control, cite not recompute:** the unconverged
+record — 23.5545% floor / 23.3010% sub-floor
+(`20260810T050319Z_EX-13-spread.log`); the arithmetic ceiling on
+separation is 23.55/5 ≈ 4.7×, so assert < 5% and report the measured
+ratio; do not erect a 10× bar the fixture cannot show. **Tier/cost:**
+standard, two runner invocations ≈ 10 s each on the `EX-13` record; the
+direct solve may cost more than the truncated GMRES but nothing near the
+180 s ceiling at 9261 cells. **Traps:** the `mri:` runner sources the
+complex build itself; `gauge_penalty` is ignored by
+`TimeHarmonicSolver.solve` (`EX-13` finding) — make no gauge claim on the
+E leg; the on-record strings *will* move, that is the point and the new
+numbers become the record; keep `EX-12`'s "ungated end-to-end demo"
+labelling intact; the `mri:1` guide (`EX-15` step 3) should be written
+after this lands or carry the caveat. **Does not close:** `WF-1` stays
+🧪 — the demo still asserts no physics against a closed form; the spread
+anchor gates sampling stability only. **Negative result:** a converged
+solve that still spreads ≥ 5% is a real finding against the centerline
+sampling path — report both numbers, keep the known-issues entry open,
+stop; a debug-preset solve that cannot converge direct is a finding
+against the demo fixture itself — known-issues update, stop.
 
 **`EX-14` — straight-wire VTX export repair, and the refcheck freshness
 branch exercised** *(scoped 2026-08-09, 18:00 review; one run, standard
@@ -5840,159 +5899,66 @@ promised an "obvious next entry named below" that was never written — the
 16:30 slot on 2026-08-07 hit that dangling reference and correctly fell
 through to the drain instruction; the reference is retired.)*
 
-Last reviewed 2026-08-09, 18:00 daily review. **Four of four slots ✅ — the
-second consecutive clean interval, and the first in which every slot closed
-its item outright.** 12:00: `MAG-6` step 5 ✅ — the gate solves at the
-validated floor, both metrics within 0.008% of step 4's predictions, bounds
-untouched. 13:30: `ANS-1` ✅ — ΔR 1.5834% vs Dodd–Deeds and 1.387e-08 vs the
-`MAT-6` pin; the case is now the **operator's**: promoted this review to the
-top of the dashboard's Waiting-on-you, per the §7 plan. §5.4's commissioned
-benchmark table is fully delivered on our side; the next case needs a fresh
-weekly-review commission. 15:00: `EX-5` ✅ — all four cavity modes at the
-0.5% ceiling, exported mode verified by Rayleigh quotient to 3.48e-15.
-16:30: `EX-12` ✅ — 16 doc references gated by a new checker whose negative
-control flags 5 and exits 1. Step-3 audit: **all four audited compliant, no
-demotions** (logs, quantitative assertions, elapsed times, and no-loosening
-all verified per chunk; evidence in the §7 entries). One audit caveat: the
-`EX-12` negctl never exercises the checker's freshness branch (empty
-`--output-dir` fires the not-exists branch first) — folded into the new
-`EX-14`. Step 2: tree clean, no `recovered/*`; both `attempt/PORT-1-*`
-branches stay parked under the weekly licence (that review, 2026-08-16,
-holds the 3b-xv adjudication and the second discriminator slot).
-§5.4 example check: **no new quantitative gate closed this interval** —
-`MAG-6` step 5 re-points an existing gate, the other three are examples/
-hygiene — so the ramp mandates no new example chunks. Plan work: `EX-13`
-created (the `MAG-6` step-5 sub-floor finding on `examples/mri/01`,
-decision taken); `EX-14` created (the filed VTX known-issue + the audit
-caveat, one motion); `EX-9`'s §7 plan corrected — its "three-resolution
-Helmholtz (`MAG-14`, cheap)" fixture does not exist; the 1.10 rate on
-record is the straight-wire h-refinement at ~167 s, and the bullet now
-states the true anchor. `MAT-6` step 7 stays 🚫 on the same one-line human
-decision (Waiting-on-you). The centerline rank-stability claim extension
-(`MAG-6` step-5 finding) stays deferred; `EX-13`'s spread measurement adds
-evidence either way.
+Last reviewed 2026-08-10, 03:00 daily review. **Three of four slots ✅, and
+the fourth a clean negative executed in full.** 19:30: `EX-6` ✅ — interior
+2.443% vs 3/(ε+2), the `TH-8` record digit for digit. 21:00: `EX-7` ✅ —
+γ = 37.650399 Np/m, 0.006% vs the closed form, the `TH-7` record digit for
+digit. 22:30: `EX-8` ✅ — guard fires at 137.554 / quiet at 21.951
+(separation 6.267×), pole law at 3.156% — **Phase 2's §5.4 shortfall is
+discharged, 5 of 5** (`EX-4`…`EX-8`). 00:00: `EX-13` executed verbatim,
+both legs negative — floor spread 23.5545% vs the < 5% anchor, sub-floor
+ratio 0.9892× vs the ≥ 2× discrimination bar, |E| legs bit-identical
+because the TH solver ignores `gauge_penalty`. Step-3 audit: **all three
+newly-✅ chunks audited compliant, no demotions** (logs, quantitative
+assertions, elapsed times verified per chunk; one recorded caveat —
+`EX-6`'s `EXTERIOR_RTOL` = 10% was set from measurement where no gated
+bound existed, interior anchor untouched at 5%; judged bound-setting, not
+loosening). Step 2: tree clean, no `recovered/*`; both `attempt/PORT-1-*`
+branches stay parked under the weekly licence (2026-08-16 holds the 3b-xv
+adjudication and the second discriminator slot). §5.4 ramp: **no new
+quantitative gate closed this interval** — the three closures are
+themselves examples — so no new example chunks mandated. Plan work:
+`EX-13` closed 🚫 with both owed decisions taken — the floor change does
+not land on this anchor (it rides `EX-16`), and the rank-stability anchor
+is unsalvageable on an unconverged iterate — and `EX-16` created (converge
+the demo's frequency-domain solve direct, then re-measure; the
+known-issues rank-spread entry is reassigned to it). `EX-15` (operator
+directive, 2026-08-10 interactive session) queued at step 1 per its own
+scoping note; its `mri:1`-guide trap re-pointed `EX-13` → `EX-16`.
+`MAT-6` step 7 stays 🚫 on the same one-line human decision
+(Waiting-on-you), joined there by the `ANS-1` Ansys-side replication.
 
-**Six ready items — independent, no serial dependencies.** Items 1–3 are
-the §5.4 backfill in the weekly review's own priority order; item 4 is the
-gauge-floor decision this review took; item 5 is Phase-1 backfill; the
-spare is the hygiene/known-issue repair. The `PORT-1` critical path is
+**Six ready items — items 1–5 independent; only the spare is serial.**
+Item 1 is the operator directive; items 2–3 are the remaining Phase-1
+§5.4 backfill; item 4 is the hygiene/known-issue repair; item 5 is the
+`EX-13` salvage this review scoped. The `PORT-1` critical path is
 deliberately absent: the second licensed discriminator slot is the weekly
 review's (2026-08-16) to spend.
 
-1. ✅ **done 2026-08-09 (19:30 run)** — `EX-6` closed: interior 2.443% vs
-   3/(ε+2) at the gate's 5% ceiling, the `TH-8` record reproduced digit for
-   digit, volume-average cross-check 0.014%, jump 59.20×/11.46×. See the §7
-   `EX-6` entry (one non-inherited bound recorded there: `EXTERIOR_RTOL` = 10%
-   for the two far-mesh exterior probes, set from measurement). *(Original item
-   text follows.)* **`EX-6` — sphere in a uniform field, solved (standard).**
-   Execute the §7 backfill plan's `EX-6` bullet: the `TH-8` sphere in an
-   imposed uniform field (import the fixture from
-   `tests/validation/test_dielectric_sphere.py` —
-   `MeshGenerator.sphere_in_box_domain` — never restate it); assert the
-   interior/exterior ratio against the quasi-static `3/(εᵣ+2)` closed form
-   at the gated tolerance (2.443% on record at the finest mesh); export
-   the field showing the interface jump; the report text states the
-   `EX-3` distinction (`EX-3` *imposes* its field, this one *solves* it);
-   `th:` runner registration included. **Anchor:** the closed-form
-   interior ratio, tolerance citing `20260731T200457Z_TH-8-gate-final.log`.
-   **Negative control:** on record in that log, cite not recompute —
-   dropping the sphere from the `material_map` under the same Dirichlet
-   data moves the interior **2348%** off, so the gate cannot pass by
-   reading back its boundary data. **Cost:** standard, `-n 2`,
-   `timeout 180` (the gate's three-mesh sweep is on record; the example
-   needs one mesh). **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`;
-   the sizing field is a gmsh `Ball`, not `Distance` (unsigned would
-   coarsen toward the centre, where the assert reads); point probes via
-   `evaluate_vector_field_parallel`. **Does not close:** nothing — `MAT-4`
-   SAR stays imposed-field-only per §2. **Negative result:** a ratio off
-   the record at matched fixture is a regression finding — report, stop.
+1. **`EX-15` step 1 — guide checker + template + `mesh:`/magnetostatics
+   guides (standard; operator directive).** Execute the §7 `EX-15` step-1
+   bullet: extend `scripts/testing/check_example_doc_references.py` with a
+   guide pass — every `./run_examples.sh --list` entry must have a
+   same-stem `.md` with the three required headings (What this
+   demonstrates / How to run it / How to analyze it, step by step) — and
+   write the five guides for the `mesh:` and magnetostatics scripts.
+   **Anchor:** checker exit 0 with the guide pass on and all five guides
+   present. **Negative control, two-sided:** one guide temporarily absent
+   → exit 1 naming the orphaned script; one guide missing a required
+   heading → exit 1 naming the heading; both restored before commit.
+   **Cost:** standard tier declared, but doc-only — checker runs are ~1 s;
+   no solves licensed (at most one `-e` refresh if the freshness branch
+   fires, as on 2026-08-09/10). **Traps:** per the §7 entry — on-record
+   numbers are *copied* from §7/gate records with log provenance, never
+   re-measured; the sibling `.md` files must not be mistaken by the
+   checker for referenced-artifact entries; existing reference/freshness
+   passes untouched. **Does not close:** anything physics-side; `EX-15`
+   stays open until steps 2–3 land. **Negative result:** a guide that
+   cannot be written to the section-3 bar without re-running its example
+   is a finding against that example's record — journal it, do not thin
+   the guide.
 
-2. ✅ **done 2026-08-09 (21:00 run)** — `EX-7` closed: γ = 37.650399 Np/m vs
-   the closed form's 37.652670, **0.006%** at the gate's 5% ceiling, the
-   `TH-7` record reproduced digit for digit (rel L2 4.406648e-02,
-   |Im|/|Re| 0.000e+00), CG1 export refit 0.117%, transverse profile 0.200%
-   RMS from sin(πx/a). See the §7 `EX-7` entry (two non-inherited bounds
-   recorded there, both on the exported CG1 field, which `TH-7` does not
-   gate). *(Original item text follows.)* **`EX-7` — evanescent waveguide
-   decay as a runnable example (standard).** Execute the §7 backfill plan's `EX-7` bullet, with one
-   correction of its wording: the `TH-7` gate is the **evanescent TE₁₀
-   decay below cutoff**, not a line-impedance case. Import the fixture
-   from `tests/validation/test_waveguide_cutoff.py` (`A_M = 0.05`,
-   `FREQUENCY_HZ = 2.4e9`, `_analytic_gamma`, `_solve_evanescent`,
-   `_probe_points`) — never restate it; export the decaying mode profile.
-   **Anchor:** the decay constant γ against the closed form
-   γ = √(k_c² − k₀²), k_c = π/a — γ_closed = 37.652670 Np/m, **0.006%**
-   on record at the fine mesh — gated at the gate's own 5% ceiling,
-   citing `20260731T123411Z_TH-7-gate-final.log`. **Negative control,
-   cite not recompute:** a k₀-blind solver returns γ ≡ k_c = 62.83 Np/m
-   at every frequency (frequency-ratio 1); the gate's three-frequency
-   sweep measured ratio 2.6373 vs closed-form 2.6383 (0.038%), asserted
-   `> 2.0`. **Cost:** standard, `-n 2`, `timeout 180` — the gate's six
-   tests ran in 9.84 s; one example solve is well under that. **Traps:**
-   complex build + `FEM_EM_REQUIRE_COMPLEX=1`; the fit window excludes
-   the drive and far walls (`FIT_Z_MIN/MAX_FRACTION`) — fitting the full
-   line contaminates the slope; probe off the mesh symmetry planes
-   (`LINE_X/Y_FRACTION`), on-axis probing was the trap the gate already
-   paid for; probes via `evaluate_vector_field_parallel`. **Does not
-   close:** nothing port-adjacent — no S-parameter or impedance claim
-   (`PORT-1` owns that). **Negative result:** γ off the record at matched
-   fixture is a regression finding — report beside the gate log, stop.
-
-3. ✅ **done 2026-08-09 (22:30 run)** — `EX-8` closed: the guard fires at
-   max |dlnW/dlnf| **137.554** / implied detuning **1.454%**, the quiet arm
-   stays silent at **21.951** (separation **6.267×**), and the energy rise
-   is **16.505×** vs the pole law's 16.0× — **3.156%** against the gate's
-   own 10% ceiling. The `TH-1` step-5 record is reproduced digit for digit,
-   including all six sweep energies. See the §7 `EX-8` entry (no
-   non-inherited bounds; the two export gates are identities, 0.00e+00
-   relative). *(Original item text follows.)* **`EX-8` — the resonance
-   guard firing, as a runnable example
-   (standard).** Execute the §7 backfill plan's `EX-8` bullet: sweep
-   across the `TH-9` fundamental with `core/resonance.py`
-   (`check_energy_continuity`, `DEFAULT_SLOPE_THRESHOLD = 50.0`); import
-   the sweep fixture from `tests/validation/test_resonance_guard.py`;
-   print the guard's S-metric table (`ResonanceGuardReport.describe()`).
-   The `return_modes` kwarg `EX-5` added is on the shelf if the example
-   wants to show the mode it is skirting. **Anchor:** two-sided, both
-   from the gate — the guard fires on the near sweep at implied detuning
-   **1.454%** (max |dlnW/dlnf| = 137.554 vs threshold 50) and the energy
-   amplification follows the |f−f₀|⁻² pole law within 10% (**16.505× vs
-   16.0×, 3.156%** on record), citing `20260731T021521Z_TH-1-step5b.log`.
-   **Negative control, in-fixture:** the quiet off-resonance arm reads
-   max slope 21.951 and must stay untriggered — separation **6.267×**
-   near/quiet on record; assert triggered on one arm and not the other.
-   **Cost:** standard, `-n 2`, `timeout 180` — the gate's six tests cost
-   19.48 s. **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`; the
-   first step-5 attempt failed with separation 2.814× on a badly-placed
-   sweep window — take the gate's windows verbatim, do not invent new
-   ones; `ufl.max_value` does not compile in the complex build. **Does
-   not close:** nothing — `TH-1` closed 2026-07-31; this is Phase-2 §5.4
-   backfill. **Negative result:** a guard that fails to fire (or fires
-   quiet) at the gate's own windows is a regression finding — report,
-   stop, known-issues entry.
-
-4. 🟡 **executed 2026-08-10 (00:00 run) — negative result, needs a review
-   decision; do not re-run as-is.** Floor spread **23.5545%** against the
-   asserted < 5%, sub-floor **23.3010%** (ratio **0.9892×**, discrimination
-   needs ≥ 2×); the |E| legs are bit-identical floor vs sub-floor because
-   the time-harmonic solver ignores `gauge_penalty` by construction. Gauge
-   edits reverted, example left sub-floor, known-issues entry filed. The two
-   open decisions are in the §7 `EX-13` annotation. *(Original item text
-   follows.)* **`EX-13` — `examples/mri/01` at the validated gauge floor
-   (standard).** Execute the §7 `EX-13` plan verbatim: both
-   `gauge_penalty` call sites `1e-3 → 1.0`, `mri:1` at `-n 2`/`-n 4`
-   floor and sub-floor (four ~10 s runs), refresh the on-record strings,
-   finish with the doc-reference checker green. **Anchor:** the floor
-   `-n 2` vs `-n 4` max relative spread across the five centerline
-   (|E|, |B|) pairs, asserted **< 5%** (`MAG-6` gate at the floor:
-   0.024%). **Negative control:** the sub-floor spread measured in the
-   same slot; if it is not ≥ 2× the floor spread, claim no
-   discrimination — that outcome (DG0 sampling already suppresses gauge
-   scatter) is itself the finding. **Traps/scope/negative-result:** per
-   the §7 entry — `WF-1` stays 🧪 regardless; a failed floor solve or a
-   spread ≥ 5% is a report-and-stop finding, not a revert-and-retry.
-
-5. **`EX-10` — gauge cross-check as a runnable example (standard).**
+2. **`EX-10` — gauge cross-check as a runnable example (standard).**
    Execute the §7 backfill plan's `EX-10` bullet: the `MAG-15` wire
    fixture (`tests/solver/test_gauge_lagrange.py`, `wire_solutions`,
    `GaugeMethod`) solved with both the penalty and the
@@ -6013,7 +5979,28 @@ review's (2026-08-16) to spend.
    result:** B-field disagreement beyond 5% at matched fixture is a
    regression finding — report, stop.
 
-6. *(spare)* **`EX-14` — straight-wire VTX export repair + the refcheck
+3. **`EX-9` — measured h-convergence rate as an example output
+   (standard).** Execute the §7 backfill plan's `EX-9` bullet **as
+   corrected 2026-08-09** (the original "three-resolution Helmholtz
+   (`MAG-14`, cheap)" fixture does not exist): three-resolution straight
+   wire via
+   `tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire`.
+   **Anchor:** the fitted convergence rate, asserted `0.7 < rate < 1.5`
+   (the gate's own band; **1.10** on record in
+   `20260730T125522Z_MAG-13.log`); print the (h, error) table. **Negative
+   control, cite not recompute:** a solver blind to h shows no systematic
+   error decay — the on-record monotone (h, error) table is the
+   separation; assert monotone decrease across the three resolutions.
+   **Cost:** standard, `-n 2` — **~167 s on record, the standard tier at
+   its ceiling**; budget the full 180 s and expect no room for a second
+   solve (attempts.md 2026-08-10 note). **Traps:** real build
+   (magnetostatics); do not add a fourth resolution — the ceiling has no
+   slack; the rate is fitted in log-log, not two-point. **Does not
+   close:** nothing — `MAG-13` closed; Phase-1 §5.4 backfill. **Negative
+   result:** a rate outside the band at matched fixture is a regression
+   finding — report, stop.
+
+4. **`EX-14` — straight-wire VTX export repair + the refcheck
    freshness branch exercised (standard).** Execute the §7 `EX-14` plan
    verbatim: Lagrange interpolants to `VTXWriter`, split `try`, restore
    the three `.bp` guide references; anchor is the ADIOS2 round-trip
@@ -6022,6 +6009,30 @@ review's (2026-08-16) to spend.
    freshness branch `EX-12`'s negctl skipped. Fixes the 2026-08-09
    known-issues entry; if the ADIOS2 Python read-back is unavailable
    in-container, hold at 🟡 per the §7 entry.
+
+5. **`EX-16` — `examples/mri/01`: converge the frequency-domain solve,
+   then re-measure the rank spread (standard).** Execute the §7 `EX-16`
+   plan verbatim: drop the GMRES+Jacobi override
+   (`examples/mri/01_coil_phantom_fields.py:340`) so the debug/coarse
+   presets solve through the solver's default direct path, flip the
+   magnetostatic call site (`:317`) `1e-3 → 1.0` in the same motion,
+   re-run `mri:1` at `-n 2`/`-n 4`, refresh the on-record strings,
+   checker green. **Anchor:** the `-n 2` vs `-n 4` max centerline spread
+   on a **converged** solve, < 5% (`converged=True` is the precondition,
+   not the anchor). **Negative control, cite not recompute:** the
+   unconverged 23.5545%/23.3010% record
+   (`20260810T050319Z_EX-13-spread.log`); separation ceiling 4.7×.
+   **Traps/scope/negative-result:** per the §7 entry — `WF-1` stays 🧪
+   regardless; a converged solve still ≥ 5% is a report-and-stop finding
+   against the sampling path, and known-issues stays open.
+
+6. *(spare)* **`EX-15` step 2 — `th:` group guides (standard; serial:
+   depends on item 1 landing — if it did not, take whichever of items
+   2–5 remains instead).** Execute the §7 `EX-15` step-2 bullet: guides
+   for the five `th:` scripts, every stated number the gate record
+   already in §7 (`EX-4`…`EX-8`), cited by log name, digit for digit;
+   same checker gate and negative control as step 1; doc-only, no solves
+   licensed.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and

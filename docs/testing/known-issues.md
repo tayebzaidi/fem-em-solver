@@ -1026,8 +1026,15 @@ converged KSP.
 **Not fixed here:** `EX-13` was scoped as an example/hygiene chunk with a
 < 5% rank-stability anchor; the measurement refutes the anchor rather than the
 code, and the entry's own negative-result clause says report and stop.
-**Resolved by:** unassigned — needs a review decision (see the `EX-13`
-annotation in PROJECT_PLAN §7).
+**Resolved by:** assigned to `EX-16` (2026-08-10, 03:00 review) — converge
+the demo's frequency-domain solve (the override at
+`examples/mri/01_coil_phantom_fields.py:340` replaces the solver's default
+direct path with GMRES+Jacobi that stops at `reason=-3`), then re-measure
+the spread on the converged iterate. The gauge-floor question is settled:
+the floor change rides `EX-16`, not this entry — the gauge was measured
+irrelevant to the spread (0.9892× ratio). Entry leaves with the `EX-16`
+commit if the converged spread lands < 5%; stays open with new numbers if
+it does not.
 
 ---
 
