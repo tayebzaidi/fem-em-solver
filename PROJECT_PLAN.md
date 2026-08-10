@@ -2766,6 +2766,55 @@ ceilings are untouched; this buys memory, not compute.)*
 > the cell count, annotate here, stop; a cross-term reading is the more
 > informative physics outcome, per step 6.
 
+**`MAT-6` step 8 — ΔR error budget: the slab-resolution knob** 🔲 *(scoped
+2026-08-10, interactive session at operator direction)*
+> Step 5 attributed roughly a third of the landed 1.58% ΔR error to wire
+> discretisation (1.5834% → 1.0562% under `resolution_wire` 0.002 → 0.001 at
+> fixed box), and step 4 bounded the box term at < 0.01 pp of wobble past
+> W = 0.15. The remaining ~1.06% is unattributed between two candidates this
+> step separates: **skin-depth resolution in the slab** (`resolution_near`
+> = 0.005 gives ~3.2 cells per δ = 15.9 mm, degree-1 Nédélec, and the ohmic
+> boundary layer decays as e^(−z/δ)) versus the **filamentary-reference
+> mismatch** (the closed form is evaluated for an ideal loop at (a, h); the
+> meshed coil is a 2.5 mm wire, h/r_wire = 8 against step 2b's ≥ 16 target,
+> which step 5 measured as unreachable in the container as configured). Move
+> only the slab knob: `resolution_near` 0.005 → 0.0025 (~6.4 cells/δ) at
+> fixed `resolution_wire = 0.002`, W = 0.15, **projected drive only** (two
+> solves, loaded + free). A ΔR that moves ~1 pp toward the closed form
+> attributes the residual to skin-depth resolution and names the knob a
+> sub-1% fixture would need; a ΔR that barely moves says the residual is the
+> coil-model mismatch, which no slab mesh can remove — either reading closes
+> the budget. **Anchor:** Dodd–Deeds `ΔR = +3.2259615e-01 Ω`; step 2b's 5%
+> ceiling inherited unchanged and never tightened in-slot; the reported
+> result is the refined-slab ΔR relative error beside the measured ladder
+> (1.5834% at wire 0.002 / 1.0562% at wire 0.001). ΔX reported, never gated,
+> exactly as everywhere else in `MAT-6`. **Negative controls:** on record,
+> cite — σ-blind `ΔZ = 0` (100% separation) and null tagging `1.31e-08`
+> (`20260731T110515Z_MAT-6-step2b-gate-numbers.log`); the σ = 0 solve's
+> `R = +0.0` exactly (no tolerance) re-asserted on the new mesh; the reality
+> floor is step 4's < 0.01 pp box wobble — a slab-refinement effect below it
+> is not called real. **Cost — probe first, point of no return (steps 4–6
+> discipline):** the refined-slab cell count is unmeasured (naive bound: the
+> near region's cells grow ~8×; baseline 138 619 total). Extend the
+> `scripts/probes/mat6_step*_probe.py` pattern: mesh count, then **one**
+> solve at `-n 4`, heavy `timeout 1200`; OOM or > 300 s ⇒ report the
+> measured cost and stop — the 16 G cap is total-footprint and rank-blind
+> (step 6's finding; no retry at more ranks), and the rescope is a smaller
+> refinement ratio (0.005 → 0.0035), never a raised timeout (§5.1). Gate at
+> `-n 2`. **Traps:** step 5's list unchanged — `project_source=False` pins
+> untouched, separate module importing the step-2b fixtures (nothing
+> restated), `resolution_far` and `resolution_wire` stay put, stale FFCx
+> lock after a kill, `ufl.max_value` complex trap, complex build +
+> `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first. The near-box
+> extents (`near_depth = 0.05` etc.) also stay put — this refines cell size
+> inside the region, not the region. **Does not close / does not reopen:**
+> `MAT-6` stays ✅; §2.1's landed 1.58% and the `ANS-1` comparison numbers
+> are the landed fixture's and do not move; saline/Larmor stays unlicensed
+> (eddy-current kernel). **Negative result:** a ΔR pinned near 1.06% under
+> slab refinement is the finding — the residual is reference ambiguity, and
+> any future sub-1% claim needs a finite-cross-section closed form or a
+> thinner wire, not more mesh; report both numbers, annotate here, stop.
+
 ### POST — Post-processing & field extraction
 
 | ID | Title | Status | Tier |
@@ -6371,6 +6420,25 @@ absent: the second licensed discriminator slot is the weekly review's
    the dict and closes `EX-15`. Same checker gate and negative control
    as steps 1–2; no solves licensed. **Negative result:** same
    journal-don't-thin rule as item 4.
+
+6. **`MAT-6` step 8 — ΔR error budget: the slab-resolution knob (heavy;
+   probe-first).** *(Added 2026-08-10 by an interactive session at
+   operator direction — the next review may reorder it, and should
+   journal rather than drop it.)* Execute the §7 `MAT-6` step-8 entry
+   verbatim: `resolution_near` 0.005 → 0.0025 (~3.2 → ~6.4 cells/δ) at
+   fixed wire 0.002 / W = 0.15, projected drive only, separating the
+   remaining ~1.06% of ΔR error between skin-depth resolution and the
+   filamentary-reference mismatch (step 5 already attributed the wire's
+   ~0.53 pp). **Anchor:** Dodd–Deeds `ΔR = +3.2259615e-01 Ω`, step 2b's
+   5% ceiling inherited unchanged; result reported beside the
+   1.5834%/1.0562% ladder. **Cost gate is the point of no return:**
+   mesh-count probe then one `-n 4` solve; OOM or > 300 s ⇒ report and
+   stop (16 G cap is rank-blind, step 6); gate at `-n 2`,
+   `timeout 1200`. **Negative controls:** cite the σ-blind and
+   null-tagging records; σ = 0 `R = +0.0` exact on the new mesh; step
+   4's < 0.01 pp wobble is the reality floor. **Negative result:** ΔR
+   pinned near 1.06% attributes the residual to the coil model — report
+   both numbers, annotate the §7 entry, stop.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
