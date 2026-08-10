@@ -8521,3 +8521,105 @@ the three-resolution straight-wire h-refinement), so it is the first EX chunk
 in this backfill that genuinely sits at the standard-tier ceiling — cost-probe
 the coarsest rung before running all three, and expect to need a freshness
 refresh afterwards only if its guide cites artifacts rather than log names.
+
+## 2026-08-10T12:50Z — `EX-9` — **complete**: the rate reproduces the record to four digits, and the export loses 7.89 points of it
+
+Scheduled implementer run, 07:30 CDT slot. Preflight clean, container Up 40 h.
+On-deck item 3 (items 1–2 done at the 04:30 / 06:00 slots).
+`examples/magnetostatics/06_h_convergence_rate.py`, dispatched as `-e 6`, real
+build, `-n 2`.
+
+**Anchor.** Fitted rate **1.1009** against the `MAG-13` gate's own
+`0.7 < p < 1.5` band and the **1.10** on record in
+`20260730T125522Z_MAG-13.log`. The three errors reproduce that record to every
+digit it carries: **22.1925% / 12.7485% / 9.2568%** at h = 0.004 / 0.0025 /
+0.0018 m (38 750 / 145 884 / 383 248 cells) against 22.19 / 12.75 / 9.26.
+Negative control **solved here, not cited**: monotone decrease coarse → fine,
+asserted — the property that forced `MAG-13` to exclude h = 0.0035 (11.77%,
+below the h = 0.0025 value), and the one a slope fitted through h-blind noise
+fails.
+
+**The fixture is imported, which took an additive refactor.** Unlike
+`test_gauge_lagrange.py` (`EX-10`), `test_convergence.py` held every parameter
+inline in the test body, so there was nothing to import. Lifted to module
+scope: `CURRENT`/`WIRE_LENGTH`/`WIRE_RADIUS`/`DOMAIN_RADIUS`, `RESOLUTIONS`,
+`RATE_MIN`/`RATE_MAX`, `evaluation_points()`, `solve_h_refinement()` and
+`fit_convergence_rate()`, with the measured-choice commentary moved to the
+constants it explains. The test body now calls the same two functions the
+example does. Nothing computed or asserted changed, and the gate was re-run to
+prove it: `20260810T124051Z_EX-9-MAG-13-regress.log`, 1 passed / 2 skipped,
+129.20 s, `-n 2` — the two skips are the pre-existing `test_p_refinement` /
+`test_convergence_data_export` stubs.
+
+**Finding: the exported field is not the measured field, by 7.89 percentage
+points.** The example re-measures the finest-resolution error on the *exported*
+CG1 function at the same ten points. First run
+(`20260810T123503Z_EX-9-run1.log`, exit 1) asserted the two agree to ±5%;
+measurement said **17.1451%** exported against **9.2568%** solved. This is not
+noise: `curl(A)` is cell-wise constant at N1curl degree 1, so writing `B` to a
+continuous space averages neighbouring cells at each vertex, and on a 1/r field
+near a conductor that averaging costs most of what the 2.2× refinement bought.
+The bound was **not widened to fit** — the check was re-pointed at a reference
+the run itself produces: the exported error must stay under the *coarsest
+solved* resolution (22.1925%), i.e. smoothing may not cost more than refinement
+gained. Measured 17.1451% against that. The 7.89-point figure is recorded in
+the constant's comment, the module docstring, the guide's step 4 and the §7
+annotation. Nothing here is inherited — `MAG-13` gates no export — and the
+closed form is deliberately *not* exported beside the numeric field: it is the
+exterior solution, valid only for r > a, so a whole-domain difference field
+would be dominated by an invalid interior comparison and a 1/r axis
+singularity. Worth a future chunk if anyone wants the ParaView picture to carry
+the measured accuracy: a DG0 or higher-degree export path would.
+
+**Tier reclassified standard → heavy, and this is the honest call.** The
+on-deck item declared standard and told the taker to budget the full 180 s.
+The example measures **130.1 s** in-example / 131 s harness-wall at `-n 2` —
+the three solves plus ~47 s of Netgen optimisation on the 383 k-cell mesh — so
+a 180 s ceiling holds it with under 30% margin and any mesh-generator variance
+puts it over. §5.1 names convergence studies as the heavy tier's own example,
+and `MAG-13` itself is labeled heavy for this same measurement. Ran at
+`-t 600`; nothing came within a factor of 4 of the 20-minute ceiling. §7 table
+row and the guide both say heavy.
+
+**Guide.** `06_h_convergence_rate.md` written to the `EX-15` step-1 bar (three
+required headings, six analysis steps, ParaView recipes, deviation
+interpretation). The guide pass now checks **7** examples, up from 6.
+
+**Logs.** `20260810T123456Z_EX-9-runner-list.log` (`-e 6` registered),
+`20260810T123503Z_EX-9-run1.log` (exit 1, the export finding),
+`20260810T123824Z_EX-9-run2.log` (exit 0, 129 s),
+`20260810T124051Z_EX-9-MAG-13-regress.log` (gate green after the refactor,
+131 s), `20260810T124317Z_EX-9-run-final.log` (exit 0, 131 s — the committed
+record), `20260810T124544Z_EX-9-refcheck.log` (exit 1, freshness only),
+`20260810T124556Z_EX-9-refcheck-refresh.log` (`-e 1,4,5`, 84 s),
+`20260810T124730Z_EX-9-refcheck2.log` (both passes PASS, 37 references).
+
+**The freshness branch fired for the third consecutive run.** 11 stale
+straight-wire / Helmholtz / gauge-cross-check artifacts, 1.7 h against the
+1.0 h window — `EX-14`'s branch, unrelated to this chunk, same as `EX-6` and
+`EX-10` hit. Refreshed with `-e 1,4,5` (84 s, exit 0, reproducing 65.8739% and
+0.0004% / 0.0033% on the way); `-e 2` excluded as before, its 411 k-cell mesh
+is the expensive one and no reference points at it. **This is now a standing
+tax of ~80 s on every example chunk**, paid three runs running. The window is
+1.0 h and a slot is 1 h, so any chunk that touches an example after its first
+half-hour pays it. Worth the daily review's attention: either `--max-age-s`
+wants raising to ~4 h for the committed-guide case, or the refresh belongs in
+the runner rather than in each chunk's budget.
+
+**Cost.** Eight harness commands: runner-list 0 s, three example runs at
+129–134 s, the gate regression 131 s, two checker runs at 1 s, the refresh
+84 s. Heavy tier declared for the example, `-t 600`, `-n 2` throughout.
+Slot used ~25 min including plan and guide writing.
+
+**Phase-1 §5.4 example backfill is complete** — `EX-9` was the last shortfall
+(`EX-10` closed the other at 06:00 today). Phase 1 now carries 5 of 5, joining
+Phase 2's 5 of 5 from 2026-08-09. The only remaining §5.4 shortfall anywhere is
+Phase 3's 1 → `EX-11` (the `MAT-6` Dodd–Deeds example, which also feeds
+`ANS-1`), and it is not currently queued.
+
+**Next-attempt hypothesis.** On-deck item 4 (`EX-14`) is next and is the chunk
+that owns the freshness branch this run paid three times — taking it next would
+retire the tax as well as the VTX export defect. Its stated risk is the ADIOS2
+Python read-back being unavailable in-container; check that first, before
+touching the writer, and hold at 🟡 per its §7 entry if it is missing rather
+than inventing a substitute round-trip.

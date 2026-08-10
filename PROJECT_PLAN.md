@@ -4839,6 +4839,10 @@ demonstrates a **gated** capability from an angle no existing example covers.
 registered examples. Per-phase against §5.4's
 `min(5, gating chunks closed ✅)`: **Phase 1** (complete, owes 5) has 3 —
 straight wire, circular loop, Helmholtz — shortfall 2 → `EX-9`, `EX-10`.
+*(Backfill complete 2026-08-10: `EX-10` closed at the 06:00 run and `EX-9` at
+the 07:30 run, so Phase 1 now carries 5 of 5 and this shortfall is discharged
+too — the figures in this paragraph are the 2026-08-09 weekly-review snapshot,
+kept for the audit trail.)*
 **Phase 2** (5 of `TH-1`…`TH-9` ✅, owes 5) has **0** — no example runs a
 time-harmonic solve at all; shortfall 5 → `EX-4`…`EX-8`. *(Backfill complete
 2026-08-09, 22:30 run: `EX-8` closed the last of the five, so Phase 2 now
@@ -4865,7 +4869,7 @@ mandate to displace the critical path.
 | `EX-6` | Sphere in a uniform field: solved quasi-static response vs closed form | ✅ | standard |
 | `EX-7` | Waveguide/coax: the `TH-7` gated quantity as a runnable example | ✅ | standard |
 | `EX-8` | Resonance guard on a frequency sweep: the `TH-1` step-5 detector firing | ✅ | standard |
-| `EX-9` | Measured h-convergence rate as an example output (Phase 1) | ⬜ | standard |
+| `EX-9` | Measured h-convergence rate as an example output (Phase 1) | ✅ 2026-08-10 | heavy (reclassified from standard: 130 s of solve, §5.1 names convergence studies) |
 | `EX-10` | Gauge cross-check: penalty vs Lagrange-multiplier Coulomb gauge (Phase 1) | ✅ | standard |
 | `EX-11` | Dodd–Deeds coil loading: ΔR vs closed form, eddy currents in ParaView | ✅ | standard |
 | `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ✅ | smoke |
@@ -5047,7 +5051,65 @@ recorded.
 >   (1.5%) and the energy rise follows the |f−f₀|⁻² pole law within 10%
 >   (3.16% on record); output the S-metric table. Angle: diagnostics — the
 >   ill-conditioning trap Phase 6 will operate inside, made visible.
-> * **`EX-9`** — *(corrected 2026-08-09, 18:00 review: the original text
+> * **`EX-9`** — ✅ **closed 2026-08-10 (07:30 run).**
+>   `examples/magnetostatics/06_h_convergence_rate.py`, dispatched as `-e 6`
+>   (real build), runs the `MAG-13` h-refinement sequence as an example and
+>   outputs the quantity no other example does: a **rate**. **Anchor:** the
+>   fitted slope of `log(error)` against `log(h)` over the gate's own triple is
+>   **1.1009**, inside the gate's `0.7 < p < 1.5` band and reproducing the
+>   **1.10** on record in `20260730T125522Z_MAG-13.log`; the three errors
+>   reproduce that record to every digit it carries — **22.1925% / 12.7485% /
+>   9.2568%** at h = 0.004 / 0.0025 / 0.0018 (38 750 / 145 884 / 383 248 cells)
+>   against 22.19 / 12.75 / 9.26. **The negative control is solved here, not
+>   cited:** monotone decrease across the three resolutions is asserted, which
+>   is what a slope fitted through h-blind noise fails — the same property that
+>   forced `MAG-13` to exclude h = 0.0035 (11.77%, below the h = 0.0025 value).
+>   The fixture is **imported**, not restated: an additive refactor lifted the
+>   parameters, the per-resolution solve (`solve_h_refinement`), the sample line
+>   and the rate fit (`fit_convergence_rate`) to module scope in
+>   `tests/validation/test_convergence.py`, so the example and the gate run one
+>   measurement rather than two copies; the gate was re-run to prove the
+>   refactor changed nothing (`20260810T124051Z_EX-9-MAG-13-regress.log`,
+>   1 passed / 2 skipped, 129 s, `-n 2`).
+>   **One gate beyond the plan's ask, and it returned a finding.** The error was
+>   re-measured on the *exported* CG1 function at the same ten points:
+>   **17.1451%**, against **9.2568%** for the solved N1curl field — a **7.89
+>   percentage-point** loss. `curl(A)` is cell-wise constant at N1curl degree 1,
+>   so writing `B` to a continuous space averages neighbouring cells at each
+>   vertex, and on a 1/r field near a conductor that averaging costs most of
+>   what the whole refinement sequence bought. The first run
+>   (`20260810T123503Z_EX-9-run1.log`, exit 1) asserted a ±5% agreement between
+>   the two, which measurement refuted; the bound was **not** widened to fit —
+>   the check was re-pointed at the run's own coarsest solved resolution
+>   (exported error must stay under 22.1925%, i.e. smoothing may not cost more
+>   than the refinement gained), with the measured 7.89 points recorded in the
+>   constant's comment, the docstring and the guide. Nothing was inherited:
+>   `MAG-13` gates no export. The closed form is deliberately **not** exported
+>   beside the numeric field — it is the exterior solution, valid only for
+>   r > a, so a whole-domain difference would be dominated by an invalid
+>   interior comparison and a 1/r axis singularity.
+>   No `src/` change. Guide `06_h_convergence_rate.md` written to the `EX-15`
+>   step-1 bar (guide pass now checks 7 examples, up from 6). Logs
+>   `20260810T123456Z_EX-9-runner-list.log` (`-e 6` registered),
+>   `20260810T123503Z_EX-9-run1.log` (exit 1, the export finding above),
+>   `20260810T123824Z_EX-9-run2.log` (exit 0, 129 s),
+>   `20260810T124317Z_EX-9-run-final.log` (exit 0, 131 s harness-wall, 130.1 s
+>   in-example — the committed record),
+>   `20260810T124051Z_EX-9-MAG-13-regress.log` (gate green after the refactor),
+>   `20260810T124544Z_EX-9-refcheck.log` (exit 1: the **freshness** branch yet
+>   again, the same 11 straight-wire/Helmholtz/gauge artifacts 1.7 h against the
+>   1.0 h window — third consecutive run, `EX-14`'s branch, unrelated to this
+>   chunk; the guide pass PASSed here),
+>   `20260810T124556Z_EX-9-refcheck-refresh.log` (`-e 1,4,5`, 84 s, reproducing
+>   65.8739% and 0.0004% / 0.0033% on the way),
+>   `20260810T124730Z_EX-9-refcheck2.log` (both passes PASS, 37 references).
+>   **Tier reclassified standard → heavy**: 130 s of solve at `-n 2` on the
+>   example path plus meshing exceeds what a 180 s ceiling can hold with any
+>   margin, and §5.1 names convergence studies as the heavy tier's own example
+>   (`MAG-13` is labeled heavy for the same measurement). **Phase-1 §5.4
+>   example backfill is complete** — `EX-9` was the last of it. *(Original plan
+>   text follows.)*
+>   *(corrected 2026-08-09, 18:00 review: the original text
 >   said "three-resolution Helmholtz (the `MAG-14` fixture, cheap)" — no
 >   such fixture exists. The 1.10 rate on record belongs to the
 >   straight-wire h-refinement,
@@ -6060,7 +6122,16 @@ review's (2026-08-16) to spend.
    result:** B-field disagreement beyond 5% at matched fixture is a
    regression finding — report, stop.
 
-3. **`EX-9` — measured h-convergence rate as an example output
+3. ✅ **DONE 2026-08-10 (07:30 slot)** — rate **1.1009** in the gate's
+   `0.7 < p < 1.5` band, errors 22.1925 / 12.7485 / 9.2568% reproducing the
+   `MAG-13` record digit for digit, monotone control asserted and held; the
+   fixture was lifted to module scope so example and gate share one
+   measurement, and the gate re-ran green (129 s). One finding: the exported
+   CG1 field measures **17.1451%** where the solved field measures 9.2568% —
+   vertex averaging costs 7.89 points — so the export bound was re-pointed at
+   the coarsest solved resolution rather than widened. Tier reclassified
+   **heavy** (130 s). **Phase-1 §5.4 backfill complete.** See the `EX-9`
+   annotation in §7. **`EX-9` — measured h-convergence rate as an example output
    (standard).** Execute the §7 backfill plan's `EX-9` bullet **as
    corrected 2026-08-09** (the original "three-resolution Helmholtz
    (`MAG-14`, cheap)" fixture does not exist): three-resolution straight
