@@ -50,9 +50,23 @@ dominated by meshing, not solving: 411 k cells at resolution 0.002 m means
 that relaxing the resolution to 0.0025 costs about 2% extra error — the trade
 is documented in the parameter comments.
 
-The same `⚠ VTX output failed …` line as `-e 1` appears and is expected
-(known-issues: the `.bp` writer is handed an N1curl function). Exit status 0;
-use the XDMF files.
+The VTX/`.bp` export was repaired 2026-08-10 (`EX-17`, the port of `EX-14`'s
+straight-wire fix). A healthy run prints, on rank 0,
+
+```
+  VTX round-trip check (EX-17 anchor):
+    in-memory  max|B| = 7.756122914931e-05 T
+    read-back  max|B| = 7.756122914931e-05 T
+    relative difference = 0.000e+00  (tol 1e-10)
+```
+
+— the written `circular_loop_B.bp` read back through ADIOS2 and compared with
+the field still in memory (`20260810T200154Z_EX-17-gate-mag2.log`, exit 0,
+124 s at `-n 2`). A mismatch raises rather than printing a warning. Before the
+fix the run printed `⚠ VTX output failed (ADIOS2 may not be available)` on
+every rank and left `circular_loop_A.bp` with zero ADIOS2 variables; if you see
+that line, the tree predates the fix. Exit status 0 either way — the XDMF files
+were always written.
 
 ## 3. How to analyze it, step by step
 

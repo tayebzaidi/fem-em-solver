@@ -961,33 +961,17 @@ was invisible until an analytic comparison existed. Coil+phantom has no analytic
 reference yet. See `PROJECT_PLAN.md` §9.
 
 
-### `02_circular_loop.py` never writes its VTX/`.bp` output
+### ✅ RETIRED 2026-08-10 (`EX-17`) — `02_circular_loop.py` never wrote its VTX/`.bp` output
 
-**Test id:** none — `./run_examples.sh -e 2` (the example is not gated by a
-test; the surrounding numbers are).
-**Symptom:** expected verbatim (not re-observed here — inferred from identical
-code, `examples/magnetostatics/02_circular_loop.py:214`), once per rank, exit
-status still 0:
-
-```
-⚠ VTX output failed (ADIOS2 may not be available): Only (discontinuous)
-Lagrange functions are supported. Interpolate Functions before output.
-```
-
-**Verified at:** not executed. The evidence is the artifact:
-`paraview_output/circular_loop_A.bp` opens with **zero ADIOS2 variables**
-(probed 2026-08-10 in-container), i.e. an empty directory from a failed write.
-
-**Cause:** the same defect `EX-14` fixed in `01_straight_wire.py` — the first
-`io.VTXWriter` is handed the N1curl `A`, and one `try` wraps both writers so
-`B` is never attempted either. The fix is the same: pass the Lagrange
-interpolants and split the `try`.
-
-**Not fixed here:** found while executing `EX-14`, whose scope is the
-straight-wire example only; fixing a second example in passing is what
-implementer.md forbids. **Resolved by:** assigned to `EX-17` (2026-08-10,
-10:30 review) — the one-file port of the `EX-14` diff plus the same
-round-trip check, queued §9 item 3. Entry leaves with the `EX-17` commit.
+Fixed by the one-file port of the `EX-14` diff: the writers now take the
+`A_lag`/`B_lag` Lagrange interpolants the example already builds, each under
+its own `try`, and `_check_vtx_roundtrip()` reads `circular_loop_B.bp` back
+through ADIOS2 — in-memory and read-back max |B| both **7.756122914931e-05 T**,
+relative difference **0.000e+00** vs the 1e-10 tolerance
+(`20260810T200154Z_EX-17-gate-mag2.log`, exit 0, 124 s, `-n 2`). The pre-fix
+state on record: `⚠ VTX output failed (ADIOS2 may not be available): Only
+(discontinuous) Lagrange functions are supported` once per rank, and
+`paraview_output/circular_loop_A.bp` opening with zero ADIOS2 variables.
 
 ### `examples/mri/01` centerline samples are rank-dependent at ~23%, at and below the gauge floor
 

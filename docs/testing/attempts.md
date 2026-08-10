@@ -8850,3 +8850,68 @@ would have caught the dead references `EX-12` found by hand.
 *(Post-edit re-run: the docstring paragraph landed after anchor (a), so the
 default leg was repeated on the exact committed file state —
 `20260810T183437Z_OPS-15-default-final.log`, exit 0, 1 s, both passes PASS.)*
+
+---
+
+## 2026-08-10T20:10Z — `EX-17` — complete
+
+Scheduled implementer run, 15:00 CDT slot, §9 On-deck item 3. Tree clean at
+preflight, container Up 34 min, no `recovered/*`.
+
+**What was tried.** The one-file port the §7 entry specified, nothing more:
+`examples/magnetostatics/02_circular_loop.py` now hands both `io.VTXWriter`
+calls the `A_lag`/`B_lag` Lagrange interpolants it already builds for the XDMF
+path (never the N1curl `A` / DG `B`), each writer gets its own `try`, and
+`_check_vtx_roundtrip()` — copied from `01_straight_wire.py` with the IO name
+rebound — reads `circular_loop_B.bp` back through ADIOS2 on rank 0 and
+broadcasts the verdict so every rank raises or none does.
+
+**Measured numbers.**
+- Round-trip anchor: in-memory **7.756122914931e-05 T**, read-back
+  **7.756122914931e-05 T**, relative difference **0.000e+00** vs tol **1e-10**
+  — bit-identical, matching the straight wire's result on the 411 393-cell
+  loop mesh.
+- Negative control, cited not recomputed per the entry: the zero-variable
+  `circular_loop_A.bp` and the `⚠ VTX output failed (ADIOS2 may not be
+  available): Only (discontinuous) Lagrange functions are supported` print
+  class, both on record in the known-issues entry now retired. This run prints
+  `✓ Vector potential A saved` / `✓ Magnetic field B saved`.
+- Physics unmoved, as the entry required: relative L2 error **6.3046%**, max
+  relative error **13.5037%** at z = +0.0240 m — `MAG-EX`'s numbers digit for
+  digit, on both ranks.
+
+**The pre-paid trap stayed paid.** `EX-14` burned an attempt on VTX point data
+being an ADIOS2 *local* array (empty `Shape`, `AxisError`, then exit 139 in
+basix teardown). Because the ported read-back already walks `BlocksInfo`, this
+run hit none of it — first attempt, exit 0. That is the whole value of porting
+a diff rather than rewriting it.
+
+**The freshness tax was actually zero.** `OPS-15` landed at 13:30 and this is
+the first `-e` slot after it. The default-window checker run took **1 s**, exit
+0, both passes PASS, **no refresh solves** — where the three slots before
+`OPS-15` each paid 80–200 s. The `-e 2` run itself was the only compute.
+
+**Harness logs.**
+- `20260810T200154Z_EX-17-gate-mag2.log` — `./scripts/run_examples.sh -e 2 -n 2
+  -t 600`, exit 0, **124 s**, standard declared with the `-t 600` budget the §7
+  entry allowed for the 411 k-cell mesh. One run, no second solve.
+- `20260810T200519Z_EX-17-refcheck.log` — default window, exit 0, 1 s, both
+  passes PASS.
+
+**Cost.** Two harness commands, ~125 s of compute total. Slot used ~40 min
+including the doc rewrite. No denials.
+
+**Docs landed with the code.** Known-issues entry retired in place (marked ✅
+RETIRED with the measured numbers, per the file's existing convention);
+`02_circular_loop.md` §2 replaced its "the `⚠ VTX output failed …` line is
+expected" paragraph with the round-trip block and the log reference;
+`PARAVIEW_GUIDE.md` gained the two `circular_loop_*.bp` entries alongside the
+straight wire's. §7 table ✅, §7 closure note, §9 item 3 struck.
+
+**Next-attempt hypothesis.** None — closed on the first attempt. For the next
+run (§9 item 4, `EX-15` step 2): the refresh tax it budgeted for no longer
+exists, so the whole slot is available for guide writing; and if any slot does
+see the freshness branch fire at the 48 h default, that is a finding about
+`artifact_mtime()`, not the tax. One residual for the review:
+`_check_vtx_roundtrip` and `_global_max_magnitude` now exist verbatim in two
+examples — cheap to hoist into `fem_em_solver.io` before a third needs them.

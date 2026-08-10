@@ -24,6 +24,89 @@ from fem_em_solver.io.paraview_utils import write_combined_paraview_output
 from dolfinx import io, fem
 
 
+#: EX-17 anchor (ported from EX-14): the ADIOS2 round trip is exact, so the
+#: written artifact must reproduce the in-memory global max |B| to round-off.
+#: This is a closed-loop identity on the file itself, not a finiteness check.
+VTX_ROUNDTRIP_RTOL = 1e-10
+
+
+def _global_max_magnitude(f, V, comm):
+    """Allreduced max |f| over owned dofs (rank-local maxima are not the answer)."""
+    n_owned = V.dofmap.index_map.size_local * V.dofmap.index_map_bs
+    owned = f.x.array[:n_owned].reshape(-1, 3)
+    local = float(np.max(np.linalg.norm(owned, axis=1))) if owned.size else 0.0
+    return comm.allreduce(local, op=MPI.MAX)
+
+
+def _check_vtx_roundtrip(bp_path, B_lag, V_lag, comm):
+    """Read the written .bp back through ADIOS2 and compare max |B| (EX-17).
+
+    The writer is collective; the read-back is done on rank 0 only (the BP file
+    holds the *global* array) and the verdict is broadcast, so every rank
+    raises or none does.
+    """
+    in_memory = _global_max_magnitude(B_lag, V_lag, comm)
+    comm.Barrier()
+
+    readback = None
+    failure = None
+    if comm.rank == 0:
+        try:
+            import adios2
+
+            adios = adios2.ADIOS()
+            reader_io = adios.DeclareIO("ex17_vtx_readback")
+            reader_io.SetEngine("BP4")
+            engine = reader_io.Open(str(bp_path), adios2.Mode.ReadRandomAccess)
+            try:
+                available = reader_io.AvailableVariables()
+                if "B" not in available:
+                    raise RuntimeError(
+                        f"no 'B' variable in {bp_path.name}; found {sorted(available)}"
+                    )
+                # VTX writes point data as an ADIOS2 *local* array -- one block
+                # per writer rank, no global shape -- so the read-back walks the
+                # blocks rather than asking for a shape.
+                var = reader_io.InquireVariable("B")
+                blocks = engine.BlocksInfo("B", 0)
+                if not blocks:
+                    raise RuntimeError(f"'B' in {bp_path.name} has no data blocks")
+                readback = 0.0
+                for block_id, block in enumerate(blocks):
+                    count = [int(n) for n in block["Count"].split(",")]
+                    var.SetBlockSelection(block_id)
+                    data = np.zeros(count, dtype=np.float64)
+                    engine.Get(var, data, adios2.Mode.Sync)
+                    readback = max(
+                        readback, float(np.max(np.linalg.norm(data, axis=1)))
+                    )
+            finally:
+                engine.Close()
+        except Exception as e:  # noqa: BLE001 - reported, then re-raised below
+            failure = f"{type(e).__name__}: {e}"
+
+    readback, failure = comm.bcast((readback, failure), root=0)
+
+    if failure is not None:
+        print(f"    ⚠ VTX round-trip read-back unavailable: {failure}")
+        return False
+
+    rel = abs(readback - in_memory) / in_memory if in_memory else abs(readback)
+    if comm.rank == 0:
+        print("\n  VTX round-trip check (EX-17 anchor):")
+        print(f"    in-memory  max|B| = {in_memory:.12e} T")
+        print(f"    read-back  max|B| = {readback:.12e} T")
+        print(f"    relative difference = {rel:.3e}  (tol {VTX_ROUNDTRIP_RTOL:.0e})")
+    if rel > VTX_ROUNDTRIP_RTOL:
+        raise RuntimeError(
+            f"VTX round-trip mismatch: in-memory max|B| = {in_memory:.12e} vs "
+            f"read-back {readback:.12e} (relative {rel:.3e} > {VTX_ROUNDTRIP_RTOL:.0e})"
+        )
+    if comm.rank == 0:
+        print("    ✓ written .bp reproduces the in-memory field")
+    return True
+
+
 def main():
     """Run circular loop example."""
     comm = MPI.COMM_WORLD
@@ -209,19 +292,35 @@ def main():
             print(f"    ✓ Combined file saved to {written_files['combined'].name}")
 
     # Method 2: VTX format (modern, supports higher-order elements)
+    #
+    # EX-17: VTXWriter accepts only (discontinuous) Lagrange functions, so it is
+    # handed the A_lag/B_lag interpolants built above -- never the N1curl `A` or
+    # the DG-space `B` object.  The two writers also get one `try` each: the
+    # original single block meant a failure on `A` silently skipped `B` as well.
     print("\n  Writing VTX files...")
+    b_bp_path = output_dir / "circular_loop_B.bp"
+    vtx_B_written = False
     try:
-        vtx_A = io.VTXWriter(comm, output_dir / "circular_loop_A.bp", [A], engine="BP4")
+        # VTXWriter for the vector potential A (Lagrange interpolant of N1curl A)
+        vtx_A = io.VTXWriter(comm, output_dir / "circular_loop_A.bp", [A_lag], engine="BP4")
         vtx_A.write(0.0)
         vtx_A.close()
         print("    ✓ Vector potential A saved to circular_loop_A.bp/")
+    except Exception as e:
+        print(f"    ⚠ VTX output of A failed: {e}")
 
-        vtx_B = io.VTXWriter(comm, output_dir / "circular_loop_B.bp", [B], engine="BP4")
+    try:
+        # VTXWriter for the magnetic field B (Lagrange interpolant of DG B)
+        vtx_B = io.VTXWriter(comm, b_bp_path, [B_lag], engine="BP4")
         vtx_B.write(0.0)
         vtx_B.close()
+        vtx_B_written = True
         print("    ✓ Magnetic field B saved to circular_loop_B.bp/")
     except Exception as e:
-        print(f"    ⚠ VTX output failed (ADIOS2 may not be available): {e}")
+        print(f"    ⚠ VTX output of B failed: {e}")
+
+    if not (vtx_B_written and _check_vtx_roundtrip(b_bp_path, B_lag, V_lag, comm)):
+        print("    Note: XDMF files were still created and can be used instead")
 
     print("\n  ✓ ParaView files saved to paraview_output/")
     print("    Open circular_loop_combined.xdmf in ParaView: it carries the")

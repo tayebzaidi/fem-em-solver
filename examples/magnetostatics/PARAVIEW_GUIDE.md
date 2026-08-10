@@ -53,6 +53,11 @@ the in-memory value, printed as the "VTX round-trip check" block. On record
 **4.463805898300e-05 T**, relative difference **0.000e+00** against a 1e-10
 tolerance. A mismatch raises.
 
+`02_circular_loop.py` carried the identical defect and was repaired the same
+way on 2026-08-10 (`EX-17`), so `circular_loop_A.bp/` and `circular_loop_B.bp/`
+now exist too, with the same round-trip check — both **7.756122914931e-05 T**,
+relative difference **0.000e+00** (`docs/testing/logs/20260810T200154Z_EX-17-gate-mag2.log`).
+
 ---
 
 ## Opening in ParaView

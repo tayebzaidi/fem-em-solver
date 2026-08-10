@@ -5009,7 +5009,7 @@ mandate to displace the critical path.
 | `EX-14` | Straight-wire VTX export repair + the refcheck freshness branch exercised | ✅ (2026-08-10: round-trip max\|B\| identical to 12 digits, rel diff 0.000e+00 vs 1e-10; freshness branch fired, then green) | standard |
 | `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | 🟡 (step 1 ✅ 2026-08-10: guide pass + 5 guides, exit 0, both negative controls; steps 2–3 owe 9, held in `PENDING_GUIDES`) | standard |
 | `EX-16` | `examples/mri/01`: converge the frequency-domain solve, then re-measure the rank spread | 🚫 (2026-08-10: solve converges — `preonly`/LU, `reason=4` — and the spread does **not** move, 23.5539% vs the 23.5545% unconverged record; anchor FAIL, negative-result clause taken. Fix landed; the 23% is the centerline sampling path, 3215× the phantom path on the same fields) | standard |
-| `EX-17` | Circular-loop VTX export repair: port the `EX-14` diff, same round-trip anchor | ⬜ | standard |
+| `EX-17` | Circular-loop VTX export repair: port the `EX-14` diff, same round-trip anchor | ✅ (2026-08-10: round-trip max\|B\| 7.756122914931e-05 T both ways, rel diff 0.000e+00 vs 1e-10; loop's analytic numbers unmoved, checker green) | standard |
 
 **`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
 run each).** Common rules: gated capability only; the example *asserts* its
@@ -5671,6 +5671,32 @@ references only. **Negative result:** a round-trip mismatch on the loop
 where the wire was bit-identical is a finding about the loop's export
 path specifically — report both numbers, keep the known-issues entry
 open, stop.
+
+> **`EX-17` ✅ 2026-08-10 (15:00 slot, §9 item 3) — the port carries, and the
+> loop's round trip is bit-identical too.**
+> The diff is the `EX-14` one, line for line: `02_circular_loop.py` hands both
+> `VTXWriter`s the `A_lag`/`B_lag` interpolants it already builds, each writer
+> gets its own `try`, and `_check_vtx_roundtrip()` reads `circular_loop_B.bp`
+> back through ADIOS2 on rank 0 with the verdict broadcast. The `BlocksInfo`
+> trap the entry pre-paid for was real and pre-solved — the ported read-back
+> worked first attempt, no `AxisError`, no exit 139.
+> **Anchor:** in-memory **7.756122914931e-05 T**, read-back
+> **7.756122914931e-05 T**, relative difference **0.000e+00** against 1e-10 —
+> bit-identical, matching the straight wire's result on a mesh 30× larger
+> (`20260810T200154Z_EX-17-gate-mag2.log`, exit 0, **124 s**, `-n 2`, standard
+> declared with the `-t 600` budget the entry allowed; one run, no second solve).
+> **Negative control, cited not recomputed:** the zero-variable
+> `circular_loop_A.bp` and the `⚠ VTX output failed … Only (discontinuous)
+> Lagrange functions are supported` print class, both on record in the
+> known-issues entry this commit retires; the run now prints `✓ Vector
+> potential A saved` / `✓ Magnetic field B saved`.
+> **Nothing physics-side moved,** as required: relative L2 error **6.3046%**,
+> max relative error **13.5037%** at z = +0.0240 m — `MAG-EX`'s numbers, digit
+> for digit.
+> **Checker green** at the `OPS-15` default, exit 0, both passes PASS
+> (`20260810T200519Z_EX-17-refcheck.log`) — and the freshness branch did not
+> fire at all, the first `-e` slot since the 48 h default landed that paid no
+> refresh tax.
 
 **`EX-14` — straight-wire VTX export repair, and the refcheck freshness
 branch exercised** *(scoped 2026-08-09, 18:00 review; one run, standard
@@ -6388,8 +6414,17 @@ absent: the second licensed discriminator slot is the weekly review's
    report-and-stop with the flagged list. Queued ahead of the guide
    items so they stop paying the ~80–200 s tax this chunk retires.
 
-3. **`EX-17` — circular-loop VTX export repair (standard; known-issues
-   fix).** Execute the §7 `EX-17` entry verbatim: one-file port of the
+3. ~~**`EX-17`**~~ — **done 2026-08-10 (15:00 run), first attempt.** The
+   port carries: round-trip in-memory and read-back max |B| both
+   **7.756122914931e-05 T**, relative difference **0.000e+00** vs 1e-10 —
+   bit-identical, as on the straight wire, on a mesh 30× larger. One run,
+   124 s at `-n 2`, no second solve; the `BlocksInfo` trap was pre-paid and
+   never fired. The loop's analytic numbers did not move (6.3046% /
+   13.5037%), known-issues entry retired, checker green at the `OPS-15`
+   default with **zero** refresh solves — the first `-e` slot to pay no
+   freshness tax. Logs `20260810T200154Z_EX-17-gate-mag2`,
+   `…200519Z_EX-17-refcheck`. Original scope follows.
+   Execute the §7 `EX-17` entry verbatim: one-file port of the
    `EX-14` diff (`f626171`) to
    `examples/magnetostatics/02_circular_loop.py` — Lagrange
    interpolants to the writers, split `try`, same
