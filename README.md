@@ -140,6 +140,10 @@ pip install -e ".[dev,docs]"
 # (complex build)
 ./run_examples.sh --example th:3
 
+# Run the below-cutoff waveguide example — the evanescent TE10 decay constant vs
+# sqrt(k_c^2 - k0^2) in a lossless guide, mode profile exported (complex build)
+./run_examples.sh --example th:4
+
 # Run all magnetostatics examples / absolutely everything
 ./run_examples.sh --example all-mag
 ./run_examples.sh --example all --nproc 2

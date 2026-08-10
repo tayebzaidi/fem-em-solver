@@ -4851,7 +4851,7 @@ mandate to displace the critical path.
 | `EX-4` | Lossy plane wave: decay and phase vs closed form (first time-harmonic example) | ✅ | standard |
 | `EX-5` | PEC cavity resonances: eigenfrequencies vs closed form, mode field in ParaView | ✅ | standard |
 | `EX-6` | Sphere in a uniform field: solved quasi-static response vs closed form | ✅ | standard |
-| `EX-7` | Waveguide/coax: the `TH-7` gated quantity as a runnable example | ⬜ | standard |
+| `EX-7` | Waveguide/coax: the `TH-7` gated quantity as a runnable example | ✅ | standard |
 | `EX-8` | Resonance guard on a frequency sweep: the `TH-1` step-5 detector firing | ⬜ | standard |
 | `EX-9` | Measured h-convergence rate as an example output (Phase 1) | ⬜ | standard |
 | `EX-10` | Gauge cross-check: penalty vs Lagrange-multiplier Coulomb gauge (Phase 1) | ⬜ | standard |
@@ -4949,9 +4949,51 @@ recorded.
 >   closed form at the gated tolerance; export the field showing the interface
 >   jump. Angle: material contrast in a solved field (`EX-3` *imposes* its field;
 >   this one solves it — state that distinction in the report text).
-> * **`EX-7`** — the `TH-7` waveguide/coax case: reproduce the gated cutoff
->   or line-impedance quantity within its gate tolerance; export the mode
->   profile. Angle: guided-wave/port-adjacent geometry.
+> * **`EX-7`** — ✅ **closed 2026-08-09 (21:00 run).**
+>   `examples/time_harmonic/04_evanescent_waveguide_decay.py`, dispatched as
+>   `th:4`, reproduces the `TH-7` finer-mesh record **digit for digit** through
+>   the example path: fitted decay constant **γ = 37.650399 Np/m** against the
+>   closed form √(k_c²−k₀²) = 37.652670 Np/m, **0.006%** at the gate's own 5%
+>   MVP ceiling — identical to `20260731T123411Z_TH-7-gate-final.log` — with
+>   whole-domain relative L2 **4.406648e-02** and residual |Im E_y|/|Re E_y|
+>   **0.000e+00**, also identical, at 41 472 cells and 5.1 s in-example. The
+>   fixture is imported (geometry, frequency, the exact-field factory, the probe
+>   line and its fit window), never restated. The §9 item's wording correction
+>   holds: the `TH-7` gate is the **evanescent TE₁₀ decay below cutoff**, and no
+>   line-impedance or S-parameter claim is made or implied (`PORT-1` owns that).
+>   Two gates beyond the plan's ask, both for the export: γ is **refitted from
+>   the CG1 array actually written to XDMF** — 37.606274 Np/m, **0.117%** from
+>   the N1curl fit, so ParaView colours the field the anchor was measured on —
+>   and the **mode profile is a number**: 25 points across the guide at mid-length
+>   read **0.200%** RMS from sin(πx/a) after peak normalisation, i.e. the TE₁₀
+>   half-arch is in the exported array. The exported |E| spans
+>   5.147567e-17 … 1.000725e+00 V/m, so the PEC side-wall zero is visible in the
+>   array itself. Negative control cited not re-run per the plan (the gate's
+>   three-frequency sweep: measured γ ratio 2.6373 vs closed-form 2.6383, 0.038%,
+>   asserted > 2.0, against exactly 1 for a k₀-blind solver), with an in-run
+>   assertion that this run's own γ sits strictly below k_c (1.67× below), which
+>   a k₀-blind operator cannot do at any mesh.
+>   **Two bounds were set from measurement, not inherited** — both on the
+>   *exported* CG1 field, which `TH-7` does not gate: `CG1_VS_NEDELEC_MAX` = 0.5%
+>   (measured 0.117%) and `PROFILE_RMS_MAX` = 2% (measured 0.200%), each with its
+>   measurement and the reason for the margin in the constant's comment. The
+>   anchor was **not** touched — it stands at the gate's own 5%. No `src/` change
+>   was needed, so no gate re-run was owed. Logs
+>   `20260810T020317Z_EX-7-runner-list.log` (`th:4` registered by the runner's
+>   filename glob), `20260810T020325Z_EX-7-run1.log` (exit 0, 11 s — first run
+>   passed; its numbers are what the two export bounds were then set from),
+>   `20260810T020355Z_EX-7-gate.log` (exit 0, 7 s harness-wall, 5.1 s in-example,
+>   the tightened bounds re-verified), `20260810T020419Z_EX-7-refcheck.log` +
+>   `20260810T020433Z_EX-7-refcheck-refresh.log` +
+>   `20260810T020439Z_EX-7-refcheck2.log` (the `EX-12` doc-reference checker
+>   fired the **freshness** branch on the straight-wire artifacts again — 1.5 h
+>   against the 1.0 h window, the second consecutive run to hit it, unrelated to
+>   this chunk; `-e 1` refreshed them, checker PASS at 16 references, and `-e 1`
+>   reproduced 65.8739% / 85.2498% on the way). README example list extended
+>   with `th:4`. *(Original plan text follows.)* the `TH-7` waveguide/coax case:
+>   reproduce the gated cutoff or line-impedance quantity within its gate
+>   tolerance; export the mode profile. Angle: guided-wave/port-adjacent
+>   geometry.
 > * **`EX-8`** — sweep across the `TH-9` fundamental with
 >   `core/resonance.py`: assert the guard fires at the on-record detuning
 >   (1.5%) and the energy rise follows the |f−f₀|⁻² pole law within 10%
@@ -5723,8 +5765,14 @@ review's (2026-08-16) to spend.
    SAR stays imposed-field-only per §2. **Negative result:** a ratio off
    the record at matched fixture is a regression finding — report, stop.
 
-2. **`EX-7` — evanescent waveguide decay as a runnable example
-   (standard).** Execute the §7 backfill plan's `EX-7` bullet, with one
+2. ✅ **done 2026-08-09 (21:00 run)** — `EX-7` closed: γ = 37.650399 Np/m vs
+   the closed form's 37.652670, **0.006%** at the gate's 5% ceiling, the
+   `TH-7` record reproduced digit for digit (rel L2 4.406648e-02,
+   |Im|/|Re| 0.000e+00), CG1 export refit 0.117%, transverse profile 0.200%
+   RMS from sin(πx/a). See the §7 `EX-7` entry (two non-inherited bounds
+   recorded there, both on the exported CG1 field, which `TH-7` does not
+   gate). *(Original item text follows.)* **`EX-7` — evanescent waveguide
+   decay as a runnable example (standard).** Execute the §7 backfill plan's `EX-7` bullet, with one
    correction of its wording: the `TH-7` gate is the **evanescent TE₁₀
    decay below cutoff**, not a line-impedance case. Import the fixture
    from `tests/validation/test_waveguide_cutoff.py` (`A_M = 0.05`,

@@ -8100,3 +8100,80 @@ fails with `docker: command not found` (status 127,
 `20260810T003341Z_EX-6-run1.log`, kept as the record of that dead end) because
 the script re-dispatches through `docker compose` itself. The bare
 `./run_examples.sh -e th:N -n 2 -t 180` form is correct and is what `EX-5` used.
+
+## 2026-08-10T02:05Z — `EX-7` — **complete**: the below-cutoff waveguide as a runnable example, reproducing the `TH-7` decay record digit for digit
+
+**Preflight.** Tree clean, container Up (30 h), no `recovered/*` needed. §9
+On-deck item 1 (`EX-6`) is marked done, so item 2 (`EX-7`) is the top open one
+— taken as written, including the item's own correction that the `TH-7` gate is
+the **evanescent TE₁₀ decay below cutoff**, not a line-impedance case.
+
+**What was built.** `examples/time_harmonic/04_evanescent_waveguide_decay.py`,
+auto-registered by the runner's filename glob as `th:4` (verified in
+`20260810T020317Z_EX-7-runner-list.log` before any solve). The fixture is
+*imported* from `tests/validation/test_waveguide_cutoff.py` — `A_M`, `B_M`,
+`L_M`, `FREQUENCY_HZ`, `SWEEP_HZ`, `_analytic_gamma`, `_exact_factory`, `_k0`,
+`_probe_points`, `cutoff_frequency_hz` — never restated; only the solver
+plumbing and the export are local, as in `EX-6`. One mesh (n = 24, the gate's
+finer one, 41 472 cells), not the gate's refinement pair.
+
+**The anchor, digit for digit against the record.** Fitted decay constant
+**γ = 37.650399 Np/m** against the closed form √(k_c²−k₀²) = **37.652670**,
+**0.006%** at the gate's own 5% MVP ceiling — identical to
+`20260731T123411Z_TH-7-gate-final.log`. Whole-domain relative L2
+**4.406648e-02** and residual |Im E_y|/|Re E_y| **0.000e+00**, also identical.
+5.1 s in-example, 41 472 cells.
+
+**Two gates the plan did not ask for, both earning the export.** γ is
+**refitted from the CG1 array that is actually written to XDMF** — 37.606274
+Np/m, **0.117%** from the N1curl fit — so what ParaView colours is the field the
+anchor was measured on, not a look-alike. And the plan's "export the mode
+profile" is a *number*: 25 points across the guide at mid-length read **0.200%**
+RMS from sin(πx/a) after peak normalisation. The exported |E| spans
+5.147567e-17 … 1.000725e+00 V/m, i.e. the PEC side-wall zero is in the array
+itself.
+
+**Two bounds set from measurement, not inherited.** Both are on the exported
+CG1 field, which `TH-7` does not gate, so there was no gated bound to inherit:
+`CG1_VS_NEDELEC_MAX` = 0.5% (measured 0.117%) and `PROFILE_RMS_MAX` = 2%
+(measured 0.200%), each with its measurement and the reason for the margin in
+the constant's comment, per the MAG-10/MAG-15 precedent. The first run passed
+with placeholder guesses for these (0.5% / 4%); the guesses were replaced by the
+measured values and the looser of the two **tightened** 4% → 2%, then re-run to
+verify — `20260810T020355Z_EX-7-gate.log`, exit 0. Nothing was loosened, and the
+anchor was not touched: it stands at the gate's own 5%.
+
+**Negative control cited, not recomputed** (per the §7 plan): the gate's
+three-frequency sweep measured a γ ratio of **2.6373** vs closed-form 2.6383
+(0.038%), asserted > 2.0, against exactly **1** for a k₀-blind solver (which
+returns γ ≡ k_c at every frequency). In-run share of that control: this run's γ
+sits **1.67× below k_c**, asserted strictly, which a k₀-blind operator cannot do
+at any mesh.
+
+**No `src/` change**, so no gate re-run was owed — the example is additive and
+imports the landed fixture.
+
+**The `EX-14` freshness branch fired again — second consecutive run.** The
+`EX-12` doc-reference checker failed on first call
+(`20260810T020419Z_EX-7-refcheck.log`, exit 1): the same 5 straight-wire
+artifacts, **1.5 h old against the 1.0 h window**, three hours after `EX-6`
+refreshed them. Unrelated to this chunk. `-e 1` refreshed them (6 s, exit 0,
+reproducing 65.8739% / 85.2498%) and the checker is PASS at 16 references
+(`20260810T020439Z_EX-7-refcheck2.log`). For `EX-14`: this is now twice in a
+row, so the 1.0 h default is not a rare inconvenience — every implementer run
+that touches examples pays a re-run to satisfy it. Either the window wants to be
+hours, or the checker wants a "regenerate the referenced examples" mode.
+
+**Cost.** Standard tier declared, `-n 2`, `timeout 180`; 27 s of harness wall
+across five runs (1 + 11 + 7 + 6 + 2 s), nothing near a ceiling.
+
+**Closes nothing physics-side.** No S-parameter or line-impedance claim
+(`PORT-1` owns that); this is Phase-2 §5.4 backfill. Phase 2's example shortfall
+goes 2 → 1 (`EX-8` remains).
+
+**Next-attempt hypothesis.** None needed — complete. For whoever takes `EX-8`:
+the `th:` runner group sources the complex build automatically and the runner
+must be invoked on the **host** (see the `EX-6` entry's dead end); the sweep
+windows for the resonance guard are to be taken from
+`tests/validation/test_resonance_guard.py` verbatim — the §9 item says a
+hand-picked window already cost one attempt a 2.814× separation.
