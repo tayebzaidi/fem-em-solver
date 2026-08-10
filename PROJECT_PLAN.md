@@ -338,6 +338,15 @@ needs `-f docker/docker-compose.yml`.
   example set; its meshing slice is covered by the `mesh:` group.)*
   Example chunks are their own §7 entries sized for one implementer run,
   never riders on physics chunks, and never target ungated capability.
+  *(Operator directive 2026-08-10:)* **every runnable example also ships
+  with a same-stem step-by-step guide page** — what it demonstrates, how
+  to run it, and how to analyze the output step by step so the operator
+  can understand what is going on without reading the source (required
+  sections and the mechanical gate: §7 `EX-15`). A missing or stale guide
+  is a defect like a broken example; the doc-reference checker enforces
+  presence and structure, and the weekly review audits guides with the
+  ramp. Example chunks scoped after 2026-08-10 include the guide page in
+  their done-when; the pre-existing examples are backfilled by `EX-15`.
 - **Ansys benchmark cases** live in `examples/ansys_benchmarks/<case>/`, each
   containing: `SPEC.md`, precise enough to replicate in Ansys Electronics
   Desktop with no judgement calls (geometry with dimensions, materials,
@@ -5147,6 +5156,50 @@ recorded.
 > physics-side:** 10 MHz, eddy-current regime; no Larmor/saline claim (§2.1),
 > and the example's report text says so on screen. Feeds `ANS-1`, which now has
 > its compute path on record, but does not start it.
+
+**`EX-15` — every runnable example gets a step-by-step analysis guide**
+*(operator directive 2026-08-10, interactive session; three runs, one per
+step, standard tier, doc-only apart from the checker extension; the daily
+review queues step 1 at its next §9 refresh and the later steps as slots
+free).* Policy now stated in §5.4: every script `./run_examples.sh --list`
+enumerates ships with a **same-stem guide page** next to it
+(`01_lossy_plane_wave.py` → `01_lossy_plane_wave.md`) that a reader can
+follow without the source open, with three required sections: **(1) What
+this demonstrates** — the physics, and which §7 gate / closed form anchors
+it; **(2) How to run it** — exact runner command, tier, expected wall time
+on record; **(3) How to analyze it, step by step** — which artifacts to
+open in ParaView and what to look at, which printed numbers to check,
+their on-record values with log provenance, and what a deviation in each
+would mean. Group-level guides (`PARAVIEW_GUIDE.md` and friends) stay but
+do not satisfy the per-example requirement. Fourteen runnable scripts at
+scoping time; the split below is by runner group.
+- **Step 1 — checker + template + `mesh:`/magnetostatics (5 scripts).**
+  Extend `scripts/testing/check_example_doc_references.py` with a guide
+  pass: every `--list` entry must have its same-stem `.md` containing the
+  three required headings (existing reference/freshness passes untouched).
+  **Anchor:** checker exit 0 with the pass on and all five guides present;
+  **negative control, two-sided:** one guide temporarily absent → exit 1
+  naming the orphaned script, and one guide missing a required heading →
+  exit 1 naming the heading; both restored before commit.
+- **Step 2 — `th:` group (5 scripts).** Every stated number is the gate
+  record already in §7 (`EX-4`–`EX-7`, `th:5`), cited by log name, digit
+  for digit. Same checker gate.
+- **Step 3 — `mat:`, `mri:`, `ans:` (4 scripts).** The `ans:1` guide
+  points at the case's `SPEC.md`/`COMPARISON.md` rather than duplicating
+  them; the `mri:1` guide keeps `EX-12`'s "ungated end-to-end demo"
+  labelling.
+
+**Traps:** on-record numbers are *copied* from §7/gate records, never
+re-measured — no solves are licensed here (checker runs are ~1 s; at most
+one `-e` refresh if the freshness branch fires, as it did twice on
+2026-08-09/10); `mri:1`'s numbers move if `EX-13` lands first — write that
+guide after `EX-13`, or state the sub-floor caveat explicitly; the sibling
+`.md` files land next to scripts, so make sure the checker does not
+mistake them for referenced-artifact entries. **Does not close:** nothing
+physics-side; documentation surface only. **Negative result:** a guide
+that cannot be written to the section-3 bar without re-running its example
+means that example's record is under-documented — journal it as a finding
+against the example, not a reason to thin the guide.
 
 **`EX-13` — `examples/mri/01` at the validated gauge floor** *(scoped
 2026-08-09, 18:00 review — this is the review decision the `MAG-6` step-5
