@@ -35,20 +35,23 @@ this fixture, which is coarse on purpose (`resolution = 0.01 m`) so the
 scheduled runs stay cheap. The error is large because of the mesh, not
 because the comparison is wrong.
 
-### VTX Format (Modern, requires ADIOS2) — **not currently produced**
+### VTX Format (Modern, requires ADIOS2)
 
-The example attempts a VTX/ADIOS2 export and it fails every run, printing
+- `straight_wire_A.bp/` - Vector potential A (Lagrange interpolant)
+- `straight_wire_B.bp/` - Magnetic field B (Lagrange interpolant)
 
-```
-⚠ VTX output failed (ADIOS2 may not be available): Only (discontinuous)
-Lagrange functions are supported. Interpolate Functions before output.
-```
+Both are directories, not files. Repaired 2026-08-10 (`EX-14`): the writers
+used to be handed the N1curl `A`, which `VTXWriter` cannot write, under a
+single `try` that swallowed `B` with it, so no `.bp` was ever produced. They
+now get the same `A_lag`/`B_lag` interpolants the XDMF path uses, and each
+writer has its own `try`.
 
-`VTXWriter` is handed the N1curl potential `A`, which it cannot write, and the
-one `try` block covers both writers, so no `.bp` directory is produced for `B`
-either. See `docs/testing/known-issues.md`. Use the XDMF files above; if you
-find a stale `.bp` directory in `paraview_output/`, it predates 2026-08-03
-and is not from your run.
+The run verifies the artifact rather than trusting it: `straight_wire_B.bp` is
+read back through the ADIOS2 Python bindings and its max |B| is compared with
+the in-memory value, printed as the "VTX round-trip check" block. On record
+(`docs/testing/logs/20260810T140337Z_EX-14-gate-mag1-v2.log`, `-n 2`) both read
+**4.463805898300e-05 T**, relative difference **0.000e+00** against a 1e-10
+tolerance. A mismatch raises.
 
 ---
 
@@ -67,8 +70,13 @@ You should now see the mesh loaded!
 
 ### Method 2: VTX Files (Modern)
 
-Unavailable — the VTX export fails on every run (see "Output Files" above).
-XDMF is the only format the example writes.
+1. **File → Open**
+2. Navigate to `paraview_output/` and select the `straight_wire_B.bp`
+   **directory** itself (do not descend into it)
+3. Choose the **"ADIOS2VTXReader"** when prompted
+4. Click **"Apply"**
+
+`straight_wire_A.bp` opens the same way for the vector potential.
 
 ---
 
@@ -147,9 +155,11 @@ If you just want to see the mesh structure:
 - For the straight wire, expect cylindrical symmetry
 
 ### "VTX files not created"
-- Expected: the export fails on every run, and not because ADIOS2 is missing
-  (see "Output Files")
-- Use XDMF files instead - they carry every field this example writes
+- A run prints `⚠ VTX output of A failed` / `... of B failed` if a writer
+  raised; each writer is independent, so one can succeed alone
+- If the round-trip check prints `read-back unavailable`, the ADIOS2 Python
+  bindings are missing from the container — the `.bp` may still be fine
+- Use the XDMF files meanwhile; they carry every field this example writes
 
 ### "ParaView crashes when opening file"
 - Try opening a single-field file first: `straight_wire_B.xdmf`
@@ -215,8 +225,8 @@ For a straight wire carrying current I along the z-axis:
   - Requires ADIOS2 installation
   - Newer format, less widespread
 
-**Recommendation**: XDMF, which is also the only format this example
-successfully writes today.
+**Recommendation**: XDMF for the combined tags+fields grid; VTX if you want
+the ADIOS2 reader or parallel I/O. The example writes both.
 
 ---
 

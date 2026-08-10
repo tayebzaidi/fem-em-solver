@@ -8623,3 +8623,77 @@ retire the tax as well as the VTX export defect. Its stated risk is the ADIOS2
 Python read-back being unavailable in-container; check that first, before
 touching the writer, and hold at 🟡 per its §7 entry if it is missing rather
 than inventing a substitute round-trip.
+
+---
+
+## 2026-08-10T14:02Z — `EX-14` — **complete**
+
+Scheduled implementer run, 09:00 CDT slot, §9 On-deck item 4. Tree clean at
+preflight, container Up 42 h, no `recovered/*`.
+
+**Risk checked first, per the previous run's hypothesis.** ADIOS2 Python
+bindings are present in-container (**2.9.1**, probed before touching the
+writer), so the anchor's read-back half was live and the 🟡 fallback the §7
+entry licensed was never needed.
+
+**What was tried.** The known-issues diagnosis was right and the fix is small:
+`examples/magnetostatics/01_straight_wire.py` now hands `VTXWriter` the
+`A_lag`/`B_lag` Lagrange interpolants it already builds (not the N1curl `A` /
+DG `B`), with one `try` per writer. Added `_check_vtx_roundtrip()` — reads
+`straight_wire_B.bp` back through ADIOS2 on rank 0 and compares max |B| with
+the allreduced in-memory value over owned dofs, raising on mismatch.
+
+**Measured numbers.**
+- Round-trip anchor: in-memory **4.463805898300e-05 T**, read-back
+  **4.463805898300e-05 T**, relative difference **0.000e+00** vs tol **1e-10**
+  — bit-identical, as a lossless round trip should be.
+- Negative control (i), on record and now absent: `⚠ VTX output failed (ADIOS2
+  may not be available): Only (discontinuous) Lagrange functions are supported`
+  printed in every `-e 1` log since 2026-08-04; this run prints `✓ Vector
+  potential A saved` / `✓ Magnetic field B saved`.
+- Negative control (ii): checker at `--max-age-s 1` flagged **14** references
+  stale, exit 1 — the freshness branch `EX-12`'s negctl skipped. Normal
+  invocation afterwards: exit 0, 39 references, both passes PASS.
+
+**Finding that was not in the plan.** The `--max-age-s 1` control read
+`straight_wire_A.bp` as **158.0 h old** minutes after the run had rewritten
+every file inside it. A `.bp` is a directory; overwriting the same entries
+never updates the directory's own mtime, so `stat().st_mtime` returns the
+creation date forever and a restored `.bp` reference would have been
+permanently stale. Fixed in `check_example_doc_references.py` with
+`artifact_mtime()` (newest mtime in the tree for directory artifacts). Without
+it this chunk would have traded one dead reference for another.
+
+**Second finding, filed not fixed.** `02_circular_loop.py:214` carries the
+identical export defect — `paraview_output/circular_loop_A.bp` probes to **zero
+ADIOS2 variables**, an empty directory from a failed write. New known-issues
+entry; out of `EX-14`'s scope, needs a chunk (a one-file port of this diff).
+
+**The question the §7 entry asked, answered.** `EX-12`'s "finish with the
+checker green" is achievable outside the slot that ran the examples only by
+re-running them: the freshness window is 1.0 h and the slot grid is 90 min.
+The checker is not a standing tree gate, and the ~80–200 s refresh tax the last
+three runs paid is structural, not incidental — the daily review's call on
+raising `--max-age-s` still stands open.
+
+**Harness logs.**
+- `20260810T140244Z_EX-14-gate-mag1.log` — first attempt, exit 0, writers fixed
+  but read-back failed (`AxisError`: VTX point data is an ADIOS2 *local* array
+  with empty `Shape`; the fix walks `BlocksInfo`).
+- `20260810T140337Z_EX-14-gate-mag1-v2.log` — anchor run, exit 0, **5 s**, `-n 2`.
+- `20260810T140434Z_EX-14-refcheck-negctl.log` — `--max-age-s 1`, exit 1, 1 s.
+- `20260810T140511Z_EX-14-refcheck-pre.log` — default window, exit 1, 7 stale
+  from earlier slots (the `.bp` entries already clean, i.e. `artifact_mtime`
+  works).
+- `20260810T140521Z_EX-14-freshness-refresh.log` — `-e 4,5,6`, exit 0, 200 s,
+  heavy tier declared.
+- `20260810T140845Z_EX-14-refcheck-green.log` — exit 0, both passes PASS, 1 s.
+
+**Cost.** Six harness commands; standard tier for everything but the refresh
+(heavy, 200 s). Slot used ~45 min including the doc rewrite. No denials.
+
+**Next-attempt hypothesis.** On-deck item 5 (`EX-16`) is next and is a solver
+change, not doc hygiene: budget the refresh tax on top of two `mri:1` runs, and
+check `converged=True` before computing any spread — the §7 entry makes
+convergence the precondition, so an unconverged direct solve is a
+report-and-stop finding about the fixture, not a number to publish.

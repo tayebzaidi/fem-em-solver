@@ -44,18 +44,21 @@ Real DolfinX build; the runner selects it. Tier: **smoke** in practice — on
 record **5 s** at `-n 2` for the example alone
 (`20260810T033438Z_EX-8-refcheck-refresh.log`), 4 s of that in gmsh.
 
-Known, expected, and **not** a failure: the run prints, once per rank,
+The VTX/`.bp` export was repaired 2026-08-10 (`EX-14`). A healthy run prints,
+on rank 0,
 
 ```
-⚠ VTX output failed (ADIOS2 may not be available): Only (discontinuous)
-Lagrange functions are supported. Interpolate Functions before output.
+  VTX round-trip check (EX-14 anchor):
+    in-memory  max|B| = 4.463805898300e-05 T
+    read-back  max|B| = 4.463805898300e-05 T
+    relative difference = 0.000e+00  (tol 1e-10)
 ```
 
-The `.bp` export has never worked — `VTXWriter` is handed the N1curl `A`, and
-one `try` covers both writers so `B` is never attempted either (known-issues,
-"`01_straight_wire.py` never writes its VTX/`.bp` output"; diagnosed, unfixed,
-needs a chunk). Exit status is still 0 and the XDMF path is unaffected. Use
-XDMF, not `.bp`, for everything below.
+— the written `straight_wire_B.bp` read back through ADIOS2 and compared with
+the field still in memory (`20260810T140337Z_EX-14-gate-mag1-v2.log`). A
+mismatch raises rather than printing a warning. Before the fix the run printed
+`⚠ VTX output failed (ADIOS2 may not be available)` on every rank and wrote no
+`.bp` at all; if you see that line, the tree predates the fix.
 
 ## 3. How to analyze it, step by step
 

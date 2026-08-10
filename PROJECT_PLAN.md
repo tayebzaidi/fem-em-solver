@@ -4874,7 +4874,7 @@ mandate to displace the critical path.
 | `EX-11` | Dodd–Deeds coil loading: ΔR vs closed form, eddy currents in ParaView | ✅ | standard |
 | `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ✅ | smoke |
 | `EX-13` | `examples/mri/01` at the validated gauge floor: rank-spread measured, on-record numbers refreshed | 🚫 | standard |
-| `EX-14` | Straight-wire VTX export repair + the refcheck freshness branch exercised | ⬜ | standard |
+| `EX-14` | Straight-wire VTX export repair + the refcheck freshness branch exercised | ✅ (2026-08-10: round-trip max\|B\| identical to 12 digits, rel diff 0.000e+00 vs 1e-10; freshness branch fired, then green) | standard |
 | `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | 🟡 (step 1 ✅ 2026-08-10: guide pass + 5 guides, exit 0, both negative controls; steps 2–3 owe 9, held in `PENDING_GUIDES`) | standard |
 | `EX-16` | `examples/mri/01`: converge the frequency-domain solve, then re-measure the rank spread | ⬜ | standard |
 
@@ -5506,6 +5506,65 @@ finding — report the two numbers, stop, known-issues entry.
 > ago. Whether `EX-12`'s "finish with the checker green" step is even
 > achievable outside the slot that ran the examples is a question this chunk
 > should settle.)*
+
+> **`EX-14` ✅ 2026-08-10 (09:00 slot, §9 item 4) — the export works, the
+> artifact is verified against itself, and the freshness pass had a second
+> defect the restored `.bp` references exposed.**
+> **The fix** is the one the known-issues entry predicted:
+> `examples/magnetostatics/01_straight_wire.py` hands `VTXWriter` the
+> `A_lag`/`B_lag` Lagrange interpolants it already builds instead of the
+> N1curl `A`/DG `B`, and each writer gets its own `try` (the single block was
+> why `B` — always writable — was never attempted). Both `.bp` directories now
+> write on every run: `✓ Vector potential A saved` / `✓ Magnetic field B
+> saved`, where every log since 2026-08-04 printed `⚠ VTX output failed
+> (ADIOS2 may not be available): Only (discontinuous) Lagrange functions are
+> supported` — negative control (i), on record and now absent.
+> **Anchor, and it is exact.** `_check_vtx_roundtrip` reads
+> `straight_wire_B.bp` back through the ADIOS2 Python bindings (2.9.1, present
+> in-container) and compares its max |B| with the allreduced in-memory value
+> over owned dofs: **4.463805898300e-05 T** both ways, **relative difference
+> 0.000e+00** against the 1e-10 tolerance — bit-identical, which is the right
+> answer for a lossless round trip, and a closed-loop identity on the artifact
+> rather than a finiteness check. A mismatch raises; a missing read-back API
+> degrades to a printed warning and `return False`, the 🟡 branch the entry
+> licensed, unused. One API note for successors: VTX writes point data as an
+> ADIOS2 **local** array (one block per writer rank, `Shape` empty), so the
+> read-back walks `BlocksInfo` — asking for a global shape returns nothing and
+> was the first attempt's failure (`…140244Z_EX-14-gate-mag1.log`).
+> **Negative control (ii) fired, and caught a real defect.**
+> `--max-age-s 1` against the *real* `paraview_output/` flagged 14 references
+> stale and exited 1 (`20260810T140434Z_EX-14-refcheck-negctl.log`) — the
+> freshness branch `EX-12`'s negctl skipped, now exercised. But it also read
+> `straight_wire_A.bp` as **158.0 h old** minutes after the run rewrote every
+> file inside it: a `.bp` is a *directory*, and overwriting the same entries
+> (`data.0`, `md.0`, …) never touches the directory's own mtime, so
+> `stat().st_mtime` reports the creation date forever. Restoring the `.bp`
+> references would have made the checker permanently red on an artifact no
+> rerun could refresh. Fixed in `check_example_doc_references.py` with
+> `artifact_mtime()` — newest mtime in the tree for a directory artifact — and
+> the same run that had flagged `straight_wire_A.bp` stops flagging it.
+> **Green afterwards:** `20260810T140845Z_EX-14-refcheck-green.log`, exit 0,
+> both passes PASS (39 references, 7 guides checked / 9 pending), after an
+> `-e 4,5,6` freshness refresh (`…140521Z_EX-14-freshness-refresh.log`, exit 0,
+> 200 s) cleared seven artifacts left 1.3 h old by earlier slots.
+> **The question the entry asked, answered:** `EX-12`'s "finish with the
+> checker green" is achievable outside the slot that ran the examples only by
+> re-running them — the 1.0 h window is shorter than the 90-minute slot grid,
+> so any run that touches example docs must budget a refresh. The checker is
+> therefore still not a standing tree gate.
+> **Docs:** `PARAVIEW_GUIDE.md` regains its three `.bp` sections (Output Files,
+> Method 2, Troubleshooting) with the round-trip numbers and the
+> ADIOS2VTXReader instruction; the `EX-15` guide `01_straight_wire.md` swaps
+> its "expected failure" block for the round-trip record. Known-issues: the
+> straight-wire entry retires. **New entry filed, not fixed:**
+> `02_circular_loop.py` carries the identical defect
+> (`02_circular_loop.py:214`) — `paraview_output/circular_loop_A.bp` probes to
+> **zero ADIOS2 variables**, an empty directory from a failed write — and is
+> out of this chunk's scope.
+> **Tier/cost:** standard for the example (`20260810T140337Z_EX-14-gate-mag1-v2.log`,
+> exit 0, **5 s** at `-n 2`) and 1 s for each checker run; the freshness
+> refresh alone was heavy-tier (200 s), declared as such. **Does not close:**
+> nothing physics-side, as scoped.
 
 > **`EX-4` ✅ 2026-08-09 (09:00 slot, §9 item 4).**
 > `examples/time_harmonic/01_lossy_plane_wave.py` lands — **the first example in
@@ -6152,7 +6211,16 @@ review's (2026-08-16) to spend.
    result:** a rate outside the band at matched fixture is a regression
    finding — report, stop.
 
-4. **`EX-14` — straight-wire VTX export repair + the refcheck
+4. ✅ **DONE 2026-08-10 (09:00 slot)** — export repaired (both `.bp` now
+   written every run), round-trip anchor **exact**: in-memory and read-back
+   max |B| both **4.463805898300e-05 T**, relative difference **0.000e+00**
+   vs the 1e-10 tolerance. Freshness branch exercised at `--max-age-s 1`
+   (14 flagged, exit 1) and it exposed a second defect — a `.bp` *directory*
+   read 158.0 h old minutes after its contents were rewritten, so
+   `artifact_mtime()` now takes the newest mtime in the tree; checker green
+   afterwards, both passes, exit 0. New known-issues entry: `02_circular_loop.py`
+   has the identical export defect, out of scope. See the `EX-14` annotation in
+   §7. **`EX-14` — straight-wire VTX export repair + the refcheck
    freshness branch exercised (standard).** Execute the §7 `EX-14` plan
    verbatim: Lagrange interpolants to `VTXWriter`, split `try`, restore
    the three `.bp` guide references; anchor is the ADIOS2 round-trip

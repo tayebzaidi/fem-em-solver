@@ -81,6 +81,23 @@ ALLOWLIST: dict[str, str] = {
 }
 
 
+def artifact_mtime(target: Path) -> float:
+    """Newest mtime of an artifact, looking *inside* directory artifacts.
+
+    A `.bp` is an ADIOS2 directory, and rewriting it overwrites the same
+    entries (`data.0`, `md.0`, ...) without touching the directory's own
+    mtime — so `straight_wire_A.bp` read 158 h old on 2026-08-10 minutes
+    after a run had refreshed every file in it (`EX-14`). Take the newest
+    mtime in the tree instead, or the freshness rule flags an artifact no
+    rerun can clear.
+    """
+    newest = target.stat().st_mtime
+    if target.is_dir():
+        for child in target.rglob("*"):
+            newest = max(newest, child.stat().st_mtime)
+    return newest
+
+
 def collect_references(doc_paths: list[Path]) -> dict[str, list[str]]:
     """Map referenced filename -> list of "<relpath>:<line>" citation sites."""
     references: dict[str, list[str]] = {}
@@ -244,7 +261,7 @@ def main() -> int:
                 f"not committed under {args.docs_root}/  [{sites}]"
             )
             continue
-        age = now - target.stat().st_mtime
+        age = now - artifact_mtime(target)
         if age > args.max_age_s:
             violations.append(
                 f"{name}: stale in {args.output_dir}/ ({age / 3600:.1f} h old, "

@@ -961,33 +961,32 @@ was invisible until an analytic comparison existed. Coil+phantom has no analytic
 reference yet. See `PROJECT_PLAN.md` §9.
 
 
-### `01_straight_wire.py` never writes its VTX/`.bp` output
+### `02_circular_loop.py` never writes its VTX/`.bp` output
 
-**Test id:** none — `./run_examples.sh -e 1` (the example is not gated by a
+**Test id:** none — `./run_examples.sh -e 2` (the example is not gated by a
 test; the surrounding numbers are).
-**Symptom** (verbatim, once per rank, exit status still 0):
+**Symptom:** expected verbatim (not re-observed here — inferred from identical
+code, `examples/magnetostatics/02_circular_loop.py:214`), once per rank, exit
+status still 0:
 
 ```
 ⚠ VTX output failed (ADIOS2 may not be available): Only (discontinuous)
 Lagrange functions are supported. Interpolate Functions before output.
 ```
 
-**Verified at:** `e54c628`, log `20260809T213342Z_EX-12-baseline-mag1.log`;
-also present unchanged in `20260804T174037Z_MAG-EX.log`, so it is not a
-regression.
+**Verified at:** not executed. The evidence is the artifact:
+`paraview_output/circular_loop_A.bp` opens with **zero ADIOS2 variables**
+(probed 2026-08-10 in-container), i.e. an empty directory from a failed write.
 
-**Cause:** diagnosed, not a missing ADIOS2. The first `io.VTXWriter` is handed
-`A`, which lives in N1curl — `VTXWriter` accepts only (discontinuous) Lagrange
-— and the single `try` block wraps both writers, so `B` (which *is* writable)
-is never attempted either. The example already computes `A_lag`/`B_lag`
-interpolants for its XDMF path; passing those, and splitting the `try`, is the
-fix.
+**Cause:** the same defect `EX-14` fixed in `01_straight_wire.py` — the first
+`io.VTXWriter` is handed the N1curl `A`, and one `try` wraps both writers so
+`B` is never attempted either. The fix is the same: pass the Lagrange
+interpolants and split the `try`.
 
-**Not fixed here:** `EX-12` is a documentation chunk (smoke, doc-only + one
-regen); changing what the example exports is code, and the export is
-redundant with the XDMF path that works. `PARAVIEW_GUIDE.md` now says the
-format is unavailable instead of telling readers to open a `.bp` directory
-that a run never writes. **Resolved by:** unassigned — needs a chunk.
+**Not fixed here:** found while executing `EX-14`, whose scope is the
+straight-wire example only; fixing a second example in passing is what
+implementer.md forbids. **Resolved by:** unassigned — needs a chunk (a
+one-file port of the `EX-14` diff, plus the same round-trip check).
 
 ### `examples/mri/01` centerline samples are rank-dependent at ~23%, at and below the gauge floor
 
