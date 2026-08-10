@@ -2705,7 +2705,20 @@ constraint.)*
 > stop.
 
 **`MAT-6` step 7 — raise the container memory cap to 64 G, verify it took,
-and measure the additivity ratio step 6 could not** 🚫 *(attempted 2026-08-08,
+and measure the additivity ratio step 6 could not** 🟡 *(Part 1 ✅
+2026-08-10, interactive session — **the operator approved the cap raise and
+the edit went through with the human answering the `ask` prompt**, resolving
+the blocker below by route (a)/the compose edit: `docker/docker-compose.yml`
+`limits.memory: 16G → 64G` (reservation stays 4G), service recreated
+(`up -d`, Up), and the cap verified at the kernel before anything else:
+`/sys/fs/cgroup/memory.max` = **68719476736** — the exact value Part 1's
+plan names. Part 2 — the additivity measurement against 0.9843 — remains
+unrun and is now executable in a scheduled slot per the original scoping
+below; the new headroom also un-sticks step 5's 1 458 561-cell rung and
+loosens step 8's cost gate. The 12-core and 20-minute ceilings are
+untouched: this bought memory, not compute.)*
+
+*Blocked-attempt record, 2026-08-08, retained:* *(attempted 2026-08-08,
 19:30 run — **blocked before any compute: a scheduled session cannot edit
 `docker/`.** `.claude/settings.json` lists `Edit(docker/**)` under
 `permissions.ask`, and an `ask` rule in a headless run is a denial — there is
