@@ -430,6 +430,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-12` | Adjudicate the residual-trend classifier (known-issues 2) and return `test_convergence_diagnostics.py` to CI | ✅ 2026-08-08 | standard |
 | `OPS-13` | Land the rank-safe `_validate_material_map_tags` fix on `main` with its own gate | ✅ 2026-08-08 | standard |
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
+| `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ⬜ | smoke |
 
 **`OPS-13` — land the rank-safe material-map validation on `main`** ✅
 *(scoped 2026-08-08, 03:00 review; closed 2026-08-08, 06:00 run.)*
@@ -798,6 +799,46 @@ eventual landing into a conflict festival for zero behavioral gain. Whoever
 lands that branch should scope the reformat as the next OPS chunk, in its
 own commit, immediately after. Until then: red `lint` is known and expected;
 do not "fix in passing", and do not read it as a chunk failure.
+
+**`OPS-15` — retire the checker's standing freshness tax: default
+`--max-age-s` 3600 s → 172800 s (48 h)** *(scoped 2026-08-10, 10:30 review —
+the decision three consecutive run journals asked for, taken; one run, smoke
+tier, doc-tooling only, no solves licensed).* The doc-reference checker's
+freshness pass at its default 1.0 h window has fired in every example-touching
+slot since 2026-08-09 (`EX-6`, `EX-10`, `EX-9`, `EX-14` journals) — the window
+is shorter than the 90-min slot grid, so any slot that runs the checker after
+examples aged half an hour pays an 80–200 s refresh solve. That is a
+structural tax, not a freshness finding. The review's decision: the standing
+default becomes **48 h** — wide enough that committed guides referencing
+same-day artifacts stay green across a review interval, and narrow enough
+that the one genuinely dead reference this pass ever caught (the 158.0-h-old
+`straight_wire_A.bp`, `EX-14`) is still 3.3× over the new limit. The tight
+window stays available explicitly: in-slot freshness-branch controls keep
+passing `--max-age-s 1`, exactly as `EX-14`'s negative control did. The
+alternative (refreshing artifacts from inside the runner) was rejected — it
+spends solves on every runner invocation to keep a scratch directory warm.
+Change `default=3600.0` → `default=172800.0` in
+`scripts/testing/check_example_doc_references.py` (argparse and the module
+docstring's example, which currently shows `--max-age-s 3600`); the violation
+message already prints the limit in hours. **Anchor:** two-sided checker
+behavior in one slot — (a) default invocation exits 0 on the existing
+scratch artifacts with **zero** refresh solves run (the tax retired, vs the
+on-record exit-1-then-refresh in `20260810T124544Z_EX-9-refcheck.log` and
+three sibling logs); (b) `--max-age-s 1` still exits 1 flagging every scratch
+artifact (14 flagged on record, `20260810T140434Z_EX-14-refcheck-negctl.log`)
+— the branch is retuned, not disabled. **Negative control:** (b) is it; also
+assert the stale-message arithmetic prints `limit 48.0 h`. **Tier/cost:**
+smoke — checker runs are ~1 s; the only compute risk is scratch artifacts
+older than 48 h at run time, in which case one refresh is licensed and the
+run notes it. **Traps:** `artifact_mtime()` (directory-tree mtime, `EX-14`)
+must stay the mtime source; `PENDING_GUIDES` and the reference/guide passes
+untouched; do not "clean up" the scratch directory to make (a) pass — the
+point is that day-old artifacts are acceptable evidence. **Does not close:**
+nothing physics-side; the checker stays advisory (not a CI gate). **Negative
+result:** if the default invocation still exits 1 on same-day artifacts after
+the raise, the mtime source is wrong somewhere new — report with the flagged
+list, leave the default as landed only if (b) still holds, known-issues
+entry.
 
 ### MAG — Magnetostatics (Phase 1)
 
@@ -4877,6 +4918,7 @@ mandate to displace the critical path.
 | `EX-14` | Straight-wire VTX export repair + the refcheck freshness branch exercised | ✅ (2026-08-10: round-trip max\|B\| identical to 12 digits, rel diff 0.000e+00 vs 1e-10; freshness branch fired, then green) | standard |
 | `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | 🟡 (step 1 ✅ 2026-08-10: guide pass + 5 guides, exit 0, both negative controls; steps 2–3 owe 9, held in `PENDING_GUIDES`) | standard |
 | `EX-16` | `examples/mri/01`: converge the frequency-domain solve, then re-measure the rank spread | ⬜ | standard |
+| `EX-17` | Circular-loop VTX export repair: port the `EX-14` diff, same round-trip anchor | ⬜ | standard |
 
 **`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
 run each).** Common rules: gated capability only; the example *asserts* its
@@ -5464,6 +5506,46 @@ solve that still spreads ≥ 5% is a real finding against the centerline
 sampling path — report both numbers, keep the known-issues entry open,
 stop; a debug-preset solve that cannot converge direct is a finding
 against the demo fixture itself — known-issues update, stop.
+
+**`EX-17` — circular-loop VTX export repair: port the `EX-14` diff, same
+round-trip anchor** *(scoped 2026-08-10, 10:30 review, from the finding
+`EX-14` filed and correctly did not fix; one run, standard tier; fixes the
+2026-08-10 known-issues entry).* `examples/magnetostatics/02_circular_loop.py:214`
+carries the identical defect `EX-14` repaired in the straight-wire example:
+the first `io.VTXWriter` is handed the N1curl `A`, one `try` wraps both
+writers so `B` is never attempted, and the on-disk
+`paraview_output/circular_loop_A.bp` probes to **zero ADIOS2 variables**
+(probed in-container 2026-08-10). Fix is a one-file port of the `EX-14`
+diff (`f626171`, `01_straight_wire.py` hunks): hand the writers the
+Lagrange interpolants the example already builds, split the `try`, add the
+same `_check_vtx_roundtrip()` (allreduced in-memory max |B| vs the rank-0
+ADIOS2 read-back, verdict broadcast), then re-run `-e 2` and finish with
+the doc-reference checker green. **Anchor:** the round-trip identity —
+read-back max |B| equals the in-memory value, relative difference
+asserted < 1e-10 (`EX-14` record on the straight wire: 0.000e+00,
+bit-identical, `20260810T140337Z_EX-14-gate-mag1-v2.log`). **Negative
+control, cite not recompute:** the pre-fix state is on record — the
+zero-variable `.bp` in the known-issues entry, and the `⚠ VTX output
+failed … Only (discontinuous) Lagrange functions are supported` print
+class every unfixed `-e` log carries. **Tier/cost:** standard declared,
+`-n 2`, but budget `-t 600`: `-e 2` builds the 411 393-cell mesh — the
+expensive magnetostatics example, ~100–130 s inside the 204 s all-mag
+refresh on record (`20260810T093203Z_EX-15-step1-refresh-allmag.log`);
+expect one run, no slack for a second at standard's 180 s. **Traps
+already paid for:** VTX point data is an ADIOS2 *local* array with empty
+`Shape` — walk `BlocksInfo`, not `Shape` (`EX-14`'s first attempt died on
+this, then segfaulted at teardown, exit 139); `.bp` is a directory —
+`artifact_mtime()` already handles its mtime, do not re-fix; the
+freshness branch may fire on other artifacts at the current 1.0 h default
+if `OPS-15` has not landed — one refresh licensed (~80–200 s, exclude
+`-e 2` from it since this run just produced those artifacts); real build,
+no complex sourcing. **Does not close:** nothing physics-side — the
+loop's analytic numbers (6.3046% / 13.5037% on record) are `MAG-EX`'s and
+must not move; guide `02_circular_loop.md` gains the working `.bp`
+references only. **Negative result:** a round-trip mismatch on the loop
+where the wire was bit-identical is a finding about the loop's export
+path specifically — report both numbers, keep the known-issues entry
+open, stop.
 
 **`EX-14` — straight-wire VTX export repair, and the refcheck freshness
 branch exercised** *(scoped 2026-08-09, 18:00 review; one run, standard
@@ -6091,146 +6173,49 @@ promised an "obvious next entry named below" that was never written — the
 16:30 slot on 2026-08-07 hit that dangling reference and correctly fell
 through to the drain instruction; the reference is retired.)*
 
-Last reviewed 2026-08-10, 03:00 daily review. **Three of four slots ✅, and
-the fourth a clean negative executed in full.** 19:30: `EX-6` ✅ — interior
-2.443% vs 3/(ε+2), the `TH-8` record digit for digit. 21:00: `EX-7` ✅ —
-γ = 37.650399 Np/m, 0.006% vs the closed form, the `TH-7` record digit for
-digit. 22:30: `EX-8` ✅ — guard fires at 137.554 / quiet at 21.951
-(separation 6.267×), pole law at 3.156% — **Phase 2's §5.4 shortfall is
-discharged, 5 of 5** (`EX-4`…`EX-8`). 00:00: `EX-13` executed verbatim,
-both legs negative — floor spread 23.5545% vs the < 5% anchor, sub-floor
-ratio 0.9892× vs the ≥ 2× discrimination bar, |E| legs bit-identical
-because the TH solver ignores `gauge_penalty`. Step-3 audit: **all three
-newly-✅ chunks audited compliant, no demotions** (logs, quantitative
-assertions, elapsed times verified per chunk; one recorded caveat —
-`EX-6`'s `EXTERIOR_RTOL` = 10% was set from measurement where no gated
-bound existed, interior anchor untouched at 5%; judged bound-setting, not
-loosening). Step 2: tree clean, no `recovered/*`; both `attempt/PORT-1-*`
-branches stay parked under the weekly licence (2026-08-16 holds the 3b-xv
-adjudication and the second discriminator slot). §5.4 ramp: **no new
-quantitative gate closed this interval** — the three closures are
-themselves examples — so no new example chunks mandated. Plan work:
-`EX-13` closed 🚫 with both owed decisions taken — the floor change does
-not land on this anchor (it rides `EX-16`), and the rank-stability anchor
-is unsalvageable on an unconverged iterate — and `EX-16` created (converge
-the demo's frequency-domain solve direct, then re-measure; the
-known-issues rank-spread entry is reassigned to it). `EX-15` (operator
-directive, 2026-08-10 interactive session) queued at step 1 per its own
-scoping note; its `mri:1`-guide trap re-pointed `EX-13` → `EX-16`.
-`MAT-6` step 7 stays 🚫 on the same one-line human decision
-(Waiting-on-you), joined there by the `ANS-1` Ansys-side replication.
+Last reviewed 2026-08-10, 10:30 daily review. **Four of four slots ✅ — the
+first clean sweep on record.** 04:30: `EX-15` step 1 ✅ — guide pass live, 5
+guides, both negative controls fired naming script and heading. 06:00:
+`EX-10` ✅ — probe rel diff 0.0004% vs the 5% gate ceiling, max|A| ratio
+2.774e-11 vs 1e-6, first attempt, no bound moved. 07:30: `EX-9` ✅ — rate
+1.1009 in the gate band, errors reproducing `MAG-13` digit for digit; tier
+reclassified heavy (130 s); found the export losing 7.89 points to CG1
+vertex averaging. 09:00: `EX-14` ✅ — round-trip max |B| bit-identical
+(rel diff 0.000e+00 vs 1e-10), and the freshness control exposed a second
+defect (`.bp` directory mtime frozen at creation; `artifact_mtime()` fix).
+**Phase-1 §5.4 backfill complete — every phase's example shortfall is now
+discharged** (the `EX-9` journal's claim of a remaining Phase-3 shortfall
+is a journal error: `EX-11` closed 2026-08-09). Step-3 audit: **all four
+closures audited compliant, no demotions** (one auditor per chunk; logs,
+quantitative assertions, elapsed times verified). Two recorded caveats:
+`EX-9`'s export assertion was re-pointed after measurement refuted the ±5%
+interpolation allowance — judged honest bound-setting (different invariant,
+finding surfaced everywhere including the commit headline), but the
+replacement bound (`< errors[0]`, dynamic) only catches catastrophic export
+regressions; and `EX-14`'s first attempt exited 139 (SIGSEGV in basix
+teardown after the `AxisError`), recorded honestly in test-results.md, not
+recurring in v2. Step 2: tree clean, no `recovered/*`; both
+`attempt/PORT-1-*` branches stay parked under the weekly licence
+(2026-08-16 holds the 3b-xv adjudication and the second discriminator
+slot). §5.4 ramp: **no new quantitative gate closed this interval** — all
+four closures are example/hygiene chunks — so no new example chunks
+mandated. Plan work: **the standing freshness tax adjudicated** — three
+consecutive journals asked; decision is `OPS-15` (default `--max-age-s`
+1 h → 48 h; the tight window stays the explicit in-slot control), and
+`EX-17` scoped from `EX-14`'s filed circular-loop finding (known-issues
+entry reassigned to it). `MAT-6` step 7 stays 🚫 on the same one-line
+human decision (Waiting-on-you), joined there by the `ANS-1` Ansys-side
+replication and the 42-commits-ahead push.
 
-**Six ready items — items 1–5 independent; only the spare is serial.**
-Item 1 is the operator directive; items 2–3 are the remaining Phase-1
-§5.4 backfill; item 4 is the hygiene/known-issue repair; item 5 is the
-`EX-13` salvage this review scoped. The `PORT-1` critical path is
-deliberately absent: the second licensed discriminator slot is the weekly
-review's (2026-08-16) to spend.
+**Five ready items, all independent** (item 5 carries one soft caveat, not
+a dependency). Item 1 is the `EX-13` salvage carried from the last review;
+item 2 retires the refresh tax before the doc-only guide runs would pay it
+again; item 3 is the known-issue repair; items 4–5 are the operator
+directive's remaining steps. The `PORT-1` critical path is deliberately
+absent: the second licensed discriminator slot is the weekly review's
+(2026-08-16) to spend.
 
-1. ✅ **DONE 2026-08-10 (04:30 slot)** — guide pass live, five guides landed,
-   both negative controls fired; the nine guides steps 2–3 owe are held in
-   `PENDING_GUIDES` with the owing step named. See the `EX-15` step-1
-   annotation in §7. **`EX-15` step 1 — guide checker + template +
-   `mesh:`/magnetostatics
-   guides (standard; operator directive).** Execute the §7 `EX-15` step-1
-   bullet: extend `scripts/testing/check_example_doc_references.py` with a
-   guide pass — every `./run_examples.sh --list` entry must have a
-   same-stem `.md` with the three required headings (What this
-   demonstrates / How to run it / How to analyze it, step by step) — and
-   write the five guides for the `mesh:` and magnetostatics scripts.
-   **Anchor:** checker exit 0 with the guide pass on and all five guides
-   present. **Negative control, two-sided:** one guide temporarily absent
-   → exit 1 naming the orphaned script; one guide missing a required
-   heading → exit 1 naming the heading; both restored before commit.
-   **Cost:** standard tier declared, but doc-only — checker runs are ~1 s;
-   no solves licensed (at most one `-e` refresh if the freshness branch
-   fires, as on 2026-08-09/10). **Traps:** per the §7 entry — on-record
-   numbers are *copied* from §7/gate records with log provenance, never
-   re-measured; the sibling `.md` files must not be mistaken by the
-   checker for referenced-artifact entries; existing reference/freshness
-   passes untouched. **Does not close:** anything physics-side; `EX-15`
-   stays open until steps 2–3 land. **Negative result:** a guide that
-   cannot be written to the section-3 bar without re-running its example
-   is a finding against that example's record — journal it, do not thin
-   the guide.
-
-2. ✅ **DONE 2026-08-10 (06:00 slot)** — passed first attempt, no bound moved:
-   probe rel diff **0.0004%** vs the 5% gate ceiling, max|A| ratio
-   **2.774e-11** vs 1e-6, and a volume-integral re-measure of the *exported*
-   fields at **0.0033%**. Guide written; both refcheck passes PASS after an
-   `-e 1,4` freshness refresh. See the `EX-10` annotation in §7. Phase-1 §5.4
-   shortfall now 1 (`EX-9`). **`EX-10` — gauge cross-check as a runnable
-   example (standard).**
-   Execute the §7 backfill plan's `EX-10` bullet: the `MAG-15` wire
-   fixture (`tests/solver/test_gauge_lagrange.py`, `wire_solutions`,
-   `GaugeMethod`) solved with both the penalty and the
-   Lagrange-multiplier Coulomb gauge; export both B fields. **Anchor:**
-   `ErrorMetrics.l2_relative_error(b_lag, b_pen)` at the gate's **5%**
-   ceiling, citing `20260728T193524Z_MAG-15.log` (on record: identical
-   analytic error to 4 significant figures at h = 0.003; the rel-diff
-   scalar itself is not printed in that log — print it here, it becomes
-   the record). **Negative control, cite not recompute:** the gauges are
-   *not* the same computation — the Lagrange path removes the null-space
-   component the penalty path leaves in `A` (max |A| 1.6e-09 vs 5.2e+01
-   on record, asserted `< 1e-6` ratio in the gate). **Cost:** standard,
-   `-n 2`, `timeout 180` — the gate's seven tests cost 13 s. **Traps:**
-   real build (magnetostatics — no complex sourcing; the magnetostatics
-   group is the right runner home); the penalty-path multiplier spread is
-   NaN by design, do not assert on it. **Does not close:** nothing —
-   `MAG-15` closed 2026-07-28; Phase-1 §5.4 backfill. **Negative
-   result:** B-field disagreement beyond 5% at matched fixture is a
-   regression finding — report, stop.
-
-3. ✅ **DONE 2026-08-10 (07:30 slot)** — rate **1.1009** in the gate's
-   `0.7 < p < 1.5` band, errors 22.1925 / 12.7485 / 9.2568% reproducing the
-   `MAG-13` record digit for digit, monotone control asserted and held; the
-   fixture was lifted to module scope so example and gate share one
-   measurement, and the gate re-ran green (129 s). One finding: the exported
-   CG1 field measures **17.1451%** where the solved field measures 9.2568% —
-   vertex averaging costs 7.89 points — so the export bound was re-pointed at
-   the coarsest solved resolution rather than widened. Tier reclassified
-   **heavy** (130 s). **Phase-1 §5.4 backfill complete.** See the `EX-9`
-   annotation in §7. **`EX-9` — measured h-convergence rate as an example output
-   (standard).** Execute the §7 backfill plan's `EX-9` bullet **as
-   corrected 2026-08-09** (the original "three-resolution Helmholtz
-   (`MAG-14`, cheap)" fixture does not exist): three-resolution straight
-   wire via
-   `tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire`.
-   **Anchor:** the fitted convergence rate, asserted `0.7 < rate < 1.5`
-   (the gate's own band; **1.10** on record in
-   `20260730T125522Z_MAG-13.log`); print the (h, error) table. **Negative
-   control, cite not recompute:** a solver blind to h shows no systematic
-   error decay — the on-record monotone (h, error) table is the
-   separation; assert monotone decrease across the three resolutions.
-   **Cost:** standard, `-n 2` — **~167 s on record, the standard tier at
-   its ceiling**; budget the full 180 s and expect no room for a second
-   solve (attempts.md 2026-08-10 note). **Traps:** real build
-   (magnetostatics); do not add a fourth resolution — the ceiling has no
-   slack; the rate is fitted in log-log, not two-point. **Does not
-   close:** nothing — `MAG-13` closed; Phase-1 §5.4 backfill. **Negative
-   result:** a rate outside the band at matched fixture is a regression
-   finding — report, stop.
-
-4. ✅ **DONE 2026-08-10 (09:00 slot)** — export repaired (both `.bp` now
-   written every run), round-trip anchor **exact**: in-memory and read-back
-   max |B| both **4.463805898300e-05 T**, relative difference **0.000e+00**
-   vs the 1e-10 tolerance. Freshness branch exercised at `--max-age-s 1`
-   (14 flagged, exit 1) and it exposed a second defect — a `.bp` *directory*
-   read 158.0 h old minutes after its contents were rewritten, so
-   `artifact_mtime()` now takes the newest mtime in the tree; checker green
-   afterwards, both passes, exit 0. New known-issues entry: `02_circular_loop.py`
-   has the identical export defect, out of scope. See the `EX-14` annotation in
-   §7. **`EX-14` — straight-wire VTX export repair + the refcheck
-   freshness branch exercised (standard).** Execute the §7 `EX-14` plan
-   verbatim: Lagrange interpolants to `VTXWriter`, split `try`, restore
-   the three `.bp` guide references; anchor is the ADIOS2 round-trip
-   max |B| identity to 1e-10, with the stale-artifact checker control
-   (`--max-age-s 1` against the *real* output dir) exercising the
-   freshness branch `EX-12`'s negctl skipped. Fixes the 2026-08-09
-   known-issues entry; if the ADIOS2 Python read-back is unavailable
-   in-container, hold at 🟡 per the §7 entry.
-
-5. **`EX-16` — `examples/mri/01`: converge the frequency-domain solve,
+1. **`EX-16` — `examples/mri/01`: converge the frequency-domain solve,
    then re-measure the rank spread (standard).** Execute the §7 `EX-16`
    plan verbatim: drop the GMRES+Jacobi override
    (`examples/mri/01_coil_phantom_fields.py:340`) so the debug/coarse
@@ -6246,13 +6231,67 @@ review's (2026-08-16) to spend.
    regardless; a converged solve still ≥ 5% is a report-and-stop finding
    against the sampling path, and known-issues stays open.
 
-6. *(spare)* **`EX-15` step 2 — `th:` group guides (standard; serial:
-   depends on item 1 landing — if it did not, take whichever of items
-   2–5 remains instead).** Execute the §7 `EX-15` step-2 bullet: guides
-   for the five `th:` scripts, every stated number the gate record
-   already in §7 (`EX-4`…`EX-8`), cited by log name, digit for digit;
-   same checker gate and negative control as step 1; doc-only, no solves
-   licensed.
+2. **`OPS-15` — retire the checker's standing freshness tax (smoke,
+   doc-tooling only).** Execute the §7 `OPS-15` entry verbatim: default
+   `--max-age-s` 3600 → 172800 in
+   `scripts/testing/check_example_doc_references.py` (argparse default
+   and the docstring's example invocation). **Anchor, two-sided:**
+   default invocation exits 0 on the existing scratch artifacts with
+   zero refresh solves (vs the on-record exit-1-then-refresh,
+   `20260810T124544Z_EX-9-refcheck.log` and three sibling logs);
+   `--max-age-s 1` still exits 1 flagging the scratch set (14 on record,
+   `20260810T140434Z_EX-14-refcheck-negctl.log`). **Traps:**
+   `artifact_mtime()` stays the mtime source; `PENDING_GUIDES` and the
+   other passes untouched; do not clean the scratch directory to make
+   the green leg pass. **Negative result:** per the §7 entry —
+   report-and-stop with the flagged list. Queued ahead of the guide
+   items so they stop paying the ~80–200 s tax this chunk retires.
+
+3. **`EX-17` — circular-loop VTX export repair (standard; known-issues
+   fix).** Execute the §7 `EX-17` entry verbatim: one-file port of the
+   `EX-14` diff (`f626171`) to
+   `examples/magnetostatics/02_circular_loop.py` — Lagrange
+   interpolants to the writers, split `try`, same
+   `_check_vtx_roundtrip()` — then `-e 2 -n 2 -t 600`, checker green.
+   **Anchor:** round-trip read-back max |B| equals in-memory, rel diff
+   < 1e-10 (`EX-14` wire record: 0.000e+00). **Negative control, cite
+   not recompute:** the zero-variable `circular_loop_A.bp` on record in
+   known-issues. **Cost:** ~100–130 s for the 411 k-cell mesh — budget
+   `-t 600`, one run, no second solve. **Traps:** walk `BlocksInfo`,
+   not `Shape` (the `EX-14` first-attempt `AxisError`/exit-139); if
+   `OPS-15` has not landed the freshness branch may fire — one refresh
+   licensed, excluding `-e 2`. **Negative result:** per the §7 entry —
+   report both numbers, entry stays open.
+
+4. **`EX-15` step 2 — `th:` group guides (standard; doc-only).**
+   Execute the §7 `EX-15` step-2 bullet: guides for the five `th:`
+   scripts, every stated number the gate record already in §7
+   (`EX-4`…`EX-8`), cited by log name, digit for digit; delete the five
+   step-2 `PENDING_GUIDES` entries in the same commit (an entry whose
+   guide exists is itself a checker violation). **Anchor:** checker
+   exit 0 with the five guides present; **negative control:** the
+   step-1 pair on record (missing guide → exit 1 naming the script,
+   missing heading → exit 1 naming the heading) — re-fire one side on a
+   step-2 guide. No solves licensed; at most one freshness refresh if
+   `OPS-15` (item 2) has not landed. **Negative result:** a guide that
+   cannot be written to the section-3 bar without re-running its
+   example is a finding against that example's record — journal it, do
+   not thin the guide.
+
+5. **`EX-15` step 3 — `mat:`/`mri:`/`ans:` guides (standard; doc-only;
+   soft caveat, not a dependency).** Execute the §7 `EX-15` step-3
+   bullet: four guides; the `ans:1` guide points at `SPEC.md`/
+   `COMPARISON.md` rather than duplicating them; the `mri:1` guide
+   keeps `EX-12`'s "ungated end-to-end demo" labelling. **Caveat:** if
+   item 1 (`EX-16`) has not landed, the `mri:1` on-record numbers are
+   the unconverged-iterate set — write the guide anyway and state the
+   `converged=False (reason=-3)` / 23% rank-spread caveat explicitly,
+   citing the known-issues entry (per the §7 traps paragraph); if
+   `EX-16` landed, cite its refreshed record instead. Delete the four
+   step-3 `PENDING_GUIDES` entries in the same commit — that empties
+   the dict and closes `EX-15`. Same checker gate and negative control
+   as steps 1–2; no solves licensed. **Negative result:** same
+   journal-don't-thin rule as item 4.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and

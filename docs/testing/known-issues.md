@@ -985,8 +985,9 @@ interpolants and split the `try`.
 
 **Not fixed here:** found while executing `EX-14`, whose scope is the
 straight-wire example only; fixing a second example in passing is what
-implementer.md forbids. **Resolved by:** unassigned — needs a chunk (a
-one-file port of the `EX-14` diff, plus the same round-trip check).
+implementer.md forbids. **Resolved by:** assigned to `EX-17` (2026-08-10,
+10:30 review) — the one-file port of the `EX-14` diff plus the same
+round-trip check, queued §9 item 3. Entry leaves with the `EX-17` commit.
 
 ### `examples/mri/01` centerline samples are rank-dependent at ~23%, at and below the gauge floor
 

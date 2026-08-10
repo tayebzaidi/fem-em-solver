@@ -1,6 +1,6 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-10, 03:00 daily review. Source of truth is
+**Updated:** 2026-08-10, 10:30 daily review. Source of truth is
 `PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
 
 ## Waiting on you
@@ -29,7 +29,7 @@
    2026-08-09 00:33Z**, WSL2 `vmmem` reclaim, or any host supervisor
    reaping process trees. Anything you can paste unblocks the step-2
    solve.
-4. Local `main` will be **42 commits ahead** of `origin/main` once this
+4. Local `main` will be **47 commits ahead** of `origin/main` once this
    review's commit lands (last push 2026-08-07). A push whenever
    convenient still triggers the first-ever GitHub-runner execution of
    `validation-complex`.
@@ -46,75 +46,72 @@
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4 step 1); operator exact at 1 g/10 g (step 3); never gated on a coil |
 | S-parameters | 🧪 heuristic | one real S-matrix, two-loop air fixture in a test (PORT-1) |
 
-No gate moved this interval. What did move: **Phase 2's example
-shortfall is fully discharged** (`EX-4`…`EX-8`, 5 of 5 — every gated
-time-harmonic capability now has a runnable, self-asserting example),
-and the one demo that was rank-unstable now has a diagnosis and a fix
-chunk (below).
+No gate moved this interval. What did move: **the §5.4 example backfill
+is complete everywhere** — every phase with closed gates now carries its
+full example quota, each example self-asserting against the gate record —
+and the ParaView export path that had silently never worked in the
+straight-wire example is repaired and gated by a bit-exact round trip.
 
-## Recent activity (since the 18:00 review)
+## Recent activity (since the 03:00 review)
 
-**Three of four slots ✅, and the fourth a clean negative executed in
-full.**
+**Four of four slots ✅ — the first clean sweep on record.**
 
-- **EX-6 ✅ (19:30)** — dielectric sphere with the interior field
-  *solved*, not imposed: 2.443% vs the 3/(ε+2) closed form at the gate's
-  5% ceiling, the `TH-8` record digit for digit; interface jump asserted
-  numerically (59.20× pole / 11.46× equator).
-- **EX-7 ✅ (21:00)** — evanescent TE₁₀ decay below cutoff in a lossless
-  medium: γ = 37.650399 Np/m, **0.006%** from the closed form, the `TH-7`
-  record digit for digit; exported CG1 field re-fitted to 0.117%.
-- **EX-8 ✅ (22:30)** — the resonance guard firing as an example: fires
-  at implied detuning 1.454%, quiet arm silent (separation 6.267×),
-  energy rise 16.505× vs the |f−f₀|⁻² pole law's 16.0×.
-- **EX-13 negative, executed in full (00:00)** — the gauge-floor change
-  on `examples/mri/01` moves nothing: floor rank spread **23.55%** vs the
-  < 5% anchor, sub-floor 23.30% (ratio 0.99× vs the ≥ 2× discrimination
-  bar). Root cause found: the demo overrides the solver's direct path
-  with GMRES that **never converges** (`reason=-3` at `ksp_max_it`), and
-  the time-harmonic solver ignores `gauge_penalty` entirely — the 23% is
-  partition dependence of an unconverged iterate, not a gauge effect.
+- **EX-15 step 1 ✅ (04:30)** — every runnable example now requires a
+  same-stem analysis guide, mechanically enforced by the doc checker; 5
+  guides landed, both negative controls fired (missing guide and missing
+  heading each named exactly).
+- **EX-10 ✅ (06:00)** — penalty vs Lagrange gauge cross-check as an
+  example: B-field rel diff **0.0004%** vs the 5% gate ceiling, null-space
+  separation 2.774e-11 vs 1e-6. First attempt, no bound moved.
+- **EX-9 ✅ (07:30)** — measured h-convergence rate **1.1009**,
+  reproducing the `MAG-13` record digit for digit; found that the CG1
+  export costs 7.89 error points vs the solved field (vertex averaging),
+  now stated in the example rather than hidden. Tier reclassified heavy.
+- **EX-14 ✅ (09:00)** — straight-wire `.bp` export repaired; round-trip
+  read-back max |B| **bit-identical** (rel diff 0.000e+00 vs 1e-10). The
+  freshness control exposed a second checker defect (`.bp` directory
+  mtime frozen at creation — a restored artifact would have read stale
+  forever), fixed in the same run.
 
-Audit: all three flipped chunks verified against §4 — harness logs,
-quantitative assertions, elapsed times. **No demotions.** Review
-decisions on `EX-13`: closed 🚫; the floor change and the re-measurement
-ride the new `EX-16` (converge the demo's solve direct, then re-measure
-the spread on a converged iterate).
-
-Also this interval: the operator directive landed as `EX-15` — every
-runnable example gets a same-stem step-by-step analysis guide, enforced
-by the doc-reference checker; step 1 is now the top of the queue.
+Audit: all four closures verified against §4 by one auditor each —
+harness logs, quantitative assertions, elapsed times. **No demotions.**
+Two caveats recorded in the review commit: EX-9's export assertion was
+re-pointed after measurement refuted its ±5% allowance (judged honest
+bound-setting, but the replacement is a loose catastrophic-only guard),
+and EX-14's first attempt segfaulted at teardown (exit 139, recorded,
+not recurring).
 
 ## Automation health
 
-- **Slot yield this interval: 4/4 executed** (3 ✅ + 1 complete
-  negative) — 12/12 across the day's three intervals. Tree clean at
+- **Slot yield this interval: 4/4 ✅** — the first interval on record
+  where all four implementer runs closed their item. Tree clean at
   review end, no `recovered/*`; both `attempt/PORT-1-*` branches stay
   parked under the weekly licence — the **weekly review (2026-08-16)
-  holds the 3b-xv adjudication and the second discriminator slot**, and
-  owes the next AED benchmark commission.
-- The `EX-12` doc-reference checker's freshness branch fired in four
-  consecutive slots at its default 1.0 h window (examples' scratch
-  artifacts age between slots); whether "checker green" is achievable
-  outside the slot that ran the examples is `EX-14`'s question to
-  settle.
-- Queue depth **6** after refresh (`EX-15` steps 1–2 and `EX-16`
-  created/queued; `EX-9` promoted from backlog).
+  holds the 3b-xv adjudication and the second discriminator slot**.
+- **The standing freshness tax is adjudicated.** The doc checker's 1.0 h
+  artifact window sat below the 90-min slot grid, so three consecutive
+  runs each paid an 80–200 s refresh solve. Decision: default window
+  → 48 h (`OPS-15`, queued item 2); the tight window remains the
+  explicit in-slot negative control. The one genuinely dead reference
+  the pass ever caught was 158 h old — still 3.3× over the new limit.
+- Queue depth **5** after refresh (`EX-17` and `OPS-15` scoped this
+  review); one journal error corrected (a claimed Phase-3 example
+  shortfall — `EX-11` in fact closed 2026-08-09).
 
 ## On deck (§9, refreshed this review)
 
-1. **EX-15 step 1** (standard, doc-only; operator directive) — guide
-   checker pass + template + the five `mesh:`/magnetostatics guides.
-2. **EX-10** (standard) — penalty vs Lagrange-multiplier gauge
-   cross-check as an example.
-3. **EX-9** (standard, ~167 s — at the tier ceiling) — measured
-   h-convergence rate as an example output.
-4. **EX-14** (standard) — straight-wire VTX export repair + the
-   checker's freshness branch exercised.
-5. **EX-16** (standard) — converge `examples/mri/01`'s frequency-domain
-   solve, land the gauge floor, re-measure the rank spread.
-6. *(spare)* **EX-15 step 2** (standard, doc-only; needs item 1 landed) —
-   the five `th:` guides.
+1. **EX-16** (standard) — converge `examples/mri/01`'s frequency-domain
+   solve direct, land the gauge floor, re-measure the rank spread on a
+   converged iterate (< 5% anchor vs the 23.55% unconverged record).
+2. **OPS-15** (smoke, doc-tooling) — checker freshness default
+   1 h → 48 h; retires the standing refresh tax.
+3. **EX-17** (standard) — circular-loop VTX export repair, the one-file
+   port of the EX-14 diff, same bit-exact round-trip anchor.
+4. **EX-15 step 2** (standard, doc-only) — the five `th:` guides, gate
+   records cited digit for digit.
+5. **EX-15 step 3** (standard, doc-only) — the four `mat:`/`mri:`/`ans:`
+   guides; empties `PENDING_GUIDES` and closes EX-15. If EX-16 has not
+   landed, the `mri:1` guide states the unconverged-solve caveat.
 
 ---
 
