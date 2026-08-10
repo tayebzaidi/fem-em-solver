@@ -20,6 +20,14 @@ exist. Two classes of reference, checked differently:
   written it) and the ``.bp`` instructions in ``PARAVIEW_GUIDE.md`` (VTX export
   raises on the N1curl potential, so the directory is never written).
 
+  The default window is **48 h** (`OPS-15`, 2026-08-10). One hour was shorter
+  than the 90-minute automation slot grid, so every slot that ran the checker
+  after its examples had aged half an hour paid an 80–200 s refresh solve — a
+  structural tax, not a freshness finding. 48 h keeps a committed guide green
+  across a review interval and still flags the one genuinely dead reference
+  this pass has ever caught (a 158-h-old `.bp`, `EX-14`). In-slot controls that
+  want the strict reading pass `--max-age-s 1` explicitly.
+
 **Guide pass (`EX-15`)** — every entry ``./run_examples.sh --list`` enumerates
 must have a **same-stem** ``.md`` next to it (``01_lossy_plane_wave.py`` →
 ``01_lossy_plane_wave.md``) carrying the three required headings: *What this
@@ -32,7 +40,7 @@ by the reference pass but do not satisfy the per-example requirement.
 Usage (run it *after* the examples whose artifacts are being checked):
 
     python3 scripts/testing/check_example_doc_references.py \
-        --output-dir paraview_output --max-age-s 3600
+        --output-dir paraview_output --max-age-s 172800
 
 Exit status 0 if every reference resolves and every example has its guide, 1
 otherwise, with one line per violation.
@@ -211,9 +219,9 @@ def main() -> int:
     parser.add_argument(
         "--max-age-s",
         type=float,
-        default=3600.0,
+        default=172800.0,
         help="an artifact older than this is treated as a stale leftover, not "
-        "as evidence that a run produces it (default: 3600)",
+        "as evidence that a run produces it (default: 172800 = 48 h)",
     )
     parser.add_argument(
         "--docs-root",

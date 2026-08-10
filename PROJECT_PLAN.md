@@ -430,7 +430,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-12` | Adjudicate the residual-trend classifier (known-issues 2) and return `test_convergence_diagnostics.py` to CI | ✅ 2026-08-08 | standard |
 | `OPS-13` | Land the rank-safe `_validate_material_map_tags` fix on `main` with its own gate | ✅ 2026-08-08 | standard |
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
-| `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ⬜ | smoke |
+| `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 
 **`OPS-13` — land the rank-safe material-map validation on `main`** ✅
 *(scoped 2026-08-08, 03:00 review; closed 2026-08-08, 06:00 run.)*
@@ -801,7 +801,36 @@ own commit, immediately after. Until then: red `lint` is known and expected;
 do not "fix in passing", and do not read it as a chunk failure.
 
 **`OPS-15` — retire the checker's standing freshness tax: default
-`--max-age-s` 3600 s → 172800 s (48 h)** *(scoped 2026-08-10, 10:30 review —
+`--max-age-s` 3600 s → 172800 s (48 h)** ✅ *(2026-08-10, 13:30 run; smoke,
+three legs at 1 s each, no solves run)*
+> **Done, first attempt, nothing rescoped.** `default=3600.0` →
+> `default=172800.0` in `scripts/testing/check_example_doc_references.py`,
+> the module docstring's example invocation follows it, and a short paragraph
+> in the docstring records *why* 48 h (so the next reader does not re-tighten
+> it). `artifact_mtime()` untouched; `PENDING_GUIDES`, the reference pass and
+> the guide pass untouched; the scratch directory was **not** cleaned — the
+> green leg runs against the same day-old artifacts the tax was firing on.
+>
+> | leg | invocation | exit | flagged |
+> |---|---|---|---|
+> | baseline, same slot (`20260810T183126Z_OPS-15-oldwindow.log`) | `--max-age-s 3600` | **1** | 14, "4.4 h old, limit 1.0 h" |
+> | **anchor (a)** (`20260810T183139Z_OPS-15-default.log`) | default | **0** | 0 — *zero refresh solves* |
+> | **anchor (b)** (`20260810T183202Z_OPS-15-tight-negctl.log`) | `--max-age-s 1` | **1** | 14, "limit 0.0 h" |
+> | arithmetic (`20260810T183247Z_OPS-15-limit-arith.log`) | default, synthetic fixture | **1** | 1, "72.0 h old, **limit 48.0 h**" |
+>
+> The baseline leg was re-measured in-slot rather than cited: it reproduces the
+> on-record tax (`20260810T124544Z_EX-9-refcheck.log` and siblings) on
+> *today's* artifacts, so the before/after pair differs by the default alone
+> and by nothing about the scratch directory's state. The `limit 48.0 h`
+> arithmetic could not be shown on real artifacts — no referenced artifact is
+> older than 48 h, which is exactly what anchor (a) asserts — so it was fired
+> against a backdated `.csv` and a one-line guide in a throwaway
+> `--docs-root` under scratch, removed after the run. Net: the branch is
+> **retuned, not disabled** (it still flags at 72 h, and 3.3× tighter than
+> the 158-h `EX-14` catch it must keep catching), and the ~80–200 s
+> per-slot refresh tax is gone. Original scope follows.
+
+*(scoped 2026-08-10, 10:30 review —
 the decision three consecutive run journals asked for, taken; one run, smoke
 tier, doc-tooling only, no solves licensed).* The doc-reference checker's
 freshness pass at its default 1.0 h window has fired in every example-touching
@@ -6273,8 +6302,16 @@ absent: the second licensed discriminator slot is the weekly review's
    regardless; a converged solve still ≥ 5% is a report-and-stop finding
    against the sampling path, and known-issues stays open.
 
-2. **`OPS-15` — retire the checker's standing freshness tax (smoke,
-   doc-tooling only).** Execute the §7 `OPS-15` entry verbatim: default
+2. ~~**`OPS-15`**~~ — **done 2026-08-10 (13:30 run), first attempt.** Both
+   anchors green in one slot: the default invocation now exits **0** on the
+   4.4-h scratch artifacts with **zero** refresh solves (same-slot baseline at
+   `--max-age-s 3600` exits 1 flagging 14, so the before/after differs by the
+   default alone), and `--max-age-s 1` still exits **1** flagging the same 14
+   — retuned, not disabled. The `limit 48.0 h` arithmetic fired on a
+   backdated fixture (72.0 h) since no real artifact is old enough to show it.
+   Logs `20260810T1831…1832Z_OPS-15-*`. Items 3–5 no longer pay the tax.
+   Original scope follows.
+   Execute the §7 `OPS-15` entry verbatim: default
    `--max-age-s` 3600 → 172800 in
    `scripts/testing/check_example_doc_references.py` (argparse default
    and the docstring's example invocation). **Anchor, two-sided:**

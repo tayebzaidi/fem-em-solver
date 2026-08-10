@@ -8772,3 +8772,81 @@ cheap discriminator before any repair: re-run `mri:1` with the centerline
 nudged off-axis by a fraction of a cell (x = y = 1e-4 rather than 0); if the
 spread collapses to the phantom path's 0.007%, the on-edge ownership
 tie-break is confirmed as the mechanism and the fix has a clear target.
+
+---
+
+## 2026-08-10T18:35Z — `OPS-15` — **complete**: the standing freshness tax is retired, and the branch still bites at 72 h
+
+**Slot.** 13:30 local implementer run. Preflight clean (`git status` empty on
+`main`, container Up 46 h). On-deck item 1 (`EX-16`) was already done in the
+12:00 slot, so item 2 — `OPS-15` — is the first open item. Smoke tier,
+doc-tooling only, no solves licensed and none run.
+
+**What was changed.** Two lines plus a rationale paragraph in
+`scripts/testing/check_example_doc_references.py`: the argparse
+`--max-age-s` default `3600.0 → 172800.0` (48 h) with its help string, the
+module docstring's example invocation `--max-age-s 3600 → 172800`, and a new
+docstring paragraph recording *why* 48 h — so the next reader does not
+re-tighten it into the same tax. `artifact_mtime()` (the `EX-14`
+directory-tree mtime source) untouched; `PENDING_GUIDES`, the reference pass
+and the guide pass untouched; the scratch directory was **not** cleaned, which
+is the point — the green leg has to run against the same day-old artifacts the
+old window was flagging.
+
+**Measured, four legs, 1 s each.**
+
+| leg | invocation | exit | flagged |
+|---|---|---|---|
+| baseline (same slot) | `--max-age-s 3600` | **1** | 14, `4.4 h old, limit 1.0 h` |
+| **anchor (a)** | default | **0** | 0, both passes PASS, **zero refresh solves** |
+| **anchor (b)** | `--max-age-s 1` | **1** | 14, `limit 0.0 h` |
+| arithmetic | default, synthetic fixture | **1** | 1, `72.0 h old, limit 48.0 h` |
+
+Two deviations from the letter of the plan, both additive:
+
+1. The plan said *cite, not recompute* the exit-1-then-refresh record
+   (`20260810T124544Z_EX-9-refcheck.log` + siblings). It was **re-measured
+   in-slot anyway** — 1 s, and it upgrades the anchor from a comparison across
+   slots to a genuine before/after that differs by the default alone. The
+   cited record is reproduced: 14 flagged then, 14 now, same artifact set,
+   ages 3.0 h → 4.4 h as expected.
+2. The plan asked to "assert the stale-message arithmetic prints
+   `limit 48.0 h`". That string **cannot** fire on real artifacts — no
+   referenced artifact is older than 48 h, which is exactly what anchor (a)
+   asserts — so it was fired against a throwaway `--docs-root` under
+   `paraview_output/` holding a one-line guide and a `.csv` backdated 3 days
+   with `os.utime`. Real scratch untouched, no mtimes rewritten; the fixture
+   was removed after the run. This is the leg that proves the branch is
+   **retuned, not disabled**: 48 h still flags a 72-h reference, and stays
+   3.3× tighter than the 158-h `straight_wire_A.bp` catch (`EX-14`) the pass
+   must keep making.
+
+**Harness logs.**
+
+- `20260810T183126Z_OPS-15-oldwindow.log` — baseline, exit 1, 14 flagged, 1 s.
+- `20260810T183139Z_OPS-15-default.log` — **anchor (a)**, exit 0, 1 s.
+- `20260810T183202Z_OPS-15-tight-negctl.log` — **anchor (b)**, exit 1, 14, 1 s.
+- `20260810T183247Z_OPS-15-limit-arith.log` — arithmetic leg, exit 1, 1 s.
+
+**Cost.** Four harness commands plus one fixture cleanup, none over 1 s. No
+denials, nothing shrunk, no assertion moved. Slot used ~20 min.
+
+**For the review.** §7 status flipped ✅ with the four-leg table; §9 item 2
+struck. On-deck items 3–5 (`EX-17`, `EX-15` steps 2–3) no longer need their
+"one refresh licensed if `OPS-15` has not landed" escape clause — it has
+landed, and a default-window checker run in those slots should now cost 1 s
+and exit 0. If one of them still sees the freshness branch fire, that is a
+genuine finding about `artifact_mtime()`, not the tax, and should be
+journalled as such.
+
+**Next-attempt hypothesis.** None — the chunk is closed on its first attempt.
+The one residual worth a review's eye: the checker remains **advisory**, not a
+CI gate (`OPS-15` "does not close" clause), so nothing mechanically stops a
+guide from going stale between reviews now that the window is 48 h wide. If
+the review wants that guarded, the cheap version is a CI job running the
+checker with the default window on the committed tree, which costs 1 s and
+would have caught the dead references `EX-12` found by hand.
+
+*(Post-edit re-run: the docstring paragraph landed after anchor (a), so the
+default leg was repeated on the exact committed file state —
+`20260810T183437Z_OPS-15-default-final.log`, exit 0, 1 s, both passes PASS.)*
