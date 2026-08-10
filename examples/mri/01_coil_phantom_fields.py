@@ -26,10 +26,20 @@ dropping the loss term.
 `TH-6` (the lossy plane wave, closed 2026-07-31) gates the time-harmonic
 formulation itself, and `EX-4` demonstrates it as a runnable example. That
 gate says nothing about *this* geometry: the drive here is a coarse proxy on
-an unconverged mesh, the frequency-domain leg reports
-``converged=False (reason=-3)``, and the |E|/|B| balance check the script
-prints fails by eight orders of magnitude. Treat the metrics below as a smoke
-test of the pipeline, not as fields.
+an unconverged mesh and the |E|/|B| balance check the script prints fails by
+eight orders of magnitude. Treat the metrics below as a smoke test of the
+pipeline, not as fields.
+
+Since `EX-16` (2026-08-10) the frequency-domain leg solves through the
+solver's default direct path and reports ``converged=True (reason=4)``; it
+previously overrode that with GMRES+Jacobi and stopped at ``ksp_max_it``
+with ``converged=False (reason=-3)``. That fix did **not** make the printed
+centerline samples rank-stable: at `-n 2` vs `-n 4` they still spread
+**23.5539%** (vs 23.5545% unconverged), the max carried by the
+magnetostatic |B| leg, while the 493-point phantom-region aggregates over
+the same fields agree to 0.007326%. The centerline point-evaluation path is
+partition-dependent — see the open known-issues entry; do not quote a
+centerline number from a single rank count.
 """
 
 from __future__ import annotations
@@ -92,19 +102,16 @@ SCENARIO_PRESETS = {
     "benchmark-lite": {
         "resolution_preset": "fine",
         "centerline_sample_count": 17,
-        "ksp_max_it": 450,
         "frequency_probe_scale_factors": [0.995, 1.0, 1.005],
     },
     "debug": {
         "resolution_preset": "coarse",
         "centerline_sample_count": 5,
-        "ksp_max_it": 180,
         "frequency_probe_scale_factors": [1.0],
     },
     "dev": {
         "resolution_preset": "medium",
         "centerline_sample_count": 9,
-        "ksp_max_it": 300,
         "frequency_probe_scale_factors": [0.999, 1.0, 1.001],
     },
 }
@@ -178,7 +185,6 @@ def _resolve_scenario(args: argparse.Namespace) -> dict[str, object]:
         "resolution_preset": effective_resolution_preset,
         "resolution_m": float(RESOLUTION_PRESETS[effective_resolution_preset]),
         "centerline_sample_count": int(preset_config["centerline_sample_count"]),
-        "ksp_max_it": int(preset_config["ksp_max_it"]),
         "frequency_probe_scale_factors": frequency_probe_scale_factors,
     }
 
@@ -274,7 +280,7 @@ def main(argv: list[str] | None = None):
     print(f"  Mesh resolution preset: {scenario['resolution_preset']}")
     print(f"  Mesh resolution: {resolution:.4f} m")
     print(f"  Centerline sample count: {scenario['centerline_sample_count']}")
-    print(f"  Solver ksp_max_it: {scenario['ksp_max_it']}")
+    print("  Frequency-domain solver: solver default (direct, preonly+LU/MUMPS)")
     print(
         "  Frequency probe points (Hz): "
         + ", ".join(f"{freq:.6e}" for freq in probe_frequencies)
@@ -314,7 +320,8 @@ def main(argv: list[str] | None = None):
     print("\nSolving magnetostatic field (A, B)...")
     mag_problem = MagnetostaticProblem(mesh=mesh, cell_tags=cell_tags, facet_tags=facet_tags, mu=MU_0)
     mag_solver = MagnetostaticSolver(mag_problem, degree=1)
-    a_field = mag_solver.solve(current_density=current_density, subdomain_ids=[1, 2], gauge_penalty=1e-3)
+    # `EX-16` (the `EX-13` decision-(a) rider): gauge penalty 1e-3 -> 1.0.
+    a_field = mag_solver.solve(current_density=current_density, subdomain_ids=[1, 2], gauge_penalty=1.0)
     b_field = mag_solver.compute_b_field()
     if comm.rank == 0:
         print("  Magnetostatic solve complete")
@@ -337,12 +344,12 @@ def main(argv: list[str] | None = None):
         facet_tags=facet_tags,
         phantom_material=phantom,
         phantom_tag=3,
-        solver_petsc_options={
-            "ksp_type": "gmres",
-            "pc_type": "jacobi",
-            "ksp_rtol": 1e-8,
-            "ksp_max_it": int(scenario["ksp_max_it"]),
-        },
+        # `EX-16`: no `solver_petsc_options` override — the solver's default
+        # direct path (`ksp_type=preonly` + LU/MUMPS, the path every
+        # `TH-6`/`TH-7`/`TH-8` gate solves through) handles this fixture.  The
+        # GMRES+Jacobi override this replaces stopped at `ksp_max_it` with
+        # `converged=False (reason=-3)`, and `EX-13` measured that truncated
+        # iterate as 23.55% partition-dependent on the centerline.
         collect_solver_diagnostics=True,
     )
     th_solver = TimeHarmonicSolver(th_problem, degree=1)

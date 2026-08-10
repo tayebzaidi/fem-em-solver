@@ -1021,20 +1021,46 @@ unconverged frequency-domain solve: GMRES stops at `ksp_max_it=180` with
 both rank counts), so the returned iterate — not a converged solution — is
 partition-dependent. The magnetostatic |B| leg moves < 0.6% with the gauge, so
 it cannot account for a 23% spread either. Not confirmed: no run yet with a
-converged KSP.
+converged KSP. *(That suspect was tested and refuted on 2026-08-10 — see the
+revision below.)*
 
-**Not fixed here:** `EX-13` was scoped as an example/hygiene chunk with a
-< 5% rank-stability anchor; the measurement refutes the anchor rather than the
-code, and the entry's own negative-result clause says report and stop.
-**Resolved by:** assigned to `EX-16` (2026-08-10, 03:00 review) — converge
-the demo's frequency-domain solve (the override at
-`examples/mri/01_coil_phantom_fields.py:340` replaces the solver's default
-direct path with GMRES+Jacobi that stops at `reason=-3`), then re-measure
-the spread on the converged iterate. The gauge-floor question is settled:
-the floor change rides `EX-16`, not this entry — the gauge was measured
-irrelevant to the spread (0.9892× ratio). Entry leaves with the `EX-16`
-commit if the converged spread lands < 5%; stays open with new numbers if
-it does not.
+**Cause, revised 2026-08-10 (`EX-16`) — the convergence suspect is refuted
+and the sampling path is confirmed as the owner.** The demo now solves
+direct (`ksp=preonly, pc=lu, converged=True (reason=4)` at both rank
+counts) at `gauge_penalty=1.0`, and the spread **does not move**:
+
+```
+                       unconverged (EX-13)   converged (EX-16)
+max spread, all pairs        23.5545%             23.5539%
+  |B| leg (magnetostatic)    23.5545%             23.5539%
+  |E| leg (time-harmonic)    15.6832%             13.4499%
+```
+
+The anchor's own max is carried by the **magnetostatic |B|** leg, which the
+frequency-domain fix cannot touch and which reproduces the unconverged
+record to 1.0000×. Converging the KSP bought only 15.68% → 13.45% on the
+|E| leg. **Positive control, same two runs, same fields:** the 493-point
+phantom-region sampling path agrees across rank counts to **0.007326%**
+(|B| mean and all three |E| stats bit-identical) — **3215×** tighter than
+the centerline path. Same solve, same field, two samplers: the defect is in
+the **centerline point-evaluation path**, not in the solve, the gauge, or
+the KSP. Leading (undiagnosed) mechanism: the centerline points sit at
+x = y = 0, on mesh edges of the axis, so ownership in
+`evaluate_vector_field_parallel` is partition-dependent — the mechanism
+`MAG-6` step 4 already characterised for its own centerline metric.
+
+**Verified at (revision):** `34f18de` + the `EX-16` diff, logs
+`20260810T170234Z_EX-16-direct-n2.log`, `20260810T170309Z_EX-16-direct-n4.log`,
+spread computation `20260810T170457Z_EX-16-spread-v2.log`.
+
+**Not fixed here:** both `EX-13` and `EX-16` were scoped as example/hygiene
+chunks with a < 5% rank-stability anchor and an explicit report-and-stop
+clause for a converged solve that still spreads. Repairing on-axis point
+evaluation is solver-side work on `post.evaluation`, not an example edit.
+**Resolved by:** unassigned — needs a review to scope a chunk against
+`evaluate_vector_field_parallel`'s ownership tie-break for points on shared
+edges/facets (`MAG-6` step 4 is the precedent to read first). Entry stays
+open.
 
 ---
 

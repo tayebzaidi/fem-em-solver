@@ -8697,3 +8697,78 @@ change, not doc hygiene: budget the refresh tax on top of two `mri:1` runs, and
 check `converged=True` before computing any spread — the §7 entry makes
 convergence the precondition, so an unconverged direct solve is a
 report-and-stop finding about the fixture, not a number to publish.
+
+---
+
+## 2026-08-10T17:07Z — `EX-16` — **complete (negative result)**
+
+Scheduled implementer run, 12:00 CDT slot. On-deck item 1. Preflight clean,
+container Up 45 h.
+
+**What was tried.** The §7 plan verbatim: dropped the GMRES+Jacobi
+`solver_petsc_options` override at `examples/mri/01_coil_phantom_fields.py:340`
+so the frequency-domain leg solves through the solver's default direct path,
+flipped the magnetostatic call site `gauge_penalty` `1e-3 → 1.0` (the `EX-13`
+decision-(a) rider), removed the now-dead `ksp_max_it` preset knob and its
+print, then re-ran the `EX-13` measurement at `-n 2` / `-n 4`.
+
+**Measured numbers.**
+
+- Precondition met: `ksp=preonly, pc=lu, converged=True (reason=4)`,
+  `iterations=1`, `residual_norm=0.000000e+00` at **both** rank counts — from
+  `converged=False (reason=-3)`, `residual_norm=1.684628e+00`.
+- **Anchor FAIL.** Max `-n 2` vs `-n 4` centerline spread **23.5539%** against
+  the < 5% bound — **1.0000×** the 23.5545% unconverged record it was meant to
+  beat. Per-leg: |E| 15.6832% → **13.4499%** (the only thing the fix moved);
+  |B| 23.5545% → **23.5539%** (magnetostatic, untouchable by a
+  frequency-domain change, and it carries the max).
+- **Positive control added, and it is the decisive measurement.** On the same
+  two runs and the same fields, the 493-point phantom-region sampling path
+  agrees across rank counts to **0.007326%** (|B| mean and all three |E| stats
+  bit-identical) — **3215×** tighter than the centerline path.
+- Cross-check for free: the new `gauge_penalty=1.0` |B| samples reproduce
+  `EX-13`'s "floor" run digit for digit (3.689962e-07, …), confirming that run
+  was indeed at the validated floor and that `1e-3` was the sub-floor case.
+
+**Conclusion.** `EX-13`'s hypothesis (b) — that the 23% measures the
+unconverged GMRES — is **refuted**. Same solve, same field, two samplers, a
+3215× separation: the defect is the **centerline point-evaluation path**.
+Likely mechanism, undiagnosed: the centerline points sit at x = y = 0, on mesh
+edges of the axis, so ownership in `evaluate_vector_field_parallel` is
+partition-dependent — the mechanism `MAG-6` step 4 already characterised for
+its own centerline metric. Report-and-stop clause taken. The code change lands
+anyway on its merits (converged solve + validated gauge floor strictly beat a
+truncated iterate at a sub-floor penalty) with the example's on-record strings
+refreshed; `WF-1` stays 🧪. Known-issues entry **stays open**, revised with the
+new numbers and **re-pointed** from the KSP to the sampling path; it is now
+**unassigned** — the repair is solver-side work on `post.evaluation`, not an
+example edit, and needs a review to scope it.
+
+**Harness logs.**
+
+- `20260810T170234Z_EX-16-direct-n2.log` — `mri:1 -n 2`, exit 0, **6 s**.
+- `20260810T170309Z_EX-16-direct-n4.log` — `mri:1 -n 4`, exit 0, **4 s**.
+- `20260810T170344Z_EX-16-spread.log` — first spread computation, exit 0, 0 s.
+- `20260810T170457Z_EX-16-spread-v2.log` — **the anchor**, with the
+  phantom-path control added, exit 0, 1 s.
+- `20260810T170614Z_EX-16-refcheck.log` — default window, exit 1, 14 stale
+  references, **all** magnetostatics artifacts at 3.0 h vs the 1.0 h limit;
+  nothing dead, nothing this chunk touched.
+- `20260810T170630Z_EX-16-refcheck-maxage.log` — `--max-age-s 172800` (the
+  value `OPS-15` will make the default), **exit 0**, both passes PASS, 1 s.
+
+**Cost.** Six harness commands, standard tier throughout, nothing over 6 s.
+The 200 s magnetostatics refresh was deliberately *not* spent: the failures are
+the standing freshness tax that on-deck item 2 (`OPS-15`) retires, and burning
+200 s of shared compute to re-date artifacts this chunk does not touch would be
+waste. Slot used ~50 min. No denials.
+
+**Next-attempt hypothesis.** Nothing to retry on `EX-16`. The open question it
+hands the review is a new chunk: does
+`evaluate_vector_field_parallel` tie-break ownership deterministically for a
+point lying on a facet or edge shared between partitions? Read `MAG-6` step 4
+first — it instrumented exactly this and found partition-owned sampling. A
+cheap discriminator before any repair: re-run `mri:1` with the centerline
+nudged off-axis by a fraction of a cell (x = y = 1e-4 rather than 0); if the
+spread collapses to the phantom path's 0.007%, the on-edge ownership
+tie-break is confirmed as the mechanism and the fix has a clear target.

@@ -4917,7 +4917,7 @@ mandate to displace the critical path.
 | `EX-13` | `examples/mri/01` at the validated gauge floor: rank-spread measured, on-record numbers refreshed | 🚫 | standard |
 | `EX-14` | Straight-wire VTX export repair + the refcheck freshness branch exercised | ✅ (2026-08-10: round-trip max\|B\| identical to 12 digits, rel diff 0.000e+00 vs 1e-10; freshness branch fired, then green) | standard |
 | `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | 🟡 (step 1 ✅ 2026-08-10: guide pass + 5 guides, exit 0, both negative controls; steps 2–3 owe 9, held in `PENDING_GUIDES`) | standard |
-| `EX-16` | `examples/mri/01`: converge the frequency-domain solve, then re-measure the rank spread | ⬜ | standard |
+| `EX-16` | `examples/mri/01`: converge the frequency-domain solve, then re-measure the rank spread | 🚫 (2026-08-10: solve converges — `preonly`/LU, `reason=4` — and the spread does **not** move, 23.5539% vs the 23.5545% unconverged record; anchor FAIL, negative-result clause taken. Fix landed; the 23% is the centerline sampling path, 3215× the phantom path on the same fields) | standard |
 | `EX-17` | Circular-loop VTX export repair: port the `EX-14` diff, same round-trip anchor | ⬜ | standard |
 
 **`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
@@ -5506,6 +5506,40 @@ solve that still spreads ≥ 5% is a real finding against the centerline
 sampling path — report both numbers, keep the known-issues entry open,
 stop; a debug-preset solve that cannot converge direct is a finding
 against the demo fixture itself — known-issues update, stop.
+
+> **`EX-16` 🚫 2026-08-10 (12:00 run) — the fix works, the anchor fails, and
+> the convergence hypothesis is refuted.** Both edits landed: the
+> GMRES+Jacobi override is gone (the demo now reports
+> `ksp=preonly, pc=lu, converged=True (reason=4)` at both rank counts, from
+> `converged=False (reason=-3)`, `residual_norm=1.684628e+00`), and the
+> magnetostatic gauge penalty is `1.0`. The `-n 2` vs `-n 4` centerline
+> spread is **23.5539%** against the < 5% anchor — **1.0000×** the 23.5545%
+> unconverged record it was supposed to beat
+> (`20260810T170457Z_EX-16-spread-v2.log`; runs
+> `…170234Z_EX-16-direct-n2.log` / `…170309Z_EX-16-direct-n4.log`, 6 s and
+> 4 s, standard tier). Converging the KSP moved only the |E| leg, 15.6832%
+> → 13.4499%; the anchor's max is carried by the **magnetostatic |B|** leg,
+> which no frequency-domain change can touch. **The decisive measurement is
+> the added positive control:** on the same two runs and the same fields,
+> the 493-point phantom-region sampling path agrees across rank counts to
+> **0.007326%** — **3215×** tighter than the centerline path. Same solve,
+> same field, two samplers, so the defect is the **centerline
+> point-evaluation path**, not the solve, the KSP or the gauge; the likely
+> mechanism is on-axis points (x = y = 0) sitting on shared mesh edges,
+> exactly what `MAG-6` step 4 characterised. Per the entry's
+> negative-result clause: reported, known-issues entry stays **open** and
+> is re-pointed at `evaluate_vector_field_parallel` (currently
+> unassigned — a review must scope it; it is solver-side work, not an
+> example edit). The code change lands anyway on its own merits (a
+> converged solve and the validated gauge floor are strictly better than a
+> truncated iterate at a sub-floor penalty) and the example's on-record
+> strings are refreshed to the converged numbers. `WF-1` stays 🧪 as
+> scoped. Doc-reference checker: **green at exit 0** with
+> `--max-age-s 172800` (`…170630Z_EX-16-refcheck-maxage.log`); the default
+> 1.0 h window still fails 14 references on the standing freshness tax
+> (`…170614Z_EX-16-refcheck.log`) — all magnetostatics artifacts 3.0 h old,
+> nothing dead, nothing this chunk touched. That is exactly what `OPS-15`
+> (§9 item 2) retires.
 
 **`EX-17` — circular-loop VTX export repair: port the `EX-14` diff, same
 round-trip anchor** *(scoped 2026-08-10, 10:30 review, from the finding
@@ -6215,8 +6249,16 @@ directive's remaining steps. The `PORT-1` critical path is deliberately
 absent: the second licensed discriminator slot is the weekly review's
 (2026-08-16) to spend.
 
-1. **`EX-16` — `examples/mri/01`: converge the frequency-domain solve,
-   then re-measure the rank spread (standard).** Execute the §7 `EX-16`
+1. ~~**`EX-16`**~~ — **done 2026-08-10 (12:00 run), negative result.** The
+   solve converges (`preonly`/LU, `reason=4`) and the spread does not move:
+   23.5539% vs the 23.5545% unconverged record, anchor FAIL, the
+   report-and-stop clause taken. The convergence hypothesis is refuted and
+   the owner is now identified — the centerline point-evaluation path,
+   3215× the phantom path's rank spread on the same fields. Code landed,
+   on-record strings refreshed, known-issues entry stays open and
+   **unassigned**: the review must scope the
+   `evaluate_vector_field_parallel` repair. Original scope follows.
+   Execute the §7 `EX-16`
    plan verbatim: drop the GMRES+Jacobi override
    (`examples/mri/01_coil_phantom_fields.py:340`) so the debug/coarse
    presets solve through the solver's default direct path, flip the
