@@ -134,11 +134,6 @@ def repo_basenames() -> set[str]:
 # a script that already has a guide is itself a violation, so the list cannot
 # rot into a permanent exemption.
 PENDING_GUIDES: dict[str, str] = {
-    "01_lossy_plane_wave.py": "EX-15 step 2 (th: group)",
-    "02_pec_cavity_resonances.py": "EX-15 step 2 (th: group)",
-    "03_dielectric_sphere_in_uniform_field.py": "EX-15 step 2 (th: group)",
-    "04_evanescent_waveguide_decay.py": "EX-15 step 2 (th: group)",
-    "05_resonance_guard_sweep.py": "EX-15 step 2 (th: group)",
     "01_dodd_deeds_coil_loading.py": "EX-15 step 3 (mat: group)",
     "01_coil_phantom_fields.py": "EX-15 step 3 (mri: group)",
     "02_mass_averaged_sar.py": "EX-15 step 3 (mri: group)",

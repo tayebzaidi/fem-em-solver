@@ -5007,7 +5007,7 @@ mandate to displace the critical path.
 | `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ✅ | smoke |
 | `EX-13` | `examples/mri/01` at the validated gauge floor: rank-spread measured, on-record numbers refreshed | 🚫 | standard |
 | `EX-14` | Straight-wire VTX export repair + the refcheck freshness branch exercised | ✅ (2026-08-10: round-trip max\|B\| identical to 12 digits, rel diff 0.000e+00 vs 1e-10; freshness branch fired, then green) | standard |
-| `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | 🟡 (step 1 ✅ 2026-08-10: guide pass + 5 guides, exit 0, both negative controls; steps 2–3 owe 9, held in `PENDING_GUIDES`) | standard |
+| `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | 🟡 (steps 1–2 ✅ 2026-08-10: guide pass + 10 guides, exit 0 at 12 checked, negative controls fired in both steps; step 3 owes 4, held in `PENDING_GUIDES`) | standard |
 | `EX-16` | `examples/mri/01`: converge the frequency-domain solve, then re-measure the rank spread | 🚫 (2026-08-10: solve converges — `preonly`/LU, `reason=4` — and the spread does **not** move, 23.5539% vs the 23.5545% unconverged record; anchor FAIL, negative-result clause taken. Fix landed; the 23% is the centerline sampling path, 3215× the phantom path on the same fields) | standard |
 | `EX-17` | Circular-loop VTX export repair: port the `EX-14` diff, same round-trip anchor | ✅ (2026-08-10: round-trip max\|B\| 7.756122914931e-05 T both ways, rel diff 0.000e+00 vs 1e-10; loop's analytic numbers unmoved, checker green) | standard |
 
@@ -5456,6 +5456,39 @@ scoping time; the split below is by runner group.
 > **Finding, recorded not acted on:** `-e 4`'s centre error is non-monotone in
 > `h` — the systematic-floor signature its own docstring predicts, stated as
 > the result in the guide; `MAG-14` is a different fixture and is unaffected.
+
+> **`EX-15` step 2 ✅ 2026-08-10 (16:30 slot, §9 item 4) — the five `th:` guides
+> land, and the group is the first to cost nothing to gate.** Guides for
+> `th:1`…`th:5` written to the step-1 bar (three required sections, on-record
+> numbers copied from the `EX-4`…`EX-8` §7 records and cited by log name), and
+> the five step-2 `PENDING_GUIDES` entries deleted in the same commit.
+> **Anchor:** `20260810T213556Z_EX-15-step2-refcheck-final.log`, exit 0, 0 s —
+> **12** of 16 runnable examples now checked against 3 required headings (was
+> 5), 4 pending, reference pass green alongside at 19 guides / 60 distinct
+> references / 1 allowlisted. The pre-mutation run
+> (`…213519Z_EX-15-step2-refcheck.log`, exit 0, 1 s) is identical.
+> **Negative control:** the heading side re-fired on a step-2 guide —
+> `## 2. How to run it` renamed in `01_lossy_plane_wave.md` → exit 1,
+> `missing required heading 'How to run it'`
+> (`…213543Z_EX-15-step2-negctl-heading.log`), mutation reverted inside the same
+> container invocation and verified byte-identical on the host afterwards (clean
+> `git status` for that path, heading restored at line 50).
+> **`OPS-15` paid off exactly as scoped:** all three checker runs took **zero**
+> refresh solves — the oldest `th:` artifact (`lossy_plane_wave_combined.xdmf`,
+> 2026-08-09 09:05 local) is ~36.7 h old, under the new 48 h default and well
+> over the retired 1 h one, which would have forced five `-e th:*` refreshes.
+> Doc-only apart from the five-line `PENDING_GUIDES` deletion; no `src/` change,
+> no solve, no gate re-run owed.
+> **Two notes for the next reader.** The `th:4` guide restates the §9 scope
+> correction explicitly — `TH-7` gates the evanescent TE₁₀ decay, and no line
+> impedance or S-parameter claim is made or implied (`PORT-1` owns that, §2). And
+> the runnable-example count is **16**, not the 14 this chunk's scoping text
+> records — examples landed after scoping (`EX-9`'s `-e 6` among them) and the
+> `--list` glob picked them up automatically; which two is not diagnosed here,
+> and it does not change step 3, whose four entries still empty the dict.
+> **Finding, none:** every one of the five guides was writable to the section-3
+> bar from the existing records without re-running its example, so the
+> journal-don't-thin clause did not fire.
 
 **Traps:** on-record numbers are *copied* from §7/gate records, never
 re-measured — no solves are licensed here (checker runs are ~1 s; at most
@@ -6439,7 +6472,17 @@ absent: the second licensed discriminator slot is the weekly review's
    licensed, excluding `-e 2`. **Negative result:** per the §7 entry —
    report both numbers, entry stays open.
 
-4. **`EX-15` step 2 — `th:` group guides (standard; doc-only).**
+4. ~~**`EX-15` step 2**~~ — **done 2026-08-10 (16:30 run), first attempt.** The
+   five `th:` guides land and the checker goes green at **12** of 16 examples
+   checked against 3 required headings (was 5), exit 0, 0 s
+   (`20260810T213556Z_EX-15-step2-refcheck-final.log`); the heading negative
+   control re-fired on a step-2 guide — exit 1 naming `How to run it`
+   (`…213543Z_…-negctl-heading.log`), mutation reverted and verified
+   byte-identical. Five `PENDING_GUIDES` entries deleted in the same commit; 4
+   remain for step 3. **`OPS-15` earned its slot:** zero refresh solves across
+   all three runs, where the retired 1 h window would have forced five. No
+   guide needed a re-run to reach the section-3 bar, so the
+   journal-don't-thin clause did not fire. Original scope follows.
    Execute the §7 `EX-15` step-2 bullet: guides for the five `th:`
    scripts, every stated number the gate record already in §7
    (`EX-4`…`EX-8`), cited by log name, digit for digit; delete the five

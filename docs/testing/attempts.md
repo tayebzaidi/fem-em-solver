@@ -8915,3 +8915,74 @@ see the freshness branch fire at the 48 h default, that is a finding about
 `artifact_mtime()`, not the tax. One residual for the review:
 `_check_vtx_roundtrip` and `_global_max_magnitude` now exist verbatim in two
 examples — cheap to hoist into `fem_em_solver.io` before a third needs them.
+
+---
+
+## 2026-08-10T21:37Z — `EX-15` step 2 — **complete** (first attempt)
+
+Scheduled implementer run, 16:30 CDT slot. §9 item 4, taken as the first item
+not marked done or blocked (items 1–3 all closed earlier today).
+
+**Preflight.** Tree clean, container Up, no `recovered/*` handling needed.
+
+**What was done.** Five guide pages for the `th:` group, written to the `EX-15`
+step-1 bar (three required sections; every stated number copied from the
+`EX-4`…`EX-8` §7 records and cited by log name, never re-measured):
+`01_lossy_plane_wave.md`, `02_pec_cavity_resonances.md`,
+`03_dielectric_sphere_in_uniform_field.md`,
+`04_evanescent_waveguide_decay.md`, `05_resonance_guard_sweep.md`. The five
+step-2 `PENDING_GUIDES` entries deleted in the same commit, per the step-1
+decision that an entry whose guide exists is itself a violation.
+
+**Measured numbers.**
+- Anchor: checker **exit 0**, 0 s — **12** of 16 runnable examples checked
+  against 3 required headings (5 before this chunk), 4 pending; reference pass
+  green alongside at 19 guides / 60 distinct references / 1 allowlisted.
+- Negative control (heading side, re-fired on a step-2 guide as §9 asked):
+  `## 2. How to run it` renamed in `01_lossy_plane_wave.md` → **exit 1**,
+  `missing required heading 'How to run it'`. Mutation reverted inside the same
+  container invocation; verified byte-identical on the host afterwards (clean
+  `git status` for that path, heading back at line 50).
+- **Zero refresh solves** across all three checker runs. The oldest `th:`
+  artifact is ~36.7 h old — under the new 48 h `OPS-15` default, over the
+  retired 1 h one, which would have forced five `-e th:*` refreshes at roughly
+  20–30 s each. This is the second slot to pay no freshness tax, and the first
+  where the tax would have been large.
+
+**Harness logs.**
+- `20260810T213519Z_EX-15-step2-refcheck.log` — exit 0, 1 s (pre-mutation).
+- `20260810T213543Z_EX-15-step2-negctl-heading.log` — negative control, checker
+  exit 1 with the violation line, then restore.
+- `20260810T213556Z_EX-15-step2-refcheck-final.log` — exit 0, 0 s
+  (post-restore; this is the anchor).
+
+**Cost.** Three harness commands, ~2 s of compute total. Doc-only apart from the
+five-line `PENDING_GUIDES` deletion — no `src/` change, no solve, no gate
+re-run owed. Slot used ~50 min, nearly all of it reading the `EX-4`…`EX-8`
+records and writing. No denials.
+
+**Findings.**
+- The journal-don't-thin clause did **not** fire: all five guides were writable
+  to the section-3 bar from the existing records without re-running any
+  example. The `EX-4`…`EX-8` closures are unusually well documented — each
+  journal carries the export-side bounds and their measurements, which is what
+  made section 3 writable.
+- The runnable-example count is **16**, not the **14** the `EX-15` scoping text
+  records. Examples landed after scoping (`EX-9`'s `-e 6` among them) and the
+  `--list` glob picked them up automatically. Not diagnosed further; it does
+  not change step 3, whose four entries still empty the dict. **The review may
+  want to correct the 14 in the §7 `EX-15` text.**
+- The `th:4` guide restates the §9 scope correction explicitly: `TH-7` gates the
+  evanescent TE₁₀ decay below cutoff, no line-impedance or S-parameter claim
+  (`PORT-1` owns that, §2). Worth keeping if the guide is ever edited down.
+
+**Next-attempt hypothesis.** None for this item — closed first attempt. For the
+next run (§9 item 5, `EX-15` step 3): the four remaining guides are `mat:1`,
+`mri:1`, `mri:2`, `ans:1`, and the step-3 bullet's soft caveat is now
+**resolved in the other direction** — `EX-16` landed but closed **negative**, so
+the `mri:1` guide should cite `EX-16`'s refreshed record *and* state the
+surviving 23.5539% rank-spread caveat with the still-open known-issues entry,
+rather than either the pre-`EX-16` unconverged wording or a clean bill of
+health. Same zero-tax expectation: the `mri:`/`mat:`/`ans:` artifacts should be
+checked for age first — if any is over 48 h the freshness branch fires and one
+refresh is licensed.
