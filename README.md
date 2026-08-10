@@ -144,6 +144,10 @@ pip install -e ".[dev,docs]"
 # sqrt(k_c^2 - k0^2) in a lossless guide, mode profile exported (complex build)
 ./run_examples.sh --example th:4
 
+# Run the resonance-guard example — the near-singular-solve detector firing on a
+# sweep toward a cavity mode, silent in the band between modes (complex build)
+./run_examples.sh --example th:5
+
 # Run all magnetostatics examples / absolutely everything
 ./run_examples.sh --example all-mag
 ./run_examples.sh --example all --nproc 2

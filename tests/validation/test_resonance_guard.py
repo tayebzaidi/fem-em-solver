@@ -58,7 +58,13 @@ def _uniform_drive(x):
     return ufl.as_vector([zero, zero, 1.0 + zero])
 
 
-def _energy_at(msh, frequency_hz: float, comm) -> float:
+def _solve_at(msh, frequency_hz: float):
+    """The driven solve behind one sweep point, returning the fields themselves.
+
+    Factored out of :func:`_energy_at` (additively, 2026-08-09, `EX-8`) so the
+    example can export the field a sweep point was scored from rather than
+    re-deriving an equivalent one. No assertion here depends on it.
+    """
     problem = TimeHarmonicProblem(
         mesh=msh,
         frequency_hz=frequency_hz,
@@ -66,8 +72,11 @@ def _energy_at(msh, frequency_hz: float, comm) -> float:
         boundary_condition="pec_zero_tangential_a",
     )
     solver = TimeHarmonicSolver(problem, degree=DEGREE)
-    fields = solver.solve(current_density=_uniform_drive)
-    return stored_electric_energy(fields, comm)
+    return solver.solve(current_density=_uniform_drive)
+
+
+def _energy_at(msh, frequency_hz: float, comm) -> float:
+    return stored_electric_energy(_solve_at(msh, frequency_hz), comm)
 
 
 def _sweep(msh, frequencies, comm) -> list[float]:

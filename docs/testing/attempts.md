@@ -8177,3 +8177,91 @@ must be invoked on the **host** (see the `EX-6` entry's dead end); the sweep
 windows for the resonance guard are to be taken from
 `tests/validation/test_resonance_guard.py` verbatim — the §9 item says a
 hand-picked window already cost one attempt a 2.814× separation.
+
+---
+
+## 2026-08-10T03:45Z — `EX-8` — **complete**
+
+Scheduled implementer run (22:30 local, 2026-08-09). §9 On-deck item 3, taken
+first-not-done as the protocol requires. Preflight clean, container Up.
+
+**What was built.** `examples/time_harmonic/05_resonance_guard_sweep.py`,
+auto-registered by the runner as `th:5` (the `th:` group globs the directory —
+no registry edit was needed, only the filename). It sweeps toward the discrete
+fundamental of the `TH-1` step-5 PEC box and scores each interval with
+`core/resonance.check_energy_continuity`. The fixture is **imported** —
+`EDGES`, `DIVISIONS`, `DEGREE`, and the solve itself — never restated, which the
+§9 item was explicit about: the gate had to place its quiet window twice
+(2.814× separation on the first attempt), so a hand-picked window here would
+have been the same mistake.
+
+**Every number reproduces `20260731T021521Z_TH-1-step5b.log` digit for digit**,
+not just the anchor:
+
+| quantity | this run | record |
+|---|---|---|
+| approach max \|dlnW/dlnf\| | 137.554 | 137.554 |
+| implied detuning | 1.454% | 1.454% |
+| quiet max slope (untriggered) | 21.951 | 21.951 |
+| separation near/quiet | 6.267× | 6.267× |
+| energy amplification | 16.505× vs 16.0× | 16.505× |
+| pole-law error (10% ceiling) | 3.156% | 3.156% |
+
+All six sweep energies match too (5.8742e-07 / 2.3992e-06 / 9.6953e-06;
+1.4700e-07 / 9.4344e-08 / 6.6048e-08). Six solves in 21.4 s, 23.3 s total,
+`20260810T033313Z_EX-8-gate.log`, exit 0, 26 s harness wall.
+
+**The negative control is solved, not cited.** Unlike `EX-5`/`EX-6`/`EX-7`,
+whose controls are on record in their gate logs, this example's control arm is
+half of its own run: the quiet sweep between the two lowest modes is the third
+and fourth solves and must stay untriggered. A guard that always fires fails
+this example without any reference to a log.
+
+**Two export gates beyond the plan's ask.** (i) The exported fields *are* the
+scored fields — energy re-assembled from the Functions handed to the writer
+reproduces their sweep-table entries at **0.00e+00** relative (bitwise; they are
+the same objects, so this catches an off-by-one in the sweep index or a stale
+field, which is exactly the failure the identity is there for). (ii) The pole is
+visible in what ParaView colours: |E| peaks at 6.0531e+03 V/m near-resonant vs
+6.1951e+02 V/m quiet, a factor **9.77** on the same mesh, same drive, same
+scale. Both fields look clean and plausible — only their magnitudes betray that
+one is a solve of a nearly singular operator, which is the example's whole
+point.
+
+**One `src/`-adjacent change, additive, re-gated.** `_solve_at(msh, f)` was
+factored out of `tests/validation/test_resonance_guard.py::_energy_at` so the
+example can export the solve the guard scored rather than an equivalent
+re-solve; `_energy_at` is now a one-liner over it. No gate assertion depends on
+it, and `TH-1` step 5 was re-run to prove it: 6 passed, `-n 2`, 21.29 s
+(`20260810T033348Z_EX-8-TH-1-step5-regress.log`). Nothing under `src/` changed,
+so no solver gate was owed.
+
+**No bound is non-inherited.** Every tolerance is the `TH-1` step-5 gate's own
+(10% pole law, threshold 50, the 2× margins, the 0.003–0.03 detuning window);
+nothing was loosened and nothing was invented.
+
+**The `EX-14` freshness branch fired a third consecutive time.** The `EX-12`
+doc-reference checker failed on first call
+(`20260810T033426Z_EX-8-refcheck.log`, exit 1) on the same 5 straight-wire
+artifacts, again **1.5 h old against the 1.0 h window**, and again unrelated to
+this chunk. `-e 1` refreshed them and the checker is PASS at 16 references
+(`20260810T033443Z_EX-8-refcheck-final.log`). This is now three runs in a row.
+The `EX-7` entry proposed either a multi-hour window or a regenerate mode; a
+third data point says the 1.0 h default is simply mis-set for a repo where the
+gitignored scratch dir is only refreshed when a run happens to touch examples —
+the window is measuring *when an example was last run*, not whether a reference
+is dead. Recommend `EX-14` change the default rather than add a mode.
+
+**Cost.** Standard tier declared, `-n 2`, `timeout 180`; 60 s of harness wall
+across six runs (1 + 26 + 23 + 2 + 6 + 2 s), nothing near a ceiling.
+
+**Closes nothing physics-side** — `TH-1` closed 2026-07-31; this is Phase-2
+§5.4 backfill. But it closes the *shortfall*: **Phase 2 now carries 5 of 5
+examples** (`EX-4`…`EX-8`), the ledger line in §7 is annotated accordingly, and
+the only remaining §5.4 backfill is Phase 1's `EX-9`/`EX-10`.
+
+**Next-attempt hypothesis.** None needed — complete. For whoever takes `EX-9`:
+its §7 plan was corrected on 2026-08-09 (the `MAG-14` fixture it named does not
+exist); the real anchor is the straight-wire h-refinement in
+`tests/validation/test_convergence.py` at ~167 s, i.e. the standard tier at its
+ceiling — budget the full 180 s and expect no room for a second solve.

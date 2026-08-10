@@ -4831,7 +4831,10 @@ registered examples. Per-phase against §5.4's
 `min(5, gating chunks closed ✅)`: **Phase 1** (complete, owes 5) has 3 —
 straight wire, circular loop, Helmholtz — shortfall 2 → `EX-9`, `EX-10`.
 **Phase 2** (5 of `TH-1`…`TH-9` ✅, owes 5) has **0** — no example runs a
-time-harmonic solve at all; shortfall 5 → `EX-4`…`EX-8`. The miss predates
+time-harmonic solve at all; shortfall 5 → `EX-4`…`EX-8`. *(Backfill complete
+2026-08-09, 22:30 run: `EX-8` closed the last of the five, so Phase 2 now
+carries 5 of 5 and this shortfall is discharged — the figures above are the
+2026-08-09 weekly-review snapshot, kept for the audit trail.)* The miss predates
 the accrual mechanism (adopted 2026-08-06, after Phase 2's gates closed
 2026-07-31), so it is a backfill, not a mechanism failure this week.
 **Phase 3** (`MAT-2` + `MAT-6` ✅, owes 2) has 1 (`mri:2`) — shortfall 1 →
@@ -4852,7 +4855,7 @@ mandate to displace the critical path.
 | `EX-5` | PEC cavity resonances: eigenfrequencies vs closed form, mode field in ParaView | ✅ | standard |
 | `EX-6` | Sphere in a uniform field: solved quasi-static response vs closed form | ✅ | standard |
 | `EX-7` | Waveguide/coax: the `TH-7` gated quantity as a runnable example | ✅ | standard |
-| `EX-8` | Resonance guard on a frequency sweep: the `TH-1` step-5 detector firing | ⬜ | standard |
+| `EX-8` | Resonance guard on a frequency sweep: the `TH-1` step-5 detector firing | ✅ | standard |
 | `EX-9` | Measured h-convergence rate as an example output (Phase 1) | ⬜ | standard |
 | `EX-10` | Gauge cross-check: penalty vs Lagrange-multiplier Coulomb gauge (Phase 1) | ⬜ | standard |
 | `EX-11` | Dodd–Deeds coil loading: ΔR vs closed form, eddy currents in ParaView | ✅ | standard |
@@ -4994,7 +4997,41 @@ recorded.
 >   reproduce the gated cutoff or line-impedance quantity within its gate
 >   tolerance; export the mode profile. Angle: guided-wave/port-adjacent
 >   geometry.
-> * **`EX-8`** — sweep across the `TH-9` fundamental with
+> * **`EX-8`** — ✅ **closed 2026-08-09 (22:30 run).**
+>   `examples/time_harmonic/05_resonance_guard_sweep.py`, dispatched as `th:5`,
+>   reproduces the `TH-1` step-5 record **digit for digit** through the example
+>   path — every printed quantity, not merely the anchor: approach max
+>   |dlnW/dlnf| **137.554** (threshold 50) and implied detuning **1.454%**;
+>   quiet-band max slope **21.951**, untriggered; separation **6.267×**; energy
+>   amplification **16.505×** against the |f−f₀|⁻² pole law's 16.0×, **3.156%**
+>   against the gate's own 10% ceiling; all six sweep energies identical to
+>   `20260731T021521Z_TH-1-step5b.log` (5.8742e-07 / 2.3992e-06 / 9.6953e-06 and
+>   1.4700e-07 / 9.4344e-08 / 6.6048e-08). Six solves in 21.4 s, 23.3 s total.
+>   The fixture is imported — sweep windows, mesh, material, drive — never
+>   restated, which the plan required precisely because that gate had to place
+>   its quiet window twice. **The negative control is in-fixture and solved
+>   here, not cited:** the quiet arm is the third and fourth solves of the run
+>   and must stay silent, so a guard that always fires fails this example.
+>   Two gates beyond the plan's ask, both for the export: the two `.xdmf`
+>   arrays are the phasors of the nearest-approach and quiet-midpoint solves,
+>   and the stored energy **re-assembled from the Functions handed to the
+>   writer** reproduces their sweep-table entries to **0.00e+00** relative
+>   (bitwise — same Function objects, so an off-by-one in the sweep index or a
+>   stale field is what this would catch); and the pole is visible in the
+>   exported field itself, |E| peaking at **6.0531e+03 V/m** near-resonant vs
+>   **6.1951e+02 V/m** quiet, a factor **9.77** on the same mesh, same drive,
+>   same colour scale. No tolerance was loosened and none was invented: every
+>   bound is the `TH-1` step-5 gate's own.
+>   `tests/validation/test_resonance_guard.py` gained one **additive** refactor
+>   — `_solve_at(msh, f)` returning the fields, with `_energy_at` now a
+>   one-liner over it — so the example exports the solve the guard scored rather
+>   than an equivalent re-solve; no gate assertion depends on it and `TH-1`
+>   step 5 was re-run to prove it (6 passed, `-n 2`, 21.29 s). Logs
+>   `20260810T033306Z_EX-8-runner-list.log`,
+>   `20260810T033313Z_EX-8-gate.log` (26 s),
+>   `20260810T033348Z_EX-8-TH-1-step5-regress.log` (23 s),
+>   `20260810T033443Z_EX-8-refcheck-final.log` (PASS, 16 references).
+>   *(Original plan text follows.)* sweep across the `TH-9` fundamental with
 >   `core/resonance.py`: assert the guard fires at the on-record detuning
 >   (1.5%) and the energy rise follows the |f−f₀|⁻² pole law within 10%
 >   (3.16% on record); output the S-metric table. Angle: diagnostics — the
@@ -5796,7 +5833,15 @@ review's (2026-08-16) to spend.
    (`PORT-1` owns that). **Negative result:** γ off the record at matched
    fixture is a regression finding — report beside the gate log, stop.
 
-3. **`EX-8` — the resonance guard firing, as a runnable example
+3. ✅ **done 2026-08-09 (22:30 run)** — `EX-8` closed: the guard fires at
+   max |dlnW/dlnf| **137.554** / implied detuning **1.454%**, the quiet arm
+   stays silent at **21.951** (separation **6.267×**), and the energy rise
+   is **16.505×** vs the pole law's 16.0× — **3.156%** against the gate's
+   own 10% ceiling. The `TH-1` step-5 record is reproduced digit for digit,
+   including all six sweep energies. See the §7 `EX-8` entry (no
+   non-inherited bounds; the two export gates are identities, 0.00e+00
+   relative). *(Original item text follows.)* **`EX-8` — the resonance
+   guard firing, as a runnable example
    (standard).** Execute the §7 backfill plan's `EX-8` bullet: sweep
    across the `TH-9` fundamental with `core/resonance.py`
    (`check_energy_continuity`, `DEFAULT_SLOPE_THRESHOLD = 50.0`); import
