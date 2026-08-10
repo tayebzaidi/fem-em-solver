@@ -1041,10 +1041,16 @@ spread computation `20260810T170457Z_EX-16-spread-v2.log`.
 chunks with a < 5% rank-stability anchor and an explicit report-and-stop
 clause for a converged solve that still spreads. Repairing on-axis point
 evaluation is solver-side work on `post.evaluation`, not an example edit.
-**Resolved by:** unassigned — needs a review to scope a chunk against
-`evaluate_vector_field_parallel`'s ownership tie-break for points on shared
-edges/facets (`MAG-6` step 4 is the precedent to read first). Entry stays
-open.
+**Resolved by:** assigned to `POST-4` (2026-08-10, 18:00 review) — step 1
+diagnoses the ownership mechanism on the `EX-16` fixture (claim multiplicity,
+per-claiming-cell disagreement, `valid_mask`, and an off-axis ε-nudge
+discriminator); step 2, conditional on step 1 confirming, replaces
+last-writer-wins with a minimum-global-cell-index tie-break in
+`evaluate_vector_field_parallel` (`MAG-6` step 4 is the precedent read
+first — it measured 0/9 multi-claims on *its* fixture, so the mechanism is
+unproven here until step 1 measures it). Entry leaves only with a `POST-4`
+step 2 commit whose collapse anchor lands (23.5539% → ≤ 0.1% across
+`-n 1/2/4`); stays open on any other outcome.
 
 ---
 

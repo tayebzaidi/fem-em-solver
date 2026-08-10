@@ -2835,6 +2835,7 @@ ceilings are untouched; this buys memory, not compute.)*
 | `POST-1` | Interface-aware field extraction reliability | 🟡 *(adjudicated 2026-08-05, 18:00 review — mean semantics decided, extremum semantics is step 4)* | standard |
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
+| `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | 🔲 *(scoped 2026-08-10, 18:00 review, from the `EX-16` negative result)* | standard |
 
 > *(Closed-step plans, execution journals and audits below are archived
 > verbatim in `docs/planning/plan-archive.md`.)*
@@ -3400,6 +3401,101 @@ ceilings are untouched; this buys memory, not compute.)*
 > imbalance and rate at both levels, annotate this entry, stop — an identity
 > that fails on piecewise μᵣ after passing on piecewise σ is information about
 > the μᵣ discretisation, not a tolerance problem.
+
+**`POST-4` — centerline point evaluation is rank-count-dependent: attribute
+and fix the ownership tie-break in `evaluate_vector_field_parallel`** 🔲
+*(scoped 2026-08-10, 18:00 review — this is the chunk the `EX-16` negative
+result demanded: converging the mri demo's solve moved the centerline rank
+spread 23.5545% → 23.5539% (1.0000×), while the 493-point phantom-region
+sampler on the *same two solves and the same fields* agrees across rank
+counts to 0.007326% — 3215× tighter. Same solve, two samplers: the defect
+is in the point-evaluation path. Owns the open known-issues entry
+"`examples/mri/01` centerline samples are rank-dependent at ~23%".)*
+> **The suspect mechanism, stated so the probe can refute it.**
+> `post/evaluation.py::evaluate_vector_field_parallel` has each rank claim
+> `links[0]` — the first locally-colliding cell — and rank 0 resolve
+> multi-rank claims by last-writer-wins in rank order (`values[rank_indices]
+> = rank_values` in the gather loop). For a point on a shared facet/edge —
+> and the demo's centerline sits at x = y = 0, plausibly on shared entities
+> of the axis — the evaluating *cell* is therefore partition-dependent, and
+> a Nédélec interpolant is only tangentially continuous across faces, so
+> cell choice changes the value. `MAG-6` step 4 measured **0/9 multi-claims
+> on its fixture** (and refuted its own probe's √3 artifact), so this
+> mechanism is *plausible but unmeasured* on the mri fixture — hence
+> diagnosis before fix. A second candidate the probe must also cover:
+> silent zero-fill — a point no rank's bbox collision claims returns 0 with
+> `valid_mask=False`, and a sampler ignoring the mask would swallow the
+> zero into a spread statistic.
+>
+> * **Step 1 — diagnosis on the `EX-16` fixture (measurement only, no
+>   `src/` change)** 🔲. New probe `scripts/probes/post4_step1_probe.py`
+>   in the `mag6_step4_probe.py` mold, on `examples/mri/01`'s debug preset
+>   exactly as `EX-16` left it (`preonly`/LU, `gauge_penalty=1.0`). Solve
+>   at `-n 1`, `-n 2`, `-n 4`; per centerline point and per rank count
+>   record: (a) claim multiplicity — how many ranks' `colliding_cells`
+>   found it; (b) the set of *global* cell indices claiming it
+>   (`local_to_global` on the links, all of them, not just `links[0]`);
+>   (c) the per-claiming-cell evaluated value and the max cross-cell
+>   relative disagreement; (d) `valid_mask` — any point invalid at any
+>   rank count; (e) the ε-nudge discriminator: the same points offset to
+>   x = y = 1e-6 m (off the axis, geometry otherwise identical),
+>   spread re-measured. **Anchor (attribution identity):** the points
+>   carrying the 23.5539% spread coincide with the points whose claiming
+>   cell set is partition-varying (or mask-invalid), and their measured
+>   cross-cell disagreement accounts for the spread's magnitude; the
+>   nudged points collapse to the phantom path's scale — assert nudged
+>   spread ≤ 0.1% against the on-axis 23.5539%, a ≥ 235× separation
+>   (ceiling measured: 3215×, `20260810T170457Z_EX-16-spread-v2.log`).
+>   **Negative control:** the phantom-region 0.007326% on the same solves,
+>   cited not recomputed (same log); `MAG-6` step 4's 0/9 multi-claim
+>   fixture is the on-record contrast. **Cost:** standard tier; the demo
+>   solves in 6 s / 4 s at `-n 2` / `-n 4` on record
+>   (`20260810T170234Z` / `…170309Z_EX-16-direct-n2/n4.log`); `-n 1` is
+>   unmeasured — wrap it alone in `timeout 600`, the rest 180.
+>   **Traps:** the √3 probe bug is pre-paid — `Function.eval` squeezes a
+>   single point to shape `(3,)`, so `.reshape(-1, 3)` before indexing
+>   (`MAG-6` step 4's one-line fix); complex build +
+>   `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; stale FFCx
+>   lock after any kill; claim counts are rank-local — reduce before
+>   printing; pytest swallows prints without `-s`. **Scope boundary:**
+>   diagnosis only — no `src/` edit, no tolerance, no gate; `MAG-6` and
+>   `EX-13`/`EX-16` records untouched; the known-issues entry stays open
+>   regardless of outcome. **Negative result:** zero multi-claims, stable
+>   claim sets, full masks *and* no collapse under the nudge refutes the
+>   ownership mechanism — then the per-point rank-difference table itself
+>   localizes where the 23% lives (which points, which leg); re-point the
+>   known-issues entry at the measured locus, annotate here, stop.
+> * **Step 2 — deterministic tie-break in
+>   `evaluate_vector_field_parallel`, gated by the collapse** 🔲
+>   *(execute only if step 1 confirmed partition-varying cell choice; a
+>   refuted step 1 makes this step's edit aimless — skip and leave for
+>   the next review).* The fix shape: choose the evaluating cell by
+>   **minimum global cell index** — each rank evaluates at its
+>   locally-min global claimed cell and reports that index; rank 0 keeps,
+>   per point, the value from the globally minimal cell instead of
+>   last-writer-wins. The claimed-cell set of a point is geometric, so
+>   the selection is partition-independent by construction. **Anchor:**
+>   on the step-1 fixture, the on-axis centerline spread across
+>   `-n 1/2/4` collapses 23.5539% → ≤ 0.1% (≥ 235× — ceiling 3215×,
+>   the solve-noise floor is the phantom path's 0.007326%); plus
+>   non-regression, the phantom-region stats and `tests/post` reproduce
+>   their on-record digits. **Negative control:** the pre-fix 23.5539%
+>   on record (`…EX-16-spread-v2.log`), cited. **Cost:** standard,
+>   `-n 1/2/4` re-runs of the step-1 measurement, same budgets.
+>   **Traps:** ghost cells appear in `colliding_cells` links —
+>   `local_to_global` handles them, but evaluate only at cells the rank
+>   can (owned or ghost, after `scatter_forward`); keep the complex
+>   scalar dtype path exactly as is; do not touch the function's
+>   signature — `MAG-8`-era callers exist. **Scope boundary:** the
+>   *value* at a shared-facet point remains convention (the min-cell
+>   trace) — this chunk buys rank-invariance, not a claim that the trace
+>   equals the physical field at a discontinuity; no SAR/B1 gate cites
+>   centerline numbers, and none may cite this as new physics validation.
+>   Closing the known-issues entry requires this step's anchor to land —
+>   the entry leaves with this commit or stays. **Negative result:** a
+>   deterministic tie-break that does not collapse the spread means the
+>   disagreement is between *runs*, not cells — report the per-point
+>   table, keep the entry open, annotate here, stop.
 
 ### PORT — Ports & S-parameters (Phase 4)
 
@@ -5410,7 +5506,13 @@ open in ParaView and what to look at, which printed numbers to check,
 their on-record values with log provenance, and what a deviation in each
 would mean. Group-level guides (`PARAVIEW_GUIDE.md` and friends) stay but
 do not satisfy the per-example requirement. Fourteen runnable scripts at
-scoping time; the split below is by runner group.
+scoping time; the split below is by runner group. *(Count correction,
+2026-08-10, 18:00 review: the step-2 run measured **16** runnable scripts —
+examples landed after scoping (`EX-9`'s `-e 6` among them) were picked up by
+the `--list` glob automatically. The guide requirement follows `--list`, not
+this paragraph's snapshot; step 3's four `PENDING_GUIDES` entries still
+empty the dict, and the two post-scoping scripts already carry guides —
+that is how the step-2 gate reads 12 checked + 4 pending at 16 total.)*
 - **Step 1 — checker + template + `mesh:`/magnetostatics (5 scripts).**
   Extend `scripts/testing/check_example_doc_references.py` with a guide
   pass: every `--list` entry must have its same-stem `.md` containing the
@@ -6357,179 +6459,155 @@ promised an "obvious next entry named below" that was never written — the
 16:30 slot on 2026-08-07 hit that dangling reference and correctly fell
 through to the drain instruction; the reference is retired.)*
 
-Last reviewed 2026-08-10, 10:30 daily review. **Four of four slots ✅ — the
-first clean sweep on record.** 04:30: `EX-15` step 1 ✅ — guide pass live, 5
-guides, both negative controls fired naming script and heading. 06:00:
-`EX-10` ✅ — probe rel diff 0.0004% vs the 5% gate ceiling, max|A| ratio
-2.774e-11 vs 1e-6, first attempt, no bound moved. 07:30: `EX-9` ✅ — rate
-1.1009 in the gate band, errors reproducing `MAG-13` digit for digit; tier
-reclassified heavy (130 s); found the export losing 7.89 points to CG1
-vertex averaging. 09:00: `EX-14` ✅ — round-trip max |B| bit-identical
-(rel diff 0.000e+00 vs 1e-10), and the freshness control exposed a second
-defect (`.bp` directory mtime frozen at creation; `artifact_mtime()` fix).
-**Phase-1 §5.4 backfill complete — every phase's example shortfall is now
-discharged** (the `EX-9` journal's claim of a remaining Phase-3 shortfall
-is a journal error: `EX-11` closed 2026-08-09). Step-3 audit: **all four
-closures audited compliant, no demotions** (one auditor per chunk; logs,
-quantitative assertions, elapsed times verified). Two recorded caveats:
-`EX-9`'s export assertion was re-pointed after measurement refuted the ±5%
-interpolation allowance — judged honest bound-setting (different invariant,
-finding surfaced everywhere including the commit headline), but the
-replacement bound (`< errors[0]`, dynamic) only catches catastrophic export
-regressions; and `EX-14`'s first attempt exited 139 (SIGSEGV in basix
-teardown after the `AxisError`), recorded honestly in test-results.md, not
-recurring in v2. Step 2: tree clean, no `recovered/*`; both
+Last reviewed 2026-08-10, 18:00 daily review. **Four of four slots landed
+their item — the second consecutive sweep, one of them a decisive
+negative.** 12:00: `EX-16` 🚫 — the convergence hypothesis refuted with the
+fix landed anyway: the demo now solves direct (`preonly`/LU, `reason=4`) at
+the validated gauge floor and the centerline rank spread does not move
+(23.5539% vs the 23.5545% unconverged record, 1.0000×), while the added
+positive control — the 493-point phantom-region sampler on the *same*
+fields — agrees to 0.007326%, **3215× tighter**; the owner is the
+centerline point-evaluation path. 13:30: `OPS-15` ✅ — freshness default
+1 h → 48 h, both anchors green in one slot, retuned-not-disabled shown at
+`--max-age-s 1` (14 flagged) and 48 h arithmetic shown on a backdated
+72-h fixture. 15:00: `EX-17` ✅ — circular-loop `.bp` round trip
+bit-identical (rel diff 0.000e+00 vs 1e-10), analytic numbers unmoved,
+known-issues entry retired. 16:30: `EX-15` step 2 ✅ — five `th:` guides,
+12 of 16 examples checked, heading negctl re-fired; first `-e` interval to
+pay zero freshness tax. **Between slots, an interactive operator session
+resolved the standing `MAT-6` blocker** — step 7 Part 1 landed by hand
+(cap 16 G → 64 G, verified at the kernel: `memory.max` = 68719476736),
+un-blocking Part 2 — and scoped `MAT-6` step 8 at operator direction.
+Step-3 audit: **all three ✅ closures audited compliant, no demotions**
+(one auditor per closure; logs, quantitative assertions, elapsed times
+verified against the files). Two recorded caveats, neither material:
+`OPS-15`'s fifth log (`…default-final`) exists but is missing from the
+attempts.md log list (bookkeeping); `EX-15` step 2's heading negctl exit 1
+is evidenced by the echoed sentinel rather than the wrapper's exit code,
+and its in-container restore check misfired ("not a git repository") —
+compensated by the journaled host-side byte-identity check, which the
+auditor re-confirmed. Step 2: tree clean, no `recovered/*`; both
 `attempt/PORT-1-*` branches stay parked under the weekly licence
 (2026-08-16 holds the 3b-xv adjudication and the second discriminator
-slot). §5.4 ramp: **no new quantitative gate closed this interval** — all
-four closures are example/hygiene chunks — so no new example chunks
-mandated. Plan work: **the standing freshness tax adjudicated** — three
-consecutive journals asked; decision is `OPS-15` (default `--max-age-s`
-1 h → 48 h; the tight window stays the explicit in-slot control), and
-`EX-17` scoped from `EX-14`'s filed circular-loop finding (known-issues
-entry reassigned to it). `MAT-6` step 7 stays 🚫 on the same one-line
-human decision (Waiting-on-you), joined there by the `ANS-1` Ansys-side
-replication and the 42-commits-ahead push.
+slot). §5.4 ramp: **no new quantitative gate closed this interval** —
+`EX-17` is an example repair, `OPS-15` tooling, `EX-15` docs, and the
+`MAT-6` movement is ops — so no new example chunks mandated. Plan work:
+**`POST-4` scoped** from `EX-16`'s attribution (the known-issues centerline
+entry is re-pointed at it; step 1 diagnoses ownership on the fixture, step
+2 — conditional — replaces last-writer-wins with a min-global-cell
+tie-break), and `EX-15`'s scoping count corrected 14 → 16 runnable with a
+dated note. Waiting-on-you delta: **the memory-cap decision is off the
+list** (operator acted); `ANS-1` replication and the push (54 ahead once
+this commit lands; runner results still never observed) remain.
 
-**Five ready items, all independent** (item 5 carries one soft caveat, not
-a dependency). Item 1 is the `EX-13` salvage carried from the last review;
-item 2 retires the refresh tax before the doc-only guide runs would pay it
-again; item 3 is the known-issue repair; items 4–5 are the operator
-directive's remaining steps. The `PORT-1` critical path is deliberately
-absent: the second licensed discriminator slot is the weekly review's
-(2026-08-16) to spend.
+**Five ready items; items 1–3 independent, items 4–5 genuinely serial**
+(item 5 executes only if item 4 confirmed its mechanism — the skip clause
+is in the item). Item 1 is the measurement the operator's cap raise just
+unblocked; item 2 closes the operator's guide directive; item 3 is the
+operator-directed error budget; items 4–5 are the `POST-4` diagnosis→fix
+pair scoped this review from `EX-16`'s finding. The `PORT-1` critical path
+is deliberately absent: the second licensed discriminator slot is the
+weekly review's (2026-08-16) to spend.
 
-1. ~~**`EX-16`**~~ — **done 2026-08-10 (12:00 run), negative result.** The
-   solve converges (`preonly`/LU, `reason=4`) and the spread does not move:
-   23.5539% vs the 23.5545% unconverged record, anchor FAIL, the
-   report-and-stop clause taken. The convergence hypothesis is refuted and
-   the owner is now identified — the centerline point-evaluation path,
-   3215× the phantom path's rank spread on the same fields. Code landed,
-   on-record strings refreshed, known-issues entry stays open and
-   **unassigned**: the review must scope the
-   `evaluate_vector_field_parallel` repair. Original scope follows.
-   Execute the §7 `EX-16`
-   plan verbatim: drop the GMRES+Jacobi override
-   (`examples/mri/01_coil_phantom_fields.py:340`) so the debug/coarse
-   presets solve through the solver's default direct path, flip the
-   magnetostatic call site (`:317`) `1e-3 → 1.0` in the same motion,
-   re-run `mri:1` at `-n 2`/`-n 4`, refresh the on-record strings,
-   checker green. **Anchor:** the `-n 2` vs `-n 4` max centerline spread
-   on a **converged** solve, < 5% (`converged=True` is the precondition,
-   not the anchor). **Negative control, cite not recompute:** the
-   unconverged 23.5545%/23.3010% record
-   (`20260810T050319Z_EX-13-spread.log`); separation ceiling 4.7×.
-   **Traps/scope/negative-result:** per the §7 entry — `WF-1` stays 🧪
-   regardless; a converged solve still ≥ 5% is a report-and-stop finding
-   against the sampling path, and known-issues stays open.
+1. **`MAT-6` step 7 Part 2 — the additivity measurement at 64 G (heavy;
+   probe-first).** Part 1 (the cap) landed 2026-08-10 by the operator's
+   hand and is verified at the kernel (`memory.max` = 68719476736); this
+   item is the measurement it existed for. Execute the §7 step-7 Part 2
+   text verbatim: re-run `scripts/probes/mat6_step6_probe.py` exactly as
+   the step-6 entry authorised — mesh count first (697 401 on record,
+   byte-identical at two rank counts), then **one** solve at `-n 4`,
+   `timeout 1200`; still-OOM at 64 G or > 600 s of solve ⇒ report the
+   measured cost and stop, no retry at more ranks (the cap is
+   total-footprint and rank-blind, step 6's finding). **Anchor:** step
+   6's, inherited — Dodd–Deeds refs, step 2b's gates unchanged; the
+   reading is the additivity defect vs **0.9843** with the pre-decided
+   bands (≤ 0.5 pp additive / > 1.5 pp cross-term / between ambiguous).
+   **Negative control:** step 6's two 16 G kill records on the same
+   fixture, cited never recomputed; the O(h²) volume-deficit control
+   re-asserted. **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`;
+   `project_source=False` pins; FFCx lock after a kill. **Negative
+   result:** OOM at 64 G is a real per-cell memory measurement — report
+   beside cap and cell count, annotate the §7 entry, stop; a cross-term
+   reading is the more informative physics outcome.
 
-2. ~~**`OPS-15`**~~ — **done 2026-08-10 (13:30 run), first attempt.** Both
-   anchors green in one slot: the default invocation now exits **0** on the
-   4.4-h scratch artifacts with **zero** refresh solves (same-slot baseline at
-   `--max-age-s 3600` exits 1 flagging 14, so the before/after differs by the
-   default alone), and `--max-age-s 1` still exits **1** flagging the same 14
-   — retuned, not disabled. The `limit 48.0 h` arithmetic fired on a
-   backdated fixture (72.0 h) since no real artifact is old enough to show it.
-   Logs `20260810T1831…1832Z_OPS-15-*`. Items 3–5 no longer pay the tax.
-   Original scope follows.
-   Execute the §7 `OPS-15` entry verbatim: default
-   `--max-age-s` 3600 → 172800 in
-   `scripts/testing/check_example_doc_references.py` (argparse default
-   and the docstring's example invocation). **Anchor, two-sided:**
-   default invocation exits 0 on the existing scratch artifacts with
-   zero refresh solves (vs the on-record exit-1-then-refresh,
-   `20260810T124544Z_EX-9-refcheck.log` and three sibling logs);
-   `--max-age-s 1` still exits 1 flagging the scratch set (14 on record,
-   `20260810T140434Z_EX-14-refcheck-negctl.log`). **Traps:**
-   `artifact_mtime()` stays the mtime source; `PENDING_GUIDES` and the
-   other passes untouched; do not clean the scratch directory to make
-   the green leg pass. **Negative result:** per the §7 entry —
-   report-and-stop with the flagged list. Queued ahead of the guide
-   items so they stop paying the ~80–200 s tax this chunk retires.
+2. **`EX-15` step 3 — `mat:`/`mri:`/`ans:` guides (standard; doc-only;
+   closes the chunk).** Execute the §7 `EX-15` step-3 bullet: four
+   guides; the `ans:1` guide points at `SPEC.md`/`COMPARISON.md` rather
+   than duplicating them; the `mri:1` guide keeps `EX-12`'s "ungated
+   end-to-end demo" labelling. `EX-16` landed (negative result), so the
+   `mri:1` guide cites the **converged** record — `preonly`/LU
+   `reason=4` at `gauge_penalty=1.0`, the refreshed on-record strings —
+   and states the still-open centerline caveat explicitly: 23.5539%
+   rank spread on the centerline sampler vs 0.007326% on the
+   phantom-region sampler, known-issues entry open, assigned `POST-4`.
+   Delete the four step-3 `PENDING_GUIDES` entries in the same commit —
+   that empties the dict and closes `EX-15`. Same checker gate and
+   negative control as steps 1–2; no solves licensed (and none needed:
+   the 48 h window covers every artifact). **Negative result:** same
+   journal-don't-thin rule as steps 1–2 — a guide that cannot be written
+   from the records without re-running its example is journaled, not
+   thinned.
 
-3. ~~**`EX-17`**~~ — **done 2026-08-10 (15:00 run), first attempt.** The
-   port carries: round-trip in-memory and read-back max |B| both
-   **7.756122914931e-05 T**, relative difference **0.000e+00** vs 1e-10 —
-   bit-identical, as on the straight wire, on a mesh 30× larger. One run,
-   124 s at `-n 2`, no second solve; the `BlocksInfo` trap was pre-paid and
-   never fired. The loop's analytic numbers did not move (6.3046% /
-   13.5037%), known-issues entry retired, checker green at the `OPS-15`
-   default with **zero** refresh solves — the first `-e` slot to pay no
-   freshness tax. Logs `20260810T200154Z_EX-17-gate-mag2`,
-   `…200519Z_EX-17-refcheck`. Original scope follows.
-   Execute the §7 `EX-17` entry verbatim: one-file port of the
-   `EX-14` diff (`f626171`) to
-   `examples/magnetostatics/02_circular_loop.py` — Lagrange
-   interpolants to the writers, split `try`, same
-   `_check_vtx_roundtrip()` — then `-e 2 -n 2 -t 600`, checker green.
-   **Anchor:** round-trip read-back max |B| equals in-memory, rel diff
-   < 1e-10 (`EX-14` wire record: 0.000e+00). **Negative control, cite
-   not recompute:** the zero-variable `circular_loop_A.bp` on record in
-   known-issues. **Cost:** ~100–130 s for the 411 k-cell mesh — budget
-   `-t 600`, one run, no second solve. **Traps:** walk `BlocksInfo`,
-   not `Shape` (the `EX-14` first-attempt `AxisError`/exit-139); if
-   `OPS-15` has not landed the freshness branch may fire — one refresh
-   licensed, excluding `-e 2`. **Negative result:** per the §7 entry —
-   report both numbers, entry stays open.
-
-4. ~~**`EX-15` step 2**~~ — **done 2026-08-10 (16:30 run), first attempt.** The
-   five `th:` guides land and the checker goes green at **12** of 16 examples
-   checked against 3 required headings (was 5), exit 0, 0 s
-   (`20260810T213556Z_EX-15-step2-refcheck-final.log`); the heading negative
-   control re-fired on a step-2 guide — exit 1 naming `How to run it`
-   (`…213543Z_…-negctl-heading.log`), mutation reverted and verified
-   byte-identical. Five `PENDING_GUIDES` entries deleted in the same commit; 4
-   remain for step 3. **`OPS-15` earned its slot:** zero refresh solves across
-   all three runs, where the retired 1 h window would have forced five. No
-   guide needed a re-run to reach the section-3 bar, so the
-   journal-don't-thin clause did not fire. Original scope follows.
-   Execute the §7 `EX-15` step-2 bullet: guides for the five `th:`
-   scripts, every stated number the gate record already in §7
-   (`EX-4`…`EX-8`), cited by log name, digit for digit; delete the five
-   step-2 `PENDING_GUIDES` entries in the same commit (an entry whose
-   guide exists is itself a checker violation). **Anchor:** checker
-   exit 0 with the five guides present; **negative control:** the
-   step-1 pair on record (missing guide → exit 1 naming the script,
-   missing heading → exit 1 naming the heading) — re-fire one side on a
-   step-2 guide. No solves licensed; at most one freshness refresh if
-   `OPS-15` (item 2) has not landed. **Negative result:** a guide that
-   cannot be written to the section-3 bar without re-running its
-   example is a finding against that example's record — journal it, do
-   not thin the guide.
-
-5. **`EX-15` step 3 — `mat:`/`mri:`/`ans:` guides (standard; doc-only;
-   soft caveat, not a dependency).** Execute the §7 `EX-15` step-3
-   bullet: four guides; the `ans:1` guide points at `SPEC.md`/
-   `COMPARISON.md` rather than duplicating them; the `mri:1` guide
-   keeps `EX-12`'s "ungated end-to-end demo" labelling. **Caveat:** if
-   item 1 (`EX-16`) has not landed, the `mri:1` on-record numbers are
-   the unconverged-iterate set — write the guide anyway and state the
-   `converged=False (reason=-3)` / 23% rank-spread caveat explicitly,
-   citing the known-issues entry (per the §7 traps paragraph); if
-   `EX-16` landed, cite its refreshed record instead. Delete the four
-   step-3 `PENDING_GUIDES` entries in the same commit — that empties
-   the dict and closes `EX-15`. Same checker gate and negative control
-   as steps 1–2; no solves licensed. **Negative result:** same
-   journal-don't-thin rule as item 4.
-
-6. **`MAT-6` step 8 — ΔR error budget: the slab-resolution knob (heavy;
+3. **`MAT-6` step 8 — ΔR error budget: the slab-resolution knob (heavy;
    probe-first).** *(Added 2026-08-10 by an interactive session at
-   operator direction — the next review may reorder it, and should
-   journal rather than drop it.)* Execute the §7 `MAT-6` step-8 entry
-   verbatim: `resolution_near` 0.005 → 0.0025 (~3.2 → ~6.4 cells/δ) at
-   fixed wire 0.002 / W = 0.15, projected drive only, separating the
-   remaining ~1.06% of ΔR error between skin-depth resolution and the
-   filamentary-reference mismatch (step 5 already attributed the wire's
-   ~0.53 pp). **Anchor:** Dodd–Deeds `ΔR = +3.2259615e-01 Ω`, step 2b's
-   5% ceiling inherited unchanged; result reported beside the
-   1.5834%/1.0562% ladder. **Cost gate is the point of no return:**
-   mesh-count probe then one `-n 4` solve; OOM or > 300 s ⇒ report and
-   stop (16 G cap is rank-blind, step 6); gate at `-n 2`,
-   `timeout 1200`. **Negative controls:** cite the σ-blind and
+   operator direction; ordered after item 1 only because item 1's
+   measurement has waited since step 6 — they are independent.)* Execute
+   the §7 `MAT-6` step-8 entry verbatim: `resolution_near` 0.005 →
+   0.0025 (~3.2 → ~6.4 cells/δ) at fixed wire 0.002 / W = 0.15,
+   projected drive only, separating the remaining ~1.06% of ΔR error
+   between skin-depth resolution and the filamentary-reference mismatch
+   (step 5 already attributed the wire's ~0.53 pp). **Anchor:**
+   Dodd–Deeds `ΔR = +3.2259615e-01 Ω`, step 2b's 5% ceiling inherited
+   unchanged; result reported beside the 1.5834%/1.0562% ladder. **Cost
+   gate is the point of no return:** mesh-count probe then one `-n 4`
+   solve; OOM or > 300 s ⇒ report and stop (the cap — now 64 G — is
+   total-footprint and rank-blind, step 6); gate at `-n 2`,
+   `timeout 1200`; rescope is a smaller ratio (0.005 → 0.0035), never a
+   raised timeout. **Negative controls:** cite the σ-blind and
    null-tagging records; σ = 0 `R = +0.0` exact on the new mesh; step
    4's < 0.01 pp wobble is the reality floor. **Negative result:** ΔR
    pinned near 1.06% attributes the residual to the coil model — report
    both numbers, annotate the §7 entry, stop.
+
+4. **`POST-4` step 1 — diagnose the centerline point-evaluation rank
+   dependence (standard; measurement only, no `src/` change).** Execute
+   the §7 `POST-4` step-1 entry verbatim: probe
+   (`scripts/probes/post4_step1_probe.py`, `mag6_step4_probe.py` mold)
+   on `examples/mri/01`'s debug preset as `EX-16` left it; per
+   centerline point at `-n 1/2/4` record claim multiplicity, global
+   claimed-cell sets, per-claiming-cell disagreement, `valid_mask`, and
+   the x = y = 1e-6 m ε-nudge re-measurement. **Anchor:** spread-carrying
+   points coincide with partition-varying claim sets (or mask holes),
+   and the nudged spread collapses to ≤ 0.1% vs the on-axis 23.5539% —
+   ≥ 235× separation, ceiling 3215× on record
+   (`20260810T170457Z_EX-16-spread-v2.log`). **Negative control:** the
+   phantom path's 0.007326% on the same solves, cited. **Cost:** solves
+   6 s / 4 s on record at `-n 2/4`; `-n 1` unmeasured — `timeout 600`
+   for that leg alone. **Traps:** the √3 single-point `eval` squeeze —
+   `.reshape(-1, 3)` (`MAG-6` step 4); complex build +
+   `FEM_EM_REQUIRE_COMPLEX=1`; claim counts are rank-local — reduce
+   before printing. **Negative result:** ownership refuted ⇒ the
+   per-point table localizes the 23% anyway — re-point the known-issues
+   entry at the measured locus, annotate the §7 entry, stop; item 5 is
+   then skipped.
+
+5. **`POST-4` step 2 — the min-global-cell tie-break (standard; depends
+   on item 4: execute only if step 1 confirmed partition-varying cell
+   choice; if item 4 did not land or refuted the mechanism, skip —
+   journal and stop rather than guessing at a fix).** Execute the §7
+   `POST-4` step-2 entry verbatim: replace `links[0]` + last-writer-wins
+   in `evaluate_vector_field_parallel` with selection by minimum global
+   cell index (partition-independent by construction). **Anchor:**
+   on-axis centerline spread across `-n 1/2/4` collapses 23.5539% →
+   ≤ 0.1%; non-regression — phantom-region stats and `tests/post`
+   reproduce their on-record digits. **Negative control:** the pre-fix
+   23.5539%, cited. **Traps:** ghost cells in the collision links;
+   preserve the complex scalar dtype path and the function signature.
+   **Scope boundary:** buys rank-invariance, not physics validation of
+   a shared-facet trace; the known-issues entry leaves only if the
+   anchor lands. **Negative result:** a deterministic tie-break that
+   does not collapse the spread — report the per-point table, entry
+   stays open, annotate, stop.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
