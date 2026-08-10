@@ -8265,3 +8265,89 @@ its §7 plan was corrected on 2026-08-09 (the `MAG-14` fixture it named does not
 exist); the real anchor is the straight-wire h-refinement in
 `tests/validation/test_convergence.py` at ~167 s, i.e. the standard tier at its
 ceiling — budget the full 180 s and expect no room for a second solve.
+
+---
+
+## 2026-08-10T05:10Z — `EX-13` — **incomplete (negative result, executed in full)**: the gauge floor changes nothing on this fixture, and the fixture is 23% rank-unstable either way
+
+**Slot.** 00:00 CDT scheduled implementer run, §9 On-deck item 4 (items 1–3
+done). Preflight clean, container Up 33 h, no `recovered/*` created.
+
+**What was tried — the §7 plan, verbatim and complete.** Sub-floor baselines
+first (`gauge_penalty=1e-3`, as on main) at `-n 2`
+(`20260810T050120Z_EX-13-subfloor-n2.log`, exit 0, 6 s) and `-n 4`
+(`…050133Z_EX-13-subfloor-n4.log`, exit 0, 4 s); then both call sites edited
+`1e-3 → 1.0` and the pair repeated at the floor (`…050150Z_EX-13-floor-n2.log`
+and `…050157Z_EX-13-floor-n4.log`, exit 0, 4 s each). All four via
+`./run_examples.sh -e mri:1 -n <p> -t 180` through the harness, standard tier,
+debug preset (5 centerline samples), 9261 cells. The anchor was then computed
+over the four logs in-container (`…050319Z_EX-13-spread.log`, exit 0), parsing
+the printed pairs rather than retyping them.
+
+**Measured numbers.** Relative spread `|a−b| / max(|a|,|b|)`, `-n 2` vs `-n 4`,
+across the five centerline (|E|, |B|) pairs:
+
+| | max spread | worst pair |
+|---|---:|---|
+| floor (`1.0`) | **23.5545%** | \|B\| z=+0.0225: 4.055231e-07 vs 5.304733e-07 |
+| sub-floor (`1e-3`) | **23.3010%** | \|B\| z=+0.0000: 4.909605e-07 vs 3.765620e-07 |
+
+Ratio sub-floor/floor **0.9892×**. Worst |E| spread **15.6832%** (z=+0.0450 m),
+*identical at both gauge settings to every printed digit*.
+
+**Both legs fail, and the second explains the first.** The anchor asserted
+< 5% at the floor: measured 23.55%, a factor of 4.7 over. The negative control
+required the sub-floor spread to be ≥ 2× the floor spread to claim
+discrimination: measured 0.99×. The reason the two settings are
+indistinguishable is not subtle — `TimeHarmonicSolver.solve` accepts
+`gauge_penalty` **for call-site compatibility and ignores it**
+(`src/fem_em_solver/core/time_harmonic.py:351`), so of the "both call sites"
+the plan asked to change, only the magnetostatic one can move a number, and it
+moves centerline |B| by < 0.6%. The `MAG-6` gate's 0.024% reading does not
+transfer: that fixture is a converged wire solve, this one is a coarse
+coil+phantom demo whose frequency-domain leg stops at `ksp_max_it=180` with
+`converged=False (reason=-3)`, `residual_norm=1.684628e+00` (bit-identical at
+both rank counts). An unconverged GMRES iterate is partition-dependent; no
+gauge setting addresses that.
+
+**Disposition, per the entry's own negative-result clause.** Gauge edits
+reverted — the example stays sub-floor at `1e-3`, so no on-record string in
+the file or any guide staled and none was touched. `WF-1` stays 🧪. Filed:
+known-issues entry ("`examples/mri/01` centerline samples are rank-dependent at
+~23%, at and below the gauge floor", cause partly diagnosed, resolver
+unassigned); §7 `EX-13` annotated 🟡 with the two decisions the review owes;
+table status ⬜ → 🟡; §9 item 4 annotated 🟡 with "do not re-run as-is" so the
+06:00 slot does not spend itself reproducing this. **No branch parked** — main
+carries no code change, because the code change is exactly what the finding
+says not to land yet.
+
+**The `EX-14` freshness branch fired a fourth consecutive time.** The
+doc-reference checker (`20260810T050349Z_EX-13-refcheck.log`, exit 1) flagged
+the same 5 `straight_wire*` artifacts, again **1.5 h old against the 1.0 h
+default window**, again unrelated to the chunk — and this time *without* any
+`--max-age-s` override and with no `-e 1` refresh performed (nothing in this
+chunk writes those artifacts, and refreshing them would have been unrelated
+work). Four runs in a row is no longer a coincidence: the default window
+measures *when an example was last run*, not whether a reference is dead. The
+`EX-8` recommendation stands and is now stronger — `EX-14` should change the
+default rather than add a regenerate mode, and should also settle whether
+`EX-12`'s "finish with the checker green" step is achievable at all outside
+the slot that ran the examples. Noted in the §7 `EX-14` entry.
+
+**Cost.** Standard tier declared throughout, `-n 2`/`-n 4`, `timeout 180`;
+~20 s of harness wall across six invocations (6 + 4 + 4 + 4 + 0 + 0 s). Nothing
+near a ceiling; no command approached the 20-minute cap. Total slot ~25 min.
+
+**Closes nothing.** No physics claim moved; this is a refuted hygiene anchor.
+
+**Next-attempt hypothesis.** The rank spread is the unconverged KSP, not the
+gauge or the sampling. Cheapest discriminator, and the shape a rescoped
+`EX-13` should take: rerun the same `-n 2`/`-n 4` pair with `ksp_max_it` raised
+until `converged=True` (or with a direct LU on this 9261-cell mesh, which is
+small enough), and re-measure the |E| spread. If it collapses, the finding is
+"the demo's spread is convergence, not partitioning" and a rank-stability
+anchor becomes gateable on a converged variant; if it survives, the sampling
+path itself is implicated and the `MAG-6` step-5 centerline-stability claim
+extension should stay deferred permanently. Either way the gauge-floor change
+is orthogonal and can land on its own merits — it costs < 0.6% on |B| and
+nothing on |E| — but it needs a decision, not this anchor.

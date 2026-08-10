@@ -4869,7 +4869,7 @@ mandate to displace the critical path.
 | `EX-10` | Gauge cross-check: penalty vs Lagrange-multiplier Coulomb gauge (Phase 1) | ⬜ | standard |
 | `EX-11` | Dodd–Deeds coil loading: ΔR vs closed form, eddy currents in ParaView | ✅ | standard |
 | `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ✅ | smoke |
-| `EX-13` | `examples/mri/01` at the validated gauge floor: rank-spread measured, on-record numbers refreshed | ⬜ | standard |
+| `EX-13` | `examples/mri/01` at the validated gauge floor: rank-spread measured, on-record numbers refreshed | 🟡 | standard |
 | `EX-14` | Straight-wire VTX export repair + the refcheck freshness branch exercised | ⬜ | standard |
 
 **`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
@@ -5233,6 +5233,46 @@ a floor solve that fails to converge or a spread ≥ 5% is a finding
 against the floor-on-this-fixture assumption — report in a §7 annotation,
 leave the example sub-floor, known-issues entry.
 
+> **`EX-13` 🟡 2026-08-10 (00:00 slot, §9 item 4) — executed, both legs
+> negative; the example stays sub-floor and the chunk needs a review
+> decision.** The four runner invocations ran as planned
+> (`20260810T050120Z_EX-13-subfloor-n2.log`, `…050133Z_EX-13-subfloor-n4`,
+> `…050150Z_EX-13-floor-n2`, `…050157Z_EX-13-floor-n4`; all exit 0, 6/4/4/4 s,
+> standard tier), and the spread computation over the four logs is
+> `20260810T050319Z_EX-13-spread.log` (exit 0).
+>
+> 1. **The anchor fails, by a factor of five.** Max `-n 2` vs `-n 4` relative
+>    spread across the five centerline (|E|, |B|) pairs **at the floor is
+>    23.5545%** (|B| at z = +0.0225 m: 4.055231e-07 vs 5.304733e-07), against
+>    the asserted **< 5%**. The largest |E| spread is 15.6832% (z = +0.0450 m).
+>    So the `MAG-6` gate-fixture reading of 0.024% does **not** transfer to this
+>    example: the gate samples a converged wire fixture, this example samples a
+>    coarse unconverged coil+phantom solve.
+> 2. **No discrimination, and the reason is structural.** Sub-floor max spread
+>    is **23.3010%** — ratio sub-floor/floor **0.9892×**, where the plan
+>    required ≥ 2× to claim discrimination. The five |E| spreads are
+>    *bit-identical* between floor and sub-floor because
+>    `TimeHarmonicSolver.solve` accepts `gauge_penalty` for call-site
+>    compatibility and **ignores it** (`core/time_harmonic.py:351`) — so the
+>    plan's "both call sites" premise is half-inert: only the magnetostatic
+>    site can move a number, and it moves |B| by < 0.6% at the centerline.
+>
+> Per the entry's negative-result clause the gauge edits were reverted and the
+> example is left sub-floor at `1e-3`; known-issues entry filed. **What the
+> review must decide:** (a) whether the floor change lands anyway on its merits
+> — it is nearly free here (E unaffected by construction, |B| ≤ 0.6%) but
+> cannot be justified by *this* anchor; and (b) whether a rank-stability anchor
+> on this fixture is salvageable at all, or whether the finding is simply that
+> an unconverged GMRES (`converged=False (reason=-3)`, `ksp_max_it=180`,
+> identical `residual_norm=1.684628e+00` at every rank count) produces a
+> partition-dependent iterate that no gauge setting can quiet. The 23% is a
+> property of the demo, not of the gauge.
+>
+> Not touched: `WF-1` stays 🧪 as scoped; the doc-reference checker was run
+> (`20260810T050349Z_EX-13-refcheck.log`) and exits 1 on
+> **artifact-freshness** for five `straight_wire*` files, unrelated to this
+> chunk — see the `EX-14` note below.
+
 **`EX-14` — straight-wire VTX export repair, and the refcheck freshness
 branch exercised** *(scoped 2026-08-09, 18:00 review; one run, standard
 tier; fixes the `EX-12` known-issues entry and the audit gap in the same
@@ -5262,6 +5302,18 @@ writer-succeeds + freshness pair alone, holding the chunk 🟡. **Does not
 close:** nothing physics-side; doc/example hygiene plus one artifact
 identity. **Negative result:** a round-trip mismatch is a real I/O
 finding — report the two numbers, stop, known-issues entry.
+>
+> *(2026-08-10, 00:00 slot: the freshness branch was observed firing
+> unprompted, at the **default** `--max-age-s`, in
+> `20260810T050349Z_EX-13-refcheck.log` — five `straight_wire*` references
+> flagged "stale in paraview_output/ (1.5 h old, limit 1.0 h)", exit 1, with
+> no `--max-age-s` override. Two consequences for this chunk: the negative
+> control is easier than scoped — no `--max-age-s 1` gymnastics needed, just
+> let the artifacts age — and the checker is **not** a standing tree gate,
+> since it goes red on any tree whose examples were last run over an hour
+> ago. Whether `EX-12`'s "finish with the checker green" step is even
+> achievable outside the slot that ran the examples is a question this chunk
+> should settle.)*
 
 > **`EX-4` ✅ 2026-08-09 (09:00 slot, §9 item 4).**
 > `examples/time_harmonic/01_lossy_plane_wave.py` lands — **the first example in
@@ -5919,7 +5971,14 @@ review's (2026-08-16) to spend.
    quiet) at the gate's own windows is a regression finding — report,
    stop, known-issues entry.
 
-4. **`EX-13` — `examples/mri/01` at the validated gauge floor
+4. 🟡 **executed 2026-08-10 (00:00 run) — negative result, needs a review
+   decision; do not re-run as-is.** Floor spread **23.5545%** against the
+   asserted < 5%, sub-floor **23.3010%** (ratio **0.9892×**, discrimination
+   needs ≥ 2×); the |E| legs are bit-identical floor vs sub-floor because
+   the time-harmonic solver ignores `gauge_penalty` by construction. Gauge
+   edits reverted, example left sub-floor, known-issues entry filed. The two
+   open decisions are in the §7 `EX-13` annotation. *(Original item text
+   follows.)* **`EX-13` — `examples/mri/01` at the validated gauge floor
    (standard).** Execute the §7 `EX-13` plan verbatim: both
    `gauge_penalty` call sites `1e-3 → 1.0`, `mri:1` at `-n 2`/`-n 4`
    floor and sub-floor (four ~10 s runs), refresh the on-record strings,

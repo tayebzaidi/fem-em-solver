@@ -989,6 +989,46 @@ redundant with the XDMF path that works. `PARAVIEW_GUIDE.md` now says the
 format is unavailable instead of telling readers to open a `.bp` directory
 that a run never writes. **Resolved by:** unassigned — needs a chunk.
 
+### `examples/mri/01` centerline samples are rank-dependent at ~23%, at and below the gauge floor
+
+**Test id:** none — `./run_examples.sh -e mri:1 -n 2` vs `-n 4` (the example
+is ungated by design, `WF-1` 🧪).
+**Symptom:** the five printed centerline `(z, |E|, |B|)` pairs differ between
+rank counts far beyond sampling noise. Worst pair at the validated gauge floor
+(`gauge_penalty=1.0`), z = +0.0225 m:
+
+```
+-n 2:  z=+0.0225 m -> |E|=2.708874e+02, |B|=4.055231e-07
+-n 4:  z=+0.0225 m -> |E|=2.592948e+02, |B|=5.304733e-07
+```
+
+— **23.5545%** max relative spread across the five pairs (|E| alone: 15.6832%
+at z = +0.0450 m). The phantom-region aggregates are stable to ~0.1%, so this
+is specific to the centerline point samples.
+
+**Verified at:** `3c9c0bf`, logs `20260810T050150Z_EX-13-floor-n2.log` /
+`…-floor-n4.log` (floor) and `…050120Z_EX-13-subfloor-n2.log` /
+`…050133Z_EX-13-subfloor-n4.log` (sub-floor `1e-3`), spread computation
+`20260810T050319Z_EX-13-spread.log`.
+
+**Cause:** partly diagnosed, and *not* the gauge. Sub-floor spread is
+**23.3010%** — 0.9892× the floor value, i.e. indistinguishable — and the |E|
+legs are bit-identical between the two settings because
+`TimeHarmonicSolver.solve` ignores `gauge_penalty`
+(`src/fem_em_solver/core/time_harmonic.py:351`). The leading suspect is the
+unconverged frequency-domain solve: GMRES stops at `ksp_max_it=180` with
+`converged=False (reason=-3)` and `residual_norm=1.684628e+00` (identical at
+both rank counts), so the returned iterate — not a converged solution — is
+partition-dependent. The magnetostatic |B| leg moves < 0.6% with the gauge, so
+it cannot account for a 23% spread either. Not confirmed: no run yet with a
+converged KSP.
+
+**Not fixed here:** `EX-13` was scoped as an example/hygiene chunk with a
+< 5% rank-stability anchor; the measurement refutes the anchor rather than the
+code, and the entry's own negative-result clause says report and stop.
+**Resolved by:** unassigned — needs a review decision (see the `EX-13`
+annotation in PROJECT_PLAN §7).
+
 ---
 
 ## Recording a new entry
