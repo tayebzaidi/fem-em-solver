@@ -4866,7 +4866,7 @@ mandate to displace the critical path.
 | `EX-7` | Waveguide/coax: the `TH-7` gated quantity as a runnable example | ✅ | standard |
 | `EX-8` | Resonance guard on a frequency sweep: the `TH-1` step-5 detector firing | ✅ | standard |
 | `EX-9` | Measured h-convergence rate as an example output (Phase 1) | ⬜ | standard |
-| `EX-10` | Gauge cross-check: penalty vs Lagrange-multiplier Coulomb gauge (Phase 1) | ⬜ | standard |
+| `EX-10` | Gauge cross-check: penalty vs Lagrange-multiplier Coulomb gauge (Phase 1) | ✅ | standard |
 | `EX-11` | Dodd–Deeds coil loading: ΔR vs closed form, eddy currents in ParaView | ✅ | standard |
 | `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ✅ | smoke |
 | `EX-13` | `examples/mri/01` at the validated gauge floor: rank-spread measured, on-record numbers refreshed | 🚫 | standard |
@@ -5058,7 +5058,48 @@ recorded.
 >   assert `0.7 < rate < 1.5` (the gate's own band; 1.10 on record);
 >   print the (h, error) table. Angle: the output quantity is the *rate* —
 >   no example shows convergence behaviour. Budget the full 180 s.
-> * **`EX-10`** — same magnetostatic fixture solved with the gauge penalty
+> * **`EX-10`** — ✅ **closed 2026-08-10 (06:00 run).**
+>   `examples/magnetostatics/05_gauge_cross_check.py`, dispatched as `-e 5`
+>   (real build), solves the imported `MAG-15` wire fixture
+>   (`tests/solver/test_gauge_lagrange.py` — geometry, `RESOLUTION`, and the
+>   same eight probe points, imported not restated) **twice on one mesh**, once
+>   per `GaugeMethod`. **Anchor:** probe-point
+>   `ErrorMetrics.l2_relative_error(b_lag, b_pen)` = **0.0004%** against the
+>   gate's 5% ceiling — the scalar `20260728T193524Z_MAG-15.log` never printed,
+>   so this run is now its record. **The negative control is measured, not just
+>   cited, and it is the reason the anchor means anything:** max|A| = 5.073e+01
+>   (penalty) vs **1.407e-09** (Lagrange), ratio **2.774e-11** against the
+>   gate's 1e-6 — matching the on-record 5.2e+01 / 1.6e-09 at the finer h, so
+>   the two solves demonstrably differ by eleven orders in `A` while agreeing to
+>   four decimals in `B`. The multiplier diagnostic is asserted to discriminate
+>   (`nan` for penalty, finite 2.083e+02 for Lagrange) and never pinned — the
+>   fixture's source is incompatible by construction (`J·n ≠ 0` on the end
+>   caps).
+>   **One gate beyond the plan's ask, for the export:** eight probes on one line
+>   say nothing about what ParaView colours, so agreement is re-measured as a
+>   volume integral `sqrt(∫|B_lag−B_pen|²dx / ∫|B_pen|²dx)` over the *exact CG1
+>   functions written to the XDMF* — **0.0033%**, both integrals allreduced
+>   before the division. 8× the probe figure and four orders inside the ceiling,
+>   which is the expected ordering (the volume norm includes the conductor
+>   interior and the wall region the probes never see). Its 5% bound is not
+>   inherited — no `MAG-15` assertion covers a volume norm — and is set equal to
+>   the probe anchor it corroborates, with the reason in the constant's comment.
+>   No `src/` change, so no regression re-run was owed. 14 055 cells, 0.5 s
+>   penalty / 2.3 s Lagrange, 5.1 s in-example. Guide
+>   `05_gauge_cross_check.md` written to the `EX-15` step-1 bar (the guide pass
+>   checks 6 examples now, up from 5). Logs
+>   `20260810T110301Z_EX-10-runner-list.log` (`-e 5` registered),
+>   `20260810T110311Z_EX-10-run1.log` (exit 0, 8 s harness-wall — passed first
+>   attempt, no bound was moved), `20260810T110431Z_EX-10-refcheck.log` (exit 1:
+>   the **freshness** branch again, 10 straight-wire/Helmholtz artifacts 1.5 h
+>   old against the 1.0 h window — same `EX-14` branch `EX-6` hit; the guide
+>   pass already PASSed here),
+>   `20260810T110453Z_EX-10-refcheck-refresh.log` (`-e 1,4`, 78 s — `-e 2`
+>   deliberately excluded, its 411 k-cell mesh is the expensive one and no
+>   `.xdmf` reference points at it), `20260810T110622Z_EX-10-refcheck2.log`
+>   (both passes PASS, 34 references). Phase-1 §5.4 shortfall is now **1**
+>   (`EX-9` outstanding). *(Original plan text follows.)* same magnetostatic
+>   fixture solved with the gauge penalty
 >   and the `MAG-15` Lagrange-multiplier gauge: assert the two B fields
 >   agree within the `MAG-15` gated tolerance; export both. Angle:
 >   formulation cross-validation.
@@ -5992,7 +6033,13 @@ review's (2026-08-16) to spend.
    is a finding against that example's record — journal it, do not thin
    the guide.
 
-2. **`EX-10` — gauge cross-check as a runnable example (standard).**
+2. ✅ **DONE 2026-08-10 (06:00 slot)** — passed first attempt, no bound moved:
+   probe rel diff **0.0004%** vs the 5% gate ceiling, max|A| ratio
+   **2.774e-11** vs 1e-6, and a volume-integral re-measure of the *exported*
+   fields at **0.0033%**. Guide written; both refcheck passes PASS after an
+   `-e 1,4` freshness refresh. See the `EX-10` annotation in §7. Phase-1 §5.4
+   shortfall now 1 (`EX-9`). **`EX-10` — gauge cross-check as a runnable
+   example (standard).**
    Execute the §7 backfill plan's `EX-10` bullet: the `MAG-15` wire
    fixture (`tests/solver/test_gauge_lagrange.py`, `wire_solutions`,
    `GaugeMethod`) solved with both the penalty and the

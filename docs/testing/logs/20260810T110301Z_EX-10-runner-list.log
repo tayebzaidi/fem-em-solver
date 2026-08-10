@@ -1,0 +1,61 @@
+# Test Run
+- Chunk: EX-10-runner-list
+- Commit: e1c2850becdce63b4d51ffedcc74de05ecb97ab6
+- Time (UTC): 2026-08-10 11:03:02
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: ./run_examples.sh --list
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 10 06:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc './run_examples.sh --list'
+Available examples:
+magnetostatics (default real build):
+  1 -> examples/magnetostatics/01_straight_wire.py
+  2 -> examples/magnetostatics/02_circular_loop.py
+  4 -> examples/magnetostatics/04_helmholtz_analytic_comparison.py
+  5 -> examples/magnetostatics/05_gauge_cross_check.py
+mri (complex build, sourced automatically):
+  mri:1 -> examples/mri/01_coil_phantom_fields.py
+  mri:2 -> examples/mri/02_mass_averaged_sar.py
+meshing (default real build, no solve):
+  mesh:1 -> examples/meshing/01_two_torus_ports.py
+  mesh:2 -> examples/meshing/02_cylindrical_phantom.py
+materials (complex build, sourced automatically):
+  mat:1 -> examples/materials/01_dodd_deeds_coil_loading.py
+time-harmonic (complex build, sourced automatically):
+  th:1 -> examples/time_harmonic/01_lossy_plane_wave.py
+  th:2 -> examples/time_harmonic/02_pec_cavity_resonances.py
+  th:3 -> examples/time_harmonic/03_dielectric_sphere_in_uniform_field.py
+  th:4 -> examples/time_harmonic/04_evanescent_waveguide_decay.py
+  th:5 -> examples/time_harmonic/05_resonance_guard_sweep.py
+ansys benchmarks (complex build, sourced automatically):
+  ans:1 -> examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py
+
+Selections: -e <n> | -e mri:<n> | -e mesh:<n> | -e mat:<n> | -e th:<n> | -e ans:<n> | -e all-mag | -e all
+
+## Exit
+- Status: 0
+- Elapsed (s): 0

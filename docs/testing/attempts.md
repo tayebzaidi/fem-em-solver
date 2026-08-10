@@ -8435,3 +8435,89 @@ now mechanical: write the guides, delete the five `EX-15 step 2` entries from
 control. Its numbers are the `EX-4`–`EX-7` / `th:5` gate records, so it needs
 **no** solves at all — not even a refresh, since those guides can cite log
 names rather than artifacts in `paraview_output/`.
+
+## 2026-08-10T11:10Z — `EX-10` — **complete**: two gauges, one mesh, agreement to 0.0004% with the eleven-order `A` separation measured rather than cited
+
+**Slot.** 06:00 CDT scheduled implementer run. Preflight clean, container Up
+39 h. §9 On-deck item 1 (`EX-15` step 1) was already done by the 04:30 slot, so
+item 2 — `EX-10` — was the first open one. Executed per the §7 `EX-4`…`EX-11`
+backfill plan's `EX-10` bullet, unmodified.
+
+**What landed.** `examples/magnetostatics/05_gauge_cross_check.py`, dispatched
+as `-e 5` (real build; magnetostatics does not solve in the frequency domain),
+plus its guide `05_gauge_cross_check.md`. The `MAG-15` fixture is *imported*
+from `tests/solver/test_gauge_lagrange.py` — `WIRE_RADIUS`, `DOMAIN_RADIUS`,
+`WIRE_LENGTH`, `RESOLUTION` and the same eight probe points `_POINTS` — via the
+repo-root-on-`sys.path` pattern `EX-4` established, never restated. One mesh,
+two solves, one per `GaugeMethod`.
+
+**Numbers** (`20260810T110311Z_EX-10-run1.log`, `-n 2`, 14 055 cells, 5.1 s
+in-example / 8 s harness-wall, exit 0 on the **first** attempt — no bound was
+moved, nothing was re-run to make it pass):
+
+| Quantity | Measured | Ceiling | Source of the ceiling |
+| --- | --- | --- | --- |
+| Probe vector L2 rel diff `b_lag` vs `b_pen` | **0.0004%** | 5% | `MAG-15` `test_penalty_and_lagrange_agree_on_b_field` |
+| Volume L2 rel diff, exported CG1 fields | **0.0033%** | 5% | set here, = the probe anchor (see below) |
+| max&#124;A&#124; penalty | 5.073e+01 | — | on record 5.2e+01 at h = 0.003 |
+| max&#124;A&#124; Lagrange | 1.407e-09 | — | on record 1.6e-09 |
+| Ratio Lagrange/penalty | **2.774e-11** | 1e-6 | `MAG-15` `test_lagrange_removes_null_space_component` |
+| Multiplier spread, Lagrange | 2.083e+02 (finite) | asserted finite only | mesh-dependent by design |
+| Multiplier spread, penalty | `nan` | asserted `nan` | `MAG-15` third test |
+
+The anchor scalar is **new to the record**: `20260728T193524Z_MAG-15.log`
+proves the two gauges give an identical *analytic* error to 4 s.f. but never
+prints the gauge-to-gauge difference itself. 0.0004% is now that number.
+
+**The negative control is measured, not cited, and it is load-bearing.** The
+plan allowed citing it; both solves happen anyway, so it cost nothing to
+re-measure. It matters because agreement between two paths is worthless if they
+are the same computation — eleven orders of separation in `A` (5.073e+01 vs
+1.407e-09) is the evidence that they are not, and the run asserts the ratio
+before it asserts anything about `B`. The guide reads them in that order too.
+
+**One bound was set here rather than inherited, and it is stated as such.**
+Eight probes on one line say nothing about the field ParaView colours, so the
+run re-measures agreement as `sqrt(∫|B_lag−B_pen|²dx / ∫|B_pen|²dx)` over the
+*exact CG1 functions written to the XDMF*. No `MAG-15` assertion covers a
+volume norm, so no gated bound existed to inherit; `VOLUME_AGREEMENT_RTOL` is
+set equal to the 5% probe anchor it corroborates, with the reason in the
+constant's comment. Measured 0.0033% — 8× the probe figure, which is the
+expected ordering, since the volume norm includes the conductor interior and
+the wall region the probes never visit. Both integrals are allreduced before
+the division (`fem.assemble_scalar` is rank-local; at `-n 2` a missing
+reduction here would have been silently wrong).
+
+**No `src/` change**, so no regression re-run was owed and none was made.
+
+**Doc gate.** `20260810T110431Z_EX-10-refcheck.log` exited 1 — the **guide**
+pass PASSed immediately (6 examples checked, up from 5), and every failure was
+the `EX-14` **freshness** branch: 10 straight-wire/Helmholtz artifacts 1.5 h
+old against the 1.0 h window, i.e. the same branch `EX-6` hit on 2026-08-10.
+Refreshed with `-e 1,4` (`20260810T110453Z_EX-10-refcheck-refresh.log`, 78 s,
+exit 0) — `-e 2` deliberately **excluded**: its 411 k-cell mesh is what made
+the 09:32 `-e all-mag` refresh cost 204 s, and no `.xdmf`/`.csv` reference in
+any guide points at it. `20260810T110622Z_EX-10-refcheck2.log`: both passes
+PASS, 34 references, 1 allowlisted.
+
+**One observation, not a defect, recorded so it is not rediscovered.** The two
+outermost probe points read 6.70e-06 / 6.48e-06 T against 1.311e-05 T at the
+six inner ones — a step, on a fixture whose h = 0.006 m is the width of the
+sampling window itself (`2a` = 0.006 to `0.4·R_domain` = 0.012). It is
+*identical in both gauges*, so this cross-check is blind to it by construction,
+and `MAG-15` samples the same points. It is an accuracy property of a
+deliberately coarse fixture, not an agreement property; the guide says so
+rather than hiding the table. No chunk proposed.
+
+**Cost.** Five harness commands: runner-list 0 s, the example 8 s, two checker
+runs at 1 s, the refresh 78 s. Standard tier declared, `-t 180` per example,
+`-n 2` throughout. Nothing within an order of the 20-minute ceiling. Slot used
+~45 min including the plan and guide writing.
+
+**Next-attempt hypothesis.** `EX-9` is now the only Phase-1 §5.4 shortfall and
+is the next On-deck item. Warning for whoever takes it: its corrected plan
+budgets the **full 180 s** (`20260730T125522Z_MAG-13.log` measured ~167 s for
+the three-resolution straight-wire h-refinement), so it is the first EX chunk
+in this backfill that genuinely sits at the standard-tier ceiling — cost-probe
+the coarsest rung before running all three, and expect to need a freshness
+refresh afterwards only if its guide cites artifacts rather than log names.
