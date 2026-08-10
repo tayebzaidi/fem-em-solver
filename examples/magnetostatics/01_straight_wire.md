@@ -1,0 +1,132 @@
+# `-e 1` — magnetic field of a straight wire
+
+Guide for `examples/magnetostatics/01_straight_wire.py`. Written to be followed
+without the source open.
+
+## 1. What this demonstrates
+
+The magnetostatic solver end to end on the simplest fixture there is: a
+finite-length current-carrying wire (1.0 A, length 0.3 m, radius 3 mm) inside a
+4 cm air cylinder, solved for the vector potential `A`, post-processed to `B`,
+and compared point by point against the infinite-wire closed form
+`B_θ = μ₀I/2πr`.
+
+**Read the accuracy honestly.** At this example's defaults the agreement is
+*poor by design*, and the numbers below are the record, not a bug:
+
+| Quantity | On record at `-n 2` |
+| --- | --- |
+| Relative L2 error vs `μ₀I/2πr` | **65.8739%** |
+| Max relative error | **85.2498%** |
+| Decay ratio `B(3 mm)/B(38 mm)`, numerical | **29.83** (analytic: **12.67**) |
+| Magnetic energy | **2.307201e-08 J** |
+| Mesh | **15 001 cells, 3 259 vertices** |
+
+Two independent reasons, both physical rather than numerical: the wire is
+**finite** (0.3 m) while the closed form is infinite, and the outer wall carries
+the **natural** condition `n × H = 0`, a magnetic mirror that inflates the field
+near the boundary. That is why the numerical decay is steeper than `1/r`.
+
+The **gated** wire result is a different fixture: `tests/validation/`
+`test_straight_wire.py` under `MAG-13`, which replaces the natural wall with an
+**analytic Dirichlet** boundary and lands at **12.75%** with measured
+convergence rate **1.10** (PROJECT_PLAN.md §7, `MAG-13` ✅, heavy tier). This
+example is the *demonstration*; `MAG-13` is the *gate*. Do not quote 65.87% as
+solver accuracy, and do not quote 12.75% as this example's output.
+
+## 2. How to run it
+
+```
+./run_examples.sh -e 1 -n 2 -t 180
+```
+
+Real DolfinX build; the runner selects it. Tier: **smoke** in practice — on
+record **5 s** at `-n 2` for the example alone
+(`20260810T033438Z_EX-8-refcheck-refresh.log`), 4 s of that in gmsh.
+
+Known, expected, and **not** a failure: the run prints, once per rank,
+
+```
+⚠ VTX output failed (ADIOS2 may not be available): Only (discontinuous)
+Lagrange functions are supported. Interpolate Functions before output.
+```
+
+The `.bp` export has never worked — `VTXWriter` is handed the N1curl `A`, and
+one `try` covers both writers so `B` is never attempted either (known-issues,
+"`01_straight_wire.py` never writes its VTX/`.bp` output"; diagnosed, unfixed,
+needs a chunk). Exit status is still 0 and the XDMF path is unaffected. Use
+XDMF, not `.bp`, for everything below.
+
+## 3. How to analyze it, step by step
+
+**Step 1 — check the printed numbers against the record above.** In order of
+diagnostic value:
+
+1. **Cell/vertex count** (`15 001` / `3 259`). If this moved, nothing below is
+   comparable — a mesh change explains any error change on its own.
+2. **Relative L2 error 65.8739%** and **max relative error 85.2498%**. These
+   reproduce digit for digit across runs and across the 2026-08-04 record
+   (`20260804T174037Z_MAG-EX.log`) — this example is deterministic at fixed
+   rank count, so *any* movement in these digits is a real change in the
+   solver, the mesh, or the evaluation path, not noise.
+3. **Decay ratio 29.83 vs analytic 12.67.** A ratio moving *toward* 12.67 means
+   the boundary treatment changed (that would be good, and would belong in a
+   chunk); a ratio moving further above means the mirror got stronger, i.e. the
+   wall moved inward.
+4. **Magnetic energy 2.307201e-08 J** — the one global, non-pointwise number
+   here; it catches errors that pointwise sampling at a handful of radii can
+   miss.
+
+**Step 2 — read the per-radius table.** The run prints `r`, `|B_num|`,
+`|B_ana|`, and their ratio at ~30 radii from the wire edge (3.00 mm) to
+38.00 mm. On record the ratio falls monotonically from ≈ 0.35 near the wire to
+≈ 0.15 at the outer radius. What to look at: **the shape, not the value.** A
+roughly flat ratio would mean a uniform scale error (suspect current density or
+`μ₀`); the observed *decreasing* ratio is the finite-length plus mirrored-wall
+signature. A ratio that jumps around non-monotonically points at the point
+evaluation, not the physics — evaluation must go through
+`post.evaluation.evaluate_vector_field_parallel`, never `B.eval(points,
+np.arange(n))` (that bug is what killed the deleted example 03, the
+predecessor of `04_helmholtz_analytic_comparison.py`).
+
+**Step 3 — check the field direction.** The component table at `(x, 0, 0)`
+should give `By` dominant with `Bx ≈ Bz ≈ 0` (exact answer: `Bx = Bz = 0`,
+`By = μ₀I/2πx`). On record at r = 3.00 mm the numerical field is
+`(2.08e-05, 9.13e-06, 4.37e-06) T` — the off-axis components are *not* small
+there, which is the near-wire discretisation showing; by r = 21.10 mm `By`
+dominates by two orders. Off-axis components growing with r instead of
+shrinking would mean the current is not confined to the wire volume.
+
+**Step 4 — open the fields in ParaView.**
+`File → Open → paraview_output/straight_wire_combined.xdmf` (one file carrying
+`A`, `B`, `B_analytical` and `CellTags` on the *same* grid):
+
+1. **Threshold** on `CellTags`, min 2 max 2, to drop the wire cells (tag 1 =
+   wire, 2 = air) — the closed form is singular inside the conductor, so
+   comparisons there are meaningless.
+2. **Glyph** on the thresholded data, orientation and scale by `B`. What to
+   look at: the arrows must circulate azimuthally around the wire axis with no
+   radial component and no swirl at the outer wall.
+3. **Calculator** with `mag(B - B_analytical)`: the pointwise error field.
+   What to look at: the error must be largest **near the wire surface and near
+   the outer wall** and smallest in the middle annulus. Error concentrated in
+   one azimuthal sector instead means a mesh or partitioning artefact — that is
+   worth a known-issues entry.
+
+Individual files (`straight_wire_A.xdmf`, `straight_wire_B.xdmf`,
+`straight_wire_B_analytical.xdmf`) carry the same mesh and `CellTags` if you
+prefer one field per reader.
+
+**Step 5 — the validation plot.** The run writes
+`paraview_output/straight_wire_validation.png`, `|B|` vs `r` for numerical and
+analytic. A copy regenerated on 2026-08-09 is committed at
+`examples/magnetostatics/straight_wire_validation.png` (provenance: `EX-12`;
+the original 2026-02-18 image predated the example's 2026-08-03 rewrite and was
+replaced). What to look at: two curves, both falling, the numerical one falling
+faster — the visual form of the 29.83 vs 12.67 ratio.
+
+## Related
+
+- ParaView workflow for this group: `examples/magnetostatics/PARAVIEW_GUIDE.md`.
+- Combined-file layout: `examples/magnetostatics/COMBINED_XDMF_README.md`.
+- The gated counterpart of this physics: `MAG-13` in PROJECT_PLAN.md §7.

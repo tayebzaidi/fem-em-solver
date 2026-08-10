@@ -4871,7 +4871,7 @@ mandate to displace the critical path.
 | `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ✅ | smoke |
 | `EX-13` | `examples/mri/01` at the validated gauge floor: rank-spread measured, on-record numbers refreshed | 🚫 | standard |
 | `EX-14` | Straight-wire VTX export repair + the refcheck freshness branch exercised | ⬜ | standard |
-| `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | ⬜ | standard |
+| `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | 🟡 (step 1 ✅ 2026-08-10: guide pass + 5 guides, exit 0, both negative controls; steps 2–3 owe 9, held in `PENDING_GUIDES`) | standard |
 | `EX-16` | `examples/mri/01`: converge the frequency-domain solve, then re-measure the rank spread | ⬜ | standard |
 
 **`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
@@ -5190,6 +5190,36 @@ scoping time; the split below is by runner group.
   points at the case's `SPEC.md`/`COMPARISON.md` rather than duplicating
   them; the `mri:1` guide keeps `EX-12`'s "ungated end-to-end demo"
   labelling.
+
+> **`EX-15` step 1 ✅ 2026-08-10 (04:30 slot, §9 item 1) — guide pass live,
+> five guides landed, both negative controls fired.** The pass asks
+> `scripts/run_examples.sh --list` for the example set (no second list to keep
+> in sync) and requires the three headings.
+> **Anchor:** `20260810T093807Z_EX-15-step1-refcheck-final.log`, exit 0, 1 s —
+> 14 examples enumerated, **5 checked against 3 required headings**, 9 pending,
+> `EX-12` reference pass green alongside (12 guides, 31 references).
+> **Negative controls:** guide absent → exit 1 naming
+> `examples/meshing/02_cylindrical_phantom.py`
+> (`…093747Z_EX-15-step1-negctl-missing-guide.log`); heading absent → exit 1
+> naming `How to run it` (`…093757Z_…-negctl-missing-heading.log`). Both
+> mutations reverted inside the same container invocation and verified
+> restored.
+> **Decision the step-1 bullet did not resolve:** exit 0 is unreachable while
+> steps 2–3 owe nine guides (first run flagged all nine,
+> `…093635Z_EX-15-step1-refcheck.log`, exit 1), so those nine sit in a
+> `PENDING_GUIDES` dict, each naming its owing step; an entry whose guide
+> *exists* is itself a violation, so steps 2–3 must delete their entries in the
+> commit that adds the guides. Steps 2–3 unchanged otherwise.
+> **Numbers:** `mesh:` guides copy the docstring records; the three
+> magnetostatics guides cite the one licensed refresh
+> `20260810T093203Z_EX-15-step1-refresh-allmag.log` (exit 0, 204 s, `-n 2`) —
+> `-e 1` 65.8739% / 85.2498% (identical to `20260804T174037Z_MAG-EX.log`),
+> `-e 2` 6.3046% / 13.5037% at 411 393 cells, `-e 4` centre rel err
+> 0.89% → 0.24% → 1.28% over h/a = 1.00 / 0.70 / 0.50. Each guide names the
+> gate its example is **not** (`MAG-13` 12.75% / 7.07%, `MAG-14` 0.728%).
+> **Finding, recorded not acted on:** `-e 4`'s centre error is non-monotone in
+> `h` — the systematic-floor signature its own docstring predicts, stated as
+> the result in the guide; `MAG-14` is a different fixture and is unaffected.
 
 **Traps:** on-record numbers are *copied* from §7/gate records, never
 re-measured — no solves are licensed here (checker runs are ~1 s; at most
@@ -5935,7 +5965,11 @@ Item 1 is the operator directive; items 2–3 are the remaining Phase-1
 deliberately absent: the second licensed discriminator slot is the weekly
 review's (2026-08-16) to spend.
 
-1. **`EX-15` step 1 — guide checker + template + `mesh:`/magnetostatics
+1. ✅ **DONE 2026-08-10 (04:30 slot)** — guide pass live, five guides landed,
+   both negative controls fired; the nine guides steps 2–3 owe are held in
+   `PENDING_GUIDES` with the owing step named. See the `EX-15` step-1
+   annotation in §7. **`EX-15` step 1 — guide checker + template +
+   `mesh:`/magnetostatics
    guides (standard; operator directive).** Execute the §7 `EX-15` step-1
    bullet: extend `scripts/testing/check_example_doc_references.py` with a
    guide pass — every `./run_examples.sh --list` entry must have a

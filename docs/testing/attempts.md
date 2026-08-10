@@ -8351,3 +8351,87 @@ path itself is implicated and the `MAG-6` step-5 centerline-stability claim
 extension should stay deferred permanently. Either way the gauge-floor change
 is orthogonal and can land on its own merits — it costs < 0.6% on |B| and
 nothing on |E| — but it needs a decision, not this anchor.
+
+---
+
+## 2026-08-10T09:39Z — `EX-15` step 1 — **complete**
+
+**Slot:** 04:30 CDT scheduled implementer run. **§9 item 1** (operator
+directive). Tree clean at preflight, container Up, no `recovered/*` action
+needed.
+
+**What landed.** The guide pass in
+`scripts/testing/check_example_doc_references.py` plus the five step-1 guides:
+`examples/meshing/01_two_torus_ports.md`,
+`examples/meshing/02_cylindrical_phantom.md`,
+`examples/magnetostatics/01_straight_wire.md`,
+`examples/magnetostatics/02_circular_loop.md`,
+`examples/magnetostatics/04_helmholtz_analytic_comparison.md`. The pass asks
+`scripts/run_examples.sh --list` for the example set rather than keeping a
+second list, so a new example is orphaned by the checker the moment it appears.
+
+**Anchor — met.** `20260810T093807Z_EX-15-step1-refcheck-final.log`, exit 0,
+1 s: 14 runnable examples enumerated, **5 checked against 3 required headings**,
+9 pending, and the `EX-12` reference pass green alongside it (12 guides, 31
+references, 1 allowlisted).
+
+**Negative controls, two-sided, both fired.**
+- guide absent → `20260810T093747Z_EX-15-step1-negctl-missing-guide.log`, exit
+  1, naming `examples/meshing/02_cylindrical_phantom.py` as the orphaned
+  script;
+- required heading absent (`## 2. How to run it` → `## 2. Invocation`) →
+  `20260810T093757Z_EX-15-step1-negctl-missing-heading.log`, exit 1, naming
+  the heading.
+Both mutations were made and reverted inside the same container invocation
+(host `mv` is not allowlisted); restoration verified on the host and by the
+final green run above.
+
+**Design decision the §7 entry did not resolve, and the reason it was needed.**
+Step 1's anchor asks for checker **exit 0** while steps 2–3 have not written
+their nine guides — with the pass simply on, the first run flagged all nine
+(`20260810T093635Z_EX-15-step1-refcheck.log`, exit 1) and exit 0 was
+unreachable. Rather than weaken the pass or defer the anchor, the nine are
+listed in a `PENDING_GUIDES` dict, each entry naming the step that owes it
+(step 2: the five `th:`; step 3: `mat:`, both `mri:`, `ans:`), following the
+existing `ALLOWLIST` idiom of mandatory reasons. The list cannot rot into a
+permanent exemption: an entry whose guide **does** exist is itself a violation,
+so steps 2–3 must delete their entries in the commit that adds the guides.
+
+**One doc-side finding.** Three of the new guides named the deleted
+`03_helmholtz_coil.py` while explaining the `B.eval(points, np.arange(n))`
+defect it died of; the `EX-12` reference pass correctly flagged all three
+(same log as above). Reworded to "the deleted example 03" — the checker
+discriminating against a guide written in the same slot is the pass working.
+
+**Numbers, provenance.** `mesh:1`/`mesh:2` guides copy the on-record values
+from the script docstrings (`GEO-8`/`GEO-10`/`GEO-13`; 79 534 cells / 13.1 s
+and 5 717 cells / 0.7 s; heptagon ratio `0.8710264` to 1.11e-16). The three
+magnetostatics guides quote the licensed refresh run
+`20260810T093203Z_EX-15-step1-refresh-allmag.log` (exit 0, 204 s, `-n 2`,
+`-e all-mag -t 180`): `-e 1` L2 **65.8739%** / max **85.2498%** / energy
+**2.307201e-08 J** (identical to the 2026-08-04 record
+`20260804T174037Z_MAG-EX.log`); `-e 2` 411 393 cells, centre `B_z`
+**2.974560e-05 T** vs analytic **3.141593e-05 T**, L2 **6.3046%**, max
+**13.5037%**, energy **2.466288e-08 J**; `-e 4` three rungs — centre rel err
+**0.89% → 0.24% → 1.28%** at h/a = 1.00 / 0.70 / 0.50 (70 054 / 103 984 /
+160 478 cells), max on-axis **7.98% → 6.07% → 4.05%**. Each guide states the
+gate its example is *not* (`MAG-13` wire 12.75% / loop 7.07%, `MAG-14` 0.728%)
+so no example number can be read as a solver claim.
+
+**Second finding, physics-side, for the review to note rather than act on.**
+`-e 4`'s centre error is **not monotone in h** — the sweep walks 0.89 → 0.24 →
+1.28%, which is what the script's own docstring predicts when the systematic
+floors (finite `a/R = 0.25`, domain truncation) dominate discretisation. The
+guide states it as the result rather than smoothing it. No chunk is proposed:
+`MAG-14` is gated on a different fixture and is unaffected.
+
+**Cost.** One licensed `-e all-mag` refresh (204 s, standard tier, `-t 180`
+per example, `-n 2`) plus five checker runs at 1 s each. Nothing near the
+20-minute ceiling. Slot ~65 min, the refresh overlapping the guide writing.
+
+**Next-attempt hypothesis.** Step 2 (the five `th:` guides) is unblocked and
+now mechanical: write the guides, delete the five `EX-15 step 2` entries from
+`PENDING_GUIDES`, and the same checker command is both anchor and negative
+control. Its numbers are the `EX-4`–`EX-7` / `th:5` gate records, so it needs
+**no** solves at all — not even a refresh, since those guides can cite log
+names rather than artifacts in `paraview_output/`.
