@@ -1,0 +1,67 @@
+# Test Run
+- Chunk: EX-7-gate
+- Commit: 9f67a5f97924a1be5073a68282b6061ebeabd2c0
+- Time (UTC): 2026-08-10 02:03:55
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: ./run_examples.sh -e th:4 -n 2 -t 180
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  9 21:03 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc './run_examples.sh -e th:4 -n 2 -t 180'
+Running 1 example(s) with mpiexec -n 2 (timeout 180s each)
+COMPOSE_FILE=/home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+
+==> examples/time_harmonic/04_evanescent_waveguide_decay.py (complex build)
+========================================================================
+EX-7 — evanescent TE10: decay with no loss anywhere in the problem
+========================================================================
+
+[geometry] PEC guide 0.05 x 0.025 x 0.05 m; the exact evanescent field is Dirichlet data on the whole boundary, which pins the two end faces — the slope between them is the solver's own output
+[material] eps_r = 1, mu_r = 1, sigma = 0 — lossless, so nothing in the medium can be causing the decay, and the phasor must come out real
+[regime] f = 2.4 GHz against the TE10 cutoff f_c = c/2a = 2.998 GHz: below cutoff, so the mode is evanescent and gamma is real (no pole in the band)
+[closed form] k_c = 62.8319 1/m, k0 = 50.3003 1/m, gamma = sqrt(k_c^2 - k0^2) = 37.652670 Np/m (gamma*L = 1.883, an amplitude drop of 6.57x across the guide)
+[vs EX-4] `EX-4` decays because Im(eps_c) absorbs the wave; here the operator's real part alone does it, and a solver blind to k0 would still decay — at k_c = 62.83 Np/m, 1.67x too fast, at every frequency
+
+[solve] 41472 cells (n = 24 — the `TH-7` gate's finer mesh), solved in 4.5 s
+[decay] 41 probe points on an off-lattice line, fit window z/L in [0.15, 0.85] (the drive and far faces are excluded — fitting them fits the boundary data): gamma = 37.650399 Np/m vs closed form 37.652670 Np/m (0.006%, ceiling 5%, 0.006% on the TH-7 record)
+[field] whole-domain relative L2 error 4.406648e-02 (4.406648e-02 on the record), residual |Im E_y|/|Re E_y| on the line 0.000e+00 — lossless and real-data, so the quadrature component is round-off or the convention has leaked
+
+[cross-check] the same decay, refitted from the CG1 array that is written to XDMF: gamma = 37.606274 Np/m, 0.117% from the N1curl fit — so what ParaView colours is the field the anchor was measured on, not a look-alike
+[mode profile] 25 points across the guide at z = 0.50 L, x/a in [0.12, 0.88]: peak-normalised |E_y| is 0.200% RMS from sin(pi x/a) — the TE10 half-arch is in the exported array, not just in the picture
+
+[control] this gate cannot pass by reading back its own boundary data, and the `TH-7` gate measured that: a k0-blind solver returns gamma = k_c = 62.8319 Np/m at *every* frequency, so its gamma across the gate's 1.0/2.4/2.8 GHz sweep would have ratio 1.0. The measured ratio was 2.6373 against the closed form's 2.6383 (0.038%), asserted > 2.0 — cited from 20260731T123411Z_TH-7-gate-final.log, not re-run (sweep frequencies 1.0, 2.4, 2.8 GHz). This run's own share of that control: gamma = 37.6504 sits 1.67x below k_c, which a k0-blind operator cannot do at any mesh
+
+[paraview] wrote /workspace/examples/time_harmonic/paraview_output/evanescent_waveguide_combined.xdmf
+[paraview] |E| spans 5.147567e-17 … 1.000725e+00 V/m over the guide — the floor is the PEC side wall at x = 0, a, where sin(pi x/a) pins the field to zero, and the peak is the drive face
+[paraview] colour by `E_magnitude`: `Plot Over Line` along z on a log scale is the straight line whose slope is the gamma asserted above; the same filter along x at fixed z is the sin(pi x/a) half-arch.
+
+All assertions hold. Total elapsed 5.1 s.
+
+Done.
+
+## Exit
+- Status: 0
+- Elapsed (s): 7

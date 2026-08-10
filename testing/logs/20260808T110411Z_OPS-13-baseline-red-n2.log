@@ -1,0 +1,301 @@
+# Test Run
+- Chunk: OPS-13-baseline-red-n2
+- Commit: 52baacbff75c402e8d289acc42398c66757f066e
+- Time (UTC): 2026-08-08 11:04:12
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 120 mpiexec -n 2 python3 -m pytest tests/materials/test_material_map_rank_safety.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  8 06:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 120 mpiexec -n 2 python3 -m pytest tests/materials/test_material_map_rank_safety.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 3 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 3 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank FAILED
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+Loguru caught a signal: SIGTERM
+
+Loguru caught a signal: SIGTERM
+Stack trace:
+113     0x63ec3653aba5 _start + 37
+112     0x70514ca6ae40 __libc_start_main + 128
+111     0x70514ca6ad90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x70514ca6ad90]
+110     0x63ec3653acad Py_BytesMain + 45
+109     0x63ec36564288 Py_RunMain + 296
+108     0x63ec365655dd python3(+0x2575dd) [0x63ec365655dd]
+107     0x63ec3646e70c _PyFunction_Vectorcall + 124
+106     0x63ec36456e0d _PyEval_EvalFrameDefault + 1725
+105     0x63ec3646e70c _PyFunction_Vectorcall + 124
+104     0x63ec36456e0d _PyEval_EvalFrameDefault + 1725
+103     0x63ec3646e969 python3(+0x160969) [0x63ec3646e969]
+102     0x63ec3654db0d python3(+0x23fb0d) [0x63ec3654db0d]
+101     0x63ec36547cf6 PyEval_EvalCode + 134
+100     0x63ec36547e56 python3(+0x239e56) [0x63ec36547e56]
+99      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+98      0x63ec3646e70c _PyFunction_Vectorcall + 124
+97      0x63ec36456e0d _PyEval_EvalFrameDefault + 1725
+96      0x63ec3646e70c _PyFunction_Vectorcall + 124
+95      0x63ec3645d908 _PyEval_EvalFrameDefault + 29112
+94      0x63ec364645eb _PyObject_MakeTpCall + 603
+93      0x63ec365921e0 python3(+0x2841e0) [0x63ec365921e0]
+92      0x63ec3647954c _PyObject_Call_Prepend + 92
+91      0x63ec3646382d _PyObject_FastCallDictTstate + 365
+90      0x63ec3646e70c _PyFunction_Vectorcall + 124
+89      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+88      0x63ec3647c4e1 python3(+0x16e4e1) [0x63ec3647c4e1]
+87      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+86      0x63ec3646e70c _PyFunction_Vectorcall + 124
+85      0x63ec364592c1 _PyEval_EvalFrameDefault + 11121
+84      0x63ec3646e70c _PyFunction_Vectorcall + 124
+83      0x63ec36456e0d _PyEval_EvalFrameDefault + 1725
+82      0x63ec3646e70c _PyFunction_Vectorcall + 124
+81      0x63ec36456e0d _PyEval_EvalFrameDefault + 1725
+80      0x63ec3646e70c _PyFunction_Vectorcall + 124
+79      0x63ec3645d908 _PyEval_EvalFrameDefault + 29112
+78      0x63ec364645eb _PyObject_MakeTpCall + 603
+77      0x63ec365921e0 python3(+0x2841e0) [0x63ec365921e0]
+76      0x63ec3647954c _PyObject_Call_Prepend + 92
+75      0x63ec3646382d _PyObject_FastCallDictTstate + 365
+74      0x63ec3646e70c _PyFunction_Vectorcall + 124
+73      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+72      0x63ec3647c4e1 python3(+0x16e4e1) [0x63ec3647c4e1]
+71      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+70      0x63ec3646e70c _PyFunction_Vectorcall + 124
+69      0x63ec364592c1 _PyEval_EvalFrameDefault + 11121
+68      0x63ec3646e70c _PyFunction_Vectorcall + 124
+67      0x63ec3645d908 _PyEval_EvalFrameDefault + 29112
+66      0x63ec364645eb _PyObject_MakeTpCall + 603
+65      0x63ec365921e0 python3(+0x2841e0) [0x63ec365921e0]
+64      0x63ec3647954c _PyObject_Call_Prepend + 92
+63      0x63ec3646382d _PyObject_FastCallDictTstate + 365
+62      0x63ec3646e70c _PyFunction_Vectorcall + 124
+61      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+60      0x63ec3647c4e1 python3(+0x16e4e1) [0x63ec3647c4e1]
+59      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+58      0x63ec3646e70c _PyFunction_Vectorcall + 124
+57      0x63ec364592c1 _PyEval_EvalFrameDefault + 11121
+56      0x63ec3646e70c _PyFunction_Vectorcall + 124
+55      0x63ec364580d1 _PyEval_EvalFrameDefault + 6529
+54      0x63ec3646e70c _PyFunction_Vectorcall + 124
+53      0x63ec36456e0d _PyEval_EvalFrameDefault + 1725
+52      0x63ec3646e70c _PyFunction_Vectorcall + 124
+51      0x63ec364592c1 _PyEval_EvalFrameDefault + 11121
+50      0x63ec3646e70c _PyFunction_Vectorcall + 124
+49      0x63ec364580d1 _PyEval_EvalFrameDefault + 6529
+48      0x63ec3647c4e1 python3(+0x16e4e1) [0x63ec3647c4e1]
+47      0x63ec36456e0d _PyEval_EvalFrameDefault + 1725
+46      0x63ec3646e70c _PyFunction_Vectorcall + 124
+45      0x63ec364592c1 _PyEval_EvalFrameDefault + 11121
+44      0x63ec3647d12b PyObject_Call + 187
+43      0x63ec365921e0 python3(+0x2841e0) [0x63ec365921e0]
+42      0x63ec3647954c _PyObject_Call_Prepend + 92
+41      0x63ec3646382d _PyObject_FastCallDictTstate + 365
+40      0x63ec3646e70c _PyFunction_Vectorcall + 124
+39      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+38      0x63ec3647c4e1 python3(+0x16e4e1) [0x63ec3647c4e1]
+37      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+36      0x63ec3646e70c _PyFunction_Vectorcall + 124
+35      0x63ec364592c1 _PyEval_EvalFrameDefault + 11121
+34      0x63ec3646e70c _PyFunction_Vectorcall + 124
+33      0x63ec36456f52 _PyEval_EvalFrameDefault + 2050
+32      0x63ec3646e70c _PyFunction_Vectorcall + 124
+31      0x63ec3645d908 _PyEval_EvalFrameDefault + 29112
+30      0x63ec364645eb _PyObject_MakeTpCall + 603
+29      0x63ec365921e0 python3(+0x2841e0) [0x63ec365921e0]
+28      0x63ec3647954c _PyObject_Call_Prepend + 92
+27      0x63ec3646382d _PyObject_FastCallDictTstate + 365
+26      0x63ec3646e70c _PyFunction_Vectorcall + 124
+25      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+24      0x63ec3647c4e1 python3(+0x16e4e1) [0x63ec3647c4e1]
+23      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+22      0x63ec3646e70c _PyFunction_Vectorcall + 124
+21      0x63ec364592c1 _PyEval_EvalFrameDefault + 11121
+20      0x63ec3646e70c _PyFunction_Vectorcall + 124
+19      0x63ec364592c1 _PyEval_EvalFrameDefault + 11121
+18      0x63ec3647d192 PyObject_Call + 290
+17      0x63ec3646e70c _PyFunction_Vectorcall + 124
+16      0x63ec364580d1 _PyEval_EvalFrameDefault + 6529
+15      0x63ec3646e70c _PyFunction_Vectorcall + 124
+14      0x63ec36456f52 _PyEval_EvalFrameDefault + 2050
+13      0x63ec3646e70c _PyFunction_Vectorcall + 124
+12      0x63ec3645c8a2 _PyEval_EvalFrameDefault + 24914
+11      0x63ec3647c7bb python3(+0x16e7bb) [0x63ec3647c7bb]
+10      0x63ec364645eb _PyObject_MakeTpCall + 603
+9       0x63ec3646de0e python3(+0x15fe0e) [0x63ec3646de0e]
+8       0x70513d7f65dc /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0xb25dc) [0x70513d7f65dc]
+7       0x70513d962062 /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0x21e062) [0x70513d962062]
+6       0x70513d9560b9 /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0x2120b9) [0x70513d9560b9]
+5       0x705146e619c8 PMPI_Waitall + 136
+4       0x7051470906da /usr/local/lib/libmpi.so.12(+0x3b56da) [0x7051470906da]
+3       0x7051470900a9 /usr/local/lib/libmpi.so.12(+0x3b50a9) [0x7051470900a9]
+2       0x70514708b880 /usr/local/lib/libmpi.so.12(+0x3b0880) [0x70514708b880]
+1       0x705147089c70 /usr/local/lib/libmpi.so.12(+0x3aec70) [0x705147089c70]
+0       0x70514ca83520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x70514ca83520]
+2026-08-08 11:06:12.817 ( 119.538s) [main            ]                       :0     FATL| Signal: SIGTERM
+Stack trace:
+[truncated]
+123     0x5aede82f170c _PyFunction_Vectorcall + 124
+122     0x5aede82d9e0d _PyEval_EvalFrameDefault + 1725
+121     0x5aede82f170c _PyFunction_Vectorcall + 124
+120     0x5aede82e0908 _PyEval_EvalFrameDefault + 29112
+119     0x5aede82e75eb _PyObject_MakeTpCall + 603
+118     0x5aede84151e0 python3(+0x2841e0) [0x5aede84151e0]
+117     0x5aede82fc54c _PyObject_Call_Prepend + 92
+116     0x5aede82e682d _PyObject_FastCallDictTstate + 365
+115     0x5aede82f170c _PyFunction_Vectorcall + 124
+114     0x5aede82df8a2 _PyEval_EvalFrameDefault + 24914
+113     0x5aede82ff4e1 python3(+0x16e4e1) [0x5aede82ff4e1]
+112     0x5aede82df8a2 _PyEval_EvalFrameDefault + 24914
+111     0x5aede82f170c _PyFunction_Vectorcall + 124
+110     0x5aede82dc2c1 _PyEval_EvalFrameDefault + 11121
+109     0x5aede82f170c _PyFunction_Vectorcall + 124
+108     0x5aede82d9e0d _PyEval_EvalFrameDefault + 1725
+107     0x5aede82f170c _PyFunction_Vectorcall + 124
+106     0x5aede82d9e0d _PyEval_EvalFrameDefault + 1725
+105     0x5aede82f170c _PyFunction_Vectorcall + 124
+104     0x5aede82e0908 _PyEval_EvalFrameDefault + 29112
+103     0x5aede82e75eb _PyObject_MakeTpCall + 603
+102     0x5aede84151e0 python3(+0x2841e0) [0x5aede84151e0]
+101     0x5aede82fc54c _PyObject_Call_Prepend + 92
+100     0x5aede82e682d _PyObject_FastCallDictTstate + 365
+99      0x5aede82f170c _PyFunction_Vectorcall + 124
+98      0x5aede82df8a2 _PyEval_EvalFrameDefault + 24914
+97      0x5aede82ff4e1 python3(+0x16e4e1) [0x5aede82ff4e1]
+96      0x5aede82df8a2 _PyEval_EvalFrameDefault + 24914
+95      0x5aede82f170c _PyFunction_Vectorcall + 124
+94      0x5aede82dc2c1 _PyEval_EvalFrameDefault + 11121
+93      0x5aede82f170c _PyFunction_Vectorcall + 124
+92      0x5aede82e0908 _PyEval_EvalFrameDefault + 29112
+91      0x5aede82e75eb _PyObject_MakeTpCall + 603
+90      0x5aede84151e0 python3(+0x2841e0) [0x5aede84151e0]
+89      0x5aede82fc54c _PyObject_Call_Prepend + 92
+88      0x5aede82e682d _PyObject_FastCallDictTstate + 365
+87      0x5aede82f170c _PyFunction_Vectorcall + 124
+86      0x5aede82df8a2 _PyEval_EvalFrameDefault + 24914
+85      0x5aede82ff4e1 python3(+0x16e4e1) [0x5aede82ff4e1]
+84      0x5aede82df8a2 _PyEval_EvalFrameDefault + 24914
+83      0x5aede82f170c _PyFunction_Vectorcall + 124
+82      0x5aede82dc2c1 _PyEval_EvalFrameDefault + 11121
+81      0x5aede82f170c _PyFunction_Vectorcall + 124
+80      0x5aede82db0d1 _PyEval_EvalFrameDefault + 6529
+79      0x5aede82f170c _PyFunction_Vectorcall + 124
+78      0x5aede82d9e0d _PyEval_EvalFrameDefault + 1725
+77      0x5aede82f170c _PyFunction_Vectorcall + 124
+76      0x5aede82dc2c1 _PyEval_EvalFrameDefault + 11121
+75      0x5aede82f170c _PyFunction_Vectorcall + 124
+74      0x5aede82db0d1 _PyEval_EvalFrameDefault + 6529
+73      0x5aede82ff4e1 python3(+0x16e4e1) [0x5aede82ff4e1]
+72      0x5aede82d9e0d _PyEval_EvalFrameDefault + 1725
+71      0x5aede82f170c _PyFunction_Vectorcall + 124
+70      0x5aede82dc2c1 _PyEval_EvalFrameDefault + 11121
+69      0x5aede830012b PyObject_Call + 187
+68      0x5aede84151e0 python3(+0x2841e0) [0x5aede84151e0]
+67      0x5aede82fc54c _PyObject_Call_Prepend + 92
+66      0x5aede82e682d _PyObject_FastCallDictTstate + 365
+65      0x5aede82f170c _PyFunction_Vectorcall + 124
+64      0x5aede82df8a2 _PyEval_EvalFrameDefault + 24914
+63      0x5aede82ff4e1 python3(+0x16e4e1) [0x5aede82ff4e1]
+62      0x5aede82df8a2 _PyEval_EvalFrameDefault + 24914
+61      0x5aede82f170c _PyFunction_Vectorcall + 124
+60      0x5aede82dc2c1 _PyEval_EvalFrameDefault + 11121
+59      0x5aede82f170c _PyFunction_Vectorcall + 124
+58      0x5aede82d9f52 _PyEval_EvalFrameDefault + 2050
+57      0x5aede82f170c _PyFunction_Vectorcall + 124
+56      0x5aede82d9f52 _PyEval_EvalFrameDefault + 2050
+55      0x5aede82f170c _PyFunction_Vectorcall + 124
+54      0x5aede82d9f52 _PyEval_EvalFrameDefault + 2050
+53      0x5aede82f170c _PyFunction_Vectorcall + 124
+52      0x5aede82d9f52 _PyEval_EvalFrameDefault + 2050
+51      0x5aede82f170c _PyFunction_Vectorcall + 124
+50      0x5aede82d9f52 _PyEval_EvalFrameDefault + 2050
+49      0x5aede82f170c _PyFunction_Vectorcall + 124
+48      0x5aede82d9f52 _PyEval_EvalFrameDefault + 2050
+47      0x5aede82f170c _PyFunction_Vectorcall + 124
+46      0x5aede82db0d1 _PyEval_EvalFrameDefault + 6529
+45      0x5aede82ff4e1 python3(+0x16e4e1) [0x5aede82ff4e1]
+44      0x5aede82e0908 _PyEval_EvalFrameDefault + 29112
+43      0x5aede82e75eb _PyObject_MakeTpCall + 603
+42      0x5aede84151e0 python3(+0x2841e0) [0x5aede84151e0]
+41      0x5aede82fc54c _PyObject_Call_Prepend + 92
+40      0x5aede82e682d _PyObject_FastCallDictTstate + 365
+39      0x5aede82f170c _PyFunction_Vectorcall + 124
+38      0x5aede82df8a2 _PyEval_EvalFrameDefault + 24914
+37      0x5aede82ff4e1 python3(+0x16e4e1) [0x5aede82ff4e1]
+36      0x5aede82df8a2 _PyEval_EvalFrameDefault + 24914
+35      0x5aede82f170c _PyFunction_Vectorcall + 124
+34      0x5aede82dc2c1 _PyEval_EvalFrameDefault + 11121
+33      0x5aede82f170c _PyFunction_Vectorcall + 124
+32      0x5aede82d9e0d _PyEval_EvalFrameDefault + 1725
+31      0x5aede82f170c _PyFunction_Vectorcall + 124
+30      0x5aede82dc2c1 _PyEval_EvalFrameDefault + 11121
+29      0x5aede82f170c _PyFunction_Vectorcall + 124
+28      0x5aede82df8a2 _PyEval_EvalFrameDefault + 24914
+27      0x5aede82f170c _PyFunction_Vectorcall + 124
+26      0x5aede82d9e0d _PyEval_EvalFrameDefault + 1725
+25      0x5aede82f170c _PyFunction_Vectorcall + 124
+24      0x5aede82e01f1 _PyEval_EvalFrameDefault + 27297
+23      0x5aede82e75eb _PyObject_MakeTpCall + 603
+22      0x5aede82f0e0e python3(+0x15fe0e) [0x5aede82f0e0e]
+21      0x7421a54db5dc /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0xb25dc) [0x7421a54db5dc]
+20      0x7421a56c178b /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0x29878b) [0x7421a56c178b]
+19      0x7421a56767b6 /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0x24d7b6) [0x7421a56767b6]
+18      0x7421a5746db7 /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0x31ddb7) [0x7421a5746db7]
+17      0x7421a56c25b1 /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0x2995b1) [0x7421a56c25b1]
+16      0x7421a5664cf1 /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0x23bcf1) [0x7421a5664cf1]
+15      0x7421a569d339 /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0x274339) [0x7421a569d339]
+14      0x5aede8398e5b PyObject_CallObject + 187
+13      0x5aede82f0e0e python3(+0x15fe0e) [0x5aede82f0e0e]
+12      0x7421a54db5dc /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0xb25dc) [0x7421a54db5dc]
+11      0x7421a5699811 /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0x270811) [0x7421a5699811]
+10      0x7421a5674d91 /usr/local/dolfinx-real/lib/python3.10/dist-packages/dolfinx/cpp.cpython-310-x86_64-linux-gnu.so(+0x24bd91) [0x7421a5674d91]
+9       0x7421a53992bc /usr/local/dolfinx-real/lib/libdolfinx.so.0.7(+0x16b2bc) [0x7421a53992bc]
+8       0x7421a53991c5 /usr/local/dolfinx-real/lib/libdolfinx.so.0.7(+0x16b1c5) [0x7421a53991c5]
+7       0x7421a538a3d7 dolfinx::mesh::build_dual_graph(int, dolfinx::graph::AdjacencyList<long> const&, int) + 663
+6       0x7421a5385f60 /usr/local/dolfinx-real/lib/libdolfinx.so.0.7(+0x157f60) [0x7421a5385f60]
+5       0x7421aea1d1ea PMPI_Allreduce + 2026
+4       0x7421aecf8b9f /usr/local/lib/libmpi.so.12(+0x32db9f) [0x7421aecf8b9f]
+3       0x7421aecf775e /usr/local/lib/libmpi.so.12(+0x32c75e) [0x7421aecf775e]
+2       0x7421aecf72f3 /usr/local/lib/libmpi.so.12(+0x32c2f3) [0x7421aecf72f3]
+1       0x7421aecdc762 /usr/local/lib/libmpi.so.12(+0x311762) [0x7421aecdc762]
+0       0x7421b4773520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x7421b4773520]
+2026-08-08 11:06:12.817 ( 119.546s) [main            ]                       :0     FATL| Signal: SIGTERM
+
+## Exit
+- Status: 124
+- Elapsed (s): 120

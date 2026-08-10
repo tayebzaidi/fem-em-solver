@@ -1,0 +1,96 @@
+# Test Run
+- Chunk: OPS-13-gate-n2
+- Commit: 52baacbff75c402e8d289acc42398c66757f066e
+- Time (UTC): 2026-08-08 11:03:24
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/materials/test_material_map_rank_safety.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  8 06:03 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 2 python3 -m pytest tests/materials/test_material_map_rank_safety.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 3 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 3 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank [OPS-13] ranks=2 cells=162 V_tagged=6.17283950617284090e-03 (closed form 6.17283950617283916e-03) int(sigma)=1.23456790123456805e+00 sigma*V=1.23456790123456828e+00
+PASSEDPASSED
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank PASSEDPASSED
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises PASSEDPASSED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank
+  /usr/local/lib/python3.10/dist-packages/ufl/core/expr.py:275: DeprecationWarning: Expr.ufl_domain() is deprecated, please use extract_unique_domain(expr) instead.
+    warnings.warn("Expr.ufl_domain() is deprecated, please "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 3 passed, 11 warnings in 2.45s ========================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 3 passed, 8 warnings in 2.45s =========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 4

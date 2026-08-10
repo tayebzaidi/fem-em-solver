@@ -1,0 +1,70 @@
+# Test Run
+- Chunk: OPS-14-table-n8
+- Commit: e434a99ccccea5c8410ef1d41a0adba55ca06c13
+- Time (UTC): 2026-08-08 14:04:27
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 8 python3 scripts/probes/ops14_rank_probe.py 2>&1 | grep -v PLACEHOLDER'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  8 09:03 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout 180 mpiexec -n 8 python3 scripts/probes/ops14_rank_probe.py 2>&1 | grep -v PLACEHOLDER'\'''
+==============================================================================
+OPS-14 rank probe: comm size = 8
+global cells = 12   global tag set = [11, 12]
+global per-tag cell counts = {11: 8, 12: 4, 21: 0, 22: 0}
+------------------------------------------------------------------------------
+rank | local cells | local tag set (argument at excitation.py:249)
+   0 |           1 | [11]
+   1 |           2 | [11, 12]
+   2 |           1 | [11]
+   3 |           2 | [11, 12]
+   4 |           1 | [11]
+   5 |           2 | [11, 12]
+   6 |           1 | [11]
+   7 |           2 | [11, 12]
+------------------------------------------------------------------------------
+ranks whose local tag set != global tag set : 4 / 8
+production call raised ValueError on ranks   : 8 / 8
+    rank 0: missing required port tags: [12, 21, 22]
+    rank 1: missing required port tags: [21, 22]
+    rank 2: missing required port tags: [12, 21, 22]
+    rank 3: missing required port tags: [21, 22]
+    rank 4: missing required port tags: [12, 21, 22]
+    rank 5: missing required port tags: [21, 22]
+    rank 6: missing required port tags: [12, 21, 22]
+    rank 7: missing required port tags: [21, 22]
+------------------------------------------------------------------------------
+counterfactual A (collective validator argument, test fixture):
+  raised on 8 / 8 ranks; rank 0: missing required port tags: [21, 22]
+  global per-tag cell counts = {11: 3, 12: 3, 21: 3, 22: 3}
+------------------------------------------------------------------------------
+counterfactual B (global-index fixture, production code):
+  raised on 8 / 8 ranks; rank 0: missing required port tags: [12, 21, 22]
+==============================================================================
+
+## Exit
+- Status: 0
+- Elapsed (s): 1

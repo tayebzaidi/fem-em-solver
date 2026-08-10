@@ -506,10 +506,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#recent-activity-since-the-0300-review" class="md-nav__link">
+  <a href="#recent-activity-since-the-1030-review" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recent activity (since the 03:00 review)
+        Recent activity (since the 10:30 review)
       
     </span>
   </a>
@@ -559,20 +559,37 @@
 
 
 <h1 id="fem-em-solver-status">FEM-EM Solver — status<a class="headerlink" href="#fem-em-solver-status" title="Permanent link">&para;</a></h1>
-<p><strong>Updated:</strong> 2026-08-07, 10:30 daily review. Source of truth is
+<p><strong>Updated:</strong> 2026-08-10, 18:00 daily review. Source of truth is
 <code>PROJECT_PLAN.md</code>; this page is a read-only digest for the human operator.</p>
 <h2 id="waiting-on-you">Waiting on you<a class="headerlink" href="#waiting-on-you" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Housekeeping: local <code>main</code> is <strong>15 commits ahead</strong> of <code>origin/main</code> after
-   this review — push when convenient (every "in CI" claim is a local
-   reproduction until then). No Ansys benchmark cases commissioned yet
-   (the weekly review owns that; next one is Sunday 01:30).</li>
-<li>FYI, no action needed: the corrected port voltage (0.8945 × ωM₁₂) is
-   validated against an independent control to 3.0% but sits 0.02 pp
-   outside a bound whose premise the control itself disproved. Rather than
-   moving the bound on judgement, queue item 1 buys the one measurement
-   that decides it (see On deck); both outcomes are pre-decided in §7.</li>
+<li><strong>The first Ansys benchmark is ready to replicate in AED</strong> (unchanged
+   since 2026-08-09 18:00). <code>ANS-1</code> at
+   <code>examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/</code> pins itself to
+   the <code>MAT-6</code> gate (ΔR = +0.32770 Ω, <strong>1.5834%</strong> from Dodd–Deeds).
+   <code>SPEC.md</code> box 1 is checked; the next two are yours: build the case in
+   AED per <code>SPEC.md</code>, fill the blank AED columns in <code>COMPARISON.md</code> — the
+   weekly review then adjudicates. Reminders: ΔX is reported, never gated;
+   our Re Z(σ = 0) is exactly 0.0 by structure — disable coil eddy effects
+   in AED per <code>SPEC.md</code> §Excitation before comparing.</li>
+<li><strong>Host-side observables needed for the <code>MAG-13</code> kill.</strong> Unchanged:
+   both death phases reproduce clean on demand, so the kill is
+   non-deterministic and host-side; sessions cannot see
+   <strong><code>dmesg -T</code> / <code>journalctl -k</code> around 2026-08-08 20:15Z and
+   2026-08-09 00:33Z</strong>, WSL2 <code>vmmem</code> reclaim, or any host supervisor
+   reaping process trees. Anything you can paste unblocks the step-2
+   solve.</li>
+<li>Local <code>main</code> will be <strong>54 commits ahead</strong> of <code>origin/main</code> once this
+   review's commit lands (last push 2026-08-07). A push whenever
+   convenient still triggers the first-ever GitHub-runner execution of
+   <code>validation-complex</code>.</li>
+<li>FYI, no action needed: the <code>lint</code> CI job stays red-by-adjudication
+   (reformat deferred until the PORT-1 branch lands).</li>
 </ol>
+<p><strong>Resolved since last interval:</strong> the 16 G → 64 G memory-cap decision —
+you made the edit interactively and the cap is verified at the kernel
+(<code>memory.max</code> = 68719476736). Thank you; the blocked measurement
+(<code>MAT-6</code> step 7 Part 2) is now queue item 1.</p>
 <h2 id="honest-current-state-digest-of-2-unchanged-this-interval">Honest current state (digest of §2 — unchanged this interval)<a class="headerlink" href="#honest-current-state-digest-of-2-unchanged-this-interval" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -601,7 +618,7 @@
 <tr>
 <td>SAR</td>
 <td>⚠️ imposed uniform field only</td>
-<td>lossy sphere 3.5% (MAT-4 step 1); never gated on a coil</td>
+<td>lossy sphere 3.5% (MAT-4 step 1); operator exact at 1 g/10 g (step 3); never gated on a coil</td>
 </tr>
 <tr>
 <td>S-parameters</td>
@@ -610,66 +627,75 @@
 </tr>
 </tbody>
 </table>
-<h2 id="recent-activity-since-the-0300-review">Recent activity (since the 03:00 review)<a class="headerlink" href="#recent-activity-since-the-0300-review" title="Permanent link">&para;</a></h2>
-<p>Sixth consecutive 4/4 interval — two landed, two disciplined parks, all
-four slots on or about the port-voltage thread:</p>
+<p>No gate moved this interval. What did move: a long-suspected defect got a
+decisive attribution — the mri demo's 23% rank instability is in the
+<strong>centerline point-evaluation path</strong>, not the solver (the solve now
+converges direct and the spread didn't budge, while a different sampler on
+the same fields agrees to 0.007%). A fix chunk (<code>POST-4</code>) is scoped and
+queued.</p>
+<h2 id="recent-activity-since-the-1030-review">Recent activity (since the 10:30 review)<a class="headerlink" href="#recent-activity-since-the-1030-review" title="Permanent link">&para;</a></h2>
+<p><strong>Four of four slots landed their item — the second consecutive sweep;
+one is a decisive negative.</strong></p>
 <ul>
-<li><strong>PORT-1 step 3b-x (parked)</strong> — the terminal-to-terminal correction
-  <strong>works</strong>: 0.8945 × ωM₁₂ (vs the old wedge-limited 0.4937), the
-  retiling identity holds to 2.7e-4, all 19 gates green. Not landed
-  because the plan's second anchor (the reaction route) turned out not to
-  exist on a conducting open arc — it reads the ohmic term, a factor 244
-  off, for a structural reason, not a defect.</li>
-<li><strong>PORT-1 step 3b-x-b (parked)</strong> — the missing control now exists: a
-  σ = 0 closed-loop solve on the same mesh gives an independent reference
-  (0.9224 × ωM₁₂, <code>Re Z₂₁ = 0</code> exactly). The estimator agrees with it to
-  <strong>3.0224%</strong> against a pre-decided 3% bound — red by 0.02 pp — and the
-  slot correctly refused to move the bound: the control measures the
-  spread the bound was sized from at 2.8 pp, not the assumed 1.2 pp.</li>
-<li><strong>PORT-1 step 3b-xi ✅</strong> — the PEC-box attribution is now a <strong>trend,
-  not a point</strong>: deficits −8.03% / −5.03% / −3.27% at padding
-  0.08 / 0.10 / 0.12, strictly monotone, all the sign a PEC wall must
-  produce, 53× the mesh-resolution control. The residual on the corrected
-  port voltage has a named, measured owner.</li>
-<li><strong>EX-2 ✅</strong> — the cylindrical phantom ships as <code>mesh:2</code> through the
-  runner, and the example found something: at generator defaults the
-  inner cylinder meshes as a <strong>heptagonal prism</strong> (resolution is twice the
-  inner radius), a 28% inner-volume deficit. Gated in closed form — the
-  meshed cap equals the inscribed heptagon to 1.11e-16 — and this review
-  audited every caller: none gates an inner-subdomain quantity, so the
-  hazard is latent and recorded, not an active defect.</li>
+<li><strong>EX-16 🚫 (12:00)</strong> — the convergence hypothesis refuted, and that is
+  the deliverable: the demo now solves direct (<code>preonly</code>/LU, <code>reason=4</code>)
+  at the validated gauge floor, and the centerline rank spread stays at
+  <strong>23.5539%</strong> (was 23.5545% unconverged — 1.0000×). The added positive
+  control: the 493-point phantom-region sampler on the same fields agrees
+  across ranks to <strong>0.007326%</strong>, 3215× tighter. Same solve, two samplers
+  ⇒ the sampler owns the defect. Fix landed anyway (converged &gt; truncated
+  iterate); known-issues entry stays open, now assigned <code>POST-4</code>.</li>
+<li><strong>OPS-15 ✅ (13:30)</strong> — the checker's freshness default 1 h → 48 h. The
+  standing ~80–200 s per-slot refresh tax is retired; the branch is
+  retuned, not disabled — it still flags at 72 h (shown on a backdated
+  fixture) and <code>--max-age-s 1</code> still fires as the in-slot control.</li>
+<li><strong>EX-17 ✅ (15:00)</strong> — circular-loop <code>.bp</code> export repaired (the EX-14
+  port); round-trip read-back max |B| <strong>bit-identical</strong> (rel diff
+  0.000e+00 vs 1e-10), analytic numbers unmoved digit for digit.
+  Known-issues entry retired. First <code>-e</code> slot to pay zero freshness tax.</li>
+<li><strong>EX-15 step 2 ✅ (16:30)</strong> — the five <code>th:</code> analysis guides; <strong>12 of
+  16</strong> runnable examples now guide-checked, all numbers cited by log
+  name; heading negative control re-fired and was restored byte-identical.
+  Step 3 (four guides) closes the directive — queue item 2.</li>
+<li><strong>Interactive session (operator + agent, between slots)</strong> — <code>MAT-6</code>
+  step 7 Part 1 landed by hand (memory cap 16 G → 64 G, kernel-verified)
+  and <code>MAT-6</code> step 8 (ΔR error budget: slab-resolution knob) scoped at
+  operator direction; both measurements are queued.</li>
 </ul>
-<p>Audits: both ✅ flips (3b-xi, EX-2) verified §4-compliant by independent
-read-only auditors — every claimed number found in the harness logs, exit
-codes 0, no demotions; EX-2's one bound change was a <em>tightening</em>
-(1e-3 → 1e-12). Branch hygiene: the 3b-ix and 3b-x branches deleted after
-verifying both are strict ancestors of the 3b-x-b branch, which is now the
-single live lineage; queue item 1 lands or adjudicates it.</p>
+<p>Audit: all three ✅ closures verified against §4 by one auditor each —
+harness logs, quantitative assertions, elapsed times. <strong>No demotions.</strong>
+Two minor caveats recorded in the review commit (a log-list bookkeeping
+omission in the OPS-15 journal; EX-15's negctl exit evidenced by sentinel
+echo, restore verified host-side).</p>
 <h2 id="automation-health">Automation health<a class="headerlink" href="#automation-health" title="Permanent link">&para;</a></h2>
 <ul>
-<li>The grid has run clean since 08-05 15:30Z — 24 consecutive slots, six
-  4/4 implementer slates in a row.</li>
-<li>Tree clean at review start and end; no <code>recovered/*</code> branches; one
-  <code>attempt/*</code> branch (the live PORT-1 lineage, deliberate).</li>
-<li>The twice-failed queue item 1 was caught by the queue's own rule
-  (implementers skipped it and took independent items) and is now
-  rescoped as step 3b-xii with dispositions pre-decided — the blocking
-  mechanism worked as designed.</li>
-<li><strong>Queue depth is 3, not 5</strong> — that is every rubric-compliant item that
-  exists; the fourth run before the 18:00 review will hit the
-  stop-and-journal drain instruction. Not an outage, just honest scoping.</li>
+<li><strong>Slot yield this interval: 4/4</strong> — second consecutive sweep. Tree
+  clean at review end, no <code>recovered/*</code>; both <code>attempt/PORT-1-*</code> branches
+  stay parked under the weekly licence — the <strong>weekly review (2026-08-16)
+  holds the 3b-xv adjudication and the second discriminator slot</strong>.</li>
+<li>The <code>EX-16</code> negative result worked exactly as designed: the anchor
+  failed, the report-and-stop clause fired, and the added positive
+  control converted the failed hour into an attribution. Follow-up
+  (<code>POST-4</code>) scoped this review with a diagnosis-before-fix split.</li>
+<li>Queue depth <strong>5</strong> after refresh; items 4–5 are an explicit serial pair
+  (fix runs only if the diagnosis confirms), everything else independent.</li>
 </ul>
 <h2 id="on-deck-9-refreshed-this-review">On deck (§9, refreshed this review)<a class="headerlink" href="#on-deck-9-refreshed-this-review" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>PORT-1 step 3b-xii</strong> — the discriminator: rebuild the gapped fixture
-   at padding 0.10 and see whether estimator and control converge under
-   box enlargement. If yes, the 5% re-size is pre-authorized and the
-   whole branch lineage lands on <code>main</code>; if no, a real estimator bias has
-   been found. Either outcome is a finding.</li>
-<li><strong>MAT-4 step 3</strong> — the SAR averaging operator gated at the standard
-   1 g/10 g masses on a sphere that can hold them; no solve.</li>
-<li><strong>MAT-6 step 5</strong> (spare, heavy) — wire refinement at fixed box to
-   separate the last ~1.5% of ΔX.</li>
+<li><strong>MAT-6 step 7 Part 2</strong> (heavy) — the additivity measurement your cap
+   raise unblocked: one <code>-n 4</code> solve of the 697 401-cell combined case,
+   additivity defect vs 0.9843.</li>
+<li><strong>EX-15 step 3</strong> (standard, doc-only) — the last four guides; empties
+   <code>PENDING_GUIDES</code> and closes the directive.</li>
+<li><strong>MAT-6 step 8</strong> (heavy, probe-first) — slab-resolution knob:
+   attributes the remaining ~1.06% ΔR error to skin-depth resolution or
+   the filamentary reference.</li>
+<li><strong>POST-4 step 1</strong> (standard) — diagnose the centerline sampler's rank
+   dependence (claim multiplicity, cross-cell disagreement, ε-nudge
+   discriminator).</li>
+<li><strong>POST-4 step 2</strong> (standard, only if step 1 confirms) — deterministic
+   min-global-cell tie-break in <code>evaluate_vector_field_parallel</code>;
+   anchor: 23.5539% → ≤ 0.1% across rank counts.</li>
 </ol>
 <hr />
 <p><em>Maintained by <code>docs/automation/daily-review.md</code> step 7. The Waiting-on-you
