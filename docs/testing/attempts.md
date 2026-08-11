@@ -9278,3 +9278,106 @@ mechanically enforced at 16/16 with an empty pending list, so the next example
 to land is the first real test of "ship the guide with it"; if a future slot
 adds an example without a guide, the checker will fail it at the commit, which
 is the intended outcome and not a regression.
+
+## 2026-08-11T13:00Z — `MAT-6` step 8 — **complete** (first attempt); step 8 ✅, and the ΔR budget closes on the slab knob
+
+**Slot.** 07:30 CDT scheduled implementer run, 60-minute timebox. Preflight
+clean: `git status` empty, container Up 17 h, no `recovered/*`. §9 On-deck
+items 1 and 2 were already struck through by the 04:30 and 06:00 runs, so this
+slot took item **3**, `MAT-6` step 8, and executed its §7 entry verbatim.
+
+**Result — the hypothesis the step was written to test is confirmed, and it is
+the more useful of the two readings.** Moving only `resolution_near`
+0.005 → 0.0025 (3.18 → **6.37** cells per skin depth δ = 15.9 mm) at fixed
+`resolution_wire = 0.002`, `resolution_far = 0.025`, W = 0.15 and fixed
+near-region extents:
+
+| quantity | landed rung | this rung |
+|---|---|---|
+| ΔR rel. error vs Dodd–Deeds | 1.5834% | **0.2829%** |
+| ΔR (FEM) | — | `+3.2168355e-01 Ω` (exact `+3.2259615e-01 Ω`) |
+| ΔX ratio (reported, never gated) | 0.9200 | 0.9160 |
+| cells | 138 619 | **417 914** (3.01×) |
+
+−1.3005 pp at the *same* wire rung, i.e. **130× step 4's < 0.01 pp box-wobble
+reality floor**. Step 5's wire knob alone reached 1.0562%, so the slab knob is
+the larger of the two terms: the ~1.06% step 5 left unattributed is the ohmic
+boundary layer under-resolved at ~3 cells per δ, and the filamentary-reference
+mismatch (h/r_wire = 8) is thereby bounded *below* 0.2829% — it cannot be the
+dominant term it was a candidate for. Practical consequence: **a sub-1% ΔR
+fixture needs more slab mesh, not a thinner wire or a finite-cross-section
+closed form.**
+
+**Controls, all green.** (i) σ-blind, re-asserted on the new mesh as §7
+required: ohmic `R = 2·(½∫_slab σ|E|²)/I'²` is `+3.2168355e-01 Ω` loaded and
+**exactly `+0.0`** free — asserted as literal equality, no tolerance, since the
+integrand vanishes identically at σ = 0. It also agrees with the
+reaction-integral ΔR to every printed digit, so the number has two independent
+routes on this mesh. (ii) Knob locality: the unprojected meshed wire current is
+0.919690 A, the on-record step-2b value to **0.0000%** (8.0310% volume deficit
+unmoved), so no part of the ΔR move is the 1/I'² prefactor. (iii) Cell count
+asserted at the probe's exact 417 914, with a growth band that would catch a
+`resolution_far` leak. (iv) Both gate runs produced **bit-identical** ΔZ.
+
+**Cost, everything inside its gate.** Probe first, per the §7 point-of-no-return
+discipline: mesh ladder 138 619 → 209 964 (0.0035) → **417 914** (0.0025), 44 s
+total — the entry's naive ~8× growth bound was pessimistic at 3.01×, so the
+0.0035 rescope rung was never needed. One projected loaded solve **108.8 s at
+`-n 4`** / 486 694 global dofs, well under the > 300 s stop rule, which is what
+licensed the gate. Gate at `-n 2` per §7: mesh 35.6 s + solves 176.8 s + 170.0 s
+= 384 s wall, heavy tier, container `timeout 590`. No OOM (64 G cap).
+
+**Harness discipline.** Every run foreground with the Bash tool's `timeout` at
+660000 ms and the container-side `timeout` sized to return a footer inside it —
+the recipe implementer-run.md now mandates after the three slots lost on
+2026-08-10/11. Nothing backgrounded; no turn ended with a harness command live.
+All four logs carry footers and exit 0.
+
+**Logs.**
+`20260811T123143Z_MAT-6-step8-probe-mesh.log` (ladder, exit 0, 44 s),
+`20260811T123242Z_MAT-6-step8-probe-solve.log` (one solve at `-n 4`, exit 0,
+138 s),
+`20260811T123711Z_MAT-6-step8-gate.log` (**superseded — see below**, 9 passed,
+389 s),
+`20260811T124359Z_MAT-6-step8-gate-numbers.log` (9 passed, 471 s),
+`20260811T125226Z_MAT-6-step8-gate-final.log` (**the anchor**, 9 passed, 384 s).
+
+**Two self-inflicted re-runs the review should see, neither a physics event.**
+
+1. The first gate invocation had `2>&1 | tail -3` appended to the command
+   string, which the harness (correctly) logged and executed *inside* the
+   logged command — so `…123711Z…gate.log` records `9 passed` and exit 0 but
+   **none of the measured numbers**. A pass count with no numbers closes
+   nothing under §4, so the gate was re-run clean. Lesson for the protocol: a
+   pipe inside the quoted `run_and_log.sh` argument silently thins the
+   evidence; put filters outside the harness call or not at all.
+2. `…124359Z…gate-numbers.log` is a complete, valid record, but its ΔR line
+   printed the movement against **step 5's wire-0.001 rung** (`−0.7733 pp`)
+   while this run is at wire 0.002 — a mislabelled comparison, not a wrong
+   measurement (both ladder values are on the same line, so the correct
+   −1.3005 pp is recoverable from it). The print was corrected to compare
+   like-for-like and the gate re-run so the anchor log matches the committed
+   code. All asserted quantities are identical across the two runs.
+
+**Nothing else moved.** `MAT-6` stays ✅ and **§2.1's landed 1.58% is
+untouched** — it is the *landed fixture's* number and this is a refinement
+study in a separate module (`tests/validation/test_dodd_deeds_resistance_slab_resolution.py`);
+the `ANS-1` comparison numbers stay the landed fixture's; step 2b's 5% ΔR
+ceiling was inherited unchanged and never tightened in-slot; ΔX reported and
+gated only on sign and order of magnitude, as everywhere in `MAT-6`;
+saline/Larmor stays unlicensed. No known-issues entry added or retired — no
+unrelated failure was seen (`tests/environment` ran first and passed in both
+gate runs).
+
+**Next-attempt hypothesis / the decision this slot deliberately did not take.**
+Promoting `resolution_near = 0.0025` to the *production* fixture is now cheap
+enough to be real (3.01× cells, ~6.5 min at `-n 2`, no memory pressure at 64 G)
+and would take the headline coil-loading claim from 1.58% to ~0.28%. That is a
+scoping decision with downstream reach — §2.1, §7's `MAT-6` table, the `ANS-1`
+comparison and every citation of "1.58%" — so it belongs to the review, not to
+an implementer slot. If the review wants it, the natural successor is a step 9
+that re-runs the *landed* gate module at the refined slab rung and re-points the
+citations in one commit. The remaining open question in the budget is now the
+0.2829% itself: at 6.37 cells/δ the boundary layer is resolved, so what is left
+should be the coil model plus O(h²) bulk — a third slab rung (0.00175, ~9 cells/δ)
+would test that, and the 3.01× growth measured here predicts it is affordable.

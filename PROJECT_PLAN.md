@@ -2831,8 +2831,51 @@ ceilings are untouched; this buys memory, not compute.)*
 > the cell count, annotate here, stop; a cross-term reading is the more
 > informative physics outcome, per step 6.
 
-**`MAT-6` step 8 — ΔR error budget: the slab-resolution knob** 🔲 *(scoped
-2026-08-10, interactive session at operator direction)*
+**`MAT-6` step 8 — ΔR error budget: the slab-resolution knob** ✅
+*(2026-08-11, 07:30 run; `20260811T125226Z_MAT-6-step8-gate-final.log`,
+9 passed, 384 s, heavy, `-n 2`, complex build; probes
+`20260811T123143Z_MAT-6-step8-probe-mesh.log` (ladder, 44 s) and
+`20260811T123242Z_MAT-6-step8-probe-solve.log` (one solve, 138 s))*
+> **The residual is skin-depth resolution, not the coil model — and the
+> fixture is now sub-1% on ΔR.** Moving only `resolution_near` 0.005 → 0.0025
+> (3.18 → 6.37 cells per δ = 15.9 mm) at fixed `resolution_wire = 0.002`,
+> W = 0.15 and fixed near-region extents takes the projected-drive ΔR from
+> **1.5834% to 0.2829%** of the Dodd–Deeds `ΔR = +3.2259615e-01 Ω`
+> (FEM `+3.2168355e-01 Ω`) — a **−1.3005 pp** move at the *same* wire rung,
+> 130× step 4's < 0.01 pp box-wobble reality floor. Step 5's wire knob alone
+> reached 1.0562%, so the slab knob is the larger of the two terms and the
+> ~1.06% step 5 left unattributed is now attributed: it is the ohmic boundary
+> layer under-resolved at ~3 cells per skin depth, and a sub-1% fixture needs
+> **more slab mesh, not a thinner wire**. The filamentary-reference mismatch
+> (h/r_wire = 8) is correspondingly bounded *below* 0.2829% at this rung —
+> it cannot be the dominant term it was a candidate for. §7's naive ~8×
+> cell-growth bound was pessimistic: the measured ladder is 138 619 → 209 964
+> (0.0035) → **417 914** (0.0025), i.e. 3.01×, so the 0.0035 rescope rung was
+> never needed. **Cost, all inside the gates:** one projected loaded solve
+> 108.8 s at `-n 4` / 486 694 global dofs, against the > 300 s stop rule;
+> the gate's loaded/free pair at `-n 2` cost 176.8 s + 170.0 s + 35.6 s of
+> mesh. **Controls, all green:** the σ-blind control re-asserted on the new
+> mesh — ohmic `R = ½∫σ|E|²·2/I²` is `+3.2168355e-01 Ω` loaded and **exactly
+> `+0.0`** free (no tolerance, infinite separation by construction), and it
+> agrees with the reaction-integral ΔR to all printed digits, a second route
+> to the same number; the knob is proven slab-local by the meshed wire current
+> reproducing the on-record 0.919690 A to **0.0000%** (8.0310% volume deficit
+> unmoved), so no part of the ΔR move is the 1/I² prefactor; the cell count is
+> asserted at the probe's exact 417 914. ΔX reported, never gated: ratio
+> **0.9160** (step 3's landed 0.9200 on the same drive), sign and order of
+> magnitude only. Two independent gate runs produced bit-identical ΔZ.
+> **Does not close / does not reopen:** `MAT-6` stays ✅ and §2.1's landed
+> 1.58% is unmoved — that number is the *landed fixture's* and this is a
+> refinement study on a separate module; the `ANS-1` comparison numbers stay
+> the landed fixture's; the 5% ceiling is inherited unchanged and was not
+> tightened in-slot; saline/Larmor stays unlicensed (eddy-current kernel).
+> **For the review:** promoting 0.0025 to the production fixture is a real
+> option now (3.01× cells, ~6 min at `-n 2`) but is a scoping decision this
+> slot did not take — it would move §2.1's headline number and every downstream
+> citation of it.
+
+*(Original scoping, retained: scoped 2026-08-10, interactive session at
+operator direction.)*
 > Step 5 attributed roughly a third of the landed 1.58% ΔR error to wire
 > discretisation (1.5834% → 1.0562% under `resolution_wire` 0.002 → 0.001 at
 > fixed box), and step 4 bounded the box term at < 0.01 pp of wobble past
@@ -6712,7 +6755,21 @@ discriminator slot is the weekly review's (2026-08-16) to spend.
    from the records without re-running its example is journaled, not
    thinned.
 
-3. **`MAT-6` step 8 — ΔR error budget: the slab-resolution knob (heavy;
+3. ~~**`MAT-6` step 8 — ΔR error budget: the slab-resolution knob**~~ —
+   **done as scoped 2026-08-11 (07:30 run); step 8 ✅.** `resolution_near`
+   0.005 → 0.0025 at fixed wire/box took projected ΔR from **1.5834% to
+   0.2829%** (−1.3005 pp at the same wire rung, 130× step 4's 0.01 pp floor),
+   so the residual is **skin-depth resolution**, not the filamentary-reference
+   mismatch, and the fixture is sub-1% on ΔR. Ladder 138 619 → 209 964 →
+   417 914 cells (3.01×, not the naive 8×); one solve 108.8 s at `-n 4` under
+   the 300 s stop rule; gate `20260811T125226Z_MAT-6-step8-gate-final.log`,
+   9 passed, 384 s at `-n 2`. σ-blind control exactly `+0.0` and agreeing
+   with the reaction ΔR to all digits; meshed wire current unmoved to 0.0000%.
+   **For the review:** whether 0.0025 becomes the production fixture (it would
+   move §2.1's headline 1.58%) is a scoping decision this slot did not take.
+   *(Original item text retained below for the audit trail.)*
+
+   **`MAT-6` step 8 — ΔR error budget: the slab-resolution knob (heavy;
    probe-first).** *(Added 2026-08-10 by an interactive session at
    operator direction; ordered after item 1 only because item 1's
    measurement has waited since step 6 — they are independent.)* Execute

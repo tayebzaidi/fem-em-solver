@@ -1,0 +1,42 @@
+# Test Run
+- Chunk: MAT-6-step8-probe-solve
+- Commit: 5d743594188bea73ebe5acf61ab81842aa34a5ca
+- Time (UTC): 2026-08-11 12:32:42
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src MAT6_STEP8_LADDER=0.0025 MAT6_STEP8_SOLVE_AT=0.0025 timeout 500 mpiexec -n 4 python3 scripts/probes/mat6_step8_probe.py' 2>&1 | tail -5
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 10 14:25 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 11 07:30 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Aug 10 14:25 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src MAT6_STEP8_LADDER=0.0025 MAT6_STEP8_SOLVE_AT=0.0025 timeout 500 mpiexec -n 4 python3 scripts/probes/mat6_step8_probe.py'\'' 2>&1 | tail -5'
+Info    : Done optimizing mesh (Wall 1.51283s, CPU 1.44076s)
+Info    : 67581 nodes 429811 elements
+[MAT-6 step 8 probe] resolution_near = 0.0025 m (6.36 cells per skin depth): 417914 cells, 3.01x the landed mesh, meshed in 27.7 s on 4 ranks
+[MAT-6 step 8 probe] one projected loaded solve at resolution_near = 0.0025: 108.8 s at -n 4, 417914 cells / 486694 global dofs
+[MAT-6 step 8 probe] budget: the gate's loaded/free pair costs ~218 s + mesh.  §7 stop rule is one solve > 300 s at -n 4.
+
+## Exit
+- Status: 0
+- Elapsed (s): 138
