@@ -9637,3 +9637,78 @@ reproducing every digit at every rank count says the source field there is
 smooth; a small midpoint artifact with a large vertex artifact is the expected
 shape, and the step's own negative-result clause already covers the
 alternative.
+
+## 2026-08-11T20:07Z — `MAG-13` step 2 — **complete** (measurement landed, first attempt under the foreground recipe): the rung is **on-rate and off-target**, 5.6494% vs < 5%
+
+**Outcome: complete.** §9 item 3 executed as written and produced its number.
+The item's own **negative-result clause is the one that fired** — "still > 5%
+on-rate at the rung is a real reading — report the measured error and cost
+beside the prediction, annotate, stop." Nothing closes and nothing reopens:
+`MAG-13` stays ✅ at wire 12.75% / loop 7.07%, exactly as the entry
+pre-committed under every outcome. What changes is the status of the < 5%
+target: it was "unmeasured, not missed" for three days and is now **measured
+and missed at h = 0.00125**.
+
+**Measured** — `20260811T200040Z_MAG-13-step2-solve-n8.log`, exit 0, **278 s**
+harness-wall, `-n 8`, real build, container `timeout 590`, foreground Bash
+call with the tool timeout at 660000 ms:
+
+- mesh + solve **275.3 s**, **1 097 873 cells / 4 391 492 global dofs**
+- relative L2 error **5.6494%** vs `straight_wire_magnetic_field`
+  (target < 5.00%; record **12.75%** at h = 0.0025)
+- two-rung observed rate **1.174** over 0.0025 → 0.00125 (record **1.10**
+  over 0.004 → 0.0018)
+- azimuthality control: `B_z` max 1.853e-07 vs `|B|_ref` 3.333e-05 =
+  **5.6e-03**, bound 0.10 — passes with 18× room
+- per-radius: 4.44% / 9.46% / 6.33% / 3.11% / 0.61% / 3.62% / 3.21% / 0.33% /
+  2.27% / 1.40% at r = 0.0060 → 0.0240 m
+
+**The cell count is digit-identical to the 2026-08-08 mesh record and the
+08-09 diag** (1 097 873 all three times), so this is unambiguously the same
+rung those runs meshed — the solve is the only thing that had never been
+observed, and now has been.
+
+**Read this as a prediction failure, not a solver failure.** The
+extrapolation that put < 5% at h = 0.00125 was 12.75% × (1/2)^1.10 =
+**5.95%** — above 5% on its own arithmetic before anyone ran anything. The
+measurement came in at 5.6494%, i.e. the local rate (1.174) is *better* than
+the 1.10 on record, and the target still misses by 0.65 pp. There is no
+evidence here against the fixture, the analytic Dirichlet wall, or the rate
+fit; the rung was mis-sized when it was scoped.
+
+**Second finding, free: the foreground recipe is confirmed at the exact
+profile that "died" twice.** Same script, same rung, same rank-scale that
+produced the two footerless 2026-08-08 logs — this one reached an `## Exit`
+block in 278 s. That is a fourth independent confirmation of the 10:30
+review's background-and-end-turn root cause. The retired known-issues entry
+needs no reopening and was not touched.
+
+**Traps met.** None fired. Real build, no complex mode (correct — the probe
+never sources `dolfinx-complex-mode`); no stale FFCx lock; point evaluation
+went through `_sample_radial` → `evaluate_vector_field_parallel`, never
+rank-local eval; the run stayed in the foreground for its whole 278 s. `J·n ≠
+0` at the end caps stands unmeasured, as the entry says. No unrelated failure
+appeared, so no known-issues entry. Scope boundary respected: no `src/`
+change, no test change, the probe script untouched.
+
+**Cost note for the budget.** 278 s at `-n 8` is comfortably inside the
+590 s window and inside heavy tier — the three slots this step cost were paid
+to the background trap, not to the physics. The measurement itself is a
+five-minute run.
+
+**Next-attempt hypothesis.** Two routes, and the arithmetic favours the one
+already named. (1) *One more uniform rung:* at the measured rate 1.174, 5.00%
+wants h = 0.00125 × (5.00/5.6494)^(1/1.174) = **h ≈ 0.001127**, ~1.37× the
+cells (**~1.50 M**), so mesh + solve ~380–450 s at `-n 8` *if* cost scales
+with cell count — inside the window but on thin margin, and that scaling is
+an assumption, not a measurement. It would buy a bare pass of an arbitrary
+threshold. (2) *Graded refinement*, the entry's named cheaper route: this run
+adds a hint for it — the per-radius errors are **not monotone in r**, largest
+at the two smallest sampled radii (9.46% at r = 0.0080, 6.33% at r = 0.0100)
+against 0.33% at r = 0.0200, so the residual looks concentrated near the wire
+rather than at the truncation wall, which is where uniform refinement spends
+most of its cells. Ten sample points is a hint, not a measurement. Per the
+entry's scope boundary I did not improvise either in-slot; the review should
+pick, and if it wants route (2) it should first spend a cheap step measuring
+the error-vs-radius profile properly (more sample points, existing solved
+field, no new solve) before committing to a graded mesh.

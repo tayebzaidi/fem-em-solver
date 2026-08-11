@@ -1443,6 +1443,47 @@ tolerance.*
 > numbers, annotate here; if a real reduction defect surfaces, it gets a
 > known-issues entry and a fix is scoped by a review, not improvised in-slot.
 
+**`MAG-13` step 2 — EXECUTED 2026-08-11 (15:00 slot): the rung is measured
+and the target is missed on-rate — 5.6494% vs < 5%, in 278 s.** *(`MAG-13`
+stays ✅ at its recorded numbers, exactly as the entry pre-committed; the
+< 5% target moves from "unmeasured" to **measured and missed at
+h = 0.00125**. Nothing closes, nothing reopens.)*
+> **Measured** (`20260811T200040Z_MAG-13-step2-solve-n8.log`, exit 0,
+> **278 s** harness-wall, `-n 8`, real build, container `timeout 590`,
+> foreground): mesh + solve **275.3 s**, **1 097 873 cells / 4 391 492
+> global dofs**, relative L2 error **5.6494%** against
+> `straight_wire_magnetic_field` (target < 5.00%; record 12.75% at
+> h = 0.0025), two-rung observed rate **1.174** over 0.0025 → 0.00125
+> (record 1.10 over 0.004 → 0.0018). Azimuthality control passes with room:
+> `B_z` max 1.853e-07 vs `|B|_ref` 3.333e-05 = **5.6e-03**, bound 0.10. The
+> cell count is **digit-identical** to the 2026-08-08 mesh record and the
+> 08-09 diag, so this is the same rung all three runs meshed.
+> **The rung is on-rate; the prediction that put < 5% here was optimistic on
+> its own arithmetic.** The extrapolation was 12.75% × (1/2)^1.10 =
+> **5.95%** at h = 0.00125 — already above 5% before this run. Measured
+> 5.6494% *beats* that (the local rate 1.174 exceeds the 1.10 on record):
+> the convergence behaviour is as good as advertised or better, and the
+> target still misses by 0.65 pp. Nothing here is evidence against the
+> fixture or the analytic Dirichlet wall.
+> **The foreground recipe is also confirmed at the exact profile that
+> "died" twice**: the same probe, same script, same rung that produced the
+> two 2026-08-08 footerless logs ran to an `## Exit` block in 278 s — a
+> fourth independent confirmation of the 10:30 review's
+> background-and-end-turn root cause (the retired known-issues entry needs
+> no reopening).
+> **Next-rung arithmetic, recorded for the review, not executed here:** at
+> the measured rate 1.174, 5.00% wants h = 0.00125 × (5.00/5.6494)^(1/1.174)
+> = **h ≈ 0.001127**, i.e. ~1.37× the cells (**~1.50 M**) — mesh + solve
+> plausibly ~380–450 s at `-n 8` if cost scales with cell count, inside the
+> 590 s window but with thin margin and no measurement behind the scaling.
+> **Cheaper route, still the named one:** graded refinement. This run adds a
+> hint for it — the per-radius errors are **not monotone in r** (9.46% at
+> r = 0.0080 and 6.33% at r = 0.0100, against 0.33% at r = 0.0200 and 1.40%
+> at r = 0.0240), so the residual looks concentrated near the wire rather
+> than at the truncation wall. That is a hypothesis from ten sample points,
+> not a measurement, and per the entry's own scope boundary graded
+> refinement is a review's to scope, not to be improvised in-slot.
+
 **`MAG-13` step 2 diag — EXECUTED 2026-08-09 (07:30 slot): the mesh rung
 reproduces exactly; no stage owns the kill.** *(`MAG-13` stays ✅; the < 5%
 target stays unmeasured-not-missed; stage 2 stays blocked pending a review.)*
@@ -1601,9 +1642,16 @@ timeout. All anchors, controls, and traps below unchanged.*
   rate puts it at h ≈ 0.00125, ~1.1M cells, > 5 min at `-n 2` — which was outside
   the budget when `heavy` was 10 min at 2 ranks, and **is now plausibly inside it**
   at 20 min and up to 12 ranks. Cost-probe before assuming so. *(Step 2 above,
-  scoped 2026-08-08, executes exactly this.)* The residual is
+  scoped 2026-08-08, executes exactly this.)* **Executed 2026-08-11
+  (15:00 slot): the rung is measured and the target missed on-rate —
+  5.6494% at h = 0.00125, observed rate 1.174, 275.3 s at `-n 8`
+  (`20260811T200040Z_MAG-13-step2-solve-n8.log`). The 1.10-rate
+  extrapolation had itself predicted 5.95% here, so this was never a < 5%
+  rung; the crossing sits at h ≈ 0.001127 (~1.50 M cells).** The residual is
   uniform-mesh discretization of a 1/r field next to a thin conductor, so graded
-  refinement is still the cheaper route than more uniform h.
+  refinement is still the cheaper route than more uniform h — and the
+  measured per-radius errors, largest at the two smallest sampled radii, are
+  consistent with that (§7 entry).
   `J·n ≠ 0` at the end caps also still stands; capping the wire short of the end
   faces was never needed and is unmeasured.
 - `MAG-15` is a working option, not a finished subsystem: Dirichlet conditions on
@@ -6958,7 +7006,21 @@ licensed discriminator slot is the weekly review's (2026-08-16) to spend.
    step 1's own measurement — report both tables, entry stays open,
    annotate, stop.
 
-3. **`MAG-13` step 2 — the < 5% wire, foreground recipe at `-n 8` (heavy;
+3. ~~**`MAG-13` step 2 — the < 5% wire, foreground recipe at `-n 8`.**~~
+   **DONE 2026-08-11 15:00 run** — exit 0, 278 s,
+   `20260811T200040Z_MAG-13-step2-solve-n8.log`. The rung is **measured and
+   the target missed on-rate**: relative L2 **5.6494%** vs < 5.00%
+   (record 12.75% at h = 0.0025), two-rung observed rate **1.174** (record
+   1.10), mesh + solve **275.3 s** at `-n 8`, 1 097 873 cells / 4 391 492
+   dofs, azimuthality 5.6e-03 against a 0.10 bound. The 1.10-rate
+   extrapolation that put < 5% at this h actually predicted **5.95%** —
+   the rung beat its own prediction and still missed. The foreground recipe
+   completed the exact profile that produced the two 2026-08-08 footerless
+   logs. Next-rung arithmetic (h ≈ 0.001127, ~1.50 M cells) and the
+   near-wire error concentration are recorded in the §7 entry for the
+   review; graded refinement stays a review's to scope. *Original text, for
+   the audit trail:* **`MAG-13` step 2 — the < 5% wire, foreground recipe
+   at `-n 8` (heavy;
    un-blocked this review — read the §7 un-block note first; it supersedes
    the entry's `timeout 1200` text).** Real build, **no complex mode**.
    Mesh + one solve of the h ≈ 0.00125 rung (~1.1 M cells, priced
