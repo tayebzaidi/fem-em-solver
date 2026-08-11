@@ -9381,3 +9381,87 @@ citations in one commit. The remaining open question in the budget is now the
 0.2829% itself: at 6.37 cells/δ the boundary layer is resolved, so what is left
 should be the coil model plus O(h²) bulk — a third slab rung (0.00175, ~9 cells/δ)
 would test that, and the 3.01× growth measured here predicts it is affordable.
+
+## 2026-08-11T14:06Z — `POST-4` step 1 — **complete** (first attempt); step 1 ✅, and it refutes its own suspect
+
+**Outcome:** complete. Diagnosis executed, anchor PASS, no `src/` change, no
+gate, no tolerance touched. Step 1 ✅; **step 2 🚫 skipped** under its own
+conditional clause. On-deck items 4 and 5 both resolved by this slot.
+
+**What was tried.** New probe `scripts/probes/post4_step1_probe.py` (in the
+`mag6_step4_probe.py` mold) rebuilds `examples/mri/01`'s debug preset exactly as
+`EX-16` left it — coarse 0.02 m mesh, magnetostatics at `gauge_penalty=1.0`,
+time-harmonic on the solver's default direct path, 127.74 MHz — and samples the
+five printed centerline points with the evaluation instrumented: it evaluates at
+**every** colliding cell rather than `links[0]`, maps them through
+`local_to_global`, and reduces the claiming `(rank, global cell)` sets on rank 0.
+Four fields per run: the Lagrange-P1 interpolants the example prints (`E_lag`,
+`B_lag`) and the source fields those were interpolated from (`E_src`, `B_src`) —
+that pairing is the addition to the scoped recipe, and it is what turned a
+refutation into an attribution. Three runs (`-n 1/2/4`), then
+`scripts/probes/post4_step1_spread.py` parses the three logs and computes mesh
+identity, the census, the per-field rank spread, and the ε-nudge comparison.
+
+**Measured numbers.**
+
+* Mesh identical at all three rank counts: 9261 cells, coordinate moments equal
+  to 12 digits — the run-to-run mesh-drift confound (`MAG-6` step 3) is excluded
+  by measurement, not assumption.
+* Census, 120 rows (5 points × 4 fields × 2 point sets × 3 rank counts):
+  `MULTI_RANK_CLAIMS = 0/120`, `MULTI_CELL_CLAIMS = 0/120`,
+  `MASK_INVALID = 0/120`, `CROSS_CELL_DISAGREE = 0/120`. Every centerline point
+  is claimed by exactly one cell on exactly one rank.
+* ε-nudge (x = y = 1e-6 m): 97.975464% on axis → 97.975404% nudged, **1.00×**,
+  against the ≥ 235× collapse the anchor demanded.
+* Rank spread over the `-n 1/2/4` pairs, on axis: `E_lag` **97.975464%**,
+  `B_lag` 49.126566%, `E_src` **0.000000%** (bit-identical), `B_src`
+  **0.008426%** — interpolant/source separation **1.163e+04×**.
+* Fixture identity: the `-n 2` vs `-n 4` per-point table reproduces `EX-16`'s
+  record exactly — `B_lag` 23.5539% at z = +0.0225 m, 23.3954% at z = 0.
+* The previously unmeasured `-n 1` leg is the worst: `E_lag` = 7.670127e+03 at
+  z = −0.045 m against `E_src` = 1.368268e+02 at the same point — a 56×
+  interpolation artifact, present at every rank count and merely varying with it.
+* Negative control cited, not recomputed: the 493-point phantom-region sampler's
+  0.007326% (`20260810T170457Z_EX-16-spread-v2.log`). `B_src`'s 0.008426% sits
+  at that same scale, which is the point.
+
+**Conclusion.** All three of the chunk's discriminators fire the same way: the
+`links[0]` + last-writer-wins ownership tie-break is **refuted** on this fixture,
+and so is silent zero-fill. The solve is rank-invariant to round-off. The 23%
+enters at `fem.Function.interpolate` into `("Lagrange", 1, (3,))`, where the
+vertex dof of a field that is not continuous there is written by whichever
+adjacent cell writes last locally — a property of the partition. `MAG-6` step 4's
+0/9 multi-claims on *its* fixture is now matched rather than contradicted.
+
+**Harness logs.** `20260811T140345Z_POST-4-step1-n2.log` (4 s),
+`20260811T140402Z_POST-4-step1-n4.log` (4 s),
+`20260811T140414Z_POST-4-step1-n1.log` (8 s),
+`20260811T140549Z_POST-4-step1-attribution.log` (1 s, ANCHOR PASS). Two
+throwaway failures preceded them and are in the index for honesty:
+`…140319Z_POST-4-step1-n2.log` (exit 1 — the harness command omitted
+`source /usr/local/bin/dolfinx-complex-mode`, so `require_complex_mode` raised
+as designed) and `…140531Z_POST-4-step1-attribution.log` (exit 1 — a 9-group
+regex unpacked into 8 names in the analysis script). Neither ran a solve; both
+were fixed and re-run. Nothing was parked; no branch.
+
+**Not touched.** No `src/` edit — the scope boundary held. `MAG-6`,
+`EX-13`/`EX-16` records untouched and cited only. The known-issues entry
+"`examples/mri/01` centerline samples are rank-dependent at ~23%" **stays open**
+and is re-pointed at the measured locus with the census, the separation table and
+the `-n 1` outlier. No new known-issues entry: no unrelated failure appeared.
+
+**Next-attempt hypothesis, for the review.** Step 2 as scoped is dead — a
+min-global-cell tie-break cannot move a spread with no multi-claims — so the
+successor has to be re-scoped onto the interpolation, and there are two shapes.
+(a) **Cheap and probably correct for the example:** the demo samples `E_lag`/
+`B_lag` only because those are the fields it exports to XDMF; sampling the
+*source* fields for the printed centerline would take the spread from 23% to
+0.008% with a three-line change and no `src/` risk. (b) **The real defect, if
+one wants it:** interpolating an H(curl)/DG field into vector P1 is
+ill-posed at vertices, and `-n 1`'s 7.670e+03 shows the artifact is not merely a
+parallel one — the interpolant is wrong at that vertex at *every* rank count.
+That argues the export path itself should use a conforming/averaged projection
+rather than `interpolate`, which reaches every `.xdmf` the project writes and is
+plainly a review-sized decision, not an implementer slot's. I would run (a) as a
+one-slot item and scope (b) as its own chunk with a projection-vs-interpolation
+comparison as its anchor.

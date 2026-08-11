@@ -1052,6 +1052,72 @@ unproven here until step 1 measures it). Entry leaves only with a `POST-4`
 step 2 commit whose collapse anchor lands (23.5539% → ≤ 0.1% across
 `-n 1/2/4`); stays open on any other outcome.
 
+**Cause, revised 2026-08-11 (`POST-4` step 1) — the ownership tie-break is
+refuted; the locus is the interpolation into Lagrange P1, upstream of
+`evaluate_vector_field_parallel`.** The probe rebuilt this exact fixture and
+solved it at `-n 1/2/4` on a **byte-identical mesh** (9261 cells, coordinate
+moments identical to 12 digits at all three rank counts), then instrumented the
+point evaluation: it evaluated at *every* colliding cell, not just `links[0]`,
+and reduced the claiming `(rank, global cell)` sets across ranks. The
+mechanism's necessary condition is simply absent —
+
+```
+rows (5 points x 4 fields x 2 point sets x 3 rank counts): 120
+MULTI_RANK_CLAIMS   = 0/120
+MULTI_CELL_CLAIMS   = 0/120   (links[0] can only bite here)
+MASK_INVALID        = 0/120   (silent zero-fill candidate)
+CROSS_CELL_DISAGREE = 0/120
+```
+
+— every centerline point is claimed by exactly one cell on exactly one rank,
+every mask is full, and the ε-nudge to x = y = 1e-6 m does **not** collapse the
+spread (97.9755% on axis → 97.9754% nudged, 1.00×) where the chunk's anchor
+demanded ≥ 235×. Both candidate mechanisms — partition-dependent cell choice and
+silent zero-fill — are therefore dead on this fixture, matching `MAG-6` step 4's
+0/9 rather than contradicting it.
+
+**Where the spread actually lives.** The probe sampled four fields at the same
+points on the same solves: the Lagrange-P1 interpolants the example prints
+(`E_lag`, `B_lag`) and the fields they were interpolated *from* (`E_src`,
+`B_src`).
+
+```
+                     max rank spread over -n 1/2/4 pairs, on axis
+  E_lag (P1 interp)                 97.975464%
+  B_lag (P1 interp)                 49.126566%
+  E_src (source field)               0.000000%   <- bit-identical
+  B_src (source field)               0.008426%
+  separation, same points/solves     1.163e+04x
+```
+
+The solve is rank-invariant to round-off — `E_src` is bit-identical across all
+three rank counts and `B_src`'s 0.008426% sits at the phantom-path control's
+0.007326% scale. The 23% enters at `fem.Function.interpolate` into
+`("Lagrange", 1, (3,))`: the P1 vertex dof of a field that is not continuous
+there is written from whichever adjacent cell writes last locally, which is a
+property of the partition. The `-n 2` vs `-n 4` per-point table reproduces
+`EX-16`'s record exactly (`B_lag` 23.5539% at z = +0.0225 m), confirming the
+probe re-created the fixture rather than a neighbour of it. The `-n 1` leg,
+unmeasured before now, is the worst: `E_lag` at z = −0.045 m reads
+**7.670127e+03** against 1.5646e+02 / 1.5528e+02 at `-n 2` / `-n 4` and against
+the source field's 1.368268e+02 — a 56× interpolation artifact at a single
+vertex, present at *every* rank count and merely varying with it.
+
+**Verified at (second revision):** `1c1dc13` + the `POST-4` step-1 diff, logs
+`20260811T140414Z_POST-4-step1-n1.log`,
+`20260811T140345Z_POST-4-step1-n2.log`,
+`20260811T140402Z_POST-4-step1-n4.log`, attribution
+`20260811T140549Z_POST-4-step1-attribution.log` (anchor PASS).
+
+**Resolved by (re-pointed):** `POST-4` step 2 as scoped — a min-global-cell
+tie-break in `evaluate_vector_field_parallel` — **cannot fix this** and is
+skipped per its own conditional clause. The owner is the P1 interpolation of a
+non-P1-conforming field (or the example's decision to sample the interpolant
+rather than the source field at all); re-scoping that is the next review's.
+This entry stays open, with its exit condition unchanged in kind: it leaves with
+a commit whose fix collapses the on-axis spread across `-n 1/2/4`, wherever that
+fix turns out to live.
+
 ---
 
 ## Recording a new entry

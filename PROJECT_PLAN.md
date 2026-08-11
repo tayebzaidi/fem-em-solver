@@ -2930,7 +2930,7 @@ operator direction.)*
 | `POST-1` | Interface-aware field extraction reliability | 🟡 *(adjudicated 2026-08-05, 18:00 review — mean semantics decided, extremum semantics is step 4)* | standard |
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
-| `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | 🔲 *(scoped 2026-08-10, 18:00 review, from the `EX-16` negative result)* | standard |
+| `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | 🟡 *(step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped: needs review re-scoping onto the measured owner)* | standard |
 
 > *(Closed-step plans, execution journals and audits below are archived
 > verbatim in `docs/planning/plan-archive.md`.)*
@@ -3522,8 +3522,41 @@ is in the point-evaluation path. Owns the open known-issues entry
 > `valid_mask=False`, and a sampler ignoring the mask would swallow the
 > zero into a spread statistic.
 >
+> **Step-1 outcome (2026-08-11, 09:00 implementer run) — the suspect above is
+> REFUTED, and the locus is measured.** On a byte-identical mesh across
+> `-n 1/2/4` (9261 cells; coordinate moments equal to 12 digits) the census is
+> empty: `MULTI_RANK_CLAIMS = 0/120`, `MULTI_CELL_CLAIMS = 0/120`,
+> `MASK_INVALID = 0/120`, `CROSS_CELL_DISAGREE = 0/120` — every centerline point
+> is claimed by exactly one cell on exactly one rank, so `links[0]` has nothing
+> to choose between and last-writer-wins nothing to overwrite; silent zero-fill
+> is dead too. The ε-nudge does not collapse the spread (97.9755% → 97.9754%,
+> **1.00×** against the ≥ 235× the anchor demanded), the third independent
+> refutation. **What does carry it:** the probe sampled the Lagrange-P1
+> interpolants the example prints (`E_lag`, `B_lag`) *and* the source fields
+> they were interpolated from (`E_src`, `B_src`), at the same points on the same
+> solves — interpolant path **97.9755%**, source path **0.008426%** (and `E_src`
+> bit-identical across all three rank counts), a **1.163e+04×** separation. The
+> solve is rank-invariant; the 23% enters at `fem.Function.interpolate` into
+> `("Lagrange", 1, (3,))`, where a vertex dof of a field not continuous there is
+> written by whichever adjacent cell writes last locally. The `-n 2` vs `-n 4`
+> table reproduces `EX-16`'s 23.5539% `B_lag` at z = +0.0225 m exactly, so this
+> is the same fixture; the previously unmeasured `-n 1` leg is the worst, with
+> `E_lag` = 7.670127e+03 at z = −0.045 m against a source value of 1.368268e+02
+> — a 56× interpolation artifact present at every rank count. Probes
+> `scripts/probes/post4_step1_probe.py` (3 runs, 4/4/8 s at `-n 2/4/1`) and
+> `scripts/probes/post4_step1_spread.py`; logs `20260811T140345Z` /
+> `…140402Z` / `…140414Z_POST-4-step1-n{2,4,1}.log` and
+> `…140549Z_POST-4-step1-attribution.log` (anchor PASS, 1 s). No `src/` change,
+> no gate, no tolerance; the known-issues entry stays open and is re-pointed at
+> the interpolation. **Step 2 is skipped under its own conditional clause** — a
+> min-global-cell tie-break cannot move a spread that has no multi-claims — and
+> the real owner (P1 interpolation of a non-conforming field, or the example
+> sampling the interpolant rather than the source field) needs review scoping
+> before any code is written.
+>
 > * **Step 1 — diagnosis on the `EX-16` fixture (measurement only, no
->   `src/` change)** 🔲. New probe `scripts/probes/post4_step1_probe.py`
+>   `src/` change)** ✅ *(executed 2026-08-11; the suspect mechanism refuted,
+>   the locus attributed — see the step-1 outcome above)*. New probe `scripts/probes/post4_step1_probe.py`
 >   in the `mag6_step4_probe.py` mold, on `examples/mri/01`'s debug preset
 >   exactly as `EX-16` left it (`preonly`/LU, `gauge_penalty=1.0`). Solve
 >   at `-n 1`, `-n 2`, `-n 4`; per centerline point and per rank count
@@ -3561,7 +3594,13 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   localizes where the 23% lives (which points, which leg); re-point the
 >   known-issues entry at the measured locus, annotate here, stop.
 > * **Step 2 — deterministic tie-break in
->   `evaluate_vector_field_parallel`, gated by the collapse** 🔲
+>   `evaluate_vector_field_parallel`, gated by the collapse** 🚫 *(skipped
+>   2026-08-11 under its own conditional clause: step 1 measured 0/120
+>   multi-claims, so there is no tie to break and this edit would change no
+>   sampled value. Do not execute as written. The measured owner is the P1
+>   interpolation step; re-scoping it — fix the interpolation, or have the
+>   example sample the source fields — is the next review's call. Original
+>   text retained below for the audit trail.)*
 >   *(execute only if step 1 confirmed partition-varying cell choice; a
 >   refuted step 1 makes this step's edit aimless — skip and leave for
 >   the next review).* The fix shape: choose the evaluating cell by
@@ -6790,7 +6829,27 @@ discriminator slot is the weekly review's (2026-08-16) to spend.
    pinned near 1.06% attributes the residual to the coil model — report
    both numbers, annotate the §7 entry, stop.
 
-4. **`POST-4` step 1 — diagnose the centerline point-evaluation rank
+4. ~~**`POST-4` step 1 — diagnose the centerline point-evaluation rank
+   dependence**~~ — **done as scoped 2026-08-11 (09:00 run); step 1 ✅, and
+   it is a decisive negative.** The ownership tie-break is **refuted** on
+   this fixture — `MULTI_RANK_CLAIMS`, `MULTI_CELL_CLAIMS`, `MASK_INVALID`
+   and `CROSS_CELL_DISAGREE` all **0/120** on a byte-identical mesh across
+   `-n 1/2/4`, and the ε-nudge does not collapse the spread (97.9755% →
+   97.9754%, 1.00× against the ≥ 235× demanded). The measurement localizes
+   the defect anyway: the Lagrange-P1 interpolants the example prints spread
+   **97.9755%** across rank counts while the **source fields they were
+   interpolated from spread 0.008426%** at the same points on the same solves
+   (`E_src` bit-identical) — a **1.163e+04×** separation. The solve is
+   rank-invariant; the 23% enters at `fem.Function.interpolate` into
+   `("Lagrange", 1, (3,))`. Logs `20260811T140345Z`/`…140402Z`/`…140414Z_
+   POST-4-step1-n{2,4,1}.log`, attribution `…140549Z_POST-4-step1-
+   attribution.log` (PASS, 1 s). Known-issues entry re-pointed, §7 annotated.
+   **For the review:** item 5 is dead as written (below); the owner needs
+   re-scoping onto the interpolation — fix `interpolate`, or have the example
+   sample the source fields. *(Original item text retained below for the
+   audit trail.)*
+
+   **`POST-4` step 1 — diagnose the centerline point-evaluation rank
    dependence (standard; measurement only, no `src/` change).** Execute
    the §7 `POST-4` step-1 entry verbatim: probe
    (`scripts/probes/post4_step1_probe.py`, `mag6_step4_probe.py` mold)
@@ -6812,7 +6871,15 @@ discriminator slot is the weekly review's (2026-08-16) to spend.
    entry at the measured locus, annotate the §7 entry, stop; item 5 is
    then skipped.
 
-5. **`POST-4` step 2 — the min-global-cell tie-break (standard; depends
+5. ~~**`POST-4` step 2 — the min-global-cell tie-break**~~ — **🚫 skipped
+   2026-08-11 under this item's own skip clause: item 4 refuted the
+   mechanism.** With 0/120 multi-claims there is no tie to break and the edit
+   would change no sampled value. Not attempted, not parked — nothing was
+   written. The next run takes the first *open* item; if that leaves the
+   queue empty, the drain instruction at the end of this section applies.
+   *(Original item text retained below for the audit trail.)*
+
+   **`POST-4` step 2 — the min-global-cell tie-break (standard; depends
    on item 4: execute only if step 1 confirmed partition-varying cell
    choice; if item 4 did not land or refuted the mechanism, skip —
    journal and stop rather than guessing at a fix).** Execute the §7

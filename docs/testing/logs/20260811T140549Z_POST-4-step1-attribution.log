@@ -1,0 +1,88 @@
+# Test Run
+- Chunk: POST-4-step1-attribution
+- Commit: 1c1dc138605ea09b9d5cdaf40eb808cf49379b5b
+- Time (UTC): 2026-08-11 14:05:49
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && timeout 30 python3 scripts/probes/post4_step1_spread.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 10 14:25 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 11 09:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Aug 10 14:25 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && timeout 30 python3 scripts/probes/post4_step1_spread.py'\'''
+========================================================================
+POST-4 step 1 — centerline rank dependence, attribution
+========================================================================
+
+1. mesh identity across rank counts (10 significant digits)
+  n1: cells=9261 m1=4.529002887097e+01 m2=1.285484415430e+02  same
+  n2: cells=9261 m1=4.529002887097e+01 m2=1.285484415430e+02  same
+  n4: cells=9261 m1=4.529002887097e+01 m2=1.285484415430e+02  same
+  MESH_IDENTICAL = True
+
+2. ownership census — the suspect mechanism's necessary condition
+  rows (point x field x set x rank count): 120
+  MULTI_RANK_CLAIMS   = 0/120
+  MULTI_CELL_CLAIMS   = 0/120   (links[0] can only bite here)
+  MASK_INVALID        = 0/120   (silent zero-fill candidate)
+  CROSS_CELL_DISAGREE = 0/120
+
+3. rank spread per field and point set (max over the three rank pairs)
+  axis  E_lag max rank spread =  97.975464%
+  axis  B_lag max rank spread =  49.126566%
+  axis  E_src max rank spread =   0.000000%
+  axis  B_src max rank spread =   0.008426%
+  nudge E_lag max rank spread =  97.975404%
+  nudge B_lag max rank spread =  49.120702%
+  nudge E_src max rank spread =   0.000000%
+  nudge B_src max rank spread =   0.008426%
+
+   per-point detail, axis set, -n 2 vs -n 4 (EX-16's pair)
+  E_lag   0.7494%    1.4568%    0.5319%    1.4678%   13.4499%
+  B_lag   5.0400%   19.8007%   23.3954%   23.5539%    2.2261%
+  E_src   0.0000%    0.0000%    0.0000%    0.0000%    0.0000%
+  B_src   0.0008%    0.0006%    0.0007%    0.0011%    0.0002%
+
+4. the epsilon-nudge discriminator (x = y = 1e-6 m)
+  E_lag axis  97.975464%  ->  nudge  97.975404%  (1x)
+  B_lag axis  49.126566%  ->  nudge  49.120702%  (1x)
+  E_src axis   0.000000%  ->  nudge   0.000000%  (4.319e+287x)
+  B_src axis   0.008426%  ->  nudge   0.008426%  (1x)
+
+========================================================================
+ATTRIBUTION
+========================================================================
+  interpolant path (E_lag/B_lag) max rank spread : 97.9755%
+  source path      (E_src/B_src) max rank spread : 0.008426%
+  separation, same points, same solves           : 1.163e+04x
+  EX-16 centerline record (cited)                : 23.5539%
+  EX-16 phantom-path control (cited)             : 0.007326%
+  ownership mechanism possible on this fixture   : False
+
+ANCHOR (mesh identical, zero multi-claims/mask holes, and the interpolant path spreads >= 235x the source path): PASS
+VERDICT: the links[0] + last-writer-wins ownership tie-break is REFUTED on this fixture; the rank dependence enters at the interpolation into Lagrange P1, upstream of evaluate_vector_field_parallel.
+
+## Exit
+- Status: 0
+- Elapsed (s): 1
