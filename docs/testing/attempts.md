@@ -9465,3 +9465,73 @@ rather than `interpolate`, which reaches every `.xdmf` the project writes and is
 plainly a review-sized decision, not an implementer slot's. I would run (a) as a
 one-slot item and scope (b) as its own chunk with a projection-vs-interpolation
 comparison as its anchor.
+
+## 2026-08-11T17:05Z — `MAT-6` step 7 Part 2b — **complete** (first attempt): the `-n 8` price is **179.3 s**, inside the band, and the gate now fits one foreground call
+
+**Slot.** 12:00 CDT scheduled implementer run, §9 item 1 (the first On-deck
+item, not done, not blocked). Preflight: tree clean on `c67b1b3`, container Up
+22 h, no `recovered/*`. One compute command, foreground, exit 0.
+
+**What was run.** `scripts/probes/mat6_step6_probe.py` through
+`run_and_log.sh` at **`-n 8`**, complex mode, `FEM_EM_REQUIRE_COMPLEX=1`,
+container-side `timeout 590`, Bash-tool `timeout` 660000 ms — the rescoped
+foreground recipe, verbatim, second use. No script edit was needed: the probe
+already prints `-n {comm.size}`, so the same file that produced the `-n 4`
+record produces the `-n 8` one. **Nothing was backgrounded and the turn never
+ended while the harness ran** — the trap that cost five slots did not recur.
+
+**Measured, `20260811T170103Z_MAT-6-step7-part2b-probe-n8.log`, exit 0,
+elapsed 229 s (heavy tier, ceiling 1200 s):**
+- cgroup cap re-read *before* the solve: `memory.max` = **68719476736** (64 G),
+  the fourth consecutive confirmation;
+- mesh **697 401 cells in 46.6 s** — the same cell count a **seventh** time,
+  and the cheapest mesh on record (prior six 51.5–56.1 s);
+- **one projected loaded solve: 179.3 s at `-n 8`, 813 287 global dofs, no
+  OOM** — the same dof count as the `-n 4` record, so this is the same problem
+  priced at twice the width;
+- scaling against the `-n 4` record (372.9 s,
+  `20260811T093111Z_MAT-6-step7-part2-probe.log`, cited not recomputed):
+  **2.08× speedup at 2× the ranks — superlinear**, consistent with the smaller
+  per-rank working set at 64 G;
+- probe's own budget line: the loaded/free pair prices at **~359 s solve +
+  47 s mesh = ~405 s**.
+
+**The decision rule fires green.** §9 item 1 pre-committed the band as
+*solve ≤ ~240 s* (mesh ~52 s + 2× solve ≤ ~530 s). Measured 179.3 s is
+**60.7 s inside it**, and the ~405 s pair sits **~125 s under** the 530 s
+window and well under the Bash tool's 660 s hard maximum. So: route option (1)
+is confirmed, option (2) (splitting the pair across two harness calls, which
+needs the gate module restructured) is **not** needed, and **§9 item 4's skip
+clause does not fire** — the additivity gate is executable in one foreground
+call at `-n 8`, container `timeout` ~470 s (mesh + 2× solve + 60 s margin).
+
+**Negative control, cited not recomputed.** Step 6's two 16 G kill records on
+this identical fixture (`-n 4` signal 9 at ~262 s; **`-n 8` exit 137 at
+~138 s**). The second is the direct control for this run: the same rank width
+that was OOM-killed at 138 s under 16 G now runs to a completed 179.3 s solve
+under 64 G. A completed `-n 8` solve is itself the memory reading — the cap
+raise, not the rank count, is what changed.
+
+**Scope boundary held.** The gate module
+`tests/validation/test_dodd_deeds_reactance_combined_knobs.py` was **not**
+run and remains unverified — it is item 4's, and the O(h²) volume-deficit
+control the probe skips is item 4's to re-assert. The additivity number was
+not read; **0.9843 stays unmeasured**. No `src/`, `tests/`, or `scripts/`
+edit — this commit is the log, the index row, and the two plan annotations.
+`MAT-6` stays ✅; step 7 stays 🟡 pending item 4.
+
+**Traps met.** None fired: no stale FFCx lock (no prior kill this slot), the
+complex build sourced cleanly, the `project_source=False` pins are in the
+probe and untouched. No unrelated test failure appeared, so no known-issues
+entry.
+
+**Next-attempt hypothesis.** Item 4 should now run as written, at `-n 8`, with
+the container `timeout` set from this measurement — 470 s is mesh 47 s +
+2× 179.3 s + 64 s margin, comfortably inside the foreground window. The one
+thing this probe cannot predict is the gate module's *first* execution: it has
+never run, so a mechanical failure (import, fixture name, missing marker) is
+the likeliest way item 4 loses its slot, not cost. Recommend the item-4 slot
+budget its first minute to a collection-only check
+(`pytest --collect-only` on that module, seconds, no solve) before spending
+the 405 s — a cheap way to convert a module bug into a fix-and-run instead of
+a lost slot.

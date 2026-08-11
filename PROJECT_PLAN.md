@@ -2805,6 +2805,31 @@ it: the additivity **reading** is a measurement at `-n 8`; the Dodd–Deeds
 anchors it inherits were gated at `-n 2` in step 2b and are not re-gated
 wider.*
 
+*Part 2b executed, 2026-08-11 12:00 run — **option (1) is confirmed
+green: 179.3 s at `-n 8`, and the gate fits one foreground call.**
+Foreground harness call, container `timeout 590`, Bash-tool `timeout`
+660000 ms: exit **0**, elapsed 229 s
+(`20260811T170103Z_MAT-6-step7-part2b-probe-n8.log`). Cap re-read first,
+`memory.max` = 68719476736. Mesh **697 401 cells in 46.6 s** — the same
+count a seventh time, and the cheapest mesh on record. **One projected
+loaded solve: 179.3 s at `-n 8`, 813 287 global dofs, no OOM** — the same
+dof count as the `-n 4` record, so this is one problem priced at two
+widths: **2.08× speedup for 2× the ranks, superlinear**, consistent with
+the smaller per-rank working set at 64 G. Negative control, cited not
+recomputed: step 6's `-n 8` kill at 16 G (exit 137, ~138 s) on this exact
+fixture — the same rank width that died then completes now, so the cap
+raise is what changed, not the rank count. **Decision rule (§9 item 1,
+pre-committed as solve ≤ ~240 s) fires green with 60.7 s of margin:** the
+loaded/free pair prices at **~359 s solve + 47 s mesh = ~405 s**, ~125 s
+inside the 530 s solve window and far inside the Bash tool's 660 s
+foreground maximum. Consequences: option (2) (split the pair across two
+harness calls, module restructure) is **not needed**; §9 item 4's skip
+clause does **not** fire; the gate runs at `-n 8` with container `timeout`
+~470 s (mesh + 2× solve + 60 s margin). Untouched, still owed by the gate:
+the gate module has never executed, the O(h²) volume-deficit control is
+not re-asserted, and **0.9843 remains unmeasured**. Step 7 stays 🟡;
+`MAT-6` stays ✅.*
+
 *Blocked-attempt record, 2026-08-08, retained:* *(attempted 2026-08-08,
 19:30 run — **blocked before any compute: a scheduled session cannot edit
 `docker/`.** `.claude/settings.json` lists `Edit(docker/**)` under
@@ -6828,8 +6853,15 @@ known-issues entry; item 4 is the conditional additivity gate; item 5 is
 the spare. The `PORT-1` critical path stays deliberately absent: the second
 licensed discriminator slot is the weekly review's (2026-08-16) to spend.
 
-1. **`MAT-6` step 7 Part 2b — the `-n 8` cost probe (heavy; foreground
-   recipe; route decision (1) in the §7 step-7 note).** Run
+1. ~~**`MAT-6` step 7 Part 2b — the `-n 8` cost probe.**~~ **DONE
+   2026-08-11 12:00 run** — exit 0, 229 s,
+   `20260811T170103Z_MAT-6-step7-part2b-probe-n8.log`. **Solve 179.3 s at
+   `-n 8`** (mesh 46.6 s, 697 401 cells / 813 287 dofs, no OOM at 64 G;
+   2.08× faster than the 372.9 s `-n 4` record). The pre-committed band
+   (≤ ~240 s) is met with 60.7 s to spare, the pair prices at **~405 s**,
+   and **item 4's skip clause does not fire** — the gate is executable in
+   one foreground call at `-n 8`, container `timeout` ~470 s. Details in
+   the §7 step-7 Part 2b note. *Original text, for the audit trail:* Run
    `scripts/probes/mat6_step6_probe.py` via `run_and_log.sh` at **`-n 8`**,
    complex mode, **foreground Bash call, tool `timeout` 660000 ms,
    container-side `timeout 590`** — never `run_in_background`, never end
