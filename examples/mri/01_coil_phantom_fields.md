@@ -42,32 +42,49 @@ at the validated gauge floor is strictly better than a truncated iterate at a
 sub-floor penalty — but see the caveat below, because it did **not** fix what it
 was hypothesised to fix.
 
-### The open caveat: centerline samples are rank-dependent
+### The closed caveat: the centerline block used to be rank-dependent
 
-**Do not quote a centerline number from a single rank count.** At `-n 2` vs
-`-n 4` the five printed centerline `(|E|, |B|)` pairs spread by **23.5539%** —
-against **23.5545%** for the unconverged solve it replaced, a ratio of
-**1.0000**. Converging the KSP moved only the `|E|` leg (15.6832% → 13.4499%);
-the maximum is carried by the **magnetostatic `|B|` leg**, which no
-frequency-domain change can touch.
+**This is history now, but read it — it is the most instructive thing in this
+guide.** Through `EX-16` (2026-08-10) the five printed centerline `(|E|, |B|)`
+pairs spread by **23.5539%** between `-n 2` and `-n 4` — against **23.5545%**
+for the unconverged solve it replaced, a ratio of **1.0000**: converging the
+KSP moved nothing. The positive control on the *same two runs and the same
+fields* — the **493-point phantom-region** min/max/mean block — agreed across
+rank counts to **0.007326%**, **3215× tighter**. Same solve, same field, two
+samplers.
 
-The decisive measurement is the positive control taken on the *same two runs and
-the same fields*: the **493-point phantom-region** sampling path — the `|E|`/`|B|`
-min/max/mean block, not the centerline block — agrees across rank counts to
-**0.007326%**, **3215× tighter**. Same solve, same field, two samplers. The
-defect is therefore in the **centerline point-evaluation path**
-(`evaluate_vector_field_parallel`), not in the solve, the KSP or the gauge; the
-likely mechanism is on-axis points at `x = y = 0` sitting on shared mesh edges,
-exactly what `MAG-6` step 4 characterised.
+The obvious suspect was the point-evaluation path
+(`evaluate_vector_field_parallel` choosing a partition-dependent cell for
+on-axis points at `x = y = 0`). `POST-4` step 1 (2026-08-11) **refuted** it:
+across `-n 1/2/4` on a byte-identical mesh the ownership census is empty —
+**0/120** multi-rank claims, 0/120 multi-cell claims, no mask holes — and an
+ε-nudge off the axis did not collapse the spread. The locus is one step
+*upstream*: the script sampled the `("Lagrange", 1, (3,))` interpolants it
+builds for the XDMF export, and a vertex dof of a field that is not continuous
+there is written by whichever adjacent cell writes last locally. Measured on
+the same points and the same solves: interpolant path **97.9755%**, source path
+**0.008426%** — a **1.163e+04×** separation.
 
-That is an **open known-issues entry**, assigned to `POST-4` (step 1 diagnoses
-ownership, step 2 — conditional — replaces last-writer-wins with a
-min-global-cell tie-break). Until it closes: the phantom-region aggregates are
-rank-stable and the centerline block is not.
+`POST-4` step 3 fixed it where it lives: the centerline table now samples the
+fields **as solved**. Measured spread across `-n 1/2/4` is **0.008613%**, a
+**2735×** collapse, and the residue is the magnetostatic `|B|` leg's own solve
+noise — the `|E|` leg reproduces every printed digit across all three rank
+counts (0.000000%). The printed values also changed, because they are now the
+source values: `|E| = 1.368268e+02` at `z = −0.045 m`, where the interpolant
+printed `7.670127e+03` — **56× off**. Logs
+`20260811T183229Z`/`…183211Z`/`…183222Z_POST-4-step3-n{1,2,4}.log` and the
+anchor `…183503Z_POST-4-step3-anchor.log` (PASS, 1 s).
 
-On record at `-n 2`, `debug` preset (`20260810T170234Z_EX-16-direct-n2.log`,
+Two things this does **not** buy. Rank-invariance is not physics: no number in
+this example is gated, and a faithful printout of an ungated field is still an
+ungated field. And the **exported** XDMF/VTX fields are still P1 interpolants,
+so they still carry the vertex-convention artifact — bounding it on the export
+paths is `POST-4` step 4, still open. Do not read a ParaView vertex value of
+`A`/`B`/`E` as the field at that vertex.
+
+On record at `-n 2`, `debug` preset (`20260811T183211Z_POST-4-step3-n2.log`,
 exit 0, 6 s harness-wall; the `-n 4` companion is
-`…170309Z_EX-16-direct-n4.log`, 4 s):
+`…183222Z_POST-4-step3-n4.log`, 4 s, and `-n 1` is `…183229Z`, 9 s):
 
 | Quantity | Value | Rank-stable? |
 | --- | --- | --- |
@@ -75,10 +92,10 @@ exit 0, 6 s harness-wall; the `-n 4` companion is
 | Cell tags | coil_1 **385**, coil_2 **350**, phantom **493**, air **8033** | — |
 | Frequency-domain KSP | `preonly` / `lu`, `converged=True (reason=4)`, 1 iteration, `residual_norm=0.000000e+00` | — |
 | Phantom `\|E\|` min/max/mean | 1.244231e+02 / 3.150176e+02 / **1.975909e+02** | **yes** — 0.007326% |
-| Phantom `\|B\|` min/max/mean | 8.791014e-08 / 2.771692e-06 / **1.292004e-06** | **yes** — 0.007326% |
+| Phantom `\|B\|` min/max/mean | 8.790509e-08 / 2.771695e-06 / **1.292004e-06** | **yes** — 0.007326% |
 | `\|E\|/\|B\|` mean ratio | **1.529336e+08** (max 1.136553e+08) | — (non-physical by construction) |
 | Sampling coverage | 493/493/493, 0 dropped | — |
-| Centerline, `z = 0` | `\|E\| = 2.364105e+02`, `\|B\| = 4.933436e-07` | **NO** — 23.5539% across `-n 2`/`-n 4` |
+| Centerline, `z = 0` | `\|E\| = 2.370446e+02`, `\|B\| = 5.325383e-07` | **yes** — 0.008613% across `-n 1`/`-n 2`/`-n 4` (was 23.5539% pre-`POST-4`) |
 | Centerline samples valid (E/B) | 5/5, 5/5 | — |
 | quick-look status | **WARN** (the imbalance warning above) | — |
 
@@ -178,24 +195,25 @@ magnitudes: they say both fields vary over the phantom by a comparable relative
 amount, i.e. the spatial structure is plausible even though the scales are not
 related.
 
-**Step 5 — read the centerline block last, and read it with the caveat.**
+**Step 5 — read the centerline block last.**
 
 ```
 Centerline sample magnitudes (z, |E|, |B|):
-  z=-0.0450 m -> |E|=1.564570e+02, |B|=3.689962e-07
-  z=-0.0225 m -> |E|=2.240058e+02, |B|=3.530755e-07
-  z=+0.0000 m -> |E|=2.364105e+02, |B|=4.933436e-07
-  z=+0.0225 m -> |E|=2.247580e+02, |B|=4.055231e-07
-  z=+0.0450 m -> |E|=1.629703e+02, |B|=4.348834e-07
+  z=-0.0450 m -> |E|=1.368268e+02, |B|=5.038754e-07
+  z=-0.0225 m -> |E|=2.315512e+02, |B|=4.288120e-07
+  z=+0.0000 m -> |E|=2.370446e+02, |B|=5.325383e-07
+  z=+0.0225 m -> |E|=2.380360e+02, |B|=5.249071e-07
+  z=+0.0450 m -> |E|=1.410509e+02, |B|=4.252024e-07
 ```
 
 The shape is sensible — both fields peak at the mid-plane between the coils —
-but **these five pairs are partition-dependent to 23.5539%**. Running at `-n 4`
-gives visibly different digits from the same solve. Treat this block as
-illustrative only; the open `POST-4` entry owns it. The `centerline samples
-valid (E/B): 5/5 / 5/5` line says all five points were located in some cell — it
-does **not** say the same cell was chosen at every rank count, which is the
-actual defect.
+and since `POST-4` step 3 these five pairs are rank-invariant to **0.008613%**
+(they used to move 23.5539%; the numbers here are also *different* from the
+pre-fix guide, because they are now the source values rather than P1
+interpolants of them). Running at `-n 4` reproduces the `|E|` digits exactly.
+The `centerline samples valid (E/B): 5/5 / 5/5` line says all five points were
+located in some cell. What this block still is **not**: physics. It is an
+ungated proxy field printed faithfully.
 
 **Step 6 — open it in ParaView.**
 `File → Open → examples/mri/paraview_output/mri_coil_phantom_fields_combined.xdmf`.
@@ -227,9 +245,10 @@ iterative solver override has returned; that is the `EX-16` regression. Cell-tag
 counts differing from 385/350/493/8033 at the `debug` preset → the mesh changed;
 nothing below is comparable to this record. Phantom aggregates moving by more
 than ~0.01% across rank counts → a *new* defect, because that path is the
-rank-stable one; report it, it is not the known centerline issue. Centerline
-numbers differing across rank counts → the **known** open issue, expected, do
-not file it again. `dropped samples` non-zero → the phantom sampling lost cells
+rank-stable one; report it, it is not the old centerline issue. Centerline
+numbers differing across rank counts by more than ~0.01% → a **regression** of
+`POST-4` step 3; the most likely cause is the block sampling the `*_lagrange`
+interpolants again instead of the source fields. `dropped samples` non-zero → the phantom sampling lost cells
 to the boundary filter and the aggregates no longer cover the whole phantom.
 `|E|/|B|` ratio near the wave impedance → something has changed that would make
 this a physics example, which it is not licensed to be; check what moved before
@@ -237,9 +256,10 @@ celebrating.
 
 ## Related
 
-- The known-issues entry that owns the centerline caveat:
-  `docs/testing/known-issues.md`, assigned to `POST-4` (PROJECT_PLAN.md §7).
-- The measurement that attributed it: `EX-16` (PROJECT_PLAN.md §7), logs
+- The chunk that closed the centerline caveat: `POST-4` (PROJECT_PLAN.md §7),
+  step 1 (attribution) and step 3 (this fix); step 4 still owns the export-path
+  residue.
+- The measurement that raised it: `EX-16` (PROJECT_PLAN.md §7), logs
   `20260810T170457Z_EX-16-spread-v2.log` and the `-n 2`/`-n 4` pair.
 - The gate that makes the time-harmonic *formulation* real — which this geometry
   does not inherit: `examples/time_harmonic/01_lossy_plane_wave.py` (`th:1`,

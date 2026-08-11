@@ -9535,3 +9535,105 @@ budget its first minute to a collection-only check
 (`pytest --collect-only` on that module, seconds, no solve) before spending
 the 405 s — a cheap way to convert a module bug into a fix-and-run instead of
 a lost slot.
+
+## 2026-08-11T18:45Z — `POST-4` step 3 — **complete** (first attempt); step 3 ✅, the 23% is gone from the printout, and the known-issues entry retires
+
+**Item:** §9 item 2 (item 1 was landed by the 12:00 slot). **Outcome:**
+complete. **Elapsed:** ~50 min of the 60. **Tier:** standard; four compute
+commands, 9 + 6 + 4 + 1 + 1 s of container time.
+
+**What was changed.** One example, two lines of it:
+`examples/mri/01_coil_phantom_fields.py`'s centerline table now calls
+`evaluate_vector_field_parallel` on `e_field`/`b_field` — the fields **as
+solved** — instead of `e_lagrange`/`b_lagrange`, the `("Lagrange", 1, (3,))`
+interpolants the script builds for the XDMF export. The interpolants stay
+exactly where they are load-bearing (the export path). **No `src/` change, no
+`tests/` change, no tolerance touched**, per the step's scope boundary:
+`fem.Function.interpolate` is DolfinX behaviour and the vertex dof of a
+non-conforming field is a convention there, not a bug this chunk owns.
+
+**The anchor, first execution, PASS.**
+
+```
+                        max rank spread over the -n 1/2/4 pairs
+  |E| centerline                 0.000000%   <- every printed digit reproduces
+  |B| centerline                 0.008613%   <- magnetostatic solve noise
+  centerline (max)               0.008613%   vs the 23.5539% EX-16 record
+  collapse                       2735x       (anchor demanded >= 235x, <= 0.1%)
+```
+
+Faithfulness — the printed values equal step 1's measured source values, `|E|`
+to **3.090e-07** and `|B|` to **7.615e-05**; at z = −0.045 m the block now
+prints **1.368268e+02** where the interpolant printed **7.670127e+03**, the 56×
+artifact step 1 found. Non-regression — phantom-region aggregates reproduce
+their `EX-16` record to **0.005745%** (`-n 2`) and **0.002218%** (`-n 4`),
+inside that path's own 0.007326% floor.
+
+**Logs:** `20260811T183211Z_POST-4-step3-n2.log` (exit 0, 6 s),
+`…183222Z_POST-4-step3-n4.log` (4 s), `…183229Z_POST-4-step3-n1.log` (9 s),
+anchor `…183503Z_POST-4-step3-anchor.log` (PASS, 1 s), doc checker
+`…183750Z_POST-4-step3-doccheck.log` (PASS, both checks). Anchor script
+`scripts/probes/post4_step3_spread.py` (new). The superseded first anchor run
+`…183353Z_POST-4-step3-anchor.log` (FAIL) is committed too, not hidden — see
+below.
+
+**Two secondary tolerances in my own anchor script were wrong when written, and
+were corrected with the measurements recorded in code comments.** Neither is
+the chunk's anchor, which passed unchanged on the first execution; both were
+bounds I invented in a script that had never run:
+
+1. *Faithfulness 5e-6 → 1e-4.* I asserted the six significant figures the
+   example prints. But the comparison is against **a different process's
+   solves** (step 1's probe), and step 1 had already measured that floor —
+   source path 0.008426% across rank counts, with its "bit-identical" claim
+   corrected to last-ulp by the 10:30 review audit. 5e-6 was unachievable when
+   written. Measured 7.615e-5, carried **entirely** by the magnetostatic `|B|`
+   leg; the `|E|` leg reads 3.090e-07. The two legs are now printed separately
+   so the number is not hidden inside a single max.
+2. *Non-regression restricted to matched rank counts.* I compared all three
+   runs against `EX-16`'s `-n 2` record. `EX-16` never ran the example at
+   `-n 1`, so there is no n1 phantom record to reproduce — the 0.025917% first
+   reading was an n1 leg's 493-point `|B|` **min**, the noisiest statistic in
+   the block, against an n2 reference. At matched rank counts the deviations
+   are 5.7e-5 and 2.2e-5. The n1 figure is still **printed, as an unasserted
+   reading**.
+
+Flagging this explicitly for the review: an implementer weakening its own
+just-written bound is the exact shape of the thing the rules forbid, and the
+reviewer should check it rather than take my word. What protects it here is
+that the chunk's own anchor — the 23.5539% → ≤ 0.1% collapse, ≥ 235× — was
+never touched and passed on the first run, and both corrections are justified
+by numbers **already on record from step 1**, not by numbers this run
+produced. The FAIL log is committed as evidence.
+
+**Documentation.** The `mri:1` guide's caveat section is rewritten from "the
+open caveat" to closed history — it keeps the full `EX-13`/`EX-16`/step-1 story
+(it is the most instructive passage in that guide) and states plainly what the
+fix does **not** buy: the exported XDMF/VTX fields are still P1 interpolants
+carrying the vertex artifact (`POST-4` step 4, open), and rank-invariance is
+not physics — `examples/mri/01` is ungated by design. The guide's on-record
+table, its step-5 block, and its step-8 deviation triage are updated to the new
+numbers and the new failure mode ("centerline moving > 0.01% across ranks is
+now a *regression* of step 3, most likely the block sampling `*_lagrange`
+again"). The known-issues entry is **retired in place** with the retirement
+block on top and the original entry plus both cause revisions retained beneath.
+`check_example_doc_references.py` re-run in the same commit: PASS, artifacts
+fresh within the 48 h window.
+
+**Traps met.** None fired. The complex build sourced automatically via the
+`mri:` group in `run_examples.sh`; no `.reshape(-1, 3)` issue (the example
+samples five points, not one); no rank-local reduction needed (the printout is
+already rank-0-guarded and the sampler reduces internally); no `-s` issue (this
+is an example, not pytest); no stale FFCx lock. No unrelated failure appeared,
+so no new known-issues entry.
+
+**Next-attempt hypothesis.** `POST-4` step 4 (§9 item 5) is now the chunk's
+only open step and is well set up: this run leaves `scripts/probes/
+post4_step3_spread.py` beside step 1's two probes, and the fixture solves in
+4–9 s, so the whole of step 4's measurement is minutes of compute. The one
+thing step 4 should not assume is that the vertex artifact is large
+*everywhere* — step 1's 56× was at an on-axis point, and the step-3 |E| leg
+reproducing every digit at every rank count says the source field there is
+smooth; a small midpoint artifact with a large vertex artifact is the expected
+shape, and the step's own negative-result clause already covers the
+alternative.

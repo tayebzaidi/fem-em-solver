@@ -2999,7 +2999,7 @@ operator direction.)*
 | `POST-1` | Interface-aware field extraction reliability | 🟡 *(adjudicated 2026-08-05, 18:00 review — mean semantics decided, extremum semantics is step 4)* | standard |
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
-| `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | 🟡 *(step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped; re-scoped 2026-08-11 10:30 review: step 3 samples the source fields on the centerline, step 4 bounds the export-path artifact)* | standard |
+| `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | 🟡 *(step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped. Step 3 ✅ 2026-08-11 — the centerline samples the source fields: **23.5539% → 0.008613%**, a 2735× collapse; known-issues entry **retired**. Step 4 🔲 — the export-path P1 artifact is still unbounded)* | standard |
 
 > *(Closed-step plans, execution journals and audits below are archived
 > verbatim in `docs/planning/plan-archive.md`.)*
@@ -3704,7 +3704,39 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   table, keep the entry open, annotate here, stop.
 > * **Step 3 — the centerline samples the source fields, not the P1
 >   interpolants (standard; re-scoped 2026-08-11, 10:30 review, onto the
->   locus step 1 measured).** 🔲 Change `examples/mri/01`'s centerline
+>   locus step 1 measured).** ✅ *(executed 2026-08-11, 13:30 implementer run —
+>   anchor PASS first execution.* `examples/mri/01_coil_phantom_fields.py`'s
+>   centerline table now evaluates `e_field`/`b_field` **as solved** through
+>   `evaluate_vector_field_parallel`; the P1 interpolants stay on the XDMF
+>   export path, untouched, and **no `src/` change** was made. Measured on the
+>   post-fix example at `-n 1/2/4` (logs `20260811T183229Z` / `…183211Z` /
+>   `…183222Z_POST-4-step3-n{1,2,4}.log`, exit 0, 9/6/4 s): centerline spread
+>   **0.008613%** against the 23.5539% record — a **2735×** collapse, where the
+>   anchor demanded ≥ 235× and ≤ 0.1%. The `|E|` leg reproduces **every printed
+>   digit** at all three rank counts (0.000000%); the 0.008613% residue is the
+>   magnetostatic `|B|` leg's own solve noise, at the phantom control's
+>   0.007326% scale. Faithfulness: the printed values equal step 1's measured
+>   source values (`|E|` to 3.090e-07, `|B|` to 7.615e-05), and `|E|` at
+>   z = −0.045 m now reads **1.368268e+02** where the interpolant printed
+>   **7.670127e+03** — the 56× artifact, gone from the printout.
+>   Non-regression: phantom-region aggregates reproduce their `EX-16` record to
+>   **0.005745%** (`-n 2`) and **0.002218%** (`-n 4`), inside that path's own
+>   floor. Anchor script `scripts/probes/post4_step3_spread.py`, log
+>   `20260811T183503Z_POST-4-step3-anchor.log` (PASS, 1 s). **Two anchor-script
+>   tolerances were corrected between its first and second execution, with the
+>   measurements recorded in code comments** (neither is the chunk's anchor,
+>   which passed unchanged): faithfulness 5e-6 → 1e-4, because the comparison is
+>   against a *different process's* solves and step 1 had already measured that
+>   floor at 0.008426% (the 5e-6 assumed print precision was achievable
+>   cross-run; it is not); and non-regression restricted to the rank counts
+>   `EX-16` actually recorded (`-n 2`, `-n 4`) — `EX-16` never ran `-n 1`, so
+>   the 0.025917% first reading was an n1 leg's 493-point `|B|` **min** compared
+>   against an n2 reference, and it is now printed as an unasserted reading
+>   rather than silently dropped. The `mri:1` guide's caveat block is rewritten
+>   as closed history (with the export-path residue called out), the
+>   known-issues entry is **retired** in the same commit, and
+>   `check_example_doc_references.py` re-run. Step 4 (the export-path bound) is
+>   unaffected and stays open.)* Original text: change `examples/mri/01`'s centerline
 >   table to evaluate the **source fields** (`E`, `B` as solved) through
 >   `post.evaluation.evaluate_vector_field_parallel`, instead of the
 >   `("Lagrange", 1, (3,))` interpolants it prints today; the P1
@@ -6887,8 +6919,19 @@ licensed discriminator slot is the weekly review's (2026-08-16) to spend.
    §7 option (2) (split the pair across two harness calls; needs the module
    restructured — a later review scopes it); journal, annotate §7, stop.
 
-2. **`POST-4` step 3 — the centerline samples the source fields (standard;
-   re-scoped this review onto the measured locus).** Execute the §7
+2. ~~**`POST-4` step 3 — the centerline samples the source fields.**~~ **DONE
+   2026-08-11 13:30 run** — anchor PASS first execution, four harness logs
+   (`20260811T183211Z` / `…183222Z` / `…183229Z_POST-4-step3-n{2,4,1}.log`,
+   exit 0, 6/4/9 s; anchor `…183503Z_POST-4-step3-anchor.log`, 1 s). Centerline
+   spread **23.5539% → 0.008613%** across `-n 1/2/4`, a **2735×** collapse
+   (≥ 235× demanded); the `|E|` leg reproduces every printed digit, the residue
+   is the magnetostatic `|B|` leg's solve noise. Printed values now equal the
+   source fields (1.368268e+02 at z = −0.045 m vs the interpolant's
+   7.670127e+03); phantom aggregates reproduce `EX-16` to 0.005745%/0.002218%
+   at the matched rank counts. Known-issues entry **retired**, guide rewritten,
+   doc checker re-run; no `src/` change. Two of the anchor script's own
+   secondary tolerances were corrected with the measurements recorded — details
+   in the §7 step-3 entry. *Original text, for the audit trail:* Execute the §7
    `POST-4` step-3 entry verbatim: `examples/mri/01`'s centerline table
    evaluates the solved `E`/`B` through
    `post.evaluation.evaluate_vector_field_parallel` instead of the

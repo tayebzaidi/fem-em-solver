@@ -35,11 +35,24 @@ solver's default direct path and reports ``converged=True (reason=4)``; it
 previously overrode that with GMRES+Jacobi and stopped at ``ksp_max_it``
 with ``converged=False (reason=-3)``. That fix did **not** make the printed
 centerline samples rank-stable: at `-n 2` vs `-n 4` they still spread
-**23.5539%** (vs 23.5545% unconverged), the max carried by the
-magnetostatic |B| leg, while the 493-point phantom-region aggregates over
-the same fields agree to 0.007326%. The centerline point-evaluation path is
-partition-dependent — see the open known-issues entry; do not quote a
-centerline number from a single rank count.
+**23.5539%** (vs 23.5545% unconverged), while the 493-point phantom-region
+aggregates over the same fields agreed to 0.007326%.
+
+`POST-4` (steps 1 and 3, 2026-08-11) closed that. The point-evaluation path
+was **refuted** as the cause — 0/120 multi-rank/multi-cell claims, no mask
+holes — and the locus measured one step upstream: the script was sampling the
+``("Lagrange", 1, (3,))`` interpolants it builds for the XDMF export, and a
+vertex dof of a field that is not continuous there is written by whichever
+adjacent cell writes last locally (interpolant path 97.9755% vs source path
+0.008426%, a 1.163e+04x separation). The centerline table now samples the
+fields **as solved**; measured spread across `-n 1/2/4` is **0.008613%**
+(2735x collapse from 23.5539%), the residue the magnetostatic |B| leg's own
+solve noise, and the printed values now equal the source fields (1.368268e+02
+at z = -0.045 m, where the interpolant printed 7.670127e+03 — 56x off).
+Rank-invariance is not a physics claim: no number here is gated.
+
+The exported XDMF/VTX fields are still P1 interpolants and still carry that
+vertex-convention artifact — bounding it is `POST-4` step 4.
 """
 
 from __future__ import annotations
@@ -438,8 +451,16 @@ def main(argv: list[str] | None = None):
     z_line = np.linspace(-0.045, 0.045, int(scenario["centerline_sample_count"]))
     sample_points = np.zeros((len(z_line), 3), dtype=np.float64)
     sample_points[:, 2] = z_line
-    e_samples, e_valid = evaluate_vector_field_parallel(e_lagrange, sample_points, comm=comm)
-    b_samples, b_valid = evaluate_vector_field_parallel(b_lagrange, sample_points, comm=comm)
+    # `POST-4` step 3: sample the **source** fields, not the Lagrange-P1
+    # interpolants built above for the XDMF export.  Step 1 measured, on this
+    # fixture and these same solves, that the solve is rank-invariant (source
+    # path 0.008426% across `-n 1/2/4`) while the P1 interpolants spread
+    # 97.9755% — a 1.163e+04x separation — because a vertex dof of a field that
+    # is not continuous there is written by whichever adjacent cell writes last
+    # locally.  The interpolants stay where they are load-bearing (the export
+    # path); the printed diagnostics read the fields as solved.
+    e_samples, e_valid = evaluate_vector_field_parallel(e_field, sample_points, comm=comm)
+    b_samples, b_valid = evaluate_vector_field_parallel(b_field, sample_points, comm=comm)
 
     if comm.rank == 0:
         print("\n" + format_phantom_quicklook_report(quicklook))

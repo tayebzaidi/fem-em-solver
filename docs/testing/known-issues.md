@@ -999,7 +999,46 @@ state on record: `⚠ VTX output failed (ADIOS2 may not be available): Only
 (discontinuous) Lagrange functions are supported` once per rank, and
 `paraview_output/circular_loop_A.bp` opening with zero ADIOS2 variables.
 
-### `examples/mri/01` centerline samples are rank-dependent at ~23%, at and below the gauge floor
+### ✅ RETIRED 2026-08-11 (`POST-4` step 3) — `examples/mri/01` centerline samples were rank-dependent at ~23%, at and below the gauge floor
+
+**Closed by sampling the source fields.** The example's centerline table now
+evaluates `E`/`B` **as solved** through `evaluate_vector_field_parallel`,
+instead of the `("Lagrange", 1, (3,))` interpolants it builds for the XDMF
+export — the locus the step-1 revision below attributed the spread to. Measured
+across `-n 1/2/4` on the post-fix example:
+
+```
+                            max rank spread over the -n 1/2/4 pairs
+  |E| centerline                     0.000000%   <- every printed digit
+  |B| centerline                     0.008613%   <- magnetostatic solve noise
+  collapse from the 23.5539% record  2735x       (anchor demanded >= 235x)
+```
+
+plus faithfulness — the printed values now equal step 1's measured source
+values (|E| to 3.1e-7, |B| to 7.6e-5, the |B| leg's own floor); `|E|` at
+z = −0.045 m reads **1.368268e+02** where the interpolant printed
+**7.670127e+03**, the 56× artifact — and non-regression: the phantom-region
+aggregates reproduce their `EX-16` record to 0.005745% (`-n 2`) and 0.002218%
+(`-n 4`), inside the phantom path's own 0.007326% floor.
+
+**Verified at:** `a34c3e6` + the `POST-4` step-3 diff, logs
+`20260811T183229Z_POST-4-step3-n1.log`,
+`20260811T183211Z_POST-4-step3-n2.log`,
+`20260811T183222Z_POST-4-step3-n4.log`, anchor
+`20260811T183503Z_POST-4-step3-anchor.log` (PASS, 1 s),
+`scripts/probes/post4_step3_spread.py`.
+
+**What is NOT closed by this.** The exported XDMF/VTX fields are still P1
+interpolants of Nédélec/DG sources and still carry the vertex-convention
+artifact — the fix moved the *printout* off that path, it did not repair the
+path. `POST-4` step 4 bounds that residue on the export paths and is open. And
+rank-invariance is not physics: `examples/mri/01` is ungated by design
+(`WF-1` 🧪), so a faithful printout of an ungated proxy field is still ungated.
+
+*The original entry and its two cause revisions are retained below for the
+audit trail.*
+
+#### Original entry (opened `EX-13`, 2026-08-10)
 
 **Test id:** none — `./run_examples.sh -e mri:1 -n 2` vs `-n 4` (the example
 is ungated by design, `WF-1` 🧪).
@@ -1142,7 +1181,9 @@ non-P1-conforming field (or the example's decision to sample the interpolant
 rather than the source field at all); re-scoping that is the next review's.
 This entry stays open, with its exit condition unchanged in kind: it leaves with
 a commit whose fix collapses the on-axis spread across `-n 1/2/4`, wherever that
-fix turns out to live.
+fix turns out to live. *(That exit condition was met by `POST-4` step 3 on
+2026-08-11 — the second option, the example sampling the source field; see the
+retirement block at the top of this entry.)*
 
 ---
 
