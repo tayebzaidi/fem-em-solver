@@ -2775,7 +2775,10 @@ constraint.)*
 > stop.
 
 **`MAT-6` step 7 — raise the container memory cap to 64 G, verify it took,
-and measure the additivity ratio step 6 could not** 🟡 *(Part 1 ✅
+and measure the additivity ratio step 6 could not** ✅ *(closed 2026-08-11,
+16:30 run, by Part 2c — the additivity reading is **0.9835 vs the 0.9843
+prediction, defect −0.080 pp, consistent with ADDITIVE**; see the Part 2c
+paragraph below. Part 1 ✅
 2026-08-10, interactive session — **the operator approved the cap raise and
 the edit went through with the human answering the `ask` prompt**, resolving
 the blocker below by route (a)/the compose edit: `docker/docker-compose.yml`
@@ -2877,6 +2880,40 @@ clause does **not** fire; the gate runs at `-n 8` with container `timeout`
 the gate module has never executed, the O(h²) volume-deficit control is
 not re-asserted, and **0.9843 remains unmeasured**. Step 7 stays 🟡;
 `MAT-6` stays ✅.*
+
+*Part 2c executed, 2026-08-11 16:30 run — **step 7 closes: the two mesh
+knobs are additive, and the gate module's first execution is green on all
+four tests.** Foreground harness call, `-n 8`, container `timeout 470`
+(sized from Part 2b's measurement: mesh + 2× solve + 60 s margin),
+Bash-tool `timeout` 660000 ms: exit **0**, elapsed 423 s, 4 passed in
+421.9 s (`20260811T213057Z_MAT-6-step7-part2c-gate-n8.log`); a 3 s
+collect-only smoke ran first to catch import bugs before the spend
+(`20260811T213045Z_MAT-6-step7-part2c-collect.log`, 4 tests collected).
+Cap re-read first, `memory.max` = 68719476736. **The reading:
+ΔX ratio 0.9835 against the additive prediction 0.9194 + 0.9849 − 0.9200 =
+0.9843 → defect −0.080 pp**, well inside the pre-decided ≤ 0.5 pp band, so
+the verdict is **consistent with ADDITIVE** — no cross-term, and
+single-knob extrapolation on this fixture is a defensible shortcut rather
+than an assumption. The band was pre-decided in step 6 and the ratio is
+reported, never asserted, exactly as drafted. **Inherited gates, both
+green:** ΔR **0.8835%** of Dodd–Deeds (FEM `+3.2544615e-01 Ω` vs exact
+`+3.2259615e-01 Ω`) under step 2b's unwidened 5% ceiling — and note that
+the combined fixture is *sub-1% on ΔR* without step 8's slab knob, against
+1.5834% at W = 0.15 coarse wire and 1.0562% fine; ΔX sign negative (flux
+expelled) and ratio inside the order-of-magnitude gate. **The O(h²)
+volume-deficit control the probe skips is now re-asserted on this mesh:**
+meshed torus `I = 0.979886 A`, deficit **2.0114%** against the coarse
+wire's 8.0310% → **3.99× shrink** vs the ~4× O(h²) prediction, reproducing
+step 5's 3.99× at W = 0.15 — the box knob did not disturb the wire
+discretisation. Mesh **697 401 cells** an eighth time, 46.1 s, 5.03× the
+138 619 baseline; solves **196.2 s + 178.2 s** at `-n 8`, i.e. 374.4 s
+against Part 2b's ~359 s projection (4.3% over, and the whole pair landed
+420.5 s against the ~405 s estimate — Part 2b's pricing was accurate).
+Negative control cited, never recomputed: step 6's two 16 G kills on this
+exact fixture. **Rank-width caveat, as stated by the route note:** the
+additivity reading is a measurement at `-n 8`; the Dodd–Deeds anchors it
+inherits stay gated at `-n 2` from step 2b and were not re-gated wider.
+`MAT-6` stays ✅ (this never reopened it); ΔX remains reported, not gated.*
 
 *Blocked-attempt record, 2026-08-08, retained:* *(attempted 2026-08-08,
 19:30 run — **blocked before any compute: a scheduled session cannot edit
@@ -7046,7 +7083,22 @@ licensed discriminator slot is the weekly review's (2026-08-16) to spend.
    to scope); still > 5% on-rate at the rung is a real reading — report
    the measured error and cost beside the prediction, annotate, stop.
 
-4. **`MAT-6` step 7 Part 2c — the additivity gate at `-n 8` (heavy;
+4. ~~**`MAT-6` step 7 Part 2c — the additivity gate at `-n 8`.**~~ **DONE
+   2026-08-11 16:30 run — and it closes step 7 (🟡 → ✅).** Exit 0, 423 s,
+   4 passed (`20260811T213057Z_MAT-6-step7-part2c-gate-n8.log`; collect-only
+   smoke `…213045Z_…part2c-collect.log`, 3 s). Item 1's reading put the pair
+   in the band and the skip clause did not fire; the container `timeout 470`
+   sized from it held with ~50 s to spare (mesh 46.1 s + solves
+   196.2 + 178.2 s = 420.5 s vs the ~405 s projection). **The reading:
+   ΔX ratio 0.9835 vs 0.9843 → defect −0.080 pp → consistent with
+   ADDITIVE** (≤ 0.5 pp band, pre-decided in step 6). Inherited gates green:
+   ΔR **0.8835%** under the unwidened 5% ceiling — the combined fixture is
+   sub-1% on ΔR without step 8's knob; ΔX sign and magnitude green. The
+   O(h²) volume-deficit control is re-asserted on this mesh: deficit
+   2.0114% vs 8.0310% → **3.99× shrink**, reproducing step 5. The module's
+   first-ever execution needed no fix. Details in the §7 step-7 Part 2c
+   note. *Original text, for the audit trail:* **`MAT-6` step 7 Part 2c —
+   the additivity gate at `-n 8` (heavy;
    serial: depends on item 1. Execute only if item 1 landed a loaded-solve
    reading ≤ ~240 s at `-n 8`; if item 1 did not land or priced above the
    band, skip — journal and stop, the route is then §7 option (2) and a

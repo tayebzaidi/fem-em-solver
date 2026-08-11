@@ -9712,3 +9712,88 @@ entry's scope boundary I did not improvise either in-slot; the review should
 pick, and if it wants route (2) it should first spend a cheap step measuring
 the error-vs-radius profile properly (more sample points, existing solved
 field, no new solve) before committing to a graded mesh.
+
+## 2026-08-11T21:38Z — `MAT-6` step 7 Part 2c — **complete** (first attempt); step 7 ✅, and the two mesh knobs are **additive**
+
+**Item.** §9 item 4, the conditional additivity gate. Its skip clause did not
+fire: item 1 (12:00 run) landed the loaded solve at 179.3 s at `-n 8`, inside
+the pre-committed ≤ ~240 s band, so the gate was authorised at `-n 8` with a
+container `timeout` sized from that measurement.
+
+**What was run.** Two foreground harness calls, no backgrounding at any point.
+First a 3 s collect-only smoke at `-n 2` to catch import bugs in a module that
+had never executed, before spending seven minutes on it
+(`20260811T213045Z_MAT-6-step7-part2c-collect.log`, exit 0, 4 tests
+collected). Then the gate itself:
+`20260811T213057Z_MAT-6-step7-part2c-gate-n8.log`, exit **0**, elapsed
+**423 s**, **4 passed in 421.9 s**, `-n 8`, complex build with
+`FEM_EM_REQUIRE_COMPLEX=1`, container `timeout 470`, Bash-tool `timeout`
+660000 ms, `-v -s --tb=short`. Cap re-read first: `memory.max` =
+**68719476736**. No `src/`, test, or script change — the drafted module ran as
+landed.
+
+**The reading (the deliverable three slots and a cap raise were spent on).**
+ΔX ratio **0.9835** against the additive prediction 0.9194 + 0.9849 − 0.9200 =
+**0.9843** → defect **−0.080 pp**. The pre-decided bands (§7 step 6, ≤ 0.5 pp
+additive / > 1.5 pp cross-term / between ambiguous) put that unambiguously in
+the first: **consistent with ADDITIVE**, with 0.42 pp of margin to the nearest
+band edge. There is no measurable cross-term between the box knob and the wire
+knob on this fixture, so single-knob extrapolation — the precondition for ever
+writing a defensible ΔX gate — survives its first real test. The ratio is
+*reported*, never asserted, exactly as the module was drafted; nothing here was
+sized to its own result.
+
+**Inherited gates, both green, unwidened.** ΔR **0.8835%** of Dodd–Deeds (FEM
+`+3.2544615e-01 Ω` vs exact `+3.2259615e-01 Ω`) under step 2b's 5% ceiling.
+Worth flagging for the review: that is **sub-1% on ΔR on the combined fixture
+without step 8's slab knob**, against 1.5834% at W = 0.15 coarse wire and
+1.0562% at W = 0.15 fine — the box+wire pair buys most of what step 8's
+`resolution_near` 0.0025 buys, on a mesh the operator's `ANS-1` replication
+already has numbers for. ΔX sign negative (the conductor expels flux) and the
+ratio inside the order-of-magnitude gate.
+
+**The control the probe could never do.** The O(h²) volume-deficit check is now
+re-asserted on this mesh, which is what step 7 still owed after Part 2/2b:
+meshed torus `I = 0.979886 A`, deficit **2.0114%** against the coarse wire's
+8.0310% → **3.99× shrink** vs the ~4× O(h²) chord-error prediction, against a
+1.5× floor. It reproduces step 5's 3.99× at W = 0.15 to two decimals, which is
+the specific statement that the box knob did not disturb the wire
+discretisation. `I' = 0.979884 A` matches the torus current to 6 digits.
+
+**Mesh and cost.** 697 401 cells an **eighth** consecutive time, byte-identical
+across `-n 1/2/4/8` and eight sessions; 46.1 s; 5.03× the 138 619 baseline, so
+both knobs are plainly in. Solves **196.2 s + 178.2 s** at `-n 8` = 374.4 s
+against Part 2b's ~359 s projection (**4.3% over**); the whole pair landed
+420.5 s against the ~405 s estimate, ~50 s inside the 470 s container window
+and far inside the 660 s Bash-tool maximum. Part 2b's pricing was accurate and
+the margin it demanded was the right size. Negative control cited, never
+recomputed: step 6's two 16 G kills on this exact fixture.
+
+**Traps met.** None fired. Complex build sourced and `FEM_EM_REQUIRE_COMPLEX=1`
+set; `project_source=False` pins untouched (imported helpers used verbatim); no
+stale FFCx lock; every reduction (`assemble_scalar`, cell counts, the reaction
+integral) goes through `comm.allreduce` in the module as drafted; the run stayed
+foreground for its whole 423 s and the turn never ended while the harness ran.
+The module's first-ever execution needed **no** in-slot fix — no bad import, no
+wrong fixture name — so the bands were never touched. No unrelated failure
+appeared, so no known-issues entry. Rank-width caveat observed as the route note
+demanded: the additivity reading is a measurement at `-n 8`, the inherited
+Dodd–Deeds anchors stay gated at `-n 2` from step 2b and were not re-gated wider.
+
+**Status flips landed with this commit.** §7 `MAT-6` step 7 🟡 → ✅ with the
+Part 2c record; §9 item 4 struck through as done with its original text
+retained. `MAT-6` itself stays ✅ — this step never reopened it.
+
+**Next-attempt hypothesis (nothing owed on this step; two things for the
+review).** (1) The 0.8835% ΔR on the combined fixture is a *free* observation
+that bears on the deferred step-8 decision: promoting `resolution_near` 0.0025
+to production was deferred pending `ANS-1` adjudication precisely because it
+moves the numbers being replicated — but W = 0.25 + fine wire reaches sub-1%
+ΔR by a different route, and whether the two compose is now a cheap question
+(one solve pair) rather than an open one, since additivity just tested green on
+this exact pair of knobs. (2) With additivity established, the ΔX gate that
+step 6 called the point of the exercise is finally writable: the remaining
+obstacle is that ΔX converges to ~0.98, not 1.00, and no step has yet attributed
+that last ~1.6% — box truncation at W = 0.25 is the obvious suspect and step 4's
+own W-sweep (0.9200 → 0.9849) is the data that would extrapolate it. Both are a
+review's to scope; I improvised neither.
