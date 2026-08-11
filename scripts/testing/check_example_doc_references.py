@@ -127,18 +127,15 @@ def repo_basenames() -> set[str]:
     return names
 
 
-# Examples whose guides are commissioned but not yet written (`EX-15` lands in
-# three steps; step 1 wrote the `mesh:` and magnetostatics five). Every entry
-# names the step that owes it, and that step deletes its entries in the same
-# commit that adds the guide — an empty reason is not allowed, and an entry for
-# a script that already has a guide is itself a violation, so the list cannot
-# rot into a permanent exemption.
-PENDING_GUIDES: dict[str, str] = {
-    "01_dodd_deeds_coil_loading.py": "EX-15 step 3 (mat: group)",
-    "01_coil_phantom_fields.py": "EX-15 step 3 (mri: group)",
-    "02_mass_averaged_sar.py": "EX-15 step 3 (mri: group)",
-    "01_loop_over_lossy_slab_10MHz.py": "EX-15 step 3 (ans: group)",
-}
+# Examples whose guides are commissioned but not yet written. Every entry names
+# the step that owes it, and that step deletes its entries in the same commit
+# that adds the guide — an empty reason is not allowed, and an entry for a
+# script that already has a guide is itself a violation, so the list cannot rot
+# into a permanent exemption. **Empty since `EX-15` step 3 (2026-08-11)**: the
+# chunk landed guides for all 16 runnable examples, so every `--list` entry is
+# now checked against the three required headings. A new example must ship its
+# guide with it; adding an entry here is a deliberate, temporary exception.
+PENDING_GUIDES: dict[str, str] = {}
 
 
 def runnable_examples() -> list[Path]:

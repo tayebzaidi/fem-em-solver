@@ -5155,7 +5155,7 @@ mandate to displace the critical path.
 | `EX-12` | Examples hygiene: stale claims, dead references, the 2026-02 PNG | ✅ | smoke |
 | `EX-13` | `examples/mri/01` at the validated gauge floor: rank-spread measured, on-record numbers refreshed | 🚫 | standard |
 | `EX-14` | Straight-wire VTX export repair + the refcheck freshness branch exercised | ✅ (2026-08-10: round-trip max\|B\| identical to 12 digits, rel diff 0.000e+00 vs 1e-10; freshness branch fired, then green) | standard |
-| `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | 🟡 (steps 1–2 ✅ 2026-08-10: guide pass + 10 guides, exit 0 at 12 checked, negative controls fired in both steps; step 3 owes 4, held in `PENDING_GUIDES`) | standard |
+| `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | ✅ (2026-08-11: all three steps landed; **16 of 16** runnable examples checked against 3 required headings, `PENDING_GUIDES` empty, negative controls fired in all three steps) | standard |
 | `EX-16` | `examples/mri/01`: converge the frequency-domain solve, then re-measure the rank spread | 🚫 (2026-08-10: solve converges — `preonly`/LU, `reason=4` — and the spread does **not** move, 23.5539% vs the 23.5545% unconverged record; anchor FAIL, negative-result clause taken. Fix landed; the 23% is the centerline sampling path, 3215× the phantom path on the same fields) | standard |
 | `EX-17` | Circular-loop VTX export repair: port the `EX-14` diff, same round-trip anchor | ✅ (2026-08-10: round-trip max\|B\| 7.756122914931e-05 T both ways, rel diff 0.000e+00 vs 1e-10; loop's analytic numbers unmoved, checker green) | standard |
 
@@ -5643,6 +5643,57 @@ that is how the step-2 gate reads 12 checked + 4 pending at 16 total.)*
 > **Finding, none:** every one of the five guides was writable to the section-3
 > bar from the existing records without re-running its example, so the
 > journal-don't-thin clause did not fire.
+
+> **`EX-15` step 3 ✅ 2026-08-11 (06:00 slot, §9 item 2) — the last four guides
+> land, `PENDING_GUIDES` is empty, and the chunk closes.** Guides for `mat:1`,
+> `mri:1`, `mri:2` and `ans:1` written to the step-1 bar (three required
+> sections, on-record numbers copied from the `EX-11` / `EX-16` / `EX-3` /
+> `ANS-1` §7 records and cited by log name), and the four step-3
+> `PENDING_GUIDES` entries deleted in the same commit — the dict is now `{}`,
+> with a comment recording that a new example must ship its guide with it.
+> **Anchor:** `20260811T110627Z_EX-15-step3-refcheck-final.log`, exit 0, 1 s —
+> **16 of 16** runnable examples checked against 3 required headings (was 12),
+> **0 pending**, reference pass green alongside at 23 guides / 74 distinct
+> references / 1 allowlisted.
+> **Negative control:** the heading side fired on a step-3 guide —
+> `## 2. How to run it` renamed in `01_dodd_deeds_coil_loading.md` → the checker
+> reports `missing required heading 'How to run it'` and the sentinel prints
+> `NEGCTL RESULT: exit 1 — expected`
+> (`20260811T110641Z_EX-15-step3-negctl-heading.log`); mutation reverted inside
+> the same container invocation and the heading verified present on the host
+> afterwards.
+> **The reference pass caught a real defect in the new prose**, which is worth
+> recording because it is the pass doing its job on first use against fresh
+> text: the first run
+> (`20260811T110554Z_EX-15-step3-refcheck.log`, exit 1, 1 s) flagged two dead
+> references, `_B.xdmf` and `_E.xdmf`, from an ellipsis shorthand
+> (`` `…_B.xdmf` ``) in the `mri:1` guide. Fixed by naming
+> `mri_coil_phantom_fields_B.xdmf` / `…_E.xdmf` in full — a guide "a reader can
+> follow without the source open" cannot abbreviate a filename anyway. Guide
+> pass was already 16/16 green on that same run, so the two passes are
+> independent as designed.
+> **Zero solves, zero refresh tax:** all three checker runs ran at
+> `--max-age-s 172800`; `OPS-15`'s 48 h default covers every artifact the four
+> guides cite, so no example was re-run. Doc-only apart from the six-line
+> `PENDING_GUIDES` edit; no `src/` change, no gate re-run owed.
+> **Two notes for the next reader.** The `mri:1` guide is the awkward one and
+> was written to be honest rather than tidy: it keeps `EX-12`'s **ungated
+> end-to-end demo** labelling in the title and section 1, states in section 1
+> that no printed number is evidence, cites the **converged** `EX-16` record
+> (`preonly`/LU `reason=4` at `gauge_penalty=1.0`, 9261 cells, the tag counts
+> and the phantom aggregates), and carries the still-open centerline caveat as
+> its own subsection — 23.5539% centerline spread across `-n 2`/`-n 4` against
+> **0.007326%** on the phantom-region sampler over the same fields, known-issues
+> entry open, assigned `POST-4`. Its per-quantity table marks each row
+> rank-stable or not, and step 5 tells the reader to read the centerline block
+> last. And the `ans:1` guide deliberately **does not** duplicate `SPEC.md` or
+> `COMPARISON.md`: it opens by naming them as authority-for-the-problem and
+> regenerated-result respectively, and covers only how to run the script and
+> read its output — including that `COMPARISON.md` is rewritten by every run and
+> must not be hand-edited except to fill the AED columns.
+> **Finding, none:** all four guides were writable to the section-3 bar from the
+> existing records without re-running their examples, so the journal-don't-thin
+> clause did not fire in any step of this chunk.
 
 **Traps:** on-record numbers are *copied* from §7/gate records, never
 re-measured — no solves are licensed here (checker runs are ~1 s; at most
@@ -6632,7 +6683,18 @@ discriminator slot is the weekly review's (2026-08-16) to spend.
    64 G is a real per-cell memory measurement — report beside cap and
    cell count, stop.
 
-2. **`EX-15` step 3 — `mat:`/`mri:`/`ans:` guides (standard; doc-only;
+2. ~~**`EX-15` step 3 — `mat:`/`mri:`/`ans:` guides**~~ — **done as scoped
+   2026-08-11 (06:00 run); `EX-15` ✅, chunk closed.** All four guides landed
+   to the step-1 bar, the four `PENDING_GUIDES` entries deleted in the same
+   commit (dict now empty), checker exit 0 at **16 of 16** examples checked /
+   0 pending (`20260811T110627Z_EX-15-step3-refcheck-final.log`, 1 s), heading
+   negctl fired (`…110641Z_EX-15-step3-negctl-heading.log`). Zero solves — the
+   48 h window covered every cited artifact. The reference pass caught two dead
+   references in the first draft of the `mri:1` guide (an ellipsis shorthand for
+   two `.xdmf` names), fixed before the final run; see the §7 step-3 record.
+   *(Original item text retained below for the audit trail.)*
+
+   **`EX-15` step 3 — `mat:`/`mri:`/`ans:` guides (standard; doc-only;
    closes the chunk).** Execute the §7 `EX-15` step-3 bullet: four
    guides; the `ans:1` guide points at `SPEC.md`/`COMPARISON.md` rather
    than duplicating them; the `mri:1` guide keeps `EX-12`'s "ungated

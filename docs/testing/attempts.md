@@ -9197,3 +9197,84 @@ between the plan and the 0.9843 reading is purely the 797 s-vs-660 s window
 arithmetic above. Option 1 is the cheapest test and the one a single slot can
 answer; if `-n 8` brings the pair under ~550 s, the very next slot can run the
 gate module foreground and get the additivity defect.
+
+## 2026-08-11T11:10Z — `EX-15` step 3 — **complete** (first attempt); `EX-15` ✅, chunk closed
+
+**Slot:** 06:00 CDT implementer run. §9 item 1 was already struck through by the
+04:30 slot, so the top open item was **item 2**, `EX-15` step 3. Preflight
+clean: `git status` empty, container Up 16 h.
+
+**What was tried.** The §7 `EX-15` step-3 bullet verbatim — the last four guides
+(`mat:1`, `mri:1`, `mri:2`, `ans:1`), written to the step-1 bar (three required
+sections, every number copied from the §7 records and cited by log name), and
+the four `PENDING_GUIDES` entries deleted in the same commit so the dict is
+empty and the chunk closes. Doc-only apart from the six-line `PENDING_GUIDES`
+edit. No `src/` change, no solve.
+
+**Measured numbers.**
+
+* Gate: **exit 0, 1 s** — `20260811T110627Z_EX-15-step3-refcheck-final.log`.
+  Guide pass **16 of 16** runnable examples checked against 3 required headings
+  (was 12), **0 pending**. Reference pass green alongside: 23 guides, 74
+  distinct references, 1 allowlisted.
+* Negative control, heading side:
+  `20260811T110641Z_EX-15-step3-negctl-heading.log`, wrapper exit 0 with the
+  sentinel `NEGCTL RESULT: exit 1 — expected` and the checker line
+  `missing required heading 'How to run it'` naming
+  `examples/materials/01_dodd_deeds_coil_loading.md`. Mutation reverted inside
+  the same container invocation; heading verified present on the host after.
+  *(Same sentinel-not-exit-code caveat the 2026-08-10 review recorded for step
+  2 — the wrapper's exit code is the outer `bash -lc`'s, so the evidence is the
+  echoed sentinel plus the FAIL line, both in the log.)*
+* First run **failed, correctly**: `20260811T110554Z_EX-15-step3-refcheck.log`,
+  exit 1, 1 s — two dead references, `_B.xdmf` and `_E.xdmf`, produced by an
+  ellipsis shorthand in the `mri:1` guide. Fixed by writing
+  `mri_coil_phantom_fields_B.xdmf` and its `_E` sibling in full. Worth
+  recording: this is the reference pass catching a real defect in prose written
+  minutes earlier, and the guide pass was **already 16/16 green on that same
+  run**, so the two passes are independent as designed.
+* **Zero solves, zero refresh tax.** All three checker runs used
+  `--max-age-s 172800`; `OPS-15`'s 48 h default covers every artifact the four
+  guides cite, so no example needed re-running. Second consecutive `EX-15` step
+  to pay nothing to gate.
+
+**Log filenames.**
+`20260811T110554Z_EX-15-step3-refcheck.log` (exit 1, the dead-reference catch),
+`20260811T110627Z_EX-15-step3-refcheck-final.log` (exit 0, the anchor),
+`20260811T110641Z_EX-15-step3-negctl-heading.log` (negative control).
+
+**Judgement calls the review may want to check.**
+
+* The **`mri:1` guide** is the awkward one — the tree's only ungated example —
+  and was written to be honest rather than tidy. It keeps `EX-12`'s **ungated
+  end-to-end demo** labelling in the title and in section 1, says outright that
+  no printed number is evidence about the physics, cites the **converged**
+  `EX-16` record (`preonly`/LU `reason=4`, `gauge_penalty=1.0`, 9261 cells, tag
+  counts 385/350/493/8033, phantom aggregates), and carries the open centerline
+  caveat as its own subsection under section 1: 23.5539% across `-n 2`/`-n 4`
+  vs **0.007326%** on the phantom-region sampler over the same fields,
+  known-issues entry open, assigned `POST-4`. The per-quantity table has a
+  rank-stable column, and the analysis section orders the centerline block
+  **last** with an explicit "do not quote a centerline number from a single rank
+  count".
+* The **`ans:1` guide** does not duplicate `SPEC.md` or `COMPARISON.md`, per the
+  item. It opens by naming them (authority-for-the-problem; regenerated-result,
+  never hand-edited except the AED columns) and then covers only running the
+  script and reading its output — the two anchor legs, why the per-solve R/X and
+  ΔX rows are reported and not gated, and what a deviation on each means.
+* `PENDING_GUIDES` is now `{}` rather than removed. Its comment was rewritten to
+  record that the dict is empty as of this commit and that a new example must
+  ship its guide with it — an entry is a deliberate, temporary exception, not a
+  standing exemption. The violation-on-entry-with-existing-guide rule is
+  untouched, so it still cannot rot.
+
+**Nothing else moved.** `WF-1` stays 🧪, the `POST-4` known-issues entry stays
+open (items 4–5 own it), `MAT-6` untouched, no §7 status flipped besides
+`EX-15` 🟡 → ✅ and the §9 item-2 strike-through.
+
+**Next-attempt hypothesis.** N/A for `EX-15` — the chunk is closed and its
+`--list`-driven gate is self-maintaining. The §5.4 guide policy is now
+mechanically enforced at 16/16 with an empty pending list, so the next example
+to land is the first real test of "ship the guide with it"; if a future slot
+adds an example without a guide, the checker will fail it at the commit, which
+is the intended outcome and not a regression.
