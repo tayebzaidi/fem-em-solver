@@ -8986,3 +8986,86 @@ rather than either the pre-`EX-16` unconverged wording or a clean bill of
 health. Same zero-tax expectation: the `mri:`/`mat:`/`ans:` artifacts should be
 checked for age first — if any is over 48 h the freshness branch fires and one
 refresh is licensed.
+
+---
+
+## 2026-08-11T02:00Z — `MAT-6` step 7 Part 2 — **anomaly**: the 19:30 slot died mid-chunk and left its work untracked, with no journal entry of its own
+
+Scheduled implementer run, 21:00 CDT slot. **No chunk work was done** — the
+preflight tree was dirty and this is a *first* encounter (no prior attempts.md
+anomaly entry describes it), so the protocol's stop rule applies unchanged.
+
+**What the preflight found.** `git status --porcelain` at 02:00:14Z:
+
+```
+?? docs/testing/logs/20260811T003136Z_MAT-6-step7-part2-probe.log
+?? tests/validation/test_dodd_deeds_reactance_combined_knobs.py
+```
+
+Both are untracked; nothing is modified or staged, and `main` is at `b6e994f`
+(the 18:00 review commit) — the same commit the orphaned log records in its
+header. Container Up, 7 h, healthy. Nothing was stashed, discarded, or edited.
+
+**Whose work this is.** The 19:30 CDT slot (= 00:30Z) attempted §9 item 1,
+`MAT-6` step 7 Part 2, and **appended no attempts.md entry at all** — the last
+entry in the file is `EX-15` step 2 at 2026-08-10T21:37Z, from the 16:30 slot.
+So the 19:30 session was lost before its documentation phase. That is why this
+tree is dirty and why no prior entry covers it: the exception clauses in the
+protocol (land-already-journaled, park-on-second-encounter) both require a
+prior journal entry, and there is none.
+
+**What the orphaned artifacts contain**, read but not run:
+
+- `tests/validation/test_dodd_deeds_reactance_combined_knobs.py` (345 lines) —
+  step 6's gate as step 7 Part 2 was scoped to run it: the combined-knob
+  fixture, `W` = 0.25 **and** `resolution_wire` = 0.001, projected drive only.
+  Its docstring carries the pre-decided reading verbatim (additive prediction
+  0.9194 + 0.9849 − 0.9200 = **0.9843**; ≤ 0.5 pp consistent, > 1.5 pp a real
+  cross-term, between = ambiguous-and-stop) and cites the two step-6 OOM kills
+  (`-n 4` signal 9 at ~262 s, `-n 8` exit 137 at ~138 s) as the negative
+  control rather than recomputing them. It reads as a *finished* module, but
+  that is an impression from reading, not a verdict — it has never been
+  executed by any run that journaled a result.
+- `docs/testing/logs/20260811T003136Z_MAT-6-step7-part2-probe.log` (374 lines)
+  — `run_and_log.sh` output for
+  `mpiexec -n 4 python3 scripts/probes/mat6_step6_probe.py` under the raised
+  cap, `timeout 1200`, complex mode. It has a header but **no footer**: no exit
+  code, no elapsed line. Its last line is the probe's own mesh report,
+  `mesh: 697401 cells in 51.9 s` (step 5 fine wire was 366207; step 4 coarse
+  300591; the OOM rung 1458561) — i.e. the mesh built fine at 64 G and the log
+  ends before any solve output. A missing footer means the harness was killed
+  mid-command, so **no** conclusion about the solve — success, OOM, or timeout —
+  can be drawn from this file.
+
+**What is NOT known and must not be assumed.** Whether the 64 G cap actually
+carries the 697 k-cell combined solve. Part 1 (`5cbca95`) verified the cap at
+the kernel; the first measurement under it is exactly what this log fails to
+record. §7 `MAT-6` step 7 keeps its current annotation; this entry changes no
+status.
+
+**Cost.** Zero compute. Two harness-free file reads and `git status`. No
+denials. Slot ends here per step 1.
+
+**For the daily review.** Two things, and the first is the important one:
+
+1. **The 19:30 session left no entry.** Every other slot today journaled, so
+   this is not the normal incomplete path (which parks on `attempt/*` and
+   commits an entry). Worth checking `scripts/automation/implementer-run.sh`
+   and the cron log for that slot: a session killed at the 65-minute wrapper
+   boundary while still inside a 1200 s compute command would produce exactly
+   this signature — footerless log, uncommitted work, no entry — and if so the
+   lesson is that a `timeout 1200` command started after minute ~30 can eat the
+   documentation phase whole.
+2. **The tree is now on its second-encounter clock.** This entry is the prior
+   journal the next run needs: at 22:30 CDT, if these same two untracked files
+   are still present, that run parks them on `recovered/<UTC-timestamp>` and
+   proceeds with chunk work. One slot lost, not the rest of the night — which
+   is the design. If a human would rather not have the test module land on a
+   `recovered/*` branch, moving or committing it before 22:30 is the window.
+
+**Next-attempt hypothesis.** The combined-knob module is probably runnable as
+written; the open question is purely whether 64 G holds a 697 401-cell complex
+curl-curl solve at `-n 4`. Whoever picks step 7 Part 2 back up should treat the
+recovered module as *unverified* input, re-derive nothing, and budget the solve
+as heavy with the `timeout` at 1200 s **started early in the slot** — the
+failure mode this entry documents is a late start, not a wrong test.
