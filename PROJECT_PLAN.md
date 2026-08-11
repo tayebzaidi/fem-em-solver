@@ -1542,6 +1542,28 @@ mid-command and its artifacts were landed by the review in `8b8a706`.
 cost-probe, then the gate** *(scoped 2026-08-08, 10:30 review; queued §9
 item 3; `MAG-13` stays ✅ — this extends a measurement, it does not reopen
 the chunk)*.
+
+*Un-blocked, 2026-08-11 10:30 review — **the two 2026-08-08 harness deaths
+are the background-and-end-turn trap, and the block is lifted.** The wrapper
+logs are dispositive: `logs/automation/20260808T200001Z_implementer.log`
+ends "Stage 2 is running … I'll report when the monitor fires" then
+`exit=0` at 20:16:37Z (harness died ~20:15Z), and
+`…20260809T003001Z_implementer.log` ends "Waiting on the background solve …
+I'll report when it lands" then `exit=0` at 00:33:04Z — the exact minute of
+the log's last flushed write. Both sessions backgrounded the harness run and
+ended their turn; in headless `-p` mode that exits the CLI and SIGKILLs the
+process tree — the same mechanism, with the same evidence shape, as the
+three `MAT-6` step 7 deaths root-caused 2026-08-11 03:00. The "host-side
+mystery kill" hypothesis and the operator's host-observables ask are
+withdrawn; the known-issues entry is retired this commit. **Rescope for the
+re-queue (§9 item 3):** foreground harness call, Bash-tool `timeout`
+660000 ms, container-side `timeout 590`, **`-n 8`** (real build — lighter
+than the complex solves measured at this scale; the 08-08 attempt showed
+mesh 149.8 s in-solve + > 510 s of `-n 4` solve without finishing, so `-n 4`
+cannot fit the window). Exit 124 is a result: "mesh + solve > 590 s at
+`-n 8`, real build" — record it, annotate here, stop; the fallback is then a
+split mesh-cache/solve recipe or a review-priced wider slot, never a raised
+timeout. All anchors, controls, and traps below unchanged.*
 > `MAG-13` closed at wire 12.75% / loop 7.07% with measured rate 1.10 when
 > heavy was 10 min at 2 ranks; extrapolating that rate puts the < 5% wire
 > crossing at h ≈ 0.00125, ~1.1 M cells, which the current budget (20 min,
@@ -2770,6 +2792,19 @@ step 6's case). The O(h²) volume-deficit control is still not re-asserted —
 outside the probe. Step 7 stays 🟡; `MAT-6` stays ✅; the 0.9843 reading
 remains the open deliverable.*
 
+*Route decision, 2026-08-11 10:30 review — **option (1), the `-n 8` cost
+probe, is taken** (§9 item 1; the conditional gate run is §9 item 4). The
+16 G no-retry rule was about a rank-blind memory ceiling and memory is no
+longer binding at 64 G; ~4 minutes of probe answers whether the loaded+free
+pair fits one foreground call at `-n 8`. Option (2) (split the pair across
+two harness calls) is the named fallback if `-n 8` prices the pair above the
+~530 s solve window; option (3) (shrink the fixture) stays last. The gate,
+when it runs, must also re-assert the O(h²) volume-deficit control the probe
+skips. Rank-width caveat, stated now so the gate slot does not have to argue
+it: the additivity **reading** is a measurement at `-n 8`; the Dodd–Deeds
+anchors it inherits were gated at `-n 2` in step 2b and are not re-gated
+wider.*
+
 *Blocked-attempt record, 2026-08-08, retained:* *(attempted 2026-08-08,
 19:30 run — **blocked before any compute: a scheduled session cannot edit
 `docker/`.** `.claude/settings.json` lists `Edit(docker/**)` under
@@ -2873,6 +2908,15 @@ ceilings are untouched; this buys memory, not compute.)*
 > option now (3.01× cells, ~6 min at `-n 2`) but is a scoping decision this
 > slot did not take — it would move §2.1's headline number and every downstream
 > citation of it.
+>
+> *Review decision, 2026-08-11 10:30 — **promotion deferred, deliberately.**
+> `ANS-1`'s SPEC/COMPARISON numbers are the landed fixture's, and the human
+> operator has not yet run the Ansys replication (Waiting-on-you since
+> 2026-08-05); changing the production fixture mid-replication would move the
+> numbers the operator is replicating against. The 0.2829% record stands as a
+> refinement-study result; promotion is re-decidable the review after `ANS-1`'s
+> comparison is adjudicated, and must move §2.1, the `ANS-1` docs, and every
+> downstream citation in one commit.*
 
 *(Original scoping, retained: scoped 2026-08-10, interactive session at
 operator direction.)*
@@ -2930,7 +2974,7 @@ operator direction.)*
 | `POST-1` | Interface-aware field extraction reliability | 🟡 *(adjudicated 2026-08-05, 18:00 review — mean semantics decided, extremum semantics is step 4)* | standard |
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
-| `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | 🟡 *(step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped: needs review re-scoping onto the measured owner)* | standard |
+| `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | 🟡 *(step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped; re-scoped 2026-08-11 10:30 review: step 3 samples the source fields on the centerline, step 4 bounds the export-path artifact)* | standard |
 
 > *(Closed-step plans, execution journals and audits below are archived
 > verbatim in `docs/planning/plan-archive.md`.)*
@@ -3535,7 +3579,10 @@ is in the point-evaluation path. Owns the open known-issues entry
 > interpolants the example prints (`E_lag`, `B_lag`) *and* the source fields
 > they were interpolated from (`E_src`, `B_src`), at the same points on the same
 > solves — interpolant path **97.9755%**, source path **0.008426%** (and `E_src`
-> bit-identical across all three rank counts), a **1.163e+04×** separation. The
+> bit-identical across all three rank counts *(corrected 2026-08-11, 10:30
+> review audit: last-ulp, not literally bit-identical — n1 vs n2 print
+> `…7731` vs `…7732` at z = −0.0225 m, ~4e-13 relative; the 0.008426% and the
+> separation stand)*), a **1.163e+04×** separation. The
 > solve is rank-invariant; the 23% enters at `fem.Function.interpolate` into
 > `("Lagrange", 1, (3,))`, where a vertex dof of a field not continuous there is
 > written by whichever adjacent cell writes last locally. The `-n 2` vs `-n 4`
@@ -3630,6 +3677,63 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   deterministic tie-break that does not collapse the spread means the
 >   disagreement is between *runs*, not cells — report the per-point
 >   table, keep the entry open, annotate here, stop.
+> * **Step 3 — the centerline samples the source fields, not the P1
+>   interpolants (standard; re-scoped 2026-08-11, 10:30 review, onto the
+>   locus step 1 measured).** 🔲 Change `examples/mri/01`'s centerline
+>   table to evaluate the **source fields** (`E`, `B` as solved) through
+>   `post.evaluation.evaluate_vector_field_parallel`, instead of the
+>   `("Lagrange", 1, (3,))` interpolants it prints today; the P1
+>   interpolation stays where it is load-bearing (the XDMF/VTX export
+>   path), untouched. Refresh the `mri:1` guide's caveat block in the
+>   same commit (it currently cites the 23.5539% spread as open). **No
+>   `src/` change** — this is an example-level sampling fix; `interpolate`
+>   itself is DolfinX behaviour and vertex dofs of a non-conforming field
+>   are convention there, not a bug this chunk owns. **Anchor:** centerline
+>   spread across `-n 1/2/4` collapses 23.5539% → ≤ 0.1% (measured floor on
+>   the source path: 0.008426%, `20260811T140549Z_POST-4-step1-attribution.
+>   log`; separation demanded ≥ 235×, ceiling on record 1.163e+04×); plus
+>   non-regression — the phantom-region stats reproduce their on-record
+>   digits and the printed values now match `E_src`/`B_src` (e.g.
+>   1.368268e+02 at z = −0.045 m where the interpolant printed 7.670127e+03).
+>   **Negative control:** the pre-fix interpolant spread 97.9755% and the
+>   56× `-n 1` artifact, cited from step 1's logs, never recomputed.
+>   **Cost:** standard, `-n 1/2/4` re-runs of the step-1 measurement —
+>   solves 8/4/4 s on record; the spread script is 1 s. **Traps:** step 1's
+>   list — `.reshape(-1, 3)` on single-point eval, complex build +
+>   `FEM_EM_REQUIRE_COMPLEX=1`, rank-local claim counts, `-s` for prints;
+>   plus: the guide checker's 48 h freshness window (`OPS-15`) — cite the
+>   new logs, and re-run `check_example_doc_references.py` since the guide
+>   changes. **Scope boundary:** buys a rank-invariant *and* faithful
+>   centerline printout; it does not validate the physics of those values,
+>   and the export-path interpolants remain vertex-convention-dependent —
+>   that residue is step 4's. The known-issues centerline entry leaves with
+>   this commit iff the anchor lands. **Negative result:** a source-path
+>   spread that does not collapse contradicts step 1's own measurement —
+>   report both tables, keep the entry open, annotate here, stop.
+> * **Step 4 — bound the P1-interpolant artifact on the export paths
+>   (standard; measurement only; spare — scoped 2026-08-11, 10:30
+>   review).** 🔲 Step 1 showed the P1 interpolant of a non-conforming
+>   field can sit 56× off its source at a point even at `-n 1`; every
+>   example's XDMF/VTX export ships exactly such interpolants. Sweep
+>   `examples/` for `interpolate` targets of `("Lagrange", 1, …)` fed by
+>   Nédélec/DG sources (grep, then confirm by reading), and on **one**
+>   representative fixture (`examples/mri/01`'s debug preset — the probe
+>   machinery exists) measure interpolant-vs-source disagreement at cell
+>   midpoints and at vertices, reusing `scripts/probes/post4_step1_spread.py`
+>   patterns. **Anchor:** the measured disagreement is reported as a
+>   max/median table, and the *midpoint* disagreement must sit far below
+>   the vertex disagreement (the discontinuity lives at shared vertices/
+>   facets) — assert midpoint ≤ 1% where vertex shows the on-record
+>   O(50×); a violation is a finding about the export, not a tolerance to
+>   tune. **Negative control:** a conforming source (the magnetostatic P1
+>   path) interpolated the same way must agree to solver tolerance.
+>   **Cost:** standard, `-n 2`, solves seconds on record; the sweep is
+>   read-only. **Traps:** step 1's list. **Scope boundary:** measurement +
+>   a known-issues caveat naming the affected exports; no export code
+>   changes, no ParaView claims withdrawn in-slot. **Negative result:**
+>   a small artifact everywhere says the centerline points were
+>   pathological (on-axis) — that is itself the caveat text; report,
+>   annotate, stop.
 
 ### PORT — Ports & S-parameters (Phase 4)
 
@@ -6644,7 +6748,51 @@ promised an "obvious next entry named below" that was never written — the
 16:30 slot on 2026-08-07 hit that dangling reference and correctly fell
 through to the drain instruction; the reference is retired.)*
 
-Last reviewed 2026-08-11, 03:00 daily review. **Three of four slots lost to
+Last reviewed 2026-08-11, 10:30 daily review. **Four of four slots landed
+their item — a clean sweep: one chunk closed, one error budget closed, one
+decisive negative, and the cost number three slots died for.** 04:30:
+`MAT-6` step 7 Part 2 — the rescoped foreground recipe worked first time
+(exit 0, 427 s); one projected loaded solve **372.9 s at `-n 4`, no OOM at
+64 G**; the 300 s stop rule fired as written, so the 0.9843 additivity
+reading stays open — the gate pair prices at ~797 s, outside one foreground
+call at `-n 4`. 06:00: `EX-15` step 3 ✅ — **chunk closed**, 16 of 16
+runnable examples checked, `PENDING_GUIDES` empty, negctl re-fired. 07:30:
+`MAT-6` step 8 ✅ — `resolution_near` 0.005 → 0.0025 takes projected ΔR
+**1.5834% → 0.2829%**; the residual is skin-depth resolution, not the coil
+model, and the fixture is sub-1% on ΔR. 09:00: `POST-4` step 1 ✅ — decisive
+negative: the ownership suspect **refuted** at 0/120 on every counter; the
+23% enters at the Lagrange-P1 interpolation (interpolant 97.9755% vs source
+0.008426%, **1.163e+04×**); step 2 correctly 🚫 skipped under its own
+clause. Step-3 audit: **all three ✅ steps audited compliant, no demotions**
+(one auditor per closure; logs, footers, elapsed times, and quantitative
+assertions verified against the files). Minor auditor caveats, recorded:
+`POST-4`'s "`E_src` bit-identical" is last-ulp (corrected in the §7 entry);
+`MAT-6` step 8's 0.2829% is print-reported while the asserted bound stays
+the inherited 5% (deliberate, rationale in-test); two superseded step-8
+gate runs are journaled, not hidden. Step 2: tree clean all interval, no
+`recovered/*`; `attempt/PORT-1-*` branches stay parked under the weekly
+licence (2026-08-16). **Review decisions:** (1) the additivity measurement
+routes through an `-n 8` cost probe (item 1), gate conditional on it
+(item 4) — §7 step-7 route note; (2) promoting 0.0025 to the production
+fixture is **deferred pending `ANS-1` adjudication** — it would move the
+numbers the operator is replicating against (§7 step-8 note); (3) `POST-4`
+re-scoped onto the measured locus — step 3 samples the source fields
+(item 2), step 4 bounds the export-path artifact (item 5); (4) **the
+2026-08-08 "unexplained harness termination" known-issues entry is
+retired** — the wrapper logs show both deaths end with "waiting on the
+background solve" then `exit=0` at the death minute, the same
+background-and-end-turn trap 03:00 root-caused for `MAT-6`; `MAG-13` step 2
+is un-blocked and re-queued (item 3), and the operator's host-observables
+ask is **withdrawn** from Waiting-on-you. §5.4 ramp: step 8's capability is
+already demonstrated by `EX-11` and the `mat:1` guide — no example chunk
+mandated; `EX-15` and `POST-4` step 1 closed no field gate. Waiting-on-you
+delta: **a push landed since 03:00** (origin/main is now `b6e994f`,
+2026-08-10 18:00 review; 8 ahead once this commit lands) — `ANS-1`
+replication remains, runner results remain never-observed, and the
+`MAG-13` host-observables item leaves the list.
+
+Previous interval's digest (2026-08-11 03:00), retained for the audit
+trail: **Three of four slots lost to
 one harness trap, zero chunk movement — the mirror image of the previous
 interval.** The 19:30, 22:30, and 00:00 slots each attempted item 1
 (`MAT-6` step 7 Part 2) and each died the same way: the session backgrounded
@@ -6670,232 +6818,140 @@ the weekly licence (2026-08-16). Waiting-on-you unchanged: `ANS-1`
 replication, the push (now 56 ahead once this lands), MAG-13 host
 observables.
 
-Previous interval's digest (2026-08-10 18:00), retained for the audit
-trail: **four of four slots landed their item — the second consecutive
-sweep, one of them a decisive negative.** 12:00: `EX-16` 🚫 — the convergence hypothesis refuted with the
-fix landed anyway: the demo now solves direct (`preonly`/LU, `reason=4`) at
-the validated gauge floor and the centerline rank spread does not move
-(23.5539% vs the 23.5545% unconverged record, 1.0000×), while the added
-positive control — the 493-point phantom-region sampler on the *same*
-fields — agrees to 0.007326%, **3215× tighter**; the owner is the
-centerline point-evaluation path. 13:30: `OPS-15` ✅ — freshness default
-1 h → 48 h, both anchors green in one slot, retuned-not-disabled shown at
-`--max-age-s 1` (14 flagged) and 48 h arithmetic shown on a backdated
-72-h fixture. 15:00: `EX-17` ✅ — circular-loop `.bp` round trip
-bit-identical (rel diff 0.000e+00 vs 1e-10), analytic numbers unmoved,
-known-issues entry retired. 16:30: `EX-15` step 2 ✅ — five `th:` guides,
-12 of 16 examples checked, heading negctl re-fired; first `-e` interval to
-pay zero freshness tax. **Between slots, an interactive operator session
-resolved the standing `MAT-6` blocker** — step 7 Part 1 landed by hand
-(cap 16 G → 64 G, verified at the kernel: `memory.max` = 68719476736),
-un-blocking Part 2 — and scoped `MAT-6` step 8 at operator direction.
-Step-3 audit: **all three ✅ closures audited compliant, no demotions**
-(one auditor per closure; logs, quantitative assertions, elapsed times
-verified against the files). Two recorded caveats, neither material:
-`OPS-15`'s fifth log (`…default-final`) exists but is missing from the
-attempts.md log list (bookkeeping); `EX-15` step 2's heading negctl exit 1
-is evidenced by the echoed sentinel rather than the wrapper's exit code,
-and its in-container restore check misfired ("not a git repository") —
-compensated by the journaled host-side byte-identity check, which the
-auditor re-confirmed. Step 2: tree clean, no `recovered/*`; both
-`attempt/PORT-1-*` branches stay parked under the weekly licence
-(2026-08-16 holds the 3b-xv adjudication and the second discriminator
-slot). §5.4 ramp: **no new quantitative gate closed this interval** —
-`EX-17` is an example repair, `OPS-15` tooling, `EX-15` docs, and the
-`MAT-6` movement is ops — so no new example chunks mandated. Plan work:
-**`POST-4` scoped** from `EX-16`'s attribution (the known-issues centerline
-entry is re-pointed at it; step 1 diagnoses ownership on the fixture, step
-2 — conditional — replaces last-writer-wins with a min-global-cell
-tie-break), and `EX-15`'s scoping count corrected 14 → 16 runnable with a
-dated note. Waiting-on-you delta: **the memory-cap decision is off the
-list** (operator acted); `ANS-1` replication and the push (54 ahead once
-this commit lands; runner results still never observed) remain.
+**Five ready items; items 1, 2, 3, and 5 independent; item 4 genuinely
+serial** (item 4 executes only if item 1 landed its cost reading inside the
+band — the skip clause is in the item). Item 1 executes the review's route
+decision on the `MAT-6` additivity measurement; item 2 is the `POST-4` fix
+re-scoped onto the locus step 1 measured; item 3 is `MAG-13` step 2,
+un-blocked this review by the retirement of the harness-termination
+known-issues entry; item 4 is the conditional additivity gate; item 5 is
+the spare. The `PORT-1` critical path stays deliberately absent: the second
+licensed discriminator slot is the weekly review's (2026-08-16) to spend.
 
-**Five ready items; items 1–3 independent, items 4–5 genuinely serial**
-(item 5 executes only if item 4 confirmed its mechanism — the skip clause
-is in the item). Item 1 is rescoped this review after three identical
-harness deaths (see the digest above — it has not failed on physics; the
-solve has never run longer than ~2.5 min); item 2 closes the operator's
-guide directive; item 3 is the operator-directed error budget; items 4–5
-are the `POST-4` diagnosis→fix pair scoped from `EX-16`'s finding. The
-`PORT-1` critical path is deliberately absent: the second licensed
-discriminator slot is the weekly review's (2026-08-16) to spend.
+1. **`MAT-6` step 7 Part 2b — the `-n 8` cost probe (heavy; foreground
+   recipe; route decision (1) in the §7 step-7 note).** Run
+   `scripts/probes/mat6_step6_probe.py` via `run_and_log.sh` at **`-n 8`**,
+   complex mode, **foreground Bash call, tool `timeout` 660000 ms,
+   container-side `timeout 590`** — never `run_in_background`, never end
+   the turn while the harness runs (five slots have died there; see the
+   rubric trap list). **Anchor:** this is a cost measurement — the loaded
+   solve time at `-n 8` on the 697 401-cell / 813 287-dof combined fixture,
+   reported beside the 372.9 s `-n 4` record
+   (`20260811T093111Z_MAT-6-step7-part2-probe.log`). Decision rule, stated
+   now: the item-4 gate pair fits one foreground call iff mesh (~52 s on
+   record) + 2× the measured solve ≤ ~530 s, i.e. **solve ≤ ~240 s**.
+   **Negative control:** step 6's two 16 G kill records on this fixture
+   (`-n 4` signal 9 at ~262 s, `-n 8` exit 137 at ~138 s), cited never
+   recomputed — a completed `-n 8` solve at 64 G is itself the memory
+   reading. **Cost:** heavy; mesh 51.7–56.1 s on six records; the `-n 8`
+   solve is the unknown being priced. **Traps:** complex build +
+   `FEM_EM_REQUIRE_COMPLEX=1`; `project_source=False` pins; stale FFCx lock
+   after any kill; the background-and-end-turn CLI exit. **Scope
+   boundary:** does not run the gate module
+   (`tests/validation/test_dodd_deeds_reactance_combined_knobs.py` stays
+   unverified — it is item 4's); does not read the additivity number.
+   **Negative result:** exit 124 **is** the measurement — "solve > 530 s at
+   `-n 8` under 64 G" ⇒ item 4's skip clause fires and the route falls to
+   §7 option (2) (split the pair across two harness calls; needs the module
+   restructured — a later review scopes it); journal, annotate §7, stop.
 
-1. ~~**`MAT-6` step 7 Part 2 — the additivity probe, foreground recipe**~~ —
-   **done as scoped 2026-08-11 (04:30 run)**: the rescoped foreground recipe
-   worked (exit 0, 427 s,
-   `20260811T093111Z_MAT-6-step7-part2-probe.log`) and produced the number
-   three slots died without — **one projected loaded solve at 372.9 s,
-   `-n 4`, 697 401 cells / 813 287 dofs, no OOM at 64 G**. The 300 s stop
-   rule fired, so the slot reported and stopped per its own instruction.
-   **The 0.9843 additivity reading is still unmeasured** and needs a review
-   decision first: the gate's loaded+free pair prices at ~797 s, inside the
-   heavy tier but outside the Bash tool's 660 s foreground maximum, so it
-   cannot run in a scheduled slot at `-n 4`. See the §7 step-7 Part 2
-   annotation for the three options (`-n 8` probe is the cheapest).
-   *(Original item text retained below for the audit trail.)*
+2. **`POST-4` step 3 — the centerline samples the source fields (standard;
+   re-scoped this review onto the measured locus).** Execute the §7
+   `POST-4` step-3 entry verbatim: `examples/mri/01`'s centerline table
+   evaluates the solved `E`/`B` through
+   `post.evaluation.evaluate_vector_field_parallel` instead of the
+   Lagrange-P1 interpolants; export path untouched; no `src/` change; the
+   `mri:1` guide's caveat block refreshed and the doc checker re-run in the
+   same commit. **Anchor:** centerline spread across `-n 1/2/4` collapses
+   23.5539% → ≤ 0.1% (source-path floor on record **0.008426%**,
+   `20260811T140549Z_POST-4-step1-attribution.log`; ≥ 235× demanded,
+   ceiling 1.163e+04× on record); non-regression — phantom-region stats
+   reproduce their on-record digits, and the printed centerline values
+   match the step-1 source values (1.368268e+02 at z = −0.045 m where the
+   interpolant printed 7.670127e+03). **Negative control:** the pre-fix
+   interpolant spread 97.9755% and the 56× `-n 1` artifact, cited from
+   step 1's logs. **Cost:** standard; solves 8/4/4 s on record at
+   `-n 1/2/4`; spread script 1 s; checker 1 s. **Traps:** `.reshape(-1, 3)`
+   on single-point eval; complex build + `FEM_EM_REQUIRE_COMPLEX=1`;
+   rank-local claim counts — reduce before printing; pytest needs `-s`;
+   the checker's 48 h freshness window wants the new logs cited. **Scope
+   boundary:** buys a rank-invariant, faithful printout — not physics
+   validation of those values; export-path interpolants stay
+   vertex-convention-dependent (item 5's). The known-issues centerline
+   entry leaves with this commit iff the anchor lands. **Negative
+   result:** a source-path spread that does not collapse contradicts
+   step 1's own measurement — report both tables, entry stays open,
+   annotate, stop.
 
-   **`MAT-6` step 7 Part 2 — the additivity probe, foreground recipe
-   (heavy; rescoped 2026-08-11 after three lost slots — read the §7
-   step-7 Part 2 rescope note first; it supersedes the entry's
-   `timeout 1200` text).** The mesh phase is settled — 697 401 cells,
-   byte-identical five times on record — and the drafted gate module
-   `tests/validation/test_dodd_deeds_reactance_combined_knobs.py` is on
-   main but **unverified**; do not run it this slot. This slot runs only
-   the probe: `scripts/probes/mat6_step6_probe.py` via `run_and_log.sh`,
-   `-n 4`, complex mode, **foreground Bash call with the tool's
-   `timeout` parameter at 660000 ms and container-side `timeout 590`**
-   (mesh ~56 s + solve window ~530 s). **Never `run_in_background`,
-   never end the turn while the harness runs** — that is what killed
-   19:30/22:30/00:00. **Anchor:** step 6's, inherited — Dodd–Deeds refs,
-   step 2b's gates unchanged; the reading is the additivity defect vs
-   **0.9843**, bands ≤ 0.5 pp additive / > 1.5 pp cross-term / between
-   ambiguous. **Negative control:** step 6's two 16 G kill records on
-   the same fixture, cited never recomputed; the O(h²) volume-deficit
-   control re-asserted. **Cost:** heavy; mesh 51.9–56.1 s on record;
-   solve cost unmeasured — bounding it is part of the point. **Traps:**
-   complex build + `FEM_EM_REQUIRE_COMPLEX=1`; `project_source=False`
-   pins; FFCx lock after a kill; the background-and-end-turn CLI exit
-   (implementer-run.md, allowlist section). **Scope boundary:** a clean
-   probe reading does not run or close the gate module — journal the
-   number, annotate §7, leave the module for the next slot. **Negative
-   result:** exit 124 **is** the measurement — "solve > 530 s at `-n 4`
-   under 64 G" goes in the log, the §7 entry, and attempts.md; no retry
-   at more ranks in-slot (rank choice is then a review decision). OOM at
-   64 G is a real per-cell memory measurement — report beside cap and
-   cell count, stop.
+3. **`MAG-13` step 2 — the < 5% wire, foreground recipe at `-n 8` (heavy;
+   un-blocked this review — read the §7 un-block note first; it supersedes
+   the entry's `timeout 1200` text).** Real build, **no complex mode**.
+   Mesh + one solve of the h ≈ 0.00125 rung (~1.1 M cells, priced
+   2026-08-08: `20260808T200126Z_MAG-13-step2-meshprobe.log`) via
+   `run_and_log.sh`, **`-n 8`, foreground, tool `timeout` 660000 ms,
+   container `timeout 590`** — the 08-08 attempt showed mesh 149.8 s
+   in-solve plus > 510 s of `-n 4` solve without finishing, so `-n 4`
+   cannot fit the window. **Anchor:** the straight-wire closed form
+   `utils/analytical.py::straight_wire_magnetic_field` (B_θ = μ₀I/2πr),
+   target **< 5%** at the extrapolated rung; print the new two-rung
+   observed rate beside the landed 1.10. **Negative control:** `MAG-13`'s
+   analytic-Dirichlet-vs-plain-box separation and the rate fit, on record,
+   cited. **Cost:** heavy; mesh ~150–193 s on record; the `-n 8` solve is
+   unmeasured — bounding it is part of the point. **Traps:** never
+   background; stale FFCx lock; `J·n ≠ 0` at the end caps stands
+   unmeasured; point evaluation through
+   `evaluate_vector_field_parallel`, never rank-local eval. **Scope
+   boundary:** `MAG-13` stays ✅ at its recorded numbers either way; a
+   green < 5% annotates the entry and the MAG follow-up bullet; graded
+   refinement stays the named cheaper route, not to be improvised in-slot.
+   **Negative result:** exit 124 is the measurement ("mesh + solve > 590 s
+   at `-n 8`, real build" — the fallback is then a split recipe, a review's
+   to scope); still > 5% on-rate at the rung is a real reading — report
+   the measured error and cost beside the prediction, annotate, stop.
 
-2. ~~**`EX-15` step 3 — `mat:`/`mri:`/`ans:` guides**~~ — **done as scoped
-   2026-08-11 (06:00 run); `EX-15` ✅, chunk closed.** All four guides landed
-   to the step-1 bar, the four `PENDING_GUIDES` entries deleted in the same
-   commit (dict now empty), checker exit 0 at **16 of 16** examples checked /
-   0 pending (`20260811T110627Z_EX-15-step3-refcheck-final.log`, 1 s), heading
-   negctl fired (`…110641Z_EX-15-step3-negctl-heading.log`). Zero solves — the
-   48 h window covered every cited artifact. The reference pass caught two dead
-   references in the first draft of the `mri:1` guide (an ellipsis shorthand for
-   two `.xdmf` names), fixed before the final run; see the §7 step-3 record.
-   *(Original item text retained below for the audit trail.)*
+4. **`MAT-6` step 7 Part 2c — the additivity gate at `-n 8` (heavy;
+   serial: depends on item 1. Execute only if item 1 landed a loaded-solve
+   reading ≤ ~240 s at `-n 8`; if item 1 did not land or priced above the
+   band, skip — journal and stop, the route is then §7 option (2) and a
+   review scopes it).** First execution of the drafted, **unverified**
+   module `tests/validation/test_dodd_deeds_reactance_combined_knobs.py`:
+   foreground, `-n 8`, container `timeout` sized from item 1's measured
+   solve (mesh + 2× solve + 60 s margin, ≤ 590). **Anchor:** the
+   additivity defect vs **0.9843**, pre-decided bands ≤ 0.5 pp additive /
+   > 1.5 pp cross-term / between ambiguous; Dodd–Deeds refs with step 2b's
+   gates unchanged; the O(h²) volume-deficit control re-asserted on this
+   mesh (the probe never does). **Negative control:** step 6's kill
+   records and the σ-blind record, cited. **Cost:** priced by item 1;
+   mesh ~52 s on record. **Traps:** complex build +
+   `FEM_EM_REQUIRE_COMPLEX=1`; `project_source=False` pins; FFCx lock;
+   never background; the module has never run — a module bug (bad import,
+   wrong fixture name) is a journal entry and an in-slot fix if mechanical,
+   never a reason to touch the bands. **Scope boundary:** the rank-width
+   caveat in the §7 route note — the additivity reading is a measurement
+   at `-n 8`; the inherited anchors stay gated at `-n 2` from step 2b and
+   are not re-gated wider. A green run closes step 7 (🟡 → ✅). **Negative
+   result:** a cross-term reading (> 1.5 pp) is the more informative
+   physics outcome, per step 6; an ambiguous band is reported as ambiguous;
+   report, annotate §7, stop.
 
-   **`EX-15` step 3 — `mat:`/`mri:`/`ans:` guides (standard; doc-only;
-   closes the chunk).** Execute the §7 `EX-15` step-3 bullet: four
-   guides; the `ans:1` guide points at `SPEC.md`/`COMPARISON.md` rather
-   than duplicating them; the `mri:1` guide keeps `EX-12`'s "ungated
-   end-to-end demo" labelling. `EX-16` landed (negative result), so the
-   `mri:1` guide cites the **converged** record — `preonly`/LU
-   `reason=4` at `gauge_penalty=1.0`, the refreshed on-record strings —
-   and states the still-open centerline caveat explicitly: 23.5539%
-   rank spread on the centerline sampler vs 0.007326% on the
-   phantom-region sampler, known-issues entry open, assigned `POST-4`.
-   Delete the four step-3 `PENDING_GUIDES` entries in the same commit —
-   that empties the dict and closes `EX-15`. Same checker gate and
-   negative control as steps 1–2; no solves licensed (and none needed:
-   the 48 h window covers every artifact). **Negative result:** same
-   journal-don't-thin rule as steps 1–2 — a guide that cannot be written
-   from the records without re-running its example is journaled, not
-   thinned.
-
-3. ~~**`MAT-6` step 8 — ΔR error budget: the slab-resolution knob**~~ —
-   **done as scoped 2026-08-11 (07:30 run); step 8 ✅.** `resolution_near`
-   0.005 → 0.0025 at fixed wire/box took projected ΔR from **1.5834% to
-   0.2829%** (−1.3005 pp at the same wire rung, 130× step 4's 0.01 pp floor),
-   so the residual is **skin-depth resolution**, not the filamentary-reference
-   mismatch, and the fixture is sub-1% on ΔR. Ladder 138 619 → 209 964 →
-   417 914 cells (3.01×, not the naive 8×); one solve 108.8 s at `-n 4` under
-   the 300 s stop rule; gate `20260811T125226Z_MAT-6-step8-gate-final.log`,
-   9 passed, 384 s at `-n 2`. σ-blind control exactly `+0.0` and agreeing
-   with the reaction ΔR to all digits; meshed wire current unmoved to 0.0000%.
-   **For the review:** whether 0.0025 becomes the production fixture (it would
-   move §2.1's headline 1.58%) is a scoping decision this slot did not take.
-   *(Original item text retained below for the audit trail.)*
-
-   **`MAT-6` step 8 — ΔR error budget: the slab-resolution knob (heavy;
-   probe-first).** *(Added 2026-08-10 by an interactive session at
-   operator direction; ordered after item 1 only because item 1's
-   measurement has waited since step 6 — they are independent.)* Execute
-   the §7 `MAT-6` step-8 entry verbatim: `resolution_near` 0.005 →
-   0.0025 (~3.2 → ~6.4 cells/δ) at fixed wire 0.002 / W = 0.15,
-   projected drive only, separating the remaining ~1.06% of ΔR error
-   between skin-depth resolution and the filamentary-reference mismatch
-   (step 5 already attributed the wire's ~0.53 pp). **Anchor:**
-   Dodd–Deeds `ΔR = +3.2259615e-01 Ω`, step 2b's 5% ceiling inherited
-   unchanged; result reported beside the 1.5834%/1.0562% ladder. **Cost
-   gate is the point of no return:** mesh-count probe then one `-n 4`
-   solve; OOM or > 300 s ⇒ report and stop (the cap — now 64 G — is
-   total-footprint and rank-blind, step 6); gate at `-n 2`,
-   `timeout 1200`; rescope is a smaller ratio (0.005 → 0.0035), never a
-   raised timeout. **Negative controls:** cite the σ-blind and
-   null-tagging records; σ = 0 `R = +0.0` exact on the new mesh; step
-   4's < 0.01 pp wobble is the reality floor. **Negative result:** ΔR
-   pinned near 1.06% attributes the residual to the coil model — report
-   both numbers, annotate the §7 entry, stop.
-
-4. ~~**`POST-4` step 1 — diagnose the centerline point-evaluation rank
-   dependence**~~ — **done as scoped 2026-08-11 (09:00 run); step 1 ✅, and
-   it is a decisive negative.** The ownership tie-break is **refuted** on
-   this fixture — `MULTI_RANK_CLAIMS`, `MULTI_CELL_CLAIMS`, `MASK_INVALID`
-   and `CROSS_CELL_DISAGREE` all **0/120** on a byte-identical mesh across
-   `-n 1/2/4`, and the ε-nudge does not collapse the spread (97.9755% →
-   97.9754%, 1.00× against the ≥ 235× demanded). The measurement localizes
-   the defect anyway: the Lagrange-P1 interpolants the example prints spread
-   **97.9755%** across rank counts while the **source fields they were
-   interpolated from spread 0.008426%** at the same points on the same solves
-   (`E_src` bit-identical) — a **1.163e+04×** separation. The solve is
-   rank-invariant; the 23% enters at `fem.Function.interpolate` into
-   `("Lagrange", 1, (3,))`. Logs `20260811T140345Z`/`…140402Z`/`…140414Z_
-   POST-4-step1-n{2,4,1}.log`, attribution `…140549Z_POST-4-step1-
-   attribution.log` (PASS, 1 s). Known-issues entry re-pointed, §7 annotated.
-   **For the review:** item 5 is dead as written (below); the owner needs
-   re-scoping onto the interpolation — fix `interpolate`, or have the example
-   sample the source fields. *(Original item text retained below for the
-   audit trail.)*
-
-   **`POST-4` step 1 — diagnose the centerline point-evaluation rank
-   dependence (standard; measurement only, no `src/` change).** Execute
-   the §7 `POST-4` step-1 entry verbatim: probe
-   (`scripts/probes/post4_step1_probe.py`, `mag6_step4_probe.py` mold)
-   on `examples/mri/01`'s debug preset as `EX-16` left it; per
-   centerline point at `-n 1/2/4` record claim multiplicity, global
-   claimed-cell sets, per-claiming-cell disagreement, `valid_mask`, and
-   the x = y = 1e-6 m ε-nudge re-measurement. **Anchor:** spread-carrying
-   points coincide with partition-varying claim sets (or mask holes),
-   and the nudged spread collapses to ≤ 0.1% vs the on-axis 23.5539% —
-   ≥ 235× separation, ceiling 3215× on record
-   (`20260810T170457Z_EX-16-spread-v2.log`). **Negative control:** the
-   phantom path's 0.007326% on the same solves, cited. **Cost:** solves
-   6 s / 4 s on record at `-n 2/4`; `-n 1` unmeasured — `timeout 600`
-   for that leg alone. **Traps:** the √3 single-point `eval` squeeze —
-   `.reshape(-1, 3)` (`MAG-6` step 4); complex build +
-   `FEM_EM_REQUIRE_COMPLEX=1`; claim counts are rank-local — reduce
-   before printing. **Negative result:** ownership refuted ⇒ the
-   per-point table localizes the 23% anyway — re-point the known-issues
-   entry at the measured locus, annotate the §7 entry, stop; item 5 is
-   then skipped.
-
-5. ~~**`POST-4` step 2 — the min-global-cell tie-break**~~ — **🚫 skipped
-   2026-08-11 under this item's own skip clause: item 4 refuted the
-   mechanism.** With 0/120 multi-claims there is no tie to break and the edit
-   would change no sampled value. Not attempted, not parked — nothing was
-   written. The next run takes the first *open* item; if that leaves the
-   queue empty, the drain instruction at the end of this section applies.
-   *(Original item text retained below for the audit trail.)*
-
-   **`POST-4` step 2 — the min-global-cell tie-break (standard; depends
-   on item 4: execute only if step 1 confirmed partition-varying cell
-   choice; if item 4 did not land or refuted the mechanism, skip —
-   journal and stop rather than guessing at a fix).** Execute the §7
-   `POST-4` step-2 entry verbatim: replace `links[0]` + last-writer-wins
-   in `evaluate_vector_field_parallel` with selection by minimum global
-   cell index (partition-independent by construction). **Anchor:**
-   on-axis centerline spread across `-n 1/2/4` collapses 23.5539% →
-   ≤ 0.1%; non-regression — phantom-region stats and `tests/post`
-   reproduce their on-record digits. **Negative control:** the pre-fix
-   23.5539%, cited. **Traps:** ghost cells in the collision links;
-   preserve the complex scalar dtype path and the function signature.
-   **Scope boundary:** buys rank-invariance, not physics validation of
-   a shared-facet trace; the known-issues entry leaves only if the
-   anchor lands. **Negative result:** a deterministic tie-break that
-   does not collapse the spread — report the per-point table, entry
-   stays open, annotate, stop.
+5. **`POST-4` step 4 — bound the P1-interpolant artifact on the export
+   paths (standard; measurement only; the spare — independent of every
+   item above).** Execute the §7 `POST-4` step-4 entry verbatim: sweep
+   `examples/` for `("Lagrange", 1, …)` interpolation of Nédélec/DG
+   sources; on `examples/mri/01`'s debug preset measure
+   interpolant-vs-source disagreement at cell midpoints and vertices,
+   reusing the step-1 probe machinery. **Anchor:** midpoint disagreement
+   ≤ 1% where the vertex path shows the on-record O(50×) — the
+   discontinuity lives at shared vertices/facets; report the max/median
+   table. **Negative control:** a conforming (magnetostatic P1) source
+   interpolated the same way agrees to solver tolerance. **Cost:**
+   standard, `-n 2`, solves seconds on record; the sweep is read-only.
+   **Traps:** step 1's list (reshape, complex build, rank-local counts,
+   `-s`). **Scope boundary:** measurement plus a known-issues caveat
+   naming the affected exports; no export-code changes, no ParaView claims
+   withdrawn in-slot. **Negative result:** a small artifact everywhere
+   says the centerline points were pathological (on-axis) — that is
+   itself the caveat text; report, annotate, stop.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and

@@ -498,7 +498,33 @@ mesh in the process — is the reusable part.
 
 ## Non-test issues
 
-### Unexplained mid-command termination of the logging harness (2026-08-08, 15:00 and 19:30 implementer slots)
+### ✅ RETIRED 2026-08-11 — "unexplained" mid-command termination of the logging harness was the background-and-end-turn trap (2026-08-08, 15:00 and 19:30 implementer slots)
+
+**Retired by the 2026-08-11 10:30 review — cause named, with wrapper-log
+evidence; nothing host-side ever killed anything.** Both slots' automation
+wrapper logs end with the session announcing it is waiting on a
+*backgrounded* harness run, then `exit=0` at the exact minute the harness
+log stops: `logs/automation/20260808T200001Z_implementer.log` ends "Stage 2
+is running … I'll report when the monitor fires", `exit=0` 20:16:37Z
+(death ~20:15Z); `logs/automation/20260809T003001Z_implementer.log` ends
+"Waiting on the background solve … I'll report when it lands", `exit=0`
+00:33:04Z (the log's last flushed write, to the minute). A headless
+`claude -p` session that ends its turn exits the CLI and SIGKILLs its
+process tree — harness included: footerless log, no journal, dirty tree.
+This is the same mechanism, established the same way, as the three `MAT-6`
+step 7 deaths root-caused by the 2026-08-11 03:00 review (attempts.md
+2026-08-11T08:00Z). It explains every anomaly this entry catalogued: the
+6.7× spread in time-to-death (it is when the session chose to end its turn,
+not a resource ceiling), the never-restarted container, the missing
+attempts.md entries (the session died with its journal unwritten), and the
+stage-uncorrelated kills (MESH_ONLY ran clean *foreground*). The fix is the
+foreground recipe already landed in implementer-run.md and the §9 rubric
+trap list (03:00 review commit `bc86367`); this commit names the cause,
+which is the condition this entry set for leaving. **The standing
+instruction below is lifted**: `MAG-13` step 2 is retryable under the
+foreground recipe (re-queued §9 item 3, 2026-08-11 10:30), and the
+operator's host-observables ask (`dmesg`, `journalctl`, WSL2 reclaim) is
+withdrawn from Waiting-on-you. Original record retained below.
 
 **Observed twice — the standing instruction below has fired; `MAG-13` step 2
 is escalated, not retryable.** The second occurrence is recorded after the
