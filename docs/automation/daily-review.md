@@ -146,7 +146,11 @@ step 5 or listed in step 6 states all six:
    next until `~/.cache/fenics` is cleared; `cell_tags.values` and
    `assemble_scalar` are rank-local; pytest captures prints without `-s`;
    `-k a or b` splits into stray argv inside an already-quoted container
-   command. Add to this list as runs discover more.
+   command; a headless session that backgrounds a harness run and ends its
+   turn exits the CLI and SIGKILLs the harness (footerless log, no journal —
+   three slots on 2026-08-10/11): harness runs go foreground, Bash-tool
+   timeout 660000 ms, container-side `timeout` sized to return a footer
+   inside that window. Add to this list as runs discover more.
 5. **The scope boundary** — what the item does *not* close, stated so the
    implementer holds the chunk at 🟡 rather than over-claiming. `POST-3` step 1
    correctly stayed 🟡 because a scalar-σ identity does not gate the coil+

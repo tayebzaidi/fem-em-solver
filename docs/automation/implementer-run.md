@@ -98,6 +98,19 @@ answer prompts — a denied tool call is simply denied. Consequences:
 - All compute goes through `scripts/testing/run_and_log.sh ...` or
   `docker compose exec ...` at the **top level** of the Bash command. Host
   `python3`/`pytest` are not allowed and the host lacks dolfinx anyway.
+- **Never run the harness with `run_in_background`, and never end your turn
+  while a harness command is running.** You are a headless `claude -p`
+  session: ending the turn exits the CLI (exit 0), which SIGKILLs the
+  backgrounded harness — footerless log, untracked artifacts, no journal
+  entry, and the tree left dirty for the next slot. Three consecutive slots
+  paid this on 2026-08-10/11 (19:30, 22:30, 00:00 — the whole night) on the
+  same item. Run harness commands in the **foreground** with the Bash tool's
+  `timeout` parameter at its 660000 ms maximum, and size the
+  **container-side** `timeout` so the command returns a footer inside that
+  window (≤ ~590 s of container time for a command with ~1 min of setup). A
+  compute step that cannot finish inside one foreground window at ≤ 12 ranks
+  is too big for a scheduled slot: shrink the case or journal it for the
+  review — do not background it.
 - Read files with the Read/Grep/Glob tools, not `cat`/`sed`/`head` — the
   generic readers are not allowlisted, deliberately.
 - Multi-line commit messages: write the message to a file with the Write

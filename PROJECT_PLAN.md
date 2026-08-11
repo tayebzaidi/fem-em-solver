@@ -2718,6 +2718,33 @@ below; the new headroom also un-sticks step 5's 1 458 561-cell rung and
 loosens step 8's cost gate. The 12-core and 20-minute ceilings are
 untouched: this bought memory, not compute.)*
 
+*Part 2 rescoped, 2026-08-11 03:00 review — **three consecutive slots
+(19:30, 22:30, 00:00) attempted Part 2 as scoped above and all three died
+the same way, none of it physics.** Root cause, established from
+`logs/automation/*_implementer.log` (each session exited **0** after 2–5
+minutes) and the three footerless probe logs: each session launched the
+harness run as a background Bash task, wrote "waiting on the solve", and
+ended its turn — which in headless `claude -p` mode exits the CLI and
+SIGKILLs the harness. Not OOM (dmesg's only memcg kills are step 6's, Aug 8,
+at 16 G), not the 65-min wrapper, not a late start (the 21:00 anomaly
+entry's hypothesis — 19:30's probe started one minute into its slot). What
+the night did establish, three times over: the 64 G cap is in effect at the
+kernel (`memory.max` = 68719476736) and the combined mesh reproduces
+byte-identically at 697 401 cells (51.9/51.5/56.1 s). The solve never ran
+more than ~2.5 min before its session died; **its cost at 64 G is still
+unmeasured**. The orphaned artifacts — the drafted, never-executed gate
+module `tests/validation/test_dodd_deeds_reactance_combined_knobs.py` and
+the three probe logs — are landed on main (chore(recover), 2026-08-11); the
+module is input, not evidence. **Rescoped run recipe (supersedes the
+`timeout 1200` instruction below, which is unrunnable in a scheduled slot):**
+run the probe **foreground**, Bash-tool `timeout` parameter at 660000 ms,
+container-side `timeout 590` (mesh ~56 s + solve window ~530 s). Exit 124 is
+a *result*: "solve > 530 s at `-n 4` under 64 G" is the cost measurement —
+record it, annotate here, stop; do not retry at more ranks in the same slot
+and do not background anything. Any other exit gives the first real
+additivity reading or a real OOM record. The 0.9843 bands, anchors,
+negative controls, and no-retry rationale below are unchanged.*
+
 *Blocked-attempt record, 2026-08-08, retained:* *(attempted 2026-08-08,
 19:30 run — **blocked before any compute: a scheduled session cannot edit
 `docker/`.** `.claude/settings.json` lists `Edit(docker/**)` under
@@ -6459,9 +6486,35 @@ promised an "obvious next entry named below" that was never written — the
 16:30 slot on 2026-08-07 hit that dangling reference and correctly fell
 through to the drain instruction; the reference is retired.)*
 
-Last reviewed 2026-08-10, 18:00 daily review. **Four of four slots landed
-their item — the second consecutive sweep, one of them a decisive
-negative.** 12:00: `EX-16` 🚫 — the convergence hypothesis refuted with the
+Last reviewed 2026-08-11, 03:00 daily review. **Three of four slots lost to
+one harness trap, zero chunk movement — the mirror image of the previous
+interval.** The 19:30, 22:30, and 00:00 slots each attempted item 1
+(`MAT-6` step 7 Part 2) and each died the same way: the session backgrounded
+the harness run and ended its turn, which in headless `-p` mode exits the
+CLI and kills the harness — footerless log, no journal, dirty tree (root
+cause with wrapper-log evidence in attempts.md 2026-08-11T08:00Z; the 21:00
+entry's late-start hypothesis is corrected there). 21:00 stopped correctly
+on the dirty tree. **Not** OOM and **not** the 65-min backstop: the 64 G
+cap read 68719476736 in all three preflights, dmesg shows no memcg kill
+since step 6's 16 G records, and every session exited 0 within five
+minutes. Step 2: the three orphaned probe logs and the drafted (never
+executed) combined-knob gate module landed on main in their own
+`chore(recover)` commit — the module is input, not evidence — and both
+`recovered/*` branches are deleted; tree clean. Step 3: no ✅ closures this
+interval, nothing to audit. Step 5: no new gate closed, no example chunks
+mandated, no backlog gap — no new work invented. Prevention: the trap is
+now in implementer-run.md (foreground harness runs, Bash-tool timeout
+660000 ms, container `timeout` sized to footer inside it) and the review
+rubric's trap list; item 1 below is rescoped to that recipe, converting a
+possible overrun into a recorded cost measurement (exit 124 = "solve
+> 530 s", report and stop). `attempt/PORT-1-*` branches stay parked under
+the weekly licence (2026-08-16). Waiting-on-you unchanged: `ANS-1`
+replication, the push (now 56 ahead once this lands), MAG-13 host
+observables.
+
+Previous interval's digest (2026-08-10 18:00), retained for the audit
+trail: **four of four slots landed their item — the second consecutive
+sweep, one of them a decisive negative.** 12:00: `EX-16` 🚫 — the convergence hypothesis refuted with the
 fix landed anyway: the demo now solves direct (`preonly`/LU, `reason=4`) at
 the validated gauge floor and the centerline rank spread does not move
 (23.5539% vs the 23.5545% unconverged record, 1.0000×), while the added
@@ -6502,33 +6555,43 @@ this commit lands; runner results still never observed) remain.
 
 **Five ready items; items 1–3 independent, items 4–5 genuinely serial**
 (item 5 executes only if item 4 confirmed its mechanism — the skip clause
-is in the item). Item 1 is the measurement the operator's cap raise just
-unblocked; item 2 closes the operator's guide directive; item 3 is the
-operator-directed error budget; items 4–5 are the `POST-4` diagnosis→fix
-pair scoped this review from `EX-16`'s finding. The `PORT-1` critical path
-is deliberately absent: the second licensed discriminator slot is the
-weekly review's (2026-08-16) to spend.
+is in the item). Item 1 is rescoped this review after three identical
+harness deaths (see the digest above — it has not failed on physics; the
+solve has never run longer than ~2.5 min); item 2 closes the operator's
+guide directive; item 3 is the operator-directed error budget; items 4–5
+are the `POST-4` diagnosis→fix pair scoped from `EX-16`'s finding. The
+`PORT-1` critical path is deliberately absent: the second licensed
+discriminator slot is the weekly review's (2026-08-16) to spend.
 
-1. **`MAT-6` step 7 Part 2 — the additivity measurement at 64 G (heavy;
-   probe-first).** Part 1 (the cap) landed 2026-08-10 by the operator's
-   hand and is verified at the kernel (`memory.max` = 68719476736); this
-   item is the measurement it existed for. Execute the §7 step-7 Part 2
-   text verbatim: re-run `scripts/probes/mat6_step6_probe.py` exactly as
-   the step-6 entry authorised — mesh count first (697 401 on record,
-   byte-identical at two rank counts), then **one** solve at `-n 4`,
-   `timeout 1200`; still-OOM at 64 G or > 600 s of solve ⇒ report the
-   measured cost and stop, no retry at more ranks (the cap is
-   total-footprint and rank-blind, step 6's finding). **Anchor:** step
-   6's, inherited — Dodd–Deeds refs, step 2b's gates unchanged; the
-   reading is the additivity defect vs **0.9843** with the pre-decided
-   bands (≤ 0.5 pp additive / > 1.5 pp cross-term / between ambiguous).
-   **Negative control:** step 6's two 16 G kill records on the same
-   fixture, cited never recomputed; the O(h²) volume-deficit control
-   re-asserted. **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`;
-   `project_source=False` pins; FFCx lock after a kill. **Negative
-   result:** OOM at 64 G is a real per-cell memory measurement — report
-   beside cap and cell count, annotate the §7 entry, stop; a cross-term
-   reading is the more informative physics outcome.
+1. **`MAT-6` step 7 Part 2 — the additivity probe, foreground recipe
+   (heavy; rescoped 2026-08-11 after three lost slots — read the §7
+   step-7 Part 2 rescope note first; it supersedes the entry's
+   `timeout 1200` text).** The mesh phase is settled — 697 401 cells,
+   byte-identical five times on record — and the drafted gate module
+   `tests/validation/test_dodd_deeds_reactance_combined_knobs.py` is on
+   main but **unverified**; do not run it this slot. This slot runs only
+   the probe: `scripts/probes/mat6_step6_probe.py` via `run_and_log.sh`,
+   `-n 4`, complex mode, **foreground Bash call with the tool's
+   `timeout` parameter at 660000 ms and container-side `timeout 590`**
+   (mesh ~56 s + solve window ~530 s). **Never `run_in_background`,
+   never end the turn while the harness runs** — that is what killed
+   19:30/22:30/00:00. **Anchor:** step 6's, inherited — Dodd–Deeds refs,
+   step 2b's gates unchanged; the reading is the additivity defect vs
+   **0.9843**, bands ≤ 0.5 pp additive / > 1.5 pp cross-term / between
+   ambiguous. **Negative control:** step 6's two 16 G kill records on
+   the same fixture, cited never recomputed; the O(h²) volume-deficit
+   control re-asserted. **Cost:** heavy; mesh 51.9–56.1 s on record;
+   solve cost unmeasured — bounding it is part of the point. **Traps:**
+   complex build + `FEM_EM_REQUIRE_COMPLEX=1`; `project_source=False`
+   pins; FFCx lock after a kill; the background-and-end-turn CLI exit
+   (implementer-run.md, allowlist section). **Scope boundary:** a clean
+   probe reading does not run or close the gate module — journal the
+   number, annotate §7, leave the module for the next slot. **Negative
+   result:** exit 124 **is** the measurement — "solve > 530 s at `-n 4`
+   under 64 G" goes in the log, the §7 entry, and attempts.md; no retry
+   at more ranks in-slot (rank choice is then a review decision). OOM at
+   64 G is a real per-cell memory measurement — report beside cap and
+   cell count, stop.
 
 2. **`EX-15` step 3 — `mat:`/`mri:`/`ans:` guides (standard; doc-only;
    closes the chunk).** Execute the §7 `EX-15` step-3 bullet: four

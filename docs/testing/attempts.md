@@ -9069,3 +9069,54 @@ curl-curl solve at `-n 4`. Whoever picks step 7 Part 2 back up should treat the
 recovered module as *unverified* input, re-derive nothing, and budget the solve
 as heavy with the `timeout` at 1200 s **started early in the slot** — the
 failure mode this entry documents is a late start, not a wrong test.
+
+## 2026-08-11T08:00Z — `MAT-6` step 7 Part 2 — **anomaly, root cause found**: the 22:30 and 00:00 slots died the same death as 19:30, and it is the harness, not the physics
+
+Written by the 03:00 daily review. The 22:30 and 00:00 slots journaled
+nothing — this entry is their record — and it corrects the hypothesis the
+21:00 entry above left for us.
+
+**What happened, per slot** (all times CDT; wrapper logs in
+`logs/automation/`):
+
+- **19:30** — parked nothing (first encounter was 21:00's). Probe log
+  `20260811T003136Z…` starts 19:31, mesh 697 401 cells in 51.9 s, no solve
+  output, no footer. Wrapper: session **exited 0 at 19:34:58** — five
+  minutes in.
+- **22:30** — parked 19:30's dirt on `recovered/20260811T033030Z` (correct,
+  second encounter), then attempted the item itself: log
+  `20260811T033140Z…`, same mesh in 51.5 s, footerless. Wrapper: **exit 0
+  at 22:33:35**.
+- **00:00** — parked 22:30's log on `recovered/20260811T050050Z`, attempted
+  the item: log `20260811T050131Z…`, same mesh in 56.1 s, footerless.
+  Wrapper: **exit 0 at 00:02:35** — the solve was ~8 s old when the session
+  ended.
+
+**Root cause.** Each wrapper log ends with the session's own final message:
+"Waiting on the solve — the background run will notify on exit." All three
+sessions launched the harness command as a **background** Bash task and
+ended their turn. In a headless `claude -p` session, ending the turn exits
+the CLI — exit 0, 2–5 minutes after start — and the orphaned
+`run_and_log.sh` is killed with it: footerless log, untracked artifacts, no
+documentation phase. The 21:00 entry's late-start/wrapper-boundary
+hypothesis is **wrong**: 19:30's probe started one minute into its slot,
+and no session came anywhere near the 65-minute backstop.
+
+**Ruled out.** OOM: `dmesg` shows exactly two memcg kills, both step 6's
+known 16 G records (Aug 8, ~15:33 and ~19:44 CDT); none since the cap
+raise. The 65-min wrapper: all exits are 0 at minutes 2–5. The cap:
+`memory.max` = 68719476736 in all three preflights.
+
+**What the night bought.** The cap holds at the kernel, the combined mesh
+reproduces byte-identically a 3rd/4th/5th time, and the gate module was
+drafted (once). The solve's cost at 64 G is still unmeasured — no solve
+survived longer than ~2.5 min before its session died.
+
+**Disposition (this review).** Orphans landed on main
+(`chore(recover)`, module explicitly unverified); both `recovered/*`
+branches deleted; trap added to implementer-run.md ("Working inside the
+permission allowlist") and the daily-review rubric list; §7 step 7 Part 2
+and §9 item 1 rescoped: **foreground harness run, Bash-tool timeout
+660000 ms, container-side `timeout 590`** — exit 124 becomes the cost
+measurement instead of a lost slot. Cost of the outage: three of four
+slots (21:00 stopped correctly on the dirty tree, per protocol).
