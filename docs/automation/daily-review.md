@@ -100,14 +100,19 @@ are yours.
 7. **Refresh the status dashboard.** Rewrite `docs/status/dashboard.md` from
    what steps 1–6 established — Waiting-on-you first, then the §2 digest
    (only when §2 changed), recent activity, automation health, on-deck
-   summary. Keep it a digest: no content that exists only there. Then
-   republish it with the Artifact tool to the recorded URL:
+   summary. Keep it a digest: no content that exists only there.
+
+   The artifact republish is **interactive-only**: the Artifact tool is not
+   available in headless scheduled sessions, so do not attempt it here —
+   the file update is this step's whole deliverable. The published copy at
 
    `https://claude.ai/code/artifact/d5040a1e-ae6c-42dd-8e11-2330e0b9bbc8`
 
-   (pass that as `url` so the link stays stable; if the Artifact tool is
-   unavailable in this session, the file update alone is fine — the next
-   session republishes). Anything blocked on the human operator goes at the
+   is refreshed by the next interactive session (pass that URL as `url` so
+   the link stays stable), and lags `docs/status/dashboard.md` until one
+   runs — the operator confirmed this arrangement 2026-08-11 after the
+   artifact was found six days stale. Anything blocked on the human
+   operator goes at the
    top of Waiting-on-you — the dashboard is the only alerting channel; do
    not send push notifications. Dashboard staleness alone does not justify
    a commit — fold the refresh into a commit the other steps already

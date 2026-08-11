@@ -109,4 +109,6 @@ background-run trap, proven from the wrapper logs — which un-blocks
 ---
 
 *Maintained by `docs/automation/daily-review.md` step 7. The Waiting-on-you
-section above is the alerting channel — check it after each review interval.*
+section above is the alerting channel — check it after each review interval.
+The published artifact copy is refreshed by interactive sessions only and may
+lag this file; `docs/status/dashboard.md` on `main` is always current.*
