@@ -1,6 +1,6 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-11, 10:30 daily review. Source of truth is
+**Updated:** 2026-08-11, 18:00 daily review. Source of truth is
 `PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
 
 ## Waiting on you
@@ -13,26 +13,22 @@
    AED per `SPEC.md`, fill the blank AED columns in `COMPARISON.md` — the
    weekly review then adjudicates. Reminders: ΔX is reported, never gated;
    our Re Z(σ = 0) is exactly 0.0 by structure — disable coil eddy effects
-   in AED per `SPEC.md` §Excitation before comparing. *(Related decision
-   this review: a refinement study just took ΔR to **0.2829%** on a finer
-   slab mesh, but the production fixture — and therefore the SPEC you are
-   replicating — is deliberately frozen until your comparison is
-   adjudicated. Nothing changes on your side.)*
-2. **What did the GitHub runner say?** `origin/main` is at the 2026-08-10
-   18:00 review commit, so a runner execution of `validation-complex`
-   should exist by now. Sessions have no network access and cannot see the
-   result; anything you can paste (pass/fail, log excerpt) is new
-   information. Local `main` is 8 ahead once this review's commit lands —
-   a follow-up push whenever convenient.
+   in AED per `SPEC.md` §Excitation before comparing. *(Refinement studies
+   have since taken ΔR to 0.28–0.88% by two independent routes, and their
+   composition is queued as a measurement — but the production fixture,
+   and therefore the SPEC you are replicating, stays deliberately frozen
+   until your comparison is adjudicated. Nothing changes on your side.)*
+2. **What did the GitHub runner say?** `origin/main` is still at the
+   2026-08-10 18:00 review commit (`b6e994f`), so a runner execution of
+   `validation-complex` should exist by now. Sessions have no network
+   access and cannot see the result; anything you can paste (pass/fail,
+   log excerpt) is new information. Local `main` is **14 ahead** once this
+   review's commit lands — a follow-up push whenever convenient.
 3. FYI, no action needed: the `lint` CI job stays red-by-adjudication
-   (reformat deferred until the PORT-1 branch lands).
-4. **Withdrawn:** the ask for host-side observables around the 2026-08-08
-   `MAG-13` kills. The wrapper logs settle it — both sessions ended their
-   turn while their solve ran *backgrounded*, which in a headless session
-   exits the CLI and kills the run; the same trap that cost three slots on
-   08-10/11. No host mystery, nothing to dig up; `dmesg`/`journalctl`
-   archaeology is off your list. `MAG-13` step 2 is re-queued under the
-   foreground recipe.
+   (reformat deferred until the PORT-1 branch lands); and the 2026-08-08
+   `MAG-13` host-observables ask stays withdrawn — the foreground recipe
+   has now completed that exact profile twice, confirming the
+   background-run trap as the whole story.
 
 ## Honest current state (digest of §2 — unchanged this interval)
 
@@ -44,67 +40,62 @@
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4 step 1); operator exact at 1 g/10 g (step 3); never gated on a coil |
 | S-parameters | 🧪 heuristic | one real S-matrix, two-loop air fixture in a test (PORT-1) |
 
-Headline gates unmoved, but two error budgets closed underneath them (see
-below) — the coil-loading fixture is now demonstrably sub-1%-capable on ΔR.
+Headline gates unmoved. Underneath them: mesh-knob **additivity tested
+green** on the coil-loading fixture (−0.080 pp defect), and the combined
+box+wire mesh is **sub-1% on ΔR** (0.8835%) by a second route.
 
-## Recent activity (since the 03:00 review)
+## Recent activity (since the 10:30 review)
 
-**Four of four slots landed their item — a clean sweep.**
+**Four of four slots landed their item — the second consecutive clean
+sweep.**
 
-- **MAT-6 step 7 Part 2** (04:30): the foreground recipe worked first
-  time; the solve three slots died for is priced — **372.9 s at `-n 4`,
-  no OOM at 64 G** on the 697 401-cell combined case. The additivity
-  reading itself still needs a wider window; this review routed it
-  through an `-n 8` cost probe (queue items 1 + 4).
-- **EX-15 closed** (06:00): all 16 runnable examples now carry a
-  step-by-step analysis guide, checker green, negative control fired.
-  Your guide directive is done.
-- **MAT-6 step 8** (07:30): the ΔR error budget is closed — doubling
-  slab resolution at fixed wire takes ΔR **1.5834% → 0.2829%**, so the
-  residual was skin-depth resolution, not the coil model. Promoting the
-  finer fixture to production is deferred pending your ANS-1 comparison
-  (see Waiting-on-you item 1).
-- **POST-4 step 1** (09:00): decisive negative — the suspected ownership
-  tie-break in the parallel point evaluator is **refuted** (0/120 on
-  every counter). The mri demo's 23% rank spread enters at the
-  Lagrange-P1 interpolation the example prints (source fields agree to
-  0.008426% — an 11 630× separation). Fix re-scoped onto the real locus
-  (queue item 2).
+- **MAT-6 step 7 Part 2b** (12:00): the `-n 8` cost probe priced the
+  loaded solve at **179.3 s** — inside the pre-committed band, so the
+  additivity gate fit one foreground call.
+- **POST-4 step 3 closed** (13:30): the mri demo's centerline table now
+  samples the solved fields; rank spread **23.5539% → 0.008613%** (a
+  2735× collapse). The known-issues centerline entry is retired; the
+  `mri:1` guide is rewritten.
+- **MAG-13 step 2** (15:00): the < 5% wire rung is **measured and missed
+  on-rate** — 5.6494% at h = 0.00125, where the record rate had already
+  predicted 5.95%. The convergence is as good as advertised (rate 1.174
+  vs 1.10); the target was optimistic at this rung. The error looks
+  concentrated near the wire; a cheap profile measurement is queued
+  before any graded mesh is committed.
+- **MAT-6 step 7 closed** (16:30): the additivity gate ran green first
+  time — **the two mesh knobs are additive** (defect −0.080 pp against a
+  0.5 pp band), ΔR 0.8835% on the combined fixture under the unwidened 5%
+  ceiling, O(h²) wire control reproduced.
 
-All three ✅ steps were audited against the §4 bar (one auditor each):
-compliant, no demotions. Also this review: the 2026-08-08 "unexplained
-harness termination" known-issues entry is **retired** — same
-background-run trap, proven from the wrapper logs — which un-blocks
-`MAG-13` step 2.
+Both ✅ flips were audited against the §4 bar (one auditor each):
+compliant, no demotions; minor wording drift in the POST-4 entry corrected.
 
 ## Automation health
 
-- **Slot yield this interval: 4/4** — best interval on record, directly
-  after the worst (0/4). The foreground-recipe fix held in all four
-  slots; the trap list now carries it.
+- **Slot yield this interval: 4/4** — two consecutive clean sweeps since
+  the foreground-recipe fix; the trap has not recurred in eight slots.
 - Tree stayed clean the whole interval; no `recovered/*` branches; all
   slots committed their own work.
 - Both `attempt/PORT-1-*` branches stay parked under the weekly licence —
   the **weekly review (2026-08-16) holds the 3b-xv adjudication and the
   second discriminator slot**.
-- Queue depth **5** after refresh; items 1, 2, 3, 5 independent, item 4
-  serial on item 1 with an explicit skip clause.
+- Queue depth **5** after refresh; items 1–4 independent, item 5 is the
+  declared spare (brute-force route on the same question as item 2).
 
 ## On deck (§9, refreshed this review)
 
-1. **MAT-6 step 7 Part 2b** (heavy) — `-n 8` cost probe of the combined
-   fixture; decides whether the additivity gate fits one foreground call
-   (solve ≤ ~240 s).
-2. **POST-4 step 3** (standard) — the mri demo's centerline table samples
-   the solved fields instead of the P1 interpolants; anchor: 23.5539% →
-   ≤ 0.1% across rank counts.
-3. **MAG-13 step 2** (heavy, un-blocked) — the < 5% wire rung at `-n 8`
-   under the foreground recipe; exit 124 is itself the cost reading.
-4. **MAT-6 step 7 Part 2c** (heavy, serial on item 1) — the additivity
-   gate vs 0.9843, first run of the drafted module; skip clause if item 1
-   priced it out.
-5. **POST-4 step 4** (standard, spare) — bound the P1-interpolant artifact
-   on the export paths; measurement + caveat only.
+1. **POST-4 step 4** (standard) — bound the P1-interpolant artifact on the
+   export paths; measurement + caveat only.
+2. **MAG-13 step 2 profile** (heavy) — re-solve the measured rung and map
+   error-vs-radius densely; decides where a graded mesh would spend its
+   cells before one is built.
+3. **MAT-6 step 9** (heavy) — third box rung (W = 0.35): turn the ΔX
+   truncation trend into a W → ∞ extrapolation; the input a future ΔX
+   gate needs.
+4. **MAT-6 step 10** (heavy) — do the two sub-1% ΔR routes compose? One
+   solve pair on the combined fixture + the fine slab knob.
+5. **MAG-13 step 2 rung 3** (heavy, spare) — the < 5% wire by brute force
+   (~1.5 M cells); exit 124 is itself the reading.
 
 ---
 

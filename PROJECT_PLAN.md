@@ -1443,6 +1443,62 @@ tolerance.*
 > numbers, annotate here; if a real reduction defect surfaces, it gets a
 > known-issues entry and a fix is scoped by a review, not improvised in-slot.
 
+**`MAG-13` step 2 profile — where does the 5.65% live?** 🔲
+*(scoped 2026-08-11, 18:00 review — the route decision the step-2 run asked
+for. Graded refinement stays the named cheaper route, but the run's
+near-wire hint rests on ten sample points; this step buys the map before
+any mesh is committed to grading. Queued as §9 item 2; the uniform rung 3
+below is the declared spare, §9 item 5.)*
+> Re-run the h ≈ 0.00125 rung exactly as measured (mesh + solve **275.3 s
+> on record** at `-n 8`, `20260811T200040Z_MAG-13-step2-solve-n8.log`) and
+> sample the error-vs-radius profile densely: **≥ 40 radii spanning
+> r ∈ [0.006, 0.028]** through `evaluate_vector_field_parallel`, replacing
+> the ten points on record. Real build, **no complex mode**; foreground,
+> tool `timeout` 660000 ms, container `timeout 590`. **Anchor:** the
+> straight-wire closed form
+> `utils/analytical.py::straight_wire_magnetic_field` (B_θ = μ₀I/2πr) per
+> radius; fixture identity first — cell count digit-identical to
+> **1 097 873** and global relative L2 reproducing **5.6494%** to its
+> printed digits before any profile claim. **Negative control:** the
+> ten-point table on record (9.46% at r = 0.0080, 6.33% at 0.0100, 0.33%
+> at 0.0200, 1.40% at 0.0240) — the dense profile must reproduce those
+> radii; a profile that contradicts its own coarse sample is a bug, not a
+> finding. **Cost:** heavy; 275.3 s mesh + solve on record, sampling
+> seconds. **Traps:** never background; stale FFCx lock; point evaluation
+> through `evaluate_vector_field_parallel`, never rank-local eval;
+> `J·n ≠ 0` at the end caps stands unmeasured. **Does not close / does not
+> reopen:** `MAG-13` stays ✅; no mesh change, no graded mesh in-slot —
+> this buys the map, a review scopes the mesh against it. **Negative
+> result:** a flat or wall-dominated profile refutes the near-wire
+> hypothesis and the uniform rung (below) becomes the honest route; report
+> the profile table, annotate here, stop.
+
+**`MAG-13` step 2 rung 3 — the < 5% wire by brute force** 🔲
+*(scoped 2026-08-11, 18:00 review — the spare, §9 item 5; the other route
+to the same question as the profile step above. A slot reaching it runs it
+as written even if the profile already landed — a completed rung is a real
+measurement either way.)*
+> Mesh + one solve of **h ≈ 0.001127** (~1.50 M cells at 1.37× the
+> 1 097 873 on record — the rung the measured rate 1.174 prices at exactly
+> 5.00%), `-n 8`, real build, foreground, tool `timeout` 660000 ms,
+> container `timeout 590`. **Anchor:**
+> `utils/analytical.py::straight_wire_magnetic_field` (B_θ = μ₀I/2πr),
+> target **< 5.00%** relative L2 at the rung; print the three-rung observed
+> rate beside 1.174 and the landed 1.10; azimuthality control ≤ 0.10 as on
+> record. **Negative control:** `MAG-13`'s analytic-Dirichlet-vs-plain-box
+> separation and the rate fit, on record, cited never recomputed. **Cost:**
+> heavy; **estimate 380–450 s if cost scales with cell count — an
+> assumption, declared**: the 590 s window holds it only with thin margin,
+> and **exit 124 is the measurement** ("~1.5 M cells does not fit the
+> window at `-n 8`"), not a failure. **Traps:** the profile step's list
+> verbatim. **Does not close / does not reopen:** `MAG-13` stays ✅ at its
+> recorded numbers either way; a green < 5% annotates this entry and the
+> MAG follow-up bullet; it does not retire the graded route, which stays
+> the cheaper path for any further rung. **Negative result:** still > 5%
+> on-rate, or exit 124, says the uniform route is exhausted inside the
+> window — graded refinement becomes the only route; report the measured
+> error and cost beside the prediction, annotate here, stop.
+
 **`MAG-13` step 2 — EXECUTED 2026-08-11 (15:00 slot): the rung is measured
 and the target is missed on-rate — 5.6494% vs < 5%, in 278 s.** *(`MAG-13`
 stays ✅ at its recorded numbers, exactly as the entry pre-committed; the
@@ -3077,6 +3133,79 @@ operator direction.)*
 > any future sub-1% claim needs a finite-cross-section closed form or a
 > thinner wire, not more mesh; report both numbers, annotate here, stop.
 
+**`MAT-6` step 9 — ΔX box-truncation attribution: the third W rung** 🔲
+*(scoped 2026-08-11, 18:00 review — decision (2); this is the first of the
+two follow-ons the step-7 Part 2c entry flagged for a review. Queued as §9
+item 3.)*
+> Step 7 Part 2c left ΔX converging to ~0.98, not 1.00, with the last
+> ~1.6% unattributed; box truncation at W = 0.25 is the named suspect, and
+> step 4's own sweep — projected ratio **0.9200 at W = 0.15 → 0.9849 at
+> W = 0.25** — is two points of the trend a third rung would pin. Solve
+> **W = 0.35 at coarse wire** (`resolution_wire = 0.002`; additivity is
+> green, so the coarse-wire trend transfers), projected drive only, one
+> loaded + free pair; report the three-point ratio trend and its W → ∞
+> extrapolation. **Probe first, point of no return (step-4 discipline):**
+> mesh count, then one solve at `-n 4`, stop at > 300 s or OOM — W = 0.35's
+> cell count is unmeasured (W = 0.25 was 300 591 cells, 2.17× the baseline,
+> 18–22 s mesh, 81 s solve at `-n 4`; the growth is far-field-dominated at
+> `resolution_far = 0.025`, so ~2–2.5× again is an estimate, not a
+> measurement). **Anchor:** Dodd–Deeds `ΔX = −6.1586749e-01 Ω`,
+> `ΔR = +3.2259615e-01 Ω`, step 2b's gates inherited unchanged (ΔR < 5%
+> hard ceiling; ΔX sign and order of magnitude only); the reading —
+> the trend and extrapolated endpoint — is **reported, never gated**, for
+> exactly step 4's stated reason: the box convergence of ΔX is the thing
+> under test. **Negative control:** ΔR box-invariance on record (< 0.01 pp
+> across W = 0.15 → 0.25, drives identical to 5e-5) — a ΔR that moves with
+> W says the fixture changed, not the truncation. **Cost:** heavy; complex
+> build + `FEM_EM_REQUIRE_COMPLEX=1`; gate at `-n 2` (allreduced current
+> and reaction integral, step 4's note), split by `-k` into two commands if
+> the pair exceeds one ceiling. **Traps:** step 4's list — import geometry,
+> tags, and both solve routines from the step-2b/step-3 modules, restate
+> nothing; `project_source=False` pins untouched; stale FFCx lock;
+> `ufl.max_value`. **Does not close / does not reopen:** `MAT-6` stays ✅;
+> no ΔX band is written or tightened in-slot — the extrapolated endpoint is
+> the *input* to a future gate-authoring step, which stays deferred until
+> this attribution lands (18:00 review decision). **Negative result:** an
+> extrapolation that plateaus visibly below 1.00 says the residual is not
+> truncation — the finite-cross-section reference becomes the next suspect,
+> and a ΔX gate needs a better reference before it needs a bigger box; that
+> is the more informative reading. Report all three ratios and the fit,
+> annotate here, stop.
+
+**`MAT-6` step 10 — do the two sub-1% routes compose? Slab knob on the
+combined fixture** 🔲
+*(scoped 2026-08-11, 18:00 review — decision (2); the second Part 2c
+follow-on. Queued as §9 item 4; independent of step 9.)*
+> Two separate routes now reach sub-1% ΔR: box+wire (step 7 Part 2c,
+> **0.8835%** at W = 0.25 / wire 0.001 / slab 0.005) and the slab knob alone
+> (step 8, **0.2829%** at W = 0.15 / wire 0.002 / slab 0.0025). Step 7's
+> additivity verdict makes their composition a one-pair question: solve the
+> combined fixture **plus** `resolution_near = 0.0025`, projected drive,
+> loaded + free, `-n 8` under the 64 G cap, and read ΔR beside the two
+> records. **Probe first:** mesh count, then one solve; stop at > 300 s or
+> OOM — the composed cell count is unmeasured (combined 697 401 on record;
+> step 8's knob added ~208 k near-region cells to a 210 k fixture, so ~1 M
+> is an estimate), and an OOM at 64 G is itself a per-cell memory reading.
+> **Anchor:** Dodd–Deeds `ΔR = +3.2259615e-01 Ω` under step 2b's unwidened
+> 5% ceiling; the reading — whether ΔR improves from 0.8835% toward the
+> sub-0.5% an additive error budget predicts — is **reported beside the
+> prediction, never gated to it**. **Negative control:** step 6's two 16 G
+> kill records on the un-composed fixture and the σ-blind `ΔZ = 0`, cited
+> never recomputed. **Cost:** heavy; solves 178–196 s each at `-n 8` on
+> record for the un-composed fixture; container `timeout` sized after the
+> probe, ≤ 590; cap re-read (`memory.max` = 68719476736) before the solve.
+> **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`;
+> `project_source=False` pins; stale FFCx lock after any kill; never
+> background — foreground harness call, tool `timeout` 660000 ms. **Does
+> not close / does not reopen:** measurement only — the production fixture,
+> §2.1's landed 1.58%, and the `ANS-1` SPEC/COMPARISON numbers stay frozen
+> pending the operator's adjudication (step-8 review decision, unchanged);
+> `MAT-6` stays ✅. **Negative result:** a ΔR that does not improve — or
+> worsens — under the composed knobs says mesh-knob additivity (measured on
+> ΔX) does not imply error-term additivity (assumed for ΔR): that is the
+> finding this step exists to catch, and it would bound how far single-knob
+> extrapolation can be trusted. Report both numbers, annotate here, stop.
+
 ### POST — Post-processing & field extraction
 
 | ID | Title | Status | Tier |
@@ -3790,7 +3919,10 @@ is in the point-evaluation path. Owns the open known-issues entry
 > * **Step 3 — the centerline samples the source fields, not the P1
 >   interpolants (standard; re-scoped 2026-08-11, 10:30 review, onto the
 >   locus step 1 measured).** ✅ *(executed 2026-08-11, 13:30 implementer run —
->   anchor PASS first execution.* `examples/mri/01_coil_phantom_fields.py`'s
+>   the chunk-anchor leg passed on the script's first execution; the anchor
+>   script as a whole first exited 1 on two secondary tolerances, corrected
+>   in-slot with the FAIL log committed — see below. Wording corrected
+>   2026-08-11, 18:00 review audit.* `examples/mri/01_coil_phantom_fields.py`'s
 >   centerline table now evaluates `e_field`/`b_field` **as solved** through
 >   `evaluate_vector_field_parallel`; the P1 interpolants stay on the XDMF
 >   export path, untouched, and **no `src/` change** was made. Measured on the
@@ -6890,7 +7022,55 @@ promised an "obvious next entry named below" that was never written — the
 16:30 slot on 2026-08-07 hit that dangling reference and correctly fell
 through to the drain instruction; the reference is retired.)*
 
-Last reviewed 2026-08-11, 10:30 daily review. **Four of four slots landed
+Last reviewed 2026-08-11, 18:00 daily review. **Four of four slots landed
+again — two consecutive clean sweeps: two steps closed, one measured miss,
+and the cost probe that priced the gate.** 12:00: `MAT-6` step 7 Part 2b —
+the `-n 8` probe read the loaded solve at **179.3 s**, inside the
+pre-committed ≤ ~240 s band, so item 4's skip clause did not fire. 13:30:
+`POST-4` step 3 ✅ — the centerline samples the source fields: spread
+**23.5539% → 0.008613%** across `-n 1/2/4`, a 2735× collapse (≥ 235×
+demanded); the known-issues centerline entry retired with it. 15:00:
+`MAG-13` step 2 — the h = 0.00125 rung is **measured and missed on-rate**,
+5.6494% vs < 5.00% in 278 s; the local rate 1.174 *beats* the 1.10 on
+record, and the 1.10 extrapolation had already predicted 5.95% — the
+prediction was optimistic on its own arithmetic, not the fixture wrong. The
+ten-point radial table hints the residual concentrates near the wire (9.46%
+at r = 0.0080 vs 0.33% at r = 0.0200). 16:30: `MAT-6` step 7 Part 2c ✅ —
+**closes step 7**: additivity defect **−0.080 pp** against the ≤ 0.5 pp
+band (consistent with ADDITIVE), ΔR **0.8835%** on the combined fixture
+under the unwidened 5% ceiling — sub-1% without step 8's slab knob — and
+the O(h²) volume-deficit control re-asserted (3.99× shrink, reproducing
+step 5). Step-3 audit: **both ✅ flips audited compliant, no demotions**
+(one auditor each; logs, footers, elapsed times, enforced quantitative
+asserts, and bound provenance verified — neither module touched between run
+and flip). Auditor caveats, recorded: `POST-4` step 3's "anchor PASS first
+execution" overstated — the anchor *script*'s first run exited 1 on two
+secondary tolerances (disclosed in the entry and attempts.md; §7 wording
+corrected this review); the additivity ratio is report-only by design (the
+ΔR closed form and O(h²) shrink carry §4); the gate log's "4 passed" prints
+once per rank. Step 2: tree clean all interval, no `recovered/*`;
+`attempt/PORT-1-*` branches stay parked under the weekly licence
+(2026-08-16). **Review decisions:** (1) `MAG-13` route — graded refinement
+stays the named cheaper route, but the profile measurement comes first
+(item 2 below; §7 step-2-profile entry): re-solve the solved rung and map
+error-vs-radius densely before committing any mesh to grading; the next
+uniform rung (h ≈ 0.001127, ~1.50 M cells) is queued only as the declared
+brute-force spare (item 5; §7 step-2-rung-3 entry). (2) `MAT-6` follow-ons
+scoped as **step 9** (ΔX box-truncation attribution — third W rung at
+coarse wire, extending step 4's 0.9200 → 0.9849 sweep; item 3) and
+**step 10** (slab × (box+wire) composition — does 0.8835% compose with
+step 8's 0.2829%; item 4); authoring a ΔX *gate* stays deliberately
+deferred until step 9 lands its attribution. (3) §5.4 ramp: step 7's
+capability (coil loading vs Dodd–Deeds) is already demonstrated by
+`examples/materials/01_dodd_deeds_coil_loading` (`mat:1`); `POST-4` step 3
+*is* an example fix; `MAG-13` closed no gate — **no example chunk
+mandated**. (4) Step-8 promotion stays deferred pending `ANS-1` (10:30
+decision unchanged); nothing in §2 moves this interval. Waiting-on-you
+delta: none — `ANS-1` replication and the runner-results ask stand; local
+`main` is 14 ahead once this commit lands.
+
+Previous interval's digest (2026-08-11 10:30), retained for the audit
+trail: **Four of four slots landed
 their item — a clean sweep: one chunk closed, one error budget closed, one
 decisive negative, and the cost number three slots died for.** 04:30:
 `MAT-6` step 7 Part 2 — the rescoped foreground recipe worked first time
@@ -6933,199 +7113,20 @@ delta: **a push landed since 03:00** (origin/main is now `b6e994f`,
 replication remains, runner results remain never-observed, and the
 `MAG-13` host-observables item leaves the list.
 
-Previous interval's digest (2026-08-11 03:00), retained for the audit
-trail: **Three of four slots lost to
-one harness trap, zero chunk movement — the mirror image of the previous
-interval.** The 19:30, 22:30, and 00:00 slots each attempted item 1
-(`MAT-6` step 7 Part 2) and each died the same way: the session backgrounded
-the harness run and ended its turn, which in headless `-p` mode exits the
-CLI and kills the harness — footerless log, no journal, dirty tree (root
-cause with wrapper-log evidence in attempts.md 2026-08-11T08:00Z; the 21:00
-entry's late-start hypothesis is corrected there). 21:00 stopped correctly
-on the dirty tree. **Not** OOM and **not** the 65-min backstop: the 64 G
-cap read 68719476736 in all three preflights, dmesg shows no memcg kill
-since step 6's 16 G records, and every session exited 0 within five
-minutes. Step 2: the three orphaned probe logs and the drafted (never
-executed) combined-knob gate module landed on main in their own
-`chore(recover)` commit — the module is input, not evidence — and both
-`recovered/*` branches are deleted; tree clean. Step 3: no ✅ closures this
-interval, nothing to audit. Step 5: no new gate closed, no example chunks
-mandated, no backlog gap — no new work invented. Prevention: the trap is
-now in implementer-run.md (foreground harness runs, Bash-tool timeout
-660000 ms, container `timeout` sized to footer inside it) and the review
-rubric's trap list; item 1 below is rescoped to that recipe, converting a
-possible overrun into a recorded cost measurement (exit 124 = "solve
-> 530 s", report and stop). `attempt/PORT-1-*` branches stay parked under
-the weekly licence (2026-08-16). Waiting-on-you unchanged: `ANS-1`
-replication, the push (now 56 ahead once this lands), MAG-13 host
-observables.
+**Five ready items; items 1–4 independent; item 5 is the declared
+brute-force spare on the same question as item 2** (either may run; a slot
+reaching item 5 executes it as written even if item 2 already landed — a
+completed rung is a real measurement either way, but the profile is the
+cheaper decision-maker and goes first). Item 1 carries over unchanged (last
+interval's spare, never reached); items 2 and 5 execute review decision (1)
+on the `MAG-13` route; items 3 and 4 execute decision (2), the two `MAT-6`
+follow-ons Part 2c flagged. The `PORT-1` critical path stays deliberately
+absent: the second licensed discriminator slot is the weekly review's
+(2026-08-16) to spend.
 
-**Five ready items; items 1, 2, 3, and 5 independent; item 4 genuinely
-serial** (item 4 executes only if item 1 landed its cost reading inside the
-band — the skip clause is in the item). Item 1 executes the review's route
-decision on the `MAT-6` additivity measurement; item 2 is the `POST-4` fix
-re-scoped onto the locus step 1 measured; item 3 is `MAG-13` step 2,
-un-blocked this review by the retirement of the harness-termination
-known-issues entry; item 4 is the conditional additivity gate; item 5 is
-the spare. The `PORT-1` critical path stays deliberately absent: the second
-licensed discriminator slot is the weekly review's (2026-08-16) to spend.
-
-1. ~~**`MAT-6` step 7 Part 2b — the `-n 8` cost probe.**~~ **DONE
-   2026-08-11 12:00 run** — exit 0, 229 s,
-   `20260811T170103Z_MAT-6-step7-part2b-probe-n8.log`. **Solve 179.3 s at
-   `-n 8`** (mesh 46.6 s, 697 401 cells / 813 287 dofs, no OOM at 64 G;
-   2.08× faster than the 372.9 s `-n 4` record). The pre-committed band
-   (≤ ~240 s) is met with 60.7 s to spare, the pair prices at **~405 s**,
-   and **item 4's skip clause does not fire** — the gate is executable in
-   one foreground call at `-n 8`, container `timeout` ~470 s. Details in
-   the §7 step-7 Part 2b note. *Original text, for the audit trail:* Run
-   `scripts/probes/mat6_step6_probe.py` via `run_and_log.sh` at **`-n 8`**,
-   complex mode, **foreground Bash call, tool `timeout` 660000 ms,
-   container-side `timeout 590`** — never `run_in_background`, never end
-   the turn while the harness runs (five slots have died there; see the
-   rubric trap list). **Anchor:** this is a cost measurement — the loaded
-   solve time at `-n 8` on the 697 401-cell / 813 287-dof combined fixture,
-   reported beside the 372.9 s `-n 4` record
-   (`20260811T093111Z_MAT-6-step7-part2-probe.log`). Decision rule, stated
-   now: the item-4 gate pair fits one foreground call iff mesh (~52 s on
-   record) + 2× the measured solve ≤ ~530 s, i.e. **solve ≤ ~240 s**.
-   **Negative control:** step 6's two 16 G kill records on this fixture
-   (`-n 4` signal 9 at ~262 s, `-n 8` exit 137 at ~138 s), cited never
-   recomputed — a completed `-n 8` solve at 64 G is itself the memory
-   reading. **Cost:** heavy; mesh 51.7–56.1 s on six records; the `-n 8`
-   solve is the unknown being priced. **Traps:** complex build +
-   `FEM_EM_REQUIRE_COMPLEX=1`; `project_source=False` pins; stale FFCx lock
-   after any kill; the background-and-end-turn CLI exit. **Scope
-   boundary:** does not run the gate module
-   (`tests/validation/test_dodd_deeds_reactance_combined_knobs.py` stays
-   unverified — it is item 4's); does not read the additivity number.
-   **Negative result:** exit 124 **is** the measurement — "solve > 530 s at
-   `-n 8` under 64 G" ⇒ item 4's skip clause fires and the route falls to
-   §7 option (2) (split the pair across two harness calls; needs the module
-   restructured — a later review scopes it); journal, annotate §7, stop.
-
-2. ~~**`POST-4` step 3 — the centerline samples the source fields.**~~ **DONE
-   2026-08-11 13:30 run** — anchor PASS first execution, four harness logs
-   (`20260811T183211Z` / `…183222Z` / `…183229Z_POST-4-step3-n{2,4,1}.log`,
-   exit 0, 6/4/9 s; anchor `…183503Z_POST-4-step3-anchor.log`, 1 s). Centerline
-   spread **23.5539% → 0.008613%** across `-n 1/2/4`, a **2735×** collapse
-   (≥ 235× demanded); the `|E|` leg reproduces every printed digit, the residue
-   is the magnetostatic `|B|` leg's solve noise. Printed values now equal the
-   source fields (1.368268e+02 at z = −0.045 m vs the interpolant's
-   7.670127e+03); phantom aggregates reproduce `EX-16` to 0.005745%/0.002218%
-   at the matched rank counts. Known-issues entry **retired**, guide rewritten,
-   doc checker re-run; no `src/` change. Two of the anchor script's own
-   secondary tolerances were corrected with the measurements recorded — details
-   in the §7 step-3 entry. *Original text, for the audit trail:* Execute the §7
-   `POST-4` step-3 entry verbatim: `examples/mri/01`'s centerline table
-   evaluates the solved `E`/`B` through
-   `post.evaluation.evaluate_vector_field_parallel` instead of the
-   Lagrange-P1 interpolants; export path untouched; no `src/` change; the
-   `mri:1` guide's caveat block refreshed and the doc checker re-run in the
-   same commit. **Anchor:** centerline spread across `-n 1/2/4` collapses
-   23.5539% → ≤ 0.1% (source-path floor on record **0.008426%**,
-   `20260811T140549Z_POST-4-step1-attribution.log`; ≥ 235× demanded,
-   ceiling 1.163e+04× on record); non-regression — phantom-region stats
-   reproduce their on-record digits, and the printed centerline values
-   match the step-1 source values (1.368268e+02 at z = −0.045 m where the
-   interpolant printed 7.670127e+03). **Negative control:** the pre-fix
-   interpolant spread 97.9755% and the 56× `-n 1` artifact, cited from
-   step 1's logs. **Cost:** standard; solves 8/4/4 s on record at
-   `-n 1/2/4`; spread script 1 s; checker 1 s. **Traps:** `.reshape(-1, 3)`
-   on single-point eval; complex build + `FEM_EM_REQUIRE_COMPLEX=1`;
-   rank-local claim counts — reduce before printing; pytest needs `-s`;
-   the checker's 48 h freshness window wants the new logs cited. **Scope
-   boundary:** buys a rank-invariant, faithful printout — not physics
-   validation of those values; export-path interpolants stay
-   vertex-convention-dependent (item 5's). The known-issues centerline
-   entry leaves with this commit iff the anchor lands. **Negative
-   result:** a source-path spread that does not collapse contradicts
-   step 1's own measurement — report both tables, entry stays open,
-   annotate, stop.
-
-3. ~~**`MAG-13` step 2 — the < 5% wire, foreground recipe at `-n 8`.**~~
-   **DONE 2026-08-11 15:00 run** — exit 0, 278 s,
-   `20260811T200040Z_MAG-13-step2-solve-n8.log`. The rung is **measured and
-   the target missed on-rate**: relative L2 **5.6494%** vs < 5.00%
-   (record 12.75% at h = 0.0025), two-rung observed rate **1.174** (record
-   1.10), mesh + solve **275.3 s** at `-n 8`, 1 097 873 cells / 4 391 492
-   dofs, azimuthality 5.6e-03 against a 0.10 bound. The 1.10-rate
-   extrapolation that put < 5% at this h actually predicted **5.95%** —
-   the rung beat its own prediction and still missed. The foreground recipe
-   completed the exact profile that produced the two 2026-08-08 footerless
-   logs. Next-rung arithmetic (h ≈ 0.001127, ~1.50 M cells) and the
-   near-wire error concentration are recorded in the §7 entry for the
-   review; graded refinement stays a review's to scope. *Original text, for
-   the audit trail:* **`MAG-13` step 2 — the < 5% wire, foreground recipe
-   at `-n 8` (heavy;
-   un-blocked this review — read the §7 un-block note first; it supersedes
-   the entry's `timeout 1200` text).** Real build, **no complex mode**.
-   Mesh + one solve of the h ≈ 0.00125 rung (~1.1 M cells, priced
-   2026-08-08: `20260808T200126Z_MAG-13-step2-meshprobe.log`) via
-   `run_and_log.sh`, **`-n 8`, foreground, tool `timeout` 660000 ms,
-   container `timeout 590`** — the 08-08 attempt showed mesh 149.8 s
-   in-solve plus > 510 s of `-n 4` solve without finishing, so `-n 4`
-   cannot fit the window. **Anchor:** the straight-wire closed form
-   `utils/analytical.py::straight_wire_magnetic_field` (B_θ = μ₀I/2πr),
-   target **< 5%** at the extrapolated rung; print the new two-rung
-   observed rate beside the landed 1.10. **Negative control:** `MAG-13`'s
-   analytic-Dirichlet-vs-plain-box separation and the rate fit, on record,
-   cited. **Cost:** heavy; mesh ~150–193 s on record; the `-n 8` solve is
-   unmeasured — bounding it is part of the point. **Traps:** never
-   background; stale FFCx lock; `J·n ≠ 0` at the end caps stands
-   unmeasured; point evaluation through
-   `evaluate_vector_field_parallel`, never rank-local eval. **Scope
-   boundary:** `MAG-13` stays ✅ at its recorded numbers either way; a
-   green < 5% annotates the entry and the MAG follow-up bullet; graded
-   refinement stays the named cheaper route, not to be improvised in-slot.
-   **Negative result:** exit 124 is the measurement ("mesh + solve > 590 s
-   at `-n 8`, real build" — the fallback is then a split recipe, a review's
-   to scope); still > 5% on-rate at the rung is a real reading — report
-   the measured error and cost beside the prediction, annotate, stop.
-
-4. ~~**`MAT-6` step 7 Part 2c — the additivity gate at `-n 8`.**~~ **DONE
-   2026-08-11 16:30 run — and it closes step 7 (🟡 → ✅).** Exit 0, 423 s,
-   4 passed (`20260811T213057Z_MAT-6-step7-part2c-gate-n8.log`; collect-only
-   smoke `…213045Z_…part2c-collect.log`, 3 s). Item 1's reading put the pair
-   in the band and the skip clause did not fire; the container `timeout 470`
-   sized from it held with ~50 s to spare (mesh 46.1 s + solves
-   196.2 + 178.2 s = 420.5 s vs the ~405 s projection). **The reading:
-   ΔX ratio 0.9835 vs 0.9843 → defect −0.080 pp → consistent with
-   ADDITIVE** (≤ 0.5 pp band, pre-decided in step 6). Inherited gates green:
-   ΔR **0.8835%** under the unwidened 5% ceiling — the combined fixture is
-   sub-1% on ΔR without step 8's knob; ΔX sign and magnitude green. The
-   O(h²) volume-deficit control is re-asserted on this mesh: deficit
-   2.0114% vs 8.0310% → **3.99× shrink**, reproducing step 5. The module's
-   first-ever execution needed no fix. Details in the §7 step-7 Part 2c
-   note. *Original text, for the audit trail:* **`MAT-6` step 7 Part 2c —
-   the additivity gate at `-n 8` (heavy;
-   serial: depends on item 1. Execute only if item 1 landed a loaded-solve
-   reading ≤ ~240 s at `-n 8`; if item 1 did not land or priced above the
-   band, skip — journal and stop, the route is then §7 option (2) and a
-   review scopes it).** First execution of the drafted, **unverified**
-   module `tests/validation/test_dodd_deeds_reactance_combined_knobs.py`:
-   foreground, `-n 8`, container `timeout` sized from item 1's measured
-   solve (mesh + 2× solve + 60 s margin, ≤ 590). **Anchor:** the
-   additivity defect vs **0.9843**, pre-decided bands ≤ 0.5 pp additive /
-   > 1.5 pp cross-term / between ambiguous; Dodd–Deeds refs with step 2b's
-   gates unchanged; the O(h²) volume-deficit control re-asserted on this
-   mesh (the probe never does). **Negative control:** step 6's kill
-   records and the σ-blind record, cited. **Cost:** priced by item 1;
-   mesh ~52 s on record. **Traps:** complex build +
-   `FEM_EM_REQUIRE_COMPLEX=1`; `project_source=False` pins; FFCx lock;
-   never background; the module has never run — a module bug (bad import,
-   wrong fixture name) is a journal entry and an in-slot fix if mechanical,
-   never a reason to touch the bands. **Scope boundary:** the rank-width
-   caveat in the §7 route note — the additivity reading is a measurement
-   at `-n 8`; the inherited anchors stay gated at `-n 2` from step 2b and
-   are not re-gated wider. A green run closes step 7 (🟡 → ✅). **Negative
-   result:** a cross-term reading (> 1.5 pp) is the more informative
-   physics outcome, per step 6; an ambiguous band is reported as ambiguous;
-   report, annotate §7, stop.
-
-5. **`POST-4` step 4 — bound the P1-interpolant artifact on the export
-   paths (standard; measurement only; the spare — independent of every
-   item above).** Execute the §7 `POST-4` step-4 entry verbatim: sweep
+1. **`POST-4` step 4 — bound the P1-interpolant artifact on the export
+   paths (standard; measurement only; independent of every item
+   below).** Execute the §7 `POST-4` step-4 entry verbatim: sweep
    `examples/` for `("Lagrange", 1, …)` interpolation of Nédélec/DG
    sources; on `examples/mri/01`'s debug preset measure
    interpolant-vs-source disagreement at cell midpoints and vertices,
@@ -7141,6 +7142,112 @@ licensed discriminator slot is the weekly review's (2026-08-16) to spend.
    withdrawn in-slot. **Negative result:** a small artifact everywhere
    says the centerline points were pathological (on-axis) — that is
    itself the caveat text; report, annotate, stop.
+
+2. **`MAG-13` step 2 profile — where does the 5.65% live? (heavy;
+   measurement only; decides the graded-refinement target with data).**
+   Execute the §7 `MAG-13` step-2-profile entry verbatim: re-run the
+   h ≈ 0.00125 rung (mesh + solve **275.3 s on record** at `-n 8`,
+   `20260811T200040Z_MAG-13-step2-solve-n8.log`) and sample the
+   error-vs-radius profile densely — ≥ 40 radii spanning r ∈ [0.006,
+   0.028] through `evaluate_vector_field_parallel` — instead of the ten
+   points on record. **Anchor:** the straight-wire closed form
+   `utils/analytical.py::straight_wire_magnetic_field` (B_θ = μ₀I/2πr)
+   per radius; fixture identity first — cell count digit-identical to
+   1 097 873 and global relative L2 reproducing **5.6494%** to its
+   printed digits before any profile claim. **Negative control:** the
+   ten-point table on record (9.46% at r = 0.0080, 6.33% at 0.0100,
+   0.33% at 0.0200, 1.40% at 0.0240) — the dense profile must reproduce
+   those four radii; a profile that contradicts its own coarse sample is
+   a bug, not a finding. **Cost:** heavy, `-n 8`, foreground, tool
+   `timeout` 660000 ms, container `timeout 590`; 275.3 s solve on record
+   + seconds of sampling. Real build, **no complex mode**. **Traps:**
+   never background; stale FFCx lock; point evaluation through
+   `evaluate_vector_field_parallel`, never rank-local eval; `J·n ≠ 0` at
+   the end caps stands unmeasured. **Scope boundary:** no mesh change, no
+   graded mesh in-slot — this buys the *map*, the review scopes the mesh;
+   `MAG-13` stays ✅ regardless. **Negative result:** a flat or
+   wall-dominated profile refutes the near-wire hypothesis and the
+   uniform rung (item 5) becomes the honest route — report the profile
+   table, annotate the §7 entry, stop.
+
+3. **`MAT-6` step 9 — ΔX box-truncation attribution: the third W rung
+   (heavy; probe first; measurement only).** Execute the §7 step-9 entry
+   verbatim: W = 0.35 at **coarse wire** (`resolution_wire = 0.002`),
+   projected drive only, loaded + free pair, extending step 4's two-point
+   sweep 0.9200 (W = 0.15) → 0.9849 (W = 0.25). **Probe first, point of
+   no return:** mesh count, then one solve at `-n 4`, stop at > 300 s or
+   OOM — W = 0.35's cell count is unmeasured (W = 0.25 was 300 591,
+   2.17× at 18–22 s mesh / 81 s solve at `-n 4`, growth far-field-
+   dominated; ~2–2.5× again is an estimate, not a measurement). **Anchor:**
+   Dodd–Deeds `ΔX = −6.1586749e-01 Ω` and `ΔR = +3.2259615e-01 Ω` with
+   step 2b's gates inherited unchanged (ΔR < 5% hard ceiling; ΔX sign and
+   order of magnitude); the *reading* is the three-point truncation trend
+   and its W → ∞ extrapolation, **reported, never gated**. **Negative
+   control:** ΔR box-invariance on record (< 0.01 pp across W = 0.15 →
+   0.25, drives identical to 5e-5) — ΔR moving with W says the fixture
+   changed, not the truncation. **Cost:** heavy; complex build +
+   `FEM_EM_REQUIRE_COMPLEX=1`; gate at `-n 2` per step 4's allreduce
+   note, split by `-k` if four solves exceed one command. **Traps:**
+   step 4's list — import geometry/tags/solves from the step-2b/step-3
+   modules, restate nothing; `project_source=False` pins; FFCx lock;
+   `ufl.max_value`. **Scope boundary:** no ΔX band is written or
+   tightened — the extrapolated endpoint is the input to a *future* gate
+   step, not a gate; `MAT-6` stays ✅. **Negative result:** an
+   extrapolation that plateaus visibly below 1.00 says the residual is
+   not truncation (finite-cross-section reference is the next suspect) —
+   that is the more informative reading; report all three ratios and the
+   fit, annotate, stop.
+
+4. **`MAT-6` step 10 — do the two sub-1% routes compose? (heavy; probe
+   first; measurement only; independent of item 3).** Execute the §7
+   step-10 entry verbatim: one loaded + free pair on the combined
+   fixture (W = 0.25, `resolution_wire = 0.001`) **plus** step 8's
+   `resolution_near = 0.0025`, projected drive, `-n 8` under the 64 G
+   cap. **Probe first:** mesh count, then one solve; stop at > 300 s
+   or OOM — the composed cell count is unmeasured (combined 697 401 on
+   record; step 8's knob added ~208 k near-region cells to a 210 k
+   fixture; ~1 M is an estimate, and an OOM at 64 G is itself a per-cell
+   memory reading). **Anchor:** Dodd–Deeds `ΔR = +3.2259615e-01 Ω`
+   under step 2b's unwidened 5% ceiling; the reading is whether ΔR
+   improves from **0.8835%** (box+wire, on record) toward the sub-0.5%
+   the error budget predicts if the slab term composes — licensed by
+   step 7 Part 2c's additivity verdict, and **reported beside the
+   prediction, never gated to it**. **Negative control:** step 6's two
+   16 G kill records and the σ-blind `ΔZ = 0`, cited never recomputed.
+   **Cost:** heavy; solves ≥ 178–196 s each at `-n 8` on record for the
+   un-composed fixture; container `timeout` sized after the probe, ≤ 590.
+   **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`;
+   `project_source=False` pins; FFCx lock after any kill; never
+   background; cap re-read (`memory.max` = 68719476736) before the
+   solve. **Scope boundary:** measurement only — the production fixture
+   and §2.1's landed numbers stay frozen pending `ANS-1` (step-8 review
+   decision unchanged); `MAT-6` stays ✅. **Negative result:** a ΔR that
+   does not improve — or worsens — under the composed knobs says mesh-
+   knob additivity (ΔX, measured) does not imply error-term additivity
+   (ΔR, assumed): that is the finding this step exists to catch; report
+   both numbers, annotate, stop.
+
+5. **`MAG-13` step 2 rung 3 — the < 5% wire by brute force (heavy; the
+   spare; same question as item 2, other route).** Execute the §7
+   step-2-rung-3 entry verbatim: mesh + one solve of h ≈ 0.001127
+   (~1.50 M cells at 1.37× the 1 097 873 on record), `-n 8`, foreground,
+   tool `timeout` 660000 ms, container `timeout 590`. **Anchor:**
+   `straight_wire_magnetic_field` (B_θ = μ₀I/2πr), target **< 5.00%** at
+   the rung the measured rate 1.174 prices at 5.00%; print the
+   three-rung observed rate beside 1.174 and 1.10. **Negative control:**
+   `MAG-13`'s analytic-Dirichlet-vs-plain-box separation and rate fit,
+   on record, cited. **Cost:** heavy; **estimate 380–450 s if cost
+   scales with cell count — an assumption, declared**: the 590 s
+   container window holds it only with thin margin, and **exit 124 is
+   the measurement** ("~1.5 M cells does not fit the window at `-n 8`"),
+   not a failure. Real build, no complex mode. **Traps:** item 2's list
+   verbatim. **Scope boundary:** `MAG-13` stays ✅ at its recorded
+   numbers either way; a green < 5% annotates the entry and the MAG
+   follow-up bullet; it does not retire the graded route, which stays
+   the cheaper path for any future rung. **Negative result:** still
+   > 5% on-rate, or exit 124, says the uniform route is exhausted
+   inside the window — graded refinement becomes the only route; report
+   the measured error and cost beside the prediction, annotate, stop.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
