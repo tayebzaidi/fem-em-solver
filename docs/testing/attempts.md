@@ -9120,3 +9120,80 @@ and §9 item 1 rescoped: **foreground harness run, Bash-tool timeout
 660000 ms, container-side `timeout 590`** — exit 124 becomes the cost
 measurement instead of a lost slot. Cost of the outage: three of four
 slots (21:00 stopped correctly on the dirty tree, per protocol).
+
+## 2026-08-11T09:39Z — `MAT-6` step 7 Part 2 — **complete as scoped** (probe only): the solve cost at 64 G is measured at last — 372.9 s at `-n 4`, no OOM
+
+04:30 scheduled implementer run, §9 On-deck item 1. Preflight clean, container
+Up, no stale FFCx `.lock` and no stray `mpiexec` left by the three killed
+sessions. The rescoped recipe was followed exactly and **it worked**: the
+harness ran in the **foreground**, Bash-tool `timeout` at 660000 ms,
+container-side `timeout 590`. First footered run of this item after three
+deaths.
+
+**Command** (log `20260811T093111Z_MAT-6-step7-part2-probe.log`, exit **0**,
+elapsed **427 s**, heavy tier):
+
+```
+scripts/testing/run_and_log.sh MAT-6-step7-part2-probe "docker compose exec -T \
+  fem-em-solver bash -lc 'cat /sys/fs/cgroup/memory.max && source \
+  /usr/local/bin/dolfinx-complex-mode && cd /workspace && \
+  PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 590 mpiexec -n 4 \
+  python3 scripts/probes/mat6_step6_probe.py'"
+```
+
+**Measured.**
+
+- cgroup cap read first, as Part 1 requires: `memory.max` = **68719476736**
+  (64 G), unchanged.
+- mesh: **697 401 cells in 51.7 s** — the same count a **sixth** time
+  (51.9 / 51.5 / 56.1 s on the three killed runs), so the mesh phase is
+  settled beyond argument.
+- **one projected loaded solve: 372.9 s at `-n 4`, 813 287 global dofs.**
+  This is the number step 6 could not get and three slots died without:
+  the combined-knob solve is **finite and it fits in memory**.
+- **No OOM at 64 G.** Negative control cited, not recomputed: step 6's two
+  16 G kill records on this same fixture (`-n 4` signal 9 at ~262 s, `-n 8`
+  exit 137 at ~138 s). The same fixture that was killed twice at 16 G now
+  runs to completion at 64 G — the cap raise is vindicated by measurement,
+  not just by `memory.max`.
+
+**Stop rule fired, as pre-decided.** 372.9 s > the §7 300 s threshold, so the
+entry's instruction is "report the measured cost and stop". No retry at more
+ranks in-slot — rank choice is explicitly a review decision. Nothing else was
+run; the scope boundary ("a clean probe reading does not run or close the gate
+module") was respected, and
+`tests/validation/test_dodd_deeds_reactance_combined_knobs.py` remains on main
+**unverified**, untouched by this slot.
+
+**The additivity number is still unmeasured, and this run tells us why it will
+stay that way under the current recipe.** The probe measures cost, not ΔZ; the
+reading vs **0.9843** needs the gate's loaded+free pair, which the probe prices
+at **~746 s of solve + 52 s of mesh ≈ 797 s**. That is under the heavy 1200 s
+tier ceiling but **over the 660 s hard maximum of the Bash tool's foreground
+`timeout`** — and backgrounding is exactly what killed 19:30/22:30/00:00. So
+the gate as designed **cannot be run in one foreground call in a scheduled
+slot at `-n 4`**. This is a new, measured constraint, not a guess.
+
+**Options for the review** (naming, not choosing — rank count is its call):
+
+1. `-n 8` for the gate. The 16 G no-retry rule was about a rank-blind
+   *memory* ceiling; at 64 G memory is no longer the binding constraint, and
+   time is. If the solve scales even sub-linearly, ~797 s drops inside the
+   window. Cost of finding out: one `-n 8` probe solve, ~4 min.
+2. Split the pair across two harness calls (loaded, then free) and combine
+   the impedances — needs the gate module restructured to persist one solve's
+   result, i.e. real code, not a recipe tweak.
+3. Shrink the combined fixture. Loses the very case step 6 defined.
+
+**Does not close / does not reopen.** `MAT-6` stays ✅; step 7 Part 2 stays
+🟡 with the cost now measured; §2.1 untouched; ΔX still ungateable. A cost
+measurement is not a §4 quantitative assertion, so nothing flips to ✅ here.
+The step-6 plan's O(h²) volume-deficit control was **not** re-asserted — the
+probe does not compute it and adding it was outside this slot's licence.
+
+**Next-attempt hypothesis.** The physics has never been the problem and still
+isn't: mesh settled, memory solved, solve finite at 372.9 s. What stands
+between the plan and the 0.9843 reading is purely the 797 s-vs-660 s window
+arithmetic above. Option 1 is the cheapest test and the one a single slot can
+answer; if `-n 8` brings the pair under ~550 s, the very next slot can run the
+gate module foreground and get the additivity defect.

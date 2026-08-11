@@ -2745,6 +2745,31 @@ and do not background anything. Any other exit gives the first real
 additivity reading or a real OOM record. The 0.9843 bands, anchors,
 negative controls, and no-retry rationale below are unchanged.*
 
+*Part 2 executed under the rescoped recipe, 2026-08-11 04:30 run — **the
+recipe works and the solve cost is measured at last, but the additivity
+reading is not.** Foreground harness call, Bash-tool `timeout` 660000 ms,
+container-side `timeout 590`: exit **0**, elapsed 427 s
+(`20260811T093111Z_MAT-6-step7-part2-probe.log`). Cap re-read first,
+`memory.max` = 68719476736. Mesh **697 401 cells in 51.7 s** — the same
+count a sixth time. **One projected loaded solve: 372.9 s at `-n 4`,
+813 287 global dofs, no OOM** — the fixture that step 6 saw killed twice at
+16 G (`-n 4` signal 9 at ~262 s, `-n 8` exit 137 at ~138 s; cited, not
+recomputed) now runs to completion at 64 G. 372.9 s > the 300 s threshold,
+so the pre-decided stop rule fired: reported, stopped, no retry at more
+ranks in-slot, gate module left unrun and still unverified. **New measured
+constraint:** the gate's loaded+free pair prices at ~746 s solve + 52 s mesh
+= **~797 s**, which is inside the heavy 1200 s tier but **outside the 660 s
+hard maximum of the Bash tool's foreground `timeout`** — so the gate cannot
+be run in one foreground call in a scheduled slot at `-n 4`, and
+backgrounding is what killed three slots. Options for the review, in cost
+order: (1) `-n 8` — the 16 G no-retry rule addressed a rank-blind *memory*
+ceiling, and memory is no longer the binding constraint; one ~4-min probe
+answers it; (2) split the pair across two harness calls and combine the
+impedances (needs the module restructured); (3) shrink the fixture (loses
+step 6's case). The O(h²) volume-deficit control is still not re-asserted —
+outside the probe. Step 7 stays 🟡; `MAT-6` stays ✅; the 0.9843 reading
+remains the open deliverable.*
+
 *Blocked-attempt record, 2026-08-08, retained:* *(attempted 2026-08-08,
 19:30 run — **blocked before any compute: a scheduled session cannot edit
 `docker/`.** `.claude/settings.json` lists `Edit(docker/**)` under
@@ -6563,7 +6588,21 @@ are the `POST-4` diagnosis→fix pair scoped from `EX-16`'s finding. The
 `PORT-1` critical path is deliberately absent: the second licensed
 discriminator slot is the weekly review's (2026-08-16) to spend.
 
-1. **`MAT-6` step 7 Part 2 — the additivity probe, foreground recipe
+1. ~~**`MAT-6` step 7 Part 2 — the additivity probe, foreground recipe**~~ —
+   **done as scoped 2026-08-11 (04:30 run)**: the rescoped foreground recipe
+   worked (exit 0, 427 s,
+   `20260811T093111Z_MAT-6-step7-part2-probe.log`) and produced the number
+   three slots died without — **one projected loaded solve at 372.9 s,
+   `-n 4`, 697 401 cells / 813 287 dofs, no OOM at 64 G**. The 300 s stop
+   rule fired, so the slot reported and stopped per its own instruction.
+   **The 0.9843 additivity reading is still unmeasured** and needs a review
+   decision first: the gate's loaded+free pair prices at ~797 s, inside the
+   heavy tier but outside the Bash tool's 660 s foreground maximum, so it
+   cannot run in a scheduled slot at `-n 4`. See the §7 step-7 Part 2
+   annotation for the three options (`-n 8` probe is the cheapest).
+   *(Original item text retained below for the audit trail.)*
+
+   **`MAT-6` step 7 Part 2 — the additivity probe, foreground recipe
    (heavy; rescoped 2026-08-11 after three lost slots — read the §7
    step-7 Part 2 rescope note first; it supersedes the entry's
    `timeout 1200` text).** The mesh phase is settled — 697 401 cells,
