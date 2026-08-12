@@ -1449,7 +1449,12 @@ tolerance.*
 **`MAG-13` step 2 profile — EXECUTED 2026-08-11 (21:00 slot): the map is
 measured — the error goes as 1/r *and* as a per-cell staircase; the near-wire
 hint survives, but the mechanism is the cell-wise-constant B, not a
-near-wire solve defect.** 🧪
+near-wire solve defect.** ✅
+*(**Restored 🧪 → ✅ 2026-08-12, 07:30 slot** by the re-gate step below: the
+probe's verdicts now drive its exit code, the smoke rung exits 1 on 0/4 gates,
+and the real rung re-solves to 4/4 with every number below reproduced
+digit-identically — `20260812T123255Z_MAG-13-step2-regate-n8.log`, exit 0,
+263 s. The demotion text is retained verbatim for the audit trail.)*
 *(Demoted ✅ → 🧪 by the 2026-08-12 03:00 review audit, §4(c): every
 PASS/FAIL in `mag13_step2_profile.py` is print-only — `main()` returns 0
 unconditionally, and the smoke log demonstrates it: its identity and control
@@ -1559,7 +1564,33 @@ below is the declared spare, §9 item 5.)*
 > the profile table, annotate here, stop.
 
 **`MAG-13` step 2 profile re-gate — make the map's checks bite, restore the
-✅** 🔲
+✅** ✅
+**EXECUTED 2026-08-12 (07:30 slot) — the gates bite and the fixture holds; the
+profile step above is restored 🧪 → ✅.**
+> **Negative control first, and it fired**
+> (`20260812T123217Z_MAG-13-step2-regate-smoke.log`, **exit 1**, 27 s
+> harness-wall, `-n 8`, `MAG13_STEP2_RES=0.0025`): **0/4 gates pass** —
+> cells 145 884 vs 1 097 873, ten-point relL2 12.7485% vs 5.6494%, negative
+> control FAIL, shape FAIL (slope **−0.244**, outside [−1.3, −0.9]; the
+> near-wire > wall half PASSed, 12.2034% vs 7.5104%). This is the same rung
+> whose 2026-08-12 log FAILed print-only and exited 0 — the defect the audit
+> named is demonstrably fixed, and the coarse rung's −0.244 slope also shows
+> the shape pin is not vacuous.
+> **Real rung** (`20260812T123255Z_MAG-13-step2-regate-n8.log`, **exit 0**,
+> **263 s** harness-wall, mesh+solve 261.5 s, `-n 8`, real build, container
+> `timeout -k 30 590`, foreground): **4/4 gates pass**, and every measurement
+> reproduces the record digit-for-digit — 1 097 873 cells / 4 391 492 global
+> dofs, ten-point relL2 **5.6494%**, azimuthality 5.6e-03 vs the 0.10 bound,
+> all four control radii inside ±0.05 pp, bands 5.4939% / 4.1411% / 2.8345% /
+> 2.3341%, dense span 4.6500%, worst radius 0.0080 m at 9.4574%, log-log
+> slope **−1.069**. Nothing drifted since 2026-08-12, so the negative-result
+> branch (known-issues entry) did not apply.
+> **What changed:** `scripts/probes/mag13_step2_profile.py` only — four
+> named gates, the ±0.05 pp control band lifted to a constant, and the
+> verdict broadcast from rank 0 so every rank exits with the same code
+> (non-rank-0 ranks now wait on a matching `bcast` instead of returning 0
+> early). No new physics, no new sampling, no `src/`, no `tests/`, no
+> tolerance.
 *(scoped 2026-08-12, 03:00 review — the restoration path for the audit
 demotion above. Queued as §9 item 2.)*
 > Edit `scripts/probes/mag13_step2_profile.py` so its already-computed
@@ -7683,7 +7714,12 @@ in the new `-k 30` recipe, nothing else.
    change). The §7 decision-(4) zero-solve padding fit may ride along
    if time remains. Tolerances untouched (0.03 / 0.10) under every band.
 
-2. **`MAG-13` step 2 profile re-gate — make the map's checks bite,
+2. ✅ **DONE 2026-08-12, 07:30 slot — gates bite (smoke 0/4, exit 1, 27 s)
+   and the real rung passes 4/4 (exit 0, 263 s) reproducing every recorded
+   number digit-identically; the profile step is restored 🧪 → ✅. Logs
+   `20260812T123217Z_MAG-13-step2-regate-smoke.log` /
+   `20260812T123255Z_MAG-13-step2-regate-n8.log`.**
+   **`MAG-13` step 2 profile re-gate — make the map's checks bite,
    restore the demoted ✅ (heavy; one edit + one re-run).** Execute the §7
    step-2-profile-re-gate entry verbatim: gate
    `mag13_step2_profile.py`'s exit code on its already-computed verdicts —

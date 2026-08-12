@@ -10344,3 +10344,59 @@ allowed outcome given the MUMPS precedent at ~240 k cells. The alternative, if
 a review would rather not re-point a pre-registered control: keep it and
 declare step 3b-xvi unanswerable on this fixture, since no refinement that
 moves the wall band can satisfy it.
+
+---
+
+## 2026-08-12T12:45Z — `MAG-13` step 2 profile re-gate — **complete**
+
+**Slot** 07:30 CDT scheduled implementer run. **Item** §9 item 2 (item 1
+skipped: `PORT-1` step 3b-xvi is marked "failed twice, needs the review to
+re-point the control before it may reappear" — blocked by §9's own two-failure
+rule, so the first *available* item is 2).
+
+**Outcome: complete, §4-done.** The demoted profile step is restored 🧪 → ✅.
+
+**What was tried.** Exactly the §7 re-gate entry: no new physics, no new
+sampling, only `scripts/probes/mag13_step2_profile.py`. Four named gates now
+drive `main()`'s return value — (1) cell count == 1 097 873 exactly, (2)
+ten-point relL2 reproducing 5.6494% to printed digits, (3) all four control
+radii within the existing ±0.05 pp band (now the constant
+`CONTROL_BAND_PP`), (4) the shape pin from the on-record map: log-log slope
+in [−1.3, −0.9] **and** near-wire band relL2 > wall band relL2. The verdict
+is decided on rank 0 and broadcast; the old `if not rank0: return 0` early
+exit became a matching `comm.bcast(None, root=0)` receive, so every rank
+exits with the same code rather than relying on mpiexec to surface a
+rank-0-only failure. No `src/`, no `tests/`, no tolerance file touched.
+
+**Measured — negative control first, and it fired.**
+`20260812T123217Z_MAG-13-step2-regate-smoke.log`, **exit 1**, 27 s
+harness-wall, `-n 8`, `MAG13_STEP2_RES=0.0025` (26 s on record): **0/4 gates
+pass** — cells 145 884 vs 1 097 873, relL2 12.7485% vs 5.6494%, control FAIL,
+shape FAIL (slope **−0.244**, outside the band; near-wire > wall PASSed at
+12.2034% vs 7.5104%). This is the identical rung that FAILed print-only and
+exited 0 on 2026-08-12, so the audited defect is demonstrably fixed. The
+coarse rung's −0.244 also shows the shape pin is not vacuous — it discriminates
+between the two rungs on its own.
+
+**Measured — real rung.** `20260812T123255Z_MAG-13-step2-regate-n8.log`,
+**exit 0**, **263 s** harness-wall (mesh+solve 261.5 s; 269 s / 267.0 s on
+record), `-n 8`, real build, no complex mode, container `timeout -k 30 590`,
+foreground: **4/4 gates pass** with every number digit-identical to the
+record — 1 097 873 cells / 4 391 492 global dofs, ten-point relL2 5.6494%,
+azimuthality 5.6e-03 vs bound 0.10, four control radii inside ±0.05 pp,
+bands 5.4939% / 4.1411% / 2.8345% / 2.3341%, dense span 4.6500%, worst radius
+0.0080 m at 9.4574%, log-log slope −1.069. No fixture drift, so the
+negative-result branch (known-issues entry, keep 🧪) did not apply.
+
+**Scope held.** `MAG-13` chunk untouched; no mesh, no bound, no route
+decision; nothing said about steps 2b or rung 3.
+
+**Harness notes.** Nothing new. Both commands foreground with
+`timeout -k 30 <s>`, both returned footers, no wedge, no denied command.
+Note for the review: the harness exits with the wrapped command's status, so
+the deliberately-failing negative control writes an `Exit 1` row into
+`test-results.md` — that row is the evidence, not a red run.
+
+**Next-attempt hypothesis.** None needed for this item; it is closed. The
+open `MAG-13` question is unchanged and is §9 item 4 (step 2b, CG1 recovery
+priced against the graded-mesh route).

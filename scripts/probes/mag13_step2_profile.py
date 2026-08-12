@@ -11,10 +11,25 @@ Order of operations, deliberately:
 
 1. **Fixture identity first.**  Cell count must be digit-identical to
    1 097 873 and the ten-point relative L2 must reproduce 5.6494% to its
-   printed digits.  Neither is asserted as a gate here (this step moves no
-   bound, and `MAG-13` stays ✅ either way) but both are printed with an
-   explicit PASS/FAIL verdict, and the profile claim is only meaningful if
-   they hold.
+   printed digits.
+
+**Gating (added 2026-08-12, §7 `MAG-13` step 2 profile re-gate).**  The
+2026-08-12 03:00 review audit demoted this step's ✅ to 🧪 because every
+PASS/FAIL below was print-only: ``main()`` returned 0 unconditionally, and the
+smoke log proved it (its identity and control checks FAILed by construction
+and the run still exited 0).  The verdicts this probe already computes now
+drive the exit code — no new physics, no new sampling:
+
+* ``GATE 1`` cell count == ``REF_CELLS`` exactly;
+* ``GATE 2`` ten-point relative L2 reproduces ``REF_REL_L2`` to printed digits;
+* ``GATE 3`` all four ``CONTROL`` radii within the existing +-0.05 pp band;
+* ``GATE 4`` shape pin authored from the on-record map: log-log slope of
+  ``|rel|`` vs r over [0.006, 0.024] inside ``[-1.3, -0.9]`` (measured -1.069)
+  and near-wire band relL2 > wall band relL2 (measured 5.4939% vs 2.3341%).
+  The pin asserts the *shape*, generously, not the digits.
+
+The verdict is decided on rank 0 and broadcast, so every rank exits with the
+same code.
 2. **Dense profile**: 45 radii, r = 0.006 -> 0.028 m in 0.5 mm steps, through
    ``evaluate_vector_field_parallel``.  The grid is chosen to contain the four
    radii the coarse table on record names (0.0080 / 0.0100 / 0.0200 / 0.0240,
@@ -69,6 +84,12 @@ REF_H = 0.0025
 REF_ERR = 0.1275
 # The coarse table's four named radii, the declared negative control.
 CONTROL = {0.0080: 0.0946, 0.0100: 0.0633, 0.0200: 0.0033, 0.0240: 0.0140}
+CONTROL_BAND_PP = 0.05
+
+# Shape pin (GATE 4), authored from the on-record map: slope -1.069, near-wire
+# band relL2 5.4939% vs wall band 2.3341%.  Generous by construction.
+SLOPE_LO = -1.3
+SLOPE_HI = -0.9
 
 # Dense grid: 45 radii, 0.5 mm apart, containing every control radius.
 PROFILE_R_MIN = 0.006
@@ -145,7 +166,8 @@ def main() -> int:
     b_ana = np.linalg.norm(b_ana_vec, axis=1)
 
     if not rank0:
-        return 0
+        # Matching receive for rank 0's verdict broadcast at the end of main().
+        return int(comm.bcast(None, root=0))
 
     n_invalid = int((~valid).sum())
     print(
@@ -180,7 +202,7 @@ def main() -> int:
     for rc, ref in sorted(CONTROL.items()):
         i = int(np.argmin(np.abs(r_dense - rc)))
         delta_pp = (rel[i] - ref) * 100.0
-        ok = abs(delta_pp) <= 0.05
+        ok = abs(delta_pp) <= CONTROL_BAND_PP
         control_ok = control_ok and ok
         print(
             f"    r={rc:.4f}  dense {rel[i]:.2%}  record {ref:.2%}  "
@@ -205,6 +227,7 @@ def main() -> int:
 
     print("[MAG-13 profile] error by radial band (n, relL2, mean|rel|, max|rel|):",
           flush=True)
+    band_l2 = {}
     for lo, hi, label in [
         (0.006, 0.010, "near-wire  2.0a - 3.3a"),
         (0.010, 0.016, "mid        3.3a - 5.3a"),
@@ -214,6 +237,7 @@ def main() -> int:
         (0.006, 0.028, "full dense span"),
     ]:
         n, l2, mean, mx = band(lo, hi)
+        band_l2[label.split()[0]] = l2
         print(
             f"    {label:<34s} n={n:2d}  relL2={l2:.4%}  "
             f"mean={mean:.4%}  max={mx:.4%}",
@@ -242,7 +266,39 @@ def main() -> int:
         f"real build, no complex mode",
         flush=True,
     )
-    return 0
+
+    # --- 4. gates ------------------------------------------------------------
+    # The verdicts above now decide the exit code (see the module docstring).
+    slope_in_band = SLOPE_LO <= slope <= SLOPE_HI
+    near_over_wall = band_l2["near-wire"] > band_l2["wall"]
+    shape_ok = slope_in_band and near_over_wall
+    gates = [
+        ("GATE 1 fixture cells", cells_ok,
+         f"{ncells} vs {REF_CELLS} on record"),
+        ("GATE 2 fixture relL2", l2_ok,
+         f"{rel_l2_10:.4%} vs {REF_REL_L2:.4%} on record"),
+        ("GATE 3 negative control", control_ok,
+         f"4 recorded radii within +-{CONTROL_BAND_PP:.2f} pp"),
+        ("GATE 4 profile shape", shape_ok,
+         f"slope {slope:+.3f} in [{SLOPE_LO:+.2f}, {SLOPE_HI:+.2f}] "
+         f"-> {'PASS' if slope_in_band else 'FAIL'}; near-wire relL2 "
+         f"{band_l2['near-wire']:.4%} > wall {band_l2['wall']:.4%} "
+         f"-> {'PASS' if near_over_wall else 'FAIL'}"),
+    ]
+    print("[MAG-13 profile] GATES (exit code is gated on these):", flush=True)
+    for label, ok, detail in gates:
+        print(
+            f"    {label:<26s} {'PASS' if ok else 'FAIL'}  ({detail})",
+            flush=True,
+        )
+    n_failed = sum(1 for _, ok, _ in gates if not ok)
+    code = 0 if n_failed == 0 else 1
+    print(
+        f"[MAG-13 profile] OVERALL: {len(gates) - n_failed}/{len(gates)} gates "
+        f"pass -> exit {code}",
+        flush=True,
+    )
+    return int(comm.bcast(code, root=0))
 
 
 if __name__ == "__main__":
