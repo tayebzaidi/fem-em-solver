@@ -9797,3 +9797,105 @@ obstacle is that ΔX converges to ~0.98, not 1.00, and no step has yet attribute
 that last ~1.6% — box truncation at W = 0.25 is the obvious suspect and step 4's
 own W-sweep (0.9200 → 0.9849) is the data that would extrapolate it. Both are a
 review's to scope; I improvised neither.
+
+---
+
+## 2026-08-12T00:38Z — `POST-4` step 4 — **complete**
+
+**Item.** §9 On-deck item 1 (top open item), taken as written. Slot 19:30
+local, 2026-08-11.
+
+**Outcome: complete, and the step's own anchor is REFUTED.** The export-path
+Lagrange-P1 artifact is bounded, and the localization the entry predicted is
+measured to be wrong in the informative direction.
+
+**The read-only sweep.** 11 `("Lagrange", 1, …)` interpolation sites in
+`examples/`; **10** are fed by a non-conforming source (N1curl `A`/`E`, DG `B`).
+`magnetostatics/06_h_convergence_rate.py:164` is the sole safe one — it exports
+the CG1 function it also asserts on. Full table in the new known-issues entry.
+One site is *not* export-only: `magnetostatics/01_straight_wire.py:185`
+interpolates `B` to P1 and then evaluates the radial profile **from the
+interpolant**; that printout carries the artifact. `MAG-13`'s convergence
+numbers do not come from it.
+
+**Measured** (`examples/mri/01` debug preset, 9261 cells, `-n 2`, 400 cell
+midpoints + 400 vertices, point sets built partition-independently by
+lexicographic sort + even subsample, evaluated through
+`evaluate_vector_field_parallel` on both paths):
+
+| field | mid rel median | vtx rel median | mid scaled | vtx scaled | separation |
+| --- | --- | --- | --- | --- | --- |
+| `A` N1curl | **51.17%** | 27.33% | 0.1032 | 0.0432 | 0.4185× |
+| `B` DG1 | **52.47%** | 38.39% | 0.1590 | 0.0766 | 0.4818× |
+| `E` N1curl | **20.18%** | 15.79% | 0.1633 | 0.1116 | 0.6835× |
+
+The entry demanded midpoint ≤ 1% with vertices showing O(50×) more. Measured:
+midpoints are ~50× *over* the bound and are the **noisier** side. Refuted on
+both halves, in all three fields.
+
+**The discriminator that made it a mechanism rather than a number.** I added a
+DG1 target — same degree 1, no dofs shared between cells, therefore no vertex
+convention — and interpolated the same three sources onto it: scaled median
+**3.246992e-17 / 0.0 / 0.0**. All three sources are degree-1 discontinuous
+polynomials (Whitney N1curl included), so they are represented *exactly* in DG1
+and degree-1 interpolation error is zero. Therefore **100%** of the P1
+disagreement is the continuity constraint: the shared vertex dof is one
+adjacent cell's trace, and it then defines the interpolant over the whole cell,
+so the interior inherits the error instead of escaping it. A vertex *sample*
+can by chance draw the same cell trace on both paths — that is why the vertex
+column reads quieter, and it is the whole explanation of the inverted
+separation.
+
+**Negative control** (the entry's): a conforming P1 source round-tripped
+through the same machinery — **0.000000e+00** at both point sets against a
+1e-10 bound. The machinery is not the artifact.
+
+**Assertion handling — read this before assuming a tolerance moved.** The first
+execution asserted the entry's hypothesis as written and **FAILed, exit 1**
+(`20260812T003243Z_POST-4-step4-n2.log`, committed, not hidden). I did not
+loosen it. The hypothesis was demoted to a printed `verdict=REFUTED` line —
+which is what this entry's own "Negative result: report, annotate, stop" clause
+directs — and the exit code was handed to three facts the same run measured:
+(1) the negative control ≤ 1e-10; (2) the DG1 discriminator ≤ 1e-14; (3) a
+**refutation pin** — midpoint relative median ≥ 10% and vertex ≤ midpoint on
+the scaled median — so that a future export change cannot quietly invalidate
+this reading without firing. Every bound carries its measurement in a code
+comment.
+
+**Logs** (all `-n 2`, standard tier, container `timeout 300`, foreground, tool
+timeout at the 660000 ms max): `20260812T003243Z_POST-4-step4-n2.log` (exit 1,
+5 s — hypothesis as written, the FAIL of record);
+`20260812T003344Z_POST-4-step4-discrim-n2.log` (exit 1, 4 s — DG1 discriminator
+added, hypothesis still asserted);
+`20260812T003454Z_POST-4-step4-anchor-n2.log` (**exit 0, 4 s, PROBE_RESULT
+PASS** — the anchor of record). Mesh fingerprint identical across all three:
+9261 cells, m1 = 4.529002887097e+01.
+
+**Traps met.** None fired. Complex build sourced with
+`FEM_EM_REQUIRE_COMPLEX=1`; `.reshape(-1, 3)` applied on every eval path; all
+point evaluation through `evaluate_vector_field_parallel`, never rank-local
+`eval`; point-set construction reduced through `gather`/`bcast` so it is
+partition-independent; every statistic computed on rank 0 after a validity mask
+intersected across both paths; the runs stayed foreground and the turn never
+ended while the harness ran. No `src/` change, no export change, no ParaView
+claim withdrawn — the scope boundary held. No unrelated failure appeared.
+
+**Status flips landed with this commit.** §7 `POST-4` step 4 🔲 → ✅; the
+`POST-4` chunk row and entry header 🟡 → ✅ (steps 1/3/4 ✅, step 2 🚫 skipped
+under its own clause) with the honest note that the chunk *title's* premise —
+an ownership tie-break defect — was refuted by its own step 1 and
+`evaluate_vector_field_parallel` was never changed; §9 item 1 marked done with
+its original text retained. New known-issues entry naming all ten affected
+exports.
+
+**Next-attempt hypothesis (nothing owed on this step; one decision for the
+review).** The open call is whether the exports should carry DG1 instead of P1:
+DG1 is faithful to round-off on exactly these fields, at the cost of larger
+files and a discontinuous rendering that most ParaView filters handle but that
+looks worse. It is cheap to try — the interpolation already exists in the probe
+and `write_combined_paraview_output` takes the pair — but it changes what the
+operator sees in every example at once, so it is a review's call, not an
+implementer's. Second, smaller: the 51%/52%/20% figures are at *debug*
+resolution; nobody has checked whether they shrink at production resolution.
+They should, as the cell traces converge, but that is a prediction, not a
+measurement, and one refuted prediction per chunk is enough.

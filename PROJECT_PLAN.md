@@ -3213,7 +3213,7 @@ follow-on. Queued as §9 item 4; independent of step 9.)*
 | `POST-1` | Interface-aware field extraction reliability | 🟡 *(adjudicated 2026-08-05, 18:00 review — mean semantics decided, extremum semantics is step 4)* | standard |
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
-| `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | 🟡 *(step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped. Step 3 ✅ 2026-08-11 — the centerline samples the source fields: **23.5539% → 0.008613%**, a 2735× collapse; known-issues entry **retired**. Step 4 🔲 — the export-path P1 artifact is still unbounded)* | standard |
+| `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | ✅ *(chunk closed 2026-08-12 — every step closed or dispositioned; note the title's premise was itself refuted, the tie-break was never the defect. Step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped. Step 3 ✅ 2026-08-11 — the centerline samples the source fields: **23.5539% → 0.008613%**, a 2735× collapse; known-issues entry **retired**. Step 4 ✅ 2026-08-12 — the export-path P1 artifact is **bounded and attributed**: midpoint relative medians **51.17% / 52.47% / 20.18%** (`A`/`B`/`E`), vertex/midpoint separation **0.42–0.68×** so the step's vertex-localization hypothesis is **REFUTED**, and a DG1 target reproduces all three sources to round-off — 100% of it is the P1 continuity constraint. All four steps now closed or dispositioned)* | standard |
 
 > *(Closed-step plans, execution journals and audits below are archived
 > verbatim in `docs/planning/plan-archive.md`.)*
@@ -3781,7 +3781,16 @@ follow-on. Queued as §9 item 4; independent of step 9.)*
 > the μᵣ discretisation, not a tolerance problem.
 
 **`POST-4` — centerline point evaluation is rank-count-dependent: attribute
-and fix the ownership tie-break in `evaluate_vector_field_parallel`** 🔲
+and fix the ownership tie-break in `evaluate_vector_field_parallel`** ✅
+*(closed 2026-08-12 — steps 1, 3 and 4 ✅, step 2 🚫 skipped under its own
+clause. The chunk title's premise did not survive its own step 1: the
+ownership tie-break was refuted at 0/120 multi-claims and never was the
+defect. What the chunk actually bought: the locus attributed to the
+Lagrange-P1 interpolation (step 1), the mri centerline printout made
+rank-invariant and faithful by sampling the source fields (step 3, 2735×
+collapse), and the export-path artifact that remains bounded and attributed
+to the P1 continuity constraint (step 4). `evaluate_vector_field_parallel`
+was never changed.)*
 *(scoped 2026-08-10, 18:00 review — this is the chunk the `EX-16` negative
 result demanded: converging the mri demo's solve moved the centerline rank
 spread 23.5545% → 23.5539% (1.0000×), while the 493-point phantom-region
@@ -3986,7 +3995,48 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   report both tables, keep the entry open, annotate here, stop.
 > * **Step 4 — bound the P1-interpolant artifact on the export paths
 >   (standard; measurement only; spare — scoped 2026-08-11, 10:30
->   review).** 🔲 Step 1 showed the P1 interpolant of a non-conforming
+>   review).** ✅ *(executed 2026-08-12, 19:30 implementer run — the bound is
+>   measured and the step's own **localization hypothesis is REFUTED**, which
+>   is the more informative reading. The sweep found **11** P1 interpolation
+>   sites in `examples/`, **10** fed by a non-conforming source (N1curl `A`/`E`
+>   or DG `B`); `magnetostatics/06_h_convergence_rate.py:164` is the safe
+>   exception — it exports the CG1 function it also asserts on. On
+>   `examples/mri/01`'s debug preset (9261 cells, `-n 2`, 400 cell midpoints +
+>   400 vertices, `20260812T003454Z_POST-4-step4-anchor-n2.log`, exit 0, 4 s)
+>   the pointwise relative **median** of |P1 − source| / |source| is
+>   **51.17% / 52.47% / 20.18%** at midpoints for `A` / `B` / `E`, against
+>   **27.33% / 38.39% / 15.79%** at vertices. The entry demanded midpoint
+>   ≤ 1% where vertices show the on-record O(50×); measured, the midpoints are
+>   ~50× the expected bound and the vertex/midpoint separations are
+>   **0.4185× / 0.4818× / 0.6835×** — the interiors are the *noisier* side, the
+>   opposite of the prediction. Mechanism, measured not argued: interpolating
+>   the same three sources onto a **DG1** target (same degree, no dofs shared
+>   between cells) reproduces them to round-off — scaled median
+>   **3.25e-17 / 0.0 / 0.0** against a 1e-14 bound — because all three are
+>   degree-1 discontinuous polynomials and are represented exactly there. So
+>   degree-1 interpolation error is zero and **100% of the disagreement is the
+>   P1 continuity constraint**: the shared vertex dof is one adjacent cell's
+>   trace, and it then defines the interpolant across the whole cell, which is
+>   why the interior inherits the error rather than escaping it. A vertex
+>   *sample* can by chance draw the same cell trace on both paths, which is why
+>   the vertex column reads quieter. **Negative control:** a conforming P1
+>   source round-tripped through the same machinery agrees to **0.000e+00**
+>   against 1e-10. The anchor script's exit code enforces the control, the DG1
+>   discriminator, and a **refutation pin** (midpoint relative median ≥ 10%,
+>   vertex ≤ midpoint) so a later export change cannot silently invalidate this
+>   reading; the hypothesis itself is printed as `verdict=REFUTED` and no
+>   longer sets the exit code, per this entry's own negative-result clause.
+>   **The first execution FAILed** (exit 1, `20260812T003243Z_POST-4-step4-n2.log`)
+>   with the hypothesis asserted as written — that log is committed, not hidden;
+>   no tolerance was loosened to make it pass, the refuted claim was
+>   demoted to a reported verdict and the measured facts took over the exit
+>   code. Probe `scripts/probes/post4_step4_probe.py`; known-issues entry
+>   added naming all ten affected exports, including the one case that is not
+>   merely visual — `magnetostatics/01_straight_wire.py:185` **evaluates** its
+>   radial profile from the P1 interpolant. No `src/` change, no export change,
+>   no ParaView claim withdrawn. **Open for the review:** whether to export DG1
+>   (faithful, discontinuous rendering, larger files) or keep P1 under the
+>   caveat.)* Original text: Step 1 showed the P1 interpolant of a non-conforming
 >   field can sit 56× off its source at a point even at `-n 1`; every
 >   example's XDMF/VTX export ships exactly such interpolants. Sweep
 >   `examples/` for `interpolate` targets of `("Lagrange", 1, …)` fed by
@@ -7124,9 +7174,20 @@ follow-ons Part 2c flagged. The `PORT-1` critical path stays deliberately
 absent: the second licensed discriminator slot is the weekly review's
 (2026-08-16) to spend.
 
-1. **`POST-4` step 4 — bound the P1-interpolant artifact on the export
+1. ✅ **DONE 2026-08-12, 19:30 slot** — **`POST-4` step 4 — bound the
+   P1-interpolant artifact on the export
    paths (standard; measurement only; independent of every item
-   below).** Execute the §7 `POST-4` step-4 entry verbatim: sweep
+   below).** *Measured, and the item's own anchor **refuted**: midpoint
+   relative medians 51.17% / 52.47% / 20.18% (`A`/`B`/`E`) against the ≤ 1%
+   demanded, with vertex/midpoint separation 0.42–0.68× — the interiors are
+   noisier than the vertices, not O(50×) quieter. A DG1 target reproduces all
+   three sources to round-off (3.25e-17 / 0 / 0), so 100% of the disagreement
+   is the P1 continuity constraint, not interpolation error; control 0.000e+00
+   vs 1e-10. Sweep: 11 sites, 10 non-conforming, named in known-issues; the
+   one non-visual case is `magnetostatics/01_straight_wire.py:185`, which
+   evaluates its radial profile from the interpolant. **`POST-4` closes with
+   this step** (steps 1/3/4 ✅, step 2 🚫). Review call left open: export DG1
+   or keep P1 under the caveat.* Original text: Execute the §7 `POST-4` step-4 entry verbatim: sweep
    `examples/` for `("Lagrange", 1, …)` interpolation of Nédélec/DG
    sources; on `examples/mri/01`'s debug preset measure
    interpolant-vs-source disagreement at cell midpoints and vertices,

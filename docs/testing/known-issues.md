@@ -999,6 +999,70 @@ state on record: `⚠ VTX output failed (ADIOS2 may not be available): Only
 (discontinuous) Lagrange functions are supported` once per rank, and
 `paraview_output/circular_loop_A.bp` opening with zero ADIOS2 variables.
 
+### Every XDMF/VTX export of a Nédélec or DG field ships a Lagrange-P1 interpolant that disagrees with the solved field at O(20–52%) — everywhere in the cell, not only at vertices (`POST-4` step 4, 2026-08-12)
+
+**What this affects.** Eleven interpolation sites in `examples/` build a
+`("Lagrange", 1, (3,))` (or scalar `("Lagrange", 1)`) function for export;
+**ten** of them are fed by a source that is not continuous in that space —
+N1curl (`A`, `E`) or DG (`B`):
+
+| file | line | source |
+| --- | --- | --- |
+| `examples/mri/01_coil_phantom_fields.py` | 413 | `A` N1curl, `B` DG1, `E` N1curl |
+| `examples/magnetostatics/01_straight_wire.py` | 185 | `B` DG1 — **evaluated, not only exported** (see below) |
+| `examples/magnetostatics/02_circular_loop.py` | 259 | `A` N1curl, `B` DG1 |
+| `examples/magnetostatics/04_helmholtz_analytic_comparison.py` | 136 | `A` N1curl, `B` DG1 |
+| `examples/magnetostatics/05_gauge_cross_check.py` | 198 | `A` N1curl, `B` DG1 (both gauges) |
+| `examples/time_harmonic/01_lossy_plane_wave.py` | 109 | `E` N1curl |
+| `examples/time_harmonic/02_pec_cavity_resonances.py` | 145 | eigenmode, N1curl |
+| `examples/time_harmonic/03_dielectric_sphere_in_uniform_field.py` | 258 | `E` N1curl |
+| `examples/time_harmonic/04_evanescent_waveguide_decay.py` | 246 | `E` N1curl |
+| `examples/time_harmonic/05_resonance_guard_sweep.py` | 127 | `E` N1curl |
+
+`examples/magnetostatics/06_h_convergence_rate.py:164` is the exception that is
+*safe by construction*: it exports the CG1 function it also asserts on, so the
+asserted field and the exported field are the same object.
+
+**Measured magnitude** (`examples/mri/01` debug preset, 9261 cells, `-n 2`,
+400 cell midpoints + 400 vertices, `20260812T003454Z_POST-4-step4-anchor-n2.log`,
+exit 0, 4 s). Pointwise relative median of |P1 − source| / |source|:
+
+| field | midpoints | vertices | scaled median (mid / vtx) |
+| --- | --- | --- | --- |
+| `A` (N1curl) | **51.17%** | 27.33% | 0.1032 / 0.0432 |
+| `B` (DG1) | **52.47%** | 38.39% | 0.1590 / 0.0766 |
+| `E` (N1curl) | **20.18%** | 15.79% | 0.1633 / 0.1116 |
+
+**Two things this measurement settled, both against the prior expectation.**
+(1) The artifact is *not* localized at shared vertices — the midpoint
+disagreement is **larger** than the vertex disagreement in all three fields
+(separation 0.4185× / 0.4818× / 0.6835×, where the step-4 entry predicted
+O(50×) the other way). The wrong vertex dofs define the P1 interpolant over
+the whole cell, so the interior inherits them; a vertex sample can also, by
+chance, draw the same cell trace on both paths, which is why vertices read
+*quieter*. (2) None of it is interpolation error. Interpolating the same three
+sources onto a **DG1** target — same degree, no dofs shared between cells —
+reproduces them to round-off (scaled median 3.25e-17 / 0.0 / 0.0), because all
+three are degree-1 discontinuous polynomials and are represented exactly. The
+entire disagreement is the P1 continuity constraint. Negative control: a
+conforming P1 source round-tripped through the same machinery agrees to
+**0.000e+00** against a 1e-10 bound.
+
+**Consequences.** ParaView renderings of `A`, `B`, and `E` from these exports
+are a continuous *approximation* of a field that is not continuous, off by tens
+of percent pointwise at debug resolution; they are qualitative pictures, not
+data. No gate cites them. The one case that goes beyond visualization is
+`examples/magnetostatics/01_straight_wire.py:185`, which interpolates `B` to P1
+and then **evaluates the radial profile from the interpolant** — that printout
+carries this artifact and should be read as indicative only; the `MAG-13`
+convergence numbers do not come from it.
+
+**Scope of this entry.** Measurement only — no export code was changed, and no
+ParaView claim elsewhere in the repo is withdrawn by it. Whether to export DG1
+instead (faithful, larger files, discontinuous rendering) or to keep P1 with
+this caveat is a review decision, not this step's. Probe:
+`scripts/probes/post4_step4_probe.py`.
+
 ### ✅ RETIRED 2026-08-11 (`POST-4` step 3) — `examples/mri/01` centerline samples were rank-dependent at ~23%, at and below the gauge floor
 
 **Closed by sampling the source fields.** The example's centerline table now
