@@ -10513,3 +10513,88 @@ load balancing on this fixture's aspect ratio and step 10 needs an ordering
 or grading change, not a bigger machine. Per the entry's negative-result
 clause this hands step 10 to the weekly review; the run above is what that
 review should commission.
+
+---
+
+## 2026-08-12T17:00Z — `PORT-1` step 3b-xvi (third attempt) — **complete**
+
+**Outcome: complete.** The §9 item-1 recipe ran end to end: the re-pointed
+locality control passed, the solve arm was bought, and the estimator landed in
+the **(converged at the feed)** band. Parked on the lineage branch
+`attempt/PORT-1-step3bxvi-20260812T093000Z` at **`d459af9`** per the item's own
+scope boundary ("work there, land nothing in-slot"); `main` carries the §7
+annotation and this entry only.
+
+**What was tried.** One code change on the branch: the locality control's region
+moved from the bare gap boxes to boxes dilated by `CONTROL_COLLAR_M` = 5 mm, at
+the **unchanged** < 5% band, exactly as the 10:30 daily review decided on the
+06:00 slot's calibration. The undilated count is still computed and printed,
+now explicitly gated on nothing. Nothing else moved — bands (0.5 pp),
+tolerances (0.03 / 0.10) and adjudication decision (3) are untouched, and the
+re-pointing was not this slot's to decide (it was already made by a review, per
+the 06:00 entry's hand-off).
+
+**Mesh arm** — `20260812T170128Z_PORT-1-step3bxvi-mesh6e4-repointed.log`,
+`-n 2`, complex build, 95 s, exit 0. Run as its **own command before** the
+solve, so the control genuinely gated the purchase rather than being read after
+it.
+
+| quantity | unrefined | refined (`h_box = 6.0e-4`) | move |
+| --- | --- | --- | --- |
+| cells | 178 055 | 246 364 | 1.3836× (ceiling 350 000) |
+| **outside 5 mm-dilated boxes (GATED)** | 115 220 | 115 029 | **−0.1658%** (band < 5%) ✅ |
+| outside undilated boxes (printed, never gated) | 129 242 | 150 329 | +16.3159% |
+| outside 10 mm-dilated | 109 116 | 108 778 | −0.3098% |
+| outside 20 mm-dilated | 96 686 | 96 402 | −0.2937% |
+| `cells_across_overhang` | 0.1405 | 0.2209 | 1.57× |
+| `cells_across_arc` | 24.70 | 24.63 | arc field untouched, as designed |
+
+Gap-box meshed/analytic volume **1.000000000000** on both meshes, facet tags
+`[1, 201, 202]`, port-disc meshed/exact 1.042206112 → 1.050651841. The control
+reproduced the 06:00 calibration **digit for digit** (−0.1658%), which is the
+strongest available evidence that the re-pointing changed the instrument's
+region and not its answer.
+
+**Solve arm** — `20260812T170317Z_PORT-1-step3bxvi-solve6e4.log`, `-n 2`,
+complex build, 174 s total, exit 0; solves 25.5 s (unrefined) and 29.8 s
+(refined) inside `timeout -k 30 590`, so the exit-124 branch never came near
+firing despite step 1's 237 926-cell MUMPS kill sizing the worry.
+
+* **Anchor:** unrefined estimator **0.894543** vs the **0.894543** on record —
+  **+0.0000 pp**. The fixture reproduces itself before the refined arm is read.
+* **Reading:** refined estimator **0.895051**, **Δ = +0.0508 pp** against the
+  pre-registered 0.5 pp band ⇒ **(converged at the feed)**.
+* Against the cited σ = 0 closed-loop control 0.922423, the refined deviation is
+  **−2.9674e-02** (record −3.0224e-02).
+* Supporting: `|I_cond/I'|` 0.971942 → 0.968117; quadrature drift
+  2049→4097 orders 3.911e-04 → 7.969e-04 (both far inside the 0.03 tolerance).
+
+**What this buys.** A 1.3836× mesh carrying **1.57×** the resolution across the
+overhang — the very region the adjudication suspected, and the one measured
+sub-cell at 0.1405 by the 04:30 arm — moves the estimator by **one tenth of the
+band**. Feed discretisation is therefore **exonerated**: the −3.02e-02 deviation
+from the closed-loop control is gap physics, not the feed's mesh, and
+adjudication decision (3) fires with the **physics** label as pre-registered
+(Jin §10.4.2.1 as the mechanism class). This is the input decision (3) was
+waiting on, and it is now earned by measurement rather than assumed.
+
+**Denials / harness notes.** None. `timeout -k 30` used on both commands;
+neither fired. `PYTHONPATH` needed `/workspace` alongside `/workspace/src`
+because the probe imports the fixture constants from
+`tests/validation/test_port_gap_voltage_impedance.py` — same invocation the two
+prior arms used.
+
+**Scope held.** `PORT-1` stays 🟡. Nothing closed: not the chunk, not
+known-issues 3, not the σ-on-driven-wire re-pointing (decision (3)'s own commit
+cites these two logs). No tolerance or band was touched.
+
+**Next-attempt hypothesis.** There is no fourth attempt at 3b-xvi — the step's
+question is answered. The successors are now unblocked and both are decision
+(3)'s: (a) land `d459af9` from the branch if a review wants the re-pointed
+control and the two logs in the tree (it is a self-contained probe change plus
+logs, no `src/` or test edits); (b) execute decision (3)'s re-pointing commit
+with the **physics** label, which no longer needs to hedge between the two
+labels. If a slot wants one more measurement first, the cheap one is the same
+solve at the *fallback* `h_box = 1.875e-3` — a third point on the
+(refinement, estimator) curve would turn "+0.0508 pp at 1.38×" into a trend and
+bound the extrapolation to h → 0, but nothing pre-registered requires it.

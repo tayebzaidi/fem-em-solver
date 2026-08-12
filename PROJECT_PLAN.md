@@ -4808,6 +4808,49 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   `timeout -k 30 590`; exit 124 is itself a finding ("the refined
 >   fixture does not fit the window at `-n 2`") — report it, park, stop.
 >
+>   ✅ **Third attempt executed 2026-08-12 (12:00 slot) — the re-pointed
+>   control passes, the solve was bought, and the reading is
+>   *converged at the feed*: feed discretisation is exonerated and the
+>   offset is gap physics.** Parked on the same lineage branch
+>   `attempt/PORT-1-step3bxvi-20260812T093000Z` (`d459af9`);
+>   `20260812T170128Z_PORT-1-step3bxvi-mesh6e4-repointed.log` (mesh arm,
+>   95 s, exit 0), `20260812T170317Z_PORT-1-step3bxvi-solve6e4.log`
+>   (solve arm, 174 s, exit 0); attempts.md 2026-08-12T17:00Z. Both arms
+>   `-n 2`, complex build, standard tier.
+>   **Control (enforced first, in its own command, before the solve was
+>   bought):** cells outside the 5 mm-dilated gap boxes 115 220 → 115 029,
+>   **−0.1658%** against the < 5% band — digit-identical to the 06:00
+>   calibration, so the re-pointing reproduces rather than re-measures.
+>   The undilated count is printed beside it and gated on nothing
+>   (129 242 → 150 329, +16.3159%: gmsh's mandatory gradation collar).
+>   Standing identities held on both meshes — gap-box meshed/analytic
+>   volume **1.000000000000**, facet tags `[1, 201, 202]`; mesh
+>   178 055 → 246 364 cells (1.3836×, under the 350 000 ceiling),
+>   `cells_across_overhang` 0.1405 → 0.2209, `cells_across_arc`
+>   24.70 → 24.63.
+>   **Anchor:** the unrefined arm's estimator is **0.894543**, the record
+>   to six digits, **+0.0000 pp** — the fixture reproduces itself before
+>   the refined arm is read.
+>   **Reading:** refined estimator **0.895051**, **Δ = +0.0508 pp**
+>   against the pre-registered 0.5 pp band ⇒ band **(converged at the
+>   feed)**. A 1.38× mesh carrying 1.57× the resolution across the
+>   overhang moves the estimator by **one tenth of the band**, so the
+>   −3.02e-02 deviation from the 0.922423 closed-loop control is **not**
+>   owned by the feed's discretisation. Against that cited control the
+>   refined deviation is −2.9674e-02 (record −3.0224e-02). Adjudication
+>   decision (3) therefore fires with the **physics** label (Jin
+>   §10.4.2.1 as the mechanism class), as pre-registered. Bands,
+>   tolerances (0.03 / 0.10) and decision (3) untouched; the solve arms
+>   cost 25.5 s and 29.8 s, so the `timeout -k 30 590` window was never
+>   near — exit 124 did not fire.
+>   **Does not close** `PORT-1` (stays 🟡), known-issues 3, or the
+>   re-pointing of the σ-on-driven-wire successor — decision (3)'s commit
+>   is separate and cites these two logs. **Hand-off:** the code is
+>   parked, not landed, per this item's scope boundary; a review that
+>   wants the re-pointed control in the tree lands `d459af9` from the
+>   branch. The physics label is now *earned by measurement* rather than
+>   assumed, which is the input decision (3) was waiting on.
+>
 > **Closed steps** *(two-loop air fixture `two_torus_domain`, f = 10 MHz,
 > a = 0.04 m, r_wire = 0.005 m, d = 0.04 m; padding 0.08 / h_far 0.03,
 > 119738 cells, unless stated; all gates `-n 2`, complex build, in
@@ -7765,9 +7808,15 @@ anything). Item 1 is the twice-failed 3b-xvi, re-queued under this
 review's control re-pointing per the §9 rescope rule; nothing else in
 the list waits on it.
 
-1. **`PORT-1` step 3b-xvi, third attempt — re-pointed locality control,
+1. ✅ **DONE 2026-08-12 (12:00 slot) — control passed at −0.1658%, solve
+   bought, reading is (converged at the feed): Δ = +0.0508 pp against the
+   0.5 pp band, anchor exact at 0.894543, so feed discretisation is
+   exonerated and the offset is gap physics. Parked at `d459af9` on the
+   lineage branch; §7 annotation and attempts.md 2026-08-12T17:00Z carry
+   the numbers. Twice-failed item closed on its third attempt.**
+   ~~**`PORT-1` step 3b-xvi, third attempt — re-pointed locality control,
    then buy the solve (standard; measurement only; continues on
-   `attempt/PORT-1-step3bxvi-20260812T093000Z` at `bc6d69c`).** Execute
+   `attempt/PORT-1-step3bxvi-20260812T093000Z` at `bc6d69c`).**~~ Execute
    the §7 10:30 review-decision recipe: mesh arm at `h_box = 6.0e-4`
    asserting the **re-pointed** control — cell count outside the
    **5 mm-dilated** gap boxes moves < 5% (calibration on record:
