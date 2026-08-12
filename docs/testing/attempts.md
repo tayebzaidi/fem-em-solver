@@ -10489,6 +10489,19 @@ the kill per the entry's trap list. No denied commands.
 **Scope held.** `MAT-6` stays ✅; step 10 stays 🟡; no ΔR read; no ΔX band
 touched; no rank count above 8 spent.
 
+**One risk I introduced, flagged rather than silently carried.** Retaining
+the `LinearProblem` also retains its MUMPS factor — 1.6e9 entries, ~37 GB
+effectively used across 8 ranks on the baseline fixture. Before this change
+that memory was released when `problem` fell out of scope at the end of
+`solve()`; it now lives until the solver is dropped or re-solved, so the
+peak during the post-solve DG interpolation rises by the factor's size. All
+three runs above executed this path without incident (the largest completed
+one used 36 960 MB under a 65 536 MiB cap), which is why it stands as
+verified rather than as an unverified late edit — but given lead (1) above
+is *itself* about memory headroom, the review should know. The fix if it
+ever bites is to extract INFOG/RINFOG into `diagnostics` at solve time and
+drop the handle, not to raise the cap; the code comment says so at the site.
+
 **Next-attempt hypothesis.** The 9× is a numeric-phase pathology, not an
 operation count. The cheapest discriminator is a **memory-headroom** run: the
 same composed fixture with MUMPS out-of-core or with `ICNTL(14)` working-

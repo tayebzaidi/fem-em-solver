@@ -455,6 +455,17 @@ class TimeHarmonicSolver:
         # `solver.getPC().getFactorMatrix()`, which is discarded with `problem`
         # otherwise).  Diagnostic access only — nothing in the solve path reads
         # this attribute.
+        #
+        # Tradeoff, stated because this subsystem is memory-tight: holding the
+        # `LinearProblem` also holds its MUMPS factor, which step 10a measured
+        # at 1.6e9 entries (~37 GB effectively used across 8 ranks on the
+        # 697 401-cell fixture).  Before this line that memory was released
+        # when `problem` fell out of scope at the end of `solve`; now it lives
+        # until the solver is dropped or re-solved, so peak usage of the
+        # post-solve interpolation block rises by the factor's size.  If a
+        # `MAT-6`-scale run ever hits the container cap here, the fix is to
+        # extract INFOG/RINFOG into `diagnostics` at solve time and drop the
+        # handle, not to grow the cap.
         self._linear_problem = problem
 
         # `OPS-12`: without this the KSP records nothing and every
