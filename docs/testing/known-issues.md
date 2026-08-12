@@ -498,6 +498,35 @@ mesh in the process — is the reusable part.
 
 ## Non-test issues
 
+### The container-side `timeout` in the standard harness recipe does not reliably stop an `mpiexec` job, and an overrun can wedge the container (`MAT-6` step 10, 2026-08-12)
+
+**Verified at `648b216`, 00:00 implementer slot.** The recipe every heavy
+chunk uses — `... bash -lc 'source ... && timeout <s> mpiexec -n <N> python3
+...'` — was run with `timeout 590`. It should have fired at 05:11:23Z. The
+ranks were still burning 8–12 cores at 05:31Z, ~1 700 s into a solve, and the
+harness never wrote a footer
+(`20260812T050133Z_MAT-6-step10-probe.log`). **Treat the container-side
+`timeout` as best-effort, not a guaranteed stop**; the recipe has no
+`-k`/kill-after, so a job that ignores or outlives SIGTERM keeps the cores.
+Suggested repair, not yet landed: `timeout -k 30 <s> mpiexec ...`.
+
+**The overrun then wedged the container**, and the usual levers failed in
+order: `docker compose exec` hung twice with no output (>2 min each);
+`docker compose restart` and `docker compose kill` both returned
+`Error response from daemon: ... tried to kill container, but did not receive
+an exit event`; a later exec failed with `OCI runtime exec failed: ... error
+executing setns process: exit status 1`. **What recovered it:**
+
+```bash
+docker compose -f docker/docker-compose.yml up -d --force-recreate
+```
+
+Verified clean afterwards — exec responds, `/sys/fs/cgroup/memory.max` still
+`68719476736`, zero stray `python3`, host load 12.2 → 8.9 as the orphaned
+ranks died. Reach for the force-recreate rather than repeating the
+restart/kill pair. Not diagnosed: whether the wedge is specific to a job that
+survived its `timeout`, or to any long `docker compose exec` under load.
+
 ### ✅ RETIRED 2026-08-11 — "unexplained" mid-command termination of the logging harness was the background-and-end-turn trap (2026-08-08, 15:00 and 19:30 implementer slots)
 
 **Retired by the 2026-08-11 10:30 review — cause named, with wrapper-log

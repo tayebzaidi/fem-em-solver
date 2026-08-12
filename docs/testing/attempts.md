@@ -10074,3 +10074,88 @@ composition must be read on the signed FEM value, not the relative error. That
 arithmetic is worth the review's attention before any further ΔR rung is
 commissioned. Also unpriced: whether the ΔX endpoint 1.0023 survives at fine
 wire, which additivity (step 7 Part 2c, −0.080 pp) predicts but did not test.
+
+## 2026-08-12T05:35Z — `MAT-6` step 10 — **incomplete** (probe hit the stop rule by a wide margin, and wedged the container)
+
+**Item:** §9 item 4 (`MAT-6` step 10 — do the two sub-1% routes compose?).
+Items 1–3 were already marked done, so this was the first open item.
+**Outcome:** the §7 point-of-no-return probe was executed and the stop rule
+**fired decisively**; no gate module was written, no ΔR reading exists.
+Recovery of the container cost the rest of the slot.
+
+**What was measured (this is the slot's result).**
+- The composed fixture meshes: **895 974 cells** at W = 0.25,
+  `resolution_wire` = 0.001, `resolution_near` = 0.0025 — **1.28×** the
+  box+wire fixture's 697 401 and 6.46× the step-2b baseline, meshed in
+  **66.3 s** at `-n 8`. §7's "~1 M is an estimate" was close and slightly
+  high; the estimate is now a measurement.
+  (`20260812T050133Z_MAT-6-step10-probe.log`, footerless — see below.)
+- **One projected loaded solve did not finish in ~1 700 s at `-n 8`.** The
+  solve began at 05:02:40Z and was still running when the job was killed at
+  ~05:31Z. That is **≥ 5.7× the 300 s stop rule** and ~9× step 9's 190.1 s
+  solve on 595 391 cells at the same rank count — nine times the time for
+  1.5× the cells, so the cost is **not** scaling with cell count on this
+  fixture. §7's cost estimate ("solves 178–196 s each at `-n 8` on record for
+  the un-composed fixture") is refuted for the composed one.
+- **Not an OOM, on the evidence available.** Host memory never approached
+  pressure (74 G used of 754 G at peak, 684 G free, no swap growth) and load
+  average sat at 11–12 with 8 ranks, i.e. compute-bound, not reclaim-bound.
+  No OOM message reached the log. The container's own cap was re-read before
+  the run and was the expected 68719476736 (64 G), as §7 requires.
+
+**Two harness findings, both new, both worth the review's attention.**
+1. **`timeout 590` did not terminate the job.** The container-side timeout
+   should have fired at 05:11:23Z; the ranks were still burning cores at
+   05:31Z. The TERM was evidently not effective against the `mpiexec` job
+   (no `-k` kill-after in the recipe every chunk has been using). Every
+   heavy recipe on record inherits this: **the container-side `timeout` is
+   not a guaranteed stop.** Suggested fix for the review — `timeout -k 30 <s>`
+   in the standard recipe.
+2. **The wedged container needed a force-recreate.** Once the run overran,
+   `docker compose exec` hung (two calls, >2 min each, no output);
+   `docker compose restart` and `docker compose kill` both failed with
+   *"tried to kill container, but did not receive an exit event"*; a further
+   exec failed with *"error executing setns process: exit status 1"*.
+   `docker compose up -d --force-recreate` **succeeded** and restored a clean
+   container — verified afterwards: exec responds, `memory.max` still
+   68719476736, zero stray `python3`. Load fell 12.2 → 8.9 as the orphaned
+   ranks died. **The machine was left clean**, and this recipe is the
+   recovery a future slot should reach for rather than repeating the
+   restart/kill pair.
+
+**Tool-timeout note (not a protocol violation, but adjacent to one).** The
+harness call was made in the foreground with the tool `timeout` at its
+660000 ms maximum, as implementer-run.md requires. It nonetheless exceeded
+that ceiling — because the *container-side* stop did not work — and the tool
+moved it to the background. The turn was **never ended** while it ran: the
+task was polled and then stopped explicitly, so the SIGKILL-on-turn-end trap
+did not fire and the log survives. The lesson is that "container `timeout`
+sized under the tool `timeout`" only bounds the call if finding 1 is fixed.
+
+**Log.** `20260812T050133Z_MAT-6-step10-probe.log`, 435 lines, **no footer**
+— the run was killed, so the harness never wrote one. It carries the mesh
+statistics and the cell-count line; everything after is absent by
+construction.
+
+**Files.** `scripts/probes/mat6_step10_probe.py` (new, mesh + one timed
+projected loaded solve, `MAT6_STEP10_MESH_ONLY=1` for the solve-free stage)
+is parked on `attempt/MAT-6-step10-20260812T053500Z`; `main` carries only
+this entry, the log, and the §7/§9 annotations. Nothing under `src/` or
+`tests/` was touched, on any branch. `MAT-6` stays ✅.
+
+**Next-attempt hypothesis.** The cost is superlinear in a way cell count does
+not explain, so the suspect is **solver conditioning**, not size: the composed
+mesh puts a 0.001 m wire next to a 0.0025 m near-region inside a W = 0.25 box
+at `resolution_far` = 0.025, i.e. the widest cell-size ratio any `MAT-6`
+fixture has carried, and the curl-curl operator's iteration count is the
+term that would blow up. Cheapest discriminator for the next slot, and it is
+a *smoke*-tier question: re-run the probe with the KSP iteration count and
+residual history printed (and `MAT6_STEP10_MESH_ONLY=1` first, so the mesh
+costs nothing to confirm), at the intermediate rung `resolution_near` = 0.0035
+on the combined fixture. If iterations explode there too, step 10 is not a
+mesh-cost question at all and the review should rescope it onto the
+conditioning, not onto a bigger box or more ranks. If iterations are normal
+and only wall-clock is large, `-n 12` is the one lever left inside the rank
+ceiling — worth ~1.5× at best, which does not close a 5.7× gap, so step 10
+as scoped would then be **out of reach of a scheduled slot** and belongs to
+the weekly review's licence.

@@ -3294,9 +3294,48 @@ review. Queued as §9 item 3.)*
 > annotate here, stop.
 
 **`MAT-6` step 10 — do the two sub-1% routes compose? Slab knob on the
-combined fixture** 🔲
-*(scoped 2026-08-11, 18:00 review — decision (2); the second Part 2c
-follow-on. Queued as §9 item 4; independent of step 9.)*
+combined fixture** 🟡
+*(attempted 2026-08-12, 00:00 run — **the probe's stop rule fired and the
+step is blocked on solve cost, not on memory**;
+`20260812T050133Z_MAT-6-step10-probe.log`, footerless because the run was
+killed.)*
+> **The composed fixture meshes cheaply and then does not solve.** The mesh
+> is **895 974 cells** (1.28× the box+wire fixture's 697 401, 6.46× the
+> step-2b baseline), meshed in 66.3 s at `-n 8` — §7's "~1 M is an estimate"
+> was close and is now measured. But **one projected loaded solve did not
+> finish in ~1 700 s at `-n 8`**: ≥ 5.7× the 300 s stop rule, and ~9× step
+> 9's 190.1 s solve on 595 391 cells at the same rank count. Nine times the
+> time for 1.5× the cells means the cost is **not** scaling with size, so
+> this entry's own estimate ("178–196 s each at `-n 8` on record for the
+> un-composed fixture") is refuted for the composed one. **It is not the
+> 64 G cap:** the cap was re-read (68719476736) before the run, host memory
+> peaked at 74 G of 754 G with no swap growth, and load sat at 11–12 with 8
+> ranks — compute-bound, not reclaim-bound. No ΔR reading exists; the
+> composition question is untouched.
+> **Two harness findings came with it, both for the review:** (1) the
+> container-side `timeout 590` **did not terminate the job** (it should have
+> fired at 05:11:23Z; ranks were still running at 05:31Z) — every heavy
+> recipe on record inherits this, and `timeout -k 30 <s>` is the suggested
+> repair; (2) the overrun **wedged the container** — `exec` hung, `restart`
+> and `kill` both returned "did not receive an exit event", a later exec
+> failed with "error executing setns process" — and
+> `docker compose up -d --force-recreate` is what recovered it (verified
+> afterwards: exec responds, cap unchanged, zero stray `python3`, load back
+> to baseline).
+> **Next attempt, and it is smoke-tier:** the suspect is **conditioning**,
+> not size — the composed mesh carries the widest cell-size ratio in the
+> `MAT-6` family (0.001 wire / 0.0025 near / 0.025 far inside W = 0.25).
+> Re-run the probe printing KSP iteration counts and residual history, at
+> the intermediate rung `resolution_near` = 0.0035 on the combined fixture.
+> Iterations exploding there rescopes step 10 onto the conditioning; normal
+> iterations leave only `-n 12` (~1.5× at best against a 5.7× gap), which
+> would put step 10 out of reach of a scheduled slot.
+> Probe script parked on `attempt/MAT-6-step10-20260812T053500Z`.
+> **Does not close / does not reopen:** `MAT-6` stays ✅; nothing in §2.1 or
+> the `ANS-1` numbers moves.
+
+*(Original scoping, retained: scoped 2026-08-11, 18:00 review — decision (2);
+the second Part 2c follow-on. Queued as §9 item 4; independent of step 9.)*
 > Two separate routes now reach sub-1% ΔR: box+wire (step 7 Part 2c,
 > **0.8835%** at W = 0.25 / wire 0.001 / slab 0.005) and the slab knob alone
 > (step 8, **0.2829%** at W = 0.15 / wire 0.002 / slab 0.0025). Step 7's
@@ -7405,7 +7444,20 @@ absent: the second licensed discriminator slot is the weekly review's
    that is the more informative reading; report all three ratios and the
    fit, annotate, stop.
 
-4. **`MAT-6` step 10 — do the two sub-1% routes compose? (heavy; probe
+4. 🟡 **ATTEMPTED 2026-08-12, 00:00 slot — probe stop rule fired; not
+   retired, rescope needed.** *The mesh is cheap and measured (**895 974
+   cells**, 66.3 s at `-n 8`, 1.28× the box+wire fixture), but **one
+   projected loaded solve did not finish in ~1 700 s at `-n 8`** — ≥ 5.7×
+   the 300 s stop rule and ~9× step 9's 190.1 s on 595 391 cells, so the
+   cost is not scaling with cell count. **Not memory:** cap re-read at 64 G,
+   host peaked 74 G of 754 G, load 11–12 = compute-bound. No ΔR reading
+   exists. Two harness findings for the review: the container-side
+   `timeout 590` **did not stop the job**, and the overrun **wedged the
+   container** (`exec`/`restart`/`kill` all failed; recovered with
+   `docker compose up -d --force-recreate`, verified clean). Suspect is
+   conditioning, not size; the smoke-tier discriminator is in the §7 entry.
+   Probe parked on `attempt/MAT-6-step10-20260812T053500Z`.* Original text:
+   **`MAT-6` step 10 — do the two sub-1% routes compose? (heavy; probe
    first; measurement only; independent of item 3).** Execute the §7
    step-10 entry verbatim: one loaded + free pair on the combined
    fixture (W = 0.25, `resolution_wire = 0.001`) **plus** step 8's
