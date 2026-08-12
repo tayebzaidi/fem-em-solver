@@ -28,6 +28,13 @@ that solves in the frequency domain needs the complex DolfinX build
   implementation plans).
 - **docs/testing/known-issues.md** — check BEFORE debugging any failing test.
   A set of failures on main predates you; that file says which.
+- **docs/references/** — Jin, *The FEM in Electromagnetics* 3rd ed. is
+  available as searchable per-chapter markdown under
+  `docs/references/jin-fem-3e/` (gitignored, operator-provided; start at
+  `INDEX.md`). Consult it before re-deriving formulation, feed/port-model,
+  boundary-condition, or solver theory; cite chapter/section/equation
+  numbers in plan annotations. Absent on a fresh clone — see
+  `docs/references/README.md`.
 
 ## Hard rules
 

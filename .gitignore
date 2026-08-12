@@ -110,3 +110,8 @@ Thumbs.db
 # tracked-output policy per d3d23c0 — example output does not live in git.
 # Unignored, these trip every implementer preflight: attempts.md 2026-08-04T00:30Z)
 circular_loop_results.txt
+
+# Operator-provided copyrighted reference texts: readable in-repo (the
+# sandbox blocks reads outside it) but never committed or pushed.
+docs/references/*.epub
+docs/references/jin-fem-3e/
