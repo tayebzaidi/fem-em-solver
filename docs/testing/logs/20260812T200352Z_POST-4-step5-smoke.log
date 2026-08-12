@@ -1,0 +1,58 @@
+# Test Run
+- Chunk: POST-4-step5-smoke
+- Commit: 89006f9d1cf84fce5c98ea84f04e33b5198f14f1
+- Time (UTC): 2026-08-12 20:03:52
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 mpiexec -n 2 python3 scripts/probes/post4_step5_probe.py smoke'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 12 15:03 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 120 mpiexec -n 2 python3 scripts/probes/post4_step5_probe.py smoke'\'''
+==============================================================================
+POST-4 step 5 probe — ranks=2 mode=smoke
+==============================================================================
+BLOCKSHAPE A rows=2884 size_local=2596 num_ghosts=288 (rank 0)
+BLOCKSHAPE B rows=2884 size_local=2596 num_ghosts=288 (rank 0)
+BLOCKSHAPE E rows=2884 size_local=2596 num_ghosts=288 (rank 0)
+POINTS mid=400 vtx=343
+DISAGREE RT_A           MID n= 400 rel_max=0.000000e+00 rel_med=0.000000e+00 scaled_max=0.000000e+00 scaled_med=0.000000e+00 rms_src=2.156560e+00
+DISAGREE RT_A           VTX n= 343 rel_max=0.000000e+00 rel_med=0.000000e+00 scaled_max=0.000000e+00 scaled_med=0.000000e+00 rms_src=2.248456e+00
+RT_DOF A max_abs_diff=0.000000e+00 field_max=3.000000e+00 scaled=0.000000e+00
+DISAGREE RT_B           MID n= 400 rel_max=0.000000e+00 rel_med=0.000000e+00 scaled_max=0.000000e+00 scaled_med=0.000000e+00 rms_src=3.822214e+00
+DISAGREE RT_B           VTX n= 343 rel_max=0.000000e+00 rel_med=0.000000e+00 scaled_max=0.000000e+00 scaled_med=0.000000e+00 rms_src=3.975620e+00
+RT_DOF B max_abs_diff=0.000000e+00 field_max=6.000000e+00 scaled=0.000000e+00
+DISAGREE RT_E           MID n= 400 rel_max=0.000000e+00 rel_med=0.000000e+00 scaled_max=0.000000e+00 scaled_med=0.000000e+00 rms_src=5.877439e+00
+DISAGREE RT_E           VTX n= 343 rel_max=0.000000e+00 rel_med=0.000000e+00 scaled_max=0.000000e+00 scaled_med=0.000000e+00 rms_src=6.087327e+00
+RT_DOF E max_abs_diff=0.000000e+00 field_max=9.000000e+00 scaled=0.000000e+00
+------------------------------------------------------------------------------
+COST dg1_vtx_bp bytes=669761 files=4 write_s=0.0024
+COST p1_xdmf   bytes=85663 (xdmf=1983 h5=83680) write_s=0.0047
+COST ratio size_dg1_over_p1=7.8186 time_dg1_over_p1=0.5208
+PROBE_RESULT PASS
+
+## Exit
+- Status: 0
+- Elapsed (s): 1

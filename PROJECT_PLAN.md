@@ -4531,7 +4531,51 @@ is in the point-evaluation path. Owns the open known-issues entry
 > * **Step 5 — price the faithful-export route before the P1-vs-DG1
 >   decision is made (standard; measurement only; scoped 2026-08-12,
 >   03:00 review — the decision input for step 4's open call; does not
->   reopen the chunk).** 🔲 On `examples/mri/01`'s debug preset (9261
+>   reopen the chunk).** ✅ *(executed 2026-08-12, 15:00 slot — **the DG1/VTX
+>   route is faithful and the price is 10.5× on disk, nothing on wall clock**.
+>   Probe `scripts/probes/post4_step5_probe.py`, `-n 2`, complex build, 5 s
+>   (`20260812T200532Z_POST-4-step5-n2.log`, exit 0), fixture identity enforced
+>   (9261 cells, step-4's record). **Anchor (1) — round-trip:** the read-back
+>   `.bp` agrees with the in-memory DG1 function at **exactly 0.000000e+00**,
+>   scaled median *and* max, at both step-4 point sets and independently at dof
+>   level (max |Δ| 0.0 against field maxima 1.35e+03 / 1.65e-05 / 1.59e+04) for
+>   all three fields — against the ≤ 1e-14 bound. ADIOS2 does not degrade the
+>   field; the write path is bit-exact. **Anchor (2) — fidelity to the source:**
+>   the read-back DG1 fields read **3.246992e-17 / 0.0 / 0.0** (midpoint scaled
+>   median, `A`/`B`/`E`; 3.808588e-17 / 0.0 / 0.0 at vertices) where the P1 path
+>   measured in the *same run* reads **51.17084% / 52.47222% / 20.18185%**
+>   relative median. **Negative control:** step 4's refutation pin fires on that
+>   same run — midpoint relative medians reproduce the step-4 record to
+>   **8.19e-9 / 3.65e-7 / 1.24e-7** relative drift and the vertex/midpoint
+>   separations come back **0.4185× / 0.4818× / 0.6835×**, digit-identical to
+>   step 4, so the fixture did not drift and the comparison stands. **Cost, the
+>   number the decision actually turns on:** `.bp` (DG1, 3 fields, BP4) is
+>   **6 936 408 B in 4 files** by tree walk against **661 260 B** for the P1
+>   `.xdmf` + `.h5` — **10.49×** — while the writer is *faster*, 0.0143 s vs
+>   0.0193 s (**0.74×**). So the trade is disk, not time. **Two mechanism facts
+>   measured on the way, neither previously on record and both load-bearing for
+>   any implementation:** (a) in the **complex** build `VTXWriter` has no
+>   complex point-data type and emits **two real arrays per function**,
+>   `<name>_real` and `<name>_imag` — any reader (ParaView included) sees two
+>   real fields, not one complex one
+>   (`20260812T200439Z_POST-4-step5-n2.log`); (b) VTX point data on a
+>   discontinuous space is one point per **dof coordinate**, i.e.
+>   `size_local + num_ghosts` rows per writer rank in dofmap order — the smoke
+>   arm on a unit cube measured 2884 rows against size_local 2596 + 288 ghosts
+>   (`20260812T200352Z_POST-4-step5-smoke.log`), where the real fixture's DG1
+>   space happens to carry no ghosts (18 516 = size_local). A read-back that
+>   assumes owned-only rows silently mis-reconstructs; this probe checks the
+>   extent rather than assuming it. **The smoke arm's first execution FAILed**
+>   (`20260812T200316Z_POST-4-step5-smoke.log`) on exactly that assumption —
+>   committed, not hidden; nothing was loosened, the reconstruction was
+>   corrected. No `src/` change, no example switched its export, `POST-4` stays
+>   ✅. **Open for the review — the call is now priced, not argued:** DG1/VTX
+>   buys exact fidelity for 10.5× disk and no time, and costs a
+>   two-real-arrays-per-field representation of every complex field; "P1 +
+>   caveat" costs O(20–52%) disagreement in every rendered picture. ParaView-side
+>   rendering of DG1 `.bp` is **not** asserted here and cannot be headless — it
+>   remains a dashboard Waiting-on-you one-click operator check.)* Original text:
+>   On `examples/mri/01`'s debug preset (9261
 >   cells, `-n 2`, seconds on record), write the three fields through the
 >   **DG1/VTX route** — `B` (already DG1) directly, `A`/`E` interpolated
 >   N1curl → DG1 (exact per step 4: 3.25e-17 scaled median) — via
@@ -7958,8 +8002,21 @@ the list waits on it.
    makes graded refinement the sole live route — report both tables,
    annotate, stop.
 
-3. **`POST-4` step 5 — price the faithful-export route (standard;
-   measurement only; the decision table for the open DG1-vs-P1 call).**
+3. ✅ **DONE 2026-08-12 (15:00 slot) — the DG1/VTX route is faithful and the
+   price is 10.5× on disk, nothing on wall clock: round-trip agrees with the
+   in-memory DG1 function at exactly 0.000000e+00 (bound 1e-14), the read-back
+   fields read 3.25e-17 / 0.0 / 0.0 against the source where the P1 path reads
+   51.17% / 52.47% / 20.18% in the same run, and step 4's refutation pin fires
+   with the record reproduced to ≤ 3.7e-7 drift and separations 0.4185× /
+   0.4818× / 0.6835× digit-identical. `.bp` 6 936 408 B vs `.xdmf`+`.h5`
+   661 260 B (10.49×); writer 0.0143 s vs 0.0193 s (0.74×, DG1 faster).
+   Two new mechanism facts: complex-build VTX emits `<name>_real`/`<name>_imag`
+   as two real arrays, and VTX point data on a discontinuous space is
+   `size_local + num_ghosts` rows in dofmap order. `POST-4` stays ✅; the call
+   is the review's, now priced. Log `20260812T200532Z_POST-4-step5-n2.log`,
+   exit 0, 5 s.**
+   ~~**`POST-4` step 5 — price the faithful-export route (standard;
+   measurement only; the decision table for the open DG1-vs-P1 call).**~~
    Execute the §7 `POST-4` step-5 entry verbatim: on `examples/mri/01`'s
    debug preset, write `A`/`B`/`E` through the DG1/VTX route, read back,
    and run the step-4 probe against both paths in one command.

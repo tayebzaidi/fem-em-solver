@@ -10665,3 +10665,74 @@ graded-mesh route — scoped against a first-order, near-wire-concentrated error
 map this step dismantled — should be re-derived before anyone builds it, since
 uniform refinement at second order with continuous recovery is then the cheaper
 path.
+
+---
+
+## 2026-08-12T20:07Z — `POST-4` step 5 — **complete**
+
+**Slot.** Scheduled implementer run, 15:00 CDT. Preflight clean, container Up
+14 h. §9 On deck: items 1 and 2 were marked done by earlier slots, so the first
+open item was **3 — `POST-4` step 5**, taken as written.
+
+**What was tried.** New probe `scripts/probes/post4_step5_probe.py`. On the
+`examples/mri/01` debug preset (9261 cells, `-n 2`, complex build), it writes
+`A`/`B`/`E` as DG1 through `VTXWriter` to `.bp`, reads them back through
+ADIOS2, reconstructs DG1 `Function`s on the same space, and measures three
+things in one command: (1) read-back vs in-memory DG1; (2) both routes against
+the source fields at step 4's MID/VTX point sets; (3) writer wall-clock and
+on-disk size, the `.bp` directory sized by tree walk.
+
+**Measured.** All anchors green, exit 0, 5 s
+(`20260812T200532Z_POST-4-step5-n2.log`).
+- Round-trip: **exactly 0.000000e+00**, scaled median and max, at both point
+  sets and independently at dof level, all three fields — bound 1e-14. ADIOS2
+  does not degrade the field.
+- Read-back DG1 vs source: **3.246992e-17 / 0.0 / 0.0** midpoint scaled median
+  (`A`/`B`/`E`), 3.808588e-17 / 0.0 / 0.0 at vertices, against the P1 path's
+  **51.17084% / 52.47222% / 20.18185%** relative median in the same run.
+- Fixture-drift control: step 4's midpoint record reproduced to **8.19e-9 /
+  3.65e-7 / 1.24e-7** relative drift; separations **0.4185× / 0.4818× /
+  0.6835×**, digit-identical to step 4. The refutation pin fires.
+- Cost: `.bp` **6 936 408 B / 4 files** vs `.xdmf`+`.h5` **661 260 B** —
+  **10.49×**; writer **0.0143 s vs 0.0193 s**, i.e. DG1 is **0.74×**, faster.
+  The trade is disk, not time.
+
+**Two mechanism facts, neither previously on record.** (a) In the complex build
+`VTXWriter` has no complex point-data type: it emits **`<name>_real` and
+`<name>_imag` as two real arrays** per function
+(`20260812T200439Z_POST-4-step5-n2.log`), so ParaView sees two real fields, not
+one complex one — load-bearing for any implementation of this route. (b) VTX
+point data on a discontinuous space is one point per **dof coordinate**,
+`size_local + num_ghosts` rows per writer rank in dofmap order; the smoke arm
+measured 2884 rows against size_local 2596 + 288 ghosts
+(`20260812T200352Z_POST-4-step5-smoke.log`), while the real fixture's DG1 space
+happens to have zero ghosts (18 516 rows). A read-back assuming owned-only rows
+mis-reconstructs silently; the probe checks the extent instead of assuming it.
+
+**Logs (all committed, including the failures).**
+`20260812T200316Z_POST-4-step5-smoke.log` — exit 1, the owned-only assumption,
+caught by the smoke arm before any real compute was spent;
+`20260812T200352Z_POST-4-step5-smoke.log` — exit 0, mechanics de-risked;
+`20260812T200425Z_POST-4-step5-n2.log` — exit 1, real-mode build (the recipe in
+the §7 entry omits `source /usr/local/bin/dolfinx-complex-mode`; step 4's
+recorded command has it);
+`20260812T200439Z_POST-4-step5-n2.log` — exit 1, complex `_real`/`_imag` split;
+`20260812T200515Z_POST-4-step5-n2.log` — exit 1, SyntaxError in an edited
+docstring; `20260812T200532Z_POST-4-step5-n2.log` — exit 0, the reading. No
+bound was moved at any point.
+
+**Scope held.** No `src/` change, no example switched its export, `POST-4` stays
+✅ (step 5 was scoped not to reopen it). ParaView-side rendering of DG1 `.bp` is
+not asserted and cannot be headless — it stays a dashboard Waiting-on-you
+one-click operator check.
+
+**Denials / harness notes.** None. `timeout -k 30` on every command; none fired.
+Every arm was seconds, well inside the standard tier.
+
+**Next-attempt hypothesis.** No further attempt at step 5 — the decision table
+is bought. For the review: the DG1-vs-P1 call is now a stated trade (exact
+fidelity + 10.5× disk + no time cost + complex fields split into two real
+arrays, versus O(20–52%) disagreement in every rendered picture), and the
+cheapest thing that would still change it is the operator's one-click ParaView
+check that a DG1 `.bp` renders acceptably — if it does not, the route dies on
+usability regardless of the numbers here.
