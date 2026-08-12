@@ -3479,8 +3479,10 @@ intended reading). Heavy, `-n 8`, three foreground commands.)*
 > cells) 1.051031e+13; composed (0.0025, 895 974 cells) **1.534e+13**. The
 > anchor ratio is **1.693×** against the **1.28×** cell ratio — **1.32× the
 > cell ratio**, where the pre-registered fill-in verdict demanded ≥ 4×
-> (5.12×). Estimated factor entries move less still (2 230 978 496 /
-> 1 621 190 556 = 1.376×). The composed matrix is ordinary for its size.
+> (5.12×). Estimated factor entries move less still (2 230 926 270 /
+> 1 621 116 647 = 1.376×; digits corrected to the logs by the 10:30
+> review audit — the run's plan text had transcribed both slightly off,
+> ratio unaffected). The composed matrix is ordinary for its size.
 > **Negative control PASS and enforced:** the baseline solve read **179.8 s**
 > inside the 178–196 s record at ±25%, and the probe now exits 1 when that
 > band is missed (`MAT6_STEP10_ROLE=baseline`), so the exit code carries the
@@ -3514,7 +3516,14 @@ intended reading). Heavy, `-n 8`, three foreground commands.)*
 > `-n 12`, or MUMPS out-of-core / raised `ICNTL(14)`) timed against the 257 s
 > prediction: near it ⇒ memory pressure owns the gap and step 10 is
 > schedulable; still ~5× long ⇒ parallel load balancing owns it and step 10
-> needs ordering or grading, not a bigger machine.
+> needs ordering or grading, not a bigger machine. *(10:30 review audit
+> note for that commission: the factor-retention change this step landed
+> means the factor now stays resident from `solve()` return until the
+> solver leaves scope, so any post-solve processing on MAT-6-class
+> fixtures runs with ~37–52 GB held against the 64 GiB cap — a headroom
+> run that post-processes in the same scope should account for it, or
+> extract INFOG/RINFOG at solve time and drop the handle per the code
+> comment at `time_harmonic.py:453`.)*
 > Three runs, all with MUMPS verbosity through the existing
 > `solver_petsc_options` passthrough (`core/time_harmonic.py:449` —
 > `mat_mumps_icntl_4: 2` and `-log_view`, so the analysis phase prints
@@ -4772,6 +4781,32 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   mesh is 246 364 cells and step 1 killed a 237 926-cell solve at 180 s
 >   inside MUMPS, so it wants its own `timeout -k 30 590` and exit 124 is
 >   a possible outcome.
+>
+>   **Review decision, 2026-08-12 (10:30 daily review) — the locality
+>   control is re-pointed to the 5 mm-dilated gap boxes, same < 5% band.**
+>   Grounds, from the 06:00 slot's calibration measurements: (a) the claim
+>   the control protects — the PEC-box deficit stays common-mode because
+>   the mesh at the wall 0.08 m away is untouched — is measured satisfied
+>   at every collar width (−0.1658% / −0.3098% / −0.2937% at 5/10/20 mm);
+>   (b) the raw +16.3159% is gmsh's mandatory gradation collar (a size
+>   field stepping 6.0e-4 → 2.5e-3 cannot do it in zero cells), not a leak;
+>   (c) as written the control admits only refinements too weak to answer
+>   the question (the 1.0430× arm passes, the 1.5223× arm fails). The
+>   band itself (< 5%), the estimator bands (0.5 pp), and the tolerances
+>   (0.03 / 0.10) do not move — this re-points the instrument at the claim
+>   it was always meant to test; it does not widen anything. The dilation
+>   width is 5 mm because it is the smallest measured collar that already
+>   contains every added cell. Made by a review, not the incentivized
+>   slot, per the 06:00 entry's own hand-off. **Third attempt (one slot,
+>   re-queued as §9 item 1):** on the parked branch, re-run the mesh arm
+>   at `h_box = 6.0e-4` asserting the re-pointed control (< 5% outside the
+>   5 mm-dilated boxes) plus the standing identities (gap-box volume
+>   1.000000000000, facet tags `[1, 201, 202]`), then buy the solve arm —
+>   `port1_step3bxvi_probe.py solve 6.0e-4`, refined estimator vs 0.894543
+>   at the pre-registered 0.5 pp bands, either band proceeds per
+>   adjudication decision (3). 246 364 cells wants its own
+>   `timeout -k 30 590`; exit 124 is itself a finding ("the refined
+>   fixture does not fit the window at `-n 2`") — report it, park, stop.
 >
 > **Closed steps** *(two-loop air fixture `two_torus_domain`, f = 10 MHz,
 > a = 0.04 m, r_wire = 0.005 m, d = 0.04 m; padding 0.08 / h_far 0.03,
@@ -7645,194 +7680,127 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed 2026-08-12, 03:00 daily review. **Four slots: three landed
-their item, and the fourth returned a decisive stop-rule finding plus two
-harness defects.** 19:30: `POST-4` step 4 ✅ — the export-path P1 artifact
-is bounded and its localization hypothesis **refuted** (midpoint medians
-51.17%/52.47%/20.18%, vertices the *quieter* side; a DG1 target reproduces
-all three sources to round-off, so 100% of it is the P1 continuity
-constraint) — **`POST-4` closes**. 21:00: `MAG-13` step 2 profile — the
-map is measured (|rel| ∝ 1/r, slope −1.069; the profile is a per-cell
-staircase because curl of lowest-order N1curl `A` is cell-wise constant;
-wall band quietest). 22:30: `MAT-6` step 9 ✅ — truncation owns the ΔX
-residual (0.9200 → 0.9849 → 0.9960, free-exponent fit r∞ = 1.0023 at
-p = 3.045 — the dipolar 1/W³ tail the fit was never given), plus a refuted
-negative control handled correctly: ΔR is *not* box-converged (0.3797 pp
-motion, band not widened, fixture integrity carried by two sharper pre-run
-checks). 00:00: `MAT-6` step 10 — the composed fixture meshes (895 974
-cells, 66.3 s) and then **does not solve** (≥ 1 700 s at `-n 8`, ≥ 5.7×
-the stop rule, not memory); the slot also found that container-side
-`timeout` without `-k` does not stop an `mpiexec` job and that the overrun
-wedges the container.
-**Step-3 audit (one auditor per flip): `POST-4` closure COMPLIANT — the
-chunk stands; `MAT-6` step 9 COMPLIANT** (the re-pointed box-invariance
-control is the one judgment call, conspicuously documented, and this
-review signs off on it: band unwidened, failing run committed, fixture
-integrity carried by pre-run assertions); **`MAG-13` step 2 profile
-DEMOTED ✅ → 🧪** — the probe's `main()` returns 0 unconditionally, every
-PASS/FAIL is print-only, and its own smoke log proves the exit code
-carries no information; the numbers are digit-faithful to the log and
-stand as measurements, but §4(c) requires an enforced assertion (item 2
-below is the restoration). Audit nits folded into §7: `POST-4` slot-date
-conflation, "bit-identical" overstated to print-precision, the
-staircase's stray "0.0250" group, `A` mislabeled P1 (it is N1curl).
-Step 2: the tree went dirty mid-review in the best way — an **interactive
-operator session adjudicated the `PORT-1` estimator lineage** against the
-new in-repo Jin reference library and left the edit uncommitted; this
-review landed it verbatim (`bc93f49`), so the second licensed slot's
-decision is spent and **step 3b-xvi is item 1 below**. The step-10 probe
-script was landed from its attempt branch (`cc2e8da`) and the branch
-deleted; the two `attempt/PORT-1-*` branches stay parked per the
-adjudication's decision (6). **Harness repair landed this review:** every
-canonical recipe now reads `timeout -k 30 <s>` (CLAUDE.md, §5, both
-automation protocols; known-issues entry updated — it stays for the
-container-wedge recovery, `docker compose up -d --force-recreate`).
-**Review decisions:** (1) `MAT-6` step 10 rescoped as **step 10a** with a
-solver correction — the run's "KSP iteration" discriminator does not
-exist on a `preonly`+`lu` direct solve (`time_harmonic.py:445`); the
-instrument is MUMPS analysis-phase statistics, which print before numeric
-factorization and survive a kill (item 3). (2) `MAG-13` route — before
-any mesh is graded, price the unpriced alternative: CG1 recovery of
-`curl A` on the solved rung (step 2b, item 4); the re-gate (item 2) is
-independent of it. (3) `POST-4`'s open export call (DG1 vs
-P1-with-caveat) gets its decision table measured first (step 5, item 5);
-the ParaView-side render check goes to Waiting-on-you, not into a gate.
-(4) Composed-ΔR arithmetic note taken up from step 9: composition is read
-on signed ΔZ, never on relative-percent (§7 step-9 annotation). (5) §5.4
-ramp: no example chunk mandated — `POST-4` closed with a caveat about
-exports, not a new capability gate (its step-3 fix already lives in
-`examples/mri/01`), and the `MAT-6`/`MAG-13` steps closed no field gate.
-Waiting-on-you delta: `ANS-1` replication and the runner-results ask
-stand; push is manual and origin sits at `b6e994f` (2026-08-10) — 24
-ahead once this commit lands; new one-click ask incoming from item 5
-(ParaView DG1 render check) when it runs.
+Last reviewed 2026-08-12, 10:30 daily review. **Four slots: two items
+landed and audited compliant, and the other two were the same item's two
+mesh arms — no lost slots, but item 1 consumed half the interval without
+buying its solve.** 04:30: `PORT-1` step 3b-xvi mesh arm — the scoped
+refinement factor is **refuted by measurement** (`cells_across_arc` is
+24.70, not the "~5" inferred from 3b-vi — that count predates 3b-vii's
+arc field; `h_gap ≈ 1.25e-3` would move the wall band 4.2% and compare a
+mesh against itself), while the sub-cell overhang premise is confirmed
+(0.1405 cells across). 06:00: the same step's second arm executed the
+re-scoped recipe — capping the `Box` field's `Thickness` at 5 mm cut the
+locality control +35.4560% → +16.3159%, still over its < 5% band, so the
+slot correctly did not buy the solve; its added collar diagnostic is
+decisive (outside a 5 mm-dilated box the mesh moves −0.1658%) and it
+correctly handed the control re-pointing to a review rather than moving
+a pre-registered control in-slot. 07:30: `MAG-13` step 2 re-gate ✅ —
+smoke rung now **exits 1** at 0/4 gates, real rung 4/4 at exit 0
+reproducing the record digit-identically (263 s); the profile step is
+restored 🧪 → ✅. 09:00: `MAT-6` step 10a ✅ — the attribution is negative:
+estimated factor flops grow **1.693×** for the 1.28× cell ratio against
+the ≥ 4× fill-in verdict, so **fill-in is exonerated** and ≥ 5.1× of the
+9× lives in the numeric phase; two first-of-their-kind leads (MUMPS
+in-core estimate 69 894 MB vs the 65 536 MiB cgroup cap; the kill stack
+in MUMPS's parallel load-balancing receive), and `timeout -k 30`'s first
+composed-fixture kill was clean — footer written, no wedge.
+**Step-3 audit (one auditor per flip): both COMPLIANT.** `MAG-13`
+re-gate + restoration — exit code genuinely derived from the four gates,
+verdict broadcast rank-safe, no bound loosened (the gate constants are
+the pre-demotion record's own digits; the slope pin is a *new*
+constraint). `MAT-6` step 10a — all three footers present including the
+intended exit-124 reading, the baseline band enforced in the probe's
+exit code, scope held (step 10 stays 🟡, `MAT-6` ✅ untouched). Two
+advisory nits folded into §7: the step-10a factor-entry digits were
+transcribed slightly off the logs (corrected, ratio unaffected), and the
+factor-retention lifetime caveat is now stated in the step-10 hand-off
+so the weekly review's memory-headroom run prices it in.
+Step 2: tree clean, no `recovered/*`. Branch dispositions: the two older
+`attempt/PORT-1-*` branches stay parked per adjudication decision (6)
+(nothing lands from a 🟡 park without a gate);
+`attempt/PORT-1-step3bxvi-20260812T093000Z` (`bc6d69c`) stays parked —
+item 1's third attempt continues on it and its `Thickness`-cap +
+diagnostics are needed there.
+**Review decisions:** (1) **The 3b-xvi locality control is re-pointed to
+the 5 mm-dilated gap boxes, < 5% band unchanged** — full grounds and the
+third-attempt recipe in the §7 annotation (the 06:00 calibration shows
+the protected claim is satisfied at every collar width and the control
+as written admits only refinements too weak to answer the question);
+item 1 below is the re-queue, now including the solve arm. (2) The
+operator adjudication's decision-(4) **zero-solve padding fit is
+promoted to a standalone queue item** (item 4) rather than a ride-along
+on an item that has twice run out of slot. (3) `MAT-6` step 10 is the
+**weekly review's to commission** per step 10a's pre-registered
+negative-result clause — deliberately not queued here; the
+discriminator recipe is in the §7 annotation. (4) §5.4 ramp: no example
+chunk — the re-gate restored enforcement of an existing measurement and
+step 10a is attribution; neither closed a new quantitative capability
+gate. Waiting-on-you delta: `ANS-1` replication and the runner-results
+ask stand; origin still at `b6e994f` (2026-08-10) — 28 ahead once this
+commit lands.
 
-Previous interval's digest (2026-08-11 18:00), retained for the audit
-trail: **Four of four slots landed
-again — two consecutive clean sweeps: two steps closed, one measured miss,
-and the cost probe that priced the gate.** 12:00: `MAT-6` step 7 Part 2b —
-the `-n 8` probe read the loaded solve at **179.3 s**, inside the
-pre-committed ≤ ~240 s band, so item 4's skip clause did not fire. 13:30:
-`POST-4` step 3 ✅ — the centerline samples the source fields: spread
-**23.5539% → 0.008613%** across `-n 1/2/4`, a 2735× collapse (≥ 235×
-demanded); the known-issues centerline entry retired with it. 15:00:
-`MAG-13` step 2 — the h = 0.00125 rung is **measured and missed on-rate**,
-5.6494% vs < 5.00% in 278 s; the local rate 1.174 *beats* the 1.10 on
-record, and the 1.10 extrapolation had already predicted 5.95% — the
-prediction was optimistic on its own arithmetic, not the fixture wrong.
-16:30: `MAT-6` step 7 Part 2c ✅ — **closes step 7**: additivity defect
-**−0.080 pp** against the ≤ 0.5 pp band (consistent with ADDITIVE), ΔR
-**0.8835%** on the combined fixture under the unwidened 5% ceiling.
-Step-3 audit: both ✅ flips audited compliant, no demotions. Review
-decisions: `MAG-13` profile before grading; `MAT-6` steps 9/10 scoped;
-§5.4 no example chunk; step-8 promotion deferred pending `ANS-1`.
-*(Full text in `docs/planning/plan-archive.md`, archived 2026-08-12.)*
+Previous interval's digest (2026-08-12 03:00), retained for the audit
+trail: **Four slots: three landed, one decisive stop-rule finding plus
+two harness defects.** `POST-4` step 4 ✅ closed the chunk (P1 artifact
+bounded, localization refuted — 100% the continuity constraint);
+`MAG-13` step 2 profile measured the 1/r + staircase map (audit demoted
+it ✅ → 🧪 for print-only gates; restored by this interval's re-gate);
+`MAT-6` step 9 ✅ (truncation owns ΔX, r∞ = 1.0023 at p = 3.045); `MAT-6`
+step 10 hit its stop rule (composed fixture meshes, then ≥ 1 700 s at
+`-n 8`) and found the plain-`timeout`/container-wedge harness defects —
+every recipe now reads `timeout -k 30 <s>`. The review landed the
+operator session's uncommitted Jin-grounded `PORT-1` adjudication
+verbatim (`bc93f49`), landed the step-10 probe from its branch
+(`cc2e8da`), rescoped step 10 as 10a (MUMPS analysis stats, not the
+nonexistent KSP-iteration count), and queued six items.
+*(Full text in `docs/planning/plan-archive.md`, archived 2026-08-12,
+10:30 review.)*
 
-**Six ready items; all independent of one another** (items 2 and 4 both
+**Five ready items; all independent of one another** (items 2 and 5 both
 re-solve the same recorded `MAG-13` rung, but each carries its own
-identity checks and neither reads the other's output; item 6 is the
-declared brute-force spare on the same question as item 4's route
-decision). Item 1 was inserted by the operator session's adjudication and
-goes first under its licence; this review renumbered it from 0 and folded
-in the new `-k 30` recipe, nothing else.
+identity checks and neither reads the other's output; item 5 is the
+declared brute-force spare on the same question as item 2's route
+decision; item 4 is zero-solve arithmetic and cannot collide with
+anything). Item 1 is the twice-failed 3b-xvi, re-queued under this
+review's control re-pointing per the §9 rescope rule; nothing else in
+the list waits on it.
 
-1. 🟡 **attempted twice, 2026-08-12 04:30 and 06:00 — mesh arm both
-   times, no solve bought; parked on
-   `attempt/PORT-1-step3bxvi-20260812T093000Z` (`bc6d69c`). 04:30 refuted
-   the refinement factor (the feed region is graded, not `h_wire`-sized);
-   06:00 executed that slot's recipe — bounding the `Box` `Thickness` to
-   5 mm cut the locality control +35.4560% → +16.3159%, still over its
-   < 5% band, so the "then buy the solve" clause did not fire. The
-   diagnostic it added shows the control is the wrong instrument: outside
-   a 5 mm-dilated box the move is −0.1658% (−0.3098% at 10 mm, −0.2937%
-   at 20 mm) — the added cells are gmsh's mandatory gradation collar, not
-   a leak toward a PEC wall 0.08 m away. **This item has now failed twice
-   and needs the review to re-point the control before it may reappear**
-   (§7 annotation carries the proposed re-pointing and the solve arm's
-   cost).** **`PORT-1` step 3b-xvi — gap-region h-refinement of
-   the terminal-to-terminal estimator (standard; measurement only; inserted
-   2026-08-12 by the operator session under the §7 adjudication).**
-   Execute the §7 `PORT-1` step 3b-xvi entry verbatim: byte-reproduce the
-   unrefined record first (estimator 0.894543, control 0.922423, deviation
-   −3.0224e-02), mesh-only probe printing cells-across-arc and
-   cells-across-overhang for both meshes, then one solve on the gapped
-   padding-0.08 fixture with a **local** size field halving h in the gap
-   boxes + overhang only (never global). **Anchor:** the refined estimator
-   vs 0.894543 at the pre-registered 0.5 pp bands — either band is a
-   finding and both proceed per adjudication decision (3); report, park on
-   the lineage branch, nothing lands in-slot. **Negative control:** cell
-   count outside the gap region moves < 5% (common-mode box claim); gap-box
-   facet-tag identity 1.000000000000 before any estimator claim. **Cost:**
-   standard, `-n 2`, one `timeout -k 30 600` command (3b-xiii's 344.6 s
-   envelope covers it; `-k 30` folded in by the 03:00 review recipe
-   change). The §7 decision-(4) zero-solve padding fit may ride along
-   if time remains. Tolerances untouched (0.03 / 0.10) under every band.
+1. **`PORT-1` step 3b-xvi, third attempt — re-pointed locality control,
+   then buy the solve (standard; measurement only; continues on
+   `attempt/PORT-1-step3bxvi-20260812T093000Z` at `bc6d69c`).** Execute
+   the §7 10:30 review-decision recipe: mesh arm at `h_box = 6.0e-4`
+   asserting the **re-pointed** control — cell count outside the
+   **5 mm-dilated** gap boxes moves < 5% (calibration on record:
+   −0.1658%) — plus the standing identities (gap-box meshed/analytic
+   volume 1.000000000000, facet tags `[1, 201, 202]`, unrefined record
+   byte-reproduced first), then one solve:
+   `port1_step3bxvi_probe.py solve 6.0e-4`. **Anchor:** the refined
+   estimator beside 0.894543 at the pre-registered 0.5 pp bands —
+   **(converged at the feed)** |Δ| < 0.5 pp ⇒ discretisation exonerated,
+   physics label; **(under-resolved)** |Δ| ≥ 0.5 pp ⇒ the stated
+   systematic becomes the refined reading, discretisation label; either
+   band proceeds per adjudication decision (3), and tolerances
+   0.03 / 0.10 are untouched under every band. **Negative control:** the
+   re-pointed locality control, enforced before the solve is bought; the
+   raw undilated count is printed beside it for the record, never gated.
+   **Cost:** standard, `-n 2`; mesh arms are ~1–2 min on record; the
+   solve is unpriced at 246 364 cells and step 1 killed a 237 926-cell
+   solve at 180 s inside MUMPS — give it its own `timeout -k 30 590`,
+   and **exit 124 is a finding** ("the refined fixture does not fit the
+   window at `-n 2`"), not a failure. **Traps:** the 3b-xiii list (FFCx
+   lock after any kill, complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` first, σ via the DG0 field never a global); the
+   `Thickness` cap and collar diagnostics live on the parked branch —
+   work there, land nothing in-slot. **Scope boundary:** report and park
+   on the lineage branch; `PORT-1` stays 🟡; the control re-pointing is
+   already made (§7, this review) and is not the slot's to re-litigate
+   or extend. **Negative result:** every estimator band is a finding; a
+   control still > 5% outside the *dilated* boxes is new information
+   about the size field itself — report the collar table, park, stop;
+   do not touch the band.
 
-2. ✅ **DONE 2026-08-12, 07:30 slot — gates bite (smoke 0/4, exit 1, 27 s)
-   and the real rung passes 4/4 (exit 0, 263 s) reproducing every recorded
-   number digit-identically; the profile step is restored 🧪 → ✅. Logs
-   `20260812T123217Z_MAG-13-step2-regate-smoke.log` /
-   `20260812T123255Z_MAG-13-step2-regate-n8.log`.**
-   **`MAG-13` step 2 profile re-gate — make the map's checks bite,
-   restore the demoted ✅ (heavy; one edit + one re-run).** Execute the §7
-   step-2-profile-re-gate entry verbatim: gate
-   `mag13_step2_profile.py`'s exit code on its already-computed verdicts —
-   cell count == 1 097 873, ten-point relL2 reproducing 5.6494% to printed
-   digits, four control radii within the existing ±0.05 pp band, and the
-   shape pin (log-log slope in [−1.3, −0.9]; near-wire band relL2 > wall
-   band). **Anchor:** `straight_wire_magnetic_field` per radius, now
-   enforced. **Negative control — run it first:** the smoke rung
-   (`MAG13_STEP2_RES=0.0025`, 26 s on record) must now **exit nonzero**;
-   its 2026-08-12 log FAILed print-only and exited 0, which is the defect
-   being fixed. **Cost:** heavy, `-n 8`, 269 s harness-wall on record +
-   ~30 s smoke; container `timeout -k 30 590`, foreground, real build, no
-   complex mode. **Traps:** the profile entry's list; never background;
-   the `-k 30` is new and mandatory. **Scope boundary:** flips the
-   profile step 🧪 → ✅ only; `MAG-13` chunk untouched; no mesh, no bound,
-   no route decision. **Negative result:** the real rung failing its own
-   reproduction means the fixture drifted since 2026-08-12 — that is a
-   known-issues entry, not a band adjustment; keep 🧪, report and stop.
-
-3. ✅ **DONE 2026-08-12, 09:00 slot — the attribution landed and is
-   negative: estimated factor flops grow 1.693× for the 1.28× cell ratio
-   (1.32× the cell ratio, against the ≥ 4× fill-in threshold), so
-   **fill-in is exonerated** and ≥ 5.1× of the 9× is unexplained by
-   arithmetic. Baseline control PASS and now enforced (179.8 s inside
-   178–196 s ±25%). Two leads for the weekly review: MUMPS estimates
-   69 894 MB in-core factorization space against a 65 536 MiB container
-   cap, and the kill landed inside MUMPS's parallel load-balancing
-   receive. `timeout -k 30` stopped run (3) cleanly — no wedge. Logs
-   `20260812T140222Z_MAT-6-step10a-baseline.log` /
-   `...T140637Z_...-intermediate.log` / `...T141058Z_...-composed.log`
-   (exit 124, the intended reading). Step 10 stays 🟡, handed to the
-   weekly review.**
-   **`MAT-6` step 10a — attribute the 9× composed-fixture solve cost
-   (heavy; measurement only; three commands).** Execute the §7 step-10a
-   entry verbatim: MUMPS verbosity (`mat_mumps_icntl_4: 2` + `-log_view`
-   via `solver_petsc_options`, `time_harmonic.py:449`) on (1) the
-   box+wire baseline (178–196 s solves on record at `-n 8`), (2) the
-   combined fixture at `resolution_near = 0.0035` under
-   `timeout -k 30 590`, (3) the composed 0.0025 fixture under
-   `timeout -k 30 300` — its analysis stats print early and **exit 124
-   with stats in the log is the measurement**. Extend the landed
-   `scripts/probes/mat6_step10_probe.py`. **Anchor:** estimated-factor-
-   flops ratio composed/baseline vs the 1.28× cell ratio; ≥ 4× the cell
-   ratio ⇒ fill-in owns the 9×; ≈ cell ratio ⇒ the `-log_view` phase
-   timings name the owner. **Negative control:** baseline wall clock on
-   its 178–196 s record ± 25%, else the environment moved and the ratios
-   are void. **Cost:** heavy, `-n 8`; ~190 + ≤ 590 + ≤ 300 s solves, two
-   ~66 s meshes, three separate foreground commands. **Traps:** complex
-   build + `FEM_EM_REQUIRE_COMPLEX=1`; **the KSP-iteration discriminator
-   from the 00:00 journal does not exist** — the solver is `preonly`+`lu`;
-   stale FFCx lock after the run-(3) kill (clear `~/.cache/fenics`);
-   force-recreate if the container wedges, and journal it. **Scope
-   boundary:** step 10 stays 🟡, `MAT-6` stays ✅, no ΔR read. **Negative
-   result:** ordinary analysis stats put the pathology in the numeric
-   phase — journal it beside the step-10 annotation and hand step 10 to
-   the weekly review; do not spend `-n 12` on a 5.7× gap.
-
-4. **`MAG-13` step 2b — price higher-order B recovery on the solved rung
-   (heavy; measurement only; independent of item 2).** Execute the §7
+2. **`MAG-13` step 2b — price higher-order B recovery on the solved rung
+   (heavy; measurement only; independent of everything above).** Execute the §7
    step-2b entry verbatim: re-solve the h = 0.00125 rung (267.0 s on
    record), L2-project `curl A` into CG1 (one mass solve, `cg`+`gamg`),
    and evaluate both recoveries on the recorded 45-radius grid.
@@ -7854,7 +7822,7 @@ in the new `-k 30` recipe, nothing else.
    makes graded refinement the sole live route — report both tables,
    annotate, stop.
 
-5. **`POST-4` step 5 — price the faithful-export route (standard;
+3. **`POST-4` step 5 — price the faithful-export route (standard;
    measurement only; the decision table for the open DG1-vs-P1 call).**
    Execute the §7 `POST-4` step-5 entry verbatim: on `examples/mri/01`'s
    debug preset, write `A`/`B`/`E` through the DG1/VTX route, read back,
@@ -7876,8 +7844,40 @@ in the new `-k 30` recipe, nothing else.
    round-trip kills the DG1 route and makes "P1 + caveat" the standing
    answer — report, annotate, stop.
 
-6. **`MAG-13` step 2 rung 3 — the < 5% wire by brute force (heavy; the
-   spare; same question as item 4's route decision, other route).**
+4. **`PORT-1` adjudication decision-(4) padding fit — state the box term
+   as a number (smoke; zero-solve; arithmetic on recorded digits;
+   commissioned 2026-08-12 by the operator-session adjudication, promoted
+   to a standalone item by the 10:30 review).** Apply `MAT-6` step 9's
+   free-exponent form — deficit(W) = D∞ + C·W^(−p) — to 3b-xi's three
+   recorded padding rungs (−8.0324 / −5.0256 / −3.2733 pp at
+   W = 0.08 / 0.10 / 0.12); three points, three parameters, exactly
+   determined. **Anchor:** the recovered exponent p reported beside
+   `MAT-6` step 9's blind p = 3.045 and the dipolar expectation p = 3;
+   the deliverable is **D∞, the extrapolated box-free deficit** the
+   port-pair gate will state instead of "the suspect". **Negative
+   control (the ceiling, stated up front):** exact determination means
+   zero residual by construction — no goodness-of-fit claim exists and
+   the item must not manufacture one; the enforced assertions are
+   **p > 0** and **|D∞| < 3.2733 pp** (a monotonically decaying tail
+   cannot extrapolate above its smallest measured rung), and the script
+   exits nonzero on either miss. Seed the solve at p = 3. **Cost:**
+   smoke, `-n 1`, seconds — numpy in the container, through
+   `run_and_log.sh` like everything else; no mesh, no solve, no complex
+   mode needed. **Traps:** the deficits are signed — composition is read
+   on signed ΔZ, never relative-percent (§7 `MAT-6` step-9 note); use
+   the recorded digits verbatim, re-solve nothing; a nonlinear
+   three-equation solve can silently converge to a complex or negative-p
+   root — assert, don't assume. **Scope boundary:** annotates the §7
+   3b-xi entry and pre-states the port-pair gate's box term; closes
+   nothing; `PORT-1` stays 🟡; independent of item 1 in both directions.
+   **Negative result:** a fit violating p > 0 or the D∞ bound says the
+   three rungs do not support a power-law tail — journal that in the
+   3b-xi annotation and the port-pair gate states the box term
+   unextrapolated, labeled "suspect, three rungs non-power-law"; report,
+   annotate, stop.
+
+5. **`MAG-13` step 2 rung 3 — the < 5% wire by brute force (heavy; the
+   spare; same question as item 2's route decision, other route).**
    Execute the §7 step-2-rung-3 entry verbatim: mesh + one solve of
    h ≈ 0.001127 (~1.50 M cells at 1.37× the 1 097 873 on record), `-n 8`,
    foreground, tool `timeout` 660000 ms, container `timeout -k 30 590`.
@@ -7889,7 +7889,7 @@ in the new `-k 30` recipe, nothing else.
    cost scales with cell count — an assumption, declared**: the 590 s
    container window holds it only with thin margin, and **exit 124 is
    the measurement** ("~1.5 M cells does not fit the window at `-n 8`"),
-   not a failure. **Traps:** item 2's list verbatim. **Scope boundary:**
+   not a failure. **Traps:** the §7 profile entry's list verbatim; never background; container `timeout -k 30 590`. **Scope boundary:**
    `MAG-13` stays ✅ at its recorded numbers either way; a green < 5%
    annotates the entry and the MAG follow-up bullet; it does not retire
    the graded route, which stays the cheaper path for any future rung.
