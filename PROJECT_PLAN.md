@@ -3202,10 +3202,62 @@ operator direction.)*
 > any future sub-1% claim needs a finite-cross-section closed form or a
 > thinner wire, not more mesh; report both numbers, annotate here, stop.
 
-**`MAT-6` step 9 — ΔX box-truncation attribution: the third W rung** 🔲
-*(scoped 2026-08-11, 18:00 review — decision (2); this is the first of the
-two follow-ons the step-7 Part 2c entry flagged for a review. Queued as §9
-item 3.)*
+**`MAT-6` step 9 — ΔX box-truncation attribution: the third W rung** ✅
+*(2026-08-12, 22:30 run; `20260812T034631Z_MAT-6-step9-gate-final.log`,
+9 passed, 427 s, heavy, `-n 8`, complex build; probe
+`20260812T033054Z_MAT-6-step9-probe.log` (595 391 cells, one solve 271.3 s at
+`-n 4`, inside the 300 s stop rule); superseded first gate run
+`20260812T033830Z_MAT-6-step9-gate-n8.log` (1 failed / 8 passed — the refuted
+control below), whose ΔZ is bit-identical to the final run's.)*
+> **Truncation owns the ΔX residual.** The third rung lands the projected
+> coarse-wire trend at **0.9200 (W = 0.15) → 0.9849 (0.25) → 0.9960 (0.35)**,
+> and the free-exponent power-law fit `ratio(W) = r∞ − C·W^(−p)` through the
+> three points extrapolates to **r∞ = 1.0023 at p = 3.045**, i.e. **+0.226 pp**
+> from unity against the pre-decided ≤ 1 pp band. The measured exponent is the
+> physics: a current loop's truncated far field is dipolar, and p ≈ 3 is what a
+> 1/W³ tail predicts — the fit was not given that exponent, it recovered it.
+> Step 7 Part 2c's unattributed last ~1.6% of ΔX is therefore box truncation,
+> and the finite-cross-section reference is **not** needed to explain it.
+> **Cost:** 595 391 cells (4.30× the W = 0.15 baseline, 1.98× W = 0.25 — the
+> growth is far-field-dominated at `resolution_far = 0.025`), mesh 37.7 s,
+> solves 190.1 s + 197.2 s at `-n 8`. Run at `-n 8`, not `-n 2`: the probe
+> priced one solve at 271.3 s at `-n 4`, so a `-n 2` pair is ~18 min and does
+> not fit one foreground command; every reduction in the reaction integral and
+> the current is imported verbatim from the step-2b/step-3 modules that CI
+> exercises at `-n 2`, and step 7 Part 2 established `-n 8` on this fixture
+> family. Two independent gate runs produced bit-identical ΔZ.
+>
+> **A negative control was refuted by its own first run, and the refutation is
+> the step's second finding.** The module asserted ΔR *box-invariance* — on
+> record ΔR moves 1.5834% → 1.5763% across W = 0.15 → 0.25, 0.0071 pp — inside
+> a 0.10 pp band set at ~14× that wobble. W = 0.35 moved it **0.3797 pp, to
+> 1.1966%**: 53× the wobble, 3.8× the band. **The band was not widened** (§7's
+> standing rule); the premise is what the measurement disproved. The hypothesis
+> that control existed to exclude — "the mesh changed under the fixture, so the
+> ΔX trend is meaningless" — is separately excluded by two sharper checks that
+> both passed inside bands fixed *before* the run: the cell count is the
+> probe's exact 595 391, and the drive current I' is invariant to **5.92e-08 A**
+> against a 2e-4 A band. So the fixture is intact and **ΔR is simply not
+> box-converged at W = 0.25**: it carries a truncation term of its own, worth
+> ~0.38 pp, which step 8's error budget could not see because it held W = 0.15
+> fixed. The test is retained as a measurement, asserting only the direction
+> the truncation hypothesis predicts (a bigger box truncates less, so the ΔR
+> error shrinks) — recorded in-module as a consistency check written after the
+> sign was seen, **not** one of the assertions carrying §4. Those are the 5% ΔR
+> ceiling, the exact cell count, and the pre-run I' band.
+> **For the review:** the ΔR reading is new information for the step-8 budget —
+> box truncation and skin-depth resolution are now both live ΔR terms, measured
+> on disjoint fixtures (W = 0.35/slab 0.005 here; W = 0.15/slab 0.0025 there),
+> and whether they compose is the same question step 10 asks of the other pair.
+> **Does not close / does not reopen:** `MAT-6` stays ✅; **no ΔX band was
+> written or tightened** — the extrapolated endpoint is the input to a future
+> gate-authoring step, which stays deferred per the 18:00 review decision;
+> §2.1's landed 1.58% and the `ANS-1` numbers are the landed fixture's and do
+> not move; saline/Larmor stays unlicensed.
+
+*(Original scoping, retained: scoped 2026-08-11, 18:00 review — decision (2);
+this is the first of the two follow-ons the step-7 Part 2c entry flagged for a
+review. Queued as §9 item 3.)*
 > Step 7 Part 2c left ΔX converging to ~0.98, not 1.00, with the last
 > ~1.6% unattributed; box truncation at W = 0.25 is the named suspect, and
 > step 4's own sweep — projected ratio **0.9200 at W = 0.15 → 0.9849 at
@@ -7313,8 +7365,20 @@ absent: the second licensed discriminator slot is the weekly review's
    uniform rung (item 5) becomes the honest route — report the profile
    table, annotate the §7 entry, stop.
 
-3. **`MAT-6` step 9 — ΔX box-truncation attribution: the third W rung
-   (heavy; probe first; measurement only).** Execute the §7 step-9 entry
+3. ✅ **DONE 2026-08-12, 22:30 slot** — **`MAT-6` step 9 — ΔX box-truncation
+   attribution: the third W rung (heavy; probe first; measurement only).**
+   *Measured, and the attribution lands: the projected coarse-wire trend is
+   **0.9200 → 0.9849 → 0.9960** and the free-exponent fit extrapolates to
+   **r∞ = 1.0023 at p = 3.045**, +0.226 pp from unity against the ≤ 1 pp band —
+   **truncation owns** step 7 Part 2c's unattributed ~1.6%, and the recovered
+   p ≈ 3 is the dipolar 1/W³ tail the fit was never given. Probe 595 391 cells /
+   271.3 s at `-n 4` (inside the 300 s stop rule); gate at `-n 8` because a
+   `-n 2` pair is ~18 min. **Second finding — a negative control refuted:**
+   ΔR was **not** box-invariant, improving 1.5763% → **1.1966%** (0.3797 pp, 53×
+   the on-record wobble). The band was not widened; the fixture is intact (cell
+   count exact, I' invariant to 5.92e-08 A, both pre-run bands), so ΔR carries
+   its own ~0.38 pp truncation term that step 8's fixed-W budget could not see.
+   No ΔX band written or tightened; `MAT-6` stays ✅.* Original text: Execute the §7 step-9 entry
    verbatim: W = 0.35 at **coarse wire** (`resolution_wire = 0.002`),
    projected drive only, loaded + free pair, extending step 4's two-point
    sweep 0.9200 (W = 0.15) → 0.9849 (W = 0.25). **Probe first, point of

@@ -9986,3 +9986,91 @@ directly rather than shrinking h. (b) is the untested one and would be a
 one-slot measurement on the *already-solved* rung if the solve were cached;
 it is not, so it costs the same 267 s. Both touch the fixture, so both are a
 review's call.
+
+---
+
+## 2026-08-12T03:53Z — `MAT-6` step 9 — **complete**
+
+**Item.** §9 On-deck item 3 (items 1 and 2 already marked done), executed as
+written: ΔX box-truncation attribution, the third W rung at W = 0.35, coarse
+wire (`resolution_wire` = 0.002), projected drive only, one loaded + free pair.
+Measurement only; no ΔX band written or tightened; `MAT-6` stays ✅.
+
+**What was done.** New module
+`tests/validation/test_dodd_deeds_reactance_box_truncation.py`, modelled on the
+step-4 box-size module: geometry, tags, current density and `_solve_projected`
+imported from `test_dodd_deeds_impedance.py` / `test_dodd_deeds_projected_drive.py`,
+nothing restated, only `box_half_width` moved. The cost probe reused
+`scripts/probes/mat6_step4_probe.py` unchanged via its `MAT6_STEP4_W` env knob
+rather than adding a near-duplicate script.
+
+**Numbers.**
+- Probe (`20260812T033054Z_MAT-6-step9-probe.log`, exit 0, 317 s): **595 391
+  cells** / 699 036 dofs, mesh 42.7 s, **one projected loaded solve 271.3 s at
+  `-n 4`** — inside §7's 300 s stop rule, so the point of no return was passed
+  legitimately. 4.30× the W = 0.15 baseline, 1.98× W = 0.25.
+- Gate (`20260812T034631Z_MAT-6-step9-gate-final.log`, exit 0, **427 s**,
+  heavy, `-n 8`, complex build): **9 passed**. Mesh 37.7 s, solves 190.1 s +
+  197.2 s. FEM `dZ = +3.2645640e-01 + j(-6.1342268e-01) Ω` vs exact
+  `+3.2259615e-01 + j(-6.1586749e-01) Ω`.
+- **Primary reading:** ΔX ratio trend **0.9200 (W = 0.15) → 0.9849 (0.25) →
+  0.9960 (0.35)**; free-exponent fit `ratio = r∞ − C·W^(−p)` through the three
+  points gives **r∞ = 1.0023, p = 3.045**, i.e. **+0.226 pp** from unity
+  against the pre-decided ≤ 1 pp band → **truncation owns** the residual.
+  p ≈ 3 is the dipolar 1/W³ tail; the fit was not given the exponent.
+- ΔR rel. error **1.1966%** (5% ceiling, inherited, passed); I' = 0.919666 A.
+
+**Rank count deviates from the §7 entry, deliberately and on the probe's
+evidence.** §7 said gate at `-n 2`, splitting by `-k` if the pair exceeds one
+ceiling. There is only one drive here (projected), so `-k` has nothing to split
+on, and 271.3 s/solve at `-n 4` prices a `-n 2` pair at ~18 min — outside one
+foreground command, and backgrounding is forbidden. Ran at `-n 8`: every
+reduction (reaction integral, current, cell count) is imported verbatim from
+modules CI exercises at `-n 2`, and step 7 Part 2 established `-n 8` on this
+fixture family.
+
+**A negative control was refuted by its own first run.** The module asserted ΔR
+*box-invariance* (on record 1.5834% → 1.5763% across W = 0.15 → 0.25, 0.0071 pp)
+inside a 0.10 pp band, ~14× that wobble. The first gate run
+(`20260812T033830Z_MAT-6-step9-gate-n8.log`, exit 1, **1 failed / 8 passed**,
+398 s) measured **0.3797 pp** of motion, to ΔR = 1.1966% — 53× the wobble.
+**The band was not widened.** The premise is what the measurement disproved,
+and the hypothesis the control existed to exclude ("the mesh changed under the
+fixture, so the ΔX trend is meaningless") is separately excluded by two sharper
+checks that passed inside bands fixed *before* the run: cell count exactly the
+probe's 595 391, and I' invariant to **5.92e-08 A** against a 2e-4 A band. So
+ΔR is simply **not box-converged at W = 0.25** and carries its own ~0.38 pp
+truncation term, invisible to step 8's budget because that held W = 0.15 fixed.
+The test was re-pointed to measure the magnitude and assert only the direction
+truncation predicts (bigger box ⇒ smaller ΔR error) — flagged in-module and in
+§7 as a consistency check authored *after* the sign was seen, and explicitly
+**not** one of the assertions carrying §4. Those are the 5% ΔR ceiling, the
+exact cell count, and the pre-run I' band. The superseded failing run is
+journaled here and cited in §7, not hidden; its ΔZ is bit-identical to the
+final run's, so the re-point changed no measured number.
+
+**Traps met.** None fired. Complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+`tests/environment` first in the pytest path list. `project_source=False` pins
+untouched (the pinned module was not imported at all — projected drive only).
+No stale FFCx lock. Foreground throughout; the turn never ended while the
+harness ran. `assemble_scalar` allreduced before forming ΔZ; cell count
+allreduced; all printing on rank 0. Scope boundary held: no ΔX band, no change
+to `src/`, no production-fixture change, §2.1 and the `ANS-1` numbers untouched.
+No unrelated failure appeared, so no known-issues change.
+
+**Status flips landed with this commit.** §7 `MAT-6` step 9 🔲 → ✅ (original
+scoping retained verbatim beneath the annotation); §9 item 3 marked done with
+its original text retained. `MAT-6` itself stays ✅.
+
+**Next-attempt hypothesis (nothing owed on this step; one question for the
+review).** The ΔR finding is the live thread: box truncation (~0.38 pp, this
+run) and skin-depth resolution (~1.30 pp, step 8) are now both measured ΔR
+terms, but on **disjoint** fixtures — W = 0.35 / slab 0.005 here, W = 0.15 /
+slab 0.0025 there. Whether they compose is exactly the question §9 item 4
+(step 10) asks of the *other* pair, and a step-10-shaped follow-on at
+W = 0.35 + slab 0.0025 would predict ΔR near 1.1966% − 1.3005% < 0, i.e. the
+two terms plainly cannot both be simple additive offsets in *percent* — the
+composition must be read on the signed FEM value, not the relative error. That
+arithmetic is worth the review's attention before any further ΔR rung is
+commissioned. Also unpriced: whether the ΔX endpoint 1.0023 survives at fine
+wire, which additivity (step 7 Part 2c, −0.080 pp) predicts but did not test.
