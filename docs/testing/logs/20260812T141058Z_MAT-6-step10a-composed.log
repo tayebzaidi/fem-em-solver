@@ -1,0 +1,898 @@
+# Test Run
+- Chunk: MAT-6-step10a-composed
+- Commit: fb731871fb127b1849b1db8ccc6ff78ae9b02d49
+- Time (UTC): 2026-08-12 14:10:58
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T -e MAT6_STEP10_RESOLUTION_NEAR=0.0025 -e MAT6_STEP10_ROLE=composed -e MAT6_STEP10_MUMPS_VERBOSE=1 -e FEM_EM_REQUIRE_COMPLEX=1 -e GFORTRAN_UNBUFFERED_ALL=y -e PETSC_OPTIONS=-log_view fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 8 python3 scripts/probes/mat6_step10_probe.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 06:08 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 12 09:10 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 06:08 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T -e MAT6_STEP10_RESOLUTION_NEAR=0.0025 -e MAT6_STEP10_ROLE=composed -e MAT6_STEP10_MUMPS_VERBOSE=1 -e FEM_EM_REQUIRE_COMPLEX=1 -e GFORTRAN_UNBUFFERED_ALL=y -e PETSC_OPTIONS=-log_view fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 8 python3 scripts/probes/mat6_step10_probe.py'\'''
+[MAT-6 step 10 probe] role = composed, mumps_verbose = 1; W = 0.25 m, resolution_wire = 0.001 m, resolution_near = 0.0025 m (6.36 cells per skin depth) at -n 8; on record 697401 (box+wire) and 417914 (slab alone)
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 50%] Meshing curve 11 (Line)
+Info    : [ 50%] Meshing curve 12 (Line)
+Info    : [ 60%] Meshing curve 13 (Line)
+Info    : [ 60%] Meshing curve 14 (Line)
+Info    : [ 70%] Meshing curve 15 (Line)
+Info    : [ 70%] Meshing curve 16 (Line)
+Info    : [ 80%] Meshing curve 17 (Line)
+Info    : [ 80%] Meshing curve 18 (Line)
+Info    : [ 90%] Meshing curve 19 (Line)
+Info    : [ 90%] Meshing curve 20 (Line)
+Info    : [100%] Meshing curve 21 (Line)
+Info    : [100%] Meshing curve 22 (Line)
+Info    : Done meshing 1D (Wall 0.072595s, CPU 0.072595s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.618093s, CPU 0.616716s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 3 volumes with 1 connected component
+Info    : Tetrahedrizing 12635 nodes...
+Info    : Done tetrahedrizing 12643 nodes (Wall 0.331872s, CPU 0.307715s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.665415s, CPU 0.60503s)
+Info    : Found volume 4
+Info    : Found volume 3
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 143.588 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 6.63076 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 5.06189 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 4.399 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 3.99115 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 3.677 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 3.68042 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 3.28855 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 3.15063 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 3.03136 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 2.93174 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 2.84324 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 2.76243 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 2.69103 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 2.6251 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 2.56488 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 2.51375 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 2.46863 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 2.42201 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 2.38143 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 2.34305 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 2.30802 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 2.27251 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 2.23767 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 2.20753 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 2.17856 (nodes removed 0 0)
+Info    : It. 13000 - 13000 nodes created - worst tet radius 2.15031 (nodes removed 0 0)
+Info    : It. 13500 - 13500 nodes created - worst tet radius 2.12381 (nodes removed 0 0)
+Info    : It. 14000 - 14000 nodes created - worst tet radius 2.09718 (nodes removed 0 0)
+Info    : It. 14500 - 14500 nodes created - worst tet radius 2.07124 (nodes removed 0 0)
+Info    : It. 15000 - 15000 nodes created - worst tet radius 2.0484 (nodes removed 0 0)
+Info    : It. 15500 - 15500 nodes created - worst tet radius 2.02628 (nodes removed 0 0)
+Info    : It. 16000 - 16000 nodes created - worst tet radius 2.00486 (nodes removed 0 0)
+Info    : It. 16500 - 16500 nodes created - worst tet radius 1.9849 (nodes removed 0 0)
+Info    : It. 17000 - 17000 nodes created - worst tet radius 1.96623 (nodes removed 0 0)
+Info    : It. 17500 - 17500 nodes created - worst tet radius 1.94818 (nodes removed 0 0)
+Info    : It. 18000 - 18000 nodes created - worst tet radius 1.92807 (nodes removed 0 0)
+Info    : It. 18500 - 18500 nodes created - worst tet radius 1.91091 (nodes removed 0 0)
+Info    : It. 19000 - 19000 nodes created - worst tet radius 1.89442 (nodes removed 0 0)
+Info    : It. 19500 - 19500 nodes created - worst tet radius 1.87826 (nodes removed 0 0)
+Info    : It. 20000 - 20000 nodes created - worst tet radius 1.86266 (nodes removed 0 0)
+Info    : It. 20500 - 20500 nodes created - worst tet radius 1.84811 (nodes removed 0 0)
+Info    : It. 21000 - 21000 nodes created - worst tet radius 1.83181 (nodes removed 0 0)
+Info    : It. 21500 - 21500 nodes created - worst tet radius 1.81781 (nodes removed 0 0)
+Info    : It. 22000 - 22000 nodes created - worst tet radius 1.80366 (nodes removed 0 0)
+Info    : It. 22500 - 22500 nodes created - worst tet radius 1.7906 (nodes removed 0 0)
+Info    : It. 23000 - 23000 nodes created - worst tet radius 1.77834 (nodes removed 0 0)
+Info    : It. 23500 - 23500 nodes created - worst tet radius 1.76419 (nodes removed 0 0)
+Info    : It. 24000 - 24000 nodes created - worst tet radius 1.75136 (nodes removed 0 0)
+Info    : It. 24500 - 24500 nodes created - worst tet radius 1.73943 (nodes removed 0 0)
+Info    : It. 25000 - 25000 nodes created - worst tet radius 1.72866 (nodes removed 0 0)
+Info    : It. 25500 - 25500 nodes created - worst tet radius 1.71796 (nodes removed 0 0)
+Info    : It. 26000 - 26000 nodes created - worst tet radius 1.70757 (nodes removed 0 0)
+Info    : It. 26500 - 26498 nodes created - worst tet radius 1.70611 (nodes removed 0 2)
+Info    : It. 27000 - 26998 nodes created - worst tet radius 1.68703 (nodes removed 0 2)
+Info    : It. 27500 - 27498 nodes created - worst tet radius 1.6765 (nodes removed 0 2)
+Info    : It. 28000 - 27998 nodes created - worst tet radius 1.66648 (nodes removed 0 2)
+Info    : It. 28500 - 28498 nodes created - worst tet radius 1.65655 (nodes removed 0 2)
+Info    : It. 29000 - 28998 nodes created - worst tet radius 1.64717 (nodes removed 0 2)
+Info    : It. 29500 - 29498 nodes created - worst tet radius 1.63799 (nodes removed 0 2)
+Info    : It. 30000 - 29998 nodes created - worst tet radius 1.6291 (nodes removed 0 2)
+Info    : It. 30500 - 30498 nodes created - worst tet radius 1.62083 (nodes removed 0 2)
+Info    : It. 31000 - 30998 nodes created - worst tet radius 1.61241 (nodes removed 0 2)
+Info    : It. 31500 - 31498 nodes created - worst tet radius 1.60399 (nodes removed 0 2)
+Info    : It. 32000 - 31998 nodes created - worst tet radius 1.59624 (nodes removed 0 2)
+Info    : It. 32500 - 32498 nodes created - worst tet radius 1.58831 (nodes removed 0 2)
+Info    : It. 33000 - 32998 nodes created - worst tet radius 1.5804 (nodes removed 0 2)
+Info    : It. 33500 - 33498 nodes created - worst tet radius 1.57299 (nodes removed 0 2)
+Info    : It. 34000 - 33998 nodes created - worst tet radius 1.56551 (nodes removed 0 2)
+Info    : It. 34500 - 34498 nodes created - worst tet radius 1.55773 (nodes removed 0 2)
+Info    : It. 35000 - 34998 nodes created - worst tet radius 1.55044 (nodes removed 0 2)
+Info    : It. 35500 - 35498 nodes created - worst tet radius 1.5425 (nodes removed 0 2)
+Info    : It. 36000 - 35998 nodes created - worst tet radius 1.53549 (nodes removed 0 2)
+Info    : It. 36500 - 36498 nodes created - worst tet radius 1.52847 (nodes removed 0 2)
+Info    : It. 37000 - 36998 nodes created - worst tet radius 1.52155 (nodes removed 0 2)
+Info    : It. 37500 - 37498 nodes created - worst tet radius 1.51481 (nodes removed 0 2)
+Info    : It. 38000 - 37998 nodes created - worst tet radius 1.50865 (nodes removed 0 2)
+Info    : It. 38500 - 38498 nodes created - worst tet radius 1.50224 (nodes removed 0 2)
+Info    : It. 39000 - 38998 nodes created - worst tet radius 1.49559 (nodes removed 0 2)
+Info    : It. 39500 - 39498 nodes created - worst tet radius 1.48909 (nodes removed 0 2)
+Info    : It. 40000 - 39998 nodes created - worst tet radius 1.4828 (nodes removed 0 2)
+Info    : It. 40500 - 40498 nodes created - worst tet radius 1.47702 (nodes removed 0 2)
+Info    : It. 41000 - 40998 nodes created - worst tet radius 1.47105 (nodes removed 0 2)
+Info    : It. 41500 - 41498 nodes created - worst tet radius 1.46533 (nodes removed 0 2)
+Info    : It. 42000 - 41998 nodes created - worst tet radius 1.4593 (nodes removed 0 2)
+Info    : It. 42500 - 42498 nodes created - worst tet radius 1.45345 (nodes removed 0 2)
+Info    : It. 43000 - 42998 nodes created - worst tet radius 1.44829 (nodes removed 0 2)
+Info    : It. 43500 - 43498 nodes created - worst tet radius 1.44256 (nodes removed 0 2)
+Info    : It. 44000 - 43998 nodes created - worst tet radius 1.43679 (nodes removed 0 2)
+Info    : It. 44500 - 44498 nodes created - worst tet radius 1.47679 (nodes removed 0 2)
+Info    : It. 45000 - 44998 nodes created - worst tet radius 1.42607 (nodes removed 0 2)
+Info    : It. 45500 - 45498 nodes created - worst tet radius 1.42078 (nodes removed 0 2)
+Info    : It. 46000 - 45998 nodes created - worst tet radius 1.41616 (nodes removed 0 2)
+Info    : It. 46500 - 46498 nodes created - worst tet radius 1.41085 (nodes removed 0 2)
+Info    : It. 47000 - 46998 nodes created - worst tet radius 1.40547 (nodes removed 0 2)
+Info    : It. 47500 - 47498 nodes created - worst tet radius 1.40053 (nodes removed 0 2)
+Info    : It. 48000 - 47998 nodes created - worst tet radius 1.39575 (nodes removed 0 2)
+Info    : It. 48500 - 48498 nodes created - worst tet radius 1.39107 (nodes removed 0 2)
+Info    : It. 49000 - 48998 nodes created - worst tet radius 1.38625 (nodes removed 0 2)
+Info    : It. 49500 - 49498 nodes created - worst tet radius 1.38197 (nodes removed 0 2)
+Info    : It. 50000 - 49998 nodes created - worst tet radius 1.38116 (nodes removed 0 2)
+Info    : It. 50500 - 50498 nodes created - worst tet radius 1.37315 (nodes removed 0 2)
+Info    : It. 51000 - 50998 nodes created - worst tet radius 1.36874 (nodes removed 0 2)
+Info    : It. 51500 - 51498 nodes created - worst tet radius 1.36405 (nodes removed 0 2)
+Info    : It. 52000 - 51998 nodes created - worst tet radius 1.35969 (nodes removed 0 2)
+Info    : It. 52500 - 52498 nodes created - worst tet radius 1.35527 (nodes removed 0 2)
+Info    : It. 53000 - 52998 nodes created - worst tet radius 1.35067 (nodes removed 0 2)
+Info    : It. 53500 - 53498 nodes created - worst tet radius 1.34638 (nodes removed 0 2)
+Info    : It. 54000 - 53998 nodes created - worst tet radius 1.34225 (nodes removed 0 2)
+Info    : It. 54500 - 54498 nodes created - worst tet radius 1.33814 (nodes removed 0 2)
+Info    : It. 55000 - 54998 nodes created - worst tet radius 1.3345 (nodes removed 0 2)
+Info    : It. 55500 - 55498 nodes created - worst tet radius 1.33047 (nodes removed 0 2)
+Info    : It. 56000 - 55998 nodes created - worst tet radius 1.32651 (nodes removed 0 2)
+Info    : It. 56500 - 56498 nodes created - worst tet radius 1.32276 (nodes removed 0 2)
+Info    : It. 57000 - 56998 nodes created - worst tet radius 1.31913 (nodes removed 0 2)
+Info    : It. 57500 - 57498 nodes created - worst tet radius 1.31543 (nodes removed 0 2)
+Info    : It. 58000 - 57998 nodes created - worst tet radius 1.31174 (nodes removed 0 2)
+Info    : It. 58500 - 58498 nodes created - worst tet radius 1.30822 (nodes removed 0 2)
+Info    : It. 59000 - 58998 nodes created - worst tet radius 1.30463 (nodes removed 0 2)
+Info    : It. 59500 - 59498 nodes created - worst tet radius 1.30099 (nodes removed 0 2)
+Info    : It. 60000 - 59998 nodes created - worst tet radius 1.29749 (nodes removed 0 2)
+Info    : It. 60500 - 60498 nodes created - worst tet radius 1.29417 (nodes removed 0 2)
+Info    : It. 61000 - 60998 nodes created - worst tet radius 1.29059 (nodes removed 0 2)
+Info    : It. 61500 - 61498 nodes created - worst tet radius 1.28698 (nodes removed 0 2)
+Info    : It. 62000 - 61998 nodes created - worst tet radius 1.28364 (nodes removed 0 2)
+Info    : It. 62500 - 62498 nodes created - worst tet radius 1.28016 (nodes removed 0 2)
+Info    : It. 63000 - 62998 nodes created - worst tet radius 1.27691 (nodes removed 0 2)
+Info    : It. 63500 - 63498 nodes created - worst tet radius 1.2738 (nodes removed 0 2)
+Info    : It. 64000 - 63998 nodes created - worst tet radius 1.27038 (nodes removed 0 2)
+Info    : It. 64500 - 64498 nodes created - worst tet radius 1.26731 (nodes removed 0 2)
+Info    : It. 65000 - 64998 nodes created - worst tet radius 1.26408 (nodes removed 0 2)
+Info    : It. 65500 - 65498 nodes created - worst tet radius 1.26076 (nodes removed 0 2)
+Info    : It. 66000 - 65998 nodes created - worst tet radius 1.25743 (nodes removed 0 2)
+Info    : It. 66500 - 66498 nodes created - worst tet radius 1.25438 (nodes removed 0 2)
+Info    : It. 67000 - 66998 nodes created - worst tet radius 1.25129 (nodes removed 0 2)
+Info    : It. 67500 - 67498 nodes created - worst tet radius 1.24818 (nodes removed 0 2)
+Info    : It. 68000 - 67998 nodes created - worst tet radius 1.24499 (nodes removed 0 2)
+Info    : It. 68500 - 68498 nodes created - worst tet radius 1.24192 (nodes removed 0 2)
+Info    : It. 69000 - 68998 nodes created - worst tet radius 1.23881 (nodes removed 0 2)
+Info    : It. 69500 - 69498 nodes created - worst tet radius 1.2357 (nodes removed 0 2)
+Info    : It. 70000 - 69998 nodes created - worst tet radius 1.23265 (nodes removed 0 2)
+Info    : It. 70500 - 70498 nodes created - worst tet radius 1.22981 (nodes removed 0 2)
+Info    : It. 71000 - 70998 nodes created - worst tet radius 1.227 (nodes removed 0 2)
+Info    : It. 71500 - 71498 nodes created - worst tet radius 1.22412 (nodes removed 0 2)
+Info    : It. 72000 - 71998 nodes created - worst tet radius 1.22121 (nodes removed 0 2)
+Info    : It. 72500 - 72498 nodes created - worst tet radius 1.2182 (nodes removed 0 2)
+Info    : It. 73000 - 72998 nodes created - worst tet radius 1.2155 (nodes removed 0 2)
+Info    : It. 73500 - 73498 nodes created - worst tet radius 1.21261 (nodes removed 0 2)
+Info    : It. 74000 - 73998 nodes created - worst tet radius 1.21001 (nodes removed 0 2)
+Info    : It. 74500 - 74498 nodes created - worst tet radius 1.20723 (nodes removed 0 2)
+Info    : It. 75000 - 74998 nodes created - worst tet radius 1.2047 (nodes removed 0 2)
+Info    : It. 75500 - 75498 nodes created - worst tet radius 1.20245 (nodes removed 0 2)
+Info    : It. 76000 - 75998 nodes created - worst tet radius 1.19978 (nodes removed 0 2)
+Info    : It. 76500 - 76498 nodes created - worst tet radius 1.19726 (nodes removed 0 2)
+Info    : It. 77000 - 76998 nodes created - worst tet radius 1.1946 (nodes removed 0 2)
+Info    : It. 77500 - 77498 nodes created - worst tet radius 1.19228 (nodes removed 0 2)
+Info    : It. 78000 - 77998 nodes created - worst tet radius 1.18985 (nodes removed 0 2)
+Info    : It. 78500 - 78498 nodes created - worst tet radius 1.18729 (nodes removed 0 2)
+Info    : It. 79000 - 78998 nodes created - worst tet radius 1.18495 (nodes removed 0 2)
+Info    : It. 79500 - 79498 nodes created - worst tet radius 1.18868 (nodes removed 0 2)
+Info    : It. 80000 - 79998 nodes created - worst tet radius 1.17998 (nodes removed 0 2)
+Info    : It. 80500 - 80498 nodes created - worst tet radius 1.1776 (nodes removed 0 2)
+Info    : It. 81000 - 80998 nodes created - worst tet radius 1.17531 (nodes removed 0 2)
+Info    : It. 81500 - 81498 nodes created - worst tet radius 1.17295 (nodes removed 0 2)
+Info    : It. 82000 - 81998 nodes created - worst tet radius 1.17036 (nodes removed 0 2)
+Info    : It. 82500 - 82498 nodes created - worst tet radius 1.16794 (nodes removed 0 2)
+Info    : It. 83000 - 82998 nodes created - worst tet radius 1.16553 (nodes removed 0 2)
+Info    : It. 83500 - 83498 nodes created - worst tet radius 1.16322 (nodes removed 0 2)
+Info    : It. 84000 - 83998 nodes created - worst tet radius 1.16093 (nodes removed 0 2)
+Info    : It. 84500 - 84498 nodes created - worst tet radius 1.15873 (nodes removed 0 2)
+Info    : It. 85000 - 84998 nodes created - worst tet radius 1.15643 (nodes removed 0 2)
+Info    : It. 85500 - 85498 nodes created - worst tet radius 1.15421 (nodes removed 0 2)
+Info    : It. 86000 - 85998 nodes created - worst tet radius 1.15202 (nodes removed 0 2)
+Info    : It. 86500 - 86498 nodes created - worst tet radius 1.1499 (nodes removed 0 2)
+Info    : It. 87000 - 86998 nodes created - worst tet radius 1.14763 (nodes removed 0 2)
+Info    : It. 87500 - 87498 nodes created - worst tet radius 1.14548 (nodes removed 0 2)
+Info    : It. 88000 - 87998 nodes created - worst tet radius 1.14334 (nodes removed 0 2)
+Info    : It. 88500 - 88498 nodes created - worst tet radius 1.14124 (nodes removed 0 2)
+Info    : It. 89000 - 88998 nodes created - worst tet radius 1.13924 (nodes removed 0 2)
+Info    : It. 89500 - 89498 nodes created - worst tet radius 1.13722 (nodes removed 0 2)
+Info    : It. 90000 - 89998 nodes created - worst tet radius 1.13532 (nodes removed 0 2)
+Info    : It. 90500 - 90498 nodes created - worst tet radius 1.1334 (nodes removed 0 2)
+Info    : It. 91000 - 90998 nodes created - worst tet radius 1.13127 (nodes removed 0 2)
+Info    : It. 91500 - 91498 nodes created - worst tet radius 1.12934 (nodes removed 0 2)
+Info    : It. 92000 - 91998 nodes created - worst tet radius 1.1273 (nodes removed 0 2)
+Info    : It. 92500 - 92498 nodes created - worst tet radius 1.1253 (nodes removed 0 2)
+Info    : It. 93000 - 92998 nodes created - worst tet radius 1.12324 (nodes removed 0 2)
+Info    : It. 93500 - 93498 nodes created - worst tet radius 1.12109 (nodes removed 0 2)
+Info    : It. 94000 - 93998 nodes created - worst tet radius 1.11916 (nodes removed 0 2)
+Info    : It. 94500 - 94498 nodes created - worst tet radius 1.11719 (nodes removed 0 2)
+Info    : It. 95000 - 94998 nodes created - worst tet radius 1.1154 (nodes removed 0 2)
+Info    : It. 95500 - 95498 nodes created - worst tet radius 1.11359 (nodes removed 0 2)
+Info    : It. 96000 - 95998 nodes created - worst tet radius 1.12047 (nodes removed 0 2)
+Info    : It. 96500 - 96498 nodes created - worst tet radius 1.10967 (nodes removed 0 2)
+Info    : It. 97000 - 96998 nodes created - worst tet radius 1.10783 (nodes removed 0 2)
+Info    : It. 97500 - 97498 nodes created - worst tet radius 1.10584 (nodes removed 0 2)
+Info    : It. 98000 - 97998 nodes created - worst tet radius 1.10394 (nodes removed 0 2)
+Info    : It. 98500 - 98498 nodes created - worst tet radius 1.10205 (nodes removed 0 2)
+Info    : It. 99000 - 98998 nodes created - worst tet radius 1.10031 (nodes removed 0 2)
+Info    : It. 99500 - 99498 nodes created - worst tet radius 1.09854 (nodes removed 0 2)
+Info    : It. 100000 - 99998 nodes created - worst tet radius 1.09684 (nodes removed 0 2)
+Info    : It. 100500 - 100498 nodes created - worst tet radius 1.09492 (nodes removed 0 2)
+Info    : It. 101000 - 100998 nodes created - worst tet radius 1.09301 (nodes removed 0 2)
+Info    : It. 101500 - 101498 nodes created - worst tet radius 1.09125 (nodes removed 0 2)
+Info    : It. 102000 - 101998 nodes created - worst tet radius 1.0894 (nodes removed 0 2)
+Info    : It. 102500 - 102498 nodes created - worst tet radius 1.08756 (nodes removed 0 2)
+Info    : It. 103000 - 102998 nodes created - worst tet radius 1.08586 (nodes removed 0 2)
+Info    : It. 103500 - 103498 nodes created - worst tet radius 1.08421 (nodes removed 0 2)
+Info    : It. 104000 - 103998 nodes created - worst tet radius 1.08247 (nodes removed 0 2)
+Info    : It. 104500 - 104498 nodes created - worst tet radius 1.08072 (nodes removed 0 2)
+Info    : It. 105000 - 104998 nodes created - worst tet radius 1.07898 (nodes removed 0 2)
+Info    : It. 105500 - 105498 nodes created - worst tet radius 1.07741 (nodes removed 0 2)
+Info    : It. 106000 - 105998 nodes created - worst tet radius 1.07576 (nodes removed 0 2)
+Info    : It. 106500 - 106498 nodes created - worst tet radius 1.07398 (nodes removed 0 2)
+Info    : It. 107000 - 106998 nodes created - worst tet radius 1.07235 (nodes removed 0 2)
+Info    : It. 107500 - 107498 nodes created - worst tet radius 1.07069 (nodes removed 0 2)
+Info    : It. 108000 - 107998 nodes created - worst tet radius 1.06896 (nodes removed 0 2)
+Info    : It. 108500 - 108498 nodes created - worst tet radius 1.06732 (nodes removed 0 2)
+Info    : It. 109000 - 108998 nodes created - worst tet radius 1.06568 (nodes removed 0 2)
+Info    : It. 109500 - 109498 nodes created - worst tet radius 1.06396 (nodes removed 0 2)
+Info    : It. 110000 - 109998 nodes created - worst tet radius 1.06231 (nodes removed 0 2)
+Info    : It. 110500 - 110498 nodes created - worst tet radius 1.06075 (nodes removed 0 2)
+Info    : It. 111000 - 110998 nodes created - worst tet radius 1.05909 (nodes removed 0 2)
+Info    : It. 111500 - 111498 nodes created - worst tet radius 1.05752 (nodes removed 0 2)
+Info    : It. 112000 - 111998 nodes created - worst tet radius 1.05607 (nodes removed 0 2)
+Info    : It. 112500 - 112498 nodes created - worst tet radius 1.05452 (nodes removed 0 2)
+Info    : It. 113000 - 112998 nodes created - worst tet radius 1.05297 (nodes removed 0 2)
+Info    : It. 113500 - 113498 nodes created - worst tet radius 1.05143 (nodes removed 0 2)
+Info    : It. 114000 - 113998 nodes created - worst tet radius 1.04976 (nodes removed 0 2)
+Info    : It. 114500 - 114498 nodes created - worst tet radius 1.04824 (nodes removed 0 2)
+Info    : It. 115000 - 114998 nodes created - worst tet radius 1.04668 (nodes removed 0 2)
+Info    : It. 115500 - 115498 nodes created - worst tet radius 1.04525 (nodes removed 0 2)
+Info    : It. 116000 - 115998 nodes created - worst tet radius 1.04377 (nodes removed 0 2)
+Info    : It. 116500 - 116498 nodes created - worst tet radius 1.04233 (nodes removed 0 2)
+Info    : It. 117000 - 116998 nodes created - worst tet radius 1.04089 (nodes removed 0 2)
+Info    : It. 117500 - 117498 nodes created - worst tet radius 1.0394 (nodes removed 0 2)
+Info    : It. 118000 - 117998 nodes created - worst tet radius 1.03797 (nodes removed 0 2)
+Info    : It. 118500 - 118498 nodes created - worst tet radius 1.03644 (nodes removed 0 2)
+Info    : It. 119000 - 118998 nodes created - worst tet radius 1.03499 (nodes removed 0 2)
+Info    : It. 119500 - 119498 nodes created - worst tet radius 1.03365 (nodes removed 0 2)
+Info    : It. 120000 - 119998 nodes created - worst tet radius 1.03226 (nodes removed 0 2)
+Info    : It. 120500 - 120498 nodes created - worst tet radius 1.03092 (nodes removed 0 2)
+Info    : It. 121000 - 120998 nodes created - worst tet radius 1.02954 (nodes removed 0 2)
+Info    : It. 121500 - 121498 nodes created - worst tet radius 1.02809 (nodes removed 0 2)
+Info    : It. 122000 - 121998 nodes created - worst tet radius 1.02665 (nodes removed 0 2)
+Info    : It. 122500 - 122498 nodes created - worst tet radius 1.02519 (nodes removed 0 2)
+Info    : It. 123000 - 122998 nodes created - worst tet radius 1.02378 (nodes removed 0 2)
+Info    : It. 123500 - 123498 nodes created - worst tet radius 1.02238 (nodes removed 0 2)
+Info    : It. 124000 - 123998 nodes created - worst tet radius 1.03054 (nodes removed 0 2)
+Info    : It. 124500 - 124498 nodes created - worst tet radius 1.01969 (nodes removed 0 2)
+Info    : It. 125000 - 124998 nodes created - worst tet radius 1.01826 (nodes removed 0 2)
+Info    : It. 125500 - 125498 nodes created - worst tet radius 1.01699 (nodes removed 0 2)
+Info    : It. 126000 - 125998 nodes created - worst tet radius 1.01561 (nodes removed 0 2)
+Info    : It. 126500 - 126498 nodes created - worst tet radius 1.01431 (nodes removed 0 2)
+Info    : It. 127000 - 126998 nodes created - worst tet radius 1.01299 (nodes removed 0 2)
+Info    : It. 127500 - 127498 nodes created - worst tet radius 1.01171 (nodes removed 0 2)
+Info    : It. 128000 - 127998 nodes created - worst tet radius 1.0104 (nodes removed 0 2)
+Info    : It. 128500 - 128498 nodes created - worst tet radius 1.00909 (nodes removed 0 2)
+Info    : It. 129000 - 128998 nodes created - worst tet radius 1.00785 (nodes removed 0 2)
+Info    : It. 129500 - 129498 nodes created - worst tet radius 1.00654 (nodes removed 0 2)
+Info    : It. 130000 - 129998 nodes created - worst tet radius 1.00516 (nodes removed 0 2)
+Info    : It. 130500 - 130498 nodes created - worst tet radius 1.00383 (nodes removed 0 2)
+Info    : It. 131000 - 130998 nodes created - worst tet radius 1.00255 (nodes removed 0 2)
+Info    : It. 131500 - 131498 nodes created - worst tet radius 1.00276 (nodes removed 0 2)
+Info    : It. 132000 - 131998 nodes created - worst tet radius 1.00006 (nodes removed 0 2)
+Info    : 3D refinement terminated (144658 nodes total):
+Info    :  - 9 Delaunay cavities modified for star shapeness
+Info    :  - 2 nodes could not be inserted
+Info    :  - 911246 tetrahedra created in 16.5547 sec. (55044 tets/s)
+Info    : Done meshing 3D (Wall 19.1262s, CPU 18.908s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 4.83554e-06) with worst = 0.018988 / average = 0.760849:
+Info    : 0.00 < quality < 0.10 :        52 elements
+Info    : 0.10 < quality < 0.20 :       165 elements
+Info    : 0.20 < quality < 0.30 :       325 elements
+Info    : 0.30 < quality < 0.40 :       508 elements
+Info    : 0.40 < quality < 0.50 :       752 elements
+Info    : 0.50 < quality < 0.60 :      1154 elements
+Info    : 0.60 < quality < 0.70 :      2849 elements
+Info    : 0.70 < quality < 0.80 :      6802 elements
+Info    : 0.80 < quality < 0.90 :      8237 elements
+Info    : 0.90 < quality < 1.00 :      3403 elements
+Info    : 534 edge swaps, 10 node relocations (volume = 4.83554e-06): worst = 0.0521506 / average = 0.775005 (Wall 0.0234441s, CPU 0.023444s)
+Info    : 540 edge swaps, 12 node relocations (volume = 4.83554e-06): worst = 0.0521506 / average = 0.775184 (Wall 0.0285098s, CPU 0.028503s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         1 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       507 elements
+Info    : 0.40 < quality < 0.50 :       705 elements
+Info    : 0.50 < quality < 0.60 :      1050 elements
+Info    : 0.60 < quality < 0.70 :      2863 elements
+Info    : 0.70 < quality < 0.80 :      6888 elements
+Info    : 0.80 < quality < 0.90 :      8362 elements
+Info    : 0.90 < quality < 1.00 :      3367 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 0.0625) with worst = 0.000799016 / average = 0.78067:
+Info    : 0.00 < quality < 0.10 :       549 elements
+Info    : 0.10 < quality < 0.20 :      1697 elements
+Info    : 0.20 < quality < 0.30 :      3465 elements
+Info    : 0.30 < quality < 0.40 :      5403 elements
+Info    : 0.40 < quality < 0.50 :      8321 elements
+Info    : 0.50 < quality < 0.60 :     14606 elements
+Info    : 0.60 < quality < 0.70 :     28813 elements
+Info    : 0.70 < quality < 0.80 :     64336 elements
+Info    : 0.80 < quality < 0.90 :    110209 elements
+Info    : 0.90 < quality < 1.00 :     58365 elements
+Info    : 5627 edge swaps, 217 node relocations (volume = 0.0625): worst = 0.173608 / average = 0.792471 (Wall 0.336074s, CPU 0.336074s)
+Info    : 5658 edge swaps, 219 node relocations (volume = 0.0625): worst = 0.250522 / average = 0.79251 (Wall 0.436949s, CPU 0.43695s)
+Info    : 5659 edge swaps, 219 node relocations (volume = 0.0625): worst = 0.250522 / average = 0.792513 (Wall 0.535912s, CPU 0.535913s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         2 elements
+Info    : 0.30 < quality < 0.40 :      5381 elements
+Info    : 0.40 < quality < 0.50 :      8042 elements
+Info    : 0.50 < quality < 0.60 :     14115 elements
+Info    : 0.60 < quality < 0.70 :     28884 elements
+Info    : 0.70 < quality < 0.80 :     65259 elements
+Info    : 0.80 < quality < 0.90 :    111156 elements
+Info    : 0.90 < quality < 1.00 :     57912 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 0.0624952) with worst = 0.00324513 / average = 0.784103:
+Info    : 0.00 < quality < 0.10 :      1107 elements
+Info    : 0.10 < quality < 0.20 :      3492 elements
+Info    : 0.20 < quality < 0.30 :      6417 elements
+Info    : 0.30 < quality < 0.40 :     10289 elements
+Info    : 0.40 < quality < 0.50 :     16221 elements
+Info    : 0.50 < quality < 0.60 :     27177 elements
+Info    : 0.60 < quality < 0.70 :     54634 elements
+Info    : 0.70 < quality < 0.80 :    128418 elements
+Info    : 0.80 < quality < 0.90 :    225465 elements
+Info    : 0.90 < quality < 1.00 :    118014 elements
+Info    : 10920 edge swaps, 350 node relocations (volume = 0.0624952): worst = 0.194219 / average = 0.795674 (Wall 0.601172s, CPU 0.601147s)
+Info    : 10963 edge swaps, 350 node relocations (volume = 0.0624952): worst = 0.300021 / average = 0.79571 (Wall 0.802836s, CPU 0.802813s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :     10264 elements
+Info    : 0.40 < quality < 0.50 :     15645 elements
+Info    : 0.50 < quality < 0.60 :     26155 elements
+Info    : 0.60 < quality < 0.70 :     54405 elements
+Info    : 0.70 < quality < 0.80 :    130785 elements
+Info    : 0.80 < quality < 0.90 :    227068 elements
+Info    : 0.90 < quality < 1.00 :    117154 elements
+Info    : Done optimizing mesh (Wall 4.01714s, CPU 3.8727s)
+Info    : 144658 nodes 921951 elements
+[MAT-6 step 10 probe] 895974 cells (1.28x the box+wire fixture, 6.46x the step-2b baseline), meshed in 59.1 s on 8 ranks
+
+Entering ZMUMPS 5.6.1 from C interface with JOB, N =   1     1043640
+      executing #MPI =      8, without OMP
+
+ =================================================
+ MUMPS compiled with option -Dmetis
+ MUMPS compiled with option -Dpord
+ MUMPS compiled with option -Dptscotch
+ MUMPS compiled with option -Dscotch
+ =================================================
+L U Solver for unsymmetric matrices
+Type of parallelism: Working host
+
+ ****** ANALYSIS STEP ********
+
+ ** Maximum transversal (ICNTL(6)) not allowed because matrix is distributed
+ Processing a graph of size:   1043640 with      16145586 edges
+ Ordering based on METIS
+ ELAPSED TIME SPENT IN METIS reordering  =     14.0396
+ SYMBOLIC based on column counts 
+ ELAPSED TIME IN symbolic factorization  =    740.3091
+ A root of estimated size        10809  has been selected for Scalapack.
+
+Leaving analysis phase with  ...
+ INFOG(1)                                       =               0
+ INFOG(2)                                       =               0
+ -- (20) Number of entries in factors (estim.)  =      2230926270
+ --  (3) Real space for factors    (estimated)  =      2230978496
+ --  (4) Integer space for factors (estimated)  =        13421599
+ --  (5) Maximum frontal size      (estimated)  =           16548
+ --  (6) Number of nodes in the tree            =           41725
+ -- (32) Type of analysis effectively used      =               1
+ --  (7) Ordering option effectively used       =               5
+ ICNTL (6) Maximum transversal option           =               0
+ ICNTL (7) Pivot order option                   =               7
+ ICNTL(13) Parallelism/splitting of root node   =               0
+ ICNTL(14) Percentage of memory relaxation      =              25
+ ICNTL(15) Analysis by block effectively used   =               0
+ ICNTL(18) Distributed input matrix (on if >0)  =               3
+ ICNTL(58) Symbolic factorization option        =               2
+ Number of level 2 nodes                        =              13
+ Number of split nodes                          =               0
+ RINFOG(1) Operations during elimination (estim)= 1.534D+13
+ Distributed matrix entry format (ICNTL(18))    =               3
+
+ MEMORY ESTIMATIONS ... 
+ Estimations with standard Full-Rank (FR) factorization:
+    Maximum estim. space in Mbytes, IC facto.    (INFOG(16)):        9432
+    Total space in MBytes, IC factorization      (INFOG(17)):       69894
+    Maximum estim. space in Mbytes, OOC facto.   (INFOG(26)):        5654
+    Total space in MBytes,  OOC factorization    (INFOG(27)):       34382
+
+ Elapsed time in analysis driver=      15.3612
+
+Entering ZMUMPS 5.6.1 from C interface with JOB, N =   2     1043640
+      executing #MPI =      8, without OMP
+
+
+
+****** FACTORIZATION STEP ********
+
+ GLOBAL STATISTICS PRIOR NUMERICAL FACTORIZATION ...
+ Number of working processes                =               8
+ ICNTL(22) Out-of-core option               =               0
+ ICNTL(35) BLR activation (eff. choice)     =               0
+ ICNTL(37) BLR CB compression (eff. choice) =               0
+ ICNTL(49) Compact workarray S (end facto.) =               0
+ ICNTL(14) Memory relaxation                =              25
+ INFOG(3) Real space for factors (estimated)=      2230978496
+ INFOG(4) Integer space for factors (estim.)=        13421599
+ Maximum frontal size (estimated)           =           16548
+ Number of nodes in the tree                =           41725
+ ICNTL(23) Memory allowed (value on host)   =               0
+           Sum over all procs               =               0
+ Memory provided by user, sum of LWK_USER   =               0
+ Effective threshold for pivoting, CNTL(1)  =      0.1000D-01
+ Max difference from 1 after scaling the entries for ONE-NORM (option 7/8)   = 0.14D+00
+ Average Effective size of S     (based on INFO(39))=            527848196
+
+ Redistrib: total data local/sent           =         1809175        15881209
+
+ Elapsed time to reformat/distribute matrix =      0.5989
+
+Loguru caught a signal: SIGTERM
+
+Loguru caught a signal: SIGTERM
+
+Loguru caught a signal: SIGTERM
+
+Loguru caught a signal: SIGTERM
+
+Loguru caught a signal: SIGTERM
+
+Loguru caught a signal: SIGTERM
+
+Loguru caught a signal: SIGTERM
+
+Loguru caught a signal: SIGTERM
+Stack trace:
+43      0x5e3e0d279ba5 _start + 37
+42      0x7ee929082e40 __libc_start_main + 128
+41      0x7ee929082d90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7ee929082d90]
+40      0x5e3e0d279cad Py_BytesMain + 45
+39      0x5e3e0d2a341e Py_RunMain + 702
+38      0x5e3e0d2b0653 _PyRun_AnyFileObject + 67
+37      0x5e3e0d2b0a08 _PyRun_SimpleFileObject + 424
+36      0x5e3e0d2b1525 python3(+0x264525) [0x5e3e0d2b1525]
+35      0x5e3e0d2ab0bb python3(+0x25e0bb) [0x5e3e0d2ab0bb]
+34      0x5e3e0d2b17d8 python3(+0x2647d8) [0x5e3e0d2b17d8]
+33      0x5e3e0d286cf6 PyEval_EvalCode + 134
+32      0x5e3e0d286e56 python3(+0x239e56) [0x5e3e0d286e56]
+31      0x5e3e0d195e0d _PyEval_EvalFrameDefault + 1725
+30      0x5e3e0d1ad70c _PyFunction_Vectorcall + 124
+29      0x5e3e0d1970d1 _PyEval_EvalFrameDefault + 6529
+28      0x5e3e0d1bb4e1 python3(+0x16e4e1) [0x5e3e0d1bb4e1]
+27      0x5e3e0d195f52 _PyEval_EvalFrameDefault + 2050
+26      0x5e3e0d1ad70c _PyFunction_Vectorcall + 124
+25      0x5e3e0d195f52 _PyEval_EvalFrameDefault + 2050
+24      0x5e3e0d1cddde python3(+0x180dde) [0x5e3e0d1cddde]
+23      0x7ee9201911ec /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-complex128-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x2121ec) [0x7ee9201911ec]
+22      0x7ee91f5e17f7 KSPSolve + 23
+21      0x7ee91f5e04b3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x12904b3) [0x7ee91f5e04b3]
+20      0x7ee91f5dee56 KSPSetUp + 1446
+19      0x7ee91f4c3380 PCSetUp + 560
+18      0x7ee91f5af8e3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x125f8e3) [0x7ee91f5af8e3]
+17      0x7ee91f282ff3 MatLUFactorNumeric + 275
+16      0x7ee91f2089b7 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0xeb89b7) [0x7ee91f2089b7]
+15      0x7ee91f73cea7 zmumps_c + 2375
+14      0x7ee91f73e6d4 zmumps_f77_ + 4548
+13      0x7ee91f7a9ccd zmumps_ + 8413
+12      0x7ee91f8213c1 zmumps_fac_driver_ + 44913
+11      0x7ee91f856d9d zmumps_fac_b_ + 4109
+10      0x7ee91f8d3408 __zmumps_fac_par_m_MOD_zmumps_fac_par + 3944
+9       0x7ee91f774afc __zmumps_load_MOD_zmumps_load_recv_msgs + 156
+8       0x7ee91ccb6057 pmpi_iprobe + 103
+7       0x7ee922628bb9 PMPI_Iprobe + 1705
+6       0x7ee92262766c /usr/local/lib/libmpi.so.12(+0xff66c) [0x7ee92262766c]
+5       0x7ee92262701e /usr/local/lib/libmpi.so.12(+0xff01e) [0x7ee92262701e]
+4       0x7ee9226254e2 /usr/local/lib/libmpi.so.12(+0xfd4e2) [0x7ee9226254e2]
+3       0x7ee922995858 /usr/local/lib/libmpi.so.12(+0x46d858) [0x7ee922995858]
+2       0x7ee92485a1f5 /usr/local/lib/libmpi.so.12(+0x23321f5) [0x7ee92485a1f5]
+1       0x7ee9290f2aa6 pthread_mutex_unlock + 54
+0       0x7ee92909b520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x7ee92909b520]
+2026-08-12 14:15:58.813 ( 299.654s) [main            ]                       :0     FATL| Signal: SIGTERM
+Stack trace:
+44      0x5ce94dbd8ba5 _start + 37
+43      0x78aa209eee40 __libc_start_main + 128
+42      0x78aa209eed90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x78aa209eed90]
+41      0x5ce94dbd8cad Py_BytesMain + 45
+40      0x5ce94dc0241e Py_RunMain + 702
+39      0x5ce94dc0f653 _PyRun_AnyFileObject + 67
+38      0x5ce94dc0fa08 _PyRun_SimpleFileObject + 424
+37      0x5ce94dc10525 python3(+0x264525) [0x5ce94dc10525]
+36      0x5ce94dc0a0bb python3(+0x25e0bb) [0x5ce94dc0a0bb]
+35      0x5ce94dc107d8 python3(+0x2647d8) [0x5ce94dc107d8]
+34      0x5ce94dbe5cf6 PyEval_EvalCode + 134
+33      0x5ce94dbe5e56 python3(+0x239e56) [0x5ce94dbe5e56]
+32      0x5ce94daf4e0d _PyEval_EvalFrameDefault + 1725
+31      0x5ce94db0c70c _PyFunction_Vectorcall + 124
+30      0x5ce94daf60d1 _PyEval_EvalFrameDefault + 6529
+29      0x5ce94db1a4e1 python3(+0x16e4e1) [0x5ce94db1a4e1]
+28      0x5ce94daf4f52 _PyEval_EvalFrameDefault + 2050
+27      0x5ce94db0c70c _PyFunction_Vectorcall + 124
+26      0x5ce94daf4f52 _PyEval_EvalFrameDefault + 2050
+25      0x5ce94db2cdde python3(+0x180dde) [0x5ce94db2cdde]
+24      0x78aa17bfe1ec /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-complex128-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x2121ec) [0x78aa17bfe1ec]
+23      0x78aa1704e7f7 KSPSolve + 23
+22      0x78aa1704d4b3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x12904b3) [0x78aa1704d4b3]
+21      0x78aa1704be56 KSPSetUp + 1446
+20      0x78aa16f30380 PCSetUp + 560
+19      0x78aa1701c8e3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x125f8e3) [0x78aa1701c8e3]
+18      0x78aa16cefff3 MatLUFactorNumeric + 275
+17      0x78aa16c759b7 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0xeb89b7) [0x78aa16c759b7]
+16      0x78aa171a9ea7 zmumps_c + 2375
+15      0x78aa171ab6d4 zmumps_f77_ + 4548
+14      0x78aa17216ccd zmumps_ + 8413
+13      0x78aa1728e3c1 zmumps_fac_driver_ + 44913
+12      0x78aa172c3d9d zmumps_fac_b_ + 4109
+11      0x78aa17340408 __zmumps_fac_par_m_MOD_zmumps_fac_par + 3944
+10      0x78aa171e1afc __zmumps_load_MOD_zmumps_load_recv_msgs + 156
+9       0x78aa14723057 pmpi_iprobe + 103
+8       0x78aa19f94964 PMPI_Iprobe + 1108
+7       0x78aa19f93b08 /usr/local/lib/libmpi.so.12(+0xffb08) [0x78aa19f93b08]
+6       0x78aa19f913ab /usr/local/lib/libmpi.so.12(+0xfd3ab) [0x78aa19f913ab]
+5       0x78aa1c1c6659 /usr/local/lib/libmpi.so.12(+0x2332659) [0x78aa1c1c6659]
+4       0x78aa1c1995f5 /usr/local/lib/libmpi.so.12(+0x23055f5) [0x78aa1c1995f5]
+3       0x78aa20aaa66d __clock_gettime + 29
+2       0x7ffd0a7adcbc clock_gettime + 588
+1       0x7ffd0a7ad6da linux-vdso.so.1(+0x6da) [0x7ffd0a7ad6da]
+0       0x78aa20a07520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x78aa20a07520]
+2026-08-12 14:15:58.813 ( 299.654s) [main            ]                       :0     FATL| Signal: SIGTERM
+Stack trace:
+39      0x5a7048839ba5 _start + 37
+38      0x737953e56e40 __libc_start_main + 128
+37      0x737953e56d90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x737953e56d90]
+36      0x5a7048839cad Py_BytesMain + 45
+35      0x5a704886341e Py_RunMain + 702
+34      0x5a7048870653 _PyRun_AnyFileObject + 67
+33      0x5a7048870a08 _PyRun_SimpleFileObject + 424
+32      0x5a7048871525 python3(+0x264525) [0x5a7048871525]
+31      0x5a704886b0bb python3(+0x25e0bb) [0x5a704886b0bb]
+30      0x5a70488717d8 python3(+0x2647d8) [0x5a70488717d8]
+29      0x5a7048846cf6 PyEval_EvalCode + 134
+28      0x5a7048846e56 python3(+0x239e56) [0x5a7048846e56]
+27      0x5a7048755e0d _PyEval_EvalFrameDefault + 1725
+26      0x5a704876d70c _PyFunction_Vectorcall + 124
+25      0x5a70487570d1 _PyEval_EvalFrameDefault + 6529
+24      0x5a704877b4e1 python3(+0x16e4e1) [0x5a704877b4e1]
+23      0x5a7048755f52 _PyEval_EvalFrameDefault + 2050
+22      0x5a704876d70c _PyFunction_Vectorcall + 124
+21      0x5a7048755f52 _PyEval_EvalFrameDefault + 2050
+20      0x5a704878ddde python3(+0x180dde) [0x5a704878ddde]
+19      0x73794af5b1ec /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-complex128-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x2121ec) [0x73794af5b1ec]
+18      0x73794a3ab7f7 KSPSolve + 23
+17      0x73794a3aa4b3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x12904b3) [0x73794a3aa4b3]
+16      0x73794a3a8e56 KSPSetUp + 1446
+15      0x73794a28d380 PCSetUp + 560
+14      0x73794a3798e3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x125f8e3) [0x73794a3798e3]
+13      0x73794a04cff3 MatLUFactorNumeric + 275
+12      0x737949fd29b7 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0xeb89b7) [0x737949fd29b7]
+11      0x73794a506ea7 zmumps_c + 2375
+10      0x73794a5086d4 zmumps_f77_ + 4548
+9       0x73794a573ccd zmumps_ + 8413
+8       0x73794a5eb3c1 zmumps_fac_driver_ + 44913
+7       0x73794a620d9d zmumps_fac_b_ + 4109
+6       0x73794a69d3f4 __zmumps_fac_par_m_MOD_zmumps_fac_par + 3924
+5       0x73794a56a874 zmumps_try_recvtreat_ + 3812
+4       0x73794a6357b8 zmumps_process_blocfacto_ + 7832
+3       0x737947cf3898 zgemm_ + 1128
+2       0x737945388e71 zgemm_nn + 1153
+1       0x737946b66ea4 zgemm_kernel_n_SKYLAKEX + 1780
+0       0x737953e6f520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x737953e6f520]
+2026-08-12 14:15:58.813 ( 299.654s) [main            ]                       :0     FATL| Signal: SIGTERM
+Stack trace:
+39      0x603b51377ba5 _start + 37
+38      0x7f7028c13e40 __libc_start_main + 128
+37      0x7f7028c13d90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7f7028c13d90]
+36      0x603b51377cad Py_BytesMain + 45
+35      0x603b513a141e Py_RunMain + 702
+34      0x603b513ae653 _PyRun_AnyFileObject + 67
+33      0x603b513aea08 _PyRun_SimpleFileObject + 424
+32      0x603b513af525 python3(+0x264525) [0x603b513af525]
+31      0x603b513a90bb python3(+0x25e0bb) [0x603b513a90bb]
+30      0x603b513af7d8 python3(+0x2647d8) [0x603b513af7d8]
+29      0x603b51384cf6 PyEval_EvalCode + 134
+28      0x603b51384e56 python3(+0x239e56) [0x603b51384e56]
+27      0x603b51293e0d _PyEval_EvalFrameDefault + 1725
+26      0x603b512ab70c _PyFunction_Vectorcall + 124
+25      0x603b512950d1 _PyEval_EvalFrameDefault + 6529
+24      0x603b512b94e1 python3(+0x16e4e1) [0x603b512b94e1]
+23      0x603b51293f52 _PyEval_EvalFrameDefault + 2050
+22      0x603b512ab70c _PyFunction_Vectorcall + 124
+21      0x603b51293f52 _PyEval_EvalFrameDefault + 2050
+20      0x603b512cbdde python3(+0x180dde) [0x603b512cbdde]
+19      0x7f701fe291ec /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-complex128-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x2121ec) [0x7f701fe291ec]
+18      0x7f701f2797f7 KSPSolve + 23
+17      0x7f701f2784b3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x12904b3) [0x7f701f2784b3]
+16      0x7f701f276e56 KSPSetUp + 1446
+15      0x7f701f15b380 PCSetUp + 560
+14      0x7f701f2478e3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x125f8e3) [0x7f701f2478e3]
+13      0x7f701ef1aff3 MatLUFactorNumeric + 275
+12      0x7f701eea09b7 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0xeb89b7) [0x7f701eea09b7]
+11      0x7f701f3d4ea7 zmumps_c + 2375
+10      0x7f701f3d66d4 zmumps_f77_ + 4548
+9       0x7f701f441ccd zmumps_ + 8413
+8       0x7f701f4b93c1 zmumps_fac_driver_ + 44913
+7       0x7f701f4eed9d zmumps_fac_b_ + 4109
+6       0x7f701f56b3f4 __zmumps_fac_par_m_MOD_zmumps_fac_par + 3924
+5       0x7f701f438874 zmumps_try_recvtreat_ + 3812
+4       0x7f701f5037b8 zmumps_process_blocfacto_ + 7832
+3       0x7f701cbb5898 zgemm_ + 1128
+2       0x7f701a248e71 zgemm_nn + 1153
+1       0x7f701ba26ef7 zgemm_kernel_n_SKYLAKEX + 1863
+0       0x7f7028c2c520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x7f7028c2c520]
+2026-08-12 14:15:58.813 ( 299.654s) [main            ]                       :0     FATL| Signal: SIGTERM
+Stack trace:
+39      0x55f3603ddba5 _start + 37
+38      0x7ce84baafe40 __libc_start_main + 128
+37      0x7ce84baafd90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7ce84baafd90]
+36      0x55f3603ddcad Py_BytesMain + 45
+35      0x55f36040741e Py_RunMain + 702
+34      0x55f360414653 _PyRun_AnyFileObject + 67
+33      0x55f360414a08 _PyRun_SimpleFileObject + 424
+32      0x55f360415525 python3(+0x264525) [0x55f360415525]
+31      0x55f36040f0bb python3(+0x25e0bb) [0x55f36040f0bb]
+30      0x55f3604157d8 python3(+0x2647d8) [0x55f3604157d8]
+29      0x55f3603eacf6 PyEval_EvalCode + 134
+28      0x55f3603eae56 python3(+0x239e56) [0x55f3603eae56]
+27      0x55f3602f9e0d _PyEval_EvalFrameDefault + 1725
+26      0x55f36031170c _PyFunction_Vectorcall + 124
+25      0x55f3602fb0d1 _PyEval_EvalFrameDefault + 6529
+24      0x55f36031f4e1 python3(+0x16e4e1) [0x55f36031f4e1]
+23      0x55f3602f9f52 _PyEval_EvalFrameDefault + 2050
+22      0x55f36031170c _PyFunction_Vectorcall + 124
+21      0x55f3602f9f52 _PyEval_EvalFrameDefault + 2050
+20      0x55f360331dde python3(+0x180dde) [0x55f360331dde]
+19      0x7ce842cbf1ec /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-complex128-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x2121ec) [0x7ce842cbf1ec]
+18      0x7ce84210f7f7 KSPSolve + 23
+17      0x7ce84210e4b3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x12904b3) [0x7ce84210e4b3]
+16      0x7ce84210ce56 KSPSetUp + 1446
+15      0x7ce841ff1380 PCSetUp + 560
+14      0x7ce8420dd8e3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x125f8e3) [0x7ce8420dd8e3]
+13      0x7ce841db0ff3 MatLUFactorNumeric + 275
+12      0x7ce841d369b7 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0xeb89b7) [0x7ce841d369b7]
+11      0x7ce84226aea7 zmumps_c + 2375
+10      0x7ce84226c6d4 zmumps_f77_ + 4548
+9       0x7ce8422d7ccd zmumps_ + 8413
+8       0x7ce84234f3c1 zmumps_fac_driver_ + 44913
+7       0x7ce842384d9d zmumps_fac_b_ + 4109
+6       0x7ce8424013f4 __zmumps_fac_par_m_MOD_zmumps_fac_par + 3924
+5       0x7ce8422ce874 zmumps_try_recvtreat_ + 3812
+4       0x7ce8423997b8 zmumps_process_blocfacto_ + 7832
+3       0x7ce83fa4b898 zgemm_ + 1128
+2       0x7ce83d0e8e71 zgemm_nn + 1153
+1       0x7ce83e8c6f8e zgemm_kernel_n_SKYLAKEX + 2014
+0       0x7ce84bac8520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x7ce84bac8520]
+2026-08-12 14:15:58.813 ( 299.648s) [main            ]                       :0     FATL| Signal: SIGTERM
+Stack trace:
+39      0x5cf2076b6ba5 _start + 37
+38      0x7d23d0a6ae40 __libc_start_main + 128
+37      0x7d23d0a6ad90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7d23d0a6ad90]
+36      0x5cf2076b6cad Py_BytesMain + 45
+35      0x5cf2076e041e Py_RunMain + 702
+34      0x5cf2076ed653 _PyRun_AnyFileObject + 67
+33      0x5cf2076eda08 _PyRun_SimpleFileObject + 424
+32      0x5cf2076ee525 python3(+0x264525) [0x5cf2076ee525]
+31      0x5cf2076e80bb python3(+0x25e0bb) [0x5cf2076e80bb]
+30      0x5cf2076ee7d8 python3(+0x2647d8) [0x5cf2076ee7d8]
+29      0x5cf2076c3cf6 PyEval_EvalCode + 134
+28      0x5cf2076c3e56 python3(+0x239e56) [0x5cf2076c3e56]
+27      0x5cf2075d2e0d _PyEval_EvalFrameDefault + 1725
+26      0x5cf2075ea70c _PyFunction_Vectorcall + 124
+25      0x5cf2075d40d1 _PyEval_EvalFrameDefault + 6529
+24      0x5cf2075f84e1 python3(+0x16e4e1) [0x5cf2075f84e1]
+23      0x5cf2075d2f52 _PyEval_EvalFrameDefault + 2050
+22      0x5cf2075ea70c _PyFunction_Vectorcall + 124
+21      0x5cf2075d2f52 _PyEval_EvalFrameDefault + 2050
+20      0x5cf20760adde python3(+0x180dde) [0x5cf20760adde]
+19      0x7d23c7c7e1ec /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-complex128-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x2121ec) [0x7d23c7c7e1ec]
+18      0x7d23c70ce7f7 KSPSolve + 23
+17      0x7d23c70cd4b3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x12904b3) [0x7d23c70cd4b3]
+16      0x7d23c70cbe56 KSPSetUp + 1446
+15      0x7d23c6fb0380 PCSetUp + 560
+14      0x7d23c709c8e3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x125f8e3) [0x7d23c709c8e3]
+13      0x7d23c6d6fff3 MatLUFactorNumeric + 275
+12      0x7d23c6cf59b7 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0xeb89b7) [0x7d23c6cf59b7]
+11      0x7d23c7229ea7 zmumps_c + 2375
+10      0x7d23c722b6d4 zmumps_f77_ + 4548
+9       0x7d23c7296ccd zmumps_ + 8413
+8       0x7d23c730e3c1 zmumps_fac_driver_ + 44913
+7       0x7d23c7343d9d zmumps_fac_b_ + 4109
+6       0x7d23c73c03f4 __zmumps_fac_par_m_MOD_zmumps_fac_par + 3924
+5       0x7d23c728d874 zmumps_try_recvtreat_ + 3812
+4       0x7d23c73587b8 zmumps_process_blocfacto_ + 7832
+3       0x7d23c4a0a898 zgemm_ + 1128
+2       0x7d23c20a8e71 zgemm_nn + 1153
+1       0x7d23c3886c98 zgemm_kernel_n_SKYLAKEX + 1256
+0       0x7d23d0a83520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x7d23d0a83520]
+2026-08-12 14:15:58.813 ( 299.654s) [main            ]                       :0     FATL| Signal: SIGTERM
+Stack trace:
+39      0x6475b78ddba5 _start + 37
+38      0x7b3ed32aae40 __libc_start_main + 128
+37      0x7b3ed32aad90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7b3ed32aad90]
+36      0x6475b78ddcad Py_BytesMain + 45
+35      0x6475b790741e Py_RunMain + 702
+34      0x6475b7914653 _PyRun_AnyFileObject + 67
+33      0x6475b7914a08 _PyRun_SimpleFileObject + 424
+32      0x6475b7915525 python3(+0x264525) [0x6475b7915525]
+31      0x6475b790f0bb python3(+0x25e0bb) [0x6475b790f0bb]
+30      0x6475b79157d8 python3(+0x2647d8) [0x6475b79157d8]
+29      0x6475b78eacf6 PyEval_EvalCode + 134
+28      0x6475b78eae56 python3(+0x239e56) [0x6475b78eae56]
+27      0x6475b77f9e0d _PyEval_EvalFrameDefault + 1725
+26      0x6475b781170c _PyFunction_Vectorcall + 124
+25      0x6475b77fb0d1 _PyEval_EvalFrameDefault + 6529
+24      0x6475b781f4e1 python3(+0x16e4e1) [0x6475b781f4e1]
+23      0x6475b77f9f52 _PyEval_EvalFrameDefault + 2050
+22      0x6475b781170c _PyFunction_Vectorcall + 124
+21      0x6475b77f9f52 _PyEval_EvalFrameDefault + 2050
+20      0x6475b7831dde python3(+0x180dde) [0x6475b7831dde]
+19      0x7b3eca4b51ec /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-complex128-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x2121ec) [0x7b3eca4b51ec]
+18      0x7b3ec99057f7 KSPSolve + 23
+17      0x7b3ec99044b3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x12904b3) [0x7b3ec99044b3]
+16      0x7b3ec9902e56 KSPSetUp + 1446
+15      0x7b3ec97e7380 PCSetUp + 560
+14      0x7b3ec98d38e3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x125f8e3) [0x7b3ec98d38e3]
+13      0x7b3ec95a6ff3 MatLUFactorNumeric + 275
+12      0x7b3ec952c9b7 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0xeb89b7) [0x7b3ec952c9b7]
+11      0x7b3ec9a60ea7 zmumps_c + 2375
+10      0x7b3ec9a626d4 zmumps_f77_ + 4548
+9       0x7b3ec9acdccd zmumps_ + 8413
+8       0x7b3ec9b453c1 zmumps_fac_driver_ + 44913
+7       0x7b3ec9b7ad9d zmumps_fac_b_ + 4109
+6       0x7b3ec9bf73f4 __zmumps_fac_par_m_MOD_zmumps_fac_par + 3924
+5       0x7b3ec9ac4874 zmumps_try_recvtreat_ + 3812
+4       0x7b3ec9b8f7b8 zmumps_process_blocfacto_ + 7832
+3       0x7b3ec7241898 zgemm_ + 1128
+2       0x7b3ec48d8e71 zgemm_nn + 1153
+1       0x7b3ec60b6b0d zgemm_kernel_n_SKYLAKEX + 861
+0       0x7b3ed32c3520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x7b3ed32c3520]
+2026-08-12 14:15:58.813 ( 299.644s) [main            ]                       :0     FATL| Signal: SIGTERM
+Stack trace:
+45      0x58f4d01a6ba5 _start + 37
+44      0x755125398e40 __libc_start_main + 128
+43      0x755125398d90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x755125398d90]
+42      0x58f4d01a6cad Py_BytesMain + 45
+41      0x58f4d01d041e Py_RunMain + 702
+40      0x58f4d01dd653 _PyRun_AnyFileObject + 67
+39      0x58f4d01dda08 _PyRun_SimpleFileObject + 424
+38      0x58f4d01de525 python3(+0x264525) [0x58f4d01de525]
+37      0x58f4d01d80bb python3(+0x25e0bb) [0x58f4d01d80bb]
+36      0x58f4d01de7d8 python3(+0x2647d8) [0x58f4d01de7d8]
+35      0x58f4d01b3cf6 PyEval_EvalCode + 134
+34      0x58f4d01b3e56 python3(+0x239e56) [0x58f4d01b3e56]
+33      0x58f4d00c2e0d _PyEval_EvalFrameDefault + 1725
+32      0x58f4d00da70c _PyFunction_Vectorcall + 124
+31      0x58f4d00c40d1 _PyEval_EvalFrameDefault + 6529
+30      0x58f4d00e84e1 python3(+0x16e4e1) [0x58f4d00e84e1]
+29      0x58f4d00c2f52 _PyEval_EvalFrameDefault + 2050
+28      0x58f4d00da70c _PyFunction_Vectorcall + 124
+27      0x58f4d00c2f52 _PyEval_EvalFrameDefault + 2050
+26      0x58f4d00fadde python3(+0x180dde) [0x58f4d00fadde]
+25      0x75511c4a31ec /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-complex128-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x2121ec) [0x75511c4a31ec]
+24      0x75511b8f37f7 KSPSolve + 23
+23      0x75511b8f24b3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x12904b3) [0x75511b8f24b3]
+22      0x75511b8f0e56 KSPSetUp + 1446
+21      0x75511b7d5380 PCSetUp + 560
+20      0x75511b8c18e3 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0x125f8e3) [0x75511b8c18e3]
+19      0x75511b594ff3 MatLUFactorNumeric + 275
+18      0x75511b51a9b7 /usr/local/petsc/linux-gnu-complex128-32/lib/libpetsc.so.3.20(+0xeb89b7) [0x75511b51a9b7]
+17      0x75511ba4eea7 zmumps_c + 2375
+16      0x75511ba506d4 zmumps_f77_ + 4548
+15      0x75511babbccd zmumps_ + 8413
+14      0x75511bb333c1 zmumps_fac_driver_ + 44913
+13      0x75511bb68d9d zmumps_fac_b_ + 4109
+12      0x75511bbe60de __zmumps_fac_par_m_MOD_zmumps_fac_par + 7230
+11      0x75511bc22044 __zmumps_fac2_lu_m_MOD_zmumps_fac2_lu + 11844
+10      0x75511bc2f2e6 __zmumps_fac_front_type2_aux_m_MOD_zmumps_send_factored_blk + 2566
+9       0x75511bab1d8f zmumps_try_recvtreat_ + 1023
+8       0x75511ba86afc __zmumps_load_MOD_zmumps_load_recv_msgs + 156
+7       0x755118fc8057 pmpi_iprobe + 103
+6       0x75511e944964 PMPI_Iprobe + 1108
+5       0x75511e943b08 /usr/local/lib/libmpi.so.12(+0xffb08) [0x75511e943b08]
+4       0x75511e9413ab /usr/local/lib/libmpi.so.12(+0xfd3ab) [0x75511e9413ab]
+3       0x755120b767bb /usr/local/lib/libmpi.so.12(+0x23327bb) [0x755120b767bb]
+2       0x755120b75e79 /usr/local/lib/libmpi.so.12(+0x2331e79) [0x755120b75e79]
+1       0x755120b87cd0 /usr/local/lib/libmpi.so.12(+0x2343cd0) [0x755120b87cd0]
+0       0x7551253b1520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x7551253b1520]
+2026-08-12 14:15:58.813 ( 299.654s) [main            ]                       :0     FATL| Signal: SIGTERM
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 10011 RUNNING AT 02ae63306731
+=   EXIT CODE: 15
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Terminated (signal 15)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions
+
+## Exit
+- Status: 124
+- Elapsed (s): 302

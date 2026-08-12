@@ -58,6 +58,20 @@ BOX_HALF_WIDTH = 0.25
 RESOLUTION_WIRE = 0.001
 RESOLUTION_NEAR = float(os.environ.get("MAT6_STEP10_RESOLUTION_NEAR", "0.0025"))
 MESH_ONLY = os.environ.get("MAT6_STEP10_MESH_ONLY", "0") == "1"
+# Step 10a knobs.  `ROLE` selects which rung of the attribution ladder this run
+# is: "baseline" (resolution_near = 0.005, the un-composed box+wire fixture,
+# 178-196 s on record at -n 8) also carries the step's negative control, an
+# enforced wall-clock band; "intermediate" (0.0035) and "composed" (0.0025) are
+# measurement-only.  `MUMPS_VERBOSE` turns on ICNTL(4) = 2 so the analysis
+# phase prints its statistics *before* numeric factorization starts, which is
+# the only reading run (3) can produce — it is killed mid-factorization by
+# design and `exit 124 with the stats in the log` is the measurement.
+ROLE = os.environ.get("MAT6_STEP10_ROLE", "composed")
+MUMPS_VERBOSE = os.environ.get("MAT6_STEP10_MUMPS_VERBOSE", "0") == "1"
+# §7 step 10a negative control: the baseline's own wall clock must land on its
+# 178-196 s record at ±25%, else the environment moved and every ratio this
+# probe reports is void.
+BASELINE_SOLVE_BAND_S = (178.0 * 0.75, 196.0 * 1.25)
 # On record for the un-composed fixtures, for the growth line.
 NCELLS_COMBINED = 697_401  # W = 0.25, wire 0.001, slab 0.005 (step 7 Part 2c)
 NCELLS_SLAB_FINE = 417_914  # W = 0.15, wire 0.002, slab 0.0025 (step 8)
@@ -71,7 +85,8 @@ def main() -> int:
 
     if comm.rank == 0:
         print(
-            f"[MAT-6 step 10 probe] composed fixture: W = {BOX_HALF_WIDTH} m, "
+            f"[MAT-6 step 10 probe] role = {ROLE}, mumps_verbose = "
+            f"{int(MUMPS_VERBOSE)}; W = {BOX_HALF_WIDTH} m, "
             f"resolution_wire = {RESOLUTION_WIRE} m, resolution_near = "
             f"{RESOLUTION_NEAR:g} m ({SKIN_DEPTH_M / RESOLUTION_NEAR:.2f} cells "
             f"per skin depth) at -n {comm.size}; on record {NCELLS_COMBINED} "
@@ -124,6 +139,7 @@ def main() -> int:
             )
         },
         boundary_condition="pec_zero_tangential_a",
+        solver_petsc_options={"mat_mumps_icntl_4": 2} if MUMPS_VERBOSE else None,
     )
     solver = TimeHarmonicSolver(problem, degree=1)
     j_magnitude = FEM_CURRENT_A / (np.pi * FEM_WIRE_RADIUS**2)
@@ -152,7 +168,74 @@ def main() -> int:
             f"solve > 300 s or OOM.",
             flush=True,
         )
+
+    _report_mumps_stats(comm, solver, ncells, ndofs)
+
+    failures = []
+    if ROLE == "baseline":
+        lo, hi = BASELINE_SOLVE_BAND_S
+        ok = lo <= t_solve <= hi
+        if comm.rank == 0:
+            print(
+                f"[MAT-6 step 10a control] baseline solve {t_solve:.1f} s vs the "
+                f"178-196 s record at +-25% ([{lo:.1f}, {hi:.1f}] s): "
+                f"{'PASS' if ok else 'FAIL'}",
+                flush=True,
+            )
+        if not ok:
+            failures.append(
+                f"baseline solve {t_solve:.1f} s outside [{lo:.1f}, {hi:.1f}] s "
+                "— the environment moved and the step-10a ratios are void"
+            )
+
+    failures = comm.bcast(failures, root=0)
+    if failures:
+        if comm.rank == 0:
+            for message in failures:
+                print(f"[MAT-6 step 10a control] FAIL: {message}", flush=True)
+        return 1
     return 0
+
+
+def _report_mumps_stats(comm, solver, ncells: int, ndofs: int) -> None:
+    """Print MUMPS's own factorization statistics for this solve.
+
+    The anchor of step 10a is the ratio of *estimated factor flops*
+    (``RINFOG(1)``) between the composed 0.0025 fixture and the box+wire
+    baseline, read against the 1.28x cell ratio.  MUMPS also prints these
+    during the analysis phase when ``ICNTL(4) = 2`` — that printed copy is what
+    a killed run leaves behind; this query is the exact reading for the runs
+    that finish.  ``INFOG(20)`` is the estimated number of entries in the
+    factors, negative when expressed in millions (MUMPS convention).
+    """
+    lp = getattr(solver, "_linear_problem", None)
+    if lp is None:  # pragma: no cover — solver API changed
+        if comm.rank == 0:
+            print(
+                "[MAT-6 step 10a] no LinearProblem handle: MUMPS stats "
+                "unavailable from Python; read the ICNTL(4) printout instead",
+                flush=True,
+            )
+        return
+    try:
+        factor = lp.solver.getPC().getFactorMatrix()
+        flops = factor.getMumpsRinfog(1)
+        nnz_raw = factor.getMumpsInfog(20)
+        ordering = factor.getMumpsInfog(7)
+    except Exception as exc:  # pragma: no cover — not a MUMPS factor
+        if comm.rank == 0:
+            print(f"[MAT-6 step 10a] MUMPS stats query failed: {exc}", flush=True)
+        return
+    nnz = -nnz_raw * 1e6 if nnz_raw < 0 else float(nnz_raw)
+    if comm.rank == 0:
+        print(
+            f"[MAT-6 step 10a] MUMPS estimated factor flops RINFOG(1) = "
+            f"{flops:.6e}, estimated factor entries INFOG(20) = {nnz:.6e} "
+            f"(raw {nnz_raw}), ordering INFOG(7) = {ordering}; "
+            f"{ncells} cells / {ndofs} dofs, "
+            f"flops per dof = {flops / max(ndofs, 1):.4e}",
+            flush=True,
+        )
 
 
 if __name__ == "__main__":

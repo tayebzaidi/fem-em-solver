@@ -450,6 +450,12 @@ class TimeHarmonicSolver:
             options.update(dict(self.problem.solver_petsc_options))
 
         problem = LinearProblem(a, L, bcs=bcs, petsc_options=options)
+        # `MAT-6` step 10a: keep the LinearProblem reachable so a caller can
+        # query the factorization's own statistics (MUMPS INFOG/RINFOG live on
+        # `solver.getPC().getFactorMatrix()`, which is discarded with `problem`
+        # otherwise).  Diagnostic access only — nothing in the solve path reads
+        # this attribute.
+        self._linear_problem = problem
 
         # `OPS-12`: without this the KSP records nothing and every
         # `residual_history` on this path came back empty, so `residual_trend`

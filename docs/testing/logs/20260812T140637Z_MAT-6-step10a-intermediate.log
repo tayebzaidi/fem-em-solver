@@ -1,0 +1,653 @@
+# Test Run
+- Chunk: MAT-6-step10a-intermediate
+- Commit: fb731871fb127b1849b1db8ccc6ff78ae9b02d49
+- Time (UTC): 2026-08-12 14:06:38
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T -e MAT6_STEP10_RESOLUTION_NEAR=0.0035 -e MAT6_STEP10_ROLE=intermediate -e MAT6_STEP10_MUMPS_VERBOSE=1 -e FEM_EM_REQUIRE_COMPLEX=1 -e GFORTRAN_UNBUFFERED_ALL=y -e PETSC_OPTIONS=-log_view fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 590 mpiexec -n 8 python3 scripts/probes/mat6_step10_probe.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 06:08 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 12 09:06 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 06:08 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T -e MAT6_STEP10_RESOLUTION_NEAR=0.0035 -e MAT6_STEP10_ROLE=intermediate -e MAT6_STEP10_MUMPS_VERBOSE=1 -e FEM_EM_REQUIRE_COMPLEX=1 -e GFORTRAN_UNBUFFERED_ALL=y -e PETSC_OPTIONS=-log_view fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 590 mpiexec -n 8 python3 scripts/probes/mat6_step10_probe.py'\'''
+[MAT-6 step 10 probe] role = intermediate, mumps_verbose = 1; W = 0.25 m, resolution_wire = 0.001 m, resolution_near = 0.0035 m (4.54 cells per skin depth) at -n 8; on record 697401 (box+wire) and 417914 (slab alone)
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 50%] Meshing curve 11 (Line)
+Info    : [ 50%] Meshing curve 12 (Line)
+Info    : [ 60%] Meshing curve 13 (Line)
+Info    : [ 60%] Meshing curve 14 (Line)
+Info    : [ 70%] Meshing curve 15 (Line)
+Info    : [ 70%] Meshing curve 16 (Line)
+Info    : [ 80%] Meshing curve 17 (Line)
+Info    : [ 80%] Meshing curve 18 (Line)
+Info    : [ 90%] Meshing curve 19 (Line)
+Info    : [ 90%] Meshing curve 20 (Line)
+Info    : [100%] Meshing curve 21 (Line)
+Info    : [100%] Meshing curve 22 (Line)
+Info    : Done meshing 1D (Wall 0.0716258s, CPU 0.071627s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.572775s, CPU 0.568913s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 3 volumes with 1 connected component
+Info    : Tetrahedrizing 11926 nodes...
+Info    : Done tetrahedrizing 11934 nodes (Wall 0.276138s, CPU 0.260138s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.585197s, CPU 0.529076s)
+Info    : Found volume 4
+Info    : Found volume 3
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 115.564 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 6.16552 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 4.71229 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 4.09759 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 3.73103 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 3.46217 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 3.25435 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 3.08857 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 2.94137 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 2.82897 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 2.73455 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 2.65493 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 2.58746 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 2.51694 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 2.46002 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 2.40946 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 2.3599 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 2.31187 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 2.26621 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 2.22381 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 2.18606 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 2.20851 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 2.12079 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 2.09072 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 2.06064 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 2.03257 (nodes removed 0 0)
+Info    : It. 13000 - 13000 nodes created - worst tet radius 2.00564 (nodes removed 0 0)
+Info    : It. 13500 - 13500 nodes created - worst tet radius 1.98066 (nodes removed 0 0)
+Info    : It. 14000 - 14000 nodes created - worst tet radius 1.9566 (nodes removed 0 0)
+Info    : It. 14500 - 14500 nodes created - worst tet radius 1.9342 (nodes removed 0 0)
+Info    : It. 15000 - 15000 nodes created - worst tet radius 1.91234 (nodes removed 0 0)
+Info    : It. 15500 - 15500 nodes created - worst tet radius 1.8917 (nodes removed 0 0)
+Info    : It. 16000 - 16000 nodes created - worst tet radius 1.87182 (nodes removed 0 0)
+Info    : It. 16500 - 16500 nodes created - worst tet radius 1.85311 (nodes removed 0 0)
+Info    : It. 17000 - 17000 nodes created - worst tet radius 1.83925 (nodes removed 0 0)
+Info    : It. 17500 - 17500 nodes created - worst tet radius 1.81657 (nodes removed 0 0)
+Info    : It. 18000 - 18000 nodes created - worst tet radius 1.79922 (nodes removed 0 0)
+Info    : It. 18500 - 18500 nodes created - worst tet radius 1.78321 (nodes removed 0 0)
+Info    : It. 19000 - 19000 nodes created - worst tet radius 1.7679 (nodes removed 0 0)
+Info    : It. 19500 - 19500 nodes created - worst tet radius 1.7543 (nodes removed 0 0)
+Info    : It. 20000 - 20000 nodes created - worst tet radius 1.73977 (nodes removed 0 0)
+Info    : It. 20500 - 20500 nodes created - worst tet radius 1.72547 (nodes removed 0 0)
+Info    : It. 21000 - 21000 nodes created - worst tet radius 1.71163 (nodes removed 0 0)
+Info    : It. 21500 - 21498 nodes created - worst tet radius 1.69834 (nodes removed 0 2)
+Info    : It. 22000 - 21998 nodes created - worst tet radius 1.6852 (nodes removed 0 2)
+Info    : It. 22500 - 22498 nodes created - worst tet radius 1.67264 (nodes removed 0 2)
+Info    : It. 23000 - 22998 nodes created - worst tet radius 1.66146 (nodes removed 0 2)
+Info    : It. 23500 - 23498 nodes created - worst tet radius 1.64863 (nodes removed 0 2)
+Info    : It. 24000 - 23998 nodes created - worst tet radius 1.63716 (nodes removed 0 2)
+Info    : It. 24500 - 24498 nodes created - worst tet radius 1.62581 (nodes removed 0 2)
+Info    : It. 25000 - 24998 nodes created - worst tet radius 1.61472 (nodes removed 0 2)
+Info    : It. 25500 - 25498 nodes created - worst tet radius 1.60454 (nodes removed 0 2)
+Info    : It. 26000 - 25998 nodes created - worst tet radius 1.59489 (nodes removed 0 2)
+Info    : It. 26500 - 26498 nodes created - worst tet radius 1.58467 (nodes removed 0 2)
+Info    : It. 27000 - 26998 nodes created - worst tet radius 1.57526 (nodes removed 0 2)
+Info    : It. 27500 - 27498 nodes created - worst tet radius 1.63771 (nodes removed 0 2)
+Info    : It. 28000 - 27998 nodes created - worst tet radius 1.55679 (nodes removed 0 2)
+Info    : It. 28500 - 28498 nodes created - worst tet radius 1.5481 (nodes removed 0 2)
+Info    : It. 29000 - 28998 nodes created - worst tet radius 1.53922 (nodes removed 0 2)
+Info    : It. 29500 - 29498 nodes created - worst tet radius 1.53108 (nodes removed 0 2)
+Info    : It. 30000 - 29998 nodes created - worst tet radius 1.5226 (nodes removed 0 2)
+Info    : It. 30500 - 30498 nodes created - worst tet radius 1.51468 (nodes removed 0 2)
+Info    : It. 31000 - 30998 nodes created - worst tet radius 1.50667 (nodes removed 0 2)
+Info    : It. 31500 - 31498 nodes created - worst tet radius 1.49868 (nodes removed 0 2)
+Info    : It. 32000 - 31998 nodes created - worst tet radius 1.49119 (nodes removed 0 2)
+Info    : It. 32500 - 32498 nodes created - worst tet radius 1.50575 (nodes removed 0 2)
+Info    : It. 33000 - 32998 nodes created - worst tet radius 1.47567 (nodes removed 0 2)
+Info    : It. 33500 - 33498 nodes created - worst tet radius 1.46883 (nodes removed 0 2)
+Info    : It. 34000 - 33998 nodes created - worst tet radius 1.47468 (nodes removed 0 2)
+Info    : It. 34500 - 34498 nodes created - worst tet radius 1.45449 (nodes removed 0 2)
+Info    : It. 35000 - 34998 nodes created - worst tet radius 1.44746 (nodes removed 0 2)
+Info    : It. 35500 - 35498 nodes created - worst tet radius 1.44062 (nodes removed 0 2)
+Info    : It. 36000 - 35998 nodes created - worst tet radius 1.43432 (nodes removed 0 2)
+Info    : It. 36500 - 36498 nodes created - worst tet radius 1.42761 (nodes removed 0 2)
+Info    : It. 37000 - 36998 nodes created - worst tet radius 1.42177 (nodes removed 0 2)
+Info    : It. 37500 - 37498 nodes created - worst tet radius 1.41569 (nodes removed 0 2)
+Info    : It. 38000 - 37998 nodes created - worst tet radius 1.40899 (nodes removed 0 2)
+Info    : It. 38500 - 38498 nodes created - worst tet radius 1.40299 (nodes removed 0 2)
+Info    : It. 39000 - 38998 nodes created - worst tet radius 1.39709 (nodes removed 0 2)
+Info    : It. 39500 - 39498 nodes created - worst tet radius 1.39102 (nodes removed 0 2)
+Info    : It. 40000 - 39998 nodes created - worst tet radius 1.38535 (nodes removed 0 2)
+Info    : It. 40500 - 40498 nodes created - worst tet radius 1.37937 (nodes removed 0 2)
+Info    : It. 41000 - 40998 nodes created - worst tet radius 1.3737 (nodes removed 0 2)
+Info    : It. 41500 - 41498 nodes created - worst tet radius 1.36834 (nodes removed 0 2)
+Info    : It. 42000 - 41998 nodes created - worst tet radius 1.3632 (nodes removed 0 2)
+Info    : It. 42500 - 42498 nodes created - worst tet radius 1.35755 (nodes removed 0 2)
+Info    : It. 43000 - 42998 nodes created - worst tet radius 1.35263 (nodes removed 0 2)
+Info    : It. 43500 - 43498 nodes created - worst tet radius 1.34817 (nodes removed 0 2)
+Info    : It. 44000 - 43998 nodes created - worst tet radius 1.34298 (nodes removed 0 2)
+Info    : It. 44500 - 44498 nodes created - worst tet radius 1.33805 (nodes removed 0 2)
+Info    : It. 45000 - 44998 nodes created - worst tet radius 1.3331 (nodes removed 0 2)
+Info    : It. 45500 - 45498 nodes created - worst tet radius 1.328 (nodes removed 0 2)
+Info    : It. 46000 - 45998 nodes created - worst tet radius 1.32332 (nodes removed 0 2)
+Info    : It. 46500 - 46498 nodes created - worst tet radius 1.31873 (nodes removed 0 2)
+Info    : It. 47000 - 46998 nodes created - worst tet radius 1.31432 (nodes removed 0 2)
+Info    : It. 47500 - 47498 nodes created - worst tet radius 1.30941 (nodes removed 0 2)
+Info    : It. 48000 - 47998 nodes created - worst tet radius 1.30487 (nodes removed 0 2)
+Info    : It. 48500 - 48498 nodes created - worst tet radius 1.30066 (nodes removed 0 2)
+Info    : It. 49000 - 48998 nodes created - worst tet radius 1.29654 (nodes removed 0 2)
+Info    : It. 49500 - 49498 nodes created - worst tet radius 1.29231 (nodes removed 0 2)
+Info    : It. 50000 - 49998 nodes created - worst tet radius 1.28782 (nodes removed 0 2)
+Info    : It. 50500 - 50498 nodes created - worst tet radius 1.28366 (nodes removed 0 2)
+Info    : It. 51000 - 50998 nodes created - worst tet radius 1.27924 (nodes removed 0 2)
+Info    : It. 51500 - 51498 nodes created - worst tet radius 1.27538 (nodes removed 0 2)
+Info    : It. 52000 - 51998 nodes created - worst tet radius 1.27169 (nodes removed 0 2)
+Info    : It. 52500 - 52498 nodes created - worst tet radius 1.26768 (nodes removed 0 2)
+Info    : It. 53000 - 52998 nodes created - worst tet radius 1.26362 (nodes removed 0 2)
+Info    : It. 53500 - 53498 nodes created - worst tet radius 1.25973 (nodes removed 0 2)
+Info    : It. 54000 - 53998 nodes created - worst tet radius 1.25598 (nodes removed 0 2)
+Info    : It. 54500 - 54498 nodes created - worst tet radius 1.25227 (nodes removed 0 2)
+Info    : It. 55000 - 54998 nodes created - worst tet radius 1.24837 (nodes removed 0 2)
+Info    : It. 55500 - 55498 nodes created - worst tet radius 1.24471 (nodes removed 0 2)
+Info    : It. 56000 - 55998 nodes created - worst tet radius 1.24107 (nodes removed 0 2)
+Info    : It. 56500 - 56498 nodes created - worst tet radius 1.23776 (nodes removed 0 2)
+Info    : It. 57000 - 56998 nodes created - worst tet radius 1.23411 (nodes removed 0 2)
+Info    : It. 57500 - 57498 nodes created - worst tet radius 1.23043 (nodes removed 0 2)
+Info    : It. 58000 - 57998 nodes created - worst tet radius 1.22691 (nodes removed 0 2)
+Info    : It. 58500 - 58498 nodes created - worst tet radius 1.22358 (nodes removed 0 2)
+Info    : It. 59000 - 58998 nodes created - worst tet radius 1.22003 (nodes removed 0 2)
+Info    : It. 59500 - 59498 nodes created - worst tet radius 1.21641 (nodes removed 0 2)
+Info    : It. 60000 - 59998 nodes created - worst tet radius 1.21304 (nodes removed 0 2)
+Info    : It. 60500 - 60498 nodes created - worst tet radius 1.20969 (nodes removed 0 2)
+Info    : It. 61000 - 60998 nodes created - worst tet radius 1.20636 (nodes removed 0 2)
+Info    : It. 61500 - 61498 nodes created - worst tet radius 1.20307 (nodes removed 0 2)
+Info    : It. 62000 - 61998 nodes created - worst tet radius 1.19982 (nodes removed 0 2)
+Info    : It. 62500 - 62498 nodes created - worst tet radius 1.19636 (nodes removed 0 2)
+Info    : It. 63000 - 62998 nodes created - worst tet radius 1.19317 (nodes removed 0 2)
+Info    : It. 63500 - 63498 nodes created - worst tet radius 1.19016 (nodes removed 0 2)
+Info    : It. 64000 - 63998 nodes created - worst tet radius 1.18714 (nodes removed 0 2)
+Info    : It. 64500 - 64498 nodes created - worst tet radius 1.18394 (nodes removed 0 2)
+Info    : It. 65000 - 64998 nodes created - worst tet radius 1.18099 (nodes removed 0 2)
+Info    : It. 65500 - 65498 nodes created - worst tet radius 1.17806 (nodes removed 0 2)
+Info    : It. 66000 - 65998 nodes created - worst tet radius 1.17485 (nodes removed 0 2)
+Info    : It. 66500 - 66498 nodes created - worst tet radius 1.17147 (nodes removed 0 2)
+Info    : It. 67000 - 66998 nodes created - worst tet radius 1.16857 (nodes removed 0 2)
+Info    : It. 67500 - 67498 nodes created - worst tet radius 1.16595 (nodes removed 0 2)
+Info    : It. 68000 - 67998 nodes created - worst tet radius 1.16305 (nodes removed 0 2)
+Info    : It. 68500 - 68498 nodes created - worst tet radius 1.16022 (nodes removed 0 2)
+Info    : It. 69000 - 68998 nodes created - worst tet radius 1.15727 (nodes removed 0 2)
+Info    : It. 69500 - 69498 nodes created - worst tet radius 1.15472 (nodes removed 0 2)
+Info    : It. 70000 - 69998 nodes created - worst tet radius 1.15196 (nodes removed 0 2)
+Info    : It. 70500 - 70498 nodes created - worst tet radius 1.14928 (nodes removed 0 2)
+Info    : It. 71000 - 70998 nodes created - worst tet radius 1.14655 (nodes removed 0 2)
+Info    : It. 71500 - 71498 nodes created - worst tet radius 1.1438 (nodes removed 0 2)
+Info    : It. 72000 - 71998 nodes created - worst tet radius 1.14353 (nodes removed 0 2)
+Info    : It. 72500 - 72498 nodes created - worst tet radius 1.13871 (nodes removed 0 2)
+Info    : It. 73000 - 72998 nodes created - worst tet radius 1.13612 (nodes removed 0 2)
+Info    : It. 73500 - 73498 nodes created - worst tet radius 1.13363 (nodes removed 0 2)
+Info    : It. 74000 - 73998 nodes created - worst tet radius 1.13104 (nodes removed 0 2)
+Info    : It. 74500 - 74498 nodes created - worst tet radius 1.12864 (nodes removed 0 2)
+Info    : It. 75000 - 74998 nodes created - worst tet radius 1.12613 (nodes removed 0 2)
+Info    : It. 75500 - 75498 nodes created - worst tet radius 1.12388 (nodes removed 0 2)
+Info    : It. 76000 - 75998 nodes created - worst tet radius 1.12139 (nodes removed 0 2)
+Info    : It. 76500 - 76498 nodes created - worst tet radius 1.119 (nodes removed 0 2)
+Info    : It. 77000 - 76998 nodes created - worst tet radius 1.11643 (nodes removed 0 2)
+Info    : It. 77500 - 77498 nodes created - worst tet radius 1.11413 (nodes removed 0 2)
+Info    : It. 78000 - 77998 nodes created - worst tet radius 1.11177 (nodes removed 0 2)
+Info    : It. 78500 - 78498 nodes created - worst tet radius 1.10932 (nodes removed 0 2)
+Info    : It. 79000 - 78998 nodes created - worst tet radius 1.10694 (nodes removed 0 2)
+Info    : It. 79500 - 79498 nodes created - worst tet radius 1.10467 (nodes removed 0 2)
+Info    : It. 80000 - 79998 nodes created - worst tet radius 1.10248 (nodes removed 0 2)
+Info    : It. 80500 - 80498 nodes created - worst tet radius 1.10015 (nodes removed 0 2)
+Info    : It. 81000 - 80998 nodes created - worst tet radius 1.09779 (nodes removed 0 2)
+Info    : It. 81500 - 81498 nodes created - worst tet radius 1.09554 (nodes removed 0 2)
+Info    : It. 82000 - 81998 nodes created - worst tet radius 1.09324 (nodes removed 0 2)
+Info    : It. 82500 - 82498 nodes created - worst tet radius 1.09098 (nodes removed 0 2)
+Info    : It. 83000 - 82998 nodes created - worst tet radius 1.0886 (nodes removed 0 2)
+Info    : It. 83500 - 83498 nodes created - worst tet radius 1.08658 (nodes removed 0 2)
+Info    : It. 84000 - 83998 nodes created - worst tet radius 1.08439 (nodes removed 0 2)
+Info    : It. 84500 - 84498 nodes created - worst tet radius 1.08236 (nodes removed 0 2)
+Info    : It. 85000 - 84998 nodes created - worst tet radius 1.08027 (nodes removed 0 2)
+Info    : It. 85500 - 85498 nodes created - worst tet radius 1.07817 (nodes removed 0 2)
+Info    : It. 86000 - 85998 nodes created - worst tet radius 1.07623 (nodes removed 0 2)
+Info    : It. 86500 - 86498 nodes created - worst tet radius 1.07419 (nodes removed 0 2)
+Info    : It. 87000 - 86998 nodes created - worst tet radius 1.07201 (nodes removed 0 2)
+Info    : It. 87500 - 87498 nodes created - worst tet radius 1.06986 (nodes removed 0 2)
+Info    : It. 88000 - 87998 nodes created - worst tet radius 1.06772 (nodes removed 0 2)
+Info    : It. 88500 - 88498 nodes created - worst tet radius 1.06565 (nodes removed 0 2)
+Info    : It. 89000 - 88998 nodes created - worst tet radius 1.06382 (nodes removed 0 2)
+Info    : It. 89500 - 89498 nodes created - worst tet radius 1.06206 (nodes removed 0 2)
+Info    : It. 90000 - 89998 nodes created - worst tet radius 1.06019 (nodes removed 0 2)
+Info    : It. 90500 - 90498 nodes created - worst tet radius 1.05829 (nodes removed 0 2)
+Info    : It. 91000 - 90998 nodes created - worst tet radius 1.05642 (nodes removed 0 2)
+Info    : It. 91500 - 91498 nodes created - worst tet radius 1.05446 (nodes removed 0 2)
+Info    : It. 92000 - 91998 nodes created - worst tet radius 1.05258 (nodes removed 0 2)
+Info    : It. 92500 - 92498 nodes created - worst tet radius 1.05083 (nodes removed 0 2)
+Info    : It. 93000 - 92998 nodes created - worst tet radius 1.04889 (nodes removed 0 2)
+Info    : It. 93500 - 93498 nodes created - worst tet radius 1.06348 (nodes removed 0 2)
+Info    : It. 94000 - 93998 nodes created - worst tet radius 1.04537 (nodes removed 0 2)
+Info    : It. 94500 - 94498 nodes created - worst tet radius 1.04359 (nodes removed 0 2)
+Info    : It. 95000 - 94998 nodes created - worst tet radius 1.04171 (nodes removed 0 2)
+Info    : It. 95500 - 95498 nodes created - worst tet radius 1.04007 (nodes removed 0 2)
+Info    : It. 96000 - 95998 nodes created - worst tet radius 1.03815 (nodes removed 0 2)
+Info    : It. 96500 - 96498 nodes created - worst tet radius 1.03639 (nodes removed 0 2)
+Info    : It. 97000 - 96998 nodes created - worst tet radius 1.0345 (nodes removed 0 2)
+Info    : It. 97500 - 97498 nodes created - worst tet radius 1.03279 (nodes removed 0 2)
+Info    : It. 98000 - 97998 nodes created - worst tet radius 1.03114 (nodes removed 0 2)
+Info    : It. 98500 - 98498 nodes created - worst tet radius 1.02942 (nodes removed 0 2)
+Info    : It. 99000 - 98998 nodes created - worst tet radius 1.02764 (nodes removed 0 2)
+Info    : It. 99500 - 99498 nodes created - worst tet radius 1.02587 (nodes removed 0 2)
+Info    : It. 100000 - 99998 nodes created - worst tet radius 1.02423 (nodes removed 0 2)
+Info    : It. 100500 - 100498 nodes created - worst tet radius 1.02262 (nodes removed 0 2)
+Info    : It. 101000 - 100998 nodes created - worst tet radius 1.02097 (nodes removed 0 2)
+Info    : It. 101500 - 101498 nodes created - worst tet radius 1.01938 (nodes removed 0 2)
+Info    : It. 102000 - 101998 nodes created - worst tet radius 1.01782 (nodes removed 0 2)
+Info    : It. 102500 - 102498 nodes created - worst tet radius 1.01621 (nodes removed 0 2)
+Info    : It. 103000 - 102998 nodes created - worst tet radius 1.01465 (nodes removed 0 2)
+Info    : It. 103500 - 103498 nodes created - worst tet radius 1.01315 (nodes removed 0 2)
+Info    : It. 104000 - 103998 nodes created - worst tet radius 1.0115 (nodes removed 0 2)
+Info    : It. 104500 - 104498 nodes created - worst tet radius 1.00983 (nodes removed 0 2)
+Info    : It. 105000 - 104998 nodes created - worst tet radius 1.0082 (nodes removed 0 2)
+Info    : It. 105500 - 105498 nodes created - worst tet radius 1.00671 (nodes removed 0 2)
+Info    : It. 106000 - 105998 nodes created - worst tet radius 1.00519 (nodes removed 0 2)
+Info    : It. 106500 - 106498 nodes created - worst tet radius 1.00344 (nodes removed 0 2)
+Info    : It. 107000 - 106998 nodes created - worst tet radius 1.00192 (nodes removed 0 2)
+Info    : It. 107500 - 107498 nodes created - worst tet radius 1.00037 (nodes removed 0 2)
+Info    : 3D refinement terminated (119558 nodes total):
+Info    :  - 8 Delaunay cavities modified for star shapeness
+Info    :  - 2 nodes could not be inserted
+Info    :  - 751479 tetrahedra created in 12.9671 sec. (57952 tets/s)
+Info    : Done meshing 3D (Wall 15.1336s, CPU 14.9456s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 4.83554e-06) with worst = 0.018988 / average = 0.761087:
+Info    : 0.00 < quality < 0.10 :        54 elements
+Info    : 0.10 < quality < 0.20 :       164 elements
+Info    : 0.20 < quality < 0.30 :       321 elements
+Info    : 0.30 < quality < 0.40 :       508 elements
+Info    : 0.40 < quality < 0.50 :       748 elements
+Info    : 0.50 < quality < 0.60 :      1145 elements
+Info    : 0.60 < quality < 0.70 :      2841 elements
+Info    : 0.70 < quality < 0.80 :      6801 elements
+Info    : 0.80 < quality < 0.90 :      8256 elements
+Info    : 0.90 < quality < 1.00 :      3402 elements
+Info    : 531 edge swaps, 10 node relocations (volume = 4.83554e-06): worst = 0.0521506 / average = 0.775148 (Wall 0.0513065s, CPU 0.05125s)
+Info    : 537 edge swaps, 12 node relocations (volume = 4.83554e-06): worst = 0.0521506 / average = 0.775327 (Wall 0.057574s, CPU 0.057519s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         1 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       508 elements
+Info    : 0.40 < quality < 0.50 :       701 elements
+Info    : 0.50 < quality < 0.60 :      1043 elements
+Info    : 0.60 < quality < 0.70 :      2856 elements
+Info    : 0.70 < quality < 0.80 :      6893 elements
+Info    : 0.80 < quality < 0.90 :      8375 elements
+Info    : 0.90 < quality < 1.00 :      3363 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 0.0625) with worst = 0.00454025 / average = 0.777104:
+Info    : 0.00 < quality < 0.10 :       316 elements
+Info    : 0.10 < quality < 0.20 :      1012 elements
+Info    : 0.20 < quality < 0.30 :      1757 elements
+Info    : 0.30 < quality < 0.40 :      2790 elements
+Info    : 0.40 < quality < 0.50 :      4653 elements
+Info    : 0.50 < quality < 0.60 :      7959 elements
+Info    : 0.60 < quality < 0.70 :     16344 elements
+Info    : 0.70 < quality < 0.80 :     36233 elements
+Info    : 0.80 < quality < 0.90 :     57715 elements
+Info    : 0.90 < quality < 1.00 :     29879 elements
+Info    : 3046 edge swaps, 102 node relocations (volume = 0.0625): worst = 0.175238 / average = 0.789115 (Wall 0.208114s, CPU 0.208104s)
+Info    : 3062 edge swaps, 102 node relocations (volume = 0.0625): worst = 0.296358 / average = 0.789166 (Wall 0.260797s, CPU 0.260775s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         1 elements
+Info    : 0.30 < quality < 0.40 :      2746 elements
+Info    : 0.40 < quality < 0.50 :      4482 elements
+Info    : 0.50 < quality < 0.60 :      7771 elements
+Info    : 0.60 < quality < 0.70 :     16292 elements
+Info    : 0.70 < quality < 0.80 :     36764 elements
+Info    : 0.80 < quality < 0.90 :     58204 elements
+Info    : 0.90 < quality < 1.00 :     29664 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 0.0624952) with worst = 0.0018484 / average = 0.784387:
+Info    : 0.00 < quality < 0.10 :      1018 elements
+Info    : 0.10 < quality < 0.20 :      3371 elements
+Info    : 0.20 < quality < 0.30 :      6043 elements
+Info    : 0.30 < quality < 0.40 :      9835 elements
+Info    : 0.40 < quality < 0.50 :     15655 elements
+Info    : 0.50 < quality < 0.60 :     26099 elements
+Info    : 0.60 < quality < 0.70 :     52393 elements
+Info    : 0.70 < quality < 0.80 :    123234 elements
+Info    : 0.80 < quality < 0.90 :    217779 elements
+Info    : 0.90 < quality < 1.00 :    113153 elements
+Info    : 10346 edge swaps, 290 node relocations (volume = 0.0624952): worst = 0.149194 / average = 0.795838 (Wall 0.59817s, CPU 0.598166s)
+Info    : 10378 edge swaps, 296 node relocations (volume = 0.0624952): worst = 0.240002 / average = 0.795868 (Wall 0.801254s, CPU 0.801253s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         2 elements
+Info    : 0.30 < quality < 0.40 :      9780 elements
+Info    : 0.40 < quality < 0.50 :     15032 elements
+Info    : 0.50 < quality < 0.60 :     25144 elements
+Info    : 0.60 < quality < 0.70 :     52094 elements
+Info    : 0.70 < quality < 0.80 :    125571 elements
+Info    : 0.80 < quality < 0.90 :    219350 elements
+Info    : 0.90 < quality < 1.00 :    112312 elements
+Info    : Done optimizing mesh (Wall 3.2174s, CPU 3.1134s)
+Info    : 119558 nodes 763512 elements
+[MAT-6 step 10 probe] 738953 cells (1.06x the box+wire fixture, 5.33x the step-2b baseline), meshed in 47.2 s on 8 ranks
+
+Entering ZMUMPS 5.6.1 from C interface with JOB, N =   1      861519
+      executing #MPI =      8, without OMP
+
+ =================================================
+ MUMPS compiled with option -Dmetis
+ MUMPS compiled with option -Dpord
+ MUMPS compiled with option -Dptscotch
+ MUMPS compiled with option -Dscotch
+ =================================================
+L U Solver for unsymmetric matrices
+Type of parallelism: Working host
+
+ ****** ANALYSIS STEP ********
+
+ ** Maximum transversal (ICNTL(6)) not allowed because matrix is distributed
+ Processing a graph of size:    861519 with      13319208 edges
+ Ordering based on METIS
+ ELAPSED TIME SPENT IN METIS reordering  =     11.2883
+ SYMBOLIC based on column counts 
+ ELAPSED TIME IN symbolic factorization  =    462.7510
+ A root of estimated size         9340  has been selected for Scalapack.
+
+Leaving analysis phase with  ...
+ INFOG(1)                                       =               0
+ INFOG(2)                                       =               0
+ -- (20) Number of entries in factors (estim.)  =      1754346531
+ --  (3) Real space for factors    (estimated)  =      1754363485
+ --  (4) Integer space for factors (estimated)  =        11070364
+ --  (5) Maximum frontal size      (estimated)  =           14072
+ --  (6) Number of nodes in the tree            =           34429
+ -- (32) Type of analysis effectively used      =               1
+ --  (7) Ordering option effectively used       =               5
+ ICNTL (6) Maximum transversal option           =               0
+ ICNTL (7) Pivot order option                   =               7
+ ICNTL(13) Parallelism/splitting of root node   =               0
+ ICNTL(14) Percentage of memory relaxation      =              25
+ ICNTL(15) Analysis by block effectively used   =               0
+ ICNTL(18) Distributed input matrix (on if >0)  =               3
+ ICNTL(58) Symbolic factorization option        =               2
+ Number of level 2 nodes                        =              14
+ Number of split nodes                          =               0
+ RINFOG(1) Operations during elimination (estim)= 1.051D+13
+ Distributed matrix entry format (ICNTL(18))    =               3
+
+ MEMORY ESTIMATIONS ... 
+ Estimations with standard Full-Rank (FR) factorization:
+    Maximum estim. space in Mbytes, IC facto.    (INFOG(16)):        7615
+    Total space in MBytes, IC factorization      (INFOG(17)):       53272
+    Maximum estim. space in Mbytes, OOC facto.   (INFOG(26)):        4298
+    Total space in MBytes,  OOC factorization    (INFOG(27)):       26218
+
+ Elapsed time in analysis driver=      12.3612
+
+Entering ZMUMPS 5.6.1 from C interface with JOB, N =   2      861519
+      executing #MPI =      8, without OMP
+
+
+
+****** FACTORIZATION STEP ********
+
+ GLOBAL STATISTICS PRIOR NUMERICAL FACTORIZATION ...
+ Number of working processes                =               8
+ ICNTL(22) Out-of-core option               =               0
+ ICNTL(35) BLR activation (eff. choice)     =               0
+ ICNTL(37) BLR CB compression (eff. choice) =               0
+ ICNTL(49) Compact workarray S (end facto.) =               0
+ ICNTL(14) Memory relaxation                =              25
+ INFOG(3) Real space for factors (estimated)=      1754363485
+ INFOG(4) Integer space for factors (estim.)=        11070364
+ Maximum frontal size (estimated)           =           14072
+ Number of nodes in the tree                =           34429
+ ICNTL(23) Memory allowed (value on host)   =               0
+           Sum over all procs               =               0
+ Memory provided by user, sum of LWK_USER   =               0
+ Effective threshold for pivoting, CNTL(1)  =      0.1000D-01
+ Max difference from 1 after scaling the entries for ONE-NORM (option 7/8)   = 0.15D+00
+ Average Effective size of S     (based on INFO(39))=            402512458
+
+ Redistrib: total data local/sent           =          533788        14146935
+
+ Elapsed time to reformat/distribute matrix =      0.5867
+ ** Memory allocated, max in Mbytes             (INFOG(18)):        7615
+
+ ** Memory allocated, total in Mbytes           (INFOG(19)):       53272
+ ** Memory effectively used, max in  Mbytes     (INFOG(21)):        5683
+ ** Memory effectively used, total in Mbytes    (INFOG(22)):       40661
+
+ Elapsed time to process root node                  =      6.3057
+
+ Elapsed time for factorization                     =    165.9645
+
+Leaving factorization with ...
+ RINFOG (2) Operations in node assembly             = 4.125D+09
+ ------ (3) Operations in node elimination          = 1.051D+13
+ ICNTL  (8) Scaling effectively used                =               7
+ INFOG  (9) Real space for factors                  =      1754346531
+ INFOG (10) Integer space for factors               =        11066732
+ INFOG (11) Maximum front size                      =           14072
+ INFOG (29) Number of entries in factors            =      1754346531
+ INFOG (12) Number of off diagonal pivots           =               0
+ INFOG (13) Number of delayed pivots                =               0
+ INFOG (14) Number of memory compress               =               6
+
+ Elapsed time in factorization driver               =    166.7808
+
+Entering ZMUMPS 5.6.1 from C interface with JOB, N =   3      861519
+      executing #MPI =      8, without OMP
+
+
+
+ ****** SOLVE & CHECK STEP ********
+
+ GLOBAL STATISTICS PRIOR SOLVE PHASE ...........
+ Number of right-hand-sides                    =           1
+ Blocking factor for multiple rhs              =           1
+ ICNTL (9)                                     =           1
+  --- (10)                                     =           0
+  --- (11)                                     =           0
+  --- (20)                                     =          10
+  --- (21)                                     =           1
+  --- (30)                                     =           0
+  --- (35)                                     =           0
+ WARNING: original distributed matrix is not allocated
+ ** Rank of processor needing largest memory in solve     :         7
+ ** Space in MBYTES used by this processor for solve      :      7474
+ ** Avg. Space in MBYTES per working proc during solve    :      6518
+
+ Leaving solve with ...
+ Time to build/scatter RHS        =       0.007469
+ Time in solution step (fwd/bwd)  =       1.364461
+  .. Time in forward (fwd) step   =          0.574129
+  .. Time in ScaLAPACK root       =          0.047442
+  .. Time in backward (bwd) step  =          0.742863
+ Time to gather solution(cent.sol)=       0.000000
+ Time to copy/scale dist. solution=       0.002072
+
+ Elapsed time in solve driver=       1.3992
+[MAT-6 step 10 probe] one projected loaded solve: 196.8 s at -n 8, 738953 cells / 861519 global dofs
+[MAT-6 step 10 probe] budget: the gate's loaded/free pair costs ~441 s including mesh.  §7 stop rule is one solve > 300 s or OOM.
+[MAT-6 step 10a] MUMPS estimated factor flops RINFOG(1) = 1.051031e+13, estimated factor entries INFOG(20) = 1.754347e+09 (raw 1754346531), ordering INFOG(7) = 5; 738953 cells / 861519 dofs, flops per dof = 1.2200e+07
+
+Entering ZMUMPS 5.6.1 from C interface with JOB =  -2
+      executing #MPI =      8, without OMP
+****************************************************************************************************************************************************************
+***                                WIDEN YOUR WINDOW TO 160 CHARACTERS.  Use 'enscript -r -fCourier9' to print this document                                 ***
+****************************************************************************************************************************************************************
+
+------------------------------------------------------------------ PETSc Performance Summary: ------------------------------------------------------------------
+
+Unknown Name on a linux-gnu-complex128-32 named 02ae63306731.mcc.northwestern.edu with 8 processors, by Unknown Wed Aug 12 14:10:44 2026
+Using Petsc Release Version 3.20.0, unknown 
+
+                         Max       Max/Min     Avg       Total
+Time (sec):           2.458e+02     1.000   2.458e+02
+Objects:              0.000e+00     0.000   0.000e+00
+Flops:                4.811e+09     1.406   4.131e+09  3.304e+10
+Flops/sec:            1.957e+07     1.406   1.681e+07  1.344e+08
+MPI Msg Count:        2.040e+02     1.140   1.948e+02  1.558e+03
+MPI Msg Len (bytes):  5.431e+06     1.373   2.482e+04  3.867e+07
+MPI Reductions:       8.700e+01     1.000
+
+Flop counting convention: 1 flop = 1 real number operation of type (multiply/divide/add/subtract)
+                            e.g., VecAXPY() for real vectors of length N --> 2N flops
+                            and VecAXPY() for complex vectors of length N --> 8N flops
+
+Summary of Stages:   ----- Time ------  ----- Flop ------  --- Messages ---  -- Message Lengths --  -- Reductions --
+                        Avg     %Total     Avg     %Total    Count   %Total     Avg         %Total    Count   %Total
+ 0:      Main Stage: 2.4579e+02 100.0%  3.3045e+10 100.0%  1.558e+03 100.0%  2.482e+04      100.0%  6.800e+01  78.2%
+
+------------------------------------------------------------------------------------------------------------------------
+See the 'Profiling' chapter of the users' manual for details on interpreting output.
+Phase summary info:
+   Count: number of times phase was executed
+   Time and Flop: Max - maximum over all processors
+                  Ratio - ratio of maximum to minimum over all processors
+   Mess: number of messages sent
+   AvgLen: average message length (bytes)
+   Reduct: number of global reductions
+   Global: entire computation
+   Stage: stages of a computation. Set stages with PetscLogStagePush() and PetscLogStagePop().
+      %T - percent time in this phase         %F - percent flop in this phase
+      %M - percent messages in this phase     %L - percent message lengths in this phase
+      %R - percent reductions in this phase
+   Total Mflop/s: 10e-6 * (sum of flop over all processors)/(max time over all processors)
+------------------------------------------------------------------------------------------------------------------------
+Event                Count      Time (sec)     Flop                              --- Global ---  --- Stage ----  Total
+                   Max Ratio  Max     Ratio   Max  Ratio  Mess   AvgLen  Reduct  %T %F %M %L %R  %T %F %M %L %R Mflop/s
+------------------------------------------------------------------------------------------------------------------------
+
+--- Event Stage 0: Main Stage
+
+BuildTwoSided         12 1.0 1.4462e-01 16.2 0.00e+00 0.0 5.1e+02 4.0e+00 1.2e+01  0  0 33  0 14   0  0 33  0 18     0
+BuildTwoSidedF         4 1.0 1.4077e-01 16.5 0.00e+00 0.0 2.1e+02 5.1e+04 4.0e+00  0  0 13 28  5   0  0 13 28  6     0
+SFSetGraph             8 1.0 9.2085e-03 1.7 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+SFSetUp                8 1.0 7.8474e-03 2.0 0.00e+00 0.0 8.2e+02 5.6e+03 8.0e+00  0  0 53 12  9   0  0 53 12 12     0
+SFPack                 4 1.0 1.0040e-03 1.8 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+SFUnpack               4 1.0 7.5850e-04 1.4 2.22e+04 1.4 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0   209
+VecSet                 2 1.0 3.6040e-04 1.1 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+VecScatterBegin        4 1.0 1.2961e-03 1.6 0.00e+00 0.0 2.0e+02 7.8e+04 0.0e+00  0  0 13 40  0   0  0 13 40  0     0
+VecScatterEnd          4 1.0 5.4941e-02 5.0 2.22e+04 1.4 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     3
+MatSolve               2 1.0 1.5515e+00 1.0 2.13e+09 1.3 6.2e+02 4.3e+04 1.0e+01  1 46 40 68 11   1 46 40 68 15  9813
+MatLUFactorSym         2 1.0 1.3878e+01 1.0 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  6  0  0  0  0   6  0  0  0  0     0
+MatLUFactorNum         2 1.0 1.7399e+02 1.0 2.67e+09 1.5 0.0e+00 0.0e+00 0.0e+00 71 54  0  0  0  71 54  0  0  0   102
+MatAssemblyBegin       4 1.0 1.5009e-01 6.8 0.00e+00 0.0 2.1e+02 5.1e+04 4.0e+00  0  0 13 28  5   0  0 13 28  6     0
+MatAssemblyEnd         4 1.0 2.2585e-02 1.1 1.20e+05 1.3 2.1e+02 2.7e+03 1.0e+01  0  0 14  1 11   0  0 14  1 15    38
+MatZeroEntries         2 1.0 1.8380e-02 3.9 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+PCSetUp                2 1.0 1.8788e+02 1.0 2.67e+09 1.5 0.0e+00 0.0e+00 4.0e+00 76 54  0  0  5  76 54  0  0  6    94
+PCApply                2 1.0 1.5515e+00 1.0 2.13e+09 1.3 6.2e+02 4.3e+04 1.0e+01  1 46 40 68 11   1 46 40 68 15  9813
+KSPSetUp               2 1.0 2.9000e-06 1.6 0.00e+00 0.0 0.0e+00 0.0e+00 0.0e+00  0  0  0  0  0   0  0  0  0  0     0
+KSPSolve               2 1.0 1.5515e+00 1.0 2.13e+09 1.3 6.2e+02 4.3e+04 1.2e+01  1 46 40 68 14   1 46 40 68 18  9813
+------------------------------------------------------------------------------------------------------------------------
+
+Object Type          Creations   Destructions. Reports information only for process 0.
+
+--- Event Stage 0: Main Stage
+
+           Index Set    16             16
+   IS L to G Mapping     6              6
+   Star Forest Graph     8              8
+              Vector    16             16
+              Matrix    10             10
+      Preconditioner     2              2
+       Krylov Solver     2              2
+              Viewer     1              0
+
+--- Event Stage 1: PCMPI
+
+========================================================================================================================
+Average time to get PetscTime(): 4e-08
+Average time for MPI_Barrier(): 7.58e-06
+Average time for zero size MPI_Send(): 3.025e-06
+#PETSc Option Table entries:
+-dolfinx_solve_137051066214016ksp_type preonly # (source: code)
+-dolfinx_solve_137051066214016pc_factor_mat_solver_type mumps # (source: code)
+-dolfinx_solve_137051066214016pc_type lu # (source: code)
+-dolfinx_solve_137051066218720ksp_type preonly # (source: code)
+-dolfinx_solve_137051066218720mat_mumps_icntl_4 2 # (source: code)
+-dolfinx_solve_137051066218720pc_factor_mat_solver_type mumps # (source: code)
+-dolfinx_solve_137051066218720pc_type lu # (source: code)
+-log_view # (source: environment)
+#End of PETSc Option Table entries
+Compiled without FORTRAN kernels
+Compiled with full precision matrices (default)
+sizeof(short) 2 sizeof(int) 4 sizeof(long) 8 sizeof(void*) 8 sizeof(PetscScalar) 16 sizeof(PetscInt) 4
+Configure options: PETSC_ARCH=linux-gnu-complex128-32 --COPTFLAGS=-O2 --CXXOPTFLAGS=-O2 --FOPTFLAGS=-O2 --with-64-bit-indices=no --with-debugging=no --with-fortran-bindings=no --with-shared-libraries --download-hypre --download-metis --download-mumps --download-ptscotch --download-scalapack --download-suitesparse --download-superlu --download-superlu_dist --with-scalar-type=complex --with-precision=double
+-----------------------------------------
+Libraries compiled on 2023-10-05 11:54:33 on buildkitsandbox 
+Machine characteristics: Linux-6.2.0-1012-azure-x86_64-with-glibc2.35
+Using PETSc directory: /usr/local/petsc
+Using PETSc arch: linux-gnu-complex128-32
+-----------------------------------------
+
+Using C compiler: mpicc  -fPIC -Wall -Wwrite-strings -Wno-unknown-pragmas -Wno-lto-type-mismatch -Wno-stringop-overflow -fstack-protector -fvisibility=hidden -O2  
+Using Fortran compiler: mpif90  -fPIC -Wall -ffree-line-length-none -ffree-line-length-0 -Wno-lto-type-mismatch -Wno-unused-dummy-argument -O2    
+-----------------------------------------
+
+Using include paths: -I/usr/local/petsc/include -I/usr/local/petsc/linux-gnu-complex128-32/include
+-----------------------------------------
+
+Using C linker: mpicc
+Using Fortran linker: mpif90
+Using libraries: -Wl,-rpath,/usr/local/petsc/linux-gnu-complex128-32/lib -L/usr/local/petsc/linux-gnu-complex128-32/lib -lpetsc -Wl,-rpath,/usr/local/petsc/linux-gnu-complex128-32/lib -L/usr/local/petsc/linux-gnu-complex128-32/lib -Wl,-rpath,/usr/local/lib -L/usr/local/lib -Wl,-rpath,/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11 -lHYPRE -lspqr -lumfpack -lklu -lcholmod -lbtf -lccolamd -lcolamd -lcamd -lamd -lsuitesparseconfig -lzmumps -lmumps_common -lpord -lpthread -lscalapack -lsuperlu -lsuperlu_dist -llapack -lblas -lptesmumps -lptscotchparmetisv3 -lptscotch -lptscotcherr -lesmumps -lscotch -lscotcherr -lmetis -lm -lX11 -lmpifort -lmpi -lgfortran -lm -lgfortran -lm -lgcc_s -lquadmath -lstdc++ -lrt -lquadmath
+-----------------------------------------
+
+
+## Exit
+- Status: 0
+- Elapsed (s): 246

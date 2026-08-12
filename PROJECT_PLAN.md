@@ -3454,13 +3454,67 @@ killed.)*
 > survive a kill. Formal rescope in **step 10a** below; the probe script is
 > landed on `main` (`scripts/probes/mat6_step10_probe.py`, commit
 > `cc2e8da`; the attempt branch is deleted).
+> **Attribution landed 2026-08-12 (09:00 run, step 10a below): the
+> conditioning/fill-in hypothesis is refuted.** Estimated factor flops grow
+> only **1.693×** for the 1.28× cell ratio, so the composed matrix is
+> ordinary for its size and ≥ 5.1× of the 9× is unexplained by arithmetic.
+> The two surviving suspects are cgroup memory pressure (MUMPS estimates
+> 69 894 MB of in-core factorization space against a 65 536 MiB cap) and
+> MUMPS parallel load balancing (the kill landed in its message receive).
+> This step is now the weekly review's to commission.
 > **Does not close / does not reopen:** `MAT-6` stays ✅; nothing in §2.1 or
 > the `ANS-1` numbers moves.
 
 **`MAT-6` step 10a — attribute the 9× composed-fixture solve cost before
-any bigger box or rank count is spent on it** 🔲
+any bigger box or rank count is spent on it** ✅
 *(scoped 2026-08-12, 03:00 review — the step-10 rescope after its stop
-rule fired. Queued as §9 item 3. Step 10 proper stays 🟡 behind this.)*
+rule fired. **Executed 2026-08-12, 09:00 run — the attribution landed and
+it is negative: fill-in is exonerated.** Logs
+`20260812T140222Z_MAT-6-step10a-baseline.log` (exit 0, 230 s),
+`20260812T140637Z_MAT-6-step10a-intermediate.log` (exit 0, 246 s),
+`20260812T141058Z_MAT-6-step10a-composed.log` (exit 124, 302 s — the
+intended reading). Heavy, `-n 8`, three foreground commands.)*
+> **Result.** Estimated factor flops `RINFOG(1)`: baseline (0.005, 697 401
+> cells, 813 287 dofs) **9.059690e+12**; intermediate (0.0035, 738 953
+> cells) 1.051031e+13; composed (0.0025, 895 974 cells) **1.534e+13**. The
+> anchor ratio is **1.693×** against the **1.28×** cell ratio — **1.32× the
+> cell ratio**, where the pre-registered fill-in verdict demanded ≥ 4×
+> (5.12×). Estimated factor entries move less still (2 230 978 496 /
+> 1 621 190 556 = 1.376×). The composed matrix is ordinary for its size.
+> **Negative control PASS and enforced:** the baseline solve read **179.8 s**
+> inside the 178–196 s record at ±25%, and the probe now exits 1 when that
+> band is missed (`MAT6_STEP10_ROLE=baseline`), so the exit code carries the
+> verdict.
+> **Where the 9× is not.** Baseline `-log_view` puts `MatLUFactorNum` at
+> 157.85 s of 227.7 s (69%; MUMPS "Elapsed time for factorization" 152.06 s),
+> so the healthy rung *is* numeric-factorization-dominated and the flop ratio
+> is the right predictor — it predicts a ~257 s composed numeric phase and a
+> ~330 s solve against the ≥ 1 700 s measured at 00:00. **≥ 5.1× is
+> unexplained by arithmetic and lives in the numeric phase.**
+> **Two leads, both first readings of their kind.** (1) MUMPS `INFOG(17)`
+> total in-core factorization space is **69 894 MB** composed vs 48 950 MB
+> baseline, against a container cap of 68 719 476 736 B = **65 536 MiB** —
+> the estimate *exceeds the cap by 6.7%*; effective use runs ~75% of estimate
+> (baseline `INFOG(22)` 36 960 MB), so composed projects to ~52 GB, ~20%
+> headroom vs 44%. The 00:00 run ruled the cap out from *host* memory, which
+> cannot see cgroup reclaim. (2) The SIGTERM landed in
+> `zmumps_fac_par → zmumps_fac2_lu → zmumps_send_factored_blk →
+> zmumps_load_recv_msgs → PMPI_Iprobe` — blocked in MUMPS's parallel
+> load-balancing receive, not in local BLAS.
+> **Harness:** `timeout -k 30 300` stopped the job cleanly at 299.654 s,
+> footer written, container Up, zero stray `python3`, `memory.max`
+> unchanged — the direct counter-case to the 00:00 plain-`timeout` failure.
+> **Instrumentation landed:** `time_harmonic.py` keeps the `LinearProblem`
+> as `self._linear_problem` (diagnostic access only, nothing in the solve
+> path reads it) so `getFactorMatrix()` survives the solve; the probe gained
+> `MAT6_STEP10_ROLE` / `MAT6_STEP10_MUMPS_VERBOSE` and a stats reader.
+> **Does not close / does not reopen:** `MAT-6` stays ✅; **step 10 stays 🟡
+> and goes to the weekly review** per this entry's negative-result clause.
+> The commissionable discriminator is a memory-headroom run (same fixture at
+> `-n 12`, or MUMPS out-of-core / raised `ICNTL(14)`) timed against the 257 s
+> prediction: near it ⇒ memory pressure owns the gap and step 10 is
+> schedulable; still ~5× long ⇒ parallel load balancing owns it and step 10
+> needs ordering or grading, not a bigger machine.
 > Three runs, all with MUMPS verbosity through the existing
 > `solver_petsc_options` passthrough (`core/time_harmonic.py:449` —
 > `mat_mumps_icntl_4: 2` and `-log_view`, so the analysis phase prints
@@ -7739,7 +7793,20 @@ in the new `-k 30` recipe, nothing else.
    reproduction means the fixture drifted since 2026-08-12 — that is a
    known-issues entry, not a band adjustment; keep 🧪, report and stop.
 
-3. **`MAT-6` step 10a — attribute the 9× composed-fixture solve cost
+3. ✅ **DONE 2026-08-12, 09:00 slot — the attribution landed and is
+   negative: estimated factor flops grow 1.693× for the 1.28× cell ratio
+   (1.32× the cell ratio, against the ≥ 4× fill-in threshold), so
+   **fill-in is exonerated** and ≥ 5.1× of the 9× is unexplained by
+   arithmetic. Baseline control PASS and now enforced (179.8 s inside
+   178–196 s ±25%). Two leads for the weekly review: MUMPS estimates
+   69 894 MB in-core factorization space against a 65 536 MiB container
+   cap, and the kill landed inside MUMPS's parallel load-balancing
+   receive. `timeout -k 30` stopped run (3) cleanly — no wedge. Logs
+   `20260812T140222Z_MAT-6-step10a-baseline.log` /
+   `...T140637Z_...-intermediate.log` / `...T141058Z_...-composed.log`
+   (exit 124, the intended reading). Step 10 stays 🟡, handed to the
+   weekly review.**
+   **`MAT-6` step 10a — attribute the 9× composed-fixture solve cost
    (heavy; measurement only; three commands).** Execute the §7 step-10a
    entry verbatim: MUMPS verbosity (`mat_mumps_icntl_4: 2` + `-log_view`
    via `solver_petsc_options`, `time_harmonic.py:449`) on (1) the

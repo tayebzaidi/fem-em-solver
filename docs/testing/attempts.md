@@ -10400,3 +10400,103 @@ the deliberately-failing negative control writes an `Exit 1` row into
 **Next-attempt hypothesis.** None needed for this item; it is closed. The
 open `MAG-13` question is unchanged and is §9 item 4 (step 2b, CG1 recovery
 priced against the graded-mesh route).
+
+## 2026-08-12T14:20Z — `MAT-6` step 10a — **complete**
+
+**Slot** 2026-08-12, 09:00 CDT scheduled implementer run. **Item** §9 item 3
+(items 1 and 2 skipped correctly: item 1 is the twice-failed `PORT-1`
+3b-xvi, which its own text bars from reappearing until the review re-points
+its control; item 2 is marked DONE by the 07:30 slot). Preflight clean,
+container Up 9 h.
+
+**What was done.** Extended the landed `scripts/probes/mat6_step10_probe.py`
+(no new script) with three knobs — `MAT6_STEP10_ROLE`,
+`MAT6_STEP10_MUMPS_VERBOSE` (→ `solver_petsc_options={"mat_mumps_icntl_4":
+2}`, the existing passthrough at `time_harmonic.py:449`), and a
+`_report_mumps_stats()` reader — plus a four-line diagnostic addition in
+`src/fem_em_solver/core/time_harmonic.py`: the `LinearProblem` is now kept
+as `self._linear_problem` so `solver.getPC().getFactorMatrix()` survives the
+solve and MUMPS `RINFOG`/`INFOG` can be read exactly rather than scraped from
+the printout. Nothing in the solve path reads that attribute. Three separate
+foreground harness commands, `-n 8`, complex build,
+`FEM_EM_REQUIRE_COMPLEX=1`, `PETSC_OPTIONS=-log_view`,
+`GFORTRAN_UNBUFFERED_ALL=y` (insurance so the Fortran-side analysis print
+survives the kill on run 3 — it did).
+
+**Measured — the ladder.** All three rungs differ only in
+`resolution_near`; W = 0.25, wire 0.001 throughout.
+
+| rung | cells | dofs | analysis (s) | RINFOG(1) est. flops | INFOG(3) est. real space | solve (s) |
+|---|---|---|---|---|---|---|
+| baseline 0.005 | 697 401 | 813 287 | 11.72 | **9.059690e+12** | 1 621 190 556 | **179.8** |
+| intermediate 0.0035 | 738 953 | 861 519 | 12.36 | 1.051031e+13 | — (INFOG(29) 1 754 346 531) | 196.8 |
+| composed 0.0025 | 895 974 | — | 15.36 | **1.534e+13** | 2 230 978 496 | killed at 300 s |
+
+Logs: `20260812T140222Z_MAT-6-step10a-baseline.log` (exit 0, 230 s),
+`20260812T140637Z_MAT-6-step10a-intermediate.log` (exit 0, 246 s),
+`20260812T141058Z_MAT-6-step10a-composed.log` (**exit 124, 302 s — the
+intended measurement**). Heavy tier; three commands, none over 302 s.
+
+**Negative control — PASS, enforced.** The baseline solve read **179.8 s**
+against its 178–196 s record at ±25% ([133.5, 245.0] s); the probe returns 1
+when `ROLE=baseline` misses that band, so the exit code carries the verdict
+(the demotion lesson from `MAG-13` step 2, applied). The environment did not
+move and the ratios below stand.
+
+**The anchor, read against its pre-registration — fill-in is EXONERATED.**
+Composed/baseline estimated factor flops = 1.534e13 / 9.05969e12 =
+**1.693×**, against the cell ratio **1.28×** — i.e. **1.32× the cell ratio**,
+where the pre-registered fill-in verdict required **≥ 4×** (5.12×). The
+intermediate rung sits on the same line (1.16× flops for 1.06× cells).
+Factor entries move even less: 2 230 978 496 / 1 621 190 556 = 1.376×. So the
+composed matrix is an *ordinary* matrix for its size, and the 9× wall-clock
+gap the 00:00 run measured is **not** the factorization's operation count.
+This is the entry's own "≈ cell ratio" branch.
+
+**How large the unexplained gap is.** Baseline `-log_view` puts
+`MatLUFactorNum` at **157.85 s of the 227.7 s** run (69%; MUMPS's own
+"Elapsed time for factorization" 152.06 s), so the healthy rung is numeric-
+factorization-dominated and the flop ratio is the right predictor. Scaling
+it, the composed numeric phase should cost ≈ 1.693 × 152 s ≈ **257 s**, i.e.
+a ~330 s solve. The 00:00 run measured **≥ 1 700 s**. **≥ 5.1× is
+unaccounted for by the arithmetic**, and it lives in the numeric phase.
+
+**Two concrete leads for the review, both new.**
+(1) **Memory, at the container level.** MUMPS's analysis estimates
+`INFOG(17)` total in-core factorization space at **69 894 MB** for the
+composed fixture vs **48 950 MB** for the baseline — and the container cap is
+68 719 476 736 B = **65 536 MiB**, which the composed estimate *exceeds by
+6.7%*. Baseline effectively used 36 960 MB, 75.5% of its own estimate, so the
+composed run projects to ~52 GB effective — under the cap but with ~20%
+headroom instead of 44%. The 00:00 run ruled out the cap from *host* memory
+(74 G of 754 G, no swap growth); that observation cannot see cgroup-level
+reclaim, and this is the first reading that does.
+(2) **The kill site names the phase.** The SIGTERM at 299.654 s landed in
+`zmumps_fac_par → zmumps_fac2_lu → zmumps_send_factored_blk →
+zmumps_try_recvtreat → zmumps_load_recv_msgs → PMPI_Iprobe` — inside the
+*parallel* numeric factorization, blocked in MUMPS's load-balancing message
+receive, not in local BLAS. Communication stall / load imbalance is therefore
+the reading the stack supports, and it is compatible with (1).
+
+**Harness note — the `-k 30` repair works.** Run (3) terminated cleanly at
+299.654 s (`Signal: SIGTERM`, mpiexec exit string 15, harness footer written,
+exit 124), the container stayed Up, `pgrep -c python3` = 0 afterwards, and
+`memory.max` re-read unchanged at 68 719 476 736. No wedge, no
+force-recreate. This is the direct counter-case to the 00:00 run's plain
+`timeout 590`, which never stopped the job. `~/.cache/fenics` cleared after
+the kill per the entry's trap list. No denied commands.
+
+**Scope held.** `MAT-6` stays ✅; step 10 stays 🟡; no ΔR read; no ΔX band
+touched; no rank count above 8 spent.
+
+**Next-attempt hypothesis.** The 9× is a numeric-phase pathology, not an
+operation count. The cheapest discriminator is a **memory-headroom** run: the
+same composed fixture with MUMPS out-of-core or with `ICNTL(14)` working-
+space percentage raised, or simply at `-n 12` (which *lowers* per-rank space,
+`INFOG(16)` 9 432 MB max at 8 ranks), timed against the 257 s prediction — if
+it lands near 330 s, memory pressure owns the gap and step 10 becomes
+schedulable; if it still runs 5× long, the owner is MUMPS's parallel
+load balancing on this fixture's aspect ratio and step 10 needs an ordering
+or grading change, not a bigger machine. Per the entry's negative-result
+clause this hands step 10 to the weekly review; the run above is what that
+review should commission.
