@@ -9899,3 +9899,90 @@ implementer's. Second, smaller: the 51%/52%/20% figures are at *debug*
 resolution; nobody has checked whether they shrink at production resolution.
 They should, as the cell traces converge, but that is a prediction, not a
 measurement, and one refuted prediction per chunk is enough.
+
+---
+
+## 2026-08-12T02:07Z — `MAG-13` step 2 profile — **complete**
+
+**Slot.** Scheduled implementer run, 21:00 local 2026-08-11 (02:00Z). Preflight
+clean: `git status` empty at `f6505fc`, container Up 31 h. §9 On deck item 1
+already done (19:30 slot), so **item 2** — the `MAG-13` step-2 profile — was
+taken as written; no fallback, no substitution.
+
+**What was tried.** New standalone instrument
+`scripts/probes/mag13_step2_profile.py` (no `src/`, no `tests/`, no tolerance
+touched): re-solve the h = 0.00125 rung, check fixture identity *before* any
+profile claim, then sample 45 radii 0.006 → 0.028 m at 0.5 mm steps through
+`evaluate_vector_field_parallel`. The grid was chosen to contain the four radii
+of the ten-point table on record, which is the step's declared negative
+control. A coarse dry run at h = 0.0025 (`MAG13_STEP2_RES`, 23.4 s) exercised
+the script end to end before the real rung was spent — it reproduced that
+rung's own 12.7485% and confirmed all 45 points land inside the mesh.
+
+**Harness logs.** `20260812T020211Z_MAG-13-step2-profile-smoke-n8.log`
+(exit 0, 30 s, dry run at h = 0.0025 — identity/control FAIL by construction,
+wrong rung) and `20260812T020247Z_MAG-13-step2-profile-n8.log` (exit 0,
+**269 s** harness-wall, `-n 8`, real build, container `timeout 590`, tool
+`timeout` 660000 ms, foreground throughout). Heavy tier; both inside it.
+
+**Measured numbers.**
+- Identity, both PASS: **1 097 873 cells** digit-identical to record;
+  ten-point relative L2 **5.6494% vs 5.6494%**; azimuthality 5.6e-03 vs the
+  0.10 bound, also digit-identical. Mesh + solve **267.0 s** (275.3 s on
+  record), 4 391 492 global dofs.
+- Negative control, PASS on all four: 9.46/9.46 (−0.003 pp), 6.33/6.33
+  (−0.000 pp), 0.33/0.33 (−0.004 pp), 1.40/1.40 (−0.003 pp).
+- Profile by band (relL2 / mean / max): near-wire 2.0a–3.3a **5.4939% /
+  5.0527% / 9.4574%**; mid 3.3a–5.3a 4.1411% / 3.3406% / 6.5574%; outer
+  5.3a–8.0a 2.8345% / 2.2152% / 5.9029%; wall band 0.8R–0.93R **2.3341% /
+  2.0972% / 3.8259%**. Worst radius r = 0.0080 m (2.67a), 9.4574%.
+- **log-log slope of |rel| vs r over [0.006, 0.024]: −1.069** — error ∝ 1/r
+  to within 7% of an exact inverse law. The wall band is the quietest of the
+  four: the residual is **not** boundary-dominated.
+
+**The finding the step did not ask for.** The dense profile is a *staircase*:
+eight groups of adjacent radii return **bit-identical** `|B|_num` (0.0070/
+0.0075, 0.0080/0.0085, 0.0105/0.0110/0.0115, 0.0120/0.0125, 0.0145/0.0150,
+0.0160/0.0165, 0.0175/0.0180/0.0185, 0.0190/0.0195/0.0200) while the closed
+form varies across each, and the signed error alternates sign inside every
+group. `A` is P1, so `B = ∇ × A` is cell-wise constant; `compute_b_field`
+(`solvers.py:637`) interpolates it into DG1, but a DG1 container carries no
+gradient. Local error is therefore O(h·|dB/dr|) = O(h/r) — which *is* the
+−1.069 slope, and is also why the global convergence rate measured ~1.1–1.17
+rather than 2. The ten-point table's jaggedness (9.46% beside 0.33%) is
+sampling position within a cell, not structure in the solution.
+
+**What this says about the route.** Graded refinement survives as the endorsed
+route — the error genuinely concentrates near the wire and halving h there
+halves the error there. But the same arithmetic says grading r < 0.010 m alone
+removes about half of the dominant band and crosses 5% only if the mid band is
+touched too (indicative, *not* measured). The alternative the staircase
+surfaces and this slot did **not** price: higher-order B recovery, so B stops
+being cell-constant. `test_straight_wire.py:96` records that degree 2 was
+measured to diverge at res = 0.003 on this fixture, so it is not a free swap.
+
+**Traps met.** None fired. Real build, no complex mode. Foreground throughout;
+the turn never ended while the harness ran. No stale FFCx lock. All point
+evaluation through `evaluate_vector_field_parallel`; cell count reduced with
+`allreduce`; every statistic printed on rank 0. `J·n ≠ 0` at the end caps
+stands unmeasured, as the entry says. Scope boundary held: no mesh change, no
+graded mesh, no bound moved, no `src/`/`tests/` edit. No unrelated failure
+appeared, so no known-issues change.
+
+**Status flips landed with this commit.** §7 `MAG-13` step-2-profile 🔲 → ✅
+(original plan retained verbatim beneath the annotation); §9 item 2 marked
+done with its original text retained. `MAG-13` itself stays ✅ at its recorded
+numbers; §9 item 5 (the 1.50 M-cell uniform rung) is explicitly **not**
+retired — it measures the brute-force route and its predicted cost is
+unchanged.
+
+**Next-attempt hypothesis (nothing owed on this step; one decision for the
+review).** Choose between (a) a graded mesh at fixed B-recovery — refine
+r < 0.012 m by 2×, predicted to take the dense relL2 from 4.72% to roughly
+3.5–4% at a fraction of the 1.50 M-cell rung's cost, and (b) higher-order B
+recovery at fixed mesh — an L2 projection of `curl A` into CG1, which is
+cheap (one mass solve on the existing mesh) and attacks the O(h/r) term
+directly rather than shrinking h. (b) is the untested one and would be a
+one-slot measurement on the *already-solved* rung if the solve were cached;
+it is not, so it costs the same 267 s. Both touch the fixture, so both are a
+review's call.

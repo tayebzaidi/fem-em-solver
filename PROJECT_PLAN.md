@@ -1443,7 +1443,76 @@ tolerance.*
 > numbers, annotate here; if a real reduction defect surfaces, it gets a
 > known-issues entry and a fix is scoped by a review, not improvised in-slot.
 
-**`MAG-13` step 2 profile — where does the 5.65% live?** 🔲
+**`MAG-13` step 2 profile — EXECUTED 2026-08-11 (21:00 slot): the map is
+measured — the error goes as 1/r *and* as a per-cell staircase; the near-wire
+hint survives, but the mechanism is the cell-wise-constant B, not a
+near-wire solve defect.** ✅
+> **Measured** (`20260812T020247Z_MAG-13-step2-profile-n8.log`, exit 0,
+> **269 s** harness-wall, `-n 8`, real build, container `timeout 590`,
+> foreground; instrument `scripts/probes/mag13_step2_profile.py`, standalone,
+> touches no `src/`, no `tests/`, no tolerance).
+> **Fixture identity first, both PASS:** **1 097 873 cells** digit-identical
+> to record, ten-point relative L2 **5.6494% vs 5.6494%** reproducing every
+> printed digit; azimuthality `B_z` 1.853e-07 / 3.333e-05 = 5.6e-03 against
+> the 0.10 bound, also digit-identical. Mesh + solve **267.0 s** (275.3 s on
+> record), 4 391 492 global dofs.
+> **Negative control PASS on all four recorded radii** — dense vs the
+> ten-point table: 9.46/9.46 (−0.003 pp), 6.33/6.33 (−0.000 pp), 0.33/0.33
+> (−0.004 pp), 1.40/1.40 (−0.003 pp). The dense profile does not contradict
+> its own coarse sample.
+> **The profile** (45 radii, 0.006 → 0.028 m, 0.5 mm steps, all 45 inside the
+> mesh, `evaluate_vector_field_parallel`), by band — relL2 / mean|rel| /
+> max|rel|: near-wire 2.0a–3.3a **5.4939% / 5.0527% / 9.4574%**; mid 3.3a–5.3a
+> 4.1411% / 3.3406% / 6.5574%; outer 5.3a–8.0a 2.8345% / 2.2152% / 5.9029%;
+> wall band 0.8R–0.93R 2.3341% / 2.0972% / 3.8259%. Worst radius r = 0.0080 m
+> (2.67a) at 9.4574%. **The near-wire hypothesis is confirmed and quantified:**
+> the log-log slope of |rel| vs r over [0.006, 0.024] is **−1.069**, i.e.
+> relative error ∝ 1/r to within 7% of an exact inverse law, and the wall band
+> is the *quietest* of the four — the error is not boundary-dominated.
+> **The second, unasked-for finding — and the one that should shape the mesh
+> decision: the profile is a staircase, not a curve.** Adjacent radii return
+> **bit-identical** `|B|_num` in eight groups (0.0070/0.0075 = 2.7490e-05;
+> 0.0080/0.0085 = 2.2636e-05; 0.0105/0.0110/0.0115 = 1.7862e-05;
+> 0.0120/0.0125 = 1.6148e-05; 0.0145/0.0150; 0.0160/0.0165; 0.0175/0.0180/
+> 0.0185; 0.0190/0.0195/0.0200; 0.0250…), while the closed form varies across
+> each group. That is exactly the fixture's own construction: `A` is P1, so
+> `B = ∇ × A` is **cell-wise constant** — `compute_b_field` interpolates it
+> into DG1 (`solvers.py:637`), but a constant is a constant, and the DG1
+> container carries no gradient. Consequently the signed error **alternates
+> sign within every group** (e.g. −9.46% at 0.0080 then −3.80% at 0.0085;
+> −3.11% then +0.93%): each sample's error is dominated by *where inside its
+> cell it sits*, not by a smooth solution defect. Sampling-position noise of
+> this kind is the reason the ten-point table looked jagged (9.46% at 0.0080
+> next to 0.33% at 0.0200).
+> **Both facts compose, and they say the same thing about the mesh.** A
+> cell-wise-constant B on a mesh of size h samples an exact field with
+> |dB/dr| = B/r, so the local relative error is O(h/r) — which *is* the
+> measured −1.069 slope, and is also why the global rate came out ~1.1–1.17
+> (first order in h) rather than 2. Halving h halves the error everywhere;
+> halving it only near the wire buys the same reduction where the error is 5–9%
+> and nothing where it is already 0.3–2%. **Graded refinement is therefore the
+> right route on this evidence** — the review's provisional call survives the
+> map. Indicative arithmetic, *not* a measurement: taking the 4.7235% dense
+> relL2 over the recorded span and the measured O(h/r), refining only
+> r < 0.010 m (9 of 45 radii, band relL2 5.4939%) by 2× removes ~half of the
+> dominant band's contribution — enough to cross 5% only if the mid band is
+> also touched. The cheaper, *better-targeted* alternative the staircase
+> surfaces and this step does **not** cost out: recover B at higher order (P2
+> `A`, or a projection of `curl A` into a continuous space) so B is no longer
+> cell-constant. The §7 note above records that degree 2 was measured to
+> *diverge* at res = 0.003 on this fixture and is not a free swap.
+> **Does not close / does not reopen:** `MAG-13` stays ✅ at its recorded
+> numbers; no mesh changed, no graded mesh built, no bound moved, no `src/`
+> or `tests/` file touched. §9 item 5 (the uniform 1.50 M-cell rung) is *not*
+> retired by this — it remains a real measurement of the brute-force route,
+> and its predicted cost is unchanged.
+> **For the review, one thing to decide:** whether the next `MAG-13` step is
+> a graded mesh at fixed B-recovery (the route this map endorses) or a
+> higher-order B recovery at fixed mesh (the route the staircase suggests and
+> nobody has priced). Both are mesh/gate-touching and so a review's call, not
+> a slot's.
+>
+> *Original plan, retained verbatim:*
 *(scoped 2026-08-11, 18:00 review — the route decision the step-2 run asked
 for. Graded refinement stays the named cheaper route, but the run's
 near-wire hint rests on ten sample points; this step buys the map before
@@ -7204,9 +7273,22 @@ absent: the second licensed discriminator slot is the weekly review's
    says the centerline points were pathological (on-axis) — that is
    itself the caveat text; report, annotate, stop.
 
-2. **`MAG-13` step 2 profile — where does the 5.65% live? (heavy;
-   measurement only; decides the graded-refinement target with data).**
-   Execute the §7 `MAG-13` step-2-profile entry verbatim: re-run the
+2. ✅ **DONE 2026-08-11, 21:00 slot** — **`MAG-13` step 2 profile — where
+   does the 5.65% live? (heavy; measurement only).** *Mapped, and both
+   pre-committed identity checks PASS: 1 097 873 cells and 5.6494%
+   reproduced to every printed digit (267.0 s at `-n 8`,
+   `20260812T020247Z_MAG-13-step2-profile-n8.log`), negative control PASS on
+   all four recorded radii (≤ 0.004 pp). 45 radii, 0.006 → 0.028 m: the
+   near-wire hypothesis **confirmed and quantified** — |rel| ∝ 1/r,
+   log-log slope **−1.069**, near-wire band relL2 5.4939% (max 9.4574% at
+   r = 0.0080) vs the wall band's 2.3341%, the quietest of the four. Second
+   finding: the profile is a **staircase** — B = ∇×A with P1 `A` is
+   cell-wise constant, adjacent radii return bit-identical values in eight
+   groups and the signed error alternates sign inside each, so O(h/r) is the
+   whole story and explains the ~1.1 global rate. **Graded refinement
+   survives as the endorsed route**; the unpriced alternative the staircase
+   surfaces is higher-order B recovery. `MAG-13` stays ✅; item 5 not
+   retired.* Original text: Execute the §7 `MAG-13` step-2-profile entry verbatim: re-run the
    h ≈ 0.00125 rung (mesh + solve **275.3 s on record** at `-n 8`,
    `20260811T200040Z_MAG-13-step2-solve-n8.log`) and sample the
    error-vs-radius profile densely — ≥ 40 radii spanning r ∈ [0.006,
