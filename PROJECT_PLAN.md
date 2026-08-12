@@ -4619,6 +4619,34 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   that refuses the size field or breaks the tag identity is reported and
 >   stopped, never worked around silently.
 >
+>   🟡 **Mesh arm executed 2026-08-12 (04:30 slot), no solve bought — the
+>   step's *refinement factor* is refuted, the step itself stands.** Parked
+>   on `attempt/PORT-1-step3bxvi-20260812T093000Z` (`0d128ca`);
+>   `20260812T093819Z_PORT-1-step3bxvi-mesh.log`,
+>   `…094005Z_…-mesh6e4.log`; attempts.md 2026-08-12T09:30Z. Fixture
+>   identity held (178 055 cells, the number on record; gap-box
+>   meshed/analytic volume **1.000000000000** on both meshes; facet tags
+>   `[1, 201, 202]`). Measured, where the adjudication had inferred:
+>   **cells_across_overhang = 0.1405** (sub-cell, premise confirmed) but
+>   **cells_across_arc = 24.70**, not the "~5" quoted from 3b-vi — that
+>   count predates step 3b-vii's `gap_arc_resolution = 3e-4`. The
+>   consequence is arithmetic: the wall band is sized by the arc field's
+>   slope-0.3 ramp at `3e-4 + 0.3·(5e-3 − 1.2e-3) = 1.44e-3` (measured
+>   1.4230e-3), **not** at `h_wire = 2.5e-3`, so the scoped
+>   `h_gap ≈ 1.25e-3` moves the wall band 4.2% and the cell count 1.0430×
+>   — a solve arm there would compare a mesh against itself. At
+>   `h_box = 6.0e-4` (wall band 9.05e-4, cells_across_overhang 0.2209,
+>   1.5223×) the pre-registered locality control **fires**: cells outside
+>   the gap boxes move +35.4560% against < 5%, because the `Box` field's
+>   `Thickness` inherits the slope-0.3 value (0.098 m) and leaks a 10 cm
+>   shell into the air. **Next attempt (one slot):** bound that
+>   `Thickness` to ~3–5 mm, re-confirm the < 5% band at `h_box = 6.0e-4`
+>   on the mesh arm, then buy the solve arm — `port1_step3bxvi_probe.py
+>   solve 6.0e-4`, one mesh + one σ = 800 rung per arm, ~2×(55 + 30) s
+>   inside `timeout -k 30 590`. Bands, tolerances and decision (3)
+>   unchanged; only the refinement factor moves, and it moves *because*
+>   the mesh was measured.
+>
 > **Closed steps** *(two-loop air fixture `two_torus_domain`, f = 10 MHz,
 > a = 0.04 m, r_wire = 0.005 m, d = 0.04 m; padding 0.08 / h_far 0.03,
 > 119738 cells, unless stated; all gates `-n 2`, complex build, in
@@ -7582,8 +7610,13 @@ decision). Item 1 was inserted by the operator session's adjudication and
 goes first under its licence; this review renumbered it from 0 and folded
 in the new `-k 30` recipe, nothing else.
 
-1. **`PORT-1` step 3b-xvi — gap-region h-refinement of the
-   terminal-to-terminal estimator (standard; measurement only; inserted
+1. 🟡 **attempted 2026-08-12, 04:30 — mesh arm only, parked on
+   `attempt/PORT-1-step3bxvi-20260812T093000Z`; the refinement factor is
+   refuted (the feed region is graded, not `h_wire`-sized) and the
+   locality control fires at the factor that would bite. Re-scoped
+   next-attempt recipe is in the §7 annotation; the next slot may take it
+   as written there.** **`PORT-1` step 3b-xvi — gap-region h-refinement of
+   the terminal-to-terminal estimator (standard; measurement only; inserted
    2026-08-12 by the operator session under the §7 adjudication).**
    Execute the §7 `PORT-1` step 3b-xvi entry verbatim: byte-reproduce the
    unrefined record first (estimator 0.894543, control 0.922423, deviation

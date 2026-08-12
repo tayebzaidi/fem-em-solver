@@ -10159,3 +10159,94 @@ and only wall-clock is large, `-n 12` is the one lever left inside the rank
 ceiling — worth ~1.5× at best, which does not close a 5.7× gap, so step 10
 as scoped would then be **out of reach of a scheduled slot** and belongs to
 the weekly review's licence.
+
+---
+
+## 2026-08-12T09:30Z — `PORT-1` step 3b-xvi — **incomplete** (parked on
+## `attempt/PORT-1-step3bxvi-20260812T093000Z`; mesh arm only, no solve
+## bought): the step's premise is **refuted at the mesh level** — the feed
+## region is not sized at `h_wire`, so `h_gap ≈ 1.25e-3` is a 4% no-op
+
+**Slot.** Scheduled implementer run, 04:30 CDT. Tree clean at preflight,
+container Up (4 h), no `recovered/*` branches. §9 item 1 taken as scoped
+(the operator adjudication's re-pointed slot).
+
+**What was tried.** The §7 step-3b-xvi plan, mesh arm first as the plan
+requires ("a mesh-only probe prints cells-across-arc and cells-across-overhang
+for both meshes" before the solve is bought). Branched from
+`attempt/PORT-1-step3bxiv-20260808T095500Z` (`5f34f88`) to
+`attempt/PORT-1-step3bxvi-20260812T093000Z` (`0d128ca`). New code: a local
+`gap_box_resolution` size field on `MeshGenerator.two_torus_domain` (one gmsh
+`Box` field per gap box, composed through the *existing* `Min`, default `None`
+so nothing landed moves) and `scripts/probes/port1_step3bxvi_probe.py`
+(`mesh` / `solve` modes; the solve mode is written and unrun).
+
+**Fixture identity — reproduced.** Unrefined gapped padding-0.08 mesh:
+**178 055 cells**, exactly the number on record
+(`20260807T110513Z_PORT-1-step3bxb-gate-n2.log`). Gap-box meshed/analytic
+volume **1.000000000000** on both meshes; facet tags `[1, 201, 202]` on both.
+The estimator anchor (0.894543) was **not** exercised — no solve ran.
+
+**The measurement** (`-n 2`, complex build, mesh only; 133 s and 148 s of
+harness wall; `20260812T093819Z_PORT-1-step3bxvi-mesh.log`,
+`20260812T094005Z_PORT-1-step3bxvi-mesh6e4.log`):
+
+| mesh | cells | gap-box cells | wall-band median h | cells_across_arc | cells_across_overhang | cells outside gap boxes |
+|---|---|---|---|---|---|---|
+| unrefined | 178 055 | 48 813 | 1.4230e-3 | **24.70** | **0.1405** | 129 242 |
+| `h_box` = 1.25e-3 | 185 718 (1.0430×) | 51 531 | 1.3627e-3 | 24.72 | 0.1468 | 134 187 (**+3.83%**) |
+| `h_box` = 6.0e-4 | 271 046 (1.5223×) | 95 980 | 9.0537e-4 | 24.64 | 0.2209 | 175 066 (**+35.46%**) |
+
+("wall band" = gap-box cells more than `r_wire/2` from the tube axis, i.e.
+where the conductor wall and the overhang shell live; `h` is the cell
+diameter, so it runs ~15% above the gmsh target size.)
+
+**Finding 1 — the adjudication's two premises measure differently.** The
+overhang premise **holds**: 0.1405 cells across the 2e-4 overhang, sub-cell
+by 7×, now measured rather than inferred. The *arc* premise is **stale**:
+24.70 cells across the gap arc, not the "~5 cells" quoted from 3b-vi — that
+count predates step 3b-vii, which added `gap_arc_resolution = 3e-4` and its
+slope-0.3 ramp. The feed region today is graded, not `h_wire`-sized.
+
+**Finding 2 — why the scoped refinement is a no-op, and it is arithmetic, not
+luck.** The scoped target `h_gap ≈ 1.25e-3` was chosen as half of
+`h_wire = 2.5e-3`. But the wall band is not at `h_wire`: the arc field's ramp
+gives `3e-4 + 0.3·(5e-3 − 1.2e-3) = 1.44e-3` there, and the measured 1.4230e-3
+matches that to 1.2%. Asking for 1.25e-3 therefore buys 4.2% in the wall band
+and 4.3% in cells — inside the noise of a mesh comparison. **Buying the solve
+arm at 1.25e-3 would have spent ~350 s to compare a mesh against itself**,
+which is why this slot stopped at the mesh arm instead.
+
+**Finding 3 — the locality control bites, and names its own cause.** At
+`h_box = 6.0e-4` — the first value that actually refines the wall band (to
+9.05e-4, cells_across_overhang 0.2209) — cells outside the gap boxes move
+**+35.4560%** against the pre-registered < 5% band, so the PEC-box deficit
+would no longer be common-mode with the unrefined record and the estimator
+comparison would be void. The cause is in the field, not the region: the `Box`
+field's `Thickness` is set to the same slope-0.3 ramp as the arc field,
+`(0.03 − 6e-4)/0.3 = 0.098 m`, so the refinement leaks a 10 cm shell into the
+air. The probe caught this before any solve was bought.
+
+**What was not touched.** No solve, no estimator read, no band adjudicated,
+`REACTION_CONSISTENCY_TOLERANCE` 0.03 and `MUTUAL_TOLERANCE` 0.10 unchanged,
+no digit-string re-pinned, nothing re-pointed, `main` carries no code. The
+closed control (0.922423) was correctly not re-solved.
+
+**Harness notes.** Three throwaway runs cost ~2 min total and are on the
+branch for the record: `PYTHONPATH` needs `/workspace` as well as
+`/workspace/src` for a probe that imports the test module's helpers;
+`dolfinx.mesh.h` does not exist at 0.7.2 (it is `dolfinx.cpp.mesh.h`); and a
+probe that assembles any form from that module needs the complex build even
+when it never solves.
+
+**Next-attempt hypothesis.** The step is still answerable and still one slot,
+with two edits the probe is already shaped for: (1) bound the `Box` field's
+`Thickness` to ~3–5 mm instead of the slope-0.3 value, which keeps the ramp
+inside the conductor's own refined shell and should return the outside-count
+move to a few percent — re-run the mesh arm at `h_box` = 6.0e-4 to confirm the
+< 5% band before anything solves; (2) then buy the solve arm
+(`... probe.py solve 6.0e-4`), which is one mesh + one σ = 800 solve per arm,
+~2×(55 + 30) s, comfortably inside `timeout -k 30 590`. The band arithmetic in
+the plan is unchanged; what moved is the *refinement factor* needed to make
+the feed region's h actually halve — 6.0e-4 against the wall band's measured
+1.42e-3, not the 1.25e-3 the plan derived from a stale `h_wire` premise.
