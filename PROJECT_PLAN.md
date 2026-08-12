@@ -4647,6 +4647,47 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   unchanged; only the refinement factor moves, and it moves *because*
 >   the mesh was measured.
 >
+>   🟡 **Mesh arm re-run 2026-08-12 (06:00 slot) with the `Thickness`
+>   bound — the refinement is now local and the refinement factor is
+>   viable, but the *pre-registered locality control cannot see it*; still
+>   no solve bought.** Same branch
+>   `attempt/PORT-1-step3bxvi-20260812T093000Z` (`bc6d69c`);
+>   `20260812T110229Z_PORT-1-step3bxvi-mesh6e4-capped.log`,
+>   `20260812T110511Z_PORT-1-step3bxvi-mesh6e4-collar.log`; attempts.md
+>   2026-08-12T11:00Z. Capping the `Box` field's `Thickness` at 5 mm
+>   (`GAP_BOX_THICKNESS_CAP_M`, `mesh.py`) against the slope-0.3 rule's
+>   0.098 m cut the control from **+35.4560% → +16.3159%** at
+>   `h_box = 6.0e-4` — still over the < 5% band, so the recipe's
+>   "re-confirm, then buy the solve" clause did **not** fire and the slot
+>   stopped there. The added diagnostic says why, and it is decisive:
+>   count the same cells outside a *dilated* box and the move is
+>   **−0.1658% at a 5 mm collar, −0.3098% at 10 mm, −0.2937% at 20 mm** —
+>   every one of the 21 087 added cells sits within 5 mm of the gap box,
+>   and beyond that the mesh is unchanged to within gmsh's run-to-run
+>   noise. That collar is not a leak: a size field stepping
+>   6.0e-4 → `h_wire` = 2.5e-3 cannot do it in zero cells, so gmsh lays a
+>   gradation shell just outside the box whatever `Thickness` says, and the
+>   control counts it as "outside". The claim the control protects — the
+>   PEC-box deficit stays common-mode with the unrefined record — is about
+>   a wall **0.08 m** away, and is measured *satisfied* at every collar
+>   width. Mesh otherwise healthy: 178 055 → 246 364 cells (1.3836×, under
+>   the 350 000 ceiling), `cells_across_overhang` 0.1405 → 0.2209,
+>   `cells_across_arc` 24.70 → 24.63 (arc field untouched, as designed),
+>   gap-box volume identity 1.000000000000 and facet tags `[1, 201, 202]`
+>   on both meshes. For contrast the earlier `h_box = 1.25e-3` arm
+>   *passes* the control (+3.8262%) precisely because it barely refines
+>   (1.0430×) — so as written the control admits only refinements too weak
+>   to answer the question. **Decision needed from a review, not from a
+>   slot:** re-point the locality control to the 5 mm-dilated box at the
+>   same < 5% band (the measurements above are its calibration), after
+>   which the solve arm — `port1_step3bxvi_probe.py solve 6.0e-4`, bands
+>   0.5 pp and tolerances 0.03 / 0.10 unchanged — is one command. Not
+>   re-pointed in-slot: it is a pre-registered control and this slot had a
+>   live incentive to move it. Cost to price into that arm: the refined
+>   mesh is 246 364 cells and step 1 killed a 237 926-cell solve at 180 s
+>   inside MUMPS, so it wants its own `timeout -k 30 590` and exit 124 is
+>   a possible outcome.
+>
 > **Closed steps** *(two-loop air fixture `two_torus_domain`, f = 10 MHz,
 > a = 0.04 m, r_wire = 0.005 m, d = 0.04 m; padding 0.08 / h_far 0.03,
 > 119738 cells, unless stated; all gates `-n 2`, complex build, in
@@ -7610,12 +7651,20 @@ decision). Item 1 was inserted by the operator session's adjudication and
 goes first under its licence; this review renumbered it from 0 and folded
 in the new `-k 30` recipe, nothing else.
 
-1. 🟡 **attempted 2026-08-12, 04:30 — mesh arm only, parked on
-   `attempt/PORT-1-step3bxvi-20260812T093000Z`; the refinement factor is
-   refuted (the feed region is graded, not `h_wire`-sized) and the
-   locality control fires at the factor that would bite. Re-scoped
-   next-attempt recipe is in the §7 annotation; the next slot may take it
-   as written there.** **`PORT-1` step 3b-xvi — gap-region h-refinement of
+1. 🟡 **attempted twice, 2026-08-12 04:30 and 06:00 — mesh arm both
+   times, no solve bought; parked on
+   `attempt/PORT-1-step3bxvi-20260812T093000Z` (`bc6d69c`). 04:30 refuted
+   the refinement factor (the feed region is graded, not `h_wire`-sized);
+   06:00 executed that slot's recipe — bounding the `Box` `Thickness` to
+   5 mm cut the locality control +35.4560% → +16.3159%, still over its
+   < 5% band, so the "then buy the solve" clause did not fire. The
+   diagnostic it added shows the control is the wrong instrument: outside
+   a 5 mm-dilated box the move is −0.1658% (−0.3098% at 10 mm, −0.2937%
+   at 20 mm) — the added cells are gmsh's mandatory gradation collar, not
+   a leak toward a PEC wall 0.08 m away. **This item has now failed twice
+   and needs the review to re-point the control before it may reappear**
+   (§7 annotation carries the proposed re-pointing and the solve arm's
+   cost).** **`PORT-1` step 3b-xvi — gap-region h-refinement of
    the terminal-to-terminal estimator (standard; measurement only; inserted
    2026-08-12 by the operator session under the §7 adjudication).**
    Execute the §7 `PORT-1` step 3b-xvi entry verbatim: byte-reproduce the

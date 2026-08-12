@@ -10250,3 +10250,97 @@ move to a few percent — re-run the mesh arm at `h_box` = 6.0e-4 to confirm the
 the plan is unchanged; what moved is the *refinement factor* needed to make
 the feed region's h actually halve — 6.0e-4 against the wall band's measured
 1.42e-3, not the 1.25e-3 the plan derived from a stale `h_wire` premise.
+
+## 2026-08-12T11:00Z — `PORT-1` step 3b-xvi — **incomplete** (parked on
+## `attempt/PORT-1-step3bxvi-20260812T093000Z`, `bc6d69c`; mesh arm again, no
+## solve bought): the `Thickness` fix works — the refinement is now **local**
+## and the factor is viable — but the pre-registered locality control still
+## FAILs, because it cannot tell gmsh's mandatory gradation collar from a leak
+
+Slot 06:00 CDT (11:00 UTC), 2026-08-12. Item 1 of §9 On deck, taken as the
+04:30 slot's §7 re-scoped recipe licensed. That recipe: bound the `Box` size
+field's `Thickness` to ~3–5 mm, re-confirm the < 5% locality band at
+`h_box = 6.0e-4` on the mesh arm, **then** buy the solve arm. The first half
+was executed; the second half's precondition did not hold, so no solve was
+bought.
+
+**What was changed.** `GAP_BOX_THICKNESS_CAP_M = 5.0e-3` in
+`src/fem_em_solver/io/mesh.py` (top of the licensed 3–5 mm band, i.e. the
+gentlest ramp in it), applied as
+`box_thickness = min((h_far - h_box)/0.3, GAP_BOX_THICKNESS_CAP_M)`; the print
+now shows capped and uncapped values. Plus a **diagnostic** in
+`scripts/probes/port1_step3bxvi_probe.py` that repeats the outside-cells count
+on a box dilated by 5 / 10 / 20 mm. The diagnostic gates nothing and the
+pre-registered control's verdict is untouched.
+
+**Measured** (padding 0.08, gapped, `-n 2`, `h_box = 6.0e-4`; two harness
+commands, 93 s and 93 s, standard tier, `timeout -k 30 420`):
+
+| quantity | unrefined | refined | move |
+|---|---|---|---|
+| cells | 178 055 | 246 364 | 1.3836× (ceiling 350 000) |
+| **control** — cells outside the gap boxes | 129 242 | 150 329 | **+16.3159%** (band < 5%, **FAIL**) |
+| diagnostic — outside +5 mm | 115 220 | 115 029 | **−0.1658%** |
+| diagnostic — outside +10 mm | 109 116 | 108 778 | −0.3098% |
+| diagnostic — outside +20 mm | 96 686 | 96 402 | −0.2937% |
+| `cells_across_overhang` | 0.1405 | 0.2209 | the refinement bites |
+| `cells_across_arc` | 24.70 | 24.63 | arc field untouched, as designed |
+
+Gap-box meshed/analytic volume **1.000000000000** and facet tags
+`[1, 201, 202]` on both meshes, as on record.
+
+**Finding 1 — the cap works, and the 04:30 diagnosis was right.** The same
+control that read **+35.4560%** with the slope-0.3 `Thickness` (0.098 m) reads
+**+16.3159%** with it capped at 5 mm. The leak was the field's ramp, exactly
+as the 04:30 slot inferred.
+
+**Finding 2 — and the residue is not a leak at all; the control is the wrong
+instrument.** All 21 087 added "outside" cells sit **within 5 mm of the gap
+box**: past that collar the count moves −0.17%, and at 10 and 20 mm −0.31% and
+−0.29% — i.e. unchanged to within gmsh's run-to-run noise, and *negative*, so
+not a trend. This is structural, not a tuning failure: a size field stepping
+6.0e-4 → `h_wire` = 2.5e-3 cannot do it in zero cells, so gmsh lays a
+gradation collar just outside the box whatever `Thickness` says, and the
+control counts those cells as "outside". The claim the control exists to
+protect — the PEC-box deficit stays common-mode with the unrefined record — is
+about a wall **0.08 m** away, and every collar measurement says it holds.
+
+**Finding 3 — as written, the control admits only refinements too weak to
+answer the question.** The 04:30 arm's `h_box = 1.25e-3` *passes* it
+(+3.8262%) precisely because it barely refines (1.0430× cells, 4.2% in the
+wall band — a mesh compared against itself). Passing the control and biting
+the feed region are, at this fixture, mutually exclusive.
+
+**Why the solve arm was not bought anyway.** The reading would have been
+usable — the probe prints the estimator before the locality check and the
+check's FAIL would have stood in the log unaltered. It was not bought for two
+reasons, in order: (1) the control is pre-registered and this slot had a live
+incentive to move it, so re-pointing it here is exactly the judgment call that
+belongs to a review (the MAT-6 step-9 precedent re-pointed a control *with*
+review sign-off, not ahead of it); (2) cost — the refined mesh is 246 364
+cells and `PORT-1` step 1 killed a 237 926-cell solve at 180 s inside MUMPS,
+so the arm carries a real chance of eating the 590 s window, and at minute 39
+of the slot that would have cost the documentation window. Nothing about the
+solve arm got cheaper or harder by deferring it.
+
+**What was not touched.** No solve, no estimator read, no band adjudicated,
+`REACTION_CONSISTENCY_TOLERANCE` 0.03 and `MUTUAL_TOLERANCE` 0.10 unchanged,
+no digit-string re-pinned, the closed control (0.922423) correctly not
+re-solved, and **no control re-pointed**. `main` carries only this entry and
+the §7/§9 annotations; all code is on the lineage branch.
+
+**Harness notes.** Nothing new. Both runs used
+`timeout -k 30 420` in the foreground, returned footers, and cost 93 s each;
+no container wedge, no denied command.
+
+**Next-attempt hypothesis (needs a review decision first — this item has now
+failed twice).** Re-point the locality control to the **5 mm-dilated** box at
+the same < 5% band; the two arms above are its calibration (−0.1658% at
+`h_box = 6.0e-4` where it should pass, and the uncapped 0.098 m ramp would
+still fail it, since that shell reaches 10 cm). With that, the solve arm is
+one command — `port1_step3bxvi_probe.py solve 6.0e-4` under its own
+`timeout -k 30 590`, bands 0.5 pp and tolerances unchanged, exit 124 an
+allowed outcome given the MUMPS precedent at ~240 k cells. The alternative, if
+a review would rather not re-point a pre-registered control: keep it and
+declare step 3b-xvi unanswerable on this fixture, since no refinement that
+moves the wall band can satisfy it.
