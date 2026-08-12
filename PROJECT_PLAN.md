@@ -6063,6 +6063,66 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   untouched at 10%, as the plan required regardless of outcome; known-issues
 >   3 unchanged; no symbol flips.
 >
+>   **Decision-(4) padding fit — the box term as a number, and why it must be
+>   quoted with its exponent** ✅ *(2026-08-12, 16:30 run;
+>   `scripts/probes/port1_padding_fit.py`,
+>   `20260812T213337Z_PORT-1-dec4-fit.log`, exit 0, 1 s, smoke, `-n 1`,
+>   zero-solve — no mesh, no solve, no complex mode, nothing under `src/`)*.
+>   The operator adjudication's decision (4) commissioned `MAT-6` step 9's
+>   free-exponent form on the three rungs above so the port-pair gate could
+>   state the box term as a number. It now can, and **both pre-registered
+>   gates pass** — but the number's honest error bar is set by the model, not
+>   the data, and that is this step's real content.
+>
+>   | quantity | value |
+>   |---|---|
+>   | `D∞` (free exponent) | **+1.6934 pp** |
+>   | `C` | −1.478719e-01 pp·mᵖ |
+>   | `p` (recovered, not given) | **1.6574** |
+>   | `D∞` conditioning, half-ulp on all three rungs | [+1.6915, +1.6953] pp (span **0.0037 pp**) |
+>   | `D∞` with `p` pinned at the dipolar 3.0 | **−1.4291 pp** (max residual 0.1864 pp) |
+>
+>   **Three findings.** (i) **The extrapolation crosses zero.** All three
+>   measured rungs are negative deficits and `C < 0` — the sign 3b-xi argued a
+>   PEC wall must produce — but the endpoint is *positive*: box-free, the fit
+>   says +1.69 pp of **excess**, not zero. Read literally, the box owns 9.73 pp
+>   at `W = 0.08`, more than the whole −8.03 pp measured there, and something
+>   of the opposite sign owns the remainder. (ii) **The exponent is not
+>   dipolar.** `p = 1.657` against `MAT-6` step 9's blind **3.045** and the
+>   dipolar **3** — step 9's fixture recovered the physics it was never given;
+>   this one does not. (iii) **Model uncertainty dominates data uncertainty by
+>   ~840×.** The recorded digits move `D∞` by 0.0037 pp; the *choice of
+>   exponent* moves it by **3.1225 pp, across zero** (+1.6934 → −1.4291). The
+>   pinned-`p = 3` fit's 0.1864 pp max residual is 3 700× the rungs' recording
+>   precision, so the rungs genuinely are not a 1/W³ tail — but three points
+>   inside a factor 1.5 in `W` cannot distinguish exponents either. `p = 1.657`
+>   is an **effective exponent over [0.08, 0.12] m, not an asymptotic tail
+>   exponent**, and `D∞` inherits that status.
+>
+>   **What the port-pair gate should state**, therefore: the box term as
+>   **`D∞ = +1.69 pp` at the recovered `p = 1.657`, labeled an effective-range
+>   extrapolation from three rungs spanning a factor 1.5** — never as a
+>   converged box-free value, and never without the exponent, since assuming
+>   the physically-expected `p = 3` instead gives −1.43 pp. This is strictly
+>   better than "the suspect", which was the standing alternative, and it is
+>   the whole of what decision (4) asked for. **Controls, both green:** a
+>   synthetic triple planted from a known `(D∞, C, p)` is recovered to 4.4e-16
+>   / 6.7e-15 (the vacuity guard — an exactly-determined solve has a
+>   zero-by-construction residual and *no* goodness-of-fit claim exists, which
+>   this step states up front and does not manufacture), and a non-monotone
+>   triple is refused rather than fitted. **Method note:** decision (4) asked
+>   for the solve seeded at `p = 3`; step 9's method needs no seed and was used
+>   unchanged — it eliminates `C` and `p` analytically and bisects on the one
+>   remaining unknown, so the complex/negative-`p` root the seed guarded
+>   against is structurally absent rather than assumed away. **Scope held:**
+>   annotation only; `PORT-1` stays 🟡; `MUTUAL_TOLERANCE` and
+>   `REACTION_CONSISTENCY_TOLERANCE` untouched; no symbol flips; 3b-xi's own
+>   "no extrapolation was attempted" sentence above stands as the record of
+>   what *that* step did. **For a review:** if a converged box-free number is
+>   ever wanted rather than an effective-range one, the blocker is named — a
+>   fourth padding rung well outside [0.08, 0.12] (a factor ≥ 2 in `W`) is what
+>   separates the exponents; nothing cheaper will.
+>
 > * **Step 3b-xii — the box discriminator at padding 0.10** 🟡 *(executed
 >   2026-08-07 12:00 run; **disposition (ii)** — parked on
 >   `attempt/PORT-1-step3bxii-20260807T170000Z` (`87bf35d`), which carries the
@@ -8037,10 +8097,26 @@ the list waits on it.
    round-trip kills the DG1 route and makes "P1 + caveat" the standing
    answer — report, annotate, stop.
 
-4. **`PORT-1` adjudication decision-(4) padding fit — state the box term
+4. ✅ **DONE 2026-08-12 (16:30 slot) — the box term is a number, and it
+   must be quoted with its exponent. Both pre-registered gates pass:
+   `p = 1.6574 > 0`, `|D∞| = 1.6934 pp < 3.2733 pp`. But the fit crosses
+   zero (all three rungs are negative deficits; `D∞` is a **positive**
+   +1.6934 pp excess), the recovered exponent is **not** dipolar (1.657 vs
+   `MAT-6` step 9's blind 3.045), and **model uncertainty dominates data
+   uncertainty ~840×** — the recorded digits move `D∞` by 0.0037 pp while
+   pinning `p = 3` moves it by 3.1225 pp, across zero, to −1.4291 pp. The
+   deliverable is therefore `D∞ = +1.69 pp at p = 1.657`, labeled an
+   **effective-range** extrapolation over [0.08, 0.12] m, never a converged
+   box-free value; a fourth rung at a factor ≥ 2 in `W` is the named
+   blocker for a converged one. Controls green (planted triple recovered to
+   4.4e-16; non-monotone triple refused). Landed on `main`: probe
+   `scripts/probes/port1_padding_fit.py`, log
+   `20260812T213337Z_PORT-1-dec4-fit.log`, exit 0, 1 s. §7 3b-xi annotation
+   carries the table. `PORT-1` stays 🟡.**
+   ~~**`PORT-1` adjudication decision-(4) padding fit — state the box term
    as a number (smoke; zero-solve; arithmetic on recorded digits;
    commissioned 2026-08-12 by the operator-session adjudication, promoted
-   to a standalone item by the 10:30 review).** Apply `MAT-6` step 9's
+   to a standalone item by the 10:30 review).**~~ Apply `MAT-6` step 9's
    free-exponent form — deficit(W) = D∞ + C·W^(−p) — to 3b-xi's three
    recorded padding rungs (−8.0324 / −5.0256 / −3.2733 pp at
    W = 0.08 / 0.10 / 0.12); three points, three parameters, exactly

@@ -1,0 +1,78 @@
+# Test Run
+- Chunk: PORT-1-dec4-fit
+- Commit: e1a0b6b1afc6e5c90a87fe2678d529748abbc09f
+- Time (UTC): 2026-08-12 21:33:38
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 30 mpiexec -n 1 python3 scripts/probes/port1_padding_fit.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 12 16:30 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 30 mpiexec -n 1 python3 scripts/probes/port1_padding_fit.py'\'''
+[PORT-1 dec-(4)] free-exponent padding fit — zero-solve arithmetic
+  model: deficit(W) = D_inf + C·W**(-p);  3 points, 3 parameters,
+         exactly determined -> residual is zero BY CONSTRUCTION and
+         carries no goodness-of-fit information.  Stated up front.
+  recorded rungs (§7 step 3b-xi, signed pp):
+    W = 0.08 m   deficit = -8.0324 pp
+    W = 0.10 m   deficit = -5.0256 pp
+    W = 0.12 m   deficit = -3.2733 pp
+
+[control] synthetic recovery at the same three widths
+  planted   D_inf = -1.500000 pp, C = -4.000000e-04, p = 3.000000
+  recovered D_inf = -1.500000 pp, C = -4.000000e-04, p = 3.000000
+  |ΔD_inf| = 4.441e-16 pp, |Δp| = 6.661e-15  (bound 1e-9)
+
+[control] non-monotone triple must be refused
+  input -8.0324, -3.2733, -5.0256 -> NO FIT (correct)
+
+[fit] 3b-xi padding rungs
+  D_inf = +1.6934 pp   (the box-free deficit)
+  C     = -1.478719e-01      (pp·m**p, sign of the tail)
+  p     = 1.6574
+  p beside `MAT-6` step 9's blind p = 3.045 (Δ = -1.3876) and the dipolar p = 3.0 (Δ = -1.3426)
+  residuals (zero by construction; printed as an implementation check, NOT a fit-quality claim): +1.776e-15, -4.441e-15, -3.109e-15
+
+[diagnostic] the same rungs with p pinned at the dipolar 3.0
+  D_inf(p=3) = -1.4291 pp,  C = -3.410151e-03
+  residuals (informative here — 2 params, 3 points): -0.0571, +0.1864, -0.1292  max |r| = 0.1864 pp
+  vs the free fit's D_inf = +1.6934 pp -> the exponent choice moves the deliverable by 3.1225 pp
+
+[conditioning] half-ulp (±5e-5 pp) perturbation of the recorded rungs
+  D_inf spans [+1.6915, +1.6953] pp  (span 0.0037 pp)
+  p     spans [1.6570, 1.6579]        (span 0.0009)
+  amplification: 37.3× the input half-ulp width
+
+[gates] pre-registered, §9 item 4
+  (1) p > 0                : p = 1.6574            -> PASS
+  (2) |D_inf| < 3.2733 pp : |D_inf| = 1.6934 pp   -> PASS
+
+[verdict]
+  all gates green
+  deliverable: the port-pair gate states the box term as D_inf = +1.6934 pp (p = 1.6574)
+
+## Exit
+- Status: 0
+- Elapsed (s): 1

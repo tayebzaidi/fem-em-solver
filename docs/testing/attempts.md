@@ -10736,3 +10736,100 @@ arrays, versus O(20–52%) disagreement in every rendered picture), and the
 cheapest thing that would still change it is the operator's one-click ParaView
 check that a DG1 `.bp` renders acceptably — if it does not, the route dies on
 usability regardless of the numbers here.
+
+## 2026-08-12T21:35Z — `PORT-1` adjudication decision-(4) padding fit — **complete**
+
+Scheduled implementer run, 16:30 CDT slot. §9 On-deck **item 4** (items 1–3
+were marked done by earlier slots this interval). Preflight clean, container Up
+16 h, no `recovered/*`. Zero-solve: no mesh, no solve, no complex mode, nothing
+under `src/`.
+
+**Both pre-registered gates pass, and the interesting content is what passing
+does *not* license.** `MAT-6` step 9's free-exponent form
+`deficit(W) = D∞ + C·W^(−p)` applied to 3b-xi's three recorded padding rungs
+(−8.0324 / −5.0256 / −3.2733 pp at W = 0.08 / 0.10 / 0.12):
+
+| quantity | value |
+|---|---|
+| `D∞` (free exponent) | **+1.6934 pp** |
+| `C` | −1.478719e-01 pp·mᵖ |
+| `p` (recovered, not given) | **1.6574** |
+| gate (1) `p > 0` | PASS |
+| gate (2) `\|D∞\| < 3.2733 pp` | PASS (1.6934) |
+| conditioning: half-ulp (±5e-5 pp) on all three rungs | `D∞` ∈ [+1.6915, +1.6953], span **0.0037 pp** |
+| diagnostic: `p` pinned at the dipolar 3.0 | `D∞` = **−1.4291 pp**, max residual 0.1864 pp |
+
+**Three findings.**
+
+1. **The extrapolation crosses zero.** Every measured rung is a negative
+   deficit and `C < 0` — the sign 3b-xi argued a PEC wall must produce — yet
+   the endpoint is **positive**. Read literally: the box owns 9.73 pp at
+   `W = 0.08`, more than the whole −8.03 pp measured there, and something of
+   the opposite sign owns +1.69 pp of it.
+2. **The exponent is not dipolar.** `p = 1.6574` against `MAT-6` step 9's
+   blind **3.045** and the dipolar **3** (Δ = −1.388 / −1.343). Step 9's
+   fixture recovered the physics it was never given; this one does not.
+3. **Model uncertainty dominates data uncertainty by ~840×** — the decisive
+   number for how the port-pair gate quotes this. The recorded digits move
+   `D∞` by 0.0037 pp. The *choice of exponent* moves it by **3.1225 pp,
+   across zero**, to −1.4291 pp. The pinned-`p = 3` fit's 0.1864 pp max
+   residual is 3 700× the rungs' recording precision, so the rungs genuinely
+   are not a 1/W³ tail — but three points inside a factor 1.5 in `W` cannot
+   distinguish exponents either. `p = 1.657` is an **effective exponent over
+   [0.08, 0.12] m**, not an asymptotic one, and `D∞` inherits that status.
+
+**Deliverable as handed to the port-pair gate:** the box term is
+**`D∞ = +1.69 pp at p = 1.657`, labeled an effective-range extrapolation from
+three rungs spanning a factor 1.5** — never as a converged box-free value and
+never without its exponent. That is still strictly better than "the suspect",
+which was the standing alternative, and it is the whole of what decision (4)
+asked for.
+
+**Controls, both green, both green for the right reason.** The item stated its
+ceiling up front — three points, three parameters, residual zero *by
+construction*, no goodness-of-fit claim available — and the probe does not
+manufacture one (it prints the by-construction residual, 4.4e-15 max, labeled
+as an implementation check only). What actually guards against vacuity:
+(a) a synthetic triple planted from a known `(D∞, C, p) = (−1.5, −4e-4, 3.0)`
+is recovered to **4.4e-16 pp / 6.7e-15**; (b) a non-monotone triple is
+**refused** ("NO FIT") rather than fitted. The conditioning sweep additionally
+asserts that no half-ulp corner flips `D∞`'s sign, breaches the rung bound, or
+drives `p` non-positive.
+
+**Method deviation, deliberate and reported.** Decision (4) asked for the
+nonlinear solve **seeded at `p = 3`**. `MAT-6` step 9's method needs no seed
+and was carried over unchanged instead: it eliminates `C` and `p` analytically
+(`ln e_i = ln C − p ln W_i`, so the right `D∞` is the one making the three
+`(ln W_i, ln e_i)` collinear) and **bisects** on the single remaining unknown.
+The failure mode the seed was commissioned to guard against — silent
+convergence to a complex or negative-`p` root — is therefore structurally
+absent rather than assumed away, which is strictly stronger than asserting it
+after the fact.
+
+**Log.** `20260812T213337Z_PORT-1-dec4-fit.log`, exit **0**, **1 s**, smoke
+tier, `-n 1`, through `run_and_log.sh` like everything else. Two superseded
+runs of the same probe are also committed:
+`20260812T213220Z_PORT-1-dec4-fit.log` (exit 0 — the fit and both gates, before
+the conditioning sweep was added) and `20260812T213303Z_PORT-1-dec4-fit.log`
+(exit 0 — conditioning added, before the dipolar diagnostic). `D∞`, `C` and `p`
+are digit-identical across all three.
+
+**Scope held.** Annotation only. `PORT-1` stays 🟡; nothing closed; no bound
+moved — `MUTUAL_TOLERANCE` (0.10) and `REACTION_CONSISTENCY_TOLERANCE` (0.03)
+untouched, as is 3b-xi's own "no extrapolation was attempted" sentence, which
+stands as the record of what *that* step did. No `src/`, no test, no mesh.
+
+**Denials / harness notes.** None. `timeout -k 30 30` on every command; none
+fired; nothing backgrounded; 1 s each, far inside the smoke tier.
+
+**Next-attempt hypothesis.** No further attempt at decision (4) — it is
+discharged. The open question it *exposes* is worth a review's attention and is
+named with its price: if a **converged** box-free number is ever wanted rather
+than an effective-range one, the blocker is that [0.08, 0.12] is too narrow to
+separate exponents, and the only thing that fixes it is a **fourth padding rung
+at a factor ≥ 2 in `W`** (≈ 0.20 m). That is not free — 3b-xi's rungs cost
+119 738 / 135 542 / 154 493 cells and grew ~1.29× per 0.02 m of padding, so
+`W = 0.20` is plausibly ~250 000 cells, i.e. exactly the line where padding
+0.12 / h_far 0.02 once died in MUMPS. A review should decide whether the
+port-pair gate needs the converged number at all before commissioning that; the
+effective-range statement above may well be sufficient for a stated systematic.
