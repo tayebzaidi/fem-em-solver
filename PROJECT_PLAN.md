@@ -1617,7 +1617,86 @@ demotion above. Queued as §9 item 2.)*
 > drifted since 2026-08-12 — that is a known-issues entry, not a band
 > adjustment; report, keep 🧪, stop.
 
-**`MAG-13` step 2b — price higher-order B recovery on the solved rung** 🔲
+**`MAG-13` step 2b — price higher-order B recovery on the solved rung** ✅
+**EXECUTED 2026-08-12 (13:30 slot): the recovery route is bought and it is
+cheap — CG1-projected `curl A` reads 1.9557% where the DG1 interpolation
+reads 4.7235%, for 2.71 s on top of a 271.1 s solve. The < 5% wire is
+reached at the *existing* mesh, and the staircase breaks in all eight
+groups.**
+*(`MAG-13` stays ✅ at its recorded numbers — nothing in `src/` or `tests/`
+changed, no mesh changed, no bound moved. This prices a route; it does not
+adopt one. The graded route is **not** retired: it remains the only lever on
+the ~2% floor this step exposes.)*
+> **Negative control first, and it fired**
+> (`20260812T183247Z_MAG-13-step2b-smoke.log`, **exit 1**, 30 s harness-wall,
+> `-n 8`, `MAG13_STEP2_RES=0.0025`): **0/4 gates pass** — 145 884 cells vs
+> 1 097 873, ten-point relL2 12.7485% vs 5.6494%, dense bands FAIL, and the
+> DG1 staircase is **not** flat at the coarse rung, so GATE 4 is not vacuous.
+> The probe's verdicts drive its exit code from the outset (the step-2
+> re-gate's lesson, applied at authorship rather than after an audit).
+> **Real rung** (`20260812T183329Z_MAG-13-step2b-n8.log`, **exit 0**,
+> **276 s** harness-wall, mesh+solve 271.1 s, `-n 8`, real build, container
+> `timeout -k 30 590`, foreground; instrument
+> `scripts/probes/mag13_step2b_recovery.py`, standalone, touches no `src/`,
+> no `tests/`, no tolerance): **4/4 gates pass** and the DG1 path reproduces
+> the record digit-for-digit — 1 097 873 cells / 4 391 492 global DG1 dofs,
+> ten-point relL2 **5.6494%**, dense span **4.7235%**, near-wire **5.4939%**,
+> wall **2.3341%**. That reproduction *is* the declared negative control: the
+> two recoveries are scored on one solve, one sampler, one point set.
+> **The CG1 projection costs nothing**: L2-project `curl A` into vector CG1
+> (602 052 global dofs, `cg` + `gamg`, rtol 1e-12) converges in **11 CG
+> iterations, 2.71 s** — **1.0%** of the solve it post-processes, versus the
+> 1.37× cell count (~380–450 s predicted) that §9 item 5's brute-force rung
+> would spend to reach the same target.
+> **The reading, pre-registered and met** — CG1 relL2 **1.9557%** over the
+> recorded metric span against the **< 5.00%** mark (full dense span
+> 1.9590% vs DG1 4.6500%). Recovery alone reaches the target at the existing
+> mesh, with **2.77 pp** to spare.
+> **Per band (DG1 → CG1 relL2), and this is the shape of the finding:**
+> near-wire 5.4939% → **1.9099%** (−3.5840 pp); mid 4.1411% → 2.0511%
+> (−2.0900 pp); outer 2.8345% → 2.0646% (−0.7699 pp); wall 2.3341% →
+> 2.0441% (−0.2900 pp). The gain is monotone in how much error the band
+> held, and the CG1 residual is **band-flat at ≈ 2.0%** — the measured
+> O(h/r) structure the profile step mapped (slope −1.069) is **removed**,
+> exactly as the cell-wise-constant-B mechanism predicts, and what is left
+> is a nearly uniform ≈ −2% bias, same sign at every radius. Finite wire
+> length does not own it: L/√(L²+4r²) is −3.9% at r = 0.028 m but < 0.02%
+> at the near-wire radii, where the bias is already 1.8%.
+> **The floor is h-convergent, and at rate ≈ 2** — a two-point reading the
+> slot's own two logs supply for free: the smoke rung (h = 0.0025, same
+> probe, same 45 radii, identity gates deliberately failing because it is a
+> different mesh) reads CG1 **7.8411%** against this rung's **1.9557%**, a
+> ratio of **4.01** over one halving, i.e. **p = 2.00**, where the DG1 path
+> over the same two rungs reads 10.9806% → 4.7235% (ratio 2.32, p = 1.22).
+> Continuous recovery does not merely shift the error down, it restores the
+> **second-order** rate the DG1 container was throwing away. Two points is
+> a rate with no redundancy — it is an observation, not a fitted rate, and
+> a third rung would settle it.
+> **The staircase breaks, 8/8.** Inside every one of the eight recorded
+> groups the DG1 values are flat to five significant figures (control,
+> reproduced) while the CG1 values are **distinct** — e.g. 0.0105/0.0110/
+> 0.0115 reads DG1 1.7862e-05 three times, CG1 1.8717e-05 / 1.7887e-05 /
+> 1.7058e-05. The continuous container carries the gradient the DG1 one
+> could not; sampling-position noise is gone.
+> **Does not close / does not reopen:** `MAG-13` stays ✅ at its recorded
+> numbers; `compute_b_field` is untouched — adopting CG1 recovery in `src/`
+> is a gate-touching change and a review's call, not a slot's. §9 item 5
+> (the 1.50 M-cell uniform rung) is not retired: it measures the *solve*
+> route and remains a real measurement, though this step makes it the
+> expensive way to the same number.
+> **For the review, two things to decide:** (1) whether
+> `compute_b_field`/`MAG-13`'s gate move to a continuous recovery — the
+> 2.71 s price and the 8/8 staircase break argue yes, but every
+> B-consuming test's recorded number would shift and that is a
+> re-gating exercise, not an edit; (2) whether the ≈ 2% band-flat floor
+> gets a third rung to confirm the p = 2.00 two-point reading — if it
+> holds, the *cheap* route to any future accuracy target on this fixture
+> is continuous recovery plus uniform refinement at second order, and the
+> graded-mesh route (scoped against a first-order, near-wire-concentrated
+> error map that this step just dismantled) should be re-derived before it
+> is built.
+>
+> *Original plan, retained verbatim:*
 *(scoped 2026-08-12, 03:00 review — the route the staircase surfaced and
 nobody has priced; decision deferred by the profile entry's "for the
 review" note, resolved as: measure (b) before committing any mesh to
@@ -7848,8 +7927,16 @@ the list waits on it.
    about the size field itself — report the collar table, park, stop;
    do not touch the band.
 
-2. **`MAG-13` step 2b — price higher-order B recovery on the solved rung
-   (heavy; measurement only; independent of everything above).** Execute the §7
+2. ✅ **DONE 2026-08-12 (13:30 slot) — the route is bought and it is cheap:
+   CG1-projected `curl A` reads 1.9557% against DG1's 4.7235% and the
+   < 5.00% mark, for 2.71 s on top of a 271.1 s solve (1.0% of it); the
+   staircase breaks 8/8 and the O(h/r) structure is removed, leaving a
+   band-flat ≈ 2% floor with no identified owner. 4/4 gates, exit 0,
+   276 s (`20260812T183329Z_MAG-13-step2b-n8.log`); the smoke rung exits 1
+   at 0/4 (`20260812T183247Z_MAG-13-step2b-smoke.log`). `MAG-13` stays ✅;
+   two decisions handed to the review in the §7 annotation.**
+   ~~**`MAG-13` step 2b — price higher-order B recovery on the solved rung
+   (heavy; measurement only; independent of everything above).**~~ Execute the §7
    step-2b entry verbatim: re-solve the h = 0.00125 rung (267.0 s on
    record), L2-project `curl A` into CG1 (one mass solve, `cg`+`gamg`),
    and evaluate both recoveries on the recorded 45-radius grid.

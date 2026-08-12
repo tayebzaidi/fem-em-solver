@@ -10598,3 +10598,70 @@ labels. If a slot wants one more measurement first, the cheap one is the same
 solve at the *fallback* `h_box = 1.875e-3` — a third point on the
 (refinement, estimator) curve would turn "+0.0508 pp at 1.38×" into a trend and
 bound the extrapolation to h → 0, but nothing pre-registered requires it.
+
+## 2026-08-12T18:40Z — `MAG-13` step 2b — **complete**
+
+**Item.** §9 On-deck item 2 (item 1 was marked done by the 12:00 slot).
+Price higher-order B recovery on the solved h = 0.00125 rung: L2-project
+`curl A` into CG1 beside the existing DG1 interpolation and score both on the
+recorded 45-radius grid. Measurement only; `MAG-13` stays ✅.
+
+**Logs.** `20260812T183247Z_MAG-13-step2b-smoke.log` (exit **1**, 30 s, `-n 8`,
+`MAG13_STEP2_RES=0.0025`) and `20260812T183329Z_MAG-13-step2b-n8.log`
+(exit **0**, **276 s**, `-n 8`, real build, container `timeout -k 30 590`,
+foreground). Instrument: `scripts/probes/mag13_step2b_recovery.py`, new,
+standalone — no `src/`, no `tests/`, no tolerance touched.
+
+**Negative control first.** The smoke rung exits 1 at **0/4 gates** — cells
+145 884 vs 1 097 873, ten-point relL2 12.7485% vs 5.6494%, dense bands FAIL,
+and the DG1 staircase is *not* flat at the coarse rung, so GATE 4 is not
+vacuous either. Gates drove the exit code from authorship, not after an audit.
+
+**Fixture identity / declared negative control, all reproduced digit-for-digit
+on the real rung.** 1 097 873 cells, 4 391 492 global DG1 dofs, ten-point relL2
+**5.6494%**, dense span **4.7235%**, near-wire **5.4939%**, wall **2.3341%**.
+Both recoveries are scored on one solve, one sampler, one point set.
+
+**Measured.** CG1 L2 projection of `curl A`: 602 052 global dofs, `cg`+`gamg`
+rtol 1e-12, **11 CG iterations, 2.71 s** — 1.0% of the 271.1 s mesh+solve it
+post-processes. Reading (pre-registered): CG1 relL2 **1.9557%** over the
+recorded metric span vs DG1 4.7235% and the **< 5.00%** mark — **BELOW**, with
+2.77 pp to spare (full dense span 1.9590% vs 4.6500%). Per band, DG1 → CG1:
+near-wire 5.4939% → 1.9099% (−3.5840 pp), mid 4.1411% → 2.0511%, outer 2.8345%
+→ 2.0646%, wall 2.3341% → 2.0441% (−0.2900 pp). Staircase: DG1 flat to 5 sig
+figs in all eight recorded groups (control), CG1 **distinct in 8/8** (reading).
+
+**What this buys.** The < 5% wire is reachable at the **existing** mesh for
+2.71 s, against the 380–450 s the §9 item-5 brute-force rung would spend for
+the same target. The profile step's O(h/r) structure (slope −1.069) is
+**removed** — the CG1 residual is band-flat at ≈ 2.0% — which confirms the
+cell-wise-constant-B mechanism as the owner of the 1/r map. What remains is a
+nearly uniform **≈ −2% signed bias**; finite wire length does not own it
+(−3.9% at r = 0.028 m but < 0.02% near the wire, where the bias is 1.8%).
+**And the floor is h-convergent at rate ≈ 2**, a two-point reading the slot's
+own two logs supply for free: the smoke rung (h = 0.0025, same probe, same 45
+radii, identity gates failing by construction because it is a different mesh)
+reads CG1 **7.8411%** vs this rung's **1.9557%** — ratio **4.01**, p = **2.00**
+— where DG1 over the same two rungs reads 10.9806% → 4.7235% (ratio 2.32,
+p = 1.22). Continuous recovery restores the second-order rate the DG1 container
+was discarding. Two points is an observation, not a fitted rate.
+
+**Denials / harness notes.** None. `timeout -k 30` on both commands, neither
+fired. `gamg` on the vector mass matrix behaved (11 iterations); the
+`current_divergence.py` note about hypre was not tested and stands unchanged.
+
+**Scope held.** `MAG-13` stays ✅ at its recorded numbers. `compute_b_field`
+untouched — no `src/`, no `tests/`, no mesh, no bound. The graded route is not
+retired; §9 item 5 is not retired.
+
+**Next-attempt hypothesis.** No further attempt at 2b — the question is
+answered. Two review decisions are stated in the §7 annotation: (1) whether
+`compute_b_field`/`MAG-13`'s gate move to a continuous recovery (a re-gating
+exercise: every B-consuming test's recorded number shifts, so it is not an
+edit); (2) whether the p = 2.00 two-point CG1 rate gets a third rung. The
+cheapest next measurement is exactly that: the same probe at one intermediate
+h, which turns two points into a rate with redundancy. If p = 2 holds, the
+graded-mesh route — scoped against a first-order, near-wire-concentrated error
+map this step dismantled — should be re-derived before anyone builds it, since
+uniform refinement at second order with continuous recovery is then the cheaper
+path.
