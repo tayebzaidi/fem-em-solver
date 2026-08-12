@@ -3784,3 +3784,266 @@ in the new `-k 30` recipe, nothing else.
    route is exhausted inside the window — graded refinement becomes the
    only route; report the measured error and cost beside the prediction,
    annotate, stop.
+
+## §9 On-deck review journal (2026-08-12 10:30 digest + item list, with the in-interval DONE annotations) — archived 2026-08-12 (18:00 review)
+
+Last reviewed 2026-08-12, 10:30 daily review. **Four slots: two items
+landed and audited compliant, and the other two were the same item's two
+mesh arms — no lost slots, but item 1 consumed half the interval without
+buying its solve.** 04:30: `PORT-1` step 3b-xvi mesh arm — the scoped
+refinement factor is **refuted by measurement** (`cells_across_arc` is
+24.70, not the "~5" inferred from 3b-vi — that count predates 3b-vii's
+arc field; `h_gap ≈ 1.25e-3` would move the wall band 4.2% and compare a
+mesh against itself), while the sub-cell overhang premise is confirmed
+(0.1405 cells across). 06:00: the same step's second arm executed the
+re-scoped recipe — capping the `Box` field's `Thickness` at 5 mm cut the
+locality control +35.4560% → +16.3159%, still over its < 5% band, so the
+slot correctly did not buy the solve; its added collar diagnostic is
+decisive (outside a 5 mm-dilated box the mesh moves −0.1658%) and it
+correctly handed the control re-pointing to a review rather than moving
+a pre-registered control in-slot. 07:30: `MAG-13` step 2 re-gate ✅ —
+smoke rung now **exits 1** at 0/4 gates, real rung 4/4 at exit 0
+reproducing the record digit-identically (263 s); the profile step is
+restored 🧪 → ✅. 09:00: `MAT-6` step 10a ✅ — the attribution is negative:
+estimated factor flops grow **1.693×** for the 1.28× cell ratio against
+the ≥ 4× fill-in verdict, so **fill-in is exonerated** and ≥ 5.1× of the
+9× lives in the numeric phase; two first-of-their-kind leads (MUMPS
+in-core estimate 69 894 MB vs the 65 536 MiB cgroup cap; the kill stack
+in MUMPS's parallel load-balancing receive), and `timeout -k 30`'s first
+composed-fixture kill was clean — footer written, no wedge.
+**Step-3 audit (one auditor per flip): both COMPLIANT.** `MAG-13`
+re-gate + restoration — exit code genuinely derived from the four gates,
+verdict broadcast rank-safe, no bound loosened (the gate constants are
+the pre-demotion record's own digits; the slope pin is a *new*
+constraint). `MAT-6` step 10a — all three footers present including the
+intended exit-124 reading, the baseline band enforced in the probe's
+exit code, scope held (step 10 stays 🟡, `MAT-6` ✅ untouched). Two
+advisory nits folded into §7: the step-10a factor-entry digits were
+transcribed slightly off the logs (corrected, ratio unaffected), and the
+factor-retention lifetime caveat is now stated in the step-10 hand-off
+so the weekly review's memory-headroom run prices it in.
+Step 2: tree clean, no `recovered/*`. Branch dispositions: the two older
+`attempt/PORT-1-*` branches stay parked per adjudication decision (6)
+(nothing lands from a 🟡 park without a gate);
+`attempt/PORT-1-step3bxvi-20260812T093000Z` (`bc6d69c`) stays parked —
+item 1's third attempt continues on it and its `Thickness`-cap +
+diagnostics are needed there.
+**Review decisions:** (1) **The 3b-xvi locality control is re-pointed to
+the 5 mm-dilated gap boxes, < 5% band unchanged** — full grounds and the
+third-attempt recipe in the §7 annotation (the 06:00 calibration shows
+the protected claim is satisfied at every collar width and the control
+as written admits only refinements too weak to answer the question);
+item 1 below is the re-queue, now including the solve arm. (2) The
+operator adjudication's decision-(4) **zero-solve padding fit is
+promoted to a standalone queue item** (item 4) rather than a ride-along
+on an item that has twice run out of slot. (3) `MAT-6` step 10 is the
+**weekly review's to commission** per step 10a's pre-registered
+negative-result clause — deliberately not queued here; the
+discriminator recipe is in the §7 annotation. (4) §5.4 ramp: no example
+chunk — the re-gate restored enforcement of an existing measurement and
+step 10a is attribution; neither closed a new quantitative capability
+gate. Waiting-on-you delta: `ANS-1` replication and the runner-results
+ask stand; origin still at `b6e994f` (2026-08-10) — 28 ahead once this
+commit lands.
+
+Previous interval's digest (2026-08-12 03:00), retained for the audit
+trail: **Four slots: three landed, one decisive stop-rule finding plus
+two harness defects.** `POST-4` step 4 ✅ closed the chunk (P1 artifact
+bounded, localization refuted — 100% the continuity constraint);
+`MAG-13` step 2 profile measured the 1/r + staircase map (audit demoted
+it ✅ → 🧪 for print-only gates; restored by this interval's re-gate);
+`MAT-6` step 9 ✅ (truncation owns ΔX, r∞ = 1.0023 at p = 3.045); `MAT-6`
+step 10 hit its stop rule (composed fixture meshes, then ≥ 1 700 s at
+`-n 8`) and found the plain-`timeout`/container-wedge harness defects —
+every recipe now reads `timeout -k 30 <s>`. The review landed the
+operator session's uncommitted Jin-grounded `PORT-1` adjudication
+verbatim (`bc93f49`), landed the step-10 probe from its branch
+(`cc2e8da`), rescoped step 10 as 10a (MUMPS analysis stats, not the
+nonexistent KSP-iteration count), and queued six items.
+*(Full text in `docs/planning/plan-archive.md`, archived 2026-08-12,
+10:30 review.)*
+
+**Five ready items; all independent of one another** (items 2 and 5 both
+re-solve the same recorded `MAG-13` rung, but each carries its own
+identity checks and neither reads the other's output; item 5 is the
+declared brute-force spare on the same question as item 2's route
+decision; item 4 is zero-solve arithmetic and cannot collide with
+anything). Item 1 is the twice-failed 3b-xvi, re-queued under this
+review's control re-pointing per the §9 rescope rule; nothing else in
+the list waits on it.
+
+1. ✅ **DONE 2026-08-12 (12:00 slot) — control passed at −0.1658%, solve
+   bought, reading is (converged at the feed): Δ = +0.0508 pp against the
+   0.5 pp band, anchor exact at 0.894543, so feed discretisation is
+   exonerated and the offset is gap physics. Parked at `d459af9` on the
+   lineage branch; §7 annotation and attempts.md 2026-08-12T17:00Z carry
+   the numbers. Twice-failed item closed on its third attempt.**
+   ~~**`PORT-1` step 3b-xvi, third attempt — re-pointed locality control,
+   then buy the solve (standard; measurement only; continues on
+   `attempt/PORT-1-step3bxvi-20260812T093000Z` at `bc6d69c`).**~~ Execute
+   the §7 10:30 review-decision recipe: mesh arm at `h_box = 6.0e-4`
+   asserting the **re-pointed** control — cell count outside the
+   **5 mm-dilated** gap boxes moves < 5% (calibration on record:
+   −0.1658%) — plus the standing identities (gap-box meshed/analytic
+   volume 1.000000000000, facet tags `[1, 201, 202]`, unrefined record
+   byte-reproduced first), then one solve:
+   `port1_step3bxvi_probe.py solve 6.0e-4`. **Anchor:** the refined
+   estimator beside 0.894543 at the pre-registered 0.5 pp bands —
+   **(converged at the feed)** |Δ| < 0.5 pp ⇒ discretisation exonerated,
+   physics label; **(under-resolved)** |Δ| ≥ 0.5 pp ⇒ the stated
+   systematic becomes the refined reading, discretisation label; either
+   band proceeds per adjudication decision (3), and tolerances
+   0.03 / 0.10 are untouched under every band. **Negative control:** the
+   re-pointed locality control, enforced before the solve is bought; the
+   raw undilated count is printed beside it for the record, never gated.
+   **Cost:** standard, `-n 2`; mesh arms are ~1–2 min on record; the
+   solve is unpriced at 246 364 cells and step 1 killed a 237 926-cell
+   solve at 180 s inside MUMPS — give it its own `timeout -k 30 590`,
+   and **exit 124 is a finding** ("the refined fixture does not fit the
+   window at `-n 2`"), not a failure. **Traps:** the 3b-xiii list (FFCx
+   lock after any kill, complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` first, σ via the DG0 field never a global); the
+   `Thickness` cap and collar diagnostics live on the parked branch —
+   work there, land nothing in-slot. **Scope boundary:** report and park
+   on the lineage branch; `PORT-1` stays 🟡; the control re-pointing is
+   already made (§7, this review) and is not the slot's to re-litigate
+   or extend. **Negative result:** every estimator band is a finding; a
+   control still > 5% outside the *dilated* boxes is new information
+   about the size field itself — report the collar table, park, stop;
+   do not touch the band.
+
+2. ✅ **DONE 2026-08-12 (13:30 slot) — the route is bought and it is cheap:
+   CG1-projected `curl A` reads 1.9557% against DG1's 4.7235% and the
+   < 5.00% mark, for 2.71 s on top of a 271.1 s solve (1.0% of it); the
+   staircase breaks 8/8 and the O(h/r) structure is removed, leaving a
+   band-flat ≈ 2% floor with no identified owner. 4/4 gates, exit 0,
+   276 s (`20260812T183329Z_MAG-13-step2b-n8.log`); the smoke rung exits 1
+   at 0/4 (`20260812T183247Z_MAG-13-step2b-smoke.log`). `MAG-13` stays ✅;
+   two decisions handed to the review in the §7 annotation.**
+   ~~**`MAG-13` step 2b — price higher-order B recovery on the solved rung
+   (heavy; measurement only; independent of everything above).**~~ Execute the §7
+   step-2b entry verbatim: re-solve the h = 0.00125 rung (267.0 s on
+   record), L2-project `curl A` into CG1 (one mass solve, `cg`+`gamg`),
+   and evaluate both recoveries on the recorded 45-radius grid.
+   **Anchor:** the closed form per radius with fixture identity enforced
+   (cell count 1 097 873; DG1 ten-point relL2 reproduces 5.6494% — exit
+   nonzero on miss); the reading is CG1 dense relL2 beside the DG1 record
+   (4.7235%) at the pre-registered < 5.00% mark, and whether the eight
+   staircase groups break into distinct values. **Negative control:** the
+   DG1 path's own recorded numbers, reproduced in the same run. **Cost:**
+   heavy, `-n 8`, 267 s + a seconds-scale mass solve; container
+   `timeout -k 30 590`, real build, foreground. **Traps:** the profile
+   entry's list; the recorded degree-2 divergence
+   (`test_straight_wire.py:96`) was a P2 *solve*, not this projection —
+   do not conflate; the projection is a fresh FFCx form — clear a stale
+   lock after any kill. **Scope boundary:** no mesh change, no export
+   change, no bound moved; `MAG-13` stays ✅; the graded route is not
+   retired by any outcome. **Negative result:** CG1 recovery that does
+   not beat DG1 (Gibbs-like overshoot at the wire is the plausible mode)
+   makes graded refinement the sole live route — report both tables,
+   annotate, stop.
+
+3. ✅ **DONE 2026-08-12 (15:00 slot) — the DG1/VTX route is faithful and the
+   price is 10.5× on disk, nothing on wall clock: round-trip agrees with the
+   in-memory DG1 function at exactly 0.000000e+00 (bound 1e-14), the read-back
+   fields read 3.25e-17 / 0.0 / 0.0 against the source where the P1 path reads
+   51.17% / 52.47% / 20.18% in the same run, and step 4's refutation pin fires
+   with the record reproduced to ≤ 3.7e-7 drift and separations 0.4185× /
+   0.4818× / 0.6835× digit-identical. `.bp` 6 936 408 B vs `.xdmf`+`.h5`
+   661 260 B (10.49×); writer 0.0143 s vs 0.0193 s (0.74×, DG1 faster).
+   Two new mechanism facts: complex-build VTX emits `<name>_real`/`<name>_imag`
+   as two real arrays, and VTX point data on a discontinuous space is
+   `size_local + num_ghosts` rows in dofmap order. `POST-4` stays ✅; the call
+   is the review's, now priced. Log `20260812T200532Z_POST-4-step5-n2.log`,
+   exit 0, 5 s.**
+   ~~**`POST-4` step 5 — price the faithful-export route (standard;
+   measurement only; the decision table for the open DG1-vs-P1 call).**~~
+   Execute the §7 `POST-4` step-5 entry verbatim: on `examples/mri/01`'s
+   debug preset, write `A`/`B`/`E` through the DG1/VTX route, read back,
+   and run the step-4 probe against both paths in one command.
+   **Anchor:** `.bp` round-trip ≤ 1e-14 scaled median at the step-4 point
+   sets (reuse the `EX-14`/`EX-17` machinery, restate nothing); the DG1
+   read-back reads round-off where the P1 path reads
+   51.17%/52.47%/20.18%. **Negative control:** the P1 refutation pin
+   (midpoint median ≥ 10%, vertex ≤ midpoint) must still fire on the same
+   run, else the fixture drifted and the comparison is void. Report file
+   sizes (ADIOS2 `.bp` is a directory — tree-walk it, `stat` lies) and
+   writer wall-clocks beside the fidelity table. **Cost:** standard,
+   `-n 2`, `timeout -k 30 180`; solves and writes are seconds on record.
+   **Traps:** step 1's list (reshape, complex build, rank-local counts,
+   `-s`); ParaView rendering cannot be asserted headless — it becomes a
+   dashboard Waiting-on-you item, never a gate. **Scope boundary:** no
+   example switches its export in-slot; `POST-4` stays ✅; a review makes
+   the call on the measured table. **Negative result:** an unfaithful DG1
+   round-trip kills the DG1 route and makes "P1 + caveat" the standing
+   answer — report, annotate, stop.
+
+4. ✅ **DONE 2026-08-12 (16:30 slot) — the box term is a number, and it
+   must be quoted with its exponent. Both pre-registered gates pass:
+   `p = 1.6574 > 0`, `|D∞| = 1.6934 pp < 3.2733 pp`. But the fit crosses
+   zero (all three rungs are negative deficits; `D∞` is a **positive**
+   +1.6934 pp excess), the recovered exponent is **not** dipolar (1.657 vs
+   `MAT-6` step 9's blind 3.045), and **model uncertainty dominates data
+   uncertainty ~840×** — the recorded digits move `D∞` by 0.0037 pp while
+   pinning `p = 3` moves it by 3.1225 pp, across zero, to −1.4291 pp. The
+   deliverable is therefore `D∞ = +1.69 pp at p = 1.657`, labeled an
+   **effective-range** extrapolation over [0.08, 0.12] m, never a converged
+   box-free value; a fourth rung at a factor ≥ 2 in `W` is the named
+   blocker for a converged one. Controls green (planted triple recovered to
+   4.4e-16; non-monotone triple refused). Landed on `main`: probe
+   `scripts/probes/port1_padding_fit.py`, log
+   `20260812T213337Z_PORT-1-dec4-fit.log`, exit 0, 1 s. §7 3b-xi annotation
+   carries the table. `PORT-1` stays 🟡.**
+   ~~**`PORT-1` adjudication decision-(4) padding fit — state the box term
+   as a number (smoke; zero-solve; arithmetic on recorded digits;
+   commissioned 2026-08-12 by the operator-session adjudication, promoted
+   to a standalone item by the 10:30 review).**~~ Apply `MAT-6` step 9's
+   free-exponent form — deficit(W) = D∞ + C·W^(−p) — to 3b-xi's three
+   recorded padding rungs (−8.0324 / −5.0256 / −3.2733 pp at
+   W = 0.08 / 0.10 / 0.12); three points, three parameters, exactly
+   determined. **Anchor:** the recovered exponent p reported beside
+   `MAT-6` step 9's blind p = 3.045 and the dipolar expectation p = 3;
+   the deliverable is **D∞, the extrapolated box-free deficit** the
+   port-pair gate will state instead of "the suspect". **Negative
+   control (the ceiling, stated up front):** exact determination means
+   zero residual by construction — no goodness-of-fit claim exists and
+   the item must not manufacture one; the enforced assertions are
+   **p > 0** and **|D∞| < 3.2733 pp** (a monotonically decaying tail
+   cannot extrapolate above its smallest measured rung), and the script
+   exits nonzero on either miss. Seed the solve at p = 3. **Cost:**
+   smoke, `-n 1`, seconds — numpy in the container, through
+   `run_and_log.sh` like everything else; no mesh, no solve, no complex
+   mode needed. **Traps:** the deficits are signed — composition is read
+   on signed ΔZ, never relative-percent (§7 `MAT-6` step-9 note); use
+   the recorded digits verbatim, re-solve nothing; a nonlinear
+   three-equation solve can silently converge to a complex or negative-p
+   root — assert, don't assume. **Scope boundary:** annotates the §7
+   3b-xi entry and pre-states the port-pair gate's box term; closes
+   nothing; `PORT-1` stays 🟡; independent of item 1 in both directions.
+   **Negative result:** a fit violating p > 0 or the D∞ bound says the
+   three rungs do not support a power-law tail — journal that in the
+   3b-xi annotation and the port-pair gate states the box term
+   unextrapolated, labeled "suspect, three rungs non-power-law"; report,
+   annotate, stop.
+
+5. **`MAG-13` step 2 rung 3 — the < 5% wire by brute force (heavy; the
+   spare; same question as item 2's route decision, other route).**
+   Execute the §7 step-2-rung-3 entry verbatim: mesh + one solve of
+   h ≈ 0.001127 (~1.50 M cells at 1.37× the 1 097 873 on record), `-n 8`,
+   foreground, tool `timeout` 660000 ms, container `timeout -k 30 590`.
+   **Anchor:** `straight_wire_magnetic_field` (B_θ = μ₀I/2πr), target
+   **< 5.00%** at the rung the measured rate 1.174 prices at 5.00%; print
+   the three-rung observed rate beside 1.174 and 1.10. **Negative
+   control:** `MAG-13`'s analytic-Dirichlet-vs-plain-box separation and
+   rate fit, on record, cited. **Cost:** heavy; **estimate 380–450 s if
+   cost scales with cell count — an assumption, declared**: the 590 s
+   container window holds it only with thin margin, and **exit 124 is
+   the measurement** ("~1.5 M cells does not fit the window at `-n 8`"),
+   not a failure. **Traps:** the §7 profile entry's list verbatim; never background; container `timeout -k 30 590`. **Scope boundary:**
+   `MAG-13` stays ✅ at its recorded numbers either way; a green < 5%
+   annotates the entry and the MAG follow-up bullet; it does not retire
+   the graded route, which stays the cheaper path for any future rung.
+   **Negative result:** still > 5% on-rate, or exit 124, says the uniform
+   route is exhausted inside the window — graded refinement becomes the
+   only route; report the measured error and cost beside the prediction,
+   annotate, stop.
