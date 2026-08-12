@@ -506,9 +506,12 @@ chunk uses — `... bash -lc 'source ... && timeout <s> mpiexec -n <N> python3
 ranks were still burning 8–12 cores at 05:31Z, ~1 700 s into a solve, and the
 harness never wrote a footer
 (`20260812T050133Z_MAT-6-step10-probe.log`). **Treat the container-side
-`timeout` as best-effort, not a guaranteed stop**; the recipe has no
+`timeout` as best-effort, not a guaranteed stop**; the recipe had no
 `-k`/kill-after, so a job that ignores or outlives SIGTERM keeps the cores.
-Suggested repair, not yet landed: `timeout -k 30 <s> mpiexec ...`.
+Repair landed 2026-08-12 (03:00 daily review): the canonical recipes in
+CLAUDE.md, PROJECT_PLAN §5, and docs/automation/ now read
+`timeout -k 30 <s>`. This entry stays for the container-wedge behavior and
+its recovery below, which the `-k` reduces but does not provably eliminate.
 
 **The overrun then wedged the container**, and the usual levers failed in
 order: `docker compose exec` hung twice with no output (>2 min each);

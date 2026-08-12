@@ -107,7 +107,14 @@ answer prompts — a denied tool call is simply denied. Consequences:
   same item. Run harness commands in the **foreground** with the Bash tool's
   `timeout` parameter at its 660000 ms maximum, and size the
   **container-side** `timeout` so the command returns a footer inside that
-  window (≤ ~590 s of container time for a command with ~1 min of setup). A
+  window (≤ ~590 s of container time for a command with ~1 min of setup).
+  Always write the container-side timeout as **`timeout -k 30 <s>`** — a
+  plain TERM does not reliably stop an `mpiexec` job (MAT-6 step 10,
+  2026-08-12: `timeout 590` fired and the ranks ran on for ~1 700 s,
+  wedging the container). If a container wedges anyway (`exec` hangs,
+  `restart`/`kill` report "did not receive an exit event"), the recovery
+  is `docker compose -f docker/docker-compose.yml up -d --force-recreate`,
+  then verify `memory.max` and zero stray `python3` before continuing. A
   compute step that cannot finish inside one foreground window at ≤ 12 ranks
   is too big for a scheduled slot: shrink the case or journal it for the
   review — do not background it.

@@ -155,7 +155,11 @@ step 5 or listed in step 6 states all six:
    turn exits the CLI and SIGKILLs the harness (footerless log, no journal —
    three slots on 2026-08-10/11): harness runs go foreground, Bash-tool
    timeout 660000 ms, container-side `timeout` sized to return a footer
-   inside that window. Add to this list as runs discover more.
+   inside that window; the container-side `timeout` needs `-k 30` — a plain
+   TERM does not reliably stop an `mpiexec` job, and an overrun can wedge
+   the container (MAT-6 step 10, 2026-08-12; recovery is
+   `docker compose up -d --force-recreate`). Add to this list as runs
+   discover more.
 5. **The scope boundary** — what the item does *not* close, stated so the
    implementer holds the chunk at 🟡 rather than over-claiming. `POST-3` step 1
    correctly stayed 🟡 because a scalar-σ identity does not gate the coil+

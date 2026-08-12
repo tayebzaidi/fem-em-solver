@@ -47,9 +47,15 @@ that solves in the frequency domain needs the complex DolfinX build
 
   ```
   scripts/testing/run_and_log.sh <CHUNK-ID> "docker compose exec -T fem-em-solver \
-    bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout 180 \
+    bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 \
     mpiexec -n 2 python3 -m pytest <paths> -v --tb=short'"
   ```
+
+  The `-k 30` is mandatory: a plain `timeout` TERM does not reliably stop an
+  `mpiexec` job (MAT-6 step 10, 2026-08-12 — a `timeout 590` run burned cores
+  for ~1 700 s and wedged the container; recovery is
+  `docker compose -f docker/docker-compose.yml up -d --force-recreate`, see
+  known-issues).
 
 - `mpiexec -n 12` is the hard ceiling; use the smallest rank count that fits the
   tier, and keep `-n 2` for anything a rank-local bug could hide in (that is the
