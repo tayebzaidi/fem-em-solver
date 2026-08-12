@@ -4357,6 +4357,101 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   measurement — report and stop, never substitute a different σ or
 >   topology silently.
 >
+> **Operator-session adjudication, 2026-08-12 (interactive session, at the
+> human operator's direction — this spends the *decision* of the second
+> licensed slot granted 2026-08-09; the slot itself runs from §9 as step
+> 3b-xvi. The 2026-08-16 weekly review audits this rather than re-opening
+> it, unless 3b-xvi's reading itself demands otherwise).** Grounding: the
+> in-repo reference library (`docs/references/jin-fem-3e/`, added
+> 2026-08-12). Two findings from the text change the plan:
+> **(a)** the lineage's estimator families map exactly onto Jin's feed-model
+> taxonomy (§10.4.2.1: current filament/probe, magnetic frill, and the gap
+> generator — "specifying the field across a gap a priori" — with the
+> caveat that "more accurate modeling … is possible with the use of a
+> waveguide port boundary condition", ch. 11). The ~3 pp deviation is a
+> **documented artifact class** of gap-generator feeds — known least
+> accurate for impedance and gap-geometry dependent — not an unexplained
+> defect. **(b)** Jin's feed-modeling practice refines the feed region
+> locally as routine hygiene (ch. 12, coax-fed cone: 3 mm elements at the
+> feed vs 10 mm elsewhere), and this fixture has never been tested for
+> that: `h_wire = 2.5e-3` spans the 1.2e-2 gap arc in ~5 cells (3b-vi's
+> count), and 3b-ix located **45% of the loop EMF in the 2e-4 overhang
+> region — one order below local mesh size, sub-cell**. A reading whose
+> feed-region mesh convergence is unestablished must not be diagnosed for
+> physics ownership; the discretisation question precedes the σ question.
+> Decisions:
+> **(1)** The second licensed slot is **re-pointed** from 3b-xv's proposed
+> σ-on-driven-wire successor to **step 3b-xvi below — gap-region
+> h-refinement of the estimator**.
+> **(2)** Further σ-placement variants are **barred**: the 2×2 is complete
+> and every corner measured (3b-xv). Daily reviews do not scope new ones.
+> **(3)** **All-outcomes-proceed, pre-registered:** after 3b-xvi the
+> lineage proceeds to the deferred 3b-i/3b-ii port-pair gate carrying the
+> offset as a **stated systematic** labeled by whichever band fired
+> (feed-model physics per Jin §10.4.2.1 / feed under-resolution, measured /
+> unowned). No outcome loops back into diagnosis. The re-pointing commit
+> re-aims the consistency gate at matched topology, keeps the −3.0224e-02
+> record with its label, and remains the only place
+> `REACTION_CONSISTENCY_TOLERANCE` (0.03) / `MUTUAL_TOLERANCE` (0.10) may
+> move — citing 3b-xvi's log. The port-pair gate's reciprocity identity is
+> the standing tripwire if the label is wrong.
+> **(4)** Zero-solve annotation commissioned: apply `MAT-6` step 9's
+> free-exponent fit (`ratio = r∞ − C·W^(−p)`) to 3b-xi's three padding
+> rungs (deficits −8.0324 / −5.0256 / −3.2733 pp at W = 0.08/0.10/0.12) so
+> the port-pair gate states the box term as an extrapolated number rather
+> than "the suspect". Arithmetic on recorded digits; may ride with 3b-xvi
+> or any later slot.
+> **(5)** Long-horizon (§10 note): **no further `∫E·dl` estimator variants
+> after this lineage** — voltage on an inductive fixture is a stated-path
+> convention (the estimator families measured three different numbers
+> because they are three different path conventions, not three attempts at
+> one truth). Port-definition investment for the birdcage moves toward a
+> lumped/circuit-element port boundary condition per Jin's own hierarchy
+> (ch. 11); consult the reference library before scoping.
+> **(6)** 2026-08-09 decision (4) stands unchanged: the attempt branch
+> lands on `main` only with the lineage's first ✅ gate.
+>
+> * **Step 3b-xvi — gap-region h-refinement of the terminal-to-terminal
+>   estimator** *(scoped 2026-08-12 by the operator-session adjudication
+>   above; one run, standard tier, measurement only, on the
+>   `attempt/PORT-1-step3bxiv-20260808T095500Z` lineage like 3b-xv).*
+>   Rebuild the gapped padding-0.08 fixture with a **local** gmsh size
+>   field halving the element size in the gap boxes and overhang region
+>   only (target h_gap ≈ 1.25e-3; **never** refine globally — the PEC-box
+>   deficit must stay common-mode with the on-record control), one solve,
+>   read the terminal-to-terminal estimator. **Anchor:** (1) fixture
+>   identity first — byte-reproduce the unrefined record (estimator
+>   0.894543, control 0.922423, deviation −3.0224e-02) before building the
+>   refined mesh; (2) a mesh-only probe prints cells-across-arc and
+>   cells-across-overhang for both meshes — turns the "~5 cells /
+>   sub-cell" inference into record; (3) the refined estimator beside
+>   0.894543, pre-registered bands at 0.5 pp: **(converged at the feed)**
+>   |Δ| < 0.5 pp ⇒ feed discretisation exonerated, the offset is gap
+>   physics — adjudication decision (3) fires with the physics label
+>   (Jin §10.4.2.1 cited as the mechanism class). **(under-resolved)**
+>   |Δ| ≥ 0.5 pp ⇒ feed discretisation owns part of the offset; the stated
+>   systematic becomes the refined reading with the trend direction noted —
+>   decision (3) fires with the discretisation label. Either band
+>   proceeds; neither loops back. **Negative control:** the closed-loop
+>   control is *not* re-solved (a gap-local size field cannot touch its
+>   mesh); instead assert the refined gapped mesh's cell count *outside*
+>   the gap region moves < 5%, so the common-mode claim about the box
+>   deficit holds. **Cost:** standard, `-n 2`, one `timeout 600` command —
+>   3b-xiii's envelope (344.6 s) covered mesh + two solves; one mesh + one
+>   solve fits with margin. If the mesh-only probe prices the refined
+>   solve out of the envelope, halve the refinement factor, not the
+>   region, and report both cell counts. **Traps:** the 3b-xiii list
+>   (FFCx lock, pytest `-s`, complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+>   `tests/environment` first, σ via the DG0 field never a global); gmsh
+>   size fields interact with the wall-tolerance classification (`GEO-13`)
+>   — assert the gap-box facet-tag identity 1.000000000000 before trusting
+>   the estimator; print, pin nothing in-slot; tolerances untouched under
+>   every band (0.03 / 0.10). **Does not close:** `PORT-1`, known-issues 3,
+>   or the re-pointing — that is a separate commit citing this log, per
+>   decision (3). **Negative result:** every band is a finding; a mesh
+>   that refuses the size field or breaks the tag identity is reported and
+>   stopped, never worked around silently.
+>
 > **Closed steps** *(two-loop air fixture `two_torus_domain`, f = 10 MHz,
 > a = 0.04 m, r_wire = 0.005 m, d = 0.04 m; padding 0.08 / h_far 0.03,
 > 119738 cells, unless stated; all gates `-n 2`, complex build, in
@@ -7332,7 +7427,29 @@ interval's spare, never reached); items 2 and 5 execute review decision (1)
 on the `MAG-13` route; items 3 and 4 execute decision (2), the two `MAT-6`
 follow-ons Part 2c flagged. The `PORT-1` critical path stays deliberately
 absent: the second licensed discriminator slot is the weekly review's
-(2026-08-16) to spend.
+(2026-08-16) to spend. *(Superseded 2026-08-12: an interactive operator
+session spent that slot's decision — see the §7 `PORT-1`
+"Operator-session adjudication, 2026-08-12". Item 0 below carries the
+slot itself; it is numbered 0 to leave this interval's cross-references
+intact and is the first open item by position.)*
+
+0. **`PORT-1` step 3b-xvi — gap-region h-refinement of the
+   terminal-to-terminal estimator (standard; measurement only; inserted
+   2026-08-12 by the operator session under the §7 adjudication).**
+   Execute the §7 `PORT-1` step 3b-xvi entry verbatim: byte-reproduce the
+   unrefined record first (estimator 0.894543, control 0.922423, deviation
+   −3.0224e-02), mesh-only probe printing cells-across-arc and
+   cells-across-overhang for both meshes, then one solve on the gapped
+   padding-0.08 fixture with a **local** size field halving h in the gap
+   boxes + overhang only (never global). **Anchor:** the refined estimator
+   vs 0.894543 at the pre-registered 0.5 pp bands — either band is a
+   finding and both proceed per adjudication decision (3); report, park on
+   the lineage branch, nothing lands in-slot. **Negative control:** cell
+   count outside the gap region moves < 5% (common-mode box claim); gap-box
+   facet-tag identity 1.000000000000 before any estimator claim. **Cost:**
+   standard, `-n 2`, one `timeout 600` command (3b-xiii's 344.6 s envelope
+   covers it). The §7 decision-(4) zero-solve padding fit may ride along
+   if time remains. Tolerances untouched (0.03 / 0.10) under every band.
 
 1. ✅ **DONE 2026-08-12, 19:30 slot** — **`POST-4` step 4 — bound the
    P1-interpolant artifact on the export
