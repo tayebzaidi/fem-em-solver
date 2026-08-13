@@ -1,4 +1,4 @@
-"""`TH-10` step 2: the first Larmor-regime full-wave solve gate (64 MHz).
+"""`TH-10` steps 2-3: the Larmor-regime full-wave solve gates (64 and 128 MHz).
 
 Every coil-loading/SAR gate in this repo is either eddy-current (`MAT-6`,
 10 MHz) or imposed-field (`MAT-4`); `TH-8` gates a *quasi-static* sphere at
@@ -32,7 +32,15 @@ The ``e^{+jωt}`` convention is load-bearing (`TH-1` formulation note): a solve
 landing ~170% off matches the conjugated-convention signature step 1 recorded
 at 173.8%, and that is a convention bug, not a solver bug.
 
-Scope: 64 MHz only.  128 MHz is step 3, ½∫σ|E|² is step 4, and no `MAT-4` or
+Step 3 repeats the identical recipe at 128 MHz, where ``|m|k₀a = 1.374`` and the
+quasi-static departure step 1 recorded is larger still (**154.6%** in max-norm).
+The interior wavelength shortens with ``|m|k₀``, so the resolution demand roughly
+doubles: the 128 MHz rungs start at 64 MHz's *fine* rung and refine once from
+there.  A 64 MHz green beside a 128 MHz red would itself be the frequency-scaling
+finding — the two errors and rates are printed side by side for exactly that
+reading.
+
+Scope: the interior *field* only.  ½∫σ|E|² is step 4, and no `MAT-4` or
 coil-loading claim follows from this file.
 
 Run (complex build required)::
@@ -42,6 +50,9 @@ Run (complex build required)::
        PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 \\
        mpiexec -n 2 python3 -m pytest tests/environment \\
        tests/validation/test_lossy_sphere_fullwave.py -v -s'
+
+Pass ``-k 64mhz`` or ``-k 128mhz`` to run one gate; each is priced separately
+(§9 items 1 and 3) and neither depends on the other's solve.
 """
 
 from __future__ import annotations
@@ -67,23 +78,29 @@ BOX_HALF_WIDTH = 0.10
 E0 = 1.0
 SALINE_EPSILON_R = 78.0
 SALINE_SIGMA = 0.5
-FREQUENCY_HZ = 64.0e6
+FREQUENCY_64_HZ = 64.0e6
+FREQUENCY_128_HZ = 128.0e6
 SPHERE_TAG = 1
 
 # `TH-8`'s own two coarser recorded resolutions, carried over unchanged so the
 # rungs are the ones the quasi-static gate is priced at (§9 item 1).
-RESOLUTIONS = [(0.0125, 0.025), (0.00833, 0.0167)]
+RESOLUTIONS_64 = [(0.0125, 0.025), (0.00833, 0.0167)]
+# Step 3 (§9 item 3): "start at item 1's fine rung plus one refinement" — the
+# same 1.5× ladder `TH-8` uses, one rung further, because the interior
+# wavelength scales with |m|k₀ and that roughly doubles from 64 to 128 MHz.
+RESOLUTIONS_128 = [(0.00833, 0.0167), (0.00556, 0.0111)]
 
-# Bounds are the §9 item-1 recipe's, stated before the run.
+# Bounds are the §9 item-1 / item-3 recipes', stated before the run and
+# identical at both frequencies — step 3 inherits step 2's band unchanged.
 INTERIOR_L2_BOUND = 0.05
 QUASISTATIC_SEPARATION = 10.0
 
 
-def _series() -> LossySphereSeries:
+def _series(frequency_hz: float) -> LossySphereSeries:
     return LossySphereSeries(
         radius=SPHERE_RADIUS,
-        epsilon_c=complex_permittivity(SALINE_EPSILON_R, SALINE_SIGMA, FREQUENCY_HZ),
-        frequency_hz=FREQUENCY_HZ,
+        epsilon_c=complex_permittivity(SALINE_EPSILON_R, SALINE_SIGMA, frequency_hz),
+        frequency_hz=frequency_hz,
         e0=E0,
     )
 
@@ -147,7 +164,7 @@ def _solve(series: LossySphereSeries, resolution_sphere: float, resolution_far: 
 
     problem = TimeHarmonicProblem(
         mesh=msh,
-        frequency_hz=FREQUENCY_HZ,
+        frequency_hz=series.frequency_hz,
         material=HomogeneousMaterial(sigma=0.0, epsilon_r=1.0),
         cell_tags=cell_tags,
         material_map={
@@ -180,14 +197,23 @@ def _solve(series: LossySphereSeries, resolution_sphere: float, resolution_far: 
     return _rel_l2(e_fem, e_series), _rel_l2(e_fem, e_quasistatic), ncells
 
 
-@complex_only
-@pytest.mark.integration
-def test_lossy_sphere_interior_field_matches_full_wave_series_at_64mhz():
-    """Interior ``E`` matches `LossySphereSeries` to < 5% and improves with h."""
-    comm = MPI.COMM_WORLD
-    series = _series()
+def _run_gate(
+    step_label: str,
+    frequency_hz: float,
+    resolutions: list[tuple[float, float]],
+    quasistatic_max_norm_pct: float,
+) -> float:
+    """Both gates at one frequency.  Returns the fine-rung relL2 for reporting.
 
-    runs = [_solve(series, hs, hf) for hs, hf in RESOLUTIONS]
+    Nothing here is frequency-specific except the printed labels: step 3 is
+    step 2's recipe with ``frequency_hz`` and the rung ladder changed, which is
+    the point — a difference in the measured error is then a statement about the
+    physics, not about two hand-tuned fixtures.
+    """
+    comm = MPI.COMM_WORLD
+    series = _series(frequency_hz)
+
+    runs = [_solve(series, hs, hf) for hs, hf in resolutions]
     err_coarse, err_fine = runs[0][0], runs[-1][0]
     qs_fine = runs[-1][1]
     separation = qs_fine / err_fine if err_fine > 0.0 else np.inf
@@ -201,11 +227,17 @@ def test_lossy_sphere_interior_field_matches_full_wave_series_at_64mhz():
     e_quasistatic[:, 0] = series.quasistatic_internal_field()
     series_vs_qs = _rel_l2(e_quasistatic, e_series)
 
+    # Pairwise rate over the two rungs, printed for the frequency-scaling
+    # comparison §9 item 3 asks for.  Both ladders step h by the same 1.5×, so
+    # the two frequencies' rates are directly comparable.
+    h_ratio = resolutions[0][0] / resolutions[-1][0]
+    rate = float(np.log(err_coarse / err_fine) / np.log(h_ratio))
+
     if comm.rank == 0:
         print(
-            f"\n[TH-10 2] lossy saline sphere, full-wave, a = {SPHERE_RADIUS} m, "
-            f"eps_r = {SALINE_EPSILON_R}, sigma = {SALINE_SIGMA} S/m, "
-            f"f = {FREQUENCY_HZ / 1e6:.0f} MHz"
+            f"\n[{step_label}] lossy saline sphere, full-wave, "
+            f"a = {SPHERE_RADIUS} m, eps_r = {SALINE_EPSILON_R}, "
+            f"sigma = {SALINE_SIGMA} S/m, f = {frequency_hz / 1e6:.0f} MHz"
         )
         print(
             f"  eps_c = {series.epsilon_c:.6g}, m = {series.m:.6g}, "
@@ -215,9 +247,11 @@ def test_lossy_sphere_interior_field_matches_full_wave_series_at_64mhz():
         )
         print(
             f"  reference: series vs quasi-static 3E0/(eps_c+2) = "
-            f"{series_vs_qs:.3%} relL2 (step 1 recorded 102.3% in max-norm)"
+            f"{series_vs_qs:.3%} relL2 (step 1 recorded "
+            f"{quasistatic_max_norm_pct:.1f}% in max-norm — different norms, "
+            f"never interchangeable)"
         )
-        for (hs, _), (err, qs, ncells) in zip(RESOLUTIONS, runs):
+        for (hs, _), (err, qs, ncells) in zip(resolutions, runs):
             print(
                 f"  h_sphere = {hs:.5f} ({ncells:7d} cells): "
                 f"relL2(FEM vs series) = {err:.3%}, "
@@ -226,7 +260,9 @@ def test_lossy_sphere_interior_field_matches_full_wave_series_at_64mhz():
             )
         print(
             f"  plane-wave precedent (TH-1): 3.61% L2; "
-            f"this gate: {err_fine:.3%} at the fine rung"
+            f"this gate: {err_fine:.3%} at the fine rung, "
+            f"observed pairwise rate in h = {rate:.3f} "
+            f"(read, not gated — the gate is the level and the direction)"
         )
 
     assert err_fine < err_coarse, (
@@ -235,11 +271,11 @@ def test_lossy_sphere_interior_field_matches_full_wave_series_at_64mhz():
         "coincidence, not convergence"
     )
     assert err_fine < INTERIOR_L2_BOUND, (
-        f"interior E differs from the full-wave series by {err_fine:.2%} relL2, "
-        f"over the {INTERIOR_L2_BOUND:.0%} band (PROJECT_PLAN §9 item 1, "
-        f"§10 MVP criterion; TH-1's plane wave reached 3.61%). A miss near 170% "
-        "is the conjugated-convention signature (step 1: 173.8%), not a solver "
-        "defect — check the e^{+jwt} convention first"
+        f"interior E at {frequency_hz / 1e6:.0f} MHz differs from the full-wave "
+        f"series by {err_fine:.2%} relL2, over the {INTERIOR_L2_BOUND:.0%} band "
+        f"(PROJECT_PLAN §9, §10 MVP criterion; TH-1's plane wave reached 3.61%). "
+        "A miss near 170% is the conjugated-convention signature (step 1: "
+        "173.8%), not a solver defect — check the e^{+jwt} convention first"
     )
     assert separation > QUASISTATIC_SEPARATION, (
         f"the solve sits only {separation:.2f}x closer to the full-wave series "
@@ -248,3 +284,23 @@ def test_lossy_sphere_interior_field_matches_full_wave_series_at_64mhz():
         f"differ by {series_vs_qs:.1%} here, so a solve that could not tell them "
         "apart has not entered the Larmor regime at all"
     )
+    return err_fine
+
+
+@complex_only
+@pytest.mark.integration
+def test_lossy_sphere_interior_field_matches_full_wave_series_at_64mhz():
+    """Interior ``E`` matches `LossySphereSeries` to < 5% and improves with h."""
+    _run_gate("TH-10 2", FREQUENCY_64_HZ, RESOLUTIONS_64, 102.3)
+
+
+@complex_only
+@pytest.mark.integration
+def test_lossy_sphere_interior_field_matches_full_wave_series_at_128mhz():
+    """Step 2's gate at the 3 T Larmor frequency, |m|k₀a = 1.374.
+
+    Identical bounds to 64 MHz: step 3 buys nothing if it needs a wider band.
+    The rungs are the only thing that moves, and only because the interior
+    wavelength does.
+    """
+    _run_gate("TH-10 3", FREQUENCY_128_HZ, RESOLUTIONS_128, 154.6)

@@ -2552,7 +2552,9 @@ numbers, revert nothing silently, stop.
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | 🟡 | standard |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)** 🟡
-*(step 1 ✅ 2026-08-13; the anchor exists, no solve has been gated against it)*
+*(steps 1–3 ✅ 2026-08-13; the interior field is gated against the series at
+**both** Larmor frequencies — 3.643% at 64 MHz, 1.826% at 128 MHz. Step 4's
+∫σ|E|² is what stands between this and any SAR wording.)*
 *(opened 2026-08-12, 18:00 daily review, per §10 subgoal 3's standing
 instruction — "the daily review should start breaking this down as the port
 lineage clears, and a §7 chunk ID should exist by the next weekly review".
@@ -2641,11 +2643,38 @@ and the pair gate is queued — which is the condition §10 named.)*
 >   internal identities of one implementation" caveat for 64 MHz. It does
 >   **not** license SAR (that is step 4's ∫σ|E|²) or any coil-loading claim.
 >   `TH-10` stays 🟡 pending steps 3–4.
-> * **Step 3 — 128 MHz** ⬜ *(scoped 2026-08-13; §9 item 3, serial on
->   step 2's fixture landing).* Same recipe at |m|k₀a = 1.374, where the
->   quasi-static departure on record is **154.6%**; the resolution demand
->   roughly doubles — if the 5% band needs a rung the 590 s window cannot
->   price, exit 124 is the measurement, not a failure.
+> * **Step 3 — 128 MHz** ✅ **2026-08-13 (07:30 run)**. Step 2's fixture
+>   made frequency-parametric (`_run_gate`) and re-run at 128 MHz with the
+>   **bounds unchanged** — ε_c = 78 − j70.215, m = 9.5642 + 3.6707j,
+>   k₀a = 0.134134, **|m|k₀a = 1.37413**, N = 8, last-term bound 7.207e-16.
+>   Rungs are step 2's fine rung plus one 1.5× refinement. **Both gates
+>   green first run, exit 0, 26 s for the whole file, `-n 2`, standard
+>   tier** (`20260813T123211Z_TH-10-step3-128mhz.log`):
+>   **interior relL2(E_FEM vs series) 3.299% (17 670 cells) → 1.826%
+>   (55 251 cells)** — under the 5% band and decreasing, at *half* `TH-1`'s
+>   plane-wave 3.61%. Negative control: **57.31×** separation from the
+>   quasi-static closed form (bound 10×; relL2(FEM vs quasi-static)
+>   104.658%, and the reference's own series-vs-quasi-static separation is
+>   **68.703% in relL2** = step 1's 154.6% in max-norm — quote the norm with
+>   the number). The same command re-ran 64 MHz through the refactored
+>   helper and reproduced step 2's record digit-for-digit (8.154% → 3.643%,
+>   18.68×), so the parametrisation moved nothing.
+>   **The frequency-scaling read, which contradicts the item's
+>   prediction:** §9 item 3 priced the resolution demand as "roughly
+>   doubling", and it did not. At the **same** rung (17 670 cells) the error
+>   is *lower* at 128 MHz (3.299%) than at 64 MHz (3.643%), even though the
+>   interior wavenumber |m|k₀ rises 1.71× (16.06 → 27.48 rad/m). So at these
+>   rungs the ~3% error is **not** interior-wavelength-limited — something
+>   else (most plausibly sphere faceting / exterior discretisation, both
+>   frequency-independent) sets it, which also means 64 MHz's 3.643% may be
+>   a geometry floor rather than a resolution level. The observed pairwise
+>   rates are consistent with that: **1.985 at 64 MHz vs 1.463 at 128 MHz**,
+>   printed as reads, not gated. Isolating that floor is not `TH-10`'s
+>   scope — flagged for the weekly review beside `MAG-13`'s own CG1 floor.
+>   **Where the claim now stands:** the solver is gated against an
+>   independent full-wave anchor at **both** Larmor frequencies, the
+>   condition §10 subgoal 3 names. It still licenses no SAR number (step 4's
+>   ∫σ|E|²) and no coil-loading claim; `TH-10` stays 🟡 pending step 4.
 > * **Step 4 — the SAR-relevant integral** ⬜ *(scoped 2026-08-13; §9
 >   item 5, rides step 2's fixture).* ½∫σ|E|² over the sphere from the FEM
 >   solve vs the same integral of the series interior field — the volume
@@ -8473,8 +8502,20 @@ mutually independent.** Item 5 is the declared spare.
    lineage/environment drift — journal it, park, open a known-issues
    entry; never re-tune the example to pass.
 
-3. **`TH-10` step 3 — 128 MHz (standard; depends on item 1 landing —
-   if it did not land, skip to item 4).** Item 1's recipe at
+3. ~~**`TH-10` step 3 — 128 MHz**~~ — **done 2026-08-13 (07:30 run)**, both
+   gates green first run at the **unmoved** bounds: interior relL2 vs
+   `LossySphereSeries` **3.299% (17 670 cells) → 1.826% (55 251 cells)**
+   (< 5%, decreasing, half `TH-1`'s 3.61%), quasi-static separation
+   **57.31×** against the 10× bound, exit 0, 26 s for the whole file, `-n 2`
+   (`20260813T123211Z_TH-10-step3-128mhz.log`); the same run reproduced
+   64 MHz digit-for-digit through the refactored helper. **The item's
+   resolution prediction was wrong and that is the finding:** demand did not
+   double — at the *same* rung 128 MHz is more accurate than 64 MHz
+   (3.299% vs 3.643%) despite |m|k₀ rising 1.71×, so the ~3% level is not
+   wavelength-limited; rates 1.985 (64) vs 1.463 (128), read not gated. See
+   the §7 entry. `TH-10` stays 🟡 pending step 4 (item 5), whose
+   precondition — item 1's fixture — was already met. Original text follows.
+   Item 1's recipe at
    f = 128 MHz (|m|k₀a = 1.374). **Anchor:** the same series gate,
    same < 5% relL2 + decreasing bands. **Negative control:**
    quasi-static departure on record **154.6%** — assert ≥ 10×

@@ -11366,3 +11366,81 @@ has a runnable end-to-end port demo, so the cheapest next port-side example is
 `is_placeholder=False` threading is the remaining known-issues 3 item — an
 example is the natural place to discover whether that threading works, since it
 needs a real S-matrix and now one exists outside a test.
+
+---
+
+## 2026-08-13T12:40Z — `TH-10` step 3 (§9 item 3) — **complete**
+
+**Preflight.** Tree clean on `main` at `89fd522`, container Up 31 h. No
+`recovered/*` handling needed.
+
+**What was tried.** §9 item 3 verbatim: step 2's recipe at 128 MHz. The
+existing `tests/validation/test_lossy_sphere_fullwave.py` was made
+frequency-parametric — the whole gate body moved into `_run_gate(step_label,
+frequency_hz, resolutions, quasistatic_max_norm_pct)` and the two frequencies
+are now two thin test functions over it. `_series()` takes a frequency;
+`_solve()` reads `series.frequency_hz` instead of the module constant. **No
+bound moved**: `INTERIOR_L2_BOUND = 0.05` and `QUASISTATIC_SEPARATION = 10.0`
+are shared by both frequencies deliberately — step 3 buys nothing if it needs
+a wider band. The only frequency-specific data are the rung ladders. 128 MHz
+uses step 2's *fine* rung plus one 1.5× refinement, `(0.00833, 0.0167)` →
+`(0.00556, 0.0111)`, per the item's "start at item 1's fine rung plus one
+refinement".
+
+**Measured numbers.** `20260813T123211Z_TH-10-step3-128mhz.log`, exit 0, 26 s,
+`-n 2`, standard tier, one command for the whole file (both frequencies +
+`tests/environment`), 6 passed.
+
+- 128 MHz: ε_c = 78 − j70.2152, m = 9.56422 + 3.67073j, k₀a = 0.134134,
+  **|m|k₀a = 1.37413**, N = 8, last-term bound 7.207e-16.
+- Positive gate: relL2(FEM vs series) **3.299% (17 670 cells) → 1.826%
+  (55 251 cells)** — under 5% and decreasing. Half `TH-1`'s plane-wave 3.61%.
+- Negative control: separation **31.78× → 57.31×** against the 10× bound
+  (relL2(FEM vs quasi-static) 104.658% at the fine rung). The item predicted a
+  ceiling ≈ 30×; the realised 57.31× is simply because the error came in at
+  1.826% rather than at the 5% band.
+- Reference-only: series vs quasi-static **68.703% relL2** = step 1's 154.6%
+  in max-norm. Different norms; the print now says so on the line.
+- 64 MHz through the refactored helper: **8.154% → 3.643%, 18.68×** —
+  digit-for-digit step 2's record (`20260813T093212Z`), so the
+  parametrisation is inert.
+
+**The finding — the item's resolution prediction was wrong.** §9 item 3 priced
+128 MHz's resolution demand as "roughly doubling" vs 64 MHz. It did not. At the
+**same** rung (17 670 cells) the error is *lower* at 128 MHz (3.299%) than at
+64 MHz (3.643%), while the interior wavenumber |m|k₀ rises 1.71×
+(16.06 → 27.48 rad/m — |m| falls from 12.672 to 10.245 because σ/(ωε₀) halves,
+but k₀ doubles). So at these rungs the ~3% error is **not**
+interior-wavelength-limited. The observed pairwise rates agree: **1.985 at
+64 MHz, 1.463 at 128 MHz** — the 64 MHz sequence is the one behaving like clean
+second-order convergence toward a level, the 128 MHz one is flatter and started
+lower. Both are printed as reads, explicitly not gated.
+
+**Consequence worth carrying:** 64 MHz's 3.643% may be a *geometry* floor
+(sphere faceting / exterior discretisation, both frequency-independent) rather
+than a resolution level. That is the same shape as `MAG-13`'s CG1/DG1 floor
+that "scales with h". Not diagnosed here — out of `TH-10`'s scope, and
+diagnosing it would mean either a graded-sizing rung or a curved-geometry
+question, neither of which is one slot's work.
+
+**Scope held.** `TH-10` stays 🟡: the gate is the interior *field* at both
+Larmor frequencies, nothing more. No SAR number (step 4's ∫σ|E|²), no `MAT-4`
+claim, no coil loading, no ABC work — the Dirichlet drive is exact by
+construction. §2.1's extrapolation language is not touched by this commit.
+
+**Where the queue stands.** Items 1, 2, 3 done. Item 4 (`MAG-13` rung 3,
+independent, heavy) is next for the 09:00 slot; item 5 (`TH-10` step 4) had its
+precondition — item 1's fixture — met before this run and is unaffected by the
+refactor, though whoever takes it should note the gate body now lives in
+`_run_gate` and the fine-rung 128 MHz fixture (55 251 cells, ~15 s of solve)
+exists too.
+
+**Hypothesis for the next attempt on this family.** Step 4's power integral is
+the natural next one and is cheap on the 64 MHz fine rung. Before spending a
+slot on the geometry floor above, the one-command discriminator is a third
+64 MHz rung at `(0.00556, 0.0111)` — the mesh is already priced at 55 251 cells
+and ~15 s. If 64 MHz's error stalls near 3% while 128 MHz's kept falling to
+1.8%, the floor is real and frequency-independent; if it falls to ~1.6% the
+rate 1.985 was honest and there is no floor to chase.
+
+**No denials, no known-issues entries.** Nothing unrelated failed.
