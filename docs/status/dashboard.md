@@ -1,113 +1,91 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-13, 03:00 daily review. Source of truth is
+**Updated:** 2026-08-13, 10:30 review (run interactively — the scheduled
+slot died on an API 529; see Automation health). Source of truth is
 `PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
 
 ## Waiting on you
 
 1. **One click: does ParaView open a DG1 `.bp`?** (unchanged since the
    2026-08-12 18:00 review). `POST-4` step 5 measured the DG1/VTX export
-   route **bit-faithful** (round-trip exactly 0.0 against a 1e-14 bound)
-   where the current P1 path is 20–52% off pointwise; cost is 10.5× disk,
-   zero wall clock. Adoption is blocked only on you opening a `.bp` in
-   ParaView (ADIOS2/VTX reader) and confirming it renders — in the complex
-   build each field arrives as two real arrays, `<name>_real` and
+   route bit-faithful (round-trip exactly 0.0) where the current P1 path is
+   20–52% off pointwise; cost is 10.5× disk, zero wall clock. Adoption is
+   blocked only on you opening a `.bp` in ParaView (ADIOS2/VTX reader) and
+   confirming it renders — each field arrives as `<name>_real` /
    `<name>_imag`. `scripts/probes/post4_step5_probe.py` regenerates the
-   files; until you confirm, no example switches its export.
-2. **The first Ansys benchmark is ready to replicate in AED** (unchanged
-   since 2026-08-09). `ANS-1` at
-   `examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/` pins itself to
-   the `MAT-6` gate (ΔR = +0.32770 Ω, **1.5834%** from Dodd–Deeds). Build
-   the case in AED per `SPEC.md`, fill the blank AED columns in
-   `COMPARISON.md`; the weekly review then adjudicates. ΔX is reported,
-   never gated; disable coil eddy effects in AED per `SPEC.md` §Excitation.
-3. **What did the GitHub runner say?** `origin/main` is still at the
-   2026-08-10 18:00 review commit (`b6e994f`); local `main` is **37
-   ahead** once this review's commit lands. Sessions have no network
-   access — anything you can paste (pass/fail, log excerpt) is new
-   information, and a push whenever convenient.
+   files.
+2. **ANS-1 Ansys replication** — the FEM half is complete
+   (`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/`, `SPEC.md`
+   box 1 checked); the AED run is yours. Our ΔX is genuinely unconverged,
+   so the AED number is informative, not a formality.
+3. Housekeeping: local `main` is **~45 commits ahead** of `origin/main`
+   (`b6e994f`, 2026-08-10) — push when convenient; every "in CI" claim is
+   a local reproduction until then.
 
-## Honest current state (digest of §2)
+## Honest current state (digest of §2 — two rows moved this interval)
 
 | Capability | State | Gate |
 |---|---|---|
-| Magnetostatics | ✅ validated | closed forms; energy safe in both builds (MAG-16) |
-| Time-harmonic curl-curl | ✅ validated | lossy plane wave, < 0.06% (TH-1/TH-6) |
-| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 1.58% @ 10 MHz (MAT-6); Larmor case is extrapolation |
-| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4 step 1); never gated on a coil |
-| S-parameters | 🧪 heuristic in the package | first real gated S from a solved Z landed this interval — two-torus fixture, in a test (PORT-1 3b-xviii); the sweep path still calls the heuristic |
+| Magnetostatics | ✅ validated | closed forms; the < 5% wire field reached (MAG-13, 3.74% at 1.5 M cells) |
+| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; **Larmor-regime sphere now gated: 3.64% (64 MHz) / 1.83% (128 MHz) + ½∫σ\|E\|² to 3.63% — TH-10 closed ✅ this review** |
+| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 0.88% on the combined fixture (MAT-6); **coil-at-Larmor is the remaining extrapolation → TH-11 commissioned** |
+| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4) + the Larmor power integral (TH-10); never on a coil |
+| S-parameters | 🟡 test path real, package path heuristic | port-pair gate green at the unmoved 10% (3b-xviii, systematics named); **PORT-1 step 4 (package path) is queue item 1** |
 
-New under the headlines: the port lineage is **on `main` and gated** —
-matched-topology Faraday closure at 11× margin (3b-xvii) and the
-port-pair mutual inside the unmoved 10% band with both systematics
-named (3b-xviii; raw −10.57% is on the record as a miss, corrected
-−6.04%). And the Larmor gap now has a number: the first Larmor-regime
-anchor (`TH-10`, lossy-sphere Mie series) shows the saline sphere's
-full-wave interior field departs from quasi-static by **102% at 64 MHz
-and 155% at 128 MHz** — the quasi-static answer at Larmor is not a
-correction away from truth, it is the wrong answer. Gating the actual
-solver against that anchor is now queue item 1.
+## Recent activity (03:00 → 10:30 interval)
 
-## Recent activity (since the 18:00 review)
+Five slots, five landings; all audited §4-compliant (one subagent auditor
+per landing), no demotions:
 
-**Four slots: four items landed; all four ✅ flips audited compliant.**
-
-- **PORT-1 step 3b-xvii** (19:30, ✅): the lineage branch landed on
-  `main` by path (a merge would have reverted 100+ main-side commits);
-  the consistency gate re-aimed at matched topology reads **−2.7e-03 /
-  −2.6e-03 vs the unmoved 3% bound** (11× margin). Neither tolerance
-  moved.
-- **PORT-1 step 3b-xviii** (21:00, ✅): the port-pair gate — raw
-  0.894283 (−10.57%, a recorded miss) → two named systematics →
-  **0.939581 (−6.04%)** inside the unmoved 10%; blind control −98.26%
-  asserted to fail; first S-matrix from this Z: symmetry 2.5e-05,
-  ‖S‖₂ = 0.86 (passive). Caveat for the weekly review: the two
-  corrections' independent composition is untested.
-- **MAG-13 step 2c** (22:30, ✅): third rung, 408 k cells — three-point
-  CG1 rate **p = 2.003**, but pairwise 2.204/1.803, so the honest claim
-  is "second order ±10%", not a converged 2.00. Gate adoption stays the
-  weekly review's call.
-- **TH-10 step 1** (00:00, ✅): the Larmor anchor exists —
-  `LossySphereSeries`, 6/6 gates including quasi-static tie to TH-8 at
-  rate 1.97 and a conjugated-convention control that misses by 2.1e+04×.
-  Zero-solve; the solver has not yet been gated against it.
-
-Audits: all four flips **compliant** (quantitative gates drive every
-exit code; TH-10's failing first run was re-aimed at TH-8's own gated
-quantity with *more* gates, not looser ones). Housekeeping: the three
-`attempt/PORT-1-*` branches are deleted — content verified on `main`
-first; the two 3b-xv logs lived only on their branch and were copied
-over with their result rows.
+- **TH-10 closed ✅** — the interior field gated against the Mie series at
+  both Larmor frequencies and the SAR-relevant power integral at 64 MHz;
+  the quasi-static route misses by 58%, so the gate measures genuinely
+  full-wave physics. §2.1's long-standing extrapolation caveat narrows to
+  coil-at-Larmor only.
+- **EX-18** — first ports example (`ports:` runner group); the correction
+  ladder now has a single source in `ports/systematics.py`, asserted
+  bit-identical to the gate module.
+- **MAG-13 rung 3** — the < 5% wire target reached by brute force (3.74%,
+  1.52 M cells, 423 s); rung 2's near-wire error-map pattern refuted as
+  mesh-realization noise and the §2 bullet corrected.
+- New chunks from the findings: **TH-11** (coil loading across the
+  eddy→displacement transition), **GEO-14** (the shared ~3% geometry-floor
+  discriminator), **EX-19** (Larmor sphere example, §5.4 ramp), **OPS-16**
+  (retry-on-529 in the launchers, spare).
 
 ## Automation health
 
-- **Slot yield: 4/4 landing, second interval in a row.** Tree clean at
-  review time; no `recovered/*`; attempt-branch list now empty.
-- Queue depth **5** after refresh: TH-10's solve gates (items 1, 3, 5 —
-  the last two serial on item 1, skip rules stated), the first ports
-  example `EX-18` (item 2, §5.4 ramp), MAG-13 brute-force rung (item 4).
-- `PORT-1`'s next move (birdcage ports / B1+) is deliberately held for
-  the weekly review: the correction-ladder composition question comes
-  first.
+- **The 10:30 review slot died on an API 529** (empty log, exit 1; an
+  interactive relaunch attempt hit the same). This review was then run
+  interactively at the operator's direction, ~6.5 h late — the drained
+  queue was restocked before any implementer slot idled, so the outage
+  cost zero slots. `OPS-16` (one guarded retry in the launchers) is queued
+  to absorb this class in future.
+- Grid otherwise clean: nine consecutive landing slots across the last two
+  intervals; tree clean; no `attempt/*` or `recovered/*` branches — the
+  three PORT-1 lineage branches were landed and deleted 2026-08-13.
+- Standing weekly-review items (2026-08-16): the two-systematics
+  composition question (3b-xviii), MAG-13 CG1 gate adoption, MAT-6
+  step 10's ≥ 5.1× solve anomaly (memory-headroom lead), POST-4 export
+  adoption (pending your ParaView check), and the birdcage-ports/B1+
+  hold.
 
-## On deck (§9, refreshed this review)
+## On deck (§9, rebuilt this review; items mutually independent)
 
-1. **TH-10 step 2** (standard) — first Larmor-regime full-wave solve
-   gate: sphere-in-box at 64 MHz vs the Mie series, < 5% interior relL2;
-   quasi-static misses by 102% on the same fixture (the negative
-   control).
-2. **EX-18** (standard) — first ports example: two-torus pair → Z → S,
-   reproducing the 3b-xviii gated digits, XDMF for ParaView.
-3. **TH-10 step 3** (standard, serial on 1) — the same gate at 128 MHz,
-   where quasi-static misses by 155%.
-4. **MAG-13 rung 3** (heavy) — the < 5% wire by brute force; exit 124 is
-   itself the measurement.
-5. **TH-10 step 4** (standard, serial on 1, spare) — ½∫σ|E|² vs the
-   series: the SAR-relevant volume integral.
+1. **PORT-1 step 4** — the package path reads the solved field: retire the
+   `excitation.py` heuristic on the two-torus fixture. The §10 subgoal-2
+   critical path; §2's "every packaged S-parameter is a heuristic"
+   sentence falls only when this lands.
+2. **EX-19** — Larmor lossy-sphere example, both frequencies, gate digits
+   reproduced through the example path.
+3. **GEO-14 step 1** — one-command discriminator: is the ~3% residual a
+   geometry floor or resolution?
+4. **TH-11 step 1** — coil loading at 64 MHz, cost/feasibility probe,
+   measurement only, stop rule 300 s/solve.
+5. *(spare)* **OPS-16** — retry-on-529 in the automation launchers.
 
 ---
 
 *Maintained by `docs/automation/daily-review.md` step 7. The Waiting-on-you
 section above is the alerting channel — check it after each review interval.
-The published artifact copy is refreshed by interactive sessions only and may
-lag this file; `docs/status/dashboard.md` on `main` is always current.*
+The published artifact copy lags until an interactive session republishes it.*
