@@ -56,6 +56,17 @@ REF_ERR = 0.1275
 REF_RATE = 1.10
 N_POINTS = 10
 
+# Rung 2, on record (MAG-13 step 2, log 20260811T200040Z_MAG-13-step2-solve-n8,
+# exit 0, -n 8, 1 097 873 cells): cite, never recompute.  Used for the
+# three-rung rate the §7 step-2-rung-3 entry asks to print beside 1.174/1.10.
+REF2_H = 0.00125
+REF2_ERR = 0.056494
+REF2_RATE = 1.174
+
+# The gate the §7 entry pre-registers for rung 3.  Neither bound moves.
+TARGET_ERR = 0.0500
+AZIMUTHALITY_BOUND = 0.10
+
 
 def main() -> int:
     comm = MPI.COMM_WORLD
@@ -124,6 +135,17 @@ def main() -> int:
 
     # Two-rung observed rate against the recorded h = 0.0025 / 12.75% rung.
     rate = np.log(REF_ERR / rel_error) / np.log(REF_H / RESOLUTION_FINE)
+    # Pairwise rate against the recorded rung 2, and the three-rung least
+    # squares fit over (REF_H, REF2_H, this h) -- the §7 entry asks for the
+    # three-rung number beside the recorded 1.174 and 1.10.
+    rate_pair2 = np.log(REF2_ERR / rel_error) / np.log(REF2_H / RESOLUTION_FINE)
+    hs = np.array([REF_H, REF2_H, RESOLUTION_FINE])
+    errs = np.array([REF_ERR, REF2_ERR, rel_error])
+    rate3 = float(np.polyfit(np.log(hs), np.log(errs), 1)[0])
+
+    # Quantitative gate (§7 step-2-rung-3): the exit code carries the result.
+    passed_err = rel_error < TARGET_ERR
+    passed_azi = b_z_max / b_ref <= AZIMUTHALITY_BOUND
 
     if comm.rank == 0:
         print(
@@ -137,15 +159,27 @@ def main() -> int:
         print(f"[MAG-13 step 2 probe] two-rung observed rate "
               f"{REF_H} -> {RESOLUTION_FINE}: {rate:.3f} "
               f"(record 1.10 over 0.004 -> 0.0018)", flush=True)
+        print(f"[MAG-13 step 2 probe] pairwise rate {REF2_H} -> "
+              f"{RESOLUTION_FINE}: {rate_pair2:.3f}; three-rung fit over "
+              f"{REF_H}/{REF2_H}/{RESOLUTION_FINE}: {rate3:.3f} "
+              f"(record 1.174 two-rung, 1.10 landed)", flush=True)
         print(f"[MAG-13 step 2 probe] B_z max {b_z_max:.3e} vs |B|_ref "
-              f"{b_ref:.3e} (azimuthality check, bound 0.10)", flush=True)
+              f"{b_ref:.3e} (azimuthality check, bound "
+              f"{AZIMUTHALITY_BOUND})", flush=True)
         for r, bn, ba in zip(r_test, b_num_mag, b_ana_mag):
             print(f"    r={r:.4f}  |B|_num={bn:.4e}  |B|_ana={ba:.4e}  "
                   f"rel={abs(bn - ba) / ba:.2%}", flush=True)
         _ = AnalyticalSolutions  # imported for provenance of the reference
         print(f"[MAG-13 step 2 probe] current {CURRENT} A, "
               f"sampling {R_MIN:.4f} -> {R_MAX_BC:.4f} m", flush=True)
-    return 0
+        verdict = "PASS" if passed_err else "FAIL"
+        print(f"[MAG-13 step 2 probe] GATE relative L2 {verdict}: "
+              f"{rel_error:.4%} vs target < {TARGET_ERR:.2%}", flush=True)
+        verdict = "PASS" if passed_azi else "FAIL"
+        print(f"[MAG-13 step 2 probe] GATE azimuthality {verdict}: "
+              f"{b_z_max / b_ref:.3e} vs bound <= "
+              f"{AZIMUTHALITY_BOUND}", flush=True)
+    return 0 if (passed_err and passed_azi) else 1
 
 
 if __name__ == "__main__":

@@ -11444,3 +11444,81 @@ and ~15 s. If 64 MHz's error stalls near 3% while 128 MHz's kept falling to
 rate 1.985 was honest and there is no floor to chase.
 
 **No denials, no known-issues entries.** Nothing unrelated failed.
+
+---
+
+## 2026-08-13T14:10Z — `MAG-13` step 2 rung 3 — **complete**
+
+Scheduled implementer run, 09:00 CDT slot. Preflight clean (`d293f87`,
+no `recovered/*`), container Up 32 h. §9 items 1–3 were struck done by the
+04:30 / 06:00 / 07:30 runs, so this took **item 4**, the first open one:
+the §7 `MAG-13` step-2-rung-3 entry, executed verbatim.
+
+**Outcome: the gate is green on the first run, at the unmoved bound.**
+`20260813T140146Z_MAG-13-step2-rung3-n8.log`, **exit 0**, **423 s**
+harness-wall, `-n 8`, real build, container `timeout -k 30 590`, foreground.
+Mesh + solve **420.3 s**, **1 520 152 cells / 6 080 608 global dofs**.
+Relative L2 vs `straight_wire_magnetic_field`: **3.7372%** against the
+pre-registered **< 5.00%**. Azimuthality **3.057e-02** against the
+pre-registered ≤ 0.10 (`B_z` max 1.019e-06, `|B|_ref` 3.333e-05). Neither
+bound moved; both exit-code-carrying.
+
+**Cost, against the declared estimate.** The entry declared 380–450 s "if
+cost scales with cell count — an assumption, declared". Measured 420.3 s at
+1.385× the rung-2 cell count for 1.53× its 275.3 s solve — so cost scaled
+slightly *worse* than linear, and the estimate still held at its top end,
+with 167 s of margin on the 590 s window. `exit 124` was pre-registered as
+the measurement; it did not fire.
+
+**The finding is that the prediction was conservative.** The rung was chosen
+so the measured two-rung rate 1.174 would price it at *exactly* 5.00%; it
+measured **1.26 pp better**. Rates now on record: 1.10 (landed, h 0.004 →
+0.0018), 1.174 (two-rung to 0.00125), **1.540** two-rung to 0.001127,
+**1.407** three-rung log-log fit over 0.0025 / 0.00125 / 0.001127. The
+pairwise 0.00125 → 0.001127 rate prints **3.989** and I am reading it as
+noise, not superconvergence: the h ratio is 1.109, log(ratio) = 0.104, so a
+0.1 pp wobble in either error swings the exponent ~0.2. The defensible
+statement is the three-rung 1.407 — and that the observed rate is *not* a
+converged constant (1.10 → 1.174 → 1.407 as h falls), the same caveat step 2c
+recorded for its p = 2.003.
+
+**A prior hypothesis died here, which is worth more than the green.** Rung 2
+observed per-radius errors largest at the two smallest sampled radii (9.46% at
+r = 0.0080, 6.33% at 0.0100, vs 0.33% at 0.0200) and offered "residual
+concentrated near the wire" as a motivation for graded refinement — flagged
+at the time as "a hypothesis from ten sample points, not a measurement". At
+rung 3 the total fell to 3.74% while the *far* radii got **worse** (3.47% at
+0.0200, 1.70% at 0.0240, vs rung 2's 0.33% / 1.40%), and the near radii
+improved unevenly (6.03% at 0.0080, 0.41% at 0.0100). Pointwise error at
+fixed r is therefore not monotone in h: the ten-point pattern is
+mesh-realization noise, not a spatial error map. Grading is still the cheaper
+route **on cost alone**; the per-radius argument for it should not be cited
+again.
+
+**Code landed with the run.** `scripts/probes/mag13_step2_probe.py` gains the
+two rung-2 record constants (cited, never recomputed), the pairwise +
+three-rung rate prints the entry asked for, and an explicit exit-code gate on
+the pre-registered < 5.00% / ≤ 0.10 pair — previously the probe returned 0
+unconditionally, which would not have satisfied the 03:00 review's step-3
+audit criterion ("every exit code from quantitative gates"). Gate values are
+computed from allreduced/globally-consistent quantities, so the return code is
+uniform across ranks. Side effect, deliberate: at the default h = 0.00125 the
+probe now exits **1**, which is correct — that rung is a measured miss on the
+record.
+
+**Scope held.** `MAG-13` stays ✅ at its recorded numbers, exactly as the entry
+pre-committed: this annotates the §7 entry and the §2 MAG follow-up bullet, it
+does not reopen the chunk and it does not retire the graded route. No grading
+was improvised (a review's to scope). No other subsystem touched.
+
+**Hypothesis for the next attempt on this family.** The uniform route is now
+*not* exhausted — it crossed 5% with 167 s of window to spare, and at rate
+1.407 the next halving of error wants h ≈ 0.00083 (~3.6 M cells, ~1 000 s at
+`-n 8`), which is outside a scheduled slot at 8 ranks but possibly inside one
+at 12. If a review wants a 4th rung, price it at `-n 12` first with
+`MAG13_STEP2_MESH_ONLY=1`. The more informative question is why the rate keeps
+rising with refinement — a pre-asymptotic signature that, if real, means the
+1.10 landed with `MAG-13` understates the method.
+
+**No denials, no known-issues entries.** Nothing unrelated failed.
+

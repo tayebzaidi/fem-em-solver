@@ -1836,8 +1836,50 @@ carries its own identity checks.)*
 > the wire is the plausible mode) makes graded refinement the sole live
 > route — report both tables, annotate here, stop.
 
-**`MAG-13` step 2 rung 3 — the < 5% wire by brute force** 🔲
-*(scoped 2026-08-11, 18:00 review — the spare, §9 item 5; the other route
+**`MAG-13` step 2 rung 3 — EXECUTED 2026-08-13 (09:00 slot): the < 5% wire
+lands by brute force at 3.7372%, and it beat its own prediction.** ✅ *(the
+rung was priced at exactly 5.00%; it measured 3.74%. `MAG-13` stays ✅ at its
+recorded numbers, exactly as the entry pre-committed — this annotates, it does
+not reopen, and it does not retire the graded route.)*
+> **Measured** (`20260813T140146Z_MAG-13-step2-rung3-n8.log`, **exit 0**,
+> **423 s** harness-wall, `-n 8`, real build, container `timeout -k 30 590`,
+> foreground): mesh + solve **420.3 s**, **1 520 152 cells / 6 080 608 global
+> dofs**, relative L2 error **3.7372%** against
+> `straight_wire_magnetic_field` — **gate green at the unmoved < 5.00%**,
+> exit code carried by the gate. Azimuthality control **3.057e-02** vs the
+> unmoved 0.10 bound (`B_z` max 1.019e-06 vs `|B|_ref` 3.333e-05). Cost
+> landed inside the declared 380–450 s estimate at its top end, with 167 s of
+> margin on the window.
+> **The prediction was conservative and that is the finding.** The rung was
+> chosen so that the measured two-rung rate 1.174 prices it at exactly 5.00%;
+> it came in **1.26 pp better**. Rates: two-rung vs the 0.0025 record
+> **1.540**, three-rung log-log fit over 0.0025 / 0.00125 / 0.001127
+> **1.407**, both above the 1.174 that sized the rung and the 1.10 landed
+> with `MAG-13`. The pairwise 0.00125 → 0.001127 rate prints as **3.989** —
+> read it as noise, not superconvergence: the h ratio is 1.109, so
+> log(ratio) = 0.104 and a 0.1 pp wobble in either error moves the exponent
+> by ~0.2; the three-rung fit is the defensible number. **The observed rate
+> is not a converged constant** (1.10 → 1.174 → 1.407 as h falls), the same
+> caveat step 2c recorded for its p = 2.003.
+> **Weakens the rung-2 "residual concentrated near the wire" hypothesis.**
+> Per-radius errors are again non-monotone in r (6.03% at r = 0.0080, 4.27%
+> at 0.0160, 3.47% at 0.0200, 0.38% at 0.0220), but the far radii got
+> *worse* than rung 2's (0.33% at 0.0200, 1.40% at 0.0240) while the total
+> fell — pointwise per-radius error at fixed r is not monotone in h, so the
+> ten-point pattern is mesh-realization noise rather than a spatial error
+> map. Rung 2's hypothesis was flagged as "a hypothesis from ten sample
+> points, not a measurement"; this rung is the evidence that the ten points
+> do not support it. Graded refinement remains the cheaper route, still a
+> review's to scope; nothing about its motivation is settled here.
+> **Probe change, landed with the run:** `scripts/probes/mag13_step2_probe.py`
+> gains the two recorded rung-2 constants (cited, never recomputed), the
+> pairwise + three-rung rate prints, and an explicit exit-code gate on the
+> pre-registered < 5.00% / ≤ 0.10 pair. Neither bound moved. At the default
+> h = 0.00125 the probe now exits 1 — correct: that rung is a measured miss
+> on the record.
+>
+> *Original plan, retained verbatim:*
+> *(scoped 2026-08-11, 18:00 review — the spare, §9 item 5; the other route
 to the same question as the profile step above. A slot reaching it runs it
 as written even if the profile already landed — a completed rung is a real
 measurement either way.)*
@@ -2070,7 +2112,15 @@ timeout. All anchors, controls, and traps below unchanged.*
   uniform-mesh discretization of a 1/r field next to a thin conductor, so graded
   refinement is still the cheaper route than more uniform h — and the
   measured per-radius errors, largest at the two smallest sampled radii, are
-  consistent with that (§7 entry).
+  consistent with that (§7 entry). **Rung 3 executed 2026-08-13 (09:00 slot):
+  the target is reached by brute force — 3.7372% at h = 0.001127, 1 520 152
+  cells, 420.3 s at `-n 8`, exit 0
+  (`20260813T140146Z_MAG-13-step2-rung3-n8.log`), beating the 5.00% the rate
+  1.174 priced the rung at; three-rung fitted rate 1.407.** The per-radius
+  argument for grading does **not** survive that rung — the far radii got
+  worse while the total fell, so the ten-point pattern is mesh-realization
+  noise, not a spatial error map (§7 entry). Grading stays the cheaper route
+  on cost alone; `MAG-13` stays ✅ at its recorded numbers either way.
   `J·n ≠ 0` at the end caps also still stands; capping the wire short of the end
   faces was never needed and is unmeasured.
 - `MAG-15` is a working option, not a finished subsystem: Dirichlet conditions on
@@ -8531,10 +8581,19 @@ mutually independent.** Item 5 is the declared spare.
    128 red is itself the frequency-scaling finding — report both
    errors and rates side by side, annotate §7 `TH-10`, stop.
 
-4. **`MAG-13` step 2 rung 3 — the < 5% wire by brute force (heavy;
-   independent; same question as step 2b's route decision, other
-   route — step 2b makes this the expensive path to a number CG1
-   recovery already reached).** Execute the §7 step-2-rung-3 entry
+4. ~~**`MAG-13` step 2 rung 3 — the < 5% wire by brute force**~~ — **done
+   2026-08-13 (09:00 run)**, gate green first run at the **unmoved** < 5.00%:
+   relative L2 **3.7372%** at h = 0.001127, **1 520 152 cells / 6 080 608
+   dofs**, azimuthality 3.057e-02 vs 0.10, exit 0, **423 s**, `-n 8`
+   (`20260813T140146Z_MAG-13-step2-rung3-n8.log`); cost landed at the top of
+   the declared 380–450 s estimate with 167 s of window margin. **The rung
+   beat its own pricing by 1.26 pp** — it was sized so rate 1.174 gives
+   exactly 5.00% — and the three-rung fitted rate is **1.407** (pairwise
+   3.989 is noise: h ratio 1.109). Rung 2's "residual concentrated near the
+   wire" hypothesis does **not** survive: far radii worsened while the total
+   fell. `MAG-13` stays ✅ at its recorded numbers, as pre-committed; the
+   graded route is not retired. See the §7 entry. Original text follows.
+   Execute the §7 step-2-rung-3 entry
    verbatim: mesh + one solve of h ≈ 0.001127 (~1.50 M cells at 1.37×
    the 1 097 873 on record), `-n 8`, foreground, tool `timeout`
    660000 ms, container `timeout -k 30 590`. **Anchor:**
