@@ -11751,3 +11751,86 @@ resolution-shaped, the 55 251-cell 64 MHz run `GEO-14` step 1 prices should land
 near 3%, not below 2%.
 
 **No denials.**
+
+## 2026-08-13T21:36Z — `GEO-14` step 1 (§9 item 3) — **complete**
+
+**Slot.** 16:30 local implementer run, §9 On-deck item 3 (items 1 and 2 already
+done by the 13:30 and 15:00 slots). Tree clean at `86be6e6`, container Up 40 h,
+no `attempt/*` or `recovered/*` work needed. Elapsed to the landing: ~35 min of
+the 60, one compute command.
+
+**What landed.** `tests/validation/test_geometry_floor_discriminator.py`, one
+test. It imports the `TH-10` fixture (`_series`, `_solve`, `RESOLUTIONS_128`,
+`INTERIOR_L2_BOUND`) and restates nothing — a second copy of the sphere recipe
+would have made any difference between the two files uninterpretable, which is
+the whole experiment. Two solves at one mesh, `h_sphere = 0.00556`: 64 MHz (the
+measurement) and 128 MHz (the control).
+
+**Measured, exit 0** (`20260813T213156Z_GEO-14-step1-discriminator.log`,
+5 passed 26.51 s, 28 s harness-wall, `-n 2`, complex build, container
+`timeout -k 30 170`, foreground — standard tier, ~1/6 of it used):
+
+- mesh **55 251 cells**, the priced count to drift **0.00e+00**; both
+  frequencies on the identical mesh (asserted equal, not assumed);
+- **negative control, 128 MHz:** relL2 **1.826%** vs the recorded 1.826%
+  (drift **1.83e-05**), separation **57.31×** vs the recorded 57.31×
+  (drift **7.20e-05**), against a pre-stated 1% band — `TH-10` step 3's
+  record reproduces through a third code path;
+- **measurement, 64 MHz:** relL2 **1.781%** at 55 251 cells against 3.643% at
+  17 670 — improvement **2.046×** for a 1.5× step in h, observed rate
+  **1.77 in h**; separation 38.10×.
+
+**Reading: the pre-registered RESOLUTION band, and the commissioning hypothesis
+is refuted.** There is no shared curved-surface faceting floor on this fixture —
+the residual is mesh resolution and it is still falling faster than O(h). So
+`GEO-14` step 2 (surface-graded sizing "moving all three numbers together")
+loses its premise at 64 MHz and is not scoped. Note this is the *opposite* of
+the 15:00 slot's stated hypothesis, which predicted "near 3%, not below 2%" if
+the floor were `MAG-13`-shaped; the prediction was made and it failed, which is
+what pricing it as one command bought.
+
+**The band's trailing clause over-reached, and the log says so.** §7 registered
+"falls < 2.0% ⇒ it was resolution **and the step-3 inference is wrong**". Two
+claims were conflated. At this mesh 64 MHz (1.781%) and 128 MHz (1.826%) sit
+*together*, as they did at the coarser mesh (3.643% / 3.299%) — so `TH-10` step
+3's actual inference, that the residual is not wavelength-limited, is
+**strengthened**. What was wrong is only the further guess that a
+frequency-independent residual must therefore be geometric: it is
+frequency-independent *and* mesh-limited. I left the band name and its
+registered wording untouched in the classifier so the log records what was
+pre-registered, and put the correction in the docstring, the §7 entry, and here.
+
+**Assertions (four, all quantitative, none loosened).** Cell count within 1% of
+the priced 55 251; the two frequencies' cell counts equal; 128 MHz relL2 and
+separation each within the pre-stated 1% reproduction band of the record
+(`EX-19` measured this fixture's reproducibility at 1.7e-04, so 1% is ~60×
+margin); and the 64 MHz residual inside `TH-10`'s own unmoved 5% band —
+refining a passing gate into a failing one would be a defect, not a floor
+measurement.
+
+**Status.** `GEO-14` ⬜ → 🟡 with step 1 ✅; whether it closes on a refuted
+hypothesis or is re-aimed at `MAG-13`'s wire is the reviewing session's call, so
+I did not flip it ✅. `TH-10` and `MAG-13` §7 entries annotated as the entry
+instructs — `TH-10` unchanged in status (its gates are levels, not floor
+attributions, exactly as the entry pre-committed), `MAG-13`'s 3.7372% back to
+**unattributed**: nothing was measured on the wire fixture and the sphere's
+result may not be borrowed in either direction.
+
+**Scope held.** Measurement only. No mesh code touched, no bound moved, no new
+fixture, no step 2. The `MAG-13`-wire leg of the hypothesis is untested and
+labelled as such.
+
+**Unrelated failures.** None new. The doc-reference checker's `EX-18` guide
+breakage is already in known-issues (`EX-19`, this morning) and this chunk
+touches no guide.
+
+**No denials.**
+
+**Hypothesis for the next attempt.** The sphere's residual is mesh-limited with
+rate ~1.8 in h, so the cheap way to move every Larmor number is simply the next
+rung, not graded sizing — and if `MAG-13`'s wire is also resolution-limited
+(its own three-rung fit reads 1.407), then the "~3% floor" framing that
+commissioned `GEO-14` never had a floor in it at all, and the chunk should be
+retired rather than re-aimed. A one-command test of that on the wire would be
+`MAG-13`'s existing probe at one finer rung — but it is a 420 s, 1.5 M-cell
+solve, so pricing it belongs to a review, not to an implementer slot.

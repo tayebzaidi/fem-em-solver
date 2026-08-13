@@ -1847,6 +1847,15 @@ lands by brute force at 3.7372%, and it beat its own prediction.** ✅ *(the
 rung was priced at exactly 5.00%; it measured 3.74%. `MAG-13` stays ✅ at its
 recorded numbers, exactly as the entry pre-committed — this annotates, it does
 not reopen, and it does not retire the graded route.)*
+*(**Annotated 2026-08-13, 16:30 run, by `GEO-14` step 1.** The commissioning
+hypothesis was that this 3.7372% and `TH-10`'s two ~3% residuals are **one**
+shared curved-surface faceting floor. On the sphere leg that is now **refuted**
+— the 64 MHz residual falls 3.643% → 1.781% at 3.13× the cells, rate 1.77 in h
+(`20260813T213156Z_GEO-14-step1-discriminator.log`). Nothing was measured on
+*this* fixture, so the wire's residual is simply **unattributed** again: it may
+not be borrowed from the sphere's, in either direction. What the two do still
+share is the shape of the evidence — both fall with h at a rate above 1 and
+neither has been shown to bottom out.)*
 > **Measured** (`20260813T140146Z_MAG-13-step2-rung3-n8.log`, **exit 0**,
 > **423 s** harness-wall, `-n 8`, real build, container `timeout -k 30 590`,
 > foreground): mesh + solve **420.3 s**, **1 520 152 cells / 6 080 608 global
@@ -2157,7 +2166,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-11` | **Boundary-classification margins under OCC bounding-box padding (CAD-only probe sweep)** | ✅ | smoke |
 | `GEO-12` | **Widen the two `1e-9` wall tolerances and gate the `outer_boundary` group** (known-issues 12) | ✅ | standard |
 | `GEO-13` | **Decouple `cylindrical_domain`'s wall tolerance from `resolution`** (known-issues 13) | ✅ | standard |
-| `GEO-14` | **The shared ~3% geometry floor: faceting vs resolution** (entry lives after `TH-11`, beside the fixtures it measures) | ⬜ | standard |
+| `GEO-14` | **The shared ~3% geometry floor: faceting vs resolution** (entry lives after `TH-11`, beside the fixtures it measures) | 🟡 | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -2627,6 +2636,17 @@ negative-control margin is 1.16× vs the field gates' 1.9–5.7× — floor was
 pre-stated, not moved. No SAR *wording* follows: this gates the volume
 integral, not mass averaging or C95.3, and §2.1's sentence moves only the
 imposed-field clause.)*
+*(**Annotated 2026-08-13, 16:30 run, by `GEO-14` step 1** — as that chunk's
+entry instructs, and it changes nothing about `TH-10`'s status: its gates are
+levels, and this only says where the levels come from. At the priced
+55 251-cell mesh the 64 MHz interior residual is **1.781%**, down from 3.643%
+at 17 670 cells — improvement 2.046× for a 1.5× step in h, an observed rate of
+**1.77 in h**. So the ~3% recorded here is **mesh resolution, still
+converging**, not a faceting floor. Step 3's inference stands and is
+strengthened: at this mesh 64 MHz (1.781%) and 128 MHz (1.826%) sit together,
+as they did at 17 670 cells (3.643% / 3.299%) — the residual is
+frequency-independent *and* mesh-limited. Log
+`20260813T213156Z_GEO-14-step1-discriminator.log`.)*
 *(opened 2026-08-12, 18:00 daily review, per §10 subgoal 3's standing
 instruction — "the daily review should start breaking this down as the port
 lineage clears, and a §7 chunk ID should exist by the next weekly review".
@@ -2836,6 +2856,33 @@ sizing moving all three numbers together) is scoped only after this reads;
 `TH-10`'s ✅ does not reopen under any band — its gates are levels, not
 floor attributions. **Negative result:** report and annotate `TH-10`/
 `MAG-13` §7 entries; nothing parked.
+>
+> **Step 1 ✅ 2026-08-13, 16:30 run** — `tests/validation/test_geometry_floor_discriminator.py`,
+> 5 passed 26.5 s / 28 s wall, `-n 2`,
+> `20260813T213156Z_GEO-14-step1-discriminator.log`. The reading is the
+> pre-registered **RESOLUTION** band and it **refutes the commissioning
+> hypothesis**: 64 MHz interior relL2 falls **3.643% → 1.781%** at the priced
+> 55 251-cell mesh (3.13× the cells, h down 1.5×) — improvement 2.046×, an
+> observed rate of **1.77 in h**, i.e. faster than O(h) and nowhere near a
+> floor. There is no shared faceting floor to grade against on this fixture,
+> so **step 2 (surface-graded sizing) loses its premise at 64 MHz** and is not
+> scoped. Negative control exact: the mesh is the priced 55 251 cells to
+> drift 0.00, and 128 MHz on that same mesh reproduces `TH-10` step 3's record
+> to **1.8e-05** (relL2 1.826%) and **7.2e-05** (separation 57.31×), against a
+> pre-stated 1% band.
+> **Second reading, and the band's trailing clause was wrong:** the band was
+> registered as "falls < 2.0% ⇒ … the step-3 inference is wrong", which
+> conflated two claims. At this mesh 64 MHz (1.781%) and 128 MHz (1.826%) sit
+> **together**, as they did at the coarser mesh (3.643% / 3.299%) — so
+> `TH-10` step 3's actual inference, that the residual is *not*
+> wavelength-limited, is **strengthened**. What was wrong is only the further
+> guess that a frequency-independent residual must therefore be geometric: it
+> is frequency-independent *and* mesh-limited. The band name is recorded
+> exactly as registered rather than re-worded after the fact.
+> **Chunk held 🟡** — step 1's scope is discharged and no step 2 follows from
+> it; whether `GEO-14` closes ✅ on a refuted hypothesis, or is re-aimed at
+> `MAG-13`'s wire (a different fixture, untouched by this measurement), is the
+> reviewing session's call.
 
 **`TH-1` — Real complex time-harmonic formulation** ✅ *(all five steps,
 2026-07-30/31; full step journal archived in `docs/planning/plan-archive.md`)*
@@ -8667,7 +8714,20 @@ self-contained below.
    on record); the doc-reference checker's guide pass will fail the
    commit without the guide. **Scope:** no SAR wording, no mass
    averaging. **Negative result:** report, annotate §7, stop.
-3. **`GEO-14` step 1 — the ~3% floor discriminator (standard).**
+3. ✅ **done 2026-08-13, 16:30 run** — the pre-registered **RESOLUTION**
+   band, and the commissioning hypothesis is **refuted**: 64 MHz interior
+   relL2 **3.643% → 1.781%** at the priced 55 251-cell mesh (improvement
+   2.046× for 1.5× in h, observed rate 1.77 — still converging, no floor).
+   Negative control exact: 55 251 cells to drift 0.00, 128 MHz reproducing
+   the record to 1.8e-05 (1.826%) and 7.2e-05 (57.31×) against a pre-stated
+   1% band. Second reading: the band's trailing clause over-reached — at this
+   mesh 64 and 128 MHz sit *together* (1.781% / 1.826%), so `TH-10` step 3's
+   not-wavelength-limited inference is strengthened, not overturned; the
+   residual is frequency-independent **and** mesh-limited. 5 passed 26.5 s /
+   28 s wall, `20260813T213156Z_GEO-14-step1-discriminator.log`. `GEO-14`
+   held 🟡; step 2 (surface-graded sizing) loses its premise and is not
+   scoped; `TH-10` and `MAG-13` annotated as the entry instructs.
+   **`GEO-14` step 1 — the ~3% floor discriminator (standard).**
    Execute the §7 `GEO-14` entry verbatim: the 64 MHz gate at the
    priced 55 251-cell mesh; bands pre-registered (> 3.0% floor /
    < 2.0% resolution / between mixed); the 128 MHz record digits at the
