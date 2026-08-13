@@ -5097,6 +5097,49 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   matched-topology reference, this test is the single place to change.
 >   **Does not close** `PORT-1` (stays 🟡) or known-issues 3.
 >
+> * **Step 3b-xviii — the deferred 3b-i/3b-ii port-pair gate** ✅ *(2026-08-12,
+>   21:00 run; the lineage's second ✅ gate, and the first time this fixture's
+>   `Im Z₁₂` is asserted against an **independent** reference)*.
+>   `test_gap_voltage_port_pair_mutual_carries_its_systematics` replaces the
+>   printed-only `..._is_reported` and gates the gap-voltage `Im Z₁₂` against
+>   the filamentary closed form `ωM₁₂ = +1.241755 Ω` at `MUTUAL_TOLERANCE`
+>   = 0.10, **unmoved**, carrying decision (3)'s two pre-registered systematics
+>   **by name in the assertion message**. The measured ladder, printed raw
+>   first: **raw 0.894283 (−10.57%) → +PEC box `D∞ = +0.0169` at
+>   `p = 1.657` (effective-range, §7 3b-xi — never quoted without its exponent)
+>   → 0.911183 (−8.88%) → ÷(1 − 0.030224) gap physics (Jin 3e §10.4.2.1) →
+>   0.939581, deviation −6.04%** against the 10% band, a 1.66× margin.
+>   The raw number is on the record *because it does not clear the band*: the
+>   0.57 pp miss is what the two systematics are there to account for, and the
+>   band was not widened by a point. **Negative control, executed rather than
+>   cited:** the gate is a pure function of one number
+>   (`_mutual_systematics_ladder`), so it is run in the same test on step 1's
+>   unfragmented-mesh record `Im Z₁₂ ≡ 0` — corrected ratio 0.017427, −98.26%,
+>   `passes = False`, asserted. **Network tripwires:** reciprocity unmoved and
+>   reproduced (5.8343e-04 vs 1e-2 — the 1e-9 identity belongs to the reaction
+>   route, where the same bilinear form appears in both off-diagonals); and the
+>   step-2 `scattering_from_impedance` machinery on this `Z` for the first time
+>   — **‖S−Sᵀ‖/‖S‖ = 2.5494e-05** (band 1e-2) and **‖S‖₂ = 0.861449** ≤ 1,
+>   passive with a 0.1386 loss margin. Step 2's *unitarity* assertion is
+>   deliberately absent: that fixture was lossless air, this one dissipates
+>   (`Re Z₁₁ = +3.82 Ω`), so `‖S‖₂ = 1` would be the wrong claim. `-n 2`,
+>   **23 passed, exit 0, 457 s**, standard tier;
+>   `20260813T020352Z_PORT-1-step3bxviii-pairgate-n2.log` (collect-only
+>   preflight `20260813T020340Z_PORT-1-step3bxviii-collect.log`, 3 s).
+>   **What this licenses and what it does not.** The two-torus `∫E·dl`
+>   machinery is now gated against a reference that is not derived from this
+>   fixture — the independence 3b-xvii's self-consistency identity could not
+>   supply. It does **not** claim path-independence (the estimator is a
+>   stated-path convention, decision (5)), and the −6.04% residual is
+>   unattributed: finite cross-section (3b-viii measured +0.481% on the
+>   reference side), the remaining truncation beyond the extrapolation, and
+>   discretisation. **For the weekly review:** the corrections are additive in
+>   the units each was measured in (box: pp of ratio; gap: relative vs the
+>   closed control), which assumes they compose independently — untested, and
+>   the 3.1 pp exponent-model spread on the box term is the larger of the two
+>   uncertainties either way. **Does not close** `PORT-1` (stays 🟡) or
+>   known-issues 3; birdcage ports and B1+ stay held.
+>
 > **Closed steps** *(two-loop air fixture `two_torus_domain`, f = 10 MHz,
 > a = 0.04 m, r_wire = 0.005 m, d = 0.04 m; padding 0.08 / h_far 0.03,
 > 119738 cells, unless stated; all gates `-n 2`, complex build, in
@@ -8185,9 +8228,22 @@ outlast items 1–4.
    label is incomplete — report the measured residual, park on the
    lineage branch, hand to the weekly review; never loosen.
 
-2. **`PORT-1` deferred 3b-i/3b-ii port-pair gate — two-torus gap-voltage
-   `Z₁₂` with its systematics stated (standard; depends on item 1
-   landing — if it did not land, skip to item 3).** Author and run the
+2. ~~**`PORT-1` deferred 3b-i/3b-ii port-pair gate**~~ — **done 2026-08-12
+   (21:00 run)**, §7 step 3b-xviii. The gate is authored and green at
+   `MUTUAL_TOLERANCE` = 0.10 **unmoved**: raw 0.894283 (−10.57%, which the
+   band does **not** accept) → +PEC box `D∞ = +0.0169` at `p = 1.657` →
+   0.911183 (−8.88%) → ÷(1 − 0.030224) gap physics → **0.939581, −6.04%**,
+   both systematics named in the assertion message. The negative control is
+   executed, not cited — the same pure ladder function on step 1's
+   unfragmented-mesh `Im Z₁₂ ≡ 0` gives −98.26% and is asserted to fail.
+   Reciprocity reproduced at 5.8343e-04 (1e-2, unmoved) and the step-2
+   Z→S machinery ran on this `Z` for the first time: ‖S−Sᵀ‖/‖S‖ = 2.5494e-05,
+   ‖S‖₂ = 0.861449 ≤ 1 (passive; unitarity deliberately not claimed on a
+   lossy fixture). `-n 2`, 23 passed, exit 0, 457 s;
+   `20260813T020352Z_PORT-1-step3bxviii-pairgate-n2.log`. **For the review:**
+   the two corrections are applied in the units each was measured in and
+   assumed to compose independently — untested, and flagged in §7.
+   *Original item text follows.* Author and run the
    pair gate adjudication decision (3) pre-registered: on the landed
    gapped two-torus fixture (padding 0.08, 178 055 cells), gate
    `Im Z₁₂` from the gap-voltage route against the filamentary closed

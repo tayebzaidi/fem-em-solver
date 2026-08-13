@@ -1,0 +1,1685 @@
+# Test Run
+- Chunk: PORT-1-step3bxviii-pairgate-n2
+- Commit: a755afb66a066c8c6950ba23444aea5cf5688b38
+- Time (UTC): 2026-08-13 02:03:52
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 590 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_gap_voltage_impedance.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 12 21:03 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 590 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_gap_voltage_impedance.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 23 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 23 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build 
+[TH-1 step 0] PETSC_ARCH='linux-gnu-complex128-32' ScalarType=complex128 dolfinx=/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/__init__.py version=0.7.2
+PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSEDPASSED
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED[TH-1 step 0] inner=(11.00000000000001+1.9999999999999993j) dot=(-5.000000000000001+10.000000000000002j)
+PASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly [TH-1 step 0] ||M||_F=1.041233e+00 ||M_c - eps_c*M||_F=4.449e-16
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_respects_the_skin_depth_constraint 
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_respects_the_skin_depth_constraint PASSED[PORT-1 step 3b-vi] delta = 5.626977e-03 m vs r_wire = 5.000000e-03 m; sigma = 8.000000e+02 <= sigma_max = 1.013212e+03 S/m
+PASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_box_meshes_exactly_at_the_reduced_overhang 
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_box_meshes_exactly_at_the_reduced_overhang [two-torus-mesh] gapped fragment volumes=9 wire_1=1.864041e-05(1p) wire_2=1.864041e-05(1p) domain=1.308470e-02(1p) gap_1=1.509378e-06(3p) gap_2=1.509378e-06(3p) gap_box_analytic=1.509378e-06
+[two-torus-mesh] port interfaces (CAD) 201: 4 surface(s) area=1.689195e-04 202: 4 surface(s) area=1.689195e-04
+[two-torus-mesh] gap-arc refinement h_gap=3.000e-04 tube=1.200e-03 dist_max=1.002e-01 arc_half_y=5.977525e-03 cells_across_arc=40.0
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : [ 10%] Meshing curve 2 (Line)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 10%] Meshing curve 4 (Line)
+Info    : [ 10%] Meshing curve 5 (Line)
+Info    : [ 10%] Meshing curve 6 (Line)
+Info    : [ 10%] Meshing curve 7 (Line)
+Info    : [ 10%] Meshing curve 8 (Line)
+Info    : [ 10%] Meshing curve 9 (Line)
+Info    : [ 20%] Meshing curve 10 (Line)
+Info    : [ 20%] Meshing curve 11 (Line)
+Info    : [ 20%] Meshing curve 12 (Line)
+Info    : [ 20%] Meshing curve 13 (BSpline)
+Info    : [ 20%] Meshing curve 14 (BSpline)
+Info    : [ 20%] Meshing curve 15 (Circle)
+Info    : [ 20%] Meshing curve 16 (BSpline)
+Info    : [ 20%] Meshing curve 17 (BSpline)
+Info    : [ 30%] Meshing curve 18 (Circle)
+Info    : [ 30%] Meshing curve 19 (BSpline)
+Info    : [ 30%] Meshing curve 20 (BSpline)
+Info    : [ 30%] Meshing curve 21 (Circle)
+Info    : [ 30%] Meshing curve 22 (BSpline)
+Info    : [ 30%] Meshing curve 23 (BSpline)
+Info    : [ 30%] Meshing curve 24 (Line)
+Info    : [ 30%] Meshing curve 25 (Line)
+Info    : [ 40%] Meshing curve 26 (Line)
+Info    : [ 40%] Meshing curve 27 (Line)
+Info    : [ 40%] Meshing curve 28 (Line)
+Info    : [ 40%] Meshing curve 29 (Line)
+Info    : [ 40%] Meshing curve 30 (Line)
+Info    : [ 40%] Meshing curve 31 (Line)
+Info    : [ 40%] Meshing curve 32 (Line)
+Info    : [ 40%] Meshing curve 33 (Line)
+Info    : [ 50%] Meshing curve 34 (Line)
+Info    : [ 50%] Meshing curve 35 (Line)
+Info    : [ 50%] Meshing curve 36 (Line)
+Info    : [ 50%] Meshing curve 37 (Line)
+Info    : [ 50%] Meshing curve 38 (Line)
+Info    : [ 50%] Meshing curve 39 (Line)
+Info    : [ 50%] Meshing curve 40 (BSpline)
+Info    : [ 50%] Meshing curve 41 (BSpline)
+Info    : [ 50%] Meshing curve 42 (Circle)
+Info    : [ 60%] Meshing curve 43 (BSpline)
+Info    : [ 60%] Meshing curve 44 (BSpline)
+Info    : [ 60%] Meshing curve 45 (Circle)
+Info    : [ 60%] Meshing curve 46 (BSpline)
+Info    : [ 60%] Meshing curve 47 (BSpline)
+Info    : [ 60%] Meshing curve 48 (Circle)
+Info    : [ 60%] Meshing curve 49 (BSpline)
+Info    : [ 60%] Meshing curve 50 (BSpline)
+Info    : [ 70%] Meshing curve 51 (Line)
+Info    : [ 70%] Meshing curve 52 (Line)
+Info    : [ 70%] Meshing curve 53 (Line)
+Info    : [ 70%] Meshing curve 54 (Line)
+Info    : [ 70%] Meshing curve 55 (Line)
+Info    : [ 70%] Meshing curve 56 (Line)
+Info    : [ 70%] Meshing curve 57 (Line)
+Info    : [ 70%] Meshing curve 58 (Line)
+Info    : [ 80%] Meshing curve 59 (Line)
+Info    : [ 80%] Meshing curve 60 (Line)
+Info    : [ 80%] Meshing curve 61 (Line)
+Info    : [ 80%] Meshing curve 62 (Line)
+Info    : [ 80%] Meshing curve 63 (Line)
+Info    : [ 80%] Meshing curve 64 (Line)
+Info    : [ 80%] Meshing curve 65 (Line)
+Info    : [ 80%] Meshing curve 66 (Line)
+Info    : [ 90%] Meshing curve 67 (Circle)
+Info    : [ 90%] Meshing curve 68 (Circle)
+Info    : [ 90%] Meshing curve 69 (Circle)
+Info    : [ 90%] Meshing curve 70 (Line)
+Info    : [ 90%] Meshing curve 71 (Circle)
+Info    : [ 90%] Meshing curve 72 (Circle)
+Info    : [ 90%] Meshing curve 73 (Circle)
+Info    : [ 90%] Meshing curve 74 (Line)
+Info    : [100%] Meshing curve 75 (Circle)
+Info    : [100%] Meshing curve 76 (Circle)
+Info    : [100%] Meshing curve 77 (Circle)
+Info    : [100%] Meshing curve 78 (Line)
+Info    : [100%] Meshing curve 79 (Circle)
+Info    : [100%] Meshing curve 80 (Circle)
+Info    : [100%] Meshing curve 81 (Circle)
+Info    : [100%] Meshing curve 82 (Line)
+Info    : Done meshing 1D (Wall 0.32091s, CPU 0.318694s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 7 (Torus, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 13 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 14 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 15 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 16 (Torus, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 17 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 18 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 19 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 20 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 21 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 22 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 23 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 24 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 25 (Torus, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 26 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 27 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 28 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 29 (Torus, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 30 (Torus, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 31 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 32 (Torus, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 33 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 34 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 35 (Torus, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 36 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 37 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 38 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 39 (Torus, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 40 (Torus, Frontal-Delaunay)
+Info    : [100%] Meshing surface 41 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 42 (Torus, Frontal-Delaunay)
+Info    : [100%] Meshing surface 43 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 44 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.411873s, CPU 0.390727s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 9 volumes with 1 connected component
+Info    : Tetrahedrizing 5981 nodes...
+Info    : Done tetrahedrizing 5989 nodes (Wall 0.117969s, CPU 0.101428s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.264081s, CPU 0.223525s)
+Info    : Found volume 1
+Info    : Found volume 3
+Info    : Found volume 7
+Info    : Found volume 4
+Info    : Found volume 8
+Info    : Found volume 5
+Info    : Found volume 2
+Info    : Found volume 9
+Info    : Found volume 6
+Info    : It. 0 - 0 nodes created - worst tet radius 20.3531 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 5.12726 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 2.93325 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 2.52915 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 2.30135 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 2.14868 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 2.02287 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 1.92883 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 1.85186 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 1.78054 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 1.7183 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 1.66922 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 1.62261 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 1.58005 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 1.54125 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 1.50748 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 1.47446 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 1.44471 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 1.41944 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 1.47003 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 1.37332 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 1.34925 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 1.32866 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 1.30914 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 1.29071 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 1.27377 (nodes removed 0 0)
+Info    : It. 13000 - 12999 nodes created - worst tet radius 1.25803 (nodes removed 1 0)
+Info    : It. 13500 - 13499 nodes created - worst tet radius 1.28788 (nodes removed 1 0)
+Info    : It. 14000 - 13998 nodes created - worst tet radius 1.22783 (nodes removed 2 0)
+Info    : It. 14500 - 14498 nodes created - worst tet radius 1.21319 (nodes removed 2 0)
+Info    : It. 15000 - 14998 nodes created - worst tet radius 1.20054 (nodes removed 2 0)
+Info    : It. 15500 - 15498 nodes created - worst tet radius 1.18839 (nodes removed 2 0)
+Info    : It. 16000 - 15998 nodes created - worst tet radius 1.17713 (nodes removed 2 0)
+Info    : It. 16500 - 16494 nodes created - worst tet radius 1.16528 (nodes removed 2 4)
+Info    : It. 17000 - 16990 nodes created - worst tet radius 1.15346 (nodes removed 3 7)
+Info    : It. 17500 - 17489 nodes created - worst tet radius 1.14149 (nodes removed 3 8)
+Info    : It. 18000 - 17989 nodes created - worst tet radius 1.13066 (nodes removed 3 8)
+Info    : It. 18500 - 18489 nodes created - worst tet radius 1.12029 (nodes removed 3 8)
+Info    : It. 19000 - 18989 nodes created - worst tet radius 1.11089 (nodes removed 3 8)
+Info    : It. 19500 - 19489 nodes created - worst tet radius 1.1003 (nodes removed 3 8)
+Info    : It. 20000 - 19989 nodes created - worst tet radius 1.09193 (nodes removed 3 8)
+Info    : It. 20500 - 20489 nodes created - worst tet radius 1.08356 (nodes removed 3 8)
+Info    : It. 21000 - 20989 nodes created - worst tet radius 1.07525 (nodes removed 3 8)
+Info    : It. 21500 - 21489 nodes created - worst tet radius 1.067 (nodes removed 3 8)
+Info    : It. 22000 - 21989 nodes created - worst tet radius 1.05932 (nodes removed 3 8)
+Info    : It. 22500 - 22489 nodes created - worst tet radius 1.0514 (nodes removed 3 8)
+Info    : It. 23000 - 22989 nodes created - worst tet radius 1.04417 (nodes removed 3 8)
+Info    : It. 23500 - 23489 nodes created - worst tet radius 1.03687 (nodes removed 3 8)
+Info    : It. 24000 - 23989 nodes created - worst tet radius 1.02924 (nodes removed 3 8)
+Info    : It. 24500 - 24488 nodes created - worst tet radius 1.02195 (nodes removed 4 8)
+Info    : It. 25000 - 24988 nodes created - worst tet radius 1.0154 (nodes removed 4 8)
+Info    : It. 25500 - 25488 nodes created - worst tet radius 1.0093 (nodes removed 4 8)
+Info    : It. 26000 - 25984 nodes created - worst tet radius 1.00294 (nodes removed 4 12)
+Info    : 3D refinement terminated (32221 nodes total):
+Info    :  - 0 Delaunay cavities modified for star shapeness
+Info    :  - 16 nodes could not be inserted
+Info    :  - 201379 tetrahedra created in 3.11812 sec. (64583 tets/s)
+Info    : Done meshing 3D (Wall 3.997s, CPU 3.9011s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 0.0130858) with worst = 0.00560528 / average = 0.769548:
+Info    : 0.00 < quality < 0.10 :       278 elements
+Info    : 0.10 < quality < 0.20 :       779 elements
+Info    : 0.20 < quality < 0.30 :      1500 elements
+Info    : 0.30 < quality < 0.40 :      2454 elements
+Info    : 0.40 < quality < 0.50 :      3939 elements
+Info    : 0.50 < quality < 0.60 :      6865 elements
+Info    : 0.60 < quality < 0.70 :     14498 elements
+Info    : 0.70 < quality < 0.80 :     30634 elements
+Info    : 0.80 < quality < 0.90 :     44116 elements
+Info    : 0.90 < quality < 1.00 :     22386 elements
+Info    : 2515 edge swaps, 59 node relocations (volume = 0.0130858): worst = 0.116519 / average = 0.781767 (Wall 0.0920044s, CPU 0.091212s)
+Info    : 2530 edge swaps, 60 node relocations (volume = 0.0130858): worst = 0.116519 / average = 0.781845 (Wall 0.113486s, CPU 0.112694s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :        15 elements
+Info    : 0.20 < quality < 0.30 :        14 elements
+Info    : 0.30 < quality < 0.40 :      2392 elements
+Info    : 0.40 < quality < 0.50 :      3791 elements
+Info    : 0.50 < quality < 0.60 :      6624 elements
+Info    : 0.60 < quality < 0.70 :     14486 elements
+Info    : 0.70 < quality < 0.80 :     31176 elements
+Info    : 0.80 < quality < 0.90 :     44463 elements
+Info    : 0.90 < quality < 1.00 :     22198 elements
+Info    : Optimizing volume 2
+Info    : Optimization starts (volume = 7.75486e-08) with worst = 0.0386899 / average = 0.75614:
+Info    : 0.00 < quality < 0.10 :         6 elements
+Info    : 0.10 < quality < 0.20 :        14 elements
+Info    : 0.20 < quality < 0.30 :        15 elements
+Info    : 0.30 < quality < 0.40 :        41 elements
+Info    : 0.40 < quality < 0.50 :        53 elements
+Info    : 0.50 < quality < 0.60 :       113 elements
+Info    : 0.60 < quality < 0.70 :       304 elements
+Info    : 0.70 < quality < 0.80 :       551 elements
+Info    : 0.80 < quality < 0.90 :       628 elements
+Info    : 0.90 < quality < 1.00 :       277 elements
+Info    : 35 edge swaps, 0 node relocations (volume = 7.75486e-08): worst = 0.180771 / average = 0.766498 (Wall 0.00141249s, CPU 0.001353s)
+Info    : 37 edge swaps, 0 node relocations (volume = 7.75486e-08): worst = 0.30161 / average = 0.76663 (Wall 0.00165989s, CPU 0.001577s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        41 elements
+Info    : 0.40 < quality < 0.50 :        50 elements
+Info    : 0.50 < quality < 0.60 :       111 elements
+Info    : 0.60 < quality < 0.70 :       315 elements
+Info    : 0.70 < quality < 0.80 :       548 elements
+Info    : 0.80 < quality < 0.90 :       628 elements
+Info    : 0.90 < quality < 1.00 :       277 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 1.35428e-06) with worst = 0.0316791 / average = 0.772535:
+Info    : 0.00 < quality < 0.10 :        38 elements
+Info    : 0.10 < quality < 0.20 :       146 elements
+Info    : 0.20 < quality < 0.30 :       276 elements
+Info    : 0.30 < quality < 0.40 :       442 elements
+Info    : 0.40 < quality < 0.50 :       755 elements
+Info    : 0.50 < quality < 0.60 :      1225 elements
+Info    : 0.60 < quality < 0.70 :      2550 elements
+Info    : 0.70 < quality < 0.80 :      5391 elements
+Info    : 0.80 < quality < 0.90 :      8039 elements
+Info    : 0.90 < quality < 1.00 :      4357 elements
+Info    : 440 edge swaps, 10 node relocations (volume = 1.35428e-06): worst = 0.129808 / average = 0.783774 (Wall 0.0126022s, CPU 0.012507s)
+Info    : 441 edge swaps, 10 node relocations (volume = 1.35428e-06): worst = 0.147443 / average = 0.783799 (Wall 0.0155913s, CPU 0.015497s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :        11 elements
+Info    : 0.20 < quality < 0.30 :         9 elements
+Info    : 0.30 < quality < 0.40 :       439 elements
+Info    : 0.40 < quality < 0.50 :       735 elements
+Info    : 0.50 < quality < 0.60 :      1197 elements
+Info    : 0.60 < quality < 0.70 :      2571 elements
+Info    : 0.70 < quality < 0.80 :      5454 elements
+Info    : 0.80 < quality < 0.90 :      8092 elements
+Info    : 0.90 < quality < 1.00 :      4327 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 1.80814e-05) with worst = 0.00878028 / average = 0.76068:
+Info    : 0.00 < quality < 0.10 :        31 elements
+Info    : 0.10 < quality < 0.20 :        77 elements
+Info    : 0.20 < quality < 0.30 :       119 elements
+Info    : 0.30 < quality < 0.40 :       175 elements
+Info    : 0.40 < quality < 0.50 :       291 elements
+Info    : 0.50 < quality < 0.60 :       581 elements
+Info    : 0.60 < quality < 0.70 :      1240 elements
+Info    : 0.70 < quality < 0.80 :      2624 elements
+Info    : 0.80 < quality < 0.90 :      3022 elements
+Info    : 0.90 < quality < 1.00 :      1623 elements
+Info    : 226 edge swaps, 5 node relocations (volume = 1.80814e-05): worst = 0.245607 / average = 0.775635 (Wall 0.00532286s, CPU 0.005322s)
+Info    : 229 edge swaps, 5 node relocations (volume = 1.80814e-05): worst = 0.300207 / average = 0.775716 (Wall 0.00648326s, CPU 0.006336s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       174 elements
+Info    : 0.40 < quality < 0.50 :       281 elements
+Info    : 0.50 < quality < 0.60 :       552 elements
+Info    : 0.60 < quality < 0.70 :      1223 elements
+Info    : 0.70 < quality < 0.80 :      2668 elements
+Info    : 0.80 < quality < 0.90 :      3039 elements
+Info    : 0.90 < quality < 1.00 :      1634 elements
+Info    : Optimizing volume 5
+Info    : Optimization starts (volume = 7.75484e-08) with worst = 0.0386899 / average = 0.756558:
+Info    : 0.00 < quality < 0.10 :         6 elements
+Info    : 0.10 < quality < 0.20 :        13 elements
+Info    : 0.20 < quality < 0.30 :        15 elements
+Info    : 0.30 < quality < 0.40 :        41 elements
+Info    : 0.40 < quality < 0.50 :        53 elements
+Info    : 0.50 < quality < 0.60 :       113 elements
+Info    : 0.60 < quality < 0.70 :       304 elements
+Info    : 0.70 < quality < 0.80 :       550 elements
+Info    : 0.80 < quality < 0.90 :       629 elements
+Info    : 0.90 < quality < 1.00 :       277 elements
+Info    : 34 edge swaps, 0 node relocations (volume = 7.75484e-08): worst = 0.259579 / average = 0.766947 (Wall 0.000740095s, CPU 0.000651s)
+Info    : 35 edge swaps, 0 node relocations (volume = 7.75484e-08): worst = 0.30161 / average = 0.766771 (Wall 0.000963094s, CPU 0.000845s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        41 elements
+Info    : 0.40 < quality < 0.50 :        51 elements
+Info    : 0.50 < quality < 0.60 :       110 elements
+Info    : 0.60 < quality < 0.70 :       314 elements
+Info    : 0.70 < quality < 0.80 :       548 elements
+Info    : 0.80 < quality < 0.90 :       629 elements
+Info    : 0.90 < quality < 1.00 :       277 elements
+Info    : Optimizing volume 6
+Info    : Optimization starts (volume = 7.75486e-08) with worst = 0.0386899 / average = 0.75614:
+Info    : 0.00 < quality < 0.10 :         6 elements
+Info    : 0.10 < quality < 0.20 :        14 elements
+Info    : 0.20 < quality < 0.30 :        15 elements
+Info    : 0.30 < quality < 0.40 :        41 elements
+Info    : 0.40 < quality < 0.50 :        53 elements
+Info    : 0.50 < quality < 0.60 :       113 elements
+Info    : 0.60 < quality < 0.70 :       304 elements
+Info    : 0.70 < quality < 0.80 :       551 elements
+Info    : 0.80 < quality < 0.90 :       628 elements
+Info    : 0.90 < quality < 1.00 :       277 elements
+Info    : 35 edge swaps, 0 node relocations (volume = 7.75486e-08): worst = 0.180771 / average = 0.766557 (Wall 0.000781095s, CPU 0.000781s)
+Info    : 36 edge swaps, 0 node relocations (volume = 7.75486e-08): worst = 0.30161 / average = 0.766864 (Wall 0.000994094s, CPU 0.000996s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        41 elements
+Info    : 0.40 < quality < 0.50 :        51 elements
+Info    : 0.50 < quality < 0.60 :       113 elements
+Info    : 0.60 < quality < 0.70 :       308 elements
+Info    : 0.70 < quality < 0.80 :       549 elements
+Info    : 0.80 < quality < 0.90 :       631 elements
+Info    : 0.90 < quality < 1.00 :       277 elements
+Info    : Optimizing volume 7
+Info    : Optimization starts (volume = 1.35428e-06) with worst = 0.00434285 / average = 0.772653:
+Info    : 0.00 < quality < 0.10 :        42 elements
+Info    : 0.10 < quality < 0.20 :       152 elements
+Info    : 0.20 < quality < 0.30 :       260 elements
+Info    : 0.30 < quality < 0.40 :       476 elements
+Info    : 0.40 < quality < 0.50 :       714 elements
+Info    : 0.50 < quality < 0.60 :      1206 elements
+Info    : 0.60 < quality < 0.70 :      2582 elements
+Info    : 0.70 < quality < 0.80 :      5448 elements
+Info    : 0.80 < quality < 0.90 :      7967 elements
+Info    : 0.90 < quality < 1.00 :      4388 elements
+Info    : 435 edge swaps, 4 node relocations (volume = 1.35428e-06): worst = 0.168292 / average = 0.783814 (Wall 0.0132771s, CPU 0.013277s)
+Info    : 438 edge swaps, 5 node relocations (volume = 1.35428e-06): worst = 0.168292 / average = 0.783896 (Wall 0.0164704s, CPU 0.016471s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :        10 elements
+Info    : 0.20 < quality < 0.30 :        11 elements
+Info    : 0.30 < quality < 0.40 :       470 elements
+Info    : 0.40 < quality < 0.50 :       695 elements
+Info    : 0.50 < quality < 0.60 :      1186 elements
+Info    : 0.60 < quality < 0.70 :      2575 elements
+Info    : 0.70 < quality < 0.80 :      5534 elements
+Info    : 0.80 < quality < 0.90 :      8017 elements
+Info    : 0.90 < quality < 1.00 :      4356 elements
+Info    : Optimizing volume 8
+Info    : Optimization starts (volume = 1.80677e-05) with worst = 0.0134676 / average = 0.764173:
+Info    : 0.00 < quality < 0.10 :        22 elements
+Info    : 0.10 < quality < 0.20 :        62 elements
+Info    : 0.20 < quality < 0.30 :       102 elements
+Info    : 0.30 < quality < 0.40 :       211 elements
+Info    : 0.40 < quality < 0.50 :       277 elements
+Info    : 0.50 < quality < 0.60 :       534 elements
+Info    : 0.60 < quality < 0.70 :      1238 elements
+Info    : 0.70 < quality < 0.80 :      2501 elements
+Info    : 0.80 < quality < 0.90 :      3106 elements
+Info    : 0.90 < quality < 1.00 :      1634 elements
+Info    : 185 edge swaps, 6 node relocations (volume = 1.80677e-05): worst = 0.272372 / average = 0.775892 (Wall 0.00480647s, CPU 0.004796s)
+Info    : 188 edge swaps, 6 node relocations (volume = 1.80677e-05): worst = 0.300578 / average = 0.776041 (Wall 0.00590646s, CPU 0.005906s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       214 elements
+Info    : 0.40 < quality < 0.50 :       265 elements
+Info    : 0.50 < quality < 0.60 :       517 elements
+Info    : 0.60 < quality < 0.70 :      1241 elements
+Info    : 0.70 < quality < 0.80 :      2520 elements
+Info    : 0.80 < quality < 0.90 :      3126 elements
+Info    : 0.90 < quality < 1.00 :      1637 elements
+Info    : Optimizing volume 9
+Info    : Optimization starts (volume = 7.75484e-08) with worst = 0.0386899 / average = 0.756558:
+Info    : 0.00 < quality < 0.10 :         6 elements
+Info    : 0.10 < quality < 0.20 :        13 elements
+Info    : 0.20 < quality < 0.30 :        15 elements
+Info    : 0.30 < quality < 0.40 :        41 elements
+Info    : 0.40 < quality < 0.50 :        53 elements
+Info    : 0.50 < quality < 0.60 :       113 elements
+Info    : 0.60 < quality < 0.70 :       304 elements
+Info    : 0.70 < quality < 0.80 :       550 elements
+Info    : 0.80 < quality < 0.90 :       629 elements
+Info    : 0.90 < quality < 1.00 :       277 elements
+Info    : 34 edge swaps, 0 node relocations (volume = 7.75484e-08): worst = 0.180771 / average = 0.766617 (Wall 0.000791895s, CPU 0.000792s)
+Info    : 35 edge swaps, 0 node relocations (volume = 7.75484e-08): worst = 0.30161 / average = 0.766924 (Wall 0.00100209s, CPU 0.001003s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        39 elements
+Info    : 0.40 < quality < 0.50 :        51 elements
+Info    : 0.50 < quality < 0.60 :       113 elements
+Info    : 0.60 < quality < 0.70 :       314 elements
+Info    : 0.70 < quality < 0.80 :       544 elements
+Info    : 0.80 < quality < 0.90 :       632 elements
+Info    : 0.90 < quality < 1.00 :       277 elements
+Info    : Done optimizing mesh (Wall 0.550578s, CPU 0.513197s)
+Info    : 32221 nodes 210700 elements
+Info    : Optimizing mesh (Netgen)...
+Info    : Optimizing volume 1
+Info    : CalcLocalH: 22070 Points 125165 Elements 8686 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 570 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 91.5281 
+Info    : 110 splits performed 
+Info    : SwapImprove  
+Info    : 94 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 289 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 123.01 
+Info    : 65 splits performed 
+Info    : SwapImprove  
+Info    : 24 swaps performed 
+Info    : SwapImprove2  
+Info    : 7 swaps performed 
+Info    : 133 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 2570.55 
+Info    : 35 splits performed 
+Info    : SwapImprove  
+Info    : 17 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 35 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 910.286 
+Info    : 11 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 910.286 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 1338 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 164118 
+Info    : Total badness = 155647 
+Info    : SplitImprove 
+Info    : badmax = 64.1484 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 155651 
+Info    : Total badness = 154606 
+Info    : SwapImprove  
+Info    : 6893 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 142444 
+Info    : Total badness = 138885 
+Info    : CombineImprove 
+Info    : 247 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 136739 
+Info    : Total badness = 136225 
+Info    : SplitImprove 
+Info    : badmax = 38.6439 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 136231 
+Info    : Total badness = 136136 
+Info    : SwapImprove  
+Info    : 815 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 135508 
+Info    : Total badness = 134934 
+Info    : CombineImprove 
+Info    : 74 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 134318 
+Info    : Total badness = 134205 
+Info    : SplitImprove 
+Info    : badmax = 31.6066 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 134205 
+Info    : Total badness = 134180 
+Info    : SwapImprove  
+Info    : 224 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 134079 
+Info    : Total badness = 133920 
+Info    : Optimizing volume 2
+Info    : CalcLocalH: 552 Points 1970 Elements 866 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 102 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 18 splits performed 
+Info    : SwapImprove  
+Info    : 7 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 82 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 19 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 32 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.1085 
+Info    : 6 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 16 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.1085 
+Info    : 3 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 7 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.1085 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 20 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 3198.11 
+Info    : Total badness = 3117.97 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 3117.97 
+Info    : Total badness = 3113.51 
+Info    : SwapImprove  
+Info    : 96 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2974.08 
+Info    : Total badness = 2946.49 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2936.1 
+Info    : Total badness = 2934.31 
+Info    : SplitImprove 
+Info    : badmax = 15.8434 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2934.31 
+Info    : Total badness = 2934.21 
+Info    : SwapImprove  
+Info    : 18 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2925.38 
+Info    : Total badness = 2916.34 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2906.71 
+Info    : Total badness = 2905.84 
+Info    : SplitImprove 
+Info    : badmax = 15.8924 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2905.84 
+Info    : Total badness = 2905.78 
+Info    : SwapImprove  
+Info    : 7 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2904.25 
+Info    : Total badness = 2899.87 
+Info    : Optimizing volume 3
+Info    : CalcLocalH: 4094 Points 22835 Elements 1594 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 324 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 54.5989 
+Info    : 59 splits performed 
+Info    : SwapImprove  
+Info    : 22 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 192 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 35.4409 
+Info    : 37 splits performed 
+Info    : SwapImprove  
+Info    : 6 swaps performed 
+Info    : SwapImprove2  
+Info    : 3 swaps performed 
+Info    : 109 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 21 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 4 swaps performed 
+Info    : 55 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 964.978 
+Info    : 13 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 20 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 964.978 
+Info    : 5 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 7 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 964.978 
+Info    : 3 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 306 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 30844.8 
+Info    : Total badness = 29191.4 
+Info    : SplitImprove 
+Info    : badmax = 57.0434 
+Info    : 2 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 29204.3 
+Info    : Total badness = 29015.6 
+Info    : SwapImprove  
+Info    : 1179 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 26892.8 
+Info    : Total badness = 26226.1 
+Info    : CombineImprove 
+Info    : 55 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 25759.7 
+Info    : Total badness = 25664 
+Info    : SplitImprove 
+Info    : badmax = 51.586 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 25664 
+Info    : Total badness = 25647.3 
+Info    : SwapImprove  
+Info    : 145 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 25524.5 
+Info    : Total badness = 25416.7 
+Info    : CombineImprove 
+Info    : 12 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 25318.6 
+Info    : Total badness = 25299 
+Info    : SplitImprove 
+Info    : badmax = 51.5883 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 25299 
+Info    : Total badness = 25293.9 
+Info    : SwapImprove  
+Info    : 41 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 25275.3 
+Info    : Total badness = 25244.2 
+Info    : Optimizing volume 4
+Info    : CalcLocalH: 2642 Points 9571 Elements 3818 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 161 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.6126 
+Info    : 27 splits performed 
+Info    : SwapImprove  
+Info    : 29 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 92 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 77.4001 
+Info    : 22 splits performed 
+Info    : SwapImprove  
+Info    : 9 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 31 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 305.538 
+Info    : 9 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 10 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 305.538 
+Info    : 3 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 305.538 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 27 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14345.1 
+Info    : Total badness = 13723.6 
+Info    : SplitImprove 
+Info    : badmax = 86.2743 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 13732.8 
+Info    : Total badness = 13663 
+Info    : SwapImprove  
+Info    : 532 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12762.7 
+Info    : Total badness = 12515.5 
+Info    : CombineImprove 
+Info    : 3 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 12485.6 
+Info    : Total badness = 12464.9 
+Info    : SplitImprove 
+Info    : badmax = 34.7514 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12464.9 
+Info    : Total badness = 12463 
+Info    : SwapImprove  
+Info    : 90 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12377.5 
+Info    : Total badness = 12335.9 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 12335.9 
+Info    : Total badness = 12333.7 
+Info    : SplitImprove 
+Info    : badmax = 34.0756 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12333.7 
+Info    : Total badness = 12333.5 
+Info    : SwapImprove  
+Info    : 30 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12325.2 
+Info    : Total badness = 12310.7 
+Info    : Optimizing volume 5
+Info    : CalcLocalH: 552 Points 1970 Elements 866 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 103 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 18 splits performed 
+Info    : SwapImprove  
+Info    : 5 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 82 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 18 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 34 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.1085 
+Info    : 7 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 17 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.1085 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 8 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 2313.85 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 19 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 3237.54 
+Info    : Total badness = 3141.24 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 3141.24 
+Info    : Total badness = 3134.75 
+Info    : SwapImprove  
+Info    : 96 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2982.82 
+Info    : Total badness = 2947.51 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2938.54 
+Info    : Total badness = 2936.42 
+Info    : SplitImprove 
+Info    : badmax = 14.3501 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2936.42 
+Info    : Total badness = 2936.31 
+Info    : SwapImprove  
+Info    : 17 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2926.04 
+Info    : Total badness = 2917.43 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2910.03 
+Info    : Total badness = 2909.03 
+Info    : SplitImprove 
+Info    : badmax = 15.8945 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2909.03 
+Info    : Total badness = 2908.98 
+Info    : SwapImprove  
+Info    : 8 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2905.65 
+Info    : Total badness = 2901.61 
+Info    : Optimizing volume 6
+Info    : CalcLocalH: 552 Points 1970 Elements 866 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 102 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 19 splits performed 
+Info    : SwapImprove  
+Info    : 7 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 81 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 19 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 30 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.1085 
+Info    : 5 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 16 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.1085 
+Info    : 3 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 7 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.1085 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 6 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.1085 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.1085 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 21 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 3195.72 
+Info    : Total badness = 3118.78 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 3118.78 
+Info    : Total badness = 3114.41 
+Info    : SwapImprove  
+Info    : 100 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2973.33 
+Info    : Total badness = 2944.36 
+Info    : CombineImprove 
+Info    : 2 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2921.75 
+Info    : Total badness = 2919.12 
+Info    : SplitImprove 
+Info    : badmax = 15.8308 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2919.12 
+Info    : Total badness = 2919 
+Info    : SwapImprove  
+Info    : 15 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2911.22 
+Info    : Total badness = 2903.66 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2903.66 
+Info    : Total badness = 2903.33 
+Info    : SplitImprove 
+Info    : badmax = 15.8925 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2903.33 
+Info    : Total badness = 2903.3 
+Info    : SwapImprove  
+Info    : 8 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2901.7 
+Info    : Total badness = 2896.25 
+Info    : Optimizing volume 7
+Info    : CalcLocalH: 4094 Points 22855 Elements 1594 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 325 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 21.2166 
+Info    : 59 splits performed 
+Info    : SwapImprove  
+Info    : 21 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 196 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 35.4409 
+Info    : 37 splits performed 
+Info    : SwapImprove  
+Info    : 5 swaps performed 
+Info    : SwapImprove2  
+Info    : 4 swaps performed 
+Info    : 112 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 22 splits performed 
+Info    : SwapImprove  
+Info    : 5 swaps performed 
+Info    : SwapImprove2  
+Info    : 3 swaps performed 
+Info    : 52 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 10 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 26 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 7 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 2 swaps performed 
+Info    : 7 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 3 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 300 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 30830.9 
+Info    : Total badness = 29244 
+Info    : SplitImprove 
+Info    : badmax = 51.7187 
+Info    : 2 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 29251.5 
+Info    : Total badness = 29062.7 
+Info    : SwapImprove  
+Info    : 1185 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 26967 
+Info    : Total badness = 26316.2 
+Info    : CombineImprove 
+Info    : 73 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 25695.4 
+Info    : Total badness = 25581.5 
+Info    : SplitImprove 
+Info    : badmax = 51.5855 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 25581.5 
+Info    : Total badness = 25563.6 
+Info    : SwapImprove  
+Info    : 152 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 25428.9 
+Info    : Total badness = 25315.5 
+Info    : CombineImprove 
+Info    : 10 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 25227.5 
+Info    : Total badness = 25210.6 
+Info    : SplitImprove 
+Info    : badmax = 51.5889 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 25210.6 
+Info    : Total badness = 25206.2 
+Info    : SwapImprove  
+Info    : 32 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 25181.5 
+Info    : Total badness = 25158.9 
+Info    : Optimizing volume 8
+Info    : CalcLocalH: 2628 Points 9520 Elements 3800 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 162 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.6128 
+Info    : 26 splits performed 
+Info    : SwapImprove  
+Info    : 29 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 103 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 82.8577 
+Info    : 27 splits performed 
+Info    : SwapImprove  
+Info    : 9 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 41 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 339.302 
+Info    : 11 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 13 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 339.302 
+Info    : 4 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 339.302 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 42 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14202.5 
+Info    : Total badness = 13590 
+Info    : SplitImprove 
+Info    : badmax = 74.0494 
+Info    : 2 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 13608.3 
+Info    : Total badness = 13536.7 
+Info    : SwapImprove  
+Info    : 494 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12629.4 
+Info    : Total badness = 12402.3 
+Info    : CombineImprove 
+Info    : 7 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 12315.5 
+Info    : Total badness = 12295.9 
+Info    : SplitImprove 
+Info    : badmax = 33.73 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12295.9 
+Info    : Total badness = 12293.8 
+Info    : SwapImprove  
+Info    : 91 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12221.8 
+Info    : Total badness = 12171 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 12171 
+Info    : Total badness = 12169 
+Info    : SplitImprove 
+Info    : badmax = 33.662 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12169 
+Info    : Total badness = 12168.9 
+Info    : SwapImprove  
+Info    : 21 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12155.6 
+Info    : Total badness = 12143.8 
+Info    : Optimizing volume 9
+Info    : CalcLocalH: 552 Points 1970 Elements 866 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 103 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 19 splits performed 
+Info    : SwapImprove  
+Info    : 6 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 79 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 19 splits performed 
+Info    : SwapImprove  
+Info    : 5 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 25 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 29.1085 
+Info    : 6 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 4 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 871.593 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 16 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 3277.07 
+Info    : Total badness = 3143.65 
+Info    : SplitImprove 
+Info    : badmax = 20.0348 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 3143.65 
+Info    : Total badness = 3137.71 
+Info    : SwapImprove  
+Info    : 92 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2992.74 
+Info    : Total badness = 2955.32 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2955.32 
+Info    : Total badness = 2953.73 
+Info    : SplitImprove 
+Info    : badmax = 15.8312 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2953.73 
+Info    : Total badness = 2953.58 
+Info    : SwapImprove  
+Info    : 14 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2947.9 
+Info    : Total badness = 2940.33 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2940.33 
+Info    : Total badness = 2940.04 
+Info    : SplitImprove 
+Info    : badmax = 15.8902 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2940.04 
+Info    : Total badness = 2940.01 
+Info    : SwapImprove  
+Info    : 8 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2939.02 
+Info    : Total badness = 2933.38 
+Info    : Done optimizing mesh (Wall 15.839s, CPU 15.7756s)
+[PORT-1 step 3b-vi] terminal angles from facet tags (201, 202): port 1 y>0 +0.175335123, y<0 -0.175335123 rad; port 2 y>0 +0.175335123, y<0 -0.175335123 rad (expected +-0.175335123 = arcsin(half_y/a), nominal wedge +-0.150000000, tolerance 1.0e-06)
+[PORT-1 step 3b-vi] known-issues 11 diagnostic (printed, not gated): area-weighted mean over the same tags gives port 1 y>0 +0.173852206, y<0 -0.173852207 rad; port 2 y>0 +0.173852206, y<0 -0.173852207 rad — the deficit is the lateral strips the tag picks up at gap_overhang = 2.0e-04 < 6e-4
+[PORT-1 step 3b-vi] port 1 arc nodes (order 33): located 33/33, gap-tagged 33, wire-tagged 0, air-tagged 0
+[PORT-1 step 3b-vi] port 1 arc nodes (order 4097): located 4097/4097, gap-tagged 4097, wire-tagged 0, air-tagged 0
+[PORT-1 step 3b-vi] port 2 arc nodes (order 33): located 33/33, gap-tagged 33, wire-tagged 0, air-tagged 0
+[PORT-1 step 3b-vi] port 2 arc nodes (order 4097): located 4097/4097, gap-tagged 4097, wire-tagged 0, air-tagged 0
+[PORT-1 step 3b-vi] closure segments: gap wedge +-0.150000 rad, gap box reaches +-0.175335 rad (buried 2.533512e-02 rad = 1.013405e-03 m per side), wire arc 5.932515 rad = 2.373006e-01 m
+[PORT-1 step 3b-vi] port 1 buried_neg nodes (order 129): located 129/129, gap-tagged 129, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 1 buried_neg nodes (order 257): located 257/257, gap-tagged 257, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 1 buried_pos nodes (order 129): located 129/129, gap-tagged 129, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 1 buried_pos nodes (order 257): located 257/257, gap-tagged 257, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 1 gap nodes (order 129): located 129/129, gap-tagged 129, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 1 gap nodes (order 257): located 257/257, gap-tagged 257, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 1 wire nodes (order 513): located 513/513, gap-tagged 0, wire-tagged 513, air-tagged 0 (expected wire)
+[PORT-1 step 3b-vi] port 1 wire nodes (order 1025): located 1025/1025, gap-tagged 0, wire-tagged 1025, air-tagged 0 (expected wire)
+[PORT-1 step 3b-vi] port 2 buried_neg nodes (order 129): located 129/129, gap-tagged 129, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 2 buried_neg nodes (order 257): located 257/257, gap-tagged 257, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 2 buried_pos nodes (order 129): located 129/129, gap-tagged 129, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 2 buried_pos nodes (order 257): located 257/257, gap-tagged 257, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 2 gap nodes (order 129): located 129/129, gap-tagged 129, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 2 gap nodes (order 257): located 257/257, gap-tagged 257, wire-tagged 0, air-tagged 0 (expected gap)
+[PORT-1 step 3b-vi] port 2 wire nodes (order 513): located 513/513, gap-tagged 0, wire-tagged 513, air-tagged 0 (expected wire)
+[PORT-1 step 3b-vi] port 2 wire nodes (order 1025): located 1025/1025, gap-tagged 0, wire-tagged 1025, air-tagged 0 (expected wire)
+[PORT-1 step 3b-vi] port 1 driven: V_path port 1 order    33 = +3.746362886e+00+8.560685167e+00j V
+[PORT-1 step 3b-vi] port 1 driven: V_path port 1 order    65 = +3.746541581e+00+8.628328924e+00j V, |dV|/|V| vs previous order 7.1911e-03
+[PORT-1 step 3b-vi] port 1 driven: V_path port 1 order   129 = +3.746738318e+00+6.669459108e+00j V, |dV|/|V| vs previous order 2.5607e-01
+[PORT-1 step 3b-vi] port 1 driven: V_path port 1 order   257 = +3.746004359e+00+5.561821960e+00j V, |dV|/|V| vs previous order 1.6518e-01
+[PORT-1 step 3b-vi] port 1 driven: V_path port 1 order   513 = +3.746393596e+00+6.832641463e+00j V, |dV|/|V| vs previous order 1.6309e-01
+[PORT-1 step 3b-vi] port 1 driven: V_path port 1 order  1025 = +3.746515224e+00+7.275654603e+00j V, |dV|/|V| vs previous order 5.4134e-02
+[PORT-1 step 3b-vi] port 1 driven: V_path port 1 order  2049 = +3.746466305e+00+7.024618384e+00j V, |dV|/|V| vs previous order 3.1532e-02
+[PORT-1 step 3b-vi] port 1 driven: V_path port 1 order  4097 = +3.746503025e+00+7.208374414e+00j V, |dV|/|V| vs previous order 2.2619e-02
+[PORT-1 step 3b-vi] port 1 driven: V_path port 2 order    33 = +1.351789989e-02+1.090826988e+00j V
+[PORT-1 step 3b-vi] port 1 driven: V_path port 2 order    65 = +1.359600601e-02+1.074124351e+00j V, |dV|/|V| vs previous order 1.5549e-02
+[PORT-1 step 3b-vi] port 1 driven: V_path port 2 order   129 = +1.358654785e-02+1.077340697e+00j V, |dV|/|V| vs previous order 2.9852e-03
+[PORT-1 step 3b-vi] port 1 driven: V_path port 2 order   257 = +1.359189818e-02+1.076067327e+00j V, |dV|/|V| vs previous order 1.1833e-03
+[PORT-1 step 3b-vi] port 1 driven: V_path port 2 order   513 = +1.355886366e-02+1.082875272e+00j V, |dV|/|V| vs previous order 6.2865e-03
+[PORT-1 step 3b-vi] port 1 driven: V_path port 2 order  1025 = +1.356943504e-02+1.080595899e+00j V, |dV|/|V| vs previous order 2.1092e-03
+[PORT-1 step 3b-vi] port 1 driven: V_path port 2 order  2049 = +1.357198158e-02+1.080005269e+00j V, |dV|/|V| vs previous order 5.4684e-04
+[PORT-1 step 3b-vi] port 1 driven: V_path port 2 order  4097 = +1.357414232e-02+1.079583009e+00j V, |dV|/|V| vs previous order 3.9111e-04
+[PORT-1 step 3b-vi] port 1 driven: disc pair 201 <E.yhat> gap side = -3.276913e+02-3.396688e+05j, wire side = +1.272310e+01-1.600699e-02j V/m (jump ratio 3.7457e-05); per disc y>0 -3.286055e+02-3.373022e+05j, y<0 -3.267771e+02-3.420353e+05j V/m (ratio +0.986162-0.000019j); V_facet = +4.572949e+00+4.740095e+03j V
+[PORT-1 step 3b-vi] port 1 driven: disc pair 202 <E.yhat> gap side = +8.333679e-01-4.466736e+02j, wire side = +8.367979e-04-5.982562e-03j V/m (jump ratio 1.3524e-05); per disc y>0 +8.494486e-01-4.714912e+02j, y<0 +8.172872e-01-4.218559e+02j V/m (ratio +1.117659-0.000152j); V_facet = -1.162969e-02+6.233352e+00j V
+[PORT-1 step 3b-vi] port 1 driven (tag 101): I_driven = +9.719303e-01-4.673474e-03j A, I_undriven = +6.398658e-04-1.207659e-03j A (ratio 1.4062e-03); V1_facet = +4.572949e+00+4.740095e+03j V, V2_facet = -1.162969e-02+6.233352e+00j V
+[PORT-1 step 3b-vi] port 1 diagnostic: mutual from path V = 0.894543 x omega*M, from facet V = 5.164602 x omega*M, from full-box V = 0.349567 x omega*M, from tube-shadow V = 0.856617 x omega*M (V_path = +1.357414e-02+1.079583e+00j, V_facet = -1.162969e-02+6.233352e+00j, V_box = +1.626807e-02+4.218236e-01j, V_shadow = +1.375138e-02+1.033808e+00j V); driven-gap V_path = +3.746503e+00+7.208374e+00j V
+[PORT-1 step 3b-vi] port 1 driven: port 1 V_buried_neg (gap) = +2.995014132e-01+9.933225774e+01j V at order 257, +2.995111233e-01+9.933673036e+01j V at 129 (|dV|/|V| = 4.5027e-05)
+[PORT-1 step 3b-vi] port 1 driven: port 1 V_gap (gap) = +3.146748527e+00-1.916604947e+02j V at order 257, +3.146121617e+00-1.938542256e+02j V at 129 (|dV|/|V| = 1.1444e-02)
+[PORT-1 step 3b-vi] port 1 driven: port 1 V_buried_pos (gap) = +2.997408063e-01+9.848793014e+01j V at order 257, +2.997617774e-01+9.853770392e+01j V at 129 (|dV|/|V| = 5.0538e-04)
+[PORT-1 step 3b-vi] port 1 driven: port 1 V_wire (wire) = -3.574672372e+00+6.767499138e-01j V at order 1025, -3.576703519e+00+6.763852738e-01j V at 513 (|dV|/|V| = 5.6721e-04)
+[PORT-1 step 3b-vi] port 1 driven: port 1 closure V_gap = 158.787893, V_buried = 163.906435, V_wire = 0.546480, sum = 5.665022 x omega*M (sum = +1.713183747e-01+6.836443079e+00j V, I_driven = +9.719303e-01-4.673474e-03j A)
+[PORT-1 step 3b-vi] port 1 driven: port 2 V_buried_neg (gap) = +2.052752288e-04+2.232122605e-01j V at order 257, +2.058387929e-04+2.231519157e-01j V at 129 (|dV|/|V| = 2.7036e-04)
+[PORT-1 step 3b-vi] port 1 driven: port 2 V_gap (gap) = +1.318682643e-02+5.957396454e-01j V at order 257, +1.317802788e-02+5.979434034e-01j V at 129 (|dV|/|V| = 3.6983e-03)
+[PORT-1 step 3b-vi] port 1 driven: port 2 V_buried_pos (gap) = +1.891239016e-04+2.595231440e-01j V at order 257, +1.887330839e-04+2.596211632e-01j V at 129 (|dV|/|V| = 3.7769e-04)
+[PORT-1 step 3b-vi] port 1 driven: port 2 V_wire (wire) = -2.495576803e-03+2.900957930e-03j V at order 1025, -2.521622717e-03+2.828615771e-03j V at 513 (|dV|/|V| = 2.0093e-02)
+[PORT-1 step 3b-vi] port 1 driven: port 2 closure V_gap = 0.493653, V_buried = 0.399972, V_wire = 0.002394, sum = 0.896019 x omega*M (sum = +1.108564876e-02+1.081376008e+00j V, I_driven = +9.719303e-01-4.673474e-03j A)
+[PORT-1 step 3b-vi] port 1 driven: terminal-to-terminal Im Z_gap = +1.110803269e+00 Ohm (0.894543 x omega*M), reaction-route Im Z = +4.537587930e-03 Ohm (0.003654 x omega*M), ratio 244.800384 (Re Z_reaction = -2.432211e-03 Ohm)
+[PORT-1 step 3b-vi] port 2 driven: V_path port 1 order    33 = +1.353150329e-02+1.083490170e+00j V
+[PORT-1 step 3b-vi] port 2 driven: V_path port 1 order    65 = +1.352977487e-02+1.082933187e+00j V, |dV|/|V| vs previous order 5.1429e-04
+[PORT-1 step 3b-vi] port 2 driven: V_path port 1 order   129 = +1.354315786e-02+1.080987580e+00j V, |dV|/|V| vs previous order 1.7997e-03
+[PORT-1 step 3b-vi] port 2 driven: V_path port 1 order   257 = +1.354891374e-02+1.079052486e+00j V, |dV|/|V| vs previous order 1.7932e-03
+[PORT-1 step 3b-vi] port 2 driven: V_path port 1 order   513 = +1.354516086e-02+1.079616224e+00j V, |dV|/|V| vs previous order 5.2214e-04
+[PORT-1 step 3b-vi] port 2 driven: V_path port 1 order  1025 = +1.354305948e-02+1.080160650e+00j V, |dV|/|V| vs previous order 5.0399e-04
+[PORT-1 step 3b-vi] port 2 driven: V_path port 1 order  2049 = +1.354453870e-02+1.079853061e+00j V, |dV|/|V| vs previous order 2.8482e-04
+[PORT-1 step 3b-vi] port 2 driven: V_path port 1 order  4097 = +1.354389482e-02+1.080004748e+00j V, |dV|/|V| vs previous order 1.4044e-04
+[PORT-1 step 3b-vi] port 2 driven: V_path port 2 order    33 = +3.750727822e+00+1.221107048e+01j V
+[PORT-1 step 3b-vi] port 2 driven: V_path port 2 order    65 = +3.749786566e+00+5.676296880e+00j V, |dV|/|V| vs previous order 9.6057e-01
+[PORT-1 step 3b-vi] port 2 driven: V_path port 2 order   129 = +3.750137903e+00+7.433537321e+00j V, |dV|/|V| vs previous order 2.1106e-01
+[PORT-1 step 3b-vi] port 2 driven: V_path port 2 order   257 = +3.749692868e+00+6.371769514e+00j V, |dV|/|V| vs previous order 1.4361e-01
+[PORT-1 step 3b-vi] port 2 driven: V_path port 2 order   513 = +3.750524235e+00+8.546368257e+00j V, |dV|/|V| vs previous order 2.3300e-01
+[PORT-1 step 3b-vi] port 2 driven: V_path port 2 order  1025 = +3.750134442e+00+7.544206517e+00j V, |dV|/|V| vs previous order 1.1895e-01
+[PORT-1 step 3b-vi] port 2 driven: V_path port 2 order  2049 = +3.749986567e+00+7.250317154e+00j V, |dV|/|V| vs previous order 3.6004e-02
+[PORT-1 step 3b-vi] port 2 driven: V_path port 2 order  4097 = +3.749912675e+00+6.972749546e+00j V, |dV|/|V| vs previous order 3.5059e-02
+[PORT-1 step 3b-vi] port 2 driven: disc pair 201 <E.yhat> gap side = +8.453995e-01-4.474566e+02j, wire side = +1.282739e-03-5.099784e-03j V/m (jump ratio 1.1752e-05); per disc y>0 +8.575376e-01-4.456617e+02j, y<0 +8.332613e-01-4.492514e+02j V/m (ratio +0.992010+0.000069j); V_facet = -1.179759e-02+6.244279e+00j V
+[PORT-1 step 3b-vi] port 2 driven: disc pair 202 <E.yhat> gap side = -3.273376e+02-3.337789e+05j, wire side = +1.263301e+01-2.371102e-02j V/m (jump ratio 3.7848e-05); per disc y>0 -3.283154e+02-3.360988e+05j, y<0 -3.263598e+02-3.314591e+05j V/m (ratio +1.013998+0.000008j); V_facet = +4.568013e+00+4.657902e+03j V
+[PORT-1 step 3b-vi] port 2 driven (tag 102): I_driven = +9.728767e-01-4.660620e-03j A, I_undriven = +6.307861e-04-1.207834e-03j A (ratio 1.4006e-03); V1_facet = -1.179759e-02+6.244279e+00j V, V2_facet = +4.568013e+00+4.657902e+03j V
+[PORT-1 step 3b-vi] port 2 diagnostic: mutual from path V = 0.894022 x omega*M, from facet V = 5.168622 x omega*M, from full-box V = 0.349227 x omega*M, from tube-shadow V = 0.838592 x omega*M (V_path = +1.354389e-02+1.080005e+00j, V_facet = -1.179759e-02+6.244279e+00j, V_box = +1.626807e-02+4.218236e-01j, V_shadow = +1.382161e-02+1.013038e+00j V); driven-gap V_path = +3.749913e+00+6.972750e+00j V
+[PORT-1 step 3b-vi] port 2 driven: port 1 V_buried_neg (gap) = +1.879767149e-04+2.451083126e-01j V at order 257, +1.876266474e-04+2.452155971e-01j V at 129 (|dV|/|V| = 4.3770e-04)
+[PORT-1 step 3b-vi] port 2 driven: port 1 V_gap (gap) = +1.317647281e-02+5.940133126e-01j V at order 257, +1.319581997e-02+5.901335499e-01j V at 129 (|dV|/|V| = 6.5299e-03)
+[PORT-1 step 3b-vi] port 2 driven: port 1 V_buried_pos (gap) = +1.761525778e-04+2.408352965e-01j V at order 257, +1.758619167e-04+2.409309703e-01j V at 129 (|dV|/|V| = 3.9726e-04)
+[PORT-1 step 3b-vi] port 2 driven: port 1 V_wire (wire) = -2.447943566e-03+2.810037113e-03j V at order 1025, -2.434515907e-03+2.845013441e-03j V at 513 (|dV|/|V| = 1.0053e-02)
+[PORT-1 step 3b-vi] port 2 driven: port 1 closure V_gap = 0.491744, V_buried = 0.402239, V_wire = 0.002316, sum = 0.896299 x omega*M (sum = +1.109265854e-02+1.082766959e+00j V, I_driven = +9.728767e-01-4.660620e-03j A)
+[PORT-1 step 3b-vi] port 2 driven: port 2 V_buried_neg (gap) = +2.997772305e-01+9.730538363e+01j V at order 257, +2.998006099e-01+9.733582370e+01j V at 129 (|dV|/|V| = 3.1283e-04)
+[PORT-1 step 3b-vi] port 2 driven: port 2 V_gap (gap) = +3.150094809e+00-1.895539582e+02j V at order 257, +3.150586157e+00-1.882059158e+02j V at 129 (|dV|/|V| = 7.1107e-03)
+[PORT-1 step 3b-vi] port 2 driven: port 2 V_buried_pos (gap) = +2.999606054e-01+9.928888611e+01j V at order 257, +2.999698143e-01+9.930889555e+01j V at 129 (|dV|/|V| = 2.0153e-04)
+[PORT-1 step 3b-vi] port 2 driven: port 2 V_wire (wire) = -3.579450893e+00+6.763835574e-01j V at order 1025, -3.579838105e+00+6.759001889e-01j V at 513 (|dV|/|V| = 1.7002e-04)
+[PORT-1 step 3b-vi] port 2 driven: port 2 closure V_gap = 156.889804, V_buried = 162.732254, V_wire = 0.545679, sum = 6.388129 x omega*M (sum = +1.703817522e-01+7.716695052e+00j V, I_driven = +9.728767e-01-4.660620e-03j A)
+[PORT-1 step 3b-vi] port 2 driven: terminal-to-terminal Im Z_gap = +1.110155911e+00 Ohm (0.894022 x omega*M), reaction-route Im Z = +4.537466163e-03 Ohm (0.003654 x omega*M), ratio 244.664284 (Re Z_reaction = -2.397408e-03 Ohm)
+
+[PORT-1 step 3b-vi] step 3b-x-b control (sigma = 0 everywhere, impressed azimuthal drive over the wire+gap footprint of loop 1, project_source on): solve 25.2 s; footprint volumes 1.959076e-05, 1.957711e-05 m^3 (torus pi*r^2*2*pi*a = 1.973921e-05); I_prescribed = +9.924797e-01 A, I' (projected) = +9.907870e-01 A (ratio 0.998295), projection imag_ratio = 0.000e+00
+[PORT-1 step 3b-vi] step 3b-x-b reference: Im Z21 = +1.145422659e+00 Ohm (0.922423 x omega*M), Re Z21 = +0.000000e+00 Ohm; test over the wire tag alone = +1.140392362e+00 Ohm (0.918372 x omega*M — the same field over 94.4% of the loop, printed as the measure of how much of the EMF the gap span carries)
+
+[PORT-1 step 3b-vi] step 3b-xiii control ladder sigma = 2.000e+02 S/m (closed wire+gap footprints, impressed drive, delta/r_wire = 2.251): solve 26.5 s, I' (projected impressed) = +9.907870e-01 A, I_conduction = -1.722659e-01-3.698228e-01j A (|I_cond/I'| = 4.1177e-01), projection imag_ratio = 0.000e+00
+[PORT-1 step 3b-vi] step 3b-xiii control(sigma = 2.000e+02): Im Z21 = +6.166728307e-01 Ohm (0.496614 x omega*M), Re Z21 = +7.029882e-01 Ohm; wire tag alone 0.508091 x omega*M
+
+[PORT-1 step 3b-vi] step 3b-xiii control ladder sigma = 8.000e+02 S/m (closed wire+gap footprints, impressed drive, delta/r_wire = 1.125): solve 25.9 s, I' (projected impressed) = +9.907870e-01 A, I_conduction = -7.505512e-01-4.145415e-01j A (|I_cond/I'| = 8.6539e-01), projection imag_ratio = 0.000e+00
+[PORT-1 step 3b-vi] step 3b-xiii control(sigma = 8.000e+02): Im Z21 = -1.335582389e-01 Ohm (0.107556 x omega*M), Re Z21 = +2.266345e-01 Ohm; wire tag alone 0.110015 x omega*M
+
+[PORT-1 step 3b-vi] sigma x2: sigma = 1.600e+03 S/m, delta/r_wire = 0.796, solve 23.0 s, I_driven = +9.693629e-01-7.791741e-03j A, |I_undriven/I_driven| = 2.1413e-03
+[PORT-1 step 3b-vi] sigma x2: port 1 V_buried_neg (gap) = +1.587798213e-01+9.932987475e+01j V at order 257, +1.587846965e-01+9.933434740e+01j V at 129 (|dV|/|V| = 4.5028e-05)
+[PORT-1 step 3b-vi] sigma x2: port 1 V_gap (gap) = +1.666038471e+00-1.916851440e+02j V at order 257, +1.665703277e+00-1.938788702e+02j V at 129 (|dV|/|V| = 1.1444e-02)
+[PORT-1 step 3b-vi] sigma x2: port 1 V_buried_pos (gap) = +1.589112545e-01+9.848554189e+01j V at order 257, +1.589224650e-01+9.853531543e+01j V at 129 (|dV|/|V| = 5.0539e-04)
+[PORT-1 step 3b-vi] sigma x2: port 1 V_wire (wire) = -1.660801050e+00+6.455474198e-01j V at order 1025, -1.662130215e+00+6.453950226e-01j V at 513 (|dV|/|V| = 7.5083e-04)
+[PORT-1 step 3b-vi] sigma x2: port 1 closure V_gap = 159.223760, V_buried = 164.329488, V_wire = 0.525174, sum = 5.630902 x omega*M (sum = +3.229284974e-01+6.775820063e+00j V, I_driven = +9.693629e-01-7.791741e-03j A)
+[PORT-1 step 3b-vi] sigma x2: port 2 V_buried_neg (gap) = +1.028692021e-03+2.227421797e-01j V at order 257, +1.029049861e-03+2.226818006e-01j V at 129 (|dV|/|V| = 2.7107e-04)
+[PORT-1 step 3b-vi] sigma x2: port 2 V_gap (gap) = +1.663507739e-02+5.907301714e-01j V at order 257, +1.663157519e-02+5.929333869e-01j V at 129 (|dV|/|V| = 3.7282e-03)
+[PORT-1 step 3b-vi] sigma x2: port 2 V_buried_pos (gap) = +1.018604536e-03+2.590540090e-01j V at order 257, +1.018466898e-03+2.591519996e-01j V at 129 (|dV|/|V| = 3.7826e-04)
+[PORT-1 step 3b-vi] sigma x2: port 2 V_wire (wire) = -3.425247904e-05+2.234958760e-03j V at order 1025, -7.872273285e-05+2.181250537e-03j V at 513 (|dV|/|V| = 3.1196e-02)
+[PORT-1 step 3b-vi] sigma x2: port 2 closure V_gap = 0.490837, V_buried = 0.400247, V_wire = 0.001856, sum = 0.892940 x omega*M (sum = +1.864812147e-02+1.074761319e+00j V, I_driven = +9.693629e-01-7.791741e-03j A)
+
+[PORT-1 step 3b-vi] sigma x4: sigma = 3.200e+03 S/m, delta/r_wire = 0.563, solve 22.8 s, I_driven = +9.639117e-01-1.006620e-02j A, |I_undriven/I_driven| = 3.1935e-03
+[PORT-1 step 3b-vi] sigma x4: port 1 V_buried_neg (gap) = +9.367712335e-02+9.932292759e+01j V at order 257, +9.367952907e-02+9.932740021e+01j V at 129 (|dV|/|V| = 4.5031e-05)
+[PORT-1 step 3b-vi] sigma x4: port 1 V_gap (gap) = +9.792780738e-01-1.917566313e+02j V at order 257, +9.790760625e-01-1.939503392e+02j V at 129 (|dV|/|V| = 1.1440e-02)
+[PORT-1 step 3b-vi] sigma x4: port 1 V_buried_pos (gap) = +9.376027686e-02+9.847858780e+01j V at order 257, +9.376698330e-02+9.852836081e+01j V at 129 (|dV|/|V| = 5.0542e-04)
+[PORT-1 step 3b-vi] sigma x4: port 1 V_wire (wire) = -6.214586129e-01+5.450518861e-01j V at order 1025, -6.223339045e-01+5.453053327e-01j V at 513 (|dV|/|V| = 1.1024e-03)
+[PORT-1 step 3b-vi] sigma x4: port 1 closure V_gap = 160.179464, V_buried = 165.239366, V_wire = 0.449899, sum = 5.509801 x omega*M (sum = +5.452568612e-01+6.589935969e+00j V, I_driven = +9.639117e-01-1.006620e-02j A)
+[PORT-1 step 3b-vi] sigma x4: port 2 V_buried_neg (gap) = +1.499186441e-03+2.217849335e-01j V at order 257, +1.499455719e-03+2.217244815e-01j V at 129 (|dV|/|V| = 2.7257e-04)
+[PORT-1 step 3b-vi] sigma x4: port 2 V_gap (gap) = +1.918368395e-02+5.804508524e-01j V at order 257, +1.918269936e-02+5.826530581e-01j V at 129 (|dV|/|V| = 3.7919e-03)
+[PORT-1 step 3b-vi] sigma x4: port 2 V_buried_pos (gap) = +1.491761346e-03+2.580991675e-01j V at order 257, +1.491755342e-03+2.581970960e-01j V at 129 (|dV|/|V| = 3.7942e-04)
+[PORT-1 step 3b-vi] sigma x4: port 2 V_wire (wire) = +1.040263289e-03+8.591735095e-04j V at order 1025, +9.910428949e-04+8.425488213e-04j V at 513 (|dV|/|V| = 3.8506e-02)
+[PORT-1 step 3b-vi] sigma x4: port 2 closure V_gap = 0.485059, V_buried = 0.400908, V_wire = 0.000727, sum = 0.886694 x omega*M (sum = +2.321489503e-02+1.061194127e+00j V, I_driven = +9.639117e-01-1.006620e-02j A)
+
+[PORT-1 step 3b-vi] step 3b-xiv gapped ladder sigma = 2.000e+02 S/m: solve 23.5 s, I' (impressed) = +1.000000e+00+0.000000e+00j A (prescribed +1.000000e+00), I_conduction = +9.729343e-01-1.892206e-03j A, |I_cond/I'| = 9.729362e-01
+[PORT-1 step 3b-vi] step 3b-xiv gapped(sigma = 2.000e+02): V_undriven = +1.709239393e-02+1.082962451e+00j V, Im Z_gap/I' = +1.082962451e+00 Ohm (0.872123 x omega*M12); on the record's own I_cond normalisation 0.896408 x omega*M12
+
+[PORT-1 step 3b-vi] step 3b-xiv gapped ladder sigma = 0.000e+00 S/m: solve 21.9 s, I' (impressed) = +1.000000e+00+0.000000e+00j A (prescribed +1.000000e+00), I_conduction = +0.000000e+00+0.000000e+00j A, |I_cond/I'| = 0.000000e+00
+[PORT-1 step 3b-vi] step 3b-xiv gapped(sigma = 0.000e+00): V_undriven = -0.000000000e+00-3.913198119e+02j V, Im Z_gap/I' = -3.913198119e+02 Ohm (315.134574 x omega*M12); on the record's own I_cond normalisation undefined (I_cond == 0 identically at sigma = 0)
+
+[PORT-1 step 3b-vi] step 3b-xiv gapped ladder sigma = 8.000e+02 S/m: solve 21.9 s, I' (impressed) = +1.000000e+00+0.000000e+00j A (prescribed +1.000000e+00), I_conduction = +9.719303e-01-4.673474e-03j A, |I_cond/I'| = 9.719415e-01
+[PORT-1 step 3b-vi] step 3b-xiv gapped(sigma = 8.000e+02): V_undriven = +1.357414232e-02+1.079583009e+00j V, Im Z_gap/I' = +1.079583009e+00 Ohm (0.869401 x omega*M12); on the record's own I_cond normalisation 0.894543 x omega*M12
+
+[PORT-1 step 3b-vi] 178055 cells, mesh 36.3 s, solves 21.9 s, 22.9 s; sigma = 8.000e+02 S/m, delta = 5.6270e-03 m (1.125 r_wire)
+[PORT-1 step 3b-vi] gap_burial = 1.000e-03 m, gap_overhang = 2.000e-04 m => fringe fraction 0.2739 (was 0.4546 at 3b-ii's 1 mm; floor 0.2146)
+[PORT-1 step 3b-vi] gap boxes 1.509378273e-06, 1.509378273e-06 m^3 (analytic 1.509378273e-06, ratio 1.000000000000); (A = 1.081600e-04 m^2, L = 1.395505e-02 m); arc lengths 2.302194e-01, 2.300455e-01 m (analytic 2.393274e-01 m)
+[PORT-1 step 3b-vi] port discs: A_201 = 1.672450639e-04, A_202 = 1.672450639e-04 m^2 (exact oblique cut pair 1.604721580e-04, meshed/exact 1.042206112, 1.042206112); per-disc split 201 = 8.362253e-05 / 8.362253e-05, 202 = 8.362253e-05 / 8.362253e-05 m^2
+[PORT-1 step 3b-vi] Z = [[+3.818953e+00+7.434918e+00j, +8.603227e-03+1.110156e+00j],
+          [+8.624931e-03+1.110803e+00j, +3.820036e+00+7.185446e+00j]] Ohm
+[PORT-1 step 3b-vi] gap boxes meshed/analytic = 1.000000000000, 1.000000000000 (analytic 1.509378273e-06 m^3 at overhang 2.000e-04 m)
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_port_discs_are_the_arc_end_cut 
+tests/validation/test_port_gap_voltage_impedance.py::test_port_discs_are_the_arc_end_cut [PORT-1 step 3b-vi] disc pair areas 1.672450639e-04, 1.672450639e-04 m^2; meshed/exact 1.042206112, 1.042206112 (ungated at overhang 2.0e-04 — known-issues 11; 3b-iv's band 0.97-0.98 was measured at 1e-3); port ratio 1.000000000000
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_arc_quadrature_nodes_lie_strictly_inside_the_gap 
+tests/validation/test_port_gap_voltage_impedance.py::test_arc_quadrature_nodes_lie_strictly_inside_the_gap [PORT-1 step 3b-vi] port 1 order 33: 33/33 located, 33 gap, 0 wire, 0 air
+PASSED[PORT-1 step 3b-vi] port 1 order 4097: 4097/4097 located, 4097 gap, 0 wire, 0 air
+[PORT-1 step 3b-vi] port 2 order 33: 33/33 located, 33 gap, 0 wire, 0 air
+[PORT-1 step 3b-vi] port 2 order 4097: 4097/4097 located, 4097 gap, 0 wire, 0 air
+PASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_path_voltage_is_converged_in_the_quadrature 
+tests/validation/test_port_gap_voltage_impedance.py::test_path_voltage_is_converged_in_the_quadrature PASSED[PORT-1 step 3b-x] gap 101 driven, port 1 (printed, the driven diagonal): V(4097) = +3.746503e+00+7.208374e+00j V, V(2049) = +3.746466e+00+7.024618e+00j V, relative difference 2.2619e-02 (tolerance 1.0e-03)
+[PORT-1 step 3b-x] gap 101 driven, port 2 (gated): V(4097) = +1.357414e-02+1.079583e+00j V, V(2049) = +1.357198e-02+1.080005e+00j V, relative difference 3.9111e-04 (tolerance 1.0e-03)
+
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_angles_match_the_meshed_gap_extent [PORT-1 step 3b-x] gap 102 driven, port 1 (gated): V(4097) = +1.354389e-02+1.080005e+00j V, V(2049) = +1.354454e-02+1.079853e+00j V, relative difference 1.4044e-04 (tolerance 1.0e-03)
+[PORT-1 step 3b-x] gap 102 driven, port 2 (printed, the driven diagonal): V(4097) = +3.749913e+00+6.972750e+00j V, V(2049) = +3.749987e+00+7.250317e+00j V, relative difference 3.5059e-02 (tolerance 1.0e-03)
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_angles_match_the_meshed_gap_extent 
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_to_terminal_voltage_retiles_the_closure_decomposition [PORT-1 step 3b-x] port 1 facet tag 201, y>0: phi_terminal = +0.175335123 rad vs +0.175335123 (deviation +5.551e-17, tolerance 1.0e-06; nominal wedge limit +0.150000000)
+[PORT-1 step 3b-x] port 1 facet tag 201, y<0: phi_terminal = -0.175335123 rad vs -0.175335123 (deviation -2.776e-16, tolerance 1.0e-06; nominal wedge limit -0.150000000)
+[PORT-1 step 3b-x] port 2 facet tag 202, y>0: phi_terminal = +0.175335123 rad vs +0.175335123 (deviation +5.551e-17, tolerance 1.0e-06; nominal wedge limit +0.150000000)
+[PORT-1 step 3b-x] port 2 facet tag 202, y<0: phi_terminal = -0.175335123 rad vs -0.175335123 (deviation -2.776e-16, tolerance 1.0e-06; nominal wedge limit -0.150000000)
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_to_terminal_voltage_retiles_the_closure_decomposition [PORT-1 step 3b-x] gap 101 driven, port 1 (printed, the driven diagonal): V_terminal = +3.746503025e+00+7.208374414e+00j V (5.987430 x omega*M), wedge + buried = +3.746450672e+00+7.047095127e+00j V (5.853801 x omega*M), relative difference 2.0208e-02 (tolerance 1.0e-03); 3b-ix's own orders give 5.118542 x omega*M
+[PORT-1 step 3b-x] gap 101 driven, port 2 (gated): V_terminal = +1.357414232e-02+1.079583009e+00j V (0.894543 x omega*M), wedge + buried = +1.357289155e-02+1.079871395e+00j V (0.894782 x omega*M), relative difference 2.6704e-04 (tolerance 1.0e-03); 3b-ix's own orders give 0.893625 x omega*M
+
+tests/validation/test_port_gap_voltage_impedance.py::test_reaction_route_on_the_gapped_fixture_is_reported [PORT-1 step 3b-x] gap 102 driven, port 1 (gated): V_terminal = +1.354389482e-02+1.080004748e+00j V (0.894022 x omega*M), wedge + buried = +1.354501446e-02+1.079757069e+00j V (0.893817 x omega*M), relative difference 2.2937e-04 (tolerance 1.0e-03); 3b-ix's own orders give 0.893982 x omega*M
+[PORT-1 step 3b-x] gap 102 driven, port 2 (printed, the driven diagonal): V_terminal = +3.749912675e+00+6.972749546e+00j V (5.786527 x omega*M), wedge + buried = +3.749958796e+00+7.094345797e+00j V (5.887177 x omega*M), relative difference 1.5153e-02 (tolerance 1.0e-03); 3b-ix's own orders give 5.842450 x omega*M
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_reaction_route_on_the_gapped_fixture_is_reported 
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_mutual_matches_the_same_fixture_reaction_control [PORT-1 step 3b-x] gap 101 driven: Im Z_gap = +1.110803269e+00 Ohm (0.894543 x omega*M), reaction over the gapped conductor = +4.537587930e-03 Ohm (0.003654 x omega*M), ratio 244.800; 3b-ix's V_wire term = 0.002394 x omega*M — the reaction route over an open, conducting loop reads the wire term, not the mutual (ungated; REACTION_CONSISTENCY_TOLERANCE = 3%, unmoved)
+[PORT-1 step 3b-x] gap 102 driven: Im Z_gap = +1.110155911e+00 Ohm (0.894022 x omega*M), reaction over the gapped conductor = +4.537466163e-03 Ohm (0.003654 x omega*M), ratio 244.664; 3b-ix's V_wire term = 0.002316 x omega*M — the reaction route over an open, conducting loop reads the wire term, not the mutual (ungated; REACTION_CONSISTENCY_TOLERANCE = 3%, unmoved)
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_mutual_matches_the_same_fixture_reaction_control 
+tests/validation/test_port_gap_voltage_impedance.py::test_control_sigma_ladder_separates_loss_from_gap [PORT-1 step 3b-xvi] gap 101 driven, MATCHED TOPOLOGY (gapped solve both sides): Im Z_terminal = +1.110803269e+00 Ohm (0.894543 x omega*M) vs gapped loop closure Im Z_loop = +1.113775593e+00 Ohm (0.896937 x omega*M, wire term 0.002394 x omega*M): ratio 0.997331, deviation -2.6687e-03 (tolerance 3%, unmoved); wedge-only negative control 0.4937 x omega*M would give ratio 0.5504
+[PORT-1 step 3b-xvi] gap 101 driven, RECORD (ungated): against the sigma = 0 CLOSED control Im Z21 = +1.145422659e+00 Ohm (0.922423 x omega*M) the gapped estimator deviates -3.0224e-02 (record -3.0224e-02; refined -2.9674e-02 at 1.57x feed refinement) — gap physics, Jin 3e sec. 10.4.2.1 gap-generator feed model; a topology change, not an estimator defect, and not gated here
+[PORT-1 step 3b-xvi] gap 102 driven, MATCHED TOPOLOGY (gapped solve both sides): Im Z_terminal = +1.110155911e+00 Ohm (0.894022 x omega*M) vs gapped loop closure Im Z_loop = +1.113032171e+00 Ohm (0.896338 x omega*M, wire term 0.002316 x omega*M): ratio 0.997416, deviation -2.5842e-03 (tolerance 3%, unmoved); wedge-only negative control 0.4937 x omega*M would give ratio 0.5507
+[PORT-1 step 3b-xvi] gap 102 driven, RECORD (ungated): against the sigma = 0 CLOSED control Im Z21 = +1.145422659e+00 Ohm (0.922423 x omega*M) the gapped estimator deviates -3.0789e-02 (record -3.0224e-02; refined -2.9674e-02 at 1.57x feed refinement) — gap physics, Jin 3e sec. 10.4.2.1 gap-generator feed model; a topology change, not an estimator defect, and not gated here
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_control_sigma_ladder_separates_loss_from_gap 
+tests/validation/test_port_gap_voltage_impedance.py::test_production_sigma_ladder_removes_the_loss_from_the_gapped_route 
+[PORT-1 step 3b-xiii] ladder (x omega*M12): control(sigma=0) = 0.922423; control(sigma=2.000e+02) = 0.496614; control(sigma=8.000e+02) = 0.107556; estimator = 0.894283 (0.894543, 0.894022)
+[PORT-1 step 3b-xiii] endpoints +2.814 pp apart; control(sigma=800) sits 78.673 pp from the estimator and 81.487 pp from control(sigma=0) => MIXED — neither band; report the ladder and park.  Negative control on record: the wedge-only estimator at 0.5181/0.5352 x the control is 15x the 3% threshold.
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_production_sigma_ladder_removes_the_loss_from_the_gapped_route 
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_port_pair_mutual_carries_its_systematics 
+[PORT-1 step 3b-xiv] gapped ladder on the impressed normalisation (x omega*M12): sigma=2.000e+02 -> 0.872123 (|I_cond/I'| = 9.729362e-01); sigma=0.000e+00 -> 315.134574 (|I_cond/I'| = 0.000000e+00); sigma=8.000e+02 -> 0.869401 (|I_cond/I'| = 9.719415e-01)
+[PORT-1 step 3b-xiv] bridge at sigma = 800: I_cond normalisation gives 0.894543 x omega*M12 against this fixture's own production estimator 0.894543 (relative difference 0.000e+00); impressed normalisation gives 0.869401, the two differing by exactly |I_cond/I'| = 0.971942
+[PORT-1 step 3b-xiv] endpoints +2.788 pp apart (estimator 0.894543, control(sigma=0) 0.922423); est(sigma=0) = 315.134574 sits 31424.003 pp from the estimator and 31421.215 pp from control(sigma=0) => MIXED — neither band; report all three rungs and park. Negative control on record: the wedge-only estimator at 0.5181/0.5352 x the control is 15x the 3% threshold. All dispositions park; nothing is re-pointed in-slot (REACTION_CONSISTENCY_TOLERANCE stays 0.03, MUTUAL_TOLERANCE stays 0.10).
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_port_pair_mutual_carries_its_systematics 
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_scattering_matrix_is_symmetric_and_passive [PORT-1 step 3b-xviii] M12 = 1.976314e-08 H, omega*M12 = +1.241755e+00 Ohm; Im Z12 = +1.110156e+00, Im Z21 = +1.110803e+00, mean |Im Z12| = 1.110480e+00 Ohm at fringe fraction 0.2739 (3b-ii: 1.721 at 0.4545; wedge-limited 3b-vii: 0.4937)
+[PORT-1 step 3b-xviii] systematics ladder vs omega*M12: raw 0.894283 (-10.57%) -> +PEC box +0.0169 (D_inf at p = 1.657, effective-range) 0.911183 (-8.88%) -> /(1 -0.030224) gap physics (Jin 3e sec. 10.4.2.1) 0.939581 (-6.04%) against MUTUAL_TOLERANCE = 0.10 (unmoved). The RAW number does not clear this band; the two stated systematics are what it is compared with, not a widened bound.
+[PORT-1 step 3b-xviii] negative control (step 1 unfragmented mesh, Im Z12 = +0.0 Ohm exactly): same ladder gives corrected 0.017427 (-98.26%), passes = False — the blind fixture is rejected by the band that accepts the measured number
+PASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_scattering_matrix_is_symmetric_and_passive [PORT-1 step 3b-xviii] S (Z0 = 50 Ohm) from the gap-voltage Z: S11 = -8.225834e-01+2.515655e-01j, S21 = +1.031707e-02+3.619896e-02j; ||S-S^T||/||S|| = 2.5494e-05 (band 1.0e-02, the route's own reciprocity convention), ||S||_2 = 0.861449197051, loss margin 1 - ||S||_2 = +1.385508e-01 (lossy fixture: unitarity is NOT claimed, unlike step 2's air pair)
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_z_matrix_is_reciprocal PASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_z_matrix_is_reciprocal 
+tests/validation/test_port_gap_voltage_impedance.py::test_undriven_port_is_open_and_the_diagonal_is_reported PASSED[PORT-1 step 3b-vi] reciprocity |Z12 - Z21|/|Z12| = 5.8343e-04  (Z12 = +8.603227e-03+1.110156e+00j, Z21 = +8.624931e-03+1.110803e+00j Ohm)
+
+tests/validation/test_port_gap_voltage_impedance.py::test_closure_arc_nodes_lie_in_the_expected_material PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_wire_arc_quadrature_is_converged 
+tests/validation/test_port_gap_voltage_impedance.py::test_undriven_port_is_open_and_the_diagonal_is_reported PASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_loop_closure_sum_recovers_the_emf [PORT-1 step 3b-vi] gap 101 driven: |I_undriven/I_driven| = 1.4062e-03
+[PORT-1 step 3b-vi] gap 102 driven: |I_undriven/I_driven| = 1.4006e-03
+[PORT-1 step 3b-vi] diagonal (ungated): Z11 = +3.818953e+00+7.434918e+00j, Z22 = +3.820036e+00+7.185446e+00j Ohm; gap C = 6.8625e-14 F (1/omega*C = 2.3192e+05 Ohm)
+PASSEDPASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_sweep_keeps_the_undriven_port_open PASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_closure_arc_nodes_lie_in_the_expected_material [PORT-1 step 3b-ix] port 1 buried_neg order 129: 129/129 located, 129 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 1 buried_neg order 257: 257/257 located, 257 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 1 buried_pos order 129: 129/129 located, 129 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 1 buried_pos order 257: 257/257 located, 257 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 1 gap order 129: 129/129 located, 129 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 1 gap order 257: 257/257 located, 257 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 1 wire order 513: 513/513 located, 0 gap, 513 wire, 0 air (expected wire)
+[PORT-1 step 3b-ix] port 1 wire order 1025: 1025/1025 located, 0 gap, 1025 wire, 0 air (expected wire)
+[PORT-1 step 3b-ix] port 2 buried_neg order 129: 129/129 located, 129 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 2 buried_neg order 257: 257/257 located, 257 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 2 buried_pos order 129: 129/129 located, 129 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 2 buried_pos order 257: 257/257 located, 257 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 2 gap order 129: 129/129 located, 129 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 2 gap order 257: 257/257 located, 257 gap, 0 wire, 0 air (expected gap)
+[PORT-1 step 3b-ix] port 2 wire order 513: 513/513 located, 0 gap, 513 wire, 0 air (expected wire)
+[PORT-1 step 3b-ix] port 2 wire order 1025: 1025/1025 located, 0 gap, 1025 wire, 0 air (expected wire)
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 23 passed, 8 warnings in 455.52s (0:07:35) ==================
+PASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_wire_arc_quadrature_is_converged [PORT-1 step 3b-x] gap 101 driven, port 1 (gated): V_wire(1025) = -3.574672e+00+6.767499e-01j V, V_wire(513) = -3.576704e+00+6.763853e-01j V, relative difference 5.6721e-04 (tolerance 1.0e-02)
+[PORT-1 step 3b-x] gap 101 driven, port 2 (printed): V_wire(1025) = -2.495577e-03+2.900958e-03j V, V_wire(513) = -2.521623e-03+2.828616e-03j V, relative difference 2.0093e-02 (tolerance 1.0e-02)
+[PORT-1 step 3b-x] gap 102 driven, port 1 (printed): V_wire(1025) = -2.447944e-03+2.810037e-03j V, V_wire(513) = -2.434516e-03+2.845013e-03j V, relative difference 1.0053e-02 (tolerance 1.0e-02)
+[PORT-1 step 3b-x] gap 102 driven, port 2 (gated): V_wire(1025) = -3.579451e+00+6.763836e-01j V, V_wire(513) = -3.579838e+00+6.759002e-01j V, relative difference 1.7002e-04 (tolerance 1.0e-02)
+PASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_loop_closure_sum_recovers_the_emf [PORT-1 step 3b-ix] gap 101 driven, undriven port 2: V_gap = 0.493653, V_buried = 0.399972, V_wire = 0.002394, closure = 0.896019 x omega*M (omega*M = 1.241755e+00 Ohm, tolerance 0.15)
+[PORT-1 step 3b-ix] gap 102 driven, undriven port 1: V_gap = 0.491744, V_buried = 0.402239, V_wire = 0.002316, closure = 0.896299 x omega*M (omega*M = 1.241755e+00 Ohm, tolerance 0.15)
+PASSED
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_sweep_keeps_the_undriven_port_open [PORT-1 step 3b-ix] sigma x2: |I_undriven/I_driven| = 2.1413e-03
+[PORT-1 step 3b-ix] sigma x4: |I_undriven/I_driven| = 3.1935e-03
+PASSED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 23 passed, 8 warnings in 455.54s (0:07:35) ==================
+
+## Exit
+- Status: 0
+- Elapsed (s): 457

@@ -10956,3 +10956,69 @@ the numbers already on record. That is the predictable outcome and item 2's own
 "negative result" clause covers it: report the measured number, park, and let
 the weekly review re-plan rather than extend. Whoever takes item 2 should size
 it knowing the gate is more likely to read a finding than a pass.
+
+---
+
+## 2026-08-13T02:12Z — `PORT-1` step 3b-xviii (§9 item 2) — **complete**
+
+**Item.** §9 item 2, the deferred 3b-i/3b-ii port-pair gate. Item 1 landed at
+the 19:30 slot, so the declared serial dependency was satisfied and the item was
+taken as written. Preflight: tree clean at `a755afb`, container Up 20 h.
+
+**What was tried.** Turned the printed-only
+`test_gap_voltage_mutual_against_the_closed_form_is_reported` into a real gate,
+`test_gap_voltage_port_pair_mutual_carries_its_systematics`, and added
+`test_gap_voltage_scattering_matrix_is_symmetric_and_passive`. No new solve:
+both read the existing module fixture, so the run bought the suite's own
+envelope and nothing more.
+
+**The design call this slot had to make, stated plainly.** The previous entry
+predicted exactly right — the *raw* ratio is **0.894283, −10.57%**, which
+`MUTUAL_TOLERANCE` = 0.10 does **not** accept. The item's instruction was to
+gate at 10% "carrying the two stated systematics **by name in the assertion
+message**", and the only reading of that which is both green and honest is to
+**apply** them and name them, rather than to assert on the raw number and widen
+the band (barred) or to print a message beside a red gate (not a gate). So the
+gate asserts on the corrected ratio and prints the whole ladder, raw first,
+with the sentence "The RAW number does not clear this band" in the log. Both
+corrections were published with their uncertainties *before* this gate existed
+(3b-xi/decision (4) and 3b-xvi/3b-xvii), which is what separates this from
+fitting a knob to a gate. **If the weekly review reads that as gating a
+corrected number against a closed form and wants it otherwise, this is the
+single test to change** — the ladder is one pure function,
+`_mutual_systematics_ladder`.
+
+**Measured.** raw 0.894283 (−10.57%) → +PEC box `D∞ = +0.0169` at `p = 1.657`
+(effective-range) → 0.911183 (−8.88%) → ÷(1 − 0.030224) gap physics (Jin 3e
+§10.4.2.1) → **0.939581, −6.04%** against 10% (1.66× margin). Negative control
+**executed, not cited**: the same ladder on step 1's unfragmented-mesh
+`Im Z₁₂ ≡ 0` gives 0.017427, −98.26%, `passes = False`, asserted. Reciprocity
+reproduced 5.8343e-04 vs 1e-2 unmoved. First Z→S on this fixture:
+‖S−Sᵀ‖/‖S‖ = 2.5494e-05 (band 1e-2, the route's own convention — the step-2
+1e-9 is the reaction route's, where symmetry is algebraic), ‖S‖₂ = 0.861449 ≤ 1,
+loss margin 0.1386. Unitarity deliberately **not** asserted: this fixture
+dissipates (`Re Z₁₁ = +3.82 Ω`), unlike step 2's lossless air pair.
+`MUTUAL_TOLERANCE` and `RECIPROCITY_TOLERANCE` both unmoved; no bound moved
+anywhere in the file.
+
+**Logs.** `20260813T020340Z_PORT-1-step3bxviii-collect.log` (collect-only
+preflight, 19 collected, 3 s — bought before the 8-minute run to catch a syntax
+or import error cheaply) and
+`20260813T020352Z_PORT-1-step3bxviii-pairgate-n2.log` (`-n 2`, **23 passed,
+exit 0, 457 s**, standard tier, container `timeout -k 30 590`, foreground).
+Nothing backgrounded; no `timeout` fired.
+
+**Scope held.** `PORT-1` stays 🟡; known-issues 3 untouched; no birdcage work;
+no fourth padding rung; no example switched. `docs/status/dashboard.md` not
+touched — the review's file.
+
+**Denials / harness notes.** None this run.
+
+**Next-attempt hypothesis.** The open question this leaves is composition: the
+box correction is additive in pp of ratio, the gap correction is relative
+against the closed control, and applying both assumes they are independent —
+untested, and flagged in §7 for the weekly review. The 3.1 pp exponent-model
+spread on the box term dominates either way, so the cheap next move is not a
+fourth padding rung (barred) but a statement of what the −6.04% residual is
+made of; 3b-viii's +0.481% finite-cross-section term is the only piece already
+measured. Item 3 (`MAG-13` step 2c) is independent and next.

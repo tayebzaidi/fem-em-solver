@@ -105,10 +105,13 @@ What is gated, and why:
     :func:`~tests.validation.test_port_reaction_impedance.mutual_inductance`),
     with port 2 open — its gap is a series C of ~7e-14 F, i.e. 2.2e5 Ω at
     10 MHz against the loop's ~7 Ω, so "open" is four orders of separation, not
-    an approximation.  The band is set from the probe (see
-    ``MUTUAL_TOLERANCE``), with step 1's reaction-route −9.35% as the
-    expectation scale: the residual is the PEC box, measured in step 1 to move
-    monotonically toward the closed form with padding.
+    an approximation.  **Step 3b-xviii** made this the port-pair gate it had
+    been deferred as since 3b-i/3b-ii, at ``MUTUAL_TOLERANCE`` unmoved and
+    carrying its two measured systematics by name — the PEC box
+    (``+1.69 pp`` at ``p = 1.657``, effective-range) and the gap-physics offset
+    (``−3.0224e-02``, Jin 3e §10.4.2.1).  Between 3b-x and 3b-xviii it was
+    printed and not asserted, because neither systematic had been measured yet
+    and gating on the raw number would have gated the truncation box.
   * **reciprocity** ``|Z₁₂ − Z₂₁|/|Z₁₂|`` from the second port's solve on the
     *same* mesh — two different tags, two different loads, one operator.  This
     is a network identity the gap-voltage route has never been asked for; the
@@ -406,12 +409,85 @@ CONTROL_SIGMA_LADDER = (2.0e2, SIGMA_WIRE_S_PER_M)
 # construction; on this route the gap box is the gap.)
 PRODUCTION_SIGMA_LADDER = (2.0e2, 0.0)
 
+# ---------------------------------------------------------------------------
+# Step 3b-xviii: the deferred 3b-i/3b-ii **port-pair gate**.
+#
+# The two systematics that stand between this fixture's Im Z12 and the
+# filamentary closed form.  Both are measured on record, both are quoted with
+# what they are, and neither is a fitted knob adjusted to make a gate green:
+# they were fixed by the padding sweep and the matched-topology re-point before
+# this gate existed.
+#
+#   * **PEC box.**  The truncation box at AIR_PADDING = 0.08 costs the mutual
+#     D_inf = +1.69 pp of ratio, from step 3b-xi/decision-(4)'s free-exponent
+#     fit ``ratio = r_inf - C*W^(-p)`` to three padding rungs, at **p = 1.657**
+#     — an *effective-range* extrapolation, never to be quoted without its
+#     exponent (pinning the dipolar p = 3 moves the term to -1.43 pp; the model
+#     uncertainty is ~840x the data uncertainty, §7 3b-xi note).  The 10% band
+#     dwarfs that 3.1 pp spread, which is why no fourth rung was commissioned.
+#   * **Gap physics.**  The gapped fixture reads -3.0224e-02 against its own
+#     sigma = 0 *closed* control (-2.9674e-02 under 1.57x feed refinement) —
+#     the gap-generator feed model's documented, gap-geometry-dependent
+#     impedance error (Jin, *The FEM in Electromagnetics* 3rd ed., §10.4.2.1).
+#     Step 3b-xvi excluded feed discretisation as its owner by measurement
+#     (+0.0508 pp under refinement against a 0.5 pp band), and 3b-xvii's
+#     matched-topology gate is what licenses calling it a topology term rather
+#     than an estimator defect.
+#
+# The closed form is filamentary and box-free, so a comparison against it must
+# either carry these two or gate the box and the feed model instead of the
+# estimator.  The gate below carries them: it asserts on the corrected ratio and
+# prints the whole ladder, raw first, so the raw -10.57% is on the record beside
+# the corrected number rather than hidden behind it.
+PEC_BOX_SYSTEMATIC = +1.69e-2
+PEC_BOX_SYSTEMATIC_EXPONENT = 1.657
+GAP_PHYSICS_SYSTEMATIC = -3.0224e-02
+
+# Step 1's unfragmented-mesh record: the two loops meshed as disconnected
+# islands and Z12 came out *identically* zero against this same 1.241755 Ohm
+# closed form (`20260731T213222Z_PORT-1-step1-costprobe.log`).  That is the
+# total-separation floor every step of this lineage cites, and the gate function
+# below is executed on it as a negative control — a band that accepts the blind
+# fixture's -100% would be gating nothing.
+BLIND_FIXTURE_IM_Z12_OHM = 0.0
+
 # The rung this ladder shares with the landed fixture, and the column it drives.
 # Column 0's record at padding 0.08 is the estimator 0.894543 x omega*M12; the
 # ladder is read against that and against the sigma = 0 closed control 0.922423
 # (both on record, both cited rather than recomputed here -- the module's own
 # gates re-measure them on every run of this fixture).
 PRODUCTION_LADDER_DRIVEN_COLUMN = 0
+
+
+def _mutual_systematics_ladder(im_z12_ohm: float, omega_m12: float) -> dict:
+    """The 3b-xviii ladder: raw ratio → PEC-box corrected → gap-physics corrected.
+
+    A pure function of one measured number, so the gate it drives can be
+    executed on the blind fixture's ``Z₁₂ ≡ 0`` as a negative control without a
+    second solve.  The two corrections are applied in the order they were
+    measured, and each is *additive in the same units it was measured in*:
+
+      * the PEC box moved the **ratio** by ``+D_inf`` pp (a padding
+        extrapolation of ``|Im Z₁₂|/ωM₁₂`` itself), so it adds to the ratio;
+      * the gap-physics term is a **relative** deviation of the gapped fixture
+        against its own closed control, so removing it divides by
+        ``1 + GAP_PHYSICS_SYSTEMATIC``.
+
+    Returns every rung, not just the last: the gate asserts on ``corrected`` and
+    the caller prints all of them.
+    """
+    raw = abs(im_z12_ohm) / omega_m12
+    box_corrected = raw + PEC_BOX_SYSTEMATIC
+    corrected = box_corrected / (1.0 + GAP_PHYSICS_SYSTEMATIC)
+    return {
+        "raw": raw,
+        "raw_deviation": raw - 1.0,
+        "box_corrected": box_corrected,
+        "box_deviation": box_corrected - 1.0,
+        "corrected": corrected,
+        "deviation": corrected - 1.0,
+        "passes": abs(corrected - 1.0) < MUTUAL_TOLERANCE,
+    }
 
 
 def _gap_half_extents():
@@ -2475,44 +2551,165 @@ def test_production_sigma_ladder_removes_the_loss_from_the_gapped_route(gap_port
 
 
 @complex_only
-def test_gap_voltage_mutual_against_the_closed_form_is_reported(gap_ports):
-    """``Im Z₁₂ = V₂/I₁`` against ``ωM₁₂ = 1.241755 Ω`` (Jackson 5.37) —
-    **printed, not gated**.
+def test_gap_voltage_port_pair_mutual_carries_its_systematics(gap_ports):
+    """Step 3b-xviii, **the port-pair gate**: ``Im Z₁₂`` against ``ωM₁₂``.
 
-    Step 3b-x moved this comparison's *assertion* to the same-fixture reaction
-    route (above) and left the number itself on the record.  The reason is not
-    that it fails: it is that the filamentary closed form is a different
-    fixture — no PEC box, no padding, no finite cross-section — and step 1
-    already measured −9.35% of deficit on the ungapped geometry with −9.36%
-    attributable to the box at padding 0.08 (step 3b-viii separately exonerated
-    the reference itself at +0.481%).  Gating a port estimator on a residual
-    that belongs to the truncation domain would be gating the box.  The
-    residual is tracked by known-issues 3 and adjudicated by step 3b-xi's
-    padding sweep; ``MUTUAL_TOLERANCE`` is printed here for continuity and is
-    unmoved at 0.10.
+    The deferred 3b-i/3b-ii gate, pre-registered by the 2026-08-12 adjudication
+    decision (3) and authored only once its two systematics had been measured
+    rather than assumed.  ``Im Z₁₂ = V₂/I₁`` from the gap-voltage route on the
+    landed gapped two-torus fixture (padding 0.08, 178 055 cells) is compared to
+    the filamentary closed form ``ωM₁₂ = +1.241755 Ω`` (Jackson 5.37, via
+    :func:`~tests.validation.test_port_reaction_impedance.mutual_inductance`) at
+    ``MUTUAL_TOLERANCE`` = 10%, **unmoved**.
 
-    This test asserts nothing by design.  It closes nothing; the gates that do
-    are :func:`test_gap_voltage_mutual_matches_the_reaction_route` and
-    :func:`test_terminal_to_terminal_voltage_retiles_the_closure_decomposition`.
+    **Why the comparison needs corrections, and why that is not band-shopping.**
+    The closed form is a filament pair in free space; this fixture is a pair of
+    finite-cross-section tori inside a PEC truncation box, each broken by a
+    dielectric gap the source is impressed across.  Two of those differences are
+    measured, and both were fixed on the record *before* this gate existed:
+
+      * the **PEC box**, ``D∞ = +1.69 pp`` of ratio at ``p = 1.657`` — an
+        effective-range extrapolation of decision-(4)'s free-exponent fit to
+        three padding rungs, never quotable without its exponent (§7 3b-xi);
+      * the **gap-physics offset**, ``−3.0224e-02`` against this fixture's own
+        σ = 0 closed control (Jin 3e §10.4.2.1's gap-generator feed model;
+        3b-xvi excluded feed discretisation as its owner, 3b-xvii gated the
+        matched-topology closure that licenses the label).
+
+    Both are named in the assertion message, and the ladder is printed raw
+    first: the **raw** ratio 0.894283 is −10.57%, which this band would *not*
+    accept, and saying so is the point of printing it.  The corrections are not
+    free parameters — a knob fitted to this gate would have been chosen after
+    seeing it; these were both published with their uncertainties in earlier
+    steps, and the residual they leave (~−6%) is the finite cross-section, the
+    remaining truncation, and the discretisation, not a tuned zero.
+
+    **Negative control, executed:** :func:`_mutual_systematics_ladder` is run on
+    step 1's unfragmented-mesh record — ``Z₁₂ ≡ 0`` exactly, the two loops
+    meshed as disconnected islands — and must be **rejected** by the same band
+    that accepts the measured number.  The blind fixture reads −100% even with
+    both corrections applied; the separation between it and this fixture is
+    total, and a band that could not tell them apart would gate nothing.
+
+    Reciprocity is the standing tripwire and is gated next door
+    (:func:`test_gap_voltage_z_matrix_is_reciprocal`, 5.83e-4 against an unmoved
+    1e-2); the ``1e-9`` identity belongs to the *reaction* route, where the same
+    bilinear form appears in both off-diagonals and symmetry is structural
+    (`test_reaction_impedance_matrix_is_reciprocal`).  Here ``V`` and ``I`` are
+    assembled on different subdomains with different integrands, so 5.83e-4 is
+    what a real network identity costs on this route, not a loosened 1e-9.
+
+    **Scope.**  This gate validates the two-torus ``∫E·dl`` machinery *with its
+    systematics stated*.  It does not close `PORT-1`: the estimator is a
+    stated-path convention (decision (5)) and claims no path-independence, and
+    birdcage ports and B1+ stay held.
     """
     z = gap_ports["z"]
     m12 = mutual_inductance(MAJOR_RADIUS, MAJOR_RADIUS, SEPARATION)
     omega_m12 = OMEGA * m12
     z12 = 0.5 * (z[0, 1] + z[1, 0])
-    relative_error = abs(z12.imag) / omega_m12 - 1.0
+    ladder = _mutual_systematics_ladder(z12.imag, omega_m12)
+    blind = _mutual_systematics_ladder(BLIND_FIXTURE_IM_Z12_OHM, omega_m12)
     if MPI.COMM_WORLD.rank == 0:
         print(
-            f"[PORT-1 step 3b-x] M12 = {m12:.6e} H, omega*M12 = "
+            f"[PORT-1 step 3b-xviii] M12 = {m12:.6e} H, omega*M12 = "
             f"{omega_m12:+.6e} Ohm; Im Z12 = {z[0,1].imag:+.6e}, Im Z21 = "
-            f"{z[1,0].imag:+.6e}, mean |Im Z12| = {abs(z12.imag):.6e} Ohm "
-            f"({relative_error:+.2%}); |Im Z12|/omega*M = "
-            f"{abs(z12.imag) / omega_m12:.6f} at fringe fraction "
-            f"{_fringe_fraction(GAP_OVERHANG):.4f} (3b-ii: 1.721 at 0.4545; "
-            f"wedge-limited 3b-vii: 0.4937); reported against "
-            f"MUTUAL_TOLERANCE = {MUTUAL_TOLERANCE:.2f}, not gated on it "
-            f"(known-issues 3)",
+            f"{z[1,0].imag:+.6e}, mean |Im Z12| = {abs(z12.imag):.6e} Ohm at "
+            f"fringe fraction {_fringe_fraction(GAP_OVERHANG):.4f} "
+            f"(3b-ii: 1.721 at 0.4545; wedge-limited 3b-vii: 0.4937)",
             flush=True,
         )
+        print(
+            f"[PORT-1 step 3b-xviii] systematics ladder vs omega*M12: "
+            f"raw {ladder['raw']:.6f} ({ladder['raw_deviation']:+.2%}) "
+            f"-> +PEC box {PEC_BOX_SYSTEMATIC:+.4f} (D_inf at p = "
+            f"{PEC_BOX_SYSTEMATIC_EXPONENT:.3f}, effective-range) "
+            f"{ladder['box_corrected']:.6f} ({ladder['box_deviation']:+.2%}) "
+            f"-> /(1 {GAP_PHYSICS_SYSTEMATIC:+.6f}) gap physics (Jin 3e sec. "
+            f"10.4.2.1) {ladder['corrected']:.6f} "
+            f"({ladder['deviation']:+.2%}) against MUTUAL_TOLERANCE = "
+            f"{MUTUAL_TOLERANCE:.2f} (unmoved). The RAW number does not clear "
+            f"this band; the two stated systematics are what it is compared "
+            f"with, not a widened bound.",
+            flush=True,
+        )
+        print(
+            f"[PORT-1 step 3b-xviii] negative control (step 1 unfragmented "
+            f"mesh, Im Z12 = {BLIND_FIXTURE_IM_Z12_OHM:+.1f} Ohm exactly): "
+            f"same ladder gives corrected {blind['corrected']:.6f} "
+            f"({blind['deviation']:+.2%}), passes = {blind['passes']} — the "
+            f"blind fixture is rejected by the band that accepts the measured "
+            f"number",
+            flush=True,
+        )
+    assert not blind["passes"], (
+        "negative control failed: the unfragmented-mesh record Im Z12 = 0 "
+        f"is accepted at MUTUAL_TOLERANCE = {MUTUAL_TOLERANCE:.2f} "
+        f"(corrected ratio {blind['corrected']:.6f}) — this band gates nothing"
+    )
+    assert ladder["passes"], (
+        f"gap-voltage port pair: |Im Z12| = {abs(z12.imag):.6e} Ohm is "
+        f"{ladder['raw']:.6f} x omega*M12 raw; carrying the two stated "
+        f"systematics — PEC box D_inf = {PEC_BOX_SYSTEMATIC:+.4f} of ratio at "
+        f"p = {PEC_BOX_SYSTEMATIC_EXPONENT:.3f} (effective-range "
+        f"extrapolation, §7 3b-xi) and gap physics "
+        f"{GAP_PHYSICS_SYSTEMATIC:+.6f} vs the closed control (Jin 3e sec. "
+        f"10.4.2.1) — gives {ladder['corrected']:.6f} x omega*M12, deviation "
+        f"{ladder['deviation']:+.4e}, outside MUTUAL_TOLERANCE = "
+        f"{MUTUAL_TOLERANCE:.2f}"
+    )
+
+
+@complex_only
+def test_gap_voltage_scattering_matrix_is_symmetric_and_passive(gap_ports):
+    """Step 3b-xviii's network tripwire: ``S`` at ``Z₀ = 50 Ω``, this fixture.
+
+    The step-2 machinery
+    (:func:`~tests.validation.test_port_reaction_impedance.scattering_from_impedance`,
+    ``S = (Z − Z₀I)(Z + Z₀I)⁻¹``) applied to the gap-voltage ``Z`` for the first
+    time.  Two claims, and deliberately not step 2's third:
+
+      * **symmetric**, to the same 1e-2 the route's own reciprocity residual is
+        gated at — ``S``'s asymmetry is ``Z``'s asymmetry pushed through a
+        smooth map, so 5.83e-4 in ``Z`` cannot become 1e-9 in ``S``.  Step 2's
+        1e-9 lives on the reaction route where symmetry is algebraic.
+      * **passive**, ``‖S‖₂ ≤ 1``.  This is the physical claim: the fixture
+        contains a σ = 800 S/m conductor and no source but the impressed one, so
+        a network that reflected more power than it accepted would mean the
+        solved field is delivering energy from nowhere.
+
+    Step 2's **unitarity** assertion is deliberately absent: that fixture was
+    lossless air, this one dissipates (``Re Z₁₁ = +3.82 Ω``), so ``‖S‖₂ = 1``
+    would be the wrong claim here.  ``1 − ‖S‖₂`` is printed as the loss margin.
+    """
+    from tests.validation.test_port_reaction_impedance import (
+        REFERENCE_IMPEDANCE_OHM,
+        scattering_from_impedance,
+    )
+
+    z = gap_ports["z"]
+    s = scattering_from_impedance(z, REFERENCE_IMPEDANCE_OHM)
+    asymmetry = np.linalg.norm(s - s.T) / np.linalg.norm(s)
+    spectral_norm = float(np.linalg.norm(s, 2))
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"[PORT-1 step 3b-xviii] S (Z0 = {REFERENCE_IMPEDANCE_OHM:.0f} "
+            f"Ohm) from the gap-voltage Z: S11 = {s[0,0]:+.6e}, S21 = "
+            f"{s[1,0]:+.6e}; ||S-S^T||/||S|| = {asymmetry:.4e} (band "
+            f"{RECIPROCITY_TOLERANCE:.1e}, the route's own reciprocity "
+            f"convention), ||S||_2 = {spectral_norm:.12f}, loss margin "
+            f"1 - ||S||_2 = {1.0 - spectral_norm:+.6e} (lossy fixture: "
+            f"unitarity is NOT claimed, unlike step 2's air pair)",
+            flush=True,
+        )
+    assert asymmetry < RECIPROCITY_TOLERANCE, (
+        f"S asymmetry {asymmetry:.4e} exceeds {RECIPROCITY_TOLERANCE:.1e} — "
+        "the gap-voltage Z is not reciprocal enough for an S-matrix"
+    )
+    assert spectral_norm <= 1.0 + 1e-9, (
+        f"||S||_2 = {spectral_norm:.12f} is not passive: the solved field "
+        "would be delivering power the impressed source did not supply"
+    )
 
 
 @complex_only
