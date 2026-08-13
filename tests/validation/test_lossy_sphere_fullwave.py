@@ -1,4 +1,4 @@
-"""`TH-10` steps 2-3: the Larmor-regime full-wave solve gates (64 and 128 MHz).
+"""`TH-10` steps 2-4: the Larmor-regime full-wave gates (64 and 128 MHz).
 
 Every coil-loading/SAR gate in this repo is either eddy-current (`MAT-6`,
 10 MHz) or imposed-field (`MAT-4`); `TH-8` gates a *quasi-static* sphere at
@@ -40,8 +40,17 @@ there.  A 64 MHz green beside a 128 MHz red would itself be the frequency-scalin
 finding — the two errors and rates are printed side by side for exactly that
 reading.
 
-Scope: the interior *field* only.  ½∫σ|E|² is step 4, and no `MAT-4` or
-coil-loading claim follows from this file.
+Step 4 adds the **volume** gate the field gates do not imply: ½∫σ|E|² over the
+sphere, the integral any Larmor-regime SAR number routes through.  Its
+reference is the series interior field integrated over the *same meshed cells*
+with the *same* σ field, so only ``E`` differs between the two integrals —
+the meshed sphere carries 98.6% of the exact-ball power at the fine rung, and
+folding that geometry defect into a 5% field band would have been a different
+(weaker) test.  The exact-ball integral is computed independently in numpy and
+printed beside it.
+
+Scope: the interior field and the total ohmic power.  No mass averaging, no
+C95.3 wording, no `MAT-4` or coil-loading claim follows from this file.
 
 Run (complex build required)::
 
@@ -59,8 +68,12 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import ufl
 from mpi4py import MPI
 from petsc4py import PETSc
+
+import dolfinx
+from dolfinx import fem
 
 from fem_em_solver.core import (
     HomogeneousMaterial,
@@ -151,8 +164,15 @@ def _rel_l2(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.linalg.norm(a - b) / np.linalg.norm(b))
 
 
-def _solve(series: LossySphereSeries, resolution_sphere: float, resolution_far: float):
-    """One rung.  Returns ``(err_series, err_quasistatic, ncells)``."""
+def _mesh_and_solve(
+    series: LossySphereSeries, resolution_sphere: float, resolution_far: float
+):
+    """Mesh + solve one rung.  Returns ``(msh, cell_tags, fields, ncells)``.
+
+    Steps 2/3 read only the interior field out of this; step 4 needs the mesh
+    and the σ field as well, so the solve itself lives here and both gates run
+    on demonstrably the same fixture rather than on two copies of it.
+    """
     comm = MPI.COMM_WORLD
     msh, cell_tags, _ = MeshGenerator.sphere_in_box_domain(
         sphere_radius=SPHERE_RADIUS,
@@ -176,6 +196,16 @@ def _solve(series: LossySphereSeries, resolution_sphere: float, resolution_far: 
         dirichlet_e_field=_dirichlet_total_field(series),
     )
     fields = TimeHarmonicSolver(problem, degree=1).solve()
+    ncells = int(
+        comm.allreduce(msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM)
+    )
+    return msh, cell_tags, fields, ncells
+
+
+def _solve(series: LossySphereSeries, resolution_sphere: float, resolution_far: float):
+    """One rung.  Returns ``(err_series, err_quasistatic, ncells)``."""
+    comm = MPI.COMM_WORLD
+    _, _, fields, ncells = _mesh_and_solve(series, resolution_sphere, resolution_far)
 
     points = _interior_probe_points()
     real_values, valid_real = evaluate_vector_field_parallel(fields.e_real, points, comm)
@@ -191,9 +221,6 @@ def _solve(series: LossySphereSeries, resolution_sphere: float, resolution_far: 
     e_quasistatic = np.zeros_like(e_series)
     e_quasistatic[:, 0] = series.quasistatic_internal_field()
 
-    ncells = int(
-        comm.allreduce(msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM)
-    )
     return _rel_l2(e_fem, e_series), _rel_l2(e_fem, e_quasistatic), ncells
 
 
@@ -285,6 +312,269 @@ def _run_gate(
         "apart has not entered the Larmor regime at all"
     )
     return err_fine
+
+
+# ---------------------------------------------------------------------------
+# Step 4: the SAR-relevant volume integral, ½∫σ|E|² over the sphere.
+# ---------------------------------------------------------------------------
+#
+# Steps 2/3 gate the interior field at 27 probe points; SAR is a *volume*
+# functional of |E|², so the field gate does not imply this one — a solve can
+# be right where it is sampled and carry its error in the volume, and squaring
+# turns a signed field error into a one-signed power error.  Bounds (§9 item 5,
+# stated before the run): FEM-vs-series total ohmic power < 5%, and the
+# quasi-static uniform-field power route must miss by > 50% (a conservative
+# floor — the interior *field* is 102.3% off in max-norm at 64 MHz, and power
+# goes as |E|²).
+OHMIC_POWER_BOUND = 0.05
+QUASISTATIC_POWER_MISS_FLOOR = 0.50
+# `MAT-4` step 2's measured degree, reused rather than re-tuned; the log prints
+# the value and the degree-16 recomputation beside it (the "latent degree"
+# lesson: a quadrature degree that is never stated is never checked).
+REFERENCE_QUADRATURE_DEGREE = 12
+REFERENCE_QUADRATURE_DEGREE_CHECK = 16
+
+
+def _series_interior_interpolant(series: LossySphereSeries):
+    """``internal_field`` in dolfinx interpolation convention, ``x`` is (3, n).
+
+    The series is written in spherical coordinates and raises at ``r = 0``
+    (a removable singularity it does not take the limit of).  The mesh has a
+    node at the sphere centre, so those points are evaluated a nanometre off
+    axis instead — |m|k₀·1e-9 ≈ 2e-8 rad, i.e. below round-off in the field.
+    """
+
+    def field(x: np.ndarray) -> np.ndarray:
+        points = np.ascontiguousarray(np.asarray(x).T, dtype=np.float64)
+        r = np.linalg.norm(points, axis=1)
+        at_centre = r < 1.0e-12
+        if np.any(at_centre):
+            points = points.copy()
+            points[at_centre, 0] = 1.0e-9
+        values = series.internal_field(points)
+        return np.ascontiguousarray(values.T, dtype=PETSc.ScalarType)
+
+    return field
+
+
+def _integrate_over_sphere(integrand, msh, cell_tags, comm, quadrature_degree: int):
+    """``∫_sphere integrand dV``, allreduced.
+
+    ``fem.assemble_scalar`` is rank-local (CLAUDE.md rank-safety rule); the
+    reduction happens here so no caller can forget it.
+    """
+    dx = ufl.Measure(
+        "dx",
+        domain=msh,
+        subdomain_data=cell_tags,
+        metadata={"quadrature_degree": int(quadrature_degree)},
+    )
+    local = fem.assemble_scalar(fem.form(integrand * dx(SPHERE_TAG)))
+    return complex(comm.allreduce(local, op=MPI.SUM))
+
+
+def _ohmic_power(e_field, sigma_field, msh, cell_tags, comm, quadrature_degree: int):
+    """``½∫σ|E|²dV`` over the meshed sphere [W].
+
+    ``ufl.inner`` conjugates its second argument, so ``inner(E, E)`` is |E|²
+    and the imaginary part is round-off, not a truncated quantity.
+    """
+    integrand = 0.5 * sigma_field * ufl.inner(e_field, e_field)
+    return float(
+        np.real(
+            _integrate_over_sphere(integrand, msh, cell_tags, comm, quadrature_degree)
+        )
+    )
+
+
+def _exact_sphere_series_power(series: LossySphereSeries, sigma: float, n_radial: int):
+    """``½σ∫|E_series|²dV`` over the **exact** ball, by product Gauss quadrature.
+
+    Independent of the mesh and of dolfinx: Gauss-Legendre in r (weighted r²)
+    and in cosθ, uniform-trapezoid in φ (spectrally accurate, the integrand is
+    periodic).  Printed as a read beside the meshed reference so a mesh-side
+    defect (volume defect, interpolation, quadrature degree) is separable from
+    a series-side one.
+    """
+    a = series.radius
+    r_nodes, r_weights = np.polynomial.legendre.leggauss(n_radial)
+    r = 0.5 * a * (r_nodes + 1.0)
+    wr = 0.5 * a * r_weights * r**2
+    mu_nodes, mu_weights = np.polynomial.legendre.leggauss(n_radial)
+    n_phi = 2 * n_radial
+    phi = 2.0 * np.pi * np.arange(n_phi) / n_phi
+    w_phi = 2.0 * np.pi / n_phi
+
+    sin_theta = np.sqrt(np.maximum(0.0, 1.0 - mu_nodes**2))
+    rr, mm, pp = np.meshgrid(r, np.arange(mu_nodes.size), np.arange(n_phi), indexing="ij")
+    points = np.column_stack(
+        [
+            (rr * sin_theta[mm] * np.cos(phi[pp])).ravel(),
+            (rr * sin_theta[mm] * np.sin(phi[pp])).ravel(),
+            (rr * mu_nodes[mm]).ravel(),
+        ]
+    )
+    e = series.internal_field(points)
+    e_sq = np.sum(np.abs(e) ** 2, axis=1).reshape(rr.shape)
+    weights = wr[:, None, None] * mu_weights[None, :, None] * w_phi
+    return float(0.5 * sigma * np.sum(weights * e_sq))
+
+
+def _power_rung(series: LossySphereSeries, resolution_sphere: float, resolution_far: float):
+    """One rung of the power gate.  Returns a dict of the three integrals."""
+    comm = MPI.COMM_WORLD
+    msh, cell_tags, fields, ncells = _mesh_and_solve(
+        series, resolution_sphere, resolution_far
+    )
+
+    p_fem = _ohmic_power(
+        fields.e_complex,
+        fields.sigma_field,
+        msh,
+        cell_tags,
+        comm,
+        REFERENCE_QUADRATURE_DEGREE,
+    )
+
+    # The series reference is integrated over the *same meshed region* with the
+    # *same* σ field: the only thing that differs between p_fem and p_series is
+    # E, which is what this gate is about.  The exact-ball value below carries
+    # the geometry question separately.
+    v_space = fem.functionspace(msh, ("Lagrange", 2, (3,)))
+    e_series_fn = fem.Function(v_space, name="E_series")
+    sphere_cells = np.asarray(
+        cell_tags.indices[cell_tags.values == SPHERE_TAG], dtype=np.int32
+    )
+    e_series_fn.interpolate(_series_interior_interpolant(series), cells=sphere_cells)
+    p_series = _ohmic_power(
+        e_series_fn,
+        fields.sigma_field,
+        msh,
+        cell_tags,
+        comm,
+        REFERENCE_QUADRATURE_DEGREE,
+    )
+    p_series_check = _ohmic_power(
+        e_series_fn,
+        fields.sigma_field,
+        msh,
+        cell_tags,
+        comm,
+        REFERENCE_QUADRATURE_DEGREE_CHECK,
+    )
+
+    # Negative control: the quasi-static uniform interior field, x̂-directed,
+    # integrated over the same region with the same σ.
+    e_qs = series.quasistatic_internal_field()
+    e_qs_vector = ufl.as_vector(
+        [
+            fem.Constant(msh, dolfinx.default_scalar_type(e_qs)),
+            fem.Constant(msh, dolfinx.default_scalar_type(0.0)),
+            fem.Constant(msh, dolfinx.default_scalar_type(0.0)),
+        ]
+    )
+    p_quasistatic = _ohmic_power(
+        e_qs_vector,
+        fields.sigma_field,
+        msh,
+        cell_tags,
+        comm,
+        REFERENCE_QUADRATURE_DEGREE,
+    )
+
+    one = fem.Constant(msh, dolfinx.default_scalar_type(1.0))
+    volume = float(
+        np.real(
+            _integrate_over_sphere(
+                one, msh, cell_tags, comm, REFERENCE_QUADRATURE_DEGREE
+            )
+        )
+    )
+
+    return {
+        "ncells": ncells,
+        "p_fem": p_fem,
+        "p_series": p_series,
+        "p_series_check": p_series_check,
+        "p_quasistatic": p_quasistatic,
+        "volume": volume,
+    }
+
+
+@complex_only
+@pytest.mark.integration
+def test_lossy_sphere_ohmic_power_matches_full_wave_series_at_64mhz():
+    """``½∫σ|E|²`` over the sphere matches the series integral to < 5%.
+
+    This is the volume integral any Larmor-regime SAR number routes through
+    (`MAT-4`).  It gates the integral only: no mass averaging, no C95.3
+    wording, and `MAT-4`/`TH-10` both stay 🟡 on the strength of it.
+    """
+    comm = MPI.COMM_WORLD
+    series = _series(FREQUENCY_64_HZ)
+
+    rungs = [_power_rung(series, hs, hf) for hs, hf in RESOLUTIONS_64]
+    for rung in rungs:
+        rung["error"] = abs(rung["p_fem"] - rung["p_series"]) / rung["p_series"]
+        rung["qs_miss"] = (
+            abs(rung["p_quasistatic"] - rung["p_series"]) / rung["p_series"]
+        )
+    fine = rungs[-1]
+
+    volume_exact = 4.0 / 3.0 * np.pi * SPHERE_RADIUS**3
+    p_exact_ball = _exact_sphere_series_power(series, SALINE_SIGMA, n_radial=24)
+    p_exact_ball_check = _exact_sphere_series_power(series, SALINE_SIGMA, n_radial=32)
+
+    if comm.rank == 0:
+        print(
+            f"\n[TH-10 4] ohmic power in the lossy saline sphere, "
+            f"a = {SPHERE_RADIUS} m, eps_r = {SALINE_EPSILON_R}, "
+            f"sigma = {SALINE_SIGMA} S/m, f = {FREQUENCY_64_HZ / 1e6:.0f} MHz, "
+            f"|m|k0a = {abs(series.m) * series.size_parameter:.6g}"
+        )
+        print(
+            f"  reference (exact ball, numpy Gauss product quadrature): "
+            f"P_series = {p_exact_ball:.9e} W "
+            f"(n_radial 24 -> 32: {p_exact_ball_check:.9e} W, "
+            f"drift {abs(p_exact_ball_check - p_exact_ball) / p_exact_ball:.2e})"
+        )
+        for (hs, _), rung in zip(RESOLUTIONS_64, rungs):
+            print(
+                f"  h_sphere = {hs:.5f} ({rung['ncells']:7d} cells): "
+                f"P_FEM = {rung['p_fem']:.9e} W, "
+                f"P_series(meshed) = {rung['p_series']:.9e} W "
+                f"=> error {rung['error']:.3%}; "
+                f"P_quasistatic = {rung['p_quasistatic']:.9e} W "
+                f"=> miss {rung['qs_miss']:.3%}; "
+                f"V_mesh/V_exact = {rung['volume'] / volume_exact:.6f}, "
+                f"P_series(meshed)/P_series(exact ball) = "
+                f"{rung['p_series'] / p_exact_ball:.6f}"
+            )
+        print(
+            f"  quadrature degree {REFERENCE_QUADRATURE_DEGREE} "
+            f"(the MAT-4 step-2 measured degree); recomputed at "
+            f"{REFERENCE_QUADRATURE_DEGREE_CHECK} the meshed series power moves "
+            f"{abs(fine['p_series_check'] - fine['p_series']) / fine['p_series']:.2e} "
+            f"at the fine rung"
+        )
+
+    assert fine["error"] < OHMIC_POWER_BOUND, (
+        f"total ohmic power from the FEM solve is {fine['p_fem']:.6e} W against "
+        f"the series integral {fine['p_series']:.6e} W over the same meshed "
+        f"sphere — off by {fine['error']:.2%}, outside the "
+        f"{OHMIC_POWER_BOUND:.0%} band (PROJECT_PLAN §9 item 5). The interior "
+        f"*field* gate passes at this rung, so a miss here points at the "
+        f"integration path — cell-tag restriction, measure, quadrature degree — "
+        f"before it points at the solver"
+    )
+    assert fine["qs_miss"] > QUASISTATIC_POWER_MISS_FLOOR, (
+        f"the quasi-static uniform-field power route gives "
+        f"{fine['p_quasistatic']:.6e} W against the series "
+        f"{fine['p_series']:.6e} W, a miss of only {fine['qs_miss']:.2%} — under "
+        f"the {QUASISTATIC_POWER_MISS_FLOOR:.0%} floor. If quasi-statics can "
+        f"reproduce this integral, the gate above is not discriminating between "
+        f"a Larmor-regime solve and TH-8 physics"
+    )
 
 
 @complex_only

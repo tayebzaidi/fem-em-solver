@@ -2602,9 +2602,14 @@ numbers, revert nothing silently, stop.
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | 🟡 | standard |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)** 🟡
-*(steps 1–3 ✅ 2026-08-13; the interior field is gated against the series at
-**both** Larmor frequencies — 3.643% at 64 MHz, 1.826% at 128 MHz. Step 4's
-∫σ|E|² is what stands between this and any SAR wording.)*
+*(steps 1–4 ✅ 2026-08-13; the interior field is gated against the series at
+**both** Larmor frequencies — 3.643% at 64 MHz, 1.826% at 128 MHz — and the
+SAR-relevant volume integral ½∫σ|E|² to 3.629% at 64 MHz, with the
+quasi-static power route missing by 58.1%. All four scoped steps are green;
+the chunk stays 🟡 only because its one unscoped item, the coil-loading trend
+across the eddy→displacement transition, has not been dispositioned by a
+review. No SAR *wording* follows yet: this gates the volume integral, not
+mass averaging or C95.3.)*
 *(opened 2026-08-12, 18:00 daily review, per §10 subgoal 3's standing
 instruction — "the daily review should start breaking this down as the port
 lineage clears, and a §7 chunk ID should exist by the next weekly review".
@@ -2725,10 +2730,45 @@ and the pair gate is queued — which is the condition §10 named.)*
 >   independent full-wave anchor at **both** Larmor frequencies, the
 >   condition §10 subgoal 3 names. It still licenses no SAR number (step 4's
 >   ∫σ|E|²) and no coil-loading claim; `TH-10` stays 🟡 pending step 4.
-> * **Step 4 — the SAR-relevant integral** ⬜ *(scoped 2026-08-13; §9
->   item 5, rides step 2's fixture).* ½∫σ|E|² over the sphere from the FEM
->   solve vs the same integral of the series interior field — the volume
->   integral `MAT-4`'s Larmor licence eventually routes through.
+> * **Step 4 — the SAR-relevant integral** ✅ **2026-08-13 (12:00 run)**.
+>   Both gates green first run at the bounds §9 item 5 stated before the
+>   run, exit 0, **30 s** for the whole file, `-n 2`, standard tier
+>   (`20260813T170337Z_TH-10-step4-power-n2.log`). ½∫σ|E|² over the sphere
+>   at 64 MHz, on step 2's two rungs and its σ field:
+>   **P_FEM vs the series integral 8.387% (5 866 cells) → 3.629%
+>   (17 670 cells)** — under the 5% band and decreasing. Negative control:
+>   the quasi-static uniform-field power route misses the series integral by
+>   **58.14%** against the > 50% floor (P_qs = 4.464e-08 W vs
+>   P_series = 1.066e-07 W; quasi-statics under-predicts the absorbed power
+>   by a factor 2.4 at the 1.5 T Larmor frequency — the §2.1 extrapolation
+>   priced in watts rather than volts).
+>   **What the reference is, precisely.** The gated comparison integrates the
+>   series interior field over the *same meshed* sphere cells with the *same*
+>   DG0 σ field and the same measure, so the only thing differing between the
+>   two integrals is `E`. That matters: the meshed sphere holds
+>   **V_mesh/V_exact = 0.9898** at the fine rung and carries
+>   **98.59%** of the exact-ball power, so scoring the FEM against an
+>   exact-ball reference would have folded a 1.4% geometry defect into a 5%
+>   field band. The exact-ball value is computed independently anyway (numpy
+>   Gauss-Legendre product quadrature, r × cosθ × φ) and printed as a read:
+>   **1.081637779e-07 W**, drift **2.45e-16** between 24 and 32 radial nodes,
+>   i.e. converged. Quadrature degree is **12** (`MAT-4` step 2's measured
+>   degree, stated in the log per the latent-degree lesson); recomputing the
+>   reference at degree 16 moves it **6.11e-14** relative, so the degree is
+>   not load-bearing here.
+>   **The number worth carrying:** the power error (3.629%) lands essentially
+>   *on* the field relL2 (3.643%), not at twice it. Squaring a field error
+>   need not double the functional error — here the interior error is
+>   dominantly a phase/sign-varying component that |E|² is insensitive to, and
+>   the residual level is the same ~3% floor step 3 traced to geometry rather
+>   than wavelength. Read, not gated.
+>   **Where the claim now stands:** the volume integral every SAR number
+>   routes through is gated against an independent full-wave anchor in the
+>   Larmor regime. It gates the *integral only* — no mass averaging, no
+>   C95.3 wording, no coil. `MAT-4` stays 🟡 and `TH-10` stays 🟡 pending a
+>   review's read on whether its remaining unscoped item (the coil-loading
+>   trend across the eddy→displacement transition) belongs to this chunk or
+>   to a successor; all four scoped steps are now ✅.
 > * **Still unscoped:** the coil-loading trend across the
 >   eddy→displacement transition (`MAT-6`'s ΔR machinery) — after the
 >   sphere gates, not before.
@@ -8614,9 +8654,23 @@ mutually independent.** Item 5 is the declared spare.
    becomes the only route; report the measured error and cost beside
    the prediction, annotate, stop.
 
-5. **`TH-10` step 4 — the SAR-relevant integral at 64 MHz (standard;
-   depends on item 1 landing — if it did not land, stop and journal
-   per the drain rule; the declared spare).** On item 1's fine-rung
+5. ~~**`TH-10` step 4 — the SAR-relevant integral at 64 MHz**~~ — **done
+   2026-08-13 (12:00 run)**, both gates green first run at the **unmoved**
+   bounds: ½∫σ|E|² FEM-vs-series **8.387% (5 866 cells) → 3.629%
+   (17 670 cells)** (< 5%, decreasing), quasi-static power route missing by
+   **58.14%** against the > 50% floor, exit 0, 30 s for the whole file, `-n 2`
+   (`20260813T170337Z_TH-10-step4-power-n2.log`); the same run reproduced
+   both field gates digit-for-digit through the refactored solve helper.
+   **The reference is mesh-consistent by construction** — series field
+   integrated over the *same* meshed cells with the *same* σ field, because
+   the meshed sphere carries only 98.59% of the exact-ball power
+   (V_mesh/V_exact = 0.9898); the exact-ball value is computed independently
+   in numpy (1.081637779e-07 W, quadrature drift 2.45e-16) and printed as a
+   read. Quadrature degree 12, stated in the log; degree 16 moves it 6.11e-14.
+   **Read worth carrying:** the power error lands *on* the field relL2
+   (3.629% vs 3.643%), not at twice it. `TH-10`'s four scoped steps are all
+   ✅; the chunk stays 🟡 pending a review's disposition of its one unscoped
+   item, and `MAT-4` stays 🟡. Original text follows. On item 1's fine-rung
    fixture: ½∫σ|E|² over the sphere from the FEM solve
    (cell-tag-restricted `assemble_scalar`, **allreduced**) vs the same
    integral of the series interior field evaluated at quadrature

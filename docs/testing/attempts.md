@@ -11522,3 +11522,86 @@ rising with refinement — a pre-asymptotic signature that, if real, means the
 
 **No denials, no known-issues entries.** Nothing unrelated failed.
 
+
+---
+
+## 2026-08-13T17:10Z — `TH-10` step 4 (§9 item 5) — **complete**
+
+Scheduled implementer run, 12:00 CDT slot. Preflight clean: tree clean on
+`main` at `5a7c641`, container Up 35 h, no `recovered/*`. Items 1–4 of the
+On-deck queue were already done, so this run took **item 5**, the declared
+spare — `TH-10` step 4, the SAR-relevant volume integral at 64 MHz. Its stated
+precondition (item 1's fixture landing) was met.
+
+**Outcome: both gates green on the first run, at the bounds the item stated
+before the run.** Exit 0, **30 s** for the whole file, `-n 2`, standard tier —
+`20260813T170337Z_TH-10-step4-power-n2.log`, 7 passed (2 environment + 2
+prior field gates + the new one, plus the environment file's other cases).
+
+**Measured.** ½∫σ|E|² over the sphere, step 2's two rungs, a = 0.05 m,
+εᵣ = 78, σ = 0.5 S/m, f = 64 MHz, |m|k₀a = 0.850029:
+
+| rung | cells | P_FEM [W] | P_series (meshed) [W] | error | qs miss | V_mesh/V_exact |
+|---|---|---|---|---|---|---|
+| h = 0.01250 | 5 866 | 1.136925634e-07 | 1.048951142e-07 | **8.387%** | 57.984% | 0.977179 |
+| h = 0.00833 | 17 670 | 1.105143259e-07 | 1.066439182e-07 | **3.629%** | 58.140% | 0.989786 |
+
+Gates: fine-rung error **3.629% < 5%** and decreasing; quasi-static
+uniform-field power route misses by **58.14% > 50%** (P_qs = 4.464133865e-08 W
+— quasi-statics under-predicts absorbed power by 2.4× at 64 MHz, which is the
+§2.1 extrapolation priced in watts instead of volts). Neither bound moved.
+
+**Reference design, and why it is not the exact ball.** The gated reference
+integrates `LossySphereSeries.internal_field` over the *same meshed sphere
+cells*, with the *same* DG0 σ field and measure, so `E` is the only thing that
+differs. The meshed sphere holds V_mesh/V_exact = 0.9898 and carries
+**98.59%** of the exact-ball power at the fine rung — scoring against the
+exact ball would have spent 1.4 pp of a 5% band on a geometry defect that has
+nothing to do with the solver. The exact-ball integral is computed anyway,
+independently of dolfinx (numpy Gauss-Legendre product quadrature in
+r × cosθ × φ): **1.081637779e-07 W**, drift **2.45e-16** between 24 and 32
+radial nodes. Quadrature degree **12** (`MAT-4` step 2's measured degree),
+stated in the log per the latent-degree lesson; recomputing the reference at
+degree 16 moves it 6.11e-14 relative.
+
+**The read worth carrying.** The power error lands essentially *on* the field
+relL2 (3.629% vs 3.643% at the same rung), not at twice it as squaring would
+naively suggest. So the interior error is dominantly a component |E|² is
+insensitive to (phase / sign-varying), consistent with step 3's finding that
+the ~3% level is a geometry floor rather than a resolution one. Printed, not
+gated.
+
+**Code landed with the run.** `tests/validation/test_lossy_sphere_fullwave.py`
+gains `_mesh_and_solve` (the mesh+solve extracted from `_solve`, so the field
+and power gates demonstrably ride the same fixture rather than two copies of
+it), the numpy exact-ball quadrature, and the step-4 test. The refactor moved
+nothing: the same command reproduced both field gates digit-for-digit
+(64 MHz 8.154% → 3.643%, separation 18.68×; 128 MHz unchanged and green).
+Trap hit and handled: the series is written in spherical coordinates and
+raises at r = 0, which the mesh has a node at — the interpolant evaluates
+those points 1 nm off axis (|m|k₀·1e-9 ≈ 2e-8 rad, below round-off).
+Interpolation is restricted to the tagged sphere cells.
+
+**Scope held.** The integral only: no mass averaging, no C95.3 wording, no
+coil. `MAT-4` stays 🟡; `TH-10` stays 🟡 — all four of its scoped steps are now
+✅ and the only thing left in its entry is the unscoped coil-loading trend
+across the eddy→displacement transition.
+
+**For the review.** (1) The On-deck queue is now **fully drained** — all five
+items done, four of them this cycle. Per the drain rule this run stops here
+rather than improvising a sixth. (2) `TH-10`'s disposition is a decision:
+every scoped step is green, so either the chunk closes ✅ with the
+coil-loading trend moved to a successor chunk, or that trend is scoped into it
+as step 5. (3) The three ~3% residuals now on record — 64 MHz field 3.643%,
+128 MHz 1.826%, power 3.629% — point at one shared floor (sphere faceting /
+exterior discretisation), which is the same shape as `MAG-13`'s CG1 floor and
+is worth a single scoping decision rather than two.
+
+**Hypothesis for the next attempt on this family.** If the ~3% floor is
+faceting, a single rung with the sphere surface refined *without* refining the
+interior (graded sizing, `GEO-4`'s machinery) should move all three numbers
+together and by more than an isotropic refinement of the same cost — that is
+the cheapest discriminator, and it prices the same graded-sizing question
+`MAG-13` and the birdcage prerequisite are both waiting on.
+
+**No denials, no known-issues entries.** Nothing unrelated failed.
