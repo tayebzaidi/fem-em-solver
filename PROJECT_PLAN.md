@@ -2549,9 +2549,10 @@ numbers, revert nothing silently, stop.
 | `TH-7` | **Validation: waveguide cutoff / coaxial line** | ✅ | standard |
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ✅ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
-| `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ⬜ | standard |
+| `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | 🟡 | standard |
 
-**`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)** ⬜
+**`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)** 🟡
+*(step 1 ✅ 2026-08-13; the anchor exists, no solve has been gated against it)*
 *(opened 2026-08-12, 18:00 daily review, per §10 subgoal 3's standing
 instruction — "the daily review should start breaking this down as the port
 lineage clears, and a §7 chunk ID should exist by the next weekly review".
@@ -2566,7 +2567,44 @@ and the pair gate is queued — which is the condition §10 named.)*
 > is order-one (saline εᵣ ≈ 78, σ ≈ 0.5–0.7 S/m at 64/128 MHz) and the
 > quasi-static approximation `TH-8` gated is no longer valid.
 >
-> * **Step 1 — author the anchor (zero-solve, smoke).** Queued as §9
+> * **Step 1 — author the anchor (zero-solve, smoke).** ✅ **2026-08-13
+>   (00:00 run)**. `LossySphereSeries` + `complex_permittivity` are in
+>   `utils/analytical.py`: the Mie series (Bohren & Huffman ch. 4,
+>   eqs. 4.37/4.40/4.45/4.50/4.53) imported into the `e^{+jωt}` convention
+>   **by conjugating both `ε_c` and the field**, with special functions per
+>   Jin App. E.2 (eqs. E.24–E.31) — `scipy.special.jv(n+½, ·)` for the complex
+>   interior argument, since `spherical_jn` rejects complex. Interior,
+>   incident, scattered and piecewise-total fields are all exposed; the total
+>   field is the callable a later step drives the box wall with, as `TH-8`
+>   does. **6/6 gates, exit 0, 1 s, `-n 1`**
+>   (`20260813T050847Z_TH-10.log`): empty limit **1.998e-15** (and `c_n = d_n
+>   = 1` to **0.000e+00** — the Wronskian collapse, exact); quasi-static tie to
+>   `TH-8` **0.0151%**; the same on the imaginary axis of `ε_c` **0.0083%**;
+>   tangential-`E` continuity at `r = a` **2.4e-14** at 64/128 MHz (the only
+>   gate that touches `a_n`/`b_n`, and a *full-wave* identity — it needs no
+>   quasi-static limit); conjugated-convention control **173.8%**, i.e.
+>   **2.1e+04×** the spec error; truncation drift at `N+6` **9.7e-17**.
+>   **The quasi-static gate is aimed at the mean, and both retardation orders
+>   are gated, because the first attempt measured why:** pointwise the series
+>   misses `3E₀/(εᵣ+2)` by **3.52e-02** at the `TH-8` fixture — a linear
+>   interior phase ramp `e^{−j k_in z}` that the closed form has no term for —
+>   falling at **rate 1.0002** in `|m|k₀a` over three radius halvings, while
+>   the mean (`TH-8`'s own gated `ez_mean`) falls at **rate 1.9684** from
+>   1.5e-04. `TH-8`'s fixture comment ("the retardation correction the closed
+>   form drops is O((k_in R)²) ≈ 0.2%") is thereby **confirmed for its mean and
+>   shown to be wrong pointwise** — a note for whoever next reads that fixture,
+>   not a defect in it, since `TH-8` asserts on the mean. The lossy sweep
+>   reproduces both rates (1.9003 / 1.0001) on the imaginary axis.
+>   **The reading `TH-10` exists for** (printed, ungated): the saline sphere's
+>   full-wave interior field departs from the quasi-static value by **102.3%**
+>   at 64 MHz and **154.6%** at 128 MHz (a = 0.05 m, εᵣ = 78, σ = 0.5 S/m,
+>   `|m|k₀a` = 0.85 / 1.37). That is the size of the extrapolation §2.1 flags —
+>   at the Larmor frequencies the quasi-static answer is not a correction away
+>   from the truth, it is the wrong answer. **For the review:** the anchor is
+>   self-consistent and limit-correct, but nothing has yet compared it to an
+>   *independent* implementation or to a solve; step 2 is where it earns
+>   trust as a gate. Probe: `scripts/probes/th10_step1_sphere_series.py`.
+>   *Original step text follows.* Queued as §9
 >   item 4, 2026-08-12 18:00: implement the series solution in
 >   `utils/analytical.py` (complex `ε_c = εᵣ − j·σ/(ωε₀)`, the `TH-1`
 >   `e^{+jωt}` convention) with a self-check probe through the harness.
@@ -8415,7 +8453,22 @@ outlast items 1–4.
    step 2b, stop; the graded-route re-derivation question goes to the
    weekly review either way.
 
-4. **`TH-10` step 1 — author the Larmor anchor: lossy dielectric sphere
+4. ~~**`TH-10` step 1 — author the Larmor anchor**~~ — **done 2026-08-13
+   (00:00 run)**, §7 `TH-10` step 1. `LossySphereSeries` lands in
+   `utils/analytical.py`; **6/6 gates, exit 0, 1 s, `-n 1`**;
+   `20260813T050847Z_TH-10.log`. Empty limit 1.998e-15 with `c_n = d_n = 1`
+   exact; quasi-static tie to `TH-8` 0.0151% and 0.0083% on the imaginary
+   axis; tangential-`E` continuity 2.4e-14 at 64/128 MHz; conjugated-
+   convention control 173.8% = 2.1e+04× the spec error; truncation drift
+   9.7e-17 at `N+6`. **The gate had to be re-aimed, by measurement:** the
+   *pointwise* quasi-static miss at the `TH-8` fixture is 3.52e-02 — a linear
+   interior phase ramp at **rate 1.0002** in `|m|k₀a` over three halvings,
+   while the mean (what `TH-8` itself asserts on) falls at **rate 1.9684**
+   from 1.5e-04. Both rates are gated, so the anchor is shown to *limit to*
+   the validated closed form rather than merely sit near it; no bound was
+   loosened. Ungated reading: the saline sphere's interior field departs from
+   quasi-static by **102.3% / 154.6%** at 64/128 MHz — the size of the §2.1
+   extrapolation. *Original item text follows.* **author the Larmor anchor: lossy dielectric sphere
    series solution (smoke; zero-solve; independent; opens §10 subgoal
    3).** Implement in `utils/analytical.py` the full-wave series
    solution for a lossy dielectric sphere (complex

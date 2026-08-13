@@ -1,0 +1,57 @@
+# Test Run
+- Chunk: TH-10
+- Commit: cb63ac1ba279df69f20a89a5b9c2e9b8ae0ec92f
+- Time (UTC): 2026-08-13 05:05:37
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 30 python3 scripts/probes/th10_step1_sphere_series.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 13 00:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 30 python3 scripts/probes/th10_step1_sphere_series.py'\'''
+[TH-10 1] lossy dielectric sphere, full-wave series anchor (smoke, -n 1, zero-solve)
+[TH-10 1] empty limit  : a = 0.05 m, f = 64 MHz, eps_c = 1-0j, m = 1+0j, k0a = 0.067067, |m|k0a = 0.067067, N = 4, last-term bound = 4.500e-01
+[TH-10 1]   internal series vs E0 x_hat e^(-j k0 z): rel 4.845e-09; max|c_n-1|,|d_n-1| = 0.000e+00
+[TH-10 1] TH-8 fixture : a = 0.05 m, f = 4.771 MHz, eps_c = 78-0j, m = 8.83176+0j, k0a = 0.005, |m|k0a = 0.0441588, N = 4, last-term bound = 7.397e-05
+[TH-10 1]   E_in/E0 = 0.037506-0.000000j vs TH-8 closed form 3/(eps+2) = 0.037500+0.000000j; rel 3.519% (bound 0.50%), spatial spread 1.969e-05
+[TH-10 1] lossy QS     : a = 0.002 m, f = 64 MHz, eps_c = 78-140.43j, m = 10.9233+6.428j, k0a = 0.00268268, |m|k0a = 0.0340012, N = 4, last-term bound = 1.744e-05
+[TH-10 1]   E_in/E0 = 0.009190+0.016128j vs 3/(eps_c+2) = 0.009188+0.016129j (|.| 0.018562, arg 60.331 deg); rel 3.908% (bound 0.50%)
+[TH-10 1]   negative control (eps_c = eps_r + j sigma/(w eps0)): E_in/E0 = 0.009190-0.016129j, rel 177.451% = 45.4x the spec error
+[TH-10 1] saline 64 MHz: a = 0.05 m, f = 64 MHz, eps_c = 78-140.43j, m = 10.9233+6.428j, k0a = 0.067067, |m|k0a = 0.850029, N = 7, last-term bound = 5.157e-09
+[TH-10 1]   tangential-E jump at r=a 2.384e-14; truncation drift at N+6 9.732e-17; READING full-wave vs quasi-static interior departure 102.349% (ungated)
+[TH-10 1] saline 128 MHz: a = 0.05 m, f = 128 MHz, eps_c = 78-70.2152j, m = 9.56422+3.67073j, k0a = 0.134134, |m|k0a = 1.37413, N = 8, last-term bound = 2.027e-09
+[TH-10 1]   tangential-E jump at r=a 1.118e-14; truncation drift at N+6 5.195e-17; READING full-wave vs quasi-static interior departure 154.550% (ungated)
+[TH-10 1] GATES (exit code is gated on these, and on nothing else):
+    GATE 1 empty limit             FAIL  (field 4.845e-09 < 1e-12 and coefficients 0.000e+00 < 1e-13)
+    GATE 2 quasi-static (TH-8)     FAIL  (3.519% vs 0.50% bound)
+    GATE 3 quasi-static (lossy)    FAIL  (3.908% vs 0.50% bound)
+    GATE 4 tangential continuity   PASS  (max 2.384e-14 < 1e-10 over 2 frequencies)
+    GATE 5 conjugated control      FAIL  (177.451% > 10% and 45.4x > 100x the spec error)
+    GATE 6 truncation stability    PASS  (max 9.732e-17 < 1e-10 at N+6)
+[TH-10 1] OVERALL: 2/6 gates pass -> exit 1
+
+## Exit
+- Status: 1
+- Elapsed (s): 4

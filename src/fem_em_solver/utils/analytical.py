@@ -386,6 +386,342 @@ class AnalyticalSolutions:
         return B1 + B2
 
 
+def complex_permittivity(
+    epsilon_r: float, sigma: float, frequency_hz: float, conjugate: bool = False
+) -> complex:
+    """``ε_c = εᵣ − j·σ/(ωε₀)`` in the project's ``e^{+jωt}`` convention.
+
+    ``conjugate=True`` returns the wrong-sign value ``εᵣ + j·σ/(ωε₀)`` and
+    exists only so a negative control can pass it deliberately (`TH-1`
+    formulation note: the sign convention is part of the spec).
+    """
+    from .constants import EPSILON_0
+
+    omega = 2.0 * np.pi * frequency_hz
+    loss = sigma / (omega * EPSILON_0)
+    return complex(epsilon_r, loss if conjugate else -loss)
+
+
+class LossySphereSeries:
+    """Full-wave series solution for a lossy dielectric sphere in a plane wave.
+
+    ``TH-10`` step 1 anchor.  The sphere of radius ``a`` and complex relative
+    permittivity ``ε_c`` sits in free space; the incident wave travels along
+    ``+z`` and is polarised along ``x``.  In the project's ``e^{+jωt}``
+    convention (``TH-1`` formulation note) that incident field is
+
+        E_inc(r) = E₀ x̂ · e^{−j k₀ z},      ε_c = εᵣ − j·σ/(ωε₀)
+
+    and the interior/scattered fields are the classical Mie series.  Textbook
+    Mie theory (Bohren & Huffman, *Absorption and Scattering of Light by Small
+    Particles*, ch. 4, eqs. 4.37/4.40/4.45/4.50/4.53) is written in the
+    ``e^{−iωt}`` convention, where the lossy permittivity is
+    ``εᵣ + i·σ/(ωε₀)``.  **This class evaluates the textbook series with the
+    conjugated permittivity and conjugates the resulting field**, which is the
+    convention import the ``TH-1`` note demands; the conjugated-convention
+    evaluation is available as ``conjugate_convention=True`` purely as a
+    negative control and is *not* physical here.  Special-function definitions
+    and the Wronskian follow Jin, *The FEM in Electromagnetics* 3rd ed.,
+    App. E.2 (spherical Bessel/Hankel functions, eqs. E.24–E.31); the FEM-side
+    dielectric-sphere scattering fixture this anchors is Jin §9.4 (Fig. 9.11).
+
+    Only ``numpy``/``scipy`` — no mesh, no DolfinX.
+
+    Notes
+    -----
+    ``scipy.special.spherical_jn`` rejects complex arguments, so the interior
+    radial functions go through ``scipy.special.jv(n+½, z)``, which does not:
+    ``j_n(z) = √(π/2z)·J_{n+½}(z)``.  The exterior argument ``k₀r`` is real.
+    """
+
+    def __init__(
+        self,
+        radius: float,
+        epsilon_c: complex,
+        frequency_hz: float,
+        e0: float = 1.0,
+        n_terms: int = None,
+        conjugate_convention: bool = False,
+    ):
+        from .constants import EPSILON_0, MU_0
+
+        if radius <= 0.0:
+            raise ValueError("radius must be positive")
+        if frequency_hz <= 0.0:
+            raise ValueError("frequency_hz must be positive")
+
+        self.radius = float(radius)
+        self.frequency_hz = float(frequency_hz)
+        self.e0 = float(e0)
+        self.conjugate_convention = bool(conjugate_convention)
+
+        # e^{+jωt} spec value, kept for reporting.
+        self.epsilon_c = complex(epsilon_c)
+        # Textbook (e^{-iωt}) permittivity.  The negative control skips the
+        # conjugation, i.e. evaluates the series as if ε_c = εᵣ + jσ/(ωε₀).
+        self.epsilon_c_textbook = (
+            self.epsilon_c if conjugate_convention else np.conj(self.epsilon_c)
+        )
+
+        omega = 2.0 * np.pi * self.frequency_hz
+        self.k0 = omega * np.sqrt(MU_0 * EPSILON_0)
+        # Relative refractive index m = k_in/k₀ = √ε_c, principal branch with
+        # Re m > 0 (the physical root for a passive medium in this convention).
+        m = np.sqrt(complex(self.epsilon_c_textbook))
+        self.m = m if m.real >= 0.0 else -m
+
+        self.size_parameter = self.k0 * self.radius
+        self.n_terms = int(n_terms) if n_terms is not None else self._wiscombe_n()
+        if self.n_terms < 1:
+            raise ValueError("n_terms must be >= 1")
+
+        self._coefficients = self._mie_coefficients()
+
+    # ------------------------------------------------------------------ setup
+
+    def _wiscombe_n(self) -> int:
+        """Wiscombe's truncation ``x + 4x^{1/3} + 2`` on the larger of the two
+        size parameters ``k₀a`` and ``|m|k₀a``, floored at 4 terms."""
+        x = max(self.size_parameter, abs(self.m) * self.size_parameter)
+        return int(max(4, np.ceil(x + 4.0 * x ** (1.0 / 3.0) + 2.0)))
+
+    @staticmethod
+    def _sph_jn(n: np.ndarray, z):
+        """``j_n(z)`` for complex ``z`` via ``J_{n+½}``."""
+        from scipy.special import jv
+
+        z = np.asarray(z, dtype=complex)
+        return np.sqrt(np.pi / (2.0 * z)) * jv(n + 0.5, z)
+
+    @staticmethod
+    def _sph_h1(n: np.ndarray, z):
+        """``h_n^{(1)}(z) = √(π/2z)·H^{(1)}_{n+½}(z)`` (Jin App. E, eq. E.28)."""
+        from scipy.special import hankel1
+
+        z = np.asarray(z, dtype=complex)
+        return np.sqrt(np.pi / (2.0 * z)) * hankel1(n + 0.5, z)
+
+    @classmethod
+    def _riccati(cls, n_max: int, z, kind: str):
+        """Riccati-Bessel ``ψ_n(z) = z·j_n(z)`` / ``ξ_n(z) = z·h_n^{(1)}(z)``
+        and its derivative, for ``n = 1…n_max``.
+
+        The derivative uses the standard downward relation
+        ``ψ_n'(z) = ψ_{n-1}(z) − n·ψ_n(z)/z`` (Jin App. E, eq. E.30 applied to
+        the Riccati form), which needs the ``n = 0`` value as well.
+        """
+        z = np.asarray(z, dtype=complex)
+        orders = np.arange(0, n_max + 1)
+        shape = (n_max + 1,) + z.shape
+        zz = np.broadcast_to(z, shape)
+        nn = orders.reshape((-1,) + (1,) * z.ndim)
+        radial = cls._sph_jn(nn, zz) if kind == "j" else cls._sph_h1(nn, zz)
+        psi = zz * radial
+        d_psi = psi[:-1] - nn[1:] * psi[1:] / zz[1:]
+        return psi[1:], d_psi  # both indexed n = 1…n_max
+
+    def _mie_coefficients(self) -> dict:
+        """``a_n, b_n`` (scattered) and ``c_n, d_n`` (internal), B&H eq. 4.53.
+
+        For ``m = 1`` the numerators reduce to the Wronskian
+        ``ψ_nξ_n' − ξ_nψ_n' = i`` and ``c_n = d_n = 1`` exactly — that identity
+        is what the empty-limit gate exercises.
+        """
+        n_max = self.n_terms
+        x = np.array([self.size_parameter], dtype=complex)
+        m = self.m
+
+        psi_x, dpsi_x = self._riccati(n_max, x, "j")
+        xi_x, dxi_x = self._riccati(n_max, x, "h1")
+        psi_mx, dpsi_mx = self._riccati(n_max, m * x, "j")
+
+        psi_x, dpsi_x = psi_x[:, 0], dpsi_x[:, 0]
+        xi_x, dxi_x = xi_x[:, 0], dxi_x[:, 0]
+        psi_mx, dpsi_mx = psi_mx[:, 0], dpsi_mx[:, 0]
+
+        a_n = (m * psi_mx * dpsi_x - psi_x * dpsi_mx) / (
+            m * psi_mx * dxi_x - xi_x * dpsi_mx
+        )
+        b_n = (psi_mx * dpsi_x - m * psi_x * dpsi_mx) / (
+            psi_mx * dxi_x - m * xi_x * dpsi_mx
+        )
+        wronskian = m * (psi_x * dxi_x - xi_x * dpsi_x)
+        c_n = wronskian / (psi_mx * dxi_x - m * xi_x * dpsi_mx)
+        d_n = wronskian / (m * psi_mx * dxi_x - xi_x * dpsi_mx)
+        return {"a": a_n, "b": b_n, "c": c_n, "d": d_n}
+
+    @property
+    def coefficients(self) -> dict:
+        return self._coefficients
+
+    def last_term_bound(self) -> float:
+        """``|E_N|·max(|c_N|,|d_N|)·|j_N(m k₀a)|/E₀`` — the dropped tail.
+
+        The radial factor is what actually kills the tail for a small sphere
+        (``j_N(z) ~ z^N/(2N+1)!!``), so leaving it out reports a bound of order
+        one for the empty limit and reads as alarming when the true tail is
+        ``1e-9``.  Printed rather than assumed: a sweep in ``n_terms`` is the
+        honest check, and this is the cheap companion to it.
+        """
+        n = self.n_terms
+        e_n = (2.0 * n + 1.0) / (n * (n + 1.0))
+        radial = abs(
+            complex(
+                self._sph_jn(
+                    np.array([n]), np.array([self.m * self.k0 * self.radius])
+                )[0]
+            )
+        )
+        return float(
+            e_n
+            * max(abs(self._coefficients["c"][-1]), abs(self._coefficients["d"][-1]))
+            * radial
+        )
+
+    # ------------------------------------------------------------------ fields
+
+    @staticmethod
+    def _angular_functions(n_max: int, mu: np.ndarray):
+        """``π_n(cosθ) = P_n¹/sinθ`` and ``τ_n = dP_n¹/dθ`` by upward recurrence
+        (B&H eq. 4.47); both are finite on the axis."""
+        pi_n = np.zeros((n_max + 1,) + mu.shape)
+        tau_n = np.zeros((n_max + 1,) + mu.shape)
+        pi_n[1] = 1.0
+        tau_n[1] = mu
+        for n in range(2, n_max + 1):
+            pi_n[n] = ((2 * n - 1) / (n - 1)) * mu * pi_n[n - 1] - (n / (n - 1)) * pi_n[
+                n - 2
+            ]
+            tau_n[n] = n * mu * pi_n[n] - (n + 1) * pi_n[n - 1]
+        return pi_n[1:], tau_n[1:]
+
+    def _spherical_frame(self, points: np.ndarray):
+        points = np.asarray(points, dtype=float)
+        if points.ndim != 2 or points.shape[1] != 3:
+            raise ValueError("points must have shape (n, 3)")
+        r = np.linalg.norm(points, axis=1)
+        if np.any(r < 1e-14):
+            raise ValueError(
+                "the series is evaluated in spherical coordinates; r = 0 is a "
+                "removable singularity that this implementation does not take "
+                "the limit of — offset the probe point"
+            )
+        mu = points[:, 2] / r
+        mu = np.clip(mu, -1.0, 1.0)
+        sin_theta = np.sqrt(np.maximum(0.0, 1.0 - mu**2))
+        phi = np.arctan2(points[:, 1], points[:, 0])
+        cos_phi, sin_phi = np.cos(phi), np.sin(phi)
+        e_r = np.stack(
+            [sin_theta * cos_phi, sin_theta * sin_phi, mu], axis=1
+        )
+        e_theta = np.stack(
+            [mu * cos_phi, mu * sin_phi, -sin_theta], axis=1
+        )
+        e_phi = np.stack([-sin_phi, cos_phi, np.zeros_like(phi)], axis=1)
+        return r, mu, sin_theta, cos_phi, sin_phi, e_r, e_theta, e_phi
+
+    def _series(self, points: np.ndarray, which: str) -> np.ndarray:
+        """Evaluate one of ``incident|internal|scattered`` at ``points``.
+
+        Returns the textbook (``e^{-iωt}``) field; the public methods conjugate.
+        """
+        n_max = self.n_terms
+        r, mu, sin_theta, cos_phi, sin_phi, e_r, e_theta, e_phi = (
+            self._spherical_frame(points)
+        )
+        pi_n, tau_n = self._angular_functions(n_max, mu)
+        n = np.arange(1, n_max + 1).reshape(-1, 1)
+
+        if which == "internal":
+            rho = self.m * self.k0 * r
+            psi, d_psi = self._riccati(n_max, rho, "j")
+            coeff_m, coeff_n = self._coefficients["c"], self._coefficients["d"]
+        elif which == "incident":
+            rho = (self.k0 * r).astype(complex)
+            psi, d_psi = self._riccati(n_max, rho, "j")
+            coeff_m = np.ones(n_max, dtype=complex)
+            coeff_n = np.ones(n_max, dtype=complex)
+        elif which == "scattered":
+            rho = (self.k0 * r).astype(complex)
+            psi, d_psi = self._riccati(n_max, rho, "h1")
+            coeff_m, coeff_n = self._coefficients["b"], self._coefficients["a"]
+        else:
+            raise ValueError(f"unknown series {which!r}")
+
+        z_n = psi / rho  # the radial function itself
+        d_n = d_psi / rho  # [ρ z_n(ρ)]'/ρ
+        e_n = 1j**n.astype(float) * self.e0 * (2.0 * n + 1.0) / (n * (n + 1.0))
+        coeff_m = coeff_m.reshape(-1, 1)
+        coeff_n = coeff_n.reshape(-1, 1)
+
+        # M_o1n and N_e1n, B&H eq. 4.50.
+        m_theta = cos_phi * pi_n * z_n
+        m_phi = -sin_phi * tau_n * z_n
+        n_r = cos_phi * n * (n + 1.0) * sin_theta * pi_n * z_n / rho
+        n_theta = cos_phi * tau_n * d_n
+        n_phi = -sin_phi * pi_n * d_n
+
+        if which == "scattered":
+            # E_s = Σ E_n (i a_n N^(3) − b_n M^(3));  coeff_m = b, coeff_n = a.
+            w_m, w_n = -coeff_m, 1j * coeff_n
+        else:
+            # E = Σ E_n (c_n M^(1) − i d_n N^(1)); incident is c = d = 1.
+            w_m, w_n = coeff_m, -1j * coeff_n
+
+        comp_r = np.sum(e_n * w_n * n_r, axis=0)
+        comp_theta = np.sum(e_n * (w_m * m_theta + w_n * n_theta), axis=0)
+        comp_phi = np.sum(e_n * (w_m * m_phi + w_n * n_phi), axis=0)
+
+        return (
+            comp_r[:, None] * e_r
+            + comp_theta[:, None] * e_theta
+            + comp_phi[:, None] * e_phi
+        )
+
+    def incident_field(self, points: np.ndarray) -> np.ndarray:
+        """Series form of the incident plane wave, shape (n, 3), complex."""
+        return np.conj(self._series(points, "incident"))
+
+    def incident_field_closed_form(self, points: np.ndarray) -> np.ndarray:
+        """``E₀ x̂ e^{−j k₀ z}`` — what the incident series must reproduce."""
+        points = np.asarray(points, dtype=float)
+        field = np.zeros((points.shape[0], 3), dtype=complex)
+        field[:, 0] = self.e0 * np.exp(-1j * self.k0 * points[:, 2])
+        return field
+
+    def internal_field(self, points: np.ndarray) -> np.ndarray:
+        """Interior field (valid for ``r < a``), shape (n, 3), complex."""
+        return np.conj(self._series(points, "internal"))
+
+    def scattered_field(self, points: np.ndarray) -> np.ndarray:
+        """Scattered field (valid for ``r > a``), shape (n, 3), complex."""
+        return np.conj(self._series(points, "scattered"))
+
+    def total_field(self, points: np.ndarray) -> np.ndarray:
+        """Piecewise total field: interior series inside, incident + scattered
+        outside.  This is the callable a later ``TH-10`` step drives the box
+        wall with, exactly as ``TH-8`` drives its box with the quasi-static
+        closed form."""
+        points = np.asarray(points, dtype=float)
+        r = np.linalg.norm(points, axis=1)
+        inside = r < self.radius
+        field = np.zeros((points.shape[0], 3), dtype=complex)
+        if np.any(inside):
+            field[inside] = self.internal_field(points[inside])
+        outside = ~inside
+        if np.any(outside):
+            field[outside] = self.incident_field(points[outside]) + (
+                self.scattered_field(points[outside])
+            )
+        return field
+
+    def quasistatic_internal_field(self) -> complex:
+        """``3E₀/(ε_c + 2)`` — the ``TH-8`` closed form continued onto the
+        imaginary axis of ``ε_c``.  The full-wave interior field must approach
+        this (uniform, x̂-directed) value as ``|m|k₀a → 0``."""
+        return 3.0 * self.e0 / (self.epsilon_c + 2.0)
+
+
 class ErrorMetrics:
     """Error metrics for comparing numerical and analytical solutions."""
     

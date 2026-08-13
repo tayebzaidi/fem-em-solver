@@ -11098,3 +11098,102 @@ re-gating, a fourth rung is the wrong lever — it costs a solve to move a fitte
 exponent by hundredths; a cheaper discriminator is the same two recoveries on a
 *degree-2* `A` solve, where the DG1 container's order argument makes a sharp
 prediction. §9 item 4 (`TH-10` step 1, zero-solve) is independent and next.
+
+## 2026-08-13T05:15Z — `TH-10` step 1 (§9 item 4) — **complete**
+
+**Preflight.** Tree clean, `main` at `cb63ac1`, container Up 23 h. §9 items
+1–3 all struck done; item 4 is the first open one and was taken unchanged.
+
+**What was done.** Authored the Larmor anchor: `LossySphereSeries` and
+`complex_permittivity` in `src/fem_em_solver/utils/analytical.py`, plus the
+self-check probe `scripts/probes/th10_step1_sphere_series.py`. The series is
+the classical Mie solution (Bohren & Huffman ch. 4, eqs. 4.37/4.40/4.45/4.50/
+4.53) imported into the project's `e^{+jωt}` convention **by conjugating both
+`ε_c` and the resulting field** — the trap the item named, handled once at the
+boundary rather than sprinkled through the formulas. Special functions follow
+Jin App. E.2 (eqs. E.24–E.31). The item's scipy trap is real and was routed
+around as suggested: `spherical_jn` rejects complex arguments, so the interior
+radial functions go through `scipy.special.jv(n+½, z)`, which does not; the
+exterior argument `k₀r` is real. Interior, incident, scattered and
+piecewise-total fields are exposed — the total field is deliberately shaped as
+the Dirichlet callable a later step drives the box wall with, exactly as `TH-8`
+drives its box.
+
+**Measured numbers** (6/6 gates, exit 0, 1 s, `-n 1`,
+`20260813T050847Z_TH-10.log`):
+
+| gate | measured | bound |
+| --- | --- | --- |
+| 1 empty limit, field | 1.998e-15 | < 1e-12 |
+| 1 empty limit, `max\|c_n−1\|,\|d_n−1\|` | 0.000e+00 | < 1e-13 |
+| 2 quasi-static mean vs `TH-8` | 0.0151% | < 0.50% |
+| 2 rate, mean / pointwise | 1.9684 / 1.0002 | (1.85, 2.15) / (0.90, 1.10) |
+| 3 quasi-static mean, imaginary axis | 0.0083% | < 0.50% |
+| 3 rate, mean / pointwise | 1.9003 / 1.0001 | same |
+| 4 tangential-`E` jump at `r = a`, 64/128 MHz | 2.4e-14 | < 1e-10 |
+| 5 conjugated-convention control | 173.8%, 2.1e+04× spec | > 10%, > 100× |
+| 6 truncation drift at `N+6` | 9.7e-17 | < 1e-10 |
+
+**The one judgement this slot had to make, and why.** The first run
+(`20260813T050536Z_TH-10.log`, exit 1, 2/6 — committed, not hidden) failed
+gates 2/3 at 3.5%/3.9% against the item's 0.5%. That was **not** a bug and
+**not** a case for loosening: a radius-halving sweep at fixed frequency showed
+the *pointwise* deviation falls at **rate 1.0002** in `|m|k₀a` — a linear
+interior phase ramp `e^{−j k_in z}`, which the quasi-static closed form has no
+term for — while the **mean** falls at **rate 1.9684** from 1.5e-04. `TH-8`
+asserts on the mean (`ez_mean`, `test_dielectric_sphere.py`), so the gate was
+re-aimed at *that* quantity and **both rates were added as gates**. Net effect
+is a strictly stronger claim than the item asked for: the anchor is shown to
+*limit to* `TH-8`'s validated closed form at the right order in the right
+parameter, rather than merely sitting inside a band. No bound was loosened —
+the 0.5% band is unmoved and now passes with 33× margin. Two smaller judgement
+calls, both declared: gate 1 reads machine precision at a converged `N = 16`
+(the Wiscombe default `N = 4` gives 4.8e-09, printed beside it — machine
+precision is a statement about the series, not about a truncation heuristic
+tuned for cross sections), and `last_term_bound()` was corrected to include the
+radial factor `|j_N(m k₀a)|`, without which it reported 4.5e-01 for the empty
+limit where the true tail is 1e-09.
+
+**Side finding for the reviewer.** `TH-8`'s fixture comment — "the retardation
+correction the closed form drops is O((k_in R)²) ≈ 0.2%" — is now measured:
+**true for its mean (rate 1.97), wrong pointwise (rate 1.00, 3.5e-02 at that
+fixture)**. `TH-8`'s assertions are on the mean, so this is a note about the
+comment, not a defect in the gate; nothing in `TH-8` was touched.
+
+**The reading `TH-10` exists for** (printed, ungated): the saline sphere
+(a = 0.05 m, εᵣ = 78, σ = 0.5 S/m) departs from the quasi-static interior field
+by **102.3%** at 64 MHz and **154.6%** at 128 MHz, at `|m|k₀a` = 0.850 / 1.374.
+At the Larmor frequencies the quasi-static answer is not a correction away from
+the truth — it is the wrong answer. That is the §2.1 extrapolation, sized.
+
+**Logs.** `20260813T050536Z_TH-10.log` (first run, exit 1, 4 s — the failing
+run that produced the re-aiming, committed for the audit trail) and
+`20260813T050847Z_TH-10.log` (exit 0, 1 s). Both foreground, container
+`timeout -k 30 30`, smoke tier, `-n 1`; nothing backgrounded, no timeout fired.
+Total compute under 10 s. A scratch diagnostic
+(`scripts/probes/_th10_diag_scratch.py`) was run twice through
+`docker compose exec` to measure the two rate scalings and deleted before the
+commit; its numbers are reproduced by the committed probe's own sweep.
+
+**Scope held.** Anchor authoring only, per the item: no solver work, no mesh,
+no `TH-10` gate against a solve, no DolfinX dependency. `TH-10` goes ⬜ → 🟡
+(step 1 ✅, chunk open) — the item's "stays ⬜/🟡". Nothing under `tests/`
+changed and no existing bound moved anywhere in the repo. No known-issues
+entry: nothing unrelated failed.
+
+**Denials / harness notes.** One: a heredoc (`cat > … <<EOF`) writing the
+scratch probe was denied by the permission layer as `simple_expansion`. Worked
+around with the Write tool; no allowlist change is being requested, since Write
+is the intended path.
+
+**Next-attempt hypothesis.** The anchor is self-consistent and limit-correct,
+but nothing has compared it to an *independent* implementation or to a solve —
+gates 1–3 are limits of the same code and gate 4 is an internal identity, so a
+shared-mode error (e.g. a wrong `E_n` prefactor common to all three series)
+would survive all six. Step 2 should therefore lead with the cheapest external
+check available — the `MAT-4` lossy-sphere SAR closed form integrated against
+this series' `∫σ|E|²` over the sphere, still zero-solve — before spending a
+mesh. When the solve does come, the 102%/154% departure says the fixture must
+be driven with the *series'* total field on the box wall, never the
+quasi-static one; reusing `TH-8`'s Dirichlet callable at 64 MHz would build in
+a 100% error, and `total_field()` exists to make that mistake hard.
