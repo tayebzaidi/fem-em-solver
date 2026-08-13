@@ -1,0 +1,73 @@
+# Test Run
+- Chunk: PORT-1-step3bix-collect
+- Commit: 6635d07f2e078d0fc54fee10a66554f4b02e2ae1
+- Time (UTC): 2026-08-07 05:06:38
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 60 python3 -m pytest tests/validation/test_port_gap_voltage_impedance.py --collect-only -q'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .
+drwxr-xr-x 14 taz5297 taz5297 4096 Aug  7 00:06 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-r--r--  1 taz5297 taz5297  633 Mar 24 00:02 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout 60 python3 -m pytest tests/validation/test_port_gap_voltage_impedance.py --collect-only -q'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collected 13 items
+
+<Module tests/validation/test_port_gap_voltage_impedance.py>
+  <Function test_sigma_respects_the_skin_depth_constraint>
+  <Function test_gap_box_meshes_exactly_at_the_reduced_overhang>
+  <Function test_port_discs_are_the_arc_end_cut>
+  <Function test_arc_quadrature_nodes_lie_strictly_inside_the_gap>
+  <Function test_path_voltage_is_converged_in_the_quadrature>
+  <Function test_gap_voltage_mutual_impedance_matches_closed_form>
+  <Function test_gap_voltage_z_matrix_is_reciprocal>
+  <Function test_undriven_port_is_open_and_the_diagonal_is_reported>
+  <Function test_closure_arc_nodes_lie_in_the_expected_material>
+  <Function test_wire_arc_quadrature_is_converged>
+  <Function test_loop_closure_sum_recovers_the_emf>
+  <Function test_sigma_sweep_keeps_the_undriven_port_open>
+  <Function test_gap_voltage_rises_monotonically_toward_the_emf_with_sigma>
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+========================= 13 tests collected in 1.76s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 4

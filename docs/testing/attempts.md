@@ -10833,3 +10833,126 @@ at a factor ≥ 2 in `W`** (≈ 0.20 m). That is not free — 3b-xi's rungs cost
 0.12 / h_far 0.02 once died in MUMPS. A review should decide whether the
 port-pair gate needs the converged number at all before commissioning that; the
 effective-range statement above may well be sufficient for a stated systematic.
+
+---
+
+## 2026-08-13T00:30Z — `PORT-1` step 3b-xvii (decision-(3) re-pointing) — **complete**
+
+Scheduled implementer run, 19:30 CDT slot. §9 On-deck item 1, taken as
+protocol requires (first item not done or blocked). Preflight clean, no
+`recovered/*`, container Up 19 h.
+
+**What was tried.** Two things in one commit, as item 1 specified: land the
+`PORT-1` lineage branch on `main`, then execute adjudication decision (3) —
+re-aim the consistency gate at matched topology.
+
+**Landing, and why not a merge.** `attempt/PORT-1-step3bxvi-20260812T093000Z`
+(`d459af9`) forked at `dc4eb66` (the 2026-08-07 10:30 review) and `main` has
+moved 100+ commits since. `git diff main..branch` reads
+**33 055 insertions / 136 193 deletions** — almost all of it main-side work the
+branch never saw (`MAG-6`, `MAT-6`, `POST-4`, `EX-*`, `OPS-*`, examples,
+PROJECT_PLAN). A merge or a `git checkout branch -- .` would have reverted
+those. The branch's *own* diff against its base is 31 files, so the landing was
+done by path:
+
+- `src/fem_em_solver/io/mesh.py` — taken verbatim; `git diff dc4eb66 main` on
+  this file is **empty**, so `main` had not touched it since the fork and the
+  branch version is a clean superset (carries `GAP_BOX_THICKNESS_CAP_M`).
+- `src/fem_em_solver/core/time_harmonic.py` — **skipped**. The branch's
+  `_validate_material_map_tags` hunk is the already-applied conflict item 1
+  named; verified present on `main` (`mesh.comm.allgather` at line 163, via
+  `OPS-13`). Taking the branch file would have reverted `OPS-13`'s other work.
+- `tests/validation/test_port_gap_voltage_impedance.py`,
+  `tests/validation/test_port_gap_voltage_padding.py`,
+  `scripts/probes/port1_step3bvii_probe.py`, `..._step3bxii_probe.py`,
+  `..._step3bxvi_probe.py` — new files, taken verbatim.
+- 19 branch-only logs (3b-ix, 3b-x, 3b-xb, 3b-xii, 3b-xiv, 3b-xvi mesh arms).
+  The 3b-xiii logs and the two 3b-xvi logs the 18:00 review copied were already
+  on `main` and were not touched.
+- `docs/testing/test-results.md` — the branch's 17 rows could not be appended
+  (main's table has 200+ later rows), so the 19 missing rows were **interleaved
+  chronologically** by hand; the two 3b-xiii rows already present were left
+  alone.
+
+**The re-point.** `test_gap_voltage_mutual_matches_the_same_fixture_reaction_control`
+no longer compares the gapped estimator against the σ = 0 **closed** control.
+It gates Faraday closure on the gapped loop at matched topology:
+`Im Z_terminal` against `Im Z_loop = (V_terminal + V_wire)/I`, both read off the
+same gapped σ = 800 S/m solve, one mesh, one field.
+
+**Measured numbers.**
+
+| quantity | gap 101 driven | gap 102 driven | bound |
+|---|---|---|---|
+| matched-topology deviation | **−2.6687e-03** | **−2.5842e-03** | 0.03, unmoved |
+| `Im Z_terminal` | 0.894543 × ωM₁₂ | 0.894022 × ωM₁₂ | record, reproduced |
+| wire term | 0.002394 × ωM₁₂ | 0.002316 × ωM₁₂ | 3b-ix record |
+| gapped-vs-closed (ungated record) | −3.0224e-02 | −3.0789e-02 | printed, labeled |
+| reciprocity `|Z12−Z21|/|Z12|` | 5.8343e-04 | — | 1e-2 |
+
+Margin on the gate is **11×**. Negative control: the wedge-only estimator
+0.4937 × ωM₁₂ gives ratio 0.5504 — misses the closure by 45%, 15× the bound.
+**No bound moved:** `REACTION_CONSISTENCY_TOLERANCE` stays 0.03 and
+`MUTUAL_TOLERANCE` stays 0.10, which item 1 named as the tripwire ("a re-point
+that only goes green with a loosened bound is a finding, not a fix"). The
+−3.0224e-02 record is kept in the test docstring and printed at runtime with
+its earned label — gap physics, Jin 3e §10.4.2.1's gap-generator feed model,
+measured by 3b-xvi at Δ = +0.0508 pp under 1.57× feed refinement.
+
+Note on item 1's anchor text: it asked for "reciprocity ‖Z−Zᵀ‖/‖Z‖ < 1e-9
+unchanged". On *this* fixture the residual is 5.8343e-04 against
+`RECIPROCITY_TOLERANCE` = 1e-2 — the 1e-9 figure belongs to the step-1/2
+lossless two-torus fixture. The recorded digit is reproduced exactly; nothing
+was changed, and the normalisation was left at `|Z12|` (item 1 licensed moving
+it only if the diagonal's magnitude changed, which it did not).
+
+**Log.** `20260813T003532Z_PORT-1-step3bxvii-repoint-n2.log` — **22 passed,
+exit 0, 474 s**, standard tier, `-n 2`, complex build with
+`FEM_EM_REQUIRE_COMPLEX=1` and `tests/environment` first,
+`timeout -k 30 570` container-side, foreground, tool timeout 660 000 ms. The
+whole port validation suite is green, which item 1 set as the landing gate.
+
+**Judgement call the slot had to make — for the weekly review.** Decision (3)
+says "re-point to matched topology" and item 1 says "a gapped-fixture
+reference", but neither names one, and the fixture does not offer an
+*independent route* at matched topology:
+
+- the reaction integral over a **gapped, conducting** arc returns the wire
+  term, not the mutual — 3b-x measured factor 244 and the existing
+  `test_reaction_route_on_the_gapped_fixture_is_reported` records it;
+- the σ = 0 impressed-current control is **closed by construction** (drive and
+  test regions are the wire+gap footprints), which is exactly the topology the
+  decision forbids comparing against;
+- its `wire_only` variant reads 0.918372 × ωM₁₂ — still the closed field, only
+  over 94.4% of the loop.
+
+So the reference chosen is the gapped loop's own closure. That is a real
+identity and was previously **ungated** — the retiling gate (1e-3) tiles the
+*gap* arc and is blind to the wire, and reciprocity (1e-2) compares the two
+drives with each other, not the estimator with the loop — but it is
+self-consistency, not independence. Stated plainly so the review can overrule
+it: independence returns with item 2's port-pair gate against `ωM₁₂`, and this
+one test is the single place to change if a different reference is wanted.
+
+**Scope held.** `PORT-1` stays 🟡; known-issues 3 untouched; no birdcage work;
+no σ-placement variant (barred by decision (2)); no fourth padding rung.
+`docs/status/dashboard.md` not touched — that is the review's file.
+
+**Denials / harness notes.** Two shell forms were denied by the permission
+layer and worked around, both expected: `$(...)`/`$VAR` expansion inside Bash
+commands (used `git merge-base` as its own call, and `$TMPDIR` only in the
+allowlisted position), and `grep` on a log file tripping the pytest guard when
+the pattern contained the word `pytest` (read the header with the Read tool
+instead). Nothing was backgrounded; no `timeout` fired.
+
+**Next-attempt hypothesis.** Item 2 (the deferred 3b-i/3b-ii port-pair gate) is
+now unblocked — item 1 landed, so the serial dependency it declares is
+satisfied. It should reuse this run's fixture unchanged and state both
+systematics by name in the assertion message: the PEC-box term (D∞ = +1.69 pp
+at p = 1.657, effective-range, never without its exponent) and the gap-physics
+offset (−3.0224e-02; refined −2.9674e-02). Expect `Im Z₁₂/ωM₁₂ ≈ 0.894` against
+`MUTUAL_TOLERANCE` = 0.10 — i.e. a **−10.6% miss, just outside the bound**, on
+the numbers already on record. That is the predictable outcome and item 2's own
+"negative result" clause covers it: report the measured number, park, and let
+the weekly review re-plan rather than extend. Whoever takes item 2 should size
+it knowing the gate is more likely to read a finding than a pass.

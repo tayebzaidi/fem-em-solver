@@ -5051,6 +5051,52 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   (`d459af9`), the lineage's first ✅ gate — and the deferred
 >   3b-i/3b-ii port-pair gate as §9 item 2, serial on item 1.
 >
+> * **Step 3b-xvii — decision (3)'s re-pointing commit** ✅ *(2026-08-12,
+>   19:30 run; the lineage's first ✅ gate, and the commit that lands the
+>   branch)*. `attempt/PORT-1-step3bxvi-20260812T093000Z` (`d459af9`) is on
+>   `main`: applied by path rather than merged, because the branch forked at
+>   `dc4eb66` (2026-08-07 10:30) and a wholesale merge would have reverted
+>   100+ commits of main-side work. `io/mesh.py` was untouched on `main`
+>   since the fork and taken verbatim (carrying `GAP_BOX_THICKNESS_CAP_M`);
+>   the `core/time_harmonic.py` `_validate_material_map_tags` hunk was
+>   skipped, already on `main` via `OPS-13` (verified: `mesh.comm.allgather`
+>   present at line 163); 19 branch-only logs, three probes
+>   (`port1_step3bvii/xii/xvi_probe.py`) and both gap-voltage test modules
+>   landed, with the 19 harness rows interleaved chronologically into
+>   `test-results.md`.
+>   **The re-point.** `test_gap_voltage_mutual_matches_the_same_fixture_reaction_control`
+>   no longer compares gapped-against-closed. It gates **Faraday closure on
+>   the gapped loop at matched topology**: `Im Z_terminal` against
+>   `Im Z_loop` from `V_terminal + V_wire`, both read off the same gapped
+>   σ = 800 S/m solve. Measured **−2.6687e-03 (gap 101) / −2.5842e-03
+>   (gap 102)** against `REACTION_CONSISTENCY_TOLERANCE` = 0.03 **unmoved** —
+>   11× margin, so the re-point did not need a loosened bound, which decision
+>   (3) named as the tripwire. Negative control: the wedge-only estimator
+>   0.4937 × ωM₁₂ gives ratio 0.5504, missing the closure by 45% (15× the
+>   bound). Fixture identity reproduced digit-for-digit: estimator 0.894543 /
+>   0.894022, wire term 0.002394 / 0.002316 × ωM₁₂, reciprocity 5.8343e-04
+>   against `RECIPROCITY_TOLERANCE` 1e-2 (the 1e-9 figure belongs to the
+>   step-1/2 lossless fixture, not this one). The −3.0224e-02 / −3.0789e-02
+>   gapped-vs-closed deviation is **printed ungated** with its earned label —
+>   gap physics, Jin §10.4.2.1's gap-generator feed model — citing
+>   `20260812T170128Z_...-mesh6e4-repointed.log` and
+>   `20260812T170317Z_...-solve6e4.log`. `MUTUAL_TOLERANCE` unmoved at 0.10.
+>   `-n 2`, **22 passed, exit 0, 474 s**, standard tier;
+>   `20260813T003532Z_PORT-1-step3bxvii-repoint-n2.log`.
+>   **Judgement this slot had to make, flagged for the weekly review.**
+>   Decision (3) said "matched topology" and item 1 said "a gapped-fixture
+>   reference" without naming one, and the fixture offers no *independent
+>   route* at matched topology: 3b-x measured that a reaction integral over a
+>   gapped, conducting arc returns the wire term (factor 244), and the σ = 0
+>   impressed-current control is closed by construction. The closure identity
+>   gated here is real and was previously ungated — the retiling gate (1e-3)
+>   tiles the *gap* arc and is blind to the wire, and reciprocity (1e-2)
+>   compares the two drives with each other — but it is a self-consistency
+>   identity, not an independent route. Independence returns with the
+>   port-pair gate (§9 item 2). If the weekly review wants a different
+>   matched-topology reference, this test is the single place to change.
+>   **Does not close** `PORT-1` (stays 🟡) or known-issues 3.
+>
 > **Closed steps** *(two-loop air fixture `two_torus_domain`, f = 10 MHz,
 > a = 0.04 m, r_wire = 0.005 m, d = 0.04 m; padding 0.08 / h_far 0.03,
 > 119738 cells, unless stated; all gates `-n 2`, complex build, in
@@ -8074,9 +8120,33 @@ Item 5 is the declared spare: step 2b made it the expensive route to a
 number CG1 recovery already reached, so it runs only if the slots
 outlast items 1–4.
 
-1. **`PORT-1` decision-(3) re-pointing — land the lineage and re-aim the
-   consistency gate at matched topology (standard; the lineage's first
-   ✅ gate; the only tolerance-licensed commit).** Land
+1. ~~**`PORT-1` decision-(3) re-pointing**~~ — **done 2026-08-12 (19:30 run)**.
+   The lineage landed on `main` (branch content applied by path — the branch
+   forked at `dc4eb66` and `git diff main..branch` is dominated by 100+
+   commits of main-side drift, so a wholesale merge would have reverted
+   them; `mesh.py` was unchanged on `main` since the fork and taken verbatim,
+   the `_validate_material_map_tags` hunk was skipped as already present via
+   `OPS-13`, and the 19 branch-only logs plus their test-results rows were
+   interleaved chronologically). The consistency gate is re-aimed at
+   **matched topology**: `Im Z_terminal` against the *gapped* loop's own
+   Faraday closure `V_terminal + V_wire`, both read off the gapped σ = 800
+   solve — **−2.6687e-03 / −2.5842e-03 against the unmoved 3% bound**
+   (11× margin), wedge-only negative control at ratio 0.5504. Recorded
+   digits reproduced exactly: estimator 0.894543 / 0.894022, reciprocity
+   5.8343e-04. The −3.0224e-02 gapped-vs-closed number is now printed
+   ungated with its earned label (**gap physics**, Jin §10.4.2.1). Neither
+   `REACTION_CONSISTENCY_TOLERANCE` (0.03) nor `MUTUAL_TOLERANCE` (0.10)
+   moved. `-n 2`, 22 passed, exit 0, 474 s;
+   `20260813T003532Z_PORT-1-step3bxvii-repoint-n2.log`. **For the review:**
+   the choice of matched-topology reference is a judgement this slot had to
+   make — decision (3) named "a gapped-fixture reference" without naming
+   one, and the fixture offers no *independent-route* reference at matched
+   topology (3b-x showed the reaction integral over a gapped conductor reads
+   the wire term, and the σ = 0 control is closed by construction). The
+   closure identity gated here is real and previously ungated (nothing else
+   bounds the wire term's magnitude) but it is weaker than an independent
+   route; item 2's port-pair gate is where independence returns.
+   *Original item text follows.* Land
    `attempt/PORT-1-step3bxvi-20260812T093000Z` (`d459af9`) on `main` —
    it carries the 3b-xii…xvi probes and logs, the
    `GAP_BOX_THICKNESS_CAP_M` cap in `mesh.py`, and the consistency gate

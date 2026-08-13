@@ -12,6 +12,14 @@ from dolfinx.io import gmshio
 #: `20260807T033127Z_GEO-13-probe.log`; see the sizing note at its use site.
 _WALL_TOL_FRACTION = 0.01
 
+#: `PORT-1` step 3b-xvi: ceiling [m] on the ``Thickness`` of
+#: ``two_torus_domain``'s gap-box refinement field, i.e. how far outside each
+#: gap box the refinement is allowed to ramp back to ``far_resolution``.  See
+#: the sizing note at its use site — the slope-0.3 rule the other size fields
+#: use puts a 10 cm shell of refinement in the air here, and the locality
+#: control measured it at +35.4560% of the outside cell count.
+GAP_BOX_THICKNESS_CAP_M = 5.0e-3
+
 
 def _interface_facet_tags(
     mesh: "dolfinx.mesh.Mesh",
@@ -853,6 +861,11 @@ class MeshGenerator:
         port_gap: bool = False,
         gap_angle: float = 0.30,
         gap_clearance: float = 1.0e-3,
+        gap_burial: Optional[float] = None,
+        gap_overhang: Optional[float] = None,
+        gap_arc_resolution: Optional[float] = None,
+        gap_arc_tube_radius: Optional[float] = None,
+        gap_box_resolution: Optional[float] = None,
     ) -> Tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]:
         """Generate mesh with two tori inside a box domain.
 
@@ -915,9 +928,77 @@ class MeshGenerator:
         gap_angle:
             Angular opening of the removed wedge [rad], centred on ``+x``.
         gap_clearance:
-            Margin by which the gap box overhangs the conductor tube [m]. It
-            sets the box's radial and axial half-size (``minor_radius +
-            gap_clearance``) and how far the box buries into each arc end.
+            Legacy single margin [m]: the default for **both** ``gap_burial``
+            and ``gap_overhang`` below, so a call that passes only this one
+            meshes exactly as it did before the split (``PORT-1`` step 3b-i's
+            gate is written against that geometry).
+        gap_burial:
+            How far the gap box buries past each arc end-face centre along
+            ``ŷ`` [m], i.e. the box half-length is ``major_radius *
+            sin(gap_angle/2) + gap_burial``. Must stay **strictly positive**:
+            the two end planes meet at ``gap_angle``, so a box face flush with
+            a tilted arc end is not constructible (step 3b-i's recorded
+            deviation). Defaults to ``gap_clearance``.
+        gap_overhang:
+            Transverse margin by which the box overhangs the tube in the
+            ``xz`` plane [m], i.e. the box half-size there is ``minor_radius +
+            gap_overhang``. Unlike the burial this one is free to vanish, and
+            it is the one that costs cross-section: at overhang ``o`` the box
+            face is ``4(r+o)²`` against the tube's ``πr²``, so the fraction of
+            the face that is *not* conductor shadow is ``1 - πr²/(4(r+o)²)``
+            — 45.5% at the 1 mm legacy value, and never below ``1 - π/4 =
+            21.5%`` however small ``o`` gets (a rectangle circumscribing a
+            circle keeps its corners). ``PORT-1`` step 3b-ii traced a +72.12%
+            mutual-impedance error to that fringe; step 3b-iii varied this
+            parameter and found the box-volume voltage *sign-unstable* in it
+            (+1.7210 / −0.2391 / +0.3317 × ωM₁₂ at o = 1e-3 / 5e-4 / 2e-4),
+            which excludes the box-average family outright. Steps 3b-v and
+            3b-vi both run at ``o = 2e-4``; note that below ``o ≈ 6e-4`` the
+            tube protrudes through the box's ``−x`` face, so the port facet
+            tags pick up lateral strips (known-issues 11). Defaults to
+            ``gap_clearance``.
+        gap_arc_resolution:
+            Target mesh size in a tube around each gap's *centreline arc* [m].
+            ``None`` (default) leaves the sizing exactly as before. Requires
+            ``wire_resolution`` (it composes with that graded field through a
+            ``Min``), and is ignored unless ``port_gap``.
+
+            `PORT-1` step 3b-vii: the lumped-port voltage estimator integrates
+            ``E·t̂`` along that arc, and N1curl guarantees continuity of the
+            *facet*-tangential component only — the arc's own tangent is not
+            facet-tangential, so the integrand jumps at every cell crossing.
+            Step 3b-vi measured the consequence: with ``h_wire = 2.5e-3``
+            against an arc length ``a·g = 1.2e-2`` only ~5 cells span the path,
+            and the quadrature converges at ``O(1/n)`` to a ~1e-3 plateau
+            instead of the 1e-3 precondition. The fix is to resolve the
+            integrand, not the quadrature; ``3e-4`` puts ~40 cells across the
+            arc.
+        gap_arc_tube_radius:
+            Radius of that refined tube [m]. Defaults to
+            ``4 * gap_arc_resolution``, which is wide enough that the cells the
+            arc actually passes through are all at ``gap_arc_resolution``. The
+            size then ramps linearly to ``far_resolution`` at slope 0.3 (about
+            1.3x growth per cell, gmsh's comfortable gradation), which is what
+            keeps the refinement affordable: the tube itself is a few 1e-8 m^3.
+        gap_box_resolution:
+            Target mesh size *inside each gap box* [m], overhang included.
+            ``None`` (default) leaves the sizing exactly as before — every
+            digit-string the `PORT-1` gates pin is measured at that default.
+            Requires ``wire_resolution``; ignored unless ``port_gap``.
+
+            `PORT-1` step 3b-xvi. ``gap_arc_resolution`` refines a tube of
+            radius ``4*gap_arc_resolution`` around the gap's centreline arc,
+            which is where the path-integral estimator samples — but that tube
+            never reaches the conductor wall at ``minor_radius``, so the box's
+            transverse structure, and the ``gap_overhang`` shell in
+            particular, is still sized by the conductor field at
+            ``wire_resolution``. At the landed fixture that leaves a 2e-4
+            overhang inside 2.5e-3 cells, i.e. sub-cell, while step 3b-ix
+            located 45% of the loop EMF there. This knob is the feed-region
+            h-refinement that makes the estimator's mesh convergence
+            answerable; it is deliberately **local** (a ``Box`` field with a
+            slope-0.3 ramp, composed through the same ``Min``), so the PEC-box
+            deficit stays common-mode with the unrefined record.
         """
         if comm.rank == rank:
             gmsh.initialize()
@@ -930,9 +1011,19 @@ class MeshGenerator:
                     raise ValueError(
                         f"gap_angle must be in (0, pi), got {gap_angle!r}"
                     )
-                if gap_clearance <= 0.0:
+                burial = gap_clearance if gap_burial is None else float(gap_burial)
+                overhang = (
+                    gap_clearance if gap_overhang is None else float(gap_overhang)
+                )
+                if burial <= 0.0:
                     raise ValueError(
-                        f"gap_clearance must be positive, got {gap_clearance!r}"
+                        f"gap_burial must be positive, got {burial!r} "
+                        f"(gap_clearance={gap_clearance!r})"
+                    )
+                if overhang < 0.0:
+                    raise ValueError(
+                        f"gap_overhang must be non-negative, got {overhang!r} "
+                        f"(gap_clearance={gap_clearance!r})"
                     )
                 # Partial torus: OCC sweeps from phi = 0 to phi = angle, so
                 # rotating by +gap_angle/2 leaves the wedge centred on +x.
@@ -951,12 +1042,17 @@ class MeshGenerator:
                 # The box must *cross* both arc ends, not stop short of them:
                 # a box face flush with a tilted arc end is not constructible
                 # (the two end planes meet at gap_angle), so the box buries
-                # `gap_clearance` past the end-face centres and the gap group
+                # `gap_burial` past the end-face centres and the gap group
                 # takes precedence over the conductor below. That makes the
                 # gap the box exactly -- planar faces, meshed to roundoff --
                 # and the conductor the arc minus what the box swallowed.
-                gap_half_xz = minor_radius + gap_clearance
-                gap_half_y = major_radius * np.sin(0.5 * gap_angle) + gap_clearance
+                #
+                # The two margins are independent (step 3b-iii): `burial` is
+                # the along-arc one that must stay positive for the box to be
+                # constructible at all; `overhang` is the transverse one, which
+                # buys nothing and costs cross-section (see the docstring).
+                gap_half_xz = minor_radius + overhang
+                gap_half_y = major_radius * np.sin(0.5 * gap_angle) + burial
                 gap_size = (2.0 * gap_half_xz, 2.0 * gap_half_y, 2.0 * gap_half_xz)
                 gap_1 = gmsh.model.occ.addBox(
                     major_radius - gap_half_xz,
@@ -1210,6 +1306,16 @@ class MeshGenerator:
                 gmsh.model.setPhysicalName(2, 1, "outer_boundary")
 
             if wire_resolution is None:
+                if gap_arc_resolution is not None:
+                    raise ValueError(
+                        "gap_arc_resolution needs wire_resolution: it composes "
+                        "with the graded field, and uniform sizing has none"
+                    )
+                if gap_box_resolution is not None:
+                    raise ValueError(
+                        "gap_box_resolution needs wire_resolution: it composes "
+                        "with the graded field, and uniform sizing has none"
+                    )
                 gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
             else:
                 # Graded sizing: fine on the tori, coarsening with distance so a
@@ -1246,7 +1352,156 @@ class MeshGenerator:
                 gmsh.model.mesh.field.setNumber(thr, "DistMin", minor_radius)
                 gmsh.model.mesh.field.setNumber(thr, "DistMax", major_radius + padding)
 
-                gmsh.model.mesh.field.setAsBackgroundMesh(thr)
+                # Extra *local* refinement fields, composed with the conductor
+                # field through a `Min` below (finest wins, nothing coarsens).
+                local_fields = []
+                if port_gap and gap_arc_resolution is not None:
+                    # `PORT-1` step 3b-vii: refine a tube around each gap's
+                    # centreline arc, where the path-integral estimator samples.
+                    #
+                    # The field is defined by *coordinates*, evaluated on the
+                    # fragmented model: fragment renumbers, and the arc is not
+                    # a model entity at all (it runs through the gap box's
+                    # interior), so there is nothing to point a `Distance` field
+                    # at. `MathEval` is the distance to the arc written out --
+                    # distance to the centreline circle, plus an out-of-band
+                    # penalty in `y` so only the wedge is refined and not the
+                    # whole 2*pi*a of conductor, plus one in `-x` so the
+                    # circle's far branch is excluded. `max(0, u)` is spelled
+                    # `(u + sqrt(u^2))/2` and `|y|` as `sqrt(y^2)`: gmsh's
+                    # expression parser is not guaranteed to carry `fabs`/`max`,
+                    # and sqrt of a square is exact for both.
+                    h_gap = float(gap_arc_resolution)
+                    if h_gap <= 0.0:
+                        raise ValueError(
+                            f"gap_arc_resolution must be positive, got {h_gap!r}"
+                        )
+                    tube = (
+                        4.0 * h_gap
+                        if gap_arc_tube_radius is None
+                        else float(gap_arc_tube_radius)
+                    )
+                    if tube <= 0.0:
+                        raise ValueError(
+                            f"gap_arc_tube_radius must be positive, got {tube!r}"
+                        )
+                    # Slope 0.3 in size per unit distance ~ 1.3x growth per
+                    # cell. `SizeMax = h_far` (not h_wire) is what keeps the
+                    # `Min` below from clamping the whole air box to the wire
+                    # size; the conductor field still wins where it is finer.
+                    dist_max = tube + (h_far - h_gap) / 0.3
+                    arc_half_y = major_radius * np.sin(0.5 * gap_angle)
+                    gap_fields = []
+                    for z_c in (-z_offset, z_offset):
+                        band = (
+                            f"(0.5*((sqrt(y^2)-{arc_half_y!r})"
+                            f"+sqrt((sqrt(y^2)-{arc_half_y!r})^2)))"
+                        )
+                        expr = (
+                            f"sqrt((sqrt(x^2+y^2)-{major_radius!r})^2"
+                            f"+(z-({z_c!r}))^2"
+                            f"+{band}^2"
+                            f"+(0.5*(sqrt(x^2)-x))^2)"
+                        )
+                        arc_dist = gmsh.model.mesh.field.add("MathEval")
+                        gmsh.model.mesh.field.setString(arc_dist, "F", expr)
+                        arc_thr = gmsh.model.mesh.field.add("Threshold")
+                        gmsh.model.mesh.field.setNumber(arc_thr, "InField", arc_dist)
+                        gmsh.model.mesh.field.setNumber(arc_thr, "SizeMin", h_gap)
+                        gmsh.model.mesh.field.setNumber(arc_thr, "SizeMax", h_far)
+                        gmsh.model.mesh.field.setNumber(arc_thr, "DistMin", tube)
+                        gmsh.model.mesh.field.setNumber(arc_thr, "DistMax", dist_max)
+                        gap_fields.append(arc_thr)
+
+                    local_fields.extend(gap_fields)
+                    print(
+                        "[two-torus-mesh] gap-arc refinement h_gap="
+                        f"{h_gap:.3e} tube={tube:.3e} dist_max={dist_max:.3e} "
+                        f"arc_half_y={arc_half_y:.6e} "
+                        f"cells_across_arc={major_radius * gap_angle / h_gap:.1f}",
+                        flush=True,
+                    )
+
+                if port_gap and gap_box_resolution is not None:
+                    # `PORT-1` step 3b-xvi: refine the *whole gap box* -- the
+                    # feed region -- not just the centreline tube.  The arc
+                    # field above resolves where the estimator's path integral
+                    # samples; it does nothing for the transverse structure the
+                    # terminal fields have, because its tube radius
+                    # (4*h_gap = 1.2e-3) never reaches the tube wall at
+                    # r_wire = 5e-3, let alone the `gap_overhang` shell outside
+                    # it.  Jin (3rd ed., ch. 12) refines the feed region
+                    # locally as routine practice for exactly this reason.
+                    #
+                    # A `Box` field, not `MathEval`: the gap solids *are*
+                    # axis-aligned boxes, so the refined region is the feed
+                    # region exactly, and `Thickness` ramps back out to
+                    # `far_resolution` so the refinement stays affordable.
+                    #
+                    # That ramp is *capped*, and the cap is measured, not
+                    # guessed.  A slope-0.3 thickness — `(h_far - h_box)/0.3`,
+                    # the rule the arc field above uses — is 0.098 m at
+                    # `h_box = 6e-4`: a 10 cm shell of refinement around each
+                    # gap box.  The arc field survives the same slope because
+                    # it ramps away from a thin tube; a `Box` field ramps away
+                    # from a *surface*, so the same slope buys vastly more
+                    # volume, and the step 3b-xvi mesh arm measured the
+                    # consequence — cells outside the gap boxes +35.4560%
+                    # against the < 5% locality band
+                    # (`20260812T094005Z_PORT-1-step3bxvi-mesh6e4.log`).  Past
+                    # a few mm the conductor field (`h_wire` near the wire) is
+                    # the finer of the two anyway and the `Min` takes it back,
+                    # so the cap removes no resolution the refinement was
+                    # buying: it only stops the shell leaking into the air.
+                    h_box = float(gap_box_resolution)
+                    if h_box <= 0.0:
+                        raise ValueError(
+                            f"gap_box_resolution must be positive, got {h_box!r}"
+                        )
+                    box_thickness = min(
+                        max(h_far - h_box, 0.0) / 0.3, GAP_BOX_THICKNESS_CAP_M
+                    )
+                    for z_c in (-z_offset, z_offset):
+                        box_field = gmsh.model.mesh.field.add("Box")
+                        gmsh.model.mesh.field.setNumber(
+                            box_field, "XMin", major_radius - gap_half_xz
+                        )
+                        gmsh.model.mesh.field.setNumber(
+                            box_field, "XMax", major_radius + gap_half_xz
+                        )
+                        gmsh.model.mesh.field.setNumber(box_field, "YMin", -gap_half_y)
+                        gmsh.model.mesh.field.setNumber(box_field, "YMax", gap_half_y)
+                        gmsh.model.mesh.field.setNumber(
+                            box_field, "ZMin", z_c - gap_half_xz
+                        )
+                        gmsh.model.mesh.field.setNumber(
+                            box_field, "ZMax", z_c + gap_half_xz
+                        )
+                        gmsh.model.mesh.field.setNumber(box_field, "VIn", h_box)
+                        gmsh.model.mesh.field.setNumber(box_field, "VOut", h_far)
+                        gmsh.model.mesh.field.setNumber(
+                            box_field, "Thickness", box_thickness
+                        )
+                        local_fields.append(box_field)
+                    print(
+                        "[two-torus-mesh] gap-box refinement h_box="
+                        f"{h_box:.3e} thickness={box_thickness:.3e} "
+                        f"(uncapped {max(h_far - h_box, 0.0) / 0.3:.3e}, cap "
+                        f"{GAP_BOX_THICKNESS_CAP_M:.3e}) "
+                        f"half_xz={gap_half_xz:.6e} half_y={gap_half_y:.6e} "
+                        f"cells_across_overhang={overhang / h_box:.3f}",
+                        flush=True,
+                    )
+
+                if local_fields:
+                    background = gmsh.model.mesh.field.add("Min")
+                    gmsh.model.mesh.field.setNumbers(
+                        background, "FieldsList", [thr] + local_fields
+                    )
+                else:
+                    background = thr
+
+                gmsh.model.mesh.field.setAsBackgroundMesh(background)
                 # Background field must win over point/curve-derived sizing.
                 gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
                 gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
