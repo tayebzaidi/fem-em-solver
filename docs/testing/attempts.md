@@ -11022,3 +11022,79 @@ spread on the box term dominates either way, so the cheap next move is not a
 fourth padding rung (barred) but a statement of what the −6.04% residual is
 made of; 3b-viii's +0.481% finite-cross-section term is the only piece already
 measured. Item 3 (`MAG-13` step 2c) is independent and next.
+
+---
+
+## 2026-08-13T03:35Z — `MAG-13` step 2c — **complete**
+
+**Slot.** 22:30 CDT scheduled implementer run. Preflight clean: `git status`
+empty at `0d069f2`, container Up 22 h, no `recovered/*` or `attempt/*` work to
+land. §9 items 1 and 2 are marked done, so the first open item is item 3.
+
+**What was asked.** One intermediate rung at h = 0.0017678 (√2 between the
+recorded rungs), both recoveries on the recorded 45-radius grid, smoke-rung
+identity gates driving the exit code, the 1.1 M-cell rung cited not re-solved,
+and the §7 GATE-4 failure-path nit fixed in the same probe edit.
+
+**What was done.** New probe `scripts/probes/mag13_step2c_third_rung.py`, which
+imports `_solve_straight_wire_keep_solver`, `_project_curl_to_cg1`, `_sample`,
+`_bands` and the 45-radius grid constants from `mag13_step2b_recovery` and
+restates none of them. **Deviation, declared:** the item said "extend
+`mag13_step2b_recovery.py`". A sibling module was preferred because that file's
+recorded gates are pinned to the 1.1 M-cell rung, and a rung-selection edit
+inside it would have put the step-2b reproduction at risk for no gain. The
+GATE-4 nit fix *does* ride in `mag13_step2b_recovery.py` as instructed — the
+static "flat to 5 sig figs" detail string is now conditional, printing "VARIES
+… inside at least one of the eight recorded groups" on the failure path.
+
+**Measured numbers.** Identity run at h = 0.0025: 145 884 cells, DG1 span
+**10.9806%**, CG1 span **7.8411%** — all three digit-identical to the step-2b
+smoke log, **3/3 gates, exit 0, 26 s**. New rung: **408 079 cells** (1.051× the
+declared ~388 k cube-scaling assumption) / 1 632 316 DG1 dofs, mesh+solve
+**75.5 s**, CG1 projection 11 CG iterations in **0.82 s** = **1.1%** of the
+solve. Errors over the recorded metric span: DG1 **7.5952%**, CG1 **3.6530%**
+(gap −3.9423 pp). Three-point least squares: **CG1 p = 2.003**, **DG1
+p = 1.217**, against the two-point observations 2.00 and 1.22. Extrapolation
+check: CG1 predicted 3.9207% at p = 2.00, measured 3.6530% (−0.2677 pp, 6.8%
+low); DG1 predicted 7.1946%, measured 7.5952% (+0.4006 pp). Bands (DG1 → CG1):
+near-wire 8.4299% → 3.0688%, mid 7.3593% → 4.5303%, outer 4.5173% → 4.1168%,
+wall 4.2106% → 4.2842%. **3/3 gates, exit 0, 78 s.**
+
+**The caveat worth the review's attention.** The pairwise CG1 rates are
+**2.204** (coarse→new) and **1.803** (new→fine) — a ±0.20 spread around the
+fitted 2.003. Three points constrain this to "second order, ±10%", not to 2.00
+as a converged constant, and the steeper-then-shallower pattern plus the 6.8%
+low level is what approaching a floor looks like. Against that, the CG1 band
+values are ≈ 3–4.5% here versus ≈ 2.0% at the fine rung, so the band-flat
+residual **scales with h** and is not a fixed bias — which is the piece step 2b
+could not distinguish.
+
+**Negative control.** Executed, not cited: the DG1 path on the same new rung,
+same solve, same sampler, same 45 points. The CG1/DG1 gap persists and CG1
+improves on the smoke rung; both are asserted and drive the exit code (GATE 3).
+Step 2b's finding is not rung-specific.
+
+**Logs.** `20260813T033235Z_MAG-13-step2c-smoke.log` (identity, `-n 8`, exit 0,
+26 s, container `timeout -k 30 300`) and
+`20260813T033311Z_MAG-13-step2c-rung3.log` (new rung, `-n 8`, exit 0, 78 s,
+container `timeout -k 30 590`). Both foreground; nothing backgrounded; no
+`timeout` fired. Total compute ~104 s, well inside the heavy tier the item
+budgeted.
+
+**Scope held.** `MAG-13` stays ✅ at its recorded numbers. Nothing under `src/`
+or `tests/` changed; no mesh in any test changed; no bound moved.
+`compute_b_field` is untouched — gate adoption stays the weekly review's call.
+§9 item 5 not retired. `docs/status/dashboard.md` not touched (the review's
+file). No known-issues entry needed: nothing unrelated failed.
+
+**Denials / harness notes.** None this run.
+
+**Next-attempt hypothesis.** The rate question is answered well enough to
+decide adoption; what is *not* answered is where the band-flat residual comes
+from, and the h-scaling measured here says it is discretisation rather than a
+modelling floor (finite wire length was already excluded at the near-wire
+radii). If the weekly review wants the pairwise spread tightened before
+re-gating, a fourth rung is the wrong lever — it costs a solve to move a fitted
+exponent by hundredths; a cheaper discriminator is the same two recoveries on a
+*degree-2* `A` solve, where the DG1 container's order argument makes a sharp
+prediction. §9 item 4 (`TH-10` step 1, zero-solve) is independent and next.

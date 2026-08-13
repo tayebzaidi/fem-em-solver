@@ -416,7 +416,14 @@ def main() -> int:
         (
             "GATE 4 DG1 staircase",
             dg1_flat_all,
-            "DG1 |B| flat to 5 sig figs inside all eight recorded groups",
+            # The failure path must not print the passing claim (§7 nit,
+            # 2026-08-12 18:00 review): at a rung other than the recorded one
+            # the DG1 values inside these groups genuinely vary, and the old
+            # static string said "flat" while the gate read FAIL.
+            "DG1 |B| flat to 5 sig figs inside all eight recorded groups"
+            if dg1_flat_all
+            else "DG1 |B| VARIES to 5 sig figs inside at least one of the "
+            "eight recorded groups (see the per-group lines above)",
         ),
     ]
     print("[MAG-13 2b] GATES (exit code is gated on these):", flush=True)

@@ -1617,6 +1617,92 @@ demotion above. Queued as §9 item 2.)*
 > drifted since 2026-08-12 — that is a known-issues entry, not a band
 > adjustment; report, keep 🧪, stop.
 
+**`MAG-13` step 2c — the third rung, and the CG1 rate is second order** ✅
+**EXECUTED 2026-08-13 (22:30 slot): the intermediate rung lands on the
+p = 2 line. CG1 relL2 reads 3.6530% at h = 0.0017678 where the two-point
+observation predicted 3.9207%, and the three-point least-squares rate is
+p = 2.003 against the observation's 2.00; the DG1 path reads 7.5952%
+(predicted 7.1946%) at p = 1.217 against 1.22. Step 2b's rate was not
+an artefact of two points.**
+*(`MAG-13` stays ✅ at its recorded numbers — nothing in `src/` or `tests/`
+changed, no mesh in any test changed, no bound moved. Gate adoption —
+moving `compute_b_field` to CG1 recovery — remains the **weekly review's**
+call, now with the third point in hand; this step buys the point, it does
+not spend it.)*
+> **Identity first, and it reproduced exactly**
+> (`20260813T033235Z_MAG-13-step2c-smoke.log`, **exit 0**, 26 s
+> harness-wall, `-n 8`, `MAG13_STEP2C_RES=0.0025`): **3/3 gates** —
+> 145 884 cells, DG1 span **10.9806%**, CG1 span **7.8411%**, each
+> digit-identical to the step-2b smoke log. The imported machinery is the
+> step-2b machinery: `scripts/probes/mag13_step2c_third_rung.py` restates
+> nothing, importing `_solve_straight_wire_keep_solver`,
+> `_project_curl_to_cg1`, `_sample`, `_bands` and the 45-radius grid
+> constants from `mag13_step2b_recovery`, so a drift between the steps
+> cannot pass silently. *(Deviation from the §9 recipe, declared: the item
+> said "extend `mag13_step2b_recovery.py`". A sibling module that imports
+> it was preferred so the recorded step-2b gates — which are pinned to the
+> 1.1 M-cell rung — could not be perturbed by a rung-selection edit. The
+> GATE-4 nit fix the item required does ride in the step-2b file, as
+> instructed.)*
+> **The new rung** (`20260813T033311Z_MAG-13-step2c-rung3.log`, **exit 0**,
+> **78 s** harness-wall, mesh+solve 75.5 s, `-n 8`, real build, container
+> `timeout -k 30 590`, foreground): **408 079 cells** / 1 632 316 global
+> DG1 dofs — **1.051×** the ~388 k the declared cube-scaling assumption
+> predicted, so that assumption held to 5%. All 45 dense radii inside the
+> mesh for both recoveries. The CG1 projection again costs nothing: 11 CG
+> iterations, **0.82 s**, **1.1%** of the solve (step 2b: 2.71 s, 1.0%).
+> **The three-point table** (relL2 over the recorded metric span; the outer
+> two rows are **cited from the step-2b logs, not re-solved** — the 1.1 M
+> rung's 271 s is a solve this step did not need to buy):
+>
+> | h [m] | cells | DG1 relL2 | CG1 relL2 |
+> |---|---|---|---|
+> | 0.0025 | 145 884 | 10.9806% | 7.8411% | *(record)* |
+> | 0.0017678 | 408 079 | **7.5952%** | **3.6530%** | *(this run)* |
+> | 0.00125 | 1 097 873 | 4.7235% | 1.9557% | *(record)* |
+>
+> **The reading:** least-squares over three points gives CG1 **p = 2.003**
+> and DG1 **p = 1.217** — both within 0.005 of the two-point observations
+> they were fitted to test. The two-point p = 2.00 was **not**
+> pre-asymptotic in the sense that would have voided it.
+> **The honest caveat, and it is the one the review should weigh:** the
+> *pairwise* rates are not flat. CG1 reads **2.204** coarse→new and
+> **1.803** new→fine; DG1 reads 1.064 then 1.370. A ±0.20 spread about the
+> fitted 2.003 means three points constrain the CG1 rate to roughly
+> "second order, ±10%", not to 2.00 as a converged constant — and the
+> spread's *sign* (steeper first, shallower second) is what a solution
+> approaching a floor looks like, not what a clean asymptotic rate looks
+> like. The measured level supports the same caution: CG1 came in
+> **0.2677 pp below** the p = 2.00 extrapolation (3.6530% vs 3.9207%),
+> i.e. 6.8% low.
+> **The band-flat floor survives the rung.** Per band (DG1 → CG1 relL2):
+> near-wire 8.4299% → **3.0688%** (−5.3610 pp); mid 7.3593% → 4.5303%;
+> outer 4.5173% → 4.1168%; wall 4.2106% → **4.2842%** (+0.0736 pp — the
+> only band where CG1 does not help, as at the fine rung). CG1 is again
+> **band-flat**, here at ≈ 3–4.5% against the fine rung's ≈ 2.0%: the
+> O(h/r) radial structure is removed at this rung too, and the residual
+> scales with h rather than sitting at a fixed floor. That is the
+> substantive addition to step 2b — a *fixed* ≈ 2% bias would not have
+> halved.
+> **Negative control, executed not cited:** the DG1 path on this same
+> rung, same solve, same sampler, same 45 points. The CG1/DG1 gap
+> persists (3.6530% < 7.5952%, −3.94 pp) and CG1 improves on the smoke
+> rung — both asserted, and the gate reads them as its exit code. Step
+> 2b's finding is not rung-specific.
+> **The §7 nit is fixed** (18:00 review, advisory): the step-2b probe's
+> GATE-4 failure-path detail string is now conditional — it prints
+> "VARIES … inside at least one of the eight recorded groups" when the
+> gate fails, instead of the static passing claim. Boolean and exit code
+> were always correct; only the text misled, and only on the failure path.
+> **Does not close / does not reopen:** `MAG-13` stays ✅;
+> `compute_b_field` untouched; §9 item 5 (the 1.50 M-cell uniform rung)
+> is not retired. **For the weekly review:** the third point is in, and
+> it says second order — but read it with the pairwise spread beside it.
+> If the graded route is re-derived (step 2b's hand-off), it is now being
+> re-derived against a *second-order, radially flat* error map, not the
+> first-order near-wire-concentrated one it was originally scoped
+> against.
+
 **`MAG-13` step 2b — price higher-order B recovery on the solved rung** ✅
 **EXECUTED 2026-08-12 (13:30 slot): the recovery route is bought and it is
 cheap — CG1-projected `curl A` reads 1.9557% where the DG1 interpolation
@@ -8273,7 +8359,31 @@ outlast items 1–4.
    is wrong — report the measured number, park, and the weekly review
    re-plans rather than extends (§10's own tripwire).
 
-3. **`MAG-13` step 2c — a third rung for the CG1 recovery rate (heavy;
+3. ~~**`MAG-13` step 2c — a third rung for the CG1 recovery rate**~~ —
+   **done 2026-08-12 (22:30 run)**, §7 step 2c. The rung landed at
+   **408 079 cells** (1.051× the declared cube-scaling assumption) for
+   75.5 s of mesh+solve, and the three-point least-squares rates are
+   **CG1 p = 2.003** / **DG1 p = 1.217** against the two-point
+   observations 2.00 / 1.22. Measured CG1 span **3.6530%** vs the
+   p = 2.00 extrapolation's 3.9207% (−0.2677 pp, 6.8% low); DG1
+   **7.5952%** vs 7.1946%. Identity run reproduced the smoke rung
+   digit-for-digit (145 884 cells / 10.9806% / 7.8411%, 3/3 gates,
+   exit 0, 26 s); the 1.1 M rung was cited, not re-solved. The negative
+   control fired as designed — the CG1/DG1 gap persists at this rung, so
+   step 2b's finding is not rung-specific — and CG1 is again band-flat,
+   here at ≈ 3–4.5% against the fine rung's ≈ 2.0%, which says the floor
+   **scales with h** rather than sitting fixed. `-n 8`, exit 0, 78 s;
+   `20260813T033235Z_MAG-13-step2c-smoke.log`,
+   `20260813T033311Z_MAG-13-step2c-rung3.log`. **For the weekly review:**
+   the third point supports second order, but the *pairwise* CG1 rates
+   are 2.204 (coarse→new) and 1.803 (new→fine) — a ±0.20 spread that
+   constrains the rate to "second order, ±10%", not to 2.00 as a
+   converged constant. Two deviations from the recipe are declared in the
+   §7 entry: the probe is a sibling module importing `mag13_step2b_recovery`
+   rather than an edit to it (so the recorded step-2b gates could not be
+   perturbed), and the GATE-4 nit fix does ride in the step-2b file as
+   instructed. *Original item text follows.*
+   **(heavy;
    independent; commissioned by this review from step 2b's hand-off).**
    One intermediate rung at h = 0.0017678 (√2 between the recorded
    rungs): mesh + solve (**expected ~390 k cells by cube scaling from
