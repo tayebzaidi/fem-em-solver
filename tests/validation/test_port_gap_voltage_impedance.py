@@ -172,6 +172,12 @@ from fem_em_solver.core import (
     TimeHarmonicSolver,
 )
 from fem_em_solver.io.mesh import MeshGenerator
+from fem_em_solver.ports.systematics import (
+    GAP_PHYSICS_SYSTEMATIC as _GAP_PHYSICS_SYSTEMATIC,
+    PEC_BOX_SYSTEMATIC as _PEC_BOX_SYSTEMATIC,
+    PEC_BOX_SYSTEMATIC_EXPONENT as _PEC_BOX_SYSTEMATIC_EXPONENT,
+    mutual_systematics_ladder,
+)
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.constants import EPSILON_0, MU_0
 
@@ -439,9 +445,16 @@ PRODUCTION_SIGMA_LADDER = (2.0e2, 0.0)
 # estimator.  The gate below carries them: it asserts on the corrected ratio and
 # prints the whole ladder, raw first, so the raw -10.57% is on the record beside
 # the corrected number rather than hidden behind it.
-PEC_BOX_SYSTEMATIC = +1.69e-2
-PEC_BOX_SYSTEMATIC_EXPONENT = 1.657
-GAP_PHYSICS_SYSTEMATIC = -3.0224e-02
+# Lifted into the package by `EX-18` (2026-08-13) so the example and this gate
+# share one definition of the three constants and the ladder — see
+# ``fem_em_solver.ports.systematics``.  The values are unmoved; the module-level
+# names are kept so every reference below and in the sibling padding/consistency
+# modules reads exactly as it did when the numbers were measured, and
+# ``test_lifted_systematics_ladder_is_bit_identical`` asserts the lift changed
+# no digit.
+PEC_BOX_SYSTEMATIC = _PEC_BOX_SYSTEMATIC
+PEC_BOX_SYSTEMATIC_EXPONENT = _PEC_BOX_SYSTEMATIC_EXPONENT
+GAP_PHYSICS_SYSTEMATIC = _GAP_PHYSICS_SYSTEMATIC
 
 # Step 1's unfragmented-mesh record: the two loops meshed as disconnected
 # islands and Z12 came out *identically* zero against this same 1.241755 Ohm
@@ -475,19 +488,70 @@ def _mutual_systematics_ladder(im_z12_ohm: float, omega_m12: float) -> dict:
 
     Returns every rung, not just the last: the gate asserts on ``corrected`` and
     the caller prints all of them.
+
+    **`EX-18` (2026-08-13):** the arithmetic moved to
+    :func:`fem_em_solver.ports.systematics.mutual_systematics_ladder` so
+    ``examples/ports/01_two_torus_port_pair.py`` reproduces this gate's digits
+    from the same code rather than from a copy of the three constants.  What
+    stays here is ``passes`` alone — ``MUTUAL_TOLERANCE`` is *this module's*
+    band, not a property of the systematics.
     """
-    raw = abs(im_z12_ohm) / omega_m12
-    box_corrected = raw + PEC_BOX_SYSTEMATIC
-    corrected = box_corrected / (1.0 + GAP_PHYSICS_SYSTEMATIC)
+    rungs = mutual_systematics_ladder(im_z12_ohm, omega_m12)
     return {
-        "raw": raw,
-        "raw_deviation": raw - 1.0,
-        "box_corrected": box_corrected,
-        "box_deviation": box_corrected - 1.0,
-        "corrected": corrected,
-        "deviation": corrected - 1.0,
-        "passes": abs(corrected - 1.0) < MUTUAL_TOLERANCE,
+        **rungs,
+        "passes": abs(rungs["corrected"] - 1.0) < MUTUAL_TOLERANCE,
     }
+
+
+def test_lifted_systematics_ladder_is_bit_identical():
+    """`EX-18`'s lift changed no digit of step 3b-xviii's ladder.
+
+    The three constants and the two-rung arithmetic moved to
+    ``fem_em_solver.ports.systematics`` so the example and this gate cannot
+    drift apart.  A lift that quietly re-typed a constant would move the gated
+    number without moving the band, so the comparison here is ``==`` against
+    the literals and the expression as they stood when 3b-xviii measured them —
+    exact equality, not a tolerance — evaluated at that gate's own recorded
+    ``Im Z₁₂`` and ``ωM₁₂`` and at the blind fixture's ``Z₁₂ ≡ 0``.  No solve:
+    the ladder is a pure function, which is why it could be lifted at all.
+    """
+    assert PEC_BOX_SYSTEMATIC == +1.69e-2
+    assert PEC_BOX_SYSTEMATIC_EXPONENT == 1.657
+    assert GAP_PHYSICS_SYSTEMATIC == -3.0224e-02
+
+    omega_m12 = OMEGA * mutual_inductance(MAJOR_RADIUS, MAJOR_RADIUS, SEPARATION)
+    # The gate's own recorded rung: raw 0.894283 x omega*M12
+    # (20260813T020352Z_PORT-1-step3bxviii-pairgate-n2.log).
+    for im_z12 in (0.894283 * omega_m12, BLIND_FIXTURE_IM_Z12_OHM, -1.5, 12.75):
+        expected_raw = abs(im_z12) / omega_m12
+        expected_box = expected_raw + 1.69e-2
+        expected_corrected = expected_box / (1.0 + (-3.0224e-02))
+
+        rungs = mutual_systematics_ladder(im_z12, omega_m12)
+        assert rungs["raw"] == expected_raw
+        assert rungs["box_corrected"] == expected_box
+        assert rungs["corrected"] == expected_corrected
+        assert rungs["raw_deviation"] == expected_raw - 1.0
+        assert rungs["box_deviation"] == expected_box - 1.0
+        assert rungs["deviation"] == expected_corrected - 1.0
+
+        # The module's wrapper adds only the band, and takes it from
+        # MUTUAL_TOLERANCE rather than from the lifted module.
+        wrapped = _mutual_systematics_ladder(im_z12, omega_m12)
+        assert wrapped["corrected"] == expected_corrected
+        assert wrapped["passes"] == (
+            abs(expected_corrected - 1.0) < MUTUAL_TOLERANCE
+        )
+
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            "[EX-18] lifted ladder bit-identical: PEC box "
+            f"{PEC_BOX_SYSTEMATIC:+.6e} (p = {PEC_BOX_SYSTEMATIC_EXPONENT}), "
+            f"gap physics {GAP_PHYSICS_SYSTEMATIC:+.6e}; at the 3b-xviii raw "
+            "rung 0.894283 the ladder returns corrected "
+            f"{mutual_systematics_ladder(0.894283 * omega_m12, omega_m12)['corrected']:.6f}",
+            flush=True,
+        )
 
 
 def _gap_half_extents():

@@ -11292,3 +11292,77 @@ box is not the suspect: at 64 MHz the box is 0.045 λ₀ across and the
 Dirichlet trace is exact by construction, so truncation contributes nothing —
 that stays true at 128 MHz and points any residual at interior resolution,
 not at the drive.
+
+## 2026-08-13T11:20Z — `EX-18` (§9 item 2) — **complete**
+
+Preflight clean, container Up 29 h. §9 item 1 (`TH-10` step 2) was already
+marked done by the 04:30 run, so item 2 is the first open one.
+
+**What was built.** `examples/ports/01_two_torus_port_pair.py` (+ `.md` guide),
+a new `ports:` group in `scripts/run_examples.sh` — listed by
+`./run_examples.sh --list`, dispatched by `-e ports:1`, complex build sourced
+automatically like `mri:`/`th:`/`mat:`/`ans:` (the `-h` `sed` range moved 26 →
+28 with the added usage lines). Plus the lift the item asked for:
+`PEC_BOX_SYSTEMATIC`, `PEC_BOX_SYSTEMATIC_EXPONENT`, `GAP_PHYSICS_SYSTEMATIC`
+and `_mutual_systematics_ladder` moved out of
+`tests/validation/test_port_gap_voltage_impedance.py` into
+**`src/fem_em_solver/ports/systematics.py`** (exported from `ports/__init__`).
+The test keeps its module-level names — every reference in it and in the sibling
+padding/consistency modules reads as it did when the numbers were measured — and
+keeps `passes` alone, since `MUTUAL_TOLERANCE` is that module's band, not a
+property of the systematics.
+
+**Measured, allreduced, on `main` at `-n 2`**
+(`20260813T110940Z_EX-18-example-n2-v3.log`, **exit 0, 135 s**, standard tier;
+mesh 36.1 s / 178 055 cells, solves 22.0 + 22.5 s):
+
+| quantity | measured | 3b-xviii record |
+|---|---|---|
+| raw mutual / ωM₁₂ | **0.894543 (−10.55%)** | 0.894283 (−10.57%) |
+| + PEC box (`+0.0169`, `p = 1.657`) | 0.911443 (−8.86%) | — |
+| + gap physics (`÷(1 − 0.030224)`) | **0.939849 (−6.02%)** | 0.939581 (−6.04%) |
+| \|Z₁₂−Z₂₁\|/\|Z₁₂\| | 5.8343e-04 (printed) | — |
+| ‖S−Sᵀ‖/‖S‖ | **2.5494e-05** | 2.5494e-05 |
+| ‖S‖₂ | **0.861449** | 0.861449 |
+
+The raw ratio lands on the 3b-xi padding-sweep digit 0.894543 rather than
+3b-xviii's 0.894283 — 2.6e-4 apart, inside the declared 2e-3 reproduction band,
+same fixture and same padding, so partition/lineage rather than drift. The S
+digits reproduce exactly. Negative control cited not recomputed: step 1's
+unfragmented fixture's `Im Z₁₂ ≡ 0` through the same ladder reads **−98.26%**,
+asserted *to fail* the 10% band. Combined XDMF written
+(`examples/ports/paraview_output/two_torus_port_pair_combined.xdmf`, mesh +
+`CellTags` + port-1 `E_real`/`E_imag`/`E_magnitude` as CG1 Lagrange).
+Ladder lift gated separately with `==`, not a tolerance, at four inputs
+including the blind zero: `20260813T110626Z_EX-18-ladderlift.log`, exit 0, 3 s.
+
+**Two failed runs on the way, both the example's own defects, neither a
+tolerance question.**
+1. `20260813T110637Z_EX-18-example-n2.log` (exit 1, 43 s) — the pre-solve
+   terminal-angle check used the *area-weighted* ⟨y⟩ and read 0.173852 against
+   0.175335. That is known-issues 11 (at `gap_overhang = 2e-4` the tube
+   protrudes through the box's −x face, so the tag picks up lateral strips at
+   `|y| < half_y`), not a geometry drift; the gate module's *extreme*-y form was
+   ported instead and reads 0.175335123 exactly. Worth noting the check earned
+   its place: it failed in 43 s, before either solve was bought.
+2. `20260813T110745Z_EX-18-example-n2-v2.log` (exit 1, 89 s) — the quadrature
+   precondition was applied to both ports and the **driven** one failed at
+   2.2619e-02. Step 3b-x's standing disposition gates the undriven port and
+   prints the driven diagonal: the driven path runs through the impressed
+   source's own terminals and does not converge in the quadrature at all
+   (2.3e-2 / 3.5e-2 measured here, matching the 3b-x record), which is a
+   property of `Z₁₁`, which nothing here reads. Measured undriven residuals:
+   3.9111e-04 and 1.4044e-04 against the unmoved 1e-3.
+
+No bound was moved in either fix.
+
+**Scope held.** `PORT-1` stays 🟡; no `S₁₁` claim (step 2b's electric-energy
+excess is called out in the script, the guide and the log); no birdcage ports;
+the correction-ladder composition question stays the weekly review's.
+
+**Hypothesis for the next attempt on this family.** The two-torus fixture now
+has a runnable end-to-end port demo, so the cheapest next port-side example is
+*frequency*: the same fixture through `ports/sweep.py` + `touchstone.py`, whose
+`is_placeholder=False` threading is the remaining known-issues 3 item — an
+example is the natural place to discover whether that threading works, since it
+needs a real S-matrix and now one exists outside a test.

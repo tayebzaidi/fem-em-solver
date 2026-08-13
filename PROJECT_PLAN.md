@@ -6843,7 +6843,7 @@ mandate to displace the critical path.
 | `EX-15` | Every runnable example gets a step-by-step analysis guide (3 steps, operator directive) | ✅ (2026-08-11: all three steps landed; **16 of 16** runnable examples checked against 3 required headings, `PENDING_GUIDES` empty, negative controls fired in all three steps) | standard |
 | `EX-16` | `examples/mri/01`: converge the frequency-domain solve, then re-measure the rank spread | 🚫 (2026-08-10: solve converges — `preonly`/LU, `reason=4` — and the spread does **not** move, 23.5539% vs the 23.5545% unconverged record; anchor FAIL, negative-result clause taken. Fix landed; the 23% is the centerline sampling path, 3215× the phantom path on the same fields) | standard |
 | `EX-17` | Circular-loop VTX export repair: port the `EX-14` diff, same round-trip anchor | ✅ (2026-08-10: round-trip max\|B\| 7.756122914931e-05 T both ways, rel diff 0.000e+00 vs 1e-10; loop's analytic numbers unmoved, checker green) | standard |
-| `EX-18` | Gap-voltage port pair → Z → S on the two-torus fixture (the 3b-xvii/xviii gated capability; first ports example) | ⬜ | standard |
+| `EX-18` | Gap-voltage port pair → Z → S on the two-torus fixture (the 3b-xvii/xviii gated capability; first ports example) | ✅ (2026-08-13: raw 0.894543 × ωM₁₂ printed as the miss it is, corrected 0.939849 (−6.02%) inside the unmoved 10%; ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1; blind-ladder negative control −98.26% asserted to fail; 134 s at `-n 2`) | standard |
 
 **`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
 run each).** Common rules: gated capability only; the example *asserts* its
@@ -7644,7 +7644,53 @@ corrected 0.939581 (−6.04% inside the unmoved 10%), ‖S−Sᵀ‖/‖S‖ ≈
 `20260813T020352Z_PORT-1-step3bxviii-pairgate-n2.log` (looser allowed,
 never tighter); combined-XDMF written; elapsed recorded. Demonstrates
 gated capability only; `PORT-1` stays 🟡 and the correction-ladder
-composition question stays the weekly review's. and the refcheck freshness
+composition question stays the weekly review's.
+>
+> **`EX-18` ✅ 2026-08-13 (06:00 slot, §9 item 2) — the port lineage is
+> demonstrable, and the example prints the miss first.**
+> `examples/ports/01_two_torus_port_pair.py` + guide, a new `ports:` runner
+> group (`./run_examples.sh -e ports:1`, complex build sourced automatically
+> like `mri:`/`th:`/`mat:`/`ans:`), runner-dispatched through the harness:
+> `20260813T110940Z_EX-18-example-n2-v3.log`, **exit 0, 135 s**, `-n 2`,
+> standard tier — mesh 36.1 s / 178 055 cells, solves 22.0 + 22.5 s.
+> **Reproduced on `main`, allreduced:** raw **0.894543** × ωM₁₂ (−10.55%,
+> printed first and labelled a miss — the unmoved 10% band would reject it),
+> + PEC box 0.911443, + gap physics **0.939849 (−6.02%)**; reciprocity
+> |Z₁₂−Z₂₁|/|Z₁₂| = 5.8343e-04 printed; **‖S−Sᵀ‖/‖S‖ = 2.5494e-05** and
+> **‖S‖₂ = 0.861449** — both the 3b-xviii digits to every printed figure.
+> The raw ratio lands on the 3b-xi padding-sweep digit 0.894543 rather than
+> 3b-xviii's 0.894283 (2.6e-4 apart, inside the declared 2e-3 reproduction
+> band); same fixture, same padding — the spread is partition/lineage, not
+> drift.
+> **Negative control, cited not recomputed:** step 1's unfragmented fixture's
+> `Im Z₁₂ ≡ 0` run through the same ladder reads **−98.26%** and is asserted
+> *to fail* the band.
+> **The lift:** `PEC_BOX_SYSTEMATIC` / `PEC_BOX_SYSTEMATIC_EXPONENT` /
+> `GAP_PHYSICS_SYSTEMATIC` and the ladder moved out of
+> `tests/validation/test_port_gap_voltage_impedance.py` into
+> **`src/fem_em_solver/ports/systematics.py`**, so the example and the gate
+> share one definition instead of two copies of three constants. The test
+> keeps the module-level names (every sibling module's reference reads as it
+> did when the numbers were measured) and keeps `passes` alone, since
+> `MUTUAL_TOLERANCE` is that module's band, not a property of the
+> systematics. `test_lifted_systematics_ladder_is_bit_identical` asserts the
+> lift with `==` — not a tolerance — against the literals and the expression
+> as they stood, at four inputs including the blind fixture's zero
+> (`20260813T110626Z_EX-18-ladderlift.log`, exit 0, 3 s).
+> **Two misses on the way, both the example's and both real:** (1) the
+> pre-solve terminal-angle check first used the *area-weighted* ⟨y⟩ and read
+> 0.173852 against 0.175335 — that is known-issues 11 (lateral strips the tag
+> picks up at `gap_overhang = 2e-4`), not a geometry drift, and the gate
+> module's *extreme*-y form was ported instead; (2) the quadrature
+> precondition was applied to both ports and the **driven** one failed at
+> 2.26e-02 — step 3b-x's standing disposition gates the undriven port and
+> prints the driven diagonal, because the driven path runs through the
+> impressed source's own terminals. Neither tolerance was moved.
+> **Does not close** `PORT-1` (stays 🟡): no `S₁₁` claim (step 2b's
+> electric-energy excess), no birdcage ports, and the correction-ladder
+> composition question stays the weekly review's.
+
+**`EX-14` — straight-wire VTX export repair and the refcheck freshness
 branch exercised** *(scoped 2026-08-09, 18:00 review; one run, standard
 tier; fixes the `EX-12` known-issues entry and the audit gap in the same
 motion).* The `.bp` export in `examples/magnetostatics/01_straight_wire.py`
@@ -8385,8 +8431,17 @@ mutually independent.** Item 5 is the declared spare.
    look for; report the measured error and rate beside the plane-wave
    3.61%, annotate §7 `TH-10`, stop; never widen.
 
-2. **`EX-18` — gap-voltage port pair → Z → S example (standard;
-   independent; §5.4 ramp on the 3b-xvii/xviii gates).** New
+2. ~~**`EX-18` — gap-voltage port pair → Z → S example**~~ — **done
+   2026-08-13 (06:00 run)**: `examples/ports/01_two_torus_port_pair.py` +
+   guide + a new `ports:` runner group; raw **0.894543** × ωM₁₂ printed
+   first as the miss it is (−10.55%), corrected **0.939849 (−6.02%)** inside
+   the unmoved 10%, ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1, blind
+   ladder −98.26% asserted to fail, exit 0, 135 s, `-n 2`
+   (`20260813T110940Z_EX-18-example-n2-v3.log`). The three systematics
+   constants and the ladder are lifted into
+   `src/fem_em_solver/ports/systematics.py` and bit-identical-checked
+   (`20260813T110626Z_EX-18-ladderlift.log`). `PORT-1` stays 🟡. Original
+   text follows. New
    `examples/ports/01_two_torus_port_pair.py` + guide,
    runner-registered (`./run_examples.sh --list` + `-e` logs are part
    of the chunk — the `EX-1` demotion lesson): gapped two-torus
