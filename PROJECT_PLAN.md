@@ -2615,17 +2615,32 @@ and the pair gate is queued — which is the condition §10 named.)*
 >   orders. Full recipe in the §9 item. Consult
 >   `docs/references/jin-fem-3e/` before re-deriving; cite chapter/eq.
 >   numbers in the annotation.
-> * **Step 2 — the first full-wave solve gate, 64 MHz** ⬜ *(scoped
->   2026-08-13, 03:00 review, step 1 having landed; queued as §9 item 1 —
->   full rubric-complete recipe there).* Drive the `sphere_in_box_domain`
->   walls with the series **total** exterior field via
->   `TimeHarmonicProblem.dirichlet_e_field` (the `TH-8` pattern; the
->   piecewise-total callable was exposed by step 1 for exactly this),
->   a = 0.05 m, εᵣ = 78, σ = 0.5 S/m, 64 MHz (|m|k₀a = 0.850), and gate
->   the interior `E` against `LossySphereSeries` — relL2 < 5% at the finer
->   of two `TH-8`-class rungs with the error decreasing under refinement
->   (`TH-1`'s plane-wave precedent: 3.61% L2). Negative control on record:
->   the quasi-static closed form misses this interior field by **102.3%**.
+> * **Step 2 — the first full-wave solve gate, 64 MHz** ✅ **2026-08-13
+>   (04:30 run)**. `tests/validation/test_lossy_sphere_fullwave.py`: the
+>   `sphere_in_box_domain` wall is driven with `LossySphereSeries.total_field`
+>   through `TimeHarmonicProblem.dirichlet_e_field` (the `TH-8` pattern, the
+>   piecewise-total callable step 1 exposed for exactly this), a = 0.05 m,
+>   εᵣ = 78, σ = 0.5 S/m, 64 MHz — `ε_c = 78 − j140.43`, m = 10.9233 +
+>   6.428j, k₀a = 0.067067, **|m|k₀a = 0.850029**, N = 7, last-term bound
+>   8.075e-16. **Both gates green first run, exit 0, 10 s, `-n 2`, standard
+>   tier** (`20260813T093212Z_TH-10-step2-64mhz.log`):
+>   **interior relL2(E_FEM vs series) 8.154% (5 866 cells) → 3.643%
+>   (17 670 cells)** on `TH-8`'s own two coarser rungs — under the 5% band
+>   and decreasing, and within 0.9% of `TH-1`'s plane-wave precedent
+>   (3.61% L2) on a completely different fixture. Negative control: the
+>   solve sits **18.68×** closer to the series than to the quasi-static
+>   closed form (bound 10×; relL2(FEM vs quasi-static) 68.034%), so the
+>   solver is resolving physics `TH-8`'s closed form does not contain.
+>   **Number worth carrying:** the reference's *own* series-vs-quasi-static
+>   separation on this probe set is **55.113% in relL2** — the same fact
+>   step 1 recorded as 102.3% in max-norm. The two are not interchangeable;
+>   quote the norm with the number. **Where the claim now stands:** this is
+>   the repo's first solve gated in the Larmor regime, and the first
+>   external check on step 1's anchor — the series and a fully independent
+>   FEM discretisation agree to 3.6%, which retires the "six gates are all
+>   internal identities of one implementation" caveat for 64 MHz. It does
+>   **not** license SAR (that is step 4's ∫σ|E|²) or any coil-loading claim.
+>   `TH-10` stays 🟡 pending steps 3–4.
 > * **Step 3 — 128 MHz** ⬜ *(scoped 2026-08-13; §9 item 3, serial on
 >   step 2's fixture landing).* Same recipe at |m|k₀a = 1.374, where the
 >   quasi-static departure on record is **154.6%**; the resolution demand
@@ -8327,9 +8342,14 @@ as item 4. *(Full text in `docs/planning/plan-archive.md`, archived
 landing — the skip rule is stated in each; items 1, 2 and 4 are
 mutually independent.** Item 5 is the declared spare.
 
-1. **`TH-10` step 2 — the first Larmor-regime full-wave solve gate,
-   64 MHz (standard; independent; opens the solve half of §10
-   subgoal 3).** Impose the series **total** exterior field on the
+1. ~~**`TH-10` step 2 — the first Larmor-regime full-wave solve gate,
+   64 MHz**~~ — **done 2026-08-13 (04:30 run)**, both gates green first
+   run: interior relL2 vs `LossySphereSeries` **8.154% → 3.643%** over the
+   two `TH-8` rungs (< 5%, decreasing; `TH-1`'s plane wave reached 3.61%),
+   quasi-static separation **18.68×** against the 10× bound, exit 0, 10 s,
+   `-n 2` (`20260813T093212Z_TH-10-step2-64mhz.log`). `TH-10` stays 🟡;
+   **item 3's precondition (step 2's fixture landing) is met.** Original
+   text follows. Impose the series **total** exterior field on the
    `sphere_in_box_domain` walls via
    `TimeHarmonicProblem.dirichlet_e_field` (the `TH-8` pattern; step 1
    exposed the piecewise-total callable for exactly this), a = 0.05 m,

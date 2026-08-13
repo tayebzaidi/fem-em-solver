@@ -11197,3 +11197,98 @@ mesh. When the solve does come, the 102%/154% departure says the fixture must
 be driven with the *series'* total field on the box wall, never the
 quasi-static one; reusing `TH-8`'s Dirichlet callable at 64 MHz would build in
 a 100% error, and `total_field()` exists to make that mistake hard.
+
+## 2026-08-13T09:35Z — `TH-10` step 2 (§9 item 1) — **complete**
+
+Scheduled implementer run, 04:30 CDT slot. Preflight clean: `git status`
+empty, on `main` at `9fb22f0`, container Up 28 h. No `recovered/*` or
+`attempt/*` handling needed. §9 item 1 taken as written — the first
+Larmor-regime full-wave **solve** gate at 64 MHz.
+
+**What was built.** One new file,
+`tests/validation/test_lossy_sphere_fullwave.py` — no source changes at all.
+It drives the `sphere_in_box_domain` box wall with
+`LossySphereSeries.total_field` through
+`TimeHarmonicProblem.dirichlet_e_field` (the `TH-8` pattern; step 1 exposed
+the piecewise-total callable for exactly this), solves at `degree=1`, and
+probes the **interior** on the same Fibonacci two-shell point set `TH-8` and
+the step-1 probe use — deliberately identical, so the three sets of numbers
+are directly comparable. Fixture: a = 0.05 m, εᵣ = 78, σ = 0.5 S/m,
+f = 64 MHz, box half-width 0.10 m, rungs `(0.0125, 0.025)` and
+`(0.00833, 0.0167)` — `TH-8`'s own two coarser resolutions, unchanged.
+
+**Measured (first run, no re-aiming, no bound moved).**
+
+| quantity | coarse rung (5 866 cells) | fine rung (17 670 cells) | bound |
+|---|---|---|---|
+| relL2(E_FEM vs series) | 8.154% | **3.643%** | < 5% at the fine rung, decreasing |
+| relL2(E_FEM vs quasi-static) | 68.672% | 68.034% | — |
+| separation (qs/series) | 8.42× | **18.68×** | > 10× |
+
+Series parameters printed and checked against the item's prediction:
+`ε_c = 78 − j140.43` (σ/(ωε₀) = 140 **dominates** εᵣ = 78 at 64 MHz),
+m = 10.9233 + 6.428j, k₀a = 0.067067, **|m|k₀a = 0.850029** — the item said
+0.850. N = 7, last-term bound 8.075e-16.
+
+**The result in one line.** 3.643% relL2 on a lossy full-wave sphere sits
+within 0.9% of `TH-1`'s plane-wave precedent (3.61% L2) on a completely
+different fixture — the solver's Larmor-regime accuracy is the same as its
+already-gated plane-wave accuracy. This is the repo's first solve gated at a
+Larmor frequency.
+
+**The number that matters for the audit trail, and a norm trap.** The
+reference's own series-vs-quasi-static separation on this probe set is
+**55.113% in relL2**, which is the *same fact* step 1 recorded as **102.3%**
+— step 1's is a max-norm figure. They are not interchangeable, and the test
+prints both side by side so the next reader cannot conflate them. The 10×
+gate is computed from the FEM field's two distances (68.034% / 3.643%), not
+from either headline number.
+
+**What this does and does not license.** It is the first *external* check on
+step 1's anchor: gates 1–6 there were all internal identities of one
+implementation (the 03:00 review's caveat (c)), and an independent FEM
+discretisation now agrees with the series to 3.6%. A shared-mode error in the
+series — a wrong `E_n` prefactor common to all branches — would have shown up
+here as a level offset and did not. It does **not** license SAR (step 4's
+∫σ|E|²), any `MAT-4` claim, or any coil-loading claim; `TH-10` stays 🟡.
+
+**Scope held.** 64 MHz only, per the item's scope boundary. 128 MHz (item 3)
+was **not** attempted in this slot even though the compute came in 18× under
+the tier — one run, one item. No coil, no ABC work, no `MAT-4` wording, no
+existing bound touched anywhere in the repo. The `TH-8` fixture and the
+step-1 probe were both read and neither was edited.
+
+**Cost.** One harness command, foreground, `-n 2`, container
+`timeout -k 30 300`, Bash-tool timeout 660000 ms. **Exit 0, 10 s elapsed**
+(5 passed, including `tests/environment` first). Standard tier declared; the
+run used 6% of it. Nothing backgrounded, no timeout fired, no container
+wedge, no FFCx lock. Log
+`20260813T093212Z_TH-10-step2-64mhz.log`; the test-results.md row landed with
+it. The chunk ID carries the step suffix, per the 03:00 audit nit.
+
+**Traps checked off the item's list.** Complex build sourced +
+`FEM_EM_REQUIRE_COMPLEX=1` with `tests/environment` first (4 environment
+tests passed); interior sampling via
+`post.evaluation.evaluate_vector_field_parallel`, never `f.eval`; cell count
+allreduced; `-s` for the prints. The `e^{+jωt}` convention needed no
+debugging — a conjugated drive would have landed near 170% (step 1's 173.8%
+signature) and the assertion message names that, so the next reader checks
+the convention before blaming the solver. The step-1 probe's FAIL-line
+template nit was **not** fixed: the item conditions that on "if editing the
+step-1 probe", and this chunk did not need to touch it.
+
+**No known-issues entry** — nothing unrelated failed. **No denials.**
+
+**Next-attempt hypothesis.** Item 3 (128 MHz) is unblocked and its
+precondition is met. The 10 s cost is the useful datum: the item warns that
+the resolution demand roughly doubles and prices exit 124 as the measurement,
+but at 10 s for two rungs there is room for *several* refinements inside the
+570 s window — `-n 2` at ~150 k cells should still fit. Expect the 5% band at
+128 MHz to need one to two rungs finer than 0.00833 (|m|k₀a = 1.374 vs 0.850,
+and the interior wavelength shortens with √f), and expect the separation gate
+to be *easier* there, not harder, since the quasi-static departure grows to
+154.6% (max-norm). If 128 MHz misses on rate rather than level, the exterior
+box is not the suspect: at 64 MHz the box is 0.045 λ₀ across and the
+Dirichlet trace is exact by construction, so truncation contributes nothing —
+that stays true at 128 MHz and points any residual at interior resolution,
+not at the drive.
