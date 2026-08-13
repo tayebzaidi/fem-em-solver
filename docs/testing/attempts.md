@@ -11676,3 +11676,78 @@ ladder, which must be *re-measured* rather than reused, is then the only blocker
 to a second gated S-matrix.
 
 **No denials, no unrelated failures.**
+
+---
+
+## 2026-08-13T20:07Z — `EX-19` — complete
+
+**Slot.** 15:00 local implementer run, §9 On-deck item 2 (item 1 was already
+done). Tree clean at `8e6d522`, container Up 38 h, no `attempt/*` or
+`recovered/*` work needed.
+
+**What landed.** `examples/time_harmonic/06_larmor_lossy_sphere.py` (runner
+selector `th:6`, existing group — no runner change was needed) and its guide
+`06_larmor_lossy_sphere.md`. The fixture is *imported* from
+`tests/validation/test_lossy_sphere_fullwave.py` per the item — geometry,
+materials, both rung ladders, probe cloud, `LossySphereSeries`, the ohmic-power
+machinery (`_power_rung`, `_exact_sphere_series_power`) and every bound. The
+example restates none of it; the repo root goes on `sys.path` exactly as
+`EX-6`/`th:3` already does.
+
+**Measured, first run, exit 0** (`20260813T200415Z_EX-19-example-n2.log`,
+`./run_examples.sh -e th:6 -n 2 -t 540`, 24 s compute / 27 s wall, five solves
+5 866 → 55 251 cells):
+
+```
+  64 MHz  h=0.01250 (  5866):  relL2 8.154%   separation  8.42x
+  64 MHz  h=0.00833 ( 17670):  relL2 3.643%   separation 18.68x   <- record 3.643% / 18.68x
+ 128 MHz  h=0.00833 ( 17670):  relL2 3.299%   separation 31.78x
+ 128 MHz  h=0.00556 ( 55251):  relL2 1.826%   separation 57.31x   <- record 1.826% / 57.31x
+ power 64 MHz fine:  P_FEM 1.105143259e-07 W vs P_series 1.066439182e-07 W => 3.629%
+ power negative control: P_quasistatic 4.464133865e-08 W => miss 58.140% (floor 50%)
+```
+
+Reproduction drifts vs the `TH-10` records, against a **pre-stated 1% band**
+(`REPRODUCTION_BAND`, justified in the file from `MAG-13` rung 2's
+mesh-realisation noise): 8.41e-05, 1.68e-04, 1.83e-05, 7.20e-05 for the four
+field anchors; both power anchors inside the band. The gate's own assertions —
+level < 5%, decreasing with h, separation > 10×, power < 5%, quasi-static power
+miss > 50% — are re-asserted on this run's field, not cited. Both negative
+controls execute in-run.
+
+**One free reading, recorded in the guide.** At the *same* 17 670-cell mesh,
+128 MHz (3.299%) is more accurate than 64 MHz (3.643%). That is `GEO-14`'s
+premise reproduced through a second path; the example states it as a refutation
+of wavelength-limited resolution, and claims nothing further.
+
+**Cost note.** Five solves, not the six the three gate runs would cost: the fine
+rung is solved once per frequency and serves the field anchor *and* the XDMF
+export (`_mesh_and_solve` + a six-line probe→relL2 helper, since the fixture's
+`_solve` discards its fields). That helper is the only duplicated plumbing in
+the file and it is self-checking — if it ever diverged from `_solve`, the
+`RECORD_INTERIOR_L2` assertions fail, which is exactly the failure mode the band
+exists to catch. Power runs at the fine rung only, the rung the gate asserts on.
+
+**Unrelated failure, journaled not fixed.** The doc-reference checker
+(`20260813T200522Z_EX-19-docrefs.log`, exit 1) reports **3 guide violations,
+all in `examples/ports/01_two_torus_port_pair.md`** — `EX-18`'s guide, landed at
+this morning's 06:00 slot, uses `## What it demonstrates` and never the three
+required heading forms. The new `EX-19` guide passes cleanly; that file is the
+only violation on `main`. New known-issues entry under "Non-test issues" with
+the literal output and the fix (a three-line heading rename + re-run). Not fixed
+in passing, per the implementer non-negotiable.
+
+**Scope held.** Interior field and total ohmic power only — no mass averaging,
+no C95.3 wording, no SAR claim, nothing about a coil. `TH-10` is already ✅;
+`MAT-4`/`TH-11` are untouched. The guide discloses that the XDMF picture is
+qualitative (`POST-4` step 4's P1-interpolant issue) and that every asserted
+number is read from the solved N1curl field.
+
+**Hypothesis for the next attempt on this family.** The remaining §9 items
+(`GEO-14` step 1, `TH-11` step 1) are independent of this one; the natural
+follow-on *here* is that `06`'s cross-frequency reading gives `GEO-14` a second,
+zero-cost data point — if the floor is CG1/`MAG-13`-shaped rather than
+resolution-shaped, the 55 251-cell 64 MHz run `GEO-14` step 1 prices should land
+near 3%, not below 2%.
+
+**No denials.**

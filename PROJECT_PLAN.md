@@ -7090,7 +7090,7 @@ mandate to displace the critical path.
 | `EX-16` | `examples/mri/01`: converge the frequency-domain solve, then re-measure the rank spread | 🚫 (2026-08-10: solve converges — `preonly`/LU, `reason=4` — and the spread does **not** move, 23.5539% vs the 23.5545% unconverged record; anchor FAIL, negative-result clause taken. Fix landed; the 23% is the centerline sampling path, 3215× the phantom path on the same fields) | standard |
 | `EX-17` | Circular-loop VTX export repair: port the `EX-14` diff, same round-trip anchor | ✅ (2026-08-10: round-trip max\|B\| 7.756122914931e-05 T both ways, rel diff 0.000e+00 vs 1e-10; loop's analytic numbers unmoved, checker green) | standard |
 | `EX-18` | Gap-voltage port pair → Z → S on the two-torus fixture (the 3b-xvii/xviii gated capability; first ports example) | ✅ (2026-08-13: raw 0.894543 × ωM₁₂ printed as the miss it is, corrected 0.939849 (−6.02%) inside the unmoved 10%; ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1; blind-ladder negative control −98.26% asserted to fail; 134 s at `-n 2`) | standard |
-| `EX-19` | Larmor lossy-sphere example (`TH-10`'s newly gated capability: first example solving at 64/128 MHz; rubric in the §9 item) | ⬜ | standard |
+| `EX-19` | Larmor lossy-sphere example (`TH-10`'s newly gated capability: first example solving at 64/128 MHz; rubric in the §9 item) | ✅ (2026-08-13: `th:6`, fixture imported from the `TH-10` test module; all four records reproduced through the example path — 3.643% / 1.826% interior relL2 at 18.68× / 57.31× separation, power 3.629% with the quasi-static route missing 58.140% — max drift **1.7e-04** vs a pre-stated 1% band; convergence and both negative controls executed in-run; 24 s at `-n 2`) | standard |
 
 **`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
 run each).** Common rules: gated capability only; the example *asserts* its
@@ -8642,7 +8642,17 @@ self-contained below.
    `timeout -k 30 600` (3b-xviii's 457 s envelope). Deprecate the
    heuristic behind a kwarg, do not delete. Hold `PORT-1` 🟡 — the ✅
    flip is the reviewing session's call.
-2. **`EX-19` — Larmor lossy-sphere example (standard).** The first
+2. ✅ **done 2026-08-13, 15:00 run** — `examples/time_harmonic/06_larmor_lossy_sphere.py`
+   (`th:6`) + guide; all four gate records reproduced through the example path
+   at a pre-stated 1% band, max drift 1.7e-04 (64 MHz 3.643% / 18.68×,
+   128 MHz 1.826% / 57.31×, power 3.629% with a 58.140% quasi-static miss);
+   two XDMF files written; exit 0, 24 s compute / 27 s wall,
+   `20260813T200415Z_EX-19-example-n2.log`. Free reading recorded in the
+   guide: at the *same* 17 670-cell mesh 128 MHz (3.299%) beats 64 MHz
+   (3.643%) — the `GEO-14` measurement, reproduced. The doc-reference
+   checker's guide pass is red on `main` for `EX-18`'s guide headings, not
+   this one (known-issues, `20260813T200522Z_EX-19-docrefs.log`).
+   **`EX-19` — Larmor lossy-sphere example (standard).** The first
    example solving at 64/128 MHz: `examples/time_harmonic/06_…` under
    the `th:` group, importing the `TH-10` fixture (never restating it),
    both frequencies in one run, combined XDMF of |E| in and around the

@@ -499,6 +499,30 @@ mesh in the process — is the reusable part.
 
 ## Non-test issues
 
+### `examples/ports/01_two_torus_port_pair.md`'s headings fail the `EX-15` guide pass, so `check_example_doc_references.py` is red on `main` (found by `EX-19`, 2026-08-13)
+
+**Verified at `8e6d522`, 15:00 implementer slot**
+(`20260813T200522Z_EX-19-docrefs.log`, exit 1). The checker's guide pass
+requires all three of *What this demonstrates* / *How to run it* / *How to
+analyze it, step by step* as heading substrings; `EX-18`'s guide, landed at the
+06:00 slot the same day, uses `## What it demonstrates` and never uses the other
+two forms, so it reports three violations:
+
+```
+FAIL: 3 guide violation(s):
+  - examples/ports/01_two_torus_port_pair.md: missing required heading 'What this demonstrates'
+  - examples/ports/01_two_torus_port_pair.md: missing required heading 'How to run it'
+  - examples/ports/01_two_torus_port_pair.md: missing required heading 'How to analyze it, step by step'
+```
+
+**Cause: known, and it is documentation only** — the `EX-18` guide's content
+covers all three topics under differently-worded headings; nothing about the
+ports example or its gate is wrong. The `EX-19` guide added in the same run
+passes the pass cleanly, so this is the only violation on `main`. Not fixed in
+passing (implementer non-negotiable: unrelated failures get an entry, not a
+drive-by edit); the fix is a three-line heading rename plus a re-run of the
+checker, and the entry retires with it.
+
 ### The container-side `timeout` in the standard harness recipe does not reliably stop an `mpiexec` job, and an overrun can wedge the container (`MAT-6` step 10, 2026-08-12)
 
 **Verified at `648b216`, 00:00 implementer slot.** The recipe every heavy
