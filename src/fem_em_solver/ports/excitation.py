@@ -246,7 +246,20 @@ def run_placeholder_port_coupling_case(
         passive_port_terminations_ohm=passive_port_terminations_ohm,
     )
 
-    validate_required_port_tags_exist(ports, available_tags=problem.cell_tags.values)
+    # `cell_tags.values` is rank-local: a rank owning no cell of a terminal
+    # region raised while the others returned (OPS-14 measured 4/4 ranks at
+    # -n 4 and 8/8 at -n 8, `20260808T140426Z_OPS-14-table-n4.log`, and the
+    # validator's own docstring prescribes reducing first).  Defect (2) of
+    # known-issues 3; fixed here so the deprecated route stays *runnable* as
+    # PORT-1 step 4's negative control.  Defect (1) — the fixture in
+    # tests/solver/test_single_port_excitation.py tagging over rank-local cell
+    # indices — is untouched, so that entry does not close.
+    global_tag_values = sorted(
+        {int(v) for values in problem.mesh.comm.allgather(
+            np.unique(np.asarray(problem.cell_tags.values)).tolist()
+        ) for v in values}
+    )
+    validate_required_port_tags_exist(ports, available_tags=global_tag_values)
 
     solver = TimeHarmonicSolver(problem, degree=degree)
     fields = solver.solve(

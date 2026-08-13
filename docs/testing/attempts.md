@@ -11605,3 +11605,74 @@ the cheapest discriminator, and it prices the same graded-sizing question
 `MAG-13` and the birdcage prerequisite are both waiting on.
 
 **No denials, no known-issues entries.** Nothing unrelated failed.
+
+---
+
+## 2026-08-13T18:38Z — `PORT-1` step 4 — **complete**
+
+On-deck item 1, executed as scoped. Log
+`20260813T183606Z_PORT-1-step4-packagegate.log` (`-n 2`, standard,
+`timeout -k 30 500`, **7 passed 153.9 s**, 155 s wall), new test
+`tests/validation/test_port_package_sparameters.py`.
+
+**The result.** `run_n_port_sparameter_sweep(problem, ports,
+gap_voltage_ports=specs)` reproduces the 3b-xviii record *through the package
+entry point*: `Im Z12 = +1.110803269e+00` Ω, raw ratio **0.894543** against the
+record 0.894283 (Δ = 2.6e-4, band 2e-3), corrected **0.939849** (−6.02%, inside
+the unmoved 10%), `‖S−Sᵀ‖/‖S‖ = 2.5494e-05` (band 1e-3) and `‖S‖₂ = 0.861449`
+(≤ 1). The last two are *bit-identical* to the `EX-18` record, and the raw digit
+is 3b-xvi's gap-101 number — so the package route is demonstrably the same route
+the test path gated, not a lookalike. `is_placeholder=False` on the result.
+
+**Negative controls, both executed.** The retiring heuristic, on the same mesh,
+the same `TimeHarmonicProblem` and the same `PortDefinition`s, returns
+`S ≈ −I` with `S12 ≡ 0` **exactly** — its ring-distance coupling and the
+power-wave assembly give zero off-diagonal for this two-port —
+`max|S_heur − S_field| = 3.078260e-01`, three orders above the 2e-3 band. The
+blind fixture (`Im Z12 = 0`, cited) fails the mutual band at −98.26%.
+
+**What landed in `src/`.** New `ports/gap_voltage.py`: `GapVoltagePortSpec` +
+`run_gap_voltage_port_case` — one impressed-gap solve per port
+(`project_source=False`), `I` from the meshed conduction current on the meshed
+arc length, `V = −∫E·t̂ dl` through `evaluate_vector_field_parallel`, returning
+the same `SinglePortExcitationResult` container with `is_placeholder=False`.
+`ports/sparameters.py`: `gap_voltage_ports=` kwarg selecting the route,
+`_assemble_impedance_matrix` (`Z[i,k] = V_i/I_k`, column by column), `z_matrix`
+on `SParameterSweepResult`, `sparameters_from_impedance` for the conversion, and
+a `DeprecationWarning` on the heuristic branch — **kept reachable, not deleted**,
+per the scope note. The *geometry* stays the caller's (path quadrature,
+conductor direction, gap/conductor lengths): a package that invented those is
+how `excitation.py` became a heuristic in the first place.
+
+**One defect fixed in passing, and one deliberately not.** known-issues 3's
+defect (2) — `excitation.py` handing rank-local `cell_tags.values` to
+`validate_required_port_tags_exist` — is now globally reduced. This was not
+optional: the negative control runs the heuristic at `-n 2` on a partition that
+gives each rank one port, which is exactly the case defect (2) raises on.
+Defect (1) (the `test_single_port_excitation.py` fixture tagging over rank-local
+cell indices) is untouched, **so known-issues 3 stays open and that test stays
+red** — the row is annotated, not removed.
+
+**Scope held.** Two-torus fixture only; no birdcage tags, no B1+, no `S11`
+claim (step 2b's electric-energy excess still forbids reading `Z_in` off this
+diagonal). `PORT-1` held at **🟡** — every gate is green through the package
+entry point, so the done-when is plausibly met, but the flip is the reviewing
+session's call, as the item said.
+
+**For the review.** (1) The §2 sentence "every S-parameter the package produces
+is a heuristic" is now false *for this fixture through this entry point*, and
+true everywhere else — §2 needs the narrowing sentence, and the `PORT-1` ✅
+decision is yours. (2) The heuristic's `S12 ≡ 0` is worth a line in its own
+right: the retiring model produced not merely a wrong mutual but *no* mutual, on
+a fixture whose measured `|S12| = 0.0376`. (3) Next natural step is a second
+geometry or a Touchstone export off the solved-field route (the
+`is_placeholder=False` flag now unblocks export), whichever the review prefers.
+
+**Hypothesis for the next attempt on this family.** The route's only
+fixture-specific inputs are the four geometry quantities in
+`GapVoltagePortSpec`; if a second gapped geometry (e.g. one loop of the birdcage
+lineage) can fill them, the same gate runs there unchanged — and the systematics
+ladder, which must be *re-measured* rather than reused, is then the only blocker
+to a second gated S-matrix.
+
+**No denials, no unrelated failures.**

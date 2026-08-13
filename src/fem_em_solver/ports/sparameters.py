@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Callable, Optional, Sequence
 
@@ -14,6 +15,7 @@ from .excitation import (
     SinglePortExcitationResult,
     run_placeholder_port_coupling_case,
 )
+from .gap_voltage import GapVoltagePortSpec, run_gap_voltage_port_case
 
 
 @dataclass(frozen=True)
@@ -43,6 +45,10 @@ class SParameterSweepResult:
     excitation_results: dict[str, SinglePortExcitationResult]
     sanity_report: SMatrixSanityReport
     is_placeholder: bool = True
+    # Present only on the solved-field (gap-voltage) route, where S is built
+    # from a measured Z rather than from per-port power waves.  `None` on the
+    # heuristic route, which has no impedance matrix to speak of.
+    z_matrix: Optional[np.ndarray] = None
 
 
 def _power_waves(voltage_v: complex, current_a: complex, z0_ohm: float) -> tuple[complex, complex]:
@@ -191,10 +197,42 @@ def _assemble_sparameter_matrix(
     return s_matrix
 
 
+def _assemble_impedance_matrix(
+    ports: Sequence[PortDefinition],
+    excitation_results: dict[str, SinglePortExcitationResult],
+) -> np.ndarray:
+    """``Z[i, k] = V_i / I_k`` from one driven-port solve per column.
+
+    The column-by-column definition `PORT-1` step 3b gated: ``I_k`` is the
+    driven port's own (conduction) current in solve ``k``, and ``V_i`` is the
+    terminal-to-terminal path voltage read off that same solve.  Power waves are
+    deliberately not used here — S comes from Z through
+    :func:`sparameters_from_impedance`, which is the route with a gate behind it.
+    """
+    n_ports = len(ports)
+    z_matrix = np.zeros((n_ports, n_ports), dtype=np.complex128)
+    for col, driven_port in enumerate(ports):
+        result = excitation_results[driven_port.port_id]
+        i_driven = result.responses[driven_port.port_id].current_a
+        if np.isclose(abs(i_driven), 0.0):
+            raise ValueError(
+                f"driven-port current for '{driven_port.port_id}' is zero; "
+                "cannot assemble an impedance matrix"
+            )
+        for row, recv_port in enumerate(ports):
+            z_matrix[row, col] = result.responses[recv_port.port_id].voltage_v / i_driven
+
+    if not np.all(np.isfinite(z_matrix.real)) or not np.all(np.isfinite(z_matrix.imag)):
+        raise ValueError("assembled Z-matrix contains non-finite values")
+    return z_matrix
+
+
 def run_n_port_sparameter_sweep(
     problem: TimeHarmonicProblem,
     ports: Sequence[PortDefinition],
     *,
+    gap_voltage_ports: Optional[Sequence[GapVoltagePortSpec]] = None,
+    reference_impedance_ohm: Optional[float] = None,
     drive_voltage_v: complex = 1.0 + 0.0j,
     terminated_port_impedance_ohm: float = 50.0,
     current_density: Optional[Callable] = None,
@@ -203,7 +241,27 @@ def run_n_port_sparameter_sweep(
     gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
     degree: int = 1,
 ) -> SParameterSweepResult:
-    """Run an N-port excitation sweep and assemble an NxN S-matrix."""
+    """Run an N-port excitation sweep and assemble an NxN S-matrix.
+
+    Two routes, selected by ``gap_voltage_ports``:
+
+    * **solved field** (`PORT-1` step 4) — pass one
+      :class:`~fem_em_solver.ports.gap_voltage.GapVoltagePortSpec` per port and
+      the sweep runs one impressed-gap solve per port, reads ``V`` and ``I`` off
+      the field, assembles ``Z`` column by column and converts it with
+      :func:`sparameters_from_impedance`.  ``is_placeholder`` is False and
+      ``z_matrix`` is populated.
+    * **heuristic** (the retiring `PORT-0` path, kept reachable and deprecated)
+      — with ``gap_voltage_ports=None`` the port quantities come from
+      ``excitation.py``'s proximity model and mean nothing physically.  It emits
+      a :class:`DeprecationWarning` on top of the existing
+      :class:`~fem_em_solver.ports.excitation.PlaceholderPortModelWarning`.
+
+    ``reference_impedance_ohm`` overrides the scalar ``Z0`` of the conversion;
+    by default the ports' common ``z0_ohm`` is used (the converter is scalar-Z0
+    by construction, so mixed per-port references are rejected rather than
+    silently averaged).
+    """
     if not ports:
         raise ValueError("ports must be non-empty")
 
@@ -215,22 +273,55 @@ def run_n_port_sparameter_sweep(
         raise ValueError("port_id values must be unique")
 
     excitation_results: dict[str, SinglePortExcitationResult] = {}
-    for drive_idx, port in enumerate(ports):
-        excitation_results[port.port_id] = run_placeholder_port_coupling_case(
-            problem,
-            ports,
-            driven_port_id=port.port_id,
-            driven_port_index=drive_idx,
-            drive_voltage_v=drive_voltage_v,
-            terminated_port_impedance_ohm=terminated_port_impedance_ohm,
-            current_density=current_density,
-            subdomain_id=subdomain_id,
-            subdomain_ids=subdomain_ids,
-            gauge_penalty=gauge_penalty,
-            degree=degree,
-        )
+    z_matrix: Optional[np.ndarray] = None
 
-    s_matrix = _assemble_sparameter_matrix(ports, excitation_results)
+    if gap_voltage_ports is not None:
+        for port in ports:
+            excitation_results[port.port_id] = run_gap_voltage_port_case(
+                problem,
+                ports,
+                gap_voltage_ports,
+                driven_port_id=port.port_id,
+                gauge_penalty=gauge_penalty,
+                degree=degree,
+            )
+        if reference_impedance_ohm is None:
+            references = {float(port.z0_ohm) for port in ports}
+            if len(references) != 1:
+                raise ValueError(
+                    "sparameters_from_impedance takes a scalar Z0: the ports carry "
+                    f"{sorted(references)}; pass reference_impedance_ohm explicitly"
+                )
+            z0_ohm = references.pop()
+        else:
+            z0_ohm = float(reference_impedance_ohm)
+        z_matrix = _assemble_impedance_matrix(ports, excitation_results)
+        s_matrix = sparameters_from_impedance(z_matrix, z0_ohm=z0_ohm)
+    else:
+        warnings.warn(
+            "run_n_port_sparameter_sweep() without gap_voltage_ports uses the "
+            "PORT-0 coupling heuristic, not the solved field; pass "
+            "gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route "
+            "(PORT-1 step 4). The heuristic path is deprecated.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        for drive_idx, port in enumerate(ports):
+            excitation_results[port.port_id] = run_placeholder_port_coupling_case(
+                problem,
+                ports,
+                driven_port_id=port.port_id,
+                driven_port_index=drive_idx,
+                drive_voltage_v=drive_voltage_v,
+                terminated_port_impedance_ohm=terminated_port_impedance_ohm,
+                current_density=current_density,
+                subdomain_id=subdomain_id,
+                subdomain_ids=subdomain_ids,
+                gauge_penalty=gauge_penalty,
+                degree=degree,
+            )
+        s_matrix = _assemble_sparameter_matrix(ports, excitation_results)
+
     sanity_report = summarize_sparameter_sanity(s_matrix)
 
     if problem.mesh.comm.rank == 0:
@@ -269,4 +360,5 @@ def run_n_port_sparameter_sweep(
         excitation_results=excitation_results,
         sanity_report=sanity_report,
         is_placeholder=any(r.is_placeholder for r in excitation_results.values()),
+        z_matrix=z_matrix,
     )

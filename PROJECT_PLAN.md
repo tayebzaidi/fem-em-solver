@@ -5487,7 +5487,39 @@ is in the point-evaluation path. Owns the open known-issues entry
 >   known-issues 3; birdcage ports and B1+ stay held.
 >
 > * **Step 4 — the package path: `run_n_port_sparameter_sweep` reads the
->   solved field** ⬜ *(scoped 2026-08-13, 10:30 review — the §10 subgoal-2
+>   solved field** ✅ *(2026-08-13, 13:30 run;
+>   `tests/validation/test_port_package_sparameters.py`, 7 passed 153.9 s at
+>   `-n 2`, standard, `20260813T183606Z_PORT-1-step4-packagegate.log`)*.
+>   **The package entry point now reproduces the gated record bit-for-bit**:
+>   `Im Z₁₂ = +1.110803269e+00 Ω`, raw **0.894543** (record 0.894283, Δ =
+>   2.6e-4 inside the 2e-3 band; the same digit 3b-xvi measured on gap 101),
+>   corrected **0.939849** (−6.02%, inside the unmoved 10%),
+>   `‖S−Sᵀ‖/‖S‖ = 2.5494e-05` and `‖S‖₂ = 0.861449` — *identical* to the
+>   `EX-18` record, i.e. the package route and the test route are the same
+>   route. `is_placeholder=False` on the returned result. **Negative control,
+>   executed:** the retiring heuristic on the *same mesh, same problem, same
+>   ports* returns `S ≈ −I` with `S₁₂ ≡ 0` exactly (it has no coupling for a
+>   two-port whose "distance" its ring model reads as zero coupling once the
+>   orientation labels match), `max|S_heur − S_field| = 3.078260e-01` ≫ 2e-3.
+>   Blind-ladder control (`Im Z₁₂ = 0`, −98.26%) asserted to fail the band.
+>   **What landed in `src/`:** `ports/gap_voltage.py` (the route —
+>   impressed-gap solve, `I` from the meshed conduction current, `V` from the
+>   caller-supplied terminal-to-terminal quadrature via
+>   `evaluate_vector_field_parallel`), `sparameters.py` gains
+>   `gap_voltage_ports=`, `_assemble_impedance_matrix` (`Z[i,k] = V_i/I_k`),
+>   `z_matrix` on the result, and a `DeprecationWarning` on the heuristic
+>   branch — which stays reachable, undeleted. The *geometry* (path
+>   quadrature, conductor direction/length, gap length) is the caller's, not
+>   the package's: inventing it inside the package is how `excitation.py`
+>   became a heuristic. **One defect fixed in passing:** known-issues 3's
+>   defect (2) — `excitation.py`'s rank-local `cell_tags.values` handed to
+>   `validate_required_port_tags_exist` — is now globally reduced, because the
+>   negative control cannot run at `-n 2` without it. Defect (1) (the fixture
+>   tagging over rank-local cell indices) is untouched, so **known-issues 3
+>   does not close**. `PORT-1` stays 🟡: the ✅ flip is the reviewing session's
+>   call. §2's "every S-parameter the package produces is a heuristic"
+>   sentence is what this step retires — for the two-torus fixture, through
+>   this entry point, and nowhere else. *(scoped 2026-08-13, 10:30 review — the §10 subgoal-2
 >   critical-path step the 3b lineage cleared the way for. §2's standing
 >   sentence — "every S-parameter the package produces is a heuristic" —
 >   falls only when this lands.)* Replace the port-voltage source inside
@@ -8593,7 +8625,11 @@ verification.** *(Full text in `docs/planning/plan-archive.md`, archived
 Items 1, 3 and 4 execute their §7 entries verbatim; items 2 and 5 are
 self-contained below.
 
-1. **`PORT-1` step 4 — the package path reads the solved field
+1. ✅ **done 2026-08-13, 13:30 run** — raw 0.894543 (record 0.894283),
+   corrected 0.939849, `‖S−Sᵀ‖/‖S‖ = 2.5494e-05`, `‖S‖₂ = 0.861449`, heuristic
+   negative control differs by 3.08e-01; 7 passed 153.9 s,
+   `20260813T183606Z_PORT-1-step4-packagegate.log`. `PORT-1` held 🟡.
+   **`PORT-1` step 4 — the package path reads the solved field
    (standard).** Execute the §7 `PORT-1` step-4 entry verbatim:
    `run_n_port_sparameter_sweep` gets its port voltages from the
    gap-voltage route (systematics via `ports/systematics.py`) instead of
