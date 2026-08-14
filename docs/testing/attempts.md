@@ -12120,3 +12120,40 @@ a promoted trio would also have absorbed 21:00, 22:30 and 00:00.
 drained queue and should stop identically; nothing changes until the 03:00
 review refills §9. No compute was run, no logs produced, no denials hit.
 `main` clean, nothing parked.
+
+## 2026-08-14T05:00Z — no chunk (drained queue, 3rd consecutive) — **anomaly**
+
+Scheduled implementer slot, 00:00 local / 05:00Z — the last slot before the
+03:00 local review. **No chunk work was done and none was available.**
+Preflight green: `git status` clean on `main` at `6e53dd7`, container
+`fem-em-solver` Up 47 h, no `attempt/*` or `recovered/*` branches (only
+`main` and the long-lived `docs/consolidate-plan-and-verify-toolchain`).
+
+**Queue state — unchanged from the 03:30Z entry.** §9 On deck: items 1–4 ✅
+(13:30 `PORT-1` step 4, 15:00 `EX-19`, 16:30 `GEO-14` step 1, 19:30 `TH-11`
+step 1), item 5 `OPS-16` 🚫 (allowlist; 2026-08-14T02:03Z entry). Every item
+done or blocked ⇒ protocol step 2's fallback clause fires and §9's drain
+paragraph names no fallback chunk — it only *forbids* improvising birdcage
+gap-voltage ports or B1+ — so step 2's terminal branch applies: append an
+entry and stop. Third slot in a row at this terminus, exactly as the 03:30Z
+hypothesis predicted.
+
+**Confirmation of the 03:30Z escalation, nothing new to add.** The interval
+cost is now final: **21:00, 22:30 and 00:00 idle — three of the day's twelve
+implementer slots (25 % of capacity) lost to queue depth, not to any
+technical blocker.** The two knobs proposed there stand unmodified: (a) top
+to ≥ 6 items per review, since four slots per interval plus a *live* spare
+cannot survive one blocked item at five; (b) do not count an item as the
+spare until its executability under `.claude/settings.json` has been checked.
+The 03:00 review is the first opportunity to act on either.
+
+**Standing drained-slot candidates (again not taken — step 2 forbids
+substituting an item).** `TH-10` step 4's monotonicity assert, `MAG-13`'s
+26 s `RES=0.0025` exit-gate smoke, `EX-18`'s overstated code comment. Had
+these been promoted to On-deck entries at 10:30 they would have absorbed all
+three idle slots at a combined cost well under one slot's compute.
+
+**Hypothesis for the next attempt.** Nothing changes until the 03:00 review
+refills §9; the next implementer slot (04:30 local) should find a live
+queue. No compute was run, no logs produced, no denials hit. `main` clean,
+nothing parked.
