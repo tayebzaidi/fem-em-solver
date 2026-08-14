@@ -12492,3 +12492,54 @@ repoint is the only remaining lever inside the repo — and it is the one a
 headless session cannot pull, since `.claude/settings.json` puts
 `Edit(scripts/automation/**)` under `ask`. No compute was run, no logs
 produced, no denials hit. `main` clean, nothing parked.
+
+## 2026-08-14T18:30Z — no chunk (drained queue, 9th consecutive) — **anomaly**
+
+Scheduled implementer slot, 13:30 local / 18:30Z. **No chunk work was done and
+none was available.** Preflight green: `git status` clean on `main` at
+`42bf1c5`, container `fem-em-solver` Up 2 d, branches unchanged (`main` plus
+the long-lived `docs/consolidate-plan-and-verify-toolchain`; no `attempt/*`,
+no `recovered/*`).
+
+**Determined, and confirmed determined.** The 17:00Z entry pre-registered this
+slot as one of three that *cannot* differ, because no review event falls
+between 15:30Z and 23:00Z. §9 On deck is byte-identical to what that slot read
+— items 1–4 ✅ (`PORT-1` step 4, `EX-19`, `GEO-14` step 1, `TH-11` step 1),
+item 5 `OPS-16` 🚫 — and `logs/automation/` still ends at
+`20260814T153001Z_daily-review.log` (98 B) for the review tier. Every item done
+or blocked ⇒ protocol step 2's fallback fires; §9's drain instruction names
+nothing runnable and explicitly forbids improvising birdcage ports or B1+, so
+this slot stops. Nothing here is new evidence: the 17:00Z entry closed the
+diagnosis with three byte-identical 98-byte review logs, and this slot had no
+observation available that could have amended it.
+
+**Cost.** Idle slots 21:00, 22:30, 00:00, 04:30, 06:00, 07:30, 09:00, 12:00 and
+now 13:30 — **nine consecutive, 75 % of the day's twelve**, none to a technical
+blocker. 15:00 and 16:30 remain determined on the same argument (11 by 16:30).
+19:30, after the 23:00Z review, is still the next slot whose outcome is open;
+the base case there is a fourth 98-byte log, since `daily-review.sh` draws on
+the same exhausted Fable 5 balance. The weekly planning review (2026-08-16
+01:30 local, `weekly-review.sh:32` → `claude-fable-5`) is now **~1.3 days out**
+and dies the same way absent operator action.
+
+**Dashboard.** Waiting-on-you item 0 and the Automation-health line updated:
+count 8 → 9 (75 % of the day), the 13:30 idle moved from predicted to realised,
+and the determined-slot list narrowed to 15:00 / 16:30. Same disclosed
+deviation as the five prior slots — an implementer session editing a
+review-owned file — with the same justification: it is the only alerting
+channel and its owning review is dead. No other file touched.
+
+**Standing drained-slot candidates (again not taken — step 2 forbids
+substituting an item).** `TH-10` step 4's monotonicity assert, `MAG-13`'s 26 s
+`RES=0.0025` exit-gate smoke, `EX-18`'s overstated code comment. Nine idle
+slots against ~3 min of compute that would close all three. Restated for
+whichever review runs first, unchanged in priority: (1) restock §9 to ≥ 6
+items; (2) promote one standing ride-along to a real queue item so a drained
+slot has a legal floor; (3) verify allowlist executability before counting an
+item, the `OPS-16` lesson.
+
+**Hypothesis for the next attempt.** 15:00 local / 20:00Z meets this same §9
+unchanged and should stop identically, making ten; 16:30 likewise. Entries for
+those two slots have no new information to add beyond incrementing the count —
+the informative event is the 23:00Z review log's size. No compute was run, no
+logs produced, no denials hit. `main` clean, nothing parked.

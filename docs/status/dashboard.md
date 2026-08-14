@@ -9,7 +9,7 @@ slot died on an API 529; see Automation health). Source of truth is
 0. 🔴 **The scheduled reviews are out of usage credits — the automation loop
    is half-dead, and the weekly review is ~1.4 days from dying too.**
    *(Added 2026-08-14 09:30Z by the 04:30 implementer slot, not by a review;
-   updated by the 06:00, 07:30, 09:00 and 12:00 slots — see their
+   updated by the 06:00, 07:30, 09:00, 12:00 and 13:30 slots — see their
    `docs/testing/attempts.md` entries.)* **Three** consecutive review slots
    (2026-08-13 18:00, 2026-08-14 03:00 and 10:30) each produced a **98-byte,
    byte-identical** log reading *"You're out of usage credits … Fable 5"* and
@@ -18,9 +18,9 @@ slot died on an API 529; see Automation health). Source of truth is
    not a transient. The implementer pool (Opus) is unaffected and still runs
    — so the half of the loop that *consumes* §9 On-deck items is alive while
    the half that *refills* it is silent. Consequence: the queue drained at
-   21:00 on 08-13 and **eight implementer slots have now idled consecutively
-   (66.7 % of the day's twelve)**, none to a technical blocker. The next
-   review event is 18:00 local, so **13:30 / 15:00 / 16:30 are already
+   21:00 on 08-13 and **nine implementer slots have now idled consecutively
+   (75 % of the day's twelve)**, none to a technical blocker. The next
+   review event is 18:00 local, so **15:00 and 16:30 are already
    determined to idle as well** (11 by 16:30); 19:30 is the next slot whose
    outcome is still open. **Also at risk: the 2026-08-16 01:30 weekly
    planning review**, on the same model — it alone owns the `PORT-1` 3b
@@ -90,14 +90,15 @@ per landing), no demotions:
   credits, not 529s** (2026-08-13 18:00, 2026-08-14 03:00 and 10:30; 98-byte
   logs, byte-identical, no steps run). §9 has therefore not been restocked
   since 2026-08-13 10:30, and the implementer slots at 21:00, 22:30, 00:00,
-  04:30, 06:00, 07:30, 09:00 and 12:00 all met a drained queue and stopped per
-  §9's drain instruction — eight consecutive. See Waiting-on-you item 0 — this
+  04:30, 06:00, 07:30, 09:00, 12:00 and 13:30 all met a drained queue and
+  stopped per §9's drain instruction — nine consecutive, three quarters of the
+  day's capacity. See Waiting-on-you item 0 — this
   is the live blocker. **The 2026-08-16 01:30 weekly planning review is on the
   same model** (`weekly-review.sh:32` → `claude-fable-5`), so an unrestored
   balance also kills the owner of the `PORT-1` 3b branch-landing adjudication,
   the §10 roadmap and §5.4 Ansys commissioning. *(Line added by the
-  2026-08-14 04:30 implementer slot and updated by the 06:00, 07:30, 09:00
-  and 12:00 ones; the rest of this section is the 10:30 review's.)*
+  2026-08-14 04:30 implementer slot and updated by the 06:00, 07:30, 09:00,
+  12:00 and 13:30 ones; the rest of this section is the 10:30 review's.)*
 - Grid otherwise clean: nine consecutive landing slots across the last two
   intervals; tree clean; no `attempt/*` or `recovered/*` branches — the
   three PORT-1 lineage branches were landed and deleted 2026-08-13.
