@@ -12408,3 +12408,87 @@ review slots across two days, the model repoint becomes the priority over
 waiting, and 12:00 should stop identically (making eight). If it is a full
 log, §9 is restocked and 12:00 executes item 1 normally. No compute was run,
 no logs produced, no denials hit. `main` clean, nothing parked.
+
+## 2026-08-14T17:00Z — no chunk (drained queue, 8th consecutive) — **anomaly**
+
+Scheduled implementer slot, 12:00 local / 17:00Z. **No chunk work was done and
+none was available.** Preflight green: `git status` clean on `main` at
+`1bf6c71`, container `fem-em-solver` Up 2 d, branches unchanged (`main` plus
+the long-lived `docs/consolidate-plan-and-verify-toolchain`; no `attempt/*`,
+no `recovered/*`).
+
+**The 14:05Z hypothesis is confirmed, on the branch it named.** That entry
+said this slot was the first that *could* differ, because it is the first to
+follow a review event (10:30 local / 15:30Z), and pre-registered the two
+outcomes. The review log is
+`20260814T153001Z_daily-review.log`, **98 bytes**, reading
+*"You're out of usage credits. Run /usage-credits to keep using Fable 5 or
+/model to switch models."* — so the first branch fired. I read all three dead
+review logs (`20260813T230001Z`, `20260814T080001Z`, `20260814T153001Z`) and
+they are **byte-identical**, 98 B each. That upgrades the diagnosis from
+inference to observation:
+
+- **three consecutive review slots, spanning two days**, killed by the same
+  cause — Fable 5 credit exhaustion on the review pool;
+- the cause is **not** transient (a 529 recurs randomly; this message has
+  recurred identically at 23:00Z, 08:00Z and 15:30Z, i.e. every review slot
+  since the credit ran out);
+- the Opus implementer pool remains unaffected — this session ran normally,
+  as have the seven idle ones before it. The split-pool account from 09:30Z
+  stands, now with a three-point confirmation rather than two.
+
+**Cost, and the day is once more over-determined — further than before.**
+Idle slots: 21:00, 22:30, 00:00, 04:30, 06:00, 07:30, 09:00 and now 12:00 —
+**eight consecutive, 66.7 % of the day's twelve**, none to a technical
+blocker. The next review event is 18:00 local / 23:00Z. The slots at
+**13:30, 15:00 and 16:30 all fall before it**, so §9 cannot change beneath
+them and all three are now determined to stop identically — **11 consecutive
+by 16:30**. 19:30 is the next slot that can differ, on the same argument this
+entry just tested. Since `weekly-review.sh` and `daily-review.sh` draw on the
+same exhausted Fable 5 balance, the base case for 23:00Z is a fourth 98-byte
+log; only operator action changes it.
+
+**Weekly review, now the sharper deadline.** The 2026-08-16 01:30 local
+weekly planning review is **~1.4 days out** and is pinned to
+`claude-fable-5` (`weekly-review.sh:32`). On present evidence it dies the
+same way. It is not interchangeable with a daily review: it solely owns the
+`PORT-1` 3b branch-landing adjudication, the §10 roadmap assessment, §5.4
+Ansys commissioning, and the birdcage-ports/B1+ hold that §9's drain
+instruction explicitly reserves to it. Losing it costs a week of long-horizon
+sequencing, not a slot.
+
+**Dashboard.** Waiting-on-you item 0 and the Automation-health line updated:
+count 7 → 8, the third dead review recorded with the byte-identical-logs
+observation, and the remaining-slots arithmetic corrected (the 15:30Z review
+did not save the four slots the previous text hoped for; 13:30/15:00/16:30
+are now determined, and 19:30 is the next decision point). Same disclosed
+deviation as the four prior slots — an implementer session is editing a
+review-owned file — with the same justification: it is the only alerting
+channel and its owning review is dead. No other file touched.
+
+**What this slot adds.** The previous seven entries argued from *absence*
+(no restock ⇒ probably credits). This one closes that with three identical
+logs and a pre-registered prediction that came out on the predicted branch,
+so no further waiting is informative: the diagnosis is done, and every
+additional idle slot from here buys nothing. Restated for whichever review
+runs first, unchanged in priority: (1) restock §9 to ≥ 6 items — four is
+exactly what the grid consumes between reviews, leaving no margin for one
+dead review, let alone three; (2) promote one standing ride-along to a real
+queue item so a drained slot has a legal floor; (3) verify allowlist
+executability before counting an item, the `OPS-16` lesson.
+
+**Standing drained-slot candidates (again not taken — step 2 forbids
+substituting an item).** `TH-10` step 4's monotonicity assert, `MAG-13`'s
+26 s `RES=0.0025` exit-gate smoke, `EX-18`'s overstated code comment. Eight
+idle slots — ~8 h of Opus implementer capacity — have now passed over ~3 min
+of compute that would close all three, because each is a rider on an edit
+that never came rather than a queue item.
+
+**Hypothesis for the next attempt.** 13:30 local / 18:30Z meets this same
+§9 unchanged (no review intervenes) and should stop identically, making
+nine; likewise 15:00 and 16:30. The next genuinely informative slot is
+19:30, after the 23:00Z review. If that log is also 98 bytes, the launcher
+repoint is the only remaining lever inside the repo — and it is the one a
+headless session cannot pull, since `.claude/settings.json` puts
+`Edit(scripts/automation/**)` under `ask`. No compute was run, no logs
+produced, no denials hit. `main` clean, nothing parked.

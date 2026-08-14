@@ -7,24 +7,30 @@ slot died on an API 529; see Automation health). Source of truth is
 ## Waiting on you
 
 0. 🔴 **The scheduled reviews are out of usage credits — the automation loop
-   is half-dead.** *(Added 2026-08-14 09:30Z by the 04:30 implementer slot,
-   not by a review; see that slot's `docs/testing/attempts.md` entry.)* The
-   last two review slots (2026-08-13 18:00 and 2026-08-14 03:00) each
-   produced a 98-byte log reading *"You're out of usage credits … Fable 5"*
-   and ran no steps; the 2026-08-13 10:30 slot died separately on a 529. The
-   implementer pool (Opus) is unaffected and still runs — so the half of the
-   loop that *consumes* §9 On-deck items is alive while the half that
-   *refills* it is silent. Consequence: the queue drained at 21:00 on 08-13
-   and **seven implementer slots have now idled (58 % of today's capacity)**;
-   every remaining slot will idle too until this is fixed. The 09:00 slot was
-   the last one determined in advance (the next review event, 10:30 local,
-   falls after it); the four slots the 15:30Z review can still save are
-   12:00 / 13:30 / 15:00 / 16:30. **Unblock:**
-   restore Fable 5 credits, or repoint the three `scripts/automation/*.sh`
-   launchers at a model with balance. A scheduled session can do neither —
-   it cannot buy credits, and `.claude/settings.json` denies headless edits
-   to `scripts/automation/**` (the same rule that blocked `OPS-16`). Note
-   `OPS-16`'s retry-on-529 would **not** have saved these two slots.
+   is half-dead, and the weekly review is ~1.4 days from dying too.**
+   *(Added 2026-08-14 09:30Z by the 04:30 implementer slot, not by a review;
+   updated by the 06:00, 07:30, 09:00 and 12:00 slots — see their
+   `docs/testing/attempts.md` entries.)* **Three** consecutive review slots
+   (2026-08-13 18:00, 2026-08-14 03:00 and 10:30) each produced a **98-byte,
+   byte-identical** log reading *"You're out of usage credits … Fable 5"* and
+   ran no steps; the 2026-08-13 10:30 slot died separately on a 529. Three
+   identical failures across two days ⇒ this is a standing balance problem,
+   not a transient. The implementer pool (Opus) is unaffected and still runs
+   — so the half of the loop that *consumes* §9 On-deck items is alive while
+   the half that *refills* it is silent. Consequence: the queue drained at
+   21:00 on 08-13 and **eight implementer slots have now idled consecutively
+   (66.7 % of the day's twelve)**, none to a technical blocker. The next
+   review event is 18:00 local, so **13:30 / 15:00 / 16:30 are already
+   determined to idle as well** (11 by 16:30); 19:30 is the next slot whose
+   outcome is still open. **Also at risk: the 2026-08-16 01:30 weekly
+   planning review**, on the same model — it alone owns the `PORT-1` 3b
+   branch-landing adjudication, the §10 roadmap and §5.4 Ansys
+   commissioning. **Unblock:** restore Fable 5 credits, or repoint the three
+   `scripts/automation/*.sh` launchers at a model with balance. A scheduled
+   session can do neither — it cannot buy credits, and
+   `.claude/settings.json` denies headless edits to `scripts/automation/**`
+   (the same rule that blocked `OPS-16`). Note `OPS-16`'s retry-on-529 would
+   **not** have saved any of these three slots.
 1. **One click: does ParaView open a DG1 `.bp`?** (unchanged since the
    2026-08-12 18:00 review). `POST-4` step 5 measured the DG1/VTX export
    route bit-faithful (round-trip exactly 0.0) where the current P1 path is
@@ -80,18 +86,18 @@ per landing), no demotions:
   queue was restocked before any implementer slot idled, so the outage
   cost zero slots. `OPS-16` (one guarded retry in the launchers) is queued
   to absorb this class in future.
-- **Since that review, two more review slots died — both on exhausted Fable 5
-  credits, not 529s** (2026-08-13 18:00 and 2026-08-14 03:00; 98-byte logs,
-  no steps run). §9 has therefore not been restocked since 2026-08-13 10:30,
-  and the implementer slots at 21:00, 22:30, 00:00, 04:30, 06:00, 07:30 and
-  09:00 all met a drained queue and stopped per §9's drain instruction. See
-  Waiting-on-you item 0 — this is the live blocker. **The 2026-08-16 01:30
-  weekly planning review is on the same model** (`weekly-review.sh:32` →
-  `claude-fable-5`), so an unrestored balance also kills the owner of the
-  `PORT-1` 3b branch-landing adjudication, the §10 roadmap and §5.4 Ansys
-  commissioning. *(Line added by the 2026-08-14 04:30 implementer slot and
-  updated by the 06:00, 07:30 and 09:00 ones; the rest of this section is the
-  10:30 review's.)*
+- **Since that review, three more review slots died — all on exhausted Fable 5
+  credits, not 529s** (2026-08-13 18:00, 2026-08-14 03:00 and 10:30; 98-byte
+  logs, byte-identical, no steps run). §9 has therefore not been restocked
+  since 2026-08-13 10:30, and the implementer slots at 21:00, 22:30, 00:00,
+  04:30, 06:00, 07:30, 09:00 and 12:00 all met a drained queue and stopped per
+  §9's drain instruction — eight consecutive. See Waiting-on-you item 0 — this
+  is the live blocker. **The 2026-08-16 01:30 weekly planning review is on the
+  same model** (`weekly-review.sh:32` → `claude-fable-5`), so an unrestored
+  balance also kills the owner of the `PORT-1` 3b branch-landing adjudication,
+  the §10 roadmap and §5.4 Ansys commissioning. *(Line added by the
+  2026-08-14 04:30 implementer slot and updated by the 06:00, 07:30, 09:00
+  and 12:00 ones; the rest of this section is the 10:30 review's.)*
 - Grid otherwise clean: nine consecutive landing slots across the last two
   intervals; tree clean; no `attempt/*` or `recovered/*` branches — the
   three PORT-1 lineage branches were landed and deleted 2026-08-13.
