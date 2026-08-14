@@ -439,7 +439,40 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-13` | Land the rank-safe `_validate_material_map_tags` fix on `main` with its own gate | ✅ 2026-08-08 | standard |
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
-| `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | ⬜ | smoke |
+| `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
+
+**`OPS-16` — retry-on-529 in the automation launchers** 🚫
+*(commissioned 2026-08-13, 10:30 review; blocked 2026-08-14, 21:00 run.)*
+> **Blocked by the permission layer, not by the work.** Every file this chunk
+> must touch lives under `scripts/automation/`, and `.claude/settings.json`
+> lists `Edit(scripts/automation/**)` in the **`ask`** section — which in a
+> headless `claude -p` run with `--permission-mode acceptEdits` is a denial,
+> because there is nobody to answer the prompt. Both a `Write` of the new
+> `lib/claude_retry.sh` and the single one-line `CLAUDE_BIN="${CLAUDE_BIN:-…}"`
+> edit to `implementer-run.sh` were denied, so no scheduled session can execute
+> this chunk in any scoping.
+>
+> The §9 item's trap paragraph is wrong about the rule's scope — it says only
+> `scripts/automation/hooks/` is write-protected, but the glob covers the
+> launchers too. **Unblocking is a human decision**, and a defensible one to
+> refuse: a session that can edit its own launcher can change its own model,
+> effort, timeout and disallowed tools. Either (a) the operator moves *only*
+> the three launcher files to `allow`, keeping the `**` rule on `ask` so
+> `hooks/` and new files stay gated, or (b) the operator applies the change by
+> hand in an interactive session. The full design — shared helper, the retry
+> ERE validated against both real failure logs, the deadline-based budget
+> conservation `elapsed₁ + backoff + budget₂ = total` that leaves healthy runs
+> bit-unchanged, the per-launcher floor, and the six-case stub-`CLAUDE_BIN`
+> rehearsal with its ±2 s budget identity — is recorded in the
+> 2026-08-14T02:03Z `docs/testing/attempts.md` entry, ready to apply.
+>
+> **Second trap, found in passing and independent of the first:**
+> `.gitignore:13` is a bare `lib/` (Python-packaging leftover, no leading
+> slash), so `scripts/automation/lib/` is **ignored at any depth** — the
+> shared helper would have been committed-by-omission and every scheduled
+> session would then die at `source` after the next pull. Name the directory
+> something else or add a `!scripts/automation/lib/` negation. This applies to
+> any future `*/lib/` in the repo, not just `OPS-16`.
 
 **`OPS-13` — land the rank-safe material-map validation on `main`** ✅
 *(scoped 2026-08-08, 03:00 review; closed 2026-08-08, 06:00 run.)*
@@ -8796,7 +8829,21 @@ self-contained below.
    verbatim: the `MAT-6` combined fixture at 64 MHz, identities gated
    (complex-power residual, exact-zero σ = 0 control), physics printed
    never gated, stop rule 300 s/solve. Any outcome is a finding.
-5. *(spare)* **`OPS-16` — retry-on-529 in the automation launchers
+5. 🚫 **blocked 2026-08-14, 21:00 run — unexecutable by any scheduled
+   session, and the queue is now fully drained.** `.claude/settings.json`
+   line 27 lists `Edit(scripts/automation/**)` under **`ask`**, which is a
+   denial in a headless run; both the new `lib/claude_retry.sh` and the
+   one-line `CLAUDE_BIN` override in `implementer-run.sh` were refused. This
+   item's own trap paragraph misreads that rule as covering only
+   `scripts/automation/hooks/` — it covers the launchers as well, so the item
+   was commissioned on a mistaken model of the allowlist and **must not be
+   re-queued as written**. Unblocking is the human operator's call (narrow the
+   `allow` list to the three launcher files, or apply the change
+   interactively); the complete design is in the 2026-08-14T02:03Z
+   `attempts.md` entry and the §7 `OPS-16` entry. With items 1–4 done, the
+   drain instruction below fired and the 21:00 slot stopped and journalled;
+   22:30 and 00:00 will meet the same drained queue before the 03:00 review.
+   *(spare)* **`OPS-16` — retry-on-529 in the automation launchers
    (smoke, no compute).** Add to `daily-review.sh`, `weekly-review.sh`,
    `implementer-run.sh`: if the claude CLI exits nonzero **and** the
    log tail matches `API Error` / `5[0-9][0-9]`, sleep 300 s and retry

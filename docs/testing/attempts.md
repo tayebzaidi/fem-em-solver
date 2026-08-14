@@ -11932,3 +11932,148 @@ Cheap add-on for that run: a third frequency (e.g. 30 MHz) on the same mesh
 turns two points into a curve for ~30 s.
 
 **No denials, no known-issues touched, nothing parked; `main` clean.**
+
+## 2026-08-14T02:03Z — `OPS-16` (§9 item 5, the spare) — **blocked**
+
+Scheduled implementer run, 21:00 local slot. Preflight clean: `git status`
+empty on `main` at `3e89ecb`, container `fem-em-solver` Up 44 h, no
+`attempt/*` or `recovered/*` to deal with. §9 On-deck items 1–4 are all
+marked done (13:30 / 15:00 / 16:30 / 19:30 runs), so per protocol step 2 the
+first item not done or blocked is **item 5, `OPS-16`** — retry-on-529 in the
+three automation launchers.
+
+**`OPS-16` cannot be executed by a scheduled session. The permission layer
+denies every edit it requires.** This is not a compute problem, a timebox
+problem, or a design problem; the chunk's entire deliverable lives in a
+directory that `.claude/settings.json` gates behind `ask`, and an `ask` rule
+in a headless `claude -p` run with `--permission-mode acceptEdits` is simply
+a denial — there is no human in the loop to answer it.
+
+**The two denials, verbatim in what was attempted:**
+
+1. `Write` → `scripts/automation/lib/claude_retry.sh` (the shared retry
+   helper, ~75 lines, written and ready) — *"Claude requested permissions to
+   write to …/scripts/automation/lib/claude_retry.sh, but you haven't granted
+   it yet."*
+2. `Edit` → `scripts/automation/implementer-run.sh`, the single smallest
+   edit the chunk needs — `CLAUDE_BIN="$HOME/.local/bin/claude"` →
+   `CLAUDE_BIN="${CLAUDE_BIN:-$HOME/.local/bin/claude}"`, i.e. exactly the
+   "add an env override for testability" the §9 item asks for — same denial.
+
+The governing rule is `.claude/settings.json` line 27,
+`"Edit(scripts/automation/**)"` in the **`ask`** list. Note the §9 item's
+trap paragraph says *"`scripts/automation/hooks/` is write-protected — this
+touches only the three launchers"*: that reading is wrong about the rule's
+scope. The glob covers **all** of `scripts/automation/`, launchers included,
+not just `hooks/`. The item was commissioned on a mistaken model of the
+allowlist, so no rescoping of its *content* can unblock it — item 5's second
+attempt would fail identically.
+
+**What the human operator must decide (the escalation).** Unblocking
+requires a settings change, which only a human can make, and it is a genuine
+judgement call rather than an oversight to correct:
+
+- The launchers are the code that *starts* these sessions. A session that
+  can edit its own launcher can change its own model, effort, timeout,
+  disallowed tools, and prompt. That is very plausibly why the rule is
+  `ask` and not `allow`, and it is a good reason to leave it alone.
+- If the operator wants `OPS-16` done by automation anyway, the narrowest
+  change that would do it is moving *only the three launcher files* to
+  `allow` — `Edit(scripts/automation/daily-review.sh)`,
+  `Edit(scripts/automation/weekly-review.sh)`,
+  `Edit(scripts/automation/implementer-run.sh)` — leaving
+  `Edit(scripts/automation/**)` on `ask` so `hooks/` and any new file stay
+  gated. This still grants self-modification of the launch parameters; it
+  only narrows the blast radius from the directory to three files.
+- The cheaper alternative is that **the operator applies `OPS-16` by hand**
+  in an interactive session, where the `ask` prompt can be answered. The
+  design work is already done and is recorded below so no thinking is lost.
+
+**Design that was ready to land, for whoever executes it.** One shared
+helper `scripts/automation/lib/claude_retry.sh` sourced by all three
+launchers (the three are ~90% identical today; triplicating the retry logic
+would drift). Contents as designed:
+
+- Retry predicate — exit nonzero **and** the last 50 log lines match ERE
+  `API Error.*[^0-9]5[0-9][0-9]([^0-9]|$)`. Matched against the two real
+  failures on record: `20260813T153001Z_daily-review.log` is exactly
+  `API Error: 529 Overloaded. …` → retries;
+  `20260813T230001Z_daily-review.log` is `You're out of usage credits.` →
+  does **not** (correct: a credits exhaustion and any protocol failure of
+  the session itself must never run twice).
+- **Budget conservation, the part worth keeping.** The §9 item says "shrink
+  the CLI timeout accordingly rather than extending the slot". Halving the
+  CLI timeout up front would cost every healthy run half its session, so the
+  design instead gives attempt 1 the *full* existing budget and attempt 2
+  exactly `total − elapsed − backoff`, enforcing
+  `elapsed₁ + sleep + budget₂ = total` identically. Healthy runs are
+  bit-unchanged; the two attempts plus the 300 s backoff are bounded by the
+  launcher's existing `timeout` value (3900 / 2700 / 3600 s).
+- A floor: if `total − elapsed − 300` is below a per-launcher minimum
+  (1200 s implementer, 900 s reviews), log why and do **not** start a
+  session too short to reach its own journalling step.
+- The implementer prompt's hardcoded "60 minutes … enforced at 65 … after
+  minute 45" derived from the actual budget (soft = hard − 300, cutoff =
+  ¾ soft) so a reduced attempt 2 is told the truth. At the current 3900 s
+  the rendered prompt is byte-identical to today's.
+- `flock` semantics unchanged: fd 9 is held across the backoff, so the two
+  attempts stay one session. Env overrides `CLAUDE_BIN`,
+  `CLAUDE_RETRY_SLEEP`, plus `LOCK`/`LOGDIR` — the last three exist only so
+  the rehearsal can run without a real CLI, a five-minute sleep, or
+  contending with the live lock (which the calling cron wrapper holds).
+- Rehearsal `tests/automation/test_launcher_retry.sh`, stub `CLAUDE_BIN`, six
+  cases: 529-then-success (exactly 2 stub invocations, one `attempt 2`
+  marker, exit 0) for **each** of the three launchers; success-first-try (1
+  invocation, no marker); non-API failure (1 invocation, no marker);
+  persistent 529 (exactly 2, no third). Quantitative assertion:
+  the budget identity `budget₂ + elapsed₁ + sleep == total` to ±2 s, read
+  off the marker line, plus attempt 2's rendered prompt minutes strictly
+  less than attempt 1's. Smoke tier, seconds, host-side through
+  `run_and_log.sh`.
+
+**A second, independent trap, found while working around the first and worth
+more than the chunk itself.** `git check-ignore -v
+scripts/automation/lib/claude_retry.sh` →
+`.gitignore:13:lib/`. The bare `lib/` pattern is a leftover from the Python
+packaging block at the top of `.gitignore`, and with no leading slash it
+matches a directory named `lib` at **any** depth. Whoever applies `OPS-16`
+with the shared-helper design must either not name the directory `lib/`,
+or add a `!scripts/automation/lib/` negation — otherwise the helper is
+silently untracked, the three launchers are committed sourcing a file that
+does not exist on a fresh clone, and every scheduled session dies at
+`source` on the next `git pull`. That failure mode would have cost far more
+slots than the 529s the chunk exists to fix. The same landmine sits under
+any future `*/lib/` in this repo.
+
+**No verification command was run** — there was nothing runnable to verify,
+since no source edit could be applied. Recorded here rather than committed as
+code, per the §5.2 no-op guard: this entry plus the §7/§9 status flip is the
+protocol's prescribed *blocked* output, not an audit note.
+
+**Queue state after this run: fully drained.** Items 1–4 done, item 5 blocked
+⇒ every On-deck item is done or blocked, so §9's drain instruction applies —
+**stop and journal**, do not improvise (explicitly: no birdcage gap-voltage
+ports, no B1+; both are held for the weekly review). The 21:00 slot therefore
+ends here with ~40 minutes of its window unspent, and the 22:30 and 00:00
+slots will hit the same drained queue before the 03:00 review refills it.
+That is two more slots at risk. Flagging for the review: the queue was
+topped to five items at 10:30 and consumed five items in five slots, i.e.
+the refill rate exactly matched the burn rate with zero margin, and the one
+spare was unexecutable.
+
+**Ride-along work deliberately not done.** The 10:30 review recorded three
+cheap follow-ups pinned to "the next edit of that file" (TH-10 step 4's
+monotonicity assert, MAG-13's `RES=0.0025` 26 s exit-gate smoke, EX-18's
+overstated code comment). None is an On-deck item, and protocol step 2
+forbids substituting a different item, so they were left alone — but they
+are exactly the kind of work that would absorb a drained slot if the review
+chose to promote them.
+
+**Hypothesis for the next attempt.** `OPS-16` stays 🚫 until a human either
+widens the allowlist to the three launcher files or applies the change
+interactively; no agent-side rescoping helps. If the review wants the
+slot-loss class closed sooner, the design above is complete enough to be
+applied by hand in minutes.
+
+**Nothing parked, no branches created, no known-issues touched; `main`
+clean.**
