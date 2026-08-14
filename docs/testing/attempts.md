@@ -12297,3 +12297,55 @@ discriminating observation is the 15:30Z review log — ~98 bytes again
 confirms multi-day credit exhaustion; a full log means the queue is live and
 the 19:30-onward slots resume normally. No compute was run, no logs produced,
 no denials hit. `main` clean, nothing parked.
+
+## 2026-08-14T12:35Z — no chunk (drained queue, 6th consecutive) — **anomaly**
+
+Scheduled implementer slot, 07:30 local / 12:30Z. **No chunk work was done and
+none was available.** Preflight green: `git status` clean on `main` at
+`cf2ad0f`, container `fem-em-solver` Up 2 d, branches unchanged (`main` plus
+the long-lived `docs/consolidate-plan-and-verify-toolchain`; no `attempt/*`,
+no `recovered/*`).
+
+**Nothing has changed since 11:05Z, as predicted.** §9 On deck is
+byte-identical — items 1–4 ✅, item 5 `OPS-16` 🚫 — because no review has run.
+`logs/automation/` still ends at `20260814T080001Z_daily-review.log` (98 B,
+*"You're out of usage credits … Fable 5"*) for the review tier. Every item
+done or blocked ⇒ protocol step 2's fallback fires; §9's drain instruction
+names nothing runnable and explicitly forbids improvising birdcage ports or
+B1+, so this slot stops. The causal account from 09:30Z (Fable 5 credit
+exhaustion on the review pool; the Opus implementer pool unaffected) stands
+unamended.
+
+**Cost.** 21:00, 22:30, 00:00, 04:30, 06:00 and now 07:30 idle — **six of
+twelve implementer slots, 50 % of the day's capacity**, none to a technical
+blocker. Dashboard Waiting-on-you item 0 and the Automation-health line
+updated 5 → 6 (same disclosed deviation as the two prior slots, same
+justification: the dashboard is the only alerting channel and its owning
+review is dead). No other file touched.
+
+**New this slot: the 09:00 idle is already determined, not predicted.** The
+next review event is 10:30 local / 15:30Z, which falls *after* the 09:00
+local / 14:00Z implementer slot. So even in the best case — credits restored
+this minute and the 15:30Z review running in full — the 09:00 slot meets this
+same drained queue and the day's floor is **seven idle slots (58 %)**, with
+recovery no earlier than the 12:00 local slot. The half-day of remaining
+capacity (12:00 / 13:30 / 15:00 / 16:30) is what the 15:30Z review can still
+save; the 2026-08-16 01:30 weekly review remains at risk on the same model
+(`weekly-review.sh:32` → `claude-fable-5`), unchanged from 11:05Z.
+
+**Standing drained-slot candidates (again not taken — step 2 forbids
+substituting an item).** `TH-10` step 4's monotonicity assert, `MAG-13`'s
+26 s `RES=0.0025` exit-gate smoke, `EX-18`'s overstated code comment. Six idle
+slots have now passed over the same three cheap, already-designed ride-alongs.
+The ask to the next live review is concrete: **promote one of them to a real
+§9 item** (or add a standing "drained-slot floor" item), so that a queue no
+review can refill still leaves a slot something it may legally execute. Six
+consecutive slots is enough evidence that "stop and journal" has no floor.
+
+**Hypothesis for the next attempt.** The 09:00 local slot will find this same
+queue and should stop identically — that is now a determination, not a
+forecast (see above). The discriminating observation remains the 15:30Z review
+log: ~98 bytes confirms multi-day credit exhaustion and makes the model
+repoint the priority over waiting; a full log means the queue is live and the
+12:00 slot resumes normally. No compute was run, no logs produced, no denials
+hit. `main` clean, nothing parked.
