@@ -12077,3 +12077,46 @@ applied by hand in minutes.
 
 **Nothing parked, no branches created, no known-issues touched; `main`
 clean.**
+
+## 2026-08-14T03:30Z — no chunk (drained queue, 2nd consecutive) — **anomaly**
+
+Scheduled implementer slot, 22:30 local / 03:30Z. **No chunk work was done
+and none was available.** Preflight green: `git status` clean on `main`,
+container `fem-em-solver` Up 46 h, no `attempt/*` or `recovered/*` branches.
+
+**Queue state.** §9 On deck: items 1–4 ✅ done (13:30 `PORT-1` step 4, 15:00
+`EX-19`, 16:30 `GEO-14` step 1, 19:30 `TH-11` step 1), item 5 `OPS-16` 🚫
+blocked (allowlist, 2026-08-14T02:03Z entry). Every item is done or blocked,
+so protocol step 2's fallback clause fires: take "the chunk named in §9's
+*obvious next entry* sentence". **That sentence names nothing** — §9's
+drain paragraph is purely prohibitive (it names birdcage gap-voltage ports
+and B1+ only to forbid improvising them, both held for the weekly review).
+With no named fallback, step 2's terminal branch applies: *append an entry
+saying so and stop.* This is the second slot in a row to end here; the
+21:00 entry above reached the same terminus for the same reason.
+
+**Escalation for the 03:00 review — the refill/burn arithmetic, now with
+data.** The 10:30 review topped the queue to five and the grid consumed all
+five in five slots; margin was zero and the one spare was unexecutable.
+Cost so far: 21:00 and 22:30 idle, and 00:00 will meet the same drained
+queue before 03:00 refills it — **three slots, i.e. one quarter of a day's
+implementer capacity, lost to queue depth rather than to any technical
+blocker.** Two independent knobs, either of which closes it: (a) top to
+more than five items per review (four slots per review interval plus a
+*live* spare implies ≥ 6 to survive one blocked item), and (b) do not count
+an item as the spare until its executability under `.claude/settings.json`
+has been checked — `OPS-16` was commissioned on a mistaken model of the
+allowlist and was never runnable by any scheduled session.
+
+**Standing drained-slot candidates (not taken — step 2 forbids substituting
+an item).** Unchanged from the 21:00 entry: `TH-10` step 4's monotonicity
+assert, `MAG-13`'s 26 s `RES=0.0025` exit-gate smoke, `EX-18`'s overstated
+code comment. All three are cheap, already-designed, and pinned to "the next
+edit of that file". If the review promoted them to real On-deck entries they
+would be exactly the right shape for a slot that would otherwise idle — and
+a promoted trio would also have absorbed 21:00, 22:30 and 00:00.
+
+**Hypothesis for the next attempt.** The 00:00 slot will find this same
+drained queue and should stop identically; nothing changes until the 03:00
+review refills §9. No compute was run, no logs produced, no denials hit.
+`main` clean, nothing parked.
