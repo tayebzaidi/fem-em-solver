@@ -2618,7 +2618,7 @@ numbers, revert nothing silently, stop.
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ✅ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ✅ | standard |
-| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | ⬜ | standard |
+| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz is feasible at the 10 MHz price, identities to 1e-14, and the quasi-static ΔR deviation grows 1.5834% → **10.2698%**; unattributed between physics and 1.26 cells/δ)* | standard |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)** ✅
 *(steps 1–4 ✅ 2026-08-13; **chunk closed by the 2026-08-13 10:30 review**
@@ -2835,6 +2835,49 @@ list; `timeout -k 30`; the Dodd–Deeds kernel itself is quasi-static — at
 an error. **Scope boundary:** measurement only; §2.1 stays as written until
 a gated trend exists; no SAR wording. **Negative result:** any outcome is a
 finding — report in §7, park nothing (no src changes licensed).
+>
+> **Step 1 ✅ 2026-08-13, 19:30 run** — `tests/validation/test_coil_loading_larmor_probe.py`,
+> 6 passed 73.2 s / 74 s wall, `-n 2`, container `timeout -k 30 590`,
+> `20260814T003445Z_TH-11-step1-larmor-n2.log` (a 3 s collect-only smoke ran
+> first: `20260814T003428Z_TH-11-step1-collect.log`, 6 collected). No `src/`
+> change; the 10 MHz `MAT-6` modules are untouched — `_solve_projected` pins
+> `FEM_FREQUENCY_HZ`, so the solve helper is copied with `f` freed and the
+> fixture geometry/constants imported.
+> **Feasibility: green, and cheaper than feared.** Mesh 10.8 s, solves
+> **30.5 s + 27.0 s at `-n 2`** on the 138 619-cell fixture — i.e. 64 MHz
+> costs the *same* as 10 MHz (70–75 s on record for the pair), nowhere near
+> the 300 s/solve stop rule, and the `MAT-6` step 10 lesson about conditioning
+> did **not** repeat. Consequence for scoping: the finer `MAT-6` rungs are
+> reachable at 64 MHz at their 10 MHz prices.
+> **Identities, all green and none widened.** Complex-power
+> `Im Z = 4ω(W_m − W_e)/I′²` at **1.0517e-14** (loaded) and **4.2484e-14**
+> (free) against the step-2f family bound of 1e-9 — six orders inside it, so
+> §7's "past 1e-6 is the finding" clause did not fire. Free bonus identity,
+> reported not gated: ΔR by dissipation `2P/I′²` = **+1.4843400e+00 Ω**
+> reproduces the reaction route **digit-for-digit** (the free solve is
+> lossless, so Re ΔZ is all of it). Drive control 8.774e-39, the same
+> round-off step 3 measured. Negative control exact: σ = 0 gives
+> `P_loss = +0.0000000e+00 W` against the loaded 6.2771648e-01 W. Mesh
+> deterministic at 138 619 — frequency does not reach the generator.
+> **The reading (printed, never gated).** FEM
+> `ΔZ = +1.4843400e+00 − j5.9823740e+00 Ω`; Dodd–Deeds quasi-static
+> `+1.3460987e+00 − j6.1738852e+00 Ω`. **ΔR deviates +10.2698%** from the
+> quasi-static prediction, against **1.5834%** on this same fixture and drive
+> at 10 MHz — a **6.49×** growth in deviation for a 6.4× growth in frequency,
+> and it is the *predicted* direction (§7 expected it to grow). ΔX ratio
+> **0.9690** vs 0.9200 at 10 MHz, i.e. the reactive part moved *toward* the
+> kernel while the resistive part moved away. Quasi-static scaling over the
+> same span for reference: ΔR ×4.173, ΔX ×10.025.
+> **The caveat that step 2 must resolve, stated now.** δ = 6.29 mm at 64 MHz
+> against `resolution_near` = 5 mm is **1.26 cells per skin depth**, down from
+> 3.18 at 10 MHz. So the +10.27% is not yet attributable: it is the sum of the
+> physics `TH-11` is after (displacement current, retardation — Dodd–Deeds
+> assumes neither) and an under-resolved ohmic boundary layer, and `MAT-6`
+> step 8 already showed that knob alone worth ~1.3 pp at 10 MHz. **A trend
+> claim needs the same measurement at `resolution_near` = 0.0025** (417 914
+> cells, δ/h = 2.52) so the resolution term is bounded before the deviation is
+> called physics — and step 1's timing says that rung is affordable. Until
+> then §2.1's extrapolation sentence stands exactly as written.
 
 **`GEO-14` — the shared ~3% geometry floor: discriminate faceting from
 resolution** ⬜ *(commissioned 2026-08-13, 10:30 review; entry placed here
@@ -8732,7 +8775,23 @@ self-contained below.
    priced 55 251-cell mesh; bands pre-registered (> 3.0% floor /
    < 2.0% resolution / between mixed); the 128 MHz record digits at the
    same mesh are the negative control. ~30–40 s.
-4. **`TH-11` step 1 — coil loading at 64 MHz, cost/feasibility probe
+4. ✅ **done 2026-08-13, 19:30 run** — 6 passed 73.2 s / 74 s wall, `-n 2`,
+   `20260814T003445Z_TH-11-step1-larmor-n2.log`. Feasible at the 10 MHz price
+   (mesh 10.8 s, solves 30.5 + 27.0 s, stop rule never approached); identities
+   1.0517e-14 / 4.2484e-14 vs the 1e-9 bound, σ = 0 dissipation exactly +0.0,
+   ΔR by dissipation reproducing the reaction route digit-for-digit. Reading:
+   ΔR deviates **+10.2698%** from Dodd–Deeds at 64 MHz vs 1.5834% at 10 MHz
+   (6.49× growth, predicted direction); ΔX ratio 0.9690 vs 0.9200. Caveat on
+   record: 1.26 cells per skin depth, so the deviation is not yet attributable
+   — the `resolution_near` = 0.0025 rung is the named next measurement.
+   `TH-11` held 🟡. **Ran as written except for the fixture, and the entry was
+   internally inconsistent there:** it names "W = 0.25 / `resolution_near`
+   0.0025 (ΔR 0.8835%)" but prices step 1 at "`-n 2` … 70–75 s on record",
+   which is the *step-3 baseline* (W = 0.15 / wire 0.002, 138 619 cells);
+   0.8835% is the 697 401-cell combined-knobs mesh at 178–196 s **per solve at
+   `-n 8`**. The priced rung was run, per cost-probe-first; the reviewing
+   session owns which fixture step 2 uses.
+   **`TH-11` step 1 — coil loading at 64 MHz, cost/feasibility probe
    (standard, measurement only).** Execute the §7 `TH-11` step-1 entry
    verbatim: the `MAT-6` combined fixture at 64 MHz, identities gated
    (complex-power residual, exact-zero σ = 0 control), physics printed

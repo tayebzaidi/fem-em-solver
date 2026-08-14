@@ -11834,3 +11834,101 @@ commissioned `GEO-14` never had a floor in it at all, and the chunk should be
 retired rather than re-aimed. A one-command test of that on the wire would be
 `MAG-13`'s existing probe at one finer rung — but it is a 420 s, 1.5 M-cell
 solve, so pricing it belongs to a review, not to an implementer slot.
+
+## 2026-08-14T00:34Z — `TH-11` step 1 (§9 item 4) — **complete**
+
+**Slot:** 2026-08-13, 19:30 local implementer run. Preflight clean (`main` at
+`5d7500f`, no `attempt/*` or `recovered/*` dirt), container Up 43 h.
+
+**What ran.** New module `tests/validation/test_coil_loading_larmor_probe.py`
+— the `MAT-6` loop-over-lossy-half-space fixture and production projected
+drive, solved **loaded + free at 64 MHz** instead of 10 MHz. No `src/` change
+(none licensed). The 10 MHz modules are untouched: `_solve_projected` pins
+`FEM_FREQUENCY_HZ`, so the solve helper is copied with `f` freed and the
+geometry/constants/`_reduced_real` imported, keeping one definition of the
+fixture. `stored_magnetic_energy` is likewise re-declared locally because the
+`PORT-1` copy closes over *its* module's 10 MHz `OMEGA` — importing it would
+have silently mis-scaled `W_m` by 41×; `stored_electric_energy`
+(`core/resonance.py`) is frequency-free and imported as-is.
+
+- Collect-only smoke, 3 s, 6 collected — `20260814T003428Z_TH-11-step1-collect.log`.
+- Gate: `-n 2`, container `timeout -k 30 590`, Bash tool `timeout` 660000 ms,
+  foreground. **6 passed in 73.19 s, exit 0, 74 s wall** —
+  `20260814T003445Z_TH-11-step1-larmor-n2.log`.
+
+**Fixture deviation, and why (the reviewing session should read this).** The
+§7 step-1 entry is internally inconsistent about which `MAT-6` fixture to
+re-run. It names "the `MAT-6` W = 0.25 / `resolution_near` 0.0025 fixture
+(ΔR 0.8835% on record at 10 MHz)", but 0.8835% is the **combined-knobs** mesh
+(W = 0.25 / `resolution_wire` 0.001 / near 0.005, 697 401 cells, step 7
+Part 2c) — a fixture that costs 178–196 s **per solve at `-n 8`**. The same
+paragraph then prices step 1 at "`-n 2` first at the 10 MHz price (70–75 s on
+record)", which is the **step-3 baseline** (W = 0.15 / wire 0.002 / near
+0.005, 138 619 cells). W = 0.25 *with* `resolution_near` 0.0025 is the
+composed fixture of `MAT-6` step 10, never meshed, ~1 M cells estimated. I ran
+the **priced rung** (step-3 baseline at `-n 2`), on implementer.md's
+cost-probe-first rule and because step 1 is by its own title a cost probe: it
+is the only rung with a like-for-like 10 MHz ΔR record on the *same* drive
+(1.5834%), which is what the deviation reading needs. Which fixture step 2
+uses is the review's call, and step 1's timing now prices all of them.
+
+**Feasibility — the question step 1 exists for — is green.** Mesh 10.8 s,
+solves **30.5 s + 27.0 s at `-n 2`**, 138 619 cells: 64 MHz costs the *same*
+as 10 MHz on this fixture. The 300 s/solve stop rule was never approached and
+the `MAT-6` step-10 conditioning pathology (≥ 5.1× at a finer mesh) did not
+repeat here. Scoping consequence: the finer `MAT-6` rungs are affordable at
+64 MHz at roughly their 10 MHz prices.
+
+**Gated identities, all green, none widened.**
+
+- Complex-power `Im Z = 4ω(W_m − W_e)/I′²`, per solve: **1.0517e-14** (loaded,
+  Im Z = 5.539821e+01 Ω) and **4.2484e-14** (free, 6.138059e+01 Ω) against the
+  step-2f family bound 1e-9 — six orders inside, so §7's "residual past 1e-6
+  *is* the finding" clause did not fire.
+- σ-blind negative control (`EX-11`'s): free solve `P_loss = +0.0000000e+00 W`
+  **exactly**, loaded +6.2771648e-01 W.
+- Drive control: `‖J′_loaded − J′_free‖²/‖J′‖²` = **8.774e-39**, the identical
+  round-off `MAT-6` step 3 measured — the material never reaches the CG1
+  projection at 64 MHz either.
+- Mesh determinism: 138 619 cells exactly, i.e. the mesh the 10 MHz record was
+  taken on.
+- Free extra identity, printed not gated: ΔR by dissipation `2P/I′²` =
+  **+1.4843400e+00 Ω** reproduces the reaction route **digit-for-digit** (the
+  free solve is lossless, so Re ΔZ is entirely the loaded dissipation). Worth
+  promoting to a gate on this file's next edit — it is exact for the discrete
+  solution and gates the ΔR bookkeeping the way the Im identity gates ΔX.
+
+**The reading (printed, never gated — Dodd–Deeds is the comparison at this
+frequency, not the reference).** FEM `ΔZ = +1.4843400e+00 − j5.9823740e+00 Ω`
+vs quasi-static `+1.3460987e+00 − j6.1738852e+00 Ω`:
+
+| | 10 MHz (`MAT-6` step 3) | 64 MHz (here) |
+|---|---|---|
+| ΔR deviation from Dodd–Deeds | 1.5834% | **+10.2698%** |
+| ΔX ratio | 0.9200 | **0.9690** |
+
+A **6.49×** growth in ΔR deviation for a 6.4× growth in frequency, in the
+direction §7 predicted. Note the split: the *reactive* part moved **toward**
+the quasi-static kernel while the *resistive* part moved away. Quasi-static
+scaling over the same span, for context: ΔR ×4.173, ΔX ×10.025.
+
+**The caveat, and it is load-bearing.** δ = 1/√(πfμ₀σ) is 6.29 mm at 64 MHz
+against `resolution_near` = 5 mm — **1.26 cells per skin depth**, down from
+3.18 at 10 MHz. The +10.27% is therefore *not attributable yet*: it is the sum
+of the physics `TH-11` is after (displacement current and retardation, neither
+in the kernel) and an under-resolved ohmic boundary layer, and `MAT-6` step 8
+measured that knob alone worth ~1.3 pp at 10 MHz (1.5834% → 0.2829% at
+`resolution_near` = 0.0025). Nothing about §2.1 changes on this run.
+
+**Hypothesis for the next attempt.** Repeat this exact module at
+`resolution_near` = 0.0025 (417 914 cells, δ/h = 2.52, ~3× the cells; step 8
+priced one solve at 108.8 s at `-n 4`, so the pair fits one standard-to-heavy
+foreground call). If the deviation stays near 10% the residual is physics and
+`TH-11` has its trend; if it collapses toward ~2% the way step 8's did at
+10 MHz, the 64 MHz reading was mesh and the trend claim needs the fine rung at
+every frequency. Either outcome bounds the resolution term, which is the
+precondition for any gated statement about the eddy→displacement transition.
+Cheap add-on for that run: a third frequency (e.g. 30 MHz) on the same mesh
+turns two points into a curve for ~30 s.
+
+**No denials, no known-issues touched, nothing parked; `main` clean.**
