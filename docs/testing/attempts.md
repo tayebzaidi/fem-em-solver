@@ -12349,3 +12349,62 @@ log: ~98 bytes confirms multi-day credit exhaustion and makes the model
 repoint the priority over waiting; a full log means the queue is live and the
 12:00 slot resumes normally. No compute was run, no logs produced, no denials
 hit. `main` clean, nothing parked.
+
+## 2026-08-14T14:05Z — no chunk (drained queue, 7th consecutive) — **anomaly**
+
+Scheduled implementer slot, 09:00 local / 14:00Z. **No chunk work was done and
+none was available.** Preflight green: `git status` clean on `main` at
+`8fa5266`, container `fem-em-solver` Up 2 d, branches unchanged (`main` plus
+the long-lived `docs/consolidate-plan-and-verify-toolchain`; no `attempt/*`,
+no `recovered/*`).
+
+**The 12:35Z determination held, as it had to.** §9 On deck is byte-identical
+— items 1–4 ✅, item 5 `OPS-16` 🚫 — because no review has run since
+2026-08-13 10:30. `logs/automation/` still ends at
+`20260814T080001Z_daily-review.log` (98 B) for the review tier; the next
+review event is 10:30 local / 15:30Z, still ahead of this slot. Every item
+done or blocked ⇒ protocol step 2's fallback fires; §9's drain instruction
+names nothing runnable and explicitly forbids improvising birdcage ports or
+B1+, so this slot stops. The causal account from 09:30Z (Fable 5 credit
+exhaustion on the review pool; the Opus implementer pool unaffected) stands
+unamended — nothing observed today has been inconsistent with it.
+
+**Cost.** 21:00, 22:30, 00:00, 04:30, 06:00, 07:30 and now 09:00 idle —
+**seven of twelve implementer slots, 58 % of the day's capacity**, none to a
+technical blocker. This is the floor the 12:35Z entry computed; it is now
+realised rather than predicted, and the day's outcome is no longer
+over-determined: the 15:30Z review decides whether the remaining four slots
+(12:00 / 13:30 / 15:00 / 16:30) run or the day lands at 12/12 idle. Dashboard
+Waiting-on-you item 0 and the Automation-health line updated 6 → 7 (same
+disclosed deviation as the three prior slots, same justification: the
+dashboard is the only alerting channel and its owning review is dead). I also
+lifted the weekly-review-at-risk fact from three attempts.md entries into the
+dashboard's Automation-health line, since that is where the operator will read
+it and the 2026-08-16 01:30 deadline is now two days out. No other file
+touched.
+
+**What this slot adds, on the evidence rather than the arithmetic.** Six
+entries have now recorded the same escalation to the same silent channel. The
+one thing an implementer slot can still do is make the *next* live review's
+job smaller, so, concretely and in priority order, for whichever review runs
+first: (1) restock §9 to ≥ 6 items — four is exactly the number the grid
+consumes between reviews and leaves no margin for a dead review; (2) promote
+one standing ride-along to a real queue item so a drained slot has a legal
+floor; (3) check each item's allowlist executability before counting it, the
+`OPS-16` lesson. None of the three is available from here.
+
+**Standing drained-slot candidates (again not taken — step 2 forbids
+substituting an item).** `TH-10` step 4's monotonicity assert, `MAG-13`'s
+26 s `RES=0.0025` exit-gate smoke, `EX-18`'s overstated code comment. Seven
+idle slots have now passed over the same three cheap, already-designed
+ride-alongs — roughly 7 h of Opus implementer capacity against ~3 min of
+compute that would have closed all three, had any of them been a queue item
+rather than a rider on an edit that never came.
+
+**Hypothesis for the next attempt.** The 12:00 local / 17:00Z slot is the
+first that *can* differ: it runs after the 15:30Z review. If that review log
+is again ~98 bytes, the credit exhaustion is confirmed as spanning three
+review slots across two days, the model repoint becomes the priority over
+waiting, and 12:00 should stop identically (making eight). If it is a full
+log, §9 is restocked and 12:00 executes item 1 normally. No compute was run,
+no logs produced, no denials hit. `main` clean, nothing parked.
