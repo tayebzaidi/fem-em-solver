@@ -12241,3 +12241,59 @@ should stop identically. If the 10:30 review log is again ~98 bytes, the
 credit exhaustion is confirmed as multi-day and the model-repoint becomes
 the priority over waiting. No compute was run, no logs produced, no denials
 hit. `main` clean, nothing parked.
+
+## 2026-08-14T11:05Z — no chunk (drained queue, 5th consecutive) — **anomaly**
+
+Scheduled implementer slot, 06:00 local / 11:00Z. **No chunk work was done
+and none was available.** Preflight green: `git status` clean on `main` at
+`c14bcf0`, container `fem-em-solver` Up 2 d, no `attempt/*` or `recovered/*`
+branches (only `main` and the long-lived
+`docs/consolidate-plan-and-verify-toolchain`).
+
+**The 09:30Z prediction held exactly.** §9 On deck is byte-identical to what
+the last four slots found — items 1–4 ✅, item 5 `OPS-16` 🚫 — because no
+review has run since. `logs/automation/` confirms the last review-slot log is
+still `20260814T080001Z_daily-review.log` (98 B, out of credits); the next
+review event is 10:30 local / 15:30Z, after this slot. Every item done or
+blocked ⇒ protocol step 2's fallback fires, §9's drain instruction names
+nothing runnable ("stop and journal", with the birdcage-ports/B1+ improvisation
+explicitly forbidden), so this slot stops. Nothing new to diagnose: the
+09:30Z entry's causal account (Fable 5 credit exhaustion on the review pool,
+Opus implementer pool unaffected) stands unamended.
+
+**Cost.** 21:00, 22:30, 00:00, 04:30 and now 06:00 idle — **five of twelve
+implementer slots, 42 % of the day's capacity**, none to a technical blocker.
+Dashboard Waiting-on-you item 0 and the Automation-health line updated 4 → 5
+(same disclosed deviation as the 09:30Z slot, and for the same reason: the
+dashboard is the only alerting channel and its owning review is dead). No
+other file touched.
+
+**New, and not yet on record: the weekly review is on the same dead model.**
+`scripts/automation/weekly-review.sh:32` passes `--model claude-fable-5`, as
+does `daily-review.sh:34`; only `implementer-run.sh:30` is
+`claude-opus-5`. So if credits are not restored before **Sunday 2026-08-16
+01:30 local**, the weekly planning review dies identically — and it is the
+named owner of the `PORT-1` 3b branch-landing adjudication and the
+topology-changing successor (gapped-vs-closed at σ = 800), plus the §10
+roadmap and §5.4 Ansys commissioning. The blast radius is therefore no longer
+just today's queue: it reaches the strategic decisions §9 explicitly escalated.
+This raises the priority of the **model-repoint** knob over waiting for a
+top-up, since one edit to three lines revives both review tiers — but that
+edit is exactly what `.claude/settings.json` denies a headless session
+(`Edit(scripts/automation/**)` under `ask`), so it remains the operator's.
+
+**Standing drained-slot candidates (again not taken — step 2 forbids
+substituting an item).** `TH-10` step 4's monotonicity assert, `MAG-13`'s
+26 s `RES=0.0025` exit-gate smoke, `EX-18`'s overstated code comment. Five
+idle slots have now passed over the same three cheap, already-designed
+ride-alongs; that they are ride-alongs (each explicitly scoped to "the next
+edit of that file") is why they cannot be picked up here, and it is worth the
+review deciding whether one of them should instead be a queue item so a
+drained slot has a floor.
+
+**Hypothesis for the next attempt.** Unchanged and now well-supported: the
+07:30 local slot will find this same queue and should stop identically. The
+discriminating observation is the 15:30Z review log — ~98 bytes again
+confirms multi-day credit exhaustion; a full log means the queue is live and
+the 19:30-onward slots resume normally. No compute was run, no logs produced,
+no denials hit. `main` clean, nothing parked.
