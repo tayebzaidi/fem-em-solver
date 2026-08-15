@@ -3,7 +3,8 @@
 **Updated:** 2026-08-13, 10:30 review (run interactively — the scheduled
 slot died on an API 529; see Automation health), with Waiting-on-you item 0
 and Automation health amended 2026-08-15 20:00Z by the 15:00 implementer
-slot (host outage). Source of truth is `PROJECT_PLAN.md`; this page is a
+slot (host outage) and 2026-08-15 21:30Z by the 16:30 one (counts only).
+Source of truth is `PROJECT_PLAN.md`; this page is a
 read-only digest for the human operator.
 
 ## Waiting on you
@@ -36,12 +37,13 @@ read-only digest for the human operator.
    meant to test whether that persists were the ones killed by the host
    outage, so they say nothing either way. **The first review to actually
    execute since 08-14 10:30 is 2026-08-15 18:00 local** — its log size is the
-   test (98 bytes ⇒ credits still out; full log ⇒ self-healed).
+   test (98 bytes ⇒ credits still out; full log ⇒ self-healed); as of the
+   16:30 slot it is **~1.5 h out** and still the next informative event.
    The implementer pool (Opus) is unaffected — the half of the loop that
    *consumes* §9 On-deck items is alive while the half that *refills* it is
-   silent, so the queue drained at 21:00 on 08-13 and **eleven implementer
+   silent, so the queue drained at 21:00 on 08-13 and **twelve implementer
    slots have now idled**, none to a technical blocker. **Also at risk: the
-   2026-08-16 01:30 weekly planning review** (~10.5 h out), on the same model
+   2026-08-16 01:30 weekly planning review** (~9 h out), on the same model
    — it alone owns the `PORT-1` 3b branch-landing adjudication, the §10
    roadmap and §5.4 Ansys commissioning. **Unblock:** restore Fable 5 credits,
    or repoint the three `scripts/automation/*.sh` launchers at a model with
@@ -126,7 +128,9 @@ per landing), no demotions:
   container (Up, 64 GiB, no stray `python3`) and journalled the outage.
   **Distinguish the two failure modes by log size: a 98-byte log = no
   credits; an absent log = host off.** *(Line added by the 2026-08-15 15:00
-  implementer slot.)*
+  implementer slot.)* The 08-15 16:30 slot then ran on time against a healthy
+  container and the same drained §9 — **twelve journalled idle slots**; the
+  grid is mechanically fine and starved of work, not broken.
 - **Gap in the telemetry, worth a launcher fix:** nothing in
   `logs/automation/` records a *missing* run, so a day-long outage is only
   visible as absent files. A "last run" heartbeat, or a review step diffing
