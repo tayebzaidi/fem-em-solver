@@ -1,36 +1,54 @@
 # FEM-EM Solver — status
 
 **Updated:** 2026-08-13, 10:30 review (run interactively — the scheduled
-slot died on an API 529; see Automation health). Source of truth is
-`PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
+slot died on an API 529; see Automation health), with Waiting-on-you item 0
+and Automation health amended 2026-08-15 20:00Z by the 15:00 implementer
+slot (host outage). Source of truth is `PROJECT_PLAN.md`; this page is a
+read-only digest for the human operator.
 
 ## Waiting on you
 
-0. 🔴 **The scheduled reviews are out of usage credits — the automation loop
-   is half-dead, and the weekly review is ~1.4 days from dying too.**
+0. 🔴 **Two separate outages, and the loop has landed nothing since 08-13
+   21:00. (a) This machine was switched off for ~23.8 h — 14 scheduled
+   sessions never ran. (b) The reviews were already out of Fable 5 credits
+   before that.**
    *(Added 2026-08-14 09:30Z by the 04:30 implementer slot, not by a review;
-   updated by the 06:00, 07:30, 09:00, 12:00, 13:30 and 15:00 slots — see their
-   `docs/testing/attempts.md` entries.)* **Three** consecutive review slots
-   (2026-08-13 18:00, 2026-08-14 03:00 and 10:30) each produced a **98-byte,
-   byte-identical** log reading *"You're out of usage credits … Fable 5"* and
-   ran no steps; the 2026-08-13 10:30 slot died separately on a 529. Three
-   identical failures across two days ⇒ this is a standing balance problem,
-   not a transient. The implementer pool (Opus) is unaffected and still runs
-   — so the half of the loop that *consumes* §9 On-deck items is alive while
-   the half that *refills* it is silent. Consequence: the queue drained at
-   21:00 on 08-13 and **ten implementer slots have now idled consecutively
-   (83 % of the day's twelve)**, none to a technical blocker. The next
-   review event is 18:00 local, so **16:30 is already determined to idle as
-   well** (11 by 16:30); 19:30 is the next slot whose
-   outcome is still open. **Also at risk: the 2026-08-16 01:30 weekly
-   planning review**, on the same model — it alone owns the `PORT-1` 3b
-   branch-landing adjudication, the §10 roadmap and §5.4 Ansys
-   commissioning. **Unblock:** restore Fable 5 credits, or repoint the three
-   `scripts/automation/*.sh` launchers at a model with balance. A scheduled
-   session can do neither — it cannot buy credits, and
+   updated by the 06:00–15:00 slots on 08-14 and rewritten 2026-08-15 20:00Z
+   by the 15:00 slot, which found the reboot — see their
+   `docs/testing/attempts.md` entries.)*
+
+   **(a) Host outage — new, and it needs nothing from you but awareness.**
+   `uptime -s` = **2026-08-15 14:50 CDT**; the container was found
+   `Exited (255)`. Between the last commit (2026-08-14 20:01Z) and boot
+   (2026-08-15 19:50Z) **no scheduled session ran at all**: 11 implementer
+   slots and **3 daily reviews** (08-14 18:00, 08-15 03:00, 08-15 10:30)
+   produced *no log file*. Cron is healthy — it launched the 15:00 slot on
+   time. The 15:00 slot restarted the container (Up, 64 GiB cap, no stray
+   processes), so the grid is mechanically ready again. **If this box is a
+   laptop that sleeps, the automation grid stops with it** — that is the one
+   structural thing to know.
+
+   **(b) Review credits — still the real blocker, but now *less* confirmed
+   than this page previously claimed.** The evidence remains exactly **three**
+   byte-identical **98-byte** review logs (2026-08-13 18:00, 2026-08-14 03:00
+   and 10:30) reading *"You're out of usage credits … Fable 5"*; the
+   2026-08-13 10:30 slot died separately on a 529. The three reviews that were
+   meant to test whether that persists were the ones killed by the host
+   outage, so they say nothing either way. **The first review to actually
+   execute since 08-14 10:30 is 2026-08-15 18:00 local** — its log size is the
+   test (98 bytes ⇒ credits still out; full log ⇒ self-healed).
+   The implementer pool (Opus) is unaffected — the half of the loop that
+   *consumes* §9 On-deck items is alive while the half that *refills* it is
+   silent, so the queue drained at 21:00 on 08-13 and **eleven implementer
+   slots have now idled**, none to a technical blocker. **Also at risk: the
+   2026-08-16 01:30 weekly planning review** (~10.5 h out), on the same model
+   — it alone owns the `PORT-1` 3b branch-landing adjudication, the §10
+   roadmap and §5.4 Ansys commissioning. **Unblock:** restore Fable 5 credits,
+   or repoint the three `scripts/automation/*.sh` launchers at a model with
+   balance. A scheduled session can do neither — it cannot buy credits, and
    `.claude/settings.json` denies headless edits to `scripts/automation/**`
    (the same rule that blocked `OPS-16`). Note `OPS-16`'s retry-on-529 would
-   **not** have saved any of these three slots.
+   **not** have saved any of these slots, under either cause.
 1. **One click: does ParaView open a DG1 `.bp`?** (unchanged since the
    2026-08-12 18:00 review). `POST-4` step 5 measured the DG1/VTX export
    route bit-faithful (round-trip exactly 0.0) where the current P1 path is
@@ -91,18 +109,32 @@ per landing), no demotions:
   logs, byte-identical, no steps run). §9 has therefore not been restocked
   since 2026-08-13 10:30, and the implementer slots at 21:00, 22:30, 00:00,
   04:30, 06:00, 07:30, 09:00, 12:00, 13:30 and 15:00 all met a drained queue
-  and stopped per §9's drain instruction — ten consecutive, 83 % of the
-  day's capacity. See Waiting-on-you item 0 — this
-  is the live blocker. **The 2026-08-16 01:30 weekly planning review is on the
-  same model** (`weekly-review.sh:32` → `claude-fable-5`), so an unrestored
-  balance also kills the owner of the `PORT-1` 3b branch-landing adjudication,
-  the §10 roadmap and §5.4 Ansys commissioning. *(Line added by the
-  2026-08-14 04:30 implementer slot and updated by the 06:00, 07:30, 09:00,
-  12:00, 13:30 and 15:00 ones; the rest of this section is the 10:30
-  review's.)*
-- Grid otherwise clean: nine consecutive landing slots across the last two
-  intervals; tree clean; no `attempt/*` or `recovered/*` branches — the
-  three PORT-1 lineage branches were landed and deleted 2026-08-13.
+  and stopped per §9's drain instruction — ten consecutive. See
+  Waiting-on-you item 0 — this is the live blocker. **The 2026-08-16 01:30
+  weekly planning review is on the same model** (`weekly-review.sh:32` →
+  `claude-fable-5`), so an unrestored balance also kills the owner of the
+  `PORT-1` 3b branch-landing adjudication, the §10 roadmap and §5.4 Ansys
+  commissioning. *(Line added by the 2026-08-14 04:30 implementer slot and
+  updated by the 06:00, 07:30, 09:00, 12:00, 13:30 and 15:00 ones; the rest
+  of this section is the 10:30 review's.)*
+- **Then the host went down for ~23.8 h and 14 sessions never ran at all**
+  (2026-08-14 20:01Z → 2026-08-15 19:50Z; `uptime -s` 2026-08-15 14:50 CDT,
+  container found `Exited (255)`). Missing with **no log file**: implementer
+  08-14 16:30/19:30/21:00/22:30 and 08-15 00:00/04:30/06:00/07:30/09:00/
+  12:00/13:30, plus daily reviews 08-14 18:00 and 08-15 03:00/10:30. Cron is
+  fine — it launched the 08-15 15:00 slot on time; that slot restarted the
+  container (Up, 64 GiB, no stray `python3`) and journalled the outage.
+  **Distinguish the two failure modes by log size: a 98-byte log = no
+  credits; an absent log = host off.** *(Line added by the 2026-08-15 15:00
+  implementer slot.)*
+- **Gap in the telemetry, worth a launcher fix:** nothing in
+  `logs/automation/` records a *missing* run, so a day-long outage is only
+  visible as absent files. A "last run" heartbeat, or a review step diffing
+  expected-vs-present logs, would make this class self-reporting.
+- Grid otherwise clean: nine consecutive landing slots across the two
+  intervals preceding the drain; tree clean; no `attempt/*` or `recovered/*`
+  branches — the three PORT-1 lineage branches were landed and deleted
+  2026-08-13.
 - Standing weekly-review items (2026-08-16): the two-systematics
   composition question (3b-xviii), MAG-13 CG1 gate adoption, MAT-6
   step 10's ≥ 5.1× solve anomaly (memory-headroom lead), POST-4 export

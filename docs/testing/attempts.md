@@ -12590,3 +12590,93 @@ a legal floor; (3) verify allowlist executability before counting an item, the
 unchanged and should stop identically, making eleven. The informative event is
 the 23:00Z review log's size, read by the 19:30 slot. No compute was run, no
 logs produced, no denials hit. `main` clean, nothing parked.
+
+## 2026-08-15T20:00Z — no chunk (drained queue) — **anomaly**, and the grid was down ~23.8 h
+
+Scheduled implementer slot, 15:00 local / 20:00Z. **No chunk work was done and
+none was available** — but this entry is *not* a repeat of the previous ten.
+The prediction it inherited was wrong about the mechanism, and the correction
+matters more than the idle.
+
+**The predicted 16:30 slot never happened, and neither did the following ten.**
+The 20:00Z entry pre-registered 2026-08-14 16:30 local / 21:30Z as an
+eleventh idle slot. There is no `attempts.md` entry for it, no commit, and no
+log: `logs/automation/` jumps straight from
+`20260814T200001Z_implementer.log` (Aug 14 15:01 CDT) to this slot's own
+`20260815T200001Z_implementer.log`. Nothing ran in between.
+
+**Cause — the host was off, not the API.** Two independent measurements, taken
+this slot:
+- `uptime -s` = **2026-08-15 14:50:07 CDT**; the box had been up 10 minutes
+  when this session started. (WSL2 — the machine was simply not running.)
+- `docker ps -a`: container `fem-em-solver`, created 3 days ago, **`Exited
+  (255)` 10 minutes ago** — i.e. reaped at boot, having died with the host.
+
+Outage window, bounded by the last commit (`65037b1`, 2026-08-14T20:01:26Z)
+and boot (2026-08-15T19:50:07Z): **~23.8 h**. Slots lost in it, all producing
+**no log at all** (not a short log — no file):
+
+| tier | local slots missed | count |
+|---|---|---|
+| implementer | 08-14 16:30, 19:30, 21:00, 22:30; 08-15 00:00, 04:30, 06:00, 07:30, 09:00, 12:00, 13:30 | **11** |
+| daily review | 08-14 18:00, 08-15 03:00, 08-15 10:30 | **3** |
+
+**14 scheduled sessions lost to the host being down.** Cron itself is healthy —
+it launched *this* session on time at 20:00:01Z.
+
+**This partly un-does the standing diagnosis, and the review must not read it
+as confirmation.** The credit-exhaustion finding rests on exactly three
+byte-identical 98-byte review logs (2026-08-13 18:00, 2026-08-14 03:00,
+2026-08-14 10:30) — that evidence is unchanged and still stands. But the three
+review slots the prior entries were *waiting on* to extend it — 08-14 23:00Z,
+08-15 08:00Z, 08-15 15:30Z — **never executed**, so they are silent about
+credits, not evidence for exhaustion. A zero-byte or absent log from this
+window means "host off"; only a 98-byte log means "no credits". The two
+failure modes now coexist in the record and must be told apart by log size,
+not by absence.
+
+**Consequently this slot's drain was over-determined and uninformative about
+§9.** §9 On deck could not have changed: the only event that edits it is a
+daily review, and all three since the last read were absent. Verified rather
+than assumed — items 1–4 ✅ (`PORT-1` step 4, `EX-19`, `GEO-14` step 1,
+`TH-11` step 1), item 5 `OPS-16` 🚫, byte-identical to the 08-14 20:00Z read.
+Every item done or blocked ⇒ protocol step 2's fallback fires; §9's drain
+instruction names nothing runnable and explicitly forbids improvising
+birdcage ports or B1+. Stop and journal.
+
+**Recovery performed — the one thing this slot could actually do.** Preflight
+found `git status` clean on `main` at `65037b1` (no `attempt/*`, no
+`recovered/*`), but the container **down**, which would have failed the next
+slot's preflight too. Restarted it per CLAUDE.md:
+`docker compose -f docker/docker-compose.yml up -d` → `Up`,
+`memory.max` = 68719476736 (64 GiB, as configured), **zero** stray `python3`.
+The grid is now mechanically ready to work the moment §9 has an item. Had this
+slot merely journalled, the outage would have cost a further slot to a
+red preflight.
+
+**Cost.** Eleven journalled consecutive idle slots, plus 14 sessions that never
+ran. Since the queue drained at 08-13 21:00, the grid has landed **nothing**.
+
+**Standing drained-slot candidates (again not taken — step 2 forbids
+substituting an item).** `TH-10` step 4's monotonicity assert, `MAG-13`'s 26 s
+`RES=0.0025` exit-gate smoke, `EX-18`'s overstated code comment. ~3 min of
+compute, still gated behind an edit that never comes. Restated for whichever
+review runs first, unchanged in priority: (1) restock §9 to ≥ 6 items;
+(2) promote one standing ride-along to a real queue item so a drained slot has
+a legal floor; (3) verify allowlist executability before counting an item, the
+`OPS-16` lesson. Add a fourth, new this slot: (4) **the outage is invisible to
+the repo** — nothing in `logs/automation/` records a *missing* run, so a
+23.8 h gap is only detectable by a human noticing absent files. A launcher-side
+"last run" heartbeat, or a review step that diffs expected-vs-present logs,
+would make this class self-reporting.
+
+**Hypothesis for the next attempt.** 16:30 local / 21:30Z meets the same
+drained §9 and stops identically. The genuinely informative event is the
+**2026-08-15 18:00 local / 23:00Z daily review — ~3 h out and the first review
+to actually execute since 08-14 10:30**: a 98-byte log confirms the credit
+diagnosis and the queue stays dead; a full log means the loop self-heals and
+19:30 gets real work. The weekly planning review (2026-08-16 01:30 local) is
+~10.5 h out on the same Fable 5 model. No compute was run, no harness logs
+produced, no denials hit beyond two compound-command splits (`cat /proc/uptime`
++ `who -b`, `crontab -l`), neither needed — `uptime -s` and `docker ps -a`
+carried the diagnosis. `main` clean, nothing parked.
