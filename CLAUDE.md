@@ -8,15 +8,18 @@ the coil at 64/128 MHz, extract B1+/SAR/S-parameters. Scope rescoped
 "HFSS parity".
 Magnetostatics is validated against closed forms. The time-harmonic path is a
 real complex curl-curl solve validated against the analytic lossy plane wave
-(`TH-1` closed 2026-07-31; decay/phase constants to < 0.06%, `TH-6`). Coil
-loading **is** now gated, but only in the eddy-current regime — `MAT-6` closed
-2026-07-31 with ΔR matching Dodd–Deeds to 1.58% at 10 MHz, σ = 100 S/m; the
-saline/Larmor case is an extrapolation, not a result. SAR is gated against the
-lossy-sphere closed form to 3.5% (`MAT-4` step 1, 2026-08-03) on an **imposed
-uniform field**, never on a coil. The package's S-parameters are still a
-heuristic (`PORT-1`; one real S-matrix exists, in a test, on a two-loop air
-fixture) — read PROJECT_PLAN.md §2 before trusting any S-parameter or
-coil-loading/SAR figure. Anything
+(`TH-1` closed 2026-07-31; decay/phase constants to < 0.06%, `TH-6`) and,
+at the Larmor frequencies themselves, against the lossy-sphere series on an
+imposed field (`TH-10` closed 2026-08-13: 3.643% / 1.826% at 64 / 128 MHz,
+power to 3.629%). Coil loading is gated only in the eddy-current regime —
+`MAT-6` closed 2026-07-31 with ΔR matching Dodd–Deeds to 1.58% at 10 MHz,
+σ = 100 S/m; the **coil-at-Larmor** case is still an extrapolation (`TH-11`
+is measuring it). SAR is gated against the lossy-sphere closed form to 3.5%
+(`MAT-4` step 1, 2026-08-03) on an **imposed uniform field**, never on a
+coil. S-parameters are field-derived through the package (`PORT-1` closed
+2026-08-15), but **only on the two-torus validation fixture with two named
+systematics** — no coil or birdcage has ports at all; read PROJECT_PLAN.md
+§2 before trusting any S-parameter or coil-loading/SAR figure. Anything
 that solves in the frequency domain needs the complex DolfinX build
 (`source /usr/local/bin/dolfinx-complex-mode`); real mode raises.
 

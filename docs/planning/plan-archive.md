@@ -4627,3 +4627,184 @@ mutually independent.** Item 5 is the declared spare.
    gate green (item 1) but power gate red points at the integration
    path (restriction, measure, degree), not the solver — report both
    numbers, annotate §7 `TH-10`, stop.
+
+## §9 On-deck review journal (2026-08-13 10:30 digest + item list, with the DONE/blocked annotations) — archived 2026-08-15 (18:00 review)
+
+Last reviewed 2026-08-13, **10:30 review, run interactively** — the
+scheduled 10:30 slot died on an API 529 before doing any work (empty log,
+exit 1); the human operator directed an interactive session to run the
+protocol in its place, ~6.5 h late but before any implementer slot hit the
+drained queue, so no slot was lost to the outage. **The interval (03:00 →
+now): five slots, five landings — `TH-10` went from anchor-only to closed.**
+04:30: step 2 ✅ — the repo's first Larmor-frequency solve gate: 64 MHz
+interior relL2 **8.154% → 3.643%** vs `LossySphereSeries` (< 5%,
+decreasing), quasi-static separation 18.68× (> 10×), 10 s. 06:00: `EX-18` ✅
+— first ports example, `ports:` runner group, systematics ladder lifted to
+`ports/systematics.py` and asserted bit-identical; raw −10.55% printed as
+the miss it is. 07:30: step 3 ✅ — 128 MHz at **1.826%**, 57.31×, same
+bounds shared by both frequencies; *refuted its own scoping* (error is
+lower at 128 MHz at the same mesh ⇒ the ~3% is not wavelength-limited —
+now `GEO-14`'s question). 09:00: `MAG-13` rung 3 ✅ — **3.7372%** at 1.52 M
+cells: the < 5% wire target reached by brute force; rung 2's near-wire
+error-map pattern refuted (mesh-realization noise; §2 bullet struck).
+12:00: step 4 ✅ — ½∫σ|E|² to **3.629%**, quasi-static power route missing
+by 58.1%; queue correctly drained-and-stopped. **Step-3 audit (one
+subagent auditor per landing): EX-18, TH-10 steps 2–4, MAG-13 rung 3 all
+COMPLIANT — no demotions.** Caveats recorded, none §4-blocking: TH-10
+step 4 gates the level but not monotonicity (add the assert on that
+file's next edit); its negative-control margin is 1.16× vs the field
+gates' 1.9–5.7× (floor pre-stated, not moved); MAG-13's new exit gate is
+code-verified but was never bitten in-slot (a 26 s `RES=0.0025` smoke
+closes that — ride it on the next probe edit); EX-18's negative control
+is cited-not-solved (disclosed) and one code comment overstates its
+reproduction-band margin ~50× (comment fix rides with the next edit of
+that file). Step 2: tree clean, no `attempt/*`/`recovered/*`.
+**Review decisions:** (1) **`TH-10` closed ✅** — all scoped steps green
+and audited; the coil-loading trend is a different machinery on a
+different fixture and becomes **`TH-11`** (§2.1's extrapolation sentence
+narrowed accordingly: imposed-field Larmor is now gated; coil-at-Larmor
+remains the extrapolation). (2) **`PORT-1` step 4 scoped** — the package
+path (`run_n_port_sparameter_sweep` off the solved field, retiring the
+`excitation.py` heuristic on the two-torus fixture); this is the §10
+subgoal-2 critical-path step and queue item 1. It is *not* birdcage
+ports and does not touch the weekly hold. (3) **`GEO-14` commissioned**
+— the shared ~3% floor discriminator (TH-10's three residuals +
+`MAG-13`'s CG1 floor), step 1 is the one-command 64 MHz run at the
+priced 55 251-cell mesh. (4) §5.4 ramp: **`EX-19` commissioned** —
+`TH-10` closed new quantitative gates and no example solves at a Larmor
+frequency. (5) **`OPS-16` commissioned (spare)** — retry-on-529 in the
+three automation launchers; two review slots died on 529 today (15:30Z
+and the 10:30 slot), and a single guarded retry converts that class of
+loss into a delay. Standing weekly-review items unchanged (composition
+question, `MAG-13` gate adoption, `MAT-6` step 10, `POST-4`/ParaView,
+birdcage-ports/B1+ hold). Waiting-on-you delta: nothing new; ParaView
+`.bp` check, `ANS-1`, and the push stand (origin at `b6e994f`,
+2026-08-10 — ~45 ahead once this lands).
+
+Previous interval's digest (2026-08-13 03:00), retained for the audit
+trail: **four slots, four landings — the port lineage landed on `main`
+(3b-xvii, 11× margin at matched topology; 3b-xviii pair gate green at
+the unmoved 10% via the two named systematics, raw −10.57% on record as
+a miss) and the Larmor anchor appeared (`LossySphereSeries`, 6/6, the
+102.3%/154.6% quasi-static departure sized). All four flips audited
+COMPLIANT; the three `attempt/PORT-1-*` branches deleted after capture
+verification.** *(Full text in `docs/planning/plan-archive.md`, archived
+2026-08-13, 10:30 review.)*
+
+**Five ready items, mutually independent.** Item 5 is the declared spare.
+Items 1, 3 and 4 execute their §7 entries verbatim; items 2 and 5 are
+self-contained below.
+
+1. ✅ **done 2026-08-13, 13:30 run** — raw 0.894543 (record 0.894283),
+   corrected 0.939849, `‖S−Sᵀ‖/‖S‖ = 2.5494e-05`, `‖S‖₂ = 0.861449`, heuristic
+   negative control differs by 3.08e-01; 7 passed 153.9 s,
+   `20260813T183606Z_PORT-1-step4-packagegate.log`. `PORT-1` held 🟡.
+   **`PORT-1` step 4 — the package path reads the solved field
+   (standard).** Execute the §7 `PORT-1` step-4 entry verbatim:
+   `run_n_port_sparameter_sweep` gets its port voltages from the
+   gap-voltage route (systematics via `ports/systematics.py`) instead of
+   `ports/excitation.py`'s heuristic, on the two-torus fixture.
+   **Anchor:** the gated record reproduced through the *package* entry
+   point — raw within 2e-3 of 0.894283, corrected inside the unmoved
+   0.10, `‖S−Sᵀ‖/‖S‖ < 1e-3`, `‖S‖₂ ≤ 1`. **Negative control:** the
+   retiring heuristic's S on the same fixture, asserted to *differ*
+   beyond the reproduction band. **Cost:** `-n 2`, one command,
+   `timeout -k 30 600` (3b-xviii's 457 s envelope). Deprecate the
+   heuristic behind a kwarg, do not delete. Hold `PORT-1` 🟡 — the ✅
+   flip is the reviewing session's call.
+2. ✅ **done 2026-08-13, 15:00 run** — `examples/time_harmonic/06_larmor_lossy_sphere.py`
+   (`th:6`) + guide; all four gate records reproduced through the example path
+   at a pre-stated 1% band, max drift 1.7e-04 (64 MHz 3.643% / 18.68×,
+   128 MHz 1.826% / 57.31×, power 3.629% with a 58.140% quasi-static miss);
+   two XDMF files written; exit 0, 24 s compute / 27 s wall,
+   `20260813T200415Z_EX-19-example-n2.log`. Free reading recorded in the
+   guide: at the *same* 17 670-cell mesh 128 MHz (3.299%) beats 64 MHz
+   (3.643%) — the `GEO-14` measurement, reproduced. The doc-reference
+   checker's guide pass is red on `main` for `EX-18`'s guide headings, not
+   this one (known-issues, `20260813T200522Z_EX-19-docrefs.log`).
+   **`EX-19` — Larmor lossy-sphere example (standard).** The first
+   example solving at 64/128 MHz: `examples/time_harmonic/06_…` under
+   the `th:` group, importing the `TH-10` fixture (never restating it),
+   both frequencies in one run, combined XDMF of |E| in and around the
+   sphere, guide to the `EX-15` bar. **Anchor:** the gate record
+   reproduced digit-for-digit through the example path — 3.643% /
+   1.826% interior relL2, separations 18.68× / 57.31×, power 3.629%
+   (logs `20260813T093212Z…`, `…123211Z…`, `…170337Z…`). **Negative
+   control, executed in-run:** the quasi-static separation assertions
+   are part of the imported fixture. **Cost:** standard, `-n 2`; the
+   three gate runs price it at ~70 s total + export. **Traps:** complex
+   build via the runner; the series raises at r = 0 (the 1 nm offset is
+   on record); the doc-reference checker's guide pass will fail the
+   commit without the guide. **Scope:** no SAR wording, no mass
+   averaging. **Negative result:** report, annotate §7, stop.
+3. ✅ **done 2026-08-13, 16:30 run** — the pre-registered **RESOLUTION**
+   band, and the commissioning hypothesis is **refuted**: 64 MHz interior
+   relL2 **3.643% → 1.781%** at the priced 55 251-cell mesh (improvement
+   2.046× for 1.5× in h, observed rate 1.77 — still converging, no floor).
+   Negative control exact: 55 251 cells to drift 0.00, 128 MHz reproducing
+   the record to 1.8e-05 (1.826%) and 7.2e-05 (57.31×) against a pre-stated
+   1% band. Second reading: the band's trailing clause over-reached — at this
+   mesh 64 and 128 MHz sit *together* (1.781% / 1.826%), so `TH-10` step 3's
+   not-wavelength-limited inference is strengthened, not overturned; the
+   residual is frequency-independent **and** mesh-limited. 5 passed 26.5 s /
+   28 s wall, `20260813T213156Z_GEO-14-step1-discriminator.log`. `GEO-14`
+   held 🟡; step 2 (surface-graded sizing) loses its premise and is not
+   scoped; `TH-10` and `MAG-13` annotated as the entry instructs.
+   **`GEO-14` step 1 — the ~3% floor discriminator (standard).**
+   Execute the §7 `GEO-14` entry verbatim: the 64 MHz gate at the
+   priced 55 251-cell mesh; bands pre-registered (> 3.0% floor /
+   < 2.0% resolution / between mixed); the 128 MHz record digits at the
+   same mesh are the negative control. ~30–40 s.
+4. ✅ **done 2026-08-13, 19:30 run** — 6 passed 73.2 s / 74 s wall, `-n 2`,
+   `20260814T003445Z_TH-11-step1-larmor-n2.log`. Feasible at the 10 MHz price
+   (mesh 10.8 s, solves 30.5 + 27.0 s, stop rule never approached); identities
+   1.0517e-14 / 4.2484e-14 vs the 1e-9 bound, σ = 0 dissipation exactly +0.0,
+   ΔR by dissipation reproducing the reaction route digit-for-digit. Reading:
+   ΔR deviates **+10.2698%** from Dodd–Deeds at 64 MHz vs 1.5834% at 10 MHz
+   (6.49× growth, predicted direction); ΔX ratio 0.9690 vs 0.9200. Caveat on
+   record: 1.26 cells per skin depth, so the deviation is not yet attributable
+   — the `resolution_near` = 0.0025 rung is the named next measurement.
+   `TH-11` held 🟡. **Ran as written except for the fixture, and the entry was
+   internally inconsistent there:** it names "W = 0.25 / `resolution_near`
+   0.0025 (ΔR 0.8835%)" but prices step 1 at "`-n 2` … 70–75 s on record",
+   which is the *step-3 baseline* (W = 0.15 / wire 0.002, 138 619 cells);
+   0.8835% is the 697 401-cell combined-knobs mesh at 178–196 s **per solve at
+   `-n 8`**. The priced rung was run, per cost-probe-first; the reviewing
+   session owns which fixture step 2 uses.
+   **`TH-11` step 1 — coil loading at 64 MHz, cost/feasibility probe
+   (standard, measurement only).** Execute the §7 `TH-11` step-1 entry
+   verbatim: the `MAT-6` combined fixture at 64 MHz, identities gated
+   (complex-power residual, exact-zero σ = 0 control), physics printed
+   never gated, stop rule 300 s/solve. Any outcome is a finding.
+5. 🚫 **blocked 2026-08-14, 21:00 run — unexecutable by any scheduled
+   session, and the queue is now fully drained.** `.claude/settings.json`
+   line 27 lists `Edit(scripts/automation/**)` under **`ask`**, which is a
+   denial in a headless run; both the new `lib/claude_retry.sh` and the
+   one-line `CLAUDE_BIN` override in `implementer-run.sh` were refused. This
+   item's own trap paragraph misreads that rule as covering only
+   `scripts/automation/hooks/` — it covers the launchers as well, so the item
+   was commissioned on a mistaken model of the allowlist and **must not be
+   re-queued as written**. Unblocking is the human operator's call (narrow the
+   `allow` list to the three launcher files, or apply the change
+   interactively); the complete design is in the 2026-08-14T02:03Z
+   `attempts.md` entry and the §7 `OPS-16` entry. With items 1–4 done, the
+   drain instruction below fired and the 21:00 slot stopped and journalled;
+   22:30 and 00:00 will meet the same drained queue before the 03:00 review.
+   *(spare)* **`OPS-16` — retry-on-529 in the automation launchers
+   (smoke, no compute).** Add to `daily-review.sh`, `weekly-review.sh`,
+   `implementer-run.sh`: if the claude CLI exits nonzero **and** the
+   log tail matches `API Error` / `5[0-9][0-9]`, sleep 300 s and retry
+   **once**, appending an `attempt 2` marker line; lock semantics
+   unchanged (retry happens inside the held lock); total runtime stays
+   inside each script's existing `timeout` budget — shrink the CLI
+   timeout accordingly rather than extending the slot. **Anchor:** a
+   rehearsal with a stub `CLAUDE_BIN` (add an env override for
+   testability): stub fails with an `API Error` line → exactly one
+   retry, then success → log carries both attempts and exit 0.
+   **Negative control:** stub succeeds first try → no retry marker;
+   stub fails with a non-API error → **no** retry (a protocol failure
+   must not run twice). **Traps:** `scripts/automation/hooks/` is
+   write-protected — this touches only the three launchers; keep the
+   one-session lock held across the retry or two sessions can
+   interleave. **Scope:** no protocol-document changes. **Negative
+   result:** report; the scripts stay as they are.

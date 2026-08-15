@@ -1,163 +1,117 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-13, 10:30 review (run interactively — the scheduled
-slot died on an API 529; see Automation health), with Waiting-on-you item 0
-and Automation health amended 2026-08-15 20:00Z by the 15:00 implementer
-slot (host outage) and 2026-08-15 21:30Z by the 16:30 one (counts only).
-Source of truth is `PROJECT_PLAN.md`; this page is a
-read-only digest for the human operator.
+**Updated:** 2026-08-15, 18:00 review — **the first review to execute since
+2026-08-13 10:30**, so this page digests a two-day interval: four landings,
+two chunk closes, one blocked chunk, two outages, and twelve idle slots.
+Source of truth is `PROJECT_PLAN.md`; this page is a read-only digest for
+the human operator.
 
 ## Waiting on you
 
-0. 🔴 **Two separate outages, and the loop has landed nothing since 08-13
-   21:00. (a) This machine was switched off for ~23.8 h — 14 scheduled
-   sessions never ran. (b) The reviews were already out of Fable 5 credits
-   before that.**
-   *(Added 2026-08-14 09:30Z by the 04:30 implementer slot, not by a review;
-   updated by the 06:00–15:00 slots on 08-14 and rewritten 2026-08-15 20:00Z
-   by the 15:00 slot, which found the reboot — see their
-   `docs/testing/attempts.md` entries.)*
-
-   **(a) Host outage — new, and it needs nothing from you but awareness.**
-   `uptime -s` = **2026-08-15 14:50 CDT**; the container was found
-   `Exited (255)`. Between the last commit (2026-08-14 20:01Z) and boot
-   (2026-08-15 19:50Z) **no scheduled session ran at all**: 11 implementer
-   slots and **3 daily reviews** (08-14 18:00, 08-15 03:00, 08-15 10:30)
-   produced *no log file*. Cron is healthy — it launched the 15:00 slot on
-   time. The 15:00 slot restarted the container (Up, 64 GiB cap, no stray
-   processes), so the grid is mechanically ready again. **If this box is a
-   laptop that sleeps, the automation grid stops with it** — that is the one
-   structural thing to know.
-
-   **(b) Review credits — still the real blocker, but now *less* confirmed
-   than this page previously claimed.** The evidence remains exactly **three**
-   byte-identical **98-byte** review logs (2026-08-13 18:00, 2026-08-14 03:00
-   and 10:30) reading *"You're out of usage credits … Fable 5"*; the
-   2026-08-13 10:30 slot died separately on a 529. The three reviews that were
-   meant to test whether that persists were the ones killed by the host
-   outage, so they say nothing either way. **The first review to actually
-   execute since 08-14 10:30 is 2026-08-15 18:00 local** — its log size is the
-   test (98 bytes ⇒ credits still out; full log ⇒ self-healed); as of the
-   16:30 slot it is **~1.5 h out** and still the next informative event.
-   The implementer pool (Opus) is unaffected — the half of the loop that
-   *consumes* §9 On-deck items is alive while the half that *refills* it is
-   silent, so the queue drained at 21:00 on 08-13 and **twelve implementer
-   slots have now idled**, none to a technical blocker. **Also at risk: the
-   2026-08-16 01:30 weekly planning review** (~9 h out), on the same model
-   — it alone owns the `PORT-1` 3b branch-landing adjudication, the §10
-   roadmap and §5.4 Ansys commissioning. **Unblock:** restore Fable 5 credits,
-   or repoint the three `scripts/automation/*.sh` launchers at a model with
-   balance. A scheduled session can do neither — it cannot buy credits, and
-   `.claude/settings.json` denies headless edits to `scripts/automation/**`
-   (the same rule that blocked `OPS-16`). Note `OPS-16`'s retry-on-529 would
-   **not** have saved any of these slots, under either cause.
-1. **One click: does ParaView open a DG1 `.bp`?** (unchanged since the
-   2026-08-12 18:00 review). `POST-4` step 5 measured the DG1/VTX export
-   route bit-faithful (round-trip exactly 0.0) where the current P1 path is
-   20–52% off pointwise; cost is 10.5× disk, zero wall clock. Adoption is
-   blocked only on you opening a `.bp` in ParaView (ADIOS2/VTX reader) and
-   confirming it renders — each field arrives as `<name>_real` /
-   `<name>_imag`. `scripts/probes/post4_step5_probe.py` regenerates the
-   files.
-2. **ANS-1 Ansys replication** — the FEM half is complete
-   (`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/`, `SPEC.md`
-   box 1 checked); the AED run is yours. Our ΔX is genuinely unconverged,
-   so the AED number is informative, not a formality.
-3. Housekeeping: local `main` is **~45 commits ahead** of `origin/main`
-   (`b6e994f`, 2026-08-10) — push when convenient; every "in CI" claim is
-   a local reproduction until then.
+0. 🔴 **The Fable 5 credit question is now half-answered: this review ran.**
+   The 18:00 daily review executed normally (this page is its output), so
+   the review model has balance again — whether restored by you or by a
+   billing-cycle reset, the loop's refill half is alive as of 18:00 local.
+   The queue is restocked to six items; the 19:30 implementer slot is the
+   first in twelve with real work. **Watch the 2026-08-16 01:30 weekly
+   planning review** — same model; if it produces another 98-byte log the
+   balance is marginal rather than restored. For the record, the two
+   failure modes in the log archive are told apart by size: **98-byte log
+   = no credits; absent log = host off** (the box was off ~23.8 h,
+   2026-08-14 20:01Z → 2026-08-15 19:50Z — 14 sessions never ran; if this
+   box sleeps, the grid stops with it).
+1. **Two operator decisions the automation cannot make for itself:**
+   (a) **`OPS-16` unblock** — retry-on-529 in the launchers is fully
+   designed (2026-08-14T02:03Z attempts.md entry) but `.claude/settings.json`
+   puts `Edit(scripts/automation/**)` under `ask`, a headless denial. Either
+   move *only* the three launcher files to `allow`, or apply the change by
+   hand; also note the `.gitignore` bare-`lib/` trap recorded in the §7
+   entry. (b) **Outage visibility** — nothing records a *missing* run, so
+   the 23.8 h gap was findable only by noticing absent files. A launcher
+   "last run" heartbeat needs the same allowlist decision; until then this
+   stays a known blind spot.
+2. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
+   2026-08-12). `POST-4` step 5 measured the DG1/VTX route bit-faithful
+   where the current P1 path is 20–52% off pointwise. Blocked only on you
+   opening a `.bp` (ADIOS2/VTX reader) and confirming it renders;
+   `scripts/probes/post4_step5_probe.py` regenerates the files.
+3. **ANS-1 Ansys replication** — the FEM half is complete
+   (`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/`); the AED run
+   is yours. Our ΔX is genuinely unconverged, so the AED number is
+   informative, not a formality.
+4. Housekeeping: local `main` is **~50 commits ahead** of `origin/main`
+   (`b6e994f`, 2026-08-10) — push when convenient.
 
 ## Honest current state (digest of §2 — two rows moved this interval)
 
 | Capability | State | Gate |
 |---|---|---|
-| Magnetostatics | ✅ validated | closed forms; the < 5% wire field reached (MAG-13, 3.74% at 1.5 M cells) |
-| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; **Larmor-regime sphere now gated: 3.64% (64 MHz) / 1.83% (128 MHz) + ½∫σ\|E\|² to 3.63% — TH-10 closed ✅ this review** |
-| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 0.88% on the combined fixture (MAT-6); **coil-at-Larmor is the remaining extrapolation → TH-11 commissioned** |
+| Magnetostatics | ✅ validated | closed forms; < 5% wire field reached (MAG-13, 3.74% at 1.5 M cells) |
+| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.83% + power to 3.63% (TH-10); **the ~3% residual is proven resolution, not a geometry floor — GEO-14 closed ✅ this review (1.78% at the finer mesh, rate 1.77)** |
+| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 0.88% (MAT-6); at 64 MHz the quasi-static deviation grows to +10.27% (TH-11 step 1) — **unattributed between physics and mesh until the resolution rung runs (queue item 1)** |
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4) + the Larmor power integral (TH-10); never on a coil |
-| S-parameters | 🟡 test path real, package path heuristic | port-pair gate green at the unmoved 10% (3b-xviii, systematics named); **PORT-1 step 4 (package path) is queue item 1** |
+| S-parameters | 🟡→✅ **package path now field-derived — PORT-1 closed ✅ this review** | `run_n_port_sparameter_sweep` reads the solved field; reciprocity 2.5e-05 vs the 1e-3 gate, ‖S‖₂ = 0.861; heuristic deprecated, kept only as a negative control. **Two-torus fixture only — no coil or birdcage has ports; that hold is the weekly review's** |
 
-## Recent activity (03:00 → 10:30 interval)
+## Recent activity (2026-08-13 10:30 → now)
 
-Five slots, five landings; all audited §4-compliant (one subagent auditor
-per landing), no demotions:
+Four landings in four consecutive slots before the queue drained at 08-13
+21:00; all audited §4-compliant this review (one subagent auditor per
+landing), no demotions:
 
-- **TH-10 closed ✅** — the interior field gated against the Mie series at
-  both Larmor frequencies and the SAR-relevant power integral at 64 MHz;
-  the quasi-static route misses by 58%, so the gate measures genuinely
-  full-wave physics. §2.1's long-standing extrapolation caveat narrows to
-  coil-at-Larmor only.
-- **EX-18** — first ports example (`ports:` runner group); the correction
-  ladder now has a single source in `ports/systematics.py`, asserted
-  bit-identical to the gate module.
-- **MAG-13 rung 3** — the < 5% wire target reached by brute force (3.74%,
-  1.52 M cells, 423 s); rung 2's near-wire error-map pattern refuted as
-  mesh-realization noise and the §2 bullet corrected.
-- New chunks from the findings: **TH-11** (coil loading across the
-  eddy→displacement transition), **GEO-14** (the shared ~3% geometry-floor
-  discriminator), **EX-19** (Larmor sphere example, §5.4 ramp), **OPS-16**
-  (retry-on-529 in the launchers, spare).
+- **PORT-1 step 4 → chunk closed ✅** — the package S-parameter path reads
+  the solved field and reproduces the gated record; the `excitation.py`
+  heuristic is retired to a deprecated kwarg whose output is asserted to
+  *differ*. §2.2 retitled; CLAUDE.md's summary corrected.
+- **EX-19 ✅** — first example solving at 64/128 MHz; all four TH-10 gate
+  records reproduced through the example path to 1.7e-04 drift.
+- **GEO-14 step 1 → chunk closed ✅** — the pre-registered discriminator
+  read RESOLUTION: 64 MHz error falls 3.64% → 1.78% at the finer mesh, so
+  the shared-faceting-floor hypothesis is refuted; the wire re-aim was
+  declined because MAG-13's own rung ladder already attributes its residual
+  to resolution.
+- **TH-11 step 1 ✅ (chunk stays 🟡)** — 64 MHz coil loading costs the same
+  as 10 MHz; identities to 1e-14; the quasi-static ΔR deviation grows
+  1.58% → +10.27%, deliberately unattributed until the resolution rung.
+- **OPS-16 🚫** — unexecutable by any scheduled session (allowlist); see
+  Waiting-on-you 1a.
 
 ## Automation health
 
-- **The 10:30 review slot died on an API 529** (empty log, exit 1; an
-  interactive relaunch attempt hit the same). This review was then run
-  interactively at the operator's direction, ~6.5 h late — the drained
-  queue was restocked before any implementer slot idled, so the outage
-  cost zero slots. `OPS-16` (one guarded retry in the launchers) is queued
-  to absorb this class in future.
-- **Since that review, three more review slots died — all on exhausted Fable 5
-  credits, not 529s** (2026-08-13 18:00, 2026-08-14 03:00 and 10:30; 98-byte
-  logs, byte-identical, no steps run). §9 has therefore not been restocked
-  since 2026-08-13 10:30, and the implementer slots at 21:00, 22:30, 00:00,
-  04:30, 06:00, 07:30, 09:00, 12:00, 13:30 and 15:00 all met a drained queue
-  and stopped per §9's drain instruction — ten consecutive. See
-  Waiting-on-you item 0 — this is the live blocker. **The 2026-08-16 01:30
-  weekly planning review is on the same model** (`weekly-review.sh:32` →
-  `claude-fable-5`), so an unrestored balance also kills the owner of the
-  `PORT-1` 3b branch-landing adjudication, the §10 roadmap and §5.4 Ansys
-  commissioning. *(Line added by the 2026-08-14 04:30 implementer slot and
-  updated by the 06:00, 07:30, 09:00, 12:00, 13:30 and 15:00 ones; the rest
-  of this section is the 10:30 review's.)*
-- **Then the host went down for ~23.8 h and 14 sessions never ran at all**
-  (2026-08-14 20:01Z → 2026-08-15 19:50Z; `uptime -s` 2026-08-15 14:50 CDT,
-  container found `Exited (255)`). Missing with **no log file**: implementer
-  08-14 16:30/19:30/21:00/22:30 and 08-15 00:00/04:30/06:00/07:30/09:00/
-  12:00/13:30, plus daily reviews 08-14 18:00 and 08-15 03:00/10:30. Cron is
-  fine — it launched the 08-15 15:00 slot on time; that slot restarted the
-  container (Up, 64 GiB, no stray `python3`) and journalled the outage.
-  **Distinguish the two failure modes by log size: a 98-byte log = no
-  credits; an absent log = host off.** *(Line added by the 2026-08-15 15:00
-  implementer slot.)* The 08-15 16:30 slot then ran on time against a healthy
-  container and the same drained §9 — **twelve journalled idle slots**; the
-  grid is mechanically fine and starved of work, not broken.
-- **Gap in the telemetry, worth a launcher fix:** nothing in
-  `logs/automation/` records a *missing* run, so a day-long outage is only
-  visible as absent files. A "last run" heartbeat, or a review step diffing
-  expected-vs-present logs, would make this class self-reporting.
-- Grid otherwise clean: nine consecutive landing slots across the two
-  intervals preceding the drain; tree clean; no `attempt/*` or `recovered/*`
-  branches — the three PORT-1 lineage branches were landed and deleted
-  2026-08-13.
-- Standing weekly-review items (2026-08-16): the two-systematics
-  composition question (3b-xviii), MAG-13 CG1 gate adoption, MAT-6
-  step 10's ≥ 5.1× solve anomaly (memory-headroom lead), POST-4 export
-  adoption (pending your ParaView check), and the birdcage-ports/B1+
-  hold.
+- **Outage ledger for the interval:** three review slots died on exhausted
+  Fable 5 credits (98-byte logs: 08-13 18:00, 08-14 03:00, 08-14 10:30);
+  then the host was off ~23.8 h, killing 11 implementer slots and 3 more
+  reviews with no log at all; **twelve implementer slots idled** on the
+  drained queue between 08-13 22:31 and 08-15 16:30, every one journalled
+  per the drain instruction. The 08-15 15:00 slot restarted the container
+  after the reboot — the grid was mechanically green again before this
+  review ran.
+- **This review executed normally at 18:00** — the credit outage is over
+  for the daily review at least; the weekly review (01:30 tonight) is the
+  remaining test.
+- Discipline held throughout: no improvised work in twelve drained slots,
+  tree clean at every check, no `attempt/*` or `recovered/*` branches, and
+  the idle-slot journals correctly separated the two outage causes.
+- Standing weekly-review items (tonight): the two-systematics composition
+  question (3b-xviii), MAG-13 CG1 gate adoption, MAT-6 step 10's ≥ 5.1×
+  solve anomaly, POST-4 export adoption (pending your ParaView check), the
+  birdcage-ports/B1+ hold — **plus, flagged this review: §6's Phase-4 row
+  and §10's target checkboxes predate the PORT-1 close and need their
+  weekly-owned refresh.**
 
-## On deck (§9, rebuilt this review; items mutually independent)
+## On deck (§9, restocked this review; six items, mutually independent)
 
-1. **PORT-1 step 4** — the package path reads the solved field: retire the
-   `excitation.py` heuristic on the two-torus fixture. The §10 subgoal-2
-   critical path; §2's "every packaged S-parameter is a heuristic"
-   sentence falls only when this lands.
-2. **EX-19** — Larmor lossy-sphere example, both frequencies, gate digits
-   reproduced through the example path.
-3. **GEO-14 step 1** — one-command discriminator: is the ~3% residual a
-   geometry floor or resolution?
-4. **TH-11 step 1** — coil loading at 64 MHz, cost/feasibility probe,
-   measurement only, stop rule 300 s/solve.
-5. *(spare)* **OPS-16** — retry-on-529 in the automation launchers.
+1. **TH-11 step 2** — the resolution rung at 64 MHz (417 914 cells): bound
+   the mesh term inside the +10.27% deviation before anyone calls it
+   physics.
+2. **Hygiene pair** — TH-10's monotonicity assert + MAG-13's exit-gate
+   smoke, the two ride-alongs twelve drained slots watched sit idle.
+3. **EX-18 doc repairs** — retire the docrefs known-issues entry (guide
+   headings; gate on the guide pass, not exit 0).
+4. **EX-20** — first example calling the package S-parameter sweep
+   (§5.4 ramp for the PORT-1 close).
+5. **PORT-5 step 1** — sweep-level sanity metrics on the field-route
+   S-matrix (§10 target 3's named gap).
+6. *(spare)* **TH-11 step 3** — 30 MHz mid-transition point.
 
 ---
 

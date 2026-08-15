@@ -523,6 +523,18 @@ passing (implementer non-negotiable: unrelated failures get an entry, not a
 drive-by edit); the fix is a three-line heading rename plus a re-run of the
 checker, and the entry retires with it.
 
+**Extended 2026-08-15 (18:00 review, step-3 audit):** the same exit-1 log
+also carries **24 stale-reference failures** (magnetostatics/MRI output files
+older than the checker's 48 h `--max-age-s`,
+`20260813T200522Z_EX-19-docrefs.log` lines 35–59) that the original journaling
+under-reported — "the only violation on `main`" is true of the *guide pass*,
+not of the checker's overall exit code. The staleness is environmental (old
+output files; regenerating them is compute, not a doc fix) and will recur
+whenever outputs age past 48 h, so the heading fix should gate on the
+**guide-pass violation count (3 → 0)**, not on exit 0. This paragraph
+retires with the heading fix; the environmental-staleness behavior is by
+design and needs no entry of its own once stated here.
+
 ### The container-side `timeout` in the standard harness recipe does not reliably stop an `mpiexec` job, and an overrun can wedge the container (`MAT-6` step 10, 2026-08-12)
 
 **Verified at `648b216`, 00:00 implementer slot.** The recipe every heavy
