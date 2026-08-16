@@ -12033,3 +12033,75 @@ run the *same* h ladder at 10 MHz and 30 MHz where the solves are affordable,
 and see whether the extrapolated-to-zero-h deviation is flat in f (⇒ no
 physics term) or rising (⇒ the term `TH-11` is after). That variant is one
 slot at this fixture's price.
+
+## 2026-08-16T20:05Z — `EX-21` — **complete**
+
+Scheduled implementer run, 15:00 CDT slot. Preflight clean, container Up 24 h.
+
+**Item selection — items 1 and 2 skipped as blocked/done, item 3 executed.**
+§9 On-deck item 1 (`PORT-9` step 1) is 🟡 in its §7 entry **with the blocker
+named** (no longitudinal port-sheet surface in `two_torus_domain`; the 12:00
+slot's 2026-08-16T17:08Z entry), i.e. the protocol's "blocked". Item 2
+(`TH-11` step 3) is struck done by the 13:30 slot. First item neither done nor
+blocked is item 3, `EX-21`. Nothing on the parked branch
+`attempt/PORT-9-20260816T170800Z` was touched.
+
+**What was built.** `examples/meshing/03_birdcage_graded_conductors.py` +
+same-stem guide `03_birdcage_graded_conductors.md` — the first birdcage
+example of any kind, dispatched as `mesh:3` (the runner globs `NN_*.py` out of
+`examples/meshing/`, so no registry edit was needed). Two rungs of the same
+fixture, measured against the **CAD (occ) mass** denominator `GEO-15`
+established, both exported to ParaView so the two can be opened side by side.
+
+Every constant is **imported**, none restated (`ANS-1`): `CAD_MASS_GATE`,
+`CONDUCTOR_RUNGS` and `_check_geo9_identities` from
+`tests/mesh/test_birdcage_conductor_sizing.py`, the fixture parameters from
+`tests/mesh/test_birdcage_port_tags.py`, `_tag_volume`/`_total_volume` from
+`tests/mesh/test_coil_phantom_conforming.py`, `global_cell_tag_set` from
+`tests/mesh/helpers.py`. The repo root goes on `sys.path` because the runner
+exports only `/workspace/src` — the `EX-11`/`mag:5` pattern.
+
+**Measured** (`20260816T200516Z_EX-21-example-n2-final.log`, standard tier,
+`-n 2`, 26.1 s script / 28 s harness; first run
+`20260816T200348Z_EX-21-example-n2.log`, 25.9 s):
+
+| rung | h_c | cells | mesh s | meshed/CAD |
+|---|---|---|---|---|
+| baseline (global `setSize` 0.015) | — | 48 245 | 6.1–6.3 | **0.740335** |
+| graded (Distance→Threshold) | 1.6e-3 m | 98 474 | 16.7 | **0.967019** |
+
+Conductor CAD mass 1.030097043e-04 m³, identical across rungs to < 1e-12.
+Gate: graded 0.967019 ≥ 0.95 ✅ — matches `GEO-15`'s 0.9670 on record.
+`GEO-9` box-partition identities (total/analytic box, tagged sum, each of the
+four port boxes vs `dx·dy·dz`) re-asserted on **both** rungs at < 1e-9 and
+unmoved. Ratios and cell counts were bit-identical across the two runs; only
+wall times moved.
+
+**Negative control (inverted assertion, `EX-18` pattern), executed in-run:**
+the baseline rung is asserted to *fail* the same 0.95 gate by at least the
+`GEO-15` margin of 0.05 — `assert baseline_ratio < 0.90` — so a regression
+that silently disabled grading turns the example red instead of leaving it
+green on the fallback path. Measured separation **0.226685**.
+
+**Docrefs companion.** First run `20260816T200449Z_EX-21-docrefs.log` exited 1
+with 25 dead references and caught **one real violation of this example's
+own**: guide line 103 wrote the second XDMF as `…_graded_combined.xdmf`, and
+the checker resolves bare filenames, so the ellipsis made it a dead reference.
+Fixed by writing the full path; re-run `20260816T200505Z_EX-21-docrefs-fix.log`
+is back to the **24 pre-existing** stale artifacts from other examples, none
+of them EX-21's (known-issues "by design" entry; `OPS-19` is the queued fix
+for the masked exit code — this slot is a fresh data point for it, since the
+exit-1 body did carry a signal that mattered).
+
+**Measured note handed to `PORT-9` step 3:** the graded birdcage is **98 474
+cells**, which confirms rather than revises that entry's 98 k budget. The
+2.04× cell cost and ~2.7× mesh-time cost of grading are recorded in the guide.
+
+No tolerance moved, nothing loosened, no ⚠️ subsystem extended, no solve and
+no port claim. No denied commands this slot.
+
+**Hypothesis for the next attempt.** The queue's item 4 (`OPS-19` step 1,
+docrefs exit-code split) is independent and now has a second concrete
+motivation from this slot; item 6 (`PORT-9` step 2) remains gated on item 1,
+which still needs the review to choose between the two mesh-side options in
+the 2026-08-16T17:08Z entry.
