@@ -42,8 +42,22 @@ Usage (run it *after* the examples whose artifacts are being checked):
     python3 scripts/testing/check_example_doc_references.py \
         --output-dir paraview_output --max-age-s 172800
 
-Exit status 0 if every reference resolves and every example has its guide, 1
-otherwise, with one line per violation.
+**Exit codes (`OPS-19`, 2026-08-16)** — staleness does not own the exit code:
+
+* ``0`` — clean: every reference resolves, every artifact is fresh, every
+  example has its guide with all required headings.
+* ``1`` — a **hard** violation: a dead reference (named file exists nowhere,
+  or no run ever wrote the artifact), a missing guide, or a missing required
+  heading. This is the defect class the checker exists for.
+* ``2`` — **staleness only**: every reference resolves and the guide pass is
+  green, but at least one `--output-dir` artifact is older than
+  ``--max-age-s``. Nobody has re-run those examples lately; nothing is broken.
+
+Before the split, 24 stale `paraview_output/` artifacts drove exit 1 on every
+invocation, so a chunk touching examples could not tell its own breakage from
+the backlog's without reading the log body (`EX-20`, `ANS-3`, both 2026-08-16).
+``--stale-severity fail`` restores the old all-or-nothing reading (staleness
+exits 1) for callers that want it; the default is ``report``.
 """
 
 from __future__ import annotations
@@ -56,6 +70,12 @@ import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+# Exit codes (`OPS-19`). Callers gate on these, so they are named here and
+# imported by the test module rather than restated (`ANS-1`).
+EXIT_OK = 0
+EXIT_HARD = 1
+EXIT_STALE_ONLY = 2
 
 RUNNER = REPO_ROOT / "scripts" / "run_examples.sh"
 
@@ -106,11 +126,24 @@ def artifact_mtime(target: Path) -> float:
     return newest
 
 
+def display_path(path: Path) -> Path:
+    """Repo-relative when the path is in the repo, absolute otherwise.
+
+    `--docs-root` may point outside the repo (the `OPS-19` exit-code tests
+    drive the checker over temp-dir fixtures), and a bare `relative_to` raises
+    there — an unhandled ValueError, not a violation report.
+    """
+    try:
+        return path.relative_to(REPO_ROOT)
+    except ValueError:
+        return path
+
+
 def collect_references(doc_paths: list[Path]) -> dict[str, list[str]]:
     """Map referenced filename -> list of "<relpath>:<line>" citation sites."""
     references: dict[str, list[str]] = {}
     for doc in doc_paths:
-        rel = doc.relative_to(REPO_ROOT)
+        rel = display_path(doc)
         for lineno, line in enumerate(doc.read_text().splitlines(), start=1):
             for match in REFERENCE_RE.finditer(line):
                 name = Path(match.group(0)).name
@@ -220,6 +253,15 @@ def main() -> int:
         default="examples",
         help="tree whose *.md files are scanned (default: examples)",
     )
+    parser.add_argument(
+        "--stale-severity",
+        choices=("fail", "report"),
+        default="report",
+        help="how a stale-but-present artifact is scored: 'report' (default) "
+        f"keeps it out of the hard exit code (staleness alone exits "
+        f"{EXIT_STALE_ONLY}), 'fail' restores the pre-OPS-19 reading where "
+        f"staleness exits {EXIT_HARD}",
+    )
     args = parser.parse_args()
 
     docs_root = REPO_ROOT / args.docs_root
@@ -227,7 +269,7 @@ def main() -> int:
     doc_paths = sorted(docs_root.rglob("*.md"))
     if not doc_paths:
         print(f"FAIL: no markdown guides found under {docs_root}")
-        return 1
+        return EXIT_HARD
 
     references = collect_references(doc_paths)
     known_scripts = repo_basenames()
@@ -238,6 +280,7 @@ def main() -> int:
     }
     now = time.time()
     violations: list[str] = []
+    stale: list[str] = []
 
     for name in sorted(references):
         sites = ", ".join(references[name])
@@ -263,7 +306,7 @@ def main() -> int:
             continue
         age = now - artifact_mtime(target)
         if age > args.max_age_s:
-            violations.append(
+            stale.append(
                 f"{name}: stale in {args.output_dir}/ ({age / 3600:.1f} h old, "
                 f"limit {args.max_age_s / 3600:.1f} h) — rerun the example that "
                 f"writes it, or the reference is dead  [{sites}]"
@@ -280,16 +323,23 @@ def main() -> int:
         for violation in violations:
             print(f"  - {violation}")
     else:
-        print("PASS: every referenced file exists (artifacts fresh within the window).")
+        print("PASS: every referenced file exists.")
+    if stale:
+        label = "FAIL" if args.stale_severity == "fail" else "STALE"
+        print(f"{label}: {len(stale)} stale artifact(s) (--stale-severity {args.stale_severity}):")
+        for violation in stale:
+            print(f"  - {violation}")
+    else:
+        print("PASS: every referenced artifact is fresh within the window.")
 
     try:
         scripts = runnable_examples()
     except (OSError, subprocess.CalledProcessError) as exc:
         print(f"FAIL: could not enumerate examples via {RUNNER.name} --list: {exc}")
-        return 1
+        return EXIT_HARD
     if not scripts:
         print(f"FAIL: {RUNNER.name} --list enumerated no examples")
-        return 1
+        return EXIT_HARD
     guide_violations = check_guides(scripts)
     pending = sum(1 for s in scripts if s.name in PENDING_GUIDES)
     print(
@@ -305,7 +355,23 @@ def main() -> int:
     else:
         print("PASS: every runnable example has a guide with all required sections.")
 
-    return 1 if violations or guide_violations else 0
+    # Exit-code contract (`OPS-19`): hard violations dominate, staleness only
+    # reaches the exit code as EXIT_STALE_ONLY (or as a hard failure when the
+    # caller asked for --stale-severity fail). The counts are printed on the
+    # line below so a caller can gate on the numbers without parsing the body.
+    stale_is_hard = args.stale_severity == "fail"
+    hard_count = len(violations) + len(guide_violations) + (len(stale) if stale_is_hard else 0)
+    if hard_count:
+        status = EXIT_HARD
+    elif stale:
+        status = EXIT_STALE_ONLY
+    else:
+        status = EXIT_OK
+    print(
+        f"RESULT: dead={len(violations)} guide={len(guide_violations)} "
+        f"stale={len(stale)} stale_severity={args.stale_severity} exit={status}"
+    )
+    return status
 
 
 if __name__ == "__main__":

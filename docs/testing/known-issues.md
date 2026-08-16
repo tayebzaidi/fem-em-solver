@@ -499,28 +499,40 @@ mesh in the process — is the reusable part.
 
 ## Non-test issues
 
-### `check_example_doc_references.py` exits 1 on stale example artifacts, and that is by design (not an issue — recorded so it is not re-filed)
+### `check_example_doc_references.py` exit codes: 0 clean, 1 real defect, 2 staleness only (`OPS-19`, 2026-08-16 — contract, not an issue)
 
-The checker's dead-reference pass treats an artifact in `paraview_output/`
-older than `--max-age-s` (default 48 h) as stale, so the **overall exit code
-goes to 1 whenever nobody has re-run the magnetostatics/MRI examples for two
-days** — 24 such failures on 2026-08-16, all of them files aged 105–133 h
-(`20260816T033121Z_EX-18-docrefs-fix.log` lines 35–59). Regenerating them is
-compute, not a documentation fix. **Gate on the guide-pass violation count,
-not on exit 0.** The guide pass itself is green on `main`: *"18 checked
-against 3 required heading(s), 0 pending … PASS"* (same log, lines 60–61).
+**Resolved 2026-08-16 (`OPS-19` step 1).** Staleness no longer owns the exit
+code, so a chunk touching examples can read its companion docrefs log by its
+status alone:
 
-*(The `EX-18` heading violations that used to be filed here — three missing
-required headings in `examples/ports/01_two_torus_port_pair.md`, found by
-`EX-19` on 2026-08-13 — were fixed 2026-08-16 and the entry retired with
-them: 3 guide violations → 0, verified in the log cited above.)*
+| code | meaning | who caused it |
+|---|---|---|
+| 0 | every reference resolves, every artifact fresh, guide pass green | — |
+| 1 | **hard** violation: dead reference, missing guide, missing heading | usually the chunk in the slot |
+| 2 | staleness only: references resolve, guides green, some artifact older than `--max-age-s` | the backlog — nobody has re-run those examples |
 
-*Update 2026-08-16, 10:30 review: "by design" has become "masks the
-signal" — two implementer runs (`EX-20`, `ANS-3`) had to journal a red
-companion log as known-benign in one day, so the exit code no longer
-distinguishes a case's own breakage from the backlog's. `OPS-19` (§7)
-is commissioned to give staleness its own exit code; this paragraph
-leaves with it.*
+The last line of the checker's output states the split for a caller that does
+not want to parse the body: `RESULT: dead=<n> guide=<n> stale=<n>
+stale_severity=<fail|report> exit=<code>`. `--stale-severity fail` restores
+the pre-`OPS-19` all-or-nothing reading (staleness exits 1); the default is
+`report`. `--max-age-s` (`OPS-15`'s 48 h) did **not** move.
+
+**On `main` at the time of the split**: `dead=0 guide=0 stale=24
+stale_severity=report exit=2` — the 24 stale `paraview_output/` files (aged
+105–141 h, magnetostatics/MRI examples) are still there, and regenerating
+them is still compute rather than a documentation fix. What changed is that
+they no longer show up as a failure. Guide pass green at 21/21 examples,
+0 pending. Verified in `20260816T213312Z_OPS-19-step1-rerun.log` (8 passed,
+1.91 s); the contract is pinned by `tests/unit/test_doc_reference_exit_codes.py`,
+whose negative control is a guide naming an artifact no run ever wrote — that
+must still exit 1 after the split, or the checker was switched off rather than
+sharpened.
+
+*(History: the pre-split behaviour — exit 1 on every invocation, "gate on the
+guide-pass violation count, not on exit 0" — cost `EX-20` and `ANS-3` a
+red-but-benign companion log each on 2026-08-16, which is what commissioned
+`OPS-19`. The `EX-18` heading violations once filed here, three missing
+headings in `examples/ports/01_two_torus_port_pair.md`, were fixed 2026-08-16.)*
 
 ### The container-side `timeout` in the standard harness recipe does not reliably stop an `mpiexec` job, and an overrun can wedge the container (`MAT-6` step 10, 2026-08-12)
 

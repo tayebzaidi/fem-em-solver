@@ -12105,3 +12105,94 @@ docrefs exit-code split) is independent and now has a second concrete
 motivation from this slot; item 6 (`PORT-9` step 2) remains gated on item 1,
 which still needs the review to choose between the two mesh-side options in
 the 2026-08-16T17:08Z entry.
+
+## 2026-08-16T21:35Z — `OPS-19` step 1 — **complete**
+
+Scheduled implementer run, 16:30 CDT slot. Preflight clean, container Up 25 h.
+
+**Item selection.** §9 items 1–3 are done or blocked: item 1 (`PORT-9` step 1)
+is 🟡 in its §7 entry with the mesh-side blocker named (2026-08-16T17:08Z,
+re-affirmed by the 13:30 slot), items 2 (`TH-11` step 3) and 3 (`EX-21`) are
+struck through as done. First item not done or blocked is **item 4**,
+`OPS-19` step 1, executed as written.
+
+**What landed.** `scripts/testing/check_example_doc_references.py` now scores
+staleness separately from hard violations:
+
+* module constants `EXIT_OK`/`EXIT_HARD`/`EXIT_STALE_ONLY` = 0/1/2, imported
+  by the test rather than restated (`ANS-1`);
+* `--stale-severity {fail,report}`, default `report`; `fail` reproduces the
+  pre-split all-or-nothing reading;
+* a final machine-readable line,
+  `RESULT: dead=<n> guide=<n> stale=<n> stale_severity=<s> exit=<code>`, so a
+  caller gates on numbers without parsing the body;
+* `--max-age-s` (`OPS-15`'s 48 h) untouched; no example re-run, no artifact
+  refreshed.
+
+New `tests/unit/test_doc_reference_exit_codes.py` (8 tests) pins the contract.
+
+**Verification executed** (`20260816T213312Z_OPS-19-step1-rerun.log`,
+**8 passed, 1.91 s**, smoke tier, `-n 1`, `-s`):
+
+| case | measured | exit |
+|---|---|---|
+| tree as committed (anchor) | `dead=0 guide=0 stale=24 stale_severity=report` | **2** |
+| guide pass on that run | 21/21 examples, 0 pending, PASS | — |
+| temp fixture, artifact aged 10 h, `--max-age-s 3600` | `stale=1 dead=0` | **2** |
+| same, `--stale-severity fail` | `stale=1 dead=0` | **1** |
+| temp fixture, artifact no run ever wrote (**negative control**) | `dead=1 stale=0` | **1** |
+| temp fixture, non-existent `.py` (negative control) | `dead=1 stale=0` | **1** |
+| temp fixture, artifact fresh | `dead=0 guide=0 stale=0` | **0** |
+| default-window boundary, 47 h / 49 h | `stale=0` / `stale=1` | **0** / **2** |
+
+Every fixture test asserts the exit code twice — against the literal expected
+code, and against the contract restated as arithmetic over the printed counts,
+so a future change that alters one without the other fails.
+
+**Negative control, in-run:** the dead-artifact fixture is the sharp one. It
+travels the same code path staleness was carved out of, so a split that
+mis-scored "no run ever produced this" as staleness would silently downgrade
+the only violation this pass has ever caught in the wild (`EX-14`'s 158-h
+`.bp`) — it must still exit 1, and does.
+
+**Bug found and fixed in passing** (pre-existing, latent until temp-dir
+fixtures existed): `collect_references` called `doc.relative_to(REPO_ROOT)`
+unconditionally, so any `--docs-root` outside the repo raised `ValueError`
+instead of reporting. Now `display_path()` — repo-relative when it can be,
+absolute otherwise. The first harness run
+(`20260816T213248Z_OPS-19-step1.log`, 7 failed / 1 passed, 2 s) is exactly
+that bug; kept for the record, since it is also the fixtures' own negative
+control against the tests passing vacuously.
+
+**Scope deviation the review should see: only one call site exists.** The §9
+item and the §7 entry both required updating "`run_examples.sh`'s docrefs
+invocation". There is none — `grep -rn check_example_doc_references scripts/`
+hits only the checker's own usage docstring, and every historical invocation
+is ad hoc inside a harness command (`EX-18`, `EX-20`, `ANS-3`, `EX-21`). So
+the item's trap (a green example run starting to fail on the new code 2)
+cannot occur, and nothing needed to be kept in sync. Recorded in the §7 entry.
+
+**Second measured finding, handed to `EX-22`.** That chunk's §7 text says the
+six examples' artifacts are "**absent on disk**, not merely stale". They are
+not: this run's checker output (log lines 44–68) reads `dead=0 stale=24` —
+every one of the 24, `circular_loop_B.bp` included, **exists** in
+`paraview_output/`, aged 145.5–151.4 h. A genuinely missing artifact scores
+`dead`, which is 0. `EX-22`'s refresh work is unaffected, but its premise and
+its "24 → 0" done-when want re-auditing before the runs are sized; annotated
+in place.
+
+**Docs updated in the same commit:** known-issues §"Non-test issues" — the
+"exits 1 by design" entry is replaced by the new exit-code contract table
+(0 / 1 / 2, the `RESULT:` line, `--stale-severity`), with the on-`main`
+reading recorded; §7 `OPS-19` ⬜ → ✅ with the closure; §9 item 4 struck.
+
+No tolerance moved, nothing loosened, no ⚠️ subsystem extended, no solves. No
+denied commands this slot (the `Edit(scripts/automation/**)` rule that blocks
+`OPS-16` does not cover `scripts/testing/`).
+
+**Hypothesis for the next attempt.** Item 5 (`OPS-17` step 1, finiteness-only
+test inventory) is the next unblocked queue item and is independent. The
+queue's two remaining `PORT-9` items still need the review's mesh-side
+decision from the 2026-08-16T17:08Z entry; nothing in this slot changes that.
+Chunks that run examples can now gate on `exit != 2` — worth stating in the
+next review's guidance so the pattern actually gets used.

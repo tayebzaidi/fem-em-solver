@@ -1,0 +1,140 @@
+# Test Run
+- Chunk: OPS-19-step1-rerun
+- Commit: 3ff22a2e226658aa88680810be06966a683c960f
+- Time (UTC): 2026-08-16 21:33:13
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 -m pytest tests/unit/test_doc_reference_exit_codes.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 16 16:33 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 -m pytest tests/unit/test_doc_reference_exit_codes.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 8 items
+
+tests/unit/test_doc_reference_exit_codes.py::test_current_tree_is_free_of_hard_violations_and_obeys_the_contract Scanned 30 guide(s) under examples/, 89 distinct file reference(s) checked, 1 allowlisted.
+PASS: every referenced file exists.
+STALE: 24 stale artifact(s) (--stale-severity report):
+  - circular_loop_B.bp: stale in paraview_output/ (145.5 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/02_circular_loop.md:63, examples/magnetostatics/PARAVIEW_GUIDE.md:57]
+  - gauge_cross_check_combined.xdmf: stale in paraview_output/ (151.4 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/05_gauge_cross_check.md:112]
+  - h_convergence_rate_combined.xdmf: stale in paraview_output/ (151.4 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/06_h_convergence_rate.md:133]
+  - helmholtz_A.xdmf: stale in paraview_output/ (151.4 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/04_helmholtz_analytic_comparison.md:131]
+  - helmholtz_B.xdmf: stale in paraview_output/ (151.4 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/04_helmholtz_analytic_comparison.md:131]
+  - helmholtz_B_analytical.xdmf: stale in paraview_output/ (151.4 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/04_helmholtz_analytic_comparison.md:132]
+  - helmholtz_combined.xdmf: stale in paraview_output/ (151.4 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/04_helmholtz_analytic_comparison.md:119]
+  - helmholtz_on_axis.csv: stale in paraview_output/ (151.4 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/04_helmholtz_analytic_comparison.md:110]
+  - mri_coil_phantom_fields_A.xdmf: stale in paraview_output/ (123.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/mri/01_coil_phantom_fields.md:230]
+  - mri_coil_phantom_fields_B.xdmf: stale in paraview_output/ (123.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/mri/01_coil_phantom_fields.md:230]
+  - mri_coil_phantom_fields_E.xdmf: stale in paraview_output/ (123.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/mri/01_coil_phantom_fields.md:231]
+  - mri_coil_phantom_fields_combined.xdmf: stale in paraview_output/ (123.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/mri/01_coil_phantom_fields.md:219]
+  - mri_coil_phantom_manifest.json: stale in paraview_output/ (123.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/mri/01_coil_phantom_fields.md:239]
+  - mri_coil_phantom_phantom_B_samples.csv: stale in paraview_output/ (123.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/mri/01_coil_phantom_fields.md:237]
+  - mri_coil_phantom_phantom_E_samples.csv: stale in paraview_output/ (123.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/mri/01_coil_phantom_fields.md:236]
+  - mri_coil_phantom_phantom_metrics.json: stale in paraview_output/ (123.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/mri/01_coil_phantom_fields.md:235]
+  - mri_coil_phantom_quicklook.json: stale in paraview_output/ (123.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/mri/01_coil_phantom_fields.md:238]
+  - straight_wire_A.bp: stale in paraview_output/ (151.5 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/PARAVIEW_GUIDE.md:40, examples/magnetostatics/PARAVIEW_GUIDE.md:84]
+  - straight_wire_A.xdmf: stale in paraview_output/ (151.5 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/01_straight_wire.md:119, examples/magnetostatics/COMBINED_XDMF_README.md:18, examples/magnetostatics/PARAVIEW_GUIDE.md:17]
+  - straight_wire_B.bp: stale in paraview_output/ (151.5 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/01_straight_wire.md:57, examples/magnetostatics/PARAVIEW_GUIDE.md:41, examples/magnetostatics/PARAVIEW_GUIDE.md:49, examples/magnetostatics/PARAVIEW_GUIDE.md:79]
+  - straight_wire_B.xdmf: stale in paraview_output/ (151.5 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/01_straight_wire.md:119, examples/magnetostatics/COMBINED_XDMF_README.md:19, examples/magnetostatics/PARAVIEW_GUIDE.md:18, examples/magnetostatics/PARAVIEW_GUIDE.md:70, examples/magnetostatics/PARAVIEW_GUIDE.md:170, examples/magnetostatics/PARAVIEW_VALIDATION_GUIDE.md:41]
+  - straight_wire_B_analytical.xdmf: stale in paraview_output/ (151.5 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/01_straight_wire.md:120, examples/magnetostatics/COMBINED_XDMF_README.md:20, examples/magnetostatics/PARAVIEW_GUIDE.md:19]
+  - straight_wire_combined.h5: stale in paraview_output/ (151.5 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/COMBINED_XDMF_README.md:24]
+  - straight_wire_combined.xdmf: stale in paraview_output/ (151.5 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/01_straight_wire.md:104, examples/magnetostatics/COMBINED_XDMF_README.md:23, examples/magnetostatics/COMBINED_XDMF_README.md:34, examples/magnetostatics/COMBINED_XDMF_README.md:143, examples/magnetostatics/MESH_DIAGNOSTIC_GUIDE.md:91, examples/magnetostatics/MESH_DIAGNOSTIC_GUIDE.md:106, examples/magnetostatics/PARAVIEW_GUIDE.md:20, examples/magnetostatics/PARAVIEW_GUIDE.md:141, examples/magnetostatics/PARAVIEW_VALIDATION_GUIDE.md:34]
+Guide pass: 21 runnable example(s) from scripts/run_examples.sh --list, 21 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=24 stale_severity=report exit=2
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_staleness_alone_exits_with_the_staleness_code Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-1/test_staleness_alone_exits_wit0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+STALE: 1 stale artifact(s) (--stale-severity report):
+  - fixture_field.xdmf: stale in /tmp/pytest-of-root/pytest-1/test_staleness_alone_exits_wit0/out/ (10.0 h old, limit 1.0 h) — rerun the example that writes it, or the reference is dead  [/tmp/pytest-of-root/pytest-1/test_staleness_alone_exits_wit0/guides/01_fixture.md:9]
+Guide pass: 21 runnable example(s) from scripts/run_examples.sh --list, 21 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=1 stale_severity=report exit=2
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_stale_severity_fail_restores_the_old_all_or_nothing_reading Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-1/test_stale_severity_fail_resto0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+FAIL: 1 stale artifact(s) (--stale-severity fail):
+  - fixture_field.xdmf: stale in /tmp/pytest-of-root/pytest-1/test_stale_severity_fail_resto0/out/ (10.0 h old, limit 1.0 h) — rerun the example that writes it, or the reference is dead  [/tmp/pytest-of-root/pytest-1/test_stale_severity_fail_resto0/guides/01_fixture.md:9]
+Guide pass: 21 runnable example(s) from scripts/run_examples.sh --list, 21 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=1 stale_severity=fail exit=1
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_dead_reference_still_exits_one_after_the_split[dead-artifact] Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-1/test_dead_reference_still_exit0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+FAIL: 1 dead reference(s):
+  - never_written_field.xdmf: no run produced it in /tmp/pytest-of-root/pytest-1/test_dead_reference_still_exit0/out/, and it is not committed under /tmp/pytest-of-root/pytest-1/test_dead_reference_still_exit0/guides/  [/tmp/pytest-of-root/pytest-1/test_dead_reference_still_exit0/guides/01_fixture.md:9]
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 21 runnable example(s) from scripts/run_examples.sh --list, 21 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=1 guide=0 stale=0 stale_severity=report exit=1
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_dead_reference_still_exits_one_after_the_split[dead-script] Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-1/test_dead_reference_still_exit1/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+FAIL: 1 dead reference(s):
+  - no_such_example_script.py: no such file in the repo  [/tmp/pytest-of-root/pytest-1/test_dead_reference_still_exit1/guides/01_fixture.md:9]
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 21 runnable example(s) from scripts/run_examples.sh --list, 21 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=1 guide=0 stale=0 stale_severity=report exit=1
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_fresh_and_resolvable_references_exit_zero Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-1/test_fresh_and_resolvable_refe0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 21 runnable example(s) from scripts/run_examples.sh --list, 21 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_is_unchanged_by_this_chunk[within-48h] Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-1/test_default_window_is_unchang0/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+PASS: every referenced artifact is fresh within the window.
+Guide pass: 21 runnable example(s) from scripts/run_examples.sh --list, 21 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0
+
+PASSED
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_is_unchanged_by_this_chunk[past-48h] Scanned 1 guide(s) under /tmp/pytest-of-root/pytest-1/test_default_window_is_unchang1/guides/, 1 distinct file reference(s) checked, 0 allowlisted.
+PASS: every referenced file exists.
+STALE: 1 stale artifact(s) (--stale-severity report):
+  - fixture_field.xdmf: stale in /tmp/pytest-of-root/pytest-1/test_default_window_is_unchang1/out/ (49.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [/tmp/pytest-of-root/pytest-1/test_default_window_is_unchang1/guides/01_fixture.md:9]
+Guide pass: 21 runnable example(s) from scripts/run_examples.sh --list, 21 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=1 stale_severity=report exit=2
+
+PASSED
+
+============================== 8 passed in 1.91s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 2

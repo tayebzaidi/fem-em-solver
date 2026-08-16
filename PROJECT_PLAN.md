@@ -366,7 +366,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
 | `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | ⬜ | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
-| `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ⬜ | smoke |
+| `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 
 **`OPS-18` — DolfinX version upgrade, recurring** ⬜
 *(commissioned 2026-08-16, operator session. The base image is pinned at
@@ -410,15 +410,60 @@ dated annotation. The ID stays stable.)*
 >   keeps 0.7.2 until all three steps are green.
 
 **`OPS-19` — doc-reference checker: staleness must not own the exit code**
-⬜ *(commissioned 2026-08-16, 10:30 review. Two independent implementer runs
-flagged the same defect this interval: 24 pre-existing stale
-`paraview_output/` artifacts (magnetostatics/MRI examples last regenerated
-112–141 h ago) drive `check_example_doc_references.py` to exit 1 on every
-invocation, so a chunk touching examples cannot tell its own breakage from
-the backlog's without reading the log body — `EX-20` and `ANS-3` both had
-to journal a red companion log as "known, benign". The fix is signal
-separation, not artifact refresh: a refresh run buys 48 h of green and
-then the treadmill resumes.)*
+✅ *(commissioned 2026-08-16, 10:30 review; step 1 closed 2026-08-16, 16:30
+implementer slot.)*
+> **Closure (step 1).** `scripts/testing/check_example_doc_references.py` now
+> scores staleness in its own bucket: module-level `EXIT_OK`/`EXIT_HARD`/
+> `EXIT_STALE_ONLY` = 0/1/2, plus `--stale-severity {fail,report}` defaulting
+> to `report`. Hard violations (dead reference, missing guide, missing
+> heading) dominate; staleness alone exits 2; `--stale-severity fail`
+> reproduces the pre-split reading bit for bit. A final
+> `RESULT: dead=… guide=… stale=… stale_severity=… exit=…` line makes the
+> split machine-readable without parsing the body. `--max-age-s` (`OPS-15`'s
+> 48 h) did not move, and no example was re-run or refreshed.
+>
+> **Anchor (countable), `tests/unit/test_doc_reference_exit_codes.py`, 8
+> tests, 1.91 s, smoke, `-n 1`,
+> `20260816T213312Z_OPS-19-step1-rerun.log`:** on the tree as committed the
+> checker reports `dead=0 guide=0 stale=24 stale_severity=report exit=2` —
+> the 24 pre-existing stale `paraview_output/` artifacts, and nothing else,
+> with the guide pass green at **21/21 examples, 0 pending** (the §9 item's
+> "20/20" predates `EX-21`, which added the 21st). Each fixture test asserts
+> the exit code twice: against the literal expected code and against the
+> contract restated as arithmetic over the printed counts.
+> **Negative control (the defect class must survive the split):** a temp-dir
+> guide naming an artifact no run ever wrote still exits 1
+> (`dead=1 stale=0`), as does one naming a non-existent `.py` — the artifact
+> case travels the same code path staleness was carved out of, so a split
+> that mis-scored "missing" as "stale" would fail here. Boundary control on
+> the untouched default: the same fixture aged 47 h scores `stale=0 exit=0`
+> and aged 49 h scores `stale=1 exit=2`.
+>
+> **Call sites — one, not two.** The §9 item and this entry both said
+> `run_examples.sh`'s docrefs invocation must be updated to agree on the new
+> codes. It has none: `grep -rn check_example_doc_references scripts/` hits
+> only the checker's own usage docstring. The checker is invoked ad hoc in
+> harness commands (`EX-18`, `EX-20`, `ANS-3`, `EX-21` logs), so there is no
+> second caller to desynchronise, and the trap the item warned about — a
+> green example run starting to fail on code 2 — cannot occur. If a docrefs
+> call is ever added to the runner, `0` and `2` are both pass.
+>
+> **One bug found and fixed in passing** (pre-existing, latent until the
+> fixtures existed): `collect_references` called `doc.relative_to(REPO_ROOT)`
+> unconditionally, so any `--docs-root` outside the repo raised `ValueError`
+> instead of reporting. Now `display_path()`, repo-relative when it can be.
+> The first harness run (`20260816T213248Z_OPS-19-step1.log`, 7 failed / 1
+> passed, 2 s) is that bug: every temp-dir fixture died before printing.
+>
+> **Original commissioning note (2026-08-16, 10:30 review).** Two independent
+> implementer runs flagged the same defect this interval: 24 pre-existing
+> stale `paraview_output/` artifacts (magnetostatics/MRI examples last
+> regenerated 112–141 h ago) drive `check_example_doc_references.py` to exit 1
+> on every invocation, so a chunk touching examples cannot tell its own
+> breakage from the backlog's without reading the log body — `EX-20` and
+> `ANS-3` both had to journal a red companion log as "known, benign". The fix
+> is signal separation, not artifact refresh: a refresh run buys 48 h of green
+> and then the treadmill resumes.
 > * **Step 1 (gate) — split the exit code (smoke, no solves).** Give
 >   staleness its own exit code (e.g. 0 = clean, 1 = dead reference or
 >   missing guide/section, 2 = staleness-only) or a `--stale-severity
@@ -1572,8 +1617,16 @@ every `straight_wire_*`, `helmholtz_*`, `gauge_cross_check_*`,
 `h_convergence_rate_*` and `mri_coil_phantom_*` artifact plus
 `circular_loop_B.bp` is gone (gitignored, so unrecoverable without
 reruns) — the source of the doc-reference checker's 24 standing
-stale-reference violations that currently mask its exit code (`OPS-19`
-owns the *policy* split; this chunk restores the *signal* now). **Do:**
+stale-reference violations (`OPS-19` owned the *policy* split and landed
+2026-08-16 — those 24 now score `exit=2`, staleness-only, and no longer
+mask a real defect; this chunk restores the *artifacts*).
+**Premise correction, measured 2026-08-16 16:30 slot
+(`20260816T213312Z_OPS-19-step1-rerun.log` lines 44–68):** the 24 are
+`dead=0 stale=24` — every one of them **exists** in `paraview_output/`,
+aged 145.5–151.4 h, including `circular_loop_B.bp`. "Absent on disk" does
+not hold at this commit; the chunk's refresh work is unchanged, but its
+done-when should be read as 24 → 0 *stale*, and whether any artifact is
+genuinely missing needs re-auditing before the runs are sized. **Do:**
 runner refresh runs, `mag` 01/02/04/05/06 and `mri:1`, through the
 harness. **Done-when:** each run exits 0 with its recorded anchors
 reproduced by the examples' own asserts (`EX-14`/`EX-17` round-trip
@@ -1936,10 +1989,18 @@ items 1, 3, 4, 6 execute the §7 entries named inline.
    **Scope:** mesh fidelity demonstration only — no solve, no port
    claim. **Negative result:** report, annotate the §7 `EX-21` row,
    stop.
-4. **`OPS-19` step 1 — docrefs exit-code split (smoke, no solves).**
-   Execute the §7 `OPS-19` entry verbatim: staleness gets its own exit
-   code (or `--stale-severity report` default), both call sites updated,
-   known-issues "by design" entry updated with the new contract.
+4. ~~**`OPS-19` step 1 — docrefs exit-code split (smoke, no solves).**~~
+   **done 2026-08-16, 16:30 slot** — exit 0/1/2 plus
+   `--stale-severity {fail,report}` (default `report`); on `main` the
+   checker reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1,
+   guide pass green **21/21** (the item's "20/20" predates `EX-21`);
+   dead-reference negative control still exits 1; 8 tests, 1.91 s,
+   `20260816T213312Z_OPS-19-step1-rerun.log`. Only **one** call site
+   exists — `run_examples.sh` has no docrefs invocation — recorded in the
+   §7 entry with the latent `relative_to` bug fixed in passing. Original
+   text: Execute the §7 `OPS-19` entry verbatim: staleness gets its own
+   exit code (or `--stale-severity report` default), both call sites
+   updated, known-issues "by design" entry updated with the new contract.
    Countable anchor + injected-dead-reference negative control per the
    entry. Independent of every item above.
 5. **`OPS-17` step 1 — finiteness-only test inventory (smoke, no
