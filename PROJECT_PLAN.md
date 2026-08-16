@@ -1367,11 +1367,37 @@ further gap-voltage estimator variants.)* The gap-voltage `∫E·dl`
 machinery stays what `PORT-1` validated; this chunk builds the port model
 the birdcage will actually use, and validates it **on the fixture where
 the answer is already gated**.
-> * **Step 1 (🧪 measurement) — formulation on the two-torus fixture.**
->   Implement the lumped-port BC on the existing gap faces (tags 101/102)
->   and solve the gapped two-torus fixture at 10 MHz; print the lumped-port
->   `Z` beside the gated gap-voltage route on the same solved field. No
->   assertion beyond the existing identity gates; measurements feed step 2.
+> * **Step 1 (🟡 attempted 2026-08-16, 12:00 slot — formulation landed,
+>   instantiation blocked on the mesh) — formulation on the two-torus
+>   fixture.** Implement the lumped-port BC on the existing gap faces (tags
+>   101/102) and solve the gapped two-torus fixture at 10 MHz; print the
+>   lumped-port `Z` beside the gated gap-voltage route on the same solved
+>   field. No assertion beyond the existing identity gates; measurements feed
+>   step 2.
+>   > **Attempt 2026-08-16** (parked, `attempt/PORT-9-20260816T170800Z`;
+>   > `20260816T170543Z_PORT-9-step1.log`, 10 passed, 4.29 s, smoke, `-n 2`).
+>   > The **formulation** is written and gated: the resistive-sheet lumped
+>   > port of Jin 3e §1.5.4 (1.60)–(1.63) in the variational form of §6.5
+>   > (6.93)–(6.98), i.e. `a = +jωμ₀(1/R)∫_S(n̂×E)·conj(n̂×v)dS`,
+>   > `L = −jωμ₀∫_S K_imp·conj(v)dS` with `K_imp = V_src/(Rh)ĥ` and
+>   > `R = Z_p w/h` Ω/square (`ports/lumped.py`), pinned by six exact
+>   > identities on a one-square sheet — including the circuit identity
+>   > `I = V_src/Z_p` = 20 mA at 1 V/50 Ω to < 1e-12 relative, with a
+>   > passive-sheet negative control. The **two-torus instantiation was not
+>   > reached, and is blocked on geometry**: a lumped-port sheet spans
+>   > terminal to terminal with the current flowing *in* its plane, whereas
+>   > this fixture's only tagged surfaces (facet tags 201/202) are
+>   > gap↔conductor cross-sections **normal** to the current — the wrong
+>   > constitutive law, not a coarser one — and the gap is otherwise a cell
+>   > volume (101/102, which the §9 item mis-names "gap faces"). The step
+>   > therefore needs a **mesh-side prerequisite**: `two_torus_domain` must
+>   > emit the gap box's longitudinal mid-plane as a surface, with the facet
+>   > tag rebuilt from cell tags on the dolfinx side (known-issues 9). A
+>   > second premise for step 2: the gap box crosses a *round* arc, so the
+>   > sheet's `w` and `h` are not the box's nominal dimensions and the
+>   > "number of squares" needs its own measured definition on this fixture
+>   > before any `Z` read off it means anything. Full journal:
+>   > `docs/testing/attempts.md`, 2026-08-16T17:08Z.
 > * **Step 2 (gate) — cross-route identity.** Pre-stated bands, set at
 >   scoping and never widened: lumped-port `Im Z₁₂` within the unmoved
 >   **10%** mutual band of ωM₁₂ (the `PORT-1` gate, absolute anchor), and

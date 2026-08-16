@@ -11861,3 +11861,97 @@ assumption the ladder rests on — not the extrapolations layered on top.
 now both reported (`PORT-10` here, `GEO-15` step 1 in the 07:30 slot), so the
 daily review can scope its gate. Next open On-deck item is 5 (`TH-11` step 3,
 standard, measurement only), independent of all of this.
+
+---
+
+## 2026-08-16T17:08Z — `PORT-9` step 1 — **incomplete** (parked)
+
+Scheduled implementer slot 12:00 CDT. Preflight clean, container Up 21 h. Took
+§9 On-deck item 1 (`PORT-9` step 1) as written.
+
+**Parked branch:** `attempt/PORT-9-20260816T170800Z` (commit `2a3120f`). Nothing
+of this attempt is on `main` except this entry and the §7 annotation.
+
+**What landed on the branch.** The lumped/circuit-element port boundary
+condition as a **resistive sheet**, with the Jin citations the §7 entry
+requires — read before coding, not after:
+
+* Jin 3e **§1.5.4, eqs (1.60)–(1.63)**: the resistive-sheet transition
+  condition. `n̂ × (E⁺ − E⁻) = 0`, `n̂ × (H⁺ − H⁻) = J_s` with
+  `J_s = (1/R)(n̂ × E) × n̂`, `R` in **ohms per square**.
+* Jin 3e **§6.5, eqs (6.93)–(6.98)**: the variational statement of the same
+  sheet — the one surface integral it adds to the E-field functional
+  (5.118)/(6.63) when the domain is split at the sheet and the two subdomain
+  functionals are summed. (6.98) derives it a second way, as a thin dielectric
+  layer of thickness τ, and shows the two agree up to the normal-component term
+  the transition condition does not model.
+
+Giving, on this package's `e^{+jωt}` convention:
+
+    a_sheet(E, v) = +jωμ₀ (1/R) ∫_S (n̂×E)·conj(n̂×v) dS      (sesquilinear)
+    L_sheet(v)    = −jωμ₀ ∫_S K_imp·conj(v) dS,  K_imp = V_src/(R h) ĥ
+    R             = Z_p · w / h
+
+`src/fem_em_solver/ports/lumped.py`, ~230 lines, geometry supplied by the
+caller exactly as `gap_voltage.py` does it. Interior and exterior facet sheets
+both handled; the `'+'` restriction on an interior sheet is legitimate because
+`n̂ × E` is single-valued across it — Jin (1.60) — not an arbitrary side choice.
+
+**Verification executed** (`20260816T170543Z_PORT-9-step1.log`, **10 passed,
+4.29 s**, smoke tier, `-n 2`, complex build, `tests/environment` first):
+`tests/validation/test_port_lumped_bc.py`, six tests, all quantitative, on the
+unit cube's `x = 0` face sized to exactly **one square** so `R == Z_p` and no
+geometric factor can hide inside an identity.
+
+| identity | expected | result |
+|---|---|---|
+| sheet area (precondition) | 1.0 m² | to < 1e-12 rel |
+| `a_sheet` on `E = v = ẑ` | `jωμ₀A/R` | < 1e-12 rel, `Im > 0` (dissipative) |
+| `L_sheet` on `v = ẑ` | `−jωμ₀V_src A/(Rh)` | < 1e-12 rel |
+| terminal current, `E = 0` | `V_src/Z_p` = **20 mA** at 1 V / 50 Ω | < 1e-12 rel |
+| terminal current, passive in `E = ẑ` | `1/Z_p` = 20 mA | < 1e-12 rel |
+
+**Negative control, in-run:** a passive sheet (no source) on a zero field must
+carry `< 1e-30` A. Without it, a bug that ignored `E` and returned `V_src/Z_p`
+from the impressed constant alone would pass the fourth row.
+
+**Why the step is incomplete — the finding.** The §7 plan's second half (solve
+the two-torus fixture at 10 MHz, print lumped-port `Z` beside the gated
+gap-voltage route) was **not reached**, and it is blocked on geometry rather
+than on time. A lumped port sheet spans **terminal to terminal with the port
+current flowing in the sheet plane** — that is what makes `R = Z_p w/h` an
+ohms-per-square statement at all. The gapped two-torus fixture carries its gap
+as a *volume* (cell tags 101/102 — the On-deck item calls these "gap faces",
+but they are cell tags), and its only tagged surfaces are the gap↔conductor
+interfaces (facet tags 201/202, built by `io/mesh.py::_interface_facet_tags`).
+Those are **cross-sections normal to the current**: current passes *through*
+them, so a resistive sheet there is the wrong constitutive law, not a coarser
+one. A conforming longitudinal slice through the gap box — the surface the BC
+actually needs — is not in the mesh, and a tet mesh has no planar interior
+facet set unless gmsh put a surface there.
+
+So step 1 as scoped needs a **mesh-side prerequisite**: `two_torus_domain` must
+emit the gap box's longitudinal mid-plane as a surface the fragment respects
+(then reconstruct the facet tag from cell tags on the dolfinx side, per
+known-issues 9, since dim-2 gmsh groups on interior facets hang `model_to_mesh`
+at `-n 2`). That is a mesh chunk, not a port chunk.
+
+**Also true and worth the review's attention:** whichever slice is chosen, the
+two-torus gap is a box crossing a *round* arc, so the sheet's `w` and `h` are
+not the box's nominal dimensions — the "number of squares" needs its own
+measured definition on this fixture before any `Z` printed off it means
+anything. That is a step-2 premise, not a step-1 detail.
+
+**No tolerance moved, nothing loosened, no ⚠️ subsystem extended** (in
+particular `excitation.py` is untouched). No denied commands this slot.
+
+**Hypothesis for the next attempt.** Two options for the review, in preference
+order. (a) Split a small mesh chunk — "emit a longitudinal port-sheet surface in
+`two_torus_domain`" — ahead of `PORT-9` step 1, then re-run step 1 unchanged;
+the formulation on the parked branch is ready and gated, so that re-run is a
+fixture wiring job, not a formulation job. (b) Re-scope step 1's demonstration
+onto a geometry that already has the right surface (a straight-wire gap fixture
+with a box gap would), accepting that the cross-route comparison in step 2 still
+has to happen on the two-torus fixture where the gap-voltage route is gated.
+Either way the parked branch should be merged rather than re-derived: its six
+identities are the formulation's gate and they are green.
