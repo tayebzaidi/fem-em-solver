@@ -81,12 +81,18 @@ What is validated, to what tolerance, and what must not be trusted.
   2026-08-16 both named prerequisites have **executed and closed**:
   `PORT-10` (the two systematics compose additively, cross-term
   −0.0604 pp) and `GEO-15` (graded conductor sizing reaches 0.967 of CAD
-  mass; `PORT-9` budgets from 98 k cells). `PORT-9` itself has not
-  started; this bullet stands until it gates. B1+ remains §10 subgoal 4,
-  blocked behind it.
+  mass; `PORT-9` budgets from 98 k cells). `PORT-9`'s step-1 **formulation**
+  is written and identity-gated on a parked branch
+  (`attempt/PORT-9-20260816T170800Z`, Jin 3e §1.5.4/§6.5 resistive sheet),
+  but its instantiation is blocked on a mesh prerequisite (`GEO-16` — the
+  fixture has no longitudinal port-sheet surface); no lumped-port `Z` has
+  ever been solved. This bullet stands until step 2's cross-route band
+  gates. B1+ remains §10 subgoal 4, blocked behind it.
 - **Coil loading at the Larmor frequencies is an extrapolation** until
   `TH-11` lands a gated trend (its resolution rung attributed most of the
-  observed 64 MHz deviation to mesh, not physics).
+  observed 64 MHz deviation to mesh, not physics; the three-point set
+  1.58 / 5.59 / 10.27% at 10 / 30 / 64 MHz is monotone, but so is the
+  resolution confound — cells/δ 3.18 / 1.84 / 1.26).
 - **SAR on a solved coil field** — the IEEE C95.3 claim — is open;
   `MAT-4` stays 🟡 until it exists on the coil+phantom fixture.
 - **`⚠️` chunks** (`TH-2`/`TH-3`, `PORT-4`/`PORT-5`/`PORT-8`, `WF-2`/
@@ -784,6 +790,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-13` | **Decouple `cylindrical_domain`'s wall tolerance from `resolution`** (known-issues 13) | ✅ | standard |
 | `GEO-14` | **The shared ~3% geometry floor: faceting vs resolution** (entry lives after `TH-11`, beside the fixtures it measures) | ✅ *(closed 2026-08-15 review on the refuted hypothesis: RESOLUTION, 3.643% → 1.781% at 55 251 cells, rate 1.77 in h — no faceting floor)* | standard |
 | `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | ✅ 2026-08-16 (graded sizing recovers **0.9670** of the conductor's CAD mass at h_c = 1.6 mm vs **0.7403** baseline, gate cleared, `GEO-9` identities unmoved at < 1e-9; 41 s at `-n 2`; closed by the 10:30 review — the chunk was its one question, now answered by measurement) | standard |
+| `GEO-16` | **Emit the gap boxes' longitudinal port-sheet mid-plane in `two_torus_domain`** (the `PORT-9` step-1 mesh prerequisite; commissioned 2026-08-16 18:00 review) | ⬜ | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -901,6 +908,49 @@ answers `PORT-9` step 3's open question by measurement.
 >   (no solve ran). Full narrative + original plan:
 >   `docs/planning/plan-archive.md`, archived 2026-08-16.
 
+**`GEO-16` — emit the gap boxes' longitudinal port-sheet mid-plane in
+`two_torus_domain`** ⬜ *(commissioned 2026-08-16, 18:00 review — the mesh
+prerequisite the `PORT-9` step-1 attempt named (attempts.md
+2026-08-16T17:08Z, option (a) chosen: split the mesh chunk, keep the parked
+formulation branch intact). A lumped-port sheet spans terminal to terminal
+with the port current flowing **in** its plane; the fixture's only tagged
+surfaces (facet tags 201/202) are gap↔conductor cross-sections **normal**
+to the current — the wrong constitutive law. This chunk puts the right
+surface in the mesh; `PORT-9` step 1 then re-runs unchanged off the parked
+branch.)* **Do:** behind a new opt-in kwarg (e.g.
+`emit_port_sheet=False` default — the gated `PORT-1`/`PORT-10` records
+were measured on the unfragmented mesh and must stay reproducible), have
+`two_torus_domain` fragment each gap box with its longitudinal mid-plane
+so the tet mesh conforms to it, and rebuild the sheet's **facet tag from
+cell tags on the dolfinx side** — do *not* create a dim-2 gmsh physical
+group on an interior surface (known-issues 9: that hangs `model_to_mesh`
+at `-n 2`; `io/mesh.py::_interface_facet_tags` is the in-repo pattern).
+Print (never gate) the sheet's measured extents — area, length along the
+current direction *h*, transverse width *w* — because the gap box crosses
+a round arc, so the "number of squares" `R = Z_p·w/h` needs is a measured
+quantity on this fixture, not the box's nominal dimensions (step-2 premise
+from the 17:08Z entry). **Anchor:** MPI-reduced summed area of the
+reconstructed facet set equals the gmsh/occ mass-property area of the
+mid-plane surface to < 1e-9 relative (the `GEO-15` CAD-denominator
+pattern), on both gap boxes; existing two-torus mesh identities re-asserted
+unmoved. **Negative control:** (i) kwarg off — cell count and tag sets
+bit-match the current record (import the recorded constants from the
+`PORT-1`/3b-xvi tests, `ANS-1` rule: never restate); (ii) kwarg on — the
+facet set is asserted non-empty *before* the area identity, so a
+reconstruction that silently matches zero facets fails at 100% separation
+rather than passing vacuously. **Tier/cost:** standard, `-n 2`, mesh-only
+— two-torus meshes in ~36 s (`ANS-3` measured); ~120 s with both rungs and
+checks, container `timeout -k 30 500`. **Traps:** `occ.fragment` renumbers
+volumes — re-derive the cell-tag mapping after the fragment, never assume
+it (the `GEO-9` step-2b lesson); facet sets and `cell_tags.values` are
+rank-local — reduce before asserting; `-n 2` minimum (finalize/bcast
+degenerates at `-n 1`). **Scope:** mesh-only, no solve, no port claim —
+whether the gated gap-route numbers move on the fragmented mesh is
+`PORT-9` step 1's measurement, not this chunk's. **Negative result:** a
+mid-plane the fragment will not conform to, or an area identity that
+misses, is a finding about the gap-box CAD — record the measured area and
+the residual in this entry, known-issues if it blocks, stop.
+
 ### TH — Time-harmonic Maxwell (Phase 2)
 
 | ID | Title | Status | Tier |
@@ -915,7 +965,7 @@ answers `PORT-9` step 3's open question by measurement.
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ✅ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ✅ | standard |
-| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points)* | standard |
+| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 scoped by the 18:00 review — fixed-f Richardson ladder at 10/30 MHz)* | standard (step 4 heavy) |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)**
 ✅ *(steps 1–4 ✅ 2026-08-13, chunk closed by the 10:30 review; full step
@@ -997,6 +1047,38 @@ step-1/2 journals archived in `docs/planning/plan-archive.md`.)*
 > resolution term as step 1 and is a trend *point*, not a trend *claim*.
 > **Tier/cost:** standard, `-n 2`, ~60–75 s (step 1's price); container
 > `timeout -k 30 590`. **Traps/scope/negative result:** step 2's, verbatim.
+> * **Step 4 (scoped 2026-08-16, 18:00 review — the affordable half of the
+>   Richardson programme steps 2 and 3 both recommended; heavy, one run).**
+>   The h-ladder at **fixed f, at the two affordable frequencies**: solve
+>   the loaded/free pair on the step-1 baseline (near 0.005, 138 619 cells)
+>   *and* the step-2 refined rung (near 0.0025, 417 914 cells) at **10 MHz
+>   and 30 MHz** — the baselines are already on record (1.5834% / 5.5912%),
+>   so the new solves are the two refined-rung pairs. Extrapolate the ΔR
+>   deviation to h → 0 at each f (Richardson, rate estimated from the pair
+>   and printed beside step 2's 64 MHz move); the discriminating reading,
+>   **printed, never gated**: extrapolated deviation ~flat in f ⇒ no
+>   resolvable physics term below 30 MHz, rising in f ⇒ the term `TH-11`
+>   is after survives mesh refinement. **Anchor (§4):** the step-1 identity
+>   family on every rung — complex-power < 1e-9, σ = 0 exactly zero, drive
+>   control, cell counts == 138 619 / 417 914. **Negative control:** the
+>   two baseline-rung readings must reproduce their records (1.5834%,
+>   +5.5912%) to the printed digits — a ladder that cannot reproduce its
+>   own anchors has changed the fixture, not refined it. **Tier/cost:**
+>   heavy, `-n 2`; step 2's refined 64 MHz pair cost 390.9 s total, and
+>   frequency does not change the linear-system size, so budget ~400 s per
+>   refined frequency — run as **two harness commands (one per f)**, each
+>   `timeout -k 30 1100`, cost-probe the first before the second. **Traps:**
+>   step 2's verbatim (FFCx lock after a kill; `-s`; complex build +
+>   `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first); print cells/δ
+>   per rung (δ scales 1/√f·√(1+…) across the transition — compute it, do
+>   not copy step 3's). **Scope:** the 64 MHz `near = 0.00125` third rung
+>   (~9 min/solve, possibly over one slot) is **not** this step — if the
+>   two-frequency extrapolation reads "rising", scoping that rung is the
+>   review's next decision, not this run's. No gated trend claim either
+>   way; §2's extrapolation sentence moves only when a review adjudicates
+>   the extrapolated numbers. **Negative result:** flat-in-f is a *finding*
+>   (the transition signal was resolution all along) — record both
+>   extrapolations in this entry, report, stop.
 
 **`GEO-14` — the shared ~3% geometry floor: discriminate faceting from
 resolution** ✅ *(commissioned 2026-08-13, closed 2026-08-15 on a refuted
@@ -1306,7 +1388,7 @@ until that check returns.
 | `PORT-6` | Frequency sweep orchestration | 🧪 | smoke |
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard |
-| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | ⬜ | standard |
+| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(step-1 formulation gated on `attempt/PORT-9-20260816T170800Z`; instantiation blocked on `GEO-16`, the mesh prerequisite — 18:00 review)* | standard |
 | `PORT-10` | The two `PORT-1` systematics: composition measured, not assumed | ✅ 2026-08-16 (cross-term **−0.0604 pp** inside the pre-stated ±0.5 pp) | heavy |
 
 **`PORT-1` — Real port excitation from the solved field** ✅ *(closed by
@@ -1422,7 +1504,7 @@ step 4 never read); **no warnings** on the field route.
 > caution above applies unchanged.
 
 **`PORT-9` — lumped-element port boundary condition (the birdcage port
-model)** ⬜ *(scoped 2026-08-16, weekly planning review — discharges the §9
+model)** 🟡 *(scoped 2026-08-16, weekly planning review — discharges the §9
 hold on birdcage ports. Direction per the 2026-08-12 operator note: a
 lumped/circuit-element port boundary condition, Jin 3e ch. 11's port
 hierarchy — theory in-repo at `docs/references/jin-fem-3e/`; the
@@ -1462,6 +1544,19 @@ the answer is already gated**.
 >   > "number of squares" needs its own measured definition on this fixture
 >   > before any `Z` read off it means anything. Full journal:
 >   > `docs/testing/attempts.md`, 2026-08-16T17:08Z.
+>   > **Review decision (2026-08-16, 18:00): option (a).** The mesh
+>   > prerequisite is split out as `GEO-16` (§7 GEO table; emit the
+>   > longitudinal mid-plane behind an opt-in kwarg, facet tag rebuilt
+>   > dolfinx-side, sheet extents measured and printed). The parked
+>   > branch is **kept, not merged and not deleted** — its six identity
+>   > gates are the formulation's gate and its code is not capturable in
+>   > plan text; the step-1 re-run **starts by merging
+>   > `attempt/PORT-9-20260816T170800Z`**, wires the sheet onto
+>   > `GEO-16`'s surface, and is a fixture wiring job, not a formulation
+>   > job. Option (b) (a straight-wire gap fixture) was rejected: the
+>   > step-2 cross-route comparison must happen on the two-torus fixture
+>   > where the gap-voltage route is gated, so (b) defers the same mesh
+>   > work without discharging anything.
 > * **Step 2 (gate) — cross-route identity.** Pre-stated bands, set at
 >   scoping and never widened: lumped-port `Im Z₁₂` within the unmoved
 >   **10%** mutual band of ωM₁₂ (the `PORT-1` gate, absolute anchor), and
@@ -1632,7 +1727,8 @@ harness. **Done-when:** each run exits 0 with its recorded anchors
 reproduced by the examples' own asserts (`EX-14`/`EX-17` round-trip
 identities included), the six examples' artifacts exist on disk, and the
 doc-reference checker's stale/dead count drops 24 → 0 (guide pass stays
-20/20). **Tier:** heavy — `EX-9`'s convergence example alone is ~130 s;
+green — 21/21 since `EX-21`; the checker under the `OPS-19` contract then
+reads `exit=0`). **Tier:** heavy — `EX-9`'s convergence example alone is ~130 s;
 run as two runner commands (`mag` group, then `mri:1`), each wrapped
 `timeout -k 30 500`. **Trap:** `mri:1` is the labelled *ungated* example
 — reproduce its printed record, do not invent a gate for it. **Negative
@@ -1874,21 +1970,28 @@ beyond the two-torus fixture and the Larmor-regime validation gate.
 1. **The birdcage-port lineage — prerequisites discharged 2026-08-16**
    (`PORT-10` ✅ composition additive, `GEO-15` ✅ graded sizing cheap,
    `ANS-3` ✅ runnable half; the AED half is the operator's): the front
-   is now `PORT-9` itself (lumped-element port BC, Jin ch. 11) — steps
-   1–2 on the two-torus fixture, then step 3 on the birdcage, whose
-   gate is scoped in the §7 entry (reciprocity, passivity, C4 circulant
-   symmetry of Z).
+   is now `PORT-9` itself (lumped-element port BC, Jin ch. 11): step 1's
+   formulation is gated on `attempt/PORT-9-20260816T170800Z` but blocked
+   on the `GEO-16` mesh prerequisite (18:00 review decision, option (a));
+   then steps 1–2 on the two-torus fixture, then step 3 on the birdcage,
+   whose gate is scoped in the §7 entry (reciprocity, passivity, C4
+   circulant symmetry of Z).
 2. **`TH-11`** — coil loading at Larmor frequencies: step 2 attributed
    most of the 64 MHz deviation to mesh resolution (+10.27% → +2.81%);
    step 3 ✅ added the 30 MHz mid-point (+5.5912%), but cells/δ falls
    3.18 / 1.84 / 1.26 across the three frequencies, so the confound is
-   monotone with the signal. The open rung is a Richardson
-   extrapolation in h at fixed f — unscoped, for the review.
+   monotone with the signal. Step 4 (scoped, 18:00 review) is the
+   Richardson extrapolation in h at fixed f — 10 and 30 MHz, the
+   affordable frequencies.
 3. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
 
 **Standing rules.** Do not add new features to `⚠️` subsystems. Do not
 trust a chunk's status without a log — any §7 status that is not `✅`
-reads "unknown", not "probably fine".
+reads "unknown", not "probably fine". Since `OPS-19` (2026-08-16), the
+docrefs checker exits 0/1/2 (clean / hard violation / staleness-only) and
+prints a machine-readable `RESULT:` line — chunks that run examples gate
+on **`exit != 1`**, and read staleness (`exit 2`) as information, not
+failure.
 
 ### On deck — maintained by the scheduled daily review
 
@@ -1901,117 +2004,83 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed 2026-08-16, **10:30 review**. Interval: all four queued
-runs completed in order — `PORT-5` step 1, `ANS-3`, `GEO-15` step 1,
-`PORT-10` — tree clean at every handoff, nothing parked. All four ✅
-claims audited **COMPLIANT** (one subagent auditor each); `PORT-5`'s
-run→rerun delta adjudicated as a negative-control premise correction
-(mis-transcribed constant from a different fixture), not a loosened
-gate — the discriminating 0.13 separation never moved. `GEO-15` closed
-🟡→✅ by this review (its one question is answered). `PORT-9` step 3's
-gate scoped in its §7 entry (both prerequisites reported): reciprocity
-≤ 1e-3, passivity, and a C4 circulant-symmetry identity on Z at ≤ 5%
-class spread. New chunks: `EX-21` (§5.4 ramp — graded birdcage mesh,
-first birdcage example of any kind; `PORT-10`'s capability is already
-demonstrated from two angles by `EX-20`/`ANS-3`, no example owed) and
-`OPS-19` (docrefs exit-code split — two runs flagged the masked signal;
-an artifact-refresh run was considered and rejected as a treadmill).
-Audit-found latent hazard (rank-local ladder-budget break in the
-`GEO-15` test) filed in known-issues. Done-item texts and prior recaps:
+Last reviewed 2026-08-16, **18:00 review**. Interval (since 10:30): four
+slots ran in order. The 12:00 slot took `PORT-9` step 1 and **parked it**
+(`attempt/PORT-9-20260816T170800Z`) — the resistive-sheet formulation is
+written and gated by six exact identities, but the fixture has no
+longitudinal port-sheet surface to put it on; the review adjudicated the
+attempt's option (a): mesh prerequisite split out as **`GEO-16`** (new §7
+chunk), parked branch kept for the re-run to merge. The 13:30 / 15:00 /
+16:30 slots closed `TH-11` step 3, `EX-21`, and `OPS-19` step 1; all
+three audited **COMPLIANT** (one subagent auditor each; logs footered,
+anchors quantitative, plan numbers match the logs digit for digit).
+`TH-11` **step 4 scoped** by this review (fixed-f Richardson ladder at
+10/30 MHz — both step 2 and step 3 recommended it). `OPS-19`'s run also
+corrected `EX-22`'s premise in place (the 24 references are *stale*, not
+absent — `dead=0 stale=24`) and found only one docrefs call site. The
+weekly review and the 02:15 slot move also landed this interval (their
+own commits). Done-item texts and prior recaps:
 `docs/planning/plan-archive.md`.
 
-**Six items.** Items 1–5 are mutually independent; item 6 is the declared
-spare and the queue's only serial item (depends on item 1). Items 2, 5
-execute their §7 entries verbatim (`TH-11` step 3, `OPS-17` step 1);
-items 1, 3, 4, 6 execute the §7 entries named inline.
+**Five items.** Items 1–3 are mutually independent; item 4 depends on
+item 1; item 5 is the declared spare and depends on items 1 and 4.
+Items 1–3 execute their §7 entries verbatim (`GEO-16`, `OPS-17` step 1,
+`TH-11` step 4); items 4–5 execute the §7 `PORT-9` entries as annotated
+by this review.
 
-1. **`PORT-9` step 1 — lumped-port formulation on the two-torus fixture
-   (standard, one solve).** Execute the §7 `PORT-9` step-1 entry: implement
-   the lumped/circuit-element port BC (read Jin 3e ch. 11 at
-   `docs/references/jin-fem-3e/` first; cite chapter/equation numbers in
-   the code and the journal) on the existing gap faces (tags 101/102),
-   solve at 10 MHz, print lumped-port Z beside the gated gap-voltage route
-   on the same solved field. **Anchor:** measurement-only step — no new
-   gate; the printed comparators are named quantities: gap-route corrected
-   ratio 0.939849 × ωM₁₂, ωM₁₂ = 1.241755 Ω, and the existing identity
-   gates stay green. Step 2 owns the bands (pre-stated in the §7 entry:
-   10% mutual, 5% cross-route, 1e-3 reciprocity — set at scoping, never
-   widened). **Negative control:** none required at step 1; the gap-route
-   numbers on the same field are the reference the lumped route must sit
-   beside. **Cost:** mesh 35.9 s + one solve ~25 s (`ANS-3` measured);
-   ~120–180 s with FFCx compile, `-n 2`, container `timeout -k 30 500`.
-   **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
-   `tests/environment` first; a killed run leaves a stale FFCx lock
-   (clear `~/.cache/fenics`); `-s` to put the printed Z on record;
-   new-BC assembly is the risky half — if the formulation does not land
-   inside the slot, park on `attempt/*` with the Jin citations journaled.
-   **Scope:** two-torus fixture only; no birdcage, no S-claim, chunk
-   stays ⬜→🧪. **Negative result:** a lumped Z wildly off the gap route
-   is the finding step 2 exists to adjudicate — report both numbers in
-   the §7 entry, stop.
-2. ~~**`TH-11` step 3 — 30 MHz mid-transition point on the
-   step-1 baseline (standard, measurement only).**~~ **done 2026-08-16,
-   13:30 slot** — +5.5912% at 1.84 cells/δ, 10 passed in 70.3 s,
-   `20260816T183310Z_TH-11-step3-30mhz-n2.log`; the three-point ladder
-   and its monotone resolution confound are in the §7 entry. Original
-   text: Execute the §7
-   `TH-11` step-3 entry verbatim: step 1's module at f = 30 MHz on the
-   same 138 619-cell fixture, same identity gates, ΔR/ΔX printed beside
-   Dodd–Deeds. Both rungs carry the resolution caveat, stated in the
-   print (δ = 9.19 mm ⇒ 1.84 cells/δ). Any outcome is a finding;
-   report in §7, stop.
-3. ~~**`EX-21` — graded birdcage conductor mesh example (standard,
-   mesh-only, no solve).**~~ **done 2026-08-16, 15:00 slot** — graded
-   **0.967019** ≥ 0.95 gate, baseline **0.740335** asserted to fail it,
-   separation **0.226685**; `GEO-9` identities unmoved on both rungs
-   < 1e-9; 48 245 → 98 474 cells, 26.0 s at `-n 2`;
-   `20260816T200516Z_EX-21-example-n2-final.log`, docrefs clean of its own
-   violations. Full closure in the §7 `EX-21` row. Original text: New
-   `examples/meshing/03_birdcage_graded_conductors.py`
-   + same-stem guide (§5.4 directive; the docrefs checker enforces it),
-   dispatched as `mesh:3` via `./run_examples.sh`, combined XDMF of the
-   tagged mesh opening in ParaView. Demonstrates `GEO-15`'s newly gated
-   capability from the angle no example covers — no birdcage example of
-   any kind exists. **Anchor:** the meshed/CAD conductor-mass identity
-   through the example path — graded rung ≥ 0.95 (import the gate and
-   the API defaults from `io/mesh.py` / the `GEO-15` test, the `ANS-1`
-   rule: constants imported, never restated); `GEO-9` box-partition
-   identity re-asserted < 1e-9. **Negative control (inverted assertion,
-   `EX-18` pattern):** the baseline global-`setSize` rung printed first
-   and asserted to *fail* 0.95 (on record at 0.740335; separation
-   0.2267). **Cost:** both rungs measured — 6.07 s + 16.74 s mesh, ~60 s
-   total with export, standard, `-n 2`, `timeout -k 30 500`. **Traps:**
-   the three `Mesh.MeshSizeFrom*`/`MeshSizeExtendFromBoundary` switches
-   must be off or gmsh silently re-imposes the coarse size; docrefs
-   companion log exits 1 on the 24 pre-existing stale artifacts — read
-   the body, only this case's own violations count (until `OPS-19`
-   lands); `-n 2` (finalize/bcast isolation degenerates at `-n 1`).
-   **Scope:** mesh fidelity demonstration only — no solve, no port
-   claim. **Negative result:** report, annotate the §7 `EX-21` row,
-   stop.
-4. ~~**`OPS-19` step 1 — docrefs exit-code split (smoke, no solves).**~~
-   **done 2026-08-16, 16:30 slot** — exit 0/1/2 plus
-   `--stale-severity {fail,report}` (default `report`); on `main` the
-   checker reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1,
-   guide pass green **21/21** (the item's "20/20" predates `EX-21`);
-   dead-reference negative control still exits 1; 8 tests, 1.91 s,
-   `20260816T213312Z_OPS-19-step1-rerun.log`. Only **one** call site
-   exists — `run_examples.sh` has no docrefs invocation — recorded in the
-   §7 entry with the latent `relative_to` bug fixed in passing. Original
-   text: Execute the §7 `OPS-19` entry verbatim: staleness gets its own
-   exit code (or `--stale-severity report` default), both call sites
-   updated, known-issues "by design" entry updated with the new contract.
-   Countable anchor + injected-dead-reference negative control per the
-   entry. Independent of every item above.
-5. **`OPS-17` step 1 — finiteness-only test inventory (smoke, no
+1. **`GEO-16` — emit the longitudinal port-sheet mid-plane in
+   `two_torus_domain` (standard, mesh-only, no solve).** Execute the §7
+   `GEO-16` entry verbatim: opt-in kwarg, `occ.fragment` of the gap
+   boxes' mid-plane, facet tag rebuilt from cell tags dolfinx-side
+   (known-issues 9 — never a dim-2 gmsh group on an interior surface),
+   sheet extents (area, *h*, *w*) measured and printed. Anchor:
+   facet-set area vs occ mass-property area < 1e-9 rel, both boxes;
+   kwarg-off bit-match of the recorded mesh is the negative control.
+   ~120 s, `-n 2`, `timeout -k 30 500`. Independent of everything below.
+2. **`OPS-17` step 1 — finiteness-only test inventory (smoke, no
    solves).** Execute the §7 `OPS-17` step-1 entry verbatim: sweep,
    table, dispositions — annotation and harness log only, nothing
-   deleted yet. Independent of every item above.
-6. *(spare, serial)* **`PORT-9` step 2 — cross-route identity gate
-   (standard).** **Depends on item 1 landing; if it did not, stop and
-   journal rather than improvising past it.** Execute the §7 `PORT-9`
-   step-2 entry verbatim: lumped-port Im Z₁₂ inside the unmoved 10%
-   band of ωM₁₂; cross-route |ΔZ₁₂|/|Z₁₂| ≤ 5%; reciprocity ≤ 1e-3
+   deleted yet. Independent of every other item.
+3. **`TH-11` step 4 — fixed-f Richardson ladder at 10 and 30 MHz
+   (heavy, two harness commands, one per frequency).** Execute the §7
+   `TH-11` step-4 entry verbatim: refined-rung (417 914-cell) pairs at
+   10 and 30 MHz, identity family on every rung, baseline records
+   (1.5834% / +5.5912%) reproduced as the negative control, deviation
+   extrapolated to h → 0 per frequency — printed, never gated. ~400 s
+   per frequency at `-n 2`, `timeout -k 30 1100`, cost-probe the first
+   command before the second. Independent of items 1–2.
+4. *(serial)* **`PORT-9` step 1 re-run — lumped-port `Z` beside the gap
+   route (standard, one solve).** **Depends on item 1 landing; if
+   `GEO-16` did not land, stop and journal rather than improvising a
+   surface.** Start by **merging `attempt/PORT-9-20260816T170800Z`**
+   (formulation + six gated identities; re-run its
+   `test_port_lumped_bc.py` to confirm green on the merge), then wire
+   the sheet onto `GEO-16`'s facet set with `R = Z_p·w/h` taken from
+   the **measured** extents `GEO-16` printed — never the gap box's
+   nominal dimensions (the 17:08Z premise). Solve the fixture at
+   10 MHz, print lumped-port `Z` beside the gap-voltage route **on the
+   same solved field on the fragmented mesh**. **Anchor:**
+   measurement-only — the existing identity gates stay green; printed
+   comparators: gap-route corrected ratio 0.939849 × ωM₁₂,
+   ωM₁₂ = 1.241755 Ω. The gap route is re-measured on the fragmented
+   mesh — if it moved off its unfragmented record, print both and flag
+   it; that delta is step 2's first exhibit, not a gate. **Negative
+   control:** the parked branch's passive-sheet zero-field control,
+   re-run on the merge. **Cost:** mesh ~40 s + one solve ~25 s +
+   FFCx compile; ~180 s, `-n 2`, `timeout -k 30 500`. **Traps:**
+   complex build + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment`
+   first; stale FFCx lock after a kill (clear `~/.cache/fenics`); `-s`
+   to put the printed Z on record; the `'+'` restriction on the
+   interior sheet is single-valued per Jin (1.60) — do not "fix" it.
+   **Scope:** two-torus only; no birdcage, no S-claim; chunk stays 🟡.
+   **Negative result:** a lumped Z wildly off the gap route is the
+   finding step 2 exists to adjudicate — report both numbers in the §7
+   entry, stop.
+5. *(spare, serial)* **`PORT-9` step 2 — cross-route identity gate
+   (standard).** **Depends on items 1 and 4 landing; if either did not,
+   stop and journal rather than improvising past it.** Execute the §7
+   `PORT-9` step-2 entry verbatim: lumped-port Im Z₁₂ inside the unmoved
+   10% band of ωM₁₂; cross-route |ΔZ₁₂|/|Z₁₂| ≤ 5%; reciprocity ≤ 1e-3
    through `run_n_port_sparameter_sweep`. Bands pre-stated at scoping,
    never widened — a miss is a finding about one of the two feed
    models; diagnose in the §7 entry, stop. Cost: two routes on the
