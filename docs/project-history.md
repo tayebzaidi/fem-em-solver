@@ -135,6 +135,26 @@ implementer 6× daily, so the last three slots of the day stopped with `anomaly`
 entries and no chunk work. Fixed by raising the floor to 6 items and giving the
 implementer a fallback to §9's "obvious next entry" sentence.
 
+## The PORT-1 gap-voltage lineage — why the port model looks the way it does (resolved 2026-08-15)
+
+Eighteen diagnostic steps (3b-i…3b-xviii, 2026-08-04…13) stand behind the
+two-torus port model. Three estimator families were excluded by
+measurement (box averages: sign-unstable; terminal-facet sampling: 4.8×,
+the facet carries the surface-charge-dominated normal component; the
+tangential path integral then read ~0.49 × ωM₁₂); the factor 2 turned out
+to be `_gap_arc_quadrature` integrating the nominal wedge while `GAP_BURIAL`
+put the terminals outside it — 0.8% of the loop's length carried 45% of its
+EMF. The residual ~3% offset was chased through wedge limits, the ωM₁₂
+reference (+0.481%, wrong sign to help), the PEC box, and loss — all
+exonerated — and earned its physics label (Jin 3e §10.4.2.1's gap-generator
+feed-model artifact class) only after a gap-region h-refinement moved the
+estimator by 0.05 pp against a 0.5 pp band. Standing consequences: port
+voltage on an inductive fixture is a stated-path convention, so no further
+`∫E·dl` estimator variants; birdcage ports go toward a lumped/circuit
+-element port BC (Jin ch. 11); every S-parameter figure carries the two
+named systematics in `ports/systematics.py`. Full narrative:
+`docs/planning/plan-archive.md`, the 2026-08-16 PORT-1 entry.
+
 ## Superseded documents
 
 `ROADMAP.md` merged into `PROJECT_PLAN.md`; `docs/status.md` is a generated

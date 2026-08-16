@@ -14,6 +14,10 @@ strict and two-way:
 - **The daily review owns** §7 chunk entries and the §9 On-deck queue. Do not
   edit §9. Where a subgoal needs implementer work, express it as a §7 chunk
   (stable ID, §4-compliant done-when) and let the daily review queue it.
+  One carve-out: compressing a **closed** chunk's §7 narrative into a
+  result block (step 6 below) is weekly-owned hygiene; editing open
+  chunks' status/done-when/plans, and anything in §9, remains the daily
+  review's.
 
 Subagents are available and web tools are not — same economics as the daily
 review: this session never solves, so subagents cost tokens, not cores. Use
@@ -75,7 +79,22 @@ means — for yourself.
      known-issues entry and a diagnosis chunk. A disagreement is a finding,
      never something to explain away.
 
-6. **Commit** as `docs(plan): weekly review YYYY-MM-DD`. If nothing needs
+6. **Plan hygiene.** If `PROJECT_PLAN.md` exceeds 4,000 lines, or any
+   closed chunk or closed step carries more than ~50 lines of narrative,
+   move the closed narrative **verbatim** to
+   `docs/planning/plan-archive.md` (append, matching its entry-header
+   format and preamble contract — never summarize into the archive), and
+   leave a result block of ≤ 15 lines in §7: status, close date, the
+   gated numbers, log IDs, live carry-forwards, and the archive pointer.
+   Verify zero loss before committing: every removed line must appear
+   verbatim in the archive (a set-difference check over non-blank lines
+   is sufficient), and every § reference in CLAUDE.md and
+   docs/automation/*.md must still resolve. Same treatment for
+   `docs/testing/attempts.md`: entries older than 14 days move verbatim
+   to `docs/testing/attempts-archive.md` (create it with a one-paragraph
+   preamble mirroring plan-archive.md's on first use).
+
+7. **Commit** as `docs(plan): weekly review YYYY-MM-DD`. If nothing needs
    changing, commit nothing — §5.2's audit-note prohibition applies here
    too.
 
