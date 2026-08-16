@@ -11652,3 +11652,76 @@ the §9 anchor error above came from a number transcribed across fixtures, and
 `passivity_max_sigma ≈ 1` appears in at least three places meaning three
 different matrices — a reviewer quoting a metric should name the fixture with
 it. `main` clean, nothing parked.
+
+---
+
+## 2026-08-16T11:15Z — `ANS-3` — **complete**
+
+Scheduled implementer run, 06:00 CDT slot. `main` clean at preflight,
+container Up 15 h. §9 item 1 (`PORT-5` step 1) was already struck by the
+04:30 run, so item 2 — the `ANS-3` runnable half — was the first open item.
+Executed the §7 entry verbatim; no fallback, no denial, nothing parked.
+
+**Outcome.** All gates green in **131 s** wall clock (128.1 s in-script) at
+`mpiexec -n 2` on 178 055 cells, heavy tier, container wrap
+`timeout -k 30 500`. Log
+`20260816T110354Z_ANS-3-runnable-half-n2.log`. Stage timings: mesh 35.9 s,
+2-column package sweep 46.3 s, export solve 21.4 s.
+
+**Numbers.** Reproduction of the `PORT-1` step-4 record inside `EX-20`'s
+pre-stated 1% band, misses ≤ **3.67e-06** — raw mutual 0.894543 (3.33e-07),
+corrected 0.939849 (3.23e-07), ‖S−Sᵀ‖/‖S‖ = 2.5494e-05 (3.67e-06),
+‖S‖₂ = 0.861449 (2.29e-07). Negative control executed and printed **first**:
+the raw rung is −10.55% against the unmoved 10% mutual band and is asserted
+to *fail* it (the `EX-20` inverted assertion); the corrected rung is −6.02%,
+inside. Im Z₂₁ = +1.110803269e+00 Ω vs ωM₁₂ = 1.241755 Ω;
+|Z₁₂−Z₂₁|/|Z₂₁| = 5.8309e-04, reported not gated.
+
+**Artifacts landed** in `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/`:
+`03_two_torus_gap_ports_10MHz.py`, `metrics.json` (full complex 2×2 Z and S,
+ladder, identities, mesh/timings), `COMPARISON.md` (our columns filled, AED
+columns blank per SPEC), and the combined XDMF (untracked, as every
+`paraview_output/` is). Every geometry, drive, quadrature and correction
+constant is **imported** from `examples/ports/02_package_sparameter_sweep.py`
+(`EX-20`) and `fem_em_solver.ports.systematics` — the `ANS-1` rule, so the
+benchmark cannot drift from the gate.
+
+**Two deliberate departures from a literal `EX-20` copy**, both in scope:
+
+1. `EX-20`'s 45.7 s deprecated-heuristic control is **absent**. The §7
+   `ANS-3` entry names the raw rung as this case's negative control, and
+   dropping the heuristic is what brought the case in at 131 s rather than
+   ~180 s. The heuristic control still runs in `EX-20` itself.
+2. A same-stem guide page `03_two_torus_gap_ports_10MHz.md` was written,
+   which the entry did not ask for — §5.4's 2026-08-10 operator directive
+   requires one for every runnable example and the doc-reference checker
+   enforces it, so omitting it would have left a defect. `ANS-1` has one.
+
+**Incidental fix, landed in the same commit.** `scripts/run_examples.sh`
+issued a bare `timeout $TIMEOUT_S` inside the container — it was the last
+compute path in the repo still sending a plain TERM to an `mpiexec` job, the
+exact mode that wedged the container in `MAT-6` step 10 (2026-08-12). Now
+`timeout -k 30 $TIMEOUT_S`, matching the CLAUDE.md hard rule. Every `ans:`,
+`mri:`, `th:`, `mat:`, `mesh:` and `ports:` dispatch inherits it.
+
+**Doc-reference checker** (`20260816T110748Z_ANS-3-docrefs.log`): exit 1 with
+**24 stale-artifact violations, none from this case** — all are
+`examples/magnetostatics/` and `examples/mri/` `paraview_output/` references
+112–141 h old. Known and benign per the §7 `ANS-3` entry's own trap note. The
+guide pass is clean: 20 runnable examples, 20 checked against 3 required
+headings, 0 pending; `PASS: every runnable example has a guide with all
+required sections.`
+
+**Waiting-on-you, for the next daily review's dashboard.** The operator's AED
+replication of `two_torus_gap_ports_10MHz/SPEC.md` is now unblocked and is
+the case's remaining half. It is also `PORT-10`'s independent adjudication
+input, so it is worth surfacing before `PORT-10` runs rather than after.
+
+**Hypothesis for the next attempt.** §9 item 3 (`GEO-15` step 1, mesh-only,
+no solves) is next open and independent of everything landed here. One
+observation for the review: the 24 stale-artifact violations make the
+doc-reference checker's exit code uninformative — every chunk that touches
+examples now has to read the body to tell its own breakage from the
+backlog's. A cheap `all-mag`+`mri:1` refresh run, or a chunk to decide
+whether the 48 h freshness limit is the right policy for untracked outputs,
+would restore the signal.

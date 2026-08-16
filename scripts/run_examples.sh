@@ -244,7 +244,10 @@ for entry in "${SELECTED[@]}"; do
   if [[ "$group" == "mri" || "$group" == "mat" || "$group" == "th" || "$group" == "ans" || "$group" == "ports" ]]; then
     prefix="source $COMPLEX_MODE_SOURCE && "
   fi
-  inner="cd /workspace && ${prefix}PYTHONPATH=/workspace/src timeout $TIMEOUT_S mpiexec -n $NPROC python3 $rel"
+  # `-k 30`: a plain TERM does not reliably stop an `mpiexec` job — MAT-6
+  # step 10 (2026-08-12) burned cores for ~1700 s past a bare `timeout 590`
+  # and wedged the container (CLAUDE.md hard rules, known-issues).
+  inner="cd /workspace && ${prefix}PYTHONPATH=/workspace/src timeout -k 30 $TIMEOUT_S mpiexec -n $NPROC python3 $rel"
   echo
   echo "==> $rel${prefix:+ (complex build)}"
   if [[ "$DRY_RUN" == "1" ]]; then

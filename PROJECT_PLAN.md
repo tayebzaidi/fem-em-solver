@@ -1525,7 +1525,7 @@ next weekly review adjudicates the returned numbers.
 | ID | Title | Status | Tier |
 |---|---|---|---|
 | `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ✅ | standard |
-| `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ⬜ | heavy |
+| `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ✅ | heavy |
 
 **`ANS-1` ✅ 2026-08-09** *(scoped 2026-08-09, weekly review; full plan and
 closure narrative in `docs/planning/plan-archive.md`)*. Runnable half of
@@ -1540,7 +1540,37 @@ the case directory; every constant, mesh, and drive is imported from the
 `MAT-6`/`EX-11` modules, so the benchmark cannot drift from the gate. The
 AED half is the operator's (§5.4 Waiting-on-you).
 
-**`ANS-3` — two coaxial gapped loops at 10 MHz: runnable half** ⬜
+**`ANS-3` ✅ 2026-08-16** — two coaxial gapped loops at 10 MHz: runnable
+half. Dispatched through the runner's `ans:` group
+(`./run_examples.sh -e ans:3 -n 2 -t 500`, log
+`20260816T110354Z_ANS-3-runnable-half-n2.log`, **131 s** wall clock, 128.1 s
+in-script at `-n 2` on 178 055 cells — mesh 35.9 s, package sweep 46.3 s,
+export solve 21.4 s). Every anchor reproduced inside `EX-20`'s pre-stated
+1% band, misses ≤ **3.67e-06**: raw mutual 0.894543 (3.33e-07), corrected
+0.939849 (3.23e-07), ‖S−Sᵀ‖/‖S‖ = 2.5494e-05 (3.67e-06), ‖S‖₂ = 0.861449
+(2.29e-07). Negative control executed and printed **first**: the raw rung
+is −10.55% against the unmoved 10% band and is asserted to *fail* it, so
+the two systematics are visibly load-bearing; the corrected rung is −6.02%,
+inside. Im Z₂₁ = +1.110803269e+00 Ω against ωM₁₂ = 1.241755 Ω;
+|Z₁₂−Z₂₁|/|Z₂₁| = 5.8309e-04 (reported, not gated). `metrics.json`
+(full complex 2×2 Z and S, ladder, identities, mesh/timing),
+`COMPARISON.md` (our columns filled, AED columns blank per SPEC) and the
+combined XDMF landed in the case directory; every geometry, drive,
+quadrature and correction constant is **imported** from
+`examples/ports/02_package_sparameter_sweep.py` (`EX-20`) and
+`fem_em_solver.ports.systematics`, so the benchmark cannot drift from the
+gate — `ANS-1`'s rule. The 45.7 s heuristic control of `EX-20` is
+deliberately absent: this entry names the raw rung as the negative control,
+and dropping the heuristic is what brought the case in at 131 s.
+The AED half is the operator's (§5.4 Waiting-on-you), and it is also
+`PORT-10`'s independent adjudication input. Incidental fix landed with it:
+`scripts/run_examples.sh` now issues `timeout -k 30` inside the container —
+it was the last compute path still sending a bare TERM to an `mpiexec` job
+(the MAT-6 step-10 wedge mode).
+
+<details><summary>Original entry (commissioning + plan)</summary>
+
+**`ANS-3` — two coaxial gapped loops at 10 MHz: runnable half**
 *(commissioned 2026-08-16 by the interrupted weekly-scope session —
 authoritative spec in
 `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`; this entry
@@ -1570,6 +1600,8 @@ combined XDMF. Dispatch through the runner's `ans:` group
 > adjudication input). **Negative result:** any drift from the gated
 > records outside the 1% band is a finding about the example path —
 > report, annotate this entry, stop.
+
+</details>
 
 ---
 
@@ -1676,12 +1708,20 @@ step-1 entry; item 1 is self-contained below.
    wiring only; `PORT-5`'s frequency-sweep ambitions stay unscoped; no
    tolerance in `sparameters.py` moves. **Negative result:** report,
    annotate the §7 `PORT-5` row, stop.
-2. **`ANS-3` runnable half (heavy, ~200 s measured via `EX-20`).**
-   Execute the §7 `ANS-3` entry verbatim against
+2. ~~**`ANS-3` runnable half (heavy, ~200 s measured via `EX-20`).**~~
+   **done** 2026-08-16, 06:00 run — 131 s at `-n 2`,
+   `20260816T110354Z_ANS-3-runnable-half-n2.log`; all four anchors
+   reproduced inside the 1% band (misses ≤ 3.67e-06), raw rung asserted
+   to fail the unmoved 10% band as the negative control.
+   `metrics.json` / `COMPARISON.md` / combined XDMF landed. **The
+   operator's AED replication of
+   `two_torus_gap_ports_10MHz/SPEC.md` is now Waiting-on-you** — the
+   next daily review must put it on the dashboard. Original item:
+   execute the §7 `ANS-3` entry verbatim against
    `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`:
    regenerate the gated 2-port records through the `EX-20` path into
    `metrics.json` / `COMPARISON.md` (AED columns blank) / combined
-   XDMF. On landing, the operator's AED half goes to Waiting-on-you.
+   XDMF.
 3. **`GEO-15` step 1 — graded birdcage conductor sizing (standard,
    mesh-only, no solves).** Execute the §7 `GEO-15` entry verbatim:
    baseline vs graded conductor-volume/CAD-mass identity in one

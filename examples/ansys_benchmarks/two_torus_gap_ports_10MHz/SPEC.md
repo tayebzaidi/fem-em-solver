@@ -20,8 +20,10 @@ nominal over ±r_wire.
 
 ## Status
 
-- [ ] Runnable half implemented (`ANS-3`, PROJECT_PLAN §7) — script, metrics
+- [x] Runnable half implemented (`ANS-3`, PROJECT_PLAN §7) — script, metrics
       JSON, XDMF, `COMPARISON.md` with our numbers filled in
+      *(2026-08-16, `03_two_torus_gap_ports_10MHz.py`, log
+      `20260816T110354Z_ANS-3-runnable-half-n2.log`)*
 - [ ] Operator replication in AED (goes to the dashboard Waiting-on-you list
       when the box above is checked)
 - [ ] Adjudication (next weekly review after AED numbers land)
