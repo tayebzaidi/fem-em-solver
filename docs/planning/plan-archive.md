@@ -13387,3 +13387,72 @@ lists every currently-failing test with symptom, the commit it was verified fail
 at, and the diagnosed cause. Several tests fail on `main` for reasons unrelated to
 any change you are making.
 
+
+## §9 On-deck done items 1-4, interval 03:00 to 10:30 2026-08-16 — archived 2026-08-16 (10:30 review)
+
+All four executed in order by the 04:30/06:00/07:30/09:00 slots; audited
+COMPLIANT against §4 by the 10:30 review. Struck texts verbatim:
+
+1. ~~**`PORT-5` step 1 — sweep-level sanity metrics on the field route
+   (standard).**~~ **done** 2026-08-16, 04:30 run — 10 passed 149.1 s at
+   `-n 2`, `20260816T093556Z_PORT-5-step1-rerun.log`; σ_max 0.861449197
+   (miss 1.97e-07), ‖S−Sᵀ‖/‖S‖ 2.549409e-05, no warnings, both negative
+   controls executed. One anchor in the text below was a mis-attributed
+   constant (the heuristic's σ_max is 0.999985964171 here, not exactly 1)
+   — corrected with its measurement; see the §7 `PORT-5` entry. Original
+   item: `summarize_sparameter_sanity()` wired to
+   `run_n_port_sparameter_sweep`'s field-route output — the
+   "sweep-level path untouched" gap §10 target 3 names, on a
+   field-derived matrix for the first time. **Anchor:**
+   `passivity_max_sigma` equals `PORT-1` step 4's gated
+   `‖S‖₂ = 0.861449` to 1e-6 (the same quantity by a second route);
+   `reciprocity_max_abs_delta` consistent with the gated 2.5494e-05
+   relative asymmetry; **no warnings** on the field route. **Negative
+   control:** the deprecated heuristic S through the same metrics
+   (`passivity_max_sigma` = 1.000000000000 on record, ≥ 0.13 from the
+   field route's), plus a deliberately asymmetrized copy tripping the
+   reciprocity warning path — the warning must fire. **Cost:**
+   standard, `-n 2`, ~160 s (step 4's solve pair); container
+   `timeout -k 30 500`. **Traps:** the metrics are pure numpy — do not
+   re-solve per metric; one sweep, one summary. **Scope:** metrics
+   wiring only; `PORT-5`'s frequency-sweep ambitions stay unscoped; no
+   tolerance in `sparameters.py` moves. **Negative result:** report,
+   annotate the §7 `PORT-5` row, stop.
+2. ~~**`ANS-3` runnable half (heavy, ~200 s measured via `EX-20`).**~~
+   **done** 2026-08-16, 06:00 run — 131 s at `-n 2`,
+   `20260816T110354Z_ANS-3-runnable-half-n2.log`; all four anchors
+   reproduced inside the 1% band (misses ≤ 3.67e-06), raw rung asserted
+   to fail the unmoved 10% band as the negative control.
+   `metrics.json` / `COMPARISON.md` / combined XDMF landed. **The
+   operator's AED replication of
+   `two_torus_gap_ports_10MHz/SPEC.md` is now Waiting-on-you** — the
+   next daily review must put it on the dashboard. Original item:
+   execute the §7 `ANS-3` entry verbatim against
+   `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`:
+   regenerate the gated 2-port records through the `EX-20` path into
+   `metrics.json` / `COMPARISON.md` (AED columns blank) / combined
+   XDMF.
+3. ~~**`GEO-15` step 1 — graded birdcage conductor sizing (standard,
+   mesh-only, no solves).**~~ **done** 2026-08-16, 07:30 run — 1 passed
+   41 s at `-n 2`, `20260816T123337Z_GEO-15-step1.log`; gate cleared at
+   **0.967019** meshed/CAD (h_c = 1.6e-3, 98 474 cells, 16.74 s mesh)
+   against a **0.740335** baseline negative control, three-rung ladder
+   monotone, `GEO-9` identities unmoved at < 1e-9 on every rung.
+   Junction double-count isolated at 4.22% (CAD/analytic 0.957781), so
+   the 0.7091 deficit was mostly resolution after all. See the §7
+   `GEO-15` entry. Original item: baseline vs graded
+   conductor-volume/CAD-mass identity in one command, gate ≥ 0.95
+   graded with the `GEO-9` identities unmoved.
+4. ~~**`PORT-10` — systematics composition, 2×2 factorial (heavy).**~~
+   **done** 2026-08-16, 09:00 run — 7 passed 352.4 s at `-n 2`,
+   `20260816T140643Z_PORT-10.log`; cost probe first
+   (`20260816T140457Z_PORT-10-costprobe.log`, 95 s: the padded corners
+   mesh at 194 985 / 263 751 cells, inside the 350 000 stop rule).
+   **Cross-term −0.0604 pp inside the pre-stated ±0.5 pp by 8.3×** —
+   the two systematics compose additively at this grain. Both baseline
+   corners reproduce their records to ≤ 3.0e-07, both negative controls
+   executed (+0.9396 pp displaced, −43.0958 pp wedge-only). See the §7
+   `PORT-10` entry. Original item: execute the §7 `PORT-10` entry
+   verbatim; its cost-probe-first rule is binding — `EX-20`'s pair is
+   178 s at `-n 2`, the padded and refined rungs cost more, single
+   command under 1200 s or shrink.

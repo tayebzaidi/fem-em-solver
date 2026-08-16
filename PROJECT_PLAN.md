@@ -76,12 +76,14 @@ What is validated, to what tolerance, and what must not be trusted.
 ### 2.2 Not validated — do not trust, do not extend
 
 - **No coil or birdcage has ports.** Any S-parameter figure quoted for a
-  coil is unsupported. The birdcage-port direction is scoped as of the
-  2026-08-16 weekly review — `PORT-9` (lumped/circuit-element port BC,
-  Jin ch. 11) with `PORT-10` (systematics composition) and `GEO-15`
-  (conductor sizing) as the two named prerequisites — but nothing has
-  executed; this bullet stands until `PORT-9` gates. B1+ remains §10
-  subgoal 4, blocked behind it.
+  coil is unsupported. The birdcage-port direction is scoped —
+  `PORT-9` (lumped/circuit-element port BC, Jin ch. 11) — and as of
+  2026-08-16 both named prerequisites have **executed and closed**:
+  `PORT-10` (the two systematics compose additively, cross-term
+  −0.0604 pp) and `GEO-15` (graded conductor sizing reaches 0.967 of CAD
+  mass; `PORT-9` budgets from 98 k cells). `PORT-9` itself has not
+  started; this bullet stands until it gates. B1+ remains §10 subgoal 4,
+  blocked behind it.
 - **Coil loading at the Larmor frequencies is an extrapolation** until
   `TH-11` lands a gated trend (its resolution rung attributed most of the
   observed 64 MHz deviation to mesh, not physics).
@@ -364,6 +366,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
 | `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | ⬜ | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
+| `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ⬜ | smoke |
 
 **`OPS-18` — DolfinX version upgrade, recurring** ⬜
 *(commissioned 2026-08-16, operator session. The base image is pinned at
@@ -405,6 +408,39 @@ dated annotation. The ID stays stable.)*
 >   rather than exceeding the 20-minute ceiling. **Negative result:**
 >   park on an `attempt/*` branch with the failing step named; `main`
 >   keeps 0.7.2 until all three steps are green.
+
+**`OPS-19` — doc-reference checker: staleness must not own the exit code**
+⬜ *(commissioned 2026-08-16, 10:30 review. Two independent implementer runs
+flagged the same defect this interval: 24 pre-existing stale
+`paraview_output/` artifacts (magnetostatics/MRI examples last regenerated
+112–141 h ago) drive `check_example_doc_references.py` to exit 1 on every
+invocation, so a chunk touching examples cannot tell its own breakage from
+the backlog's without reading the log body — `EX-20` and `ANS-3` both had
+to journal a red companion log as "known, benign". The fix is signal
+separation, not artifact refresh: a refresh run buys 48 h of green and
+then the treadmill resumes.)*
+> * **Step 1 (gate) — split the exit code (smoke, no solves).** Give
+>   staleness its own exit code (e.g. 0 = clean, 1 = dead reference or
+>   missing guide/section, 2 = staleness-only) or a `--stale-severity
+>   {fail,report}` flag defaulting to `report`, in
+>   `scripts/testing/check_example_doc_references.py`; update
+>   `run_examples.sh`'s docrefs invocation and the known-issues
+>   "by design" entry (§ line ~502) with the new contract. **Anchor
+>   (countable, asserted in a pytest wrapper or the checker's own
+>   self-test):** on the current tree the checker reports exactly the
+>   staleness violations and exits with the staleness-only code, with the
+>   guide pass still green (20/20); **negative control:** a temp-dir copy
+>   with one deliberately dead artifact reference in a guide must still
+>   exit 1 — the defect class the checker exists for must survive the
+>   split. **Tier/cost:** smoke, `-n 1`, seconds (the checker is pure
+>   filesystem; `EX-18`'s docrefs runs are ~1 s). **Traps:** the checker
+>   is called from `run_examples.sh` *and* standalone in harness
+>   commands — both call sites must agree on the new codes or a green
+>   example run will start failing on code 2; pytest captures prints
+>   without `-s`. **Scope:** exit-code semantics only — no example is
+>   re-run, no artifact refreshed, `--max-age-s` (OPS-15's 48 h) does not
+>   move. **Negative result:** if the checker's structure resists the
+>   split inside a slot, report the obstacle in this entry and stop.
 
 **`OPS-16` — retry-on-529 in the automation launchers** 🚫
 *(commissioned 2026-08-13, 10:30 review; blocked 2026-08-14, 21:00 run.)*
@@ -694,7 +730,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-12` | **Widen the two `1e-9` wall tolerances and gate the `outer_boundary` group** (known-issues 12) | ✅ | standard |
 | `GEO-13` | **Decouple `cylindrical_domain`'s wall tolerance from `resolution`** (known-issues 13) | ✅ | standard |
 | `GEO-14` | **The shared ~3% geometry floor: faceting vs resolution** (entry lives after `TH-11`, beside the fixtures it measures) | ✅ *(closed 2026-08-15 review on the refuted hypothesis: RESOLUTION, 3.643% → 1.781% at 55 251 cells, rate 1.77 in h — no faceting floor)* | standard |
-| `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | 🟡 *(step 1 ✅ 2026-08-16 — graded sizing recovers **0.9670** of the conductor's CAD mass at h_c = 1.6 mm vs **0.7403** baseline, gate cleared, `GEO-9` identities unmoved at < 1e-9; 41 s at `-n 2`)* | standard |
+| `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | ✅ 2026-08-16 (graded sizing recovers **0.9670** of the conductor's CAD mass at h_c = 1.6 mm vs **0.7403** baseline, gate cleared, `GEO-9` identities unmoved at < 1e-9; 41 s at `-n 2`; closed by the 10:30 review — the chunk was its one question, now answered by measurement) | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -778,10 +814,16 @@ precondition at the use site: a radial gap below ~1e-4 m stops clearing
 the OCC padding by 10× (smallest gap in the repo: 0.07 m).
 
 **`GEO-15` — birdcage conductor sizing: is graded sizing a `PORT-9`
-prerequisite?** 🟡 *(entry written 2026-08-16, 03:00 daily review — the
-chunk itself was named by the interrupted weekly-scope session as the
-second `PORT-9` step-3 prerequisite but left without an entry. Mesh-only:
-no solves.)* The birdcage mesh (`GEO-9`) keeps only **0.7091** of the
+prerequisite?** ✅ 2026-08-16 *(entry written 2026-08-16, 03:00 daily
+review; step 1 executed by the 07:30 implementer run; **closed by the
+10:30 review** — the chunk was scoped as a single measured question and
+step 1 answered it (audited §4-COMPLIANT: pre-stated ≥ 0.95 gate, logs,
+elapsed recorded). The implementer left the flip to the review; the
+remaining 3.3% is curvature faceting, not a mesh-size failure, and pinning
+it down buys `PORT-9` nothing. One latent hazard the audit found — a
+rank-local `perf_counter` budget break in the ladder test that could
+desync collectives if it ever fires — is recorded in known-issues, not
+here. Mesh-only: no solves.)* The birdcage mesh (`GEO-9`) keeps only **0.7091** of the
 conductor's analytic volume under the single global `setSize = 0.015` —
 part is the analytic sum double-counting the 8 leg∩ring junctions (CAD
 masses give 0.9578), the rest is 0.015 against a 0.004 ring minor radius.
@@ -826,7 +868,9 @@ answers `PORT-9` step 3's open question by measurement.
 >   cheap, so it is a prerequisite the port model can simply assume** — the
 >   remaining 3.3% is faceting of the curved boundary, not a mesh-size failure.
 >   Not yet measured: whether a *port* on the graded conductor surface behaves
->   differently — that is `PORT-9`'s own gate, still unscoped by design. `GEO-4`
+>   differently — that is `PORT-9`'s own gate, unscoped at the time of this
+>   run *(scoped later the same day by the 10:30 review — see the `PORT-9`
+>   step-3 entry)*. `GEO-4`
 >   stays 🧪 (no solve was run here).
 > * **Step 1 (gate) — graded rung** *(original plan, executed as written)*.
 >   Regenerate `birdcage_port_domain`
@@ -1369,11 +1413,40 @@ the answer is already gated**.
 >   `run_n_port_sparameter_sweep`. A miss is a finding about one of the
 >   feed models — diagnose, never widen.
 > * **Step 3 — birdcage instantiation.** The BC on the birdcage mesh's four
->   port boxes (`GEO-9`, generated and identity-gated). **Blocked on
->   `GEO-15`** (whether the conductor sizing must be graded first) **and
->   `PORT-10`** (no corrected number is quoted on a new topology until the
->   systematics' composition is measured). Gate to be scoped by the daily
->   review once both report; reciprocity on the 4×4 S is the minimum.
+>   port boxes (`GEO-9`, generated and identity-gated). **Both prerequisites
+>   reported 2026-08-16 and the block is lifted:** `GEO-15` ✅ — graded
+>   conductor sizing is achievable and cheap, so this step *assumes* it
+>   (`conductor_resolution = 1.6e-3`; budget from **98 474 cells**, mesh
+>   16.74 s, not the 48 k baseline); `PORT-10` ✅ — the two systematics
+>   compose additively (cross-term −0.0604 pp inside ±0.5 pp), so the
+>   sequential ladder in `ports/systematics.py` may be applied on this
+>   topology, with the `PORT-10` caveat quoted (one finite padding step,
+>   feed-discretisation probe — not the extrapolations themselves).
+>   **Gate, scoped by the 2026-08-16 10:30 review — pre-stated, never
+>   widened.** On the solved 4×4 through `run_n_port_sparameter_sweep`:
+>   (i) reciprocity `‖S−Sᵀ‖/‖S‖ ≤ 1e-3` (step 2's band, unchanged);
+>   (ii) passivity `σ_max(S) ≤ 1 + 1e-9` and unit column power sums ≤ 1;
+>   (iii) **C4 circulant symmetry of Z** — the CAD geometry is invariant
+>   under 90° rotation (ports sit at leg-gap midpoints on a uniform
+>   angular grid, `io/mesh.py` `theta = linspace(0, 2π, leg_count)`), so
+>   Z must be circulant up to meshing asymmetry: max relative spread
+>   within each rotation-equivalence class ({Z_ii}, {adjacent Z_i,i±1},
+>   {opposite Z_i,i+2}) **≤ 5%**. (iii) is the step's closed-form-free
+>   quantitative identity: it needs no birdcage analytic solution, only
+>   the symmetry group. **Negative control:** one port box displaced
+>   azimuthally by half a gap — the class spread must blow through 5%
+>   while reciprocity (route-independent) stays ≤ 1e-3, separating
+>   "symmetry gate measures geometry" from "solver is healthy".
+>   **Cost:** never solved — cost-probe-first is binding (`PORT-10`
+>   precedent): probe the graded mesh + one single-port solve before
+>   committing to four; estimate from `ANS-3` (178 k cells, 2 package
+>   solves, 46.3 s) puts 4 solves on ~100 k cells at ~60–120 s, heavy
+>   tier, `-n 2`. **Serial:** depends on steps 1–2 landing on the
+>   two-torus fixture; do not start it from a queue that hasn't seen
+>   step 2's cross-route band hold. **Negative result:** a class spread
+>   > 5% on the undisplaced mesh is a finding about mesh-induced
+>   asymmetry at the graded sizing — record the measured spread per
+>   class in this entry and stop; never widen (iii) to admit it.
 
 **`PORT-10` — the two `PORT-1` systematics: composition measured, not
 assumed** ✅ *(scoped 2026-08-16, weekly planning review — the first of the
@@ -1476,6 +1549,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-18` | Gap-voltage port pair → Z → S on the two-torus fixture (the 3b-xvii/xviii gated capability; first ports example) | ✅ (2026-08-13: raw 0.894543 × ωM₁₂ printed as the miss it is, corrected 0.939849 (−6.02%) inside the unmoved 10%; ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1; blind-ladder negative control −98.26% asserted to fail; 134 s at `-n 2`) | standard |
 | `EX-19` | Larmor lossy-sphere example (`TH-10`'s newly gated capability: first example solving at 64/128 MHz; rubric in the §9 item) | ✅ (2026-08-13: `th:6`, fixture imported from the `TH-10` test module; all four records reproduced through the example path — 3.643% / 1.826% interior relL2 at 18.68× / 57.31× separation, power 3.629% with the quasi-static route missing 58.140% — max drift **1.7e-04** vs a pre-stated 1% band; convergence and both negative controls executed in-run; 24 s at `-n 2`) | standard |
 | `EX-20` | Package S-parameter sweep example (`PORT-1` step 4's newly gated capability: first example calling `run_n_port_sparameter_sweep` on the solved field — the entry-point angle `EX-18` does not cover; full rubric in the §9 item, commissioned 2026-08-15 review) | ✅ (2026-08-16: `ports:2`, one `run_n_port_sparameter_sweep(..., gap_voltage_ports=specs)` call → two solves → Z → S; **all four step-4 records reproduced inside the pre-stated 1% band, misses 3.33e-07 / 3.23e-07 / 3.67e-06 / 2.29e-07** — raw 0.894543 printed first and asserted to *fail* the 10% band, corrected 0.939849 (−6.02%) inside it, ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1, `\|Z₁₂−Z₂₁\|/\|Z₂₁\|` = 5.8309e-04 printed; negative control executed in-run — the deprecated heuristic route on the same mesh/ports gives an identically-zero off-diagonal, max\|ΔS\| = 3.078e-01 with its `DeprecationWarning` shown; 178.2 s at `-n 2`, 178 055 cells; guide pass 19/19 green. **Named limitation on record:** the sweep returns no fields, so the combined XDMF costs one extra port-1 solve (23.0 s) — surfacing `TimeHarmonicFields` from `SParameterSweepResult` is unscoped. *Audit 2026-08-16, 03:00 review: COMPLIANT; tier reclassified standard → heavy per the `EX-9` precedent — 178.2 s sits at the 180 s standard boundary and the wrap was 500 s; the companion docrefs log exits 1 on 24 pre-existing stale artifacts from other examples, none EX-20's (journaled in attempts.md)*) | heavy |
+| `EX-21` | Graded birdcage conductor mesh (`GEO-15`'s newly gated capability: first birdcage example of any kind — geometry angle no example covers; mesh-only, no solve; full rubric in the §9 item, commissioned 2026-08-16 10:30 review) | ⬜ | standard |
 
 **`EX-4`…`EX-12` — the 2026-08-09 backfill, all ✅ by 2026-08-10** *(full
 plans + closure narratives in `docs/planning/plan-archive.md`)*. Common
@@ -1708,18 +1782,17 @@ the ROADMAP than in `pending-tests.md`. Resolve via this table.
 Phase-1/2 analytic gates are closed (§6); the working front is ports
 beyond the two-torus fixture and the Larmor-regime validation gate.
 
-1. **The birdcage-port lineage, now scoped** (2026-08-16): prerequisites
-   `PORT-10` (systematics composition) and `GEO-15` (conductor sizing)
-   first, plus `ANS-3` (the AED adjudication input for the same
-   composition question), then `PORT-9` (lumped-element port BC, Jin
-   ch. 11 — steps 1–2 on the two-torus fixture are independent of the
-   prerequisites; only step 3 is blocked on them).
+1. **The birdcage-port lineage — prerequisites discharged 2026-08-16**
+   (`PORT-10` ✅ composition additive, `GEO-15` ✅ graded sizing cheap,
+   `ANS-3` ✅ runnable half; the AED half is the operator's): the front
+   is now `PORT-9` itself (lumped-element port BC, Jin ch. 11) — steps
+   1–2 on the two-torus fixture, then step 3 on the birdcage, whose
+   gate is scoped in the §7 entry (reciprocity, passivity, C4 circulant
+   symmetry of Z).
 2. **`TH-11`** — coil loading at Larmor frequencies: step 2 attributed
    most of the 64 MHz deviation to mesh resolution (+10.27% → +2.81%);
    step 3 (30 MHz mid-transition point) is queued.
-3. **`PORT-5` step 1** — sweep-level sanity metrics on the field route
-   (queued below).
-4. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
+3. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
 
 **Standing rules.** Do not add new features to `⚠️` subsystems. Do not
 trust a chunk's status without a log — any §7 status that is not `✅`
@@ -1736,109 +1809,114 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed 2026-08-16, **03:00 review**. Interval: all four queued
-runs completed — `TH-11` step 2, the hygiene pair, `EX-18` doc repairs,
-`EX-20` — no anomalies, no parked branches. `EX-20` (the interval's one
-chunk-level ✅) audited **COMPLIANT**; tier reclassified to heavy per the
-`EX-9` precedent. The 01:30 scheduled weekly review **never executed**
-(session-limit log); an interactive operator session had already done
-weekly-scope work (plan prune, `OPS-18`, `PORT-9`/`PORT-10` scoping,
-`ANS-3` commission, attempts archival) but was itself cut off — this
-review landed its uncommitted tail verbatim (commit before this one) and
-wrote the two entries it left dangling (`GEO-15`, `ANS-3`). §10's dated
-assessments remain 2026-08-09 vintage — weekly-review scope, not touched
-here. Done-item texts and prior recaps: `docs/planning/plan-archive.md`.
+Last reviewed 2026-08-16, **10:30 review**. Interval: all four queued
+runs completed in order — `PORT-5` step 1, `ANS-3`, `GEO-15` step 1,
+`PORT-10` — tree clean at every handoff, nothing parked. All four ✅
+claims audited **COMPLIANT** (one subagent auditor each); `PORT-5`'s
+run→rerun delta adjudicated as a negative-control premise correction
+(mis-transcribed constant from a different fixture), not a loosened
+gate — the discriminating 0.13 separation never moved. `GEO-15` closed
+🟡→✅ by this review (its one question is answered). `PORT-9` step 3's
+gate scoped in its §7 entry (both prerequisites reported): reciprocity
+≤ 1e-3, passivity, and a C4 circulant-symmetry identity on Z at ≤ 5%
+class spread. New chunks: `EX-21` (§5.4 ramp — graded birdcage mesh,
+first birdcage example of any kind; `PORT-10`'s capability is already
+demonstrated from two angles by `EX-20`/`ANS-3`, no example owed) and
+`OPS-19` (docrefs exit-code split — two runs flagged the masked signal;
+an artifact-refresh run was considered and rejected as a treadmill).
+Audit-found latent hazard (rank-local ladder-budget break in the
+`GEO-15` test) filed in known-issues. Done-item texts and prior recaps:
+`docs/planning/plan-archive.md`.
 
-**Six ready items, mutually independent.** Item 6 is the declared spare.
-Items 2–4 execute their §7 entries verbatim (`ANS-3`, `GEO-15` step 1,
-`PORT-10`); item 5 its §7 `TH-11` step-3 entry, item 6 its §7 `OPS-17`
-step-1 entry; item 1 is self-contained below.
+**Six items.** Items 1–5 are mutually independent; item 6 is the declared
+spare and the queue's only serial item (depends on item 1). Items 2, 5
+execute their §7 entries verbatim (`TH-11` step 3, `OPS-17` step 1);
+items 1, 3, 4, 6 execute the §7 entries named inline.
 
-1. ~~**`PORT-5` step 1 — sweep-level sanity metrics on the field route
-   (standard).**~~ **done** 2026-08-16, 04:30 run — 10 passed 149.1 s at
-   `-n 2`, `20260816T093556Z_PORT-5-step1-rerun.log`; σ_max 0.861449197
-   (miss 1.97e-07), ‖S−Sᵀ‖/‖S‖ 2.549409e-05, no warnings, both negative
-   controls executed. One anchor in the text below was a mis-attributed
-   constant (the heuristic's σ_max is 0.999985964171 here, not exactly 1)
-   — corrected with its measurement; see the §7 `PORT-5` entry. Original
-   item: `summarize_sparameter_sanity()` wired to
-   `run_n_port_sparameter_sweep`'s field-route output — the
-   "sweep-level path untouched" gap §10 target 3 names, on a
-   field-derived matrix for the first time. **Anchor:**
-   `passivity_max_sigma` equals `PORT-1` step 4's gated
-   `‖S‖₂ = 0.861449` to 1e-6 (the same quantity by a second route);
-   `reciprocity_max_abs_delta` consistent with the gated 2.5494e-05
-   relative asymmetry; **no warnings** on the field route. **Negative
-   control:** the deprecated heuristic S through the same metrics
-   (`passivity_max_sigma` = 1.000000000000 on record, ≥ 0.13 from the
-   field route's), plus a deliberately asymmetrized copy tripping the
-   reciprocity warning path — the warning must fire. **Cost:**
-   standard, `-n 2`, ~160 s (step 4's solve pair); container
-   `timeout -k 30 500`. **Traps:** the metrics are pure numpy — do not
-   re-solve per metric; one sweep, one summary. **Scope:** metrics
-   wiring only; `PORT-5`'s frequency-sweep ambitions stay unscoped; no
-   tolerance in `sparameters.py` moves. **Negative result:** report,
-   annotate the §7 `PORT-5` row, stop.
-2. ~~**`ANS-3` runnable half (heavy, ~200 s measured via `EX-20`).**~~
-   **done** 2026-08-16, 06:00 run — 131 s at `-n 2`,
-   `20260816T110354Z_ANS-3-runnable-half-n2.log`; all four anchors
-   reproduced inside the 1% band (misses ≤ 3.67e-06), raw rung asserted
-   to fail the unmoved 10% band as the negative control.
-   `metrics.json` / `COMPARISON.md` / combined XDMF landed. **The
-   operator's AED replication of
-   `two_torus_gap_ports_10MHz/SPEC.md` is now Waiting-on-you** — the
-   next daily review must put it on the dashboard. Original item:
-   execute the §7 `ANS-3` entry verbatim against
-   `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`:
-   regenerate the gated 2-port records through the `EX-20` path into
-   `metrics.json` / `COMPARISON.md` (AED columns blank) / combined
-   XDMF.
-3. ~~**`GEO-15` step 1 — graded birdcage conductor sizing (standard,
-   mesh-only, no solves).**~~ **done** 2026-08-16, 07:30 run — 1 passed
-   41 s at `-n 2`, `20260816T123337Z_GEO-15-step1.log`; gate cleared at
-   **0.967019** meshed/CAD (h_c = 1.6e-3, 98 474 cells, 16.74 s mesh)
-   against a **0.740335** baseline negative control, three-rung ladder
-   monotone, `GEO-9` identities unmoved at < 1e-9 on every rung.
-   Junction double-count isolated at 4.22% (CAD/analytic 0.957781), so
-   the 0.7091 deficit was mostly resolution after all. See the §7
-   `GEO-15` entry. Original item: baseline vs graded
-   conductor-volume/CAD-mass identity in one command, gate ≥ 0.95
-   graded with the `GEO-9` identities unmoved.
-4. ~~**`PORT-10` — systematics composition, 2×2 factorial (heavy).**~~
-   **done** 2026-08-16, 09:00 run — 7 passed 352.4 s at `-n 2`,
-   `20260816T140643Z_PORT-10.log`; cost probe first
-   (`20260816T140457Z_PORT-10-costprobe.log`, 95 s: the padded corners
-   mesh at 194 985 / 263 751 cells, inside the 350 000 stop rule).
-   **Cross-term −0.0604 pp inside the pre-stated ±0.5 pp by 8.3×** —
-   the two systematics compose additively at this grain. Both baseline
-   corners reproduce their records to ≤ 3.0e-07, both negative controls
-   executed (+0.9396 pp displaced, −43.0958 pp wedge-only). See the §7
-   `PORT-10` entry. Original item: execute the §7 `PORT-10` entry
-   verbatim; its cost-probe-first rule is binding — `EX-20`'s pair is
-   178 s at `-n 2`, the padded and refined rungs cost more, single
-   command under 1200 s or shrink.
-5. **`TH-11` step 3 — 30 MHz mid-transition point on the
+1. **`PORT-9` step 1 — lumped-port formulation on the two-torus fixture
+   (standard, one solve).** Execute the §7 `PORT-9` step-1 entry: implement
+   the lumped/circuit-element port BC (read Jin 3e ch. 11 at
+   `docs/references/jin-fem-3e/` first; cite chapter/equation numbers in
+   the code and the journal) on the existing gap faces (tags 101/102),
+   solve at 10 MHz, print lumped-port Z beside the gated gap-voltage route
+   on the same solved field. **Anchor:** measurement-only step — no new
+   gate; the printed comparators are named quantities: gap-route corrected
+   ratio 0.939849 × ωM₁₂, ωM₁₂ = 1.241755 Ω, and the existing identity
+   gates stay green. Step 2 owns the bands (pre-stated in the §7 entry:
+   10% mutual, 5% cross-route, 1e-3 reciprocity — set at scoping, never
+   widened). **Negative control:** none required at step 1; the gap-route
+   numbers on the same field are the reference the lumped route must sit
+   beside. **Cost:** mesh 35.9 s + one solve ~25 s (`ANS-3` measured);
+   ~120–180 s with FFCx compile, `-n 2`, container `timeout -k 30 500`.
+   **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` first; a killed run leaves a stale FFCx lock
+   (clear `~/.cache/fenics`); `-s` to put the printed Z on record;
+   new-BC assembly is the risky half — if the formulation does not land
+   inside the slot, park on `attempt/*` with the Jin citations journaled.
+   **Scope:** two-torus fixture only; no birdcage, no S-claim, chunk
+   stays ⬜→🧪. **Negative result:** a lumped Z wildly off the gap route
+   is the finding step 2 exists to adjudicate — report both numbers in
+   the §7 entry, stop.
+2. **`TH-11` step 3 — 30 MHz mid-transition point on the
    step-1 baseline (standard, measurement only).** Execute the §7
    `TH-11` step-3 entry verbatim: step 1's module at f = 30 MHz on the
    same 138 619-cell fixture, same identity gates, ΔR/ΔX printed beside
    Dodd–Deeds. Both rungs carry the resolution caveat, stated in the
    print (δ = 9.19 mm ⇒ 1.84 cells/δ). Any outcome is a finding;
    report in §7, stop.
-6. *(spare)* **`OPS-17` step 1 — finiteness-only test inventory (smoke,
-   no solves).** Execute the §7 `OPS-17` step-1 entry verbatim: sweep,
+3. **`EX-21` — graded birdcage conductor mesh example (standard,
+   mesh-only, no solve).** New `examples/meshing/03_birdcage_graded_conductors.py`
+   + same-stem guide (§5.4 directive; the docrefs checker enforces it),
+   dispatched as `mesh:3` via `./run_examples.sh`, combined XDMF of the
+   tagged mesh opening in ParaView. Demonstrates `GEO-15`'s newly gated
+   capability from the angle no example covers — no birdcage example of
+   any kind exists. **Anchor:** the meshed/CAD conductor-mass identity
+   through the example path — graded rung ≥ 0.95 (import the gate and
+   the API defaults from `io/mesh.py` / the `GEO-15` test, the `ANS-1`
+   rule: constants imported, never restated); `GEO-9` box-partition
+   identity re-asserted < 1e-9. **Negative control (inverted assertion,
+   `EX-18` pattern):** the baseline global-`setSize` rung printed first
+   and asserted to *fail* 0.95 (on record at 0.740335; separation
+   0.2267). **Cost:** both rungs measured — 6.07 s + 16.74 s mesh, ~60 s
+   total with export, standard, `-n 2`, `timeout -k 30 500`. **Traps:**
+   the three `Mesh.MeshSizeFrom*`/`MeshSizeExtendFromBoundary` switches
+   must be off or gmsh silently re-imposes the coarse size; docrefs
+   companion log exits 1 on the 24 pre-existing stale artifacts — read
+   the body, only this case's own violations count (until `OPS-19`
+   lands); `-n 2` (finalize/bcast isolation degenerates at `-n 1`).
+   **Scope:** mesh fidelity demonstration only — no solve, no port
+   claim. **Negative result:** report, annotate the §7 `EX-21` row,
+   stop.
+4. **`OPS-19` step 1 — docrefs exit-code split (smoke, no solves).**
+   Execute the §7 `OPS-19` entry verbatim: staleness gets its own exit
+   code (or `--stale-severity report` default), both call sites updated,
+   known-issues "by design" entry updated with the new contract.
+   Countable anchor + injected-dead-reference negative control per the
+   entry. Independent of every item above.
+5. **`OPS-17` step 1 — finiteness-only test inventory (smoke, no
+   solves).** Execute the §7 `OPS-17` step-1 entry verbatim: sweep,
    table, dispositions — annotation and harness log only, nothing
    deleted yet. Independent of every item above.
+6. *(spare, serial)* **`PORT-9` step 2 — cross-route identity gate
+   (standard).** **Depends on item 1 landing; if it did not, stop and
+   journal rather than improvising past it.** Execute the §7 `PORT-9`
+   step-2 entry verbatim: lumped-port Im Z₁₂ inside the unmoved 10%
+   band of ωM₁₂; cross-route |ΔZ₁₂|/|Z₁₂| ≤ 5%; reciprocity ≤ 1e-3
+   through `run_n_port_sparameter_sweep`. Bands pre-stated at scoping,
+   never widened — a miss is a finding about one of the two feed
+   models; diagnose in the §7 entry, stop. Cost: two routes on the
+   step-1 artifacts, ~180 s, `-n 2`, `timeout -k 30 500`.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
 `docs/planning/plan-archive.md`, not here.)*
 
 If the queue drains: **stop and journal.** The former birdcage-port hold
-is discharged (2026-08-16): its two open questions are now chunks —
-`PORT-10` (systematics composition) and `GEO-15` (the 0.7091 sizing
-question) — and the port model itself is `PORT-9`. Do not improvise
-beyond their written entries; `PORT-9` step 3's gate is still unscoped by
-design. History of the hold in `docs/planning/plan-archive.md`.
+is fully discharged: its two open questions closed as chunks 2026-08-16
+(`PORT-10`, `GEO-15`), and `PORT-9` — the port model itself — is fully
+scoped, step 3's gate included (10:30 review). Do not improvise beyond
+the written `PORT-9` entry; its steps are serial by design. History of
+the hold in `docs/planning/plan-archive.md`.
 
 Every frequency-domain command needs `source /usr/local/bin/dolfinx-complex-mode`
 **and** `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest

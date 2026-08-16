@@ -1,106 +1,103 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-16, 03:00 review. A fully productive interval — all
-four queued implementer runs completed, one chunk closed — but the 01:30
-**scheduled weekly review died on the session limit**, and the
-interactive session that had been doing its work was cut off mid-flight;
-this review landed its uncommitted tail. Source of truth is
-`PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
+**Updated:** 2026-08-16, 10:30 review. Second fully-productive interval in
+a row: all four implementer slots landed (`PORT-5` step 1, `ANS-3`,
+`GEO-15` step 1, `PORT-10`), all four audited §4-compliant, two chunks
+closed, and the birdcage-port path is now fully scoped — `PORT-9` heads
+the queue. Source of truth is `PROJECT_PLAN.md`; this page is a read-only
+digest for the human operator.
 
 ## Waiting on you
 
-0. 🔴 **The weekly review never ran — and your own session was cut off.**
-   The 01:30 weekly slot produced a session-limit log ("resets 2am"), the
-   third review-slot credit death this week. Your interactive session
-   (commits 01:19/01:25 plus a dirty tree) had already covered most of the
-   weekly scope — plan prune, `OPS-18`, `PORT-9`/`PORT-10` scoping,
-   `ANS-3` commission, attempts archival — and this review committed its
-   uncommitted tail verbatim and wrote the two entries it left dangling
-   (`GEO-15`, `ANS-3`). **Still not done by anyone: §10's dated
-   assessments (last refreshed 2026-08-09) and the examples/ health
-   check.** Options: run the weekly protocol interactively when your
-   session limit resets, or let it wait for the 08-23 slot — but the
-   Phase-5 pace numbers ("ports on the birdcage ≈ 08-19…26") go stale
-   either way.
-1. **Two operator decisions the automation cannot make for itself**
-   (unchanged): (a) **`OPS-16` unblock** — retry-on-529 is designed but
+0. 🟢→**NEW: the `ANS-3` AED run is unblocked.** The FEM half landed this
+   morning (131 s, all gates green, records reproduced to ≤ 3.7e-06).
+   Your half: replicate
+   `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md` in
+   Ansys Electronics Desktop and fill the blank AED columns in
+   `COMPARISON.md`. It is also the **independent adjudication input for
+   `PORT-10`'s composition result** — worth doing before birdcage-port
+   numbers start being quoted against the additive ladder.
+1. 🔴 **The weekly review still hasn't run** (01:30 slot died on the
+   session limit; third review-slot credit death that week). Its
+   remaining scope: §10's dated assessments (still 2026-08-09 vintage —
+   the "ports on the birdcage ≈ 08-19…26" pace number is now actionable
+   since `PORT-9` is queued) and the examples/ health check. Run the
+   weekly protocol interactively or let the 08-23 slot take it.
+2. **Two operator decisions the automation cannot make** (unchanged):
+   (a) **`OPS-16` unblock** — retry-on-529 is designed but
    `Edit(scripts/automation/**)` is under `ask`; move the three launcher
    files to `allow` or apply by hand (mind the `.gitignore` bare-`lib/`
-   trap in the §7 entry). (b) **Outage visibility** — nothing records a
-   *missing* run; the heartbeat needs the same allowlist decision.
-2. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
-   2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates the
-   files.)
-3. **ANS-1 Ansys replication** — the FEM half is complete; the AED run is
-   yours. **`ANS-3` (two gapped loops, 2-port Z/S) is now commissioned and
-   queued** — its runnable half is On-deck item 2, and its AED half will
-   join this list when that lands; the SPEC you wrote is at
-   `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`.
-4. Housekeeping: local `main` is now **68 commits ahead** of
-   `origin/main` (last push 2026-08-10) — push when convenient.
+   trap). (b) **Outage visibility** — nothing records a *missing* run.
+3. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
+   2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
+4. **ANS-1 Ansys replication** — still yours; ANS-3 (item 0) is the
+   second case in the same queue.
+5. Housekeeping: local `main` is **73 commits ahead** of `origin/main`
+   (last push 2026-08-10) — push when convenient.
 
 ## Honest current state (digest of §2 — one row moved this interval)
 
 | Capability | State | Gate |
 |---|---|---|
 | Magnetostatics | ✅ validated | closed forms; < 5% wire field reached (MAG-13, 3.74% at 1.5 M cells) |
-| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.83% + power to 3.63% (TH-10); the ~3% residual is proven resolution (GEO-14) |
-| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 0.88% (MAT-6); **TH-11 step 2 attributed most of the +10.27% 64 MHz deviation to mesh: +2.81% at 2.5 cells/δ — still unconverged, so no gated Larmor trend claim yet** |
-| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4) + the Larmor power integral (TH-10); never on a coil |
-| S-parameters | ✅ package path field-derived (PORT-1) | two-torus fixture only, two named systematics; **the birdcage-port hold is discharged — direction scoped 2026-08-16 as `PORT-9` (lumped-element port BC, Jin ch. 11) behind `PORT-10` (systematics composition) + `GEO-15` (conductor sizing); nothing has executed, so §2.2's "no coil has ports" stands** |
+| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.83% + power to 3.63% (TH-10) |
+| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 0.88% (MAT-6); TH-11 step 2 attributed most of the 64 MHz deviation to mesh (+2.81% at 2.5 cells/δ); step 3 (30 MHz) queued |
+| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4); never on a coil |
+| S-parameters | ✅ package path field-derived (PORT-1) | two-torus fixture only. **Both `PORT-9` prerequisites executed and closed today**: `PORT-10` — the two systematics compose additively (cross-term −0.0604 pp inside ±0.5 pp); `GEO-15` — graded conductor sizing reaches 0.967 of CAD mass (PORT-9 budgets from 98 k cells). `PORT-9` (lumped-element port BC) is now fully scoped incl. its birdcage gate (reciprocity + passivity + C4 circulant symmetry of Z) and heads the queue; §2.2's "no coil has ports" stands until it gates |
 
-## Recent activity (2026-08-15 18:00 → now)
+## Recent activity (2026-08-16 03:00 → 10:30)
 
-Four completions in four consecutive slots — the first fully-productive
-interval since the outages:
+Four completions in four consecutive slots, all audited COMPLIANT:
 
-- **TH-11 step 2 ✅ (chunk stays 🟡)** — the 417 914-cell rung read
-  RESOLUTION-DOMINATED: +10.27% → +2.81%; no gated trend step scopeable
-  per the pre-registration.
-- **Hygiene pair ✅** — TH-10's monotonicity assert live and green;
-  MAG-13's exit gate bitten live (exit 1, bit-identical numbers). Both
-  deferred audit caveats closed; no bound moved.
-- **EX-18 doc repairs ✅** — guide pass 3 violations → 0; the "400×"
-  margin comment was off by ~52× and now reads 7.7× with the band
-  untouched; docrefs known-issues entry retired.
-- **EX-20 → chunk closed ✅** — one `run_n_port_sparameter_sweep` call
-  reproduces all four PORT-1 step-4 records to ≤ 3.7e-06 against a 1%
-  band; raw rung asserted to *fail* the 10% band; heuristic negative
-  control separated by 0.31. Audited COMPLIANT this review (subagent
-  auditor); tier reclassified standard → heavy (178.2 s at the 180 s
-  boundary, EX-9 precedent).
+- **PORT-5 step 1 ✅ (chunk stays 🧪)** — sweep-level sanity metrics gate
+  on the field route for the first time: σ_max matches the gated ‖S‖₂ to
+  1.97e-07, reciprocity to 9e-11, warning-free; heuristic negative
+  control separated by 0.139. A mis-transcribed §9 constant was
+  corrected with its measurement (audit confirmed: control-premise fix,
+  discriminating bound untouched).
+- **ANS-3 ✅** — the two-torus 2-port AED benchmark's runnable half:
+  `metrics.json` / `COMPARISON.md` (AED columns blank for you) / XDMF;
+  records reproduced to ≤ 3.7e-06; raw rung asserted to *fail* the 10%
+  band as the negative control. Incidental fix: `run_examples.sh` got
+  the `timeout -k 30` treatment (last bare-TERM compute path retired).
+- **GEO-15 → chunk closed ✅** — the 0.7091 question answered: 4.22% was
+  the analytic sum double-counting junctions, the rest resolution;
+  graded sizing (Distance→Threshold field) recovers 0.967 of CAD mass at
+  2× cells / 2.8× mesh time, GEO-9 identities unmoved. Closed by this
+  review; one latent rank-safety hazard in the ladder test filed in
+  known-issues (has not fired).
+- **PORT-10 ✅** — 2×2 factorial: the two PORT-1 systematics compose
+  additively — cross-term −0.0604 pp inside the pre-stated ±0.5 pp by
+  8.3×; both negative controls executed in-run; cost-probe-first honored.
 
 ## Automation health
 
 - **Implementer grid: 4/4 slots productive**, tree clean at every
-  handoff, no `attempt/*` or `recovered/*` branches.
-- **Review slots: the credit ceiling is now the grid's top risk.** The
-  01:30 weekly review is the third review slot this week to die on
-  credits/session limit, and this time it took the week's §10 refresh
-  with it. The daily 03:00 slot (this page) ran normally.
-- The interrupted interactive session left the tree dirty ~90 min; the
-  02:00-slot exception (implementer lands journaled doc-only diffs) never
-  applied because no implementer ran between 01:25 and this review.
-  Resolved here by commit, per protocol step 2.
+  handoff, no `attempt/*` or `recovered/*` branches. Both review slots
+  since (03:00, 10:30) ran normally; the credit ceiling remains the
+  grid's top risk (weekly slot, item 1 above).
+- **Doc-reference checker signal is degraded**: 24 pre-existing stale
+  artifacts force exit 1 on every run, so two chunks had to journal red
+  logs as known-benign in one day. `OPS-19` commissioned this review to
+  split the exit code (queue item 4); an artifact-refresh run was
+  rejected as a treadmill.
 - Standing weekly-review items, rolled to whichever weekly runs next:
-  §10 dated assessments + pace ledger (now two weeks stale), examples/
+  §10 dated assessments + pace ledger (two weeks stale), examples/
   health check, MAG-13 CG1 gate adoption, MAT-6 step 10's ≥ 5.1× solve
   anomaly, POST-4 export adoption (pending your ParaView check),
-  `ANS-1`/`ANS-3` adjudication when AED numbers land.
+  ANS-1/ANS-3 adjudication when AED numbers land.
 
-## On deck (§9, restocked this review; six items, mutually independent)
+## On deck (§9, restocked this review; items 1–5 independent, 6 serial)
 
-1. **PORT-5 step 1** — sweep-level sanity metrics on the field-route
-   S-matrix (§10 target 3's named gap).
-2. **ANS-3 runnable half** — regenerate the gated 2-port records into the
-   benchmark case directory via the EX-20 path.
-3. **GEO-15 step 1** — graded birdcage conductor sizing, mesh-only: is
-   the 0.7091 conductor-volume ratio a `PORT-9` blocker?
-4. **PORT-10** — the two PORT-1 systematics: 2×2 factorial, composition
-   measured, not assumed.
-5. **TH-11 step 3** — 30 MHz mid-transition point.
-6. *(spare)* **OPS-17 step 1** — finiteness-only test inventory (no
-   solves).
+1. **PORT-9 step 1** — lumped-port formulation on the two-torus fixture
+   (Jin ch. 11); lumped Z printed beside the gated gap-voltage route.
+2. **TH-11 step 3** — 30 MHz mid-transition point.
+3. **EX-21** — graded birdcage conductor mesh example (first birdcage
+   example of any kind; GEO-15's capability in ParaView).
+4. **OPS-19** — docrefs exit-code split (restore the checker's signal).
+5. **OPS-17 step 1** — finiteness-only test inventory (no solves).
+6. *(spare, depends on item 1)* **PORT-9 step 2** — cross-route identity
+   gate.
 
 ---
 

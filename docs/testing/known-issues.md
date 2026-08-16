@@ -515,6 +515,13 @@ required headings in `examples/ports/01_two_torus_port_pair.md`, found by
 `EX-19` on 2026-08-13 — were fixed 2026-08-16 and the entry retired with
 them: 3 guide violations → 0, verified in the log cited above.)*
 
+*Update 2026-08-16, 10:30 review: "by design" has become "masks the
+signal" — two implementer runs (`EX-20`, `ANS-3`) had to journal a red
+companion log as known-benign in one day, so the exit code no longer
+distinguishes a case's own breakage from the backlog's. `OPS-19` (§7)
+is commissioned to give staleness its own exit code; this paragraph
+leaves with it.*
+
 ### The container-side `timeout` in the standard harness recipe does not reliably stop an `mpiexec` job, and an overrun can wedge the container (`MAT-6` step 10, 2026-08-12)
 
 **Verified at `648b216`, 00:00 implementer slot.** The recipe every heavy
@@ -1299,6 +1306,28 @@ fix turns out to live. *(That exit condition was met by `POST-4` step 3 on
 retirement block at the top of this entry.)*
 
 ---
+
+### Latent (has not fired): rank-local ladder-budget break in `test_birdcage_conductor_sizing.py` can desync collectives
+
+**Found:** 2026-08-16, 10:30 review audit of `GEO-15` step 1 (subagent
+auditor), at commit `94becb5`. **Not a failure yet** — recorded because the
+mode it enables is a wedge, not a wrong number.
+
+**Symptom (potential):** `tests/mesh/test_birdcage_conductor_sizing.py`
+lines ~149–158 break out of the sizing ladder when
+`remaining < 2 × previous_rung_time`, using per-rank `time.perf_counter()`
+with **no reduction**. If ranks ever straddle the threshold, one rank
+`break`s while the other enters a collective mesh call — deadlock until the
+container-side `timeout -k 30` kills the job. It cannot corrupt a reported
+number (all rungs completed in the closing run, 41 s against a 300 s
+budget), but a slower box or a bigger ladder could fire it.
+
+**Cause:** wall-clock is rank-local state used in a collective control-flow
+decision — the same class as the `cell_tags.values` rule in CLAUDE.md.
+
+**Resolves with:** any commit that next touches this test — reduce the
+decision (`comm.allreduce(remaining, MPI.MIN)` or decide on rank 0 and
+`bcast`). `EX-21` must not copy the pattern into the example.
 
 ## Recording a new entry
 
