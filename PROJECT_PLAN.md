@@ -694,6 +694,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-12` | **Widen the two `1e-9` wall tolerances and gate the `outer_boundary` group** (known-issues 12) | ✅ | standard |
 | `GEO-13` | **Decouple `cylindrical_domain`'s wall tolerance from `resolution`** (known-issues 13) | ✅ | standard |
 | `GEO-14` | **The shared ~3% geometry floor: faceting vs resolution** (entry lives after `TH-11`, beside the fixtures it measures) | ✅ *(closed 2026-08-15 review on the refuted hypothesis: RESOLUTION, 3.643% → 1.781% at 55 251 cells, rate 1.77 in h — no faceting floor)* | standard |
+| `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | ⬜ | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -775,6 +776,47 @@ unchanged (3 of 6 surfaces), margins now 1.1e-04× / 1.0e+02×. All four
 fixtures in the margins file assert live (the `GEO-11` sweep closes). New
 precondition at the use site: a radial gap below ~1e-4 m stops clearing
 the OCC padding by 10× (smallest gap in the repo: 0.07 m).
+
+**`GEO-15` — birdcage conductor sizing: is graded sizing a `PORT-9`
+prerequisite?** ⬜ *(entry written 2026-08-16, 03:00 daily review — the
+chunk itself was named by the interrupted weekly-scope session as the
+second `PORT-9` step-3 prerequisite but left without an entry. Mesh-only:
+no solves.)* The birdcage mesh (`GEO-9`) keeps only **0.7091** of the
+conductor's analytic volume under the single global `setSize = 0.015` —
+part is the analytic sum double-counting the 8 leg∩ring junctions (CAD
+masses give 0.9578), the rest is 0.015 against a 0.004 ring minor radius.
+`GEO-8`'s measured rule (`wire_resolution ≲ 0.4·minor_radius`, i.e.
+≲ 0.0016 here) says the conductor is ~10× under-resolved, and a lumped
+port on that surface inherits the coarse conductor boundary. This chunk
+answers `PORT-9` step 3's open question by measurement.
+> * **Step 1 (gate) — graded rung.** Regenerate `birdcage_port_domain`
+>   with conductor-graded sizing (gmsh size field or per-surface `setSize`
+>   at ~0.4× the ring minor radius; air/box sizing untouched) and print,
+>   for baseline and graded in the same command: conductor meshed volume /
+>   **CAD (occ) mass** — an identity that → 1 under refinement, denominator
+>   free of the junction double-count — plus cell count and mesh wall
+>   time. **Anchor:** the volume identity; **gate:** graded conductor
+>   ratio ≥ 0.95 of CAD mass while the four port-box identities and both
+>   global volume identities stay at their `GEO-9` values (`< 1e-9`).
+>   **Negative control:** the baseline global-`setSize` mesh re-measured
+>   in-run on the same CAD-mass denominator (its 0.7091-vs-analytic-sum
+>   number is on record; separation is the distance to the 0.95 band).
+>   **Tier/cost:** standard, `-n 2`; baseline birdcage meshes in 8.95 s
+>   (`GEO-9` step 2b), graded costs more — print cell count before any
+>   second rung, container `timeout -k 30 500`. **Traps:** `occ.fragment`
+>   renumbers — re-derive groups by centroid/mass, never trust returned
+>   tag order; tag reads via `global_cell_tag_set()` (the rank-local read
+>   fired live in `GEO-9`); keep `-n 2` — the finalize/`bcast` isolation
+>   gate degenerates at `-n 1`; a bad sizing choice fails inside
+>   `_build_birdcage_port_model` after `gmsh.initialize()`, which the 2a
+>   machinery already handles. **Scope:** meshability and volume fidelity
+>   only — no solve, no port claim, `GEO-4` stays 🧪; the answer feeds the
+>   `PORT-9` step-3 gate that the daily review scopes once this and
+>   `PORT-10` report. **Negative result:** if 0.95 is unreachable inside
+>   the tier ceiling (cell explosion or mesh failure), that *is* the
+>   answer — record the measured frontier (largest ratio, cell count,
+>   time) in this entry and known-issues if a defect surfaced; report,
+>   stop.
 
 ### TH — Time-harmonic Maxwell (Phase 2)
 
@@ -1322,7 +1364,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-17` | Circular-loop VTX export repair: port the `EX-14` diff, same round-trip anchor | ✅ (2026-08-10: round-trip max\|B\| 7.756122914931e-05 T both ways, rel diff 0.000e+00 vs 1e-10; loop's analytic numbers unmoved, checker green) | standard |
 | `EX-18` | Gap-voltage port pair → Z → S on the two-torus fixture (the 3b-xvii/xviii gated capability; first ports example) | ✅ (2026-08-13: raw 0.894543 × ωM₁₂ printed as the miss it is, corrected 0.939849 (−6.02%) inside the unmoved 10%; ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1; blind-ladder negative control −98.26% asserted to fail; 134 s at `-n 2`) | standard |
 | `EX-19` | Larmor lossy-sphere example (`TH-10`'s newly gated capability: first example solving at 64/128 MHz; rubric in the §9 item) | ✅ (2026-08-13: `th:6`, fixture imported from the `TH-10` test module; all four records reproduced through the example path — 3.643% / 1.826% interior relL2 at 18.68× / 57.31× separation, power 3.629% with the quasi-static route missing 58.140% — max drift **1.7e-04** vs a pre-stated 1% band; convergence and both negative controls executed in-run; 24 s at `-n 2`) | standard |
-| `EX-20` | Package S-parameter sweep example (`PORT-1` step 4's newly gated capability: first example calling `run_n_port_sparameter_sweep` on the solved field — the entry-point angle `EX-18` does not cover; full rubric in the §9 item, commissioned 2026-08-15 review) | ✅ (2026-08-16: `ports:2`, one `run_n_port_sparameter_sweep(..., gap_voltage_ports=specs)` call → two solves → Z → S; **all four step-4 records reproduced inside the pre-stated 1% band, misses 3.33e-07 / 3.23e-07 / 3.67e-06 / 2.29e-07** — raw 0.894543 printed first and asserted to *fail* the 10% band, corrected 0.939849 (−6.02%) inside it, ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1, `\|Z₁₂−Z₂₁\|/\|Z₂₁\|` = 5.8309e-04 printed; negative control executed in-run — the deprecated heuristic route on the same mesh/ports gives an identically-zero off-diagonal, max\|ΔS\| = 3.078e-01 with its `DeprecationWarning` shown; 178.2 s at `-n 2`, 178 055 cells; guide pass 19/19 green. **Named limitation on record:** the sweep returns no fields, so the combined XDMF costs one extra port-1 solve (23.0 s) — surfacing `TimeHarmonicFields` from `SParameterSweepResult` is unscoped) | standard |
+| `EX-20` | Package S-parameter sweep example (`PORT-1` step 4's newly gated capability: first example calling `run_n_port_sparameter_sweep` on the solved field — the entry-point angle `EX-18` does not cover; full rubric in the §9 item, commissioned 2026-08-15 review) | ✅ (2026-08-16: `ports:2`, one `run_n_port_sparameter_sweep(..., gap_voltage_ports=specs)` call → two solves → Z → S; **all four step-4 records reproduced inside the pre-stated 1% band, misses 3.33e-07 / 3.23e-07 / 3.67e-06 / 2.29e-07** — raw 0.894543 printed first and asserted to *fail* the 10% band, corrected 0.939849 (−6.02%) inside it, ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1, `\|Z₁₂−Z₂₁\|/\|Z₂₁\|` = 5.8309e-04 printed; negative control executed in-run — the deprecated heuristic route on the same mesh/ports gives an identically-zero off-diagonal, max\|ΔS\| = 3.078e-01 with its `DeprecationWarning` shown; 178.2 s at `-n 2`, 178 055 cells; guide pass 19/19 green. **Named limitation on record:** the sweep returns no fields, so the combined XDMF costs one extra port-1 solve (23.0 s) — surfacing `TimeHarmonicFields` from `SParameterSweepResult` is unscoped. *Audit 2026-08-16, 03:00 review: COMPLIANT; tier reclassified standard → heavy per the `EX-9` precedent — 178.2 s sits at the 180 s standard boundary and the wrap was 500 s; the companion docrefs log exits 1 on 24 pre-existing stale artifacts from other examples, none EX-20's (journaled in attempts.md)*) | heavy |
 
 **`EX-4`…`EX-12` — the 2026-08-09 backfill, all ✅ by 2026-08-10** *(full
 plans + closure narratives in `docs/planning/plan-archive.md`)*. Common
@@ -1443,6 +1485,7 @@ next weekly review adjudicates the returned numbers.
 | ID | Title | Status | Tier |
 |---|---|---|---|
 | `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ✅ | standard |
+| `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ⬜ | heavy |
 
 **`ANS-1` ✅ 2026-08-09** *(scoped 2026-08-09, weekly review; full plan and
 closure narrative in `docs/planning/plan-archive.md`)*. Runnable half of
@@ -1456,6 +1499,37 @@ with no tolerance); energy identity ratio 1.0000. `metrics.json`,
 the case directory; every constant, mesh, and drive is imported from the
 `MAT-6`/`EX-11` modules, so the benchmark cannot drift from the gate. The
 AED half is the operator's (§5.4 Waiting-on-you).
+
+**`ANS-3` — two coaxial gapped loops at 10 MHz: runnable half** ⬜
+*(commissioned 2026-08-16 by the interrupted weekly-scope session —
+authoritative spec in
+`examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`; this entry
+written by the 03:00 daily review to give the commission its runnable-half
+chunk, mirroring `ANS-1`'s shape.)* Regenerate the gated two-torus 2-port
+numbers through `run_n_port_sparameter_sweep` — the `EX-20` path, never
+hand-transcribed — into the case directory: `metrics.json`,
+`COMPARISON.md` with our columns filled and AED columns blank per SPEC,
+combined XDMF. Dispatch through the runner's `ans:` group
+(`./run_examples.sh -e ans:3 ...`).
+> **Anchor:** the `PORT-1` step-4 records, reproduced inside `EX-20`'s
+> pre-stated 1% band (`EX-20` measured misses ≤ 3.67e-06): corrected ratio
+> 0.939849 × ωM₁₂ (ωM₁₂ = +1.241755 Ω filamentary), reciprocity
+> ‖S−Sᵀ‖/‖S‖ = 2.5494e-05 against 1e-3, ‖S‖₂ = 0.861449 ≤ 1. **Negative
+> control:** the raw rung 0.894543 printed first and asserted to *fail*
+> the unmoved 10% band (the `EX-20` inverted assertion). **Tier/cost:**
+> heavy by the `EX-20` measurement — 178.2 s at `-n 2` for the sweep plus
+> 23.0 s for the export solve (the sweep discards `TimeHarmonicFields`,
+> `EX-20`'s named limitation); one command, container `timeout -k 30 500`.
+> **Traps:** complex mode + `FEM_EM_REQUIRE_COMPLEX=1`; geometry, drive,
+> and correction constants come from the `EX-20`/`PORT-1` modules so the
+> benchmark cannot drift from the gate (`ANS-1`'s rule); the docrefs
+> checker exits 1 on unrelated stale artifacts (known, benign). **Scope:**
+> runnable half only — no adjudication, no coil/birdcage claim; on landing,
+> the operator's AED replication goes to the dashboard Waiting-on-you and
+> the next weekly review adjudicates (it is also `PORT-10`'s independent
+> adjudication input). **Negative result:** any drift from the gated
+> records outside the 1% band is a finding about the example path —
+> report, annotate this entry, stop.
 
 ---
 
@@ -1491,13 +1565,15 @@ the ROADMAP than in `pending-tests.md`. Resolve via this table.
 Phase-1/2 analytic gates are closed (§6); the working front is ports
 beyond the two-torus fixture and the Larmor-regime validation gate.
 
-1. **`TH-11`** — coil loading at Larmor frequencies: step 2 attributed
+1. **The birdcage-port lineage, now scoped** (2026-08-16): prerequisites
+   `PORT-10` (systematics composition) and `GEO-15` (conductor sizing)
+   first, plus `ANS-3` (the AED adjudication input for the same
+   composition question), then `PORT-9` (lumped-element port BC, Jin
+   ch. 11 — steps 1–2 on the two-torus fixture are independent of the
+   prerequisites; only step 3 is blocked on them).
+2. **`TH-11`** — coil loading at Larmor frequencies: step 2 attributed
    most of the 64 MHz deviation to mesh resolution (+10.27% → +2.81%);
    step 3 (30 MHz mid-transition point) is queued.
-2. **Birdcage ports / B1+** — deliberately held for the weekly review to
-   scope (see the drain note at the end of this section); the flagged
-   direction is a lumped/circuit-element port BC per Jin ch. 11, not
-   further gap-voltage estimator variants.
 3. **`PORT-5` step 1** — sweep-level sanity metrics on the field route
    (queued below).
 4. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
@@ -1517,45 +1593,25 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed 2026-08-15, **18:00 review** (the first to execute since
-08-13 10:30 — three API-529 no-ops and a ~23.8 h host outage in between;
-an absent log file means host-off, a 98-byte log means no-credits).
-Interval landings: `PORT-1` step 4, `EX-19`, `GEO-14` step 1, `TH-11`
-step 1 — all audited COMPLIANT, no demotions. Decisions: **`PORT-1`
-closed ✅** (field-derived S through the package entry point,
-`‖S−Sᵀ‖/‖S‖ = 2.5494e-05` against the 1e-3 gate), **`GEO-14` closed ✅**
-on the refuted hypothesis, `TH-11` steps 2–3 scoped, `EX-20`
-commissioned, `OPS-16` 🚫 (unexecutable headless — operator unblock
-decision on the dashboard). Full journal in
-`docs/planning/plan-archive.md`.
+Last reviewed 2026-08-16, **03:00 review**. Interval: all four queued
+runs completed — `TH-11` step 2, the hygiene pair, `EX-18` doc repairs,
+`EX-20` — no anomalies, no parked branches. `EX-20` (the interval's one
+chunk-level ✅) audited **COMPLIANT**; tier reclassified to heavy per the
+`EX-9` precedent. The 01:30 scheduled weekly review **never executed**
+(session-limit log); an interactive operator session had already done
+weekly-scope work (plan prune, `OPS-18`, `PORT-9`/`PORT-10` scoping,
+`ANS-3` commission, attempts archival) but was itself cut off — this
+review landed its uncommitted tail verbatim (commit before this one) and
+wrote the two entries it left dangling (`GEO-15`, `ANS-3`). §10's dated
+assessments remain 2026-08-09 vintage — weekly-review scope, not touched
+here. Done-item texts and prior recaps: `docs/planning/plan-archive.md`.
 
-**Seven ready items, mutually independent.** Item 6 is the declared spare.
-Items 1 and 6 execute their §7 `TH-11` entries verbatim, item 7 its §7
-`OPS-17` step-1 entry; items 2–5 are self-contained below.
+**Six ready items, mutually independent.** Item 6 is the declared spare.
+Items 2–4 execute their §7 entries verbatim (`ANS-3`, `GEO-15` step 1,
+`PORT-10`); item 5 its §7 `TH-11` step-3 entry, item 6 its §7 `OPS-17`
+step-1 entry; item 1 is self-contained below.
 
-1. ~~**`TH-11` step 2 — the resolution rung at 64 MHz (heavy).**~~ —
-   **done 2026-08-15, 19:30 run**: pre-registered reading
-   **RESOLUTION-DOMINATED** — ΔR deviation +10.2698% → **+2.8063%** on the
-   417 914-cell rung, all identities green; residual still unconverged at
-   2.52 cells/δ, and per the pre-registration no gated trend step is
-   scopeable. Disposition in the §7 `TH-11` entry.
-2. ~~**Hygiene pair — the two standing ride-alongs, promoted.**~~ —
-   **done 2026-08-15, 21:00 run**: (a) `TH-10` monotonicity assert live and
-   green (8.387% → 3.629%, digits bit-identical); (b) `MAG-13` exit gate
-   bitten live (exit 1, 12.7485% bit-identical, azimuthality PASS at
-   9.541e-02). No bound moved; dispositions in their §7 entries.
-3. ~~**`EX-18` doc repairs — retire the docrefs known-issues entry.**~~ —
-   **done 2026-08-16, 22:30 run**: guide pass 3 violations → **0**; the
-   overstated margin comment corrected 400× → 7.7× with the band untouched;
-   the checker's exit-1 on 24 stale artifacts is environmental/by-design
-   (known-issues note). Disposition in the §7 `EX-18` entry.
-4. ~~**`EX-20` — package S-parameter sweep example (standard).**~~ —
-   **done 2026-08-16, 00:00 run**: `ports:2` reproduces all four `PORT-1`
-   step-4 records to ≤ 3.67e-06 against a pre-stated 1% band; the raw rung
-   asserted to *fail* the unmoved 10%; heuristic negative control ran
-   in-run (max|ΔS| = 3.078e-01). One scoping finding (the sweep discards
-   `TimeHarmonicFields`, costing an extra solve) in the §7 `EX-20` row.
-5. **`PORT-5` step 1 — sweep-level sanity metrics on the field route
+1. **`PORT-5` step 1 — sweep-level sanity metrics on the field route
    (standard).** `summarize_sparameter_sanity()` wired to
    `run_n_port_sparameter_sweep`'s field-route output — the
    "sweep-level path untouched" gap §10 target 3 names, on a
@@ -1574,15 +1630,29 @@ Items 1 and 6 execute their §7 `TH-11` entries verbatim, item 7 its §7
    wiring only; `PORT-5`'s frequency-sweep ambitions stay unscoped; no
    tolerance in `sparameters.py` moves. **Negative result:** report,
    annotate the §7 `PORT-5` row, stop.
-6. *(spare)* **`TH-11` step 3 — 30 MHz mid-transition point on the
+2. **`ANS-3` runnable half (heavy, ~200 s measured via `EX-20`).**
+   Execute the §7 `ANS-3` entry verbatim against
+   `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`:
+   regenerate the gated 2-port records through the `EX-20` path into
+   `metrics.json` / `COMPARISON.md` (AED columns blank) / combined
+   XDMF. On landing, the operator's AED half goes to Waiting-on-you.
+3. **`GEO-15` step 1 — graded birdcage conductor sizing (standard,
+   mesh-only, no solves).** Execute the §7 `GEO-15` entry verbatim:
+   baseline vs graded conductor-volume/CAD-mass identity in one
+   command, gate ≥ 0.95 graded with the `GEO-9` identities unmoved.
+4. **`PORT-10` — systematics composition, 2×2 factorial (heavy).**
+   Execute the §7 `PORT-10` entry verbatim; its cost-probe-first rule
+   is binding — `EX-20`'s pair is 178 s at `-n 2`, the padded and
+   refined rungs cost more, single command under 1200 s or shrink.
+5. **`TH-11` step 3 — 30 MHz mid-transition point on the
    step-1 baseline (standard, measurement only).** Execute the §7
    `TH-11` step-3 entry verbatim: step 1's module at f = 30 MHz on the
    same 138 619-cell fixture, same identity gates, ΔR/ΔX printed beside
-   Dodd–Deeds. Independent of item 1 (different mesh rung); both carry
-   the resolution caveat, stated in the print (δ = 9.19 mm ⇒
-   1.84 cells/δ). Any outcome is a finding; report in §7, stop.
-7. **`OPS-17` step 1 — finiteness-only test inventory (smoke, no
-   solves).** Execute the §7 `OPS-17` step-1 entry verbatim: sweep,
+   Dodd–Deeds. Both rungs carry the resolution caveat, stated in the
+   print (δ = 9.19 mm ⇒ 1.84 cells/δ). Any outcome is a finding;
+   report in §7, stop.
+6. *(spare)* **`OPS-17` step 1 — finiteness-only test inventory (smoke,
+   no solves).** Execute the §7 `OPS-17` step-1 entry verbatim: sweep,
    table, dispositions — annotation and harness log only, nothing
    deleted yet. Independent of every item above.
 
@@ -1590,12 +1660,12 @@ Items 1 and 6 execute their §7 `TH-11` entries verbatim, item 7 its §7
 §10 assessment — lives in the review commits and
 `docs/planning/plan-archive.md`, not here.)*
 
-If the queue drains: **stop and journal.** Do **not** improvise birdcage
-ports or a B1+ chunk — the hold stands: scoping them is the weekly review's
-call, with two open questions first — the two systematics' independent
-composition is untested (§7 3b-xviii), and whether `GEO-4`'s graded sizing
-is a birdcage prerequisite (the 0.7091 measurement). History of the hold in
-`docs/planning/plan-archive.md`.
+If the queue drains: **stop and journal.** The former birdcage-port hold
+is discharged (2026-08-16): its two open questions are now chunks —
+`PORT-10` (systematics composition) and `GEO-15` (the 0.7091 sizing
+question) — and the port model itself is `PORT-9`. Do not improvise
+beyond their written entries; `PORT-9` step 3's gate is still unscoped by
+design. History of the hold in `docs/planning/plan-archive.md`.
 
 Every frequency-domain command needs `source /usr/local/bin/dolfinx-complex-mode`
 **and** `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest
