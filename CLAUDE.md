@@ -99,7 +99,7 @@ plus one weekly planning review:
   against §4, rescopes failed attempts, disposes of `recovered/*` branches,
   tops the §9 "On deck" queue up to 5 items. Protocol:
   docs/automation/daily-review.md.
-- **Weekly planning review** (Fable 5, high effort, Sunday 01:30 local) —
+- **Weekly planning review** (Fable 5, high effort, Sunday 02:15 local) —
   owns the long horizon with brutal realism: §6 phase map and §10 roadmap
   (phases → subgoals, dated pace-based assessments), examples/ health, and
   commissioning/adjudicating `examples/ansys_benchmarks/` cases the human

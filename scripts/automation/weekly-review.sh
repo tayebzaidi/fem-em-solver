@@ -23,7 +23,9 @@ fi
 cd "$REPO"
 START="$(date '+%Y-%m-%d %H:%M %Z')"
 
-# 60 min wall-clock cap in the Sunday 01:30 buffer slot; the 03:00 daily
+# 60 min wall-clock cap in the Sunday 02:15 buffer slot (moved from 01:30
+# on 2026-08-16: the plan's usage window resets at 02:00 local, and the old
+# slot starved whenever late-Saturday work drained it); the 03:00 daily
 # review shares the flock, so an overrun makes it skip rather than collide.
 # High effort: this is the long-horizon judgement session (phase planning,
 # pace extrapolation, benchmark adjudication) and runs once a week.

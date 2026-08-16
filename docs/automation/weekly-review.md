@@ -1,7 +1,8 @@
 # Weekly planning review protocol (Fable 5, scheduled)
 
 Run by `scripts/automation/weekly-review.sh` via cron **weekly** (Sunday
-01:30 local, in the buffer slot before that day's 03:00 daily review; the
+02:15 local — after the 02:00 usage-window reset, in the buffer slot before
+that day's 03:00 daily review; the
 shared flock prevents overlap). One session, documentation work only — **no
 solves, no meshing**; reading harness logs is fine.
 
