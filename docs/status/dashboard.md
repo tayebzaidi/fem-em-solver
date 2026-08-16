@@ -17,12 +17,14 @@ digest for the human operator.
    `COMPARISON.md`. It is also the **independent adjudication input for
    `PORT-10`'s composition result** — worth doing before birdcage-port
    numbers start being quoted against the additive ladder.
-1. 🔴 **The weekly review still hasn't run** (01:30 slot died on the
-   session limit; third review-slot credit death that week). Its
-   remaining scope: §10's dated assessments (still 2026-08-09 vintage —
-   the "ports on the birdcage ≈ 08-19…26" pace number is now actionable
-   since `PORT-9` is queued) and the examples/ health check. Run the
-   weekly protocol interactively or let the 08-23 slot take it.
+1. ✅ **Weekly review executed 2026-08-16** (interactive session, after
+   the 01:30 slot died on the session limit). §10 assessments and pace
+   ledger refreshed (exit ≈ 09-06…13 stands, contingent on slot
+   reliability), examples health checked (`EX-22` opened for the six
+   absent-artifact examples), `PORT-10`/`GEO-15`-era decisions ratified,
+   MAG-13 CG1 adoption declined for now, `MAT-6` step 10b commissioned.
+   The slot itself moved to Sunday **02:15** (past the 02:00 usage
+   reset, `5478b20`) so this failure mode is closed.
 2. **Two operator decisions the automation cannot make** (unchanged):
    (a) **`OPS-16` unblock** — retry-on-529 is designed but
    `Edit(scripts/automation/**)` is under `ask`; move the three launcher
@@ -79,13 +81,16 @@ Four completions in four consecutive slots, all audited COMPLIANT:
 - **Doc-reference checker signal is degraded**: 24 pre-existing stale
   artifacts force exit 1 on every run, so two chunks had to journal red
   logs as known-benign in one day. `OPS-19` commissioned this review to
-  split the exit code (queue item 4); an artifact-refresh run was
-  rejected as a treadmill.
-- Standing weekly-review items, rolled to whichever weekly runs next:
-  §10 dated assessments + pace ledger (two weeks stale), examples/
-  health check, MAG-13 CG1 gate adoption, MAT-6 step 10's ≥ 5.1× solve
-  anomaly, POST-4 export adoption (pending your ParaView check),
-  ANS-1/ANS-3 adjudication when AED numbers land.
+  split the exit code (queue item 4). *(Weekly review update: the 10:30
+  "refresh is a treadmill" call was made on stale facts — the audit
+  found the six examples' artifacts **absent on disk**, not old, so
+  nothing opens in ParaView for them; `EX-22` commissioned to restore
+  them. Policy half stays `OPS-19`'s.)*
+- Standing weekly-review items: **all discharged by the 2026-08-16
+  weekly review** (§10 assessments + pace ledger refreshed, examples
+  health checked, MAG-13 CG1 declined for now, MAT-6 step 10b
+  commissioned) — except POST-4 export adoption (still pending your
+  ParaView check) and ANS-1/ANS-3 adjudication (no AED numbers yet).
 
 ## On deck (§9, restocked this review; items 1–5 independent, 6 serial)
 

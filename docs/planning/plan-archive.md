@@ -13456,3 +13456,76 @@ COMPLIANT against §4 by the 10:30 review. Struck texts verbatim:
    verbatim; its cost-probe-first rule is binding — `EX-20`'s pair is
    178 s at `-n 2`, the padded and refined rungs cost more, single
    command under 1200 s or shrink.
+
+## §7 GEO-15 step-1 closure narrative + original plan — archived 2026-08-16 (weekly review)
+
+> * **Step 1 ✅ 2026-08-16** *(`tests/mesh/test_birdcage_conductor_sizing.py`,
+>   `20260816T123337Z_GEO-15-step1.log`, 41 s at `-n 2`; regression
+>   `20260816T123433Z_GEO-15-step1-regression.log`, 4 passed 21 s)*. **The
+>   0.7091 question is answered, and it splits in two.** The conductor's CAD
+>   (occ) mass is **1.030097043e-04 m³** against an analytic ring+leg sum of
+>   1.075503356e-04 m³ — so the eight leg∩ring junctions the sum double-counts
+>   are worth **4.22%**, and the *rest* of the historical deficit is pure
+>   resolution: on the CAD denominator the baseline global-`setSize` mesh keeps
+>   only **0.740335**. Grading fixes it. Measured ladder (all three rungs, one
+>   command, `GEO-9` identities re-checked on each and unmoved at < 1e-9 —
+>   box-partition, tagged-sum, and all four port boxes):
+>
+>   | conductor sizing | cells | meshed/CAD | meshed/analytic | mesh time |
+>   |---|---|---|---|---|
+>   | global 0.015 (baseline) | 48 245 | 0.740335 | 0.709079 | 6.07 s |
+>   | h_c = 3.2e-3 | 48 576 | 0.918603 | 0.879821 | 8.30 s |
+>   | h_c = 1.6e-3 (`GEO-8`'s 0.4·minor) | 98 474 | **0.967019** | 0.926193 | 16.74 s |
+>
+>   **Gate cleared** (0.967019 ≥ 0.95) at exactly the sizing `GEO-8`'s rule
+>   predicts, with the negative control separated by 0.2267 — and the cost is
+>   mild: 2.04× the cells and 2.76× the mesh time of baseline, still inside the
+>   *standard* tier with room to spare. Mechanism (the trap that decided the
+>   implementation): `mesh.setSize` binds dimension-0 entities only and an OCC
+>   torus carries a single seam point, so no per-point constraint can resolve a
+>   0.004 m minor radius; the working mechanism is a Distance→Threshold
+>   background field over the conductor's 20 boundary surfaces with
+>   `SizeMax = resolution`, which leaves air/box sizing untouched by
+>   construction. The three `Mesh.MeshSizeFrom*` switches must be off or gmsh
+>   mins the field against the coarse point constraints. New kwargs on
+>   `birdcage_port_domain`: `conductor_resolution`, `conductor_refine_distance`
+>   (default 3·ring_minor_radius), `return_diagnostics` (opt-in 4-tuple
+>   carrying per-group CAD mass + mesh wall time, bcast from the building rank);
+>   every default is unchanged, and the `GEO-9`/finalize-isolation tests pass
+>   untouched. **Answer for `PORT-9` step 3: graded sizing is achievable and
+>   cheap, so it is a prerequisite the port model can simply assume** — the
+>   remaining 3.3% is faceting of the curved boundary, not a mesh-size failure.
+>   Not yet measured: whether a *port* on the graded conductor surface behaves
+>   differently — that is `PORT-9`'s own gate, unscoped at the time of this
+>   run *(scoped later the same day by the 10:30 review — see the `PORT-9`
+>   step-3 entry)*. `GEO-4`
+>   stays 🧪 (no solve was run here).
+> * **Step 1 (gate) — graded rung** *(original plan, executed as written)*.
+>   Regenerate `birdcage_port_domain`
+>   with conductor-graded sizing (gmsh size field or per-surface `setSize`
+>   at ~0.4× the ring minor radius; air/box sizing untouched) and print,
+>   for baseline and graded in the same command: conductor meshed volume /
+>   **CAD (occ) mass** — an identity that → 1 under refinement, denominator
+>   free of the junction double-count — plus cell count and mesh wall
+>   time. **Anchor:** the volume identity; **gate:** graded conductor
+>   ratio ≥ 0.95 of CAD mass while the four port-box identities and both
+>   global volume identities stay at their `GEO-9` values (`< 1e-9`).
+>   **Negative control:** the baseline global-`setSize` mesh re-measured
+>   in-run on the same CAD-mass denominator (its 0.7091-vs-analytic-sum
+>   number is on record; separation is the distance to the 0.95 band).
+>   **Tier/cost:** standard, `-n 2`; baseline birdcage meshes in 8.95 s
+>   (`GEO-9` step 2b), graded costs more — print cell count before any
+>   second rung, container `timeout -k 30 500`. **Traps:** `occ.fragment`
+>   renumbers — re-derive groups by centroid/mass, never trust returned
+>   tag order; tag reads via `global_cell_tag_set()` (the rank-local read
+>   fired live in `GEO-9`); keep `-n 2` — the finalize/`bcast` isolation
+>   gate degenerates at `-n 1`; a bad sizing choice fails inside
+>   `_build_birdcage_port_model` after `gmsh.initialize()`, which the 2a
+>   machinery already handles. **Scope:** meshability and volume fidelity
+>   only — no solve, no port claim, `GEO-4` stays 🧪; the answer feeds the
+>   `PORT-9` step-3 gate that the daily review scopes once this and
+>   `PORT-10` report. **Negative result:** if 0.95 is unreachable inside
+>   the tier ceiling (cell explosion or mesh failure), that *is* the
+>   answer — record the measured frontier (largest ratio, cell count,
+>   time) in this entry and known-issues if a defect surfaced; report,
+>   stop.

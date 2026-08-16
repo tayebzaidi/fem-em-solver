@@ -693,6 +693,14 @@ chunk.)*
 >   exit gate was bitten live 2026-08-15 (exit 1 at the 12.7485% smoke
 >   rung, azimuthality PASS independently). Degree-2 `A` is on record
 >   diverging on this fixture — not a free swap.
+>   **Decided 2026-08-16 (weekly review): declined for now.** No §10
+>   goal is currently limited by B-field accuracy — the wire gate stands
+>   at 3.74% on the mesh route — so the re-gating tax (every recorded
+>   B-consuming number shifts in one commit) buys nothing today.
+>   Revisit when §10 subgoal-4 B1+ work opens: its gates are new, so
+>   adopting CG1 recovery there carries no re-gating cost, and the
+>   measured case (1.9557% vs 4.7235%, p = 2.003) is already on record.
+>   Not an epitaph — the option stays live, the default stays DG1.
 > * The two 2026-08-08 "mystery harness deaths" were the
 >   **background-and-end-turn trap** (a headless session backgrounding a
 >   harness run and ending its turn SIGKILLs the tree) — the reason every
@@ -831,76 +839,22 @@ masses give 0.9578), the rest is 0.015 against a 0.004 ring minor radius.
 ≲ 0.0016 here) says the conductor is ~10× under-resolved, and a lumped
 port on that surface inherits the coarse conductor boundary. This chunk
 answers `PORT-9` step 3's open question by measurement.
-> * **Step 1 ✅ 2026-08-16** *(`tests/mesh/test_birdcage_conductor_sizing.py`,
->   `20260816T123337Z_GEO-15-step1.log`, 41 s at `-n 2`; regression
->   `20260816T123433Z_GEO-15-step1-regression.log`, 4 passed 21 s)*. **The
->   0.7091 question is answered, and it splits in two.** The conductor's CAD
->   (occ) mass is **1.030097043e-04 m³** against an analytic ring+leg sum of
->   1.075503356e-04 m³ — so the eight leg∩ring junctions the sum double-counts
->   are worth **4.22%**, and the *rest* of the historical deficit is pure
->   resolution: on the CAD denominator the baseline global-`setSize` mesh keeps
->   only **0.740335**. Grading fixes it. Measured ladder (all three rungs, one
->   command, `GEO-9` identities re-checked on each and unmoved at < 1e-9 —
->   box-partition, tagged-sum, and all four port boxes):
->
->   | conductor sizing | cells | meshed/CAD | meshed/analytic | mesh time |
->   |---|---|---|---|---|
->   | global 0.015 (baseline) | 48 245 | 0.740335 | 0.709079 | 6.07 s |
->   | h_c = 3.2e-3 | 48 576 | 0.918603 | 0.879821 | 8.30 s |
->   | h_c = 1.6e-3 (`GEO-8`'s 0.4·minor) | 98 474 | **0.967019** | 0.926193 | 16.74 s |
->
->   **Gate cleared** (0.967019 ≥ 0.95) at exactly the sizing `GEO-8`'s rule
->   predicts, with the negative control separated by 0.2267 — and the cost is
->   mild: 2.04× the cells and 2.76× the mesh time of baseline, still inside the
->   *standard* tier with room to spare. Mechanism (the trap that decided the
->   implementation): `mesh.setSize` binds dimension-0 entities only and an OCC
->   torus carries a single seam point, so no per-point constraint can resolve a
->   0.004 m minor radius; the working mechanism is a Distance→Threshold
->   background field over the conductor's 20 boundary surfaces with
->   `SizeMax = resolution`, which leaves air/box sizing untouched by
->   construction. The three `Mesh.MeshSizeFrom*` switches must be off or gmsh
->   mins the field against the coarse point constraints. New kwargs on
->   `birdcage_port_domain`: `conductor_resolution`, `conductor_refine_distance`
->   (default 3·ring_minor_radius), `return_diagnostics` (opt-in 4-tuple
->   carrying per-group CAD mass + mesh wall time, bcast from the building rank);
->   every default is unchanged, and the `GEO-9`/finalize-isolation tests pass
->   untouched. **Answer for `PORT-9` step 3: graded sizing is achievable and
->   cheap, so it is a prerequisite the port model can simply assume** — the
->   remaining 3.3% is faceting of the curved boundary, not a mesh-size failure.
->   Not yet measured: whether a *port* on the graded conductor surface behaves
->   differently — that is `PORT-9`'s own gate, unscoped at the time of this
->   run *(scoped later the same day by the 10:30 review — see the `PORT-9`
->   step-3 entry)*. `GEO-4`
->   stays 🧪 (no solve was run here).
-> * **Step 1 (gate) — graded rung** *(original plan, executed as written)*.
->   Regenerate `birdcage_port_domain`
->   with conductor-graded sizing (gmsh size field or per-surface `setSize`
->   at ~0.4× the ring minor radius; air/box sizing untouched) and print,
->   for baseline and graded in the same command: conductor meshed volume /
->   **CAD (occ) mass** — an identity that → 1 under refinement, denominator
->   free of the junction double-count — plus cell count and mesh wall
->   time. **Anchor:** the volume identity; **gate:** graded conductor
->   ratio ≥ 0.95 of CAD mass while the four port-box identities and both
->   global volume identities stay at their `GEO-9` values (`< 1e-9`).
->   **Negative control:** the baseline global-`setSize` mesh re-measured
->   in-run on the same CAD-mass denominator (its 0.7091-vs-analytic-sum
->   number is on record; separation is the distance to the 0.95 band).
->   **Tier/cost:** standard, `-n 2`; baseline birdcage meshes in 8.95 s
->   (`GEO-9` step 2b), graded costs more — print cell count before any
->   second rung, container `timeout -k 30 500`. **Traps:** `occ.fragment`
->   renumbers — re-derive groups by centroid/mass, never trust returned
->   tag order; tag reads via `global_cell_tag_set()` (the rank-local read
->   fired live in `GEO-9`); keep `-n 2` — the finalize/`bcast` isolation
->   gate degenerates at `-n 1`; a bad sizing choice fails inside
->   `_build_birdcage_port_model` after `gmsh.initialize()`, which the 2a
->   machinery already handles. **Scope:** meshability and volume fidelity
->   only — no solve, no port claim, `GEO-4` stays 🧪; the answer feeds the
->   `PORT-9` step-3 gate that the daily review scopes once this and
->   `PORT-10` report. **Negative result:** if 0.95 is unreachable inside
->   the tier ceiling (cell explosion or mesh failure), that *is* the
->   answer — record the measured frontier (largest ratio, cell count,
->   time) in this entry and known-issues if a defect surfaced; report,
->   stop.
+> * **Step 1 ✅ 2026-08-16** — gate **0.967019 ≥ 0.95** of CAD mass at
+>   h_c = 1.6e-3 (98 474 cells, 16.74 s; baseline global-`setSize`
+>   0.740335 at 48 245 cells / 6.07 s; negative-control separation
+>   0.2267); the junction double-count is **4.22%** (CAD 1.030097043e-04
+>   vs analytic 1.075503356e-04 m³); `GEO-9` identities unmoved < 1e-9 on
+>   every rung. Logs `20260816T123337Z_GEO-15-step1.log` (1 passed, 41 s,
+>   `-n 2`) + `20260816T123433Z_GEO-15-step1-regression.log` (4 passed,
+>   21 s). **Live carry-forwards:** new `birdcage_port_domain` kwargs
+>   `conductor_resolution` / `conductor_refine_distance` /
+>   `return_diagnostics`, all defaults unchanged; the working mechanism
+>   is a Distance→Threshold field over the conductor surfaces — the
+>   three `Mesh.MeshSizeFrom*` switches must be off or gmsh re-imposes
+>   the coarse size; `PORT-9` may assume graded sizing and budgets from
+>   98 k cells; the residual 3.3% is curvature faceting; `GEO-4` stays 🧪
+>   (no solve ran). Full narrative + original plan:
+>   `docs/planning/plan-archive.md`, archived 2026-08-16.
 
 ### TH — Time-harmonic Maxwell (Phase 2)
 
@@ -1182,7 +1136,19 @@ plans and probes archived verbatim in `docs/planning/plan-archive.md`)*:
 >   69 894 MB vs the 65 536 MiB cap) and MUMPS parallel load balancing.
 >   **Step 10 is the weekly review's to commission**: a memory-headroom run
 >   (`-n 12`, or out-of-core / raised `ICNTL(14)`) timed against the 257 s
->   prediction. Note the factor stays resident after `solve()` returns
+>   prediction. **Commissioned 2026-08-16 (weekly review) as step 10b**,
+>   heavy, one command, deliberately narrow: the composed 895 974-cell
+>   fixture, one solve at `-n 12` with MUMPS `ICNTL(14)` raised (and
+>   out-of-core as the in-run fallback if the in-core estimate still
+>   exceeds the cgroup cap), wrapped `timeout -k 30 1200` — **done-when:**
+>   solve wall time recorded and either ≤ 2× the 257 s prediction
+>   (attribution CONFIRMED: memory pressure owned the ≥ 5.7× overrun) or
+>   not (attribution REFUTED — record the time, suspect load balancing,
+>   stop; that negative result closes 10b too). No tolerance moves; the
+>   ΔZ physics is already gated on the per-knob fixtures. Priced from the
+>   step-7 `-n 8` record; if the mesh alone exceeds 300 s, kill and
+>   report — do not shrink the case, the composed size *is* the question.
+>   Note the factor stays resident after `solve()` returns
 >   (`time_harmonic.py:453`) — post-solve processing on MAT-6-class
 >   fixtures holds ~37–52 GB against the cap. The overrun also proved plain
 >   `timeout` does not stop mpiexec (hence the mandatory `-k 30`) and
@@ -1330,8 +1296,10 @@ integral over a subdomain some rank does not touch needs an unconditional
 `create_entity_permutations()` (the 3b-iv lazy-collective hang); the
 "gap wins over conductor" piece policy; known-issues 11 (lateral strips
 in the 2xx tags below overhang ≈ 6e-4); the two systematics' independent
-composition is **untested** — the weekly review's open question before
-any birdcage port work; known-issues 3 stays open for its defect (1).
+composition — the weekly review's open question — was **answered
+2026-08-16** (`PORT-10` ✅: cross-term −0.0604 pp vs ±0.5 pp, additive;
+the sequential ladder stands); known-issues 3 stays open for its
+defect (1).
 
 > **Two port tests are red and deliberately left red.** Both fakes set
 > `current = voltage/z0` at the driven port, making it perfectly matched, so
@@ -1550,6 +1518,29 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-19` | Larmor lossy-sphere example (`TH-10`'s newly gated capability: first example solving at 64/128 MHz; rubric in the §9 item) | ✅ (2026-08-13: `th:6`, fixture imported from the `TH-10` test module; all four records reproduced through the example path — 3.643% / 1.826% interior relL2 at 18.68× / 57.31× separation, power 3.629% with the quasi-static route missing 58.140% — max drift **1.7e-04** vs a pre-stated 1% band; convergence and both negative controls executed in-run; 24 s at `-n 2`) | standard |
 | `EX-20` | Package S-parameter sweep example (`PORT-1` step 4's newly gated capability: first example calling `run_n_port_sparameter_sweep` on the solved field — the entry-point angle `EX-18` does not cover; full rubric in the §9 item, commissioned 2026-08-15 review) | ✅ (2026-08-16: `ports:2`, one `run_n_port_sparameter_sweep(..., gap_voltage_ports=specs)` call → two solves → Z → S; **all four step-4 records reproduced inside the pre-stated 1% band, misses 3.33e-07 / 3.23e-07 / 3.67e-06 / 2.29e-07** — raw 0.894543 printed first and asserted to *fail* the 10% band, corrected 0.939849 (−6.02%) inside it, ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1, `\|Z₁₂−Z₂₁\|/\|Z₂₁\|` = 5.8309e-04 printed; negative control executed in-run — the deprecated heuristic route on the same mesh/ports gives an identically-zero off-diagonal, max\|ΔS\| = 3.078e-01 with its `DeprecationWarning` shown; 178.2 s at `-n 2`, 178 055 cells; guide pass 19/19 green. **Named limitation on record:** the sweep returns no fields, so the combined XDMF costs one extra port-1 solve (23.0 s) — surfacing `TimeHarmonicFields` from `SParameterSweepResult` is unscoped. *Audit 2026-08-16, 03:00 review: COMPLIANT; tier reclassified standard → heavy per the `EX-9` precedent — 178.2 s sits at the 180 s standard boundary and the wrap was 500 s; the companion docrefs log exits 1 on 24 pre-existing stale artifacts from other examples, none EX-20's (journaled in attempts.md)*) | heavy |
 | `EX-21` | Graded birdcage conductor mesh (`GEO-15`'s newly gated capability: first birdcage example of any kind — geometry angle no example covers; mesh-only, no solve; full rubric in the §9 item, commissioned 2026-08-16 10:30 review) | ⬜ | standard |
+| `EX-22` | Restore the absent example artifacts: refresh runs for `mag` 01/02/04/05/06 + `mri:1` (commissioned 2026-08-16 weekly review — see entry below) | ⬜ | heavy |
+
+**`EX-22` — restore the absent example artifacts** ⬜ *(commissioned
+2026-08-16, weekly review — examples-health audit)*. Six examples' gated
+`paraview_output/` outputs are **absent on disk**, not merely stale:
+every `straight_wire_*`, `helmholtz_*`, `gauge_cross_check_*`,
+`h_convergence_rate_*` and `mri_coil_phantom_*` artifact plus
+`circular_loop_B.bp` is gone (gitignored, so unrecoverable without
+reruns) — the source of the doc-reference checker's 24 standing
+stale-reference violations that currently mask its exit code (`OPS-19`
+owns the *policy* split; this chunk restores the *signal* now). **Do:**
+runner refresh runs, `mag` 01/02/04/05/06 and `mri:1`, through the
+harness. **Done-when:** each run exits 0 with its recorded anchors
+reproduced by the examples' own asserts (`EX-14`/`EX-17` round-trip
+identities included), the six examples' artifacts exist on disk, and the
+doc-reference checker's stale/dead count drops 24 → 0 (guide pass stays
+20/20). **Tier:** heavy — `EX-9`'s convergence example alone is ~130 s;
+run as two runner commands (`mag` group, then `mri:1`), each wrapped
+`timeout -k 30 500`. **Trap:** `mri:1` is the labelled *ungated* example
+— reproduce its printed record, do not invent a gate for it. **Negative
+result:** an example that no longer reproduces its record is a real
+regression — known-issues entry, report, stop; never refresh past a
+failure.
 
 **`EX-4`…`EX-12` — the 2026-08-09 backfill, all ✅ by 2026-08-10** *(full
 plans + closure narratives in `docs/planning/plan-archive.md`)*. Common
@@ -1942,14 +1933,20 @@ blamed.
 ### Target (end of Phase 4)
 - [ ] Loaded birdcage + phantom simulation runs end to end *(the mesh half is
   done: both fixtures generate and are identity-gated in CI as of 2026-08-03,
-  `GEO-9` steps 1 + 2b. What remains is excitation — `PORT-1` step 3b-i/3b-ii
-  on the two-torus validation pair, then ports on the birdcage itself.)*
+  `GEO-9` steps 1 + 2b, and graded conductor sizing is gated as of
+  2026-08-16, `GEO-15`. The two-torus excitation lineage closed —
+  `PORT-1` ✅ 2026-08-15. What remains is ports on the birdcage itself:
+  `PORT-9`, scoped ⬜.)*
 - [ ] S-parameters derived from the solved field, not a coupling heuristic
-  *(partial: the **conversion** is now packaged — `PORT-1` step 3a, 2026-08-03,
-  `sparameters_from_impedance()` in `ports/sparameters.py`, gated bit-identical
-  to the test path on a solved field — but the only impedance matrix feeding it
-  is the two-loop air fixture's, and `run_n_port_sparameter_sweep` still calls
-  the heuristic. `PORT-1` step 3b puts it on a coil.)*
+  *(the **route** is done — `PORT-1` ✅ 2026-08-15:
+  `run_n_port_sparameter_sweep` reads the solved field end to end,
+  `‖S−Sᵀ‖/‖S‖ = 2.5494e-05` vs the 1e-3 gate, heuristic retired behind a
+  `DeprecationWarning`; reproduced through `EX-20` and `ANS-3` to
+  ≤ 3.67e-06. Corrected 2026-08-16, weekly review — the previous
+  parenthetical's "still calls the heuristic" predated step 4. The box
+  stays unticked because the only fixture with ports is the two-torus
+  pair: it ticks when the same machinery gates on the birdcage,
+  `PORT-9`.)*
 - [ ] S-matrix satisfies reciprocity and passivity within stated tolerance
   *(demonstrated on that same fixture, and as of `PORT-1` step 3a, 2026-08-03,
   through **`PORT-5`'s own metrics** rather than the test's arithmetic:
@@ -1988,6 +1985,21 @@ journaled implementer slots at a 65% slot-completion rate; measured
 throughput 12 ✅ port steps/week, 5 analytic gates/week when focused. The
 measured risk to pace is reliability (host downtime, harness kills,
 human-gated decisions), not physics.
+
+**Pace ledger, week 2026-08-09 → 08-16** *(measured 2026-08-16, weekly
+review; sources: 105 commits `7e93fe3..`, 78 attempts.md entries)*:
+**51 items reached §4-✅** (24 chunk closures + 27 further gated steps) —
+throughput per fired slot *rose*, but ~30 of the week's ~112 scheduled
+slots produced nothing, none for physics reasons: 14 lost to a ~23.8 h
+host outage, 12 to a drained §9 queue (downstream of the dead reviews),
+4 review slots dead on the usage limit, 2 to API 529s. Where slots fired:
+9 port-lineage steps (subgoals 1–2) and 7 Larmor-gate items (subgoal 3)
+landed — consistent with the 08-09 throughput numbers. Last week's
+verdict stands and sharpened: **the binding constraint is slot
+reliability, not solve difficulty.** Mitigations landed this week: §9
+restock floor ≥ 6 mutually independent items (08-15 review), weekly slot
+moved past the 02:00 usage reset (`5478b20`), `OPS-18` upgrade cadence;
+the outage class has no in-repo mitigation (dashboard Waiting-on-you).
 **Phase 5 — loaded birdcage RF (current).** Subgoals, each with its
 validation target:
 
@@ -2002,6 +2014,13 @@ validation target:
    all outcomes proceed to the 3b-i/ii port-pair gate with a stated,
    labeled systematic, and further σ-placement or `∫E·dl`-variant
    diagnosis is barred. The 08-09 assessment's step count stands.
+   **Closed 2026-08-16 (weekly review):** the lineage terminated —
+   `PORT-1` ✅ 2026-08-15 on the matched-topology gate (reciprocity
+   2.5494e-05 vs 1e-3 through the package entry point), and the one
+   question this subgoal left open, whether the two named systematics
+   compose, was answered by `PORT-10` ✅ 2026-08-16: cross-term
+   **−0.0604 pp** against a pre-stated ±0.5 pp band — additive, the
+   sequential ladder in `ports/systematics.py` stands as measured.
 2. *Honest S-parameters from the package* — gap-voltage `V = −∫E·dl` ports,
    `excitation.py` replaced, N-port Z from single-port solves, then the
    same machinery on the birdcage mesh. Targets: cross-route identity
@@ -2017,24 +2036,51 @@ validation target:
    condition rather than further gap-voltage estimator variants — Jin
    ch. 11's hierarchy; theory now in-repo at `docs/references/jin-fem-3e/`.
    The two-torus `∫E·dl` machinery stays what the 3b-i/ii gate validates,
-   with its systematic stated.)*
+   with its systematic stated.)* **Assessment 2026-08-16:** the
+   two-torus half of the 08-09 estimate is **done** — 9 subgoal-1/2
+   steps landed this week (3b-xvi/xvii/xviii, step 4/chunk ✅, `PORT-5`
+   step 1, `PORT-10`, `GEO-15`), and both `PORT-9` prerequisites are
+   measured (composition additive; graded conductor sizing 0.967 of CAD
+   mass, budget from 98 k cells). What remains is the birdcage half:
+   `PORT-9` (lumped-element port BC, Jin ch. 11 — scoped ⬜, not
+   started), ≈ 8–12 steps at the landed grain; at the measured 9–12 port
+   steps/week ⇒ **≈ 1 week of fired slots — ports on the birdcage
+   ≈ 2026-08-23…27**, the tail of the 08-09 window. The 08-09 watch
+   condition resolved honestly: 3b-xvi needed a third slot (two parked
+   attempts), but the re-pointed round converted and the lineage closed
+   two days later — no re-plan forced.
 3. *Larmor-regime validation gate — this phase's real content.* Every
    loading/SAR gate today is eddy-current (10 MHz) or imposed-field; saline
    at 64/128 MHz is an extrapolation (§2.1). Named targets: the lossy
    dielectric sphere in a full-wave field at 64/128 MHz against its
    analytic series solution (the `TH-8` machinery carried into the
    displacement-current regime), and the coil-loading trend vs frequency
-   crossing out of the eddy-current regime. **Assessment:** ≈ 8–12
-   gate-grain items; at the TH-campaign precedent (5 gates/week focused) ⇒
-   **≈ 1.5–2 weeks once queued**; not yet queued — the daily review should
-   start breaking this down as the port lineage clears, and a §7 chunk ID
-   should exist by the next weekly review.
+   crossing out of the eddy-current regime. **Assessment 2026-08-09:**
+   ≈ 8–12 gate-grain items at the TH-campaign precedent (5 gates/week
+   focused) ⇒ ≈ 1.5–2 weeks once queued; a §7 chunk ID should exist by
+   the next weekly review. **Assessment 2026-08-16:** the chunk-ID
+   clause is satisfied and the subgoal is most of the way done — 7
+   Larmor-grain items landed this week: `TH-10` ✅ 08-13 (the sphere
+   target itself: 3.643% / 1.826% at 64/128 MHz, power 3.629%, plus the
+   08-15 monotonicity assert), `GEO-14` ✅ 08-15, `TH-11` 🟡 steps 1–2
+   (the trend target: step 2 attributes most of the +10.27% 64 MHz
+   deviation to mesh, landing at +2.81% resolution-dominated). Remaining:
+   `TH-11` step 3 (30 MHz mid-transition point, queued as the §9 spare)
+   plus whatever gated trend claim its reading licenses — ≈ 2–4 items ⇒
+   **< 1 week of fired slots**. Honest limit: step 2's band means no
+   gated trend claim is scopeable *yet*; §2.1's "coil-at-Larmor is an
+   extrapolation" sentence stands until one gates.
 4. *B1+ and SAR maps on the coil+phantom fixture at 64/128 MHz.* Targets:
    SAR through the `MAT-4`-gated averaging operator (its C95.3 claim closes
    here); B1+ gated qualitatively against published birdcage homogeneity
    behaviour and, once computed, an AED benchmark case (`ANS-2`, to be
    commissioned when subgoals 2–3 close). Blocked on 2 + 3 by §6's
-   scaffolding rule.
+   scaffolding rule. *(Note 2026-08-16, weekly review: this is now the
+   only subgoal with no owning §7 chunk ID — correctly, while blocked —
+   but subgoals 2–3 are ≈ 1 week out, so the daily review should scope
+   the first B1+ chunk when `PORT-9` gates, and `ANS-2`'s commissioning
+   trigger is unchanged. `MAT-4` last moved 2026-08-07; it is the
+   watch-item for the one-month stall rule at the 08-30 review.)*
 
 **Phase-5 exit assessment, 2026-08-09 (the arithmetic on record):** ports
 ≈ 1.7 wk (subgoal 2) + Larmor gates ≈ 1.5–2 wk (subgoal 3, partly
@@ -2044,6 +2090,17 @@ is forced. The number honest people watch: if the port lineage's
 discriminator round does not convert to the 3b-i/ii pair gate within its
 two-slot budget, subgoal 2's 20-step estimate is wrong and the next weekly
 review re-plans rather than extends.
+
+**Phase-5 exit assessment, 2026-08-16 (the arithmetic):** subgoal 1
+closed; remaining = `PORT-9` ≈ 1 wk (subgoal 2) + Larmor remainder
+< 1 wk (subgoal 3, parallel) + maps ≈ 1 wk (subgoal 4) ⇒ **exit
+≈ 2026-09-06…13 unchanged at measured per-slot pace — but only if slot
+reliability holds.** This week lost ~30 of ~112 scheduled slots to
+non-physics causes; a repeat adds a week, and that is now the modeled
+risk, not the physics. The number honest people watch this week: **if
+`PORT-9`'s first gated step has not landed by the 2026-08-23 weekly
+review, the 8–12-step estimate is wrong and that review re-plans rather
+than extends.**
 
 **Phase 6 — tuning.** Mode spectrum of the birdcage (the `TH-9` eigensolver
 machinery on the birdcage mesh), lumped capacitors at the gap/port level,
@@ -2058,7 +2115,10 @@ earliest meaningful start ≈ end of August (when subgoal-2 ports land); no
 completion date — no circuit co-simulation work of any kind exists in the
 repo, so there is no measured pace to extrapolate from, and inventing one
 is what this section exists to prevent. First date next review after its
-first steps land.
+first steps land. **Assessment 2026-08-16:** unchanged — ports are ≈ 1
+week out, so "earliest meaningful start ≈ end of August" still holds and
+still awaits `PORT-9`; no circuit co-simulation work exists yet, so
+still no completion date.
 
 **Phase 7 — implants.** Parametric implant geometry first (wires, rods,
 plates in the phantom; CAD import later), mesh grading around thin
@@ -2076,8 +2136,24 @@ interface, not the solver. No dated estimate, same rule.
 **Epitaphs.** None yet.
 
 **Examples and benchmarks.** The §5.4 ramp accounting lives in the §7 `EX`
-family (backfill `EX-4`…`EX-12` opened 2026-08-09); the first AED benchmark
-`ANS-1` is closed and waits on the operator's Ansys half (§7 `ANS`).
+family (backfill `EX-4`…`EX-12` opened 2026-08-09). Ramp check 2026-08-16
+(weekly review): 20 runnable examples, every phase at or above quota —
+Phase 1 five, Phase 2 six, Phases 3 and 4 exactly at quota (2/2 each) with
+**no headroom**: the next `MAT` or `PORT` gate closure immediately owes an
+example, and `EX-21` (birdcage mesh) is the queued answer for `GEO`.
+Both AED benchmarks' runnable halves are closed (`ANS-1` 08-09, `ANS-3`
+08-16) and wait on the operator's Ansys halves — no `COMPARISON.md` has
+AED numbers yet, so nothing to adjudicate this week; `ANS-2` (B1+/SAR)
+stays reserved for subgoal 4. One health defect found: five examples'
+gated `paraview_output/` artifacts are **absent on disk** (not merely
+stale — gitignored and deleted), `EX-22` opened to restore them.
+
+**Ratification, 2026-08-16.** The `PORT-9`/`PORT-10` scoping, `ANS-3`
+commissioning, plan prune, and attempts archival annotated "*weekly
+planning review 2026-08-16*" were executed by the operator's interactive
+session (the scheduled 01:30 slot died on the usage limit; `d21d228`
+landed the tail). This review audited and ratifies them as weekly-scope
+work — the annotations stand.
 
 ---
 
