@@ -870,7 +870,7 @@ answers `PORT-9` step 3's open question by measurement.
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ✅ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ✅ | standard |
-| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet)* | standard |
+| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points)* | standard |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)**
 ✅ *(steps 1–4 ✅ 2026-08-13, chunk closed by the 10:30 review; full step
@@ -921,7 +921,26 @@ step-1/2 journals archived in `docs/planning/plan-archive.md`.)*
 >   (`resolution_near` = 0.00125, ~3× cells ⇒ ~9 min/solve at `-n 2` —
 >   cost-probe it) for a Richardson extrapolation in h before any physics
 >   claim. §2's extrapolation sentence stands as written.
-> **Step 3 — 30 MHz mid-transition point (scoped 2026-08-15, 18:00 review;
+> * **Step 3 ✅ 2026-08-16** *(`test_coil_loading_transition_30mhz.py`,
+>   `20260816T183310Z_TH-11-step3-30mhz-n2.log`, 10 passed, 70.3 s, standard,
+>   `-n 2`, 138 619 cells, mesh 10.6 s + solves 30.5/26.7 s)*: the third point
+>   reads ΔR deviation **+5.5912%** (ΔZ = +8.4022314e-01 − j2.4152825e+00 Ω vs
+>   Dodd–Deeds +7.9573218e-01 − j2.5425171e+00 Ω), ΔX ratio **0.9500**. The
+>   three points on this one rung are **1.5834% (10 MHz) → 5.5912% (30 MHz) →
+>   10.2698% (64 MHz)**, monotone and close to linear in f; ΔX ratio moves
+>   0.9200 → 0.9500 → 0.9690 in the same direction. All bookkeeping gates held
+>   unmoved: complex-power identity **2.7373e-14** loaded / **1.6799e-14** free
+>   against the 1e-9 family bound, σ = 0 dissipation exactly `+0.0` vs
+>   +3.5532418e-01 W loaded, drive control, cell count exact. The reaction and
+>   dissipation routes to ΔR agree to all 8 printed digits
+>   (+8.4022314e-01 Ω both). **Still a trend point, not a trend claim** — the
+>   confound is monotone too: cells/δ falls 3.18 → **1.84** → 1.26 across the
+>   same three points, so the resolution term step 2 measured (worth −7.46 pp
+>   at 64 MHz) grows alongside the physics term and this rung cannot separate
+>   them. The honest next rung is unchanged from step 2's: a Richardson
+>   extrapolation in h at fixed f, not a fourth frequency. §2's extrapolation
+>   sentence stands as written.
+> **Step 3 plan as scoped (2026-08-15, 18:00 review;
 > the declared §9 spare, independent of step 2).** Step 1's module at
 > f = 30 MHz on the step-1 baseline (W = 0.15 / near 0.005, 138 619 cells) —
 > a third point across the eddy→displacement transition beside 10 MHz
@@ -1808,7 +1827,10 @@ beyond the two-torus fixture and the Larmor-regime validation gate.
    symmetry of Z).
 2. **`TH-11`** — coil loading at Larmor frequencies: step 2 attributed
    most of the 64 MHz deviation to mesh resolution (+10.27% → +2.81%);
-   step 3 (30 MHz mid-transition point) is queued.
+   step 3 ✅ added the 30 MHz mid-point (+5.5912%), but cells/δ falls
+   3.18 / 1.84 / 1.26 across the three frequencies, so the confound is
+   monotone with the signal. The open rung is a Richardson
+   extrapolation in h at fixed f — unscoped, for the review.
 3. Then `PORT-4`…`PORT-8`, then Phase 5 (`WF-5`…`WF-8`).
 
 **Standing rules.** Do not add new features to `⚠️` subsystems. Do not
@@ -1874,8 +1896,12 @@ items 1, 3, 4, 6 execute the §7 entries named inline.
    stays ⬜→🧪. **Negative result:** a lumped Z wildly off the gap route
    is the finding step 2 exists to adjudicate — report both numbers in
    the §7 entry, stop.
-2. **`TH-11` step 3 — 30 MHz mid-transition point on the
-   step-1 baseline (standard, measurement only).** Execute the §7
+2. ~~**`TH-11` step 3 — 30 MHz mid-transition point on the
+   step-1 baseline (standard, measurement only).**~~ **done 2026-08-16,
+   13:30 slot** — +5.5912% at 1.84 cells/δ, 10 passed in 70.3 s,
+   `20260816T183310Z_TH-11-step3-30mhz-n2.log`; the three-point ladder
+   and its monotone resolution confound are in the §7 entry. Original
+   text: Execute the §7
    `TH-11` step-3 entry verbatim: step 1's module at f = 30 MHz on the
    same 138 619-cell fixture, same identity gates, ΔR/ΔX printed beside
    Dodd–Deeds. Both rungs carry the resolution caveat, stated in the
@@ -2090,12 +2116,16 @@ validation target:
    target itself: 3.643% / 1.826% at 64/128 MHz, power 3.629%, plus the
    08-15 monotonicity assert), `GEO-14` ✅ 08-15, `TH-11` 🟡 steps 1–2
    (the trend target: step 2 attributes most of the +10.27% 64 MHz
-   deviation to mesh, landing at +2.81% resolution-dominated). Remaining:
-   `TH-11` step 3 (30 MHz mid-transition point, queued as the §9 spare)
-   plus whatever gated trend claim its reading licenses — ≈ 2–4 items ⇒
-   **< 1 week of fired slots**. Honest limit: step 2's band means no
-   gated trend claim is scopeable *yet*; §2.1's "coil-at-Larmor is an
-   extrapolation" sentence stands until one gates.
+   deviation to mesh, landing at +2.81% resolution-dominated), and
+   `TH-11` step 3 ✅ 08-16 (the 30 MHz mid-point, +5.5912%). Remaining:
+   whatever gated trend claim the three-point reading licenses — and
+   step 3 showed it licenses none directly, because cells/δ (3.18 /
+   1.84 / 1.26) falls monotonically with the same f the deviation rises
+   with. The unblocking rung is an h-refinement ladder at *fixed* f
+   (Richardson), unscoped as of 08-16 — ≈ 2–4 items ⇒ **< 1 week of
+   fired slots**. Honest limit unchanged: no gated trend claim is
+   scopeable *yet*; §2.1's "coil-at-Larmor is an extrapolation"
+   sentence stands until one gates.
 4. *B1+ and SAR maps on the coil+phantom fixture at 64/128 MHz.* Targets:
    SAR through the `MAT-4`-gated averaging operator (its C95.3 claim closes
    here); B1+ gated qualitatively against published birdcage homogeneity

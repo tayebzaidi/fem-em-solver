@@ -11955,3 +11955,81 @@ with a box gap would), accepting that the cross-route comparison in step 2 still
 has to happen on the two-torus fixture where the gap-voltage route is gated.
 Either way the parked branch should be merged rather than re-derived: its six
 identities are the formulation's gate and they are green.
+
+## 2026-08-16T18:36Z — `TH-11` step 3 — **complete**
+
+Scheduled implementer run, 13:30 CDT slot. Preflight clean, container Up.
+
+**Item selection — item 1 was taken as blocked, item 2 executed.** §9's On-deck
+item 1 is `PORT-9` step 1, which the 12:00 slot attempted
+(2026-08-16T17:08Z) and left **🟡 in its §7 entry with the blocker named**: the
+two-torus fixture has no longitudinal port-sheet surface, only cross-sections
+normal to the current (facet tags 201/202), so the lumped-port BC cannot be
+instantiated without a mesh-side prerequisite in `two_torus_domain`. That is
+the protocol's own "blocked" annotation (implementer-run.md step 4), so the
+first item *not* marked done or blocked is item 2. Re-running item 1 verbatim
+would reproduce the same block; supplying the missing mesh work myself is
+excluded by §9's "do not improvise beyond the written `PORT-9` entry; its steps
+are serial by design". The parked branch `attempt/PORT-9-20260816T170800Z` is
+untouched and still awaits the review's disposition (its two options are in the
+17:08Z entry).
+
+**What was done.** New `tests/validation/test_coil_loading_transition_30mhz.py`
+— step 1's module at f = 30 MHz on step 1's own fixture (W = 0.15,
+`resolution_wire` 0.002, `resolution_near` 0.005, 138 619 cells). Every helper
+(`_solve_projected_at`, `_stored_magnetic_energy`, `_ohmic_power`,
+`_skin_depth`, `IDENTITY_TOLERANCE`) and every cited constant is **imported**
+from steps 1–2, never restated (`ANS-1` rule), so only the frequency differs
+between step 1's reading and this one.
+
+**Verification executed** (`20260816T183310Z_TH-11-step3-30mhz-n2.log`,
+**10 passed, 70.29 s**, standard tier, `-n 2`, complex build,
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; mesh 10.6 s, solves
+30.5 s + 26.7 s; collect-only smoke first,
+`20260816T183258Z_TH-11-step3-collect.log`, 6 tests, 4 s).
+
+| gate (asserted) | bound | result |
+|---|---|---|
+| complex-power identity, loaded | < 1e-9 | **2.7373e-14** |
+| complex-power identity, free | < 1e-9 | **1.6799e-14** |
+| σ = 0 dissipation (negative control) | exactly `+0.0` | `+0.0000000e+00` W vs `+3.5532418e-01` W loaded |
+| drive control ‖ΔJ′‖²/‖J′‖² | < 1e-24 | met |
+| cell count | == 138 619 | 138 619 |
+| ΔR > 0, ΔX < 0 (passivity / Lenz) | signs | +8.402e-01, −2.415e+00 Ω |
+
+**The reading (printed, never gated).** ΔZ = `+8.4022314e-01` −
+j`2.4152825e+00` Ω against Dodd–Deeds `+7.9573218e-01` − j`2.5425171e+00` Ω:
+
+* ΔR deviation from the quasi-static prediction **+5.5912%**; ΔX ratio
+  **0.9500**;
+* the three points on this one rung — **1.5834% (10 MHz) → 5.5912% (30 MHz) →
+  10.2698% (64 MHz)** — are monotone and close to linear in f, and the ΔX ratio
+  moves 0.9200 → 0.9500 → 0.9690 in the same direction;
+* I′ = 0.919666 A; quasi-static ΔZ itself scales ×2.467 (ΔR) and ×4.128 (ΔX)
+  from 10 to 30 MHz;
+* the reaction and dissipation routes to ΔR agree to all eight printed digits
+  (`+8.4022314e-01` Ω both) — reported, not gated.
+
+**The finding, and why it is still not a trend claim.** The confound is
+monotone with the signal: cells per skin depth falls **3.18 → 1.84 → 1.26**
+across exactly the three frequencies whose deviation rises. Step 2 measured
+that term at 64 MHz to be worth −7.4635 pp, so a mid-point at intermediate
+resolution is expected to sit at an intermediate deviation *whether or not any
+physics term exists*. This point therefore constrains nothing about the
+displacement-current physics on its own — it is a third data point in a
+two-variable family. §2's extrapolation sentence stands as written and no
+trend claim was scoped.
+
+**No tolerance moved, nothing loosened, no ⚠️ subsystem touched.** No denied
+commands this slot. No unrelated test failures encountered.
+
+**Hypothesis for the next attempt.** Step 2's recommendation is now doubly
+supported and should be scoped as `TH-11` step 4 (or its own chunk) by the
+review: an h-refinement ladder at **fixed f** for a Richardson extrapolation —
+the 64 MHz `resolution_near` = 0.00125 rung step 2 named (≈ 3× cells,
+cost-probe first, ~9 min/solve at `-n 2`, likely heavy tier and possibly too
+big for one slot at `-n 2`). Cheaper and possibly more informative first cut:
+run the *same* h ladder at 10 MHz and 30 MHz where the solves are affordable,
+and see whether the extrapolated-to-zero-h deviation is flat in f (⇒ no
+physics term) or rising (⇒ the term `TH-11` is after). That variant is one
+slot at this fixture's price.
