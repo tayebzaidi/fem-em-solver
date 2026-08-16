@@ -2674,7 +2674,7 @@ numbers, revert nothing silently, stop.
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ✅ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ✅ | standard |
-| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz is feasible at the 10 MHz price, identities to 1e-14, and the quasi-static ΔR deviation grows 1.5834% → **10.2698%**; unattributed between physics and 1.26 cells/δ)* | standard |
+| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet)* | standard |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)** ✅
 *(steps 1–4 ✅ 2026-08-13; **chunk closed by the 2026-08-13 10:30 review**
@@ -2977,6 +2977,60 @@ finding — report in §7, park nothing (no src changes licensed).
 > measurement only; §2.1's extrapolation sentence unchanged until a gated
 > trend exists; no SAR wording; `TH-11` stays 🟡 under every reading.
 > **Negative result:** any reading is a finding — report here, park nothing.
+>
+> **Step 2 ✅ 2026-08-15, 19:30 run — the reading is RESOLUTION-DOMINATED,
+> and step 1's +10.27% does not survive the rung.**
+> `tests/validation/test_coil_loading_larmor_resolution.py` (new; step 1's
+> module untouched — its helpers `_solve_projected_at`,
+> `_stored_magnetic_energy`, `_ohmic_power`, `_skin_depth` and its constants
+> are *imported*, so only `resolution_near` differs between the two
+> readings), **10 passed 390.9 s / 392 s wall**, `-n 2`, container
+> `timeout -k 30 580`,
+> `20260816T003251Z_TH-11-step2-resolution-n2.log` (a 4 s collect-only smoke
+> ran first: `20260816T003236Z_TH-11-step2-collect.log`, 10 collected). No
+> `src/` change. Container timeout 580 s not the entry's 900: the Bash tool
+> caps a foreground window at 660 s, and implementer-run.md requires the
+> footer to land inside it — 580 s cleared the measured 391 s by 1.5×.
+> **Cost, as priced:** mesh 35.0 s, solves **174.2 + 174.5 s** at `-n 2` on
+> 417 914 cells, against the entry's ~390–450 s estimate and the unmoved
+> 300 s/solve stop rule. 64 MHz again costs the 10 MHz price (step 8:
+> 176.8 + 170.0 s), so `MAT-6`'s finer rungs stay reachable at Larmor.
+> **Gates, all green and none widened.** Cell count exactly **417 914**
+> (step 8's); complex-power residual **3.7967e-14** loaded / **6.3010e-14**
+> free against 1e-9 — five orders inside, and the 3× larger system did not
+> condition worse than step 1's rung (1.05e-14 / 4.25e-14); drive control
+> **8.774e-39** vs 1e-24; σ = 0 dissipation exactly **+0.0000000e+00 W**
+> against the loaded 5.8523036e-01 W. Free bonus identity, reported not
+> gated: ΔR by dissipation `2P/I′²` = **+1.3838746e+00 Ω** reproduces the
+> reaction route digit-for-digit again.
+> **The reading (printed, never gated).** FEM
+> `ΔZ = +1.3838746e+00 − j5.8741123e+00 Ω` against Dodd–Deeds
+> `+1.3460987e+00 − j6.1738852e+00 Ω`: **ΔR deviates +2.8063%**, a
+> **−7.4635 pp** move from step 1's +10.2698% on the identical drive and
+> fixture with only `resolution_near` 0.005 → 0.0025 (1.26 → 2.52 cells per
+> δ = 6.29 mm). That lands in the pre-registered **< 3% band —
+> RESOLUTION-DOMINATED** (2.8063% against the 3% line, by 0.19 pp). ΔX ratio
+> **0.9514** (step 1's 0.9690; this mesh at 10 MHz, 0.9160). I′ = 0.919666 A.
+> **What this settles and what it does not.** Settles: **most of step 1's
+> +10.27% was the under-resolved ohmic boundary layer, not physics** — the
+> same knob worth −1.3005 pp at 10 MHz is worth −7.4635 pp at 64 MHz, i.e.
+> the resolution term itself grows ~5.7× with the 6.4× frequency, exactly as
+> a skin-depth argument predicts (δ shrinks 2.53×, so a fixed h buys 2.53×
+> fewer cells across the layer). The pre-registered "> 8% ⇒ physics-dominated
+> ⇒ scope a gated trend step" branch **did not fire**; per §7 as written, a
+> gated trend claim is **not** scopeable on this evidence. Does not settle:
+> whether the residual 2.8063% is physics or the *remaining* mesh error.
+> 2.52 cells/δ is not converged, and the 10 MHz rung at that same δ/h = 6.37
+> reads 0.2829% — so the 64 MHz residual is ~9.9× the 10 MHz residual at the
+> *coarser* relative resolution, which is suggestive of a real physics term
+> but is **not** a two-rung convergence measurement at 64 MHz and must not be
+> read as one. **Consequence for scoping (the review's call, not this
+> run's):** the honest next rung is a *third* 64 MHz mesh (the natural one is
+> `resolution_near` = 0.00125, ~3× cells again ⇒ ~9 min/solve at `-n 2`,
+> heavy and near the slot ceiling — cost-probe it), which would let ΔR be
+> Richardson-extrapolated in h at 64 MHz and the resolution term subtracted
+> before any physics claim. §2.1's extrapolation sentence stands exactly as
+> written; `TH-11` stays 🟡.
 >
 > **Step 3 — 30 MHz mid-transition point (scoped 2026-08-15, 18:00 review;
 > the declared §9 spare, independent of step 2).** Step 1's module at
@@ -8877,7 +8931,15 @@ scoped. *(Full text in `docs/planning/plan-archive.md`, archived
 Items 1 and 6 execute their §7 `TH-11` entries verbatim; items 2–5 are
 self-contained below.
 
-1. **`TH-11` step 2 — the resolution rung at 64 MHz (heavy).** Execute
+1. ~~**`TH-11` step 2 — the resolution rung at 64 MHz (heavy).**~~ —
+   **done 2026-08-15, 19:30 run**: 10 passed 390.9 s at `-n 2` on the
+   417 914-cell rung, all identities green (complex power 3.80e-14 /
+   6.30e-14, σ = 0 exactly +0.0, cell count exact), and the pre-registered
+   reading is **RESOLUTION-DOMINATED** — ΔR deviation **+2.8063%**, a
+   −7.4635 pp move from step 1's +10.2698%. Per the pre-registration a
+   gated trend step is **not** scopeable; the residual 2.81% is still
+   unconverged at 2.52 cells/δ. Full disposition and the proposed third
+   rung are in the §7 `TH-11` step-2 annotation. Original text: execute
    the §7 `TH-11` step-2 entry verbatim: step 1's probe module re-run at
    `resolution_near` = 0.0025 (the `MAT-6` step-8 ladder rung, 417 914
    cells, δ/h = 2.52 at 64 MHz), the same identities gated, physics

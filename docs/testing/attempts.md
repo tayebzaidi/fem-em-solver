@@ -12747,3 +12747,81 @@ first in twelve whose outcome is genuinely open, because it runs *after* the
 this same drained one and makes thirteen. No compute was run beyond a two-line
 container health check, no harness logs produced, no denials hit. `main`
 clean, nothing parked.
+
+## 2026-08-16T00:30Z — `TH-11` step 2 — **complete**
+
+**Preflight.** `main` clean, container Up 4 h. §9 queue restocked by the
+2026-08-15 18:00 review, so the thirteen-idle-slot streak ends here: item 1
+(`TH-11` step 2, the resolution rung at 64 MHz) taken as written, no
+substitution.
+
+**What was done.** New module
+`tests/validation/test_coil_loading_larmor_resolution.py`: step 1's 64 MHz
+loading measurement with exactly one knob moved, `resolution_near`
+0.005 → 0.0025 (the `MAT-6` step-8 ladder rung). Step 1's module is
+**untouched** — its helpers (`_solve_projected_at`, `_stored_magnetic_energy`,
+`_ohmic_power`, `_skin_depth`) and constants are imported, not copied or
+refactored, so the two readings are like-for-like by construction and step 1's
+provenance is byte-identical. No `src/` change. The 10 MHz pair was not
+re-solved; step 8's record is cited.
+
+**Runs.** `20260816T003236Z_TH-11-step2-collect.log` (collect-only, 10
+collected, 4 s) then `20260816T003251Z_TH-11-step2-resolution-n2.log` —
+**10 passed 390.9 s**, 392 s wall, `-n 2`, complex build,
+`tests/environment` first, container `timeout -k 30 580`.
+
+**Deviation from the §7 entry, disclosed.** The entry specifies container
+`timeout -k 30 900` *and* Bash-tool timeout 660000 ms, which cannot both hold
+— 660 s is the tool's maximum foreground window, and implementer-run.md
+requires the container timeout to be sized so the footer lands inside it. Used
+580 s, which cleared the measured 391 s by 1.5× and the entry's own ~390–450 s
+estimate by 1.3×. Nothing else deviated. **For the review:** the 900 s in the
+entry is unexecutable as written by a scheduled session; a heavy step needing
+> ~590 s of container time cannot be run in one foreground window at all.
+
+| | step 1 rung (near 0.005) | **step 2 rung (near 0.0025)** |
+| --- | --- | --- |
+| cells | 138 619 | **417 914** (3.01×) |
+| cells per δ at 64 MHz | 1.26 | **2.52** |
+| mesh / solves at `-n 2` | 10.8 s / 30.5 + 27.0 s | 35.0 s / **174.2 + 174.5 s** |
+| FEM ΔR | +1.4843400e+00 Ω | **+1.3838746e+00 Ω** |
+| FEM ΔX | −5.9823740e+00 Ω | **−5.8741123e+00 Ω** |
+| ΔR dev. vs Dodd–Deeds | +10.2698% | **+2.8063%** (−7.4635 pp) |
+| ΔX ratio | 0.9690 | **0.9514** |
+| complex-power residual | 1.05e-14 / 4.25e-14 | **3.80e-14 / 6.30e-14** |
+
+**Gates, all green, none widened.** Cell count asserted at step 8's exact
+417 914; complex-power identity at the 1e-9 family bound (five orders inside,
+and the 3× larger system did not condition worse); drive control 8.774e-39 vs
+1e-24; σ = 0 dissipation exactly `+0.0000000e+00` W against loaded
+5.8523036e-01 W. Bonus, reported not gated: ΔR by dissipation `2P/I′²`
+reproduces the reaction route digit-for-digit (+1.3838746e+00 Ω), as at step 1.
+Physics printed, never asserted — the four asserts that carry §4 are the cell
+count, the drive control, the identity pair and the σ = 0 control, plus the
+sign test (ΔR > 0, ΔX < 0).
+
+**The finding.** The pre-registered band that fired is **RESOLUTION-DOMINATED
+(< 3%)**, at 2.8063% — 0.19 pp inside the line, so the classification is real
+but not comfortable. Most of step 1's +10.27% was the under-resolved ohmic
+boundary layer: the same knob worth −1.3005 pp at 10 MHz is worth −7.4635 pp
+at 64 MHz, ~5.7× more for a 6.4× frequency, which is what a skin-depth
+argument predicts (δ shrinks 2.53×, so fixed h buys 2.53× fewer cells across
+the layer). The "> 8% ⇒ scope a gated trend step" branch **did not fire**, so
+per the pre-registration no gated trend claim is scopeable on this evidence.
+§2.1's extrapolation sentence is unchanged, `TH-11` stays 🟡, no SAR wording
+touched.
+
+**What is still open.** Whether the residual 2.8063% is physics or the
+remaining mesh error. 2.52 cells/δ is not converged, and the 10 MHz rung at
+δ/h = 6.37 reads 0.2829% — the 64 MHz residual is ~9.9× that at *coarser*
+relative resolution, suggestive of a real physics term but **not** a two-rung
+convergence measurement at 64 MHz and deliberately not written up as one.
+
+**Hypothesis for the next attempt.** A third 64 MHz rung (`resolution_near`
+= 0.00125, ~1.26 M cells, ~3× again ⇒ ~9 min/solve at `-n 2` extrapolating
+174 s × 3) would let ΔR be Richardson-extrapolated in h at 64 MHz and the
+resolution term subtracted before any physics claim — but at ~19 min for the
+solve pair it is at the edge of one foreground window and must be cost-probed
+(mesh + one tiny solve) before being queued. Scoping that rung is the
+review's call, not this run's; the §7 step-2 annotation states it. No
+denials hit. `main` clean, nothing parked.

@@ -1,0 +1,402 @@
+# Test Run
+- Chunk: TH-11-step2-resolution-n2
+- Commit: 480d374ada180f5b55ac96ad273312074f8d5e6c
+- Time (UTC): 2026-08-16 00:32:51
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 580 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_coil_loading_larmor_resolution.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 15 19:32 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 580 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_coil_loading_larmor_resolution.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 10 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 10 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+[TH-1 step 0] PETSC_ARCH='linux-gnu-complex128-32' ScalarType=complex128 dolfinx=/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/__init__.py version=0.7.2
+PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form 
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSEDPASSED
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED[TH-1 step 0] inner=(11.00000000000001+1.9999999999999993j) dot=(-5.000000000000001+10.000000000000002j)
+PASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly [TH-1 step 0] ||M||_F=1.041233e+00 ||M_c - eps_c*M||_F=4.449e-16
+PASSEDPASSED
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_mesh_is_the_mat6_step8_fine_rung 
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_mesh_is_the_mat6_step8_fine_rung Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 50%] Meshing curve 11 (Line)
+Info    : [ 50%] Meshing curve 12 (Line)
+Info    : [ 60%] Meshing curve 13 (Line)
+Info    : [ 60%] Meshing curve 14 (Line)
+Info    : [ 70%] Meshing curve 15 (Line)
+Info    : [ 70%] Meshing curve 16 (Line)
+Info    : [ 80%] Meshing curve 17 (Line)
+Info    : [ 80%] Meshing curve 18 (Line)
+Info    : [ 90%] Meshing curve 19 (Line)
+Info    : [ 90%] Meshing curve 20 (Line)
+Info    : [100%] Meshing curve 21 (Line)
+Info    : [100%] Meshing curve 22 (Line)
+Info    : Done meshing 1D (Wall 0.073085s, CPU 0.073018s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.268885s, CPU 0.251899s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 3 volumes with 1 connected component
+Info    : Tetrahedrizing 5746 nodes...
+Info    : Done tetrahedrizing 5754 nodes (Wall 0.107582s, CPU 0.095136s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.220088s, CPU 0.183135s)
+Info    : Found volume 4
+Info    : Found volume 3
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 33.515 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 5.1407 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 3.88398 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 3.42935 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 3.08717 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 2.85945 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 2.69631 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 2.66428 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 2.46303 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 2.36982 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 2.28523 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 2.21126 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 2.1511 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 2.09442 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 2.04362 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 1.99976 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 1.95984 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 1.92415 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 1.8878 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 1.85266 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 1.82254 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 1.79401 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 1.76499 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 1.74043 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 1.71593 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 1.69208 (nodes removed 0 0)
+Info    : It. 13000 - 13000 nodes created - worst tet radius 1.66962 (nodes removed 0 0)
+Info    : It. 13500 - 13500 nodes created - worst tet radius 1.64905 (nodes removed 0 0)
+Info    : It. 14000 - 14000 nodes created - worst tet radius 1.63013 (nodes removed 0 0)
+Info    : It. 14500 - 14500 nodes created - worst tet radius 1.61204 (nodes removed 0 0)
+Info    : It. 15000 - 15000 nodes created - worst tet radius 1.59415 (nodes removed 0 0)
+Info    : It. 15500 - 15500 nodes created - worst tet radius 1.57706 (nodes removed 0 0)
+Info    : It. 16000 - 16000 nodes created - worst tet radius 1.55963 (nodes removed 0 0)
+Info    : It. 16500 - 16500 nodes created - worst tet radius 1.54406 (nodes removed 0 0)
+Info    : It. 17000 - 17000 nodes created - worst tet radius 1.53018 (nodes removed 0 0)
+Info    : It. 17500 - 17500 nodes created - worst tet radius 1.51482 (nodes removed 0 0)
+Info    : It. 18000 - 18000 nodes created - worst tet radius 1.50029 (nodes removed 0 0)
+Info    : It. 18500 - 18500 nodes created - worst tet radius 1.48755 (nodes removed 0 0)
+Info    : It. 19000 - 19000 nodes created - worst tet radius 1.47464 (nodes removed 0 0)
+Info    : It. 19500 - 19500 nodes created - worst tet radius 1.46303 (nodes removed 0 0)
+Info    : It. 20000 - 20000 nodes created - worst tet radius 1.45168 (nodes removed 0 0)
+Info    : It. 20500 - 20500 nodes created - worst tet radius 1.43884 (nodes removed 0 0)
+Info    : It. 21000 - 21000 nodes created - worst tet radius 1.42667 (nodes removed 0 0)
+Info    : It. 21500 - 21500 nodes created - worst tet radius 1.41595 (nodes removed 0 0)
+Info    : It. 22000 - 22000 nodes created - worst tet radius 1.40587 (nodes removed 0 0)
+Info    : It. 22500 - 22500 nodes created - worst tet radius 1.39542 (nodes removed 0 0)
+Info    : It. 23000 - 23000 nodes created - worst tet radius 1.38598 (nodes removed 0 0)
+Info    : It. 23500 - 23500 nodes created - worst tet radius 1.37554 (nodes removed 0 0)
+Info    : It. 24000 - 24000 nodes created - worst tet radius 1.36515 (nodes removed 0 0)
+Info    : It. 24500 - 24500 nodes created - worst tet radius 1.35553 (nodes removed 0 0)
+Info    : It. 25000 - 25000 nodes created - worst tet radius 1.34683 (nodes removed 0 0)
+Info    : It. 25500 - 25500 nodes created - worst tet radius 1.33765 (nodes removed 0 0)
+Info    : It. 26000 - 26000 nodes created - worst tet radius 1.32932 (nodes removed 0 0)
+Info    : It. 26500 - 26500 nodes created - worst tet radius 1.32188 (nodes removed 0 0)
+Info    : It. 27000 - 27000 nodes created - worst tet radius 1.31379 (nodes removed 0 0)
+Info    : It. 27500 - 27500 nodes created - worst tet radius 1.30596 (nodes removed 0 0)
+Info    : It. 28000 - 28000 nodes created - worst tet radius 1.2985 (nodes removed 0 0)
+Info    : It. 28500 - 28500 nodes created - worst tet radius 1.29148 (nodes removed 0 0)
+Info    : It. 29000 - 29000 nodes created - worst tet radius 1.28428 (nodes removed 0 0)
+Info    : It. 29500 - 29500 nodes created - worst tet radius 1.27722 (nodes removed 0 0)
+Info    : It. 30000 - 30000 nodes created - worst tet radius 1.27052 (nodes removed 0 0)
+Info    : It. 30500 - 30500 nodes created - worst tet radius 1.26417 (nodes removed 0 0)
+Info    : It. 31000 - 31000 nodes created - worst tet radius 1.25768 (nodes removed 0 0)
+Info    : It. 31500 - 31500 nodes created - worst tet radius 1.25102 (nodes removed 0 0)
+Info    : It. 32000 - 32000 nodes created - worst tet radius 1.25198 (nodes removed 0 0)
+Info    : It. 32500 - 32500 nodes created - worst tet radius 1.23842 (nodes removed 0 0)
+Info    : It. 33000 - 33000 nodes created - worst tet radius 1.2321 (nodes removed 0 0)
+Info    : It. 33500 - 33500 nodes created - worst tet radius 1.22584 (nodes removed 0 0)
+Info    : It. 34000 - 34000 nodes created - worst tet radius 1.21984 (nodes removed 0 0)
+Info    : It. 34500 - 34500 nodes created - worst tet radius 1.21376 (nodes removed 0 0)
+Info    : It. 35000 - 35000 nodes created - worst tet radius 1.20826 (nodes removed 0 0)
+Info    : It. 35500 - 35500 nodes created - worst tet radius 1.20245 (nodes removed 0 0)
+Info    : It. 36000 - 36000 nodes created - worst tet radius 1.1971 (nodes removed 0 0)
+Info    : It. 36500 - 36500 nodes created - worst tet radius 1.19171 (nodes removed 0 0)
+Info    : It. 37000 - 37000 nodes created - worst tet radius 1.18599 (nodes removed 0 0)
+Info    : It. 37500 - 37500 nodes created - worst tet radius 1.18048 (nodes removed 0 0)
+Info    : It. 38000 - 38000 nodes created - worst tet radius 1.17531 (nodes removed 0 0)
+Info    : It. 38500 - 38500 nodes created - worst tet radius 1.17016 (nodes removed 0 0)
+Info    : It. 39000 - 39000 nodes created - worst tet radius 1.16548 (nodes removed 0 0)
+Info    : It. 39500 - 39500 nodes created - worst tet radius 1.16079 (nodes removed 0 0)
+Info    : It. 40000 - 40000 nodes created - worst tet radius 1.15595 (nodes removed 0 0)
+Info    : It. 40500 - 40500 nodes created - worst tet radius 1.15135 (nodes removed 0 0)
+Info    : It. 41000 - 41000 nodes created - worst tet radius 1.14679 (nodes removed 0 0)
+Info    : It. 41500 - 41500 nodes created - worst tet radius 1.21308 (nodes removed 0 0)
+Info    : It. 42000 - 42000 nodes created - worst tet radius 1.13755 (nodes removed 0 0)
+Info    : It. 42500 - 42500 nodes created - worst tet radius 1.13288 (nodes removed 0 0)
+Info    : It. 43000 - 43000 nodes created - worst tet radius 1.12835 (nodes removed 0 0)
+Info    : It. 43500 - 43500 nodes created - worst tet radius 1.12403 (nodes removed 0 0)
+Info    : It. 44000 - 44000 nodes created - worst tet radius 1.1198 (nodes removed 0 0)
+Info    : It. 44500 - 44500 nodes created - worst tet radius 1.1153 (nodes removed 0 0)
+Info    : It. 45000 - 45000 nodes created - worst tet radius 1.11127 (nodes removed 0 0)
+Info    : It. 45500 - 45500 nodes created - worst tet radius 1.10733 (nodes removed 0 0)
+Info    : It. 46000 - 46000 nodes created - worst tet radius 1.10331 (nodes removed 0 0)
+Info    : It. 46500 - 46500 nodes created - worst tet radius 1.09963 (nodes removed 0 0)
+Info    : It. 47000 - 47000 nodes created - worst tet radius 1.13502 (nodes removed 0 0)
+Info    : It. 47500 - 47500 nodes created - worst tet radius 1.09169 (nodes removed 0 0)
+Info    : It. 48000 - 48000 nodes created - worst tet radius 1.08787 (nodes removed 0 0)
+Info    : It. 48500 - 48500 nodes created - worst tet radius 1.08394 (nodes removed 0 0)
+Info    : It. 49000 - 49000 nodes created - worst tet radius 1.07997 (nodes removed 0 0)
+Info    : It. 49500 - 49500 nodes created - worst tet radius 1.07638 (nodes removed 0 0)
+Info    : It. 50000 - 50000 nodes created - worst tet radius 1.07262 (nodes removed 0 0)
+Info    : It. 50500 - 50500 nodes created - worst tet radius 1.06927 (nodes removed 0 0)
+Info    : It. 51000 - 51000 nodes created - worst tet radius 1.06589 (nodes removed 0 0)
+Info    : It. 51500 - 51500 nodes created - worst tet radius 1.06216 (nodes removed 0 0)
+Info    : It. 52000 - 52000 nodes created - worst tet radius 1.05878 (nodes removed 0 0)
+Info    : It. 52500 - 52500 nodes created - worst tet radius 1.05545 (nodes removed 0 0)
+Info    : It. 53000 - 53000 nodes created - worst tet radius 1.05215 (nodes removed 0 0)
+Info    : It. 53500 - 53500 nodes created - worst tet radius 1.04915 (nodes removed 0 0)
+Info    : It. 54000 - 54000 nodes created - worst tet radius 1.04603 (nodes removed 0 0)
+Info    : It. 54500 - 54500 nodes created - worst tet radius 1.04286 (nodes removed 0 0)
+Info    : It. 55000 - 55000 nodes created - worst tet radius 1.05621 (nodes removed 0 0)
+Info    : It. 55500 - 55500 nodes created - worst tet radius 1.0363 (nodes removed 0 0)
+Info    : It. 56000 - 56000 nodes created - worst tet radius 1.03318 (nodes removed 0 0)
+Info    : It. 56500 - 56500 nodes created - worst tet radius 1.03008 (nodes removed 0 0)
+Info    : It. 57000 - 57000 nodes created - worst tet radius 1.02714 (nodes removed 0 0)
+Info    : It. 57500 - 57500 nodes created - worst tet radius 1.02418 (nodes removed 0 0)
+Info    : It. 58000 - 58000 nodes created - worst tet radius 1.02126 (nodes removed 0 0)
+Info    : It. 58500 - 58500 nodes created - worst tet radius 1.01851 (nodes removed 0 0)
+Info    : It. 59000 - 59000 nodes created - worst tet radius 1.01579 (nodes removed 0 0)
+Info    : It. 59500 - 59500 nodes created - worst tet radius 1.01336 (nodes removed 0 0)
+Info    : It. 60000 - 60000 nodes created - worst tet radius 1.0104 (nodes removed 0 0)
+Info    : It. 60500 - 60500 nodes created - worst tet radius 1.00752 (nodes removed 0 0)
+Info    : It. 61000 - 61000 nodes created - worst tet radius 1.00448 (nodes removed 0 0)
+Info    : It. 61500 - 61500 nodes created - worst tet radius 1.00181 (nodes removed 0 0)
+Info    : 3D refinement terminated (67581 nodes total):
+Info    :  - 3 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 425127 tetrahedra created in 6.37673 sec. (66668 tets/s)
+Info    : Done meshing 3D (Wall 7.20724s, CPU 7.09228s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 4.53849e-06) with worst = 0.115162 / average = 0.811785:
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :        10 elements
+Info    : 0.20 < quality < 0.30 :        22 elements
+Info    : 0.30 < quality < 0.40 :        21 elements
+Info    : 0.40 < quality < 0.50 :        49 elements
+Info    : 0.50 < quality < 0.60 :        62 elements
+Info    : 0.60 < quality < 0.70 :       230 elements
+Info    : 0.70 < quality < 0.80 :       735 elements
+Info    : 0.80 < quality < 0.90 :      1322 elements
+Info    : 0.90 < quality < 1.00 :       725 elements
+Info    : 32 edge swaps, 0 node relocations (volume = 4.53849e-06): worst = 0.301137 / average = 0.818744 (Wall 0.0010576s, CPU 0.001058s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        19 elements
+Info    : 0.40 < quality < 0.50 :        48 elements
+Info    : 0.50 < quality < 0.60 :        59 elements
+Info    : 0.60 < quality < 0.70 :       230 elements
+Info    : 0.70 < quality < 0.80 :       734 elements
+Info    : 0.80 < quality < 0.90 :      1328 elements
+Info    : 0.90 < quality < 1.00 :       728 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 0.0135) with worst = 0.00187387 / average = 0.778788:
+Info    : 0.00 < quality < 0.10 :       516 elements
+Info    : 0.10 < quality < 0.20 :      1536 elements
+Info    : 0.20 < quality < 0.30 :      2702 elements
+Info    : 0.30 < quality < 0.40 :      4528 elements
+Info    : 0.40 < quality < 0.50 :      7243 elements
+Info    : 0.50 < quality < 0.60 :     12478 elements
+Info    : 0.60 < quality < 0.70 :     23996 elements
+Info    : 0.70 < quality < 0.80 :     51937 elements
+Info    : 0.80 < quality < 0.90 :     88512 elements
+Info    : 0.90 < quality < 1.00 :     48246 elements
+Info    : 4673 edge swaps, 181 node relocations (volume = 0.0135): worst = 0.180692 / average = 0.790659 (Wall 0.194778s, CPU 0.194036s)
+Info    : 4707 edge swaps, 181 node relocations (volume = 0.0135): worst = 0.232662 / average = 0.79074 (Wall 0.251416s, CPU 0.250676s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         4 elements
+Info    : 0.30 < quality < 0.40 :      4501 elements
+Info    : 0.40 < quality < 0.50 :      7073 elements
+Info    : 0.50 < quality < 0.60 :     12196 elements
+Info    : 0.60 < quality < 0.70 :     23793 elements
+Info    : 0.70 < quality < 0.80 :     52992 elements
+Info    : 0.80 < quality < 0.90 :     89208 elements
+Info    : 0.90 < quality < 1.00 :     47779 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 0.0134955) with worst = 0.00564766 / average = 0.778617:
+Info    : 0.00 < quality < 0.10 :       365 elements
+Info    : 0.10 < quality < 0.20 :      1095 elements
+Info    : 0.20 < quality < 0.30 :      1962 elements
+Info    : 0.30 < quality < 0.40 :      3204 elements
+Info    : 0.40 < quality < 0.50 :      5186 elements
+Info    : 0.50 < quality < 0.60 :      9182 elements
+Info    : 0.60 < quality < 0.70 :     17998 elements
+Info    : 0.70 < quality < 0.80 :     40484 elements
+Info    : 0.80 < quality < 0.90 :     66324 elements
+Info    : 0.90 < quality < 1.00 :     34455 elements
+Info    : 3383 edge swaps, 126 node relocations (volume = 0.0134955): worst = 0.221309 / average = 0.790358 (Wall 0.159531s, CPU 0.159411s)
+Info    : 3401 edge swaps, 127 node relocations (volume = 0.0134955): worst = 0.255734 / average = 0.790408 (Wall 0.199425s, CPU 0.199305s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         1 elements
+Info    : 0.30 < quality < 0.40 :      3151 elements
+Info    : 0.40 < quality < 0.50 :      5041 elements
+Info    : 0.50 < quality < 0.60 :      8882 elements
+Info    : 0.60 < quality < 0.70 :     17914 elements
+Info    : 0.70 < quality < 0.80 :     41217 elements
+Info    : 0.80 < quality < 0.90 :     66816 elements
+Info    : 0.90 < quality < 1.00 :     34198 elements
+Info    : Done optimizing mesh (Wall 1.47759s, CPU 1.38864s)
+Info    : 67581 nodes 429811 elements
+
+[TH-11 step 2 | f = 64.0 MHz | W = 0.15 m, wire 0.002, near 0.0025] 417914 cells, mesh 35.0 s, solves 174.2 s + 174.5 s at -n 2
+[TH-11 step 2] skin depth 6.29 mm (2.52 cells per delta; step 1's rung: 1.26)
+[TH-11 step 2] I' = 0.919666 A
+[TH-11 step 2] FEM   dZ = +1.3838746e+00 + j(-5.8741123e+00) Ohm
+[TH-11 step 2] Dodd-Deeds (QUASI-STATIC, the comparison and not the reference at this f) dZ = +1.3460987e+00 + j(-6.1738852e+00) Ohm
+[TH-11 step 2] dR deviation from the quasi-static prediction +2.8063%  (step 1's coarse rung at 64 MHz: +10.2698%; move -7.4635 pp)
+[TH-11 step 2] the 10 MHz 2x2 for the same knob, cited never re-solved: 1.5834% (near 0.005) -> 0.2829% (near 0.0025), i.e. -1.3005 pp
+[TH-11 step 2] PRE-REGISTERED READING: RESOLUTION-DOMINATED (< 3%): the trend needs finer rungs first
+[TH-11 step 2] dX ratio 0.9514  (step 1 at 64 MHz: 0.9690; this mesh at 10 MHz: 0.9160)
+[TH-11 step 2] dR via dissipation 2P/I'^2 = +1.3838746e+00 Ohm vs reaction +1.3838746e+00 Ohm (reported)
+[TH-11 step 2] complex-power identity residual: loaded 3.7967e-14, free 6.3010e-14 (bound 1e-09)
+[TH-11 step 2] sigma-blind control: P_loss loaded +5.8523036e-01 W vs free +0.0000000e+00 W
+
+  cells: 417914 (step 8 record: 417914)
+PASSED
+tests/validation/test_coil_loading_larmor_resolution.py::test_both_solves_are_driven_by_the_same_projected_current 
+  ||J'_loaded - J'_free||^2 / ||J'||^2 = 0.000e+00
+PASSED
+  cells: 417914 (step 8 record: 417914)
+PASSED
+tests/validation/test_coil_loading_larmor_resolution.py::test_complex_power_identity_holds_on_the_fine_rung[loaded] 
+tests/validation/test_coil_loading_larmor_resolution.py::test_both_solves_are_driven_by_the_same_projected_current 
+  loaded: Im Z reaction 5.558329e+01 Ω vs energy 5.558329e+01 Ω → residual 3.7967e-14 (W_m 2.9234e-08 J, W_e 6.5225e-12 J)
+PASSED
+  ||J'_loaded - J'_free||^2 / ||J'||^2 = 0.000e+00
+PASSED
+tests/validation/test_coil_loading_larmor_resolution.py::test_complex_power_identity_holds_on_the_fine_rung[free] 
+tests/validation/test_coil_loading_larmor_resolution.py::test_complex_power_identity_holds_on_the_fine_rung[loaded] 
+  free: Im Z reaction 6.145740e+01 Ω vs energy 6.145740e+01 Ω → residual 6.3010e-14 (W_m 3.2330e-08 J, W_e 1.3930e-11 J)
+PASSED
+  loaded: Im Z reaction 5.558329e+01 Ω vs energy 5.558329e+01 Ω → residual 3.7967e-14 (W_m 2.9234e-08 J, W_e 6.5225e-12 J)
+PASSED
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_fine_rung 
+  P_loss: loaded +5.8523036e-01 W, free (σ = 0) +0.0000000e+00 W
+PASSED
+tests/validation/test_coil_loading_larmor_resolution.py::test_complex_power_identity_holds_on_the_fine_rung[free] 
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_loaded_coil_still_dissipates_and_expels_flux_on_the_fine_rung 
+  free: Im Z reaction 6.145740e+01 Ω vs energy 6.145740e+01 Ω → residual 6.3010e-14 (W_m 3.2330e-08 J, W_e 1.3930e-11 J)
+PASSED
+  ΔR = +1.3838746e+00 Ω, ΔX = -5.8741123e+00 Ω; deviation from the quasi-static prediction +2.8063% (-7.4635 pp vs step 1's coarse rung), ΔX ratio 0.9514 — reported, not gated
+  pre-registered reading: RESOLUTION-DOMINATED (< 3%): the trend needs finer rungs first
+PASSED
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_fine_rung 
+  P_loss: loaded +5.8523036e-01 W, free (σ = 0) +0.0000000e+00 W
+PASSED
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_loaded_coil_still_dissipates_and_expels_flux_on_the_fine_rung 
+  ΔR = +1.3838746e+00 Ω, ΔX = -5.8741123e+00 Ω; deviation from the quasi-static prediction +2.8063% (-7.4635 pp vs step 1's coarse rung), ΔX ratio 0.9514 — reported, not gated
+  pre-registered reading: RESOLUTION-DOMINATED (< 3%): the trend needs finer rungs first
+PASSED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 10 passed, 8 warnings in 390.89s (0:06:30) ==================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 10 passed, 8 warnings in 390.88s (0:06:30) ==================
+
+## Exit
+- Status: 0
+- Elapsed (s): 392
