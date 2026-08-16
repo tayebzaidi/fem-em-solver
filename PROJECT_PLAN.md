@@ -694,7 +694,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-12` | **Widen the two `1e-9` wall tolerances and gate the `outer_boundary` group** (known-issues 12) | ✅ | standard |
 | `GEO-13` | **Decouple `cylindrical_domain`'s wall tolerance from `resolution`** (known-issues 13) | ✅ | standard |
 | `GEO-14` | **The shared ~3% geometry floor: faceting vs resolution** (entry lives after `TH-11`, beside the fixtures it measures) | ✅ *(closed 2026-08-15 review on the refuted hypothesis: RESOLUTION, 3.643% → 1.781% at 55 251 cells, rate 1.77 in h — no faceting floor)* | standard |
-| `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | ⬜ | standard |
+| `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | 🟡 *(step 1 ✅ 2026-08-16 — graded sizing recovers **0.9670** of the conductor's CAD mass at h_c = 1.6 mm vs **0.7403** baseline, gate cleared, `GEO-9` identities unmoved at < 1e-9; 41 s at `-n 2`)* | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -778,7 +778,7 @@ precondition at the use site: a radial gap below ~1e-4 m stops clearing
 the OCC padding by 10× (smallest gap in the repo: 0.07 m).
 
 **`GEO-15` — birdcage conductor sizing: is graded sizing a `PORT-9`
-prerequisite?** ⬜ *(entry written 2026-08-16, 03:00 daily review — the
+prerequisite?** 🟡 *(entry written 2026-08-16, 03:00 daily review — the
 chunk itself was named by the interrupted weekly-scope session as the
 second `PORT-9` step-3 prerequisite but left without an entry. Mesh-only:
 no solves.)* The birdcage mesh (`GEO-9`) keeps only **0.7091** of the
@@ -789,7 +789,47 @@ masses give 0.9578), the rest is 0.015 against a 0.004 ring minor radius.
 ≲ 0.0016 here) says the conductor is ~10× under-resolved, and a lumped
 port on that surface inherits the coarse conductor boundary. This chunk
 answers `PORT-9` step 3's open question by measurement.
-> * **Step 1 (gate) — graded rung.** Regenerate `birdcage_port_domain`
+> * **Step 1 ✅ 2026-08-16** *(`tests/mesh/test_birdcage_conductor_sizing.py`,
+>   `20260816T123337Z_GEO-15-step1.log`, 41 s at `-n 2`; regression
+>   `20260816T123433Z_GEO-15-step1-regression.log`, 4 passed 21 s)*. **The
+>   0.7091 question is answered, and it splits in two.** The conductor's CAD
+>   (occ) mass is **1.030097043e-04 m³** against an analytic ring+leg sum of
+>   1.075503356e-04 m³ — so the eight leg∩ring junctions the sum double-counts
+>   are worth **4.22%**, and the *rest* of the historical deficit is pure
+>   resolution: on the CAD denominator the baseline global-`setSize` mesh keeps
+>   only **0.740335**. Grading fixes it. Measured ladder (all three rungs, one
+>   command, `GEO-9` identities re-checked on each and unmoved at < 1e-9 —
+>   box-partition, tagged-sum, and all four port boxes):
+>
+>   | conductor sizing | cells | meshed/CAD | meshed/analytic | mesh time |
+>   |---|---|---|---|---|
+>   | global 0.015 (baseline) | 48 245 | 0.740335 | 0.709079 | 6.07 s |
+>   | h_c = 3.2e-3 | 48 576 | 0.918603 | 0.879821 | 8.30 s |
+>   | h_c = 1.6e-3 (`GEO-8`'s 0.4·minor) | 98 474 | **0.967019** | 0.926193 | 16.74 s |
+>
+>   **Gate cleared** (0.967019 ≥ 0.95) at exactly the sizing `GEO-8`'s rule
+>   predicts, with the negative control separated by 0.2267 — and the cost is
+>   mild: 2.04× the cells and 2.76× the mesh time of baseline, still inside the
+>   *standard* tier with room to spare. Mechanism (the trap that decided the
+>   implementation): `mesh.setSize` binds dimension-0 entities only and an OCC
+>   torus carries a single seam point, so no per-point constraint can resolve a
+>   0.004 m minor radius; the working mechanism is a Distance→Threshold
+>   background field over the conductor's 20 boundary surfaces with
+>   `SizeMax = resolution`, which leaves air/box sizing untouched by
+>   construction. The three `Mesh.MeshSizeFrom*` switches must be off or gmsh
+>   mins the field against the coarse point constraints. New kwargs on
+>   `birdcage_port_domain`: `conductor_resolution`, `conductor_refine_distance`
+>   (default 3·ring_minor_radius), `return_diagnostics` (opt-in 4-tuple
+>   carrying per-group CAD mass + mesh wall time, bcast from the building rank);
+>   every default is unchanged, and the `GEO-9`/finalize-isolation tests pass
+>   untouched. **Answer for `PORT-9` step 3: graded sizing is achievable and
+>   cheap, so it is a prerequisite the port model can simply assume** — the
+>   remaining 3.3% is faceting of the curved boundary, not a mesh-size failure.
+>   Not yet measured: whether a *port* on the graded conductor surface behaves
+>   differently — that is `PORT-9`'s own gate, still unscoped by design. `GEO-4`
+>   stays 🧪 (no solve was run here).
+> * **Step 1 (gate) — graded rung** *(original plan, executed as written)*.
+>   Regenerate `birdcage_port_domain`
 >   with conductor-graded sizing (gmsh size field or per-surface `setSize`
 >   at ~0.4× the ring minor radius; air/box sizing untouched) and print,
 >   for baseline and graded in the same command: conductor meshed volume /
@@ -1722,10 +1762,17 @@ step-1 entry; item 1 is self-contained below.
    regenerate the gated 2-port records through the `EX-20` path into
    `metrics.json` / `COMPARISON.md` (AED columns blank) / combined
    XDMF.
-3. **`GEO-15` step 1 — graded birdcage conductor sizing (standard,
-   mesh-only, no solves).** Execute the §7 `GEO-15` entry verbatim:
-   baseline vs graded conductor-volume/CAD-mass identity in one
-   command, gate ≥ 0.95 graded with the `GEO-9` identities unmoved.
+3. ~~**`GEO-15` step 1 — graded birdcage conductor sizing (standard,
+   mesh-only, no solves).**~~ **done** 2026-08-16, 07:30 run — 1 passed
+   41 s at `-n 2`, `20260816T123337Z_GEO-15-step1.log`; gate cleared at
+   **0.967019** meshed/CAD (h_c = 1.6e-3, 98 474 cells, 16.74 s mesh)
+   against a **0.740335** baseline negative control, three-rung ladder
+   monotone, `GEO-9` identities unmoved at < 1e-9 on every rung.
+   Junction double-count isolated at 4.22% (CAD/analytic 0.957781), so
+   the 0.7091 deficit was mostly resolution after all. See the §7
+   `GEO-15` entry. Original item: baseline vs graded
+   conductor-volume/CAD-mass identity in one command, gate ≥ 0.95
+   graded with the `GEO-9` identities unmoved.
 4. **`PORT-10` — systematics composition, 2×2 factorial (heavy).**
    Execute the §7 `PORT-10` entry verbatim; its cost-probe-first rule
    is binding — `EX-20`'s pair is 178 s at `-n 2`, the padded and

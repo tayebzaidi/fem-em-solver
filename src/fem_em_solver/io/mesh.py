@@ -1,6 +1,7 @@
 """Mesh generation utilities for EM simulations."""
 
 from typing import Optional, Tuple, List, Dict
+import time
 import numpy as np
 import gmsh
 from mpi4py import MPI
@@ -2507,12 +2508,15 @@ class MeshGenerator:
         min_port_center_separation: Optional[float] = None,
         air_padding: float = 0.03,
         resolution: float = 0.015,
+        conductor_resolution: Optional[float] = None,
+        conductor_refine_distance: Optional[float] = None,
         comm: MPI.Intracomm = MPI.COMM_WORLD,
         rank: int = 0,
         n_legs: Optional[int] = None,
         leg_radius: Optional[float] = None,
         leg_height: Optional[float] = None,
-    ) -> Tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]:
+        return_diagnostics: bool = False,
+    ):
         """Generate a coarse, parametric birdcage-like geometry fixture with port tags.
 
         Parameters
@@ -2527,6 +2531,23 @@ class MeshGenerator:
             Center-to-center spacing between bottom and top ring planes [m].
         coil_length : float
             Axial conductor span used for vertical legs [m].
+        conductor_resolution : float, optional
+            Target element size **on and near the conductor surfaces** [m]
+            (`GEO-15` step 1). ``None`` keeps the historical behaviour: one
+            global ``setSize`` at `resolution` everywhere. When given, a gmsh
+            Distance→Threshold background field grades from
+            `conductor_resolution` at the conductor boundary up to `resolution`
+            beyond `conductor_refine_distance`; air/box sizing is unchanged
+            because the field's ``SizeMax`` *is* `resolution`.
+        conductor_refine_distance : float, optional
+            Width of the graded shell around the conductor [m]. Defaults to
+            ``3 x ring_minor_radius``, which keeps the fine zone a thin skin
+            rather than flooding the air box with small cells.
+        return_diagnostics : bool
+            When True, return a fourth element: a dict with the **CAD (occ)
+            mass** per physical group — the junction-double-count-free
+            denominator `GEO-15` measures against — and the gmsh meshing wall
+            time. Broadcast from `rank`, so it is identical on every rank.
 
         Notes
         -----
@@ -2579,9 +2600,10 @@ class MeshGenerator:
         # rank never reaches. Both were measured: 20260803T123116Z log, 5 failed
         # 2 passed in 3.16 s of pytest but harness exit 124 at the 180 s ceiling.
         build_error: Optional[BaseException] = None
+        build_diagnostics: Optional[Dict[str, object]] = None
         if comm.rank == rank:
             try:
-                MeshGenerator._build_birdcage_port_model(
+                build_diagnostics = MeshGenerator._build_birdcage_port_model(
                     leg_count=leg_count,
                     ring_radius=ring_radius,
                     leg_radius_eff=leg_radius_eff,
@@ -2594,6 +2616,8 @@ class MeshGenerator:
                     port_radius=port_diagnostics["port_radius_m"],
                     air_padding=air_padding,
                     resolution=resolution,
+                    conductor_resolution=conductor_resolution,
+                    conductor_refine_distance=conductor_refine_distance,
                 )
             except BaseException as exc:  # noqa: BLE001 — re-raised below, on every rank
                 build_error = exc
@@ -2616,7 +2640,13 @@ class MeshGenerator:
         if comm.rank == rank:
             gmsh.finalize()
 
-        return mesh, cell_tags, facet_tags
+        if not return_diagnostics:
+            return mesh, cell_tags, facet_tags
+
+        # Collective: the CAD masses only exist on the building rank, and every
+        # rank must see the same denominator or the ratio assertions disagree
+        # across ranks (the rank-local trap `GEO-9` already paid once).
+        return mesh, cell_tags, facet_tags, comm.bcast(build_diagnostics, root=rank)
 
     @staticmethod
     def _build_birdcage_port_model(
@@ -2633,7 +2663,9 @@ class MeshGenerator:
         port_radius: float,
         air_padding: float,
         resolution: float,
-    ) -> None:
+        conductor_resolution: Optional[float] = None,
+        conductor_refine_distance: Optional[float] = None,
+    ) -> Dict[str, object]:
         """Build the birdcage gmsh model on the calling rank (see `birdcage_port_domain`)."""
         gmsh.initialize()
         gmsh.model.add("birdcage_port_domain")
@@ -2823,5 +2855,83 @@ class MeshGenerator:
             gmsh.model.setPhysicalName(2, 1, "outer_boundary")
 
         gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
+
+        # `GEO-15` step 1 — conductor grading. `mesh.setSize` only binds
+        # dimension-0 entities, and an OCC torus carries a single seam point, so
+        # a per-point constraint cannot resolve a 0.004 m minor radius no matter
+        # what value it is given. The size *field* is the mechanism that can: a
+        # Distance field sampled over the conductor's own boundary surfaces fed
+        # into a Threshold that is `conductor_resolution` at the metal and
+        # relaxes to the untouched global `resolution` past `refine_distance`.
+        # The three MeshSizeFrom* switches must be off or gmsh takes the minimum
+        # of the field and the point/curvature constraints, which would silently
+        # re-impose the coarse global size inside the shell.
+        if conductor_resolution is not None:
+            refine_distance = (
+                3.0 * ring_minor_radius
+                if conductor_refine_distance is None
+                else conductor_refine_distance
+            )
+            conductor_surfaces = sorted(
+                {
+                    surf
+                    for dim, surf in gmsh.model.getBoundary(
+                        [(3, piece) for piece in pieces_by_group[1]],
+                        combined=True,
+                        oriented=False,
+                        recursive=False,
+                    )
+                    if dim == 2
+                }
+            )
+            if not conductor_surfaces:
+                raise RuntimeError(
+                    "birdcage_port_domain: conductor grading requested but the "
+                    f"conductor group has no boundary surfaces ({len(pieces_by_group[1])} pieces)"
+                )
+            distance_field = gmsh.model.mesh.field.add("Distance")
+            gmsh.model.mesh.field.setNumbers(
+                distance_field, "SurfacesList", conductor_surfaces
+            )
+            gmsh.model.mesh.field.setNumber(distance_field, "Sampling", 20)
+            threshold_field = gmsh.model.mesh.field.add("Threshold")
+            gmsh.model.mesh.field.setNumber(threshold_field, "InField", distance_field)
+            gmsh.model.mesh.field.setNumber(threshold_field, "SizeMin", conductor_resolution)
+            gmsh.model.mesh.field.setNumber(threshold_field, "SizeMax", resolution)
+            gmsh.model.mesh.field.setNumber(threshold_field, "DistMin", 0.0)
+            gmsh.model.mesh.field.setNumber(threshold_field, "DistMax", refine_distance)
+            gmsh.model.mesh.field.setAsBackgroundMesh(threshold_field)
+            gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+            gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
+            gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
+            print(
+                f"[birdcage-mesh] conductor grading: h_c={conductor_resolution:.6e} m "
+                f"over {len(conductor_surfaces)} surfaces, shell={refine_distance:.6e} m, "
+                f"h_global={resolution:.6e} m",
+                flush=True,
+            )
+
+        mesh_start = time.perf_counter()
         gmsh.model.mesh.generate(3)
         gmsh.model.mesh.optimize("Netgen")
+        mesh_wall_time = time.perf_counter() - mesh_start
+
+        # CAD (occ) masses per physical group. `masses` above is per fragment
+        # piece and is what `pieces_by_group` indexes, so summing it group-wise
+        # gives the exact CAD volume of the group — the leg∩ring junctions are
+        # separate pieces after the fragment, so each is counted once. That is
+        # precisely the denominator the analytic ring+leg sum cannot supply.
+        cad_mass_by_group = {
+            group_names[group]: float(sum(masses[piece] for piece in pieces))
+            for group, pieces in sorted(pieces_by_group.items())
+        }
+        print(
+            f"[birdcage-mesh] mesh wall time {mesh_wall_time:.2f} s; CAD masses [m^3]: "
+            + " ".join(f"{name}={mass:.9e}" for name, mass in cad_mass_by_group.items()),
+            flush=True,
+        )
+        return {
+            "cad_mass_by_group": cad_mass_by_group,
+            "mesh_wall_time_s": float(mesh_wall_time),
+            "conductor_resolution_m": conductor_resolution,
+        }

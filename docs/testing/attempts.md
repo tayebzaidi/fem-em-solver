@@ -11725,3 +11725,74 @@ examples now has to read the body to tell its own breakage from the
 backlog's. A cheap `all-mag`+`mri:1` refresh run, or a chunk to decide
 whether the 48 h freshness limit is the right policy for untracked outputs,
 would restore the signal.
+
+---
+
+## 2026-08-16T12:35Z — `GEO-15` step 1 — **complete**
+
+Scheduled implementer run, 07:30 CDT slot. Preflight clean (`main`, no dirty
+tree, container Up 16 h). §9 On-deck item 3, the first not-done entry; items 1
+and 2 were closed by the 04:30 and 06:00 runs. Executed the §7 `GEO-15`
+step-1 plan verbatim. Elapsed: ~35 min of the 60, both compute commands
+inside the standard tier.
+
+**Result: gate cleared, and the 0.7091 question splits in two.** The chunk's
+premise was that the historical deficit had two tangled causes — the analytic
+ring+leg sum double-counting the eight leg∩ring junctions, and a 0.015 m
+global `setSize` against a 0.004 m ring minor radius. Changing the denominator
+to the conductor group's **CAD (occ) mass** separates them:
+
+| conductor sizing | cells | meshed/CAD | meshed/analytic | mesh time |
+|---|---|---|---|---|
+| global 0.015 (baseline / negative control) | 48 245 | 0.740335 | 0.709079 | 6.07 s |
+| h_c = 3.2e-3 | 48 576 | 0.918603 | 0.879821 | 8.30 s |
+| h_c = 1.6e-3 (`GEO-8`'s 0.4·minor) | 98 474 | **0.967019** | 0.926193 | 16.74 s |
+
+CAD mass 1.030097043e-04 m³ vs analytic sum 1.075503356e-04 m³ ⇒ the junctions
+are worth **4.22%**; the remaining ~26 pp of the old 0.7091 was resolution.
+Gate ≥ 0.95 cleared at 0.967019, negative control separated by 0.2267, ladder
+strictly monotone, and the `GEO-9` identities (box partition, tagged sum, all
+four port boxes) re-checked on **every** rung and unmoved at < 1e-9. CAD mass
+asserted identical across rungs to 1e-12 — the size field may not move the
+geometry.
+
+**Logs.** `20260816T123337Z_GEO-15-step1.log` — 1 passed, 41 s, `-n 2`,
+container `timeout -k 30 500` per the entry. `20260816T123433Z_GEO-15-step1-regression.log`
+— 4 passed, 21 s: `test_birdcage_port_tags.py` + the finalize-isolation test,
+confirming the default (ungraded) path is byte-for-byte the old behaviour.
+
+**The trap that decided the implementation**, worth recording because the §7
+entry offered "size field *or* per-surface `setSize`" and only one of them can
+work: `gmsh.model.mesh.setSize` binds **dimension-0 entities only**, and an
+OCC torus carries a single seam point — so a per-point constraint cannot
+resolve a 0.004 m minor radius at any value. The mechanism that does is a
+Distance→Threshold background field over the conductor's 20 boundary surfaces,
+`SizeMin = h_c`, `SizeMax = resolution`, `DistMax = 3·ring_minor_radius`. The
+`SizeMax = resolution` choice is what keeps "air/box sizing untouched" true by
+construction rather than by inspection. Second trap: the three
+`Mesh.MeshSizeFrom{Points,Curvature}` / `MeshSizeExtendFromBoundary` switches
+must be set to 0, or gmsh takes the minimum of the field and the point
+constraints and silently re-imposes the coarse size inside the shell.
+
+**API.** `birdcage_port_domain` gained `conductor_resolution`,
+`conductor_refine_distance` (default 3·ring_minor_radius) and
+`return_diagnostics` — the last an opt-in 4-tuple carrying per-group CAD mass
+and gmsh mesh wall time, `bcast` from the building rank so every rank shares
+one denominator (the rank-local trap `GEO-9` already paid for). Defaults
+unchanged, so no existing caller sees anything.
+
+**Cost note for whoever scopes `PORT-9` step 3.** Grading to the `GEO-8` rule
+costs 2.04× the cells and 2.76× the mesh time of baseline — 98 474 cells,
+16.74 s. That is still *standard* tier for meshing, but it is a doubled cell
+count for every solve that follows, and `PORT-9` should budget from 98 k, not
+48 k.
+
+**Hypothesis for the next attempt.** §9 item 4 (`PORT-10`, systematics
+composition, heavy) is next open, and its cost-probe-first rule is binding.
+Independent of everything here. One observation for the daily review: this
+chunk's step 1 answers `PORT-9` step 3's prerequisite question in the
+affirmative — graded sizing is achievable and cheap — so `GEO-15` is arguably
+closeable at 🟡→✅ without a step 2 unless the review wants the faceting
+residual (the remaining 3.3%, which is curvature discretisation and not a
+mesh-size failure) pinned down separately. I left it 🟡 rather than making
+that call unilaterally.
