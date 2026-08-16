@@ -11796,3 +11796,68 @@ closeable at 🟡→✅ without a step 2 unless the review wants the faceting
 residual (the remaining 3.3%, which is curvature discretisation and not a
 mesh-size failure) pinned down separately. I left it 🟡 rather than making
 that call unilaterally.
+
+---
+
+## 2026-08-16T14:15Z — `PORT-10` — complete
+
+**Slot.** 09:00 CDT scheduled implementer run. Preflight clean (no dirty tree,
+container Up, 18 h uptime). §9 On deck items 1–3 were already done, so item 4
+— `PORT-10`, systematics composition, heavy — was the first open one.
+
+**What was tried.** The §7 entry verbatim: a 2×2 factorial that measures the
+interaction between the two `PORT-1` systematics instead of assuming it away.
+Each systematic gets its own experimental knob on the gapped two-torus fixture
+— `air_padding` for the PEC-box term, gap-box `h_box` for the gap/feed term —
+so the four corners are (0.08, baseline), (0.10, baseline), (0.08, 6.0e-4),
+(0.10, 6.0e-4). Each corner is one mesh + one solve reading the
+terminal-to-terminal estimator on the undriven port with gap 101 driven under
+the `I_cond` normalisation, i.e. 3b-xvi's lean path rather than
+`_solve_gap_ports`'s five solves (four corners of the five-solve harness would
+not fit a slot, and the record this reproduces was measured on the lean path).
+New module `tests/validation/test_port_systematics_composition.py`; new probe
+`scripts/probes/port10_costprobe.py`.
+
+**Cost probe first** (the entry's binding rule), because two corners had never
+been meshed: `20260816T140457Z_PORT-10-costprobe.log`, 95 s — padded 194 985
+cells / 38.9 s (matching the 3b-xii record digit for digit), joint **263 751**
+cells / 52.4 s, both inside 3b-xvi's 350 000 stop rule. The gate was then sized
+from that (`timeout -k 30 540`) rather than from an extrapolation; it ran 352 s.
+
+**Measured numbers** (`20260816T140643Z_PORT-10.log`, 7 passed 352.37 s at
+`-n 2`, heavy tier, four meshes 174.6 s + four solves 117.3 s):
+
+- corner ratios ×ωM₁₂: base 0.894543, padded 0.924103, refined 0.895051,
+  joint 0.924007;
+- shifts off base: PEC box **+2.9559 pp**, gap/feed **+0.0508 pp** (3b-xvi
+  measured +0.0508 pp), joint +2.9464 pp vs sum of parts +3.0067 pp;
+- **cross-term X = −6.037099e-04 = −0.0604 pp** against the pre-stated
+  ±0.5 pp band — inside by 8.3×, so the two knobs' effects add and the
+  sequential ladder in `ports/systematics.py` carries no interaction error
+  resolvable at 3b-xvi's grain;
+- anchors: base reproduces 0.894543 to **+2.979e-07** and refined 0.895051 to
+  **+1.536e-07**, against a 0.1 pp band (5× tighter than the gate's);
+- negative controls, both executed in-run on the same cross-term arithmetic:
+  joint displaced +1.0 pp ⇒ X = +0.9396 pp, wedge-only estimator 0.493653 as
+  the joint corner ⇒ X = −43.0958 pp; both asserted to fail the band.
+
+Structural gates per corner also green: meshed/analytic gap-box volume an
+identity to < 1e-9, cell count under the ceiling, quadrature drift
+2049→4097 under 1e-3.
+
+**Landed.** The module, the probe, both logs, the §7 `PORT-10` status flip
+(⬜ → ✅ with the result block), the §9 item-4 done mark, and a paragraph in
+`ports/systematics.py`'s docstring recording that the composition is now
+measured. No tolerance moved; nothing in the ladder changed.
+
+**Stated limit of the claim** (also in §7 and in the module docstring): `Δ_box`
+is one finite padding step, not the `W → ∞` extrapolation `D∞` itself, and
+`Δ_feed` probes the gap term through feed discretisation, not through gap
+physics (which has no knob short of changing topology). The factorial tests
+whether the two *measurements* were separable — which is exactly the
+assumption the ladder rests on — not the extrapolations layered on top.
+
+**Hypothesis for the next attempt.** `PORT-9` step 3's two prerequisites are
+now both reported (`PORT-10` here, `GEO-15` step 1 in the 07:30 slot), so the
+daily review can scope its gate. Next open On-deck item is 5 (`TH-11` step 3,
+standard, measurement only), independent of all of this.

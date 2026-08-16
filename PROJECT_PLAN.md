@@ -1233,7 +1233,7 @@ until that check returns.
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard |
 | `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | ⬜ | standard |
-| `PORT-10` | The two `PORT-1` systematics: composition measured, not assumed | ⬜ | heavy |
+| `PORT-10` | The two `PORT-1` systematics: composition measured, not assumed | ✅ 2026-08-16 (cross-term **−0.0604 pp** inside the pre-stated ±0.5 pp) | heavy |
 
 **`PORT-1` — Real port excitation from the solved field** ✅ *(closed by
 the 2026-08-15, 18:00 review. Full plans, execution journals, adjudications
@@ -1376,8 +1376,8 @@ the answer is already gated**.
 >   review once both report; reciprocity on the 4×4 S is the minimum.
 
 **`PORT-10` — the two `PORT-1` systematics: composition measured, not
-assumed** ⬜ *(scoped 2026-08-16, weekly planning review — the first of the
-two §9-hold questions.)* The PEC-box correction (`D∞ = +0.0169` at
+assumed** ✅ *(scoped 2026-08-16, weekly planning review — the first of the
+two §9-hold questions; **closed 2026-08-16, 09:00 slot**.)* The PEC-box correction (`D∞ = +0.0169` at
 `p = 1.657`, an effective-range extrapolation) and the gap-physics
 correction (`÷(1 − 0.030224)`, Jin 3e §10.4.2.1) were each measured in
 isolation; `ports/systematics.py` composes them multiplicatively, and that
@@ -1393,6 +1393,37 @@ stop; never widen. **Tier:** heavy — cost-probe first (`EX-20`'s pair is
 178 s at `-n 2`; the padded and refined rungs cost more), single command
 under the 1200 s ceiling or the case shrinks. `ANS-3`'s AED comparison is
 the independent adjudication input for the same question (§5.4).
+>
+> **Result (2026-08-16, `tests/validation/test_port_systematics_composition.py`,
+> 7 passed 352.4 s at `-n 2`, `20260816T140643Z_PORT-10.log`).** Cost probe
+> first, as the entry required: the two unmeasured padded corners mesh at
+> 194 985 and **263 751** cells, inside 3b-xvi's 350 000 stop rule, 95 s
+> (`20260816T140457Z_PORT-10-costprobe.log`) — the gate was then sized from
+> that measurement, not from an extrapolation. Each systematic is driven by
+> its own knob (`air_padding` for the PEC box, gap-box `h_box` for the
+> gap/feed term) and each corner is one mesh + one solve reading the
+> terminal-to-terminal estimator on the undriven port, gap 101 driven,
+> `I_cond` normalisation — 3b-xvi's own lean path. Corner ratios ×ωM₁₂:
+> base **0.894543**, padded 0.924103, refined **0.895051**, joint 0.924007.
+> Shifts off base: PEC box **+2.9559 pp** (0.08 → 0.10), gap/feed
+> **+0.0508 pp** (reproducing 3b-xvi's +0.0508 pp), joint +2.9464 pp against
+> a sum of parts +3.0067 pp ⇒ **cross-term X = −6.037e-04 = −0.0604 pp**,
+> inside the pre-stated ±0.5 pp by **8.3×**. The two knobs' effects add at
+> this grain, so measuring each with the other at baseline — how both
+> systematics were in fact measured — is legitimate, and the sequential
+> ladder in `ports/systematics.py` carries no interaction error resolvable
+> here. **Anchors:** both baseline corners reproduce their records to
+> **+2.979e-07** and **+1.536e-07** against a 0.1 pp band, so the lean path
+> is the record's quantity. **Negative controls, both executed in-run on the
+> same arithmetic:** a joint corner displaced +1.0 pp gives X = +0.9396 pp
+> and the wedge-only estimator (0.493653, the integral that misses the
+> buried gap arc) gives X = −43.0958 pp — both asserted to fail the band.
+> **Scope of the claim:** `Δ_box` is one finite padding step, not the
+> `W → ∞` extrapolation `D∞`, and `Δ_feed` probes the gap term through feed
+> discretisation, not the gap physics itself; the factorial tests the
+> *separability* of the two measurements, not the extrapolations layered on
+> them. Nothing in `systematics.py` or `MUTUAL_TOLERANCE` moved. `PORT-9`
+> step 3's prerequisite from this side is discharged (`GEO-15` is the other).
 
 ### WF — End-to-end workflow & MRI outputs (Phase 5)
 
@@ -1773,10 +1804,19 @@ step-1 entry; item 1 is self-contained below.
    `GEO-15` entry. Original item: baseline vs graded
    conductor-volume/CAD-mass identity in one command, gate ≥ 0.95
    graded with the `GEO-9` identities unmoved.
-4. **`PORT-10` — systematics composition, 2×2 factorial (heavy).**
-   Execute the §7 `PORT-10` entry verbatim; its cost-probe-first rule
-   is binding — `EX-20`'s pair is 178 s at `-n 2`, the padded and
-   refined rungs cost more, single command under 1200 s or shrink.
+4. ~~**`PORT-10` — systematics composition, 2×2 factorial (heavy).**~~
+   **done** 2026-08-16, 09:00 run — 7 passed 352.4 s at `-n 2`,
+   `20260816T140643Z_PORT-10.log`; cost probe first
+   (`20260816T140457Z_PORT-10-costprobe.log`, 95 s: the padded corners
+   mesh at 194 985 / 263 751 cells, inside the 350 000 stop rule).
+   **Cross-term −0.0604 pp inside the pre-stated ±0.5 pp by 8.3×** —
+   the two systematics compose additively at this grain. Both baseline
+   corners reproduce their records to ≤ 3.0e-07, both negative controls
+   executed (+0.9396 pp displaced, −43.0958 pp wedge-only). See the §7
+   `PORT-10` entry. Original item: execute the §7 `PORT-10` entry
+   verbatim; its cost-probe-first rule is binding — `EX-20`'s pair is
+   178 s at `-n 2`, the padded and refined rungs cost more, single
+   command under 1200 s or shrink.
 5. **`TH-11` step 3 — 30 MHz mid-transition point on the
    step-1 baseline (standard, measurement only).** Execute the §7
    `TH-11` step-3 entry verbatim: step 1's module at f = 30 MHz on the

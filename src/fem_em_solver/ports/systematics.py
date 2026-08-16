@@ -25,6 +25,18 @@ fixed by `PORT-1` steps 3b-xi/3b-xvii, before step 3b-xviii's gate existed.
     3b-xvii's matched-topology gate is what licenses calling it a topology term
     rather than an estimator defect.
 
+**The composition is measured, not assumed** (`PORT-10`, 2026-08-16).  Each
+term above was measured with the other at its baseline, and
+:func:`mutual_systematics_ladder` then applies them in sequence — separability
+no measurement had tested.  The 2×2 factorial
+(``tests/validation/test_port_systematics_composition.py``: ``air_padding``
+0.08/0.10 × gap-box ``h_box`` baseline/6.0e-4, four solves) reads the
+cross-term at **−0.0604 pp** against a pre-stated ±0.5 pp band — the two knobs'
+effects add, so the sequential ladder carries no interaction error resolvable
+at 3b-xvi's grain.  The factorial tests the separability of the two
+*measurements*; it is silent on the extrapolations layered on them (``D∞`` is a
+``W → ∞`` limit, and the padding rung there is one finite step of it).
+
 Both are specific to the two-torus gapped fixture at ``air_padding = 0.08``,
 ``gap_angle = 0.30``, ``gap_burial = 1e-3``, ``f = 10 MHz``.  They are *not*
 general-purpose corrections and must not be applied to another geometry
