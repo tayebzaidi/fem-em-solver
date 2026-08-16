@@ -26,6 +26,15 @@ step-3b-xviii record:
     mutual band (cited, not re-solved —
     ``20260731T213222Z_PORT-1-step1-costprobe.log``).
 
+**`PORT-5` step 1 — sweep-level sanity metrics on the field route.**  The
+three ``test_sanity_*`` cases at the bottom of this module are a separate
+chunk riding the same module-scoped fixture (the metrics are pure numpy; a
+second sweep would buy nothing but 160 s of solve).  Until they existed
+``summarize_sparameter_sanity`` had only ever seen a placeholder or a
+hand-built matrix — §10 target 3's "sweep-level path is untouched".  They
+assert the report the *sweep* returns against the step-4 records by a second
+route, and drive the warning paths with a heuristic and an asymmetrised S.
+
 **Scope.**  Two-torus fixture only.  No birdcage ports, no B1+, no ``S11``
 claim: `PORT-1` step 2b localised an electric-energy excess on this fixture's
 diagonal, so nothing here reads ``Z_in`` or ``S11``.  The systematics are this
@@ -47,7 +56,10 @@ from fem_em_solver.core import HomogeneousMaterial, TimeHarmonicProblem
 from fem_em_solver.io.mesh import MeshGenerator
 from fem_em_solver.ports.definitions import PortDefinition
 from fem_em_solver.ports.gap_voltage import GapVoltagePortSpec
-from fem_em_solver.ports.sparameters import run_n_port_sparameter_sweep
+from fem_em_solver.ports.sparameters import (
+    run_n_port_sparameter_sweep,
+    summarize_sparameter_sanity,
+)
 from fem_em_solver.ports.systematics import mutual_systematics_ladder
 from fem_em_solver.utils.analytical import AnalyticalSolutions
 
@@ -86,6 +98,34 @@ MUTUAL_TOLERANCE = 0.10
 S_SYMMETRY_BAND = 1.0e-3
 S_SPECTRAL_NORM_CEILING = 1.0
 BLIND_FIXTURE_IM_Z12_OHM = 0.0
+
+# --- PORT-5 step 1 anchors, same log ----------------------------------------
+# ||S||_2 as step 4 gated it; the sanity report's `passivity_max_sigma` is the
+# largest singular value, i.e. the same quantity reached through
+# summarize_sparameter_sanity instead of numpy.linalg.norm(..., 2).
+RECORDED_PASSIVITY_MAX_SIGMA = 0.861449
+PASSIVITY_REPRODUCTION_BAND = 1.0e-6
+# ||S - S^T||/||S|| = 2.5494e-05 (Frobenius) is what step 4 gated.  For a 2x2,
+# S - S^T has exactly two non-zero entries of equal magnitude, so
+# ||S - S^T||_F = sqrt(2) * max|Sij - Sji| — the report's
+# `reciprocity_max_abs_delta` converts to the gated ratio exactly.  The band is
+# 2% of the record: the record carries five significant figures and the ratio
+# rides a KSP-tolerance solve, so a tighter band would gate the solver's noise.
+RECORDED_S_SYMMETRY_RATIO = 2.5494e-05
+SYMMETRY_RATIO_BAND = 5.0e-7
+# The heuristic route's S is perfectly matched at every driven port (b = 0 on
+# the diagonal), so its S is numerically unitary and sigma_max sits at 1.
+# MEASURED on this fixture, 20260816T093226Z: 0.999985964171, i.e. 1 to
+# 1.4036e-05 — *not* the exact 1.000000000000 the §9 item quoted, which is the
+# reaction-route fixture's number (`PORT-1` step 2 iv, plan-archive) and the
+# hand-built unitary S of test_port_reaction_impedance.py, both different
+# matrices.  Here the off-diagonal comes from the proximity heuristic on this
+# mesh and is not exactly reciprocal-unitary.  The band below is 3.5x the
+# measured departure; the discriminating assertion is the separation, which
+# passed at its pre-stated 0.13 in the same run (measured 0.138537).
+RECORDED_HEURISTIC_MAX_SIGMA = 1.0
+HEURISTIC_MAX_SIGMA_BAND = 5.0e-5
+HEURISTIC_SIGMA_SEPARATION = 0.13
 
 
 def _mutual_inductance(a: float, rho: float, z: float) -> float:
@@ -322,3 +362,150 @@ def test_retiring_heuristic_differs_from_the_solved_field(package_sweep):
         f"the retiring heuristic reproduces the solved-field S to {delta:.3e} — "
         "that is a finding about the heuristic, not a passing gate"
     )
+
+
+# --- PORT-5 step 1 ----------------------------------------------------------
+
+
+def test_sanity_report_reproduces_the_gated_metrics_on_the_field_route(package_sweep):
+    """The sweep's own sanity report lands on the step-4 records.
+
+    `PORT-5`'s metrics have run on placeholder and hand-built matrices since D3;
+    this is the first time the report that ``run_n_port_sparameter_sweep``
+    *returns* is checked against a gated number.  Both anchors are the step-4
+    quantities reached by a second route — ``passivity_max_sigma`` is
+    ``||S||_2`` through ``numpy.linalg.svd`` rather than
+    ``numpy.linalg.norm(s, 2)``, and ``reciprocity_max_abs_delta`` converts to
+    the gated Frobenius ratio exactly for a 2x2.
+    """
+    result = package_sweep["solved"]
+    comm = package_sweep["comm"]
+    report = result.sanity_report
+    s = result.s_matrix
+
+    assert not result.is_placeholder, "these anchors are the field route's, not the heuristic's"
+    assert s.shape == (2, 2), "the 2x2 conversion below assumes a two-port S"
+
+    symmetry_ratio = float(
+        np.sqrt(2.0) * report.reciprocity_max_abs_delta / np.linalg.norm(s)
+    )
+    if comm.rank == 0:
+        print(
+            f"[PORT-5 step 1] sweep sanity report on the field route:\n"
+            f"    passivity_max_sigma           = {report.passivity_max_sigma:.9f} "
+            f"(record {RECORDED_PASSIVITY_MAX_SIGMA:.6f}, band "
+            f"{PASSIVITY_REPRODUCTION_BAND:.1e})\n"
+            f"    passivity_max_column_power_sum= "
+            f"{report.passivity_max_column_power_sum:.9f}\n"
+            f"    reciprocity_max_abs_delta     = "
+            f"{report.reciprocity_max_abs_delta:.6e}\n"
+            f"    reciprocity_max_rel_delta     = "
+            f"{report.reciprocity_max_rel_delta:.6e}\n"
+            f"    -> ||S-S^T||/||S|| = {symmetry_ratio:.6e} "
+            f"(record {RECORDED_S_SYMMETRY_RATIO:.4e}, band "
+            f"{SYMMETRY_RATIO_BAND:.1e})\n"
+            f"    warnings: {report.warnings or 'none'}",
+            flush=True,
+        )
+
+    # Same quantity, two implementations: the report must not disagree with the
+    # spectral norm step 4 asserted on this very matrix.
+    assert abs(report.passivity_max_sigma - float(np.linalg.norm(s, 2))) < 1.0e-12
+
+    assert abs(report.passivity_max_sigma - RECORDED_PASSIVITY_MAX_SIGMA) < (
+        PASSIVITY_REPRODUCTION_BAND
+    ), (
+        f"passivity_max_sigma {report.passivity_max_sigma:.9f} does not reproduce "
+        f"the step-4 record {RECORDED_PASSIVITY_MAX_SIGMA:.6f} within "
+        f"{PASSIVITY_REPRODUCTION_BAND:.1e}"
+    )
+    assert abs(symmetry_ratio - RECORDED_S_SYMMETRY_RATIO) < SYMMETRY_RATIO_BAND, (
+        f"the report's reciprocity delta converts to ||S-S^T||/||S|| = "
+        f"{symmetry_ratio:.6e}, not the gated {RECORDED_S_SYMMETRY_RATIO:.4e}"
+    )
+    assert report.warnings == (), (
+        "the field route tripped a sanity warning it must not trip: "
+        f"{report.warnings}"
+    )
+    # Passivity as an inequality, on the second metric step 4 never read.
+    assert report.passivity_max_column_power_sum <= 1.0, (
+        "a column of the field-derived S carries more power out than in: "
+        f"{report.passivity_max_column_power_sum:.9f} > 1"
+    )
+
+
+def test_sanity_metrics_separate_the_heuristic_from_the_field_route(package_sweep):
+    """Negative control: the same metrics on the deprecated heuristic's S.
+
+    The heuristic terminates every driven port in its own ``z0``, so ``b = 0``
+    on the diagonal and its largest singular value sits at 1 to 1.4e-05 —
+    numerically indistinguishable from a lossless network, and 0.1385 away from
+    the field route's.  A metric set that could not tell these apart would be
+    reporting on arithmetic rather than on physics.
+    """
+    field = package_sweep["solved"].sanity_report
+    heuristic = package_sweep["heuristic"].sanity_report
+    comm = package_sweep["comm"]
+
+    separation = abs(heuristic.passivity_max_sigma - field.passivity_max_sigma)
+    if comm.rank == 0:
+        print(
+            f"[PORT-5 step 1] negative control — heuristic route through the same "
+            f"metrics:\n"
+            f"    passivity_max_sigma = {heuristic.passivity_max_sigma:.12f} "
+            f"(unitary to {HEURISTIC_MAX_SIGMA_BAND:.1e})\n"
+            f"    reciprocity_max_abs_delta = "
+            f"{heuristic.reciprocity_max_abs_delta:.6e}\n"
+            f"    separation from the field route's sigma = {separation:.6f} "
+            f"(must exceed {HEURISTIC_SIGMA_SEPARATION:.2f})",
+            flush=True,
+        )
+
+    assert package_sweep["heuristic"].is_placeholder
+    assert abs(heuristic.passivity_max_sigma - RECORDED_HEURISTIC_MAX_SIGMA) < (
+        HEURISTIC_MAX_SIGMA_BAND
+    ), (
+        f"the heuristic's sigma_max moved off 1 to "
+        f"{heuristic.passivity_max_sigma:.12f} — the control's premise "
+        "(a numerically unitary heuristic S) changed"
+    )
+    assert separation > HEURISTIC_SIGMA_SEPARATION, (
+        f"the sanity metrics separate the heuristic from the solved field by only "
+        f"{separation:.6f} — they are not discriminating between the routes"
+    )
+
+
+def test_reciprocity_warning_fires_on_an_asymmetrised_field_smatrix(package_sweep):
+    """Negative control: the warning path is reachable, on this very matrix.
+
+    "No warnings on the field route" is only evidence if a warning *can* fire.
+    Perturbing one off-diagonal of the gated S by twice the absolute warning
+    threshold must trip it — and must trip nothing on the untouched copy.
+    """
+    result = package_sweep["solved"]
+    comm = package_sweep["comm"]
+
+    perturbation = 2.0 * 5.0e-2  # 2x summarize_sparameter_sanity's abs default
+    asymmetric = result.s_matrix.copy()
+    asymmetric[0, 1] += perturbation
+    report = summarize_sparameter_sanity(asymmetric)
+
+    if comm.rank == 0:
+        print(
+            f"[PORT-5 step 1] negative control — S[0,1] perturbed by "
+            f"{perturbation:.3f}: reciprocity_max_abs_delta = "
+            f"{report.reciprocity_max_abs_delta:.6e}, warnings = {report.warnings}",
+            flush=True,
+        )
+
+    assert report.reciprocity_max_abs_delta == pytest.approx(perturbation, rel=1.0e-3), (
+        "the perturbation did not land in the reciprocity metric: "
+        f"{report.reciprocity_max_abs_delta:.6e} vs {perturbation:.6e}"
+    )
+    assert any("reciprocity abs delta" in w for w in report.warnings), (
+        "an S asymmetric by twice the warning threshold produced no reciprocity "
+        f"warning: {report.warnings}"
+    )
+    # The untouched matrix must still be clean — the warning is about the
+    # perturbation, not about the fixture.
+    assert summarize_sparameter_sanity(result.s_matrix).warnings == ()

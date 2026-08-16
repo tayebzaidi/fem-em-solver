@@ -11589,3 +11589,66 @@ step to *gating* those already-computed metrics on the field route (the
 `passivity_max_sigma` == 0.861449 anchor is available directly from
 `result.sanity_report`, no re-solve), rather than wiring a call that exists.
 `main` clean, nothing parked.
+
+---
+
+## 2026-08-16T09:36Z — `PORT-5` step 1 — **complete**
+
+Scheduled implementer run, 04:30 CDT slot. Preflight clean, container Up,
+§9 On-deck item 1 taken as written.
+
+**What was done.** The prior slot's hypothesis was right: the wiring already
+existed — `run_n_port_sparameter_sweep` calls
+`summarize_sparameter_sanity(s_matrix)` at `sparameters.py:325` on both routes.
+So the step was scoped to *gating* the report the sweep already returns, not to
+wiring a call. Three cases added to
+`tests/validation/test_port_package_sparameters.py`, riding that module's
+existing module-scoped fixture: **no extra solves** (the trap the item named —
+one sweep, one summary) and the whole module still runs in ~149 s.
+
+**Measured, field route** (`result.sanity_report`, `is_placeholder=False`):
+
+| metric | measured | anchor | miss |
+|---|---|---|---|
+| `passivity_max_sigma` | 0.861449197 | `PORT-1` step 4 `‖S‖₂` 0.861449 | 1.97e-07 (band 1e-6) |
+| same vs `np.linalg.norm(S,2)` | — | identical quantity | < 1e-12 |
+| `‖S−Sᵀ‖/‖S‖` from `reciprocity_max_abs_delta` (=2.194793e-05, ×√2/‖S‖_F, exact for 2×2) | 2.549409e-05 | gated 2.5494e-05 | 9e-11 (band 5e-7) |
+| `passivity_max_column_power_sum` | 0.741345553 | ≤ 1 | — |
+| warnings | none | none | — |
+
+**Negative controls, both executed.** Deprecated heuristic through the same
+metrics: `passivity_max_sigma` 0.999985964171, `reciprocity_max_abs_delta`
+identically 0, separation from the field route's σ **0.138537** > the
+pre-stated 0.13. Asymmetrised copy (one off-diagonal +2× the abs warning
+threshold): delta 9.999344e-02, both reciprocity warnings fire; the untouched
+matrix still reports none.
+
+**One constant in the §9 item was wrong — corrected with its measurement, per
+the MAG-10/MAG-15 precedent.** The item quoted the heuristic's
+`passivity_max_sigma` as exactly `1.000000000000`. That is the *reaction-route*
+fixture's number (`PORT-1` step 2 iv, plan-archive) and the hand-built unitary
+S in `test_port_reaction_impedance.py` — different matrices. On this mesh the
+proximity heuristic's S is unitary only to 1.4036e-05. First run
+(`20260816T093226Z_PORT-5-step1.log`, **1 failed / 9 passed**, 150.5 s) failed
+exactly there and **passed both anchor cases at their pre-stated bands**; the
+premise assertion was rewritten as "unitary to 5e-5" with the measurement in a
+code comment. The discriminating assertion — the 0.13 separation — was never
+moved, and no tolerance in `sparameters.py` changed.
+
+**Logs.** `20260816T093226Z_PORT-5-step1.log` (first run, the corrected
+constant), `20260816T093556Z_PORT-5-step1-rerun.log` (**10 passed 149.1 s**,
+`-n 2`, standard tier, container wrap `timeout -k 30 500`; `-s` so the metric
+prints are on record). `tests/environment` first in both, complex mode +
+`FEM_EM_REQUIRE_COMPLEX=1`.
+
+**Plan edits in this commit.** §7 `PORT-5` ⚠️ → 🧪 with a step-1 ✅ entry (tier
+smoke → standard: 149 s is not a smoke run); §9 item 1 struck; §10 target 3's
+"`PORT-5`'s sweep-level path is untouched" clause discharged — what keeps that
+box unticked is now the fixture, not the route. No denial hit.
+
+**Hypothesis for the next attempt.** Item 2 (`ANS-3` runnable half) is next
+open and independent. Unrelated to it, one finding worth a review's attention:
+the §9 anchor error above came from a number transcribed across fixtures, and
+`passivity_max_sigma ≈ 1` appears in at least three places meaning three
+different matrices — a reviewer quoting a metric should name the fixture with
+it. `main` clean, nothing parked.

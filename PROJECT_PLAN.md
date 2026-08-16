@@ -1188,7 +1188,7 @@ until that check returns.
 | `PORT-2` | Port data model and tagging contract | 🧪 | smoke |
 | `PORT-3` | Calibration checklist → executable checks | 🧪 | standard |
 | `PORT-4` | Multi-port drive/termination consistency | ⚠️ | standard |
-| `PORT-5` | S-matrix reciprocity/passivity metrics | ⚠️ | smoke |
+| `PORT-5` | S-matrix reciprocity/passivity metrics | 🧪 *(step 1 ✅ 2026-08-16: the metrics are off placeholder data — see below; the chunk's frequency-sweep scope is untouched)* | standard |
 | `PORT-6` | Frequency sweep orchestration | 🧪 | smoke |
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard |
@@ -1264,6 +1264,46 @@ any birdcage port work; known-issues 3 stays open for its defect (1).
 > project looking authoritative. `PORT-6`/`PORT-7` are 🧪 rather than ⚠️ — sweep-grid
 > generation and Touchstone *formatting* are correct independent of what fills the
 > matrix.
+
+**`PORT-5` step 1 — sweep-level sanity metrics on the field route** ✅
+*(2026-08-16, `20260816T093556Z_PORT-5-step1-rerun.log`, 10 passed
+149.1 s at `-n 2`, standard, wrap `timeout -k 30 500`.)* The metrics had
+only ever seen placeholder or hand-built matrices — §10 target 3's
+"`PORT-5`'s sweep-level path is untouched". Three cases now ride the
+`PORT-1` step-4 module's own fixture (`tests/validation/test_port_package_sparameters.py`;
+same module-scoped sweep pair, **no extra solves** — the metrics are pure
+numpy). Measured on the report `run_n_port_sparameter_sweep` *returns*:
+`passivity_max_sigma` = **0.861449197** against step 4's gated
+`‖S‖₂ = 0.861449`, miss **1.97e-07** inside the pre-stated 1e-6, and
+equal to `numpy.linalg.norm(S, 2)` to < 1e-12 (same quantity, two
+implementations); `reciprocity_max_abs_delta` = 2.194793e-05, which for a
+2×2 converts exactly (`‖S−Sᵀ‖_F = √2·max|Sᵢⱼ−Sⱼᵢ|`) to
+**‖S−Sᵀ‖/‖S‖ = 2.549409e-05** against the gated 2.5494e-05, band 5e-7;
+`passivity_max_column_power_sum` = 0.741345553 ≤ 1 (the second metric
+step 4 never read); **no warnings** on the field route.
+> **Negative controls, both executed.** The deprecated heuristic's S
+> through the same metrics: `passivity_max_sigma` = **0.999985964171**,
+> separation from the field route's **0.138537** > the pre-stated 0.13,
+> `reciprocity_max_abs_delta` identically 0. An S with one off-diagonal
+> perturbed by 2× the warning threshold: delta 9.999344e-02, both
+> reciprocity warnings fire, and the untouched matrix still reports none
+> — "no warnings" is evidence only because a warning can fire.
+> **One §9 constant was wrong and is corrected with its measurement.**
+> The item quoted the heuristic's `passivity_max_sigma` as exactly
+> `1.000000000000`; that number is the *reaction-route* fixture's
+> (`PORT-1` step 2 iv) and the hand-built unitary S of
+> `test_port_reaction_impedance.py`, not this mesh's. Measured here:
+> 0.999985964171, unitary to 1.4036e-05 (first run,
+> `20260816T093226Z_PORT-5-step1.log`, 1 failed / 9 passed — the two
+> anchor cases passed at their pre-stated bands in that same run). The
+> premise assertion now reads "unitary to 5e-5" with the measurement in a
+> code comment; the *discriminating* assertion, the 0.13 separation, was
+> never moved.
+>
+> **Scope.** Metrics wiring only: no tolerance in `sparameters.py` moved,
+> `PORT-5`'s frequency-sweep ambitions stay unscoped, and the claim is the
+> two-torus fixture through this entry point — every `PORT-1` standing
+> caution above applies unchanged.
 
 **`PORT-9` — lumped-element port boundary condition (the birdcage port
 model)** ⬜ *(scoped 2026-08-16, weekly planning review — discharges the §9
@@ -1611,8 +1651,14 @@ Items 2–4 execute their §7 entries verbatim (`ANS-3`, `GEO-15` step 1,
 `PORT-10`); item 5 its §7 `TH-11` step-3 entry, item 6 its §7 `OPS-17`
 step-1 entry; item 1 is self-contained below.
 
-1. **`PORT-5` step 1 — sweep-level sanity metrics on the field route
-   (standard).** `summarize_sparameter_sanity()` wired to
+1. ~~**`PORT-5` step 1 — sweep-level sanity metrics on the field route
+   (standard).**~~ **done** 2026-08-16, 04:30 run — 10 passed 149.1 s at
+   `-n 2`, `20260816T093556Z_PORT-5-step1-rerun.log`; σ_max 0.861449197
+   (miss 1.97e-07), ‖S−Sᵀ‖/‖S‖ 2.549409e-05, no warnings, both negative
+   controls executed. One anchor in the text below was a mis-attributed
+   constant (the heuristic's σ_max is 0.999985964171 here, not exactly 1)
+   — corrected with its measurement; see the §7 `PORT-5` entry. Original
+   item: `summarize_sparameter_sanity()` wired to
    `run_n_port_sparameter_sweep`'s field-route output — the
    "sweep-level path untouched" gap §10 target 3 names, on a
    field-derived matrix for the first time. **Anchor:**
@@ -1704,8 +1750,12 @@ blamed.
   through **`PORT-5`'s own metrics** rather than the test's arithmetic:
   `passivity_max_sigma = 1.000000000000` and unit column power sums to `1e-9`,
   `reciprocity_max_abs_delta = 3.4981e-13`. Left open because the matrix is
-  still a two-loop air fixture's and `PORT-5`'s sweep-level path is untouched;
-  what step 3a removed was the "placeholder matrices only" objection.)*
+  still a two-loop air fixture's; what step 3a removed was the "placeholder
+  matrices only" objection. **The sweep-level clause is now discharged** —
+  `PORT-5` step 1, 2026-08-16: the report `run_n_port_sparameter_sweep`
+  returns on the field route reproduces the gated `‖S‖₂` to 1.97e-07 and
+  `‖S−Sᵀ‖/‖S‖` to 9e-11, warning-free, with both negative controls
+  executed. What keeps the box unticked is the *fixture*, not the route.)*
 - [ ] B1+ field matches literature/measured data qualitatively *(routes through
   the coil+phantom fixture, which `GEO-9` step 1 gated on 2026-08-03; nothing
   has yet computed B1+ on it.)*

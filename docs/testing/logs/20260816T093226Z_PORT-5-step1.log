@@ -1,0 +1,128 @@
+# Test Run
+- Chunk: PORT-5-step1
+- Commit: 058ee83aee430ca57e1c300a081986c436acc843
+- Time (UTC): 2026-08-16 09:32:26
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 500 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_package_sparameters.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 16 04:31 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 500 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_package_sparameters.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 10 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 10 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [ 10%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 10%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 20%]PASSED [ 20%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 30%]PASSED [ 30%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 40%]PASSED [ 40%]
+tests/validation/test_port_package_sparameters.py::test_package_sweep_reproduces_the_gated_mutual 
+tests/validation/test_port_package_sparameters.py::test_package_sweep_reproduces_the_gated_mutual PASSED [ 50%]PASSED [ 50%]
+tests/validation/test_port_package_sparameters.py::test_package_smatrix_is_symmetric_and_passive 
+tests/validation/test_port_package_sparameters.py::test_package_smatrix_is_symmetric_and_passive PASSED [ 60%]
+tests/validation/test_port_package_sparameters.py::test_retiring_heuristic_differs_from_the_solved_field PASSED [ 60%]
+tests/validation/test_port_package_sparameters.py::test_retiring_heuristic_differs_from_the_solved_field PASSED [ 70%]
+tests/validation/test_port_package_sparameters.py::test_sanity_report_reproduces_the_gated_metrics_on_the_field_route PASSED [ 70%]PASSED [ 80%]
+tests/validation/test_port_package_sparameters.py::test_sanity_report_reproduces_the_gated_metrics_on_the_field_route 
+tests/validation/test_port_package_sparameters.py::test_sanity_metrics_separate_the_heuristic_from_the_field_route PASSED [ 80%]
+tests/validation/test_port_package_sparameters.py::test_sanity_metrics_separate_the_heuristic_from_the_field_route FAILED [ 90%]FAILED [ 90%]
+tests/validation/test_port_package_sparameters.py::test_reciprocity_warning_fires_on_an_asymmetrised_field_smatrix 
+tests/validation/test_port_package_sparameters.py::test_reciprocity_warning_fires_on_an_asymmetrised_field_smatrix PASSED [100%]PASSED [100%]
+
+=================================== FAILURES ===================================
+_______ test_sanity_metrics_separate_the_heuristic_from_the_field_route ________
+tests/validation/test_port_package_sparameters.py:456: in test_sanity_metrics_separate_the_heuristic_from_the_field_route
+    assert abs(heuristic.passivity_max_sigma - RECORDED_HEURISTIC_MAX_SIGMA) < 1.0e-9, (
+E   AssertionError: the heuristic's sigma_max moved off 1 to 0.999985964171 — the control's premise changed
+E   assert 1.4035829023484325e-05 < 1e-09
+E    +  where 1.4035829023484325e-05 = abs((0.9999859641709765 - 1.0))
+E    +    where 0.9999859641709765 = SMatrixSanityReport(reciprocity_max_abs_delta=0.0, reciprocity_max_rel_delta=0.0, passivity_max_sigma=0.9999859641709765, passivity_max_column_power_sum=0.9999719285389576, warnings=()).passivity_max_sigma
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_port_package_sparameters.py::test_sanity_metrics_separate_the_heuristic_from_the_field_route
+============= 1 failed, 9 passed, 8 warnings in 150.46s (0:02:30) ==============
+
+
+=================================== FAILURES ===================================
+_______ test_sanity_metrics_separate_the_heuristic_from_the_field_route ________
+tests/validation/test_port_package_sparameters.py:456: in test_sanity_metrics_separate_the_heuristic_from_the_field_route
+    assert abs(heuristic.passivity_max_sigma - RECORDED_HEURISTIC_MAX_SIGMA) < 1.0e-9, (
+E   AssertionError: the heuristic's sigma_max moved off 1 to 0.999985964171 — the control's premise changed
+E   assert 1.4035829023484325e-05 < 1e-09
+E    +  where 1.4035829023484325e-05 = abs((0.9999859641709765 - 1.0))
+E    +    where 0.9999859641709765 = SMatrixSanityReport(reciprocity_max_abs_delta=0.0, reciprocity_max_rel_delta=0.0, passivity_max_sigma=0.9999859641709765, passivity_max_column_power_sum=0.9999719285389576, warnings=()).passivity_max_sigma
+----------------------------- Captured stdout call -----------------------------
+[PORT-5 step 1] negative control — heuristic route through the same metrics:
+    passivity_max_sigma = 0.999985964171 (record 1.000000000000)
+    reciprocity_max_abs_delta = 0.000000e+00
+    separation from the field route's sigma = 0.138537 (must exceed 0.13)
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_port_package_sparameters.py::test_sanity_metrics_separate_the_heuristic_from_the_field_route
+============= 1 failed, 9 passed, 8 warnings in 150.46s (0:02:30) ==============
+
+## Exit
+- Status: 1
+- Elapsed (s): 152
