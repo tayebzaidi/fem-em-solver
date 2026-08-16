@@ -76,10 +76,12 @@ What is validated, to what tolerance, and what must not be trusted.
 ### 2.2 Not validated — do not trust, do not extend
 
 - **No coil or birdcage has ports.** Any S-parameter figure quoted for a
-  coil is unsupported. Birdcage ports and B1+ are deliberately held for
-  the weekly review to scope; the flagged direction is a lumped/
-  circuit-element port BC (Jin ch. 11), not more gap-voltage estimator
-  variants.
+  coil is unsupported. The birdcage-port direction is scoped as of the
+  2026-08-16 weekly review — `PORT-9` (lumped/circuit-element port BC,
+  Jin ch. 11) with `PORT-10` (systematics composition) and `GEO-15`
+  (conductor sizing) as the two named prerequisites — but nothing has
+  executed; this bullet stands until `PORT-9` gates. B1+ remains §10
+  subgoal 4, blocked behind it.
 - **Coil loading at the Larmor frequencies is an extrapolation** until
   `TH-11` lands a gated trend (its resolution rung attributed most of the
   observed 64 MHz deviation to mesh, not physics).
@@ -301,7 +303,7 @@ needs `-f docker/docker-compose.yml`.
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Complete and trustworthy** |
 | 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — every analytic gate closed (`TH-1`/`TH-6`/`TH-7`/`TH-8`/`TH-9` ✅); `TH-2`/`TH-3` API hardening ⚠️ |
 | 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58% pinned / 1.5834% on the production projected drive, step 3; eddy-current regime); SAR gated on an **imposed** uniform field only (`MAT-4` steps 1+3: lossy-sphere closed form 3.5%, mass-averaging exact at 1 g/10 g) — coil-driven SAR and the C95.3 claim still open |
-| 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-8` | `PORT-1` ✅ 2026-08-15 (field-derived S through the package, two-torus fixture only, two named systematics); birdcage ports unscoped — held for the weekly review; `PORT-4`…`PORT-8` open |
+| 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-10` | `PORT-1` ✅ 2026-08-15 (field-derived S through the package, two-torus fixture only, two named systematics); birdcage-port direction scoped 2026-08-16: `PORT-9` lumped-element port BC, prerequisites `PORT-10` + `GEO-15`; `PORT-4`…`PORT-8` open |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 for excitation; both meshes (coil+phantom, birdcage) generate and are identity-gated in CI (`GEO-9`, 2026-08-03) |
 | 6 | Birdcage tuning at 64/128 MHz: mode spectrum, lumped capacitors, circuit co-simulation (the HFSS + Circuit split) | subgoals owned by the weekly review (§10) | Not started |
 | 7 | Implants: parametric implant geometry in the phantom, local SAR / near-implant hot spots | subgoals owned by the weekly review (§10) | Not started |
@@ -1148,6 +1150,8 @@ until that check returns.
 | `PORT-6` | Frequency sweep orchestration | 🧪 | smoke |
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard |
+| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | ⬜ | standard |
+| `PORT-10` | The two `PORT-1` systematics: composition measured, not assumed | ⬜ | heavy |
 
 **`PORT-1` — Real port excitation from the solved field** ✅ *(closed by
 the 2026-08-15, 18:00 review. Full plans, execution journals, adjudications
@@ -1218,6 +1222,55 @@ any birdcage port work; known-issues 3 stays open for its defect (1).
 > project looking authoritative. `PORT-6`/`PORT-7` are 🧪 rather than ⚠️ — sweep-grid
 > generation and Touchstone *formatting* are correct independent of what fills the
 > matrix.
+
+**`PORT-9` — lumped-element port boundary condition (the birdcage port
+model)** ⬜ *(scoped 2026-08-16, weekly planning review — discharges the §9
+hold on birdcage ports. Direction per the 2026-08-12 operator note: a
+lumped/circuit-element port boundary condition, Jin 3e ch. 11's port
+hierarchy — theory in-repo at `docs/references/jin-fem-3e/`; the
+implementing step cites chapter/equation numbers after reading it. Not
+further gap-voltage estimator variants.)* The gap-voltage `∫E·dl`
+machinery stays what `PORT-1` validated; this chunk builds the port model
+the birdcage will actually use, and validates it **on the fixture where
+the answer is already gated**.
+> * **Step 1 (🧪 measurement) — formulation on the two-torus fixture.**
+>   Implement the lumped-port BC on the existing gap faces (tags 101/102)
+>   and solve the gapped two-torus fixture at 10 MHz; print the lumped-port
+>   `Z` beside the gated gap-voltage route on the same solved field. No
+>   assertion beyond the existing identity gates; measurements feed step 2.
+> * **Step 2 (gate) — cross-route identity.** Pre-stated bands, set at
+>   scoping and never widened: lumped-port `Im Z₁₂` within the unmoved
+>   **10%** mutual band of ωM₁₂ (the `PORT-1` gate, absolute anchor), and
+>   cross-route agreement `|Z₁₂(lumped) − Z₁₂(gap-voltage, corrected)| /
+>   |Z₁₂(gap-voltage, corrected)| ≤ 5%` (two feed models on identical
+>   geometry); reciprocity `‖S−Sᵀ‖/‖S‖ ≤ 1e-3` through
+>   `run_n_port_sparameter_sweep`. A miss is a finding about one of the
+>   feed models — diagnose, never widen.
+> * **Step 3 — birdcage instantiation.** The BC on the birdcage mesh's four
+>   port boxes (`GEO-9`, generated and identity-gated). **Blocked on
+>   `GEO-15`** (whether the conductor sizing must be graded first) **and
+>   `PORT-10`** (no corrected number is quoted on a new topology until the
+>   systematics' composition is measured). Gate to be scoped by the daily
+>   review once both report; reciprocity on the 4×4 S is the minimum.
+
+**`PORT-10` — the two `PORT-1` systematics: composition measured, not
+assumed** ⬜ *(scoped 2026-08-16, weekly planning review — the first of the
+two §9-hold questions.)* The PEC-box correction (`D∞ = +0.0169` at
+`p = 1.657`, an effective-range extrapolation) and the gap-physics
+correction (`÷(1 − 0.030224)`, Jin 3e §10.4.2.1) were each measured in
+isolation; `ports/systematics.py` composes them multiplicatively, and that
+composition is untested (§7 `PORT-1` standing cautions). Design: 2×2
+factorial on the two-torus fixture — {baseline, +1 padding rung} ×
+{baseline, gap h-refined rung (the 3b-xvi mesh)} — four solves, one
+command. **Gate:** the cross-term (deviation of the jointly-measured
+`Im Z₁₂/ωM₁₂` shift from the sum of the two individually-measured shifts)
+within a pre-stated **±0.5 pp** band, the 3b-xvi grain. **Negative
+result:** a cross-term outside the band is a finding — annotate
+`systematics.py`'s quotation rule, open a known-issues entry, report,
+stop; never widen. **Tier:** heavy — cost-probe first (`EX-20`'s pair is
+178 s at `-n 2`; the padded and refined rungs cost more), single command
+under the 1200 s ceiling or the case shrinks. `ANS-3`'s AED comparison is
+the independent adjudication input for the same question (§5.4).
 
 ### WF — End-to-end workflow & MRI outputs (Phase 5)
 
