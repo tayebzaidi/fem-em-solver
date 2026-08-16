@@ -499,41 +499,21 @@ mesh in the process — is the reusable part.
 
 ## Non-test issues
 
-### `examples/ports/01_two_torus_port_pair.md`'s headings fail the `EX-15` guide pass, so `check_example_doc_references.py` is red on `main` (found by `EX-19`, 2026-08-13)
+### `check_example_doc_references.py` exits 1 on stale example artifacts, and that is by design (not an issue — recorded so it is not re-filed)
 
-**Verified at `8e6d522`, 15:00 implementer slot**
-(`20260813T200522Z_EX-19-docrefs.log`, exit 1). The checker's guide pass
-requires all three of *What this demonstrates* / *How to run it* / *How to
-analyze it, step by step* as heading substrings; `EX-18`'s guide, landed at the
-06:00 slot the same day, uses `## What it demonstrates` and never uses the other
-two forms, so it reports three violations:
+The checker's dead-reference pass treats an artifact in `paraview_output/`
+older than `--max-age-s` (default 48 h) as stale, so the **overall exit code
+goes to 1 whenever nobody has re-run the magnetostatics/MRI examples for two
+days** — 24 such failures on 2026-08-16, all of them files aged 105–133 h
+(`20260816T033121Z_EX-18-docrefs-fix.log` lines 35–59). Regenerating them is
+compute, not a documentation fix. **Gate on the guide-pass violation count,
+not on exit 0.** The guide pass itself is green on `main`: *"18 checked
+against 3 required heading(s), 0 pending … PASS"* (same log, lines 60–61).
 
-```
-FAIL: 3 guide violation(s):
-  - examples/ports/01_two_torus_port_pair.md: missing required heading 'What this demonstrates'
-  - examples/ports/01_two_torus_port_pair.md: missing required heading 'How to run it'
-  - examples/ports/01_two_torus_port_pair.md: missing required heading 'How to analyze it, step by step'
-```
-
-**Cause: known, and it is documentation only** — the `EX-18` guide's content
-covers all three topics under differently-worded headings; nothing about the
-ports example or its gate is wrong. The `EX-19` guide added in the same run
-passes the pass cleanly, so this is the only violation on `main`. Not fixed in
-passing (implementer non-negotiable: unrelated failures get an entry, not a
-drive-by edit); the fix is a three-line heading rename plus a re-run of the
-checker, and the entry retires with it.
-
-**Extended 2026-08-15 (18:00 review, step-3 audit):** the same exit-1 log
-also carries **24 stale-reference failures** (magnetostatics/MRI output files
-older than the checker's 48 h `--max-age-s`,
-`20260813T200522Z_EX-19-docrefs.log` lines 35–59) that the original journaling
-under-reported — "the only violation on `main`" is true of the *guide pass*,
-not of the checker's overall exit code. The staleness is environmental (old
-output files; regenerating them is compute, not a doc fix) and will recur
-whenever outputs age past 48 h, so the heading fix should gate on the
-**guide-pass violation count (3 → 0)**, not on exit 0. This paragraph
-retires with the heading fix; the environmental-staleness behavior is by
-design and needs no entry of its own once stated here.
+*(The `EX-18` heading violations that used to be filed here — three missing
+required headings in `examples/ports/01_two_torus_port_pair.md`, found by
+`EX-19` on 2026-08-13 — were fixed 2026-08-16 and the entry retired with
+them: 3 guide violations → 0, verified in the log cited above.)*
 
 ### The container-side `timeout` in the standard harness recipe does not reliably stop an `mpiexec` job, and an overrun can wedge the container (`MAT-6` step 10, 2026-08-12)
 

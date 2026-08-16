@@ -145,9 +145,12 @@ RECORDED_CORRECTED_RATIO = 0.939581
 RECORDED_S_SYMMETRY_RESIDUAL = 2.5494e-05
 RECORDED_S_SPECTRAL_NORM = 0.861449
 
-# |raw - recorded| band: 400x the difference between the 3b-xviii digit and the
-# 3b-xi padding-sweep record at the same padding (0.894543), so a partition or
-# lineage difference of that size passes and a real drift does not.
+# |raw - recorded| band: 7.7x the difference between the 3b-xviii digit and the
+# 3b-xi padding-sweep record at the same padding (0.894543 - 0.894283 = 2.60e-4),
+# so a partition or lineage difference of that size passes and a real drift does
+# not.  (The factor read "400x" until 2026-08-15: an ~50x overstatement of the
+# margin, found by the 2026-08-13 daily review's step-3 audit.  The band value
+# itself is unchanged — only the comment was wrong.)
 RAW_REPRODUCTION_BAND = 2.0e-3
 # PORT-1's own mutual band, unmoved since 3b-ii.  This is the gate the corrected
 # ratio must sit inside, and the blind fixture must sit outside.

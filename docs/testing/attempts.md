@@ -12887,3 +12887,65 @@ self-comparison mode, and the other probes carrying recorded-rung constants
 slot re-runs them at their own anchor rung — worth a sweep if a slot is ever
 cheap, not worth queueing on its own. No denials hit. `main` clean, nothing
 parked.
+
+## 2026-08-16T03:30Z — `EX-18` doc repairs — **complete**
+
+Scheduled 22:30 CDT slot. Preflight clean (`main` at `f1372a7`, no `attempt/*`
+work outstanding), container Up 7 h. §9 items 1 and 2 are struck done, so the
+first open item is **3 — `EX-18` doc repairs**, taken per protocol step 2.
+Both halves landed on the first run; **1 s + 1 s of compute**, smoke tier,
+whole slot well inside the timebox.
+
+**(a) The guide headings.** `examples/ports/01_two_torus_port_pair.md` used
+`## What it demonstrates` and folded its run instructions into the preamble, so
+the `EX-15` guide pass reported three missing required headings. Renamed to the
+checker's forms and restructured to the `EX-15` shape: `## 1. What this
+demonstrates`, a new `## 2. How to run it` holding the run block and the 134 s
+`-n 2` cost line moved out of the preamble, and `## 3. How to analyze it, step
+by step — the numbers it prints, and the one it prints first` (the substring
+match is case-insensitive, so the original section title is kept as a suffix
+rather than discarded). No prose about the physics was rewritten.
+
+**Anchor met: guide pass 3 violations → 0.** `20260816T033121Z_EX-18-docrefs-fix.log`,
+1 s: *"Guide pass: 18 runnable example(s) from scripts/run_examples.sh --list,
+18 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3). PASS:
+every runnable example has a guide with all required sections."*
+
+**The pre-stated trap fired exactly as pre-stated.** The checker's **overall
+exit stays 1** on **24 dead references**, every one of them a stale artifact —
+`paraview_output/` files aged **105.0–133.5 h** against the 48 h `--max-age-s`
+(magnetostatics `straight_wire_*`/`helmholtz_*`/`gauge_cross_check`, MRI
+`mri_coil_phantom_*`). That is compute-to-fix, not doc-to-fix, and the item
+gated on the guide-pass violation count for exactly this reason. Nothing in
+the dead list belongs to the ports example.
+
+**(b) The overstated comment.** `RAW_REPRODUCTION_BAND`'s comment claimed the
+2.0e-3 band was **"400x the difference between the 3b-xviii digit and the
+3b-xi padding-sweep record"**. That difference is 0.894543 − 0.894283 =
+**2.60e-4**, so the true factor is **2.0e-3 / 2.60e-4 = 7.7×** — the comment
+overstated the margin **~52×**, which is the 2026-08-13 audit's finding
+reproduced arithmetically rather than taken on faith. Corrected in place with
+the subtraction shown, the old figure named, and the date of the correction, so
+a future reader can tell a fixed comment from an unexamined one. **The band
+value 2.0e-3 is unchanged** — this was a wrong sentence about a right number,
+so no gate moved, no recorded digit moved, and `EX-18` stays ✅. Example
+byte-compiles after the edit (`20260816T033139Z_EX-18-syntax.log`, exit 0).
+
+**Known-issues.** The docrefs entry retires with this commit, as its own text
+said it would. It is replaced by a short **by-design** note — the staleness
+pass will redden the overall exit whenever nobody re-runs the examples for two
+days, so a future session that meets exit 1 finds the standing instruction
+("gate on the guide-pass count") instead of an empty spot that invites
+re-filing the same bug.
+
+**Hypothesis for the next attempt.** None pending on `EX-18`. Queue item 4
+(`EX-20`) is next open and is unaffected by these edits — no file conflict, as
+the item anticipated, though its new guide must clear the same three headings;
+the shape now on `01_two_torus_port_pair.md` is the model to copy. One thing
+worth the review's attention rather than a queue slot: the staleness pass means
+**the doc checker is red on `main` by default** most of the time, which makes
+it a poor CI gate as currently invoked — a `--max-age-s` of 0/∞ for a
+docs-only invocation, or splitting the two passes into separate exit codes,
+would make the guide pass usable as a gate. Not queued; it touches
+`scripts/testing/**`, which is allowlisted, but it is a design call, not a
+repair. No denials hit. `main` clean, nothing parked.

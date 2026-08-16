@@ -1,18 +1,9 @@
 # EX-18 — gap-voltage port pair → Z → S on the two-torus fixture
 
 The first example in this repository that produces **port** quantities from a
-solved field. Run it with:
+solved field.
 
-```bash
-./run_examples.sh -e ports:1 -n 2 -t 540
-```
-
-It needs the complex DolfinX build; the `ports:` runner group sources
-`/usr/local/bin/dolfinx-complex-mode` automatically. Measured cost at `-n 2`:
-**134 s** — mesh 36.1 s (178 055 cells), two solves 22.0 s + 22.5 s
-(`docs/testing/logs/20260813T110940Z_EX-18-example-n2-v3.log`, exit 0).
-
-## What it demonstrates
+## 1. What this demonstrates
 
 Exactly the capability `PORT-1` steps 3b-xvii/3b-xviii gated on 2026-08-13, and
 nothing beyond it:
@@ -30,7 +21,18 @@ nothing beyond it:
 5. `S = (Z − Z₀I)(Z + Z₀I)⁻¹` through
    `fem_em_solver.ports.sparameters.sparameters_from_impedance()` at Z₀ = 50 Ω.
 
-## The numbers it prints, and the one it prints first
+## 2. How to run it
+
+```bash
+./run_examples.sh -e ports:1 -n 2 -t 540
+```
+
+It needs the complex DolfinX build; the `ports:` runner group sources
+`/usr/local/bin/dolfinx-complex-mode` automatically. Measured cost at `-n 2`:
+**134 s** — mesh 36.1 s (178 055 cells), two solves 22.0 s + 22.5 s
+(`docs/testing/logs/20260813T110940Z_EX-18-example-n2-v3.log`, exit 0).
+
+## 3. How to analyze it, step by step — the numbers it prints, and the one it prints first
 
 | rung | ratio to `ωM₁₂` | deviation |
 |---|---|---|

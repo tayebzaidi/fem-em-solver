@@ -8259,6 +8259,27 @@ composition question stays the weekly review's.
 > **Does not close** `PORT-1` (stays 🟡): no `S₁₁` claim (step 2b's
 > electric-energy excess), no birdcage ports, and the correction-ladder
 > composition question stays the weekly review's.
+>
+> **Doc repairs, 2026-08-16 (22:30 slot, §9 item 3) — both 2026-08-13 audit
+> caveats on this example close; no logic, no number, no band moved.**
+> (1) The guide's headings now carry the checker's three required forms
+> (`## 1. What this demonstrates`, `## 2. How to run it`, `## 3. How to
+> analyze it, step by step — the numbers it prints, and the one it prints
+> first`); the run block moved out of the preamble into §2, which is where
+> the `EX-15` bar puts it. The checker's guide pass goes **3 violations →
+> 0**: *"18 checked against 3 required heading(s), 0 pending … PASS"*
+> (`20260816T033121Z_EX-18-docrefs-fix.log`, 1 s). Its overall exit stays 1
+> on **24 stale-artifact** dead references (files 105–133 h old, limit 48 h)
+> — environmental and by design, per the pre-stated trap; the anchor was the
+> guide-pass count, and it was met. (2) The `RAW_REPRODUCTION_BAND` comment
+> claimed **400×** the 3b-xviii-vs-3b-xi digit difference; the true factor is
+> **7.7×** (2.0e-3 / 2.60e-4) — an ~52× overstatement of the margin, now
+> corrected in place with the arithmetic shown and the old figure named.
+> **The band value 2.0e-3 is unchanged** — only the comment was wrong, so no
+> gate moved and `EX-18` stays ✅ at its recorded digits. The example
+> byte-compiles after the edit (`20260816T033139Z_EX-18-syntax.log`, exit 0).
+> The docrefs known-issues entry retires with this commit, replaced by a
+> short by-design note on the staleness pass so it is not re-filed as a bug.
 
 **`EX-14` — straight-wire VTX export repair and the refcheck freshness
 branch exercised** *(scoped 2026-08-09, 18:00 review; one run, standard
@@ -9016,8 +9037,16 @@ self-contained below.
    **Scope:** no new physics claims; `TH-10` and `MAG-13` stay ✅ at
    their recorded numbers. **Negative result:** report, annotate the
    §7 entries, stop.
-3. **`EX-18` doc repairs — retire the docrefs known-issues entry
-   (smoke, ~1 min compute).** Rename the three guide headings in
+3. ~~**`EX-18` doc repairs — retire the docrefs known-issues entry
+   (smoke, ~1 min compute).**~~ — **done 2026-08-16, 22:30 run**: guide
+   pass **3 violations → 0** (*"18 checked against 3 required heading(s),
+   0 pending … PASS"*, `20260816T033121Z_EX-18-docrefs-fix.log`, 1 s), and
+   the overstated comment corrected **400× → 7.7×** (2.0e-3 / 2.60e-4)
+   with the band value 2.0e-3 untouched, so no gate moved and `EX-18`
+   stays ✅. The checker's overall exit stays 1 on 24 stale-artifact dead
+   references — the pre-stated environmental trap, now a short by-design
+   note in known-issues where the retired entry stood. Disposition in the
+   §7 `EX-18` entry. Original text: Rename the three guide headings in
    `examples/ports/01_two_torus_port_pair.md` to the checker's required
    forms and fix the ~50× overstated reproduction-band margin comment
    in the `EX-18` example file (2026-08-13 audit caveat), then re-run
