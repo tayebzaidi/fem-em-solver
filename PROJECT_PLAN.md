@@ -361,6 +361,48 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
 | `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | ⬜ | standard |
+| `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
+
+**`OPS-18` — DolfinX version upgrade, recurring** ⬜
+*(commissioned 2026-08-16, operator session. The base image is pinned at
+`dolfinx/dolfinx:v0.7.2` (late 2023) while upstream is at v0.11.0; the
+operator wants regular upgrades with deliberate lag. This chunk is
+**re-executable**: each pass marks the table row ✅ with the adopted
+version and date, then the next qualifying release reopens it ⬜ with a
+dated annotation. The ID stays stable.)*
+> **Lag policy.** Adopt a release only when it is ≥ 8 weeks old **or** has
+> received a patch release (x.y.z, z ≥ 1). When several qualify, jump
+> directly to the newest — never step through intermediates (each step
+> costs a full re-gate). **Trigger:** scheduled sessions have no network,
+> so upstream release checks happen in interactive operator sessions; when
+> one finds a qualifying release, it reopens this chunk and the daily
+> review queues it.
+> * **Step 1 — build and boot (standard).** Bump the `FROM` line, rebuild,
+>   and fix the environment plumbing that encodes version-specific paths:
+>   the compose `PYTHONPATH` (`dolfinx-real/lib/python3.10/…` — both the
+>   variant dir and the Python minor can change), the
+>   `/usr/local/bin/dolfinx-complex-mode` wrapper, and the from-source
+>   h5py build against the image's HDF5. **Done-when (§4):** container Up;
+>   real and complex modes both import dolfinx and report the target
+>   version under `mpiexec -n 2`; harness log committed.
+> * **Step 2 — API migration (standard).** Port `src/` and `tests/` to the
+>   new API (0.7→0.11 crosses the `FunctionSpace`→`functionspace` rename,
+>   `dolfinx.fem.petsc` assembly/solver rework, and gmsh-interop signature
+>   changes). **Done-when (§4):** full suite collects with zero errors in
+>   both modes; harness log committed.
+> * **Step 3 — re-gate (heavy).** Re-run the quantitative gate suite
+>   through the harness at `-n 2`, real and complex legs. **Done-when
+>   (§4):** every §2.1 gated number reproduces within its existing band
+>   (TH-6 decay/phase, TH-10 lossy-sphere, MAT-4 SAR, MAT-6 ΔR, PORT-1
+>   S-params with its two named systematics), pre-existing known-issues
+>   failures excepted and cited; elapsed recorded; §5.3's environment
+>   table updated. **Traps:** a gated number that moves is a *finding*
+>   (upstream regression or a latent bug of ours the old version masked) —
+>   open a known-issues entry and stop; never loosen a band to absorb it.
+>   Budget discipline: the re-gate leg is heavy-tier — split across runs
+>   rather than exceeding the 20-minute ceiling. **Negative result:**
+>   park on an `attempt/*` branch with the failing step named; `main`
+>   keeps 0.7.2 until all three steps are green.
 
 **`OPS-16` — retry-on-529 in the automation launchers** 🚫
 *(commissioned 2026-08-13, 10:30 review; blocked 2026-08-14, 21:00 run.)*
