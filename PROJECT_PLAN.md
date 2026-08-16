@@ -7413,7 +7413,7 @@ mandate to displace the critical path.
 | `EX-17` | Circular-loop VTX export repair: port the `EX-14` diff, same round-trip anchor | ✅ (2026-08-10: round-trip max\|B\| 7.756122914931e-05 T both ways, rel diff 0.000e+00 vs 1e-10; loop's analytic numbers unmoved, checker green) | standard |
 | `EX-18` | Gap-voltage port pair → Z → S on the two-torus fixture (the 3b-xvii/xviii gated capability; first ports example) | ✅ (2026-08-13: raw 0.894543 × ωM₁₂ printed as the miss it is, corrected 0.939849 (−6.02%) inside the unmoved 10%; ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1; blind-ladder negative control −98.26% asserted to fail; 134 s at `-n 2`) | standard |
 | `EX-19` | Larmor lossy-sphere example (`TH-10`'s newly gated capability: first example solving at 64/128 MHz; rubric in the §9 item) | ✅ (2026-08-13: `th:6`, fixture imported from the `TH-10` test module; all four records reproduced through the example path — 3.643% / 1.826% interior relL2 at 18.68× / 57.31× separation, power 3.629% with the quasi-static route missing 58.140% — max drift **1.7e-04** vs a pre-stated 1% band; convergence and both negative controls executed in-run; 24 s at `-n 2`) | standard |
-| `EX-20` | Package S-parameter sweep example (`PORT-1` step 4's newly gated capability: first example calling `run_n_port_sparameter_sweep` on the solved field — the entry-point angle `EX-18` does not cover; full rubric in the §9 item, commissioned 2026-08-15 review) | ⬜ | standard |
+| `EX-20` | Package S-parameter sweep example (`PORT-1` step 4's newly gated capability: first example calling `run_n_port_sparameter_sweep` on the solved field — the entry-point angle `EX-18` does not cover; full rubric in the §9 item, commissioned 2026-08-15 review) | ✅ (2026-08-16: `ports:2`, one `run_n_port_sparameter_sweep(..., gap_voltage_ports=specs)` call → two solves → Z → S; **all four step-4 records reproduced inside the pre-stated 1% band, misses 3.33e-07 / 3.23e-07 / 3.67e-06 / 2.29e-07** — raw 0.894543 printed first and asserted to *fail* the 10% band, corrected 0.939849 (−6.02%) inside it, ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1, `\|Z₁₂−Z₂₁\|/\|Z₂₁\|` = 5.8309e-04 printed; negative control executed in-run — the deprecated heuristic route on the same mesh/ports gives an identically-zero off-diagonal, max\|ΔS\| = 3.078e-01 with its `DeprecationWarning` shown; 178.2 s at `-n 2`, 178 055 cells; guide pass 19/19 green. **Named limitation on record:** the sweep returns no fields, so the combined XDMF costs one extra port-1 solve (23.0 s) — surfacing `TimeHarmonicFields` from `SParameterSweepResult` is unscoped) | standard |
 
 **`EX-4`…`EX-11` — backfill plans (scoped 2026-08-09, weekly review; one
 run each).** Common rules: gated capability only; the example *asserts* its
@@ -9059,7 +9059,23 @@ self-contained below.
    the guide-pass violation count, not on exit 0. **Scope:**
    documentation plus one comment; no example logic changes. **Negative
    result:** report; the entry stays open.
-4. **`EX-20` — package S-parameter sweep example (standard).** The
+4. ~~**`EX-20` — package S-parameter sweep example (standard).**~~ —
+   **done 2026-08-16, 00:00 run**: `examples/ports/02_package_sparameter_sweep.py`
+   + guide, in the `ports:` group as `ports:2`. All four step-4 records
+   reproduced through the example path inside the pre-stated 1% band with
+   four orders of headroom (misses **3.33e-07 / 3.23e-07 / 3.67e-06 /
+   2.29e-07**); the raw rung printed first and asserted to *fail* the
+   unmoved 10% band; the negative control ran in-run — heuristic
+   off-diagonal identically zero, max\|ΔS\| = **3.078e-01** on record,
+   `DeprecationWarning` shown. 178.2 s at `-n 2`
+   (`20260816T050310Z_EX-20-example-n2.log`, exit 0); guide pass **19
+   runnable examples, 0 violations**
+   (`20260816T050650Z_EX-20-docrefs.log`) with the checker's overall exit
+   still 1 on the 24 environmental stale artifacts, none of them the new
+   file. One finding for a future scoping decision, annotated in the §7
+   row: `run_n_port_sparameter_sweep` discards the solver's
+   `TimeHarmonicFields`, so the example's combined XDMF costs an extra
+   port-1 solve (23.0 s of the 178.2 s). Original text: The
    first example calling `run_n_port_sparameter_sweep` — the capability
    `PORT-1` step 4 gated, from the entry-point angle `EX-18` does not
    cover (`EX-18` builds Z and calls `sparameters_from_impedance`

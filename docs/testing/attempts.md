@@ -12949,3 +12949,86 @@ docs-only invocation, or splitting the two passes into separate exit codes,
 would make the guide pass usable as a gate. Not queued; it touches
 `scripts/testing/**`, which is allowlisted, but it is a design call, not a
 repair. No denials hit. `main` clean, nothing parked.
+
+---
+
+## 2026-08-16T05:10Z — `EX-20` — complete
+
+**Slot.** Scheduled implementer run, 00:00 CDT grid slot. Preflight clean:
+`git status` empty, container Up 9 h, `main` at `6c9ec50`. Queue items 1–3
+struck through by the previous three slots, so the first open item was §9
+item 4, taken as written.
+
+**What was built.** `examples/ports/02_package_sparameter_sweep.py` +
+`02_package_sparameter_sweep.md`, picked up automatically by the `ports:`
+runner group as `ports:2` (the group globs `examples/ports/*.py`; no runner
+edit needed). The example is the first caller of
+`run_n_port_sparameter_sweep(problem, ports, gap_voltage_ports=specs)` outside
+`tests/` — one call runs both impressed-gap solves, assembles `Z` column by
+column and converts to `S`, where `EX-18` builds `Z` by hand and calls
+`sparameters_from_impedance` directly. Fixture constants are restated from the
+gate module, not imported: examples run with `PYTHONPATH=/workspace/src` and
+must not depend on `tests/`.
+
+**Measured, all on the first run** (`20260816T050310Z_EX-20-example-n2.log`,
+exit 0, 178.2 s at `-n 2`, 178 055 cells — mesh 36.9 s, package sweep 47.9 s,
+heuristic control 45.7 s, export solve 23.0 s; standard tier,
+`timeout -k 30 500`):
+
+| quantity | measured | step-4 record | relative miss |
+|---|---|---|---|
+| raw mutual | 0.894543 | 0.894543 | 3.33e-07 |
+| corrected mutual | 0.939849 | 0.939849 | 3.23e-07 |
+| ‖S−Sᵀ‖/‖S‖ | 2.5494e-05 | 2.5494e-05 | 3.67e-06 |
+| ‖S‖₂ | 0.861449 | 0.861449 | 2.29e-07 |
+
+All four inside the rubric's pre-stated **1% relative** band with four orders
+of headroom. `Im Z₁₂ = 1.110803269 Ω` against `ωM₁₂ = 1.241755 Ω`; ladder
+printed rung by rung with the **raw rung first and asserted to fail** the
+unmoved 10% band (−10.55%), corrected inside it (−6.02%);
+`|Z₁₂−Z₂₁|/|Z₂₁|` = 5.8309e-04 printed beside them.
+
+**Negative control, executed in-run** (not cited): the same call without
+`gap_voltage_ports=` on the same mesh and the same ports. Its S-matrix
+off-diagonal is **identically zero** — the `PORT-0` proximity heuristic has no
+coupling to report at this separation — against the field route's
+`0.0103 + 0.0362j`, so `max|S_heuristic − S_field| = 3.078260e-01` against a
+2.0e-3 floor, exactly the recorded value; one `DeprecationWarning` caught and
+printed; `is_placeholder` True on it and False on the solved route.
+
+**Finding worth a scoping decision, not a repair.**
+`run_n_port_sparameter_sweep` returns port quantities only —
+`SParameterSweepResult` carries `s_matrix`/`z_matrix`/responses and the
+solver's `TimeHarmonicFields` are discarded inside
+`run_gap_voltage_port_case`. So the rubric's "combined XDMF of the solved
+fields" cannot come from the sweep, and the example pays **one extra port-1
+solve (23.0 s of the 178.2 s)** through `TimeHarmonicSolver` to write it. The
+example and guide both say so under a *named limitation* heading rather than
+exporting nothing or implying the sweep produced the file. Surfacing the
+fields (an optional `keep_fields=` on the sweep, or the per-port
+`TimeHarmonicFields` on the result) would remove the duplicate solve and is
+the obvious `PORT-5`-adjacent follow-up; left unscoped, for the review.
+
+**Doc checker** (`20260816T050650Z_EX-20-docrefs.log`, 1 s): guide pass
+**19 runnable examples, 19 checked against 3 required headings, 0 pending,
+0 violations — PASS**, up from 18 with the new guide included. Overall exit
+stays 1 on **24** dead references, all of them the > 48 h stale
+`paraview_output/` artifacts of the by-design known-issues note that yesterday's
+`EX-18` slot wrote; none names the new example or its outputs. Gated on the
+guide-pass count per that note, as item 4's trap instructed.
+
+**No bound moved, no assertion loosened, no denial hit.** `PORT-1` stays ✅ at
+its recorded numbers; nothing in `src/` changed. `EX-20` flipped ⬜ → ✅ in §7
+and item 4 struck through in §9, in this commit with the code, the guide and
+both logs.
+
+**Hypothesis for the next attempt.** Item 5 (`PORT-5` step 1) is next open and
+is the natural continuation: note that `run_n_port_sparameter_sweep` **already**
+calls `summarize_sparameter_sanity(s_matrix)` internally (sparameters.py, right
+after the S assembly) and prints the metrics in its own diagnostics block — so
+the item's "sweep-level path untouched" gap is narrower than the §10 target 3
+wording suggests. Whoever takes it should read that block first and scope the
+step to *gating* those already-computed metrics on the field route (the
+`passivity_max_sigma` == 0.861449 anchor is available directly from
+`result.sanity_report`, no re-solve), rather than wiring a call that exists.
+`main` clean, nothing parked.
