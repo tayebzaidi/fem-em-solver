@@ -2164,6 +2164,28 @@ timeout. All anchors, controls, and traps below unchanged.*
 > findings; report the measured error and cost beside the prediction,
 > annotate here, stop.
 
+*(**Audit caveat closed 2026-08-15, 21:00 run (§9 item 2b)** — the exit gate
+rung 3 added to `scripts/probes/mag13_step2_probe.py` was code-verified but
+never *bitten* in a slot; the 26 s `MAG13_STEP2_RES=0.0025` smoke the
+2026-08-13 10:30 review priced has now bitten it live at `-n 2`, real build
+(`20260816T020344Z_MAG-13-exitgate-smoke-n2-rerun.log`, 26 s harness wall;
+first run `…020249Z_MAG-13-exitgate-smoke-n2.log`). Every pre-registered
+number met: **exit status 1**, relative L2 **12.7485%** against the < 5.00%
+target — bit-identical to `MAG-13`'s own recorded 12.7485% at this rung —
+**145 884 cells** / 583 536 global dofs against the ~145.9 k on record, and
+`GATE azimuthality PASS` at 9.541e-02 against the ≤ 0.10 bound. The two gates
+therefore discriminate **independently** in the same run — one FAIL, one PASS
+at only 4.6% margin — so the nonzero exit is the error gate firing, not a
+blanket. That the probe exits 1 here is *correct*: h = 0.0025 is a recorded
+miss, and a gate that passed on it would be measuring nothing. **One defect
+found and fixed:** run at a rung that equals a hard-coded reference, the h
+ratio is 1 and the observed-rate print was `inf` (0/0) with the three-rung
+fit taken over a duplicate abscissa. Both now report `nan` — they are
+undefined, not measured. All gated and measured quantities are bit-identical
+across the pre-fix and post-fix runs (12.7485%, 145 884 cells, B_z
+3.180e-06 T, azimuthality 9.541e-02); only the two degenerate rates moved
+`inf` → `nan`. No bound moved; `MAG-13` stays ✅ at its recorded numbers.)*
+
 **Open follow-ups in MAG:**
 
 - `MAG-6`'s revised test has never been executed. Its predecessor failed at
@@ -2703,6 +2725,20 @@ strengthened: at this mesh 64 MHz (1.781%) and 128 MHz (1.826%) sit together,
 as they did at 17 670 cells (3.643% / 3.299%) — the residual is
 frequency-independent *and* mesh-limited. Log
 `20260813T213156Z_GEO-14-step1-discriminator.log`.)*
+*(**Audit caveat closed 2026-08-15, 21:00 run (§9 item 2a)** — the step-4
+monotonicity assert the 2026-08-13 audit deferred to "the next edit of that
+file" is now **in the file**: `test_lossy_sphere_ohmic_power_…_64mhz` gates
+strict decrease of the power error across every consecutive rung, not just
+the fine-rung level. Green on the first run at the unmoved recorded digits —
+**8.387% (5 866 cells) → 3.629% (17 670 cells)**, every printed number in
+the file bit-identical to `20260813T170337Z_TH-10-step4-power-n2.log`
+(including the field gates 8.154 → 3.643% and 3.299 → 1.826%); 7 passed,
+25.7 s, harness 27 s, `-n 2`, complex build
+(`20260816T020207Z_TH-10-step4-monotonicity-n2.log`). No bound moved, no
+recorded digit touched, and `TH-10` stays ✅ at its recorded numbers — this
+closes an audit caveat, it does not reopen the chunk. The remaining step-4
+caveat (negative-control margin 1.16× vs the field gates' 1.9–5.7×) is
+**untouched**: it is a property of the fixture, not a missing assert.)*
 *(opened 2026-08-12, 18:00 daily review, per §10 subgoal 3's standing
 instruction — "the daily review should start breaking this down as the port
 lineage clears, and a §7 chunk ID should exist by the next weekly review".
@@ -8946,8 +8982,23 @@ self-contained below.
    printed never gated. The entry carries the anchor, the pre-registered
    reading bands, the step-8 pricing (~390–450 s at `-n 2`), and the
    traps. `TH-11` stays 🟡 whatever it reads.
-2. **Hygiene pair — the two standing ride-alongs, promoted (standard,
-   ~3 min compute).** Twelve drained slots watched these sit behind
+2. ~~**Hygiene pair — the two standing ride-alongs, promoted (standard,
+   ~3 min compute).**~~ — **done 2026-08-15, 21:00 run**: both caveats
+   closed, both anchors met on the first run, 53 s of compute total.
+   (a) monotonicity assert live in `test_lossy_sphere_fullwave.py` and
+   green — **8.387% → 3.629%**, every printed digit in the file
+   bit-identical to the 08-13 record; 7 passed, 27 s
+   (`20260816T020207Z_TH-10-step4-monotonicity-n2.log`). (b) the
+   `MAG13_STEP2_RES=0.0025` smoke bit the exit gate live — **exit 1**,
+   relative L2 **12.7485%** (bit-identical to `MAG-13`'s record),
+   **145 884 cells** vs ~145.9 k on record, azimuthality **PASS** at
+   9.541e-02 ≤ 0.10, so the two gates discriminate independently; 26 s
+   (`20260816T020344Z_MAG-13-exitgate-smoke-n2-rerun.log`). One defect
+   found and fixed in the probe: at an h equal to a hard-coded reference
+   the rate prints were `inf`/duplicate-abscissa, now `nan` — all gated
+   quantities bit-identical across the fix. No bound moved; `TH-10` and
+   `MAG-13` stay ✅. Dispositions in their §7 entries. Original text:
+   Twelve drained slots watched these sit behind
    "next edit of that file"; they are now a slot of their own.
    (a) `TH-10` step 4's monotonicity assert: the power-gate test gates
    the level (3.629%) but not decrease across rungs — add the assert

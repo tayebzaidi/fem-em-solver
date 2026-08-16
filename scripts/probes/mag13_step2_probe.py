@@ -133,15 +133,29 @@ def main() -> int:
     b_z_max = float(np.max(np.abs(values[:, 2])))
     b_ref = float(np.max(b_ana_mag))
 
-    # Two-rung observed rate against the recorded h = 0.0025 / 12.75% rung.
-    rate = np.log(REF_ERR / rel_error) / np.log(REF_H / RESOLUTION_FINE)
-    # Pairwise rate against the recorded rung 2, and the three-rung least
-    # squares fit over (REF_H, REF2_H, this h) -- the §7 entry asks for the
-    # three-rung number beside the recorded 1.174 and 1.10.
-    rate_pair2 = np.log(REF2_ERR / rel_error) / np.log(REF2_H / RESOLUTION_FINE)
+    # Two-rung observed rate against the recorded h = 0.0025 / 12.75% rung,
+    # and the pairwise rate against the recorded rung 2, plus the three-rung
+    # least squares fit over (REF_H, REF2_H, this h) -- the §7 entry asks for
+    # the three-rung number beside the recorded 1.174 and 1.10.
+    #
+    # Re-running the probe *at* a recorded rung (the MAG13_STEP2_RES=0.0025
+    # exit-gate smoke, §9 item 2b) makes an h ratio 1: the rate is then 0/0 and
+    # printed `inf`, and the three-rung fit sees a duplicate abscissa.  Neither
+    # is a measurement, so report them as undefined rather than as a number.
+    def _rate(h_ref: float, err_ref: float) -> float:
+        if np.isclose(h_ref, RESOLUTION_FINE):
+            return float("nan")
+        return float(np.log(err_ref / rel_error) / np.log(h_ref / RESOLUTION_FINE))
+
+    rate = _rate(REF_H, REF_ERR)
+    rate_pair2 = _rate(REF2_H, REF2_ERR)
     hs = np.array([REF_H, REF2_H, RESOLUTION_FINE])
     errs = np.array([REF_ERR, REF2_ERR, rel_error])
-    rate3 = float(np.polyfit(np.log(hs), np.log(errs), 1)[0])
+    rate3 = (
+        float("nan")
+        if len(np.unique(hs)) < 3
+        else float(np.polyfit(np.log(hs), np.log(errs), 1)[0])
+    )
 
     # Quantitative gate (§7 step-2-rung-3): the exit code carries the result.
     passed_err = rel_error < TARGET_ERR

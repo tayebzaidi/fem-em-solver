@@ -558,6 +558,24 @@ def test_lossy_sphere_ohmic_power_matches_full_wave_series_at_64mhz():
             f"at the fine rung"
         )
 
+    # The level is gated below; this gates the *trend* (§9 item 2a, added
+    # 2026-08-15).  The recorded pair in
+    # `20260813T170337Z_TH-10-step4-power-n2.log` is 8.387% (5 866 cells) ->
+    # 3.629% (17 670 cells), so strict decrease across consecutive rungs is a
+    # real constraint here, not a tautology: a level-only gate would still pass
+    # if the coarse rung were the better one, which is the signature of a
+    # cancellation rather than convergence.  Never adjust the recorded digits
+    # to make this hold — a failure is a finding about the coarse record.
+    for coarse, finer in zip(rungs[:-1], rungs[1:]):
+        assert finer["error"] < coarse["error"], (
+            f"ohmic-power error does not decrease under refinement: "
+            f"{coarse['ncells']} cells gives {coarse['error']:.3%} but "
+            f"{finer['ncells']} cells gives {finer['error']:.3%}. The level "
+            f"gate below can still pass on a non-converging sequence; a total "
+            f"integral that stops improving with h points at the integration "
+            f"path or at error cancellation, not at a tighter bound"
+        )
+
     assert fine["error"] < OHMIC_POWER_BOUND, (
         f"total ohmic power from the FEM solve is {fine['p_fem']:.6e} W against "
         f"the series integral {fine['p_series']:.6e} W over the same meshed "

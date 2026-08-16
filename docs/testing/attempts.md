@@ -12825,3 +12825,65 @@ solve pair it is at the edge of one foreground window and must be cost-probed
 (mesh + one tiny solve) before being queued. Scoping that rung is the
 review's call, not this run's; the §7 step-2 annotation states it. No
 denials hit. `main` clean, nothing parked.
+
+## 2026-08-16T02:00Z — hygiene pair (`TH-10` step 4a / `MAG-13` 2b) — **complete**
+
+§9 item 2, taken as the first not-done item (item 1 landed in the 19:30 slot).
+Preflight clean, container Up 6 h. Both halves landed on the first run; 53 s of
+compute total across two commands, both `-n 2`, both foreground.
+
+**(a) `TH-10` step 4 — the monotonicity assert.** The power gate asserted the
+fine-rung *level* (3.629% < 5%) and the quasi-static separation, but nothing
+about the trend, so a sequence that stopped improving — or improved backwards —
+would still have passed. Added a loop over consecutive rungs asserting strict
+decrease of the power error, with the reason in a comment: a level-only gate
+also passes when the coarse rung is the better one, which is the signature of
+error cancellation rather than convergence. Green first run at the unmoved
+digits: **8.387% (5 866 cells) → 3.629% (17 670 cells)**. Every printed number
+in the file is bit-identical to `20260813T170337Z_TH-10-step4-power-n2.log`,
+field gates included (8.154 → 3.643% at 64 MHz, 3.299 → 1.826% at 128 MHz), so
+the assert is additive and nothing drifted. 7 passed, 25.7 s in-test / 27 s
+harness (`20260816T020207Z_TH-10-step4-monotonicity-n2.log`, exit 0).
+
+**(b) `MAG-13` — the exit gate, bitten live.** Pre-registered before running:
+exit status 1, relative L2 within ±0.5 pp of the recorded 12.75%, cell count
+within ±2% of ~145.9 k, azimuthality gate PASS. All four met, three of them
+tighter than the band — **exit 1**, **12.7485%** (bit-identical to `MAG-13`'s
+own recorded digit), **145 884 cells** / 583 536 dofs, azimuthality **PASS** at
+9.541e-02 vs ≤ 0.10. The reading worth keeping is that the two gates
+discriminated *independently in the same run*: the error gate FAILed and the
+azimuthality gate PASSed with only 4.6% of margin, so the nonzero exit is one
+specific gate firing rather than a blanket failure — which is exactly what
+"code-verified but never bitten" left unknown. Exiting 1 at h = 0.0025 is the
+correct behaviour: that rung is a recorded miss, and a gate that passed on it
+would be measuring nothing. 26 s harness wall
+(`20260816T020344Z_MAG-13-exitgate-smoke-n2-rerun.log`; pre-fix run
+`…020249Z_MAG-13-exitgate-smoke-n2.log`).
+
+**Defect found and fixed (b).** Running the probe *at* a hard-coded reference
+rung makes the h ratio exactly 1, so the two-rung observed rate was `log(1)/
+log(1)` and printed **`inf`**, and the three-rung `polyfit` ran over a
+duplicate abscissa (it printed 1.174, i.e. it silently reported the recorded
+pairwise rate as if it were a three-rung fit — the more misleading of the two).
+Both now return `nan`: undefined, not measured. This is the smoke's own
+side-effect, found only because the gate was finally run at that rung. All
+gated and measured quantities are bit-identical across the pre-fix and post-fix
+runs — 12.7485%, 145 884 cells, B_z 3.180e-06 T, azimuthality 9.541e-02 — so
+the fix is confined to the two degenerate prints.
+
+No bound was moved and no recorded digit was touched anywhere; `TH-10` and
+`MAG-13` both stay ✅ at their recorded numbers, per the item's scope. Both
+2026-08-13 audit caveats that read "add it on the next edit of that file" are
+now closed in their §7 entries. The one remaining step-4 caveat — the
+negative-control margin 1.16× against the field gates' 1.9–5.7× — is
+deliberately untouched: it is a property of the fixture, not a missing assert,
+and moving it would need a new measurement, not a new assertion.
+
+**Hypothesis for the next attempt.** None pending for these two; the queue's
+next open item is 3 (`EX-18` doc repairs). The generalizable lesson for the
+review: a probe whose references are hard-coded constants has a degenerate
+self-comparison mode, and the other probes carrying recorded-rung constants
+(`TH-11`'s step-1 module in particular) will print the same `inf` if a future
+slot re-runs them at their own anchor rung — worth a sweep if a slot is ever
+cheap, not worth queueing on its own. No denials hit. `main` clean, nothing
+parked.
