@@ -1,13 +1,14 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-17, 10:30 review. Three of four slots closed their
-items, all three audited §4-compliant — `PORT-9` step 2 (the 7.71%
-cross-route miss is **diagnosed**: it's the transverse average), `OPS-17`
-step 2 (14 test dispositions landed, **4 real code defects surfaced**),
-`EX-23` (port-sheet example). The fourth (`TH-11` step 5) stopped on its
-own pre-stated cost gate — the 64 MHz third rung is priced and doesn't
-fit a slot unmodified; rescoped. Source of truth is `PROJECT_PLAN.md`;
-this page is a read-only digest for the human operator.
+**Updated:** 2026-08-17, 18:00 review. All four slots productive and two
+capability fronts moved: **PORT-9 step 2b — the narrowed sheet holds the
+5% band** (1.8333% at half width; the sheet-averaging diagnosis
+confirmed by measurement), and **TH-11 step 5a — the 2.8 M-cell mesh
+cache is exact and the `-n 8` rank change is bought** with a measured
++0.00002 pp control. OPS-17's full-suite reconciliation closed its
+real-mode half: all 377 real-mode tests observed, every failure named.
+Both ✅ audited §4-compliant. Source of truth is `PROJECT_PLAN.md`; this
+page is a read-only digest for the human operator.
 
 ## Waiting on you
 
@@ -15,10 +16,11 @@ this page is a read-only digest for the human operator.
    FEM half is on record; your half: replicate
    `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md` in
    Ansys Electronics Desktop and fill the blank AED columns in
-   `COMPARISON.md`. Newly relevant to it: `PORT-9` step 2 diagnosed the
-   lumped-vs-gap feed difference as the sheet's transverse average — an
-   AED lumped port (which uses an integration *line*) is now a direct
-   external check on the review's narrow-the-sheet decision.
+   `COMPARISON.md`. Newly relevant: PORT-9 step 2b confirmed the
+   lumped-vs-gap difference is the sheet's transverse average and fixed
+   it by narrowing the sheet (1.8333% at f = 0.5) — an AED lumped port
+   (integration *line*) is now a direct external check on that
+   narrowed-width convention.
 1. **Two operator decisions the automation cannot make** (unchanged):
    (a) **`OPS-16` unblock** — retry-on-529 is designed but
    `Edit(scripts/automation/**)` is under `ask`; move the three launcher
@@ -28,7 +30,7 @@ this page is a read-only digest for the human operator.
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
 3. **ANS-1 Ansys replication** — still yours; ANS-3 (item 0) is the
    second case in the same queue.
-4. Housekeeping: local `main` is **92 commits ahead** of `origin/main`
+4. Housekeeping: local `main` is **97 commits ahead** of `origin/main`
    (last push 2026-08-10) — push when convenient.
 
 ## Honest current state (digest of §2 — two bullets moved this interval)
@@ -37,61 +39,57 @@ this page is a read-only digest for the human operator.
 |---|---|---|
 | Magnetostatics | ✅ validated | closed forms; < 5% wire field reached (MAG-13, 3.74% at 1.5 M cells) |
 | Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.83% + power to 3.63% (TH-10) |
-| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 0.88% (MAT-6); the apparent frequency trend is attributed to mesh resolution (TH-11 step 4), but 64 MHz still has **no h→0 bracket**. Step 5's third rung is priced — 2.8 M cells, doesn't fit a slot as scoped — and rescoped as 5a (cache the mesh + rank control, queued) / 5b (the solves). Larmor coil loading stays labeled an extrapolation |
-| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4); never on a coil. New caveat: OPS-17 surfaced a wrong-sign Poynting flux on the smoke fixture (POST-5 commissioned) — power-accounting hygiene is now on the mission path explicitly |
-| S-parameters | ✅ package path field-derived (PORT-1) | two-torus fixture only. **PORT-9 step 2: both pre-stated bands MISS and the miss is diagnosed** — the lumped port averages the gap voltage across the sheet (7.7783 pp of the 7.71%; path residual 0.0763 pp), a feed-definition property, not a solver defect. Review decision: **narrow the sheet toward the centreline** (step 2b, queued — the measured profile predicts ~1% at interior width). Bands unmoved; §2.2's "no coil has ports" stands |
+| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR 0.88% (MAT-6); the frequency "trend" is attributed to mesh resolution, but 64 MHz still has **no h→0 bracket**. TH-11 5a removed both blockers on the third rung (exact XDMF cache; rank invariance +0.00002 pp vs 0.1 pp band) — **step 5b, queued item 1, runs the 64 MHz pair off the cache**. Larmor coil loading stays labeled an extrapolation until a review adjudicates the printed bracket |
+| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4); never on a coil. OPS-17's wrong-sign Poynting flux still open (POST-5 step 1, queued item 4) |
+| S-parameters | ✅ package path field-derived (PORT-1) | two-torus fixture only. **PORT-9 step 2's gate is closed at the narrowed definition**: the width ladder reads 7.7095 → 3.6730 → **1.8333%** at f = 0.5 against the unmoved 5% band, confirming the transverse-averaging diagnosis; a port sheet's width is now specified as `A/h` on the filtered facet set (spec, not implementation detail). Remaining before the birdcage (step 3): **step 2c** — `run_n_port_sparameter_sweep` needs a lumped-sheet route so the reciprocity leg can run. §2.2's "no coil has ports" stands |
 
-## Recent activity (2026-08-17 03:00 → 10:30)
+## Recent activity (2026-08-17 10:30 → 18:00)
 
-- **PORT-9 step 2 ✅ (chunk stays 🟡)** — both pre-stated bands miss
-  (cross-route 7.7095% vs 5%, lumped mutual 12.6931% vs 10%) and the
-  falsifiable hypothesis was **confirmed by decomposition**: transverse
-  averaging accounts for 7.7783 pp, the path/projection residual is
-  0.0763 pp vs a ~1 pp gate (13×). The gap route stays inside its band
-  on the same field, so the solver and mesh are exonerated. The review
-  chose the fix: narrow the sheet (a facet-filter change, no gmsh work).
-- **OPS-17 step 2 ✅** — 4 deletions, 10 anchored replacements landed,
-  no band loosened. The new anchors immediately earned their keep:
-  **four real defects surfaced** (coil+phantom meshes lose 22% of coil
-  volume when asked for a *finer* size; gauge multiplier non-zero for a
-  compatible source; Poynting flux wrong-sign on the smoke fixture;
-  `sigma=0.0` raises). Three carried as strict xfail; all four now have
-  commissioned chunks (`GEO-17`, `MAG-17`, `POST-5`).
-- **TH-11 step 5 🚫 → rescoped** — the cost probe worked as designed:
-  third rung meshes to 2 807 309 cells (inside ceiling) but the mesh
-  alone is 288 s and the solve died mid-assembly at the window. Module
-  parked, nothing broken. Rescope: 5a caches the mesh to XDMF and buys
-  `-n 8` with a measured rank-invariance control; 5b runs the pair off
-  the cache.
-- **EX-23 ✅** — first example with an interior sheet surface;
-  meshed/CAD = 1.000000000000, negative control bit-matches the
-  sheet-less record. Measured bonus: the port sheet costs +354 cells —
-  essentially free for PORT-9 step 3's budget.
+- **PORT-9 step 2b ✅ (chunk stays 🟡)** — the band holds at half
+  width with 2.7× margin, f = 1.0 reproduces step 2's record to < 1e-4,
+  and the open-limit identity held < 1e-11 per width. One finding en
+  route: the first attempt read a false 14% MISS because the filtered
+  sheet's bounding box overstates its ragged edge by 14–15% — the width
+  convention is now `w = A/h` (mean width), asserted equal to bbox on
+  the rectangular full-width rung. No band moved in either attempt.
+- **TH-11 step 5a ✅** — the third-rung mesh (2 807 309 cells)
+  round-trips XDMF exactly (tag counts and names preserved; 14.8 s
+  read-back replaces 126–288 s of meshing) and the fine rung at `-n 8`
+  reproduces the `-n 2` record 5 000× inside the pre-stated band. One
+  in-slot failure (a smoke-rung gmsh timeout from an oversized wire
+  resolution) was diagnosed, fixed, and journaled — not a defect.
+- **OPS-17 step 3 🟡 ×2 — leg (a) closed** — all **377** real-mode
+  tests are now observed in completed legs (171 + 206, exact), every
+  failure a named expected one. Attempt 1 also caught a **silent
+  regression**: PORT-1 step 4's `allgather` broke `_DummyComm`, failing
+  an orientation test since 08-13 (filed in known-issues). Leg (b) —
+  the two complex legs — is queued item 3.
 
 ## Automation health
 
-- **4/4 slots productive** (3 closures + 1 correct pre-stated stop; a
-  stop condition firing as written is the process working, not a
-  failure). All three ✅ audited COMPLIANT by independent auditors.
-- **One process find from the audit:** two OPS-17 harness footers
-  recorded `grep`'s exit 0 over a failing and a killed pytest run
-  (piping inside the harness command). Now a named trap in the review
-  rubric and the OPS-17 step-3 item; no result was misreported in prose.
-- Tree clean at every handoff; one `attempt/*` branch parked by design
-  (TH-11 step 5's module — item 2 lands it); no `recovered/*`.
+- **4/4 slots productive** (2 closures + 2 journaled partial attempts
+  that closed leg (a) between them). Both ✅ audited COMPLIANT by
+  independent auditors; every plan number checked against its log.
+- **The grep-pipe trap fired a third time** (attempt 2 piped a collect
+  through `tail -3`, footer recorded tail's exit) — caught in-slot and
+  re-run unpiped; the trap text in the rubric stands. Watch whether it
+  recurs; three trips in two days may argue for a mechanical guard.
+- Tree clean at every handoff; `attempt/TH-11-step5-*` deleted this
+  review (step 5a landed a strict superset, verified by diff); no
+  `recovered/*`.
 - Standing weekly-review items unchanged: POST-4 export adoption (your
   ParaView check) and ANS-1/ANS-3 adjudication (no AED numbers yet).
 
 ## On deck (§9, restocked this review; items 1–4 independent, 5 spare)
 
-1. **PORT-9 step 2b** — the narrowed sheet: width ladder
-   f ∈ {1.0, 0.735, 0.5}; the 5% band, unmoved, expected to hold at
-   interior width; reciprocity sweep if it does.
-2. **TH-11 step 5a** — cache the 2.8 M-cell third-rung mesh to XDMF +
-   the `-n 8` rank-invariance control (fine rung reproduces +2.8063%
-   within 0.1 pp).
-3. **OPS-17 step 3** — full-suite legs in four sized commands + the
-   finiteness-sweep 59 → 45 before/after control.
+1. **TH-11 step 5b** — the 64 MHz third-rung pair off the cached mesh
+   at `-n 8`, one solve per command (~480 s each); the Aitken ladder
+   printed, never gated.
+2. **PORT-9 step 2c** — the lumped-sheet route in
+   `run_n_port_sparameter_sweep` + the reciprocity leg
+   (`‖S−Sᵀ‖/‖S‖ ≤ 1e-3`); prerequisite of the birdcage step.
+3. **OPS-17 step 3 leg (b)** — the two complex legs; counts reconciled
+   against 377; the th-smoke xfail finally observed in a completed run.
 4. **POST-5 step 1** — the scalar-σ one-liner + the Poynting wrong-sign
    h-ladder discriminator (`ds` orientation checked first).
 5. *(spare)* **EX-22** — restore the six examples' artifacts

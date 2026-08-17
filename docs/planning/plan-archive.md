@@ -13683,3 +13683,83 @@ by this review.
    docrefs gate on `exit != 1`. **Scope:** mesh-only, no `Z` claims.
    **Negative result:** area identity failing on the example path is a
    regression vs `GEO-16` — known-issues entry, report, stop.
+
+## §9 On-deck done items 1–2 + interval recap, 10:30 to 18:00 2026-08-17 — archived 2026-08-17 (18:00 review)
+
+Last reviewed 2026-08-17, **10:30 review**. Interval (since 03:00): three
+of four slots closed their items — `PORT-9` step 2 (both pre-stated bands
+MISS, and the miss **diagnosed**: transverse averaging 7.7783 pp, path
+residual 0.0763 pp against the ~1 pp gate), `OPS-17` step 2 (14
+dispositions landed, **4 defects surfaced**, none fixed, no band
+loosened), `EX-23` (port-sheet example, meshed/CAD = 1.000000000000) —
+and `TH-11` step 5 hit its own pre-stated stop condition (third rung
+priced: 2 807 309 cells, mesh alone 288.2 s; module parked on
+`attempt/TH-11-step5-20260817T123353Z`, kept — its content is code, not
+plan text). All three ✅ audited **COMPLIANT** (one subagent auditor
+each; the one process find — two `OPS-17` th-smoke footers record
+*grep's* exit over piped pytest — is now a named trap in the `OPS-17`
+step-3 entry and the review rubric). Tree clean, no `recovered/*`. This
+review made the two decisions the interval queued up: **`PORT-9` → narrow
+the sheet** (step 2b scoped: width ladder, the measured profile predicts
+~1% at interior width) and **`TH-11` step 5 → 5a/5b** (cache the mesh to
+XDMF + buy `-n 8` with a measured rank-invariance control); scoped
+`OPS-17` step 3 (full-suite legs in four sized commands), and
+commissioned **`GEO-17`/`MAG-17`/`POST-5`** from the four surfaced
+defects (POST-5 carries defects 3+4 together). No new example chunk: no
+new *gated* capability closed this interval (`PORT-9` step 2 is a
+diagnosis, its chunk stays 🟡).
+
+1. ✅ **DONE 2026-08-17, 12:00 slot** — **`PORT-9` step 2b — the
+   narrowed sheet gates the cross-route band (standard).** Band holds at
+   f = 0.5 (1.8333% against 5%), ladder 7.7095 → 3.6730 → 1.8333%,
+   control reproduced to < 1e-4, 14 passed 150.5 s
+   (`20260817T170841Z_PORT-9-step2b-effective-width.log`). Width
+   convention fixed to `A/h` en route (see §7). The second command
+   (reciprocity sweep) was **not** run — it needs a lumped-sheet route in
+   `run_n_port_sparameter_sweep`, a package change, not a wiring job.
+   Original text: execute the §7 step-2b entry verbatim (scoped the 10:30
+   review). **Anchor:** at f = 0.5 interior width, cross-route
+   `|ΔZ₁₂|/|Z₁₂| ≤ 5%` — step 2's own band, unmoved, now expected to
+   hold (the measured transverse profile puts the interior stations
+   within 1.1% of the chord); the sheet-average identity < 1e-11
+   re-asserted per width. **Negative control:** f = 1.0 reproduces the
+   step-2 record **7.7095%** to 1e-4; passive-sheet control green. If
+   the band holds, command 2 is the two-port reciprocity sweep
+   (`‖S−Sᵀ‖/‖S‖ ≤ 1e-3`, step 2's unrun leg). **Cost:** ~3 solves +
+   1 mesh ≈ 130 s at `-n 2`, `timeout -k 30 500`. **Traps:** step 1's
+   verbatim; re-measure `w` from the filtered facet set, never
+   `f × w_full`. **Scope:** two-torus only; the chunk stays 🟡 until
+   step 3's birdcage gate. **Negative result:** a deviation that does
+   not fall toward ~1% as f shrinks refutes the transverse-averaging
+   diagnosis — record the ladder, known-issues entry, report, stop; the
+   band never widens.
+2. ✅ **DONE 2026-08-17, 13:30 slot** — **`TH-11` step 5a — cache the
+   third-rung mesh + the rank-invariance control (standard).** Both
+   anchors met: the cache round-trips 2 807 309 cells exactly with
+   per-tag counts and tag names preserved (mesh 126.4 s → 14.8 s
+   read-back, 5 passed 143 s,
+   `20260817T183751Z_TH-11-step5a-cache-third.log`), and the fine rung
+   at `-n 8` reads +2.8063%, **+0.00002 pp** off the `-n 2` record
+   against the 0.1 pp band (11 passed 174 s,
+   `20260817T184026Z_TH-11-step5a-rank-control.log`). The parked module
+   from `attempt/TH-11-step5-20260817T123353Z` landed with it. **5b is
+   unblocked**, with a measured cost datum: `-n 8` solves the fine rung
+   in 72–73 s (2.7× over `-n 2`), so the third rung extrapolates to
+   ~480 s — one solve per harness command. Original text: execute the §7
+   step-5a entry verbatim (scoped the 10:30 review — do **not** re-run
+   step 5 as originally written; a second unchanged slot buys the same
+   288 s mesh and the same kill). Start by landing the parked module
+   from `attempt/TH-11-step5-20260817T123353Z`. Command 1: mesh
+   `near = 0.00125`, write XDMF, read back, **assert cell count
+   == 2 807 309 exactly** with tag sets preserved (`timeout -k 30 500`;
+   the probe priced the mesh at 288.2 s). Command 2: the fine
+   417 914-cell loaded/free pair at **`-n 8`** — **anchor:** ΔR
+   deviation reproduces the `-n 2` record **+2.8063%** within the
+   pre-stated **0.1 pp** (10× the same-rank run-to-run floor, 28× under
+   the signal), identity family < 1e-9, σ = 0 exactly zero. **Traps:**
+   step 4's verbatim; XDMF must preserve the tag names the solver
+   selects by; FFCx lock after a kill. **Scope:** no 64 MHz reading
+   this step; step 5b (deliberately not queued) consumes the cache next
+   interval. **Negative result:** a rank-dependent ΔR outside 0.1 pp is
+   a solver-stack finding — known-issues entry, 5b stays blocked,
+   report, stop.
