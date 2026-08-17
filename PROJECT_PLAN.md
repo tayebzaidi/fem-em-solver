@@ -1612,7 +1612,7 @@ until that check returns.
 | `PORT-6` | Frequency sweep orchestration | 🧪 | smoke |
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard |
-| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(**step 1 done 2026-08-17** — parked formulation merged, sheet instantiated on `GEO-16`'s facet tag `212` of the solve fixture, both routes read off one 10 MHz solve: gap 0.894310 × ωM₁₂ raw (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route **7.7095%** against step 2's 5% band — measurement-only, step 2 adjudicates; steps 2–3 open)* | standard |
+| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(**step 1 done 2026-08-17** — parked formulation merged, sheet instantiated on `GEO-16`'s facet tag `212` of the solve fixture, both routes read off one 10 MHz solve: gap 0.894310 × ωM₁₂ raw (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route **7.7095%** against step 2's 5% band. **Step 2 executed 2026-08-17**: both pre-stated bands **MISS** (cross-route 7.7095% vs 5%; lumped mutual 12.6931% vs 10%; the gap route stays inside at 6.0391%) and the miss is **diagnosed** — it is the transverse average over the sheet, 7.7783 pp, with a path/projection residual of only **0.0763 pp** against the pre-stated ~1 pp threshold. Bands not widened; **step 3 blocked on a feed-definition scoping decision for the review**)* | standard |
 | `PORT-10` | The two `PORT-1` systematics: composition measured, not assumed | ✅ 2026-08-16 (cross-term **−0.0604 pp** inside the pre-stated ±0.5 pp) | heavy |
 
 **`PORT-1` — Real port excitation from the solved field** ✅ *(closed by
@@ -1847,6 +1847,74 @@ the answer is already gated**.
 >   geometry); reciprocity `‖S−Sᵀ‖/‖S‖ ≤ 1e-3` through
 >   `run_n_port_sparameter_sweep`. A miss is a finding about one of the
 >   feed models — diagnose, never widen.
+>   > **EXECUTED 2026-08-17, 04:30 slot — both pre-stated bands MISS, and the
+>   > miss is diagnosed.** (`tests/validation/test_port_lumped_two_torus.py`,
+>   > 15 passed 95.2 s at `-n 2`, standard,
+>   > `20260817T093554Z_PORT-9-step2.log`. Written into step 1's module because
+>   > it adjudicates numbers read off **one** solved field; step 1's fixture
+>   > record and its two assertions are untouched and re-run green in the same
+>   > command, together with `test_port_lumped_bc.py`'s six identity gates and
+>   > the passive-sheet negative control.)
+>   > **The verdict on the pre-stated bands, neither widened.** Cross-route
+>   > `|ΔZ₁₂|/|Z₁₂| = 7.7095%` against the **5%** band: **MISS**. Lumped-port
+>   > corrected ratio `0.873069`, so `|ratio − 1| = 12.6931%` against the
+>   > **10%** mutual band: **MISS**. The gated gap route on the same field stays
+>   > **INSIDE** at `6.0391%` (corrected `0.939609`), so neither the fixture nor
+>   > the solve is what failed. Reciprocity through
+>   > `run_n_port_sparameter_sweep` was **not** run: the §9 item directed the
+>   > hour at the diagnosis once step 1 had already measured the cross-route
+>   > outside its band, and a two-port sweep with lumped sheets on both ports is
+>   > a second and a third solve. It is step 3's to execute if the feed question
+>   > below is resolved.
+>   > **The diagnosis: the miss is the transverse average, entirely.** The
+>   > hypothesis recorded above was falsifiable and is **confirmed**. Off the one
+>   > field, the cross-route deviation splits into two terms measured between the
+>   > *same* terminal planes: a **transverse-averaging** term (the sheet average
+>   > `−(1/w)∫_S E·ŷ dS` against the same functional on the centre chord
+>   > `x = a`) of **7.7783 pp**, and a **path/projection residual** (that
+>   > straight chord, `ĥ = ŷ`, against the gated route's curved centreline,
+>   > `t̂ = φ̂`) of **0.0763 pp** — against the §9 item's pre-stated ~1 pp
+>   > threshold, which is this run's asserted gate and passes by **13×**.
+>   > `V_gap = +1.363043e-02 + 1.079788j`, `V_chord = +1.371015e-02 +
+>   > 1.080609j`, `V_avg = +4.258870e-02 + 1.001734j` V. The two routes
+>   > integrate the same field along effectively the same path; they differ
+>   > **only** in that the lumped port averages across the gap box's width and
+>   > the gap route does not. The 7.71% is therefore a property of the two
+>   > **feed definitions** on this box — not of the solver, the mesh fragment,
+>   > or the port formulation.
+>   > **Supporting reads.** The open-limit reduction the diagnosis rests on —
+>   > `V_lumped = −(1/w)∫_S E·ĥ dS`, i.e. `I·Z_p` collapsing to the
+>   > sheet-averaged gap voltage — is now an *asserted* identity against an
+>   > independently assembled form (< 1e-11 relative), no longer prose.
+>   > Transverse profile of `V(x) = −∫E_y dy` across the sheet: the seven
+>   > interior stations (`|s| ≤ 0.735` of the half-width) all sit within
+>   > **1.1%** of the chord (0.990178 … 1.010688), so the dilution is not a
+>   > broad gradient — it lives in the outer ~25% of the width, where the
+>   > `s = +0.980` station reads `+7.146e-01 − 7.952e-01j` V, a wholly
+>   > different phase. Step 1's three records (gap 0.894310, lumped 0.829782,
+>   > cross-route 0.077095) reproduce to < 1e-4, asserted.
+>   > **Caveat on one printed number, recorded so nothing quotes it.** The
+>   > shadow/fringe *area* split by the indicator `|x − a| < r_minor` measured
+>   > fringe = **0.1506%** of the sheet against the analytic strip fraction
+>   > `1 − r/(r+overhang) = 3.8462%`: those strips are 0.2 mm wide against a
+>   > ~0.4 mm mean facet edge on this sheet, so the facet-quadrature indicator
+>   > under-resolves them. That split — and the fringe/shadow mean-field ratio
+>   > 0.000317 read through it — is **not** a reliable area measure at this mesh
+>   > and nothing above depends on it; the two-term decomposition and the
+>   > profile are resolution-independent and are the evidence. Related: 3b-xii's
+>   > `_fringe_fraction` (0.273855) is the *disc* shadow on a face **normal** to
+>   > the current and is the wrong denominator for this plane — the §9 item's
+>   > instruction to print it beside the ratio is honoured, and the answer is
+>   > that the two are different geometric quantities.
+>   > **Consequence: step 3 stays blocked, and the open question is now sharp.**
+>   > The finding is not "the port model is wrong" — it is that a lumped port on
+>   > a box whose width is comparable to its gap length reads a *different*
+>   > terminal voltage from a centreline `∫E·dl`, by 7.8% on this fixture.
+>   > Choosing what to do — narrow the port sheet toward the centreline, adopt
+>   > the sheet average as the definition and re-derive the `PORT-1`
+>   > systematics against it, or accept a documented feed-definition systematic
+>   > and quote it — is a scoping decision for the review, not an implementer's.
+>   > Do **not** start step 3 until it is made.
 > * **Step 3 — birdcage instantiation.** The BC on the birdcage mesh's four
 >   port boxes (`GEO-9`, generated and identity-gated). **Both prerequisites
 >   reported 2026-08-16 and the block is lifted:** `GEO-15` ✅ — graded
@@ -2334,7 +2402,18 @@ critical path; 2–4 touch disjoint files); item 5 is the declared spare,
 also independent. Items execute their §7 entries verbatim as annotated
 by this review.
 
-1. **`PORT-9` step 2 — cross-route adjudication (standard).** Execute
+1. ✅ **DONE 2026-08-17, 04:30 slot** — diagnosis branch, as the item
+   expected. Both pre-stated bands MISS (cross-route 7.7095% vs 5%,
+   lumped mutual 12.6931% vs 10%; gap route inside at 6.0391%), neither
+   widened, and the hypothesis is **confirmed**: transverse averaging
+   7.7783 pp, path/projection residual **0.0763 pp** against the ~1 pp
+   threshold. Negative controls green (passive sheet, gap route
+   reproducing 0.894310). 15 passed 95.2 s at `-n 2`,
+   `20260817T093554Z_PORT-9-step2.log`. The reciprocity sweep was not
+   run (the item directed the hour at the diagnosis); step 3 is blocked
+   on a **feed-definition scoping decision for the review** — see the
+   §7 `PORT-9` step-2 block. *(Original item text below.)*
+   **`PORT-9` step 2 — cross-route adjudication (standard).** Execute
    the §7 `PORT-9` step-2 entry verbatim. **Anchor:** lumped-port
    `Im Z₁₂` inside the unmoved 10% band of ωM₁₂ = 1.241755 Ω;
    cross-route `|ΔZ₁₂|/|Z₁₂| ≤ 5%`; reciprocity `‖S−Sᵀ‖/‖S‖ ≤ 1e-3`

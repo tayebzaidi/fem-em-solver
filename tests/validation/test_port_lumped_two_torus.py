@@ -1,4 +1,12 @@
-"""`PORT-9` step 1 (re-run) — the lumped-port sheet **on the two-torus fixture**.
+"""`PORT-9` steps 1–2 — the lumped-port sheet **on the two-torus fixture**.
+
+*(Step 2, 2026-08-17: the cross-route adjudication is written into this same
+module because it adjudicates numbers read off **one** solved field — the field
+step 1 already solves here.  A second module would have meant a second mesh and
+a second solve of the same 184 919-cell fixture for no new physics.  Step 1's
+fixture record and its two assertions are unchanged; step 2 only adds reads off
+the field and the tests at the end of the file.)*
+
 
 The parked 2026-08-16 attempt wrote the formulation
 (:mod:`fem_em_solver.ports.lumped`, Jin 3e §1.5.4 (1.60)–(1.63) in the
@@ -116,7 +124,9 @@ from tests.validation.test_port_gap_voltage_impedance import (
     _tag_measure,
     _tag_volume,
 )
+from tests.validation.test_port_gap_voltage_impedance import _fringe_fraction
 from tests.validation.test_port_reaction_impedance import mutual_inductance
+from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 
 # `GEO-16`'s fragment: each gap box becomes two cell groups, told apart by
 # centroid z. A caller selecting the gap volume by tag must take BOTH halves —
@@ -141,6 +151,68 @@ GAP_ROUTE_CORRECTED_RECORD = 0.939849    # × ωM₁₂, through ports.systemati
 VOLUME_IDENTITY_BAND = 1.0e-9            # `PORT-1` 3b-i measured 1.000000000000
 AREA_IDENTITY_BAND = 1.0e-9              # `GEO-16` / `GEO-15` CAD denominator
 QUADRATURE_DRIFT_TOLERANCE = 1.0e-3      # 3b-x, unmoved
+
+# ---------------------------------------------------------------------------
+# Step 2 — the cross-route adjudication and its diagnosis.
+# ---------------------------------------------------------------------------
+# Pre-stated at scoping (§7 `PORT-9` step 2), never widened here or anywhere.
+# They are recorded as module constants so the numbers this run measures are
+# printed against the band they were always going to be judged by; whether they
+# hold is the step's finding, and the §7 entry carries the verdict.
+CROSS_ROUTE_BAND = 0.05                  # |ΔZ12|/|Z12|, two feed models
+MUTUAL_BAND = 0.10                       # |ratio − 1| against omega*M12
+
+# Step 1's own measurements on this identical fixture (2026-08-17,
+# `20260817T050734Z_PORT-9-step1-rerun-final.log`). Reproducing them is the
+# run's anchor: step 2 adds reads off the same field and must not move it.
+STEP1_GAP_RATIO_RECORD = 0.894310        # × omega*M12, fragmented mesh
+STEP1_LUMPED_RATIO_RECORD = 0.829782     # × omega*M12
+STEP1_CROSS_ROUTE_RECORD = 0.077095      # |ΔZ12|/|Z12|
+REPRODUCTION_BAND = 1.0e-4               # 0.01 pp — the grain step 1 printed to
+
+# Exact-arithmetic identities: these are algebra on one solved field, so they
+# hold to round-off or the code is wrong.
+DECOMPOSITION_IDENTITY_BAND = 1.0e-11
+
+# The §9 item's threshold for "the hypothesis explains the miss": the
+# sheet-average-minus-centreline term must account for the cross-route
+# deviation to within ~1 pp.
+HYPOTHESIS_EXPLANATION_BAND = 0.01
+
+# Transverse stations across the sheet, as fractions of its half-width, at
+# which the per-line voltage profile is sampled. Kept off the very edge
+# (|s| ≤ 0.98) so every quadrature point is strictly inside the gap box.
+PROFILE_STATIONS = np.linspace(-0.98, 0.98, 9)
+PROFILE_ORDER = 513                      # per station; the chord uses the
+                                         # gated orders instead
+
+
+def _sheet_chord_voltage(e_field, x_station, z_c, half_y, order, comm) -> complex:
+    """``V = −∫E·ŷ dy`` along a straight line **in the sheet**, at fixed ``x``.
+
+    This is the lumped port's own path: the sheet spans terminal to terminal
+    along ``ĥ = ŷ`` at every ``x`` across its width, and its reading is the
+    ``x``-average of exactly this integral (see
+    :func:`test_the_open_limit_reduces_to_the_sheet_average`).  The gated gap
+    route instead integrates ``E·φ̂`` along the *curved centreline* between the
+    same two terminal planes.  Comparing this chord at ``x = a`` against the gap
+    route isolates the path/projection difference; comparing the ``x``-average
+    against this chord isolates the transverse averaging.  That two-term split
+    is the whole content of step 2's diagnosis.
+    """
+    nodes, weights = np.polynomial.legendre.leggauss(order)
+    y = half_y * nodes
+    points = np.column_stack(
+        [np.full_like(y, float(x_station)), y, np.full_like(y, float(z_c))]
+    )
+    values, valid = evaluate_vector_field_parallel(e_field, points, comm)
+    if not bool(np.all(valid)):
+        raise RuntimeError(
+            f"sheet chord at x = {x_station:.6e}: {int((~valid).sum())} of "
+            f"{order} quadrature points located in no cell — the chord left the "
+            "mesh"
+        )
+    return complex(-half_y * np.sum(weights * values[:, 1]))
 
 
 def _build(comm):
@@ -276,6 +348,53 @@ def lumped_run():
     i_sheet = sheet_terminal_current(msh, facet_tags, sheet, e, comm)
     v_lumped = -i_sheet * PROBE_PORT_IMPEDANCE_OHM
 
+    # --- step 2: the same field, read three more ways -------------------
+    # (a) the sheet average, assembled independently of ``ports.lumped`` so the
+    #     open-limit reduction V = −(1/w)∫_S E·ĥ dS is a *checked* identity and
+    #     not a restatement of the module under test;
+    # (b) the shadow/fringe partition of that average, the fringe hypothesis's
+    #     own decomposition;
+    # (c) straight chords in the sheet plane at nine transverse stations.
+    ds_sheet = ufl.Measure(
+        "dS", domain=msh, subdomain_data=facet_tags, subdomain_id=(int(sheet_tag),)
+    )
+    h_hat = ufl.as_vector([0.0, 1.0, 0.0])
+    e_y = ufl.inner(e("+"), h_hat)
+    # `GEO-16`'s sheet is the gap box's longitudinal mid-plane, so the tube's
+    # intersection with it is the band |x − a| < r_minor: the sheet's own fringe
+    # is the pair of outer strips of half-width GAP_OVERHANG, an area fraction
+    # 1 − r/(r + overhang) — NOT 3b-xii's `_fringe_fraction`, which is the disc
+    # shadow on a face *normal* to the current. Both are printed below; the
+    # difference between them is exactly why the hypothesis needs measuring
+    # rather than quoting.
+    x_ufl_sheet = ufl.SpatialCoordinate(msh)("+")
+    in_shadow = ufl.conditional(
+        ufl.lt(abs(x_ufl_sheet[0] - MAJOR_RADIUS), MINOR_RADIUS), 1.0, 0.0
+    )
+    area_shadow = _reduce(in_shadow * ds_sheet, comm).real
+    area_fringe = _reduce((1.0 - in_shadow) * ds_sheet, comm).real
+    int_ey = _reduce(e_y * ds_sheet, comm)
+    int_ey_shadow = _reduce(in_shadow * e_y * ds_sheet, comm)
+    int_ey_fringe = _reduce((1.0 - in_shadow) * e_y * ds_sheet, comm)
+    v_sheet_average = -int_ey / w_measured
+
+    z_c = (-1.0) ** ((1 - col) + 1) * SEPARATION / 2.0
+    v_chord = _sheet_chord_voltage(
+        e, MAJOR_RADIUS, z_c, half_y, PATH_QUADRATURE_GATE_ORDERS[-1], comm
+    )
+    v_chord_coarse = _sheet_chord_voltage(
+        e, MAJOR_RADIUS, z_c, half_y, PATH_QUADRATURE_GATE_ORDERS[0], comm
+    )
+    profile = [
+        (
+            float(s),
+            _sheet_chord_voltage(
+                e, MAJOR_RADIUS + s * half_xz, z_c, half_y, PROFILE_ORDER, comm
+            ),
+        )
+        for s in PROFILE_STATIONS
+    ]
+
     omega_m = OMEGA * mutual_inductance(MAJOR_RADIUS, MAJOR_RADIUS, SEPARATION)
     z12_gap = v_gap / i_conduction
     z12_lumped = v_lumped / i_conduction
@@ -313,6 +432,19 @@ def lumped_run():
         # Step 2's own metric, computed here so the number it will gate on is
         # on record from the run that first read both routes.
         "cross_route_complex": abs(z12_lumped - z12_gap) / abs(z12_gap),
+        # --- step 2 ---
+        "v_sheet_average": v_sheet_average,
+        "v_chord": v_chord,
+        "chord_drift": abs(v_chord - v_chord_coarse) / abs(v_chord),
+        "area_shadow": area_shadow,
+        "area_fringe": area_fringe,
+        "int_ey": int_ey,
+        "int_ey_shadow": int_ey_shadow,
+        "int_ey_fringe": int_ey_fringe,
+        "profile": profile,
+        "z_c": z_c,
+        "half_y": half_y,
+        "half_xz": half_xz,
     }
     if comm.rank == 0:
         print(
@@ -428,3 +560,192 @@ def test_two_routes_printed_on_one_solved_field(lumped_run):
             "gated; step 2's pre-stated band is 5% on the second",
             flush=True,
         )
+
+
+# ===========================================================================
+# Step 2 — cross-route adjudication.
+# ===========================================================================
+
+
+@complex_only
+def test_step_1_measurements_reproduce(lumped_run):
+    """Step 2 reads more off step 1's field; it must not have moved the field.
+
+    The three numbers step 1 put on record — gap ratio, lumped ratio,
+    cross-route deviation — reproduce to ``REPRODUCTION_BAND`` (0.01 pp, the
+    grain step 1 printed to).  This is the run's anchor in the §4 sense and its
+    guard against the step-2 additions (an extra ``dS`` form over the sheet, a
+    facet-tag-driven measure, ~5 000 point evaluations) having perturbed the
+    assembly they read from.
+    """
+    r = lumped_run
+    for name, measured, record in (
+        ("gap ratio", r["ratio_gap"], STEP1_GAP_RATIO_RECORD),
+        ("lumped ratio", r["ratio_lumped"], STEP1_LUMPED_RATIO_RECORD),
+        ("cross-route", r["cross_route_complex"], STEP1_CROSS_ROUTE_RECORD),
+    ):
+        assert abs(measured - record) < REPRODUCTION_BAND, (
+            f"{name}: {measured:.6f} against step 1's record {record:.6f} — "
+            f"moved by {abs(measured - record):.2e}, above "
+            f"{REPRODUCTION_BAND:.0e}; step 2's reads changed step 1's solve"
+        )
+
+
+@complex_only
+def test_the_open_limit_reduces_to_the_sheet_average(lumped_run):
+    """``V_lumped = -(1/w) int_S E.hhat dS`` — the premise the diagnosis rests on.
+
+    The whole hypothesis under test says the lumped route *is* the gap voltage
+    averaged over the sheet.  That is algebra —
+    ``I = (1/R) int_S (E.hhat) dS / h`` with ``R = Z_p*w/h`` gives
+    ``I*Z_p = (1/w) int_S E.hhat dS`` — but it is algebra spread across
+    :mod:`fem_em_solver.ports.lumped`, the fixture's measured ``w``/``h`` and
+    the sign convention, so it is checked here against an independently
+    assembled form rather than asserted in prose.
+
+    The shadow/fringe partition of that same average is checked to close on the
+    unsplit integral, so the decomposition printed below is a partition and not
+    two overlapping reads.
+    """
+    r = lumped_run
+    rel = abs(r["v_lumped"] - r["v_sheet_average"]) / abs(r["v_lumped"])
+    assert rel < DECOMPOSITION_IDENTITY_BAND, (
+        f"lumped terminal voltage {r['v_lumped']:+.9e} V against the "
+        f"independently assembled sheet average {r['v_sheet_average']:+.9e} V "
+        f"— relative {rel:.3e}, above {DECOMPOSITION_IDENTITY_BAND:.0e}: the "
+        "open-limit reduction the diagnosis assumes does not hold for this code"
+    )
+    area_total = r["sheet_areas"][r["sheet_tag"]]
+    area_split = r["area_shadow"] + r["area_fringe"]
+    assert abs(area_split / area_total - 1.0) < DECOMPOSITION_IDENTITY_BAND, (
+        f"shadow {r['area_shadow']:.9e} + fringe {r['area_fringe']:.9e} = "
+        f"{area_split:.9e} m^2 against the sheet's {area_total:.9e} m^2 — the "
+        "transverse partition is not a partition"
+    )
+    int_split = r["int_ey_shadow"] + r["int_ey_fringe"]
+    assert abs(int_split - r["int_ey"]) < DECOMPOSITION_IDENTITY_BAND * abs(
+        r["int_ey"]
+    ), (
+        f"partitioned sheet integral {int_split:+.9e} against the unsplit "
+        f"{r['int_ey']:+.9e}"
+    )
+
+
+@complex_only
+def test_the_cross_route_miss_is_the_transverse_average(lumped_run):
+    """**Step 2's adjudication.**  Is the 7.71% miss the two feed definitions?
+
+    Step 1 measured a cross-route deviation of **7.7095%** against the 5% band
+    pre-stated at scoping.  The band does not move; what step 2 owes is a
+    diagnosis, and the §7 entry's hypothesis is specific enough to be falsified:
+    the lumped route is the gap voltage *transversely averaged over the sheet*
+    while the gap route integrates the *centreline* only, so the miss should be
+    the transverse variation of ``E.yhat`` and nothing else.
+
+    That splits the deviation into two terms measured off one field:
+
+      * **transverse** — ``|V_avg - V_chord| / |V_gap|``, the sheet average
+        against the same functional evaluated on the centre chord ``x = a``;
+      * **path** — ``|V_chord - V_gap| / |V_gap|``, the centre chord (straight,
+        ``hhat = yhat``) against the gated route (curved, ``that = phihat``)
+        between the same terminal planes.
+
+    The hypothesis is that the **path** residual is negligible — i.e. the two
+    routes differ only in how they average across the gap.  The §9 item fixes
+    the threshold at ~1 pp, pre-stated, and that is what is asserted.  A path
+    residual above it means the miss is *not* purely the two feed definitions,
+    and is the informative negative result.
+
+    Nothing here widens the 5% or 10% bands: their verdicts are printed with the
+    numbers, and the §7 entry records them.
+    """
+    r = lumped_run
+    assert r["chord_drift"] < QUADRATURE_DRIFT_TOLERANCE, (
+        f"the sheet chord moved {r['chord_drift']:.3e} between orders "
+        f"{PATH_QUADRATURE_GATE_ORDERS} — the diagnosis's own path integral is "
+        "not converged"
+    )
+    v_gap, v_avg, v_chord = r["v_gap"], r["v_sheet_average"], r["v_chord"]
+    transverse = abs(v_avg - v_chord) / abs(v_gap)
+    path = abs(v_chord - v_gap) / abs(v_gap)
+    total = abs(v_avg - v_gap) / abs(v_gap)
+    # The metric step 2 gates on is |dZ12|/|Z12|; both routes divide by the same
+    # I_cond, so the voltage ratio above IS that metric — checked, not assumed.
+    assert abs(total - r["cross_route_complex"]) < DECOMPOSITION_IDENTITY_BAND, (
+        f"voltage-space deviation {total:.9e} against the impedance-space "
+        f"{r['cross_route_complex']:.9e} — the two routes do not share I_cond"
+    )
+
+    if MPI.COMM_WORLD.rank == 0:
+        area_total = r["sheet_areas"][r["sheet_tag"]]
+        f_fringe_sheet = r["area_fringe"] / area_total
+        f_fringe_analytic = 1.0 - MINOR_RADIUS / (MINOR_RADIUS + GAP_OVERHANG)
+        mean_shadow = r["int_ey_shadow"] / r["area_shadow"]
+        mean_fringe = r["int_ey_fringe"] / r["area_fringe"]
+        print(
+            f"\n[PORT-9 step2] sheet transverse partition: shadow "
+            f"{r['area_shadow']:.9e} m^2 ({1.0 - f_fringe_sheet:.6f}), fringe "
+            f"{r['area_fringe']:.9e} m^2 ({f_fringe_sheet:.6f}) — analytic "
+            f"strip fraction 1 - r/(r+overhang) = {f_fringe_analytic:.6f}; "
+            f"3b-xii's disc `_fringe_fraction` (a face NORMAL to the current, "
+            f"not this plane) = {_fringe_fraction(GAP_OVERHANG):.6f}",
+            flush=True,
+        )
+        print(
+            f"[PORT-9 step2] mean E.yhat over the sheet: shadow "
+            f"{mean_shadow:+.6e}, fringe {mean_fringe:+.6e} V/m, ratio "
+            f"fringe/shadow {abs(mean_fringe) / abs(mean_shadow):.6f}",
+            flush=True,
+        )
+        print(
+            f"[PORT-9 step2] transverse voltage profile (x = a + s*half_xz, "
+            f"half_xz = {r['half_xz']:.6e} m), V = -int E_y dy:",
+            flush=True,
+        )
+        for s, v in r["profile"]:
+            print(
+                f"    s = {s:+.3f}  x = {MAJOR_RADIUS + s * r['half_xz']:.9e} m  "
+                f"V = {v:+.9e} V  |V|/|V_chord| = {abs(v) / abs(v_chord):.6f}",
+                flush=True,
+            )
+        print(
+            f"[PORT-9 step2] DECOMPOSITION of the cross-route miss "
+            f"{total * 100:.4f}%: transverse averaging "
+            f"{transverse * 100:.4f} pp, path/projection residual "
+            f"{path * 100:.4f} pp (hypothesis threshold "
+            f"{HYPOTHESIS_EXPLANATION_BAND * 100:.2f} pp)",
+            flush=True,
+        )
+        print(
+            f"[PORT-9 step2] V_gap = {v_gap:+.9e}, V_chord = {v_chord:+.9e}, "
+            f"V_avg = {v_avg:+.9e} V",
+            flush=True,
+        )
+        for name, ratio in (
+            ("gap", r["corrected_gap"]),
+            ("lumped", r["corrected_lumped"]),
+        ):
+            verdict = "INSIDE" if abs(ratio - 1.0) <= MUTUAL_BAND else "MISS"
+            print(
+                f"[PORT-9 step2] BAND {name} corrected ratio {ratio:.6f} vs "
+                f"omega*M12: |ratio-1| = {abs(ratio - 1.0) * 100:.4f}% against "
+                f"the {MUTUAL_BAND * 100:.0f}% mutual band — {verdict}",
+                flush=True,
+            )
+        cross_verdict = "INSIDE" if total <= CROSS_ROUTE_BAND else "MISS"
+        print(
+            f"[PORT-9 step2] BAND cross-route {total * 100:.4f}% against the "
+            f"{CROSS_ROUTE_BAND * 100:.0f}% band — {cross_verdict} (pre-stated "
+            "at scoping; not widened)",
+            flush=True,
+        )
+
+    assert path < HYPOTHESIS_EXPLANATION_BAND, (
+        f"path/projection residual {path * 100:.4f} pp of the "
+        f"{total * 100:.4f}% cross-route miss — above the pre-stated "
+        f"{HYPOTHESIS_EXPLANATION_BAND * 100:.2f} pp, so the miss is NOT "
+        "purely the sheet-average-vs-centreline difference between the two "
+        "feed definitions: part of it is the path the gap route integrates "
+        "along. Record both terms and report (§7 `PORT-9` step 2, negative "
+        "result); never widen the 5% cross-route band to admit it."
+    )

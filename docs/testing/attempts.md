@@ -12458,3 +12458,77 @@ tube-shadow and fringe parts and compare the shadow-only average against the
 centreline path. If the shadow-only average lands inside 5%, the miss is the
 box's transverse extent, not the feed model, and step 2's diagnosis is about
 what `w` a lumped port on a round conductor should use.
+
+---
+
+## 2026-08-17T09:37Z — `PORT-9` step 2 — **complete** (diagnosis branch)
+
+**Outcome: complete.** The §9 item's expected branch. Both pre-stated bands
+MISS and neither was widened; the miss is diagnosed to a residual of 0.0763 pp.
+`PORT-9` stays 🟡 — step 3 is blocked on a scoping decision the review owns.
+
+**What was tried.** Step 2 adjudicates numbers read off *one* solved field, so
+it was written into step 1's module
+(`tests/validation/test_port_lumped_two_torus.py`) rather than a second module:
+a separate file would have meant a second mesh and a second solve of the same
+184 919-cell fixture for no new physics. Step 1's fixture record and its two
+assertions are untouched and re-run green in the same command, alongside
+`test_port_lumped_bc.py`'s six identity gates and the passive-sheet negative
+control. Three tests added: the step-1 reproduction anchor, the open-limit
+reduction identity, and the adjudication itself.
+
+**The measurement that decides it.** The cross-route deviation splits, between
+the *same* terminal planes and off the same field, into
+
+  * **transverse averaging** — sheet average `−(1/w)∫_S E·ŷ dS` against the same
+    functional on the centre chord `x = a`: **7.7783 pp**;
+  * **path/projection residual** — that straight chord (`ĥ = ŷ`) against the
+    gated route's curved centreline (`t̂ = φ̂`): **0.0763 pp**,
+
+against the §9 item's pre-stated ~1 pp threshold, which is the run's asserted
+gate and passes by 13×. `V_gap = +1.363043e-02 + 1.079788j`,
+`V_chord = +1.371015e-02 + 1.080609j`, `V_avg = +4.258870e-02 + 1.001734j` V.
+So the two routes integrate the same field along effectively the same path and
+differ **only** in the transverse average. The prior attempt's hypothesis is
+confirmed as stated.
+
+**Bands (pre-stated, not moved).** Cross-route `|ΔZ₁₂|/|Z₁₂|` = **7.7095%** vs
+5% — MISS. Lumped corrected ratio 0.873069 ⇒ `|ratio − 1|` = **12.6931%** vs the
+10% mutual band — MISS. Gap route on the same field: 6.0391%, **INSIDE** — so
+neither fixture nor solve is what failed. Reciprocity through
+`run_n_port_sparameter_sweep` was **not** run: the item directed the hour at the
+diagnosis once step 1 had already put the cross-route outside its band, and a
+two-port sweep with lumped sheets on both ports is a second and third solve.
+
+**Negative controls.** Passive-sheet zero-field control green; gap route
+reproduces its fragmented-mesh record 0.894310 (asserted to < 1e-4, as are the
+lumped 0.829782 and the cross-route 0.077095).
+
+**One number that must not be quoted.** The shadow/fringe *area* split by the
+indicator `|x − a| < r_minor` measured fringe = 0.1506% of the sheet against the
+analytic strip fraction `1 − r/(r+overhang)` = 3.8462%. The strips are 0.2 mm
+wide against a ~0.4 mm mean facet edge here, so the facet-quadrature indicator
+under-resolves them; that split, and the fringe/shadow mean-field ratio 0.000317
+read through it, are not reliable at this mesh and nothing in the finding rests
+on them. The prior attempt's guess that 3b-xii's `_fringe_fraction` (0.273855)
+was the right denominator is **wrong** for this plane: that is the disc shadow
+on a face *normal* to the current, whereas the port sheet contains the current.
+The resolution-independent evidence is the two-term decomposition plus the
+transverse profile, whose seven interior stations (`|s| ≤ 0.735`) all sit within
+1.1% of the chord while the `s = +0.980` station reads `+7.146e-01 − 7.952e-01j`
+V — a wholly different phase. The dilution lives in the outer ~25% of the width.
+
+**Log.** `20260817T093554Z_PORT-9-step2.log` — 15 passed, 95.18 s, standard
+tier, `-n 2`, exit 0, elapsed 97 s. No denied commands, no ⚠️ subsystem
+extended, no known-issues churn.
+
+**Hypothesis for the next attempt.** There is nothing left for an implementer to
+try here: the question is now a scoping one and belongs to the review. The three
+live options, in the order I would rank them: (a) accept the sheet average as
+*the* lumped-port terminal voltage and re-derive the `PORT-1` systematics
+against it — principled, but it re-opens a gated number; (b) narrow the port
+sheet toward the centreline (a mesh-side `sheet_width` knob on `GEO-16`) and
+measure the cross-route as a function of `w`, which turns the 7.8% into a curve
+and would say whether the two definitions converge as `w → 0`; (c) accept a
+documented feed-definition systematic and quote it beside the other two. (b) is
+the only one that is itself a measurement and would fit one slot.
