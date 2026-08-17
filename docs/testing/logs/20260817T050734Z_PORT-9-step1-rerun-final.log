@@ -1,0 +1,2298 @@
+# Test Run
+- Chunk: PORT-9-step1-rerun-final
+- Commit: 121d65c3c84e58a50ba3a692eaa3bc06338ce8a2
+- Time (UTC): 2026-08-17 05:07:34
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 500 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_lumped_bc.py tests/validation/test_port_lumped_two_torus.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 17 00:06 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 500 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_lumped_bc.py tests/validation/test_port_lumped_two_torus.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 12 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build 
+[TH-1 step 0] PETSC_ARCH='linux-gnu-complex128-32' ScalarType=complex128 dolfinx=/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/__init__.py version=0.7.2
+PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 12 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSEDPASSED
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not [TH-1 step 0] inner=(11.00000000000001+1.9999999999999993j) dot=(-5.000000000000001+10.000000000000002j)
+PASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly [TH-1 step 0] ||M||_F=1.041233e+00 ||M_c - eps_c*M||_F=4.449e-16
+PASSEDPASSED
+tests/validation/test_port_lumped_bc.py::test_sheet_resistivity_is_ohms_per_square 
+tests/validation/test_port_lumped_bc.py::test_sheet_resistivity_is_ohms_per_square PASSEDPASSED
+tests/validation/test_port_lumped_bc.py::test_sheet_area_is_the_unit_square 
+tests/validation/test_port_lumped_bc.py::test_sheet_area_is_the_unit_square PASSEDPASSED
+tests/validation/test_port_lumped_bc.py::test_bilinear_sheet_term_matches_closed_form 
+tests/validation/test_port_lumped_bc.py::test_bilinear_sheet_term_matches_closed_form PASSEDPASSED
+tests/validation/test_port_lumped_bc.py::test_linear_sheet_term_matches_closed_form 
+tests/validation/test_port_lumped_bc.py::test_linear_sheet_term_matches_closed_form PASSEDPASSED
+tests/validation/test_port_lumped_bc.py::test_open_circuit_terminal_current_is_v_over_z 
+tests/validation/test_port_lumped_bc.py::test_open_circuit_terminal_current_is_v_over_z PASSEDPASSED
+tests/validation/test_port_lumped_bc.py::test_passive_sheet_current_follows_the_field 
+tests/validation/test_port_lumped_bc.py::test_passive_sheet_current_follows_the_field PASSEDPASSED
+tests/validation/test_port_lumped_two_torus.py::test_the_solved_fixture_carries_the_sheet_and_the_gap_box 
+tests/validation/test_port_lumped_two_torus.py::test_the_solved_fixture_carries_the_sheet_and_the_gap_box [two-torus-mesh] gapped fragment volumes=15 wire_1=1.864041e-05(1p) wire_2=1.864041e-05(1p) domain=1.308470e-02(1p) gap_1=7.546892e-07(3p) gap_2=7.546892e-07(3p) gap_1_upper=7.546892e-07(3p) gap_2_upper=7.546892e-07(3p) gap_box_analytic=1.509378e-06
+[two-torus-mesh] port interfaces (CAD) 201: 8 surface(s) area=1.689195e-04 202: 8 surface(s) area=1.689195e-04
+[two-torus-mesh] port sheet (CAD) 211: 3 surface(s) area=1.451325262e-04 h_along_current=1.395535060e-02 w_transverse=1.040030000e-02 squares_w_over_h=0.745255372 nominal_area=1.451325262e-04
+[two-torus-mesh] port sheet (CAD) 212: 3 surface(s) area=1.451325262e-04 h_along_current=1.395535060e-02 w_transverse=1.040030000e-02 squares_w_over_h=0.745255372 nominal_area=1.451325262e-04
+[two-torus-mesh] gap-arc refinement h_gap=3.000e-04 tube=1.200e-03 dist_max=1.002e-01 arc_half_y=5.977525e-03 cells_across_arc=40.0
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : [ 10%] Meshing curve 2 (Line)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 10%] Meshing curve 4 (Line)
+Info    : [ 10%] Meshing curve 5 (Line)
+Info    : [ 10%] Meshing curve 6 (Line)
+Info    : [ 10%] Meshing curve 7 (Line)
+Info    : [ 10%] Meshing curve 8 (Line)
+Info    : [ 10%] Meshing curve 9 (Line)
+Info    : [ 10%] Meshing curve 10 (Line)
+Info    : [ 10%] Meshing curve 11 (Line)
+Info    : [ 10%] Meshing curve 12 (Line)
+Info    : [ 20%] Meshing curve 13 (BSpline)
+Info    : [ 20%] Meshing curve 14 (BSpline)
+Info    : [ 20%] Meshing curve 15 (Circle)
+Info    : [ 20%] Meshing curve 16 (BSpline)
+Info    : [ 20%] Meshing curve 17 (BSpline)
+Info    : [ 20%] Meshing curve 18 (Circle)
+Info    : [ 20%] Meshing curve 19 (BSpline)
+Info    : [ 20%] Meshing curve 20 (BSpline)
+Info    : [ 20%] Meshing curve 21 (Circle)
+Info    : [ 20%] Meshing curve 22 (BSpline)
+Info    : [ 20%] Meshing curve 23 (BSpline)
+Info    : [ 30%] Meshing curve 24 (Line)
+Info    : [ 30%] Meshing curve 25 (Line)
+Info    : [ 30%] Meshing curve 26 (Line)
+Info    : [ 30%] Meshing curve 27 (Line)
+Info    : [ 30%] Meshing curve 28 (Line)
+Info    : [ 30%] Meshing curve 29 (Line)
+Info    : [ 30%] Meshing curve 30 (Line)
+Info    : [ 30%] Meshing curve 31 (Line)
+Info    : [ 30%] Meshing curve 32 (Line)
+Info    : [ 30%] Meshing curve 33 (Line)
+Info    : [ 30%] Meshing curve 34 (Line)
+Info    : [ 30%] Meshing curve 35 (Line)
+Info    : [ 40%] Meshing curve 36 (Line)
+Info    : [ 40%] Meshing curve 37 (Line)
+Info    : [ 40%] Meshing curve 38 (Line)
+Info    : [ 40%] Meshing curve 39 (Line)
+Info    : [ 40%] Meshing curve 40 (Line)
+Info    : [ 40%] Meshing curve 41 (Line)
+Info    : [ 40%] Meshing curve 42 (Line)
+Info    : [ 40%] Meshing curve 43 (Line)
+Info    : [ 40%] Meshing curve 44 (Line)
+Info    : [ 40%] Meshing curve 45 (Line)
+Info    : [ 40%] Meshing curve 46 (Line)
+Info    : [ 50%] Meshing curve 47 (Line)
+Info    : [ 50%] Meshing curve 48 (BSpline)
+Info    : [ 50%] Meshing curve 49 (BSpline)
+Info    : [ 50%] Meshing curve 50 (Circle)
+Info    : [ 50%] Meshing curve 51 (BSpline)
+Info    : [ 50%] Meshing curve 52 (BSpline)
+Info    : [ 50%] Meshing curve 53 (Circle)
+Info    : [ 50%] Meshing curve 54 (BSpline)
+Info    : [ 50%] Meshing curve 55 (BSpline)
+Info    : [ 50%] Meshing curve 56 (Circle)
+Info    : [ 50%] Meshing curve 57 (BSpline)
+Info    : [ 50%] Meshing curve 58 (BSpline)
+Info    : [ 60%] Meshing curve 59 (Line)
+Info    : [ 60%] Meshing curve 60 (Line)
+Info    : [ 60%] Meshing curve 61 (Line)
+Info    : [ 60%] Meshing curve 62 (Line)
+Info    : [ 60%] Meshing curve 63 (Line)
+Info    : [ 60%] Meshing curve 64 (Line)
+Info    : [ 60%] Meshing curve 65 (Line)
+Info    : [ 60%] Meshing curve 66 (Line)
+Info    : [ 60%] Meshing curve 67 (Line)
+Info    : [ 60%] Meshing curve 68 (Line)
+Info    : [ 60%] Meshing curve 69 (Line)
+Info    : [ 70%] Meshing curve 70 (Line)
+Info    : [ 70%] Meshing curve 71 (Line)
+Info    : [ 70%] Meshing curve 72 (Line)
+Info    : [ 70%] Meshing curve 73 (Line)
+Info    : [ 70%] Meshing curve 74 (Line)
+Info    : [ 70%] Meshing curve 75 (Line)
+Info    : [ 70%] Meshing curve 76 (Line)
+Info    : [ 70%] Meshing curve 77 (Line)
+Info    : [ 70%] Meshing curve 78 (Line)
+Info    : [ 70%] Meshing curve 79 (Line)
+Info    : [ 70%] Meshing curve 80 (Line)
+Info    : [ 80%] Meshing curve 81 (Line)
+Info    : [ 80%] Meshing curve 82 (Line)
+Info    : [ 80%] Meshing curve 83 (Circle)
+Info    : [ 80%] Meshing curve 84 (Circle)
+Info    : [ 80%] Meshing curve 85 (Line)
+Info    : [ 80%] Meshing curve 86 (Line)
+Info    : [ 80%] Meshing curve 87 (Line)
+Info    : [ 80%] Meshing curve 88 (Line)
+Info    : [ 80%] Meshing curve 89 (Circle)
+Info    : [ 80%] Meshing curve 90 (Line)
+Info    : [ 80%] Meshing curve 91 (Circle)
+Info    : [ 80%] Meshing curve 92 (Line)
+Info    : [ 90%] Meshing curve 93 (Line)
+Info    : [ 90%] Meshing curve 94 (Line)
+Info    : [ 90%] Meshing curve 95 (Line)
+Info    : [ 90%] Meshing curve 96 (Line)
+Info    : [ 90%] Meshing curve 97 (Circle)
+Info    : [ 90%] Meshing curve 98 (Circle)
+Info    : [ 90%] Meshing curve 99 (Circle)
+Info    : [ 90%] Meshing curve 100 (Circle)
+Info    : [ 90%] Meshing curve 101 (Line)
+Info    : [ 90%] Meshing curve 102 (Line)
+Info    : [ 90%] Meshing curve 103 (Line)
+Info    : [100%] Meshing curve 104 (Line)
+Info    : [100%] Meshing curve 105 (Circle)
+Info    : [100%] Meshing curve 106 (Line)
+Info    : [100%] Meshing curve 107 (Circle)
+Info    : [100%] Meshing curve 108 (Line)
+Info    : [100%] Meshing curve 109 (Line)
+Info    : [100%] Meshing curve 110 (Line)
+Info    : [100%] Meshing curve 111 (Line)
+Info    : [100%] Meshing curve 112 (Line)
+Info    : [100%] Meshing curve 113 (Circle)
+Info    : [100%] Meshing curve 114 (Circle)
+Info    : Done meshing 1D (Wall 0.480566s, CPU 0.480562s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 7 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 13 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 14 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 15 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 16 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 17 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 18 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 19 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 20 (Torus, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 21 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 22 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 23 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 24 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 25 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 26 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 27 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 28 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 29 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 30 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 31 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 32 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 33 (Torus, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 34 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 35 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 36 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 37 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 38 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 39 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 40 (Torus, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 41 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 42 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 43 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 44 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 45 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 46 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 47 (Torus, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 48 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 49 (Torus, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 50 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 51 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 52 (Torus, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 53 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 54 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 55 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 56 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 57 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 58 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 59 (Torus, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 60 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 61 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 62 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 63 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 64 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 65 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 66 (Torus, Frontal-Delaunay)
+Info    : [100%] Meshing surface 67 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 68 (Torus, Frontal-Delaunay)
+Info    : [100%] Meshing surface 69 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 70 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.457147s, CPU 0.450051s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 15 volumes with 1 connected component
+Info    : Tetrahedrizing 7487 nodes...
+Info    : Done tetrahedrizing 7495 nodes (Wall 0.131881s, CPU 0.124149s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.261169s, CPU 0.229048s)
+Info    : Found volume 1
+Info    : Found volume 3
+Info    : Found volume 10
+Info    : Found volume 13
+Info    : Found volume 6
+Info    : Found volume 11
+Info    : Found volume 4
+Info    : Found volume 5
+Info    : Found volume 12
+Info    : Found volume 14
+Info    : Found volume 7
+Info    : Found volume 2
+Info    : Found volume 9
+Info    : Found volume 15
+Info    : Found volume 8
+Info    : It. 0 - 0 nodes created - worst tet radius 21.0434 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 3.67514 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 2.80403 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 2.45423 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 2.23627 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 2.08402 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 1.97499 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 1.88625 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 1.80704 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 1.73617 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 1.67729 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 1.62955 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 1.58739 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 1.54415 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 1.50796 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 1.47621 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 1.44643 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 1.42009 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 1.39069 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 1.36517 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 1.34334 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 1.3223 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 1.30291 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 1.28518 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 1.26669 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 1.25125 (nodes removed 0 0)
+Info    : It. 13000 - 13000 nodes created - worst tet radius 1.23656 (nodes removed 0 0)
+Info    : It. 13500 - 13500 nodes created - worst tet radius 1.22173 (nodes removed 0 0)
+Info    : It. 14000 - 14000 nodes created - worst tet radius 1.20804 (nodes removed 0 0)
+Info    : It. 14500 - 14500 nodes created - worst tet radius 1.19405 (nodes removed 0 0)
+Info    : It. 15000 - 15000 nodes created - worst tet radius 1.18095 (nodes removed 0 0)
+Info    : It. 15500 - 15498 nodes created - worst tet radius 1.16867 (nodes removed 0 2)
+Info    : It. 16000 - 15996 nodes created - worst tet radius 1.15696 (nodes removed 0 4)
+Info    : It. 16500 - 16494 nodes created - worst tet radius 1.1455 (nodes removed 0 6)
+Info    : It. 17000 - 16992 nodes created - worst tet radius 1.13452 (nodes removed 0 8)
+Info    : It. 17500 - 17492 nodes created - worst tet radius 1.12395 (nodes removed 0 8)
+Info    : It. 18000 - 17992 nodes created - worst tet radius 1.12181 (nodes removed 0 8)
+Info    : It. 18500 - 18492 nodes created - worst tet radius 1.10267 (nodes removed 0 8)
+Info    : It. 19000 - 18992 nodes created - worst tet radius 1.09351 (nodes removed 0 8)
+Info    : It. 19500 - 19491 nodes created - worst tet radius 1.0848 (nodes removed 0 9)
+Info    : It. 20000 - 19990 nodes created - worst tet radius 1.07625 (nodes removed 1 9)
+Info    : It. 20500 - 20490 nodes created - worst tet radius 1.06767 (nodes removed 1 9)
+Info    : It. 21000 - 20990 nodes created - worst tet radius 1.06023 (nodes removed 1 9)
+Info    : It. 21500 - 21490 nodes created - worst tet radius 1.05321 (nodes removed 1 9)
+Info    : It. 22000 - 21990 nodes created - worst tet radius 1.04577 (nodes removed 1 9)
+Info    : It. 22500 - 22490 nodes created - worst tet radius 1.03948 (nodes removed 1 9)
+Info    : It. 23000 - 22990 nodes created - worst tet radius 1.03179 (nodes removed 1 9)
+Info    : It. 23500 - 23490 nodes created - worst tet radius 1.0238 (nodes removed 1 9)
+Info    : It. 24000 - 23990 nodes created - worst tet radius 1.01757 (nodes removed 1 9)
+Info    : It. 24500 - 24487 nodes created - worst tet radius 1.01106 (nodes removed 4 9)
+Info    : It. 25000 - 24984 nodes created - worst tet radius 1.00398 (nodes removed 5 11)
+Info    : 3D refinement terminated (32790 nodes total):
+Info    :  - 1 Delaunay cavities modified for star shapeness
+Info    :  - 18 nodes could not be inserted
+Info    :  - 204729 tetrahedra created in 2.74584 sec. (74559 tets/s)
+Info    : Done meshing 3D (Wall 3.80464s, CPU 3.76731s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 0.0130858) with worst = 0.0116745 / average = 0.770914:
+Info    : 0.00 < quality < 0.10 :       239 elements
+Info    : 0.10 < quality < 0.20 :       806 elements
+Info    : 0.20 < quality < 0.30 :      1468 elements
+Info    : 0.30 < quality < 0.40 :      2344 elements
+Info    : 0.40 < quality < 0.50 :      3886 elements
+Info    : 0.50 < quality < 0.60 :      6987 elements
+Info    : 0.60 < quality < 0.70 :     14385 elements
+Info    : 0.70 < quality < 0.80 :     30630 elements
+Info    : 0.80 < quality < 0.90 :     44418 elements
+Info    : 0.90 < quality < 1.00 :     22708 elements
+Info    : 2464 edge swaps, 62 node relocations (volume = 0.0130858): worst = 0.116912 / average = 0.782612 (Wall 0.0897723s, CPU 0.089635s)
+Info    : 2476 edge swaps, 63 node relocations (volume = 0.0130858): worst = 0.116912 / average = 0.782665 (Wall 0.111872s, CPU 0.111736s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :        14 elements
+Info    : 0.20 < quality < 0.30 :        12 elements
+Info    : 0.30 < quality < 0.40 :      2309 elements
+Info    : 0.40 < quality < 0.50 :      3757 elements
+Info    : 0.50 < quality < 0.60 :      6820 elements
+Info    : 0.60 < quality < 0.70 :     14398 elements
+Info    : 0.70 < quality < 0.80 :     31142 elements
+Info    : 0.80 < quality < 0.90 :     44668 elements
+Info    : 0.90 < quality < 1.00 :     22552 elements
+Info    : Optimizing volume 2
+Info    : Optimization starts (volume = 3.87743e-08) with worst = 0.0408087 / average = 0.731875:
+Info    : 0.00 < quality < 0.10 :         5 elements
+Info    : 0.10 < quality < 0.20 :         8 elements
+Info    : 0.20 < quality < 0.30 :        13 elements
+Info    : 0.30 < quality < 0.40 :        24 elements
+Info    : 0.40 < quality < 0.50 :        39 elements
+Info    : 0.50 < quality < 0.60 :        74 elements
+Info    : 0.60 < quality < 0.70 :       206 elements
+Info    : 0.70 < quality < 0.80 :       300 elements
+Info    : 0.80 < quality < 0.90 :       290 elements
+Info    : 0.90 < quality < 1.00 :       126 elements
+Info    : 25 edge swaps, 0 node relocations (volume = 3.87743e-08): worst = 0.119704 / average = 0.746935 (Wall 0.000541195s, CPU 0.000487s)
+Info    : 27 edge swaps, 0 node relocations (volume = 3.87743e-08): worst = 0.30221 / average = 0.74757 (Wall 0.000683294s, CPU 0.000616s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        21 elements
+Info    : 0.40 < quality < 0.50 :        42 elements
+Info    : 0.50 < quality < 0.60 :        67 elements
+Info    : 0.60 < quality < 0.70 :       205 elements
+Info    : 0.70 < quality < 0.80 :       305 elements
+Info    : 0.80 < quality < 0.90 :       294 elements
+Info    : 0.90 < quality < 1.00 :       126 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 6.77141e-07) with worst = 0.0101448 / average = 0.765314:
+Info    : 0.00 < quality < 0.10 :        26 elements
+Info    : 0.10 < quality < 0.20 :        86 elements
+Info    : 0.20 < quality < 0.30 :       130 elements
+Info    : 0.30 < quality < 0.40 :       211 elements
+Info    : 0.40 < quality < 0.50 :       391 elements
+Info    : 0.50 < quality < 0.60 :       671 elements
+Info    : 0.60 < quality < 0.70 :      1504 elements
+Info    : 0.70 < quality < 0.80 :      3061 elements
+Info    : 0.80 < quality < 0.90 :      4037 elements
+Info    : 0.90 < quality < 1.00 :      2049 elements
+Info    : 230 edge swaps, 8 node relocations (volume = 6.77141e-07): worst = 0.168292 / average = 0.77609 (Wall 0.00672974s, CPU 0.00673s)
+Info    : 234 edge swaps, 8 node relocations (volume = 6.77141e-07): worst = 0.168292 / average = 0.776355 (Wall 0.00851333s, CPU 0.008514s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         5 elements
+Info    : 0.20 < quality < 0.30 :         7 elements
+Info    : 0.30 < quality < 0.40 :       214 elements
+Info    : 0.40 < quality < 0.50 :       376 elements
+Info    : 0.50 < quality < 0.60 :       665 elements
+Info    : 0.60 < quality < 0.70 :      1532 elements
+Info    : 0.70 < quality < 0.80 :      3093 elements
+Info    : 0.80 < quality < 0.90 :      4044 elements
+Info    : 0.90 < quality < 1.00 :      2032 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 1.80713e-05) with worst = 0.0285497 / average = 0.754048:
+Info    : 0.00 < quality < 0.10 :        34 elements
+Info    : 0.10 < quality < 0.20 :        86 elements
+Info    : 0.20 < quality < 0.30 :       135 elements
+Info    : 0.30 < quality < 0.40 :       198 elements
+Info    : 0.40 < quality < 0.50 :       308 elements
+Info    : 0.50 < quality < 0.60 :       651 elements
+Info    : 0.60 < quality < 0.70 :      1300 elements
+Info    : 0.70 < quality < 0.80 :      2594 elements
+Info    : 0.80 < quality < 0.90 :      3058 elements
+Info    : 0.90 < quality < 1.00 :      1543 elements
+Info    : 249 edge swaps, 4 node relocations (volume = 1.80713e-05): worst = 0.194211 / average = 0.769814 (Wall 0.00581435s, CPU 0.005813s)
+Info    : 251 edge swaps, 4 node relocations (volume = 1.80713e-05): worst = 0.300161 / average = 0.769904 (Wall 0.00699914s, CPU 0.006998s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       192 elements
+Info    : 0.40 < quality < 0.50 :       303 elements
+Info    : 0.50 < quality < 0.60 :       636 elements
+Info    : 0.60 < quality < 0.70 :      1296 elements
+Info    : 0.70 < quality < 0.80 :      2620 elements
+Info    : 0.80 < quality < 0.90 :      3091 elements
+Info    : 0.90 < quality < 1.00 :      1540 elements
+Info    : Optimizing volume 5
+Info    : Optimization starts (volume = 3.87743e-08) with worst = 0.0506974 / average = 0.749961:
+Info    : 0.00 < quality < 0.10 :         4 elements
+Info    : 0.10 < quality < 0.20 :         5 elements
+Info    : 0.20 < quality < 0.30 :        15 elements
+Info    : 0.30 < quality < 0.40 :        13 elements
+Info    : 0.40 < quality < 0.50 :        23 elements
+Info    : 0.50 < quality < 0.60 :        59 elements
+Info    : 0.60 < quality < 0.70 :       192 elements
+Info    : 0.70 < quality < 0.80 :       317 elements
+Info    : 0.80 < quality < 0.90 :       283 elements
+Info    : 0.90 < quality < 1.00 :       141 elements
+Info    : 23 edge swaps, 0 node relocations (volume = 3.87743e-08): worst = 0.287906 / average = 0.764711 (Wall 0.000395697s, CPU 0.000396s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         1 elements
+Info    : 0.30 < quality < 0.40 :        11 elements
+Info    : 0.40 < quality < 0.50 :        18 elements
+Info    : 0.50 < quality < 0.60 :        57 elements
+Info    : 0.60 < quality < 0.70 :       196 elements
+Info    : 0.70 < quality < 0.80 :       321 elements
+Info    : 0.80 < quality < 0.90 :       285 elements
+Info    : 0.90 < quality < 1.00 :       141 elements
+Info    : Optimizing volume 6
+Info    : Optimization starts (volume = 6.77141e-07) with worst = 0.0197501 / average = 0.764171:
+Info    : 0.00 < quality < 0.10 :        27 elements
+Info    : 0.10 < quality < 0.20 :        79 elements
+Info    : 0.20 < quality < 0.30 :       148 elements
+Info    : 0.30 < quality < 0.40 :       251 elements
+Info    : 0.40 < quality < 0.50 :       380 elements
+Info    : 0.50 < quality < 0.60 :       654 elements
+Info    : 0.60 < quality < 0.70 :      1533 elements
+Info    : 0.70 < quality < 0.80 :      3046 elements
+Info    : 0.80 < quality < 0.90 :      4000 elements
+Info    : 0.90 < quality < 1.00 :      2001 elements
+Info    : 246 edge swaps, 10 node relocations (volume = 6.77141e-07): worst = 0.168292 / average = 0.776267 (Wall 0.00690664s, CPU 0.006906s)
+Info    : 248 edge swaps, 11 node relocations (volume = 6.77141e-07): worst = 0.168292 / average = 0.77638 (Wall 0.00871403s, CPU 0.008714s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         5 elements
+Info    : 0.20 < quality < 0.30 :         6 elements
+Info    : 0.30 < quality < 0.40 :       249 elements
+Info    : 0.40 < quality < 0.50 :       356 elements
+Info    : 0.50 < quality < 0.60 :       655 elements
+Info    : 0.60 < quality < 0.70 :      1524 elements
+Info    : 0.70 < quality < 0.80 :      3082 elements
+Info    : 0.80 < quality < 0.90 :      4037 elements
+Info    : 0.90 < quality < 1.00 :      1988 elements
+Info    : Optimizing volume 7
+Info    : Optimization starts (volume = 3.87742e-08) with worst = 0.0506398 / average = 0.750631:
+Info    : 0.00 < quality < 0.10 :         2 elements
+Info    : 0.10 < quality < 0.20 :         6 elements
+Info    : 0.20 < quality < 0.30 :        14 elements
+Info    : 0.30 < quality < 0.40 :        19 elements
+Info    : 0.40 < quality < 0.50 :        29 elements
+Info    : 0.50 < quality < 0.60 :        55 elements
+Info    : 0.60 < quality < 0.70 :       185 elements
+Info    : 0.70 < quality < 0.80 :       320 elements
+Info    : 0.80 < quality < 0.90 :       294 elements
+Info    : 0.90 < quality < 1.00 :       139 elements
+Info    : 20 edge swaps, 0 node relocations (volume = 3.87742e-08): worst = 0.305458 / average = 0.762962 (Wall 0.000433597s, CPU 0.000435s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        19 elements
+Info    : 0.40 < quality < 0.50 :        24 elements
+Info    : 0.50 < quality < 0.60 :        59 elements
+Info    : 0.60 < quality < 0.70 :       184 elements
+Info    : 0.70 < quality < 0.80 :       323 elements
+Info    : 0.80 < quality < 0.90 :       297 elements
+Info    : 0.90 < quality < 1.00 :       138 elements
+Info    : Optimizing volume 8
+Info    : Optimization starts (volume = 3.87742e-08) with worst = 0.0408087 / average = 0.737683:
+Info    : 0.00 < quality < 0.10 :         5 elements
+Info    : 0.10 < quality < 0.20 :         8 elements
+Info    : 0.20 < quality < 0.30 :        14 elements
+Info    : 0.30 < quality < 0.40 :        23 elements
+Info    : 0.40 < quality < 0.50 :        39 elements
+Info    : 0.50 < quality < 0.60 :        66 elements
+Info    : 0.60 < quality < 0.70 :       193 elements
+Info    : 0.70 < quality < 0.80 :       304 elements
+Info    : 0.80 < quality < 0.90 :       312 elements
+Info    : 0.90 < quality < 1.00 :       129 elements
+Info    : 27 edge swaps, 0 node relocations (volume = 3.87742e-08): worst = 0.300098 / average = 0.755039 (Wall 0.000482396s, CPU 0.000482s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        18 elements
+Info    : 0.40 < quality < 0.50 :        38 elements
+Info    : 0.50 < quality < 0.60 :        61 elements
+Info    : 0.60 < quality < 0.70 :       194 elements
+Info    : 0.70 < quality < 0.80 :       312 elements
+Info    : 0.80 < quality < 0.90 :       314 elements
+Info    : 0.90 < quality < 1.00 :       129 elements
+Info    : Optimizing volume 9
+Info    : Optimization starts (volume = 3.87743e-08) with worst = 0.0408087 / average = 0.731875:
+Info    : 0.00 < quality < 0.10 :         5 elements
+Info    : 0.10 < quality < 0.20 :         8 elements
+Info    : 0.20 < quality < 0.30 :        13 elements
+Info    : 0.30 < quality < 0.40 :        24 elements
+Info    : 0.40 < quality < 0.50 :        39 elements
+Info    : 0.50 < quality < 0.60 :        74 elements
+Info    : 0.60 < quality < 0.70 :       206 elements
+Info    : 0.70 < quality < 0.80 :       300 elements
+Info    : 0.80 < quality < 0.90 :       290 elements
+Info    : 0.90 < quality < 1.00 :       126 elements
+Info    : 26 edge swaps, 0 node relocations (volume = 3.87743e-08): worst = 0.30221 / average = 0.74829 (Wall 0.000467096s, CPU 0.000469s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        21 elements
+Info    : 0.40 < quality < 0.50 :        38 elements
+Info    : 0.50 < quality < 0.60 :        69 elements
+Info    : 0.60 < quality < 0.70 :       206 elements
+Info    : 0.70 < quality < 0.80 :       304 elements
+Info    : 0.80 < quality < 0.90 :       295 elements
+Info    : 0.90 < quality < 1.00 :       126 elements
+Info    : Optimizing volume 10
+Info    : Optimization starts (volume = 6.77141e-07) with worst = 0.0101448 / average = 0.765319:
+Info    : 0.00 < quality < 0.10 :        26 elements
+Info    : 0.10 < quality < 0.20 :        86 elements
+Info    : 0.20 < quality < 0.30 :       130 elements
+Info    : 0.30 < quality < 0.40 :       212 elements
+Info    : 0.40 < quality < 0.50 :       390 elements
+Info    : 0.50 < quality < 0.60 :       670 elements
+Info    : 0.60 < quality < 0.70 :      1504 elements
+Info    : 0.70 < quality < 0.80 :      3063 elements
+Info    : 0.80 < quality < 0.90 :      4035 elements
+Info    : 0.90 < quality < 1.00 :      2050 elements
+Info    : 230 edge swaps, 8 node relocations (volume = 6.77141e-07): worst = 0.168292 / average = 0.776093 (Wall 0.00622265s, CPU 0.006223s)
+Info    : 234 edge swaps, 8 node relocations (volume = 6.77141e-07): worst = 0.168292 / average = 0.776358 (Wall 0.00787153s, CPU 0.007872s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         5 elements
+Info    : 0.20 < quality < 0.30 :         7 elements
+Info    : 0.30 < quality < 0.40 :       215 elements
+Info    : 0.40 < quality < 0.50 :       375 elements
+Info    : 0.50 < quality < 0.60 :       664 elements
+Info    : 0.60 < quality < 0.70 :      1532 elements
+Info    : 0.70 < quality < 0.80 :      3094 elements
+Info    : 0.80 < quality < 0.90 :      4043 elements
+Info    : 0.90 < quality < 1.00 :      2033 elements
+Info    : Optimizing volume 11
+Info    : Optimization starts (volume = 1.80762e-05) with worst = 0.00521778 / average = 0.759849:
+Info    : 0.00 < quality < 0.10 :        25 elements
+Info    : 0.10 < quality < 0.20 :        76 elements
+Info    : 0.20 < quality < 0.30 :       119 elements
+Info    : 0.30 < quality < 0.40 :       207 elements
+Info    : 0.40 < quality < 0.50 :       272 elements
+Info    : 0.50 < quality < 0.60 :       576 elements
+Info    : 0.60 < quality < 0.70 :      1288 elements
+Info    : 0.70 < quality < 0.80 :      2629 elements
+Info    : 0.80 < quality < 0.90 :      2958 elements
+Info    : 0.90 < quality < 1.00 :      1645 elements
+Info    : 217 edge swaps, 10 node relocations (volume = 1.80762e-05): worst = 0.231036 / average = 0.773742 (Wall 0.00530846s, CPU 0.005308s)
+Info    : 223 edge swaps, 11 node relocations (volume = 1.80762e-05): worst = 0.259261 / average = 0.774152 (Wall 0.00658654s, CPU 0.006586s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         1 elements
+Info    : 0.30 < quality < 0.40 :       201 elements
+Info    : 0.40 < quality < 0.50 :       267 elements
+Info    : 0.50 < quality < 0.60 :       557 elements
+Info    : 0.60 < quality < 0.70 :      1277 elements
+Info    : 0.70 < quality < 0.80 :      2635 elements
+Info    : 0.80 < quality < 0.90 :      2999 elements
+Info    : 0.90 < quality < 1.00 :      1653 elements
+Info    : Optimizing volume 12
+Info    : Optimization starts (volume = 3.87743e-08) with worst = 0.0506974 / average = 0.749961:
+Info    : 0.00 < quality < 0.10 :         4 elements
+Info    : 0.10 < quality < 0.20 :         5 elements
+Info    : 0.20 < quality < 0.30 :        15 elements
+Info    : 0.30 < quality < 0.40 :        13 elements
+Info    : 0.40 < quality < 0.50 :        23 elements
+Info    : 0.50 < quality < 0.60 :        59 elements
+Info    : 0.60 < quality < 0.70 :       192 elements
+Info    : 0.70 < quality < 0.80 :       317 elements
+Info    : 0.80 < quality < 0.90 :       283 elements
+Info    : 0.90 < quality < 1.00 :       141 elements
+Info    : 23 edge swaps, 0 node relocations (volume = 3.87743e-08): worst = 0.308452 / average = 0.765022 (Wall 0.000416896s, CPU 0.000419s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        10 elements
+Info    : 0.40 < quality < 0.50 :        18 elements
+Info    : 0.50 < quality < 0.60 :        60 elements
+Info    : 0.60 < quality < 0.70 :       196 elements
+Info    : 0.70 < quality < 0.80 :       318 elements
+Info    : 0.80 < quality < 0.90 :       286 elements
+Info    : 0.90 < quality < 1.00 :       141 elements
+Info    : Optimizing volume 13
+Info    : Optimization starts (volume = 6.77141e-07) with worst = 0.0197501 / average = 0.764171:
+Info    : 0.00 < quality < 0.10 :        27 elements
+Info    : 0.10 < quality < 0.20 :        79 elements
+Info    : 0.20 < quality < 0.30 :       148 elements
+Info    : 0.30 < quality < 0.40 :       251 elements
+Info    : 0.40 < quality < 0.50 :       380 elements
+Info    : 0.50 < quality < 0.60 :       654 elements
+Info    : 0.60 < quality < 0.70 :      1533 elements
+Info    : 0.70 < quality < 0.80 :      3046 elements
+Info    : 0.80 < quality < 0.90 :      4000 elements
+Info    : 0.90 < quality < 1.00 :      2001 elements
+Info    : 246 edge swaps, 10 node relocations (volume = 6.77141e-07): worst = 0.168292 / average = 0.776261 (Wall 0.00695704s, CPU 0.006925s)
+Info    : 248 edge swaps, 11 node relocations (volume = 6.77141e-07): worst = 0.168292 / average = 0.776374 (Wall 0.00871963s, CPU 0.00872s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         5 elements
+Info    : 0.20 < quality < 0.30 :         6 elements
+Info    : 0.30 < quality < 0.40 :       249 elements
+Info    : 0.40 < quality < 0.50 :       356 elements
+Info    : 0.50 < quality < 0.60 :       655 elements
+Info    : 0.60 < quality < 0.70 :      1524 elements
+Info    : 0.70 < quality < 0.80 :      3083 elements
+Info    : 0.80 < quality < 0.90 :      4036 elements
+Info    : 0.90 < quality < 1.00 :      1988 elements
+Info    : Optimizing volume 14
+Info    : Optimization starts (volume = 3.87742e-08) with worst = 0.0506398 / average = 0.750631:
+Info    : 0.00 < quality < 0.10 :         2 elements
+Info    : 0.10 < quality < 0.20 :         6 elements
+Info    : 0.20 < quality < 0.30 :        14 elements
+Info    : 0.30 < quality < 0.40 :        19 elements
+Info    : 0.40 < quality < 0.50 :        29 elements
+Info    : 0.50 < quality < 0.60 :        55 elements
+Info    : 0.60 < quality < 0.70 :       185 elements
+Info    : 0.70 < quality < 0.80 :       320 elements
+Info    : 0.80 < quality < 0.90 :       294 elements
+Info    : 0.90 < quality < 1.00 :       139 elements
+Info    : 20 edge swaps, 0 node relocations (volume = 3.87742e-08): worst = 0.305458 / average = 0.763219 (Wall 0.000379796s, CPU 0.000391s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        19 elements
+Info    : 0.40 < quality < 0.50 :        24 elements
+Info    : 0.50 < quality < 0.60 :        57 elements
+Info    : 0.60 < quality < 0.70 :       184 elements
+Info    : 0.70 < quality < 0.80 :       325 elements
+Info    : 0.80 < quality < 0.90 :       297 elements
+Info    : 0.90 < quality < 1.00 :       138 elements
+Info    : Optimizing volume 15
+Info    : Optimization starts (volume = 3.87742e-08) with worst = 0.0408087 / average = 0.737683:
+Info    : 0.00 < quality < 0.10 :         5 elements
+Info    : 0.10 < quality < 0.20 :         8 elements
+Info    : 0.20 < quality < 0.30 :        14 elements
+Info    : 0.30 < quality < 0.40 :        23 elements
+Info    : 0.40 < quality < 0.50 :        39 elements
+Info    : 0.50 < quality < 0.60 :        66 elements
+Info    : 0.60 < quality < 0.70 :       193 elements
+Info    : 0.70 < quality < 0.80 :       304 elements
+Info    : 0.80 < quality < 0.90 :       312 elements
+Info    : 0.90 < quality < 1.00 :       129 elements
+Info    : 26 edge swaps, 0 node relocations (volume = 3.87742e-08): worst = 0.119704 / average = 0.754285 (Wall 0.000517296s, CPU 0.000518s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         1 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        18 elements
+Info    : 0.40 < quality < 0.50 :        38 elements
+Info    : 0.50 < quality < 0.60 :        63 elements
+Info    : 0.60 < quality < 0.70 :       193 elements
+Info    : 0.70 < quality < 0.80 :       310 elements
+Info    : 0.80 < quality < 0.90 :       315 elements
+Info    : 0.90 < quality < 1.00 :       129 elements
+Info    : Done optimizing mesh (Wall 0.505972s, CPU 0.481976s)
+Info    : 32790 nodes 217441 elements
+Info    : Optimizing mesh (Netgen)...
+Info    : Optimizing volume 1
+Info    : CalcLocalH: 22179 Points 125678 Elements 8750 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 571 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 99.8623 
+Info    : 112 splits performed 
+Info    : SwapImprove  
+Info    : 87 swaps performed 
+Info    : SwapImprove2  
+Info    : 3 swaps performed 
+Info    : 292 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 75.949 
+Info    : 66 splits performed 
+Info    : SwapImprove  
+Info    : 35 swaps performed 
+Info    : SwapImprove2  
+Info    : 6 swaps performed 
+Info    : 110 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 2570.55 
+Info    : 29 splits performed 
+Info    : SwapImprove  
+Info    : 5 swaps performed 
+Info    : SwapImprove2  
+Info    : 2 swaps performed 
+Info    : 32 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 1690.49 
+Info    : 11 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 223.823 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 1278 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 165311 
+Info    : Total badness = 156810 
+Info    : SplitImprove 
+Info    : badmax = 100.483 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 156816 
+Info    : Total badness = 155733 
+Info    : SwapImprove  
+Info    : 6966 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 143645 
+Info    : Total badness = 140019 
+Info    : CombineImprove 
+Info    : 258 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 137715 
+Info    : Total badness = 137200 
+Info    : SplitImprove 
+Info    : badmax = 40.9149 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 137200 
+Info    : Total badness = 137110 
+Info    : SwapImprove  
+Info    : 798 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 136405 
+Info    : Total badness = 135836 
+Info    : CombineImprove 
+Info    : 71 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 135229 
+Info    : Total badness = 135117 
+Info    : SplitImprove 
+Info    : badmax = 27.898 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 135117 
+Info    : Total badness = 135091 
+Info    : SwapImprove  
+Info    : 233 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 134992 
+Info    : Total badness = 134824 
+Info    : Optimizing volume 2
+Info    : CalcLocalH: 327 Points 1060 Elements 554 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 160 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.6887 
+Info    : 24 splits performed 
+Info    : SwapImprove  
+Info    : 28 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 102 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 31.7891 
+Info    : 22 splits performed 
+Info    : SwapImprove  
+Info    : 8 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 40 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 31.7891 
+Info    : 10 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 17 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 41.184 
+Info    : 4 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 4 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 60.3938 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 60.3938 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 18 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2112.08 
+Info    : Total badness = 2045.23 
+Info    : SplitImprove 
+Info    : badmax = 22.2469 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2045.23 
+Info    : Total badness = 2041.99 
+Info    : SwapImprove  
+Info    : 88 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1900.42 
+Info    : Total badness = 1860.58 
+Info    : CombineImprove 
+Info    : 2 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1835.2 
+Info    : Total badness = 1832.54 
+Info    : SplitImprove 
+Info    : badmax = 17.5032 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1832.54 
+Info    : Total badness = 1832.41 
+Info    : SwapImprove  
+Info    : 17 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1813.67 
+Info    : Total badness = 1802.41 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1793.14 
+Info    : Total badness = 1792.6 
+Info    : SplitImprove 
+Info    : badmax = 14.6679 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1792.6 
+Info    : Total badness = 1792.56 
+Info    : SwapImprove  
+Info    : 6 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1783.56 
+Info    : Total badness = 1778.42 
+Info    : Optimizing volume 3
+Info    : CalcLocalH: 2500 Points 11970 Elements 2162 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 328 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 21.2166 
+Info    : 54 splits performed 
+Info    : SwapImprove  
+Info    : 40 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 204 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 140.002 
+Info    : 41 splits performed 
+Info    : SwapImprove  
+Info    : 10 swaps performed 
+Info    : SwapImprove2  
+Info    : 3 swaps performed 
+Info    : 99 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.317 
+Info    : 22 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 2 swaps performed 
+Info    : 40 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.317 
+Info    : 10 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 11 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.317 
+Info    : 4 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 125 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 17321 
+Info    : Total badness = 16431.2 
+Info    : SplitImprove 
+Info    : badmax = 58.2795 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 16438.1 
+Info    : Total badness = 16316.3 
+Info    : SwapImprove  
+Info    : 660 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 15171.3 
+Info    : Total badness = 14789.9 
+Info    : CombineImprove 
+Info    : 26 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14559.5 
+Info    : Total badness = 14506.7 
+Info    : SplitImprove 
+Info    : badmax = 57.2528 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14506.7 
+Info    : Total badness = 14497.3 
+Info    : SwapImprove  
+Info    : 101 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14422.8 
+Info    : Total badness = 14357.3 
+Info    : CombineImprove 
+Info    : 5 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14319.7 
+Info    : Total badness = 14310.8 
+Info    : SplitImprove 
+Info    : badmax = 57.4156 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14310.8 
+Info    : Total badness = 14308.7 
+Info    : SwapImprove  
+Info    : 42 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14285.2 
+Info    : Total badness = 14259.5 
+Info    : Optimizing volume 4
+Info    : CalcLocalH: 2657 Points 9678 Elements 3830 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 164 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 22.7369 
+Info    : 29 splits performed 
+Info    : SwapImprove  
+Info    : 31 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 92 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 39.928 
+Info    : 24 splits performed 
+Info    : SwapImprove  
+Info    : 11 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 25 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 39.928 
+Info    : 7 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 67.5003 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 28 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14583.4 
+Info    : Total badness = 13964.4 
+Info    : SplitImprove 
+Info    : badmax = 80.3735 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 13976.9 
+Info    : Total badness = 13904.6 
+Info    : SwapImprove  
+Info    : 542 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12952.2 
+Info    : Total badness = 12719.5 
+Info    : CombineImprove 
+Info    : 7 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 12651.6 
+Info    : Total badness = 12631.9 
+Info    : SplitImprove 
+Info    : badmax = 43.5606 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12631.9 
+Info    : Total badness = 12629.6 
+Info    : SwapImprove  
+Info    : 108 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12530.4 
+Info    : Total badness = 12476.8 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 12453.4 
+Info    : Total badness = 12450 
+Info    : SplitImprove 
+Info    : badmax = 45.9712 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12450 
+Info    : Total badness = 12449.7 
+Info    : SwapImprove  
+Info    : 40 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12418.2 
+Info    : Total badness = 12389.4 
+Info    : Optimizing volume 5
+Info    : CalcLocalH: 324 Points 1030 Elements 552 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 161 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 19.9157 
+Info    : 23 splits performed 
+Info    : SwapImprove  
+Info    : 28 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 107 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 28.8707 
+Info    : 26 splits performed 
+Info    : SwapImprove  
+Info    : 8 swaps performed 
+Info    : SwapImprove2  
+Info    : 2 swaps performed 
+Info    : 33 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 108.016 
+Info    : 8 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 11 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 108.016 
+Info    : 3 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 6 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 108.016 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 108.016 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 16 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2063.45 
+Info    : Total badness = 1988.18 
+Info    : SplitImprove 
+Info    : badmax = 20.5472 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1988.18 
+Info    : Total badness = 1980.42 
+Info    : SwapImprove  
+Info    : 74 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1875.49 
+Info    : Total badness = 1835.37 
+Info    : CombineImprove 
+Info    : 4 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1795.56 
+Info    : Total badness = 1793.33 
+Info    : SplitImprove 
+Info    : badmax = 20.2224 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1793.33 
+Info    : Total badness = 1793.23 
+Info    : SwapImprove  
+Info    : 22 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1772.66 
+Info    : Total badness = 1759.7 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1759.7 
+Info    : Total badness = 1759.04 
+Info    : SplitImprove 
+Info    : badmax = 14.4698 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1759.04 
+Info    : Total badness = 1759.01 
+Info    : SwapImprove  
+Info    : 10 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1751.51 
+Info    : Total badness = 1744.67 
+Info    : Optimizing volume 6
+Info    : CalcLocalH: 2492 Points 11903 Elements 2162 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 325 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 21.909 
+Info    : 56 splits performed 
+Info    : SwapImprove  
+Info    : 46 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 192 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 35.4409 
+Info    : 40 splits performed 
+Info    : SwapImprove  
+Info    : 12 swaps performed 
+Info    : SwapImprove2  
+Info    : 2 swaps performed 
+Info    : 81 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 20 splits performed 
+Info    : SwapImprove  
+Info    : 4 swaps performed 
+Info    : SwapImprove2  
+Info    : 2 swaps performed 
+Info    : 30 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 7 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 6 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 128 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 17223.3 
+Info    : Total badness = 16334.1 
+Info    : SplitImprove 
+Info    : badmax = 52.3941 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 16334.1 
+Info    : Total badness = 16220.2 
+Info    : SwapImprove  
+Info    : 655 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 15056.4 
+Info    : Total badness = 14705.2 
+Info    : CombineImprove 
+Info    : 20 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14542.8 
+Info    : Total badness = 14499.9 
+Info    : SplitImprove 
+Info    : badmax = 52.4934 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14499.9 
+Info    : Total badness = 14492.9 
+Info    : SwapImprove  
+Info    : 114 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14409 
+Info    : Total badness = 14324.8 
+Info    : CombineImprove 
+Info    : 5 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14283.6 
+Info    : Total badness = 14275.3 
+Info    : SplitImprove 
+Info    : badmax = 51.63 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14275.3 
+Info    : Total badness = 14273.6 
+Info    : SwapImprove  
+Info    : 30 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14260.2 
+Info    : Total badness = 14243 
+Info    : Optimizing volume 7
+Info    : CalcLocalH: 327 Points 1044 Elements 556 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 161 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 15.0291 
+Info    : 23 splits performed 
+Info    : SwapImprove  
+Info    : 24 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 115 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 22.2852 
+Info    : 21 splits performed 
+Info    : SwapImprove  
+Info    : 11 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 53 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 34.3702 
+Info    : 12 splits performed 
+Info    : SwapImprove  
+Info    : 4 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 22 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 31.2292 
+Info    : 5 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 7 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 31.4701 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 31.4701 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 20 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2015.81 
+Info    : Total badness = 1955.88 
+Info    : SplitImprove 
+Info    : badmax = 23.8962 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1955.88 
+Info    : Total badness = 1952.19 
+Info    : SwapImprove  
+Info    : 65 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1866.45 
+Info    : Total badness = 1830.81 
+Info    : CombineImprove 
+Info    : 2 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1803.49 
+Info    : Total badness = 1800.65 
+Info    : SplitImprove 
+Info    : badmax = 23.8243 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1800.65 
+Info    : Total badness = 1800.32 
+Info    : SwapImprove  
+Info    : 22 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1777.27 
+Info    : Total badness = 1763.72 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1763.72 
+Info    : Total badness = 1763.05 
+Info    : SplitImprove 
+Info    : badmax = 23.8329 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1763.05 
+Info    : Total badness = 1762.99 
+Info    : SwapImprove  
+Info    : 6 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1758.7 
+Info    : Total badness = 1755.18 
+Info    : Optimizing volume 8
+Info    : CalcLocalH: 330 Points 1066 Elements 558 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 159 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.6887 
+Info    : 22 splits performed 
+Info    : SwapImprove  
+Info    : 31 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 109 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 40.8209 
+Info    : 27 splits performed 
+Info    : SwapImprove  
+Info    : 8 swaps performed 
+Info    : SwapImprove2  
+Info    : 2 swaps performed 
+Info    : 34 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 304.549 
+Info    : 9 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 11 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 304.549 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 6 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 304.549 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 18 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2201.72 
+Info    : Total badness = 2116.53 
+Info    : SplitImprove 
+Info    : badmax = 65.6929 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2121.19 
+Info    : Total badness = 2109.61 
+Info    : SwapImprove  
+Info    : 91 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1964.69 
+Info    : Total badness = 1917.55 
+Info    : CombineImprove 
+Info    : 2 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1895.41 
+Info    : Total badness = 1888.7 
+Info    : SplitImprove 
+Info    : badmax = 15.5349 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1888.7 
+Info    : Total badness = 1888.57 
+Info    : SwapImprove  
+Info    : 21 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1860.83 
+Info    : Total badness = 1843.82 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1843.82 
+Info    : Total badness = 1843.01 
+Info    : SplitImprove 
+Info    : badmax = 14.7873 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1843.01 
+Info    : Total badness = 1842.96 
+Info    : SwapImprove  
+Info    : 12 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1833.94 
+Info    : Total badness = 1825.93 
+Info    : Optimizing volume 9
+Info    : CalcLocalH: 327 Points 1059 Elements 554 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 160 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.6887 
+Info    : 25 splits performed 
+Info    : SwapImprove  
+Info    : 27 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 102 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 31.7889 
+Info    : 24 splits performed 
+Info    : SwapImprove  
+Info    : 10 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 31 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 47.4512 
+Info    : 8 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 11 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 351.298 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 4 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 351.298 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 351.298 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 18 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2104.7 
+Info    : Total badness = 2034.76 
+Info    : SplitImprove 
+Info    : badmax = 22.0542 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2034.76 
+Info    : Total badness = 2030.2 
+Info    : SwapImprove  
+Info    : 90 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1890.39 
+Info    : Total badness = 1848.36 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1838.96 
+Info    : Total badness = 1837.16 
+Info    : SplitImprove 
+Info    : badmax = 16.7554 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1837.16 
+Info    : Total badness = 1837.04 
+Info    : SwapImprove  
+Info    : 13 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1826.33 
+Info    : Total badness = 1818.58 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1809.32 
+Info    : Total badness = 1809 
+Info    : SplitImprove 
+Info    : badmax = 14.5573 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1809 
+Info    : Total badness = 1808.99 
+Info    : SwapImprove  
+Info    : 7 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1799.79 
+Info    : Total badness = 1794.13 
+Info    : Optimizing volume 10
+Info    : CalcLocalH: 2500 Points 11970 Elements 2162 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 328 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 21.2166 
+Info    : 54 splits performed 
+Info    : SwapImprove  
+Info    : 41 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 201 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 140.002 
+Info    : 40 splits performed 
+Info    : SwapImprove  
+Info    : 12 swaps performed 
+Info    : SwapImprove2  
+Info    : 3 swaps performed 
+Info    : 94 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.317 
+Info    : 21 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 37 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.317 
+Info    : 9 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 11 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.317 
+Info    : 4 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 124 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 17310.4 
+Info    : Total badness = 16419.4 
+Info    : SplitImprove 
+Info    : badmax = 58.2795 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 16426.2 
+Info    : Total badness = 16305.3 
+Info    : SwapImprove  
+Info    : 651 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 15160.3 
+Info    : Total badness = 14786.2 
+Info    : CombineImprove 
+Info    : 26 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14549.4 
+Info    : Total badness = 14492.8 
+Info    : SplitImprove 
+Info    : badmax = 57.2528 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14492.8 
+Info    : Total badness = 14483.4 
+Info    : SwapImprove  
+Info    : 99 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14412.2 
+Info    : Total badness = 14348.1 
+Info    : CombineImprove 
+Info    : 6 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14300 
+Info    : Total badness = 14290.7 
+Info    : SplitImprove 
+Info    : badmax = 57.4186 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14290.7 
+Info    : Total badness = 14288.5 
+Info    : SwapImprove  
+Info    : 40 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14265.8 
+Info    : Total badness = 14244.5 
+Info    : Optimizing volume 11
+Info    : CalcLocalH: 2649 Points 9590 Elements 3836 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 167 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 22.7369 
+Info    : 30 splits performed 
+Info    : SwapImprove  
+Info    : 25 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 98 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 76.8938 
+Info    : 25 splits performed 
+Info    : SwapImprove  
+Info    : 7 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 38 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 309.945 
+Info    : 11 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 6 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 309.945 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 46 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14268.5 
+Info    : Total badness = 13649.7 
+Info    : SplitImprove 
+Info    : badmax = 89.4758 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 13649.7 
+Info    : Total badness = 13583.2 
+Info    : SwapImprove  
+Info    : 518 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12711.8 
+Info    : Total badness = 12504.7 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 12493.9 
+Info    : Total badness = 12482.1 
+Info    : SplitImprove 
+Info    : badmax = 46.7593 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12490.3 
+Info    : Total badness = 12486.3 
+Info    : SwapImprove  
+Info    : 92 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12400.4 
+Info    : Total badness = 12350.3 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 12336.8 
+Info    : Total badness = 12334.5 
+Info    : SplitImprove 
+Info    : badmax = 38.3591 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12334.5 
+Info    : Total badness = 12334.3 
+Info    : SwapImprove  
+Info    : 43 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 12308.4 
+Info    : Total badness = 12287.6 
+Info    : Optimizing volume 12
+Info    : CalcLocalH: 324 Points 1029 Elements 552 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 161 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 15.0291 
+Info    : 24 splits performed 
+Info    : SwapImprove  
+Info    : 28 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 99 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 15.0291 
+Info    : 22 splits performed 
+Info    : SwapImprove  
+Info    : 4 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 45 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 34.3702 
+Info    : 11 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 14 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 31.2292 
+Info    : 3 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 7 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 31.2292 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 4 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 31.2292 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 2 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 31.2292 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 21 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1980.09 
+Info    : Total badness = 1918.39 
+Info    : SplitImprove 
+Info    : badmax = 23.8561 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1918.39 
+Info    : Total badness = 1914.65 
+Info    : SwapImprove  
+Info    : 69 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1833.96 
+Info    : Total badness = 1798.78 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1789.22 
+Info    : Total badness = 1787.58 
+Info    : SplitImprove 
+Info    : badmax = 23.6791 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1787.58 
+Info    : Total badness = 1787.46 
+Info    : SwapImprove  
+Info    : 16 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1774.51 
+Info    : Total badness = 1766.57 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1766.57 
+Info    : Total badness = 1766.22 
+Info    : SplitImprove 
+Info    : badmax = 22.6684 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1766.22 
+Info    : Total badness = 1766.17 
+Info    : SwapImprove  
+Info    : 7 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1758.91 
+Info    : Total badness = 1754.19 
+Info    : Optimizing volume 13
+Info    : CalcLocalH: 2492 Points 11903 Elements 2162 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 325 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 21.909 
+Info    : 56 splits performed 
+Info    : SwapImprove  
+Info    : 46 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 192 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 35.4409 
+Info    : 39 splits performed 
+Info    : SwapImprove  
+Info    : 13 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 85 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 21 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 2 swaps performed 
+Info    : 34 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 8 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 15 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 4 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 367.324 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 137 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 17167.2 
+Info    : Total badness = 16288 
+Info    : SplitImprove 
+Info    : badmax = 52.3941 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 16288 
+Info    : Total badness = 16175.4 
+Info    : SwapImprove  
+Info    : 650 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 15016.1 
+Info    : Total badness = 14677 
+Info    : CombineImprove 
+Info    : 20 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14513.4 
+Info    : Total badness = 14469.6 
+Info    : SplitImprove 
+Info    : badmax = 52.4935 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14469.6 
+Info    : Total badness = 14462.5 
+Info    : SwapImprove  
+Info    : 109 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14370.3 
+Info    : Total badness = 14284.6 
+Info    : CombineImprove 
+Info    : 4 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 14252.2 
+Info    : Total badness = 14244.9 
+Info    : SplitImprove 
+Info    : badmax = 51.63 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14244.9 
+Info    : Total badness = 14243.2 
+Info    : SwapImprove  
+Info    : 29 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 14230.5 
+Info    : Total badness = 14214.3 
+Info    : Optimizing volume 14
+Info    : CalcLocalH: 327 Points 1044 Elements 556 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 161 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 15.0291 
+Info    : 23 splits performed 
+Info    : SwapImprove  
+Info    : 27 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 111 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 24.5985 
+Info    : 23 splits performed 
+Info    : SwapImprove  
+Info    : 11 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 44 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 41.192 
+Info    : 10 splits performed 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 17 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 60.7879 
+Info    : 3 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 10 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 60.7879 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 60.7879 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 18 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2031.41 
+Info    : Total badness = 1964.54 
+Info    : SplitImprove 
+Info    : badmax = 22.3116 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1964.54 
+Info    : Total badness = 1961.34 
+Info    : SwapImprove  
+Info    : 73 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1861.38 
+Info    : Total badness = 1815.66 
+Info    : CombineImprove 
+Info    : 3 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1780.37 
+Info    : Total badness = 1777.34 
+Info    : SplitImprove 
+Info    : badmax = 17.2942 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1777.34 
+Info    : Total badness = 1777.02 
+Info    : SwapImprove  
+Info    : 20 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1753.98 
+Info    : Total badness = 1741.15 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1741.15 
+Info    : Total badness = 1740.82 
+Info    : SplitImprove 
+Info    : badmax = 14.4706 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1740.82 
+Info    : Total badness = 1740.81 
+Info    : SwapImprove  
+Info    : 6 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1735.05 
+Info    : Total badness = 1732.81 
+Info    : Optimizing volume 15
+Info    : CalcLocalH: 330 Points 1067 Elements 558 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 161 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 137.161 
+Info    : 23 splits performed 
+Info    : SwapImprove  
+Info    : 29 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 109 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 211.844 
+Info    : 26 splits performed 
+Info    : SwapImprove  
+Info    : 7 swaps performed 
+Info    : SwapImprove2  
+Info    : 3 swaps performed 
+Info    : 33 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 121.747 
+Info    : 8 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 14 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 121.747 
+Info    : 3 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 2 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 391.608 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 12 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2260.18 
+Info    : Total badness = 2148.07 
+Info    : SplitImprove 
+Info    : badmax = 80.8078 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2151.85 
+Info    : Total badness = 2143.57 
+Info    : SwapImprove  
+Info    : 93 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1999.41 
+Info    : Total badness = 1955.57 
+Info    : CombineImprove 
+Info    : 2 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1933.17 
+Info    : Total badness = 1929.46 
+Info    : SplitImprove 
+Info    : badmax = 15.1306 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1929.46 
+Info    : Total badness = 1929.27 
+Info    : SwapImprove  
+Info    : 22 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1901.05 
+Info    : Total badness = 1881.46 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1870.48 
+Info    : Total badness = 1868.09 
+Info    : SplitImprove 
+Info    : badmax = 14.584 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1868.09 
+Info    : Total badness = 1868.03 
+Info    : SwapImprove  
+Info    : 8 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1859.08 
+Info    : Total badness = 1853.12 
+Info    : Done optimizing mesh (Wall 16.5165s, CPU 16.4681s)
+
+[PORT-9 step1] fragmented two-torus fixture: 184919 cells, mesh 38.1 s, solve 25.1 s; driven gap cell tags (101, 111), lumped sheet on facet tag 212 (Z_p = 1.0e+06 Ohm, near-open probe)
+[PORT-9 step1] sheet 212: 1585 owned facets, meshed/CAD area 1.000000000000, measured w = 1.040000000e-02 m, h = 1.395505060e-02 m, w/h = 0.745249896 squares (out-of-plane spread 0.0e+00 m) => R = Z_p*w/h = 7.452499e+05+0.000000e+00j Ohm/square; meshed/analytic gap volume 1.000000000000
+PASSED
+tests/validation/test_port_lumped_two_torus.py::test_two_routes_printed_on_one_solved_field 
+[PORT-9 step1] I_cond = +9.723686e-01-4.646100e-03j A; omega*M12 = 1.241755 Ohm
+[PORT-9 step1] GAP route:    V = +1.363043137e-02+1.079788163e+00j V, Im Z12 = +1.110513699e+00 Ohm = 0.894310 x omega*M12 (corrected 0.939609); unfragmented record 0.894543 raw / 0.939849 corrected — delta on the fragmented mesh -2.328965e-04 (-0.0233 pp)
+[PORT-9 step1] LUMPED route: I_sheet = -4.258870e-08-1.001734e-06j A, V = +4.258869583e-02+1.001733587e+00j V, Im Z12 = +1.030385205e+00 Ohm = 0.829782 x omega*M12 (corrected 0.873069)
+[PORT-9 step1] CROSS-ROUTE deviation: on the |Im Z12| ratios -7.215444e-02 (-7.2154%); on the complex Z12 |Z12(lumped) - Z12(gap)|/|Z12(gap)| = 7.709529e-02 (7.7095%) — both PRINTED, neither gated; step 2's pre-stated band is 5% on the second
+PASSED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 12 passed, 8 warnings in 78.58s (0:01:18) ===================
+PASSED
+tests/validation/test_port_lumped_two_torus.py::test_two_routes_printed_on_one_solved_field PASSED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 12 passed, 8 warnings in 78.57s (0:01:18) ===================
+
+## Exit
+- Status: 0
+- Elapsed (s): 79

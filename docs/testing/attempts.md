@@ -12391,3 +12391,70 @@ it). Cheaper alternative if the review wants Larmor covered: re-use this module
 at f = 64 MHz on the two existing rungs — it needs only a
 `DR_DEV_BASELINE_RECORD` entry (+0.102698) and would produce the 64 MHz
 bracket from solves already priced at 390 s.
+
+---
+
+## 2026-08-17T05:15Z — `PORT-9` step 1 (re-run) — **complete**
+
+Scheduled implementer run, 00:00 CDT slot. Tree clean at preflight, container
+Up 33 h. §9 On-deck item 4 (items 1–3 were closed by the three preceding
+slots), executed as written: merge the parked branch, wire the sheet onto
+`GEO-16`'s surface, one solve, print both routes.
+
+**What was done.** `attempt/PORT-9-20260816T170800Z` merged into `main`
+(`121d65c`; one conflict, `docs/testing/test-results.md`, resolved by keeping
+both sides' rows in timestamp order — the branch's `PORT-9-step1` row plus the
+four slots that landed after it). The parked formulation's six exact identities
+re-run green on the merge, negative control included, in the same command as
+the new work. One package change: `TimeHarmonicSolver.solve` gained
+`extra_bilinear_terms` / `extra_linear_terms` (callables of the solver's own
+trial/test), because a resistive-sheet BC is a term in `a` and there was no way
+to reach `a` from outside; both default `None`, so every gated record's
+assembled forms are untouched. New module
+`tests/validation/test_port_lumped_two_torus.py`: the `PORT-1`/`PORT-10` solve
+fixture with `emit_port_sheet=True`, gap `101`+`111` driven (both halves — the
+`GEO-16` caveat), a **passive near-open** lumped sheet (`Z_p = 1e6 Ω`) on the
+undriven port's facet tag `212`, one 10 MHz solve, both routes read off that
+one field.
+
+**Measured.** 184 919 cells, mesh 38.1 s, solve 25.1 s, 12 passed in 78.6 s at
+`-n 2` (standard). Sheet: 1585 owned facets, meshed/CAD area
+`1.000000000000`, out-of-plane spread `0.0e+00`, and — the number the step
+needed — extents **measured on the solve fixture**, `w = 1.040000000e-02 m`,
+`h = 1.395505060e-02 m`, `w/h = 0.745249896` squares. That is *not*
+`GEO-16`'s printed `1.504225878`: that chunk's fixture is
+`gap_clearance`-parameterised and the solve fixture is
+`gap_burial`/`gap_overhang`, so taking the recorded value would have scaled `R`
+by 2.02×. Two-halved gap-box volume meshed/analytic `1.000000000000`.
+Routes: gap `Im Z₁₂ = +1.110513699 Ω = 0.894310 × ωM₁₂` raw / 0.939609
+corrected, i.e. **−0.0233 pp** off the unfragmented record 0.894543/0.939849 —
+the fragment did not move the gated route. Lumped
+`I_sheet = −4.258870e-08 − 1.001734e-06j A`, `Im Z₁₂ = +1.030385205 Ω =
+0.829782 × ωM₁₂` raw / 0.873069 corrected. **Cross-route `|ΔZ₁₂|/|Z₁₂|` =
+7.7095%** (−7.2154% on the |Im| ratios), printed and not gated — step 2's band
+is 5%, so this is the finding step 2 exists to adjudicate.
+
+**Sign convention, worth knowing before reading the first log.**
+`sheet_terminal_current` is in the generator convention (a passive sheet in
+`E = +ĥ` carries `+1/Z_p`), so the terminal voltage comparable to the gap
+route's `V = −∫E·t̂ dl` is `−I·Z_p`. The first run
+(`20260817T050456Z_PORT-9-step1-rerun.log`) prints the two routes with opposite
+`Im Z₁₂` signs for that reason alone; the comparator was corrected and re-run
+(`...T050734Z_..._final.log`), magnitudes identical.
+
+**Logs.** `20260817T050456Z_PORT-9-step1-rerun.log` (86.5 s, 12 passed),
+`20260817T050734Z_PORT-9-step1-rerun-final.log` (78.6 s, 12 passed). No denied
+commands, no ⚠️ subsystem extended, no known-issues churn. `PORT-9` stays 🟡:
+step 1 is done, steps 2–3 are open.
+
+**Hypothesis for the next attempt (step 2).** In the open limit the lumped
+reading reduces to `V = (1/w)∫_S E·ĥ dS` — the gap voltage **averaged over the
+mid-plane** — while the gap route integrates the **centreline** only. Most of
+the sheet is fringe (tube shadow = `π r²/(4(r+overhang)²)` of the box face,
+3b-xii's `_fringe_fraction`), where `E·ŷ` is weaker; that is the sign and
+roughly the size of the 7.7%. The cheapest step-2 first exhibit is therefore
+one extra assembly on the *same* solved field: split the sheet integral into
+tube-shadow and fringe parts and compare the shadow-only average against the
+centreline path. If the shadow-only average lands inside 5%, the miss is the
+box's transverse extent, not the feed model, and step 2's diagnosis is about
+what `w` a lumped port on a round conductor should use.

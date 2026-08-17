@@ -1563,7 +1563,7 @@ until that check returns.
 | `PORT-6` | Frequency sweep orchestration | 🧪 | smoke |
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard |
-| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(step-1 formulation gated on `attempt/PORT-9-20260816T170800Z`; instantiation unblocked 2026-08-17 — `GEO-16` ✅ emits the sheet, `w/h = 1.504225878`, facet tags `211`/`212`)* | standard |
+| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(**step 1 done 2026-08-17** — parked formulation merged, sheet instantiated on `GEO-16`'s facet tag `212` of the solve fixture, both routes read off one 10 MHz solve: gap 0.894310 × ωM₁₂ raw (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route **7.7095%** against step 2's 5% band — measurement-only, step 2 adjudicates; steps 2–3 open)* | standard |
 | `PORT-10` | The two `PORT-1` systematics: composition measured, not assumed | ✅ 2026-08-16 (cross-term **−0.0604 pp** inside the pre-stated ±0.5 pp) | heavy |
 
 **`PORT-1` — Real port excitation from the solved field** ✅ *(closed by
@@ -1741,7 +1741,56 @@ the answer is already gated**.
 >   > Wiring trap the kwarg introduces: the gap volume is now **two** cell
 >   > tags per box (`101`+`111`, `102`+`112`), so any selection by gap tag
 >   > must take both halves; `201`/`202` are unchanged as sets.
-> * **Step 2 (gate) — cross-route identity.** Pre-stated bands, set at
+>   >
+>   > **Re-run result 2026-08-17 — both routes measured, step 1 done**
+>   > (`tests/validation/test_port_lumped_two_torus.py`, 12 passed 78.6 s at
+>   > `-n 2`, standard, `20260817T050734Z_PORT-9-step1-rerun-final.log`; the
+>   > first pass, sign convention uncorrected, is
+>   > `20260817T050456Z_PORT-9-step1-rerun.log`). The parked branch was merged
+>   > (`121d65c`) and its six identity gates re-run green on the merge in the
+>   > same command, negative control included. The sheet is wired onto
+>   > `GEO-16`'s facet tag `212` — the **undriven** port — of the
+>   > `PORT-1`/`PORT-10` solve fixture (184 919 cells, mesh 38.1 s, solve
+>   > 25.1 s), and one solve at 10 MHz drives gap `101`+`111` exactly as the
+>   > gated route drives it. `R = Z_p·w/h` is taken from the extents **measured
+>   > on this fixture**, not from `GEO-16`'s: that chunk's mesh-only fixture is
+>   > `gap_clearance`-parameterised and reads `w/h = 1.504225878`, whereas the
+>   > solve fixture (`gap_burial`/`gap_overhang`) reads
+>   > **`w = 1.040000000e-02 m`, `h = 1.395505060e-02 m`, `w/h = 0.745249896`
+>   > squares**, out-of-plane spread `0.0e+00 m`, meshed/CAD sheet area
+>   > `1.000000000000`. Structural identities gated before either route was
+>   > read: sheet facet set non-empty (1585 owned facets) and area = CAD to
+>   > < 1e-9, two-halved gap-box volume meshed/analytic `1.000000000000`,
+>   > path quadrature converged.
+>   > **The two numbers, measurement-only as scoped.** Gap route on the
+>   > *fragmented* mesh: `Im Z₁₂ = +1.110513699 Ω = 0.894310 × ωM₁₂` raw,
+>   > **0.939609** corrected — against the unfragmented record 0.894543 /
+>   > 0.939849, a delta of **−0.0233 pp**, so the fragment did not move the
+>   > gated route at the grain the systematics are quoted to. Lumped route
+>   > (near-open probe `Z_p = 1e6 Ω`, so the `1/R` sheet term perturbs the
+>   > field ~1e-5 of what a 50 Ω port would): `I_sheet = −4.258870e-08 −
+>   > 1.001734e-06j A`, `V = −I·Z_p = +1.001733587j V`,
+>   > `Im Z₁₂ = +1.030385205 Ω = 0.829782 × ωM₁₂` raw, 0.873069 corrected.
+>   > **Cross-route deviation: 7.7095%** on step 2's own metric
+>   > `|ΔZ₁₂|/|Z₁₂|` (−7.2154% on the |Im| ratios) — printed, not gated, and
+>   > **outside step 2's pre-stated 5% band**. Sign note: the module's
+>   > `sheet_terminal_current` is in the generator convention (a passive sheet
+>   > in `E = +ĥ` carries `+1/Z_p`), so the terminal voltage comparable to the
+>   > gap route's `V = −∫E·t̂ dl` is `−I·Z_p`; the first log shows the two
+>   > routes with opposite `Im Z₁₂` signs for that reason alone, and the final
+>   > log carries the corrected comparator (magnitudes identical).
+>   > **Hypothesis for step 2, not measured here:** the lumped route reduces in
+>   > the open limit to `V = (1/w)∫_S E·ĥ dS`, the gap voltage **averaged over
+>   > the sheet**, while the gap route integrates the **centreline** path only;
+>   > most of the mid-plane is fringe (the tube's shadow is
+>   > `π r²/(4(r+overhang)²)` of the box face, 3b-xii's `_fringe_fraction`),
+>   > where `E·ŷ` is weaker, which is the sign and roughly the size of the
+>   > miss. Step 2 adjudicates whether that is a property of the two feed
+>   > models or of this fixture's box; it does **not** widen the 5% band.
+> * **Step 2 (gate) — cross-route identity.** *(Step 1 measured the number
+>   this step gates: **7.7095%** cross-route, outside the 5% band, with the
+>   sheet-average-vs-centreline hypothesis above as the first thing to
+>   test. The band does not move.)* Pre-stated bands, set at
 >   scoping and never widened: lumped-port `Im Z₁₂` within the unmoved
 >   **10%** mutual band of ωM₁₂ (the `PORT-1` gate, absolute anchor), and
 >   cross-route agreement `|Z₁₂(lumped) − Z₁₂(gap-voltage, corrected)| /
@@ -2246,7 +2295,13 @@ by this review.
    extrapolated to h → 0 per frequency — printed, never gated. ~400 s
    per frequency at `-n 2`, `timeout -k 30 1100`, cost-probe the first
    command before the second. Independent of items 1–2.
-4. *(serial)* **`PORT-9` step 1 re-run — lumped-port `Z` beside the gap
+4. ✅ **done 2026-08-17** (`20260817T050734Z_PORT-9-step1-rerun-final.log`,
+   78.6 s, 12 passed; parked branch merged `121d65c`, its six identities
+   green on the merge; measured `w/h = 0.745249896` on the *solve* fixture,
+   sheet area = CAD to `1.000000000000`; gap route 0.894310 × ωM₁₂
+   (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route
+   **7.7095%** — printed, not gated, and step 2's finding to adjudicate).
+   *(serial)* **`PORT-9` step 1 re-run — lumped-port `Z` beside the gap
    route (standard, one solve).** **Depends on item 1 landing; if
    `GEO-16` did not land, stop and journal rather than improvising a
    surface.** Start by **merging `attempt/PORT-9-20260816T170800Z`**

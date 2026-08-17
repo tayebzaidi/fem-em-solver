@@ -345,6 +345,8 @@ class TimeHarmonicSolver:
         subdomain_ids: Optional[Sequence[int]] = None,
         gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
         project_source: bool = True,
+        extra_bilinear_terms: Optional[Sequence[Callable]] = None,
+        extra_linear_terms: Optional[Sequence[Callable]] = None,
     ) -> TimeHarmonicFields:
         """Solve the complex curl-curl problem and return the phasor E-field.
 
@@ -365,6 +367,17 @@ class TimeHarmonicSolver:
         source, or a diagnosis that pins unprojected numbers.  It costs one CG1
         Poisson solve (~2 s on the 120k-cell port fixture) and is a no-op when
         ``current_density`` is ``None``.
+
+        ``extra_bilinear_terms`` / ``extra_linear_terms`` (`PORT-9` step 1) are
+        surface terms a *port model* adds to the assembled forms — each a
+        callable ``f(trial, test) -> ufl form`` resp. ``g(test) -> ufl form``,
+        called with this solver's own ``TrialFunction``/``TestFunction`` so the
+        arguments match the volume form's.  The lumped-port sheet of
+        :mod:`fem_em_solver.ports.lumped` is the one caller; the hook exists
+        because a resistive-sheet BC is a term in ``a``, not a Dirichlet
+        condition or a volume source, and there was no way to reach ``a`` from
+        outside.  Both default to ``None``, in which case the assembled forms
+        are bit-identical to what every gated record was measured on.
         """
         material = self.problem.material
         if not np.isfinite(self.problem.frequency_hz) or self.problem.frequency_hz <= 0:
@@ -440,6 +453,18 @@ class TimeHarmonicSolver:
                 L = load_factor * ufl.inner(current, v) * self._current_measure(
                     subdomain_id=subdomain_id, subdomain_ids=subdomain_ids
                 )
+
+        # Port-model surface terms (`PORT-9` step 1).  A fresh
+        # TrialFunction/TestFunction on the same space compares equal to the
+        # ones `bilinear_form` built — UFL Arguments are identified by (space,
+        # number, part) — so the sums below are single well-formed forms.
+        if extra_bilinear_terms:
+            e_trial = ufl.TrialFunction(v_space)
+            for term in extra_bilinear_terms:
+                a = a + term(e_trial, v)
+        if extra_linear_terms:
+            for term in extra_linear_terms:
+                L = L + term(v)
 
         options = {
             "ksp_type": "preonly",
