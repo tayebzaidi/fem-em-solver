@@ -12747,3 +12747,75 @@ area — the area is exact because the plane is exact.
 
 **Hypothesis for the next attempt.** None needed for this chunk; it is closed.
 The `EX` ramp's next open item is `EX-22` (§9 spare), unchanged by this run.
+
+## 2026-08-17T17:11Z — `PORT-9` step 2b — **complete** (the band holds at the narrowed width)
+
+**Item.** §9 On-deck item 1, executed verbatim: the width ladder
+f ∈ {1.0, 0.735, 0.5} on the step-1 solve fixture, gate at f = 0.5 on step 2's
+own **5%** cross-route band, negative control at f = 1.0.
+
+**Outcome: the gate passes.** New module
+`tests/validation/test_port_lumped_narrowed_sheet.py`, **14 passed 150.5 s**,
+`-n 2`, standard, `timeout -k 30 500` —
+`20260817T170841Z_PORT-9-step2b-effective-width.log`. One mesh (184 919 cells,
+37.1 s) and three solves (26.0 / 23.1 / 22.7 s), plus
+`tests/validation/test_port_lumped_bc.py`'s six identity gates and the
+passive-sheet negative control green in the same command.
+
+**The measured ladder** (`|ΔZ₁₂|/|Z₁₂|`, band 5%, never widened):
+
+| f | facets | w = A/h [m] | cross-route | verdict |
+|---|---|---|---|---|
+| 1.000 | 1585 | 1.040000000e-02 | **7.7095%** | MISS (= step 2's record) |
+| 0.735 | 1511 | 7.616677977e-03 | **3.6730%** | INSIDE |
+| 0.500 | 1375 | 5.171485579e-03 | **1.8333%** | INSIDE ← the gate |
+
+Monotone, falling toward step 2's transverse-profile prediction of ~1.1% at
+interior width; the gate clears by 2.7×. Gap route flat across the ladder
+(0.894310 / 0.894324 / 0.894349 × ωM₁₂) as it must be for a near-open probe
+sheet. Open-limit identity `V_lumped = −(1/w_f)∫_S E·ĥ dS` asserted **per
+width** at < 1e-11; nested-family identities asserted (gap-box volume
+1.000000000000, f = 1.0 area = CAD < 1e-9, strictly decreasing facets/areas,
+planarity < 1e-12, path quadrature converged per rung); f = 1.0 reproduces the
+step-1/2 records (cross-route 0.077095, gap ratio 0.894310) to < 1e-4.
+
+**Mechanism.** `GEO-16`'s `21x` facet tags are rebuilt dolfinx-side, so a width
+is a **facet-midpoint filter** on the existing tag (`_narrowed_sheet_tags`) —
+no gmsh change, no re-mesh, mesh bit-identical across the ladder. Each width is
+still its own assembly + solve (the sheet is in the bilinear form).
+
+**The one finding, and it cost a solve: `w` is `A/h`, not the bounding box.**
+The first attempt (`20260817T170448Z_PORT-9-step2b.log`, **1 failed / 13
+passed**) re-measured `w` as the filtered facet set's bounding-box extent — a
+literal reading of the entry's "re-measure from the filtered set, never
+f × w_full" — and read the ladder 7.7095% / 16.3925% / **14.0402% MISS**. The
+narrowing appeared to make things *worse*, which is the shape of a bug, not of
+the physics. Diagnosis: the midpoint filter leaves a **ragged** edge (a facet is
+kept whole when its midpoint clears the threshold, so its nodes reach past it),
+so the kept region is not a rectangle and the bbox extent is its *maximum*
+width, where `R = Z_p·w/h` counts squares and wants its *mean*. Measured
+overstatement **15.3%** at f = 0.735 and **14.2%** at f = 0.5 — which is the
+deviation the first attempt read, to the point. `A/h` is the mean width by
+definition, makes the lumped reading the true area average of `E·ŷ`, and on a
+rectangle *is* the bbox extent — now asserted on the f = 1.0 rung to < 1e-9, so
+the negative control is provably untouched by the choice. **No band moved in
+either attempt**; both logs are committed and the reasoning is in a code comment
+at the measurement.
+
+**Not run, deliberately: the second command.** The entry's reciprocity leg
+(`‖S−Sᵀ‖/‖S‖ ≤ 1e-3` through `run_n_port_sparameter_sweep`) is **not** a
+fixture-wiring job: that function has exactly two routes, `GapVoltagePortSpec`
+and the retiring heuristic, and no lumped-sheet route at all
+(`src/fem_em_solver/ports/sparameters.py:230`), so driving two narrowed sheets
+through it means adding a third excitation route to the package. That is a
+package change and it was past the minute-45 cutoff once the width finding had
+cost a solve. It remains step 2's unrun leg.
+
+**Nothing filed to known-issues.** No unrelated failure was met; the first
+attempt's failure was this run's own and is fixed in this run's commit.
+
+**Hypothesis for the next attempt.** The lumped-sheet route in
+`run_n_port_sparameter_sweep` is the next scoping decision on this lineage —
+it is the prerequisite for *both* step 2's reciprocity leg and step 3's 4×4
+birdcage sweep, so scoping it once buys both. Step 3's ports should be specified
+at **f = 0.5 with `w = A/h`**, the convention this run gated.

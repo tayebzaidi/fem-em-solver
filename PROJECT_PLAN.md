@@ -1922,7 +1922,7 @@ until that check returns.
 | `PORT-6` | Frequency sweep orchestration | 🧪 | smoke |
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard |
-| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(**step 1 done 2026-08-17** — parked formulation merged, sheet instantiated on `GEO-16`'s facet tag `212` of the solve fixture, both routes read off one 10 MHz solve: gap 0.894310 × ωM₁₂ raw (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route **7.7095%** against step 2's 5% band. **Step 2 executed 2026-08-17**: both pre-stated bands **MISS** (cross-route 7.7095% vs 5%; lumped mutual 12.6931% vs 10%; the gap route stays inside at 6.0391%) and the miss is **diagnosed** — it is the transverse average over the sheet, 7.7783 pp, with a path/projection residual of only **0.0763 pp** against the pre-stated ~1 pp threshold. Bands not widened. **Decision made 2026-08-17 10:30: narrow the sheet — step 2b scoped** (width ladder f ∈ {1.0, 0.735, 0.5}; the measured profile predicts ~1% at interior width); step 3 stays blocked until 2b's band holds)* | standard |
+| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(**step 1 done 2026-08-17** — parked formulation merged, sheet instantiated on `GEO-16`'s facet tag `212` of the solve fixture, both routes read off one 10 MHz solve: gap 0.894310 × ωM₁₂ raw (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route **7.7095%** against step 2's 5% band. **Step 2 executed 2026-08-17**: both pre-stated bands **MISS** (cross-route 7.7095% vs 5%; lumped mutual 12.6931% vs 10%; the gap route stays inside at 6.0391%) and the miss is **diagnosed** — it is the transverse average over the sheet, 7.7783 pp, with a path/projection residual of only **0.0763 pp** against the pre-stated ~1 pp threshold. Bands not widened. **Decision made 2026-08-17 10:30: narrow the sheet — step 2b scoped** (width ladder f ∈ {1.0, 0.735, 0.5}; the measured profile predicts ~1% at interior width). **Step 2b executed 2026-08-17, 12:00 slot — the band HOLDS**: ladder 7.7095% (f = 1.0, the negative control, reproducing step 2 to < 1e-4) → 3.6730% → **1.8333%** at f = 0.5 against the unmoved 5% band, open-limit identity < 1e-11 per width, 14 passed 150.5 s at `-n 2`. One finding en route: the sheet's width is the **area-based effective width `A/h`**, not the bounding-box extent (the midpoint filter leaves a ragged edge; bbox overstates by 14–15% and the first attempt read 14.04% MISS because of it) — the convention is now part of the port model's spec. Step 2's gate is closed at the narrowed definition; step 3 unblocked on this side, its ports use f = 0.5. Still unrun: the reciprocity leg, which needs a lumped-sheet route in `run_n_port_sparameter_sweep`)* | standard |
 | `PORT-10` | The two `PORT-1` systematics: composition measured, not assumed | ✅ 2026-08-16 (cross-term **−0.0604 pp** inside the pre-stated ±0.5 pp) | heavy |
 
 **`PORT-1` — Real port excitation from the solved field** ✅ *(closed by
@@ -2272,6 +2272,65 @@ the answer is already gated**.
 >   the profile's ~1% as f shrinks refutes the transverse-averaging
 >   diagnosis — record the ladder in this entry, known-issues entry,
 >   report, stop; the band never widens.
+>   > **EXECUTED 2026-08-17, 12:00 slot — the band HOLDS at the narrowed
+>   > width, and the transverse-averaging diagnosis is confirmed.**
+>   > (`tests/validation/test_port_lumped_narrowed_sheet.py`, **14 passed
+>   > 150.5 s** at `-n 2`, standard,
+>   > `20260817T170841Z_PORT-9-step2b-effective-width.log`; one mesh 37.1 s
+>   > and three solves 26.0 / 23.1 / 22.7 s, `timeout -k 30 500`. The six
+>   > `test_port_lumped_bc.py` identity gates and the passive-sheet negative
+>   > control re-ran green in the same command.)
+>   > **The ladder, measured** (`|ΔZ₁₂|/|Z₁₂|` against the unmoved **5%**
+>   > band): f = 1.000 → **7.7095% MISS**, f = 0.735 → **3.6730% INSIDE**,
+>   > f = 0.500 → **1.8333% INSIDE**. The gate is the f = 0.5 rung and it
+>   > passes with 2.7× margin, against step 2's transverse profile predicting
+>   > ~1.1% at interior width. **Negative control green:** f = 1.0 reproduces
+>   > step 2's 7.7095% and the gap ratio 0.894310 to < 1e-4 (asserted) — the
+>   > narrowing changed the sheet, not the fixture; the gap route is flat
+>   > across the ladder at 0.894310 / 0.894324 / 0.894349 × ωM₁₂, as it must
+>   > be, a near-open sheet being a probe. The open-limit identity
+>   > `V_lumped = −(1/w_f)∫_S E·ĥ dS` is re-asserted **per width** at < 1e-11,
+>   > and the rungs are gated as one nested family on one fixture (gap-box
+>   > volume 1.000000000000, f = 1.0 area = CAD to < 1e-9, strictly decreasing
+>   > facet counts 1585 → 1511 → 1375 and areas, planarity < 1e-12, path
+>   > quadrature converged per rung).
+>   > **Mechanism: no re-mesh.** `GEO-16`'s `21x` tags are rebuilt dolfinx-side,
+>   > so a width is a **facet-midpoint filter** on the existing tag
+>   > (`_narrowed_sheet_tags`) — the mesh is bit-identical across the ladder,
+>   > which is what makes f = 1.0 a control on the sheet rather than on a
+>   > second mesh. Each width is still its own assembly + solve (the sheet
+>   > enters the bilinear form).
+>   > **One finding this run had to measure before its own gate meant
+>   > anything — the width convention is `A/h`, not the bounding box.** The
+>   > first attempt (`20260817T170448Z_PORT-9-step2b.log`, 1 failed / 13
+>   > passed) took `w` as the filtered set's bounding-box extent and read the
+>   > ladder at 7.7095% / 16.3925% / **14.0402% MISS**. That is not physics:
+>   > the midpoint filter leaves a **ragged** edge (a facet is kept whole when
+>   > its midpoint clears the threshold, so its nodes reach past it), so the
+>   > kept region is not a rectangle, and the bbox extent is its *maximum*
+>   > width where `R = Z_p·w/h` wants its *mean*. Measured overstatement:
+>   > **15.3%** at f = 0.735 (8.780489e-03 vs 7.616678e-03 m) and **14.2%** at
+>   > f = 0.5 (5.905570e-03 vs 5.171486e-03 m) — which is the deviation the
+>   > first attempt read, to the point. `w = A/h` is the mean width by
+>   > definition, makes the lumped reading the true *area* average of `E·ŷ`,
+>   > and on a rectangle **is** the bbox extent — now asserted on the f = 1.0
+>   > rung to < 1e-9, so the negative control is provably untouched by the
+>   > choice. No band moved in either attempt; both logs are committed.
+>   > **The width convention is now part of the port model's spec**, as the
+>   > entry required: a lumped port sheet is specified by its **interior width
+>   > fraction f** of the gap box, and its `w` is measured as `A/h` on the
+>   > filtered facet set. Step 3's birdcage ports use f = 0.5 and this rule.
+>   > **Not run: the second command.** The reciprocity leg
+>   > (`‖S−Sᵀ‖/‖S‖ ≤ 1e-3` through `run_n_port_sparameter_sweep`) is *not* a
+>   > drop-in and was not started: that function has exactly two routes,
+>   > `GapVoltagePortSpec` and the retiring heuristic, and no lumped-sheet
+>   > route at all (`ports/sparameters.py:230`), so driving two narrowed
+>   > sheets through it is a **package change** — a third excitation route —
+>   > not a fixture wiring job, and it did not fit this slot after the width
+>   > finding cost a solve. It stays step 2's unrun leg and is the next thing
+>   > to scope on this lineage.
+>   > **Scope, unchanged:** two-torus only. Step 2's gate is closed **at the
+>   > narrowed definition**; the chunk stays 🟡 until step 3's birdcage gate.
 > * **Step 3 — birdcage instantiation.** The BC on the birdcage mesh's four
 >   port boxes (`GEO-9`, generated and identity-gated). **Both prerequisites
 >   reported 2026-08-16 and the block is lifted:** `GEO-15` ✅ — graded
@@ -2779,8 +2838,15 @@ also independent. `TH-11` step 5b is deliberately *not* queued — it
 depends on item 2 landing and is the next review's to queue. Items
 execute their §7 entries verbatim as annotated by this review.
 
-1. **`PORT-9` step 2b — the narrowed sheet gates the cross-route band
-   (standard).** Execute the §7 step-2b entry verbatim (scoped this
+1. ~~**`PORT-9` step 2b — the narrowed sheet gates the cross-route band
+   (standard).**~~ **DONE 2026-08-17, 12:00 slot — band holds at f = 0.5
+   (1.8333% against 5%), ladder 7.7095 → 3.6730 → 1.8333%, control
+   reproduced to < 1e-4, 14 passed 150.5 s
+   (`20260817T170841Z_PORT-9-step2b-effective-width.log`). Width
+   convention fixed to `A/h` en route (see §7). The second command
+   (reciprocity sweep) was **not** run — it needs a lumped-sheet route in
+   `run_n_port_sparameter_sweep`, a package change, not a wiring job.**
+   Original text: execute the §7 step-2b entry verbatim (scoped this
    review). **Anchor:** at f = 0.5 interior width, cross-route
    `|ΔZ₁₂|/|Z₁₂| ≤ 5%` — step 2's own band, unmoved, now expected to
    hold (the measured transverse profile puts the interior stations
