@@ -379,7 +379,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
-| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 step 1 ✅ (inventory: 10 replace / 4 delete / 45 keep of 306) | standard |
+| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; full-suite legs → step 3) | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 
@@ -537,7 +537,8 @@ implementer slot.)*
 
 **`OPS-17` — delete or replace the finiteness-only test suites** 🟡
 *(step 1 ✅ 2026-08-17, `20260817T020244Z_OPS-17-step1-sweep.log`, 2 s, smoke;
-step 2 open)*
+step 2 ✅ 2026-08-17 — all 14 dispositions landed, 4 defects surfaced; the two
+full-suite legs did not fit the hour and are the step 3 the next review cuts)*
 *(commissioned 2026-08-16, operator session. The directive: tests whose
 only assertions are finiteness-class are worse than no tests — they
 green-lit both §2-era defects for months (§4's finiteness-only rule exists
@@ -678,6 +679,91 @@ exists, replace instead. Two steps, one implementer run each.)*
 >   a deletion that leaves a CI job empty is a finding, not a success;
 >   known-issues' pre-existing failures are not this chunk's to fix.
 >   **Negative result:** report, leave the table committed, stop.
+>
+>   **✅ 2026-08-17, 06:00 slot.** All 14 dispositions executed: **4 deletes,
+>   10 replacements landed.** Logs (all `-n 2`):
+>   `20260817T111036Z_OPS-17-step2-collect.log` (359 collected, exit 0, 6 s),
+>   `20260817T111054Z_OPS-17-step2-mesh-n2.log` (15 s),
+>   `20260817T111217Z_OPS-17-step2-solver-n2.log` (41 s),
+>   `20260817T112448Z_OPS-17-step2-th-smoke2-n2.log`,
+>   `20260817T113031Z_OPS-17-step2-portgap-n2.log` (1 passed, 448 s),
+>   `20260817T113806Z_OPS-17-step2-xfail-n2.log` (**10 passed, 2 xfailed**, 202 s).
+>
+>   **Anchors that hold, with the numbers:**
+>
+>   | replacement | anchor | measured | band |
+>   | --- | --- | --- | --- |
+>   | `solver/test_cylinder.py` | straight-wire `μ₀I/2πr` at the mid-length plane | **13.2751%** L2 | 25% |
+>   | `solver/test_coil_phantom_magnetostatics.py` | on-axis `B_z` vs two-loop Biot–Savart | **17.1233%** L2 | 30% |
+>   | `solver/test_two_torus.py` | volume partition | ratio **1.000000000000** | 1e-9 |
+>   | `mesh/test_mesh_tag_integrity.py` (both) | tagged-volume partition | ratio **1.000000000000** | 1e-9 |
+>   | `mesh/test_birdcage_port_tags.py` | port-layout diagnostics vs closed forms | exact | 1e-12 |
+>   | `validation/test_straight_wire.py` | fitted h-refinement rate | in band | `[0.7, 1.5]` |
+>   | `validation/test_port_gap_voltage_impedance.py` | 3b-x record pinned | both tags reproduce | 1% |
+>
+>   Two replacements did **not** land the anchor the step-1 table named, for
+>   stated reasons rather than by failure:
+>   * `mesh/test_birdcage_port_tags.py` — the named tagged-volume identity is
+>     already gated on the *identical* fixture by
+>     `test_birdcage_volumes_partition_the_box` 20 lines below (`LEG_COUNT` is
+>     4, the leg count the old test passed), so landing it would have
+>     duplicated a gate and paid for a second mesh. Per the step-1 table's own
+>     pre-authorisation, the mesh-side content was left to that test and the
+>     tag summary folded into it; the replacement gates
+>     `birdcage_port_layout_diagnostics`, which was print-only and is meshless.
+>   * `solver/test_time_harmonic_smoke.py` — the named α anchor is **not
+>     measurable on this fixture at all**: an interior axial current in a
+>     cylinder decays by geometric spreading as well as absorption, and the two
+>     are not separable from `|E|` at two depths. Where α *is* measurable it is
+>     `TH-6`'s own gate at this exact material. Replaced with the `POST-3`
+>     Poynting identity instead — see the finding below.
+>
+>   **Four defects surfaced, none fixed here — full write-ups with numbers in
+>   docs/testing/known-issues.md (2026-08-17).** Three are carried in the tree
+>   as `pytest.mark.xfail(strict=True)` with the measurement in the docstring,
+>   so a fix reports XPASS rather than passing silently; **no band was
+>   loosened.**
+>   1. `coil_phantom_domain`'s region-resolution policy shrinks the meshed coil
+>      volumes **−21.68% / −22.62%** while specifying a *finer* size than the
+>      uniform run (CAD recovery 75.5% → 59.1%). The sign is impossible for an
+>      inscribing linear-tet mesh. → a `GEO` chunk.
+>   2. The Coulomb-gauge multiplier does **not** vanish for a divergence-free
+>      source: spread **7.836781e+00** on a closed loop (vs 2.083064e+02 on the
+>      deliberately incompatible wire — 26.6×, so it is not dead). An h-ladder
+>      separates "O(h) discrete source" from "assembly defect". → a `MAG`/`OPS`
+>      chunk.
+>   3. Real Poynting power does not balance on the smoke fixture: dissipated
+>      **+1.199162e-06 W** against net inward **−2.008179e-07 W**, imbalance
+>      **116.7465%** vs a pre-stated 25% — and the flux has the **wrong sign**,
+>      which the identity forbids for any Maxwell solution. → a `TH`/`POST`
+>      chunk.
+>   4. `poynting_power_balance` raises on scalar `sigma=0.0`, the σ-blind
+>      control its own docstring advertises (UFL folds the integrand to a
+>      domain-less zero). Worked around in the one test with `1e-12·σ`; a
+>      one-line `POST` fix.
+>
+>   **Done-when, item by item.** Dispositions landed and verified ✅.
+>   `⚠️`-retirement clause, as rescoped to "confirm and say so": **confirmed —
+>   nothing to retire.** Step 1 found no `⚠️` chunk propped up by a swept row,
+>   and step 2 changed nothing about that; the glyph is untouched in §3 and the
+>   family tables, which is the honest reading. References to deleted tests:
+>   the one *live* stale reference was known-issues' "still red" line for
+>   `test_birdcage_like_mesh_has_core_and_port_tags`, corrected in this commit;
+>   the remaining hits are the step-1 disposition table itself (which must name
+>   what it dispositions) and the append-only journals
+>   (`docs/testing/attempts.md`, `docs/planning/plan-archive.md`), which are
+>   records, not live pointers.
+>
+>   **Sizing valve used, as pre-authorized.** The two full-suite legs did not
+>   fit: the first complex-mode leg hit its 560 s ceiling (exit 124,
+>   `20260817T111429Z_OPS-17-step2-complex-n2.log`) with the two `post/`
+>   deletion files still running, and the `port_gap` fixture alone costs 446 s.
+>   Landed with targeted runs of every touched file instead — the deletions in
+>   `post/test_interface_guardrail_fallback.py` and
+>   `post/test_tagged_cell_partition_invariance.py` were observed PASSED in
+>   that timed-out leg before the kill, and the collect-only run confirms the
+>   whole tree still imports. **The full-suite real + complex legs are the
+>   step 3 the next review should cut.**
 
 **`OPS-13` — land the rank-safe `_validate_material_map_tags` fix** ✅
 *(2026-08-08; full narrative in `docs/planning/plan-archive.md`)*. The one
@@ -2438,7 +2524,28 @@ by this review.
    the chunk 🟡 and keeps step 3 blocked — never widen the band.
    **Negative result:** hypothesis doesn't explain the miss either ⇒
    record both numbers and the residual in the §7 entry, report, stop.
-2. **`OPS-17` step 2 — execute the dispositions (standard, as rescoped
+2. ✅ **DONE 2026-08-17, 06:00 slot** — all 14 dispositions landed (4
+   deletes, 10 replacements), verified at `-n 2` across six harness logs.
+   Anchors that hold: cylinder **13.2751%** vs `μ₀I/2πr` (band 25%),
+   coil+phantom **17.1233%** vs two-loop Biot–Savart (band 30%), three
+   volume-partition identities at ratio **1.000000000000**, birdcage
+   diagnostics exact to 1e-12, the `PORT-1` 3b-x record reproduced on both
+   gap tags to 1%. `finiteness_sweep.py` was **not** re-run as the
+   before/after control — the hour went to the four defects below; that
+   and the two full-suite legs are step 3. Two rows did not take the
+   named anchor for stated reasons (birdcage: already gated on the
+   identical fixture 20 lines away; time-harmonic smoke: α is not
+   measurable on an interior-source cylinder at all) — §7 has both.
+   **Four defects surfaced, none fixed, no band loosened** (three carried
+   as strict xfail, full write-ups in known-issues): the coil+phantom
+   region-resolution policy shrinks meshed coil volumes **−21.68%/−22.62%**
+   while asking for a *finer* mesh; the Coulomb-gauge multiplier does not
+   vanish for a divergence-free source (**7.836781e+00**); real Poynting
+   power misses by **116.7465%** with the flux sign wrong on the smoke
+   fixture; `poynting_power_balance` raises on scalar `sigma=0.0`. The
+   `⚠️`-retirement clause **confirmed as nothing-to-retire**.
+   *(Original item text below.)*
+   **`OPS-17` step 2 — execute the dispositions (standard, as rescoped
    2026-08-17).** Execute the §7 step-2 entry verbatim, including the
    rescope annotation: 4 deletes, 10 replacements with the anchors named
    in the step-1 table, `⚠️`-clause read as "confirm and say so", and

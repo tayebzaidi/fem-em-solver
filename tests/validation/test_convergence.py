@@ -215,34 +215,12 @@ class TestConvergence:
             f"(expected ~1.0 for N1curl degree 1); errors {errors} at h "
             f"{resolutions}"
         )
-    
-    def test_p_refinement_straight_wire(self):
-        """
-        Test p-convergence (polynomial degree) for straight wire problem.
-        
-        As polynomial degree increases, error should decrease.
-        
-        Steps:
-        1. Fixed mesh resolution (e.g., 0.01)
-        2. Loop over degrees: [1, 2, 3]
-        3. For each degree:
-           - Create solver with degree=N
-           - Solve and compute error
-        4. Assert error decreases with higher degree
-        
-        TODO: Implement this test
-        """
-        pytest.skip("Not yet implemented - Chunk 7")
-    
-    def test_convergence_data_export(self):
-        """
-        Export convergence data for visualization.
-        
-        Save h vs error and degree vs error to files in results/convergence/
-        
-        TODO: Implement data export
-        """
-        pytest.skip("Not yet implemented - Chunk 8")
+
+
+# OPS-17 step 2 (2026-08-17): test_p_refinement_straight_wire and
+# test_convergence_data_export deleted — both were bare
+# pytest.skip("Not yet implemented") stubs that inflated the pass count
+# without asserting anything.
 
 
 if __name__ == "__main__":

@@ -483,7 +483,7 @@ mesh in the process — is the reusable part.
 
 | | |
 |---|---|
-| **Tests** | `tests/mesh/test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags` — **still red**, the overlapping-facets geometry is `GEO-9` step 2b<br>~~`tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_generates_required_tags_centered_preset`~~ **passes since 2026-08-03**<br>~~`tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_off_center_preset_moves_phantom_without_overlap`~~ **passes since 2026-08-03** |
+| **Tests** | ~~`tests/mesh/test_birdcage_port_tags.py::test_birdcage_like_mesh_has_core_and_port_tags`~~ — the "still red" note here is **historical**; the overlapping-facets geometry was fixed by `GEO-9` step 2b and the test itself no longer exists: `OPS-17` step 2 (2026-08-17) removed it as finiteness-only, its mesh-side content having been subsumed by `test_birdcage_volumes_partition_the_box` in the same file<br>~~`tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_generates_required_tags_centered_preset`~~ **passes since 2026-08-03**<br>~~`tests/mesh/test_coil_phantom_mesh.py::test_coil_phantom_mesh_off_center_preset_moves_phantom_without_overlap`~~ **passes since 2026-08-03** |
 | **Symptom** | `gmsh.py:2006: Exception: Invalid boundary mesh (overlapping facets) on surface 3 surface 49` (birdcage) and `dolfinx/io/gmshio.py:118: AssertionError` ×2 (coil+phantom) — the meshes never reach dolfinx |
 | **Cause** | **Diagnosed 2026-08-03 by `GEO-9` step 1, and it is a single cause, not two.** `birdcage_port_domain` raises inside its `comm.rank == rank` block (the overlapping-facets error) and therefore never reaches its `gmsh.finalize()`. The process is left with gmsh initialised and mid-command, so the *next* generator in the same pytest process gets `Warning : Gmsh has aleady been initialized` and `Info : I'm busy! Ask me that later...`, every subsequent `occ` call is silently refused, and `model_to_mesh` reads the stale birdcage model — whose mixed element types are what `gmshio.py:118` asserts on. **The coil+phantom generator is innocent:** in a fresh process all three of its tests pass in 4.8 s (`20260803T033050Z_GEO-9-before.log`), and they fail again the moment the birdcage file runs first (`20260803T033119Z_GEO-9-order-probe.log`, 3 failed 2 passed in 3.47 s — the same two failures). Found 2026-08-01 by the `GEO-8` run, which ran `tests/mesh` as a regression sweep; the whole directory is in no CI job, which is why these were invisible. Both fixtures are untouched by `GEO-8` (it changed `two_torus_domain` only). |
 | **Verified pre-existing at** | `63c94f2` — the `GEO-8` diff touches neither generator; log `20260801T004839Z_GEO-8-unrelated-failures.log`, 3 failed 2 passed in 3.5 s at `-n 2` |
@@ -1340,6 +1340,95 @@ decision — the same class as the `cell_tags.values` rule in CLAUDE.md.
 **Resolves with:** any commit that next touches this test — reduce the
 decision (`comm.allreduce(remaining, MPI.MIN)` or decide on rank 0 and
 `bcast`). `EX-21` must not copy the pattern into the example.
+
+---
+
+### Four defects surfaced by replacing finiteness-only tests with real anchors (`OPS-17` step 2, 2026-08-17)
+
+**Found:** 2026-08-17, `OPS-17` step 2, at commit `197142f`. All four were
+invisible until the tests that exercise these paths were given quantitative
+anchors — which is the whole premise of the chunk. **None is being fixed here:**
+`OPS-17` is test hygiene, and each of these belongs to the subsystem it lands
+in. The first three are carried in the tree as `pytest.mark.xfail(strict=True)`
+with the measurement in the docstring, so a fix reports as XPASS rather than
+silently passing; the fourth is worked around in one test.
+
+**1. `coil_phantom_domain` region-resolution policy shrinks the meshed coil
+volumes by ~22% while asking for a *finer* mesh.**
+`tests/mesh/test_mesh_tag_integrity.py::test_region_resolution_policy_does_not_move_the_tagged_volumes`
+(xfail). Measured at `-n 2`, `20260817T111054Z_OPS-17-step2-mesh-n2.log`,
+uniform `h = 0.015` against `coil_resolution=0.012, phantom_resolution=0.010,
+air_resolution=0.020`:
+
+| tag | uniform [m³] | policy [m³] | Δ |
+| --- | --- | --- | --- |
+| 1 `coil_1` | 1.191750413e-04 | 9.333354960e-05 | −21.68% |
+| 2 `coil_2` | 1.188402981e-04 | 9.195675344e-05 | −22.62% |
+| 3 `phantom` | 4.943767949e-04 | 4.880940997e-04 | −1.27% |
+| 4 `air` | 1.143560787e-02 | 1.149461560e-02 | +0.52% |
+
+CAD torus volume is `2π²Rr² = 1.579137e-04 m³`, so uniform recovers 75.5% of
+each coil and the policy mesh 59.1%. **The sign is the defect:** a linear-tet
+mesh inscribes a curved surface, so refining can only move meshed volume *up*
+toward CAD. Every region given a finer size lost volume, and the air took up
+exactly what the curved regions lost. **Cause: not diagnosed.** Hypothesis —
+the region size fields replace rather than refine the surface sizing on shared
+curved interfaces, so the coarse air field (0.020) wins on the coil and phantom
+boundaries. **Resolves with:** a `GEO` chunk on `coil_phantom_domain`'s sizing
+path. Both meshes still partition their own volume to 1e-9, so this is fidelity,
+not conformity.
+
+**2. The Coulomb-gauge Lagrange multiplier does not vanish for a
+divergence-free source.**
+`tests/solver/test_gauge_lagrange.py::test_gauge_multiplier_vanishes_for_a_divergence_free_source`
+(xfail). Measured at `-n 2`, `20260817T111217Z_OPS-17-step2-solver-n2.log`:
+spread **7.836781e+00** on a closed current loop (azimuthal J: `div J = 0`
+inside, `J·n = 0` on both the torus surface and the outer sphere) against the
+solver-tolerance residual the theory requires. The multiplier is not dead — it
+reads **2.083064e+02** on the deliberately incompatible straight wire, 26.6×
+larger — but "vanishes for a compatible source" is false as written.
+**Cause: not diagnosed.** Two candidates, separable with one h-ladder:
+(a) benign — the source enters through an interpolated `J` whose discrete
+divergence is O(h), and the fixture is coarse (h = 0.005 against a 0.003 wire
+radius), in which case the spread falls with refinement; (b) a real defect in
+how the constraint is assembled, in which case it is h-independent.
+**Resolves with:** a `MAG`/`OPS` chunk on the gauge formulation. Note `max|A|`
+is not a usable normaliser here — `test_lagrange_removes_the_null_space`
+requires the LAGRANGE `max|A|` to sit six orders below the penalty solve's.
+
+**3. Real Poynting power does not balance on the time-harmonic smoke fixture,
+and the boundary flux has the wrong sign.**
+`tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power`
+(xfail). Measured at `-n 2`,
+`20260817T112448Z_OPS-17-step2-th-smoke2-n2.log`: dissipated
+`½∫σ|E|²dV = +1.199162e-06 W` against net inward flux
+`−∮½Re(E×H̄)·n̂dS = −2.008179e-07 W`, relative imbalance **116.7465%** against
+a pre-stated 25%. Power leaves through the boundary while the medium
+dissipates, which the identity forbids for any solution of Maxwell's equations
+regardless of boundary condition. **Cause: not diagnosed.** Candidates:
+(a) resolution — 0.16 m domain at h = 0.03 m is ~9 cells per in-medium
+wavelength (λ = c/(f√78) = 0.266 m), and the boundary leg is a curl trace, the
+least accurate quantity a degree-1 N1curl solution carries;
+`tests/validation/test_poynting_balance.py` needs a refined mesh to reach 5%
+and gates the *convergence* of this imbalance for that reason; (b) the source —
+an axial current terminating on the end caps, so `J·n ≠ 0` there, the same
+incompatibility as defect 2. **Resolves with:** a `TH`/`POST` chunk; an
+h-ladder on this fixture distinguishes the two in one command.
+
+**4. `poynting_power_balance` raises on a scalar `sigma=0.0`, the σ-blind
+negative control its own docstring advertises.**
+`src/fem_em_solver/post/power_balance.py:137`. `0.5 * 0.0 * ufl.inner(E, E)`
+folds to a domain-less UFL zero and `* ufl.dx` then raises
+`ValueError: This integral is missing an integration domain`. First hit at
+`20260817T112414Z_OPS-17-step2-th-smoke-n2.log`. **Cause:** the scalar branch
+passes a bare Python float rather than wrapping it in `fem.Constant(msh, ...)`,
+so UFL constant-folds the whole integrand away. `sigma=0.0` is an intended
+input — the module docstring calls it "what makes the σ-blind negative control
+possible". Existing callers pass a non-zero scalar or a `sigma_field`, so
+nothing was previously red. **Worked around**, not fixed: the smoke test above
+uses `SIGMA_BLIND = 1e-12 * SIGMA`. **Resolves with:** wrapping the scalar in
+`fem.Constant` — a one-line `POST` fix plus a re-run of
+`tests/validation/test_poynting_balance.py`.
 
 ## Recording a new entry
 

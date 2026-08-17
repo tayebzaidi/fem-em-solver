@@ -52,75 +52,94 @@ def _analytic_box_volume() -> float:
     return 8.0 * radial_extent * radial_extent * z_extent
 
 
-def test_birdcage_like_mesh_has_core_and_port_tags():
-    """Ensure parametric birdcage fixture provides all required core + port tags."""
+# `OPS-17` step 2 (2026-08-17). The old
+# ``test_birdcage_like_mesh_has_core_and_port_tags`` meshed this fixture and
+# asserted ``n_cells > 0``, ``n_cells < 50000`` and "no required tag missing" —
+# all finiteness-class. The step-1 table named the tagged-volume partition
+# identity as its anchor, but ``test_birdcage_volumes_partition_the_box`` below
+# already gates exactly that identity on the *identical* fixture (LEG_COUNT is
+# 4, the same leg count the old test passed) and already asserts the exact
+# global tag set. Landing the named anchor here would have duplicated a gate
+# and paid for a second mesh of the same geometry to do it; the step-1 table
+# pre-authorises deleting rather than duplicating when step 2 finds this, so
+# the mesh-side content is left to that test.
+#
+# What is *not* covered there is ``birdcage_port_layout_diagnostics``, which the
+# old test called and only printed. It is meshless, so gating it is free, and
+# its outputs are closed forms of the fixture parameters:
+#
+#   port face area          = port_dx * port_dz
+#   port radius             = ring_radius + max(leg_width/2, ring_minor_radius)
+#                             + port_dy/2 + port_clearance
+#   min centre separation   = 2 * port_radius * sin(pi / leg_count)
+#     (the ports sit at the leg midpoint angles, so they are as equally spaced
+#      as the legs; nearest neighbours subtend 2*pi/leg_count)
+#   conductor clearance     = port_radius - port_dy/2 - conductor_outer_radius
+#   phantom clearance       = port_radius - port_dy/2 - phantom_radius
+#
+# Every one is exact arithmetic on floats, so the band is roundoff.
+
+PORT_CLEARANCE = 1.0e-3
+DIAGNOSTICS_BAND = 1.0e-12
+
+
+def test_birdcage_port_layout_diagnostics_match_the_closed_forms():
+    """The meshless port-layout diagnostics reproduce their geometry formulas."""
     comm = MPI.COMM_WORLD
 
-    leg_count = 4
     diagnostics = MeshGenerator.birdcage_port_layout_diagnostics(
-        leg_count=leg_count,
-        ring_radius=0.07,
-        leg_width=0.012,
-        ring_minor_radius=0.004,
-        phantom_radius=0.03,
-        port_box_size=(0.010, 0.008, 0.010),
-    )
-
-    if comm.rank == 0:
-        print(
-            "[birdcage-port] area/separation diagnostics: "
-            f"port_face_area={diagnostics['port_face_area_m2']:.6e} m^2 "
-            f"(required>={diagnostics['min_port_face_area_m2']:.6e}), "
-            f"min_center_separation={diagnostics['min_port_center_separation_m']:.6e} m "
-            f"(required>={diagnostics['required_port_center_separation_m']:.6e}), "
-            f"conductor_clearance={diagnostics['conductor_radial_clearance_m']:.6e} m, "
-            f"phantom_clearance={diagnostics['phantom_radial_clearance_m']:.6e} m"
-        )
-
-    mesh, cell_tags, _ = MeshGenerator.birdcage_port_domain(
-        leg_count=leg_count,
+        leg_count=LEG_COUNT,
         ring_radius=RING_RADIUS,
         leg_width=LEG_WIDTH,
-        leg_spacing=LEG_SPACING,
-        coil_length=COIL_LENGTH,
         ring_minor_radius=RING_MINOR_RADIUS,
         phantom_radius=PHANTOM_RADIUS,
-        phantom_height=PHANTOM_HEIGHT,
         port_box_size=PORT_BOX_SIZE,
-        air_padding=AIR_PADDING,
-        resolution=RESOLUTION,
-        comm=comm,
+        port_clearance=PORT_CLEARANCE,
     )
 
-    n_cells = mesh.topology.index_map(3).size_global
-    assert n_cells > 0, "Mesh must contain cells"
-    assert n_cells < 50000, f"Mesh must stay under 50k cells, got {n_cells}"
+    port_dx, port_dy, port_dz = PORT_BOX_SIZE
+    conductor_outer_radius = RING_RADIUS + max(0.5 * LEG_WIDTH, RING_MINOR_RADIUS)
+    port_radius = conductor_outer_radius + 0.5 * port_dy + PORT_CLEARANCE
 
-    # `cell_tags.values` is rank-local: at -n 2 rank 0 owns no P2/P3 cells and
-    # rank 1 owns no P1/P4, so the old `set(np.unique(...))` failed on both
-    # ranks for opposite reasons (20260803T200151Z_GEO-9-step2b-probe.log) even
-    # though every tag was present globally. Known-issues recorded this fix as
-    # written-and-reverted pending exactly this rework; the assertion content
-    # below is unchanged.
-    unique_tags = global_cell_tag_set(mesh, cell_tags)
+    expected = {
+        "port_face_area_m2": port_dx * port_dz,
+        "conductor_outer_radius_m": conductor_outer_radius,
+        "port_radius_m": port_radius,
+        "min_port_center_separation_m": 2.0 * port_radius * np.sin(np.pi / LEG_COUNT),
+        "conductor_radial_clearance_m": (
+            port_radius - 0.5 * port_dy - conductor_outer_radius
+        ),
+        "phantom_radial_clearance_m": port_radius - 0.5 * port_dy - PHANTOM_RADIUS,
+    }
 
-    expected_port_tags = [100 + i for i in range(1, leg_count + 1)]
+    if comm.rank == 0:
+        print("\n[OPS-17] birdcage port-layout diagnostics vs closed forms:")
+        for key, want in expected.items():
+            got = float(diagnostics[key])
+            print(
+                f"    {key}: {got:.12e} vs {want:.12e} "
+                f"(rel {abs(got / want - 1.0):.3e})",
+                flush=True,
+            )
 
-    missing_core = [name for tag, name in BIRDCAGE_CORE_TAGS.items() if tag not in unique_tags]
-    assert not missing_core, f"Missing core birdcage tags: {', '.join(missing_core)}"
+    for key, want in expected.items():
+        got = float(diagnostics[key])
+        rel = abs(got / want - 1.0)
+        assert rel < DIAGNOSTICS_BAND, (
+            f"{key} = {got:.12e} vs closed form {want:.12e} "
+            f"(relative {rel:.3e}, band {DIAGNOSTICS_BAND:.0e})"
+        )
 
-    missing_ports = [f"P{i}" for i, tag in enumerate(expected_port_tags, start=1) if tag not in unique_tags]
-    assert not missing_ports, f"Missing port tags for {', '.join(missing_ports)}"
-
-    print_cell_tag_summary(
-        cell_tags,
-        tag_names={
-            **BIRDCAGE_CORE_TAGS,
-            **{tag: f"port_P{i}" for i, tag in enumerate(expected_port_tags, start=1)},
-        },
-        comm=comm,
-        prefix="[birdcage-mesh] ",
+    # The layout must actually clear both bulk regions and its own minima. The
+    # diagnostics raise otherwise, but the margins are what make the fixture
+    # usable, so pin their sign here rather than trusting the raise.
+    assert expected["conductor_radial_clearance_m"] > 0.0
+    assert expected["phantom_radial_clearance_m"] > 0.0
+    assert (
+        diagnostics["min_port_center_separation_m"]
+        > diagnostics["required_port_center_separation_m"]
     )
+    assert diagnostics["port_face_area_m2"] > diagnostics["min_port_face_area_m2"]
 
 
 def test_birdcage_volumes_partition_the_box():
@@ -152,6 +171,19 @@ def test_birdcage_volumes_partition_the_box():
     port_tags = [100 + i for i in range(1, LEG_COUNT + 1)]
     all_tags = [1, 2, 3, *port_tags]
     assert global_cell_tag_set(mesh, cell_tags) == set(all_tags)
+
+    # Tag summary inherited from the finiteness-only test `OPS-17` step 2
+    # removed above: the QA output is worth keeping, the assertions it carried
+    # are subsumed by the exact set identity on the line above.
+    print_cell_tag_summary(
+        cell_tags,
+        tag_names={
+            **BIRDCAGE_CORE_TAGS,
+            **{tag: f"port_P{i}" for i, tag in enumerate(port_tags, start=1)},
+        },
+        comm=comm,
+        prefix="[birdcage-mesh] ",
+    )
 
     v_box = _analytic_box_volume()
     v_total = _total_volume(mesh, comm)

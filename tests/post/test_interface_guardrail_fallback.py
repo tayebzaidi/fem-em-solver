@@ -349,62 +349,12 @@ def _regime(msh, cell_tags, tag: int, comm):
 
 
 # --------------------------------------------------------------------------
-# 1. Probe
+# 1. Probe — deleted (OPS-17 step 2, 2026-08-17)
 # --------------------------------------------------------------------------
-
-
-@pytest.mark.integration
-@pytest.mark.parametrize(
-    "fixture_name", ["piecewise_sigma_tags", "thin_tag_mesh", "mixed_regime_mesh"]
-)
-def test_probe_fallback_regimes(request, fixture_name):
-    """Probe: which fallback regime does each fixture realise, per rank?
-
-    Prints, for every tag, each rank's tagged / interior / dropped counts and
-    whether that rank would take the per-rank fallback.  This is what sizes the
-    defect: a rank with tagged cells and an empty interior set, on a mesh whose
-    global interior set is non-empty, is the mixed regime the anchor gates.
-    """
-    comm = MPI.COMM_WORLD
-    msh, cell_tags = request.getfixturevalue(fixture_name)
-
-    lines = []
-    for tag in TAGS:
-        tagged = _tagged_cells(cell_tags, tag)
-        interior = _interior_tagged_cells(msh, cell_tags, tag)
-        sampling, dropped = _sampling_cells_with_interface_guardrails(
-            msh, cell_tags, tag, prefer_interior=True
-        )
-        fallback = tagged.size > 0 and interior.size == 0
-        lines.append(
-            f"    tag {tag}: tagged {tagged.size}, interior {interior.size}, "
-            f"dropped {dropped}, sampling {sampling.size}, "
-            f"per-rank fallback {'YES' if fallback else 'no'}"
-        )
-
-    for rank in range(comm.size):
-        comm.Barrier()
-        if comm.rank == rank:
-            print(f"\n[POST-1 step 2] {fixture_name} at -n {comm.size}, rank {rank}:")
-            print("\n".join(lines), flush=True)
-    comm.Barrier()
-
-    if comm.rank == 0:
-        print(f"  regimes ({fixture_name}, -n {comm.size}):", flush=True)
-    for tag in TAGS:
-        n_with_tag, n_sliver, n_interior, n_tagged = _regime(msh, cell_tags, tag, comm)
-        if comm.rank == 0:
-            regime = (
-                "global-fallback"
-                if n_interior == 0
-                else ("MIXED" if n_sliver > 0 else "interior")
-            )
-            print(
-                f"    tag {tag}: {regime} — ranks holding the tag {n_with_tag}, "
-                f"sliver ranks {n_sliver}, global interior {n_interior}, "
-                f"global tagged {n_tagged}",
-                flush=True,
-            )
+#
+# test_probe_fallback_regimes was a print-only probe over three
+# parametrisations with zero assertions.  The regime it characterised is
+# gated by the anchors below, which call the same _regime() helper.
 
 
 # --------------------------------------------------------------------------

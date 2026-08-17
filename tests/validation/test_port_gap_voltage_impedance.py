@@ -2216,10 +2216,35 @@ def test_terminal_to_terminal_voltage_retiles_the_closure_decomposition(gap_port
             )
 
 
+# `OPS-17` step 2 (2026-08-17): the step-3b-x record, pinned. The test below
+# was print-only — it carried the factor-244 finding in its docstring and its
+# output, and asserted nothing, so nothing stopped the numbers the narrative is
+# built on from drifting. These are the measured values at `-n 2` from
+# `20260813T003532Z_PORT-1-step3bxvii-repoint-n2.log`, per gap tag:
+#
+#   gap 101: Im Z_gap = +1.110803269e+00 Ohm, Im Z_reaction = +4.537587930e-03
+#            Ohm, ratio 244.800
+#   gap 102: Im Z_gap = +1.110155911e+00 Ohm, Im Z_reaction = +4.537466163e-03
+#            Ohm, ratio 244.664
+#
+# The band is a *regression* band, not an accuracy claim: these are records of
+# what this fixture reads, and the test's finding (the reaction route over an
+# open conducting loop measures the wire term, not the mutual) is a statement
+# about which of them is which. 1% admits the run-to-run and partition variation
+# the rest of this module already tolerates while catching any change that moves
+# the finding. Nothing here gates the physics —
+# REACTION_CONSISTENCY_TOLERANCE remains unmoved and unapplied.
+REACTION_RECORD_RTOL = 0.01
+REACTION_RECORDS = {
+    101: {"im_z_gap_ohm": 1.110803269e00, "im_z_reaction_ohm": 4.537587930e-03},
+    102: {"im_z_gap_ohm": 1.110155911e00, "im_z_reaction_ohm": 4.537466163e-03},
+}
+
+
 @complex_only
-def test_reaction_route_on_the_gapped_fixture_is_reported(gap_ports):
-    """``−∫E·J_test/(I₁I_test)`` over the undriven conductor — **printed, and a
-    measured finding about step 3b-x's anchor (2), not a gate.**
+def test_reaction_route_on_the_gapped_fixture_reproduces_its_record(gap_ports):
+    """``−∫E·J_test/(I₁I_test)`` over the undriven conductor — **a pinned record
+    of step 3b-x's anchor (2), not a gate on the physics.**
 
     The plan's second anchor was to gate the corrected gap voltage against the
     landed step-1/2 reaction route evaluated on *this* fixture and *this* solved
@@ -2248,6 +2273,10 @@ def test_reaction_route_on_the_gapped_fixture_is_reported(gap_ports):
     the next attempt starts from the measurement rather than from the plan's
     premise.  ``REACTION_CONSISTENCY_TOLERANCE`` is unmoved and ungated: nothing
     was loosened, the anchor is simply not yet computable on this fixture.
+
+    `OPS-17` step 2 (2026-08-17) pinned both measured numbers as a regression
+    bound — see ``REACTION_RECORDS`` above for the values and why the band is a
+    record band rather than an accuracy claim.
     """
     omega_m = gap_ports["omega_m"]
     for tag, record in sorted(gap_ports["currents"].items()):
@@ -2271,6 +2300,29 @@ def test_reaction_route_on_the_gapped_fixture_is_reported(gap_ports):
                 f"{REACTION_CONSISTENCY_TOLERANCE:.0%}, unmoved)",
                 flush=True,
             )
+
+        expected = REACTION_RECORDS[tag]
+        for name, measured, want in (
+            ("Im Z_gap", z_gap.imag, expected["im_z_gap_ohm"]),
+            ("Im Z_reaction", z_reaction.imag, expected["im_z_reaction_ohm"]),
+        ):
+            rel = abs(measured / want - 1.0)
+            assert rel < REACTION_RECORD_RTOL, (
+                f"gap {tag}: {name} = {measured:+.9e} Ohm against the step-3b-x "
+                f"record {want:+.9e} Ohm (relative {rel:.4e}, band "
+                f"{REACTION_RECORD_RTOL:.0%}); the factor-244 finding this test "
+                "documents is built on these two numbers"
+            )
+
+        # The finding itself: the reaction route reads a quantity ~244x smaller
+        # than the terminal estimator, which is what identifies it as the wire
+        # term of the loop-closure decomposition rather than the mutual.
+        ratio = abs(z_gap.imag) / abs(z_reaction.imag)
+        want_ratio = abs(expected["im_z_gap_ohm"] / expected["im_z_reaction_ohm"])
+        assert abs(ratio / want_ratio - 1.0) < REACTION_RECORD_RTOL, (
+            f"gap {tag}: Im Z_gap / Im Z_reaction = {ratio:.3f} against the "
+            f"record {want_ratio:.3f}"
+        )
 
 
 @complex_only

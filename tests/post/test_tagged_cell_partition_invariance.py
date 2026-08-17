@@ -111,64 +111,11 @@ def _all_tagged_cells(cell_tags, tag: int) -> np.ndarray:
     return np.asarray(cell_tags.indices[cell_tags.values == int(tag)], dtype=np.int32)
 
 
-@complex_only
-@pytest.mark.integration
-def test_probe_tagged_ghost_cell_separation(piecewise_sigma_field):
-    """Probe: how many tagged cells on this fixture are ghosts, per rank?
-
-    This sizes the defect before anything is gated.  A tagged ghost count of 0
-    would mean the fixture cannot exhibit rank-count dependence at all, and the
-    invariance tests below would be vacuous rather than exonerating — so the
-    count is asserted positive, not merely printed.
-    """
-    comm = MPI.COMM_WORLD
-    e_field, cell_tags = piecewise_sigma_field
-    mesh = e_field.function_space.mesh
-    n_owned = _n_owned(mesh)
-    n_ghost = int(mesh.topology.index_map(mesh.topology.dim).num_ghosts)
-
-    lines = [f"  rank {comm.rank}: owned cells {n_owned}, ghost cells {n_ghost}"]
-    total_ghost_tagged = 0
-    for tag in TAGS:
-        all_tagged = _all_tagged_cells(cell_tags, tag)
-        ghost_tagged = int(np.count_nonzero(all_tagged >= n_owned))
-        total_ghost_tagged += ghost_tagged
-        lines.append(
-            f"    tag {tag}: tagged {all_tagged.size} "
-            f"(owned {all_tagged.size - ghost_tagged}, ghost {ghost_tagged})"
-        )
-        for prefer in PREFER_INTERIOR:
-            sampling, dropped = _sampling_cells_with_interface_guardrails(
-                mesh, cell_tags, tag, prefer_interior=prefer
-            )
-            ghost_sampling = int(np.count_nonzero(sampling >= n_owned))
-            lines.append(
-                f"      prefer_interior={prefer}: sampling {sampling.size} "
-                f"(ghost {ghost_sampling}, boundary-dropped {dropped})"
-            )
-
-    for rank in range(comm.size):
-        comm.Barrier()
-        if comm.rank == rank:
-            print(f"\n[POST-1 step 1] probe at -n {comm.size}:")
-            print("\n".join(lines), flush=True)
-    comm.Barrier()
-
-    global_ghost_tagged = comm.allreduce(total_ghost_tagged, op=MPI.SUM)
-    if comm.rank == 0:
-        print(
-            f"  total tagged ghost cells across ranks: {global_ghost_tagged}",
-            flush=True,
-        )
-
-    if comm.size == 1:
-        pytest.skip("serial run has no ghost cells; the defect is an MPI one")
-
-    assert global_ghost_tagged > 0, (
-        f"no tagged cell on any of {comm.size} ranks is a ghost, so this fixture "
-        "cannot exhibit the double-counting defect: the invariance assertions "
-        "below would be vacuous, not exonerating"
-    )
+# OPS-17 step 2 (2026-08-17): test_probe_tagged_ghost_cell_separation deleted.
+# Its only assertion was `global_ghost_tagged > 0` — a finiteness-class
+# non-vacuity check.  The finding it sized is gated exactly by
+# test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count below,
+# which uses the same _all_tagged_cells helper.
 
 
 @complex_only

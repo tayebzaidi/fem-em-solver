@@ -12532,3 +12532,97 @@ measure the cross-route as a function of `w`, which turns the 7.8% into a curve
 and would say whether the two definitions converge as `w → 0`; (c) accept a
 documented feed-definition systematic and quote it beside the other two. (b) is
 the only one that is itself a measurement and would fit one slot.
+
+---
+
+## 2026-08-17T11:45Z — `OPS-17` step 2 — **complete**
+
+**Slot:** 06:00 CDT scheduled implementer run. Preflight clean, container Up,
+no `recovered/*`. Took On-deck item 2 (item 1 was already done).
+
+**What was tried.** All 14 dispositions from the step-1 table, executed
+verbatim: 4 deletes, 10 replacements. Everything landed on `main` in one
+commit with the logs, §7 flip, §9 tick and known-issues entries.
+
+**Deletes (4).** `test_convergence.py::{test_p_refinement_straight_wire,
+test_convergence_data_export}` (bare `pytest.skip` stubs),
+`test_interface_guardrail_fallback.py::test_probe_fallback_regimes` (zero
+asserts; its `_regime` helper is used by four gated tests in the same file and
+was kept), `test_tagged_cell_partition_invariance.py::test_probe_tagged_ghost_cell_separation`
+(`global_ghost_tagged > 0` only; `_all_tagged_cells` kept — a gated test uses it).
+
+**Replacements that landed their anchor, with measured numbers** (all `-n 2`):
+
+| file | anchor | measured | band |
+| --- | --- | --- | --- |
+| `solver/test_cylinder.py` | `μ₀I/2πr` at mid-length | 13.2751% L2 | 25% |
+| `solver/test_coil_phantom_magnetostatics.py` | on-axis `B_z` vs two-loop Biot–Savart | 17.1233% L2 | 30% |
+| `solver/test_two_torus.py` | volume partition | 1.000000000000 | 1e-9 |
+| `mesh/test_mesh_tag_integrity.py` ×2 | tagged-volume partition | 1.000000000000 | 1e-9 |
+| `mesh/test_birdcage_port_tags.py` | port-layout diagnostics vs closed forms | exact | 1e-12 |
+| `validation/test_straight_wire.py` | fitted h-rate (was `errors[-1] < errors[0]`) | in band | `[0.7, 1.5]` |
+| `validation/test_port_gap_voltage_impedance.py` | 3b-x record | both tags reproduce | 1% |
+
+Two of the ten did not take the anchor the table named, both for reasons
+recorded in §7 rather than by failure: the **birdcage** row's named
+tagged-volume identity is already gated on the *identical* fixture by
+`test_birdcage_volumes_partition_the_box` 20 lines below (`LEG_COUNT == 4`),
+so it would have duplicated a gate and paid for a second mesh — the
+pre-authorised "delete rather than duplicate" reasoning, applied to the
+mesh-side half only, with the replacement gating the previously print-only
+meshless `birdcage_port_layout_diagnostics`; and the **time-harmonic smoke**
+row's α anchor is not measurable on that fixture at all (interior axial
+current in a cylinder — geometric spreading and absorption are not separable
+from `|E|` at two depths), so it took the `POST-3` Poynting identity instead.
+
+Two replacements needed a *fixture* fix before their closed form meant
+anything, and both are findings in their own right: `test_coil_phantom_magnetostatics`
+drove `(0,0,J)` on **toroidal** coil tags (a z-directed J drives essentially no
+loop current — `test_circular_loop` records the same mistake costing ~1000×),
+and neither it nor `test_cylinder` imposed the `MAG-13` analytic Dirichlet wall.
+
+**Four defects surfaced, none fixed, no band loosened.** Three are carried as
+`pytest.mark.xfail(strict=True)` with the measurement in the docstring so a fix
+reports XPASS; full write-ups in known-issues 2026-08-17.
+
+1. `coil_phantom_domain` region-resolution policy: meshed coil volumes
+   **−21.68% / −22.62%** (CAD recovery 75.5% → 59.1%) while specifying a
+   *finer* size than the uniform run. An inscribing linear-tet mesh cannot
+   lose volume under refinement — the sign is the defect. Not diagnosed.
+2. Coulomb-gauge multiplier does not vanish for a divergence-free source:
+   spread **7.836781e+00** on a closed loop vs **2.083064e+02** on the
+   deliberately incompatible wire (26.6×, so it is not dead). Not diagnosed.
+3. Real Poynting power on the smoke fixture: dissipated **+1.199162e-06 W**
+   vs net inward **−2.008179e-07 W** — imbalance **116.7465%** against a
+   pre-stated 25%, and the flux **sign is wrong**. Not diagnosed.
+4. `poynting_power_balance` raises on scalar `sigma=0.0` (UFL folds the
+   integrand to a domain-less zero), the σ-blind control its own docstring
+   advertises. Worked around with `1e-12·σ`; one-line `POST` fix.
+
+**Logs.** `20260817T111036Z_OPS-17-step2-collect.log` (359 collected, exit 0,
+6 s) · `20260817T111054Z_OPS-17-step2-mesh-n2.log` (15 s) ·
+`20260817T111217Z_OPS-17-step2-solver-n2.log` (41 s) ·
+`20260817T111429Z_OPS-17-step2-complex-n2.log` (**exit 124**, 561 s — see
+below) · `20260817T112414Z_OPS-17-step2-th-smoke-n2.log` (defect 4) ·
+`20260817T112448Z_OPS-17-step2-th-smoke2-n2.log` (defect 3) ·
+`20260817T113031Z_OPS-17-step2-portgap-n2.log` (1 passed, 448 s) ·
+`20260817T113806Z_OPS-17-step2-xfail-n2.log` (**10 passed, 2 xfailed**, 202 s).
+
+**Sizing valve used, as the item pre-authorised.** The two full-suite legs did
+not fit. The first complex-mode leg hit its 560 s ceiling with the two `post/`
+deletion files still running (their tests were observed PASSED before the
+kill), and the `port_gap` fixture alone costs 446 s. Landed with targeted runs
+of every touched file plus a whole-tree collect-only. **Not run, and owed to a
+step 3:** the full real + complex suite legs, and `finiteness_sweep.py` as the
+before/after control (candidate count 59 → 45). Neither is a blocker; both are
+cheap and the review should cut step 3 for them.
+
+**Hypothesis for the next attempt.** Defects 1–3 are all plausibly the same
+shape — a coarse fixture whose named anchor was written assuming a resolution
+it does not have — and all three are settled by one h-ladder each. Defect 1 is
+the exception and the most interesting: it is sign-wrong, not magnitude-wrong,
+so no amount of refinement explains it and it should be read as a real bug in
+`coil_phantom_domain`'s region sizing. Cheapest next probe: mesh that fixture
+at three `coil_resolution` values with the policy on and print the tag volumes
+— if they move monotonically *away* from CAD as the requested size falls, the
+region fields are replacing rather than refining the surface sizing.

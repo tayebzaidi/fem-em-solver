@@ -48,6 +48,11 @@ from fem_em_solver.io.mesh import MeshGenerator
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.analytical import AnalyticalSolutions, ErrorMetrics
 from fem_em_solver.utils.constants import MU_0
+from tests.validation.test_convergence import (
+    RATE_MAX,
+    RATE_MIN,
+    fit_convergence_rate,
+)
 
 # Geometry chosen so the wire is resolvable at a coarse global mesh size while
 # the sampling annulus stays clear of both the conductor and the outer boundary.
@@ -216,7 +221,15 @@ class TestStraightWire:
         )
 
     def test_straight_wire_convergence(self):
-        """Error decreases as the mesh is refined."""
+        """The measured h-refinement *rate* sits in the N1curl degree-1 band.
+
+        `OPS-17` step 2 (2026-08-17): the previous assertion was
+        ``errors[-1] < errors[0]`` — monotone improvement with no rate, which
+        a solve converging at any rate at all (or by luck) passes. Replaced
+        with the fitted log-log slope gated on the same ``[RATE_MIN, RATE_MAX]``
+        band ``test_convergence.py::test_h_refinement_straight_wire`` uses, and
+        with the same fitting routine, imported rather than re-derived.
+        """
         comm = MPI.COMM_WORLD
         resolutions = [0.004, 0.0025]
         n_points = 8
@@ -230,9 +243,14 @@ class TestStraightWire:
             if comm.rank == 0:
                 print(f"  Resolution {res:.4f} m: error = {err:.4%}")
 
-        assert errors[-1] < errors[0], (
-            f"Error should decrease with refinement, got {errors[0]:.4%} -> "
-            f"{errors[-1]:.4%}"
+        rate = fit_convergence_rate(np.array(resolutions), np.array(errors))
+        if comm.rank == 0:
+            print(f"  Fitted convergence rate: {rate:.4f}")
+
+        assert RATE_MIN < rate < RATE_MAX, (
+            f"Convergence rate {rate:.4f} outside [{RATE_MIN}, {RATE_MAX}] "
+            f"(expected ~1.0 for N1curl degree 1); errors "
+            f"{[f'{e:.4%}' for e in errors]} at h {resolutions}"
         )
 
 
