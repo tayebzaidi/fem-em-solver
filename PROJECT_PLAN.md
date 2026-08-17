@@ -1108,7 +1108,7 @@ the residual in this entry, known-issues if it blocks, stop.
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ✅ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ✅ | standard |
-| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 scoped by the 18:00 review — fixed-f Richardson ladder at 10/30 MHz)* | standard (step 4 heavy) |
+| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 ✅ 2026-08-17 — the fixed-f h-ladder reads **flat in f**: refinement moves the deviation −1.87 pp at 10 MHz and −4.48 pp at 30 MHz (−7.46 pp at 64 MHz on record) and the h → 0 brackets overlap at ~−1%, so the "trend" was the resolution term; no gated trend claim is scopeable and §2 stands)* | standard (step 4 heavy) |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)**
 ✅ *(steps 1–4 ✅ 2026-08-13, chunk closed by the 10:30 review; full step
@@ -1190,7 +1190,39 @@ step-1/2 journals archived in `docs/planning/plan-archive.md`.)*
 > resolution term as step 1 and is a trend *point*, not a trend *claim*.
 > **Tier/cost:** standard, `-n 2`, ~60–75 s (step 1's price); container
 > `timeout -k 30 590`. **Traps/scope/negative result:** step 2's, verbatim.
-> * **Step 4 (scoped 2026-08-16, 18:00 review — the affordable half of the
+> * **Step 4 ✅ 2026-08-17** *(`test_coil_loading_richardson_ladder.py`;
+>   `20260817T033320Z_TH-11-step4-baseline.log` 138 s / 18 passed,
+>   `20260817T033547Z_TH-11-step4-fine-10mhz.log` 422 s / 10 passed + 1
+>   skipped, `20260817T034258Z_TH-11-step4-fine-30mhz.log` 383 s / 10 passed
+>   + 1 skipped; heavy, `-n 2`)*: the h-ladder at fixed f reads
+>   **flat-in-f, i.e. the §7 negative result** — the eddy→displacement
+>   "trend" steps 1–3 saw was the resolution term, not a physics term.
+>   Refining `resolution_near` 0.005 → 0.0025 (138 619 → 417 914 cells,
+>   factor 2 in h) moves the ΔR deviation **+1.5834% → −0.2829%** at 10 MHz
+>   (−1.8663 pp) and **+5.5912% → +1.1119%** at 30 MHz (−4.4793 pp); the
+>   64 MHz pair on record moves +10.2698% → +2.8063% (−7.4635 pp). So the
+>   *deviation* rises with f only at fixed h, while the *move under
+>   refinement* rises in lockstep with it. Extrapolated to h → 0 (printed as
+>   a bracket, since two rungs cannot fix d₀, C and p at once): **[−2.1492%,
+>   −0.9050%]** at 10 MHz and **[−3.3675%, −0.3812%]** at 30 MHz for assumed
+>   rates p = 1 / p = 2 — overlapping brackets, both straddling ~−1%, no
+>   rise with f. Effective rate if the limit were zero: 2.330 at 30 MHz,
+>   undefined at 10 MHz (the deviation changes sign). **Gates all held:**
+>   complex-power identity ≤ **8.1597e-14** (worst of six solves) against
+>   1e-9, σ = 0 dissipation exactly `+0.0` vs +1.36e-01/+3.40e-01 W loaded,
+>   drive control, cell counts exact (138 619 / 417 914), ΔR > 0 / ΔX < 0 on
+>   every rung, and the reaction and dissipation routes to ΔR agree to all 8
+>   printed digits on all six solves. **Negative control (§7's):** both
+>   baseline anchors reproduced their records to **−0.00002 pp** (10 MHz) and
+>   **−0.00000 pp** (30 MHz) against the `MAT-6` step-8 run-to-run floor of
+>   0.01 pp. Residual reading: ~1% remains at 3.68 cells/δ (30 MHz) and
+>   −0.28% at 6.37 cells/δ (10 MHz) — same magnitude class, opposite signs,
+>   so what is left is at the level of the fixture's own systematics, not a
+>   frequency-dependent physics term. **Consequence:** no gated coil-loading
+>   trend is scopeable below 30 MHz, and §2's extrapolation sentence stands
+>   as written; whether to buy the 64 MHz `near = 0.00125` rung (~9 min/solve)
+>   to say the same thing at Larmor is the review's call.
+> * **Step 4 plan as scoped (2026-08-16, 18:00 review — the affordable half of the
 >   Richardson programme steps 2 and 3 both recommended; heavy, one run).**
 >   The h-ladder at **fixed f, at the two affordable frequencies**: solve
 >   the loaded/free pair on the step-1 baseline (near 0.005, 138 619 cells)
@@ -2201,7 +2233,12 @@ by this review.
    deleted yet. Independent of every other item. Sweep tool landed at
    `scripts/testing/finiteness_sweep.py`; step 2 re-runs it as its
    before/after control.
-3. **`TH-11` step 4 — fixed-f Richardson ladder at 10 and 30 MHz
+3. ✅ **done 2026-08-17** (three harness commands — baseline both f 138 s,
+   fine 10 MHz 422 s, fine 30 MHz 383 s — split from the scoped two so each
+   fits one foreground window). **Flat in f**: h → 0 brackets [−2.1492%,
+   −0.9050%] at 10 MHz and [−3.3675%, −0.3812%] at 30 MHz overlap; anchors
+   reproduced to −0.00002 / −0.00000 pp; identities ≤ 8.16e-14.
+   **`TH-11` step 4 — fixed-f Richardson ladder at 10 and 30 MHz
    (heavy, two harness commands, one per frequency).** Execute the §7
    `TH-11` step-4 entry verbatim: refined-rung (417 914-cell) pairs at
    10 and 30 MHz, identity family on every rung, baseline records

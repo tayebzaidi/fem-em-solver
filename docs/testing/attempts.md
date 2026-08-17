@@ -12327,3 +12327,67 @@ same fixture), then the solver archetypes against their existing closed forms.
 Grep for imports of the deleted names first; `test_probe_fallback_regimes` is
 parametrised over three fixtures that other tests in its file also use, so the
 fixtures stay even though the probe goes.
+
+---
+
+## 2026-08-17T03:50Z — `TH-11` step 4 — **complete**
+
+Scheduled implementer slot 22:30 CDT. Preflight clean, container Up (31 h).
+§9 On-deck items 1–2 were already done, so this run took item 3, the fixed-f
+Richardson ladder, and executed the §7 `TH-11` step-4 entry.
+
+**What was built.** `tests/validation/test_coil_loading_richardson_ladder.py`
+— step 1's fixture body with **two** knobs freed (`resolution_near` and f),
+both selected by environment (`TH11_STEP4_RUNG` ∈ {baseline, fine},
+`TH11_STEP4_FREQ_MHZ`, default `baseline` / `10,30`, so a bare CI run takes
+the cheap rung). Solve helper, energy helpers, dissipation helper and the two
+cell-count records are imported from steps 1–2, never re-declared.
+
+**Deviation from the scoped shape, deliberate.** The entry says "two harness
+commands, one per f"; that would have put ~500 s of container time plus FFCx
+in one window, and the protocol caps a foreground harness command at ~590 s of
+container time. Split into **three**: baseline rung at both frequencies
+(138 s), then the two fine-rung solves (422 s, 383 s). Same six solves, same
+gates, more headroom. Container-side `timeout -k 30 500 / 560 / 560`, `-n 2`.
+
+**Result — the §7 negative result, cleanly.** The ladder reads **flat in f**:
+
+| f | baseline (0.005) | fine (0.0025) | move | h→0, p = 1 | h→0, p = 2 |
+|---|---|---|---|---|---|
+| 10 MHz | +1.5834% | −0.2829% | −1.8663 pp | −2.1492% | −0.9050% |
+| 30 MHz | +5.5912% | +1.1119% | −4.4793 pp | −3.3675% | −0.3812% |
+| 64 MHz *(steps 1–2, on record)* | +10.2698% | +2.8063% | −7.4635 pp | — | — |
+
+The deviation rises with f only at fixed h; the move under refinement rises in
+lockstep, and the extrapolation brackets overlap at ~−1% with no rise. Two
+rungs cannot fix d₀, C and p simultaneously, so the module prints the p = 1 /
+p = 2 bracket plus `p_eff` (2.330 at 30 MHz; undefined at 10 MHz — the
+deviation changes sign) instead of a single extrapolant. What remains at the
+fine rung (−0.28% at 6.37 cells/δ, +1.11% at 3.68 cells/δ) is same-magnitude,
+opposite-sign — fixture systematics, not a frequency-dependent physics term.
+
+**Gates (all green, nothing loosened).** Complex-power identity worst
+**8.1597e-14** of six solves vs the 1e-9 family bound; σ = 0 dissipation
+exactly `+0.0` against +1.3604e-01 / +3.4025e-01 W loaded; drive control
+< 1e-24; cell counts exact 138 619 / 417 914; ΔR > 0, ΔX < 0 on every rung;
+reaction and dissipation routes to ΔR agree to all 8 printed digits, six for
+six. §7's **negative control** — the baseline anchors reproduced their records
+to **−0.00002 pp** (10 MHz) and **−0.00000 pp** (30 MHz) against `MAT-6` step
+8's 0.01 pp run-to-run floor. The fine 10 MHz rung also lands on `MAT-6` step
+8's independent 0.2829% record (sign now printed: −0.2829%).
+
+**Logs.** `20260817T033320Z_TH-11-step4-baseline.log` (138 s, 18 passed),
+`20260817T033547Z_TH-11-step4-fine-10mhz.log` (422 s, 10 passed 1 skipped),
+`20260817T034258Z_TH-11-step4-fine-30mhz.log` (383 s, 10 passed 1 skipped).
+Heavy tier. No denied commands, no ⚠️ subsystem extended, no known-issues
+churn. `TH-11` left **🟡**: every scoped step is closed, but whether the chunk
+closes on a flat-in-f finding is a review adjudication, not this run's.
+
+**Hypothesis for the next attempt.** The 64 MHz `near = 0.00125` third rung is
+now the only open question and is probably **not worth buying**: the two
+extrapolations already say the transition signal was mesh, and that rung costs
+~9 min/solve (over one slot at `-n 2`; feasible at `-n 8` if the review wants
+it). Cheaper alternative if the review wants Larmor covered: re-use this module
+at f = 64 MHz on the two existing rungs — it needs only a
+`DR_DEV_BASELINE_RECORD` entry (+0.102698) and would produce the 64 MHz
+bracket from solves already priced at 390 s.
