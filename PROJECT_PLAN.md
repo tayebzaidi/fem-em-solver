@@ -389,7 +389,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
-| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempt 1 2026-08-17 — 2 of 4 commands ran; sweep anchor restated 45 → **56, reconciled**; real full-suite leg overran at 58% and is split; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4) | standard |
+| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b), the two complex legs, unstarted) | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 
@@ -852,6 +852,42 @@ exists, replace instead. Two steps, one implementer run each.)*
 >     `tests/validation` (`timeout -k 30 570`, the `port_gap` family is 446 s of
 >     it) plus the complex remainder with `tests/environment` first, which is
 >     the only leg that can observe defect 3's xfail in a completed run.
+>
+>   **🟡 attempt 2, 2026-08-17 21:45Z (16:30 slot) — leg (a) is CLOSED: the
+>   real-mode half is observed in completed legs and reconciles exactly. Leg
+>   (b), the two complex legs, is unstarted and unblocked.** Nothing parked (no
+>   `src/` or `tests/` change). Full journal in `docs/testing/attempts.md`.
+>   * **Real `tests/validation` is now sized and green, in three commands**
+>     — the leg attempt 1 left unmeasured. Collect **206**
+>     (`20260817T213108Z_OPS-17-step3b-probe-collect.log`, 5 s); the prescribed
+>     probe prices `test_convergence.py` at **119.61 s for one test**
+>     (`20260817T213125Z_OPS-17-step3b-probe-convergence.log`). 35 of 47
+>     validation files are `complex_only`, so the real leg is mostly skips with
+>     a heavy magnetostatic head; split so neither command could overrun:
+>     remainder **33 passed, 167 skipped, 249.48 s**
+>     (`20260817T213419Z_OPS-17-step3b-real-validation-remainder.log`),
+>     convergence **1 passed**, mesh cache **5 passed, 141.49 s**
+>     (`20260817T213843Z_OPS-17-step3b-real-mesh-cache.log`). All exit 0, both
+>     ranks byte-identical. **33 + 1 + 5 = 39 passed + 167 skipped = 206
+>     collected, exactly**; zero failures, zero xfails, zero XPASS.
+>   * **Negative control measured, and it closes the real half by count.** Real
+>     `tests/` collects **377**
+>     (`20260817T214141Z_OPS-17-step3b-collect-real-unpiped.log`, 3 s) — step
+>     2's 359 was a *complex* count, and the delta is the 18 tests landed since.
+>     **171 + 206 = 377 exactly**: attempt 1's non-validation leg (3 failed,
+>     134 passed, 32 skipped, 2 xfailed) still holds on this tree — the only
+>     commit since is `df4e615`, docs and logs only. So **every real-mode test
+>     is observed in a completed leg with every failure a named expected one**
+>     (the 3 `tests/ports/` failures; nothing else). The sweep anchor was not
+>     re-run — no test file changed — so **56, reconciled** stands.
+>   * **Defect 3 is still unobserved** (`@complex_only`), and only leg (b) can
+>     see it. Leg (b) remains: complex `tests/validation` then the complex
+>     remainder with `tests/environment` first.
+>   * **Process — the step's own new trap was tripped once and corrected.** The
+>     first collect command piped pytest through `tail`, so
+>     `20260817T214128Z_OPS-17-step3b-collect-real.log` records *tail's* exit;
+>     re-run unpiped. Do not cite the piped log. The trap survives having just
+>     been read — keep it in the rubric.
 
 **`OPS-13` — land the rank-safe `_validate_material_map_tags` fix** ✅
 *(2026-08-08; full narrative in `docs/planning/plan-archive.md`)*. The one
@@ -2987,7 +3023,19 @@ execute their §7 entries verbatim as annotated by this review.
    a solver-stack finding — known-issues entry, 5b stays blocked,
    report, stop.
 3. **`OPS-17` step 3 — full-suite legs + the sweep control (standard).**
-   Execute the §7 step-3 entry verbatim (scoped this review): four
+   **🟡 attempt 2, 2026-08-17, 16:30 slot — leg (a) CLOSED, leg (b) is what
+   remains.** Executed the split attempt 1's §7 annotation prescribed (the
+   real-mode legs), not this item's original four commands. Real
+   `tests/validation` is now sized and green in three commands (39 passed +
+   167 skipped = 206 collected, exactly; probe prices `test_convergence.py` at
+   119.61 s), and with attempt 1's non-validation leg the count closes exactly:
+   **171 + 206 = 377** real-mode tests, all observed in completed legs, every
+   failure a named expected one. **Next slot takes leg (b) only:** complex
+   `tests/validation` (`timeout -k 30 570`; split `test_port_gap_*` off if it
+   threatens the window) then the complex remainder with `tests/environment`
+   first — the only leg that can observe defect 3's th-smoke xfail. See the §7
+   attempt-2 annotation. Original text: execute the §7 step-3 entry verbatim
+   (scoped this review): four
    commands — `finiteness_sweep.py` (**anchor:** candidate count
    59 → 45 exactly, zero new), the full real leg, complex
    `tests/validation` alone (the 446 s `port_gap` family gets its own

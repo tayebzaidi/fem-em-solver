@@ -13034,3 +13034,73 @@ and journalling each leg's counts requires. Split it: one slot for the two real
 legs (2 above is the only unmeasured one), one for the two complex legs. The
 `_DummyComm` breakage is a two-line fix in the test double, but it belongs to
 whoever owns `PORT-1`'s retirement, not to `OPS-17`.
+
+## 2026-08-17T21:45Z — `OPS-17` step 3 (leg a) — **incomplete** (the real-mode half is closed exactly; the two complex legs remain)
+
+**Outcome: incomplete on the step, complete on leg (a).** This slot executed the
+split attempt 1 prescribed in the §7 annotation — the real-mode legs — and did
+**not** re-run step 3 as originally written. Every one of the **377** real-mode
+tests is now accounted for in a *completed* leg, and the counts reconcile
+exactly. No `src/` or `tests/` change was made, so nothing is parked: `main`
+carries five logs, this entry, and the §7 annotation.
+
+**Why the real leg is now sized (attempt 1's open question).** Real-mode
+`tests/validation` collects **206** (`20260817T213108Z_..._probe-collect.log`,
+exit 0, 5 s), and the prescribed cost-probe puts `test_convergence.py` at
+**119.61 s for its single test**
+(`20260817T213125Z_..._probe-convergence.log`, 1 passed, exit 0, 120 s,
+`--durations`). 35 of the 47 validation files carry `complex_only`, so the real
+leg is mostly skips with a heavy magnetostatic head. Split into two commands so
+neither could overrun, rather than betting one 570 s window:
+
+| leg | command | result | elapsed |
+| --- | --- | --- | --- |
+| validation remainder | `tests/validation` minus `test_convergence.py`, `test_coil_loading_larmor_mesh_cache.py`, `-n 2`, `timeout -k 30 570` | **33 passed, 167 skipped**, exit 0 | 249.48 s |
+| convergence (the probe, reused) | `test_convergence.py`, `-n 2`, `timeout -k 30 400` | **1 passed**, exit 0 | 119.61 s |
+| mesh cache | `test_coil_loading_larmor_mesh_cache.py`, `-n 2`, `timeout -k 30 400` | **5 passed**, exit 0 | 141.49 s |
+
+**33 + 1 + 5 = 39 passed, 167 skipped = 206 collected, exactly.** Both ranks
+print byte-identical summaries in all three. Zero failures, zero xfails, zero
+XPASS anywhere in real-mode validation. Slowest real work is magnetostatic, not
+the ladders: `test_circular_loop_on_axis` 116.71 s, `..._field_symmetry`
+45.02 s, `test_straight_wire_convergence` 30.47 s.
+
+**The negative control, measured.** Real-mode `tests/` collects **377**
+(`20260817T214141Z_..._collect-real-unpiped.log`, exit 0, 3 s). Step 2's 359 was
+a *complex-mode* count; the difference is the 18 tests that landed since
+(`TH-11` step 4/5a, `PORT-9` step 2b, `OPS-17` step 2's own sibling). More
+usefully, **171 + 206 = 377 exactly** — attempt 1's non-validation leg
+(3 failed, 134 passed, 32 skipped, 2 xfailed = 171) plus this slot's 206. That
+leg is still valid on this tree: the only commit since it ran is `df4e615`,
+which touches `PROJECT_PLAN.md`, `docs/` and logs only (verified by
+`git show --stat`), so no `src/`/`tests/` byte has moved.
+
+**Real-mode half of the step's anchor: MET.** Every real-mode test is observed
+in a completed leg, and every failure is a *named* expected one — the 3 in
+`tests/ports/` from attempt 1 (known-issues 3, plus this tree's new
+`_DummyComm` entry), nothing else. Both real-reachable strict xfails still
+xfail. **Defect 3's th-smoke Poynting xfail remains unobserved** — it is
+`@complex_only`, so only leg (b) can see it, exactly as attempt 1 predicted.
+The sweep anchor was not re-run: no test file changed since attempt 1 measured
+it, so **56, reconciled** stands.
+
+**Process note — I tripped the step's own named trap and corrected it.** The
+first collect-count command piped pytest through `tail -3`, so its footer
+(`20260817T214128Z_..._collect-real.log`) records *tail's* exit 0, not pytest's;
+I re-ran it unpiped for the record. The trap is one command's worth of
+carelessness even when you have just read it — worth keeping in the rubric.
+Both logs are committed; the piped one should not be cited.
+
+**Remaining work — leg (b), unstarted and unblocked.** Complex
+`tests/validation` (`timeout -k 30 570`; the `port_gap` family is 446 s of it)
+and the complex remainder with `tests/environment` first, which is the only leg
+that can observe defect 3's xfail in a completed run. Nothing else of step 3 is
+outstanding.
+
+**Hypothesis for the next attempt.** Leg (b) fits one slot on this evidence:
+real validation cost 510 s across three commands *including* two heavy
+magnetostatic files, and the complex leg's expensive family is already priced at
+446 s. Run complex `tests/validation` first (it carries `port_gap` and the
+defect-3 xfail's siblings), then the remainder; if the complex validation
+command threatens 570 s, split it the same way — `test_port_gap_*` alone, then
+the rest — rather than raising a ceiling.
