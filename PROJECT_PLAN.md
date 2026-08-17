@@ -2174,10 +2174,22 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-20` | Package S-parameter sweep example (`PORT-1` step 4's newly gated capability: first example calling `run_n_port_sparameter_sweep` on the solved field — the entry-point angle `EX-18` does not cover; full rubric in the §9 item, commissioned 2026-08-15 review) | ✅ (2026-08-16: `ports:2`, one `run_n_port_sparameter_sweep(..., gap_voltage_ports=specs)` call → two solves → Z → S; **all four step-4 records reproduced inside the pre-stated 1% band, misses 3.33e-07 / 3.23e-07 / 3.67e-06 / 2.29e-07** — raw 0.894543 printed first and asserted to *fail* the 10% band, corrected 0.939849 (−6.02%) inside it, ‖S−Sᵀ‖/‖S‖ = 2.5494e-05, ‖S‖₂ = 0.861449 ≤ 1, `\|Z₁₂−Z₂₁\|/\|Z₂₁\|` = 5.8309e-04 printed; negative control executed in-run — the deprecated heuristic route on the same mesh/ports gives an identically-zero off-diagonal, max\|ΔS\| = 3.078e-01 with its `DeprecationWarning` shown; 178.2 s at `-n 2`, 178 055 cells; guide pass 19/19 green. **Named limitation on record:** the sweep returns no fields, so the combined XDMF costs one extra port-1 solve (23.0 s) — surfacing `TimeHarmonicFields` from `SParameterSweepResult` is unscoped. *Audit 2026-08-16, 03:00 review: COMPLIANT; tier reclassified standard → heavy per the `EX-9` precedent — 178.2 s sits at the 180 s standard boundary and the wrap was 500 s; the companion docrefs log exits 1 on 24 pre-existing stale artifacts from other examples, none EX-20's (journaled in attempts.md)*) | heavy |
 | `EX-21` | Graded birdcage conductor mesh (`GEO-15`'s newly gated capability: first birdcage example of any kind — geometry angle no example covers; mesh-only, no solve; full rubric in the §9 item, commissioned 2026-08-16 10:30 review) | ✅ (2026-08-16: `mesh:3`, `examples/meshing/03_birdcage_graded_conductors.py` + same-stem guide; two rungs of the same fixture on the **CAD (occ) mass** denominator — graded `h_c` = 1.6 mm keeps **0.967019** ≥ the imported `CAD_MASS_GATE` = 0.95, baseline global `setSize` keeps **0.740335** and is asserted to *fail* the same gate (`EX-18` inverted-assertion pattern), **separation 0.226685**; `GEO-9` box-partition identities re-asserted on **both** rungs < 1e-9 and the conductor CAD mass identical across them < 1e-12; 48 245 → 98 474 cells, 26.0 s at `-n 2`, standard. Every constant imported from the `GEO-15`/`GEO-9` test modules, none restated (`ANS-1`). Logs `20260816T200348Z_EX-21-example-n2.log` and `20260816T200516Z_EX-21-example-n2-final.log` (ratios bit-identical across both); docrefs `20260816T200505Z_EX-21-docrefs-fix.log` — 24 dead references, all pre-existing staleness from other examples, **none EX-21's** (its one own violation was found and fixed by the first docrefs run). **Measured note for `PORT-9` step 3:** the graded birdcage is 98 474 cells, confirming that entry's 98 k budget) | standard |
 | `EX-22` | Restore the absent example artifacts: refresh runs for `mag` 01/02/04/05/06 + `mri:1` (commissioned 2026-08-16 weekly review — see entry below) | ⬜ | heavy |
-| `EX-23` | Two-torus port-sheet mesh (`GEO-16`'s newly gated capability: first example with an interior sheet surface, facet tags rebuilt dolfinx-side — geometry angle no example covers; mesh-only, no solve; commissioned 2026-08-17 review) | ⬜ | standard |
+| `EX-23` | Two-torus port-sheet mesh (`GEO-16`'s newly gated capability: first example with an interior sheet surface, facet tags rebuilt dolfinx-side — geometry angle no example covers; mesh-only, no solve; commissioned 2026-08-17 review) | ✅ (2026-08-17: `mesh:4`, `examples/meshing/04_two_torus_port_sheet.py` + same-stem guide; both sheets **84 facets**, meshed/CAD = **1.000000000000** inside the imported `AREA_IDENTITY_BAND` = 1e-9, 211/212 area symmetry bit-identical (< 1e-12), out-of-plane spread **3.469e-18** m; kwarg-off control reproduces **79 534** cells with cell tags `{1,2,3,101,102}`, facet tags `{1,201,202}` and sheet tags asserted *absent* (`EX-18` inverted-assertion pattern); extents printed not gated — w = 1.200000000e-02 m, h = 7.977525299e-03 m, **w/h = 1.504225878** against the generator's CAD-side 1.504206917; port areas 1.563786482e-04 m² on both 201/202, unmoved. 79 888 cells / 13.7 s sheet mesh, 79 534 / 12.2 s control, **26.0 s** in-script (30 s harness) at `-n 2`, standard. Every constant imported from `tests/mesh/test_two_torus_port_sheet.py` and the `PORT-1` facet module (`ANS-1`), none restated. Logs `20260817T140233Z_EX-23-list.log`, `20260817T140242Z_EX-23-example-n2.log`, docrefs `20260817T140416Z_EX-23-docrefs.log` — `dead=0 guide=0 stale=24 exit=2`, staleness-only and **none EX-23's** (its own artifacts are fresh; the 24 are `EX-22`'s standing backlog), guide pass 31 guides green) | standard |
 
-**`EX-23` — two-torus port-sheet mesh example** ⬜ *(commissioned
-2026-08-17 review, §5.4 ramp on `GEO-16`'s newly gated capability)*.
+**`EX-23` — two-torus port-sheet mesh example** ✅ *(2026-08-17, 09:00
+slot; commissioned 2026-08-17 review, §5.4 ramp on `GEO-16`'s newly gated
+capability)*. **Closed as written** — every element of the rubric below
+executed, no band moved and none needed to move: both area identities
+landed at `1.000000000000`, the kwarg-off control reproduced 79 534 cells
+with the sheet tags absent, and the docrefs checker exits 2
+(staleness-only, none of it this example's). Two things worth carrying
+forward: the sheet mesh costs **+354 cells** over the control
+(79 888 vs 79 534) — the fragment is nearly free, which is the number
+`PORT-9` step 3 should budget from; and the measured `w/h = 1.504225878`
+sits **1.3e-05 relative** above the generator's own CAD-side
+`squares_w_over_h = 1.504206917`, the arc-chord difference between the
+CAD surface and its triangulation, printed side by side in the example.
+*(Original plan below.)*
 `examples/meshing/01` shows the gapped two-torus and `03` the graded
 birdcage; no example shows an **interior sheet surface** — the
 known-issues-9 pattern (facet tag rebuilt from cell tags on the dolfinx
@@ -2628,7 +2640,17 @@ by this review.
    zero; record reproduction. **Traps/scope/negative result:** §7 entry
    verbatim (step 4's traps; no gated claim; a non-overlapping 64 MHz
    bracket is the informative outcome — record, report, stop).
-4. **`EX-23` — two-torus port-sheet mesh example (standard, mesh-only,
+4. ✅ **DONE 2026-08-17, 09:00 slot** — closed as written, no band
+   moved. Both sheets 84 facets, meshed/CAD **1.000000000000** inside the
+   imported 1e-9; 211/212 symmetry bit-identical; kwarg-off control
+   reproduced **79 534** cells and asserted to *lack* the `21x` tags;
+   extents printed — **w/h = 1.504225878** vs the generator's CAD-side
+   1.504206917 (1.26e-05 relative, the arc-chord difference). 26.0 s
+   in-script at `-n 2`, `20260817T140242Z_EX-23-example-n2.log`; docrefs
+   `exit=2`, `dead=0 guide=0 stale=24`, none of it EX-23's. Measured note
+   for `PORT-9` step 3: the sheet costs **+354 cells** over the control.
+   *(Original item text below.)*
+   **`EX-23` — two-torus port-sheet mesh example (standard, mesh-only,
    no solve).** Execute the §7 `EX-23` entry verbatim (commissioned this
    review): `examples/meshing/04` + same-stem guide, combined-XDMF with
    tags `211`/`212`, every constant imported from

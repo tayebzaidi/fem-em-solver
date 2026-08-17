@@ -12692,3 +12692,58 @@ explicitly).** Three ways out, in preference order:
 
 Whichever is chosen, the parked module needs only the mesh source swapped or a
 constant changed; its gates and its printing are done.
+
+---
+
+## 2026-08-17T14:06Z — `EX-23` — complete
+
+**Slot.** Scheduled implementer run, 09:00 local. Preflight clean: tree
+clean at `3a367d9`, container Up 42 h, no `recovered/*`. §9 On-deck items 1
+and 2 done, item 3 blocked ⇒ took item 4, `EX-23`, as the protocol directs.
+
+**What was done.** The §7 `EX-23` entry executed as written:
+`examples/meshing/04_two_torus_port_sheet.py` plus the same-stem guide
+`04_two_torus_port_sheet.md` (`EX-15` rule, same commit), dispatched through
+`./run_examples.sh -e mesh:4 -n 2 -t 480`. No new registry wiring was needed —
+the runner discovers `mesh:4` by glob, confirmed by a logged `--list`. Every
+constant imported from `tests/mesh/test_two_torus_port_sheet.py` and the
+`PORT-1` facet module it imports (`ANS-1`); nothing restated.
+
+**Measured (all anchors held, no band moved).**
+
+- both sheets **84 facets**, asserted non-empty *before* any area ratio
+  (vacuous-pass guard);
+- meshed/CAD = **1.000000000000** on both, inside the imported
+  `AREA_IDENTITY_BAND` = 1e-9 — CAD mid-plane 9.573030358733e-05 m²;
+- 211/212 area symmetry: areas bit-identical, < 1e-12;
+- out-of-plane spread **3.469e-18** m — the facet set is the plane it claims;
+- extents printed, never gated: w = 1.200000000e-02 m, h = 7.977525299e-03 m,
+  **w/h = 1.504225878** vs the generator's CAD-side `squares_w_over_h`
+  = 1.504206917 (**1.26e-05** relative — the arc-chord difference between the
+  CAD surface and its triangulation);
+- port areas 1.563786482e-04 m² on both 201/202, unmoved by the sheet;
+- **negative control** (`emit_port_sheet=False`): **79 534** cells — the
+  record — cell tags `{1,2,3,101,102}`, facet tags `{1,201,202}`, sheet tags
+  asserted *absent* (`EX-18`/`EX-21` inverted-assertion pattern);
+- cost: 79 888 cells / 13.7 s (sheet) + 79 534 / 12.2 s (control),
+  **26.0 s** in-script, 30 s harness elapsed, `-n 2`, standard tier.
+
+**Logs.** `20260817T140233Z_EX-23-list.log` (runner `--list`, exit 0),
+`20260817T140242Z_EX-23-example-n2.log` (30 s, exit 0),
+`20260817T140416Z_EX-23-docrefs.log` — `dead=0 guide=0 stale=24
+stale_severity=report exit=2`. The chunk gates on `exit != 1` (`OPS-19`
+contract): **pass**. None of the 24 stale references is EX-23's — its own
+artifacts were written this run; the 24 are `EX-22`'s standing backlog.
+Guide pass: 31 guides scanned, all required headings present.
+
+**Nothing filed to known-issues.** No unrelated failure was met.
+
+**Two numbers worth carrying forward.** (i) The port sheet costs **+354
+cells** over the sheet-less mesh (79 888 vs 79 534) — the fragment is
+essentially free, which is what `PORT-9` step 3 should budget from. (ii) The
+measured-vs-CAD `w/h` gap of 1.26e-05 is the only place the triangulation
+differs from the CAD on this surface, and it is in the *extents*, not the
+area — the area is exact because the plane is exact.
+
+**Hypothesis for the next attempt.** None needed for this chunk; it is closed.
+The `EX` ramp's next open item is `EX-22` (§9 spare), unchanged by this run.
