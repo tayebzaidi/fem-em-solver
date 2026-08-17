@@ -389,7 +389,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
-| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 scoped 2026-08-17 10:30 — full-suite legs in four sized commands + the 59 → 45 sweep control) | standard |
+| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempt 1 2026-08-17 — 2 of 4 commands ran; sweep anchor restated 45 → **56, reconciled**; real full-suite leg overran at 58% and is split; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4) | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 
@@ -798,6 +798,60 @@ exists, replace instead. Two steps, one implementer run each.)*
 >   fixing any is `GEO-17`/`MAG-17`/`POST-5`'s work, not this step's.
 >   **Negative result:** an unexpected failure is a finding — known-issues
 >   entry naming the test and the count delta, report, stop.
+>
+>   **🟡 attempt 1, 2026-08-17 20:20Z (15:00 slot) — 2 of 4 commands ran; the
+>   sweep anchor MISSES and is reconciled, the real leg is mis-sized, and a
+>   completed leg surfaced a silent regression.** Nothing parked (no `src/` or
+>   `tests/` change). Full journal in `docs/testing/attempts.md`.
+>   * **Sweep control: 56 candidates, not 45** — anchor missed, substance
+>     intact (`20260817T200056Z_OPS-17-step3-sweep.log`, exit 0, 3 s; 95 files,
+>     335 functions, 257 `QUANT`, 22 raises-only). Reconciled exactly: 44
+>     step-1 `keep` rows still flagged + 1 `keep` row that moved *out* of
+>     candidates into `QUANT` (`test_closure_arc_nodes_lie_in_the_expected_material`,
+>     an improvement) + **2 `replace` rows still flagged** + **10 tests that
+>     postdate the anchor's own sweep**. **Zero unexplained new candidates.**
+>     The 2 `replace` rows are the load-bearing part: step 2 landed the
+>     tagged-volume anchor as a *new sibling test*
+>     (`test_region_resolution_policy_does_not_move_the_tagged_volumes`) rather
+>     than rewriting `test_coil_phantom_mesh_tag_integrity{,_with_region_resolution_policy}`,
+>     so those two kept finiteness-only bodies and `59 → 45` was never
+>     achievable — it was derived from the disposition table, not from step 2's
+>     landed diff. The 10 newcomers (`TH-11` step 4/5a ×8, `PORT-9` step 2b ×1,
+>     `OPS-17` step 2's own deliberate `isnan` half ×1) are all `keep`-class by
+>     step 1's criteria on reading; **dispositioning them is a review's call,
+>     not this step's.** Restate the anchor as **56, reconciled**.
+>   * **Real-mode full suite: exit 124 at 570 s, 58% done**
+>     (`20260817T200248Z_OPS-17-step3-real-n2.log`), dying in
+>     `tests/validation/test_convergence.py`. The real leg's cost is the
+>     refinement ladders; the review sized it from step 2's *complex*
+>     measurements, and the real leg had never been timed. Killed and shrunk
+>     per §5.1, not re-run longer.
+>   * **Shrunk real leg: COMPLETED, and it is the reusable one**
+>     (`20260817T201248Z_OPS-17-step3-real-nonvalidation-n2.log`, exit 1,
+>     **218 s**, `tests/ --ignore=tests/validation`): **3 failed, 134 passed,
+>     32 skipped, 2 xfailed**, byte-identical on both ranks. Both real-mode
+>     strict xfails still xfail (defects 1 and 2, no XPASS); defect 3's
+>     th-smoke xfail is `@complex_only` and sits in the 32 skips, so the
+>     anchor's "observed in a completed leg" is **still unmet for defect 3**.
+>     The two `post/` deletion files ran to completion for the first time.
+>   * **Finding — a silent regression, filed in known-issues.** All 3 failures
+>     are in `tests/ports/`, and **2 of them fail for a reason known-issues 3
+>     does not record**: `AttributeError: '_DummyComm' object has no attribute
+>     'allgather'` out of `ports/excitation.py:258`, i.e. inside `src/` before
+>     any assertion. `PORT-1` step 4 (2026-08-13) added that `allgather` — the
+>     entry-6 defect-(2) fix — and the file's test double implements only
+>     `allreduce`. `test_port_orientation_flip_changes_induced_voltage_sign` is
+>     **not** in entry 3's pair, so it was green until 2026-08-13. Not fixed
+>     (entry 3's tests live and die with `PORT-1`); entry 3 must be re-symptomed
+>     by whatever fixes it.
+>   * **Commands 3–4 (both complex legs) did not run** — out of timebox, not
+>     blocked. **Do not re-run step 3 as written**: the real leg will overrun
+>     identically. Split into two slots — (a) the 218 s leg above plus
+>     `tests/validation` **real** alone (unmeasured; cost-probe
+>     `test_convergence.py` before committing a window), (b) complex
+>     `tests/validation` (`timeout -k 30 570`, the `port_gap` family is 446 s of
+>     it) plus the complex remainder with `tests/environment` first, which is
+>     the only leg that can observe defect 3's xfail in a completed run.
 
 **`OPS-13` — land the rank-safe `_validate_material_map_tags` fix** ✅
 *(2026-08-08; full narrative in `docs/planning/plan-archive.md`)*. The one

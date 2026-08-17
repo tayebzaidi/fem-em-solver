@@ -1430,6 +1430,23 @@ uses `SIGMA_BLIND = 1e-12 * SIGMA`. **Resolves with:** wrapping the scalar in
 `fem.Constant` — a one-line `POST` fix plus a re-run of
 `tests/validation/test_poynting_balance.py`.
 
+### `PORT-1` step 4's `allgather` reduction broke `_DummyComm`, and one orientation test regressed silently on 2026-08-13 (`OPS-17` step 3, 2026-08-17)
+
+**Found:** 2026-08-17, `OPS-17` step 3, at commit `e211356`, in the first
+*completed* real-mode suite leg since 2026-08-13
+(`20260817T201248Z_OPS-17-step3-real-nonvalidation-n2.log`, `-n 2`, 218 s,
+3 failed / 134 passed / 32 skipped / 2 xfailed, both ranks identical).
+
+| | |
+|---|---|
+| **Tests** | `tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign` — **not previously known-red**<br>`tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign` — known-red under entry 3, but **not for entry 3's recorded reason** |
+| **Symptom** | `AttributeError: '_DummyComm' object has no attribute 'allgather'` raised out of `src/fem_em_solver/ports/excitation.py:258`. The failure is inside `src/`, *before* any test assertion executes. |
+| **Cause** | Diagnosed, one line. `PORT-1` step 4 (2026-08-13) added `problem.mesh.comm.allgather(...)` at `excitation.py:258` to reduce the tag set before `validate_required_port_tags_exist` — the documented fix for entry 6 defect (2). The file's test double (`tests/ports/test_port_orientation_sensitivity.py:16`) implements only `rank` and a static `allreduce`, so the new collective call has nothing to dispatch to. |
+| **Why it went unseen for four days** | `PORT-1` step 4's own gate ran the *two-torus* negative control, not this file, and every slot since has used targeted per-file runs. No completed suite leg was paid for until this one. The `--ignore=tests/validation` leg above is the cheapest thing that catches this class (218 s). |
+| **Two separate consequences** | (i) `test_port_orientation_flip_changes_induced_voltage_sign` is absent from entry 3's list of two tests, so it was green before 2026-08-13 — this is a **silent regression**, not a pre-existing red. (ii) Entry 3's symptom line (`assert np.all(np.abs(diagonal) > 0.0)` on a zero diagonal) is **stale for the orientation test**: that assertion is now unreachable. It still describes `tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape` correctly (`test_sparameter_assembly.py:104: AssertionError: assert False`), which is the third failure in the same leg. |
+| **Fix** | **Deliberately not fixed by `OPS-17`** — that chunk is test hygiene, and entry 3's standing disposition is that these tests live and die with `PORT-1`'s retirement of the `PORT-0` placeholder. The mechanical repair is two lines in the test double (`allgather = staticmethod(lambda v: [v])`, or use a real `MPI.COMM_SELF`); whoever retires `PORT-1` should decide whether the double survives at all. Do not read the `AttributeError` as evidence about the placeholder's arithmetic — it never runs. |
+| **Resolves with** | `PORT-1`'s retirement commit, or any earlier commit that repairs the double. **Entry 3 must be re-symptomed in the same commit**, since its recorded cause now applies to only one of its two tests. |
+
 ## Recording a new entry
 
 Add an entry when you find a failure you are **not** fixing. Include: the test id, the

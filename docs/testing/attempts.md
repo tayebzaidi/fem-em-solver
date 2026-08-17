@@ -12899,3 +12899,138 @@ and the rank width bought, the only remaining risk is the solve itself: a
 with no room for the free solve in the same command. Split loaded and free into
 two commands, cache nothing but the mesh, and expect the three-rung Aitken fit
 to be the cheap part.
+
+---
+
+## 2026-08-17T20:20Z — `OPS-17` step 3 — **incomplete** (2 of 4 commands ran; the real leg is mis-sized, and a completed leg surfaced a regression)
+
+**Outcome: incomplete, with two findings.** The step's own pre-stated anchor
+(sweep candidates `59 → 45` exactly, zero new) **MISSES at 56**, and the
+reconciliation is exact rather than mysterious. The real-mode full-suite leg
+**does not fit one harness window** — it reached 58% at the 570 s ceiling. A
+shrunk leg then completed and found a failure nobody had seen, because no
+completed leg has run on this tree since 2026-08-13. No `src/` or `tests/`
+change was made, so there is nothing parked: `main` carries logs, this entry,
+the §7 annotation, and one new known-issues entry.
+
+**Command 1 — the sweep control (`20260817T200056Z_OPS-17-step3-sweep.log`,
+exit 0, 3 s, smoke).** 95 files / 335 test functions / 257 with a `QUANT`
+assert / 22 raises-only / **56 candidates** (8 assert nothing). Against the
+anchor's 45 that is +11, and every one of the 56 is accounted for:
+
+| bucket | n | what |
+| --- | --- | --- |
+| step-1 `keep` rows still flagged | 44 | the expected residue |
+| step-1 `keep` row now classified `QUANT` | 1 | `validation/test_port_gap_voltage_impedance.py::test_closure_arc_nodes_lie_in_the_expected_material` — moved *out* of candidates (step 2 edited that file); an improvement, not a regression |
+| step-1 `replace` rows still flagged | 2 | `mesh/test_mesh_tag_integrity.py::{test_coil_phantom_mesh_tag_integrity, ..._with_region_resolution_policy}` |
+| tests that postdate the anchor's sweep | 10 | landed after `20260817T020244Z` |
+
+44 + 1 + 2 + 10 = 57 named, 56 flagged (the reclassified row is not flagged).
+**Zero unexplained new candidates**, so the *substance* of the control holds
+while its arithmetic does not.
+
+The two `replace` rows are the load-bearing part of the miss: step 2 landed the
+tagged-volume-partition anchor as a **new sibling test**
+(`test_region_resolution_policy_does_not_move_the_tagged_volumes`, the xfail
+carrying defect 1) instead of rewriting the two original functions, which
+therefore kept their finiteness-only bodies. That is a defensible choice — the
+anchor exists and gates — but it means the disposition table's implied
+"45 candidates after step 2" was never achievable, and the review's `59 → 45`
+was derived from the table rather than from step 2's landed diff.
+
+The 10 post-anchor candidates, for the next review to disposition (not done
+here — out of step 3's scope): `solver/test_gauge_lagrange.py::test_gauge_multiplier_is_nan_without_a_lagrange_solve`
+(the structural half step 1 explicitly said "stays" — expected);
+`validation/test_coil_loading_richardson_ladder.py` ×2 (`TH-11` step 4, landed
+`20260817T03:51Z`, i.e. 1 h 49 m *after* the step-1 sweep);
+`validation/test_coil_loading_larmor_mesh_cache.py` ×4 and
+`validation/test_coil_loading_larmor_third_rung.py` ×2 (`TH-11` step 5a, today);
+`validation/test_port_lumped_narrowed_sheet.py::test_the_open_limit_reduction_holds_at_every_width`
+(`PORT-9` step 2b, today). On reading, all 10 are `keep`-class by step 1's own
+criteria — exact `ncells == RECORD` fixture pins and
+`residual < IDENTITY_TOLERANCE` identities, the two shapes step 1 grouped as
+"exact identity, not finiteness" and "quantitative through an unresolved
+`tests/tolerances.py` import". None is a new finiteness-only test.
+
+**Command 2 — the real-mode full suite: OVERRAN, exit 124**
+(`20260817T200248Z_OPS-17-step3-real-n2.log`, `-n 2`, 570 s ceiling, 570 s
+elapsed). Progress at the kill: **58%**, dying inside
+`tests/validation/test_convergence.py` — the real-mode leg's cost is the
+`tests/validation` refinement ladders, the same shape that made the *complex*
+leg need its own window at step 2. The review sized this leg from step 2's
+complex measurements, where the real leg had never been timed at all. Killed
+and shrunk per §5.1 rather than re-run longer.
+
+**Command 2′ — the shrunk real leg: COMPLETED**
+(`20260817T201248Z_OPS-17-step3-real-nonvalidation-n2.log`, `-n 2`, exit 1,
+**218 s**, 420 s ceiling). `tests/ --ignore=tests/validation`:
+**3 failed, 134 passed, 32 skipped, 2 xfailed** in 217.38 s, and both ranks
+print byte-identical summaries. Bookkeeping against the anchor:
+
+* **2 xfailed = the 2 real-mode-reachable strict xfails**, both named and both
+  still xfail (not XPASS): `mesh/test_mesh_tag_integrity.py::test_region_resolution_policy_does_not_move_the_tagged_volumes`
+  (defect 1) and `solver/test_gauge_lagrange.py::test_gauge_multiplier_vanishes_for_a_divergence_free_source`
+  (defect 2). The third — th-smoke Poynting, defect 3 — is `@complex_only` and
+  correctly appears in the 32 skips, so the anchor's "observed in a completed
+  leg for the first time" is **still unmet for defect 3**; it needs the complex
+  leg.
+* **The two `post/` deletion files ran to completion for the first time** —
+  `post/test_interface_guardrail_fallback.py` and
+  `post/test_tagged_cell_partition_invariance.py` are inside the 134 passed,
+  where step 2 only ever saw them PASSED *before* a kill.
+* known-issues 6 (`solver/test_single_port_excitation.py`) passes at `-n 2`, as
+  that entry says it does.
+* **3 failed, but only 2 are named — and neither named one fails for its
+  recorded reason.** New known-issues entry filed (see below).
+
+**Finding — `PORT-1` step 4's rank-safety fix broke the test double, and it has
+been red and unwatched for 4 days.** All three failures are in `tests/ports/`;
+two of them are `test_port_orientation_sensitivity.py::{test_port_orientation_flip_changes_induced_voltage_sign,
+test_port_orientation_flip_changes_off_diagonal_sparameter_sign}` and both die
+with `AttributeError: '_DummyComm' object has no attribute 'allgather'` at
+`src/fem_em_solver/ports/excitation.py:258` — *inside `src/`, before any
+assertion runs*. `PORT-1` step 4 (2026-08-13) added the
+`problem.mesh.comm.allgather(...)` reduction there — the documented fix for
+known-issues 6 defect (2) — and the file's `_DummyComm` (line 16) implements
+only `rank` and `allreduce`. Consequences, both worth the review's attention:
+(i) `test_port_orientation_flip_changes_induced_voltage_sign` is **not** in
+known-issues 3's list of two tests, so it was green before and is a **silent
+regression** of 2026-08-13; (ii) known-issues 3's recorded symptom
+(`assert np.all(np.abs(diagonal) > 0.0)` on a zero diagonal) is now **stale for
+the orientation test** — that assertion is unreachable. Only
+`test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape`
+(`tests/ports/test_sparameter_assembly.py:104: AssertionError: assert False`)
+still fails the way entry 3 describes. **Not fixed here** — `OPS-17` step 3 is
+bookkeeping, and entry 3's standing disposition is that these live and die with
+`PORT-1`. Filed, with the measurement, as a new known-issues entry.
+
+This is precisely the failure mode step 3 was cut to catch: four days of
+targeted per-file runs, every one of them green on the files it touched, while
+a completed leg was never paid for.
+
+**Commands 3 and 4 — the two complex legs — DID NOT RUN.** Out of timebox: the
+sweep plus its reconciliation, the 570 s overrun, and the 218 s shrunk leg
+consumed the implementation window, and each complex leg is a further ~570 s /
+~300 s. Nothing about them is blocked; they are unstarted.
+
+**What step 3 now needs, sized from this run's own measurements** (the next
+review's to cut — do not re-run step 3 as written, the real leg will overrun
+again identically):
+1. `tests/ --ignore=tests/validation` real, `timeout -k 30 420` — **measured
+   218 s**, done above, reproducible.
+2. `tests/validation` **real** alone, `timeout -k 30 570` — unmeasured; the
+   58%-kill says the ladders are the cost, so cost-probe with
+   `--collect-only` + `test_convergence.py` alone before committing a window.
+3. complex `tests/validation`, `timeout -k 30 570` — the `port_gap` family is
+   446 s of it (step 2's number), so this is genuinely one command's worth.
+4. complex remainder (`tests/environment` first), and this is the only leg that
+   can observe defect 3's th-smoke xfail in a completed run.
+The `59 → 45` anchor should be **restated as `56`, reconciled** — the number is
+now measured, and re-deriving it from the disposition table will miss again.
+
+**Hypothesis for the next attempt.** Step 3 is four commands of ~2 000 s total
+plus the sweep, which is more than one 60-minute slot holds *with* the reading
+and journalling each leg's counts requires. Split it: one slot for the two real
+legs (2 above is the only unmeasured one), one for the two complex legs. The
+`_DummyComm` breakage is a two-line fix in the test double, but it belongs to
+whoever owns `PORT-1`'s retirement, not to `OPS-17`.
