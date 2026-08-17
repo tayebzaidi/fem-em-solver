@@ -31,7 +31,11 @@ def _interface_facet_tags(
     """Tag the facets shared by two differently-tagged cell regions.
 
     ``interfaces`` maps a facet tag to the pair of *cell* tags whose common
-    facets carry it (order irrelevant). The result merges those facets into
+    facets carry it (order irrelevant), or to a *sequence* of such pairs when
+    one facet group is the union of several cell-tag interfaces (`GEO-16`: the
+    gap box split at its port-sheet mid-plane meets the conductor with both
+    halves, so port group ``201`` is ``(101, 1)`` and ``(111, 1)`` together).
+    The result merges those facets into
     ``existing``'s tags when one is given.
 
     Why this is done here and not in gmsh: dim-2 physical groups on facets
@@ -75,10 +79,13 @@ def _interface_facet_tags(
         indices.append(np.asarray(existing.indices, dtype=np.int32))
         values.append(np.asarray(existing.values, dtype=np.int32))
 
-    for facet_tag, (tag_a, tag_b) in sorted(interfaces.items()):
-        on_interface = ((side_a == tag_a) & (side_b == tag_b)) | (
-            (side_a == tag_b) & (side_b == tag_a)
-        )
+    for facet_tag, spec in sorted(interfaces.items()):
+        pairs = [spec] if len(spec) == 2 and np.isscalar(spec[0]) else list(spec)
+        on_interface = np.zeros(interior.size, dtype=bool)
+        for tag_a, tag_b in pairs:
+            on_interface |= ((side_a == tag_a) & (side_b == tag_b)) | (
+                (side_a == tag_b) & (side_b == tag_a)
+            )
         found = interior[on_interface]
         indices.append(found.astype(np.int32))
         values.append(np.full(found.size, facet_tag, dtype=np.int32))
@@ -867,6 +874,7 @@ class MeshGenerator:
         gap_arc_resolution: Optional[float] = None,
         gap_arc_tube_radius: Optional[float] = None,
         gap_box_resolution: Optional[float] = None,
+        emit_port_sheet: bool = False,
     ) -> Tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags]:
         """Generate mesh with two tori inside a box domain.
 
@@ -1000,7 +1008,48 @@ class MeshGenerator:
             answerable; it is deliberately **local** (a ``Box`` field with a
             slope-0.3 ramp, composed through the same ``Min``), so the PEC-box
             deficit stays common-mode with the unrefined record.
+        emit_port_sheet:
+            Opt in to the longitudinal **port-sheet mid-plane** inside each gap
+            box (`GEO-16`, the `PORT-9` step-1 mesh prerequisite). Default
+            ``False`` reproduces the gapped fixture byte for byte — every
+            `PORT-1` / `PORT-10` record was measured without it. Requires
+            ``port_gap``.
+
+            A lumped-element port sheet spans terminal to terminal with the
+            port current flowing **in** its plane. The fixture's only tagged
+            surfaces (facet tags ``201`` / ``202``) are the gap<->conductor
+            cross-sections, which are *normal* to that current — the wrong
+            constitutive law for ``R = Z_p * w / h``. This kwarg fragments each
+            gap box with its own mid-plane ``z = +/- separation/2``, the plane
+            that contains both the gap's centreline arc and the current
+            direction ``y``, so the tet mesh conforms to it.
+
+            Consequences for the tags, all opt-in:
+
+            * each gap box becomes **two** cell groups — ``101`` / ``111`` for
+              gap 1 (below / above its mid-plane) and ``102`` / ``112`` for
+              gap 2. A caller that selects the gap volume by tag must take
+              both halves.
+            * the sheet itself is facet tag ``211`` (gap 1) / ``212`` (gap 2),
+              rebuilt from the distributed cell tags exactly like the port
+              facets (known-issues 9 forbids a dim-2 gmsh group on an interior
+              surface).
+            * the port facet groups ``201`` / ``202`` are unchanged as *sets*:
+              the mid-plane also cuts the arc-end discs, so each is now the
+              union of two cell-tag interfaces.
+
+            The sheet's measured extents (area, length ``h`` along the current
+            direction, transverse width ``w``) are printed, never gated: the
+            gap box crosses a round arc, so the "number of squares" that
+            ``R = Z_p * w / h`` needs is a measured quantity on this fixture,
+            not the box's nominal dimensions.
         """
+        if emit_port_sheet and not port_gap:
+            raise ValueError(
+                "emit_port_sheet needs port_gap: the sheet is the gap box's "
+                "mid-plane, and the ungapped fixture has no gap box"
+            )
+
         if comm.rank == rank:
             gmsh.initialize()
             gmsh.model.add("two_torus_domain")
@@ -1067,6 +1116,27 @@ class MeshGenerator:
                     z_offset - gap_half_xz,
                     *gap_size,
                 )
+                # `GEO-16`: the longitudinal mid-plane of each gap box, added
+                # as a *tool* to the same fragment below so the tets conform
+                # to it. Exactly the box's own cross-section at ``z = z_c`` —
+                # no larger, or the fragment would also cut the conductor and
+                # the air box along that plane.
+                sheet_1 = sheet_2 = None
+                if emit_port_sheet:
+                    sheet_1 = gmsh.model.occ.addRectangle(
+                        major_radius - gap_half_xz,
+                        -gap_half_y,
+                        -z_offset,
+                        2.0 * gap_half_xz,
+                        2.0 * gap_half_y,
+                    )
+                    sheet_2 = gmsh.model.occ.addRectangle(
+                        major_radius - gap_half_xz,
+                        -gap_half_y,
+                        z_offset,
+                        2.0 * gap_half_xz,
+                        2.0 * gap_half_y,
+                    )
             else:
                 wire_1 = gmsh.model.occ.addTorus(0, 0, -z_offset, major_radius, minor_radius)
                 wire_2 = gmsh.model.occ.addTorus(0, 0, z_offset, major_radius, minor_radius)
@@ -1092,8 +1162,11 @@ class MeshGenerator:
             tool_tags = [wire_1, wire_2]
             if port_gap:
                 tool_tags += [gap_1, gap_2]
+            tool_dimtags = [(3, tag) for tag in tool_tags]
+            if port_gap and emit_port_sheet:
+                tool_dimtags += [(2, sheet_1), (2, sheet_2)]
             _, fragment_map = gmsh.model.occ.fragment(
-                [(3, domain)], [(3, tag) for tag in tool_tags]
+                [(3, domain)], tool_dimtags
             )
             gmsh.model.occ.synchronize()
 
@@ -1102,20 +1175,27 @@ class MeshGenerator:
                 # machinery): fragment renumbers, so absolute tags from before
                 # the call mean nothing after it. The out-map is positional,
                 # objects first then tools.
-                input_tags = [domain] + tool_tags
-                if len(fragment_map) != len(input_tags):
+                input_dimtags = [(3, domain)] + tool_dimtags
+                if len(fragment_map) != len(input_dimtags):
                     raise RuntimeError(
                         "two_torus_domain: occ.fragment returned an out-map of "
-                        f"{len(fragment_map)} entries for {len(input_tags)} inputs"
+                        f"{len(fragment_map)} entries for {len(input_dimtags)} "
+                        "inputs"
                     )
                 ancestors: Dict[int, set] = {}
-                for input_tag, pieces in zip(input_tags, fragment_map):
+                for input_dimtag, pieces in zip(input_dimtags, fragment_map):
                     for dim, piece in pieces:
                         if dim == 3:
-                            ancestors.setdefault(piece, set()).add(input_tag)
+                            ancestors.setdefault(piece, set()).add(input_dimtag)
 
-                wire_of = {wire_1: 1, wire_2: 2}
-                gap_of = {gap_1: 101, gap_2: 102}
+                wire_of = {(3, wire_1): 1, (3, wire_2): 2}
+                # `GEO-16`: with the sheet in, each gap box is two pieces —
+                # below and above its own mid-plane. The sheet is a dim-2
+                # input, so it is never an *ancestor* of a 3-D piece; the
+                # halves are told apart by centroid z against the box centre,
+                # the same mass/centroid discipline the ungapped branch uses.
+                gap_of = {(3, gap_1): (101, 111, -z_offset),
+                          (3, gap_2): (102, 112, z_offset)}
                 group_of_piece: Dict[int, int] = {}
                 for piece, sources in ancestors.items():
                     # Gap wins over metal: the box IS the dielectric gap, and
@@ -1123,7 +1203,16 @@ class MeshGenerator:
                     hit_gap = sources & gap_of.keys()
                     hit_wire = sources & wire_of.keys()
                     if hit_gap:
-                        group_of_piece[piece] = min(gap_of[t] for t in hit_gap)
+                        lower, upper, z_c = gap_of[min(hit_gap)]
+                        if emit_port_sheet:
+                            _, _, zc_piece = gmsh.model.occ.getCenterOfMass(
+                                3, piece
+                            )
+                            group_of_piece[piece] = (
+                                upper if zc_piece > z_c else lower
+                            )
+                        else:
+                            group_of_piece[piece] = lower
                     elif hit_wire:
                         group_of_piece[piece] = min(wire_of[t] for t in hit_wire)
                     else:
@@ -1134,10 +1223,14 @@ class MeshGenerator:
                     pieces_by_group.setdefault(group, []).append(piece)
 
                 group_names = {1: "wire_1", 2: "wire_2", 3: "domain",
-                               101: "gap_1", 102: "gap_2"}
+                               101: "gap_1", 102: "gap_2",
+                               111: "gap_1_upper", 112: "gap_2_upper"}
+                required_groups = (1, 2, 3, 101, 102)
+                if emit_port_sheet:
+                    required_groups = required_groups + (111, 112)
                 volumes = gmsh.model.getEntities(dim=3)
                 masses = {tag: gmsh.model.occ.getMass(3, tag) for _, tag in volumes}
-                missing = [group_names[g] for g in (1, 2, 3, 101, 102)
+                missing = [group_names[g] for g in required_groups
                            if g not in pieces_by_group]
                 if missing:
                     raise RuntimeError(
@@ -1198,23 +1291,27 @@ class MeshGenerator:
                 # against. Derived from the fragment's own boundaries;
                 # absolute tags from before the fragment call mean nothing
                 # after it.
+                def _boundary_surfaces(groups):
+                    return {
+                        surf
+                        for group in groups
+                        for vol in pieces_by_group[group]
+                        for _, surf in gmsh.model.getBoundary(
+                            [(3, vol)], oriented=False, recursive=False
+                        )
+                    }
+
+                # `GEO-16`: with the sheet in, "the gap" is both halves.
+                gap_groups = {101: (101, 111), 102: (102, 112)}
+
                 cad_areas = {}
                 for gap_group, wire_group, facet_group in ((101, 1, 201),
                                                            (102, 2, 202)):
-                    gap_boundary = {
-                        surf
-                        for vol in pieces_by_group[gap_group]
-                        for _, surf in gmsh.model.getBoundary(
-                            [(3, vol)], oriented=False, recursive=False
-                        )
-                    }
-                    conductor_boundary = {
-                        surf
-                        for vol in pieces_by_group[wire_group]
-                        for _, surf in gmsh.model.getBoundary(
-                            [(3, vol)], oriented=False, recursive=False
-                        )
-                    }
+                    gap_boundary = _boundary_surfaces(
+                        gap_groups[gap_group] if emit_port_sheet
+                        else (gap_group,)
+                    )
+                    conductor_boundary = _boundary_surfaces((wire_group,))
                     shared = sorted(gap_boundary & conductor_boundary)
                     if not shared:
                         raise RuntimeError(
@@ -1236,6 +1333,41 @@ class MeshGenerator:
                     ),
                     flush=True,
                 )
+
+                if emit_port_sheet:
+                    # `GEO-16`: the sheet is what the two halves of one gap box
+                    # share -- the mid-plane, and nothing else, because the
+                    # halves touch only there. Same CAD-denominator pattern as
+                    # the port interfaces above: OCC's own area, plus the
+                    # bounding-box extents `R = Z_p * w / h` needs (h along the
+                    # current direction y, w transverse in x).
+                    for lower, upper, facet_group in ((101, 111, 211),
+                                                      (102, 112, 212)):
+                        shared = sorted(
+                            _boundary_surfaces((lower,))
+                            & _boundary_surfaces((upper,))
+                        )
+                        if not shared:
+                            raise RuntimeError(
+                                "two_torus_domain: gap halves "
+                                f"{group_names[lower]}/{group_names[upper]} "
+                                "share no surface; the fragment did not "
+                                "conform to the port-sheet mid-plane"
+                            )
+                        area = sum(gmsh.model.occ.getMass(2, s) for s in shared)
+                        boxes = np.array(
+                            [gmsh.model.getBoundingBox(2, s) for s in shared]
+                        )
+                        w_cad = boxes[:, 3].max() - boxes[:, 0].min()
+                        h_cad = boxes[:, 4].max() - boxes[:, 1].min()
+                        print(
+                            f"[two-torus-mesh] port sheet (CAD) {facet_group}: "
+                            f"{len(shared)} surface(s) area={area:.9e} "
+                            f"h_along_current={h_cad:.9e} w_transverse={w_cad:.9e} "
+                            f"squares_w_over_h={w_cad / h_cad:.9f} "
+                            f"nominal_area={4.0 * gap_half_xz * gap_half_y:.9e}",
+                            flush=True,
+                        )
 
             else:
                 # Fragment renumbers volumes; identify them by mass and centroid
@@ -1331,7 +1463,9 @@ class MeshGenerator:
                 # share surfaces after fragment, so de-duplicate.
                 refine_volumes = list(wire_volumes[1]) + list(wire_volumes[2])
                 if port_gap:
-                    refine_volumes += pieces_by_group[101] + pieces_by_group[102]
+                    for group in required_groups:
+                        if group >= 101:
+                            refine_volumes += pieces_by_group[group]
                 wire_surfaces = sorted(
                     {
                         surf
@@ -1534,8 +1668,21 @@ class MeshGenerator:
             # distributed cell tags (see the CAD-side comment above and
             # known-issues 9). gap_1 <-> wire_1 is port 201, gap_2 <-> wire_2
             # is port 202.
+            if emit_port_sheet:
+                # `GEO-16`: the mid-plane cuts the arc-end discs too, so each
+                # port group is the union of its two half-box interfaces; the
+                # sheet groups (`211` / `212`) are the halves against each
+                # other. Same rebuild-from-cell-tags rule as above.
+                interfaces = {
+                    201: ((101, 1), (111, 1)),
+                    202: ((102, 2), (112, 2)),
+                    211: ((101, 111),),
+                    212: ((102, 112),),
+                }
+            else:
+                interfaces = {201: (101, 1), 202: (102, 2)}
             facet_tags = _interface_facet_tags(
-                mesh, cell_tags, {201: (101, 1), 202: (102, 2)}, facet_tags
+                mesh, cell_tags, interfaces, facet_tags
             )
 
         return mesh, cell_tags, facet_tags

@@ -84,9 +84,11 @@ What is validated, to what tolerance, and what must not be trusted.
   mass; `PORT-9` budgets from 98 k cells). `PORT-9`'s step-1 **formulation**
   is written and identity-gated on a parked branch
   (`attempt/PORT-9-20260816T170800Z`, Jin 3e §1.5.4/§6.5 resistive sheet),
-  but its instantiation is blocked on a mesh prerequisite (`GEO-16` — the
-  fixture has no longitudinal port-sheet surface); no lumped-port `Z` has
-  ever been solved. This bullet stands until step 2's cross-route band
+  and awaiting instantiation: its mesh prerequisite `GEO-16` closed
+  2026-08-17 (the fixture now emits the longitudinal sheet on an opt-in
+  kwarg, area = CAD to roundoff, `w/h = 1.504225878` squares measured), so
+  the branch may now be merged and wired — but no lumped-port `Z` has ever
+  been solved. This bullet stands until step 2's cross-route band
   gates. B1+ remains §10 subgoal 4, blocked behind it.
 - **Coil loading at the Larmor frequencies is an extrapolation** until
   `TH-11` lands a gated trend (its resolution rung attributed most of the
@@ -790,7 +792,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-13` | **Decouple `cylindrical_domain`'s wall tolerance from `resolution`** (known-issues 13) | ✅ | standard |
 | `GEO-14` | **The shared ~3% geometry floor: faceting vs resolution** (entry lives after `TH-11`, beside the fixtures it measures) | ✅ *(closed 2026-08-15 review on the refuted hypothesis: RESOLUTION, 3.643% → 1.781% at 55 251 cells, rate 1.77 in h — no faceting floor)* | standard |
 | `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | ✅ 2026-08-16 (graded sizing recovers **0.9670** of the conductor's CAD mass at h_c = 1.6 mm vs **0.7403** baseline, gate cleared, `GEO-9` identities unmoved at < 1e-9; 41 s at `-n 2`; closed by the 10:30 review — the chunk was its one question, now answered by measurement) | standard |
-| `GEO-16` | **Emit the gap boxes' longitudinal port-sheet mid-plane in `two_torus_domain`** (the `PORT-9` step-1 mesh prerequisite; commissioned 2026-08-16 18:00 review) | ⬜ | standard |
+| `GEO-16` | **Emit the gap boxes' longitudinal port-sheet mid-plane in `two_torus_domain`** (the `PORT-9` step-1 mesh prerequisite; commissioned 2026-08-16 18:00 review) | ✅ | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -909,7 +911,9 @@ answers `PORT-9` step 3's open question by measurement.
 >   `docs/planning/plan-archive.md`, archived 2026-08-16.
 
 **`GEO-16` — emit the gap boxes' longitudinal port-sheet mid-plane in
-`two_torus_domain`** ⬜ *(commissioned 2026-08-16, 18:00 review — the mesh
+`two_torus_domain`** ✅ *(closed 2026-08-17, `tests/mesh/test_two_torus_port_sheet.py`,
+`20260817T003627Z_GEO-16-regression.log`, 47.3 s at `-n 2`, 5 passed —
+commissioned 2026-08-16, 18:00 review — the mesh
 prerequisite the `PORT-9` step-1 attempt named (attempts.md
 2026-08-16T17:08Z, option (a) chosen: split the mesh chunk, keep the parked
 formulation branch intact). A lumped-port sheet spans terminal to terminal
@@ -950,6 +954,39 @@ whether the gated gap-route numbers move on the fragmented mesh is
 mid-plane the fragment will not conform to, or an area identity that
 misses, is a finding about the gap-box CAD — record the measured area and
 the residual in this entry, known-issues if it blocks, stop.
+>
+> **Result ✅ 2026-08-17.** `emit_port_sheet=False` (default) landed on
+> `two_torus_domain`; on it each gap box is fragmented by its own mid-plane
+> `z = ±separation/2` (an `occ.addRectangle` at exactly the box cross-section,
+> passed as a dim-2 *tool* to the existing `occ.fragment`), giving cell tags
+> `101`/`111` and `102`/`112` for the lower/upper halves — told apart by
+> centroid z, never by fragment's renumbered tags (`GEO-9` step-2b lesson).
+> The sheet's facet tags `211`/`212` are rebuilt from the distributed cell
+> tags via `_interface_facet_tags` (no dim-2 gmsh group, known-issues 9),
+> which now accepts a *sequence* of cell-tag pairs per facet tag because the
+> mid-plane also cuts the arc-end discs: `201` is `(101,1) ∪ (111,1)`.
+> **Anchor met:** the MPI-reduced `dS` area of each sheet is
+> **9.573030358733e-05 m²** against the CAD mid-plane
+> **9.573030358733e-05 m²** — `meshed/CAD = 1.000000000000`, residual below
+> the 1e-9 band and at roundoff (a plane meshed by linear tets is exact, so
+> unlike the discs' 2.55% chordal deficit there is nothing to inscribe);
+> 84 owned facets per sheet, asserted non-empty *before* the identity;
+> out-of-plane spread 3.5e-18 m; the two sheets agree to < 1e-12.
+> **Measured extents** (printed, never gated, and what `PORT-9` step 1 must
+> take instead of nominal dimensions): `w = 1.200000000e-02 m` transverse,
+> `h = 7.977525299e-03 m` along the current, `w/h = 1.504225878` squares,
+> `area/(w·h) = 1.000000000` (the sheet fills its bounding rectangle — the arc
+> is buried inside the box, so the mid-plane itself is a clean rectangle; the
+> CAD bbox reads `w/h = 1.504206917`, differing in the 5th digit only through
+> gmsh's 1e-7 bbox inflation, `GEO-10`). **Negative controls both held:**
+> kwarg off meshes 79 534 cells with tag sets `{1,2,3,101,102}` / `{1,201,202}`
+> and no `21x` group, and the 3b-iv gate re-run on the same commit reproduces
+> `meshed/analytic = 0.974490841` for both ports — bit-identical to the value
+> recorded 2026-08-05, so the shared code path did not move. Port areas on the
+> *fragmented* mesh read 1.563786482e-04 m² per port, the same 0.9745 of the
+> analytic cut pair. Cost: 47.3 s at `-n 2`, well inside the ~120 s estimate.
+> Caveat for `PORT-9` step 1: a caller selecting the gap volume by tag must
+> take **both** halves of each box when the kwarg is on.
 
 ### TH — Time-harmonic Maxwell (Phase 2)
 
@@ -1388,7 +1425,7 @@ until that check returns.
 | `PORT-6` | Frequency sweep orchestration | 🧪 | smoke |
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard |
-| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(step-1 formulation gated on `attempt/PORT-9-20260816T170800Z`; instantiation blocked on `GEO-16`, the mesh prerequisite — 18:00 review)* | standard |
+| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(step-1 formulation gated on `attempt/PORT-9-20260816T170800Z`; instantiation unblocked 2026-08-17 — `GEO-16` ✅ emits the sheet, `w/h = 1.504225878`, facet tags `211`/`212`)* | standard |
 | `PORT-10` | The two `PORT-1` systematics: composition measured, not assumed | ✅ 2026-08-16 (cross-term **−0.0604 pp** inside the pre-stated ±0.5 pp) | heavy |
 
 **`PORT-1` — Real port excitation from the solved field** ✅ *(closed by
@@ -1557,6 +1594,15 @@ the answer is already gated**.
 >   > step-2 cross-route comparison must happen on the two-torus fixture
 >   > where the gap-voltage route is gated, so (b) defers the same mesh
 >   > work without discharging anything.
+>   > **Prerequisite discharged 2026-08-17: `GEO-16` ✅.** The step-1 re-run
+>   > now has its surface — `two_torus_domain(..., emit_port_sheet=True)`,
+>   > facet tags `211` (gap 1) / `212` (gap 2), area = CAD mid-plane to
+>   > `1.000000000000`. Take `R = Z_p·w/h` from the **measured** extents
+>   > `w = 1.200000000e-02 m`, `h = 7.977525299e-03 m`,
+>   > **`w/h = 1.504225878` squares** — printed by the fixture, not nominal.
+>   > Wiring trap the kwarg introduces: the gap volume is now **two** cell
+>   > tags per box (`101`+`111`, `102`+`112`), so any selection by gap tag
+>   > must take both halves; `201`/`202` are unchanged as sets.
 > * **Step 2 (gate) — cross-route identity.** Pre-stated bands, set at
 >   scoping and never widened: lumped-port `Im Z₁₂` within the unmoved
 >   **10%** mutual band of ωM₁₂ (the `PORT-1` gate, absolute anchor), and
@@ -2028,7 +2074,10 @@ Items 1–3 execute their §7 entries verbatim (`GEO-16`, `OPS-17` step 1,
 `TH-11` step 4); items 4–5 execute the §7 `PORT-9` entries as annotated
 by this review.
 
-1. **`GEO-16` — emit the longitudinal port-sheet mid-plane in
+1. ✅ **done 2026-08-17** (`20260817T003627Z_GEO-16-regression.log`, 47.3 s,
+   5 passed; sheet area = CAD to `1.000000000000`, measured
+   `w/h = 1.504225878`; kwarg-off control bit-matches, incl. 3b-iv's
+   `0.974490841`). **`GEO-16` — emit the longitudinal port-sheet mid-plane in
    `two_torus_domain` (standard, mesh-only, no solve).** Execute the §7
    `GEO-16` entry verbatim: opt-in kwarg, `occ.fragment` of the gap
    boxes' mid-plane, facet tag rebuilt from cell tags dolfinx-side

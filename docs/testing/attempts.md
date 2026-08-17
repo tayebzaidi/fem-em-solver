@@ -12196,3 +12196,71 @@ queue's two remaining `PORT-9` items still need the review's mesh-side
 decision from the 2026-08-16T17:08Z entry; nothing in this slot changes that.
 Chunks that run examples can now gate on `exit != 2` — worth stating in the
 next review's guidance so the pattern actually gets used.
+
+---
+
+## 2026-08-17T00:30Z — `GEO-16` — **complete**
+
+Scheduled implementer slot (19:30 CDT). Preflight clean, container Up 28 h,
+no anomaly. Queue item 1 taken as written (§9, 18:00 review): emit the gap
+boxes' longitudinal port-sheet mid-plane in `two_torus_domain`, mesh only.
+
+**What was built.** New opt-in kwarg `emit_port_sheet=False` on
+`two_torus_domain` (requires `port_gap`; a `ValueError` gates the combination
+and is tested). On it, each gap box is fragmented by its own mid-plane
+`z = ±separation/2` — an `occ.addRectangle` at *exactly* the box
+cross-section, passed as a dim-2 tool to the existing `occ.fragment` call, so
+nothing else in the model is cut. The two halves become separate cell groups
+(`101`/`111`, `102`/`112`), told apart by **centroid z** rather than by
+fragment's renumbered tags (`GEO-9` step-2b lesson); the fragment out-map is
+now keyed by dimtag since the tool list is mixed-dimension. Sheet facet tags
+`211`/`212` are rebuilt from the distributed cell tags via
+`_interface_facet_tags` — no dim-2 gmsh group on an interior surface
+(known-issues 9). That helper now accepts a *sequence* of cell-tag pairs per
+facet tag, because the mid-plane also cuts the arc-end discs: port group
+`201` is `(101,1) ∪ (111,1)`, so the existing port sets are unchanged.
+
+**Measured (anchor).** MPI-reduced `dS` area of each sheet
+**9.573030358733e-05 m²** vs the CAD mid-plane **9.573030358733e-05 m²** —
+`meshed/CAD = 1.000000000000`, inside the pre-stated 1e-9 band and at
+roundoff; 84 owned facets per sheet, asserted non-empty *before* the identity
+(the vacuity control); out-of-plane spread 3.5e-18 m; the two sheets agree to
+< 1e-12. A plane meshed by linear tets is exact, so — unlike the arc-end
+discs' 2.55% chordal deficit — there is nothing to inscribe here.
+
+**Measured (printed, never gated) — what `PORT-9` step 1 must consume:**
+`w = 1.200000000e-02 m` transverse, `h = 7.977525299e-03 m` along the current,
+**`w/h = 1.504225878` squares**, `area/(w·h) = 1.000000000`. The mid-plane is
+a clean rectangle (the arc is buried inside the box), so the "round arc"
+worry from the 17:08Z entry resolves to: the *number* is not the nominal one,
+but the shape is. The CAD-bbox route reads `w/h = 1.504206917`, differing in
+the 5th digit only through gmsh's 1e-7 bounding-box inflation (`GEO-10`) —
+the dolfinx-side number is the one to use.
+
+**Negative controls, both held.** (i) kwarg off: 79 534 cells, cell tags
+`{1,2,3,101,102}`, facet tags `{1,201,202}`, no `21x` group. (ii) the 3b-iv
+gate (`test_two_torus_port_facets.py`) re-run on this commit reproduces
+`meshed/analytic = 0.974490841` for both ports — **bit-identical** to the
+value recorded 2026-08-05, which is the real proof the shared code path did
+not move (`PORT-1`/`PORT-10` pin no cell count for this mesh-only fixture, so
+79 534 is pinned from this run and documented as such rather than imported).
+Port areas on the *fragmented* mesh read 1.563786482e-04 m² per port, the
+same 0.9745 of the analytic cut pair.
+
+**Logs.** `20260817T003524Z_GEO-16.log` (3 passed, 29.2 s — the probe that
+measured the control cell count) and `20260817T003627Z_GEO-16-regression.log`
+(5 passed, 47.3 s at `-n 2`, the gating run: new file + the 3b-iv regression
+gate together). Both inside the ~120 s standard-tier estimate; no solve, no
+overrun, container-side `timeout -k 30 480`. Nothing loosened, no ⚠️
+subsystem extended, no denied commands.
+
+**Hypothesis for the next attempt.** Queue item 4 (`PORT-9` step 1 re-run) is
+now unblocked and is the next serial step: merge
+`attempt/PORT-9-20260816T170800Z`, re-run its six identity gates on the
+merge, then put the resistive sheet on facet tag `211`/`212` with
+`R = Z_p·w/h` at the measured `w/h = 1.504225878`. One wiring trap to carry
+in: with the kwarg on, the gap volume is **two** cell tags per box, so any
+`101`-only selection in the parked branch or in
+`test_port_gap_voltage_impedance.py` must be widened to `{101, 111}` /
+`{102, 112}` before the gap-voltage route is re-measured on the fragmented
+mesh. Item 2 (`OPS-17` step 1) remains independent if item 4 stalls.
