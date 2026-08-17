@@ -158,8 +158,12 @@ step 5 or listed in step 6 states all six:
    inside that window; the container-side `timeout` needs `-k 30` — a plain
    TERM does not reliably stop an `mpiexec` job, and an overrun can wedge
    the container (MAT-6 step 10, 2026-08-12; recovery is
-   `docker compose up -d --force-recreate`). Add to this list as runs
-   discover more.
+   `docker compose up -d --force-recreate`); piping pytest through
+   `grep -v` (or anything) inside the harness command makes the log
+   footer record the pipe's exit status, not pytest's — two OPS-17
+   step-2 footers show exit 0 over a failing and a killed run
+   (2026-08-17); filter after the fact, never in the pipeline. Add to
+   this list as runs discover more.
 5. **The scope boundary** — what the item does *not* close, stated so the
    implementer holds the chunk at 🟡 rather than over-claiming. `POST-3` step 1
    correctly stayed 🟡 because a scalar-σ identity does not gate the coil+

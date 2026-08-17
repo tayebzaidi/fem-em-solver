@@ -13529,3 +13529,157 @@ COMPLIANT against §4 by the 10:30 review. Struck texts verbatim:
 >   answer — record the measured frontier (largest ratio, cell count,
 >   time) in this entry and known-issues if a defect surfaced; report,
 >   stop.
+
+## §9 On-deck items 1-4 + interval recap, 03:00 to 10:30 2026-08-17 — archived 2026-08-17 (10:30 review)
+
+Last reviewed 2026-08-17, **03:00 review**. Interval (since 18:00): four
+slots ran in order and **all four closed their items** — `GEO-16`
+(sheet area = CAD to `1.000000000000`), `OPS-17` step 1 (306 functions
+swept, 10 replace / 4 delete / 45 keep), `TH-11` step 4 (fixed-f
+h-ladders read **flat in f**), and the `PORT-9` step-1 re-run (parked
+branch merged `121d65c`, first lumped-port `Z` solved, cross-route
+**7.7095%** vs the gap route — outside step 2's 5% band, printed not
+gated). All four audited **COMPLIANT** (one subagent auditor each; logs
+footered, anchors quantitative, plan numbers match the logs digit for
+digit; the one slip found — a 1 s/2 s elapsed mixup in `OPS-17`'s
+annotation — is corrected in §7). The merged `attempt/*` branch was
+deleted; tree clean, no `recovered/*`. This review adjudicated `TH-11`
+step 4's flat-in-f reading into §2 (as printed evidence, the caveat
+retained), scoped **`TH-11` step 5** (64 MHz third rung) and **`EX-23`**
+(port-sheet mesh example, §5.4 ramp on `GEO-16`), rescoped `OPS-17`
+step 2 per its own step-1 finding, and updated both stale §2.2 bullets.
+Done-item texts and prior recaps: `docs/planning/plan-archive.md`.
+
+**Five items.** Items 1–4 are mutually independent (item 1 is the
+critical path; 2–4 touch disjoint files); item 5 is the declared spare,
+also independent. Items execute their §7 entries verbatim as annotated
+by this review.
+
+1. ✅ **DONE 2026-08-17, 04:30 slot** — diagnosis branch, as the item
+   expected. Both pre-stated bands MISS (cross-route 7.7095% vs 5%,
+   lumped mutual 12.6931% vs 10%; gap route inside at 6.0391%), neither
+   widened, and the hypothesis is **confirmed**: transverse averaging
+   7.7783 pp, path/projection residual **0.0763 pp** against the ~1 pp
+   threshold. Negative controls green (passive sheet, gap route
+   reproducing 0.894310). 15 passed 95.2 s at `-n 2`,
+   `20260817T093554Z_PORT-9-step2.log`. The reciprocity sweep was not
+   run (the item directed the hour at the diagnosis); step 3 is blocked
+   on a **feed-definition scoping decision for the review** — see the
+   §7 `PORT-9` step-2 block. *(Original item text below.)*
+   **`PORT-9` step 2 — cross-route adjudication (standard).** Execute
+   the §7 `PORT-9` step-2 entry verbatim. **Anchor:** lumped-port
+   `Im Z₁₂` inside the unmoved 10% band of ωM₁₂ = 1.241755 Ω;
+   cross-route `|ΔZ₁₂|/|Z₁₂| ≤ 5%`; reciprocity `‖S−Sᵀ‖/‖S‖ ≤ 1e-3`
+   through `run_n_port_sparameter_sweep`. **Know going in:** step 1
+   already measured the cross-route at **7.7095%** — outside the band.
+   The bands were pre-stated and do not move; the expected outcome is
+   the **diagnosis branch**, and the run should budget its hour for it:
+   test the §7 entry's sheet-average-vs-centreline hypothesis
+   quantitatively — on the step-1 solved field, compute the sheet-average
+   voltage `(1/w)∫_S E·ĥ dS` beside the centreline `∫E·dl` and print the
+   ratio next to 3b-xii's `_fringe_fraction`; if that ratio explains the
+   7.71% to within ~1 pp, the miss is a property of the two feed
+   definitions on this box, and the §7 entry says so with the numbers.
+   **Negative control:** the passive-sheet zero-field control stays
+   green; the gap route reproduces its fragmented-mesh record 0.894310
+   at the −0.0233 pp grain. **Cost:** step-1 fixture (184 919 cells,
+   mesh ~38 s, solve ~25 s), two solves for the sweep; ~240 s, `-n 2`,
+   `timeout -k 30 500`. **Traps:** step 1's verbatim (complex build +
+   `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; FFCx lock;
+   `-s`; generator-convention sign — comparator is `−I·Z_p`; two cell
+   tags per gap box). **Scope:** two-torus only; a diagnosed miss holds
+   the chunk 🟡 and keeps step 3 blocked — never widen the band.
+   **Negative result:** hypothesis doesn't explain the miss either ⇒
+   record both numbers and the residual in the §7 entry, report, stop.
+2. ✅ **DONE 2026-08-17, 06:00 slot** — all 14 dispositions landed (4
+   deletes, 10 replacements), verified at `-n 2` across six harness logs.
+   Anchors that hold: cylinder **13.2751%** vs `μ₀I/2πr` (band 25%),
+   coil+phantom **17.1233%** vs two-loop Biot–Savart (band 30%), three
+   volume-partition identities at ratio **1.000000000000**, birdcage
+   diagnostics exact to 1e-12, the `PORT-1` 3b-x record reproduced on both
+   gap tags to 1%. `finiteness_sweep.py` was **not** re-run as the
+   before/after control — the hour went to the four defects below; that
+   and the two full-suite legs are step 3. Two rows did not take the
+   named anchor for stated reasons (birdcage: already gated on the
+   identical fixture 20 lines away; time-harmonic smoke: α is not
+   measurable on an interior-source cylinder at all) — §7 has both.
+   **Four defects surfaced, none fixed, no band loosened** (three carried
+   as strict xfail, full write-ups in known-issues): the coil+phantom
+   region-resolution policy shrinks meshed coil volumes **−21.68%/−22.62%**
+   while asking for a *finer* mesh; the Coulomb-gauge multiplier does not
+   vanish for a divergence-free source (**7.836781e+00**); real Poynting
+   power misses by **116.7465%** with the flux sign wrong on the smoke
+   fixture; `poynting_power_balance` raises on scalar `sigma=0.0`. The
+   `⚠️`-retirement clause **confirmed as nothing-to-retire**.
+   *(Original item text below.)*
+   **`OPS-17` step 2 — execute the dispositions (standard, as rescoped
+   2026-08-17).** Execute the §7 step-2 entry verbatim, including the
+   rescope annotation: 4 deletes, 10 replacements with the anchors named
+   in the step-1 table, `⚠️`-clause read as "confirm and say so", and
+   the pre-authorized sizing valve (targeted runs + journal if the two
+   full-suite legs don't fit the hour). **Anchor:** each replacement's
+   named closed form (Biot–Savart, μ₀I/2πr, plane-wave α, CAD volume
+   identities, fitted rate in `[RATE_MIN, RATE_MAX]`, the pinned
+   `Im Z_reaction` record); `finiteness_sweep.py` re-run as the
+   before/after control — candidate count must drop 59 → 45 (the keeps)
+   with zero new candidates. **Negative control:** the sweep's own
+   before/after delta; deleted tests greppable in no `docs/` or §7
+   reference. **Cost:** dispositions are edits; targeted runs of the ~12
+   touched files ~300 s total at `-n 2`; full-suite legs only if they
+   fit. **Traps:** never delete a fixture a gated test imports (grep
+   first); `test_time_harmonic_smoke` replacement may duplicate the
+   `TH-6` gate — then delete and say so (step-1 table pre-authorizes);
+   known-issues failures are not this chunk's to fix. **Scope:** test
+   hygiene only — no `⚠️` retirement without per-chunk evidence.
+   **Negative result:** a replacement whose anchor fails on the real
+   solve is a *finding about the code it exercises* — known-issues
+   entry, report, stop; never land a loosened replacement.
+3. 🚫 **BLOCKED 2026-08-17, 07:30 slot** — the cost probe ran and its
+   stop condition fired, exactly as §7 made binding. The rung passed the
+   cell-count ceiling (**2 807 309** cells, 5.03 cells/δ, ceiling 3.4 M)
+   and failed the window: **mesh 288.2 s** at `-n 2`, loaded solve still
+   in matrix assembly at the 568.6 s kill
+   (`20260817T123353Z_TH-11-step5-probe.log`, exit 124). No reading — no
+   ΔR, no bracket. The written module is parked unlanded on
+   `attempt/TH-11-step5-20260817T123353Z`; nothing about it is
+   known-broken, it is blocked on cost only. **The review must choose**
+   between mesh-caching to XDMF (recommended), more ranks for this rung
+   only (not authorised by §7 as written), or a shrunk rung with a non-2
+   refinement ratio — see the §7 step-5 attempt-1 block for the numbers
+   behind each. Do not retry this item unchanged: a second slot would
+   buy the same 288 s mesh and the same kill. *(Original item text
+   below.)*
+   **`TH-11` step 5 — the 64 MHz third rung (heavy, cost-probe
+   binding).** Execute the §7 step-5 entry verbatim (scoped this
+   review): command 1 meshes the `near = 0.00125` rung and solves the
+   loaded case only, `timeout -k 30 1100`, `-n 2` — if the mesh blows
+   past ~3.4 M cells or the solve doesn't return in-window, journal the
+   probe numbers and stop; command 2 is the free solve + the three-rung
+   Richardson ladder, printed never gated. **Anchor:** identity family
+   < 1e-9 every solve; step-2 fine-rung record **+2.8063%** reproduced
+   at the 0.01 pp floor. **Negative control:** σ = 0 dissipation exactly
+   zero; record reproduction. **Traps/scope/negative result:** §7 entry
+   verbatim (step 4's traps; no gated claim; a non-overlapping 64 MHz
+   bracket is the informative outcome — record, report, stop).
+4. ✅ **DONE 2026-08-17, 09:00 slot** — closed as written, no band
+   moved. Both sheets 84 facets, meshed/CAD **1.000000000000** inside the
+   imported 1e-9; 211/212 symmetry bit-identical; kwarg-off control
+   reproduced **79 534** cells and asserted to *lack* the `21x` tags;
+   extents printed — **w/h = 1.504225878** vs the generator's CAD-side
+   1.504206917 (1.26e-05 relative, the arc-chord difference). 26.0 s
+   in-script at `-n 2`, `20260817T140242Z_EX-23-example-n2.log`; docrefs
+   `exit=2`, `dead=0 guide=0 stale=24`, none of it EX-23's. Measured note
+   for `PORT-9` step 3: the sheet costs **+354 cells** over the control.
+   *(Original item text below.)*
+   **`EX-23` — two-torus port-sheet mesh example (standard, mesh-only,
+   no solve).** Execute the §7 `EX-23` entry verbatim (commissioned this
+   review): `examples/meshing/04` + same-stem guide, combined-XDMF with
+   tags `211`/`212`, every constant imported from
+   `tests/mesh/test_two_torus_port_sheet.py`. **Anchor:** both sheets'
+   meshed/CAD area to `AREA_IDENTITY_BAND` (1e-9), symmetry < 1e-12.
+   **Negative control:** kwarg-off run bit-matches the recorded 79 534
+   cells with no `21x` tags, asserted to *lack* the sheet (`EX-18`
+   inverted-assertion pattern). ~60 s, `-n 2`, `timeout -k 30 480`;
+   docrefs gate on `exit != 1`. **Scope:** mesh-only, no `Z` claims.
+   **Negative result:** area identity failing on the example path is a
+   regression vs `GEO-16` — known-issues entry, report, stop.
