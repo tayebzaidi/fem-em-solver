@@ -1,0 +1,406 @@
+# Test Run
+- Chunk: TH-11-step5a-cache-smoke
+- Commit: 29e10e26f2341d263ec4121460e635ac446fa101
+- Time (UTC): 2026-08-17 18:32:48
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && TH11_CACHE_RUNG=smoke PYTHONPATH=/workspace/src timeout -k 30 240 mpiexec -n 2 python3 -m pytest tests/validation/test_coil_loading_larmor_mesh_cache.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 17 13:31 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && TH11_CACHE_RUNG=smoke PYTHONPATH=/workspace/src timeout -k 30 240 mpiexec -n 2 python3 -m pytest tests/validation/test_coil_loading_larmor_mesh_cache.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 5 items
+
+tests/validation/test_coil_loading_larmor_mesh_cache.py::test_the_cached_rung_is_the_priced_mesh collected 5 items
+
+tests/validation/test_coil_loading_larmor_mesh_cache.py::test_the_cached_rung_is_the_priced_mesh Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 50%] Meshing curve 11 (Line)
+Info    : [ 50%] Meshing curve 12 (Line)
+Info    : [ 60%] Meshing curve 13 (Line)
+Info    : [ 60%] Meshing curve 14 (Line)
+Info    : [ 70%] Meshing curve 15 (Line)
+Info    : [ 70%] Meshing curve 16 (Line)
+Info    : [ 80%] Meshing curve 17 (Line)
+Info    : [ 80%] Meshing curve 18 (Line)
+Info    : [ 90%] Meshing curve 19 (Line)
+Info    : [ 90%] Meshing curve 20 (Line)
+Info    : [100%] Meshing curve 21 (Line)
+Info    : [100%] Meshing curve 22 (Line)
+Info    : Done meshing 1D (Wall 0.0680395s, CPU 0.067215s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [  0%] 100 triangles are equivalent
+Info    : [  0%] Meshing surface 1 (Torus, MeshAdapt)
+Info    : [  0%] Serializing surface 1 and refining all its bounding edges
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Warning : 122 elements remain invalid in surface 1
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [100%] 8-| Splitting those edges and trying again
+Info    : [100%] :-) All edges recovered after 1 iteration
+Info    : [100%] 90 triangles are equivalent
+Info    : [100%] Meshing surface 1 (Torus, MeshAdapt)
+Warning : 27 elements remain invalid in surface 1
+Info    : [100%] Serializing surface 1 and refining all its bounding edges
+Info    : [100%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [100%] 8-| Splitting those edges and trying again
+Info    : [100%] :-) All edges recovered after 1 iteration
+Info    : [100%] 40 triangles are equivalent
+Info    : [100%] Meshing surface 1 (Torus, MeshAdapt)
+Warning : 30 elements remain invalid in surface 1
+Info    : [100%] Serializing surface 1 and refining all its bounding edges
+Info    : [100%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [100%] 8-| Splitting those edges and trying again
+Info    : [100%] :-) All edges recovered after 1 iteration
+Info    : [100%] Meshing surface 1 (Torus, MeshAdapt)
+Warning : 48 elements remain invalid in surface 1
+Info    : [100%] Serializing surface 1 and refining all its bounding edges
+Info    : [100%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [100%] 8-| Splitting those edges and trying again
+Info    : [100%] :-) All edges recovered after 1 iteration
+Info    : [100%] Meshing surface 1 (Torus, MeshAdapt)
+Warning : 85 elements remain invalid in surface 1
+Info    : [100%] Serializing surface 1 and refining all its bounding edges
+Info    : [100%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [100%] 8-| Splitting those edges and trying again
+Info    : [100%] :-) All edges recovered after 1 iteration
+Info    : [100%] Meshing surface 1 (Torus, MeshAdapt)
+Warning : 337 elements remain invalid in surface 1
+Info    : [100%] Serializing surface 1 and refining all its bounding edges
+Info    : [100%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [100%] 8-| Splitting those edges and trying again
+Info    : [100%] :-) All edges recovered after 1 iteration
+Info    : [100%] Meshing surface 1 (Torus, MeshAdapt)
+Warning : 318 elements remain invalid in surface 1
+Info    : [100%] Serializing surface 1 and refining all its bounding edges
+Info    : [100%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [100%] 8-| Splitting those edges and trying again
+Info    : [100%] :-) All edges recovered after 1 iteration
+Info    : [100%] Meshing surface 1 (Torus, MeshAdapt)
+Warning : 942 elements remain invalid in surface 1
+Info    : [100%] Serializing surface 1 and refining all its bounding edges
+Info    : [100%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [100%] 8-| Splitting those edges and trying again
+Info    : [100%] :-) All edges recovered after 1 iteration
+Info    : [100%] Meshing surface 1 (Torus, MeshAdapt)
+Warning : 535 elements remain invalid in surface 1
+Info    : [100%] Serializing surface 1 and refining all its bounding edges
+Info    : [100%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [100%] 8-| Splitting those edges and trying again
+Info    : [100%] :-) All edges recovered after 1 iteration
+Info    : [100%] Meshing surface 1 (Torus, MeshAdapt)
+
+Loguru caught a signal: SIGTERM
+
+Loguru caught a signal: SIGTERM
+Stack trace:
+[truncated]
+123     0x62b844228e56 python3(+0x239e56) [0x62b844228e56]
+122     0x62b84413d8a2 _PyEval_EvalFrameDefault + 24914
+121     0x62b84414f70c _PyFunction_Vectorcall + 124
+120     0x62b844137e0d _PyEval_EvalFrameDefault + 1725
+119     0x62b84414f70c _PyFunction_Vectorcall + 124
+118     0x62b84413e908 _PyEval_EvalFrameDefault + 29112
+117     0x62b8441455eb _PyObject_MakeTpCall + 603
+116     0x62b8442731e0 python3(+0x2841e0) [0x62b8442731e0]
+115     0x62b84415a54c _PyObject_Call_Prepend + 92
+114     0x62b84414482d _PyObject_FastCallDictTstate + 365
+113     0x62b84414f70c _PyFunction_Vectorcall + 124
+112     0x62b84413d8a2 _PyEval_EvalFrameDefault + 24914
+111     0x62b84415d4e1 python3(+0x16e4e1) [0x62b84415d4e1]
+110     0x62b84413d8a2 _PyEval_EvalFrameDefault + 24914
+109     0x62b84414f70c _PyFunction_Vectorcall + 124
+108     0x62b84413a2c1 _PyEval_EvalFrameDefault + 11121
+107     0x62b84414f70c _PyFunction_Vectorcall + 124
+106     0x62b844137e0d _PyEval_EvalFrameDefault + 1725
+105     0x62b84414f70c _PyFunction_Vectorcall + 124
+104     0x62b844137e0d _PyEval_EvalFrameDefault + 1725
+103     0x62b84414f70c _PyFunction_Vectorcall + 124
+102     0x62b84413e908 _PyEval_EvalFrameDefault + 29112
+101     0x62b8441455eb _PyObject_MakeTpCall + 603
+100     0x62b8442731e0 python3(+0x2841e0) [0x62b8442731e0]
+99      0x62b84415a54c _PyObject_Call_Prepend + 92
+98      0x62b84414482d _PyObject_FastCallDictTstate + 365
+97      0x62b84414f70c _PyFunction_Vectorcall + 124
+96      0x62b84413d8a2 _PyEval_EvalFrameDefault + 24914
+95      0x62b84415d4e1 python3(+0x16e4e1) [0x62b84415d4e1]
+94      0x62b84413d8a2 _PyEval_EvalFrameDefault + 24914
+93      0x62b84414f70c _PyFunction_Vectorcall + 124
+92      0x62b84413a2c1 _PyEval_EvalFrameDefault + 11121
+91      0x62b84414f70c _PyFunction_Vectorcall + 124
+90      0x62b84413e908 _PyEval_EvalFrameDefault + 29112
+89      0x62b8441455eb _PyObject_MakeTpCall + 603
+88      0x62b8442731e0 python3(+0x2841e0) [0x62b8442731e0]
+87      0x62b84415a54c _PyObject_Call_Prepend + 92
+86      0x62b84414482d _PyObject_FastCallDictTstate + 365
+85      0x62b84414f70c _PyFunction_Vectorcall + 124
+84      0x62b84413d8a2 _PyEval_EvalFrameDefault + 24914
+83      0x62b84415d4e1 python3(+0x16e4e1) [0x62b84415d4e1]
+82      0x62b84413d8a2 _PyEval_EvalFrameDefault + 24914
+81      0x62b84414f70c _PyFunction_Vectorcall + 124
+80      0x62b84413a2c1 _PyEval_EvalFrameDefault + 11121
+79      0x62b84414f70c _PyFunction_Vectorcall + 124
+78      0x62b8441390d1 _PyEval_EvalFrameDefault + 6529
+77      0x62b84414f70c _PyFunction_Vectorcall + 124
+76      0x62b844137e0d _PyEval_EvalFrameDefault + 1725
+75      0x62b84414f70c _PyFunction_Vectorcall + 124
+74      0x62b84413a2c1 _PyEval_EvalFrameDefault + 11121
+73      0x62b84414f70c _PyFunction_Vectorcall + 124
+72      0x62b8441390d1 _PyEval_EvalFrameDefault + 6529
+71      0x62b84415d4e1 python3(+0x16e4e1) [0x62b84415d4e1]
+70      0x62b844137e0d _PyEval_EvalFrameDefault + 1725
+69      0x62b84414f70c _PyFunction_Vectorcall + 124
+68      0x62b84413a2c1 _PyEval_EvalFrameDefault + 11121
+67      0x62b84415e12b PyObject_Call + 187
+66      0x62b8442731e0 python3(+0x2841e0) [0x62b8442731e0]
+65      0x62b84415a54c _PyObject_Call_Prepend + 92
+64      0x62b84414482d _PyObject_FastCallDictTstate + 365
+63      0x62b84414f70c _PyFunction_Vectorcall + 124
+62      0x62b84413d8a2 _PyEval_EvalFrameDefault + 24914
+61      0x62b84415d4e1 python3(+0x16e4e1) [0x62b84415d4e1]
+60      0x62b84413d8a2 _PyEval_EvalFrameDefault + 24914
+59      0x62b84414f70c _PyFunction_Vectorcall + 124
+58      0x62b84413a2c1 _PyEval_EvalFrameDefault + 11121
+57      0x62b84414f70c _PyFunction_Vectorcall + 124
+56      0x62b844137f52 _PyEval_EvalFrameDefault + 2050
+55      0x62b84414f70c _PyFunction_Vectorcall + 124
+54      0x62b844137f52 _PyEval_EvalFrameDefault + 2050
+53      0x62b84414f70c _PyFunction_Vectorcall + 124
+52      0x62b844137f52 _PyEval_EvalFrameDefault + 2050
+51      0x62b84414f70c _PyFunction_Vectorcall + 124
+50      0x62b844137f52 _PyEval_EvalFrameDefault + 2050
+49      0x62b84414f70c _PyFunction_Vectorcall + 124
+48      0x62b844137f52 _PyEval_EvalFrameDefault + 2050
+47      0x62b84414f70c _PyFunction_Vectorcall + 124
+46      0x62b844137f52 _PyEval_EvalFrameDefault + 2050
+45      0x62b84414f70c _PyFunction_Vectorcall + 124
+44      0x62b8441390d1 _PyEval_EvalFrameDefault + 6529
+43      0x62b84415d4e1 python3(+0x16e4e1) [0x62b84415d4e1]
+42      0x62b84413e908 _PyEval_EvalFrameDefault + 29112
+41      0x62b8441455eb _PyObject_MakeTpCall + 603
+40      0x62b8442731e0 python3(+0x2841e0) [0x62b8442731e0]
+39      0x62b84415a54c _PyObject_Call_Prepend + 92
+38      0x62b84414482d _PyObject_FastCallDictTstate + 365
+37      0x62b84414f70c _PyFunction_Vectorcall + 124
+36      0x62b84413d8a2 _PyEval_EvalFrameDefault + 24914
+35      0x62b84415d4e1 python3(+0x16e4e1) [0x62b84415d4e1]
+34      0x62b84413d8a2 _PyEval_EvalFrameDefault + 24914
+33      0x62b84414f70c _PyFunction_Vectorcall + 124
+32      0x62b84413a2c1 _PyEval_EvalFrameDefault + 11121
+31      0x62b84414f70c _PyFunction_Vectorcall + 124
+30      0x62b844137e0d _PyEval_EvalFrameDefault + 1725
+29      0x62b84414f70c _PyFunction_Vectorcall + 124
+28      0x62b84413a2c1 _PyEval_EvalFrameDefault + 11121
+27      0x62b84414f70c _PyFunction_Vectorcall + 124
+26      0x62b8441390d1 _PyEval_EvalFrameDefault + 6529
+25      0x62b84414f70c _PyFunction_Vectorcall + 124
+24      0x62b8441390d1 _PyEval_EvalFrameDefault + 6529
+23      0x62b84414f70c _PyFunction_Vectorcall + 124
+22      0x62b84413e908 _PyEval_EvalFrameDefault + 29112
+21      0x62b8441455eb _PyObject_MakeTpCall + 603
+20      0x62b84414ee0e python3(+0x15fe0e) [0x62b84414ee0e]
+19      0x74be50add635 /usr/local/lib/python3.10/dist-packages/mpi4py/MPI.cpython-310-x86_64-linux-gnu.so(+0xf8635) [0x74be50add635]
+18      0x74be4e0e27f8 MPI_Bcast + 872
+17      0x74be4e397d39 /usr/local/lib/libmpi.so.12(+0x315d39) [0x74be4e397d39]
+16      0x74be4e397236 /usr/local/lib/libmpi.so.12(+0x315236) [0x74be4e397236]
+15      0x74be4e3967c1 /usr/local/lib/libmpi.so.12(+0x3147c1) [0x74be4e3967c1]
+14      0x74be4e395b01 /usr/local/lib/libmpi.so.12(+0x313b01) [0x74be4e395b01]
+13      0x74be4e3959cc /usr/local/lib/libmpi.so.12(+0x3139cc) [0x74be4e3959cc]
+12      0x74be4e3264c9 /usr/local/lib/libmpi.so.12(+0x2a44c9) [0x74be4e3264c9]
+11      0x74be4e3cdf37 /usr/local/lib/libmpi.so.12(+0x34bf37) [0x74be4e3cdf37]
+10      0x74be4e3cdab3 /usr/local/lib/libmpi.so.12(+0x34bab3) [0x74be4e3cdab3]
+9       0x74be4e3bcf6f /usr/local/lib/libmpi.so.12(+0x33af6f) [0x74be4e3bcf6f]
+8       0x74be4e43689b /usr/local/lib/libmpi.so.12(+0x3b489b) [0x74be4e43689b]
+7       0x74be4e432880 /usr/local/lib/libmpi.so.12(+0x3b0880) [0x74be4e432880]
+6       0x74be4e430c9b /usr/local/lib/libmpi.so.12(+0x3aec9b) [0x74be4e430c9b]
+5       0x74be503b47bb /usr/local/lib/libmpi.so.12(+0x23327bb) [0x74be503b47bb]
+4       0x74be503b3e79 /usr/local/lib/libmpi.so.12(+0x2331e79) [0x74be503b3e79]
+3       0x74be503c5cf5 /usr/local/lib/libmpi.so.12(+0x2343cf5) [0x74be503c5cf5]
+2       0x74be503c5b8e /usr/local/lib/libmpi.so.12(+0x2343b8e) [0x74be503c5b8e]
+1       0x74be558b8f4d pthread_mutex_lock + 93
+0       0x74be55863520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x74be55863520]
+2026-08-17 18:36:49.202 ( 239.381s) [main            ]                       :0     FATL| Signal: SIGTERM
+Stack trace:
+[truncated]
+123     0x55ce43df6b0d python3(+0x23fb0d) [0x55ce43df6b0d]
+122     0x55ce43df0cf6 PyEval_EvalCode + 134
+121     0x55ce43df0e56 python3(+0x239e56) [0x55ce43df0e56]
+120     0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+119     0x55ce43d1770c _PyFunction_Vectorcall + 124
+118     0x55ce43cffe0d _PyEval_EvalFrameDefault + 1725
+117     0x55ce43d1770c _PyFunction_Vectorcall + 124
+116     0x55ce43d06908 _PyEval_EvalFrameDefault + 29112
+115     0x55ce43d0d5eb _PyObject_MakeTpCall + 603
+114     0x55ce43e3b1e0 python3(+0x2841e0) [0x55ce43e3b1e0]
+113     0x55ce43d2254c _PyObject_Call_Prepend + 92
+112     0x55ce43d0c82d _PyObject_FastCallDictTstate + 365
+111     0x55ce43d1770c _PyFunction_Vectorcall + 124
+110     0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+109     0x55ce43d254e1 python3(+0x16e4e1) [0x55ce43d254e1]
+108     0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+107     0x55ce43d1770c _PyFunction_Vectorcall + 124
+106     0x55ce43d022c1 _PyEval_EvalFrameDefault + 11121
+105     0x55ce43d1770c _PyFunction_Vectorcall + 124
+104     0x55ce43cffe0d _PyEval_EvalFrameDefault + 1725
+103     0x55ce43d1770c _PyFunction_Vectorcall + 124
+102     0x55ce43cffe0d _PyEval_EvalFrameDefault + 1725
+101     0x55ce43d1770c _PyFunction_Vectorcall + 124
+100     0x55ce43d06908 _PyEval_EvalFrameDefault + 29112
+99      0x55ce43d0d5eb _PyObject_MakeTpCall + 603
+98      0x55ce43e3b1e0 python3(+0x2841e0) [0x55ce43e3b1e0]
+97      0x55ce43d2254c _PyObject_Call_Prepend + 92
+96      0x55ce43d0c82d _PyObject_FastCallDictTstate + 365
+95      0x55ce43d1770c _PyFunction_Vectorcall + 124
+94      0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+93      0x55ce43d254e1 python3(+0x16e4e1) [0x55ce43d254e1]
+92      0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+91      0x55ce43d1770c _PyFunction_Vectorcall + 124
+90      0x55ce43d022c1 _PyEval_EvalFrameDefault + 11121
+89      0x55ce43d1770c _PyFunction_Vectorcall + 124
+88      0x55ce43d06908 _PyEval_EvalFrameDefault + 29112
+87      0x55ce43d0d5eb _PyObject_MakeTpCall + 603
+86      0x55ce43e3b1e0 python3(+0x2841e0) [0x55ce43e3b1e0]
+85      0x55ce43d2254c _PyObject_Call_Prepend + 92
+84      0x55ce43d0c82d _PyObject_FastCallDictTstate + 365
+83      0x55ce43d1770c _PyFunction_Vectorcall + 124
+82      0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+81      0x55ce43d254e1 python3(+0x16e4e1) [0x55ce43d254e1]
+80      0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+79      0x55ce43d1770c _PyFunction_Vectorcall + 124
+78      0x55ce43d022c1 _PyEval_EvalFrameDefault + 11121
+77      0x55ce43d1770c _PyFunction_Vectorcall + 124
+76      0x55ce43d010d1 _PyEval_EvalFrameDefault + 6529
+75      0x55ce43d1770c _PyFunction_Vectorcall + 124
+74      0x55ce43cffe0d _PyEval_EvalFrameDefault + 1725
+73      0x55ce43d1770c _PyFunction_Vectorcall + 124
+72      0x55ce43d022c1 _PyEval_EvalFrameDefault + 11121
+71      0x55ce43d1770c _PyFunction_Vectorcall + 124
+70      0x55ce43d010d1 _PyEval_EvalFrameDefault + 6529
+69      0x55ce43d254e1 python3(+0x16e4e1) [0x55ce43d254e1]
+68      0x55ce43cffe0d _PyEval_EvalFrameDefault + 1725
+67      0x55ce43d1770c _PyFunction_Vectorcall + 124
+66      0x55ce43d022c1 _PyEval_EvalFrameDefault + 11121
+65      0x55ce43d2612b PyObject_Call + 187
+64      0x55ce43e3b1e0 python3(+0x2841e0) [0x55ce43e3b1e0]
+63      0x55ce43d2254c _PyObject_Call_Prepend + 92
+62      0x55ce43d0c82d _PyObject_FastCallDictTstate + 365
+61      0x55ce43d1770c _PyFunction_Vectorcall + 124
+60      0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+59      0x55ce43d254e1 python3(+0x16e4e1) [0x55ce43d254e1]
+58      0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+57      0x55ce43d1770c _PyFunction_Vectorcall + 124
+56      0x55ce43d022c1 _PyEval_EvalFrameDefault + 11121
+55      0x55ce43d1770c _PyFunction_Vectorcall + 124
+54      0x55ce43cfff52 _PyEval_EvalFrameDefault + 2050
+53      0x55ce43d1770c _PyFunction_Vectorcall + 124
+52      0x55ce43cfff52 _PyEval_EvalFrameDefault + 2050
+51      0x55ce43d1770c _PyFunction_Vectorcall + 124
+50      0x55ce43cfff52 _PyEval_EvalFrameDefault + 2050
+49      0x55ce43d1770c _PyFunction_Vectorcall + 124
+48      0x55ce43cfff52 _PyEval_EvalFrameDefault + 2050
+47      0x55ce43d1770c _PyFunction_Vectorcall + 124
+46      0x55ce43cfff52 _PyEval_EvalFrameDefault + 2050
+45      0x55ce43d1770c _PyFunction_Vectorcall + 124
+44      0x55ce43cfff52 _PyEval_EvalFrameDefault + 2050
+43      0x55ce43d1770c _PyFunction_Vectorcall + 124
+42      0x55ce43d010d1 _PyEval_EvalFrameDefault + 6529
+41      0x55ce43d254e1 python3(+0x16e4e1) [0x55ce43d254e1]
+40      0x55ce43d06908 _PyEval_EvalFrameDefault + 29112
+39      0x55ce43d0d5eb _PyObject_MakeTpCall + 603
+38      0x55ce43e3b1e0 python3(+0x2841e0) [0x55ce43e3b1e0]
+37      0x55ce43d2254c _PyObject_Call_Prepend + 92
+36      0x55ce43d0c82d _PyObject_FastCallDictTstate + 365
+35      0x55ce43d1770c _PyFunction_Vectorcall + 124
+34      0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+33      0x55ce43d254e1 python3(+0x16e4e1) [0x55ce43d254e1]
+32      0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+31      0x55ce43d1770c _PyFunction_Vectorcall + 124
+30      0x55ce43d022c1 _PyEval_EvalFrameDefault + 11121
+29      0x55ce43d1770c _PyFunction_Vectorcall + 124
+28      0x55ce43cffe0d _PyEval_EvalFrameDefault + 1725
+27      0x55ce43d1770c _PyFunction_Vectorcall + 124
+26      0x55ce43d022c1 _PyEval_EvalFrameDefault + 11121
+25      0x55ce43d1770c _PyFunction_Vectorcall + 124
+24      0x55ce43d010d1 _PyEval_EvalFrameDefault + 6529
+23      0x55ce43d1770c _PyFunction_Vectorcall + 124
+22      0x55ce43d058a2 _PyEval_EvalFrameDefault + 24914
+21      0x55ce43d1770c _PyFunction_Vectorcall + 124
+20      0x55ce43d061f1 _PyEval_EvalFrameDefault + 27297
+19      0x55ce43d0d5eb _PyObject_MakeTpCall + 603
+18      0x7bd2a390fa00 /usr/lib/python3.10/lib-dynload/_ctypes.cpython-310-x86_64-linux-gnu.so(+0x9a00) [0x7bd2a390fa00]
+17      0x7bd2a39103e9 /usr/lib/python3.10/lib-dynload/_ctypes.cpython-310-x86_64-linux-gnu.so(+0xa3e9) [0x7bd2a39103e9]
+16      0x7bd2a38fd493 /lib/x86_64-linux-gnu/libffi.so.8(+0x4493) [0x7bd2a38fd493]
+15      0x7bd2a3900e2e /lib/x86_64-linux-gnu/libffi.so.8(+0x7e2e) [0x7bd2a3900e2e]
+14      0x7bd29605f8e8 gmshModelMeshGenerate + 24
+13      0x7bd295090724 gmsh::model::mesh::generate(int) + 52
+12      0x7bd2952c1df1 /usr/local/lib/libgmsh.so.4.11(+0x476df1) [0x7bd2952c1df1]
+11      0x7bd2954cc22c /usr/local/lib/libgmsh.so.4.11(+0x68122c) [0x7bd2954cc22c]
+10      0x7bd2954c7e3a /usr/local/lib/libgmsh.so.4.11(+0x67ce3a) [0x7bd2954c7e3a]
+9       0x7bd294c22a16 GOMP_parallel + 70
+8       0x7bd2954c16a8 /usr/local/lib/libgmsh.so.4.11(+0x6766a8) [0x7bd2954c16a8]
+7       0x7bd29526ab57 /usr/local/lib/libgmsh.so.4.11(+0x41fb57) [0x7bd29526ab57]
+6       0x7bd2954f36b4 /usr/local/lib/libgmsh.so.4.11(+0x6a86b4) [0x7bd2954f36b4]
+5       0x7bd2954f2f66 /usr/local/lib/libgmsh.so.4.11(+0x6a7f66) [0x7bd2954f2f66]
+4       0x7bd2954f14b1 /usr/local/lib/libgmsh.so.4.11(+0x6a64b1) [0x7bd2954f14b1]
+3       0x7bd295513ba5 /usr/local/lib/libgmsh.so.4.11(+0x6c8ba5) [0x7bd295513ba5]
+2       0x7bd2955109ab /usr/local/lib/libgmsh.so.4.11(+0x6c59ab) [0x7bd2955109ab]
+1       0x7bd29562c3dd /usr/local/lib/libgmsh.so.4.11(+0x7e13dd) [0x7bd29562c3dd]
+0       0x7bd2a7879520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x7bd2a7879520]
+2026-08-17 18:36:49.202 ( 239.381s) [main            ]                       :0     FATL| Signal: SIGTERM
+
+## Exit
+- Status: 124
+- Elapsed (s): 241

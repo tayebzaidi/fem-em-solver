@@ -1316,7 +1316,7 @@ path, not polish.
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ✅ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ✅ | standard |
-| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 ✅ 2026-08-17 — the fixed-f h-ladder reads **flat in f**: refinement moves the deviation −1.87 pp at 10 MHz and −4.48 pp at 30 MHz (−7.46 pp at 64 MHz on record) and the h → 0 brackets overlap at ~−1%, so the "trend" was the resolution term; no gated trend claim is scopeable and §2 stands; step 5 scoped 2026-08-17 review, attempt 1 🚫 2026-08-17 — the third rung is **priced and does not fit a scheduled slot**: 2 807 309 cells (inside the 3.4 M ceiling) but 288.2 s of mesh plus a loaded solve still assembling at the 570 s kill, so §7's probe stop condition fired; module parked on `attempt/TH-11-step5-20260817T123353Z`; **rescoped by the 10:30 review as 5a/5b** — 5a caches the mesh to XDMF and buys the `-n 8` rank change with a measured control (fine-rung +2.8063% reproduced within 0.1 pp), 5b runs the pair off the cache)* | standard (steps 4–5 heavy) |
+| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 ✅ 2026-08-17 — the fixed-f h-ladder reads **flat in f**: refinement moves the deviation −1.87 pp at 10 MHz and −4.48 pp at 30 MHz (−7.46 pp at 64 MHz on record) and the h → 0 brackets overlap at ~−1%, so the "trend" was the resolution term; no gated trend claim is scopeable and §2 stands; step 5 scoped 2026-08-17 review, attempt 1 🚫 2026-08-17 — the third rung is **priced and does not fit a scheduled slot**: 2 807 309 cells (inside the 3.4 M ceiling) but 288.2 s of mesh plus a loaded solve still assembling at the 570 s kill, so §7's probe stop condition fired; module parked on `attempt/TH-11-step5-20260817T123353Z`; **rescoped by the 10:30 review as 5a/5b** — 5a caches the mesh to XDMF and buys the `-n 8` rank change with a measured control (fine-rung +2.8063% reproduced within 0.1 pp), 5b runs the pair off the cache; step 5a ✅ 2026-08-17 — the cache round-trips the 2 807 309-cell rung **exactly** (per-tag owned counts and tag names preserved, mesh 126.4 s replaced by a 14.8 s read) and the `-n 8` fine-rung pair reproduces the `-n 2` record to **+0.00002 pp**, so the rank change is bought; 5b is unblocked and needs one solve per command at ~480 s)* | standard (steps 4–5 heavy) |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)**
 ✅ *(steps 1–4 ✅ 2026-08-13, chunk closed by the 10:30 review; full step
@@ -1559,6 +1559,46 @@ step-1/2 journals archived in `docs/planning/plan-archive.md`.)*
 >     a rank-dependent ΔR outside 0.1 pp is a finding about the solver
 >     stack, not a licence to widen — known-issues entry, step 5b stays
 >     blocked, report, stop.
+>   * **Step 5a ✅ 2026-08-17 (13:30 slot) — the cache is exact and the
+>     reading is rank-invariant.** Both commands green, both anchors met.
+>     *Command 1* (`20260817T183751Z_TH-11-step5a-cache-third.log`, 143 s,
+>     `-n 2`, 5 passed): the third rung meshes to **2 807 309 cells
+>     exactly** — the probe's record to the cell — in **126.4 s** (the
+>     probe's 288.2 s was a loaded box), writes a 192.4 MiB XDMF pair in
+>     0.3 s and reads back in **14.8 s** with *everything* preserved:
+>     cell count identical, per-tag owned counts identical
+>     (`{1: 13 344, 2: 1 066 453, 3: 1 727 512}` wire/air/slab, facet
+>     `{1: 2 402}`), tag names `cell_tags`/`facet_tags` intact. So 5b pays
+>     15 s instead of 126–288 s of meshing. Counts are owned-only
+>     (`indices < size_local`) and reduced, so they are partition-invariant
+>     across the two different decompositions; read-back is
+>     `GhostMode.none`, matching `gmshio`'s default in `io/mesh.py`. The
+>     round-trip mechanics were validated on a coarse 50 675-cell rung
+>     first (`20260817T183709Z_TH-11-step5a-cache-smoke2.log`, 3 s) — the
+>     first attempt at that smoke rung timed out in gmsh at 240 s because
+>     its `resolution_wire` = 0.01 exceeded the 0.0025 m wire radius
+>     (`20260817T183248Z_TH-11-step5a-cache-smoke.log`, exit 124); the
+>     surface size is now pinned at the fixture's 0.002 with the reason in
+>     a code comment. *Command 2*
+>     (`20260817T184026Z_TH-11-step5a-rank-control.log`, 174 s, `-n 8`,
+>     11 passed): the fine 417 914-cell loaded/free pair at `-n 8` reads
+>     ΔR deviation **+2.8063%**, i.e. **+0.00002 pp** off the `-n 2` record
+>     — 5 000× inside the review's pre-stated **0.1 pp** band and inside
+>     even the 0.01 pp same-rank floor, so the rank change is bought and
+>     5b's `-n 8`/`-n 12` solves stay like-for-like with the ladder. The
+>     identity family held on both solves (complex-power residual
+>     3.58e-15 loaded / 1.33e-14 free against 1e-9; σ = 0 dissipation
+>     exactly `+0.0`; drive mismatch inside 1e-24; ΔR > 0, ΔX < 0), ΔZ
+>     = +1.3838746 − j5.8741123 Ω, 2P/I′² reproducing ΔR to the printed
+>     digit. **Cost datum for 5b:** at `-n 8` a fine-rung solve costs
+>     **72–73 s** against ~195 s at `-n 2` (2.7×). Scaling by the 6.7×
+>     cell count puts a third-rung solve near **~480 s**, so 5b should
+>     budget **one solve per harness command** (`timeout -k 30 560`) and
+>     be ready to use its pre-authorised `-n 12`. The band constant lives
+>     in the step-5 module as `RANK_INVARIANCE_BAND_PP`; it is a band on a
+>     different comparison than `DR_WOBBLE_FLOOR_PP` (same ranks, repeat
+>     run), which is unchanged and still applies at `-n 2`. No 64 MHz
+>     reading this step, as scoped.
 >   * **Step 5b — the third-rung pair off the cached mesh (one run,
 >     heavy; depends on 5a landing).** Command 1: loaded solve at `-n 8`
 >     reading the cached XDMF, `timeout -k 30 570`; command 2: free solve
@@ -2862,8 +2902,19 @@ execute their §7 entries verbatim as annotated by this review.
    not fall toward ~1% as f shrinks refutes the transverse-averaging
    diagnosis — record the ladder, known-issues entry, report, stop; the
    band never widens.
-2. **`TH-11` step 5a — cache the third-rung mesh + the rank-invariance
-   control (standard).** Execute the §7 step-5a entry verbatim (scoped
+2. ~~**`TH-11` step 5a — cache the third-rung mesh + the rank-invariance
+   control (standard).**~~ **DONE 2026-08-17, 13:30 slot — both anchors
+   met: the cache round-trips 2 807 309 cells exactly with per-tag counts
+   and tag names preserved (mesh 126.4 s → 14.8 s read-back, 5 passed
+   143 s, `20260817T183751Z_TH-11-step5a-cache-third.log`), and the fine
+   rung at `-n 8` reads +2.8063%, **+0.00002 pp** off the `-n 2` record
+   against the 0.1 pp band (11 passed 174 s,
+   `20260817T184026Z_TH-11-step5a-rank-control.log`). The parked module
+   from `attempt/TH-11-step5-20260817T123353Z` landed with it. **5b is
+   unblocked**, with a measured cost datum: `-n 8` solves the fine rung in
+   72–73 s (2.7× over `-n 2`), so the third rung extrapolates to ~480 s —
+   one solve per harness command.** Original text: execute the §7 step-5a
+   entry verbatim (scoped
    this review — do **not** re-run step 5 as originally written; a
    second unchanged slot buys the same 288 s mesh and the same kill).
    Start by landing the parked module from
