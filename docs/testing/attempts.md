@@ -12264,3 +12264,66 @@ in: with the kwarg on, the gap volume is **two** cell tags per box, so any
 `test_port_gap_voltage_impedance.py` must be widened to `{101, 111}` /
 `{102, 112}` before the gap-voltage route is re-measured on the fragmented
 mesh. Item 2 (`OPS-17` step 1) remains independent if item 4 stalls.
+
+## 2026-08-17T02:00Z — `OPS-17` step 1 — **complete**
+
+**Chunk.** §9 On-deck item 2, taken because item 1 (`GEO-16`) closed in the
+previous slot. `OPS-17` step 1 — inventory and disposition of the
+finiteness-only tests. Smoke tier, no solves, one harness command.
+
+**What was tried.** The §7 entry asks to "grep, then confirm by reading". Grep
+alone cannot see which side of a comparison is a tolerance, so the sweep landed
+as an AST tool instead — `scripts/testing/finiteness_sweep.py`, committed with
+this step so step 2 can re-run it as a before/after control. It buckets every
+`assert` in every `test_*` function as `QUANT` / `FINITE` / `OTHER` and reports
+the functions with **zero** `QUANT` asserts.
+
+Two iterations were needed and the first is the useful finding. The literal
+reading of "finiteness-class" (isfinite / > 0 / shape) flagged **123 of 306**
+functions — including `test_gap_voltage_z_matrix_is_reciprocal`, which is a
+network identity. Cause: this repo asserts against *named* tolerance constants
+(`residual < RECIPROCITY_TOLERANCE`), never float literals. Resolving names
+bound to a float anywhere in module or function scope, and splitting
+`pytest.raises`-only error-path contracts into their own bucket, took the
+candidate list to **59** — which is the number every row of the table was read
+against.
+
+**Measured numbers.** 89 files, **306** test functions. 225 carry a `QUANT`
+assert; 22 are `pytest.raises` error-path contracts; **59 candidates**, 11 of
+them asserting nothing at all. All 59 confirmed by reading (the sweep prints
+each candidate's `assert` source into the log, so the §7 table is checkable
+against the log line by line). **Disposition: 10 replace, 4 delete, 45 keep** —
+45 = 5 quantitative through a helper + 5 quantitative through an unresolved
+`tests/tolerances.py` import + 26 exact-identity + 9 structural guards a gate
+relies on. Counts stated and self-consistent (10+4+45 = 59; 225+22+59 = 306).
+
+**Two limitations, stated in the annotation rather than hidden.** (i) Asserts
+inside a helper the test calls are invisible to the AST — five keeps are keeps
+for exactly that reason. (ii) `tests/tolerances.py` imports are deliberately
+*not* resolved: a "nontrivial magnitude floor" is finiteness-class even though
+it is a float, so auto-resolving them would have cleared precisely the tests
+this chunk exists to remove.
+
+**Logs.** `20260817T020244Z_OPS-17-step1-sweep.log` (exit 0, 1 s, smoke tier,
+container-side `timeout -k 30 120`). Two superseded runs from the same slot are
+in the index and left there deliberately as the audit trail of the 123 → 59
+correction: `20260817T020115Z` (literal reading, 123 candidates) and
+`20260817T020217Z` (tolerance-name resolution, 59, before assert sources were
+printed). Nothing loosened, no ⚠️ subsystem extended, no denied commands.
+
+**Finding for the review.** Step 2's done-when says the `⚠️` glyph is retired
+from §3 and the family tables. On this table it has nothing to fire on: **no
+`⚠️` chunk is propped up by any of the 59 rows** — the four deletions are two
+`pytest.skip("Not yet implemented")` stubs and two print-only probes whose
+findings are gated by their file-neighbours. That clause should be re-scoped to
+"confirm and say so" before step 2 runs, or step 2 will look like it failed a
+requirement it cannot meet.
+
+**Hypothesis for the next attempt.** Step 2 is a clean one-slot job and needs
+no solve for the deletions: land the 4 deletes plus the 3 cheapest replaces
+(`test_two_torus`, `test_mesh_tag_integrity` ×2 — all three take the same
+tagged-volume partition identity at 1e-9 that `GEO-16` just exercised on the
+same fixture), then the solver archetypes against their existing closed forms.
+Grep for imports of the deleted names first; `test_probe_fallback_regimes` is
+parametrised over three fixtures that other tests in its file also use, so the
+fixtures stay even though the probe goes.

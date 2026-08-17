@@ -1,0 +1,142 @@
+# Test Run
+- Chunk: OPS-17-step1-sweep
+- Commit: 794536c0186d915bb27c35dc577f736d3f80bbd7
+- Time (UTC): 2026-08-17 02:02:17
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 30 120 python3 scripts/testing/finiteness_sweep.py tests'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 16 21:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 30 120 python3 scripts/testing/finiteness_sweep.py tests'\'''
+scanned files      : 89
+test functions     : 306
+with QUANT assert  : 225
+RAISES-only (error-path contract): 22
+CANDIDATES (no QUANT, not raises-only): 59
+  of which NOASSERT : 11
+  of which call a helper (may assert indirectly): 2
+
+file :: test :: line :: n_assert finite/other :: flags
+------------------------------------------------------------------------------
+tests/environment/test_complex_mode.py :: test_scalar_type_matches_active_dolfinx_build :: 67 :: 3 3/0 :: -
+tests/io/test_mesh_qa_diagnostics.py :: test_format_expected_tag_counts_reports_missing_and_present_tags :: 12 :: 3 0/3 :: -
+tests/io/test_mesh_qa_diagnostics.py :: test_print_required_tag_failure_summary_includes_expected_and_observed :: 23 :: 6 0/6 :: -
+tests/io/test_mesh_qa_diagnostics.py :: test_format_cell_tag_summary_empty_counts_is_explicit :: 38 :: 1 0/1 :: -
+tests/io/test_touchstone_export.py :: test_touchstone_export_allows_placeholder_when_explicit :: 178 :: 3 1/2 :: -
+tests/materials/test_material_map_rank_safety.py :: test_absent_tag_is_rejected_on_every_rank :: 186 :: 5 2/3 :: RAISES2
+tests/mesh/test_birdcage_port_tags.py :: test_birdcage_like_mesh_has_core_and_port_tags :: 55 :: 4 1/3 :: -
+tests/mesh/test_birdcage_port_tags.py :: test_birdcage_port_layout_rejects_too_small_or_overlapping_port_regions :: 229 :: 2 0/2 :: -
+tests/mesh/test_mesh_tag_integrity.py :: test_coil_phantom_mesh_tag_integrity :: 15 :: 0 0/0 :: NOASSERT,HELPER
+tests/mesh/test_mesh_tag_integrity.py :: test_coil_phantom_mesh_tag_integrity_with_region_resolution_policy :: 39 :: 1 1/0 :: HELPER
+tests/mesh/test_two_torus_outer_boundary.py :: test_outer_boundary_tag_covers_the_box_ungapped :: 144 :: 0 0/0 :: NOASSERT
+tests/mesh/test_two_torus_port_facets.py :: test_ungapped_fixture_emits_no_port_facet_groups :: 220 :: 1 0/1 :: -
+tests/mesh/test_two_torus_port_sheet.py :: test_kwarg_off_reproduces_the_recorded_mesh :: 223 :: 4 0/4 :: -
+tests/mesh/test_wall_boundary_tag_areas.py :: test_loop_over_half_space_outer_boundary_area :: 122 :: 0 0/0 :: NOASSERT
+tests/mesh/test_wall_boundary_tag_areas.py :: test_sphere_in_box_outer_boundary_area :: 133 :: 0 0/0 :: NOASSERT
+tests/ports/test_port_definition.py :: test_port_definition_defaults_and_tag_name_contract :: 22 :: 5 0/5 :: -
+tests/ports/test_port_definition.py :: test_required_port_tags_collection_and_validation_success :: 42 :: 1 0/1 :: -
+tests/ports/test_port_definition.py :: test_run_port_calibration_checks_rejects_order_mismatch_with_checklist_reference :: 91 :: 1 0/1 :: RAISES1
+tests/ports/test_port_definition.py :: test_run_port_calibration_checks_rejects_missing_orientation_metadata :: 107 :: 2 0/2 :: RAISES1
+tests/ports/test_port_definition.py :: test_run_port_calibration_checks_rejects_inconsistent_face_area_ratio :: 124 :: 1 0/1 :: RAISES1
+tests/post/test_csv_export_stats_parity.py :: test_guarded_export_is_short_by_exactly_the_dropped_layer :: 227 :: 2 1/1 :: -
+tests/post/test_interface_guardrail_fallback.py :: test_probe_fallback_regimes :: 360 :: 0 0/0 :: NOASSERT
+tests/post/test_interface_guardrail_fallback.py :: test_owned_cell_count_escape_hatch_is_characterised :: 618 :: 2 2/0 :: -
+tests/post/test_quicklook_report.py :: test_build_phantom_quicklook_report_warn_status_when_consistency_warnings_present :: 55 :: 3 0/3 :: -
+tests/post/test_quicklook_report.py :: test_format_and_write_phantom_quicklook_report_produce_expected_artifacts :: 66 :: 7 2/5 :: -
+tests/post/test_tagged_cell_partition_invariance.py :: test_probe_tagged_ghost_cell_separation :: 116 :: 1 1/0 :: -
+tests/post/test_tagged_cell_partition_invariance.py :: test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count :: 312 :: 2 1/1 :: -
+tests/solver/test_boundary_condition_selection.py :: test_normalize_boundary_condition_accepts_enum_and_string_values :: 39 :: 2 0/2 :: -
+tests/solver/test_boundary_condition_selection.py :: test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set :: 52 :: 3 0/3 :: -
+tests/solver/test_coil_phantom_magnetostatics.py :: test_coil_phantom_magnetostatics_bfield_is_finite_and_nontrivial_in_phantom :: 19 :: 6 4/2 :: -
+tests/solver/test_cylinder.py :: test_cylinder_solver_computes_nonzero_b_field :: 14 :: 2 2/0 :: -
+tests/solver/test_gauge_lagrange.py :: test_gauge_multiplier_spread_is_reported :: 138 :: 2 2/0 :: -
+tests/solver/test_gauge_penalty.py :: test_small_gauge_penalty_warns_about_null_space_contamination :: 72 :: 0 0/0 :: NOASSERT
+tests/solver/test_gauge_penalty.py :: test_default_gauge_penalty_does_not_warn :: 82 :: 1 0/1 :: -
+tests/solver/test_time_harmonic_smoke.py :: test_time_harmonic_smoke_returns_finite_e_field_values :: 24 :: 3 2/1 :: -
+tests/solver/test_two_cylinder.py :: test_two_cylinder_solver_centerline_field_is_roughly_constant :: 19 :: 6 3/3 :: -
+tests/solver/test_two_torus.py :: test_two_torus_mesh_generates_with_two_wire_volumes :: 9 :: 4 1/3 :: -
+tests/unit/test_doc_reference_exit_codes.py :: test_current_tree_is_free_of_hard_violations_and_obeys_the_contract :: 114 :: 5 0/5 :: -
+tests/unit/test_doc_reference_exit_codes.py :: test_staleness_alone_exits_with_the_staleness_code :: 131 :: 3 0/3 :: -
+tests/unit/test_doc_reference_exit_codes.py :: test_stale_severity_fail_restores_the_old_all_or_nothing_reading :: 145 :: 3 0/3 :: -
+tests/unit/test_doc_reference_exit_codes.py :: test_dead_reference_still_exits_one_after_the_split :: 166 :: 3 0/3 :: -
+tests/unit/test_doc_reference_exit_codes.py :: test_fresh_and_resolvable_references_exit_zero :: 181 :: 3 0/3 :: -
+tests/unit/test_doc_reference_exit_codes.py :: test_default_window_is_unchanged_by_this_chunk :: 194 :: 2 0/2 :: -
+tests/validation/test_coil_loading_larmor_probe.py :: test_the_mesh_is_the_mat6_step3_baseline :: 328 :: 1 0/1 :: -
+tests/validation/test_coil_loading_larmor_resolution.py :: test_the_mesh_is_the_mat6_step8_fine_rung :: 267 :: 1 0/1 :: -
+tests/validation/test_coil_loading_larmor_resolution.py :: test_complex_power_identity_holds_on_the_fine_rung :: 307 :: 1 0/1 :: -
+tests/validation/test_coil_loading_transition_30mhz.py :: test_the_mesh_is_the_step1_baseline :: 252 :: 1 0/1 :: -
+tests/validation/test_coil_loading_transition_30mhz.py :: test_complex_power_identity_holds_at_30mhz :: 291 :: 1 0/1 :: -
+tests/validation/test_convergence.py :: test_p_refinement_straight_wire :: 219 :: 0 0/0 :: NOASSERT
+tests/validation/test_convergence.py :: test_convergence_data_export :: 237 :: 0 0/0 :: NOASSERT
+tests/validation/test_dodd_deeds_reactance_box_truncation.py :: test_the_xlarge_box_mesh_is_the_probes :: 323 :: 2 0/2 :: -
+tests/validation/test_lossy_sphere_fullwave.py :: test_lossy_sphere_interior_field_matches_full_wave_series_at_64mhz :: 600 :: 0 0/0 :: NOASSERT
+tests/validation/test_lossy_sphere_fullwave.py :: test_lossy_sphere_interior_field_matches_full_wave_series_at_128mhz :: 607 :: 0 0/0 :: NOASSERT
+tests/validation/test_port_gap_voltage_impedance.py :: test_arc_quadrature_nodes_lie_strictly_inside_the_gap :: 2023 :: 2 1/1 :: -
+tests/validation/test_port_gap_voltage_impedance.py :: test_reaction_route_on_the_gapped_fixture_is_reported :: 2220 :: 0 0/0 :: NOASSERT
+tests/validation/test_port_gap_voltage_impedance.py :: test_gap_voltage_port_pair_mutual_carries_its_systematics :: 2618 :: 2 0/2 :: -
+tests/validation/test_port_gap_voltage_impedance.py :: test_closure_arc_nodes_lie_in_the_expected_material :: 2844 :: 2 1/1 :: -
+tests/validation/test_port_solenoidal_drive.py :: test_projected_diagonal_against_grover :: 497 :: 1 0/1 :: -
+tests/validation/test_straight_wire.py :: test_straight_wire_convergence :: 218 :: 1 0/1 :: -
+
+RAISES-only list (error-path contracts, reported not dispositioned)
+------------------------------------------------------------------------------
+tests/io/test_touchstone_export.py :: test_touchstone_loader_rejects_frequency_metadata_mismatch :: 94 :: raises=1
+tests/io/test_touchstone_export.py :: test_touchstone_loader_rejects_z0_metadata_mismatch :: 117 :: raises=1
+tests/io/test_touchstone_export.py :: test_touchstone_export_refuses_placeholder_data_by_default :: 162 :: raises=1
+tests/materials/test_material_map_rank_safety.py :: test_material_map_without_cell_tags_still_raises :: 214 :: raises=1
+tests/mesh/test_coil_phantom_mesh.py :: test_coil_phantom_mesh_rejects_overlapping_off_center_placement :: 52 :: raises=1
+tests/mesh/test_domain_sizing_heuristics.py :: test_coil_phantom_domain_sizing_rejects_negative_air_padding :: 143 :: raises=1
+tests/mesh/test_region_resolution_policy.py :: test_region_resolution_policy_rejects_unknown_mapping_keys :: 30 :: raises=1
+tests/mesh/test_two_torus_port_sheet.py :: test_sheet_kwarg_requires_the_gap :: 258 :: raises=1
+tests/ports/test_frequency_sweep_planner.py :: test_plan_frequency_sweep_rejects_invalid_refined_config :: 54 :: raises=2
+tests/ports/test_port_definition.py :: test_validate_required_port_tags_exist_raises_for_missing_tags :: 52 :: raises=1
+tests/ports/test_port_definition.py :: test_port_definition_rejects_invalid_values :: 59 :: raises=3
+tests/ports/test_sparameter_assembly.py :: test_n_port_sweep_rejects_zero_incident_drive :: 113 :: raises=1
+tests/solver/test_boundary_condition_selection.py :: test_normalize_boundary_condition_rejects_unknown_value :: 47 :: raises=1
+tests/solver/test_energy_and_point_evaluation.py :: test_evaluate_at_points_rejects_points_outside_mesh :: 274 :: raises=1
+tests/solver/test_single_port_excitation.py :: test_single_port_excitation_rejects_missing_required_tags :: 114 :: raises=1
+tests/solver/test_single_port_excitation.py :: test_single_port_excitation_rejects_driven_index_mismatch :: 126 :: raises=1
+tests/solver/test_single_port_excitation.py :: test_single_port_excitation_rejects_invalid_passive_termination_map :: 166 :: raises=2
+tests/solver/test_time_harmonic_smoke.py :: test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve :: 94 :: raises=1
+tests/solver/test_time_harmonic_smoke.py :: test_time_harmonic_solver_rejects_material_map_without_cell_tags_before_solve :: 118 :: raises=1
+tests/solver/test_time_harmonic_smoke.py :: test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve :: 142 :: raises=1
+tests/validation/test_current_divergence.py :: test_degree_zero_is_rejected :: 210 :: raises=1
+tests/validation/test_resonance_guard.py :: test_guard_rejects_malformed_sweeps :: 181 :: raises=3
+
+per-directory candidate counts
+  tests/environment: 1
+  tests/io: 4
+  tests/materials: 1
+  tests/mesh: 9
+  tests/ports: 5
+  tests/post: 7
+  tests/solver: 10
+  tests/unit: 6
+  tests/validation: 16
+
+## Exit
+- Status: 0
+- Elapsed (s): 1

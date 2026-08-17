@@ -372,7 +372,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
-| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | ⬜ | standard |
+| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 step 1 ✅ (inventory: 10 replace / 4 delete / 45 keep of 306) | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 
@@ -528,7 +528,9 @@ implementer slot.)*
 > something else or add a `!scripts/automation/lib/` negation. This applies to
 > any future `*/lib/` in the repo, not just `OPS-16`.
 
-**`OPS-17` — delete or replace the finiteness-only test suites** ⬜
+**`OPS-17` — delete or replace the finiteness-only test suites** 🟡
+*(step 1 ✅ 2026-08-17, `20260817T020244Z_OPS-17-step1-sweep.log`, 1 s, smoke;
+step 2 open)*
 *(commissioned 2026-08-16, operator session. The directive: tests whose
 only assertions are finiteness-class are worse than no tests — they
 green-lit both §2-era defects for months (§4's finiteness-only rule exists
@@ -543,6 +545,110 @@ exists, replace instead. Two steps, one implementer run each.)*
 >   gate relies on — e.g. a negative control's fixture). **Done-when
 >   (§4):** the table is committed with every row dispositioned and counts
 >   stated; the sweep command and its output are in the harness log.
+>   **✅ 2026-08-17** (`20260817T020244Z_OPS-17-step1-sweep.log`, smoke, 1 s,
+>   exit 0). Sweep tool: `scripts/testing/finiteness_sweep.py` (AST, committed
+>   with this step) — buckets every `assert` in a `test_*` function as `QUANT`
+>   (`isclose`/`allclose`/`approx`/`assert_allclose`, or a comparison against a
+>   float literal **or a name bound to a float** anywhere in module or function
+>   scope — the `residual < RECIPROCITY_TOLERANCE` idiom this repo uses
+>   everywhere), `FINITE`, or `OTHER`, and reports every function with **zero**
+>   `QUANT` asserts.
+>
+>   **Counts. 306 test functions in 89 files: 225 carry a `QUANT` assert; 22
+>   are error-path `pytest.raises` contracts (reported separately, not
+>   dispositioned — "rejects bad input with this message" is a behavioural gate,
+>   not a finiteness one); 59 are candidates, of which 11 assert nothing at
+>   all.** Every one of the 59 was confirmed by reading its asserts (the sweep
+>   prints each candidate's `assert` source into the log, so the table below is
+>   checkable against the log line by line). **Disposition: 10 replace, 4
+>   delete, 45 keep.**
+>
+>   Two deliberate limitations, stated so the table is honest. (i) Assertions
+>   made inside a helper the test calls are invisible to the AST sweep — five
+>   rows below are keeps for exactly this reason (`_check_outer_boundary`,
+>   `_run_gate`). (ii) Names imported from `tests/tolerances.py` are **not**
+>   resolved to floats, on purpose: a "nontrivial magnitude floor"
+>   (`B_FIELD_MAX_NONTRIVIAL_ABS_MIN`) is finiteness-class *even though* it is a
+>   float, so auto-clearing those rows would clear precisely the tests this
+>   chunk exists to remove. Both classes are therefore read, never auto-judged.
+>
+>   **Rows dispositioned `replace` (10) — finiteness-only, cheap anchor named:**
+>
+>   | file :: test | what it exercises | anchor for step 2 |
+>   | --- | --- | --- |
+>   | `mesh/test_birdcage_port_tags.py` :: `test_birdcage_like_mesh_has_core_and_port_tags` | birdcage mesh tags exist (`n_cells > 0`, `< 50000`, no missing tag) | tagged-volume partition identity: Σ tag volumes = domain volume to 1e-9, as `tests/mesh/test_wall_boundary_tag_areas.py` does for area |
+>   | `mesh/test_mesh_tag_integrity.py` :: `test_coil_phantom_mesh_tag_integrity` | coil+phantom required tags non-empty and centroid-distinct (no assert in the test; helper asserts non-emptiness) | same volume-partition identity, per tag |
+>   | `mesh/test_mesh_tag_integrity.py` :: `test_coil_phantom_mesh_tag_integrity_with_region_resolution_policy` | as above under region-specific sizing (`size_global > 0`) | same identity, with the policy on — the policy must not move the volumes |
+>   | `solver/test_coil_phantom_magnetostatics.py` :: `test_coil_phantom_magnetostatics_bfield_is_finite_and_nontrivial_in_phantom` | **archetype**: `isfinite` + `> nontrivial floor` | on-axis *B* at the coil centre vs the Biot–Savart closed form for the loop pair (the `MAG` closed forms already in `tests/validation`) |
+>   | `solver/test_cylinder.py` :: `test_cylinder_solver_computes_nonzero_b_field` | `isfinite` + `> weak floor` | infinite-straight-wire *B* = μ₀I/2πr at a mid-length probe (the `test_straight_wire` closed form) |
+>   | `solver/test_gauge_lagrange.py` :: `test_gauge_multiplier_spread_is_reported` | `isfinite(spread)`, `isnan(pen_spread)` | multiplier spread → 0 to solver tolerance for a divergence-free source; the `isnan` half is a structural contract and stays |
+>   | `solver/test_time_harmonic_smoke.py` :: `test_time_harmonic_smoke_returns_finite_e_field_values` | **archetype**: `isfinite` + `> floor` on *E* | attenuation constant α from \|E\| at two depths vs the `TH-1`/`TH-6` lossy plane wave. If step 2 finds this only duplicates the `TH-6` gate, delete instead and say so |
+>   | `solver/test_two_torus.py` :: `test_two_torus_mesh_generates_with_two_wire_volumes` | `n_cells > 0` + tags 1/2/3 present | the two wire volumes = CAD 2·(2π²Rr²) to 1e-9 (the identity `GEO-16` already uses on this fixture) |
+>   | `validation/test_port_gap_voltage_impedance.py` :: `test_reaction_route_on_the_gapped_fixture_is_reported` | print-only record of the reaction/gap-voltage factor-244 finding | pin the measured record: `Im Z_reaction = 4.5376e-3 Ω` vs the estimator's `1.1072 Ω` (`20260807T093906Z_PORT-1-step3bx-gate-n2.log`) as a regression bound. The narrative docstring survives the change |
+>   | `validation/test_straight_wire.py` :: `test_straight_wire_convergence` | `errors[-1] < errors[0]` — monotone improvement, no rate | fitted rate in `[RATE_MIN, RATE_MAX]`, exactly as `test_convergence.py::test_h_refinement_straight_wire` does 40 lines away |
+>
+>   **Rows dispositioned `delete` (4):**
+>
+>   | file :: test | why |
+>   | --- | --- |
+>   | `validation/test_convergence.py` :: `test_p_refinement_straight_wire` | body is `pytest.skip("Not yet implemented - Chunk 7")` — a dead TODO stub that inflates the pass count |
+>   | `validation/test_convergence.py` :: `test_convergence_data_export` | `pytest.skip("Not yet implemented - Chunk 8")` — same |
+>   | `post/test_interface_guardrail_fallback.py` :: `test_probe_fallback_regimes` | print-only probe (three parametrisations, zero asserts); the regime it characterised is gated by the anchors in the same file |
+>   | `post/test_tagged_cell_partition_invariance.py` :: `test_probe_tagged_ghost_cell_separation` | asserts only `global_ghost_tagged > 0`; the finding is gated exactly by `test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count` in the same file |
+>
+>   **Rows dispositioned `keep` (45)**, in four groups — none is finiteness-only
+>   on reading:
+>   * **Quantitative through a helper (5)** — the sweep's blind spot:
+>     `mesh/test_two_torus_outer_boundary.py::test_outer_boundary_tag_covers_the_box_ungapped`,
+>     `mesh/test_wall_boundary_tag_areas.py::{test_loop_over_half_space_outer_boundary_area, test_sphere_in_box_outer_boundary_area}`
+>     (helper asserts area/analytic to `AREA_RTOL`),
+>     `validation/test_lossy_sphere_fullwave.py::{..._at_64mhz, ..._at_128mhz}`
+>     (`_run_gate` gates < 5%).
+>   * **Quantitative through an unresolved `tests/tolerances.py` import (5)** —
+>     `validation/test_coil_loading_larmor_resolution.py::test_complex_power_identity_holds_on_the_fine_rung`,
+>     `validation/test_coil_loading_transition_30mhz.py::test_complex_power_identity_holds_at_30mhz`
+>     (`residual < IDENTITY_TOLERANCE`),
+>     `solver/test_two_cylinder.py::test_two_cylinder_solver_centerline_field_is_roughly_constant`
+>     (`cv < CENTERLINE_CV_MAX` is a real uniformity metric),
+>     `validation/test_port_solenoidal_drive.py::test_projected_diagonal_against_grover`
+>     (`low < ratio < high`),
+>     `validation/test_port_gap_voltage_impedance.py::test_gap_voltage_port_pair_mutual_carries_its_systematics`
+>     (booleans composed from gated numbers).
+>   * **Exact identity, not finiteness (26)** — exact `==`/set/string equality on
+>     deterministic values, which §4 counts as a gate:
+>     `environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build`;
+>     `io/test_mesh_qa_diagnostics.py` ×3; `io/test_touchstone_export.py::test_touchstone_export_allows_placeholder_when_explicit`;
+>     `mesh/test_two_torus_port_facets.py::test_ungapped_fixture_emits_no_port_facet_groups`;
+>     `mesh/test_two_torus_port_sheet.py::test_kwarg_off_reproduces_the_recorded_mesh` (`GEO-16`'s negative control);
+>     `ports/test_port_definition.py::{test_port_definition_defaults_and_tag_name_contract, test_required_port_tags_collection_and_validation_success}`;
+>     `post/test_csv_export_stats_parity.py::test_guarded_export_is_short_by_exactly_the_dropped_layer`;
+>     `post/test_interface_guardrail_fallback.py::test_owned_cell_count_escape_hatch_is_characterised`;
+>     `post/test_quicklook_report.py` ×2;
+>     `post/test_tagged_cell_partition_invariance.py::test_ghost_inclusive_control_overcounts_by_exactly_the_ghost_count`;
+>     `solver/test_boundary_condition_selection.py` ×2;
+>     `unit/test_doc_reference_exit_codes.py` ×6 (`OPS-19`'s gate);
+>     `validation/test_coil_loading_larmor_probe.py::test_the_mesh_is_the_mat6_step3_baseline`,
+>     `validation/test_coil_loading_larmor_resolution.py::test_the_mesh_is_the_mat6_step8_fine_rung`,
+>     `validation/test_coil_loading_transition_30mhz.py::test_the_mesh_is_the_step1_baseline`,
+>     `validation/test_dodd_deeds_reactance_box_truncation.py::test_the_xlarge_box_mesh_is_the_probes`
+>     (the four `ncells == RECORD` fixture pins a gate reads).
+>   * **Structural guard a quantitative gate relies on (9)** — the §4 carve-out:
+>     `materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank`
+>     (`len(raised) == comm.size`, `allreduce == comm.size` — `OPS-13`'s collective identity);
+>     `mesh/test_birdcage_port_tags.py::test_birdcage_port_layout_rejects_too_small_or_overlapping_port_regions`;
+>     `ports/test_port_definition.py::test_run_port_calibration_checks_rejects_*` ×3;
+>     `solver/test_gauge_penalty.py::{test_small_gauge_penalty_warns_about_null_space_contamination, test_default_gauge_penalty_does_not_warn}`
+>     (the `pytest.warns` guard that would have caught the 920% error, and its negative control);
+>     `validation/test_port_gap_voltage_impedance.py::{test_arc_quadrature_nodes_lie_strictly_inside_the_gap, test_closure_arc_nodes_lie_in_the_expected_material}`
+>     (`n_gap == order` — the quadrature the gap-voltage gate integrates on).
+>
+>   **Finding for step 2.** The four `delete` rows are the whole of the
+>   "finiteness-only" damage in `tests/`; the ten `replace` rows are the real
+>   surface, and six of them are mesh/solver smoke tests whose anchor already
+>   exists elsewhere in the tree. **No `⚠️` chunk is propped up by a row in this
+>   table** — so step 2's `⚠️`-retirement clause has nothing to retire on the
+>   strength of the sweep, and should be re-scoped to "confirm and say so"
+>   rather than assumed to fire.
 > * **Step 2 — execute the dispositions.** Delete the delete rows
 >   outright; land the named replacements; run the full remaining suite
 >   through the harness at `-n 2`, real and complex legs. **Done-when
@@ -2086,10 +2192,15 @@ by this review.
    facet-set area vs occ mass-property area < 1e-9 rel, both boxes;
    kwarg-off bit-match of the recorded mesh is the negative control.
    ~120 s, `-n 2`, `timeout -k 30 500`. Independent of everything below.
-2. **`OPS-17` step 1 — finiteness-only test inventory (smoke, no
+2. ✅ **done 2026-08-17** (`20260817T020244Z_OPS-17-step1-sweep.log`, 1 s,
+   exit 0; 306 test functions swept, 59 candidates all confirmed by
+   reading — **10 replace / 4 delete / 45 keep**, table in §7).
+   **`OPS-17` step 1 — finiteness-only test inventory (smoke, no
    solves).** Execute the §7 `OPS-17` step-1 entry verbatim: sweep,
    table, dispositions — annotation and harness log only, nothing
-   deleted yet. Independent of every other item.
+   deleted yet. Independent of every other item. Sweep tool landed at
+   `scripts/testing/finiteness_sweep.py`; step 2 re-runs it as its
+   before/after control.
 3. **`TH-11` step 4 — fixed-f Richardson ladder at 10 and 30 MHz
    (heavy, two harness commands, one per frequency).** Execute the §7
    `TH-11` step-4 entry verbatim: refined-rung (417 914-cell) pairs at
