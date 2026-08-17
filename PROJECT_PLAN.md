@@ -1211,7 +1211,7 @@ the residual in this entry, known-issues if it blocks, stop.
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ✅ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ✅ | standard |
-| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 ✅ 2026-08-17 — the fixed-f h-ladder reads **flat in f**: refinement moves the deviation −1.87 pp at 10 MHz and −4.48 pp at 30 MHz (−7.46 pp at 64 MHz on record) and the h → 0 brackets overlap at ~−1%, so the "trend" was the resolution term; no gated trend claim is scopeable and §2 stands; step 5 scoped 2026-08-17 review — the 64 MHz third rung, pricing the h → 0 bracket §2's extrapolation sentence is waiting on)* | standard (steps 4–5 heavy) |
+| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 ✅ 2026-08-17 — the fixed-f h-ladder reads **flat in f**: refinement moves the deviation −1.87 pp at 10 MHz and −4.48 pp at 30 MHz (−7.46 pp at 64 MHz on record) and the h → 0 brackets overlap at ~−1%, so the "trend" was the resolution term; no gated trend claim is scopeable and §2 stands; step 5 scoped 2026-08-17 review, attempt 1 🚫 2026-08-17 — the third rung is **priced and does not fit a scheduled slot**: 2 807 309 cells (inside the 3.4 M ceiling) but 288.2 s of mesh plus a loaded solve still assembling at the 570 s kill, so §7's probe stop condition fired; module parked on `attempt/TH-11-step5-20260817T123353Z`, blocked on the review choosing mesh-caching vs more ranks vs a shrunk rung)* | standard (steps 4–5 heavy) |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)**
 ✅ *(steps 1–4 ✅ 2026-08-13, chunk closed by the 10:30 review; full step
@@ -1389,6 +1389,40 @@ step-1/2 journals archived in `docs/planning/plan-archive.md`.)*
 >   does *not* overlap the 10/30 MHz ones is the more informative
 >   outcome — a genuine frequency-dependent term survives refinement;
 >   record it in this entry, report, stop.
+> * **Step 5 attempt 1 🟡 2026-08-17 (07:30 slot) — the rung is priced and
+>   it does not fit a scheduled slot.** §7's probe command ran
+>   (`20260817T123353Z_TH-11-step5-probe.log`, 572 s, `-n 2`, exit 124):
+>   the third rung meshes to **2 807 309 cells** — *inside* the 3.4 M
+>   ceiling, **5.03 cells/δ** at 64 MHz, so the ceiling condition passed —
+>   but **the mesh alone costs 288.2 s** and the loaded solve was still in
+>   matrix assembly (`tabulate_tensor`) when the container-side
+>   `timeout -k 30 570` fired at 568.6 s. So §7's *other* stop condition
+>   fired ("the solve does not return inside the window ⇒ journal the probe
+>   numbers and stop; shrinking the rung is the review's decision, not the
+>   run's") and no reading was produced: no ΔR, no bracket, no ladder. The
+>   step-5 module is written, complete, and parked unlanded on
+>   `attempt/TH-11-step5-20260817T123353Z` — env-selected rung
+>   (`third`/`fine`) and mode (`probe`/`full`), the step-1/2/4 identity
+>   family carried unchanged, §7's negative control on the `fine` rung, and
+>   a three-rung Aitken fit (at a fixed ratio of 2, three rungs determine
+>   `p` **and** `d₀`, so 64 MHz would get a measured rate and not only a
+>   bracket) printed beside step 4's 10/30 MHz brackets.
+>   **The binding constraint is not §7's 1100 s ceiling but the scheduled
+>   session's foreground window** (implementer-run.md: harness commands may
+>   not be backgrounded, so container time is capped at ~590 s). Even at
+>   §7's own 1100 s the pair would be tight: 288 s of mesh leaves ~800 s for
+>   two solves of a 2.8 M-cell complex system, against 390.9 s for the whole
+>   417 914-cell pair. **Three ways out, all review decisions:** (a) cache
+>   the mesh — write the third rung to XDMF in one command and read it in the
+>   next, which removes 288 s from every subsequent run and is reusable by
+>   any later 64 MHz rung; (b) raise the rank count for this rung only
+>   (`-n 8`/`-n 12`) and re-derive its like-for-like status against the
+>   `-n 2` records, which §7 as written does not authorise; (c) shrink the
+>   rung (e.g. `near` = 0.0018, ~1.4 M cells) and accept a non-2 refinement
+>   ratio, which the three-rung fit already handles via its `ratio`
+>   argument. Recommendation: **(a)**, since it is the only one that neither
+>   changes the discretisation nor the parallel decomposition the existing
+>   records were measured on.
 
 **`GEO-14` — the shared ~3% geometry floor: discriminate faceting from
 resolution** ✅ *(commissioned 2026-08-13, closed 2026-08-15 on a refuted
@@ -2567,7 +2601,22 @@ by this review.
    **Negative result:** a replacement whose anchor fails on the real
    solve is a *finding about the code it exercises* — known-issues
    entry, report, stop; never land a loosened replacement.
-3. **`TH-11` step 5 — the 64 MHz third rung (heavy, cost-probe
+3. 🚫 **BLOCKED 2026-08-17, 07:30 slot** — the cost probe ran and its
+   stop condition fired, exactly as §7 made binding. The rung passed the
+   cell-count ceiling (**2 807 309** cells, 5.03 cells/δ, ceiling 3.4 M)
+   and failed the window: **mesh 288.2 s** at `-n 2`, loaded solve still
+   in matrix assembly at the 568.6 s kill
+   (`20260817T123353Z_TH-11-step5-probe.log`, exit 124). No reading — no
+   ΔR, no bracket. The written module is parked unlanded on
+   `attempt/TH-11-step5-20260817T123353Z`; nothing about it is
+   known-broken, it is blocked on cost only. **The review must choose**
+   between mesh-caching to XDMF (recommended), more ranks for this rung
+   only (not authorised by §7 as written), or a shrunk rung with a non-2
+   refinement ratio — see the §7 step-5 attempt-1 block for the numbers
+   behind each. Do not retry this item unchanged: a second slot would
+   buy the same 288 s mesh and the same kill. *(Original item text
+   below.)*
+   **`TH-11` step 5 — the 64 MHz third rung (heavy, cost-probe
    binding).** Execute the §7 step-5 entry verbatim (scoped this
    review): command 1 meshes the `near = 0.00125` rung and solves the
    loaded case only, `timeout -k 30 1100`, `-n 2` — if the mesh blows

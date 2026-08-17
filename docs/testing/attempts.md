@@ -12626,3 +12626,69 @@ so no amount of refinement explains it and it should be read as a real bug in
 at three `coil_resolution` values with the policy on and print the tag volumes
 — if they move monotonically *away* from CAD as the requested size falls, the
 region fields are replacing rather than refining the surface sizing.
+
+---
+
+## 2026-08-17T12:33Z — `TH-11` step 5 — **incomplete** (blocked on cost; the probe's own stop condition)
+
+**Item.** §9 On-deck item 3, the 64 MHz third rung (`resolution_near` =
+0.00125), executed per the §7 step-5 entry. §7 made command 1 a **binding cost
+probe**: mesh the rung, solve the loaded case only, and stop-and-journal if the
+mesh passes ~3.4 M cells *or* the solve does not return inside the window.
+
+**What was tried.** New module
+`tests/validation/test_coil_loading_larmor_third_rung.py`, built on step 1's
+fixture body with two knobs freed and nothing else — `TH11_STEP5_RUNG`
+(`third` = near 0.00125, `fine` = 0.0025 / 417 914 cells for §7's negative
+control) and `TH11_STEP5_MODE` (`probe` = mesh + loaded solve only, `full` =
+the pair + the ladder). Gates carried unchanged from steps 1/2/4: complex-power
+identity < 1e-9 per solve, σ = 0 dissipation at exact `+0.0`, drive control
+< 1e-24, ΔR > 0 / ΔX < 0, the cell-count gate (§7's 3.4 M ceiling on the
+unpriced rung, the exact 417 914 record on the `fine` one), and step 2's
+**+2.8063%** reproduced to the `MAT-6` step-8 **0.01 pp** floor on the `fine`
+rung. Reading (printed, never gated): a **three-rung Aitken fit** — at a fixed
+refinement ratio of 2 three rungs determine `p` *and* `d₀`, so 64 MHz would get
+a measured rate, not only step 4's assumed-p bracket — beside step 4's 10/30 MHz
+brackets.
+
+**Measured (the probe's whole product).**
+- cells at `near` = 0.00125: **2 807 309** (448 981 nodes) — **inside** §7's
+  3 400 000 ceiling, so that condition *passed*;
+- **5.03 cells per δ** at 64 MHz (step 1: 1.26, step 2: 2.52);
+- **mesh 288.2 s** at `-n 2` — vs ~38 s for the 417 914-cell rung;
+- loaded solve **did not return**: still in `tabulate_tensor` (matrix
+  assembly, not the linear solve) when `timeout -k 30 570` fired at 568.6 s.
+  Exit 124, elapsed 572 s. Container clean afterwards (Up, zero stray
+  `python3`); no wedge, no force-recreate needed.
+
+**Log.** `20260817T123353Z_TH-11-step5-probe.log` (572 s, `-n 2`, exit 124).
+
+**Branch.** Module parked unlanded on
+`attempt/TH-11-step5-20260817T123353Z` (commit `ad323f9`). `main` carries only
+this entry, the log, the test-results row and the §7/§9 annotations.
+
+**The real constraint, named precisely.** Not §7's 1100 s ceiling — the
+**scheduled session's foreground window**: implementer-run.md forbids
+backgrounding a harness command, which caps container time at ~590 s, so 570 s
+was the largest ceiling this slot could give. But §7's own 1100 s would also
+have been tight: 288 s of mesh leaves ~800 s for two solves of a 2.8 M-cell
+complex system, against **390.9 s for the entire 417 914-cell pair** (step 2).
+The mesh is ~50% of the affordable budget before any physics happens.
+
+**Hypothesis for the next attempt (a review decision, not a run's — §7 says so
+explicitly).** Three ways out, in preference order:
+1. **Cache the mesh to XDMF** — one command writes the third rung, later
+   commands read it. Removes 288 s from every subsequent run, reusable by any
+   future 64 MHz rung, and changes neither the discretisation nor the parallel
+   decomposition the existing records were measured on. This is the
+   recommendation.
+2. **More ranks for this rung only** (`-n 8`/`-n 12`) — §7 as written says
+   `-n 2`, and the like-for-like status of the result against the `-n 2`
+   records would have to be re-argued, so this needs explicit authorisation.
+3. **Shrink the rung** (e.g. `near` = 0.0018, ~1.4 M cells) and accept a
+   non-2 refinement ratio — the three-rung fit already takes `ratio` as an
+   argument, so the arithmetic is ready; the cost is that the ladder's rungs
+   stop being the clean 2× family steps 1/2/4 used.
+
+Whichever is chosen, the parked module needs only the mesh source swapped or a
+constant changed; its gates and its printing are done.
