@@ -16,6 +16,7 @@ from .excitation import (
     run_placeholder_port_coupling_case,
 )
 from .gap_voltage import GapVoltagePortSpec, run_gap_voltage_port_case
+from .lumped import LumpedSheetPortSpec, run_lumped_sheet_port_case
 
 
 @dataclass(frozen=True)
@@ -232,6 +233,8 @@ def run_n_port_sparameter_sweep(
     ports: Sequence[PortDefinition],
     *,
     gap_voltage_ports: Optional[Sequence[GapVoltagePortSpec]] = None,
+    lumped_sheet_ports: Optional[Sequence[LumpedSheetPortSpec]] = None,
+    lumped_sheet_facet_tags=None,
     reference_impedance_ohm: Optional[float] = None,
     drive_voltage_v: complex = 1.0 + 0.0j,
     terminated_port_impedance_ohm: float = 50.0,
@@ -243,7 +246,9 @@ def run_n_port_sparameter_sweep(
 ) -> SParameterSweepResult:
     """Run an N-port excitation sweep and assemble an NxN S-matrix.
 
-    Two routes, selected by ``gap_voltage_ports``:
+    Three routes, selected by ``gap_voltage_ports`` / ``lumped_sheet_ports``
+    (passing both is an error — an S-matrix mixing two port models means
+    nothing):
 
     * **solved field** (`PORT-1` step 4) — pass one
       :class:`~fem_em_solver.ports.gap_voltage.GapVoltagePortSpec` per port and
@@ -251,6 +256,14 @@ def run_n_port_sparameter_sweep(
       the field, assembles ``Z`` column by column and converts it with
       :func:`sparameters_from_impedance`.  ``is_placeholder`` is False and
       ``z_matrix`` is populated.
+    * **lumped sheet** (`PORT-9` step 2c) — pass one
+      :class:`~fem_em_solver.ports.lumped.LumpedSheetPortSpec` per port plus the
+      mesh's ``lumped_sheet_facet_tags``, and every port becomes a resistive
+      sheet in the bilinear form with the driven one carrying the impressed
+      source.  ``V`` and ``I`` come from the sheets' own constitutive law on the
+      generator convention (``V = V_src − I·Z_p``); ``Z`` and ``S`` are then
+      assembled exactly as on the gap-voltage route.  This is the route
+      `PORT-9` step 3's reciprocity gate runs through.
     * **heuristic** (the retiring `PORT-0` path, kept reachable and deprecated)
       — with ``gap_voltage_ports=None`` the port quantities come from
       ``excitation.py``'s proximity model and mean nothing physically.  It emits
@@ -272,19 +285,36 @@ def run_n_port_sparameter_sweep(
     if len(set(port_ids)) != len(port_ids):
         raise ValueError("port_id values must be unique")
 
+    if gap_voltage_ports is not None and lumped_sheet_ports is not None:
+        raise ValueError(
+            "pass gap_voltage_ports or lumped_sheet_ports, not both: they are two "
+            "different port models and an S-matrix mixing them means nothing"
+        )
+
     excitation_results: dict[str, SinglePortExcitationResult] = {}
     z_matrix: Optional[np.ndarray] = None
 
-    if gap_voltage_ports is not None:
+    if gap_voltage_ports is not None or lumped_sheet_ports is not None:
         for port in ports:
-            excitation_results[port.port_id] = run_gap_voltage_port_case(
-                problem,
-                ports,
-                gap_voltage_ports,
-                driven_port_id=port.port_id,
-                gauge_penalty=gauge_penalty,
-                degree=degree,
-            )
+            if gap_voltage_ports is not None:
+                excitation_results[port.port_id] = run_gap_voltage_port_case(
+                    problem,
+                    ports,
+                    gap_voltage_ports,
+                    driven_port_id=port.port_id,
+                    gauge_penalty=gauge_penalty,
+                    degree=degree,
+                )
+            else:
+                excitation_results[port.port_id] = run_lumped_sheet_port_case(
+                    problem,
+                    ports,
+                    lumped_sheet_ports,
+                    facet_tags=lumped_sheet_facet_tags,
+                    driven_port_id=port.port_id,
+                    gauge_penalty=gauge_penalty,
+                    degree=degree,
+                )
         if reference_impedance_ohm is None:
             references = {float(port.z0_ohm) for port in ports}
             if len(references) != 1:

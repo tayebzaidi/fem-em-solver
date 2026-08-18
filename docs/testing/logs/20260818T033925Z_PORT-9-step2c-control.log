@@ -1,0 +1,115 @@
+# Test Run
+- Chunk: PORT-9-step2c-control
+- Commit: 508432e7ca68b78b6a9b914f81ee11f4f58cd416
+- Time (UTC): 2026-08-18 03:39:25
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 500 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_package_sparameters.py tests/validation/test_port_lumped_bc.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 17 22:39 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 500 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_package_sparameters.py tests/validation/test_port_lumped_bc.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 16 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 16 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  6%]PASSED [  6%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form 
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 12%]PASSED [ 12%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 18%]PASSED [ 18%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 25%]PASSED [ 25%]
+tests/validation/test_port_package_sparameters.py::test_package_sweep_reproduces_the_gated_mutual 
+tests/validation/test_port_package_sparameters.py::test_package_sweep_reproduces_the_gated_mutual PASSED [ 31%]PASSED [ 31%]
+tests/validation/test_port_package_sparameters.py::test_package_smatrix_is_symmetric_and_passive 
+tests/validation/test_port_package_sparameters.py::test_package_smatrix_is_symmetric_and_passive PASSED [ 37%]PASSED [ 37%]
+tests/validation/test_port_package_sparameters.py::test_retiring_heuristic_differs_from_the_solved_field 
+tests/validation/test_port_package_sparameters.py::test_retiring_heuristic_differs_from_the_solved_field PASSED [ 43%]
+tests/validation/test_port_package_sparameters.py::test_sanity_report_reproduces_the_gated_metrics_on_the_field_route PASSED [ 43%]PASSED [ 50%]
+tests/validation/test_port_package_sparameters.py::test_sanity_report_reproduces_the_gated_metrics_on_the_field_route 
+tests/validation/test_port_package_sparameters.py::test_sanity_metrics_separate_the_heuristic_from_the_field_route PASSED [ 50%]PASSED [ 56%]
+tests/validation/test_port_package_sparameters.py::test_sanity_metrics_separate_the_heuristic_from_the_field_route 
+tests/validation/test_port_package_sparameters.py::test_reciprocity_warning_fires_on_an_asymmetrised_field_smatrix PASSED [ 56%]
+tests/validation/test_port_package_sparameters.py::test_reciprocity_warning_fires_on_an_asymmetrised_field_smatrix PASSED [ 62%]
+tests/validation/test_port_lumped_bc.py::test_sheet_resistivity_is_ohms_per_square PASSED [ 62%]PASSED [ 68%]
+tests/validation/test_port_lumped_bc.py::test_sheet_resistivity_is_ohms_per_square 
+tests/validation/test_port_lumped_bc.py::test_sheet_area_is_the_unit_square PASSED [ 68%]
+tests/validation/test_port_lumped_bc.py::test_sheet_area_is_the_unit_square PASSED [ 75%]PASSED [ 75%]
+tests/validation/test_port_lumped_bc.py::test_bilinear_sheet_term_matches_closed_form 
+tests/validation/test_port_lumped_bc.py::test_bilinear_sheet_term_matches_closed_form PASSED [ 81%]PASSED [ 81%]
+tests/validation/test_port_lumped_bc.py::test_linear_sheet_term_matches_closed_form 
+tests/validation/test_port_lumped_bc.py::test_linear_sheet_term_matches_closed_form PASSED [ 87%]
+tests/validation/test_port_lumped_bc.py::test_open_circuit_terminal_current_is_v_over_z PASSED [ 87%]
+tests/validation/test_port_lumped_bc.py::test_open_circuit_terminal_current_is_v_over_z PASSED [ 93%]PASSED [ 93%]
+tests/validation/test_port_lumped_bc.py::test_passive_sheet_current_follows_the_field 
+tests/validation/test_port_lumped_bc.py::test_passive_sheet_current_follows_the_field PASSED [100%]PASSED [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 16 passed, 8 warnings in 145.04s (0:02:25) ==================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 16 passed, 8 warnings in 145.04s (0:02:25) ==================
+
+## Exit
+- Status: 0
+- Elapsed (s): 146

@@ -2188,7 +2188,7 @@ until that check returns.
 | `PORT-6` | Frequency sweep orchestration | 🧪 | smoke |
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard |
-| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(**step 1 done 2026-08-17** — parked formulation merged, sheet instantiated on `GEO-16`'s facet tag `212` of the solve fixture, both routes read off one 10 MHz solve: gap 0.894310 × ωM₁₂ raw (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route **7.7095%** against step 2's 5% band. **Step 2 executed 2026-08-17**: both pre-stated bands **MISS** (cross-route 7.7095% vs 5%; lumped mutual 12.6931% vs 10%; the gap route stays inside at 6.0391%) and the miss is **diagnosed** — it is the transverse average over the sheet, 7.7783 pp, with a path/projection residual of only **0.0763 pp** against the pre-stated ~1 pp threshold. Bands not widened. **Decision made 2026-08-17 10:30: narrow the sheet — step 2b scoped** (width ladder f ∈ {1.0, 0.735, 0.5}; the measured profile predicts ~1% at interior width). **Step 2b executed 2026-08-17, 12:00 slot — the band HOLDS**: ladder 7.7095% (f = 1.0, the negative control, reproducing step 2 to < 1e-4) → 3.6730% → **1.8333%** at f = 0.5 against the unmoved 5% band, open-limit identity < 1e-11 per width, 14 passed 150.5 s at `-n 2`. One finding en route: the sheet's width is the **area-based effective width `A/h`**, not the bounding-box extent (the midpoint filter leaves a ragged edge; bbox overstates by 14–15% and the first attempt read 14.04% MISS because of it) — the convention is now part of the port model's spec. Step 2's gate is closed at the narrowed definition; step 3 unblocked on this side, its ports use f = 0.5. Still unrun: the reciprocity leg, which needs a lumped-sheet route in `run_n_port_sparameter_sweep` — **step 2c scoped 2026-08-17 18:00 review** as a named prerequisite of step 3's gate (i))* | standard |
+| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(**step 1 done 2026-08-17** — parked formulation merged, sheet instantiated on `GEO-16`'s facet tag `212` of the solve fixture, both routes read off one 10 MHz solve: gap 0.894310 × ωM₁₂ raw (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route **7.7095%** against step 2's 5% band. **Step 2 executed 2026-08-17**: both pre-stated bands **MISS** (cross-route 7.7095% vs 5%; lumped mutual 12.6931% vs 10%; the gap route stays inside at 6.0391%) and the miss is **diagnosed** — it is the transverse average over the sheet, 7.7783 pp, with a path/projection residual of only **0.0763 pp** against the pre-stated ~1 pp threshold. Bands not widened. **Decision made 2026-08-17 10:30: narrow the sheet — step 2b scoped** (width ladder f ∈ {1.0, 0.735, 0.5}; the measured profile predicts ~1% at interior width). **Step 2b executed 2026-08-17, 12:00 slot — the band HOLDS**: ladder 7.7095% (f = 1.0, the negative control, reproducing step 2 to < 1e-4) → 3.6730% → **1.8333%** at f = 0.5 against the unmoved 5% band, open-limit identity < 1e-11 per width, 14 passed 150.5 s at `-n 2`. One finding en route: the sheet's width is the **area-based effective width `A/h`**, not the bounding-box extent (the midpoint filter leaves a ragged edge; bbox overstates by 14–15% and the first attempt read 14.04% MISS because of it) — the convention is now part of the port model's spec. Step 2's gate is closed at the narrowed definition; step 3 unblocked on this side, its ports use f = 0.5. **Step 2c executed 2026-08-18, 22:30 slot — the reciprocity leg is run and the route exists**: `run_n_port_sparameter_sweep` gained a third excitation route (`LumpedSheetPortSpec`, sheets on every port, impressed source on the driven one, `V = V_src − I·Z_p`), and the two-torus two-port sweep at f = 0.5 on both ports reads **‖S − Sᵀ‖/‖S‖ = 2.574249e-11** against the unmoved 1e-3 band (‖Z − Zᵀ‖/‖Z‖ = 1.767820e-09), 7 passed 122.2 s at `-n 2`. Cross-route *inside* the sweep 1.6079% / 1.5950%, inside step 2's 5% band, 0.23 pp off step 2b's 1.8333% — the reading is drive-dependent at that grain. Two legs not run as written (the 1e-4 reproduction is not the same quantity under a sheet drive; the fragmented-mesh gap sweep needs a multi-tag `GapVoltagePortSpec`), the negative control run instead as the record-owning gates, 16 passed. Step 3's gate (i) prerequisite is discharged)* | standard |
 | `PORT-10` | The two `PORT-1` systematics: composition measured, not assumed | ✅ 2026-08-16 (cross-term **−0.0604 pp** inside the pre-stated ±0.5 pp) | heavy |
 
 **`PORT-1` — Real port excitation from the solved field** ✅ *(closed by
@@ -2627,6 +2627,66 @@ the answer is already gated**.
 >   **Negative result:** an asymmetry > 1e-3 with both controls green is
 >   a finding about the lumped BC's reciprocity, not a licence to widen
 >   — known-issues entry, step 3 stays blocked, report, stop.
+>   > **EXECUTED 2026-08-18, 22:30 slot — the route exists and the sweep is
+>   > reciprocal at 2.574e-11 against the unmoved 1e-3 band.**
+>   > (`tests/validation/test_port_lumped_sheet_sweep.py`, **7 passed
+>   > 122.2 s** at `-n 2`, standard, exit 0,
+>   > `20260818T033643Z_PORT-9-step2c.log`; 184 919 cells, mesh 39.0 s, the
+>   > two-port sweep — one solve per driven port — 57.0 s,
+>   > `timeout -k 30 500`.)
+>   > **The package change.** `run_n_port_sparameter_sweep` now has three
+>   > excitation routes, not two: `LumpedSheetPortSpec` +
+>   > `run_lumped_sheet_port_case` (`ports/lumped.py`) put **every** port's
+>   > sheet in the bilinear form (L1) and the driven port's impressed source
+>   > (L3) in the load, then read each port on the generator convention
+>   > `V = V_src − I·Z_p` off its own sheet's constitutive law
+>   > (`sheet_terminal_current`, already MPI-reduced). `Z` and `S` are
+>   > assembled by the *existing* column-by-column path, so the new route
+>   > reaches `sparameters_from_impedance` exactly as the gap route does.
+>   > Passing both route specs at once is now an explicit error. One
+>   > additive field on `PortVoltageCurrentEstimate`
+>   > (`path_voltage_v`, default `None`): the independent
+>   > terminal-to-terminal path integral off the *same* solve, which is what
+>   > makes the cross-route comparison readable **inside** the sweep.
+>   > **The gate, measured:** `‖S − Sᵀ‖/‖S‖ = 2.574249e-11` against the
+>   > pre-stated **1e-3** — inside by 4×10⁷ — with
+>   > `‖Z − Zᵀ‖/‖Z‖ = 1.767820e-09`,
+>   > `Z₁₂ = +1.097173784e-02 + 1.111378170e+00j Ω` against
+>   > `Z₂₁ = +1.096344984e-02 + 1.111387041e+00j Ω`. Printed beside it, not
+>   > gated here: `σ_max(S) = 0.9869`, max column power sum 0.9740 (step 3's
+>   > gate (ii) quantities, on a two-port fixture).
+>   > **Both sheets are step 2b's gated sheet.** The `f = 0.5` filter is
+>   > composed over the two `21x` groups on one mesh; each reads 1375 facets,
+>   > area 7.216834292e-05 m², `w = A/h = 5.171485579e-03 m` — step 2b's
+>   > f = 0.5 record 5.171486e-03 m, so the width convention crossed into the
+>   > package unchanged — planar to < 1e-12, and ragged (A/h strictly below
+>   > the bbox extent 5.905570485e-03 m, asserted).
+>   > **Cross-route inside the sweep: 1.6079% (P1 driven) and 1.5950% (P2
+>   > driven)**, both inside step 2's unmoved 5% band, against step 2b's
+>   > **1.8333%** at the same width — 0.2254 / 0.2383 pp apart.
+>   > **Two legs of the entry were not run as written, both because the
+>   > sweep's drive is not the fixture's.** (a) The entry asked the sweep's
+>   > port-1-driven solve to reproduce step 2b's f = 0.5 records to **1e-4**.
+>   > It cannot be that quantity: step 2b drove an impressed *gap current*
+>   > with a sheet on the undriven port only, while the route drives the
+>   > *sheet source* with sheets on both ports, so the field differs by
+>   > construction. What survives the drive normalisation — the cross-route
+>   > ratio — is reported above and sits 0.23 pp off, i.e. the reading is
+>   > drive-dependent at the 0.2 pp grain and the 5% band does not notice.
+>   > (b) The gap-voltage sweep on **this** (fragmented) mesh needs
+>   > `GapVoltagePortSpec` to accept a gap box carrying two cell tags
+>   > (`{101: (101, 111)}` after `GEO-16`'s fragment) and it takes one; the
+>   > negative control was therefore run as the record-owning gates
+>   > themselves — `test_port_package_sparameters.py` +
+>   > `test_port_lumped_bc.py`, **16 passed 145.0 s**,
+>   > `20260818T033925Z_PORT-9-step2c-control.log` — which reproduce
+>   > `EX-20`'s `‖S‖₂ = 0.861449` (band 1e-6) and
+>   > `‖S − Sᵀ‖/‖S‖ = 2.5494e-05` (band 5e-7) and the heuristic route's
+>   > separation gate through the modified package, plus step 1's six lumped
+>   > identity gates. The new route moved neither existing route.
+>   > **Scope, unchanged:** two-torus only, no birdcage claim; the chunk
+>   > stays 🟡. Step 3's gate (i) prerequisite is discharged — the function
+>   > it asserts through now has the route.
 > * **Step 3 — birdcage instantiation.** The BC on the birdcage mesh's four
 >   port boxes (`GEO-9`, generated and identity-gated). **Both prerequisites
 >   reported 2026-08-16 and the block is lifted:** `GEO-15` ✅ — graded
@@ -3193,7 +3253,16 @@ verbatim as annotated by this review.
    a non-overlapping 64 MHz bracket is the informative outcome — record
    it in the §7 entry, report, stop.
 2. **`PORT-9` step 2c — the lumped-sheet sweep route + the reciprocity
-   leg (standard).** Execute the §7 step-2c entry verbatim (scoped this
+   leg (standard).** ✅ **done 2026-08-18, 22:30 slot** — the route
+   landed and the sweep is reciprocal at **2.574249e-11** against the
+   unmoved 1e-3 band; cross-route inside the sweep 1.6079% / 1.5950%
+   (5% band), 0.23 pp of drive dependence off step 2b's 1.8333%; two
+   legs of the item not run as written and named in the §7 entry (the
+   1e-4 reproduction is not the same quantity under a sheet drive; the
+   fragmented-mesh gap sweep wants a multi-tag `GapVoltagePortSpec`).
+   Item 1 (`TH-11` step 5b) was **skipped as twice-failed** per this
+   section's rescope rule — its §7 stop condition fired at attempt 2.
+   Original text: Execute the §7 step-2c entry verbatim (scoped this
    review). Add the third excitation route to
    `run_n_port_sparameter_sweep` (`ports/sparameters.py:230` has
    exactly two — `GapVoltagePortSpec` and the retiring heuristic) and

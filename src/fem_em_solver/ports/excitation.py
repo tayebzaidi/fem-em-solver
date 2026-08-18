@@ -48,6 +48,13 @@ class PortVoltageCurrentEstimate:
     current_a: complex
     is_driven: bool
     termination_ohm: float
+    # Optional second reading of the same port's terminal voltage, taken along
+    # the caller's terminal-to-terminal quadrature (`PORT-9` step 2c).  It is a
+    # *diagnostic*: the route that fills it (the lumped-sheet route) reads its
+    # own ``V`` off the sheet, and this is the independent path integral the
+    # cross-route band of step 2/2b is measured against, off the same solve.
+    # ``None`` on every route that has no path to integrate along.
+    path_voltage_v: Optional[complex] = None
 
 
 @dataclass(frozen=True)
