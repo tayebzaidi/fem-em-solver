@@ -13763,3 +13763,85 @@ diagnosis, its chunk stays 🟡).
    interval. **Negative result:** a rank-dependent ΔR outside 0.1 pp is
    a solver-stack finding — known-issues entry, 5b stays blocked,
    report, stop.
+
+## §9 On-deck done/superseded items + interval recap, 18:00 2026-08-17 to 03:00 2026-08-18 — archived 2026-08-18 (03:00 review)
+
+Last reviewed 2026-08-17, **18:00 review**. Interval (since 10:30): all
+four slots productive — `PORT-9` step 2b ✅ (the cross-route band
+**HOLDS at the narrowed width**: 1.8333% at f = 0.5 against the unmoved
+5%; the width convention `w = A/h` found and fixed en route — the bbox
+extent overstates a ragged filtered edge by 14–15%; the reciprocity leg
+stays unrun, it needs a package change), `TH-11` step 5a ✅ (the
+2 807 309-cell mesh round-trips XDMF exactly and `-n 8` reproduces the
+`-n 2` record to **+0.00002 pp** against the pre-stated 0.1 pp — the
+rank change is bought), and `OPS-17` step 3 🟡 across two attempts
+(attempt 1 reconciled the sweep anchor at **56** and surfaced the silent
+`_DummyComm` regression, filed in known-issues; attempt 2 **closed leg
+(a)** — all 377 real-mode tests observed in completed legs, 171 + 206
+exact, every failure a named expected one). Both ✅ audited
+**COMPLIANT** (one subagent auditor each; every plan number verified
+against its log; no band loosened). Tree clean, no `recovered/*`;
+`attempt/TH-11-step5-20260817T123353Z` **deleted** — step 5a landed a
+strict superset of its module (verified by diff before deletion). This
+review scoped **`PORT-9` step 2c** (the lumped-sheet sweep route + the
+reciprocity leg — step 3's gate (i) cannot run without it) and
+commissioned **`EX-24`** (§5.4 ramp: step 2b's gated capability has no
+example from the lumped-BC angle; `EX-18`/`EX-20` are gap-voltage
+only). No example for `TH-11` 5a: the cache and rank control are
+infrastructure toward a still-ungated 64 MHz reading. Process note: the
+grep-pipe trap fired a third time (attempt 2's `tail -3` collect) and
+was caught and re-run unpiped in-slot — the rubric text stands as
+written.
+
+Item 2 closed; items 1 and 3 were superseded by the 03:00 2026-08-18
+review's rescopes (`TH-11` step 5b → 5c after the measured 64 GiB wall;
+`OPS-17` leg (b) → (b1)/(b2) after both complex commands exit 124).
+Struck texts verbatim:
+
+1. *(superseded — twice-failed, rescoped as step 5c)* **`TH-11` step 5b
+   — the third-rung pair off the cached mesh (heavy).** Execute the §7
+   step-5b entry verbatim (5a landed: the cache and the rank control are
+   on record). Command 1: the loaded third-rung solve at `-n 8` reading
+   the cached XDMF, `timeout -k 30 570`. Command 2: the free solve + the
+   three-rung Aitken ladder — measured rate `p` and `d₀` at 64 MHz,
+   **printed, never gated**, beside step 4's 10/30 MHz brackets.
+   **Anchor:** the step-1/2 identity family on every solve (< 1e-9
+   complex-power residual, σ = 0 dissipation exactly zero); the
+   fine-rung record +2.8063% as 5a re-measured it. **Cost, measured:**
+   `-n 8` solves the fine rung in 72–73 s; 6.7× the cells extrapolates a
+   third-rung solve to **~480 s** — one solve per harness command,
+   `-n 12` pre-authorised if command 1 threatens the window (the 5a
+   control covers the width change; the hook caps at 12). **Traps:**
+   step 4's verbatim; a killed run leaves a stale FFCx lock; the XDMF
+   read must preserve the tag names the solver selects by (5a asserts it
+   did). **Scope:** no gated claim — §2's extrapolation sentence moves
+   only by review adjudication of the printed bracket. **Negative
+   result:** a non-overlapping 64 MHz bracket is the informative outcome
+   — record it in the §7 entry, report, stop.
+2. ✅ **DONE 2026-08-18, 22:30 slot** — **`PORT-9` step 2c — the
+   lumped-sheet sweep route + the reciprocity leg (standard).** The
+   route landed and the sweep is reciprocal at **2.574249e-11** against
+   the unmoved 1e-3 band; cross-route inside the sweep 1.6079% / 1.5950%
+   (5% band), 0.23 pp of drive dependence off step 2b's 1.8333%; two
+   legs of the item not run as written and named in the §7 entry (the
+   1e-4 reproduction is not the same quantity under a sheet drive; the
+   fragmented-mesh gap sweep wants a multi-tag `GapVoltagePortSpec`).
+   Audited COMPLIANT 2026-08-18 03:00 review.
+3. *(superseded — rescoped as (b1)/(b2))* **`OPS-17` step 3 leg (b) —
+   the two complex legs (standard).** Attempts 1–2 closed leg (a) (all
+   377 real-mode tests observed, 171 + 206 exact) and the sweep anchor
+   (56, reconciled); this item is the remainder, per the §7 attempt-2
+   annotation. Command 1: complex `tests/validation` (`timeout -k 30
+   570`; the `port_gap` family is 446 s of it — if it threatens the
+   window, run `test_port_gap_*` alone first and the rest second, never
+   raise a ceiling). Command 2: the complex remainder with
+   `tests/environment` first — the only leg that can observe defect 3's
+   th-smoke Poynting xfail in a completed run. **Anchor:** exact counts
+   reconciled against the tree's 377 collect (step 2's 359 + the 18
+   landed since), every failure a *named* expected one; the th-smoke
+   xfail observed in a completed leg for the first time. **Traps:**
+   complex build + `FEM_EM_REQUIRE_COMPLEX=1`; **never pipe pytest
+   inside the harness command**. **Scope:** bookkeeping only; the four
+   defects stay xfail (`GEO-17`/`MAG-17`/`POST-5`'s work). **Negative
+   result:** an unexpected failure or count delta is a finding —
+   known-issues entry naming the test and the delta, report, stop.
