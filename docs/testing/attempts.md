@@ -13993,3 +13993,88 @@ decision clause needs that answer before it fires.
 **Container:** healthy throughout — no OOM, no wedge, no force-recreate, ~2 GiB
 of headroom at peak. FFCx cache left **warm**, now including this module's
 degree-2 validation forms.
+
+## 2026-08-18T21:30Z — `POST-5` step 1, attempt 1 — **complete**
+
+**Item:** §9 On deck #2 (#1, `TH-12` step 2, was already done). Scalar-σ fix +
+the Poynting h-ladder discriminator, standard tier, `-n 2`, complex build.
+
+**Outcome: the step's anchor is met and the discriminator gave an unambiguous
+reading — SOURCE/ASSEMBLY, not resolution.** Nothing was loosened; the xfail
+keeps its 25% band and `strict=True`.
+
+**What was done.**
+
+1. *Defect 4 fixed* — `src/fem_em_solver/post/power_balance.py` wraps the
+   scalar σ branch in `fem.Constant(msh, dolfinx.default_scalar_type(σ))`.
+   `sigma=0.0` no longer folds to a domain-less UFL zero. The
+   `SIGMA_BLIND = 1e-12 * SIGMA` workaround in
+   `tests/solver/test_time_harmonic_smoke.py` is deleted; the control is a
+   real zero and its volume leg is asserted `== 0.0` exactly (not `isclose`).
+2. *`ds` orientation checked first*, as the step plan demanded — new
+   `test_smoke_fixture_boundary_measure_is_outward_oriented` assembles
+   `∮x·n̂dS` and `3|Ω|` with the same `dx`/`ds` pair the power balance uses:
+   **7.117591052e-03 m³ on both legs, ratio 1.000000000000** against a 1e-10
+   band. Candidate (c), a flipped outward measure, is excluded exactly.
+3. *The h-ladder* — new
+   `test_poynting_imbalance_h_ladder_discriminates_resolution_from_source`.
+
+**Measured** (`20260818T215101Z_POST-5-step1-ladder2.log`, `-n 2`, 5 s
+elapsed, 4.07 s of pytest — the ladder is a smoke-tier cost, not standard):
+
+| h | cells | dissipated [W] | net inward [W] | sign | imbalance | blind diss [W] |
+|---|---|---|---|---|---|---|
+| 0.030 | 1 405 | 1.199162e-06 | −2.008179e-07 | − | 116.7465% | 0.000000e+00 |
+| 0.020 | 2 590 | 1.154337e-06 | −1.778362e-07 | − | 115.4059% | 0.000000e+00 |
+| 0.015 | 4 661 | 1.479920e-06 | −2.134447e-07 | − | 114.4227% | 0.000000e+00 |
+
+Fitted rate in h (log–log least squares, three rungs) **0.0290** against the
+pre-registered ≥ 0.7; the flux sign **never corrects**. Both halves of the
+band fail ⇒ **SOURCE/ASSEMBLY**. 2.3 pp of movement across a 3.3× cell-count
+increase is not an O(h) artefact. The coarse rung reproduces the `OPS-17`
+record to every printed digit, which doubles as the negative control on the
+`fem.Constant` wrap.
+
+**Negative control, green:** `tests/validation/test_poynting_balance.py`
+**8 passed, 129 s** (`20260818T215117Z_POST-5-step1-negcontrol.log`); the
+refined-mesh 5% gate holds and `test_uniform_sigma_field_reproduces_the_
+scalar_path` still equates the scalar and DG0-field paths at `rtol=1e-12` —
+the digits-unmoved evidence.
+
+**Two windows burned, and the cause is worth carrying.** The orientation
+form `ufl.dot(x, n) * ufl.ds` written *without* a `metadata` quadrature
+degree sent FFCx into a compile that had not finished after **nine minutes**
+on this gmsh mesh. It killed `20260818T213256Z` (400 s, exit 124) and
+`20260818T214040Z` (570 s, exit 124), and each kill left the half-written
+`libffcx_forms_85c1a0ff….c` behind so the *next* run failed with
+`JIT compilation timed out, probably due to a failed previous compile`.
+Recovery is `rm /root/.cache/fenics/*<hash>*`; the real fix is
+`metadata={"quadrature_degree": 2}`, exact here since both legs are linear
+in x, after which the whole thing compiles and runs in 5 s. **Generalisable:
+pin the quadrature degree on any `SpatialCoordinate`-bearing facet integral
+on a gmsh mesh.** The first of the two windows was in any case a legitimate
+cold-cache compile window for the validation forms (the 10:30 review's note
+that validation forms were still cold).
+
+**Logs:** `20260818T213256Z_POST-5-step1-smoke.log` (exit 124, the JIT
+stall), `20260818T213953Z_POST-5-step1-smoke-warm.log` (exit 1, the poisoned
+cache entry; ladder passed inside it), `20260818T214040Z_POST-5-step1-ladder.log`
+(exit 124, second stall), `20260818T215101Z_POST-5-step1-ladder2.log`
+(exit 0, the reading), `20260818T215117Z_POST-5-step1-negcontrol.log`
+(exit 0, the negative control).
+
+**Container:** healthy throughout — no OOM, no wedge, no force-recreate. FFCx
+cache left **warm**, now including the smoke fixture's forms and the two
+orientation forms.
+
+**Hypothesis for the next attempt (`POST-5` step 2, scoped in §7):** the
+drive is the defect. The smoke fixture is driven by an axial current in the
+inner cylinder that terminates on the end caps, so `J·n ≠ 0` there — the same
+incompatibility `test_gauge_lagrange` measures on its wire fixture (`OPS-17`
+step-2 defect 2). Re-drive the same fixture with a **closed azimuthal loop**
+(`div J = 0`, `J·n = 0` everywhere on the boundary) and re-read the identity:
+if the imbalance collapses and the sign turns positive, it is the source; if
+it does not, the boundary leg's assembly is next, probed against the `TH-6`
+plane wave where both legs are known in closed form. The two defects sharing
+one cause would be a real economy — worth checking whether one fix closes
+both.

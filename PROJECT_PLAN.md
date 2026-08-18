@@ -2526,7 +2526,7 @@ plans and probes archived verbatim in `docs/planning/plan-archive.md`)*:
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
 | `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | ✅ *(chunk closed 2026-08-12 — every step closed or dispositioned; note the title's premise was itself refuted, the tie-break was never the defect. Step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped. Step 3 ✅ 2026-08-11 — the centerline samples the source fields: **23.5539% → 0.008613%**, a 2735× collapse; known-issues entry **retired**. Step 4 ✅ 2026-08-12 — the export-path P1 artifact is **bounded and attributed**: midpoint relative medians **51.17% / 52.47% / 20.18%** (`A`/`B`/`E`), vertex/midpoint separation **0.42–0.68×** so the step's vertex-localization hypothesis is **REFUTED**, and a DG1 target reproduces all three sources to round-off — 100% of it is the P1 continuity constraint. All four steps now closed or dispositioned)* | standard |
-| `POST-5` | Real Poynting power balance: wrong-sign boundary flux on the time-harmonic smoke fixture + `poynting_power_balance` raises on scalar `sigma=0.0` (`OPS-17` step-2 defects 3 + 4, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | ⬜ | standard |
+| `POST-5` | Real Poynting power balance: wrong-sign boundary flux on the time-harmonic smoke fixture + `poynting_power_balance` raises on scalar `sigma=0.0` (`OPS-17` step-2 defects 3 + 4, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | 🟡 *(step 1 ✅ 2026-08-18: defect 4 fixed, `ds` ruled out at ratio 1.000000000000, ladder verdict **SOURCE/ASSEMBLY**; the fix for defect 3 is step 2)* | standard |
 
 > *(Closed-step plans, execution journals and audits for `POST-1` and
 > `POST-3` are archived verbatim in `docs/planning/plan-archive.md`.)*
@@ -2571,7 +2571,8 @@ plans and probes archived verbatim in `docs/planning/plan-archive.md`)*:
 > adjudication, nothing else is open.
 
 **`POST-5` — real Poynting power balance: wrong-sign flux + the scalar-σ
-raise** ⬜ *(commissioned 2026-08-17 10:30 review from `OPS-17` step-2
+raise** 🟡 *(step 1 executed 2026-08-18, 16:30 slot — see the step-1
+result block below; commissioned 2026-08-17 10:30 review from `OPS-17` step-2
 defects 3 and 4 — full measurements in known-issues "Four defects…" §3/§4;
 the failing gate is carried as
 `tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power`,
@@ -2611,6 +2612,81 @@ to reach 5%); (b) the source's `J·n ≠ 0` end-cap incompatibility.
 > coil-loading claim moves. **Negative result:** an in-between reading is
 > the finding — record all three rungs and the sign per rung in this
 > entry and known-issues, report, stop.
+>
+> **Step 1 result — executed 2026-08-18, 16:30 slot. ✅ The pre-registered
+> anchor is met and the discriminator read SOURCE/ASSEMBLY.**
+>
+> *Defect 4 is fixed.* `power_balance.py` now wraps the scalar branch in
+> `fem.Constant(msh, dolfinx.default_scalar_type(σ))`, so the domain-less
+> UFL zero is gone. The σ-blind control runs at **exactly `sigma=0.0`** and
+> its volume leg assembles to **0.000000e+00 W at all three rungs** — the
+> `POST-5` step-1 anchor, asserted `== 0.0` (not `isclose`) in
+> `test_poynting_imbalance_h_ladder_discriminates_resolution_from_source`.
+> The `SIGMA_BLIND = 1e-12 * SIGMA` workaround is deleted from
+> `test_time_harmonic_smoke.py`.
+>
+> *Candidate (c) — a flipped outward measure — is ruled out, exactly.*
+> `test_smoke_fixture_boundary_measure_is_outward_oriented` assembles the
+> divergence-theorem identity `∮x·n̂dS = 3|Ω|` with the same `dx`/`ds` pair
+> the power balance uses: **7.117591052e-03 m³ on both legs, ratio
+> 1.000000000000** (+1 outward, −1 inward), against a 1e-10 band. `ufl.ds`
+> with `ufl.FacetNormal` is outward on this fixture; the wrong sign is not
+> the measure.
+>
+> *The h-ladder* (`20260818T215101Z_POST-5-step1-ladder2.log`, `-n 2`, **5 s**
+> — smoke tier, the whole ladder is 4.07 s of pytest):
+>
+> | h | cells | dissipated [W] | net inward [W] | sign | imbalance | blind diss [W] |
+> |---|---|---|---|---|---|---|
+> | 0.030 | 1 405 | 1.199162e-06 | −2.008179e-07 | − | 116.7465% | 0.000000e+00 |
+> | 0.020 | 2 590 | 1.154337e-06 | −1.778362e-07 | − | 115.4059% | 0.000000e+00 |
+> | 0.015 | 4 661 | 1.479920e-06 | −2.134447e-07 | − | 114.4227% | 0.000000e+00 |
+>
+> Fitted rate in h (least squares on log–log, three rungs): **0.0290**
+> against the pre-registered ≥ 0.7. The sign **never corrects** — net inward
+> power is negative on every rung, including the finest. Both halves of the
+> band fail, so the reading is unambiguous: **SOURCE/ASSEMBLY, not
+> resolution.** The imbalance moves 2.3 pp over a 3.3× cell-count increase;
+> a resolution artefact at O(h) would have fallen by ~50%. The coarse rung
+> reproduces the `OPS-17` record to every printed digit
+> (1.199162e-06 / −2.008179e-07 / 116.7465%), which is also the negative
+> control on the `fem.Constant` change: the wrap moved nothing.
+>
+> *Negative control, passed.* `tests/validation/test_poynting_balance.py`
+> **8 passed, 129 s** (`20260818T215117Z_POST-5-step1-negcontrol.log`) —
+> the refined-mesh 5% gate is green and
+> `test_uniform_sigma_field_reproduces_the_scalar_path` still holds the
+> scalar path against the DG0 field path at `rtol=1e-12`, which is the
+> digits-unmoved evidence for the wrap.
+>
+> *Consequence for the xfail.* The gate does **not** rescope to convergence.
+> `test_time_harmonic_smoke_solve_conserves_real_power` keeps its 25% band
+> and `strict=True`, with the ladder numbers now in the xfail reason.
+>
+> *One trap found, and it is not the physics.* `∮x·n̂dS` written without a
+> `metadata` quadrature degree sends FFCx into a compile that had **not
+> finished after nine minutes** on this gmsh mesh, killing two whole windows
+> (`20260818T213256Z`, `20260818T214040Z`) and poisoning the cache entry
+> each time (`rm /root/.cache/fenics/*<hash>*` is the recovery; the
+> symptom on the next run is `JIT compilation timed out, probably due to a
+> failed previous compile`). Both legs are exactly linear in x, so
+> `metadata={"quadrature_degree": 2}` is exact and compiles instantly.
+> Any future `SpatialCoordinate`-in-a-facet-integral form on a gmsh mesh
+> should pin its quadrature degree.
+>
+> **Step 2 — find the source/assembly defect (scoped, not executed).** The
+> ladder has excluded resolution and the `ds` orientation; the remaining
+> named candidate is defect 3's (b), the drive's `J·n ≠ 0` on the end caps
+> (an axial current in the inner cylinder terminating on the boundary — the
+> same incompatibility `test_gauge_lagrange` measures, `OPS-17` step-2
+> defect 2). The cheap discriminator is a **closed** source on this fixture:
+> re-drive with an azimuthal current loop (`div J = 0`, `J·n = 0` on every
+> boundary) and re-read the identity. If the imbalance collapses and the
+> sign turns positive, the defect is the source's compatibility and the
+> smoke fixture's drive is what changes; if it does not, the defect is in
+> the assembly of the boundary leg itself and the next probe is the curl
+> trace against an imposed-field solve where both legs are known in closed
+> form (the `TH-6` plane wave already carries that, at 5%).
 
 **`POST-4`** ✅ *(closed 2026-08-12; full step plans + journals in
 `docs/planning/plan-archive.md`)*. The chunk title's premise was refuted by
@@ -3793,8 +3869,23 @@ verbatim as annotated by this review.
    review's. **Negative result:** an over-cap MUMPS estimate, or ΔR
    outside the bracket, is the informative outcome — record it in the
    §7 entry, report, stop.
-2. **`POST-5` step 1 — the scalar-σ fix + the Poynting h-ladder
-   discriminator (standard).** Execute the §7 `POST-5` step-1 entry
+2. ~~**`POST-5` step 1 — the scalar-σ fix + the Poynting h-ladder
+   discriminator (standard).**~~ ✅ **DONE** *(2026-08-18 16:30 slot —
+   defect 4 fixed and the σ-blind control returns **exactly 0.000000e+00 W**
+   at all three rungs; `ds` orientation ruled out at ratio
+   **1.000000000000** vs the 1e-10 band; ladder 116.7465 → 115.4059 →
+   114.4227% at h = 0.03/0.02/0.015, **fitted rate 0.0290** against the
+   pre-registered ≥ 0.7 and the flux sign never corrects ⇒ **VERDICT:
+   SOURCE/ASSEMBLY**, so the xfail does NOT rescope to convergence.
+   Negative control green: validation Poynting 8 passed 129 s, scalar-vs-
+   field path still equal at rtol 1e-12.
+   `20260818T215101Z_POST-5-step1-ladder2.log` (5 s),
+   `20260818T215117Z_POST-5-step1-negcontrol.log` (129 s). Step 2 is
+   scoped in §7 — a closed azimuthal source as the next discriminator. Two
+   windows were burned first on an unpinned-quadrature `∮x·n̂dS` form that
+   FFCx could not compile in nine minutes; the fix and the recovery are in
+   the §7 entry.)*
+   *Superseded text follows.* Execute the §7 `POST-5` step-1 entry
    verbatim (commissioned 2026-08-18 03:00 review from `OPS-17` defects 3 + 4).
    **Anchor:** the σ-blind control (`sigma=0.0`) runs and returns
    exactly-zero dissipated power after the `fem.Constant` wrap; the

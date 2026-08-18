@@ -28,7 +28,21 @@ FREQUENCY_HZ = 127.74e6
 # Pre-stated; see test_time_harmonic_smoke_solve_conserves_real_power.
 POYNTING_IMBALANCE_MAX = 0.25
 BLIND_SEPARATION = 10.0
-SIGMA_BLIND = 1.0e-12 * SIGMA
+# The real sigma-blind control.  Was `1e-12 * SIGMA` until `POST-5` step 1
+# (2026-08-18) fixed the helper defect that made an exact zero raise
+# (known-issues 2026-08-17, `OPS-17` step-2 defect 4).
+SIGMA_BLIND = 0.0
+
+# `POST-5` step 1's h-ladder discriminator.  The record rung first, then two
+# refinements; the smoke fixture's in-medium wavelength is
+# lambda = c/(f sqrt(78)) = 0.266 m, so these are ~9 / ~13 / ~18 cells per
+# wavelength.
+LADDER_RESOLUTIONS = (0.03, 0.02, 0.015)
+# Pre-registered before the run (PROJECT_PLAN §7 `POST-5` step 1): imbalance
+# falling at a fitted rate >= this AND the net-inward flux sign correcting to
+# positive on the finest rung  =>  RESOLUTION; an h-independent imbalance or a
+# sign that never corrects  =>  SOURCE/ASSEMBLY.
+LADDER_RATE_FOR_RESOLUTION = 0.7
 
 
 @complex_only
@@ -38,7 +52,12 @@ SIGMA_BLIND = 1.0e-12 * SIGMA
         "known-issues 2026-08-17 (OPS-17 step 2): real Poynting power does not "
         "balance on this smoke fixture — dissipated 1.199162e-06 W against a "
         "net inward flux of -2.008179e-07 W (imbalance 116.7465%, and the flux "
-        "has the wrong SIGN). Band left strict so a fix shows as XPASS."
+        "has the wrong SIGN). `POST-5` step 1 (2026-08-18) discriminated the "
+        "cause: the imbalance is h-independent (116.7465 / 115.4059 / "
+        "114.4227% at h = 0.03 / 0.02 / 0.015, fitted rate 0.0290 against the "
+        "pre-registered 0.7) and the sign never corrects => SOURCE/ASSEMBLY, "
+        "so the band does NOT rescope to convergence. Band left strict so a "
+        "fix shows as XPASS."
     ),
 )
 def test_time_harmonic_smoke_solve_conserves_real_power():
@@ -169,15 +188,19 @@ def test_time_harmonic_smoke_solve_conserves_real_power():
     # magnitude. If it does not, the identity is not live on this fixture and
     # the band above means nothing.
     #
-    # SIGMA_BLIND is 1e-12 * SIGMA rather than exactly 0.0 because
-    # poynting_power_balance raises on a scalar sigma of 0.0 — UFL folds
-    # `0.5 * 0.0 * inner(E, E)` to a domain-less zero and `* ufl.dx` then
-    # raises "This integral is missing an integration domain". That module's
-    # own docstring advertises the sigma-blind control, so this is a defect in
-    # the helper, not in the control; recorded in known-issues 2026-08-17
-    # (`OPS-17` step 2). Twelve orders down is lossless for this purpose.
+    # SIGMA_BLIND is exactly 0.0 since `POST-5` step 1 (2026-08-18): the
+    # 1e-12 * SIGMA workaround stood only because poynting_power_balance
+    # raised on a scalar zero (known-issues, `OPS-17` step-2 defect 4). The
+    # fix wraps the scalar in fem.Constant; the control below is now the
+    # lossless medium it always claimed to be, and its volume leg is exactly
+    # zero rather than twelve orders down.
     blind = poynting_power_balance(
         fields.e_complex, omega=fields.omega, sigma=SIGMA_BLIND, comm=comm
+    )
+    assert blind["dissipated_power_w"] == 0.0, (
+        "the sigma-blind control dissipated "
+        f"{blind['dissipated_power_w']:.6e} W at sigma = 0 exactly; the volume "
+        "leg must vanish identically, not approximately"
     )
 
     if comm.rank == 0:
@@ -206,7 +229,177 @@ def test_time_harmonic_smoke_solve_conserves_real_power():
     )
 
 
-def test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve():
+def _smoke_mesh(resolution: float, comm):
+    """The smoke fixture's cylindrical domain at one resolution."""
+    return MeshGenerator.cylindrical_domain(
+        inner_radius=0.01,
+        outer_radius=0.08,
+        length=0.12,
+        resolution=resolution,
+        comm=comm,
+    )
+
+
+def _solve_smoke_and_balance(resolution: float, comm):
+    """Solve the smoke fixture at ``resolution`` and score the identity."""
+    mesh, cell_tags, facet_tags = _smoke_mesh(resolution, comm)
+    problem = TimeHarmonicProblem(
+        mesh=mesh,
+        frequency_hz=FREQUENCY_HZ,
+        material=HomogeneousMaterial(sigma=SIGMA, epsilon_r=EPSILON_R, mu_r=1.0),
+        cell_tags=cell_tags,
+        facet_tags=facet_tags,
+    )
+    solver = TimeHarmonicSolver(problem, degree=1)
+
+    def current_density(x):
+        return ufl.as_vector([0.0, 0.0, 1.0])
+
+    fields = solver.solve(
+        current_density=current_density, subdomain_id=1, gauge_penalty=1e-3
+    )
+    balance = poynting_power_balance(
+        fields.e_complex, omega=fields.omega, sigma=SIGMA, comm=comm
+    )
+    blind = poynting_power_balance(
+        fields.e_complex, omega=fields.omega, sigma=SIGMA_BLIND, comm=comm
+    )
+    tdim = mesh.topology.dim
+    balance["ncells"] = int(
+        comm.allreduce(mesh.topology.index_map(tdim).size_local, op=MPI.SUM)
+    )
+    balance["h"] = float(resolution)
+    balance["blind_dissipated_w"] = blind["dissipated_power_w"]
+    balance["mesh"] = mesh
+    return balance
+
+
+@complex_only
+def test_smoke_fixture_boundary_measure_is_outward_oriented():
+    """``ds``/``FacetNormal`` on the smoke mesh point *out*, exactly.
+
+    Candidate (c) for the wrong-sign Poynting flux (known-issues 2026-08-17,
+    `OPS-17` step-2 defect 3) is a flipped outward measure: if ``ufl.ds`` with
+    ``ufl.FacetNormal`` were inward on this fixture, every boundary-flux sign
+    in the repo would be reversed and the 116.7465% imbalance would be an
+    artefact of the measure rather than of the solution.  The divergence
+    theorem settles it with no free parameters and no solve —
+
+        oint x . n dS = int div(x) dV = 3 |Omega|
+
+    — so the ratio of the assembled surface integral to three times the
+    assembled volume is exactly +1 for an outward normal and exactly -1 for an
+    inward one.  Both legs use the same ``dx``/``ds`` pair the power balance
+    uses.  Run before the h-ladder, per the step plan: this is the cheap
+    candidate the wrong sign points at.
+    """
+    comm = MPI.COMM_WORLD
+    mesh, _, _ = _smoke_mesh(LADDER_RESOLUTIONS[0], comm)
+
+    normal = ufl.FacetNormal(mesh)
+    position = ufl.SpatialCoordinate(mesh)
+    # The quadrature degree is pinned rather than estimated. Left to UFL, the
+    # SpatialCoordinate-times-FacetNormal integrand on this gmsh mesh sends
+    # FFCx into a compile that had not finished after nine minutes
+    # (`POST-5` step 1, 2026-08-18, logs 20260818T213256Z / 20260818T214040Z —
+    # both windows died there and poisoned the JIT cache entry). Both legs are
+    # exactly linear in x, so degree 2 integrates them without error.
+    meta = {"quadrature_degree": 2}
+    surface = comm.allreduce(
+        fem.assemble_scalar(
+            fem.form(ufl.dot(position, normal) * ufl.ds(metadata=meta))
+        ),
+        op=MPI.SUM,
+    )
+    # div(x) = 3 identically, so this volume leg *is* 3|Omega| and carries the
+    # mesh without needing a scalar-type-matched Constant.
+    volume3 = comm.allreduce(
+        fem.assemble_scalar(
+            fem.form(ufl.div(position) * ufl.dx(metadata=meta))
+        ),
+        op=MPI.SUM,
+    )
+    ratio = float(np.real(surface)) / float(np.real(volume3))
+
+    if comm.rank == 0:
+        print("\n[POST-5 step 1] ds orientation check on the smoke fixture:")
+        print(f"  oint x.n dS = {float(np.real(surface)):.9e} m^3")
+        print(f"  3 |Omega|   = {float(np.real(volume3)):.9e} m^3")
+        print(f"  ratio       = {ratio:.12f}  (+1 outward, -1 inward)",
+              flush=True)
+
+    assert abs(ratio - 1.0) < 1.0e-10, (
+        f"oint x.n dS / (3|Omega|) = {ratio:.12f} on the smoke fixture; the "
+        "outward measure is not outward (or the mesh is not closed), which "
+        "would make every boundary-flux sign in the power balance wrong"
+    )
+
+
+@complex_only
+def test_poynting_imbalance_h_ladder_discriminates_resolution_from_source():
+    """`POST-5` step 1: is the smoke fixture's power imbalance resolution?
+
+    Three rungs of the smoke fixture, h in ``LADDER_RESOLUTIONS``, each solved
+    and scored with the same identity that reads 116.7465% at the record rung.
+    The classification band is pre-registered (PROJECT_PLAN §7 `POST-5`
+    step 1, and ``LADDER_RATE_FOR_RESOLUTION`` above):
+
+    * imbalance falling with a fitted rate >= 0.7 in h **and** the net inward
+      flux turning positive on the finest rung  =>  RESOLUTION, and the xfail
+      gate rescopes to convergence;
+    * an h-independent imbalance, or a sign that never corrects  =>
+      SOURCE/ASSEMBLY, and the fix is a follow-on step.
+
+    The rate is fitted by least squares on log(imbalance) against log(h) over
+    all three rungs.  This test asserts the two things that are true whatever
+    the reading is — the sigma-blind control's volume leg is *exactly* zero
+    (the `POST-5` step-1 anchor, defect 4's fix) and the three rungs really do
+    refine — and prints the table; the classification itself is a reading
+    recorded in the plan, not a gate, because the outcome is what the step is
+    measuring.
+    """
+    comm = MPI.COMM_WORLD
+    rungs = [_solve_smoke_and_balance(h, comm) for h in LADDER_RESOLUTIONS]
+
+    log_h = np.log(np.array([r["h"] for r in rungs]))
+    log_imb = np.log(np.array([r["relative_imbalance"] for r in rungs]))
+    rate = float(np.polyfit(log_h, log_imb, 1)[0])
+    sign_corrected = rungs[-1]["net_inward_power_w"] > 0.0
+    verdict = (
+        "RESOLUTION"
+        if (rate >= LADDER_RATE_FOR_RESOLUTION and sign_corrected)
+        else "SOURCE/ASSEMBLY"
+    )
+
+    if comm.rank == 0:
+        print("\n[POST-5 step 1] Poynting h-ladder on the smoke fixture:")
+        print("      h      cells    dissipated [W]   net inward [W]  sign   "
+              "imbalance   blind diss [W]")
+        for r in rungs:
+            print(
+                f"  {r['h']:.3f}  {r['ncells']:7d}   "
+                f"{r['dissipated_power_w']:.6e}   "
+                f"{r['net_inward_power_w']:+.6e}   "
+                f"{'+' if r['net_inward_power_w'] > 0 else '-'}    "
+                f"{r['relative_imbalance']:9.4%}   "
+                f"{r['blind_dissipated_w']:.6e}"
+            )
+        print(f"  fitted rate in h: {rate:.4f} "
+              f"(>= {LADDER_RATE_FOR_RESOLUTION} required for RESOLUTION)")
+        print(f"  finest-rung flux sign corrected: {sign_corrected}")
+        print(f"  VERDICT: {verdict}", flush=True)
+
+    for r in rungs:
+        assert r["blind_dissipated_w"] == 0.0, (
+            f"at h = {r['h']} the sigma-blind control dissipated "
+            f"{r['blind_dissipated_w']:.6e} W; at sigma = 0 exactly the volume "
+            "leg must vanish identically, which is the `POST-5` step-1 anchor"
+        )
+    cells = [r["ncells"] for r in rungs]
+    assert cells[0] < cells[1] < cells[2], (
+        f"the ladder did not refine: cell counts {cells} are not increasing, "
+        "so the fitted rate is not a rate in h"
+    )
     """API should fail fast when users pass non-Hz units to avoid silent mistakes."""
     comm = MPI.COMM_WORLD
 

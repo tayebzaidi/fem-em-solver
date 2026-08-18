@@ -1524,7 +1524,40 @@ an axial current terminating on the end caps, so `J·n ≠ 0` there, the same
 incompatibility as defect 2. **Resolves with:** a `TH`/`POST` chunk; an
 h-ladder on this fixture distinguishes the two in one command.
 
-**4. `poynting_power_balance` raises on a scalar `sigma=0.0`, the σ-blind
+> **Sharpened 2026-08-18, `POST-5` step 1 — candidate (a) is excluded and so
+> is a third candidate (c).** The h-ladder ran
+> (`20260818T215101Z_POST-5-step1-ladder2.log`, `-n 2`, 5 s):
+>
+> | h | cells | dissipated [W] | net inward [W] | imbalance |
+> |---|---|---|---|---|
+> | 0.030 | 1 405 | 1.199162e-06 | −2.008179e-07 | 116.7465% |
+> | 0.020 | 2 590 | 1.154337e-06 | −1.778362e-07 | 115.4059% |
+> | 0.015 | 4 661 | 1.479920e-06 | −2.134447e-07 | 114.4227% |
+>
+> Fitted rate in h **0.0290** against the pre-registered ≥ 0.7, and the net
+> inward flux is negative on every rung including the finest. **It is not
+> resolution.** Candidate (c), a flipped outward measure, is excluded
+> exactly: `∮x·n̂dS / 3|Ω| = 1.000000000000` on this fixture with the same
+> `dx`/`ds` pair the balance uses
+> (`test_smoke_fixture_boundary_measure_is_outward_oriented`). Candidate (b)
+> — the drive's `J·n ≠ 0` on the end caps — is what remains, together with a
+> defect in the boundary leg's assembly. The xfail is **not** rescoped to
+> convergence; its reason string now carries these numbers. `POST-5` step 2
+> in PROJECT_PLAN §7 scopes the next discriminator (a closed azimuthal
+> source on the same fixture).
+
+**4. ~~`poynting_power_balance` raises on a scalar `sigma=0.0`~~ — FIXED
+2026-08-18 (`POST-5` step 1).** The scalar branch is now wrapped in
+`fem.Constant(msh, dolfinx.default_scalar_type(σ))`, so the integral keeps
+its domain and `sigma=0.0` assembles to **exactly 0.000000e+00 W** (verified
+at three mesh sizes, `20260818T215101Z_POST-5-step1-ladder2.log`; asserted
+`== 0.0`). The `SIGMA_BLIND = 1e-12 * SIGMA` workaround is deleted and the
+control is now a real zero. `tests/validation/test_poynting_balance.py` is
+unmoved by the wrap — 8 passed, scalar-vs-DG0-field paths still equal at
+`rtol=1e-12` (`20260818T215117Z_POST-5-step1-negcontrol.log`). Original
+report follows.
+
+**`poynting_power_balance` raises on a scalar `sigma=0.0`, the σ-blind
 negative control its own docstring advertises.**
 `src/fem_em_solver/post/power_balance.py:137`. `0.5 * 0.0 * ufl.inner(E, E)`
 folds to a domain-less UFL zero and `* ufl.dx` then raises

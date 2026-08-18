@@ -38,6 +38,7 @@ from __future__ import annotations
 
 from typing import Optional, Union
 
+import dolfinx
 import numpy as np
 import ufl
 from mpi4py import MPI
@@ -106,11 +107,18 @@ def poynting_power_balance(
             )
         sigma_ufl: object = sigma
     else:
-        sigma_ufl = float(sigma)
-        if not np.isfinite(sigma_ufl) or sigma_ufl < 0.0:
+        sigma_value = float(sigma)
+        if not np.isfinite(sigma_value) or sigma_value < 0.0:
             raise ValueError(
                 f"sigma must be finite and non-negative (S/m), got {sigma!r}"
             )
+        # Wrapped in a Constant rather than left as a Python float: at the
+        # documented sigma = 0.0 negative control, `0.5 * 0.0 * inner(E, E)`
+        # constant-folds to a domain-less UFL zero and `* ufl.dx` then raises
+        # "This integral is missing an integration domain" (known-issues
+        # 2026-08-17, `OPS-17` step-2 defect 4).  A Constant carries the mesh,
+        # so the zero integral survives as an integral and assembles to 0.0.
+        sigma_ufl = fem.Constant(msh, dolfinx.default_scalar_type(sigma_value))
 
     if isinstance(mu_r, fem.Function):
         if mu_r.function_space.mesh is not msh:
