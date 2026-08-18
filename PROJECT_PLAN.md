@@ -418,6 +418,16 @@ dated annotation. The ID stays stable.)*
 > so upstream release checks happen in interactive operator sessions; when
 > one finds a qualifying release, it reopens this chunk and the daily
 > review queues it.
+> **Release check 2026-08-18 (interactive session, operator present):
+> TRIGGER FIRES.** Upstream newest is **v0.11.0** with patch
+> `v0.11.0.post0` — qualifying on both prongs of the lag policy (≥ 8
+> weeks old *and* patched). Target: `0.7.2 → v0.11.0.post0`. The daily
+> review should queue steps 1–3. Note for step 2, learned since
+> commissioning: `discrete_gradient` currently lives at
+> `dolfinx.cpp.fem.petsc.discrete_gradient` in 0.7.2 — expect it (and
+> the AMS-relevant plumbing) to have moved namespaces across 0.7 → 0.11;
+> any iterative-solver work (`TH-13`-class) should land *after* this
+> upgrade or be written against the new API.
 > * **Step 1 — build and boot (standard).** Bump the `FROM` line, rebuild,
 >   and fix the environment plumbing that encodes version-specific paths:
 >   the compose `PYTHONPATH` (`dolfinx-real/lib/python3.10/…` — both the
