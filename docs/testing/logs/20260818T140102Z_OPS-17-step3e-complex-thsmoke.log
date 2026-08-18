@@ -1,0 +1,132 @@
+# Test Run
+- Chunk: OPS-17-step3e-complex-thsmoke
+- Commit: 7219c94bfd75eaec804be89474c7a415773fe0d1
+- Time (UTC): 2026-08-18 14:01:02
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 480 mpiexec -n 2 python3 -m pytest tests/environment tests/solver/test_time_harmonic_smoke.py -v --tb=short --durations=10'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 18 09:00 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 480 mpiexec -n 2 python3 -m pytest tests/environment tests/solver/test_time_harmonic_smoke.py -v --tb=short --durations=10'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 8 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 8 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [ 12%]PASSED [ 12%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form 
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 25%]PASSED [ 25%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 37%]PASSED [ 37%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 50%]PASSED [ 50%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power XFAILbalance on this smoke fixture — dissipated
+1.199162e-06 W against a net inward flux of -2.008179e-07 W (imbalance
+116.7465%, and the flux has the wrong SIGN). Band left strict so a fix
+shows as XPASS.)                                                         [ 62%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve XFAILbalance on this smoke fixture — dissipated
+1.199162e-06 W against a net inward flux of -2.008179e-07 W (imbalance
+116.7465%, and the flux has the wrong SIGN). Band left strict so a fix
+shows as XPASS.)                                                         [ 62%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve PASSED [ 75%]PASSED [ 75%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_material_map_without_cell_tags_before_solve 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_material_map_without_cell_tags_before_solve PASSED [ 87%]PASSED [ 87%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve PASSED [100%]PASSED [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+5.51s call     tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power
+1.26s call     tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.88s call     tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.65s call     tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.26s call     tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve
+0.25s call     tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve
+0.25s call     tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_material_map_without_cell_tags_before_solve
+0.00s call     tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s teardown tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power
+0.00s setup    tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power
+================== 7 passed, 1 xfailed, 8 warnings in 10.51s ===================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/environment/test_complex_mode.py: 5 warnings
+tests/solver/test_time_harmonic_smoke.py: 30 warnings
+  /usr/local/lib/python3.10/dist-packages/ufl/core/expr.py:275: DeprecationWarning: Expr.ufl_domain() is deprecated, please use extract_unique_domain(expr) instead.
+    warnings.warn("Expr.ufl_domain() is deprecated, please "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+5.51s call     tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power
+1.26s call     tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.88s call     tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.65s call     tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.26s call     tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve
+0.25s call     tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_material_map_without_cell_tags_before_solve
+0.25s call     tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve
+0.00s teardown tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.00s call     tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s teardown tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power
+================== 7 passed, 1 xfailed, 43 warnings in 10.51s ==================
+
+## Exit
+- Status: 0
+- Elapsed (s): 12

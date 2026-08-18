@@ -13739,3 +13739,85 @@ tail behind it with **per-file** sizing rather than one directory command. Leg
 
 **Container:** healthy throughout, no wedge, no force-recreate; FFCx cache left
 **cleared** for the next slot.
+
+---
+
+## 2026-08-18T14:15Z — `OPS-17` step 3 leg (b1), attempt 2 — **complete**
+
+**Slot:** 09:00 local implementer run. **Tier:** standard, `-n 2`, complex
+build + `FEM_EM_REQUIRE_COMPLEX=1`. **Base:** clean `main` at `7219c94`.
+**Parked:** nothing — no `src/` or `tests/` change; this leg is bookkeeping.
+**Outcome: leg (b1) is closed**, and attempt 1's headline sizing rule is
+withdrawn.
+
+### What I ran
+
+Cache cleared first (`rm -rf /root/.cache/fenics`), then four harness commands:
+
+| # | Command | Log | Result |
+|---|---|---|---|
+| 1 | `tests/environment` + `test_time_harmonic_smoke.py` | `20260818T140102Z_OPS-17-step3e-complex-thsmoke.log` | **7 passed, 1 xfailed, 10.51 s**, exit 0 |
+| 2 | `tests/environment` + the 8 files after `test_convergence_diagnostics.py` | `20260818T140137Z_OPS-17-step3e-complex-solver-tail.log` | exit **124** at 61%, 480 s |
+| 3 | the 4 files after `test_gauge_penalty.py` | `20260818T140954Z_OPS-17-step3e-complex-solver-tail2.log` | **11 passed, 4.73 s**, exit 0 |
+| 4 | `test_gauge_penalty.py` alone | `20260818T141020Z_OPS-17-step3e-complex-gaugepenalty.log` | **8 passed, 20.33 s**, exit 0 |
+| 5 | `tests/environment` + **all** `tests/solver` minus the coil-phantom file | `20260818T141104Z_OPS-17-step3e-complex-solver-warm.log` | **46 passed, 2 xfailed, 111.22 s**, exit 0 |
+| 6 | collect-only, `tests/solver` + `tests/environment` | `20260818T141312Z_OPS-17-step3e-collect-solver.log` | **49 collected**, 0.41 s, exit 0 |
+
+### The close
+
+Command 5 is the closing leg: exit 0, **both ranks reporting identical
+counts** (no rank-dependent delta anywhere in this directory). Its 2 xfails are
+the expected pair — `test_time_harmonic_smoke_solve_conserves_real_power`
+(defect 3, and command 1 is the first time that xfail has ever been read off a
+*completed* complex leg; attempt 1's rescope wrongly expected command 1 to see
+it, but it lives in the directory that command `--ignore`d) and
+`test_gauge_multiplier_vanishes_for_a_divergence_free_source` (`MAG-17`).
+
+Counts reconcile with nothing left over: 49 collected = 48 in command 5 + the
+single `test_coil_phantom_magnetostatics` test, which is already observed
+FAILED in its own *completed* log from attempt 1 (`20260818T124712Z_...`,
+exit 1, 15 s) and carries two known-issues entries. I ignored that file
+deliberately — its raise hangs `mpiexec` ~300 s on exit, so including it would
+have cost the window and produced a footerless 124 for a test already observed.
+Non-validation complex = 126 (attempt 1 command 1) + 45 (`tests/solver`,
+`tests/environment` not double-counted) = **171**, exactly the 171 real-mode
+leg (a) observed; 380 − 171 = 209 = validation's 206 + step 2c's 3, which is
+leg (b2)'s scope. Anchor met.
+
+### The finding: ">12× real" was a cold cache, not `tests/solver`
+
+Attempt 1 concluded complex `tests/solver` is > 12× real mode and must be sized
+per file. That is wrong, and I withdrew it. Commands 2, 4 and 5 are a clean
+counterfactual triple at one commit: the cold-cache directory run died at 61%
+of 480 s inside `test_gauge_penalty.py`; that same file standalone on a warm
+cache is 8 passed in **20.33 s**; and the whole directory on a warm cache is
+**111.22 s** against real mode's 41 s — **~2.7×**, i.e. the recorded 2.6× rule,
+not a departure from it. The multiplier was **cold-cache FFCx JIT of complex
+forms**. The genuine cost sink is visible in command 5's durations:
+`test_cylinder`'s single closed-form test is 66.60 s of the 111 s.
+
+Two rules follow, both filed in known-issues under the cache-poisoning entry:
+a cold-cache death location says nothing about which test is expensive, and
+compilation and measurement must not share a window — size the first
+post-clear command as a throwaway warm-up.
+
+### Not fixed here
+
+The `ComplexComparisonError` and its exit hang, and the rank-dependent
+complex-blind XDMF test, keep their known-issues entries untouched. This leg
+was bookkeeping and fixed nothing.
+
+### Hypothesis for the next attempt
+
+Leg (b2) (complex validation, On-deck item 6) is now the **only** remaining
+part of `OPS-17` step 3, and it is unaffected by any of this. Its sizing should
+be re-derived under the corrected rule: with a warm cache it is plausibly
+cheaper than the rescope assumed, so the `--collect-only` cost probe it
+prescribes should be run *after* a warm-up command rather than immediately
+after the cache clear. My recommendation to the review stands from attempt 1
+on one point only — the `ComplexComparisonError` deserves its own small chunk
+(one command, cold cache, `--tb=long`) — but it is no longer a prerequisite for
+anything in `OPS-17`, since (b1) closed around it.
+
+**Container:** healthy throughout, no wedge, no force-recreate. FFCx cache left
+**warm** (deliberately — the next slot should note this before pricing).

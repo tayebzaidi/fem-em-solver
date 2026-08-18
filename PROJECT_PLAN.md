@@ -405,7 +405,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
-| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots; **rescoped 2026-08-18 03:00 review as (b1) remainder + (b2) validation**, one slot each; **(b1) attempt 1 2026-08-18 🟡 — command 1 completed (3 failed / 122 passed / 1 xfailed, 392.76 s, the three failures exactly the named expected ones, one rank-dependent XDMF count delta), command 2 exit 124 at 44%: complex `tests/solver` is > 12× real, not 2.6×. The leg's real finding is that attempt 3's "cache artifact" call was wrong — on a cold cache `test_coil_phantom_magnetostatics` fails in 5.58 s with a genuine `ComplexComparisonError`**) | standard |
+| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots; **rescoped 2026-08-18 03:00 review as (b1) remainder + (b2) validation**, one slot each; **(b1) attempt 1 2026-08-18 🟡 — command 1 completed (3 failed / 122 passed / 1 xfailed, 392.76 s, the three failures exactly the named expected ones, one rank-dependent XDMF count delta), command 2 exit 124 at 44%: complex `tests/solver` is > 12× real, not 2.6×. The leg's real finding is that attempt 3's "cache artifact" call was wrong — on a cold cache `test_coil_phantom_magnetostatics` fails in 5.58 s with a genuine `ComplexComparisonError`**; **(b1) attempt 2 2026-08-18 ✅ CLOSED — complex `tests/solver` runs as one command, 46 passed / 2 xfailed in 111.22 s, exit 0, both ranks identical; counts reconcile to 171 non-validation complex, the same 171 leg (a) observed; defect 3's th-smoke Poynting xfail finally read in a completed leg; the ">12× real" rule is **withdrawn** as a cold-cache FFCx-JIT artifact — warm complex is ~2.7× real, and `test_gauge_penalty.py`, which killed the 480 s cold leg at 61%, is 8 passed in 20.33 s warm**; only leg (b2) remains) | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 
@@ -1053,6 +1053,62 @@ exists, replace instead. Two steps, one implementer run each.)*
 >     sizing rather than one directory command, and which will trip the exit
 >     hang above on every run until the `ComplexComparisonError` is fixed or
 >     the file is marked. Leg (b2) is untouched and independent.
+>
+>   **✅ leg (b1) attempt 2, 2026-08-18 14:13Z (09:00 slot) — CLOSED, and the
+>   ">12× real" sizing rule from attempt 1 is withdrawn as a cold-cache
+>   artifact.** Complex `tests/solver` runs as **one** command in 111 s. No
+>   `src/` or `tests/` change; bookkeeping only, §2 untouched.
+>   * **The closing leg: `46 passed, 2 xfailed in 111.22 s`, exit 0**
+>     (`20260818T141104Z_OPS-17-step3e-complex-solver-warm.log`, `-n 2`,
+>     `timeout -k 30 480`), complex `tests/environment` + `tests/solver`
+>     `--ignore=tests/solver/test_coil_phantom_magnetostatics.py`. **Both
+>     ranks report identical counts** — no rank-dependent delta in this
+>     directory. The 2 xfails are the expected ones:
+>     `test_time_harmonic_smoke_solve_conserves_real_power` (defect 3, first
+>     observation ever in a completed complex leg) and
+>     `test_gauge_multiplier_vanishes_for_a_divergence_free_source`
+>     (`MAG-17`, measured spread 7.836781e+00 against the 1e-9 anchor).
+>   * **Counts reconcile exactly.** `tests/solver` + `tests/environment`
+>     collect **49** (`20260818T141312Z_OPS-17-step3e-collect-solver.log`,
+>     exit 0, 0.41 s); 48 are in the completed leg above and the 49th is
+>     `test_coil_phantom_magnetostatics`'s single test, already observed
+>     FAILED in its own *completed* dedicated log (attempt 1,
+>     `20260818T124712Z_...`, exit 1, 15 s) with two known-issues entries.
+>     Non-validation complex is therefore 126 (attempt 1 command 1) + 45
+>     (`tests/solver`, environment not double-counted) = **171**, the same
+>     171 real-mode leg (a) observed — and 380 − 171 = 209 = validation's
+>     206 + step 2c's 3, which is leg (b2)'s scope. **Leg (b1) anchor met:
+>     every non-validation complex test observed in a completed leg, every
+>     failure a named expected one.**
+>   * **Attempt 1's "complex `tests/solver` is > 12× real, size it per-file"
+>     is wrong and is withdrawn.** Measured here: real mode 41 s (step 2),
+>     complex **warm** 111 s for 12 of the 13 files — **~2.7×**, which is the
+>     recorded 2.6× rule, not a departure from it. The cost that made attempt
+>     1 exit 124 was **cold-cache FFCx JIT of complex forms**, not the solves.
+>     Two counterfactuals, same commit, same command shape:
+>     `test_gauge_penalty.py` was where attempt 2's cold-cache leg died at 61%
+>     of a 480 s window (`20260818T140137Z_...-solver-tail.log`, exit 124),
+>     yet standalone on a warm cache the whole file is **8 passed in 20.33 s**
+>     (`20260818T141020Z_OPS-17-step3e-complex-gaugepenalty.log`, exit 0) —
+>     the file was never the sink. The real sink is visible in the closing
+>     leg's durations: `test_cylinder`'s single closed-form test is 66.60 s of
+>     the 111 s. **Corrected sizing rule: complex ≈ 2.6–2.7× real on a warm
+>     FFCx cache; a cold cache is the multiplier, and clearing
+>     `~/.cache/fenics` before a leg buys correctness at the price of one
+>     window's compilation.** A cold-cache leg must therefore be sized as a
+>     throwaway warm-up or split so compilation and measurement do not share a
+>     window.
+>   * **Two cheap sub-legs also completed** and are folded into the above:
+>     `tests/environment` + `test_time_harmonic_smoke.py`, **7 passed 1
+>     xfailed in 10.51 s** (`20260818T140102Z_...-complex-thsmoke.log`, exit
+>     0, cold cache) — this is the run that finally read defect 3's xfail; and
+>     the four files after `test_gauge_penalty.py`, **11 passed in 4.73 s**
+>     (`20260818T140954Z_...-complex-solver-tail2.log`, exit 0).
+>   * **Not fixed here (bookkeeping leg):** the `ComplexComparisonError` in
+>     `test_coil_phantom_magnetostatics` and its ~300 s non-collective exit
+>     hang, and the rank-dependent complex-blind XDMF test — both keep their
+>     known-issues entries. Leg (b2) (complex validation) is untouched and
+>     independent; with (b1) closed it is the only remaining part of step 3.
 
 **`OPS-13` — land the rank-safe `_validate_material_map_tags` fix** ✅
 *(2026-08-08; full narrative in `docs/planning/plan-archive.md`)*. The one
@@ -3542,8 +3598,21 @@ this review.
    stays unqueued until this lands. **Negative result:** degree 2 not
    beating the fine-rung record at fewer cells *is the answer* — record
    it in the §7 entry, report, stop.
-3. 🟡 **`OPS-17` step 3 leg (b1) — the complex remainder, split at
-   `tests/solver` (standard).** *Attempted 2026-08-18 07:30 slot — **command 1
+3. ✅ **`OPS-17` step 3 leg (b1) — the complex remainder, split at
+   `tests/solver` (standard).** *Done 2026-08-18 09:00 slot (attempt 2):
+   complex `tests/solver` needs no split at all — **46 passed / 2 xfailed in
+   111.22 s, exit 0**, both ranks identical, with the coil-phantom file
+   ignored (it is already observed FAILED in its own completed log and hangs
+   `mpiexec` ~300 s on its raise). Counts reconcile exactly — 49 collected,
+   48 in the completed leg + 1 coil-phantom ⇒ **171** non-validation complex
+   tests, the same 171 real-mode leg (a) observed, leaving 209 = validation's
+   206 + step 2c's 3 for leg (b2). Defect 3's th-smoke Poynting xfail is
+   finally read in a completed leg. Attempt 1's ">12× real, size it per-file"
+   is **withdrawn**: warm complex is ~2.7× real (the recorded rule), the
+   multiplier was cold-cache FFCx JIT, and `test_gauge_penalty.py` — which
+   killed a 480 s cold leg at 61% — is 8 passed in 20.33 s warm. Nothing
+   parked; §2 untouched. **Only leg (b2) (item 6) remains of step 3.*** Prior
+   attempt: *2026-08-18 07:30 slot — **command 1
    closed, command 2 did not**. Command 1 completed the non-solver complex
    remainder (3 failed / 122 passed / 1 xfailed, 392.76 s; the three failures
    are exactly the named expected ones); command 2 exit 124 at 44% because

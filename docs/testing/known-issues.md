@@ -612,6 +612,21 @@ Measured cache-state → message map for this one test, all at `-n 2` complex:
 | warm from a *completed* prior leg | FAILED 13.92 s | `Failed just-in-time compilation of form: Compilation failed on root node.` |
 | cold (`rm -rf /root/.cache/fenics`) | FAILED **5.58 s** | `ComplexComparisonError: You can't compare complex numbers with max.` |
 
+**Sizing corollary, measured 2026-08-18 (leg (b1) attempt 2, 09:00 slot).**
+Clearing the cache is correct but it is not free, and it is the dominant cost
+of a complex leg — not the solves. Same commit, same command shape, complex
+`-n 2`: `tests/solver` on a **cold** cache exhausted a 480 s window at 61%
+(`20260818T140137Z_OPS-17-step3e-complex-solver-tail.log`, exit 124), while on
+a **warm** cache the same directory (minus the coil-phantom file) is
+**46 passed / 2 xfailed in 111.22 s**
+(`20260818T141104Z_OPS-17-step3e-complex-solver-warm.log`, exit 0) — ~2.7× the
+41 s real-mode number, i.e. the recorded 2.6× rule holds. The file the cold leg
+died in, `test_gauge_penalty.py`, is 8 passed in 20.33 s standalone warm
+(`20260818T141020Z_OPS-17-step3e-complex-gaugepenalty.log`), so a cold-leg
+death location says nothing about which test is expensive. **Never infer a
+per-test cost from a cold-cache run, and never let compilation and measurement
+share one window** — size the first post-clear command as a throwaway warm-up.
+
 ### `test_coil_phantom_magnetostatics` fails in the complex build on a cold FFCx cache: `ComplexComparisonError` (`OPS-17` step 3 leg (b1), 2026-08-18)
 
 **Verified at `93fc531`, 07:30 implementer slot,
