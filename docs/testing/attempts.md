@@ -13104,3 +13104,80 @@ magnetostatic files, and the complex leg's expensive family is already priced at
 defect-3 xfail's siblings), then the remainder; if the complex validation
 command threatens 570 s, split it the same way — `test_port_gap_*` alone, then
 the rest — rather than raising a ceiling.
+
+---
+
+## 2026-08-18T00:34Z — `TH-11` step 5b — **incomplete**
+
+**Slot:** 19:30 local implementer run (2026-08-17). **On-deck item 1**, taken as
+written. Tree clean at preflight, container Up. Parked on
+`attempt/TH-11-step5b-20260818T004000Z`; `main` carries this entry, the §7
+annotation and both logs only.
+
+**Outcome in one line: the third rung is not time-bound, it is
+memory-bound — the loaded solve at `-n 12` was OOM-killed with the container,
+and no 64 MHz reading was produced.**
+
+**What was built (parked, verified).** §7's 5b plan needs one solve per harness
+command, which the module could not do: `full` mode solves the pair in one
+fixture. So `test_coil_loading_larmor_third_rung.py` gained two axes —
+`TH11_STEP5_SOURCE` (`mesh` | `cache`, reading step 5a's XDMF) and two new
+`TH11_STEP5_MODE` values (`loaded` | `free`) that split the pair across two
+commands via a JSON record of the loaded solve's reduced scalars. The `free`
+command refuses a record whose rung or cell count differs from its own mesh.
+The one thing the split costs is the *form* of the drive control: the two `J′`
+fields never coexist in one process, so it degrades from the field-level
+`‖J′_l − J′_f‖²/‖J′‖²` at 1e-24 to their reduced scalars (`I′`, `‖J′‖²`) at a
+pre-stated `DRIVE_SCALAR_BAND` = 1e-12 — labelled weaker in the docstring, the
+print and the failure message, with the field-level form still running whenever
+one command does both solves. `NCELLS_THIRD` = 2 807 309 moved from the cache
+module to the step-5 module (the cache module now imports it), and the cell-count
+ceiling assert now runs on every rung rather than only on unrecorded ones.
+
+**Rehearsal — green, and it is a real result**
+(`20260818T003418Z_TH-11-step5b-rehearsal.log`, 288 s, `-n 8`, complex build;
+6 passed + 5 skipped then 11 passed). The split, run as two commands on the fine
+417 914-cell rung, reproduces step 5a's single-command record **exactly**:
+ΔZ = **+1.3838746 − j5.8741123 Ω**, ΔR deviation **+2.8063%** = **+0.00002 pp**
+off step 2's record — the same digits 5a measured at `-n 8`. Complex-power
+residual 7.5422e-15 loaded / 1.3527e-14 free against 1e-9; σ = 0 dissipation
+exactly `+0.0`; ΔX ratio 0.9514; `2P/I′²` reproducing ΔR to the printed digit.
+The two-command drive surrogate reads **0.000e+00** — the free command rebuilt a
+bitwise-identical drive, the strongest form that control can take. So the split
+is not an approximation of `full`; on this rung it is `full`, to the last digit.
+
+**The failure** (`20260818T003806Z_TH-11-step5b-third-loaded.log`, **exit 137**,
+518 s, `-n 12`). The cache read worked and is itself a datum: **2 807 309 cells
+read back in 21.7 s at `-n 12`**, 5.03 cells/δ — step 5a's cache is usable by a
+different rank count than wrote it, which 5a did not test. Then the loaded solve
+died. Exit 137 is SIGKILL, and it arrived at **518 s against a `timeout -k 30
+560`** — i.e. *before* the ceiling fired — and `docker compose ps` afterwards
+showed **no container at all**, not merely a dead `mpiexec`. A `timeout` kills
+the job, never the container; the cgroup OOM killer at `memory.max` =
+**64 GiB** does exactly this. I did not capture `memory.peak` (the container was
+gone), so this is the strong hypothesis rather than a measurement. Recovery was
+the known-issues procedure — `up -d --force-recreate` — and the container is Up
+with `memory.max` 64 GiB and 36 CPUs visible; nothing was left wedged.
+
+**`-n 12` was mine, and it is a named lesson.** §7 pre-authorises `-n 12` "if
+command 1 threatens the window", and at ~480 s projected + 15 s read + startup
+against 570 s it plainly did, so I took it. But rank count trades *time* for
+*memory*: more ranks means more ghost layers and more duplicated overhead, so
+`-n 12` is the wrong lever against a memory wall and may have caused it. The
+`-n 8` estimate would have been ~480 s and might have fit both budgets.
+
+**What this reframes for the review.** The 10:30 review chose (a) cache + (b)
+ranks over (c) shrink the rung, on the premise that the third rung's cost was
+*wall clock*. That premise is now wrong in kind: (a) is bought and works, but (b)
+does not help — and plausibly hurts — a 64 GiB ceiling, so **(c) shrinking the
+rung is the live option**, and the three-rung fit already takes a non-2 `ratio`
+argument for exactly this case. A rung at `near` ≈ 0.0018 (~1.4 M cells, half
+the memory) is the obvious candidate.
+
+**Hypothesis for the next attempt.** Re-run command 1 at **`-n 8`** first — one
+command, ~480 s, and if it survives it both produces the loaded record and
+measures the peak memory the decision needs (print `/sys/fs/cgroup/memory.peak`
+after the solve, which costs nothing). If it OOMs too, the rung does not fit this
+box at all and (c) becomes the review's call, not a run's — journal the peak and
+stop. The parked branch is ready for either: only the rank count and, for (c),
+`RESOLUTION_NEAR_THIRD` plus the fit's `ratio` would move.
