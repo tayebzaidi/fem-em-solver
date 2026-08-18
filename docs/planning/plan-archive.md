@@ -13845,3 +13845,84 @@ Struck texts verbatim:
    defects stay xfail (`GEO-17`/`MAG-17`/`POST-5`'s work). **Negative
    result:** an unexpected failure or count delta is a finding —
    known-issues entry naming the test and the delta, report, stop.
+
+## §9 On-deck done/superseded items + interval recap, 03:00 to 10:30 2026-08-18 — archived 2026-08-18 (10:30 review)
+
+Last reviewed 2026-08-18, **03:00 review**. Interval (since 18:00): four
+slots, one close — `PORT-9` step 2c ✅ (22:30 slot: the lumped-sheet
+sweep route landed, reciprocal at **2.574249e-11** vs the unmoved 1e-3;
+audited **COMPLIANT** — subagent auditor, every plan number verified
+against its log, the two anchor legs not run as written are disclosed
+substitutions, no band widened; step 3's gate (i) prerequisite is
+discharged). `TH-11` step 5b failed twice on **one wall measured two
+ways**: `-n 12` OOM-killed the container, `-n 8` drove `memory.peak` to
+exactly `memory.max` = 64.00 GiB — no rank count affords 2 807 309
+cells, so this review adopted option (c) and **rescoped 5b → step 5c**
+(the ~1.4 M rung off the parked branch, 480 s ceilings, `memory.peak`
+printed every command). `OPS-17` step 3 attempt 3: both complex leg-(b)
+commands exit 124 — **complex mode is ~2.6× real on the same tests**,
+now a recorded sizing rule — and the one surprise (a coil-phantom
+FAILED) is a stale-FFCx-lock artifact, filed in known-issues, no chunk
+opened; **leg (b) rescoped → (b1) remainder + (b2) validation**, one
+slot each. Interactively landed mid-interval: two operator directives
+(Phase-6 production target = 32-port high-pass birdcage at 1.5 T;
+**`TH-12`** commissioned — element order decided by measurement) and
+the OPS-18 migration pack. Branch dispositions:
+`attempt/TH-11-step5b-20260818T004000Z` **deleted** (attempt 2's branch
+carries a strict superset — verified by diff, zero deletions);
+`attempt/TH-11-step5b-20260818T024200Z` **kept** as step 5c's declared
+base. `EX-24` gained a sweep-route leg (§5.4 ramp on step 2c's newly
+closed gate; still one slot). Process note: PORT-9's 22:30 slot
+collided with an interactive session sharing the index — the sweep was
+caught and unwound in-slot; pathspecs on every scheduled commit stands.
+
+Items 1–3 consumed this interval (10:30 review). Struck texts verbatim:
+
+1. 🚫 **`TH-11` step 5c — the shrunk third rung (~1.4 M cells) end to end
+   (heavy).** *Attempted 2026-08-18 04:30 slot — **blocked by the measured
+   64 GiB wall**, which §7's own negative-result clause names as the stop
+   condition: the rung meshes to 994 258 cells (not ~1.4 M) and its loaded
+   solve alone pegs `memory.peak` at `memory.max` = 64.00 GiB, after which
+   the free solve exits 124. No 64 MHz bracket; §2 untouched; module parked
+   on `attempt/TH-11-step5c-20260818T101500Z`. Adjudicated by the 10:30
+   review: **step 5 closed as a measured negative, chunk `TH-11` closed**,
+   both parked branches deleted with the fit formula captured in §7.*
+   Original text: execute the §7 step-5c entry verbatim (scoped this
+   review; supersedes the twice-failed 5b — do **not** re-run the
+   2 807 309-cell rung, it is measured not to fit at any rank count).
+   Start from `attempt/TH-11-step5b-20260818T024200Z`; the module edits
+   are exactly `RESOLUTION_NEAR_THIRD → near ≈ 0.0018`, the fit's non-2
+   `ratio`, and record renames. Three commands, each `timeout -k 30
+   480`: (1) mesh + cache + 5a read-back identity; (2) loaded solve at
+   `-n 8` off the cache; (3) free solve + the three-rung Aitken fit —
+   rate `p` and `d₀` at 64 MHz **printed, never gated**. **Anchor:**
+   the identity family every solve (< 1e-9; σ = 0 dissipation exactly
+   zero); `DRIVE_SCALAR_BAND` = 1e-12; the fine-rung +2.8063% record.
+   **Negative control (memory):** `memory.peak` printed every command —
+   linear-in-cells predicts ~32 GiB; a ceiling read is itself the
+   finding. **Cost, measured:** mesh ~60–150 s (5a: 126.4 s at 2.8 M),
+   loaded solve ~250–400 s (fine rung 72–73 s at `-n 8`, 3.35× cells).
+   **Traps:** 5b's verbatim; clear `~/.cache/fenics` after any kill;
+   harness runs foreground, Bash timeout 660000 ms; 480 s container
+   ceiling, never 560+. **Scope:** no gated claim — §2 moves only by
+   review adjudication of the printed bracket. **Negative result:** a
+   non-overlapping bracket, or a 64 GiB peak at 1.4 M cells, is the
+   informative outcome — journal it, report, stop (`TH-12` is the
+   remaining axis).
+2. ✅ **DONE 2026-08-18, 06:00 slot — `TH-12` step 1 — the sphere at
+   degree 2 (standard).** Gate passed with room — **0.1405%** interior
+   relL2 on the coarse 5 866-cell rung against the ≤ 3.643%-at-17 670-cells
+   gate (25.9× accuracy at 3.01× fewer cells), power error 8.3869% →
+   0.0058%, control green to 0.0001 pp, `|Im P|/Re P` exactly zero. Cost:
+   5.22× DOFs, 4.32× wall, 2.67× RSS — sublinear on both axes. Audited
+   COMPLIANT 2026-08-18 10:30 review. Step 2 (the coil) unblocked and
+   queued; the production-order decision is the weekly review's.
+3. ✅ **DONE 2026-08-18, 09:00 slot (attempt 2) — `OPS-17` step 3 leg
+   (b1) — the complex remainder (standard).** Complex `tests/solver` is
+   **46 passed / 2 xfailed in 111.22 s, exit 0**, both ranks identical,
+   coil-phantom file excluded (observed FAILED in its own completed log,
+   two known-issues entries). Counts reconcile exactly: 171 non-validation
+   complex = leg (a)'s 171; 209 remain for leg (b2). Attempt 1's ">12×
+   real" withdrawn — cold-cache FFCx JIT; warm complex is ~2.7× real.
+   Audited COMPLIANT 2026-08-18 10:30 review. Defects filed → `OPS-20`,
+   `OPS-21` commissioned by the 10:30 review.

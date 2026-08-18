@@ -642,6 +642,7 @@ immediately before the run.
 | **Cause** | **Not diagnosed.** The run used `--tb=line`, which printed only the UFL frame and no user frame, so the offending expression is not localized. `grep` for `max_value`/`min_value`/`conditional(` across `src/` finds exactly one hit (`src/fem_em_solver/post/sar.py:286`), which this test does not exercise — so the comparison most likely enters through a DolfinX/UFL helper (a cell-size or clamp expression) rather than a literal `ufl.max_value` call. **One command settles it:** re-run this file alone on a cleared cache with `--tb=long`. |
 | **Not** | Not the cache artifact the previous entry claimed, and not a regression from any recent chunk — no completed complex leg had ever reached this file before today, so it has no known-green complex history. |
 | **Scope** | `OPS-17` is test-hygiene bookkeeping and deliberately did not fix it. Whoever fixes it should record whether the complex build ever needs this magnetostatic path at all — if not, an explicit `@real_only` marker is a legitimate disposition and is cheaper than making the form complex-safe. |
+| **Resolves with** | `OPS-20` (commissioned 2026-08-18 10:30 review): one `--tb=long` cold-cache diagnosis, then fix-or-mark, real-mode record 17.1233% re-asserted unmoved either way. |
 
 ### `test_paraview_combined_xdmf` asserts real-mode attribute names and fails in the complex build (`OPS-17` step 3 leg (b1), 2026-08-18)
 
@@ -656,7 +657,7 @@ immediately before the run.
 | **Cause** | Diagnosed by inspection of the assertion, not fixed. DolfinX's XDMF writer splits every attribute into `real_<name>`/`imag_<name>` when the scalar type is complex. The test hard-codes the three real-mode names, so it can only pass in the real build. The writer is behaving correctly; **the test is build-mode-blind**. |
 | **Rank-dependent** | Yes, and unexplained: the two ranks disagree — rank A reported `3 failed, 122 passed, 1 xfailed`, rank B `4 failed, 121 passed, 1 xfailed`, the delta being exactly this test (`PASSED [ 99%]` on one rank, `FAILED [100%]` on the other, same run). A test whose verdict depends on rank is a second defect on top of the naming one; whoever fixes the naming must also make the file read collectively (or restrict it to rank 0) rather than only relaxing the name set. |
 | **Fix** | Not attempted — `OPS-17` leg (b1) is bookkeeping. The name set should be derived from the active scalar type, not restated. Do **not** "fix" it by widening the set to accept both spellings unconditionally: that would let a real-mode run pass while silently emitting complex names. |
-| **Resolves with** | A chunk that makes the XDMF export tests scalar-type-aware. None commissioned as of this entry. |
+| **Resolves with** | `OPS-21` (commissioned 2026-08-18 10:30 review): derive the name set from the active scalar type with the real-mode inverted assertion, and make the verdict collective — both defects in one chunk. |
 
 ### ✅ RETIRED 2026-08-11 — "unexplained" mid-command termination of the logging harness was the background-and-end-turn trap (2026-08-08, 15:00 and 19:30 implementer slots)
 
