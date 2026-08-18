@@ -13262,3 +13262,104 @@ turn was **not** ended while it ran (implementer-run.md's rule) — it was polle
 to completion in-slot — but a command whose container ceiling is 560 s can
 still exceed 660 s of wall clock when the box is under memory pressure, so
 560 s is not a safe container ceiling for a foreground slot. **~480 s is.**
+
+---
+
+## 2026-08-18T03:30Z — `PORT-9` step 2c — **complete**
+
+**Item.** §9 On-deck **item 2**. Item 1 (`TH-11` step 5b) was skipped, not
+attempted: it failed twice in this interval (19:30 and 21:00 slots, both 🟡)
+and §9's "items that fail twice get rescoped by the review before they may
+reappear" applies; its §7 entry says in as many words that the stop condition
+fired and shrinking the rung is the review's call. Nothing about `TH-11` was
+touched.
+
+**Preflight.** Tree clean, container Up, no `recovered/*`, no parked branch
+needed.
+
+**What was tried.** The package change step 2b named as the blocker:
+`run_n_port_sparameter_sweep` had exactly two excitation routes and now has
+three. `ports/lumped.py` gained `LumpedSheetPortSpec` +
+`run_lumped_sheet_port_case` — every port's sheet in the bilinear form (L1),
+the driven port's impressed source in the load (L3), each port read on the
+generator convention `V = V_src − I·Z_p` off `sheet_terminal_current`; `Z`/`S`
+then go through the existing column-by-column path, so the new route reaches
+`sparameters_from_impedance` exactly as the gap route does. One additive field
+on `PortVoltageCurrentEstimate` (`path_voltage_v`, default `None`) carries the
+independent terminal-to-terminal path integral off the same solve, which is
+what makes the cross-route comparison readable inside the sweep. Passing both
+route specs at once is now an error. New module
+`tests/validation/test_port_lumped_sheet_sweep.py` drives the two-torus
+two-port sweep with step 2b's `f = 0.5` filter composed over **both** `21x`
+groups on one mesh.
+
+**Measured.**
+- **GATE — reciprocity through the sweep:** `‖S − Sᵀ‖/‖S‖ = 2.574249e-11`
+  against the pre-stated, unmoved **1e-3** (inside by 4×10⁷);
+  `‖Z − Zᵀ‖/‖Z‖ = 1.767820e-09`;
+  `Z₁₂ = +1.097173784e-02+1.111378170e+00j Ω` vs
+  `Z₂₁ = +1.096344984e-02+1.111387041e+00j Ω`.
+- **Cross-route inside the sweep:** 1.6079% (P1 driven) / 1.5950% (P2 driven),
+  inside step 2's unmoved 5% band; step 2b read 1.8333% at the same width under
+  the impressed-gap drive ⇒ **0.2254 / 0.2383 pp of drive dependence**.
+- **Sheets:** 1375 facets each, area 7.216834292e-05 m²,
+  `w = A/h = 5.171485579e-03 m` — step 2b's f = 0.5 record 5.171486e-03 m, so
+  the width convention crossed into the package unchanged — planar < 1e-12,
+  ragged (A/h < bbox 5.905570485e-03 m, asserted).
+- Printed, not gated: `σ_max(S) = 0.9869`, max column power sum 0.9740.
+- **Negative control:** `test_port_package_sparameters.py` +
+  `test_port_lumped_bc.py`, **16 passed 145.0 s** — `EX-20`'s
+  `‖S‖₂ = 0.861449` (1e-6) and `‖S − Sᵀ‖/‖S‖ = 2.5494e-05` (5e-7), the
+  heuristic route's separation gate, and step 1's six lumped identity gates all
+  green through the modified package. The new route moved neither existing one.
+
+**Logs.** `20260818T033643Z_PORT-9-step2c.log` (7 passed, 122.2 s, exit 0,
+`-n 2`, standard, `timeout -k 30 500`; 184 919 cells, mesh 39.0 s, sweep
+57.0 s) and `20260818T033925Z_PORT-9-step2c-control.log` (16 passed, 145.0 s,
+exit 0). Total compute 271 s, well inside the slot.
+
+**Two legs of the item not run as written** — both recorded in the §7 entry,
+neither a band that moved:
+1. "the sweep's port-1-driven solve reproduces step 2b's f = 0.5 records to
+   1e-4" is **not the same quantity** under this route: step 2b drove an
+   impressed gap current with a sheet on the undriven port only; the route
+   drives the sheet source with sheets on both ports, so the field differs by
+   construction. What survives drive normalisation (the cross-route ratio) is
+   reported above and is 0.23 pp off.
+2. "the gap-voltage sweep on the same mesh" needs `GapVoltagePortSpec` to
+   accept a gap box with **two** cell tags (`{101: (101, 111)}` after
+   `GEO-16`'s fragment) and it takes one; the control was run instead as the
+   gates that own the `EX-20` records, on their own mesh.
+
+**Hypothesis for the next attempt (step 3, birdcage).** The prerequisite is
+discharged — gate (i) can now run through the function it names. Two things
+this run learned that step 3 should carry: the lumped reading is
+drive-dependent at ~0.2 pp, so step 3's ports should quote the raw rung with
+the drive stated; and reciprocity through the sweep is essentially exact
+(1e-11) on a symmetric fixture, so on the birdcage it will measure meshing
+asymmetry, not the BC — gate (iii)'s C4 spread is the discriminating one.
+
+**Denials/anomalies.** None.
+
+**Observed mid-slot, not mine.** `docs/references/dolfinx-0.11-migration/`
+(README + `idioms-0.11.md`, `migration-map.md`, `release-notes.md`) appeared
+untracked *after* this run's clean preflight — operator-provided reference
+material, and `.gitignore` covers only `docs/references/*.epub` and
+`jin-fem-3e/`, so it shows as untracked on `main`. Left exactly as found
+(neither committed nor removed); flagged for the review to decide whether it
+is tracked or ignored, since as-is it will trip the next run's preflight.
+
+**Commit anomaly — this step's diff landed inside someone else's commit.** A
+concurrent *interactive* session committed
+`549fb36 docs(references): cache the OPS-18 DolfinX 0.7.2 -> 0.11 migration
+pack` at 22:44 local while this slot's files were staged, and its `git commit`
+without pathspecs swept the whole index: `549fb36` therefore contains this
+step's `src/fem_em_solver/ports/{lumped,sparameters,excitation}.py`,
+`tests/validation/test_port_lumped_sheet_sweep.py`, both harness logs,
+test-results.md, attempts.md and the §7/§9 edits, alongside the migration pack
+its message describes (that message says PROJECT_PLAN "must not be swept" — it
+was). Nothing is lost and `main` is clean; the history is simply mis-labelled.
+History was **not** rewritten: another session is live on this tree. The
+review can leave it or split `549fb36`. Process note: two sessions writing one
+index is a real hazard of running an interactive session inside a scheduled
+slot's window — `git commit -F <msg> -- <pathspecs>` would have contained it.
