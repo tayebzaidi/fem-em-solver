@@ -13619,3 +13619,123 @@ and the 64 MHz h → 0 bracket becomes affordable — which is exactly the swap
 `TH-11` step 5c's negative result pointed at. The step's own cost probe (print
 DOFs and the MUMPS in-core estimate before solving) should be run against the
 RSS instrument, not `memory.peak`, for the reason above.
+
+## 2026-08-18T12:30Z — `OPS-17` step 3 (leg b1, attempt 1) — **incomplete** (command 1 completed; command 2 overran — and attempt 3's "cache artifact" call is overturned)
+
+**Slot:** 07:30 local, scheduled implementer run. **Item:** §9 On deck item 3
+(items 1 and 2 were 🚫 blocked and ✅ done respectively). **Base:** `93fc531`,
+clean tree, container `Up` 7 h. **Parked:** nothing — this leg made no `src/`
+or `tests/` change. **Denials:** none.
+
+### What was run
+
+FFCx cache cleared first as the rescope required (`rm -rf
+/root/.cache/fenics`, 112 entries removed).
+
+| # | Command | Ceiling | Exit | Elapsed | Result |
+|---|---|---|---|---|---|
+| 1 | complex `tests/environment` + `tests/ --ignore=tests/validation --ignore=tests/solver`, `-n 2` | `timeout -k 30 520` | 1 | **392.76 s** | **completed** — `3 failed, 122 passed, 1 xfailed` |
+| 2 | complex `tests/environment` + `tests/solver`, `-n 2` | `timeout -k 30 520` | 124 | 520 s | killed at **44%** |
+| 3 | complex `test_coil_phantom_magnetostatics.py` alone, warm cache | `timeout -k 30 300` | 1 | 13.92 s | FAILED, `Compilation failed on root node` |
+| 4 | same, **cold** cache (`rm -rf` immediately prior) | `timeout -k 30 300` | 124 | 301 s | FAILED **in 5.58 s**, then hung to SIGTERM |
+
+Logs: `20260818T123045Z_OPS-17-step3d-complex-nonsolver.log`,
+`20260818T123814Z_OPS-17-step3d-complex-solver.log`,
+`20260818T124712Z_OPS-17-step3d-coilphantom-complex.log`,
+`20260818T124742Z_OPS-17-step3d-coilphantom-complex-cleancache.log`.
+
+### Command 1 — the half that closed
+
+The anchor is met for everything outside `tests/solver` and `tests/validation`:
+`environment`, `io`, `materials`, `mesh`, `ports`, `post` and `unit` are now
+all observed in a **completed** complex leg. The three failures are exactly the
+named expected ones — the two `test_port_orientation_sensitivity.py`
+`_DummyComm` regressions and `test_sparameter_assembly.py`'s entry-3 zero
+diagonal. No unexplained failure.
+
+One count delta, **rank-dependent**: the ranks disagree by exactly one test.
+Rank A prints `3 failed, 122 passed, 1 xfailed`; rank B prints `4 failed, 121
+passed, 1 xfailed`. The extra is
+`tests/unit/test_paraview_combined_xdmf.py::test_combined_xdmf_is_single_grid_with_all_attributes`
+— `PASSED [ 99%]` on one rank and `FAILED [100%]` on the other, in the same
+run. Assertion:
+`assert {'imag_CellTags','real_F','imag_G','imag_F','real_CellTags','real_G'} == {'F','CellTags','G'}`.
+The complex XDMF writer splits attributes into `real_*`/`imag_*`; the test
+hard-codes the real-mode names. That is one defect (build-mode-blind test); the
+rank-dependence is a **second**, undiagnosed one. Known-issues entry filed, not
+fixed — this leg is bookkeeping, and the naming fix alone would leave the
+rank-dependence in place.
+
+**The rescope's own claim about defect 3 was wrong, and I did not fix it by
+accident.** It said command 1 "finally reads defect 3's th-smoke Poynting xfail
+off a completed `tests/post`". That xfail is in
+`tests/solver/test_time_harmonic_smoke.py`, which command 1 `--ignore`s by
+construction. The single xfail command 1 observed is a `tests/mesh`
+region-resolution one. Defect 3 remains unobserved and can only come off a
+completed `tests/solver`.
+
+### Command 2 — why the sizing rule did not transfer
+
+Exit 124 at 44%. Complex `tests/solver` **alone** does not fit 520 s, though
+real mode ran the same directory in 41 s (step 2). That is **> 12×**, not the
+2.6× the 03:00 review recorded — because `tests/solver` is exactly where the
+`@complex_only` skips *unskip*, so the two modes are not running the same work.
+**The 2.6× rule is only valid where both modes run the same tests; it must not
+be applied to `tests/solver`.** Measured split point: `test_boundary_condition_selection.py`,
+`test_coil_phantom_magnetostatics.py` and all 13 `test_convergence_diagnostics.py`
+cases completed; everything after that is unobserved.
+
+### The finding: attempt 3's adjudication was wrong
+
+Attempt 3 saw `test_coil_phantom_magnetostatics` FAIL, attributed it to a stale
+FFCx lock, and wrote "**open no chunk against that test on this evidence**". I
+cleared the cache exactly as instructed and the test still failed — so I priced
+the three cache states directly (commands 3 and 4 above, plus attempt 3's own
+number):
+
+| Cache state | Result | Message |
+|---|---|---|
+| poisoned by a kill mid-compile | FAILED 14.09 s | `JIT compilation timed out, probably due to a failed previous compile` |
+| warm from a completed leg | FAILED 13.92 s | `Compilation failed on root node` |
+| **cold** (`rm -rf` immediately prior) | FAILED **5.58 s** | `ComplexComparisonError: You can't compare complex numbers with max.` |
+
+The poisoned cache was **masking a pre-existing complex-mode defect, not
+manufacturing a spurious one**. The right reading of the cache-poisoning entry
+is "a killed run makes the *message* untrustworthy", not "makes the *failure*
+spurious" — after clearing you must still re-run and read the new message.
+Confirmed in passing, which that entry listed as unverified: `rm -rf
+/root/.cache/fenics` is sufficient; no `--force-recreate` was needed at any
+point. Both known-issues entries updated; the cache entry keeps its mechanism
+and loses its conclusion.
+
+The defect itself is **not diagnosed**: I ran command 4 with `--tb=line`, which
+printed only the UFL frame, so the offending expression is unlocalized. `grep`
+for `max_value`/`min_value`/`conditional(` across `src/` finds exactly one hit
+(`src/fem_em_solver/post/sar.py:286`) that this test does not exercise, so the
+comparison probably enters through a UFL/DolfinX helper rather than a literal
+call. **One command settles it:** this file alone, cold cache, `--tb=long`.
+
+### A second, budget-relevant observation
+
+Command 4 printed `1 failed in 5.58 s` and then **hung until SIGTERM at
+299.5 s**, ranks stuck in `MPI_Comm_dup`/`PetscCommDuplicate` — a
+non-collective raise out of form compilation, the 3b-xiii hang family. So a
+complex probe of this file costs a **full window**, not 6 s, until the raise is
+fixed or the file is marked. Anyone pricing that one-command diagnosis should
+budget for the hang.
+
+### Hypothesis for the next attempt
+
+The residual (b1) tail — complex `tests/solver` from
+`test_convergence_diagnostics.py` onward — is worth **less** run before the
+coil-phantom defect is dispositioned than after: every attempt will pay the
+~300 s exit hang and still not reach defect 3's xfail if the hang lands
+mid-directory. My recommendation to the review is to commission the
+`ComplexComparisonError` diagnosis as its own small chunk (one command, cold
+cache, `--tb=long`, then either fix the form or mark the file `@real_only` if
+the complex build never needs that magnetostatic path), and re-queue the (b1)
+tail behind it with **per-file** sizing rather than one directory command. Leg
+(b2) is untouched, independent, and unaffected by any of this.
+
+**Container:** healthy throughout, no wedge, no force-recreate; FFCx cache left
+**cleared** for the next slot.

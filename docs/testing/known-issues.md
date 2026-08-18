@@ -593,11 +593,55 @@ not trust *any* failure in a run that follows a killed one until the cache is
 cleared. Suspect this whenever a fast, previously-green test fails in seconds
 with a `dolfinx/jit.py` `RuntimeError` rather than an assertion.
 
-Not yet verified in this repo (no compute budget left in the slot when it was
-found): that removing `/root/.cache/fenics/libffcx_forms_<hash>.c` — or the
-cache directory — restores the test. The next slot that touches this should
-clear the cache first and record whether the test returns to green; that also
-settles whether a force-recreate is needed or a file delete suffices.
+**⚠️ PARTLY SUPERSEDED 2026-08-18 (`OPS-17` step 3 leg (b1), 07:30 slot).** The
+cache-poisoning mechanism above is real and confirmed: `rm -rf
+/root/.cache/fenics` is sufficient (no force-recreate needed), and the JIT
+`RuntimeError` message does change with cache state. But the **conclusion drawn
+about this particular test was wrong**. On a genuinely cold cache the test does
+*not* return to green — it fails in **5.58 s** with a real complex-mode defect
+(`ComplexComparisonError`, next entry). The poisoned cache was masking a
+pre-existing failure, not creating one. Read this entry as "a killed run makes
+the *message* untrustworthy", not "a killed run makes the *failure* spurious":
+after clearing the cache you must still re-run and read the new message.
+
+Measured cache-state → message map for this one test, all at `-n 2` complex:
+
+| Cache state | Result | Message |
+|---|---|---|
+| poisoned by a kill mid-compile | FAILED 14.09 s | `JIT compilation timed out, probably due to a failed previous compile` |
+| warm from a *completed* prior leg | FAILED 13.92 s | `Failed just-in-time compilation of form: Compilation failed on root node.` |
+| cold (`rm -rf /root/.cache/fenics`) | FAILED **5.58 s** | `ComplexComparisonError: You can't compare complex numbers with max.` |
+
+### `test_coil_phantom_magnetostatics` fails in the complex build on a cold FFCx cache: `ComplexComparisonError` (`OPS-17` step 3 leg (b1), 2026-08-18)
+
+**Verified at `93fc531`, 07:30 implementer slot,
+`20260818T124742Z_OPS-17-step3d-coilphantom-complex-cleancache.log`**, `-n 2`,
+complex build + `FEM_EM_REQUIRE_COMPLEX=1`, `/root/.cache/fenics` removed
+immediately before the run.
+
+| | |
+|---|---|
+| **Test** | `tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form` |
+| **Symptom** | `ufl/algorithms/comparison_checker.py:66: ufl.algorithms.comparison_checker.ComplexComparisonError: You can't compare complex numbers with max.` — **1 failed in 5.58 s**, raised during form compilation, before any assertion runs. |
+| **Mode** | Complex build **only**. Real mode is green and gates 17.1233% L2 against a 30% band (`OPS-17` step 2). Nothing about the gated quantity is complex-valued; this is a UFL-level rejection of a `max`-style comparison in a form that is assembled with a complex scalar type. |
+| **Cause** | **Not diagnosed.** The run used `--tb=line`, which printed only the UFL frame and no user frame, so the offending expression is not localized. `grep` for `max_value`/`min_value`/`conditional(` across `src/` finds exactly one hit (`src/fem_em_solver/post/sar.py:286`), which this test does not exercise — so the comparison most likely enters through a DolfinX/UFL helper (a cell-size or clamp expression) rather than a literal `ufl.max_value` call. **One command settles it:** re-run this file alone on a cleared cache with `--tb=long`. |
+| **Not** | Not the cache artifact the previous entry claimed, and not a regression from any recent chunk — no completed complex leg had ever reached this file before today, so it has no known-green complex history. |
+| **Scope** | `OPS-17` is test-hygiene bookkeeping and deliberately did not fix it. Whoever fixes it should record whether the complex build ever needs this magnetostatic path at all — if not, an explicit `@real_only` marker is a legitimate disposition and is cheaper than making the form complex-safe. |
+
+### `test_paraview_combined_xdmf` asserts real-mode attribute names and fails in the complex build (`OPS-17` step 3 leg (b1), 2026-08-18)
+
+**Verified at `93fc531`, 07:30 implementer slot,
+`20260818T123045Z_OPS-17-step3d-complex-nonsolver.log`** (exit 1, 392.76 s,
+`-n 2`, complex build).
+
+| | |
+|---|---|
+| **Test** | `tests/unit/test_paraview_combined_xdmf.py::test_combined_xdmf_is_single_grid_with_all_attributes` |
+| **Symptom** | `test_paraview_combined_xdmf.py:75: AssertionError: assert {'imag_CellTags', 'real_F', 'imag_G', 'imag_F', 'real_CellTags', 'real_G'} == {'F', 'CellTags', 'G'}` |
+| **Cause** | Diagnosed by inspection of the assertion, not fixed. DolfinX's XDMF writer splits every attribute into `real_<name>`/`imag_<name>` when the scalar type is complex. The test hard-codes the three real-mode names, so it can only pass in the real build. The writer is behaving correctly; **the test is build-mode-blind**. |
+| **Rank-dependent** | Yes, and unexplained: the two ranks disagree — rank A reported `3 failed, 122 passed, 1 xfailed`, rank B `4 failed, 121 passed, 1 xfailed`, the delta being exactly this test (`PASSED [ 99%]` on one rank, `FAILED [100%]` on the other, same run). A test whose verdict depends on rank is a second defect on top of the naming one; whoever fixes the naming must also make the file read collectively (or restrict it to rank 0) rather than only relaxing the name set. |
+| **Fix** | Not attempted — `OPS-17` leg (b1) is bookkeeping. The name set should be derived from the active scalar type, not restated. Do **not** "fix" it by widening the set to accept both spellings unconditionally: that would let a real-mode run pass while silently emitting complex names. |
+| **Resolves with** | A chunk that makes the XDMF export tests scalar-type-aware. None commissioned as of this entry. |
 
 ### ✅ RETIRED 2026-08-11 — "unexplained" mid-command termination of the logging harness was the background-and-end-turn trap (2026-08-08, 15:00 and 19:30 implementer slots)
 

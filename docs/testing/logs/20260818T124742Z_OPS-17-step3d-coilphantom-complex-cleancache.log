@@ -1,0 +1,111 @@
+# Test Run
+- Chunk: OPS-17-step3d-coilphantom-complex-cleancache
+- Commit: 93fc5317be1ae84c77b3d4d8e06a9e4358bb061a
+- Time (UTC): 2026-08-18 12:47:42
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/solver/test_coil_phantom_magnetostatics.py -v --tb=line'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 18 07:47 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/solver/test_coil_phantom_magnetostatics.py -v --tb=line'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 1 item
+
+tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form collected 1 item
+
+tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form FAILED [100%]
+
+=================================== FAILURES ===================================
+/usr/local/lib/python3.10/dist-packages/ufl/algorithms/comparison_checker.py:66: ufl.algorithms.comparison_checker.ComplexComparisonError: You can't compare complex numbers with max.
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form
+tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form
+tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form
+  /usr/local/lib/python3.10/dist-packages/ufl/core/expr.py:275: DeprecationWarning: Expr.ufl_domain() is deprecated, please use extract_unique_domain(expr) instead.
+    warnings.warn("Expr.ufl_domain() is deprecated, please "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form
+======================== 1 failed, 11 warnings in 5.58s ========================
+
+Loguru caught a signal: SIGTERM
+Stack trace:
+27      0x643e8922cba5 _start + 37
+26      0x716002415e40 __libc_start_main + 128
+25      0x716002415d90 /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x716002415d90]
+24      0x643e8922ccad Py_BytesMain + 45
+23      0x643e892562d3 Py_RunMain + 371
+22      0x643e89264aaf Py_FinalizeEx + 95
+21      0x643e89265738 python3(+0x265738) [0x643e89265738]
+20      0x643e8915d64e python3(+0x15d64e) [0x643e8915d64e]
+19      0x715ff5f58216 /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-complex128-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x124216) [0x715ff5f58216]
+18      0x643e8915350b python3(+0x15350b) [0x643e8915350b]
+17      0x715ff5f67e43 /usr/local/lib/python3.10/dist-packages/petsc4py/lib/linux-gnu-complex128-32/PETSc.cpython-310-x86_64-linux-gnu.so(+0x133e43) [0x715ff5f67e43]
+16      0x715ff4872900 PetscGarbageCleanup + 64
+15      0x715ff48969b0 PetscCommDuplicate + 320
+14      0x715ffad0c507 MPI_Comm_dup + 215
+13      0x715ffafa7e6a /usr/local/lib/libmpi.so.12(+0x34fe6a) [0x715ffafa7e6a]
+12      0x715ffafb2024 /usr/local/lib/libmpi.so.12(+0x35a024) [0x715ffafb2024]
+11      0x715ffafb1c64 /usr/local/lib/libmpi.so.12(+0x359c64) [0x715ffafb1c64]
+10      0x715ffafbc331 /usr/local/lib/libmpi.so.12(+0x364331) [0x715ffafbc331]
+9       0x715ffaf83757 /usr/local/lib/libmpi.so.12(+0x32b757) [0x715ffaf83757]
+8       0x715ffaf835e7 /usr/local/lib/libmpi.so.12(+0x32b5e7) [0x715ffaf835e7]
+7       0x715ffaeee80e /usr/local/lib/libmpi.so.12(+0x29680e) [0x715ffaeee80e]
+6       0x715ffafa461e /usr/local/lib/libmpi.so.12(+0x34c61e) [0x715ffafa461e]
+5       0x715ffafa3ab3 /usr/local/lib/libmpi.so.12(+0x34bab3) [0x715ffafa3ab3]
+4       0x715ffaf92f6f /usr/local/lib/libmpi.so.12(+0x33af6f) [0x715ffaf92f6f]
+3       0x715ffb00c89b /usr/local/lib/libmpi.so.12(+0x3b489b) [0x715ffb00c89b]
+2       0x715ffb008d96 /usr/local/lib/libmpi.so.12(+0x3b0d96) [0x715ffb008d96]
+1       0x716002485aa6 pthread_mutex_unlock + 54
+0       0x71600242e520 /lib/x86_64-linux-gnu/libc.so.6(+0x42520) [0x71600242e520]
+2026-08-18 12:52:43.460 ( 299.483s) [main            ]                       :0     FATL| Signal: SIGTERM
+
+## Exit
+- Status: 124
+- Elapsed (s): 301
