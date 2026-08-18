@@ -1,0 +1,335 @@
+# Test Run
+- Chunk: TH-11-step5c-loaded-n8
+- Commit: 97cc5c7c168cb30a6dbf1281aee9dcd8607f1866
+- Time (UTC): 2026-08-18 09:33:15
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && TH11_STEP5_RUNG=third TH11_STEP5_MODE=loaded TH11_STEP5_SOURCE=cache FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 480 mpiexec -n 8 python3 -m pytest tests/validation/test_coil_loading_larmor_third_rung.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 18 04:33 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && TH11_STEP5_RUNG=third TH11_STEP5_MODE=loaded TH11_STEP5_SOURCE=cache FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 480 mpiexec -n 8 python3 -m pytest tests/validation/test_coil_loading_larmor_third_rung.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 7 items
+
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_rung_is_inside_the_priced_ceiling collected 7 items
+
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_rung_is_inside_the_priced_ceiling collected 7 items
+
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_rung_is_inside_the_priced_ceiling collected 7 items
+
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_rung_is_inside_the_priced_ceiling collected 7 items
+
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_rung_is_inside_the_priced_ceiling collected 7 items
+
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_rung_is_inside_the_priced_ceiling collected 7 items
+
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_rung_is_inside_the_priced_ceiling collected 7 items
+
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_rung_is_inside_the_priced_ceiling 
+[TH-11 step 5 | mode loaded | source cache | rung third (near 0.0018)] 994258 cells, cache read 10.8 s at -n 8; 3.50 cells per delta at 64 MHz (ceiling for the third rung: 3400000 cells)
+[TH-11 step 5 | after cache read] memory.peak 11.73 GiB of memory.max 64.00 GiB (18.3% of the ceiling)
+[TH-11 step 5 | mode loaded] loaded solve 320.5 s at -n 8 on 994258 cells
+[TH-11 step 5 | after the loaded solve] memory.peak 64.00 GiB of memory.max 64.00 GiB (100.0% of the ceiling)
+[TH-11 step 5b | LOADED] wrote output/th11_step5_cache/step5b_loaded_third.json: dR reaction +1.3628036e+00 Ohm, I' = 0.935125 A, mesh 10.8 s + solve 320.5 s = 331.2 s; the free solve and the ladder are command 2's.
+
+  cells: 994258 at resolution_near = 0.0018 (3.50 cells per delta at 64 MHz); ceiling 3400000
+PASSED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[loaded] 
+  loaded: Im Z reaction 5.573439e+01 Ω vs energy 5.573439e+01 Ω → residual 2.4223e-15 (W_m 3.0307e-08 J, W_e 6.7500e-12 J)
+PASSED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[free] SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_free_solve_dissipates_exactly_nothing 
+  P_loss: loaded +5.9585768e-01 W, free (σ = 0) None W
+SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_loaded_coil_dissipates_and_expels_flux SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_fine_rung_reproduces_step2s_recorded_deviation SKIPPED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/validation/test_coil_loading_larmor_third_rung.py: 52 warnings
+  /usr/local/lib/python3.10/dist-packages/ufl/core/expr.py:275: DeprecationWarning: Expr.ufl_domain() is deprecated, please use extract_unique_domain(expr) instead.
+    warnings.warn("Expr.ufl_domain() is deprecated, please "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============ 2 passed, 5 skipped, 60 warnings in 341.13s (0:05:41) =============
+
+  cells: 994258 at resolution_near = 0.0018 (3.50 cells per delta at 64 MHz); ceiling 3400000
+PASSED
+  cells: 994258 at resolution_near = 0.0018 (3.50 cells per delta at 64 MHz); ceiling 3400000
+PASSED
+  cells: 994258 at resolution_near = 0.0018 (3.50 cells per delta at 64 MHz); ceiling 3400000
+PASSED
+  cells: 994258 at resolution_near = 0.0018 (3.50 cells per delta at 64 MHz); ceiling 3400000
+PASSED
+  cells: 994258 at resolution_near = 0.0018 (3.50 cells per delta at 64 MHz); ceiling 3400000
+PASSED
+  cells: 994258 at resolution_near = 0.0018 (3.50 cells per delta at 64 MHz); ceiling 3400000
+PASSED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[loaded] 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[loaded] 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[loaded] 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[loaded] 
+  loaded: Im Z reaction 5.573439e+01 Ω vs energy 5.573439e+01 Ω → residual 2.4223e-15 (W_m 3.0307e-08 J, W_e 6.7500e-12 J)
+PASSED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[loaded] 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[free] 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[loaded] 
+  loaded: Im Z reaction 5.573439e+01 Ω vs energy 5.573439e+01 Ω → residual 2.4223e-15 (W_m 3.0307e-08 J, W_e 6.7500e-12 J)
+PASSED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[free] 
+  loaded: Im Z reaction 5.573439e+01 Ω vs energy 5.573439e+01 Ω → residual 2.4223e-15 (W_m 3.0307e-08 J, W_e 6.7500e-12 J)
+PASSED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[free] 
+  loaded: Im Z reaction 5.573439e+01 Ω vs energy 5.573439e+01 Ω → residual 2.4223e-15 (W_m 3.0307e-08 J, W_e 6.7500e-12 J)
+PASSED
+  loaded: Im Z reaction 5.573439e+01 Ω vs energy 5.573439e+01 Ω → residual 2.4223e-15 (W_m 3.0307e-08 J, W_e 6.7500e-12 J)
+PASSED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[free] 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[free] 
+  loaded: Im Z reaction 5.573439e+01 Ω vs energy 5.573439e+01 Ω → residual 2.4223e-15 (W_m 3.0307e-08 J, W_e 6.7500e-12 J)
+PASSED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[free] 
+  cells: 994258 at resolution_near = 0.0018 (3.50 cells per delta at 64 MHz); ceiling 3400000
+PASSEDSKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_free_solve_dissipates_exactly_nothing 
+  P_loss: loaded +5.9585768e-01 W, free (σ = 0) None W
+SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_loaded_coil_dissipates_and_expels_flux SKIPPEDSKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[loaded] 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_free_solve_dissipates_exactly_nothing 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_fine_rung_reproduces_step2s_recorded_deviation 
+  P_loss: loaded +5.9585768e-01 W, free (σ = 0) None W
+SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_loaded_coil_dissipates_and_expels_flux SKIPPEDSKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_fine_rung_reproduces_step2s_recorded_deviation SKIPPEDSKIPPEDSKIPPEDSKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_free_solve_dissipates_exactly_nothing 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_free_solve_dissipates_exactly_nothing 
+  P_loss: loaded +5.9585768e-01 W, free (σ = 0) None W
+SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_free_solve_dissipates_exactly_nothing 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_both_solves_are_driven_by_the_same_projected_current 
+  P_loss: loaded +5.9585768e-01 W, free (σ = 0) None W
+SKIPPEDSKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_loaded_coil_dissipates_and_expels_flux 
+  P_loss: loaded +5.9585768e-01 W, free (σ = 0) None W
+SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_both_solves_are_driven_by_the_same_projected_current 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPEDSKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_fine_rung_reproduces_step2s_recorded_deviation 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_loaded_coil_dissipates_and_expels_flux SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_loaded_coil_dissipates_and_expels_flux SKIPPEDSKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_fine_rung_reproduces_step2s_recorded_deviation 
+  loaded: Im Z reaction 5.573439e+01 Ω vs energy 5.573439e+01 Ω → residual 2.4223e-15 (W_m 3.0307e-08 J, W_e 6.7500e-12 J)
+PASSEDSKIPPEDSKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_fine_rung_reproduces_step2s_recorded_deviation 
+tests/validation/test_coil_loading_larmor_third_rung.py::test_complex_power_identity_holds_on_this_rung[free] SKIPPEDSKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_free_solve_dissipates_exactly_nothing 
+  P_loss: loaded +5.9585768e-01 W, free (σ = 0) None W
+SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_loaded_coil_dissipates_and_expels_flux SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_fine_rung_reproduces_step2s_recorded_deviation SKIPPED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============= 2 passed, 5 skipped, 8 warnings in 341.65s (0:05:41) =============
+SKIPPED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============= 2 passed, 5 skipped, 8 warnings in 341.64s (0:05:41) =============
+
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_free_solve_dissipates_exactly_nothing 
+  P_loss: loaded +5.9585768e-01 W, free (σ = 0) None W
+SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_both_solves_are_driven_by_the_same_projected_current SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_loaded_coil_dissipates_and_expels_flux SKIPPED
+tests/validation/test_coil_loading_larmor_third_rung.py::test_the_fine_rung_reproduces_step2s_recorded_deviation 
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============= 2 passed, 5 skipped, 8 warnings in 341.67s (0:05:41) =============
+SKIPPED
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============= 2 passed, 5 skipped, 8 warnings in 341.67s (0:05:41) =============
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============= 2 passed, 5 skipped, 8 warnings in 341.70s (0:05:41) =============
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============= 2 passed, 5 skipped, 8 warnings in 341.71s (0:05:41) =============
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============= 2 passed, 5 skipped, 8 warnings in 341.75s (0:05:41) =============
+
+## Exit
+- Status: 0
+- Elapsed (s): 344

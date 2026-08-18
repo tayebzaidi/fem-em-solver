@@ -13460,3 +13460,87 @@ That is more than one slot's work at 570 s a command; the review may want to
 split leg (b) into (b1) the remainder and (b2) validation, and to record that
 **complex mode costs ~2.6× real mode on the same tests** so future sizings
 stop inheriting real-mode numbers.
+
+---
+
+## 2026-08-18T10:15Z — `TH-11` step 5c — **incomplete (memory wall reached at 0.99 M cells)**
+
+**Slot:** 04:30 CDT scheduled implementer run. **On deck item 1**, taken as
+written. **Branch parked:** `attempt/TH-11-step5c-20260818T101500Z` (the module
+edits only; `main` carries the three logs, the test-results rows and this
+entry).
+
+**What was tried.** §7's step-5c plan verbatim, off
+`attempt/TH-11-step5b-20260818T024200Z`: `RESOLUTION_NEAR_THIRD` 0.00125 →
+**0.0018**, `NCELLS_THIRD` renamed to `NCELLS_THIRD_UNAFFORDABLE` (the
+2 807 309-cell record kept on the books, nothing overwritten) with the new
+rung's count set `None` until measured, and the three-rung fit generalised.
+Three commands, each `timeout -k 30 480`, `~/.cache/fenics` cleared first.
+
+**Measured.**
+
+1. **Mesh + cache** (`20260818T093219Z_TH-11-step5c-cache.log`, 4 passed /
+   1 skipped, 44.7 s): the 0.0018 rung meshes to **994 258 cells** in
+   **37.5 s** at `-n 2` — well under the ~1.4 M the review's linear sizing
+   predicted, so gmsh's cell count is markedly sublinear in 1/h here. The 5a
+   round-trip identity holds **exactly**: 994 258 written and read back,
+   per-tag owned counts `{1: 3979, 2: 388863, 3: 601416}` and facet
+   `{1: 2408}` identical across write → read, tag names preserved. Cache
+   68.2 MiB, write 0.2 s, read-back 5.5 s.
+2. **Loaded solve at `-n 8` off the cache**
+   (`20260818T093314Z_TH-11-step5c-loaded-n8.log`, 2 passed / 5 skipped,
+   341.1 s): it **completed** — cache read 10.8 s, solve **320.5 s**, ΔR
+   reaction **+1.3628036e+00 Ω**, I′ = 0.935125 A, 3.50 cells/δ at 64 MHz.
+   The complex-power identity passed at its unchanged 1e-9. **But
+   `memory.peak` went 11.73 GiB after the cache read → 64.00 GiB of
+   `memory.max` = 64.00 GiB after the solve — 100.0% of the ceiling.**
+3. **Free solve + ladder at `-n 8`**
+   (`20260818T093919Z_TH-11-step5c-free-ladder-n8.log`, **exit 124** at
+   484 s): cache read 10.7 s, then the σ = 0 solve did not return inside
+   480 s and took SIGTERM at 479.2 s — against the *same-size* loaded solve's
+   320.5 s. No ΔZ, no bracket, no fit.
+
+**The finding, and it is §7's own named stop condition.** §7 step 5c: "if even
+~1.4 M cells drives `memory.peak` to the ceiling, journal the peak and stop."
+**0.99 M cells did** — 30% below the rung the review sized, and 2.8× below the
+rung 5b measured at the same 64.00 GiB. So the wall is **not linear in cells**:
+0.42 M fits comfortably, 0.99 M pegs the ceiling, 2.81 M OOMs. That is MUMPS
+factor fill-in, superlinear in the unknowns, and it also explains command 3 —
+a run that starts already at the ceiling spends its time in reclaim rather
+than arithmetic, which is why an identical-size solve went from 320 s to
+> 479 s. Between the two commands the container's peak is a monotone
+high-water mark, so command 3's "64.00 GiB after the cache read" is command
+2's number, not a fresh measurement; command 2's 11.73 → 64.00 GiB inside one
+process **is** fresh and is the load-bearing one.
+
+**Correction carried in the parked module, worth the review's attention.** The
+review's edit list said "the fit's non-2 `ratio`", but the ladder
+0.005 → 0.0025 → 0.0018 refines by **2 and then 1.389** — it is not a
+fixed-ratio ladder at all, and Aitken's Δ² (which `_three_rung_fit` used) is
+only valid for one. Substituting a single non-2 ratio would have returned a
+plausible wrong rate. The parked module replaces it with the general
+statement — `(d_c − d_m)/(d_m − d_f) = (h_c^p − h_m^p)/(h_m^p − h_f^p)`,
+solved for `p` by bisection on a monotone residual, then `C` and `d₀` — which
+reduces to the old formula exactly on a ratio-2 ladder, and passes the real
+ratio to `_richardson` too. Never exercised on data: command 3 died before the
+ladder printed.
+
+**Anchor status.** Identity family green on the one solve that completed
+(1e-9, unchanged, never widened). Negative controls not reached: the σ = 0
+dissipation control and the drive-scalar surrogate both need command 3, and
+the fine-rung reproduction control is the `fine` rung's, not run this slot.
+**No 64 MHz bracket exists and §2 is untouched.**
+
+**Denials:** none. **Container:** healthy after the kill — `Up`, zero stray
+`python3`, `memory.peak` 64.0002 GiB against `memory.max` 64.00 GiB. No
+force-recreate needed.
+
+**Hypothesis for the next attempt.** The degree-1 h-ladder cannot be extended
+at 64 MHz on this box: the affordable rung is ~0.4–0.6 M cells and the third
+rung would have to sit between 0.42 M and 0.99 M — a refinement ratio near
+1.2, whose difference signal is at the same scale as the 0.01 pp run-to-run
+floor, so the fit would be noise. §7's step-5c negative-result clause names
+the successor explicitly and this run's numbers confirm it: **`TH-12` is the
+remaining axis** (fewer cells at matched accuracy, which is a memory argument
+as much as an accuracy one), and its step 2 names exactly this swap. Recommend
+the review close step 5 as a measured negative rather than scoping a 5d.

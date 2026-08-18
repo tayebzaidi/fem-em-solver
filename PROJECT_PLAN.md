@@ -1896,6 +1896,34 @@ step-1/2 journals archived in `docs/planning/plan-archive.md`.)*
 >     ~1.4 M cells drives `memory.peak` to the ceiling, journal the peak and
 >     stop — the degree-1 ladder then cannot extend on this box and `TH-12`
 >     is the remaining axis (its step 2 names exactly this swap).
+>     * **Attempt 1 🟡 2026-08-18 (04:30 slot) — the stop condition fired, at
+>       0.99 M cells.** The 0.0018 rung meshes to **994 258 cells** in 37.5 s
+>       (well under the ~1.4 M the review's linear sizing predicted — gmsh's
+>       count is sublinear in 1/h here) and the 5a round-trip identity holds
+>       **exactly**, per-tag counts and names
+>       (`20260818T093219Z_TH-11-step5c-cache.log`). The loaded solve
+>       **completed** at `-n 8` in 320.5 s, ΔR reaction **+1.3628036e+00 Ω**,
+>       identity family green at its unchanged 1e-9 — **but `memory.peak` went
+>       11.73 GiB after the cache read to 64.00 GiB of `memory.max` = 64.00 GiB
+>       after the solve, 100.0% of the ceiling**
+>       (`20260818T093314Z_TH-11-step5c-loaded-n8.log`). The free solve then
+>       exited 124 at 479.2 s — the *same-size* solve that had taken 320.5 s,
+>       i.e. a process starting at the ceiling spends its window in reclaim
+>       (`20260818T093919Z_TH-11-step5c-free-ladder-n8.log`). So the wall is
+>       **not linear in cells** (0.42 M comfortable, 0.99 M pegged, 2.81 M
+>       OOM — MUMPS fill-in), §7's own negative-result clause above is
+>       satisfied, and **no 64 MHz bracket exists; §2 is untouched.** Module
+>       parked on `attempt/TH-11-step5c-20260818T101500Z`; it also **corrects
+>       the review's edit**: the ladder 0.005 → 0.0025 → 0.0018 refines by 2
+>       *then 1.389*, so no single `ratio` is right and Aitken's Δ² does not
+>       apply — the parked fit solves `(d_c − d_m)/(d_m − d_f) =
+>       (h_c^p − h_m^p)/(h_m^p − h_f^p)` for `p` by bisection (reducing to the
+>       old formula on a ratio-2 ladder), never yet exercised on data.
+>       **Recommendation to the review: close step 5 as a measured negative
+>       rather than scoping a 5d** — an affordable third rung would have to sit
+>       between 0.42 M and 0.99 M cells, a refinement ratio near 1.2 whose
+>       difference signal is at the 0.01 pp run-to-run floor, so the fit would
+>       be noise. `TH-12` is the remaining axis.
 
 **`TH-12` — second-order elements (degree-2 N1curl): accuracy-per-DOF and
 direct-solver cost, measured on gated fixtures** ⬜ *(commissioned
@@ -3360,8 +3388,16 @@ item 3, but if item 3 tripped something unexpected, prefer reading its
 journal first). Items execute their §7 entries verbatim as annotated by
 this review.
 
-1. **`TH-11` step 5c — the shrunk third rung (~1.4 M cells) end to end
-   (heavy).** Execute the §7 step-5c entry verbatim (scoped this
+1. 🚫 **`TH-11` step 5c — the shrunk third rung (~1.4 M cells) end to end
+   (heavy).** *Attempted 2026-08-18 04:30 slot — **blocked by the measured
+   64 GiB wall**, which §7's own negative-result clause names as the stop
+   condition: the rung meshes to 994 258 cells (not ~1.4 M) and its loaded
+   solve alone pegs `memory.peak` at `memory.max` = 64.00 GiB, after which
+   the free solve exits 124. No 64 MHz bracket; §2 untouched; module parked
+   on `attempt/TH-11-step5c-20260818T101500Z`. **Do not re-run** — the next
+   run takes item 2. The review adjudicates: recommendation is to close step
+   5 as a measured negative (see the §7 attempt-1 annotation) rather than
+   scope a 5d.* Original text: execute the §7 step-5c entry verbatim (scoped this
    review; supersedes the twice-failed 5b — do **not** re-run the
    2 807 309-cell rung, it is measured not to fit at any rank count).
    Start from `attempt/TH-11-step5b-20260818T024200Z`; the module edits
