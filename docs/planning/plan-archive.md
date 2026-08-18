@@ -13926,3 +13926,58 @@ Items 1–3 consumed this interval (10:30 review). Struck texts verbatim:
    real" withdrawn — cold-cache FFCx JIT; warm complex is ~2.7× real.
    Audited COMPLIANT 2026-08-18 10:30 review. Defects filed → `OPS-20`,
    `OPS-21` commissioned by the 10:30 review.
+
+## §9 On-deck done items 1–2 + interval recap, 10:30 to 18:00 2026-08-18 — archived 2026-08-18 (18:00 review)
+
+Recap (10:30 review, verbatim): Interval (since 03:00): four slots, every
+one informative, two closes. `TH-12` step 1 ✅ (06:00 slot: degree 2 on
+the coarse sphere reads **0.1405%** interior relL2 against the ≤ 3.643%
+gate — 25.9× the accuracy at 3.01× fewer cells, cost sublinear in DOFs on
+both axes; audited **COMPLIANT**). `OPS-17` step 3 leg (b1) ✅ (07:30 +
+09:00 slots: complex `tests/solver` is **111.22 s, exit 0**, counts
+reconciled exactly at 171/209; audited **COMPLIANT**; attempt 1's ">12×
+real" withdrawn — the multiplier was cold-cache FFCx JIT, warm complex is
+~2.7× real, and **compilation and measurement must never share a
+window**; two real defects filed en route — the coil-phantom
+`ComplexComparisonError` behind the overturned "cache-artifact" call, and
+a rank-dependent build-mode-blind XDMF test). `TH-11` step 5c 🚫 (04:30
+slot: §7's own stop condition fired at **0.99 M cells** — the memory wall
+is superlinear, MUMPS fill-in; this review **adjudicated step 5 closed as
+a measured negative and closed `TH-11`** on the `GEO-14` precedent —
+trend answered by step 4 as the resolution term, the 64 MHz-bracket
+deliverable transfers to `TH-12` step 2). Commissioned this review:
+**`OPS-20`**, **`OPS-21`**, **`EX-25`**. Branch dispositions:
+`attempt/TH-11-step5b-20260818T024200Z` and
+`attempt/TH-11-step5c-20260818T101500Z` **deleted**. Cache note: the FFCx
+cache was left **warm** by the 09:00 slot; validation forms still cold.
+
+1. ✅ **DONE 2026-08-18, 13:30 + 15:00 slots — `TH-12` step 2 — the coil
+   at degree 2 (heavy).** Attempt 1 (13:30) landed the module, the
+   controls, and the mandatory cost probe, then measured the memory
+   exponent when the pre-registered 1.5 guess straddled the threshold —
+   p = 1.271 fitted on the `TH-11` rung pair, degree 2 re-projected to
+   47.61 GiB, under the cap. Attempt 2 (15:00) ran the solve
+   (`20260818T200059Z_TH-12-step2-full.log`, 546 s, `-n 8`): ΔR deviation
+   **−0.8508%**, outside the h → 0 bracket [−2.1492%, −0.9050%] by
+   0.054 pp past the upper edge after a −2.434 pp move off degree 1 on
+   the same mesh; **61.94 GiB** summed peak RSS (96.8% of `memory.max`,
+   29% above the calibrated projection — the cells-axis exponent
+   under-predicts the order axis; wall ~20× vs the expected ~4×). One
+   defect left failing, not loosened: the complex-power identity at
+   degree 2 reads 3–5e-9 vs 1e-9 because `W_e` explodes 3.5e7×
+   (common-mode; the ΔR reading survives). Audited COMPLIANT 2026-08-18
+   18:00 review. Adjudicated same review: no affordable (order, h) route
+   to the 64 MHz bracket on this box (§2.2); defect disposition
+   commissioned as `TH-12` step 3.
+2. ✅ **DONE 2026-08-18, 16:30 slot — `POST-5` step 1 — the scalar-σ fix
+   + the Poynting h-ladder discriminator (standard).** Defect 4 fixed
+   (`fem.Constant` wrap; σ-blind control exactly 0.000000e+00 W at all
+   three rungs, asserted `== 0.0`); `ds` orientation excluded at ratio
+   1.000000000000 vs a 1e-10 band; ladder 116.7465 → 115.4059 →
+   114.4227% at h = 0.03/0.02/0.015, fitted rate **0.0290** vs the
+   pre-registered ≥ 0.7, sign never corrects ⇒ **SOURCE/ASSEMBLY**; the
+   xfail keeps its 25% band and `strict=True`. Negative control 8 passed
+   129 s. Two windows burned on an unpinned-quadrature `∮x·n̂dS` FFCx
+   stall — trap recorded in the protocol list. Audited COMPLIANT
+   2026-08-18 18:00 review. Step 2 (closed azimuthal drive) scoped in §7
+   and queued.

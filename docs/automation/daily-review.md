@@ -162,7 +162,12 @@ step 5 or listed in step 6 states all six:
    `grep -v` (or anything) inside the harness command makes the log
    footer record the pipe's exit status, not pytest's — two OPS-17
    step-2 footers show exit 0 over a failing and a killed run
-   (2026-08-17); filter after the fact, never in the pipeline. Add to
+   (2026-08-17); filter after the fact, never in the pipeline; a
+   `SpatialCoordinate`-bearing facet integral on a gmsh mesh without
+   `metadata={"quadrature_degree": …}` can send FFCx into a compile that
+   does not finish in nine minutes, and each killed window poisons that
+   form's cache entry (`rm /root/.cache/fenics/*<hash>*` recovers; pin
+   the degree — `POST-5` step 1, 2026-08-18, two windows). Add to
    this list as runs discover more.
 5. **The scope boundary** — what the item does *not* close, stated so the
    implementer holds the chunk at 🟡 rather than over-claiming. `POST-3` step 1

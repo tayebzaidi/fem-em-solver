@@ -127,10 +127,19 @@ What is validated, to what tolerance, and what must not be trusted.
   `memory.max` = 64.00 GiB**, 2.81 M OOMs at every legal rank count
   (MUMPS factor fill-in) — and an affordable third rung would need a
   refinement ratio ≈ 1.2 whose difference signal sits at the 0.01 pp
-  run-to-run floor, so the fit would be noise. The live axis is
-  **degree-2 elements** (`TH-12`; step 1 gated 0.1405% on the sphere,
-  step 2 prices the coil at degree 2). This bullet moves only when a
-  review adjudicates a gated 64 MHz bracket.
+  run-to-run floor, so the fit would be noise. **The degree-2 axis is
+  now measured too** (`TH-12` step 2, 2026-08-18): on the 138 619-cell
+  coil fixture at 10 MHz, degree 2 walks the coarse-rung ΔR deviation
+  +1.5834% → **−0.8508%** — h → 0 quality on an unrefined mesh — but at
+  **61.94 GiB summed peak RSS (96.8% of `memory.max`)**, i.e. against
+  the same wall, and the 64 MHz case needs ~2.5× the cells at fixed
+  cells/δ. **Adjudicated 2026-08-18 18:00 review: no affordable
+  (order, h) route to a gated 64 MHz h → 0 bracket exists on this box**
+  — there is no rung swap to scope, and the degree-2 reading stands as
+  corroborating evidence from the order axis, not a gate. This bullet
+  moves only when a review adjudicates a gated 64 MHz bracket (which
+  now requires either more memory or an out-of-core/iterative solver
+  path, neither scoped).
 - **SAR on a solved coil field** — the IEEE C95.3 claim — is open;
   `MAT-4` stays 🟡 until it exists on the coil+phantom fixture.
 - **`⚠️` chunks** (`TH-2`/`TH-3`, `PORT-4`/`PORT-5`/`PORT-8`, `WF-2`/
@@ -1709,7 +1718,7 @@ path, not polish.
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ✅ | standard |
 | `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | ✅ *(closed 2026-08-18 on step 4's answer + step 5's measured negative — the `GEO-14` precedent; step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 ✅ 2026-08-17 — the fixed-f h-ladder reads **flat in f**: refinement moves the deviation −1.87 pp at 10 MHz and −4.48 pp at 30 MHz (−7.46 pp at 64 MHz on record) and the h → 0 brackets overlap at ~−1%, so the "trend" was the resolution term; no gated trend claim is scopeable and §2 stands; step 5 scoped 2026-08-17 review, attempt 1 🚫 2026-08-17 — the third rung is **priced and does not fit a scheduled slot**: 2 807 309 cells (inside the 3.4 M ceiling) but 288.2 s of mesh plus a loaded solve still assembling at the 570 s kill, so §7's probe stop condition fired; module parked on `attempt/TH-11-step5-20260817T123353Z`; **rescoped by the 10:30 review as 5a/5b** — 5a caches the mesh to XDMF and buys the `-n 8` rank change with a measured control (fine-rung +2.8063% reproduced within 0.1 pp), 5b runs the pair off the cache; step 5a ✅ 2026-08-17 — the cache round-trips the 2 807 309-cell rung **exactly** (per-tag owned counts and tag names preserved, mesh 126.4 s replaced by a 14.8 s read) and the `-n 8` fine-rung pair reproduces the `-n 2` record to **+0.00002 pp**, so the rank change is bought; 5b is unblocked and needs one solve per command at ~480 s; step 5b attempt 1 🟡 2026-08-18 — the loaded/free split is **exact** (fine rung reproduced to the last digit, drive surrogate 0.000e+00) and the cache reads back at `-n 12`, but the third-rung solve was **OOM-killed with the container** at 518 s, so the rung is memory-bound at 64 GiB, not time-bound: the review's lever (b) more ranks is the wrong one and (c) shrinking the rung is now live; module parked on `attempt/TH-11-step5b-20260818T004000Z`; step 5b attempt 2 🟡 2026-08-18 — the peak is now **measured**: at `-n 8` the same solve drove `memory.peak` to **64.00 GiB, exactly `memory.max`**, and ran past `timeout -k 30 560` without returning, so `-n 12`'s OOM and `-n 8`'s overrun are one wall with two failure modes and **no rank count affords 2 807 309 cells on this box** — §7's stop condition fires and (c) shrinking to ~1.4 M cells is the review's call; parked on `attempt/TH-11-step5b-20260818T024200Z`; **rescoped 2026-08-18 03:00 review as step 5c** — the ~1.4 M rung (`near ≈ 0.0018`, non-2 `ratio`) end to end off the parked branch, 480 s ceilings, `memory.peak` printed every command; step 5c attempt 1 🚫 2026-08-18 — **the stop condition fired at 0.99 M cells**: the rung meshes to 994 258 cells and its loaded solve alone pegs `memory.peak` at `memory.max` = 64.00 GiB (identity family green at 1e-9 on the solve that completed), so the wall is superlinear in cells — 0.42 M comfortable / 0.99 M pegged / 2.81 M OOM, MUMPS fill-in; **step 5 closed as a measured negative, adjudicated 2026-08-18 10:30 review** — no affordable third rung exists (a rung between 0.42 M and 0.99 M is ratio ≈ 1.2, difference signal at the 0.01 pp run-to-run floor), no 5d scoped, no 64 MHz bracket; the surviving axis is `TH-12` step 2, which names this swap. **Chunk closed:** the trend question is answered — the apparent frequency trend was the resolution term (step 4), no gated trend claim is scopeable, and §2 carries the negative)* | standard (steps 4–5 heavy) |
-| `TH-12` | **Second-order elements (degree-2 N1curl): accuracy-per-DOF and cost, measured** (operator directive 2026-08-18; decides the production element order for §10 Phase 5/6 — see entry) | 🟡 *(step 1 ✅ 2026-08-18 — degree 2 on the **coarse** 5 866-cell sphere reads **0.1405%** interior relL2, against the degree-1 fine-rung record 3.643% at 17 670 cells: **25.9× the accuracy at 3.01× fewer cells**, and the ohmic-power error falls 8.3869% → **0.0058%**; the cost is 5.22× the DOFs (7 591 → 39 634), 4.32× the solve wall (0.93 → 4.03 s) and 2.67× the summed peak RSS (388 → 1 036 MiB), i.e. **sublinear in DOFs on both**; negative control green — degree 1 on the same rung reproduces its recorded 8.387% power error to 0.0001 pp; step 2 (the coil) is unblocked. *Audited COMPLIANT 2026-08-18 10:30 review — every claimed number verified against `20260818T110442Z_TH-12-step1-sphere-degree2-rss.log`, gate asserted in code at the unloosened record, `TH-10` callers unmoved; the `memory.peak` → summed-RSS instrument substitution is disclosed and instrument-only*; step 2 ✅ 2026-08-18 — the coil at degree 2 reads ΔR deviation **−0.8508%** against step 4's h → 0 bracket [−2.1492%, −0.9050%]: **outside by 0.054 pp past the upper edge**, having moved **−2.434 pp** off degree 1's +1.5834% on the same coarse mesh, so raising the order walks the coarse rung essentially to the refined answer; the cost is 5.423× the DOFs for **~20× the solve wall** (12.4 + 12.2 s → 235.4 + 266.4 s) and **61.94 GiB** summed peak RSS — 29% above the calibrated 48.04 GiB projection and 96.8% of `memory.max`, so degree 2 is against the same memory wall that killed `TH-11` step 5b; controls green (degree-1 anchor to −0.00002 pp, cells exact, σ = 0 dissipation exactly +0.0), and **one real defect found and left failing**: the complex-power identity reads 3–5e-9 against its 1e-9 family bound at degree 2 because `W_e` explodes 2.03e-13 → 7.16e-06 J (ungauged gradient null space, `Im Z` +9.02 → −2 117 Ω) — common-mode, so the ΔR reading survives, but the identity no longer discriminates at this order; known-issues carries it, unassigned. **Both scoped steps are ✅; the chunk stays 🟡 pending the review's adjudication of the identity defect and the weekly review's production-order decision clause*)* | standard (step 2 heavy) |
+| `TH-12` | **Second-order elements (degree-2 N1curl): accuracy-per-DOF and cost, measured** (operator directive 2026-08-18; decides the production element order for §10 Phase 5/6 — see entry) | 🟡 *(step 1 ✅ 2026-08-18 — degree 2 on the **coarse** 5 866-cell sphere reads **0.1405%** interior relL2, against the degree-1 fine-rung record 3.643% at 17 670 cells: **25.9× the accuracy at 3.01× fewer cells**, and the ohmic-power error falls 8.3869% → **0.0058%**; the cost is 5.22× the DOFs (7 591 → 39 634), 4.32× the solve wall (0.93 → 4.03 s) and 2.67× the summed peak RSS (388 → 1 036 MiB), i.e. **sublinear in DOFs on both**; negative control green — degree 1 on the same rung reproduces its recorded 8.387% power error to 0.0001 pp; step 2 (the coil) is unblocked. *Audited COMPLIANT 2026-08-18 10:30 review — every claimed number verified against `20260818T110442Z_TH-12-step1-sphere-degree2-rss.log`, gate asserted in code at the unloosened record, `TH-10` callers unmoved; the `memory.peak` → summed-RSS instrument substitution is disclosed and instrument-only*; step 2 ✅ 2026-08-18 — the coil at degree 2 reads ΔR deviation **−0.8508%** against step 4's h → 0 bracket [−2.1492%, −0.9050%]: **outside by 0.054 pp past the upper edge**, having moved **−2.434 pp** off degree 1's +1.5834% on the same coarse mesh, so raising the order walks the coarse rung essentially to the refined answer; the cost is 5.423× the DOFs for **~20× the solve wall** (12.4 + 12.2 s → 235.4 + 266.4 s) and **61.94 GiB** summed peak RSS — 29% above the calibrated 48.04 GiB projection and 96.8% of `memory.max`, so degree 2 is against the same memory wall that killed `TH-11` step 5b; controls green (degree-1 anchor to −0.00002 pp, cells exact, σ = 0 dissipation exactly +0.0), and **one real defect found and left failing**: the complex-power identity reads 3–5e-9 against its 1e-9 family bound at degree 2 because `W_e` explodes 2.03e-13 → 7.16e-06 J (ungauged gradient null space, `Im Z` +9.02 → −2 117 Ω) — common-mode, so the ΔR reading survives, but the identity no longer discriminates at this order; known-issues carries it, unassigned. *Audited COMPLIANT 2026-08-18 18:00 review — every claimed number verified against the log; exit 1 is exactly the two unloosened identity tests.* **Adjudicated, same review:** no affordable (order, h) route to the 64 MHz bracket exists on this box (recorded §2.2, no rung swap scoped), and the identity defect's disposition is commissioned as **step 3** (mechanism: generic-to-incompatible-drives vs coil-feed-specific, on the smoke + sphere fixtures at smoke cost). **The chunk stays 🟡 pending step 3 and the weekly review's production-order decision clause**)* | standard (step 2 heavy) |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)**
 ✅ *(steps 1–4 ✅ 2026-08-13, chunk closed by the 10:30 review; full step
@@ -2255,7 +2264,22 @@ here; a `GEO` chunk may cite this entry.
 >   wall that killed step 5b's third rung — so it is a live replacement
 >   only for a rung strictly coarser than this one, and the 64 MHz
 >   bracket (which needs ~2.5× the cells at fixed cells/δ) is **not**
->   affordable at degree 2 on this box either. *Original text (attempt 1):*
+>   affordable at degree 2 on this box either.
+>   *Audited COMPLIANT 2026-08-18 18:00 review — every claimed number
+>   (both orders' ΔR/ΔX/DOFs/walls/RSS, the identity residuals, the
+>   W_e/Im Z rows, the anchor reproduction, the bracket arithmetic)
+>   verified against `20260818T200059Z_TH-12-step2-full.log`; exit 1 is
+>   exactly the two degree-2 identity tests failing hard at the unloosened
+>   1e-9 bound, nothing else; the closing commit touches no test or source
+>   file. Adjudications, same review: (i) the swap question is answered —
+>   no affordable (order, h) route to the 64 MHz bracket exists on this
+>   box, recorded in §2.2; no rung swap is scoped. (ii) The identity
+>   defect's disposition is commissioned as step 3 below — the affordable
+>   form of known-issues disposition (b). Dispositions (a) re-anchor on
+>   `Im ΔZ` and (c) a gauged second-order path stay contingent on step 3's
+>   reading: both would need the 62 GiB coil solve to verify at degree 2,
+>   which this box affords only deliberately, not routinely.*
+>   *Original text (attempt 1):*
 >   the module lands, the control and the identity family are green, and
 >   the mandatory cost probe is executed and then calibrated — but the
 >   degree-2 solve itself has not run yet, and it is the only thing left.
@@ -2292,6 +2316,48 @@ here; a `GEO` chunk may cite this entry.
 >   first**: print DOFs and the MUMPS in-core estimate before solving;
 >   if the estimate exceeds the cgroup cap, stop — that number is the
 >   step's result.
+> * **Step 3 (mechanism) — is the degree-2 `W_e` explosion generic to
+>   incompatible drives, or coil-feed-specific?** ⬜ *(commissioned
+>   2026-08-18 18:00 review — the affordable form of known-issues
+>   disposition (b); standard, `-n 2`, complex build +
+>   `FEM_EM_REQUIRE_COMPLEX=1`)*. Assemble and print `W_m`, `W_e` and
+>   the ratio `W_e/W_m` at degrees 1 **and** 2 on two cheap fixtures:
+>   the time-harmonic **smoke fixture** (1 405-cell coarse rung — its
+>   axial drive has `J·n ≠ 0` on the end caps, the same incompatibility
+>   family as the coil feed; `OPS-17` step-2 defect 2) and the
+>   **lossy-sphere fixture** (`TH-12` step-1's 5 866-cell rung — imposed
+>   compatible drive). The coil records to print beside them, from
+>   `20260818T200059Z`: `W_e/W_m` ≈ **6.7e-6 at degree 1 → ≈ 229 at
+>   degree 2** (3.5e7× on `W_e`). **Anchor (§4), pre-registered:** the
+>   discriminator is the *change in* `W_e/W_m` across order per fixture —
+>   smoke fixture ≥ 1e3× ⇒ GENERIC (incompatible drive × richer
+>   second-order gradient space; one mechanism explains the coil defect
+>   and it is testable at smoke cost forever after); ≤ 10× on both
+>   fixtures ⇒ COIL-SPECIFIC (the feed model, not the drive class, is
+>   the injector). Quantitative gates in-run: the smoke fixture's
+>   degree-1 dissipated power reproduces the `POST-5` record
+>   **1.199162e-06 W** to every printed digit, and the sphere pair
+>   reproduces step 1's records (0.1405% relL2 / 0.0058% power error at
+>   degree 2; 8.387% power error at degree 1 to 0.0001 pp). **Negative
+>   control:** the sphere (compatible drive) must *not* explode —
+>   its cross-order `W_e/W_m` move inside 10× is asserted; if it
+>   explodes too, the drive hypothesis is dead and that is the finding.
+>   **Tier/cost:** standard, `-n 2`, `timeout -k 30 400` — the smoke
+>   rung solves in ~1.5 s at degree 1, the sphere degree-2 pair measured
+>   4.03 s solve / 1 036 MiB (`TH-12` step 1); everything here is
+>   re-assembly plus four small solves. **Traps:** import the energy
+>   forms from `test_coil_loading_degree2.py`, never restate them
+>   (`ufl.inner` conjugates — a hand-rolled `W_e` with `ufl.dot` flips
+>   the convention); warm cache — degree-2 forms for these fixtures are
+>   cold, so the first command is a compile window and is not the
+>   measurement; pytest prints need `-s`; memory via summed `ru_maxrss`.
+>   **Scope:** mechanism attribution only — no coil number moves, the
+>   two degree-2 coil identity tests stay failing, the known-issues
+>   entry stays open, and the production-order decision remains the
+>   weekly review's (this step is input to it). **Negative result:** an
+>   in-between reading (e.g. smoke at 50×) is the finding — record the
+>   four ratios here and in known-issues, report, stop; do not fabricate
+>   a band around it.
 > * **Decision clause:** results go to the weekly review, which sets
 >   the production element order for the §10 Phase-5/6 breakdown (the
 >   32-port directive's cost rung is then priced at the chosen order).
@@ -2614,7 +2680,16 @@ to reach 5%); (b) the source's `J·n ≠ 0` end-cap incompatibility.
 > entry and known-issues, report, stop.
 >
 > **Step 1 result — executed 2026-08-18, 16:30 slot. ✅ The pre-registered
-> anchor is met and the discriminator read SOURCE/ASSEMBLY.**
+> anchor is met and the discriminator read SOURCE/ASSEMBLY.** *(Audited
+> COMPLIANT 2026-08-18 18:00 review — ladder digits, orientation ratio,
+> exact-zero blind control and negative control all verified against the
+> logs; the ≥ 0.7 rate band, the 25% xfail band and `strict=True`
+> confirmed pre-registered at `3817cf2`, nothing loosened. Two audit
+> notes, disclosed not demoted: the xfail gate itself last ran in the
+> exit-1 `smoke-warm` log — where it XFAILed genuinely, with the fix
+> already in-tree — not in a green window; and the "digits unmoved"
+> negative control rests on the unmodified test file's `rtol=1e-12` /
+> 5% asserts passing, not on printed digits, since the run omitted `-s`.)*
 >
 > *Defect 4 is fixed.* `power_balance.py` now wraps the scalar branch in
 > `fem.Constant(msh, dolfinx.default_scalar_type(σ))`, so the domain-less
@@ -3786,122 +3861,44 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed 2026-08-18, **10:30 review**. Interval (since 03:00): four
-slots, every one informative, two closes. `TH-12` step 1 ✅ (06:00 slot:
-degree 2 on the coarse sphere reads **0.1405%** interior relL2 against
-the ≤ 3.643% gate — 25.9× the accuracy at 3.01× fewer cells, cost
-sublinear in DOFs on both axes; audited **COMPLIANT**). `OPS-17` step 3
-leg (b1) ✅ (07:30 + 09:00 slots: complex `tests/solver` is **111.22 s,
-exit 0**, counts reconciled exactly at 171/209; audited **COMPLIANT**;
-attempt 1's ">12× real" withdrawn — the multiplier was cold-cache FFCx
-JIT, warm complex is ~2.7× real, and **compilation and measurement must
-never share a window**; two real defects filed en route — the
-coil-phantom `ComplexComparisonError` behind the overturned
-"cache-artifact" call, and a rank-dependent build-mode-blind XDMF test).
-`TH-11` step 5c 🚫 (04:30 slot: §7's own stop condition fired at
-**0.99 M cells** — the memory wall is superlinear, MUMPS fill-in; this
-review **adjudicated step 5 closed as a measured negative and closed
-`TH-11`** on the `GEO-14` precedent — trend answered by step 4 as the
-resolution term, the 64 MHz-bracket deliverable transfers to `TH-12`
-step 2). Commissioned this review: **`OPS-20`** (disposition the
-`ComplexComparisonError`: `--tb=long` cold-cache diagnosis, fix or
-`@real_only`), **`OPS-21`** (scalar-type-aware, rank-deterministic XDMF
-test), **`EX-25`** (§5.4 ramp on `TH-12` step 1 — first example at any
-element order other than 1). Branch dispositions:
-`attempt/TH-11-step5b-20260818T024200Z` and
-`attempt/TH-11-step5c-20260818T101500Z` **deleted** — their purpose (a
-degree-1 third rung) is adjudicated dead; the 5c logs/journal carry the
-measurements and the §7 entry carries the corrected non-uniform fit
-formula. Cache note: the FFCx cache was left **warm** by the 09:00 slot
-(solver + non-validation complex forms); validation forms are still
-cold. Done-item texts and prior recaps:
-`docs/planning/plan-archive.md`.
+Last reviewed 2026-08-18, **18:00 review**. Interval (since 10:30): four
+slots scheduled, **three ran, two closes, both audited COMPLIANT** (one
+subagent auditor each; every plan number verified against its log, no
+bound loosened, exit codes attributed line-by-line). The **12:00 slot
+was lost at launch to an API 529** (`logs/automation/
+20260818T170002Z_implementer.log` — one line, no session ever started;
+one-off, the three later slots launched normally). `TH-12` step 2 ✅
+(13:30 slot priced it — the memory exponent measured at p = 1.271 when
+the pre-registered 1.5 guess straddled the threshold — and the 15:00
+slot solved it: ΔR deviation **−0.8508%** at degree 2 on the unrefined
+coil mesh, a −2.434 pp move to just past the h → 0 bracket's upper
+edge; **61.94 GiB**, 96.8% of `memory.max` — the cells-axis exponent
+under-predicts the order axis, treat 1.271 as a floor; one defect left
+failing, not loosened: the complex-power identity at degree 2 gates a
+number that is 99.6% spurious `W_e`). `POST-5` step 1 ✅ (16:30 slot:
+σ-blind control **exactly 0.0 W** after the `fem.Constant` fix, `ds`
+orientation excluded at ratio 1.000000000000, ladder verdict
+**SOURCE/ASSEMBLY** at fitted rate 0.0290 vs ≥ 0.7 — the imbalance is
+the source, not the mesh; xfail keeps its 25% band). **Adjudicated this
+review:** the `TH-12` swap question is answered — **no affordable
+(order, h) route to the 64 MHz bracket exists on this box** (§2.2
+updated; no rung swap scoped); the identity defect's disposition is
+commissioned as **`TH-12` step 3** (mechanism discriminator at smoke
+cost — known-issues re-pointed); `POST-5` step 2 queued. The
+unpinned-quadrature FFCx-stall trap (two windows burned) is appended to
+the protocol trap list. Tree clean, no `attempt/*` or `recovered/*`
+branches. Cache note: FFCx cache warm through the smoke fixture's and
+the degree-2 coil validation forms; the new azimuthal-drive and
+degree-2 smoke/sphere energy forms are cold. Done-item texts and prior
+recaps: `docs/planning/plan-archive.md`.
 
-**Six items, all mutually independent** (disjoint files and fixtures; no
-item depends on another landing). Items execute their §7 entries
-verbatim as annotated by this review.
+**Six items, mutually independent** (no item depends on another
+landing; items 3 and 6 both read the smoke fixture, but 6 uses its
+*unchanged* axial drive while 3 adds a closed-drive variant — either
+lands without the other). Items execute their §7 entries verbatim as
+annotated by this review.
 
-1. ~~**`TH-12` step 2 — the coil at degree 2 (heavy).**~~ ✅ **DONE**
-   *attempt 2, 2026-08-18 15:00 slot — the degree-2 solve ran
-   (`20260818T200059Z_TH-12-step2-full.log`, 546 s, `-n 8`): ΔR deviation
-   **−0.8508%**, outside the [−2.1492%, −0.9050%] bracket by 0.054 pp
-   past the upper edge after a −2.434 pp move off degree 1 on the same
-   mesh; 61.94 GiB summed peak RSS (96.8% of `memory.max`, 29% above the
-   calibrated projection); one defect left failing and journaled — the
-   complex-power identity reads 3–5e-9 against its 1e-9 bound at degree 2
-   because `W_e` explodes 3.5e7×. See the §7 entry and known-issues; the
-   swap decision and the defect's disposition are the review's.*
-   *Superseded text follows.* 🟡 *attempt 1
-   2026-08-18 (13:30 slot): module + probe + calibration landed, the
-   degree-2 solve is the only thing left and is now **priced at
-   47.61 GiB projected, under the cap** — one command,
-   `TH12_STEP2_MODE=full`, `-n 8`, `timeout -k 30 900`. Everything
-   below still applies; the cost probe it demanded has been executed and
-   its exponent measured (p = 1.271), so the next attempt starts at the
-   solve.* Execute the §7
-   `TH-12` step-2 entry verbatim, with this review's annotations. The
-   `TH-11` step-1 coil+phantom fixture (138 619 cells) at degree-2
-   N1curl, 10 MHz, loaded solve. **Cost probe first, mandatory:** print
-   the DOF count (~20 DOFs/tet ⇒ roughly 2.8 M, ~4.6× the degree-1
-   third rung's unknowns per cell — this is exactly the regime where
-   the `TH-11` wall lives) and the MUMPS in-core estimate *before*
-   solving; if the estimate exceeds the 64 GiB cgroup cap, **stop —
-   that number is the step's result** and it is a clean negative.
-   **Anchor:** the `TH-11` identity family at its unchanged bounds
-   (< 1e-9 complex-power residual; σ = 0 dissipation exactly zero);
-   ΔR **printed, never gated**, beside step 4's h → 0 bracket
-   [−2.1492%, −0.9050%] — the bracket is Richardson-derived, not a
-   closed form. **Negative control:** degree 1 on the same fixture
-   in-run reproduces its recorded ΔR deviation (+1.5834%, the step-1
-   record) — same-process pinning, the `TH-12` step-1 pattern.
-   **Tier/cost:** heavy, `-n 8`, complex build, `timeout -k 30 900`;
-   the degree-1 solve on this fixture is ~70 s at `-n 8`-comparable
-   sizes and the sphere measured degree 2 at 4.3× wall — budget one
-   solve per command. Memory instrument is **summed `ru_maxrss`**,
-   never `memory.peak` (container-lifetime high-water mark — `TH-12`
-   step 1 instrument note). **Traps:** first command after any cache
-   clear is a compile window (never share it with measurement);
-   `ufl.inner` conjugation; the magnetostatic degree-2 bar is a
-   different formulation and not evidence here; harness foreground,
-   Bash timeout 660000 ms. **Scope:** a *reading*, no gate — whether a
-   degree-2 rung replaces the memory-infeasible degree-1 third rung is
-   the review's swap decision; production element order is the weekly
-   review's. **Negative result:** an over-cap MUMPS estimate, or ΔR
-   outside the bracket, is the informative outcome — record it in the
-   §7 entry, report, stop.
-2. ~~**`POST-5` step 1 — the scalar-σ fix + the Poynting h-ladder
-   discriminator (standard).**~~ ✅ **DONE** *(2026-08-18 16:30 slot —
-   defect 4 fixed and the σ-blind control returns **exactly 0.000000e+00 W**
-   at all three rungs; `ds` orientation ruled out at ratio
-   **1.000000000000** vs the 1e-10 band; ladder 116.7465 → 115.4059 →
-   114.4227% at h = 0.03/0.02/0.015, **fitted rate 0.0290** against the
-   pre-registered ≥ 0.7 and the flux sign never corrects ⇒ **VERDICT:
-   SOURCE/ASSEMBLY**, so the xfail does NOT rescope to convergence.
-   Negative control green: validation Poynting 8 passed 129 s, scalar-vs-
-   field path still equal at rtol 1e-12.
-   `20260818T215101Z_POST-5-step1-ladder2.log` (5 s),
-   `20260818T215117Z_POST-5-step1-negcontrol.log` (129 s). Step 2 is
-   scoped in §7 — a closed azimuthal source as the next discriminator. Two
-   windows were burned first on an unpinned-quadrature `∮x·n̂dS` form that
-   FFCx could not compile in nine minutes; the fix and the recovery are in
-   the §7 entry.)*
-   *Superseded text follows.* Execute the §7 `POST-5` step-1 entry
-   verbatim (commissioned 2026-08-18 03:00 review from `OPS-17` defects 3 + 4).
-   **Anchor:** the σ-blind control (`sigma=0.0`) runs and returns
-   exactly-zero dissipated power after the `fem.Constant` wrap; the
-   3-rung ladder reads a pre-registered band — imbalance falling at a
-   fitted rate ≥ 0.7 *and* the flux sign correcting ⇒ RESOLUTION;
-   h-independent, or a sign that never corrects ⇒ SOURCE/ASSEMBLY.
-   Check the `ds` orientation **first** — a flipped outward measure is
-   the cheap candidate the wrong sign points at. **Negative control:**
-   `test_poynting_balance.py`'s refined-mesh 5% gate stays green with
-   digits unmoved by the `fem.Constant` change. **Cost:** the smoke
-   fixture solves in ~1.5 s; three rungs are cheap — `timeout -k 30
-   400`, `-n 2`, complex build + `FEM_EM_REQUIRE_COMPLEX=1`. **Scope:**
-   smoke fixture only; no SAR or coil-loading claim moves. **Negative
-   result:** an in-between reading is the finding — record all rungs
-   and signs, known-issues, report, stop.
-3. **`EX-24` — lumped-sheet port at interior width, with the
+1. **`EX-24` — lumped-sheet port at interior width, with the
    sweep-route leg (standard).** Execute the §7 `EX-24` entry verbatim,
    2026-08-18 addendum included: the f ∈ {1.0, 0.735, 0.5} width ladder
    as three lumped-BC solves *plus* the f = 0.5 sweep through the new
@@ -3919,7 +3916,7 @@ verbatim as annotated by this review.
    records quoted from the tests, the example reproduces them.
    **Negative result:** the example path off the test records is a
    regression — known-issues entry, report, stop.
-4. **`OPS-17` step 3 leg (b2) — complex validation (standard).**
+2. **`OPS-17` step 3 leg (b2) — complex validation (standard).**
    Execute the §7 rescope annotation (03:00 review), amended by the
    10:30 review's cache correction: do **not** clear `~/.cache/fenics`
    unless preflight finds evidence of a killed prior run — the 09:00
@@ -3940,7 +3937,39 @@ verbatim as annotated by this review.
    whatever the probe cannot fit is journaled as the remaining tail,
    not forced. **Negative result:** an unexpected failure or count
    delta — known-issues entry, report, stop.
-5. **`OPS-20` — disposition the coil-phantom `ComplexComparisonError`
+3. **`POST-5` step 2 — the closed-drive discriminator for the Poynting
+   sign (standard).** Execute the §7 `POST-5` step-2 entry verbatim
+   (scoped by step 1, 2026-08-18): add a **closed azimuthal loop**
+   drive variant (`div J = 0`, `J·n = 0` on every boundary) to the
+   smoke fixture and re-read the power balance on the coarse rung.
+   **Anchor:** pre-registered two-sided band — imbalance collapsing
+   under the xfail's 25% band *and* net flux sign turning positive ⇒
+   SOURCE (the axial drive's `J·n ≠ 0` end-cap incompatibility, defect
+   3 candidate (b), same family as `test_gauge_lagrange`'s wire);
+   imbalance persisting at O(100%) with the sign unmoved ⇒ ASSEMBLY
+   (the next probe is the boundary curl-trace leg against the `TH-6`
+   plane wave, where both legs have closed forms). The σ-blind
+   `sigma=0.0` control stays **exactly 0.0 W** on the new drive too.
+   **Negative control:** the original axial drive, same run, reproduces
+   the coarse-rung record **1.199162e-06 W / −2.008179e-07 W /
+   116.7465%** to every printed digit. The ceiling is real: the blind
+   reading saturates near 100%+, so a collapse to < 25% is ~4.7× —
+   do not assert a larger separation than the fixture can show.
+   **Tier/cost:** standard, `-n 2`, complex build +
+   `FEM_EM_REQUIRE_COMPLEX=1`, `timeout -k 30 400` — the fixture solves
+   in ~1.5 s/rung; the new drive's forms are **cold**, so the first
+   command is a compile window, not the measurement. **Traps:** pin
+   `metadata={"quadrature_degree": …}` on any `SpatialCoordinate`-
+   bearing form on this gmsh mesh (step 1 burned two windows; an
+   azimuthal `J(x)` is exactly such a form); `ufl.inner` conjugation in
+   the drive functional; never pipe pytest; prints need `-s`. **Scope:**
+   smoke fixture only; the xfail's 25% band and `strict=True` do **not**
+   move in this step even on a collapse — rescoping the gate is the
+   review's call on the reading; no SAR or coil-loading claim moves.
+   **Negative result:** an in-between reading (e.g. imbalance halves,
+   sign still negative) is the finding — record per-rung numbers in the
+   §7 entry and the known-issues defect-3 entry, report, stop.
+4. **`OPS-20` — disposition the coil-phantom `ComplexComparisonError`
    (standard).** Execute the §7 `OPS-20` entry verbatim (commissioned
    this review). **Anchor:** the real-mode record **17.1233% L2 vs the
    30% band** re-asserted unmoved either way; under a fix, the complex
@@ -3956,7 +3985,7 @@ verbatim as annotated by this review.
    magnetostatic claim moves; not a prerequisite of item 4. **Negative
    result:** no user frame in the long traceback — journal the full
    traceback in known-issues, report, stop.
-6. *(spare)* **`EX-25` — degree-2 Larmor sphere example (standard).**
+5. **`EX-25` — degree-2 Larmor sphere example (standard).**
    Execute the §7 `EX-25` entry verbatim (commissioned this review,
    §5.4 ramp on `TH-12` step 1). **Anchor:** both orders' records
    reproduced through the example path inside the pre-stated 1% drift
@@ -3972,6 +4001,18 @@ verbatim as annotated by this review.
    `exit != 1`. **Scope:** sphere only; no production-order claim; no
    coil. **Negative result:** drift beyond the band is an example-path
    regression — known-issues entry, report, stop.
+
+6. *(spare)* **`TH-12` step 3 — is the degree-2 `W_e` explosion generic
+   to incompatible drives, or coil-feed-specific? (standard).** Execute
+   the §7 `TH-12` step-3 entry verbatim (commissioned this review; the
+   full rubric — anchor bands ≥ 1e3× vs ≤ 10× on the cross-order
+   `W_e/W_m` move, the record reproductions, cost, traps — lives
+   there). Smoke + sphere fixtures at degrees 1/2, `-n 2`,
+   `timeout -k 30 400`; the coil's 6.7e-6 → ≈ 229 ratio pair printed
+   beside them for comparison. **Scope:** mechanism attribution only —
+   the two degree-2 coil identity tests stay failing and the
+   production-order decision stays the weekly review's. Reads the smoke
+   fixture's *unchanged* axial drive, so it does not depend on item 3.
 
 *(Two more rubric-complete items wait in §7 and rotate in as slots
 free: `OPS-21` — the scalar-type-aware, rank-deterministic XDMF test —
