@@ -13363,3 +13363,16 @@ History was **not** rewritten: another session is live on this tree. The
 review can leave it or split `549fb36`. Process note: two sessions writing one
 index is a real hazard of running an interactive session inside a scheduled
 slot's window — `git commit -F <msg> -- <pathspecs>` would have contained it.
+
+**Correction to the note above (same slot).** The concurrent session then ran
+`git reset HEAD~1`, so `549fb36` no longer exists and its sweep was undone; the
+step-2c diff was re-committed by this run, alone and with explicit pathspecs,
+as **`a56b632 feat(PORT-9): step 2c ✅ — the lumped-sheet sweep route,
+reciprocal at 2.574e-11`** (8 files: the three `ports/` modules, the new test
+module, both logs, test-results.md, PROJECT_PLAN §7/§9). `6fa10c3` — the
+mis-labelled anomaly note — is the commit that carries this journal entry and
+can be read as slot bookkeeping. The tree this run leaves on `main` is clean
+of its own work; still uncommitted and deliberately untouched are the other
+session's `docs/references/README.md` edit and its untracked
+`docs/references/dolfinx-0.11-migration/` pack. The process point stands
+unchanged: pathspecs on every scheduled commit.
