@@ -428,6 +428,17 @@ dated annotation. The ID stays stable.)*
 > the AMS-relevant plumbing) to have moved namespaces across 0.7 → 0.11;
 > any iterative-solver work (`TH-13`-class) should land *after* this
 > upgrade or be written against the new API.
+> **Migration pack cached 2026-08-18** (interactive session, tracked
+> in-repo): **`docs/references/dolfinx-0.11-migration/`** — distilled
+> old→new API map with a repo-specific hit list, per-version
+> release-note summaries (0.10 is a documented gap — introspect the
+> container), and verbatim 0.11 idioms from the upstream demos. Step 2
+> starts there; two known hard breaks it documents: `gmshio` moved to
+> `dolfinx.io.gmsh` with `model_to_mesh` returning a `MeshData` object
+> (breaks `io/mesh.py` tuple unpacking), and `LinearProblem` takes
+> `petsc_options_prefix`. The installed container API is ground truth
+> over the pack. *(This resolves the 03:30Z run's "observed mid-slot"
+> flag: the pack is tracked, not ignored.)*
 > * **Step 1 — build and boot (standard).** Bump the `FROM` line, rebuild,
 >   and fix the environment plumbing that encodes version-specific paths:
 >   the compose `PYTHONPATH` (`dolfinx-real/lib/python3.10/…` — both the

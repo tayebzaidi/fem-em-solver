@@ -1,12 +1,21 @@
-# References — operator-provided texts
+# References — operator-provided texts and cached upstream docs
 
-This directory holds reference texts the human operator provides locally.
-The contents are **gitignored** (copyrighted material is never committed or
-pushed); only this README is tracked. On a fresh clone the subdirectories
-below are absent until the operator restores them — a missing file here is
-expected, not a dead reference.
+This directory holds reference material for offline sessions. Two kinds:
+**operator-provided texts** (gitignored — copyrighted material is never
+committed or pushed; absent on a fresh clone until the operator restores
+them, so a missing file is expected, not a dead reference) and **cached
+public upstream documentation** (tracked, available on any clone).
 
-## Available locally
+## Tracked (cached public docs)
+
+- **`dolfinx-0.11-migration/`** — the `OPS-18` migration pack, cached
+  2026-08-18 from public release notes and demos because scheduled
+  sessions have no network: distilled 0.7.2 → 0.11 API map with a
+  repo-specific hit list, per-version release-note summaries (0.10 is a
+  documented gap), and verbatim 0.11 idioms. The installed container
+  API is ground truth over the pack.
+
+## Available locally (gitignored)
 
 - **`jin-fem-3e/`** — Jin, *The Finite Element Method in Electromagnetics*,
   3rd ed. (Wiley, ISBN 9781118841983), converted to per-chapter markdown
