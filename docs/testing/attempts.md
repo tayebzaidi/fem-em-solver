@@ -13821,3 +13821,79 @@ anything in `OPS-17`, since (b1) closed around it.
 
 **Container:** healthy throughout, no wedge, no force-recreate. FFCx cache left
 **warm** (deliberately — the next slot should note this before pricing).
+
+---
+
+## 2026-08-18T18:40Z — `TH-12` step 2, attempt 1 — **incomplete**
+
+**Slot:** 13:30 local implementer run. **Tier:** heavy budget, both commands
+landed inside standard, `-n 8`, complex build + `FEM_EM_REQUIRE_COMPLEX=1`.
+**Base:** clean `main` at `3817cf2`. **Parked:** nothing — the code is complete,
+correct and green as far as it ran, so it lands on `main`; only the degree-2
+solve is missing and it is now priced.
+
+### What I ran
+
+| # | Command | Log | Result |
+|---|---|---|---|
+| 1 | `TH12_STEP2_MODE=probe`, the mandatory cost probe + the degree-1 control | `20260818T183449Z_TH-12-step2-probe.log` | **12 passed, 5 skipped, 44.9 s**, exit 0 |
+| 2 | `TH12_STEP2_MODE=calibrate`, the memory-exponent rung | `20260818T183730Z_TH-12-step2-calibrate.log` | **5 passed, 13 skipped, 106.1 s**, exit 0 |
+
+New module `tests/validation/test_coil_loading_degree2.py`; the only `src/`-side
+change is a defaulted `degree: int = 1` keyword on `TH-11`'s
+`_solve_projected_at`, so no `TH-11` caller and no recorded number moves.
+
+### Controls, all green in-run
+
+Degree 1 on the baseline rung reproduces its recorded ΔR deviation **+1.5834%
+to −0.00002 pp** (floor 0.01 pp); complex-power identity residuals **1.5361e-14
+loaded / 5.9294e-15 free** against the unmoved 1e-9 family bound; σ = 0
+dissipation exactly `+0.0` W against a loaded `+1.3858364e-01` W; mesh exactly
+138 619 cells; drive mismatch under 1e-24. Same-process pinning per §7.
+
+### The finding: the probe's exponent was the thing deciding the step
+
+The probe priced degree 2 at **882 296 DOFs, 5.42× degree 1's 162 710**, off a
+measured degree-1 summed peak RSS of **6.63 GiB** (1.22 GiB of it pre-solve
+baseline). The §7 stop rule then fired — but on a *pre-registered guess* of
+exponent 1.5, projecting **69.49 GiB** against the 0.80·`memory.max` threshold
+of 51.20 GiB, while the linear end of the very same model read **30.54 GiB**.
+A model whose two ends straddle the threshold has not priced anything, so I
+measured the exponent instead of arguing about it: the `TH-11` fine rung at
+**unchanged element order** (417 914 cells, 486 694 DOFs, 2.991×) costs
+**21.78 GiB** of solve-attributable summed RSS against the baseline rung's
+5.41 GiB, fitting **p = 1.271** — reassuringly close to the N^(4/3) a 3D
+nested-dissection factorization is expected to store, and well below the 1.5
+guess. Degree 2 re-projects to **47.61 GiB, under the 51.20 GiB threshold**.
+
+The module constant is now the measured 1.271 with the fit and its log recorded
+in a code comment (the `MAG-10`/`MAG-15` precedent: a bound may move only with
+the measurement that moved it). This is a cost-probe threshold, not a physics
+gate — no assertion was loosened; the identity family, the σ = 0 control and
+the 0.01 pp reproduction floor are all at their unchanged bounds.
+
+### Why it stopped here
+
+The calibration finished at minute 49 of the timebox. A degree-2 solve is one
+~10-minute foreground command, which would have run past the 60-minute mark
+with no margin to recover a container if the 47.61 GiB projection is optimistic
+and it OOMs (`TH-11` step 5b wedged the box twice doing exactly this). The
+protocol's "no new implementation work after minute 45" made the call.
+
+### Hypothesis for the next attempt
+
+The next slot starts *at the solve*: one command,
+`TH12_STEP2_MODE=full`, `-n 8`, `timeout -k 30 900`, which re-runs the cheap
+degree-1 control (30 s of solve) and then the degree-2 pair — expect roughly
+4× that on the step-1 sphere's measured 4.32× wall ratio, so ~2-4 minutes of
+solve, and a peak near the projected 47.61 GiB. The module's own stop rule now
+lets it through, so no code change is needed. If it OOMs anyway, that is the
+measured answer to §7's question and the exponent model is what to report as
+wrong. If it completes, ΔR against step 4's h → 0 bracket [−2.1492%, −0.9050%]
+is the reading, printed and never gated, and the rung-swap decision is the
+review's.
+
+**Container:** healthy throughout, no wedge, no force-recreate. FFCx cache left
+**warm**, now including this module's degree-1 validation forms; the degree-2
+forms are still cold, so the next slot's first command pays their JIT and must
+not be read as per-test cost.

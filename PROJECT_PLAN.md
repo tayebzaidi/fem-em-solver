@@ -2209,8 +2209,35 @@ here; a `GEO` chunk may cite this entry.
 >   power error in-run. **Negative result:** if degree 2 does not beat
 >   the fine-rung record here, that is the answer — record it, stop; no
 >   production-order change is scopeable.
-> * **Step 2 (reading) — the coil at degree 2** *(heavy, serial on
->   step 1)*. `TH-11` step-1 fixture (138 619 cells) at degree 2,
+> * **Step 2 (reading) — the coil at degree 2** 🟡 *(attempt 1
+>   2026-08-18: the module lands, the control and the identity family are
+>   green, and the mandatory cost probe is **executed and then
+>   calibrated** — but the degree-2 solve itself has not run yet, and it
+>   is the only thing left)*
+>   `tests/validation/test_coil_loading_degree2.py`, `-n 8`, 10 MHz.
+>   **Probe** (`20260818T183449Z_TH-12-step2-probe.log`, 45 s): the
+>   baseline rung is 162 710 DOFs at degree 1 → **882 296 at degree 2**
+>   (5.42×), degree-1 summed peak RSS **6.63 GiB** of which 1.22 GiB is
+>   the pre-solve baseline. The §7 stop rule fired — but on a
+>   *pre-registered guess* of exponent 1.5 (projection 69.49 GiB against
+>   the 51.20 GiB threshold) whose own linear end read 30.54 GiB, i.e.
+>   the guess straddled the threshold and the guess, not the machinery,
+>   was deciding the step. **Calibration**
+>   (`20260818T183730Z_TH-12-step2-calibrate.log`, 106 s): the `TH-11`
+>   fine rung at unchanged order gives the second point — 417 914 cells,
+>   486 694 DOFs (2.991×), solve-attributable summed RSS 21.78 GiB
+>   against 5.41 GiB — fitting **p = 1.271**, near the N^(4/3) a 3D
+>   nested-dissection factorization is expected to store. Degree 2
+>   re-projects to **47.61 GiB**, *under* the 51.20 GiB threshold, so
+>   the solve is affordable and is priced: one command, `-n 8`,
+>   `timeout -k 30 900`, expect ~4× the degree-1 pair's 30 s of solve.
+>   The constant is now the measured 1.271 with the fit in a code
+>   comment. **Controls already green in-run:** degree 1 reproduces its
+>   recorded ΔR deviation **+1.5834%** to **−0.00002 pp** (floor
+>   0.01 pp), identity residuals 1.5e-14 / 5.9e-15 against the 1e-9
+>   family bound, σ = 0 dissipation exactly +0.0, cells exactly 138 619.
+>   **Remaining:** run the module in `full` mode and read ΔR against the
+>   bracket. *Original text:* `TH-11` step-1 fixture (138 619 cells) at degree 2,
 >   10 MHz: does ΔR land inside step 4's h → 0 bracket
 >   ([−2.1492%, −0.9050%]) at the *coarse* cell count? Identities at
 >   their family bounds; ΔR printed, never gated (the bracket is
@@ -3673,7 +3700,14 @@ cold. Done-item texts and prior recaps:
 item depends on another landing). Items execute their §7 entries
 verbatim as annotated by this review.
 
-1. **`TH-12` step 2 — the coil at degree 2 (heavy).** Execute the §7
+1. **`TH-12` step 2 — the coil at degree 2 (heavy).** 🟡 *attempt 1
+   2026-08-18 (13:30 slot): module + probe + calibration landed, the
+   degree-2 solve is the only thing left and is now **priced at
+   47.61 GiB projected, under the cap** — one command,
+   `TH12_STEP2_MODE=full`, `-n 8`, `timeout -k 30 900`. Everything
+   below still applies; the cost probe it demanded has been executed and
+   its exponent measured (p = 1.271), so the next attempt starts at the
+   solve.* Execute the §7
    `TH-12` step-2 entry verbatim, with this review's annotations. The
    `TH-11` step-1 coil+phantom fixture (138 619 cells) at degree-2
    N1curl, 10 MHz, loaded solve. **Cost probe first, mandatory:** print

@@ -1,0 +1,716 @@
+# Test Run
+- Chunk: TH-12-step2-probe
+- Commit: 3817cf2431a3972461b7c50bd5743a9f9ed73b22
+- Time (UTC): 2026-08-18 18:34:49
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 TH12_STEP2_MODE=probe timeout -k 30 420 mpiexec -n 8 python3 -m pytest tests/environment tests/validation/test_coil_loading_degree2.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 18 13:34 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 TH12_STEP2_MODE=probe timeout -k 30 420 mpiexec -n 8 python3 -m pytest tests/environment tests/validation/test_coil_loading_degree2.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 17 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 17 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 17 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 17 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSEDcollected 17 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSEDPASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form 
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form 
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form 
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 17 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 17 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build 
+[TH-1 step 0] PETSC_ARCH='linux-gnu-complex128-32' ScalarType=complex128 dolfinx=/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/__init__.py version=0.7.2
+PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 17 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSED
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not [TH-1 step 0] inner=(11.000000000000004+2.0000000000000004j) dot=(-5.000000000000002+10.000000000000004j)
+PASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSED
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSEDPASSEDPASSEDPASSEDPASSEDPASSED[TH-1 step 0] ||M||_F=1.041233e+00 ||M_c - eps_c*M||_F=4.686e-16
+PASSEDPASSED
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline 
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline 
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline 
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline 
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline 
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline 
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline 
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 50%] Meshing curve 11 (Line)
+Info    : [ 50%] Meshing curve 12 (Line)
+Info    : [ 60%] Meshing curve 13 (Line)
+Info    : [ 60%] Meshing curve 14 (Line)
+Info    : [ 70%] Meshing curve 15 (Line)
+Info    : [ 70%] Meshing curve 16 (Line)
+Info    : [ 80%] Meshing curve 17 (Line)
+Info    : [ 80%] Meshing curve 18 (Line)
+Info    : [ 90%] Meshing curve 19 (Line)
+Info    : [ 90%] Meshing curve 20 (Line)
+Info    : [100%] Meshing curve 21 (Line)
+Info    : [100%] Meshing curve 22 (Line)
+Info    : Done meshing 1D (Wall 0.078526s, CPU 0.076689s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.209359s, CPU 0.190868s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 3 volumes with 1 connected component
+Info    : Tetrahedrizing 3691 nodes...
+Info    : Done tetrahedrizing 3699 nodes (Wall 0.0802684s, CPU 0.067559s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.149524s, CPU 0.127211s)
+Info    : Found volume 4
+Info    : Found volume 3
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 34.6011 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 3.35428 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 2.60678 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 2.28255 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 2.07757 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 1.93491 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 1.82461 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 1.75247 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 1.69319 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 1.59774 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 1.54401 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 1.49993 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 1.45584 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 1.4202 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 1.38557 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 1.35341 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 1.3255 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 1.29944 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 1.27492 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 1.25625 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 1.25377 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 1.2161 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 1.19857 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 1.18152 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 1.16404 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 1.14928 (nodes removed 0 0)
+Info    : It. 13000 - 13000 nodes created - worst tet radius 1.13494 (nodes removed 0 0)
+Info    : It. 13500 - 13500 nodes created - worst tet radius 1.12204 (nodes removed 0 0)
+Info    : It. 14000 - 14000 nodes created - worst tet radius 1.1091 (nodes removed 0 0)
+Info    : It. 14500 - 14500 nodes created - worst tet radius 1.09601 (nodes removed 0 0)
+Info    : It. 15000 - 15000 nodes created - worst tet radius 1.08481 (nodes removed 0 0)
+Info    : It. 15500 - 15500 nodes created - worst tet radius 1.07217 (nodes removed 0 0)
+Info    : It. 16000 - 16000 nodes created - worst tet radius 1.06141 (nodes removed 0 0)
+Info    : It. 16500 - 16500 nodes created - worst tet radius 1.05117 (nodes removed 0 0)
+Info    : It. 17000 - 17000 nodes created - worst tet radius 1.04037 (nodes removed 0 0)
+Info    : It. 17500 - 17500 nodes created - worst tet radius 1.03018 (nodes removed 0 0)
+Info    : It. 18000 - 18000 nodes created - worst tet radius 1.02067 (nodes removed 0 0)
+Info    : It. 18500 - 18500 nodes created - worst tet radius 1.01162 (nodes removed 0 0)
+Info    : It. 19000 - 19000 nodes created - worst tet radius 1.00359 (nodes removed 0 0)
+Info    : 3D refinement terminated (22892 nodes total):
+Info    :  - 2 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 141062 tetrahedra created in 2.068 sec. (68211 tets/s)
+Info    : Done meshing 3D (Wall 2.47915s, CPU 2.43381s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 4.53849e-06) with worst = 0.115162 / average = 0.811785:
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :        10 elements
+Info    : 0.20 < quality < 0.30 :        22 elements
+Info    : 0.30 < quality < 0.40 :        21 elements
+Info    : 0.40 < quality < 0.50 :        49 elements
+Info    : 0.50 < quality < 0.60 :        62 elements
+Info    : 0.60 < quality < 0.70 :       230 elements
+Info    : 0.70 < quality < 0.80 :       735 elements
+Info    : 0.80 < quality < 0.90 :      1322 elements
+Info    : 0.90 < quality < 1.00 :       725 elements
+Info    : 32 edge swaps, 0 node relocations (volume = 4.53849e-06): worst = 0.301137 / average = 0.818744 (Wall 0.00103249s, CPU 0.000939s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        19 elements
+Info    : 0.40 < quality < 0.50 :        48 elements
+Info    : 0.50 < quality < 0.60 :        59 elements
+Info    : 0.60 < quality < 0.70 :       230 elements
+Info    : 0.70 < quality < 0.80 :       734 elements
+Info    : 0.80 < quality < 0.90 :      1328 elements
+Info    : 0.90 < quality < 1.00 :       728 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 0.0135) with worst = 0.00549795 / average = 0.770819:
+Info    : 0.00 < quality < 0.10 :        86 elements
+Info    : 0.10 < quality < 0.20 :       281 elements
+Info    : 0.20 < quality < 0.30 :       495 elements
+Info    : 0.30 < quality < 0.40 :       835 elements
+Info    : 0.40 < quality < 0.50 :      1305 elements
+Info    : 0.50 < quality < 0.60 :      2302 elements
+Info    : 0.60 < quality < 0.70 :      4771 elements
+Info    : 0.70 < quality < 0.80 :      9919 elements
+Info    : 0.80 < quality < 0.90 :     14618 elements
+Info    : 0.90 < quality < 1.00 :      7784 elements
+Info    : 850 edge swaps, 25 node relocations (volume = 0.0135): worst = 0.114719 / average = 0.783487 (Wall 0.0431592s, CPU 0.041767s)
+Info    : 856 edge swaps, 25 node relocations (volume = 0.0135): worst = 0.300335 / average = 0.783588 (Wall 0.051086s, CPU 0.049694s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       805 elements
+Info    : 0.40 < quality < 0.50 :      1250 elements
+Info    : 0.50 < quality < 0.60 :      2243 elements
+Info    : 0.60 < quality < 0.70 :      4746 elements
+Info    : 0.70 < quality < 0.80 :     10130 elements
+Info    : 0.80 < quality < 0.90 :     14708 elements
+Info    : 0.90 < quality < 1.00 :      7737 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 0.0134955) with worst = 0.0121491 / average = 0.778797:
+Info    : 0.00 < quality < 0.10 :       183 elements
+Info    : 0.10 < quality < 0.20 :       566 elements
+Info    : 0.20 < quality < 0.30 :      1073 elements
+Info    : 0.30 < quality < 0.40 :      1728 elements
+Info    : 0.40 < quality < 0.50 :      2645 elements
+Info    : 0.50 < quality < 0.60 :      4480 elements
+Info    : 0.60 < quality < 0.70 :      9605 elements
+Info    : 0.70 < quality < 0.80 :     22170 elements
+Info    : 0.80 < quality < 0.90 :     35176 elements
+Info    : 0.90 < quality < 1.00 :     17862 elements
+Info    : 1805 edge swaps, 59 node relocations (volume = 0.0134955): worst = 0.209449 / average = 0.790668 (Wall 0.0669569s, CPU 0.066956s)
+Info    : 1819 edge swaps, 59 node relocations (volume = 0.0134955): worst = 0.300242 / average = 0.790772 (Wall 0.0836235s, CPU 0.083622s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :      1694 elements
+Info    : 0.40 < quality < 0.50 :      2573 elements
+Info    : 0.50 < quality < 0.60 :      4265 elements
+Info    : 0.60 < quality < 0.70 :      9601 elements
+Info    : 0.70 < quality < 0.80 :     22533 elements
+Info    : 0.80 < quality < 0.90 :     35444 elements
+Info    : 0.90 < quality < 1.00 :     17742 elements
+Info    : Done optimizing mesh (Wall 0.435559s, CPU 0.398279s)
+Info    : 22892 nodes 146406 elements
+
+[TH-12 2 | f = 10 MHz | near 0.005] 138619 cells, mesh 9.1 s at -n 8; skin depth 15.92 mm (3.18 cells per delta)
+[TH-12 2] COST PROBE (before any degree-2 assembly): 162710 DOFs at degree 1 -> 882296 at degree 2 (5.42x)
+[TH-12 2]   degree-1 summed peak RSS 6.63 GiB, of which 1.22 GiB is the pre-solve baseline (interpreter + mesh, does not scale with order)
+[TH-12 2]   projection at exponent 1.5 (pre-registered): 69.49 GiB (linear end: 30.54 GiB) against 80% of memory.max = 51.20 GiB
+[TH-12 2]   VERDICT: OVER CAP — degree 2 is not attempted; this number is the step's result (§7 negative-result clause)
+
+  cells: 138619 (record: 138619)
+PASSED
+  cells: 138619 (record: 138619)
+PASSED
+[TH-12 2] READING at 10 MHz on 138619 cells (printed, never gated — the bracket is Richardson-derived, not a closed form)
+  degree 1:   162710 DOFs, dR = +3.2770406e-01 Ohm, dX = -5.6657895e-01 Ohm, dR deviation +1.5834%, dX ratio 0.9200, solves 17.0 s + 13.0 s, summed peak RSS 6.63 GiB (process high-water mark, so degree 2's includes degree 1's — an upper bound on its own footprint)
+    identity residuals: loaded 1.5361e-14, free 5.9294e-15 (bound 1e-09); P_loss loaded +1.3858364e-01 W vs free +0.0000000e+00 W
+  step-4 h -> 0 bracket at this f: [-2.1492%, -0.9050%]; degree-1 record on this rung +1.5834%
+  degree 2 was not solved (cost probe over cap, or probe mode) — the projection above is the step's result
+
+  cells: 138619 (record: 138619)
+PASSED
+  cells: 138619 (record: 138619)
+PASSED
+  cells: 138619 (record: 138619)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_cost_probe_priced_degree2_before_solving_it 
+tests/validation/test_coil_loading_degree2.py::test_the_cost_probe_priced_degree2_before_solving_it 
+  cells: 138619 (record: 138619)
+PASSED
+  cells: 138619 (record: 138619)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_cost_probe_priced_degree2_before_solving_it 
+tests/validation/test_coil_loading_degree2.py::test_the_cost_probe_priced_degree2_before_solving_it 
+  degree-2 DOFs 882296 (5.423x degree 1); projection 69.49 GiB vs threshold 51.20 GiB (over cap: True)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_cost_probe_priced_degree2_before_solving_it 
+  degree-2 DOFs 882296 (5.423x degree 1); projection 69.49 GiB vs threshold 51.20 GiB (over cap: True)
+PASSED
+  cells: 138619 (record: 138619)
+PASSED
+  degree-2 DOFs 882296 (5.423x degree 1); projection 69.49 GiB vs threshold 51.20 GiB (over cap: True)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_cost_probe_priced_degree2_before_solving_it 
+  degree-2 DOFs 882296 (5.423x degree 1); projection 69.49 GiB vs threshold 51.20 GiB (over cap: True)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+tests/validation/test_coil_loading_degree2.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+  degree-2 DOFs 882296 (5.423x degree 1); projection 69.49 GiB vs threshold 51.20 GiB (over cap: True)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+tests/validation/test_coil_loading_degree2.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+tests/validation/test_coil_loading_degree2.py::test_the_cost_probe_priced_degree2_before_solving_it 
+  degree-2 DOFs 882296 (5.423x degree 1); projection 69.49 GiB vs threshold 51.20 GiB (over cap: True)
+PASSED
+  degree 1: +1.5834% vs record +1.5834% → -0.00002 pp (floor 0.01 pp)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+  degree 1: +1.5834% vs record +1.5834% → -0.00002 pp (floor 0.01 pp)
+PASSED
+  degree 1: +1.5834% vs record +1.5834% → -0.00002 pp (floor 0.01 pp)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-1] 
+  degree-2 DOFs 882296 (5.423x degree 1); projection 69.49 GiB vs threshold 51.20 GiB (over cap: True)
+PASSED
+  degree 1: +1.5834% vs record +1.5834% → -0.00002 pp (floor 0.01 pp)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-1] 
+  degree 1: +1.5834% vs record +1.5834% → -0.00002 pp (floor 0.01 pp)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-1] 
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-1] 
+tests/validation/test_coil_loading_degree2.py::test_the_degree1_control_reproduces_its_recorded_deviation 
+  degree 1: +1.5834% vs record +1.5834% → -0.00002 pp (floor 0.01 pp)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-1] 
+  degree 1, loaded: Im Z reaction 9.020108e+00 Ω vs energy 9.020108e+00 Ω → residual 1.5361e-14 (W_m 3.0355e-08 J, W_e 2.0268e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-1] 
+  degree 1: +1.5834% vs record +1.5834% → -0.00002 pp (floor 0.01 pp)
+PASSED
+  degree 1, loaded: Im Z reaction 9.020108e+00 Ω vs energy 9.020108e+00 Ω → residual 1.5361e-14 (W_m 3.0355e-08 J, W_e 2.0268e-13 J)
+PASSED
+  degree 1, loaded: Im Z reaction 9.020108e+00 Ω vs energy 9.020108e+00 Ω → residual 1.5361e-14 (W_m 3.0355e-08 J, W_e 2.0268e-13 J)
+PASSED
+  degree 1, loaded: Im Z reaction 9.020108e+00 Ω vs energy 9.020108e+00 Ω → residual 1.5361e-14 (W_m 3.0355e-08 J, W_e 2.0268e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-2] 
+tests/validation/test_coil_loading_degree2.py::test_the_cost_probe_priced_degree2_before_solving_it 
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-1] 
+  degree 1, loaded: Im Z reaction 9.020108e+00 Ω vs energy 9.020108e+00 Ω → residual 1.5361e-14 (W_m 3.0355e-08 J, W_e 2.0268e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-2] 
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-2] 
+  degree 1, loaded: Im Z reaction 9.020108e+00 Ω vs energy 9.020108e+00 Ω → residual 1.5361e-14 (W_m 3.0355e-08 J, W_e 2.0268e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-2] 
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-2] 
+  degree 1, loaded: Im Z reaction 9.020108e+00 Ω vs energy 9.020108e+00 Ω → residual 1.5361e-14 (W_m 3.0355e-08 J, W_e 2.0268e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-2] SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')
+  degree-2 DOFs 882296 (5.423x degree 1); projection 69.49 GiB vs threshold 51.20 GiB (over cap: True)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-2] SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-1] SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-1] 
+tests/validation/test_coil_loading_degree2.py::test_the_degree1_control_reproduces_its_recorded_deviation SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-1] 
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-1] 
+  degree 1, free: Im Z reaction 9.586687e+00 Ω vs energy 9.586687e+00 Ω → residual 5.9294e-15 (W_m 3.2262e-08 J, W_e 3.3881e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-1] SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')
+  degree 1, free: Im Z reaction 9.586687e+00 Ω vs energy 9.586687e+00 Ω → residual 5.9294e-15 (W_m 3.2262e-08 J, W_e 3.3881e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-1] 
+  degree 1, free: Im Z reaction 9.586687e+00 Ω vs energy 9.586687e+00 Ω → residual 5.9294e-15 (W_m 3.2262e-08 J, W_e 3.3881e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-2] 
+  degree 1, free: Im Z reaction 9.586687e+00 Ω vs energy 9.586687e+00 Ω → residual 5.9294e-15 (W_m 3.2262e-08 J, W_e 3.3881e-13 J)
+PASSED
+  degree 1: +1.5834% vs record +1.5834% → -0.00002 pp (floor 0.01 pp)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-1] 
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-2] 
+  degree 1, free: Im Z reaction 9.586687e+00 Ω vs energy 9.586687e+00 Ω → residual 5.9294e-15 (W_m 3.2262e-08 J, W_e 3.3881e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-2] 
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-2] 
+  degree 1, free: Im Z reaction 9.586687e+00 Ω vs energy 9.586687e+00 Ω → residual 5.9294e-15 (W_m 3.2262e-08 J, W_e 3.3881e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-2] 
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-2] 
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-1] 
+  degree 1, free: Im Z reaction 9.586687e+00 Ω vs energy 9.586687e+00 Ω → residual 5.9294e-15 (W_m 3.2262e-08 J, W_e 3.3881e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-2] SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')
+  degree 1, loaded: Im Z reaction 9.020108e+00 Ω vs energy 9.020108e+00 Ω → residual 1.5361e-14 (W_m 3.0355e-08 J, W_e 2.0268e-13 J)
+PASSEDSKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[1] SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[1] SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[1] 
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[1] 
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-2] 
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[1] 
+  degree 1 P_loss: loaded +1.3858364e-01 W, free (σ = 0) +0.0000000e+00 W
+PASSED
+  degree 1 P_loss: loaded +1.3858364e-01 W, free (σ = 0) +0.0000000e+00 W
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[1] 
+  degree 1 P_loss: loaded +1.3858364e-01 W, free (σ = 0) +0.0000000e+00 W
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[2] 
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[2] SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')
+  degree 1 P_loss: loaded +1.3858364e-01 W, free (σ = 0) +0.0000000e+00 W
+PASSED
+  degree 1 P_loss: loaded +1.3858364e-01 W, free (σ = 0) +0.0000000e+00 W
+PASSED
+  degree 1 P_loss: loaded +1.3858364e-01 W, free (σ = 0) +0.0000000e+00 W
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[2] 
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[2] 
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[1] 
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[2] 
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[2] SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')
+  degree 1 P_loss: loaded +1.3858364e-01 W, free (σ = 0) +0.0000000e+00 W
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[1] 
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[1] SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[2] 
+  degree 1: ||J'_loaded - J'_free||^2 / ||J'||^2 = 1.049e-34
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[1] 
+  degree 1: ||J'_loaded - J'_free||^2 / ||J'||^2 = 1.049e-34
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[1] 
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[1] 
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[1] 
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[2] 
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[2] SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')
+  degree 1: ||J'_loaded - J'_free||^2 / ||J'||^2 = 1.049e-34
+PASSED
+  degree 1: ||J'_loaded - J'_free||^2 / ||J'||^2 = 1.049e-34
+PASSED
+  degree 1: ||J'_loaded - J'_free||^2 / ||J'||^2 = 1.049e-34
+PASSED
+  degree 1: ||J'_loaded - J'_free||^2 / ||J'||^2 = 1.049e-34
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-1] 
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[2] 
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[2] 
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[1] 
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[2] 
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[2] SKIPPEDhold 51.20 GiB (over cap:
+True), mode 'probe')SKIPPEDhold 51.20 GiB (over cap:
+True), mode 'probe')
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[1] 
+  degree 1: ||J'_loaded - J'_free||^2 / ||J'||^2 = 1.049e-34
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[1] SKIPPEDhold 51.20 GiB (over cap:
+True), mode 'probe')SKIPPEDhold 51.20 GiB (over cap:
+True), mode 'probe')SKIPPEDhold 51.20 GiB (over cap:
+True), mode 'probe')SKIPPEDhold 51.20 GiB (over cap:
+True), mode 'probe')
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[2] 
+  degree 1, free: Im Z reaction 9.586687e+00 Ω vs energy 9.586687e+00 Ω → residual 5.9294e-15 (W_m 3.2262e-08 J, W_e 3.3881e-13 J)
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[1] 
+  degree 1: ΔR = +3.2770406e-01 Ω, ΔX = -5.6657895e-01 Ω, deviation +1.5834%
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[1] 
+  degree 1: ΔR = +3.2770406e-01 Ω, ΔX = -5.6657895e-01 Ω, deviation +1.5834%
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[1] 
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[1] 
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[2] 
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[2] 
+  degree 1: ΔR = +3.2770406e-01 Ω, ΔX = -5.6657895e-01 Ω, deviation +1.5834%
+PASSED
+  degree 1: ΔR = +3.2770406e-01 Ω, ΔX = -5.6657895e-01 Ω, deviation +1.5834%
+PASSED
+  degree 1: ΔR = +3.2770406e-01 Ω, ΔX = -5.6657895e-01 Ω, deviation +1.5834%
+PASSED
+  degree 1: ΔR = +3.2770406e-01 Ω, ΔX = -5.6657895e-01 Ω, deviation +1.5834%
+PASSEDSKIPPEDhold 51.20 GiB (over cap:
+True), mode 'probe')
+tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[free-2] 
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[2] 
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[2] 
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[2] 
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[2] 
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[1] SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')
+  degree 1: ΔR = +3.2770406e-01 Ω, ΔX = -5.6657895e-01 Ω, deviation +1.5834%
+PASSEDSKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[2] SKIPPEDshold 51.20 GiB (over cap: True),
+mode 'probe')SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[1] 
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 12 passed, 5 skipped, 8 warnings in 44.91s ==================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 12 passed, 5 skipped, 8 warnings in 44.91s ==================
+
+  degree 1 P_loss: loaded +1.3858364e-01 W, free (σ = 0) +0.0000000e+00 W
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_free_solve_dissipates_exactly_nothing[2] 
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 12 passed, 5 skipped, 8 warnings in 44.91s ==================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 12 passed, 5 skipped, 8 warnings in 44.91s ==================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 12 passed, 5 skipped, 8 warnings in 44.91s ==================
+SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 12 passed, 5 skipped, 8 warnings in 44.91s ==================
+
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[1] 
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 12 passed, 5 skipped, 8 warnings in 44.91s ==================
+
+  degree 1: ||J'_loaded - J'_free||^2 / ||J'||^2 = 1.049e-34
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_both_solves_are_driven_by_the_same_projected_current[2] SKIPPEDhold 51.20 GiB (over cap:
+True), mode 'probe')
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[1] 
+  degree 1: ΔR = +3.2770406e-01 Ω, ΔX = -5.6657895e-01 Ω, deviation +1.5834%
+PASSED
+tests/validation/test_coil_loading_degree2.py::test_the_loaded_coil_dissipates_and_expels_flux[2] SKIPPEDhold 51.20 GiB (over cap: True), mode
+'probe')
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/validation/test_coil_loading_degree2.py: 56 warnings
+  /usr/local/lib/python3.10/dist-packages/ufl/core/expr.py:275: DeprecationWarning: Expr.ufl_domain() is deprecated, please use extract_unique_domain(expr) instead.
+    warnings.warn("Expr.ufl_domain() is deprecated, please "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================= 12 passed, 5 skipped, 64 warnings in 44.92s ==================
+
+## Exit
+- Status: 0
+- Elapsed (s): 47

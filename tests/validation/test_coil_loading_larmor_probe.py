@@ -131,7 +131,7 @@ def _stored_magnetic_energy(e_complex, omega: float, comm) -> float:
     return float(np.real(total) / (4.0 * MU_0 * omega**2))
 
 
-def _solve_projected_at(msh, cell_tags, sigma_slab, frequency_hz, comm):
+def _solve_projected_at(msh, cell_tags, sigma_slab, frequency_hz, comm, degree: int = 1):
     """``test_dodd_deeds_projected_drive._solve_projected`` with ``f`` freed.
 
     That helper pins ``FEM_FREQUENCY_HZ``, which is the one thing this chunk
@@ -139,6 +139,10 @@ def _solve_projected_at(msh, cell_tags, sigma_slab, frequency_hz, comm):
     their 10 MHz provenance untouched.  Everything else — the production
     default drive (``project_source`` left on), degree 1, the PEC box — is
     verbatim.
+
+    ``degree`` defaults to 1, so every `TH-11` caller and every recorded number
+    is untouched; `TH-12` step 2 passes 2 to run the same fixture at
+    second-order N1curl.
     """
     problem = TimeHarmonicProblem(
         mesh=msh,
@@ -150,7 +154,7 @@ def _solve_projected_at(msh, cell_tags, sigma_slab, frequency_hz, comm):
         },
         boundary_condition="pec_zero_tangential_a",
     )
-    solver = TimeHarmonicSolver(problem, degree=1)
+    solver = TimeHarmonicSolver(problem, degree=degree)
     j_magnitude = FEM_CURRENT_A / (np.pi * FEM_WIRE_RADIUS**2)
     comm.Barrier()
     t0 = time.perf_counter()
