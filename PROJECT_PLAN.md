@@ -1418,6 +1418,7 @@ path, not polish.
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ✅ | standard |
 | `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 ✅ 2026-08-17 — the fixed-f h-ladder reads **flat in f**: refinement moves the deviation −1.87 pp at 10 MHz and −4.48 pp at 30 MHz (−7.46 pp at 64 MHz on record) and the h → 0 brackets overlap at ~−1%, so the "trend" was the resolution term; no gated trend claim is scopeable and §2 stands; step 5 scoped 2026-08-17 review, attempt 1 🚫 2026-08-17 — the third rung is **priced and does not fit a scheduled slot**: 2 807 309 cells (inside the 3.4 M ceiling) but 288.2 s of mesh plus a loaded solve still assembling at the 570 s kill, so §7's probe stop condition fired; module parked on `attempt/TH-11-step5-20260817T123353Z`; **rescoped by the 10:30 review as 5a/5b** — 5a caches the mesh to XDMF and buys the `-n 8` rank change with a measured control (fine-rung +2.8063% reproduced within 0.1 pp), 5b runs the pair off the cache; step 5a ✅ 2026-08-17 — the cache round-trips the 2 807 309-cell rung **exactly** (per-tag owned counts and tag names preserved, mesh 126.4 s replaced by a 14.8 s read) and the `-n 8` fine-rung pair reproduces the `-n 2` record to **+0.00002 pp**, so the rank change is bought; 5b is unblocked and needs one solve per command at ~480 s; step 5b attempt 1 🟡 2026-08-18 — the loaded/free split is **exact** (fine rung reproduced to the last digit, drive surrogate 0.000e+00) and the cache reads back at `-n 12`, but the third-rung solve was **OOM-killed with the container** at 518 s, so the rung is memory-bound at 64 GiB, not time-bound: the review's lever (b) more ranks is the wrong one and (c) shrinking the rung is now live; module parked on `attempt/TH-11-step5b-20260818T004000Z`; step 5b attempt 2 🟡 2026-08-18 — the peak is now **measured**: at `-n 8` the same solve drove `memory.peak` to **64.00 GiB, exactly `memory.max`**, and ran past `timeout -k 30 560` without returning, so `-n 12`'s OOM and `-n 8`'s overrun are one wall with two failure modes and **no rank count affords 2 807 309 cells on this box** — §7's stop condition fires and (c) shrinking to ~1.4 M cells is the review's call; parked on `attempt/TH-11-step5b-20260818T024200Z`)* | standard (steps 4–5 heavy) |
+| `TH-12` | **Second-order elements (degree-2 N1curl): accuracy-per-DOF and cost, measured** (operator directive 2026-08-18; decides the production element order for §10 Phase 5/6 — see entry) | ⬜ | standard (step 2 heavy) |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)**
 ✅ *(steps 1–4 ✅ 2026-08-13, chunk closed by the 10:30 review; full step
@@ -1775,6 +1776,56 @@ step-1/2 journals archived in `docs/planning/plan-archive.md`.)*
 >     64 MHz reading exists and §2 is untouched. **Process datum:** a 560 s
 >     container ceiling can exceed the Bash tool's 660 s wall clock under memory
 >     pressure — **~480 s** is the safe container ceiling for a foreground slot.
+
+**`TH-12` — second-order elements (degree-2 N1curl): accuracy-per-DOF and
+direct-solver cost, measured on gated fixtures** ⬜ *(commissioned
+2026-08-18, operator directive — element order is to be evaluated as a
+cross-phase lever, and the production element order for the §10 Phase-5/6
+work is to be decided from this chunk's measurements, not assumed.)*
+Motivation, all on record: every open accuracy question in the TH/MAT
+lineage is a cells-per-skin-depth question (`TH-11` steps 2/4: the
+apparent frequency trend was the resolution term), and `TH-11` step 5b
+has now measured that the degree-1 route to the 64 MHz h → 0 bracket
+**does not fit the box** — 2 807 309 cells OOM at every legal rank count
+(64.00 GiB = `memory.max`). Degree 2 is the other axis: ~20 DOFs/tet vs
+6, denser MUMPS blocks, but second-order field convergence ⇒ far fewer
+cells at matched accuracy. The infrastructure exists —
+`TimeHarmonicSolver(problem, degree=2)` builds `("N1curl", 2)` and the
+DG output spaces follow `self.degree` — it has simply never been gated.
+**Scope guard:** time-harmonic E-formulation only. The magnetostatic
+A-formulation's degree-2 failure (penalty-gauge null-space contamination,
+920% field error with a clean solver exit, `core/solvers.py`) is a
+formulation property, stays barred, and is *not* evidence about this
+chunk. Curved second-order **geometry** (gmsh mesh order 2 — the answer
+to `GEO-15`'s 3.3% faceting residual) is a separate knob, out of scope
+here; a `GEO` chunk may cite this entry.
+> * **Step 1 (gate) — the sphere at degree 2** *(standard, `-n 2`)*.
+>   `TH-10`'s fixture, degree 2 on the **coarse** rung (5 866 cells) at
+>   64 MHz. **Gate:** interior relL2 ≤ the degree-1 fine-rung record
+>   (3.643% at 17 670 cells) at strictly fewer cells; power identity
+>   family bound 1e-9 unchanged; **print** DOF counts, MUMPS factor
+>   wall time and `memory.peak` beside the degree-1 records so
+>   accuracy-per-DOF and cost-per-DOF are both measured. **Negative
+>   control:** degree 1 on the same rung reproduces its recorded 8.387%
+>   power error in-run. **Negative result:** if degree 2 does not beat
+>   the fine-rung record here, that is the answer — record it, stop; no
+>   production-order change is scopeable.
+> * **Step 2 (reading) — the coil at degree 2** *(heavy, serial on
+>   step 1)*. `TH-11` step-1 fixture (138 619 cells) at degree 2,
+>   10 MHz: does ΔR land inside step 4's h → 0 bracket
+>   ([−2.1492%, −0.9050%]) at the *coarse* cell count? Identities at
+>   their family bounds; ΔR printed, never gated (the bracket is
+>   Richardson-derived, not a closed form). If yes, a degree-2 rung
+>   becomes the live replacement for step 5b's memory-infeasible third
+>   rung, and the review scopes that swap explicitly. **Cost probe
+>   first**: print DOFs and the MUMPS in-core estimate before solving;
+>   if the estimate exceeds the cgroup cap, stop — that number is the
+>   step's result.
+> * **Decision clause:** results go to the weekly review, which sets
+>   the production element order for the §10 Phase-5/6 breakdown (the
+>   32-port directive's cost rung is then priced at the chosen order).
+>   No recorded degree-1 number moves; every degree-2 number lands as a
+>   new row beside its degree-1 sibling.
 
 **`GEO-14` — the shared ~3% geometry floor: discriminate faceting from
 resolution** ✅ *(commissioned 2026-08-13, closed 2026-08-15 on a refuted
@@ -3451,6 +3502,22 @@ vehicle — first gates land there — but Phase 6 does not close on it.
 Circuit-layer detail is deliberately left to the reviews when the phase
 opens (operator: the area is well-covered by literature; ladder-network
 closed forms are the entry point).
+
+**The element-order lever (operator directive 2026-08-18, cross-phase).**
+Second-order (degree-2 N1curl) elements are to be *evaluated by
+measurement* (`TH-12`) and, if they win on accuracy-per-DOF, adopted as
+the production order for the Phase-5/6 solves — every open TH/MAT
+accuracy question is a cells-per-δ question, `TH-11` step 5b has measured
+that the degree-1 route to the 64 MHz bracket does not fit the box, and
+the production 32-port case only compounds that. Honest scope of the
+lever: it applies to the time-harmonic E-formulation lineage (Phases 2–6,
+including SAR fields and port integrals); it does **not** apply to the
+closed Phase-1 magnetostatics (degree-2 A is on record diverging under
+the penalty gauge — a formulation property, and Phase 1 is not worth
+re-gating). Curved second-order *geometry* is the separable second half
+of the same idea (it is the answer class for `GEO-15`'s 3.3% faceting
+residual) and awaits its own `GEO` chunk. No dated estimate until
+`TH-12` step 1 lands a number.
 
 **Phase 7 — implants.** Parametric implant geometry first (wires, rods,
 plates in the phantom; CAD import later), mesh grading around thin
