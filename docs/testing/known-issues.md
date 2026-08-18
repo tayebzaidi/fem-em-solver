@@ -566,6 +566,39 @@ ranks died. Reach for the force-recreate rather than repeating the
 restart/kill pair. Not diagnosed: whether the wedge is specific to a job that
 survived its `timeout`, or to any long `docker compose exec` under load.
 
+### A killed harness run poisons the FFCx JIT cache, and the *next* run fails unrelated forms with "JIT compilation timed out" (`OPS-17` step 3 attempt 3, 2026-08-18)
+
+**Verified at `2f97048`, 00:00 implementer slot.** Two complex-mode legs were
+killed at their ceilings by `timeout -k 30 570` (exit 124,
+`20260818T050123Z_OPS-17-step3c-complex-portgap.log` and
+`20260818T051115Z_OPS-17-step3c-complex-remainder.log`). In the *second* of
+those, `tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form`
+FAILED at 67% — a test that is green in real mode and whose gated quantity
+(17.1233% L2 against a 30% band, `OPS-17` step 2) has nothing to do with the
+build mode. Re-run alone it fails in **14.09 s** with
+
+```
+RuntimeError: Failed just-in-time compilation of form: JIT compilation timed
+out, probably due to a failed previous compile.
+Try cleaning cache (e.g. remove /root/.cache/fenics/libffcx_forms_<hash>.c)
+or increase timeout option.
+```
+
+(`20260818T052132Z_OPS-17-step3c-coilphantom-complex.log`, exit 1, 15 s.) The
+form's compile was interrupted mid-flight when the first leg was killed; the
+lock file it left in `/root/.cache/fenics/` makes every later process wait out
+the JIT timeout and raise. **The failure is an artifact of the kill, not a
+regression** — do not open a chunk against the test on this evidence, and do
+not trust *any* failure in a run that follows a killed one until the cache is
+cleared. Suspect this whenever a fast, previously-green test fails in seconds
+with a `dolfinx/jit.py` `RuntimeError` rather than an assertion.
+
+Not yet verified in this repo (no compute budget left in the slot when it was
+found): that removing `/root/.cache/fenics/libffcx_forms_<hash>.c` — or the
+cache directory — restores the test. The next slot that touches this should
+clear the cache first and record whether the test returns to green; that also
+settles whether a force-recreate is needed or a file delete suffices.
+
 ### ✅ RETIRED 2026-08-11 — "unexplained" mid-command termination of the logging harness was the background-and-end-turn trap (2026-08-08, 15:00 and 19:30 implementer slots)
 
 **Retired by the 2026-08-11 10:30 review — cause named, with wrapper-log

@@ -400,7 +400,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
-| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b), the two complex legs, unstarted) | standard |
+| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots) | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 
@@ -920,6 +920,46 @@ exists, replace instead. Two steps, one implementer run each.)*
 >     `20260817T214128Z_OPS-17-step3b-collect-real.log` records *tail's* exit;
 >     re-run unpiped. Do not cite the piped log. The trap survives having just
 >     been read — keep it in the rubric.
+>
+>   **🟡 attempt 3, 2026-08-18 05:30Z (00:00 slot) — leg (b) is NOT closed:
+>   both prescribed complex commands hit exit 124, and the leg's only surprise
+>   is a stale-FFCx-cache artifact of the first kill, not a regression.**
+>   Nothing parked (no `src/` or `tests/` change). Full journal in
+>   `docs/testing/attempts.md`.
+>   * **Negative control reconciles exactly.** Complex `tests/` collects
+>     **380** (`20260818T050048Z_OPS-17-step3c-collect-complex.log`, exit 0,
+>     6 s) = attempt 2's real **377** + the **3** functions `a56b632` added in
+>     `tests/validation/test_port_lumped_sheet_sweep.py`. Zero unexplained.
+>   * **Complex `port_gap` pair: exit 124 at 92%, 571 s**
+>     (`20260818T050123Z_OPS-17-step3c-complex-portgap.log`), dying in
+>     `test_port_gap_voltage_padding.py`. The review's 446 s priced
+>     `test_port_gap_voltage_impedance.py` **alone**; the padding sibling is
+>     not in that number and the pair does not fit one window.
+>   * **Complex remainder: exit 124 at 75%, 570 s**
+>     (`20260818T051115Z_OPS-17-step3c-complex-remainder.log`), dying inside
+>     `tests/solver`. Its real-mode twin cost 218 s — **complex mode is >2.6×
+>     real mode on the same test set**, and leg (b)'s sizing inherited the
+>     real-mode intuition. Measured split point for the next attempt:
+>     `environment`/`io`/`materials`/`mesh`/`ports`/`post` all completed; only
+>     the tail of `tests/solver` is unobserved.
+>   * **Defect 3 is still unobserved.** `tests/post` ran to completion in the
+>     killed leg, but a killed run prints no summary section, so its xfail
+>     cannot be read off the log.
+>   * **Not a regression — a cache artifact, filed in known-issues.**
+>     `test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form`
+>     FAILED at 67% of the remainder leg; re-run alone it fails in 14.09 s with
+>     `RuntimeError: Failed just-in-time compilation of form: JIT compilation
+>     timed out, probably due to a failed previous compile`
+>     (`20260818T052132Z_OPS-17-step3c-coilphantom-complex.log`). The first
+>     killed leg left a stale FFCx lock in `/root/.cache/fenics/`. **Open no
+>     chunk against that test on this evidence**, and clear the cache before
+>     the next attempt's first command. The 3 `tests/ports/` failures are the
+>     named expected ones; both strict mesh xfails still xfail.
+>   * **Leg (b) is three commands, not two, and likely two slots** — see the
+>     attempts.md hypothesis. A review may want to split it into (b1) the
+>     complex remainder (two commands, split at `tests/solver`) and (b2)
+>     complex validation (`port_gap` impedance alone, then the rest, which is
+>     unmeasured and wants a cost-probe).
 
 **`OPS-13` — land the rank-safe `_validate_material_map_tags` fix** ✅
 *(2026-08-08; full narrative in `docs/planning/plan-archive.md`)*. The one

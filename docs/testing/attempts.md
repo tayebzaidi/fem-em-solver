@@ -13376,3 +13376,87 @@ of its own work; still uncommitted and deliberately untouched are the other
 session's `docs/references/README.md` edit and its untracked
 `docs/references/dolfinx-0.11-migration/` pack. The process point stands
 unchanged: pathspecs on every scheduled commit.
+
+---
+
+## 2026-08-18T05:30Z — `OPS-17` step 3 (leg b, attempt 3) — **incomplete** (both complex legs overran; the leg's one surprise is a cache artifact, not a regression)
+
+**Slot:** 00:00 local implementer run (2026-08-18). Tree clean at preflight;
+container was **not** Up (`ps` showed no rows) and was started with
+`docker compose -f docker/docker-compose.yml up -d` before any work. On-deck
+**item 3**, taken as written: item 1 (`TH-11` step 5b) is twice-failed
+(00:34Z, 02:16Z entries) and was skipped as this section's rescope rule
+directs; item 2 (`PORT-9` step 2c) is marked done. No `src/` or `tests/`
+change was made, so nothing is parked — `main` carries four logs, this entry,
+a known-issues entry and the §7 annotation.
+
+**Negative control: the collect count reconciles exactly.** Complex `tests/`
+collects **380** (`20260818T050048Z_OPS-17-step3c-collect-complex.log`, exit 0,
+6 s). Attempt 2's real-mode 377 was measured before `a56b632`, which added
+`tests/validation/test_port_lumped_sheet_sweep.py` — **3** test functions.
+**377 + 3 = 380**, zero unexplained. (Step 2's 359 remains the older complex
+count; the 21-test delta is attempt 2's 18 plus these 3.)
+
+**Both prescribed leg-(b) commands overran their ceilings.** Each was killed
+and shrunk per §5.1, never re-run longer:
+
+| leg | command | result | elapsed |
+| --- | --- | --- | --- |
+| complex `port_gap` pair | `tests/environment` + `test_port_gap_voltage_impedance.py` + `test_port_gap_voltage_padding.py`, `-n 2`, `timeout -k 30 570` | **exit 124 at 92%**, dying in `test_port_gap_voltage_padding.py` | 571 s |
+| complex remainder | `tests/environment` + `tests/ --ignore=tests/validation`, `-n 2`, `timeout -k 30 570` | **exit 124 at 75%**, dying in `tests/solver/test_convergence_diagnostics.py` | 570 s |
+
+Logs `20260818T050123Z_OPS-17-step3c-complex-portgap.log` and
+`20260818T051115Z_OPS-17-step3c-complex-remainder.log`. The review sized the
+`port_gap` family at 446 s from a step-2 measurement of
+`test_port_gap_voltage_impedance.py` **alone**; the padding sibling is not
+covered by that number and the pair does not fit one window. The remainder leg
+is the bigger miss: its real-mode twin cost **218 s** (attempt 1) and the
+complex twin did not finish 570 s — complex mode is >2.6× on the same test
+set, and the review's leg-(b) sizing inherited the real-mode intuition.
+
+**Directory progression of the killed remainder leg** (this is the useful
+sizing datum): `tests/environment` → `io` → `materials` → `mesh` → `ports` →
+`post` all ran to completion; the kill landed inside `tests/solver` at 75%.
+So the *only* unobserved complex non-validation directory is the tail of
+`tests/solver`.
+
+**Anchor status.** Unchanged from attempt 2 on the real half (closed). The
+complex half stays open: neither complex leg completed, so no complex leg can
+yet be cited for "every test observed in a completed leg". **Defect 3's
+th-smoke Poynting xfail was still not observed** — `tests/post` ran to
+completion in the killed remainder leg, but a killed run has no summary
+section, so its xfail cannot be read off the log.
+
+**The one surprise, and it is not a regression.**
+`tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form`
+FAILED at 67% of the remainder leg — a test green in real mode whose gated
+quantity (17.1233% L2 vs 30%) is build-mode-independent. Re-run alone it fails
+in **14.09 s** with `RuntimeError: Failed just-in-time compilation of form:
+JIT compilation timed out, probably due to a failed previous compile`
+(`20260818T052132Z_OPS-17-step3c-coilphantom-complex.log`, exit 1, 15 s) —
+i.e. the *first* killed leg left a stale FFCx lock in `/root/.cache/fenics/`
+and poisoned the second. Filed as a non-test known-issues entry; **no chunk
+should be opened against that test on this evidence.** The three
+`tests/ports/` failures in the same leg are the named expected ones
+(known-issues 3 + the `_DummyComm` entry), and both strict mesh xfails still
+xfail.
+
+**Denials:** none. **Traps:** the pytest-pipe trap did not fire this slot (no
+command piped pytest).
+
+**Hypothesis for the next attempt.** Leg (b) is a **three-command** leg, not
+two, and the next attempt should clear the FFCx cache before the first
+command:
+1. complex `tests/environment` + `tests/ --ignore=tests/validation
+   --ignore=tests/solver`, then `tests/solver` alone — the 75% split point is
+   measured, and this also finally reads defect 3's xfail off a completed
+   `tests/post`;
+2. complex `test_port_gap_voltage_impedance.py` alone (`timeout -k 30 570`;
+   step 2 priced it at 448 s, so it fits and nothing else does);
+3. complex `tests/validation` minus both `port_gap` files — unmeasured, and on
+   this slot's evidence it should be cost-probed before a window is committed
+   to it.
+That is more than one slot's work at 570 s a command; the review may want to
+split leg (b) into (b1) the remainder and (b2) validation, and to record that
+**complex mode costs ~2.6× real mode on the same tests** so future sizings
+stop inheriting real-mode numbers.

@@ -1,0 +1,101 @@
+# Test Run
+- Chunk: OPS-17-step3c-complex-portgap
+- Commit: 2f970486539fa3eb09f58c472842fbf77474f053
+- Time (UTC): 2026-08-18 05:01:23
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 570 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_gap_voltage_impedance.py tests/validation/test_port_gap_voltage_padding.py -v --tb=short --durations=10'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 18 00:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 570 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_gap_voltage_impedance.py tests/validation/test_port_gap_voltage_padding.py -v --tb=short --durations=10'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 26 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  3%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 26 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  3%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [  7%]PASSED [  7%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 11%]PASSED [ 11%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 15%]PASSED [ 15%]
+tests/validation/test_port_gap_voltage_impedance.py::test_lifted_systematics_ladder_is_bit_identical 
+tests/validation/test_port_gap_voltage_impedance.py::test_lifted_systematics_ladder_is_bit_identical PASSED [ 19%]PASSED [ 19%]
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_respects_the_skin_depth_constraint 
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_respects_the_skin_depth_constraint PASSED [ 23%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_box_meshes_exactly_at_the_reduced_overhang PASSED [ 23%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_box_meshes_exactly_at_the_reduced_overhang PASSED [ 26%]PASSED [ 26%]
+tests/validation/test_port_gap_voltage_impedance.py::test_port_discs_are_the_arc_end_cut 
+tests/validation/test_port_gap_voltage_impedance.py::test_port_discs_are_the_arc_end_cut PASSED [ 30%]
+tests/validation/test_port_gap_voltage_impedance.py::test_arc_quadrature_nodes_lie_strictly_inside_the_gap PASSED [ 30%]
+tests/validation/test_port_gap_voltage_impedance.py::test_arc_quadrature_nodes_lie_strictly_inside_the_gap PASSED [ 34%]
+tests/validation/test_port_gap_voltage_impedance.py::test_path_voltage_is_converged_in_the_quadrature PASSED [ 34%]PASSED [ 38%]
+tests/validation/test_port_gap_voltage_impedance.py::test_path_voltage_is_converged_in_the_quadrature 
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_angles_match_the_meshed_gap_extent PASSED [ 38%]PASSED [ 42%]
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_angles_match_the_meshed_gap_extent 
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_to_terminal_voltage_retiles_the_closure_decomposition PASSED [ 42%]PASSED [ 46%]
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_to_terminal_voltage_retiles_the_closure_decomposition 
+tests/validation/test_port_gap_voltage_impedance.py::test_reaction_route_on_the_gapped_fixture_reproduces_its_record PASSED [ 50%]PASSED [ 46%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_mutual_matches_the_same_fixture_reaction_control 
+tests/validation/test_port_gap_voltage_impedance.py::test_reaction_route_on_the_gapped_fixture_reproduces_its_record PASSED [ 53%]PASSED [ 50%]
+tests/validation/test_port_gap_voltage_impedance.py::test_control_sigma_ladder_separates_loss_from_gap 
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_mutual_matches_the_same_fixture_reaction_control PASSED [ 57%]PASSED [ 53%]
+tests/validation/test_port_gap_voltage_impedance.py::test_production_sigma_ladder_removes_the_loss_from_the_gapped_route 
+tests/validation/test_port_gap_voltage_impedance.py::test_control_sigma_ladder_separates_loss_from_gap PASSED [ 61%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_port_pair_mutual_carries_its_systematics PASSED [ 57%]
+tests/validation/test_port_gap_voltage_impedance.py::test_production_sigma_ladder_removes_the_loss_from_the_gapped_route PASSED [ 65%]PASSED [ 61%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_scattering_matrix_is_symmetric_and_passive 
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_port_pair_mutual_carries_its_systematics PASSED [ 65%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_scattering_matrix_is_symmetric_and_passive PASSED [ 69%]PASSED [ 69%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_z_matrix_is_reciprocal 
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_z_matrix_is_reciprocal PASSED [ 73%]PASSED [ 73%]
+tests/validation/test_port_gap_voltage_impedance.py::test_undriven_port_is_open_and_the_diagonal_is_reported 
+tests/validation/test_port_gap_voltage_impedance.py::test_undriven_port_is_open_and_the_diagonal_is_reported PASSED [ 76%]PASSED [ 76%]
+tests/validation/test_port_gap_voltage_impedance.py::test_closure_arc_nodes_lie_in_the_expected_material 
+tests/validation/test_port_gap_voltage_impedance.py::test_closure_arc_nodes_lie_in_the_expected_material PASSED [ 80%]
+tests/validation/test_port_gap_voltage_impedance.py::test_wire_arc_quadrature_is_converged PASSED [ 80%]PASSED [ 84%]
+tests/validation/test_port_gap_voltage_impedance.py::test_wire_arc_quadrature_is_converged 
+tests/validation/test_port_gap_voltage_impedance.py::test_loop_closure_sum_recovers_the_emf PASSED [ 84%]PASSED [ 88%]
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_sweep_keeps_the_undriven_port_open 
+tests/validation/test_port_gap_voltage_impedance.py::test_loop_closure_sum_recovers_the_emf PASSED [ 92%]PASSED [ 88%]
+tests/validation/test_port_gap_voltage_padding.py::test_the_enlarged_box_is_the_fixture_it_claims_to_be 
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_sweep_keeps_the_undriven_port_open PASSED [ 92%]
+tests/validation/test_port_gap_voltage_padding.py::test_the_enlarged_box_is_the_fixture_it_claims_to_be 
+## Exit
+- Status: 124
+- Elapsed (s): 571
