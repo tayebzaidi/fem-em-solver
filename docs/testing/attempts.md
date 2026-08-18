@@ -13897,3 +13897,99 @@ review's.
 **warm**, now including this module's degree-1 validation forms; the degree-2
 forms are still cold, so the next slot's first command pays their JIT and must
 not be read as per-test cost.
+
+## 2026-08-18T20:20Z — `TH-12` step 2, attempt 2 — **complete (the reading landed; one defect left failing)**
+
+**Slot:** 15:00 local, scheduled implementer run. **Chunk:** §9 On-deck item 1,
+`TH-12` step 2, taken as the first item not done or blocked. Preflight clean,
+container Up (19 h old, 15 h uptime), no anomaly.
+
+**One command, exactly as attempt 1's hypothesis specified:**
+`20260818T200059Z_TH-12-step2-full.log` — `TH12_STEP2_MODE=full`, `-n 8`,
+complex build, **`timeout -k 30 570`** (not the §9 annotation's 900: the Bash
+tool's foreground ceiling is 660 000 ms, and the protocol requires the
+container-side timeout to return a footer inside that window — 900 s would have
+orphaned the `mpiexec` job). **Exit 1, 546 s** — 24 s of margin under the kill,
+so the sizing was right but not generous. `2 failed, 11 passed, 1 skipped`.
+
+### The reading (§7's deliverable)
+
+| | degree 1 | degree 2 |
+|---|---|---|
+| DOFs | 162 710 | **882 296** (5.423×, exactly as probed) |
+| ΔR | +3.2770406e-01 Ω | +3.1985142e-01 Ω |
+| ΔR deviation | **+1.5834%** (record, reproduced to −0.00002 pp) | **−0.8508%** |
+| ΔX | −5.6657895e-01 Ω | −5.6252149e-01 Ω |
+| ΔX ratio | 0.9200 | 0.9134 |
+| solve wall (loaded + free) | 12.4 + 12.2 s | **235.4 + 266.4 s** (~20×) |
+| summed peak RSS | 6.66 GiB | **61.94 GiB** |
+| identity residual (loaded / free) | 8.0743e-15 / 8.7088e-15 | **4.5931e-09 / 3.0030e-09** |
+
+**Against step 4's h → 0 bracket [−2.1492%, −0.9050%]: outside, by 0.054 pp,
+past the *upper* edge.** §7 pre-registered that as the informative outcome, and
+it is informative *for* degree 2, not against it — the order change moved the
+deviation **−2.434 pp** on an unchanged coarse mesh, i.e. nearly the whole
+distance the degree-1 h-ladder said refinement should travel, and then a hair
+past. 0.054 pp is 5× the 0.01 pp run-to-run floor but 4% of the bracket's own
+1.24 pp width, and the bracket is Richardson-derived, not a closed form. ΔR was
+printed, never gated, per §7.
+
+### The cost model was optimistic — record this
+
+The calibrated projection (p = 1.271, fitted on a degree-1 rung pair) said
+**48.04 GiB** against the 51.20 GiB threshold, so the module let the solve
+through. The outturn was **61.94 GiB — 29% above the projection and 96.8% of
+`memory.max`.** It did not OOM, but there was ~2 GiB of headroom, and the 20%
+guard fraction is the only reason this slot did not end in a wedged container.
+**Fitting the memory exponent on a cells axis under-predicts the order axis**;
+1.271 should be treated as a floor for any future degree-2 pricing on this box.
+The wall-time model was wrong in the same direction and worse: §7 expected ~4×
+the degree-1 solve pair on the sphere's 4.32× ratio, and it was **~20×**.
+
+### The defect: the identity family fails at degree 2, and was not loosened
+
+`test_complex_power_identity_holds_at_this_order[loaded-2]` and `[free-2]` fail
+at 4.5931e-09 / 3.0030e-09 against the 1e-9 `TH-11` step-2f family bound, while
+the **degree-1 rows of the same run, same mesh, same process** sit at ~8e-15.
+Cause is legible from the printed energies and is not a reduction or fixture
+defect: `W_m` is unmoved (3.04e-08 → 3.13e-08 J) but `W_e` explodes
+**2.03e-13 → 7.16e-06 J**, 3.5e7×, so `Im Z = 4ω(W_m − W_e)/I′²` goes
+**+9.02 Ω → −2 117 Ω** and the identity becomes a subtraction of two 2 117 Ω
+numbers. The ungauged curl-curl operator's gradient null space is far richer at
+second order and irrotational content sits in `E` at an amplitude that swamps
+the magnetic term. It is **common-mode** — it cancels in loaded−free, so ΔX
+moves only 0.7% and ΔR not at all, and the reading above stands. What dies is
+the identity's *discriminating power* at this order on this fixture.
+
+Full entry in `docs/testing/known-issues.md` with three ranked dispositions
+((a) re-anchor on `Im ΔZ`, (b) measure the gradient content directly, (c) price
+a gauged second-order path), unassigned — it is the review's to scope. The
+module therefore **fails by default** (`TH12_STEP2_MODE` defaults to `full`);
+`probe` and `calibrate` modes stay green. Per the non-negotiables the bound was
+not widened: it is met at 1e-14 at degree 1 in the very same process, so
+widening it would hide the finding rather than record it.
+
+**Controls all green:** cells exactly 138 619; degree-1 anchor −0.00002 pp off
+its record; σ = 0 dissipation **+0.0** exactly at both orders; drive mismatch
+9.2e-35 / 1.0e-34.
+
+### Hypothesis for the review
+
+Two questions are now separable and neither is mine to answer. **(1) The swap:**
+degree 2 does buy a coarse-mesh ΔR of h → 0 quality, but at 61.94 GiB it is
+against the *same* wall that killed `TH-11` step 5b's third rung, so it
+replaces only a rung strictly coarser than this one — and the 64 MHz bracket,
+which needs ~2.5× the cells at fixed cells/δ, is **not** affordable at degree 2
+on this box either. The honest read is that this box has no route to the 64 MHz
+bracket at any (order, h) pair, which is a §2 statement, not a `TH-12` one.
+**(2) The defect:** disposition (a) is a cheap test change and is the one I
+would scope first, because `Im ΔZ` is what every downstream claim actually
+uses; but (b) is the one that would tell us whether the `W_e` explosion is
+benign bookkeeping or the same null-space pathology that bars degree 2 in the
+magnetostatic A-formulation. If it is the latter, degree 2 is not a production
+element order regardless of what accuracy-per-DOF says, and the weekly review's
+decision clause needs that answer before it fires.
+
+**Container:** healthy throughout — no OOM, no wedge, no force-recreate, ~2 GiB
+of headroom at peak. FFCx cache left **warm**, now including this module's
+degree-2 validation forms.

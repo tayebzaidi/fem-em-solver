@@ -659,6 +659,22 @@ immediately before the run.
 | **Fix** | Not attempted — `OPS-17` leg (b1) is bookkeeping. The name set should be derived from the active scalar type, not restated. Do **not** "fix" it by widening the set to accept both spellings unconditionally: that would let a real-mode run pass while silently emitting complex names. |
 | **Resolves with** | `OPS-21` (commissioned 2026-08-18 10:30 review): derive the name set from the active scalar type with the real-mode inverted assertion, and make the verdict collective — both defects in one chunk. |
 
+### The complex-power identity reads 3–5e-9 at degree-2 N1curl on the coil fixture, against a 1e-9 family bound — and the quantity it gates is 99.6% spurious electric energy (`TH-12` step 2, 2026-08-18)
+
+**Verified at `92fc3e7`, 15:00 implementer slot,
+`20260818T200059Z_TH-12-step2-full.log`** (exit 1, 546 s, `-n 8`, complex
+build, `TH12_STEP2_MODE=full`, 138 619 cells at 10 MHz).
+
+| | |
+|---|---|
+| **Tests** | `tests/validation/test_coil_loading_degree2.py::test_complex_power_identity_holds_at_this_order[loaded-2]` and `[free-2]` |
+| **Symptom** | `AssertionError: complex-power identity broken on the loaded solve at degree 2: reaction -2.117210e+03 Ohm vs energy -2.117210e+03 Ohm, relative 4.5931e-09` (free: 3.0030e-09). The degree-1 rows of the same run, same mesh, same process are green at **8.0743e-15 / 8.7088e-15** — three orders of magnitude *inside* the bound, so this is an order effect, not a fixture or reduction defect. |
+| **Cause** | Diagnosed by inspection of the printed energies, not fixed. `Im Z = 4ω(W_m − W_e)/I′²` is exact for the discrete solution, so the residual is arithmetic cancellation — and at degree 2 the cancellation is catastrophic because `W_e` explodes. Degree 1: `W_m` 3.04e-08 J, `W_e` **2.03e-13 J** ⇒ `Im Z` = **+9.02 Ω**, the physical loop reactance. Degree 2: `W_m` 3.13e-08 J (unmoved, 3%), `W_e` **7.16e-06 J** — 3.5e7× larger — ⇒ `Im Z` = **−2.117e+03 Ω**. The ungauged curl-curl operator's gradient null space is vastly richer at second order (882 296 DOFs vs 162 710) and the penalty-free formulation lets irrotational content sit in `E` at an amplitude that swamps the magnetic term. |
+| **What it does and does not invalidate** | The spurious term is **common-mode**: it cancels in the loaded−free difference, so `ΔX` moves only −0.5666 → −0.5625 Ω (0.7%) and `ΔR` is unaffected. `TH-12` step 2's `ΔR` reading is therefore not contaminated by this. What is destroyed is the **identity's discriminating power at degree 2 on this fixture**: it now gates a number that is 99.6% non-physical, so passing it would mean little and failing it at 5e-9 means only that 2 117 Ω minus 2 117 Ω leaves 1e-5 Ω of round-off. |
+| **Not** | **Not** to be fixed by widening `IDENTITY_TOLERANCE` — the bound is the `TH-11` step-2f family's, it is met at 1e-14 at degree 1 in the very same process, and widening it would hide the `W_e` explosion that is the actual finding. Not the magnetostatic degree-2 null-space failure either (different formulation, barred by `TH-12`'s scope guard) — though the two rhyme, and that rhyme is the hypothesis worth testing. |
+| **Fix** | Not attempted; `TH-12` step 2 is a reading with no gate. The candidate dispositions, cheapest first: (a) re-anchor the identity at degree ≥ 2 on the **difference** `Im ΔZ` rather than the absolute `Im Z`, which is the quantity every downstream claim actually uses; (b) measure the gradient content of `E` directly (Helmholtz split, or `‖∇·(εE)‖` against a null-space projector) and report it as the degree-2 cost line; (c) treat it as a formulation defect and price a gauged/regularised second-order path. (a) is a test change, (b) is a measurement, (c) is a chunk. |
+| **Resolves with** | Unassigned — for the daily review to scope. Until then this file **fails by default** (`TH12_STEP2_MODE` defaults to `full`), and `probe`/`calibrate` modes remain green. |
+
 ### ✅ RETIRED 2026-08-11 — "unexplained" mid-command termination of the logging harness was the background-and-end-turn trap (2026-08-08, 15:00 and 19:30 implementer slots)
 
 **Retired by the 2026-08-11 10:30 review — cause named, with wrapper-log
