@@ -13544,3 +13544,78 @@ the successor explicitly and this run's numbers confirm it: **`TH-12` is the
 remaining axis** (fewer cells at matched accuracy, which is a memory argument
 as much as an accuracy one), and its step 2 names exactly this swap. Recommend
 the review close step 5 as a measured negative rather than scoping a 5d.
+
+---
+
+## 2026-08-18T11:10Z — `TH-12` step 1 — **complete**
+
+**Slot** 06:00 CDT scheduled implementer run. **Item** §9 On-deck item 2
+(item 1, `TH-11` step 5c, is marked 🚫 with an explicit "do not re-run"; item 2
+is the first not-done-or-blocked entry). **Preflight** clean tree on `main`,
+container `Up`. **Tier** standard, `-n 2`, complex build, `timeout -k 30 400`.
+**Elapsed** 7 s of compute across the closing run; two runs total this slot.
+
+**What was done.** New gate
+`tests/validation/test_lossy_sphere_degree2.py`: `TH-10`'s lossy saline sphere
+(a = 0.05 m, εᵣ = 78, σ = 0.5 S/m) at 64 MHz on the **coarse** rung, solved at
+N1curl degree 1 and degree 2 from one module-scoped fixture so both orders see
+demonstrably the same mesh. The only source change is a `degree: int = 1`
+kwarg threaded through `_mesh_and_solve` in
+`tests/validation/test_lossy_sphere_fullwave.py` — default unchanged, so no
+recorded `TH-10` number moves and the two external callers
+(`test_geometry_floor_discriminator.py`, `examples/time_harmonic/06_...py`)
+keep their 4-tuple unpacking.
+
+**Measured** (`20260818T110442Z_TH-12-step1-sphere-degree2-rss.log`):
+
+| order | cells | DOFs | interior relL2 | power error | solve wall | peak RSS (summed) |
+|---|---|---|---|---|---|---|
+| 1 | 5 866 | 7 591 | 8.1541% | 8.3869% | 0.93 s | 388.2 MiB |
+| 2 | 5 866 | 39 634 | **0.1405%** | **0.0058%** | 4.03 s | 1 036.2 MiB |
+
+**Gate:** relL2 ≤ the degree-1 fine-rung record **3.643% at 17 670 cells**, at
+strictly fewer cells — passed at **0.1405%**, i.e. **25.9× the accuracy on
+3.01× fewer cells**. **Negative control:** degree 1 on the same rung reads
+8.3869% ohmic-power error against the recorded 8.387% — a **0.0001 pp** move,
+inside the pre-registered 0.002 pp reproduction band, so the fixture is pinned
+to `20260813T170337Z_TH-10-step4-power-n2.log` inside the same process.
+**Identity:** `|Im P|/Re P` = **0.000e+00** at both orders (the ohmic integrand
+½σE·Ē is real by construction; the `TH-1` `ufl.dot` conjugation slip would read
+as a nonzero imaginary power). Both accuracy digits are identical across the
+slot's two runs, which differ only in the memory instrument.
+
+**Cost reading (the deliverable).** Degree 2 costs 5.22× the DOFs but only
+**4.32× the wall time and 2.67× the memory** — sublinear on both axes on this
+fixture — for 58× the field accuracy at equal cells. Against the degree-1 fine
+rung the trade is 3.01× fewer cells at 25.9× the accuracy. No production-order
+decision is taken here; that is the weekly review's, per the entry's decision
+clause.
+
+**Identity-family note, deliberate.** The `TH-11` complex-power identity
+`Im Z = 4ω(W_m − W_e)/I′²` needs a *driven port*; this fixture has no source at
+all (imposed Dirichlet total field), so that family does not apply and is not
+restated. The 1e-9 bound is carried on the imaginary-power identity above,
+which is the one this fixture does have.
+
+**Instrument finding, matters for `TH-11`/`TH-12` step 2.**
+`/sys/fs/cgroup/memory.peak` is the container's **lifetime** high-water mark and
+is not resettable from inside a test: the slot's first run printed 64.000 GiB
+for a job whose real footprint is ~1 GiB, because a prior `TH-11` step-5c run
+had already touched `memory.max`. Every `memory.peak` number quoted for a job
+that did not itself recreate the container is therefore an upper bound on the
+container's history, not a measurement of that job. The second run switched to
+summed `ru_maxrss`, which is per process and starts fresh; that is what the
+table above quotes. Any future memory pricing should use the RSS route or a
+freshly recreated container.
+
+**Denials:** none. **Container:** healthy, `Up` throughout, no kill, no
+force-recreate.
+
+**Hypothesis for the next attempt.** `TH-12` step 2 (the coil at degree 2,
+heavy, serial on this) is now unblocked and is the highest-value follow-on: if
+degree 2 holds this accuracy-per-cell on the `TH-11` step-1 coil fixture, a
+degree-2 rung replaces the memory-infeasible 2 807 309-cell third rung outright
+and the 64 MHz h → 0 bracket becomes affordable — which is exactly the swap
+`TH-11` step 5c's negative result pointed at. The step's own cost probe (print
+DOFs and the MUMPS in-core estimate before solving) should be run against the
+RSS instrument, not `memory.peak`, for the reason above.

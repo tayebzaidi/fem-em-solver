@@ -165,13 +165,20 @@ def _rel_l2(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def _mesh_and_solve(
-    series: LossySphereSeries, resolution_sphere: float, resolution_far: float
+    series: LossySphereSeries,
+    resolution_sphere: float,
+    resolution_far: float,
+    degree: int = 1,
 ):
     """Mesh + solve one rung.  Returns ``(msh, cell_tags, fields, ncells)``.
 
     Steps 2/3 read only the interior field out of this; step 4 needs the mesh
     and the σ field as well, so the solve itself lives here and both gates run
     on demonstrably the same fixture rather than on two copies of it.
+
+    ``degree`` is the N1curl order (`TH-12` step 1).  It defaults to 1, which is
+    the order every recorded `TH-10` number was measured at — no gated result of
+    this module moves when a degree-2 caller passes 2.
     """
     comm = MPI.COMM_WORLD
     msh, cell_tags, _ = MeshGenerator.sphere_in_box_domain(
@@ -195,7 +202,7 @@ def _mesh_and_solve(
         boundary_condition="pec_zero_tangential_a",
         dirichlet_e_field=_dirichlet_total_field(series),
     )
-    fields = TimeHarmonicSolver(problem, degree=1).solve()
+    fields = TimeHarmonicSolver(problem, degree=degree).solve()
     ncells = int(
         comm.allreduce(msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM)
     )

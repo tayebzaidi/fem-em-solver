@@ -1504,7 +1504,7 @@ path, not polish.
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ✅ | standard |
 | `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 ✅ 2026-08-17 — the fixed-f h-ladder reads **flat in f**: refinement moves the deviation −1.87 pp at 10 MHz and −4.48 pp at 30 MHz (−7.46 pp at 64 MHz on record) and the h → 0 brackets overlap at ~−1%, so the "trend" was the resolution term; no gated trend claim is scopeable and §2 stands; step 5 scoped 2026-08-17 review, attempt 1 🚫 2026-08-17 — the third rung is **priced and does not fit a scheduled slot**: 2 807 309 cells (inside the 3.4 M ceiling) but 288.2 s of mesh plus a loaded solve still assembling at the 570 s kill, so §7's probe stop condition fired; module parked on `attempt/TH-11-step5-20260817T123353Z`; **rescoped by the 10:30 review as 5a/5b** — 5a caches the mesh to XDMF and buys the `-n 8` rank change with a measured control (fine-rung +2.8063% reproduced within 0.1 pp), 5b runs the pair off the cache; step 5a ✅ 2026-08-17 — the cache round-trips the 2 807 309-cell rung **exactly** (per-tag owned counts and tag names preserved, mesh 126.4 s replaced by a 14.8 s read) and the `-n 8` fine-rung pair reproduces the `-n 2` record to **+0.00002 pp**, so the rank change is bought; 5b is unblocked and needs one solve per command at ~480 s; step 5b attempt 1 🟡 2026-08-18 — the loaded/free split is **exact** (fine rung reproduced to the last digit, drive surrogate 0.000e+00) and the cache reads back at `-n 12`, but the third-rung solve was **OOM-killed with the container** at 518 s, so the rung is memory-bound at 64 GiB, not time-bound: the review's lever (b) more ranks is the wrong one and (c) shrinking the rung is now live; module parked on `attempt/TH-11-step5b-20260818T004000Z`; step 5b attempt 2 🟡 2026-08-18 — the peak is now **measured**: at `-n 8` the same solve drove `memory.peak` to **64.00 GiB, exactly `memory.max`**, and ran past `timeout -k 30 560` without returning, so `-n 12`'s OOM and `-n 8`'s overrun are one wall with two failure modes and **no rank count affords 2 807 309 cells on this box** — §7's stop condition fires and (c) shrinking to ~1.4 M cells is the review's call; parked on `attempt/TH-11-step5b-20260818T024200Z`; **rescoped 2026-08-18 03:00 review as step 5c** — the ~1.4 M rung (`near ≈ 0.0018`, non-2 `ratio`) end to end off the parked branch, 480 s ceilings, `memory.peak` printed every command)* | standard (steps 4–5 heavy) |
-| `TH-12` | **Second-order elements (degree-2 N1curl): accuracy-per-DOF and cost, measured** (operator directive 2026-08-18; decides the production element order for §10 Phase 5/6 — see entry) | ⬜ | standard (step 2 heavy) |
+| `TH-12` | **Second-order elements (degree-2 N1curl): accuracy-per-DOF and cost, measured** (operator directive 2026-08-18; decides the production element order for §10 Phase 5/6 — see entry) | 🟡 *(step 1 ✅ 2026-08-18 — degree 2 on the **coarse** 5 866-cell sphere reads **0.1405%** interior relL2, against the degree-1 fine-rung record 3.643% at 17 670 cells: **25.9× the accuracy at 3.01× fewer cells**, and the ohmic-power error falls 8.3869% → **0.0058%**; the cost is 5.22× the DOFs (7 591 → 39 634), 4.32× the solve wall (0.93 → 4.03 s) and 2.67× the summed peak RSS (388 → 1 036 MiB), i.e. **sublinear in DOFs on both**; negative control green — degree 1 on the same rung reproduces its recorded 8.387% power error to 0.0001 pp; step 2 (the coil) is unblocked)* | standard (step 2 heavy) |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)**
 ✅ *(steps 1–4 ✅ 2026-08-13, chunk closed by the 10:30 review; full step
@@ -1947,7 +1947,32 @@ formulation property, stays barred, and is *not* evidence about this
 chunk. Curved second-order **geometry** (gmsh mesh order 2 — the answer
 to `GEO-15`'s 3.3% faceting residual) is a separate knob, out of scope
 here; a `GEO` chunk may cite this entry.
-> * **Step 1 (gate) — the sphere at degree 2** *(standard, `-n 2`)*.
+> * **Step 1 (gate) — the sphere at degree 2** ✅ *(2026-08-18,
+>   `tests/validation/test_lossy_sphere_degree2.py`,
+>   `20260818T110442Z_TH-12-step1-sphere-degree2-rss.log`, 7 s at `-n 2`;
+>   the identical accuracy digits appear in the earlier
+>   `20260818T110346Z` run, which differs only in the memory instrument)*.
+>   **The gate passed with room**: degree 2 on the coarse 5 866-cell rung
+>   reads **0.1405%** interior relL2 where the gate was "≤ 3.643%, the
+>   degree-1 fine-rung record at 17 670 cells" — 25.9× the accuracy at
+>   3.01× fewer cells — and the ohmic-power error falls **8.3869% →
+>   0.0058%** on the same mesh. The negative control is green to
+>   0.0001 pp (degree 1 on this rung reproduces its recorded 8.387% power
+>   error), so the fixture is pinned to the record inside the same
+>   process. **Cost, measured:** 7 591 → **39 634 DOFs** (5.22×), solve
+>   wall 0.93 → **4.03 s** (4.32×), summed peak RSS 388 → **1 036 MiB**
+>   (2.67×) — both cost axes are *sublinear* in the DOF count, so on this
+>   fixture degree 2 buys 25.9× accuracy for 4.3× time and 2.7× memory.
+>   **Identity:** `|Im P|/Re P` = **0.000e+00** at both orders (exactly
+>   zero, not merely under 1e-9) — the conjugation convention survives
+>   the degree-2 assembly. **Instrument note, for step 2:**
+>   `/sys/fs/cgroup/memory.peak` is the container's *lifetime* high-water
+>   mark and is not resettable from inside a test, so on a box where a
+>   `TH-11`-scale run has already touched the cap it reads 64 GiB for
+>   every later job and measures nothing; the per-run number is summed
+>   `ru_maxrss`, which is what this entry quotes. Any future memory
+>   pricing should use the RSS route or a freshly recreated container.
+>   *Original text:* *(standard, `-n 2`)*.
 >   `TH-10`'s fixture, degree 2 on the **coarse** rung (5 866 cells) at
 >   64 MHz. **Gate:** interior relL2 ≤ the degree-1 fine-rung record
 >   (3.643% at 17 670 cells) at strictly fewer cells; power identity
@@ -3419,7 +3444,14 @@ this review.
    non-overlapping bracket, or a 64 GiB peak at 1.4 M cells, is the
    informative outcome — journal it, report, stop (`TH-12` is the
    remaining axis).
-2. **`TH-12` step 1 — the sphere at degree 2 (standard).** Execute the
+2. ✅ **`TH-12` step 1 — the sphere at degree 2 (standard).** *Done
+   2026-08-18 06:00 slot: gate passed with room — **0.1405%** interior
+   relL2 on the coarse 5 866-cell rung against the ≤ 3.643%-at-17 670-cells
+   gate (25.9× accuracy at 3.01× fewer cells), power error 8.3869% →
+   0.0058%, control green to 0.0001 pp, `|Im P|/Re P` exactly zero. Cost:
+   5.22× DOFs, 4.32× wall, 2.67× RSS — sublinear on both axes. Step 2 (the
+   coil) is unblocked; the production-order decision is the weekly
+   review's, per the entry's decision clause.* Original text: Execute the
    §7 `TH-12` step-1 entry verbatim (commissioned 2026-08-18, operator
    directive). `TH-10`'s fixture, degree-2 N1curl on the **coarse**
    rung (5 866 cells) at 64 MHz. **Anchor:** interior relL2 against the
