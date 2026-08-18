@@ -343,7 +343,7 @@ needs `-f docker/docker-compose.yml`.
 | 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58% pinned / 1.5834% on the production projected drive, step 3; eddy-current regime); SAR gated on an **imposed** uniform field only (`MAT-4` steps 1+3: lossy-sphere closed form 3.5%, mass-averaging exact at 1 g/10 g) — coil-driven SAR and the C95.3 claim still open |
 | 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-10` | `PORT-1` ✅ 2026-08-15 (field-derived S through the package, two-torus fixture only, two named systematics); birdcage-port direction scoped 2026-08-16: `PORT-9` lumped-element port BC, prerequisites `PORT-10` + `GEO-15`; `PORT-4`…`PORT-8` open |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 for excitation; both meshes (coil+phantom, birdcage) generate and are identity-gated in CI (`GEO-9`, 2026-08-03) |
-| 6 | Birdcage tuning at 64/128 MHz: mode spectrum, lumped capacitors, circuit co-simulation (the HFSS + Circuit split) | subgoals owned by the weekly review (§10) | Not started |
+| 6 | Birdcage tuning at 64/128 MHz: mode spectrum, lumped capacitors, circuit co-simulation (the HFSS + Circuit split); production target: **32-port high-pass birdcage at 1.5 T** (§10 operator directive 2026-08-17) | subgoals owned by the weekly review (§10) | Not started |
 | 7 | Implants: parametric implant geometry in the phantom, local SAR / near-implant hot spots | subgoals owned by the weekly review (§10) | Not started |
 | 8 | Thermal: Pennes bioheat driven by SAR | subgoals owned by the weekly review (§10) | Not started |
 | 9 | Advanced: MPI scaling, AMR, sweeps, optimization | — | Deferred |
@@ -3429,6 +3429,28 @@ first steps land. **Assessment 2026-08-16:** unchanged — ports are ≈ 1
 week out, so "earliest meaningful start ≈ end of August" still holds and
 still awaits `PORT-9`; no circuit co-simulation work exists yet, so
 still no completion date.
+
+**Operator directive 2026-08-17 (binding on this phase's scoping):** the
+production target for real MRI-safety work at 1.5 T is a **high-pass
+birdcage** (capacitors in the end-ring segments, not the rungs) with
+**32 ports** — i.e. 16 rungs × 2 end rings, one lumped port per ring
+gap. Everything gated so far is the 4-leg fixture with one port box per
+leg-pair; a high-pass topology needs ring-gap port surfaces the current
+`birdcage_port_domain` layout does not emit, and nothing above
+`leg_count = 4` has ever been meshed, identity-gated, or costed. When
+this phase is broken down, the breakdown must therefore include, before
+any tuning claim: (a) parametric leg count re-gated at 16 (the `GEO-9`
+identity family + graded sizing at the larger conductor count, with a
+measured cost rung — cell count scales with legs); (b) the high-pass
+ring-gap port layout as a mesh chunk (the `GEO-16` pattern, on the end
+rings); (c) `PORT-9` step 3's circulant-symmetry gate generalized C4 →
+C_N (the 32-port S-matrix is block-circulant in the 16 ring-gap pairs);
+(d) the AED HFSS + Circuit benchmark commissioned at the production
+rung count, not at 4. The 4-leg fixture stays the cheap validation
+vehicle — first gates land there — but Phase 6 does not close on it.
+Circuit-layer detail is deliberately left to the reviews when the phase
+opens (operator: the area is well-covered by literature; ladder-network
+closed forms are the entry point).
 
 **Phase 7 — implants.** Parametric implant geometry first (wires, rods,
 plates in the phantom; CAD import later), mesh grading around thin
