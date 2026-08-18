@@ -1417,7 +1417,7 @@ path, not polish.
 | `TH-8` | **Validation: sphere in uniform field (quasi-static)** | ✅ | standard |
 | `TH-9` | **Validation: PEC rectangular-cavity resonances** | ✅ | standard |
 | `TH-10` | **Validation: lossy dielectric sphere in a full-wave field at 64/128 MHz (the first Larmor-regime gate)** | ✅ | standard |
-| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 ✅ 2026-08-17 — the fixed-f h-ladder reads **flat in f**: refinement moves the deviation −1.87 pp at 10 MHz and −4.48 pp at 30 MHz (−7.46 pp at 64 MHz on record) and the h → 0 brackets overlap at ~−1%, so the "trend" was the resolution term; no gated trend claim is scopeable and §2 stands; step 5 scoped 2026-08-17 review, attempt 1 🚫 2026-08-17 — the third rung is **priced and does not fit a scheduled slot**: 2 807 309 cells (inside the 3.4 M ceiling) but 288.2 s of mesh plus a loaded solve still assembling at the 570 s kill, so §7's probe stop condition fired; module parked on `attempt/TH-11-step5-20260817T123353Z`; **rescoped by the 10:30 review as 5a/5b** — 5a caches the mesh to XDMF and buys the `-n 8` rank change with a measured control (fine-rung +2.8063% reproduced within 0.1 pp), 5b runs the pair off the cache; step 5a ✅ 2026-08-17 — the cache round-trips the 2 807 309-cell rung **exactly** (per-tag owned counts and tag names preserved, mesh 126.4 s replaced by a 14.8 s read) and the `-n 8` fine-rung pair reproduces the `-n 2` record to **+0.00002 pp**, so the rank change is bought; 5b is unblocked and needs one solve per command at ~480 s; step 5b attempt 1 🟡 2026-08-18 — the loaded/free split is **exact** (fine rung reproduced to the last digit, drive surrogate 0.000e+00) and the cache reads back at `-n 12`, but the third-rung solve was **OOM-killed with the container** at 518 s, so the rung is memory-bound at 64 GiB, not time-bound: the review's lever (b) more ranks is the wrong one and (c) shrinking the rung is now live; module parked on `attempt/TH-11-step5b-20260818T004000Z`)* | standard (steps 4–5 heavy) |
+| `TH-11` | **Coil-loading trend across the eddy→displacement transition (`MAT-6`'s ΔR machinery at rising f)** | 🟡 *(step 1 ✅ 2026-08-13 — 64 MHz feasible at the 10 MHz price, identities to 1e-14, quasi-static ΔR deviation 1.5834% → **10.2698%**, unattributed between physics and 1.26 cells/δ; step 2 ✅ 2026-08-15 — the resolution rung attributes most of it to mesh: **+2.8063%** at 2.52 cells/δ, a −7.4635 pp move, the pre-registered RESOLUTION-DOMINATED band, so no gated trend claim is scopeable yet; step 3 ✅ 2026-08-16 — the 30 MHz mid-point reads **+5.5912%**, giving 1.5834 / 5.5912 / 10.2698% across 10 / 30 / 64 MHz, but cells/δ falls 3.18 / 1.84 / 1.26 in lockstep, so the confound is monotone too and the trend stays a set of points; step 4 ✅ 2026-08-17 — the fixed-f h-ladder reads **flat in f**: refinement moves the deviation −1.87 pp at 10 MHz and −4.48 pp at 30 MHz (−7.46 pp at 64 MHz on record) and the h → 0 brackets overlap at ~−1%, so the "trend" was the resolution term; no gated trend claim is scopeable and §2 stands; step 5 scoped 2026-08-17 review, attempt 1 🚫 2026-08-17 — the third rung is **priced and does not fit a scheduled slot**: 2 807 309 cells (inside the 3.4 M ceiling) but 288.2 s of mesh plus a loaded solve still assembling at the 570 s kill, so §7's probe stop condition fired; module parked on `attempt/TH-11-step5-20260817T123353Z`; **rescoped by the 10:30 review as 5a/5b** — 5a caches the mesh to XDMF and buys the `-n 8` rank change with a measured control (fine-rung +2.8063% reproduced within 0.1 pp), 5b runs the pair off the cache; step 5a ✅ 2026-08-17 — the cache round-trips the 2 807 309-cell rung **exactly** (per-tag owned counts and tag names preserved, mesh 126.4 s replaced by a 14.8 s read) and the `-n 8` fine-rung pair reproduces the `-n 2` record to **+0.00002 pp**, so the rank change is bought; 5b is unblocked and needs one solve per command at ~480 s; step 5b attempt 1 🟡 2026-08-18 — the loaded/free split is **exact** (fine rung reproduced to the last digit, drive surrogate 0.000e+00) and the cache reads back at `-n 12`, but the third-rung solve was **OOM-killed with the container** at 518 s, so the rung is memory-bound at 64 GiB, not time-bound: the review's lever (b) more ranks is the wrong one and (c) shrinking the rung is now live; module parked on `attempt/TH-11-step5b-20260818T004000Z`; step 5b attempt 2 🟡 2026-08-18 — the peak is now **measured**: at `-n 8` the same solve drove `memory.peak` to **64.00 GiB, exactly `memory.max`**, and ran past `timeout -k 30 560` without returning, so `-n 12`'s OOM and `-n 8`'s overrun are one wall with two failure modes and **no rank count affords 2 807 309 cells on this box** — §7's stop condition fires and (c) shrinking to ~1.4 M cells is the review's call; parked on `attempt/TH-11-step5b-20260818T024200Z`)* | standard (steps 4–5 heavy) |
 
 **`TH-10` — lossy dielectric sphere, full-wave, 64/128 MHz (Larmor gate)**
 ✅ *(steps 1–4 ✅ 2026-08-13, chunk closed by the 10:30 review; full step
@@ -1747,6 +1747,34 @@ step-1/2 journals archived in `docs/planning/plan-archive.md`.)*
 >     **`-n 8`**, printing `/sys/fs/cgroup/memory.peak` after the solve so the
 >     decision rests on a measured peak; if that OOMs too, the rung does not
 >     fit this box and shrinking it is the review's call.
+>   * **Step 5b attempt 2 🟡 2026-08-18 (21:00 slot) — the peak is measured and
+>     the rung does not fit this box at any rank count.** Attempt 1's question
+>     is answered: at **`-n 8`** the third-rung loaded solve off the cache drove
+>     `memory.peak` to **68 719 480 832 B = 64.00 GiB against `memory.max`
+>     68 719 476 736 B** — the ceiling to four bytes — and had still not returned
+>     when the container-side `timeout -k 30 560` fired
+>     (`20260818T020143Z_TH-11-step5b-third-loaded-n8.log`, exit 137, harness
+>     elapsed 908 s). Attribution is clean: the container was force-recreated
+>     after attempt 1 and read `memory.peak` = **12.0 MiB** at this slot's
+>     preflight, so the 64 GiB belongs to this solve; after the read alone it was
+>     **2.02 GiB (3.2%)**, so the mesh is nothing. This makes attempt 1's `-n 12`
+>     OOM and this run's `-n 8` overrun **the same wall with two failure modes**
+>     — killed there, reclaim-throttled into the timeout here — so lever (b) is
+>     exhausted in both directions and no rank count on this box affords
+>     2 807 309 cells. Only the instrumentation was added (a best-effort
+>     `memory.peak`/`memory.max` print after the read and after each solve);
+>     module + instrumentation parked on
+>     `attempt/TH-11-step5b-20260818T024200Z`. The cache is now read exactly at
+>     three widths (14.8 s at `-n 2`, 21.7 s at `-n 12`, 31.2 s at `-n 8`).
+>     **§7's stop condition applies as written — shrinking the rung is the
+>     review's decision, not a run's.** Sizing for that decision: the pair fits
+>     at 417 914 cells and needs ≥ 64 GiB at 6.7× that, so the box's ceiling is
+>     near **~1.7–1.8 M cells** and `near ≈ 0.0018` (~1.4 M) sits inside it with
+>     margin, at the price of a non-2 `ratio` the fit already accepts; adopting
+>     it costs the parked branch two constants plus a fresh cache command. No
+>     64 MHz reading exists and §2 is untouched. **Process datum:** a 560 s
+>     container ceiling can exceed the Bash tool's 660 s wall clock under memory
+>     pressure — **~480 s** is the safe container ceiling for a foreground slot.
 
 **`GEO-14` — the shared ~3% geometry floor: discriminate faceting from
 resolution** ✅ *(commissioned 2026-08-13, closed 2026-08-15 on a refuted

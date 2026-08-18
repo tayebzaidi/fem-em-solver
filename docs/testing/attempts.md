@@ -13181,3 +13181,84 @@ after the solve, which costs nothing). If it OOMs too, the rung does not fit thi
 box at all and (c) becomes the review's call, not a run's — journal the peak and
 stop. The parked branch is ready for either: only the rank count and, for (c),
 `RESOLUTION_NEAR_THIRD` plus the fit's `ratio` would move.
+
+## 2026-08-18T02:16Z — `TH-11` step 5b attempt 2 — **incomplete** (the rung saturates the 64 GiB ceiling at `-n 8` too)
+
+**Slot:** 21:00 local implementer run (2026-08-17). **On-deck item 1**, taken as
+written; attempt 1 (19:30 slot) named the next move and this run executed it.
+Tree clean at preflight, container Up. Module parked on
+`attempt/TH-11-step5b-20260818T024200Z`; `main` carries this entry, the §7
+annotation, the log and its test-results row only.
+
+**Outcome in one line: attempt 1's hypothesis is answered and the answer closes
+the door — at `-n 8` the third-rung loaded solve drove `memory.peak` to
+`memory.max` exactly (64.00 GiB) and had still not returned when the
+container-side `timeout -k 30 560` fired, so neither rank count fits and §7's
+"the solve does not return inside the window" stop condition applies.**
+
+**What was run.** One command
+(`20260818T020143Z_TH-11-step5b-third-loaded-n8.log`, exit 137, harness elapsed
+**908 s**): the parked loaded/free split at `TH11_STEP5_SOURCE=cache`,
+`TH11_STEP5_MODE=loaded`, `TH11_STEP5_RUNG=third`, **`-n 8`**, complex build,
+`tests/environment` first. The only code change on top of the parked module is
+attempt 1's own instruction: a best-effort `_cgroup_memory()` /
+`_print_memory_peak()` pair that prints `/sys/fs/cgroup/memory.peak` against
+`memory.max` after the mesh/read and after each solve. A missing or unreadable
+cgroup file is not a test failure.
+
+**The measurement attempt 1 asked for, and it is decisive.**
+- After the cache read: **2.02 GiB of 64.00 GiB (3.2%)** — the mesh itself is
+  nothing.
+- After the run, from the *surviving* container: `memory.peak` =
+  68 719 480 832 B = **64.00 GiB**, against `memory.max` = 68 719 476 736 B.
+  The peak is the ceiling, to four bytes. `memory.current` had fallen back to
+  2.72 GiB.
+- **Attribution is clean.** The container was force-recreated after attempt 1's
+  OOM, and this slot read `memory.peak` = **12 570 624 B (12.0 MiB)** at
+  preflight, before the run. The 64 GiB peak therefore belongs to this solve
+  alone, not to any earlier job. (`memory.peak` does count page cache, but the
+  only file traffic is the 192 MiB XDMF pair — four orders short of explaining
+  it, so this is the solve's anon memory.)
+
+**What that reframes.** Attempt 1's `-n 12` OOM and this run's `-n 8` overrun
+are the *same wall*, not two failures. At `-n 12` the cgroup killer took the
+container; at `-n 8` the same 64 GiB ceiling was reached but reclaim held on,
+so the job survived as a very slow one and the `timeout` — not the killer —
+ended it. That also plausibly explains the harness's 908 s against a 560 s
+container ceiling: docker exec and teardown were themselves slow while the
+cgroup sat at its limit. So `-n 8` is not "safer on memory" than `-n 12`; it is
+the same peak with a different failure mode, and there is no rank count on this
+box that makes 2 807 309 cells affordable.
+
+**Bought en route.** The cache is now exercised at three different rank counts:
+2 807 309 cells read back in **14.8 s at `-n 2`** (5a), **21.7 s at `-n 12`**
+(attempt 1), **31.2 s at `-n 8`** (this run) — all exact. The read is not
+monotone in rank count, which is worth nothing on its own but means no rank
+count is disqualified by the read.
+
+**Stop condition, taken as written.** §7 step 5: "the solve does not return
+inside the window ⇒ journal the probe numbers and stop; shrinking the rung is
+the review's decision, not the run's" — and attempt 1's own next-step sentence
+says the same for the memory case. Both branches now point at **(c) shrink the
+rung**, and the decision is the review's. No 64 MHz reading exists; §2's
+extrapolation sentence is untouched.
+
+**For the review, sized.** The fine rung (417 914 cells) solves the pair inside
+one command; the third rung (2 807 309 cells, 6.7×) needs ≥ 64 GiB. Linear in
+cells that puts the ceiling near **~1.7–1.8 M cells** on this box — so
+`near ≈ 0.0018` (~1.4 M cells, the candidate attempt 1 already named) is inside
+it with margin, at the price of a non-2 refinement ratio the three-rung fit's
+`ratio` argument already takes. That is a review call, not a run's.
+
+**Hypothesis for the next attempt.** None for this rung: it does not fit. If the
+review adopts (c), the parked branch needs exactly two edits —
+`RESOLUTION_NEAR_THIRD` and the fit's `ratio` — plus a fresh cache command for
+the new rung, and the loaded/free split, the identity family and the memory
+print all carry over unchanged.
+
+**Denials/anomalies.** One process note: the harness command outran the Bash
+tool's 660 s ceiling and was moved to the background by the harness itself. The
+turn was **not** ended while it ran (implementer-run.md's rule) — it was polled
+to completion in-slot — but a command whose container ceiling is 560 s can
+still exceed 660 s of wall clock when the box is under memory pressure, so
+560 s is not a safe container ceiling for a foreground slot. **~480 s is.**
