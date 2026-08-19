@@ -421,7 +421,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 | `OPS-20` | Disposition the coil-phantom `ComplexComparisonError`: localize with `--tb=long`, then fix the form or mark `@real_only` (known-issues 2026-08-18; commissioned 2026-08-18 10:30 review) | ✅ *(2026-08-19, 06:00 slot — fixed, no `@real_only`; the commissioned `ComplexComparisonError` was already dead, killed by `OPS-22` through the **imported** drive callable, and a free grep found it. Only the predicted second layer remained: the complex build now **passes the same 30% gate at the same 17.1233%**, both ranks identical, real-mode digits unmoved across control and re-run; collect count unchanged at 49. *Audited COMPLIANT 2026-08-19 10:30 review — all five footers, the 17.1233% in all three counted runs and the line-142 `Im`-assertion verified; the skipped cold-cache clear is journalled in three places and adjudicated sound; cosmetic journal error on record: the exit-124 batch log does carry a footer (124 / 481 s), the uncounted disposition stands*)* | standard |
-| `OPS-21` | Make the combined-XDMF test scalar-type-aware and rank-deterministic (known-issues 2026-08-18, two defects in one test; commissioned 2026-08-18 10:30 review) | ⬜ | standard |
+| `OPS-21` | Make the combined-XDMF test scalar-type-aware and rank-deterministic (known-issues 2026-08-18, two defects in one test; commissioned 2026-08-18 10:30 review) | ✅ | standard |
 | `OPS-22` | Make the three magnetostatic loop-drive fixtures complex-safe: replace the `ufl.max_value` / `<=` predicates in their `current_density` callables (known-issues 2026-08-19; commissioned 2026-08-19 03:00 review from the `OPS-17` leg-(b2) attempt-2 diagnosis; unblocks 5 tests in leg (b2)) | ✅ *(2026-08-19, 04:30 slot — all three files fixed, no `@real_only` needed; real-mode digits unmoved to the last printed figure across three runs, and the complex build now runs all three files to a footer: **5 passed, 412.12 s, exit 0**, both ranks identical. *Audited COMPLIANT 2026-08-19 10:30 review — footers, closed-form assertions and the new `Im`-bound idiom verified against all five logs; one caveat on record: `test_helmholtz_v2.py`'s complex coverage rests on a silenced `ComplexWarning` `float()` cast, not an assertion — fold an `Im`-bound in whenever that file is next touched*)* | standard |
 
 **`OPS-18` — DolfinX version upgrade, recurring** ⬜
@@ -1049,7 +1049,10 @@ exists, replace instead. Two steps, one implementer run each.)*
 >     Cause diagnosed by inspection: the test hard-codes real-mode XDMF
 >     attribute names and the complex writer emits `real_*`/`imag_*`. The
 >     rank-dependence is a *second*, undiagnosed defect. Known-issues entry
->     filed; not fixed (this leg is bookkeeping).
+>     filed; not fixed (this leg is bookkeeping). **Both closed by `OPS-21`
+>     2026-08-19** (entry removed from known-issues); the rank-dependence
+>     was the test's own rank-0-only early return, not a tmp-path race —
+>     see the `OPS-21` step-1 block.
 >   * **Defect 3's th-smoke Poynting xfail is still unobserved, and the
 >     rescope's claim that command 1 would read it was wrong.** That xfail
 >     lives in `tests/solver/test_time_harmonic_smoke.py`, which command 1
@@ -1436,7 +1439,7 @@ UFL/DolfinX helper. One diagnostic command, then one disposition.
 >   carry this second layer too.
 
 **`OPS-21` — make the combined-XDMF test scalar-type-aware and
-rank-deterministic** ⬜ *(commissioned 2026-08-18, 10:30 review, from the
+rank-deterministic** ✅ *(closed 2026-08-19, 16:30 implementer slot; commissioned 2026-08-18, 10:30 review, from the
 `OPS-17` leg-(b1) known-issues entry; one slot)*.
 `tests/unit/test_paraview_combined_xdmf.py::test_combined_xdmf_is_single_grid_with_all_attributes`
 carries two defects: it hard-codes real-mode attribute names (`{F, CellTags,
@@ -1468,6 +1471,56 @@ the cheap candidates).
 >   diagnosis proves a writer race — that would be a new finding.
 >   **Negative result:** a genuine writer race is a `src/` defect —
 >   known-issues update naming the mechanism, report, stop.
+> * **Step 1 ✅ 2026-08-19, 16:30 slot — both defects fixed, test-side
+>   only; no writer change, and the rank defect was misdiagnosed by the
+>   commission.** **The rank split was never a tmp-path race.** The
+>   fixture has broadcast rank 0's `tmp_path_factory` path since the
+>   file's only prior commit (`8c6ac03`, 2026-08-04), so both ranks
+>   always read the same file; the mechanism is the test's own
+>   `if comm.rank != 0: return` early exit (old line 58) — non-zero
+>   ranks never reached an assertion and so passed *unconditionally*,
+>   while rank 0 (the only rank holding a `written["combined"]` path,
+>   since `write_xdmf_with_tags` returns `None` elsewhere) asserted and
+>   failed. That is exactly the 2026-08-18 observation, PASSED on one
+>   rank and FAILED on the other, and it is a *silent* defect in the
+>   green case too: the file's real-mode coverage was rank-0-only all
+>   along. **Fix.** Rank 0 parses the light data and pulls in every
+>   heavy array it references (`_read_combined`), `comm.bcast`s the
+>   whole payload, and *every* rank then runs *every* assertion on the
+>   same bytes. **Naming.** `SCALAR_IS_COMPLEX` from
+>   `np.issubdtype(np.dtype(default_scalar_type), np.complexfloating)`
+>   selects `EXPECTED_NAMES`; the complementary spelling becomes
+>   `FORBIDDEN_NAMES` and is asserted disjoint — the commissioned
+>   inverted assertion, which is what makes a both-spellings union
+>   impossible. Imaginary parts are asserted **identically zero**
+>   (`np.array_equal(data, np.zeros_like(data))`): both fields and the
+>   DG0 tags are real-valued whatever the scalar type is, so the
+>   complex build gains a real assertion rather than a relaxation.
+>   **Numbers — exact-set identity in both builds at `-n 2`, and the
+>   two required sets are disjoint.** Real:
+>   `20260819T213140Z_OPS-21-step1-real.log`, 1 passed / exit 0 / 3 s,
+>   set exactly `{CellTags, F, G}` with the six split names asserted
+>   absent. Complex:
+>   `20260819T213153Z_OPS-21-step1-complex.log`
+>   (`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first), **5 passed
+>   / exit 0 / 2 s**, set exactly
+>   `{real_F, imag_F, real_G, imag_G, real_CellTags, imag_CellTags}`
+>   with the three bare names asserted absent. Both ranks' summary lines
+>   identical in each run. **Red baseline — the rank-determinism proof.**
+>   A green run cannot demonstrate it (before the fix the ranks agreed
+>   whenever the test passed), so the predicate was temporarily inverted
+>   (`SCALAR_IS_COMPLEX = not ...`) and re-run real:
+>   `20260819T213221Z_OPS-21-step1-redbaseline.log`, **1 failed on both
+>   ranks**, byte-identical message
+>   `attribute names do not match the complex-build spelling:
+>   ['CellTags', 'F', 'G']`, exit 1 / 2 s — the old code's disagreeing
+>   verdict under the same condition is gone, and the assertion is shown
+>   to bite. Mutation reverted and re-confirmed green,
+>   `20260819T213234Z_OPS-21-step1-real-final.log`, 1 passed / exit 0 /
+>   2 s. **`OPS-17` leg (b1) may now count this file in complex.** The
+>   known-issues entry is removed in the closing commit. **Follow-up,
+>   not forced:** the file's `G` field still has no value assertion in
+>   either build (presence and, now, a zero imaginary part only).
 
 **`OPS-22` — make the three magnetostatic loop-drive fixtures
 complex-safe** ✅ *(closed 2026-08-19, 04:30 implementer slot; commissioned 2026-08-19, 03:00 review, from the
@@ -4105,7 +4158,8 @@ build + `FEM_EM_REQUIRE_COMPLEX=1`; the test pair is 7 s of compute —
 XDMF export and docrefs dominate; budget `timeout -k 30 400`. **Traps:**
 complex-mode XDMF splits attributes into `real_*`/`imag_*` (correct
 writer behavior — name the ParaView fields accordingly in the guide; see
-the `OPS-21` known-issues entry before asserting on attribute names);
+the `OPS-21` §7 entry, which derives the six split names, before asserting
+on attribute names);
 `memory.peak` is a container-lifetime high-water mark — use summed
 `ru_maxrss` (`TH-12` step 1 instrument note); docrefs gates on
 `exit != 1`. **Scope:** sphere fixture only; no production-order claim
@@ -4674,8 +4728,23 @@ depends on another landing first. Item 1's former dependency (the
    result:** a three-term residual that misses the band with the
    source term restored — the number goes to the §7 entry and the
    known-issues defect-3 entry, report, stop.
-4. **`OPS-21` — make the combined-XDMF test scalar-type-aware and
-   rank-deterministic (smoke-to-standard).** Execute the §7 `OPS-21`
+4. ~~**`OPS-21` — make the combined-XDMF test scalar-type-aware and
+   rank-deterministic (smoke-to-standard).**~~ **Done 2026-08-19, 16:30
+   slot** — both defects fixed test-side, chunk closes ✅. Exact-set
+   identity in both builds at `-n 2` with the two required sets
+   **disjoint** (real `{CellTags, F, G}` + six split names asserted
+   absent, 1 passed / exit 0 / 3 s; complex the six `real_*`/`imag_*`
+   names + three bare names asserted absent, 5 passed / exit 0 / 2 s),
+   both ranks' summary lines identical in each run. **The commission's
+   rank diagnosis was wrong and the entry records the correction:** not
+   a per-rank tmp dir (the fixture has broadcast rank 0's path since
+   2026-08-04) but the test's own `if comm.rank != 0: return`, which
+   passed non-zero ranks unconditionally — so the file's real-mode
+   coverage was rank-0-only in the green case too. Verdict is now
+   collective (rank-0 parse + `bcast`, all ranks assert). Proven by an
+   executed red baseline with the scalar predicate inverted: **1 failed
+   on both ranks, byte-identical message**, then reverted and
+   re-confirmed green. Original scope, for the record: Execute the §7 `OPS-21`
    step-1 entry verbatim (commissioned 2026-08-18 10:30 review; full
    rubric there). **Anchor:** exact attribute-set identity in both
    builds at `-n 2` — real mode asserts exactly `{F, CellTags, G}`

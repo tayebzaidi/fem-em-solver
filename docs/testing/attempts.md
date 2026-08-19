@@ -14991,3 +14991,80 @@ re-run here as a collateral check (see the log list above). So there is no
 production consumer of `relative_imbalance` to migrate; when one appears —
 the SAR / coil-loading narratives §2 names — it must pass its drive, and the
 docstring now says so.
+
+## 2026-08-19T21:33Z — `OPS-21` step 1 — **complete** (16:30 implementer slot)
+
+**Item.** §9 On-deck item 4 (items 1–3 done). Chunk closes ✅; both commissioned
+defects fixed, test-side only, no writer change.
+
+**Preflight.** Tree clean, container Up 40 h, `main` at `6da9897`.
+
+**What was tried.** The §7 step-1 entry verbatim.
+- *Naming.* `SCALAR_IS_COMPLEX = np.issubdtype(np.dtype(default_scalar_type),
+  np.complexfloating)` selects `EXPECTED_NAMES`; the complementary spelling
+  becomes `FORBIDDEN_NAMES`, asserted disjoint (the commissioned inverted
+  assertion — it is what makes a both-spellings union impossible). Never a
+  union.
+- *Verdict.* Rank 0 parses the light data and pulls in every heavy array it
+  references (`_read_combined`), `comm.bcast`s the payload, and every rank runs
+  every assertion on the same bytes.
+- *Extra assertion, not a relaxation.* Every imaginary part is asserted
+  identically zero — both fields and the DG0 tags are real-valued whatever the
+  scalar type is — so the complex build gains a check rather than losing one.
+
+**The commission's rank diagnosis was wrong; the correction is the finding.**
+The entry (and the known-issues row) named per-rank pytest tmp dirs as the
+cheap candidate. Refuted by inspection before any command: the fixture has
+broadcast rank 0's `tmp_path_factory` path since the file's only prior commit
+(`8c6ac03`, 2026-08-04), so both ranks always read the same file. The actual
+mechanism is the test's own `if comm.rank != 0: return` (old line 58): non-zero
+ranks never reached an assertion and passed **unconditionally**, while rank 0 —
+the only rank holding a `written["combined"]` path, since
+`write_xdmf_with_tags` returns `None` elsewhere — asserted and failed. That is
+exactly the 2026-08-18 PASSED-on-one-rank/FAILED-on-the-other observation, and
+it means the file's real-mode coverage had been rank-0-only all along, silently,
+in the green case too.
+
+**Measured — exact-set identity in both builds at `-n 2`, required sets
+disjoint.**
+
+| Run | Log | Result |
+|---|---|---|
+| Real | `20260819T213140Z_OPS-21-step1-real.log` | 1 passed / exit 0 / 3 s; set exactly `{CellTags, F, G}`, six split names asserted absent |
+| Complex (`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first) | `20260819T213153Z_OPS-21-step1-complex.log` | **5 passed / exit 0 / 2 s**; set exactly `{real_F, imag_F, real_G, imag_G, real_CellTags, imag_CellTags}`, three bare names asserted absent |
+| Red baseline (predicate inverted) | `20260819T213221Z_OPS-21-step1-redbaseline.log` | **1 failed on both ranks**, exit 1 / 2 s |
+| Revert re-confirm | `20260819T213234Z_OPS-21-step1-real-final.log` | 1 passed / exit 0 / 2 s |
+
+Both ranks' summary lines identical in every run.
+
+**Why the red baseline was run.** The rank-determinism claim is unobservable on
+a green run — before the fix the ranks agreed whenever the test passed, and
+disagreed only when it failed. So `SCALAR_IS_COMPLEX` was temporarily inverted
+(`= not ...`), re-run in the real build, and both ranks failed with the
+byte-identical message `attribute names do not match the complex-build
+spelling: ['CellTags', 'F', 'G']`. That simultaneously shows the name assertion
+bites. The mutation was reverted and the green state re-confirmed by a fourth
+run; the committed tree is the reverted one.
+
+**Cost.** Far under tier — 3 + 2 + 2 + 2 s of compute, `-n 2` throughout, no
+mesh generation beyond a 3×3×3 unit cube. Commissioned smoke-to-standard; it is
+smoke.
+
+**Deviation to note.** One host `python3` heredoc was used to delete the
+resolved known-issues section (a pure text edit, no compute, no dolfinx); it
+was not denied. Everything that executed code went through `run_and_log.sh`.
+
+**Landed together.** Test rewrite, four harness logs + `test-results.md` rows,
+§7 status flip + step-1 result block, §7 table row, the `OPS-17` leg-(b1)
+annotation pointing at the correction, the §9 item-4 strikethrough, and removal
+of the known-issues entry.
+
+**Hypothesis for the next attempt.** `OPS-21` is closed; `OPS-17` leg (b1) may
+now count this file as observed-green in complex. Two follow-ups, neither
+forced: (i) the `G` field still has no value assertion in either build —
+presence and a zero imaginary part only; (ii) the early-return pattern this
+chunk found is a *class* of defect, not a one-off — any test that asserts under
+`if comm.rank != 0: return` passes unconditionally on every other rank, which is
+precisely the shape `OPS-17`'s coverage bookkeeping cannot see. A grep for that
+idiom across `tests/` is a cheap next item and would tell the review how much of
+the suite's `-n 2` coverage is actually rank-0-only.

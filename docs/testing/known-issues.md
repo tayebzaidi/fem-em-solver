@@ -786,21 +786,6 @@ immediately before the run.
 | **Scope** | `OPS-17` is test-hygiene bookkeeping and deliberately did not fix it. Whoever fixes it should record whether the complex build ever needs this magnetostatic path at all — if not, an explicit `@real_only` marker is a legitimate disposition and is cheaper than making the form complex-safe. |
 | **Resolves with** | `OPS-20` (commissioned 2026-08-18 10:30 review): one `--tb=long` cold-cache diagnosis, then fix-or-mark, real-mode record 17.1233% re-asserted unmoved either way. **Re-pointed 2026-08-19 03:00 review:** the Cause row's "DolfinX/UFL helper" hypothesis is disfavoured — every other instance of this error class was a fixture-side `max`/ordering predicate in the test's own drive callable (see the `OPS-22` entry above); start the diagnosis by grepping this test's drive construction. |
 
-### `test_paraview_combined_xdmf` asserts real-mode attribute names and fails in the complex build (`OPS-17` step 3 leg (b1), 2026-08-18)
-
-**Verified at `93fc531`, 07:30 implementer slot,
-`20260818T123045Z_OPS-17-step3d-complex-nonsolver.log`** (exit 1, 392.76 s,
-`-n 2`, complex build).
-
-| | |
-|---|---|
-| **Test** | `tests/unit/test_paraview_combined_xdmf.py::test_combined_xdmf_is_single_grid_with_all_attributes` |
-| **Symptom** | `test_paraview_combined_xdmf.py:75: AssertionError: assert {'imag_CellTags', 'real_F', 'imag_G', 'imag_F', 'real_CellTags', 'real_G'} == {'F', 'CellTags', 'G'}` |
-| **Cause** | Diagnosed by inspection of the assertion, not fixed. DolfinX's XDMF writer splits every attribute into `real_<name>`/`imag_<name>` when the scalar type is complex. The test hard-codes the three real-mode names, so it can only pass in the real build. The writer is behaving correctly; **the test is build-mode-blind**. |
-| **Rank-dependent** | Yes, and unexplained: the two ranks disagree — rank A reported `3 failed, 122 passed, 1 xfailed`, rank B `4 failed, 121 passed, 1 xfailed`, the delta being exactly this test (`PASSED [ 99%]` on one rank, `FAILED [100%]` on the other, same run). A test whose verdict depends on rank is a second defect on top of the naming one; whoever fixes the naming must also make the file read collectively (or restrict it to rank 0) rather than only relaxing the name set. |
-| **Fix** | Not attempted — `OPS-17` leg (b1) is bookkeeping. The name set should be derived from the active scalar type, not restated. Do **not** "fix" it by widening the set to accept both spellings unconditionally: that would let a real-mode run pass while silently emitting complex names. |
-| **Resolves with** | `OPS-21` (commissioned 2026-08-18 10:30 review): derive the name set from the active scalar type with the real-mode inverted assertion, and make the verdict collective — both defects in one chunk. |
-
 ### The complex-power identity reads 3–5e-9 at degree-2 N1curl on the coil fixture, against a 1e-9 family bound — and the quantity it gates is 99.6% spurious electric energy (`TH-12` step 2, 2026-08-18)
 
 **Verified at `92fc3e7`, 15:00 implementer slot,
