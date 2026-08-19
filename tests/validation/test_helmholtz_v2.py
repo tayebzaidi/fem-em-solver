@@ -36,14 +36,19 @@ def test_helmholtz_field_uniformity_two_torus():
     z2 = separation / 2
 
     def current_density(x):
-        rho = ufl.sqrt(x[0] ** 2 + x[1] ** 2)
+        # Complex-safe drive (OPS-22): regularise inside the sqrt rather than
+        # with ufl.max_value, and take ufl.real of both ordering operands —
+        # UFL forbids max/ordering on complex-typed operands. Geometry is real
+        # either way, so real mode is unaffected.
+        rho_safe = ufl.sqrt(x[0] ** 2 + x[1] ** 2 + 1e-24)
 
-        in_wire_1 = ((rho - major_radius) ** 2 + (x[2] - z1) ** 2) <= minor_radius**2
-        in_wire_2 = ((rho - major_radius) ** 2 + (x[2] - z2) ** 2) <= minor_radius**2
+        r2_1 = (rho_safe - major_radius) ** 2 + (x[2] - z1) ** 2
+        r2_2 = (rho_safe - major_radius) ** 2 + (x[2] - z2) ** 2
+        in_wire_1 = ufl.le(ufl.real(r2_1), minor_radius**2)
+        in_wire_2 = ufl.le(ufl.real(r2_2), minor_radius**2)
         in_wire = ufl.Or(in_wire_1, in_wire_2)
 
         # Azimuthal current direction around z-axis
-        rho_safe = ufl.max_value(rho, 1e-12)
         jx = -x[1] / rho_safe
         jy = x[0] / rho_safe
 

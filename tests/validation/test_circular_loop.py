@@ -50,8 +50,10 @@ def azimuthal_current_density(j_magnitude):
     """
 
     def current_density(x):
-        rho = ufl.sqrt(x[0] ** 2 + x[1] ** 2)
-        rho_safe = ufl.max_value(rho, 1e-12)
+        # Complex-safe: regularise inside the sqrt instead of ufl.max_value,
+        # which UFL forbids on complex-typed operands (OPS-22; the swallowed
+        # FFCx root-node failure of 2026-08-19 came from this line).
+        rho_safe = ufl.sqrt(x[0] ** 2 + x[1] ** 2 + 1e-24)
         return ufl.as_vector([
             -x[1] / rho_safe * j_magnitude,
             x[0] / rho_safe * j_magnitude,
@@ -212,7 +214,17 @@ class TestCircularLoop:
         # np.arange(n) here evaluates in arbitrary cells and yields garbage.
         B_num, valid = evaluate_vector_field_parallel(B, points, comm=comm)
         assert valid.all(), f"{(~valid).sum()}/{n_points} sample points outside mesh"
-        B_num_z = B_num[:, 2]  # z-component
+        # z-component. In the complex build the array carries the complex
+        # scalar type although this magnetostatic solution is real-valued
+        # (OPS-22): assert the imaginary part is negligible, then compare on
+        # the real part. np.imag is exactly zero in real mode, so this is a
+        # no-op there.
+        B_num_z = B_num[:, 2]
+        assert np.max(np.abs(np.imag(B_num_z))) <= 1e-12 * np.max(np.abs(B_num_z)), (
+            "B_z has a non-negligible imaginary part: "
+            f"max|Im| = {np.max(np.abs(np.imag(B_num_z))):.3e} T"
+        )
+        B_num_z = np.real(B_num_z)
         
         # Analytical solution
         B_ana_z = AnalyticalSolutions.circular_loop_magnetic_field_on_axis(

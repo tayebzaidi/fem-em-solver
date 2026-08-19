@@ -28,8 +28,38 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### The magnetostatic loop-drive fixtures are complex-hostile: `ufl.max_value` / `<=` geometry predicates in the current-density callable (`OPS-17` leg (b2), 2026-08-19)
+### ✅ FIXED 2026-08-19 (`OPS-22`) — the magnetostatic loop-drive fixtures were complex-hostile: `ufl.max_value` / `<=` geometry predicates in the current-density callable (`OPS-17` leg (b2), 2026-08-19)
 
+> **FIXED 2026-08-19, 04:30 implementer slot (`OPS-22` step 1).** All three
+> files repaired; nothing marked `@real_only`. The complex build now runs
+> `test_circular_loop.py`, `test_helmholtz_magnitude.py` and
+> `test_helmholtz_v2.py` as one command — **5 passed in 412.12 s, exit 0**,
+> both ranks identical (`20260819T094710Z_OPS-22-step1-complex-all.log`) —
+> and the printed digits equal the real-mode record to the last figure
+> (loop relL2 7.0658% / max 13.8212%; Helmholtz centre 0.728%, mean 0.644%,
+> CV 0.1602%). Real mode is unmoved: identical digits in
+> `20260819T093105Z` (before), `20260819T093529Z` (after the predicate fix)
+> and `20260819T095414Z` (after the real-part fix, 5 passed / 199.91 s).
+> The 5 tests are unblocked for `OPS-17` leg (b2).
+>
+> **The fix had two layers, and the second was not predicted here.**
+> (1) As diagnosed: `ufl.max_value(rho, 1e-12)` → `ufl.sqrt(x²+y²+1e-24)`,
+> and `(...) <= a²` → `ufl.le(ufl.real(...), a²)`. (2) With the form
+> compiling, the complex run reached the *assertions* and failed at
+> `ValueError: Unknown format code '%' for object of type 'complex'`:
+> `evaluate_vector_field_parallel` returns the complex scalar type even for
+> a real-valued magnetostatic solution. Both comparing tests now assert
+> `max|Im B_z| ≤ 1e-12·max|B_z|` and compare on `np.real` (a no-op in real
+> mode). **`OPS-20` should expect the same second layer** once its
+> predicate is fixed, as should
+> `examples/magnetostatics/02_circular_loop.py:173` and
+> `04_helmholtz_analytic_comparison.py:79`, which still carry the idiom and
+> are unexercised in complex mode (follow-up, not done in this slot).
+>
+> The **poisoned-stub trap** documented below stands unchanged and is
+> independently useful; the sweep was clean before and after this work.
+>
+> *(Diagnosis, retained as the record of how this was found:)*
 > **CAUSE DIAGNOSED 2026-08-19, 22:30 slot (attempt 2).** The heading below
 > originally read "cannot JIT-compile one form … cause not diagnosed". Two
 > `--tb=long` runs on a **verified-stub-free** cache localized it, and the

@@ -422,7 +422,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 | `OPS-20` | Disposition the coil-phantom `ComplexComparisonError`: localize with `--tb=long`, then fix the form or mark `@real_only` (known-issues 2026-08-18; commissioned 2026-08-18 10:30 review) | ⬜ | standard |
 | `OPS-21` | Make the combined-XDMF test scalar-type-aware and rank-deterministic (known-issues 2026-08-18, two defects in one test; commissioned 2026-08-18 10:30 review) | ⬜ | standard |
-| `OPS-22` | Make the three magnetostatic loop-drive fixtures complex-safe: replace the `ufl.max_value` / `<=` predicates in their `current_density` callables (known-issues 2026-08-19; commissioned 2026-08-19 03:00 review from the `OPS-17` leg-(b2) attempt-2 diagnosis; unblocks 5 tests in leg (b2)) | ⬜ | standard |
+| `OPS-22` | Make the three magnetostatic loop-drive fixtures complex-safe: replace the `ufl.max_value` / `<=` predicates in their `current_density` callables (known-issues 2026-08-19; commissioned 2026-08-19 03:00 review from the `OPS-17` leg-(b2) attempt-2 diagnosis; unblocks 5 tests in leg (b2)) | ✅ *(2026-08-19, 04:30 slot — all three files fixed, no `@real_only` needed; real-mode digits unmoved to the last printed figure across three runs, and the complex build now runs all three files to a footer: **5 passed, 412.12 s, exit 0**, both ranks identical)* | standard |
 
 **`OPS-18` — DolfinX version upgrade, recurring** ⬜
 *(commissioned 2026-08-16, operator session. The base image is pinned at
@@ -1366,7 +1366,7 @@ the cheap candidates).
 >   known-issues update naming the mechanism, report, stop.
 
 **`OPS-22` — make the three magnetostatic loop-drive fixtures
-complex-safe** ⬜ *(commissioned 2026-08-19, 03:00 review, from the
+complex-safe** ✅ *(closed 2026-08-19, 04:30 implementer slot; commissioned 2026-08-19, 03:00 review, from the
 `OPS-17` leg-(b2) attempt-2 diagnosis and its known-issues entry; one
 slot)*. Three validation fixtures build their own magnetostatic
 `current_density` callables with constructs UFL forbids on complex
@@ -1401,6 +1401,47 @@ debt, and the fix is precedented in-repo: regularise inside the `sqrt`
 >   window is tight; no physics claim moves. **Negative result:** a
 >   regularised form that still fails to compile — journal the FFCx
 >   message in the known-issues entry, report, stop.
+> * **Step 1 ✅ 2026-08-19, 04:30 slot — fixed, not marked; all three
+>   files, no `@real_only` anywhere.** Two defects, not one. (i) The
+>   commissioned one: `ufl.max_value` → regularise inside the `sqrt`
+>   (`+ 1e-24`), and the wire predicates rewritten as
+>   `ufl.le(ufl.real(r²), a²)` — the geometry is real either way, so
+>   nothing about the physics moves. That alone took the two hanging
+>   files to green and turned `test_circular_loop`'s swallowed
+>   root-node failure into a *compiling* form. (ii) A second,
+>   previously unseen layer behind it: with the form compiling, the
+>   complex run reached the assertions and died at
+>   `ValueError: Unknown format code '%' for object of type 'complex'`
+>   — `evaluate_vector_field_parallel` hands back the complex scalar
+>   type even though a magnetostatic solution is real-valued. Fixed in
+>   the two comparing tests by asserting `max|Im B_z| ≤ 1e-12·max|B_z|`
+>   and then comparing on `np.real` — a *new* complex-mode assertion,
+>   exactly zero and a no-op in real mode. Note for `OPS-20` and for
+>   the two examples: expect this second layer after the predicate fix.
+>   **Numbers.** Real-mode baseline before any edit
+>   (`20260819T093105Z`, 5 passed / 223.24 s): loop relL2 **7.0658%**,
+>   max **13.8212%**, |B_z|max 2.974560e-05 T; Helmholtz centre
+>   **0.728%**, mean **0.644%**, CV **0.1602%**. Re-run after the
+>   predicate fix (`20260819T093529Z`, 199—222 s) and again after the
+>   real-part fix (`20260819T095414Z`, 5 passed / 199.91 s, exit 0):
+>   **every digit identical**, so the negative control holds. Complex
+>   build, all three files, one command
+>   (`20260819T094710Z`, `FEM_EM_REQUIRE_COMPLEX=1`, `-n 2`):
+>   **5 passed in 412.12 s, exit 0**, both ranks identical, and the
+>   printed digits match the real-mode record to the last figure
+>   (7.0658% / 13.8212% / 0.728% / 0.644% / 0.1602%) — i.e. the
+>   complex build reproduces the magnetostatic records, not merely
+>   "runs". Costs for whoever sizes the next window: `test_circular_loop`
+>   is the sink at **289.41 s** (on-axis) + **102.46 s** (symmetry) in
+>   complex; the magnitude file is 18.99 s and `_v2` 0.74 s. Interim
+>   log `20260819T093933Z` (1 failed / 3 passed, 412.21 s) is the
+>   between-fixes state and is what identified defect (ii). Stub sweep
+>   `find /root/.cache/fenics -name '*.c' -size 0` clean before and
+>   after. **Follow-up, not forced (window was tight):** the same
+>   `max_value` idiom stands in
+>   `examples/magnetostatics/02_circular_loop.py:173` and
+>   `04_helmholtz_analytic_comparison.py:79`, unexercised in complex
+>   mode. `OPS-17` leg (b2) may now draw its 5 blocked tests.
 
 **`OPS-13` — land the rank-safe `_validate_material_map_tags` fix** ✅
 *(2026-08-08; full narrative in `docs/planning/plan-archive.md`)*. The one
@@ -4221,8 +4262,14 @@ their §7 entries verbatim as annotated by this review.
 > closes (complex-baseline attributability), with the queueing
 > commitment written into the condition. No further action pending here.
 
-1. **`OPS-22` — make the three magnetostatic loop-drive fixtures
-   complex-safe (standard).** Execute the §7 `OPS-22` entry verbatim
+1. ✅ **done 2026-08-19, 04:30 slot** — **`OPS-22` — make the three
+   magnetostatic loop-drive fixtures
+   complex-safe (standard).** *(All three fixed, none marked
+   `@real_only`; complex build runs all three files to a footer,
+   5 passed / 412.12 s / exit 0, digits identical to the real-mode
+   record. A second defect layer — complex-typed field arrays reaching
+   the comparisons — was found and fixed behind the predicate one; see
+   the §7 entry, it is a live warning for `OPS-20`.)* Execute the §7 `OPS-22` entry verbatim
    (commissioned this review from the `OPS-17` leg-(b2) attempt-2
    diagnosis). **Anchor:** each affected test's real-mode record
    re-asserted unmoved (digits matching the `OPS-17` leg-(a)

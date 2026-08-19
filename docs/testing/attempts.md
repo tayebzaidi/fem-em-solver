@@ -14480,3 +14480,64 @@ net flux is ~6× smaller than the dissipation, so `power_scale_w` is set by the
 volume leg and a small absolute error in the curl trace reads as O(100%). Check
 that before assuming a formulation error in `H = ∇×E/(−jωμᵣμ₀)`; the `TH-6`
 plane wave, where both legs have closed forms, settles which it is.
+
+## 2026-08-19T09:30Z — `OPS-22` step 1 (complex-safe loop-drive fixtures) — **complete**
+
+Slot: 04:30 CDT scheduled implementer run. Preflight clean (tree clean on
+`main`, container Up 28 h, no 0-byte FFCx stub in `/root/.cache/fenics`
+before or after). Took §9 item 1, the first open item.
+
+**Outcome: `OPS-22` closed.** All three fixtures fixed; **no `@real_only`
+disposition was needed anywhere** — the complex build reproduces the
+magnetostatic records, it does not merely tolerate them.
+
+**Two defect layers, only the first commissioned.**
+
+1. *The diagnosed one.* `ufl.max_value(rho, 1e-12)` → regularise inside the
+   `sqrt` (`ufl.sqrt(x[0]**2 + x[1]**2 + 1e-24)`), per the in-repo precedent;
+   the wire predicates `(...) <= a**2` → `ufl.le(ufl.real(...), a**2)`. The
+   geometry is real in both builds, so this cannot move a physics number, and
+   it did not. This alone unhung `test_helmholtz_v2` / `test_helmholtz_magnitude`
+   and turned `test_circular_loop`'s swallowed FFCx root-node failure into a
+   compiling form.
+2. *Unpredicted, found by running it.* With the forms compiling, the complex
+   run reached the assertions and died at `ValueError: Unknown format code '%'
+   for object of type 'complex'` — `evaluate_vector_field_parallel` hands back
+   the complex scalar type even though a magnetostatic solution is real-valued.
+   Both comparing tests now assert `max|Im B_z| <= 1e-12 * max|B_z|` and compare
+   on `np.real`; that is a *new* complex-mode quantitative assertion and an
+   exact no-op in real mode. **This is the hand-off worth reading:** `OPS-20`
+   (§9 item 2, same family) should expect layer 2 immediately after fixing its
+   predicate, and so should the two examples.
+
+**Numbers (four harness runs, all `-n 2`).**
+
+| run | log | result |
+|---|---|---|
+| real, before any edit | `20260819T093105Z_OPS-22-step1-realbaseline.log` | 5 passed, 223.24 s, exit 0 |
+| real, after predicate fix | `20260819T093529Z_OPS-22-step1-real-after.log` | 5 passed, 222.49 s, exit 0 |
+| complex, mid-fix (found layer 2) | `20260819T093933Z_OPS-22-step1-complex-loop-v2.log` | 1 failed / 3 passed, 412.21 s, exit 1 |
+| **complex, all three files** | `20260819T094710Z_OPS-22-step1-complex-all.log` | **5 passed, 412.12 s, exit 0**, both ranks identical |
+| real, final | `20260819T095414Z_OPS-22-step1-real-final.log` | 5 passed, 199.91 s, exit 0 |
+
+Negative control (real-mode digits unmoved) holds to the last printed figure
+across all three real runs **and** in the complex run: circular loop relL2
+**7.0658%**, max rel **13.8212%**, |B_z|max 2.974560e-05 T; Helmholtz centre
+**0.728%** (FEM 3.556767e-09 T vs closed form 3.531057e-09 T), mean
+**0.644%**, central CV **0.1602%**.
+
+**Costs, for whoever sizes the next complex window.** In the complex build
+`test_circular_loop` is the sink: **289.41 s** (on-axis) + **102.46 s**
+(symmetry); `test_helmholtz_magnitude` is 18.99 s call, `test_helmholtz_v2`
+0.74 s. The 480 s window that held the two-file leg would *not* have held all
+three cold — the all-three run fit only because two forms were already warm.
+
+**Left undone, deliberately (scope says "journalled if the window is tight"):**
+`examples/magnetostatics/02_circular_loop.py:173` and
+`04_helmholtz_analytic_comparison.py:79` still carry the `max_value` idiom;
+they are unexercised in complex mode, so nothing is red because of them.
+
+**Next attempt hypothesis:** `OPS-17` leg (b2) may now draw its 5 blocked
+tests; and `OPS-20`'s fix is likely the identical two-layer edit on one file,
+so it should be sized for a *second* window after the predicate compiles
+rather than budgeted as a one-shot.

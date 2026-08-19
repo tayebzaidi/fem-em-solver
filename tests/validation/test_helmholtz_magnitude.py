@@ -79,12 +79,17 @@ def _current_density(x):
     z1 = -SEPARATION / 2.0
     z2 = SEPARATION / 2.0
 
-    rho = ufl.sqrt(x[0] ** 2 + x[1] ** 2)
-    in_wire_1 = ((rho - MAJOR_RADIUS) ** 2 + (x[2] - z1) ** 2) <= MINOR_RADIUS**2
-    in_wire_2 = ((rho - MAJOR_RADIUS) ** 2 + (x[2] - z2) ** 2) <= MINOR_RADIUS**2
+    # Complex-safe drive (OPS-22): regularise inside the sqrt rather than with
+    # ufl.max_value, and take ufl.real of both ordering operands. UFL refuses
+    # max/ordering on complex-typed operands, so the earlier form raised
+    # ComplexComparisonError in the complex build (known-issues 2026-08-19).
+    # The geometry is real either way, so real mode is unaffected.
+    rho_safe = ufl.sqrt(x[0] ** 2 + x[1] ** 2 + 1e-24)
+    r2_1 = (rho_safe - MAJOR_RADIUS) ** 2 + (x[2] - z1) ** 2
+    r2_2 = (rho_safe - MAJOR_RADIUS) ** 2 + (x[2] - z2) ** 2
+    in_wire_1 = ufl.le(ufl.real(r2_1), MINOR_RADIUS**2)
+    in_wire_2 = ufl.le(ufl.real(r2_2), MINOR_RADIUS**2)
     in_wire = ufl.Or(in_wire_1, in_wire_2)
-
-    rho_safe = ufl.max_value(rho, 1e-12)
     return ufl.as_vector(
         [
             ufl.conditional(in_wire, -x[1] / rho_safe, 0.0),
@@ -126,7 +131,16 @@ def test_helmholtz_centre_field_magnitude():
     # with np.arange(n) evaluates in arbitrary cells and returns nonsense.
     values, valid = evaluate_vector_field_parallel(b_field, points, comm=comm)
     assert valid.all(), f"{int((~valid).sum())}/{N_POINTS} sample points outside mesh"
+    # In the complex build the field array carries the complex scalar type even
+    # though this magnetostatic solution is real-valued (OPS-22). Assert the
+    # imaginary part is negligible, then compare on the real part; in real mode
+    # np.imag is exactly zero and this is a no-op.
     bz_num = values[:, 2]
+    assert np.max(np.abs(np.imag(bz_num))) <= 1e-12 * np.max(np.abs(bz_num)), (
+        "B_z has a non-negligible imaginary part: "
+        f"max|Im| = {np.max(np.abs(np.imag(bz_num))):.3e} T"
+    )
+    bz_num = np.real(bz_num)
 
     # I = |J| * wire cross-section. This factor is what CV cannot see.
     current = 1.0 * np.pi * MINOR_RADIUS**2
