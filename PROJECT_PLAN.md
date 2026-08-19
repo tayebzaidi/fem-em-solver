@@ -417,7 +417,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
-| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots; **rescoped 2026-08-18 03:00 review as (b1) remainder + (b2) validation**, one slot each; **(b1) attempt 1 2026-08-18 🟡 — command 1 completed (3 failed / 122 passed / 1 xfailed, 392.76 s, the three failures exactly the named expected ones, one rank-dependent XDMF count delta), command 2 exit 124 at 44%: complex `tests/solver` is > 12× real, not 2.6×. The leg's real finding is that attempt 3's "cache artifact" call was wrong — on a cold cache `test_coil_phantom_magnetostatics` fails in 5.58 s with a genuine `ComplexComparisonError`**; **(b1) attempt 2 2026-08-18 ✅ CLOSED — complex `tests/solver` runs as one command, 46 passed / 2 xfailed in 111.22 s, exit 0, both ranks identical; counts reconcile to 171 non-validation complex, the same 171 leg (a) observed; defect 3's th-smoke Poynting xfail finally read in a completed leg; the ">12× real" rule is **withdrawn** as a cold-cache FFCx-JIT artifact — warm complex is ~2.7× real, and `test_gauge_penalty.py`, which killed the 480 s cold leg at 61%, is 8 passed in 20.33 s warm**. *Leg (b1) audited COMPLIANT 2026-08-18 10:30 review — the 49 = 48 + 1 and 171/209 reconciliations re-derived from the log footers, both ranks identical in the closing leg; the coil-phantom exclusion is within the written anchor (observed FAILED in its own completed log `20260818T124712Z`, two known-issues entries), with the caveat on record that the completed observation shows the warm-cache message while the genuine `ComplexComparisonError` appeared in an exit-124 run — the three-state map is disclosed in known-issues*; only leg (b2) remains; **(b2) attempt 1 2026-08-19 🟡 — three commands completed (impedance file `24 passed`/488 s; cost probe re-bases the stale 380 collect to **397**, validation **225**; shortest-first subset `23 passed`/121 s with the per-file sinks priced), then the written negative-result clause fired: `test_circular_loop.py` **cannot JIT-compile one form in the complex build**, reproducibly and independently of cache state — new known-issues entry, which also names the **0-byte FFCx stub** trap that mis-attributes such failures as cache artifacts (a stale stub from 2026-08-18 14:02 was still in the cache). Coverage 39/225; 186 remain, 3 blocked**) | standard |
+| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots; **rescoped 2026-08-18 03:00 review as (b1) remainder + (b2) validation**, one slot each; **(b1) attempt 1 2026-08-18 🟡 — command 1 completed (3 failed / 122 passed / 1 xfailed, 392.76 s, the three failures exactly the named expected ones, one rank-dependent XDMF count delta), command 2 exit 124 at 44%: complex `tests/solver` is > 12× real, not 2.6×. The leg's real finding is that attempt 3's "cache artifact" call was wrong — on a cold cache `test_coil_phantom_magnetostatics` fails in 5.58 s with a genuine `ComplexComparisonError`**; **(b1) attempt 2 2026-08-18 ✅ CLOSED — complex `tests/solver` runs as one command, 46 passed / 2 xfailed in 111.22 s, exit 0, both ranks identical; counts reconcile to 171 non-validation complex, the same 171 leg (a) observed; defect 3's th-smoke Poynting xfail finally read in a completed leg; the ">12× real" rule is **withdrawn** as a cold-cache FFCx-JIT artifact — warm complex is ~2.7× real, and `test_gauge_penalty.py`, which killed the 480 s cold leg at 61%, is 8 passed in 20.33 s warm**. *Leg (b1) audited COMPLIANT 2026-08-18 10:30 review — the 49 = 48 + 1 and 171/209 reconciliations re-derived from the log footers, both ranks identical in the closing leg; the coil-phantom exclusion is within the written anchor (observed FAILED in its own completed log `20260818T124712Z`, two known-issues entries), with the caveat on record that the completed observation shows the warm-cache message while the genuine `ComplexComparisonError` appeared in an exit-124 run — the three-state map is disclosed in known-issues*; only leg (b2) remains; **(b2) attempt 1 2026-08-19 🟡 — three commands completed (impedance file `24 passed`/488 s; cost probe re-bases the stale 380 collect to **397**, validation **225**; shortest-first subset `23 passed`/121 s with the per-file sinks priced), then the written negative-result clause fired: `test_circular_loop.py` **cannot JIT-compile one form in the complex build**, reproducibly and independently of cache state — new known-issues entry, which also names the **0-byte FFCx stub** trap that mis-attributes such failures as cache artifacts (a stale stub from 2026-08-18 14:02 was still in the cache). Coverage 39/225; 186 remain, 3 blocked**; **(b2) attempt 2 2026-08-19 🟡 — the prescribed 4×-larger batch lost its window to a *second* instance of the same defect (`test_helmholtz_magnitude` FAILED at 62%, `test_helmholtz_v2` hung, exit 124; 9 passes uncounted for want of a footer), and the slot instead **diagnosed the cause**: the fixtures' own `current_density` callables use `ufl.max_value` / `<=` geometry predicates that UFL forbids on complex operands — `ComplexComparisonError` in 13.10 s for helmholtz, a swallowed FFCx root-node failure in 113.38 s for circular_loop, both on the load form at `solvers.py:385`. `src/` has **no** `max_value`; three sibling test files already document the fix (regularise inside the `sqrt`). **Fixture debt, not a solver defect**, and the same family as `OPS-20`. Coverage still 39/225; blocked 3 → 5**) | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 | `OPS-20` | Disposition the coil-phantom `ComplexComparisonError`: localize with `--tb=long`, then fix the form or mark `@real_only` (known-issues 2026-08-18; commissioned 2026-08-18 10:30 review) | ⬜ | standard |
@@ -1184,6 +1184,57 @@ exists, replace instead. Two steps, one implementer run each.)*
 >     observed in completed legs (20 impedance + 19 subset-1 validation).
 >     Remaining tail: 186, of which `test_circular_loop.py` (3) is **blocked**
 >     by the JIT defect and the padding file (2) stays deferred as written.
+>
+>   **🟡 leg (b2) attempt 2, 2026-08-19 04:00Z (22:30 slot) — the coverage
+>   window was lost to a second instance of the same defect, and the slot
+>   converted that defect from "not diagnosed" to a named cause: it is
+>   fixture debt, not a solver defect.** Nothing parked (no `src/`, `tests/`,
+>   `scripts/` or `examples/` change). Full journal in
+>   `docs/testing/attempts.md`.
+>   * **Preflight adopted the right cache test.** `find /root/.cache/fenics
+>     -name '*.c' -size 0` — **zero stubs**, 556 entries — so the cache was
+>     not cleared and every reading below starts stub-free. The 10:30
+>     amendment's "evidence of a killed prior run" should be *this sweep*,
+>     not entry/process counts (attempt 1's counts missed a stale stub).
+>   * **Command 1 (the prescribed 4×-larger batch) exit 124 at 421 s**
+>     (`20260819T033207Z_OPS-17-step3g-complex-validation-subset2.log`, `-n 2`,
+>     `timeout -k 30 420`): attempt 1's batch 2 minus `test_circular_loop.py`.
+>     9 of 16 PASSED, then `test_helmholtz_magnitude.py::test_helmholtz_
+>     centre_field_magnitude` **FAILED** at 62% and `test_helmholtz_v2` hung.
+>     No footer ⇒ **the 9 passes do not count** toward the completed-leg
+>     anchor; coverage stays 39/225.
+>   * **Cause diagnosed — two symptoms, one construct.** Both failures are the
+>     **load form `L`** built at `src/fem_em_solver/core/solvers.py:385` from
+>     the fixture's own `current_density` callable, whose "inside the wire"
+>     predicate uses ordering comparisons UFL forbids on complex operands.
+>     `test_helmholtz_magnitude` raises in UFL **before** FFCx —
+>     `ComplexComparisonError: Ordering undefined for complex values.`,
+>     **1 failed in 13.10 s** (`20260819T033938Z_...-helmholtz-magnitude-
+>     isolated.log`; exit 124 is only the ~300 s non-collective exit hang).
+>     `test_circular_loop` passes the checker and dies in FFCx instead —
+>     `Compilation failed on root node.`, **exit 1**, `1 failed, 2 deselected
+>     in 113.38 s`, 112.81 s call / 0.00 s setup
+>     (`20260819T034936Z_...-circularloop-onaxis-clean.log`), which
+>     re-confirms attempt 1's "not a cache artifact" call from a stub-free
+>     start.
+>   * **It is fixture debt.** `src/` contains **no** `max_value`/`min_value`.
+>     Three test files still carry `ufl.max_value(rho, 1e-12)`
+>     (`test_circular_loop.py:54`, `test_helmholtz_magnitude.py:87`,
+>     `test_helmholtz_v2.py:46`) plus two examples, while **three sibling
+>     files already document the workaround** — regularise inside the `sqrt` —
+>     in comments that say this very form does not compile in complex mode
+>     (`test_dodd_deeds_impedance.py:237`, `test_port_reaction_impedance.py:200`,
+>     `tests/mesh/test_two_torus_conforming.py:164`). Real mode is unaffected.
+>     Not fixed here: `OPS-17` is bookkeeping and does not edit `tests/`.
+>   * **`OPS-20` is the same family.** Its entry's guess that the coil-phantom
+>     `max` comparison "enters through a DolfinX/UFL helper" is superseded —
+>     start step 1 from the drive callable. Known-issues updated for both.
+>   * **Blocked count rises 3 → 5** (`circular_loop` 3, `helmholtz_magnitude`
+>     1, `helmholtz_v2` 1); padding (2) still deferred. **For the review:** two
+>     consecutive slots have lost a full window because one bad file voids the
+>     whole batch under a completed-leg anchor. Either let (b2) count per-file
+>     completed runs, or queue the ~15-line fixture fix first (in-repo
+>     precedent; unblocks 5 tests and 2 examples).
 
 **`OPS-20` — disposition the coil-phantom `ComplexComparisonError`** ⬜
 *(commissioned 2026-08-18, 10:30 review, from the two `OPS-17` leg-(b1)
@@ -4018,6 +4069,15 @@ annotated by this review.
    **Negative result:** the example path off the test records is a
    regression — known-issues entry, report, stop.
 2. **`OPS-17` step 3 leg (b2) — complex validation (standard).**
+   🟡 **attempt 2 2026-08-19 (22:30 slot) — still open, and it needs the
+   review before a third attempt.** The batch window was lost again to the
+   same defect on a new file; the slot diagnosed it instead (complex-hostile
+   `ufl.max_value` / `<=` predicates in three fixtures' `current_density`
+   callables — fixture debt, `src/` clean, same family as `OPS-20`). Coverage
+   unchanged at 39/225, blocked 3 → 5. **The review must pick one:** let (b2)
+   count per-file completed runs instead of big batches, or queue the
+   ~15-line fixture fix (in-repo precedent) ahead of it. A third identical
+   batch attempt will lose a third window. See the §7 attempt-2 annotation.
    Execute the §7 rescope annotation (03:00 review), amended by the
    10:30 review's cache correction: do **not** clear `~/.cache/fenics`
    unless preflight finds evidence of a killed prior run — the 09:00

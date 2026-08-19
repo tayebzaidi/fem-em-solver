@@ -1,0 +1,1344 @@
+# Test Run
+- Chunk: OPS-17-step3g-circularloop-onaxis-clean
+- Commit: c6129203ba9c8538a9850b73b59dec807dfc3205
+- Time (UTC): 2026-08-19 03:49:36
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 200 mpiexec -n 2 python3 -m pytest tests/validation/test_circular_loop.py -k on_axis -v --tb=long --durations=0'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 18 22:49 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 200 mpiexec -n 2 python3 -m pytest tests/validation/test_circular_loop.py -k on_axis -v --tb=long --durations=0'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 3 items / 2 deselected / 1 selected
+
+tests/validation/test_circular_loop.py::TestCircularLoop::test_circular_loop_on_axis collected 3 items / 2 deselected / 1 selected
+
+tests/validation/test_circular_loop.py::TestCircularLoop::test_circular_loop_on_axis FAILED [100%]
+
+=================================== FAILURES ===================================
+_________________ TestCircularLoop.test_circular_loop_on_axis __________________
+
+self = <tests.validation.test_circular_loop.TestCircularLoop object at 0x79a5d732d180>
+loop_params = {'current': 1.0, 'domain_radius': 0.06, 'loop_radius': 0.02, 'resolution': 0.0025, ...}
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-13/test_circular_loop_on_axis0')
+
+    def test_circular_loop_on_axis(self, loop_params, tmp_path):
+        """Test B_z on axis matches analytical solution.
+    
+        This test:
+        1. Creates a torus mesh for the loop
+        2. Solves magnetostatic problem with the analytic A on the outer sphere
+        3. Extracts B_z along the z-axis
+        4. Compares with analytical solution
+        5. Checks that relative error is within tolerance
+    
+        Measured, `mpiexec -n 2`, on-axis B_z L2 error over |z| <= 0.4 R_domain
+        (MAG-13 step 4; logs 20260730T124356Z / 124523Z / 124829Z
+        _MAG-13-loop-probe*):
+    
+        | h      | cells | natural n x H = 0 | analytic Dirichlet |
+        |--------|-------|-------------------|--------------------|
+        | 0.0035 | 82.8k | 14.98%            | 16.23%             |
+        | 0.0025 | 208k  |  8.86%            | 10.37%             |
+        | 0.002  | 411k  | --                |  7.07%             |
+    
+        The analytic wall is ~20% *worse* at fixed h here, unlike the wire
+        (35.13% -> 22.19%), and this is the chunk's real finding: the wire's
+        natural-BC error is a contradiction of Ampere's law that no refinement
+        removes, whereas the loop's is a PMC image term of order (a/R)^3 ~ 3.7%
+        -- smaller than the O(h) error the degree-1 interpolation of A_phi
+        injects through the boundary data itself. What the Dirichlet wall buys
+        is the limit: it converges monotonically (16.23 -> 10.37 -> 7.07,
+        fitted rate ~1.4) to the analytic field, while the natural wall
+        converges to a field that differs from it. Do not swap back to the
+        natural BC for the lower number at coarse h.
+        """
+        comm = MPI.COMM_WORLD
+    
+        # Parameters
+        current = loop_params['current']
+        loop_radius = loop_params['loop_radius']
+        wire_radius = loop_params['wire_radius']
+        domain_radius = loop_params['domain_radius']
+        resolution = self.ON_AXIS_RESOLUTION
+    
+        print(f"\nCircular loop test:")
+        print(f"  Loop radius: {loop_radius} m")
+        print(f"  Wire radius: {wire_radius} m")
+        print(f"  Current: {current} A")
+        print(f"  Resolution: {resolution} m")
+    
+        print("  Meshing and solving (analytic Dirichlet outer boundary)...")
+>       mesh, B = solve_loop(
+            loop_params, comm, resolution=resolution, analytic_bc=True
+        )
+
+tests/validation/test_circular_loop.py:192: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+params = {'current': 1.0, 'domain_radius': 0.06, 'loop_radius': 0.02, 'resolution': 0.0025, ...}
+comm = <mpi4py.MPI.Intracomm object at 0x79a5e9d7a390>, resolution = 0.002
+analytic_bc = True
+
+    def solve_loop(params, comm, resolution=None, analytic_bc=True):
+        """Mesh and solve the circular-loop problem; return (mesh, B)."""
+        resolution = params['resolution'] if resolution is None else resolution
+        mesh, cell_tags, _ = MeshGenerator.circular_loop_domain(
+            loop_radius=params['loop_radius'],
+            wire_radius=params['wire_radius'],
+            domain_radius=params['domain_radius'],
+            resolution=resolution,
+            comm=comm,
+        )
+    
+        problem = MagnetostaticProblem(mesh=mesh, cell_tags=cell_tags, mu=MU_0)
+        solver = MagnetostaticSolver(problem, degree=1)
+    
+        j_magnitude = params['current'] / (np.pi * params['wire_radius'] ** 2)
+        bcs = None
+        if analytic_bc:
+            bcs = [
+                exterior_dirichlet_bc(
+                    solver.V,
+                    loop_potential_interp(params['current'], params['loop_radius']),
+                )
+            ]
+    
+>       solver.solve(
+            current_density=azimuthal_current_density(j_magnitude),
+            subdomain_id=1,
+            bc_functions=bcs,
+        )
+
+tests/validation/test_circular_loop.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <fem_em_solver.core.solvers.MagnetostaticSolver object at 0x79a5d732e470>
+current_density = <function azimuthal_current_density.<locals>.current_density at 0x79a5d73449d0>
+bc_functions = [<dolfinx.fem.bcs.DirichletBC object at 0x79a5d7387df0>]
+subdomain_id = 1, subdomain_ids = [1], gauge_penalty = 1.0
+gauge = <GaugeMethod.PENALTY: 'penalty'>, petsc_options = None
+collect_solver_diagnostics = False
+
+    def solve(self, current_density: Optional[Callable] = None,
+              bc_functions: Optional[List] = None,
+              subdomain_id: Optional[int] = None,
+              subdomain_ids: Optional[Sequence[int]] = None,
+              gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
+              gauge: Union[GaugeMethod, str] = GaugeMethod.PENALTY,
+              petsc_options: Optional[Mapping[str, Any]] = None,
+              collect_solver_diagnostics: bool = False) -> fem.Function:
+        """Solve the magnetostatic problem.
+    
+        Parameters
+        ----------
+        current_density : callable, optional
+            Function returning J(x) for any point x.
+            If None, assumes J = 0 (no sources).
+        bc_functions : list, optional
+            List of Dirichlet BC functions
+        subdomain_id : int, optional
+            If provided, restricts current density integration to cells
+            with this tag (requires cell_tags in problem).
+        subdomain_ids : Sequence[int], optional
+            If provided, restricts current density integration to the union
+            of these cell tags (requires cell_tags in problem).
+            Mutually exclusive with ``subdomain_id``.
+        gauge_penalty : float, optional
+            Small regularization term added to remove the nullspace in
+            pure curl-curl problems (default: 1e-3).
+        petsc_options : mapping, optional
+            PETSc KSP/PC options override. Defaults to direct solve
+            (``ksp_type=preonly``, ``pc_type=lu``).
+        collect_solver_diagnostics : bool, optional
+            If True, request PETSc convergence history and expose
+            ``last_solve_diagnostics`` for residual trend summaries.
+    
+        Returns
+        -------
+        fem.Function
+            Magnetic vector potential A
+        """
+        # Define trial and test functions
+        A_trial = TrialFunction(self.V)
+        v = TestFunction(self.V)
+    
+        # Permeability (could be spatially varying)
+        if callable(self.mu):
+            mu = self.mu(ufl.SpatialCoordinate(self.mesh))
+        else:
+            mu = fem.Constant(self.mesh, PETSc.ScalarType(self.mu))
+        mu_inv = 1.0 / mu
+    
+        # Bilinear form: a(A, v) = ∫ μ⁻¹ (∇ × A) · (∇ × v) dx
+        # Add tiny gauge regularization to remove nullspace.
+        # NB: not named `gauge` -- that is the method-selection parameter.
+        gauge_const = fem.Constant(self.mesh, PETSc.ScalarType(gauge_penalty))
+        a = inner(mu_inv * curl(A_trial), curl(v)) * dx + gauge_const * inner(A_trial, v) * dx
+    
+        # Linear form: L(v) = ∫ J · v dx
+        if subdomain_id is not None and subdomain_ids is not None:
+            raise ValueError("Use either subdomain_id or subdomain_ids, not both")
+    
+        if subdomain_ids is None and subdomain_id is not None:
+            subdomain_ids = [subdomain_id]
+    
+        if current_density is not None:
+            x = ufl.SpatialCoordinate(self.mesh)
+            J = current_density(x)
+        else:
+            J = fem.Constant(self.mesh, np.zeros(3, dtype=PETSc.ScalarType))
+    
+        # Apply boundary conditions
+        bcs = []
+        if bc_functions is not None:
+            bcs = bc_functions
+    
+        gauge_method = GaugeMethod(gauge) if not isinstance(gauge, GaugeMethod) else gauge
+        if gauge_method is GaugeMethod.LAGRANGE:
+            self.A = self._solve_lagrange(mu_inv, J, subdomain_ids, bcs, petsc_options)
+            self._solved = True
+            return self.A
+    
+        L = self._build_load_form(v, J, subdomain_ids)
+    
+        # Solve
+        options = {"ksp_type": "preonly", "pc_type": "lu"}
+        if petsc_options:
+            options.update(dict(petsc_options))
+    
+>       problem = LinearProblem(
+            a,
+            L,
+            bcs=bcs,
+            petsc_options=options,
+        )
+
+src/fem_em_solver/core/solvers.py:385: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <dolfinx.fem.petsc.LinearProblem object at 0x79a5c868b730>
+a = Form([Integral(Inner(ComponentTensor(Product(Indexed(Curl(Argument(FunctionSpace(Mesh(blocked element (Basix element (...Mesh(blocked element (Basix element (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 'everywhere', {}, None)])
+L = Form([Integral(Inner(ListTensor(Product(FloatValue(35367.7651315323), Division(Product(IntValue(-1), Indexed(SpatialCo...nt (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 1, {}, <dolfinx.mesh.MeshTags object at 0x79a5d732e500>)])
+bcs = [<dolfinx.fem.bcs.DirichletBC object at 0x79a5d7387df0>], u = None
+petsc_options = {'ksp_type': 'preonly', 'pc_type': 'lu'}
+form_compiler_options = None, jit_options = None
+
+    def __init__(self, a: ufl.Form, L: ufl.Form, bcs: typing.List[DirichletBC] = [],
+                 u: typing.Optional[_Function] = None,
+                 petsc_options: typing.Optional[dict] = None,
+                 form_compiler_options: typing.Optional[dict] = None,
+                 jit_options: typing.Optional[dict] = None):
+        """Initialize solver for a linear variational problem.
+    
+        Args:
+            a: A bilinear UFL form, the left hand side of the
+                variational problem.
+            L: A linear UFL form, the right hand side of the variational
+                problem.
+            bcs: A list of Dirichlet boundary conditions.
+            u: The solution function. It will be created if not provided.
+            petsc_options: Options that are passed to the linear
+                algebra backend PETSc. For available choices for the
+                'petsc_options' kwarg, see the `PETSc documentation
+                <https://petsc4py.readthedocs.io/en/stable/manual/ksp/>`_.
+            form_compiler_options: Options used in FFCx compilation of
+                this form. Run ``ffcx --help`` at the commandline to see
+                all available options.
+            jit_options: Options used in CFFI JIT compilation of C
+                code generated by FFCx. See `python/dolfinx/jit.py` for
+                all available options. Takes priority over all other
+                option values.
+    
+        Example::
+    
+            problem = LinearProblem(a, L, [bc0, bc1], petsc_options={"ksp_type": "preonly",
+                                                                     "pc_type": "lu",
+                                                                     "pc_factor_mat_solver_type": "mumps"})
+        """
+        self._a = _create_form(a, form_compiler_options=form_compiler_options, jit_options=jit_options)
+        self._A = create_matrix(self._a)
+>       self._L = _create_form(L, form_compiler_options=form_compiler_options, jit_options=jit_options)
+
+/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/petsc.py:590: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+form = Form([Integral(Inner(ListTensor(Product(FloatValue(35367.7651315323), Division(Product(IntValue(-1), Indexed(SpatialCo...nt (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 1, {}, <dolfinx.mesh.MeshTags object at 0x79a5d732e500>)])
+dtype = <class 'numpy.complex128'>
+form_compiler_options = {'scalar_type': 'double _Complex'}, jit_options = None
+
+    def form(form: typing.Union[ufl.Form, typing.Iterable[ufl.Form]],
+             dtype: typing.Optional[npt.DTypeLike] = default_scalar_type,
+             form_compiler_options: typing.Optional[dict] = None,
+             jit_options: typing.Optional[dict] = None):
+        """Create a Form or an array of Forms.
+    
+        Args:
+            form: A UFL form or list(s) of UFL forms.
+            dtype: Scalar type to use for the compiled form.
+            form_compiler_options: See :func:`ffcx_jit <dolfinx.jit.ffcx_jit>`
+            jit_options: See :func:`ffcx_jit <dolfinx.jit.ffcx_jit>`.
+    
+        Returns:
+            Compiled finite element Form.
+    
+        Note:
+            This function is responsible for the compilation of a UFL form
+            (using FFCx) and attaching coefficients and domains specific
+            data to the underlying C++ form. It dynamically create a
+            :class:`Form` instance with an appropriate base class for the
+            scalar type, e.g. :func:`_cpp.fem.Form_float64`.
+    
+        """
+        if form_compiler_options is None:
+            form_compiler_options = dict()
+    
+        if dtype == np.float32:
+            ftype = _cpp.fem.Form_float32
+            form_compiler_options["scalar_type"] = "float"
+        elif dtype == np.float64:
+            ftype = _cpp.fem.Form_float64
+            form_compiler_options["scalar_type"] = "double"
+        elif dtype == np.complex64:
+            ftype = _cpp.fem.Form_complex64
+            form_compiler_options["scalar_type"] = "float _Complex"
+        elif dtype == np.complex128:
+            ftype = _cpp.fem.Form_complex128
+            form_compiler_options["scalar_type"] = "double _Complex"
+        else:
+            raise NotImplementedError(f"Type {dtype} not supported.")
+    
+        def _form(form):
+            """"Compile a single UFL form"""
+            # Extract subdomain data from UFL form
+            sd = form.subdomain_data()
+            domain, = list(sd.keys())  # Assuming single domain
+            # Check that subdomain data for each integral type is the same
+            for data in sd.get(domain).values():
+                assert all([d is data[0] for d in data])
+    
+            mesh = domain.ufl_cargo()
+            if mesh is None:
+                raise RuntimeError("Expecting to find a Mesh in the form.")
+            ufcx_form, module, code = jit.ffcx_jit(mesh.comm, form,
+                                                   form_compiler_options=form_compiler_options,
+                                                   jit_options=jit_options)
+    
+            # For each argument in form extract its function space
+            V = [arg.ufl_function_space()._cpp_object for arg in form.arguments()]
+    
+            # Prepare coefficients data. For every coefficient in form take
+            # its C++ object.
+            original_coeffs = form.coefficients()
+            coeffs = [original_coeffs[ufcx_form.original_coefficient_position[i]
+                                      ]._cpp_object for i in range(ufcx_form.num_coefficients)]
+            constants = [c._cpp_object for c in form.constants()]
+    
+            # NOTE Could remove this and let the user convert meshtags by
+            # calling compute_integration_domains themselves
+            def get_integration_domains(integral_type, subdomain):
+                """Get integration domains from subdomain data"""
+                if subdomain is None:
+                    return []
+                else:
+                    try:
+                        if integral_type in (IntegralType.exterior_facet, IntegralType.interior_facet):
+                            tdim = subdomain.topology.dim
+                            subdomain._cpp_object.topology.create_connectivity(tdim - 1, tdim)
+                            subdomain._cpp_object.topology.create_connectivity(tdim, tdim - 1)
+                        return _cpp.fem.compute_integration_domains(integral_type, subdomain._cpp_object)
+                    except AttributeError:
+                        return subdomain
+    
+            # Subdomain markers (possibly empty list for some integral types)
+            subdomains = {_ufl_to_dolfinx_domain[key]: get_integration_domains(
+                _ufl_to_dolfinx_domain[key], subdomain_data[0]) for (key, subdomain_data) in sd.get(domain).items()}
+    
+            f = ftype(module.ffi.cast("uintptr_t", module.ffi.addressof(ufcx_form)), V, coeffs,
+                      constants, subdomains, mesh)
+            return Form(f, ufcx_form, code)
+    
+        def _create_form(form):
+            """Recursively convert ufl.Forms to dolfinx.fem.Form, otherwise
+            return form argument"""
+            if isinstance(form, ufl.Form):
+                return _form(form)
+            elif isinstance(form, collections.abc.Iterable):
+                return list(map(lambda sub_form: _create_form(sub_form), form))
+            return form
+    
+>       return _create_form(form)
+
+/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py:188: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+form = Form([Integral(Inner(ListTensor(Product(FloatValue(35367.7651315323), Division(Product(IntValue(-1), Indexed(SpatialCo...nt (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 1, {}, <dolfinx.mesh.MeshTags object at 0x79a5d732e500>)])
+
+    def _create_form(form):
+        """Recursively convert ufl.Forms to dolfinx.fem.Form, otherwise
+        return form argument"""
+        if isinstance(form, ufl.Form):
+>           return _form(form)
+
+/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py:183: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+form = Form([Integral(Inner(ListTensor(Product(FloatValue(35367.7651315323), Division(Product(IntValue(-1), Indexed(SpatialCo...nt (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 1, {}, <dolfinx.mesh.MeshTags object at 0x79a5d732e500>)])
+
+    def _form(form):
+        """"Compile a single UFL form"""
+        # Extract subdomain data from UFL form
+        sd = form.subdomain_data()
+        domain, = list(sd.keys())  # Assuming single domain
+        # Check that subdomain data for each integral type is the same
+        for data in sd.get(domain).values():
+            assert all([d is data[0] for d in data])
+    
+        mesh = domain.ufl_cargo()
+        if mesh is None:
+            raise RuntimeError("Expecting to find a Mesh in the form.")
+>       ufcx_form, module, code = jit.ffcx_jit(mesh.comm, form,
+                                               form_compiler_options=form_compiler_options,
+                                               jit_options=jit_options)
+
+/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py:141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+comm = <mpi4py.MPI.Intracomm object at 0x79a5cf267fb0>
+args = (Form([Integral(Inner(ListTensor(Product(FloatValue(35367.7651315323), Division(Product(IntValue(-1), Indexed(SpatialC... (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 1, {}, <dolfinx.mesh.MeshTags object at 0x79a5d732e500>)]),)
+kwargs = {'form_compiler_options': {'scalar_type': 'double _Complex'}, 'jit_options': None}
+status = 0, root = False, error_msg = 'Compilation failed on root node.'
+global_status = 1
+
+    @functools.wraps(local_jit)
+    def mpi_jit(comm, *args, **kwargs):
+    
+        # Just call JIT compiler when running in serial
+        if comm.size == 1:
+            return local_jit(*args, **kwargs)
+    
+        # Default status (0 == ok, 1 == fail)
+        status = 0
+    
+        # Compile first on process 0
+        root = comm.rank == 0
+        if root:
+            try:
+                output = local_jit(*args, **kwargs)
+            except Exception as e:
+                status = 1
+                error_msg = str(e)
+    
+        # TODO: This would have lower overhead if using the dijitso.jit
+        # features to inject a waiting callback instead of waiting out
+        # here. That approach allows all processes to first look in the
+        # cache, introducing a barrier only on cache miss. There's also
+        # a sketch in dijitso of how to make only one process per
+        # physical cache directory do the compilation.
+    
+        # Wait for the compiling process to finish and get status
+        # TODO: Would be better to broadcast the status from root but
+        # this works.
+        global_status = comm.allreduce(status, op=MPI.MAX)
+        if global_status == 0:
+            # Success, call jit on all other processes (this should just
+            # read the cache)
+            if not root:
+                output = local_jit(*args, **kwargs)
+        else:
+            # Fail simultaneously on all processes, to allow catching
+            # the error without deadlock
+            if not root:
+                error_msg = "Compilation failed on root node."
+>           raise RuntimeError(f"Failed just-in-time compilation of form: {error_msg}")
+E           RuntimeError: Failed just-in-time compilation of form: Compilation failed on root node.
+
+/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/jit.py:91: RuntimeError
+----------------------------- Captured stdout call -----------------------------
+
+Circular loop test:
+  Loop radius: 0.02 m
+  Wire radius: 0.003 m
+  Current: 1.0 A
+  Resolution: 0.002 m
+  Meshing and solving (analytic Dirichlet outer boundary)...
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================== slowest durations ===============================
+112.81s call     tests/validation/test_circular_loop.py::TestCircularLoop::test_circular_loop_on_axis
+0.00s setup    tests/validation/test_circular_loop.py::TestCircularLoop::test_circular_loop_on_axis
+0.00s teardown tests/validation/test_circular_loop.py::TestCircularLoop::test_circular_loop_on_axis
+=========================== short test summary info ============================
+FAILED tests/validation/test_circular_loop.py::TestCircularLoop::test_circular_loop_on_axis
+=========== 1 failed, 2 deselected, 8 warnings in 113.38s (0:01:53) ============
+FAILED [100%]
+
+=================================== FAILURES ===================================
+_________________ TestCircularLoop.test_circular_loop_on_axis __________________
+
+self = <tests.validation.test_circular_loop.TestCircularLoop object at 0x7d5075a6d180>
+loop_params = {'current': 1.0, 'domain_radius': 0.06, 'loop_radius': 0.02, 'resolution': 0.0025, ...}
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-12/test_circular_loop_on_axis0')
+
+    def test_circular_loop_on_axis(self, loop_params, tmp_path):
+        """Test B_z on axis matches analytical solution.
+    
+        This test:
+        1. Creates a torus mesh for the loop
+        2. Solves magnetostatic problem with the analytic A on the outer sphere
+        3. Extracts B_z along the z-axis
+        4. Compares with analytical solution
+        5. Checks that relative error is within tolerance
+    
+        Measured, `mpiexec -n 2`, on-axis B_z L2 error over |z| <= 0.4 R_domain
+        (MAG-13 step 4; logs 20260730T124356Z / 124523Z / 124829Z
+        _MAG-13-loop-probe*):
+    
+        | h      | cells | natural n x H = 0 | analytic Dirichlet |
+        |--------|-------|-------------------|--------------------|
+        | 0.0035 | 82.8k | 14.98%            | 16.23%             |
+        | 0.0025 | 208k  |  8.86%            | 10.37%             |
+        | 0.002  | 411k  | --                |  7.07%             |
+    
+        The analytic wall is ~20% *worse* at fixed h here, unlike the wire
+        (35.13% -> 22.19%), and this is the chunk's real finding: the wire's
+        natural-BC error is a contradiction of Ampere's law that no refinement
+        removes, whereas the loop's is a PMC image term of order (a/R)^3 ~ 3.7%
+        -- smaller than the O(h) error the degree-1 interpolation of A_phi
+        injects through the boundary data itself. What the Dirichlet wall buys
+        is the limit: it converges monotonically (16.23 -> 10.37 -> 7.07,
+        fitted rate ~1.4) to the analytic field, while the natural wall
+        converges to a field that differs from it. Do not swap back to the
+        natural BC for the lower number at coarse h.
+        """
+        comm = MPI.COMM_WORLD
+    
+        # Parameters
+        current = loop_params['current']
+        loop_radius = loop_params['loop_radius']
+        wire_radius = loop_params['wire_radius']
+        domain_radius = loop_params['domain_radius']
+        resolution = self.ON_AXIS_RESOLUTION
+    
+        print(f"\nCircular loop test:")
+        print(f"  Loop radius: {loop_radius} m")
+        print(f"  Wire radius: {wire_radius} m")
+        print(f"  Current: {current} A")
+        print(f"  Resolution: {resolution} m")
+    
+        print("  Meshing and solving (analytic Dirichlet outer boundary)...")
+>       mesh, B = solve_loop(
+            loop_params, comm, resolution=resolution, analytic_bc=True
+        )
+
+tests/validation/test_circular_loop.py:192: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+params = {'current': 1.0, 'domain_radius': 0.06, 'loop_radius': 0.02, 'resolution': 0.0025, ...}
+comm = <mpi4py.MPI.Intracomm object at 0x7d5088472390>, resolution = 0.002
+analytic_bc = True
+
+    def solve_loop(params, comm, resolution=None, analytic_bc=True):
+        """Mesh and solve the circular-loop problem; return (mesh, B)."""
+        resolution = params['resolution'] if resolution is None else resolution
+        mesh, cell_tags, _ = MeshGenerator.circular_loop_domain(
+            loop_radius=params['loop_radius'],
+            wire_radius=params['wire_radius'],
+            domain_radius=params['domain_radius'],
+            resolution=resolution,
+            comm=comm,
+        )
+    
+        problem = MagnetostaticProblem(mesh=mesh, cell_tags=cell_tags, mu=MU_0)
+        solver = MagnetostaticSolver(problem, degree=1)
+    
+        j_magnitude = params['current'] / (np.pi * params['wire_radius'] ** 2)
+        bcs = None
+        if analytic_bc:
+            bcs = [
+                exterior_dirichlet_bc(
+                    solver.V,
+                    loop_potential_interp(params['current'], params['loop_radius']),
+                )
+            ]
+    
+>       solver.solve(
+            current_density=azimuthal_current_density(j_magnitude),
+            subdomain_id=1,
+            bc_functions=bcs,
+        )
+
+tests/validation/test_circular_loop.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <fem_em_solver.core.solvers.MagnetostaticSolver object at 0x7d5075a6ebf0>
+current_density = <function azimuthal_current_density.<locals>.current_density at 0x7d5075a89fc0>
+bc_functions = [<dolfinx.fem.bcs.DirichletBC object at 0x7d506d9145b0>]
+subdomain_id = 1, subdomain_ids = [1], gauge_penalty = 1.0
+gauge = <GaugeMethod.PENALTY: 'penalty'>, petsc_options = None
+collect_solver_diagnostics = False
+
+    def solve(self, current_density: Optional[Callable] = None,
+              bc_functions: Optional[List] = None,
+              subdomain_id: Optional[int] = None,
+              subdomain_ids: Optional[Sequence[int]] = None,
+              gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
+              gauge: Union[GaugeMethod, str] = GaugeMethod.PENALTY,
+              petsc_options: Optional[Mapping[str, Any]] = None,
+              collect_solver_diagnostics: bool = False) -> fem.Function:
+        """Solve the magnetostatic problem.
+    
+        Parameters
+        ----------
+        current_density : callable, optional
+            Function returning J(x) for any point x.
+            If None, assumes J = 0 (no sources).
+        bc_functions : list, optional
+            List of Dirichlet BC functions
+        subdomain_id : int, optional
+            If provided, restricts current density integration to cells
+            with this tag (requires cell_tags in problem).
+        subdomain_ids : Sequence[int], optional
+            If provided, restricts current density integration to the union
+            of these cell tags (requires cell_tags in problem).
+            Mutually exclusive with ``subdomain_id``.
+        gauge_penalty : float, optional
+            Small regularization term added to remove the nullspace in
+            pure curl-curl problems (default: 1e-3).
+        petsc_options : mapping, optional
+            PETSc KSP/PC options override. Defaults to direct solve
+            (``ksp_type=preonly``, ``pc_type=lu``).
+        collect_solver_diagnostics : bool, optional
+            If True, request PETSc convergence history and expose
+            ``last_solve_diagnostics`` for residual trend summaries.
+    
+        Returns
+        -------
+        fem.Function
+            Magnetic vector potential A
+        """
+        # Define trial and test functions
+        A_trial = TrialFunction(self.V)
+        v = TestFunction(self.V)
+    
+        # Permeability (could be spatially varying)
+        if callable(self.mu):
+            mu = self.mu(ufl.SpatialCoordinate(self.mesh))
+        else:
+            mu = fem.Constant(self.mesh, PETSc.ScalarType(self.mu))
+        mu_inv = 1.0 / mu
+    
+        # Bilinear form: a(A, v) = ∫ μ⁻¹ (∇ × A) · (∇ × v) dx
+        # Add tiny gauge regularization to remove nullspace.
+        # NB: not named `gauge` -- that is the method-selection parameter.
+        gauge_const = fem.Constant(self.mesh, PETSc.ScalarType(gauge_penalty))
+        a = inner(mu_inv * curl(A_trial), curl(v)) * dx + gauge_const * inner(A_trial, v) * dx
+    
+        # Linear form: L(v) = ∫ J · v dx
+        if subdomain_id is not None and subdomain_ids is not None:
+            raise ValueError("Use either subdomain_id or subdomain_ids, not both")
+    
+        if subdomain_ids is None and subdomain_id is not None:
+            subdomain_ids = [subdomain_id]
+    
+        if current_density is not None:
+            x = ufl.SpatialCoordinate(self.mesh)
+            J = current_density(x)
+        else:
+            J = fem.Constant(self.mesh, np.zeros(3, dtype=PETSc.ScalarType))
+    
+        # Apply boundary conditions
+        bcs = []
+        if bc_functions is not None:
+            bcs = bc_functions
+    
+        gauge_method = GaugeMethod(gauge) if not isinstance(gauge, GaugeMethod) else gauge
+        if gauge_method is GaugeMethod.LAGRANGE:
+            self.A = self._solve_lagrange(mu_inv, J, subdomain_ids, bcs, petsc_options)
+            self._solved = True
+            return self.A
+    
+        L = self._build_load_form(v, J, subdomain_ids)
+    
+        # Solve
+        options = {"ksp_type": "preonly", "pc_type": "lu"}
+        if petsc_options:
+            options.update(dict(petsc_options))
+    
+>       problem = LinearProblem(
+            a,
+            L,
+            bcs=bcs,
+            petsc_options=options,
+        )
+
+src/fem_em_solver/core/solvers.py:385: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <dolfinx.fem.petsc.LinearProblem object at 0x7d5066f5fdf0>
+a = Form([Integral(Inner(ComponentTensor(Product(Indexed(Curl(Argument(FunctionSpace(Mesh(blocked element (Basix element (...Mesh(blocked element (Basix element (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 'everywhere', {}, None)])
+L = Form([Integral(Inner(ListTensor(Product(FloatValue(35367.7651315323), Division(Product(IntValue(-1), Indexed(SpatialCo...nt (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 1, {}, <dolfinx.mesh.MeshTags object at 0x7d5075a6f520>)])
+bcs = [<dolfinx.fem.bcs.DirichletBC object at 0x7d506d9145b0>], u = None
+petsc_options = {'ksp_type': 'preonly', 'pc_type': 'lu'}
+form_compiler_options = None, jit_options = None
+
+    def __init__(self, a: ufl.Form, L: ufl.Form, bcs: typing.List[DirichletBC] = [],
+                 u: typing.Optional[_Function] = None,
+                 petsc_options: typing.Optional[dict] = None,
+                 form_compiler_options: typing.Optional[dict] = None,
+                 jit_options: typing.Optional[dict] = None):
+        """Initialize solver for a linear variational problem.
+    
+        Args:
+            a: A bilinear UFL form, the left hand side of the
+                variational problem.
+            L: A linear UFL form, the right hand side of the variational
+                problem.
+            bcs: A list of Dirichlet boundary conditions.
+            u: The solution function. It will be created if not provided.
+            petsc_options: Options that are passed to the linear
+                algebra backend PETSc. For available choices for the
+                'petsc_options' kwarg, see the `PETSc documentation
+                <https://petsc4py.readthedocs.io/en/stable/manual/ksp/>`_.
+            form_compiler_options: Options used in FFCx compilation of
+                this form. Run ``ffcx --help`` at the commandline to see
+                all available options.
+            jit_options: Options used in CFFI JIT compilation of C
+                code generated by FFCx. See `python/dolfinx/jit.py` for
+                all available options. Takes priority over all other
+                option values.
+    
+        Example::
+    
+            problem = LinearProblem(a, L, [bc0, bc1], petsc_options={"ksp_type": "preonly",
+                                                                     "pc_type": "lu",
+                                                                     "pc_factor_mat_solver_type": "mumps"})
+        """
+        self._a = _create_form(a, form_compiler_options=form_compiler_options, jit_options=jit_options)
+        self._A = create_matrix(self._a)
+>       self._L = _create_form(L, form_compiler_options=form_compiler_options, jit_options=jit_options)
+
+/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/petsc.py:590: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+form = Form([Integral(Inner(ListTensor(Product(FloatValue(35367.7651315323), Division(Product(IntValue(-1), Indexed(SpatialCo...nt (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 1, {}, <dolfinx.mesh.MeshTags object at 0x7d5075a6f520>)])
+dtype = <class 'numpy.complex128'>
+form_compiler_options = {'scalar_type': 'double _Complex'}, jit_options = None
+
+    def form(form: typing.Union[ufl.Form, typing.Iterable[ufl.Form]],
+             dtype: typing.Optional[npt.DTypeLike] = default_scalar_type,
+             form_compiler_options: typing.Optional[dict] = None,
+             jit_options: typing.Optional[dict] = None):
+        """Create a Form or an array of Forms.
+    
+        Args:
+            form: A UFL form or list(s) of UFL forms.
+            dtype: Scalar type to use for the compiled form.
+            form_compiler_options: See :func:`ffcx_jit <dolfinx.jit.ffcx_jit>`
+            jit_options: See :func:`ffcx_jit <dolfinx.jit.ffcx_jit>`.
+    
+        Returns:
+            Compiled finite element Form.
+    
+        Note:
+            This function is responsible for the compilation of a UFL form
+            (using FFCx) and attaching coefficients and domains specific
+            data to the underlying C++ form. It dynamically create a
+            :class:`Form` instance with an appropriate base class for the
+            scalar type, e.g. :func:`_cpp.fem.Form_float64`.
+    
+        """
+        if form_compiler_options is None:
+            form_compiler_options = dict()
+    
+        if dtype == np.float32:
+            ftype = _cpp.fem.Form_float32
+            form_compiler_options["scalar_type"] = "float"
+        elif dtype == np.float64:
+            ftype = _cpp.fem.Form_float64
+            form_compiler_options["scalar_type"] = "double"
+        elif dtype == np.complex64:
+            ftype = _cpp.fem.Form_complex64
+            form_compiler_options["scalar_type"] = "float _Complex"
+        elif dtype == np.complex128:
+            ftype = _cpp.fem.Form_complex128
+            form_compiler_options["scalar_type"] = "double _Complex"
+        else:
+            raise NotImplementedError(f"Type {dtype} not supported.")
+    
+        def _form(form):
+            """"Compile a single UFL form"""
+            # Extract subdomain data from UFL form
+            sd = form.subdomain_data()
+            domain, = list(sd.keys())  # Assuming single domain
+            # Check that subdomain data for each integral type is the same
+            for data in sd.get(domain).values():
+                assert all([d is data[0] for d in data])
+    
+            mesh = domain.ufl_cargo()
+            if mesh is None:
+                raise RuntimeError("Expecting to find a Mesh in the form.")
+            ufcx_form, module, code = jit.ffcx_jit(mesh.comm, form,
+                                                   form_compiler_options=form_compiler_options,
+                                                   jit_options=jit_options)
+    
+            # For each argument in form extract its function space
+            V = [arg.ufl_function_space()._cpp_object for arg in form.arguments()]
+    
+            # Prepare coefficients data. For every coefficient in form take
+            # its C++ object.
+            original_coeffs = form.coefficients()
+            coeffs = [original_coeffs[ufcx_form.original_coefficient_position[i]
+                                      ]._cpp_object for i in range(ufcx_form.num_coefficients)]
+            constants = [c._cpp_object for c in form.constants()]
+    
+            # NOTE Could remove this and let the user convert meshtags by
+            # calling compute_integration_domains themselves
+            def get_integration_domains(integral_type, subdomain):
+                """Get integration domains from subdomain data"""
+                if subdomain is None:
+                    return []
+                else:
+                    try:
+                        if integral_type in (IntegralType.exterior_facet, IntegralType.interior_facet):
+                            tdim = subdomain.topology.dim
+                            subdomain._cpp_object.topology.create_connectivity(tdim - 1, tdim)
+                            subdomain._cpp_object.topology.create_connectivity(tdim, tdim - 1)
+                        return _cpp.fem.compute_integration_domains(integral_type, subdomain._cpp_object)
+                    except AttributeError:
+                        return subdomain
+    
+            # Subdomain markers (possibly empty list for some integral types)
+            subdomains = {_ufl_to_dolfinx_domain[key]: get_integration_domains(
+                _ufl_to_dolfinx_domain[key], subdomain_data[0]) for (key, subdomain_data) in sd.get(domain).items()}
+    
+            f = ftype(module.ffi.cast("uintptr_t", module.ffi.addressof(ufcx_form)), V, coeffs,
+                      constants, subdomains, mesh)
+            return Form(f, ufcx_form, code)
+    
+        def _create_form(form):
+            """Recursively convert ufl.Forms to dolfinx.fem.Form, otherwise
+            return form argument"""
+            if isinstance(form, ufl.Form):
+                return _form(form)
+            elif isinstance(form, collections.abc.Iterable):
+                return list(map(lambda sub_form: _create_form(sub_form), form))
+            return form
+    
+>       return _create_form(form)
+
+/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py:188: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+form = Form([Integral(Inner(ListTensor(Product(FloatValue(35367.7651315323), Division(Product(IntValue(-1), Indexed(SpatialCo...nt (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 1, {}, <dolfinx.mesh.MeshTags object at 0x7d5075a6f520>)])
+
+    def _create_form(form):
+        """Recursively convert ufl.Forms to dolfinx.fem.Form, otherwise
+        return form argument"""
+        if isinstance(form, ufl.Form):
+>           return _form(form)
+
+/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py:183: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+form = Form([Integral(Inner(ListTensor(Product(FloatValue(35367.7651315323), Division(Product(IntValue(-1), Indexed(SpatialCo...nt (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 1, {}, <dolfinx.mesh.MeshTags object at 0x7d5075a6f520>)])
+
+    def _form(form):
+        """"Compile a single UFL form"""
+        # Extract subdomain data from UFL form
+        sd = form.subdomain_data()
+        domain, = list(sd.keys())  # Assuming single domain
+        # Check that subdomain data for each integral type is the same
+        for data in sd.get(domain).values():
+            assert all([d is data[0] for d in data])
+    
+        mesh = domain.ufl_cargo()
+        if mesh is None:
+            raise RuntimeError("Expecting to find a Mesh in the form.")
+>       ufcx_form, module, code = jit.ffcx_jit(mesh.comm, form,
+                                               form_compiler_options=form_compiler_options,
+                                               jit_options=jit_options)
+
+/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/forms.py:141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+comm = <mpi4py.MPI.Intracomm object at 0x7d50678813b0>
+args = (Form([Integral(Inner(ListTensor(Product(FloatValue(35367.7651315323), Division(Product(IntValue(-1), Indexed(SpatialC... (P, tetrahedron, 1, equispaced, unset, False), (3,)), 0), 1, {}, <dolfinx.mesh.MeshTags object at 0x7d5075a6f520>)]),)
+kwargs = {'form_compiler_options': {'scalar_type': 'double _Complex'}, 'jit_options': None}
+status = 1, root = True
+error_msg = 'JIT compilation timed out, probably due to a failed previous compile.\n        Try cleaning cache (e.g. remove /root/.cache/fenics/libffcx_forms_3b01242391fa699f45d97f502c916e1a1c96c1e6.c) or increase timeout option.'
+global_status = 1
+
+    @functools.wraps(local_jit)
+    def mpi_jit(comm, *args, **kwargs):
+    
+        # Just call JIT compiler when running in serial
+        if comm.size == 1:
+            return local_jit(*args, **kwargs)
+    
+        # Default status (0 == ok, 1 == fail)
+        status = 0
+    
+        # Compile first on process 0
+        root = comm.rank == 0
+        if root:
+            try:
+                output = local_jit(*args, **kwargs)
+            except Exception as e:
+                status = 1
+                error_msg = str(e)
+    
+        # TODO: This would have lower overhead if using the dijitso.jit
+        # features to inject a waiting callback instead of waiting out
+        # here. That approach allows all processes to first look in the
+        # cache, introducing a barrier only on cache miss. There's also
+        # a sketch in dijitso of how to make only one process per
+        # physical cache directory do the compilation.
+    
+        # Wait for the compiling process to finish and get status
+        # TODO: Would be better to broadcast the status from root but
+        # this works.
+        global_status = comm.allreduce(status, op=MPI.MAX)
+        if global_status == 0:
+            # Success, call jit on all other processes (this should just
+            # read the cache)
+            if not root:
+                output = local_jit(*args, **kwargs)
+        else:
+            # Fail simultaneously on all processes, to allow catching
+            # the error without deadlock
+            if not root:
+                error_msg = "Compilation failed on root node."
+>           raise RuntimeError(f"Failed just-in-time compilation of form: {error_msg}")
+E           RuntimeError: Failed just-in-time compilation of form: JIT compilation timed out, probably due to a failed previous compile.
+E                   Try cleaning cache (e.g. remove /root/.cache/fenics/libffcx_forms_3b01242391fa699f45d97f502c916e1a1c96c1e6.c) or increase timeout option.
+
+/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/jit.py:91: RuntimeError
+----------------------------- Captured stdout call -----------------------------
+
+Circular loop test:
+  Loop radius: 0.02 m
+  Wire radius: 0.003 m
+  Current: 1.0 A
+  Resolution: 0.002 m
+  Meshing and solving (analytic Dirichlet outer boundary)...
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 20%] Meshing curve 2 (Circle)
+Info    : [ 60%] Meshing curve 4 (Circle)
+Info    : Done meshing 1D (Wall 0.000387198s, CPU 0.000337s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 2 (Sphere, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 1.19514s, CPU 1.16909s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 14474 nodes...
+Info    : Done tetrahedrizing 14482 nodes (Wall 0.157398s, CPU 0.145503s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.642596s, CPU 0.606451s)
+Info    : Found volume 2
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 16.1706 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 4.6215 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 3.76517 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 3.35111 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 3.05863 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 2.84909 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 2.70286 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 2.56542 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 2.46442 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 2.38083 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 2.30692 (nodes removed 0 0)
+Info    : It. 5500 - 5499 nodes created - worst tet radius 2.23466 (nodes removed 0 1)
+Info    : It. 6000 - 5999 nodes created - worst tet radius 2.1736 (nodes removed 0 1)
+Info    : It. 6500 - 6499 nodes created - worst tet radius 2.12066 (nodes removed 0 1)
+Info    : It. 7000 - 6999 nodes created - worst tet radius 2.07484 (nodes removed 0 1)
+Info    : It. 7500 - 7499 nodes created - worst tet radius 2.02872 (nodes removed 0 1)
+Info    : It. 8000 - 7999 nodes created - worst tet radius 1.98313 (nodes removed 0 1)
+Info    : It. 8500 - 8499 nodes created - worst tet radius 1.94772 (nodes removed 0 1)
+Info    : It. 9000 - 8999 nodes created - worst tet radius 1.91436 (nodes removed 0 1)
+Info    : It. 9500 - 9499 nodes created - worst tet radius 1.87769 (nodes removed 0 1)
+Info    : It. 10000 - 9999 nodes created - worst tet radius 1.84976 (nodes removed 0 1)
+Info    : It. 10500 - 10499 nodes created - worst tet radius 1.82214 (nodes removed 0 1)
+Info    : It. 11000 - 10999 nodes created - worst tet radius 1.79489 (nodes removed 0 1)
+Info    : It. 11500 - 11499 nodes created - worst tet radius 1.76841 (nodes removed 0 1)
+Info    : It. 12000 - 11999 nodes created - worst tet radius 1.7447 (nodes removed 0 1)
+Info    : It. 12500 - 12499 nodes created - worst tet radius 1.72333 (nodes removed 0 1)
+Info    : It. 13000 - 12999 nodes created - worst tet radius 1.7023 (nodes removed 0 1)
+Info    : It. 13500 - 13499 nodes created - worst tet radius 1.68117 (nodes removed 0 1)
+Info    : It. 14000 - 13999 nodes created - worst tet radius 1.66097 (nodes removed 0 1)
+Info    : It. 14500 - 14499 nodes created - worst tet radius 1.64366 (nodes removed 0 1)
+Info    : It. 15000 - 14999 nodes created - worst tet radius 1.62511 (nodes removed 0 1)
+Info    : It. 15500 - 15499 nodes created - worst tet radius 1.60802 (nodes removed 0 1)
+Info    : It. 16000 - 15999 nodes created - worst tet radius 1.59228 (nodes removed 0 1)
+Info    : It. 16500 - 16499 nodes created - worst tet radius 1.57643 (nodes removed 0 1)
+Info    : It. 17000 - 16999 nodes created - worst tet radius 1.56214 (nodes removed 0 1)
+Info    : It. 17500 - 17499 nodes created - worst tet radius 1.54863 (nodes removed 0 1)
+Info    : It. 18000 - 17999 nodes created - worst tet radius 1.53452 (nodes removed 0 1)
+Info    : It. 18500 - 18499 nodes created - worst tet radius 1.52134 (nodes removed 0 1)
+Info    : It. 19000 - 18999 nodes created - worst tet radius 1.50922 (nodes removed 0 1)
+Info    : It. 19500 - 19499 nodes created - worst tet radius 1.49691 (nodes removed 0 1)
+Info    : It. 20000 - 19999 nodes created - worst tet radius 1.48451 (nodes removed 0 1)
+Info    : It. 20500 - 20499 nodes created - worst tet radius 1.47168 (nodes removed 0 1)
+Info    : It. 21000 - 20999 nodes created - worst tet radius 1.46007 (nodes removed 0 1)
+Info    : It. 21500 - 21499 nodes created - worst tet radius 1.44976 (nodes removed 0 1)
+Info    : It. 22000 - 21999 nodes created - worst tet radius 1.43907 (nodes removed 0 1)
+Info    : It. 22500 - 22499 nodes created - worst tet radius 1.42904 (nodes removed 0 1)
+Info    : It. 23000 - 22999 nodes created - worst tet radius 1.4188 (nodes removed 0 1)
+Info    : It. 23500 - 23499 nodes created - worst tet radius 1.40872 (nodes removed 0 1)
+Info    : It. 24000 - 23999 nodes created - worst tet radius 1.39924 (nodes removed 0 1)
+Info    : It. 24500 - 24499 nodes created - worst tet radius 1.38991 (nodes removed 0 1)
+Info    : It. 25000 - 24999 nodes created - worst tet radius 1.38165 (nodes removed 0 1)
+Info    : It. 25500 - 25499 nodes created - worst tet radius 1.3726 (nodes removed 0 1)
+Info    : It. 26000 - 25999 nodes created - worst tet radius 1.36429 (nodes removed 0 1)
+Info    : It. 26500 - 26499 nodes created - worst tet radius 1.3554 (nodes removed 0 1)
+Info    : It. 27000 - 26999 nodes created - worst tet radius 1.34751 (nodes removed 0 1)
+Info    : It. 27500 - 27499 nodes created - worst tet radius 1.3402 (nodes removed 0 1)
+Info    : It. 28000 - 27999 nodes created - worst tet radius 1.33272 (nodes removed 0 1)
+Info    : It. 28500 - 28499 nodes created - worst tet radius 1.325 (nodes removed 0 1)
+Info    : It. 29000 - 28999 nodes created - worst tet radius 1.31767 (nodes removed 0 1)
+Info    : It. 29500 - 29499 nodes created - worst tet radius 1.31002 (nodes removed 0 1)
+Info    : It. 30000 - 29999 nodes created - worst tet radius 1.30274 (nodes removed 0 1)
+Info    : It. 30500 - 30499 nodes created - worst tet radius 1.29556 (nodes removed 0 1)
+Info    : It. 31000 - 30999 nodes created - worst tet radius 1.28886 (nodes removed 0 1)
+Info    : It. 31500 - 31499 nodes created - worst tet radius 1.28226 (nodes removed 0 1)
+Info    : It. 32000 - 31999 nodes created - worst tet radius 1.27532 (nodes removed 0 1)
+Info    : It. 32500 - 32499 nodes created - worst tet radius 1.26945 (nodes removed 0 1)
+Info    : It. 33000 - 32999 nodes created - worst tet radius 1.26336 (nodes removed 0 1)
+Info    : It. 33500 - 33499 nodes created - worst tet radius 1.25749 (nodes removed 0 1)
+Info    : It. 34000 - 33999 nodes created - worst tet radius 1.25157 (nodes removed 0 1)
+Info    : It. 34500 - 34499 nodes created - worst tet radius 1.24525 (nodes removed 0 1)
+Info    : It. 35000 - 34999 nodes created - worst tet radius 1.23951 (nodes removed 0 1)
+Info    : It. 35500 - 35499 nodes created - worst tet radius 1.23356 (nodes removed 0 1)
+Info    : It. 36000 - 35999 nodes created - worst tet radius 1.22816 (nodes removed 0 1)
+Info    : It. 36500 - 36499 nodes created - worst tet radius 1.22255 (nodes removed 0 1)
+Info    : It. 37000 - 36999 nodes created - worst tet radius 1.21697 (nodes removed 0 1)
+Info    : It. 37500 - 37499 nodes created - worst tet radius 1.21158 (nodes removed 0 1)
+Info    : It. 38000 - 37999 nodes created - worst tet radius 1.20655 (nodes removed 0 1)
+Info    : It. 38500 - 38499 nodes created - worst tet radius 1.20164 (nodes removed 0 1)
+Info    : It. 39000 - 38999 nodes created - worst tet radius 1.19658 (nodes removed 0 1)
+Info    : It. 39500 - 39499 nodes created - worst tet radius 1.19121 (nodes removed 0 1)
+Info    : It. 40000 - 39999 nodes created - worst tet radius 1.18659 (nodes removed 0 1)
+Info    : It. 40500 - 40499 nodes created - worst tet radius 1.18202 (nodes removed 0 1)
+Info    : It. 41000 - 40999 nodes created - worst tet radius 1.17743 (nodes removed 0 1)
+Info    : It. 41500 - 41499 nodes created - worst tet radius 1.17316 (nodes removed 0 1)
+Info    : It. 42000 - 41999 nodes created - worst tet radius 1.16873 (nodes removed 0 1)
+Info    : It. 42500 - 42499 nodes created - worst tet radius 1.16429 (nodes removed 0 1)
+Info    : It. 43000 - 42999 nodes created - worst tet radius 1.15965 (nodes removed 0 1)
+Info    : It. 43500 - 43499 nodes created - worst tet radius 1.15571 (nodes removed 0 1)
+Info    : It. 44000 - 43999 nodes created - worst tet radius 1.15142 (nodes removed 0 1)
+Info    : It. 44500 - 44499 nodes created - worst tet radius 1.14719 (nodes removed 0 1)
+Info    : It. 45000 - 44999 nodes created - worst tet radius 1.14304 (nodes removed 0 1)
+Info    : It. 45500 - 45499 nodes created - worst tet radius 1.13884 (nodes removed 0 1)
+Info    : It. 46000 - 45999 nodes created - worst tet radius 1.13481 (nodes removed 0 1)
+Info    : It. 46500 - 46499 nodes created - worst tet radius 1.13107 (nodes removed 0 1)
+Info    : It. 47000 - 46999 nodes created - worst tet radius 1.12709 (nodes removed 0 1)
+Info    : It. 47500 - 47499 nodes created - worst tet radius 1.12304 (nodes removed 0 1)
+Info    : It. 48000 - 47999 nodes created - worst tet radius 1.11925 (nodes removed 0 1)
+Info    : It. 48500 - 48499 nodes created - worst tet radius 1.11547 (nodes removed 0 1)
+Info    : It. 49000 - 48999 nodes created - worst tet radius 1.11181 (nodes removed 0 1)
+Info    : It. 49500 - 49499 nodes created - worst tet radius 1.10808 (nodes removed 0 1)
+Info    : It. 50000 - 49999 nodes created - worst tet radius 1.10469 (nodes removed 0 1)
+Info    : It. 50500 - 50499 nodes created - worst tet radius 1.10123 (nodes removed 0 1)
+Info    : It. 51000 - 50999 nodes created - worst tet radius 1.09793 (nodes removed 0 1)
+Info    : It. 51500 - 51499 nodes created - worst tet radius 1.09439 (nodes removed 0 1)
+Info    : It. 52000 - 51999 nodes created - worst tet radius 1.09111 (nodes removed 0 1)
+Info    : It. 52500 - 52499 nodes created - worst tet radius 1.08782 (nodes removed 0 1)
+Info    : It. 53000 - 52999 nodes created - worst tet radius 1.08476 (nodes removed 0 1)
+Info    : It. 53500 - 53499 nodes created - worst tet radius 1.0814 (nodes removed 0 1)
+Info    : It. 54000 - 53999 nodes created - worst tet radius 1.07815 (nodes removed 0 1)
+Info    : It. 54500 - 54499 nodes created - worst tet radius 1.07462 (nodes removed 0 1)
+Info    : It. 55000 - 54999 nodes created - worst tet radius 1.07116 (nodes removed 0 1)
+Info    : It. 55500 - 55499 nodes created - worst tet radius 1.06795 (nodes removed 0 1)
+Info    : It. 56000 - 55999 nodes created - worst tet radius 1.06499 (nodes removed 0 1)
+Info    : It. 56500 - 56499 nodes created - worst tet radius 1.06171 (nodes removed 0 1)
+Info    : It. 57000 - 56999 nodes created - worst tet radius 1.05871 (nodes removed 0 1)
+Info    : It. 57500 - 57499 nodes created - worst tet radius 1.05583 (nodes removed 0 1)
+Info    : It. 58000 - 57999 nodes created - worst tet radius 1.05292 (nodes removed 0 1)
+Info    : It. 58500 - 58499 nodes created - worst tet radius 1.05024 (nodes removed 0 1)
+Info    : It. 59000 - 58999 nodes created - worst tet radius 1.04728 (nodes removed 0 1)
+Info    : It. 59500 - 59499 nodes created - worst tet radius 1.04423 (nodes removed 0 1)
+Info    : It. 60000 - 59999 nodes created - worst tet radius 1.04163 (nodes removed 0 1)
+Info    : It. 60500 - 60499 nodes created - worst tet radius 1.03891 (nodes removed 0 1)
+Info    : It. 61000 - 60999 nodes created - worst tet radius 1.03618 (nodes removed 0 1)
+Info    : It. 61500 - 61499 nodes created - worst tet radius 1.03353 (nodes removed 0 1)
+Info    : It. 62000 - 61999 nodes created - worst tet radius 1.03101 (nodes removed 0 1)
+Info    : It. 62500 - 62499 nodes created - worst tet radius 1.02851 (nodes removed 0 1)
+Info    : It. 63000 - 62999 nodes created - worst tet radius 1.02582 (nodes removed 0 1)
+Info    : It. 63500 - 63499 nodes created - worst tet radius 1.0231 (nodes removed 0 1)
+Info    : It. 64000 - 63999 nodes created - worst tet radius 1.02044 (nodes removed 0 1)
+Info    : It. 64500 - 64499 nodes created - worst tet radius 1.01794 (nodes removed 0 1)
+Info    : It. 65000 - 64999 nodes created - worst tet radius 1.01535 (nodes removed 0 1)
+Info    : It. 65500 - 65499 nodes created - worst tet radius 1.01279 (nodes removed 0 1)
+Info    : It. 66000 - 65999 nodes created - worst tet radius 1.01023 (nodes removed 0 1)
+Info    : It. 66500 - 66499 nodes created - worst tet radius 1.00779 (nodes removed 0 1)
+Info    : It. 67000 - 66999 nodes created - worst tet radius 1.00548 (nodes removed 0 1)
+Info    : It. 67500 - 67499 nodes created - worst tet radius 1.00304 (nodes removed 0 1)
+Info    : It. 68000 - 67999 nodes created - worst tet radius 1.00049 (nodes removed 0 1)
+Info    : 3D refinement terminated (82582 nodes total):
+Info    :  - 8 Delaunay cavities modified for star shapeness
+Info    :  - 1 nodes could not be inserted
+Info    :  - 482058 tetrahedra created in 8.62817 sec. (55870 tets/s)
+Info    : Done meshing 3D (Wall 10.5576s, CPU 10.4615s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 3.36266e-06) with worst = 0.0255355 / average = 0.745434:
+Info    : 0.00 < quality < 0.10 :         5 elements
+Info    : 0.10 < quality < 0.20 :         7 elements
+Info    : 0.20 < quality < 0.30 :        19 elements
+Info    : 0.30 < quality < 0.40 :        27 elements
+Info    : 0.40 < quality < 0.50 :        38 elements
+Info    : 0.50 < quality < 0.60 :        61 elements
+Info    : 0.60 < quality < 0.70 :       330 elements
+Info    : 0.70 < quality < 0.80 :       971 elements
+Info    : 0.80 < quality < 0.90 :       658 elements
+Info    : 0.90 < quality < 1.00 :        71 elements
+Info    : 31 edge swaps, 0 node relocations (volume = 3.36266e-06): worst = 0.301185 / average = 0.754484 (Wall 0.0013154s, CPU 0.001319s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        23 elements
+Info    : 0.40 < quality < 0.50 :        36 elements
+Info    : 0.50 < quality < 0.60 :        57 elements
+Info    : 0.60 < quality < 0.70 :       336 elements
+Info    : 0.70 < quality < 0.80 :       971 elements
+Info    : 0.80 < quality < 0.90 :       664 elements
+Info    : 0.90 < quality < 1.00 :        72 elements
+Info    : Optimizing volume 2
+Info    : Optimization starts (volume = 0.000901052) with worst = 0.00497284 / average = 0.784881:
+Info    : 0.00 < quality < 0.10 :       972 elements
+Info    : 0.10 < quality < 0.20 :      2982 elements
+Info    : 0.20 < quality < 0.30 :      5240 elements
+Info    : 0.30 < quality < 0.40 :      8299 elements
+Info    : 0.40 < quality < 0.50 :     13060 elements
+Info    : 0.50 < quality < 0.60 :     21743 elements
+Info    : 0.60 < quality < 0.70 :     43329 elements
+Info    : 0.70 < quality < 0.80 :    103453 elements
+Info    : 0.80 < quality < 0.90 :    183905 elements
+Info    : 0.90 < quality < 1.00 :     96888 elements
+Info    : 9088 edge swaps, 340 node relocations (volume = 0.000901052): worst = 0.140063 / average = 0.796886 (Wall 0.565966s, CPU 0.565951s)
+Info    : 9148 edge swaps, 346 node relocations (volume = 0.000901052): worst = 0.272621 / average = 0.796959 (Wall 0.765119s, CPU 0.765104s)
+Info    : 9149 edge swaps, 347 node relocations (volume = 0.000901052): worst = 0.272621 / average = 0.79696 (Wall 0.980028s, CPU 0.980013s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         6 elements
+Info    : 0.30 < quality < 0.40 :      8262 elements
+Info    : 0.40 < quality < 0.50 :     12638 elements
+Info    : 0.50 < quality < 0.60 :     20859 elements
+Info    : 0.60 < quality < 0.70 :     42906 elements
+Info    : 0.70 < quality < 0.80 :    105267 elements
+Info    : 0.80 < quality < 0.90 :    185464 elements
+Info    : 0.90 < quality < 1.00 :     96277 elements
+Info    : Done optimizing mesh (Wall 2.59141s, CPU 2.49001s)
+Info    : 82582 nodes 502963 elements
+Info    : Optimizing mesh (Netgen)...
+Info    : Optimizing volume 1
+Info    : CalcLocalH: 798 Points 2159 Elements 1464 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 36 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 15.7628 
+Info    : 10 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 16 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 3095.41 
+Info    : Total badness = 3058.65 
+Info    : SplitImprove 
+Info    : badmax = 11.2589 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 3058.65 
+Info    : Total badness = 3057.11 
+Info    : SwapImprove  
+Info    : 48 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2997.39 
+Info    : Total badness = 2988.13 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2988.13 
+Info    : Total badness = 2987.8 
+Info    : SplitImprove 
+Info    : badmax = 7.06673 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2987.8 
+Info    : Total badness = 2987.79 
+Info    : SwapImprove  
+Info    : 11 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2986.46 
+Info    : Total badness = 2983.37 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2983.37 
+Info    : Total badness = 2983.28 
+Info    : SplitImprove 
+Info    : badmax = 5.87466 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2983.28 
+Info    : Total badness = 2983.28 
+Info    : SwapImprove  
+Info    : 4 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2983.03 
+Info    : Total badness = 2982.12 
+Info    : Optimizing volume 2
+Info    : CalcLocalH: 82516 Points 471679 Elements 28944 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 5140 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 590443 
+Info    : Total badness = 563478 
+Info    : SplitImprove 
+Info    : badmax = 13.9391 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 563478 
+Info    : Total badness = 559744 
+Info    : SwapImprove  
+Info    : 25000 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 516068 
+Info    : Total badness = 503629 
+Info    : CombineImprove 
+Info    : 1092 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 494034 
+Info    : Total badness = 492068 
+Info    : SplitImprove 
+Info    : badmax = 6.90178 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 492068 
+Info    : Total badness = 491723 
+Info    : SwapImprove  
+Info    : 2791 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 489538 
+Info    : Total badness = 487698 
+Info    : CombineImprove 
+Info    : 266 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 485484 
+Info    : Total badness = 485069 
+Info    : SplitImprove 
+Info    : badmax = 6.21815 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 485069 
+Info    : Total badness = 484976 
+Info    : SwapImprove  
+Info    : 742 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 484709 
+Info    : Total badness = 484196 
+Info    : Done optimizing mesh (Wall 55.3012s, CPU 55.1159s)
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================== slowest durations ===============================
+112.81s call     tests/validation/test_circular_loop.py::TestCircularLoop::test_circular_loop_on_axis
+0.00s setup    tests/validation/test_circular_loop.py::TestCircularLoop::test_circular_loop_on_axis
+0.00s teardown tests/validation/test_circular_loop.py::TestCircularLoop::test_circular_loop_on_axis
+=========================== short test summary info ============================
+FAILED tests/validation/test_circular_loop.py::TestCircularLoop::test_circular_loop_on_axis
+=========== 1 failed, 2 deselected, 8 warnings in 113.45s (0:01:53) ============
+Exception ignored in: <function LinearProblem.__del__ at 0x7d507b470d30>
+Traceback (most recent call last):
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/petsc.py", line 627, in __del__
+AttributeError: 'LinearProblem' object has no attribute '_solver'
+Exception ignored in: <function LinearProblem.__del__ at 0x79a5dcd2cd30>
+Traceback (most recent call last):
+  File "/usr/local/dolfinx-complex/lib/python3.10/dist-packages/dolfinx/fem/petsc.py", line 627, in __del__
+AttributeError: 'LinearProblem' object has no attribute '_solver'
+
+## Exit
+- Status: 1
+- Elapsed (s): 115
