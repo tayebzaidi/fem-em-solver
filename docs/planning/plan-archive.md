@@ -13981,3 +13981,91 @@ cache was left **warm** by the 09:00 slot; validation forms still cold.
    stall — trap recorded in the protocol list. Audited COMPLIANT
    2026-08-18 18:00 review. Step 2 (closed azimuthal drive) scoped in §7
    and queued.
+
+## §9 On-deck done items 1 & 3 + interval recap, 18:00 2026-08-18 to 03:00 2026-08-19 — archived 2026-08-19 (03:00 review)
+
+**Interval recap as it stood (written by the 18:00 review):**
+
+Last reviewed 2026-08-18, **18:00 review**. Interval (since 10:30): four
+slots scheduled, three ran, two closes, both audited COMPLIANT (one
+subagent auditor each; every plan number verified against its log, no
+bound loosened, exit codes attributed line-by-line). The 12:00 slot
+was lost at launch to an API 529 (`logs/automation/
+20260818T170002Z_implementer.log` — one line, no session ever started;
+one-off, the three later slots launched normally). `TH-12` step 2 ✅
+(13:30 slot priced it — the memory exponent measured at p = 1.271 when
+the pre-registered 1.5 guess straddled the threshold — and the 15:00
+slot solved it: ΔR deviation −0.8508% at degree 2 on the unrefined
+coil mesh, a −2.434 pp move to just past the h → 0 bracket's upper
+edge; 61.94 GiB, 96.8% of `memory.max` — the cells-axis exponent
+under-predicts the order axis, treat 1.271 as a floor; one defect left
+failing, not loosened: the complex-power identity at degree 2 gates a
+number that is 99.6% spurious `W_e`). `POST-5` step 1 ✅ (16:30 slot:
+σ-blind control exactly 0.0 W after the `fem.Constant` fix, `ds`
+orientation excluded at ratio 1.000000000000, ladder verdict
+SOURCE/ASSEMBLY at fitted rate 0.0290 vs ≥ 0.7 — the imbalance is
+the source, not the mesh; xfail keeps its 25% band). Adjudicated that
+review: the `TH-12` swap question is answered — no affordable
+(order, h) route to the 64 MHz bracket exists on this box (§2.2
+updated; no rung swap scoped); the identity defect's disposition is
+commissioned as `TH-12` step 3 (mechanism discriminator at smoke
+cost — known-issues re-pointed); `POST-5` step 2 queued. The
+unpinned-quadrature FFCx-stall trap (two windows burned) appended to
+the protocol trap list.
+
+**Item 1 (`EX-24`, done 2026-08-18, 19:30 slot).** `ports:3` landed with
+both legs on one mesh; gate 1.8333% against 5%, f = 1.0 control missed
+the band as required, gap route flat to 3.9e-5, open-limit identity
+≤ 1.8e-15, sweep reciprocity 2.574296e-11 against 1e-3; 239 s harness at
+`-n 2`, docrefs `exit=2` staleness-only (none this example's). Original
+item text: Execute the §7 `EX-24` entry verbatim, 2026-08-18 addendum
+included: the f ∈ {1.0, 0.735, 0.5} width ladder as three lumped-BC
+solves plus the f = 0.5 sweep through the new `LumpedSheetPortSpec`
+route, printing `‖S−Sᵀ‖/‖S‖` beside the 1e-3 band. Anchor: the f = 0.5
+cross-route gate ≤ 5%; the f = 1.0 record 7.7095% (gap ratio 0.894310)
+reproduced < 1e-4; open-limit identity < 1e-11 per width — all constants
+imported from the test modules, none restated. Negative control: f = 1.0
+asserted to miss the 5% band while the gap route stays flat. Cost: step
+2b measured 150.5 s for the ladder, step 2c 57.0 s for the sweep — ~260 s
+total, `timeout -k 30 500`, `-n 2`, complex build. Traps: `w = A/h`,
+never the bbox extent; two cell tags per gap box; same-stem guide in the
+same commit (`EX-15` rule); docrefs gates on `exit != 1`. Scope:
+two-torus only, no birdcage; records quoted from the tests, the example
+reproduces them. Negative result: the example path off the test records
+is a regression — known-issues entry, report, stop.
+
+**Item 3 (`POST-5` step 2, done 2026-08-19, 00:00 slot).** The closed
+azimuthal drive reads ASSEMBLY: imbalance 116.7465% → 105.9632% with the
+flux sign unmoved, against a band that required < 25% and a positive
+sign; the axial negative control reproduced the step-1 record at
+`rtol=1e-6` and the σ-blind control was exactly 0.0 W on the new drive.
+4 s harness at `-n 2` (`20260819T051150Z_POST-5-step2-closed-drive2.log`),
+full file green at `20260819T051210Z`. The xfail band and `strict=True`
+did not move. One repair rode along: step 1's commit had dropped a
+test's `def` line; the file now collects 11 where it collected 10.
+Original item text: Execute the §7 `POST-5` step-2 entry verbatim
+(scoped by step 1, 2026-08-18): add a closed azimuthal loop drive
+variant (`div J = 0`, `J·n = 0` on every boundary) to the smoke fixture
+and re-read the power balance on the coarse rung. Anchor:
+pre-registered two-sided band — imbalance collapsing under the xfail's
+25% band and net flux sign turning positive ⇒ SOURCE (the axial drive's
+`J·n ≠ 0` end-cap incompatibility, defect 3 candidate (b)); imbalance
+persisting at O(100%) with the sign unmoved ⇒ ASSEMBLY (the next probe
+is the boundary curl-trace leg against the `TH-6` plane wave, where
+both legs have closed forms). The σ-blind `sigma=0.0` control stays
+exactly 0.0 W on the new drive too. Negative control: the original
+axial drive, same run, reproduces the coarse-rung record 1.199162e-06 W
+/ −2.008179e-07 W / 116.7465% to every printed digit. The ceiling is
+real: the blind reading saturates near 100%+, so a collapse to < 25% is
+~4.7× — do not assert a larger separation than the fixture can show.
+Tier/cost: standard, `-n 2`, complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+`timeout -k 30 400` — the fixture solves in ~1.5 s/rung; the new drive's
+forms are cold, so the first command is a compile window, not the
+measurement. Traps: pin `metadata={"quadrature_degree": …}` on any
+`SpatialCoordinate`-bearing form on this gmsh mesh; `ufl.inner`
+conjugation in the drive functional; never pipe pytest; prints need
+`-s`. Scope: smoke fixture only; the xfail's 25% band and `strict=True`
+do not move in this step even on a collapse; no SAR or coil-loading
+claim moves. Negative result: an in-between reading is the finding —
+record per-rung numbers in the §7 entry and the known-issues defect-3
+entry, report, stop.

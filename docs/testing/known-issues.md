@@ -93,7 +93,7 @@ Real mode is unaffected — these files are green in the real-mode leg (a) sweep
 | **Second-order damage — the poisoned-stub trap** | A 0-byte stub left by any killed compile makes **every later run that needs that form** fail this way rather than recompiling, and the message blames the cache, not the form. A stale stub from **2026-08-18 14:02** (leg (b1) attempt 2's era) was still sitting in the cache when this slot started — i.e. this has been silently mis-attributed before. Sweep with `find /root/.cache/fenics -name '*.c' -size 0` before trusting any "JIT compilation timed out" message; that check is cheap and should precede any cache-clear. Note this cuts **against** reflexively clearing `~/.cache/fenics`: the targeted delete is the diagnostic, and here it *exonerated* the cache. |
 | **Not** | Not the `>12× real` cost rule (withdrawn 2026-08-18) and not a solve cost — 109 s of compile, 0 s of setup. Not a physics or tolerance failure: no assertion is ever reached. Not a real-mode issue. |
 | **Fix** | Not attempted — `OPS-17` is a bookkeeping leg and does not touch `tests/`. The fix is mechanical and already precedented in this repo: regularise inside the `sqrt` (`test_dodd_deeds_impedance.py:237`, `test_port_reaction_impedance.py:200`) instead of `ufl.max_value`, and express the wire predicate without an ordering comparison on complex-typed operands. Whoever takes it should decide per file whether the complex build needs the magnetostatic path at all — `@real_only` is a legitimate, cheaper disposition (same call `OPS-20` faces). Do **not** conclude the forms are un-compilable: the sibling files prove the same physics compiles once the predicate is complex-safe. |
-| **Resolves with** | Not yet commissioned — for the review; naturally scoped together with `OPS-20`, which is the same family. Blocks 5 tests in `OPS-17` leg (b2) from being observed in a completed leg. |
+| **Resolves with** | **`OPS-22`** (commissioned 2026-08-19 03:00 review; §7 entry with the full rubric): per-file fix-or-mark of the three fixtures, real-mode records asserted unmoved, complex run completing with a footer. `OPS-20` stays a separate chunk (same family, different file) and its step 1 is re-pointed at the drive callable. Blocks 5 tests in `OPS-17` leg (b2) from being observed in a completed leg until it lands. |
 
 ### 1. ✅ RETIRED 2026-07-31 — stale test double, `DummyMagnetostaticSolver`
 
@@ -709,7 +709,7 @@ immediately before the run.
 | **Cause** | **Not diagnosed.** The run used `--tb=line`, which printed only the UFL frame and no user frame, so the offending expression is not localized. `grep` for `max_value`/`min_value`/`conditional(` across `src/` finds exactly one hit (`src/fem_em_solver/post/sar.py:286`), which this test does not exercise — so the comparison most likely enters through a DolfinX/UFL helper (a cell-size or clamp expression) rather than a literal `ufl.max_value` call. **One command settles it:** re-run this file alone on a cleared cache with `--tb=long`. |
 | **Not** | Not the cache artifact the previous entry claimed, and not a regression from any recent chunk — no completed complex leg had ever reached this file before today, so it has no known-green complex history. |
 | **Scope** | `OPS-17` is test-hygiene bookkeeping and deliberately did not fix it. Whoever fixes it should record whether the complex build ever needs this magnetostatic path at all — if not, an explicit `@real_only` marker is a legitimate disposition and is cheaper than making the form complex-safe. |
-| **Resolves with** | `OPS-20` (commissioned 2026-08-18 10:30 review): one `--tb=long` cold-cache diagnosis, then fix-or-mark, real-mode record 17.1233% re-asserted unmoved either way. |
+| **Resolves with** | `OPS-20` (commissioned 2026-08-18 10:30 review): one `--tb=long` cold-cache diagnosis, then fix-or-mark, real-mode record 17.1233% re-asserted unmoved either way. **Re-pointed 2026-08-19 03:00 review:** the Cause row's "DolfinX/UFL helper" hypothesis is disfavoured — every other instance of this error class was a fixture-side `max`/ordering predicate in the test's own drive callable (see the `OPS-22` entry above); start the diagnosis by grepping this test's drive construction. |
 
 ### `test_paraview_combined_xdmf` asserts real-mode attribute names and fails in the complex build (`OPS-17` step 3 leg (b1), 2026-08-18)
 
@@ -1635,8 +1635,9 @@ h-ladder on this fixture distinguishes the two in one command.
 > three numbers (asserted, not eyeballed), so the drive is the only thing
 > that changed between the two rows. **Verdict: ASSEMBLY.** The source's
 > `J·n ≠ 0` incompatibility is real (defect 2 measures it) but it is not what
-> makes this identity fail. **Resolves with:** the boundary-leg probe named
-> in `POST-5` step 2 — scoring the curl trace `−∮½Re(E×H̄)·n̂dS` against the
+> makes this identity fail. **Resolves with:** the boundary-leg probe scoped
+> as **`POST-5` step 3** (named in the step-2 §7 entry; queued 2026-08-19
+> 03:00 review) — scoring the curl trace `−∮½Re(E×H̄)·n̂dS` against the
 > `TH-6` lossy plane wave, where both legs have closed forms, which separates
 > a wrong `H = ∇×E/(−jωμ)` reconstruction from a wrong facet assembly. The
 > xfail keeps its 25% band and `strict=True`.

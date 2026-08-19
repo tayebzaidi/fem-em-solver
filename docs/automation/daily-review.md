@@ -146,9 +146,18 @@ step 5 or listed in step 6 states all six:
    measurement where one exists (a probe's solve time, a comparable fixture).
    An item nobody has costed is an item that overruns.
 4. **The traps already paid for** — name the failures this project has already
-   bought, so the run does not buy them twice: `ufl.max_value` does not compile
-   in the complex build; a killed run leaves a stale FFCx lock that fails the
-   next until `~/.cache/fenics` is cleared; `cell_tags.values` and
+   bought, so the run does not buy them twice: `ufl.max_value` and any
+   ordering comparison (`<=`) on complex-typed operands do not compile in the
+   complex build — the error surfaces either as a UFL `ComplexComparisonError`
+   or as a swallowed FFCx "root node" failure, and three fixture
+   `current_density` callables carried it (`OPS-22`, 2026-08-19; regularise
+   inside the `sqrt` instead); a killed compile leaves a **0-byte `.c` stub**
+   in `/root/.cache/fenics` that is a *live lock* — later runs (even in the
+   same session) stall in `MPI_Bcast` or fail blaming the cache, and three
+   windows went to it on 2026-08-18/19 — sweep
+   `find /root/.cache/fenics -name '*.c' -size 0` and delete stubs only,
+   never clear the cache wholesale (the targeted delete is also the
+   diagnostic: a real defect re-creates its stub, a cache artifact does not); `cell_tags.values` and
    `assemble_scalar` are rank-local; pytest captures prints without `-s`;
    `-k a or b` splits into stray argv inside an already-quoted container
    command; a headless session that backgrounds a harness run and ends its

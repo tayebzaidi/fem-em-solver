@@ -417,11 +417,12 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
-| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots; **rescoped 2026-08-18 03:00 review as (b1) remainder + (b2) validation**, one slot each; **(b1) attempt 1 2026-08-18 🟡 — command 1 completed (3 failed / 122 passed / 1 xfailed, 392.76 s, the three failures exactly the named expected ones, one rank-dependent XDMF count delta), command 2 exit 124 at 44%: complex `tests/solver` is > 12× real, not 2.6×. The leg's real finding is that attempt 3's "cache artifact" call was wrong — on a cold cache `test_coil_phantom_magnetostatics` fails in 5.58 s with a genuine `ComplexComparisonError`**; **(b1) attempt 2 2026-08-18 ✅ CLOSED — complex `tests/solver` runs as one command, 46 passed / 2 xfailed in 111.22 s, exit 0, both ranks identical; counts reconcile to 171 non-validation complex, the same 171 leg (a) observed; defect 3's th-smoke Poynting xfail finally read in a completed leg; the ">12× real" rule is **withdrawn** as a cold-cache FFCx-JIT artifact — warm complex is ~2.7× real, and `test_gauge_penalty.py`, which killed the 480 s cold leg at 61%, is 8 passed in 20.33 s warm**. *Leg (b1) audited COMPLIANT 2026-08-18 10:30 review — the 49 = 48 + 1 and 171/209 reconciliations re-derived from the log footers, both ranks identical in the closing leg; the coil-phantom exclusion is within the written anchor (observed FAILED in its own completed log `20260818T124712Z`, two known-issues entries), with the caveat on record that the completed observation shows the warm-cache message while the genuine `ComplexComparisonError` appeared in an exit-124 run — the three-state map is disclosed in known-issues*; only leg (b2) remains; **(b2) attempt 1 2026-08-19 🟡 — three commands completed (impedance file `24 passed`/488 s; cost probe re-bases the stale 380 collect to **397**, validation **225**; shortest-first subset `23 passed`/121 s with the per-file sinks priced), then the written negative-result clause fired: `test_circular_loop.py` **cannot JIT-compile one form in the complex build**, reproducibly and independently of cache state — new known-issues entry, which also names the **0-byte FFCx stub** trap that mis-attributes such failures as cache artifacts (a stale stub from 2026-08-18 14:02 was still in the cache). Coverage 39/225; 186 remain, 3 blocked**; **(b2) attempt 2 2026-08-19 🟡 — the prescribed 4×-larger batch lost its window to a *second* instance of the same defect (`test_helmholtz_magnitude` FAILED at 62%, `test_helmholtz_v2` hung, exit 124; 9 passes uncounted for want of a footer), and the slot instead **diagnosed the cause**: the fixtures' own `current_density` callables use `ufl.max_value` / `<=` geometry predicates that UFL forbids on complex operands — `ComplexComparisonError` in 13.10 s for helmholtz, a swallowed FFCx root-node failure in 113.38 s for circular_loop, both on the load form at `solvers.py:385`. `src/` has **no** `max_value`; three sibling test files already document the fix (regularise inside the `sqrt`). **Fixture debt, not a solver defect**, and the same family as `OPS-20`. Coverage still 39/225; blocked 3 → 5**) | standard |
+| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots; **rescoped 2026-08-18 03:00 review as (b1) remainder + (b2) validation**, one slot each; **(b1) attempt 1 2026-08-18 🟡 — command 1 completed (3 failed / 122 passed / 1 xfailed, 392.76 s, the three failures exactly the named expected ones, one rank-dependent XDMF count delta), command 2 exit 124 at 44%: complex `tests/solver` is > 12× real, not 2.6×. The leg's real finding is that attempt 3's "cache artifact" call was wrong — on a cold cache `test_coil_phantom_magnetostatics` fails in 5.58 s with a genuine `ComplexComparisonError`**; **(b1) attempt 2 2026-08-18 ✅ CLOSED — complex `tests/solver` runs as one command, 46 passed / 2 xfailed in 111.22 s, exit 0, both ranks identical; counts reconcile to 171 non-validation complex, the same 171 leg (a) observed; defect 3's th-smoke Poynting xfail finally read in a completed leg; the ">12× real" rule is **withdrawn** as a cold-cache FFCx-JIT artifact — warm complex is ~2.7× real, and `test_gauge_penalty.py`, which killed the 480 s cold leg at 61%, is 8 passed in 20.33 s warm**. *Leg (b1) audited COMPLIANT 2026-08-18 10:30 review — the 49 = 48 + 1 and 171/209 reconciliations re-derived from the log footers, both ranks identical in the closing leg; the coil-phantom exclusion is within the written anchor (observed FAILED in its own completed log `20260818T124712Z`, two known-issues entries), with the caveat on record that the completed observation shows the warm-cache message while the genuine `ComplexComparisonError` appeared in an exit-124 run — the three-state map is disclosed in known-issues*; only leg (b2) remains; **(b2) attempt 1 2026-08-19 🟡 — three commands completed (impedance file `24 passed`/488 s; cost probe re-bases the stale 380 collect to **397**, validation **225**; shortest-first subset `23 passed`/121 s with the per-file sinks priced), then the written negative-result clause fired: `test_circular_loop.py` **cannot JIT-compile one form in the complex build**, reproducibly and independently of cache state — new known-issues entry, which also names the **0-byte FFCx stub** trap that mis-attributes such failures as cache artifacts (a stale stub from 2026-08-18 14:02 was still in the cache). Coverage 39/225; 186 remain, 3 blocked**; **(b2) attempt 2 2026-08-19 🟡 — the prescribed 4×-larger batch lost its window to a *second* instance of the same defect (`test_helmholtz_magnitude` FAILED at 62%, `test_helmholtz_v2` hung, exit 124; 9 passes uncounted for want of a footer), and the slot instead **diagnosed the cause**: the fixtures' own `current_density` callables use `ufl.max_value` / `<=` geometry predicates that UFL forbids on complex operands — `ComplexComparisonError` in 13.10 s for helmholtz, a swallowed FFCx root-node failure in 113.38 s for circular_loop, both on the load form at `solvers.py:385`. `src/` has **no** `max_value`; three sibling test files already document the fix (regularise inside the `sqrt`). **Fixture debt, not a solver defect**, and the same family as `OPS-20`. Coverage still 39/225; blocked 3 → 5**; **rescoped 2026-08-19 03:00 review** — the fixture fix is commissioned as `OPS-22` and queued first, (b2) resumes under **per-file completed-run accounting**, anchor re-based to 225 validation / 398 total, the +1 non-validation delta attributed benign (`POST-5` step 1's dropped `def` + 2 added tests)) | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 | `OPS-20` | Disposition the coil-phantom `ComplexComparisonError`: localize with `--tb=long`, then fix the form or mark `@real_only` (known-issues 2026-08-18; commissioned 2026-08-18 10:30 review) | ⬜ | standard |
 | `OPS-21` | Make the combined-XDMF test scalar-type-aware and rank-deterministic (known-issues 2026-08-18, two defects in one test; commissioned 2026-08-18 10:30 review) | ⬜ | standard |
+| `OPS-22` | Make the three magnetostatic loop-drive fixtures complex-safe: replace the `ufl.max_value` / `<=` predicates in their `current_density` callables (known-issues 2026-08-19; commissioned 2026-08-19 03:00 review from the `OPS-17` leg-(b2) attempt-2 diagnosis; unblocks 5 tests in leg (b2)) | ⬜ | standard |
 
 **`OPS-18` — DolfinX version upgrade, recurring** ⬜
 *(commissioned 2026-08-16, operator session. The base image is pinned at
@@ -464,6 +465,26 @@ dated annotation. The ID stays stable.)*
 > deferral note, contrary to this entry's trigger clause. The next
 > daily review must queue steps 1–3 or record a dated deferral
 > rationale here; see the matching note in the §9 preamble.
+> **Deferral recorded 2026-08-19, 03:00 review.** The trigger is
+> acknowledged and the upgrade is **deliberately deferred until
+> `OPS-17` step 3 closes** (leg (b2) is the only open part). Rationale:
+> step 3's done-when is that every gated number reproduces and every
+> failure is attributable, but the complex-suite baseline is mid-audit
+> at 39/225 validation tests observed, with a just-diagnosed
+> fixture-debt defect (`OPS-22`, commissioned this review) whose
+> symptom — `ComplexComparisonError` / swallowed FFCx root-node
+> failures during form compilation — is exactly what an 0.7→0.11 UFL/
+> FFCx migration break would look like. Upgrading now would make
+> post-upgrade complex failures unattributable between migration and
+> pre-existing debt, and the entry's own trap rule ("a gated number
+> that moves is a finding") is unenforceable without a reconciled
+> baseline. The sequencing note above already licenses clearing the
+> short in-flight tails first; those tails (`OPS-22`, leg (b2)'s
+> resumption, `POST-5` step 3, `TH-12` step 3) are all queued in §9
+> now and sum to ~4–6 slots. **Commitment:** the review that records
+> `OPS-17` step 3 closed queues `OPS-18` steps 1–3 at the top of §9 in
+> the same commit; a review that finds this condition met and does not
+> queue it repeats the protocol defect this note exists to end.
 > * **Step 1 — build and boot (standard).** Bump the `FROM` line, rebuild,
 >   and fix the environment plumbing that encodes version-specific paths:
 >   the compose `PYTHONPATH` (`dolfinx-real/lib/python3.10/…` — both the
@@ -1235,6 +1256,29 @@ exists, replace instead. Two steps, one implementer run each.)*
 >     whole batch under a completed-leg anchor. Either let (b2) count per-file
 >     completed runs, or queue the ~15-line fixture fix first (in-repo
 >     precedent; unblocks 5 tests and 2 examples).
+>
+>   **Rescoped 2026-08-19, 03:00 review — both levers taken; this
+>   annotation supersedes the batch prescription above for all further
+>   (b2) attempts.**
+>   * The fixture fix is commissioned as **`OPS-22`** (own §7 entry) and
+>     queued ahead of the (b2) resumption in §9.
+>   * **(b2) now counts per-file completed runs** toward its anchor: a
+>     file with its own footer is observed, full stop — a hung file may
+>     cost only its own window, never a batch. Batches remain allowed
+>     but, until `OPS-22` lands, only from files that do **not** define
+>     their own magnetostatic `current_density` callable (the whole
+>     risk class).
+>   * **Anchor re-based:** validation = **225**; total collect expected
+>     **398** (attempt 1's 397 plus the `def` line `POST-5` step 2
+>     restored) — re-verify by collect probe before counting. The **+1
+>     non-validation delta is attributed and benign**: `POST-5` step 1
+>     (`6044a61`) added 2 smoke tests while accidentally dropping 1
+>     `def` (net +1, 171 → 172); step 2 (`0e4ae7f`) restored it, so
+>     non-validation is now expected at **173**. No silent regression.
+>   * **Preflight standard adopted** (attempt 1's correction): the
+>     literal "evidence of a killed prior run" test is
+>     `find /root/.cache/fenics -name '*.c' -size 0`; delete stubs
+>     only, never clear the cache wholesale.
 
 **`OPS-20` — disposition the coil-phantom `ComplexComparisonError`** ⬜
 *(commissioned 2026-08-18, 10:30 review, from the two `OPS-17` leg-(b1)
@@ -1246,6 +1290,15 @@ non-collective, hanging `mpiexec` ~300 s on exit (the 3b-xiii family). The
 expression is **unlocalized**: the only literal `max`-comparison in `src/`
 (`post/sar.py:286`) is not exercised by this test, so it likely enters via a
 UFL/DolfinX helper. One diagnostic command, then one disposition.
+> **Re-pointed 2026-08-19, 03:00 review.** The "UFL/DolfinX helper"
+> hypothesis is now disfavoured: `OPS-17` leg-(b2) attempt 2 diagnosed
+> the identical error class in three validation fixtures, and in every
+> case the source was the **test's own drive/`current_density`
+> callable** (`ufl.max_value` / ordering predicates), never a library
+> helper (`OPS-22`). Start step 1 by grepping this test file's drive
+> construction for `max`-style and comparison constructs — that is
+> free and may localize it before the cold-cache window is spent. The
+> command sequence, anchor, and both dispositions below are unchanged.
 > * **Step 1 — localize, then disposition.** Command 1 (diagnosis): this
 >   file alone, complex build + `FEM_EM_REQUIRE_COMPLEX=1`, cold cache
 >   (`rm -rf ~/.cache/fenics` immediately prior — any other cache state
@@ -1311,6 +1364,43 @@ the cheap candidates).
 >   diagnosis proves a writer race — that would be a new finding.
 >   **Negative result:** a genuine writer race is a `src/` defect —
 >   known-issues update naming the mechanism, report, stop.
+
+**`OPS-22` — make the three magnetostatic loop-drive fixtures
+complex-safe** ⬜ *(commissioned 2026-08-19, 03:00 review, from the
+`OPS-17` leg-(b2) attempt-2 diagnosis and its known-issues entry; one
+slot)*. Three validation fixtures build their own magnetostatic
+`current_density` callables with constructs UFL forbids on complex
+operands — `ufl.max_value(rho, 1e-12)` and `<=` geometry predicates —
+so their load forms (`solvers.py:385`) die at form compilation in the
+complex build: `ComplexComparisonError` in 13.10 s for
+`test_helmholtz_magnitude.py:83–87`, a swallowed FFCx root-node failure
+in ~113 s for `test_circular_loop.py:54`; `test_helmholtz_v2.py:46`
+carries the same idiom. `src/` has no `max_value` — this is fixture
+debt, and the fix is precedented in-repo: regularise inside the `sqrt`
+(`test_dodd_deeds_impedance.py:237–239`,
+`test_port_reaction_impedance.py:200–202`,
+`tests/mesh/test_two_torus_conforming.py:164`). Five tests blocked in
+`OPS-17` leg (b2); two examples carry the same idiom.
+> * **Step 1 — fix or mark, per file.** For each of the three files:
+>   make the callable complex-safe (regularise-inside-`sqrt`, express
+>   the wire/torus predicate without an ordering comparison on
+>   complex-typed operands), or record a per-file `@real_only`
+>   judgement naming this entry if the complex build never needs that
+>   magnetostatic path. **Done-when (§4):** real-mode run first, every
+>   affected test's recorded digits unmoved (the `OPS-17` leg-(a)
+>   observations are the record); then a complex-build run of all
+>   three files that **completes with a footer** — same gates passing,
+>   or the `@real_only` deselections asserted in a reconciled collect;
+>   harness logs + elapsed committed, known-issues entry updated in the
+>   same commit. **Traps:** stub-sweep `find /root/.cache/fenics -name
+>   '*.c' -size 0` before and after (a 0-byte stub is a live lock and
+>   mis-attributes this class of failure to the cache); each repaired
+>   form's first complex run is a cold-JIT window — never share it
+>   with measurement; never pipe pytest. **Scope:** the three test
+>   files only; the two examples are journaled as follow-up if the
+>   window is tight; no physics claim moves. **Negative result:** a
+>   regularised form that still fails to compile — journal the FFCx
+>   message in the known-issues entry, report, stop.
 
 **`OPS-13` — land the rank-safe `_validate_material_map_tags` fix** ✅
 *(2026-08-08; full narrative in `docs/planning/plan-archive.md`)*. The one
@@ -2880,7 +2970,15 @@ to reach 5%); (b) the source's `J·n ≠ 0` end-cap incompatibility.
 > (`20260819T051150Z_POST-5-step2-closed-drive2.log`, `-n 2`, **4 s**
 > harness / 2.94 s pytest; full-file green at
 > `20260819T051210Z_POST-5-step2-smoke-full.log`, 10 passed + 1 xfailed,
-> 7 s.)
+> 7 s.) *Audited COMPLIANT 2026-08-19 03:00 review — table digits verified
+> against the log, the `== 0.0` conservation control and three
+> `rtol=1e-6` record reproductions asserted in code, no pipe in any
+> harness command, the lost first window (exit 124, 401 s) recorded
+> rather than suppressed, nothing loosened; the auditor's one caveat is
+> on record: both rows sit on small absolute fluxes (the azimuthal drive
+> dissipates ~250× less), so the ASSEMBLY verdict's strength against
+> "identity ill-conditioned on this fixture" is exactly the fork step 3
+> resolves.*
 >
 > | drive | dissipated [W] | net inward [W] | sign | imbalance | blind diss [W] |
 > |---|---|---|---|---|---|
@@ -3676,7 +3774,13 @@ changed the port reading" from "the narrowing changed the field"; and
 the same width (1.6079/1.5950% vs 1.8333%) — the impressed-sheet drive
 reads slightly closer to the centreline than the impressed-gap drive
 does, a small systematic `PORT-9` step 3 should expect rather than
-debug. *(Original plan below.)* `EX-18`/`EX-20` demonstrate the **gap-voltage** route
+debug. *Audited COMPLIANT 2026-08-19 03:00 review — all three log
+footers verified (4 s / 239 s / 1 s), every plan number matched against
+`20260819T003401Z_EX-24-example-n2.log` digit-for-digit, no pipe on any
+compute path (the `run_examples.sh` exit path was traced), combined
+XDMF written, docrefs exit 2 staleness-only with all 24 stale artifacts
+pre-existing `EX-22` backlog, none this example's.*
+*(Original plan below.)* `EX-18`/`EX-20` demonstrate the **gap-voltage** route
 only; no example instantiates the lumped-element port BC (`PORT-9`
 steps 1–2b, Jin ch. 11) — the drive/BC angle. **Do:** an example on the
 `GEO-16` port-sheet solve fixture: one mesh, the f ∈ {1.0, 0.735, 0.5}
@@ -4056,42 +4160,46 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed 2026-08-18, **18:00 review**. Interval (since 10:30): four
-slots scheduled, **three ran, two closes, both audited COMPLIANT** (one
+Last reviewed 2026-08-19, **03:00 review**. Interval (since 18:00): four
+slots scheduled, four ran, **two closes, both audited COMPLIANT** (one
 subagent auditor each; every plan number verified against its log, no
-bound loosened, exit codes attributed line-by-line). The **12:00 slot
-was lost at launch to an API 529** (`logs/automation/
-20260818T170002Z_implementer.log` — one line, no session ever started;
-one-off, the three later slots launched normally). `TH-12` step 2 ✅
-(13:30 slot priced it — the memory exponent measured at p = 1.271 when
-the pre-registered 1.5 guess straddled the threshold — and the 15:00
-slot solved it: ΔR deviation **−0.8508%** at degree 2 on the unrefined
-coil mesh, a −2.434 pp move to just past the h → 0 bracket's upper
-edge; **61.94 GiB**, 96.8% of `memory.max` — the cells-axis exponent
-under-predicts the order axis, treat 1.271 as a floor; one defect left
-failing, not loosened: the complex-power identity at degree 2 gates a
-number that is 99.6% spurious `W_e`). `POST-5` step 1 ✅ (16:30 slot:
-σ-blind control **exactly 0.0 W** after the `fem.Constant` fix, `ds`
-orientation excluded at ratio 1.000000000000, ladder verdict
-**SOURCE/ASSEMBLY** at fitted rate 0.0290 vs ≥ 0.7 — the imbalance is
-the source, not the mesh; xfail keeps its 25% band). **Adjudicated this
-review:** the `TH-12` swap question is answered — **no affordable
-(order, h) route to the 64 MHz bracket exists on this box** (§2.2
-updated; no rung swap scoped); the identity defect's disposition is
-commissioned as **`TH-12` step 3** (mechanism discriminator at smoke
-cost — known-issues re-pointed); `POST-5` step 2 queued. The
-unpinned-quadrature FFCx-stall trap (two windows burned) is appended to
-the protocol trap list. Tree clean, no `attempt/*` or `recovered/*`
-branches. Cache note: FFCx cache warm through the smoke fixture's and
-the degree-2 coil validation forms; the new azimuthal-drive and
-degree-2 smoke/sphere energy forms are cold. Done-item texts and prior
-recaps: `docs/planning/plan-archive.md`.
+bound loosened, no pipe-masked exit status). `EX-24` ✅ (19:30 slot:
+`ports:3` lands both legs on one mesh — f = 0.5 gate **1.8333%** vs 5%,
+f = 1.0 control asserted to MISS at 7.7095%, open-limit ≤ 1.8e-15,
+sweep reciprocity **2.574296e-11** vs 1e-3; 239 s at `-n 2`; docrefs
+exit 2 is staleness-only, all 24 stale artifacts `EX-22`'s backlog).
+`POST-5` step 2 ✅ (00:00 slot took item 3 over the blocked item 2, per
+protocol: the closed azimuthal drive reads **ASSEMBLY** — imbalance
+116.7465% → 105.9632%, sign unmoved, both halves of the pre-registered
+SOURCE band failed; axial control reproduced at `rtol=1e-6`, σ-blind
+exactly 0.0 W; one rode-along repair restored a `def` line step 1 had
+dropped). The 21:00 and 22:30 slots both went to `OPS-17` leg (b2) and
+both lost their batch window to the same defect on different files —
+**now diagnosed** (22:30): complex-hostile `ufl.max_value` / `<=`
+predicates in three fixtures' own `current_density` callables; `src/`
+clean; fixture debt, same family as `OPS-20`. **Adjudicated this
+review:** the twice-failed leg (b2) is rescoped — the three-file
+fixture fix is commissioned as **`OPS-22`** and queued first, and (b2)
+resumes with per-file completed-run accounting (a hung file may no
+longer zero a window); the stale 380 collect anchor is re-based to
+**397 total / 225 validation**, and attempt 1's +1 non-validation
+delta is attributed benign (`POST-5` step 1 added 2 smoke tests while
+dropping 1 `def`; after step 2's restore the expectation is **173**).
+**`OPS-18`'s fired trigger is answered with a dated deferral** (§7
+entry — the condition is `OPS-17` step 3 closing, so post-upgrade
+complex deltas are attributable; the review that closes it queues
+`OPS-18` steps 1–3 at the top). `POST-5` step 3 queued. The 0-byte
+FFCx-stub live-lock trap (two consecutive nights, three windows) is
+folded into the protocol trap list. Tree clean, no `attempt/*` or
+`recovered/*` branches. Cache note: warm through the impedance file,
+the azimuthal-drive smoke forms and subset-1 validation files; swept
+stub-free at the 00:00 slot's exit. Done-item texts and prior recaps:
+`docs/planning/plan-archive.md`.
 
-**Six items, mutually independent** (no item depends on another
-landing; items 3 and 6 both read the smoke fixture, but 6 uses its
-*unchanged* axial drive while 3 adds a closed-drive variant — either
-lands without the other). Items execute their §7 entries verbatim as
-annotated by this review.
+**Six items.** Items 1–5 are mutually independent; item 6 (spare) is
+the (b2) resumption and depends on item 1 only for its 5 currently
+blocked tests — its non-blocked tail runs either way. Items execute
+their §7 entries verbatim as annotated by this review.
 
 > **Operator note 2026-08-18 (interactive session) — unexecuted trigger
 > clause, action required at the next review.** The `OPS-18` release
@@ -4108,153 +4216,152 @@ annotated by this review.
 > implies clearing or front-loading the short in-flight tails (`OPS-17`
 > leg (b2), `POST-5` step 2, `TH-12` step 3) first — that ordering is
 > the review's call; ignoring the trigger is not.
+> **Discharged 2026-08-19, 03:00 review:** a dated deferral rationale
+> is recorded in the §7 `OPS-18` entry — deferred until `OPS-17` step 3
+> closes (complex-baseline attributability), with the queueing
+> commitment written into the condition. No further action pending here.
 
-1. ~~**`EX-24` — lumped-sheet port at interior width, with the
-   sweep-route leg (standard).**~~ **done 2026-08-18, 19:30 slot** —
-   `ports:3` landed with both legs on one mesh; gate 1.8333% against
-   5%, f = 1.0 control missed the band as required, gap route flat to
-   3.9e-5, open-limit identity ≤ 1.8e-15, sweep reciprocity
-   2.574296e-11 against 1e-3; 239 s harness at `-n 2`, docrefs
-   `exit=2` staleness-only (none this example's). Original item text:
-   Execute the §7 `EX-24` entry verbatim,
-   2026-08-18 addendum included: the f ∈ {1.0, 0.735, 0.5} width ladder
-   as three lumped-BC solves *plus* the f = 0.5 sweep through the new
-   `LumpedSheetPortSpec` route, printing `‖S−Sᵀ‖/‖S‖` beside the 1e-3
-   band. **Anchor:** the f = 0.5 cross-route gate ≤ 5%; the f = 1.0
-   record 7.7095% (gap ratio 0.894310) reproduced < 1e-4; open-limit
-   identity < 1e-11 per width — all constants imported from the test
-   modules, none restated. **Negative control:** f = 1.0 asserted to
-   *miss* the 5% band while the gap route stays flat. **Cost:** step 2b
-   measured 150.5 s for the ladder, step 2c 57.0 s for the sweep —
-   ~260 s total, `timeout -k 30 500`, `-n 2`, complex build.
-   **Traps:** `w = A/h`, never the bbox extent; two cell tags per gap
-   box; same-stem guide in the same commit (`EX-15` rule); docrefs
-   gates on `exit != 1`. **Scope:** two-torus only, no birdcage;
-   records quoted from the tests, the example reproduces them.
-   **Negative result:** the example path off the test records is a
-   regression — known-issues entry, report, stop.
-2. **`OPS-17` step 3 leg (b2) — complex validation (standard).**
-   🟡 **attempt 2 2026-08-19 (22:30 slot) — still open, and it needs the
-   review before a third attempt.** The batch window was lost again to the
-   same defect on a new file; the slot diagnosed it instead (complex-hostile
-   `ufl.max_value` / `<=` predicates in three fixtures' `current_density`
-   callables — fixture debt, `src/` clean, same family as `OPS-20`). Coverage
-   unchanged at 39/225, blocked 3 → 5. **The review must pick one:** let (b2)
-   count per-file completed runs instead of big batches, or queue the
-   ~15-line fixture fix (in-repo precedent) ahead of it. A third identical
-   batch attempt will lose a third window. See the §7 attempt-2 annotation.
-   Execute the §7 rescope annotation (03:00 review), amended by the
-   10:30 review's cache correction: do **not** clear `~/.cache/fenics`
-   unless preflight finds evidence of a killed prior run — the 09:00
-   slot deliberately left it warm, though **validation forms are still
-   cold**, so treat the first command as paying JIT and never let
-   compilation and measurement share a window (known-issues sizing
-   corollary; a cold-leg death location says nothing about per-test
-   cost). Command 1:
-   `test_port_gap_voltage_impedance.py` alone (`timeout -k 30 570` —
-   step 2 priced it at 448 s; nothing may share its window). Command 2:
-   a **collect-only cost probe** of `tests/validation` minus both
-   `port_gap` files, then the shortest-first subset a 480 s window
-   affords; `test_port_gap_voltage_padding.py` is **explicitly
-   deferred** until a measured number exists for it (attempt 3 proved
-   the pair does not fit one window — never re-try it un-priced).
-   **Anchor:** counts reconciled against the 380 collect; every failure
-   named. **Traps:** item 3's verbatim. **Scope:** bookkeeping only;
-   whatever the probe cannot fit is journaled as the remaining tail,
-   not forced. **Negative result:** an unexpected failure or count
-   delta — known-issues entry, report, stop.
-3. ~~**`POST-5` step 2 — the closed-drive discriminator for the Poynting
-   sign (standard).**~~ **done 2026-08-19, 00:00 slot** — the closed
-   azimuthal drive reads **ASSEMBLY**: imbalance 116.7465% → 105.9632%
-   with the flux sign unmoved, against a band that required < 25% *and*
-   a positive sign; the axial negative control reproduced the step-1
-   record at `rtol=1e-6` and the σ-blind control was exactly 0.0 W on
-   the new drive. 4 s harness at `-n 2`
-   (`20260819T051150Z_POST-5-step2-closed-drive2.log`), full file green
-   at `20260819T051210Z`. The xfail band and `strict=True` did not move;
-   `POST-5` step 3 (the `TH-6` boundary-leg probe) is scoped in §7 and
-   is the review's to queue. One repair rode along: step 1's commit had
-   dropped a test's `def` line, and the file now collects 11 where it
-   collected 10. Original item text: Execute the §7 `POST-5` step-2 entry verbatim
-   (scoped by step 1, 2026-08-18): add a **closed azimuthal loop**
-   drive variant (`div J = 0`, `J·n = 0` on every boundary) to the
-   smoke fixture and re-read the power balance on the coarse rung.
-   **Anchor:** pre-registered two-sided band — imbalance collapsing
-   under the xfail's 25% band *and* net flux sign turning positive ⇒
-   SOURCE (the axial drive's `J·n ≠ 0` end-cap incompatibility, defect
-   3 candidate (b), same family as `test_gauge_lagrange`'s wire);
-   imbalance persisting at O(100%) with the sign unmoved ⇒ ASSEMBLY
-   (the next probe is the boundary curl-trace leg against the `TH-6`
-   plane wave, where both legs have closed forms). The σ-blind
-   `sigma=0.0` control stays **exactly 0.0 W** on the new drive too.
-   **Negative control:** the original axial drive, same run, reproduces
-   the coarse-rung record **1.199162e-06 W / −2.008179e-07 W /
-   116.7465%** to every printed digit. The ceiling is real: the blind
-   reading saturates near 100%+, so a collapse to < 25% is ~4.7× —
-   do not assert a larger separation than the fixture can show.
-   **Tier/cost:** standard, `-n 2`, complex build +
-   `FEM_EM_REQUIRE_COMPLEX=1`, `timeout -k 30 400` — the fixture solves
-   in ~1.5 s/rung; the new drive's forms are **cold**, so the first
-   command is a compile window, not the measurement. **Traps:** pin
+1. **`OPS-22` — make the three magnetostatic loop-drive fixtures
+   complex-safe (standard).** Execute the §7 `OPS-22` entry verbatim
+   (commissioned this review from the `OPS-17` leg-(b2) attempt-2
+   diagnosis). **Anchor:** each affected test's real-mode record
+   re-asserted unmoved (digits matching the `OPS-17` leg-(a)
+   observations), and in the complex build the five blocked tests
+   either pass their **same** gates or reconcile via an asserted
+   `@real_only` deselection — a complex run of all three files
+   completes with a footer either way. **Negative control:** the
+   real-mode run first; a regularisation that moves a real-mode digit
+   is a wrong fix. **Cost:** real leg ≤ 60 s warm; complex leg is a
+   cold-JIT window per new form — helmholtz fails in 13.10 s, the
+   repaired circular_loop form compiled ~113 s; budget two
+   `timeout -k 30 480` windows, `-n 2`. **Traps:** sweep
+   `find /root/.cache/fenics -name '*.c' -size 0` before and after
+   (the 0-byte stub is a live lock); the in-repo precedent is
+   regularise-inside-the-`sqrt` (`test_dodd_deeds_impedance.py:237`,
+   `test_port_reaction_impedance.py:200`, `test_two_torus_conforming.py:164`)
+   — do **not** conclude the forms are un-compilable, the siblings
+   prove the physics compiles; never pipe pytest; first command on a
+   cold form is a compile window. **Scope:** the three test files
+   (`test_circular_loop.py`, `test_helmholtz_magnitude.py`,
+   `test_helmholtz_v2.py`); the two examples carrying the same idiom
+   are journaled as follow-up if the window is tight, not forced; no
+   physics claim moves; `src/` is untouched (it is clean). **Negative
+   result:** a regularised form that still fails to compile — journal
+   the attempt and the FFCx message in the known-issues entry, report,
+   stop.
+2. **`OPS-20` — disposition the coil-phantom `ComplexComparisonError`
+   (standard).** Execute the §7 `OPS-20` entry verbatim, **as
+   re-pointed by this review**: start the diagnosis at the test's own
+   drive/`current_density` callable — the entry's "enters via a
+   UFL/DolfinX helper" hypothesis is disfavoured by the leg-(b2)
+   attempt-2 finding (every other instance of this error class was a
+   fixture-side `max`/ordering predicate), and a grep of the test file
+   is cheaper than the cold-cache window. **Anchor:** the real-mode
+   record **17.1233% L2 vs the 30% band** re-asserted unmoved either
+   way; under a fix, the complex run passes the same gate; under
+   `@real_only`, the complex collect reconciles 49 → 48 with the
+   deselection asserted. **Negative control:** the real-mode run
+   first, digits matching the record. **Cost:** real control ~15 s;
+   complex probe 6 s + the ~300 s non-collective exit hang — budget
+   whole 400 s windows, `-n 2`. **Traps:** `--tb=long`, never
+   `--tb=line`; cold cache immediately before the diagnostic command
+   (any other state changes the message — see the known-issues state
+   map); first post-clear command is a compile window; the 0-byte-stub
+   sweep before trusting any JIT-timeout message; never pipe pytest.
+   **Scope:** one test file; no magnetostatic claim moves; independent
+   of item 1 (different file, same family). **Negative result:** no
+   user frame in the long traceback — journal the full traceback in
+   known-issues, report, stop.
+3. **`POST-5` step 3 — score the boundary leg against the `TH-6`
+   closed form (standard).** Execute the §7 `POST-5` step-3 entry
+   verbatim (scoped by step 2, queued this review). **Anchor:** the
+   assembled `−∮½Re(E×H̄)·n̂dS` on the `TH-6` lossy plane-wave fixture
+   compared against the **analytic** boundary flux *by itself* — both
+   legs have closed forms there — separating a wrong
+   `H = ∇×E/(−jωμᵣμ₀)` reconstruction (factor/conjugation) from a
+   wrong facet assembly; part of the step is reconciling
+   `test_poynting_balance.py`'s 5% refined-mesh pass against the smoke
+   fixture's 106%, with the small-denominator hypothesis (net flux ~6×
+   below dissipation, `power_scale_w` set by the volume leg) checked
+   first. **Negative control:** the same solve's volume-dissipation
+   leg against its closed form, already gated at 5% — if the boundary
+   leg matches its closed form too, the smoke reading is conditioning,
+   not assembly. **Cost:** the `TH-6` fixture is a cheap standard-tier
+   solve; the new facet form is cold — `timeout -k 30 400`, `-n 2`,
+   complex build + `FEM_EM_REQUIRE_COMPLEX=1`. **Traps:** pin
    `metadata={"quadrature_degree": …}` on any `SpatialCoordinate`-
-   bearing form on this gmsh mesh (step 1 burned two windows; an
-   azimuthal `J(x)` is exactly such a form); `ufl.inner` conjugation in
-   the drive functional; never pipe pytest; prints need `-s`. **Scope:**
-   smoke fixture only; the xfail's 25% band and `strict=True` do **not**
-   move in this step even on a collapse — rescoping the gate is the
-   review's call on the reading; no SAR or coil-loading claim moves.
-   **Negative result:** an in-between reading (e.g. imbalance halves,
-   sign still negative) is the finding — record per-rung numbers in the
-   §7 entry and the known-issues defect-3 entry, report, stop.
-4. **`OPS-20` — disposition the coil-phantom `ComplexComparisonError`
-   (standard).** Execute the §7 `OPS-20` entry verbatim (commissioned
-   this review). **Anchor:** the real-mode record **17.1233% L2 vs the
-   30% band** re-asserted unmoved either way; under a fix, the complex
-   run passes the same gate; under `@real_only`, the complex collect
-   reconciles 49 → 48 with the deselection asserted. **Negative
-   control:** the real-mode run first, digits matching the record.
-   **Cost:** real control ~15 s; complex probe 6 s + the ~300 s
-   non-collective exit hang — budget whole 400 s windows, `-n 2`.
-   **Traps:** `--tb=long`, never `--tb=line`; cold cache immediately
-   before the diagnostic command (any other state changes the message —
-   see the known-issues state map); first post-clear command is a
-   compile window; never pipe pytest. **Scope:** one test file; no
-   magnetostatic claim moves; not a prerequisite of item 4. **Negative
-   result:** no user frame in the long traceback — journal the full
-   traceback in known-issues, report, stop.
-5. **`EX-25` — degree-2 Larmor sphere example (standard).**
-   Execute the §7 `EX-25` entry verbatim (commissioned this review,
-   §5.4 ramp on `TH-12` step 1). **Anchor:** both orders' records
-   reproduced through the example path inside the pre-stated 1% drift
-   band (degree 2 **0.1405%** relL2 / 0.0058% power; degree 1 8.1541% /
-   8.3869%), constants imported, none restated. **Negative control:**
-   degree 1 asserted to *miss* the fine-rung record 3.643% while
-   degree 2 beats it at the same 5 866 cells. **Cost:** the test pair
-   is 7 s of compute; XDMF + docrefs dominate — `timeout -k 30 400`,
-   `-n 2`, complex build. **Traps:** complex-mode XDMF splits
-   attributes into `real_*`/`imag_*` (correct behavior — see the
-   `OPS-21` known-issues entry); memory numbers via summed `ru_maxrss`;
-   same-stem guide, `run_examples.sh` registration, docrefs gates on
-   `exit != 1`. **Scope:** sphere only; no production-order claim; no
-   coil. **Negative result:** drift beyond the band is an example-path
-   regression — known-issues entry, report, stop.
-
-6. *(spare)* **`TH-12` step 3 — is the degree-2 `W_e` explosion generic
-   to incompatible drives, or coil-feed-specific? (standard).** Execute
-   the §7 `TH-12` step-3 entry verbatim (commissioned this review; the
-   full rubric — anchor bands ≥ 1e3× vs ≤ 10× on the cross-order
-   `W_e/W_m` move, the record reproductions, cost, traps — lives
-   there). Smoke + sphere fixtures at degrees 1/2, `-n 2`,
+   bearing facet form (step 1 burned two windows); `ufl.inner`
+   conjugation; the 0-byte-stub sweep on any `MPI_Bcast` stall (step 2
+   lost a window to it); prints need `-s`; never pipe pytest.
+   **Scope:** attribution only — no fix lands in this step, the smoke
+   xfail's 25% band and `strict=True` do not move, no SAR or
+   coil-loading claim moves. **Negative result:** *either* reading is
+   the finding — a boundary leg that matches closed form (conditioning
+   verdict) or one that misses (assembly verdict) both go into the §7
+   entry and the known-issues defect-3 entry with per-leg numbers;
+   report, stop.
+4. **`EX-25` — degree-2 Larmor sphere example (standard).**
+   Execute the §7 `EX-25` entry verbatim (commissioned 2026-08-18
+   18:00 review, §5.4 ramp on `TH-12` step 1). **Anchor:** both
+   orders' records reproduced through the example path inside the
+   pre-stated 1% drift band (degree 2 **0.1405%** relL2 / 0.0058%
+   power; degree 1 8.1541% / 8.3869%), constants imported, none
+   restated. **Negative control:** degree 1 asserted to *miss* the
+   fine-rung record 3.643% while degree 2 beats it at the same 5 866
+   cells. **Cost:** the test pair is 7 s of compute; XDMF + docrefs
+   dominate — `timeout -k 30 400`, `-n 2`, complex build. **Traps:**
+   complex-mode XDMF splits attributes into `real_*`/`imag_*` (correct
+   behavior — see the `OPS-21` known-issues entry); memory numbers via
+   summed `ru_maxrss`; same-stem guide, `run_examples.sh` registration,
+   docrefs gates on `exit != 1`. **Scope:** sphere only; no
+   production-order claim; no coil. **Negative result:** drift beyond
+   the band is an example-path regression — known-issues entry,
+   report, stop.
+5. **`TH-12` step 3 — is the degree-2 `W_e` explosion generic to
+   incompatible drives, or coil-feed-specific? (standard).** Execute
+   the §7 `TH-12` step-3 entry verbatim (commissioned 2026-08-18 18:00
+   review; the full rubric — anchor bands ≥ 1e3× vs ≤ 10× on the
+   cross-order `W_e/W_m` move, the record reproductions, cost, traps —
+   lives there). Smoke + sphere fixtures at degrees 1/2, `-n 2`,
    `timeout -k 30 400`; the coil's 6.7e-6 → ≈ 229 ratio pair printed
    beside them for comparison. **Scope:** mechanism attribution only —
    the two degree-2 coil identity tests stay failing and the
-   production-order decision stays the weekly review's. Reads the smoke
-   fixture's *unchanged* axial drive, so it does not depend on item 3.
+   production-order decision stays the weekly review's. Reads the
+   smoke fixture's *unchanged* axial drive, so it is independent of
+   item 3.
+6. *(spare)* **`OPS-17` step 3 leg (b2) — complex validation, resumed
+   under per-file accounting (standard; rescoped this review after two
+   window losses).** Execute the §7 rescope annotation (2026-08-19
+   03:00 review): **per-file completed runs now count** toward the leg
+   — a hung file may cost only its own window, never a batch — and
+   until item 1 lands, draw batches **only from files that do not
+   define their own magnetostatic `current_density` callable** (the
+   whole risk class). Anchor re-based: validation = **225** (the 380
+   collect is stale); total collect expected **398** (397 measured at
+   `6fa6bfd` plus the `def` `POST-5` step 2 restored) — re-verify with
+   a 3 s collect probe before counting. Coverage stands at 39/225;
+   blocked 5 (the `OPS-22` files) + deferred 2 (the padding file, still
+   un-priced — never re-try it un-priced). Priced sinks for batch
+   sizing: `test_port_gradient_load` 45.79 s setup,
+   `test_port_self_impedance_energy` 43.57 s setup,
+   `test_resonance_guard` 25.68 s call, the rest of subset 1 ≤ 2.82 s.
+   **Preflight:** the literal "evidence of a killed prior run" test is
+   `find /root/.cache/fenics -name '*.c' -size 0` (attempt 1's
+   correction of the 10:30 amendment — process/entry counts missed a
+   live stub); do not clear the cache wholesale, delete stubs only.
+   **Traps:** item 3's verbatim, plus never let compilation and
+   measurement share a window. **Scope:** bookkeeping only; whatever
+   does not fit is journaled as the remaining tail, not forced.
+   **Depends on item 1 only for the 5 blocked tests** — the
+   non-blocked tail (~179 tests) proceeds regardless; if item 1 did
+   not land, run the tail and journal the blocked 5 as still blocked.
+   **Negative result:** an unexpected failure or count delta —
+   known-issues entry, report, stop.
 
 *(Two more rubric-complete items wait in §7 and rotate in as slots
 free: `OPS-21` — the scalar-type-aware, rank-deterministic XDMF test —
-and `EX-22` — restore the example artifacts, heavy, the former spare,
-which has not failed.)*
+and `EX-22` — restore the example artifacts, heavy, which has not
+failed.)*
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
