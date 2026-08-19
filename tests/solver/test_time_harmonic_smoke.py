@@ -637,3 +637,155 @@ def test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve():
 
     with pytest.raises(ValueError, match="material_map references tags"):
         solver.solve()
+
+
+# ---------------------------------------------------------------------------
+# `POST-5` step 3, reconciliation leg: why does this fixture read ~106-117%
+# while `tests/validation/test_poynting_balance.py` holds the same identity to
+# 5% on a refined mesh?
+#
+# The step plan named the small-denominator hypothesis first (net flux ~6x
+# below dissipation, so `power_scale_w` is set by the volume leg and a small
+# absolute boundary error reads as O(100%)).  It is checked here against a
+# second, structural candidate that the step-1/step-2 discriminators cannot
+# distinguish because *both* their drives are impressed currents.  Poynting's
+# theorem for e^{+jwt} with an impressed source is
+#
+#     div(1/2 E x Hbar) = -1/2 sigma|E|^2 - 1/2 E.Jbar - 2jw(w_m - w_e)
+#
+# so the real part integrates to
+#
+#     -oint 1/2 Re(E x Hbar).n dS  =  1/2 int sigma|E|^2 dV  +  1/2 Re int E.Jbar dV
+#                                     \_____ P_diss _____/     \____ P_source ____/
+#
+# `poynting_power_balance` scores only the first term on the right, which is
+# the *source-free* identity.  On the `TH-6` fixture that is correct: the plane
+# wave is an exact source-free solution and J = 0, so the omitted term is
+# identically zero and the 5% gate is honest.  On this fixture J != 0 over the
+# inner conductor, so the omitted term is not zero and the identity as scored
+# is not the identity this problem satisfies.
+#
+# Pre-registered band, written before the run: the residual of the *full*
+# three-term statement, relative to the largest of the three magnitudes, below
+# `SOURCE_TERM_RESIDUAL_MAX` = 25% (the xfail's own band, so the reading is
+# scored no more leniently than the gate it explains)
+#   => the smoke fixture's imbalance is the **missing impressed-source term**,
+#      not a defective boundary assembly;
+# at or above 25% => the source term does not account for it and the ASSEMBLY
+# verdict of step 2 stands unexplained.  No fix lands here: the xfail's 25%
+# band and strict=True do not move.
+SOURCE_TERM_RESIDUAL_MAX = 0.25
+
+
+def _solve_smoke_with_source_power(resolution: float, comm, drive: str = "axial"):
+    """The smoke solve, plus the impressed-source power 1/2 Re int E.Jbar dV.
+
+    A near-copy of :func:`_solve_smoke_and_balance` rather than a refactor of
+    it: that helper owns three recorded `POST-5` rows and this step is
+    attribution only, so it is left byte-identical.  Neither form here carries
+    a `SpatialCoordinate` (the axial drive is a `Constant`-like `as_vector` of
+    literals, the azimuthal one an interpolated P1 coefficient), so the step-1
+    unpinned-quadrature trap is dodged by construction.
+    """
+    mesh, cell_tags, facet_tags = _smoke_mesh(resolution, comm)
+    problem = TimeHarmonicProblem(
+        mesh=mesh,
+        frequency_hz=FREQUENCY_HZ,
+        material=HomogeneousMaterial(sigma=SIGMA, epsilon_r=EPSILON_R, mu_r=1.0),
+        cell_tags=cell_tags,
+        facet_tags=facet_tags,
+    )
+    solver = TimeHarmonicSolver(problem, degree=1)
+
+    if drive == "axial":
+        j_expr = ufl.as_vector([0.0, 0.0, 1.0])
+
+        def current_density(x):
+            return j_expr
+    elif drive == "azimuthal":
+        j_azimuthal = _azimuthal_current(mesh)
+        j_expr = j_azimuthal
+
+        def current_density(x):
+            return j_azimuthal
+    else:
+        raise ValueError(f"unknown drive {drive!r}; use 'axial' or 'azimuthal'")
+
+    fields = solver.solve(
+        current_density=current_density, subdomain_id=1, gauge_penalty=1e-3
+    )
+    balance = poynting_power_balance(
+        fields.e_complex, omega=fields.omega, sigma=SIGMA, comm=comm
+    )
+
+    # 1/2 Re int_{tag 1} E . conj(J) dV, over exactly the measure the solver
+    # assembled the source on.  ufl.inner conjugates its second argument, which
+    # is the conjugation this term needs.
+    dx_src = ufl.Measure("dx", domain=mesh, subdomain_data=cell_tags)(1)
+    source_form = fem.form(0.5 * ufl.inner(fields.e_complex, j_expr) * dx_src)
+    source_c = comm.allreduce(fem.assemble_scalar(source_form), op=MPI.SUM)
+
+    balance["source_power_w"] = float(np.real(source_c))
+    balance["drive"] = drive
+    tdim = mesh.topology.dim
+    balance["ncells"] = int(
+        comm.allreduce(mesh.topology.index_map(tdim).size_local, op=MPI.SUM)
+    )
+    return balance
+
+
+@complex_only
+@pytest.mark.integration
+def test_the_missing_impressed_source_term_accounts_for_the_smoke_imbalance():
+    """`POST-5` step 3: close the *full* balance on the driven fixture.
+
+    Both `POST-5` drives are scored here.  The quantity asserted on is the
+    residual of
+
+        net_inward_flux  -  (P_diss + P_source)
+
+    over the largest of the three magnitudes.  See the module comment above
+    for the pre-registered band and both verdicts.
+    """
+    comm = MPI.COMM_WORLD
+
+    rows = [
+        _solve_smoke_with_source_power(LADDER_RESOLUTIONS[0], comm, drive=drive)
+        for drive in ("axial", "azimuthal")
+    ]
+
+    residuals = []
+    for row in rows:
+        diss = row["dissipated_power_w"]
+        flux = row["net_inward_power_w"]
+        src = row["source_power_w"]
+        scale = max(abs(diss), abs(flux), abs(src))
+        residuals.append(abs(flux - (diss + src)) / scale if scale > 0.0 else float("inf"))
+
+    if comm.rank == 0:
+        print("\n[POST-5 step 3] full balance on the driven smoke fixture:")
+        for row, res in zip(rows, residuals):
+            print(
+                f"  {row['drive']:>9s} ({row['ncells']:5d} cells): "
+                f"dissipated = {row['dissipated_power_w']:.6e} W, "
+                f"net inward = {row['net_inward_power_w']:.6e} W, "
+                f"source = {row['source_power_w']:.6e} W, "
+                f"two-term imbalance = {row['relative_imbalance']:.4%}, "
+                f"three-term residual = {res:.4%}"
+            )
+        verdict = (
+            "MISSING SOURCE TERM"
+            if max(residuals) < SOURCE_TERM_RESIDUAL_MAX
+            else "UNEXPLAINED (assembly verdict stands)"
+        )
+        print(f"  step-3 reconciliation verdict: {verdict}")
+
+    for row, res in zip(rows, residuals):
+        assert res < SOURCE_TERM_RESIDUAL_MAX, (
+            f"the {row['drive']} drive's full three-term balance leaves a "
+            f"residual of {res:.4%}, at or above the pre-registered "
+            f"{SOURCE_TERM_RESIDUAL_MAX:.0%} — the omitted impressed-source "
+            f"term (1/2 Re int E.Jbar = {row['source_power_w']:.6e} W) does not "
+            f"account for the {row['relative_imbalance']:.4%} two-term "
+            "imbalance, so step 2's ASSEMBLY verdict stands unexplained"
+        )

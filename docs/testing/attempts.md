@@ -14611,3 +14611,75 @@ record is stale by 4×+. The two examples `OPS-22` journalled
 `04_helmholtz_analytic_comparison.py:79`) still carry the predicate idiom and
 will carry this second layer behind it; whoever takes them should budget both
 layers, as this slot's evidence now shows twice over.
+
+---
+
+## 2026-08-19T12:30Z — `POST-5` step 3 — **complete**
+
+Scheduled implementer run, 07:30 CDT slot. Preflight clean (`git status`
+empty, container Up 31 h, no `attempt/*` or `recovered/*`). Took §9 On-deck
+item 3; items 1 and 2 were already marked done by the 04:30 and 06:00 slots.
+
+**What was tried.** The step's own plan: score the two legs of the Poynting
+identity *separately* against closed form on the `TH-6` lossy plane wave,
+where each leg has one, then reconcile that fixture's 5% pass against the
+smoke fixture's 106%. Two tests added to
+`tests/validation/test_poynting_balance.py` (a mesh-free `rtol=1e-12`
+self-check that the two analytic legs agree via `2αβ = ωμ₀σ`, and the
+per-leg scoring at 12³/24³) and one to
+`tests/solver/test_time_harmonic_smoke.py` (the full three-term balance,
+including the impressed-source power `½Re∫E·J̄dV`). Both bands were written
+into the source before either run: `POST5_STEP3_LEG_BAND = 0.10`,
+`SOURCE_TERM_RESIDUAL_MAX = 0.25`.
+
+**Measured numbers.**
+
+| leg | rung | value [W] | vs closed form |
+|---|---|---|---|
+| analytic (both legs) | — | 1.241101e-04 | `2αβ = ωμ₀σ = 7.060162290693e+02` at `rtol=1e-12` |
+| boundary `−∮½Re(E×H̄)·n̂dS` | 12³ / 10 368 c | 1.140318e-04 | 8.1205% |
+| boundary | 24³ / 82 944 c | 1.190042e-04 | **4.1141%** (band 10%), rate 0.981 |
+| volume `½∫σ|E|²dV` | 12³ | 1.241984e-04 | 0.0711% |
+| volume (control) | 24³ | 1.241317e-04 | **0.0174%** |
+
+| smoke drive | dissipated | net inward | source `½Re∫E·J̄` | two-term | three-term |
+|---|---|---|---|---|---|
+| axial | 1.199162e-06 | −2.008179e-07 | −1.199162e-06 | 116.7465% | **16.7465%** (band 25%) |
+| azimuthal | 4.778876e-09 | −2.849722e-10 | −4.778876e-09 | 105.9632% | **5.9632%** |
+
+**Outcome.** Both pre-registered bands hold. The boundary leg is **sound**,
+which overturns step 2's ASSEMBLY verdict, and defect 3 is attributed to
+`poynting_power_balance` scoring the **source-free** identity on a **driven**
+fixture. The chunk's "the sign is one the identity forbids for any Maxwell
+solution" premise is false for a driven domain. Nothing was fixed and nothing
+loosened: the smoke xfail keeps 25% / `strict=True` and still XFAILs. Step 4
+(teach the helper the source term) is scoped in §7 with its own done-when.
+
+**Honest caveat, for the review.** The source term equals `−dissipated` to
+all 7 printed digits on both drives *by construction*: the smoke fixture uses
+the natural BC, so the weak form tested with `v = Ē` carries no boundary term
+and `½∫σ|E|² + ½Re∫E·J̄ = 0` is algebraic in the discrete solution. The
+three-term residual is therefore exactly the boundary flux over the scale —
+so the claim is "the omitted term accounts for the O(100%) imbalance, leaving
+the curl trace's own ~17%/6% discretisation error at ~9 cells/λ", not "the
+balance closes to round-off". The leg-1 measurement is what carries the
+attribution; leg 2 alone would not.
+
+**Logs.** `20260819T123438Z_POST-5-step3.log` (`-n 2`, complex,
+`timeout -k 30 540`, **exit 124 at 541 s**) — all step-3 assertions on the
+validation side completed and passed inside it; the window died later, inside
+the *pre-existing*
+`test_poynting_imbalance_h_ladder_discriminates_resolution_from_source`,
+where gmsh remeshing dominates. `20260819T124405Z_POST-5-step3-source.log`
+(`-n 2`, `timeout -k 30 400`, **5 passed, 2.54 s pytest, 4 s harness**) — the
+single new smoke test. Stub sweep `find /root/.cache/fenics -name '*.c'
+-size 0` run before each window, clean both times. No branch parked; landed
+on `main`.
+
+**Next attempt hypothesis.** `POST-5` step 4 is the obvious next unit and is
+fully scoped. Sizing warning for whoever schedules it and for `OPS-17` leg
+(b2): `tests/solver/test_time_harmonic_smoke.py` and
+`tests/validation/test_poynting_balance.py` **no longer fit one 540 s
+window** together — this slot's first window is the second independent
+observation this week that the `tests/solver` side has grown past its cached
+price (see the 06:00 `OPS-20` entry above). Re-price before batching.

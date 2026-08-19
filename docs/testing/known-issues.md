@@ -1717,6 +1717,65 @@ h-ladder on this fixture distinguishes the two in one command.
 > a wrong `H = ∇×E/(−jωμ)` reconstruction from a wrong facet assembly. The
 > xfail keeps its 25% band and `strict=True`.
 
+> **Resolved as a defect in the *identity*, not the code — 2026-08-19,
+> `POST-5` step 3.** Step 2's ASSEMBLY verdict is **overturned by direct
+> measurement**: the boundary leg is sound, and what is wrong is that
+> `poynting_power_balance` scores the **source-free** identity on a
+> **driven** fixture.
+>
+> *Leg 1 — the boundary leg against its own closed form*
+> (`20260819T123438Z_POST-5-step3.log`, `-n 2`;
+> `test_each_leg_scored_against_its_own_closed_form`). On the `TH-6` lossy
+> plane wave both legs have closed forms —
+> `P_flux = ½βL²(1−e^{−2αL})/(ωμ₀μᵣ)`, `P_diss = ½σL²(1−e^{−2αL})/(2α)`,
+> equal identically because `k² = k₀²ε_c` gives `2αβ = ωμ₀σ`
+> (asserted separately at `rtol=1e-12`: both sides 7.060162290693e+02;
+> analytic value 1.241101e-04 W):
+>
+> | rung | cells | flux leg [W] | flux err | volume leg [W] | volume err |
+> |---|---|---|---|---|---|
+> | 12³ | 10 368 | 1.140318e-04 | 8.1205% | 1.241984e-04 | 0.0711% |
+> | 24³ | 82 944 | 1.190042e-04 | **4.1141%** | 1.241317e-04 | 0.0174% |
+>
+> The boundary leg is inside the pre-registered 10% band on the fine rung and
+> falls at rate `log₂(8.1205/4.1141) = 0.981` — clean O(h) for a degree-1
+> N1curl curl trace. `H = ∇×E/(−jωμᵣμ₀)` and the facet assembly are
+> **correct**; there is no factor and no conjugation error to find.
+>
+> *Leg 2 — the full three-term balance on this fixture*
+> (`20260819T124405Z_POST-5-step3-source.log`, `-n 2`, 4 s;
+> `test_the_missing_impressed_source_term_accounts_for_the_smoke_imbalance`).
+> With an impressed `J`, Poynting's theorem reads
+> `−∮½Re(E×H̄)·n̂dS = ½∫σ|E|²dV + ½Re∫E·J̄dV`, and the helper omits the
+> second term:
+>
+> | drive | dissipated [W] | net inward [W] | source ½Re∫E·J̄ [W] | two-term | three-term |
+> |---|---|---|---|---|---|
+> | axial | 1.199162e-06 | −2.008179e-07 | −1.199162e-06 | 116.7465% | **16.7465%** |
+> | azimuthal | 4.778876e-09 | −2.849722e-10 | −4.778876e-09 | 105.9632% | **5.9632%** |
+>
+> Both inside the pre-registered 25% band (the xfail's own), so the omitted
+> term **is** the imbalance. **Read the third column carefully**: the source
+> term equals `−dissipated` to all seven printed digits on both drives. That
+> is not a coincidence and not evidence about the flux — under the *natural*
+> boundary condition this fixture uses (`TimeHarmonicBoundaryCondition.NATURAL`,
+> the default; the `TH-6` fixture is PEC-with-Dirichlet-data and source-free,
+> which is why its 5% gate is honest) the weak form tested with `v = Ē` has no
+> boundary term, so `½∫σ|E|² + ½Re∫E·J̄ = 0` holds *algebraically* in the
+> discrete solution. The three-term residual is therefore exactly the boundary
+> flux over the scale — i.e. 16.7% / 6.0% is the discretisation error of the
+> curl trace on a ~9-cells-per-wavelength gmsh mesh, entirely consistent with
+> leg 1's 8.1% at 10 368 cells on a *structured* box.
+>
+> **Consequence.** The wrong sign is not forbidden: `−∮½Re(E×H̄)·n̂dS` alone
+> has no sign law when a source is present inside — only the three-term sum
+> does. The original entry's "which the identity forbids for any solution of
+> Maxwell's equations regardless of boundary condition" is **wrong as
+> written**; it is true only for a source-free domain. **Resolves with:**
+> `POST-5` step 4 (scoped, not executed) — teach `poynting_power_balance` the
+> impressed-source term and re-gate. Nothing was changed in this step: the
+> xfail keeps its 25% band and `strict=True` and still XFAILs.
+
 > **JIT trap, 2026-08-19 (`POST-5` step 2).** The step's first window
 > (`20260819T050314Z`, exit 124 at 400 s) died with rank 1 parked in
 > `MPI_Bcast` — the dolfinx cold-JIT signature — and left **one 0-byte

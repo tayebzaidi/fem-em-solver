@@ -2883,7 +2883,7 @@ plans and probes archived verbatim in `docs/planning/plan-archive.md`)*:
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
 | `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | ✅ *(chunk closed 2026-08-12 — every step closed or dispositioned; note the title's premise was itself refuted, the tie-break was never the defect. Step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped. Step 3 ✅ 2026-08-11 — the centerline samples the source fields: **23.5539% → 0.008613%**, a 2735× collapse; known-issues entry **retired**. Step 4 ✅ 2026-08-12 — the export-path P1 artifact is **bounded and attributed**: midpoint relative medians **51.17% / 52.47% / 20.18%** (`A`/`B`/`E`), vertex/midpoint separation **0.42–0.68×** so the step's vertex-localization hypothesis is **REFUTED**, and a DG1 target reproduces all three sources to round-off — 100% of it is the P1 continuity constraint. All four steps now closed or dispositioned)* | standard |
-| `POST-5` | Real Poynting power balance: wrong-sign boundary flux on the time-harmonic smoke fixture + `poynting_power_balance` raises on scalar `sigma=0.0` (`OPS-17` step-2 defects 3 + 4, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | 🟡 *(step 1 ✅ 2026-08-18: defect 4 fixed, `ds` ruled out at ratio 1.000000000000, ladder verdict **SOURCE/ASSEMBLY**. Step 2 ✅ 2026-08-19: the closed azimuthal drive reads **ASSEMBLY** — imbalance 116.7465% → 105.9632% with the sign unmoved, against a band that required < 25% and positive — so defect 3 is the boundary leg, not the source; step 3, the `TH-6` boundary-leg probe, is scoped and unexecuted)* | standard |
+| `POST-5` | Real Poynting power balance: wrong-sign boundary flux on the time-harmonic smoke fixture + `poynting_power_balance` raises on scalar `sigma=0.0` (`OPS-17` step-2 defects 3 + 4, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | 🟡 *(step 1 ✅ 2026-08-18: defect 4 fixed, `ds` ruled out at ratio 1.000000000000, ladder verdict **SOURCE/ASSEMBLY**. Step 2 ✅ 2026-08-19: the closed azimuthal drive reads **ASSEMBLY** — imbalance 116.7465% → 105.9632% with the sign unmoved, against a band that required < 25% and positive — so defect 3 is the boundary leg, not the source. **Step 3 ✅ 2026-08-19 — and it overturns step 2's verdict**: scored against closed form *by itself* the boundary leg is **sound** (4.1141% at 24³ vs the pre-registered 10%, O(h) at rate 0.981, volume-leg control 0.0174%), and the smoke fixture's O(100%) imbalance is the **impressed-source term `½Re∫E·J̄dV` that the helper omits** — restoring it drops 116.7465% → **16.7465%** (axial) and 105.9632% → **5.9632%** (azimuthal), both inside the pre-registered 25%. The chunk's "the sign is one the identity forbids" premise is false for a driven domain. Step 4, the helper fix, is scoped and unexecuted; nothing was loosened and the xfail is unmoved)* | standard |
 
 > *(Closed-step plans, execution journals and audits for `POST-1` and
 > `POST-3` are archived verbatim in `docs/planning/plan-archive.md`.)*
@@ -3126,6 +3126,104 @@ to reach 5%); (b) the source's `J·n ≠ 0` end-cap incompatibility.
 > both drives here dissipate against a net flux ~6× smaller, so `power_scale_w`
 > is set by the volume leg and a small absolute error in the boundary leg reads
 > as O(100%).
+>
+> **Step 3 result — executed 2026-08-19, 07:30 slot. ✅ Both pre-registered
+> bands hold, and the reading overturns step 2's ASSEMBLY verdict: the
+> boundary leg is sound and the identity being scored is the wrong one for a
+> driven domain.** Two logs, `-n 2`, complex build +
+> `FEM_EM_REQUIRE_COMPLEX=1`.
+>
+> *Leg 1 — the boundary leg against its own closed form*
+> (`20260819T123438Z_POST-5-step3.log`; the window's tail was lost to
+> timeout, see the cost note, but every step-3 assertion completed inside
+> it). On the `TH-6` plane wave both legs have closed forms:
+> `P_flux = ½βL²(1−e^{−2αL})/(ωμ₀μᵣ)` and `P_diss = ½σL²(1−e^{−2αL})/(2α)`,
+> which are **equal identically** because `k² = k₀²ε_c` gives `2αβ = ωμ₀σ`.
+> That algebraic tie is asserted on its own, without a mesh, at `rtol=1e-12`
+> (`2αβ = ωμ₀σ = 7.060162290693e+02`) so the two references cannot drift
+> together and hide a defect; the common value is **1.241101e-04 W**.
+>
+> | rung | cells | flux leg [W] | flux err | volume leg [W] | volume err | imbalance |
+> |---|---|---|---|---|---|---|
+> | 12³ | 10 368 | 1.140318e-04 | 8.1205% | 1.241984e-04 | 0.0711% | 8.1857% |
+> | 24³ | 82 944 | 1.190042e-04 | **4.1141%** | 1.241317e-04 | 0.0174% | 4.1307% |
+>
+> Pre-registered band 10% per leg on the fine rung (`POST5_STEP3_LEG_BAND`,
+> written before the run): **both hold**. The flux leg falls at rate
+> `log₂(8.1205/4.1141) = 0.981` — clean O(h) for a degree-1 N1curl curl
+> trace — and the volume leg, the negative control, is three orders tighter,
+> so the reading attributes. **`H = ∇×E/(−jωμᵣμ₀)` and the facet assembly
+> are correct**; there is no factor and no conjugation to find. Note also
+> that the whole-identity imbalance tracks the flux leg's own error to
+> within 0.02 pp on both rungs, so
+> `test_poynting_balance_holds_and_converges`'s 5% gate is **not** passing
+> by cancellation.
+>
+> *Leg 2 — reconciling the 5% against the smoke fixture's 106%*
+> (`20260819T124405Z_POST-5-step3-source.log`, 4 s harness / 2.54 s pytest,
+> 5 passed). The step plan put the small-denominator hypothesis first; the
+> measurement replaces it with a structural one that neither step-1 nor
+> step-2's discriminator could see, because **both their drives are impressed
+> currents**. With an impressed `J`, Poynting's theorem is
+>
+>     −∮½Re(E×H̄)·n̂dS = ½∫σ|E|²dV + ½Re∫E·J̄dV
+>
+> and `poynting_power_balance` assembles only the first term on the right.
+> Scoring the full three-term statement, residual over the largest of the
+> three magnitudes:
+>
+> | drive | dissipated [W] | net inward [W] | source ½Re∫E·J̄ [W] | two-term | three-term |
+> |---|---|---|---|---|---|
+> | axial | 1.199162e-06 | −2.008179e-07 | −1.199162e-06 | 116.7465% | **16.7465%** |
+> | azimuthal | 4.778876e-09 | −2.849722e-10 | −4.778876e-09 | 105.9632% | **5.9632%** |
+>
+> Both inside the pre-registered 25% band (`SOURCE_TERM_RESIDUAL_MAX`, set to
+> the xfail's own band so the explanation is scored no more leniently than
+> the gate it explains). **Stated honestly, because the digits invite an
+> over-claim:** the source term equals `−dissipated` to all seven printed
+> digits on both drives, and that is an *algebraic* identity, not evidence
+> about the flux — this fixture uses the **natural** boundary condition (the
+> `TimeHarmonicProblem` default; the `TH-6` fixture is PEC-with-Dirichlet-data
+> *and* source-free, which is exactly why its gate is honest), so the weak
+> form tested with `v = Ē` carries no boundary term and
+> `½∫σ|E|² + ½Re∫E·J̄ = 0` holds in the discrete solution by construction.
+> The three-term residual is therefore *exactly* the boundary flux over the
+> scale. So the correct reading of 16.7% / 6.0% is: the omitted source term
+> accounts for the whole O(100%) imbalance, and what is left is the
+> discretisation error of the curl trace on a ~9-cells-per-wavelength gmsh
+> mesh — consistent with leg 1's 8.1% at 10 368 cells on a structured box.
+>
+> *Consequence for the chunk's premise.* "The flux *sign* is one the identity
+> forbids for any Maxwell solution" is **false as written**: it is a theorem
+> only for a source-free domain. `−∮½Re(E×H̄)·n̂dS` alone obeys no sign law
+> when a source sits inside. The known-issues defect-3 entry is corrected on
+> this point.
+>
+> *Cost note.* The first window (`timeout -k 30 540`, exit 124 at 541 s)
+> ran `tests/environment` + the whole of `test_poynting_balance.py` +
+> `test_time_harmonic_smoke.py` and died inside the *pre-existing*
+> `test_poynting_imbalance_h_ladder_discriminates_resolution_from_source` —
+> gmsh remeshing dominates that file, three rungs plus the ladder's own
+> re-solves. Both step-3 assertions on the validation side had already
+> completed; the second window ran the single new smoke test in 2.54 s. The
+> lesson for the next slot: `test_time_harmonic_smoke.py` and
+> `test_poynting_balance.py` no longer fit one 540 s window together.
+> A 0-byte-stub sweep before each window found none.
+>
+> **Step 4 — teach the helper the impressed-source term (scoped, not
+> executed).** `poynting_power_balance` should accept the impressed `J` (and
+> the subdomain measure it was assembled on) and return
+> `source_power_w` alongside the two existing legs, with
+> `relative_imbalance` scored on the three-term statement; the two-term form
+> stays reachable for source-free domains, where it is the stronger check.
+> **Done-when:** the smoke xfail becomes an XPASS *on the three-term
+> identity* under the unmoved 25% band and is converted to a plain gate; the
+> `TH-6` gates in `test_poynting_balance.py` are unmoved to their printed
+> digits (J = 0 there, so the new term must assemble to exactly 0.0 — that is
+> the negative control, asserted `== 0.0`); and the two rows above are
+> reproduced at `rtol=1e-6`. **Trap:** `power_scale_w` must not silently
+> switch definition — the recorded 116.7465% / 105.9632% two-term readings
+> have to stay computable, or the h-ladder's journal stops reconciling.
 
 **`POST-4`** ✅ *(closed 2026-08-12; full step plans + journals in
 `docs/planning/plan-archive.md`)*. The chunk title's premise was refuted by
@@ -4376,8 +4474,23 @@ their §7 entries verbatim as annotated by this review.
    of item 1 (different file, same family). **Negative result:** no
    user frame in the long traceback — journal the full traceback in
    known-issues, report, stop.
-3. **`POST-5` step 3 — score the boundary leg against the `TH-6`
-   closed form (standard).** Execute the §7 `POST-5` step-3 entry
+3. ✅ **done 2026-08-19, 07:30 slot** — **`POST-5` step 3 — score the
+   boundary leg against the `TH-6`
+   closed form (standard).** *(Both pre-registered bands hold and the
+   reading **overturns step 2's ASSEMBLY verdict**. The boundary leg
+   scored alone is sound — 8.1205% → **4.1141%** against the 10% band,
+   rate 0.981, volume-leg control 0.0174% — so `H = ∇×E/(−jωμᵣμ₀)` and
+   the facet assembly are correct and the 5% gate is not passing by
+   cancellation. The smoke fixture's O(100%) is the **impressed-source
+   term `½Re∫E·J̄dV` the helper omits**: three-term residual
+   **16.7465%** axial / **5.9632%** azimuthal against the 25% band.
+   Disclosed, not buried: the source term equals `−dissipated` to 7
+   digits because the natural-BC weak form ties them algebraically, so
+   the residual **is** the boundary flux — the honest claim is
+   "attributed", not "closed to round-off". Step 4 (fix the helper)
+   scoped; xfail unmoved. Cost: window 1 exit 124 at 541 s inside a
+   *pre-existing* smoke test after all step-3 assertions had passed —
+   the two files no longer fit one window; window 2 was 4 s.)* Execute the §7 `POST-5` step-3 entry
    verbatim (scoped by step 2, queued this review). **Anchor:** the
    assembled `−∮½Re(E×H̄)·n̂dS` on the `TH-6` lossy plane-wave fixture
    compared against the **analytic** boundary flux *by itself* — both

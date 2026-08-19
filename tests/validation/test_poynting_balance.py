@@ -703,3 +703,158 @@ def test_piecewise_mu_r_balance_fails_when_a_leg_ignores_mu_r():
         f"{honest['relative_imbalance']:.4%} — mu_r(x) is not reaching the "
         "curl-curl operator"
     )
+
+
+# ---------------------------------------------------------------------------
+# `POST-5` step 3: score the two legs of the identity *separately* against
+# closed form, on the one fixture where each leg has one.
+#
+# Steps 1 and 2 excluded resolution, the `ds` orientation and the drive's
+# compatibility as explanations for the smoke fixture's 116%/106% imbalance,
+# leaving "the boundary leg itself is wrong" as the standing verdict — but
+# that verdict was read off the *balance*, never off either leg alone.  The
+# `TH-6` plane wave closes that gap: the exact solution is known, so both
+#
+#     P_flux  = -∮ ½Re(E×H̄)·n̂ dS      and      P_diss = ½∫σ|E|²dV
+#
+# have closed forms, and a wrong H reconstruction (a factor or a conjugation
+# in `H = ∇×E/(−jωμᵣμ₀)`) or a wrong facet assembly shows up in P_flux's own
+# error, with P_diss's error as the control that says the solve was fine.
+#
+# With E = ẑe^{−jkx}, k = β − jα, on the box [0,L]³ the Poynting vector is
+# x-directed, so only the x = 0 and x = L faces carry flux:
+#
+#     P_flux_exact  = ½ β L² (1 − e^{−2αL}) / (ω μ₀ μᵣ)
+#     P_diss_exact  = ½ σ L² (1 − e^{−2αL}) / (2α)
+#
+# and these are equal *identically*, because k² = k₀²ε_c gives 2αβ = ωμ₀σ.
+# That algebraic coincidence is itself asserted below (no solve), so the two
+# analytic references cannot drift together and hide a defect.
+POST5_STEP3_LEG_BAND = 0.10
+
+
+def _analytic_legs(sigma: float = SIGMA) -> dict[str, float]:
+    """Closed-form values of both legs on the `TH-6` fixture, in W."""
+    from tests.validation.test_lossy_plane_wave import _analytic_alpha_beta
+
+    alpha, beta = _analytic_alpha_beta(sigma)
+    from fem_em_solver.utils.constants import MU_0
+
+    face = BOX_L * BOX_L
+    depth = 1.0 - float(np.exp(-2.0 * alpha * BOX_L))
+    return {
+        "alpha": alpha,
+        "beta": beta,
+        "flux_w": 0.5 * beta * face * depth / (OMEGA * MU_0 * MU_R),
+        "dissipated_w": 0.5 * sigma * face * depth / (2.0 * alpha),
+    }
+
+
+@complex_only
+def test_the_two_closed_forms_agree_by_the_dispersion_relation():
+    """`POST-5` step 3, self-check: the analytic reference is one number.
+
+    ``2αβ = ωμ₀σ`` is the imaginary part of ``k² = k₀²ε_c``; it is what makes
+    the analytic inward flux equal the analytic dissipation.  Asserting it
+    here means the two closed forms below are not two spellings of the same
+    algebra — if the branch or the loss tangent were wrong they would part.
+    No solve, no mesh.
+    """
+    from fem_em_solver.utils.constants import MU_0
+
+    legs = _analytic_legs()
+    product = 2.0 * legs["alpha"] * legs["beta"]
+    expected = OMEGA * MU_0 * SIGMA
+
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[POST-5 step 3] dispersion self-check: 2*alpha*beta = "
+            f"{product:.12e}, omega*mu0*sigma = {expected:.12e}"
+        )
+        print(
+            f"  analytic legs: flux = {legs['flux_w']:.6e} W, "
+            f"dissipated = {legs['dissipated_w']:.6e} W"
+        )
+
+    assert np.isclose(product, expected, rtol=1e-12, atol=0.0), (
+        f"2*alpha*beta = {product:.12e} but omega*mu0*sigma = {expected:.12e} — "
+        "the closed-form alpha/beta do not satisfy the dispersion relation, so "
+        "neither analytic leg can be trusted as a reference"
+    )
+    assert np.isclose(legs["flux_w"], legs["dissipated_w"], rtol=1e-12, atol=0.0), (
+        f"analytic flux {legs['flux_w']:.6e} W and analytic dissipation "
+        f"{legs['dissipated_w']:.6e} W disagree — the closed forms are wrong"
+    )
+
+
+@complex_only
+@pytest.mark.integration
+def test_each_leg_scored_against_its_own_closed_form():
+    """`POST-5` step 3: is the boundary leg wrong, or is the smoke fixture?
+
+    Pre-registered band (`POST5_STEP3_LEG_BAND` = 10%, set to the 5% MVP bar
+    the whole identity already meets on this fixture with a factor of 2 of
+    headroom because a single leg is not required to be better than the
+    balance): on the fine 24³ rung,
+
+    * boundary leg inside 10% of its closed form  ⇒  the assembly and the
+      ``H = ∇×E/(−jωμᵣμ₀)`` reconstruction are **sound**, and the smoke
+      fixture's 106% is a property of that fixture, not of this code;
+    * boundary leg outside 10% while the volume leg is inside  ⇒  the
+      boundary leg itself is defective and
+      `test_poynting_balance_holds_and_converges` passes by cancellation.
+
+    Either reading is the finding; nothing is fixed in this step.
+    """
+    comm = MPI.COMM_WORLD
+    exact = _analytic_legs()
+
+    coarse = _solve_and_balance(12, SIGMA)
+    fine = _solve_and_balance(24, SIGMA)
+
+    def _errs(b: dict) -> tuple[float, float]:
+        return (
+            abs(b["net_inward_power_w"] - exact["flux_w"]) / exact["flux_w"],
+            abs(b["dissipated_power_w"] - exact["dissipated_w"])
+            / exact["dissipated_w"],
+        )
+
+    flux_c, diss_c = _errs(coarse)
+    flux_f, diss_f = _errs(fine)
+
+    if comm.rank == 0:
+        print("\n[POST-5 step 3] per-leg scoring on the TH-6 plane wave:")
+        print(
+            f"  analytic: flux = {exact['flux_w']:.6e} W, "
+            f"dissipated = {exact['dissipated_w']:.6e} W "
+            f"(alpha = {exact['alpha']:.4f} 1/m, beta = {exact['beta']:.4f} rad/m)"
+        )
+        for label, b, ef, ed in (
+            ("coarse 12^3", coarse, flux_c, diss_c),
+            ("fine   24^3", fine, flux_f, diss_f),
+        ):
+            print(
+                f"  {label} ({b['ncells']:6d} cells): "
+                f"flux = {b['net_inward_power_w']:.6e} W (err {ef:.4%}), "
+                f"dissipated = {b['dissipated_power_w']:.6e} W (err {ed:.4%}), "
+                f"imbalance = {b['relative_imbalance']:.4%}"
+            )
+        verdict = "CONDITIONING (leg sound)" if flux_f < POST5_STEP3_LEG_BAND else "ASSEMBLY"
+        print(f"  step-3 verdict: {verdict}")
+
+    assert diss_f < POST5_STEP3_LEG_BAND, (
+        f"the *volume* leg misses its own closed form by {diss_f:.4%} on the "
+        f"fine rung — the control failed, so the boundary-leg reading "
+        f"({flux_f:.4%}) attributes nothing"
+    )
+    assert flux_f < POST5_STEP3_LEG_BAND, (
+        f"the boundary leg -oint 1/2 Re(E x Hbar).n dS = "
+        f"{fine['net_inward_power_w']:.6e} W misses its closed form "
+        f"{exact['flux_w']:.6e} W by {flux_f:.4%}, outside the pre-registered "
+        f"{POST5_STEP3_LEG_BAND:.0%} band, while the volume leg is inside at "
+        f"{diss_f:.4%} — the boundary leg is defective in its own right and "
+        "the 5% whole-identity gate on this fixture passes by cancellation"
+    )
+    assert fine["net_inward_power_w"] > 0.0, (
+        "net real power flows out of a passive lossy box on the fine rung"
+    )
