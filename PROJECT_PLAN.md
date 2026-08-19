@@ -417,7 +417,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
-| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots; **rescoped 2026-08-18 03:00 review as (b1) remainder + (b2) validation**, one slot each; **(b1) attempt 1 2026-08-18 🟡 — command 1 completed (3 failed / 122 passed / 1 xfailed, 392.76 s, the three failures exactly the named expected ones, one rank-dependent XDMF count delta), command 2 exit 124 at 44%: complex `tests/solver` is > 12× real, not 2.6×. The leg's real finding is that attempt 3's "cache artifact" call was wrong — on a cold cache `test_coil_phantom_magnetostatics` fails in 5.58 s with a genuine `ComplexComparisonError`**; **(b1) attempt 2 2026-08-18 ✅ CLOSED — complex `tests/solver` runs as one command, 46 passed / 2 xfailed in 111.22 s, exit 0, both ranks identical; counts reconcile to 171 non-validation complex, the same 171 leg (a) observed; defect 3's th-smoke Poynting xfail finally read in a completed leg; the ">12× real" rule is **withdrawn** as a cold-cache FFCx-JIT artifact — warm complex is ~2.7× real, and `test_gauge_penalty.py`, which killed the 480 s cold leg at 61%, is 8 passed in 20.33 s warm**. *Leg (b1) audited COMPLIANT 2026-08-18 10:30 review — the 49 = 48 + 1 and 171/209 reconciliations re-derived from the log footers, both ranks identical in the closing leg; the coil-phantom exclusion is within the written anchor (observed FAILED in its own completed log `20260818T124712Z`, two known-issues entries), with the caveat on record that the completed observation shows the warm-cache message while the genuine `ComplexComparisonError` appeared in an exit-124 run — the three-state map is disclosed in known-issues*; only leg (b2) remains; **(b2) attempt 1 2026-08-19 🟡 — three commands completed (impedance file `24 passed`/488 s; cost probe re-bases the stale 380 collect to **397**, validation **225**; shortest-first subset `23 passed`/121 s with the per-file sinks priced), then the written negative-result clause fired: `test_circular_loop.py` **cannot JIT-compile one form in the complex build**, reproducibly and independently of cache state — new known-issues entry, which also names the **0-byte FFCx stub** trap that mis-attributes such failures as cache artifacts (a stale stub from 2026-08-18 14:02 was still in the cache). Coverage 39/225; 186 remain, 3 blocked**; **(b2) attempt 2 2026-08-19 🟡 — the prescribed 4×-larger batch lost its window to a *second* instance of the same defect (`test_helmholtz_magnitude` FAILED at 62%, `test_helmholtz_v2` hung, exit 124; 9 passes uncounted for want of a footer), and the slot instead **diagnosed the cause**: the fixtures' own `current_density` callables use `ufl.max_value` / `<=` geometry predicates that UFL forbids on complex operands — `ComplexComparisonError` in 13.10 s for helmholtz, a swallowed FFCx root-node failure in 113.38 s for circular_loop, both on the load form at `solvers.py:385`. `src/` has **no** `max_value`; three sibling test files already document the fix (regularise inside the `sqrt`). **Fixture debt, not a solver defect**, and the same family as `OPS-20`. Coverage still 39/225; blocked 3 → 5**; **rescoped 2026-08-19 03:00 review** — the fixture fix is commissioned as `OPS-22` and queued first, (b2) resumes under **per-file completed-run accounting**, anchor re-based to 225 validation / 398 total, the +1 non-validation delta attributed benign (`POST-5` step 1's dropped `def` + 2 added tests); **re-adjudicated 2026-08-19 10:30 review — every (b2) blocker discharged**: the 5 blocked tests are observed in `OPS-22`'s completed log `20260819T094710Z` (coverage re-bases 39 → **44**/225 under per-file accounting), the (b1) coil-phantom exclusion is discharged by `OPS-20`'s completed log `20260819T110144Z` (same 30% gate, 17.1233%, complex), and the twice-measured suite-growth warning — complex `tests/solver` no longer fits a 480 s window warm — is folded into the §9 item) | standard |
+| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots; **rescoped 2026-08-18 03:00 review as (b1) remainder + (b2) validation**, one slot each; **(b1) attempt 1 2026-08-18 🟡 — command 1 completed (3 failed / 122 passed / 1 xfailed, 392.76 s, the three failures exactly the named expected ones, one rank-dependent XDMF count delta), command 2 exit 124 at 44%: complex `tests/solver` is > 12× real, not 2.6×. The leg's real finding is that attempt 3's "cache artifact" call was wrong — on a cold cache `test_coil_phantom_magnetostatics` fails in 5.58 s with a genuine `ComplexComparisonError`**; **(b1) attempt 2 2026-08-18 ✅ CLOSED — complex `tests/solver` runs as one command, 46 passed / 2 xfailed in 111.22 s, exit 0, both ranks identical; counts reconcile to 171 non-validation complex, the same 171 leg (a) observed; defect 3's th-smoke Poynting xfail finally read in a completed leg; the ">12× real" rule is **withdrawn** as a cold-cache FFCx-JIT artifact — warm complex is ~2.7× real, and `test_gauge_penalty.py`, which killed the 480 s cold leg at 61%, is 8 passed in 20.33 s warm**. *Leg (b1) audited COMPLIANT 2026-08-18 10:30 review — the 49 = 48 + 1 and 171/209 reconciliations re-derived from the log footers, both ranks identical in the closing leg; the coil-phantom exclusion is within the written anchor (observed FAILED in its own completed log `20260818T124712Z`, two known-issues entries), with the caveat on record that the completed observation shows the warm-cache message while the genuine `ComplexComparisonError` appeared in an exit-124 run — the three-state map is disclosed in known-issues*; only leg (b2) remains; **(b2) attempt 1 2026-08-19 🟡 — three commands completed (impedance file `24 passed`/488 s; cost probe re-bases the stale 380 collect to **397**, validation **225**; shortest-first subset `23 passed`/121 s with the per-file sinks priced), then the written negative-result clause fired: `test_circular_loop.py` **cannot JIT-compile one form in the complex build**, reproducibly and independently of cache state — new known-issues entry, which also names the **0-byte FFCx stub** trap that mis-attributes such failures as cache artifacts (a stale stub from 2026-08-18 14:02 was still in the cache). Coverage 39/225; 186 remain, 3 blocked**; **(b2) attempt 2 2026-08-19 🟡 — the prescribed 4×-larger batch lost its window to a *second* instance of the same defect (`test_helmholtz_magnitude` FAILED at 62%, `test_helmholtz_v2` hung, exit 124; 9 passes uncounted for want of a footer), and the slot instead **diagnosed the cause**: the fixtures' own `current_density` callables use `ufl.max_value` / `<=` geometry predicates that UFL forbids on complex operands — `ComplexComparisonError` in 13.10 s for helmholtz, a swallowed FFCx root-node failure in 113.38 s for circular_loop, both on the load form at `solvers.py:385`. `src/` has **no** `max_value`; three sibling test files already document the fix (regularise inside the `sqrt`). **Fixture debt, not a solver defect**, and the same family as `OPS-20`. Coverage still 39/225; blocked 3 → 5**; **rescoped 2026-08-19 03:00 review** — the fixture fix is commissioned as `OPS-22` and queued first, (b2) resumes under **per-file completed-run accounting**, anchor re-based to 225 validation / 398 total, the +1 non-validation delta attributed benign (`POST-5` step 1's dropped `def` + 2 added tests); **re-adjudicated 2026-08-19 10:30 review — every (b2) blocker discharged**: the 5 blocked tests are observed in `OPS-22`'s completed log `20260819T094710Z` (coverage re-bases 39 → **44**/225 under per-file accounting), the (b1) coil-phantom exclusion is discharged by `OPS-20`'s completed log `20260819T110144Z` (same 30% gate, 17.1233%, complex), and the twice-measured suite-growth warning — complex `tests/solver` no longer fits a 480 s window warm — is folded into the §9 item; **(b2) attempt 3 2026-08-19 🟡 — first clean run under the rescope: two completed runs, `14 passed`/400.01 s and `13 passed`/52.69 s, both exit 0 and both ranks identical, **+19 validation tests ⇒ coverage 44 → 63**; anchor re-based 225 → **227** validation / **402** total and reconciled exactly to `POST-5` steps 2–3, closing attempt 1's unattributed +1; **blocked 5 → 0**, `OPS-22` having discharged the risk class; two exit-124 windows were sizing errors with no failure and no hang signature, and priced the SAR/padding group at > 400 s for five files. Tail 162 runnable in ~35 files, now the expensive half — next leg takes one `coil_loading_*`/`dodd_deeds_*` family per slot at 540 s**) | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 | `OPS-20` | Disposition the coil-phantom `ComplexComparisonError`: localize with `--tb=long`, then fix the form or mark `@real_only` (known-issues 2026-08-18; commissioned 2026-08-18 10:30 review) | ✅ *(2026-08-19, 06:00 slot — fixed, no `@real_only`; the commissioned `ComplexComparisonError` was already dead, killed by `OPS-22` through the **imported** drive callable, and a free grep found it. Only the predicted second layer remained: the complex build now **passes the same 30% gate at the same 17.1233%**, both ranks identical, real-mode digits unmoved across control and re-run; collect count unchanged at 49. *Audited COMPLIANT 2026-08-19 10:30 review — all five footers, the 17.1233% in all three counted runs and the line-142 `Im`-assertion verified; the skipped cold-cache clear is journalled in three places and adjudicated sound; cosmetic journal error on record: the exit-124 batch log does carry a footer (124 / 481 s), the uncounted disposition stands*)* | standard |
@@ -1279,6 +1279,62 @@ exists, replace instead. Two steps, one implementer run each.)*
 >     literal "evidence of a killed prior run" test is
 >     `find /root/.cache/fenics -name '*.c' -size 0`; delete stubs
 >     only, never clear the cache wholesale.
+>
+>   **🟡 leg (b2) attempt 3, 2026-08-19 17:25Z (12:00 slot) — the first
+>   attempt to run clean under the rescope: two completed runs, +19
+>   validation tests, zero blocked, and the anchor reconciled to the
+>   commit graph.** Bookkeeping only, nothing parked, `main` clean.
+>   Full journal in `docs/testing/attempts.md`.
+>   * **Anchor moved again, 225 → 227 validation, and reconciles
+>     exactly.** `20260819T170053Z_OPS-17-step3h-collect.log` (exit 0,
+>     6 s, complex): `tests/` **402**, `tests/environment` +
+>     `tests/validation` **231**, environment 4 ⇒ validation **227**,
+>     non-validation **175**. The +5 over attempt 1's 397 is entirely
+>     `POST-5`: `0e4ae7f` step 2 (+2 in `test_time_harmonic_smoke.py`)
+>     and `ea0ff6a` step 3 (+1 there, **+2** in
+>     `test_poynting_balance.py`). 397+5 = 402, 225+2 = 227,
+>     172+3 = 175. **Attempt 1's unattributed +1 is closed**; the
+>     review's expected 398 simply predated step 3.
+>   * **Batch A: `14 passed` in 400.01 s, exit 0**
+>     (`20260819T170254Z_...-complex-batchA.log`, `-n 2`,
+>     `timeout -k 30 420`), both rank footers identical — 4 environment
+>     + **10** validation (`test_convergence` 1,
+>     `test_field_consistency_metrics` 2,
+>     `test_geometry_floor_discriminator` 1, `test_straight_wire` 4,
+>     `test_waveguide_cutoff` 2), each file's own recorded gates
+>     unchanged. **Batch B: `13 passed` in 52.69 s, exit 0**
+>     (`20260819T171016Z_...-batchB.log`) — 4 + **9** validation
+>     (`test_cavity_resonances` 3, `test_dielectric_sphere` 2,
+>     `test_lossy_plane_wave` 2, `test_time_harmonic_mms` 2).
+>     Negative control clean in both: no failure, no moved digit.
+>   * **Two exit-124 windows, both my sizing, neither a defect.**
+>     Batch C (`20260819T171126Z_...-batchC.log`, 400 s) ran **14
+>     PASSED with no failure and no hang signature** and simply ran out
+>     inside `test_port_systematics_composition.py`; batch C2
+>     (`...T171829Z_...-batchC2.log`, 240 s) dropped that file and died
+>     *earlier*, in `test_port_box_padding_sweep.py` — proving the cost
+>     is spread across the five SAR/padding files, not concentrated.
+>     Neither counts. **Price that group at ≥ 540 s or split it.**
+>   * **Costs measured** (`--durations=0`): `test_convergence::
+>     test_h_refinement_straight_wire` **235.29 s call** dominates
+>     batch A; `test_straight_wire` 54.33/45.65/18.42 s;
+>     `test_geometry_floor_discriminator` 27.53 s; `test_waveguide_
+>     cutoff` 8.98/8.34 s. Batch B is the cheap corner — 9 tests in
+>     52.7 s, worst 15.77 s.
+>   * **Coverage 44 → 63 of 227** (20 impedance + 19 subset 1 + 5
+>     `OPS-22` + 10 A + 9 B). Tail **164**, minus the deferred padding
+>     file (2) ⇒ **162 runnable in ~35 files. Blocked 5 → 0** —
+>     `OPS-22` discharged the whole risk class; the only remaining
+>     `max_value`/ordering hits under `tests/validation/` are its three
+>     repaired files (comments now) plus `test_dodd_deeds_impedance`,
+>     `test_port_reaction_impedance` and `test_port_gap_voltage_
+>     impedance`, the last already green in complex.
+>   * **For the next leg:** the tail is now the expensive half — the
+>     `coil_loading_*` (7 files) and `dodd_deeds_*` (7 files) families
+>     are unpriced, and batch A shows one 235 s test can eat a window.
+>     Take **one family per slot** at `timeout -k 30 540` with
+>     `--durations=0` rather than batching blind, and give
+>     `test_poynting_balance.py` a window of its own.
 
 **`OPS-20` — disposition the coil-phantom `ComplexComparisonError`** ✅
 *(closed 2026-08-19, 06:00 implementer slot; commissioned 2026-08-18, 10:30 review, from the two `OPS-17` leg-(b1)
@@ -4419,8 +4475,17 @@ swept stub-free at each slot's exit. Done-item texts and prior recaps:
 depends on another landing first. Item 1's former dependency (the
 `OPS-22` fixture fix) landed at the 04:30 slot and is discharged.
 
-1. **`OPS-17` step 3 leg (b2) — complex validation, resumed with every
-   blocker discharged (standard).** Execute the §7 rescope annotation
+1. ~~**`OPS-17` step 3 leg (b2) — complex validation, resumed with every
+   blocker discharged (standard).**~~ **Done 2026-08-19, 12:00 slot** —
+   attempt 3 ran clean under the rescope: coverage **44 → 63 of a
+   re-based 227**, anchor reconciled exactly to `POST-5` steps 2–3
+   (402 total / 227 validation / 175 non-validation; attempt 1's
+   unattributed +1 closed), blocked **5 → 0**. Leg (b2) itself is
+   **not** finished — 162 runnable tests remain in ~35 files, now the
+   expensive half of the suite; see the §7 attempt-3 annotation for the
+   next leg's prescription (one `coil_loading_*` / `dodd_deeds_*`
+   family per slot at 540 s, `test_poynting_balance.py` alone). Original
+   scope, for the record: Execute the §7 rescope annotation
    (per-file completed-run accounting) with three bookkeeping
    adjudications made by this review, to be asserted in-run, not
    re-derived: **(i)** the 5 formerly blocked tests are already

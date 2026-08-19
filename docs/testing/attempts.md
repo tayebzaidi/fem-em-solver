@@ -14748,3 +14748,110 @@ observation for the review, third this week and consistent with the 06:00 and
 07:30 entries: the *example* path is still cheap — 16 s here against a 400 s
 budget — so the suite-growth warnings in those entries are about
 `tests/solver`, not `examples/`.
+
+## 2026-08-19T17:25Z — `OPS-17` step 3 leg (b2), attempt 3 — **incomplete** (leg advances; chunk stays 🟡)
+
+Scheduled implementer run, 12:00 CDT slot. §9 item 1 taken as written.
+Bookkeeping only — **no `src/`, `tests/`, `scripts/` or `examples/` change**,
+nothing to park, `main` clean. Deliverable is the coverage count, and it
+moved **44 → 63** of a **re-based 227** validation tests.
+
+**Preflight.** Container Up 36 h; stub sweep
+`find /root/.cache/fenics -name '*.c' -size 0` → **0 stubs**, 656 entries,
+zero stray `python3` — so every reading below starts stub-free, and the same
+sweep ran clean at exit.
+
+**The three adjudications the item asked to assert, not re-derive.**
+(i) The 5 formerly blocked tests are already observed in `OPS-22`'s completed
+log `20260819T094710Z` (5 passed, exit 0) — coverage re-bases 39 → **44**
+before any new command; 5 = `test_circular_loop.py` 3 +
+`test_helmholtz_magnitude.py` 1 + `test_helmholtz_v2.py` 1, and the collect
+probe below confirms `test_circular_loop.py` is 3 (its `<Class
+TestCircularLoop>` line is why the earlier line-difference derivation read 4).
+(ii) Leg (b1)'s coil-phantom exclusion is discharged by
+`20260819T110144Z_OPS-20.log`; cited, not re-run.
+(iii) The collect anchor was re-verified and **has moved again**.
+
+**Anchor re-based 225 → 227 validation, and it reconciles exactly.**
+`20260819T170053Z_OPS-17-step3h-collect.log` (exit 0, 6 s harness, complex +
+`FEM_EM_REQUIRE_COMPLEX=1`): `tests/` collects **402**;
+`tests/environment` + `tests/validation` collects **231**, of which
+`tests/environment` is 4 → validation = **227**, non-validation =
+402 − 227 = **175**. The item expected 225 / 398. The +5 total is fully
+attributed to two commits that landed *after* attempt 1's 397 collect
+(2026-08-19 02:09Z): `0e4ae7f` (`POST-5` step 2) added 2 tests to
+`tests/solver/test_time_harmonic_smoke.py`, and `ea0ff6a` (`POST-5` step 3)
+added 1 more there plus **2** to `tests/validation/test_poynting_balance.py`.
+So 397 + 5 = 402 ✓, 225 + 2 = 227 ✓, 172 + 3 = 175 ✓. **No unattributed
+delta this time** — the bookkeeping item attempt 1 left for the review is
+closed, and the review's predicted 398 was simply pre-`POST-5`-step-3.
+
+**Coverage banked this slot: +19 validation tests, two completed runs.**
+* **Batch A — `14 passed, 8 warnings in 400.01s`, exit 0**
+  (`20260819T170254Z_OPS-17-step3h-complex-batchA.log`, `-n 2`,
+  `timeout -k 30 420`), **both rank footers identical** (14 passed /
+  400.01 s and 14 passed / 400.02 s). 14 = 4 `tests/environment` + **10**
+  validation across 5 files: `test_convergence.py` 1,
+  `test_field_consistency_metrics.py` 2,
+  `test_geometry_floor_discriminator.py` 1, `test_straight_wire.py` 4,
+  `test_waveguide_cutoff.py` 2. Every file's own recorded gates, unchanged;
+  no assertion touched; **negative control clean — no moved digit against
+  any file's real-mode record, no failure.**
+* **Batch B — `13 passed, 8 warnings in 52.69s`, exit 0**
+  (`20260819T171016Z_...-batchB.log`, `-n 2`, `timeout -k 30 420`), both
+  ranks identical (52.69 / 52.72 s). 13 = 4 environment + **9** validation:
+  `test_cavity_resonances.py` 3, `test_dielectric_sphere.py` 2,
+  `test_lossy_plane_wave.py` 2, `test_time_harmonic_mms.py` 2. Same
+  negative control, clean.
+
+**Two exit-124 windows, both sizing errors on my part, neither a defect.**
+* Batch C (`20260819T171126Z_...-batchC.log`, `timeout -k 30 400`, exit 124,
+  401 s): `test_coil_phantom_bfield_metrics.py`, `test_lossy_sphere_sar.py`,
+  `test_mass_averaged_sar.py`, `test_mass_averaged_sar_standard_masses.py`,
+  `test_port_box_padding_sweep.py`, `test_port_systematics_composition.py`.
+  **14 PASSED, no failure, no hang signature** — the window simply ran out
+  inside `test_port_systematics_composition.py` after its first test. Under
+  per-file completed-run accounting the 14 passes **do not count**.
+* Batch C2 (`20260819T171829Z_...-batchC2.log`, `timeout -k 30 240`, exit
+  124, 241 s): the same batch minus the file the window died in — an attempt
+  to bank those five files cheaply. It died *earlier*, inside
+  `test_port_box_padding_sweep.py` at 78%, which proves the batch-C reading:
+  **the cost is spread across all five SAR/padding files, not concentrated
+  in one sink**, and 240 s was my under-sizing, not new information about a
+  hang. Nothing counted.
+
+**Cost data produced (the durable output of the two dead windows).**
+`--durations=0` on batch A: `test_convergence.py::TestConvergence::
+test_h_refinement_straight_wire` **235.29 s call** — the single dominant
+sink of that batch; `test_straight_wire` 54.33 / 45.65 / 18.42 s;
+`test_geometry_floor_discriminator` 27.53 s; `test_waveguide_cutoff` 8.98 /
+8.34 s. Batch B is the cheap corner of the suite: 9 validation tests in
+52.7 s total, worst 15.77 s (`test_lossy_plane_wave`). Batches C/C2 price
+the SAR + padding group empirically: those **five** files need **> 400 s**
+together at `-n 2` (14 tests done, ~0 s of margin), and adding
+`test_port_systematics_composition.py` needs more still — size that group
+at ≥ 540 s in a slot of its own, or split it in two.
+
+**Coverage ledger.** 20 (`port_gap_voltage_impedance`, attempt 1) + 19
+(subset 1, attempt 1) + 5 (`OPS-22` log, adjudicated) + 10 (batch A) + 9
+(batch B) = **63 of 227**. Remaining tail **164**, of which
+`test_port_gap_voltage_padding.py` (2) stays deferred as written → **162
+runnable**, in ~35 files. **Zero blocked** — the blocked count that stood at
+5 last attempt is now 0, `OPS-22` having discharged the whole risk class: a
+free grep confirms the only remaining `max_value` / ordering-predicate hits
+under `tests/validation/` are the three `OPS-22`-repaired files (now in
+comments), plus `test_dodd_deeds_impedance.py`,
+`test_port_reaction_impedance.py`, `test_port_gap_voltage_impedance.py` —
+and the last of those is already green in complex (20 passed, attempt 1).
+
+**Next attempt hypothesis.** The tail is now mostly the *expensive* half —
+the `coil_loading_*` family (7 files, ~55 tests) and the `dodd_deeds_*`
+family (7 files, ~35 tests) are untouched and unpriced, and the batch-A
+lesson is that one 235 s test can eat a whole window. The next leg should
+**stop batching blind**: run a `--collect-only --durations`-free *pricing*
+pass is impossible, so instead take one family per slot at
+`timeout -k 30 540` with `--durations=0`, largest-first, and accept one
+completed run per slot rather than three. `test_poynting_balance.py` (10
+tests, gmsh h-ladder) must have a window to itself — the §9 suite-growth
+warning applies. At ~19 tests/slot the tail is ~8 more slots; at one
+priced family per slot it is ~14 but with no wasted windows.

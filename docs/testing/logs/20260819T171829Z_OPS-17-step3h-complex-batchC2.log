@@ -1,0 +1,75 @@
+# Test Run
+- Chunk: OPS-17-step3h-complex-batchC2
+- Commit: 6a089b8416e32a8f30964dfd32c0b6a9912de23a
+- Time (UTC): 2026-08-19 17:18:29
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && export FEM_EM_REQUIRE_COMPLEX=1 && PYTHONPATH=/workspace/src timeout -k 30 240 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_coil_phantom_bfield_metrics.py tests/validation/test_lossy_sphere_sar.py tests/validation/test_mass_averaged_sar.py tests/validation/test_mass_averaged_sar_standard_masses.py tests/validation/test_port_box_padding_sweep.py -v --tb=short --durations=0'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 19 12:18 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && export FEM_EM_REQUIRE_COMPLEX=1 && PYTHONPATH=/workspace/src timeout -k 30 240 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_coil_phantom_bfield_metrics.py tests/validation/test_lossy_sphere_sar.py tests/validation/test_mass_averaged_sar.py tests/validation/test_mass_averaged_sar_standard_masses.py tests/validation/test_port_box_padding_sweep.py -v --tb=short --durations=0'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 14 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  7%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 14 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  7%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 14%]PASSED [ 14%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 21%]PASSED [ 21%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 28%]PASSED [ 28%]
+tests/validation/test_coil_phantom_bfield_metrics.py::test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric 
+tests/validation/test_coil_phantom_bfield_metrics.py::test_coil_phantom_bfield_metrics_are_finite_smooth_and_symmetric PASSED [ 35%]PASSED [ 35%]
+tests/validation/test_lossy_sphere_sar.py::test_lossy_sphere_mean_sar_matches_closed_form 
+tests/validation/test_lossy_sphere_sar.py::test_lossy_sphere_mean_sar_matches_closed_form PASSED [ 42%]
+tests/validation/test_mass_averaged_sar.py::test_mass_averaging_is_the_identity_where_the_field_is_uniform PASSED [ 42%]
+tests/validation/test_mass_averaged_sar.py::test_mass_averaging_is_the_identity_where_the_field_is_uniform PASSED [ 50%]PASSED [ 50%]
+tests/validation/test_mass_averaged_sar.py::test_averaging_at_the_surface_loses_half_the_power 
+tests/validation/test_mass_averaged_sar.py::test_averaging_at_the_surface_loses_half_the_power PASSED [ 57%]PASSED [ 57%]
+tests/validation/test_mass_averaged_sar_standard_masses.py::test_mass_averaging_is_the_identity_at_the_standard_masses[1 g-0.001] 
+tests/validation/test_mass_averaged_sar_standard_masses.py::test_mass_averaging_is_the_identity_at_the_standard_masses[1 g-0.001] PASSED [ 64%]PASSED [ 64%]
+tests/validation/test_mass_averaged_sar_standard_masses.py::test_mass_averaging_is_the_identity_at_the_standard_masses[10 g-0.01] 
+tests/validation/test_mass_averaged_sar_standard_masses.py::test_mass_averaging_is_the_identity_at_the_standard_masses[10 g-0.01] PASSED [ 71%]PASSED [ 71%]
+tests/validation/test_mass_averaged_sar_standard_masses.py::test_one_gram_ball_at_the_surface_loses_the_lens_fraction 
+tests/validation/test_mass_averaged_sar_standard_masses.py::test_one_gram_ball_at_the_surface_loses_the_lens_fraction PASSED [ 78%]PASSED [ 78%]
+tests/validation/test_port_box_padding_sweep.py::test_padding_sweep_reproduces_the_landed_deficit 
+tests/validation/test_port_box_padding_sweep.py::test_padding_sweep_reproduces_the_landed_deficit 
+## Exit
+- Status: 124
+- Elapsed (s): 241
