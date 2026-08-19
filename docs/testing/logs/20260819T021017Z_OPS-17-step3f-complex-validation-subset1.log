@@ -1,0 +1,276 @@
+# Test Run
+- Chunk: OPS-17-step3f-complex-validation-subset1
+- Commit: e2295bfd7477b55bd64711110fea4dcb14ab210a
+- Time (UTC): 2026-08-19 02:10:18
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 480 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_mutual_inductance_reference.py tests/validation/test_tolerance_policy.py tests/validation/test_current_divergence.py tests/validation/test_resonance_guard.py tests/validation/test_port_gradient_load.py tests/validation/test_port_self_impedance_energy.py -v --tb=short --durations=0'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 18 21:10 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 480 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_mutual_inductance_reference.py tests/validation/test_tolerance_policy.py tests/validation/test_current_divergence.py tests/validation/test_resonance_guard.py tests/validation/test_port_gradient_load.py tests/validation/test_port_self_impedance_energy.py -v --tb=short --durations=0'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 23 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  4%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 23 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  4%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [  8%]PASSED [  8%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 13%]PASSED [ 13%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 17%]PASSED [ 17%]
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[fixture d-0.04-0.04] 
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[fixture d-0.04-0.04] PASSED [ 21%]PASSED [ 21%]
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[doubling 2d-0.04-0.08] 
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[doubling 2d-0.04-0.08] PASSED [ 26%]PASSED [ 26%]
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[near d/4-0.04-0.01] 
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[near d/4-0.04-0.01] PASSED [ 30%]PASSED [ 30%]
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[far 4d-0.04-0.16] 
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[far 4d-0.04-0.16] PASSED [ 34%]PASSED [ 34%]
+tests/validation/test_mutual_inductance_reference.py::test_modulus_convention_control_is_detectable 
+tests/validation/test_mutual_inductance_reference.py::test_modulus_convention_control_is_detectable PASSED [ 39%]PASSED [ 39%]
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_matches_logged_omega_m12 
+tests/validation/test_mutual_inductance_reference.py::test_filament_reference_matches_logged_omega_m12 PASSED [ 43%]PASSED [ 43%]
+tests/validation/test_mutual_inductance_reference.py::test_finite_cross_section_correction_is_percent_scale 
+tests/validation/test_mutual_inductance_reference.py::test_finite_cross_section_correction_is_percent_scale PASSED [ 47%]PASSED [ 47%]
+tests/validation/test_tolerance_policy.py::test_validation_tolerance_policy_is_ordered_and_positive 
+tests/validation/test_tolerance_policy.py::test_validation_tolerance_policy_is_ordered_and_positive PASSED [ 52%]PASSED [ 52%]
+tests/validation/test_current_divergence.py::test_cg2_residual_converges_under_refinement 
+tests/validation/test_current_divergence.py::test_cg2_residual_converges_under_refinement PASSED [ 56%]PASSED [ 56%]
+tests/validation/test_current_divergence.py::test_cg1_residual_is_vacuous_and_cg2_is_not 
+tests/validation/test_current_divergence.py::test_cg1_residual_is_vacuous_and_cg2_is_not PASSED [ 60%]
+tests/validation/test_current_divergence.py::test_degree_zero_is_rejected PASSED [ 60%]PASSED [ 65%]
+tests/validation/test_current_divergence.py::test_degree_zero_is_rejected 
+tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode PASSED [ 65%]
+tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode PASSED [ 69%]PASSED [ 69%]
+tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps 
+tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps PASSED [ 73%]
+tests/validation/test_port_gradient_load.py::test_gradient_subspace_identity_holds_for_the_solved_field PASSED [ 73%]
+tests/validation/test_port_gradient_load.py::test_gradient_subspace_identity_holds_for_the_solved_field PASSED [ 78%]PASSED [ 78%]
+tests/validation/test_port_gradient_load.py::test_blind_control_without_the_imaginary_unit_is_order_one 
+tests/validation/test_port_gradient_load.py::test_blind_control_without_the_imaginary_unit_is_order_one PASSED [ 82%]PASSED [ 82%]
+tests/validation/test_port_gradient_load.py::test_gradient_load_projection_is_consistent_and_reported 
+tests/validation/test_port_gradient_load.py::test_gradient_load_projection_is_consistent_and_reported PASSED [ 86%]PASSED [ 86%]
+tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_matches_complex_power_identity 
+tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_matches_complex_power_identity PASSED [ 91%]
+tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_real_part_is_structurally_zero PASSED [ 95%]
+tests/validation/test_port_self_impedance_energy.py::test_magnetic_energy_reactance_against_grover PASSED [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================== slowest durations ===============================
+45.79s setup    tests/validation/test_port_gradient_load.py::test_gradient_subspace_identity_holds_for_the_solved_field
+43.57s setup    tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_matches_complex_power_identity
+25.68s call     tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode
+2.82s call     tests/validation/test_current_divergence.py::test_cg2_residual_converges_under_refinement
+1.67s setup    tests/validation/test_current_divergence.py::test_cg2_residual_converges_under_refinement
+1.41s call     tests/validation/test_current_divergence.py::test_cg1_residual_is_vacuous_and_cg2_is_not
+0.03s call     tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.02s call     tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.01s call     tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.01s call     tests/validation/test_mutual_inductance_reference.py::test_finite_cross_section_correction_is_percent_scale
+0.00s call     tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps
+0.00s teardown tests/validation/test_current_divergence.py::test_degree_zero_is_rejected
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[fixture d-0.04-0.04]
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[near d/4-0.04-0.01]
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[fixture d-0.04-0.04]
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[doubling 2d-0.04-0.08]
+0.00s call     tests/validation/test_current_divergence.py::test_degree_zero_is_rejected
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[far 4d-0.04-0.16]
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[near d/4-0.04-0.01]
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[far 4d-0.04-0.16]
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[doubling 2d-0.04-0.08]
+0.00s setup    tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s call     tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s call     tests/validation/test_port_gradient_load.py::test_gradient_subspace_identity_holds_for_the_solved_field
+0.00s call     tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_matches_complex_power_identity
+0.00s teardown tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode
+0.00s setup    tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.00s teardown tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.00s setup    tests/validation/test_port_gradient_load.py::test_blind_control_without_the_imaginary_unit_is_order_one
+0.00s teardown tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.00s setup    tests/validation/test_current_divergence.py::test_degree_zero_is_rejected
+0.00s setup    tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.00s setup    tests/validation/test_current_divergence.py::test_cg1_residual_is_vacuous_and_cg2_is_not
+0.00s teardown tests/validation/test_port_self_impedance_energy.py::test_magnetic_energy_reactance_against_grover
+0.00s setup    tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.00s setup    tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_real_part_is_structurally_zero
+0.00s call     tests/validation/test_port_self_impedance_energy.py::test_magnetic_energy_reactance_against_grover
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[fixture d-0.04-0.04]
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_modulus_convention_control_is_detectable
+0.00s teardown tests/validation/test_current_divergence.py::test_cg2_residual_converges_under_refinement
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_filament_reference_matches_logged_omega_m12
+0.00s teardown tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[near d/4-0.04-0.01]
+0.00s setup    tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode
+0.00s teardown tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_matches_complex_power_identity
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[far 4d-0.04-0.16]
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[doubling 2d-0.04-0.08]
+0.00s call     tests/validation/test_port_gradient_load.py::test_gradient_load_projection_is_consistent_and_reported
+0.00s teardown tests/validation/test_current_divergence.py::test_cg1_residual_is_vacuous_and_cg2_is_not
+0.00s setup    tests/validation/test_port_self_impedance_energy.py::test_magnetic_energy_reactance_against_grover
+0.00s setup    tests/validation/test_port_gradient_load.py::test_gradient_load_projection_is_consistent_and_reported
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_modulus_convention_control_is_detectable
+0.00s teardown tests/validation/test_port_gradient_load.py::test_gradient_load_projection_is_consistent_and_reported
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_filament_reference_matches_logged_omega_m12
+0.00s teardown tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.00s setup    tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps
+0.00s teardown tests/validation/test_port_gradient_load.py::test_gradient_subspace_identity_holds_for_the_solved_field
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_finite_cross_section_correction_is_percent_scale
+0.00s call     tests/validation/test_port_gradient_load.py::test_blind_control_without_the_imaginary_unit_is_order_one
+0.00s teardown tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps
+0.00s setup    tests/validation/test_tolerance_policy.py::test_validation_tolerance_policy_is_ordered_and_positive
+0.00s call     tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_real_part_is_structurally_zero
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_finite_cross_section_correction_is_percent_scale
+0.00s teardown tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_real_part_is_structurally_zero
+0.00s call     tests/validation/test_tolerance_policy.py::test_validation_tolerance_policy_is_ordered_and_positive
+0.00s teardown tests/validation/test_port_gradient_load.py::test_blind_control_without_the_imaginary_unit_is_order_one
+0.00s teardown tests/validation/test_tolerance_policy.py::test_validation_tolerance_policy_is_ordered_and_positive
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_filament_reference_matches_logged_omega_m12
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_modulus_convention_control_is_detectable
+================== 23 passed, 8 warnings in 121.54s (0:02:01) ==================
+PASSED [ 91%]
+tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_real_part_is_structurally_zero PASSED [ 95%]
+tests/validation/test_port_self_impedance_energy.py::test_magnetic_energy_reactance_against_grover PASSED [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+tests/validation/test_current_divergence.py: 37 warnings
+tests/validation/test_resonance_guard.py: 69 warnings
+tests/validation/test_port_gradient_load.py: 15 warnings
+tests/validation/test_port_self_impedance_energy.py: 3 warnings
+  /usr/local/lib/python3.10/dist-packages/ufl/core/expr.py:275: DeprecationWarning: Expr.ufl_domain() is deprecated, please use extract_unique_domain(expr) instead.
+    warnings.warn("Expr.ufl_domain() is deprecated, please "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================== slowest durations ===============================
+45.79s setup    tests/validation/test_port_gradient_load.py::test_gradient_subspace_identity_holds_for_the_solved_field
+43.58s setup    tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_matches_complex_power_identity
+25.67s call     tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode
+2.82s call     tests/validation/test_current_divergence.py::test_cg2_residual_converges_under_refinement
+1.67s setup    tests/validation/test_current_divergence.py::test_cg2_residual_converges_under_refinement
+1.41s call     tests/validation/test_current_divergence.py::test_cg1_residual_is_vacuous_and_cg2_is_not
+0.05s call     tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.02s call     tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.01s call     tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.01s call     tests/validation/test_mutual_inductance_reference.py::test_finite_cross_section_correction_is_percent_scale
+0.00s call     tests/validation/test_current_divergence.py::test_degree_zero_is_rejected
+0.00s teardown tests/validation/test_current_divergence.py::test_degree_zero_is_rejected
+0.00s call     tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[fixture d-0.04-0.04]
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[doubling 2d-0.04-0.08]
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[fixture d-0.04-0.04]
+0.00s setup    tests/validation/test_current_divergence.py::test_degree_zero_is_rejected
+0.00s call     tests/validation/test_port_gradient_load.py::test_gradient_subspace_identity_holds_for_the_solved_field
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[far 4d-0.04-0.16]
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[doubling 2d-0.04-0.08]
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[far 4d-0.04-0.16]
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[near d/4-0.04-0.01]
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[near d/4-0.04-0.01]
+0.00s teardown tests/validation/test_current_divergence.py::test_cg1_residual_is_vacuous_and_cg2_is_not
+0.00s call     tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_matches_complex_power_identity
+0.00s setup    tests/validation/test_current_divergence.py::test_cg1_residual_is_vacuous_and_cg2_is_not
+0.00s teardown tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode
+0.00s call     tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s call     tests/validation/test_port_self_impedance_energy.py::test_magnetic_energy_reactance_against_grover
+0.00s teardown tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.00s teardown tests/validation/test_current_divergence.py::test_cg2_residual_converges_under_refinement
+0.00s teardown tests/validation/test_port_self_impedance_energy.py::test_magnetic_energy_reactance_against_grover
+0.00s setup    tests/validation/test_port_gradient_load.py::test_blind_control_without_the_imaginary_unit_is_order_one
+0.00s setup    tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode
+0.00s setup    tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_real_part_is_structurally_zero
+0.00s setup    tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_filament_reference_matches_logged_omega_m12
+0.00s call     tests/validation/test_port_gradient_load.py::test_gradient_load_projection_is_consistent_and_reported
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_modulus_convention_control_is_detectable
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[fixture d-0.04-0.04]
+0.00s setup    tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.00s call     tests/validation/test_mutual_inductance_reference.py::test_filament_reference_matches_logged_omega_m12
+0.00s call     tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_real_part_is_structurally_zero
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[near d/4-0.04-0.01]
+0.00s setup    tests/validation/test_port_gradient_load.py::test_gradient_load_projection_is_consistent_and_reported
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_modulus_convention_control_is_detectable
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[doubling 2d-0.04-0.08]
+0.00s setup    tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps
+0.00s setup    tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.00s teardown tests/validation/test_port_gradient_load.py::test_gradient_load_projection_is_consistent_and_reported
+0.00s setup    tests/validation/test_port_self_impedance_energy.py::test_magnetic_energy_reactance_against_grover
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_filament_reference_two_independent_routes[far 4d-0.04-0.16]
+0.00s teardown tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s teardown tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.00s setup    tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.00s teardown tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_finite_cross_section_correction_is_percent_scale
+0.00s teardown tests/validation/test_port_gradient_load.py::test_gradient_subspace_identity_holds_for_the_solved_field
+0.00s setup    tests/validation/test_tolerance_policy.py::test_validation_tolerance_policy_is_ordered_and_positive
+0.00s call     tests/validation/test_port_gradient_load.py::test_blind_control_without_the_imaginary_unit_is_order_one
+0.00s teardown tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_matches_complex_power_identity
+0.00s teardown tests/validation/test_port_self_impedance_energy.py::test_reaction_diagonal_real_part_is_structurally_zero
+0.00s teardown tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.00s call     tests/validation/test_tolerance_policy.py::test_validation_tolerance_policy_is_ordered_and_positive
+0.00s setup    tests/validation/test_mutual_inductance_reference.py::test_finite_cross_section_correction_is_percent_scale
+0.00s teardown tests/validation/test_port_gradient_load.py::test_blind_control_without_the_imaginary_unit_is_order_one
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_modulus_convention_control_is_detectable
+0.00s teardown tests/validation/test_mutual_inductance_reference.py::test_filament_reference_matches_logged_omega_m12
+0.00s teardown tests/validation/test_tolerance_policy.py::test_validation_tolerance_policy_is_ordered_and_positive
+================= 23 passed, 132 warnings in 121.52s (0:02:01) =================
+
+## Exit
+- Status: 0
+- Elapsed (s): 122

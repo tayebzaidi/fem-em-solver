@@ -417,7 +417,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-14` | Diagnose the rank-dependence of `test_single_port_excitation` (known-issues 6) | ✅ | standard |
 | `OPS-15` | Retire the checker's standing freshness tax: default `--max-age-s` 1 h → 48 h | ✅ 2026-08-10 | smoke |
 | `OPS-16` | Retry-on-529 in the three automation launchers (two review slots lost 2026-08-13; rubric in the §9 item) | 🚫 | smoke |
-| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots; **rescoped 2026-08-18 03:00 review as (b1) remainder + (b2) validation**, one slot each; **(b1) attempt 1 2026-08-18 🟡 — command 1 completed (3 failed / 122 passed / 1 xfailed, 392.76 s, the three failures exactly the named expected ones, one rank-dependent XDMF count delta), command 2 exit 124 at 44%: complex `tests/solver` is > 12× real, not 2.6×. The leg's real finding is that attempt 3's "cache artifact" call was wrong — on a cold cache `test_coil_phantom_magnetostatics` fails in 5.58 s with a genuine `ComplexComparisonError`**; **(b1) attempt 2 2026-08-18 ✅ CLOSED — complex `tests/solver` runs as one command, 46 passed / 2 xfailed in 111.22 s, exit 0, both ranks identical; counts reconcile to 171 non-validation complex, the same 171 leg (a) observed; defect 3's th-smoke Poynting xfail finally read in a completed leg; the ">12× real" rule is **withdrawn** as a cold-cache FFCx-JIT artifact — warm complex is ~2.7× real, and `test_gauge_penalty.py`, which killed the 480 s cold leg at 61%, is 8 passed in 20.33 s warm**. *Leg (b1) audited COMPLIANT 2026-08-18 10:30 review — the 49 = 48 + 1 and 171/209 reconciliations re-derived from the log footers, both ranks identical in the closing leg; the coil-phantom exclusion is within the written anchor (observed FAILED in its own completed log `20260818T124712Z`, two known-issues entries), with the caveat on record that the completed observation shows the warm-cache message while the genuine `ComplexComparisonError` appeared in an exit-124 run — the three-state map is disclosed in known-issues*; only leg (b2) remains) | standard |
+| `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots; **rescoped 2026-08-18 03:00 review as (b1) remainder + (b2) validation**, one slot each; **(b1) attempt 1 2026-08-18 🟡 — command 1 completed (3 failed / 122 passed / 1 xfailed, 392.76 s, the three failures exactly the named expected ones, one rank-dependent XDMF count delta), command 2 exit 124 at 44%: complex `tests/solver` is > 12× real, not 2.6×. The leg's real finding is that attempt 3's "cache artifact" call was wrong — on a cold cache `test_coil_phantom_magnetostatics` fails in 5.58 s with a genuine `ComplexComparisonError`**; **(b1) attempt 2 2026-08-18 ✅ CLOSED — complex `tests/solver` runs as one command, 46 passed / 2 xfailed in 111.22 s, exit 0, both ranks identical; counts reconcile to 171 non-validation complex, the same 171 leg (a) observed; defect 3's th-smoke Poynting xfail finally read in a completed leg; the ">12× real" rule is **withdrawn** as a cold-cache FFCx-JIT artifact — warm complex is ~2.7× real, and `test_gauge_penalty.py`, which killed the 480 s cold leg at 61%, is 8 passed in 20.33 s warm**. *Leg (b1) audited COMPLIANT 2026-08-18 10:30 review — the 49 = 48 + 1 and 171/209 reconciliations re-derived from the log footers, both ranks identical in the closing leg; the coil-phantom exclusion is within the written anchor (observed FAILED in its own completed log `20260818T124712Z`, two known-issues entries), with the caveat on record that the completed observation shows the warm-cache message while the genuine `ComplexComparisonError` appeared in an exit-124 run — the three-state map is disclosed in known-issues*; only leg (b2) remains; **(b2) attempt 1 2026-08-19 🟡 — three commands completed (impedance file `24 passed`/488 s; cost probe re-bases the stale 380 collect to **397**, validation **225**; shortest-first subset `23 passed`/121 s with the per-file sinks priced), then the written negative-result clause fired: `test_circular_loop.py` **cannot JIT-compile one form in the complex build**, reproducibly and independently of cache state — new known-issues entry, which also names the **0-byte FFCx stub** trap that mis-attributes such failures as cache artifacts (a stale stub from 2026-08-18 14:02 was still in the cache). Coverage 39/225; 186 remain, 3 blocked**) | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
 | `OPS-20` | Disposition the coil-phantom `ComplexComparisonError`: localize with `--tb=long`, then fix the form or mark `@real_only` (known-issues 2026-08-18; commissioned 2026-08-18 10:30 review) | ⬜ | standard |
@@ -1129,6 +1129,61 @@ exists, replace instead. Two steps, one implementer run each.)*
 >     hang, and the rank-dependent complex-blind XDMF test — both keep their
 >     known-issues entries. Leg (b2) (complex validation) is untouched and
 >     independent; with (b1) closed it is the only remaining part of step 3.
+>
+>   **🟡 leg (b2) attempt 1, 2026-08-19 02:00Z (21:00 slot) — command 1
+>   completed and closes the `port_gap` impedance file; the cost probe
+>   completed and re-based the counts; the shortest-first subset completed;
+>   the leg then hit its written negative-result clause on an unexpected
+>   failure and stopped.** Nothing parked (no `src/` or `tests/` change).
+>   Full journal in `docs/testing/attempts.md`.
+>   * **Command 1 completed: `24 passed` in 488.37 s**
+>     (`20260819T020055Z_OPS-17-step3f-complex-portgap-impedance.log`, exit 0,
+>     `-n 2`, `timeout -k 30 570`, complex + `FEM_EM_REQUIRE_COMPLEX=1`), both
+>     rank footers identical. 24 = 4 `tests/environment` + **20**
+>     `test_port_gap_voltage_impedance.py`. Step 2 priced this file at 448 s
+>     real; 488 s here is **1.09×**, not 2.6× — the file was already
+>     warm-cached, so the 2.6× rule is about *cold* forms, as (b1) concluded.
+>   * **The 380 collect anchor is stale and is re-based.** Complex `tests/`
+>     now collects **397** (`20260819T020943Z_...-collect-all.log`, exit 0,
+>     3 s), `tests/environment` + `tests/validation` **229**
+>     (`20260819T020934Z_...-collect-validation-full.log`), and the same minus
+>     both `port_gap` files **207** (`20260819T020916Z_...-collect-
+>     validation.log`). So validation is **225** (not 206/209), non-validation
+>     is 397 − 225 = **172** against leg (b1)'s observed 171, and
+>     `test_port_gap_voltage_padding.py` is **2** tests (225 − 203 − 20). The
+>     growth is this week's landings (`EX-24` `ports:3`, `TH-12` step 2,
+>     `POST-5`); **the +1 non-validation delta is unattributed and is a
+>     bookkeeping item for the review**, not a defect claim.
+>   * **Shortest-first subset completed: `23 passed` in 121.54 s**
+>     (`20260819T021017Z_...-complex-validation-subset1.log`, exit 0, `-n 2`,
+>     `timeout -k 30 480`), both ranks identical — `test_mutual_inductance_
+>     reference`, `test_tolerance_policy`, `test_current_divergence`,
+>     `test_resonance_guard`, `test_port_gradient_load`,
+>     `test_port_self_impedance_energy`. `--durations=0` prices the sinks:
+>     `test_port_gradient_load` **45.79 s setup**, `test_port_self_impedance_
+>     energy` **43.57 s setup**, `test_resonance_guard` **25.68 s call** — the
+>     rest are ≤ 2.82 s. The window was **underfilled** (121 of 480 s); a
+>     future leg can carry roughly 4× this batch.
+>   * **Negative result, per the item's written clause: an unexpected
+>     failure.** The second batch (`test_convergence`, `test_circular_loop`,
+>     `test_straight_wire`, `test_helmholtz_magnitude`, `test_helmholtz_v2`,
+>     `test_geometry_floor_discriminator`, `test_field_consistency_metrics`,
+>     `test_waveguide_cutoff`) hit `test_circular_loop.py::test_circular_
+>     loop_on_axis` **FAILED** at 31% and then hung to `exit 124`
+>     (`20260819T021242Z_...-subset2.log`, 481 s). It is an **FFCx JIT
+>     compilation failure in the complex build**, not a physics failure — no
+>     assertion is reached. Reproduced isolated (`1 failed, 2 deselected in
+>     109.58 s`, exit 1) and, decisively, **reproduced after deleting every
+>     0-byte stub in the FFCx cache**, which the test then re-created at the
+>     same hash (exit 124, 421 s). Full entry, including the **poisoned 0-byte
+>     stub** trap and a stale stub dated 2026-08-18 14:02 found in the cache
+>     at preflight, is in `docs/testing/known-issues.md`. Cache was **not**
+>     cleared wholesale (per the 10:30 amendment); the targeted delete was the
+>     diagnostic and it exonerated the cache.
+>   * **Leg (b2) coverage after this attempt: 39 of 225 validation tests**
+>     observed in completed legs (20 impedance + 19 subset-1 validation).
+>     Remaining tail: 186, of which `test_circular_loop.py` (3) is **blocked**
+>     by the JIT defect and the padding file (2) stays deferred as written.
 
 **`OPS-20` — disposition the coil-phantom `ComplexComparisonError`** ⬜
 *(commissioned 2026-08-18, 10:30 review, from the two `OPS-17` leg-(b1)

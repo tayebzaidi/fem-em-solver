@@ -28,6 +28,22 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### `tests/validation/test_circular_loop.py` cannot JIT-compile one form in the **complex** build — and the killed compile leaves a 0-byte FFCx stub that poisons every later run needing that form (`OPS-17` leg (b2), 2026-08-19)
+
+**Verified at `e2295bf`, 21:00 implementer slot, three independent runs.**
+Real mode is unaffected — this file is green in the real-mode leg (a) sweep.
+
+| | |
+|---|---|
+| **Tests** | `tests/validation/test_circular_loop.py::TestCircularLoop::test_circular_loop_on_axis` (FAILED) and `::test_circular_loop_field_symmetry` (never returns; takes the window to `exit 124`), complex build only |
+| **Symptom** | `RuntimeError: Failed just-in-time compilation of form: Compilation failed on root node.` on rank 0 (`dolfinx/jit.py:91`); rank 1 raises the same `RuntimeError` with `JIT compilation timed out, probably due to a failed previous compile. Try cleaning cache (e.g. remove /root/.cache/fenics/libffcx_forms_3b01242391fa699f45d97f502c916e1a1c96c1e6.c)`. Teardown then emits `AttributeError: 'LinearProblem' object has no attribute '_solver'` (a secondary, not the fault). The call is **109.07 s** — nearly all of it in the failing compile. |
+| **Evidence it is not a cache artifact** | Three runs, same commit. (i) In a mixed batch: FAILED at 31%, then the next test in the file hung to `exit 124` (`20260819T021242Z_OPS-17-step3f-complex-validation-subset2.log`, 481 s). (ii) Isolated, `--tb=long`: `1 failed, 2 deselected in 109.58 s` (`20260819T022120Z_OPS-17-step3f-complex-circularloop-onaxis.log`, exit 1). (iii) **After deleting every 0-byte stub in `/root/.cache/fenics`**, the same test FAILED again and **re-created the identical hash `3b01242…` at 0 bytes** (`20260819T022356Z_OPS-17-step3f-complex-circularloop-repaired.log`, exit 124, 421 s). A cache artifact does not survive its own repair, and does not regenerate the same hash at zero length. |
+| **Cause** | Not diagnosed. FFCx swallows the root-node compiler error, so the log carries only "Compilation failed on root node." The 0-byte `.c` is the *symptom* of the killed/aborted compile, not the cause. What is established: the failure is deterministic, complex-build-specific, form-specific (one hash), and independent of cache state. |
+| **Second-order damage — the poisoned-stub trap** | A 0-byte stub left by any killed compile makes **every later run that needs that form** fail this way rather than recompiling, and the message blames the cache, not the form. A stale stub from **2026-08-18 14:02** (leg (b1) attempt 2's era) was still sitting in the cache when this slot started — i.e. this has been silently mis-attributed before. Sweep with `find /root/.cache/fenics -name '*.c' -size 0` before trusting any "JIT compilation timed out" message; that check is cheap and should precede any cache-clear. Note this cuts **against** reflexively clearing `~/.cache/fenics`: the targeted delete is the diagnostic, and here it *exonerated* the cache. |
+| **Not** | Not the `>12× real` cost rule (withdrawn 2026-08-18) and not a solve cost — 109 s of compile, 0 s of setup. Not a physics or tolerance failure: no assertion is ever reached. Not a real-mode issue. |
+| **Fix** | Not attempted; out of scope for a bookkeeping leg. Cheapest next probe: re-run the one test with `FFCX_...` verbose/`-o log_level=DEBUG` or a direct `ffcx` invocation on the form to recover the swallowed compiler error, then check whether the form carries an unpinned quadrature degree on a `SpatialCoordinate` (the trap the 18:00 review appended to the protocol list) — this file's on-axis comparison is exactly that shape. |
+| **Resolves with** | Not yet commissioned — for the review. Blocks `OPS-17` leg (b2) from observing this file in a completed leg. |
+
 ### 1. ✅ RETIRED 2026-07-31 — stale test double, `DummyMagnetostaticSolver`
 
 The two phantom tests

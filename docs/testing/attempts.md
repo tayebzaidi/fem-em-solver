@@ -14172,3 +14172,116 @@ untouched by this run and its cost note still holds; the FFCx cache is warmer
 than the 10:30 review's note assumed for *port* forms specifically, but the
 `tests/validation` bulk it prices remains cold, so its collect-only probe
 should still be treated as buying a measurement rather than confirming one.
+
+---
+
+## 2026-08-19 02:00Z — `OPS-17` step 3 leg (b2), attempt 1 — **incomplete**
+
+**Slot:** 21:00 local implementer run. **Item:** §9 On deck #2 (item 1,
+`EX-24`, was already done). **Outcome: incomplete** — three commands
+completed and are usable, then the item's own written negative-result clause
+("an unexpected failure or count delta — known-issues entry, report, stop")
+fired. **Nothing parked:** no `src/`, `tests/`, or `scripts/` change was made
+at any point, so there is no `attempt/*` branch; `main` is clean.
+
+**Preflight.** Tree clean, container Up 21 h, `memory.max` 64 GiB, zero stray
+`python3`. Per the 10:30 amendment the FFCx cache was **not** cleared — there
+was no evidence of a killed prior run at preflight (309 cache entries, no
+orphan processes). *That judgement turned out to be half-wrong and it matters:
+a `find /root/.cache/fenics -name '*.c' -size 0` sweep, which I only ran later
+as a diagnostic, would have shown a **0-byte stub dated 2026-08-18 14:02**
+sitting there since leg (b1)'s era. The amendment's "evidence of a killed prior
+run" test should be that `find`, not process/entry counts.*
+
+**Command 1 — the impedance file, as written.** `tests/environment` +
+`test_port_gap_voltage_impedance.py`, `-n 2`, `timeout -k 30 570`, complex +
+`FEM_EM_REQUIRE_COMPLEX=1`: **24 passed in 488.37 s**, exit 0, both rank
+footers identical (`20260819T020055Z_OPS-17-step3f-complex-portgap-
+impedance.log`, harness elapsed 490 s). 24 = 4 environment + **20** impedance.
+Step 2 priced the file at 448 s in *real* mode; 488 s complex is **1.09×**.
+That is not a contradiction of the 2.6× rule — it confirms (b1)'s correction
+that the multiplier is **cold-form JIT**, and these port forms were warm.
+
+**Command 2 — the collect-only cost probe. It re-bases a stale anchor.** The
+item's anchor is "counts reconciled against the 380 collect"; the 380 is from
+2026-08-18 05:00 and **no longer holds**. Measured now, all exit 0, ~2–3 s
+each: complex `tests/` collects **397** (`20260819T020943Z_...-collect-
+all.log`); `tests/environment` + `tests/validation` **229**
+(`20260819T020934Z_...-collect-validation-full.log`); the same minus both
+`port_gap` files **207** (`20260819T020916Z_...-collect-validation.log`).
+Derived: validation = **225**, non-validation = 397 − 225 = **172**,
+`test_port_gap_voltage_padding.py` = **2** tests. Leg (b1) observed **171**
+non-validation, so there is a **+1 delta**. The +17 total is this week's
+landings (`EX-24` `ports:3`, `TH-12` step 2, `POST-5`); I did **not** attribute
+the +1 line-by-line and am not claiming it is benign — **it is a bookkeeping
+item for the review.** Leg (b2)'s true scope is 225, not the 209 the plan text
+says.
+
+**Command 3 — shortest-first subset, completed.** `tests/environment` +
+`test_mutual_inductance_reference`, `test_tolerance_policy`,
+`test_current_divergence`, `test_resonance_guard`, `test_port_gradient_load`,
+`test_port_self_impedance_energy`, `-n 2`, `timeout -k 30 480`,
+`--durations=0`: **23 passed in 121.54 s**, exit 0, both ranks identical
+(`20260819T021017Z_...-complex-validation-subset1.log`). Per-file sinks now
+priced for the next leg: `test_port_gradient_load` **45.79 s setup**,
+`test_port_self_impedance_energy` **43.57 s setup**, `test_resonance_guard`
+**25.68 s call**, everything else ≤ 2.82 s. **I underfilled the window** —
+121 s of 480 — because I picked the batch from known-issues anecdotes rather
+than measured numbers. The next leg can carry ~4× this batch.
+
+**Command 4 — the negative result.** Second batch (`test_convergence`,
+`test_circular_loop`, `test_straight_wire`, `test_helmholtz_magnitude`,
+`test_helmholtz_v2`, `test_geometry_floor_discriminator`,
+`test_field_consistency_metrics`, `test_waveguide_cutoff`), same shape:
+`test_circular_loop.py::test_circular_loop_on_axis` **FAILED** at 31%, the
+next test in the file never returned, `exit 124` at 481 s
+(`20260819T021242Z_...-subset2.log`).
+
+**Diagnosis — three runs, and the repair is what settles it.** This is an
+**FFCx JIT compilation failure in the complex build**, not a physics failure;
+no assertion is ever reached.
+1. Isolated with `--tb=long`: `1 failed, 2 deselected in 109.58 s`, exit 1
+   (`20260819T022120Z_...-circularloop-onaxis.log`). Rank 0:
+   `RuntimeError: Failed just-in-time compilation of form: Compilation failed
+   on root node.` Rank 1: the same `RuntimeError` with `JIT compilation timed
+   out, probably due to a failed previous compile … remove
+   /root/.cache/fenics/libffcx_forms_3b01242391fa699f45d97f502c916e1a1c96c1e6.c`.
+   Duration is **109.07 s call, 0.00 s setup** — all compile, no solve.
+2. That named file was on disk at **0 bytes**, timestamped 02:18 — inside my
+   own killed batch-2 window. A cache-poisoning story fits perfectly. **It is
+   wrong.**
+3. I deleted **every** 0-byte `.c` in the cache (2 of them: mine, and one from
+   **2026-08-18 14:02**) and re-ran the file: it **FAILED again and re-created
+   the identical hash at 0 bytes** (`20260819T022356Z_...-circularloop-
+   repaired.log`, exit 124, 421 s). A cache artifact does not survive its own
+   repair. The stub is the **symptom** of the aborted compile, not its cause.
+
+So: deterministic, complex-build-specific, form-specific, cache-independent.
+The root-node compiler error itself is **swallowed by FFCx** and is not in any
+log — that is the gap the next attempt has to close.
+
+**New known-issues entry** (top of "Failing tests"), covering both the failure
+and the **0-byte-stub trap**: a stub left by any killed compile makes later
+runs fail with a message that *blames the cache*, and one had been lying there
+since 2026-08-18 mis-attributing this class of failure. Note the trap cuts
+against reflexive `~/.cache/fenics` clearing — here the targeted delete was the
+diagnostic and it **exonerated** the cache.
+
+**Coverage.** 39 of 225 validation tests observed in completed legs (20 + 19).
+Tail 186, of which `test_circular_loop.py` (3) is blocked and the padding file
+(2) stays deferred as written. Leg (b2) needs at least two more slots.
+
+**Denials:** none. **Container:** healthy throughout — no OOM, no wedge, no
+force-recreate. Cache left warm, with the 0-byte stubs removed (the
+`circular_loop` one will regenerate on the next run of that file).
+
+**Hypothesis for the next attempt:** the swallowed compiler error is
+recoverable cheaply — run the single test with FFCx logging raised (or invoke
+`ffcx` directly on the form) to get the real message, and check first whether
+this form carries an **unpinned `quadrature_degree` on a `SpatialCoordinate`**
+expression, which is exactly the trap the 18:00 review appended to the protocol
+list after `POST-5` step 1 burned two windows on it; `test_circular_loop`'s
+on-axis analytic comparison is that shape. Independently, leg (b2) should
+resume with a **4×-larger** shortest-first batch (the 121 s reading says the
+budget is there), excluding `test_circular_loop.py` until the JIT defect is
+dispositioned.
