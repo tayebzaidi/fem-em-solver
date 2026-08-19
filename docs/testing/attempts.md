@@ -14855,3 +14855,68 @@ completed run per slot rather than three. `test_poynting_balance.py` (10
 tests, gmsh h-ladder) must have a window to itself — the §9 suite-growth
 warning applies. At ~19 tests/slot the tail is ~8 more slots; at one
 priced family per slot it is ~14 but with no wasted windows.
+
+---
+
+## 2026-08-19T18:37Z — `TH-12` step 3 — **complete**
+
+**Slot** 13:30 local implementer run. **On-deck item** 2 (item 1 was marked
+done by the 12:00 slot). Preflight clean: tree clean on `main`, container Up
+37 h, stub sweep found zero zero-byte `*.c` in `/root/.cache/fenics`.
+
+**What was tried.** New module
+`tests/validation/test_degree2_energy_mechanism.py` — the smoke fixture
+(1 405 cells, axial `J·n ≠ 0` drive) and the `TH-12` step-1 sphere rung
+(5 866 cells, imposed field) each solved at N1curl degree 1 and 2, with `W_e`
+and `W_m` assembled by the **imported** `stored_electric_energy` /
+`_stored_magnetic_energy` (the §7 trap: never restate the forms). One
+supporting edit to `tests/validation/test_lossy_sphere_degree2.py`: `_run_at_degree`
+now also returns the solved `fields` on its row, so the energies come off the
+*same* solve the step-1 records are read from instead of a re-run. No recorded
+number moves; that file's own two gates re-run green in the final log.
+
+**Measured.** Cross-order move in `W_e/W_m`: **smoke 1.155×**
+(2.164348 → 2.499688), **sphere 1.015×** (1.068190 → 1.052552), against the
+coil's recorded **3.426e+07×** (6.677632e-06 → 2.287540e+02, printed not
+re-run). Pre-registered band ≤ 10× on both ⇒ **COIL-SPECIFIC**; `J·n ≠ 0` is
+**not sufficient** to fill the second-order gradient subspace. Anchors green:
+smoke degree-1 dissipated power reproduces `POST-5`'s **1.199162e-06 W** at
+`rtol=1e-6` on exactly 1 405 cells; sphere reproduces step 1 at both orders
+(degree-1 power error inside the imported 0.002 pp control band, degree-2
+**0.1405%** relL2 / **0.0058%** power error inside `EX-25`'s 1% band), cells
+5 866 and DOFs 7 591 / 39 634 exact, `|Im P|/Re P` under 1e-9 at both orders.
+Negative control **asserted**, not printed: the compatible drive's 1.015× is
+inside the 10× band. Nothing was loosened; the two degree-2 coil identity
+tests stay failing and the known-issues entry stays open.
+
+**Confound recorded in all three places (§7, known-issues, module docstring).**
+The fixtures' baseline `W_e/W_m` spans **2.16 / 1.07 / 6.7e-6**, so a
+contamination of fixed *absolute* size moves the quasi-static coil's ratio
+~1e6× more than either cheap fixture's. The step therefore excludes "`J·n ≠ 0`
+is sufficient" but does **not** separate "the coil's feed model injects it"
+from "only a `W_m ≫ W_e` fixture can display it".
+
+**Logs** (standard tier, `-n 2`, complex build, `timeout -k 30 400`, every
+command in the foreground):
+`20260819T183329Z_TH-12-step3-compile.log` (cold compile window, 7 passed +
+1 skipped, exit 0, 15 s), `20260819T183425Z_TH-12-step3-warm.log` (the
+measurement, 8 passed, exit 0, **10 s**), `20260819T183607Z_TH-12-step3-final.log`
+(final tree state + the edited sphere file as regression, **10 passed**, exit 0,
+16 s). The cold and warm windows print the four ratios **identically to every
+digit**, so the reading reproduces across processes.
+
+**One in-run change of my own.** The first window `skip`ped the reading test
+because I had gated only the GENERIC branch; COIL-SPECIFIC is an equally
+definite pre-registered branch, so the assertion was made symmetric (both
+moves ≤ 10×, smoke < 1e3×) before the measurement window. That is a
+strengthening, not a loosening — the mechanism is now gated on a 1 405-cell
+fixture instead of a 62 GiB one.
+
+**Hypothesis for the next attempt.** Nothing is left of step 3; the chunk is
+🟡 on the weekly review's production-order clause alone. If the review wants
+the confound split, the cheap discriminator is a **magnetically-dominated
+fixture with a compatible drive** — e.g. the `MAT-6` wire/loop fixture driven
+by the projected (divergence-free) source at 10 MHz, both orders, ~1 min:
+if `W_e/W_m` explodes there too, the injector is the `W_m ≫ W_e` regime and
+the feed model is exonerated; if it does not, the feed model is named and
+disposition (a) becomes the fix.

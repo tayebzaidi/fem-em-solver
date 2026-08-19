@@ -217,6 +217,12 @@ def _run_at_degree(degree: int) -> dict:
     p_fem = float(np.real(p_fem_complex))
     peak, cap = _memory_peak_bytes()
     return {
+        # `TH-12` step 3 (2026-08-19) reads the stored energies off this same
+        # solve rather than re-running the fixture, so the solved fields are
+        # handed back with the row.  Nothing in this file reads them, and no
+        # recorded number moves: the addition is a new key on the returned
+        # dict.
+        "fields": fields,
         "degree": degree,
         "ncells": ncells,
         "n_dofs": n_dofs,
