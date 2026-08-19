@@ -14078,3 +14078,97 @@ it does not, the boundary leg's assembly is next, probed against the `TH-6`
 plane wave where both legs are known in closed form. The two defects sharing
 one cause would be a real economy — worth checking whether one fix closes
 both.
+
+## 2026-08-19T00:55Z — `EX-24` lumped-sheet port example, attempt 1 — **complete**
+
+**Item:** §9 On deck #1 (18:00 review), `EX-24` with the 2026-08-18 addendum's
+sweep-route leg. Standard tier, `-n 2`, complex build, via `./run_examples.sh`.
+
+**Outcome: closed as written, both legs, first run — every gate held and no
+band moved.** Preflight clean, container Up (19 h), no `attempt/*` or
+`recovered/*` branches.
+
+**What was done.**
+
+1. `examples/ports/03_lumped_sheet_port_widths.py` (`ports:3`, auto-discovered
+   by the runner, which sources complex mode for the `ports:` group) +
+   same-stem guide `03_lumped_sheet_port_widths.md` in the same commit
+   (`EX-15` rule).
+2. **Leg 1, the width ladder** (`PORT-9` step 2b): one mesh, `f ∈ {1.0, 0.735,
+   0.5}` as three lumped-BC assembles + solves, both routes read off each
+   field.
+3. **Leg 2, the sweep** (step 2c addendum): both `21x` sheets narrowed to
+   `f = 0.5`, two-port S-matrix through `run_n_port_sparameter_sweep` on the
+   `LumpedSheetPortSpec` route.
+4. ParaView: the `f = 0.5` phasor (`E_real`/`E_imag`/`E_magnitude`) beside
+   `CellTags` in the combined file, facet tags 211/212 in a second.
+
+**Measured (log `20260819T003401Z_EX-24-example-n2.log`).**
+
+| Quantity | Band (imported) | Measured |
+| --- | --- | --- |
+| cross-route, `f = 0.5` | ≤ 5% | **1.8333%** |
+| ladder | — | 7.7095% / 3.6730% / 1.8333% |
+| `f = 1.0` vs `STEP1_CROSS_ROUTE_RECORD` | < 1e-4 | reproduced (7.7095%) |
+| `f = 1.0` vs `STEP1_GAP_RATIO_RECORD` | < 1e-4 | reproduced (0.894310) |
+| `f = 1.0` inverted control | must **miss** 5% | 7.7095% > 5% ✓ |
+| gap ratio flat across ladder | < 1e-4 drift | 0.894310/0.894324/0.894349, drift **3.9e-5** |
+| open-limit identity per width | < 1e-11 | 1.772e-15 / 8.521e-16 / 2.103e-16 |
+| sweep ‖S−Sᵀ‖/‖S‖ | ≤ 1e-3 | **2.574296e-11** (step 2c record 2.574249e-11) |
+| cross-route through the sweep | ≤ 5% | 1.6079% / 1.5950% |
+| meshed/analytic gap volume | < 1e-9 | 1.000000000000 |
+
+Geometry printed, not gated: 184 919 cells; sheets 1585 → 1511 → 1375 facets,
+areas 1.0000 / 0.7324 / 0.4973 of CAD, `w = A/h` 1.040000000e-02 /
+7.616677977e-03 / 5.171485579e-03 m against bbox extents 1.040000000e-02 /
+8.780489185e-03 / 5.905570485e-03 m (the 15.3% / 14.2% ragged-edge gap the
+`w = A/h` trap is about); `S11 = S22 = 0.9869`, `|S12| ≈ 2.3e-6` (near-open
+probe termination, weak coupling at 10 MHz).
+
+**Cost.** Mesh 40.1 s, solves 26.9 / 24.1 / 24.1 s, sweep 52.3 s, 237.5 s
+in-script, **239 s harness** at `-n 2`, standard tier, `-t 500`. Under the
+plan's ~260 s estimate because **both legs share one mesh**: the midpoint
+filter `_narrowed_sheet_tags` is non-mutating, so the ladder's original
+`facet_tags` feeds the sweep's two-sheet composition unchanged. Worth reusing
+for `PORT-9` step 3, where a birdcage mesh is the expensive part.
+
+**Three findings worth carrying forward.**
+
+1. *One mesh serves both legs* (above) — the plan budgeted two.
+2. *The example adds a control the tests do not have*: the **gap route
+   asserted flat** across the ladder. The gap route cannot see the port BC's
+   sheet, so a gap ratio that moved with `f` would mean the narrowing
+   perturbed the field rather than the port reading, and the ladder would be
+   an artifact. Measured drift 3.9e-5, asserted against `REPRODUCTION_BAND`.
+3. *The sweep's cross-route sits ~0.23 pp below the ladder's at the same
+   width* (1.6079/1.5950% vs 1.8333%). Expected in direction — the impressed
+   **sheet** drive reads slightly closer to the centreline than the impressed
+   **gap current** drive — and it is why the step-2c test reports rather than
+   gates that comparison. `PORT-9` step 3 should expect this systematic, not
+   debug it.
+
+**Method note.** Before spending the 240 s window, a 4 s **import-only smoke
+check** of the example module ran through the harness
+(`20260819T003342Z_EX-24-importcheck.log`, exit 0): `exec_module` on the file
+with `PYTHONPATH=/workspace/src:/workspace`. It costs nothing and would have
+caught a typo in the *second* leg, which otherwise only surfaces ~250 s in.
+Cheap insurance for any example that imports a dozen test modules.
+
+**Logs.** `20260819T003342Z_EX-24-importcheck.log` (exit 0),
+`20260819T003401Z_EX-24-example-n2.log` (exit 0, 239 s),
+`20260819T003912Z_EX-24-docrefs.log` (**exit 2**, `dead=0 guide=0 stale=24
+stale_severity=report` — staleness-only, all 24 `EX-22`'s standing backlog and
+none this example's; guide pass green, 32 guides scanned, 100 file references
+checked). `OPS-19` contract: gate is `exit != 1`, satisfied.
+
+**Container:** healthy throughout — no OOM, no wedge, no force-recreate. FFCx
+cache left **warm**, now including the lumped-sheet bilinear form and the
+sweep route's forms at this fixture.
+
+**Nothing new for known-issues.md** — no unrelated failure was met.
+
+**Hypothesis for the next attempt:** §9 On deck #2 (`OPS-17` step 3 leg b2) is
+untouched by this run and its cost note still holds; the FFCx cache is warmer
+than the 10:30 review's note assumed for *port* forms specifically, but the
+`tests/validation` bulk it prices remains cold, so its collect-only probe
+should still be treated as buying a measurement rather than confirming one.

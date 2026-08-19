@@ -3442,7 +3442,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-21` | Graded birdcage conductor mesh (`GEO-15`'s newly gated capability: first birdcage example of any kind — geometry angle no example covers; mesh-only, no solve; full rubric in the §9 item, commissioned 2026-08-16 10:30 review) | ✅ (2026-08-16: `mesh:3`, `examples/meshing/03_birdcage_graded_conductors.py` + same-stem guide; two rungs of the same fixture on the **CAD (occ) mass** denominator — graded `h_c` = 1.6 mm keeps **0.967019** ≥ the imported `CAD_MASS_GATE` = 0.95, baseline global `setSize` keeps **0.740335** and is asserted to *fail* the same gate (`EX-18` inverted-assertion pattern), **separation 0.226685**; `GEO-9` box-partition identities re-asserted on **both** rungs < 1e-9 and the conductor CAD mass identical across them < 1e-12; 48 245 → 98 474 cells, 26.0 s at `-n 2`, standard. Every constant imported from the `GEO-15`/`GEO-9` test modules, none restated (`ANS-1`). Logs `20260816T200348Z_EX-21-example-n2.log` and `20260816T200516Z_EX-21-example-n2-final.log` (ratios bit-identical across both); docrefs `20260816T200505Z_EX-21-docrefs-fix.log` — 24 dead references, all pre-existing staleness from other examples, **none EX-21's** (its one own violation was found and fixed by the first docrefs run). **Measured note for `PORT-9` step 3:** the graded birdcage is 98 474 cells, confirming that entry's 98 k budget) | standard |
 | `EX-22` | Restore the absent example artifacts: refresh runs for `mag` 01/02/04/05/06 + `mri:1` (commissioned 2026-08-16 weekly review — see entry below) | ⬜ | heavy |
 | `EX-23` | Two-torus port-sheet mesh (`GEO-16`'s newly gated capability: first example with an interior sheet surface, facet tags rebuilt dolfinx-side — geometry angle no example covers; mesh-only, no solve; commissioned 2026-08-17 review) | ✅ (2026-08-17: `mesh:4`, `examples/meshing/04_two_torus_port_sheet.py` + same-stem guide; both sheets **84 facets**, meshed/CAD = **1.000000000000** inside the imported `AREA_IDENTITY_BAND` = 1e-9, 211/212 area symmetry bit-identical (< 1e-12), out-of-plane spread **3.469e-18** m; kwarg-off control reproduces **79 534** cells with cell tags `{1,2,3,101,102}`, facet tags `{1,201,202}` and sheet tags asserted *absent* (`EX-18` inverted-assertion pattern); extents printed not gated — w = 1.200000000e-02 m, h = 7.977525299e-03 m, **w/h = 1.504225878** against the generator's CAD-side 1.504206917; port areas 1.563786482e-04 m² on both 201/202, unmoved. 79 888 cells / 13.7 s sheet mesh, 79 534 / 12.2 s control, **26.0 s** in-script (30 s harness) at `-n 2`, standard. Every constant imported from `tests/mesh/test_two_torus_port_sheet.py` and the `PORT-1` facet module (`ANS-1`) except `SHEET_SYMMETRY_BAND = 1e-12`, which the test holds only as an inline literal and the example restates unloosened (10:30-review audit note). Logs `20260817T140233Z_EX-23-list.log`, `20260817T140242Z_EX-23-example-n2.log`, docrefs `20260817T140416Z_EX-23-docrefs.log` — `dead=0 guide=0 stale=24 exit=2`, staleness-only and **none EX-23's** (its own artifacts are fresh; the 24 are `EX-22`'s standing backlog), guide pass green: 22 runnable examples checked, 31 guide files scanned (the 03:00-era "31 guides green" conflated the two counts; corrected 10:30 review)) | standard |
-| `EX-24` | Lumped-sheet port at interior width (`PORT-9` step 2b's newly gated capability: first example instantiating the lumped-element port BC — the drive/BC angle `EX-18`/`EX-20`, both gap-voltage, do not cover; commissioned 2026-08-17 18:00 review) | ⬜ | standard |
+| `EX-24` | Lumped-sheet port at interior width (`PORT-9` step 2b's newly gated capability: first example instantiating the lumped-element port BC — the drive/BC angle `EX-18`/`EX-20`, both gap-voltage, do not cover; commissioned 2026-08-17 18:00 review) | ✅ (2026-08-18: `ports:3`, `examples/ports/03_lumped_sheet_port_widths.py` + same-stem guide; **both legs on one mesh** — the width ladder reproduced **7.7095% → 3.6730% → 1.8333%** and the gate at `f = 0.5` held at **1.8333%** against the imported, unmoved `CROSS_ROUTE_BAND` = 5%; `f = 1.0` reproduced `STEP1_CROSS_ROUTE_RECORD` (0.077095) and `STEP1_GAP_RATIO_RECORD` (0.894310) inside `REPRODUCTION_BAND` = 1e-4 **and** was asserted to *miss* the 5% band (`EX-18` inverted pattern), while the gap route stayed flat at 0.894310/0.894324/0.894349 × ω·M₁₂ (drift 3.9e-5 < 1e-4 — a third control this example adds); open-limit identity `V = −(1/w_f)∫_S E·ĥ dS` at **1.8e-15 / 8.5e-16 / 2.1e-16** against 1e-11 per width; sweep leg through `LumpedSheetPortSpec` gave `is_placeholder=False` and **‖S−Sᵀ‖/‖S‖ = 2.574296e-11** against the 1e-3 band (step 2c's record 2.574249e-11, reproduced to 4.7e-16 absolute), cross-route inside the sweep **1.6079% / 1.5950%** (~0.23 pp below step 2b's 1.8333% — the drive differs, reported not gated); gap-box volume 1.000000000000, sheets 1585 → 1511 → 1375 facets, planar to < 1e-12, `w = A/h` asserted equal to the bbox extent on the `f = 1.0` rectangle and strictly below it on both narrowed sheets. 184 919 cells / 40.1 s mesh, solves 26.9/24.1/24.1 s, sweep 52.3 s, **237.5 s** in-script (239 s harness) at `-n 2`, standard. Every band and record imported from `test_port_lumped_two_torus.py`, `test_port_lumped_narrowed_sheet.py`, `test_port_lumped_sheet_sweep.py` and `test_port_package_sparameters.py` (`ANS-1`); none restated. Logs `20260819T003342Z_EX-24-importcheck.log`, `20260819T003401Z_EX-24-example-n2.log`, docrefs `20260819T003912Z_EX-24-docrefs.log` — `dead=0 guide=0 stale=24 exit=2`, staleness-only and **none EX-24's** (the 24 are `EX-22`'s standing backlog), guide pass green at 32 guides scanned) | standard |
 | `EX-25` | Degree-2 Larmor sphere: accuracy-per-cost side by side (`TH-12` step 1's newly gated capability: first example at any element order other than 1 — the discretization angle no example covers; commissioned 2026-08-18 10:30 review) | ⬜ | standard |
 
 **`EX-25` — degree-2 Larmor sphere: accuracy-per-cost side by side** ⬜
@@ -3478,10 +3478,28 @@ the `OPS-21` known-issues entry before asserting on attribute names);
 **Negative result:** drift beyond the band is an example-path regression
 — known-issues entry, report, stop.
 
-**`EX-24` — lumped-sheet port at interior width** ⬜ *(commissioned
-2026-08-17 18:00 review, §5.4 ramp on `PORT-9` step 2b's newly gated
-capability — the f = 0.5 cross-route band held 2026-08-17 at 1.8333%
-against 5%)*. `EX-18`/`EX-20` demonstrate the **gap-voltage** route
+**`EX-24` — lumped-sheet port at interior width** ✅ *(2026-08-18, 19:30
+slot; commissioned 2026-08-17 18:00 review, §5.4 ramp on `PORT-9` step
+2b's newly gated capability — the f = 0.5 cross-route band held
+2026-08-17 at 1.8333% against 5%)*. **Closed as written, both legs, on
+one run** — every element of the rubric below executed and no band
+moved: ladder 7.7095% / 3.6730% / 1.8333% (gate at f = 0.5 **1.8333%**
+against 5%), f = 1.0 reproducing both step-1 records inside 1e-4 *and*
+asserted to miss the band, open-limit identity ≤ **1.8e-15** at every
+width, sweep reciprocity **2.574296e-11** against 1e-3. Three things
+worth carrying forward: (i) the two legs **share one mesh** — the
+midpoint filter is non-mutating, so the ladder's `facet_tags` feeds the
+sweep's two-sheet composition unchanged, which bought ~40 s against the
+plan's two-mesh budget (237.5 s in-script against the ~260 s estimate);
+(ii) the example adds a control the tests do not have — the **gap route
+asserted flat** across the ladder (0.894310 → 0.894349, drift 3.9e-5
+against `REPRODUCTION_BAND`), which is what distinguishes "the narrowing
+changed the port reading" from "the narrowing changed the field"; and
+(iii) the sweep's cross-route sits **~0.23 pp below** the ladder's at
+the same width (1.6079/1.5950% vs 1.8333%) — the impressed-sheet drive
+reads slightly closer to the centreline than the impressed-gap drive
+does, a small systematic `PORT-9` step 3 should expect rather than
+debug. *(Original plan below.)* `EX-18`/`EX-20` demonstrate the **gap-voltage** route
 only; no example instantiates the lumped-element port BC (`PORT-9`
 steps 1–2b, Jin ch. 11) — the drive/BC angle. **Do:** an example on the
 `GEO-16` port-sheet solve fixture: one mesh, the f ∈ {1.0, 0.735, 0.5}
@@ -3898,8 +3916,14 @@ landing; items 3 and 6 both read the smoke fixture, but 6 uses its
 lands without the other). Items execute their §7 entries verbatim as
 annotated by this review.
 
-1. **`EX-24` — lumped-sheet port at interior width, with the
-   sweep-route leg (standard).** Execute the §7 `EX-24` entry verbatim,
+1. ~~**`EX-24` — lumped-sheet port at interior width, with the
+   sweep-route leg (standard).**~~ **done 2026-08-18, 19:30 slot** —
+   `ports:3` landed with both legs on one mesh; gate 1.8333% against
+   5%, f = 1.0 control missed the band as required, gap route flat to
+   3.9e-5, open-limit identity ≤ 1.8e-15, sweep reciprocity
+   2.574296e-11 against 1e-3; 239 s harness at `-n 2`, docrefs
+   `exit=2` staleness-only (none this example's). Original item text:
+   Execute the §7 `EX-24` entry verbatim,
    2026-08-18 addendum included: the f ∈ {1.0, 0.735, 0.5} width ladder
    as three lumped-BC solves *plus* the f = 0.5 sweep through the new
    `LumpedSheetPortSpec` route, printing `‖S−Sᵀ‖/‖S‖` beside the 1e-3
