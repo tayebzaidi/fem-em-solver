@@ -1,0 +1,119 @@
+# Test Run
+- Chunk: POST-5-step2-smoke-full
+- Commit: 05647c39d1aba50db48d0c7d613520b9344820b2
+- Time (UTC): 2026-08-19 05:12:10
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/environment tests/solver/test_time_harmonic_smoke.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 19 00:11 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/environment tests/solver/test_time_harmonic_smoke.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 11 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  9%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 11 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  9%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 18%]PASSED [ 18%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 27%]PASSED [ 27%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 36%]PASSED [ 36%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power XFAILbalance on this smoke fixture — dissipated
+1.199162e-06 W against a net inward flux of -2.008179e-07 W (imbalance
+116.7465%, and the flux has the wrong SIGN). `POST-5` step 1
+(2026-08-18) discriminated the cause: the imbalance is h-independent
+(116.7465 / 115.4059 / 114.4227% at h = 0.03 / 0.02 / 0.015, fitted rate
+0.0290 against the pre-registered 0.7) and the sign never corrects =>
+SOURCE/ASSEMBLY, so the band does NOT rescope to convergence. Band left
+strict so a fix shows as XPASS.)                                         [ 45%]XFAILbalance on this smoke fixture — dissipated
+1.199162e-06 W against a net inward flux of -2.008179e-07 W (imbalance
+116.7465%, and the flux has the wrong SIGN). `POST-5` step 1
+(2026-08-18) discriminated the cause: the imbalance is h-independent
+(116.7465 / 115.4059 / 114.4227% at h = 0.03 / 0.02 / 0.015, fitted rate
+0.0290 against the pre-registered 0.7) and the sign never corrects =>
+SOURCE/ASSEMBLY, so the band does NOT rescope to convergence. Band left
+strict so a fix shows as XPASS.)                                         [ 45%]
+tests/solver/test_time_harmonic_smoke.py::test_smoke_fixture_boundary_measure_is_outward_oriented 
+tests/solver/test_time_harmonic_smoke.py::test_smoke_fixture_boundary_measure_is_outward_oriented PASSED [ 54%]PASSED [ 54%]
+tests/solver/test_time_harmonic_smoke.py::test_poynting_imbalance_h_ladder_discriminates_resolution_from_source 
+tests/solver/test_time_harmonic_smoke.py::test_poynting_imbalance_h_ladder_discriminates_resolution_from_source PASSED [ 63%]PASSED [ 63%]
+tests/solver/test_time_harmonic_smoke.py::test_closed_azimuthal_drive_discriminates_source_from_assembly 
+tests/solver/test_time_harmonic_smoke.py::test_closed_azimuthal_drive_discriminates_source_from_assembly PASSED [ 72%]PASSED [ 72%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve PASSED [ 81%]PASSED [ 81%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_material_map_without_cell_tags_before_solve 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_material_map_without_cell_tags_before_solve PASSED [ 90%]PASSED [ 90%]
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve 
+tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_solver_rejects_unknown_material_map_tag_before_solve PASSED [100%]PASSED [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 10 passed, 1 xfailed, 8 warnings in 5.97s ===================
+
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 10 passed, 1 xfailed, 8 warnings in 5.95s ===================
+
+## Exit
+- Status: 0
+- Elapsed (s): 7

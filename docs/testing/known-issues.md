@@ -1613,6 +1613,46 @@ h-ladder on this fixture distinguishes the two in one command.
 > in PROJECT_PLAN §7 scopes the next discriminator (a closed azimuthal
 > source on the same fixture).
 
+> **Sharpened again 2026-08-19, `POST-5` step 2 — candidate (b) is excluded
+> too; the defect is in the boundary leg's assembly.** The closed-drive
+> discriminator ran on the coarse rung
+> (`20260819T051150Z_POST-5-step2-closed-drive2.log`, `-n 2`, **4 s**):
+>
+> | drive | dissipated [W] | net inward [W] | sign | imbalance | blind diss [W] |
+> |---|---|---|---|---|---|
+> | axial (record) | 1.199162e-06 | −2.008179e-07 | − | 116.7465% | 0.000000e+00 |
+> | closed azimuthal | 4.778876e-09 | −2.849722e-10 | − | 105.9632% | 0.000000e+00 |
+>
+> The azimuthal drive `J = (−y, x, 0)/a` is a *closed* source on this fixture
+> — `div J = 0` pointwise, `J·n = 0` on both end caps and on the rod's own
+> lateral surface, so the tag restriction adds no surface divergence either —
+> and it is P1-exact, so no interpolation error is folded in
+> (`_azimuthal_current` in the smoke module). Both halves of the
+> pre-registered SOURCE band fail: the imbalance moves only
+> 116.7465% → **105.9632%** (a 10.8 pp move, against a band that required
+> < 25%) and the flux **sign does not turn positive**. The axial drive re-run
+> in the same session reproduces the step-1 record to `rtol=1e-6` on all
+> three numbers (asserted, not eyeballed), so the drive is the only thing
+> that changed between the two rows. **Verdict: ASSEMBLY.** The source's
+> `J·n ≠ 0` incompatibility is real (defect 2 measures it) but it is not what
+> makes this identity fail. **Resolves with:** the boundary-leg probe named
+> in `POST-5` step 2 — scoring the curl trace `−∮½Re(E×H̄)·n̂dS` against the
+> `TH-6` lossy plane wave, where both legs have closed forms, which separates
+> a wrong `H = ∇×E/(−jωμ)` reconstruction from a wrong facet assembly. The
+> xfail keeps its 25% band and `strict=True`.
+
+> **JIT trap, 2026-08-19 (`POST-5` step 2).** The step's first window
+> (`20260819T050314Z`, exit 124 at 400 s) died with rank 1 parked in
+> `MPI_Bcast` — the dolfinx cold-JIT signature — and left **one 0-byte
+> `.c` in `/root/.cache/fenics`** (created 7 s into the run, i.e. long
+> before the form that was waiting on it was reached). Removing that single
+> entry (`rm /root/.cache/fenics/*<hash>*`) and re-running the identical
+> command took **2.94 s of pytest**. So a 0-byte cache entry is not only the
+> *symptom* of a killed compile, it is a live lock the rest of that same run
+> can block on: when a run stalls in `MPI_Bcast`, look for `find
+> /root/.cache/fenics -size 0` **before** concluding the case is too big for
+> the window or that a form's quadrature degree is unpinned.
+
 **4. ~~`poynting_power_balance` raises on a scalar `sigma=0.0`~~ — FIXED
 2026-08-18 (`POST-5` step 1).** The scalar branch is now wrapped in
 `fem.Constant(msh, dolfinx.default_scalar_type(σ))`, so the integral keeps

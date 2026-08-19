@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dolfinx
 import numpy as np
 import pytest
 import ufl
@@ -43,6 +44,25 @@ LADDER_RESOLUTIONS = (0.03, 0.02, 0.015)
 # positive on the finest rung  =>  RESOLUTION; an h-independent imbalance or a
 # sign that never corrects  =>  SOURCE/ASSEMBLY.
 LADDER_RATE_FOR_RESOLUTION = 0.7
+
+# The smoke fixture's inner conductor radius, in one place: the azimuthal drive
+# of `POST-5` step 2 scales by it so |J| = 1 A/m^2 at the rod surface, matching
+# the axial drive's unit magnitude.
+INNER_RADIUS = 0.01
+# `POST-5` step 2's pre-registered discriminator band (PROJECT_PLAN §7):
+# imbalance collapsing under the xfail's 25% band AND the net-inward flux sign
+# turning positive on the closed drive  =>  SOURCE (the axial drive's J.n != 0
+# end-cap incompatibility); imbalance persisting at O(100%) with the sign
+# unmoved  =>  ASSEMBLY.
+CLOSED_DRIVE_IMBALANCE_FOR_SOURCE = POYNTING_IMBALANCE_MAX
+
+# The coarse-rung record the axial drive must reproduce as this step's negative
+# control (`POST-5` step 1 ladder, 20260818T215101Z, and `OPS-17` step 2's
+# 20260817T112448Z before it).  Imported by nothing else; restated here only
+# because the step-1 numbers live in the plan, not in code.
+AXIAL_RECORD_DISSIPATED_W = 1.199162e-06
+AXIAL_RECORD_NET_INWARD_W = -2.008179e-07
+AXIAL_RECORD_IMBALANCE = 1.167465
 
 
 @complex_only
@@ -240,8 +260,50 @@ def _smoke_mesh(resolution: float, comm):
     )
 
 
-def _solve_smoke_and_balance(resolution: float, comm):
-    """Solve the smoke fixture at ``resolution`` and score the identity."""
+def _azimuthal_current(mesh):
+    """A **closed** loop drive for the smoke fixture: ``J = (-y, x, 0)/a``.
+
+    `POST-5` step 2's discriminator.  The axial drive is an interior current
+    that terminates on the end caps, so ``J.n != 0`` there; this one closes on
+    itself inside the rod:
+
+    * ``div J = 0`` pointwise — ``d/dx(-y) + d/dy(x) = 0`` identically;
+    * ``J.n = 0`` on every boundary of the *domain* — the field is restricted
+      to the inner-cylinder tag, and on the end caps (``n = +-z``) its
+      z-component is identically zero anyway;
+    * ``J.n = 0`` on the rod's own lateral surface — azimuthal is tangential
+      to a coaxial cylinder — so the restriction to tag 1 introduces no
+      surface divergence either.
+
+    Returned as an interpolated **vector P1 Function**, not as a UFL expression
+    in ``SpatialCoordinate``, for two reasons.  It is exact: the field is
+    linear in x, so the P1 interpolant *is* the field, with no quadrature or
+    representation error to confound the reading.  And it keeps
+    ``SpatialCoordinate`` out of the assembled source and projection forms on
+    this gmsh mesh, which is the trap that cost `POST-5` step 1 two windows
+    (unpinned quadrature degree -> FFCx compile that never returned; see
+    ``test_smoke_fixture_boundary_measure_is_outward_oriented``).  A coefficient
+    from a P1 space carries its own degree estimate, so nothing is left to
+    guess.
+    """
+    v_space = fem.functionspace(mesh, ("Lagrange", 1, (3,)))
+    j = fem.Function(v_space, name="J_azimuthal")
+    j.interpolate(
+        lambda x: np.array(
+            [-x[1] / INNER_RADIUS, x[0] / INNER_RADIUS, np.zeros_like(x[0])],
+            dtype=dolfinx.default_scalar_type,
+        )
+    )
+    return j
+
+
+def _solve_smoke_and_balance(resolution: float, comm, drive: str = "axial"):
+    """Solve the smoke fixture at ``resolution`` and score the identity.
+
+    ``drive`` selects the source: ``"axial"`` is the fixture's own unit
+    z-directed current (the one every record was measured on) and ``"azimuthal"``
+    is `POST-5` step 2's closed loop, :func:`_azimuthal_current`.
+    """
     mesh, cell_tags, facet_tags = _smoke_mesh(resolution, comm)
     problem = TimeHarmonicProblem(
         mesh=mesh,
@@ -252,8 +314,18 @@ def _solve_smoke_and_balance(resolution: float, comm):
     )
     solver = TimeHarmonicSolver(problem, degree=1)
 
-    def current_density(x):
-        return ufl.as_vector([0.0, 0.0, 1.0])
+    if drive == "axial":
+        def current_density(x):
+            return ufl.as_vector([0.0, 0.0, 1.0])
+    elif drive == "azimuthal":
+        j_azimuthal = _azimuthal_current(mesh)
+
+        def current_density(x):
+            # The coefficient is already the field; x is the solver's
+            # SpatialCoordinate and is deliberately unused.
+            return j_azimuthal
+    else:
+        raise ValueError(f"unknown drive {drive!r}; use 'axial' or 'azimuthal'")
 
     fields = solver.solve(
         current_density=current_density, subdomain_id=1, gauge_penalty=1e-3
@@ -269,6 +341,7 @@ def _solve_smoke_and_balance(resolution: float, comm):
         comm.allreduce(mesh.topology.index_map(tdim).size_local, op=MPI.SUM)
     )
     balance["h"] = float(resolution)
+    balance["drive"] = drive
     balance["blind_dissipated_w"] = blind["dissipated_power_w"]
     balance["mesh"] = mesh
     return balance
@@ -400,6 +473,99 @@ def test_poynting_imbalance_h_ladder_discriminates_resolution_from_source():
         f"the ladder did not refine: cell counts {cells} are not increasing, "
         "so the fitted rate is not a rate in h"
     )
+
+
+@complex_only
+def test_closed_azimuthal_drive_discriminates_source_from_assembly():
+    """`POST-5` step 2: is the wrong-sign Poynting flux the *source*?
+
+    Step 1 excluded resolution (imbalance h-independent, fitted rate 0.0290
+    against the pre-registered 0.7) and excluded a flipped outward measure
+    (``oint x.n dS / 3|Omega| = 1.000000000000``).  What is left of defect 3 is
+    candidate (b): the fixture's axial drive terminates on the end caps, so
+    ``J.n != 0`` there — the same incompatibility ``test_gauge_lagrange``
+    measures on its wire.  The cheap discriminator is to re-drive the *same*
+    fixture, mesh and material with a source that has no such incompatibility
+    and re-read the identity.
+
+    Pre-registered band (PROJECT_PLAN §7 `POST-5` step 2):
+
+    * imbalance collapsing under the xfail's 25% band **and** the net inward
+      flux turning positive  =>  SOURCE — the defect is the drive's
+      compatibility, and the smoke fixture's source is what changes;
+    * imbalance persisting at O(100%) with the sign unmoved  =>  ASSEMBLY —
+      the boundary leg itself is wrong, and the next probe is the curl trace
+      against the `TH-6` plane wave, where both legs have closed forms;
+    * anything in between is the finding, recorded per-drive and not forced.
+
+    As in step 1 the classification is a *reading* recorded in the plan, not a
+    gate.  What this test asserts is what must hold whatever the reading is:
+    the sigma-blind control is exactly zero on the new drive too, and the axial
+    drive re-run in the same session reproduces the coarse-rung record, so a
+    difference between the two columns is the drive and nothing else.
+    """
+    comm = MPI.COMM_WORLD
+    h = LADDER_RESOLUTIONS[0]
+    axial = _solve_smoke_and_balance(h, comm, drive="axial")
+    closed = _solve_smoke_and_balance(h, comm, drive="azimuthal")
+
+    collapsed = closed["relative_imbalance"] < CLOSED_DRIVE_IMBALANCE_FOR_SOURCE
+    sign_positive = closed["net_inward_power_w"] > 0.0
+    if collapsed and sign_positive:
+        verdict = "SOURCE"
+    elif not collapsed and not sign_positive:
+        verdict = "ASSEMBLY"
+    else:
+        verdict = "IN-BETWEEN"
+
+    if comm.rank == 0:
+        print("\n[POST-5 step 2] closed-drive discriminator, "
+              f"smoke fixture at h = {h:.3f} ({axial['ncells']} cells):")
+        print("   drive        dissipated [W]   net inward [W]  sign   "
+              "imbalance   blind diss [W]")
+        for r in (axial, closed):
+            print(
+                f"  {r['drive']:<11s}  {r['dissipated_power_w']:.6e}   "
+                f"{r['net_inward_power_w']:+.6e}   "
+                f"{'+' if r['net_inward_power_w'] > 0 else '-'}    "
+                f"{r['relative_imbalance']:9.4%}   "
+                f"{r['blind_dissipated_w']:.6e}"
+            )
+        print(f"  closed-drive imbalance under "
+              f"{CLOSED_DRIVE_IMBALANCE_FOR_SOURCE:.0%}: {collapsed}; "
+              f"flux sign positive: {sign_positive}")
+        print(f"  VERDICT: {verdict}", flush=True)
+
+    # The `POST-5` step-1 anchor, re-asserted on the new drive.
+    assert closed["blind_dissipated_w"] == 0.0, (
+        "the sigma-blind control on the closed azimuthal drive dissipated "
+        f"{closed['blind_dissipated_w']:.6e} W; at sigma = 0 exactly the "
+        "volume leg must vanish identically"
+    )
+    # Negative control: the axial drive, same run, same mesh, reproduces the
+    # step-1 coarse rung.  Without this the two columns could differ for any
+    # reason; with it, the only thing that changed is J.
+    assert np.isclose(
+        axial["dissipated_power_w"], AXIAL_RECORD_DISSIPATED_W, rtol=1e-6
+    ), (
+        f"axial dissipated {axial['dissipated_power_w']:.6e} W against the "
+        f"`POST-5` step-1 record {AXIAL_RECORD_DISSIPATED_W:.6e} W"
+    )
+    assert np.isclose(
+        axial["net_inward_power_w"], AXIAL_RECORD_NET_INWARD_W, rtol=1e-6
+    ), (
+        f"axial net inward {axial['net_inward_power_w']:.6e} W against the "
+        f"`POST-5` step-1 record {AXIAL_RECORD_NET_INWARD_W:.6e} W"
+    )
+    assert np.isclose(
+        axial["relative_imbalance"], AXIAL_RECORD_IMBALANCE, rtol=1e-6
+    ), (
+        f"axial imbalance {axial['relative_imbalance']:.4%} against the "
+        f"`POST-5` step-1 record {AXIAL_RECORD_IMBALANCE:.4%}"
+    )
+
+
+def test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve():
     """API should fail fast when users pass non-Hz units to avoid silent mistakes."""
     comm = MPI.COMM_WORLD
 

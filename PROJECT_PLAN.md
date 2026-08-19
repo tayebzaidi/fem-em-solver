@@ -2704,7 +2704,7 @@ plans and probes archived verbatim in `docs/planning/plan-archive.md`)*:
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
 | `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | ✅ *(chunk closed 2026-08-12 — every step closed or dispositioned; note the title's premise was itself refuted, the tie-break was never the defect. Step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped. Step 3 ✅ 2026-08-11 — the centerline samples the source fields: **23.5539% → 0.008613%**, a 2735× collapse; known-issues entry **retired**. Step 4 ✅ 2026-08-12 — the export-path P1 artifact is **bounded and attributed**: midpoint relative medians **51.17% / 52.47% / 20.18%** (`A`/`B`/`E`), vertex/midpoint separation **0.42–0.68×** so the step's vertex-localization hypothesis is **REFUTED**, and a DG1 target reproduces all three sources to round-off — 100% of it is the P1 continuity constraint. All four steps now closed or dispositioned)* | standard |
-| `POST-5` | Real Poynting power balance: wrong-sign boundary flux on the time-harmonic smoke fixture + `poynting_power_balance` raises on scalar `sigma=0.0` (`OPS-17` step-2 defects 3 + 4, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | 🟡 *(step 1 ✅ 2026-08-18: defect 4 fixed, `ds` ruled out at ratio 1.000000000000, ladder verdict **SOURCE/ASSEMBLY**; the fix for defect 3 is step 2)* | standard |
+| `POST-5` | Real Poynting power balance: wrong-sign boundary flux on the time-harmonic smoke fixture + `poynting_power_balance` raises on scalar `sigma=0.0` (`OPS-17` step-2 defects 3 + 4, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | 🟡 *(step 1 ✅ 2026-08-18: defect 4 fixed, `ds` ruled out at ratio 1.000000000000, ladder verdict **SOURCE/ASSEMBLY**. Step 2 ✅ 2026-08-19: the closed azimuthal drive reads **ASSEMBLY** — imbalance 116.7465% → 105.9632% with the sign unmoved, against a band that required < 25% and positive — so defect 3 is the boundary leg, not the source; step 3, the `TH-6` boundary-leg probe, is scoped and unexecuted)* | standard |
 
 > *(Closed-step plans, execution journals and audits for `POST-1` and
 > `POST-3` are archived verbatim in `docs/planning/plan-archive.md`.)*
@@ -2874,6 +2874,71 @@ to reach 5%); (b) the source's `J·n ≠ 0` end-cap incompatibility.
 > the assembly of the boundary leg itself and the next probe is the curl
 > trace against an imposed-field solve where both legs are known in closed
 > form (the `TH-6` plane wave already carries that, at 5%).
+>
+> **Step 2 result — executed 2026-08-19, 00:00 slot. ✅ The discriminator ran
+> and read ASSEMBLY: the source is not what breaks the identity.**
+> (`20260819T051150Z_POST-5-step2-closed-drive2.log`, `-n 2`, **4 s**
+> harness / 2.94 s pytest; full-file green at
+> `20260819T051210Z_POST-5-step2-smoke-full.log`, 10 passed + 1 xfailed,
+> 7 s.)
+>
+> | drive | dissipated [W] | net inward [W] | sign | imbalance | blind diss [W] |
+> |---|---|---|---|---|---|
+> | axial (record) | 1.199162e-06 | −2.008179e-07 | − | 116.7465% | 0.000000e+00 |
+> | closed azimuthal | 4.778876e-09 | −2.849722e-10 | − | **105.9632%** | 0.000000e+00 |
+>
+> The new drive is `J = (−y, x, 0)/a` restricted to the inner-conductor tag —
+> `div J = 0` pointwise, `J·n = 0` on both end caps *and* on the rod's lateral
+> surface, so the tag restriction introduces no surface divergence either. It
+> is interpolated into vector P1, where the field is **exact** (it is linear
+> in x), which also keeps `SpatialCoordinate` out of the source and projection
+> forms — the step-1 quadrature trap, dodged by construction rather than by
+> pinning a degree inside `src/`.
+>
+> **Both halves of the pre-registered SOURCE band fail.** The imbalance does
+> not collapse under 25% — it moves 116.7465% → 105.9632%, 10.8 pp, on a
+> reading whose ceiling the step itself priced at ~4.7× — and the net inward
+> flux **stays negative**. Per the two-sided band written before the run, that
+> is **ASSEMBLY**: the boundary leg itself is wrong, not the drive's
+> compatibility. Defect 3's candidate (b) joins (a) and (c) as excluded.
+>
+> *Negative control, passed as a gate rather than by eye.* The axial drive,
+> re-solved in the same session on the same mesh, reproduces the step-1 coarse
+> rung at `rtol=1e-6` on all three numbers (1.199162e-06 W / −2.008179e-07 W /
+> 116.7465%), asserted in the test. The σ-blind control is **exactly 0.0 W** on
+> the new drive as well. So the only thing that differs between the two rows is
+> `J`.
+>
+> *One repair landed alongside.* `POST-5` step 1's commit (`6044a61`) dropped
+> the `def` line of
+> `test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve`, so
+> its body had been executing as a silent tail of the h-ladder test and the
+> API check itself had left the suite. The `def` is restored; the file now
+> collects 11 tests (10 passed + 1 xfailed) where it collected 10.
+>
+> *Cost note, and a new trap for the list.* The first window
+> (`20260819T050314Z`, exit 124 at 400 s) stalled with rank 1 in `MPI_Bcast`
+> on a **0-byte `.c` left in the FFCx cache 7 s into that same run** — a live
+> lock, not merely the residue of a past kill. Deleting that one entry made
+> the identical command finish in 2.94 s. `find /root/.cache/fenics -size 0`
+> belongs in the preflight of any stalled-JIT diagnosis; see known-issues.
+>
+> **Step 3 — the boundary-leg probe (scoped, not executed).** Score
+> `−∮½Re(E×H̄)·n̂dS` on the `TH-6` lossy plane-wave fixture, where the
+> analytic flux and the analytic dissipation are both known in closed form, and
+> compare the assembled boundary integral against the analytic one *by itself*
+> rather than through the balance. That separates a wrong `H = ∇×E/(−jωμᵣμ₀)`
+> reconstruction (a factor or a conjugation) from a wrong facet assembly (the
+> N1curl curl trace on exterior facets). `tests/validation/test_poynting_balance.py`
+> already holds the whole identity to 5% on a refined mesh, which bounds how
+> wrong the leg can be *there* — reconciling that 5% against this fixture's
+> 106% is itself part of the step: either the defect is fixture-specific
+> (the PEC-walled cylinder, where the true flux is near-zero and the identity
+> is scored against a small denominator) or the refined-mesh gate is passing
+> for the wrong reason. The scale suggests the former should be checked first:
+> both drives here dissipate against a net flux ~6× smaller, so `power_scale_w`
+> is set by the volume leg and a small absolute error in the boundary leg reads
+> as O(100%).
 
 **`POST-4`** ✅ *(closed 2026-08-12; full step plans + journals in
 `docs/planning/plan-archive.md`)*. The chunk title's premise was refuted by
@@ -4098,8 +4163,19 @@ annotated by this review.
    whatever the probe cannot fit is journaled as the remaining tail,
    not forced. **Negative result:** an unexpected failure or count
    delta — known-issues entry, report, stop.
-3. **`POST-5` step 2 — the closed-drive discriminator for the Poynting
-   sign (standard).** Execute the §7 `POST-5` step-2 entry verbatim
+3. ~~**`POST-5` step 2 — the closed-drive discriminator for the Poynting
+   sign (standard).**~~ **done 2026-08-19, 00:00 slot** — the closed
+   azimuthal drive reads **ASSEMBLY**: imbalance 116.7465% → 105.9632%
+   with the flux sign unmoved, against a band that required < 25% *and*
+   a positive sign; the axial negative control reproduced the step-1
+   record at `rtol=1e-6` and the σ-blind control was exactly 0.0 W on
+   the new drive. 4 s harness at `-n 2`
+   (`20260819T051150Z_POST-5-step2-closed-drive2.log`), full file green
+   at `20260819T051210Z`. The xfail band and `strict=True` did not move;
+   `POST-5` step 3 (the `TH-6` boundary-leg probe) is scoped in §7 and
+   is the review's to queue. One repair rode along: step 1's commit had
+   dropped a test's `def` line, and the file now collects 11 where it
+   collected 10. Original item text: Execute the §7 `POST-5` step-2 entry verbatim
    (scoped by step 1, 2026-08-18): add a **closed azimuthal loop**
    drive variant (`div J = 0`, `J·n = 0` on every boundary) to the
    smoke fixture and re-read the power balance on the coarse rung.

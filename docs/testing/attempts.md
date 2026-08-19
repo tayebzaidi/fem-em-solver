@@ -14394,3 +14394,89 @@ that do **not** define their own magnetostatic `current_density` callable
 (that is the whole risk class), or the fixture fix first. If the review wants
 the swallowed FFCx compiler message for completeness, note it is now
 optional: the construct is identified without it.
+
+---
+
+## 2026-08-19T05:00Z — `POST-5` step 2 (closed-drive discriminator), attempt 1 — **complete**
+
+**Item taken.** §9 On-deck item **3**, not item 2. Item 2 (`OPS-17` leg (b2))
+carries the 18:00 review's annotation "still open, and it needs the review
+before a third attempt … a third identical batch attempt will lose a third
+window", with an explicit two-way choice left to the review. That is a
+blocker in the protocol's sense — the item cannot be executed as written
+without a decision that has not been made — so it was skipped, not
+reinterpreted. Item 2 is untouched and still first in the queue for the
+03:00 review to dispose of.
+
+**Outcome.** The pre-registered discriminator ran and read **ASSEMBLY**.
+
+| drive | dissipated [W] | net inward [W] | sign | imbalance | blind diss [W] |
+|---|---|---|---|---|---|
+| axial (record) | 1.199162e-06 | −2.008179e-07 | − | 116.7465% | 0.000000e+00 |
+| closed azimuthal | 4.778876e-09 | −2.849722e-10 | − | 105.9632% | 0.000000e+00 |
+
+Band, written before the run (§7 step 2): imbalance under 25% **and** the flux
+sign turning positive ⇒ SOURCE; imbalance at O(100%) with the sign unmoved ⇒
+ASSEMBLY. Both halves fail — 10.8 pp of movement on a reading whose ceiling
+the step itself priced at ~4.7×, and the sign never turns. So defect 3's
+candidate (b), the axial drive's `J·n ≠ 0` end caps, is **excluded**, joining
+(a) resolution and (c) the `ds` orientation. What is left is the boundary leg
+itself.
+
+**What was built.** `_azimuthal_current` in
+`tests/solver/test_time_harmonic_smoke.py`: `J = (−y, x, 0)/a` on the
+inner-conductor tag — `div J = 0` pointwise, `J·n = 0` on both end caps and on
+the rod's lateral surface, so the tag restriction adds no surface divergence.
+Interpolated into vector P1, where it is **exact** (linear in x), which is also
+how the step-1 quadrature trap was dodged: a P1 coefficient carries its own
+degree estimate, so no `SpatialCoordinate` reaches the source or projection
+forms and nothing had to be pinned inside `src/`. `_solve_smoke_and_balance`
+grew a `drive` argument; the axial path is byte-identical to what step 1 ran.
+
+**Quantitative gates asserted (not eyeballed).** The σ-blind control is
+`== 0.0` exactly on the new drive; the axial drive re-solved in the same
+session reproduces the step-1 record on all three numbers at `rtol=1e-6`. The
+second is what makes the two rows comparable — the only thing differing
+between them is `J`. Nothing was loosened: the xfail keeps its 25% band and
+`strict=True`.
+
+**Repair that rode along.** `POST-5` step 1's commit `6044a61` dropped the
+`def` line of `test_time_harmonic_solver_rejects_non_hz_frequency_unit_before_solve`,
+so its body had been running as a silent tail of the h-ladder test and the API
+check had left the suite. Restored. The file collects **11** (10 passed +
+1 xfailed) where it collected 10. Same chunk, same file, one line — journaled
+rather than deferred.
+
+**Logs and cost.** `-n 2`, complex build, `FEM_EM_REQUIRE_COMPLEX=1`,
+`tests/environment` first:
+* `20260819T050314Z_POST-5-step2-closed-drive.log` — **exit 124 at 400 s**,
+  the lost first window (see below);
+* `20260819T051150Z_POST-5-step2-closed-drive2.log` — **exit 0, 4 s** harness /
+  2.94 s pytest, the measurement;
+* `20260819T051210Z_POST-5-step2-smoke-full.log` — **exit 0, 7 s**, full file
+  green, 10 passed + 1 xfailed.
+
+**The lost window, and a trap worth the next reader's time.** The first run
+stalled with rank 1 parked in `MPI_Bcast` — the dolfinx cold-JIT signature —
+and died at the 400 s ceiling. The cache held exactly one 0-byte `.c`, created
+**7 s into that same run**, i.e. long before the form waiting on it was
+reached. So a 0-byte entry is not only the residue of a past kill; it is a live
+lock a *later test in the same session* blocks on. Deleting that one entry made
+the identical command finish in 2.94 s. `find /root/.cache/fenics -size 0`
+now belongs in the preflight of any stalled-JIT diagnosis; both known-issues
+and the §7 entry carry it. Note this is the second consecutive night in which
+a 0-byte stub cost a window — the 22:30 slot's own entry predicted it.
+
+**Denials:** none.
+
+**Container:** healthy throughout — no OOM, no wedge, no force-recreate. Cache
+left warm and swept: `find /root/.cache/fenics -size 0` is empty at exit.
+
+**Hypothesis for the next attempt** (`POST-5` step 3, scoped in §7, the
+review's to queue): the boundary leg is not uniformly wrong — the refined-mesh
+gate in `tests/validation/test_poynting_balance.py` holds the *same* identity
+to 5%. The cheap reconciliation is the denominator: on this smoke fixture the
+net flux is ~6× smaller than the dissipation, so `power_scale_w` is set by the
+volume leg and a small absolute error in the curl trace reads as O(100%). Check
+that before assuming a formulation error in `H = ∇×E/(−jωμᵣμ₀)`; the `TH-6`
+plane wave, where both legs have closed forms, settles which it is.
