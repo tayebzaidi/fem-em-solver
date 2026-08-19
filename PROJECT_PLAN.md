@@ -3905,9 +3905,31 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-22` | Restore the absent example artifacts: refresh runs for `mag` 01/02/04/05/06 + `mri:1` (commissioned 2026-08-16 weekly review — see entry below) | ⬜ | heavy |
 | `EX-23` | Two-torus port-sheet mesh (`GEO-16`'s newly gated capability: first example with an interior sheet surface, facet tags rebuilt dolfinx-side — geometry angle no example covers; mesh-only, no solve; commissioned 2026-08-17 review) | ✅ (2026-08-17: `mesh:4`, `examples/meshing/04_two_torus_port_sheet.py` + same-stem guide; both sheets **84 facets**, meshed/CAD = **1.000000000000** inside the imported `AREA_IDENTITY_BAND` = 1e-9, 211/212 area symmetry bit-identical (< 1e-12), out-of-plane spread **3.469e-18** m; kwarg-off control reproduces **79 534** cells with cell tags `{1,2,3,101,102}`, facet tags `{1,201,202}` and sheet tags asserted *absent* (`EX-18` inverted-assertion pattern); extents printed not gated — w = 1.200000000e-02 m, h = 7.977525299e-03 m, **w/h = 1.504225878** against the generator's CAD-side 1.504206917; port areas 1.563786482e-04 m² on both 201/202, unmoved. 79 888 cells / 13.7 s sheet mesh, 79 534 / 12.2 s control, **26.0 s** in-script (30 s harness) at `-n 2`, standard. Every constant imported from `tests/mesh/test_two_torus_port_sheet.py` and the `PORT-1` facet module (`ANS-1`) except `SHEET_SYMMETRY_BAND = 1e-12`, which the test holds only as an inline literal and the example restates unloosened (10:30-review audit note). Logs `20260817T140233Z_EX-23-list.log`, `20260817T140242Z_EX-23-example-n2.log`, docrefs `20260817T140416Z_EX-23-docrefs.log` — `dead=0 guide=0 stale=24 exit=2`, staleness-only and **none EX-23's** (its own artifacts are fresh; the 24 are `EX-22`'s standing backlog), guide pass green: 22 runnable examples checked, 31 guide files scanned (the 03:00-era "31 guides green" conflated the two counts; corrected 10:30 review)) | standard |
 | `EX-24` | Lumped-sheet port at interior width (`PORT-9` step 2b's newly gated capability: first example instantiating the lumped-element port BC — the drive/BC angle `EX-18`/`EX-20`, both gap-voltage, do not cover; commissioned 2026-08-17 18:00 review) | ✅ (2026-08-18: `ports:3`, `examples/ports/03_lumped_sheet_port_widths.py` + same-stem guide; **both legs on one mesh** — the width ladder reproduced **7.7095% → 3.6730% → 1.8333%** and the gate at `f = 0.5` held at **1.8333%** against the imported, unmoved `CROSS_ROUTE_BAND` = 5%; `f = 1.0` reproduced `STEP1_CROSS_ROUTE_RECORD` (0.077095) and `STEP1_GAP_RATIO_RECORD` (0.894310) inside `REPRODUCTION_BAND` = 1e-4 **and** was asserted to *miss* the 5% band (`EX-18` inverted pattern), while the gap route stayed flat at 0.894310/0.894324/0.894349 × ω·M₁₂ (drift 3.9e-5 < 1e-4 — a third control this example adds); open-limit identity `V = −(1/w_f)∫_S E·ĥ dS` at **1.8e-15 / 8.5e-16 / 2.1e-16** against 1e-11 per width; sweep leg through `LumpedSheetPortSpec` gave `is_placeholder=False` and **‖S−Sᵀ‖/‖S‖ = 2.574296e-11** against the 1e-3 band (step 2c's record 2.574249e-11, reproduced to 4.7e-16 absolute), cross-route inside the sweep **1.6079% / 1.5950%** (~0.23 pp below step 2b's 1.8333% — the drive differs, reported not gated); gap-box volume 1.000000000000, sheets 1585 → 1511 → 1375 facets, planar to < 1e-12, `w = A/h` asserted equal to the bbox extent on the `f = 1.0` rectangle and strictly below it on both narrowed sheets. 184 919 cells / 40.1 s mesh, solves 26.9/24.1/24.1 s, sweep 52.3 s, **237.5 s** in-script (239 s harness) at `-n 2`, standard. Every band and record imported from `test_port_lumped_two_torus.py`, `test_port_lumped_narrowed_sheet.py`, `test_port_lumped_sheet_sweep.py` and `test_port_package_sparameters.py` (`ANS-1`); none restated. Logs `20260819T003342Z_EX-24-importcheck.log`, `20260819T003401Z_EX-24-example-n2.log`, docrefs `20260819T003912Z_EX-24-docrefs.log` — `dead=0 guide=0 stale=24 exit=2`, staleness-only and **none EX-24's** (the 24 are `EX-22`'s standing backlog), guide pass green at 32 guides scanned) | standard |
-| `EX-25` | Degree-2 Larmor sphere: accuracy-per-cost side by side (`TH-12` step 1's newly gated capability: first example at any element order other than 1 — the discretization angle no example covers; commissioned 2026-08-18 10:30 review) | ⬜ | standard |
+| `EX-25` | Degree-2 Larmor sphere: accuracy-per-cost side by side (`TH-12` step 1's newly gated capability: first example at any element order other than 1 — the discretization angle no example covers; commissioned 2026-08-18 10:30 review) | ✅ (2026-08-19: `th:7`, `examples/time_harmonic/07_element_order_lossy_sphere.py` + same-stem guide; **both orders on one mesh** — 5 866 cells solved at N1curl degree 1 and 2 in one run, all four `TH-12` step-1 records reproduced inside the imported `EX-19` 1% band: relL2 **8.1541%** / **0.1405%** (drift 4.00e-06 / 5.50e-05) and ohmic-power error **8.3869%** / **0.0058%** (drift 1.18e-05 / 1.48e-03); inverted negative control asserted both ways — degree 1 *misses* the degree-1 fine-rung record 3.643% at 17 670 cells while degree 2 beats it on 3.01× fewer cells at 25.9× the accuracy; DOFs asserted exactly 7 591 / 39 634, cells 5 866 at both orders, `\|Im P\|/Re P` = **0.000e+00** at both against the imported 1e-9 family bound. Cost printed not gated: 5.22× DOFs for 2.02× solve wall (3.75 → 7.59 s) and 2.74× summed `ru_maxrss` (376.8 → 1032.8 MiB) — sublinear on both axes *on this fixture*, printed beside `TH-12` step 2's contrary ~20×/5.42× coil reading so no production-order claim is implied. Two combined XDMFs on the identical mesh + CG1 output space. **13.4 s** in-script (16 s harness) at `-n 2`, standard. Constants imported from `tests/validation/test_lossy_sphere_degree2.py` and the `TH-10` module (`ANS-1`); restated with provenance only where the gate holds no named constant — `RECORD_FIELD_ERROR` (both orders), the degree-2 power record, `RECORD_DOFS`, and `COARSE_CELLS = 5866` (the gate carries it as an inline literal), all unloosened and all asserted. Logs `20260819T140334Z_EX-25-example-n2.log` (exit 0), docrefs `20260819T140453Z_EX-25-docrefs.log` — `dead=0 guide=0 stale=24 exit=2`, staleness-only and **none EX-25's** (the 24 are `EX-22`'s standing backlog), guide pass green at 33 guides scanned) | standard |
 
-**`EX-25` — degree-2 Larmor sphere: accuracy-per-cost side by side** ⬜
+**`EX-25` — degree-2 Larmor sphere: accuracy-per-cost side by side** ✅
+*(2026-08-19, 09:00 slot; commissioned 2026-08-18 10:30 review, §5.4 ramp
+on `TH-12` step 1's newly gated capability)*. **Closed as written, on one
+run** — every element of the rubric below executed, no band moved and none
+needed to move: all four records reproduced inside the imported 1%
+`REPRODUCTION_BAND` (worst drift 1.48e-03, on the degree-2 power error,
+which is the record quoted to the fewest digits), the inverted control
+asserted in both directions, and `|Im P|/Re P` exactly 0.0 at both orders.
+Three things worth carrying forward: (i) the two orders **share one mesh**
+and one CG1 export space, so the ParaView pair is a controlled comparison
+rather than two pictures — the only variable is the element, which is what
+makes the 58× field-accuracy move attributable; (ii) the DOF counts are
+deterministic and are now **asserted exactly** (7 591 / 39 634) rather than
+printed, which turns "the space `TH-12` step 1 priced" into a gate the
+example itself carries; and (iii) the cost ratios here (5.22× DOFs → 2.02×
+wall, 2.74× RSS) are **sublinear on both axes**, the opposite shape from
+step 2's coil (~20× wall for 5.42× DOFs at 96.8% of `memory.max`) — the
+example prints both side by side precisely so a reader cannot generalize
+this fixture's cheap second order into a production-order claim. One
+instrument caveat disclosed in the guide: the 2.02× wall ratio includes
+mesh generation and assembly, so it is a coarser number than step 1's
+4.32× on the solve alone; neither is gated.
+*(Original plan below.)*
 *(commissioned 2026-08-18, 10:30 review, §5.4 ramp on `TH-12` step 1's
 newly gated capability — degree-2 N1curl reads 0.1405% interior relL2 on
 the coarse rung, gated against the degree-1 fine-rung record)*. Every
@@ -4517,7 +4539,15 @@ their §7 entries verbatim as annotated by this review.
    verdict) or one that misses (assembly verdict) both go into the §7
    entry and the known-issues defect-3 entry with per-leg numbers;
    report, stop.
-4. **`EX-25` — degree-2 Larmor sphere example (standard).**
+4. ✅ **done 2026-08-19, 09:00 slot** — **`EX-25` — degree-2 Larmor
+   sphere example (standard).** *(Closed as written on one run: all four
+   `TH-12` step-1 records reproduced inside the 1% band — 8.1541% /
+   0.1405% relL2, 8.3869% / 0.0058% power, worst drift 1.48e-03 — the
+   inverted control asserted both ways, DOFs gated exactly at 7 591 /
+   39 634, `|Im P|/Re P` = 0.000e+00 at both orders, two combined XDMFs
+   on the identical mesh. 13.4 s in-script at `-n 2`; docrefs exit 2 is
+   staleness-only, all 24 `EX-22`'s backlog, guide pass green at 33
+   guides.)*
    Execute the §7 `EX-25` entry verbatim (commissioned 2026-08-18
    18:00 review, §5.4 ramp on `TH-12` step 1). **Anchor:** both
    orders' records reproduced through the example path inside the

@@ -14683,3 +14683,68 @@ fully scoped. Sizing warning for whoever schedules it and for `OPS-17` leg
 window** together — this slot's first window is the second independent
 observation this week that the `tests/solver` side has grown past its cached
 price (see the 06:00 `OPS-20` entry above). Re-price before batching.
+
+---
+
+## 2026-08-19T14:07Z — `EX-25` — **complete**
+
+**Slot:** 09:00 CDT implementer run. Preflight clean (`git status` empty,
+container Up 33 h). Took §9 On-deck **item 4** — items 1–3 were already
+marked done by the 04:30 / 06:00 / 07:30 slots.
+
+**What was tried.** The §7 `EX-25` rubric executed as written, first attempt,
+no rescoping: a new `examples/time_harmonic/07_element_order_lossy_sphere.py`
+(`th:7`, auto-discovered by the runner's `find` — no registry edit exists to
+make) plus the same-stem guide, solving `TH-10`'s coarse 5 866-cell 64 MHz
+saline-sphere rung at N1curl degree 1 and degree 2 in one run.
+
+**Measured, all inside the imported 1% `REPRODUCTION_BAND`:**
+
+| order | cells | DOFs | relL2 | power err | \|Im P\|/Re P | solve s | peak RSS |
+|---|---|---|---|---|---|---|---|
+| 1 | 5 866 | 7 591 | 8.1541% | 8.3869% | 0.000e+00 | 3.75 | 376.8 MiB |
+| 2 | 5 866 | 39 634 | 0.1405% | 0.0058% | 0.000e+00 | 7.59 | 1032.8 MiB |
+
+Drifts against the `TH-12` step-1 records: 4.00e-06 / 1.18e-05 (degree 1),
+5.50e-05 / 1.48e-03 (degree 2 — the largest, and it is the record quoted to
+the fewest significant figures, 0.0058%). Inverted control asserted in both
+directions: degree 1 **misses** the degree-1 fine-rung record (8.1541% >
+3.643% at 17 670 cells) while degree 2 beats it on 5 866 cells — 3.01× fewer
+cells at 25.9× the accuracy. DOF counts asserted exactly, cell count asserted
+at 5 866 for both orders, `|Im P|/Re P` under the imported 1e-9 family bound
+at both (exactly 0.0). Cost printed not gated: 5.22× DOFs → 2.02× wall,
+2.74× summed `ru_maxrss`.
+
+**Constants.** Imported from `tests/validation/test_lossy_sphere_degree2.py`
+(`COARSE_RESOLUTION`, `DEGREE1_COARSE_POWER_RECORD`, `DEGREE1_FINE_CELLS`,
+`DEGREE1_FINE_FIELD_RECORD`, `POWER_IMAGINARY_BOUND`, `_rss_peak_bytes`) and
+the `TH-10` module. Four restated **with provenance and unloosened**, because
+the gate holds no named constant for them: `RECORD_FIELD_ERROR` at both
+orders, the degree-2 power record 0.000058, `RECORD_DOFS`, and
+`COARSE_CELLS = 5866` (the gate carries 5866 as an inline literal at
+`test_lossy_sphere_degree2.py:298`). All four are asserted, not printed — the
+`EX-23` `SHEET_SYMMETRY_BAND` precedent.
+
+**One deliberate duplication.** `_row_and_fields` is step 1's `_run_at_degree`
+with the mesh and fields kept instead of discarded, because that helper
+returns only scalars and the example must export XDMF. Same argument `EX-19`
+made for `_interior_errors`, and the four record assertions are what makes it
+safe — a drift between the example path and the gate fails loudly.
+
+**Logs.** `20260819T140334Z_EX-25-example-n2.log` (`-n 2`, complex build via
+the runner's `th:` group, `-t 400`, **exit 0**, 13.4 s in-script / 16 s
+harness) and `20260819T140453Z_EX-25-docrefs.log` (**exit 2**,
+`dead=0 guide=0 stale=24 stale_severity=report`, guide pass green, 33 guides
+scanned / 103 references). The exit 2 is staleness-only and **none of it is
+this example's** — the 24 are `EX-22`'s standing backlog, unchanged file for
+file from the `EX-24` run; the `OPS-19` contract gates on `exit != 1`. Stub
+sweep `find /root/.cache/fenics -name '*.c' -size 0` clean before the run;
+no cold-JIT window was needed (both element orders were already compiled by
+`TH-12` step 1). No branch parked; landed on `main`.
+
+**Next attempt hypothesis.** Nothing left on `EX-25`. The next §9 item is 5
+(`TH-12` step 3), which is independent of everything landed today. One
+observation for the review, third this week and consistent with the 06:00 and
+07:30 entries: the *example* path is still cheap — 16 s here against a 400 s
+budget — so the suite-growth warnings in those entries are about
+`tests/solver`, not `examples/`.
