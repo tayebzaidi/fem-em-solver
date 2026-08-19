@@ -724,7 +724,52 @@ death location says nothing about which test is expensive. **Never infer a
 per-test cost from a cold-cache run, and never let compilation and measurement
 share one window** — size the first post-clear command as a throwaway warm-up.
 
-### `test_coil_phantom_magnetostatics` fails in the complex build on a cold FFCx cache: `ComplexComparisonError` (`OPS-17` step 3 leg (b1), 2026-08-18)
+### ~~`test_coil_phantom_magnetostatics` fails in the complex build on a cold FFCx cache: `ComplexComparisonError`~~ **RESOLVED 2026-08-19 (`OPS-20`, 06:00 implementer slot)** (`OPS-17` step 3 leg (b1), 2026-08-18)
+
+> **Resolved 2026-08-19, `OPS-20` step 1 — fixed, not marked.** The Cause row
+> below is wrong and the 03:00 review's re-pointing was right: the `max` never
+> entered through a DolfinX/UFL helper. It came from the test's **imported**
+> drive callable — this file uses
+> `tests/validation/test_circular_loop.azimuthal_current_density`, whose
+> `ufl.max_value` `OPS-22` had already replaced with a regularise-inside-the-
+> `sqrt` form at the 04:30 slot. So the commissioned defect was **already dead
+> on arrival** and a free grep of the import line localized it; no cold-cache
+> window was spent. What remained was the *second layer* `OPS-22` warned
+> `OPS-20` to expect: with the form compiling, the complex run reached the
+> print block and died at
+> `ValueError: Unknown format code '%' for object of type 'complex'`
+> (`test_coil_phantom_magnetostatics.py:145`) — `evaluate_vector_field_parallel`
+> returns the complex scalar type although this magnetostatic solution is
+> real-valued. Note the **rank split** that message produces: only rank 0
+> executes the print block, so the diagnosis run read `1 failed` on rank 0 and
+> `1 passed` on rank 1 in the same command. Fixed with the `OPS-22` idiom —
+> assert `max|Im B_z| ≤ 1e-12·max|B_z|`, then compare on `np.real` (a new
+> complex-mode assertion; exactly zero and a no-op in real mode). The
+> non-collective ~300 s exit hang is gone with the raise: every run in this
+> slot returned a footer in ≤ 8 s.
+>
+> **Numbers** (`-n 2`, all four runs footered, exit 0 except the diagnosis):
+> real-mode control before any edit `20260819T110051Z` — 1 passed / 5.81 s,
+> L2 **17.1233%**, the `OPS-17` step-2 record to the digit; complex diagnosis
+> `20260819T110111Z` — 1 failed (rank 0) / 6.19 s, the `ValueError` above with
+> a user frame under `--tb=long`; complex after the fix `20260819T110144Z` —
+> **1 passed / 5.11 s, L2 17.1233%**, both ranks identical, i.e. the complex
+> build passes the *same* 30% gate at the *same* digits; real-mode re-run
+> `20260819T110156Z` — 1 passed / 3.36 s, **17.1233%** unmoved, so the fix
+> moves no real-mode digit. No `@real_only` marker anywhere, so the complex
+> collect count is **unchanged at 49** and `OPS-17`'s bookkeeping does not
+> move. Stub sweep `find /root/.cache/fenics -name '*.c' -size 0` clean before
+> and after.
+>
+> **For `OPS-17` leg (b1):** the coil-phantom exclusion recorded when that leg
+> closed is now discharged in principle — the file is green in the complex
+> build. A whole-`tests/solver` complex batch attempted as confirmation in this
+> slot **timed out at 89%** (`20260819T110220Z`, exit 124, 481 s) and is
+> therefore **uncounted** — no footer, no count claim. The coil-phantom test
+> itself is visible PASSED on both ranks at 10% in that log. Separate finding
+> for the review: complex `tests/solver` fit 111.22 s warm on 2026-08-18 and no
+> longer fits a 480 s window, which points at cold forms added since (`POST-5`
+> step 2 is the candidate), not at this fix.
 
 **Verified at `93fc531`, 07:30 implementer slot,
 `20260818T124742Z_OPS-17-step3d-coilphantom-complex-cleancache.log`**, `-n 2`,

@@ -133,7 +133,17 @@ def test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form():
         f"{(~valid).sum()}/{N_AXIS_POINTS} on-axis sample points outside mesh"
     )
 
+    # z-component. In the complex build the array carries the complex scalar
+    # type although this magnetostatic solution is real-valued (OPS-20, the
+    # same second layer OPS-22 found behind the drive-callable predicate):
+    # assert the imaginary part is negligible, then compare on the real part.
+    # np.imag is exactly zero in real mode, so this is a no-op there.
     b_num_z = b_num[:, 2]
+    assert np.max(np.abs(np.imag(b_num_z))) <= 1e-12 * np.max(np.abs(b_num_z)), (
+        "B_z has a non-negligible imaginary part: "
+        f"max|Im| = {np.max(np.abs(np.imag(b_num_z))):.3e} T"
+    )
+    b_num_z = np.real(b_num_z)
     b_ana_z = _two_loop_b_z_on_axis(z_eval)
     rel_error = ErrorMetrics.l2_relative_error(b_num_z, b_ana_z)
 

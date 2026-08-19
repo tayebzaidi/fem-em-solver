@@ -420,7 +420,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-17` | Delete or replace the finiteness-only test suites (operator directive 2026-08-16) | 🟡 steps 1–2 ✅ (14 dispositions landed; 4 defects surfaced, 3 carried as strict xfail; step 3 🟡 attempts 1–2 2026-08-17 — sweep anchor restated 45 → **56, reconciled**; a completed leg found a silent `_DummyComm` regression from `PORT-1` step 4; **leg (a) closed attempt 2** — all 377 real-mode tests observed in completed legs, 171 + 206 exact, every failure named; leg (b) attempted 2026-08-18, **both complex commands exit 124** — complex mode is >2.6× real on the same tests, the leg needs three commands and likely two slots; **rescoped 2026-08-18 03:00 review as (b1) remainder + (b2) validation**, one slot each; **(b1) attempt 1 2026-08-18 🟡 — command 1 completed (3 failed / 122 passed / 1 xfailed, 392.76 s, the three failures exactly the named expected ones, one rank-dependent XDMF count delta), command 2 exit 124 at 44%: complex `tests/solver` is > 12× real, not 2.6×. The leg's real finding is that attempt 3's "cache artifact" call was wrong — on a cold cache `test_coil_phantom_magnetostatics` fails in 5.58 s with a genuine `ComplexComparisonError`**; **(b1) attempt 2 2026-08-18 ✅ CLOSED — complex `tests/solver` runs as one command, 46 passed / 2 xfailed in 111.22 s, exit 0, both ranks identical; counts reconcile to 171 non-validation complex, the same 171 leg (a) observed; defect 3's th-smoke Poynting xfail finally read in a completed leg; the ">12× real" rule is **withdrawn** as a cold-cache FFCx-JIT artifact — warm complex is ~2.7× real, and `test_gauge_penalty.py`, which killed the 480 s cold leg at 61%, is 8 passed in 20.33 s warm**. *Leg (b1) audited COMPLIANT 2026-08-18 10:30 review — the 49 = 48 + 1 and 171/209 reconciliations re-derived from the log footers, both ranks identical in the closing leg; the coil-phantom exclusion is within the written anchor (observed FAILED in its own completed log `20260818T124712Z`, two known-issues entries), with the caveat on record that the completed observation shows the warm-cache message while the genuine `ComplexComparisonError` appeared in an exit-124 run — the three-state map is disclosed in known-issues*; only leg (b2) remains; **(b2) attempt 1 2026-08-19 🟡 — three commands completed (impedance file `24 passed`/488 s; cost probe re-bases the stale 380 collect to **397**, validation **225**; shortest-first subset `23 passed`/121 s with the per-file sinks priced), then the written negative-result clause fired: `test_circular_loop.py` **cannot JIT-compile one form in the complex build**, reproducibly and independently of cache state — new known-issues entry, which also names the **0-byte FFCx stub** trap that mis-attributes such failures as cache artifacts (a stale stub from 2026-08-18 14:02 was still in the cache). Coverage 39/225; 186 remain, 3 blocked**; **(b2) attempt 2 2026-08-19 🟡 — the prescribed 4×-larger batch lost its window to a *second* instance of the same defect (`test_helmholtz_magnitude` FAILED at 62%, `test_helmholtz_v2` hung, exit 124; 9 passes uncounted for want of a footer), and the slot instead **diagnosed the cause**: the fixtures' own `current_density` callables use `ufl.max_value` / `<=` geometry predicates that UFL forbids on complex operands — `ComplexComparisonError` in 13.10 s for helmholtz, a swallowed FFCx root-node failure in 113.38 s for circular_loop, both on the load form at `solvers.py:385`. `src/` has **no** `max_value`; three sibling test files already document the fix (regularise inside the `sqrt`). **Fixture debt, not a solver defect**, and the same family as `OPS-20`. Coverage still 39/225; blocked 3 → 5**; **rescoped 2026-08-19 03:00 review** — the fixture fix is commissioned as `OPS-22` and queued first, (b2) resumes under **per-file completed-run accounting**, anchor re-based to 225 validation / 398 total, the +1 non-validation delta attributed benign (`POST-5` step 1's dropped `def` + 2 added tests)) | standard |
 | `OPS-18` | DolfinX version upgrade, recurring (0.7.2 → newest qualifying; operator directive 2026-08-16) | ⬜ | heavy |
 | `OPS-19` | Doc-reference checker: staleness must not own the exit code (2 runs flagged the masked signal 2026-08-16) | ✅ (2026-08-16: exit 0/1/2 split + `--stale-severity {fail,report}` default `report`; on `main` the checker now reads `dead=0 guide=0 stale=24 exit=2` where it read exit 1, guide pass green 21/21; 8 tests, 1.91 s, smoke) | smoke |
-| `OPS-20` | Disposition the coil-phantom `ComplexComparisonError`: localize with `--tb=long`, then fix the form or mark `@real_only` (known-issues 2026-08-18; commissioned 2026-08-18 10:30 review) | ⬜ | standard |
+| `OPS-20` | Disposition the coil-phantom `ComplexComparisonError`: localize with `--tb=long`, then fix the form or mark `@real_only` (known-issues 2026-08-18; commissioned 2026-08-18 10:30 review) | ✅ *(2026-08-19, 06:00 slot — fixed, no `@real_only`; the commissioned `ComplexComparisonError` was already dead, killed by `OPS-22` through the **imported** drive callable, and a free grep found it. Only the predicted second layer remained: the complex build now **passes the same 30% gate at the same 17.1233%**, both ranks identical, real-mode digits unmoved across control and re-run; collect count unchanged at 49)* | standard |
 | `OPS-21` | Make the combined-XDMF test scalar-type-aware and rank-deterministic (known-issues 2026-08-18, two defects in one test; commissioned 2026-08-18 10:30 review) | ⬜ | standard |
 | `OPS-22` | Make the three magnetostatic loop-drive fixtures complex-safe: replace the `ufl.max_value` / `<=` predicates in their `current_density` callables (known-issues 2026-08-19; commissioned 2026-08-19 03:00 review from the `OPS-17` leg-(b2) attempt-2 diagnosis; unblocks 5 tests in leg (b2)) | ✅ *(2026-08-19, 04:30 slot — all three files fixed, no `@real_only` needed; real-mode digits unmoved to the last printed figure across three runs, and the complex build now runs all three files to a footer: **5 passed, 412.12 s, exit 0**, both ranks identical)* | standard |
 
@@ -1280,8 +1280,8 @@ exists, replace instead. Two steps, one implementer run each.)*
 >     `find /root/.cache/fenics -name '*.c' -size 0`; delete stubs
 >     only, never clear the cache wholesale.
 
-**`OPS-20` — disposition the coil-phantom `ComplexComparisonError`** ⬜
-*(commissioned 2026-08-18, 10:30 review, from the two `OPS-17` leg-(b1)
+**`OPS-20` — disposition the coil-phantom `ComplexComparisonError`** ✅
+*(closed 2026-08-19, 06:00 implementer slot; commissioned 2026-08-18, 10:30 review, from the two `OPS-17` leg-(b1)
 known-issues entries; one slot)*. In the complex build,
 `tests/solver/test_coil_phantom_magnetostatics.py` fails during **form
 compilation** on a cold FFCx cache — `ComplexComparisonError: You can't
@@ -1330,6 +1330,54 @@ UFL/DolfinX helper. One diagnostic command, then one disposition.
 >   still shows no user frame, journal the full traceback in the
 >   known-issues entry and stop — disposition (b) remains available but
 >   must then be argued from the call path, not assumed.
+> * **Step 1 ✅ 2026-08-19, 06:00 slot — fixed, not marked; disposition (a),
+>   no `@real_only` anywhere, so the complex collect stays at 49 and
+>   `OPS-17`'s count bookkeeping does not move.** The re-pointing was right
+>   and cheaper than it knew: the `max` was never in a UFL/DolfinX helper,
+>   and it was **already gone**. This file does not define a drive callable —
+>   it *imports* `azimuthal_current_density` from
+>   `tests/validation/test_circular_loop.py` (line 48), the very file
+>   `OPS-22` repaired at the 04:30 slot. The commissioned
+>   `ComplexComparisonError` was therefore dead on arrival, and one free grep
+>   of the import line established that; **no cold-cache window was spent**,
+>   and the entry's mandatory `rm -rf ~/.cache/fenics` was deliberately not
+>   run — with the stub sweep clean and the offending predicate provably
+>   removed, a cold cache would have bought message fidelity for a defect
+>   that no longer exists and cost the slot a JIT window. What remained was
+>   exactly the **second layer `OPS-22` told this entry to expect**: the form
+>   compiles, the run reaches the print block, and
+>   `ValueError: Unknown format code '%' for object of type 'complex'` fires
+>   at line 145 because `evaluate_vector_field_parallel` hands back the
+>   complex scalar type for a real-valued magnetostatic solution. Fixed with
+>   the `OPS-22` idiom: assert `max|Im B_z| ≤ 1e-12·max|B_z|`, then compare
+>   on `np.real` — a new complex-mode assertion, exactly zero and a no-op in
+>   real mode. Worth recording for the next instance: that failure is
+>   **rank-split**, because only rank 0 runs the print block — the diagnosis
+>   command reported `1 failed` and `1 passed` in the same run. The
+>   non-collective ~300 s exit hang died with the raise; all four runs
+>   footered in ≤ 8 s.
+>   **Numbers**, `-n 2`, standard tier, in execution order. Real-mode control
+>   before any edit (`20260819T110051Z`, 7 s elapsed): 1 passed / 5.81 s, L2
+>   **17.1233%** — the `OPS-17` step-2 record to the digit, negative control
+>   satisfied. Complex diagnosis (`20260819T110111Z`, 8 s, `--tb=long`,
+>   `FEM_EM_REQUIRE_COMPLEX=1`): 1 failed on rank 0 / 6.19 s with a **user
+>   frame** at `test_coil_phantom_magnetostatics.py:145`. Complex after the
+>   fix (`20260819T110144Z`, 6 s): **1 passed / 5.11 s, L2 17.1233%**, both
+>   ranks identical — the complex build passes the *same* quantitative gate
+>   at the *same* digits, which is the (a) anchor. Real-mode re-run
+>   (`20260819T110156Z`, 4 s): 1 passed / 3.36 s, **17.1233%** unmoved. Stub
+>   sweep clean before and after.
+>   **One out-of-scope extra, uncounted.** A whole-`tests/solver` complex
+>   batch was attempted as confirmation that leg (b1)'s coil-phantom
+>   exclusion is discharged in context: it **timed out at 89%**
+>   (`20260819T110220Z`, exit 124, 481 s), so per leg-(b2) accounting it
+>   carries **no count claim** — but the coil-phantom test is visible PASSED
+>   on both ranks at 10% in that log. The real finding there is for the
+>   review, not for this chunk: complex `tests/solver` ran 111.22 s warm on
+>   2026-08-18 and no longer fits a 480 s window, pointing at cold forms
+>   added since (`POST-5` step 2 is the candidate). **Follow-up, not forced:**
+>   `OPS-22` journaled two examples carrying the predicate idiom; they will
+>   carry this second layer too.
 
 **`OPS-21` — make the combined-XDMF test scalar-type-aware and
 rank-deterministic** ⬜ *(commissioned 2026-08-18, 10:30 review, from the
@@ -4296,8 +4344,17 @@ their §7 entries verbatim as annotated by this review.
    result:** a regularised form that still fails to compile — journal
    the attempt and the FFCx message in the known-issues entry, report,
    stop.
-2. **`OPS-20` — disposition the coil-phantom `ComplexComparisonError`
-   (standard).** Execute the §7 `OPS-20` entry verbatim, **as
+2. ✅ **done 2026-08-19, 06:00 slot** — **`OPS-20` — disposition the
+   coil-phantom `ComplexComparisonError` (standard).** *(Fixed, no
+   `@real_only`, so the collect stays 49. The re-pointing paid off
+   immediately: this file **imports** its drive from
+   `test_circular_loop.py`, so `OPS-22` had already killed the
+   commissioned defect and a free grep found that — no cold-cache
+   window spent. Only the predicted second layer remained; complex now
+   passes the **same** gate at **17.1233%**, real-mode digits unmoved
+   in control and re-run. An out-of-scope whole-`tests/solver` complex
+   batch timed out at 89% and is uncounted — but it flags that the
+   suite no longer fits 480 s warm, see the §7 entry.)* Execute the §7 `OPS-20` entry verbatim, **as
    re-pointed by this review**: start the diagnosis at the test's own
    drive/`current_density` callable — the entry's "enters via a
    UFL/DolfinX helper" hypothesis is disfavoured by the leg-(b2)

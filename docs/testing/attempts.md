@@ -14541,3 +14541,73 @@ they are unexercised in complex mode, so nothing is red because of them.
 tests; and `OPS-20`'s fix is likely the identical two-layer edit on one file,
 so it should be sized for a *second* window after the predicate compiles
 rather than budgeted as a one-shot.
+
+## 2026-08-19T11:15Z — `OPS-20` — **complete**
+
+Scheduled implementer run, 06:00 CDT slot. Preflight clean (`git status`
+empty, container Up 30 h). §9 item 1 was already ✅ from the 04:30 slot, so
+this run took **item 2, `OPS-20`**, per protocol step 2.
+
+**The prior entry's hypothesis was right about the shape and wrong about the
+cost — it was cheaper, not dearer.** The 03:00 review's re-pointing said to
+grep the test's own drive callable before spending the cold-cache window.
+Doing so found that `test_coil_phantom_magnetostatics.py` **defines no drive
+at all**: line 48 imports `azimuthal_current_density` from
+`tests/validation/test_circular_loop.py` — the file `OPS-22` had repaired
+ninety minutes earlier. The commissioned `ComplexComparisonError` was
+therefore already dead, and the free grep proved it. **Deviation from the §7
+entry, deliberate and journalled:** its mandatory `rm -rf ~/.cache/fenics`
+was *not* run. The cold cache existed to get a trustworthy message for a
+defect that no longer exists; the 0-byte-stub sweep was clean before and
+after, so the trap the cold cache guards against was independently excluded,
+and clearing would have bought nothing while costing a JIT window.
+
+What was left was precisely the **second layer `OPS-22` warned this chunk to
+expect** — and that warning is what made this a one-slot close. With the form
+compiling, the complex run reached the print block and died at
+`ValueError: Unknown format code '%' for object of type 'complex'`
+(`test_coil_phantom_magnetostatics.py:145`): `evaluate_vector_field_parallel`
+returns the complex scalar type although the magnetostatic solution is
+real-valued. Fixed with the `OPS-22` idiom — assert
+`max|Im B_z| ≤ 1e-12·max|B_z|`, then compare on `np.real`; a new complex-mode
+assertion, exactly zero and a no-op in real mode. **Disposition (a), fixed,
+not marked:** no `@real_only` anywhere, so the complex collect stays **49**
+and `OPS-17`'s bookkeeping does not move. The non-collective ~300 s exit hang
+died with the raise — every in-scope run footered in ≤ 8 s.
+
+**New observation worth carrying:** this failure is **rank-split**, because
+only rank 0 executes the print block. The diagnosis command reported
+`1 failed` (rank 0) and `1 passed` (rank 1) in the same run. Anyone reading a
+single rank's summary for this error class will read it wrong.
+
+| run | log | result |
+|---|---|---|
+| real control, before any edit | `20260819T110051Z_OPS-20.log` | 1 passed, 5.81 s, L2 **17.1233%**, elapsed 7 s |
+| complex diagnosis, `--tb=long` | `20260819T110111Z_OPS-20.log` | 1 failed rank 0 / 1 passed rank 1, 6.19 s, user frame at line 145, elapsed 8 s |
+| **complex, after fix** | `20260819T110144Z_OPS-20.log` | **1 passed, 5.11 s, L2 17.1233%**, both ranks identical, elapsed 6 s |
+| real, re-run after fix | `20260819T110156Z_OPS-20.log` | 1 passed, 3.36 s, **17.1233%**, elapsed 4 s |
+| *(extra, out of scope)* complex `tests/solver` batch | `20260819T110220Z_OPS-20.log` | **exit 124 at 89%, 481 s — uncounted, no footer** |
+
+All `-n 2`, standard tier. **Anchor met:** the recorded 17.1233% vs the 30%
+band is re-asserted unmoved in both real runs (negative control — the fix
+moves no real-mode digit), and under disposition (a) the complex build passes
+the *same* quantitative gate at the *same* digits. Stub sweep
+`find /root/.cache/fenics -name '*.c' -size 0` clean before and after.
+
+**The uncounted extra, and its one real finding.** After the chunk was done I
+ran a whole-`tests/solver` complex batch to confirm `OPS-17` leg (b1)'s
+coil-phantom exclusion is discharged in context. It timed out at 89%, so per
+leg-(b2) accounting it **carries no count claim** — though coil-phantom is
+visible PASSED on both ranks at 10% in that log. The finding is for the
+review: complex `tests/solver` fit **111.22 s warm on 2026-08-18** and no
+longer fits a **480 s** window. That is not this fix (which adds two numpy
+calls); the candidate is cold forms added since, i.e. `POST-5` step 2.
+
+**Next attempt hypothesis:** `OPS-17` leg (b2) can now draw all 5 previously
+blocked tests *and* stop treating coil-phantom as excluded — but it should
+**re-price complex `tests/solver` before batching it**, since the 111 s
+record is stale by 4×+. The two examples `OPS-22` journalled
+(`examples/magnetostatics/02_circular_loop.py:173`,
+`04_helmholtz_analytic_comparison.py:79`) still carry the predicate idiom and
+will carry this second layer behind it; whoever takes them should budget both
+layers, as this slot's evidence now shows twice over.
