@@ -26,9 +26,21 @@ SIGMA = 0.7
 EPSILON_R = 78.0
 FREQUENCY_HZ = 127.74e6
 
-# Pre-stated; see test_time_harmonic_smoke_solve_conserves_real_power.
+# Pre-stated; see test_time_harmonic_smoke_solve_conserves_real_power.  The band
+# is unmoved by `POST-5` step 4 (2026-08-19); what changed is that the identity
+# scored against it is now the three-term one this driven fixture actually
+# satisfies.
 POYNTING_IMBALANCE_MAX = 0.25
-BLIND_SEPARATION = 10.0
+# The sigma-blind separation factor, re-derived for the three-term score
+# (`POST-5` step 4, pre-registered before the run).  With the volume leg forced
+# to zero the residual is |flux - source| / max(|flux|, |source|), which is <= 1
+# by construction, so the honest solve's own discretisation-level residual
+# (16.7465%, step 3) caps the achievable separation at 1/0.167465 = 5.97x.  The
+# pre-step-4 factor of 10 was calibrated against the *two-term* score, where the
+# blind reading is 100% against the honest solve's 116.7% — i.e. on this fixture
+# it never separated at all, which is part of why the gate was an xfail.  3.0
+# leaves the reading a factor of ~2 of headroom below the arithmetic ceiling.
+BLIND_SEPARATION_THREE_TERM = 3.0
 # The real sigma-blind control.  Was `1e-12 * SIGMA` until `POST-5` step 1
 # (2026-08-18) fixed the helper defect that made an exact zero raise
 # (known-issues 2026-08-17, `OPS-17` step-2 defect 4).
@@ -63,50 +75,52 @@ CLOSED_DRIVE_IMBALANCE_FOR_SOURCE = POYNTING_IMBALANCE_MAX
 AXIAL_RECORD_DISSIPATED_W = 1.199162e-06
 AXIAL_RECORD_NET_INWARD_W = -2.008179e-07
 AXIAL_RECORD_IMBALANCE = 1.167465
+# `POST-5` step 3's two recorded rows of the *full* three-term statement, which
+# step 4 reproduces through the helper rather than through the test-local form
+# that first measured them (§7 done-when, rtol = 1e-6).
+AXIAL_RECORD_SOURCE_W = -1.199162e-06
+AXIAL_RECORD_THREE_TERM = 0.167465
+AZIMUTHAL_RECORD_DISSIPATED_W = 4.778876e-09
+AZIMUTHAL_RECORD_NET_INWARD_W = -2.849722e-10
+AZIMUTHAL_RECORD_SOURCE_W = -4.778876e-09
+AZIMUTHAL_RECORD_IMBALANCE = 1.059632
+AZIMUTHAL_RECORD_THREE_TERM = 0.059632
 
 
 @complex_only
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "known-issues 2026-08-17 (OPS-17 step 2): real Poynting power does not "
-        "balance on this smoke fixture — dissipated 1.199162e-06 W against a "
-        "net inward flux of -2.008179e-07 W (imbalance 116.7465%, and the flux "
-        "has the wrong SIGN). `POST-5` step 1 (2026-08-18) discriminated the "
-        "cause: the imbalance is h-independent (116.7465 / 115.4059 / "
-        "114.4227% at h = 0.03 / 0.02 / 0.015, fitted rate 0.0290 against the "
-        "pre-registered 0.7) and the sign never corrects => SOURCE/ASSEMBLY, "
-        "so the band does NOT rescope to convergence. Band left strict so a "
-        "fix shows as XPASS."
-    ),
-)
 def test_time_harmonic_smoke_solve_conserves_real_power():
     """Solve a small frequency-domain case; real Poynting power balances.
 
-    **This test is a finding, not a pass** (`OPS-17` step 2, 2026-08-17).
-    Measured at `-n 2`, ``20260817T112448Z_OPS-17-step2-th-smoke2-n2.log``:
+    **A gate again since `POST-5` step 4 (2026-08-19).** It was carried as
+    ``xfail(strict=True)`` from `OPS-17` step 2 (2026-08-17) through
+    `POST-5` steps 1-3, on this reading at `-n 2`
+    (``20260817T112448Z_OPS-17-step2-th-smoke2-n2.log``):
 
         dissipated  = +1.199162e-06 W   (1/2 int sigma |E|^2 dV)
         net inward  = -2.008179e-07 W   (-oint 1/2 Re(E x conj(H)).n dS)
         relative imbalance: 116.7465%   (pre-stated band 25%)
 
-    The sign is the interesting part: real power leaves through the boundary
-    while the medium dissipates, which the identity forbids for any solution of
-    Maxwell's equations regardless of boundary condition. Two candidates, and
-    the timebox did not allow separating them:
+    Neither of the two candidates the xfail named was the cause. Step 1's
+    h-ladder excluded **resolution** (116.7465 / 115.4059 / 114.4227% at
+    h = 0.03 / 0.02 / 0.015, fitted rate 0.0290 against a pre-registered 0.7)
+    and ruled the outward measure correct at ratio 1.000000000000; step 2's
+    closed azimuthal drive excluded **the source's ``J.n != 0``** (105.9632%,
+    sign unmoved); step 3 scored the boundary leg alone against the `TH-6`
+    closed form and found it *sound* (4.1141% at 24^3, O(h) at rate 0.981).
 
-    1. **Resolution.** 0.16 m domain at h = 0.03 m is ~9 cells per in-medium
-       wavelength, and the boundary leg is a curl trace — the least accurate
-       quantity a degree-1 N1curl solution has. ``test_poynting_balance`` needs
-       a refined mesh to reach 5%, and gates the *convergence* of this
-       imbalance for exactly that reason.
-    2. **The source.** The drive is an axial current in the inner cylinder that
-       terminates on the end caps, so ``J.n != 0`` there — the same
-       incompatibility ``test_gauge_lagrange`` measures on its wire fixture.
+    What was wrong was the identity, not the solve. This fixture is **driven**,
+    and with an impressed J Poynting's theorem carries a third term:
 
-    An h-ladder distinguishes them in one command and belongs to a `TH`/`POST`
-    chunk, not to `OPS-17` test hygiene. The band stays at the pre-stated value
-    and the marker is ``strict=True``.
+        -oint 1/2 Re(E x conj(H)).n dS  =  1/2 int sigma|E|^2 dV
+                                           + 1/2 Re int E.conj(J) dV
+
+    ``poynting_power_balance`` scored only the source-free two-term form. Given
+    the drive it now scores the full statement, and the same 25% band the xfail
+    carried is met: 116.7465% -> 16.7465%, the remainder being the curl trace's
+    discretisation error at ~9 cells per wavelength. The docstring's old claim
+    that the flux sign "the identity forbids for any solution of Maxwell's
+    equations regardless of boundary condition" was false as written — it is a
+    theorem only for a source-free domain.
 
     `OPS-17` step 2 (2026-08-17). This was the step-1 table's second archetype
     of the finiteness-only pattern: solve, then assert ``isfinite(|E|)`` and
@@ -128,17 +142,20 @@ def test_time_harmonic_smoke_solve_conserves_real_power():
     one thing it uniquely covers — the time-harmonic solver driven by an
     interior current on a *tagged cylindrical* mesh, the only such solve in the
     tree — and gates it on a conservation identity that is valid on any
-    geometry and has no free parameters (`POST-3`):
+    geometry and has no free parameters (`POST-3`, extended by `POST-5` step 4
+    to the driven case):
 
-        -oint 1/2 Re(E x conj(H)).n dS  =  1/2 int sigma |E|^2 dV
+        -oint 1/2 Re(E x conj(H)).n dS  =  1/2 int sigma|E|^2 dV
+                                           + 1/2 Re int E.conj(J) dV
 
     The band is pre-stated. ``test_poynting_balance`` holds this identity to 5%
     on a refined mesh; this fixture is a 0.16 m domain at h = 0.03 m, roughly 9
     cells per in-medium wavelength (lambda = c/(f sqrt(78)) = 0.266 m), so 25%
     is the honest ceiling here. What makes a loose band meaningful is the
-    negative control below it: the same field scored blind to sigma must miss
-    the identity by an order of magnitude, which is what proves the metric is
-    live on this fixture rather than trivially satisfied.
+    negative control below it: the same field scored blind to sigma must be
+    *rejected* by the very band the honest solve passes, and by a factor
+    (``BLIND_SEPARATION_THREE_TERM``) — which is what proves the metric is live
+    on this fixture rather than trivially satisfied.
     """
     comm = MPI.COMM_WORLD
 
@@ -163,8 +180,10 @@ def test_time_harmonic_smoke_solve_conserves_real_power():
     )
     solver = TimeHarmonicSolver(problem, degree=1)
 
+    j_expr = ufl.as_vector([0.0, 0.0, 1.0])
+
     def current_density(x):
-        return ufl.as_vector([0.0, 0.0, 1.0])
+        return j_expr
 
     fields = solver.solve(current_density=current_density, subdomain_id=1, gauge_penalty=1e-3)
 
@@ -199,8 +218,19 @@ def test_time_harmonic_smoke_solve_conserves_real_power():
     # come from the same E but through different operators (a volume mass term
     # against a boundary curl trace), so this is a check on the solution, not
     # an algebraic tautology. Every integral inside is reduced across comm.
+    #
+    # `POST-5` step 4: the drive and the measure the solver assembled it on go
+    # in with the field, so the identity scored is the three-term one this
+    # driven domain satisfies. The two-term reading stays available under
+    # `two_term_relative_imbalance` and is checked against the record below.
+    dx_source = ufl.Measure("dx", domain=mesh, subdomain_data=cell_tags)(1)
     honest = poynting_power_balance(
-        fields.e_complex, omega=fields.omega, sigma=SIGMA, comm=comm
+        fields.e_complex,
+        omega=fields.omega,
+        sigma=SIGMA,
+        current_density=j_expr,
+        source_measure=dx_source,
+        comm=comm,
     )
     # Negative control: score the same field as if the medium were lossless.
     # The boundary flux is unchanged and the volume leg collapses to ~zero, so
@@ -215,7 +245,12 @@ def test_time_harmonic_smoke_solve_conserves_real_power():
     # lossless medium it always claimed to be, and its volume leg is exactly
     # zero rather than twelve orders down.
     blind = poynting_power_balance(
-        fields.e_complex, omega=fields.omega, sigma=SIGMA_BLIND, comm=comm
+        fields.e_complex,
+        omega=fields.omega,
+        sigma=SIGMA_BLIND,
+        current_density=j_expr,
+        source_measure=dx_source,
+        comm=comm,
     )
     assert blind["dissipated_power_w"] == 0.0, (
         "the sigma-blind control dissipated "
@@ -230,22 +265,44 @@ def test_time_harmonic_smoke_solve_conserves_real_power():
               f"{np.min(e_mag):.6e} / {max_mag:.6e} / {mean_mag:.6e}")
         print(f"  dissipated  = {honest['dissipated_power_w']:.6e} W")
         print(f"  net inward  = {honest['net_inward_power_w']:.6e} W")
+        print(f"  source      = {honest['source_power_w']:.6e} W")
         print(f"  reactive    = {honest['reactive_inward_power_var']:.6e} var")
-        print(f"  relative imbalance: honest {honest['relative_imbalance']:.4%}, "
-              f"sigma-blind {blind['relative_imbalance']:.4%}", flush=True)
+        print(f"  three-term residual: honest {honest['relative_imbalance']:.4%}, "
+              f"sigma-blind {blind['relative_imbalance']:.4%}")
+        print(f"  two-term imbalance (POST-5 step-1 record 116.7465%): "
+              f"{honest['two_term_relative_imbalance']:.4%}", flush=True)
 
     assert honest["relative_imbalance"] < POYNTING_IMBALANCE_MAX, (
         f"real power in through the boundary "
-        f"({honest['net_inward_power_w']:.6e} W) and Ohmic dissipation "
-        f"({honest['dissipated_power_w']:.6e} W) disagree by "
+        f"({honest['net_inward_power_w']:.6e} W) and the power delivered to the "
+        f"medium (Ohmic {honest['dissipated_power_w']:.6e} W + impressed source "
+        f"{honest['source_power_w']:.6e} W) disagree by "
         f"{honest['relative_imbalance']:.4%}, outside the pre-stated "
         f"{POYNTING_IMBALANCE_MAX:.0%} band for this coarse fixture"
     )
-    assert blind["relative_imbalance"] > BLIND_SEPARATION * honest["relative_imbalance"], (
-        f"scoring the same field with sigma = 0 gave an imbalance of only "
+    # The two-term reading must stay computable and unmoved, or the `POST-5`
+    # step-1 h-ladder journal (116.7465 / 115.4059 / 114.4227%) stops
+    # reconciling against this file — see the step-4 trap in PROJECT_PLAN §7.
+    assert np.isclose(
+        honest["two_term_relative_imbalance"], AXIAL_RECORD_IMBALANCE, rtol=1e-6
+    ), (
+        "the source-free reading moved: "
+        f"{honest['two_term_relative_imbalance']:.6%} against the `POST-5` "
+        f"step-1 record {AXIAL_RECORD_IMBALANCE:.6%}"
+    )
+    assert blind["relative_imbalance"] > POYNTING_IMBALANCE_MAX, (
+        f"the sigma-blind control passes the very band the honest solve is "
+        f"gated on ({blind['relative_imbalance']:.4%} < "
+        f"{POYNTING_IMBALANCE_MAX:.0%}) — the identity is not sensitive to the "
+        "loss it is supposed to be accounting for"
+    )
+    assert blind["relative_imbalance"] > (
+        BLIND_SEPARATION_THREE_TERM * honest["relative_imbalance"]
+    ), (
+        f"scoring the same field with sigma = 0 gave a residual of only "
         f"{blind['relative_imbalance']:.4%} against the honest solve's "
-        f"{honest['relative_imbalance']:.4%} — the identity is not sensitive "
-        "to the loss it is supposed to be accounting for"
+        f"{honest['relative_imbalance']:.4%} — under the pre-registered "
+        f"{BLIND_SEPARATION_THREE_TERM:.1f}x separation"
     )
 
 
@@ -714,18 +771,26 @@ def _solve_smoke_with_source_power(resolution: float, comm, drive: str = "axial"
     fields = solver.solve(
         current_density=current_density, subdomain_id=1, gauge_penalty=1e-3
     )
-    balance = poynting_power_balance(
-        fields.e_complex, omega=fields.omega, sigma=SIGMA, comm=comm
-    )
-
     # 1/2 Re int_{tag 1} E . conj(J) dV, over exactly the measure the solver
     # assembled the source on.  ufl.inner conjugates its second argument, which
     # is the conjugation this term needs.
     dx_src = ufl.Measure("dx", domain=mesh, subdomain_data=cell_tags)(1)
+    balance = poynting_power_balance(
+        fields.e_complex,
+        omega=fields.omega,
+        sigma=SIGMA,
+        current_density=j_expr,
+        source_measure=dx_src,
+        comm=comm,
+    )
+
+    # `POST-5` step 4: the helper now owns this term.  The hand-rolled form that
+    # first measured it (step 3) is kept as an independent cross-check — it is
+    # one extra assemble, and it is what proves the helper did not quietly
+    # change the measure, the conjugation or the factor of 1/2.
     source_form = fem.form(0.5 * ufl.inner(fields.e_complex, j_expr) * dx_src)
     source_c = comm.allreduce(fem.assemble_scalar(source_form), op=MPI.SUM)
-
-    balance["source_power_w"] = float(np.real(source_c))
+    balance["source_power_w_local_form"] = float(np.real(source_c))
     balance["drive"] = drive
     tdim = mesh.topology.dim
     balance["ncells"] = int(
@@ -754,6 +819,10 @@ def test_the_missing_impressed_source_term_accounts_for_the_smoke_imbalance():
         for drive in ("axial", "azimuthal")
     ]
 
+    # `POST-5` step 4: the residual is now the helper's own `relative_imbalance`
+    # — the arithmetic below is kept as the independent restatement of it, and
+    # the two are asserted equal, so the helper's three-term scoring is checked
+    # against the expression that first measured these rows.
     residuals = []
     for row in rows:
         diss = row["dissipated_power_w"]
@@ -770,7 +839,7 @@ def test_the_missing_impressed_source_term_accounts_for_the_smoke_imbalance():
                 f"dissipated = {row['dissipated_power_w']:.6e} W, "
                 f"net inward = {row['net_inward_power_w']:.6e} W, "
                 f"source = {row['source_power_w']:.6e} W, "
-                f"two-term imbalance = {row['relative_imbalance']:.4%}, "
+                f"two-term imbalance = {row['two_term_relative_imbalance']:.4%}, "
                 f"three-term residual = {res:.4%}"
             )
         verdict = (
@@ -780,12 +849,63 @@ def test_the_missing_impressed_source_term_accounts_for_the_smoke_imbalance():
         )
         print(f"  step-3 reconciliation verdict: {verdict}")
 
+    records = {
+        "axial": (
+            AXIAL_RECORD_DISSIPATED_W,
+            AXIAL_RECORD_NET_INWARD_W,
+            AXIAL_RECORD_SOURCE_W,
+            AXIAL_RECORD_IMBALANCE,
+            AXIAL_RECORD_THREE_TERM,
+        ),
+        "azimuthal": (
+            AZIMUTHAL_RECORD_DISSIPATED_W,
+            AZIMUTHAL_RECORD_NET_INWARD_W,
+            AZIMUTHAL_RECORD_SOURCE_W,
+            AZIMUTHAL_RECORD_IMBALANCE,
+            AZIMUTHAL_RECORD_THREE_TERM,
+        ),
+    }
     for row, res in zip(rows, residuals):
+        # The helper's own scoring must equal the restatement above exactly...
+        assert row["relative_imbalance"] == pytest.approx(res, rel=1e-12), (
+            f"the helper's three-term relative_imbalance "
+            f"{row['relative_imbalance']:.9e} disagrees with the arithmetic "
+            f"restatement {res:.9e} on the {row['drive']} drive"
+        )
+        # ...and its source term must equal the hand-rolled form that measured
+        # these rows in step 3.
+        assert row["source_power_w"] == pytest.approx(
+            row["source_power_w_local_form"], rel=1e-12
+        ), (
+            f"the helper's source term {row['source_power_w']:.9e} W disagrees "
+            f"with the test-local form's {row['source_power_w_local_form']:.9e} W"
+        )
+        # §7 step-4 done-when: both step-3 rows reproduced at rtol = 1e-6.
+        rec_diss, rec_flux, rec_src, rec_two, rec_three = records[row["drive"]]
+        # The powers carry 7 significant figures in the record, so rtol = 1e-6
+        # is above the printed rounding.  The two imbalances were recorded as
+        # percentages to 4 decimals, i.e. to 1e-6 in the *fraction* — at the
+        # azimuthal drive's 5.9632% that is 1.7e-5 relative, so those two are
+        # compared on an absolute tolerance at the record's own precision
+        # rather than on a relative one the printout cannot support.
+        for label, got, want, tol in (
+            ("dissipated", row["dissipated_power_w"], rec_diss, dict(rtol=1e-6)),
+            ("net inward", row["net_inward_power_w"], rec_flux, dict(rtol=1e-6)),
+            ("source", row["source_power_w"], rec_src, dict(rtol=1e-6)),
+            ("two-term", row["two_term_relative_imbalance"], rec_two,
+             dict(rtol=0.0, atol=1e-6)),
+            ("three-term", row["relative_imbalance"], rec_three,
+             dict(rtol=0.0, atol=1e-6)),
+        ):
+            assert np.isclose(got, want, **tol), (
+                f"the {row['drive']} drive's {label} reading moved: {got:.6e} "
+                f"against the `POST-5` step-3 record {want:.6e}"
+            )
         assert res < SOURCE_TERM_RESIDUAL_MAX, (
             f"the {row['drive']} drive's full three-term balance leaves a "
             f"residual of {res:.4%}, at or above the pre-registered "
             f"{SOURCE_TERM_RESIDUAL_MAX:.0%} — the omitted impressed-source "
             f"term (1/2 Re int E.Jbar = {row['source_power_w']:.6e} W) does not "
-            f"account for the {row['relative_imbalance']:.4%} two-term "
+            f"account for the {row['two_term_relative_imbalance']:.4%} two-term "
             "imbalance, so step 2's ASSEMBLY verdict stands unexplained"
         )

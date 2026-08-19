@@ -1648,8 +1648,10 @@ how the constraint is assembled, in which case it is h-independent.
 is not a usable normaliser here — `test_lagrange_removes_the_null_space`
 requires the LAGRANGE `max|A|` to sit six orders below the penalty solve's.
 
-**3. Real Poynting power does not balance on the time-harmonic smoke fixture,
-and the boundary flux has the wrong sign.**
+**3. ~~Real Poynting power does not balance on the time-harmonic smoke fixture,
+and the boundary flux has the wrong sign.~~ ✅ RESOLVED 2026-08-19 (`POST-5`
+step 4, 15:00 implementer slot) — see the closing block at the end of this
+entry; the test is a plain gate again and passes.**
 `tests/solver/test_time_harmonic_smoke.py::test_time_harmonic_smoke_solve_conserves_real_power`
 (xfail). Measured at `-n 2`,
 `20260817T112448Z_OPS-17-step2-th-smoke2-n2.log`: dissipated
@@ -1776,6 +1778,51 @@ h-ladder on this fixture distinguishes the two in one command.
 > `POST-5` step 4 (scoped, not executed) — teach `poynting_power_balance` the
 > impressed-source term and re-gate. Nothing was changed in this step: the
 > xfail keeps its 25% band and `strict=True` and still XFAILs.
+
+> **✅ CLOSED 2026-08-19, `POST-5` step 4 (15:00 implementer slot).** The fix is
+> in the helper, not in the solve: `poynting_power_balance` now accepts the
+> impressed `current_density` (and the `source_measure` it was assembled on),
+> assembles `source_power_w = ½Re∫E·J̄dV`, and scores `relative_imbalance` on
+> the three-term statement when a drive is given. Omitting the drive changes
+> nothing — the source-free two-term identity is still what a source-free
+> domain is scored against, and it stays reachable in both cases as
+> `two_term_relative_imbalance` / `two_term_power_scale_w`, so the step-1
+> h-ladder journal above keeps reconciling.
+>
+> `test_time_harmonic_smoke_solve_conserves_real_power` is a **plain gate**
+> again — the `xfail(strict=True)` is gone and it PASSES against the *unmoved*
+> 25% band (`20260819T201005Z_POST-5-step4-smoke-final.log`, `-n 2`, complex
+> build, 12 passed / exit 0 / 8 s):
+>
+> | reading | value |
+> |---|---|
+> | dissipated ½∫σ\|E\|²dV | 1.199162e-06 W |
+> | net inward −∮½Re(E×H̄)·n̂dS | −2.008179e-07 W |
+> | source ½Re∫E·J̄dV | −1.199162e-06 W |
+> | three-term residual (gated, band 25%) | **16.7465%** |
+> | two-term reading (step-1 record 116.7465%) | 116.7465% |
+> | σ-blind three-term control | 83.2535% |
+>
+> Every one of these reproduces the step-3 record; the test asserts them at
+> `rtol=1e-6` (powers) and `atol=1e-6` (the two imbalances, which the record
+> carries only to 4 decimals as a percentage) rather than printing them.
+> The σ-blind control is now scored on the three-term residual too, where its
+> arithmetic ceiling is `1/0.167465 = 5.97×`; the pre-registered replacement
+> for the old (never-met) 10× factor is **3.0×**, and it must also be *rejected*
+> by the very band the honest solve passes — 83.2535% is 4.97× the honest
+> reading and well outside 25%.
+>
+> **Negative control, on the fixture where J = 0**
+> (`20260819T200651Z_POST-5-step4-negcontrol.log`, `-n 2`, 15 passed / exit 0 /
+> 152 s): `test_zero_impressed_current_leaves_the_source_free_balance_untouched`
+> solves the `TH-6` plane wave at 12³ and scores it twice — with no drive and
+> with `J = fem.Constant(msh, [0,0,0])` (a `Constant` rather than a literal, so
+> the integral is genuinely *assembled* rather than folded away). The source
+> term is **exactly `0.0` W**, asserted `== 0.0`, and all seven other returned
+> quantities are asserted **bit-identical** between the two calls: 8.185716%
+> both ways, which is the step-3 12³ rung's 8.1857% unmoved. All the `POST-3`
+> gates in that file (5% MVP, piecewise σ, μᵣ-field, and the three blind
+> controls) are green in the same log.
 
 > **JIT trap, 2026-08-19 (`POST-5` step 2).** The step's first window
 > (`20260819T050314Z`, exit 124 at 400 s) died with rank 1 parked in

@@ -14920,3 +14920,74 @@ by the projected (divergence-free) source at 10 MHz, both orders, ~1 min:
 if `W_e/W_m` explodes there too, the injector is the `W_m ≫ W_e` regime and
 the feed model is exonerated; if it does not, the feed model is named and
 disposition (a) becomes the fix.
+
+---
+
+## 2026-08-19T20:12Z — `POST-5` step 4 — **complete** (15:00 implementer slot)
+
+**Item.** §9 On-deck item 3 (items 1–2 already done). Teach
+`poynting_power_balance` the impressed-source term; the chunk's own step-4
+scope carried the done-when.
+
+**What was done.** `current_density` + `source_measure` added to the helper; it
+assembles `source_power_w = ½Re∫E·J̄dV` over exactly the measure the solver
+used and scores `relative_imbalance` on the three-term statement when a drive
+is given. With no drive it is the old function plus `source_power_w = 0.0`.
+`two_term_power_scale_w` / `two_term_relative_imbalance` are returned
+**always**, which is how the §7 trap ("`power_scale_w` must not silently
+switch definition") is honoured structurally rather than by promise.
+`test_time_harmonic_smoke_solve_conserves_real_power` lost its
+`xfail(strict=True)` and is a plain gate again; a new
+`test_zero_impressed_current_leaves_the_source_free_balance_untouched` in
+`tests/validation/test_poynting_balance.py` is the J = 0 negative control.
+
+**Measured.**
+
+| reading | value | band |
+|---|---|---|
+| smoke gate, three-term residual | **16.7465%** | 25%, unmoved |
+| smoke two-term reading | 116.7465% | step-1 record, `rtol=1e-6` |
+| source term ½Re∫E·J̄ (axial) | −1.199162e-06 W | step-3 record, `rtol=1e-6` |
+| azimuthal row | 105.9632% / 5.9632% | step-3 record |
+| σ-blind three-term control | 83.2535% | > 25% **and** ≥ 3.0× honest |
+| `TH-6` J = 0 source term | **0.000000e+00 W** | `== 0.0` |
+| `TH-6` imbalance, no-J vs J = 0 | 8.185716% / 8.185716% | `==` on all 7 keys |
+
+**Logs.** `20260819T200606Z_POST-5-step4-smoke.log` (12 passed / exit 0 / 8 s),
+`20260819T200651Z_POST-5-step4-negcontrol.log` (15 passed / exit 0 / 152 s),
+`20260819T200934Z_POST-5-step4-smoke-diag.log` (2 passed / 3 s, `-s` to capture
+the printed rows), `20260819T201005Z_POST-5-step4-smoke-final.log` (12 passed /
+exit 0 / 8 s — the final tree state with two corrected print labels, `-s`).
+`20260819T201309Z_POST-5-step4-collateral.log` (the third call site,
+`tests/validation/test_degree2_energy_mechanism.py`, 8 passed / exit 0 / 10 s —
+it reads only `dissipated_power_w`, which is bit-identical after the change).
+All `-n 2`, complex build + `FEM_EM_REQUIRE_COMPLEX=1`, both ranks identical.
+0-byte FFCx stub sweep before the first window: none found.
+
+**One band re-derived, disclosed not buried.** The σ-blind separation factor
+could not stay at 10× once the score became three-term: with the volume leg
+zeroed the residual is `|flux − source| / max(...)`, bounded by 1, so against
+the honest 16.7465% the arithmetic ceiling is 5.97×. The old 10× was calibrated
+on the two-term score, where the blind reading is 100% against an honest 116.7%
+— i.e. it never separated on this fixture at all, part of why the gate was an
+xfail. The replacement was written into the test **before** the run: rejected
+by the very band the honest solve passes (> 25%) **and** ≥ 3.0×. Measured
+83.2535% = 4.97×. Nothing else moved; the 25% gate band and every `POST-3`
+bound are untouched, and the test diff deletes only the xfail block, the stale
+docstring paragraphs it justified, and the old blind assertion.
+
+**Cost note.** The suite-growth warning did not bite: the two files were run in
+separate windows as §9 prescribed, and warm they are 8 s and 152 s. The h-ladder
+test that killed step 3's 541 s window ran in seconds here — that window's cost
+was cold-JIT, not the ladder.
+
+**Hypothesis for the next attempt.** Nothing is left of `POST-5`; it closes ✅.
+The follow-on worth scoping is that the helper has **no caller in `src/` at
+all** — every call site is a test (`tests/validation/test_poynting_balance.py`,
+`tests/solver/test_time_harmonic_smoke.py`,
+`tests/validation/test_degree2_energy_mechanism.py`), the third reads only
+`dissipated_power_w`, which this change leaves bit-identical, and it was
+re-run here as a collateral check (see the log list above). So there is no
+production consumer of `relative_imbalance` to migrate; when one appears —
+the SAR / coil-loading narratives §2 names — it must pass its drive, and the
+docstring now says so.

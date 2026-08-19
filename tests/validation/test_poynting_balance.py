@@ -29,7 +29,7 @@ import numpy as np
 import pytest
 from mpi4py import MPI
 
-from dolfinx import fem, mesh as dmesh
+from dolfinx import default_scalar_type, fem, mesh as dmesh
 
 from fem_em_solver.core import (
     HomogeneousMaterial,
@@ -858,3 +858,105 @@ def test_each_leg_scored_against_its_own_closed_form():
     assert fine["net_inward_power_w"] > 0.0, (
         "net real power flows out of a passive lossy box on the fine rung"
     )
+
+
+# ---------------------------------------------------------------------------
+# `POST-5` step 4's negative control for the impressed-source term.
+#
+# The `TH-6` plane wave is source-free — the field is imposed through Dirichlet
+# data, J = 0 everywhere — so the term the helper learned in step 4 must
+# assemble to *exactly* 0.0 here and leave every gate above unmoved.  That is
+# what makes "the smoke fixture's O(100%) was the missing source term" a
+# statement about drives rather than a licence the helper now grants every
+# solve.
+#
+# The zero drive is a `fem.Constant` rather than a literal `ufl.as_vector` of
+# zeros for the same reason the scalar sigma = 0 branch is (known-issues
+# 2026-08-17, `OPS-17` step-2 defect 4): a literal folds to a domain-less UFL
+# zero, and the point of this control is that the integral is *assembled*, not
+# short-circuited.
+
+
+def _solve_th6_fields(n: int, sigma: float):
+    """The `TH-6` solve of :func:`_solve_and_balance`, returning the fields.
+
+    A near-copy rather than a refactor: `_solve_and_balance` owns the recorded
+    `POST-3`/`POST-5` rows above and is left byte-identical.
+    """
+    comm = MPI.COMM_WORLD
+    msh = dmesh.create_box(
+        comm,
+        [np.array([0.0, 0.0, 0.0]), np.array([BOX_L, BOX_L, BOX_L])],
+        [n, n, n],
+        cell_type=dmesh.CellType.tetrahedron,
+    )
+    exact_numpy, _ = _exact_factory(sigma)
+    problem = TimeHarmonicProblem(
+        mesh=msh,
+        frequency_hz=FREQUENCY_HZ,
+        material=HomogeneousMaterial(sigma=sigma, epsilon_r=EPSILON_R, mu_r=MU_R),
+        boundary_condition="pec_zero_tangential_a",
+        dirichlet_e_field=exact_numpy,
+    )
+    return msh, comm, TimeHarmonicSolver(problem, degree=1).solve()
+
+
+@complex_only
+@pytest.mark.integration
+def test_zero_impressed_current_leaves_the_source_free_balance_untouched():
+    """`POST-5` step 4: J = 0 assembles to exactly 0.0 and moves no digit."""
+    comm = MPI.COMM_WORLD
+    msh, _, fields = _solve_th6_fields(12, SIGMA)
+
+    source_free = poynting_power_balance(
+        fields.e_complex, omega=OMEGA, sigma=SIGMA, mu_r=MU_R, comm=comm
+    )
+    zero_j = fem.Constant(msh, np.zeros(3, dtype=default_scalar_type))
+    with_zero_source = poynting_power_balance(
+        fields.e_complex,
+        omega=OMEGA,
+        sigma=SIGMA,
+        mu_r=MU_R,
+        current_density=zero_j,
+        comm=comm,
+    )
+
+    if comm.rank == 0:
+        print("\n[POST-5 step 4] zero-J control on the TH-6 plane wave (12^3):")
+        print(
+            f"  source term        = {with_zero_source['source_power_w']:.6e} W"
+        )
+        print(
+            f"  imbalance: source-free {source_free['relative_imbalance']:.6%}, "
+            f"three-term {with_zero_source['relative_imbalance']:.6%}",
+            flush=True,
+        )
+
+    assert with_zero_source["source_power_w"] == 0.0, (
+        "the impressed-source term assembled to "
+        f"{with_zero_source['source_power_w']:.6e} W on a source-free fixture "
+        "at J = 0 exactly; it must vanish identically, not approximately"
+    )
+    assert source_free["source_power_w"] == 0.0, (
+        "omitting current_density must report exactly zero source power, got "
+        f"{source_free['source_power_w']:.6e} W"
+    )
+    for key in (
+        "dissipated_power_w",
+        "net_inward_power_w",
+        "reactive_inward_power_var",
+        "power_scale_w",
+        "relative_imbalance",
+        "two_term_power_scale_w",
+        "two_term_relative_imbalance",
+    ):
+        assert with_zero_source[key] == source_free[key], (
+            f"teaching the helper the source term moved {key} on a J = 0 "
+            f"fixture: {source_free[key]!r} -> {with_zero_source[key]!r}"
+        )
+    # The source-free path must still *be* the two-term identity, digit for
+    # digit — this is what keeps the `POST-3` gates above meaning what they did.
+    assert source_free["relative_imbalance"] == (
+        source_free["two_term_relative_imbalance"]
+    )
+    assert source_free["power_scale_w"] == source_free["two_term_power_scale_w"]

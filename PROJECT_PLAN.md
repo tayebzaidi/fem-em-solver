@@ -2977,7 +2977,7 @@ plans and probes archived verbatim in `docs/planning/plan-archive.md`)*:
 | `POST-2` | Energy/consistency diagnostics | ⚠️ | standard |
 | `POST-3` | Replace vacuous consistency metrics | 🟡 | standard |
 | `POST-4` | Centerline point evaluation is rank-count-dependent: attribute and fix the ownership tie-break in `evaluate_vector_field_parallel` | ✅ *(chunk closed 2026-08-12 — every step closed or dispositioned; note the title's premise was itself refuted, the tie-break was never the defect. Step 1 ✅ 2026-08-11 — ownership **refuted**, 0/120 multi-claims; locus is the Lagrange-P1 interpolation, 1.163e+04× separation. Step 2 🚫 skipped. Step 3 ✅ 2026-08-11 — the centerline samples the source fields: **23.5539% → 0.008613%**, a 2735× collapse; known-issues entry **retired**. Step 4 ✅ 2026-08-12 — the export-path P1 artifact is **bounded and attributed**: midpoint relative medians **51.17% / 52.47% / 20.18%** (`A`/`B`/`E`), vertex/midpoint separation **0.42–0.68×** so the step's vertex-localization hypothesis is **REFUTED**, and a DG1 target reproduces all three sources to round-off — 100% of it is the P1 continuity constraint. All four steps now closed or dispositioned)* | standard |
-| `POST-5` | Real Poynting power balance: wrong-sign boundary flux on the time-harmonic smoke fixture + `poynting_power_balance` raises on scalar `sigma=0.0` (`OPS-17` step-2 defects 3 + 4, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | 🟡 *(step 1 ✅ 2026-08-18: defect 4 fixed, `ds` ruled out at ratio 1.000000000000, ladder verdict **SOURCE/ASSEMBLY**. Step 2 ✅ 2026-08-19: the closed azimuthal drive reads **ASSEMBLY** — imbalance 116.7465% → 105.9632% with the sign unmoved, against a band that required < 25% and positive — so defect 3 is the boundary leg, not the source. **Step 3 ✅ 2026-08-19 — and it overturns step 2's verdict**: scored against closed form *by itself* the boundary leg is **sound** (4.1141% at 24³ vs the pre-registered 10%, O(h) at rate 0.981, volume-leg control 0.0174%), and the smoke fixture's O(100%) imbalance is the **impressed-source term `½Re∫E·J̄dV` that the helper omits** — restoring it drops 116.7465% → **16.7465%** (axial) and 105.9632% → **5.9632%** (azimuthal), both inside the pre-registered 25%. The chunk's "the sign is one the identity forbids" premise is false for a driven domain. Step 4, the helper fix, is scoped and unexecuted; nothing was loosened and the xfail is unmoved. *Step 3 audited COMPLIANT 2026-08-19 10:30 review — every step-3 assertion verified PASSED in the log body before the exit-124 kill landed in a pre-existing gmsh-heavy test, the second window footers exit 0, and the test diff is purely additive (0 deletions); caveat on record: the bands' pre-registration rests on the journal, not the commit graph — the run-time HEAD predates the band constants, inherent to the write-run-commit workflow*)* | standard |
+| `POST-5` | Real Poynting power balance: wrong-sign boundary flux on the time-harmonic smoke fixture + `poynting_power_balance` raises on scalar `sigma=0.0` (`OPS-17` step-2 defects 3 + 4, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | ✅ *(step 1 ✅ 2026-08-18: defect 4 fixed, `ds` ruled out at ratio 1.000000000000, ladder verdict **SOURCE/ASSEMBLY**. Step 2 ✅ 2026-08-19: the closed azimuthal drive reads **ASSEMBLY** — imbalance 116.7465% → 105.9632% with the sign unmoved, against a band that required < 25% and positive — so defect 3 is the boundary leg, not the source. **Step 3 ✅ 2026-08-19 — and it overturns step 2's verdict**: scored against closed form *by itself* the boundary leg is **sound** (4.1141% at 24³ vs the pre-registered 10%, O(h) at rate 0.981, volume-leg control 0.0174%), and the smoke fixture's O(100%) imbalance is the **impressed-source term `½Re∫E·J̄dV` that the helper omits** — restoring it drops 116.7465% → **16.7465%** (axial) and 105.9632% → **5.9632%** (azimuthal), both inside the pre-registered 25%. The chunk's "the sign is one the identity forbids" premise is false for a driven domain. **Step 4 ✅ 2026-08-19 — the helper now knows the impressed-source term and the xfail is a passing gate**: `poynting_power_balance` takes `current_density` + `source_measure` and scores the three-term statement, the smoke gate reads **16.7465%** against its unmoved 25% band, the two-term record 116.7465% is still computed and asserted, and the J = 0 control on `TH-6` assembles **exactly 0.0 W** with all seven other quantities bit-identical to the source-free call. `20260819T201005Z_POST-5-step4-smoke-final.log` 12 passed / exit 0 / 8 s and `20260819T200651Z_POST-5-step4-negcontrol.log` 15 passed / exit 0 / 152 s, both `-n 2` complex. *Step 3 audited COMPLIANT 2026-08-19 10:30 review — every step-3 assertion verified PASSED in the log body before the exit-124 kill landed in a pre-existing gmsh-heavy test, the second window footers exit 0, and the test diff is purely additive (0 deletions); caveat on record: the bands' pre-registration rests on the journal, not the commit graph — the run-time HEAD predates the band constants, inherent to the write-run-commit workflow*)* | standard |
 
 > *(Closed-step plans, execution journals and audits for `POST-1` and
 > `POST-3` are archived verbatim in `docs/planning/plan-archive.md`.)*
@@ -3318,6 +3318,63 @@ to reach 5%); (b) the source's `J·n ≠ 0` end-cap incompatibility.
 > reproduced at `rtol=1e-6`. **Trap:** `power_scale_w` must not silently
 > switch definition — the recorded 116.7465% / 105.9632% two-term readings
 > have to stay computable, or the h-ladder's journal stops reconciling.
+>
+> **Step 4 result — executed 2026-08-19, 15:00 slot. ✅ Done-when met in full;
+> the chunk closes.** Two windows, `-n 2`, complex build +
+> `FEM_EM_REQUIRE_COMPLEX=1`, plus a `-s` diagnostic re-run of the smoke pair.
+>
+> *The helper.* `poynting_power_balance` gained `current_density` and
+> `source_measure`; given a drive it assembles `source_power_w = ½Re∫E·J̄dV`
+> over exactly the measure the solver used and scores `relative_imbalance` on
+> the three-term statement. Given none it is byte-for-byte the old function
+> plus `source_power_w = 0.0` and two aliases. The trap is honoured
+> structurally rather than by promise: `two_term_power_scale_w` /
+> `two_term_relative_imbalance` are returned **always**, so `power_scale_w`
+> never silently switches meaning — it is the scale of whichever identity was
+> actually scored, and the source-free scale keeps its own name.
+>
+> *The gate* (`20260819T201005Z_POST-5-step4-smoke-final.log`, 12 passed /
+> exit 0 / 8 s; numbers printed there and in
+> `20260819T200934Z_POST-5-step4-smoke-diag.log`).
+> `test_time_harmonic_smoke_solve_conserves_real_power` has lost its
+> `xfail(strict=True)` and **passes as a plain gate** against the unmoved 25%
+> band: three-term residual **16.7465%**, on dissipated 1.199162e-06 W, net
+> inward −2.008179e-07 W, source −1.199162e-06 W. The two-term reading is
+> still computed and asserted against the step-1 record — **116.7465%** at
+> `rtol=1e-6` — so the h-ladder journal still reconciles. Both step-3 rows are
+> reproduced through the helper: axial 116.7465% / 16.7465%, azimuthal
+> 105.9632% / 5.9632%, each of the five quantities asserted (powers at
+> `rtol=1e-6`; the two imbalances at `atol=1e-6`, because the record carries
+> them only to four decimals as a percentage and 5.9632% cannot support a
+> relative 1e-6). Two further asserts keep the helper honest against the code
+> that first measured these rows: its `relative_imbalance` equals the test's
+> own arithmetic restatement at `rel=1e-12`, and its source term equals the
+> hand-rolled step-3 form at `rel=1e-12`.
+>
+> *The negative control* (`20260819T200651Z_POST-5-step4-negcontrol.log`,
+> 15 passed / exit 0 / 152 s). On the source-free `TH-6` plane wave at 12³,
+> `test_zero_impressed_current_leaves_the_source_free_balance_untouched`
+> scores the same solved field twice — no drive, and `J = fem.Constant(msh,
+> [0,0,0])`, a `Constant` rather than a literal so the integral is genuinely
+> assembled rather than folded to a domain-less UFL zero. Source power is
+> **exactly 0.0 W** (`== 0.0`), and all seven other returned quantities are
+> **bit-identical** between the two calls (`==`, not `isclose`): imbalance
+> 8.185716% both ways, the step-3 12³ rung's 8.1857% unmoved. Every `POST-3`
+> gate in that file — 5% MVP, piecewise σ, μᵣ-field, three blind controls —
+> is green in the same log.
+>
+> *One band was re-derived, and it is disclosed rather than buried.* The
+> σ-blind control's separation factor could not stay at 10×: with the volume
+> leg forced to zero the three-term residual is `|flux − source| / max(...)`,
+> bounded by 1, so against the honest solve's own 16.7465% the arithmetic
+> ceiling is **5.97×**. The old 10× was calibrated on the two-term score,
+> where the blind reading is 100% against an honest 116.7% — i.e. on this
+> fixture it never separated at all, which is part of why the gate was an
+> xfail. The replacement, written into the test before the run: the blind
+> control must be **rejected by the very band the honest solve passes**
+> (> 25%) *and* exceed it by ≥ **3.0×**. Measured: **83.2535%**, which is
+> 4.97×. Nothing else moved; the 25% gate band and every `POST-3` bound are
+> untouched.
 
 **`POST-4`** ✅ *(closed 2026-08-12; full step plans + journals in
 `docs/planning/plan-archive.md`)*. The chunk title's premise was refuted by
@@ -4578,8 +4635,24 @@ depends on another landing first. Item 1's former dependency (the
    smoke fixture's *unchanged* axial drive, so it is independent of
    item 3 (which touches the balance helper, not the drive or the
    energy forms).
-3. **`POST-5` step 4 — teach `poynting_power_balance` the
-   impressed-source term (standard).** Execute the §7 step-4 scope
+3. ~~**`POST-5` step 4 — teach `poynting_power_balance` the
+   impressed-source term (standard).**~~ **Done 2026-08-19, 15:00 slot** —
+   done-when met in full and the chunk closes ✅. The helper takes
+   `current_density` + `source_measure`, the smoke xfail is a **plain
+   passing gate** at **16.7465%** against the unmoved 25% band, the
+   two-term record 116.7465% is still computed and asserted at
+   `rtol=1e-6`, both step-3 rows reproduce through the helper, and the
+   J = 0 control on `TH-6` assembles **exactly 0.0 W** with all seven
+   other quantities bit-identical to the source-free call (8.185716%
+   both ways). `20260819T201005Z_POST-5-step4-smoke-final.log` 12
+   passed / exit 0 / 8 s; `20260819T200651Z_POST-5-step4-negcontrol.log`
+   15 passed / exit 0 / 152 s; both `-n 2`, complex. **For the review:**
+   one band was re-derived and is disclosed in the §7 block — the
+   σ-blind separation factor could not stay at 10× once the score became
+   three-term (arithmetic ceiling 5.97×), and the replacement,
+   pre-registered in the test before the run, is "rejected by the very
+   band the honest solve passes, **and** ≥ 3.0×"; measured 83.2535%,
+   i.e. 4.97×. Original scope, for the record: Execute the §7 step-4 scope
    (written by step 3, done-when included). **Anchor:** the smoke
    xfail becomes an XPASS *on the three-term identity* under the
    unmoved 25% band and is converted to a plain gate; the recorded
