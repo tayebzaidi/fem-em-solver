@@ -458,6 +458,12 @@ dated annotation. The ID stays stable.)*
 > `petsc_options_prefix`. The installed container API is ground truth
 > over the pack. *(This resolves the 03:30Z run's "observed mid-slot"
 > flag: the pack is tracked, not ignored.)*
+> **Operator note 2026-08-18 (interactive session): the fired trigger
+> above has not been acted on.** The 03:00, 10:30 and 18:00 daily
+> reviews each restocked §9 without queueing steps 1–3 and without a
+> deferral note, contrary to this entry's trigger clause. The next
+> daily review must queue steps 1–3 or record a dated deferral
+> rationale here; see the matching note in the §9 preamble.
 > * **Step 1 — build and boot (standard).** Bump the `FROM` line, rebuild,
 >   and fix the environment plumbing that encodes version-specific paths:
 >   the compose `PYTHONPATH` (`dolfinx-real/lib/python3.10/…` — both the
@@ -3915,6 +3921,22 @@ landing; items 3 and 6 both read the smoke fixture, but 6 uses its
 *unchanged* axial drive while 3 adds a closed-drive variant — either
 lands without the other). Items execute their §7 entries verbatim as
 annotated by this review.
+
+> **Operator note 2026-08-18 (interactive session) — unexecuted trigger
+> clause, action required at the next review.** The `OPS-18` release
+> check of 2026-08-18 **fired** (target `0.7.2 → v0.11.0.post0`, both
+> lag-policy prongs satisfied; migration pack cached at
+> `docs/references/dolfinx-0.11-migration/`). The chunk's trigger clause
+> says "the daily review queues it," but the 03:00, 10:30 and 18:00
+> reviews have all restocked §9 without queueing `OPS-18` steps 1–3 and
+> without recording a deferral. **The next daily review must either
+> queue `OPS-18` steps 1–3 or write a dated deferral rationale into the
+> §7 `OPS-18` entry** — silently skipping it a fourth time is a protocol
+> defect. Sequencing note: the upgrade serializes against most other
+> work (step 2 touches `src/` and `tests/` wholesale), so queueing it
+> implies clearing or front-loading the short in-flight tails (`OPS-17`
+> leg (b2), `POST-5` step 2, `TH-12` step 3) first — that ordering is
+> the review's call; ignoring the trigger is not.
 
 1. ~~**`EX-24` — lumped-sheet port at interior width, with the
    sweep-route leg (standard).**~~ **done 2026-08-18, 19:30 slot** —
