@@ -15068,3 +15068,95 @@ chunk found is a *class* of defect, not a one-off — any test that asserts unde
 precisely the shape `OPS-17`'s coverage bookkeeping cannot see. A grep for that
 idiom across `tests/` is a cheap next item and would tell the review how much of
 the suite's `-n 2` coverage is actually rank-0-only.
+
+---
+
+## 2026-08-20T00:40Z — `EX-22` — **complete**
+
+**Slot.** Scheduled implementer run, 19:30 local 2026-08-19. On-deck item 5
+(the spare) — items 1–4 were already done, so this was the first open item.
+Preflight clean, container Up 43 h.
+
+**What was tried.** The chunk verbatim: runner refresh runs for the six
+examples whose `paraview_output/` artifacts drive the doc-reference checker's
+standing 24 stale references, then the checker itself.
+
+**Baseline re-audit (the entry asks for it).** The 2026-08-16 premise
+correction holds unchanged at this commit: `EX-25`'s docrefs log
+(`20260819T140453Z`) reads `dead=0 stale=24`, every artifact present, aged
+187.5–216.0 h against the 48 h window, and the 24 map exactly onto the six
+examples the entry names (`straight_wire_*`, `circular_loop_B.bp`,
+`helmholtz_*`, `gauge_cross_check_*`, `h_convergence_rate_*`,
+`mri_coil_phantom_*`). Nothing was absent. This was a freshness restore.
+
+**Deviation: three runner commands, not two.** The entry prescribes "two
+runner commands (`mag` group, then `mri:1`)". The mag group was unpriced —
+the only all-mag timing on record (204 s, `20260810T093203Z`) predates
+examples 05 and 06, and 06 alone is 131 s (`EX-9`), so the group projected to
+~390 s of container time in one window. Rather than gamble a foreground
+window on an extrapolation, the group was split `-e 1,2,4` then `-e 5,6`.
+Measured after the fact: 230 + 151 s, i.e. the projection was right and the
+combined command would probably have fitted — but the split cost nothing and
+the protocol's no-background rule makes an overrun expensive.
+
+**Measured numbers.** All runs `-n 2`, exit 0.
+
+| run | command | elapsed |
+| --- | --- | --- |
+| `20260820T003126Z_EX-22-mag-124.log` | `./run_examples.sh -e 1,2,4 -n 2 -t 300` | 230 s |
+| `20260820T003532Z_EX-22-mag-56.log` | `./run_examples.sh -e 5,6 -n 2 -t 300` | 151 s |
+| `20260820T003812Z_EX-22-mri1.log` | `./run_examples.sh -e mri:1 -n 2 -t 300` | 6 s |
+| `20260820T003833Z_EX-22-docrefs.log` | checker, in-container | 1 s |
+
+Anchors, all reproduced by the examples' own asserts (exit 0 *is* the gate;
+these are the printed values):
+
+- `EX-14` / `EX-17` VTX round-trips **0.000e+00** relative difference against
+  their 1e-10 tolerance — `straight_wire_B.bp` max|B| 4.463816061893e-05 T,
+  `circular_loop_B.bp` 7.756122914931e-05 T (in-memory and read-back equal to
+  all 13 printed figures in both).
+- `EX-10` gauge cross-check **0.0003%** probe / **0.0033%** volume against the
+  5% `MAG-15` ceiling — byte-identical to the `EX-10` record.
+- `EX-9` fitted h-convergence rate **1.1009** in the `MAG-13` (0.7, 1.5) band
+  — byte-identical to the record the example itself prints as "1.10 on record".
+- Helmholtz h-ladder centre rel err **0.89% / 0.24% / 1.28%** at 70 054 /
+  103 984 / 160 478 cells; on-axis mean 1.47%, max 4.05%, central CV 0.051%.
+- `mri:1`, the labelled **ungated** example — printed record reproduced
+  digit-for-digit against `examples/mri/01_coil_phantom_fields.md`, no gate
+  invented: 9 261 cells / 2 077 vertices, cell tags 385 / 350 / 493 / 8 033,
+  phantom |E| 1.244231e+02 / 3.150176e+02 / 1.975909e+02, |B| 8.791014e-08 /
+  2.771692e-06 / 1.292004e-06, |E|/|B| mean ratio 1.529336e+08 (max
+  1.136553e+08), coverage 493/493/493 with 0 drops. Its WARN status and the
+  |E|/|B| imbalance warning are the documented non-physical-by-construction
+  reading, unchanged.
+
+**Deliverable.** `dead=0 guide=0 stale=0 stale_severity=report exit=0` — the
+first `exit=0` the checker has returned under the `OPS-19` contract. Guide
+pass green at 24 runnable examples / 24 checked / 0 pending, 33 guides
+scanned, 103 references, 1 allowlisted. The `stale=24` line every example
+chunk since `EX-19` has had to disclaim is gone.
+
+**Not done, deliberately.** The complex-hostile `max_value` idiom at
+`02_circular_loop.py:173` and `04_helmholtz_analytic_comparison.py:79` that
+`OPS-22` journalled is untouched — the item's own note says leave it; it is
+inert in the real build these runs use. Still an open follow-up.
+
+**Cost.** 388 s of compute across four foreground harness commands, `-n 2`
+throughout, well inside the heavy tier. Slot used ~25 min of 60.
+
+**Landed together.** Four harness logs + `test-results.md` rows, the §7 table
+row flip ⬜ → ✅, the §7 prose entry closure, and the §9 item-5 strikethrough.
+No `src/` or `tests/` change — this chunk is entirely artifact regeneration.
+
+**Hypothesis for the next attempt.** The §9 On-deck queue is now **drained** —
+all five items done — so the next slot hits the drain instruction ("stop and
+journal") unless the review tops it up first; the 21:00 slot falls before the
+03:00 review, so it will likely burn on the drain unless the queue is
+refilled. Two cheap candidates the recent slots surfaced and nobody owns: the
+`if comm.rank != 0: return` grep across `tests/` that `OPS-21` recommended
+(a coverage-class question `OPS-17` cannot see), and folding an `Im`-bound
+assertion into `test_helmholtz_v2.py` (the 10:30 review's standing audit
+caveat). Also note for whoever runs examples next: the freshness window is
+48 h, so this `stale=0` decays back to `stale=24` by 2026-08-22 unless the
+refresh is periodic — the checker measures artifact age, not correctness, and
+`EX-22` bought a two-day green, not a permanent one.
