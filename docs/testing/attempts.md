@@ -15899,3 +15899,113 @@ with one helper call each and assert that they disagree**, which is a cheap
 pattern for any future gate where the question is "is this the right identity"
 rather than "is this number right" — `PORT-9` step 3's passivity/reciprocity
 trio is the obvious next place it would apply.
+
+---
+
+## 2026-08-20T19:05Z — `OPS-17` step 3 leg (b2) attempt 4 — **incomplete (🟡, leg advances)** (13:30 CDT implementer slot)
+
+**Item:** §9 item 6, the spare — items 1–5 were all marked done by the five
+earlier slots this interval, so the spare is the first open item and this run
+took it as written: "one `coil_loading_*` / `dodd_deeds_*` family per 540 s
+window". Family drawn: **`dodd_deeds_*`** (7 files, 38 tests). Bookkeeping
+only — no `src/`, `tests/`, `scripts/` or `examples/` change, nothing parked,
+`main` clean.
+
+**Preflight.** Tree clean, container Up (2 days). Stub sweep per the adopted
+standard — `find /root/.cache/fenics -name '*.c' -size 0` → **zero stubs**,
+972 cache entries. Cache not touched.
+
+**Anchor re-based again, 227 → 232 validation / 402 → 412 total.**
+`20260820T183046Z_...-collect.log` (complex, exit 0, 5 s): `tests/` **412**.
+`20260820T183128Z_...-collect2.log` (exit 0): `tests/environment` +
+`tests/validation` **236**; both completed runs below select `tests/environment`
+and report exactly **4** of it, so validation = **232**, non-validation =
+**180**. The +10 over attempt 3's 402 is this interval's five closes
+(`GEO-18` step 1, `GEO-17` step 1, `MAG-17` step 1 (+2, named in §9 item 3),
+`OPS-23`, `EX-26`); attribution to the commit graph is left to the review, but
+no file the leg has already counted moved. Family sizes from the same probe:
+`coil_loading_*` **58**, `dodd_deeds_*` **38**, `test_poynting_balance.py`
+**11**.
+
+**Coverage 63 → 72 of 232** (+9: 4 knobs + 5 slab). Tail **160**, minus the
+deferred padding file (2) ⇒ **158 runnable**. Blocked stays **0**.
+
+### The finding: `-n 2` is the wrong width for this family, and the file's own record says so
+
+Two windows were lost before the cause was visible, and both were lost to the
+same thing:
+
+* **Batch of 4 reactance files, `-n 2`, `timeout -k 30 400` → exit 124 at 26%**
+  (`20260820T183218Z_...-dodd-reactance.log`, 401 s). 6 tests PASSED, no
+  failure, no hang signature; it simply ran out **inside the first file**
+  (`test_dodd_deeds_reactance_box_size.py`). No footer ⇒ nothing counts.
+* **One file alone, `-n 2`, `timeout -k 30 540` → exit 124**
+  (`20260820T183929Z_...-dodd-knobs.log`, 540 s):
+  `test_dodd_deeds_reactance_combined_knobs.py` did not get its **first test**
+  out of setup in ~535 s. Per-file accounting cannot rescue a file whose
+  single module-scoped solve overruns the window.
+
+Then the free check that should have come first: **the file's own record was
+made at `-n 8`.** `20260811T213057Z_MAT-6-step7-part2c-gate-n8.log` —
+`4 passed in 421.90s`, complex, `mpiexec -n 8`. Re-run at the recorded width it
+fits immediately:
+
+| run | width | timeout | result | elapsed |
+|---|---|---|---|---|
+| `20260820T184907Z_...-dodd-knobs-n8.log` | `-n 8` | `-k 30 560` | **8 passed**, exit 0 | **404.61 s** |
+| `20260820T185638Z_...-dodd-slab.log` | `-n 2` | `-k 30 500` | **9 passed**, exit 0 | **386.85 s** |
+
+Both completed with **every rank footer identical** (8 of 8 and 2 of 2), and
+both are the file's own recorded width: the slab file's MAT-6 step-9 record
+(`20260812T033830Z_MAT-6-step9-gate-n8.log`, despite the log's name) is
+`-n 2`, `9 passed in 386.82s` — this run reproduces it at **386.85 s**, a
+drift of 0.03 s (0.008%). The knobs run is 404.61 s against the record's
+421.90 s on the same 8 ranks. No digit moved, no failure, no deselection.
+
+**Gates re-asserted** (the files' own, unloosened): knobs carries the
+Dodd–Deeds closed-form gate `rel < 0.05` on ΔR plus the mesh identity
+`ncells == NCELLS_COMBINED`, the flux-expulsion sign `ΔX < 0` and
+`0.5 < ratio < 2.0`; slab carries its refinement-localisation and
+meshed-wire-unmoved identities. All passed at exit 0 on every rank. The
+`--durations=0` breakdown shows why the width matters and per-file accounting
+does not: **the entire cost is one module-scoped fixture setup** —
+404.13 s setup on the knobs file's first test, 386.41 s on the slab file's
+first, and every other call in both files is ≤ 0.03 s. There is no sub-file
+split available; the unit of work is the solve, and it either fits the window
+or nothing in the file does.
+
+### Rule for the next leg (supersedes "one family per slot at `-n 2`, 540 s")
+
+Draw the file's **recorded width and elapsed time from its own MAT-6 log
+before sizing the command** — it is a free grep and it is the difference
+between a footer and an exit 124. The map recovered this slot:
+
+| file | recorded width | recorded elapsed | status |
+|---|---|---|---|
+| `reactance_combined_knobs` | `-n 8` | 421.90 s | **counted this slot** (404.61 s) |
+| `resistance_slab_resolution` | `-n 2` | 386.82 s | **counted this slot** (386.85 s) |
+| `reactance_box_truncation` | `-n 8` | 396.39 s | unrun (record has 1 failed, older state — read it first) |
+| `reactance_wire_resolution` | `-n 2` | 491.96 s **with 2 deselected** | unrun, full file unpriced and > 500 s |
+| `reactance_box_size` | unpriced | — | ≥ 400 s at `-n 2` without finishing (this slot) |
+| `dodd_deeds_impedance` | `-n 2` | 1.31 s for `-m "not integration"` (7 of 10) | the 3 integration tests unpriced |
+| `dodd_deeds_projected_drive` | unread | — | unrun |
+
+Budget one file per window and expect **~400 s each**: the family is ~7
+windows, i.e. roughly two more slots at this rate, not one. The
+`coil_loading_*` family (58 tests) is still entirely unpriced and contains the
+degree-2 memory-wall files (`TH-12`) — price it from its own logs the same way
+before drawing it.
+
+**Denials / harness notes.** None. Two `-n 2` exit-124 windows were sizing
+errors of mine, not defects: no failure and no hang signature in either, both
+killed cleanly by `timeout -k 30`, container healthy afterwards (the two
+completed runs followed immediately).
+
+**Hypothesis for the next attempt.** The remaining `dodd_deeds_*` tail is
+window-bound, not risk-bound — every blocker class is discharged and the only
+question left is arithmetic. Next leg: `reactance_box_truncation` at `-n 8`
+(read its record's `1 failed` first — if that failure is still live it is a
+known-issues entry, not a coverage loss) and `dodd_deeds_impedance` at `-n 2`
+in the same slot, since the latter is 1.31 s for 7 of its 10 tests and only
+its 3 `integration` tests need a window. That is a plausible +12 to +13 in one
+slot, the best remaining ratio in the family.

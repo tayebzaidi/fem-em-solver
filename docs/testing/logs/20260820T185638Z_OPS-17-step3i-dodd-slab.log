@@ -1,0 +1,157 @@
+# Test Run
+- Chunk: OPS-17-step3i-dodd-slab
+- Commit: effaab6fdb9025113ec781529011c21aaee912e2
+- Time (UTC): 2026-08-20 18:56:38
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 500 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_dodd_deeds_resistance_slab_resolution.py -v --tb=short --durations=0'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 20 13:56 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 500 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_dodd_deeds_resistance_slab_resolution.py -v --tb=short --durations=0'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.2, pluggy-1.3.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: anyio-4.14.2, xdist-3.3.1
+collecting ... collected 9 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [ 11%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 9 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [ 11%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 22%]PASSED [ 22%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 33%]PASSED [ 33%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 44%]PASSED [ 44%]
+tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_refinement_landed_in_the_slab_and_not_on_the_wire_or_far_field 
+tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_refinement_landed_in_the_slab_and_not_on_the_wire_or_far_field PASSED [ 55%]
+tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_slab_knob_left_the_meshed_wire_alone PASSED [ 66%]
+tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_refined_slab PASSED [ 77%]
+tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_refined_slab PASSED [ 88%]PASSED [ 55%]
+tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_refined_slab 
+tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_slab_knob_left_the_meshed_wire_alone PASSED [100%]PASSED [ 66%]
+tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_refined_slab PASSED [ 77%]
+tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_refined_slab 
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================== slowest durations ===============================
+386.41s setup    tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_refinement_landed_in_the_slab_and_not_on_the_wire_or_far_field
+0.03s call     tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.02s call     tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.01s call     tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.00s call     tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_refinement_landed_in_the_slab_and_not_on_the_wire_or_far_field
+0.00s setup    tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_slab_knob_left_the_meshed_wire_alone
+0.00s teardown tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_refined_slab
+0.00s setup    tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_refined_slab
+0.00s call     tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_refined_slab
+0.00s call     tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_refined_slab
+0.00s call     tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_slab_knob_left_the_meshed_wire_alone
+0.00s call     tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_refined_slab
+0.00s setup    tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_refined_slab
+0.00s setup    tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_refined_slab
+0.00s setup    tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s teardown tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_refinement_landed_in_the_slab_and_not_on_the_wire_or_far_field
+0.00s teardown tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_slab_knob_left_the_meshed_wire_alone
+0.00s teardown tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_refined_slab
+0.00s teardown tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_refined_slab
+0.00s call     tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s teardown tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.00s setup    tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.00s setup    tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.00s setup    tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.00s teardown tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.00s teardown tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.00s teardown tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+================== 9 passed, 8 warnings in 386.85s (0:06:26) ===================
+PASSED [ 88%]
+tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_refined_slab PASSED [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+../usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56
+  /usr/local/lib/python3.10/dist-packages/ufl/core/ufl_type.py:56: DeprecationWarning: attach_operators_from_hash_data deprecated, please use UFLObject instead.
+    warnings.warn("attach_operators_from_hash_data deprecated, please use UFLObject instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================== slowest durations ===============================
+386.41s setup    tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_refinement_landed_in_the_slab_and_not_on_the_wire_or_far_field
+0.02s call     tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.02s call     tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.01s call     tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.00s call     tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_refinement_landed_in_the_slab_and_not_on_the_wire_or_far_field
+0.00s teardown tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_refined_slab
+0.00s call     tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_refined_slab
+0.00s setup    tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_slab_knob_left_the_meshed_wire_alone
+0.00s call     tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_refined_slab
+0.00s call     tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_refined_slab
+0.00s call     tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_slab_knob_left_the_meshed_wire_alone
+0.00s setup    tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_refined_slab
+0.00s setup    tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_refined_slab
+0.00s setup    tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_refined_slab
+0.00s call     tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s setup    tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s teardown tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_slab_knob_left_the_meshed_wire_alone
+0.00s teardown tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_refinement_landed_in_the_slab_and_not_on_the_wire_or_far_field
+0.00s teardown tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_refined_slab
+0.00s teardown tests/validation/test_dodd_deeds_resistance_slab_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_refined_slab
+0.00s teardown tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.00s setup    tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.00s setup    tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+0.00s teardown tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build
+0.00s setup    tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly
+0.00s teardown tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form
+0.00s teardown tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not
+================== 9 passed, 8 warnings in 386.85s (0:06:26) ===================
+
+## Exit
+- Status: 0
+- Elapsed (s): 388
