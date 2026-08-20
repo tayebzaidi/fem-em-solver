@@ -4046,6 +4046,53 @@ the answer is already gated**.
 >   > oriented, so the drive direction is per-port, not a global constant.
 >   > Nothing about gates (i)–(iii) moves; leg (a) neither widened nor
 >   > weakened anything.
+>   >
+>   > **Leg (b) executed 2026-08-19, 22:30 slot — leg (a)'s prescription is
+>   > REFUTED, and the prerequisite is bigger than a mid-plane split: the
+>   > birdcage port boxes have no terminals at all**
+>   > (`tests/mesh/test_birdcage_port_terminals.py`, 1 passed / exit 0 / 25 s
+>   > at `-n 2`, real build, standard;
+>   > `20260820T033402Z_PORT-9-step3b.log`). Leg (a) prescribed splitting each
+>   > port box at its mid-plane so a sheet could span it — which assumes the
+>   > box touches conductor on two sides, the way the two-torus gap box does
+>   > (it replaces a removed arc of the wire, so facet group `201` = gap↔wire
+>   > *is* the terminal pair). That assumption is false here. Partitioning each
+>   > port region's boundary by the region behind it gives, on all four ports:
+>   > **conductor 0 facets / 0.000000e+00 m², air 24 facets /
+>   > 5.200000e-04 m² = 1.000000000 of the analytic box surface, phantom 0
+>   > facets**, closure `(A_cond + A_air + A_phan)/A_box = 1.000000000000`
+>   > against a 1e-9 band. The port boxes are isolated air blocks floating
+>   > *outside* the coil — by construction, not by accident:
+>   > `birdcage_port_layout_diagnostics` sets
+>   > `port_radius = conductor_outer_radius + port_dy/2 + port_clearance` and
+>   > **raises** unless `conductor_radial_clearance > 0`, and the legs are
+>   > uncut cylinders spanning the full `coil_length`, so the fixture contains
+>   > no conductor discontinuity anywhere. A sheet on a mid-plane of such a box
+>   > would drive between air and air.
+>   > **Controls.** The zero is an absence, not a miss: the closure identity
+>   > says the three regions exhaust the box boundary exactly, and the same
+>   > interface machinery on the same mesh measures the phantom↔air surface at
+>   > **2.013394e-02 m²**, `0.971035` of its closed form
+>   > `2πr² + 2πrh = 2.073451e-02 m²` — inside the pre-stated [0.95, 1.0]
+>   > band an inscribed triangulation must occupy. Facet counts are reduced
+>   > over **owned** facets only (`indices < size_local`), or every
+>   > partition-boundary facet would be double-counted at `-n 2`. Leg (a)'s
+>   > anchors re-reproduce on the same run: 98 474 cells (ratio 1.000000),
+>   > meshed/CAD conductor 0.967019, `GEO-9` identities < 1e-9.
+>   > **Corrected prescription for the review — supersedes leg (a)'s.** The
+>   > prerequisite chunk is not "split the port box" but "give the birdcage a
+>   > gap to put a port in": cut each leg (or each end-ring segment) at the
+>   > port location so the conductor is genuinely discontinuous, and place the
+>   > port box straddling the cut so its two cut-facing faces are metal — the
+>   > two-torus topology, transplanted. Only then does a mid-plane split mean
+>   > anything, and only then is `w = A/h` computable. This is a *physics*
+>   > change to the fixture (an uncut birdcage has no capacitors and cannot
+>   > resonate either), so it is the review's to commission, not an
+>   > implementer's to improvise. Both open questions leg (a) raised stay
+>   > open and are now downstream of it: the per-port azimuthal drive
+>   > direction, and whether gate (iii)'s C4 circulant premise survives
+>   > axis-aligned boxes with `dx ≠ dy` at 45°. Nothing about gates (i)–(iii)
+>   > moves; leg (b) neither widened nor weakened anything.
 
 **`PORT-10` — the two `PORT-1` systematics: composition measured, not
 assumed** ✅ *(scoped 2026-08-16, weekly planning review — the first of the

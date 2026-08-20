@@ -15244,3 +15244,103 @@ are exactly `8.0e-7 m^3`).
 
 **Slot cost.** ~50 s of compute across two foreground harness commands; ~45 min
 of the 60-minute box, most of it reading the serial step chain.
+
+---
+
+## 2026-08-20T03:35Z — `PORT-9` step 3, leg (b) — **blocked** (queue-drain fallback)
+
+**Item selection.** Same as the 21:00 slot: the §9 On-deck queue is still
+drained (all five items struck through; the 03:00 review has not run yet), so
+protocol step 2's fallback applied — the chunk named in the drain sentence,
+`PORT-9`, scoped to one run. Tree clean at preflight, container Up 46 h. Its
+only executable leg is the one the entry's own step-3 annotation prescribes;
+this run executed the *check* that prescription rests on, and the check
+refuted it.
+
+**What was tried, and why this and not the prescription itself.** Leg (a)
+prescribed a `GEO-16`-for-the-birdcage mesh chunk: split each port box at its
+longitudinal mid-plane so a `LumpedSheetPortSpec` sheet can span it. Reading
+`birdcage_port_layout_diagnostics` before implementing it turned up a
+construction that makes the prescription suspect —
+`port_radius = conductor_outer_radius + port_dy/2 + port_clearance`, with a
+**raise** if `conductor_radial_clearance <= 0` — i.e. the boxes are pushed
+*outside* the conductor on purpose, and the legs are uncut cylinders spanning
+the full `coil_length`. If the box touches no metal there is no terminal pair,
+and a sheet across its mid-plane drives between air and air. That is
+measurable in one mesh, so it was measured instead of assumed (the same
+discipline leg (a) used).
+
+**Finding — the birdcage port boxes have no terminals; the prerequisite is
+bigger than a mid-plane split.** Partitioning each port region's boundary by
+the region behind it (`_interface_facet_tags` on cell-tag pairs, rebuilt on the
+dolfinx side per known-issues 9):
+
+| port | conductor facets / area | air facets / area | phantom | closure |
+|---|---|---|---|---|
+| P1 | **0** / `0.000000e+00 m^2` | 24 / `5.200000e-04 m^2` (`1.000000000` of the box) | 0 | `1.000000000000` |
+| P2 | **0** / `0.000000e+00 m^2` | 24 / `5.200000e-04 m^2` (`1.000000000`) | 0 | `1.000000000000` |
+| P3 | **0** / `0.000000e+00 m^2` | 24 / `5.200000e-04 m^2` (`1.000000000`) | 0 | `1.000000000000` |
+| P4 | **0** / `0.000000e+00 m^2` | 24 / `5.200000e-04 m^2` (`1.000000000`) | 0 | `1.000000000000` |
+
+Every port box is 100% air-surrounded. The two-torus contrast is the point:
+there the gap box replaces a removed arc of wire, so facet group `201`
+(gap↔wire) *is* the terminal pair; here there is no conductor discontinuity
+anywhere in the fixture to put a port across.
+
+**Controls — the zero is an absence, not a miss.**
+- **Closure identity** (the quantitative assertion): `(A_cond + A_air +
+  A_phan)/A_box = 1.000000000000` on all four ports against a pre-stated 1e-9
+  band, with `A_box = 2(dx·dy + dy·dz + dz·dx) = 5.200000e-04 m^2` analytic.
+  An exhaustive partition means the conductor slot is empty, not unsampled.
+- **Positive control**: the same machinery, same mesh, measures phantom↔air at
+  **2.013394e-02 m^2** = `0.971035` of the closed form `2πr² + 2πrh =
+  2.073451e-02 m^2`, inside the pre-stated `[0.95, 1.0]` band an inscribed
+  triangulation must occupy (ceiling at 1.0 is part of the band — a
+  triangulated cylinder cannot exceed its analytic area).
+- **Leg (a) anchors re-reproduced on the same run**: 98 474 cells (ratio to the
+  step-3 record **1.000000**), meshed/CAD conductor **0.967019** vs the
+  imported `CAD_MASS_GATE` 0.95, `GEO-9` partition identities < 1e-9.
+- **Rank safety**: facet counts reduce over *owned* facets only
+  (`indices < size_local`) — `facet_tags.indices` carries ghosts, so a plain
+  `count_nonzero` double-counts every partition-boundary facet at `-n 2`.
+  Areas go through `test_two_torus_port_facets._facet_group_area`, which
+  hoists `create_entity_permutations` for the known-issues-9 hang.
+
+**Command.** Real build, standard tier, `-n 2`, `timeout -k 30 300`, one test
+file, one foreground harness run. 1 passed / exit 0 / 26 s;
+`20260820T033402Z_PORT-9-step3b.log`.
+
+**Landed on `main`** (green, clean): `tests/mesh/test_birdcage_port_terminals.py`,
+the harness log + `test-results.md` row, and the §7 `PORT-9` step-3 leg-(b)
+annotation. Nothing parked — there is no half-finished code. No gate moved.
+`PORT-9` stays 🟡. The new test, like leg (a)'s, is written to fail loudly *if
+terminals ever appear* and to be deleted by the commit that lands them.
+
+**Not done, deliberately.** The leg-(a) prescription was **not** implemented.
+Implementing it would have produced a sheet with no terminals — a mesh feature
+that looks like a port and cannot be one. Cutting real gaps into the legs or
+end rings is a physics change to the fixture (an uncut birdcage has no
+capacitors and cannot resonate either), which the §9 drain sentence puts
+outside an implementer's licence: "do not improvise beyond the written
+`PORT-9` entry".
+
+**Cost.** 26 s of compute in one foreground harness command; ~50 min of the
+60-minute box, most of it in the geometry read that produced the hypothesis.
+
+**Hypothesis / prescription for the next attempt.** For the review: commission
+"birdcage conductor gaps" as a `GEO-`class chunk, serial before `PORT-9`
+step 3 and *superseding* leg (a)'s mid-plane prescription — cut each leg (or
+end-ring segment) at the port location and re-place the port box straddling the
+cut, so its two cut-facing faces are metal; the two-torus topology,
+transplanted. Acceptance should be this run's numbers inverted: conductor
+facet count > 0 per port, `A_cond/A_box` matching the analytic cut face pair,
+closure still 1.000000000000, `GEO-9` identities unmoved. Only after that does
+the mid-plane split (leg (a)) mean anything, and only then is `w = A/h`
+computable. Also still true and now downstream: the per-port azimuthal drive
+direction, and the doubt over gate (iii)'s C4 circulant premise for
+axis-aligned `dx ≠ dy` boxes at 45°. **Queue note:** this is the second
+consecutive slot to spend itself on the drain fallback; the 00:00 slot will be
+the third unless the 03:00 review tops §9 up. The two cheap unowned candidates
+the 19:30 slot named (`if comm.rank != 0: return` grep across `tests/`, and an
+`Im`-bound in `test_helmholtz_v2.py`) are still unowned, and `EX-22`'s
+`stale=0` decays back to `stale=24` on 2026-08-22.
