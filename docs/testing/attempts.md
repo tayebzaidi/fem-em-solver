@@ -15787,3 +15787,115 @@ the probe's indented assertion — i.e. it reproduces this run's entire census b
 inspection. An `OPS-23` follow-on (or an `OPS-17` leg) that runs it over the
 209 remaining sites and fixes only what it flags is a smoke-tier item; whether
 the coverage it buys is worth a slot is the review's call, not mine.
+
+---
+
+## 2026-08-20T17:10Z — `EX-26` — **complete** (12:00 CDT implementer slot)
+
+**Chunk:** `EX-26`, the Poynting power-balance audit example — §5.4 ramp on
+`POST-5` step 4's newly gated capability (`poynting_power_balance` with the
+impressed-source term). On deck item 5; items 1–4 were already marked done by
+the four earlier slots this interval.
+
+**Outcome: complete, closed as written, on one run.** Every element of the §7
+rubric executed. No band moved and none needed to move; no code outside
+`examples/` was touched.
+
+**What was built.** `examples/time_harmonic/08_poynting_power_balance.py` +
+same-stem guide (`EX-15` rule), registered by filename discovery in
+`scripts/run_examples.sh` (the `th:` group needs no runner edit — it globs the
+directory). Two fixtures, both imported from their gates, audited by the same
+helper call:
+
+| leg | fixture | terms | residual | band |
+|---|---|---|---|---|
+| driven | smoke cylinder, axial J in tag 1, 1 405 cells | 3 | **16.7465%** | 25% (imported, unmoved) |
+| driven, misread | *same solved field*, source-free form | 2 | **116.7465%** | asserted to **miss** the 25% |
+| source-free | `TH-6` plane wave 12³, 10 368 cells | 2 | **8.185716%** | — |
+
+**Measured, against the records.** All eight reproduced inside a pre-stated 1%
+band:
+
+| record | measured | drift |
+|---|---|---|
+| driven three-term residual | 16.7465% | 1.40e-06 |
+| driven two-term residual | 116.7465% | 2.01e-07 |
+| driven Ohmic loss | 1.199162e-06 W | 3.36e-07 |
+| driven boundary flux | −2.008179e-07 W | 1.11e-07 |
+| driven impressed source | −1.199162e-06 W | 3.36e-07 |
+| `TH-6` residual | 8.185716% | 3.66e-08 |
+| `TH-6` boundary-leg error vs closed form | 8.1205% | 5.43e-06 |
+| `TH-6` Ohmic-leg error vs closed form | 0.0711% | 3.00e-04 |
+
+Worst drift 3.00e-04, on the record quoted to the fewest digits. Both `TH-6`
+legs are inside the imported `POST5_STEP3_LEG_BAND` = 10%, with the volume leg
+asserted **first** as the control for the boundary leg.
+
+**Controls, all executed in-run.**
+
+1. *Inverted assertion (`EX-18` pattern), and it is the §5.4 capability
+   statement:* the two-term reading of the **same solved field** is asserted to
+   fail the very band the three-term reading passes. The impressed source
+   carries **100.0%** of the largest term in the identity — printed — so
+   omitting it is the whole reading, not a correction.
+2. *σ-blind:* the same field scored at σ = 0 exactly. Volume leg **0.0 W**
+   (identically, not twelve orders down — the `POST-5` step-1 helper fix
+   holds), residual 83.2535% = **4.97×** the honest reading, against the
+   pre-registered 3.0× floor and the 5.97× arithmetic ceiling step 4 derived.
+   This is that derivation's only measurable prediction and it holds.
+3. *`POST-5` step 4's J = 0 control:* explicit zero `fem.Constant` drive on the
+   source-free fixture gives `source_power_w == 0.0` exactly and all **7**
+   other dict keys bit-identical to the source-free call; `TH-6` cell count
+   asserted at 10 368.
+
+**ParaView.** Two combined XDMFs, each carrying `E` (CG1, split real/imag),
+`B` and the real Poynting vector `½Re(E×H̄)`. `B` and `S` are exported as
+**DG0 cell fields**: both route through `curl E`, which for degree-1 N1curl is
+cell-wise constant, so smoothing onto vertices would invent resolution the
+solve does not have. Disclosed in the guide as an instrument note, since the
+ParaView picture is visibly faceted and that is correct.
+
+**Logs.**
+
+| log | what | elapsed |
+|---|---|---|
+| `20260820T170422Z_EX-26-example-n2.log` | `./run_examples.sh -e th:8 -n 2 -t 400`, exit 0 | 8 s (4.7 s in-script) |
+| `20260820T170540Z_EX-26-docrefs.log` | `check_example_doc_references.py`, exit 0 | 1 s |
+
+Docrefs: **`dead=0 guide=0 stale=0 stale_severity=report exit=0`** — the second
+`exit=0` under the `OPS-19` contract, 34 guides scanned, 107 distinct file
+references. `EX-22`'s stale-0 restore is still holding at this commit; the
+`EX-22` audit's prediction is that it re-reports stale=24 from ~2026-08-22, so
+a later `exit=2` on this example's own artifacts is expected and is information,
+not a regression.
+
+**Tier correction for the review.** Commissioned **standard**, measured
+**smoke** — 4.7 s in-script, 8 s harness at `-n 2`. The commission's "8 s +
+152 s" estimate charged this example the whole `TH-6` test file; the 152 s
+belongs to that file's *other* tests (the 24³ rung, the piecewise-σ and
+piecewise-μᵣ families), not to the 12³ rung this example audits. XDMF and
+docrefs did **not** dominate as the entry predicted — they cost ~1 s each. The
+§7 row records this as `standard (measured smoke)` per the `EX-9`/`EX-20`
+reclassification precedent; the review owns the final label.
+
+**`ANS-1` discipline.** Every band, fixture, drive, material and analytic leg
+imported: `POYNTING_IMBALANCE_MAX`, `SIGMA`, `SIGMA_BLIND`,
+`BLIND_SEPARATION_THREE_TERM`, `EPSILON_R`, `FREQUENCY_HZ`,
+`LADDER_RESOLUTIONS`, `_smoke_mesh`, all five `AXIAL_RECORD_*` from
+`test_time_harmonic_smoke.py`; `OMEGA`, `SIGMA`, `POST5_STEP3_LEG_BAND`,
+`_analytic_legs`, `_solve_th6_fields` from `test_poynting_balance.py`; `BOX_L`,
+`MU_R` from the `TH-6` module. Four constants are restated with provenance,
+each because the gate holds it as *printed output* or an inline literal rather
+than a named constant, and each unloosened and asserted:
+`TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205,
+`TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368.
+
+**Hypothesis for the next attempt (not this chunk).** The queue is now drained
+— items 1–5 all done and item 6 is the `OPS-17` step-3 leg (b2) spare, which is
+a continuation rather than a fresh commission. Nothing here surfaced a defect,
+so there is no follow-on to enqueue from `EX-26` itself. One observation the
+review may want: this example is the first to score **two different identities
+with one helper call each and assert that they disagree**, which is a cheap
+pattern for any future gate where the question is "is this the right identity"
+rather than "is this number right" — `PORT-9` step 3's passivity/reciprocity
+trio is the obvious next place it would apply.

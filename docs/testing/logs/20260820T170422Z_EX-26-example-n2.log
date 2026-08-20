@@ -1,0 +1,396 @@
+# Test Run
+- Chunk: EX-26-example-n2
+- Commit: 9f878399fd11bc8d5302a75746381c248e68bef7
+- Time (UTC): 2026-08-20 17:04:23
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: ./run_examples.sh -e th:8 -n 2 -t 400
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 12 12:06 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 20 12:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-r--r--  1 taz5297 taz5297  656 Mar 24 00:02 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 12 12:06 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc './run_examples.sh -e th:8 -n 2 -t 400'
+Running 1 example(s) with mpiexec -n 2 (timeout 400s each)
+COMPOSE_FILE=/home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+
+==> examples/time_harmonic/08_poynting_power_balance.py (complex build)
+========================================================================
+EX-26 — Poynting power-balance audit: where the watts go
+========================================================================
+
+[identity] -oint 1/2 Re(E x Hbar).n dS = 1/2 int sigma|E|^2 dV + 1/2 Re int E.conj(J) dV
+           boundary flux            Ohmic loss          impressed source
+[instrument] fem_em_solver.post.poynting_power_balance — POST-3 (2026-07-31), third term added by POST-5 step 4 (2026-08-19)
+[fixtures] a DRIVEN cylinder (three terms) and a SOURCE-FREE plane wave (two terms), both imported from their gates
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 20%] Meshing curve 2 (Line)
+Info    : [ 40%] Meshing curve 3 (Circle)
+Info    : [ 50%] Meshing curve 4 (Circle)
+Info    : [ 70%] Meshing curve 5 (Line)
+Info    : [ 90%] Meshing curve 6 (Circle)
+Info    : Done meshing 1D (Wall 0.00237787s, CPU 0.00121s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Cylinder, Frontal-Delaunay)
+Info    : [  0%] 2 triangles are equivalent
+Info    : [  0%] Meshing surface 1 (Cylinder, MeshAdapt)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.0455742s, CPU 0.027876s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 263 nodes...
+Info    : Done tetrahedrizing 271 nodes (Wall 0.00421545s, CPU 0.002866s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.011404s, CPU 0.005743s)
+Info    : Found volume 2
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 2.11348 (nodes removed 0 0)
+Info    : 3D refinement terminated (318 nodes total):
+Info    :  - 0 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 1197 tetrahedra created in 0.00397516 sec. (301120 tets/s)
+Info    : Done meshing 3D (Wall 0.0305869s, CPU 0.02033s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 2.524e-05) with worst = 0.0768031 / average = 0.668426:
+Info    : 0.00 < quality < 0.10 :         3 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         3 elements
+Info    : 0.30 < quality < 0.40 :         4 elements
+Info    : 0.40 < quality < 0.50 :         4 elements
+Info    : 0.50 < quality < 0.60 :        10 elements
+Info    : 0.60 < quality < 0.70 :        16 elements
+Info    : 0.70 < quality < 0.80 :        25 elements
+Info    : 0.80 < quality < 0.90 :        21 elements
+Info    : 0.90 < quality < 1.00 :         1 elements
+Info    : 4 edge swaps, 0 node relocations (volume = 2.524e-05): worst = 0.221401 / average = 0.696639 (Wall 0.000111999s, CPU 0.000112s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         2 elements
+Info    : 0.30 < quality < 0.40 :         3 elements
+Info    : 0.40 < quality < 0.50 :         3 elements
+Info    : 0.50 < quality < 0.60 :        13 elements
+Info    : 0.60 < quality < 0.70 :        15 elements
+Info    : 0.70 < quality < 0.80 :        26 elements
+Info    : 0.80 < quality < 0.90 :        20 elements
+Info    : 0.90 < quality < 1.00 :         1 elements
+Info    : Optimizing volume 2
+Info    : Optimization starts (volume = 0.00234729) with worst = 0.0848202 / average = 0.69627:
+Info    : 0.00 < quality < 0.10 :         2 elements
+Info    : 0.10 < quality < 0.20 :        13 elements
+Info    : 0.20 < quality < 0.30 :        23 elements
+Info    : 0.30 < quality < 0.40 :        41 elements
+Info    : 0.40 < quality < 0.50 :        73 elements
+Info    : 0.50 < quality < 0.60 :       106 elements
+Info    : 0.60 < quality < 0.70 :       216 elements
+Info    : 0.70 < quality < 0.80 :       329 elements
+Info    : 0.80 < quality < 0.90 :       201 elements
+Info    : 0.90 < quality < 1.00 :       106 elements
+Info    : 37 edge swaps, 3 node relocations (volume = 0.00234729): worst = 0.132076 / average = 0.712713 (Wall 0.000997389s, CPU 0.000997s)
+Info    : 39 edge swaps, 3 node relocations (volume = 0.00234729): worst = 0.301736 / average = 0.714105 (Wall 0.00114529s, CPU 0.001146s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        43 elements
+Info    : 0.40 < quality < 0.50 :        73 elements
+Info    : 0.50 < quality < 0.60 :        98 elements
+Info    : 0.60 < quality < 0.70 :       221 elements
+Info    : 0.70 < quality < 0.80 :       334 elements
+Info    : 0.80 < quality < 0.90 :       203 elements
+Info    : 0.90 < quality < 1.00 :       106 elements
+Info    : Done optimizing mesh (Wall 0.00253537s, CPU 0.002444s)
+Info    : 318 nodes 1757 elements
+Info    : Optimizing mesh (Netgen)...
+Info    : Optimizing volume 1
+Info    : CalcLocalH: 50 Points 83 Elements 96 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 75 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 12.1287 
+Info    : 5 splits performed 
+Info    : SwapImprove  
+Info    : 4 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 62 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 181.123 
+Info    : 5 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 47 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 266.379 
+Info    : 4 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 35 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 266.379 
+Info    : 3 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 29 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 266.379 
+Info    : 4 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 11 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 266.379 
+Info    : 2 splits performed 
+Info    : SwapImprove  
+Info    : 1 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 4 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 266.379 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 7 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 333.139 
+Info    : Total badness = 302.348 
+Info    : SplitImprove 
+Info    : badmax = 24.9223 
+Info    : 2 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 309.748 
+Info    : Total badness = 307.128 
+Info    : SwapImprove  
+Info    : 11 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 285.322 
+Info    : Total badness = 279.557 
+Info    : CombineImprove 
+Info    : 4 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 239.699 
+Info    : Total badness = 236.456 
+Info    : SplitImprove 
+Info    : badmax = 8.58069 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 236.456 
+Info    : Total badness = 236.245 
+Info    : SwapImprove  
+Info    : 3 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 235.471 
+Info    : Total badness = 234.041 
+Info    : CombineImprove 
+Info    : 1 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 222.202 
+Info    : Total badness = 221.793 
+Info    : SplitImprove 
+Info    : badmax = 6.39678 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 221.793 
+Info    : Total badness = 221.802 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 221.802 
+Info    : Total badness = 221.803 
+Info    : Optimizing volume 2
+Info    : CalcLocalH: 316 Points 1078 Elements 522 Surface Elements 
+Info    : Remove Illegal Elements 
+Info    : 163 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 20.3428 
+Info    : 29 splits performed 
+Info    : SwapImprove  
+Info    : 29 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 78 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 40.173 
+Info    : 20 splits performed 
+Info    : SwapImprove  
+Info    : 6 swaps performed 
+Info    : SwapImprove2  
+Info    : 1 swaps performed 
+Info    : 28 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 47.3565 
+Info    : 7 splits performed 
+Info    : SwapImprove  
+Info    : 2 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 10 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 47.3565 
+Info    : 3 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 3 illegal tets 
+Info    : SplitImprove 
+Info    : badmax = 47.5416 
+Info    : 1 splits performed 
+Info    : SwapImprove  
+Info    : 0 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : 0 illegal tets 
+Info    : Volume Optimization 
+Info    : CombineImprove 
+Info    : 15 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 2360.58 
+Info    : Total badness = 2218.04 
+Info    : SplitImprove 
+Info    : badmax = 33.5105 
+Info    : 1 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 2223.12 
+Info    : Total badness = 2213.6 
+Info    : SwapImprove  
+Info    : 123 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1997.28 
+Info    : Total badness = 1922.15 
+Info    : CombineImprove 
+Info    : 5 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1873.77 
+Info    : Total badness = 1863.56 
+Info    : SplitImprove 
+Info    : badmax = 14.7438 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1863.56 
+Info    : Total badness = 1862.91 
+Info    : SwapImprove  
+Info    : 30 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1828.45 
+Info    : Total badness = 1805.83 
+Info    : CombineImprove 
+Info    : 0 elements combined 
+Info    : ImproveMesh 
+Info    : Total badness = 1805.83 
+Info    : Total badness = 1804.51 
+Info    : SplitImprove 
+Info    : badmax = 10.4492 
+Info    : 0 splits performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1804.51 
+Info    : Total badness = 1804.41 
+Info    : SwapImprove  
+Info    : 13 swaps performed 
+Info    : SwapImprove2  
+Info    : 0 swaps performed 
+Info    : ImproveMesh 
+Info    : Total badness = 1794.18 
+Info    : Total badness = 1775.57 
+Info    : Done optimizing mesh (Wall 0.145951s, CPU 0.136206s)
+
+[fixture] driven smoke cylinder: axial J = z_hat A/m^2 in the inner conductor (tag 1), sigma = 0.7 S/m, eps_r = 78.0, f = 127.74 MHz, h = 0.03 m => 1405 cells (~9 cells per in-medium wavelength)
+
+[audit] driven cylinder, three-term identity (the one this domain satisfies)
+  boundary flux   -oint 1/2 Re(E x Hbar).n dS = -2.008179e-07 W  (into the domain)
+  Ohmic loss       1/2 int sigma |E|^2 dV     =  1.199162e-06 W
+  impressed source 1/2 Re int E.conj(J) dV    = -1.199162e-06 W
+  reactive flux   -oint 1/2 Im(E x Hbar).n dS =  1.616955e-07 var  (reported, not scored)
+  residual, identity scored :   16.7465%  (scale 1.199162e-06 W)
+  residual, two-term form   :  116.7465%  (scale 1.199162e-06 W)
+
+[control] the SAME solved field scored two ways: three-term 16.7465% (inside the unmoved 25% band) against two-term 116.7465% (asserted to miss it) — the impressed source carries 100.0% of the largest term in the identity, so omitting it is not a correction, it is the whole reading
+[control] sigma-blind (lossless medium, same field): volume leg exactly 0.0 W, residual 83.2535% = 4.97x the honest reading, against the pre-registered 3.0x floor
+[record] driven three-term residual: drift 1.40e-06 vs the POST-5 record, band 1%
+[record] driven two-term residual: drift 2.01e-07 vs the POST-5 record, band 1%
+[record] driven Ohmic loss: drift 3.36e-07 vs the POST-5 record, band 1%
+[record] driven boundary flux: drift 1.11e-07 vs the POST-5 record, band 1%
+[record] driven source power: drift 3.36e-07 vs the POST-5 record, band 1%
+
+[fixture] TH-6 lossy plane wave: 0.1 m box at 12^3 => 10368 cells, sigma = 0.7 S/m, wall-driven by the exact closed form. J = 0 everywhere, so the two-term identity is the right one and is the stronger check
+
+[audit] TH-6 plane wave, source-free two-term identity
+  boundary flux   -oint 1/2 Re(E x Hbar).n dS =  1.140318e-04 W  (into the domain)
+  Ohmic loss       1/2 int sigma |E|^2 dV     =  1.241984e-04 W
+  impressed source 1/2 Re int E.conj(J) dV    =  0.000000e+00 W
+  reactive flux   -oint 1/2 Im(E x Hbar).n dS =  6.765018e-05 var  (reported, not scored)
+  residual, identity scored :    8.1857%  (scale 1.241984e-04 W)
+  residual, two-term form   :    8.1857%  (scale 1.241984e-04 W)
+
+[legs] each leg against its OWN closed form (POST-5 step 3): analytic flux = 1.241101e-04 W, analytic dissipation = 1.241101e-04 W (equal identically, by 2*alpha*beta = omega*mu0*sigma)
+  boundary flux error 8.1205%, Ohmic loss error 0.0711%, band 10% — the residual above is the boundary leg's discretisation error, not a cancellation
+
+[control] J = 0 passed explicitly: source term 0.0 W exactly, and all 7 other quantities bit-identical to the source-free call (8.185716% both ways). Adding the third term to the helper granted this source-free solve nothing
+[record] TH-6 residual: drift 3.66e-08 vs the POST-3/POST-5 record, band 1%
+[record] TH-6 boundary-leg error: drift 5.43e-06 vs the POST-3/POST-5 record, band 1%
+[record] TH-6 Ohmic-leg error: drift 3.00e-04 vs the POST-3/POST-5 record, band 1%
+
+[paraview] wrote /workspace/examples/time_harmonic/paraview_output/poynting_audit_driven_smoke_combined.xdmf (1405 cells, driven cylinder)
+[paraview] wrote /workspace/examples/time_harmonic/paraview_output/poynting_audit_th6_plane_wave_combined.xdmf (10368 cells, TH-6 plane wave)
+[paraview] the complex build's XDMF writer splits attributes into `real_*`/`imag_*` (correct behaviour, OPS-21 known-issues entry), so the fields are `real_E_magnitude`, `real_B_real`, and `real_S_poynting` — the last is the real Poynting vector 1/2 Re(E x Hbar), cell-wise constant because curl of a degree-1 N1curl field is. Glyph `real_S_poynting` to see the power flow the boundary integral sums: it points inward through the wall of the plane-wave box everywhere, and away from the conductor in the driven cylinder.
+
+All assertions hold on both fixtures. Total elapsed 4.7 s.
+
+Done.
+
+## Exit
+- Status: 0
+- Elapsed (s): 8
