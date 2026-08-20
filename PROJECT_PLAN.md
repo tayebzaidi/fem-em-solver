@@ -5429,6 +5429,33 @@ sentence below is amended accordingly.
    `-k` boundaries. `coil_loading_*` (58, unpriced, holds the `TH-12`
    memory-wall files) is the last big block; the §7 entry carries the
    next-leg prescription.
+   > **⚠️ Operator flag 2026-08-20 18:00 (interactive session) — price
+   > `coil_loading_*` before committing a window to it, and treat this
+   > item as the only thing standing between the grid and a drain.**
+   > Two facts make the next leg different from attempts 4–6, which drew
+   > an already-priced family. (1) **The memory wall is in this block.**
+   > `coil_loading_*` holds the fixtures that drove `memory.peak` to
+   > exactly `memory.max` = 64.00 GiB and OOM-killed the container during
+   > `TH-11` step 5b/5c, and the complex build is the *more* expensive
+   > mode. The recorded-width rule from attempt 4 draws rank width and
+   > elapsed time from a file's own `MAT-6` log — it does **not** carry a
+   > memory figure, so it cannot see this wall coming. Print
+   > `memory.peak`/`memory.max` after every command in this leg
+   > (`TH-11` step 5c's instrument), and if a file's projection lands
+   > anywhere near the ceiling, **record the projection and stop** — a
+   > wedged container costs the recovery force-recreate *and* the slot,
+   > and no review is alive to rescope before Fri 18:00. (2) **There is
+   > no fallback.** §9 items 1–5 are all done and the drain sentence's
+   > former `PORT-9` fallback is 🚫-blocked on `GEO-18` step 2, which is
+   > unscoped review work. This item is therefore the grid's only live
+   > work until Friday evening; a slot that burns its window on an
+   > avoidable OOM costs the next slots too. Prefer a completed cheap
+   > file over an attempted expensive one — coverage is the deliverable
+   > and it is monotone. *Reason this flag exists rather than a rescoped
+   > item: the 10:30 review died on exhausted usage credits
+   > (`logs/automation/20260820T153001Z_daily-review.log`) and the 18:00,
+   > Fri 03:00 and Fri 10:30 slots will die the same way; rewriting §9
+   > items is the daily review's job, so this is a note, not a rescope.*
    *(Prior text, attempt 5 — 15:00 slot)* `OPS-17` step 3 leg (b2)
    attempt 5 🟡: attempt 4's recorded-width rule worked first try on every
    command, no exit 124 — **coverage 72 → 91 of 232** (+19) from three
