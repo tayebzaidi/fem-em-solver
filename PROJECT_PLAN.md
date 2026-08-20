@@ -1939,7 +1939,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | ✅ 2026-08-16 (graded sizing recovers **0.9670** of the conductor's CAD mass at h_c = 1.6 mm vs **0.7403** baseline, gate cleared, `GEO-9` identities unmoved at < 1e-9; 41 s at `-n 2`; closed by the 10:30 review — the chunk was its one question, now answered by measurement) | standard |
 | `GEO-16` | **Emit the gap boxes' longitudinal port-sheet mid-plane in `two_torus_domain`** (the `PORT-9` step-1 mesh prerequisite; commissioned 2026-08-16 18:00 review) | ✅ | standard |
 | `GEO-17` | `coil_phantom_domain` region-resolution policy shrinks the coil volumes it refines (−21.68%/−22.62%; `OPS-17` step-2 defect 1, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | ⬜ | standard |
-| `GEO-18` | Birdcage conductor gaps: cut the legs so the port boxes have terminals (`PORT-9` step-3 mesh prerequisite; commissioned 2026-08-20 03:00 review from step 3 legs (a)+(b) 🚫) | ⬜ | standard |
+| `GEO-18` | Birdcage conductor gaps: cut the legs so the port boxes have terminals (`PORT-9` step-3 mesh prerequisite; commissioned 2026-08-20 03:00 review from step 3 legs (a)+(b) 🚫) | 🟡 (**step 1 ✅ 2026-08-20** — terminals exist: 2.236196e-04 m² per port, **0.988616** of the closed-form `2·π·r_leg²`, all four equal to the printed 7 digits; step 2 not scoped) | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -2234,6 +2234,43 @@ what makes `PORT-9` step 3 runnable at all; nothing about its gates
 > identities, the closure, or the mass gate is the finding — record the
 > measured numbers here and in known-issues, park the diff on
 > `attempt/*`, report, stop.
+> **Step 1 executed 2026-08-20, 04:30 slot — ✅, the terminals exist.**
+> `leg_gap_length` (opt-in, default `None`) landed on
+> `birdcage_port_domain`; the layout validation for the gapped mode is its
+> own helper (`_birdcage_leg_gap_layout`) because the floating-box
+> helper's radial-clearance guards forbid exactly what this mode wants.
+> `g = 8 mm`, derived box `(1.400000e-02, 1.400000e-02, 8.000000e-03)` m
+> (`dx = dy = 2·r_leg + 2·port_clearance`), graded `h_c = 1.6e-3`.
+> Measured, per port: conductor-facing area **2.236196e-04 m²**,
+> **0.988616** of the closed form `2·π·r_leg² = 2.261947e-04 m²` — inside
+> the pre-stated inscribed band [0.95, 1.0] and equal across all four
+> ports to the printed 7 digits, so gate (iii)'s C4 premise holds by
+> measurement as well as by construction; closure
+> `(A_cond + A_air + A_phan)/A_box = **1.000000000000**`; phantom-facing
+> area exactly 0; port meshed volume/analytic gap box
+> **1.000000000000**; `GEO-9` partition identities < 1e-9; gapped
+> meshed/CAD conductor **0.970152** ≥ the imported 0.95 gate; **114 846**
+> cells, mesh 22.61 s, rung 24.32 s. **Negative control in the same
+> test**: kwarg off reproduces leg (b) exactly — **98 474** cells at
+> ratio 1.000000, `EX-21`'s **0.967019**, conductor-facing area
+> `0.000000e+00 m²` on all four ports. **One band re-derived with its
+> measurement** (§4 precedent `MAG-10`/`MAG-15`): the mass identity was
+> pre-stated as `(CAD_uncut − CAD_gapped)/(4·π·r_leg²·g) = 1 ± 1e-9` and
+> reads **0.999999994733** — that difference subtracts two O(1e-4) masses
+> to make 3.6e-6 and amplifies each one's OCC integration error 28×. The
+> identity is now asserted on the mass itself,
+> `CAD_gapped/(CAD_uncut − 4·π·r_leg²·g)` = **1.000000000192**, inside
+> 1e-9; nothing was loosened, the quantity was moved off the
+> cancellation. The band as written was wrong about arithmetic, not about
+> geometry — the same run's closure and volume identities are exactly
+> 1.000000000000. Logs `20260820T093433Z_GEO-18-step1.log` (the
+> pre-derivation red), `20260820T093603Z_GEO-18-step1-final.log` (8
+> passed, 136.61 s — the new module plus the whole birdcage mesh suite,
+> nothing regressed) and `20260820T093830Z_GEO-18-step1-record.log` (1
+> passed, 45.16 s, the record-bearing `-s` run), all `-n 2`, standard,
+> real build. `tests/mesh/test_birdcage_port_terminals.py` is **not**
+> deleted: its zero is the default geometry's, which this opt-in leaves
+> bit-for-bit, and it is now the standing guard on that.
 > **Step 2 — the port-sheet mid-plane (not yet scoped).** `GEO-16`'s
 > pattern on the leg gaps: split each port box on the axis-aligned
 > coordinate plane through its leg axis (y-normal for the legs at 0°
@@ -4938,8 +4975,12 @@ with its own §7 prescription. `PORT-9` step 3 is **not** the fallback
 any more: it is blocked on item 1 landing, and the old drain-fallback
 sentence below is amended accordingly.
 
-1. **`GEO-18` step 1 — cut the birdcage legs so the ports have terminals
-   (standard).** Execute the §7 `GEO-18` step-1 entry (commissioned this
+1. **DONE 2026-08-20 (04:30 slot)** — `GEO-18` step 1 ✅: terminals
+   2.236196e-04 m² per port = **0.988616** of `2·π·r_leg²`, closure
+   1.000000000000, kwarg-off control reproduces 98 474 cells / 0.967019 /
+   exact zeros. Step 2 (the sheet mid-plane) is the review's to scope on
+   these extents; `PORT-9` step 3 stays blocked until it lands. ~~**`GEO-18` step 1 — cut the birdcage legs so the ports have terminals
+   (standard).**~~ Execute the §7 `GEO-18` step-1 entry (commissioned this
    review from `PORT-9` step 3 legs (a)+(b); full rubric there). Opt-in
    `leg_gap_length` on `birdcage_port_domain`: remove the segment
    `|z| ≤ g/2` from every leg and re-place each port box centred on its

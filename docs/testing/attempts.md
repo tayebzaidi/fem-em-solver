@@ -15421,3 +15421,76 @@ conductor gaps" chunk before any further implementer slot can touch step 3.
 For §9 itself, candidates A and B above are scoped enough to drop straight in,
 and `EX-22`'s hard-won `stale=0` decays back to `stale=24` on **2026-08-22**
 — two days out, so a refresh item queued this review still lands in time.
+
+---
+
+## 2026-08-20T09:41Z — `GEO-18` step 1 — **complete**
+
+Scheduled implementer run, 04:30 CDT slot. Preflight clean (`git status`
+empty, container Up 2 days, no `attempt/*` or `recovered/*`). Took §9 On-deck
+item 1 as written.
+
+**What was tried.** `leg_gap_length` (opt-in, default `None`) on
+`MeshGenerator.birdcage_port_domain` / `_build_birdcage_port_model`: each leg
+becomes two cylinders with the segment `|z| ≤ g/2` removed, and each port box
+is re-placed centred on its own leg axis (azimuth `k·90°`, not the midpoint
+`45° + k·90°`) spanning exactly the gap, `dz = g`, square transverse
+`dx = dy = 2·r_leg + 2·port_clearance`. The gapped mode gets its **own**
+layout validator (`_birdcage_leg_gap_layout`) — `birdcage_port_layout_
+diagnostics` raises on conductor overlap, which is precisely the thing this
+mode is for; the new one instead checks the gap leaves stubs, stays clear of
+the rings (so every removed segment is a plain cylinder and the closed forms
+hold), meets the face-area and separation minima, and keeps the phantom out of
+the box. Realised box size + gap are returned in the diagnostics dict so no
+caller restates them. New test `tests/mesh/test_birdcage_leg_gaps.py`, one
+test, two builds, leg (b)'s interface machinery verbatim.
+
+**Measured** (`g = 8 mm`, box `(1.400000e-02, 1.400000e-02, 8.000000e-03)` m,
+graded `h_c = 1.6e-3`, `-n 2`, real build, standard):
+
+| quantity | measured | band |
+|---|---|---|
+| terminal area per port | 2.236196e-04 m² | — |
+| terminal / `2·π·r_leg²` = 2.261947e-04 m² | **0.988616** (all four ports, 7 printed digits identical) | [0.95, 1.0] pre-stated |
+| closure `(A_cond+A_air+A_phan)/A_box` | **1.000000000000** | < 1e-9 |
+| port volume / analytic gap box | **1.000000000000** | < 1e-9 |
+| phantom-facing area per port | exactly 0.0 m² | — |
+| gapped meshed/CAD conductor | **0.970152** | ≥ 0.95 |
+| `CAD_gapped/(CAD_uncut − 4πr²g)` | **1.000000000192** | < 1e-9 |
+| gapped mesh | 114 846 cells, 22.61 s mesh, 24.32 s rung | — |
+| control (kwarg off) cells | **98 474**, ratio 1.000000 | 1% |
+| control meshed/CAD | **0.967019** (`EX-21`'s record) | 1e-4 |
+| control conductor-facing area | `0.000000e+00 m²` × 4 | exact |
+
+**One band re-derived, with the measurement.** The mass identity was
+pre-stated as `(CAD_uncut − CAD_gapped)/(4πr²g) = 1 ± 1e-9` and the first run
+read **0.999999994733** (5.27e-9 off) — the first log is that red. Diagnosis:
+that difference subtracts two O(1e-4) masses to make 3.6e-6 and amplifies each
+one's OCC integration error by 28×. Nothing was loosened: the identity is now
+stated on the mass itself and holds at 1e-9 with room to spare. The same run's
+closure and volume identities were exactly 1.000000000000 throughout, i.e. the
+band was wrong about arithmetic, not about the geometry.
+
+**Logs.** `20260820T093433Z_GEO-18-step1.log` (1 failed, 49.47 s — the
+pre-derivation red, and the log the numbers were first read from);
+`20260820T093603Z_GEO-18-step1-final.log` (**8 passed, 136.61 s** — the new
+module plus `test_birdcage_port_terminals` / `_port_sheet_prerequisite` /
+`_port_tags` / `_conductor_sizing` / `_finalize_isolation`, nothing
+regressed); `20260820T093830Z_GEO-18-step1-record.log` (1 passed, 45.16 s, the
+record-bearing `-s` re-run). All `-n 2`, standard tier, real build, harness
+`timeout -k 30 400`/`500`, no overrun, no denial.
+
+`tests/mesh/test_birdcage_port_terminals.py` was **not** deleted despite its
+own "delete this test when terminals appear" note: the zero it guards is the
+*default* geometry's, which this opt-in leaves bit-for-bit, and it is now the
+standing negative control on that. Scope held: mesh-side only, no port model,
+no solve, no resonance claim.
+
+**Hypothesis for the next attempt.** `GEO-18` step 2 is now scopable on real
+extents: each gap box is 14 × 14 × 8 mm with two disk terminals at
+`z = ±4 mm`, so `GEO-16`'s mid-plane split is the axis-aligned coordinate
+plane through the leg axis (y-normal at 0°/180°, x-normal at 90°/270°),
+sheet height `h = g = 8 mm` and effective width `w = A/h` per `PORT-9` step
+2b's convention — bounding-box width would be 14 mm and overstate it. Expect
+~200 facets per terminal at this sizing. `PORT-9` step 3 stays blocked until
+step 2 lands.

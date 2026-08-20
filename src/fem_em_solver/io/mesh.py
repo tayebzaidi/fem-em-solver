@@ -2640,6 +2640,107 @@ class MeshGenerator:
         }
 
     @staticmethod
+    def _birdcage_leg_gap_layout(
+        *,
+        leg_count: int,
+        ring_radius: float,
+        leg_radius_eff: float,
+        leg_spacing: float,
+        coil_length: float,
+        ring_minor_radius: float,
+        phantom_radius: float,
+        leg_gap_length: float,
+        port_clearance: float,
+        min_port_face_area: float,
+        min_port_center_separation: Optional[float],
+    ) -> Tuple[Tuple[float, float, float], Dict[str, float]]:
+        """Size and validate the `GEO-18` gapped-leg port layout.
+
+        Returns the derived ``port_box_size`` and the diagnostics dict
+        `birdcage_port_domain` consumes. The box is square in transverse
+        section and exactly as tall as the gap, so its z-faces are the leg
+        stubs' cut faces.
+        """
+        if leg_gap_length <= 0.0:
+            raise ValueError("leg_gap_length must be > 0")
+        if port_clearance <= 0.0:
+            raise ValueError("leg_gap_length requires port_clearance > 0")
+        stub_length = 0.5 * (coil_length - leg_gap_length)
+        if stub_length <= 0.0:
+            raise ValueError(
+                "leg_gap_length leaves no leg: "
+                f"gap={leg_gap_length:.6e} m, coil_length={coil_length:.6e} m"
+            )
+        # The cut must stay clear of the rings, or the removed segment is not a
+        # cylinder and the closed-form terminal/mass forms below are wrong.
+        ring_inner_z = 0.5 * leg_spacing - ring_minor_radius
+        ring_clearance = ring_inner_z - 0.5 * leg_gap_length
+        if ring_clearance <= 0.0:
+            raise ValueError(
+                "Leg gap reaches the rings: "
+                f"clearance={ring_clearance:.6e} m"
+            )
+
+        box_width = 2.0 * leg_radius_eff + 2.0 * port_clearance
+        port_box_size = (box_width, box_width, leg_gap_length)
+
+        port_face_area = box_width * leg_gap_length
+        if port_face_area < min_port_face_area:
+            raise ValueError(
+                "Port face area too small for robust tagging: "
+                f"area={port_face_area:.6e} m^2, required>={min_port_face_area:.6e} m^2"
+            )
+
+        # Ports now sit on the legs, so their separation is the leg separation.
+        theta = np.linspace(0.0, 2.0 * np.pi, leg_count, endpoint=False)
+        centers = [
+            np.array([ring_radius * np.cos(a), ring_radius * np.sin(a)]) for a in theta
+        ]
+        min_center_separation = float("inf")
+        for idx in range(len(centers)):
+            for jdx in range(idx + 1, len(centers)):
+                min_center_separation = min(
+                    min_center_separation,
+                    float(np.linalg.norm(centers[idx] - centers[jdx])),
+                )
+        if min_port_center_separation is None:
+            min_port_center_separation = max(5.0e-4, 1.25 * box_width)
+        if min_center_separation < min_port_center_separation:
+            raise ValueError(
+                "Port center separation too small: "
+                f"min={min_center_separation:.6e} m, "
+                f"required>={min_port_center_separation:.6e} m"
+            )
+
+        # The box is axis-aligned, so its nearest corner to the axis is at
+        # radius >= ring_radius - (sqrt(2)/2)*box_width; keep the phantom out of
+        # it, or the port region is not the clean air+two-disks volume assumed.
+        phantom_radial_clearance = (
+            ring_radius - 0.5 * np.sqrt(2.0) * box_width - phantom_radius
+        )
+        if phantom_radial_clearance <= 0.0:
+            raise ValueError(
+                "Port/phantom radial overlap detected: "
+                f"clearance={phantom_radial_clearance:.6e} m"
+            )
+
+        return port_box_size, {
+            "port_face_area_m2": float(port_face_area),
+            "min_port_face_area_m2": float(min_port_face_area),
+            "min_port_center_separation_m": float(min_center_separation),
+            "required_port_center_separation_m": float(min_port_center_separation),
+            "conductor_radial_clearance_m": 0.0,
+            "phantom_radial_clearance_m": float(phantom_radial_clearance),
+            "port_radius_m": float(ring_radius),
+            "conductor_outer_radius_m": float(
+                ring_radius + max(leg_radius_eff, ring_minor_radius)
+            ),
+            "leg_gap_length_m": float(leg_gap_length),
+            "leg_stub_length_m": float(stub_length),
+            "leg_gap_ring_clearance_m": float(ring_clearance),
+        }
+
+    @staticmethod
     def birdcage_port_domain(
         leg_count: int = 4,
         ring_radius: float = 0.07,
@@ -2653,6 +2754,7 @@ class MeshGenerator:
         port_clearance: float = 1.0e-3,
         min_port_face_area: float = 2.5e-5,
         min_port_center_separation: Optional[float] = None,
+        leg_gap_length: Optional[float] = None,
         air_padding: float = 0.03,
         resolution: float = 0.015,
         conductor_resolution: Optional[float] = None,
@@ -2678,6 +2780,22 @@ class MeshGenerator:
             Center-to-center spacing between bottom and top ring planes [m].
         coil_length : float
             Axial conductor span used for vertical legs [m].
+        leg_gap_length : float, optional
+            `GEO-18` step 1. ``None`` (default) keeps today's geometry
+            bit-for-bit: unbroken legs, and port boxes floating in the air at
+            the *midpoint* azimuth between adjacent legs, touching no metal
+            (measured: conductor-facing area exactly 0 m² per port, `PORT-9`
+            step 3 leg (b)). When given, the segment ``|z| <= g/2`` is removed
+            from every leg **before** the fragment, and each port box is
+            re-placed centred on its own leg axis spanning exactly the gap
+            (``dz = g``, square transverse ``dx = dy = 2·r_leg +
+            2·port_clearance``), so the two leg stubs' planar cut faces lie in
+            the box's z-faces: the conductor↔port interface is two disks of
+            closed-form area ``π·r_leg²`` each, the drive direction is ``ẑ``
+            for every port, and the four-port layout is exactly C4-invariant.
+            `port_box_size` is ignored in this mode — the gap sets it.
+            Mesh-side only: a gapped birdcage carries no lumped elements and
+            therefore still cannot resonate.
         conductor_resolution : float, optional
             Target element size **on and near the conductor surfaces** [m]
             (`GEO-15` step 1). ``None`` keeps the historical behaviour: one
@@ -2726,17 +2844,37 @@ class MeshGenerator:
             raise ValueError("ring_radius must be > 0")
 
         leg_radius_eff = 0.5 * leg_width
-        port_diagnostics = MeshGenerator.birdcage_port_layout_diagnostics(
-            leg_count=leg_count,
-            ring_radius=ring_radius,
-            leg_width=leg_width,
-            ring_minor_radius=ring_minor_radius,
-            phantom_radius=phantom_radius,
-            port_box_size=port_box_size,
-            port_clearance=port_clearance,
-            min_port_face_area=min_port_face_area,
-            min_port_center_separation=min_port_center_separation,
-        )
+        if leg_gap_length is None:
+            port_diagnostics = MeshGenerator.birdcage_port_layout_diagnostics(
+                leg_count=leg_count,
+                ring_radius=ring_radius,
+                leg_width=leg_width,
+                ring_minor_radius=ring_minor_radius,
+                phantom_radius=phantom_radius,
+                port_box_size=port_box_size,
+                port_clearance=port_clearance,
+                min_port_face_area=min_port_face_area,
+                min_port_center_separation=min_port_center_separation,
+            )
+        else:
+            # `GEO-18` step 1. The gapped layout is a different problem from the
+            # floating-box one `birdcage_port_layout_diagnostics` validates: the
+            # box is *supposed* to meet metal (that is the point — terminals),
+            # so its radial-clearance guards do not apply. What still has to
+            # hold is checked here.
+            port_box_size, port_diagnostics = MeshGenerator._birdcage_leg_gap_layout(
+                leg_count=leg_count,
+                ring_radius=ring_radius,
+                leg_radius_eff=leg_radius_eff,
+                leg_spacing=leg_spacing,
+                coil_length=coil_length,
+                ring_minor_radius=ring_minor_radius,
+                phantom_radius=phantom_radius,
+                leg_gap_length=leg_gap_length,
+                port_clearance=port_clearance,
+                min_port_face_area=min_port_face_area,
+                min_port_center_separation=min_port_center_separation,
+            )
 
         # The generator below can raise (overlapping facets, GEO-9 step 2b). Two
         # things must happen when it does, or the failure poisons the rest of the
@@ -2761,6 +2899,7 @@ class MeshGenerator:
                     phantom_height=phantom_height,
                     port_box_size=port_box_size,
                     port_radius=port_diagnostics["port_radius_m"],
+                    leg_gap_length=leg_gap_length,
                     air_padding=air_padding,
                     resolution=resolution,
                     conductor_resolution=conductor_resolution,
@@ -2793,7 +2932,15 @@ class MeshGenerator:
         # Collective: the CAD masses only exist on the building rank, and every
         # rank must see the same denominator or the ratio assertions disagree
         # across ranks (the rank-local trap `GEO-9` already paid once).
-        return mesh, cell_tags, facet_tags, comm.bcast(build_diagnostics, root=rank)
+        diagnostics = dict(comm.bcast(build_diagnostics, root=rank))
+        # The realised port geometry, so a caller never has to restate it: with
+        # `leg_gap_length` the box size is *derived*, not the one passed in.
+        diagnostics["port_box_size_m"] = tuple(float(s) for s in port_box_size)
+        diagnostics["leg_gap_length_m"] = (
+            None if leg_gap_length is None else float(leg_gap_length)
+        )
+        diagnostics["port_layout"] = dict(port_diagnostics)
+        return mesh, cell_tags, facet_tags, diagnostics
 
     @staticmethod
     def _build_birdcage_port_model(
@@ -2810,6 +2957,7 @@ class MeshGenerator:
         port_radius: float,
         air_padding: float,
         resolution: float,
+        leg_gap_length: Optional[float] = None,
         conductor_resolution: Optional[float] = None,
         conductor_refine_distance: Optional[float] = None,
     ) -> Dict[str, object]:
@@ -2827,16 +2975,35 @@ class MeshGenerator:
         for angle in theta:
             x = ring_radius * np.cos(angle)
             y = ring_radius * np.sin(angle)
-            leg = gmsh.model.occ.addCylinder(
-                x,
-                y,
-                -0.5 * coil_length,
-                0.0,
-                0.0,
-                coil_length,
-                leg_radius_eff,
-            )
-            leg_tags.append(leg)
+            if leg_gap_length is None:
+                leg_tags.append(
+                    gmsh.model.occ.addCylinder(
+                        x, y, -0.5 * coil_length, 0.0, 0.0, coil_length, leg_radius_eff
+                    )
+                )
+            else:
+                # `GEO-18` step 1: two stubs instead of one leg. The removed
+                # segment |z| <= g/2 is a plain cylinder (the layout helper has
+                # already checked it stays clear of the rings), so the analytic
+                # conductor mass is the uncut mass minus `leg_count` times
+                # pi*r^2*g exactly, and each stub end face is a planar disk.
+                stub_length = 0.5 * (coil_length - leg_gap_length)
+                leg_tags.append(
+                    gmsh.model.occ.addCylinder(
+                        x, y, -0.5 * coil_length, 0.0, 0.0, stub_length, leg_radius_eff
+                    )
+                )
+                leg_tags.append(
+                    gmsh.model.occ.addCylinder(
+                        x,
+                        y,
+                        0.5 * leg_gap_length,
+                        0.0,
+                        0.0,
+                        stub_length,
+                        leg_radius_eff,
+                    )
+                )
 
         phantom_tag = gmsh.model.occ.addCylinder(
             0.0,
@@ -2851,13 +3018,18 @@ class MeshGenerator:
         port_dx, port_dy, port_dz = port_box_size
         port_tags: List[int] = []
         for idx, angle in enumerate(theta):
-            next_angle = theta[(idx + 1) % leg_count]
-            midpoint_angle = np.arctan2(
-                np.sin(angle) + np.sin(next_angle),
-                np.cos(angle) + np.cos(next_angle),
-            )
-            cx = port_radius * np.cos(midpoint_angle)
-            cy = port_radius * np.sin(midpoint_angle)
+            if leg_gap_length is None:
+                next_angle = theta[(idx + 1) % leg_count]
+                box_angle = np.arctan2(
+                    np.sin(angle) + np.sin(next_angle),
+                    np.cos(angle) + np.cos(next_angle),
+                )
+            else:
+                # On the leg, not between legs: the drive element of a low-pass
+                # birdcage lives in the leg (`GEO-18`).
+                box_angle = angle
+            cx = port_radius * np.cos(box_angle)
+            cy = port_radius * np.sin(box_angle)
             port = gmsh.model.occ.addBox(
                 cx - 0.5 * port_dx,
                 cy - 0.5 * port_dy,
