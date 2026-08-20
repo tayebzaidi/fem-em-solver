@@ -15160,3 +15160,87 @@ caveat). Also note for whoever runs examples next: the freshness window is
 48 h, so this `stale=0` decays back to `stale=24` by 2026-08-22 unless the
 refresh is periodic — the checker measures artifact age, not correctness, and
 `EX-22` bought a two-day green, not a permanent one.
+
+---
+
+## 2026-08-20T02:00Z — `PORT-9` step 3, leg (a) — **blocked** (queue-drain fallback)
+
+**Item selection.** The §9 On-deck queue was drained (all five items struck
+through by the 19:30 slot), so protocol step 2's fallback applied: the chunk
+named in the drain sentence — "`PORT-9` — the port model itself — is fully
+scoped, step 3's gate included" — scoped to one run. No item was skipped; the
+drain instruction's "stop and journal" is the §9 text, the protocol's fallback
+is the operative rule, and this entry is the journal either way.
+
+**Scope taken.** Step 3's own binding instruction is *cost-probe-first*
+("never solved — cost-probe-first is binding (`PORT-10` precedent): probe the
+graded mesh + one single-port solve before committing to four"). That probe is
+leg (a). It never reached the solve, because the mesh half answered the
+go/no-go on its own.
+
+**Finding — step 3 is blocked on an unnamed mesh prerequisite.** Gate (i) runs
+through `run_n_port_sparameter_sweep`'s lumped-sheet route, and
+`LumpedSheetPortSpec` addresses a port by a **facet tag**: the gap box's
+longitudinal mid-plane. On the two-torus fixture that surface exists only
+because `GEO-16` split each gap box into halves (cell tags `101`/`111`,
+`102`/`112`) and rebuilt the interface as facet `211`/`212` via
+`_interface_facet_tags`. `birdcage_port_domain` has no equivalent — its port
+regions are whole boxes (`101…104`) with no mid-plane, hence no interface
+facet. Step 3 therefore has no surface to put a port on.
+
+**Measured, not read off the source** (that distinction is the point of the
+leg — a code read would not have priced the mesh or caught the `{1}`):
+
+| quantity | measured | anchor |
+|---|---|---|
+| global facet-tag set | `{1}` (outer PEC only) | none of `{211,212,213,214}` present |
+| port meshed vol / analytic box | `1.000000000000` ×4 | undivided ⇒ no mid-plane |
+| cells | **98 474** | step-3 record 98 474, ratio **1.000000** |
+| meshed/CAD conductor | **0.967019** | `EX-21` record; imported `CAD_MASS_GATE` 0.95 |
+| `GEO-9` partition identities | < 1e-9 | total vol and tag sum |
+| mesh / rung wall time | 18.43 s / 20.13 s | entry's 16.74 s record |
+
+The facet-tag set is **allgathered** — `facet_tags.values` is rank-local, and
+at `-n 2` a rank-local read could not have settled an absence claim (the trap
+`GEO-9` step 2b paid on the cell side).
+
+**Command.** Real build, standard tier, `-n 2`, `timeout -k 30 300`, one test
+file, two foreground harness runs (the first captured no stdout — pytest
+swallows prints on a passing test; the second adds `-s` and carries the
+numbers). 1 passed / exit 0 in both, 27 s and 22 s.
+Logs `20260820T020316Z_PORT-9-step3a.log`,
+`20260820T020354Z_PORT-9-step3a-numbers.log`.
+
+**Landed on `main`** (green, clean): the new test
+`tests/mesh/test_birdcage_port_sheet_prerequisite.py`, both logs +
+`test-results.md` rows, and the §7 `PORT-9` step-3 annotation. Nothing parked —
+there is no half-finished code; the finding *is* the deliverable. No gate was
+moved, widened, or weakened, and `PORT-9` stays 🟡.
+
+**Note on the test's shape.** Its blocker assertion is written to fail loudly
+*if the sheet ever appears* ("delete this test and run the sweep") rather than
+to enshrine the absence. Once the prerequisite chunk lands, this file is
+expected to go red and be removed in the same commit.
+
+**Hypothesis / prescription for the next attempt.** Commission
+`GEO-16`-for-the-birdcage as its own chunk, serial before `PORT-9` step 3: in
+`_build_birdcage_port_model`, split each port box at its longitudinal
+mid-plane before the `occ.fragment` call, carry the halves as `100+i` /
+`110+i`, and extend the interface rebuild with `{210+i: ((100+i, 110+i),)}`.
+Acceptance is `GEO-16`'s own — port group unchanged *as a set* (each port's
+meshed volume must stay at the `1.000000000000` recorded above), sheet planar,
+`w = A/h`. One trap found while scoping it: the port boxes are **axis-aligned**
+(`addBox`, extents along global x/y/z) at midpoint angles 45°+k·90°, not
+radially oriented, so the terminal-to-terminal drive direction is **per-port**
+and the sheet's mid-plane normal is the azimuthal direction, not a global
+constant — the two-torus code has no per-port direction and will not
+generalise unchanged. Same trap is a live question for gate (iii): an
+axis-aligned box with `dx = 10 mm ≠ dy = 8 mm` sitting at 45° does **not** map
+onto its neighbour under a 90° rotation, so the C4 circulant premise holds for
+the coil but not obviously for the port boxes. Worth settling before the 5%
+class-spread gate is trusted; it was not measured here (no solve, and the
+undivided boxes make the CAD-volume version of the test degenerate — all four
+are exactly `8.0e-7 m^3`).
+
+**Slot cost.** ~50 s of compute across two foreground harness commands; ~45 min
+of the 60-minute box, most of it reading the serial step chain.

@@ -4003,6 +4003,49 @@ the answer is already gated**.
 >   > 5% on the undisplaced mesh is a finding about mesh-induced
 >   asymmetry at the graded sizing — record the measured spread per
 >   class in this entry and stop; never widen (iii) to admit it.
+>   >
+>   > **Leg (a) executed 2026-08-19, 21:00 slot — step 3 is BLOCKED on a mesh
+>   > prerequisite the entry did not name, and the blocker is measured, not
+>   > read off the source**
+>   > (`tests/mesh/test_birdcage_port_sheet_prerequisite.py`, 1 passed / exit 0
+>   > / 22 s at `-n 2`, real build, standard;
+>   > `20260820T020354Z_PORT-9-step3a-numbers.log`, and the same test without
+>   > `-s` in `20260820T020316Z_PORT-9-step3a.log`).
+>   > Gate (i) runs through `run_n_port_sparameter_sweep`'s lumped-sheet route,
+>   > and `LumpedSheetPortSpec` addresses a port by **facet tag** — the gap
+>   > box's longitudinal mid-plane, which on the two-torus fixture exists only
+>   > because `GEO-16` split each gap box into halves (`101`/`111`,
+>   > `102`/`112`) and rebuilt the interface as facet `211`/`212`.
+>   > `birdcage_port_domain` has no equivalent: on the step-3 mesh the
+>   > **global** facet-tag set (allgathered — rank-local `facet_tags.values`
+>   > would not settle it) is exactly **`{1}`**, the outer PEC boundary, with
+>   > none of `{211, 212, 213, 214}` present; and each port region's meshed
+>   > volume is the **whole** analytic box to `1.000000000000` on all four
+>   > ports, i.e. one undivided region with no interface for
+>   > `_interface_facet_tags` to rebuild a sheet from. So there is no surface
+>   > to put a port on, and no amount of solving reaches gate (i).
+>   > **Anchors, both exact:** the same run reproduces the rung step 3 budgets
+>   > from — **98 474 cells, ratio to the record 1.000000** — and `EX-21`'s
+>   > meshed/CAD conductor **0.967019** against the imported `CAD_MASS_GATE`
+>   > 0.95, with the `GEO-9` partition identities re-asserted < 1e-9. **Cost
+>   > probe, the entry's binding one, now paid on the mesh side:** mesh
+>   > 18.43 s (record 16.74 s), rung 20.13 s, 26 fragment volumes. The solve
+>   > side is still unpriced and stays so — pricing a solve on a fixture with
+>   > no ports would measure nothing step 3 needs.
+>   > **Prescription for the review — a `GEO-16`-for-the-birdcage chunk,
+>   > serial before step 3:** in `_build_birdcage_port_model`, split each port
+>   > box at its longitudinal mid-plane before the `occ.fragment` call, carry
+>   > the halves as `100+i` / `110+i`, and extend the `port_gap` interface
+>   > rebuild to `{210+i: ((100+i, 110+i),)}`; the acceptance is `GEO-16`'s own
+>   > — the port group unchanged *as a set* (each port's meshed volume must
+>   > stay at the `1.000000000000` this leg just recorded), the sheet planar,
+>   > and `w = A/h` the area-based effective width step 2b's convention
+>   > requires. Note the mid-plane must be chosen so the sheet spans terminal
+>   > to terminal along the **azimuthal** (leg-to-leg) direction — the port
+>   > boxes are axis-aligned at midpoint angles 45°+k·90°, not radially
+>   > oriented, so the drive direction is per-port, not a global constant.
+>   > Nothing about gates (i)–(iii) moves; leg (a) neither widened nor
+>   > weakened anything.
 
 **`PORT-10` — the two `PORT-1` systematics: composition measured, not
 assumed** ✅ *(scoped 2026-08-16, weekly planning review — the first of the
