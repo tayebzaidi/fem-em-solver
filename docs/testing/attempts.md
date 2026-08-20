@@ -16009,3 +16009,78 @@ known-issues entry, not a coverage loss) and `dodd_deeds_impedance` at `-n 2`
 in the same slot, since the latter is 1.31 s for 7 of its 10 tests and only
 its 3 `integration` tests need a window. That is a plausible +12 to +13 in one
 slot, the best remaining ratio in the family.
+
+## 2026-08-20T20:15Z — `OPS-17` step 3 leg (b2) attempt 5 — **incomplete (🟡, leg advances)** (15:00 CDT implementer slot)
+
+**Item:** §9 item 6, the spare, again — items 1–5 are all marked done, so the
+spare is the first open item. Executed under attempt 4's replacement sizing
+rule (draw each file's recorded width and elapsed time from its own MAT-6 log
+before sizing the command) and attempt 4's written hypothesis, which named
+exactly the two files this slot took first. Bookkeeping only — no `src/`,
+`tests/`, `scripts/` or `examples/` change, nothing parked, `main` clean.
+
+**Preflight.** Tree clean, container Up (2 days), `main` at `8cff65f`.
+
+**Three completed runs, all exit 0, all in the complex build at each file's
+recorded width. +19 validation tests — the best single slot this leg has had.**
+
+| run | file | width | timeout | result | elapsed | record |
+|---|---|---|---|---|---|---|
+| `20260820T200125Z_...-dodd-boxtrunc-n8.log` | `reactance_box_truncation` | `-n 8` | `-k 30 560` | **9 passed**, exit 0 | **397.17 s** | `9 passed in 426.17s`, `-n 8` |
+| `20260820T200816Z_...-dodd-projdrive.log` | `projected_drive` | `-n 2` | `-k 30 240` | **8 passed**, exit 0 | **67.78 s** | `8 passed in 63.92s`, `-n 2` |
+| `20260820T200951Z_...-dodd-impedance-fast.log` | `dodd_deeds_impedance` `-m "not integration"` | `-n 2` | `-k 30 180` | **7 passed, 7 deselected**, exit 0 | **1.29 s** | 1.31 s, 7 of 10 |
+| `20260820T201027Z_...-dodd-impedance-integration.log` | `dodd_deeds_impedance` **full file** | `-n 2` | `-k 30 360` | **14 passed**, exit 0 | **87.43 s** | unpriced |
+
+Each file's own gates re-asserted unloosened; no failure, no error, no moved
+digit anywhere. Counting is per completed run at 4 environment tests each:
+box_truncation 9 − 4 = **5** validation, projected_drive 8 − 4 = **4**,
+impedance 14 − 4 = **10** (the marker run's 7 are a subset — the 7 deselected
+there are the 4 environment tests plus the 3 `integration` tests, and the full
+run supersedes it).
+
+**The record caveat attempt 4 flagged is discharged, not deferred.**
+`reactance_box_truncation`'s map entry carried "record has `1 failed`, older
+state — read it first". Read: there are two records, and the later one
+(`20260812T034631Z_MAT-6-step9-gate-final.log`, complex, `-n 8`,
+`timeout 560`) is **`9 passed in 426.17s`, exit 0**. This slot reproduces the
+same 9 passed at **397.17 s**. The stale `1 failed` belongs to a superseded
+state; no known-issues entry is owed and no coverage is lost.
+
+**The other unpriced item is priced, and it was cheap.** The map budgeted a
+whole window for `dodd_deeds_impedance`'s 3 `integration` tests. The full file
+including them is **87.43 s at `-n 2`** — under a quarter of one window, not a
+window of its own. The family's cost is not uniformly ~400 s: it is bimodal,
+with the three mesh-refinement files (`combined_knobs`, `slab_resolution`,
+`box_truncation`) each ~400 s on one module-scoped fixture setup and the rest
+of the family — `projected_drive` 68 s, `impedance` 87 s — an order cheaper.
+
+**Coverage 72 → 91 of 232** (+19: 5 box_truncation + 4 projected_drive + 10
+impedance). Tail **141**, minus the deferred padding file (2) ⇒ **139
+runnable**. Blocked stays **0**. The `dodd_deeds_*` family is now **28 of 38**
+counted; the remaining 10 are exactly two files, `reactance_box_size` and
+`reactance_wire_resolution`.
+
+**One benign rank asymmetry, recorded rather than asserted away.** In both
+`-n 2` runs the two rank footers agree on the outcome and the elapsed time to
+the hundredth of a second (`8 passed ... 67.78s` / `14 passed ... 87.43s`) but
+disagree on the *warning* count — 8 vs 19 on projected_drive, 8 vs 13 on
+impedance. The delta is UFL `DeprecationWarning`s (`Expr.ufl_domain()`,
+11 of them on one rank) emitted only where that rank owns the relevant cells.
+It is a warning-count difference, not a test-outcome difference; attempt 4's
+"every rank footer identical" anchor holds on the outcome fields, and this is
+noted so the next leg does not read it as new. Not a defect, no entry filed.
+
+**Denials / harness notes.** None. No exit-124 this slot — the recorded-width
+rule worked on all four commands, first try.
+
+**Hypothesis for the next attempt.** The `dodd_deeds_*` family closes in one
+more slot: `reactance_box_size` (unpriced, ≥ 400 s at `-n 2` without
+finishing per attempt 4 — try `-n 8`, since every ~400 s file in this family
+that finishes does so at 8 ranks, and 8 was also `box_truncation`'s recorded
+width) and `reactance_wire_resolution` (`-n 2`, 491.96 s recorded **with 2
+deselected**; the full file is unpriced and > 500 s, so run it with the same
+deselection first to reproduce the record, and price the 2 separately). That
+is +10 and the family is done. Then `coil_loading_*` (58 tests, wholly
+unpriced, holds the `TH-12` degree-2 memory-wall files) is the last big block
+before the leg closes — price it from its own logs the same way, and expect
+the same bimodality rather than a flat ~400 s per file.
