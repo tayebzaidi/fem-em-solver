@@ -1590,8 +1590,31 @@ in. The first three are carried in the tree as `pytest.mark.xfail(strict=True)`
 with the measurement in the docstring, so a fix reports as XPASS rather than
 silently passing; the fourth is worked around in one test.
 
-**1. `coil_phantom_domain` region-resolution policy shrinks the meshed coil
-volumes by ~22% while asking for a *finer* mesh.**
+**1. ~~`coil_phantom_domain` region-resolution policy shrinks the meshed coil
+volumes by ~22% while asking for a *finer* mesh.~~ ✅ RESOLVED 2026-08-20
+(`GEO-17` step 1, 06:00 implementer slot) — the per-region sizes were never
+applied at all: `coil_phantom_domain` walked volume → surfaces → curves →
+points through `gmsh.model.getBoundary` with its default `combined=True`,
+whose result for a volume's closed shell of surfaces is empty, so every region
+collected zero CAD points and `mesh.setSize` was never called
+(`20260820T110127Z_GEO-17-step1-diag.log`: `air: 0 pts -> NO SIZE SET` for all
+four regions at both sizings). Only the global `CharacteristicLengthMin/Max`
+clamps survived — uniform `[0.015, 0.015]`, policy `[0.010, 0.020]` — so the
+policy run meshed the coil at the *air's* 0.020 ceiling. **The hypothesis
+below is refuted:** no field won the interface, because no field existed. The
+sizes are now carried by a `Min` over per-volume `Constant` size fields, and
+the volumes move the way refinement requires (final log
+`20260820T110549Z_GEO-17-step1-final.log`, `-n 2`, 13 s): coil_1
+1.191750413e-04 → **1.319468693e-04 m³** (+10.72%, meshed/CAD 0.754685 →
+**0.835563**), coil_2 → 1.316573175e-04 (+10.79%, 0.752565 → 0.833730),
+phantom → 4.990112950e-04 (+0.94%, 0.983531 → 0.992751), and the air — the one
+region the policy *coarsens* — is the one region that loses volume (−0.26%).
+The uniform column reproduces the table below to every printed digit, gated in
+the test as the negative control. The test is a plain gate again, renamed
+`test_region_resolution_policy_refines_the_tagged_volumes_toward_cad`; its 5%
+band was replaced with the sign-of-refinement identity and the meshed/CAD
+recovery bounds, because the old band's premise (region sizing "must not move
+the geometry") is false for a curved region — see that test's docstring.**
 `tests/mesh/test_mesh_tag_integrity.py::test_region_resolution_policy_does_not_move_the_tagged_volumes`
 (xfail). Measured at `-n 2`, `20260817T111054Z_OPS-17-step2-mesh-n2.log`,
 uniform `h = 0.015` against `coil_resolution=0.012, phantom_resolution=0.010,

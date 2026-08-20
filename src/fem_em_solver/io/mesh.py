@@ -2477,31 +2477,73 @@ class MeshGenerator:
                 gmsh.model.addPhysicalGroup(2, outer_boundary_surfaces, tag=1)
                 gmsh.model.setPhysicalName(2, 1, "outer_boundary")
 
-            def _collect_volume_point_tags(volume_tag: int) -> set[int]:
-                surfaces = gmsh.model.getBoundary([(3, volume_tag)], oriented=False, recursive=False)
-                curves = gmsh.model.getBoundary(surfaces, oriented=False, recursive=False)
-                points = gmsh.model.getBoundary(curves, oriented=False, recursive=False)
-                return {entity_tag for dim, entity_tag in points if dim == 0}
+            # GEO-17 step 1 (2026-08-20): the region sizes are carried by gmsh
+            # size *fields*, composed with `Min`, not by `mesh.setSize` on CAD
+            # points. The point path this replaces was inert: it walked
+            # volume -> surfaces -> curves -> points with
+            # `gmsh.model.getBoundary`'s default `combined=True`, and the
+            # boundary of the *combined* closed shell of a volume is empty, so
+            # every region collected zero points and `setSize` was never called
+            # at all (measured `20260820T110127Z_GEO-17-step1-diag.log`: "air:
+            # 0 pts -> NO SIZE SET" for all four regions, both sizings). Mesh
+            # size then came only from the CharacteristicLength clamps, so
+            # asking for a finer coil (0.012) while any region asked for a
+            # coarser one (air 0.020) meshed the coil at the 0.020 ceiling and
+            # LOST 22% of its volume — known-issues "Four defects" §1. With a
+            # `Min` over per-volume Constant fields, a region's request bounds
+            # the size on its own boundary, so a shared curved interface takes
+            # the finer of the two neighbours rather than whatever the clamps
+            # allow.
+            region_size_requests = (
+                ("air", air_tag, region_h["air_resolution_m"]),
+                ("coil_1", coil_1_tag, region_h["coil_resolution_m"]),
+                ("coil_2", coil_2_tag, region_h["coil_resolution_m"]),
+                ("phantom", phantom_tag, region_h["phantom_resolution_m"]),
+            )
 
-            point_size_targets: Dict[int, float] = {}
+            region_field_ids = []
+            for _, volume_tag, size_value in region_size_requests:
+                field_id = gmsh.model.mesh.field.add("Constant")
+                gmsh.model.mesh.field.setNumbers(field_id, "VolumesList", [volume_tag])
+                gmsh.model.mesh.field.setNumber(field_id, "IncludeBoundary", 1)
+                gmsh.model.mesh.field.setNumber(field_id, "VIn", size_value)
+                # Outside its own volume a region must not constrain anything;
+                # `Min` then reduces to the other fields there.
+                gmsh.model.mesh.field.setNumber(field_id, "VOut", 1.0e22)
+                region_field_ids.append(field_id)
 
-            def _assign_size(points: set[int], size_value: float) -> None:
-                for point_tag in points:
-                    if point_tag in point_size_targets:
-                        point_size_targets[point_tag] = min(point_size_targets[point_tag], size_value)
-                    else:
-                        point_size_targets[point_tag] = size_value
+            size_field = gmsh.model.mesh.field.add("Min")
+            gmsh.model.mesh.field.setNumbers(size_field, "FieldsList", region_field_ids)
+            gmsh.model.mesh.field.setAsBackgroundMesh(size_field)
 
-            _assign_size(_collect_volume_point_tags(air_tag), region_h["air_resolution_m"])
-            _assign_size(_collect_volume_point_tags(coil_1_tag), region_h["coil_resolution_m"])
-            _assign_size(_collect_volume_point_tags(coil_2_tag), region_h["coil_resolution_m"])
-            _assign_size(_collect_volume_point_tags(phantom_tag), region_h["phantom_resolution_m"])
-
-            for point_tag, size_value in point_size_targets.items():
-                gmsh.model.mesh.setSize([(0, point_tag)], size_value)
+            # gmsh's own sizing heuristics stay at their defaults on purpose.
+            # Measured both ways (`20260820T110302Z_GEO-17-step1-fieldfix.log`
+            # with MeshSizeExtendFromBoundary/FromPoints/FromCurvature forced to
+            # 0, `20260820T110407Z_GEO-17-step1-probe-defaults.log` with them
+            # left alone): forcing them off moves the *uniform* mesh's tagged
+            # volumes (coil_1 1.191750413e-04 -> 1.154535949e-04 m^3, -3.12%),
+            # while at the defaults the uniform table reproduces exactly and the
+            # policy mesh gains more coil volume (+10.72% vs +13.21% off a
+            # 3% lower base: 1.319468693e-04 vs 1.307098011e-04 m^3). With no
+            # point sizes set anywhere, the boundary-extension heuristic has
+            # nothing of its own to extend and does not compete with the field.
 
             gmsh.option.setNumber("Mesh.CharacteristicLengthMin", region_h["min_resolution_m"])
             gmsh.option.setNumber("Mesh.CharacteristicLengthMax", region_h["max_resolution_m"])
+
+            print(
+                "[coil-phantom-mesh] sizing ownership: "
+                + ", ".join(
+                    f"{name}: field {field_id} on volume {volume_tag} -> {size_value:.6e} m"
+                    for (name, volume_tag, size_value), field_id in zip(
+                        region_size_requests, region_field_ids
+                    )
+                )
+                + f" | Min field {size_field}"
+                + f" | clamps min={region_h['min_resolution_m']:.6e} "
+                f"max={region_h['max_resolution_m']:.6e} m",
+                flush=True,
+            )
 
             print(
                 "[coil-phantom-mesh] region resolution policy: "

@@ -15494,3 +15494,102 @@ sheet height `h = g = 8 mm` and effective width `w = A/h` per `PORT-9` step
 2b's convention — bounding-box width would be 14 mm and overstate it. Expect
 ~200 facets per terminal at this sizing. `PORT-9` step 3 stays blocked until
 step 2 lands.
+
+---
+
+## 2026-08-20T11:10Z — `GEO-17` step 1 — **complete** (06:00 CDT implementer slot)
+
+Preflight clean (tree clean, container Up 2 days, no `attempt/*` or
+`recovered/*`). §9 On-deck item 1 was already done by the 04:30 slot, so this
+run took item 2 — `GEO-17` step 1 — per the protocol's "first item not marked
+done or blocked".
+
+**The hypothesis in known-issues was refuted, and the real mechanism is worse
+than it.** The §7 entry and known-issues both guessed that the region size
+fields *replace* the surface sizing on shared curved interfaces, so the coarse
+air field wins on the coil boundary. There were no fields to win:
+`coil_phantom_domain` assigned its per-region sizes with
+`gmsh.model.mesh.setSize` on CAD points collected by walking volume →
+surfaces → curves → points through `gmsh.model.getBoundary` at its **default
+`combined=True`** — and the boundary of a volume's *combined* closed shell of
+surfaces is empty. All four regions collected **0 points**, `setSize` was
+never called once, and the entire per-region sizing path has been inert for as
+long as it has existed. The only surviving sizing authority was the
+`CharacteristicLengthMin/Max` clamps: uniform `[0.015, 0.015]`, policy
+`[0.010, 0.020]` — so the policy run meshed the coil at the **air's** 0.020
+ceiling, and that is the whole −22%. First log printed it directly:
+`air: 0 pts -> NO SIZE SET, coil_1: 0 pts -> NO SIZE SET, ...` at both
+sizings.
+
+**Fix.** Per-region sizes are now a `Min` field over four per-volume
+`Constant` fields (`VolumesList = [tag]`, `IncludeBoundary = 1`,
+`VIn = h_region`, `VOut = 1e22`), set as the background mesh — so a region's
+request bounds the size on its own boundary and a shared curved interface
+takes the finer of its two neighbours, which is what the §7 entry asked for.
+gmsh's own heuristics are deliberately left at their defaults (see below).
+
+**Measured** (`-n 2`, standard tier, real build, 13 s,
+`20260820T110549Z_GEO-17-step1-final.log`), uniform h = 0.015 vs coil 0.012 /
+phantom 0.010 / air 0.020:
+
+| tag | uniform [m³] | policy [m³] | Δ | meshed/CAD |
+| --- | --- | --- | --- | --- |
+| 1 `coil_1` | 1.191750413e-04 | 1.319468693e-04 | **+10.7169%** | 0.754685 → **0.835563** |
+| 2 `coil_2` | 1.188402981e-04 | 1.316573175e-04 | **+10.7851%** | 0.752565 → **0.833730** |
+| 3 `phantom` | 4.943767949e-04 | 4.990112950e-04 | +0.9374% | 0.983531 → 0.992751 |
+| 4 `air` | 1.143560787e-02 | 1.140538452e-02 | −0.2643% | — |
+
+The air is the one region the policy *coarsens*, and the one region that loses
+volume — to its refined neighbours. Both meshes still partition their own
+volume at ratio **1.000000000000** (the conformity gate did not move).
+
+**Negative control passed.** The uniform column above is bit-identical to
+`OPS-17` step 2's recorded table, and that reproduction is now gated in the
+test at 1e-9 against hard-coded record values. This took one extra probe: my
+first fix also forced `Mesh.MeshSizeExtendFromBoundary/FromPoints/FromCurvature`
+to 0 to keep the heuristics from competing with the field, and that **moved
+the uniform path** (coil_1 1.191750413e-04 → 1.154535949e-04 m³, −3.12%),
+failing the pre-stated control. Reverted to gmsh defaults, where the control
+passes exactly *and* the policy mesh recovers more coil volume anyway
+(1.319468693e-04 vs 1.307098011e-04). With no point sizes set anywhere the
+boundary-extension heuristic has nothing of its own to extend, so it does not
+compete. Both measurements are in the source comment.
+
+**One band replaced with its measurement** (§4 precedent `MAG-10`/`MAG-15`,
+flagged for the review). The carried strict xfail asserted the two sizings
+agree to 5% — i.e. that region sizing "must not move the geometry". That
+premise is false for a curved region: a linear-tet mesh inscribes the surface
+and its CAD recovery *grows* with refinement, so a genuine 0.015 → 0.012
+refinement of a torus of minor radius 0.01 must move the meshed volume, and by
+more than 5% (+10.72% measured). The old band would now reject a correct mesh.
+The test is renamed
+`test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` and
+gates what the §7 step-1 entry pre-registered — policy volume > uniform volume
+for **every** refined tag — plus meshed/CAD ≤ 1.0 for both sizings (the
+inscription bound, which the old band did not have) and policy coil recovery ≥
+the pre-stated 0.755. Nothing was loosened; the xfail marker is gone because
+the defect is gone, not tolerated.
+
+**Logs.** `20260820T110127Z_GEO-17-step1-diag.log` (3 tests, 1 xfailed, 11 s —
+the diagnosis, "NO SIZE SET"); `20260820T110302Z_GEO-17-step1-fieldfix.log`
+(12 s — the forced-heuristics-off variant that broke the negative control);
+`20260820T110407Z_GEO-17-step1-probe-defaults.log` (the defaults probe that
+restored it); `20260820T110549Z_GEO-17-step1-final.log` (**3 passed, 13 s** —
+the record-bearing run); `20260820T110619Z_GEO-17-step1-policy-unit.log`
+(3 passed, 1 s — `test_region_resolution_policy.py`, the sizing-policy helper
+unregressed). All `-n 2`, harness `timeout -k 30 400`/`120`, no overrun, no
+permission denial, nothing backgrounded.
+
+**Blast radius checked:** the only callers of the per-region kwargs are the
+edited test and `tests/mesh/test_region_resolution_policy.py` (pure, no
+meshing); every other `coil_phantom_domain` caller uses the uniform path,
+which is bit-identical.
+
+**Hypothesis for the next attempt.** `GEO-17` closes here, so the §9 queue's
+item 3 (`MAG-17` step 1) is next. Worth the review's attention: this defect
+class — a sizing/tagging path that silently does nothing — is not detectable
+by any conformity gate, only by a cross-sizing comparison, and
+`birdcage_port_domain` sizes its conductor by the same `setSize`-on-points
+idiom (`GEO-18` step 1 named a graded `h_c = 1.6e-3`); whether *that* request
+reaches the mesh is unmeasured and is a one-run check of the same shape.
+

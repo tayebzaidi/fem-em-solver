@@ -8,16 +8,18 @@ its own at all. Both now gate the tagged-volume partition identity from
 ``VOLUME_PARTITION_BAND``. An empty tag contributes exactly zero and misses it;
 so does a region meshed twice.
 
-The second test's point is that region-specific sizing must not move the
-geometry, so it asserts the stronger thing directly: every tag's volume agrees
-with the uniform-sizing run's to ``POLICY_VOLUME_RTOL``. Both runs mesh the
-same CAD, so the only difference between the two volume sets is the chordal
-deficit of the curved coil and phantom surfaces at the two different cell
-sizes — a percent-level effect on the curved regions, which is what the band
-admits, and which the old ``size_global > 0`` said nothing about.
+The third test gates what region-specific sizing is *for*: a finer size on a
+curved region must move that region's meshed volume up, toward the CAD volume
+its linear tets inscribe, and never past it. `GEO-17` step 1 (2026-08-20)
+replaced its earlier band — "the two sizings agree to 5%" — with that
+identity, because the band's premise was wrong: a real 0.015 -> 0.012
+refinement of a torus of minor radius 0.01 must move the meshed volume, and by
+more than 5% (measured +10.72%). See that test's docstring for the sizing
+defect it was carried as a strict xfail for, and for the fix.
 """
 
-import pytest
+import math
+
 from mpi4py import MPI
 
 from fem_em_solver.io.mesh import MeshGenerator
@@ -40,9 +42,33 @@ GEOMETRY = dict(
     resolution=0.015,
 )
 
-# Curved-surface chordal deficit between the two sizings; see the module
-# docstring. Pre-stated, not fitted.
-POLICY_VOLUME_RTOL = 0.05
+# Analytic CAD volumes of the curved regions, for the meshed/CAD recovery
+# bounds: two tori ``2 pi^2 R r^2`` and a cylinder ``pi r^2 h``. The air is a
+# box minus these and is not gated here.
+CAD_VOLUMES = {
+    1: 2.0 * math.pi**2 * GEOMETRY["coil_major_radius"] * GEOMETRY["coil_minor_radius"] ** 2,
+    2: 2.0 * math.pi**2 * GEOMETRY["coil_major_radius"] * GEOMETRY["coil_minor_radius"] ** 2,
+    3: math.pi * GEOMETRY["phantom_radius"] ** 2 * GEOMETRY["phantom_height"],
+}
+
+# The tags the policy below asks to REFINE relative to ``GEOMETRY["resolution"]``
+# (coil 0.012 and phantom 0.010 against 0.015); the air is coarsened to 0.020
+# and is expected to lose the volume its neighbours gain.
+REFINED_TAGS = (1, 2, 3)
+
+# Pre-stated in the `GEO-17` step-1 plan: under the policy the coil recovery
+# must beat the uniform mesh's own 75.5%. Not fitted — measured 83.56% / 83.37%.
+POLICY_MIN_CAD_RECOVERY = 0.755
+
+# `OPS-17` step 2's recorded uniform-sizing table (known-issues "Four defects"
+# §1, `20260817T111054Z_OPS-17-step2-mesh-n2.log`), carried here as the
+# negative control on the `GEO-17` sizing fix.
+UNIFORM_VOLUMES_RECORD = {
+    1: 1.191750413e-04,
+    2: 1.188402981e-04,
+    3: 4.943767949e-04,
+    4: 1.143560787e-02,
+}
 
 
 def test_coil_phantom_mesh_tag_integrity():
@@ -108,45 +134,44 @@ def test_coil_phantom_mesh_tag_integrity_with_region_resolution_policy():
     _policy_volume_pair(comm)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "known-issues 2026-08-17 (OPS-17 step 2): region-specific sizing "
-        "shrinks the meshed coil volumes by ~22% even though it specifies a "
-        "FINER coil size than the uniform run. Measured, not tolerated — the "
-        "band below is the correct one and is deliberately left strict so this "
-        "flips to XPASS the moment the sizing path is fixed."
-    ),
-)
-def test_region_resolution_policy_does_not_move_the_tagged_volumes():
-    """Region-specific sizing must change cell sizes, not geometry.
+def test_region_resolution_policy_refines_the_tagged_volumes_toward_cad():
+    """A finer region size must move that region's meshed volume up, toward CAD.
 
-    `OPS-17` step 2 (2026-08-17) — **this test is a finding, not a pass.**
+    `GEO-17` step 1 (2026-08-20) — this test was carried as
+    ``xfail(strict=True)`` from `OPS-17` step 2 (2026-08-17), where the policy
+    mesh *lost* 21.68% / 22.62% of the two coil volumes while asking for a
+    finer coil size. Diagnosed and fixed: ``coil_phantom_domain`` never applied
+    the per-region sizes at all — it walked volume -> surfaces -> curves ->
+    points through ``gmsh.model.getBoundary`` with the default
+    ``combined=True``, whose result for a closed shell is empty, so every
+    region collected zero points and ``mesh.setSize`` was never called
+    (`20260820T110127Z_GEO-17-step1-diag.log`: "NO SIZE SET" x4, both sizings).
+    Only the global CharacteristicLength clamps survived, so the policy run
+    meshed the coil at the air's 0.020 ceiling. The sizes are now carried by a
+    ``Min`` over per-volume Constant size fields.
 
-    Measured at `-n 2`, `20260817T111054Z_OPS-17-step2-mesh-n2.log`, uniform
-    h = 0.015 against coil 0.012 / phantom 0.010 / air 0.020:
+    The band this test used to assert (5% between the two sizings) went with
+    the old claim that region sizing "must not move the geometry". That claim
+    is false for a curved region: an inscribing linear-tet mesh recovers a
+    fraction of the CAD volume that grows with refinement, so a real 0.015 ->
+    0.012 refinement of a torus of minor radius 0.01 *must* move the volume,
+    and by more than 5%. The gate is therefore the identity `GEO-17` step 1
+    pre-registered: the **sign** of the move, plus the CAD recovery bounds.
 
-        tag 1 (coil_1):  1.191750413e-04 -> 9.333354960e-05 m^3  (-21.68%)
-        tag 2 (coil_2):  1.188402981e-04 -> 9.195675344e-05 m^3  (-22.62%)
-        tag 3 (phantom): 4.943767949e-04 -> 4.880940997e-04 m^3  ( -1.27%)
-        tag 4 (air):     1.143560787e-02 -> 1.149461560e-02 m^3  ( +0.52%)
+    Measured at `-n 2`, `20260820T110407Z_GEO-17-step1-probe-defaults.log`,
+    uniform h = 0.015 against coil 0.012 / phantom 0.010 / air 0.020:
 
-    The CAD torus volume is ``2 pi^2 R r^2`` = 1.579137e-04 m^3, so the uniform
-    mesh recovers 75.5% of each coil and the policy mesh only 59.1%. The sign is
-    the finding: every region named in the policy is given a **finer** size than
-    the uniform run, and every one of them comes out with *less* volume — a
-    linear-tet mesh inscribes a curved surface, so refining can only move the
-    meshed volume up towards CAD, never down by 22%. The phantom moves the same
-    way, an order of magnitude less, and the air takes up exactly what the
-    curved regions lose. That points at the region size fields being applied as
-    a replacement for, rather than a refinement of, the surface sizing on the
-    shared curved interfaces — plausibly the coarser air field (0.020) winning
-    on the coil and phantom boundaries.
+        tag 1 (coil_1):  1.191750413e-04 -> 1.319468693e-04 m^3  (+10.72%)
+        tag 2 (coil_2):  1.188402981e-04 -> 1.316573175e-04 m^3  (+10.79%)
+        tag 3 (phantom): 4.943767949e-04 -> 4.990112950e-04 m^3  ( +0.94%)
+        tag 4 (air):     1.143560787e-02 -> 1.140538452e-02 m^3  ( -0.26%)
 
-    Diagnosing that is `GEO` work on ``coil_phantom_domain``, not this chunk's
-    (`OPS-17` is test hygiene). The band stays at the value physics says it
-    should be, the marker is ``strict=True`` so a fix is reported as XPASS, and
-    the known-issues entry carries the same numbers.
+    Coil recovery against ``2 pi^2 R r^2`` = 1.579137e-04 m^3 goes 75.47% ->
+    83.56% and 75.26% -> 83.37%; the air is the one region the policy
+    *coarsens* (0.015 -> 0.020), and it is the one region that loses volume,
+    to its refined neighbours. The uniform column is unmoved from the
+    `OPS-17` record to every printed digit — the fix does not touch a mesh
+    that asks for one size everywhere.
     """
     comm = MPI.COMM_WORLD
     uniform_volumes, policy_volumes = _policy_volume_pair(comm)
@@ -154,16 +179,54 @@ def test_region_resolution_policy_does_not_move_the_tagged_volumes():
     for tag, name in sorted(REQUIRED_COIL_PHANTOM_TAGS.items()):
         v_uniform = uniform_volumes[tag]
         v_policy = policy_volumes[tag]
-        rel = abs(v_policy / v_uniform - 1.0)
         if comm.rank == 0:
             print(
-                f"[OPS-17] tag {tag} ({name}): uniform {v_uniform:.9e} m^3 vs "
+                f"[GEO-17] tag {tag} ({name}): uniform {v_uniform:.9e} m^3 vs "
                 f"policy {v_policy:.9e} m^3 ({v_policy / v_uniform - 1.0:+.4%})",
                 flush=True,
             )
-        assert rel < POLICY_VOLUME_RTOL, (
-            f"region-resolution policy moved tag {tag} ({name}) by {rel:.4%}, "
-            f"outside the {POLICY_VOLUME_RTOL:.0%} chordal-deficit band: "
-            f"{v_uniform:.9e} -> {v_policy:.9e} m^3; the policy is meant to "
-            "change cell sizes, not geometry"
+
+    # Negative control: the fix may not move the uniform path. Recorded in
+    # known-issues "Four defects" §1 from `20260817T111054Z_OPS-17-step2-mesh-n2.log`.
+    for tag, v_recorded in UNIFORM_VOLUMES_RECORD.items():
+        rel = abs(uniform_volumes[tag] / v_recorded - 1.0)
+        assert rel < 1.0e-9, (
+            f"uniform sizing moved tag {tag} "
+            f"({REQUIRED_COIL_PHANTOM_TAGS[tag]}) by {rel:.3e} against its "
+            f"OPS-17 record: {v_recorded:.9e} -> {uniform_volumes[tag]:.9e} m^3"
+        )
+
+    # The identity: every region the policy refines gains meshed volume.
+    for tag in REFINED_TAGS:
+        name = REQUIRED_COIL_PHANTOM_TAGS[tag]
+        assert policy_volumes[tag] > uniform_volumes[tag], (
+            f"region-resolution policy asked for a FINER size on tag {tag} "
+            f"({name}) and the meshed volume did not grow: "
+            f"{uniform_volumes[tag]:.9e} -> {policy_volumes[tag]:.9e} m^3. "
+            "A linear-tet mesh inscribes a curved surface, so refinement can "
+            "only move meshed volume up toward CAD"
+        )
+
+    # ... and toward, never past, the CAD volume it inscribes.
+    for tag, cad_volume in CAD_VOLUMES.items():
+        name = REQUIRED_COIL_PHANTOM_TAGS[tag]
+        for label, volumes in (("uniform", uniform_volumes), ("policy", policy_volumes)):
+            recovery = volumes[tag] / cad_volume
+            if comm.rank == 0:
+                print(
+                    f"[GEO-17] tag {tag} ({name}) {label} meshed/CAD = "
+                    f"{recovery:.6f}",
+                    flush=True,
+                )
+            assert recovery <= 1.0, (
+                f"{label} mesh recovers {recovery:.6f} of tag {tag} ({name})'s "
+                f"CAD volume {cad_volume:.9e} m^3 — an inscribing linear-tet "
+                "mesh cannot exceed 1.0"
+            )
+
+        assert policy_volumes[tag] / cad_volume >= POLICY_MIN_CAD_RECOVERY, (
+            f"policy mesh recovers only "
+            f"{policy_volumes[tag] / cad_volume:.6f} of tag {tag} ({name})'s "
+            f"CAD volume, below the pre-stated {POLICY_MIN_CAD_RECOVERY} "
+            "(the uniform mesh's own recovery, which a finer request must beat)"
         )

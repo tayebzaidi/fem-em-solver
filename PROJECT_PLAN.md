@@ -1938,7 +1938,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-14` | **The shared ~3% geometry floor: faceting vs resolution** (entry lives after `TH-11`, beside the fixtures it measures) | ✅ *(closed 2026-08-15 review on the refuted hypothesis: RESOLUTION, 3.643% → 1.781% at 55 251 cells, rate 1.77 in h — no faceting floor)* | standard |
 | `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | ✅ 2026-08-16 (graded sizing recovers **0.9670** of the conductor's CAD mass at h_c = 1.6 mm vs **0.7403** baseline, gate cleared, `GEO-9` identities unmoved at < 1e-9; 41 s at `-n 2`; closed by the 10:30 review — the chunk was its one question, now answered by measurement) | standard |
 | `GEO-16` | **Emit the gap boxes' longitudinal port-sheet mid-plane in `two_torus_domain`** (the `PORT-9` step-1 mesh prerequisite; commissioned 2026-08-16 18:00 review) | ✅ | standard |
-| `GEO-17` | `coil_phantom_domain` region-resolution policy shrinks the coil volumes it refines (−21.68%/−22.62%; `OPS-17` step-2 defect 1, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | ⬜ | standard |
+| `GEO-17` | `coil_phantom_domain` region-resolution policy shrinks the coil volumes it refines (−21.68%/−22.62%; `OPS-17` step-2 defect 1, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) — step 1 ✅ 2026-08-20: the sizes were never applied (`getBoundary` `combined=True` ⇒ 0 points); `Min`-over-`Constant`-fields, coil meshed/CAD 0.7547 → **0.8356** | ✅ | standard |
 | `GEO-18` | Birdcage conductor gaps: cut the legs so the port boxes have terminals (`PORT-9` step-3 mesh prerequisite; commissioned 2026-08-20 03:00 review from step 3 legs (a)+(b) 🚫) | 🟡 (**step 1 ✅ 2026-08-20** — terminals exist: 2.236196e-04 m² per port, **0.988616** of the closed-form `2·π·r_leg²`, all four equal to the printed 7 digits; step 2 not scoped) | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
@@ -2171,6 +2171,51 @@ path, not polish.
 > the field composition, the diagnosis (which field owns each interface,
 > printed per surface) is the deliverable — record it in this entry and
 > known-issues, report, stop.
+> **Step 1 executed 2026-08-20, 06:00 slot — ✅, and the hypothesis is
+> refuted.** The size fields were not competing on the interface; there were
+> no size fields. `coil_phantom_domain` collected each region's CAD points by
+> walking volume → surfaces → curves → points with `gmsh.model.getBoundary`'s
+> **default `combined=True`**, and the boundary of a volume's *combined*
+> closed shell is empty — so all four regions collected **0 points**,
+> `mesh.setSize` was never called once, and the only surviving sizing
+> authority was the `CharacteristicLengthMin/Max` clamps (uniform
+> `[0.015, 0.015]`, policy `[0.010, 0.020]`). The policy run therefore meshed
+> the coil at the **air's** 0.020 ceiling, which is the whole −22%. Measured
+> diagnosis: `20260820T110127Z_GEO-17-step1-diag.log`, `air: 0 pts -> NO SIZE
+> SET` for every region at both sizings. **Fix:** the per-region sizes are now
+> a `Min` over four per-volume `Constant` fields (`VolumesList` +
+> `IncludeBoundary=1`, `VOut = 1e22`) set as the background mesh, so a
+> region's request bounds the size on its own boundary and a shared curved
+> interface takes the finer of its two neighbours. **Measured** (`-n 2`,
+> 13 s, `20260820T110549Z_GEO-17-step1-final.log`), uniform h = 0.015 against
+> coil 0.012 / phantom 0.010 / air 0.020: coil_1 **+10.7169%**
+> (1.191750413e-04 → 1.319468693e-04 m³, meshed/CAD 0.754685 → **0.835563**),
+> coil_2 **+10.7851%** (0.752565 → 0.833730), phantom **+0.9374%** (0.983531 →
+> 0.992751), air **−0.2643%** — the air is the one region the policy coarsens
+> and the one region that loses volume. Both meshes still partition their own
+> volume at ratio **1.000000000000**. **Negative control passed:** the uniform
+> column reproduces the `OPS-17` record to every printed digit (gated at
+> 1e-9 in the test), so the fix does not touch a mesh that asks for one size
+> everywhere; a probe that additionally forced
+> `MeshSizeExtendFromBoundary/FromPoints/FromCurvature` to 0 **did** move it
+> (coil_1 −3.12%) and was reverted — the two logs are
+> `20260820T110302Z_GEO-17-step1-fieldfix.log` (forced off) and
+> `20260820T110407Z_GEO-17-step1-probe-defaults.log` (defaults, kept), and the
+> comparison is recorded in the source comment. **One band replaced with its
+> measurement** (§4 precedent `MAG-10`/`MAG-15`): the carried strict xfail's
+> 5% band asserted that region sizing "must not move the geometry", which is
+> false for a curved region — an inscribing linear-tet mesh's CAD recovery
+> *grows* with refinement, so a real 0.015 → 0.012 refinement of a torus of
+> minor radius 0.01 must move the volume, and by more than 5% (+10.72%
+> measured). The test (renamed
+> `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad`) now
+> gates the identity this step pre-registered — policy volume > uniform volume
+> for every refined tag — plus meshed/CAD ≤ 1.0 for both sizings (the
+> inscription bound) and policy coil recovery ≥ the pre-stated 0.755. Nothing
+> was loosened: the old band would now *reject* a correct mesh. **Scope
+> kept:** `coil_phantom_domain` only, no solver claim, no `MAT-4` status
+> change. The chunk closes — known-issues "Four defects" §1 is marked
+> resolved.
 
 **`GEO-18` — birdcage conductor gaps: cut the legs so the port boxes have
 terminals** ⬜ *(commissioned 2026-08-20 03:00 review from `PORT-9` step 3
@@ -5012,8 +5057,18 @@ sentence below is amended accordingly.
    identities or the closure is the finding — record the measured
    numbers in the entry and known-issues, park on `attempt/*`, report,
    stop.
-2. **`GEO-17` step 1 — the region-resolution policy shrinks the coil it
-   refines (standard).** Execute the §7 `GEO-17` step-1 entry verbatim
+2. **DONE 2026-08-20 (06:00 slot)** — `GEO-17` step 1 ✅ **and the chunk
+   closes**: the hypothesis is refuted — the per-region sizes were never
+   applied at all (`getBoundary`'s default `combined=True` ⇒ 0 CAD points
+   per region, `setSize` never called), so the clamps alone sized the mesh
+   and the policy run took the air's 0.020 ceiling. Fixed with a `Min` over
+   per-volume `Constant` fields: coil meshed/CAD **0.754685 → 0.835563**
+   (+10.7169%), coil_2 +10.7851%, phantom +0.9374%, air −0.2643%, partition
+   1.000000000000, uniform column bit-identical to the `OPS-17` record. The
+   strict xfail is a plain gate (5% band replaced by the pre-registered
+   sign-of-refinement identity + inscription bounds; §7 carries the
+   argument). ~~**`GEO-17` step 1 — the region-resolution policy shrinks the coil it
+   refines (standard).**~~ Execute the §7 `GEO-17` step-1 entry verbatim
    (commissioned 2026-08-17 10:30 review; full rubric there — anchor:
    the carried strict xfail in `test_mesh_tag_integrity.py` flips to
    XPASS on the sign-of-refinement identity, policy-mesh coil volumes ≥
