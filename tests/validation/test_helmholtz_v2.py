@@ -76,9 +76,32 @@ def test_helmholtz_field_uniformity_two_torus():
     assert valid.all(), f"{(~valid).sum()}/{n_points} sample points outside mesh"
     b_z = b_vals[:, 2]
 
+    # ``b_z`` is complex-typed in the complex build, where ``float()`` discards
+    # the imaginary part silently (the audited `OPS-22` caveat, swept by
+    # `OPS-23`). The magnetostatic solution is real by construction, so bound
+    # the imaginary part before the cast instead of casting through it — a
+    # conjugation slip would otherwise read as a perfectly uniform field.
+    im_bound = 1e-12 * float(np.max(np.abs(b_z)))
+    max_im = float(np.max(np.abs(np.imag(b_z))))
+    assert max_im <= im_bound, (
+        f"B_z carries an imaginary part: max|Im| = {max_im:.3e} against the "
+        f"1e-12 x max|B_z| = {im_bound:.3e} bound — magnetostatics has no "
+        f"phase, so this is a defect in the assembly, not a phasor"
+    )
+
+    b_z = np.real(b_z)
     mean_bz = float(np.mean(b_z))
     std_bz = float(np.std(b_z))
     cv = std_bz / abs(mean_bz)
+
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[OPS-23] two-torus Helmholtz uniformity at -n "
+            f"{MPI.COMM_WORLD.size}: mean B_z = {mean_bz:.6e} T, "
+            f"std = {std_bz:.6e} T, CV = {cv:.4%} (gate < 1%), "
+            f"max|Im B_z| = {max_im:.3e} against the {im_bound:.3e} bound",
+            flush=True,
+        )
 
     assert abs(mean_bz) > 0.0, "Mean B_z should be non-zero"
     assert cv < 0.01, f"Field non-uniform: CV={cv:.4%} (expected < 1%)"

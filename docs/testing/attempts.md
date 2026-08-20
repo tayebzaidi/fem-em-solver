@@ -15679,3 +15679,111 @@ rather than *the code was wrong* (defect 1 `GEO-17` was genuinely code; defects
 anchor asserting "quantity X is zero" on a single discretisation is almost
 always an unwritten convergence claim, and the ladder that would have caught it
 costs ~100 s.
+
+## 2026-08-20T14:05Z — `OPS-23` step 1 — **complete** (09:00 CDT implementer slot)
+
+**Item:** §9 On deck item 4 (items 1–3 already DONE this interval). Chunk
+closes; no follow-on step.
+
+**What the run actually found.** The commission's site census — four
+`if comm.rank != 0:` sites in three files, from the 00:00 slot's grep survey —
+is wrong in **both** directions, and reading the sites was most of the work.
+
+* **False positives (2 of 4).** `test_degree2_energy_mechanism.py:237` and
+  `test_lossy_sphere_degree2.py:249` are the guard at the top of a
+  module-private `_print_table(rows)` helper. Control leaves the *helper*
+  before its `print`s and returns to the caller; every assertion in both files
+  (`test_the_incompatible_drive_reproduces_the_coil_explosion`,
+  `test_the_compatible_drive_does_not_explode_across_order`,
+  `test_degree1_control_...`, `test_degree2_beats_...`) sits in an unguarded
+  test body and reads `rows` computed collectively by a module-scoped fixture.
+  The survey read a helper's guard as a test's guard. **Both files untouched
+  and not run** — there was nothing to change and therefore nothing to gate,
+  so the commission's "unpriced half" (`test_lossy_sphere_degree2.py`'s
+  degree-2 sphere solves, the expensive unknown) cost zero compute.
+* **False negative (1).** The site the commission explicitly *exempted* —
+  `test_csv_export_stats_parity.py:252`, "returns before a print only" — is a
+  real instance. The bare `return` in
+  `test_guarded_export_is_short_by_exactly_the_dropped_layer` sits above
+  `assert n_dropped > 0` and the `default["n_rows"] - guarded["n_rows"] ==
+  n_dropped` integer identity, so `POST-1` step 6's **negative control** was
+  rank-0-only coverage as well. Fixed with the same template; the exemption
+  is corrected in the §7 entry.
+
+**Net:** three real sites, all in `tests/post/test_csv_export_stats_parity.py`
+(`:143` `continue`, `:192` `return`, `:252` `return`), plus the
+`test_helmholtz_v2.py:79` Im-bound. `OPS-21`'s template applied verbatim:
+`_export_and_read` stays collective and returns `None` off rank 0, rank 0's
+payload goes out through `comm.bcast`, every rank runs every assertion, and the
+`print`s stay rank-0-guarded so the printed records keep their shape.
+`test_helmholtz_v2.py` now asserts `max|Im B_z| ≤ 1e-12·max|B_z|` before the
+`float()` casts, then takes an explicit `np.real`, and prints an `[OPS-23]`
+record line (it had no printed digits at all before). No `src/` change, no gate
+value moved, nothing loosened.
+
+**Measured, `-n 2`, both ranks identical in every run:**
+
+| run | log | result |
+|---|---|---|
+| csv green, complex | `20260820T140248Z_OPS-23-step1-csv-green.log` | 11 passed / exit 0 / **5.51 s** |
+| helmholtz, real | `20260820T140344Z_OPS-23-step1-helmholtz-real2.log` | 2 passed, 3 skipped / exit 0 / **0.82 s** |
+| helmholtz, complex | `20260820T140330Z_OPS-23-step1-helmholtz-complex.log` | 5 passed / exit 0 / **1.09 s** |
+| **red baseline**, complex, both files | `20260820T140405Z_OPS-23-step1-redbaseline.log` | **8 failed**, 4 passed / exit 1 / **5.13 s** |
+| final, complex, both files | `20260820T140438Z_OPS-23-step1-final.log` | **12 passed** / exit 0 / **5.00 s** |
+
+(`20260820T140309Z_OPS-23-step1-helmholtz-real.log` is the same real-build run
+one edit earlier, before the record print was added — kept for the audit trail.)
+
+**Records reproduced (the identity gate):** step 5's integer identity, 5 184
+default rows / 4 896 guarded / **288** guardrail drops per tag, both tags, both
+sampling modes; worst CSV round-trip disagreement **3.808e-16** against the
+unmoved `IDENTITY_RTOL = 1e-12`; two-torus Helmholtz mean B_z =
+**4.219228e-09 T**, CV = **0.1873%** against the unmoved 1% gate, and
+`max|Im B_z| = 0.000e+00` **exactly** against the 4.231e-21 bound in the
+complex build.
+
+**Red baseline (the negative control, and the only thing that proves the
+verdict is collective).** All four fixed predicates inverted in one run:
+`worst > IDENTITY_RTOL`, `n_rows != count`, `n_dropped < 0`,
+`max_im > im_bound`. Eight tests failed and — the point — the eight
+`AssertionError` message lines are **byte-identical between rank 0 and rank 1**
+(log lines 691–698 against 725–732), with the same per-rank footer
+`8 failed, 4 passed ... in 5.13s` twice. Before the fix, three of those eight
+could not have failed on rank 1 at all. Predicates reverted and the final run
+re-confirms 12 passed.
+
+**Nuance for the review (disclosed, not gated).** Two quantities are not
+bit-stable run to run: the probe's worst round-trip disagreement reads
+3.808e-16 in the csv-only run and 3.822e-16 in both mixed runs, and the
+helmholtz `std B_z` moves in its 6th significant digit (7.902679 / 7.902639 /
+7.902744e-12) across builds and runs. Both are round-off-scale nondeterminism
+in the iterative solves — four and six orders below their respective gates —
+and every *gated* digit above (288, 5 184, 4 896, mean B_z, CV, the exact 0.0)
+is stable. Worth knowing before anyone pins either number as a record.
+
+**Denials:** none. **Tree:** clean on `main`, no `attempt/*` branch needed.
+
+**Hypothesis for the next attempt (not this chunk) — the sweep is not
+exhaustive, and the reason is the grep.** Two things the review should price:
+
+1. *The early-return spelling is now closed.* `rank != 0` appears repo-wide in
+   **exactly three** test files (grep-verified this run) — the three the
+   commission named — and all their sites are inspected above. Nothing of that
+   form is left.
+2. *The other spelling is untriaged.* The defect is "assertions that only rank
+   0 reaches", and an early `return`/`continue` is only one way to get there;
+   the other is an assertion sitting **inside** an `if comm.rank == 0:` block,
+   which is exactly what `test_probe_csv_round_trip_precision` had (its
+   `assert worst < IDENTITY_RTOL` was indented into the printing block — I
+   moved it out). `rank == 0` / `rank != 0` together occur **212** times in
+   `tests/`, so ~209 sites of the second spelling have never been looked at.
+   Most will be pure printing and harmless.
+
+The discriminating check for a scoped follow-on is mechanical and needs no
+solves: for each guard, is there an `assert` in the guarded block, and is the
+enclosing `def` a pytest-collected test rather than a helper? That predicate
+alone would have flagged `:252`, cleared the two `validation` files, and found
+the probe's indented assertion — i.e. it reproduces this run's entire census by
+inspection. An `OPS-23` follow-on (or an `OPS-17` leg) that runs it over the
+209 remaining sites and fixes only what it flags is a smoke-tier item; whether
+the coverage it buys is worth a slot is the review's call, not mine.

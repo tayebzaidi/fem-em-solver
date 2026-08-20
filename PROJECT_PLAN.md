@@ -429,7 +429,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-20` | Disposition the coil-phantom `ComplexComparisonError`: localize with `--tb=long`, then fix the form or mark `@real_only` (known-issues 2026-08-18; commissioned 2026-08-18 10:30 review) | ✅ *(2026-08-19, 06:00 slot — fixed, no `@real_only`; the commissioned `ComplexComparisonError` was already dead, killed by `OPS-22` through the **imported** drive callable, and a free grep found it. Only the predicted second layer remained: the complex build now **passes the same 30% gate at the same 17.1233%**, both ranks identical, real-mode digits unmoved across control and re-run; collect count unchanged at 49. *Audited COMPLIANT 2026-08-19 10:30 review — all five footers, the 17.1233% in all three counted runs and the line-142 `Im`-assertion verified; the skipped cold-cache clear is journalled in three places and adjudicated sound; cosmetic journal error on record: the exit-124 batch log does carry a footer (124 / 481 s), the uncounted disposition stands*)* | standard |
 | `OPS-21` | Make the combined-XDMF test scalar-type-aware and rank-deterministic (known-issues 2026-08-18, two defects in one test; commissioned 2026-08-18 10:30 review) | ✅ | standard |
 | `OPS-22` | Make the three magnetostatic loop-drive fixtures complex-safe: replace the `ufl.max_value` / `<=` predicates in their `current_density` callables (known-issues 2026-08-19; commissioned 2026-08-19 03:00 review from the `OPS-17` leg-(b2) attempt-2 diagnosis; unblocks 5 tests in leg (b2)) | ✅ *(2026-08-19, 04:30 slot — all three files fixed, no `@real_only` needed; real-mode digits unmoved to the last printed figure across three runs, and the complex build now runs all three files to a footer: **5 passed, 412.12 s, exit 0**, both ranks identical. *Audited COMPLIANT 2026-08-19 10:30 review — footers, closed-form assertions and the new `Im`-bound idiom verified against all five logs; one caveat on record: `test_helmholtz_v2.py`'s complex coverage rests on a silenced `ComplexWarning` `float()` cast, not an assertion — fold an `Im`-bound in whenever that file is next touched*)* | standard |
-| `OPS-23` | Sweep the `OPS-21` rank-0-return defect pattern (4 measured sites in 3 test files) + the `test_helmholtz_v2.py` Im-bound (commissioned 2026-08-20 03:00 review from the 00:00 slot's grep survey) | ⬜ | smoke-to-standard |
+| `OPS-23` | Sweep the `OPS-21` rank-0-return defect pattern (4 measured sites in 3 test files) + the `test_helmholtz_v2.py` Im-bound (commissioned 2026-08-20 03:00 review from the 00:00 slot's grep survey) | ✅ | smoke-to-standard | 3 real sites (all in `test_csv_export_stats_parity.py`) + the Im-bound fixed; 2 of the commissioned sites were print-only false positives and 1 exempted site was a real defect; 12 passed both ranks, 5.00 s |
 
 **`OPS-18` — DolfinX version upgrade, recurring** ⬜
 *(commissioned 2026-08-16, operator session. The base image is pinned at
@@ -1717,7 +1717,66 @@ still flags all 14 (the branch is retuned, not disabled — the 158-h
 `EX-14` catch stays 3.3× over the new limit).
 
 **`OPS-23` — sweep the `OPS-21` rank-0-return defect pattern + the
-`test_helmholtz_v2.py` Im-bound** ⬜ *(commissioned 2026-08-20 03:00
+`test_helmholtz_v2.py` Im-bound** ✅ *(step 1 closed 2026-08-20, 09:00
+implementer slot — **and the chunk closes**. The sweep landed, but the
+site census the commission carried was wrong in **both** directions and
+the corrected census is the finding:*
+> * *`tests/validation/test_degree2_energy_mechanism.py:237` and
+>   `tests/validation/test_lossy_sphere_degree2.py:249` are **not**
+>   defects. Both are the `if comm.rank != 0: return` at the top of a
+>   module-private `_print_table(rows)` helper: control leaves the
+>   **helper** before its `print`s, then returns to the caller, which
+>   asserts on every rank (`test_the_incompatible_drive_reproduces_the_coil_explosion`,
+>   `test_degree1_control_reproduces_the_recorded_coarse_rung_power_error`
+>   and the rest are unguarded, and the `rows` they read are collectively
+>   computed by the module-scoped fixture). The survey read a helper's
+>   guard as a test's guard. **Both files were left untouched** — per §4
+>   there is nothing to gate, and neither was run, so no compute was spent
+>   on them.*
+> * *conversely, the site the commission **exempted** —
+>   `test_csv_export_stats_parity.py:252`, "returns before a print only" —
+>   is a real instance: the bare `return` in
+>   `test_guarded_export_is_short_by_exactly_the_dropped_layer` sits above
+>   `assert n_dropped > 0` and the `default["n_rows"] - guarded["n_rows"]
+>   == n_dropped` integer identity, so `POST-1` step 6's **negative
+>   control** was rank-0-only coverage too. Fixed with the same template.*
+>
+> *So three real sites, all in one file (`:143`, `:192`, `:252` in the
+> commissioned numbering), plus the Im-bound. Rank 0 parses and
+> `comm.bcast`es the payload; every rank runs every assertion; the
+> `print`s stay rank-0-guarded so the printed records are unchanged in
+> shape. `test_helmholtz_v2.py` gets `max|Im B_z| ≤ 1e-12·max|B_z|`
+> asserted before the `float()` casts, then an explicit `np.real`, and a
+> record line.*
+>
+> ***Measured, `-n 2`, both ranks identical in every run:*** *csv green
+> complex 11 passed / 5.51 s (`20260820T140248Z_OPS-23-step1-csv-green.log`)
+> reproducing step 5's integer identity — 5 184 default rows / 4 896
+> guarded / **288** guardrail drops per tag — and worst round-trip
+> disagreement **3.808e-16** against the unmoved 1e-12; helmholtz real
+> 2 passed / 3 skipped / 0.82 s
+> (`20260820T140344Z_OPS-23-step1-helmholtz-real2.log`) and complex 5
+> passed / 1.09 s (`20260820T140330Z_...-helmholtz-complex.log`), both at
+> mean B_z = **4.219228e-09 T**, CV = **0.1873%** against the unmoved 1%
+> gate, `max|Im B_z| = 0.000e+00` exactly against the 4.231e-21 bound;
+> **red baseline** with all four fixed predicates inverted —
+> `20260820T140405Z_OPS-23-step1-redbaseline.log`, 8 failed / 4 passed /
+> exit 1 / 5.13 s, and the eight `AssertionError` message lines are
+> **byte-identical between rank 0 and rank 1** (log lines 691–698 vs
+> 725–732), which is the rank-determinism proof a green run cannot give;
+> **final** `20260820T140438Z_OPS-23-step1-final.log`, 12 passed / exit 0 /
+> 5.00 s. Smoke tier throughout — the commission's "unpriced half" was
+> never priced because those two files needed no change.*
+>
+> ***Nuance for the review:*** *the probe's worst round-trip disagreement
+> reads 3.808e-16 in the csv-only run and 3.822e-16 in both mixed runs,
+> and the helmholtz `std B_z` moves in its 6th significant digit
+> (7.902679 / 7.902639 / 7.902744e-12) across builds and runs. Both are
+> round-off-scale nondeterminism in the iterative solves, four and six
+> orders below their respective gates; the gated digits (288, 5 184,
+> 4 896, mean B_z, CV, the exact 0.0 imaginary part) are bit-stable. No
+> assertion was loosened and no `src/` file was touched. Original plan:)*
+*(commissioned 2026-08-20 03:00
 review from the 00:00 blocked slot's free grep survey — the sites are
 measured, not hypothesized. Four `if comm.rank != 0:` sites where control
 leaves the test before its assertions, so non-zero ranks pass
@@ -5127,8 +5186,19 @@ sentence below is amended accordingly.
    stays ~26× above the loop at base h; cost: three magnetostatic
    solves, `timeout -k 30 500`, `-n 2`, real build; trap: `max|A|` is
    not a usable normaliser here).
-4. **`OPS-23` — the rank-0-return defect pattern, swept
-   (smoke-to-standard).** Execute the §7 `OPS-23` entry (commissioned
+4. **DONE 2026-08-20 (09:00 slot)** — `OPS-23` step 1 ✅ **and the chunk
+   closes**: the census was wrong both ways. The two `validation` sites
+   are print-only guards inside a `_print_table` helper — not defects,
+   untouched, unrun; the site the commission *exempted*
+   (`test_csv_export_stats_parity.py:252`) is real and left `POST-1` step
+   6's negative control rank-0-only. Three real sites, all in the csv
+   file, plus the Im-bound: 12 passed both ranks / 5.00 s, records
+   unmoved (288 drops/tag, 5 184 / 4 896 rows, mean B_z 4.219228e-09 T,
+   CV 0.1873%, `max|Im B_z|` exactly 0.0), and the red baseline's eight
+   assertion messages are byte-identical between ranks. Smoke tier; the
+   "unpriced half" was never priced because it needed no change.
+   ~~**`OPS-23` — the rank-0-return defect pattern, swept
+   (smoke-to-standard).**~~ Execute the §7 `OPS-23` entry (commissioned
    this review from the 00:00 slot's grep survey; full rubric there).
    Four measured sites where control returns before the assertions so
    non-zero ranks pass unconditionally

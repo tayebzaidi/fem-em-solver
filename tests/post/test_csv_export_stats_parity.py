@@ -140,8 +140,12 @@ def test_probe_csv_round_trip_precision(piecewise_sigma_field, tmp_path):
         parsed = _export_and_read(
             e_field, cell_tags, tag, tmp_path, comm, prefer_interior=False
         )
-        if comm.rank != 0:
-            continue
+        # The export is collective but only rank 0 holds the parsed CSV;
+        # broadcast it so ``worst`` is the same number on every rank and the
+        # assertion below is collective (`OPS-21`'s template, swept by
+        # `OPS-23`). ``continue`` here left non-zero ranks with worst = 0.0,
+        # passing the gate unconditionally.
+        parsed = comm.bcast(parsed)
         mag = parsed["columns"]["mag"]
         csv_stats = {"min": float(mag.min()), "max": float(mag.max()), "mean": float(mag.mean())}
         lines.append(f"  tag {tag}: header {parsed['header']}")
@@ -161,10 +165,11 @@ def test_probe_csv_round_trip_precision(piecewise_sigma_field, tmp_path):
         print(f"\n[POST-1 step 6] probe at -n {comm.size}:")
         print("\n".join(lines), flush=True)
         print(f"  worst relative disagreement over all quantities: {worst:.3e}", flush=True)
-        assert worst < IDENTITY_RTOL, (
-            f"CSV round-trip carries only {worst:.3e} relative precision; the "
-            f"{IDENTITY_RTOL:.0e} gates below are not attainable on this format"
-        )
+
+    assert worst < IDENTITY_RTOL, (
+        f"CSV round-trip carries only {worst:.3e} relative precision; the "
+        f"{IDENTITY_RTOL:.0e} gates below are not attainable on this format"
+    )
 
 
 @complex_only
@@ -189,17 +194,20 @@ def test_csv_rows_match_the_stats_sample_set(
     parsed = _export_and_read(
         e_field, cell_tags, tag, tmp_path, comm, prefer_interior=prefer_interior
     )
-    if comm.rank != 0:
-        return
+    # Rank 0 parses, every rank asserts (`OPS-21`'s template, swept by
+    # `OPS-23`): the bare ``return`` this replaces passed every non-zero rank
+    # unconditionally, so the file's identity gate was rank-0-only coverage.
+    parsed = comm.bcast(parsed)
 
     mag = parsed["columns"]["mag"]
-    print(
-        f"\n[POST-1 step 6] tag {tag}, prefer_interior={prefer_interior}, -n {comm.size}: "
-        f"csv rows {parsed['n_rows']}, stats count {stats['count']}",
-        flush=True,
-    )
-    for key, value in (("min", mag.min()), ("max", mag.max()), ("mean", mag.mean())):
-        print(f"  {key:<5}: csv {float(value)!r:>24}  stats {stats[key]!r:>24}", flush=True)
+    if comm.rank == 0:
+        print(
+            f"\n[POST-1 step 6] tag {tag}, prefer_interior={prefer_interior}, -n {comm.size}: "
+            f"csv rows {parsed['n_rows']}, stats count {stats['count']}",
+            flush=True,
+        )
+        for key, value in (("min", mag.min()), ("max", mag.max()), ("mean", mag.mean())):
+            print(f"  {key:<5}: csv {float(value)!r:>24}  stats {stats[key]!r:>24}", flush=True)
 
     assert parsed["n_rows"] == stats["count"], (
         f"the CSV holds {parsed['n_rows']} rows where the stats path counted "
@@ -249,15 +257,20 @@ def test_guarded_export_is_short_by_exactly_the_dropped_layer(
     n_dropped = comm.allreduce(
         int(_tagged_cells(cell_tags, tag).size - interior.size), op=MPI.SUM
     )
-    if comm.rank != 0:
-        return
+    # Same `OPS-21` template as above. The `OPS-23` commission classified this
+    # site as "returns before a print only" from the grep survey; it does not —
+    # the two assertions below sat behind it, so the negative control was
+    # rank-0-only coverage as well. ``n_dropped`` is already allreduced.
+    default = comm.bcast(default)
+    guarded = comm.bcast(guarded)
 
-    print(
-        f"\n[POST-1 step 6] negative control, tag {tag}, -n {comm.size}: default rows "
-        f"{default['n_rows']}, guarded rows {guarded['n_rows']}, guardrail drops "
-        f"{n_dropped}",
-        flush=True,
-    )
+    if comm.rank == 0:
+        print(
+            f"\n[POST-1 step 6] negative control, tag {tag}, -n {comm.size}: default rows "
+            f"{default['n_rows']}, guarded rows {guarded['n_rows']}, guardrail drops "
+            f"{n_dropped}",
+            flush=True,
+        )
 
     assert n_dropped > 0, (
         f"the guardrail drops no cell of tag {tag} at -n {comm.size}; the two "
