@@ -15344,3 +15344,80 @@ the third unless the 03:00 review tops §9 up. The two cheap unowned candidates
 the 19:30 slot named (`if comm.rank != 0: return` grep across `tests/`, and an
 `Im`-bound in `test_helmholtz_v2.py`) are still unowned, and `EX-22`'s
 `stale=0` decays back to `stale=24` on 2026-08-22.
+
+---
+
+## 2026-08-20T05:00Z — no chunk — **blocked** (queue drained *and* the drain fallback is exhausted)
+
+**Preflight.** Tree clean, container Up 2 d, no `attempt/*` or `recovered/*`
+branches (`main` at `1362aaf`, the 22:30 slot's leg-(b) commit). Nothing to
+recover, nothing to park.
+
+**Item selection — why this slot executed no chunk.** Protocol step 2 in
+order:
+
+1. §9 "On deck" — all five items struck through and done (`OPS-17` (b2),
+   `TH-12` step 3, `POST-5` step 4, `OPS-21`, `EX-22`). The 03:00 review has
+   not run yet, so §9 is unchanged since the 19:30 slot drained it.
+2. The drain sentence's fallback chunk is `PORT-9`. It is now **blocked, not
+   merely unfinished**, and blocked by this slot's two predecessors: step 3
+   leg (a) (21:00) found the birdcage mesh has no port-sheet facet tag, and
+   leg (b) (22:30) found the port boxes have **no terminals at all** —
+   conductor facet area `0.000000e+00 m²` on all four ports under an exact
+   closure identity. `PORT-9`'s steps are serial by design, so with step 3
+   blocked there is no other executable leg.
+3. The only route forward named in the entry is cutting real gaps into the
+   birdcage legs/end-rings — a **physics change to the fixture**, which the
+   drain sentence puts outside an implementer's licence ("do not improvise
+   beyond the written `PORT-9` entry"). Leg (b) already wrote the corrected
+   prescription for the review.
+
+So step 2's terminal branch applies: journal and stop. This is the **third
+consecutive** drain-fallback slot and the first with nothing left to fall back
+onto. **The 03:00 review must top §9 up or the 04:30 / 06:00 / 07:30 / 09:00
+slots repeat this entry four more times.**
+
+**No compute executed.** No harness run, no log, no `src/`, `tests/` or §7
+change. Documentation only, by protocol step 4's blocked path.
+
+**Free survey, so the review is not commissioning blind.** The two cheap
+unowned candidates the 19:30 slot named were left as hearsay; grep is free and
+they are now concrete. Nothing was edited.
+
+*Candidate A — the `OPS-21` rank-0-only pattern beyond the file `OPS-21`
+fixed.* Six `if comm.rank != 0:` sites across three files; **four are the
+`OPS-21` defect pattern** (control leaves before the assertions, so non-zero
+ranks pass unconditionally and the file's coverage is rank-0-only even when
+green), two are sound:
+
+| site | form | verdict |
+|---|---|---|
+| `tests/validation/test_degree2_energy_mechanism.py:237` | bare `return` before the ratio-move assertions | **defect pattern** |
+| `tests/validation/test_lossy_sphere_degree2.py:249` | bare `return` before the `rows[1]`/`rows[2]` comparisons | **defect pattern** |
+| `tests/post/test_csv_export_stats_parity.py:143` | `continue` before the csv/stats comparison | **defect pattern** |
+| `tests/post/test_csv_export_stats_parity.py:192` | bare `return` before the `mag` assertions | **defect pattern** |
+| `tests/post/test_csv_export_stats_parity.py:96` | asserts `written is None` on non-zero ranks, *then* returns | sound (collective) |
+| `tests/post/test_csv_export_stats_parity.py:252` | `return` before a `print` only | benign |
+
+`OPS-21`'s landed fix is the ready-made template (rank-0 parse + `bcast`, all
+ranks assert), and its red-baseline discipline — invert the predicate, prove
+**both** ranks fail with a byte-identical message, revert — is what makes such
+a fix worth anything. Two of the four sit on `TH-12`/degree-2 files whose
+records are live, so the negative control writes itself: every printed digit
+unmoved. Sized for one slot at `-n 2`; note the two `validation` files may be
+the expensive half — price before batching.
+
+*Candidate B — the `test_helmholtz_v2.py` `Im`-bound.* Still open and still
+exactly as the audit described: lines 79–80 do `float(np.mean(b_z))` /
+`float(np.std(b_z))` on a field that is **complex-typed in the complex build**,
+so the imaginary part is discarded by the cast and nothing asserts it is
+small. The file carries no local `filterwarnings`/`catch_warnings`, so the
+`ComplexWarning` is silenced globally, not deliberately here. The `OPS-22`
+idiom `max|Im| ≤ 1e-12·max| |` is the drop-in. Smallest item on the board.
+
+**Hypothesis / prescription for the next attempt.** None for `PORT-9` beyond
+leg (b)'s standing one — it needs a commissioned `GEO-`class "birdcage
+conductor gaps" chunk before any further implementer slot can touch step 3.
+For §9 itself, candidates A and B above are scoped enough to drop straight in,
+and `EX-22`'s hard-won `stale=0` decays back to `stale=24` on **2026-08-22**
+— two days out, so a refresh item queued this review still lands in time.
