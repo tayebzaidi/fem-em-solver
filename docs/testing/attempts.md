@@ -16084,3 +16084,88 @@ is +10 and the family is done. Then `coil_loading_*` (58 tests, wholly
 unpriced, holds the `TH-12` degree-2 memory-wall files) is the last big block
 before the leg closes — price it from its own logs the same way, and expect
 the same bimodality rather than a flat ~400 s per file.
+
+---
+
+## 2026-08-20T21:55Z — `OPS-17` step 3 leg (b2) attempt 6 — **incomplete (🟡, leg advances; the `dodd_deeds_*` family closes)** (16:30 CDT implementer slot)
+
+**Item:** §9 item 6, the spare, a third time — items 1–5 are all marked done,
+so the spare is the first open item. Executed on attempt 5's written
+next-leg prescription, which named exactly the two files this slot took.
+Bookkeeping only — no `src/`, `tests/`, `scripts/` or `examples/` change,
+nothing parked, `main` clean.
+
+**Preflight.** Tree clean, container Up (2 days), `main` at `9bd38e4`.
+
+**Three completed runs, all exit 0, all in the complex build at `-n 2`.
++10 validation tests, and the `dodd_deeds_*` family is finished at 38 of 38.**
+
+| run | file / selection | width | timeout | result | elapsed | record |
+|---|---|---|---|---|---|---|
+| `20260820T213141Z_...-dodd-boxsize.log` | `reactance_box_size` **full file** | `-n 2` | `-k 30 570` | **8 passed**, exit 0 | **559.58 s** | two halves, 271.08 s + 260.07 s at `-n 2` |
+| `20260820T214121Z_...-dodd-wireres-projected.log` | `reactance_wire_resolution` `-k "environment or projected or refinement"` | `-n 2` | `-k 30 600` | **8 passed, 2 deselected**, exit 0 | **499.80 s** | `8 passed, 2 deselected in 491.96s`, `-n 2` |
+| `20260820T214952Z_...-dodd-wireres-pinned.log` | `reactance_wire_resolution` `-k "environment or pinned"` | `-n 2` | `-k 30 380` | **6 passed, 4 deselected**, exit 0 | **242.68 s** | `6 passed, 4 deselected in 237.77s`, `-n 2` |
+
+Counting is per completed run at 4 environment tests each: box_size 8 − 4 =
+**4** validation (the whole file); wire_resolution 8 − 4 = **4** plus 6 − 4 =
+**2**, disjoint selections covering all **6** of that file's validation tests
+(10 collected − 4 environment). **+10.** Every file's own gates re-asserted
+unloosened; no failure, no error.
+
+**No moved digit anywhere — the physics output is bit-identical to the
+records, on all four comparisons.** `box_size` projected `dR rel. error
+1.5763%; dX ratio 0.9849`, pinned `1.5713%` / `0.8740`, both exactly the
+2026-08-05 step-4 records. `wire_resolution` at `resolution_wire = 0.001 m`,
+**366207 cells** in all runs, projected `I = 0.979884 A`, `FEM dZ =
++3.2600342e-01 + j(-5.6623884e-01)`, `dR 1.0562%; dX ratio 0.9194`; pinned
+`I = 0.979886 A`, `dZ = +3.2600209e-01 + j(-5.6589001e-01)`, `dR 1.0558%; dX
+0.9189` — every printed figure identical to the 2026-08-07 step-5 records.
+Only the wall-clock fields differ (mesh 31.9–33.8 s vs 32.2–32.3 s recorded;
+run totals +1.6% / +2.1% vs record).
+
+**The prescription's one guess was wrong, and the recorded-width rule caught
+it.** Attempt 5 proposed `-n 8` for `box_size` on the heuristic "every ~400 s
+file in this family that finishes does so at 8 ranks". `box_size` is not
+unpriced: its own MAT-6 step-4 logs record it **twice at `-n 2`**, as two
+`-k` halves of 271.08 s and 260.07 s. The rule as written (grep the file's own
+log for its recorded width *before* sizing) overrides the heuristic, and the
+file ran at `-n 2` first try. Heuristics about a family do not survive contact
+with a file's own record; the rule stands unamended.
+
+**The bimodality has a mechanism, and `box_size` is on the expensive side
+without the fixture signature.** The full file cost **559.58 s ≈ 271 + 260 +
+~28 s**, i.e. the two halves simply add — there is no shared module-scoped
+fixture here, unlike `combined_knobs` / `slab_resolution` / `box_truncation`
+where `--durations=0` showed a single ~400 s setup and every other call
+≤ 0.03 s. So the family has *two* expensive shapes: one-setup files (~400 s,
+splittable only by not splitting) and per-test-solve files like `box_size`
+(two independent ~260 s mesh+solve pairs, splittable at will). Sizing the
+full file at 570 s was 98.2% of the window — correct but with no margin; the
+safer form for a repeat is the two recorded halves.
+
+**Coverage 91 → 101 of 232** (+10: 4 box_size + 6 wire_resolution). Tail
+**131**, minus the deferred padding file (2) ⇒ **129 runnable**. Blocked stays
+**0**. **`dodd_deeds_*` is 38 of 38 — the family is closed.** The remaining
+tail is dominated by `coil_loading_*` (58, wholly unpriced).
+
+**The benign rank asymmetry recurs, as attempt 5 predicted.** In all three
+runs both rank footers agree on outcome and elapsed time to the hundredth of a
+second and differ only in *warning* count where they differ at all
+(`box_size` 8 vs 8, the two wire_resolution runs 8 vs 8) — this slot happens
+to show no delta, which is consistent with the rank-local UFL
+`Expr.ufl_domain()` explanation rather than a new signal. Nothing filed.
+
+**Denials / harness notes.** None. No exit-124 this slot either — the
+recorded-width rule has now worked on seven consecutive commands across two
+slots.
+
+**Hypothesis for the next attempt.** `coil_loading_*` (58 tests) is the last
+big block and it is unpriced; price it the same way before drawing any of it —
+grep each file's own `MAT-6` / `TH-11` / `TH-12` log for its recorded rank
+width and elapsed time, and expect **three** cost shapes now, not two:
+one-setup ~400 s files, per-test-solve files whose halves add (the `box_size`
+shape, splittable at recorded `-k` boundaries), and cheap files. Two of the
+`coil_loading_*` files hold the `TH-12` degree-2 memory-wall cases (61.94 GiB,
+96.8% of `memory.max`) — those are the ones most likely to have no affordable
+recorded width at all, and if a file's own record shows it never completed,
+that is a defer-with-reason, not a window to spend.
