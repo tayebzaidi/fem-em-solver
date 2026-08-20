@@ -1638,8 +1638,36 @@ boundaries. **Resolves with:** a `GEO` chunk on `coil_phantom_domain`'s sizing
 path. Both meshes still partition their own volume to 1e-9, so this is fidelity,
 not conformity.
 
-**2. The Coulomb-gauge Lagrange multiplier does not vanish for a
-divergence-free source.**
+**2. ~~The Coulomb-gauge Lagrange multiplier does not vanish for a
+divergence-free source.~~ ✅ RESOLVED 2026-08-20 (`MAG-17` step 1, 07:30
+implementer slot) — candidate (a) confirmed, candidate (b) excluded: **the
+anchor was wrong, not the constraint block.** The h-ladder ran
+(`20260820T123307Z_MAG-17-step1-ladder.log`, `-n 2`, 95 s), reproducing the
+record at its own mesh and refining twice:
+
+| h | cells | multiplier spread |
+| --- | --- | --- |
+| 0.0050 | 29 190 | 7.836781e+00 |
+| 0.0035 | 82 819 | 3.052022e+00 |
+| 0.0025 | 208 049 | 1.438617e+00 |
+
+Fitted log-log rate **2.4476** (pairwise 2.645 / 2.234) against the
+pre-registered bands rate ≥ 0.7 ⇒ DISCRETE-SOURCE, |rate| < 0.3 ⇒
+ASSEMBLY-DEFECT. The verdict is DISCRETE-SOURCE with four sigfigs of margin,
+and superlinearly so: `p` is absorbing the interpolated `J`'s discrete
+divergence, which is a mesh residual that converges away, not a defect in how
+the constraint is assembled. The consequence is that the `OPS-17` anchor
+("spread → 0 to solver tolerance") **cannot hold on any single mesh** — the
+right anchor is a convergence rate. The strict xfail is retired and the claim
+moved to
+`tests/solver/test_gauge_multiplier_convergence.py::test_multiplier_spread_converges_for_a_divergence_free_source`,
+a plain gate on the ladder at the unmoved pre-registered 0.7 (band deliberately
+not tightened to the measurement — it stays the discriminator it was designed
+as). The negative control holds in the same run: the incompatible straight
+wire stays at its recorded 2.083064e+02 scale, > 10× the loop's base-h spread
+(recorded separation 26.6×), so the multiplier has not stopped discriminating
+compatible from incompatible sources. Final run
+`20260820T123823Z_MAG-17-step1-final2.log`, 6 passed, 97 s.**
 `tests/solver/test_gauge_lagrange.py::test_gauge_multiplier_vanishes_for_a_divergence_free_source`
 (xfail). Measured at `-n 2`, `20260817T111217Z_OPS-17-step2-solver-n2.log`:
 spread **7.836781e+00** on a closed current loop (azimuthal J: `div J = 0`

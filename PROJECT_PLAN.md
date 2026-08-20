@@ -1786,10 +1786,35 @@ idiom `max|Im| ≤ 1e-12·max| |` asserted before the cast.)*
 | `MAG-14` | Helmholtz magnitude comparison in the test suite | ✅ | smoke | 0.728% vs closed form (1.731% before `GEO-8`); 11 s, in CI |
 | `MAG-15` | Lagrange-multiplier Coulomb gauge (cross-check) | ✅ | smoke | 7 passed, 13 s |
 | `MAG-16` | Complex-build-safe magnetostatic energy | ✅ 2026-08-05 | smoke | 10 passed complex `-n 2` in 4.9 s; cross-build pin 2.9e-07, `Im W` exactly 0; retires known-issues 8 |
-| `MAG-17` | Coulomb-gauge multiplier does not vanish for a divergence-free source: h-ladder discriminator (`OPS-17` step-2 defect 2, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | ⬜ | standard |
+| `MAG-17` | Coulomb-gauge multiplier does not vanish for a divergence-free source: h-ladder discriminator (`OPS-17` step-2 defect 2, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | ✅ | standard |
 
 **`MAG-17` — the Coulomb-gauge multiplier does not vanish for a
-divergence-free source: h-ladder discriminator** ⬜ *(commissioned
+divergence-free source: h-ladder discriminator** ✅ *(step 1 closed
+2026-08-20, 07:30 implementer slot — **and the chunk closes**. The verdict
+is **DISCRETE-SOURCE**: the ladder reads 7.836781e+00 → 3.052022e+00 →
+1.438617e+00 at h = 0.005 / 0.0035 / 0.0025 (29 190 / 82 819 / 208 049
+cells), fitted log-log rate **2.4476** (pairwise 2.645 / 2.234) against the
+pre-registered ≥ 0.7 band, with the ASSEMBLY-DEFECT band (|rate| < 0.3) not
+merely missed but missed superlinearly. The base rung reproduces the
+`OPS-17` record to every printed digit, so the ladder measures refinement
+and not a changed fixture; the negative control holds in the same run — the
+incompatible straight wire stays at its 2.083064e+02 scale, > 10× the
+loop's base-h spread (recorded 26.6×). **What was wrong was the anchor, not
+the constraint block**: `p` absorbs the interpolated `J`'s O(h) discrete
+divergence, so "spread → 0 to solver tolerance" cannot hold on any single
+mesh. The strict xfail is retired; the claim is now
+`tests/solver/test_gauge_multiplier_convergence.py`
+(`test_multiplier_spread_converges_for_a_divergence_free_source` — monotone
+decrease + rate ≥ the **unmoved** pre-registered 0.7, deliberately not
+tightened to the measurement so the gate stays a discriminator; plus
+`test_multiplier_still_separates_an_incompatible_source`), and
+`test_gauge_lagrange.py` keeps the wire-side scale gate. Standard tier, 97 s
+at `-n 2`, `20260820T123307Z_MAG-17-step1-ladder.log` (ladder) and
+`20260820T123823Z_MAG-17-step1-final2.log` (final, 6 passed); the sizing
+probe is `20260820T123124Z_MAG-17-step1-probe.log`. known-issues defect 2
+retired in the same commit. Follow-on: none — the residual is benign and
+`MAG-15`'s open follow-ups above are unaffected. Original plan:)*
+*(commissioned
 2026-08-17 10:30 review from `OPS-17` step-2 defect 2 — full measurement in
 known-issues "Four defects…" §2; the failing gate is carried as
 `tests/solver/test_gauge_lagrange.py::test_gauge_multiplier_vanishes_for_a_divergence_free_source`,
@@ -5077,8 +5102,24 @@ sentence below is amended accordingly.
    two meshes ≈ 15 s, `timeout -k 30 400`, `-n 2`, real build; traps:
    gmsh size fields are global state, rank-local `cell_tags.values`).
    Mission path: this fixture is `MAT-4`'s road to SAR-on-a-coil.
-3. **`MAG-17` step 1 — the Coulomb-gauge multiplier h-ladder
-   discriminator (standard).** Execute the §7 `MAG-17` step-1 entry
+3. **DONE 2026-08-20 (07:30 slot)** — `MAG-17` step 1 ✅ **and the chunk
+   closes**: verdict **DISCRETE-SOURCE**, ladder 7.836781e+00 →
+   3.052022e+00 → 1.438617e+00, fitted rate **2.4476** against the
+   pre-registered ≥ 0.7; base rung reproduces the `OPS-17` record to every
+   printed digit and the incompatible wire stays at 2.083064e+02. The
+   strict xfail is retired for a convergence gate in the new
+   `tests/solver/test_gauge_multiplier_convergence.py`; known-issues
+   defect 2 retired. **Note for the review:** this adds 2 tests and removes
+   one expected xfail, so `OPS-17` step 3's accounting moves —
+   `tests/environment` + `tests/solver` now collects **55** in *both*
+   builds (`20260820T124108Z_...-collect.log`,
+   `20260820T124121Z_...-collect-complex.log`) against the 49 recorded
+   2026-08-18, of which +2 is this chunk and +4 is the rest of the
+   interval's landed work. With defect 3 retired by `POST-5` and defect 2
+   retired here, **`tests/solver` now carries no `xfail` marker at all**
+   (grep-verified), so the "2 expected xfails" line in `OPS-17` step 3e's
+   record is history, not a baseline. ~~**`MAG-17` step 1 — the Coulomb-gauge multiplier h-ladder
+   discriminator (standard).**~~ Execute the §7 `MAG-17` step-1 entry
    verbatim (commissioned 2026-08-17 10:30 review; full rubric there —
    anchor: fitted log-log rate with pre-registered bands, ≥ 0.7 ⇒
    DISCRETE-SOURCE / |rate| < 0.3 ⇒ ASSEMBLY-DEFECT, in-between =

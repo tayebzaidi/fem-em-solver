@@ -19,6 +19,14 @@ Fixture note: the straight wire terminates on the domain end caps, so
 J.n != 0 there and the source is incompatible with the curl-curl operator.
 The multiplier absorbs exactly that component, which is why its spread is
 reported as a diagnostic rather than asserted against zero.
+
+The multiplier's behaviour on a *compatible* source is gated next door, in
+``test_gauge_multiplier_convergence.py``: `OPS-17` step 2 asserted it vanishes
+to solver tolerance on a divergence-free closed loop and carried the failure
+here as a strict xfail; `MAG-17` step 1 (2026-08-20) measured the h-ladder,
+found the spread converging at rate 2.4476, and moved the claim to where a
+convergence rate can actually be asserted. The loop geometry constants below
+are shared with that file.
 """
 
 from __future__ import annotations
@@ -37,7 +45,6 @@ from fem_em_solver.io.mesh import MeshGenerator
 from fem_em_solver.post.evaluation import evaluate_vector_field_parallel
 from fem_em_solver.utils.analytical import AnalyticalSolutions, ErrorMetrics
 from fem_em_solver.utils.constants import MU_0
-from tests.validation.test_circular_loop import azimuthal_current_density
 
 WIRE_RADIUS = 0.003
 DOMAIN_RADIUS = 0.03
@@ -52,18 +59,12 @@ _POINTS[:, 0] = np.linspace(2.0 * WIRE_RADIUS, 0.4 * DOMAIN_RADIUS, N_POINTS)
 
 # `OPS-17` step 2: the divergence-free counter-fixture. A closed loop carries
 # azimuthal current with div J = 0 and J.n = 0 on the whole boundary, so the
-# Coulomb-gauge multiplier is identically zero in the continuum. Deliberately
-# coarse — this test compares multiplier behaviour between two sources, not
-# absolute field accuracy, so it buys nothing from refinement.
+# Coulomb-gauge multiplier is identically zero in the continuum. 0.005 is the
+# `OPS-17` record's own mesh and the base rung of `MAG-17`'s ladder.
 LOOP_RADIUS = 0.02
 LOOP_WIRE_RADIUS = 0.003
 LOOP_DOMAIN_RADIUS = 0.06
 LOOP_RESOLUTION = 0.005
-
-# The step-1 anchor: for a divergence-free source the multiplier is identically
-# zero in the continuum, so its spread should be a solver-tolerance residual.
-# Measured at 7.836781e+00 — see the xfail'd test below.
-LOOP_SPREAD_MAX = 1.0e-9
 
 
 @pytest.fixture(scope="module")
@@ -100,34 +101,6 @@ def wire_solutions():
             "multiplier_spread": solver.gauge_multiplier_spread(),
         }
     return results
-
-
-@pytest.fixture(scope="module")
-def loop_lagrange_solution():
-    """LAGRANGE solve of a closed loop — a source compatible by construction."""
-    comm = MPI.COMM_WORLD
-    mesh, cell_tags, _ = MeshGenerator.circular_loop_domain(
-        loop_radius=LOOP_RADIUS,
-        wire_radius=LOOP_WIRE_RADIUS,
-        domain_radius=LOOP_DOMAIN_RADIUS,
-        resolution=LOOP_RESOLUTION,
-        comm=comm,
-    )
-    j = 1.0 / (np.pi * LOOP_WIRE_RADIUS**2)
-
-    solver = MagnetostaticSolver(
-        MagnetostaticProblem(mesh=mesh, cell_tags=cell_tags, mu=MU_0), degree=1
-    )
-    A = solver.solve(
-        current_density=azimuthal_current_density(j),
-        subdomain_id=1,
-        gauge=GaugeMethod.LAGRANGE,
-    )
-    local_max = float(np.max(np.abs(A.x.array))) if A.x.array.size else 0.0
-    return {
-        "max_a": comm.allreduce(local_max, op=MPI.MAX),
-        "multiplier_spread": solver.gauge_multiplier_spread(),
-    }
 
 
 def test_penalty_and_lagrange_agree_on_b_field(wire_solutions):
@@ -185,8 +158,9 @@ def test_gauge_multiplier_is_nan_without_a_lagrange_solve(wire_solutions):
     `OPS-17` step 2 (2026-08-17) split the old
     ``test_gauge_multiplier_spread_is_reported`` in two. Its ``isnan`` half is
     a genuine structural contract and is kept here unchanged; its
-    ``isfinite(spread)`` half was finiteness-class, and the quantitative
-    statement that was supposed to replace it is the xfail'd test below.
+    ``isfinite(spread)`` half was finiteness-class; the quantitative statement
+    that replaces it is the wire-scale gate below plus the convergence gate in
+    ``test_gauge_multiplier_convergence.py`` (`MAG-17` step 1).
     """
     pen_spread = wire_solutions[GaugeMethod.PENALTY]["multiplier_spread"]
     assert np.isnan(pen_spread), "spread should be nan when no multiplier exists"
@@ -195,73 +169,32 @@ def test_gauge_multiplier_is_nan_without_a_lagrange_solve(wire_solutions):
     assert np.isfinite(spread), "a LAGRANGE solve must expose a finite spread"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "known-issues 2026-08-17 (OPS-17 step 2): the Coulomb-gauge multiplier "
-        "does NOT vanish for a divergence-free source — measured spread "
-        "7.836781e+00 on a closed current loop against the 1e-9 the step-1 "
-        "anchor expects. Not diagnosed; band left strict so a fix shows as "
-        "XPASS."
-    ),
-)
-def test_gauge_multiplier_vanishes_for_a_divergence_free_source(
-    loop_lagrange_solution, wire_solutions
+def test_incompatible_wire_multiplier_stays_at_its_recorded_scale(
+    wire_solutions,
 ):
-    """The multiplier should be zero when the source is compatible.
+    """An incompatible source must keep the multiplier O(1)-large.
 
-    `OPS-17` step 2 (2026-08-17) — **this test is a finding, not a pass.** The
-    step-1 table named "multiplier spread -> 0 to solver tolerance for a
-    divergence-free source" as the anchor that would replace
-    ``isfinite(spread)``. Executed, it does not hold.
-
-    Measured at `-n 2`, ``20260817T111217Z_OPS-17-step2-solver-n2.log``:
-
-        incompatible straight wire (J.n != 0 on the end caps): spread 2.083064e+02
-        divergence-free closed loop (div J = 0, J.n = 0 everywhere): spread 7.836781e+00
-
-    A closed loop carrying azimuthal current has ``div J = 0`` in the interior
-    and ``J.n = 0`` on both the torus surface (phi-hat is tangent to it) and
-    the outer sphere, so ``p`` is identically zero in the continuum and the
-    discrete spread should sit at solver tolerance. 7.84 is not that. The
-    multiplier *is* doing something — it is 26.6x larger on the genuinely
-    incompatible fixture, so it has not stopped responding to compatibility —
-    but "vanishes for a compatible source" is false as written.
-
-    Two candidate explanations, neither settled here and both cheap to
-    distinguish with an h-ladder the timebox did not allow:
-
-    1. **Benign discretisation.** The source enters the FE functional through
-       an interpolated ``J``, whose discrete divergence is only O(h). Then the
-       spread should fall with refinement, and the anchor should have been
-       "-> 0 with refinement", not "-> 0 to solver tolerance". This fixture is
-       deliberately coarse (h = 0.005 against a 0.003 wire radius).
-    2. **A real defect** in how the constraint is assembled, in which case the
-       spread is h-independent.
-
-    Note also that ``max|A|`` is *not* a usable normaliser here: the whole
-    point of LAGRANGE is that the null space is removed, so
-    ``test_lagrange_removes_the_null_space`` requires its ``max|A|`` to be six
-    orders below the penalty solve's. Both spreads are therefore reported raw.
-
-    Diagnosing this is `MAG`/`OPS` work on the gauge formulation, not `OPS-17`
-    test hygiene. The band stays where the anchor put it and the marker is
-    ``strict=True`` so a fix is reported as XPASS.
+    `OPS-17` step 2 wrote the anchor "multiplier spread -> 0 to solver
+    tolerance for a divergence-free source" and carried its failure here as a
+    strict xfail at 1e-9 (measured 7.836781e+00 on the closed loop,
+    ``20260817T111217Z_OPS-17-step2-solver-n2.log``). `MAG-17` step 1
+    (2026-08-20) ran the h-ladder that was left undone and **refuted the
+    anchor, not the code**: the spread converges at fitted rate 2.4476
+    (7.836781e+00 -> 3.052022e+00 -> 1.438617e+00 over h = 0.005/0.0035/0.0025,
+    ``20260820T123307Z_MAG-17-step1-ladder.log``), which is the pre-registered
+    DISCRETE-SOURCE verdict: ``p`` absorbs the interpolated ``J``'s O(h)
+    discrete divergence, so it is a discretisation residual and *cannot* sit at
+    solver tolerance on any single mesh. The claim moved to the file where a
+    rate can be asserted; what stays here is the wire-side record this file's
+    fixture already carries.
     """
     spread = wire_solutions[GaugeMethod.LAGRANGE]["multiplier_spread"]
-    loop_spread = loop_lagrange_solution["multiplier_spread"]
 
-    if MPI.COMM_WORLD.rank == 0:
-        print(
-            f"\n[OPS-17] gauge multiplier spread (raw):"
-            f"\n  incompatible straight wire: {spread:.6e}"
-            f"\n  divergence-free loop:       {loop_spread:.6e}"
-            f"\n  ratio: {spread / loop_spread:.3f}x",
-            flush=True,
-        )
-
-    assert loop_spread < LOOP_SPREAD_MAX, (
-        f"multiplier spread {loop_spread:.6e} on a divergence-free source is "
-        f"above the {LOOP_SPREAD_MAX:.0e} solver-tolerance band: the Coulomb "
-        "gauge constraint is absorbing something that should not be there"
+    # Recorded 2.083064e+02 on the incompatible wire, 26.6x the loop's base-h
+    # value: this fixture's source is genuinely incompatible, so the multiplier
+    # must be O(1)-large, not a residual. The band is an order of magnitude
+    # either side of the record.
+    assert 2.0e1 < spread < 2.0e3, (
+        f"incompatible-wire multiplier spread {spread:.6e} is outside the "
+        "recorded 2.083064e+02 band: the fixture or the constraint block moved"
     )

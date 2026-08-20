@@ -15593,3 +15593,89 @@ by any conformity gate, only by a cross-sizing comparison, and
 idiom (`GEO-18` step 1 named a graded `h_c = 1.6e-3`); whether *that* request
 reaches the mesh is unmeasured and is a one-run check of the same shape.
 
+
+---
+
+## 2026-08-20T12:45Z — `MAG-17` step 1 — **complete**
+
+**Slot:** 07:30 CDT scheduled implementer run. **Queue:** §9 item 3, the first
+not marked done (items 1 `GEO-18` and 2 `GEO-17` closed in the 04:30 / 06:00
+slots). Tree clean at preflight, container Up 2 days, no `attempt/*` or
+`recovered/*` branches.
+
+**Verdict: DISCRETE-SOURCE — the anchor was wrong, not the constraint block.**
+The h-ladder prescribed by the §7 entry ran as written, h ∈ {0.005 (the
+`OPS-17` record), 0.0035, 0.0025}:
+
+| h | cells | multiplier spread |
+| --- | --- | --- |
+| 0.0050 | 29 190 | 7.836781e+00 |
+| 0.0035 | 82 819 | 3.052022e+00 |
+| 0.0025 | 208 049 | 1.438617e+00 |
+
+Fitted log-log rate **2.4476**, pairwise 2.645 / 2.234, against the
+pre-registered bands (≥ 0.7 ⇒ DISCRETE-SOURCE, |rate| < 0.3 ⇒
+ASSEMBLY-DEFECT). Not a marginal call: the spread converges *superlinearly*,
+so the multiplier is absorbing the interpolated `J`'s O(h) discrete
+divergence — a mesh residual — and `OPS-17`'s "spread → 0 to solver
+tolerance" could not have held on any single mesh. **The base rung reproduces
+the record to every printed digit** (7.836781e+00), which is what licenses
+reading the other two rungs as refinement rather than a changed fixture.
+**Negative control passed in the same run:** the incompatible straight wire
+(`J·n ≠ 0` on the end caps) stays at its recorded 2.083064e+02, > 10× the
+loop's base-h spread (recorded separation 26.6×).
+
+**What landed.** New `tests/solver/test_gauge_multiplier_convergence.py`: the
+ladder as a module fixture, gated on monotone decrease + rate ≥ the **unmoved**
+pre-registered 0.7 (deliberately *not* tightened to the measured 2.4476 — the
+band's job is to discriminate the two candidates, and a band fitted to the
+measurement stops doing that), plus the wire/loop separation as a second test.
+The strict xfail
+`test_gauge_multiplier_vanishes_for_a_divergence_free_source` is retired from
+`test_gauge_lagrange.py` — its claim moved to where a rate can be asserted —
+and replaced there by `test_incompatible_wire_multiplier_stays_at_its_recorded_scale`,
+an order-of-magnitude band around the wire's 2.083064e+02 so that fixture keeps
+a quantitative gate. known-issues defect 2 marked RESOLVED with the table.
+Nothing was loosened: the failing assertion was removed because the
+measurement showed the assertion itself was unphysical, and the replacement is
+strictly stronger (three meshes and a rate, versus one mesh and a threshold).
+
+**One own-goal, corrected before it could land:** the first ladder run failed
+because I fitted `-slope` where the convergence rate *is* the slope
+(`spread ~ C·h^p`), printing rate −2.4476 and tripping my own gate
+(`20260820T123307Z`, exit 1). The spreads themselves were unaffected and are
+bit-identical across all three runs.
+
+**Logs** (all `-n 2`, real build, foreground, `timeout -k 30 500`/`120`, no
+overrun, no permission denial, nothing backgrounded):
+`20260820T123124Z_MAG-17-step1-probe.log` (cost probe: two coarse rungs, cell
+counts and solve times, 29 s — used to size the finest rung before running it);
+`20260820T123307Z_MAG-17-step1-ladder.log` (the ladder, exit 1 on the sign
+bug, 96 s); `20260820T123616Z_MAG-17-step1-final.log` (6 passed, 97 s);
+`20260820T123823Z_MAG-17-step1-final2.log` (**the record-bearing run** — 6
+passed, 97 s, after renaming the repurposed test so the log matches the tree);
+`20260820T124108Z_...-collect.log` / `20260820T124121Z_...-collect-complex.log`
+(collection counts, exit 0, 1 s / 2 s).
+
+**Cost note for the review.** The finest rung is 208 049 cells and the file
+costs 97 s at `-n 2` — standard tier, and the probe (`h = 0.0025` extrapolated
+from 29 k/83 k cells at near-linear solve scaling) is what kept it there. A
+fourth rung would roughly triple that; not needed, the verdict has four
+sigfigs of margin.
+
+**For `OPS-17` step 3's accounting.** This adds 2 tests and removes the last
+`xfail` marker in `tests/solver` (grep-verified: with defect 3 retired by
+`POST-5` and defect 2 retired here, the directory has none). `tests/environment`
++ `tests/solver` now collects **55** in both builds, against the 49 recorded
+2026-08-18 — +2 from this chunk, +4 from the interval's other landed work. The
+"2 expected xfails" line in step 3e's record is history, not a baseline.
+
+**Hypothesis for the next attempt.** `MAG-17` closes here, so §9 item 4
+(`OPS-23`, the rank-0-return defect pattern) is next and is independent of
+everything landed today. Worth the review's attention: this is the second
+`OPS-17`-step-2 defect in three days to resolve as *the anchor was wrong*
+rather than *the code was wrong* (defect 1 `GEO-17` was genuinely code; defects
+2 and 3 were both anchors written without a ladder). The pattern to price: an
+anchor asserting "quantity X is zero" on a single discretisation is almost
+always an unwritten convergence claim, and the ladder that would have caught it
+costs ~100 s.
