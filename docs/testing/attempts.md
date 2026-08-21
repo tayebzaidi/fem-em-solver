@@ -16958,3 +16958,58 @@ owed to the first live governing session are unchanged — close `OPS-17` step 3
 leg (b2) on the existing logs at the **216 of 232** denominator (deferring
 `test_coil_loading_degree2.py` and `test_port_gap_voltage_padding.py`), and scope
 `GEO-18` step 2, the only unblock for `PORT-9` step 3.
+
+## 2026-08-21T21:30Z — no chunk — **blocked (queue drained; eighth slot, state unchanged)** (16:30 CDT implementer slot)
+
+**Outcome: blocked, no chunk work started, no compute executed.** Eighth slot on
+the same drain, exactly the state the 15:00 entry (2026-08-21T20:00Z) predicted.
+
+**Preflight.** `git status` clean on `main` at `c6948eb`; local branches only
+`main` and the long-standing `docs/consolidate-plan-and-verify-toolchain` — no
+`attempt/*`, no `recovered/*`. Container `fem-em-solver` Up 3 days. Neither the
+anomaly nor the parking clause of `implementer-run.md` step 1 applies.
+
+**State verified, not assumed.** §9 On deck re-read in full: items 1–5 `DONE`,
+item 6 `DRAINED — AUDITED`, and the drain sentence still names no fallback by
+design ("There is no fallback chunk"), so `implementer-run.md` step 2 resolves
+to journal-and-stop. `logs/automation/` newest-first is this slot's wrapper,
+then the 15:00 implementer wrapper (1 348 bytes, ran), then the dead
+`20260821T153001Z_daily-review.log` (146 bytes, re-read this slot — the same
+`You're out of usage credits` line) — **no governing session has run since the
+03:00 one died**, and nothing has changed since the 12:00 slot resolved the
+model-scoped discriminator.
+
+**The one new fact: this was the day's last implementer slot before a review.**
+The grid is 04:30 / 06:00 / 07:30 / 09:00 / 12:00 / 13:30 / 15:00 / 16:30, then
+the 18:00 review, then 19:30 / 21:00 / 22:30 / 00:00. All eight pre-review slots
+are now spent on this drain — Friday's entire pre-review allocation — and the
+12:00 entry's projection that "the 13:30 / 15:00 / 16:30 slots and the 18:00
+review drain identically" is measured fact for the three slots and still
+untested for 18:00. **Dashboard item 0 edited on exactly this point** (the only
+change this slot made outside this journal): its cost line said "five drained
+… on the current trajectory the 13:30 / 15:00 / 16:30 slots … drain too", a
+forecast that has now resolved, so it now reads eight drained slots as measured,
+names this as the last pre-review slot, and states that if 18:00 dies the four
+slots after it drain the same way. No new evidence was manufactured for it — the
+edit converts a projection this slot could confirm into fact, and the four-log
+evidence, the one-variable `--model` difference and the two operator options are
+unchanged from the 12:00 rewrite.
+
+**Compute.** None — no harness command, no log, no `test-results.md` row, no
+known-issues change. Per §5.2 a drained slot must not manufacture a verification
+to justify itself; no test ran and no recorded digit moved.
+
+**Tree.** Clean. This entry plus the dashboard cost-line edit are the only
+changes and land together on `main`. No `attempt/*` branch — there is no code
+change to park.
+
+**Hypothesis for the next attempt.** The 18:00 review is the discriminator's
+last untested case: it launches on `--model claude-fable-5` like the four that
+died, so unless the operator has acted on dashboard item 0 it produces a fifth
+146-byte log, and the 19:30 slot then finds this identical state and should
+journal it in as few lines as this one. If instead 18:00 *runs*, §9 restocks and
+the drain ends without any implementer action. The two decisions owed to the
+first live governing session are unchanged — close `OPS-17` step 3 leg (b2) on
+the existing logs at the **216 of 232** denominator (deferring
+`test_coil_loading_degree2.py` and `test_port_gap_voltage_padding.py`), and
+scope `GEO-18` step 2, the only unblock for `PORT-9` step 3.

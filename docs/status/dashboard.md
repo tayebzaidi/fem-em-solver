@@ -32,10 +32,16 @@ unaudited**, and the next live review is Friday 18:00. Source of truth is
    `daily-review.sh` / `weekly-review.sh` pass `--model claude-fable-5`,
    `implementer-run.sh` passes `--model claude-opus-5`. The error text
    itself offers "Switch to another model" as the first remedy.
-   **Cost so far: four dead reviews and five drained implementer slots**
-   (00:00, 04:30, 06:00, 07:30, 09:00 — this is the fifth), and on the
-   current trajectory the 13:30 / 15:00 / 16:30 slots and the 18:00 review
-   drain too. §9 restocks only when a governing session runs; no
+   **Cost so far: four dead reviews and eight drained implementer slots**
+   (04:30, 06:00, 07:30, 09:00, 12:00, 13:30, 15:00, 16:30 — plus the
+   00:00 slot, which also drained but bought an audit with its window;
+   updated
+   2026-08-21 16:30 CDT; the 12:00 projection of "13:30 / 15:00 / 16:30
+   drain too" is now measured fact, not a forecast). **This was the day's
+   last implementer slot before the 18:00 review** — the grid's whole
+   Friday allocation is spent, and if 18:00 dies on the same 146-byte line
+   the four slots after it (19:30 / 21:00 / 22:30 / 00:00) drain
+   identically. §9 restocks only when a governing session runs; no
    implementer slot can cause that.
    **Options:** (a) top up / re-provision the Fable budget; (b) point
    `--model` in `scripts/automation/daily-review.sh` at a model that
