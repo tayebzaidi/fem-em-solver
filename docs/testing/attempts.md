@@ -16461,3 +16461,70 @@ leg is ~3 more slots. **The two review decisions attempt 7 asked for are still
 owed** and this slot did not change them: formally defer `degree2` (14), and
 re-base the leg's reachable denominator to **216 of 232** (232 − 14 degree2 −
 2 padding); against that denominator the leg now stands at **155 of 216**.
+
+### Continuation of the same slot (attempt 9, cont.) — the runnable tail is **exhausted**: 216 of 216
+
+The entry above was written at what I mis-read as minute 45; it was minute 12.
+The slot's remaining 33 minutes were spent finishing the leg, and it finished.
+**Six more completed complex runs, all exit 0, all `-n 2`, every rank footer
+identical in outcome and elapsed time** (warning counts differ on three of
+them — the rank-local UFL deprecation asymmetry attempt 5 recorded):
+
+| # | drawn | window | result | vs its own record |
+|---|---|---|---|---|
+| 3 | `port_lumped_bc` + `port_lumped_two_torus` (11) | `-k 30 300` | **15 passed / 98.20 s** (`20260821T034317Z_...-port-lumped-pair.log`) | `20260817T093554Z` 95.18 s → **+3.17%** |
+| 4 | `port_systematics_composition` (3) | `-k 30 480` | **7 passed / 360.23 s** (`20260821T034507Z_...-port-systematics.log`) | `20260816T140643Z` 352.37 s → **+2.23%** |
+| 5 | `poynting_balance` + `port_lumped_sheet_sweep` (14) | `-k 30 480` | **18 passed / 242.80 s** (`20260821T035140Z_...-poynting-sheetsweep.log`) | 150.41 + 122.25 s separately → **−11%** batched |
+| 6 | `port_package_sparameters` + `port_lumped_narrowed_sheet` + `port_solenoidal_drive` (15) | `-k 30 480` | **19 passed / 350.80 s** (`20260821T035616Z_...-port-trio.log`) | ~424 s as three padded commands |
+| 7 | `lossy_sphere_fullwave` + `port_reaction_impedance` (12) | `-k 30 420` | **16 passed / 210.18 s** (`20260821T040236Z_...-sphere-reaction.log`) | 25.71 + 58.00 s (the latter with 1 deselected) |
+| 8 | `degree2_energy_mechanism` + `lossy_sphere_degree2` (6) | `-k 30 120` | **10 passed / 12.08 s** (`20260821T040628Z_...-degree2-pair.log`) | `20260819T183607Z` 14.24 s → **−15%** |
+
+**Coverage 155 → 216 of 232, and 232 − 14 (`coil_loading_degree2`) − 2
+(`port_gap_voltage_padding`) = 216 is exactly the reachable denominator
+attempts 7–8 asked the review to adopt. The runnable tail is zero.** The eight
+runs reconcile by footer arithmetic (every command is 4 `tests/environment` +
+N validation): 14 + 10 + 11 + 3 + 14 + 15 + 12 + 6 = **85**, and 131 + 85 =
+216. The 16 uncounted tests are exactly the two files already dispositioned as
+defer-with-reason, which is the arithmetic confirming the denominator rather
+than a second assumption.
+
+**`test_port_systematics_composition.py` — the file that killed batch C — is
+not expensive by surprise.** Its own `PORT-10` log records it at **352.37 s**
+alone at `-n 2`; batch C simply appended it to five other files inside a 400 s
+window. Measured here at **360.23 s**, +2.23%. It needed a window of its own,
+exactly as attempt 3 wrote, and reading its own log is what sized it.
+
+**Batching beats padded single-file records.** Runs 5–7 each drew several files
+whose records existed only as *padded* commands (the recorded run carried an
+already-counted file alongside the one being priced). Dropping the padding cost
+nothing and the batches came in **at or under** the sum of the padded records —
+run 5 at −11%, run 7 at 210.18 s against 83.71 s of records that between them
+excluded a deselected test. The recorded-width rule extends cleanly: **a padded
+record is an upper bound on the unpadded file, not an estimate of it.**
+
+**Every file's own quantitative gates passed unchanged.** No assertion touched,
+no known-issues entry owed, no failure, **no exit 124 in eight commands** —
+the recorded-width rule has now worked on seventeen consecutive commands across
+four slots. `--durations=10` priced the two files that dominate what remained:
+`port_reaction_impedance::test_mutual_impedance_falls_off_like_the_closed_form`
+**123.92 s setup** (the test `PORT-1` step 3a deselected — it passes here, at
+its own cost) and `::test_reaction_z_matrix_is_reciprocal` 61.03 s setup.
+
+**Memory.** `memory.current` 21.6 MB idle → 217.4 MB after run 2 and never
+above that class through run 8; `pgrep -c python3` = 0 at every check. No
+command in this slot came near the ceiling.
+
+**What this leaves for the review — one decision, not three.** Leg (b2) has now
+observed **every runnable validation test in a completed complex run**. It is
+**not** mine to mark ✅: closing it requires the formal defer of
+`coil_loading_degree2` (14, whose own record is `5 passed, 13 skipped` with the
+skips *being* the `TH-12` memory wall) and `port_gap_voltage_padding` (2,
+deferred since attempt 3), which attempts 7, 8 and 9 have each asked for and
+which is a review-level call on scope. **Adopt the 216 denominator and defer
+those two files, and `OPS-17` step 3 leg (b2) closes on this slot's logs with
+nothing further to run.** If instead either file is to be attempted, that is a
+new chunk with a memory prescription, not a leg of this one.
+
+**Correction to the entry above.** Its closing hypothesis said the tail was
+"75 runnable in ~25 files"; the file count was wrong — it was **9** files, and
+they are all now counted. The test count (75) was right.
