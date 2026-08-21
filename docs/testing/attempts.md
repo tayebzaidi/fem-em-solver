@@ -16618,3 +16618,80 @@ run**, every subsequent slot today will drain identically; the cheapest thing a
 drained slot can do is what this one did — pick an open review decision and
 make it evidence-backed — but that well is now dry for leg (b2), so the next
 drained slot should journal and stop rather than manufacture work.
+
+## 2026-08-21T09:30Z — no chunk — **blocked (queue drained; the 03:00 review did not run)** (04:30 CDT implementer slot)
+
+**Outcome: blocked, no chunk work started, no compute executed.** This is the
+protocol's drain path taken deliberately, not a failure of an attempt.
+
+**Preflight.** `git status` clean on `main`, no `attempt/*` or `recovered/*`
+branches. Container `fem-em-solver` Up 3 days. Both preconditions passed, so
+the anomaly and parking clauses of `implementer-run.md` step 1 do not apply.
+
+**Queue state — §9 On deck is fully drained.** All six items are closed out:
+items 1–5 `DONE` (`GEO-18` step 1, `GEO-17` step 1, `MAG-17` step 1, `OPS-23`,
+`EX-26`, 2026-08-20 04:30 → 12:00 slots) and item 6 `DRAINED — AUDITED` by the
+00:00 slot. Per `implementer-run.md` step 2 I then looked for the fallback
+named in §9's drain sentence; that sentence names **nothing** by design — "There
+is no fallback chunk: the former `PORT-9` fallback is exhausted — step 3 is
+🚫-blocked on `GEO-18`, its steps are serial by design, and cutting the fixture
+is commissioned work, not improvisation." So the instruction is journal and
+stop, and this entry is the whole deliverable.
+
+**The predicted cause, now confirmed.** The 00:00 slot's hypothesis was that
+this slot would drain unless the 03:00 review restocked §9. It did not run:
+`logs/automation/20260821T080001Z_daily-review.log` is 146 bytes, one line —
+`You're out of usage credits. Switch to another model, or manage usage credits
+at claude.ai/settings/usage...`. Byte-identical failure to
+`20260820T153001Z` (10:30) and `20260820T230001Z` (18:00). That is **three
+consecutive dead reviews** on the same cause, and it is the cause the dashboard
+already carries as Waiting-on-you item 0 with the operator's acknowledgement
+("acknowledged, no action wanted", credits expected back Fri noon). **I made no
+dashboard edit**: nothing here is new information to the operator, and
+manufacturing an alert for an already-acknowledged, already-predicted event
+would only add noise to the one channel that has to stay signal.
+
+**Note the failure class, for the review's benefit.** This is *not* `OPS-16`.
+`OPS-16`'s parked retry patch fixes launch-time API errors (the 2026-08-19
+18:00 API 500); retry logic cannot recover an exhausted budget, and re-launching
+into an empty pool would burn the wrapper's attempts for nothing. The two
+review-death classes now on record want different fixes, and only one of them
+has a designed patch waiting on the permission layer.
+
+**Measured cost of the outage, so the review can price it.** On the 90-minute
+grid, and taking the dashboard's own "credits back Fri noon" estimate at face
+value: the 10:30 review dies too, so **eight implementer slots drain
+identically** — 04:30 (this one), 06:00, 07:30, 09:00, 12:00, 13:30, 15:00,
+16:30 — and the first live governing session is the **18:00 review**, which
+restocks §9 in time for the 19:30 slot onward. Combined with the 2026-08-19
+18:00 API-500 outage already attributed to `OPS-16` (one review + three
+drain-fallback slots + one blocked slot), the automation has now lost **four
+reviews and thirteen slots in three days to launch-time failures of the
+governing half**, while the implementing half has run every one of its slots
+without a miss. That asymmetry, not any single chunk, is the finding of this
+slot.
+
+**What the 18:00 review should do first, unchanged from the 00:00 slot.** Leg
+(b2) needs a decision, not a slot: formally defer `test_coil_loading_degree2.py`
+(14) and `test_port_gap_voltage_padding.py` (2), adopt the **216 of 232**
+denominator, and close `OPS-17` step 3 leg (b2) on the existing logs plus the
+00:00 audit. Per §7's commitment clause that queues `OPS-18` steps 1–3 at the
+top of §9. Second, `GEO-18` step 2 (the sheet mid-plane on step 1's measured
+extents) is the only thing unblocking `PORT-9` step 3, and it is review scoping
+work that has been waiting since 2026-08-20.
+
+**Compute.** None. No harness command was run, so no log and no
+`test-results.md` row exists for this slot — correctly, per §5.2: a drained slot
+must not manufacture a verification to justify itself. Nothing filed to
+known-issues; no test ran and no recorded digit moved.
+
+**Tree.** Clean. This entry is the only change and lands by itself on `main`.
+No `attempt/*` branch — there is no code change to park.
+
+**Hypothesis for the next attempt.** The 06:00 slot will find this identical
+state and should spend nothing on it: preflight, confirm §9 is still drained,
+append a two-line entry referencing this one, stop. The well the 00:00 slot
+drew from (an open review decision that could be made evidence-backed at smoke
+cost) is dry, and re-auditing a settled 216 would be make-work that the review
+then has to read past. The queue does not restock until a governing session
+runs, and no implementer slot can cause that to happen.
