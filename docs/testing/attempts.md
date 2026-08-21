@@ -16363,3 +16363,101 @@ and the cheap tail outside this family. **The two review decisions attempt 7
 asked for are still owed** and this slot did not change them: formally defer
 `degree2`, and re-base the leg's reachable denominator to **216 of 232**
 (232 − 14 degree2 − 2 padding).
+
+## 2026-08-21T03:45Z — `OPS-17` step 3 leg (b2) attempt 9 — **incomplete (🟡, leg advances; `coil_loading_*` closes to its deferred file and the SAR/padding group closes)** (22:30 CDT implementer slot)
+
+**Item:** §9 item 6, the spare, a sixth time — items 1–5 are all marked done.
+Bookkeeping only — no `src/`, `tests/`, `scripts/` or `examples/` change,
+nothing parked, `main` clean.
+
+**Preflight.** Tree clean, container Up (2 days), `main` at `eb545f1`,
+`memory.current` 21.6 MB idle, `pgrep -c python3` = 0.
+
+**Two commands, two completed runs, both exit 0, both rank footers identical.**
+
+| # | drawn | width | window | result | vs its own record |
+|---|---|---|---|---|---|
+| 1 | `richardson_ladder` (14) | `-n 2` | `-k 30 420` | **18 passed / 140.25 s / exit 0** (`20260821T033146Z_OPS-17-step3j-coil-richardson-baseline.log`, 142 s) | 135.83 s → **+3.25%** |
+| 2 | the five SAR/padding files (10) | `-n 2` | `-k 30 540` | **14 passed / 247.68 s / exit 0** (`20260821T033534Z_OPS-17-step3j-sar-padding-group.log`, 249 s) | priced **> 400 s** by attempt 3 → **−38%** |
+
+Counts are 4 env + N validation throughout (`tests/environment` first in every
+path list, per §9). Run 1 rank footers 140.25/140.25 s, run 2 247.66/247.68 s —
+outcome and elapsed agree, only rank-local UFL deprecation *warning* counts can
+differ (both runs happen to show 8 vs 8), the benign asymmetry attempt 5
+recorded.
+
+**The prescription's two-command split for `richardson_ladder` was
+unnecessary — one command covers all 14, and the "read *all* the logs" rule
+attempt 8 added is what shows it.** Attempt 8 read the file's two recorded
+shapes (baseline `18 passed`/135.83 s, fine-30 MHz `10 passed, 1 skipped`/
+381.56 s) and inferred "the 14 validation tests are split across them". They
+are not. The collect log `20260820T183046Z_OPS-17-step3i-collect.log` lists
+the file's 14 test IDs as 7 tests × `[10MHz]` × `[30MHz]`, and the baseline log
+`20260817T033320Z`'s 18 = 4 env + **all 14** of them: `TH11_STEP4_RUNG` selects
+the *mesh*, not the test set, while `TH11_STEP4_FREQ_MHZ=10,30` selects both
+parametrizations. The fine-rung log's `10 passed, 1 skipped` is the *same* 7
+`[30MHz]` IDs at a finer mesh — a re-observation worth 0 new coverage for
+2.7× the cost. **Rule sharpened once more: a rung/mode env var that changes
+the mesh is not a test-set partition; confirm a split against the collect log's
+test IDs before budgeting a second window for it.** The 560 s window attempt 8
+reserved for the fine rung was spent on run 2 instead.
+
+**No moved digit.** Run 1 carries `-s`; 15 of its 17 `[TH-11 step 4]` lines are
+**bit-identical** to the record `20260817T033320Z_TH-11-step4-baseline.log`:
+138619 cells at `resolution_near = 0.005` on both rungs, `I' = 0.919666 A`,
+`dZ = +3.2770406e-01 + j(-5.6657895e-01)` Ω at 10 MHz and
+`+8.4022314e-01 + j(-2.4152825e+00)` Ω at 30 MHz, `dR` deviations **+1.5834%**
+and **+5.5912%** against the in-test records, `dX` ratios 0.9200 / 0.9500,
+`P_loss` loaded +1.3858364e-01 / +3.5532418e-01 W and free exactly
++0.0000000e+00 W. The **only** two lines that differ are the complex-power
+identity residuals — loaded 2.2788e-14 → 2.7373e-14 and free 6.1147e-15 →
+1.0006e-14, i.e. round-off five orders below their own 1e-09 bound, on runs
+whose every physical figure is bit-identical. Worth recording as the family's
+one non-reproducible print: residuals are machine noise, not a record.
+Run 2 prints no physics (no `-s`); its anchors are its files' own quantitative
+gates passing at the recorded counts.
+
+**The SAR/padding group is cheaper than its price, and the reason is already on
+the books.** Attempt 3 priced these five files at **> 400 s together at
+`-n 2`** from two exit-124 windows (batch C 400 s, batch C2 240 s). Measured
+here: **247.68 s** for the same five files plus the 4 env tests, with 54% of the
+window unused. Attempt 7's cold-first-command finding explains it — batch C/C2
+were this family's first complex commands and paid the JIT; the price a *dead*
+window quotes is a cold price and should be re-measured warm before a group is
+deferred as expensive. The group's cost is concentrated exactly as
+`--durations=10` shows: `test_port_box_padding_sweep.py`'s module setup
+**161.31 s**, `test_lossy_sphere_sar.py`'s single closed-form call **40.38 s**,
+`test_mass_averaged_sar.py` setup 16.94 s, `bfield_metrics` 14.30 s, everything
+else ≤ 6.8 s — the one-setup shape plus a cheap remainder, not five equal sinks.
+
+**Memory.** `memory.current` 21.6 MB idle → **217.4 MB** after both runs,
+`pgrep -c python3` = 0 throughout. Half attempt 8's figure; neither command is
+a memory risk. `memory.peak` remains unusable (pinned at `memory.max` =
+64.00 GiB by the `TH-11` OOM, read-only mount), as attempt 7 recorded.
+
+**Coverage 131 → 155 of 232** (+24: 14 + 10). Tail **77**, minus the deferred
+padding file (2) ⇒ **75 runnable**. Blocked stays **0**. **`coil_loading_*` is
+44 of 58 — everything in the family except `degree2` (14), the
+defer-with-reason, is now counted.** The five SAR/padding files are closed.
+Nothing loosened, nothing filed in known-issues, **no exit 124** — the
+recorded-width rule has now worked on eleven consecutive commands across four
+slots.
+
+**Denials / harness notes.** Two, both new and both worked around: `awk` is not
+allowlisted (used it to build a per-file collect census; fell back to reading
+the collect log directly), and a compound `for ... do head/tail ... done` over
+several logs was refused as multiple operations. The `$(...)` and
+`.git/`-scratch denials attempts 7–8 recorded are unchanged and were avoided
+rather than re-tested.
+
+**Hypothesis for the next attempt.** With both big families closed the tail is
+**75 runnable in ~25 files** and no block larger than a handful of tests, so
+the next leg should stop drawing families and go back to **shortest-first
+batching**: price the remainder from its own logs (free), then fill one ~400 s
+window with as many cheap files as the durations support, keeping
+`test_port_systematics_composition.py` — the file that killed batch C — in a
+window of its own since its cost is still unmeasured. At ~24 tests/slot the
+leg is ~3 more slots. **The two review decisions attempt 7 asked for are still
+owed** and this slot did not change them: formally defer `degree2` (14), and
+re-base the leg's reachable denominator to **216 of 232** (232 − 14 degree2 −
+2 padding); against that denominator the leg now stands at **155 of 216**.
