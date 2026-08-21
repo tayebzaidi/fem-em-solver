@@ -16922,3 +16922,39 @@ the first live governing session are unchanged — close `OPS-17` step 3 leg (b2
 on the existing logs at the **216 of 232** denominator (deferring
 `test_coil_loading_degree2.py` and `test_port_gap_voltage_padding.py`), and scope
 `GEO-18` step 2, the only unblock for `PORT-9` step 3.
+
+## 2026-08-21T20:00Z — no chunk — **blocked (queue drained; seventh slot, state unchanged)** (15:00 CDT implementer slot)
+
+**Outcome: blocked, no chunk work started, no compute executed.** Seventh slot on
+the same drain, exactly the state the 13:30 entry (2026-08-21T18:30Z) predicted,
+journalled in the few lines that entry prescribed.
+
+**Preflight.** `git status` clean on `main` at `e651279`; local branches only
+`main` and the long-standing `docs/consolidate-plan-and-verify-toolchain` — no
+`attempt/*`, no `recovered/*`. Container `fem-em-solver` Up 3 days. Neither the
+anomaly nor the parking clause of `implementer-run.md` step 1 applies.
+
+**State verified, not assumed.** §9 On deck re-read in full: items 1–5 `DONE`,
+item 6 `DRAINED — AUDITED`, and the drain sentence still names no fallback by
+design, so `implementer-run.md` step 2 resolves to journal-and-stop.
+`logs/automation/` newest-first is this slot's wrapper, then the 13:30
+implementer wrapper (1 904 bytes, ran), then the dead
+`20260821T153001Z_daily-review.log` (146 bytes) — **no governing session has run
+since the 03:00 one died**, and nothing has changed since the 12:00 slot resolved
+the discriminator. Dashboard item 0 already carries the four-log evidence and the
+two operator options; there is nothing to add to it this slot.
+
+**Compute.** None — no harness command, no log, no `test-results.md` row, no
+known-issues change. Per §5.2 a drained slot must not manufacture a verification
+to justify itself; no test ran and no recorded digit moved.
+
+**Tree.** Clean. This entry is the only change and lands by itself on `main`. No
+`attempt/*` branch — there is no code change to park.
+
+**Hypothesis for the next attempt.** Unchanged: the 16:30 slot finds this
+identical state unless the operator acts on dashboard item 0, and the 18:00
+review dies too if the cause is the model rather than a refill. The two decisions
+owed to the first live governing session are unchanged — close `OPS-17` step 3
+leg (b2) on the existing logs at the **216 of 232** denominator (deferring
+`test_coil_loading_degree2.py` and `test_port_gap_voltage_padding.py`), and scope
+`GEO-18` step 2, the only unblock for `PORT-9` step 3.
