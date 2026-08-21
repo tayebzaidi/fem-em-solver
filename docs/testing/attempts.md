@@ -16169,3 +16169,100 @@ shape, splittable at recorded `-k` boundaries), and cheap files. Two of the
 96.8% of `memory.max`) — those are the ones most likely to have no affordable
 recorded width at all, and if a file's own record shows it never completed,
 that is a defer-with-reason, not a window to spend.
+
+## 2026-08-21T00:45Z — `OPS-17` step 3 leg (b2) attempt 7 — **incomplete (🟡, leg advances; `coil_loading_*` priced and opened)** (19:30 CDT implementer slot)
+
+**Item:** §9 item 6, the spare, a fourth time — items 1–5 are all marked done.
+Executed under the operator flag of 2026-08-20 18:00 (price `coil_loading_*`
+before committing a window; print memory after every command; prefer a
+completed cheap file over an attempted expensive one). Bookkeeping only — no
+`src/`, `tests/`, `scripts/` or `examples/` change, nothing parked, `main`
+clean.
+
+**Preflight.** Tree clean, container Up (2 days), `main` at `8b914b1`.
+
+**The family is now priced from its own logs (no compute spent on this).**
+All 58 tests reconciled against the `20260819T020934Z` collect log:
+
+| file | tests | recorded width | recorded elapsed | shape |
+|---|---|---|---|---|
+| `larmor_probe` | 6 | `-n 2` complex | **73.19 s** (`20260814T003445Z_TH-11-step1-larmor-n2`) | cheap |
+| `transition_30mhz` | 6 | `-n 2` complex | **70.29 s** (10 passed = 4 env + 6, `20260816T183310Z_TH-11-step3-30mhz-n2`) | cheap |
+| `larmor_mesh_cache` | 5 | `-n 2` **real** | **141.49 s** (`20260817T213843Z_OPS-17-step3b-real-mesh-cache`); 44.65 s with a warm cache (1 skipped) | mid, complex cost unrecorded |
+| `larmor_third_rung` | 7 | `-n 8` complex | **100.30 s** ×2 commands, **env-gated** (`TH11_STEP5_RUNG=fine` × `MODE=loaded|free`, `20260818T003418Z_TH-11-step5b-rehearsal`) | mid, env-gated |
+| `richardson_ladder` | 14 | complex | baseline 18 passed/**135.83 s**; fine-30 MHz 10 passed **1 skipped**/**381.56 s** | rung-gated, two shapes |
+| `larmor_resolution` | 6 | `-n 2` complex | **390.89 s** (10 passed = 4 env + 6, `20260816T003251Z_TH-11-step2-resolution-n2`) | expensive, one-setup |
+| `degree2` | 14 | complex | **5 passed, 13 skipped**/106.06 s (`20260818T183730Z_TH-12-step2-calibrate`) | **defer-with-reason** — the 13 skips *are* the `TH-12` memory wall (61.94 GiB, 96.8% of `memory.max`); the file has no record of completing its solving half |
+
+**The flag's memory instrument does not exist at the container level, and the
+review should know before prescribing it again.** `/sys/fs/cgroup/memory.peak`
+inside the container reads **68 719 722 496 B = 64.00 GiB** — i.e. already
+pinned at `memory.max` (68 719 476 736 B) by the `TH-11` step-5b/5c OOM two
+days ago — and it is a high-water mark on a **read-only** mount: `echo 0 >
+/sys/fs/cgroup/memory.peak` returns `Read-only file system`. So `memory.peak`
+cannot be reset between commands and reports 100% forever; it is useless as a
+per-command instrument for this leg. The usable substitute is
+`memory.current`, sampled between commands: **21.6 MB idle before the first
+command**, 446.8 MB after the exit-124 run (with `pgrep -c python3` = 0, no
+strays), 455.1 MB after the second. `TH-11` step 5c's in-test instrument
+worked only because it printed inside a run that had itself driven the peak.
+
+**Two runs, one dead and one completed. +12 validation tests.**
+
+| run | selection | width | timeout | result | elapsed |
+|---|---|---|---|---|---|
+| `20260821T003224Z_...-coil-cheap3.log` | env + `larmor_probe` + `transition_30mhz` + `larmor_mesh_cache` | `-n 2` | `-k 30 480` | **exit 124** at 76%, inside `mesh_cache`'s first test | 471 s |
+| `20260821T004041Z_...-coil-probe-30mhz.log` | env + `larmor_probe` + `transition_30mhz` | `-n 2` | `-k 30 420` | **16 passed**, exit 0 | **137.18 s** |
+
+The second run is 4 environment + 6 + 6 = **16**, both rank footers identical
+(137.18 / 137.16 s), every gate in both files re-asserted unloosened, no
+failure and no error. **Coverage 101 → 113 of 232.** Tail **119**, minus the
+deferred padding file (2) ⇒ **117 runnable**. Blocked stays **0**.
+`coil_loading_*` is **12 of 58**.
+
+**The real finding: this family's first complex command pays a one-time JIT
+cost that no recorded width can predict, and it is ~2.4× the warm cost.** The
+two files that ran to a footer in **137.18 s** warm are the same two that,
+cold, consumed the bulk of a 480 s window in the dead run — they finished
+there too (all 12 PASSED are visible in the log before the kill), leaving
+`mesh_cache` no room. Their own records are 73.19 + 70.29 = **143.5 s**, which
+the warm run reproduces to **−4.4%**; the cold run overran the same work by
+more than 3×. The recorded-width rule (attempt 4) is therefore **necessary but
+not sufficient** for a family whose complex forms have never been compiled in
+the current cache: it carries width and elapsed time but not cache state.
+Amendment for the next leg: **the first complex command against a
+not-yet-touched family is a cache-warming command — size it at the recorded
+elapsed × 3, or spend one deliberately small file to warm the cache and count
+nothing.** The 12 passes lost to the dead window are the same 12 recovered in
+138 s afterwards, so the cost of the lesson was one window, not the coverage.
+
+**No moved digit.** Both files' assertions are their own recorded closed-form
+gates (`MAT-6` step 3 / `TH-11` steps 1 and 3 — mesh identity, projected-current
+identity, complex power identity loaded/free, exact-zero free dissipation,
+loaded dissipation + flux expulsion); all 12 passed in the completed run, at
+`-n 2`, in the complex build with `FEM_EM_REQUIRE_COMPLEX=1` and
+`tests/environment` first. Nothing loosened, nothing filed in known-issues —
+the exit 124 is a sizing error with no failure and no hang signature, the same
+class attempts 3–4 recorded.
+
+**Denials / harness notes.** Two shell forms were denied by the permission
+layer and worked around, worth recording so the next slot does not re-discover
+them: a `for` loop over log files (`Contains for_statement`) and an
+`$(...)`-bearing `echo`/`grep` combination (`Contains simple_expansion`). Both
+were replaced with `grep -l ... | xargs grep -H ...`. Nothing needed was
+ultimately unavailable.
+
+**Hypothesis for the next attempt.** Take `larmor_resolution` **alone** at
+`-n 2` — the single expensive one-setup file, recorded 390.89 s complex — in a
+`timeout -k 30 560` window, since its forms are now partly warm from this
+slot's runs (+6). Then `mesh_cache` (5) and `third_rung` (7, needs
+`TH11_STEP5_RUNG=fine` and two commands at `-n 8`, 100 s each) in a second
+window (+12). That is 30 of 58 across two slots. `richardson_ladder` (14) is
+rung-gated and needs its own reading of `20260817T033320Z` / `034258Z` before
+drawing. **`degree2` (14) should be formally deferred by the review, not
+attempted:** its own record is `5 passed, 13 skipped`, the 13 skips are the
+memory wall the 2026-08-18 18:00 review already adjudicated unaffordable on
+this box, and no coverage counting rule can turn a skip into an observation.
+That deferral, plus the padding file's 2, caps this leg's reachable total at
+**216 of 232** — the review should re-base the denominator rather than leave
+the leg looking 16 short forever.
