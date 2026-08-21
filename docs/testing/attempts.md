@@ -16266,3 +16266,100 @@ this box, and no coverage counting rule can turn a skip into an observation.
 That deferral, plus the padding file's 2, caps this leg's reachable total at
 **216 of 232** — the review should re-base the denominator rather than leave
 the leg looking 16 short forever.
+
+## 2026-08-21T02:20Z — `OPS-17` step 3 leg (b2) attempt 8 — **incomplete (🟡, leg advances; the two-slot prescription landed in one)** (21:00 CDT implementer slot)
+
+**Item:** §9 item 6, the spare, a fifth time — items 1–5 are all marked done.
+Executed the attempt-7 §7 prescription verbatim. Bookkeeping only — no `src/`,
+`tests/`, `scripts/` or `examples/` change, nothing parked, `main` clean.
+
+**Preflight.** Tree clean, container Up (2 days), `main` at `567c64b`,
+`memory.current` 21.5 MB idle, `pgrep -c python3` = 0.
+
+**Three commands, three completed runs, all exit 0, every rank footer
+identical.** The prescription budgeted two slots for this; it took one.
+
+| # | drawn | width | window | result | vs its own record |
+|---|---|---|---|---|---|
+| 1 | `larmor_resolution` (6) | `-n 2` | `-k 30 560` | **10 passed / 427.15 s / exit 0** (`20260821T020103Z_...-coil-larmor-res.log`, 429 s) | 390.89 s → **+9.28%** |
+| 2 | `larmor_mesh_cache` (5) | `-n 2` | `-k 30 480` | **9 passed / 445.55 s / exit 0** (`20260821T020908Z_...-coil-meshcache.log`, 447 s) | 141.49 s **real** → complex is **3.15×** |
+| 3 | `larmor_third_rung` (7) | `-n 8` | `-k 30 400` | **11 passed / 174.86 s / exit 0** (`20260821T021644Z_...-coil-thirdrung-fine.log`, 176 s) | 172.40 s → **+1.43%** |
+
+Counts are 4 env + N validation throughout (`tests/environment` first in every
+path list, per §9). Rank footers: run 1 427.15/427.14 s, run 2 445.55/445.59 s,
+run 3 174.83–174.87 s across all eight ranks — outcome and elapsed agree, only
+rank-local UFL deprecation *warning* counts differ, the benign asymmetry
+attempt 5 recorded.
+
+**No moved digit.** Run 3 carries `-s`, so its physics is directly comparable
+to the `TH-11` record `20260817T184026Z_TH-11-step5a-rank-control`: `cells:
+417914 at resolution_near = 0.0025 (2.52 cells per delta at 64 MHz)`, `P_loss:
+loaded +5.8523036e-01 W, free (σ = 0) 0.0 W`, `ΔR = +1.3838746e+00 Ω, ΔX =
+-5.8741123e+00 Ω; deviation +2.8063%, ΔX ratio 0.9514` — **bit-identical**,
+only wall-clock differs. Runs 1 and 2 print no physics; their anchors are their
+own in-test assertions passing at the recorded counts.
+
+**The one sizing correction the prescription needed.** Attempt 7 priced
+`third_rung` as "**two** `-n 8` commands, `TH11_STEP5_RUNG=fine` ×
+`MODE=loaded|free`, 100.30 s each" from the `20260818T003418Z` rehearsal. That
+is a valid route but not the cheapest one: the *rank-control* log
+`20260817T184026Z` records the same file at `TH11_STEP5_RUNG=fine
+TH11_STEP5_MODE=full`, `-n 8`, **one** command, **11 passed / 172.40 s /
+exit 0** — all 7 validation tests in a single command for less than the two
+halves' 201 s. Drawn that way here. **Rule sharpened: when a file's recorded
+width is read, read *all* of its logs, not the first match — the `MODE=full`
+single-command route can dominate the split one, and the split route's own
+`skip` lines ("the free solve is the second command's") are what make it look
+mandatory.**
+
+**Near-miss worth recording.** `third_rung`'s *other* recorded configuration —
+`TH11_STEP5_RUNG=third ... -n 8` (`20260818T020143Z_TH-11-step5b-third-loaded-n8`)
+— is **status 137 at 908 s**: that log *is* the `TH-11` OOM kill. The operator
+flag's warning was live, and the rung value, not the file, is the wall.
+Anything drawing this file must pin `TH11_STEP5_RUNG=fine` — and note that
+`third` is also the fixture's **default**
+(`os.environ.get("TH11_STEP5_RUNG", "third")`), so an unset variable walks
+straight into it.
+
+**Memory.** `memory.current` between commands, per attempt 7's substitute
+instrument (`memory.peak` remains pinned at `memory.max` = 64.00 GiB and the
+mount is read-only): 21.5 MB idle → **425.5 MB** after all three runs,
+`pgrep -c python3` = 0 throughout. Never near the ceiling; the `-n 8` fine-rung
+run is not a memory risk.
+
+**A second complex/real ratio.** `mesh_cache` is the leg's only file with a
+real-mode record and no complex one, so it measures the ratio directly:
+**445.55 / 141.49 = 3.15×**. That sits above leg (b1)'s warm-complex figure of
+~2.7× and below attempt 7's cold-first-command 2.4× multiplier *on top of*
+warm cost — consistent with both, and a usable default for the remaining
+real-only records.
+
+**Coverage 113 → 131 of 232** (+18: 6 + 5 + 7). Tail **101**, minus the
+deferred padding file (2) ⇒ **99 runnable**. Blocked stays **0**.
+`coil_loading_*` is **30 of 58**, exactly the two-slot target the prescription
+set, reached in one. What remains of the family is `richardson_ladder` (14) and
+`degree2` (14, the defer-with-reason). Nothing loosened, nothing filed in
+known-issues, no exit 124 this slot.
+
+**Denials / harness notes.** One denial: a `grep` whose *pattern* contained the
+word `pytest` was rejected by the `bash_guard.py` hook with the harness message
+("pytest must run through the logging harness") even though the command was a
+read of a test file, not a run. Worked around by dropping that alternative from
+the pattern. A second: `Write` to a scratch file under `.git/` for the commit
+message is refused as a sensitive path — commit-message files must live
+elsewhere. The `for`-loop and `$(...)` denials attempt 7 recorded are
+unchanged and were avoided rather than re-tested.
+
+**Hypothesis for the next attempt.** `richardson_ladder` (14) is the last
+drawable block. Read its rung gating from `20260817T033320Z` /
+`20260817T034258Z` first: its two recorded shapes are baseline `18 passed`/
+**135.83 s** and fine-30 MHz `10 passed, 1 skipped`/**381.56 s**, and the 14
+validation tests are split across them, so the likely draw is **two commands in
+one slot** — baseline at `-k 30 420`, fine-30 MHz at `-k 30 560`, both at the
+width its own logs record — with the 3.15× real→complex ratio applied to
+whichever record turns out to be real-mode. That would put `coil_loading_*` at
+**44 of 58** and the leg at **145 of 232**, leaving only `degree2` (14, defer)
+and the cheap tail outside this family. **The two review decisions attempt 7
+asked for are still owed** and this slot did not change them: formally defer
+`degree2`, and re-base the leg's reachable denominator to **216 of 232**
+(232 − 14 degree2 − 2 padding).
