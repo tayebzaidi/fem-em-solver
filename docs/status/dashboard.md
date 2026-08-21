@@ -16,16 +16,33 @@ unaudited**, and the next live review is Friday 18:00. Source of truth is
 
 ## Waiting on you
 
-0. 🟡 **Fable credits exhausted — reviews are stalled until Fri 2026-08-21
-   noon (acknowledged, no action wanted).** The 10:30 review died with
-   `You're out of usage credits`
-   (`logs/automation/20260820T153001Z_daily-review.log`); the 18:00,
-   Fri 03:00 and Fri 10:30 review slots will die the same way. Logged here
-   because this page is the alerting channel, not because a decision is
-   open — you have already accepted the stall. **Note this is a different
-   failure from item 1:** retry logic cannot recover an exhausted budget,
-   and the plausible driver is the implementer grid itself consuming the
-   pool the review slot then can't draw on.
+0. 🔴 **Reviews are dead on `--model claude-fable-5`, and the "credits back
+   Fri noon" premise has expired — a decision is now open.** *(Updated
+   2026-08-21 12:00 CDT by the drained implementer slot; the acknowledged
+   "no action wanted" was scoped to a stall that has outlived its own
+   estimate.)* **Four** consecutive review launches are byte-identical
+   146-byte `You're out of usage credits` lines — `20260820T153001Z`,
+   `20260820T230001Z`, `20260821T080001Z`, `20260821T153001Z` (10:30 and
+   18:00 Thu, 03:00 and 10:30 Fri). It is now past Friday noon and the
+   10:30 review died anyway.
+   **The discriminator the 09:00 slot asked for has resolved: this is
+   model-scoped, not an account outage.** Every implementer slot in the
+   same window launched and ran normally (wrapper logs 963–1353 bytes,
+   04:30 → 12:00 Fri). The wrappers differ in exactly one variable:
+   `daily-review.sh` / `weekly-review.sh` pass `--model claude-fable-5`,
+   `implementer-run.sh` passes `--model claude-opus-5`. The error text
+   itself offers "Switch to another model" as the first remedy.
+   **Cost so far: four dead reviews and five drained implementer slots**
+   (00:00, 04:30, 06:00, 07:30, 09:00 — this is the fifth), and on the
+   current trajectory the 13:30 / 15:00 / 16:30 slots and the 18:00 review
+   drain too. §9 restocks only when a governing session runs; no
+   implementer slot can cause that.
+   **Options:** (a) top up / re-provision the Fable budget; (b) point
+   `--model` in `scripts/automation/daily-review.sh` at a model that
+   demonstrably launches — a one-line change, though note it also reverts a
+   deliberate 2026-08-03 choice of Fable 5 for the governing session, so it
+   is your call, not automation's. **Note this is still a different failure
+   from item 1:** retry logic cannot recover an exhausted budget.
 1. 🔴 **`OPS-16` unblock — the review-death class it *does* fix.** The
    2026-08-19 18:00 review died at launch on an API 500 and took one
    review + three drain-fallback slots + one blocked slot with it. The

@@ -16796,3 +16796,90 @@ decisions owed to the first live governing session are unchanged — close
 `OPS-17` step 3 leg (b2) on the existing logs at the **216 of 232** denominator
 (deferring `test_coil_loading_degree2.py` and `test_port_gap_voltage_padding.py`),
 and scope `GEO-18` step 2, the only unblock for `PORT-9` step 3.
+
+## 2026-08-21T17:05Z — no chunk — **blocked (queue drained; fifth slot, but the 09:00 slot's discriminator resolved)** (12:00 CDT implementer slot)
+
+**Outcome: blocked, no chunk work started, no compute executed.** Fifth slot on
+the same drain. Unlike slots two through four, this one is not a pure repeat:
+the 10:30 review has now fired and died, which is exactly the discriminator the
+09:00 entry (2026-08-21T14:05Z) said would decide the failure class. It decided
+it, so this entry is longer than the "as few lines as possible" the prior slot
+prescribed — and one dashboard edit follows from it.
+
+**Preflight.** `git status` clean on `main` at `2327b1b`; local branches only
+`main` and the long-standing `docs/consolidate-plan-and-verify-toolchain` — no
+`attempt/*`, no `recovered/*`. Container `fem-em-solver` Up 3 days. Neither the
+anomaly nor the parking clause of `implementer-run.md` step 1 applies.
+
+**State verified, not assumed.** §9 On deck re-read in full: items 1–5 `DONE`
+(`GEO-18` step 1, `GEO-17` step 1, `MAG-17` step 1, `OPS-23`, `EX-26`), item 6
+`DRAINED — AUDITED`. The drain sentence still names no fallback by design
+("There is no fallback chunk… cutting the fixture is commissioned work, not
+improvisation"), so `implementer-run.md` step 2 resolves to journal-and-stop.
+
+**The discriminator, resolved — the review's death is MODEL-SCOPED, not an
+account outage.** The 09:00 entry framed the test precisely: if the 10:30
+review's wrapper is another 146-byte out-of-credits line *while implementer
+slots keep launching*, the failure belongs to the governing session's own model
+or effort tier rather than to the account. Measured this slot:
+
+| wrapper log | bytes | outcome |
+|---|---|---|
+| `20260820T153001Z_daily-review.log` (Thu 10:30) | 146 | out of credits |
+| `20260820T230001Z_daily-review.log` (Thu 18:00) | 146 | out of credits |
+| `20260821T080001Z_daily-review.log` (Fri 03:00) | 146 | out of credits |
+| `20260821T153001Z_daily-review.log` (Fri 10:30) | 146 | out of credits |
+| `20260821T110001Z_implementer.log` (Fri 06:00) | 963 | launched, ran |
+| `20260821T123001Z_implementer.log` (Fri 07:30) | 1257 | launched, ran |
+| `20260821T140001Z_implementer.log` (Fri 09:00) | 1353 | launched, ran |
+| `20260821T170001Z_implementer.log` (Fri 12:00, this slot) | — | launched, ran |
+
+**Four** dead reviews, all byte-identical at 146 bytes; **every** implementer
+slot in the same window alive. The two wrappers differ in exactly one variable,
+grep-verified this slot: `scripts/automation/daily-review.sh:34` and
+`weekly-review.sh:34` pass `--model claude-fable-5`;
+`implementer-run.sh:30` passes `--model claude-opus-5`. The error string itself
+names the remedy first — "Switch to another model, or manage usage credits".
+So an account-wide exhaustion is ruled out by the same account's Opus launches
+succeeding at 06:00, 07:30, 09:00 and 12:00 Friday.
+
+**The acknowledged premise has also expired.** The dashboard's Waiting-on-you
+item 0 carried the operator's "acknowledged, no action wanted" against an
+estimate of *credits back Fri noon*. It is now past Friday noon and the 10:30
+review died anyway. The 04:30 slot correctly declined to edit the dashboard
+because it had nothing new for it; that is no longer the case, so **this slot
+did edit item 0** — the only edit it made outside this journal. It records the
+four-log evidence, the one-variable difference, the measured cost, and two
+options (top up the Fable budget, or repoint `--model` in `daily-review.sh`),
+explicitly flagging that option (b) reverts a deliberate 2026-08-03 choice and
+is therefore the operator's call. **I did not change any wrapper's `--model`
+myself**: the governing session's model is not implementer work, and
+`Edit(scripts/automation/**)` sits under `ask` in any case (the same permission
+gate that has held `OPS-16` since 2026-08-14).
+
+**Measured cost, updated.** Four dead reviews and **five** drained implementer
+slots (00:00, 04:30, 06:00, 07:30, 09:00 — plus this one makes five *drained*
+counting from 04:30; the 00:00 slot drained too but bought an audit with its
+window). On the current trajectory the 13:30 / 15:00 / 16:30 slots and the
+18:00 review drain identically. The 04:30 entry's projection of "eight
+implementer slots drained, first live governing session 18:00" is now on its
+way to being an *under*count, because 18:00 dies too if the cause is the model
+rather than a refill.
+
+**Compute.** None — no harness command, no log, no `test-results.md` row, no
+known-issues change. Per §5.2 a drained slot must not manufacture a
+verification to justify itself; no test ran and no recorded digit moved.
+
+**Tree.** Clean. This entry plus the dashboard item-0 rewrite are the only
+changes and land together on `main`. No `attempt/*` branch — there is no code
+change to park.
+
+**Hypothesis for the next attempt.** The 13:30 slot finds this identical state
+unless the operator acts on dashboard item 0, and should journal it in two
+lines referencing this entry — the discriminator is spent, and there is no
+further evidence an implementer slot can collect about a session it cannot
+launch. The two decisions owed to the first live governing session are
+unchanged: close `OPS-17` step 3 leg (b2) on the existing logs at the **216 of
+232** denominator (deferring `test_coil_loading_degree2.py` and
+`test_port_gap_voltage_padding.py`), and scope `GEO-18` step 2, the only
+unblock for `PORT-9` step 3.
