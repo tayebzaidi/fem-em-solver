@@ -1,171 +1,116 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-20 18:00, **interactive session** (no review has run
-since 03:00 — see below). Headline: **the implementing half of the
-automation had its best day on record and the governing half failed twice.**
-Eight implementer slots since the 03:00 review produced **five closes, four
-of them whole chunks** — `GEO-17`, `MAG-17`, `OPS-23` and `EX-26` — plus
-`GEO-18` step 1, which cuts the birdcage legs and gives the ports real
-terminals (0.988616 of the π·r² closed form, identical across all four
-ports to seven digits). Meanwhile the **10:30 review died on exhausted
-usage credits**, a new failure class that the parked `OPS-16` retry patch
-would *not* have caught, and the 18:00 review is dying the same way as this
-is written. Consequence to know about: **five closes are currently
-unaudited**, and the next live review is Friday 18:00. Source of truth is
+**Updated:** 2026-08-21 18:00, **daily review (scheduled, ran normally).**
+Headline: **the credit outage is over and the audit debt is cleared.** This
+review launched on the same `--model claude-fable-5` that produced four
+consecutive 146-byte `out of usage credits` deaths (Thu 10:30 → Fri 10:30),
+so the budget has refilled; no config was changed. All **five closes from
+Wednesday are now audited COMPLIANT** (`GEO-18` step 1, `GEO-17`, `MAG-17`,
+`OPS-23`, `EX-26`), **`OPS-17` is closed** after a 9-attempt complex-suite
+reconciliation (216 of 216 runnable validation tests observed; 2 files
+formally deferred with reasons), and — per the standing written commitment —
+**the DolfinX 0.7.2 → 0.11.0.post0 upgrade (`OPS-18`) is now queued at the
+top of §9**, with `GEO-18` step 2 (the last mesh prerequisite before
+birdcage ports) scoped and queued behind it. Source of truth is
 `PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
 
 ## Waiting on you
 
-0. 🔴 **Reviews are dead on `--model claude-fable-5`, and the "credits back
-   Fri noon" premise has expired — a decision is now open.** *(Updated
-   2026-08-21 12:00 CDT by the drained implementer slot; the acknowledged
-   "no action wanted" was scoped to a stall that has outlived its own
-   estimate.)* **Four** consecutive review launches are byte-identical
-   146-byte `You're out of usage credits` lines — `20260820T153001Z`,
-   `20260820T230001Z`, `20260821T080001Z`, `20260821T153001Z` (10:30 and
-   18:00 Thu, 03:00 and 10:30 Fri). It is now past Friday noon and the
-   10:30 review died anyway.
-   **The discriminator the 09:00 slot asked for has resolved: this is
-   model-scoped, not an account outage.** Every implementer slot in the
-   same window launched and ran normally (wrapper logs 963–1353 bytes,
-   04:30 → 12:00 Fri). The wrappers differ in exactly one variable:
-   `daily-review.sh` / `weekly-review.sh` pass `--model claude-fable-5`,
-   `implementer-run.sh` passes `--model claude-opus-5`. The error text
-   itself offers "Switch to another model" as the first remedy.
-   **Cost so far: four dead reviews and eight drained implementer slots**
-   (04:30, 06:00, 07:30, 09:00, 12:00, 13:30, 15:00, 16:30 — plus the
-   00:00 slot, which also drained but bought an audit with its window;
-   updated
-   2026-08-21 16:30 CDT; the 12:00 projection of "13:30 / 15:00 / 16:30
-   drain too" is now measured fact, not a forecast). **This was the day's
-   last implementer slot before the 18:00 review** — the grid's whole
-   Friday allocation is spent, and if 18:00 dies on the same 146-byte line
-   the four slots after it (19:30 / 21:00 / 22:30 / 00:00) drain
-   identically. §9 restocks only when a governing session runs; no
-   implementer slot can cause that.
-   **Options:** (a) top up / re-provision the Fable budget; (b) point
-   `--model` in `scripts/automation/daily-review.sh` at a model that
-   demonstrably launches — a one-line change, though note it also reverts a
-   deliberate 2026-08-03 choice of Fable 5 for the governing session, so it
-   is your call, not automation's. **Note this is still a different failure
-   from item 1:** retry logic cannot recover an exhausted budget.
-1. 🔴 **`OPS-16` unblock — the review-death class it *does* fix.** The
-   2026-08-19 18:00 review died at launch on an API 500 and took one
-   review + three drain-fallback slots + one blocked slot with it. The
-   retry design has been parked and ready since 2026-08-14 (attempts.md
-   2026-08-14T02:03Z); it is blocked only by `Edit(scripts/automation/**)`
-   sitting under `ask`. Options unchanged: (a) move the three launcher
-   files to `allow` (keep `hooks/` gated), or (b) apply the patch by hand
-   in an interactive session.
-2. 🟢 **The `ANS-3` AED run is unblocked** (unchanged since 08-16). The
-   FEM half is on record; your half: replicate
-   `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md` in
-   Ansys Electronics Desktop and fill the blank AED columns in
-   `COMPARISON.md`. The measured **0.23 pp drive dependence** between
-   impressed-gap and lumped-sheet drives makes an AED lumped port a
-   direct external check on both.
-3. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
+1. 🔴 **`OPS-16` unblock — now the *only* review-death class still open.**
+   The credit class resolved itself (see Automation health), but the API-500
+   launch-failure class (2026-08-19 18:00 review, cost: one review + four
+   slots) is still only fixable by the retry patch parked since 2026-08-14.
+   Blocked solely by `Edit(scripts/automation/**)` sitting under `ask`.
+   Options unchanged: (a) move the three launcher scripts to `allow`
+   (keep `hooks/` gated), or (b) apply the patch by hand interactively.
+2. 🟡 **`OPS-18` heads-up — the upgrade starts tonight and its one network
+   operation may hit the permission layer.** §9 item 1 rebuilds the image
+   `FROM dolfinx/dolfinx:v0.11.0.post0`; the pull goes through
+   `docker compose` (allowlisted). If the implementer reports it denied,
+   the item will be marked ⛔ here — nothing for you to do unless that
+   happens. Work proceeds on a sanctioned `attempt/OPS-18` branch; `main`
+   keeps booting 0.7.2 until the full re-gate is green, so do not be
+   surprised by that branch existing for several days.
+3. 🟢 **The `ANS-3` AED run is unblocked** (unchanged since 08-16). Your
+   half: replicate `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`
+   in Ansys Electronics Desktop and fill the blank AED columns in
+   `COMPARISON.md`.
+4. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
-4. **ANS-1 Ansys replication** — still yours; ANS-3 (item 2) is the
-   second case in the same queue.
-5. FYI (unchanged): memory headroom on degree-2 coil runs is ~2 GiB.
-   Local `main` remains ahead of origin (push is manual; last push
-   08-18 night — everything since is local only).
+5. **ANS-1 Ansys replication** — still yours; ANS-3 (item 3) is the second
+   case in the same queue.
+6. FYI (unchanged): degree-2 coil memory headroom ~2 GiB. Local `main` is
+   well ahead of origin (push is manual; last push 08-18 night).
 
-## Honest current state (digest of §2 — no gated capability moved this interval)
+## Honest current state (digest of §2 — one line changed this interval)
 
 | Capability | State | Gate |
 |---|---|---|
-| Magnetostatics | ✅ validated | closed forms; < 5% wire field reached (MAG-13, 3.74% at 1.5 M cells); the complex build reproduces the same records to the digit (OPS-22/OPS-20). **New:** `MAG-17` closed — the Coulomb-gauge multiplier's spread is a **discrete-source mesh residual**, converging at fitted rate 2.4476, not a defect in the constraint block |
-| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.83% + power to 3.63% (TH-10); degree-2 N1curl gated at 0.1405% (TH-12 step 1, also an example — EX-25) |
-| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (MAT-6). Adjudicated 08-18: no affordable (order, h) route to a gated 64 MHz bracket on this box. Larmor coil loading stays an extrapolation. The degree-2 energy-identity defect is **coil-specific** (TH-12 step 3), mechanism input with the weekly review |
-| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4); never on a coil. `POST-5` closed: `poynting_power_balance` scores the three-term identity at 16.7% vs the unmoved 25%. **New:** `GEO-17` closed — the region-resolution policy now actually applies (it never had), recovering **+10.7%** of coil volume; this is MAT-4's road to SAR-on-a-coil |
-| S-parameters | ✅ package path field-derived (PORT-1) | two-torus fixture only; PORT-9 step 2c reciprocal at 2.6e-11 (example EX-24). Step 3 (birdcage) stays 🚫-blocked, but **the prerequisite is now half-built**: `GEO-18` step 1 gives every port a planar disk terminal, global ẑ drive, exact C4 layout. **Step 2 (the sheet mid-plane) is not yet scoped — it needs a review, so it waits for Friday.** §2.2's "no coil has ports" stands |
+| Magnetostatics | ✅ validated | closed forms; < 5% wire field (MAG-13, 3.74%); complex build reproduces the records to the digit; MAG-17: multiplier spread is a discrete-source residual, rate 2.4476 |
+| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.83% + power 3.63% (TH-10); degree-2 gated at 0.1405% (TH-12/EX-25) |
+| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (MAT-6); no affordable 64 MHz bracket on this box (adjudicated 08-18); Larmor coil loading stays an extrapolation |
+| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4); never on a coil; GEO-17's region policy (+10.7% coil recovery) is the meshing leg of the road there |
+| S-parameters | ✅ package path field-derived (PORT-1) | two-torus only; birdcage blocked on one remaining mesh step — **GEO-18 step 2 is now scoped and queued** (§9 item 4); §2.2's "no coil has ports" stands |
+| **Test-suite trust (new)** | ✅ reconciled | **OPS-17 closed 2026-08-21**: every runnable validation test (216/232) observed in a completed complex run; the 16 absent are exactly 2 files, deferred with named reasons (TH-12 memory wall; padded-record-only). The complex baseline OPS-18 needs now exists |
 
-## Recent activity (2026-08-20 03:00 → 18:00; eight implementer slots, all fired)
+## Recent activity (2026-08-20 03:00 → 2026-08-21 18:00)
 
-- **GEO-18 step 1 ✅ (04:30)** — the fixture answer to PORT-9's double
-  block. Opt-in `leg_gap_length` cuts every leg; terminal area
-  2.236196e-04 m² per port = **0.988616** of the closed form, inside the
-  pre-stated [0.95, 1.0]; closure and port-volume identities both
-  1.000000000000; ungapped negative control bit-for-bit unchanged.
-- **GEO-17 step 1 ✅, chunk closes (06:00)** — the known-issues
-  hypothesis is **refuted**: per-region `setSize` was never called at all
-  (`getBoundary` at default `combined=True` returns nothing for a closed
-  shell), so only the length clamps ever sized the mesh. Fixed with a Min
-  field over per-volume Constants: coil recovery **+10.72% / +10.79%**,
-  partition identity 1.000000000000, uniform column bit-identical to record.
-- **MAG-17 step 1 ✅, chunk closes (07:30)** — h-ladder 7.836781 →
-  3.052022 → 1.438617, fitted rate **2.4476** vs the pre-registered ≥ 0.7:
-  verdict **DISCRETE-SOURCE**. The consequence is that `OPS-17`'s old
-  anchor was unphysical on any single mesh; the strict xfail is retired and
-  replaced by a strictly stronger three-mesh rate gate at the *unmoved* 0.7.
-- **OPS-23 ✅, chunk closes (09:00)** — the commissioned census was wrong
-  **in both directions**: two of four sites were a private helper's print
-  guard (not defects), and the site the commission *exempted* was real.
-  Net three real sites + the helmholtz Im-bound. Red baseline: eight
-  inverted predicates, messages **byte-identical across ranks**, three of
-  which could not have failed on rank 1 before the fix.
-- **EX-26 ✅, chunk closes (12:00)** — first example in the tree that
-  audits **power** rather than a field: driven cylinder 16.7465% inside the
-  unmoved 25%, the same field misread two-term asserted to **miss** it, and
-  TH-6 per-leg 8.12% / 0.07%. Measured smoke, commissioned standard.
-- **OPS-17 leg (b2) attempts 4–6 🟡 (13:30, 15:00, 16:30)** — coverage
-  **63 → 101 of 232**, tail 129 runnable, blocked 0, and the `dodd_deeds_*`
-  family **closes at 38 of 38**. The sizing rule that made it work: read
-  each file's recorded rank width and elapsed time out of its own MAT-6 log
-  before sizing the command — it worked first try on every command in
-  attempts 5 and 6 after two windows died to exit 124 in attempt 4.
+- **Wed:** eight slots, five closes (all now audited) + `OPS-17` leg (b2)
+  attempts 4–6 (coverage 63 → 101, `dodd_deeds_*` closed 38/38).
+- **Wed night / Thu early:** attempts 7–9 finished the job — `coil_loading_*`
+  44/58, `richardson_ladder` in one command instead of two, then six more
+  runs in one slot exhausted the runnable tail at **216**. Eight commands,
+  zero exit-124, no assertion touched.
+- **Thu 00:00:** queue drained; the slot spent itself independently
+  corroborating the 216 denominator (fresh collect: 236 = 4 env + 232
+  validation; the two absent files are exactly the deferred pair).
+- **Thu 04:30 → Fri 16:30:** eight drained slots journalled per protocol —
+  no governing session could run (see below). No compute, no digit moved,
+  tree clean throughout.
+- **This review:** five COMPLIANT audits (two minor transparency notes now
+  in §7/§9: MAG-17's cited ladder log is a disclosed exit-1 pre-fix run;
+  OPS-23's annotation omits one benign green log). OPS-17 closed. OPS-18
+  commitment executed. GEO-18 step 2 scoped. EX-27 commissioned (GEO-17's
+  policy capability; the GEO-18 example is deferred until that fixture
+  stops moving; MAG-17's angle is already covered by EX-9/EX-10).
 
 ## Automation health
 
-- **Two reviews lost in 24 h, two different mechanisms.** 08-19 18:00 =
-  API 500 (the `OPS-16` class). 08-20 10:30 = **exhausted usage credits**,
-  which `OPS-16` does not address. The 18:00, Fri 03:00 and Fri 10:30
-  slots are expected to fail the same way; **first live review is Fri
-  18:00.**
-- ⚠️ **Five closes are unaudited** — `GEO-18` step 1, `GEO-17`, `MAG-17`,
-  `OPS-23`, `EX-26`, plus three leg-(b2) attempts. Every one is
-  self-evidenced with logs and red baselines, but none has had the
-  independent subagent audit the protocol requires. Friday's review
-  inherits an unusually heavy audit load.
-- ⚠️ **The queue is running on one re-drawable item.** §9 items 1–5 are
-  all done; only item 6 (leg (b2)) remains, and it survives by being
-  re-drawn each slot. Its next block is `coil_loading_*` — 58 unpriced
-  tests that include the `TH-12` memory-wall files — and there is **no
-  fallback chunk** if it stalls. A flag has been added to §9 item 6 asking
-  the next slot to price that family before committing a window to it.
-- Container healthy all interval; no OOM, no wedge. Tree clean at every
-  handoff; no `attempt/*` or `recovered/*` branches.
-- `OPS-18` (DolfinX upgrade) deliberately deferred, with a written
-  rationale and a binding commitment: the review that records `OPS-17`
-  step 3 closed queues steps 1–3 in the same commit. Upgrading before the
-  complex baseline reconciles would make migration breaks and pre-existing
-  fixture debt mutually unattributable.
-- Standing weekly-review items: `TH-12` production-order decision,
-  `POST-4` export adoption, `ANS-1`/`ANS-3` adjudication — unchanged.
+- **Credit-outage postmortem (resolved, no action taken or needed):** four
+  review launches died on exhausted credits while every Opus implementer
+  wrapper launched normally — the 12:00 Fri slot proved the failure
+  model-scoped by wrapper-log comparison. This 18:00 review launching on
+  the unchanged config closes the incident as a budget refill. Total cost:
+  4 dead reviews + 8 drained implementer slots + 1 audited drain. The
+  incident produced one useful artifact: the independent 216-denominator
+  audit.
+- **The `OPS-16` class remains open** — retry logic would not have helped
+  here, but it is still the only fix for the API-500 class (Waiting item 1).
+- Container healthy all interval (Up 3+ days, no OOM, no wedge). Tree clean
+  at every handoff; no `attempt/*` or `recovered/*` branches at review time.
+- **Expect `attempt/OPS-18` to appear and persist** — it is the sanctioned
+  worksite for the upgrade (see Waiting item 2), not a stalled tree.
+- Standing weekly-review items unchanged: `TH-12` production-order
+  decision, `POST-4` export adoption, `ANS-1`/`ANS-3` adjudication.
 
-## On deck (§9 — items 1–5 consumed today; only the spare remains)
+## On deck (§9 — restocked this review, five items)
 
-1. ~~GEO-18 step 1~~ — **done 04:30**
-2. ~~GEO-17 step 1~~ — **done 06:00** (chunk closed)
-3. ~~MAG-17 step 1~~ — **done 07:30** (chunk closed)
-4. ~~OPS-23~~ — **done 09:00** (chunk closed)
-5. ~~EX-26~~ — **done 12:00** (chunk closed)
-6. *(spare, re-drawable)* **OPS-17 leg (b2) next coverage leg** — now the
-   only live item. Next block is `coil_loading_*` (58 tests, unpriced,
-   holds the TH-12 memory-wall files); price it before committing a window.
+1. **`OPS-18` step 1** — build & boot DolfinX `v0.11.0.post0`
+   (on `attempt/OPS-18`; `main` keeps 0.7.2 until step 3 is green)
+2. **`OPS-18` step 2** — API migration (migration pack is tracked in-repo;
+   expect more than one slot)
+3. **`OPS-18` step 3** — re-gate every §2.1 number in both builds (heavy;
+   a moved gated number is a finding, not a tolerance problem)
+4. **`GEO-18` step 2** — port-sheet mid-plane on the leg gaps; landing it
+   completes `PORT-9` step 3's mesh prerequisite
+5. *(spare)* **`EX-27`** — region-resolution policy example on the
+   coil+phantom mesh (GEO-17's capability)
 
-**Restocking needs a review**, so the queue stays this thin until Friday
-evening. Highest-value items waiting for that review: **GEO-18 step 2**
-(the sheet mid-plane — it unblocks `PORT-9` step 3 and the birdcage port
-path), and a decision on the ~209 untriaged `if comm.rank == 0:` sites that
-`OPS-23` deliberately left out of scope.
+Items 1–3 are strictly serial; 4–5 run on the unchanged 0.7.2 container
+regardless of upgrade progress.
 
 ---
 
-*Maintained by `docs/automation/daily-review.md` step 7; this interval's
-refresh was done by an interactive session because no review could run. The
-Waiting-on-you section above is the alerting channel — check it after each
-review interval. The published artifact copy lags until an interactive
-session republishes it.*
+*Maintained by `docs/automation/daily-review.md` step 7. The Waiting-on-you
+section above is the alerting channel — check it after each review interval.
+The published artifact copy lags until an interactive session republishes it.*

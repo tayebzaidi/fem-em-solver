@@ -14473,3 +14473,371 @@ depends on another landing first. Item 1's former dependency (the
    still carry the complex-hostile `max_value` idiom `OPS-22`
    journalled — irrelevant in the real build this item uses, so do not
    fix them here; they remain journalled follow-up.
+
+## §9 On-deck done items 1–5 + drained item 6 + interval recap, 03:00 2026-08-20 to 18:00 2026-08-21 — archived 2026-08-21 (18:00 review)
+
+Last reviewed 2026-08-20, **03:00 review**. Interval (since the 10:30
+review 2026-08-19 — **the 18:00 review never ran**: its wrapper log
+`logs/automation/20260819T230001Z_daily-review.log` is one line, a
+transient API 500 at launch, so the queue was never topped up): eight
+implementer slots scheduled, eight ran. **Four closes, all audited
+COMPLIANT** (one
+subagent auditor each, every claimed number verified against its log
+footer): `OPS-17` leg (b2) attempt 3 🟡 (12:00 slot: coverage 44 → 63 of
+a re-based 227, blocked 5 → 0; the leg continues, tail 162 tests).
+`TH-12` step 3 ✅ (13:30 slot: the degree-2 `W_e` explosion is
+**COIL-SPECIFIC** — smoke 1.155×, sphere 1.015×, coil 3.426e+07× across
+order — so `J·n ≠ 0` is not sufficient; confound on record: the fixtures'
+baseline `W_e/W_m` spans 2.16 / 1.07 / 6.7e-6, so "feed model injects it"
+vs "only a `W_m ≫ W_e` fixture displays it" is still open — the weekly
+review's decision clause now has its input). `POST-5` step 4 ✅ and the
+**chunk closes** (15:00 slot: the helper takes `current_density` +
+`source_measure`, the smoke xfail is a plain gate at 16.7465% vs the
+unmoved 25%, J = 0 control exactly 0.0 W bit-identical elsewhere; audit
+caveat on record: the σ-blind separation bar was re-derived 10× → ≥ 3.0×
+when the score became three-term — arithmetic ceiling 5.97×, measured
+4.97×, disclosed in §7 and pre-registered in the journal). `OPS-21` ✅
+(16:30 slot: exact attribute-set identity both builds, red baseline
+failed on both ranks; audit nuance: the custom assertion line is
+byte-identical, pytest's set-diff rendering below it reorders). `EX-22` ✅
+(19:30 slot: `dead=0 guide=0 stale=0 exit=0`, first exit 0 under the
+`OPS-19` contract; the audit confirmed **the stale=0 is perishable by
+design** — the checker's 48 h freshness window re-reports stale=24 from
+~2026-08-22, exit 2 = staleness-only, which chunks already read as
+information, so **no refresh treadmill item is queued**). Then the drain:
+the 21:00 / 22:30 slots spent the `PORT-9` fallback on step 3's two legs
+— both decisive negatives, 🚫 (leg (a): the birdcage mesh's global facet
+set is `{1}`, no port-sheet facet exists; leg (b): the port boxes have
+**no terminals** — conductor facet area exactly 0.000000e+00 m² on all
+four ports under a closure identity at 1.000000000000 — they are air
+blocks floating outside an uncut coil, so leg (a)'s mid-plane
+prescription is refuted and the prerequisite is a *physics* change to
+the fixture). The 00:00 slot blocked cleanly per protocol (no compute,
+journal only, plus a free grep survey this review consumed). **Plan work
+this review:** `GEO-18` commissioned (birdcage conductor gaps — the
+two-torus topology transplanted onto the legs; supersedes leg (a)'s
+prescription, serial before `PORT-9` step 3, which stays blocked);
+`OPS-23` commissioned (the `OPS-21` rank-0-return defect pattern, 4
+measured sites in 3 files, plus the `test_helmholtz_v2.py` Im-bound);
+`EX-26` commissioned (§5.4 ramp on `POST-5`'s newly gated power-balance
+capability — no existing example demonstrates it). The 18:00 outage is
+**not** a new chunk: it is the third slot-killing launch failure in the
+class `OPS-16` (🚫, blocked on the permission layer since 2026-08-14)
+already designed for — the evidence is appended to that entry and the
+operator unblock decision returns to the top of the dashboard's
+Waiting-on-you with its measured cost (one review + three
+drain-fallback slots + one blocked slot). Tree clean all interval, no `attempt/*` or
+`recovered/*` branches, container healthy. Done-item texts and prior
+recaps: `docs/planning/plan-archive.md`.
+
+**Six items.** Items 1–5 are mutually independent — no item's success
+depends on another landing first. Item 6 (spare) is a continuation leg
+with its own §7 prescription. `PORT-9` step 3 is **not** the fallback
+any more: it is blocked on item 1 landing, and the old drain-fallback
+sentence below is amended accordingly.
+
+1. **DONE 2026-08-20 (04:30 slot)** — `GEO-18` step 1 ✅: terminals
+   2.236196e-04 m² per port = **0.988616** of `2·π·r_leg²`, closure
+   1.000000000000, kwarg-off control reproduces 98 474 cells / 0.967019 /
+   exact zeros. Step 2 (the sheet mid-plane) is the review's to scope on
+   these extents; `PORT-9` step 3 stays blocked until it lands. ~~**`GEO-18` step 1 — cut the birdcage legs so the ports have terminals
+   (standard).**~~ Execute the §7 `GEO-18` step-1 entry (commissioned this
+   review from `PORT-9` step 3 legs (a)+(b); full rubric there). Opt-in
+   `leg_gap_length` on `birdcage_port_domain`: remove the segment
+   `|z| ≤ g/2` from every leg and re-place each port box centred on its
+   leg, spanning exactly the gap (`dz = g`, square transverse section
+   `dx = dy`), so the two cut faces are metal — drive direction `ẑ` for
+   every port (global, resolving leg (a)'s per-port question) and C4
+   preserved by construction (resolving the gate-(iii) doubt).
+   **Anchor:** per-port conductor↔port terminal area = 2 disk
+   cross-sections `π·r_leg²` inside the pre-stated inscribed band
+   [0.95, 1.0] (leg (b)'s phantom↔air control read 0.971035 with the
+   same machinery); closure `(A_cond + A_air + A_phan)/A_box =
+   1.000000000000` (< 1e-9) per port; gap volumes meshed/analytic to
+   1e-9; `GEO-9` partition identities < 1e-9 on the gapped mesh.
+   **Negative control:** kwarg off reproduces leg (b)'s zeros exactly —
+   conductor facet area 0.000000e+00 m² on all four ports, 98 474 cells
+   ratio 1.000000, `EX-21`'s meshed/CAD 0.967019. **Cost:** mesh 18.43 s
+   + rung 20.13 s measured (leg (a)); two builds + facet partitions,
+   `-n 2`, real build, `timeout -k 30 400`. **Traps:** fragment
+   renumbers — re-derive groups from the out-map (the `GEO-9` pattern);
+   owned facets only (`indices < size_local`); the known-issues-9
+   `create_entity_permutations` hoist; the gapped variant's analytic
+   conductor mass must subtract the four removed segments — do not
+   reuse the uncut CAD mass. **Scope:** mesh-side only; no port-model,
+   solver, or resonance claim; `PORT-9` step 3 stays blocked until this
+   lands *and* step 2 (the sheet mid-plane, `GEO-16`'s pattern — each
+   box splits on the axis-aligned coordinate plane through its leg
+   axis) is scoped by the next review on this step's measured
+   extents. **Negative result:** a cut that breaks the partition
+   identities or the closure is the finding — record the measured
+   numbers in the entry and known-issues, park on `attempt/*`, report,
+   stop.
+2. **DONE 2026-08-20 (06:00 slot)** — `GEO-17` step 1 ✅ **and the chunk
+   closes**: the hypothesis is refuted — the per-region sizes were never
+   applied at all (`getBoundary`'s default `combined=True` ⇒ 0 CAD points
+   per region, `setSize` never called), so the clamps alone sized the mesh
+   and the policy run took the air's 0.020 ceiling. Fixed with a `Min` over
+   per-volume `Constant` fields: coil meshed/CAD **0.754685 → 0.835563**
+   (+10.7169%), coil_2 +10.7851%, phantom +0.9374%, air −0.2643%, partition
+   1.000000000000, uniform column bit-identical to the `OPS-17` record. The
+   strict xfail is a plain gate (5% band replaced by the pre-registered
+   sign-of-refinement identity + inscription bounds; §7 carries the
+   argument). ~~**`GEO-17` step 1 — the region-resolution policy shrinks the coil it
+   refines (standard).**~~ Execute the §7 `GEO-17` step-1 entry verbatim
+   (commissioned 2026-08-17 10:30 review; full rubric there — anchor:
+   the carried strict xfail in `test_mesh_tag_integrity.py` flips to
+   XPASS on the sign-of-refinement identity, policy-mesh coil volumes ≥
+   uniform-mesh volumes; negative control: the uniform mesh's four
+   tagged volumes reproduce their known-issues table to 1e-9; cost:
+   two meshes ≈ 15 s, `timeout -k 30 400`, `-n 2`, real build; traps:
+   gmsh size fields are global state, rank-local `cell_tags.values`).
+   Mission path: this fixture is `MAT-4`'s road to SAR-on-a-coil.
+3. **DONE 2026-08-20 (07:30 slot)** — `MAG-17` step 1 ✅ **and the chunk
+   closes**: verdict **DISCRETE-SOURCE**, ladder 7.836781e+00 →
+   3.052022e+00 → 1.438617e+00, fitted rate **2.4476** against the
+   pre-registered ≥ 0.7; base rung reproduces the `OPS-17` record to every
+   printed digit and the incompatible wire stays at 2.083064e+02. The
+   strict xfail is retired for a convergence gate in the new
+   `tests/solver/test_gauge_multiplier_convergence.py`; known-issues
+   defect 2 retired. **Note for the review:** this adds 2 tests and removes
+   one expected xfail, so `OPS-17` step 3's accounting moves —
+   `tests/environment` + `tests/solver` now collects **55** in *both*
+   builds (`20260820T124108Z_...-collect.log`,
+   `20260820T124121Z_...-collect-complex.log`) against the 49 recorded
+   2026-08-18, of which +2 is this chunk and +4 is the rest of the
+   interval's landed work. With defect 3 retired by `POST-5` and defect 2
+   retired here, **`tests/solver` now carries no `xfail` marker at all**
+   (grep-verified), so the "2 expected xfails" line in `OPS-17` step 3e's
+   record is history, not a baseline. ~~**`MAG-17` step 1 — the Coulomb-gauge multiplier h-ladder
+   discriminator (standard).**~~ Execute the §7 `MAG-17` step-1 entry
+   verbatim (commissioned 2026-08-17 10:30 review; full rubric there —
+   anchor: fitted log-log rate with pre-registered bands, ≥ 0.7 ⇒
+   DISCRETE-SOURCE / |rate| < 0.3 ⇒ ASSEMBLY-DEFECT, in-between =
+   record and stop; negative control: the incompatible straight wire
+   stays ~26× above the loop at base h; cost: three magnetostatic
+   solves, `timeout -k 30 500`, `-n 2`, real build; trap: `max|A|` is
+   not a usable normaliser here).
+4. **DONE 2026-08-20 (09:00 slot)** — `OPS-23` step 1 ✅ **and the chunk
+   closes**: the census was wrong both ways. The two `validation` sites
+   are print-only guards inside a `_print_table` helper — not defects,
+   untouched, unrun; the site the commission *exempted*
+   (`test_csv_export_stats_parity.py:252`) is real and left `POST-1` step
+   6's negative control rank-0-only. Three real sites, all in the csv
+   file, plus the Im-bound: 12 passed both ranks / 5.00 s, records
+   unmoved (288 drops/tag, 5 184 / 4 896 rows, mean B_z 4.219228e-09 T,
+   CV 0.1873%, `max|Im B_z|` exactly 0.0), and the red baseline's eight
+   assertion messages are byte-identical between ranks. Smoke tier; the
+   "unpriced half" was never priced because it needed no change.
+   ~~**`OPS-23` — the rank-0-return defect pattern, swept
+   (smoke-to-standard).**~~ Execute the §7 `OPS-23` entry (commissioned
+   this review from the 00:00 slot's grep survey; full rubric there).
+   Four measured sites where control returns before the assertions so
+   non-zero ranks pass unconditionally
+   (`test_degree2_energy_mechanism.py:237`,
+   `test_lossy_sphere_degree2.py:249`,
+   `test_csv_export_stats_parity.py:143` and `:192`), fixed with
+   `OPS-21`'s landed template (rank-0 parse + `bcast`, all ranks
+   assert), plus the `test_helmholtz_v2.py:79` Im-bound (`max|Im| ≤
+   1e-12·max| |` before the `float()` casts). **Anchor:** every printed
+   record digit in the touched files unmoved at `-n 2`; one executed
+   red baseline per file, both ranks failing with the identical custom
+   assertion message. **Cost:** seconds for the csv file; the two
+   validation files are the unknown — price each before batching.
+   **Negative result:** a verdict that stays rank-split after the fix
+   is a real defect — known-issues entry, report, stop.
+5. **DONE 2026-08-20 (12:00 slot)** — `EX-26` ✅ **and the chunk closes**:
+   both fixtures on one run, all 8 records inside the pre-stated 1% band
+   (worst drift 3.00e-04). Driven three-term **16.7465%** inside the unmoved
+   25%, the same field's two-term reading **116.7465%** asserted to miss it;
+   `TH-6` source-free **8.185716%** with per-leg closed-form scoring
+   8.1205% / 0.0711% inside the imported 10%; J = 0 source term exactly
+   `0.0` W with all 7 other keys bit-identical; σ-blind separation 4.97×
+   against the 3.0× floor. Docrefs `dead=0 guide=0 stale=0 exit=0` (34
+   guides). **Note for the review:** commissioned standard, **measured
+   smoke** — 4.7 s in-script, 8 s harness; the commission's 152 s belonged
+   to the `TH-6` file's other tests, not to the 12³ rung this audits.
+   ~~**`EX-26` — power-balance audit example (standard).**~~ Execute the §7
+   `EX-26` entry (commissioned this review, §5.4 ramp on `POST-5` ✅;
+   full rubric there). One example script through `./run_examples.sh`,
+   complex build: the three-term real Poynting balance on the driven
+   smoke fixture and the two-term balance + exact-zero source term on
+   the `TH-6` plane wave, combined XDMF with the Poynting vector field.
+   **Anchor:** the gated records reproduced through the example path —
+   three-term 16.7465% inside the unmoved 25% band, `TH-6` 8.185716%,
+   J = 0 source term asserted `== 0.0`. **Negative control:** the
+   two-term score on the driven fixture prints its recorded 116.7465%
+   (the balance the helper would misreport without the source term).
+   **Cost:** the underlying tests ran 8 s + 152 s; XDMF + docrefs
+   dominate — `timeout -k 30 400`, `-n 2`. **Traps:** docrefs gates on
+   `exit != 1` (`exit 2` = staleness is expected from 2026-08-22);
+   complex-mode XDMF splits attributes `real_*`/`imag_*`; same-stem
+   guide + runner registration. **Negative result:** drift beyond the
+   records is an example-path regression — known-issues entry, report,
+   stop.
+6. **DRAINED — AUDITED 2026-08-21 (00:00 slot)** — the 00:00 slot found this
+   item with **zero runnable tests** (attempt 9 exhausted the tail in the
+   preceding slot) and items 1–5 done, so per §9's drain sentence it started no
+   chunk work. It spent the slot corroborating what this item asks the review to
+   adopt, at smoke cost: a complex-build collect made this slot reads **236 = 4
+   environment + 232 validation**, `coil_loading_degree2` collects **14** and
+   `port_gap_voltage_padding` **2** ⇒ **216** is arithmetic on measured counts;
+   and independently of any footer sum, **exactly those two files** are the only
+   ones of the 51 in `tests/validation/` absent from every exit-0 leg-(b2) log
+   (49 of 51 observed). Logs `20260821T050333Z` / `20260821T050352Z`; the §7
+   entry carries the audit and one method note (a coverage claim here cannot be
+   re-derived as a union of node IDs — rank interleaving destroys the tokens).
+   **The decision is unchanged and now fully evidenced: defer the two files,
+   adopt 216, close leg (b2).** *(Prior text, attempt 9 — 22:30 slot)* the prescribed **two** commands for `richardson_ladder` were
+   **one** — `TH11_STEP4_RUNG` selects the mesh, not the test set, and the
+   collect log's 14 IDs (7 tests × two frequencies) all ran in the baseline
+   command: **18 passed / 140.25 s** at `-n 2`, +3.25% on its record. The
+   freed 560 s window closed the **five SAR/padding files** attempt 3 had
+   priced at "> 400 s" from two *dead* windows: **14 passed / 247.68 s**
+   warm, 54% of the window unused. ⇒ **coverage 131 → 155 of 232**, tail 75
+   runnable, blocked 0, `coil_loading_*` **44 of 58** (everything but
+   `degree2`). Run 1's `-s` physics is bit-identical to the `TH-11` step-4
+   baseline record on 15 of 17 lines; the two exceptions are the
+   complex-power identity **residuals** at ~1e-14 against a 1e-09 bound.
+   Two rules for the review: **a rung/mode env var that changes the mesh is
+   not a test-set partition** (confirm splits against collect-log test IDs
+   before budgeting a window), and **a dead window quotes a cold price**
+   (re-measure warm before deferring a group as expensive).
+   **Then the same slot finished the leg.** Six more completed complex runs,
+   all exit 0, all `-n 2`, every rank footer identical — `port_lumped_bc` +
+   `two_torus` 15 passed/98.20 s; `port_systematics_composition` alone
+   **7 passed/360.23 s** against its own `PORT-10` record's 352.37 s (the
+   batch-C killer wanted a window of its own, as attempt 3 wrote);
+   `poynting_balance` + `sheet_sweep` 18 passed/242.80 s;
+   `package_sparameters` + `narrowed_sheet` + `solenoidal_drive` 19
+   passed/350.80 s; `lossy_sphere_fullwave` + `port_reaction_impedance` 16
+   passed/210.18 s; `degree2_energy_mechanism` + `lossy_sphere_degree2` 10
+   passed/12.08 s. ⇒ **coverage 155 → 216 of 232 and the runnable tail is
+   ZERO**: 232 − 14 (`coil_loading_degree2`) − 2 (`port_gap_voltage_padding`)
+   = 216 is exactly the denominator attempts 7–8 asked for, reconciled by
+   footer arithmetic (85 banked this slot, 131 + 85 = 216). Eight commands,
+   **no exit 124**, no assertion touched, nothing filed. Third rule: **a
+   padded record is an upper bound on the unpadded file, not an estimate.**
+   **This leg now needs one review decision, not three:** formally defer
+   `coil_loading_degree2` (14 — its own record is `5 passed, 13 skipped`, the
+   skips *being* the `TH-12` memory wall) and `port_gap_voltage_padding` (2),
+   and adopt the 216 denominator. **Do that and `OPS-17` step 3 leg (b2)
+   closes on this slot's logs with nothing further to run** — which per §7's
+   own note queues `OPS-18` steps 1–3 at the top of §9. Attempting either
+   deferred file instead is a new chunk with a memory prescription.
+   *(Prior text, attempt 8 — 21:00 slot)* attempt 7's **two-slot prescription landed in one slot**.
+   Three completed complex runs, all exit 0, every rank footer identical —
+   `larmor_resolution` alone at `-n 2` **10 passed/427.15 s** (record
+   390.89 s, +9.28%), `mesh_cache` at `-n 2` **9 passed/445.55 s**,
+   `third_rung` at `-n 8` **11 passed/174.86 s** (record 172.40 s, +1.43%)
+   ⇒ **coverage 113 → 131 of 232**, tail 99 runnable, blocked 0,
+   `coil_loading_*` **30 of 58**. Run 3's `-s` physics is **bit-identical**
+   to the `TH-11` rank-control record (417914 cells; `P_loss` loaded
+   +5.8523036e-01 W, free exactly 0.0 W; `ΔR = +1.3838746e+00 Ω`,
+   `ΔX = -5.8741123e+00 Ω`, deviation +2.8063%, ΔX ratio 0.9514). Three
+   things for the review: the recorded-width rule gains **read *all* of a
+   file's logs, not the first match** (the prescription's two `-n 8`
+   `MODE=loaded|free` commands at 201 s are dominated by one `MODE=full`
+   command at 172.40 s, and the split route's own `skip` messages are what
+   make it look mandatory); the operator flag's wall is the **rung, not the
+   file** — `TH11_STEP5_RUNG=third` at `-n 8` is status 137 at 908 s, *is*
+   the `TH-11` OOM, and `third` is the fixture's **default**, so pin `fine`
+   (`memory.current` 21.5 MB → 425.5 MB across all three runs, no strays);
+   and the real→complex ratio is now measured directly at **3.15×**
+   (`mesh_cache`, the family's only real-only record). **The two decisions
+   attempt 7 asked for are still owed:** formally defer `degree2` (14) and
+   re-base the reachable denominator to **216 of 232**. Next leg:
+   `richardson_ladder` (14), the last drawable block — the §7 entry carries
+   the prescription.
+   *(Prior text, attempt 7 — 19:30 slot)* the operator flag executed as written — `coil_loading_*`
+   **priced from its own logs before any window was committed**, and the
+   flag's own `memory.peak` instrument found **unavailable** (pinned at
+   `memory.max` = 64.00 GiB by the `TH-11` OOM, read-only mount,
+   unresettable; `memory.current` between commands is the substitute:
+   21.6 MB idle → 446.8 → 455.1, `pgrep -c python3` = 0 throughout). One
+   exit-124 window and one completed run: **`16 passed`/137.18 s/exit 0**
+   at `-n 2`, both rank footers identical ⇒ **coverage 101 → 113 of 232**,
+   tail 117 runnable, blocked 0, `coil_loading_*` **12 of 58**. The
+   finding is that the recorded-width rule is **necessary but not
+   sufficient**: a family's *first* complex command pays a one-time JIT
+   cost ~2.4× its warm cost — the same two files that consumed a 480 s
+   window cold ran in 137.18 s warm, −4.4% against their combined 143.5 s
+   record — so size a not-yet-touched family's first command at recorded
+   elapsed × 3, or warm on a small file and count nothing. **Two review
+   decisions are owed:** `degree2` (14) is a defer-with-reason, not a
+   window (its own record is `5 passed, 13 skipped` and the skips are the
+   adjudicated memory wall), which with the padding file's 2 caps the
+   leg's reachable total at **216 of 232** — re-base the denominator; and
+   the §7 entry carries the next-leg prescription (`larmor_resolution`
+   alone at `-n 2`/`-k 30 560`, then `mesh_cache` + `third_rung`).
+   *(Prior text, attempt 6 — 16:30 slot)* `OPS-17` step 3 leg (b2)
+   attempt 6 🟡: attempt 5's prescription executed as written and **the
+   `dodd_deeds_*` family closes at 38 of 38** — three completed complex
+   runs, all exit 0, all at `-n 2`, **coverage 91 → 101 of 232** (+10),
+   tail **129** runnable, blocked 0. Every printed physics figure is
+   bit-identical to its `MAT-6` record. Two rules sharpened for the
+   review: the prescription's `-n 8` guess for `box_size` was **wrong**
+   (its own step-4 logs record it twice at `-n 2`; the recorded-width
+   rule caught it and stands unamended over family heuristics), and the
+   family's cost model is **three-shaped**, not bimodal — `box_size`'s
+   two halves simply add, so an expensive file is either
+   one-setup/unsplittable or per-test-solve/splittable at its recorded
+   `-k` boundaries. `coil_loading_*` (58, unpriced, holds the `TH-12`
+   memory-wall files) is the last big block; the §7 entry carries the
+   next-leg prescription.
+   > **⚠️ Operator flag 2026-08-20 18:00 (interactive session) — price
+   > `coil_loading_*` before committing a window to it, and treat this
+   > item as the only thing standing between the grid and a drain.**
+   > Two facts make the next leg different from attempts 4–6, which drew
+   > an already-priced family. (1) **The memory wall is in this block.**
+   > `coil_loading_*` holds the fixtures that drove `memory.peak` to
+   > exactly `memory.max` = 64.00 GiB and OOM-killed the container during
+   > `TH-11` step 5b/5c, and the complex build is the *more* expensive
+   > mode. The recorded-width rule from attempt 4 draws rank width and
+   > elapsed time from a file's own `MAT-6` log — it does **not** carry a
+   > memory figure, so it cannot see this wall coming. Print
+   > `memory.peak`/`memory.max` after every command in this leg
+   > (`TH-11` step 5c's instrument), and if a file's projection lands
+   > anywhere near the ceiling, **record the projection and stop** — a
+   > wedged container costs the recovery force-recreate *and* the slot,
+   > and no review is alive to rescope before Fri 18:00. (2) **There is
+   > no fallback.** §9 items 1–5 are all done and the drain sentence's
+   > former `PORT-9` fallback is 🚫-blocked on `GEO-18` step 2, which is
+   > unscoped review work. This item is therefore the grid's only live
+   > work until Friday evening; a slot that burns its window on an
+   > avoidable OOM costs the next slots too. Prefer a completed cheap
+   > file over an attempted expensive one — coverage is the deliverable
+   > and it is monotone. *Reason this flag exists rather than a rescoped
+   > item: the 10:30 review died on exhausted usage credits
+   > (`logs/automation/20260820T153001Z_daily-review.log`) and the 18:00,
+   > Fri 03:00 and Fri 10:30 slots will die the same way; rewriting §9
+   > items is the daily review's job, so this is a note, not a rescope.*
+   *(Prior text, attempt 5 — 15:00 slot)* `OPS-17` step 3 leg (b2)
+   attempt 5 🟡: attempt 4's recorded-width rule worked first try on every
+   command, no exit 124 — **coverage 72 → 91 of 232** (+19) from three
+   completed complex runs, tail 139 runnable, blocked 0. `dodd_deeds_*` is 28
+   of 38; the last 10 are `box_size` + `wire_resolution`, one slot. Two map
+   caveats discharged (`box_truncation`'s "1 failed" record is superseded; the
+   impedance file's integration tests cost 87 s for the whole file, not a
+   window each) and **the family's cost is bimodal**, not a flat ~400 s. The
+   leg continues; the §7 entry carries the next-leg prescription.
+   *(Prior text, attempt 4 — 13:30 slot)* `OPS-17` step 3 leg (b2)
+   attempt 4 🟡: the `dodd_deeds_*` family drawn, **coverage 63 → 72 of a
+   re-based 232** (knobs `8 passed`/404.61 s at `-n 8`, slab `9 passed`/
+   386.85 s at `-n 2` — 0.008% off its record), blocked stays 0. The leg's
+   sizing rule is replaced in §7: **draw each file's recorded rank width
+   from its own MAT-6 log before sizing the command** — two `-n 2` windows
+   died first, and the whole cost is one module-scoped fixture setup, so
+   per-file accounting cannot split it. Tail 158 runnable; the family needs
+   ~2 more slots at one file per ~400 s window. The leg continues.
+   ~~*(spare)* **`OPS-17` step 3 leg (b2), next coverage leg
+   (standard).**~~ Per the §7 attempt-3 prescription: per-file
+   completed-run accounting over the tail (162 runnable in ~35 files,
+   now the expensive half) — one `coil_loading_*` / `dodd_deeds_*`
+   family per 540 s window, `test_poynting_balance.py` **alone** (the
+   twice-measured suite-growth warning), never batch it with
+   `test_time_harmonic_smoke.py`. **Anchor:** each drawn file's own
+   recorded gates unchanged in completed complex runs with footers;
+   coverage count (63 → N of 227) is the deliverable. **Negative
+   result:** any moved digit vs a real-mode record is a finding —
+   known-issues entry, report, stop.
