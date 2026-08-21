@@ -1695,6 +1695,43 @@ exists, replace instead. Two steps, one implementer run each.)*
 >     both and `OPS-17` step 3 leg (b2) closes on this slot's logs with nothing
 >     further to run.** Attempting either file instead is a new chunk with a
 >     memory prescription, not a leg of this one.
+>
+>   **✔ Coverage audit, 2026-08-21 05:05Z (00:00 slot) — the 216-of-232
+>   claim is independently corroborated; the review can adopt the
+>   denominator on measured evidence rather than on the implementer's
+>   footer arithmetic.** The slot found the queue drained (§9 items 1–5
+>   done, item 6 with zero runnable tests) and spent itself auditing what
+>   item 6 asks the review to accept. Two smoke collects and a file-level
+>   sweep of every exit-0 leg-(b2) log:
+>   * **Denominator.** `tests/environment tests/validation --collect-only`
+>     in the complex build: **236 collected = 4 environment + 232
+>     validation** (`20260821T050352Z_...-collect-audit2.log`, exit 0,
+>     4 s). The 232 in attempts 4–9 is confirmed against a collect run
+>     made this slot, not carried forward.
+>   * **The two deferred files.** `test_coil_loading_degree2.py` collects
+>     **14** and `test_port_gap_voltage_padding.py` collects **2** — so
+>     232 − 14 − 2 = **216** is arithmetic on measured counts, and the
+>     16 uncounted tests are exactly those two files.
+>   * **File-level closure, the independent leg.** Over all 25 exit-0
+>     leg-(b2) complex logs plus `OPS-22`'s `20260819T094710Z` and
+>     `OPS-20`'s `20260819T110144Z`, the set of validation modules
+>     appearing in a node-ID line is **49 of the 51 files in
+>     `tests/validation/`**, and the complement is *exactly*
+>     `test_coil_loading_degree2.py` and `test_port_gap_voltage_padding.py`.
+>     This is evidence independent of the footer sums: it never adds a
+>     count, so a double-counted or mis-attributed command cannot produce
+>     it.
+>   * **Method note for any future audit of this kind — a coverage claim
+>     in this project cannot be re-derived as a union of test node IDs.**
+>     At `-n 2` the two ranks interleave `-v` output within a line, so a
+>     fraction of the `path::name PASSED` tokens arrive merged
+>     (`PASSEDPASSED`, and in the `-s` logs the ID is lost entirely — the
+>     `richardson_ladder` log yields **0** extractable validation IDs
+>     against its 14-test footer). The union over the same logs is **174**
+>     distinct IDs, a *lower* bound consistent with 216 and not a
+>     contradiction of it. Footer arithmetic plus file-level presence is
+>     the sound route; per-test set reconstruction is not available from
+>     the logs as the harness writes them.
 
 **`OPS-20` — disposition the coil-phantom `ComplexComparisonError`** ✅
 *(closed 2026-08-19, 06:00 implementer slot; commissioned 2026-08-18, 10:30 review, from the two `OPS-17` leg-(b1)
@@ -5602,8 +5639,20 @@ sentence below is amended accordingly.
    guide + runner registration. **Negative result:** drift beyond the
    records is an example-path regression — known-issues entry, report,
    stop.
-6. **ATTEMPTED AGAIN 2026-08-21 (22:30 slot)** — `OPS-17` step 3 leg (b2)
-   attempt 9 🟡: the prescribed **two** commands for `richardson_ladder` were
+6. **DRAINED — AUDITED 2026-08-21 (00:00 slot)** — the 00:00 slot found this
+   item with **zero runnable tests** (attempt 9 exhausted the tail in the
+   preceding slot) and items 1–5 done, so per §9's drain sentence it started no
+   chunk work. It spent the slot corroborating what this item asks the review to
+   adopt, at smoke cost: a complex-build collect made this slot reads **236 = 4
+   environment + 232 validation**, `coil_loading_degree2` collects **14** and
+   `port_gap_voltage_padding` **2** ⇒ **216** is arithmetic on measured counts;
+   and independently of any footer sum, **exactly those two files** are the only
+   ones of the 51 in `tests/validation/` absent from every exit-0 leg-(b2) log
+   (49 of 51 observed). Logs `20260821T050333Z` / `20260821T050352Z`; the §7
+   entry carries the audit and one method note (a coverage claim here cannot be
+   re-derived as a union of node IDs — rank interleaving destroys the tokens).
+   **The decision is unchanged and now fully evidenced: defer the two files,
+   adopt 216, close leg (b2).** *(Prior text, attempt 9 — 22:30 slot)* the prescribed **two** commands for `richardson_ladder` were
    **one** — `TH11_STEP4_RUNG` selects the mesh, not the test set, and the
    collect log's 14 IDs (7 tests × two frequencies) all ran in the baseline
    command: **18 passed / 140.25 s** at `-n 2`, +3.25% on its record. The

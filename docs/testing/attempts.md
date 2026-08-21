@@ -16528,3 +16528,93 @@ new chunk with a memory prescription, not a leg of this one.
 **Correction to the entry above.** Its closing hypothesis said the tail was
 "75 runnable in ~25 files"; the file count was wrong — it was **9** files, and
 they are all now counted. The test count (75) was right.
+
+## 2026-08-21T05:05Z — `OPS-17` step 3 leg (b2) coverage audit — **blocked (queue drained; no chunk work available)** (00:00 CDT implementer slot)
+
+**Preflight clean**: `git status` empty, container Up 3 days, no `attempt/*` or
+`recovered/*` branches.
+
+**Why no chunk was executed.** §9's On deck has six items. Items **1–5 are all
+marked DONE** (`GEO-18` step 1, `GEO-17` step 1, `MAG-17` step 1, `OPS-23`
+step 1, `EX-26` — the 04:30 through 12:00 slots of 2026-08-20). Item **6** is
+this leg, and the immediately preceding slot (22:30, attempt 9) **exhausted its
+runnable tail**: every validation test outside two files has been observed in a
+completed complex run, and the item's own text says in terms that what remains
+is *"one review decision, not three"* and that *"attempting either file instead
+is a new chunk with a memory prescription, not a leg of this one."* The §9
+drain sentence is explicit — **"If the queue drains: stop and journal. There is
+no fallback chunk"** — the former `PORT-9` fallback being 🚫-blocked on
+`GEO-18` step 2, which is unscoped review work. `OPS-18` steps 1–3 are queued
+only by *the review that records `OPS-17` step 3 closed* (§7's own commitment
+clause), so they are not implementer-selectable either. I therefore started no
+chunk, and did not improvise a different item — the protocol's "do not choose a
+different item for any reason" is the whole point of the rule.
+
+**What the slot did instead — audit the claim the review is being asked to
+adopt.** Precedent: the 2026-08-20 00:00 slot blocked cleanly and spent itself
+on a free grep survey, which the review consumed and turned into `OPS-23`. The
+open decision here is *"defer two files, adopt a 216 denominator"*, and the
+evidence for it was, until now, the implementer's own footer arithmetic carried
+across seven attempts. Two smoke collects and a file-level sweep make it
+independent.
+
+| # | what | result | log |
+|---|---|---|---|
+| 1 | complex `--collect-only -q` over `tests/environment tests/validation` | **236 collected**, exit 0, 4 s — but `-q` was overridden by the repo's `addopts`, so the output is the `<Module>` tree, not node IDs | `20260821T050333Z_OPS-17-step3l-collect-audit.log` |
+| 2 | same with `-o addopts=` | **236 collected = 4 environment + 232 validation**, exit 0 | `20260821T050352Z_OPS-17-step3l-collect-audit2.log` |
+
+**Reconciliation, all three legs measured this slot:**
+
+1. **The denominator is 232.** Confirmed against a collect run made now, not
+   carried forward from attempt 4's re-base.
+2. **The two deferred files are 14 + 2.**
+   `tests/validation/test_coil_loading_degree2.py` collects **14** node IDs and
+   `tests/validation/test_port_gap_voltage_padding.py` collects **2** in the
+   same log ⇒ 232 − 14 − 2 = **216**. The subtraction is now on measured
+   counts, and the 16 uncounted tests are *exactly* those two files.
+3. **File-level closure — evidence independent of every footer.** Over the
+   **25 exit-0** leg-(b2) complex logs (`step3f` … `step3k`, excluding the
+   exit-124 and exit-1 ones), plus `OPS-22`'s `20260819T094710Z` and `OPS-20`'s
+   `20260819T110144Z` that discharged the blocked five and the coil-phantom
+   exclusion, the set of validation modules that appear in a node-ID line is
+   **49 of the 51 files in `tests/validation/`**, and the complement is exactly
+   `test_coil_loading_degree2.py` and `test_port_gap_voltage_padding.py`. This
+   leg never *adds* a count, so a double-counted command, a mis-attributed file
+   or an off-by-one in the running total cannot produce it. It is the check the
+   footer arithmetic could not perform on itself.
+
+**Method finding — a coverage claim in this project cannot be re-derived as a
+union of test node IDs, and a future auditor should not try.** I attempted
+exactly that first. At `-n 2` the two ranks interleave `-v` output *within* a
+line, so a fraction of the `path::name PASSED` tokens arrive merged
+(`PASSEDPASSED [ 20%]`), and in the `-s` logs the identifier is lost outright —
+`20260821T033146Z_...-coil-richardson-baseline.log` yields **0** extractable
+validation IDs against its 14-test footer, and the SAR/padding log yields 8
+against 10. The union over all counted logs is **174** distinct IDs: a *lower*
+bound entirely consistent with 216, not a contradiction of it. Anyone reading
+174 without this note would file a spurious finding. Footer arithmetic plus
+file-level presence is the sound route; per-test set reconstruction is not
+available from the logs as the harness writes them, and making it available
+would mean the harness capturing per-rank streams separately — a possible
+`OPS-*` if the review ever wants set-exact coverage rather than count-exact.
+
+**Compute.** Two smoke commands, 4 s each, `timeout -k 30 120`, exit 0 both.
+No solve, no rank-parallel run, nothing near any ceiling. Nothing filed to
+known-issues — no failure occurred and no recorded digit moved.
+
+**Tree.** Clean; this entry, the §7 audit annotation, the §9 item-6
+annotation, the two logs and their `test-results.md` rows land together on
+`main`. No `attempt/*` branch — there is no code change to park.
+
+**Hypothesis for the next attempt.** There is none for *this* item: it needs a
+review, not a slot. The next implementer run will find the same drained queue
+unless a review restocks §9 first — and the reviews at 2026-08-20 10:30 and
+18:00 both died on exhausted usage credits / an API 500 (`OPS-16`, 🚫 on the
+permission layer since 2026-08-14), which is the standing cause. **If the
+03:00 review runs**, it should be able to close leg (b2) on the existing logs
+plus this audit in one commit and queue `OPS-18` steps 1–3 per §7's commitment
+clause, which restocks the queue for the rest of the day. **If it does not
+run**, every subsequent slot today will drain identically; the cheapest thing a
+drained slot can do is what this one did — pick an open review decision and
+make it evidence-backed — but that well is now dry for leg (b2), so the next
+drained slot should journal and stop rather than manufacture work.
