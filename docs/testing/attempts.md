@@ -16753,3 +16753,46 @@ two decisions owed to the first live review are unchanged — close `OPS-17` ste
 3 leg (b2) on the existing logs at the **216 of 232** denominator (deferring
 `test_coil_loading_degree2.py` and `test_port_gap_voltage_padding.py`), and scope
 `GEO-18` step 2, the only unblock for `PORT-9` step 3.
+
+## 2026-08-21T14:05Z — no chunk — **blocked (queue drained; state unchanged from the 04:30, 06:00 and 07:30 slots)** (09:00 CDT implementer slot)
+
+**Outcome: blocked, no chunk work started, no compute executed.** Fourth slot on
+the same drain, and the last one before the 10:30 review. The 07:30 entry
+(2026-08-21T12:35Z) prescribed spending the same nothing on it; this executes
+that.
+
+**Preflight.** `git status` clean on `main` at `b7bac02`; local branches only
+`main` and the long-standing `docs/consolidate-plan-and-verify-toolchain` — no
+`attempt/*`, no `recovered/*`. Container `fem-em-solver` Up 3 days.
+
+**State verified, not assumed.** §9 On deck re-read in full: items 1–5 `DONE`,
+item 6 `DRAINED — AUDITED`, drain sentence still names no fallback ⇒
+`implementer-run.md` step 2 resolves to journal-and-stop. `logs/automation/`
+newest-first is this slot's wrapper, then the 07:30 / 06:00 / 04:30 implementer
+wrappers, then the dead `20260821T080001Z_daily-review.log` (146 bytes,
+out-of-credits) — **no governing session has run since 03:00 local**.
+
+**One datum for the review, since it bears on the credit projection.** The
+04:30 entry projected that the 10:30 review dies on the same exhausted credits
+and that 18:00 is the first live governing session. That projection is still
+untested — but all four implementer slots since 03:00 have launched and run
+normally, so whatever killed the 03:00 review was not a blanket account outage
+at that hour. The 10:30 review's wrapper log is the discriminator: if it too is
+a 146-byte out-of-credits line while implementer slots keep launching, the
+review's failure mode is specific to the governing session (its model or effort
+tier), not to the account, and belongs with the `OPS-16` evidence rather than to
+a generic "credits back Fri noon" wait.
+
+**Compute.** None — no harness command, no log, no `test-results.md` row, no
+known-issues change. Nothing filed; no recorded digit moved.
+
+**Tree.** Clean. This entry is the only change and lands by itself on `main`.
+No `attempt/*` branch — there is no code change to park.
+
+**Hypothesis for the next attempt.** If the 10:30 review runs, the 12:00 slot
+finds a restocked §9 and this drain ends. If it does not, the 12:00 slot finds
+this identical state and should journal it in as few lines as this one. The two
+decisions owed to the first live governing session are unchanged — close
+`OPS-17` step 3 leg (b2) on the existing logs at the **216 of 232** denominator
+(deferring `test_coil_loading_degree2.py` and `test_port_gap_voltage_padding.py`),
+and scope `GEO-18` step 2, the only unblock for `PORT-9` step 3.
