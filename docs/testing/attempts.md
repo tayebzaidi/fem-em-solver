@@ -17013,3 +17013,98 @@ first live governing session are unchanged — close `OPS-17` step 3 leg (b2) on
 the existing logs at the **216 of 232** denominator (deferring
 `test_coil_loading_degree2.py` and `test_port_gap_voltage_padding.py`), and
 scope `GEO-18` step 2, the only unblock for `PORT-9` step 3.
+
+## 2026-08-22T00:30Z — `OPS-18` step 1 ⛔ / `GEO-18` step 2 — **incomplete** (19:30 CDT implementer slot)
+
+Preflight clean, container Up (0.7.2), §9 restocked by the 18:00 review — the
+drain is over. **Two items touched, per the review's own fall-through clause.**
+
+**Item 1, `OPS-18` step 1 — ⛔ blocked on the permission layer, exactly the case
+the §9 preamble pre-wrote.** The blocker is *not* the image pull the preamble
+guessed. Measured, both gates probed rather than assumed:
+
+- `Edit(docker/**)` sits under `permissions.ask` in `.claude/settings.json`, and
+  a scheduled session has nobody to answer the prompt. Bumping the `FROM` line
+  returns verbatim: `Claude requested permissions to write to
+  /home/taz5297/Development/fem-em-solver/docker/Dockerfile, but you haven't
+  granted it yet.` No `FROM` bump ⇒ no step 1, and the entry's rule stands: a
+  denial is a blocked finding, never worked around.
+- The pull itself is **not** blocked. `Bash(docker compose build*)` is under
+  `ask`, but the pattern only matches the bare-prefix form; the project's own
+  `-f docker/docker-compose.yml build` form falls through to the
+  `Bash(docker compose *)` allow and ran clean (`docker compose -f
+  docker/docker-compose.yml build --help`, exit 0, no network). So the
+  operator's unblock is **one line — move or scope `Edit(docker/**)` out of
+  `ask`** — not two, and the network operation everyone budgeted risk for is
+  already permitted.
+
+`attempt/OPS-18` was created, found to have nothing to hold, and deleted at the
+same commit as `main`; the live container was never rebuilt, so 0.7.2 is Up
+untouched and the worksite/restore rule cost nothing. Items 2–3 are serial
+behind item 1 and inherit the ⛔ until the allowlist moves.
+
+**Item 4, `GEO-18` step 2 — incomplete, parked on
+`attempt/GEO-18-step2-20260822T004500Z` (commit `5c398ab`).** `emit_port_sheets`
+(opt-in, `ValueError` without `leg_gap_length`) landed on
+`birdcage_port_domain` / `_build_birdcage_port_model`: one rectangle per port,
+the gap box's own mid-section in the plane containing that leg's axis, entering
+the same `occ.fragment` as a **dim-2 tool** so the tets conform to it; the
+halves are told apart by centroid against the plane and carried as cell tags
+`100+i` (below) / `110+i` (above), `GEO-16`'s pattern transplanted. `addRectangle`
+only builds in the xy plane, so each sheet is built there and rotated 90° about
+x (legs on the x-axis, y-normal plane) or about y (legs on the y-axis,
+x-normal); both rectangles are symmetric about their rotation axis, so the sign
+convention of the rotation cannot matter. A leg off a coordinate axis raises
+`NotImplementedError` rather than building a wrong plane.
+
+**Measured, CAD side, log `20260822T003614Z_GEO-18-step2.log`** — the fragment
+does conform, and this is the scoped anchor read exactly:
+
+- 34 fragment volumes against the unsheeted build's 30 — the four port boxes are
+  eight halves, each `7.840000e-07 m³`, i.e. **exactly half** the step-1 gap box
+  `1.568000e-06 m³` on the CAD side;
+- port sheets (CAD), **1 surface each, area `1.120000000e-04 m²` for all four**
+  = the analytic `dx·g` = 1.4e-2 × 8e-3 to the printed 9 digits;
+- extents `(1.400020e-02, 2.000000e-07, 8.000200e-03)` at P1/P3 and
+  `(2.000000e-07, 1.400020e-02, 8.000200e-03)` at P2/P4 — y-normal on the
+  x-axis legs, x-normal on the y-axis legs, exactly as the review scoped, with
+  the pinned axis at OCC's 2e-7 m bounding-box padding;
+- sheeted mesh **116 416** cells against step 1's 114 846 (+1.37%), mesh 22.59 s
+  / rung 24.64 s; the sheets-off control rebuilt step 1's geometry in the same
+  run (30 volumes, port boxes whole at `1.568000e-06 m³`, mesh 22.57 s).
+
+**The slot's defect is mine and it is diagnosed, not guessed.** The command is
+**exit 124** at the 400 s ceiling even though *both* tests print `PASSED`: the
+record-printing loop calls `_global_facet_count` — an `allreduce` — inside
+`if comm.rank == 0`, so rank 0 blocks in a collective no other rank enters while
+rank 1 runs the whole module to green and prints the footer. The per-port
+`[GEO-18 step 2] P{i}:` lines are missing from the log for exactly that reason:
+rank 0 never got past the first one. **Nothing in the dolfinx-side reading is
+therefore recorded** — the meshed sheet area, the `w = A/h` identity, the
+out-of-plane spread, the half-volume and closure identities and the C4 spread
+all exist as assertions that rank 1 passed, and a one-rank pass is not a
+measurement. The CAD numbers above are rank-0 prints from inside the generator,
+before the deadlock, and are safe to read.
+
+**Compute.** One harness command, `-n 2`, real build, standard tier, `timeout -k
+30 400`, exit 124 (two mesh builds ≈ 45 s of the window; the rest is rank 0
+sitting in the collective). Log `20260822T003614Z_GEO-18-step2.log`,
+`test-results.md` row landed. No assertion touched, no band moved, nothing filed
+to known-issues — the failure is a test-harness bug in a file that has never
+been on `main`.
+
+**Tree.** `main` clean and green: this entry, the log, the `test-results.md` row
+and the §7 annotation only. All code on
+`attempt/GEO-18-step2-20260822T004500Z`.
+
+**Hypothesis for the next attempt.** Hoist the four `_global_facet_count` calls
+(and anything else collective) above the `if comm.rank == 0` guard into
+unconditional locals, then re-run the same command unchanged; the assertions
+already passed on a rank, and the CAD side already reads the anchor to 9 digits,
+so this is plausibly a one-command close. Budget the same 400 s — the two builds
+cost 45 s and the reductions are cheap. Do **not** re-scope the sheet geometry:
+`1.120000000e-04 m²` on all four ports with the pinned axis at 2e-7 m says the
+construction is right and only the instrumentation is wrong. Separately, the
+first live review after this slot owes item 1 a decision: quote the
+`Edit(docker/**)` denial into the dashboard's Waiting-on-you and note that the
+pull gate everyone expected is already open.

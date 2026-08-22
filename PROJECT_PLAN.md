@@ -2850,6 +2850,25 @@ what makes `PORT-9` step 3 runnable at all; nothing about its gates
 > the terminal band, or the area identity is the finding — record the
 > measured numbers here and in known-issues, park on `attempt/*`,
 > report, stop.
+> **Step 2 attempt 1 — 2026-08-22, 19:30 slot 🟡, parked on
+> `attempt/GEO-18-step2-20260822T004500Z` (`5c398ab`).** `emit_port_sheets`
+> (opt-in, `ValueError` without `leg_gap_length`) landed: each port box's
+> mid-section rectangle enters the fragment as a dim-2 tool, halves carried as
+> cell tags `100+i`/`110+i` by centroid against the plane. **The CAD side reads
+> the scoped anchor exactly** (log `20260822T003614Z_GEO-18-step2.log`): 34
+> fragment volumes vs the control's 30, eight half-boxes at `7.840000e-07 m³` =
+> exactly half the step-1 gap box, sheets **1 surface each at
+> `1.120000000e-04 m²` = the analytic `dx·g` on all four ports**, extents
+> y-normal at P1/P3 and x-normal at P2/P4 as scoped with the pinned axis at
+> OCC's 2e-7 m padding; sheeted mesh 116 416 cells (step 1: 114 846), mesh
+> 22.59 s, control rebuilt at 22.57 s. **Command is exit 124 with both tests
+> `PASSED`**: the record-printing loop calls `_global_facet_count` (an
+> `allreduce`) inside `if comm.rank == 0`, so rank 0 blocks in a collective
+> rank 1 never enters and runs the module to green alone. **No dolfinx-side
+> number is recorded** — meshed sheet area, `w = A/h`, out-of-plane spread,
+> half-volume/closure identities and the C4 spread are assertions one rank
+> passed, which is not a measurement. Fix is to hoist the reductions above the
+> rank guard and re-run the same command; the geometry is not in question.
 
 ### TH — Time-harmonic Maxwell (Phase 2)
 
@@ -5556,7 +5575,18 @@ item 3 is green — see the worksite rule in item 1. If item 1 ends
 the denial text quoted, put the unblock at the top of the dashboard's
 Waiting-on-you, and let the first-undone rule fall through to item 4.
 
-1. **`OPS-18` step 1 — build and boot `v0.11.0.post0` (standard; no
+1. ⛔ **BLOCKED on the permission layer 2026-08-22, 19:30 slot — the
+   operator must move `Edit(docker/**)` out of `permissions.ask` in
+   `.claude/settings.json`.** Denial verbatim: `Claude requested
+   permissions to write to
+   /home/taz5297/Development/fem-em-solver/docker/Dockerfile, but you
+   haven't granted it yet.` No `FROM` bump is possible, so items 2–3
+   inherit the block. **The pull is *not* blocked** — the preamble's
+   guess was wrong: `Bash(docker compose build*)` only matches the
+   bare-prefix form, and the project's own `-f docker/docker-compose.yml
+   build` falls through to the `Bash(docker compose *)` allow (probed
+   exit 0). One allowlist line unblocks all three items.
+   **`OPS-18` step 1 — build and boot `v0.11.0.post0` (standard; no
    solver compute).** Execute the §7 `OPS-18` step-1 entry (trigger fired
    2026-08-18; deferral condition discharged this review). **Worksite
    rule for all three steps:** work lives on a single persistent
@@ -5620,7 +5650,14 @@ Waiting-on-you, and let the first-undone rule fall through to item 4.
    `attempt/OPS-18` to `main` with all logs in one commit; negative
    result ⇒ `main` keeps 0.7.2**, the branch stays parked with the
    failing step named.
-4. **`GEO-18` step 2 — the port-sheet mid-plane (standard).** Execute
+4. 🟡 **attempt 1 2026-08-22, 19:30 slot — parked on
+   `attempt/GEO-18-step2-20260822T004500Z`; resume it, do not restart
+   it.** The construction is built and the CAD side reads the anchor
+   exactly (`1.120000000e-04 m²` on all four sheets); the command is
+   exit 124 because the record print calls a reduction inside
+   `if comm.rank == 0`. Next slot hoists the reductions above the rank
+   guard and re-runs the same command — see the §7 step-2 annotation.
+   **`GEO-18` step 2 — the port-sheet mid-plane (standard).** Execute
    the §7 `GEO-18` step-2 entry (scoped this review on step 1's
    measured extents; full rubric there). `GEO-16`'s pattern on the leg
    gaps: split each port box on the coordinate plane through its leg
