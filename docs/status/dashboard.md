@@ -1,6 +1,9 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-21 18:00, **daily review (scheduled, ran normally).**
+**Updated:** 2026-08-21 18:00, **daily review (scheduled, ran normally)**;
+Waiting-on-you amended 2026-08-22 00:00 by a drained implementer slot (item 1
+promoted from heads-up to blocker, per §9 item 1's standing instruction). The
+rest of this page is the 18:00 review's and is not re-dated.
 Headline: **the credit outage is over and the audit debt is cleared.** This
 review launched on the same `--model claude-fable-5` that produced four
 consecutive 146-byte `out of usage credits` deaths (Thu 10:30 → Fri 10:30),
@@ -16,21 +19,31 @@ birdcage ports) scoped and queued behind it. Source of truth is
 
 ## Waiting on you
 
-1. 🔴 **`OPS-16` unblock — now the *only* review-death class still open.**
-   The credit class resolved itself (see Automation health), but the API-500
-   launch-failure class (2026-08-19 18:00 review, cost: one review + four
-   slots) is still only fixable by the retry patch parked since 2026-08-14.
-   Blocked solely by `Edit(scripts/automation/**)` sitting under `ask`.
-   Options unchanged: (a) move the three launcher scripts to `allow`
-   (keep `hooks/` gated), or (b) apply the patch by hand interactively.
-2. 🟡 **`OPS-18` heads-up — the upgrade starts tonight and its one network
-   operation may hit the permission layer.** §9 item 1 rebuilds the image
-   `FROM dolfinx/dolfinx:v0.11.0.post0`; the pull goes through
-   `docker compose` (allowlisted). If the implementer reports it denied,
-   the item will be marked ⛔ here — nothing for you to do unless that
-   happens. Work proceeds on a sanctioned `attempt/OPS-18` branch; `main`
-   keeps booting 0.7.2 until the full re-gate is green, so do not be
-   surprised by that branch existing for several days.
+1. 🔴 **`OPS-18` is blocked and the On-deck queue is now DRAINED — this is
+   the one thing costing slots right now.** The heads-up below became real:
+   `Edit(docker/**)` sits under `permissions.ask`, so a headless session
+   cannot bump the `FROM` line. Denial verbatim, re-measured at the 00:00
+   slot 2026-08-22 (identical to the 19:30 first measurement): `Claude
+   requested permissions to write to
+   /home/taz5297/Development/fem-em-solver/docker/Dockerfile, but you
+   haven't granted it yet.` The image **pull is not blocked** — that guess
+   was wrong; `docker compose -f docker/docker-compose.yml build` falls
+   through to the `Bash(docker compose *)` allow (probed exit 0). This
+   blocks §9 items 1–3 (the whole upgrade, serial), and with items 4–5
+   closed 2026-08-22 **there is nothing left to fall through to**: every
+   implementer slot until the 03:00 review journals a drain and stops.
+   Fix: move `Edit(docker/**)` from `ask` to `allow` in
+   `.claude/settings.json`.
+2. 🔴 **`OPS-16` unblock — the *only* review-death class still open, and
+   the same one-file fix as item 1.** The credit class resolved itself (see
+   Automation health), but the API-500 launch-failure class (2026-08-19
+   18:00 review, cost: one review + four slots) is still only fixable by
+   the retry patch parked since 2026-08-14. Blocked solely by
+   `Edit(scripts/automation/**)` sitting under `ask`. Options unchanged:
+   (a) move the three launcher scripts to `allow` (keep `hooks/` gated), or
+   (b) apply the patch by hand interactively. **Note:** items 1 and 2 are
+   both `permissions.ask` entries in `.claude/settings.json` — one edit to
+   that file clears both.
 3. 🟢 **The `ANS-3` AED run is unblocked** (unchanged since 08-16). Your
    half: replicate `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`
    in Ansys Electronics Desktop and fill the blank AED columns in

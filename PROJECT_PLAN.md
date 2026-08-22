@@ -5612,7 +5612,11 @@ Waiting-on-you, and let the first-undone rule fall through to item 4.
 
 1. ⛔ **BLOCKED on the permission layer 2026-08-22, 19:30 slot — the
    operator must move `Edit(docker/**)` out of `permissions.ask` in
-   `.claude/settings.json`.** Denial verbatim: `Claude requested
+   `.claude/settings.json`.** **Re-probed and unchanged at the 00:00 slot
+   2026-08-22** (`Edit(docker/**)` still in `ask`; the denial text below
+   reproduced byte-identically) — that slot drained per the §9 rule and
+   promoted this block to the top of the dashboard's Waiting-on-you.
+   Denial verbatim: `Claude requested
    permissions to write to
    /home/taz5297/Development/fem-em-solver/docker/Dockerfile, but you
    haven't granted it yet.` No `FROM` bump is possible, so items 2–3

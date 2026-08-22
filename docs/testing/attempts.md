@@ -17260,3 +17260,79 @@ five queue items and should stay at the top of the dashboard's Waiting-on-you;
 since 21:00 (gates (i)–(iii) unmoved, ports at f = 0.5, sheets on tags `210+i`,
 116 416-cell sheeted mesh) — it is the obvious item to queue, and §9's drain
 instruction forbids an implementer improvising it.
+
+---
+
+## 2026-08-22T05:01Z — no chunk — **blocked (On-deck queue drained)** (00:00 CDT implementer slot)
+
+**Preflight.** Tree clean, `main`, container Up (4 days, 0.7.2). No
+`attempt/*` or `recovered/*` outstanding. No anomaly.
+
+**Queue state — every §9 On-deck item is done or blocked.** Items 4 (`GEO-18`
+step 2) and 5 (`EX-27`) closed in the 21:00 and 22:30 slots. Items 1–3 are the
+`OPS-18` upgrade, serial, and item 1 is ⛔ on the permission layer. The §9 drain
+instruction is explicit — *"If the queue drains: **stop and journal.** There is
+no fallback chunk"* — and names the former `PORT-9` fallback as exhausted
+(step 3 is 🚫 on `GEO-18`, and cutting the fixture is commissioned work, not
+improvisation). So: no chunk work this slot, by rule and not by circumstance.
+
+**I re-measured the block rather than inheriting it.** `.claude/settings.json`
+still carries `Edit(docker/**)` under `permissions.ask` (line 28, unchanged), and
+I probed it directly — an Edit bumping `docker/Dockerfile` line 1 from
+`FROM dolfinx/dolfinx:v0.7.2` to `FROM dolfinx/dolfinx:v0.11.0.post0`. Denied,
+byte-identical to the 19:30 slot's finding:
+
+```
+Claude requested permissions to write to
+/home/taz5297/Development/fem-em-solver/docker/Dockerfile, but you haven't
+granted it yet.
+```
+
+The probe is the whole point of re-running an ⛔ item: had the operator acted
+between slots, item 1 was real work and this slot would have done it. They have
+not. No `FROM` bump ⇒ no rebuild ⇒ items 2–3 inherit the block unchanged.
+Nothing was worked around; `scripts/automation/hooks/` untouched.
+
+**What I did with the slot.** The one deliverable available: §9 item 1 carries a
+standing instruction to *"put the unblock at the top of the dashboard's
+Waiting-on-you"*, and that had not happened. The dashboard still described
+`OPS-18` as a 🟡 **heads-up** ending "nothing for you to do unless that happens"
+— stale for two slots, on the project's only alerting channel, while the thing
+it hedged about had already happened. Amended (`docs/status/dashboard.md`):
+
+- new 🔴 item 1 — the block, the verbatim denial, both measurement dates, the
+  fix (`ask` → `allow`), and the consequence the old text could not know:
+  **the queue is drained behind it**, so every slot until the 03:00 review
+  journals a drain;
+- corrects the dead guess the old item repeated — the **pull is not blocked**;
+  `docker compose -f docker/docker-compose.yml build` falls through to
+  `Bash(docker compose *)` (probed exit 0 at 19:30). The blocker is the file
+  edit alone;
+- `OPS-16` demoted to item 2 with a note that **items 1 and 2 are both
+  `permissions.ask` entries in one file — a single edit clears both**. They
+  have been reported as separate asks for eight days;
+- header re-dated narrowly: the amendment is attributed to this slot and the
+  rest of the page left as the 18:00 review's, since the dashboard is
+  review-maintained (daily-review.md step 7) and I am not its owner.
+
+§9 item 1 also annotated with the 00:00 re-probe so the review sees the block
+survived a second measurement rather than assuming staleness.
+
+**No compute ran.** No harness invocation, no container command beyond the
+preflight `ps` — there was no chunk to verify, and a drained slot spending the
+20-minute budget on something unqueued is exactly what the drain rule forbids.
+Elapsed ~12 min of the 60.
+
+**Outcome.** `blocked`. Tree clean and green; nothing parked; commit is
+documentation only (dashboard + §9 annotation + this entry).
+
+**Hypothesis for the 03:00 review.** Unchanged in substance from 22:30 and now
+load-bearing: **the queue cannot be refilled by an implementer, only by the
+review.** Two concrete asks: (1) `PORT-9` step 3 is the front and its `GEO-18`
+mesh prerequisite has been discharged since 21:00 (gates (i)–(iii) unmoved,
+ports at f = 0.5, sheets on `210+i`, 116 416-cell sheeted mesh) — it is the
+obvious item to queue, and the drain rule forbids an implementer improvising it;
+(2) queue at least one item that is **independent of the permission layer**, so
+a still-absent operator costs one item and not the whole queue — the last four
+slots have produced two closes and two drains, and the drains were structural,
+not for lack of work in §7.
