@@ -18106,3 +18106,82 @@ as recorded), `git status --porcelain` empty, 0.7.2 rebuilt, force-recreated
 and probed **0.7.2 / gmsh 4.11.1**
 (`20260822T201412Z_OPS-18-step3-container-restore3.log`, Status 0). Tree
 clean at handoff.
+
+---
+
+## 2026-08-22T21:30Z — `PORT-9` step 3 leg (c) — **complete**
+
+Scheduled implementer slot, 16:30 CDT. Preflight clean (`git status
+--porcelain` empty, container Up on 0.7.2, no `recovered/*` needed).
+
+**Item selection.** §9's first-undone item was **3a**, and it was taken
+first. It stopped without compute on its own text: *"A fourth attempt would
+re-measure the same three numbers"*, *"leg 2 now needs a ruling rather than
+another experiment"*, *"3b still must not run before both rulings."* Both
+named experiments and the n_points probe are already run across the 12:00 /
+13:30 / 15:00 slots; what remains — re-recording a solved-field record for
+leg 1, and disposing of the `MAG` 15% band for leg 2 — is exactly what the
+item forbids an implementer from doing. Marked **⛔ in §9 with the blocker
+quoted**, put at the top of the dashboard's Waiting-on-you, and the
+first-undone rule was allowed to fall through to **item 4**, per this
+section's own preamble. No `src/`, band, record or assertion touched by
+that decision.
+
+**What was tried (item 4).** New module
+`tests/validation/test_port_birdcage_lumped_column.py` — the first field of
+any kind on the gapped birdcage. `GEO-18` step-2 mesh via
+`test_birdcage_port_sheets._build(True)`, sheets rebuilt dolfinx-side as
+`211`–`214` from the `100+i`/`110+i` half tags, each narrowed to `PORT-9`
+step 2b's `f = 0.5` interior width by a midpoint filter generalised to the
+port's *measured* transverse axis (the two-torus helper hard-codes `x`;
+here the plane is y-normal on the x-legs and x-normal on the y-legs),
+`LumpedSheetPortSpec` on all four at `Z_p = 1e6 Ω`, drive `ẑ`, one
+`run_lumped_sheet_port_case` with **P1 driven only** at 10 MHz, column 1 of
+Z assembled on the package's own `Z_i1 = V_i / I_1`.
+
+**Measured numbers.** 116 416 cells, **ratio 1.000000** of the `GEO-18`
+step-2 record. Sheets: 27 facets each, area 5.930614898e-05 m², `A/h` =
+7.413268623e-03 m (full bbox 1.400000000e-02 m), out-of-plane 8.882e-19 m,
+all four bit-identical, at r = 7.000000e-02 m and 0/90/180/270 deg to 1e-9.
+Mesh 21.35 s, rung 28.75 s, **one solve 7.55 s** at `-n 2` (12.29 s cold
+JIT on the first run). `I₁ = +9.992734880e-07 + 3.351870842e-09j` A;
+`Z₁₁ = +7.157807613e+02 − 3.356708736e+03j`,
+`Z₂₁ = +1.234475890e+01 − 1.879647891e+03j`,
+`Z₃₁ = +1.190817590e+01 − 1.879802412e+03j`,
+`Z₄₁ = +1.231173574e+01 − 1.879351468e+03j` Ω — **bit-identical across the
+slot's two runs**. Gate `|Z₂₁ − Z₄₁|/|Z₂₁|` = **0.0159%** against the
+unmoved 5% band.
+
+**The finding.** The entry's anti-degeneracy control (`|Z₃₁|` further from
+the adjacent mean than the pair is from itself) passes at **0.0160% vs
+0.0159% — a 1.0060× margin**, i.e. at the noise floor. At `Z_p = 1e6 Ω`
+every port is effectively open and the three mutuals agree to four digits,
+so the 0.0159% spread evidences C4 mesh symmetry and consistent sheet
+wiring, **not** resolved port-to-port coupling. Leg (d) must not run at this
+`Z_p`; the cheap next probe is the ports' own `z0_ohm` = 50 Ω, at 7.55 s a
+solve.
+
+**One assertion of my own was wrong and was fixed with its measurement, not
+loosened.** The sheet centre was first read as the unweighted mean facet
+midpoint, which is not a rectangle's centre on an unstructured mesh — r =
+6.997337e-02 m vs the exact 7.000000e-02 m, 3.8e-4 relative
+(`20260822T213427Z_PORT-9-step3c.log`, 1 failed / 5 passed). The
+bounding-box centre, exact for the full rectangle `GEO-18` step 2 gates,
+replaced it; the 1e-9 band was kept. No physics band moved.
+
+**Logs.** `20260822T213415Z_PORT-9-step3c-collect.log` (collect-only smoke,
+Status 0), `20260822T213427Z_PORT-9-step3c.log` (1 failed / 5 passed, 46 s
+— the structural miss above), `20260822T213612Z_PORT-9-step3c-rerun.log`
+(**6 passed, 40 s, Status 0**, `tests/environment` first, complex build,
+`-n 2`). Heavy tier declared; actual 40 s. No container rebuild this slot,
+so nothing to restore — 0.7.2 Up throughout. No permission denial.
+
+### Hypothesis for the next slot
+
+§9 item 5 (`EX-28`) is next by the first-undone rule and is independent of
+both the upgrade and this result. For `PORT-9` leg (d) when it is queued:
+re-run this same fixture at `Z_p = 50 Ω` and check whether `|Z₃₁|` separates
+from the adjacent pair by more than the 0.0159% mesh-symmetry floor **before**
+spending four solves on gate (iii) — if it does not, the ports are too weakly
+coupled at 10 MHz for a circulant reading and the frequency, not the
+impedance, is the knob.

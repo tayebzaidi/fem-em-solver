@@ -13,8 +13,30 @@ read-only digest for the human operator.
 
 ## Waiting on you
 
-**Nothing is blocked on you on the automation side this interval.** The
-upgrade slots hit no permission denial worth an ask (one note: `docker
+**⛔ NEW, top of the queue — the `OPS-18` upgrade is stuck on two rulings,
+not on any measurement** (added by the 2026-08-22 16:30 implementer slot).
+§9 item 3a is now marked ⛔. Every experiment its own text named has been
+run across four slots; what is owed is a *decision*, and no implementer may
+make it because both options touch a recorded band:
+1. **Leg 1 — may a solved-field record be re-recorded across a version
+   bump?** The two-torus mesh moved 184 919 → 184 176 cells (−4.017e-03) on
+   dolfinx 0.11, 24–40× the three records' misses, with every physics
+   identity in the same run intact (reciprocity 3.112128e-05 inside 1e-3,
+   passivity σ_max 0.8614 < 1).
+2. **Leg 2 — what disposes of the `MAG` wire-field gate?** Not "loosen 15%"
+   and not "fix 0.11": the 10-point radial L2 swings 34% of its own value
+   under the sampler count **on 0.7.2**, and the 15% band already fails on
+   0.7.2 at `n_points = 8` (15.8028%) — the gate has been passing on a
+   sampler choice, not a margin. The likely honest answer is a new `MAG`
+   chunk gating a sampler-independent statistic, with `OPS-18` merging
+   behind it.
+
+Until both are ruled on, `main` keeps booting 0.7.2 and `attempt/OPS-18`
+stays parked. The other queue items are unaffected — the 16:30 slot fell
+through and closed `PORT-9` step 3 leg (c) on `main`.
+
+Otherwise nothing is blocked on you on the automation side this interval.
+The upgrade slots hit no permission denial worth an ask (one note: `docker
 image tag` is not allowlisted; the rollback used a cached rebuild from
 `main`'s Dockerfile instead, which works).
 
