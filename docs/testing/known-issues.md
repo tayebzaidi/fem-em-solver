@@ -115,6 +115,36 @@ unless fixing it is the task.
 > anything measured here. Deciding between them needs the two-torus cell
 > count printed on both images; nobody has printed it.
 >
+> **Update, 2026-08-22 (`OPS-18` step 3 attempt 4): the mesh did move, and
+> by 24× more than the records did.** `tests/mesh/probe_two_torus_cell_count.py`
+> builds this exact fixture — every argument imported from `_build` in the
+> test that owns the record — and prints the reduced global counts:
+>
+> | | dolfinx 0.7.2 / gmsh 4.11.1 | dolfinx 0.11.0.post0 / gmsh 4.15.2 | Δ |
+> |---|---|---|---|
+> | cells | 184 919 | 184 176 | **−743, −4.017e-03** |
+> | vertices | 31 676 | 31 550 | −126, −3.978e-03 |
+> | wire tags `1`/`2` | 9 463 / 9 380 | 9 556 / 9 448 | +0.98% / +0.72% |
+> | gap halves `101`/`102`/`111`/`112` | 13 627 / 13 599 / 13 763 / 13 771 | 13 661 / 13 648 / 13 658 / 13 694 | ≤ 0.8% |
+>
+> Logs `20260822T183313Z_OPS-18-step3-twotorus-cells-072.log` (Status 0, 33 s,
+> `main` source on the 0.7.2 image) and
+> `20260822T183626Z_OPS-18-step3-twotorus-cells-011.log` (Status 0, 34 s,
+> `attempt/OPS-18` source on the 0.11 image), both `mpiexec -n 2`. The
+> 0.7.2 run had to be taken on `main`'s source: the branch's `io/mesh.py`
+> imports `dolfinx.io.gmsh`, which 0.7.2 does not have, so the two runs
+> differ by the step-2 migration as well as the image — a caveat on
+> attribution, not on the counts.
+>
+> **So the mesh hypothesis is *consistent* here**: a 4.0e-03 mesh
+> perturbation moving two solved records by 9.2e-05 and 1.7e-04 is a 24-40×
+> attenuation, which is what a converged quantity on a perturbed mesh does.
+> It is still not a proof — the same slot **refuted** the mesh explanation
+> for the straight-wire entry below, where the counts moved by < 0.16% —
+> so the two failures should not be assumed to share a cause. **The
+> re-record decision remains the review's**; what this update supplies is
+> the evidence it asked for.
+>
 > **No band, assertion or record was touched**, and none should be until
 > the cause is decided: re-recording a solved S-matrix to make a version
 > bump land is how a version bump hides a physics change. §9 item 3a's
@@ -159,6 +189,51 @@ unless fixing it is the task.
 > hypothesis is **not sufficient on its own** and something else may be
 > contributing. Re-running the recorded ladder's other two rungs on 0.11
 > would settle it; that is a slot's work and was not done here.
+>
+> **Update, 2026-08-22 (`OPS-18` step 3 attempt 4): the ladder was re-run on
+> both images, and the mesh explanation is refuted.**
+> `tests/validation/probe_straight_wire_ladder.py` drives the recorded rungs
+> through the same `_solve_straight_wire` / `_sample_radial` / `ErrorMetrics`
+> the gated test uses (imported, not restated), `mpiexec -n 2`, real build:
+>
+> | h | cells 0.7.2 | error 0.7.2 | cells 0.11 | error 0.11 | Δcells | Δerror |
+> |---|---|---|---|---|---|---|
+> | 0.0040 | 38 750 | **22.1925%** | 38 740 | **21.8417%** | −0.13% | −1.6% |
+> | 0.0025 | 145 900 *(record)* | 12.75% *(record)* | 147 235 | **15.3848%** | +0.92% | **+20.7%** |
+> | 0.0018 | 383 248 | **9.2568%** | 383 146 | **4.4605%** | −0.03% | **−51.8%** |
+>
+> Logs `20260822T184158Z_OPS-18-step3-wire-ladder-072.log` (Status 0, 98 s)
+> and `20260822T183710Z_OPS-18-step3-wire-ladder-011.log` (Status 0, 105 s);
+> the `h=0.0025` row is quoted from the runs above, not re-measured.
+>
+> **The 0.7.2 column is a clean control**: the July record reproduces to
+> **+0.011%** and **−0.035%**, so the ladder is not stale and the deltas are
+> the image.
+>
+> **What it shows.**
+> 1. **Not the mesh.** Both probed rungs mesh to within 0.13% of their
+>    recorded cell counts on 0.11, and their errors move by −1.6% and
+>    −51.8%. A mesh that does not move cannot explain an error that halves.
+> 2. **The convergence *rate* moved.** Fitted over the same two endpoints,
+>    0.7.2 gives ln(22.1925/9.2568)/ln(0.004/0.0018) = **1.10** — the
+>    recorded O(h^1.2) — and 0.11 gives ln(21.8417/4.4605)/ln(2.2222) =
+>    **1.99**. At the fine end 0.11 is **2.1× more accurate**, not less.
+> 3. **The gated rung is an outlier on its own ladder.** The 0.11 fit
+>    predicts 21.8417% · (0.0025/0.004)^1.99 = **8.6%** at h = 0.0025;
+>    it measures 15.3848%, **1.8×** that. It is also the only rung whose
+>    cell count moved appreciably (+0.92%, 6-30× the others).
+>
+> **Consequence for the band.** 15% was set as 1.18× a 12.75% measurement on
+> a still-converging ladder. On 0.11 that ladder converges at ~O(h²) and the
+> h = 0.0018 rung already reaches 4.46% — inside the 5% target `MAG-13`'s
+> comment calls out of reach at ~1.1M cells. So the honest disposal is
+> probably *not* "loosen 15%": it is to find why h = 0.0025 sits off its own
+> ladder on 0.11, since two rungs either side of it behave better than the
+> record. **Nothing was touched here** — no band, no assertion, no record.
+> Next cheap experiment: re-mesh h = 0.0025 on 0.11 alone and check whether
+> the +0.92% cell-count jump is stable or a gmsh-4.15 partition artefact at
+> that one size, and re-run the same rung at `-n 1` and `-n 4` to test
+> whether the outlier is rank-dependent.
 >
 > **No band was touched.** Loosening 15% to accommodate a version bump
 > would erase the only instrument that shows the ladder moved. §9 item 3a's

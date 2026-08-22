@@ -17888,3 +17888,104 @@ byte-restored via Edit and confirmed with `git status --porcelain`, 0.7.2
 rebuilt and force-recreated, `dolfinx.__version__` probed as **0.7.2**. Tree
 clean at handoff; `main` is green and boots 0.7.2, as the worksite rule
 requires.
+
+---
+
+## 2026-08-22T19:00Z — `OPS-18` step 3 (re-gate), attempt 4 — **incomplete (both discriminating experiments run)**
+
+**Slot:** 13:30 CDT scheduled implementer run, 60-minute timebox.
+**Item:** §9 On-deck item **3a** (first item not done or blocked; 1–2 ✅).
+**Branch:** `attempt/OPS-18` at **`231d6c7`** (probes + four logs; no `src/`
+change this slot). `main` carries this entry, the two known-issues updates,
+the §9/§7 annotation and one restore log — nothing else.
+
+**Preflight.** Tree clean, container Up on 0.7.2. No anomaly.
+
+### Why this is not "attempt 4 re-measuring the same three numbers"
+
+Attempt 3 stopped on its negative-result clause and said the next slot owed
+a *review decision*, naming **two cheap experiments** whose results the
+decision needs. An implementer may not make that ruling, but it can supply
+the evidence — so this slot ran **both experiments and nothing else**. No
+band, assertion or record was touched, and no gate was re-run.
+
+### Experiment 1 — two-torus cell count on both images: **the mesh moved**
+
+`tests/mesh/probe_two_torus_cell_count.py`, every fixture argument imported
+from `test_port_lumped_two_torus._build`, counts reduced across ranks,
+`mpiexec -n 2`, mesh only:
+
+| | 0.7.2 / gmsh 4.11.1 | 0.11.0.post0 / gmsh 4.15.2 | Δ |
+|---|---|---|---|
+| cells | 184 919 | 184 176 | **−743, −4.017e-03** |
+| vertices | 31 676 | 31 550 | −3.978e-03 |
+
+Logs `20260822T183313Z_…-twotorus-cells-072.log` (Status 0, 33 s) and
+`20260822T183626Z_…-twotorus-cells-011.log` (Status 0, 34 s). A 4.0e-03 mesh
+perturbation against records that missed by 9.2e-05 and 1.7e-04 is a 24-40×
+attenuation — **consistent with the mesh hypothesis** for leg 1, on the same
+grounds the review already granted `TH-10`.
+
+*Caveat recorded in the entry, not hidden:* the 0.7.2 leg had to run on
+`main`'s source, because the branch's `io/mesh.py` imports `dolfinx.io.gmsh`
+(a first, wasted, 3 s run proved this — `20260822T183220Z`, Status 1). The
+two runs therefore differ by the step-2 migration as well as the image.
+
+### Experiment 2 — the straight-wire ladder on both images: **mesh refuted**
+
+`tests/validation/probe_straight_wire_ladder.py`, same solve/sampling/metric
+as the gated test (imported), `-n 2`, real:
+
+| h | cells 0.7.2 | err 0.7.2 | cells 0.11 | err 0.11 | Δcells | Δerr |
+|---|---|---|---|---|---|---|
+| 0.0040 | 38 750 | **22.1925%** | 38 740 | **21.8417%** | −0.13% | −1.6% |
+| 0.0025 | 145 900 *(rec)* | 12.75% *(rec)* | 147 235 | **15.3848%** | +0.92% | **+20.7%** |
+| 0.0018 | 383 248 | **9.2568%** | 383 146 | **4.4605%** | −0.03% | **−51.8%** |
+
+Logs `20260822T184158Z_…-wire-ladder-072.log` (Status 0, 98 s) and
+`20260822T183710Z_…-wire-ladder-011.log` (Status 0, 105 s).
+
+**The 0.7.2 column is the control the record never had**: July's ladder
+reproduces to **+0.011%** and **−0.035%**. The record is not stale; the
+deltas are the image.
+
+**Three measured conclusions.** (1) *Not the mesh* — both probed rungs mesh
+to within 0.13% of their recorded counts and their errors move by −1.6% and
+−51.8%. (2) *The rate moved*: fitted over the same endpoints, **1.10 on
+0.7.2** (the recorded O(h^1.2)) versus **1.99 on 0.11**; at the fine end
+0.11 is **2.1× more accurate**, not less. (3) *The gated rung is an outlier
+on its own 0.11 ladder* — the 0.11 fit predicts 8.6% at h = 0.0025 and it
+measures 15.3848%, 1.8× that, and it is the only rung whose cell count
+moved appreciably (+0.92%).
+
+So the two failures **do not share a cause**, and leg 2's disposal is
+probably not "loosen 15%": on 0.11 the h = 0.0018 rung already reaches
+**4.46%**, inside the < 5% target `MAG-13`'s comment calls unreachable below
+~1.1M cells. Loosening a band on a solver that got *better* would record the
+wrong fact.
+
+**Elapsed:** five harness commands, 3 + 33 + 34 + 105 + 98 = **273 s of
+compute** (plus a 1 s version probe), two container round-trips (86 s + 100 s
+build, ~15 s recreate each). Nothing hit exit 124; no window reached 20% of
+its ceiling.
+
+**Denials:** none.
+
+### Hypothesis for the next slot
+
+Leg 1 is now **evidenced, not diagnosed** — the review can rule on the
+re-record with a measured 4.0e-03 mesh delta in hand. Leg 2 has a *new*
+question, and it is cheap: **is the h = 0.0025 outlier stable?** Re-mesh
+that one rung on 0.11 and print the count (30 s), then re-run the same rung
+at `-n 1` and `-n 4` (~2 × 90 s) to test rank dependence. If the outlier
+survives all three, the 0.11 straight-wire path has a real defect at that
+size and `OPS-18` should not merge; if it moves with rank count, the 15%
+band was never measuring what it claimed. Either answer is one slot, and
+**3b still must not run before the ruling** — merging today would put three
+red gates on `main`.
+
+**Container left as required:** `main` checked out, both docker files
+byte-restored via Edit and confirmed with `git status --porcelain` (empty),
+0.7.2 rebuilt, force-recreated, and probed **0.7.2 / gmsh 4.11.1** in
+`20260822T184455Z_OPS-18-step3-container-restore.log` (Status 0). Tree
+clean at handoff.
