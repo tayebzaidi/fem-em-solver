@@ -2,8 +2,10 @@
 
 **Updated:** 2026-08-21 18:00, **daily review (scheduled, ran normally)**;
 Waiting-on-you amended 2026-08-22 00:00 by a drained implementer slot (item 1
-promoted from heads-up to blocker, per §9 item 1's standing instruction). The
-rest of this page is the 18:00 review's and is not re-dated.
+promoted from heads-up to blocker, per §9 item 1's standing instruction), and
+again 2026-08-22 by an interactive operator session (item 2, `OPS-16`, closed
+**won't fix** by operator decision — see that item). The rest of this page is
+the 18:00 review's and is not re-dated.
 Headline: **the credit outage is over and the audit debt is cleared.** This
 review launched on the same `--model claude-fable-5` that produced four
 consecutive 146-byte `out of usage credits` deaths (Thu 10:30 → Fri 10:30),
@@ -34,16 +36,20 @@ birdcage ports) scoped and queued behind it. Source of truth is
    implementer slot until the 03:00 review journals a drain and stops.
    Fix: move `Edit(docker/**)` from `ask` to `allow` in
    `.claude/settings.json`.
-2. 🔴 **`OPS-16` unblock — the *only* review-death class still open, and
-   the same one-file fix as item 1.** The credit class resolved itself (see
-   Automation health), but the API-500 launch-failure class (2026-08-19
-   18:00 review, cost: one review + four slots) is still only fixable by
-   the retry patch parked since 2026-08-14. Blocked solely by
-   `Edit(scripts/automation/**)` sitting under `ask`. Options unchanged:
-   (a) move the three launcher scripts to `allow` (keep `hooks/` gated), or
-   (b) apply the patch by hand interactively. **Note:** items 1 and 2 are
-   both `permissions.ask` entries in `.claude/settings.json` — one edit to
-   that file clears both.
+2. ⬛ **`OPS-16` — CLOSED WON'T FIX, nothing owed by you.** *(Operator
+   decision, interactive session 2026-08-22 — recorded here only so it is
+   not re-raised.)* The permission unblock was declined on the
+   self-modification ground: a session that can edit its own launcher can
+   change its own model, effort, timeout and disallowed tools, and the
+   narrowed three-file variant does not fix that.
+   `Edit(scripts/automation/**)` **stays under `ask`**. The operator also
+   ruled the avoided cost acceptable — losing a few implementer slots to an
+   out-of-credits, API-500 or 529 launch failure is tolerated weather, not a
+   defect to chase. **This will not appear on Waiting-on-you again**; future
+   launch failures are journalled as cost and nothing more. Full disposition:
+   PROJECT_PLAN §7 `OPS-16` closing note. Note this leaves item 1 as the
+   *only* `permissions.ask` decision outstanding. **Next review: delete this
+   item** — it is a closure receipt, not an ask.
 3. 🟢 **The `ANS-3` AED run is unblocked** (unchanged since 08-16). Your
    half: replicate `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`
    in Ansys Electronics Desktop and fill the blank AED columns in
@@ -97,8 +103,10 @@ birdcage ports) scoped and queued behind it. Source of truth is
   4 dead reviews + 8 drained implementer slots + 1 audited drain. The
   incident produced one useful artifact: the independent 216-denominator
   audit.
-- **The `OPS-16` class remains open** — retry logic would not have helped
-  here, but it is still the only fix for the API-500 class (Waiting item 1).
+- **The `OPS-16` class is closed won't-fix** (operator decision 2026-08-22):
+  launch-failure retry is not being built, and launch failures — credits,
+  API 500, 529 — are henceforth recorded as ordinary cost. Retry logic would
+  not have helped this interval's credit outage in any case.
 - Container healthy all interval (Up 3+ days, no OOM, no wedge). Tree clean
   at every handoff; no `attempt/*` or `recovered/*` branches at review time.
 - **Expect `attempt/OPS-18` to appear and persist** — it is the sanctioned
