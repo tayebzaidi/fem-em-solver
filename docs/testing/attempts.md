@@ -17179,3 +17179,84 @@ at f = 0.5, sheets on tags `210+i`) as an item; it is the front. Note for
 sizing: step 3 solves on the 116 416-cell sheeted mesh, which is ~1.4% larger
 than the mesh every step-1/2 timing was taken on. Item 1's `Edit(docker/**)`
 denial is still the standing operator ask and still blocks items 1–3.
+
+## 2026-08-22T03:30Z — `EX-27` — **complete** (22:30 CDT implementer slot)
+
+**Preflight.** Tree clean, container Up (`fem-em-solver`, up 3 days). No
+`attempt/*` work of mine to resume.
+
+**Item selection.** Fall-through, per the §9 preamble's explicit instruction.
+Item 1 (`OPS-18` step 1) is still ⛔: I verified `.claude/settings.json`
+directly and `Edit(docker/**)` remains in `permissions.ask` — the operator has
+not acted on the 19:30 ask — so items 2–3 inherit the block. Item 4 (`GEO-18`
+step 2) closed at 21:00. That leaves item 5, the spare: **`EX-27`**. I did not
+attempt the `OPS-18` trio; nothing about the denial has changed and re-probing
+it would have burned the slot to reproduce a known answer.
+
+**What was built.** `examples/meshing/05_region_resolution_policy.py` (auto-
+discovered by the runner as `mesh:5`; the runner globs the directory, so no
+registry edit was needed) plus the same-stem guide. Subject is `GEO-17`'s newly
+gated capability: `coil_phantom_domain` under a per-region sizing policy (coil
+0.012 / phantom 0.010 / air 0.020) against the clamps-only 0.015, scored on
+meshed/analytic-CAD volume recovery.
+
+One source change outside the example: **`POLICY_RESOLUTIONS` hoisted to module
+level** in `tests/mesh/test_mesh_tag_integrity.py` and consumed by
+`_policy_volume_pair`, so the example imports the sizing it demonstrates rather
+than restating it (`ANS-1`). Behaviour-identical — the regression below proves
+it.
+
+**Measured** (`-n 2`, `20260822T033345Z_EX-27-example-n2.log`, exit 0, 8 s
+harness / 5.4 s in-script):
+
+- policy coil meshed/CAD **0.835563 / 0.833730** ≥ imported, unmoved
+  `POLICY_MIN_CAD_RECOVERY` = 0.755, both reproducing the `GEO-17` records to
+  every printed digit inside the pre-stated 1% band;
+- **inverted control** (`EX-18` pattern): clamps-only asserted to *miss* the
+  same floor, **0.754685 / 0.752565**;
+- sizing separation **+0.080879 / +0.081165**, gated at a pre-stated 0.05;
+- sign identity on the three refined tags **+10.7169% / +10.7851% / +0.9374%**,
+  with the one coarsened region — the air — the one that pays, **−0.2643%**;
+- inscription bound meshed/CAD ≤ 1 on both meshes, all three curved tags (max
+  0.992751);
+- tagged-volume partition **1.000000000000** on *both* meshes at the imported
+  `VOLUME_PARTITION_BAND` = 1e-9;
+- clamps-only volumes re-asserted against the imported `OPS-17` record on 4/4
+  tags at 1e-9 — the negative control on `GEO-17`'s fix itself;
+- 19 792 cells clamps-only (2.89 s) / 20 843 policy (2.38 s); two combined
+  XDMFs with `CellTags`.
+
+**A rubric note the review should have.** The commissioned inverted control is
+thin **by construction**, not by accident: `POLICY_MIN_CAD_RECOVERY` was
+pre-registered in `GEO-17` step 1 as "the uniform mesh's own recovery, which a
+finer request must beat", so the floor sits ~3.2e-4 above the control it
+inverts. Asserting only "clamps-only misses 0.755" would pass on a policy that
+did essentially nothing. I therefore gated the *sizing* separation separately
+(`SIZING_SEPARATION` = 0.05, measured +0.0809 / +0.0812) — pre-stated, not
+fitted, and the mirror of `EX-21`'s `CONTROL_SEPARATION`. Nothing was loosened;
+this is an additional assertion, not a replacement.
+
+**Docrefs** `20260822T033529Z_EX-27-docrefs.log`: `dead=0 guide=0 stale=24
+stale_severity=report exit=2` — `exit != 1`, the `OPS-19` gate, 35 guides
+scanned. The 24 stale entries are `EX-22`'s 48 h window re-growing exactly as
+the commission predicted ("stale re-grows from ~2026-08-22 by design"); all are
+51 h `magnetostatics`/`mri` artifacts and none is an `EX-27` artifact. Nothing
+filed to known-issues.
+
+**Regression** `20260822T033508Z_EX-27-geo17-regression.log`: whole
+`tests/mesh/test_mesh_tag_integrity.py`, **3 passed, exit 0, 13 s** at `-n 2` —
+the `POLICY_RESOLUTIONS` hoist changes nothing. No unrelated failure met.
+
+**Outcome.** `EX-27` ✅. §7 table row, §9 item 5, code, guide and all three logs
+in one commit on `main`. Tree clean and green; no branch parked.
+
+**Hypothesis for the next attempt.** **The On-deck queue is now fully drained
+apart from the permission-blocked `OPS-18` trio** — items 1–3 ⛔ on
+`Edit(docker/**)`, items 4–5 done — so the next slot has nothing to fall through
+to and will journal a drain under the §9 rule. Two things for the 03:00 review:
+(1) the `Edit(docker/**)` allowlist line is now the single blocker on three of
+five queue items and should stay at the top of the dashboard's Waiting-on-you;
+(2) `PORT-9` step 3 is the front and its mesh prerequisite has been discharged
+since 21:00 (gates (i)–(iii) unmoved, ports at f = 0.5, sheets on tags `210+i`,
+116 416-cell sheeted mesh) — it is the obvious item to queue, and §9's drain
+instruction forbids an implementer improvising it.

@@ -51,9 +51,19 @@ CAD_VOLUMES = {
     3: math.pi * GEOMETRY["phantom_radius"] ** 2 * GEOMETRY["phantom_height"],
 }
 
-# The tags the policy below asks to REFINE relative to ``GEOMETRY["resolution"]``
-# (coil 0.012 and phantom 0.010 against 0.015); the air is coarsened to 0.020
-# and is expected to lose the volume its neighbours gain.
+# The region-resolution policy under test: coil 0.012 and phantom 0.010 against
+# ``GEOMETRY["resolution"]`` = 0.015, with the air coarsened to 0.020. Hoisted
+# to module level by `EX-27` (2026-08-22) so the example imports the sizing it
+# demonstrates instead of restating it (`ANS-1`).
+POLICY_RESOLUTIONS = dict(
+    coil_resolution=0.012,
+    phantom_resolution=0.010,
+    air_resolution=0.020,
+)
+
+# The tags the policy above asks to REFINE relative to ``GEOMETRY["resolution"]``;
+# the air (tag 4) is coarsened and is expected to lose the volume its neighbours
+# gain.
 REFINED_TAGS = (1, 2, 3)
 
 # Pre-stated in the `GEO-17` step-1 plan: under the policy the coil recovery
@@ -109,9 +119,7 @@ def _policy_volume_pair(comm):
 
     mesh, cell_tags, _ = MeshGenerator.coil_phantom_domain(
         comm=comm,
-        coil_resolution=0.012,
-        phantom_resolution=0.010,
-        air_resolution=0.020,
+        **POLICY_RESOLUTIONS,
         **GEOMETRY,
     )
 
