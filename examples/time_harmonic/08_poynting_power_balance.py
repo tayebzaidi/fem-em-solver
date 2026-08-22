@@ -244,12 +244,12 @@ def _paraview_fields(msh, e_complex, omega: float, mu_r: float):
     s_ufl = 0.5 * ufl.cross(e_complex, ufl.conj(h_ufl))
 
     b_fn = fem.Function(w_dg, name="B_phasor")
-    b_fn.interpolate(fem.Expression(b_ufl, w_dg.element.interpolation_points()))
+    b_fn.interpolate(fem.Expression(b_ufl, w_dg.element.interpolation_points))
     b_re = fem.Function(w_dg, name="B_real")
     b_re.x.array[:] = np.real(b_fn.x.array)
 
     s_fn = fem.Function(w_dg, name="S_complex")
-    s_fn.interpolate(fem.Expression(s_ufl, w_dg.element.interpolation_points()))
+    s_fn.interpolate(fem.Expression(s_ufl, w_dg.element.interpolation_points))
     s_re = fem.Function(w_dg, name="S_poynting")
     s_re.x.array[:] = np.real(s_fn.x.array)
 

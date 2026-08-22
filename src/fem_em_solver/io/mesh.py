@@ -1543,15 +1543,23 @@ class MeshGenerator:
                     # `Min` below from clamping the whole air box to the wire
                     # size; the conductor field still wins where it is finer.
                     dist_max = tube + (h_far - h_gap) / 0.3
-                    arc_half_y = major_radius * np.sin(0.5 * gap_angle)
+                    # OPS-18 step 3: every number interpolated into a gmsh
+                    # `MathEval` string must be a plain Python float. numpy 2
+                    # renders `repr(np.float64(x))` as `np.float64(x)`, a token
+                    # gmsh's expression parser rejects with SIGABRT at meshing
+                    # ("invalid token on expression"); numpy 1.x's bare-number
+                    # repr masked this. Coerce at the boundary, never `!r` a
+                    # value of unknown type into a foreign grammar.
+                    arc_half_y = float(major_radius * np.sin(0.5 * gap_angle))
+                    r_major = float(major_radius)
                     gap_fields = []
-                    for z_c in (-z_offset, z_offset):
+                    for z_c in (-float(z_offset), float(z_offset)):
                         band = (
                             f"(0.5*((sqrt(y^2)-{arc_half_y!r})"
                             f"+sqrt((sqrt(y^2)-{arc_half_y!r})^2)))"
                         )
                         expr = (
-                            f"sqrt((sqrt(x^2+y^2)-{major_radius!r})^2"
+                            f"sqrt((sqrt(x^2+y^2)-{r_major!r})^2"
                             f"+(z-({z_c!r}))^2"
                             f"+{band}^2"
                             f"+(0.5*(sqrt(x^2)-x))^2)"

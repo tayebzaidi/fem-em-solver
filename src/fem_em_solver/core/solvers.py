@@ -645,7 +645,10 @@ class MagnetostaticSolver:
         B = fem.Function(DG, name="B")
         
         # Project curl(A) onto DG space
-        B_expr = fem.Expression(curl(self.A), DG.element.interpolation_points())
+        # OPS-18: 0.11 turned `interpolation_points` from a method into a
+        # property returning the (n, gdim) array; calling it raises
+        # "'numpy.ndarray' object is not callable".
+        B_expr = fem.Expression(curl(self.A), DG.element.interpolation_points)
         B.interpolate(B_expr)
         
         return B
@@ -669,7 +672,7 @@ class MagnetostaticSolver:
         else:
             mu = fem.Constant(self.mesh, PETSc.ScalarType(self.mu))
 
-        H_expr = fem.Expression(B / mu, DG.element.interpolation_points())
+        H_expr = fem.Expression(B / mu, DG.element.interpolation_points)
         H.interpolate(H_expr)
         
         return H
