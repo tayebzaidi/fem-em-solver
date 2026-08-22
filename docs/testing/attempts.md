@@ -17336,3 +17336,91 @@ obvious item to queue, and the drain rule forbids an implementer improvising it;
 a still-absent operator costs one item and not the whole queue — the last four
 slots have produced two closes and two drains, and the drains were structural,
 not for lack of work in §7.
+
+## 2026-08-22T09:45Z — `OPS-18` step 1 — **complete** (04:30 CDT implementer slot)
+
+**Outcome.** `complete`. §9 item 1 closed §4-done. Code, tests and logs on the
+sanctioned worksite branch **`attempt/OPS-18`** (`c767171`); `main` carries only
+the §7 closure annotation, the §9 item-1 done marking, the harness logs and this
+entry — and boots **0.7.2**, per the worksite rule. Elapsed ~25 min of 60.
+
+**Adopted version: `0.11.0.post0`.** Two things the §9 item and the §7 step-1
+text got wrong, both measured rather than reasoned around:
+
+1. **`dolfinx/dolfinx:v0.11.0.post0` does not exist as an image.** The first
+   build failed at metadata resolution ("… not found"). `.post0` is a docs-only
+   *source* patch (the migration pack says so at release-notes.md:68) — Docker
+   Hub publishes **`v0.11.0`**. That image reports `dolfinx.__version__ ==
+   "0.11.0.post0"`, so the adopted release is the one the lag policy qualified;
+   only the tag is shorter. Note this also proves the pull is not blocked: the
+   registry was reached and answered.
+2. **Only one of the three predicted plumbing items existed.** Step 1 named
+   three (compose `PYTHONPATH`, the `dolfinx-complex-mode` wrapper, the
+   from-source h5py). The container's Python moved **3.10 → 3.12** and dolfinx
+   gained a venv at `/dolfinx-env` — but the wrappers derive the tag themselves
+   (`PYV` from `sys.version_info`), `src/sitecustomize.py` already did, and
+   `/usr/local/dolfinx-{real,complex}/lib/python3.12/dist-packages` still exists
+   (the venv does not displace it). h5py took unchanged: 3.16.0, built ==
+   linked == (2, 1, 1). **The compose `PYTHONPATH` literal is the only
+   version-encoded path in the project.** The new gate is written so it cannot
+   agree with a stale one — it derives the expected interpreter tag from
+   `sys.version_info` and asserts it appears in `dolfinx.__file__`.
+
+**Anchor (§4), standard tier, `mpiexec -n 2`, both rank footers identical.**
+New file `tests/environment/test_dolfinx_version.py` (version exact, resolved
+path vs active build + running interpreter, h5py built == linked):
+
+| leg | result | elapsed | exit | log |
+|---|---|---|---|---|
+| real | `3 passed, 1 skipped` | 2 s | 0 | `20260822T093934Z_OPS-18-step1-real.log` |
+| complex | `4 passed` | 2 s | 0 | `20260822T093943Z_OPS-18-step1-complex.log` |
+| negative control | `1 failed, 3 passed` | 2 s | 1 | `20260822T093954Z_OPS-18-step1-negctl.log` |
+
+Real: `ScalarType=float64`, `/usr/local/dolfinx-real/lib/python3.12/…`.
+Complex: `ScalarType=complex128`, `/usr/local/dolfinx-complex/lib/python3.12/…`.
+The negative control is real mode + `FEM_EM_REQUIRE_COMPLEX=1`: it **fails, does
+not skip** — §5.3's contract survives the upgrade.
+
+A fourth log, `20260822T093912Z_OPS-18-step1-real.log`, is the **red** first run
+and is committed deliberately: it failed `0.11.0.post0 != 0.11.0` against my
+first guess, which is how finding (1) was made. The constant followed the
+measurement; no assertion was loosened.
+
+**Banked for the next slot at no extra compute: step 2's prescribed red
+baseline.** Its §9 text asks for the collect census on the *unmigrated* tree so
+"zero errors" has a measured starting point. Both modes, **identical**:
+`124 collected / 75 errors` per rank (`…094005Z_OPS-18-step2-census-real.log`,
+`…094029Z_…-complex.log`, exit 2/2 s and 2/7 s). **One root cause dominates:**
+71 of 75 are `ImportError: cannot import name 'gmshio' from 'dolfinx.io'`; the
+other 4 are cascade imports *from those same broken modules*
+(`_facet_group_area`, `GAP_TAGS`, `AXIAL_RECORD_DISSIPATED_W`), not independent
+breaks. So there is no second surprise at collect level.
+
+**Container restored and verified** before the slot ended, per the worksite
+rule: rebuilt from `main`'s Dockerfile and force-recreated — `dolfinx 0.7.2`,
+`python 3.10.12`, `memory.max` 68719476736 (64.00 GiB), `pgrep -c python3` = 0.
+The next non-`OPS-18` run finds 0.7.2 Up.
+
+**One denied command, per the protocol's reporting rule.** `docker image tag
+fem-em-solver:latest fem-em-solver:0.7.2-rollback` — denied; the allowlist has
+`Bash(docker compose *)` but no bare `docker` verb. Not worked around. The
+step-1 text's "keep the old image present for rollback" was satisfied a
+different way: rollback is a **cached rebuild from `main`'s Dockerfile**, which
+is ~80 s because the v0.7.2 base and every pip layer are still local, and it was
+exercised for real this slot. **This is a note, not an ask** — the route works
+and needs no allowlist change. `scripts/automation/hooks/`, `volumes:` and the
+64 G limit were untouched; the only compose edit is the one `PYTHONPATH` key,
+inside the standing constraint.
+
+**Hypothesis for the next attempt (item 2, step 2 — API migration).** The census
+says the migration is *front-loaded onto one import*: fix `gmshio` →
+`dolfinx.io.gmsh` with `model_to_mesh` returning `MeshData` (the tuple-unpack in
+`src/…/io/mesh.py` is the single upstream edit; the 4 cascade errors should
+vanish with it) and the collect count should jump most of the way to the
+leg-(b2) baseline of 236 in one edit. Expect the *second* wave —
+`FunctionSpace` → `functionspace`, `LinearProblem(petsc_options_prefix=…)`,
+`discrete_gradient`'s namespace move — to be invisible to `--collect-only` and
+to surface only once imports resolve, so **re-run the census after the `gmshio`
+fix before sizing the rest**; `tests/environment/test_complex_mode.py` is
+already known to carry a `fem.FunctionSpace` call in a test body. Budget the
+slot as editing time, not compute — collects are 2–7 s.
