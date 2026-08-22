@@ -28,6 +28,49 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` fails **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
+
+> **Where this fires.** `tests/mesh/test_mesh_tag_integrity.py::test_region_resolution_policy_refines_the_tagged_volumes_toward_cad`,
+> on the `attempt/OPS-18` worksite branch only. `main` boots 0.7.2 and is
+> unaffected — this is not a failure on `main`, and no `main` run should ever
+> see it.
+>
+> **Literal symptom** (`20260822T110624Z_OPS-18-step2-shim-runtime.log`,
+> `1 failed, 6 passed, 4 skipped` in 15.85 s, `-n 2`, real build, both rank
+> footers identical):
+>
+> ```
+> AssertionError: uniform sizing moved tag 1 (coil_1) by 4.251e-04 against its
+> OPS-17 record: 1.191750413e-04 -> 1.192257046e-04 m^3
+> ```
+>
+> **Verified at** `cc431c9` + the step-2 shim, i.e. the first commit at which
+> `io/mesh.py` imports under 0.11 at all — the `gmshio` collect error masked
+> every runtime number before it, so this could not have been observed earlier.
+>
+> **Cause: the image's gmsh, not the migration.** The failing quantity is a
+> *meshed volume* of a fixed CAD region under fixed sizing — a mesh-generator
+> output, not a solved one. The 0.7.2 → 0.11 image change carries a new gmsh
+> along with it, and the §9 item-3 trap clause anticipates exactly this class
+> ("the new image carries a new gmsh — a moved *cell count* with identities
+> intact is re-recorded with a note; a moved gated *physics* number is a
+> finding"). The three identity-shaped assertions in the same file — tag
+> integrity and the region-resolution policy pair — **pass unchanged**, so the
+> tagging and the sizing policy are intact; only the record's last digits moved.
+> The drift is 4.3e-04 relative, four orders below any gated physics band.
+>
+> **Not diagnosed further, and deliberately not fixed here.** `OPS-18` step 2's
+> done-when is collect-level, and the re-record/finding disposition belongs to
+> **step 3**, which owns §5.3's environment table and every gated band. No
+> assertion, band or record was touched by step 2 — the record moving is
+> evidence about the image, and re-recording it before the re-gate leg has run
+> would spend the trap clause's discrimination for nothing.
+>
+> **For step 3:** this is the first observed instance of the predicted gmsh
+> drift and it is in the *re-record* category on its face. Expect siblings in
+> other volume/cell-count records; a gated *physics* number moving is the
+> different animal the clause stops on.
+
 ### ✅ FIXED 2026-08-19 (`OPS-22`) — the magnetostatic loop-drive fixtures were complex-hostile: `ufl.max_value` / `<=` geometry predicates in the current-density callable (`OPS-17` leg (b2), 2026-08-19)
 
 > **FIXED 2026-08-19, 04:30 implementer slot (`OPS-22` step 1).** All three
