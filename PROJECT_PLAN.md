@@ -2427,7 +2427,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | ✅ 2026-08-16 (graded sizing recovers **0.9670** of the conductor's CAD mass at h_c = 1.6 mm vs **0.7403** baseline, gate cleared, `GEO-9` identities unmoved at < 1e-9; 41 s at `-n 2`; closed by the 10:30 review — the chunk was its one question, now answered by measurement) | standard |
 | `GEO-16` | **Emit the gap boxes' longitudinal port-sheet mid-plane in `two_torus_domain`** (the `PORT-9` step-1 mesh prerequisite; commissioned 2026-08-16 18:00 review) | ✅ | standard |
 | `GEO-17` | `coil_phantom_domain` region-resolution policy shrinks the coil volumes it refines (−21.68%/−22.62%; `OPS-17` step-2 defect 1, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) — step 1 ✅ 2026-08-20: the sizes were never applied (`getBoundary` `combined=True` ⇒ 0 points); `Min`-over-`Constant`-fields, coil meshed/CAD 0.7547 → **0.8356** | ✅ *(audited COMPLIANT 2026-08-21 18:00 review — 1e-9 negative-control gate, sign-of-refinement identity and partition 1.000000000000 verified against `20260820T110549Z…final.log`)* | standard |
-| `GEO-18` | Birdcage conductor gaps: cut the legs so the port boxes have terminals (`PORT-9` step-3 mesh prerequisite; commissioned 2026-08-20 03:00 review from step 3 legs (a)+(b) 🚫) | 🟡 (**step 1 ✅ 2026-08-20** — terminals exist: 2.236196e-04 m² per port, **0.988616** of the closed-form `2·π·r_leg²`, all four equal to the printed 7 digits, *audited COMPLIANT 2026-08-21 18:00 review — closed-form band, closure and mass identities verified against all three logs, the pre-derivation red disclosed*; **step 2 scoped 2026-08-21 18:00 review** on step 1's measured extents, queued §9 item 4) | standard |
+| `GEO-18` | Birdcage conductor gaps: cut the legs so the port boxes have terminals (`PORT-9` step-3 mesh prerequisite; commissioned 2026-08-20 03:00 review from step 3 legs (a)+(b) 🚫) | 🟡 (**step 1 ✅ 2026-08-20** — terminals exist: 2.236196e-04 m² per port, **0.988616** of the closed-form `2·π·r_leg²`, all four equal to the printed 7 digits, *audited COMPLIANT 2026-08-21 18:00 review — closed-form band, closure and mass identities verified against all three logs, the pre-derivation red disclosed*; **step 2 ✅ 2026-08-22** — the sheets exist and are exact: meshed sheet area `1.120000000e-04 m²` = the analytic `dx·g` at **1.000000000000** on all four ports, `w_eff = A/h` equal to the bbox extent to 1.000000000000, out-of-plane spread ≤ 2.512e-16 m, half-volumes 0.500000000000 each, C4 sheet spread **8.470e-16**, step 1's terminal band and closure re-asserted on the sheeted mesh) | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -2706,7 +2706,7 @@ path, not polish.
 > resolved.
 
 **`GEO-18` — birdcage conductor gaps: cut the legs so the port boxes have
-terminals** ⬜ *(commissioned 2026-08-20 03:00 review from `PORT-9` step 3
+terminals** ✅ *(both steps closed — step 1 2026-08-20, step 2 2026-08-22; commissioned 2026-08-20 03:00 review from `PORT-9` step 3
 legs (a)+(b) 🚫 — the measured facts this chunk answers: the birdcage
 mesh's global facet-tag set is exactly `{1}` (no port sheet), and every
 port box's conductor-facing area is exactly `0.000000e+00 m²` under a
@@ -2869,6 +2869,39 @@ what makes `PORT-9` step 3 runnable at all; nothing about its gates
 > half-volume/closure identities and the C4 spread are assertions one rank
 > passed, which is not a measurement. Fix is to hoist the reductions above the
 > rank guard and re-run the same command; the geometry is not in question.
+> **Step 2 executed 2026-08-22, 21:00 slot — ✅, the sheets are exact.**
+> Attempt 1's diff resumed unchanged (`5c398ab` → `attempt/GEO-18-step2-`
+> `20260822T020200Z`); the single fix is the one attempt 1 named — the
+> record loop's `_global_facet_count` (an `allreduce`) hoisted above
+> `if comm.rank == 0` into a `sheet_count` dict, so both ranks enter the
+> collective. Nothing about the construction changed, and the CAD-side
+> numbers reproduce attempt 1's exactly. **Measured, per port** (log
+> `20260822T020113Z_GEO-18-step2.log`, 2 passed, exit 0, 53 s, `-n 2`,
+> standard, real build): sheet **54 facets, 1.120000000e-04 m²**,
+> meshed/analytic `dx·g` = **1.000000000000**; `h = 8.000000000e-03 m` =
+> the gap; `w_eff = A/h = 1.400000000e-02 m` with
+> `w_eff/w_bbox = 1.000000000000` — the facet set is the *whole*
+> mid-section, not a ragged part of one (`PORT-9` step 2b's convention,
+> the `EX-24` f = 1.0 assertion); out-of-plane spread **2.512e-16 /
+> 9.714e-17 m** against the 1e-12 band; half-volumes
+> **0.500000000000 / 0.500000000000** of the step-1 gap box, so the split
+> plane does pass through the leg axis as constructed; step 1's gates
+> survive the split — terminal 2.236196e-04 m², ratio **0.988616** inside
+> [0.95, 1.0], closure `(A_cond + A_air + A_phan)/A_box =
+> **1.000000000000**`, phantom-facing exactly 0, `GEO-9` partition
+> identities < 1e-9. **C4 sheet spread 8.470e-16** relative across the
+> four ports — gate (iii)'s circulant premise now holds on the sheet as
+> well as on the terminal. Sheeted mesh **116 416** cells (step 1:
+> 114 846), mesh 22.73 s, rung 24.77 s. **Negative control in the same
+> test:** sheets off reproduces step 1 exactly — **114 846** cells at
+> ratio 1.000000, terminal ratios 0.988616 on all four, cell tags
+> `[1, 2, 3, 101, 102, 103, 104]` with every `110+i` and `210+i` asserted
+> absent. **Regression:** the whole birdcage mesh suite, 10 passed,
+> exit 0, 186 s (`20260822T020224Z_GEO-18-step2-regression.log`) —
+> `io/mesh.py`'s opt-in changes nothing when off. Step 2's gate is
+> closed; **`PORT-9` step 3's mesh prerequisite is discharged** — the
+> birdcage now has both terminals and a port sheet per port, and step 3
+> re-runs unchanged (gates (i)–(iii) never moved).
 
 ### TH — Time-harmonic Maxwell (Phase 2)
 
@@ -4233,7 +4266,7 @@ until that check returns.
 | `PORT-6` | Frequency sweep orchestration | 🧪 | smoke |
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard |
-| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(**step 1 done 2026-08-17** — parked formulation merged, sheet instantiated on `GEO-16`'s facet tag `212` of the solve fixture, both routes read off one 10 MHz solve: gap 0.894310 × ωM₁₂ raw (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route **7.7095%** against step 2's 5% band. **Step 2 executed 2026-08-17**: both pre-stated bands **MISS** (cross-route 7.7095% vs 5%; lumped mutual 12.6931% vs 10%; the gap route stays inside at 6.0391%) and the miss is **diagnosed** — it is the transverse average over the sheet, 7.7783 pp, with a path/projection residual of only **0.0763 pp** against the pre-stated ~1 pp threshold. Bands not widened. **Decision made 2026-08-17 10:30: narrow the sheet — step 2b scoped** (width ladder f ∈ {1.0, 0.735, 0.5}; the measured profile predicts ~1% at interior width). **Step 2b executed 2026-08-17, 12:00 slot — the band HOLDS**: ladder 7.7095% (f = 1.0, the negative control, reproducing step 2 to < 1e-4) → 3.6730% → **1.8333%** at f = 0.5 against the unmoved 5% band, open-limit identity < 1e-11 per width, 14 passed 150.5 s at `-n 2`. One finding en route: the sheet's width is the **area-based effective width `A/h`**, not the bounding-box extent (the midpoint filter leaves a ragged edge; bbox overstates by 14–15% and the first attempt read 14.04% MISS because of it) — the convention is now part of the port model's spec. Step 2's gate is closed at the narrowed definition; step 3 unblocked on this side, its ports use f = 0.5. **Step 2c executed 2026-08-18, 22:30 slot — the reciprocity leg is run and the route exists**: `run_n_port_sparameter_sweep` gained a third excitation route (`LumpedSheetPortSpec`, sheets on every port, impressed source on the driven one, `V = V_src − I·Z_p`), and the two-torus two-port sweep at f = 0.5 on both ports reads **‖S − Sᵀ‖/‖S‖ = 2.574249e-11** against the unmoved 1e-3 band (‖Z − Zᵀ‖/‖Z‖ = 1.767820e-09), 7 passed 122.2 s at `-n 2`. Cross-route *inside* the sweep 1.6079% / 1.5950%, inside step 2's 5% band, 0.23 pp off step 2b's 1.8333% — the reading is drive-dependent at that grain. Two legs not run as written (the 1e-4 reproduction is not the same quantity under a sheet drive; the fragmented-mesh gap sweep needs a multi-tag `GapVoltagePortSpec`), the negative control run instead as the record-owning gates, 16 passed. Step 3's gate (i) prerequisite is discharged. **Step 3 legs (a)+(b) executed 2026-08-19/20, both 🚫**: the birdcage mesh has **no port-sheet facet** (global facet set exactly `{1}`) and its port boxes have **no terminals** (conductor facet area exactly 0.000000e+00 m² on all four ports under a closure identity at 1.000000000000) — they are air blocks outside an uncut coil, so no solve can reach the gates. **Step 3 is blocked on `GEO-18`** (birdcage conductor gaps, commissioned 2026-08-20 03:00 review — cut the legs, square-section boxes, drive `ẑ`; supersedes leg (a)'s mid-plane prescription))* | standard |
+| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(**step 1 done 2026-08-17** — parked formulation merged, sheet instantiated on `GEO-16`'s facet tag `212` of the solve fixture, both routes read off one 10 MHz solve: gap 0.894310 × ωM₁₂ raw (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route **7.7095%** against step 2's 5% band. **Step 2 executed 2026-08-17**: both pre-stated bands **MISS** (cross-route 7.7095% vs 5%; lumped mutual 12.6931% vs 10%; the gap route stays inside at 6.0391%) and the miss is **diagnosed** — it is the transverse average over the sheet, 7.7783 pp, with a path/projection residual of only **0.0763 pp** against the pre-stated ~1 pp threshold. Bands not widened. **Decision made 2026-08-17 10:30: narrow the sheet — step 2b scoped** (width ladder f ∈ {1.0, 0.735, 0.5}; the measured profile predicts ~1% at interior width). **Step 2b executed 2026-08-17, 12:00 slot — the band HOLDS**: ladder 7.7095% (f = 1.0, the negative control, reproducing step 2 to < 1e-4) → 3.6730% → **1.8333%** at f = 0.5 against the unmoved 5% band, open-limit identity < 1e-11 per width, 14 passed 150.5 s at `-n 2`. One finding en route: the sheet's width is the **area-based effective width `A/h`**, not the bounding-box extent (the midpoint filter leaves a ragged edge; bbox overstates by 14–15% and the first attempt read 14.04% MISS because of it) — the convention is now part of the port model's spec. Step 2's gate is closed at the narrowed definition; step 3 unblocked on this side, its ports use f = 0.5. **Step 2c executed 2026-08-18, 22:30 slot — the reciprocity leg is run and the route exists**: `run_n_port_sparameter_sweep` gained a third excitation route (`LumpedSheetPortSpec`, sheets on every port, impressed source on the driven one, `V = V_src − I·Z_p`), and the two-torus two-port sweep at f = 0.5 on both ports reads **‖S − Sᵀ‖/‖S‖ = 2.574249e-11** against the unmoved 1e-3 band (‖Z − Zᵀ‖/‖Z‖ = 1.767820e-09), 7 passed 122.2 s at `-n 2`. Cross-route *inside* the sweep 1.6079% / 1.5950%, inside step 2's 5% band, 0.23 pp off step 2b's 1.8333% — the reading is drive-dependent at that grain. Two legs not run as written (the 1e-4 reproduction is not the same quantity under a sheet drive; the fragmented-mesh gap sweep needs a multi-tag `GapVoltagePortSpec`), the negative control run instead as the record-owning gates, 16 passed. Step 3's gate (i) prerequisite is discharged. **Step 3 legs (a)+(b) executed 2026-08-19/20, both 🚫**: the birdcage mesh has **no port-sheet facet** (global facet set exactly `{1}`) and its port boxes have **no terminals** (conductor facet area exactly 0.000000e+00 m² on all four ports under a closure identity at 1.000000000000) — they are air blocks outside an uncut coil, so no solve can reach the gates. **Step 3 is blocked on `GEO-18`** (birdcage conductor gaps, commissioned 2026-08-20 03:00 review — cut the legs, square-section boxes, drive `ẑ`; supersedes leg (a)'s mid-plane prescription). **`GEO-18` closed 2026-08-22** — terminals (step 1) *and* port sheets (step 2, area exact to 1.000000000000, C4 spread 8.470e-16) now exist on the birdcage, so **step 3's mesh prerequisite is discharged**; step 3 re-runs unchanged, unqueued as of this slot)* | standard |
 | `PORT-10` | The two `PORT-1` systematics: composition measured, not assumed | ✅ 2026-08-16 (cross-term **−0.0604 pp** inside the pre-stated ±0.5 pp) | heavy |
 
 **`PORT-1` — Real port excitation from the solved field** ✅ *(closed by
@@ -5493,9 +5526,11 @@ beyond the two-torus fixture and the Larmor-regime validation gate.
    prerequisite is discharged. **Step 3 is blocked on the mesh
    (2026-08-19/20, legs (a)+(b) 🚫): the birdcage has no port-sheet
    facet and its port boxes have no terminals — the coil is uncut.**
-   The front is **`GEO-18`** (cut the legs; commissioned 2026-08-20),
-   then step 3 (reciprocity, passivity, C4 circulant symmetry of Z),
-   ports at f = 0.5.
+   **`GEO-18` closed 2026-08-22** (step 1 the terminals, step 2 the port
+   sheets — 1.120000000e-04 m² = analytic on all four, C4 spread
+   8.470e-16), so the mesh prerequisite is discharged and the front is
+   now step 3 itself (reciprocity, passivity, C4 circulant symmetry of
+   Z), ports at f = 0.5.
 2. **The 64 MHz h → 0 bracket** §2's extrapolation sentence waits on:
    `TH-11` closed 2026-08-18 (the degree-1 ladder is a measured
    negative — superlinear memory wall), `TH-12` step 2 measured the
@@ -5650,13 +5685,17 @@ Waiting-on-you, and let the first-undone rule fall through to item 4.
    `attempt/OPS-18` to `main` with all logs in one commit; negative
    result ⇒ `main` keeps 0.7.2**, the branch stays parked with the
    failing step named.
-4. 🟡 **attempt 1 2026-08-22, 19:30 slot — parked on
-   `attempt/GEO-18-step2-20260822T004500Z`; resume it, do not restart
-   it.** The construction is built and the CAD side reads the anchor
-   exactly (`1.120000000e-04 m²` on all four sheets); the command is
-   exit 124 because the record print calls a reduction inside
-   `if comm.rank == 0`. Next slot hoists the reductions above the rank
-   guard and re-runs the same command — see the §7 step-2 annotation.
+4. ✅ **DONE 2026-08-22, 21:00 slot — attempt 2, `GEO-18` step 2 closed
+   and with it the whole chunk.** Attempt 1's parked diff resumed; the
+   only change was hoisting the record loop's `allreduce` above
+   `if comm.rank == 0`. Sheet area 1.120000000e-04 m² = analytic `dx·g`
+   at 1.000000000000 on all four ports, `w_eff/w_bbox` 1.000000000000,
+   spread ≤ 2.512e-16 m, halves 0.500000000000, C4 spread 8.470e-16,
+   step 1's terminal band and closure re-asserted; control reproduces
+   114 846 cells / 0.988616 with the `110+i`/`210+i` tags absent. 2
+   passed 53 s + birdcage-suite regression 10 passed 186 s, both exit 0.
+   **`PORT-9` step 3's mesh prerequisite is discharged — the next review
+   queues step 3.**
    **`GEO-18` step 2 — the port-sheet mid-plane (standard).** Execute
    the §7 `GEO-18` step-2 entry (scoped this review on step 1's
    measured extents; full rubric there). `GEO-16`'s pattern on the leg

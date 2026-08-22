@@ -2797,6 +2797,7 @@ class MeshGenerator:
         min_port_face_area: float = 2.5e-5,
         min_port_center_separation: Optional[float] = None,
         leg_gap_length: Optional[float] = None,
+        emit_port_sheets: bool = False,
         air_padding: float = 0.03,
         resolution: float = 0.015,
         conductor_resolution: Optional[float] = None,
@@ -2836,6 +2837,17 @@ class MeshGenerator:
             closed-form area ``π·r_leg²`` each, the drive direction is ``ẑ``
             for every port, and the four-port layout is exactly C4-invariant.
             `port_box_size` is ignored in this mode — the gap sets it.
+        emit_port_sheets : bool, optional
+            `GEO-18` step 2, requires `leg_gap_length`. ``False`` (default)
+            leaves the gapped mesh bit-for-bit as step 1 built it. When ``True``,
+            each port box is split by the axis-aligned coordinate plane
+            containing its own leg axis (y-normal for a leg on the x-axis,
+            x-normal for one on the y-axis), the rectangle entering the fragment
+            as a dim-2 tool so the tets conform to it. The halves become separate
+            cell tags — ``100+i`` below the plane, ``110+i`` above — and the sheet
+            is what they share, so a caller rebuilds it dolfinx-side as an
+            interface facet group over that tag pair. Mesh-side only: no port
+            model and no drive live here.
             Mesh-side only: a gapped birdcage carries no lumped elements and
             therefore still cannot resonate.
         conductor_resolution : float, optional
@@ -2884,6 +2896,15 @@ class MeshGenerator:
             raise ValueError("coil_length must be > 0")
         if ring_radius <= 0.0:
             raise ValueError("ring_radius must be > 0")
+
+        if emit_port_sheets and leg_gap_length is None:
+            # Checked here, before any gmsh state exists: the mode is a
+            # contradiction, not a build failure.
+            raise ValueError(
+                "emit_port_sheets requires leg_gap_length: the sheet is the leg "
+                "gap box's mid-plane, and without a gap the port boxes float in "
+                "the air with no terminals to span"
+            )
 
         leg_radius_eff = 0.5 * leg_width
         if leg_gap_length is None:
@@ -2942,6 +2963,7 @@ class MeshGenerator:
                     port_box_size=port_box_size,
                     port_radius=port_diagnostics["port_radius_m"],
                     leg_gap_length=leg_gap_length,
+                    emit_port_sheets=emit_port_sheets,
                     air_padding=air_padding,
                     resolution=resolution,
                     conductor_resolution=conductor_resolution,
@@ -3000,6 +3022,7 @@ class MeshGenerator:
         air_padding: float,
         resolution: float,
         leg_gap_length: Optional[float] = None,
+        emit_port_sheets: bool = False,
         conductor_resolution: Optional[float] = None,
         conductor_refine_distance: Optional[float] = None,
     ) -> Dict[str, object]:
@@ -3059,6 +3082,26 @@ class MeshGenerator:
 
         port_dx, port_dy, port_dz = port_box_size
         port_tags: List[int] = []
+        # `GEO-18` step 2: one rectangle per port, the gap box's own mid-section
+        # in the plane containing that leg's axis. Added as dim-2 *tools* to the
+        # same fragment below so the tets conform to it — exactly the box's
+        # cross-section, no larger, or the fragment would cut the conductor and
+        # the air box along the same plane. Keyed by port ordinal: which
+        # coordinate the plane pins, and at what value.
+        sheet_tags: List[int] = []
+        sheet_of_ordinal: Dict[int, Tuple[str, float]] = {}
+        if emit_port_sheets:
+            if leg_gap_length is None:
+                raise ValueError(
+                    "emit_port_sheets requires leg_gap_length: the sheet is the "
+                    "leg gap box's mid-plane, and without a gap there is no box "
+                    "on the leg to split"
+                )
+            if leg_count > 9:
+                raise ValueError(
+                    "emit_port_sheets encodes the port halves as cell tags "
+                    f"100+i and 110+i, so leg_count must be <= 9, got {leg_count}"
+                )
         for idx, angle in enumerate(theta):
             if leg_gap_length is None:
                 next_angle = theta[(idx + 1) % leg_count]
@@ -3081,6 +3124,41 @@ class MeshGenerator:
                 port_dz,
             )
             port_tags.append(port)
+
+            if emit_port_sheets:
+                # The plane contains the leg axis *and* the radial direction, so
+                # its normal is azimuthal: y-normal for a leg on the x-axis,
+                # x-normal for a leg on the y-axis. `addRectangle` only builds in
+                # the xy plane, so build it there and rotate the in-plane extent
+                # that must become the gap into z. Both rectangles are symmetric
+                # about the rotation axis, so the sign convention of the 90-degree
+                # rotation cannot matter.
+                ordinal = idx + 1
+                if abs(np.sin(box_angle)) < 1.0e-12:
+                    sheet = gmsh.model.occ.addRectangle(
+                        cx - 0.5 * port_dx, -0.5 * port_dz, 0.0, port_dx, port_dz
+                    )
+                    gmsh.model.occ.rotate(
+                        [(2, sheet)], 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.5 * np.pi
+                    )
+                    gmsh.model.occ.translate([(2, sheet)], 0.0, cy, 0.0)
+                    sheet_of_ordinal[ordinal] = ("y", float(cy))
+                elif abs(np.cos(box_angle)) < 1.0e-12:
+                    sheet = gmsh.model.occ.addRectangle(
+                        -0.5 * port_dz, cy - 0.5 * port_dy, 0.0, port_dz, port_dy
+                    )
+                    gmsh.model.occ.rotate(
+                        [(2, sheet)], 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.5 * np.pi
+                    )
+                    gmsh.model.occ.translate([(2, sheet)], cx, 0.0, 0.0)
+                    sheet_of_ordinal[ordinal] = ("x", float(cx))
+                else:
+                    raise NotImplementedError(
+                        "emit_port_sheets builds axis-aligned rectangles, so every "
+                        "leg must sit on a coordinate axis; port "
+                        f"P{ordinal} is at {np.degrees(box_angle):.3f} degrees"
+                    )
+                sheet_tags.append(sheet)
 
         radial_extent = ring_radius + max(leg_radius_eff, ring_minor_radius) + port_dy + air_padding
         z_extent = max(0.5 * coil_length, 0.5 * leg_spacing + ring_minor_radius, 0.5 * phantom_height) + air_padding
@@ -3105,22 +3183,30 @@ class MeshGenerator:
         # out-map — fragment renumbers and reorders, so absolute tags from before
         # the call mean nothing afterwards.
         tool_tags = conductor_tags + [phantom_tag] + port_tags
+        tool_dimtags = [(3, tag) for tag in tool_tags] + [
+            (2, tag) for tag in sheet_tags
+        ]
         _, fragment_map = gmsh.model.occ.fragment(
             [(3, air_tag)],
-            [(3, tag) for tag in tool_tags],
+            tool_dimtags,
         )
         gmsh.model.occ.synchronize()
 
         # out-map is positional: one entry per input, objects first then tools.
-        input_tags = [air_tag] + tool_tags
-        if len(fragment_map) != len(input_tags):
+        input_dimtags = [(3, air_tag)] + tool_dimtags
+        if len(fragment_map) != len(input_dimtags):
             raise RuntimeError(
                 "birdcage_port_domain: occ.fragment returned an out-map of "
-                f"{len(fragment_map)} entries for {len(input_tags)} inputs"
+                f"{len(fragment_map)} entries for {len(input_dimtags)} inputs"
             )
 
+        # Only dim-3 inputs are ancestors of a dim-3 piece; the sheets are dim-2
+        # tools, and gmsh numbers surfaces and volumes in separate spaces, so a
+        # sheet tag entering `ancestors` could collide with a volume tag.
         ancestors: Dict[int, set] = {}
-        for input_tag, pieces in zip(input_tags, fragment_map):
+        for (input_dim, input_tag), pieces in zip(input_dimtags, fragment_map):
+            if input_dim != 3:
+                continue
             for dim, piece in pieces:
                 if dim == 3:
                     ancestors.setdefault(piece, set()).add(input_tag)
@@ -3140,9 +3226,23 @@ class MeshGenerator:
             elif phantom_tag in sources:
                 group_of_piece[piece] = 3
             elif sources & port_ordinal.keys():
-                group_of_piece[piece] = 100 + min(
+                ordinal = min(
                     port_ordinal[tag] for tag in sources if tag in port_ordinal
                 )
+                if emit_port_sheets:
+                    # `GEO-18` step 2 / `GEO-16`: with the sheet in, each port box
+                    # is two pieces, one either side of its own mid-plane. The
+                    # sheet is a dim-2 input and so never an ancestor; the halves
+                    # are told apart by centroid against the plane's coordinate,
+                    # the same centroid discipline the two-torus branch uses.
+                    axis, coordinate = sheet_of_ordinal[ordinal]
+                    centre = gmsh.model.occ.getCenterOfMass(3, piece)
+                    value = centre[0] if axis == "x" else centre[1]
+                    group_of_piece[piece] = (
+                        110 + ordinal if value > coordinate else 100 + ordinal
+                    )
+                else:
+                    group_of_piece[piece] = 100 + ordinal
             else:
                 group_of_piece[piece] = 2
 
@@ -3152,12 +3252,17 @@ class MeshGenerator:
 
         group_names = {1: "conductor", 2: "air", 3: "phantom"}
         for idx in port_ordinal.values():
-            group_names[100 + idx] = f"port_P{idx}"
+            group_names[100 + idx] = (
+                f"port_P{idx}_lower" if emit_port_sheets else f"port_P{idx}"
+            )
+            if emit_port_sheets:
+                group_names[110 + idx] = f"port_P{idx}_upper"
 
+        expected_groups = [1, 2, 3] + [100 + i for i in port_ordinal.values()]
+        if emit_port_sheets:
+            expected_groups += [110 + i for i in port_ordinal.values()]
         missing_groups = [
-            group_names[tag]
-            for tag in [1, 2, 3] + [100 + i for i in port_ordinal.values()]
-            if tag not in pieces_by_group
+            group_names[tag] for tag in expected_groups if tag not in pieces_by_group
         ]
         volumes = gmsh.model.getEntities(dim=3)
         masses = {tag: gmsh.model.occ.getMass(3, tag) for _, tag in volumes}
@@ -3197,6 +3302,59 @@ class MeshGenerator:
             ),
             flush=True,
         )
+
+        # `GEO-18` step 2 / `GEO-16`: the sheet is what the two halves of one port
+        # box share — the mid-plane, and nothing else, because the halves touch
+        # only there. OCC's own area and bounding box give the CAD denominator the
+        # meshed reading is scored against, and the `PORT-9` step-2b effective
+        # width `w = A/h` its extents.
+        port_sheet_cad: Dict[str, object] = {}
+        if emit_port_sheets:
+            for ordinal in sorted(port_ordinal.values()):
+                shared = sorted(
+                    {
+                        surf
+                        for vol in pieces_by_group[100 + ordinal]
+                        for _, surf in gmsh.model.getBoundary(
+                            [(3, vol)], oriented=False, recursive=False
+                        )
+                    }
+                    & {
+                        surf
+                        for vol in pieces_by_group[110 + ordinal]
+                        for _, surf in gmsh.model.getBoundary(
+                            [(3, vol)], oriented=False, recursive=False
+                        )
+                    }
+                )
+                if not shared:
+                    raise RuntimeError(
+                        f"birdcage_port_domain: port P{ordinal}'s halves share no "
+                        "surface; the fragment did not conform to the port-sheet "
+                        "mid-plane"
+                    )
+                boxes = np.array(
+                    [gmsh.model.getBoundingBox(2, surf) for surf in shared]
+                )
+                port_sheet_cad[f"P{ordinal}"] = {
+                    "surfaces": len(shared),
+                    "area_m2": float(
+                        sum(gmsh.model.occ.getMass(2, surf) for surf in shared)
+                    ),
+                    "extent_x_m": float(boxes[:, 3].max() - boxes[:, 0].min()),
+                    "extent_y_m": float(boxes[:, 4].max() - boxes[:, 1].min()),
+                    "extent_z_m": float(boxes[:, 5].max() - boxes[:, 2].min()),
+                }
+            print(
+                "[birdcage-mesh] port sheets (CAD) "
+                + " ".join(
+                    f"{name}: {d['surfaces']} surface(s) area={d['area_m2']:.9e} "
+                    f"extents=({d['extent_x_m']:.6e}, {d['extent_y_m']:.6e}, "
+                    f"{d['extent_z_m']:.6e})"
+                    for name, d in sorted(port_sheet_cad.items())
+                ),
+                flush=True,
+            )
 
         outer_boundary_surfaces = []
         for dim, surf in gmsh.model.getEntities(dim=2):
@@ -3295,4 +3453,5 @@ class MeshGenerator:
             "cad_mass_by_group": cad_mass_by_group,
             "mesh_wall_time_s": float(mesh_wall_time),
             "conductor_resolution_m": conductor_resolution,
+            "port_sheet_cad": port_sheet_cad,
         }

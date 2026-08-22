@@ -17108,3 +17108,74 @@ construction is right and only the instrumentation is wrong. Separately, the
 first live review after this slot owes item 1 a decision: quote the
 `Edit(docker/**)` denial into the dashboard's Waiting-on-you and note that the
 pull gate everyone expected is already open.
+
+---
+
+## 2026-08-22T02:00Z — `GEO-18` step 2 — **complete**
+
+**Slot.** 21:00 local (2026-08-21 CDT) scheduled implementer run. Preflight
+clean: `main` clean, no `attempt/*` work of mine outstanding beyond the one I
+was sent to resume, container Up (0.7.2, up 3 days).
+
+**Item selection.** §9 item 1 is ⛔ blocked on the permission layer
+(`Edit(docker/**)` in `permissions.ask`) and items 2–3 inherit that block per
+the section preamble's fall-through clause, so the first undone item is **item
+4 — `GEO-18` step 2, 🟡 parked, "resume it, do not restart it."** I did not
+touch items 1–3; the operator decision they wait on is unchanged and still owed
+a dashboard line.
+
+**What was tried.** Exactly the prior entry's hypothesis, nothing more.
+Attempt 1's diff was resumed byte-for-byte from `5c398ab` onto a fresh branch
+off current `main` (`attempt/GEO-18-step2-20260822T020200Z`) — only
+`src/fem_em_solver/io/mesh.py` and `tests/mesh/test_birdcage_port_sheets.py`,
+since the branch's other files were stale copies of docs `main` has since moved.
+The single edit: the record loop's `_global_facet_count` (an `allreduce`) was
+hoisted out of `if comm.rank == 0` into an unconditional `sheet_count` dict, with
+a comment naming attempt 1's exit-124 deadlock so the trap does not come back.
+A sweep of the rest of the module found no other collective under a rank guard
+(`_sheet_extents`, `_tag_volume`, `_interface_area_or_zero` are all called
+unconditionally; `_sheet_axes` is pure). **No assertion, band, or geometry was
+touched** — the construction was never in question.
+
+**Measured.** `20260822T020113Z_GEO-18-step2.log`, 2 passed, **exit 0**, 53 s,
+`-n 2`, standard, real build, `timeout -k 30 400` as scoped:
+
+- sheet **54 facets, 1.120000000e-04 m²** per port, meshed/analytic `dx·g` =
+  **1.000000000000** on all four (band 1e-9);
+- `h = 8.000000000e-03 m` = the gap; `w_eff = A/h = 1.400000000e-02 m`,
+  `w_eff/w_bbox = **1.000000000000**` — the full mid-section, not a ragged part
+  (`PORT-9` step 2b's effective-width convention);
+- out-of-plane spread **2.512e-16 / 9.714e-17 m** against the 1e-12 band;
+- half-volumes **0.500000000000 / 0.500000000000** of the step-1 gap box — the
+  split plane does pass through the leg axis;
+- step 1's gates on the sheeted mesh: terminal 2.236196e-04 m², ratio
+  **0.988616** inside [0.95, 1.0]; closure **1.000000000000**; phantom-facing
+  exactly 0; `GEO-9` partition identities < 1e-9;
+- **C4 sheet spread 8.470e-16** relative — gate (iii)'s circulant premise now
+  measured on the sheet as well as the terminal;
+- sheeted mesh **116 416** cells, mesh 22.73 s, rung 24.77 s.
+
+**Negative control** (same test, sheets off): **114 846** cells at ratio
+1.000000, terminal ratios 0.988616 ×4, cell tags `[1, 2, 3, 101, 102, 103, 104]`
+— every `110+i` and `210+i` asserted absent, step 1 reproduced exactly.
+
+**Regression.** Whole birdcage mesh suite (7 modules), **10 passed, exit 0,
+186 s**, `-n 2` — `20260822T020224Z_GEO-18-step2-regression.log`. `io/mesh.py`'s
+opt-in changes nothing when off. Nothing filed to known-issues; no unrelated
+failure met.
+
+**Outcome.** Step 2 ✅ ⇒ **`GEO-18` ✅** (both steps closed). §7 chunk marker,
+table row, step-2 annotation, §9 item 4 and the §9.1 sequencing sentence flipped
+in the same commit as code, tests and both logs. `main` clean and green; the
+resume branch is superseded by the merge commit and attempt 1's
+`attempt/GEO-18-step2-20260822T004500Z` is left in place for the review to
+dispose of.
+
+**Hypothesis for the next attempt.** `PORT-9` step 3's mesh prerequisite is
+**discharged** — the birdcage now has terminals *and* a port sheet per port —
+but step 3 is not on the queue, and §9's drain instruction forbids improvising
+it. The next review should queue `PORT-9` step 3 (gates (i)–(iii) unmoved, ports
+at f = 0.5, sheets on tags `210+i`) as an item; it is the front. Note for
+sizing: step 3 solves on the 116 416-cell sheeted mesh, which is ~1.4% larger
+than the mesh every step-1/2 timing was taken on. Item 1's `Edit(docker/**)`
+denial is still the standing operator ask and still blocks items 1–3.
