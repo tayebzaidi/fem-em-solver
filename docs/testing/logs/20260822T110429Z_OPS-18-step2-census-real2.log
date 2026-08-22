@@ -1,0 +1,49 @@
+# Test Run
+- Chunk: OPS-18-step2-census-real2
+- Commit: cc431c998fcfe7fb5560f8cff727c76bc782d9ad
+- Time (UTC): 2026-08-22 11:04:30
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 2 bash -c "set -o pipefail; python3 -m pytest tests/ -q --collect-only 2>&1 | tail -5; echo PYTEST_RC=\$?"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 22 06:01 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 22 06:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 22 06:01 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  869 Aug 22 06:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 2 bash -c "set -o pipefail; python3 -m pytest tests/ -q --collect-only 2>&1 | tail -5; echo PYTEST_RC=\$?"'\'''
+      <Module test_waveguide_cutoff.py>
+        <Function test_evanescent_te10_decay_matches_cutoff_closed_form>
+        <Function test_decay_tracks_frequency_and_the_resonance_guard_stays_quiet>
+
+========================= 418 tests collected in 2.10s =========================
+PYTEST_RC=0
+      <Module test_waveguide_cutoff.py>
+        <Function test_evanescent_te10_decay_matches_cutoff_closed_form>
+        <Function test_decay_tracks_frequency_and_the_resonance_guard_stays_quiet>
+
+========================= 418 tests collected in 2.09s =========================
+PYTEST_RC=0
+
+## Exit
+- Status: 0
+- Elapsed (s): 3

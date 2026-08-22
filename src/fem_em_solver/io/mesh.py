@@ -6,7 +6,25 @@ import numpy as np
 import gmsh
 from mpi4py import MPI
 import dolfinx
-from dolfinx.io import gmshio
+from dolfinx.io import gmsh as dolfinx_gmsh
+
+
+def _model_to_mesh(model, comm, rank, **kwargs):
+    """`OPS-18` step 2: the 0.7 → 0.11 gmsh-interop shim.
+
+    ``dolfinx.io.gmshio.model_to_mesh`` moved to ``dolfinx.io.gmsh`` and now
+    returns a six-field :class:`~dolfinx.io.gmsh.MeshData` named tuple
+    (``mesh, cell_tags, facet_tags, ridge_tags, peak_tags, physical_groups``)
+    instead of the 0.7 three-tuple, so every call site's unpacking broke.  This
+    module is the project's only gmsh-interop boundary; keeping the conversion
+    here means one definition to revisit at the next upgrade, and the call
+    sites keep the ``(mesh, cell_tags, facet_tags)`` contract the rest of
+    ``io/mesh.py`` is written against.  ``ridge_tags``/``peak_tags`` are 0.11
+    additions this project has no consumer for; ``physical_groups`` duplicates
+    tag bookkeeping the generators already track by name.
+    """
+    data = dolfinx_gmsh.model_to_mesh(model, comm, rank, **kwargs)
+    return data.mesh, data.cell_tags, data.facet_tags
 
 #: `GEO-13`: ``cylindrical_domain``'s surface-classification tolerance, as a
 #: fraction of the radial gap ``outer_radius - inner_radius``.  Set from
@@ -235,7 +253,7 @@ class MeshGenerator:
             gmsh.model.mesh.optimize("Netgen")
 
         # Convert to dolfinx mesh
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
         
@@ -356,7 +374,7 @@ class MeshGenerator:
             gmsh.model.mesh.optimize("Netgen")
             
         # Convert to dolfinx mesh
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
         
@@ -513,7 +531,7 @@ class MeshGenerator:
             # gmsh.model.mesh.optimize("Netgen")
             
         # Convert to dolfinx mesh
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
         
@@ -564,7 +582,7 @@ class MeshGenerator:
             gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
             gmsh.model.mesh.generate(3)
         
-        mesh, _, _ = gmshio.model_to_mesh(gmsh.model, comm, rank, gdim=3)
+        mesh, _, _ = _model_to_mesh(gmsh.model, comm, rank, gdim=3)
         
         if comm.rank == rank:
             gmsh.finalize()
@@ -736,7 +754,7 @@ class MeshGenerator:
             gmsh.model.mesh.optimize("Netgen")
             
         # Convert to dolfinx mesh
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
         
@@ -845,7 +863,7 @@ class MeshGenerator:
             gmsh.model.mesh.generate(3)
             gmsh.model.mesh.optimize("Netgen")
 
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
 
@@ -1656,7 +1674,7 @@ class MeshGenerator:
         partitioner = dolfinx.mesh.create_cell_partitioner(
             dolfinx.mesh.GhostMode.shared_facet
         )
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3, partitioner=partitioner
         )
 
@@ -1869,7 +1887,7 @@ class MeshGenerator:
 
             gmsh.model.mesh.generate(3)
 
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
 
@@ -1998,7 +2016,7 @@ class MeshGenerator:
 
             gmsh.model.mesh.generate(3)
 
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
 
@@ -2555,7 +2573,7 @@ class MeshGenerator:
             gmsh.model.mesh.generate(3)
             gmsh.model.mesh.optimize("Netgen")
 
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
 
@@ -2983,7 +3001,7 @@ class MeshGenerator:
                 f"birdcage_port_domain geometry generation failed on rank {rank}"
             )
 
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
 

@@ -17424,3 +17424,100 @@ to surface only once imports resolve, so **re-run the census after the `gmshio`
 fix before sizing the rest**; `tests/environment/test_complex_mode.py` is
 already known to carry a `fem.FunctionSpace` call in a test body. Budget the
 slot as editing time, not compute — collects are 2–7 s.
+
+---
+
+## 2026-08-22T11:15Z — `OPS-18` step 2 (API migration) — **complete**
+
+**Slot:** 06:00 CDT scheduled implementer run. §9 On-deck **item 2**, taken by
+the first-undone rule (item 1 landed at 04:30 as required).
+
+**Outcome: step 2 CLOSED in one slot**, against its own "expect > 1 slot"
+estimate. Work is on the sanctioned worksite branch **`attempt/OPS-18`**
+(`main` keeps booting 0.7.2 per the worksite rule); the documentation half of
+this entry is mirrored onto `main` so the review and the next slot see it.
+
+**Preflight note.** `git status` was clean on `main`, but checking out
+`attempt/OPS-18` surfaced `docker/Dockerfile` + `docker/docker-compose.yml` as
+locally modified: the 04:30 slot restored the 0.7.2 container by rebuilding
+from `main`'s files, which leaves `main`'s content in the working tree — clean
+against `main`, dirty against the branch. Not an anomaly and not a human edit;
+`git checkout -- docker/` restored the branch's 0.11 versions. **Worth knowing
+for every remaining OPS-18 slot: the worksite branch will look dirty at
+checkout for exactly this reason, and the fix is a checkout, never a stash.**
+Merged `main` (78110a4, the 04:30 docs) into the branch first so the two do not
+diverge on documentation. Rebuild of the 0.11 image was fully cached (85 s,
+unpack-dominated); `dolfinx 0.11.0.post0`, Python `(3, 12)` confirmed on the
+recreated container.
+
+**What was tried.** Exactly one edit to `src/`, and no edit to any test:
+`src/fem_em_solver/io/mesh.py` imported `from dolfinx.io import gmshio`, which
+does not exist in 0.11. Replaced with `from dolfinx.io import gmsh as
+dolfinx_gmsh` plus a single module-level `_model_to_mesh(model, comm, rank,
+**kwargs)` shim, and rewrote the **11** `gmshio.model_to_mesh(` call sites to
+it. The shim exists because `model_to_mesh` now returns a six-field `MeshData`
+named tuple (`mesh, cell_tags, facet_tags, ridge_tags, peak_tags,
+physical_groups`), so every three-way unpack broke; it returns the
+`(mesh, cell_tags, facet_tags)` triple the rest of the module is written
+against. One definition, one place to revisit at the next upgrade. The call
+sites pass only `gdim=3` and (once) `partitioner=`, both of which survive
+unchanged in the 0.11 signature.
+
+**Measured numbers.**
+- Red baseline (step 1, same tree, unmigrated): `124 collected / 75 errors`,
+  identical in both modes.
+- **Real: `418 collected`, `PYTEST_RC=0`, both ranks** (2.10 / 2.09 s) —
+  `20260822T110429Z_OPS-18-step2-census-real2.log`.
+- **Complex: `418 collected`, `PYTEST_RC=0`, both ranks** (2.36 / 2.35 s),
+  under `FEM_EM_REQUIRE_COMPLEX=1` —
+  `20260822T110440Z_OPS-18-step2-census-complex.log`.
+- Per-directory reconciliation from
+  `20260822T110534Z_OPS-18-step2-census-tree.log`: environment 8, io 8,
+  materials 7, mesh 47, ports 17, post 33, solver 51, unit 15,
+  **validation 232**. 412 (leg-(b2) anchor) + 4 (step 1's
+  `test_dolfinx_version.py`) + 2 (`GEO-18` step 2, `bd12613`; `EX-27` added
+  none) = **418**, exact. Validation unmoved at 232 — the migration added and
+  removed no validation test.
+- Runtime probe of the shim, real, `-n 2`: `1 failed, 6 passed, 4 skipped` /
+  15.85 s, both rank footers identical —
+  `20260822T110624Z_OPS-18-step2-shim-runtime.log`.
+
+**The one failure, and why it was not fixed.**
+`test_region_resolution_policy_refines_the_tagged_volumes_toward_cad`:
+`uniform sizing moved tag 1 (coil_1) by 4.251e-04 against its OPS-17 record:
+1.191750413e-04 -> 1.192257046e-04 m^3`. This is a *meshed volume* of fixed CAD
+under fixed sizing — a gmsh output, and the new image carries a new gmsh, which
+is precisely the §9 item-3 trap clause's re-record category. Both
+identity-shaped tests in the same file pass, so tagging and the sizing policy
+are intact; the drift is four orders below any gated physics band. **Filed to
+known-issues; no assertion, band or record touched.** Step 2's done-when is
+collect-level, and the re-record-vs-finding disposition belongs to step 3,
+which owns §5.3's environment table. Re-recording now would spend the trap
+clause's discrimination before the leg that needs it has run.
+
+**Two rules for the next slot.**
+1. **A harness command whose payload ends in a pipe reports the wrong exit
+   code.** The first census (`20260822T110402Z`) ended `… | tail -40`, so the
+   footer's `Status: 0` was `tail`'s, not pytest's. Re-run with `set -o
+   pipefail` and an explicit `echo PYTEST_RC=$?` per rank. Cheap to repeat,
+   invisible when it bites — every `Status: 0` on a piped payload is unearned.
+2. **`--collect-only` proves nothing about runtime.** It never calls
+   `model_to_mesh`, so the shim would have looked green while being wrong.
+   The 16 s mesh probe is what actually exercised it, and it is what found the
+   gmsh drift a full slot before step 3 would have.
+
+**Hypothesis for the next attempt (item 3, step 3 — re-gate).** The pack's
+second wave (`FunctionSpace` → `functionspace`, `LinearProblem`'s
+`petsc_options_prefix`, `discrete_gradient`'s namespace move) fired **neither**
+at collect nor in the runtime probe, so either 0.11 kept back-compat aliases or
+those call sites are on paths the probe missed — check `src/` for them directly
+before assuming the re-gate leg is pure physics. Expect more siblings of the
+volume drift in cell-count/volume records; the discriminator is already on
+record with a magnitude (4.3e-04 relative), so a gated *physics* number moving
+should stand out by orders of magnitude rather than by argument. Size the legs
+from `OPS-17` leg (b2)'s per-file recorded widths with the cold-JIT × 3 rule —
+the JIT cache in the 0.11 image is **cold for every form**, so the first
+complex command of each family will pay it.
+
+**Container left as required:** `main` checked out clean, 0.7.2 rebuilt and
+force-recreated, so the next non-OPS-18 slot finds 0.7.2 Up.
