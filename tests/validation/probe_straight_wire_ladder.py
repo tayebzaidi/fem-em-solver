@@ -23,6 +23,7 @@ measurement, and the ruling on whether a record may move is the review's.
     mpiexec -n 2 python3 -u tests/validation/probe_straight_wire_ladder.py
 """
 
+import os
 import sys
 import time
 
@@ -41,8 +42,15 @@ from tests.validation.test_straight_wire import (
 #: measured twice already this chunk (147 235 cells, 15.3848%).
 RECORD = {
     0.004: (38_800, 0.2219),
+    0.0025: (145_900, 0.1275),
     0.0018: (383_200, 0.0926),
 }
+
+#: Rungs to run this invocation, as a comma-separated ``PROBE_H``.  Default is
+#: the two rungs the gated test does *not* cover; set ``PROBE_H=0.0025`` to
+#: interrogate the gated rung itself (`OPS-18` step 3 attempt 4 found it a
+#: 1.8x outlier on its own 0.11 ladder, and rank dependence is untested).
+RUNGS = [float(h) for h in os.environ.get("PROBE_H", "0.004,0.0018").split(",")]
 
 
 def main():
@@ -50,12 +58,13 @@ def main():
     n_points = 10
 
     if comm.rank == 0:
+        print(f"  ranks {comm.size}  rungs {RUNGS}")
         import dolfinx
         import gmsh
 
         print(f"  dolfinx {dolfinx.__version__}  gmsh {gmsh.__version__}")
 
-    for res in sorted(RECORD, reverse=True):
+    for res in sorted(RUNGS, reverse=True):
         t0 = time.perf_counter()
         mesh, b_field = _solve_straight_wire(res, comm)
         _, b_num_mag, b_ana_mag, _ = _sample_radial(
