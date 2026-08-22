@@ -1671,8 +1671,15 @@ class MeshGenerator:
         # is what makes that cell present as a ghost; it is also what a `dS`
         # integral over those facets needs. Plumbed here only, so no other
         # fixture changes partition.
+        # `OPS-18` step 3: 0.11 made `max_facet_to_cell_links` a *required*
+        # argument of `create_cell_partitioner` (0.7.2 took the mode alone).
+        # 2 is dolfinx's own default elsewhere (`create_mesh`) and its
+        # documented value for a non-branching manifold mesh, which every
+        # fixture here is — tetrahedra with each interior facet shared by
+        # exactly two cells. Passing `None` would mean "no upper bound" and
+        # is not what this mesh is.
         partitioner = dolfinx.mesh.create_cell_partitioner(
-            dolfinx.mesh.GhostMode.shared_facet
+            dolfinx.mesh.GhostMode.shared_facet, 2
         )
         mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3, partitioner=partitioner

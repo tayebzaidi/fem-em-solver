@@ -1,0 +1,75 @@
+# Test Run
+- Chunk: OPS-18-step3-mat4
+- Commit: de6e2073e41a944dafacdd19c2bff1b1ef5af5b5
+- Time (UTC): 2026-08-22 14:04:18
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && export FEM_EM_REQUIRE_COMPLEX=1 && export PYTHONPATH=/workspace/src:$PYTHONPATH && timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_lossy_sphere_sar.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 22 09:01 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 22 09:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 22 09:01 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  869 Aug 22 09:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && export FEM_EM_REQUIRE_COMPLEX=1 && export PYTHONPATH=/workspace/src:$PYTHONPATH && timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_lossy_sphere_sar.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 9 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [ 11%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 9 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [ 11%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 22%]PASSED [ 22%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 33%]PASSED [ 33%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 44%]PASSED [ 44%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact 
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 55%]PASSED [ 55%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter 
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 66%]PASSED [ 66%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 77%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 88%]
+tests/validation/test_lossy_sphere_sar.py::test_lossy_sphere_mean_sar_matches_closed_form PASSED [ 77%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 88%]
+tests/validation/test_lossy_sphere_sar.py::test_lossy_sphere_mean_sar_matches_closed_form PASSED [100%]PASSED [100%]
+
+============================== 9 passed in 35.83s ==============================
+
+
+============================== 9 passed in 35.83s ==============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 38
