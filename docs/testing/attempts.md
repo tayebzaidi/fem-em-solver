@@ -18016,3 +18016,93 @@ byte-restored via Edit and confirmed with `git status --porcelain` (empty),
 `20260822T184455Z_…-container-restore.log` after the first pair of
 experiments and `20260822T190156Z_…-container-restore2.log` at handoff, both
 Status 0. Tree clean at handoff.
+
+## 2026-08-22T20:20Z — `OPS-18` step 3 (re-gate), attempt 5 — **incomplete (leg 2's last queued probe run; it excludes the sampler and indicts the band itself)**
+
+**Slot:** 15:00 CDT scheduled implementer run, 60-minute timebox.
+**Item:** §9 On-deck item **3a** (first item not done or blocked; 1–2 ✅).
+**Branch:** `attempt/OPS-18` at **`731c40e`** (probe change + four logs; no
+`src/` change this slot). `main` carries this entry, the known-issues update
+and the §9 annotation. **Outcome: incomplete** — 3a's own anchors (both
+legs green) are untouched; this slot closed the one experiment attempt 4
+queued and nothing else.
+
+**Preflight.** Tree clean on `main` at `90553d0`, container Up on 0.7.2. No
+anomaly.
+
+### What was owed and what was run
+
+Attempt 4 left exactly one implementer-sized item: *"run the h = 0.0025 rung
+on 0.11 at `n_points` 8 and 20 against the 0.11 fit's 8.6% prediction"*.
+Leg 1's re-record ruling is the review's and was **not** touched.
+
+`probe_straight_wire_ladder.py` now takes `PROBE_N_POINTS` and solves each
+rung **once**, sampling the same field at every count — so a spread within a
+row is the sampler's alone, with no second solve to confound it. Three runs,
+all `-n 2`, real:
+
+| h | 0.7.2: 8 / 10 / 20 | 0.11: 8 / 10 / 20 |
+|---|---|---|
+| 0.0040 | 18.6850% / **22.1925%** / 20.9923% | 18.5328% / **21.8417%** / 22.0704% |
+| 0.0025 | **15.8028%** / **12.7485%** / 11.4984% | 16.6033% / **15.3848%** / 13.6986% |
+| 0.0018 | 11.5626% / **9.2568%** / 7.5722% | 4.9201% / **4.4605%** / 4.8086% |
+
+Logs: `20260822T200411Z_…-wire-h0025-npoints.log` (Status 0, 31 s),
+`20260822T200503Z_…-wire-ladder-npoints-011.log` (Status 0, 106 s),
+`20260822T201014Z_…-wire-ladder-npoints-072.log` (Status 0, 126 s).
+Cell counts are unchanged from attempt 4's (147 235 / 38 740 / 383 146 on
+0.11; 145 884 / 38 750 / 383 248 on 0.7.2), and every n_points = 10 column
+reproduces its July record to ≤ 0.035% — the sweep is anchored, not a new
+ladder.
+
+**The 0.7.2 column was run deliberately**, and it is what makes the result
+mean anything: "the metric is sampler-sensitive" is only news if the old
+image is not.
+
+### Three measured conclusions
+
+1. **The sampler is excluded as the outlier's cause.** At fixed n_points the
+   0.11 gated rung is worse at *every* count (8: 15.80 → 16.60; 10: 12.75 →
+   15.38; 20: 11.50 → 13.70) and none of them approaches the 0.11 fit's
+   8.6%. With partitioning (`-n 4` bit-identical) and mesh instability
+   (±0.13% counts) already excluded, what remains is a genuine
+   non-monotonicity of this discretization near h = 0.0025 on 0.11.
+2. **Sampler fragility is not a 0.11 artefact — it is worse on 0.7.2.** The
+   10-point radial L2 spans 34% of its own value on 0.7.2's gated rung and
+   43% on its fine rung, versus 21% and 10% on 0.11.
+3. **The 15% band already fails on 0.7.2 at n_points = 8** (15.8028%), on
+   the image its record was taken on. The band's 1.18× headroom sits
+   *inside* the statistic's own sampler spread, so the gate has been passing
+   on a sampler choice, not on a margin. This is the slot's most consequential
+   number and it is not about the upgrade at all.
+
+**Nothing touched:** no band, no assertion, no record, no `src/`.
+
+**Elapsed:** five harness commands — 2 s (Status 1, `/workspace` missing from
+`PYTHONPATH`; re-issued), 31 s, 106 s, 126 s, plus two 1 s version probes =
+**~267 s of compute**, well inside every tier. Two container round-trips
+(~90 s build + ~15 s recreate each way). No exit 124, no wedge.
+
+**Denials:** one — `git status --porcelain; echo "exit=$?"` refused for
+compound-command shape. Re-issued as a single command; no allowlist change
+needed.
+
+### Hypothesis for the next slot
+
+Leg 2's diagnosis is now closed to three exclusions and one survivor, and
+the survivor is **not** something `OPS-18` should fix: a 10-point radial L2
+that swings 34% under its own sampler is not a discretization measurement,
+on either image. The next move is therefore a **review ruling, not another
+probe** — and the honest disposal is likely a new `MAG` chunk (raise
+`n_points` to a converged count, or gate a sampler-independent norm such as
+the domain L2 of B−B_ana) with `OPS-18` merging behind it or explicitly
+against a re-recorded band. Leg 1's re-record ruling is still owed and
+unchanged. **3b must still not run**: merging today would put three red
+gates on `main`.
+
+**Container left as required:** `main` checked out at `90553d0`, both docker
+files byte-restored via Edit (the bind mount defeats `git checkout` on them,
+as recorded), `git status --porcelain` empty, 0.7.2 rebuilt, force-recreated
+and probed **0.7.2 / gmsh 4.11.1**
+(`20260822T201412Z_OPS-18-step3-container-restore3.log`, Status 0). Tree
+clean at handoff.

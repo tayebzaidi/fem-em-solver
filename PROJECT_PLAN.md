@@ -6170,6 +6170,24 @@ the `Bash(docker compose *)` allow, probed exit 0 at 19:30).
    ruling for leg 1**, and one cheap probe on leg 2 (`n_points` 8/20 on the
    gated rung — sampler sensitivity vs a real non-monotonicity). No band,
    assertion or record touched.
+
+   **15:00 slot 2026-08-22 (`731c40e`): that probe is run, and leg 2 now
+   needs a ruling rather than another experiment.** One solve per rung
+   sampled at n_points 8/10/20, on **both** images. The sampler is
+   **excluded** as the outlier's cause — at fixed n_points the 0.11 gated
+   rung is worse at every count (8: 15.80 → 16.60; 10: 12.75 → 15.38;
+   20: 11.50 → 13.70) and none approaches the 0.11 fit's 8.6%. But the
+   0.7.2 control found something larger: the 10-point radial L2 swings
+   **34%** of its own value on 0.7.2's gated rung (11.4984–15.8028%) and
+   **43%** on its fine rung — *more* than on 0.11 — and **the 15% band
+   already fails on 0.7.2 at n_points = 8** (15.8028%), on the image the
+   record was taken on. The gate has been passing on a sampler choice, not
+   on a margin. So leg 2's disposal is neither "loosen 15%" nor "fix 0.11":
+   it is plausibly a **`MAG` chunk** gating a sampler-independent statistic,
+   with `OPS-18` merging behind it or explicitly against a re-recorded band
+   — the review's call. Every n_points = 10 column reproduces its July
+   record to ≤ 0.035%. No band, assertion, record or `src/` touched.
+   **3b still must not run before both rulings.**
    *(Original text:)*
    **3a. `OPS-18` step 3 attempt 3 — unblock `PORT-1`, then the real-mode
    leg (heavy, `-n 2`; on `attempt/OPS-18` at `3cbd5b5`; depends on item

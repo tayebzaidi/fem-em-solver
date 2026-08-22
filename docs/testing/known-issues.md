@@ -256,6 +256,51 @@ unless fixing it is the task.
 > would erase the only instrument that shows the ladder moved. §9 item 3a's
 > "a moved gated physics number is a known-issues entry and a stop" clause
 > fired on this.
+>
+> ---
+>
+> **Update, `OPS-18` step 3 attempt 5 (2026-08-22, 15:00 slot) — candidate
+> (b) is answered, and it answers more than it was asked.** The probe now
+> solves each rung once and samples the *same* field at every requested
+> `n_points`, so a spread within a row is the sampler's alone. Errors at
+> n_points **8 / 10 / 20**, `-n 2`, both images
+> (`20260822T200411Z_…-wire-h0025-npoints.log` Status 0 31 s,
+> `20260822T200503Z_…-wire-ladder-npoints-011.log` Status 0 106 s,
+> `20260822T201014Z_…-wire-ladder-npoints-072.log` Status 0 126 s):
+>
+> | h | 0.7.2: 8 / 10 / 20 | 0.11: 8 / 10 / 20 |
+> |---|---|---|
+> | 0.0040 | 18.6850% / **22.1925%** / 20.9923% | 18.5328% / **21.8417%** / 22.0704% |
+> | 0.0025 | **15.8028%** / **12.7485%** / 11.4984% | 16.6033% / **15.3848%** / 13.6986% |
+> | 0.0018 | 11.5626% / **9.2568%** / 7.5722% | 4.9201% / **4.4605%** / 4.8086% |
+>
+> Every n_points = 10 column still reproduces its record (bold, ≤ 0.035%
+> on 0.7.2), so the sweep is anchored rather than a new measurement.
+>
+> 1. **The metric is sampler-fragile on *both* images, and worse on the
+>    old one.** The 10-point radial L2 spans 34% of its own value on
+>    0.7.2's gated rung and 43% on its fine rung, versus 21% and 10% on
+>    0.11. This is a property of a 10-sample radial estimator, not of the
+>    upgrade.
+> 2. **The 15% band already fails on 0.7.2 at n_points = 8** — 15.8028%,
+>    on the image the record was taken on. The gate's 1.18× headroom is
+>    *inside* the statistic's own sampler spread, so it was passing on a
+>    sampler choice rather than on a margin. That is the more important
+>    finding here than anything version-specific.
+> 3. **The outlier survives the control.** At fixed n_points the 0.11
+>    gated rung is worse at every count (8: 15.80 → 16.60; 10: 12.75 →
+>    15.38; 20: 11.50 → 13.70), and no n_points brings it near the 0.11
+>    fit's 8.6%. Candidate (b) is therefore **excluded** as the *cause* of
+>    the outlier, alongside partitioning and mesh instability; candidate
+>    (a) — a real non-monotonicity near h = 0.0025 — is what remains.
+>
+> **Still nothing touched** — no band, no assertion, no record. But the
+> disposal question has changed shape: it is no longer only "may this
+> record move", it is "is a 10-point radial L2 a gateable statistic at
+> all". A band 1.18× a number that swings 34% under its own sampler is
+> not measuring the discretization. The review owns that call; a
+> defensible fix (raise `n_points`, or gate a sampler-independent norm)
+> is a `MAG` chunk, not an `OPS-18` clause.
 
 ### `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` fails **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
 
