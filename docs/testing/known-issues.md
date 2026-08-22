@@ -28,6 +28,36 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### The two-torus port fixtures **SIGABRT in `gmsh.model.mesh.generate` only in the 0.11 image**: numpy 2 renders `!r` of a numpy scalar as `np.float64(…)` inside a gmsh `MathEval` string (`OPS-18` step 3 attempt 2, 2026-08-22; entered by the 10:30 review)
+
+> **Where this fires.** `tests/validation/test_port_package_sparameters.py`
+> and `tests/validation/test_port_lumped_two_torus.py` (every test that
+> builds `two_torus_domain`), on the `attempt/OPS-18` worksite only. `main`
+> boots 0.7.2 with numpy 1.x and is unaffected.
+>
+> **Literal symptom** (`20260822T140912Z_OPS-18-step3-port1-rerun.log`,
+> `Status: 134` at 12 s, `-n 2`, complex build):
+>
+> ```
+> Error   : Error [mathex::parseatom()]: invalid token on expression
+> terminate called after throwing an instance of 'std::runtime_error'
+> ```
+>
+> **Cause, measured by two probes.** gmsh in the 0.11 image is
+> 4.15.2-git-657c8e9 and parses the exact gap-arc expression when its numbers
+> are plain floats (`20260822T141005Z_…-gmsh-mathex-probe.log`); the image's
+> numpy 2.4.6 renders a numpy scalar's `repr` as `np.float64(0.00591…)`
+> (`20260822T141027Z_…-numpy-repr-probe.log`). `two_torus_domain` builds its
+> `MathEval` size field by f-string `!r` interpolation (`io/mesh.py:1550`–
+> `1557`) of `arc_half_y`, a numpy scalar, so the string literally contains
+> `np.float64(`. Image debt of ours that numpy 1.x masked — not an upstream
+> regression, not a gated number moving; no band, assertion or record touched.
+>
+> **Fix owner:** §9 item 3a — `float()` coercion at the sites plus a `src/`
+> sweep for `!r` in any string handed to gmsh, PETSc options or a shell (the
+> birdcage fixtures are predicted to carry siblings). This entry leaves with
+> that commit.
+
 ### `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` fails **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
 
 > **Where this fires.** `tests/mesh/test_mesh_tag_integrity.py::test_region_resolution_policy_refines_the_tagged_volumes_toward_cad`,

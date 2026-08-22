@@ -17615,3 +17615,125 @@ entry — the discrimination it was waiting for is now precedented twice.
 
 **Container left as required:** `main` checked out clean, 0.7.2 rebuilt and
 force-recreated, so the next non-`OPS-18` slot finds 0.7.2 Up.
+
+---
+
+## 2026-08-22T14:15Z — `OPS-18` step 3 (re-gate), attempt 2 — **incomplete (progress)**
+
+**Slot:** 09:00 CDT scheduled implementer run. **Branch:** `attempt/OPS-18`
+(worksite rule; commit `3cbd5b5`; `main` keeps 0.7.2). **Tier:** heavy, split
+across runs. Four of five gate families now have a clean green log of their
+own on `0.11.0.post0`; **`PORT-1` is blocked on a measured new-image defect**
+and the real-mode leg + §5.3's table are still owed, so **step 3 stays 🟡**.
+
+**Preflight, and a trap worth naming: `git checkout` cannot swap
+`docker/Dockerfile` or `docker/docker-compose.yml` in this sandbox.** Both
+fail with `error: unable to unlink old '…': Device or resource busy` — the
+permission sandbox grants write access to those two paths by bind-mounting
+them, and a bind-mounted file cannot be unlinked, only written in place. The
+visible symptom is that a branch switch *reports* `M docker/Dockerfile` and
+silently leaves the old content: this slot inherited a clean `main` whose
+worktree docker files were 0.7.2, switched to `attempt/OPS-18` (whose commit
+carries 0.11), and got the 0.7.2 files anyway. **Rule: on this repo, move
+those two files with the Edit tool, never with `git checkout`, and verify
+with `git status --porcelain` after.** Done both directions here; `main` is
+byte-clean at exit. This also explains nothing in the prior slots' journals
+— it has been invisible because both prior slots edited rather than checked
+out.
+
+**Container round-trip is cheap: 109 s to build 0.11 + 14 s to recreate, and
+the same again back.** Base layers are cached, only the h5py layer and the
+export re-run. Budget ~4 minutes of fixed overhead per OPS-18 slot, not the
+15 the worksite rule reads like it might cost.
+
+**Three completed commands, all `mpiexec -n 2`, complex build,
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, both rank footers
+identical:**
+
+* **`MAT-4` SAR now has its own clean green log** —
+  `20260822T140418Z_OPS-18-step3-mat4.log`, **9 passed / 35.83 s / exit 0**
+  (harness elapsed 38 s). This discharges attempt 1's self-declared debt: the
+  family had only been observed passing *inside* a red co-run log.
+* **`MAT-6` + `PORT-1` break-flush, and the banked rule paid** —
+  `20260822T140518Z_OPS-18-step3-mat6-port1-flush.log`, **24 passed /
+  88.60 s / exit 0** on `tests/environment` + `test_dodd_deeds_impedance.py`
+  + `test_port_lumped_bc.py`. **No API break in either family**, and the
+  impedance file (14 tests) re-gates green against its `OPS-17` record of
+  87.43 s — 88.60 s, +1.3%.
+* **`MAT-6`'s §2.1 ΔR site re-gates** —
+  `20260822T140709Z_OPS-18-step3-mat6-dR-port1-sparams.log`: the run's
+  **12 passed** are 4 environment + `test_dodd_deeds_projected_drive.py`'s 8,
+  the file whose record is the production projected drive at 1.5834%. The
+  same log's `Status: 134` belongs to the `PORT-1` files below and is named
+  here rather than hidden.
+
+**One API break found and fixed (the pack does not document it).** 0.11 makes
+`max_facet_to_cell_links` a **required** positional argument of
+`dolfinx.mesh.create_cell_partitioner`; 0.7.2 took the ghost mode alone.
+Symptom is a `functools.singledispatch` misdirect —
+`TypeError: _() missing 1 required positional argument` — which names neither
+the function nor the argument's meaning. **One call site**
+(`io/mesh.py:1681`, `two_torus_domain`); the value passed is **2**, which is
+dolfinx's own default in `create_mesh` and its documented value for a
+non-branching manifold mesh. Every fixture here is tetrahedral with each
+interior facet shared by exactly two cells. `None` — "no upper bound" — would
+have been the wrong choice, not the safe one.
+
+**`PORT-1` is blocked on a genuine new-image defect, and the cause is
+measured, not argued.** After the partitioner fix, both two-torus files abort
+the *process* during mesh generation —
+`20260822T140912Z_OPS-18-step3-port1-rerun.log`, **`Status: 134`** (SIGABRT)
+at 12 s, in `gmsh.model.mesh.generate(1)`:
+
+```
+Error   : Error [mathex::parseatom()]: invalid token on expression
+terminate called after throwing an instance of 'std::runtime_error'
+```
+
+Two cheap harness probes localise it:
+
+* `20260822T141005Z_OPS-18-step3-gmsh-mathex-probe.log` (4 s) — gmsh in the
+  0.11 image is **4.15.2-git-657c8e9**, and it parses the *exact* gap-arc
+  expression, `^` powers, nested `sqrt` and `1e-06`-style literals included,
+  when the numbers are written as plain Python float literals. **The
+  expression's grammar is not the problem.**
+* `20260822T141027Z_OPS-18-step3-numpy-repr-probe.log` (2 s) — the 0.11 image
+  ships **numpy 2.4.6**, where a numpy scalar's `repr` is
+  `np.float64(0.005910404133226791)`, not `0.005910404133226791`.
+
+`two_torus_domain` builds its `MathEval` size field by f-string interpolation
+with `!r` (`mesh.py:1550`–`1557`), and `arc_half_y = major_radius *
+np.sin(...)` is a **numpy scalar**. Under numpy 2 the field string therefore
+contains the literal token `np.float64(` — exactly the "invalid token" gmsh
+reports. This is **image debt of ours that numpy 1.x masked**, not an upstream
+regression and not a gated physics number moving; no band, assertion or
+record is touched. Filed here rather than in known-issues because the fix is
+one slot away and mechanical.
+
+**Elapsed:** six harness commands, 38 + 91 + 77 + 12 + 4 + 2 = **224 s of
+compute**, plus ~4 min of container round-trip. Nothing hit exit 124; no
+window was over 540 s and none was approached.
+
+**Rule banked: an f-string that feeds a *parser* must coerce, not `repr`.**
+`f"{x!r}"` is a Python-syntax renderer, and its output is only accidentally
+valid in another grammar. numpy 2 changed the accident. Grep for `!r` inside
+any string handed to gmsh, PETSc options, or a shell before the next
+upgrade — this is a class, not an instance.
+
+**Hypothesis for the next attempt (step 3, attempt 3).** Coerce with
+`float(...)` at the `mesh.py` gap-arc sites (`arc_half_y`, `major_radius`,
+`z_c`, and any sibling `!r` in a gmsh string — grep the module, there are
+likely more in the birdcage fixtures that no command has reached yet), then
+re-run `test_port_package_sparameters.py` + `test_port_lumped_two_torus.py`
+at a 540 s window; their `OPS-17` records are 350.80 s for a three-file batch
+and 98.20 s paired with `lumped_bc`, so the pair should land well inside it
+even cold. Expect the `PORT-1` reciprocity gate (‖S−Sᵀ‖/‖S‖ = 2.5494e-05 vs
+the 1e-3 band) to be the discriminator. Then the **real-mode leg**
+(`MAG` closed forms + `MAT-6` real gates) and **§5.3's environment table**,
+and step 3 can close. Also still open from attempt 1: disposal of step 2's
+filed volume-drift known-issues entry.
+
+**Container left as required:** `main` checked out clean (verified with
+`git status --porcelain`, both docker files byte-restored via Edit), 0.7.2
+rebuilt, force-recreated, and `dolfinx.__version__` probed as **0.7.2** — the
+next non-`OPS-18` slot finds 0.7.2 Up.
