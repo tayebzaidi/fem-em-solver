@@ -52,13 +52,19 @@ RECORD = {
 #: 1.8x outlier on its own 0.11 ladder, and rank dependence is untested).
 RUNGS = [float(h) for h in os.environ.get("PROBE_H", "0.004,0.0018").split(",")]
 
+#: Radial sample counts to evaluate each solved field at, comma-separated in
+#: ``PROBE_N_POINTS``.  The records were all taken at 10 (`test_straight_wire`
+#: lines 148 / 200), so 10 must stay in any list whose rows are compared to
+#: ``RECORD``; 8 and 20 are attempt 5's discriminator for whether the
+#: h = 0.0025 outlier is the sampler or the solution.
+N_POINTS = [int(n) for n in os.environ.get("PROBE_N_POINTS", "10").split(",")]
+
 
 def main():
     comm = MPI.COMM_WORLD
-    n_points = 10
 
     if comm.rank == 0:
-        print(f"  ranks {comm.size}  rungs {RUNGS}")
+        print(f"  ranks {comm.size}  rungs {RUNGS}  n_points {N_POINTS}")
         import dolfinx
         import gmsh
 
@@ -67,21 +73,27 @@ def main():
     for res in sorted(RUNGS, reverse=True):
         t0 = time.perf_counter()
         mesh, b_field = _solve_straight_wire(res, comm)
-        _, b_num_mag, b_ana_mag, _ = _sample_radial(
-            b_field, n_points, comm, R_MIN, R_MAX_BC
-        )
-        err = ErrorMetrics.l2_relative_error(b_num_mag, b_ana_mag)
         n_cells = mesh.topology.index_map(mesh.topology.dim).size_global
-        if comm.rank == 0:
-            cells_rec, err_rec = RECORD[res]
-            print(
-                f"  h={res:.4f}  cells {n_cells} (record {cells_rec}, "
-                f"{(n_cells - cells_rec) / cells_rec:+.4%})  "
-                f"error {err:.4%} (record {err_rec:.4%}, "
-                f"{(err - err_rec) / err_rec:+.4%})  "
-                f"{time.perf_counter() - t0:.1f} s"
+        t_solve = time.perf_counter() - t0
+        # One solve, sampled at every requested n_points: the sampler is the
+        # only thing that varies, so a spread here is the sampler's and a flat
+        # row rules it out (`OPS-18` step 3, leg 2's discriminator).
+        for n_points in N_POINTS:
+            _, b_num_mag, b_ana_mag, _ = _sample_radial(
+                b_field, n_points, comm, R_MIN, R_MAX_BC
             )
-            sys.stdout.flush()
+            err = ErrorMetrics.l2_relative_error(b_num_mag, b_ana_mag)
+            if comm.rank == 0:
+                cells_rec, err_rec = RECORD[res]
+                print(
+                    f"  h={res:.4f}  n_points {n_points:>3}  "
+                    f"cells {n_cells} (record {cells_rec}, "
+                    f"{(n_cells - cells_rec) / cells_rec:+.4%})  "
+                    f"error {err:.4%} (record {err_rec:.4%}, "
+                    f"{(err - err_rec) / err_rec:+.4%})  "
+                    f"solve {t_solve:.1f} s"
+                )
+                sys.stdout.flush()
 
 
 if __name__ == "__main__":
