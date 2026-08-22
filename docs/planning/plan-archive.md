@@ -14909,3 +14909,317 @@ carried forward in the live §9 preamble.)*
    `OPS-17` table re-asserted on 4/4 tags at 1e-9. 8 s harness at `-n 2`
    (measured smoke); docrefs `dead=0 guide=0 stale=24 exit=2`.
    *(Commission text: §7 `EX-27` row carries the full rubric summary.)*
+
+## §9 On-deck done items 1, 2, 4 + superseded item 3a text + interval recap, 10:30 to 18:00 2026-08-22 — archived 2026-08-22 (18:00 review)
+
+Verbatim from PROJECT_PLAN.md §9 at commit c040b13 (recap paragraph, then items 1–4 as they stood, item 3b included for context; item 3b and item 5 (`EX-28`) also stay live in §9, rewritten).
+
+Last reviewed 2026-08-22, **10:30 review**. Interval (since 03:00): four
+slots, **all four on `OPS-18`, no drain, no exit 124, no block** — step 1
+closed 04:30 (`0.11.0.post0` boots both modes, negative control fires),
+step 2 closed 06:00 (`418 collected / 0 errors` both modes vs the red
+`124 / 75`; the whole migration one module), step 3 attempts 1–2 at 07:30
+and 09:00 left **four of five gate families green** on 0.11 (`TH-6`
+3.609e-02 / α 0.017% / β 0.060%; `TH-10` 64 MHz bit-identical, 128 MHz
+1.826% → 1.769% *with* its cell count; `MAT-4` 3.422% / 3.536% in a clean
+log; `MAT-6` impedance file +1.3% on its record, projected drive 8 passed)
+and `PORT-1` **blocked on a measured, one-line defect of ours** — numpy 2
+renders `!r` of a numpy scalar as `np.float64(…)`, which gmsh 4.15's
+`MathEval` cannot parse (SIGABRT at meshing). Four undocumented 0.11 breaks
+were found and fixed along the way (`petsc_options_prefix` ×7,
+`functionspace`, `interpolate(cells0=)` ×2, `create_cell_partitioner`'s
+required `max_facet_to_cell_links`). **This review:** steps 1–2 audited
+from their footers (`3 passed, 1 skipped` / `1 failed, 3 passed` control /
+`418` ×2 modes, all `-n 2`, both ranks identical) — compliant as
+step-level closes; the chunk stays 🟡 until step 3. The numpy-2 `!r`
+defect, which attempt 2 filed only in attempts.md, gets its known-issues
+entry (branch-only, like the volume drift). `attempt/OPS-18` kept — it is
+the worksite, at `3cbd5b5`, six logs ahead of `main`. Container probed at
+**0.7.2 / Python 3.10.12** after the 09:00 restore. **Review decision:**
+item 3 is **split into 3a / 3b** below — attempt 2's own sizing puts
+`PORT-1` + the real-mode leg in one slot and the §5.3 table + merge in
+another, and a single item would have re-run as "attempt 3, 4, 5" with the
+twice-failed rule firing on progress rather than failure. No new chunks:
+no quantitative gate closed this interval, so §5.4 owes no example, and the
+`!r`-in-parser-strings sweep is a clause of 3a, not a chunk. Previous
+interval's recap (03:00): four slots, **two closes, one ⛔-then-unblocked, one drain**.
+19:30 — `OPS-18` step 1 ⛔ on the permission layer (`Edit(docker/**)`
+under `ask`), fell through to `GEO-18` step 2, parked 🟡 at exit 124 with
+both tests green (an `allreduce` inside `if comm.rank == 0`). 21:00 —
+step 2 resumed and **closed, and with it `GEO-18`** (sheet area `dx·g` at
+1.000000000000 ×4, C4 spread 8.470e-16, 53 s + 186 s regression). 22:30 —
+**`EX-27` closed** as written on the first run (measured smoke, 8 s).
+00:00 — drained by rule; the slot re-probed the block byte-identical and
+promoted it on the dashboard. Then the operator, interactively: `OPS-16`
+**closed won't fix** (2b59199) and the `OPS-18` block **removed**
+(c724575 — broad `Edit(docker/**)` ask gone, `Dockerfile` and
+`docker-compose.yml` individually allowed, `docker/.claude/**` newly
+asked). **Both closes audited COMPLIANT this review** (one auditor each,
+every figure verified against its log footer). One transparency note:
+`GEO-18` step 2's control asserts the `110+i` *cell* tags absent; the
+`210+i` *facet* absence the entry claims is implied, not measured —
+`EX-28` below asserts it directly. The parked
+`attempt/GEO-18-step2-20260822T004500Z` was a strict ancestor of what
+landed (main differs only by the 7-line `allreduce` hoist) — **deleted**.
+Tree clean at every handoff; no `recovered/*`; container Up on 0.7.2.
+**Review decisions:** (1) `PORT-9` step 3 **split into legs (c)/(d)** —
+the §7 entry names the fixed mesh (116 416 cells, sheets `211`–`214`) and
+makes the binding cost probe a queue item with its own symmetry anchor;
+(c) queued as item 4, (d) waits on (c)'s price. (2) §5.4 ramp: the
+`GEO-18` example deferred on 08-21 is now due — `EX-28` commissioned
+(item 5); `EX-27` is itself an example. (3) The 00:00 slot's ask — at
+least one item independent of the permission layer — is moot now the
+block is gone, but items 4–5 are independent of the upgrade regardless.
+Done-item texts and prior recaps: `docs/planning/plan-archive.md`.
+1. ✅ **DONE 2026-08-22, 04:30 slot** — `OPS-18` step 1 closed on
+   `attempt/OPS-18` (`c767171`); adopted **`0.11.0.post0`**, real
+   `3 passed, 1 skipped` / complex `4 passed`, negative control fires,
+   `main` restored to a booted 0.7.2. Two amendments and step 2's red
+   baseline (`124 collected / 75 errors`, 71 of them one `gmshio` import)
+   are in the §7 entry. **Next slot takes item 2.** *(Original text:)*
+   **`OPS-18` step 1 — build and boot `v0.11.0.post0` (standard; no
+   solver compute). Unblocked 2026-08-22; runnable as written.** Execute
+   the §7 `OPS-18` step-1 entry. **Worksite rule for all three steps:**
+   work lives on a single persistent **`attempt/OPS-18`** branch —
+   sanctioned, so later reviews adjudicate its *progress*, not its
+   existence — and `main` keeps booting 0.7.2 until step 3 is green (the
+   §7 negative-result clause); any OPS-18 slot that rebuilt the live
+   container ends by restoring it from `main`'s compose file
+   (`docker compose -f docker/docker-compose.yml up -d --force-recreate`)
+   so the next non-OPS-18 run finds 0.7.2 Up. Bump the `FROM` line, keep
+   the old image present for rollback, rebuild, and fix the
+   version-encoded plumbing: compose `PYTHONPATH` (variant dir **and**
+   Python minor can change), the `/usr/local/bin/dolfinx-complex-mode`
+   wrapper, the from-source h5py build against the image's HDF5.
+   **Anchor (§4):** under `mpiexec -n 2` through the harness, both modes
+   import dolfinx and print exactly the target `0.11.0` version, real
+   mode's PETSc `ScalarType` real and complex mode's complex.
+   **Negative control:** real mode with `FEM_EM_REQUIRE_COMPLEX=1`
+   raises, as today (the §5.3 contract survives the upgrade). **Cost:**
+   pull + build is network/disk, not solver compute; each harness
+   verification command stays inside standard 180 s. **Traps:** the
+   pull is the one network operation the project runs — it goes through
+   `docker compose` (allowlisted); a permission denial of any kind is a
+   **blocked finding** (see preamble), never worked around; do not touch
+   `scripts/automation/hooks/` or `volumes:`. **Negative result:** a boot
+   failure is parked on `attempt/OPS-18` with the failing layer named and
+   the 0.7.2 container restored before the slot ends.
+2. ✅ **DONE 2026-08-22, 06:00 slot** — `OPS-18` step 2 closed on
+   `attempt/OPS-18` in **one** slot, not the >1 predicted: **`418 collected
+   / 0 errors` in both modes**, both ranks, against the red baseline's
+   `124 / 75`; 418 reconciled to 412 + 4 (step-1 gate) + 2 (`GEO-18`
+   step 2) with **validation unmoved at 232**. The entire migration was
+   one module — `io/mesh.py`'s `gmshio` → `dolfinx.io.gmsh` and the
+   six-field `MeshData` return, 11 call sites, one `_model_to_mesh` shim;
+   none of the pack's other predicted breaks fired. A runtime probe of the
+   shim passes bar one new-gmsh **volume** drift (4.251e-04 relative),
+   filed to known-issues for step 3 — no assertion touched. **Next slot
+   takes item 3.** *(Original text:)* **`OPS-18` step 2 — API migration
+   (standard; expect > 1 slot; depends
+   on item 1 having landed on `attempt/OPS-18` — if it did not, resume
+   item 1).** Execute the §7 step-2 entry, starting from the tracked
+   migration pack (`docs/references/dolfinx-0.11-migration/` — the
+   installed container API is ground truth over the pack). Known hard
+   breaks to take first: `gmshio` → `dolfinx.io.gmsh` with
+   `model_to_mesh` returning `MeshData` (breaks `io/mesh.py` tuple
+   unpacking); `LinearProblem` `petsc_options_prefix`; `FunctionSpace` →
+   `functionspace`; `discrete_gradient`'s namespace move. **Anchor
+   (§4):** full suite collects with **zero errors in both modes**, counts
+   recorded and reconciled against the leg-(b2) baseline (236 = 4
+   environment + 232 validation; `tests/environment` + `tests/solver` =
+   55 in both builds). **Negative control:** run the collect on the
+   unmigrated tree first and record the error census — the fix list is
+   then measured, not assumed, and "zero errors" has a red baseline.
+   **Cost:** collects are seconds; the slot is editing time. A slot
+   that ends mid-migration commits its progress to `attempt/OPS-18`
+   and journals the remaining census. **Negative result:** an API with
+   no 0.11 equivalent is a known-issues entry + report, not a
+   workaround.
+3. *(Rescoped 10:30 review 2026-08-22 into 3a / 3b after attempts 1–2;
+   original text in `docs/planning/plan-archive.md` on the next archive
+   pass. Four of five families are green on 0.11 — see the §7 entry.)*
+
+   **3a — 🟡 ATTEMPTED 2026-08-22, 12:00 slot (`445a3ea`; not done —
+   needs a review decision, not another attempt).** Both fixes landed and
+   both are measured: `PORT-1` meshes again (SIGABRT → `17 passed /
+   2 failed`, 260.93 s) with the sweep measured and its birdcage prediction
+   refuted, and a fifth 0.11 break (`interpolation_points` is a property)
+   fixed, taking the real-mode `MAG` leg to `17 passed / 1 failed`. Both
+   legs then hit **this item's own negative-result clause**: three records
+   moved at 1e-4 (`passivity_max_sigma`, the two-torus gap ratio,
+   `test_straight_wire_b_field` 15.3848% vs 15%) while every physics
+   identity in the same runs holds — reciprocity 3.112128e-05 inside 1e-3,
+   passivity σ_max 0.8614 < 1, the whole rest of the `MAG` family green.
+   Two known-issues entries filed, **no band touched**. *A fourth attempt
+   would re-measure the same three numbers*: what is owed is the review's
+   ruling on whether a solved-field record may be re-recorded across a
+   version bump, and if so on what evidence — the entries name the two
+   cheap experiments (two-torus cell count on both images; the recorded
+   `h` ladder's other two rungs on 0.11). See the §7 entry.
+
+   **13:30 slot 2026-08-22 (`231d6c7`): both named experiments are now run,
+   and they split the two failures apart.** Leg 1 — the two-torus mesh
+   **moved**, 184 919 → 184 176 cells (−4.017e-03), 24-40× the records'
+   misses: *consistent* with the mesh reading the review already granted
+   `TH-10`. Leg 2 — the mesh explanation is **refuted**: the ladder's other
+   two rungs mesh to within 0.13% of their recorded counts on 0.11 yet move
+   −1.6% and **−51.8%** in error (22.1925% → 21.8417%; 9.2568% →
+   **4.4605%**), with a 0.7.2 control reproducing the July record to 0.035%.
+   The fitted rate goes **1.10 → 1.99** and the gated rung h = 0.0025 is a
+   **1.8× outlier on its own 0.11 ladder** — and that outlier is **stable**:
+   `-n 4` reproduces it bit-identically, and the rung's own 0.7.2 control
+   (145 884 cells, 12.7485%) reproduces July to 0.012%. The 0.11
+   magnetostatic path is therefore *more* accurate, not less, and "loosen
+   15%" is likely the wrong disposal. **Still owed: the review's re-record
+   ruling for leg 1**, and one cheap probe on leg 2 (`n_points` 8/20 on the
+   gated rung — sampler sensitivity vs a real non-monotonicity). No band,
+   assertion or record touched.
+
+   **15:00 slot 2026-08-22 (`731c40e`): that probe is run, and leg 2 now
+   needs a ruling rather than another experiment.** One solve per rung
+   sampled at n_points 8/10/20, on **both** images. The sampler is
+   **excluded** as the outlier's cause — at fixed n_points the 0.11 gated
+   rung is worse at every count (8: 15.80 → 16.60; 10: 12.75 → 15.38;
+   20: 11.50 → 13.70) and none approaches the 0.11 fit's 8.6%. But the
+   0.7.2 control found something larger: the 10-point radial L2 swings
+   **34%** of its own value on 0.7.2's gated rung (11.4984–15.8028%) and
+   **43%** on its fine rung — *more* than on 0.11 — and **the 15% band
+   already fails on 0.7.2 at n_points = 8** (15.8028%), on the image the
+   record was taken on. The gate has been passing on a sampler choice, not
+   on a margin. So leg 2's disposal is neither "loosen 15%" nor "fix 0.11":
+   it is plausibly a **`MAG` chunk** gating a sampler-independent statistic,
+   with `OPS-18` merging behind it or explicitly against a re-recorded band
+   — the review's call. Every n_points = 10 column reproduces its July
+   record to ≤ 0.035%. No band, assertion, record or `src/` touched.
+   **3b still must not run before both rulings.**
+
+   **⛔ BLOCKED 2026-08-22, 16:30 slot — on a review ruling, not on a
+   measurement.** The 16:30 implementer run took this item first per the
+   first-undone rule, and stopped on the item's own text: *"A fourth attempt
+   would re-measure the same three numbers"*, *"leg 2 now needs a ruling
+   rather than another experiment"*, and *"3b still must not run before both
+   rulings."* Both named experiments and the follow-up probe are run; what is
+   owed is (1) the re-record ruling for leg 1's moved two-torus mesh and
+   (2) leg 2's disposal — a `MAG` chunk gating a sampler-independent statistic
+   versus a re-recorded band. Neither is an implementer's to decide, and
+   nothing executable remains inside this item's scope that does not touch a
+   record or a band it forbids touching. Per this section's preamble the slot
+   fell through to item 4, which it completed. **Waiting-on-you on the
+   dashboard.**
+   *(Original text:)*
+   **3a. `OPS-18` step 3 attempt 3 — unblock `PORT-1`, then the real-mode
+   leg (heavy, `-n 2`; on `attempt/OPS-18` at `3cbd5b5`; depends on item
+   2 — if the branch does not collect clean, resume it).** First, the
+   one-line fix attempt 2 measured: coerce with `float(...)` every numpy
+   scalar an f-string hands to a gmsh `MathEval` string in `io/mesh.py`
+   (`arc_half_y`, `major_radius`, `z_c` at `mesh.py:1550`–`1557`), then
+   **grep the whole of `src/` for `!r` inside any string handed to gmsh,
+   PETSc options or a shell** and coerce those too — the birdcage fixtures
+   have not been reached by any 0.11 command yet and the class is
+   predicted there. Record the grep's hit count in the journal (a
+   negative control on the sweep: the two-torus sites must be among the
+   hits). **Leg 1 — `PORT-1`:** complex build, `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` + `test_port_package_sparameters.py` +
+   `test_port_lumped_two_torus.py`, `timeout -k 30 540` (records: 350.80 s
+   for a three-file batch containing the first; 98.20 s for the second
+   paired with `lumped_bc`). **Anchor:** the reciprocity gate
+   ‖S−Sᵀ‖/‖S‖ reproduces at its record **2.5494e-05** within the 1e-3
+   band, and the two named systematics are *cited* from the `PORT-1`
+   entry, not re-derived. **Negative control:** the pre-fix SIGABRT at
+   12 s in `20260822T140912Z_…-port1-rerun.log` is the red baseline — a
+   `Status: 0` here is what separates the coercion from luck. **Leg 2 —
+   real mode:** `source`-free real build, `tests/environment` +
+   `tests/validation/test_mag*` (the `MAG` closed forms; `MAG-13` wire
+   field 3.74% < 5% is the gate) + `test_dodd_deeds_projected_drive.py`
+   real gates, sized from leg (b2)'s real-mode records (leg (a): 171 +
+   206 in two commands; take the validation files only, `timeout -k 30
+   540`). **Anchor:** each §2.1 magnetostatic number reproduces within
+   its existing band. **Cost:** attempt 2 spent 224 s of compute + ~4 min
+   container round-trip (109 s build + 14 s recreate, each way); budget
+   both legs under 15 min of compute, and stop at minute 45 whatever is
+   running. **Traps:** `git checkout` cannot swap `docker/Dockerfile` or
+   `docker-compose.yml` in this sandbox (bind-mounted; "Device or
+   resource busy", a *silent* wrong-content switch) — move them with the
+   Edit tool and verify `git status --porcelain`; a family's first 0.11
+   command is a break-finder (run its cheapest member first); 0-byte `.c`
+   stubs; 128 MHz cell counts may move with the new gmsh (a moved count
+   with identities intact is a re-record). **Scope:** closes neither step
+   3 nor the chunk — 3b does; no band, record or assertion is touched
+   except a re-record the trap clause licenses, noted inline. **Negative
+   result:** `PORT-1` still aborting after the coercion means a *second*
+   token class — capture the `MathEval` string verbatim to known-issues
+   and stop; a moved gated physics number in either leg is a known-issues
+   entry and a stop. Restore the 0.7.2 container from `main`'s compose
+   before the slot ends.
+
+   **3b. `OPS-18` step 3 close — §5.3 environment table, drift disposal,
+   merge (standard; depends on 3a green on both legs — if it is not,
+   resume 3a).** (i) Update §5.3's environment table (image tag
+   **`v0.11.0`**, version string `0.11.0.post0`, Python 3.12, numpy
+   2.4.6, gmsh 4.15.2-git-657c8e9, h5py 3.16.0 / HDF5 (2, 1, 1)); (ii)
+   dispose of step 2's filed volume-drift known-issues entry by
+   re-recording the `OPS-17` volume record (4.251e-04 relative, identities
+   intact — the trap clause's re-record branch) and make the 128 MHz
+   55 251 → 55 241 re-record explicit in the `TH-10` entry; (iii) close
+   the numpy-2 `!r` known-issues entry with 3a's fixing commit; (iv) one
+   confirming run on the rebuilt 0.11 container — `tests/environment` +
+   `tests/mesh/test_mesh_tag_integrity.py`, real, `-n 2`, `timeout -k 30
+   180`, **anchor:** `0 failed` where step 2's shim-runtime log read
+   `1 failed, 6 passed, 4 skipped`, and the full-suite collect still
+   `418 / 0 errors` in both modes; (v) **merge `attempt/OPS-18` to `main`
+   in one commit with every log**, `main` now booting 0.11, compose
+   `PYTHONPATH` updated — the only version-encoded literal in the project
+   (step 1's rule). **Cost:** one 16 s run, two collects, a container
+   build; editing time otherwise. **Scope:** `OPS-18` ✅ only if every
+   §2.1 number reproduced in 3a and attempts 1–2 — cite each family's
+   green log by name in the §7 entry. **Negative result:** anything in
+   (iv) red ⇒ `main` keeps 0.7.2, branch stays parked, the failing
+   assertion quoted in the §7 entry; never re-record a gated physics
+   number to make the merge happen.
+4. ✅ **DONE 2026-08-22, 16:30 slot** — `PORT-9` step 3 leg (c) executed on
+   `main` (new module
+   `tests/validation/test_port_birdcage_lumped_column.py`, **6 passed 40 s**,
+   `-n 2`, complex, `20260822T213612Z_PORT-9-step3c-rerun.log`). **Price:**
+   mesh 21.35 s, **one solve 7.55 s** — leg (d)'s four solves project to
+   ~30 s, so leg (d) is *standard* tier, and the open-limit control is far
+   inside the 300 s affordability rule. **Gate:** `|Z₂₁ − Z₄₁|/|Z₂₁|` =
+   **0.0159%** against the unmoved 5% band. **Finding:** the entry's own
+   anti-degeneracy control passes at only **1.0060×** margin (0.0160% vs
+   0.0159%) — at `Z_p = 1e6 Ω` all four ports are effectively open and
+   column 1 of Z is near-degenerate, so the spread evidences C4 mesh symmetry
+   and consistent sheet wiring, **not** resolved port-to-port coupling. Leg
+   (d) must first find a port impedance that separates the adjacent and
+   opposite classes (50 Ω, the ports' own `z0_ohm`, is the obvious first
+   probe at 7.55 s a solve). Step 3 stays 🟡; §2 unmoved. Full figures in the
+   §7 `PORT-9` entry. **Next slot takes item 5.** *(Original text:)*
+   **`PORT-9` step 3 leg (c) — first port solve on the gapped birdcage,
+   priced and symmetry-checked (heavy, `-n 2`, complex build, 0.7.2).**
+   Execute the §7 `PORT-9` step-3 leg (c) entry (scoped this review; full
+   rubric there). The mesh is fixed: `birdcage_port_domain(
+   leg_gap_length=LEG_GAP_LENGTH, emit_port_sheets=True,
+   conductor_resolution=1.6e-3)` as `tests/mesh/test_birdcage_port_sheets.py`
+   builds it — 116 416 cells, sheets on facet tags `211`–`214`, halves
+   `101`–`104`/`111`–`114`, mesh ~23 s + rung ~25 s. `LumpedSheetPortSpec`
+   on all four sheets at f = 0.5 (`w = A/h`), **drive port 1 only**, at
+   the two-torus records' 10 MHz, one package solve via the lumped-sheet
+   route. **Anchor:** C4 on one column of Z — adjacent pair
+   `|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 5%` (gate (iii)'s own band, pre-stated), with
+   the opposite entry `Z₃₁` asserted to differ from the adjacent pair by
+   more than that spread (so a constant Z cannot pass). `Re Z₁₁ > 0`
+   reported, not gated. **Negative control:** the step-2b open-limit
+   identity (`Z_p → ∞` recovers the no-sheet solve to < 1e-11) — a second
+   solve, run **only if the first priced under 300 s wall**; otherwise
+   the price is the deliverable. **Cost:** unpriced — `ANS-3`'s 178 k
+   cells / 2 solves / 46.3 s is the only comparable; `timeout -k 30
+   1200`, cold-JIT × 3 on a never-compiled form. **Traps:** complex
+   build + `FEM_EM_REQUIRE_COMPLEX=1` + `tests/environment` first;
+   `ufl.max_value` / complex ordering comparisons (`OPS-22`); pin
+   `quadrature_degree` on `SpatialCoordinate` facet integrals (`POST-5`);
+   0-byte `.c` stubs; ports addressed by **facet tag** — allgather the
+   tag set, never trust rank-local `facet_tags.values`; foreground
+   harness run, Bash timeout 660000 ms. **Scope:** closes nothing in §2
+   — step 3 stays 🟡 until leg (d)'s 4×4. **Negative result:** adjacent
+   spread > 5% is the mesh-asymmetry finding the step-3 entry already
+   names — magnitudes into §7 + known-issues, park on `attempt/*`, stop,
+   never widen; a solve over 1200 s at `-n 2` is a sizing finding —
+   record memory + wall, one retry at `-n 4`, then stop.

@@ -149,6 +149,18 @@ unless fixing it is the task.
 > the cause is decided: re-recording a solved S-matrix to make a version
 > bump land is how a version bump hides a physics change. §9 item 3a's
 > negative-result clause fired on this and stopped the leg.
+>
+> **Ruling, 18:00 review 2026-08-22 — re-record licensed, narrowly.** The
+> three numbers (`passivity_max_sigma` at 1e-6, the gap ratio at 1e-4, the
+> reciprocity record at 5e-7) are reproduction records of a solved field on
+> a named mesh, every physics gate in the same run holds, and the mesh
+> moved 4.017e-03 — the same grounds on which `TH-10`'s 55 251 → 55 241
+> re-record was granted. Conditions: version-tagged (0.7.2 value + 184 919
+> cells stay beside the new value + 184 176 cells + `0.11.0.post0 / gmsh
+> 4.15.2`), bit-identical across two runs in the slot before the digit
+> string is written, no band moves, branch-only until 3b merges. Queued as
+> §9 item 4; this entry closes with that commit. Full text in the §7
+> `OPS-18` entry.
 
 ### `test_straight_wire_b_field` fails **only in the 0.11 image**: the discretization error moved 12.75% → 15.3848% against a 15% band, on a mesh that grew 145 900 → 147 235 cells (`OPS-18` step 3 attempt 3, 2026-08-22)
 
@@ -301,6 +313,22 @@ unless fixing it is the task.
 > not measuring the discretization. The review owns that call; a
 > defensible fix (raise `n_points`, or gate a sampler-independent norm)
 > is a `MAG` chunk, not an `OPS-18` clause.
+>
+> **Ruling, 18:00 review 2026-08-22 — the gate is replaced, not
+> re-banded.** "Loosen 15%" refused (standing rule; and 0.11 is the more
+> accurate solver on this ladder, so a loosened band would record the
+> wrong fact). "Chase the 0.11 non-monotonicity" refused as an `OPS-18`
+> clause: the statistic it would chase swings 34% under its own sampler on
+> the image that recorded it, so it cannot adjudicate a version bump either
+> way. **`MAG-18`** is commissioned (§7; §9 item 1): an annulus-restricted
+> domain L2 of `|B_h| − |B_ana|`, assembled not sampled, gated on a
+> pre-registered rate ≥ 0.7 plus rank-independence and the natural-BC
+> control, measured on 0.7.2 / `main` first; the 10-point number becomes
+> reported-not-gated. `OPS-18` then re-measures leg 2 in that norm on 0.11
+> (§9 item 4). **This entry stays open**: the h = 0.0025 non-monotonicity
+> on 0.11 is observed and unexplained, and `MAG-18` does not claim to
+> resolve it — it leaves only when someone explains or retires it with a
+> commit.
 
 ### `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` fails **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
 
