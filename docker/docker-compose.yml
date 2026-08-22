@@ -11,7 +11,10 @@ services:
     ports:
       - "8888:8888"  # Jupyter
     environment:
-      - PYTHONPATH=/usr/local/dolfinx-real/lib/python3.10/dist-packages:/usr/local/lib:/workspace/src
+      # OPS-18 (0.7.2 -> 0.11.0): the image's Python moved 3.10 -> 3.12. The
+      # dolfinx-{real,complex}-mode wrappers derive this tag themselves, and so
+      # does src/sitecustomize.py; this literal is the one place it is pinned.
+      - PYTHONPATH=/usr/local/dolfinx-real/lib/python3.12/dist-packages:/usr/local/lib:/workspace/src
       - MPLBACKEND=Agg
     working_dir: /workspace
     command: /bin/bash

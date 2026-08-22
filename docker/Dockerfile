@@ -1,4 +1,4 @@
-FROM dolfinx/dolfinx:v0.7.2
+FROM dolfinx/dolfinx:v0.11.0
 
 # Install h5py from source to match system HDF5
 # This prevents version mismatch errors
