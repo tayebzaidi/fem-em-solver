@@ -9,7 +9,9 @@
       "Bash(date)",
       "Bash(date *)",
       "Bash(pwd)",
-      "Bash(crontab -l)"
+      "Bash(crontab -l)",
+      "Edit(docker/Dockerfile)",
+      "Edit(docker/docker-compose.yml)"
     ],
     "ask": [
       "Bash(git push*)",
@@ -25,7 +27,7 @@
       "Bash(gh *)",
       "Edit(.claude/**)",
       "Edit(scripts/automation/**)",
-      "Edit(docker/**)"
+      "Edit(docker/.claude/**)"
     ],
     "deny": [
       "Bash(curl *)",

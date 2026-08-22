@@ -5651,21 +5651,43 @@ item 3 is green — see the worksite rule in item 1. If item 1 ends
 the denial text quoted, put the unblock at the top of the dashboard's
 Waiting-on-you, and let the first-undone rule fall through to item 4.
 
-1. ⛔ **BLOCKED on the permission layer 2026-08-22, 19:30 slot — the
-   operator must move `Edit(docker/**)` out of `permissions.ask` in
-   `.claude/settings.json`.** **Re-probed and unchanged at the 00:00 slot
-   2026-08-22** (`Edit(docker/**)` still in `ask`; the denial text below
-   reproduced byte-identically) — that slot drained per the §9 rule and
-   promoted this block to the top of the dashboard's Waiting-on-you.
-   Denial verbatim: `Claude requested
-   permissions to write to
+1. ✅ **UNBLOCKED 2026-08-22, interactive operator session — the
+   permission layer no longer stops this item; it is runnable as
+   written.** History: ⛔ at the 19:30 slot, re-probed byte-identical at
+   00:00 (`Claude requested permissions to write to
    /home/taz5297/Development/fem-em-solver/docker/Dockerfile, but you
-   haven't granted it yet.` No `FROM` bump is possible, so items 2–3
-   inherit the block. **The pull is *not* blocked** — the preamble's
-   guess was wrong: `Bash(docker compose build*)` only matches the
-   bare-prefix form, and the project's own `-f docker/docker-compose.yml
-   build` falls through to the `Bash(docker compose *)` allow (probed
-   exit 0). One allowlist line unblocks all three items.
+   haven't granted it yet.`). The operator has now edited
+   `.claude/settings.json` by hand. **What changed, precisely** — the
+   broad `Edit(docker/**)` **ask** rule was *removed* rather than
+   shadowed by a narrower allow (a specific `allow` under a surviving
+   broad `ask` cannot be relied on: `ask` is evaluated ahead of `allow`,
+   so the glob would have kept matching):
+
+   | rule | list |
+   |---|---|
+   | `Edit(docker/Dockerfile)` | **allow** |
+   | `Edit(docker/docker-compose.yml)` | **allow** |
+   | `Edit(docker/.claude/**)` | **ask** (added; see the trap below) |
+   | ~~`Edit(docker/**)`~~ | removed |
+
+   Both files step 1 must touch are now writable headless. The pull was
+   never blocked (`Bash(docker compose build*)` matches only the
+   bare-prefix form; the project's `-f docker/docker-compose.yml build`
+   falls through to the `Bash(docker compose *)` allow, probed exit 0).
+
+   **⚠️ Standing constraint on the compose allow — read before editing
+   that file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so
+   write access to it is write access to *what the container mounts from
+   the host*. The operator granted this knowingly and narrowly, for the
+   upgrade's `PYTHONPATH` plumbing. **Edit only the `environment:` keys
+   the upgrade requires.** Do not touch `volumes:`, do not add a mount,
+   do not widen a path, do not raise the 64 G memory limit, in this or
+   any future chunk. A chunk that believes it needs a mount change is a
+   **blocked finding for the operator**, exactly as the `FROM` bump was.
+   The `Edit(docker/.claude/**)` ask exists for the same reason: with
+   the broad glob gone, that directory would otherwise be auto-approved
+   under `--permission-mode acceptEdits`, and a nested `.claude/` is a
+   settings-override surface.
    **`OPS-18` step 1 — build and boot `v0.11.0.post0` (standard; no
    solver compute).** Execute the §7 `OPS-18` step-1 entry (trigger fired
    2026-08-18; deferral condition discharged this review). **Worksite
@@ -5763,9 +5785,9 @@ Waiting-on-you, and let the first-undone rule fall through to item 4.
    queues it.
 5. ✅ **DONE 2026-08-22, 22:30 slot — `EX-27` closed as written on the
    first run, the queue's last open item.** Reached by the fall-through
-   rule: item 1 is still ⛔ (`Edit(docker/**)` unchanged in
-   `permissions.ask` — the operator has not acted), items 2–3 inherit it,
-   item 4 closed at 21:00. Policy coil meshed/CAD **0.835563 / 0.833730**
+   rule: item 1 was ⛔ at the time (`Edit(docker/**)` then unchanged in
+   `permissions.ask`; **unblocked later the same day** — see item 1),
+   items 2–3 inherited it, item 4 closed at 21:00. Policy coil meshed/CAD **0.835563 / 0.833730**
    against the imported, unmoved 0.755; clamps-only asserted to miss it at
    **0.754685 / 0.752565**, with the *sizing* separation gated separately
    at a pre-stated 0.05 and measured **+0.080879 / +0.081165** — the

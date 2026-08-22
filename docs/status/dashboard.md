@@ -3,9 +3,12 @@
 **Updated:** 2026-08-21 18:00, **daily review (scheduled, ran normally)**;
 Waiting-on-you amended 2026-08-22 00:00 by a drained implementer slot (item 1
 promoted from heads-up to blocker, per §9 item 1's standing instruction), and
-again 2026-08-22 by an interactive operator session (item 2, `OPS-16`, closed
-**won't fix** by operator decision — see that item). The rest of this page is
-the 18:00 review's and is not re-dated.
+again 2026-08-22 by an interactive operator session — **both permission asks
+are now settled**: item 1 (`Edit(docker/**)`) granted, narrowed to two named
+files, so `OPS-18` is runnable; item 2 (`OPS-16`) closed **won't fix**. The
+Waiting-on-you list currently owes you nothing on the automation side; the
+next review deletes items 1 and 2. The rest of this page is the 18:00
+review's and is not re-dated.
 Headline: **the credit outage is over and the audit debt is cleared.** This
 review launched on the same `--model claude-fable-5` that produced four
 consecutive 146-byte `out of usage credits` deaths (Thu 10:30 → Fri 10:30),
@@ -21,21 +24,19 @@ birdcage ports) scoped and queued behind it. Source of truth is
 
 ## Waiting on you
 
-1. 🔴 **`OPS-18` is blocked and the On-deck queue is now DRAINED — this is
-   the one thing costing slots right now.** The heads-up below became real:
-   `Edit(docker/**)` sits under `permissions.ask`, so a headless session
-   cannot bump the `FROM` line. Denial verbatim, re-measured at the 00:00
-   slot 2026-08-22 (identical to the 19:30 first measurement): `Claude
-   requested permissions to write to
-   /home/taz5297/Development/fem-em-solver/docker/Dockerfile, but you
-   haven't granted it yet.` The image **pull is not blocked** — that guess
-   was wrong; `docker compose -f docker/docker-compose.yml build` falls
-   through to the `Bash(docker compose *)` allow (probed exit 0). This
-   blocks §9 items 1–3 (the whole upgrade, serial), and with items 4–5
-   closed 2026-08-22 **there is nothing left to fall through to**: every
-   implementer slot until the 03:00 review journals a drain and stops.
-   Fix: move `Edit(docker/**)` from `ask` to `allow` in
-   `.claude/settings.json`.
+1. ✅ **`OPS-18` is UNBLOCKED — you did this 2026-08-22, nothing further
+   owed.** The broad `Edit(docker/**)` ask rule is gone; `Dockerfile` and
+   `docker-compose.yml` are individually **allowed**, `docker/.claude/**`
+   newly **asked**. The broad rule was *removed* rather than shadowed by a
+   narrower allow, since `ask` is evaluated ahead of `allow` and the glob
+   would otherwise have kept matching. §9 items 1–3 (the serial upgrade)
+   are runnable as written from the next slot; the drain ends with them.
+   **One constraint the next slots are bound by, recorded in §9 item 1:**
+   the compose allow exists for the upgrade's `PYTHONPATH` plumbing only.
+   `volumes:` (line 9 is `- ..:/workspace`, i.e. the host mount), the 64 G
+   memory limit and the ports are **not** to be touched by any chunk — a
+   chunk that thinks it needs a mount change must stop and ask you, the
+   same way the `FROM` bump did. **Next review: delete this item.**
 2. ⬛ **`OPS-16` — CLOSED WON'T FIX, nothing owed by you.** *(Operator
    decision, interactive session 2026-08-22 — recorded here only so it is
    not re-raised.)* The permission unblock was declined on the
