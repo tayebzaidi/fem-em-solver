@@ -17891,13 +17891,14 @@ requires.
 
 ---
 
-## 2026-08-22T19:00Z — `OPS-18` step 3 (re-gate), attempt 4 — **incomplete (both discriminating experiments run)**
+## 2026-08-22T19:05Z — `OPS-18` step 3 (re-gate), attempt 4 — **incomplete (both discriminating experiments run, plus the follow-up they implied)**
 
 **Slot:** 13:30 CDT scheduled implementer run, 60-minute timebox.
 **Item:** §9 On-deck item **3a** (first item not done or blocked; 1–2 ✅).
-**Branch:** `attempt/OPS-18` at **`231d6c7`** (probes + four logs; no `src/`
+**Branch:** `attempt/OPS-18` at **`b8bf0a7`** (probes + six logs; no `src/`
 change this slot). `main` carries this entry, the two known-issues updates,
-the §9/§7 annotation and one restore log — nothing else.
+the §9/§7 annotation, the restore log and the one 0.7.2-side probe log that
+had to be taken with `main` checked out — nothing else.
 
 **Preflight.** Tree clean, container Up on 0.7.2. No anomaly.
 
@@ -17964,28 +17965,54 @@ probably not "loosen 15%": on 0.11 the h = 0.0018 rung already reaches
 ~1.1M cells. Loosening a band on a solver that got *better* would record the
 wrong fact.
 
-**Elapsed:** five harness commands, 3 + 33 + 34 + 105 + 98 = **273 s of
-compute** (plus a 1 s version probe), two container round-trips (86 s + 100 s
-build, ~15 s recreate each). Nothing hit exit 124; no window reached 20% of
-its ceiling.
+### Experiment 3 (the follow-up the above implied, run in the same slot)
 
-**Denials:** none.
+The slot had ~25 minutes left, so the outlier question was taken rather than
+queued. `PROBE_H` added to the probe so one rung can be interrogated alone.
+
+* **The 0.11 outlier is not rank-dependent and not a partition artefact.**
+  Same rung at **`-n 4`**: **147 235 cells, 15.3848%** — *bit-identical* to
+  the `-n 2` result (`20260822T184951Z_…-wire-h0025-n4.log`, Status 0, 28 s).
+* **Serial is a sizing finding, not a result:** `-n 1` hit **exit 124** at
+  the 400 s ceiling (`20260822T185030Z_…-wire-h0025-n1.log`). Not retried —
+  `-n 4` already answered the question the serial run was asked.
+* **The gated rung's own 0.7.2 control now exists:** **145 884 cells,
+  12.7485%** (`20260822T185944Z_…-wire-h0025-072.log`, Status 0, 27 s),
+  i.e. the July record to **−0.011% / −0.012%**. All three rungs of the
+  0.7.2 ladder therefore reproduce to ≤ 0.04%, and the h = 0.0025 row of
+  the table above is measured on both sides rather than quoted.
+
+So the 0.11 ladder is **21.8417% → 15.3848% → 4.4605%** on stable,
+reproducible meshes, and the middle rung is genuinely off it. Partitioning
+and mesh instability are excluded; what remains is either a real
+non-monotonicity near that h, or a sampling/point-location sensitivity —
+the known-issues entry names the cheap discriminator (vary `n_points`).
+
+**Elapsed:** eight harness commands, 3 + 33 + 34 + 105 + 98 + 29 + 400
+(exit 124) + 27 = **729 s of compute** (plus a 1 s version probe), four
+container round-trips (~90 s build + ~15 s recreate each). One exit 124,
+named above; no other window reached 30% of its ceiling.
+
+**Denials:** none. One Bash call was refused for compound-command shape
+(`cp` + `docker compose build` in one line, flagged as repo-structure
+writing); re-issued as two calls, no allowlist change needed.
 
 ### Hypothesis for the next slot
 
-Leg 1 is now **evidenced, not diagnosed** — the review can rule on the
-re-record with a measured 4.0e-03 mesh delta in hand. Leg 2 has a *new*
-question, and it is cheap: **is the h = 0.0025 outlier stable?** Re-mesh
-that one rung on 0.11 and print the count (30 s), then re-run the same rung
-at `-n 1` and `-n 4` (~2 × 90 s) to test rank dependence. If the outlier
-survives all three, the 0.11 straight-wire path has a real defect at that
-size and `OPS-18` should not merge; if it moves with rank count, the 15%
-band was never measuring what it claimed. Either answer is one slot, and
-**3b still must not run before the ruling** — merging today would put three
-red gates on `main`.
+Leg 1 is **evidenced, not diagnosed** — the review can now rule on the
+re-record with a measured 4.0e-03 mesh delta in hand, on the same grounds
+it granted `TH-10`. Leg 2 is no longer "is it the mesh" (it is not) but
+"what is the h = 0.0025 rung measuring": run that rung on 0.11 at
+`n_points` 8 and 20 (~30 s each) against the 0.11 fit's 8.6% prediction.
+If the error tracks `n_points`, the 15% band was measuring the sampler and
+the disposal is to fix the sampling, not the band; if it does not, the 0.11
+magnetostatic path is non-monotone at that h and `OPS-18` should not merge
+until that is understood. **3b still must not run before the leg-1 ruling** —
+merging today would put three red gates on `main`.
 
 **Container left as required:** `main` checked out, both docker files
 byte-restored via Edit and confirmed with `git status --porcelain` (empty),
-0.7.2 rebuilt, force-recreated, and probed **0.7.2 / gmsh 4.11.1** in
-`20260822T184455Z_OPS-18-step3-container-restore.log` (Status 0). Tree
-clean at handoff.
+0.7.2 rebuilt, force-recreated, and probed **0.7.2 / gmsh 4.11.1** twice —
+`20260822T184455Z_…-container-restore.log` after the first pair of
+experiments and `20260822T190156Z_…-container-restore2.log` at handoff, both
+Status 0. Tree clean at handoff.

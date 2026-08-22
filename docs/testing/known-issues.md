@@ -199,16 +199,26 @@ unless fixing it is the task.
 > | h | cells 0.7.2 | error 0.7.2 | cells 0.11 | error 0.11 | Δcells | Δerror |
 > |---|---|---|---|---|---|---|
 > | 0.0040 | 38 750 | **22.1925%** | 38 740 | **21.8417%** | −0.13% | −1.6% |
-> | 0.0025 | 145 900 *(record)* | 12.75% *(record)* | 147 235 | **15.3848%** | +0.92% | **+20.7%** |
+> | 0.0025 | **145 884** | **12.7485%** | 147 235 | **15.3848%** | **+0.93%** | **+20.7%** |
 > | 0.0018 | 383 248 | **9.2568%** | 383 146 | **4.4605%** | −0.03% | **−51.8%** |
 >
-> Logs `20260822T184158Z_OPS-18-step3-wire-ladder-072.log` (Status 0, 98 s)
-> and `20260822T183710Z_OPS-18-step3-wire-ladder-011.log` (Status 0, 105 s);
-> the `h=0.0025` row is quoted from the runs above, not re-measured.
+> Logs `20260822T184158Z_OPS-18-step3-wire-ladder-072.log` (Status 0, 98 s),
+> `20260822T183710Z_OPS-18-step3-wire-ladder-011.log` (Status 0, 105 s) and,
+> for the gated rung's 0.7.2 control,
+> `20260822T185944Z_OPS-18-step3-wire-h0025-072.log` (Status 0, 27 s); the
+> 0.11 `h=0.0025` row is quoted from the two runs above, which agree.
 >
-> **The 0.7.2 column is a clean control**: the July record reproduces to
-> **+0.011%** and **−0.035%**, so the ladder is not stale and the deltas are
-> the image.
+> **The 0.7.2 column is a clean control on all three rungs**: the July
+> record reproduces to **+0.011%**, **−0.012%** and **−0.035%**, so the
+> ladder is not stale and the deltas are the image.
+>
+> **And the outlier is not rank-dependent.** The gated rung re-run on 0.11
+> at `-n 4` is **bit-identical** to the `-n 2` result — 147 235 cells,
+> 15.3848% (`20260822T184951Z_OPS-18-step3-wire-h0025-n4.log`, Status 0,
+> 28 s). Serial (`-n 1`) is a **sizing** finding, not a result: exit 124 at
+> the 400 s ceiling (`20260822T185030Z_…-n1.log`), not retried. So the
+> mesh count 147 235 and the 15.3848% are both stable and reproducible
+> across rank widths, and partitioning is excluded as the cause.
 >
 > **What it shows.**
 > 1. **Not the mesh.** Both probed rungs mesh to within 0.13% of their
@@ -230,10 +240,17 @@ unless fixing it is the task.
 > probably *not* "loosen 15%": it is to find why h = 0.0025 sits off its own
 > ladder on 0.11, since two rungs either side of it behave better than the
 > record. **Nothing was touched here** — no band, no assertion, no record.
-> Next cheap experiment: re-mesh h = 0.0025 on 0.11 alone and check whether
-> the +0.92% cell-count jump is stable or a gmsh-4.15 partition artefact at
-> that one size, and re-run the same rung at `-n 1` and `-n 4` to test
-> whether the outlier is rank-dependent.
+>
+> **What is left to test.** Rank dependence and mesh instability are both
+> excluded by the `-n 4` re-run above, so the remaining candidates are
+> (a) a genuine non-monotonicity of this discretization near h = 0.0025
+> that 0.11's slightly different mesh happens to land on, and (b) something
+> in the sampling / point-location path that is sensitive to where a
+> 1e-3-perturbed mesh puts cell boundaries relative to the 10 sample radii.
+> (b) is the cheaper to test: re-run the gated rung on 0.11 with a
+> different `n_points` (8 and 20) and see whether 15.3848% moves toward the
+> ~8.6% the 0.11 fit predicts. If it does, the band was measuring the
+> sampler as much as the solve.
 >
 > **No band was touched.** Loosening 15% to accommodate a version bump
 > would erase the only instrument that shows the ladder moved. §9 item 3a's
