@@ -160,7 +160,7 @@ def test_complex_weighted_n1curl_mass_matrix_scales_exactly():
     _require_complex()
     comm = MPI.COMM_WORLD
     msh = dmesh.create_unit_cube(comm, 2, 2, 2)
-    V = fem.FunctionSpace(msh, ("N1curl", 1))
+    V = fem.functionspace(msh, ("N1curl", 1))
     u, v = ufl.TrialFunction(V), ufl.TestFunction(V)
 
     eps_c = 1.0 - 3.0j

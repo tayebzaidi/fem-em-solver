@@ -195,6 +195,7 @@ def _solve_gradient_potential(q_space, msh, rhs_form):
         * ufl.dx,
         rhs_form,
         bcs=[fem.dirichletbc(zero, bdofs)],
+        petsc_options_prefix="fem_em_test_solenoidal_drive_",
         petsc_options={
             "ksp_type": "preonly",
             "pc_type": "lu",

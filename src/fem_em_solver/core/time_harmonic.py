@@ -474,7 +474,16 @@ class TimeHarmonicSolver:
         if self.problem.solver_petsc_options:
             options.update(dict(self.problem.solver_petsc_options))
 
-        problem = LinearProblem(a, L, bcs=bcs, petsc_options=options)
+        # `OPS-18` step 3: dolfinx 0.11 makes `petsc_options_prefix` a required
+        # keyword — the options dict is inserted into the PETSc database under
+        # it, so each call site needs its own so two solvers cannot collide.
+        problem = LinearProblem(
+            a,
+            L,
+            bcs=bcs,
+            petsc_options=options,
+            petsc_options_prefix="fem_em_time_harmonic_",
+        )
         # `MAT-6` step 10a: keep the LinearProblem reachable so a caller can
         # query the factorization's own statistics (MUMPS INFOG/RINFOG live on
         # `solver.getPC().getFactorMatrix()`, which is discarded with `problem`

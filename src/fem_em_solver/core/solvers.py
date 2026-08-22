@@ -387,6 +387,7 @@ class MagnetostaticSolver:
             L,
             bcs=bcs,
             petsc_options=options,
+            petsc_options_prefix="fem_em_magnetostatic_",
         )
 
         if collect_solver_diagnostics:
@@ -530,7 +531,13 @@ class MagnetostaticSolver:
         if petsc_options:
             options.update(dict(petsc_options))
 
-        problem = LinearProblem(a, L, bcs=pin, petsc_options=options)
+        problem = LinearProblem(
+            a,
+            L,
+            bcs=pin,
+            petsc_options=options,
+            petsc_options_prefix="fem_em_mixed_saddle_",
+        )
         w = problem.solve()
 
         self._last_solve_diagnostics = self._extract_ksp_diagnostics(problem.solver)

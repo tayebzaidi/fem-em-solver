@@ -149,6 +149,7 @@ def remove_gradient_content(
         rhs,
         bcs=[fem.dirichletbc(zero, boundary_dofs)],
         petsc_options=options,
+        petsc_options_prefix="fem_em_source_projection_",
     )
     psi = problem.solve()
     psi.x.scatter_forward()

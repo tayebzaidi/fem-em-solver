@@ -201,7 +201,8 @@ def _run_at_degree(degree: int) -> dict:
     sphere_cells = np.asarray(
         cell_tags.indices[cell_tags.values == SPHERE_TAG], dtype=np.int32
     )
-    e_series_fn.interpolate(_series_interior_interpolant(series), cells=sphere_cells)
+    # `OPS-18` step 3: `interpolate`'s `cells` kwarg is `cells0` in 0.11.
+    e_series_fn.interpolate(_series_interior_interpolant(series), cells0=sphere_cells)
     p_series = float(
         np.real(
             _integrate_over_sphere(

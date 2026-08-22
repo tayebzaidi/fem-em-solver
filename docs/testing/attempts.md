@@ -17521,3 +17521,97 @@ complex command of each family will pay it.
 
 **Container left as required:** `main` checked out clean, 0.7.2 rebuilt and
 force-recreated, so the next non-OPS-18 slot finds 0.7.2 Up.
+
+---
+
+## 2026-08-22T12:45Z — `OPS-18` step 3 (re-gate), attempt 1 — **incomplete (progress)**
+
+**Slot:** 07:30 CDT scheduled implementer run. **Branch:** `attempt/OPS-18`
+(worksite rule; `main` keeps 0.7.2). **Tier:** heavy, split across runs as the
+§9 item prescribes. Three of the five gate families re-gated green on
+`0.11.0.post0`; `MAT-6` and `PORT-1` remain, as does the real-mode leg and
+§5.3's environment table, so **step 3 stays 🟡**.
+
+**The previous slot's hypothesis was right, and cost nothing to confirm.** The
+pack's second wave did not fire at collect *or* in the mesh probe because those
+call sites are below both — they need a **solve**. The first re-gate command
+found all of them in 7 s:
+
+* `LinearProblem.__init__() missing 1 required keyword-only argument:
+  'petsc_options_prefix'` — **7 call sites** (`core/time_harmonic.py:477`,
+  `core/solvers.py:385` and `:533`, `core/source_projection.py:147`,
+  `post/current_divergence.py:172`, and two in tests). Each given its own
+  prefix, not a shared one: 0.11 inserts the options dict into the global PETSc
+  database under that prefix, so a shared literal would let two solvers
+  overwrite each other's `pc_factor_mat_solver_type`.
+* `fem.FunctionSpace(...)` → `fem.functionspace(...)` — **1 site**,
+  `tests/environment/test_complex_mode.py:163`.
+* `Function.interpolate(..., cells=)` → **`cells0=`** (0.11 signature is
+  `(u0, cells0=None, cells1=None)`, introspected in the container, which the
+  pack does not document) — **2 sites**, `test_lossy_sphere_fullwave.py:455`
+  and `test_lossy_sphere_degree2.py:204`.
+
+`discrete_gradient`'s namespace move still has not fired.
+
+**Three gate families reproduce. `mpiexec -n 2`, complex build,
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, both rank footers
+identical on every run.**
+
+* **`TH-6` decay/phase — `20260822T123518Z_OPS-18-step3-th6-rerun.log`,
+  `10 passed` / 21.27 s / exit 0.** Fine rung 24³ (82 944 cells):
+  rel L2 **3.609441e-02** (the §10 record's 3.61%), α error **0.017%**,
+  β **0.060%**, measured L2 rate in h **0.9998**. `MAT-2` σ-sensitivity in the
+  same file: ratio 10.3243 vs closed form 10.3116 (0.124%). Cell counts
+  (10 368 / 82 944) unmoved — this fixture is `create_unit_cube`, not gmsh.
+  *(Red baseline for the same command 90 s earlier:
+  `20260822T123401Z_OPS-18-step3-th6.log`, `3 failed, 7 passed` / 4.98 s — the
+  three breaks above. The fix list was measured, not assumed.)*
+* **`TH-10` lossy-sphere — `20260822T123746Z_OPS-18-step3-th10-rerun.log`,
+  `11 passed` / 21.36 s / exit 0.** At **64 MHz the numbers are
+  bit-identical** to the `TH-10` record: 5 866 / 17 667 cells, relL2 8.154% →
+  **3.643%**, ohmic power error 8.387% → **3.629%**, `V_mesh/V_exact`
+  0.977179 / 0.989786. At **128 MHz the fine rung moved 1.826% → 1.769%**,
+  and it moved **with its mesh**: **55 251 → 55 241 cells** (10 cells, new
+  gmsh), the coarse rung sharing 64 MHz's bit-identical 17 667-cell mesh at
+  3.302%. Read as a **re-record, by measurement**: the moved cell count is the
+  same new-gmsh drift step 2 filed (4.251e-04 relative on a volume), the
+  identities are intact, the direction is *toward* the series, and 1.769% sits
+  inside the unmoved band with the separation ratio rising 57.31× → 59.16×.
+  **No band, assertion or record was touched.**
+* **`MAT-4` SAR — `20260822T123618Z_OPS-18-step3-th10-mat4.log`.** Both SAR
+  tests **PASSED**; the log's `Status: 1` is the co-run `TH-10` file's
+  `interpolate` break, before the fix, and is named here rather than hidden.
+  Fine rung (74 020 cells): mean SAR **3.422%** at 64 MHz, **3.536%** at
+  128 MHz, `Im/Re E_z` 0.1752 vs closed 0.1755 and 1.9900 vs 2.0011, spread
+  0.067% / 0.107%, `V_mesh/V_exact` 0.996387 — the §2.1 3.5%-class record
+  reproduced. **This family owes a clean green log of its own next slot**
+  (same command minus the fullwave file); it is cited here as passing inside a
+  red log, which is weaker evidence than the other two families have.
+
+**Elapsed:** four harness commands, 7 + 23 + 55 + 23 s = 108 s of compute. The
+whole slot was editing and reading, not solving — the cold-JIT × 3 rule was
+budgeted for (560/540/480 s windows) and **never approached**; nothing hit
+exit 124. The 0.11 image's FFCx cache warmed on the first command.
+
+**Rule for the next slot: a re-gate leg's first command is a break-finder, not
+a measurement.** Every one of the three API breaks surfaced in the first 7 s of
+the first command, and each was mechanical. Run the *cheapest* member of an
+unvisited family first purely to flush breaks, then size the real window — the
+alternative is discovering `petsc_options_prefix` 400 s into a `dodd_deeds`
+window.
+
+**Hypothesis for the next attempt.** `MAT-6` (`dodd_deeds_*`) and `PORT-1`
+(`port_package_sparameters` + the two-torus files) are the two remaining
+families and are the expensive ones — `OPS-17` leg (b2) priced them at ~400 s
+and ~350 s per window warm on 0.7.2. Flush their breaks with a cheap command
+first (`test_dodd_deeds_impedance.py`'s `-k` marker subset was 1.29 s;
+`test_port_lumped_two_torus.py` ran 15 passed/98.20 s with a sibling), then
+budget one recorded-width window each. Expect the same shape as `TH-10`:
+gmsh-moved cell counts carrying small physics deltas, discriminated by whether
+the *identities* (reciprocity, passivity, the open-limit) hold bit-for-bit.
+Also still owed: the **real-mode leg** (`MAG`/`MAT-6` real gates), §5.3's
+environment table, and disposal of step 2's filed volume-drift known-issues
+entry — the discrimination it was waiting for is now precedented twice.
+
+**Container left as required:** `main` checked out clean, 0.7.2 rebuilt and
+force-recreated, so the next non-`OPS-18` slot finds 0.7.2 Up.
