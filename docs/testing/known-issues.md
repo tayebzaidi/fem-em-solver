@@ -57,6 +57,113 @@ unless fixing it is the task.
 > sweep for `!r` in any string handed to gmsh, PETSc options or a shell (the
 > birdcage fixtures are predicted to carry siblings). This entry leaves with
 > that commit.
+>
+> **FIXED on the branch 2026-08-22, 12:00 implementer slot (`445a3ea`,
+> `attempt/OPS-18`) — this entry retires when that branch merges (§9 item
+> 3b (iii)).** `arc_half_y`, `major_radius` and `z_c` are coerced to plain
+> `float` before the f-strings. Negative control discharged against the red
+> baseline quoted above: the same batch now meshes and runs to a footer,
+> `17 passed / 2 failed` in 260.93 s
+> (`20260822T170346Z_OPS-18-step3-port1-coerced.log`) — the SIGABRT is gone
+> and the two remaining failures are the moved reproduction records in the
+> next entry, a different defect. **Sweep result, measured:** `src/` carries
+> **53** `!r` interpolations; the **4** two-torus `MathEval` sites are the
+> only ones handed to a foreign parser (the other 49 are Python exception
+> messages, which is what `!r` is for), and `MathEval` has exactly **one**
+> call site in all of `src/` (`io/mesh.py:1568`). The prediction that the
+> birdcage fixtures carry siblings is **wrong, by measurement** — they build
+> no `MathEval` field. The class is closed at one instance.
+
+### Two two-torus **reproduction records** move in the 0.11 image at 1e-4 while every physics identity holds (`OPS-18` step 3 attempt 3, 2026-08-22)
+
+> **Where this fires.** `tests/validation/test_port_package_sparameters.py::test_sanity_report_reproduces_the_gated_metrics_on_the_field_route`
+> and `tests/validation/test_port_lumped_two_torus.py::test_step_1_measurements_reproduce`,
+> on the `attempt/OPS-18` worksite only. `main` boots 0.7.2 and is unaffected.
+> These are the two failures left in the log that discharged the SIGABRT
+> above; they are a **different defect** from it, and they only became
+> visible once the mesh built again.
+>
+> **Literal symptom** (`20260822T170346Z_OPS-18-step3-port1-coerced.log`,
+> `2 failed, 17 passed` in 260.93 s, `Status: 1`, `-n 2`, complex build,
+> both rank footers identical):
+>
+> ```
+> passivity_max_sigma 0.861356895 does not reproduce the step-4 record
+>   0.861449 within 1.0e-06   (moved 9.210529e-05)
+> gap ratio: 0.894141 against step 1's record 0.894310 — moved by 1.69e-04,
+>   above 1e-04
+> ```
+>
+> and, printed but not asserted in the same test's stdout:
+> `||S-S^T||/||S|| = 3.112128e-05` against the record `2.5494e-05`
+> (band 5.0e-07).
+>
+> **What did *not* move.** Every gate that scores physics rather than a
+> recorded digit string passes, in the same run: reciprocity at
+> 3.112128e-05 is 32× inside the `PORT-1` band of **1e-3**; passivity holds
+> (σ_max 0.8614 < 1, column power sum 0.7411 < 1); the open-limit reduction
+> to the sheet average and the cross-route transverse-average identity both
+> PASS. 17 of 19 tests pass.
+>
+> **Cause, not diagnosed — one hypothesis, and it is testable.** gmsh moved
+> 4.11 → 4.15.2 with the image, and the meshes it emits move with it: the
+> straight-wire fixture in the entry below went 145 900 → **147 235** cells
+> on the same requested `h`. A two-torus mesh perturbed at that level moves
+> a solved S-matrix at 1e-4, which is exactly the size of both misses and
+> ~7× the tightest band (1e-6). The alternative — that 0.11 changed an
+> assembly or interpolation the port route depends on — is not excluded by
+> anything measured here. Deciding between them needs the two-torus cell
+> count printed on both images; nobody has printed it.
+>
+> **No band, assertion or record was touched**, and none should be until
+> the cause is decided: re-recording a solved S-matrix to make a version
+> bump land is how a version bump hides a physics change. §9 item 3a's
+> negative-result clause fired on this and stopped the leg.
+
+### `test_straight_wire_b_field` fails **only in the 0.11 image**: the discretization error moved 12.75% → 15.3848% against a 15% band, on a mesh that grew 145 900 → 147 235 cells (`OPS-18` step 3 attempt 3, 2026-08-22)
+
+> **Where this fires.** `tests/validation/test_straight_wire.py::TestStraightWire::test_straight_wire_b_field`,
+> real build, on the `attempt/OPS-18` worksite only. `main` boots 0.7.2 and
+> is unaffected.
+>
+> **Literal symptom** (`20260822T171401Z_OPS-18-step3-real-mag2.log`,
+> `1 failed, 17 passed, 4 skipped` in 272.43 s, `Status: 1`, `-n 2`, both
+> rank footers identical):
+>
+> ```
+> Cells: 147235
+> Relative L2 error: 15.3848%
+> AssertionError: Relative error 15.3848% exceeds 15%
+> ```
+>
+> **What did *not* move.** The rest of the `MAG` family passes on 0.11 in
+> the same run: `test_straight_wire_convergence`,
+> `test_analytic_bc_improves_on_natural_bc` (the `MAG-13` claim itself),
+> both `test_circular_loop` gates, and all 7 `test_mutual_inductance_reference`
+> tests. The failure is one number, on the one test whose band was set from
+> a measured h-error ladder.
+>
+> **Cause, measured in part.** The 15% band is not a physics tolerance: the
+> comment at `tests/validation/test_straight_wire.py:174`–`186` records it
+> as the measured error of *this mesh* — `h=0.0025`, **145.9k cells**,
+> **12.75%** on an O(h^1.2) ladder that has no plateau. The 0.11 image's
+> gmsh (4.15.2-git-657c8e9 vs 4.11) meshes the same requested `h` to
+> **147 235** cells, and this test's error is what a still-converging
+> discretization does when its mesh changes — the number was always
+> mesh-specific, and 15% was 1.18× a measurement rather than a bound with
+> headroom.
+>
+> **Not diagnosed:** whether 15.3848% is *only* the mesh change. A 1.9%
+> cell-count change producing a 21% error change is steeper than the
+> recorded ladder (38.8k→145.9k cells for 22.19%→12.75%), so the mesh
+> hypothesis is **not sufficient on its own** and something else may be
+> contributing. Re-running the recorded ladder's other two rungs on 0.11
+> would settle it; that is a slot's work and was not done here.
+>
+> **No band was touched.** Loosening 15% to accommodate a version bump
+> would erase the only instrument that shows the ladder moved. §9 item 3a's
+> "a moved gated physics number is a known-issues entry and a stop" clause
+> fired on this.
 
 ### `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` fails **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
 

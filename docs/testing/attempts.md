@@ -17737,3 +17737,154 @@ filed volume-drift known-issues entry.
 `git status --porcelain`, both docker files byte-restored via Edit), 0.7.2
 rebuilt, force-recreated, and `dolfinx.__version__` probed as **0.7.2** — the
 next non-`OPS-18` slot finds 0.7.2 Up.
+
+---
+
+## 2026-08-22T17:30Z — `OPS-18` step 3 (re-gate), attempt 3 — **incomplete (progress)**
+
+**Slot:** 12:00 CDT scheduled implementer run, 60-minute timebox.
+**Item:** §9 On-deck item **3a** (first item not done or blocked; items 1–2 ✅).
+**Branch:** work committed to the sanctioned worksite `attempt/OPS-18` at
+**`445a3ea`**, which now also carries `main` merged in (`de6e207`'s successor —
+`main`'s 10:30 review commits merged clean, docs only). `main` carries this
+entry, the §7 annotation and three known-issues edits, nothing else.
+
+**Preflight.** Tree clean, container Up (0.7.2, 3 h old). No anomaly.
+
+### What was tried, in order
+
+1. **Branch switch, with the named trap.** `git checkout attempt/OPS-18`
+   reported `M docker/Dockerfile` / `M docker/docker-compose.yml` and
+   `Device or resource busy` — attempt 2's sandbox trap, exactly as
+   documented. Both files moved with the Edit tool (`FROM
+   dolfinx/dolfinx:v0.11.0`, `PYTHONPATH=…/python3.12/…`) and
+   `git status --porcelain` confirmed empty. Merged `main` (docs only, clean).
+2. **The coercion.** `io/mesh.py` gap-arc site: `arc_half_y` bound as
+   `float(major_radius * np.sin(0.5 * gap_angle))`, `r_major =
+   float(major_radius)`, and the loop reworded to `for z_c in
+   (-float(z_offset), float(z_offset))`, with a comment naming the numpy-2
+   mechanism at the site.
+3. **The prescribed sweep, with its negative control.** `grep -rn '!r}' src/`
+   → **53** hits. The 4 two-torus `MathEval` sites (lines 1558/1559/1562/1563)
+   are among them — the control the item required. The other 49 are all
+   Python exception messages (`ValueError(f"... got {x!r}")`), which is what
+   `!r` is for. `grep -rn 'field.setString\|MathEval' src/` returns **one**
+   call site in the whole package (`io/mesh.py:1568`). **The item's
+   prediction that the birdcage fixtures carry siblings is refuted by
+   measurement** — they build no `MathEval` field at all. The class is closed
+   at one instance, not swept open.
+4. **Container to 0.11**: build 86 s + recreate, then the two legs.
+
+### Leg 1 — `PORT-1`, complex build (`20260822T170346Z_OPS-18-step3-port1-coerced.log`)
+
+`tests/environment` + `test_port_package_sparameters.py` +
+`test_port_lumped_two_torus.py`, complex, `FEM_EM_REQUIRE_COMPLEX=1`, `-n 2`,
+`timeout -k 30 540`. **`2 failed, 17 passed` in 260.93 s, `Status: 1`**, both
+rank footers identical.
+
+**The negative control is discharged.** The red baseline was attempt 2's
+`Status: 134` (SIGABRT) at **12 s**; this run meshes, solves and reaches a
+footer at 260.93 s. The coercion is the fix.
+
+**What still fails is two reproduction records, and the physics beneath them
+holds:**
+
+| quantity | this run | record | band | verdict |
+|---|---|---|---|---|
+| `passivity_max_sigma` | 0.861356895 | 0.861449 | 1e-6 | **FAIL**, moved 9.21e-05 |
+| two-torus gap ratio | 0.894141 | 0.894310 | 1e-4 | **FAIL**, moved 1.69e-04 |
+| `‖S−Sᵀ‖/‖S‖` | 3.112128e-05 | 2.5494e-05 | 5e-7 (record) / **1e-3 (physics)** | printed; **inside the physics band by 32×** |
+| passivity σ_max < 1 | 0.8614 | — | 1 | **holds** |
+| column power sum | 0.7411 | — | 1 | **holds** |
+| open-limit → sheet average | — | — | — | **PASS** |
+| cross-route miss = transverse average | — | — | — | **PASS** |
+
+So 3a's written anchor — "reciprocity reproduces at its record 2.5494e-05
+*within the 1e-3 band*" — is **met on the band it names and missed on the
+digit string**. That is why this is a stop rather than a close, and why I did
+not touch either failing assertion.
+
+### Leg 2 — real-mode `MAG` closed forms
+
+First run (`20260822T170854Z_OPS-18-step3-real-mag.log`, **`5 failed,
+13 passed, 8 skipped` in 237.86 s**) found a **fifth undocumented 0.11 API
+break**: `element.interpolation_points` is now a **property** returning the
+`(n, gdim)` array, so calling it raises `TypeError: 'numpy.ndarray' object is
+not callable` at `solvers.py:648`. Probed directly in the image
+(`type` = `numpy.ndarray`, shape `(1, 3)` on DG0). Fixed at **2 sites in
+`src/`** (`compute_b_field`, `compute_h_field`) and **4 in `examples/`**
+(`mri/02`, `time_harmonic/08` ×2, `materials/01`) — the examples are the
+identical one-token change and are **not covered by a log this slot**.
+
+That run also showed `test_dodd_deeds_projected_drive.py` is **complex-only**
+(4 SKIPPED in real mode) — the item listed it under the real leg; it is not a
+real-mode gate, and it was already re-gated green in attempt 2. Dropped from
+the rerun.
+
+Rerun (`20260822T171401Z_OPS-18-step3-real-mag2.log`): `tests/environment` +
+`test_straight_wire.py` + `test_circular_loop.py` +
+`test_mutual_inductance_reference.py`, real, `-n 2`, `timeout -k 30 540`.
+**`1 failed, 17 passed, 4 skipped` in 272.43 s, `Status: 1`**, both rank
+footers identical.
+
+The one failure: **`test_straight_wire_b_field`, relative L2 error
+15.3848% against a 15% band**, on **147 235 cells** where the record is
+145.9k. That band is not a physics tolerance — the comment at
+`tests/validation/test_straight_wire.py:174`–`186` records it as the measured
+error of *that* mesh (12.75%) on an O(h^1.2) ladder with no plateau, i.e.
+1.18× a measurement. Everything else in the family passes on 0.11:
+`test_straight_wire_convergence`, `test_analytic_bc_improves_on_natural_bc`
+(the `MAG-13` claim itself), both `test_circular_loop` gates, and all 7
+`test_mutual_inductance_reference` tests.
+
+### The stop, and why it is a stop
+
+3a's negative-result clause: *"a moved gated physics number in either leg is a
+known-issues entry and a stop."* Three numbers moved, in both legs. I filed
+**two known-issues entries** (one per leg, each with its literal symptom, its
+log, what did *not* move, and the cheap experiment that would decide the
+cause) and **touched no band, no assertion and no record**. Re-recording a
+solved S-matrix or a discretization error to make a version bump land is how a
+version bump hides a physics change.
+
+**Common hypothesis, with its own counter-evidence.** The image's gmsh moved
+4.11 → 4.15.2-git-657c8e9 and the meshes move with it — the same mechanism as
+step 2's volume drift (4.251e-04) and `TH-10`'s 55 251 → 55 241 — and a mesh
+perturbed at 1e-3 moves a solved record at 1e-4, which is the size of all
+three misses. **But** a 1.9% cell-count change producing a 21% error change on
+the straight wire is *steeper than that test's own recorded ladder*
+(38.8k → 145.9k cells for 22.19% → 12.75%), so the mesh alone does not explain
+leg 2, and nothing measured here excludes an assembly or interpolation change
+in 0.11. Both entries say so, rather than asserting the convenient cause.
+
+**Elapsed:** three harness commands, 263 + 240 + 274 = **777 s of compute**,
+plus two container round-trips (~100 s build + 15 s recreate each way).
+Nothing hit exit 124; no window came within 50% of its 540 s ceiling.
+
+**Denials:** none. No permission call was refused this slot.
+
+### Hypothesis for the next slot — and it is *not* attempt 4
+
+A fourth implementer attempt would re-measure the same three numbers and stop
+in the same place. What 3a is now blocked on is a **review decision an
+implementer may not make**: whether a solved-field reproduction record may be
+re-recorded across a version bump, and on what evidence. The two entries name
+the cheap experiments that would supply it —
+
+* print the two-torus cell count on 0.7.2 and on 0.11 (seconds, mesh-only): if
+  it moved, leg 1's two misses are the mesh and a re-record is defensible on
+  the same grounds the review already granted `TH-10`'s 55 251 → 55 241;
+* re-run the straight-wire ladder's other two rungs (h = 0.004, 0.0018) on
+  0.11 (~2 windows): if the whole ladder shifts by the same factor it is the
+  mesh; if only the middle rung moves, it is not, and the upgrade has found
+  something real.
+
+Either is one slot. **3b remains blocked on 3a** and should not be attempted
+before that ruling: merging `attempt/OPS-18` to `main` today would put three
+red gates on `main`.
+
+**Container left as required:** `main` checked out, both docker files
+byte-restored via Edit and confirmed with `git status --porcelain`, 0.7.2
+rebuilt and force-recreated, `dolfinx.__version__` probed as **0.7.2**. Tree
+clean at handoff; `main` is green and boots 0.7.2, as the worksite rule
+requires.
