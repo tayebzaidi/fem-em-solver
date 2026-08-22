@@ -14841,3 +14841,71 @@ sentence below is amended accordingly.
    coverage count (63 → N of 227) is the deliverable. **Negative
    result:** any moved digit vs a real-mode record is a finding —
    known-issues entry, report, stop.
+
+## §9 On-deck done items 4–5 + interval recap, 18:00 2026-08-21 to 03:00 2026-08-22 — archived 2026-08-22 (03:00 review)
+
+*(Recap paragraph as it stood in §9 at the 18:00 review, verbatim.)*
+Last reviewed 2026-08-21, **18:00 review** — the first governing session
+in ~39 h. Interval (since the 03:00 review 2026-08-20): **four consecutive
+review launches died on exhausted usage credits** (146-byte
+`You're out of usage credits` wrapper logs: 10:30/18:00 Thu, 03:00/10:30
+Fri) — a failure the 12:00 Fri slot measured as **model-scoped**, not an
+account outage (every `--model claude-opus-5` implementer wrapper in the
+same window launched; the review wrappers pass `--model claude-fable-5`).
+This 18:00 session launching on the same model closes that incident: the
+budget refilled; no config change was made. Cost on record: four dead
+reviews + eight drained Friday implementer slots (the 00:00 slot bought
+an independent coverage audit with its window; 04:30–16:30 journalled
+two-line drains per protocol). Before the drain, 2026-08-20's eight slots
+all fired: **five closes** — `GEO-18` step 1, `GEO-17`, `MAG-17`,
+`OPS-23`, `EX-26` (whole chunks except `GEO-18`) — plus `OPS-17` leg (b2)
+attempts 4–9, which exhausted the runnable validation tail at 216.
+**All five closes audited COMPLIANT this review** (one subagent auditor
+each; every claimed figure verified against its log footer). Two audit
+nuances on record: `MAG-17`'s cited "ladder" log is an **exit-1** run —
+the fit's sign convention was corrected between it and the record-bearing
+`final2` (6 passed, exit 0); same spreads, |rate| 2.4476 unchanged, the
+0.7 band pre-registered and unmoved — the §7 citation just doesn't say
+the ladder log is red. `OPS-23`'s annotation omits one benign exit-0
+helmholtz log that test-results.md carries. **Review decisions this
+session:** (1) `OPS-17` leg (b2) **closed** — the two deferrals adopted
+(`coil_loading_degree2` 14, the skips *are* the adjudicated `TH-12`
+memory wall; `port_gap_voltage_padding` 2), denominator re-based to
+**216**, leg closed at 216/216 observed ⇒ step 3 ✅ ⇒ **chunk ✅**.
+(2) The `OPS-18` deferral commitment is executed in this same commit:
+**steps 1–3 queued as items 1–3 below.** (3) `GEO-18` step 2 scoped
+(§7 rubric written on step 1's measured extents) and queued as item 4.
+(4) §5.4 example ramp: `EX-27` commissioned on `GEO-17`'s newly gated
+region-resolution capability (item 5); a `GEO-18` step-1 example is
+**deliberately deferred** until the chunk closes (step 2 refragments the
+same boxes — an example now would gate a moving fixture); `MAG-17` needs
+no example (`EX-9` owns the h-convergence angle, `EX-10` the gauge
+angle); `OPS-23` gates no capability; `EX-26` is one. Tree clean all
+interval, no `attempt/*` or `recovered/*`, container healthy.
+
+*(Item 1's unblock history — the ⛔ at 19:30, the byte-identical 00:00
+re-probe, and the operator's 2026-08-22 hand edit of `.claude/settings.json`
+that removed the broad `Edit(docker/**)` ask rule in favour of two named
+allows plus an `Edit(docker/.claude/**)` ask — lives in the §7 `OPS-18`
+entry and commit `c724575`; the standing constraint on the compose allow is
+carried forward in the live §9 preamble.)*
+
+4. ✅ **DONE 2026-08-22, 21:00 slot — attempt 2, `GEO-18` step 2 closed
+   and with it the whole chunk.** Attempt 1's parked diff resumed; the
+   only change was hoisting the record loop's `allreduce` above
+   `if comm.rank == 0`. Sheet area 1.120000000e-04 m² = analytic `dx·g`
+   at 1.000000000000 on all four ports, `w_eff/w_bbox` 1.000000000000,
+   spread ≤ 2.512e-16 m, halves 0.500000000000, C4 spread 8.470e-16,
+   step 1's terminal band and closure re-asserted; control reproduces
+   114 846 cells / 0.988616 with the `110+i`/`210+i` tags absent. 2
+   passed 53 s + birdcage-suite regression 10 passed 186 s, both exit 0.
+   *(Commission text: §7 `GEO-18` step 2 entry, verbatim there.)*
+5. ✅ **DONE 2026-08-22, 22:30 slot — `EX-27` closed as written on the
+   first run.** Reached by the fall-through rule (item 1 ⛔ at the time).
+   Policy coil meshed/CAD **0.835563 / 0.833730** against the imported,
+   unmoved 0.755; clamps-only asserted to miss it at **0.754685 /
+   0.752565**, sizing separation gated at a pre-stated 0.05 and measured
+   **+0.080879 / +0.081165**; partition 1.000000000000 on both meshes;
+   `OPS-17` table re-asserted on 4/4 tags at 1e-9. 8 s harness at `-n 2`
+   (measured smoke); docrefs `dead=0 guide=0 stale=24 exit=2`.
+   *(Commission text: §7 `EX-27` row carries the full rubric summary.)*
