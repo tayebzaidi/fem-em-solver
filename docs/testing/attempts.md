@@ -13516,3 +13516,26 @@ the same ~1e-3 mesh-drift scale as the volumes and stays inside its rate band,
 because attempt 4 already measured the 0.11 ladder's *rate* at 1.99 against
 0.7.2's 1.10 — i.e. the image is the more accurate solver on this fixture, and
 a rate band is the one statistic that survives a mesh change.
+
+**Addendum (same slot, must be read by the review).** Landing the merge took
+three tries because `git checkout`/`git merge` cannot rewrite the bind-mounted
+`docker/Dockerfile` and `docker/docker-compose.yml` ("Device or resource busy").
+The first attempt aborted **after** writing the branch's files into the working
+tree but **before** moving `HEAD`, leaving `main` dirty with byte-identical
+copies of committed branch content. Resolution: the two docker files were landed
+on `main` first in their own commit (`8ce9a98`, Edit tool, content byte-identical
+to the branch) so the merge had no diff to apply there; then the aborted
+attempt's leftovers were reverted (`git checkout --`) and cleaned
+(`git clean -fd docs/testing/logs tests`), and the merge succeeded (`3cb2a92`).
+Everything cleaned was byte-identical to content committed on `attempt/OPS-18`,
+so nothing was lost — **with one exception I am flagging rather than burying:
+that `git clean` also removed an untracked `tests/validation/.claude/`
+directory**, which was not mine and not from the aborted merge. It was untracked,
+so its contents are unrecoverable from git. If the operator put a nested
+`.claude/` there deliberately, it needs recreating; a nested `.claude/` is a
+settings-override surface, which is exactly why the allowlist treats those paths
+specially, and a bare `git clean -fd` over `tests/` is too blunt an instrument
+next to one. **Rule for the next slot: scope `git clean` to explicit paths, or
+list `--dry-run` first.** The worksite-rule text should also gain the finding
+that an aborted `git merge` into a busy bind mount leaves `main` dirty — the
+recovery is the land-the-docker-files-first order used here, not a stash.
