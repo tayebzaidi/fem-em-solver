@@ -161,6 +161,34 @@ unless fixing it is the task.
 > string is written, no band moves, branch-only until 3b merges. Queued as
 > §9 item 4; this entry closes with that commit. Full text in the §7
 > `OPS-18` entry.
+>
+> **Update, `OPS-18` step 3a attempt 7 (2026-08-23, 06:00 slot) — the three
+> licensed records are written and green, and writing them surfaced a
+> fourth and a fifth of the same kind.** On `attempt/OPS-18` at `44b5600`,
+> image `v0.11.0`, complex, `-n 2`, two same-slot runs
+> (`20260823T110726Z_OPS-18-step3a-leg1-confirm.log`, `1 failed / 18
+> passed` / 234.88 s, and `20260823T112102Z_…-leg1-confirm-rerun.log`,
+> same counts / 226.36 s). `passivity_max_sigma` 0.861356895, `‖S−Sᵀ‖/‖S‖`
+> 3.11213e-05 (six digits per (b′)) and the gap ratio 0.894141 all
+> reproduce as written in both runs; physics green in both (reciprocity
+> 2.679e-05 inside 1e-3, σ_max 0.861357 < 1).
+>
+> The remaining failure is **not** a regression: `test_step_1_measurements_
+> reproduce` checks three records in one loop, and the gap ratio was the
+> first, so fixing it unmasked the other two.
+>
+> | record | 0.7.2 | 0.11.0 | move | band | run-to-run move |
+> |---|---|---|---|---|---|
+> | `STEP1_LUMPED_RATIO_RECORD` | 0.829782 | 0.828893 | 8.89e-04 | 1e-4 | 6.6e-10 (6.6e-06 of band) |
+> | `STEP1_CROSS_ROUTE_RECORD` | 0.077095 | 0.077431 | 3.36e-04 | 1e-4 | identical to 6 printed digits |
+>
+> Both are step-1 reproduction records of the *same* solved field on the
+> *same* fixture whose mesh moved 184 919 → 184 176 cells — the class
+> ruling (1) licensed — and both satisfy (b′)'s reproduction condition on
+> this slot's two runs. But ruling (1) enumerates **three** numbers, and an
+> implementer does not extend a review ruling in-slot, so **neither was
+> written**. What is owed is one review decision: extend ruling (1) to
+> these two, or rule them differently. Nothing else in leg 1 is open.
 
 ### `test_straight_wire_b_field` fails **only in the 0.11 image**: the discretization error moved 12.75% → 15.3848% against a 15% band, on a mesh that grew 145 900 → 147 235 cells (`OPS-18` step 3 attempt 3, 2026-08-22)
 
@@ -345,6 +373,21 @@ unless fixing it is the task.
 > The gate is now `E_Ω` = 25.3787 / 10.7288 / **6.6708%** on the recorded
 > ladder, rate **1.6842**, monotone, with the natural-BC control at
 > 32.3117% vs 10.7288%.
+>
+> **Update, `OPS-18` step 3a attempt 7 (2026-08-23, 06:00 slot) — leg 2 is
+> green on 0.11 and the entry still stays open.** On `attempt/OPS-18` at
+> `44b5600`, real, `-n 2`, `20260823T111216Z_OPS-18-step3a-leg2-confirm.log`:
+> **`11 passed, 4 skipped`** / 293.59 s / exit 0, against attempt 6's `1
+> failed / 10 passed / 4 skipped`. `E_Ω` = 25.2868 / 10.6172 / 6.6458% on
+> the recorded ladder, rate **1.6854**, monotone, natural-BC 32.315493% vs
+> 10.617170% (ratio 0.3285). The `E_Ω` h = 0.0025 record is now written
+> version-tagged as 1.061717e-01 at 147 235 cells and measures
+> 1.0617170177e-01; the retired sampler control is keyed by image and
+> reproduces the 0.11 triplet 16.603276 / 15.384842 / 13.698645% to
+> ≤ 3.3e-06. **The 15.3848% non-monotonicity is exactly that middle
+> number** — it is now recorded and asserted rather than failing, which is
+> what "reported-not-gated" means. Still unexplained; this entry stays
+> open until someone explains or retires it.
 
 ### `MAG-18` anchor (ii) is unreachable as pre-registered: the magnetostatic solve's own cross-width floor is ~1e-7, not 1e-10 (2026-08-22)
 
@@ -2382,6 +2425,28 @@ runs of the *same* command on an *unchanged* tree
 | **Not a band question** | Every physics band in the same runs is orders of magnitude above the wobble (reciprocity 2.679e-05 vs 1e-3; the symmetry record's own band is 5e-7 absolute vs a 3e-11 move). Nothing here licenses loosening anything. |
 | **Resolves with** | A review restating the reproduction criterion at a stated tolerance (proposal in attempts.md 2026-08-23T05:25Z: agreement to ≤ 1e-9 relative across two runs, record written only to digits both runs share). No code fix is implied. |
 | **Ruling, 2026-08-23 03:00 review** | Restated as **(b′)**, per-record rather than one relative number — the proposed "≤ 1e-9 relative" would itself reject `‖S−Sᵀ‖/‖S‖` (1.0e-06 relative, cancellation-amplified): *the move across two same-slot runs must be ≤ 1% of the record's own unmoved band, and the value is written only to the digits both runs share, never fewer than the band resolves.* All four records pass (1.2e-4, 3.3e-6, 6e-5 and 7e-6 of their bands); the symmetry record is written as 3.11213e-05. Full text in PROJECT_PLAN §7 `OPS-18`. **This entry closes with the `OPS-18` 3a commit that writes the records** (§9 item 2). |
+
+### Gate (iii) is blind to a broken C4 on the *opposite* class, and the lumped-sheet 4-port sweep loses reciprocity by 223× on an asymmetric layout (`PORT-9` step 3 leg (d1), 2026-08-23)
+
+Two findings from one run, both **measured, neither disposed** — the leg's own
+negative-result clause (§7 `PORT-9` step 3 leg (d1)) sends both to the review.
+The tests are **not on `main`**: they are parked on
+`attempt/PORT-9-d1-20260823T124500Z` at `bbe657f`, so nothing here is red in CI.
+
+| | |
+|---|---|
+| **Tests** | `tests/validation/test_port_birdcage_leg_offset_sweep.py::test_gate_iii_detects_the_broken_c4`, `::test_the_displaced_rung_stays_reciprocal` (parked branch only) |
+| **Log** | `docs/testing/logs/20260823T140422Z_PORT-9-step3d1.log` — `2 failed, 7 passed` / 119 s / `-n 2`, complex build, standard tier |
+| **Fixture** | `GEO-18`'s gapped, sheeted birdcage, two rungs of the same code path: `leg_azimuth_offsets_rad` all zero (116 416 cells) and leg 1 alone at **+22.5°** (116 944 cells); four driven lumped-sheet solves per rung at `Z_p = z0 = 50 Ω`, 10 MHz, `f = 0.5`, `w = A/h`. |
+| **The comparison is controlled** | The zero rung reproduces leg (d)'s recorded 4×4 **entry by entry** to ≤ **2.969e-10** relative against the 1e-9 print-precision band (worst of sixteen), with `‖S−Sᵀ‖/‖S‖` = 2.495292352e-05 and `σ_max` = 0.862659137 identical to nine digits. The offset knob and the frame-aware sheet narrowing this leg added do not move the solve, so every difference below belongs to the displacement. |
+| **Finding 1 — symptom** | Displaced, gate (iii)'s three class spreads read **self 5.1819%**, **adjacent 7.1147%**, **opposite 1.6476%** against the unmoved 5% band (symmetric rung: 0.0199 / 0.0180 / 0.0108%; amplifications 260.89× / 395.76× / 152.49×). The adjacent class detects the broken C4 by 1.42×; the **opposite class does not** — it is inside the band it passes on a symmetric layout. The leg's anchor required **both** off-diagonal classes to exceed the band. |
+| **Finding 1 — cause** | Geometric and expected in direction, not in size: rotating leg 1 by 22.5° moves the P1–P3 separation 180° → 157.5° while P2–P4 stays 180°, so the opposite class mixes two separations 22.5° apart, where the adjacent class mixes 67.5° / 90° / 112.5°. Leg (d0) measured only 5.9% between 90° and 180°, so a 22.5° perturbation of the *opposite* pair is a second-order effect on an already-flat part of the coupling curve. Not diagnosed further in-slot. |
+| **Finding 2 — symptom** | On the displaced rung `‖S−Sᵀ‖/‖S‖` = **5.570640234e-03** against step 2c's unmoved **1e-3** band (`‖Z−Zᵀ‖/‖Z‖` = 7.440778193e-03) — a **223×** rise from the same code path's 2.495292352e-05 on the symmetric rung. `σ_max` = 0.865743230, still passive. Reciprocity is a property of the materials, so this is a systematic of the route or the discretisation, never of the physics. |
+| **Finding 2 — cause** | Not diagnosed. The one measured asymmetry that tracks it: the midpoint interior-width filter keeps **26** facets on the rotated port's sheet against **27** on the other three, so P1's `w = A/h` is **7.272128105e-03 m** against 7.413268623e-03 m elsewhere — a 1.9% width difference entering `LumpedSheetPortSpec.sheet_width_m`, hence the V/I estimate, asymmetrically between driven and undriven readings. On the symmetric rung all four sheets are identical and the systematic cancels exactly. This is a hypothesis with a measurement attached, not a diagnosis. |
+| **Not a mesh defect** | The negative control of the control is green on **both** rungs: every sheet is a full rectangle of the closed-form `dx·g` = 1.120000000e-04 m², meshed/analytic **1.000000000000** to the 1e-9 band, planar to ≤ 1.7e-17 m in its own port frame, and narrower than the full sheet after filtering. Both rungs' meshes are conforming and every `GEO-18` identity holds. |
+| **Consequence** | `PORT-9` stays **🟡**: step 3's gate (iii) is validated as a symmetry gate on the adjacent class only, and the displaced spreads cannot be read as pure geometry while finding 2 stands. §2.2's "no coil has ports" sentence is **unmoved**. Nothing licenses widening (i)–(iii) or the 5% band. |
+| **Resolves with** | A review ruling on both: whether gate (iii) is re-specified (a tighter band, an adjacent-class-only statement, or a different invariant), and how the reciprocity systematic is disposed — a per-port equal-facet-count narrowing rule is the obvious first probe, and is code work, not a band question. |
+| **Ruling, 2026-08-23 10:30 review** | **The width hypothesis is refuted from the log's own Z** (`…step3d1.log:9327-9330`): a 1.9% readout-width asymmetry on P1 would put a common factor 0.981 on every `Z₁ⱼ/Zⱼ₁` and leave the other pairs at 1; measured `\|Z_ij/Z_ji\|` = 0.99589 / 1.00109 / 1.00625 on row 1 and 1.00523 / **1.01041** / 1.00515 on the pairs that do not involve P1 — the worst pair is **P2–P4, neither port moved**. The asymmetry is global, 0.2–1.6% per pair, the order of the discretisation on a mesh gmsh regenerated whole. Reading: the route's `V` readout is not the impressed source's adjoint, so `Z − Zᵀ` is a local-discretisation residual that cancels only when every port sees the same local mesh — which every fixture this route has been measured on provides (two identical tori, C4 birdcage). **Step 2c's 2.6e-11 is evidence of a symmetric fixture, not of a reciprocal discretisation.** Disposal: `PORT-9` leg (d2), an asymmetric two-torus (`f` = 0.5 / 0.735) with pre-registered predictions (A: O(1e-2); B: ≤ 1e-9), §9 item 2. **Gate (iii) re-specified as (iii′) ≤ 0.5%** (25× above the measured symmetric floor, 3.3× below the weakest displaced class; a tightening; leg (d) stays ✅ under it). The (d1) re-run is serial on (d2). This entry closes with the (d1′) commit. |
 
 ## Recording a new entry
 

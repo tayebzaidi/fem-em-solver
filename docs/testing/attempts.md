@@ -12946,3 +12946,316 @@ five digits inside the 1e-9 band and nothing here depends on it.
 120–160 s estimate holds — this module is parametrisable on the mesh knob
 as leg (d1) scopes it, and the four-port reading it needs now exists to
 reproduce at zero offsets.
+
+---
+
+## 2026-08-23T11:35Z — `OPS-18` step 3a, attempt 7 — **incomplete (all four licensed records written and green; leg 2 closes; two more records surface and need one ruling)** (06:00 CDT implementer slot)
+
+§9 item 2, taken as the first On-deck item not done or blocked (item 1
+closed in the 04:30 slot). Preflight clean, container Up. Worksite
+`attempt/OPS-18`, `main` merged in at `d7abf54` (one conflict, both sides
+appended rows to `docs/testing/test-results.md`, resolved as the union in
+timestamp order), slot work at `44b5600`, restore at `66aaf69`. `main`
+restored to a booted **0.7.2** and probed — `0.7.2 / python 3.10.12`,
+`pgrep -c python3` = 0 — and left clean at `66a770d`. Six harness
+commands, **~1 100 s of compute**, no exit 124, no wedge, no permission
+denial, **no band or assertion touched**.
+
+### What the item asked for, and what happened to it
+
+The item said: *write, then confirm; do not re-measure.* That is exactly
+what was done, and all four records confirmed on the first run. The slot
+is `incomplete` only because writing the records **revealed two more of
+the same kind that no ruling covers**.
+
+### Leg 1 (`PORT-1`, complex, `-n 2`) — the three writes hold, twice
+
+`tests/environment` + `test_port_package_sparameters.py` +
+`test_port_lumped_two_torus.py`, run twice in the slot:
+`20260823T110726Z_OPS-18-step3a-leg1-confirm.log` (**`1 failed / 18
+passed`**, 234.88 s in-pytest, Elapsed 237 s) and
+`20260823T112102Z_OPS-18-step3a-leg1-confirm-rerun.log` (**same counts**,
+226.36 s, Elapsed 227 s), both rank footers identical within each run.
+Against attempt 6's `2 failed / 17 passed`.
+
+| record written | value | band | both runs? |
+|---|---|---|---|
+| `RECORDED_PASSIVITY_MAX_SIGMA` | 0.861356895 | 1e-6 | yes |
+| `RECORDED_S_SYMMETRY_RATIO` | 3.11213e-05 | 5e-7 | yes |
+| `STEP1_GAP_RATIO_RECORD` | 0.894141 | 1e-4 | yes |
+
+All version-tagged per condition (a): the 0.7.2 value and its 184 919
+cells stay in the comment beside the new value at 184 176 cells with
+`0.11.0.post0 / gmsh 4.15.2`. Physics green in both runs — reciprocity
+2.679e-05 inside 1e-3, `σ_max` 0.861357 < 1, open-limit and cross-route
+identities PASS.
+
+### The one remaining failure is new information, not a regression
+
+`test_step_1_measurements_reproduce` checks **three** records in one
+loop, gap ratio first. With the gap ratio fixed, the loop reaches the
+other two for the first time since the bump:
+
+| record | 0.7.2 | 0.11.0 | move | band | run-to-run move |
+|---|---|---|---|---|---|
+| `STEP1_LUMPED_RATIO_RECORD` | 0.829782 | 0.828893 | 8.89e-04 | 1e-4 | 6.6e-10 = 6.6e-06 of band |
+| `STEP1_CROSS_ROUTE_RECORD` | 0.077095 | 0.077431 | 3.36e-04 | 1e-4 | identical to 6 printed digits |
+
+The full-precision lumped ratios are 0.8288927013861895 (run 1) and
+0.8288927020449839 (run 2); the cross-route prints 7.743060e-02 in both.
+So **both satisfy (b′)'s reproduction condition already** — the second
+run was taken precisely so the review would not have to spend a slot on
+it.
+
+They are step-1 reproduction records of the *same* solved field on the
+*same* fixture whose mesh moved 184 919 → 184 176 cells, i.e. exactly the
+class ruling (1) licensed on exactly the grounds it cited. But ruling (1)
+enumerates **three** numbers and says "narrowly", and an implementer does
+not extend a review ruling in-slot (the standing rule attempt 6 stopped
+on). **Neither was written.** Known-issues carries the table.
+
+### Leg 2 (real, `-n 2`) — green, and its owed files with it
+
+`tests/environment` + `test_straight_wire.py`,
+`20260823T111216Z_OPS-18-step3a-leg2-confirm.log` — **`11 passed, 4
+skipped`**, 293.59 s, Elapsed 294 s, exit 0, both rank footers identical.
+That is the item's anchor exactly, against attempt 6's `1 failed / 10
+passed / 4 skipped`.
+
+* `E_Ω` written **1.061717e-01** at 147 235 cells, measured
+  1.0617170177e-01 — 1.7e-08 of its unmoved 1e-4 band. 0.7.2's
+  1.0728835983e-01 / 145 884 cells kept in the comment.
+* `MAG-18` rate **1.6854 ≥ 0.7**, ladder 25.2868 / 10.6172 / 6.6458%
+  monotone; natural-BC control 32.315493% vs 10.617170%, ratio 0.3285.
+* The retired sampler control is now `NPOINTS_CONTROL_BY_VERSION`, keyed
+  on `dolfinx.__version__` major.minor and **raising** on an unrecorded
+  image rather than borrowing another's row. It reproduces the 0.11
+  triplet 16.603276 / 15.384842 / 13.698645% to ≤ 3.3e-06 relative while
+  the 0.7.2 triplet stays on record. Both rows are measurements; neither
+  is a physics bound.
+
+`test_circular_loop.py` + `test_mutual_inductance_reference.py` on 0.11 —
+the only part of leg 2 attempt 6 left owed —
+`20260823T111729Z_OPS-18-step3a-leg2-loop-mutual.log`: **`14 passed, 4
+skipped`**, 184.85 s, exit 0, on their **existing** bands. Loop relative
+L2 **5.8814%** against the `rel_error < 0.08` band (the 7.07% record
+moved, but the band is what gates and it holds with room); filament
+`ωM₁₂` identity 3.093e-07 vs 1e-6; tube quadrature converged at (8,16)
+to 1.985819906053e-08 H, ratio 1.004809991957. No break-finder fired.
+
+### Logs and cost
+
+Container round trip `20260823T110458Z_OPS-18-step3a-build-011.log`
+(exit 0, **131 s**) and `20260823T112709Z_OPS-18-step3a-container-restore.log`
+(exit 0, **122 s**), with `20260823T112921Z_OPS-18-step3a-restore-probe.log`
+(exit 0, 2 s) confirming `0.7.2 / 3.10.12` and no strays. Tests:
+237 + 294 + 186 + 227 s.
+
+### Note on the branch's docker pair
+
+The Edit-tool swap worked in both directions again, but a detail worth
+recording for the next slot: with the worktree docker files swapped back
+to 0.7.2, `git checkout main` **aborts** — the two files read as modified
+relative to the branch and git refuses. The working sequence is: commit
+the slot's work on the branch, Edit the docker pair back to the *branch's*
+0.11 content so the branch is clean, `git checkout main` (it errors on
+unlinking those two and switches anyway, leaving 0.11 content in the
+worktree), then Edit them back to 0.7.2 so `main` is clean. Verified
+`git status --porcelain` empty at the end.
+
+### Hypothesis for the next slot
+
+3a needs **one review decision and no measurement**: extend ruling (1) to
+`STEP1_LUMPED_RATIO_RECORD` (0.828893) and `STEP1_CROSS_ROUTE_RECORD`
+(0.077431), whose (b′) evidence is already in this slot's two logs. With
+that, 3a is a ~10-minute write-and-confirm slot — one build, one leg-1
+command, one restore — and 3b (§9 item 4) follows. If the review instead
+rules those two differently, leg 1 needs whatever that ruling asks for;
+everything else in step 3a is closed. The general lesson for the review:
+a test that checks N records in one assertion loop hides N−1 of them, so
+a re-record slot should read the whole loop, not the first failure.
+
+---
+
+## 2026-08-23T12:45Z — `PORT-9` step 3 leg (d1) — **incomplete** (mesh half green, solve half not run)
+
+**Item taken:** §9 On deck **item 3**. Items 1 (`PORT-9` leg (d)) is ✅ done;
+item 2 (`OPS-18` 3a) was **skipped deliberately** — attempt 7 (06:00 slot)
+stopped on "the review must extend ruling (1) (or rule otherwise)", which no
+implementer may do, and it is that item's **second** failed attempt (6 and 7),
+so §9's own "items that fail twice get rescoped by the review before they may
+reappear" applies. Re-running it in this slot could only have reproduced
+attempt 7. Item 3 is independent of items 1 and 2 and runs on `main`'s 0.7.2
+container, so it was taken as written.
+
+**Parked on `attempt/PORT-9-d1-20260823T124500Z` at `e5e8a8c`**; `main` clean,
+carrying only this entry and the §7 annotation.
+
+### What was built
+
+`leg_azimuth_offsets_rad` on `MeshGenerator.birdcage_port_domain` /
+`_birdcage_leg_gap_layout`, exactly as the review scoped it: one angle per leg,
+added to that leg's azimuth, so leg *i* rotates rigidly about z **with its two
+stubs, its gap, its terminals, its port box and its sheet**, and the rings, the
+phantom and the other legs stay put.
+
+Three implementation findings worth carrying forward:
+
+1. **The box and sheet must be built undisplaced and then rotated**, not built
+   at the displaced azimuth. `addRectangle` is axis-aligned and the generator
+   already refuses a leg off a coordinate axis (`NotImplementedError`), so the
+   only exact construction is: build at `theta`, `occ.rotate` onto
+   `theta + offset`. The stubs take the displaced azimuth directly — a cylinder
+   is placed by its axis point, so placing it there *is* the rotation.
+2. **The half-plane bookkeeping had to be generalised.** `sheet_of_ordinal` was
+   an `("x"|"y", coordinate)` pair and the lower/upper split was
+   `centre[axis] > coordinate`. That is now `(n_x, n_y, p_x, p_y)` with
+   `(c − p)·n > 0`. The old form is the `n = (0,1)` / `(1,0)` special case, and
+   the sign convention was checked term by term before the change — the naive
+   "use φ̂ as the normal" rewrite **flips** ports 2 and 4 (the existing
+   convention is not C4-covariant: legs on ±x take upper = +y, legs on ±y take
+   upper = +x), which would have silently changed the sign of two columns of
+   leg (d)'s recorded Z.
+3. **A zero offset skips the rotation call entirely**, so the undisplaced
+   fixture is the same construction rather than a zero-angle rotation of it.
+   That is what makes the identity control an identity, and it measured as one.
+
+### Measured — `20260823T123737Z_PORT-9-step3d1-mesh-rerun.log`, `5 passed` / 71.16 s, `-n 2`, standard
+
+`tests/mesh/test_birdcage_leg_offset.py`, three rungs (baseline with no kwarg,
+all-zero offsets, leg 1 at `π/(2·leg_count)` = 22.5°), 21.5–21.8 s of mesh each.
+
+* **Identity control (all-zero vs baseline):** 116 416 cells both, identical
+  cell-tag set, all four sheet areas 1.120000000e-04 m² in both, azimuths
+  0/90/180/270 in both. Band 1e-12 relative; agreement is exact.
+* **Displaced rung, 116 944 cells:** P1's sheet centre at **22.5000°**, legs
+  2–4 unmoved (< 1e-6 °).
+* **Negative control of the control, all four ports of the displaced mesh:**
+  sheet meshed/analytic `dx·g` = **1.000000000000** (band 1e-9); in each port's
+  *own* radial/axial frame `w` = 1.400000000e-02 m and `h` = 8.000000000e-03 m
+  with out-of-plane spread **1.1e-16 to 2.5e-16 m**; the two box halves
+  partition the box to **1.000000000000**; terminals **0.989367** (P1) and
+  0.988616 (P2–P4) of the closed form, inside `GEO-18` step 1's [0.95, 1.0].
+  P1's terminal ratio moving 0.988616 → 0.989367 is the rotated leg's own
+  triangulation, not a defect — an inscribed triangulation under-reads, and
+  0.989367 is still under 1.
+* Two guard tests: offsets without `leg_gap_length` and a wrong-length offset
+  vector are both rejected calls.
+
+The frame-aware extent reading (`_projected_extents`) is the piece the solve
+half will need: at 22.5° a sheet is neither x- nor y-normal, so
+`_sheet_extents`/`_sheet_axes`/`_narrowed_transverse` — all of which pick a
+*global* axis off the measured bbox — cannot narrow it to `f = 0.5` or measure
+`w = A/h`. That is why the solve half is not a two-line parametrisation of leg
+(d)'s module.
+
+### One correction made in-slot, recorded
+
+The first run (`20260823T123558Z_PORT-9-step3d1-mesh.log`, `1 failed / 4
+passed`, 72.80 s) died on `TypeError: '<' not supported between instances of
+'float' and 'tuple'` — `GEO-18`'s `TERMINAL_AREA_BAND` is the **interval**
+`(0.95, 1.0)`, not a symmetric tolerance, because an inscribed triangulation of
+a disk always under-reads its area. The assertion was rewritten to use the
+imported interval as written. No band was widened; every printed number in the
+failing run is identical to the passing one.
+
+### What is left, and why it did not run
+
+Leg (d1)'s **anchor** is the pair of solve readings: all-zero offsets reproduce
+leg (d)'s 4×4 to ≤ 1e-9 relative, and the displaced mesh drives the {Z_i,i±1}
+and {Z_i,i+2} class spreads **> 5%** while reciprocity stays ≤ 1e-3. Neither
+ran. Eight solves plus two meshes at leg (d)'s price is ~160–200 s of compute,
+which fits a slot easily — the cost here was the mesh knob and the frame-aware
+sheet handling, not the compute. `PORT-9` stays 🟡 and §2.2's "no coil has
+ports" sentence is unmoved.
+
+**Hypothesis for the next attempt:** resume this branch and add
+`tests/validation/test_port_birdcage_leg_offset_sweep.py` — leg (d)'s fixture
+verbatim except (a) `_build` takes offsets, (b) the four sheets are narrowed and
+measured in each port's own radial frame using this branch's
+`_projected_extents` rather than `_sheet_axes`/`_narrowed_transverse`, and
+(c) `_class_spread` / `_circulant_classes` / `ADJACENT_SPREAD_BAND` /
+`RECIPROCITY_BAND` are imported from leg (d)'s module unchanged. Run the
+zero-offset sweep first: if it does **not** reproduce leg (d)'s 4×4 to 1e-9,
+the frame-aware narrowing disagrees with `_narrowed_transverse` on the
+undisplaced mesh and that is the bug to fix before the displaced reading means
+anything.
+
+---
+
+## 2026-08-23T14:10Z — `PORT-9` step 3 leg (d1), attempt 2 — **incomplete** (executed, both anchor halves MISS, disposal is the review's)
+
+**Slot:** scheduled implementer run, 2026-08-23 09:00 local. **Item taken:** §9
+**item 3** (`PORT-9` step 3 leg (d1)), resumed on the sanctioned branch
+`attempt/PORT-9-d1-20260823T124500Z` per its own "the next slot resumes it".
+**Item 1 was done**; **item 2 was skipped as blocked** — its §9 text says every
+part is green "except one thing no implementer may do" (ruling (1) enumerates
+three records and two more need writing), and no review has run since the 06:00
+slot journaled it. Same reading the 07:30 slot made. Tree clean at start,
+container Up, no `recovered/*`.
+
+**Executed.** Added `tests/validation/test_port_birdcage_leg_offset_sweep.py`:
+two rungs of one code path — `leg_azimuth_offsets_rad` all zero, then leg 1 at
+`+π/(2·leg_count)` = 22.5° — four driven lumped-sheet solves each at
+`Z_p = z0 = 50 Ω`, 10 MHz, `f = 0.5`, `w = A/h`, on leg (d)'s fixture. The
+frame-aware half the last attempt owed is `_narrowed_radial`: step 2b's midpoint
+filter along the port's own radial direction (read off the sheet bbox centre),
+which reduces term by term to `_narrowed_transverse` for a leg on a coordinate
+axis. Sheet extents come from this branch's `_projected_extents`.
+`ADJACENT_SPREAD_BAND`, `RECIPROCITY_BAND`, `PASSIVITY_SIGMA_TOLERANCE`,
+`_class_spread` and `_circulant_classes` are imported from legs (c)/(d),
+never restated.
+
+**Measured.** `2 failed, 7 passed` / **119 s** at `-n 2`, complex build,
+standard tier, `docs/testing/logs/20260823T140422Z_PORT-9-step3d1.log`. Rungs:
+116 416 cells / sweep 27.81 s and 116 944 cells / sweep 28.73 s, meshes 21.80 s
+and 21.62 s.
+
+* **Identity control PASSES, and hard.** All sixteen entries of the zero rung's
+  4×4 reproduce leg (d)'s recorded matrix to ≤ **2.969e-10** relative against the
+  1e-9 print-precision band; `‖S−Sᵀ‖/‖S‖` = 2.495292352e-05 and
+  `σ_max` = 0.862659137 come back identical to nine digits. The knob and the
+  frame rewrite do not move the solve — every difference below is the
+  displacement. (This was the hypothesis's own stop condition and it did not
+  fire.)
+* **MISS 1 — gate (iii) is blind on the opposite class.** Displaced spreads
+  **self 5.1819% / adjacent 7.1147% / opposite 1.6476%** vs the unmoved 5% band
+  (symmetric 0.0199 / 0.0180 / 0.0108%; amplification 260.89× / 395.76× /
+  152.49×). Adjacent clears the band by 1.42×; opposite does not, and the
+  pre-stated anchor required both off-diagonal classes.
+* **MISS 2 — reciprocity degrades with the layout.** Displaced
+  `‖S−Sᵀ‖/‖S‖` = **5.570640234e-03** vs the unmoved **1e-3**
+  (`‖Z−Zᵀ‖/‖Z‖` = 7.440778193e-03), **223×** the symmetric rung on the same code
+  path. `σ_max` = 0.865743230, still passive. This is the half of the anchor that
+  separates "the gate measured geometry" from "the solve broke", so MISS 1's
+  numbers are not yet readable as pure geometry.
+* **Negative control of the control green on both rungs** — every sheet a full
+  rectangle at `dx·g` = 1.120000000e-04 m², meshed/analytic **1.000000000000**,
+  planar to ≤ 1.7e-17 m in its own port frame, narrowed strictly below the full
+  radial extent. Neither miss is a broken port.
+
+**Nothing widened, nothing relaxed.** Both misses are exactly the negative
+result the leg's §7 entry pre-authorised: record and stop. `PORT-9` stays 🟡,
+step 3 stays "as measured on the undisplaced mesh", §2.2's "no coil has ports"
+sentence is unmoved.
+
+**Parked, not landed.** Branch `attempt/PORT-9-d1-20260823T124500Z` at
+**`bbe657f`** carries the module and the log; `main` carries only the log, the
+test-results row, the §7 annotation and the known-issues entry, so nothing is
+red on `main` and nothing is red in CI. The §9 item is annotated as needing a
+review ruling before another attempt — this is not an implementer decision.
+
+**Hypothesis for the next attempt (after a ruling).** MISS 2 first: the one
+measured asymmetry that tracks it is the interior-width filter keeping **26**
+facets on the rotated sheet against **27** on the other three, so P1's
+`w = A/h` = 7.272128105e-03 m against 7.413268623e-03 m elsewhere — a 1.9%
+width entering `LumpedSheetPortSpec.sheet_width_m` and hence the V/I estimate,
+which cancels exactly on the symmetric rung. A cheap probe that settles it
+without touching a band: re-run the displaced rung with the *unnarrowed* sheets
+(`f = 1.0`, where all four facet sets are the full rectangle and the widths are
+equal by construction) and read reciprocity — if it returns inside 1e-3 the
+systematic is the filter, not the layout, and a per-port equal-width narrowing
+rule is the fix. MISS 1 is likelier a specification question than a code one:
+the opposite class is perturbed 22.5° on a coupling curve leg (d0) measured to
+vary only 5.9% across the whole 90°→180° span, so a 5% band on that class may be
+asking the wrong invariant.

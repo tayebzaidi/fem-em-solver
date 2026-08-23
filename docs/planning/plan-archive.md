@@ -19190,3 +19190,236 @@ with the Edit tool and verify `git status --porcelain`.
    anything in (iv) red ⇒ `main` keeps 0.7.2, branch stays parked, the
    failing assertion quoted in the §7 entry; never re-record a gated
    physics number to make the merge happen.
+
+## §9 On deck — 2026-08-23 03:00 review block (recap + items 1–5 with attempt texts) — archived 2026-08-23 (10:30 review)
+
+Last reviewed 2026-08-23, **03:00 review**. Interval (since 18:00): four
+slots, **three closes and one stop-on-evidence**, no drain, no exit 124,
+no wedge, tree clean at every handoff, no `recovered/*`, the 02:15 weekly
+review ran and archived cleanly between the last slot and this one. 19:30
+— `MAG-18` landed on `main` (`7 passed` / 270.64 s / `-n 2`): rate
+**1.6842**, natural-BC 0.3320, the record bit-identical twice; anchor (ii)
+read 7.28e-08 against an unreachable 1e-10 and was left for this review.
+21:00 — `EX-28` closed as written on its first run (`mesh:6`, exit 0 /
+46 s): every `GEO-18` record reproduced to 1e-9 and the uncut control
+measured facetless. 22:30 — `PORT-9` leg (d0): at `Z_p = 50 Ω` the margin
+is **598.4×** vs 10×, adjacent spread **0.0152%** vs 5%, `|I₁|` gain
+13 876×, the 1e6 Ω control reproducing leg (c) to 2.4e-10 — the
+termination *is* the gap capacitor. 00:00 — `OPS-18` 3a attempt 6: leg 2's
+`MAG-18` anchors hold on 0.11 (rate **1.6854**, ratio 0.3285); leg 1 stopped
+on ruling (1)'s own "bit-identical" clause, two same-slot runs differing at
+~1e-10 (and 1e-6 on the symmetry residual), nothing written. **This
+review:** `EX-28` audited COMPLIANT from its footer (exit 0, 46 s,
+`20260823T020338Z_EX-28-example-n2.log:4670-4674` = the four 1e-9 gates);
+`MAG-18` **closed ✅** — (ii) re-registered at ≤ 1e-6 relative (14× the
+measured cross-width floor, five orders under the 34% sampler defect it
+was commissioned to exclude), met by the logged `-n 2`/`-n 4` pair; no
+example owed (`01_straight_wire.py` / `06_h_convergence_rate.py` already
+show the capability — the instrument changed, not the physics).
+**Ruling (1)(b) restated as (b′)** — the implementer's "≤ 1e-9 relative"
+would itself reject the symmetry record (1e-6 relative from
+cancellation), so the criterion is per-record: *move ≤ 1% of the record's
+own band, written to shared digits*; attempt 6's two runs already satisfy
+it for all four records, so item 2 writes and confirms, it does not
+re-measure. **`PORT-9` legs (d) and (d1) scoped** (items 1 and 3): (d) is
+the 4×4 at 50 Ω under the unmoved 2026-08-16 gates with two in-run
+controls; the geometric control the 08-16 text named needs a mesh knob
+`io/mesh.py` lacks and is its own leg (d1), with the 08-16 wording
+corrected — rotate the *leg* with its port, not the box off the leg.
+`PORT-9` goes ✅ on (d) + (d1), not (d) alone. Previous interval's recap
+and the done texts of items 1–3: `docs/planning/plan-archive.md`.
+1. **`PORT-9` step 3 leg (d) — the 4×4 at 50 Ω (standard, `-n 2`, complex
+   build, 0.7.2, `main`).** ✅ **done 2026-08-23, 04:30 slot** — all three
+   gates pass on the first run and both controls with them: (i)
+   2.495292352e-05 vs 1e-3, (ii) σ_max 0.862659137 with max column power
+   sum 0.515251749, (iii) class spreads 0.0199 / 0.0180 / 0.0108% vs 5%,
+   control (1) ≤ 1.9e-10 against leg (d0)'s column, control (2) 466.06×
+   vs the 10× floor. `9 passed 64.23 s` at `-n 2`,
+   `20260823T093319Z_PORT-9-step3d.log`, reproduced digit-for-digit by
+   `20260823T093439Z_PORT-9-step3d-rerun.log`. Step 3 ✅ on the
+   undisplaced mesh; `PORT-9` stays 🟡 and §2.2 unmoved until item 3.
+   Execute the §7 `PORT-9` leg (d) entry (scoped
+   this review; full rubric there). Same fixture and route as leg (d0)
+   (116 416 cells, sheets `211`–`214` at f = 0.5, `w = A/h`, 10 MHz,
+   `Z_p = 50 Ω` every port), four driven solves through
+   `run_n_port_sparameter_sweep`'s lumped-sheet route, new module
+   `tests/validation/test_port_birdcage_four_port.py` — (c)'s and (d0)'s
+   modules untouched. **Anchors, pre-stated 2026-08-16 and unmoved:** (i)
+   `‖S−Sᵀ‖/‖S‖ ≤ 1e-3`; (ii) `σ_max(S) ≤ 1 + 1e-9`, column power sums ≤ 1;
+   (iii) C4 spread within {Z_ii}, {Z_i,i±1}, {Z_i,i+2} each ≤ 5%, on Z.
+   **Negative controls, in-run:** the driven-P1 column reproduces (d0)'s
+   50 Ω record to ≤ 1e-9 relative (`Z₁₁ = +2.173224483e+01 +
+   7.459491479e+00j`, `Z₂₁ = +1.700799365e+01 + 2.384284683e-01j`, `Z₃₁ =
+   +1.602758027e+01 − 9.538522445e-01j`, `Z₄₁ = +1.701057452e+01 +
+   2.384109272e-01j` Ω); and the *pooled* off-diagonal spread (adjacent +
+   opposite as one class) ≥ 10× the worst intra-class spread — (d0) puts
+   it at ≈ 390×, so 10× is reachable. **Cost:** 21.4 s mesh + 4 × 7–9 s +
+   assembly + cold JIT ≈ 60–80 s; `timeout -k 30 400`. **Traps:** complex
+   build + `FEM_EM_REQUIRE_COMPLEX=1` + `tests/environment` first; facet
+   tags allgathered; the sweep errors on gap-spec + sheet-spec together;
+   `z0_ohm` and `Z_p` are both 50 Ω — print both, named; 0-byte `.c`
+   stubs; print `σ_max` and the column sums to 9 digits as the 4×4's
+   record. **Scope:** step 3 ✅ *as measured on the undisplaced mesh*;
+   `PORT-9` and §2.2's "no coil has ports" sentence move only with item
+   3; no Larmor claim. **Negative result:** a class spread > 5% is
+   mesh-induced asymmetry at the graded sizing — record all three spreads
+   and both controls in §7 + known-issues, stop; `σ_max > 1` is a
+   four-port passivity finding about the sheet route — same disposal;
+   never widen (i)–(iii).
+2. **`OPS-18` step 3a resumed under (b′) — write the four re-records,
+   confirm green, finish leg 2 (heavy, `-n 2`; on `attempt/OPS-18` at
+   `9b3c9e2`, merge `main` first).** 🟡 **attempt 7, 2026-08-23, 06:00
+   slot — every part executed and green except one thing no implementer
+   may do.** All four records written version-tagged and confirmed by two
+   same-slot runs (`passivity_max_sigma` 0.861356895, `‖S−Sᵀ‖/‖S‖`
+   3.11213e-05, gap ratio 0.894141, `E_Ω` 1.061717e-01 at 147 235 cells);
+   leg 2's anchor met exactly (`11 passed, 4 skipped`, rate 1.6854) and
+   its two owed files green on their existing bands (`14 passed, 4
+   skipped`; loop L2 5.8814% vs 0.08, `ωM₁₂` 3.093e-07 vs 1e-6). Leg 1
+   reads `1 failed / 18 passed` twice because **writing the gap ratio
+   unmasked two further records in the same assertion loop** —
+   `STEP1_LUMPED_RATIO_RECORD` 0.829782 → 0.828893 and
+   `STEP1_CROSS_ROUTE_RECORD` 0.077095 → 0.077431, both at the 1e-4 band,
+   both the same class ruling (1) licensed, both already satisfying (b′)
+   on this slot's two runs. **Ruling (1) enumerates three numbers, so
+   they were not written: the review must extend it (or rule
+   otherwise).** With that ruling, 3a is a ~10-minute write-and-confirm.
+   Branch `66aaf69`, `main` restored to 0.7.2 and probed. Journal
+   2026-08-23T11:35Z; §7 entry and known-issues carry the tables. Under ruling (1) as restated this
+   review (§7 `OPS-18` entry, "(b′)"), attempt 6's two same-slot runs
+   already satisfy the reproduction condition for every record, so this
+   slot **writes, then confirms** — it does not re-measure first. **Leg 1
+   (`PORT-1`, complex):** write, version-tagged per condition (a) (0.7.2
+   value + 184 919 cells stay in the comment; new value with 184 176
+   cells, `0.11.0.post0 / gmsh 4.15.2`), `passivity_max_sigma`
+   **0.861356895**, gap ratio **0.894141**, `‖S−Sᵀ‖/‖S‖` **3.11213e-05**
+   (six digits — its shared precision); bands 1e-6 / 1e-4 / 5e-7
+   untouched. **Anchor:** `tests/environment` +
+   `test_port_package_sparameters.py` + `test_port_lumped_two_torus.py`
+   **`19 passed`** against attempt 6's `17 passed / 2 failed` (255 s),
+   reciprocity inside 1e-3, σ_max < 1, open-limit and cross-route PASS.
+   **Leg 2 (real):** write the `E_Ω` h = 0.0025 record on 0.11 as
+   **1.061717e-01** at 147 235 cells (attempt 6's two prints agree to
+   7e-10; the 1e-4 band stays) beside the 0.7.2 value; the retired sampler
+   control keeps its 0.7.2 triplet **and** gains the 0.11 triplet
+   (16.603276 / 15.384842 / 13.698645%) selected by the image version, so
+   the control still pins to the image it runs on. **Anchor:**
+   `test_straight_wire.py` **`11 passed / 4 skipped`** against attempt 6's
+   `1 failed / 10 passed / 4 skipped` (303 s) with rate ≥ 0.7, monotone,
+   natural-BC worse; then `test_circular_loop.py` +
+   `test_mutual_inductance_reference.py` on 0.11 (real, `-n 2`; both
+   cheap on 0.7.2, a break-finder first), **anchor: their existing
+   bands** (loop `rel_error < 0.08` on a 7.07% record; the filament /
+   `ωM₁₂` / tube-quadrature identities at 1e-9 / 1e-6 / 1e-6) with a
+   moved *record* disposed under (b′) and a moved *band* stopping the
+   leg. **Cost:** build 127 s + restore 123 s + 255 + 305 s + two cheap
+   files ≈ 15 min of compute; stop at minute 45. **Traps:** the worksite
+   rule above; `interpolation_points` is a property on 0.11 (fixed on the
+   branch — do not re-fix on `main`); 0-byte `.c` stubs; pytest `-s` to
+   see the printed records; restore 0.7.2 from `main`'s compose before
+   the slot ends and probe `dolfinx.__version__`. **Scope:** closes 3a;
+   not the chunk — 3b does. **Negative result:** a physics gate red on
+   0.11 is a finding about 0.11 — known-issues, §7 annotation, stop; a
+   record that fails (b′) (move within 100× of its band) is filed, not
+   written.
+3. **`PORT-9` step 3 leg (d1) — the geometric negative control of gate
+   (iii): rotate one leg (standard, `-n 2`, complex build, 0.7.2,
+   `main`; independent of item 1 — if item 1's module does not exist
+   yet, build the 4×4 reading inside this leg's own module and say so).**
+   🟡 **attempt 1, 2026-08-23, 07:30 slot — the mesh knob is built and
+   green, the solve half did not run.** `leg_azimuth_offsets_rad` lands as
+   scoped; `tests/mesh/test_birdcage_leg_offset.py` reads `5 passed` /
+   71.16 s at `-n 2` with the identity control exact (all-zero offsets
+   reproduce the baseline rung's 116 416 cells, tag set and four
+   1.120000000e-04 m² sheets digit for digit) and the negative control of
+   the control green on the displaced rung (leg 1 at 22.5°, 116 944 cells;
+   sheet `dx·g` = 1.000000000000, out-of-plane 1e-16 in each port's own
+   frame, halves 1.000000000000, terminals inside [0.95, 1.0]). The
+   leg's **anchor** — the zero-offset 4×4 to 1e-9 and the displaced class
+   spreads against 5% — is **not measured**, so this item is unfinished
+   and the next slot **resumes it**: check out
+   `attempt/PORT-9-d1-20260823T124500Z` (`e5e8a8c`) and add the sweep
+   module. The cost was the mesh knob and frame-aware sheet handling, not
+   compute; the eight solves are ~160–200 s. Journal 2026-08-23T12:45Z;
+   §7 `PORT-9` carries the two convention findings.
+   🟡 **attempt 2, 2026-08-23, 09:00 slot — the solve half ran end to end
+   and the leg's anchor MISSED on both halves; nothing widened.** Parked
+   on the same branch at `bbe657f`; `main` clean and not red. The
+   identity control passes (all sixteen entries of the zero rung's 4×4
+   reproduce leg (d)'s record to ≤ **2.969e-10** vs 1e-9, `‖S−Sᵀ‖/‖S‖`
+   and `σ_max` identical to nine digits), so the comparison is
+   controlled. Displaced: class spreads **self 5.1819% / adjacent
+   7.1147% / opposite 1.6476%** vs the unmoved 5% — adjacent detects the
+   broken C4, **opposite is blind**, and the anchor required both; and
+   **`‖S−Sᵀ‖/‖S‖` = 5.570640234e-03 vs 1e-3**, 223× the symmetric rung,
+   so the spreads cannot yet be read as pure geometry. Mesh identities
+   green on both rungs (`dx·g` = 1.000000000000, planar ≤ 1.7e-17 m).
+   `2 failed, 7 passed` / 119 s / `-n 2`,
+   `20260823T140422Z_PORT-9-step3d1.log`; §7 and known-issues carry both
+   findings. **This item is now the review's, not an implementer's**: it
+   needs a ruling on gate (iii)'s re-specification and on the reciprocity
+   systematic before another attempt. Journal 2026-08-23T14:10Z.
+   Execute the §7 `PORT-9` leg (d1) entry. Add `leg_azimuth_offsets_rad`
+   (length `leg_count`, default zeros) to
+   `MeshGenerator.birdcage_port_domain` / `_birdcage_leg_gap_layout`,
+   added to `theta` per leg so leg 1 with its gap, terminals, box and
+   sheet rotates by `+π/(2·leg_count)` and nothing else moves.
+   **Anchors:** zero offsets reproduce the undisplaced 4×4 (item 1's, or
+   this module's own) to ≤ 1e-9 relative; displaced, the {Z_i,i±1} and
+   {Z_i,i+2} class spreads **> 5%** *while* `‖S−Sᵀ‖/‖S‖ ≤ 1e-3`.
+   **Negative control of the control:** `GEO-9` partition identity and
+   `GEO-18` sheet area `dx·g` to 1e-9 on all four ports of the displaced
+   mesh. **Cost:** 2 meshes × ~21 s + 8 solves ≈ 120–160 s; `timeout -k
+   30 500`. **Traps:** `birdcage_port_layout_diagnostics`' clearance check
+   assumes uniform spacing — read it first, shrink the offset before
+   touching the clearance; `TERMINAL_AREA_BAND` on the rotated leg; gmsh
+   state global; complex build + `FEM_EM_REQUIRE_COMPLEX=1` +
+   `tests/environment` first. **Scope:** with item 1 green this closes
+   step 3 and `PORT-9` ✅ and licenses the §2.2 rewrite; nothing at
+   64/128 MHz. **Negative result:** spread < 5% on the displaced mesh
+   means gate (iii) is blind at this grain — record the displaced spreads
+   in §7 + known-issues, `PORT-9` stays 🟡, the review re-specifies (iii);
+   never declare step 3 on (d) alone.
+4. **`OPS-18` step 3b — §5.3 environment table, drift disposal, merge
+   (standard; depends on item 2 green on both legs — if it is not, resume
+   item 2).** (i) Update §5.3's environment table (image tag **`v0.11.0`**,
+   version string `0.11.0.post0`, Python 3.12, numpy 2.4.6, gmsh
+   4.15.2-git-657c8e9, h5py 3.16.0 / HDF5 (2, 1, 1)); (ii) dispose of
+   step 2's filed volume-drift known-issues entry by re-recording the
+   `OPS-17` volume record (4.251e-04 relative, identities intact — under
+   (b′), version-tagged) and make the 128 MHz 55 251 → 55 241 re-record
+   explicit in the `TH-10` entry; (iii) close the numpy-2 `!r` entry with
+   attempt 3's fixing commit, the two-torus re-record entry and the
+   2026-08-23 non-determinism entry with item 2's commit (the latter
+   resolves by the (b′) restatement — quote it); (iv) one confirming run
+   on the rebuilt 0.11 container — `tests/environment` +
+   `tests/mesh/test_mesh_tag_integrity.py`, real, `-n 2`, `timeout -k 30
+   180`, **anchor:** `0 failed` where step 2's shim-runtime log read
+   `1 failed, 6 passed, 4 skipped`, and the full-suite collect in both
+   modes reconciled to the current count (418 + `MAG-18`'s + leg (d0)'s +
+   any item-1/3 additions — count, do not assume); (v) **merge
+   `attempt/OPS-18` to `main` in one commit with every log**, `main` now
+   booting 0.11, compose `PYTHONPATH` updated — the only version-encoded
+   literal in the project (step 1's rule). **Cost:** one 16 s run, two
+   collects, a container build; editing time otherwise. **Scope:**
+   `OPS-18` ✅ only if every §2.1 number reproduced in item 2 and attempts
+   1–2 — cite each family's green log by name in the §7 entry.
+   **Negative result:** anything in (iv) red ⇒ `main` keeps 0.7.2, branch
+   stays parked, the failing assertion quoted in the §7 entry; never
+   re-record a gated physics number to make the merge happen.
+5. **`PORT-11` step 1 — one 64 MHz solve on the loaded gapped birdcage,
+   priced (standard, `-n 2`, complex; serial on items 1 and 3 having
+   landed *and* `PORT-9` ✅ — if either is not on `main`, stop and
+   journal; do not start it).** Execute the §7 `PORT-11` step 1 entry as
+   the weekly review wrote it: the `GEO-18` fixture with the phantom at
+   the `TH-10` 64 MHz saline values, `Z_p = z0 = 50 Ω`, one P1-driven
+   solve. **Anchor:** the same code path at 10 MHz reproduces leg (d0)'s
+   column to 1e-6 relative before the frequency changes (the entry's own
+   control); the 64 MHz solve prints cells/δ in the phantom, cells/λ in
+   air, `ru_maxrss`, `|Im P|/Re P`, and column 1 of Z — **a priced probe,
+   🧪, no band**. **Cost:** cost-probe-first is binding; one solve at
+   ~7–9 s at 10 MHz, the 64 MHz cost is *the measurement* — `timeout -k
+   30 400`. **Scope:** nothing closes; it licenses step 2's sizing.
+   **Negative result:** an exit 124 or a memory figure past 50% of
+   `memory.max` is the finding — §7 annotation, stop; the review sizes
+   step 2 from it.
