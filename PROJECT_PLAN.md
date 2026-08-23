@@ -2688,6 +2688,55 @@ the answer is already gated**.
 >   > narrowing: `_sheet_axes` / `_narrowed_transverse` pick a *global*
 >   > axis off the bbox and cannot handle a 22.5° sheet. Journal
 >   > 2026-08-23T12:45Z.
+>   >
+>   > **Leg (d1) attempt 2, 2026-08-23 09:00 slot — 🟡 the solve half ran
+>   > end to end and the leg's anchor MISSED on both halves; nothing
+>   > widened.** Parked on `attempt/PORT-9-d1-20260823T124500Z` at
+>   > `bbe657f`; `main` clean, tests not on it, nothing red in CI.
+>   > `tests/validation/test_port_birdcage_leg_offset_sweep.py` builds two
+>   > rungs of the same code path (zero offsets 116 416 cells, leg 1 at
+>   > +22.5° 116 944 cells) and drives four lumped-sheet solves on each at
+>   > `Z_p = z0 = 50 Ω`, 10 MHz — `2 failed, 7 passed` / **119 s** at
+>   > `-n 2`, standard tier, `20260823T140422Z_PORT-9-step3d1.log`.
+>   > **The identity control passes and makes the comparison controlled:**
+>   > all sixteen entries of the zero rung's 4×4 reproduce leg (d)'s record
+>   > to **≤ 2.969e-10** relative against the 1e-9 band, with
+>   > `‖S−Sᵀ‖/‖S‖` = 2.495292352e-05 and `σ_max` = 0.862659137 identical to
+>   > nine digits — the knob and the frame-aware narrowing this leg added
+>   > (`_narrowed_radial`, the midpoint filter along the port's own radial
+>   > direction, reducing term by term to leg (c)/(d)'s global-axis one on a
+>   > coordinate-axis leg) do not move the solve.
+>   > **Miss 1 — gate (iii) is blind on one class.** Displaced spreads
+>   > **self 5.1819% / adjacent 7.1147% / opposite 1.6476%** against the
+>   > unmoved 5% band (symmetric rung 0.0199 / 0.0180 / 0.0108%;
+>   > amplification 260.89× / 395.76× / 152.49×). Adjacent detects the
+>   > broken C4 by 1.42×; **opposite does not**, and the anchor required
+>   > both. Geometric in direction: 22.5° moves P1–P3 from 180° to 157.5°
+>   > while P2–P4 stays 180°, and (d0) measured only 5.9% across the whole
+>   > 90°→180° span, so the opposite pair is perturbed on a flat part of
+>   > the coupling curve.
+>   > **Miss 2 — the route loses reciprocity when the layout does.**
+>   > Displaced `‖S−Sᵀ‖/‖S‖` = **5.570640234e-03** vs the unmoved 1e-3
+>   > (`‖Z−Zᵀ‖/‖Z‖` = 7.440778193e-03), **223×** the symmetric rung on the
+>   > same code path; `σ_max` = 0.865743230, still passive. Reciprocity is a
+>   > material property, so this is a route/discretisation systematic — and
+>   > it is the half of the anchor that separates "the gate measures
+>   > geometry" from "the solve broke", so the displaced spreads above
+>   > cannot be read as pure geometry while it stands. One measured
+>   > asymmetry tracks it, offered as hypothesis not diagnosis: the
+>   > interior-width filter keeps **26** facets on the rotated sheet against
+>   > **27** elsewhere, so P1's `w = A/h` is 7.272128105e-03 m against
+>   > 7.413268623e-03 m — a 1.9% width difference entering
+>   > `sheet_width_m` and hence the V/I estimate, which cancels exactly on
+>   > the symmetric rung where all four sheets are identical.
+>   > **The negative control of the control is green on both rungs** —
+>   > every sheet a full rectangle at `dx·g` = 1.120000000e-04 m²,
+>   > meshed/analytic **1.000000000000**, planar to ≤ 1.7e-17 m in its own
+>   > port frame — so neither miss is a broken port. **`PORT-9` stays 🟡
+>   > and §2.2 is unmoved**; per this leg's negative-result clause the
+>   > review re-specifies gate (iii) and disposes of the reciprocity
+>   > finding. Both are in known-issues (entry «Gate (iii) is blind to a
+>   > broken C4 on the *opposite* class…»). Journal 2026-08-23T14:10Z.
 
 **`PORT-10` — the two `PORT-1` systematics: composition measured, not
 assumed** ✅ *(scoped 2026-08-16, weekly planning review — the first of the
@@ -3451,6 +3500,23 @@ with the Edit tool and verify `git status --porcelain`.
    module. The cost was the mesh knob and frame-aware sheet handling, not
    compute; the eight solves are ~160–200 s. Journal 2026-08-23T12:45Z;
    §7 `PORT-9` carries the two convention findings.
+   🟡 **attempt 2, 2026-08-23, 09:00 slot — the solve half ran end to end
+   and the leg's anchor MISSED on both halves; nothing widened.** Parked
+   on the same branch at `bbe657f`; `main` clean and not red. The
+   identity control passes (all sixteen entries of the zero rung's 4×4
+   reproduce leg (d)'s record to ≤ **2.969e-10** vs 1e-9, `‖S−Sᵀ‖/‖S‖`
+   and `σ_max` identical to nine digits), so the comparison is
+   controlled. Displaced: class spreads **self 5.1819% / adjacent
+   7.1147% / opposite 1.6476%** vs the unmoved 5% — adjacent detects the
+   broken C4, **opposite is blind**, and the anchor required both; and
+   **`‖S−Sᵀ‖/‖S‖` = 5.570640234e-03 vs 1e-3**, 223× the symmetric rung,
+   so the spreads cannot yet be read as pure geometry. Mesh identities
+   green on both rungs (`dx·g` = 1.000000000000, planar ≤ 1.7e-17 m).
+   `2 failed, 7 passed` / 119 s / `-n 2`,
+   `20260823T140422Z_PORT-9-step3d1.log`; §7 and known-issues carry both
+   findings. **This item is now the review's, not an implementer's**: it
+   needs a ruling on gate (iii)'s re-specification and on the reciprocity
+   systematic before another attempt. Journal 2026-08-23T14:10Z.
    Execute the §7 `PORT-9` leg (d1) entry. Add `leg_azimuth_offsets_rad`
    (length `leg_count`, default zeros) to
    `MeshGenerator.birdcage_port_domain` / `_birdcage_leg_gap_layout`,

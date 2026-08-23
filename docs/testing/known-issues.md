@@ -2426,6 +2426,27 @@ runs of the *same* command on an *unchanged* tree
 | **Resolves with** | A review restating the reproduction criterion at a stated tolerance (proposal in attempts.md 2026-08-23T05:25Z: agreement to ≤ 1e-9 relative across two runs, record written only to digits both runs share). No code fix is implied. |
 | **Ruling, 2026-08-23 03:00 review** | Restated as **(b′)**, per-record rather than one relative number — the proposed "≤ 1e-9 relative" would itself reject `‖S−Sᵀ‖/‖S‖` (1.0e-06 relative, cancellation-amplified): *the move across two same-slot runs must be ≤ 1% of the record's own unmoved band, and the value is written only to the digits both runs share, never fewer than the band resolves.* All four records pass (1.2e-4, 3.3e-6, 6e-5 and 7e-6 of their bands); the symmetry record is written as 3.11213e-05. Full text in PROJECT_PLAN §7 `OPS-18`. **This entry closes with the `OPS-18` 3a commit that writes the records** (§9 item 2). |
 
+### Gate (iii) is blind to a broken C4 on the *opposite* class, and the lumped-sheet 4-port sweep loses reciprocity by 223× on an asymmetric layout (`PORT-9` step 3 leg (d1), 2026-08-23)
+
+Two findings from one run, both **measured, neither disposed** — the leg's own
+negative-result clause (§7 `PORT-9` step 3 leg (d1)) sends both to the review.
+The tests are **not on `main`**: they are parked on
+`attempt/PORT-9-d1-20260823T124500Z` at `bbe657f`, so nothing here is red in CI.
+
+| | |
+|---|---|
+| **Tests** | `tests/validation/test_port_birdcage_leg_offset_sweep.py::test_gate_iii_detects_the_broken_c4`, `::test_the_displaced_rung_stays_reciprocal` (parked branch only) |
+| **Log** | `docs/testing/logs/20260823T140422Z_PORT-9-step3d1.log` — `2 failed, 7 passed` / 119 s / `-n 2`, complex build, standard tier |
+| **Fixture** | `GEO-18`'s gapped, sheeted birdcage, two rungs of the same code path: `leg_azimuth_offsets_rad` all zero (116 416 cells) and leg 1 alone at **+22.5°** (116 944 cells); four driven lumped-sheet solves per rung at `Z_p = z0 = 50 Ω`, 10 MHz, `f = 0.5`, `w = A/h`. |
+| **The comparison is controlled** | The zero rung reproduces leg (d)'s recorded 4×4 **entry by entry** to ≤ **2.969e-10** relative against the 1e-9 print-precision band (worst of sixteen), with `‖S−Sᵀ‖/‖S‖` = 2.495292352e-05 and `σ_max` = 0.862659137 identical to nine digits. The offset knob and the frame-aware sheet narrowing this leg added do not move the solve, so every difference below belongs to the displacement. |
+| **Finding 1 — symptom** | Displaced, gate (iii)'s three class spreads read **self 5.1819%**, **adjacent 7.1147%**, **opposite 1.6476%** against the unmoved 5% band (symmetric rung: 0.0199 / 0.0180 / 0.0108%; amplifications 260.89× / 395.76× / 152.49×). The adjacent class detects the broken C4 by 1.42×; the **opposite class does not** — it is inside the band it passes on a symmetric layout. The leg's anchor required **both** off-diagonal classes to exceed the band. |
+| **Finding 1 — cause** | Geometric and expected in direction, not in size: rotating leg 1 by 22.5° moves the P1–P3 separation 180° → 157.5° while P2–P4 stays 180°, so the opposite class mixes two separations 22.5° apart, where the adjacent class mixes 67.5° / 90° / 112.5°. Leg (d0) measured only 5.9% between 90° and 180°, so a 22.5° perturbation of the *opposite* pair is a second-order effect on an already-flat part of the coupling curve. Not diagnosed further in-slot. |
+| **Finding 2 — symptom** | On the displaced rung `‖S−Sᵀ‖/‖S‖` = **5.570640234e-03** against step 2c's unmoved **1e-3** band (`‖Z−Zᵀ‖/‖Z‖` = 7.440778193e-03) — a **223×** rise from the same code path's 2.495292352e-05 on the symmetric rung. `σ_max` = 0.865743230, still passive. Reciprocity is a property of the materials, so this is a systematic of the route or the discretisation, never of the physics. |
+| **Finding 2 — cause** | Not diagnosed. The one measured asymmetry that tracks it: the midpoint interior-width filter keeps **26** facets on the rotated port's sheet against **27** on the other three, so P1's `w = A/h` is **7.272128105e-03 m** against 7.413268623e-03 m elsewhere — a 1.9% width difference entering `LumpedSheetPortSpec.sheet_width_m`, hence the V/I estimate, asymmetrically between driven and undriven readings. On the symmetric rung all four sheets are identical and the systematic cancels exactly. This is a hypothesis with a measurement attached, not a diagnosis. |
+| **Not a mesh defect** | The negative control of the control is green on **both** rungs: every sheet is a full rectangle of the closed-form `dx·g` = 1.120000000e-04 m², meshed/analytic **1.000000000000** to the 1e-9 band, planar to ≤ 1.7e-17 m in its own port frame, and narrower than the full sheet after filtering. Both rungs' meshes are conforming and every `GEO-18` identity holds. |
+| **Consequence** | `PORT-9` stays **🟡**: step 3's gate (iii) is validated as a symmetry gate on the adjacent class only, and the displaced spreads cannot be read as pure geometry while finding 2 stands. §2.2's "no coil has ports" sentence is **unmoved**. Nothing licenses widening (i)–(iii) or the 5% band. |
+| **Resolves with** | A review ruling on both: whether gate (iii) is re-specified (a tighter band, an adjacent-class-only statement, or a different invariant), and how the reciprocity systematic is disposed — a per-port equal-facet-count narrowing rule is the obvious first probe, and is code work, not a band question. |
+
 ## Recording a new entry
 
 Add an entry when you find a failure you are **not** fixing. Include: the test id, the

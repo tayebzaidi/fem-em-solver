@@ -13180,3 +13180,82 @@ zero-offset sweep first: if it does **not** reproduce leg (d)'s 4×4 to 1e-9,
 the frame-aware narrowing disagrees with `_narrowed_transverse` on the
 undisplaced mesh and that is the bug to fix before the displaced reading means
 anything.
+
+---
+
+## 2026-08-23T14:10Z — `PORT-9` step 3 leg (d1), attempt 2 — **incomplete** (executed, both anchor halves MISS, disposal is the review's)
+
+**Slot:** scheduled implementer run, 2026-08-23 09:00 local. **Item taken:** §9
+**item 3** (`PORT-9` step 3 leg (d1)), resumed on the sanctioned branch
+`attempt/PORT-9-d1-20260823T124500Z` per its own "the next slot resumes it".
+**Item 1 was done**; **item 2 was skipped as blocked** — its §9 text says every
+part is green "except one thing no implementer may do" (ruling (1) enumerates
+three records and two more need writing), and no review has run since the 06:00
+slot journaled it. Same reading the 07:30 slot made. Tree clean at start,
+container Up, no `recovered/*`.
+
+**Executed.** Added `tests/validation/test_port_birdcage_leg_offset_sweep.py`:
+two rungs of one code path — `leg_azimuth_offsets_rad` all zero, then leg 1 at
+`+π/(2·leg_count)` = 22.5° — four driven lumped-sheet solves each at
+`Z_p = z0 = 50 Ω`, 10 MHz, `f = 0.5`, `w = A/h`, on leg (d)'s fixture. The
+frame-aware half the last attempt owed is `_narrowed_radial`: step 2b's midpoint
+filter along the port's own radial direction (read off the sheet bbox centre),
+which reduces term by term to `_narrowed_transverse` for a leg on a coordinate
+axis. Sheet extents come from this branch's `_projected_extents`.
+`ADJACENT_SPREAD_BAND`, `RECIPROCITY_BAND`, `PASSIVITY_SIGMA_TOLERANCE`,
+`_class_spread` and `_circulant_classes` are imported from legs (c)/(d),
+never restated.
+
+**Measured.** `2 failed, 7 passed` / **119 s** at `-n 2`, complex build,
+standard tier, `docs/testing/logs/20260823T140422Z_PORT-9-step3d1.log`. Rungs:
+116 416 cells / sweep 27.81 s and 116 944 cells / sweep 28.73 s, meshes 21.80 s
+and 21.62 s.
+
+* **Identity control PASSES, and hard.** All sixteen entries of the zero rung's
+  4×4 reproduce leg (d)'s recorded matrix to ≤ **2.969e-10** relative against the
+  1e-9 print-precision band; `‖S−Sᵀ‖/‖S‖` = 2.495292352e-05 and
+  `σ_max` = 0.862659137 come back identical to nine digits. The knob and the
+  frame rewrite do not move the solve — every difference below is the
+  displacement. (This was the hypothesis's own stop condition and it did not
+  fire.)
+* **MISS 1 — gate (iii) is blind on the opposite class.** Displaced spreads
+  **self 5.1819% / adjacent 7.1147% / opposite 1.6476%** vs the unmoved 5% band
+  (symmetric 0.0199 / 0.0180 / 0.0108%; amplification 260.89× / 395.76× /
+  152.49×). Adjacent clears the band by 1.42×; opposite does not, and the
+  pre-stated anchor required both off-diagonal classes.
+* **MISS 2 — reciprocity degrades with the layout.** Displaced
+  `‖S−Sᵀ‖/‖S‖` = **5.570640234e-03** vs the unmoved **1e-3**
+  (`‖Z−Zᵀ‖/‖Z‖` = 7.440778193e-03), **223×** the symmetric rung on the same code
+  path. `σ_max` = 0.865743230, still passive. This is the half of the anchor that
+  separates "the gate measured geometry" from "the solve broke", so MISS 1's
+  numbers are not yet readable as pure geometry.
+* **Negative control of the control green on both rungs** — every sheet a full
+  rectangle at `dx·g` = 1.120000000e-04 m², meshed/analytic **1.000000000000**,
+  planar to ≤ 1.7e-17 m in its own port frame, narrowed strictly below the full
+  radial extent. Neither miss is a broken port.
+
+**Nothing widened, nothing relaxed.** Both misses are exactly the negative
+result the leg's §7 entry pre-authorised: record and stop. `PORT-9` stays 🟡,
+step 3 stays "as measured on the undisplaced mesh", §2.2's "no coil has ports"
+sentence is unmoved.
+
+**Parked, not landed.** Branch `attempt/PORT-9-d1-20260823T124500Z` at
+**`bbe657f`** carries the module and the log; `main` carries only the log, the
+test-results row, the §7 annotation and the known-issues entry, so nothing is
+red on `main` and nothing is red in CI. The §9 item is annotated as needing a
+review ruling before another attempt — this is not an implementer decision.
+
+**Hypothesis for the next attempt (after a ruling).** MISS 2 first: the one
+measured asymmetry that tracks it is the interior-width filter keeping **26**
+facets on the rotated sheet against **27** on the other three, so P1's
+`w = A/h` = 7.272128105e-03 m against 7.413268623e-03 m elsewhere — a 1.9%
+width entering `LumpedSheetPortSpec.sheet_width_m` and hence the V/I estimate,
+which cancels exactly on the symmetric rung. A cheap probe that settles it
+without touching a band: re-run the displaced rung with the *unnarrowed* sheets
+(`f = 1.0`, where all four facet sets are the full rectangle and the widths are
+equal by construction) and read reciprocity — if it returns inside 1e-3 the
+systematic is the filter, not the layout, and a per-port equal-width narrowing
+rule is the fix. MISS 1 is likelier a specification question than a code one:
+the opposite class is perturbed 22.5° on a coupling curve leg (d0) measured to
+vary only 5.9% across the whole 90°→180° span, so a 5% band on that class may be
+asking the wrong invariant.
