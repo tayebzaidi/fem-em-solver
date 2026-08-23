@@ -13349,3 +13349,81 @@ that 3b's merge makes the swap one-directional for the first time; (ii) when
 of the constant first, as the narrowed-sheet command here did — a record
 written in one module is asserted in another, and the anchor list in a §9 item
 is the minimum, not the closure.
+
+---
+
+## 2026-08-23T18:45Z — `PORT-9` step 3 leg (d2) — **complete**
+
+**Item.** §9 item 2 (item 1 was already ✅ from the 12:00 slot), executed as
+written on `main`, 0.7.2, complex build, standard tier, `-n 2`. Tree clean at
+preflight, container Up.
+
+**What was tried.** A new module,
+`tests/validation/test_port_lumped_sheet_asymmetric.py`: **one** 184 919-cell
+two-torus mesh (step 2b/2c's `_build`), two lumped-sheet sweeps on it — control
+`f` = 0.5/0.5 and asymmetric `f` = 0.5/0.735, both rungs of 2b's ladder, the
+narrowing filter composed once per sheet with a **per-sheet** fraction so the
+mesh is bit-identical between the two runs (a structural test asserts port 1's
+sheet area is unchanged and port 2's grew). No package change: `sheet_width_m`
+is already per-port, so nothing under `src/` was touched.
+
+**Step 0 (the leg required it before any solve; it is the module docstring).**
+The driven port's source is `b_j = −jωμ₀·V_src/(R_j h_j)·f_j` with
+`f_j[k] = ∫_{S_j} ĥ_j·v_k dS`; the current readout of port *i* is
+`(1/(R_i h_i))·f_iᵀx` — **same facet set, same weighting, the same vector the
+source is built from** — so on a complex-symmetric operator `I_i(drive j)` =
+`I_j(drive i)` exactly, on any mesh. Reading the code that way said the review's
+hypothesis A was unlikely and named the real suspect one level up:
+`_assemble_impedance_matrix` forms `Z_ij = V_i/I_j` with **every port
+terminated**, which is not the open-circuit matrix reciprocity symmetrises, and
+with `V_i = −Z_p I_i` at the undriven ports it collapses to
+`Z_ij/Z_ji = I_i(drive i)/I_j(drive j)`. That third hypothesis (**A′**) was
+pre-registered as two identities at a pre-stated 1e-6 and measured in the same
+run as the anchors, so it was falsifiable rather than a story told afterwards.
+
+**Measured numbers** (`9 passed` / exit 0 **twice in the slot**, 198 s / 191 s;
+`20260823T183434Z_PORT-9-step3d2.log`,
+`20260823T183823Z_PORT-9-step3d2-repeat.log`; both runs identical to 8–10
+digits, only the ~1e-10 solver-noise devs differ):
+
+- **Anchor (a)**, control: `‖S−Sᵀ‖/‖S‖` = **2.574356760e-11**, **1.078e-15**
+  from step 2c's 2.574249e-11 against the 1e-9 band. The fixture is 2c's.
+- **Anchor (b)**, asymmetric (`w₂/w₁` = 1.472822047): **8.255602536e-09** —
+  320.7× the control but **five orders inside** the unmoved 1e-3.
+  `|Z₁₂/Z₂₁|` = **0.997537168**, phase **−0.020146017°**.
+- **A′ (i)**: `I₁(drive 2)` = `I₂(drive 1)` to **1.325e-10** relative
+  (control 3.46e-10) — green at the 1e-6 band on both sweeps.
+- **A′ (ii)**: `Z₁₂/Z₂₁` = `I₁(d1)/I₂(d2)` to **1.325e-10** — green on both.
+
+**Outcome — A is refuted at its own mechanism, and B is not right either.**
+The readout **is** the source's adjoint (identity (i)), so `Z − Zᵀ` is not a
+local-discretisation residual; and the entire `Z` asymmetry that does exist is
+the per-column normalisation (identity (ii), exact to 1.3e-10). The Frobenius
+number came in at B's grain for a reason that must not be read as "the route is
+reciprocal": at this fixture's `Z_p` = 1e6 Ω the diagonal is kΩ
+(6.21 − 2.93j / 3.73 − 3.28j) and drowns the ~1.13 Ω mutuals, so a **0.25%
+per-pair** asymmetry — the same order as (d1)'s 0.2–1.6% table — shows up as
+8.3e-09. On the birdcage at 50 Ω, `Z₁₁` ≈ 21.7 Ω sits beside 17 Ω mutuals and
+the same per-pair asymmetry surfaces as 5.57e-03. **(d1)'s reciprocity miss is
+the assembly, not the discretisation and not the birdcage.**
+
+**Committed on `main`:** the module, both logs, the test-results rows, the §7
+prose entry + table-row annotation, the known-issues disposal row, the §9 item-2
+done mark. No band moved, no assertion loosened, no `src/` change, nothing
+parked. No denial hit the allowlist.
+
+**Hypothesis for the next attempt.** The fix is now well posed and is a
+**review's** call because it moves gated records: either assemble an
+open-circuit `Z`, or take `S` straight from power waves —
+`_assemble_sparameter_matrix` already does this, and on a matched termination
+`a_i` = 0 at every undriven port, so `S_ij ∝ I_i/V_src`, which identity (i)
+measured symmetric to 1.3e-10. The power-wave route is the cheaper of the two
+and is already in the file; the cost is that it moves the 2b/2c/(c)/(d0)/(d)
+records, so it needs the (1\*) class-re-record pattern. **(d1′) should stay
+serial on that ruling, not be re-queued on (d2)'s number** — re-running the
+displaced birdcage through an assembly known to be wrong would only reproduce
+5.57e-03. One methodological note worth keeping: the Frobenius ratio
+`‖S−Sᵀ‖/‖S‖` is **termination-dependent as a sensitivity**, so a reciprocity
+gate stated that way is weak at near-open terminations; the per-pair
+`|Z_ij/Z_ji|` the (d1) ruling used is the quantity that compares across
+fixtures, and a review may want gate (i) restated on it.
