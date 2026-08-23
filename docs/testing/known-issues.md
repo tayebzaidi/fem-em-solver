@@ -391,6 +391,16 @@ unless fixing it is the task.
 > review may prefer: assert cross-width agreement *directly* by running
 > the record test at both widths in one harness invocation rather than
 > against a hard-coded constant.
+>
+> **✅ RESOLVED 2026-08-23 (03:00 review) — (ii) re-registered at ≤ 1e-6
+> relative**, 14× the measured 7.28e-08 and five orders below the 34%
+> sampler swing it was commissioned to exclude; the logged `-n 2`/`-n 4`
+> pair satisfies it and `MAG-18` is ✅ (PROJECT_PLAN §7). The
+> pre-registration error was in the clause, not the solver. Entry kept
+> for the floor figure: ~1e-7 cross-width on a direct-LU magnetostatic
+> solve is now a *known* floor for any future rank-independence clause,
+> and the 2026-08-23 run-to-run entry below puts the single-width floor
+> at ~1e-9–1e-10.
 
 ### `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` fails **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
 
@@ -1037,6 +1047,39 @@ guide-pass violation count, not on exit 0" — cost `EX-20` and `ANS-3` a
 red-but-benign companion log each on 2026-08-16, which is what commissioned
 `OPS-19`. The `EX-18` heading violations once filed here, three missing
 headings in `examples/ports/01_two_torus_port_pair.md`, were fixed 2026-08-16.)*
+
+### `check_example_doc_references.py` freshness-gates only 5 of 27 examples — every `stale=24, none of them mine` line is not an all-clear (weekly review 2026-08-23, `EX-29`)
+
+**Found by the 2026-08-23 weekly examples audit (read-only, not a test
+failure).** The checker's `--output-dir` defaults to the single repo-root
+`paraview_output/` (`scripts/testing/check_example_doc_references.py:241-242`),
+and its `in_tree_artifacts` exemption (`:276-298`) treats any referenced
+artifact whose basename also appears anywhere under `examples/` as
+"committed next to its own case — existence is enough". Only
+`mag` 1/2/4/5/6 and `mri:1` write to the repo-root directory; the other
+**22 of 27** runnable examples write `Path(__file__).parent/"paraview_output"`,
+so they get an existence-only check and are **never** freshness-gated. The
+exemption's premise is false: `.gitignore` ignores `paraview_output/` at
+every depth and `git ls-files examples/ | grep paraview_output` returns
+nothing — no artifact under `examples/` is committed evidence. That is why
+the stale count has read exactly 24 on every docrefs log since `OPS-19`
+and always names the same set.
+
+**Consequence.** On 2026-08-23 the artifacts the checker cannot see are
+10–17 days old for 13 examples (`mesh:1` ~17 d, `mesh:2` ~16 d, `mri:2`
+~15 d, `mat:1` / `th:1`–`th:4` / `ans:1` ~14 d, `th:5` ~13 d, `ports:1` /
+`th:6` ~10 d), all predating `OPS-17`'s test replacement; no EX chunk's
+"none of them mine" reading ever covered them. A second, smaller finding:
+`examples/magnetostatics/paraview_output/` (2026-08-03/04 `circular_loop_*`
+files) is an orphan — `02_circular_loop.py` has written to the repo root
+since `EX-17`, and nothing regenerates that directory.
+
+**Disposition.** `EX-29` (§7) fixes the checker — scan each referenced
+artifact at its example-relative path and restrict the exemption to
+`git ls-files`-tracked paths — with the unit-test negative control that an
+untracked in-tree artifact older than `--max-age-s` must read stale;
+`EX-30` refreshes the 13-example set. Until `EX-29` lands, read every
+`stale=` figure as a lower bound over 5 examples, not a census.
 
 ### The container-side `timeout` in the standard harness recipe does not reliably stop an `mpiexec` job, and an overrun can wedge the container (`MAT-6` step 10, 2026-08-12)
 
@@ -2321,6 +2364,24 @@ uses `SIGMA_BLIND = 1e-12 * SIGMA`. **Resolves with:** wrapping the scalar in
 | **Two separate consequences** | (i) `test_port_orientation_flip_changes_induced_voltage_sign` is absent from entry 3's list of two tests, so it was green before 2026-08-13 — this is a **silent regression**, not a pre-existing red. (ii) Entry 3's symptom line (`assert np.all(np.abs(diagonal) > 0.0)` on a zero diagonal) is **stale for the orientation test**: that assertion is now unreachable. It still describes `tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape` correctly (`test_sparameter_assembly.py:104: AssertionError: assert False`), which is the third failure in the same leg. |
 | **Fix** | **Deliberately not fixed by `OPS-17`** — that chunk is test hygiene, and entry 3's standing disposition is that these tests live and die with `PORT-1`'s retirement of the `PORT-0` placeholder. The mechanical repair is two lines in the test double (`allgather = staticmethod(lambda v: [v])`, or use a real `MPI.COMM_SELF`); whoever retires `PORT-1` should decide whether the double survives at all. Do not read the `AttributeError` as evidence about the placeholder's arithmetic — it never runs. |
 | **Resolves with** | `PORT-1`'s retirement commit, or any earlier commit that repairs the double. **Entry 3 must be re-symptomed in the same commit**, since its recorded cause now applies to only one of its two tests. |
+
+### The two-torus and straight-wire solves are run-to-run non-deterministic at ~1e-10 relative, so "bit-identical reproduction" is not an achievable criterion (`OPS-18` step 3a attempt 6, 2026-08-23)
+
+**Found:** 2026-08-23, on `attempt/OPS-18` at `9b3c9e2`, image
+`0.11.0.post0` / gmsh 4.15.2 / numpy 2.4.6, `-n 2`, in two back-to-back
+runs of the *same* command on an *unchanged* tree
+(`20260823T050426Z_OPS-18-step3a-leg1-run1.log`,
+`20260823T050903Z_OPS-18-step3a-leg1-run2.log`).
+
+| | |
+|---|---|
+| **Tests** | `tests/validation/test_port_package_sparameters.py::test_sanity_report_reproduces_the_gated_metrics_on_the_field_route`, `tests/validation/test_port_lumped_two_torus.py::test_step_1_measurements_reproduce` (both already red on 0.11 for the *moved-record* reason); the same effect is visible in real mode in `test_straight_wire.py`. |
+| **Symptom** | Repeating one command reproduces every *outcome* and every band, but not every digit: `passivity_max_sigma` 0.8613568946068969 → 0.86135689450373 (1.2e-10 rel), two-torus gap ratio 0.8941410489050936 → 0.8941410492011536 (3.3e-10), `‖S−Sᵀ‖/‖S‖` 3.112128e-05 → 3.112131e-05 (1.0e-06 rel, 3e-11 abs). In one real-mode run `E_Ω` at h = 0.0025 printed 1.0617170184e-01 (ladder) and 1.0617170177e-01 (record test) — 7e-10 apart, same field, same run. |
+| **Cause** | Not separated further in-slot; the signature (same mesh, same tree, same image, ~1e-10) is floating-point summation/factorisation order inside MPI-parallel assembly and the direct solve, i.e. the same class as `MAG-18`'s 7.28e-08 `-n 2` vs `-n 4` floor. It is **not** the version bump: both runs are on one image. |
+| **Consequence** | Any acceptance criterion phrased as "reproduces bit-identically" — including `OPS-18` ruling (1) condition (b), 2026-08-22 18:00 review — cannot be met by these fixtures. Records whose written precision is coarser than ~1e-9 relative are unaffected in practice (0.861356895 and 0.894141 both reproduce as written); the `‖S−Sᵀ‖/‖S‖` record at 7 significant digits does **not**, and would have to be written as 3.11213e-05. |
+| **Not a band question** | Every physics band in the same runs is orders of magnitude above the wobble (reciprocity 2.679e-05 vs 1e-3; the symmetry record's own band is 5e-7 absolute vs a 3e-11 move). Nothing here licenses loosening anything. |
+| **Resolves with** | A review restating the reproduction criterion at a stated tolerance (proposal in attempts.md 2026-08-23T05:25Z: agreement to ≤ 1e-9 relative across two runs, record written only to digits both runs share). No code fix is implied. |
+| **Ruling, 2026-08-23 03:00 review** | Restated as **(b′)**, per-record rather than one relative number — the proposed "≤ 1e-9 relative" would itself reject `‖S−Sᵀ‖/‖S‖` (1.0e-06 relative, cancellation-amplified): *the move across two same-slot runs must be ≤ 1% of the record's own unmoved band, and the value is written only to the digits both runs share, never fewer than the band resolves.* All four records pass (1.2e-4, 3.3e-6, 6e-5 and 7e-6 of their bands); the symmetry record is written as 3.11213e-05. Full text in PROJECT_PLAN §7 `OPS-18`. **This entry closes with the `OPS-18` 3a commit that writes the records** (§9 item 2). |
 
 ## Recording a new entry
 
