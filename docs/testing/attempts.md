@@ -13259,3 +13259,93 @@ rule is the fix. MISS 1 is likelier a specification question than a code one:
 the opposite class is perturbed 22.5° on a coupling curve leg (d0) measured to
 vary only 5.9% across the whole 90°→180° span, so a 5% band on that class may be
 asking the wrong invariant.
+
+## 2026-08-23T17:20Z — `OPS-18` step 3a, attempt 8 — **complete (both unmasked records written under (1\*), leg 1 green twice, step 3a CLOSED)** (12:00 CDT implementer slot)
+
+**§9 item 1, executed as written.** Preflight clean, container Up. Worksite
+per the standing rule: `git checkout attempt/OPS-18` left `docker/Dockerfile`
+and `docker/docker-compose.yml` at `main`'s content ("Device or resource
+busy", the known silent-wrong-content trap), so both were moved with the Edit
+tool and `git status --porcelain` verified empty before anything ran. `main`
+merged in at `070b1b5` — one conflict, `docs/testing/test-results.md`, an
+append-only log index resolved by keeping both sides in timestamp order.
+
+**What was written.** In `tests/validation/test_port_lumped_two_torus.py`,
+under the 10:30 review's class ruling (1\*):
+
+| record | 0.7.2 (184 919 cells) | 0.11.0 (184 176 cells) | band | run-to-run move |
+|---|---|---|---|---|
+| `STEP1_LUMPED_RATIO_RECORD` | 0.829782 | **0.828893** | 1e-4 | `Im Z12` 1.029281339 → 1.029281338 Ω, ratio identical to 6 digits |
+| `STEP1_CROSS_ROUTE_RECORD` | 0.077095 | **0.077431** | 1e-4 | print identical, does not move |
+
+Both version-tagged beside the 0.7.2 values with both cell counts and the
+image string, as conditions (a)/(c) require. **No band moved** — the 1e-4
+`REPRODUCTION_BAND` and every physics band are untouched.
+
+**Anchor met, twice in the slot.** `tests/environment` +
+`test_port_package_sparameters.py` + `test_port_lumped_two_torus.py`, image
+`v0.11.0`, complex, `-n 2`, both rank footers identical:
+
+* `20260823T170403Z_OPS-18-step3a-leg1-run1.log` — **`19 passed`** / 238.64 s
+  / exit 0;
+* `20260823T170821Z_OPS-18-step3a-leg1-run2.log` — **`19 passed`** / 238.73 s
+  / exit 0.
+
+Attempt 7 read `1 failed / 18 passed` on the same command. Physics green in
+both: reciprocity 2.679e-05 inside 1e-3, `passivity_max_sigma` 0.861356895 /
+0.861356894 (< 1, and inside its own 1e-6 record band), `‖S−Sᵀ‖/‖S‖`
+3.112128e-05 against its 5e-7 band, `test_the_open_limit_reduces_to_the_sheet_
+average` and `test_the_cross_route_miss_is_the_transverse_average` PASS, the
+pre-stated 5% cross-route MISS unchanged at 7.7431% (decomposition: transverse
+averaging 7.8047 pp, path/projection residual 0.0689 pp). Fixture meshes to
+184 176 cells in both runs.
+
+**(b′) arithmetic, printed as the ruling asks.** Lumped ratio: the two runs'
+`Im Z12` differ by 1e-9 absolute out of 1.0293 Ω, i.e. ~1e-5 of the 1e-4 band
+once divided through by ωM₁₂ = 1.241755 Ω — five orders inside band, and the
+printed six-digit ratio 0.828893 is identical. Cross-route: 7.7431% in both
+runs, no moved digit at all. Both records therefore satisfy (iv), as they did
+in attempt 7.
+
+**The loop unmasked no further record** — `test_step_1_measurements_reproduce`
+checks three records and all three now pass, so (1\*) needed no further
+application and nothing was filed.
+
+**One command past the written anchor, and it matters.** These two constants
+have a second consumer: `test_port_lumped_narrowed_sheet.py` imports
+`STEP1_CROSS_ROUTE_RECORD` and asserts it (with the gap ratio) in
+`test_full_width_reproduces_the_step_2_record`, the `f = 1.0` negative control
+of the width ladder. Editing a shared constant without running its other
+consumer would have left a red test for step 3b's merge to discover.
+`20260823T171239Z_OPS-18-step3a-narrowed-sheet.log`: **`12 passed`** /
+142.72 s / exit 0, that rung printing 7.7431% / gap 0.894141 / lumped
+0.828893 — the identical digits. The write is consistent across the package.
+
+**Container round trip.** Build `20260823T170147Z_OPS-18-step3a-build-011.log`
+(exit 0, **130 s**); restore `20260823T171706Z_OPS-18-step3a-container-restore.log`
+(exit 0, **123 s**) from `main`'s compose file after the Edit-tool swap back,
+with `20260823T171912Z_OPS-18-step3a-restore-probe.log` confirming
+**`0.7.2 3.10.12`** and `pgrep -c python3` = 0 in the container (0 on the host
+too). Six harness commands, ~775 s of compute, no exit 124, no wedge, no
+denial.
+
+**Landed where.** Branch `attempt/OPS-18` at **`5df1e39`** carries the test
+edit, the four 0.11 logs and their test-results rows (condition (d):
+branch-only until 3b merges). `main` carries the §7 prose entry and table-row
+annotation, the known-issues resolution, the §9 item-1 done mark, the two
+container-round-trip logs and this journal — and keeps booting 0.7.2, verified.
+
+**Status.** Leg 2 closed in attempt 7, leg 1 closes here ⇒ **step 3a is
+closed**. `OPS-18` stays 🟡 on **3b alone** (§5.3's environment table, the
+volume-drift disposal, the known-issues closures, one confirming real-mode run,
+and the merge). §9 item 3 is now unblocked — it was serial on this item.
+
+**Hypothesis for the next attempt (item 3, step 3b).** No blocker is
+outstanding, so 3b should run as written. Two things this slot learned that it
+will need: (i) the branch↔`main` docker-file swap costs ~4 min of build on
+each side and must go through the Edit tool both ways — budget it, and note
+that 3b's merge makes the swap one-directional for the first time; (ii) when
+3b re-records the `OPS-17` volume figure under (1\*), grep for *every* importer
+of the constant first, as the narrowed-sheet command here did — a record
+written in one module is asserted in another, and the anchor list in a §9 item
+is the minimum, not the closure.
