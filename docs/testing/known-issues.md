@@ -391,6 +391,16 @@ unless fixing it is the task.
 > review may prefer: assert cross-width agreement *directly* by running
 > the record test at both widths in one harness invocation rather than
 > against a hard-coded constant.
+>
+> **✅ RESOLVED 2026-08-23 (03:00 review) — (ii) re-registered at ≤ 1e-6
+> relative**, 14× the measured 7.28e-08 and five orders below the 34%
+> sampler swing it was commissioned to exclude; the logged `-n 2`/`-n 4`
+> pair satisfies it and `MAG-18` is ✅ (PROJECT_PLAN §7). The
+> pre-registration error was in the clause, not the solver. Entry kept
+> for the floor figure: ~1e-7 cross-width on a direct-LU magnetostatic
+> solve is now a *known* floor for any future rank-independence clause,
+> and the 2026-08-23 run-to-run entry below puts the single-width floor
+> at ~1e-9–1e-10.
 
 ### `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` fails **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
 
@@ -2371,6 +2381,7 @@ runs of the *same* command on an *unchanged* tree
 | **Consequence** | Any acceptance criterion phrased as "reproduces bit-identically" — including `OPS-18` ruling (1) condition (b), 2026-08-22 18:00 review — cannot be met by these fixtures. Records whose written precision is coarser than ~1e-9 relative are unaffected in practice (0.861356895 and 0.894141 both reproduce as written); the `‖S−Sᵀ‖/‖S‖` record at 7 significant digits does **not**, and would have to be written as 3.11213e-05. |
 | **Not a band question** | Every physics band in the same runs is orders of magnitude above the wobble (reciprocity 2.679e-05 vs 1e-3; the symmetry record's own band is 5e-7 absolute vs a 3e-11 move). Nothing here licenses loosening anything. |
 | **Resolves with** | A review restating the reproduction criterion at a stated tolerance (proposal in attempts.md 2026-08-23T05:25Z: agreement to ≤ 1e-9 relative across two runs, record written only to digits both runs share). No code fix is implied. |
+| **Ruling, 2026-08-23 03:00 review** | Restated as **(b′)**, per-record rather than one relative number — the proposed "≤ 1e-9 relative" would itself reject `‖S−Sᵀ‖/‖S‖` (1.0e-06 relative, cancellation-amplified): *the move across two same-slot runs must be ≤ 1% of the record's own unmoved band, and the value is written only to the digits both runs share, never fewer than the band resolves.* All four records pass (1.2e-4, 3.3e-6, 6e-5 and 7e-6 of their bands); the symmetry record is written as 3.11213e-05. Full text in PROJECT_PLAN §7 `OPS-18`. **This entry closes with the `OPS-18` 3a commit that writes the records** (§9 item 2). |
 
 ## Recording a new entry
 
