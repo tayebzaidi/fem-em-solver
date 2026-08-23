@@ -2322,6 +2322,23 @@ uses `SIGMA_BLIND = 1e-12 * SIGMA`. **Resolves with:** wrapping the scalar in
 | **Fix** | **Deliberately not fixed by `OPS-17`** — that chunk is test hygiene, and entry 3's standing disposition is that these tests live and die with `PORT-1`'s retirement of the `PORT-0` placeholder. The mechanical repair is two lines in the test double (`allgather = staticmethod(lambda v: [v])`, or use a real `MPI.COMM_SELF`); whoever retires `PORT-1` should decide whether the double survives at all. Do not read the `AttributeError` as evidence about the placeholder's arithmetic — it never runs. |
 | **Resolves with** | `PORT-1`'s retirement commit, or any earlier commit that repairs the double. **Entry 3 must be re-symptomed in the same commit**, since its recorded cause now applies to only one of its two tests. |
 
+### The two-torus and straight-wire solves are run-to-run non-deterministic at ~1e-10 relative, so "bit-identical reproduction" is not an achievable criterion (`OPS-18` step 3a attempt 6, 2026-08-23)
+
+**Found:** 2026-08-23, on `attempt/OPS-18` at `9b3c9e2`, image
+`0.11.0.post0` / gmsh 4.15.2 / numpy 2.4.6, `-n 2`, in two back-to-back
+runs of the *same* command on an *unchanged* tree
+(`20260823T050426Z_OPS-18-step3a-leg1-run1.log`,
+`20260823T050903Z_OPS-18-step3a-leg1-run2.log`).
+
+| | |
+|---|---|
+| **Tests** | `tests/validation/test_port_package_sparameters.py::test_sanity_report_reproduces_the_gated_metrics_on_the_field_route`, `tests/validation/test_port_lumped_two_torus.py::test_step_1_measurements_reproduce` (both already red on 0.11 for the *moved-record* reason); the same effect is visible in real mode in `test_straight_wire.py`. |
+| **Symptom** | Repeating one command reproduces every *outcome* and every band, but not every digit: `passivity_max_sigma` 0.8613568946068969 → 0.86135689450373 (1.2e-10 rel), two-torus gap ratio 0.8941410489050936 → 0.8941410492011536 (3.3e-10), `‖S−Sᵀ‖/‖S‖` 3.112128e-05 → 3.112131e-05 (1.0e-06 rel, 3e-11 abs). In one real-mode run `E_Ω` at h = 0.0025 printed 1.0617170184e-01 (ladder) and 1.0617170177e-01 (record test) — 7e-10 apart, same field, same run. |
+| **Cause** | Not separated further in-slot; the signature (same mesh, same tree, same image, ~1e-10) is floating-point summation/factorisation order inside MPI-parallel assembly and the direct solve, i.e. the same class as `MAG-18`'s 7.28e-08 `-n 2` vs `-n 4` floor. It is **not** the version bump: both runs are on one image. |
+| **Consequence** | Any acceptance criterion phrased as "reproduces bit-identically" — including `OPS-18` ruling (1) condition (b), 2026-08-22 18:00 review — cannot be met by these fixtures. Records whose written precision is coarser than ~1e-9 relative are unaffected in practice (0.861356895 and 0.894141 both reproduce as written); the `‖S−Sᵀ‖/‖S‖` record at 7 significant digits does **not**, and would have to be written as 3.11213e-05. |
+| **Not a band question** | Every physics band in the same runs is orders of magnitude above the wobble (reciprocity 2.679e-05 vs 1e-3; the symmetry record's own band is 5e-7 absolute vs a 3e-11 move). Nothing here licenses loosening anything. |
+| **Resolves with** | A review restating the reproduction criterion at a stated tolerance (proposal in attempts.md 2026-08-23T05:25Z: agreement to ≤ 1e-9 relative across two runs, record written only to digits both runs share). No code fix is implied. |
+
 ## Recording a new entry
 
 Add an entry when you find a failure you are **not** fixing. Include: the test id, the

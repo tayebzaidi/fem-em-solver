@@ -895,6 +895,38 @@ dated annotation. The ID stays stable.)*
 >   3. **3b's drift disposal inherits ruling (1)**: the `OPS-17` volume
 >      record (4.251e-04) and `TH-10`'s 128 MHz cell count are re-recorded
 >      version-tagged, the same way.
+> * **Step 3a attempt 6 — 🟡 2026-08-23, 00:00 implementer slot** (branch
+>   `9b3c9e2`, `main` merged in at `95fbb1b` so `MAG-18`'s gate is present;
+>   `main` restored to a booted 0.7.2, verified). Four commands, ~1 030 s,
+>   no exit 124, nothing written. **Leg 2 is green on its anchors:** `E_Ω`
+>   reads **25.2868 / 10.6172 / 6.6458%** on the recorded ladder (38 740 /
+>   147 235 / 383 146 cells), monotone, rate **1.6854 ≥ 0.7** against
+>   0.7.2's 1.6842 — a rate that moves 7e-04 across the bump that moved the
+>   retired 10-point number 21% — and the natural-BC control is strictly
+>   worse at 32.315493% vs 10.617170%, ratio 0.3285. The run's single
+>   failure is the retired sampler control reproducing **the 0.11 column
+>   attempt 5 already measured** (16.6033 / 15.3848 / 13.6986% vs the
+>   0.7.2 record 15.8028 / 12.7485 / 11.4984), i.e. a record pinned to its
+>   recording image saying so. **Leg 1 stops on ruling (1)'s own condition
+>   (b):** two runs in the slot (`2 failed / 17 passed`, 255.24 s and
+>   244.98 s) are *not* bit-identical — `passivity_max_sigma`
+>   0.8613568946068969 / 0.86135689450373, gap ratio 0.8941410489050936 /
+>   0.8941410492011536, `‖S−Sᵀ‖/‖S‖` **3.112128e-05 / 3.112131e-05** — and
+>   while the first two agree at the precision they would be written to,
+>   the third **differs in the 7th significant digit, which is the digit
+>   string the ruling would have me write**. Physics green in both runs
+>   (reciprocity 2.679e-05 inside 1e-3, σ_max 0.8614 < 1). The wobble is
+>   run-to-run on an unchanged tree and image (reduction/factorisation
+>   order), and the real-mode leg carries it too (`E_Ω` printed twice in
+>   one run, 7e-10 apart). **The decision 3a now waits on is a precision
+>   restatement, not a band move:** condition (b) as "agreement to ≤ 1e-9
+>   relative across two runs, record written only to digits both runs
+>   share" admits all three re-records and writes the symmetry ratio as
+>   3.11213e-05 (6 digits); as "bit-identical" it is unsatisfiable on this
+>   fixture. Still owed besides that: `circular_loop` +
+>   `mutual_inductance_reference` on 0.11 (no `MAG-18` anchor), §5.3's
+>   table, the drift disposal — all of 3b. Journal:
+>   `docs/testing/attempts.md`, 2026-08-23T05:25Z.
 > * **Step 1 — build and boot (standard).** Bump the `FROM` line, rebuild,
 >   and fix the environment plumbing that encodes version-specific paths:
 >   the compose `PYTHONPATH` (`dolfinx-real/lib/python3.10/…` — both the
@@ -6501,7 +6533,18 @@ with the Edit tool and verify `git status --porcelain`.
    columns in §7 + known-issues, stop; the review picks the next knob
    (frequency, or a reactive `Z_p` at the birdcage's tuning capacitance),
    never a third impedance guessed in-slot.
-4. **`OPS-18` step 3a resumed under the 18:00 rulings — re-record leg 1,
+4. 🟡 **attempted 2026-08-23, 00:00 slot (attempt 6, branch `9b3c9e2`) —
+   leg 2's `MAG-18` anchors hold on 0.11 (rate 1.6854, monotone; natural-BC
+   ratio 0.3285), leg 1 stops because ruling (1)'s condition (b) is
+   unsatisfiable: two same-slot runs move `passivity_max_sigma` by 1.2e-10
+   and `‖S−Sᵀ‖/‖S‖` by 1e-6 relative, the latter differing in the 7th digit
+   the record would be written to. Nothing written, no band touched.
+   **Review decision needed — restate (b) at a stated tolerance** (≤ 1e-9
+   relative, record written only to shared digits) or 3a cannot close;
+   `circular_loop` + `mutual_inductance_reference` on 0.11 also still owed.
+   Details in the §7 entry and attempts.md 2026-08-23T05:25Z.** Original
+   text:
+   **`OPS-18` step 3a resumed under the 18:00 rulings — re-record leg 1,
    re-measure leg 2 in the new norm (heavy, `-n 2`; on `attempt/OPS-18`
    at `731c40e`; depends on item 1 having landed on `main` — merge `main`
    into the branch first; if item 1 did not land, run leg 1 only and

@@ -18418,3 +18418,109 @@ open question leg (d) inherits is whether **reciprocity** (`‖Z − Zᵀ‖/‖
 1e-3`) survives four independent drives on this fixture, which one column
 cannot see. Leg (d) is a review's to scope, not an implementer's — §9 has
 no leg (d) item as of this slot.
+
+---
+
+## 2026-08-23T05:25Z — `OPS-18` step 3a, attempt 6 — **incomplete (leg 2's anchors hold on 0.11; leg 1 stops on the ruling's own condition)** (00:00 CDT implementer slot)
+
+Worksite `attempt/OPS-18`, `9b3c9e2` (merge of `main` `c2d751f` at
+`95fbb1b`, so `MAG-18`'s gate is present as §9 item 4 requires). `main`
+restored to a booted **0.7.2**, verified `dolfinx.__version__ == 0.7.2`,
+`pgrep -c python3` = 0. Four harness commands, **~1 030 s of compute**, no
+exit 124, no wedge, no permission denial, no band or assertion touched.
+
+### Leg 1 (`PORT-1`, complex, `-n 2`) — the re-record is *not* made, and the reason is the condition itself
+
+`tests/environment` + `test_port_package_sparameters.py` +
+`test_port_lumped_two_torus.py`, twice in the slot:
+`20260823T050426Z_OPS-18-step3a-leg1-run1.log` (**`2 failed / 17 passed`**,
+255.24 s in-pytest, Elapsed 257 s) and
+`20260823T050903Z_OPS-18-step3a-leg1-run2.log` (**`2 failed / 17 passed`**,
+244.98 s, Elapsed 246 s), both rank footers identical within each run.
+
+Ruling (1) licenses the re-record only "after two runs in the same slot
+reproduce it **bit-identically**". They do not:
+
+| record | run 1 | run 2 | relative move |
+|---|---|---|---|
+| `passivity_max_sigma` | 0.8613568946068969 | 0.86135689450373 | 1.2e-10 |
+| two-torus gap ratio | 0.8941410489050936 | 0.8941410492011536 | 3.3e-10 |
+| `‖S−Sᵀ‖/‖S‖` | 3.112128e-05 | 3.112131e-05 | 1.0e-06 |
+
+The first two agree at the precision the record would be *written* to
+(0.861356895, 0.894141); the **third does not** — 3.112128e-05 vs
+3.112131e-05 differ in the 7th significant digit, which is the digit string
+ruling (1) would have me write. So this is not a rounding quibble: the
+symmetry record is unstable at its own written precision. The wobble is
+run-to-run on an unchanged tree and unchanged image, i.e. reduction/
+factorisation order, not the version bump.
+
+**The physics is unmoved and green in both runs** — reciprocity
+2.679e-05 (band 1e-3, 37× inside), `σ_max` 0.8614 < 1, open-limit and
+cross-route identities PASS — and both failures are the same two
+reproduction records attempt 3 stopped on, at the same values. So the leg
+reproduces attempt 3 exactly; what it adds is that **condition (b) is
+unsatisfiable as written** for this fixture.
+
+Nothing was written. Under the standing rule an implementer does not
+reinterpret a review ruling in-slot, and "agrees to 1e-9" is a different
+condition from "bit-identical".
+
+### Leg 2 (straight wire, real, `-n 2`) — `MAG-18`'s anchors hold on 0.11
+
+`tests/environment` + `test_straight_wire.py`,
+`20260823T051410Z_OPS-18-step3a-leg2-wire-011.log` — **`1 failed / 10
+passed / 4 skipped`**, 303.21 s in-pytest, Elapsed 305 s, both rank footers
+identical.
+
+* **(i) rate — holds.** `E_Ω` on the recorded ladder reads **25.2868% /
+  10.6172% / 6.6458%** at h = 0.004 / 0.0025 / 0.0018 (38 740 / 147 235 /
+  383 146 cells), **monotone**, fitted rate **1.6854 ≥ 0.7** — against
+  0.7.2's 25.3787 / 10.7288 / 6.6708% and 1.6842. The new statistic is
+  version-insensitive where the retired one was not: the rate moves by
+  **7e-04** across a version bump that moved the 10-point number by 21%.
+* **(iii) natural-BC control — holds.** 32.315493% vs analytic-BC
+  10.617170%, ratio **0.3285** (0.7.2: 32.3117 / 10.7288, 0.3320) —
+  strictly worse, the `MAG-13` claim restated in the new norm on 0.11.
+* **(ii)** not re-measured this slot (no `-n 4` command); it is 🟡 on
+  `main` already at 7.28e-08 vs the pre-registered 1e-10, a known-issues
+  item for the review.
+* **The one failure is a 0.7.2-image record, as designed.** The retired
+  sampler control asserts the attempt-5 triplet to 1e-4 relative and reads
+  **16.603276 / 15.384842 / 13.698645%** at `n_points` 8 / 10 / 20 against
+  15.8028 / 12.7485 / 11.4984 — i.e. **exactly the 0.11 column attempt 5
+  measured** (16.60 / 15.38 / 13.70). The control is doing its job: it is
+  pinned to the recording image, and it says so.
+* The `E_Ω` h = 0.0025 record likewise moves with the mesh —
+  **1.0617170177e-01** at 147 235 cells vs `main`'s
+  1.0728835983e-01 at 145 884 cells, −1.04% relative against a 1e-4 band —
+  and is subject to the same ruling-(1) condition leg 1 just failed. Note
+  that `E_Ω` was printed twice in this one run (ladder 1.0617170184e-01,
+  record test 1.0617170177e-01, 7e-10 apart), so the real-mode leg carries
+  the same ~1e-9 non-determinism.
+
+### Logs and cost
+
+Container round trip `20260823T050150Z_OPS-18-step3a-build-011.log`
+(Status 0, **127 s**) and `20260823T052032Z_OPS-18-step3a-container-restore.log`
+(Status 0, **123 s**) — the ~4 min fixed overhead the entry predicts.
+Compute: 257 + 246 + 305 s of tests. `circular_loop` and
+`mutual_inductance_reference` were **not** run — the two leg-1 runs plus
+leg 2 consumed the window and the slot's remaining minutes went to the
+container restore; they are the only part of item 4's leg 2 still owed, and
+they carry no `MAG-18` anchor.
+
+### Hypothesis for the next slot
+
+Both legs now wait on **one review decision, not two**: restate ruling
+(1)'s condition (b) at a **stated numerical tolerance** rather than
+"bit-identical" — the natural choice is *agreement to ≤ 1e-9 relative
+across two runs, with the record written only to digits both runs share*,
+which admits `passivity_max_sigma`, the gap ratio and `E_Ω`, and forces
+`‖S−Sᵀ‖/‖S‖` to be written as **3.11213e-05** (6 digits, its stable
+precision) rather than 7. That is a precision change, not a band change:
+the 5e-7 band is absolute and the wobble is 3e-11. With that restated, 3a
+is one ~15-minute slot from green — the measurements are all taken and
+reproduced, only the writing is blocked. If the review instead holds
+"bit-identical", 3a cannot close on this fixture and `OPS-18` needs a
+different disposal for the three records.

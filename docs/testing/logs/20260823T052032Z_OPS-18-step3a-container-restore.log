@@ -1,0 +1,184 @@
+# Test Run
+- Chunk: OPS-18-step3a-container-restore
+- Commit: c2d751f469bd67259a02b90849ddc1baf1af068e
+- Time (UTC): 2026-08-23 05:20:32
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml up -d --build --force-recreate
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 23 00:20 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 23 00:20 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  656 Aug 23 00:20 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  633 Aug 23 00:20 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml up -d --build --force-recreate'
+ Image fem-em-solver:latest Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 563B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 695B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/dolfinx/dolfinx:v0.7.2
+#3 DONE 0.4s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 DONE 0.0s
+
+#6 [1/6] FROM docker.io/dolfinx/dolfinx:v0.7.2@sha256:7700348dd365928d25844d58e7a001d469408ed3d71362ca68fac6af9f10a010
+#6 resolve docker.io/dolfinx/dolfinx:v0.7.2@sha256:7700348dd365928d25844d58e7a001d469408ed3d71362ca68fac6af9f10a010 0.1s done
+#6 DONE 0.1s
+
+#5 [internal] load build context
+#5 transferring context: 1.91MB 0.3s done
+#5 DONE 0.4s
+
+#7 [2/6] RUN pip install --no-cache-dir --no-binary=h5py h5py
+#7 CACHED
+
+#8 [3/6] RUN pip install --no-cache-dir     gmsh     pyvista     meshio     tqdm     pydantic     pyyaml     black     isort     mypy     flake8     pytest     pytest-xdist     jupyter     ipywidgets     matplotlib
+#8 CACHED
+
+#9 [4/6] WORKDIR /workspace
+#9 CACHED
+
+#10 [5/6] COPY . /workspace/
+#10 DONE 5.5s
+
+#11 [6/6] RUN pip install -e .
+#11 1.441 Obtaining file:///workspace
+#11 1.446   Installing build dependencies: started
+#11 4.983   Installing build dependencies: finished with status 'done'
+#11 4.986   Checking if build backend supports build_editable: started
+#11 5.159   Checking if build backend supports build_editable: finished with status 'done'
+#11 5.162   Getting requirements to build editable: started
+#11 5.408   Getting requirements to build editable: finished with status 'done'
+#11 5.412   Preparing editable metadata (pyproject.toml): started
+#11 5.622   Preparing editable metadata (pyproject.toml): finished with status 'done'
+#11 5.672 Requirement already satisfied: fenics-dolfinx>=0.7.0 in /usr/local/dolfinx-real/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (0.7.2)
+#11 5.673 Requirement already satisfied: mpi4py>=3.1.0 in /usr/local/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (3.1.5)
+#11 5.674 Requirement already satisfied: petsc4py>=3.19.0 in /usr/local/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (3.20.0)
+#11 5.675 Requirement already satisfied: slepc4py>=3.19.0 in /usr/local/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (3.20.0)
+#11 5.676 Requirement already satisfied: gmsh>=4.11.0 in /usr/local/lib (from fem-em-solver==0.1.0) (4.11.1.dev1)
+#11 5.676 Requirement already satisfied: pyvista>=0.42.0 in /usr/local/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (0.48.4)
+#11 6.436 Collecting numpy>=1.24.0 (from fem-em-solver==0.1.0)
+#11 6.436   Obtaining dependency information for numpy>=1.24.0 from https://files.pythonhosted.org/packages/b4/63/3de6a34ad7ad6646ac7d2f55ebc6ad439dbbf9c4370017c50cf403fb19b5/numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+#11 6.439   Using cached numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (62 kB)
+#11 6.442 Requirement already satisfied: scipy>=1.10.0 in /usr/local/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (1.11.3)
+#11 6.442 Requirement already satisfied: matplotlib>=3.7.0 in /usr/local/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (3.8.0)
+#11 6.443 Requirement already satisfied: meshio>=5.3.0 in /usr/local/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (5.3.5)
+#11 6.444 Requirement already satisfied: h5py>=3.8.0 in /usr/local/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (3.16.0)
+#11 6.444 Requirement already satisfied: tqdm>=4.65.0 in /usr/local/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (4.70.0)
+#11 6.445 Requirement already satisfied: pydantic>=2.0.0 in /usr/local/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (2.13.4)
+#11 6.446 Requirement already satisfied: pyyaml>=6.0 in /usr/local/lib/python3.10/dist-packages (from fem-em-solver==0.1.0) (6.0.1)
+#11 6.450 Requirement already satisfied: cffi in /usr/local/lib/python3.10/dist-packages (from fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (1.16.0)
+#11 6.460 Requirement already satisfied: fenics-ffcx<0.8.0,>=0.7.0 in /usr/local/lib/python3.10/dist-packages (from fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (0.7.0)
+#11 6.460 Requirement already satisfied: fenics-ufl<2023.3.0,>=2023.2.0 in /usr/local/lib/python3.10/dist-packages (from fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (2023.2.0)
+#11 6.480 Requirement already satisfied: contourpy>=1.0.1 in /usr/local/lib/python3.10/dist-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (1.1.1)
+#11 6.481 Requirement already satisfied: cycler>=0.10 in /usr/local/lib/python3.10/dist-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (0.12.0)
+#11 6.482 Requirement already satisfied: fonttools>=4.22.0 in /usr/local/lib/python3.10/dist-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (4.43.0)
+#11 6.483 Requirement already satisfied: kiwisolver>=1.0.1 in /usr/local/lib/python3.10/dist-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (1.4.5)
+#11 6.499   Obtaining dependency information for numpy>=1.24.0 from https://files.pythonhosted.org/packages/4b/d7/ecf66c1cd12dc28b4040b15ab4d17b773b87fa9d29ca16125de01adb36cd/numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+#11 6.582   Downloading numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (61 kB)
+#11 6.617      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 61.0/61.0 kB 1.8 MB/s eta 0:00:00
+#11 6.625 Requirement already satisfied: packaging>=20.0 in /usr/local/lib/python3.10/dist-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (23.2)
+#11 6.626 Requirement already satisfied: pillow>=6.2.0 in /usr/local/lib/python3.10/dist-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (10.0.1)
+#11 6.628 Requirement already satisfied: pyparsing>=2.3.1 in /usr/local/lib/python3.10/dist-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (3.1.1)
+#11 6.628 Requirement already satisfied: python-dateutil>=2.7 in /usr/local/lib/python3.10/dist-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (2.8.2)
+#11 6.645 Requirement already satisfied: rich in /usr/local/lib/python3.10/dist-packages (from meshio>=5.3.0->fem-em-solver==0.1.0) (15.0.0)
+#11 6.662 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/dist-packages (from pydantic>=2.0.0->fem-em-solver==0.1.0) (0.8.0)
+#11 6.662 Requirement already satisfied: pydantic-core==2.46.4 in /usr/local/lib/python3.10/dist-packages (from pydantic>=2.0.0->fem-em-solver==0.1.0) (2.46.4)
+#11 6.663 Requirement already satisfied: typing-extensions>=4.14.1 in /usr/local/lib/python3.10/dist-packages (from pydantic>=2.0.0->fem-em-solver==0.1.0) (4.16.0)
+#11 6.664 Requirement already satisfied: typing-inspection>=0.4.2 in /usr/local/lib/python3.10/dist-packages (from pydantic>=2.0.0->fem-em-solver==0.1.0) (0.4.2)
+#11 6.710 Requirement already satisfied: cyclopts>=4.0.0 in /usr/local/lib/python3.10/dist-packages (from pyvista>=0.42.0->fem-em-solver==0.1.0) (4.22.2)
+#11 6.710 Requirement already satisfied: pooch in /usr/local/lib/python3.10/dist-packages (from pyvista>=0.42.0->fem-em-solver==0.1.0) (1.9.0)
+#11 6.711 Requirement already satisfied: scooby>=0.5.1 in /usr/local/lib/python3.10/dist-packages (from pyvista>=0.42.0->fem-em-solver==0.1.0) (0.11.2)
+#11 6.712 Requirement already satisfied: vtk!=9.4.0 in /usr/local/lib/python3.10/dist-packages (from pyvista>=0.42.0->fem-em-solver==0.1.0) (9.6.2)
+#11 6.828 Requirement already satisfied: attrs>=23.1.0 in /usr/local/lib/python3.10/dist-packages (from cyclopts>=4.0.0->pyvista>=0.42.0->fem-em-solver==0.1.0) (23.1.0)
+#11 6.829 Requirement already satisfied: docstring-parser<4.0,>=0.15 in /usr/local/lib/python3.10/dist-packages (from cyclopts>=4.0.0->pyvista>=0.42.0->fem-em-solver==0.1.0) (0.18.0)
+#11 6.830 Requirement already satisfied: rich-rst<3.0.0,>=1.3.1 in /usr/local/lib/python3.10/dist-packages (from cyclopts>=4.0.0->pyvista>=0.42.0->fem-em-solver==0.1.0) (2.1.0)
+#11 6.831 Requirement already satisfied: tomli>=2.0.0 in /usr/local/lib/python3.10/dist-packages (from cyclopts>=4.0.0->pyvista>=0.42.0->fem-em-solver==0.1.0) (2.0.1)
+#11 6.849 Requirement already satisfied: setuptools in /usr/local/lib/python3.10/dist-packages (from fenics-ffcx<0.8.0,>=0.7.0->fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (68.2.2)
+#11 6.850 Requirement already satisfied: fenics-basix<0.8.0,>=0.7.0 in /usr/local/lib/python3.10/dist-packages (from fenics-ffcx<0.8.0,>=0.7.0->fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (0.7.0)
+#11 6.922 Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.10/dist-packages (from python-dateutil>=2.7->matplotlib>=3.7.0->fem-em-solver==0.1.0) (1.16.0)
+#11 6.927 Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.10/dist-packages (from rich->meshio>=5.3.0->fem-em-solver==0.1.0) (3.0.0)
+#11 6.928 Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.10/dist-packages (from rich->meshio>=5.3.0->fem-em-solver==0.1.0) (2.16.1)
+#11 6.949 Requirement already satisfied: pycparser in /usr/local/lib/python3.10/dist-packages (from cffi->fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (2.21)
+#11 6.958 Requirement already satisfied: platformdirs>=2.5.0 in /usr/local/lib/python3.10/dist-packages (from pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (3.11.0)
+#11 6.958 Requirement already satisfied: requests>=2.19.0 in /usr/local/lib/python3.10/dist-packages (from pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (2.31.0)
+#11 7.024 Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.10/dist-packages (from markdown-it-py>=2.2.0->rich->meshio>=5.3.0->fem-em-solver==0.1.0) (0.1.2)
+#11 7.048 Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/dist-packages (from requests>=2.19.0->pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (3.3.0)
+#11 7.049 Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/dist-packages (from requests>=2.19.0->pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (3.4)
+#11 7.050 Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests>=2.19.0->pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (2.0.6)
+#11 7.051 Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests>=2.19.0->pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (2023.7.22)
+#11 7.153 Downloading numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.2 MB)
+#11 7.609    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.2/18.2 MB 40.6 MB/s eta 0:00:00
+#11 7.675 Building wheels for collected packages: fem-em-solver
+#11 7.677   Building editable for fem-em-solver (pyproject.toml): started
+#11 7.957   Building editable for fem-em-solver (pyproject.toml): finished with status 'done'
+#11 7.959   Created wheel for fem-em-solver: filename=fem_em_solver-0.1.0-0.editable-py3-none-any.whl size=6822 sha256=5f9ef230d126859ee48e8c6ab63e9b85c71abfc931d17f63baae0665465c3822
+#11 7.959   Stored in directory: /tmp/pip-ephem-wheel-cache-tmb28wgp/wheels/80/75/f6/d63789e3414f7f88206102fa596a8ddafc889f48984e8712b3
+#11 7.966 Successfully built fem-em-solver
+#11 8.682 Installing collected packages: numpy, fem-em-solver
+#11 8.682   Attempting uninstall: numpy
+#11 8.683     Found existing installation: numpy 1.23.2
+#11 8.740     Uninstalling numpy-1.23.2:
+#11 10.43       Successfully uninstalled numpy-1.23.2
+#11 12.99 ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+#11 12.99 numba 0.58.0 requires numpy<1.26,>=1.21, but you have numpy 1.26.4 which is incompatible.
+#11 12.99 Successfully installed fem-em-solver-0.1.0 numpy-1.26.4
+#11 12.99 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#11 12.99 
+#11 12.99 [notice] A new release of pip is available: 23.2.1 -> 26.2.1
+#11 12.99 [notice] To update, run: python3 -m pip install --upgrade pip
+#11 DONE 13.5s
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 59.1s done
+#12 exporting manifest sha256:ec9ba17df98ce4efe5d8cdad51659375fdf8b390e0fd108193a21a568e1dadf3 0.0s done
+#12 exporting config sha256:d06a77f76f0ab041ceebf5590af0f2188426e776fb30707bac84eef6550fac8b 0.0s done
+#12 exporting attestation manifest sha256:1d1329c06865ef4ba40cf1fdafa416ec6708aa5fe72b81f986db08acd93f6721 0.0s done
+#12 exporting manifest list sha256:05d546981657ae9e539dfaaa4188ced31006e916b6a9b3b6e53f4624f4ede4f9
+#12 exporting manifest list sha256:05d546981657ae9e539dfaaa4188ced31006e916b6a9b3b6e53f4624f4ede4f9 0.0s done
+#12 naming to docker.io/library/fem-em-solver:latest done
+#12 unpacking to docker.io/library/fem-em-solver:latest
+#12 unpacking to docker.io/library/fem-em-solver:latest 25.5s done
+#12 DONE 84.9s
+
+#13 resolving provenance for metadata file
+#13 DONE 0.0s
+ Image fem-em-solver:latest Built 
+ Container fem-em-solver Recreate 
+ Container fem-em-solver Recreated 
+ Container fem-em-solver Starting 
+ Container fem-em-solver Started 
+
+## Exit
+- Status: 0
+- Elapsed (s): 123
