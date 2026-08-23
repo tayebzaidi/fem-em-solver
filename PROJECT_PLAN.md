@@ -378,7 +378,7 @@ needs `-f docker/docker-compose.yml`.
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Complete and trustworthy** |
 | 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — every analytic gate closed (`TH-1`/`TH-6`/`TH-7`/`TH-8`/`TH-9` ✅); Larmor sphere `TH-10` ✅; coil trend `TH-11` ✅ closed on a measured negative (no 64 MHz h → 0 bracket fits the box, 2026-08-18); degree-2 `TH-12` steps 1–3 ✅, production order decided degree 1 for coil-fed solves (§10, 2026-08-23), `TH-13` discriminator open; `TH-2`/`TH-3` API hardening ⚠️ |
 | 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58% pinned / 1.5834% on the production projected drive, step 3; eddy-current regime); SAR gated on an **imposed** uniform field only (`MAT-4` steps 1+3: lossy-sphere closed form 3.5%, mass-averaging exact at 1 g/10 g) — coil-driven SAR and the C95.3 claim still open |
-| 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-11` | `PORT-1` ✅ 2026-08-15 (field-derived S through the package, two-torus fixture only, two named systematics); `PORT-10` ✅ 08-16; `PORT-9` 🟡 — steps 1–2c ✅ on the two-torus (lumped-sheet BC, 1.8333% cross-route, reciprocity 2.6e-11), step 3 on the gapped birdcage has two gated legs (c)/(d0) at 10 MHz (C4 spread 0.0152–0.0159% vs 5%, 50 Ω termination separates the classes 598×) and leg (d), the 4×4 with gates (i)–(iii), still owed; `PORT-11` (64/128 MHz) scoped 2026-08-23, serial on it; `PORT-4`…`PORT-8` open |
+| 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-11` | `PORT-1` ✅ 2026-08-15 (field-derived S through the package, two-torus fixture only, two named systematics); `PORT-10` ✅ 08-16; `PORT-9` 🟡 — steps 1–2c ✅ on the two-torus (lumped-sheet BC, 1.8333% cross-route, reciprocity 2.6e-11), step 3 on the gapped birdcage has two gated legs (c)/(d0) at 10 MHz (C4 spread 0.0152–0.0159% vs 5%, 50 Ω termination separates the classes 598×) and **leg (d) closed 2026-08-23 — the 4×4 passes all three gates** (reciprocity 2.495292352e-05 vs 1e-3, σ_max 0.862659137 ≤ 1, class spreads 0.0199 / 0.0180 / 0.0108% vs 5%), leaving leg (d1)'s geometric control as the last owed piece; `PORT-11` (64/128 MHz) scoped 2026-08-23, serial on it; `PORT-4`…`PORT-8` open |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 for excitation; both meshes (coil+phantom, birdcage) generate and are identity-gated in CI (`GEO-9`, 2026-08-03); the birdcage fixture is loaded (phantom inside) and since `GEO-18` ✅ 2026-08-22 has terminals and port sheets — the first B1+ chunk is scoped by the daily review when `PORT-9` closes (§10 subgoal 4) |
 | 6 | Birdcage tuning at 64/128 MHz: mode spectrum, lumped capacitors, circuit co-simulation (the HFSS + Circuit split); production target: **32-port high-pass birdcage at 1.5 T** (§10 operator directive 2026-08-17) | subgoals owned by the weekly review (§10); mesh prerequisites `GEO-19` (16 legs, cost rung) + `GEO-20` (ring-gap ports) scoped 2026-08-23 | Not started — mesh prerequisites may run any time (CAD-identity gates); physics subgoals wait on `PORT-9`/`PORT-11` |
 | 7 | Implants: parametric implant geometry in the phantom, local SAR / near-implant hot spots | subgoals owned by the weekly review (§10) | Not started |
@@ -1994,7 +1994,7 @@ until that check returns.
 | `PORT-6` | Frequency sweep orchestration | 🧪 | smoke |
 | `PORT-7` | Touchstone metadata + parser cross-check | 🧪 | smoke |
 | `PORT-8` | Port-orientation sensitivity | ⚠️ | standard |
-| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(**step 1 done 2026-08-17** — parked formulation merged, sheet instantiated on `GEO-16`'s facet tag `212` of the solve fixture, both routes read off one 10 MHz solve: gap 0.894310 × ωM₁₂ raw (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route **7.7095%** against step 2's 5% band. **Step 2 executed 2026-08-17**: both pre-stated bands **MISS** (cross-route 7.7095% vs 5%; lumped mutual 12.6931% vs 10%; the gap route stays inside at 6.0391%) and the miss is **diagnosed** — it is the transverse average over the sheet, 7.7783 pp, with a path/projection residual of only **0.0763 pp** against the pre-stated ~1 pp threshold. Bands not widened. **Decision made 2026-08-17 10:30: narrow the sheet — step 2b scoped** (width ladder f ∈ {1.0, 0.735, 0.5}; the measured profile predicts ~1% at interior width). **Step 2b executed 2026-08-17, 12:00 slot — the band HOLDS**: ladder 7.7095% (f = 1.0, the negative control, reproducing step 2 to < 1e-4) → 3.6730% → **1.8333%** at f = 0.5 against the unmoved 5% band, open-limit identity < 1e-11 per width, 14 passed 150.5 s at `-n 2`. One finding en route: the sheet's width is the **area-based effective width `A/h`**, not the bounding-box extent (the midpoint filter leaves a ragged edge; bbox overstates by 14–15% and the first attempt read 14.04% MISS because of it) — the convention is now part of the port model's spec. Step 2's gate is closed at the narrowed definition; step 3 unblocked on this side, its ports use f = 0.5. **Step 2c executed 2026-08-18, 22:30 slot — the reciprocity leg is run and the route exists**: `run_n_port_sparameter_sweep` gained a third excitation route (`LumpedSheetPortSpec`, sheets on every port, impressed source on the driven one, `V = V_src − I·Z_p`), and the two-torus two-port sweep at f = 0.5 on both ports reads **‖S − Sᵀ‖/‖S‖ = 2.574249e-11** against the unmoved 1e-3 band (‖Z − Zᵀ‖/‖Z‖ = 1.767820e-09), 7 passed 122.2 s at `-n 2`. Cross-route *inside* the sweep 1.6079% / 1.5950%, inside step 2's 5% band, 0.23 pp off step 2b's 1.8333% — the reading is drive-dependent at that grain. Two legs not run as written (the 1e-4 reproduction is not the same quantity under a sheet drive; the fragmented-mesh gap sweep needs a multi-tag `GapVoltagePortSpec`), the negative control run instead as the record-owning gates, 16 passed. Step 3's gate (i) prerequisite is discharged. **Step 3 legs (a)+(b) executed 2026-08-19/20, both 🚫**: the birdcage mesh has **no port-sheet facet** (global facet set exactly `{1}`) and its port boxes have **no terminals** (conductor facet area exactly 0.000000e+00 m² on all four ports under a closure identity at 1.000000000000) — they are air blocks outside an uncut coil, so no solve can reach the gates. **Step 3 is blocked on `GEO-18`** (birdcage conductor gaps, commissioned 2026-08-20 03:00 review — cut the legs, square-section boxes, drive `ẑ`; supersedes leg (a)'s mid-plane prescription). **`GEO-18` closed 2026-08-22** — terminals (step 1) *and* port sheets (step 2, area exact to 1.000000000000, C4 spread 8.470e-16) now exist on the birdcage, so **step 3's mesh prerequisite is discharged**; step 3 re-runs unchanged, unqueued as of this slot. **Step 3 leg (c) executed 2026-08-22, 16:30 slot — the first field on the gapped birdcage**: one lumped-sheet solve, P1 driven, 116 416 cells at ratio 1.000000 of the `GEO-18` step-2 record, **price 7.55 s** at `-n 2` (mesh 21.35 s), and the pre-stated C4 gate holds — `|Z₂₁ − Z₄₁|/|Z₂₁|` = **0.0159%** against the unmoved 5% band, `6 passed 40 s`. The **finding** is the control: the anti-degeneracy check passes at 1.0060× margin (0.0160% vs 0.0159%), so at `Z_p = 1e6 Ω` column 1 of Z is near-degenerate and leg (d) must first find a port impedance that separates adjacent from opposite coupling). **Step 3 leg (d0) executed 2026-08-22, 22:30 slot — the termination is found**: at the ports' own `Z_p = z0 = 50 Ω` the discrimination margin `|Z₃₁ − ½(Z₂₁ + Z₄₁)|/|Z₂₁ − Z₄₁|` reads **598.4002×** against the pre-stated 10× floor **while** the adjacent spread holds at **0.0152%** inside the unmoved 5% band, `8 passed 48.90 s` at `-n 2` and every digit reproduced by a second in-slot run. Both negative controls pass: the 1e6 Ω control re-solves leg (c)'s column to ≤ 2.4e-10 relative, and `|I₁|` rises 13 875.96× (9.993e-07 → 1.3866e-02 A), so the termination closed a conduction path. `Z₁₁` turns from 3.43 kΩ capacitive to +21.73 + 7.46j Ω and the mutuals split into adjacent 17.008/17.011 Ω vs opposite 16.028 Ω — a 5.9% class separation on a 0.0152% intra-class spread. Leg (d) runs at 50 Ω, four solves, ~30 s, standard tier. **Legs (d) and (d1) scoped 2026-08-23 03:00 review** — (d) the 4×4 under the unmoved 08-16 gates (i)–(iii) with the (d0)-column and pooled-class controls in-run; (d1) the geometric control as a `leg_azimuth_offsets_rad` mesh knob rotating one leg with its port (the 08-16 "displace the box" wording corrected — a box off its leg is a degenerate port, not an asymmetric coil). Chunk ✅ on (d) + (d1), never (d) alone; §9 items 1 and 3)* | standard |
+| `PORT-9` | Lumped-element port boundary condition (the birdcage port model) | 🟡 *(**step 1 done 2026-08-17** — parked formulation merged, sheet instantiated on `GEO-16`'s facet tag `212` of the solve fixture, both routes read off one 10 MHz solve: gap 0.894310 × ωM₁₂ raw (−0.0233 pp off its unfragmented record), lumped 0.829782, cross-route **7.7095%** against step 2's 5% band. **Step 2 executed 2026-08-17**: both pre-stated bands **MISS** (cross-route 7.7095% vs 5%; lumped mutual 12.6931% vs 10%; the gap route stays inside at 6.0391%) and the miss is **diagnosed** — it is the transverse average over the sheet, 7.7783 pp, with a path/projection residual of only **0.0763 pp** against the pre-stated ~1 pp threshold. Bands not widened. **Decision made 2026-08-17 10:30: narrow the sheet — step 2b scoped** (width ladder f ∈ {1.0, 0.735, 0.5}; the measured profile predicts ~1% at interior width). **Step 2b executed 2026-08-17, 12:00 slot — the band HOLDS**: ladder 7.7095% (f = 1.0, the negative control, reproducing step 2 to < 1e-4) → 3.6730% → **1.8333%** at f = 0.5 against the unmoved 5% band, open-limit identity < 1e-11 per width, 14 passed 150.5 s at `-n 2`. One finding en route: the sheet's width is the **area-based effective width `A/h`**, not the bounding-box extent (the midpoint filter leaves a ragged edge; bbox overstates by 14–15% and the first attempt read 14.04% MISS because of it) — the convention is now part of the port model's spec. Step 2's gate is closed at the narrowed definition; step 3 unblocked on this side, its ports use f = 0.5. **Step 2c executed 2026-08-18, 22:30 slot — the reciprocity leg is run and the route exists**: `run_n_port_sparameter_sweep` gained a third excitation route (`LumpedSheetPortSpec`, sheets on every port, impressed source on the driven one, `V = V_src − I·Z_p`), and the two-torus two-port sweep at f = 0.5 on both ports reads **‖S − Sᵀ‖/‖S‖ = 2.574249e-11** against the unmoved 1e-3 band (‖Z − Zᵀ‖/‖Z‖ = 1.767820e-09), 7 passed 122.2 s at `-n 2`. Cross-route *inside* the sweep 1.6079% / 1.5950%, inside step 2's 5% band, 0.23 pp off step 2b's 1.8333% — the reading is drive-dependent at that grain. Two legs not run as written (the 1e-4 reproduction is not the same quantity under a sheet drive; the fragmented-mesh gap sweep needs a multi-tag `GapVoltagePortSpec`), the negative control run instead as the record-owning gates, 16 passed. Step 3's gate (i) prerequisite is discharged. **Step 3 legs (a)+(b) executed 2026-08-19/20, both 🚫**: the birdcage mesh has **no port-sheet facet** (global facet set exactly `{1}`) and its port boxes have **no terminals** (conductor facet area exactly 0.000000e+00 m² on all four ports under a closure identity at 1.000000000000) — they are air blocks outside an uncut coil, so no solve can reach the gates. **Step 3 is blocked on `GEO-18`** (birdcage conductor gaps, commissioned 2026-08-20 03:00 review — cut the legs, square-section boxes, drive `ẑ`; supersedes leg (a)'s mid-plane prescription). **`GEO-18` closed 2026-08-22** — terminals (step 1) *and* port sheets (step 2, area exact to 1.000000000000, C4 spread 8.470e-16) now exist on the birdcage, so **step 3's mesh prerequisite is discharged**; step 3 re-runs unchanged, unqueued as of this slot. **Step 3 leg (c) executed 2026-08-22, 16:30 slot — the first field on the gapped birdcage**: one lumped-sheet solve, P1 driven, 116 416 cells at ratio 1.000000 of the `GEO-18` step-2 record, **price 7.55 s** at `-n 2` (mesh 21.35 s), and the pre-stated C4 gate holds — `|Z₂₁ − Z₄₁|/|Z₂₁|` = **0.0159%** against the unmoved 5% band, `6 passed 40 s`. The **finding** is the control: the anti-degeneracy check passes at 1.0060× margin (0.0160% vs 0.0159%), so at `Z_p = 1e6 Ω` column 1 of Z is near-degenerate and leg (d) must first find a port impedance that separates adjacent from opposite coupling). **Step 3 leg (d0) executed 2026-08-22, 22:30 slot — the termination is found**: at the ports' own `Z_p = z0 = 50 Ω` the discrimination margin `|Z₃₁ − ½(Z₂₁ + Z₄₁)|/|Z₂₁ − Z₄₁|` reads **598.4002×** against the pre-stated 10× floor **while** the adjacent spread holds at **0.0152%** inside the unmoved 5% band, `8 passed 48.90 s` at `-n 2` and every digit reproduced by a second in-slot run. Both negative controls pass: the 1e6 Ω control re-solves leg (c)'s column to ≤ 2.4e-10 relative, and `|I₁|` rises 13 875.96× (9.993e-07 → 1.3866e-02 A), so the termination closed a conduction path. `Z₁₁` turns from 3.43 kΩ capacitive to +21.73 + 7.46j Ω and the mutuals split into adjacent 17.008/17.011 Ω vs opposite 16.028 Ω — a 5.9% class separation on a 0.0152% intra-class spread. Leg (d) runs at 50 Ω, four solves, ~30 s, standard tier. **Legs (d) and (d1) scoped 2026-08-23 03:00 review** — (d) the 4×4 under the unmoved 08-16 gates (i)–(iii) with the (d0)-column and pooled-class controls in-run; (d1) the geometric control as a `leg_azimuth_offsets_rad` mesh knob rotating one leg with its port (the 08-16 "displace the box" wording corrected — a box off its leg is a degenerate port, not an asymmetric coil). Chunk ✅ on (d) + (d1), never (d) alone; §9 items 1 and 3. **Step 3 leg (d) executed 2026-08-23, 04:30 slot — the 4×4 exists and all three gates pass on the first run**: four driven lumped-sheet solves at `Z_p = z0 = 50 Ω` on one 116 416-cell mesh (31.56 s of solve, `9 passed 64.23 s` at `-n 2`, reproduced bit-identically by a second in-slot run), **(i) `‖S−Sᵀ‖/‖S‖` = 2.495292352e-05 vs 1e-3**, **(ii) `σ_max(S)` = 0.862659137 ≤ 1 + 1e-9 with column power sums ≤ 0.515251749**, **(iii) C4 class spreads self 0.0199% / adjacent 0.0180% / opposite 0.0108% vs the unmoved 5%**; both controls pass (the P1 column reproduces leg (d0)'s record to ≤ 1.9e-10; pooled off-diagonal 9.2570% = 466.06× the worst intra-class spread). Step 3 is ✅ **on the undisplaced mesh**; the chunk stays 🟡 until leg (d1)'s geometric control runs, and §2.2 is unmoved until then)* | standard |
 | `PORT-10` | The two `PORT-1` systematics: composition measured, not assumed | ✅ 2026-08-16 (cross-term **−0.0604 pp** inside the pre-stated ±0.5 pp) | heavy |
 | `PORT-11` | Lumped-sheet ports on the gapped birdcage at 64 MHz (then 128): `PORT-9`'s three gates in the displacement-current regime — §10 subgoal 2b; serial on `PORT-9` ✅ (commissioned 2026-08-23 weekly review) | ⬜ | heavy (probe first) |
 
@@ -2516,6 +2516,66 @@ the answer is already gated**.
 >   > σ_max > 1 is a passivity finding about the lumped-sheet route on a
 >   > four-port network (2c's 0.9869 was two-port) — same disposal; never
 >   > widen (i)–(iii).
+>   >
+>   > **Leg (d) executed 2026-08-23, 04:30 slot — the birdcage has a 4×4, and
+>   > all three gates pass on the first run.**
+>   > `tests/validation/test_port_birdcage_four_port.py` (a new module; (c)'s
+>   > and (d0)'s untouched), **9 passed 64.23 s** at `-n 2`, complex build,
+>   > standard tier, `20260823T093319Z_PORT-9-step3d.log` (Elapsed 66 s),
+>   > confirmed by a second in-slot run
+>   > `20260823T093439Z_PORT-9-step3d-rerun.log` (`9 passed 58.66 s`,
+>   > Elapsed 60 s) that reproduces **every printed digit of Z, S, σ(S), the
+>   > column power sums and all four spreads bit-identically**. One mesh
+>   > (116 416 cells, ratio 1.000000 of the `GEO-18` step-2 record, 21.56 s;
+>   > four `f = 0.5` sheets at 27 facets, area 5.930614898e-05 m², `h` = the
+>   > 8 mm gap exactly, `A/h` = 7.413268623e-03 m, azimuths 0/90/180/270 deg,
+>   > out-of-plane 8.882e-19 m — leg (d0)'s fixture exactly), four driven
+>   > solves through `run_n_port_sparameter_sweep`'s lumped-sheet route in
+>   > **31.56 s** total, `Z_p = z0_ohm = 50 Ω` on every port (both printed and
+>   > named).
+>   > * **(i) reciprocity — PASS.** `‖S−Sᵀ‖/‖S‖` = **2.495292352e-05** against
+>   >   the unmoved 1e-3 band, 40× inside; `‖Z−Zᵀ‖/‖Z‖` = 3.237695452e-05,
+>   >   reported. Four independent solves, each driving a different leg,
+>   >   assembled column by column — this is the first reciprocity reading on
+>   >   a **coil**, not the two-torus fixture.
+>   > * **(ii) passivity — PASS.** `σ(S)` = **0.862659137 / 0.800484790 /
+>   >   0.800313330 / 0.187484393**, so `σ_max` = 0.862659137 against
+>   >   `1 + 1e-9`; column power sums **0.515083460 / 0.515157098 /
+>   >   0.515116202 / 0.515251749**, max 0.515251749 ≤ 1. `PORT-5`'s own
+>   >   metrics agree to all nine digits. Roughly half the incident power is
+>   >   absorbed (lossy legs + saline phantom), half returned — physically
+>   >   the expected reading for a loaded, untuned coil at 10 MHz, reported
+>   >   not gated.
+>   > * **(iii) C4 circulant symmetry of Z — PASS on all three classes.**
+>   >   Spreads **self 0.0199%** (n = 4, mean |Z| 2.297517344e+01 Ω),
+>   >   **adjacent 0.0180%** (n = 8, 1.701066377e+01 Ω), **opposite 0.0108%**
+>   >   (n = 4, 1.605653897e+01 Ω), each against the unmoved 5% band —
+>   >   251–463× inside. The class statistic is the four-port generalisation
+>   >   of leg (c)/(d0)'s `|Z₂₁ − Z₄₁|/|Z₂₁|`: widest complex separation
+>   >   within the class over the class's own mean magnitude, taken on **Z**
+>   >   so the termination convention does not enter.
+>   > * **Both negative controls pass.** (1) The P1-driven column of the 4×4
+>   >   reproduces leg (d0)'s recorded column to **≤ 1.9e-10 relative**
+>   >   (1.033e-10 / 1.938e-10 / 1.474e-10 / 1.448e-11 on `Z₁₁`…`Z₄₁`)
+>   >   against the 1e-9 print-precision band — every printed digit comes
+>   >   back, so the network claim stands on the one-column record. The
+>   >   residual ~1e-10 is the project's known cross-run solver
+>   >   non-determinism, not a fixture move. (2) The **pooled** off-diagonal
+>   >   class spreads **9.2570%** against a worst intra-class spread of
+>   >   0.0199% — a separation of **466.0644×** against the 10× floor, so
+>   >   gate (iii) is resolving the adjacent/opposite structure (d0) found,
+>   >   not passing on noise.
+>   > * **Scope.** Step 3 is ✅ **as measured on the undisplaced mesh**, and
+>   >   `PORT-9` stays 🟡 until leg (d1)'s geometric control runs: a symmetry
+>   >   gate whose negative control has not been executed is a consistency
+>   >   check. §2.2's "no coil has ports" sentence is unmoved for the same
+>   >   reason. 10 MHz remains the port model's frequency — no resonance,
+>   >   tuning or Larmor claim; `PORT-11` owns 64/128 MHz.
+>   > * **Cost note for the review:** commissioned standard at ~60–80 s,
+>   >   **measured 66 s / 60 s harness**. The four solves cost 31.56 s
+>   >   together (≈ 7.9 s each, leg (d0)'s 7.00–9.19 s grain), the mesh
+>   >   21.56 s — leg (d1)'s two-mesh, eight-solve estimate of 120–160 s
+>   >   holds.
 >   >
 >   > **Leg (d1) scoped 2026-08-23 03:00 review — the geometric negative
 >   > control of gate (iii).** Add an optional `leg_azimuth_offsets_rad`
@@ -3106,9 +3166,12 @@ beyond the two-torus fixture and the Larmor-regime validation gate.
    facet and its port boxes have no terminals — the coil is uncut.**
    **`GEO-18` closed 2026-08-22** (step 1 the terminals, step 2 the port
    sheets — 1.120000000e-04 m² = analytic on all four, C4 spread
-   8.470e-16), so the mesh prerequisite is discharged and the front is
-   now step 3 itself (reciprocity, passivity, C4 circulant symmetry of
-   Z), ports at f = 0.5.
+   8.470e-16), so the mesh prerequisite is discharged, and **step 3's
+   4×4 passed all three gates 2026-08-23 on the undisplaced mesh** (leg
+   (d): reciprocity 2.495292352e-05 vs 1e-3, σ_max 0.862659137 ≤ 1, C4
+   class spreads 0.0199 / 0.0180 / 0.0108% vs 5%, ports at f = 0.5). The
+   front is now leg (d1), the geometric negative control of the C4 gate;
+   `PORT-9` is ✅ only with it, and §2.2 moves at that point, not before.
 2. **The 64 MHz h → 0 bracket** §2's extrapolation sentence waits on:
    `TH-11` closed 2026-08-18 (the degree-1 ladder is a measured
    negative — superlinear memory wall), `TH-12` step 2 measured the
@@ -3203,7 +3266,16 @@ any slot that rebuilt the live container ends by restoring it from
 with the Edit tool and verify `git status --porcelain`.
 
 1. **`PORT-9` step 3 leg (d) — the 4×4 at 50 Ω (standard, `-n 2`, complex
-   build, 0.7.2, `main`).** Execute the §7 `PORT-9` leg (d) entry (scoped
+   build, 0.7.2, `main`).** ✅ **done 2026-08-23, 04:30 slot** — all three
+   gates pass on the first run and both controls with them: (i)
+   2.495292352e-05 vs 1e-3, (ii) σ_max 0.862659137 with max column power
+   sum 0.515251749, (iii) class spreads 0.0199 / 0.0180 / 0.0108% vs 5%,
+   control (1) ≤ 1.9e-10 against leg (d0)'s column, control (2) 466.06×
+   vs the 10× floor. `9 passed 64.23 s` at `-n 2`,
+   `20260823T093319Z_PORT-9-step3d.log`, reproduced digit-for-digit by
+   `20260823T093439Z_PORT-9-step3d-rerun.log`. Step 3 ✅ on the
+   undisplaced mesh; `PORT-9` stays 🟡 and §2.2 unmoved until item 3.
+   Execute the §7 `PORT-9` leg (d) entry (scoped
    this review; full rubric there). Same fixture and route as leg (d0)
    (116 416 cells, sheets `211`–`214` at f = 0.5, `w = A/h`, 10 MHz,
    `Z_p = 50 Ω` every port), four driven solves through
@@ -3379,8 +3451,11 @@ blamed.
   `PORT-9` 🟡 — as of 2026-08-23 the gapped, loaded birdcage has a solved
   lumped-sheet port column at 10 MHz with two pre-stated gates passed
   (C4 spread 0.0152–0.0159% vs 5%; 50 Ω termination margin 598× vs 10×),
-  and the 4×4 with reciprocity/passivity/C4, leg (d), is one priced slot
-  away. This box ticks at 10 MHz on leg (d); the Larmor-frequency claim is
+  and as of the same day the **4×4 with reciprocity/passivity/C4 is
+  solved and green** (leg (d): 2.495292352e-05 vs 1e-3, σ_max
+  0.862659137, class spreads 0.0199 / 0.0180 / 0.0108% vs 5%). What is
+  left is leg (d1), the geometric negative control of the C4 gate; this
+  box ticks at 10 MHz when it lands, and the Larmor-frequency claim is
   `PORT-11`.)*
 - [ ] S-parameters derived from the solved field, not a coupling heuristic
   *(the **route** is done — `PORT-1` ✅ 2026-08-15:

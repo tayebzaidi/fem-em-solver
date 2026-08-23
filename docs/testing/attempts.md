@@ -12887,3 +12887,62 @@ is one ~15-minute slot from green — the measurements are all taken and
 reproduced, only the writing is blocked. If the review instead holds
 "bit-identical", 3a cannot close on this fixture and `OPS-18` needs a
 different disposal for the three records.
+
+---
+
+## 2026-08-23T09:40Z — `PORT-9` step 3 leg (d) — **complete** (04:30 CDT implementer slot)
+
+§9 item 1, taken as the first open On-deck item. Tree clean at preflight,
+container Up (4 h), no FFCx 0-byte `.c` stubs. Executed as written: new
+module `tests/validation/test_port_birdcage_four_port.py`, legs (c)'s and
+(d0)'s modules untouched, four driven lumped-sheet solves at
+`Z_p = z0_ohm = 50 Ω` through `run_n_port_sparameter_sweep` on leg (d0)'s
+fixture (116 416 cells, ratio 1.000000; four `f = 0.5` sheets, 27 facets,
+area 5.930614898e-05 m², `A/h` = 7.413268623e-03 m, azimuths 0/90/180/270°,
+out-of-plane 8.882e-19 m), 10 MHz.
+
+**All three pre-stated gates pass, no band moved.**
+
+* (i) reciprocity `‖S−Sᵀ‖/‖S‖` = **2.495292352e-05** vs the imported,
+  unmoved 1e-3 (40× inside); `‖Z−Zᵀ‖/‖Z‖` = 3.237695452e-05, reported.
+* (ii) passivity `σ(S)` = **0.862659137 / 0.800484790 / 0.800313330 /
+  0.187484393** against `1 + 1e-9`; column power sums **0.515083460 /
+  0.515157098 / 0.515116202 / 0.515251749**. `PORT-5`'s own metrics agree
+  to nine digits.
+* (iii) C4 spreads on **Z**: **self 0.0199%** (mean |Z| 2.297517344e+01 Ω),
+  **adjacent 0.0180%** (1.701066377e+01 Ω), **opposite 0.0108%**
+  (1.605653897e+01 Ω) vs the imported 5%.
+
+**Both in-run negative controls pass.** (1) The P1-driven column reproduces
+leg (d0)'s recorded column to **1.033e-10 / 1.938e-10 / 1.474e-10 /
+1.448e-11** relative against the 1e-9 print-precision band. (2) The pooled
+off-diagonal class spreads **9.2570%** = **466.0644×** the worst intra-class
+spread, vs the 10× floor.
+
+**Logs.** `20260823T093319Z_PORT-9-step3d.log` — `9 passed 64.23 s`
+in-pytest, Elapsed **66 s**, Status 0, `-n 2`, complex build, standard tier
+(commissioned ~60–80 s). Confirming second in-slot run
+`20260823T093439Z_PORT-9-step3d-rerun.log` — `9 passed 58.66 s`, Elapsed
+60 s, and **every printed digit of Z, S, σ(S), the column power sums, all
+four spreads and the reciprocity ratio is identical between the two runs**
+(so the record satisfies the review's (b′) reproduction criterion with room
+to spare). Mesh 21.56 s, four solves 31.56 s together (≈ 7.9 s each, leg
+(d0)'s 7.00–9.19 s grain).
+
+**Scope, as written.** Step 3 is ✅ *on the undisplaced mesh only*;
+`PORT-9` stays 🟡 and §2.2's "no coil has ports" sentence is unmoved until
+leg (d1) (§9 item 3) executes the geometric negative control. No
+resonance, tuning or Larmor claim; 10 MHz remains the port model's
+frequency. Nothing under `src/` changed — the sweep's lumped-sheet route
+was used as it stands.
+
+**Note for the review.** Control (1)'s residual is ~1e-10 rather than zero:
+the sweep's P1 column and (d0)'s single solve agree to every printed digit
+but not bit-identically, which is the same cross-run solver
+non-determinism the `OPS-18` 3a work is disposing of under (b′). It is
+five digits inside the 1e-9 band and nothing here depends on it.
+
+**Hypothesis for the next slot.** Leg (d1) (§9 item 3) is unblocked and its
+120–160 s estimate holds — this module is parametrisable on the mesh knob
+as leg (d1) scopes it, and the four-port reading it needs now exists to
+reproduce at zero offsets.
