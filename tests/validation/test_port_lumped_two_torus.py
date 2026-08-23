@@ -166,15 +166,22 @@ MUTUAL_BAND = 0.10                       # |ratio − 1| against omega*M12
 # `20260817T050734Z_PORT-9-step1-rerun-final.log`). Reproducing them is the
 # run's anchor: step 2 adds reads off the same field and must not move it.
 # OPS-18 step 3a re-record, 2026-08-23 (18:00 review ruling (1) of 2026-08-22,
-# condition (b) as restated (b') on 2026-08-23).  Measured on image tag v0.11.0
-# (dolfinx 0.11.0.post0, gmsh 4.15.2), where this fixture meshes to 184 176
-# cells; the recording image v0.7.2 (184 919 cells) read 0.894310.  The mesh
-# moved 4.017e-03 relative with the image's gmsh, ~24x this record's miss.  The
-# 1e-4 REPRODUCTION_BAND below is unchanged, as are the physics bands; under
-# (b') the record's own run-to-run move is 3.3e-10, i.e. 3.3e-06 of that band.
+# condition (b) as restated (b') on 2026-08-23; extended to the class as (1*)
+# by the 10:30 review of 2026-08-23, which admits the two records this same
+# assertion loop unmasked once the gap ratio was written).  All three are
+# measured on image tag v0.11.0 (dolfinx 0.11.0.post0, gmsh 4.15.2), where this
+# fixture meshes to 184 176 cells; the recording image v0.7.2 (184 919 cells)
+# read 0.894310 / 0.829782 / 0.077095.  The mesh moved 4.017e-03 relative with
+# the image's gmsh, ~24-40x these records' misses.  The 1e-4 REPRODUCTION_BAND
+# below is unchanged, as are the physics bands; under (b') each record's own
+# run-to-run move is 3.3e-10 (gap ratio, 3.3e-06 of band), 6.6e-10 (lumped
+# ratio, 6.6e-06 of band) and below the printed six digits (cross-route).
 STEP1_GAP_RATIO_RECORD = 0.894141        # × omega*M12, fragmented mesh
-STEP1_LUMPED_RATIO_RECORD = 0.829782     # × omega*M12
-STEP1_CROSS_ROUTE_RECORD = 0.077095      # |ΔZ12|/|Z12|
+                                         # (v0.7.2 read 0.894310)
+STEP1_LUMPED_RATIO_RECORD = 0.828893     # × omega*M12
+                                         # (v0.7.2 read 0.829782)
+STEP1_CROSS_ROUTE_RECORD = 0.077431      # |ΔZ12|/|Z12|
+                                         # (v0.7.2 read 0.077095)
 REPRODUCTION_BAND = 1.0e-4               # 0.01 pp — the grain step 1 printed to
 
 # Exact-arithmetic identities: these are algebra on one solved field, so they

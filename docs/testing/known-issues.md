@@ -189,6 +189,29 @@ unless fixing it is the task.
 > implementer does not extend a review ruling in-slot, so **neither was
 > written**. What is owed is one review decision: extend ruling (1) to
 > these two, or rule them differently. Nothing else in leg 1 is open.
+>
+> **Resolved, `OPS-18` step 3a attempt 8 (2026-08-23, 12:00 slot) — the
+> 10:30 review's class ruling (1\*) admitted both, they are written, and
+> leg 1 is green.** On `attempt/OPS-18` (`main` merged at `070b1b5`),
+> image `v0.11.0`, complex, `-n 2`, two same-slot runs both **`19 passed`**
+> / exit 0 (`20260823T170403Z_OPS-18-step3a-leg1-run1.log`, 238.64 s;
+> `20260823T170821Z_OPS-18-step3a-leg1-run2.log`, 238.73 s), where attempt
+> 7 read `1 failed / 18 passed`. `STEP1_LUMPED_RATIO_RECORD` **0.828893**
+> and `STEP1_CROSS_ROUTE_RECORD` **0.077431** reproduce identically to six
+> printed digits in both runs — (b′) arithmetic: the lumped route's
+> `Im Z12` moves 1.029281339 → 1.029281338 Ω (1e-9 absolute, 1e-5 of the
+> 1e-4 band once divided through by ωM₁₂), the cross-route print does not
+> move at all. Physics green in both: reciprocity 2.679e-05 inside 1e-3,
+> σ_max 0.861357 < 1, open-limit and cross-route decomposition PASS, the
+> 5% cross-route MISS unchanged and still pre-stated. The fixture meshes
+> to 184 176 cells in both runs. **The loop unmasked no further record**,
+> and the only other consumer of these constants,
+> `test_port_lumped_narrowed_sheet.py`'s `f = 1.0` negative control, is
+> green on the new values in the same slot (`12 passed` / 142.72 s / exit
+> 0, `20260823T171239Z_OPS-18-step3a-narrowed-sheet.log`; that rung prints
+> 7.7431%, gap 0.894141, lumped 0.828893 — the identical digits). No band
+> moved. **This entry closes with step 3b's merge commit**, which is what
+> carries these branch-only writes to `main`.
 
 ### `test_straight_wire_b_field` fails **only in the 0.11 image**: the discretization error moved 12.75% → 15.3848% against a 15% band, on a mesh that grew 145 900 → 147 235 cells (`OPS-18` step 3 attempt 3, 2026-08-22)
 
