@@ -57,6 +57,340 @@ unless fixing it is the task.
 > sweep for `!r` in any string handed to gmsh, PETSc options or a shell (the
 > birdcage fixtures are predicted to carry siblings). This entry leaves with
 > that commit.
+>
+> **FIXED on the branch 2026-08-22, 12:00 implementer slot (`445a3ea`,
+> `attempt/OPS-18`) — this entry retires when that branch merges (§9 item
+> 3b (iii)).** `arc_half_y`, `major_radius` and `z_c` are coerced to plain
+> `float` before the f-strings. Negative control discharged against the red
+> baseline quoted above: the same batch now meshes and runs to a footer,
+> `17 passed / 2 failed` in 260.93 s
+> (`20260822T170346Z_OPS-18-step3-port1-coerced.log`) — the SIGABRT is gone
+> and the two remaining failures are the moved reproduction records in the
+> next entry, a different defect. **Sweep result, measured:** `src/` carries
+> **53** `!r` interpolations; the **4** two-torus `MathEval` sites are the
+> only ones handed to a foreign parser (the other 49 are Python exception
+> messages, which is what `!r` is for), and `MathEval` has exactly **one**
+> call site in all of `src/` (`io/mesh.py:1568`). The prediction that the
+> birdcage fixtures carry siblings is **wrong, by measurement** — they build
+> no `MathEval` field. The class is closed at one instance.
+
+### Two two-torus **reproduction records** move in the 0.11 image at 1e-4 while every physics identity holds (`OPS-18` step 3 attempt 3, 2026-08-22)
+
+> **Where this fires.** `tests/validation/test_port_package_sparameters.py::test_sanity_report_reproduces_the_gated_metrics_on_the_field_route`
+> and `tests/validation/test_port_lumped_two_torus.py::test_step_1_measurements_reproduce`,
+> on the `attempt/OPS-18` worksite only. `main` boots 0.7.2 and is unaffected.
+> These are the two failures left in the log that discharged the SIGABRT
+> above; they are a **different defect** from it, and they only became
+> visible once the mesh built again.
+>
+> **Literal symptom** (`20260822T170346Z_OPS-18-step3-port1-coerced.log`,
+> `2 failed, 17 passed` in 260.93 s, `Status: 1`, `-n 2`, complex build,
+> both rank footers identical):
+>
+> ```
+> passivity_max_sigma 0.861356895 does not reproduce the step-4 record
+>   0.861449 within 1.0e-06   (moved 9.210529e-05)
+> gap ratio: 0.894141 against step 1's record 0.894310 — moved by 1.69e-04,
+>   above 1e-04
+> ```
+>
+> and, printed but not asserted in the same test's stdout:
+> `||S-S^T||/||S|| = 3.112128e-05` against the record `2.5494e-05`
+> (band 5.0e-07).
+>
+> **What did *not* move.** Every gate that scores physics rather than a
+> recorded digit string passes, in the same run: reciprocity at
+> 3.112128e-05 is 32× inside the `PORT-1` band of **1e-3**; passivity holds
+> (σ_max 0.8614 < 1, column power sum 0.7411 < 1); the open-limit reduction
+> to the sheet average and the cross-route transverse-average identity both
+> PASS. 17 of 19 tests pass.
+>
+> **Cause, not diagnosed — one hypothesis, and it is testable.** gmsh moved
+> 4.11 → 4.15.2 with the image, and the meshes it emits move with it: the
+> straight-wire fixture in the entry below went 145 900 → **147 235** cells
+> on the same requested `h`. A two-torus mesh perturbed at that level moves
+> a solved S-matrix at 1e-4, which is exactly the size of both misses and
+> ~7× the tightest band (1e-6). The alternative — that 0.11 changed an
+> assembly or interpolation the port route depends on — is not excluded by
+> anything measured here. Deciding between them needs the two-torus cell
+> count printed on both images; nobody has printed it.
+>
+> **Update, 2026-08-22 (`OPS-18` step 3 attempt 4): the mesh did move, and
+> by 24× more than the records did.** `tests/mesh/probe_two_torus_cell_count.py`
+> builds this exact fixture — every argument imported from `_build` in the
+> test that owns the record — and prints the reduced global counts:
+>
+> | | dolfinx 0.7.2 / gmsh 4.11.1 | dolfinx 0.11.0.post0 / gmsh 4.15.2 | Δ |
+> |---|---|---|---|
+> | cells | 184 919 | 184 176 | **−743, −4.017e-03** |
+> | vertices | 31 676 | 31 550 | −126, −3.978e-03 |
+> | wire tags `1`/`2` | 9 463 / 9 380 | 9 556 / 9 448 | +0.98% / +0.72% |
+> | gap halves `101`/`102`/`111`/`112` | 13 627 / 13 599 / 13 763 / 13 771 | 13 661 / 13 648 / 13 658 / 13 694 | ≤ 0.8% |
+>
+> Logs `20260822T183313Z_OPS-18-step3-twotorus-cells-072.log` (Status 0, 33 s,
+> `main` source on the 0.7.2 image) and
+> `20260822T183626Z_OPS-18-step3-twotorus-cells-011.log` (Status 0, 34 s,
+> `attempt/OPS-18` source on the 0.11 image), both `mpiexec -n 2`. The
+> 0.7.2 run had to be taken on `main`'s source: the branch's `io/mesh.py`
+> imports `dolfinx.io.gmsh`, which 0.7.2 does not have, so the two runs
+> differ by the step-2 migration as well as the image — a caveat on
+> attribution, not on the counts.
+>
+> **So the mesh hypothesis is *consistent* here**: a 4.0e-03 mesh
+> perturbation moving two solved records by 9.2e-05 and 1.7e-04 is a 24-40×
+> attenuation, which is what a converged quantity on a perturbed mesh does.
+> It is still not a proof — the same slot **refuted** the mesh explanation
+> for the straight-wire entry below, where the counts moved by < 0.16% —
+> so the two failures should not be assumed to share a cause. **The
+> re-record decision remains the review's**; what this update supplies is
+> the evidence it asked for.
+>
+> **No band, assertion or record was touched**, and none should be until
+> the cause is decided: re-recording a solved S-matrix to make a version
+> bump land is how a version bump hides a physics change. §9 item 3a's
+> negative-result clause fired on this and stopped the leg.
+>
+> **Ruling, 18:00 review 2026-08-22 — re-record licensed, narrowly.** The
+> three numbers (`passivity_max_sigma` at 1e-6, the gap ratio at 1e-4, the
+> reciprocity record at 5e-7) are reproduction records of a solved field on
+> a named mesh, every physics gate in the same run holds, and the mesh
+> moved 4.017e-03 — the same grounds on which `TH-10`'s 55 251 → 55 241
+> re-record was granted. Conditions: version-tagged (0.7.2 value + 184 919
+> cells stay beside the new value + 184 176 cells + `0.11.0.post0 / gmsh
+> 4.15.2`), bit-identical across two runs in the slot before the digit
+> string is written, no band moves, branch-only until 3b merges. Queued as
+> §9 item 4; this entry closes with that commit. Full text in the §7
+> `OPS-18` entry.
+
+### `test_straight_wire_b_field` fails **only in the 0.11 image**: the discretization error moved 12.75% → 15.3848% against a 15% band, on a mesh that grew 145 900 → 147 235 cells (`OPS-18` step 3 attempt 3, 2026-08-22)
+
+> **Where this fires.** `tests/validation/test_straight_wire.py::TestStraightWire::test_straight_wire_b_field`,
+> real build, on the `attempt/OPS-18` worksite only. `main` boots 0.7.2 and
+> is unaffected.
+>
+> **Literal symptom** (`20260822T171401Z_OPS-18-step3-real-mag2.log`,
+> `1 failed, 17 passed, 4 skipped` in 272.43 s, `Status: 1`, `-n 2`, both
+> rank footers identical):
+>
+> ```
+> Cells: 147235
+> Relative L2 error: 15.3848%
+> AssertionError: Relative error 15.3848% exceeds 15%
+> ```
+>
+> **What did *not* move.** The rest of the `MAG` family passes on 0.11 in
+> the same run: `test_straight_wire_convergence`,
+> `test_analytic_bc_improves_on_natural_bc` (the `MAG-13` claim itself),
+> both `test_circular_loop` gates, and all 7 `test_mutual_inductance_reference`
+> tests. The failure is one number, on the one test whose band was set from
+> a measured h-error ladder.
+>
+> **Cause, measured in part.** The 15% band is not a physics tolerance: the
+> comment at `tests/validation/test_straight_wire.py:174`–`186` records it
+> as the measured error of *this mesh* — `h=0.0025`, **145.9k cells**,
+> **12.75%** on an O(h^1.2) ladder that has no plateau. The 0.11 image's
+> gmsh (4.15.2-git-657c8e9 vs 4.11) meshes the same requested `h` to
+> **147 235** cells, and this test's error is what a still-converging
+> discretization does when its mesh changes — the number was always
+> mesh-specific, and 15% was 1.18× a measurement rather than a bound with
+> headroom.
+>
+> **Not diagnosed:** whether 15.3848% is *only* the mesh change. A 1.9%
+> cell-count change producing a 21% error change is steeper than the
+> recorded ladder (38.8k→145.9k cells for 22.19%→12.75%), so the mesh
+> hypothesis is **not sufficient on its own** and something else may be
+> contributing. Re-running the recorded ladder's other two rungs on 0.11
+> would settle it; that is a slot's work and was not done here.
+>
+> **Update, 2026-08-22 (`OPS-18` step 3 attempt 4): the ladder was re-run on
+> both images, and the mesh explanation is refuted.**
+> `tests/validation/probe_straight_wire_ladder.py` drives the recorded rungs
+> through the same `_solve_straight_wire` / `_sample_radial` / `ErrorMetrics`
+> the gated test uses (imported, not restated), `mpiexec -n 2`, real build:
+>
+> | h | cells 0.7.2 | error 0.7.2 | cells 0.11 | error 0.11 | Δcells | Δerror |
+> |---|---|---|---|---|---|---|
+> | 0.0040 | 38 750 | **22.1925%** | 38 740 | **21.8417%** | −0.13% | −1.6% |
+> | 0.0025 | **145 884** | **12.7485%** | 147 235 | **15.3848%** | **+0.93%** | **+20.7%** |
+> | 0.0018 | 383 248 | **9.2568%** | 383 146 | **4.4605%** | −0.03% | **−51.8%** |
+>
+> Logs `20260822T184158Z_OPS-18-step3-wire-ladder-072.log` (Status 0, 98 s),
+> `20260822T183710Z_OPS-18-step3-wire-ladder-011.log` (Status 0, 105 s) and,
+> for the gated rung's 0.7.2 control,
+> `20260822T185944Z_OPS-18-step3-wire-h0025-072.log` (Status 0, 27 s); the
+> 0.11 `h=0.0025` row is quoted from the two runs above, which agree.
+>
+> **The 0.7.2 column is a clean control on all three rungs**: the July
+> record reproduces to **+0.011%**, **−0.012%** and **−0.035%**, so the
+> ladder is not stale and the deltas are the image.
+>
+> **And the outlier is not rank-dependent.** The gated rung re-run on 0.11
+> at `-n 4` is **bit-identical** to the `-n 2` result — 147 235 cells,
+> 15.3848% (`20260822T184951Z_OPS-18-step3-wire-h0025-n4.log`, Status 0,
+> 28 s). Serial (`-n 1`) is a **sizing** finding, not a result: exit 124 at
+> the 400 s ceiling (`20260822T185030Z_…-n1.log`), not retried. So the
+> mesh count 147 235 and the 15.3848% are both stable and reproducible
+> across rank widths, and partitioning is excluded as the cause.
+>
+> **What it shows.**
+> 1. **Not the mesh.** Both probed rungs mesh to within 0.13% of their
+>    recorded cell counts on 0.11, and their errors move by −1.6% and
+>    −51.8%. A mesh that does not move cannot explain an error that halves.
+> 2. **The convergence *rate* moved.** Fitted over the same two endpoints,
+>    0.7.2 gives ln(22.1925/9.2568)/ln(0.004/0.0018) = **1.10** — the
+>    recorded O(h^1.2) — and 0.11 gives ln(21.8417/4.4605)/ln(2.2222) =
+>    **1.99**. At the fine end 0.11 is **2.1× more accurate**, not less.
+> 3. **The gated rung is an outlier on its own ladder.** The 0.11 fit
+>    predicts 21.8417% · (0.0025/0.004)^1.99 = **8.6%** at h = 0.0025;
+>    it measures 15.3848%, **1.8×** that. It is also the only rung whose
+>    cell count moved appreciably (+0.92%, 6-30× the others).
+>
+> **Consequence for the band.** 15% was set as 1.18× a 12.75% measurement on
+> a still-converging ladder. On 0.11 that ladder converges at ~O(h²) and the
+> h = 0.0018 rung already reaches 4.46% — inside the 5% target `MAG-13`'s
+> comment calls out of reach at ~1.1M cells. So the honest disposal is
+> probably *not* "loosen 15%": it is to find why h = 0.0025 sits off its own
+> ladder on 0.11, since two rungs either side of it behave better than the
+> record. **Nothing was touched here** — no band, no assertion, no record.
+>
+> **What is left to test.** Rank dependence and mesh instability are both
+> excluded by the `-n 4` re-run above, so the remaining candidates are
+> (a) a genuine non-monotonicity of this discretization near h = 0.0025
+> that 0.11's slightly different mesh happens to land on, and (b) something
+> in the sampling / point-location path that is sensitive to where a
+> 1e-3-perturbed mesh puts cell boundaries relative to the 10 sample radii.
+> (b) is the cheaper to test: re-run the gated rung on 0.11 with a
+> different `n_points` (8 and 20) and see whether 15.3848% moves toward the
+> ~8.6% the 0.11 fit predicts. If it does, the band was measuring the
+> sampler as much as the solve.
+>
+> **No band was touched.** Loosening 15% to accommodate a version bump
+> would erase the only instrument that shows the ladder moved. §9 item 3a's
+> "a moved gated physics number is a known-issues entry and a stop" clause
+> fired on this.
+>
+> ---
+>
+> **Update, `OPS-18` step 3 attempt 5 (2026-08-22, 15:00 slot) — candidate
+> (b) is answered, and it answers more than it was asked.** The probe now
+> solves each rung once and samples the *same* field at every requested
+> `n_points`, so a spread within a row is the sampler's alone. Errors at
+> n_points **8 / 10 / 20**, `-n 2`, both images
+> (`20260822T200411Z_…-wire-h0025-npoints.log` Status 0 31 s,
+> `20260822T200503Z_…-wire-ladder-npoints-011.log` Status 0 106 s,
+> `20260822T201014Z_…-wire-ladder-npoints-072.log` Status 0 126 s):
+>
+> | h | 0.7.2: 8 / 10 / 20 | 0.11: 8 / 10 / 20 |
+> |---|---|---|
+> | 0.0040 | 18.6850% / **22.1925%** / 20.9923% | 18.5328% / **21.8417%** / 22.0704% |
+> | 0.0025 | **15.8028%** / **12.7485%** / 11.4984% | 16.6033% / **15.3848%** / 13.6986% |
+> | 0.0018 | 11.5626% / **9.2568%** / 7.5722% | 4.9201% / **4.4605%** / 4.8086% |
+>
+> Every n_points = 10 column still reproduces its record (bold, ≤ 0.035%
+> on 0.7.2), so the sweep is anchored rather than a new measurement.
+>
+> 1. **The metric is sampler-fragile on *both* images, and worse on the
+>    old one.** The 10-point radial L2 spans 34% of its own value on
+>    0.7.2's gated rung and 43% on its fine rung, versus 21% and 10% on
+>    0.11. This is a property of a 10-sample radial estimator, not of the
+>    upgrade.
+> 2. **The 15% band already fails on 0.7.2 at n_points = 8** — 15.8028%,
+>    on the image the record was taken on. The gate's 1.18× headroom is
+>    *inside* the statistic's own sampler spread, so it was passing on a
+>    sampler choice rather than on a margin. That is the more important
+>    finding here than anything version-specific.
+> 3. **The outlier survives the control.** At fixed n_points the 0.11
+>    gated rung is worse at every count (8: 15.80 → 16.60; 10: 12.75 →
+>    15.38; 20: 11.50 → 13.70), and no n_points brings it near the 0.11
+>    fit's 8.6%. Candidate (b) is therefore **excluded** as the *cause* of
+>    the outlier, alongside partitioning and mesh instability; candidate
+>    (a) — a real non-monotonicity near h = 0.0025 — is what remains.
+>
+> **Still nothing touched** — no band, no assertion, no record. But the
+> disposal question has changed shape: it is no longer only "may this
+> record move", it is "is a 10-point radial L2 a gateable statistic at
+> all". A band 1.18× a number that swings 34% under its own sampler is
+> not measuring the discretization. The review owns that call; a
+> defensible fix (raise `n_points`, or gate a sampler-independent norm)
+> is a `MAG` chunk, not an `OPS-18` clause.
+>
+> **Ruling, 18:00 review 2026-08-22 — the gate is replaced, not
+> re-banded.** "Loosen 15%" refused (standing rule; and 0.11 is the more
+> accurate solver on this ladder, so a loosened band would record the
+> wrong fact). "Chase the 0.11 non-monotonicity" refused as an `OPS-18`
+> clause: the statistic it would chase swings 34% under its own sampler on
+> the image that recorded it, so it cannot adjudicate a version bump either
+> way. **`MAG-18`** is commissioned (§7; §9 item 1): an annulus-restricted
+> domain L2 of `|B_h| − |B_ana|`, assembled not sampled, gated on a
+> pre-registered rate ≥ 0.7 plus rank-independence and the natural-BC
+> control, measured on 0.7.2 / `main` first; the 10-point number becomes
+> reported-not-gated. `OPS-18` then re-measures leg 2 in that norm on 0.11
+> (§9 item 4). **This entry stays open**: the h = 0.0025 non-monotonicity
+> on 0.11 is observed and unexplained, and `MAG-18` does not claim to
+> resolve it — it leaves only when someone explains or retires it with a
+> commit.
+>
+> ---
+>
+> **Update, `MAG-18` executed 2026-08-22 (log
+> `20260823T003518Z_MAG-18-full.log`, `7 passed` / 270.64 s / `-n 2`,
+> 0.7.2 / `main`) — the ruling is implemented, and the symptom at the top
+> of this entry can no longer fire.** `rel_error < 0.15` is gone from
+> `test_straight_wire_b_field`; the number is printed, and reproduced
+> under assertion at `n_points` 8 / 10 / 20 in
+> `test_domain_l2_record`. So on 0.11 that test will now *pass* — the
+> 15.3848% it used to fail on is still there, still unexplained, and this
+> entry stays open for it, but a run hitting it will see a printed line
+> rather than a red assertion. **Do not read the green as an explanation.**
+> The gate is now `E_Ω` = 25.3787 / 10.7288 / **6.6708%** on the recorded
+> ladder, rate **1.6842**, monotone, with the natural-BC control at
+> 32.3117% vs 10.7288%.
+
+### `MAG-18` anchor (ii) is unreachable as pre-registered: the magnetostatic solve's own cross-width floor is ~1e-7, not 1e-10 (2026-08-22)
+
+> **Not a failing test** — no assertion is red. This records a
+> pre-registered done-when clause that measurement showed could not be met
+> by any statistic, so the next reader does not spend a slot re-measuring
+> it.
+>
+> **The clause.** `MAG-18` anchor (ii), PROJECT_PLAN §7 and §9 item 1: "the
+> h = 0.0025 value at `-n 2` and `-n 4` agree to **1e-10 relative** — a
+> reduced integral has no sampler; this is the control that the new
+> statistic lacks the defect the old one had."
+>
+> **Measured** (`20260823T003327Z_MAG-18-record-probe.log`, `-n 2`, 31 s;
+> `20260823T003406Z_MAG-18-record-n4.log`, `-n 4`, 26 s; same 145 884-cell
+> mesh in both, `Status: 0`):
+>
+> | statistic | `-n 2` | `-n 4` | relative |
+> |---|---|---|---|
+> | `E_Ω` (new) | 1.0728835983e-01 | 1.0728836764e-01 | **7.28e-08** |
+> | 10-point, n_points = 8 (retired) | 15.802788% | 15.802785% | 1.9e-07 |
+>
+> **Cause: the linear solve, not the statistic.** `MagnetostaticSolver`
+> runs `ksp_type=preonly, pc_type=lu` — a *direct* factorization, whose
+> pivot/elimination order follows the mesh partition, so the computed `A`
+> itself differs at roundoff amplified by the gauge-penalty system's
+> conditioning. The retired sampled statistic moves the same way on the
+> same two runs, which is the discriminator: a defect of the *sampler*
+> would not appear in an assembled integral, and this appears in both.
+> ~1e-7 is therefore the solve's cross-width reproducibility floor and no
+> functional of this field can read below it.
+>
+> **What it does and does not mean.** It does **not** revive the sampler
+> objection: anchor (ii) existed to show `E_Ω` has no sample-count
+> dependence, and it has none — the 34% swing the old statistic showed
+> under `n_points` has no counterpart here. It **does** mean the 1e-10
+> number was written without knowing the solver's floor.
+>
+> **Nothing was loosened in-slot.** `E_OMEGA_RECORD_BAND` is the
+> separately pre-registered **record** band 1e-4, not a relaxed 1e-10.
+> Re-registering (ii) at the measured floor (1e-6 would be 100× the
+> observation and still 1e5× tighter than the record band) is a review
+> decision; `MAG-18` stays 🟡 until it is made. A cheap alternative the
+> review may prefer: assert cross-width agreement *directly* by running
+> the record test at both widths in one harness invocation rather than
+> against a hard-coded constant.
 
 ### `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` fails **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
 

@@ -37,6 +37,9 @@ parameters meshed a 5 cm x 1 m cylinder at h = 5 mm (~4e5 cells) and exceeded
 
 import numpy as np
 import pytest
+import ufl
+from dolfinx import fem
+from dolfinx import mesh as dmesh
 from mpi4py import MPI
 
 from fem_em_solver.core.solvers import (
@@ -72,6 +75,116 @@ R_MAX = 0.4 * DOMAIN_RADIUS
 # 2a -> 0.4R vs 12.75% over 2a -> 0.8R, i.e. the near-boundary region is no
 # longer where the error lives.
 R_MAX_BC = 0.8 * DOMAIN_RADIUS
+
+# --- MAG-18: the sampler-independent gate -----------------------------------
+# The 10-point radial statistic below is a *sample* of the field, and OPS-18
+# step 3 attempt 5 measured what that costs: on the recording image (0.7.2 /
+# gmsh 4.11.1) the same solved field at h = 0.0025 reads 15.8028% / 12.7485% /
+# 11.4984% at n_points = 8 / 10 / 20 -- a 34% swing of the statistic under a
+# choice the physics does not see, with the 15% band already failing at
+# n_points = 8 (log 20260822T201014Z_OPS-18-step3-wire-ladder-npoints-072.log,
+# known-issues 2026-08-22). MAG-18 replaces it with a reduced integral that has
+# no sample count:
+#
+#   E_Omega = || |B_h| - |B_ana| ||_L2(Omega) / || |B_ana| ||_L2(Omega)
+#   Omega   = {2a <= r <= 0.8 R_domain, |z| <= 0.25 L}
+#
+# i.e. the same region the samples span. Omega is a DG0 indicator built from a
+# numpy mask on *owned* cell midpoints -- deliberately not a ufl.conditional on
+# SpatialCoordinate, which would compare complex numbers in the complex build
+# (OPS-22) and this file must stay importable in both.
+E_OMEGA_R_MIN = 2.0 * WIRE_RADIUS
+E_OMEGA_R_MAX = 0.8 * DOMAIN_RADIUS
+E_OMEGA_Z_MAX = 0.25 * WIRE_LENGTH
+
+# The recorded h-ladder (MAG-13 fixture, analytic Dirichlet wall).
+E_OMEGA_LADDER = [0.004, 0.0025, 0.0018]
+
+# Pre-registered before any E_Omega was measured (PROJECT_PLAN MAG-18): a DG
+# projection of the curl of an N1curl degree-1 potential should show >= 1;
+# 0.7 is the headroom, the MAG-17 convention.
+E_OMEGA_RATE_MIN = 0.7
+
+# Reproduction record, NOT a physics bound -- the physics bound is the rate.
+# Version-tagged: measured on the h = 0.0025 rung, 145 884 cells, image
+# 0.7.2 / gmsh 4.11.1, mpiexec -n 2, log
+# 20260823T003327Z_MAG-18-record-probe.log.
+#
+# Rank independence (MAG-18 anchor (ii)), measured: -n 2 1.0728835983e-01 vs
+# -n 4 1.0728836764e-01, i.e. 7.28e-08 relative -- NOT the 1e-10 the anchor
+# pre-registered. The cause is not the statistic: the magnetostatic solve is a
+# direct LU (ksp_type=preonly, pc_type=lu), whose factorization order changes
+# with the partition, and the retired 10-point statistic moves the same way on
+# the same two runs (15.802788% vs 15.802785%, 1.9e-07 relative). So ~1e-7 is
+# the solve's own cross-width floor, shared by both statistics, and no norm
+# defined on this field can beat it. The band below is the pre-registered
+# *record* band 1e-4; the 1e-10 clause is a finding for the review, recorded in
+# docs/testing/known-issues.md, not something loosened here.
+E_OMEGA_H0025_RECORD = 1.0728835983e-01
+E_OMEGA_RECORD_BAND = 1e-4
+
+# Attempt-5 row reproduced as the negative control: the statistic MAG-18
+# replaces, printed beside E_Omega on the gated rung so the log carries the
+# sampler swing side by side with the norm that removes it.
+NPOINTS_CONTROL = {8: 0.158028, 10: 0.127485, 20: 0.114984}
+NPOINTS_CONTROL_BAND = 1e-4
+
+
+def _annulus_indicator(mesh):
+    """DG0 indicator of Omega = {2a <= r <= 0.8R, |z| <= 0.25L}.
+
+    Built from a numpy mask on owned-cell midpoints (``indices <
+    size_local``); ghost dofs are filled by ``scatter_forward`` so the form
+    compiler sees a consistent Function, though only owned cells contribute to
+    ``dx``.
+    """
+    tdim = mesh.topology.dim
+    n_owned = mesh.topology.index_map(tdim).size_local
+    owned = np.arange(n_owned, dtype=np.int32)
+    mid = dmesh.compute_midpoints(mesh, tdim, owned)
+
+    r = np.hypot(mid[:, 0], mid[:, 1])
+    inside = (
+        (r >= E_OMEGA_R_MIN) & (r <= E_OMEGA_R_MAX) & (np.abs(mid[:, 2]) <= E_OMEGA_Z_MAX)
+    )
+
+    V0 = fem.functionspace(mesh, ("DG", 0))
+    chi = fem.Function(V0, name="chi_Omega")
+    chi.x.array[:] = 0.0
+    dofs = np.asarray(V0.dofmap.list)[:n_owned].reshape(-1)
+    chi.x.array[dofs] = inside.astype(np.float64)
+    chi.x.scatter_forward()
+    return chi
+
+
+def _domain_l2_error(mesh, b_field):
+    """Annulus-restricted relative domain L2 error of |B| (MAG-18).
+
+    Both integrals are ``assemble_scalar`` (rank-local!) reduced with
+    ``allreduce(SUM)`` before the ratio is formed.
+    """
+    chi = _annulus_indicator(mesh)
+
+    b_ana = fem.Function(b_field.function_space, name="B_analytic")
+
+    def _b_ana_interp(x):
+        points = np.ascontiguousarray(x[:3].T)
+        return AnalyticalSolutions.straight_wire_magnetic_field(points, CURRENT).T
+
+    b_ana.interpolate(_b_ana_interp)
+
+    # Fixed quadrature degree: the integrands carry a sqrt, whose UFL degree
+    # estimate is neither cheap nor reproducible across versions.
+    dx = ufl.dx(domain=mesh, metadata={"quadrature_degree": 4})
+    mag_h = ufl.sqrt(ufl.inner(b_field, b_field))
+    mag_a = ufl.sqrt(ufl.inner(b_ana, b_ana))
+
+    num_local = fem.assemble_scalar(fem.form(chi * (mag_h - mag_a) ** 2 * dx))
+    den_local = fem.assemble_scalar(fem.form(chi * mag_a**2 * dx))
+    num = mesh.comm.allreduce(num_local, op=MPI.SUM)
+    den = mesh.comm.allreduce(den_local, op=MPI.SUM)
+    assert den > 0.0, "Omega is empty -- the annulus mask caught no cells"
+    return float(np.sqrt(num / den))
 
 
 def _wire_potential_interp(x):
@@ -184,7 +297,23 @@ class TestStraightWire:
         # -n 2), which is outside the standard tier; the remaining error is
         # discretization of a 1/r field on a uniform mesh near a thin conductor,
         # so graded refinement (MAG-9) is the cheaper route, not more uniform h.
-        assert rel_error < 0.15, f"Relative error {rel_error:.4%} exceeds 15%"
+        #
+        # MAG-18 (2026-08-22): the `rel_error < 0.15` assertion this comment
+        # used to justify is REPORTED, NOT GATED. It was never a bound on the
+        # solver: OPS-18 step 3 attempt 5 read the same solved field at
+        # n_points 8 / 10 / 20 as 15.8028% / 12.7485% / 11.4984% on the
+        # recording image itself, so the 15% band was already failing at
+        # n_points = 8 on 0.7.2 and passing at 10 only by the sampler choice
+        # this test happens to make (known-issues 2026-08-22, log
+        # 20260822T201014Z_OPS-18-step3-wire-ladder-npoints-072.log). The gate
+        # is replaced, not loosened: TestStraightWire::test_domain_l2_* gate
+        # the sampler-free E_Omega and its convergence rate. The number is
+        # still printed above, and reproduced under assertion at all three
+        # sample counts in test_domain_l2_record, so a real regression in the
+        # field is still caught here.
+        if comm.rank == 0:
+            print(f"  [reported, not gated] 10-point rel_error {rel_error:.4%} "
+                  f"vs the retired 15% band")
 
     def test_analytic_bc_improves_on_natural_bc(self):
         """The analytic Dirichlet wall beats n x H = 0 on the same mesh.
@@ -251,6 +380,117 @@ class TestStraightWire:
             f"Convergence rate {rate:.4f} outside [{RATE_MIN}, {RATE_MAX}] "
             f"(expected ~1.0 for N1curl degree 1); errors "
             f"{[f'{e:.4%}' for e in errors]} at h {resolutions}"
+        )
+
+    def test_domain_l2_convergence(self):
+        """MAG-18: E_Omega falls monotonically at rate >= 0.7 on the ladder.
+
+        This is the gate the 10-point radial statistic could not be: a reduced
+        integral over Omega, with no sample count for the answer to depend on.
+        The gated quantity is the *rate* -- the h = 0.0025 value is a separate,
+        version-tagged reproduction record (test_domain_l2_record).
+        """
+        comm = MPI.COMM_WORLD
+        errors = []
+
+        for res in E_OMEGA_LADDER:
+            mesh, b_field = _solve_straight_wire(res, comm)
+            e_omega = _domain_l2_error(mesh, b_field)
+            errors.append(e_omega)
+            if comm.rank == 0:
+                n_cells = mesh.topology.index_map(mesh.topology.dim).size_global
+                print(f"  h={res:.4f}  cells {n_cells}  E_Omega {e_omega:.10e} "
+                      f"({e_omega:.4%})")
+
+        rate = fit_convergence_rate(np.array(E_OMEGA_LADDER), np.array(errors))
+        if comm.rank == 0:
+            print(f"  MAG-18 fitted E_Omega rate: {rate:.4f}")
+
+        assert all(errors[i + 1] < errors[i] for i in range(len(errors) - 1)), (
+            f"E_Omega not monotone decreasing on {E_OMEGA_LADDER}: "
+            f"{[f'{e:.6e}' for e in errors]}"
+        )
+        assert rate >= E_OMEGA_RATE_MIN, (
+            f"E_Omega rate {rate:.4f} below the pre-registered "
+            f"{E_OMEGA_RATE_MIN}; errors {[f'{e:.6e}' for e in errors]} at "
+            f"h {E_OMEGA_LADDER}"
+        )
+
+    def test_domain_l2_record(self):
+        """MAG-18: the h = 0.0025 E_Omega reproduction record.
+
+        Run at ``-n 2`` and ``-n 4`` this is also anchor (ii), rank
+        independence: a reduced integral has no sampler, so the two widths must
+        agree -- the control that the new statistic lacks the defect the old
+        one had. The negative control prints beside it: the old 10-point
+        statistic at n_points 8 / 10 / 20 on the *same* solved field,
+        reproducing the attempt-5 row.
+        """
+        comm = MPI.COMM_WORLD
+        res = 0.0025
+        mesh, b_field = _solve_straight_wire(res, comm)
+        e_omega = _domain_l2_error(mesh, b_field)
+
+        sampled = {}
+        for n_points in sorted(NPOINTS_CONTROL):
+            _, b_num_mag, b_ana_mag, _ = _sample_radial(
+                b_field, n_points, comm, R_MIN, R_MAX_BC
+            )
+            sampled[n_points] = ErrorMetrics.l2_relative_error(b_num_mag, b_ana_mag)
+
+        if comm.rank == 0:
+            n_cells = mesh.topology.index_map(mesh.topology.dim).size_global
+            print(f"\nMAG-18 record rung h={res}, {n_cells} cells, "
+                  f"{comm.size} ranks:")
+            print(f"  E_Omega = {e_omega:.10e}  ({e_omega:.4%})")
+            print("  negative control -- the statistic this replaces:")
+            for n_points, err in sampled.items():
+                ref = NPOINTS_CONTROL[n_points]
+                print(f"    n_points {n_points:3d}  rel_error {err:.6%} "
+                      f"(attempt-5 record {ref:.4%}, "
+                      f"{(err - ref) / ref:+.3e} relative)")
+
+        # The sampler swing is the finding, so it is asserted, not just
+        # printed: the same field read three ways spans 15.80% -> 11.50%.
+        for n_points, err in sampled.items():
+            ref = NPOINTS_CONTROL[n_points]
+            assert abs(err - ref) / ref < NPOINTS_CONTROL_BAND, (
+                f"n_points={n_points} control {err:.6%} does not reproduce the "
+                f"attempt-5 record {ref:.4%} within {NPOINTS_CONTROL_BAND}"
+            )
+
+        if E_OMEGA_H0025_RECORD is None:
+            pytest.skip("E_OMEGA_H0025_RECORD not yet measured on this image")
+        dev = abs(e_omega - E_OMEGA_H0025_RECORD) / E_OMEGA_H0025_RECORD
+        assert dev < E_OMEGA_RECORD_BAND, (
+            f"E_Omega {e_omega:.10e} deviates {dev:.3e} from the record "
+            f"{E_OMEGA_H0025_RECORD:.10e} (band {E_OMEGA_RECORD_BAND}); "
+            f"{comm.size} ranks"
+        )
+
+    def test_domain_l2_analytic_bc_beats_natural(self):
+        """MAG-18 anchor (iii): MAG-13's claim restated in the new norm.
+
+        The natural ``n x H = 0`` wall contradicts Ampere's law for a net axial
+        current, so at fixed h the analytic Dirichlet wall must read strictly
+        better -- now measured as a domain integral rather than 10 samples.
+        """
+        comm = MPI.COMM_WORLD
+        res = 0.0025
+        errors = {}
+
+        for use_bc in (False, True):
+            mesh, b_field = _solve_straight_wire(res, comm, analytic_bc=use_bc)
+            errors[use_bc] = _domain_l2_error(mesh, b_field)
+
+        if comm.rank == 0:
+            print(f"\n  MAG-18 h={res}: E_Omega natural BC {errors[False]:.6%}, "
+                  f"analytic BC {errors[True]:.6%}, "
+                  f"ratio {errors[True] / errors[False]:.4f}")
+
+        assert errors[True] < errors[False], (
+            f"Analytic BC E_Omega {errors[True]:.6%} should be strictly better "
+            f"than natural BC {errors[False]:.6%} at h={res}"
         )
 
 
