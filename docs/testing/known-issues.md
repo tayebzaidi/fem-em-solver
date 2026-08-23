@@ -1038,6 +1038,39 @@ red-but-benign companion log each on 2026-08-16, which is what commissioned
 `OPS-19`. The `EX-18` heading violations once filed here, three missing
 headings in `examples/ports/01_two_torus_port_pair.md`, were fixed 2026-08-16.)*
 
+### `check_example_doc_references.py` freshness-gates only 5 of 27 examples — every `stale=24, none of them mine` line is not an all-clear (weekly review 2026-08-23, `EX-29`)
+
+**Found by the 2026-08-23 weekly examples audit (read-only, not a test
+failure).** The checker's `--output-dir` defaults to the single repo-root
+`paraview_output/` (`scripts/testing/check_example_doc_references.py:241-242`),
+and its `in_tree_artifacts` exemption (`:276-298`) treats any referenced
+artifact whose basename also appears anywhere under `examples/` as
+"committed next to its own case — existence is enough". Only
+`mag` 1/2/4/5/6 and `mri:1` write to the repo-root directory; the other
+**22 of 27** runnable examples write `Path(__file__).parent/"paraview_output"`,
+so they get an existence-only check and are **never** freshness-gated. The
+exemption's premise is false: `.gitignore` ignores `paraview_output/` at
+every depth and `git ls-files examples/ | grep paraview_output` returns
+nothing — no artifact under `examples/` is committed evidence. That is why
+the stale count has read exactly 24 on every docrefs log since `OPS-19`
+and always names the same set.
+
+**Consequence.** On 2026-08-23 the artifacts the checker cannot see are
+10–17 days old for 13 examples (`mesh:1` ~17 d, `mesh:2` ~16 d, `mri:2`
+~15 d, `mat:1` / `th:1`–`th:4` / `ans:1` ~14 d, `th:5` ~13 d, `ports:1` /
+`th:6` ~10 d), all predating `OPS-17`'s test replacement; no EX chunk's
+"none of them mine" reading ever covered them. A second, smaller finding:
+`examples/magnetostatics/paraview_output/` (2026-08-03/04 `circular_loop_*`
+files) is an orphan — `02_circular_loop.py` has written to the repo root
+since `EX-17`, and nothing regenerates that directory.
+
+**Disposition.** `EX-29` (§7) fixes the checker — scan each referenced
+artifact at its example-relative path and restrict the exemption to
+`git ls-files`-tracked paths — with the unit-test negative control that an
+untracked in-tree artifact older than `--max-age-s` must read stale;
+`EX-30` refreshes the 13-example set. Until `EX-29` lands, read every
+`stale=` figure as a lower bound over 5 examples, not a census.
+
 ### The container-side `timeout` in the standard harness recipe does not reliably stop an `mpiexec` job, and an overrun can wedge the container (`MAT-6` step 10, 2026-08-12)
 
 **Verified at `648b216`, 00:00 implementer slot.** The recipe every heavy
