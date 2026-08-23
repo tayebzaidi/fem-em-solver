@@ -18340,3 +18340,81 @@ next by the first-undone rule and is independent of this one; it solves on
 exactly the mesh this example just re-verified at every identity, so leg
 (c)'s bit-identical `Z₂₁` control should reproduce and any drift there is
 the *solve*, not the geometry — that dichotomy is now measured, not assumed.
+
+---
+
+## 2026-08-23T03:40Z — `PORT-9` step 3 leg (d0) — **complete** (22:30 CDT implementer slot)
+
+Tree clean at preflight, container Up (0.7.2), `main`. §9 item 3 by the
+first-undone rule (items 1 and 2 are struck done). New module
+`tests/validation/test_port_birdcage_termination_probe.py` — **added, not
+edited**, per the entry's own trap list, so leg (c)'s record-owning tests
+still run untouched.
+
+### What was run
+
+One mesh of the `GEO-18` step-2 fixture (116 416 cells, ratio **1.000000**
+of the record, 21.43 s; four `f = 0.5` sheets, 27 facets each,
+`A/h` = 7.413268623e-03 m, azimuths 0/90/180/270 deg, out-of-plane
+8.882e-19 m — bit-identical to leg (c)'s), then **two** lumped-sheet
+solves, P1 driven, 10 MHz, control first: `Z_p = 1e6 Ω` on every port, then
+`Z_p = 50 Ω` = `REFERENCE_IMPEDANCE_OHM`, the ports' own `z0_ohm`. Sheet
+construction, narrowing and bbox-centre helpers imported from leg (c)'s
+module rather than restated.
+
+### Numbers — the gate and both controls pass
+
+* **Gate**, both conditions in the same solve, both pre-stated at the
+  18:00 review and unmoved: discrimination margin
+  `|Z₃₁ − ½(Z₂₁ + Z₄₁)|/|Z₂₁ − Z₄₁|` = **598.4002×** vs the 10× floor,
+  adjacent spread `|Z₂₁ − Z₄₁|/|Z₂₁|` = **0.0152%** vs the 5% band. The
+  margin is not bought by breaking C4.
+* Column 1 at 50 Ω: `Z₁₁ = +2.173224483e+01 + 7.459491479e+00j`,
+  `Z₂₁ = +1.700799365e+01 + 2.384284683e-01j`,
+  `Z₃₁ = +1.602758027e+01 − 9.538522445e-01j`,
+  `Z₄₁ = +1.701057452e+01 + 2.384109272e-01j` Ω off
+  `I₁ = +1.379158864e-02 − 1.434197942e-03j` A.
+* **Control (1)** — the 1e6 Ω solve reproduces leg (c)'s recorded column to
+  **≤ 2.4e-10 relative** (`I₁` to 7.842e-12) against a 1e-9 band that is
+  the record's print precision, not a physics tolerance. Every printed
+  digit of leg (c) comes back.
+* **Control (2)** — `|I₁|` 9.992791096e-07 → 1.386595979e-02 A, gain
+  **13 875.96×** vs the 10× floor: the termination closed a conduction
+  path.
+* The physics behind it: open, `Z₁₁` is 3.43 kΩ **capacitive** and the
+  three mutuals agree to four digits (electrostatic division of the ring
+  potentials). Terminated, `Z₁₁` is **resistive-inductive** and the
+  mutuals split by symmetry class — adjacent 17.008/17.011 Ω, opposite
+  16.028 Ω, a **5.9%** class separation riding on a 0.0152% intra-class
+  spread.
+
+### Disclosure
+
+Leg (d0)'s margin is taken on the **complex** entries as scoped; leg (c)'s
+anti-degeneracy check was the magnitude-only analogue. On the same 1e6 Ω
+column they read **1.7361×** and 1.0060× — not interchangeable, so this
+module prints both in every row. No band of leg (c)'s moved and no
+assertion of its was edited.
+
+### Logs and cost
+
+`20260823T033304Z_PORT-9-step3d0.log` — **`8 passed`, 48.90 s in-pytest,
+Status 0, Elapsed 50 s, `-n 2`**, complex build with `tests/environment`
+first. Confirming rerun `20260823T033413Z_PORT-9-step3d0-rerun.log` —
+**`8 passed` 45.22 s, Elapsed 47 s**, reproducing **every printed digit of
+both columns**. Solves 9.19 s (cold) / 7.00 s, the grain leg (c) priced.
+Tier: commissioned standard, **measured standard** (~97 s of compute total
+against a `timeout -k 30 400` ceiling). No `-n 1`, no rebuild, no wedge, no
+exit 124, no permission denial.
+
+### Hypothesis for the next slot
+
+Leg (d) — the 4×4 and gates (i)–(iii) — is now scopable and cheap: run it
+at **`Z_p = 50 Ω`**, four solves on one mesh, ~30 s of solve time, standard
+tier, not the heavy item it was originally scoped as. The prediction to
+gate against is that the circulant classes resolve, since the
+adjacent/opposite separation at 50 Ω is ~390× the intra-class spread; the
+open question leg (d) inherits is whether **reciprocity** (`‖Z − Zᵀ‖/‖Z‖ ≤
+1e-3`) survives four independent drives on this fixture, which one column
+cannot see. Leg (d) is a review's to scope, not an implementer's — §9 has
+no leg (d) item as of this slot.
