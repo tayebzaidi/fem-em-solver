@@ -18266,3 +18266,77 @@ question is whether the h = 0.0025 non-monotonicity survives in a norm with
 no sampler — if `E_Ω` is monotone on 0.11 at rate ≥ 0.7 with the gated rung
 on its own ladder, the 15.3848% outlier was the sampler interacting with a
 moved mesh after all, and the open entry can close.
+
+---
+
+## 2026-08-23T02:10Z — `EX-28` — **complete** (21:00 CDT implementer slot)
+
+**Preflight.** Tree clean on `main` at `d494d81`, container Up 6 h, 0.7.2
+image (`main`'s compose file, untouched). §9 item 1 (`MAG-18`) is marked done
+by the 19:30 slot, so the first-undone rule takes **item 2, `EX-28`** — no
+fallback, no drain, no `recovered/*`.
+
+### What was built
+
+`examples/meshing/06_birdcage_leg_gaps_port_sheets.py` + the same-stem guide,
+auto-discovered as `mesh:6` by `scripts/run_examples.sh` (no runner edit
+needed). Two rungs of one fixture, mesh-only, no solve: the gapped+sheeted
+birdcage (`leg_gap_length=8 mm`, `emit_port_sheets=True`) and the default
+uncut coil, with three combined XDMFs — sheeted cells, sheeted sheet facets
+`211`-`214`, uncut cells.
+
+**Closed as written on the first run.** Every element of the §9 rubric
+executed, no band moved, no pre-existing test touched, every constant
+imported from `tests/mesh/test_birdcage_leg_gaps.py` and
+`tests/mesh/test_birdcage_port_sheets.py` and the modules they import
+(`ANS-1`).
+
+### Measured
+
+Sheeted rung **116 416 cells**, meshed/CAD conductor **0.970193** vs the
+imported `CAD_MASS_GATE` = 0.95. Per port: sheet **54 facets**,
+`1.120000000e-04 m²`, meshed/analytic **`1.000000000000`**;
+`h = 8.000000000e-03 m` = the gap exactly; **`w_eff/w_bbox =
+1.000000000000`**; out-of-plane spread `2.512e-16` m (P1/P3) and `9.714e-17`
+m (P2/P4) — the two values differ because the sheet plane is `y`-normal for a
+leg on the `x`-axis and `x`-normal for one on the `y`-axis, and the script
+reads the pinned axis off the measurement; halves
+**`0.500000000000/0.500000000000`**; terminal `2.236196e-04 m²` =
+**0.988616** of the closed-form `2.261946711e-04 m²`, inside both the
+imported `[0.95, 1.0]` inscribed band and step 1's `1e-5` record band;
+closure **`1.000000000000`**. **C4 sheet spread `8.470e-16`.** `GEO-9`
+partition `< 1e-9` on both rungs. Every figure reproduces `GEO-18` step 2's
+log to the printed digit — the fixture has not moved since 08-22.
+
+**The negative control is the part that is new, not a re-execution.** Uncut
+rung at **98 474 cells (ratio 1.000000)** and meshed/CAD **0.967019**, both
+`EX-21`'s records; cell tags `[1, 2, 3, 101-104]` with no `11x`;
+conductor-facing port area **exactly `0.000000e+00 m²`** on all four (leg
+(b)'s finding re-measured); **and `_global_facet_count` = 0 on every
+`210+i`** after running the same `_interface_facet_tags` rebuild on that
+mesh. That last line closes the one clause the 2026-08-22 03:00 audit of
+`GEO-18` step 2 flagged as *implied by the cell-tag assertion rather than
+measured* — it is now measured directly, which was this example's one
+non-redundant job.
+
+### Logs and cost
+
+`20260823T020338Z_EX-28-example-n2.log` — **exit 0, 46 s harness / 43.1 s
+in-script at `-n 2`** (sheeted 21.46 s mesh / 23.41 s rung, uncut 19.02 s,
+all three exports ~1 s: the `EX-27` precedent that exports are cheaper than
+the meshes held again). `20260823T020531Z_EX-28-docrefs.log` —
+**`dead=0 guide=0 stale=24 stale_severity=report exit=2`**, i.e. PASS under
+the `OPS-19` `exit != 1` contract; 36 guides scanned, 117 references, and
+none of the 24 stale artifacts is an `EX-28` one (they are `EX-22`'s 48 h
+window re-growing, as the commission predicted). Tier: commissioned
+standard, **measured standard**. Total compute this slot **~51 s** against
+the rubric's `timeout -k 30 400` ceiling. No `-n 1`, no rebuild, no wedge,
+no exit 124, no permission denial.
+
+### Hypothesis for the next slot
+
+§9 item 3 (`PORT-9` step 3 leg (d0), the `Z_p = 50 Ω` termination probe) is
+next by the first-undone rule and is independent of this one; it solves on
+exactly the mesh this example just re-verified at every identity, so leg
+(c)'s bit-identical `Z₂₁` control should reproduce and any drift there is
+the *solve*, not the geometry — that dichotomy is now measured, not assumed.
