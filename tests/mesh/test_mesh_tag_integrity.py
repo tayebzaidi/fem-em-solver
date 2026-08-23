@@ -73,11 +73,24 @@ POLICY_MIN_CAD_RECOVERY = 0.755
 # `OPS-17` step 2's recorded uniform-sizing table (known-issues "Four defects"
 # §1, `20260817T111054Z_OPS-17-step2-mesh-n2.log`), carried here as the
 # negative control on the `GEO-17` sizing fix.
+# OPS-18 step 3b re-record, 2026-08-23, under the 10:30 review's class ruling
+# (1*) (18:00 review of 2026-08-22, ruling (1), condition (b) as restated (b')):
+# the values below are measured on image tag v0.11.0 (dolfinx 0.11.0.post0,
+# gmsh 4.15.2-git-657c8e9), where the image's newer gmsh moves this uniform
+# h = 0.015 mesh; the recording image v0.7.2 read the values in the trailing
+# comments.  This is the drift `OPS-18` step 2 filed to known-issues
+# (`20260822T110624Z_OPS-18-step2-shim-runtime.log`, tag 1 at 4.251e-04
+# relative), disposed of here by comparison, not by argument: the partition
+# identity still closes exactly (ratio 1.000000000000, both sizings) and the
+# `GEO-17` sign + CAD-recovery gates below are unmoved and green.  The 1e-9
+# band on this negative control is unchanged; under (b') each record's own
+# run-to-run move across the two confirming runs of this slot is 0.0 — the
+# meshes are bit-identical to every printed digit.
 UNIFORM_VOLUMES_RECORD = {
-    1: 1.191750413e-04,
-    2: 1.188402981e-04,
-    3: 4.943767949e-04,
-    4: 1.143560787e-02,
+    1: 1.192257046e-04,   # v0.7.2 read 1.191750413e-04 (+4.251e-04 relative)
+    2: 1.185069486e-04,   # v0.7.2 read 1.188402981e-04 (-2.805e-03 relative)
+    3: 4.943767949e-04,   # unmoved by the image change
+    4: 1.143589055e-02,   # v0.7.2 read 1.143560787e-02 (+2.472e-05 relative)
 }
 
 

@@ -28,8 +28,17 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### The two-torus port fixtures **SIGABRT in `gmsh.model.mesh.generate` only in the 0.11 image**: numpy 2 renders `!r` of a numpy scalar as `np.float64(…)` inside a gmsh `MathEval` string (`OPS-18` step 3 attempt 2, 2026-08-22; entered by the 10:30 review)
+### ✅ RETIRED 2026-08-23 (`OPS-18` step 3b merge) — the two-torus port fixtures **SIGABRT'd in `gmsh.model.mesh.generate` only in the 0.11 image**: numpy 2 renders `!r` of a numpy scalar as `np.float64(…)` inside a gmsh `MathEval` string (`OPS-18` step 3 attempt 2, 2026-08-22; entered by the 10:30 review)
 
+> **RETIRED 2026-08-23, 15:00 implementer slot.** The entry's own retirement
+> condition is met: the fixing commit `445a3ea` (`float()` coercion at the
+> four `MathEval` sites, attempt 3) reached `main` with the `OPS-18` step 3b
+> merge, and `main` now boots the 0.11 image the defect was scoped to. The
+> two-torus fixtures the SIGABRT killed are green on that image at
+> `19 passed` / exit 0 twice (step 3a attempt 8,
+> `20260823T170403Z_OPS-18-step3a-leg1-run1.log`,
+> `20260823T170821Z_…-run2.log`). Original entry follows.
+>
 > **Where this fires.** `tests/validation/test_port_package_sparameters.py`
 > and `tests/validation/test_port_lumped_two_torus.py` (every test that
 > builds `two_torus_domain`), on the `attempt/OPS-18` worksite only. `main`
@@ -74,8 +83,16 @@ unless fixing it is the task.
 > birdcage fixtures carry siblings is **wrong, by measurement** — they build
 > no `MathEval` field. The class is closed at one instance.
 
-### Two two-torus **reproduction records** move in the 0.11 image at 1e-4 while every physics identity holds (`OPS-18` step 3 attempt 3, 2026-08-22)
+### ✅ RETIRED 2026-08-23 (`OPS-18` step 3b merge) — two two-torus **reproduction records** moved in the 0.11 image at 1e-4 while every physics identity held (`OPS-18` step 3 attempt 3, 2026-08-22)
 
+> **RETIRED 2026-08-23, 15:00 implementer slot.** The entry's stated closing
+> condition — "this entry closes with step 3b's merge commit, which is what
+> carries these branch-only writes to `main`" — is met: `5df1e39` (step 3a
+> attempt 8) is on `main` with this merge, and the four re-records plus the
+> two the same assertion loop unmasked are all written version-tagged, no
+> band moved. See the attempt-8 resolution block at the end of this entry
+> for the digits. Original entry follows.
+>
 > **Where this fires.** `tests/validation/test_port_package_sparameters.py::test_sanity_report_reproduces_the_gated_metrics_on_the_field_route`
 > and `tests/validation/test_port_lumped_two_torus.py::test_step_1_measurements_reproduce`,
 > on the `attempt/OPS-18` worksite only. `main` boots 0.7.2 and is unaffected.
@@ -218,6 +235,23 @@ unless fixing it is the task.
 > **Where this fires.** `tests/validation/test_straight_wire.py::TestStraightWire::test_straight_wire_b_field`,
 > real build, on the `attempt/OPS-18` worksite only. `main` boots 0.7.2 and
 > is unaffected.
+>
+> **Scope update, `OPS-18` step 3b (2026-08-23, 15:00 slot) — read this
+> first.** `main` now boots the 0.11 image, so the "worksite only" clause
+> above is spent. The failure it names, however, **can no longer fire**: the
+> 15% band is retired by `MAG-18` (`d494d81`, on `main` since 2026-08-22) —
+> `test_straight_wire_b_field` now *prints* the 10-point number as
+> "[reported, not gated]" and gates nothing, and the replacement gates are
+> `TestStraightWire::test_domain_l2_*` on the sampler-free `E_Ω` and its
+> convergence rate. This entry is therefore **superseded, not resolved**: it
+> stays open because the thing it is really about — that the 0.11 image's
+> gmsh moves the wire mesh (145 900 → 147 235 cells) and the solved error
+> with it — has **not** been re-measured in the `MAG-18` norm on 0.11.
+> Step 3b did not run the real-mode `MAG` leg (its anchor is the environment
+> + mesh-tag family and the two collects), so **the `E_Ω` ladder and its
+> rate band on 0.11 are owed and unobserved**; the numbers on record
+> (25.3787 / 10.7288 / 6.6708%, rate 1.6842) are 0.7.2 numbers. A review
+> should queue that leg before reading any `MAG` figure as re-gated.
 >
 > **Literal symptom** (`20260822T171401Z_OPS-18-step3-real-mag2.log`,
 > `1 failed, 17 passed, 4 skipped` in 272.43 s, `Status: 1`, `-n 2`, both
@@ -468,8 +502,32 @@ unless fixing it is the task.
 > and the 2026-08-23 run-to-run entry below puts the single-width floor
 > at ~1e-9–1e-10.
 
-### `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` fails **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
+### ✅ RESOLVED 2026-08-23 (`OPS-18` step 3b) — `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` failed **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
 
+> **RESOLVED 2026-08-23, 15:00 implementer slot (`OPS-18` step 3b), by
+> re-record under the class ruling (1\*)** — the disposition the entry
+> below asked step 3 to make, made by comparison rather than argument.
+> The image's gmsh moves three of the four uniform-sizing volumes;
+> `UNIFORM_VOLUMES_RECORD` in `tests/mesh/test_mesh_tag_integrity.py` now
+> carries the v0.11.0 values version-tagged beside the v0.7.2 ones —
+> tag 1 1.191750413e-04 → **1.192257046e-04** (+4.251e-04 relative),
+> tag 2 1.188402981e-04 → **1.185069486e-04** (−2.805e-03), tag 3
+> 4.943767949e-04 **unmoved**, tag 4 1.143560787e-02 → **1.143589055e-02**
+> (+2.472e-05). **The 1e-9 band is untouched**, as are the `GEO-17` sign
+> and CAD-recovery gates, which stay green on their own digits (policy /
+> uniform recovery 0.833417 / 0.755006 and 0.835563 / 0.750454, phantom
+> 0.992751 / 0.983531). The identity the drift could have broken still
+> closes exactly: the tagged-volume partition ratio is
+> **1.000000000000** on both sizings and on the plain integrity mesh.
+> Condition (b′) is met with room to spare — **every printed digit is
+> identical across the two `-s` confirming runs of the slot**, run-to-run
+> move 0.0 (`20260823T200533Z_OPS-18-step3b-confirm-run2.log`,
+> `20260823T200550Z_OPS-18-step3b-confirm-run3.log`, both `7 passed,
+> 4 skipped` / exit 0 / `-n 2`, both rank footers identical), against the
+> red baseline `1 failed, 6 passed, 4 skipped` reproduced this same slot
+> on the rebuilt image (`20260823T200356Z_OPS-18-step3b-confirm.log`,
+> Status 1). Original entry follows.
+>
 > **Where this fires.** `tests/mesh/test_mesh_tag_integrity.py::test_region_resolution_policy_refines_the_tagged_volumes_toward_cad`,
 > on the `attempt/OPS-18` worksite branch only. `main` boots 0.7.2 and is
 > unaffected — this is not a failure on `main`, and no `main` run should ever
@@ -2431,7 +2489,7 @@ uses `SIGMA_BLIND = 1e-12 * SIGMA`. **Resolves with:** wrapping the scalar in
 | **Fix** | **Deliberately not fixed by `OPS-17`** — that chunk is test hygiene, and entry 3's standing disposition is that these tests live and die with `PORT-1`'s retirement of the `PORT-0` placeholder. The mechanical repair is two lines in the test double (`allgather = staticmethod(lambda v: [v])`, or use a real `MPI.COMM_SELF`); whoever retires `PORT-1` should decide whether the double survives at all. Do not read the `AttributeError` as evidence about the placeholder's arithmetic — it never runs. |
 | **Resolves with** | `PORT-1`'s retirement commit, or any earlier commit that repairs the double. **Entry 3 must be re-symptomed in the same commit**, since its recorded cause now applies to only one of its two tests. |
 
-### The two-torus and straight-wire solves are run-to-run non-deterministic at ~1e-10 relative, so "bit-identical reproduction" is not an achievable criterion (`OPS-18` step 3a attempt 6, 2026-08-23)
+### ✅ RESOLVED 2026-08-23 (`OPS-18` step 3a `5df1e39`, landed on `main` by 3b) — the two-torus and straight-wire solves are run-to-run non-deterministic at ~1e-10 relative, so "bit-identical reproduction" is not an achievable criterion (`OPS-18` step 3a attempt 6, 2026-08-23)
 
 **Found:** 2026-08-23, on `attempt/OPS-18` at `9b3c9e2`, image
 `0.11.0.post0` / gmsh 4.15.2 / numpy 2.4.6, `-n 2`, in two back-to-back
@@ -2448,6 +2506,7 @@ runs of the *same* command on an *unchanged* tree
 | **Not a band question** | Every physics band in the same runs is orders of magnitude above the wobble (reciprocity 2.679e-05 vs 1e-3; the symmetry record's own band is 5e-7 absolute vs a 3e-11 move). Nothing here licenses loosening anything. |
 | **Resolves with** | A review restating the reproduction criterion at a stated tolerance (proposal in attempts.md 2026-08-23T05:25Z: agreement to ≤ 1e-9 relative across two runs, record written only to digits both runs share). No code fix is implied. |
 | **Ruling, 2026-08-23 03:00 review** | Restated as **(b′)**, per-record rather than one relative number — the proposed "≤ 1e-9 relative" would itself reject `‖S−Sᵀ‖/‖S‖` (1.0e-06 relative, cancellation-amplified): *the move across two same-slot runs must be ≤ 1% of the record's own unmoved band, and the value is written only to the digits both runs share, never fewer than the band resolves.* All four records pass (1.2e-4, 3.3e-6, 6e-5 and 7e-6 of their bands); the symmetry record is written as 3.11213e-05. Full text in PROJECT_PLAN §7 `OPS-18`. **This entry closes with the `OPS-18` 3a commit that writes the records** (§9 item 2). |
+| **Closed, `OPS-18` step 3b (2026-08-23, 15:00 slot)** | The stated condition is met: the records-writing commit is **`5df1e39`** (3a attempt 8), on `main` with this step's merge. The criterion that replaces "bit-identical" is (b′), quoted verbatim from the ruling above: *"the move across two same-slot runs must be ≤ 1% of the record's own unmoved band, and the value is written only to the digits both runs share, never fewer than the band resolves."* Every record written under it since — the four of attempt 7, the two of attempt 8 (1.2e-4 / 3.3e-6 / 6e-5 / 7e-6, then 6.6e-6 and below the printed digits, all as fractions of their own bands), and step 3b's four `UNIFORM_VOLUMES_RECORD` volumes (move 0.0 across two runs) — satisfies it with no band moved anywhere. **The underlying wobble is not fixed and is not a defect**: it is the ~1e-10 assembly/factorisation-order floor named in the Cause row, the same class as `MAG-18`'s 7.28e-08 cross-width floor, and it stays the reason no criterion in this project may say "bit-identical" of a *solved* number. |
 
 ### Gate (iii) is blind to a broken C4 on the *opposite* class, and the lumped-sheet 4-port sweep loses reciprocity by 223× on an asymmetric layout (`PORT-9` step 3 leg (d1), 2026-08-23)
 
