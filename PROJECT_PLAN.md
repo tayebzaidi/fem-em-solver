@@ -2655,6 +2655,39 @@ the answer is already gated**.
 >   > displaced spreads here and in known-issues, `PORT-9` stays 🟡, the
 >   > review re-specifies (iii) (tighter band, or a different invariant);
 >   > never declare step 3 on (d) alone.
+>   >
+>   > **Leg (d1) attempt 1, 2026-08-23 07:30 slot — 🟡 the mesh half is
+>   > built and green; the solve half did not run.** Parked on
+>   > `attempt/PORT-9-d1-20260823T124500Z` at `e5e8a8c`; `main` clean.
+>   > `leg_azimuth_offsets_rad` exists on `birdcage_port_domain` /
+>   > `_birdcage_leg_gap_layout` as scoped, and
+>   > `tests/mesh/test_birdcage_leg_offset.py` reads **`5 passed` / 71.16 s
+>   > at `-n 2`** (`20260823T123737Z_PORT-9-step3d1-mesh-rerun.log`).
+>   > **Identity control exact:** all-zero offsets give 116 416 cells, the
+>   > same cell-tag set and all four sheet areas 1.120000000e-04 m²,
+>   > matching the baseline rung digit for digit (the generator skips the
+>   > rotation outright at zero, so this is an identity, not a small-angle
+>   > limit). **Negative control of the control green on the displaced
+>   > rung** (leg 1 at 22.5°, 116 944 cells): P1's sheet centre at
+>   > 22.5000° with legs 2–4 unmoved to < 1e-6 °, every port's sheet
+>   > meshed/analytic `dx·g` = **1.000000000000** against the 1e-9 band,
+>   > `w` = 1.400000000e-02 m and `h` = 8.000000000e-03 m in that port's
+>   > *own* radial/axial frame with out-of-plane spread 1.1e-16–2.5e-16 m,
+>   > halves partitioning the box to 1.000000000000, terminals 0.989367
+>   > (P1) / 0.988616 (P2–P4) inside `GEO-18` step 1's [0.95, 1.0]. **Not
+>   > run: the leg's actual anchor** — the zero-offset 4×4 reproducing leg
+>   > (d)'s to 1e-9 and the displaced class spreads against 5% — so step 3
+>   > and `PORT-9` stay 🟡 and §2.2 is unmoved. Two findings for the next
+>   > attempt: the port box and sheet must be built at the *undisplaced*
+>   > azimuth and rotated (the generator's `addRectangle` route requires a
+>   > coordinate-axis leg), and the lower/upper half-plane convention is
+>   > **not** C4-covariant (legs on ±x take upper = +y, legs on ±y take
+>   > upper = +x), so the naive φ̂-normal rewrite flips two of leg (d)'s
+>   > columns — it is now a (normal, point) pair carrying the old
+>   > convention exactly. The solve half also needs frame-aware sheet
+>   > narrowing: `_sheet_axes` / `_narrowed_transverse` pick a *global*
+>   > axis off the bbox and cannot handle a 22.5° sheet. Journal
+>   > 2026-08-23T12:45Z.
 
 **`PORT-10` — the two `PORT-1` systematics: composition measured, not
 assumed** ✅ *(scoped 2026-08-16, weekly planning review — the first of the
@@ -3402,6 +3435,22 @@ with the Edit tool and verify `git status --porcelain`.
    (iii): rotate one leg (standard, `-n 2`, complex build, 0.7.2,
    `main`; independent of item 1 — if item 1's module does not exist
    yet, build the 4×4 reading inside this leg's own module and say so).**
+   🟡 **attempt 1, 2026-08-23, 07:30 slot — the mesh knob is built and
+   green, the solve half did not run.** `leg_azimuth_offsets_rad` lands as
+   scoped; `tests/mesh/test_birdcage_leg_offset.py` reads `5 passed` /
+   71.16 s at `-n 2` with the identity control exact (all-zero offsets
+   reproduce the baseline rung's 116 416 cells, tag set and four
+   1.120000000e-04 m² sheets digit for digit) and the negative control of
+   the control green on the displaced rung (leg 1 at 22.5°, 116 944 cells;
+   sheet `dx·g` = 1.000000000000, out-of-plane 1e-16 in each port's own
+   frame, halves 1.000000000000, terminals inside [0.95, 1.0]). The
+   leg's **anchor** — the zero-offset 4×4 to 1e-9 and the displaced class
+   spreads against 5% — is **not measured**, so this item is unfinished
+   and the next slot **resumes it**: check out
+   `attempt/PORT-9-d1-20260823T124500Z` (`e5e8a8c`) and add the sweep
+   module. The cost was the mesh knob and frame-aware sheet handling, not
+   compute; the eight solves are ~160–200 s. Journal 2026-08-23T12:45Z;
+   §7 `PORT-9` carries the two convention findings.
    Execute the §7 `PORT-9` leg (d1) entry. Add `leg_azimuth_offsets_rad`
    (length `leg_count`, default zeros) to
    `MeshGenerator.birdcage_port_domain` / `_birdcage_leg_gap_layout`,

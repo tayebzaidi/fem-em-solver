@@ -13074,3 +13074,109 @@ rules those two differently, leg 1 needs whatever that ruling asks for;
 everything else in step 3a is closed. The general lesson for the review:
 a test that checks N records in one assertion loop hides N−1 of them, so
 a re-record slot should read the whole loop, not the first failure.
+
+---
+
+## 2026-08-23T12:45Z — `PORT-9` step 3 leg (d1) — **incomplete** (mesh half green, solve half not run)
+
+**Item taken:** §9 On deck **item 3**. Items 1 (`PORT-9` leg (d)) is ✅ done;
+item 2 (`OPS-18` 3a) was **skipped deliberately** — attempt 7 (06:00 slot)
+stopped on "the review must extend ruling (1) (or rule otherwise)", which no
+implementer may do, and it is that item's **second** failed attempt (6 and 7),
+so §9's own "items that fail twice get rescoped by the review before they may
+reappear" applies. Re-running it in this slot could only have reproduced
+attempt 7. Item 3 is independent of items 1 and 2 and runs on `main`'s 0.7.2
+container, so it was taken as written.
+
+**Parked on `attempt/PORT-9-d1-20260823T124500Z` at `e5e8a8c`**; `main` clean,
+carrying only this entry and the §7 annotation.
+
+### What was built
+
+`leg_azimuth_offsets_rad` on `MeshGenerator.birdcage_port_domain` /
+`_birdcage_leg_gap_layout`, exactly as the review scoped it: one angle per leg,
+added to that leg's azimuth, so leg *i* rotates rigidly about z **with its two
+stubs, its gap, its terminals, its port box and its sheet**, and the rings, the
+phantom and the other legs stay put.
+
+Three implementation findings worth carrying forward:
+
+1. **The box and sheet must be built undisplaced and then rotated**, not built
+   at the displaced azimuth. `addRectangle` is axis-aligned and the generator
+   already refuses a leg off a coordinate axis (`NotImplementedError`), so the
+   only exact construction is: build at `theta`, `occ.rotate` onto
+   `theta + offset`. The stubs take the displaced azimuth directly — a cylinder
+   is placed by its axis point, so placing it there *is* the rotation.
+2. **The half-plane bookkeeping had to be generalised.** `sheet_of_ordinal` was
+   an `("x"|"y", coordinate)` pair and the lower/upper split was
+   `centre[axis] > coordinate`. That is now `(n_x, n_y, p_x, p_y)` with
+   `(c − p)·n > 0`. The old form is the `n = (0,1)` / `(1,0)` special case, and
+   the sign convention was checked term by term before the change — the naive
+   "use φ̂ as the normal" rewrite **flips** ports 2 and 4 (the existing
+   convention is not C4-covariant: legs on ±x take upper = +y, legs on ±y take
+   upper = +x), which would have silently changed the sign of two columns of
+   leg (d)'s recorded Z.
+3. **A zero offset skips the rotation call entirely**, so the undisplaced
+   fixture is the same construction rather than a zero-angle rotation of it.
+   That is what makes the identity control an identity, and it measured as one.
+
+### Measured — `20260823T123737Z_PORT-9-step3d1-mesh-rerun.log`, `5 passed` / 71.16 s, `-n 2`, standard
+
+`tests/mesh/test_birdcage_leg_offset.py`, three rungs (baseline with no kwarg,
+all-zero offsets, leg 1 at `π/(2·leg_count)` = 22.5°), 21.5–21.8 s of mesh each.
+
+* **Identity control (all-zero vs baseline):** 116 416 cells both, identical
+  cell-tag set, all four sheet areas 1.120000000e-04 m² in both, azimuths
+  0/90/180/270 in both. Band 1e-12 relative; agreement is exact.
+* **Displaced rung, 116 944 cells:** P1's sheet centre at **22.5000°**, legs
+  2–4 unmoved (< 1e-6 °).
+* **Negative control of the control, all four ports of the displaced mesh:**
+  sheet meshed/analytic `dx·g` = **1.000000000000** (band 1e-9); in each port's
+  *own* radial/axial frame `w` = 1.400000000e-02 m and `h` = 8.000000000e-03 m
+  with out-of-plane spread **1.1e-16 to 2.5e-16 m**; the two box halves
+  partition the box to **1.000000000000**; terminals **0.989367** (P1) and
+  0.988616 (P2–P4) of the closed form, inside `GEO-18` step 1's [0.95, 1.0].
+  P1's terminal ratio moving 0.988616 → 0.989367 is the rotated leg's own
+  triangulation, not a defect — an inscribed triangulation under-reads, and
+  0.989367 is still under 1.
+* Two guard tests: offsets without `leg_gap_length` and a wrong-length offset
+  vector are both rejected calls.
+
+The frame-aware extent reading (`_projected_extents`) is the piece the solve
+half will need: at 22.5° a sheet is neither x- nor y-normal, so
+`_sheet_extents`/`_sheet_axes`/`_narrowed_transverse` — all of which pick a
+*global* axis off the measured bbox — cannot narrow it to `f = 0.5` or measure
+`w = A/h`. That is why the solve half is not a two-line parametrisation of leg
+(d)'s module.
+
+### One correction made in-slot, recorded
+
+The first run (`20260823T123558Z_PORT-9-step3d1-mesh.log`, `1 failed / 4
+passed`, 72.80 s) died on `TypeError: '<' not supported between instances of
+'float' and 'tuple'` — `GEO-18`'s `TERMINAL_AREA_BAND` is the **interval**
+`(0.95, 1.0)`, not a symmetric tolerance, because an inscribed triangulation of
+a disk always under-reads its area. The assertion was rewritten to use the
+imported interval as written. No band was widened; every printed number in the
+failing run is identical to the passing one.
+
+### What is left, and why it did not run
+
+Leg (d1)'s **anchor** is the pair of solve readings: all-zero offsets reproduce
+leg (d)'s 4×4 to ≤ 1e-9 relative, and the displaced mesh drives the {Z_i,i±1}
+and {Z_i,i+2} class spreads **> 5%** while reciprocity stays ≤ 1e-3. Neither
+ran. Eight solves plus two meshes at leg (d)'s price is ~160–200 s of compute,
+which fits a slot easily — the cost here was the mesh knob and the frame-aware
+sheet handling, not the compute. `PORT-9` stays 🟡 and §2.2's "no coil has
+ports" sentence is unmoved.
+
+**Hypothesis for the next attempt:** resume this branch and add
+`tests/validation/test_port_birdcage_leg_offset_sweep.py` — leg (d)'s fixture
+verbatim except (a) `_build` takes offsets, (b) the four sheets are narrowed and
+measured in each port's own radial frame using this branch's
+`_projected_extents` rather than `_sheet_axes`/`_narrowed_transverse`, and
+(c) `_class_spread` / `_circulant_classes` / `ADJACENT_SPREAD_BAND` /
+`RECIPROCITY_BAND` are imported from leg (d)'s module unchanged. Run the
+zero-offset sweep first: if it does **not** reproduce leg (d)'s 4×4 to 1e-9,
+the frame-aware narrowing disagrees with `_narrowed_transverse` on the
+undisplaced mesh and that is the bug to fix before the displaced reading means
+anything.
