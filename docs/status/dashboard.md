@@ -1,128 +1,119 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-23 10:30, **daily review (scheduled, ran normally)**.
-Headline: **the birdcage has its first 4×4 network — and its negative
-control found that the port route has only ever been tested where
-symmetry hides its error.** `PORT-9` leg (d) solved the loaded, gapped
-birdcage as a four-port at 10 MHz on the first run: reciprocity
-2.5e-05, passive (σ_max 0.863), C4 class spreads ≤ 0.02% — every gate
-hundreds of times inside. Then leg (d1) rotated one leg by 22.5° and the
-network **lost reciprocity 223×** (5.6e-03 vs 1e-3). The implementer
-blamed a 1.9% sheet-width asymmetry; this review checked that against the
-printed Z and it does not hold — the worst asymmetric pair is between two
-ports that did not move. The residual is a global discretisation-order
-systematic: the voltage readout is not the source's adjoint, so `Z − Zᵀ`
-cancels only when every port sees the same local mesh, which is every
-fixture the route had been measured on. A decisive two-torus probe with
-unequal sheet widths is queued; the C4 gate is tightened to 0.5%. `OPS-18`
-3a is one ten-minute write from closing. `main` still boots 0.7.2 by
-design. Source of truth is `PROJECT_PLAN.md`; this page is a read-only
+**Updated:** 2026-08-23 18:00, **daily review (scheduled, ran normally)**.
+Headline: **the dolfinx upgrade is done — `main` now boots 0.11.0.post0 —
+and the port route's reciprocity mystery is solved.** `OPS-18` closed both
+remaining steps in one day: every §2.1 gate family reproduced green on the
+new image and the 0.7.2 container is retired. In between, `PORT-9` leg
+(d2) ran the decisive asymmetric probe and refuted the review's own
+leading hypothesis at its stated mechanism: the voltage readout **is** the
+source's adjoint (symmetric to 1.3e-10); what breaks reciprocity is one
+level up — the impedance assembly normalises each column by the driven
+port's own current, producing a *terminated* transimpedance that the
+open-circuit Z→S conversion was never valid for. The fix (S straight from
+power waves) is ruled and queued, with a licensed re-record of every port
+record it moves. The 16-leg birdcage attempt found the mesh generator
+cannot build sheets off the coordinate axes (fix scoped) — and measured
+that **the 32-leg directive does not fit the production ring** (ceiling
+N ≤ 25). Source of truth is `PROJECT_PLAN.md`; this page is a read-only
 digest for the human operator.
 
 ## Waiting on you
 
-**Nothing new is blocked on you this interval.** Both decisions owed
-(`OPS-18` ruling (1)'s extension; `PORT-9` gate (iii) and the reciprocity
-finding) were the review's and are made.
-
-1. 🟢 **The `ANS-3` AED run is unblocked** (unchanged since 08-16). Your
+1. 🟡 **A geometry decision is coming your way: 32 legs do not fit
+   `ring_radius = 0.07 m` with 14 mm port boxes.** The layout clearance
+   floor (1.25 × box width = 17.5 mm) caps the leg count at **N ≤ 25**;
+   32 legs need `ring_radius ≥ 0.0876 m` or narrower boxes. Measured by
+   `GEO-19` attempt 1, recorded, not worked around. The weekly review
+   owns §10 and will propose a disposition Sunday — if you have a
+   preference (bigger ring vs narrower boxes vs 16 legs as the
+   production count), leave it in the plan or say so.
+2. 🟢 **The `ANS-3` AED run is unblocked** (unchanged since 08-16). Your
    half: replicate `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`
    in Ansys Electronics Desktop and fill the blank AED columns in
    `COMPARISON.md`.
-2. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
+3. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
-3. **ANS-1 Ansys replication** — still yours; ANS-3 (item 1) is the second
-   case in the same queue.
-4. FYI, a finding worth knowing: **the lumped-sheet port route's
-   reciprocity had only been measured on symmetric fixtures** (two
-   identical tori, the C4 birdcage), where a non-adjoint readout's error
-   cancels exactly. On an asymmetric layout it reads 0.2–1.6% per port
-   pair. No gated number is wrong — every record was taken on a symmetric
-   fixture — but if the probe confirms the reading, the readout fix will
-   move the two-torus and birdcage port records by ~that much, and a
-   class re-record will be ruled then. `PORT-11` (64 MHz ports) stays
-   serial on this.
-5. FYI: local `main` is well ahead of origin (push is manual; last push
-   08-18 night).
-6. FYI, standing: the `docker-compose.yml` allow is used only for
-   `environment:` keys; `volumes:`, the mount and the 64 G limit are
-   untouched. Every `OPS-18` slot has restored 0.7.2 and probed it.
+4. **ANS-1 Ansys replication** — still yours; ANS-3 (item 2) is the
+   second case in the same queue.
+5. FYI: **`main` now boots dolfinx 0.11.0.post0** (Python 3.12, numpy
+   2.4.6, gmsh 4.15.2). The upgrade merged with every §2.1 family
+   re-gated green except one owed leg (the real-mode `MAG` ladder, queued
+   first). The compose allow was used only for `environment:` keys
+   throughout; `volumes:` and the 64 G limit untouched.
+6. FYI: expect port S-parameter records (two-torus and birdcage) to move
+   by ~0.25% when the ruled assembly fix lands — a licensed, route-tagged
+   class re-record, no band loosened. `PORT-11` (64 MHz ports) stays
+   serial on it.
+7. FYI: local `main` is well ahead of origin (push is manual).
 
-## Honest current state (digest of §2 — one line changed)
+## Honest current state (digest of §2 — S-parameter and suite lines changed)
 
 | Capability | State | Gate |
 |---|---|---|
-| Magnetostatics | ✅ validated | closed forms; Helmholtz 0.04%, loop 7.07%; wire `E_Ω` = 10.73% at h = 0.0025, rate 1.68 on the ladder (`MAG-18` ✅ 08-23); MAG-17 rate 2.4476 |
-| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.83% + power 3.63% (TH-10); degree-2 gated at 0.1405% (TH-12/EX-25) |
-| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (MAT-6); no affordable 64 MHz bracket on this box (adjudicated 08-18); Larmor coil loading stays an extrapolation |
-| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4); never on a coil |
-| S-parameters | ✅ package path field-derived (PORT-1) | two-torus only; **the gapped birdcage has a solved 4×4 at 10 MHz on the symmetric mesh** (PORT-9 leg (d), 0.7.2): reciprocity 2.5e-05, σ_max 0.863, C4 spreads ≤ 0.02% — but **the geometric control showed the route loses reciprocity (5.6e-03) on an asymmetric layout**, under investigation (leg (d2)); §2.2's "no coil has ports" stands |
-| Test-suite trust | ✅ reconciled | OPS-17 closed 08-21. **On 0.11 (branch only): TH-6, TH-10, MAT-4, MAT-6 reproduce; PORT-1's gates hold; `MAG-18` green (rate 1.6854); four records written, two more ruled writable this review** |
+| Magnetostatics | ✅ validated, **0.11 re-gate owed** | closed forms; Helmholtz 0.04%, loop 7.07%; wire `E_Ω` = 10.73% at h = 0.0025, rate 1.68 (`MAG-18`); digits are 0.7.2 — the `E_Ω` ladder on 0.11 is queue item 1 |
+| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.83% + power 3.63% (TH-10, reproduced on 0.11); degree-2 gated at 0.1405% (TH-12/EX-25) |
+| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (MAT-6, re-gated on 0.11); no affordable 64 MHz bracket on this box (adjudicated 08-18); Larmor coil loading stays an extrapolation |
+| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (MAT-4, re-gated on 0.11); never on a coil |
+| S-parameters | ✅ field-derived (PORT-1), **assembly fix ruled** | two-torus + a solved birdcage 4×4 at 10 MHz — but leg (d2) proved the sweep's `Z` is a *terminated transimpedance*: reciprocity figures on symmetric fixtures partly measured the symmetry (0.25% per-pair asymmetry otherwise). Fix = power-wave S, queued with a licensed class re-record; §2.2's "no coil has ports" stands |
+| Test-suite trust | ✅ reconciled, **on 0.11** | 437 collected / 0 errors both modes; `OPS-18` ✅ audited compliant (red→green same-command pair, volume records re-derived on the untouched 1e-9 band, partition identity 1.000000000000) |
 
-## Recent activity (2026-08-23 03:00 → 10:30)
+## Recent activity (2026-08-23 10:30 → 18:00)
 
-- **04:30:** `PORT-9` leg (d) closed — `9 passed` / 64.23 s / `-n 2`,
-  reproduced digit for digit by a second run. Four driven solves at
-  50 Ω on the 116 416-cell gapped birdcage: `‖S−Sᵀ‖/‖S‖` 2.495e-05 vs
-  1e-3; σ(S) = 0.863 / 0.800 / 0.800 / 0.187, column power sums ≤ 0.515
-  (about half the incident power absorbed by legs + saline); C4 class
-  spreads self 0.0199% / adjacent 0.0180% / opposite 0.0108% vs 5%; P1
-  column reproduces leg (d0) to 1.9e-10; pooled-vs-intra separation 466×.
-- **06:00:** `OPS-18` 3a attempt 7 — all four licensed records written
-  and confirmed by two runs; leg 2 closes (`11 passed, 4 skipped`, rate
-  1.6854; loop + mutual files green on their existing bands). Leg 1 stays
-  `1 failed` because the same assertion loop unmasked two more records
-  (0.828893, 0.077431) the ruling had not enumerated — correctly not
-  written in-slot.
-- **07:30:** `PORT-9` leg (d1) attempt 1 — the `leg_azimuth_offsets_rad`
-  mesh knob lands exact (`5 passed`; zero offsets reproduce the baseline
-  digit for digit; the rotated port's sheet area = analytic to 1e-12).
-  Solve half not reached. Two convention findings recorded (the
-  half-plane rule is not C4-covariant; sheets must be built on-axis and
-  rotated).
-- **09:00:** `PORT-9` leg (d1) attempt 2 — `2 failed, 7 passed` / 119 s.
-  Zero rung reproduces leg (d)'s 4×4 to ≤ 3e-10 (the knob does not move
-  the solve). Displaced: spreads 5.18% / 7.11% / **1.65%** vs 5% (the
-  opposite class is blind), and `‖S−Sᵀ‖/‖S‖` **5.57e-03** vs 1e-3.
-  Parked on `attempt/PORT-9-d1-20260823T124500Z`; nothing widened.
-- **This review:** leg (d) audited compliant; **ruling (1\*)** — the
-  re-record licence restated as a class rule so further unmasked records
-  need no review; **the width hypothesis refuted** from the log's own Z
-  (`|Z_ij/Z_ji|` worst on P2–P4 at 1.0104, no common factor on row 1);
-  **gate (iii) → 0.5%** (25× above the measured floor, 3.3× below the
-  weakest displaced class; a tightening); **leg (d2)** scoped with
-  pre-registered predictions (A: O(1e-2), B: ≤ 1e-9); (d1′) serial on it.
-  Old §9 block archived.
+- **12:00:** `OPS-18` 3a closed (attempt 8) — the two unmasked records
+  written version-tagged under (1\*); `19 passed` / exit 0 twice
+  (238.64 / 238.73 s), records identical to six digits across runs, no
+  further record unmasked.
+- **13:30:** `PORT-9` leg (d2) — the asymmetric two-torus probe. Both
+  pre-registered hypotheses beaten by the measurement: the readout is
+  adjoint (`I₁(d2)` = `I₂(d1)` to 1.33e-10) and the whole `Z` asymmetry
+  collapses to the per-column current normalisation (`Z₁₂/Z₂₁` =
+  `I₁(d1)/I₂(d2)` to 1.33e-10). Per-pair asymmetry 0.25%, hidden at
+  1e6 Ω, surfaced at 50 Ω — (d1)'s birdcage miss explained without a
+  birdcage defect.
+- **15:00:** `OPS-18` 3b closed ⇒ **chunk ✅, `main` boots 0.11**.
+  Same-command red→green anchor, both-mode collects at 437/0, volume
+  drift re-recorded on the untouched band, three known-issues entries
+  closed, `attempt/OPS-18` merged (and deleted by this review).
+- **16:30:** `GEO-19` attempt 1 — 16 legs cannot mesh: a tag-encoding
+  ceiling at 9 legs (fixed on `main`, verified inert digit-for-digit)
+  and axis-aligned-only sheets (open, fix scoped as step B). The gates
+  module is parked ready; the `N ≤ 25` layout ceiling measured en route.
+- **This review:** `OPS-18` audited COMPLIANT from the footers; ruling
+  (2\*) power-wave S assembly (open-circuit `Z` rejected on measured
+  near-degeneracy); ruling (3\*) `MAG-18`-on-0.11 queued first; `GEO-19`
+  rescoped into steps B/C; queue rebuilt to six items; old §9 block
+  archived.
 
 ## Automation health
 
-- Four slots, four useful outcomes: one first-run close, one correct
-  ruling-stop, two attempts that delivered a mesh feature exact and a
-  negative control that found a real systematic. No drain, no exit 124,
-  no wedge, no permission denial. Tree clean at every handoff; no
-  `recovered/*`.
-- `attempt/OPS-18` is the sanctioned worksite at `66aaf69` and persists
-  until item 3 merges it. `attempt/PORT-9-d1-*` at `bbe657f` holds the
-  mesh knob + sweep module and lands with (d1′).
-- The queue holds **five** items: four independent (three on 0.7.2
-  `main`, one on the upgrade branch), one serial on the upgrade. Two
-  items are deliberately *not* queued (`PORT-11` step 1, `PORT-9` (d1′))
-  because their prerequisite is a number only a review may read.
+- Four slots, four useful outcomes: **three closes** (`OPS-18` 3a, 3b,
+  `PORT-9` (d2) — the last a scoped diagnostic that landed its finding)
+  and one blocked attempt that converted its hour into two named
+  blockers, one fix, and a production-geometry ceiling. No drain, no
+  exit 124, no wedge, tree clean at every handoff, no `recovered/*`.
+- Branches: `attempt/OPS-18` **deleted** (fully merged);
+  `attempt/PORT-9-d1-*` parked (lands with (d1′));
+  `attempt/GEO-19-*` parked (its module is queue item 5).
+- The queue holds **six** items, four independent, two explicitly serial
+  with skip instructions. All on the 0.11 `main`. Still unqueued by
+  design: `PORT-11` step 1, `PORT-9` (d1′).
 
-## On deck (§9 — five open items this review)
+## On deck (§9 — six open items this review)
 
-1. **`OPS-18` 3a under (1\*)** — write the two unmasked records, confirm
-   `19 passed` twice (branch, standard, ~12 min compute)
-2. **`PORT-9` leg (d2)** — asymmetric two-torus (`f` = 0.5 / 0.735):
-   does the route stay reciprocal when the ports differ? Predictions
-   pre-registered either way (0.7.2, standard, ~250 s, independent)
-3. **`OPS-18` 3b** — §5.3 table, drift disposal, confirming run,
-   **merge** (serial on item 1)
-4. **`GEO-19`** — the birdcage at 16 legs: identity family re-gated at
-   C16, first measured cost for the 32-port target (mesh only, heavy,
-   stop rule at 1 M cells / 600 s; independent)
-5. **`GEO-20` step 1** — high-pass ring-gap ports at 4 legs, `GEO-18`'s
-   identities in the ring frame (mesh only, standard; independent, spare)
+1. **`MAG-18` `E_Ω` ladder on 0.11** — the one §2.1 family the upgrade
+   did not re-gate (heavy, real, independent)
+2. **`PORT-9` leg (d3)** — power-wave S assembly + two-torus class
+   re-record, with the 50 Ω asymmetric fixture as its own negative
+   control (standard, complex, independent)
+3. **`GEO-19` step B** — sheets built in the leg's local frame; 4-leg
+   invariance control digit-for-digit (standard, real, independent)
+4. **`PORT-9` leg (d3b)** — birdcage class re-record on the fixed route
+   (serial on item 2)
+5. **`GEO-19` step C** — the parked 16-leg gates module + first
+   measured cost (heavy, serial on item 3)
+6. **`GEO-20` step 1** — ring-gap ports at 4 legs (standard,
+   independent, spare)
 
 ---
 

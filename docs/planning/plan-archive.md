@@ -19423,3 +19423,245 @@ and the done texts of items 1–3: `docs/planning/plan-archive.md`.
    **Negative result:** an exit 124 or a memory figure past 50% of
    `memory.max` is the finding — §7 annotation, stop; the review sizes
    step 2 from it.
+
+## §9 On deck — 2026-08-23 10:30 review block (recap + items 1–5 with done texts) — archived 2026-08-23 (18:00 review)
+
+Last reviewed 2026-08-23, **10:30 review**. Interval (since 03:00): four
+slots, **one close, one ruling-stop, two attempts that turned a control
+into a finding**; no drain, no exit 124, no wedge, tree clean at every
+handoff, no `recovered/*`. 04:30 — `PORT-9` leg (d) closed as written on
+its first run (`9 passed` / 64.23 s / `-n 2`, reproduced digit for digit
+in-slot): the birdcage's first 4×4 — reciprocity 2.495292352e-05 vs 1e-3,
+σ_max 0.862659137, C4 class spreads 0.0199 / 0.0180 / 0.0108% vs 5%, both
+controls green. 06:00 — `OPS-18` 3a attempt 7 wrote and confirmed all four
+licensed records and closed leg 2 (`11 passed, 4 skipped`, rate 1.6854),
+then stopped correctly on two further records the same assertion loop
+unmasked. 07:30 / 09:00 — `PORT-9` leg (d1) attempts 1–2: the mesh knob
+lands exact (identity to the digit, `5 passed`), the solve half runs
+(`2 failed, 7 passed` / 119 s) and the anchor **misses on both halves**:
+the opposite class reads 1.6476% against 5% under a 22.5° leg rotation,
+and the displaced rung loses reciprocity 223× (5.57e-03 vs 1e-3). **This
+review:** leg (d) audited COMPLIANT from its footer (exit 0, Elapsed 66 s,
+`20260823T093319Z_PORT-9-step3d.log:4743-4779`, two rank footers
+identical). **Ruling (1) extended to its class, (1\*)** — the two
+unmasked step-1 records (0.828893, 0.077431) are admitted; item 1 is a
+ten-minute write-and-confirm. **`PORT-9` leg (d1) ruled:** the
+implementer's width hypothesis is **refuted from the log's own Z** — the
+worst asymmetric pair is P2–P4, neither port moved, and row 1 carries no
+common factor — so finding 2 is a **global route systematic**: the `V`
+readout is not the source's adjoint, and `Z − Zᵀ` is a discretisation
+residual that every symmetric fixture cancels; 2c's 2.6e-11 was the
+fixture's symmetry, not the route's reciprocity. **Gate (iii) tightened to
+(iii′) ≤ 0.5%** (leg (d) stays ✅ under it), **leg (d2)** scoped as the
+decisive asymmetric two-torus probe (item 2), and the (d1) re-run made
+serial on it. No example owed: leg (d)'s capability (a solved multi-port
+network) has no example yet, but the chunk is 🟡 and §5.4 examples never
+target ungated capability — it is owed when `PORT-9` closes. The §2.2
+"no coil has ports" sentence is unmoved. Previous interval's recap and
+the attempt texts of items 1–3: `docs/planning/plan-archive.md`.
+
+**Five open items.** Items 1, 2, 4 and 5 are **independent of each
+other**: 2, 4 and 5 run on the 0.7.2 container `main` boots; 1 is the
+`OPS-18` chain on `attempt/OPS-18` and restores 0.7.2 before it ends.
+Item 3 is serial on 1 — a slot reaching it with 1 unfinished **resumes 1**.
+`PORT-11` step 1 and `PORT-9` leg (d1′) are **not queued**: the first is
+serial on `PORT-9` ✅ (the weekly review's ordering), the second on item
+2's number, which only a review may read into a re-run.
+
+**⚠️ Standing constraint on the compose allow — read before editing
+that file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write
+access to it is write access to *what the container mounts from the
+host*. The operator granted this knowingly and narrowly (2026-08-22), for
+the upgrade's `PYTHONPATH` plumbing. **Edit only the `environment:` keys
+the upgrade requires.** Do not touch `volumes:`, do not add a mount, do
+not widen a path, do not raise the 64 G memory limit, in this or any
+future chunk. A chunk that believes it needs a mount change is a
+**blocked finding for the operator**, exactly as the `FROM` bump was.
+The `Edit(docker/.claude/**)` ask exists for the same reason: a nested
+`.claude/` is a settings-override surface. **Worksite rule for the
+`OPS-18` items:** work lives on the sanctioned persistent
+**`attempt/OPS-18`** branch; `main` keeps booting 0.7.2 until 3b merges;
+any slot that rebuilt the live container ends by restoring it from
+`main`'s compose file (`docker compose -f docker/docker-compose.yml up -d
+--force-recreate`) and probing the version. `git checkout` cannot swap
+`docker/Dockerfile` / `docker-compose.yml` in this sandbox (bind-mounted,
+"Device or resource busy", a *silent* wrong-content switch) — move them
+with the Edit tool and verify `git status --porcelain`.
+
+1. ✅ **DONE 2026-08-23, 12:00 slot (attempt 8) — 3a is closed.** Both
+   records written under (1\*) and version-tagged (`STEP1_LUMPED_RATIO_
+   RECORD` **0.828893**, `STEP1_CROSS_ROUTE_RECORD` **0.077431**, no band
+   moved); the anchor is **`19 passed` / exit 0 twice in the slot**
+   (238.64 s / 238.73 s, complex, `-n 2`, both rank footers identical)
+   with both records identical to six digits across the two runs,
+   reciprocity 2.679e-05 inside 1e-3 and σ_max 0.861356895 < 1; the loop
+   unmasked **no** further record, and the only other consumer of the two
+   constants (`test_port_lumped_narrowed_sheet.py`'s `f = 1.0` control) is
+   `12 passed` / exit 0 on the identical digits. Branch `attempt/OPS-18`
+   at `5df1e39`; `main` restored to a booted 0.7.2 and probed
+   (`0.7.2 / python 3.10.12`, `pgrep -c python3` = 0). **Item 3 (step 3b)
+   is now unblocked.** Original text: **`OPS-18` step 3a — write the two
+   unmasked records under (1\*),
+   confirm leg 1 green, close 3a (standard, `-n 2`, complex; on
+   `attempt/OPS-18` at `66aaf69`, merge `main` first).** Execute the §7
+   `OPS-18` ruling (1\*) (10:30 review): in `test_port_lumped_two_torus.py`
+   write `STEP1_LUMPED_RATIO_RECORD` **0.828893** and
+   `STEP1_CROSS_ROUTE_RECORD` **0.077431**, version-tagged per condition
+   (a) beside the 0.7.2 values (0.829782 / 0.077095 at 184 919 cells; new
+   at 184 176, `0.11.0.post0 / gmsh 4.15.2`), bands 1e-4 untouched.
+   **Anchor:** `tests/environment` + `test_port_package_sparameters.py` +
+   `test_port_lumped_two_torus.py` **`19 passed`** (attempt 7: `1 failed /
+   18 passed`, 234.88 s) with reciprocity inside 1e-3, σ_max < 1,
+   open-limit and cross-route PASS, **twice in the slot** — and if the
+   loop unmasks a further record, write it under (1\*) with its (b′)
+   arithmetic in the journal (move ≤ 1% of its band across the two runs),
+   filing rather than writing anything that fails (b′). **Cost:** build
+   127 s + restore 123 s + 2 × 235 s ≈ 12 min of compute. **Traps:** the
+   worksite rule above (Edit tool for compose/Dockerfile, restore 0.7.2
+   from `main`'s compose before the slot ends, probe
+   `dolfinx.__version__`); `interpolation_points` is a property on 0.11
+   (fixed on the branch — do not re-fix on `main`); 0-byte `.c` stubs;
+   `-s` to see the printed records. **Scope:** closes 3a (leg 2 closed
+   in attempt 7); not the chunk — item 3 does. **Negative result:** a
+   physics gate red on 0.11 is a finding about 0.11 — known-issues, §7
+   annotation, stop.
+2. ✅ **DONE 2026-08-23, 13:30 slot — finding 2 is disposed, and the
+   answer is neither A nor B as scoped.** `9 passed` / exit 0 **twice in
+   the slot** (198 s / 191 s, `-n 2`, complex, standard;
+   `20260823T183434Z_PORT-9-step3d2.log`,
+   `20260823T183823Z_PORT-9-step3d2-repeat.log`), two sweeps on one
+   184 919-cell mesh. Anchor (a) 2.574356760e-11, **1.078e-15** off step
+   2c's record (band 1e-9). Anchor (b) **8.255602536e-09** — inside the
+   unmoved 1e-3, so **A's O(1e-2) does not happen**. The mechanism tests
+   this run added say why, at a pre-stated 1e-6: `I₁(drive 2)` =
+   `I₂(drive 1)` to **1.33e-10** (the readout **is** the source's
+   adjoint — **A refuted at its own mechanism**) and `Z₁₂/Z₂₁` =
+   `I₁(d1)/I₂(d2)` to **1.33e-10** (**A′**: the asymmetry is
+   `_assemble_impedance_matrix`'s per-column normalisation by the driven
+   port's own current — its `Z` is a *terminated* transimpedance, not the
+   open-circuit matrix reciprocity symmetrises). B is not right either:
+   the per-pair `|Z₁₂/Z₂₁|` = **0.997537168** is a **0.25%** asymmetry,
+   the order of (d1)'s 0.2–1.6% — the Frobenius ratio hides it because
+   `Z_p` = 1e6 Ω makes the kΩ diagonal dominate, while 50 Ω on the
+   birdcage lets it surface as 5.57e-03. **(d1)'s miss is the assembly,
+   not the discretisation and not the birdcage.** No fix in-slot per the
+   leg's scope. **Owed to the review:** rule the assembly fix (open-circuit
+   `Z`, or `S` from power waves — symmetric by the identity just measured)
+   and the class re-record of 2b/2c/(c)/(d0)/(d) it forces; **(d1′) stays
+   serial on that ruling, not on this number alone.** Original text:
+   **`PORT-9` step 3 leg (d2) — reciprocity of the lumped-sheet route on
+   an *asymmetric* two-port (standard, `-n 2`, complex build, 0.7.2,
+   `main`; independent of item 1).** Execute the §7 `PORT-9` leg (d2)
+   entry (ruling of the 10:30 review; full rubric there). Step 2b/2c's
+   two-torus, sheets on both ports, **`f = 0.5` on port 1, `f = 0.735` on
+   port 2** — both rungs of 2b's ladder, no new geometry. **Step 0,
+   journaled before any solve:** read the lumped-sheet route and state
+   whether the `V` readout functional is the impressed source's adjoint
+   (same facet set, same weighting), and if not what differs. **Anchors:**
+   (a) control `f = 0.5 / 0.5` reproduces 2c's `‖S−Sᵀ‖/‖S‖` =
+   2.574249e-11 to ≤ 1e-9 absolute; (b) asymmetric `‖S−Sᵀ‖/‖S‖` against
+   the unmoved 1e-3, `|Z₁₂/Z₂₁|` and phase printed to nine digits.
+   **Pre-registered predictions:** A (readout not adjoint) ⇒ O(1e-2), B
+   (route discretely reciprocal) ⇒ ≤ 1e-9 like the control — either is
+   the finding. **Cost:** 2 × ~122 s (2c's sweep) ≈ 250 s; `timeout -k 30
+   500`. **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1` +
+   `tests/environment` first; the sweep errors on gap-spec + sheet-spec
+   together; if `LumpedSheetPortSpec` has no per-port width fraction, add
+   the field — do **not** merge `attempt/PORT-9-d1-*`'s `_narrowed_radial`
+   (two-torus sheets are coordinate-axis); 0-byte `.c` stubs; `-s`.
+   **Scope:** closes nothing; disposes finding 2 of the (d1) known-issues
+   entry one way or the other; no fix in-slot — a readout change moves
+   the 2b/2c/(c)/(d0)/(d) records and is ruled by the review. **Negative
+   result:** both outcomes are the measurement — §7 annotation, the
+   known-issues entry updated with which hypothesis stood, stop.
+3. ✅ **DONE 2026-08-23, 15:00 slot — `OPS-18` is closed and `main` boots
+   0.11.** (i)–(v) all executed; anchor `7 passed, 4 skipped` / exit 0
+   against step 2's `1 failed, 6 passed, 4 skipped` (three in-slot runs,
+   digits identical), collects **437 / 0 errors both modes** reconciled
+   418 + 5 + 4 + 2 + 5 + 3 by per-module count, the volume drift
+   re-recorded under (1\*) with the 1e-9 band untouched and the partition
+   identity at 1.000000000000, three known-issues entries closed and the
+   straight-wire one marked superseded. **Owed to the review:** the
+   real-mode `MAG` family's `MAG-18` `E_Ω` gates have never run on 0.11 —
+   queue that leg before reading any `MAG` figure as re-gated. Full detail
+   in the §7 entry. Original text: **`OPS-18` step 3b — §5.3 environment
+   table, drift disposal, merge
+   (standard; serial on item 1 — if 3a is not closed, resume item 1).**
+   (i) Update §5.3's environment table (image tag **`v0.11.0`**, version
+   string `0.11.0.post0`, Python 3.12, numpy 2.4.6, gmsh
+   4.15.2-git-657c8e9, h5py 3.16.0 / HDF5 (2, 1, 1)); (ii) dispose of
+   step 2's filed volume-drift known-issues entry by re-recording the
+   `OPS-17` volume record (4.251e-04 relative, identities intact — under
+   (1\*), version-tagged) and make the 128 MHz 55 251 → 55 241 re-record
+   explicit in the `TH-10` entry; (iii) close the numpy-2 `!r` entry with
+   attempt 3's fixing commit, the two-torus re-record entry and the
+   2026-08-23 non-determinism entry with item 1's commit (the latter
+   resolves by the (b′) restatement — quote it); (iv) one confirming run
+   on the rebuilt 0.11 container — `tests/environment` +
+   `tests/mesh/test_mesh_tag_integrity.py`, real, `-n 2`, `timeout -k 30
+   180`, **anchor:** `0 failed` where step 2's shim-runtime log read
+   `1 failed, 6 passed, 4 skipped`, and the full-suite collect in both
+   modes reconciled to the current count (count, do not assume — `MAG-18`,
+   leg (d0), leg (d) and any item-2 module have landed since 418); (v)
+   **merge `attempt/OPS-18` to `main` in one commit with every log**,
+   `main` now booting 0.11, compose `PYTHONPATH` updated — the only
+   version-encoded literal in the project (step 1's rule). **Cost:** one
+   16 s run, two collects, a container build; editing time otherwise.
+   **Scope:** `OPS-18` ✅ only if every §2.1 number reproduced in item 1
+   and attempts 1–7 — cite each family's green log by name in the §7
+   entry. **Negative result:** anything in (iv) red ⇒ `main` keeps 0.7.2,
+   branch stays parked, the failing assertion quoted in the §7 entry;
+   never re-record a gated physics number to make the merge happen.
+4. **`GEO-19` — `birdcage_port_domain` at `leg_count = 16`, gapped and
+   sheeted: identity family re-gated, cost rung measured (heavy, `-n 2`,
+   real build, 0.7.2, `main`; mesh only, no solve; independent).**
+   Execute the §7 `GEO-19` entry as the weekly review wrote it.
+   **Anchors:** gates (i)–(v) there — `GEO-9` partition < 1e-9; 16
+   terminals inside [0.95, 1.0] of `2·π·r_leg²`, equal to 1e-5; every
+   sheet `dx·g` = 1 to 1e-9 with **C16** area spread < 1e-12; conductor
+   meshed/CAD ≥ 0.95; layout min port-centre separation ≥ the generator's
+   floor (legs at 22.5° pitch on `ring_radius = 0.07` are 27.4 mm apart
+   against 14 mm boxes — if they touch, record it as the production
+   geometry's finding, do not shrink the boxes). **Negative control:**
+   `leg_count = 4` in the same run reproduces the `GEO-18` step-2 record
+   (116 416 cells, 0.988616, 8.470e-16) bit-identically. **Cost:** the
+   4-leg mesh is 21.4 s at 116 k cells; 16 legs is unmeasured — **stop
+   rule** from the entry: > 1 M cells or > 600 s of mesh time ⇒ record the
+   count and the 4 → 16 scaling and stop, that number is the deliverable;
+   `timeout -k 30 1200`. **Traps:** `birdcage_port_layout_diagnostics`'
+   clearance check assumes uniform spacing (fine here — it *is* uniform);
+   gmsh state is global — generate the 4-leg control in a fresh model;
+   `TERMINAL_AREA_BAND` is per-port, allgather before asserting; the
+   harness log will be large — print per-port diagnostics once, not per
+   rank. **Scope:** mesh identities at 16 legs and §10 Phase 6's first
+   measured cost; no solve, no port claim. **Negative result:** a gate red
+   at 16 legs (C16 spread, a terminal out of band) is a generator finding
+   at the new count — known-issues + §7 annotation, stop; never widen a
+   `GEO-18` band.
+5. **`GEO-20` step 1 — high-pass birdcage ring-gap port layout at
+   `leg_count = 4` (standard, `-n 2`, real build, 0.7.2, `main`; mesh
+   only; independent — spare).** Execute the §7 `GEO-20` entry, step 1
+   only: opt-in `ring_gap_length` cutting `2·leg_count` arcs on both end
+   rings at the inter-leg mid-azimuths, port boxes and (with
+   `emit_port_sheets`) sheets rotated into each ring's local `φ̂` frame,
+   terminals the two planar cut faces of the ring tube. **Anchors:** the
+   entry's gates — per ring gap, terminal area in [0.95, 1.0] of
+   `2·π·r_ring²`, equal across 8 ports to 1e-5; closure `(A_cond + A_air +
+   A_phan)/A_box = 1` to 1e-9; sheet `dx·g` = 1 to 1e-9, C4 spread
+   < 1e-12, top/bottom mirror < 1e-12; `GEO-9` partition < 1e-9;
+   conductor ≥ 0.95. **Negative controls:** kwarg off reproduces `EX-21`'s
+   uncut record (98 474 cells, 0.967019) bit-identically; leg gaps + ring
+   gaps together give a 12-port mesh with both identity families holding.
+   **Cost:** three meshes at ~20–25 s each plus diagnostics ≈ 120 s;
+   `timeout -k 30 400`. **Traps:** the `GEO-18` lower/upper half-plane
+   convention is **not** C4-covariant (leg (d1) attempt 1's finding) —
+   define the ring-gap halves in the gap's own `φ̂` frame from the start,
+   as a `(normal, point)` pair, and say so; the `addRectangle` route needs
+   a coordinate-axis sheet — build at azimuth 0 and rotate; gmsh state
+   global; allgather facet tags. **Scope:** the 4-leg layout only; step 2
+   (16 legs, 32 ports) is priced by item 4 and scoped by a review; a
+   `mesh:` example is owed by the ramp rule when this closes. **Negative
+   result:** a box/arc overlap or a terminal out of band is a geometry
+   finding about the ring-gap construction — record the numbers in §7 +
+   known-issues, stop; never move a `GEO-18` band.
+
