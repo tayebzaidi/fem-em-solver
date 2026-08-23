@@ -103,7 +103,18 @@ BLIND_FIXTURE_IM_Z12_OHM = 0.0
 # ||S||_2 as step 4 gated it; the sanity report's `passivity_max_sigma` is the
 # largest singular value, i.e. the same quantity reached through
 # summarize_sparameter_sanity instead of numpy.linalg.norm(..., 2).
-RECORDED_PASSIVITY_MAX_SIGMA = 0.861449
+#
+# OPS-18 step 3a re-record, 2026-08-23 (18:00 review ruling (1), condition (b)
+# as restated (b') by the 03:00 review of 2026-08-23).  The value below is the
+# one measured on image tag v0.11.0 (dolfinx 0.11.0.post0, gmsh 4.15.2), whose
+# two_torus mesh is 184 176 cells.  The recording image was v0.7.2 (dolfinx
+# 0.7.2, gmsh 4.11.1) at 184 919 cells, where this read 0.861449 — the mesh
+# moved 4.017e-03 relative with the image's gmsh and the record moved with it.
+# No band moved: the physics gates (reciprocity inside 1e-3, sigma_max < 1) hold
+# unchanged in the same run.  (b'): across two same-slot runs the record moved
+# 1.2e-10, i.e. 1.2e-04 of its own 1e-6 band, and is written to the digits both
+# runs share.
+RECORDED_PASSIVITY_MAX_SIGMA = 0.861356895
 PASSIVITY_REPRODUCTION_BAND = 1.0e-6
 # ||S - S^T||/||S|| = 2.5494e-05 (Frobenius) is what step 4 gated.  For a 2x2,
 # S - S^T has exactly two non-zero entries of equal magnitude, so
@@ -111,7 +122,16 @@ PASSIVITY_REPRODUCTION_BAND = 1.0e-6
 # `reciprocity_max_abs_delta` converts to the gated ratio exactly.  The band is
 # 2% of the record: the record carries five significant figures and the ratio
 # rides a KSP-tolerance solve, so a tighter band would gate the solver's noise.
-RECORDED_S_SYMMETRY_RATIO = 2.5494e-05
+#
+# OPS-18 step 3a re-record, 2026-08-23, same ruling and same reason as
+# RECORDED_PASSIVITY_MAX_SIGMA above: on v0.7.2 / 184 919 cells this read
+# 2.5494e-05; on v0.11.0 (0.11.0.post0 / gmsh 4.15.2) / 184 176 cells it reads
+# 3.11213e-05.  Six significant digits, not seven: a symmetry residual is a
+# difference of near-equal quantities, so the ~3e-11 absolute run-to-run wobble
+# is amplified to 1.0e-06 relative and the 7th digit is not reproducible.  Under
+# (b') the move is 3e-11 absolute against a 5e-7 absolute band (6e-05 of band).
+# The band is unchanged, and the 1e-3 physics gate is untouched.
+RECORDED_S_SYMMETRY_RATIO = 3.11213e-05
 SYMMETRY_RATIO_BAND = 5.0e-7
 # The heuristic route's S is perfectly matched at every driven port (b = 0 on
 # the diagonal), so its S is numerically unitary and sigma_max sits at 1.
