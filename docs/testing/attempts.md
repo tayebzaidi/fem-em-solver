@@ -12946,3 +12946,131 @@ five digits inside the 1e-9 band and nothing here depends on it.
 120–160 s estimate holds — this module is parametrisable on the mesh knob
 as leg (d1) scopes it, and the four-port reading it needs now exists to
 reproduce at zero offsets.
+
+---
+
+## 2026-08-23T11:35Z — `OPS-18` step 3a, attempt 7 — **incomplete (all four licensed records written and green; leg 2 closes; two more records surface and need one ruling)** (06:00 CDT implementer slot)
+
+§9 item 2, taken as the first On-deck item not done or blocked (item 1
+closed in the 04:30 slot). Preflight clean, container Up. Worksite
+`attempt/OPS-18`, `main` merged in at `d7abf54` (one conflict, both sides
+appended rows to `docs/testing/test-results.md`, resolved as the union in
+timestamp order), slot work at `44b5600`, restore at `66aaf69`. `main`
+restored to a booted **0.7.2** and probed — `0.7.2 / python 3.10.12`,
+`pgrep -c python3` = 0 — and left clean at `66a770d`. Six harness
+commands, **~1 100 s of compute**, no exit 124, no wedge, no permission
+denial, **no band or assertion touched**.
+
+### What the item asked for, and what happened to it
+
+The item said: *write, then confirm; do not re-measure.* That is exactly
+what was done, and all four records confirmed on the first run. The slot
+is `incomplete` only because writing the records **revealed two more of
+the same kind that no ruling covers**.
+
+### Leg 1 (`PORT-1`, complex, `-n 2`) — the three writes hold, twice
+
+`tests/environment` + `test_port_package_sparameters.py` +
+`test_port_lumped_two_torus.py`, run twice in the slot:
+`20260823T110726Z_OPS-18-step3a-leg1-confirm.log` (**`1 failed / 18
+passed`**, 234.88 s in-pytest, Elapsed 237 s) and
+`20260823T112102Z_OPS-18-step3a-leg1-confirm-rerun.log` (**same counts**,
+226.36 s, Elapsed 227 s), both rank footers identical within each run.
+Against attempt 6's `2 failed / 17 passed`.
+
+| record written | value | band | both runs? |
+|---|---|---|---|
+| `RECORDED_PASSIVITY_MAX_SIGMA` | 0.861356895 | 1e-6 | yes |
+| `RECORDED_S_SYMMETRY_RATIO` | 3.11213e-05 | 5e-7 | yes |
+| `STEP1_GAP_RATIO_RECORD` | 0.894141 | 1e-4 | yes |
+
+All version-tagged per condition (a): the 0.7.2 value and its 184 919
+cells stay in the comment beside the new value at 184 176 cells with
+`0.11.0.post0 / gmsh 4.15.2`. Physics green in both runs — reciprocity
+2.679e-05 inside 1e-3, `σ_max` 0.861357 < 1, open-limit and cross-route
+identities PASS.
+
+### The one remaining failure is new information, not a regression
+
+`test_step_1_measurements_reproduce` checks **three** records in one
+loop, gap ratio first. With the gap ratio fixed, the loop reaches the
+other two for the first time since the bump:
+
+| record | 0.7.2 | 0.11.0 | move | band | run-to-run move |
+|---|---|---|---|---|---|
+| `STEP1_LUMPED_RATIO_RECORD` | 0.829782 | 0.828893 | 8.89e-04 | 1e-4 | 6.6e-10 = 6.6e-06 of band |
+| `STEP1_CROSS_ROUTE_RECORD` | 0.077095 | 0.077431 | 3.36e-04 | 1e-4 | identical to 6 printed digits |
+
+The full-precision lumped ratios are 0.8288927013861895 (run 1) and
+0.8288927020449839 (run 2); the cross-route prints 7.743060e-02 in both.
+So **both satisfy (b′)'s reproduction condition already** — the second
+run was taken precisely so the review would not have to spend a slot on
+it.
+
+They are step-1 reproduction records of the *same* solved field on the
+*same* fixture whose mesh moved 184 919 → 184 176 cells, i.e. exactly the
+class ruling (1) licensed on exactly the grounds it cited. But ruling (1)
+enumerates **three** numbers and says "narrowly", and an implementer does
+not extend a review ruling in-slot (the standing rule attempt 6 stopped
+on). **Neither was written.** Known-issues carries the table.
+
+### Leg 2 (real, `-n 2`) — green, and its owed files with it
+
+`tests/environment` + `test_straight_wire.py`,
+`20260823T111216Z_OPS-18-step3a-leg2-confirm.log` — **`11 passed, 4
+skipped`**, 293.59 s, Elapsed 294 s, exit 0, both rank footers identical.
+That is the item's anchor exactly, against attempt 6's `1 failed / 10
+passed / 4 skipped`.
+
+* `E_Ω` written **1.061717e-01** at 147 235 cells, measured
+  1.0617170177e-01 — 1.7e-08 of its unmoved 1e-4 band. 0.7.2's
+  1.0728835983e-01 / 145 884 cells kept in the comment.
+* `MAG-18` rate **1.6854 ≥ 0.7**, ladder 25.2868 / 10.6172 / 6.6458%
+  monotone; natural-BC control 32.315493% vs 10.617170%, ratio 0.3285.
+* The retired sampler control is now `NPOINTS_CONTROL_BY_VERSION`, keyed
+  on `dolfinx.__version__` major.minor and **raising** on an unrecorded
+  image rather than borrowing another's row. It reproduces the 0.11
+  triplet 16.603276 / 15.384842 / 13.698645% to ≤ 3.3e-06 relative while
+  the 0.7.2 triplet stays on record. Both rows are measurements; neither
+  is a physics bound.
+
+`test_circular_loop.py` + `test_mutual_inductance_reference.py` on 0.11 —
+the only part of leg 2 attempt 6 left owed —
+`20260823T111729Z_OPS-18-step3a-leg2-loop-mutual.log`: **`14 passed, 4
+skipped`**, 184.85 s, exit 0, on their **existing** bands. Loop relative
+L2 **5.8814%** against the `rel_error < 0.08` band (the 7.07% record
+moved, but the band is what gates and it holds with room); filament
+`ωM₁₂` identity 3.093e-07 vs 1e-6; tube quadrature converged at (8,16)
+to 1.985819906053e-08 H, ratio 1.004809991957. No break-finder fired.
+
+### Logs and cost
+
+Container round trip `20260823T110458Z_OPS-18-step3a-build-011.log`
+(exit 0, **131 s**) and `20260823T112709Z_OPS-18-step3a-container-restore.log`
+(exit 0, **122 s**), with `20260823T112921Z_OPS-18-step3a-restore-probe.log`
+(exit 0, 2 s) confirming `0.7.2 / 3.10.12` and no strays. Tests:
+237 + 294 + 186 + 227 s.
+
+### Note on the branch's docker pair
+
+The Edit-tool swap worked in both directions again, but a detail worth
+recording for the next slot: with the worktree docker files swapped back
+to 0.7.2, `git checkout main` **aborts** — the two files read as modified
+relative to the branch and git refuses. The working sequence is: commit
+the slot's work on the branch, Edit the docker pair back to the *branch's*
+0.11 content so the branch is clean, `git checkout main` (it errors on
+unlinking those two and switches anyway, leaving 0.11 content in the
+worktree), then Edit them back to 0.7.2 so `main` is clean. Verified
+`git status --porcelain` empty at the end.
+
+### Hypothesis for the next slot
+
+3a needs **one review decision and no measurement**: extend ruling (1) to
+`STEP1_LUMPED_RATIO_RECORD` (0.828893) and `STEP1_CROSS_ROUTE_RECORD`
+(0.077431), whose (b′) evidence is already in this slot's two logs. With
+that, 3a is a ~10-minute write-and-confirm slot — one build, one leg-1
+command, one restore — and 3b (§9 item 4) follows. If the review instead
+rules those two differently, leg 1 needs whatever that ruling asks for;
+everything else in step 3a is closed. The general lesson for the review:
+a test that checks N records in one assertion loop hides N−1 of them, so
+a re-record slot should read the whole loop, not the first failure.

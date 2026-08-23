@@ -848,6 +848,45 @@ dated annotation. The ID stays stable.)*
 >   same floor), so the next slot writes them and confirms green; it does
 >   not need to measure them again. Conditions (a), (c), (d) unchanged.
 >   Queued as §9 item 2.
+> * **Step 3a attempt 7 — 🟡 2026-08-23, 06:00 implementer slot** (branch
+>   `66aaf69`, `main` merged in at `d7abf54`; `main` restored to a booted
+>   0.7.2 and probed — `0.7.2 / python 3.10.12`, `pgrep -c python3` = 0).
+>   Six harness commands, ~1 100 s, no exit 124, no wedge, no denial.
+>   **All four licensed records are written and confirmed green, and
+>   leg 2 closes.** Leg 1 (complex, `-n 2`), twice in the slot
+>   (`20260823T110726Z_…-leg1-confirm.log` `1 failed / 18 passed` /
+>   234.88 s; `20260823T112102Z_…-leg1-confirm-rerun.log` same counts /
+>   226.36 s, both rank footers identical): `passivity_max_sigma`
+>   **0.861356895** (band 1e-6), `‖S−Sᵀ‖/‖S‖` **3.11213e-05** (band 5e-7,
+>   six digits per (b′)), two-torus gap ratio **0.894141** (band 1e-4) all
+>   reproduce as written in both runs, with the physics green in both
+>   (reciprocity 2.679e-05 inside 1e-3, σ_max 0.861357 < 1). Leg 2 (real,
+>   `-n 2`, `20260823T111216Z_…-leg2-confirm.log`) is **`11 passed, 4
+>   skipped`** / 293.59 s / exit 0 against attempt 6's `1 failed / 10
+>   passed / 4 skipped` — `E_Ω` written **1.061717e-01** at 147 235 cells
+>   (measured 1.0617170177e-01), rate **1.6854**, monotone, natural-BC
+>   ratio 0.3285, and the retired sampler control now keyed by image
+>   (raising on an unrecorded one rather than borrowing another's row),
+>   reproducing the 0.11 triplet 16.603276 / 15.384842 / 13.698645% to
+>   ≤ 3.3e-06. Leg 2's two remaining owed files ran on 0.11 and hold their
+>   **existing** bands: `circular_loop` + `mutual_inductance_reference`
+>   **`14 passed, 4 skipped`** / 184.85 s / exit 0
+>   (`20260823T111729Z_…-leg2-loop-mutual.log`) — loop L2 5.8814% vs the
+>   0.08 band, `ωM₁₂` identity 3.093e-07 vs 1e-6, tube quadrature
+>   converged at (8,16). **What 3a now waits on is one decision, and it is
+>   a new one:** writing the gap ratio unmasked the two later assertions in
+>   `test_step_1_measurements_reproduce`, which checks three records in one
+>   loop. `STEP1_LUMPED_RATIO_RECORD` reads 0.828893 vs 0.829782 (moved
+>   8.89e-04) and `STEP1_CROSS_ROUTE_RECORD` 0.077431 vs 0.077095 (moved
+>   3.36e-04), both against the same 1e-4 band, both reproduction records
+>   of the *same* solved field on the *same* fixture whose mesh moved
+>   184 919 → 184 176 cells — the class ruling (1) licensed — and both
+>   satisfying (b′) on this slot's two runs (lumped ratio moves 6.6e-10,
+>   6.6e-06 of its band; the cross-route print is identical to six
+>   digits). Ruling (1) enumerates **three** numbers, so neither was
+>   written: extending a review ruling is not an implementer's call.
+>   Known-issues updated with the table; nothing else in either leg is
+>   open. Journal: `docs/testing/attempts.md`, 2026-08-23T11:35Z.
 > * **Step 1 — build and boot (standard).** Bump the `FROM` line, rebuild,
 >   and fix the environment plumbing that encodes version-specific paths:
 >   the compose `PYTHONPATH` (`dolfinx-real/lib/python3.10/…` — both the
@@ -3305,7 +3344,24 @@ with the Edit tool and verify `git status --porcelain`.
    never widen (i)–(iii).
 2. **`OPS-18` step 3a resumed under (b′) — write the four re-records,
    confirm green, finish leg 2 (heavy, `-n 2`; on `attempt/OPS-18` at
-   `9b3c9e2`, merge `main` first).** Under ruling (1) as restated this
+   `9b3c9e2`, merge `main` first).** 🟡 **attempt 7, 2026-08-23, 06:00
+   slot — every part executed and green except one thing no implementer
+   may do.** All four records written version-tagged and confirmed by two
+   same-slot runs (`passivity_max_sigma` 0.861356895, `‖S−Sᵀ‖/‖S‖`
+   3.11213e-05, gap ratio 0.894141, `E_Ω` 1.061717e-01 at 147 235 cells);
+   leg 2's anchor met exactly (`11 passed, 4 skipped`, rate 1.6854) and
+   its two owed files green on their existing bands (`14 passed, 4
+   skipped`; loop L2 5.8814% vs 0.08, `ωM₁₂` 3.093e-07 vs 1e-6). Leg 1
+   reads `1 failed / 18 passed` twice because **writing the gap ratio
+   unmasked two further records in the same assertion loop** —
+   `STEP1_LUMPED_RATIO_RECORD` 0.829782 → 0.828893 and
+   `STEP1_CROSS_ROUTE_RECORD` 0.077095 → 0.077431, both at the 1e-4 band,
+   both the same class ruling (1) licensed, both already satisfying (b′)
+   on this slot's two runs. **Ruling (1) enumerates three numbers, so
+   they were not written: the review must extend it (or rule
+   otherwise).** With that ruling, 3a is a ~10-minute write-and-confirm.
+   Branch `66aaf69`, `main` restored to 0.7.2 and probed. Journal
+   2026-08-23T11:35Z; §7 entry and known-issues carry the tables. Under ruling (1) as restated this
    review (§7 `OPS-18` entry, "(b′)"), attempt 6's two same-slot runs
    already satisfy the reproduction condition for every record, so this
    slot **writes, then confirms** — it does not re-measure first. **Leg 1

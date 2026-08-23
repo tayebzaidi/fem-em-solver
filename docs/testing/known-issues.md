@@ -161,6 +161,34 @@ unless fixing it is the task.
 > string is written, no band moves, branch-only until 3b merges. Queued as
 > §9 item 4; this entry closes with that commit. Full text in the §7
 > `OPS-18` entry.
+>
+> **Update, `OPS-18` step 3a attempt 7 (2026-08-23, 06:00 slot) — the three
+> licensed records are written and green, and writing them surfaced a
+> fourth and a fifth of the same kind.** On `attempt/OPS-18` at `44b5600`,
+> image `v0.11.0`, complex, `-n 2`, two same-slot runs
+> (`20260823T110726Z_OPS-18-step3a-leg1-confirm.log`, `1 failed / 18
+> passed` / 234.88 s, and `20260823T112102Z_…-leg1-confirm-rerun.log`,
+> same counts / 226.36 s). `passivity_max_sigma` 0.861356895, `‖S−Sᵀ‖/‖S‖`
+> 3.11213e-05 (six digits per (b′)) and the gap ratio 0.894141 all
+> reproduce as written in both runs; physics green in both (reciprocity
+> 2.679e-05 inside 1e-3, σ_max 0.861357 < 1).
+>
+> The remaining failure is **not** a regression: `test_step_1_measurements_
+> reproduce` checks three records in one loop, and the gap ratio was the
+> first, so fixing it unmasked the other two.
+>
+> | record | 0.7.2 | 0.11.0 | move | band | run-to-run move |
+> |---|---|---|---|---|---|
+> | `STEP1_LUMPED_RATIO_RECORD` | 0.829782 | 0.828893 | 8.89e-04 | 1e-4 | 6.6e-10 (6.6e-06 of band) |
+> | `STEP1_CROSS_ROUTE_RECORD` | 0.077095 | 0.077431 | 3.36e-04 | 1e-4 | identical to 6 printed digits |
+>
+> Both are step-1 reproduction records of the *same* solved field on the
+> *same* fixture whose mesh moved 184 919 → 184 176 cells — the class
+> ruling (1) licensed — and both satisfy (b′)'s reproduction condition on
+> this slot's two runs. But ruling (1) enumerates **three** numbers, and an
+> implementer does not extend a review ruling in-slot, so **neither was
+> written**. What is owed is one review decision: extend ruling (1) to
+> these two, or rule them differently. Nothing else in leg 1 is open.
 
 ### `test_straight_wire_b_field` fails **only in the 0.11 image**: the discretization error moved 12.75% → 15.3848% against a 15% band, on a mesh that grew 145 900 → 147 235 cells (`OPS-18` step 3 attempt 3, 2026-08-22)
 
@@ -345,6 +373,21 @@ unless fixing it is the task.
 > The gate is now `E_Ω` = 25.3787 / 10.7288 / **6.6708%** on the recorded
 > ladder, rate **1.6842**, monotone, with the natural-BC control at
 > 32.3117% vs 10.7288%.
+>
+> **Update, `OPS-18` step 3a attempt 7 (2026-08-23, 06:00 slot) — leg 2 is
+> green on 0.11 and the entry still stays open.** On `attempt/OPS-18` at
+> `44b5600`, real, `-n 2`, `20260823T111216Z_OPS-18-step3a-leg2-confirm.log`:
+> **`11 passed, 4 skipped`** / 293.59 s / exit 0, against attempt 6's `1
+> failed / 10 passed / 4 skipped`. `E_Ω` = 25.2868 / 10.6172 / 6.6458% on
+> the recorded ladder, rate **1.6854**, monotone, natural-BC 32.315493% vs
+> 10.617170% (ratio 0.3285). The `E_Ω` h = 0.0025 record is now written
+> version-tagged as 1.061717e-01 at 147 235 cells and measures
+> 1.0617170177e-01; the retired sampler control is keyed by image and
+> reproduces the 0.11 triplet 16.603276 / 15.384842 / 13.698645% to
+> ≤ 3.3e-06. **The 15.3848% non-monotonicity is exactly that middle
+> number** — it is now recorded and asserted rather than failing, which is
+> what "reported-not-gated" means. Still unexplained; this entry stays
+> open until someone explains or retires it.
 
 ### `MAG-18` anchor (ii) is unreachable as pre-registered: the magnetostatic solve's own cross-width floor is ~1e-7, not 1e-10 (2026-08-22)
 
