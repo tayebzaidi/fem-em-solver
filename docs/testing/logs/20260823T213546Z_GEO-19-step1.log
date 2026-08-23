@@ -1,0 +1,131 @@
+# Test Run
+- Chunk: GEO-19-step1
+- Commit: 7afb9df6d1696f257298b66b637a60836d98ab06
+- Time (UTC): 2026-08-23 21:35:46
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 590 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_port_scaleup.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 23 15:12 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 23 16:35 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  869 Aug 23 15:12 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 590 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_port_scaleup.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 2 items
+
+tests/mesh/test_birdcage_port_scaleup.py::test_sixteen_leg_identity_family_and_cost_rung collected 2 items
+
+tests/mesh/test_birdcage_port_scaleup.py::test_sixteen_leg_identity_family_and_cost_rung FAILED
+tests/mesh/test_birdcage_port_scaleup.py::test_sheet_encoding_admits_the_production_leg_count FAILED
+tests/mesh/test_birdcage_port_scaleup.py::test_sheet_encoding_admits_the_production_leg_count FAILEDFAILED
+
+=================================== FAILURES ===================================
+________________ test_sixteen_leg_identity_family_and_cost_rung ________________
+tests/mesh/test_birdcage_port_scaleup.py:355: in test_sixteen_leg_identity_family_and_cost_rung
+    scaled = _measure(SCALED_LEG_COUNT)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/mesh/test_birdcage_port_scaleup.py:124: in _measure
+    mesh, cells, _, diag, elapsed = _build(leg_count, True)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^
+tests/mesh/test_birdcage_port_scaleup.py:100: in _build
+    mesh, cell_tags, facet_tags, diagnostics = MeshGenerator.birdcage_port_domain(
+src/fem_em_solver/io/mesh.py:3014: in birdcage_port_domain
+    raise build_error
+src/fem_em_solver/io/mesh.py:2987: in birdcage_port_domain
+    build_diagnostics = MeshGenerator._build_birdcage_port_model(
+src/fem_em_solver/io/mesh.py:3189: in _build_birdcage_port_model
+    raise NotImplementedError(
+E   NotImplementedError: emit_port_sheets builds axis-aligned rectangles, so every leg must sit on a coordinate axis; port P2 is at 22.500 degrees
+_____________ test_sheet_encoding_admits_the_production_leg_count ______________
+tests/mesh/test_birdcage_port_scaleup.py:411: in test_sheet_encoding_admits_the_production_leg_count
+    MeshGenerator.birdcage_port_domain(
+src/fem_em_solver/io/mesh.py:2961: in birdcage_port_domain
+    port_box_size, port_diagnostics = MeshGenerator._birdcage_leg_gap_layout(
+src/fem_em_solver/io/mesh.py:2784: in _birdcage_leg_gap_layout
+    raise ValueError(
+E   ValueError: Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m
+
+During handling of the above exception, another exception occurred:
+tests/mesh/test_birdcage_port_scaleup.py:422: in test_sheet_encoding_admits_the_production_leg_count
+    assert "99" in str(exc), (
+E   AssertionError: leg_count=100 was rejected for the wrong reason: Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m
+E   assert '99' in 'Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m'
+E    +  where 'Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m' = str(ValueError('Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m'))
+=========================== short test summary info ============================
+FAILED tests/mesh/test_birdcage_port_scaleup.py::test_sixteen_leg_identity_family_and_cost_rung - NotImplementedError: emit_port_sheets builds axis-aligned rectangles, so every leg must sit on a coordinate axis; port P2 is at 22.500 degrees
+FAILED tests/mesh/test_birdcage_port_scaleup.py::test_sheet_encoding_admits_the_production_leg_count - AssertionError: leg_count=100 was rejected for the wrong reason: Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m
+assert '99' in 'Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m'
+ +  where 'Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m' = str(ValueError('Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m'))
+============================== 2 failed in 1.37s ===============================
+
+
+=================================== FAILURES ===================================
+________________ test_sixteen_leg_identity_family_and_cost_rung ________________
+tests/mesh/test_birdcage_port_scaleup.py:355: in test_sixteen_leg_identity_family_and_cost_rung
+    scaled = _measure(SCALED_LEG_COUNT)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/mesh/test_birdcage_port_scaleup.py:124: in _measure
+    mesh, cells, _, diag, elapsed = _build(leg_count, True)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^
+tests/mesh/test_birdcage_port_scaleup.py:100: in _build
+    mesh, cell_tags, facet_tags, diagnostics = MeshGenerator.birdcage_port_domain(
+src/fem_em_solver/io/mesh.py:3015: in birdcage_port_domain
+    raise RuntimeError(
+E   RuntimeError: birdcage_port_domain geometry generation failed on rank 0
+_____________ test_sheet_encoding_admits_the_production_leg_count ______________
+tests/mesh/test_birdcage_port_scaleup.py:411: in test_sheet_encoding_admits_the_production_leg_count
+    MeshGenerator.birdcage_port_domain(
+src/fem_em_solver/io/mesh.py:2961: in birdcage_port_domain
+    port_box_size, port_diagnostics = MeshGenerator._birdcage_leg_gap_layout(
+src/fem_em_solver/io/mesh.py:2784: in _birdcage_leg_gap_layout
+    raise ValueError(
+E   ValueError: Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m
+
+During handling of the above exception, another exception occurred:
+tests/mesh/test_birdcage_port_scaleup.py:422: in test_sheet_encoding_admits_the_production_leg_count
+    assert "99" in str(exc), (
+E   AssertionError: leg_count=100 was rejected for the wrong reason: Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m
+E   assert '99' in 'Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m'
+E    +  where 'Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m' = str(ValueError('Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m'))
+=========================== short test summary info ============================
+FAILED tests/mesh/test_birdcage_port_scaleup.py::test_sixteen_leg_identity_family_and_cost_rung - RuntimeError: birdcage_port_domain geometry generation failed on rank 0
+FAILED tests/mesh/test_birdcage_port_scaleup.py::test_sheet_encoding_admits_the_production_leg_count - AssertionError: leg_count=100 was rejected for the wrong reason: Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m
+assert '99' in 'Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m'
+ +  where 'Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m' = str(ValueError('Port center separation too small: min=4.397506e-03 m, required>=1.750000e-02 m'))
+============================== 2 failed in 1.35s ===============================
+
+## Exit
+- Status: 1
+- Elapsed (s): 3

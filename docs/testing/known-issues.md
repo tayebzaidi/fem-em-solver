@@ -28,6 +28,50 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🚫 OPEN — `birdcage_port_domain(emit_port_sheets=True)` **cannot build any birdcage with more than four legs**: the mid-plane sheet is an axis-aligned rectangle (`GEO-19` attempt 1, 2026-08-23)
+
+**Test id:** no test asserts this on `main` — the module that hits it,
+`tests/mesh/test_birdcage_port_scaleup.py`, is parked on
+`attempt/GEO-19-20260823T214500Z` rather than landed red.
+
+**Literal symptom**, at `leg_count = 16` with `leg_gap_length = 8e-3`,
+`emit_port_sheets = True`:
+
+```
+NotImplementedError: emit_port_sheets builds axis-aligned rectangles, so
+every leg must sit on a coordinate axis; port P2 is at 22.500 degrees
+```
+
+raised from `src/fem_em_solver/io/mesh.py:3189`, `-n 2`, 1.4 s,
+`docs/testing/logs/20260823T213546Z_GEO-19-step1.log`.
+
+**Verified at:** `main` @ the `GEO-19` blocker-A commit (2026-08-23), on the
+0.11.0.post0 image.
+
+**Cause — diagnosed, not a mystery.** The sheet is entered into the OCC
+fragment as an axis-aligned dim-2 tool, and the half-assignment that follows
+tests a *single Cartesian centroid coordinate* against the plane's offset
+(`mesh.py:3270-3278`). Both steps assume the leg's radial direction is `x̂`
+or `ŷ`, which holds only for `leg_count <= 4`. Any other count puts legs at
+intermediate azimuths and the construction has no rectangle to place. This is
+a genuine capability limit, not a regression: nothing above four legs had ever
+been sheeted, so it had never been reached.
+
+**Not to be confused with** the `100+i`/`110+i` tag collision in the same code
+path, which was the *outer* guard (`leg_count <= 9`) and **is fixed** — the
+upper base is now `200+i`, verified inert against `GEO-18` step 1/2 at
+`3 passed` / 116 368 cells / C4 spread 6.050e-16, digit-identical to the
+pre-change run (`20260823T213647Z_GEO-19-tagfix-regression.log`).
+
+**Retire when:** the sheet is built in the leg's local `(r̂, ẑ)` frame with the
+half test taken along the leg's radial normal, and `GEO-19`'s gates (i)–(v)
+run at 16 legs. Blocks `GEO-19`; does **not** block `GEO-20` (ring-gap ports
+sit at different azimuths and are scoped to their own local frame from the
+start). Related and separate: the layout clearance floor independently caps
+this geometry at `N <= 25` legs — see the `GEO-19` §7 entry.
+
+---
+
 ### ✅ RETIRED 2026-08-23 (`OPS-18` step 3b merge) — the two-torus port fixtures **SIGABRT'd in `gmsh.model.mesh.generate` only in the 0.11 image**: numpy 2 renders `!r` of a numpy scalar as `np.float64(…)` inside a gmsh `MathEval` string (`OPS-18` step 3 attempt 2, 2026-08-22; entered by the 10:30 review)
 
 > **RETIRED 2026-08-23, 15:00 implementer slot.** The entry's own retirement

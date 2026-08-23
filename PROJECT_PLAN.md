@@ -1387,7 +1387,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-16` | **Emit the gap boxes' longitudinal port-sheet mid-plane in `two_torus_domain`** (the `PORT-9` step-1 mesh prerequisite; commissioned 2026-08-16 18:00 review) | ✅ | standard |
 | `GEO-17` | `coil_phantom_domain` region-resolution policy shrinks the coil volumes it refines (−21.68%/−22.62%; `OPS-17` step-2 defect 1, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) — step 1 ✅ 2026-08-20: the sizes were never applied (`getBoundary` `combined=True` ⇒ 0 points); `Min`-over-`Constant`-fields, coil meshed/CAD 0.7547 → **0.8356** | ✅ *(audited COMPLIANT 2026-08-21 18:00 review — 1e-9 negative-control gate, sign-of-refinement identity and partition 1.000000000000 verified against `20260820T110549Z…final.log`)* | standard |
 | `GEO-18` | Birdcage conductor gaps: cut the legs so the port boxes have terminals (`PORT-9` step-3 mesh prerequisite; commissioned 2026-08-20 03:00 review from step 3 legs (a)+(b) 🚫) | ✅ 2026-08-22 (*step 2 audited COMPLIANT 2026-08-22 03:00 review — every figure verbatim in `20260822T020113Z_GEO-18-step2.log:8569-8576`, no pre-existing test touched; one transparency note: the sheets-off control asserts the `110+i` **cell** tags absent, and the `210+i` facet absence the entry and commit claim is implied by that, not measured — `EX-28` is commissioned to assert it directly*; **step 1 ✅ 2026-08-20** — terminals exist: 2.236196e-04 m² per port, **0.988616** of the closed-form `2·π·r_leg²`, all four equal to the printed 7 digits, *audited COMPLIANT 2026-08-21 18:00 review — closed-form band, closure and mass identities verified against all three logs, the pre-derivation red disclosed*; **step 2 ✅ 2026-08-22** — the sheets exist and are exact: meshed sheet area `1.120000000e-04 m²` = the analytic `dx·g` at **1.000000000000** on all four ports, `w_eff = A/h` equal to the bbox extent to 1.000000000000, out-of-plane spread ≤ 2.512e-16 m, half-volumes 0.500000000000 each, C4 sheet spread **8.470e-16**, step 1's terminal band and closure re-asserted on the sheeted mesh) | standard |
-| `GEO-19` | `birdcage_port_domain` at `leg_count = 16`, gapped + sheeted: identity family re-gated (C16), cost rung measured — 32-port directive item (a) (commissioned 2026-08-23 weekly review) | ⬜ | heavy (probe first) |
+| `GEO-19` | `birdcage_port_domain` at `leg_count = 16`, gapped + sheeted: identity family re-gated (C16), cost rung measured — 32-port directive item (a) (commissioned 2026-08-23 weekly review) | 🟡 | heavy (probe first) |
 | `GEO-20` | High-pass birdcage ring-gap port layout (`ring_gap_length`, `2·leg_count` ports, the `GEO-18` pattern on the end rings) — 32-port directive item (b); step 1 at 4 legs, step 2 at 16 after `GEO-19` (commissioned 2026-08-23 weekly review) | ⬜ | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
@@ -1631,6 +1631,60 @@ stop — that number *is* the deliverable for Phase 6's pricing, and the
 next item is a sizing chunk. **Done-when:** gates (i)–(v) executed at 16
 legs with cell count, mesh time and `-n 2` elapsed recorded; §10 Phase 6
 gets its first measured cost.
+
+**Attempt 1, 2026-08-23 16:30 slot — 🟡 not the gates, but two blockers
+measured and the first one cleared. The fixture cannot be built at 16
+legs, for a reason no gate would have caught.**
+
+*Blocker A (cleared this slot).* The port halves were encoded as cell tags
+`100+i` and `110+i`, which **collide for `i >= 11`**, so
+`_build_birdcage_port_model` refused `emit_port_sheets` above **nine** legs
+outright (`mesh.py:3133`, "leg_count must be <= 9"). The chunk as
+commissioned was unexecutable on its first line. Fixed by widening the
+upper base to **`200+i`**; the lower tags are untouched, so no existing tag
+*value* moved. **Verified inert**, which is the whole claim: the `GEO-18`
+step-2 + step-1 modules are `3 passed` / exit 0 / 93 s
+(`20260823T213647Z_GEO-19-tagfix-regression.log`) with **116 368 cells,
+C4 sheet spread 6.050e-16, terminal ratios 0.988616 × 4 — identical
+digit for digit** to the same modules run *before* the change in the same
+slot (`20260823T213127Z_GEO-19-probe4.log`, `2 passed` / 59 s). The
+encoding ceiling is now 99 legs.
+
+*Blocker B (open — this is what `GEO-19` actually needs).* With A cleared,
+the 16-leg build reaches the sheet construction and raises
+`NotImplementedError: emit_port_sheets builds axis-aligned rectangles, so
+every leg must sit on a coordinate axis; port P2 is at 22.500 degrees`
+(`mesh.py:3189`, `20260823T213546Z_GEO-19-step1.log`). The mid-plane sheet
+is built as an axis-aligned dim-2 tool, which is only *possible* for
+`leg_count <= 4`. **Sixteen legs need the sheet built in each leg's own
+local frame** — the rectangle rotated into `(r̂, ẑ)` at the leg's azimuth,
+with the half-assignment centroid test taken along the leg's radial
+normal instead of along x or y. That is a geometry change to
+`_build_birdcage_port_model`, not a knob, and it is the whole of the next
+attempt. Note the kinship with `PORT-9` leg (d1)'s standing warning that
+"two-torus sheets are coordinate-axis": this is the same limitation, met
+from the mesh side.
+
+*Measured anyway — a finding for the 32-port directive itself, ahead of
+gate (v).* The gapped layout's clearance floor is `1.25·box_width` =
+**1.750000e-02 m** against a leg pitch of `2·ring_radius·sin(π/N)`. At
+`N = 16` that is 2.731e-02 m and passes with 1.56× margin, as the weekly
+review predicted. At **`N = 32` it is 1.366e-02 m and fails** — the
+generator rejects the layout before meshing (measured at `N = 100`:
+4.397506e-03 m vs the same floor, `20260823T213546Z_GEO-19-step1.log`).
+The closed-form ceiling on `ring_radius = 0.07` with 14 mm boxes is
+**`N ≤ 25`**. So the directive's production count does **not** fit the
+production geometry: 32 legs need a larger ring (≥ 0.0876 m at this box),
+narrower boxes, or a lowered floor — recorded as the geometry's finding,
+not worked around, exactly as gate (v) instructed. **The `GEO-20` ring-gap
+layout is unaffected** (its ports sit at the inter-leg mid-azimuths on the
+rings, a different pitch), so item (b) is not blocked by this.
+
+*Parked:* `attempt/GEO-19-20260823T214500Z` carries
+`tests/mesh/test_birdcage_port_scaleup.py` — the gates (i)–(v) module
+written and executing, ready to run the moment blocker B is cleared. Its
+4-leg control records are already version-tagged to 0.11. `main` carries
+only the cleared blocker A and its regression log.
 
 **`GEO-20` — high-pass birdcage: ring-gap port layout (`ring_gap_length`),
 the `GEO-18` pattern on the end rings** ⬜ *(commissioned 2026-08-23 weekly

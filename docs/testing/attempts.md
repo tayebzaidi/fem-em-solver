@@ -13539,3 +13539,100 @@ next to one. **Rule for the next slot: scope `git clean` to explicit paths, or
 list `--dry-run` first.** The worksite-rule text should also gain the finding
 that an aborted `git merge` into a busy bind mount leaves `main` dirty — the
 recovery is the land-the-docker-files-first order used here, not a stash.
+
+
+---
+
+## 2026-08-23T21:45Z — `GEO-19` attempt 1 — **incomplete (blocked, one blocker cleared)**
+
+**Slot:** 16:30 local, scheduled implementer run. Preflight clean, container Up,
+`main` booting **0.11.0.post0 / gmsh 4.15.2 / python 3.12.3** (probed) — item 3
+of the last review merged `OPS-18` since the §9 item was written, so the "0.7.2,
+`main`" in the item text is stale. Ran on what `main` boots; no version work.
+
+**Item taken:** §9 On deck item 4 (items 1–3 marked done), `GEO-19` — the gapped,
+sheeted `birdcage_port_domain` at `leg_count = 16`.
+
+**Outcome: the gates never ran, because the fixture cannot be built.** Two
+independent blockers, both measured; the first is fixed and landed on `main`,
+the second is the chunk's real content and is journaled for the next attempt.
+
+**What was tried, in order.**
+
+1. **Drift control first** (cheap, and it settles whether `GEO-18`'s records
+   survived the upgrade). Existing step-2 module, `-n 2`:
+   `2 passed` / exit 0 / **59 s**, `20260823T213127Z_GEO-19-probe4.log`.
+   4-leg sheeted mesh **116 368 cells** vs the 0.7.2 record 116 416
+   (**4.1e-04** relative), mesh 21.15 s; terminal ratio **0.988615812**
+   unmoved inside its 1e-5; C4 sheet spread **6.050e-16** (record 8.470e-16 —
+   both are float-summation noise well under the 1e-12 band, not a record to
+   match bit-identically). So the 4-leg family is intact on 0.11.
+2. **Read the tag scheme before meshing**, and found blocker A statically: the
+   halves are `100+i` / `110+i`, which **collide for `i >= 11`**, and
+   `mesh.py:3133` therefore refused `emit_port_sheets` for `leg_count > 9`
+   outright. `GEO-19` was unexecutable as commissioned. Widened the upper base
+   to **`200+i`** (5 sites in `mesh.py`, the `PORT_UPPER` constant in
+   `test_birdcage_port_sheets.py`, one stale comment in
+   `test_port_birdcage_lumped_column.py`); lower tags untouched, so **no
+   existing tag value moved** — only the label of the upper half.
+3. **Proved the fix inert**, which is the only reason it is on `main`:
+   `GEO-18` step 1 + step 2, `-n 2`, **`3 passed` / exit 0 / 93 s**,
+   `20260823T213647Z_GEO-19-tagfix-regression.log` — **116 368 cells, C4
+   spread 6.050e-16, terminal ratios 0.988616 ×4, identical digit for digit**
+   to run 1 above, which was taken *before* the change in the same slot.
+4. **Ran the 16-leg gates module** (`tests/mesh/test_birdcage_port_scaleup.py`,
+   gates (i)–(v) + a 4-leg control): `2 failed` in **1.4 s**,
+   `20260823T213546Z_GEO-19-step1.log`. Blocker B, from `mesh.py:3189`:
+   `NotImplementedError: emit_port_sheets builds axis-aligned rectangles, so
+   every leg must sit on a coordinate axis; port P2 is at 22.500 degrees`.
+
+**The findings.**
+
+- **Blocker B (open, and it is `GEO-19`'s real content).** The mid-plane sheet
+  enters the OCC fragment as an axis-aligned dim-2 rectangle, and the
+  half-assignment tests one Cartesian centroid coordinate against the plane
+  offset (`mesh.py:3270-3278`). Both assume the leg's radial direction is `x̂`
+  or `ŷ` — true only for `leg_count <= 4`. Sixteen legs need the rectangle
+  rotated into each leg's local `(r̂, ẑ)` frame and the half test taken along
+  its radial normal. Geometry work in `_build_birdcage_port_model`, not a
+  knob. Same limitation `PORT-9` leg (d1) was warned about from the solver
+  side ("two-torus sheets are coordinate-axis"). Known-issues entry filed.
+- **A finding about the 32-port directive itself, arriving ahead of gate (v).**
+  The layout floor is `1.25·box_width` = **1.750000e-02 m**; the leg pitch is
+  `2·ring_radius·sin(π/N)`. `N = 16` → 2.731e-02 m, **passes at 1.56×** (as
+  the weekly review predicted). **`N = 32` → 1.366e-02 m, fails.** Measured
+  instance in the log at `N = 100`: 4.397506e-03 m rejected against the same
+  floor. Closed-form ceiling on `ring_radius = 0.07` with 14 mm boxes:
+  **`N ≤ 25`**. The directive's production count does not fit the production
+  geometry — it needs `ring_radius ≥ 0.0876 m` at this box, or narrower boxes.
+  Recorded, not worked around, per gate (v)'s own instruction. **`GEO-20` is
+  not blocked by this** (ring-gap ports sit on a different pitch).
+- **Cost rung: not delivered.** No 16-leg mesh exists, so Phase 6 still has no
+  measured cost. Blocker B gates it. The 4-leg rung on 0.11 is 116 368 cells /
+  21.15 s, which is the only anchor the next attempt will have to extrapolate
+  from.
+
+**Compute:** three foreground harness runs, 59 + 3 + 93 = **155 s** total,
+`-n 2` throughout, no run near its `timeout -k 30` ceiling, no exit 124, no
+wedge. Heavy tier was budgeted for the 16-leg build and never spent.
+
+**Tree:** `main` clean, green, carries **only** blocker A's fix + its two logs +
+this journal + the §7/known-issues text. The gates module is parked whole on
+**`attempt/GEO-19-20260823T214500Z`** (`321c933`) — written, importing, and
+executing; it will run as-is the moment B is cleared. §9 item 4 is **not**
+marked done.
+
+**Hypothesis for the next attempt.** Blocker B is a contained rewrite, and it
+should be scoped as its own step rather than folded back into `GEO-19`'s gates:
+build the sheet rectangle in the leg's local frame (rotate the `(w, g)`
+rectangle by the leg azimuth about `ẑ` before the fragment, and replace the
+`centre[0] if axis == "x" else centre[1]` test with the signed projection of
+the centroid onto the leg's radial normal `(cos θ, sin θ)`), then re-run
+`GEO-18` step 2 at 4 legs as the *invariance* control — at θ ∈ {0°, 90°, …}
+the rotated construction must reproduce 116 368 / 0.988616 / 6.050e-16
+exactly, because the rotation is the identity there. Only then run the parked
+16-leg module. Prediction: the identity family holds at 16 (the sheet is still
+a planar rectangle meshed by a conforming fragment, so `dx·g` is still exact),
+and the C16 spread stays at float-summation scale — the count was never the
+physics. **For the review:** the `N ≤ 25` finding is the more consequential of
+the two and belongs in §10 Phase 6's geometry, not just in `GEO-19`.

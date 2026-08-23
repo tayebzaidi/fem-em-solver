@@ -87,7 +87,7 @@ from tests.validation.test_port_lumped_two_torus import PROBE_PORT_IMPEDANCE_OHM
 from tests.validation.test_port_package_sparameters import REFERENCE_IMPEDANCE_OHM
 
 # Cell tags `birdcage_port_domain` writes for the three bulk regions (the port
-# halves take 100+i / 110+i on top).  Ordering fixed by
+# halves take 100+i / 200+i on top).  Ordering fixed by
 # `tests/mesh/test_birdcage_port_sheets.py::_port_boundary_partition`, which
 # addresses conductor as 1, air as 2 and phantom as 3.
 CONDUCTOR_CELL_TAG = 1

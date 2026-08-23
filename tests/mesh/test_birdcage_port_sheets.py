@@ -71,7 +71,10 @@ SHEET_IFACE = 210
 
 # Lower/upper cell tags of a split port box, as the generator writes them.
 PORT_LOWER = 100
-PORT_UPPER = 110
+# `GEO-19` widened the upper base 110 -> 200 so the encoding survives
+# leg_count > 9 (at 16 legs, 110+i overlaps 100+i for i >= 11); the lower
+# tags are untouched, so every 4-leg value here is the value step 2 recorded.
+PORT_UPPER = 200
 
 
 def _build(emit_port_sheets):
@@ -140,7 +143,7 @@ def test_port_sheets_are_the_gap_box_mid_sections():
     3. **Step 1's gates, re-asserted on the sheeted mesh** — terminal ratio in
        the pre-stated inscribed band, closure exhaustive, four sheets equal.
     4. **Negative control** — the same build with sheets off reproduces step 1
-       (114 846 cells, 0.988616) and carries no ``110+i`` cell tag and no
+       (114 846 cells, 0.988616) and carries no ``200+i`` cell tag and no
        ``210+i`` facet group at all.
     """
     comm = MPI.COMM_WORLD

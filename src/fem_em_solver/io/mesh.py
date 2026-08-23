@@ -2877,7 +2877,7 @@ class MeshGenerator:
             containing its own leg axis (y-normal for a leg on the x-axis,
             x-normal for one on the y-axis), the rectangle entering the fragment
             as a dim-2 tool so the tets conform to it. The halves become separate
-            cell tags — ``100+i`` below the plane, ``110+i`` above — and the sheet
+            cell tags — ``100+i`` below the plane, ``200+i`` above — and the sheet
             is what they share, so a caller rebuilds it dolfinx-side as an
             interface facet group over that tag pair. Mesh-side only: no port
             model and no drive live here.
@@ -3130,10 +3130,10 @@ class MeshGenerator:
                     "leg gap box's mid-plane, and without a gap there is no box "
                     "on the leg to split"
                 )
-            if leg_count > 9:
+            if leg_count > 99:
                 raise ValueError(
                     "emit_port_sheets encodes the port halves as cell tags "
-                    f"100+i and 110+i, so leg_count must be <= 9, got {leg_count}"
+                    f"100+i and 200+i, so leg_count must be <= 99, got {leg_count}"
                 )
         for idx, angle in enumerate(theta):
             if leg_gap_length is None:
@@ -3272,7 +3272,7 @@ class MeshGenerator:
                     centre = gmsh.model.occ.getCenterOfMass(3, piece)
                     value = centre[0] if axis == "x" else centre[1]
                     group_of_piece[piece] = (
-                        110 + ordinal if value > coordinate else 100 + ordinal
+                        200 + ordinal if value > coordinate else 100 + ordinal
                     )
                 else:
                     group_of_piece[piece] = 100 + ordinal
@@ -3289,11 +3289,11 @@ class MeshGenerator:
                 f"port_P{idx}_lower" if emit_port_sheets else f"port_P{idx}"
             )
             if emit_port_sheets:
-                group_names[110 + idx] = f"port_P{idx}_upper"
+                group_names[200 + idx] = f"port_P{idx}_upper"
 
         expected_groups = [1, 2, 3] + [100 + i for i in port_ordinal.values()]
         if emit_port_sheets:
-            expected_groups += [110 + i for i in port_ordinal.values()]
+            expected_groups += [200 + i for i in port_ordinal.values()]
         missing_groups = [
             group_names[tag] for tag in expected_groups if tag not in pieces_by_group
         ]
@@ -3354,7 +3354,7 @@ class MeshGenerator:
                     }
                     & {
                         surf
-                        for vol in pieces_by_group[110 + ordinal]
+                        for vol in pieces_by_group[200 + ordinal]
                         for _, surf in gmsh.model.getBoundary(
                             [(3, vol)], oriented=False, recursive=False
                         )
