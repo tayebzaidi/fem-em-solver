@@ -387,6 +387,7 @@ class MagnetostaticSolver:
             L,
             bcs=bcs,
             petsc_options=options,
+            petsc_options_prefix="fem_em_magnetostatic_",
         )
 
         if collect_solver_diagnostics:
@@ -530,7 +531,13 @@ class MagnetostaticSolver:
         if petsc_options:
             options.update(dict(petsc_options))
 
-        problem = LinearProblem(a, L, bcs=pin, petsc_options=options)
+        problem = LinearProblem(
+            a,
+            L,
+            bcs=pin,
+            petsc_options=options,
+            petsc_options_prefix="fem_em_mixed_saddle_",
+        )
         w = problem.solve()
 
         self._last_solve_diagnostics = self._extract_ksp_diagnostics(problem.solver)
@@ -638,7 +645,10 @@ class MagnetostaticSolver:
         B = fem.Function(DG, name="B")
         
         # Project curl(A) onto DG space
-        B_expr = fem.Expression(curl(self.A), DG.element.interpolation_points())
+        # OPS-18: 0.11 turned `interpolation_points` from a method into a
+        # property returning the (n, gdim) array; calling it raises
+        # "'numpy.ndarray' object is not callable".
+        B_expr = fem.Expression(curl(self.A), DG.element.interpolation_points)
         B.interpolate(B_expr)
         
         return B
@@ -662,7 +672,7 @@ class MagnetostaticSolver:
         else:
             mu = fem.Constant(self.mesh, PETSc.ScalarType(self.mu))
 
-        H_expr = fem.Expression(B / mu, DG.element.interpolation_points())
+        H_expr = fem.Expression(B / mu, DG.element.interpolation_points)
         H.interpolate(H_expr)
         
         return H

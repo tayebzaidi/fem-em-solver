@@ -212,7 +212,7 @@ def _pointwise_sar_field(fixture):
 
     dg0 = fem.functionspace(msh, ("DG", 0))
     sar = fem.Function(dg0, name="SAR")
-    sar.interpolate(fem.Expression(expr, dg0.element.interpolation_points()))
+    sar.interpolate(fem.Expression(expr, dg0.element.interpolation_points))
     sar.x.array[:] = np.real(sar.x.array)
     sar.x.scatter_forward()
     return sar

@@ -6,7 +6,25 @@ import numpy as np
 import gmsh
 from mpi4py import MPI
 import dolfinx
-from dolfinx.io import gmshio
+from dolfinx.io import gmsh as dolfinx_gmsh
+
+
+def _model_to_mesh(model, comm, rank, **kwargs):
+    """`OPS-18` step 2: the 0.7 → 0.11 gmsh-interop shim.
+
+    ``dolfinx.io.gmshio.model_to_mesh`` moved to ``dolfinx.io.gmsh`` and now
+    returns a six-field :class:`~dolfinx.io.gmsh.MeshData` named tuple
+    (``mesh, cell_tags, facet_tags, ridge_tags, peak_tags, physical_groups``)
+    instead of the 0.7 three-tuple, so every call site's unpacking broke.  This
+    module is the project's only gmsh-interop boundary; keeping the conversion
+    here means one definition to revisit at the next upgrade, and the call
+    sites keep the ``(mesh, cell_tags, facet_tags)`` contract the rest of
+    ``io/mesh.py`` is written against.  ``ridge_tags``/``peak_tags`` are 0.11
+    additions this project has no consumer for; ``physical_groups`` duplicates
+    tag bookkeeping the generators already track by name.
+    """
+    data = dolfinx_gmsh.model_to_mesh(model, comm, rank, **kwargs)
+    return data.mesh, data.cell_tags, data.facet_tags
 
 #: `GEO-13`: ``cylindrical_domain``'s surface-classification tolerance, as a
 #: fraction of the radial gap ``outer_radius - inner_radius``.  Set from
@@ -235,7 +253,7 @@ class MeshGenerator:
             gmsh.model.mesh.optimize("Netgen")
 
         # Convert to dolfinx mesh
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
         
@@ -356,7 +374,7 @@ class MeshGenerator:
             gmsh.model.mesh.optimize("Netgen")
             
         # Convert to dolfinx mesh
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
         
@@ -513,7 +531,7 @@ class MeshGenerator:
             # gmsh.model.mesh.optimize("Netgen")
             
         # Convert to dolfinx mesh
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
         
@@ -564,7 +582,7 @@ class MeshGenerator:
             gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
             gmsh.model.mesh.generate(3)
         
-        mesh, _, _ = gmshio.model_to_mesh(gmsh.model, comm, rank, gdim=3)
+        mesh, _, _ = _model_to_mesh(gmsh.model, comm, rank, gdim=3)
         
         if comm.rank == rank:
             gmsh.finalize()
@@ -736,7 +754,7 @@ class MeshGenerator:
             gmsh.model.mesh.optimize("Netgen")
             
         # Convert to dolfinx mesh
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
         
@@ -845,7 +863,7 @@ class MeshGenerator:
             gmsh.model.mesh.generate(3)
             gmsh.model.mesh.optimize("Netgen")
 
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
 
@@ -1525,15 +1543,23 @@ class MeshGenerator:
                     # `Min` below from clamping the whole air box to the wire
                     # size; the conductor field still wins where it is finer.
                     dist_max = tube + (h_far - h_gap) / 0.3
-                    arc_half_y = major_radius * np.sin(0.5 * gap_angle)
+                    # OPS-18 step 3: every number interpolated into a gmsh
+                    # `MathEval` string must be a plain Python float. numpy 2
+                    # renders `repr(np.float64(x))` as `np.float64(x)`, a token
+                    # gmsh's expression parser rejects with SIGABRT at meshing
+                    # ("invalid token on expression"); numpy 1.x's bare-number
+                    # repr masked this. Coerce at the boundary, never `!r` a
+                    # value of unknown type into a foreign grammar.
+                    arc_half_y = float(major_radius * np.sin(0.5 * gap_angle))
+                    r_major = float(major_radius)
                     gap_fields = []
-                    for z_c in (-z_offset, z_offset):
+                    for z_c in (-float(z_offset), float(z_offset)):
                         band = (
                             f"(0.5*((sqrt(y^2)-{arc_half_y!r})"
                             f"+sqrt((sqrt(y^2)-{arc_half_y!r})^2)))"
                         )
                         expr = (
-                            f"sqrt((sqrt(x^2+y^2)-{major_radius!r})^2"
+                            f"sqrt((sqrt(x^2+y^2)-{r_major!r})^2"
                             f"+(z-({z_c!r}))^2"
                             f"+{band}^2"
                             f"+(0.5*(sqrt(x^2)-x))^2)"
@@ -1653,10 +1679,17 @@ class MeshGenerator:
         # is what makes that cell present as a ghost; it is also what a `dS`
         # integral over those facets needs. Plumbed here only, so no other
         # fixture changes partition.
+        # `OPS-18` step 3: 0.11 made `max_facet_to_cell_links` a *required*
+        # argument of `create_cell_partitioner` (0.7.2 took the mode alone).
+        # 2 is dolfinx's own default elsewhere (`create_mesh`) and its
+        # documented value for a non-branching manifold mesh, which every
+        # fixture here is — tetrahedra with each interior facet shared by
+        # exactly two cells. Passing `None` would mean "no upper bound" and
+        # is not what this mesh is.
         partitioner = dolfinx.mesh.create_cell_partitioner(
-            dolfinx.mesh.GhostMode.shared_facet
+            dolfinx.mesh.GhostMode.shared_facet, 2
         )
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3, partitioner=partitioner
         )
 
@@ -1869,7 +1902,7 @@ class MeshGenerator:
 
             gmsh.model.mesh.generate(3)
 
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
 
@@ -1998,7 +2031,7 @@ class MeshGenerator:
 
             gmsh.model.mesh.generate(3)
 
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
 
@@ -2555,7 +2588,7 @@ class MeshGenerator:
             gmsh.model.mesh.generate(3)
             gmsh.model.mesh.optimize("Netgen")
 
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
 
@@ -2983,7 +3016,7 @@ class MeshGenerator:
                 f"birdcage_port_domain geometry generation failed on rank {rank}"
             )
 
-        mesh, cell_tags, facet_tags = gmshio.model_to_mesh(
+        mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
         )
 

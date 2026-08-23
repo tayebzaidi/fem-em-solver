@@ -1,0 +1,55 @@
+# Test Run
+- Chunk: OPS-18-step3-numpy-repr-probe
+- Commit: de6e2073e41a944dafacdd19c2bff1b1ef5af5b5
+- Time (UTC): 2026-08-22 14:10:27
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 30 30 python3 -c "
+import numpy as np
+print(\"numpy\", np.__version__)
+v = np.float64(0.02) * np.sin(0.5*np.float64(0.6))
+print(\"type\", type(v))
+print(\"repr-in-fstring:\", f\"{v!r}\")
+print(\"format-e:\", f\"{v:.6e}\")
+"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 22 09:01 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 22 09:10 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 22 09:01 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  869 Aug 22 09:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 30 30 python3 -c "
+import numpy as np
+print(\"numpy\", np.__version__)
+v = np.float64(0.02) * np.sin(0.5*np.float64(0.6))
+print(\"type\", type(v))
+print(\"repr-in-fstring:\", f\"{v!r}\")
+print(\"format-e:\", f\"{v:.6e}\")
+"'\'''
+numpy 2.4.6
+type <class 'numpy.float64'>
+repr-in-fstring: np.float64(0.005910404133226791)
+format-e: 5.910404e-03
+
+## Exit
+- Status: 0
+- Elapsed (s): 1

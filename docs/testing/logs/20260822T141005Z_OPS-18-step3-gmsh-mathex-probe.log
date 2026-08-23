@@ -1,0 +1,151 @@
+# Test Run
+- Chunk: OPS-18-step3-gmsh-mathex-probe
+- Commit: de6e2073e41a944dafacdd19c2bff1b1ef5af5b5
+- Time (UTC): 2026-08-22 14:10:05
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && timeout -k 30 60 python3 -c "
+import gmsh
+print(gmsh.__file__)
+gmsh.initialize()
+print(\"gmsh\", gmsh.option.getString(\"General.Version\"))
+exprs = {
+  \"pow_caret\": \"x^2\",
+  \"pow_star\": \"x*x\",
+  \"sqrt_sci\": \"sqrt(x^2+1e-06)\",
+  \"sci_plain\": \"x+1e-06\",
+  \"sci_neg\": \"x+(-0.001)\",
+  \"full\": \"sqrt((sqrt(x^2+y^2)-0.02)^2+(z-(-0.01))^2+(0.5*((sqrt(y^2)-0.005977525)+sqrt((sqrt(y^2)-0.005977525)^2)))^2+(0.5*(sqrt(x^2)-x))^2)\",
+}
+gmsh.model.add(\"probe\")
+gmsh.model.occ.addBox(0,0,0,1,1,1); gmsh.model.occ.synchronize()
+for name, e in exprs.items():
+    f = gmsh.model.mesh.field.add(\"MathEval\")
+    gmsh.model.mesh.field.setString(f, \"F\", e)
+    gmsh.model.mesh.field.setAsBackgroundMesh(f)
+    try:
+        gmsh.model.mesh.generate(1)
+        print(\"OK  \", name, e[:60])
+    except Exception as ex:
+        print(\"FAIL\", name, type(ex).__name__, ex)
+    gmsh.model.mesh.clear()
+gmsh.finalize()
+"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 22 09:01 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 22 09:09 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 22 09:01 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  869 Aug 22 09:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && timeout -k 30 60 python3 -c "
+import gmsh
+print(gmsh.__file__)
+gmsh.initialize()
+print(\"gmsh\", gmsh.option.getString(\"General.Version\"))
+exprs = {
+  \"pow_caret\": \"x^2\",
+  \"pow_star\": \"x*x\",
+  \"sqrt_sci\": \"sqrt(x^2+1e-06)\",
+  \"sci_plain\": \"x+1e-06\",
+  \"sci_neg\": \"x+(-0.001)\",
+  \"full\": \"sqrt((sqrt(x^2+y^2)-0.02)^2+(z-(-0.01))^2+(0.5*((sqrt(y^2)-0.005977525)+sqrt((sqrt(y^2)-0.005977525)^2)))^2+(0.5*(sqrt(x^2)-x))^2)\",
+}
+gmsh.model.add(\"probe\")
+gmsh.model.occ.addBox(0,0,0,1,1,1); gmsh.model.occ.synchronize()
+for name, e in exprs.items():
+    f = gmsh.model.mesh.field.add(\"MathEval\")
+    gmsh.model.mesh.field.setString(f, \"F\", e)
+    gmsh.model.mesh.field.setAsBackgroundMesh(f)
+    try:
+        gmsh.model.mesh.generate(1)
+        print(\"OK  \", name, e[:60])
+    except Exception as ex:
+        print(\"FAIL\", name, type(ex).__name__, ex)
+    gmsh.model.mesh.clear()
+gmsh.finalize()
+"'\'''
+Error   : Wrong mesh element size lc = 0 (lcmin = 0, lcmax = 1e+22)
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Error   : Wrong mesh element size lc = 0 (lcmin = 0, lcmax = 1e+22)
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : [ 10%] Meshing curve 2 (Line)
+Info    : [ 20%] Meshing curve 3 (Line)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 40%] Meshing curve 5 (Line)
+Info    : [ 50%] Meshing curve 6 (Line)
+Info    : [ 60%] Meshing curve 7 (Line)
+Info    : [ 60%] Meshing curve 8 (Line)
+Info    : [ 70%] Meshing curve 9 (Line)
+Info    : [ 80%] Meshing curve 10 (Line)
+Info    : [ 90%] Meshing curve 11 (Line)
+Info    : [100%] Meshing curve 12 (Line)
+Info    : Done meshing 1D (Wall 0.03119s, CPU 0.029277s)
+Info    : 4096 nodes 4108 elements
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : [ 10%] Meshing curve 2 (Line)
+Info    : [ 20%] Meshing curve 3 (Line)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 40%] Meshing curve 5 (Line)
+Info    : [ 50%] Meshing curve 6 (Line)
+Info    : [ 60%] Meshing curve 7 (Line)
+Info    : [ 60%] Meshing curve 8 (Line)
+Info    : [ 70%] Meshing curve 9 (Line)
+Info    : [ 80%] Meshing curve 10 (Line)
+Info    : [ 90%] Meshing curve 11 (Line)
+Info    : [100%] Meshing curve 12 (Line)
+Info    : Done meshing 1D (Wall 2.21999s, CPU 1.85287s)
+Info    : 4000176 nodes 4000188 elements
+Info    : Meshing 1D...
+Error   : Wrong mesh element size lc = 0 (lcmin = 0, lcmax = 1e+22)
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : [ 10%] Meshing curve 2 (Line)
+Info    : [ 20%] Meshing curve 3 (Line)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 40%] Meshing curve 5 (Line)
+Info    : [ 50%] Meshing curve 6 (Line)
+Info    : [ 60%] Meshing curve 7 (Line)
+Info    : [ 60%] Meshing curve 8 (Line)
+Info    : [ 70%] Meshing curve 9 (Line)
+Info    : [ 80%] Meshing curve 10 (Line)
+Info    : [ 90%] Meshing curve 11 (Line)
+Info    : [100%] Meshing curve 12 (Line)
+Info    : Done meshing 1D (Wall 0.013259s, CPU 0.01326s)
+Info    : 85 nodes 97 elements
+/usr/local/lib/gmsh.py
+gmsh 4.15.2-git-657c8e9
+FAIL pow_caret Exception Wrong mesh element size lc = 0 (lcmin = 0, lcmax = 1e+22)
+FAIL pow_star Exception Wrong mesh element size lc = 0 (lcmin = 0, lcmax = 1e+22)
+OK   sqrt_sci sqrt(x^2+1e-06)
+OK   sci_plain x+1e-06
+FAIL sci_neg Exception Wrong mesh element size lc = 0 (lcmin = 0, lcmax = 1e+22)
+OK   full sqrt((sqrt(x^2+y^2)-0.02)^2+(z-(-0.01))^2+(0.5*((sqrt(y^2)-0
+
+## Exit
+- Status: 0
+- Elapsed (s): 4

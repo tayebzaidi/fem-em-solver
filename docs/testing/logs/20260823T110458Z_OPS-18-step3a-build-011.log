@@ -1,0 +1,166 @@
+# Test Run
+- Chunk: OPS-18-step3a-build-011
+- Commit: d7abf54223a463cc931e4393faf6c7168e9550ee
+- Time (UTC): 2026-08-23 11:04:59
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml up -d --build --force-recreate
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 23 06:01 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 23 06:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 06:01 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  869 Aug 23 06:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml up -d --build --force-recreate'
+ Image fem-em-solver:latest Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 563B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 696B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/dolfinx/dolfinx:v0.11.0
+#3 DONE 0.4s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [1/6] FROM docker.io/dolfinx/dolfinx:v0.11.0@sha256:2ae4bfbc0d9077268880faf04c72750528bee986c94ab223a2c159969bd56fa8
+#5 resolve docker.io/dolfinx/dolfinx:v0.11.0@sha256:2ae4bfbc0d9077268880faf04c72750528bee986c94ab223a2c159969bd56fa8 0.0s done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 9.95MB 0.6s done
+#6 DONE 0.7s
+
+#7 [2/6] RUN pip install --no-cache-dir --no-binary=h5py h5py
+#7 CACHED
+
+#8 [3/6] RUN pip install --no-cache-dir     gmsh     pyvista     meshio     tqdm     pydantic     pyyaml     black     isort     mypy     flake8     pytest     pytest-xdist     jupyter     ipywidgets     matplotlib
+#8 CACHED
+
+#9 [4/6] WORKDIR /workspace
+#9 CACHED
+
+#10 [5/6] COPY . /workspace/
+#10 DONE 16.7s
+
+#11 [6/6] RUN pip install -e .
+#11 1.765 Obtaining file:///workspace
+#11 1.767   Installing build dependencies: started
+#11 3.136   Installing build dependencies: finished with status 'done'
+#11 3.138   Checking if build backend supports build_editable: started
+#11 3.494   Checking if build backend supports build_editable: finished with status 'done'
+#11 3.497   Getting requirements to build editable: started
+#11 3.859   Getting requirements to build editable: finished with status 'done'
+#11 3.864   Preparing editable metadata (pyproject.toml): started
+#11 4.092   Preparing editable metadata (pyproject.toml): finished with status 'done'
+#11 4.104 Requirement already satisfied: fenics-dolfinx>=0.7.0 in /usr/local/dolfinx-real/lib/python3.12/dist-packages (from fem-em-solver==0.1.0) (0.11.0.post0)
+#11 4.104 Requirement already satisfied: mpi4py>=3.1.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (4.1.2)
+#11 4.105 Requirement already satisfied: petsc4py>=3.19.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (3.25.1)
+#11 4.106 Requirement already satisfied: slepc4py>=3.19.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (3.25.1)
+#11 4.106 Requirement already satisfied: gmsh>=4.11.0 in /usr/local/lib (from fem-em-solver==0.1.0) (4.15.2.dev1)
+#11 4.106 Requirement already satisfied: pyvista>=0.42.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (0.48.4)
+#11 4.107 Requirement already satisfied: numpy>=1.24.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (2.4.6)
+#11 4.107 Requirement already satisfied: scipy>=1.10.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (1.17.1)
+#11 4.108 Requirement already satisfied: matplotlib>=3.7.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (3.10.9)
+#11 4.108 Requirement already satisfied: meshio>=5.3.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (5.3.5)
+#11 4.109 Requirement already satisfied: h5py>=3.8.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (3.16.0)
+#11 4.109 Requirement already satisfied: tqdm>=4.65.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (4.70.0)
+#11 4.110 Requirement already satisfied: pydantic>=2.0.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (2.13.4)
+#11 4.110 Requirement already satisfied: pyyaml>=6.0 in /dolfinx-env/lib/python3.12/site-packages (from fem-em-solver==0.1.0) (6.0.3)
+#11 4.112 Requirement already satisfied: cffi in /dolfinx-env/lib/python3.12/site-packages (from fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (2.0.0)
+#11 4.112 Requirement already satisfied: fenics-basix<0.12.0,>=0.11.0 in /dolfinx-env/lib/python3.12/site-packages (from fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (0.11.0)
+#11 4.113 Requirement already satisfied: fenics-ffcx<0.12.0,>=0.11.0 in /dolfinx-env/lib/python3.12/site-packages (from fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (0.11.0)
+#11 4.113 Requirement already satisfied: fenics-ufl<2026.2.0,>=2026.1.0 in /dolfinx-env/lib/python3.12/site-packages (from fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (2026.1.0)
+#11 4.118 Requirement already satisfied: setuptools>=77.0.3 in /dolfinx-env/lib/python3.12/site-packages (from fenics-ffcx<0.12.0,>=0.11.0->fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (82.0.1)
+#11 4.125 Requirement already satisfied: contourpy>=1.0.1 in /dolfinx-env/lib/python3.12/site-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (1.3.3)
+#11 4.125 Requirement already satisfied: cycler>=0.10 in /dolfinx-env/lib/python3.12/site-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (0.12.1)
+#11 4.126 Requirement already satisfied: fonttools>=4.22.0 in /dolfinx-env/lib/python3.12/site-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (4.63.0)
+#11 4.126 Requirement already satisfied: kiwisolver>=1.3.1 in /dolfinx-env/lib/python3.12/site-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (1.5.0)
+#11 4.127 Requirement already satisfied: packaging>=20.0 in /dolfinx-env/lib/python3.12/site-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (26.2)
+#11 4.127 Requirement already satisfied: pillow>=8 in /dolfinx-env/lib/python3.12/site-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (12.2.0)
+#11 4.128 Requirement already satisfied: pyparsing>=3 in /dolfinx-env/lib/python3.12/site-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (3.3.2)
+#11 4.128 Requirement already satisfied: python-dateutil>=2.7 in /dolfinx-env/lib/python3.12/site-packages (from matplotlib>=3.7.0->fem-em-solver==0.1.0) (2.9.0.post0)
+#11 4.138 Requirement already satisfied: rich in /dolfinx-env/lib/python3.12/site-packages (from meshio>=5.3.0->fem-em-solver==0.1.0) (15.0.0)
+#11 4.146 Requirement already satisfied: annotated-types>=0.6.0 in /dolfinx-env/lib/python3.12/site-packages (from pydantic>=2.0.0->fem-em-solver==0.1.0) (0.8.0)
+#11 4.146 Requirement already satisfied: pydantic-core==2.46.4 in /dolfinx-env/lib/python3.12/site-packages (from pydantic>=2.0.0->fem-em-solver==0.1.0) (2.46.4)
+#11 4.147 Requirement already satisfied: typing-extensions>=4.14.1 in /dolfinx-env/lib/python3.12/site-packages (from pydantic>=2.0.0->fem-em-solver==0.1.0) (4.16.0)
+#11 4.147 Requirement already satisfied: typing-inspection>=0.4.2 in /dolfinx-env/lib/python3.12/site-packages (from pydantic>=2.0.0->fem-em-solver==0.1.0) (0.4.4)
+#11 4.151 Requirement already satisfied: six>=1.5 in /dolfinx-env/lib/python3.12/site-packages (from python-dateutil>=2.7->matplotlib>=3.7.0->fem-em-solver==0.1.0) (1.17.0)
+#11 4.153 Requirement already satisfied: cyclopts>=4.0.0 in /dolfinx-env/lib/python3.12/site-packages (from pyvista>=0.42.0->fem-em-solver==0.1.0) (4.23.1)
+#11 4.153 Requirement already satisfied: pooch in /dolfinx-env/lib/python3.12/site-packages (from pyvista>=0.42.0->fem-em-solver==0.1.0) (1.9.0)
+#11 4.154 Requirement already satisfied: scooby>=0.5.1 in /dolfinx-env/lib/python3.12/site-packages (from pyvista>=0.42.0->fem-em-solver==0.1.0) (0.11.2)
+#11 4.154 Requirement already satisfied: vtk!=9.4.0 in /dolfinx-env/lib/python3.12/site-packages (from pyvista>=0.42.0->fem-em-solver==0.1.0) (9.6.2)
+#11 4.158 Requirement already satisfied: attrs>=23.1.0 in /dolfinx-env/lib/python3.12/site-packages (from cyclopts>=4.0.0->pyvista>=0.42.0->fem-em-solver==0.1.0) (26.1.0)
+#11 4.159 Requirement already satisfied: docstring-parser<4.0,>=0.15 in /dolfinx-env/lib/python3.12/site-packages (from cyclopts>=4.0.0->pyvista>=0.42.0->fem-em-solver==0.1.0) (0.18.0)
+#11 4.159 Requirement already satisfied: rich-rst<3.0.0,>=1.3.1 in /dolfinx-env/lib/python3.12/site-packages (from cyclopts>=4.0.0->pyvista>=0.42.0->fem-em-solver==0.1.0) (2.1.0)
+#11 4.164 Requirement already satisfied: pygments>=2.0.0 in /dolfinx-env/lib/python3.12/site-packages (from rich-rst<3.0.0,>=1.3.1->cyclopts>=4.0.0->pyvista>=0.42.0->fem-em-solver==0.1.0) (2.20.0)
+#11 4.168 Requirement already satisfied: markdown-it-py>=2.2.0 in /dolfinx-env/lib/python3.12/site-packages (from rich->meshio>=5.3.0->fem-em-solver==0.1.0) (4.2.0)
+#11 4.170 Requirement already satisfied: mdurl~=0.1 in /dolfinx-env/lib/python3.12/site-packages (from markdown-it-py>=2.2.0->rich->meshio>=5.3.0->fem-em-solver==0.1.0) (0.1.2)
+#11 4.190 Requirement already satisfied: pycparser in /dolfinx-env/lib/python3.12/site-packages (from cffi->fenics-dolfinx>=0.7.0->fem-em-solver==0.1.0) (3.0)
+#11 4.192 Requirement already satisfied: platformdirs>=2.5.0 in /dolfinx-env/lib/python3.12/site-packages (from pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (4.11.3)
+#11 4.192 Requirement already satisfied: requests>=2.19.0 in /dolfinx-env/lib/python3.12/site-packages (from pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (2.34.2)
+#11 4.195 Requirement already satisfied: charset_normalizer<4,>=2 in /dolfinx-env/lib/python3.12/site-packages (from requests>=2.19.0->pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (3.5.1)
+#11 4.195 Requirement already satisfied: idna<4,>=2.5 in /dolfinx-env/lib/python3.12/site-packages (from requests>=2.19.0->pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (3.19)
+#11 4.196 Requirement already satisfied: urllib3<3,>=1.26 in /dolfinx-env/lib/python3.12/site-packages (from requests>=2.19.0->pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (2.7.0)
+#11 4.196 Requirement already satisfied: certifi>=2023.5.7 in /dolfinx-env/lib/python3.12/site-packages (from requests>=2.19.0->pooch->pyvista>=0.42.0->fem-em-solver==0.1.0) (2026.7.22)
+#11 4.206 Building wheels for collected packages: fem-em-solver
+#11 4.208   Building editable for fem-em-solver (pyproject.toml): started
+#11 4.456   Building editable for fem-em-solver (pyproject.toml): finished with status 'done'
+#11 4.458   Created wheel for fem-em-solver: filename=fem_em_solver-0.1.0-0.editable-py3-none-any.whl size=6822 sha256=c0310e072f86d0287e1b01e14fe0e6a32e52c081eeadedec7dd8f2b0f53686db
+#11 4.458   Stored in directory: /tmp/pip-ephem-wheel-cache-kta289us/wheels/b0/41/ab/4e04a8678980f3355548f1261923479fbf2a713a7393a7dea8
+#11 4.465 Successfully built fem-em-solver
+#11 4.600 Installing collected packages: fem-em-solver
+#11 4.637 Successfully installed fem-em-solver-0.1.0
+#11 4.638 
+#11 4.638 [notice] A new release of pip is available: 26.1.2 -> 26.2.1
+#11 4.638 [notice] To update, run: pip install --upgrade pip
+#11 DONE 4.8s
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 61.3s done
+#12 exporting manifest sha256:de75411f1f74a3b5136aa6a6551073442eba908e10faf57881220eeddbc4e546 0.0s done
+#12 exporting config sha256:eb7bf1a10a0080264d9afa1ce37778de47d74f9cbc9fb75089d7e0865cd894da 0.0s done
+#12 exporting attestation manifest sha256:d4e1d1d1ec766d41559001ce397019eb01caae3a0b402b636d206e2b8fa60d97 0.0s done
+#12 exporting manifest list sha256:5bd0e8dea1e2f44e870af6f0663aadba774d8ef7e43baea77a519078fa7c9455
+#12 exporting manifest list sha256:5bd0e8dea1e2f44e870af6f0663aadba774d8ef7e43baea77a519078fa7c9455 0.0s done
+#12 naming to docker.io/library/fem-em-solver:latest done
+#12 unpacking to docker.io/library/fem-em-solver:latest
+#12 unpacking to docker.io/library/fem-em-solver:latest 27.1s done
+#12 DONE 88.6s
+
+#13 resolving provenance for metadata file
+#13 DONE 0.0s
+ Image fem-em-solver:latest Built 
+ Container fem-em-solver Recreate 
+ Container fem-em-solver Recreated 
+ Container fem-em-solver Starting 
+ Container fem-em-solver Started 
+
+## Exit
+- Status: 0
+- Elapsed (s): 131

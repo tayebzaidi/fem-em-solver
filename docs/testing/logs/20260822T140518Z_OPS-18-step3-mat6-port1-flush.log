@@ -1,0 +1,105 @@
+# Test Run
+- Chunk: OPS-18-step3-mat6-port1-flush
+- Commit: de6e2073e41a944dafacdd19c2bff1b1ef5af5b5
+- Time (UTC): 2026-08-22 14:05:18
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && export FEM_EM_REQUIRE_COMPLEX=1 && export PYTHONPATH=/workspace/src:$PYTHONPATH && timeout -k 30 540 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_dodd_deeds_impedance.py tests/validation/test_port_lumped_bc.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 22 09:01 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 22 09:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 22 09:01 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  869 Aug 22 09:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && export FEM_EM_REQUIRE_COMPLEX=1 && export PYTHONPATH=/workspace/src:$PYTHONPATH && timeout -k 30 540 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_dodd_deeds_impedance.py tests/validation/test_port_lumped_bc.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 24 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  4%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 24 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  4%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [  8%]PASSED [  8%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 12%]PASSED [ 12%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 16%]PASSED [ 16%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 20%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter 
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 25%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 20%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 25%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 29%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 33%]
+tests/validation/test_dodd_deeds_impedance.py::test_nonconducting_half_space_is_exactly_invisible PASSED [ 29%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 33%]
+tests/validation/test_dodd_deeds_impedance.py::test_nonconducting_half_space_is_exactly_invisible PASSED [ 37%]
+tests/validation/test_dodd_deeds_impedance.py::test_perfect_conductor_limit_matches_image_mutual_inductance PASSED [ 37%]
+tests/validation/test_dodd_deeds_impedance.py::test_perfect_conductor_limit_matches_image_mutual_inductance PASSED [ 41%]
+tests/validation/test_dodd_deeds_impedance.py::test_lossy_half_space_dissipates_and_expels_flux PASSED [ 41%]
+tests/validation/test_dodd_deeds_impedance.py::test_lossy_half_space_dissipates_and_expels_flux PASSED [ 45%]
+tests/validation/test_dodd_deeds_impedance.py::test_thin_skin_departure_from_perfect_conductor_is_equal_parts PASSED [ 45%]
+tests/validation/test_dodd_deeds_impedance.py::test_thin_skin_departure_from_perfect_conductor_is_equal_parts PASSED [ 50%]
+tests/validation/test_dodd_deeds_impedance.py::test_loss_scales_as_sqrt_frequency_in_the_thin_skin_regime PASSED [ 50%]
+tests/validation/test_dodd_deeds_impedance.py::test_loss_scales_as_sqrt_frequency_in_the_thin_skin_regime PASSED [ 54%]
+tests/validation/test_dodd_deeds_impedance.py::test_liftoff_reduces_the_coupling_monotonically PASSED [ 54%]
+tests/validation/test_dodd_deeds_impedance.py::test_liftoff_reduces_the_coupling_monotonically PASSED [ 58%]
+tests/validation/test_dodd_deeds_impedance.py::test_fem_regime_constraints_hold_for_the_eddy_current_kernel PASSED [ 62%]
+tests/validation/test_dodd_deeds_impedance.py::test_fem_resistance_change_matches_dodd_deeds PASSED [ 58%]
+tests/validation/test_dodd_deeds_impedance.py::test_fem_regime_constraints_hold_for_the_eddy_current_kernel PASSED [ 62%]
+tests/validation/test_dodd_deeds_impedance.py::test_fem_resistance_change_matches_dodd_deeds PASSED [ 66%]
+tests/validation/test_dodd_deeds_impedance.py::test_fem_reactance_change_has_the_right_sign_and_magnitude PASSED [ 66%]
+tests/validation/test_dodd_deeds_impedance.py::test_fem_reactance_change_has_the_right_sign_and_magnitude PASSED [ 70%]
+tests/validation/test_dodd_deeds_impedance.py::test_zero_conductivity_slab_is_invisible PASSED [ 70%]
+tests/validation/test_dodd_deeds_impedance.py::test_zero_conductivity_slab_is_invisible PASSED [ 75%]PASSED [ 75%]
+tests/validation/test_port_lumped_bc.py::test_sheet_resistivity_is_ohms_per_square 
+tests/validation/test_port_lumped_bc.py::test_sheet_resistivity_is_ohms_per_square PASSED [ 79%]
+tests/validation/test_port_lumped_bc.py::test_sheet_area_is_the_unit_square PASSED [ 79%]
+tests/validation/test_port_lumped_bc.py::test_sheet_area_is_the_unit_square PASSED [ 83%]PASSED [ 83%]
+tests/validation/test_port_lumped_bc.py::test_bilinear_sheet_term_matches_closed_form 
+tests/validation/test_port_lumped_bc.py::test_bilinear_sheet_term_matches_closed_form PASSED [ 87%]PASSED [ 87%]
+tests/validation/test_port_lumped_bc.py::test_linear_sheet_term_matches_closed_form 
+tests/validation/test_port_lumped_bc.py::test_linear_sheet_term_matches_closed_form PASSED [ 91%]PASSED [ 91%]
+tests/validation/test_port_lumped_bc.py::test_open_circuit_terminal_current_is_v_over_z 
+tests/validation/test_port_lumped_bc.py::test_open_circuit_terminal_current_is_v_over_z PASSED [ 95%]PASSED [ 95%]
+tests/validation/test_port_lumped_bc.py::test_passive_sheet_current_follows_the_field 
+tests/validation/test_port_lumped_bc.py::test_passive_sheet_current_follows_the_field PASSED [100%]PASSED [100%]
+
+======================== 24 passed in 88.60s (0:01:28) =========================
+
+
+======================== 24 passed in 88.59s (0:01:28) =========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 91

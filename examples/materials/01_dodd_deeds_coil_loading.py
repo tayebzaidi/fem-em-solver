@@ -167,7 +167,7 @@ def _current_density_magnitude(e_complex, sigma, msh):
     j_squared.interpolate(
         fem.Expression(
             sigma * sigma * ufl.inner(e_complex, e_complex),
-            dg0.element.interpolation_points(),
+            dg0.element.interpolation_points,
         )
     )
     j_mag = fem.Function(dg0, name="J_magnitude")

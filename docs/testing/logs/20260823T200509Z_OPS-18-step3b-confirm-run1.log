@@ -1,0 +1,97 @@
+# Test Run
+- Chunk: OPS-18-step3b-confirm-run1
+- Commit: bfb5c96ec5964748504502a0fb4f667cb507ad1e
+- Time (UTC): 2026-08-23 20:05:09
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/environment tests/mesh/test_mesh_tag_integrity.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 23 15:01 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 23 15:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:01 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  869 Aug 23 15:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/environment tests/mesh/test_mesh_tag_integrity.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 11 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  9%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form SKIPPED [ 18%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not SKIPPED [ 27%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly SKIPPED [ 36%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 45%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 54%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 collected 11 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  9%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form SKIPPED [ 18%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not SKIPPED [ 27%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly SKIPPED [ 36%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 45%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 54%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 63%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 SKIPPED [ 72%]
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity PASSED [ 63%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 SKIPPED [ 72%]
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity PASSED [ 81%]PASSED [ 81%]
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity_with_region_resolution_policy 
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity_with_region_resolution_policy PASSED [ 90%]PASSED [ 90%]
+tests/mesh/test_mesh_tag_integrity.py::test_region_resolution_policy_refines_the_tagged_volumes_toward_cad 
+tests/mesh/test_mesh_tag_integrity.py::test_region_resolution_policy_refines_the_tagged_volumes_toward_cad PASSED [100%]PASSED [100%]
+
+=============================== warnings summary ===============================
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity
+  /workspace/tests/mesh/helpers.py:139: DeprecationWarning: dofmap is deprecated. Use dofmaps[0] instead.
+    dofmap = mesh.geometry.dofmap
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 7 passed, 4 skipped, 4 warnings in 13.00s ===================
+
+
+=============================== warnings summary ===============================
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity
+tests/mesh/test_mesh_tag_integrity.py::test_coil_phantom_mesh_tag_integrity
+  /workspace/tests/mesh/helpers.py:139: DeprecationWarning: dofmap is deprecated. Use dofmaps[0] instead.
+    dofmap = mesh.geometry.dofmap
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 7 passed, 4 skipped, 4 warnings in 13.00s ===================
+
+## Exit
+- Status: 0
+- Elapsed (s): 15

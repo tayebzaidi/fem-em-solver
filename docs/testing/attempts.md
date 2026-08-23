@@ -13427,3 +13427,92 @@ displaced birdcage through an assembly known to be wrong would only reproduce
 gate stated that way is weak at near-open terminations; the per-pair
 `|Z_ij/Z_ji|` the (d1) ruling used is the quantity that compares across
 fixtures, and a review may want gate (i) restated on it.
+
+
+---
+
+## 2026-08-23T20:15Z — `OPS-18` step 3b — **complete** (chunk ✅; `main` now boots dolfinx 0.11)
+
+**Item.** §9 On-deck item 3 (items 1 and 2 were already done). 15:00 implementer
+slot, tree clean at preflight, container Up.
+
+**What was done.** `main` merged into `attempt/OPS-18` (one conflict, both sides
+appended `test-results.md` rows — kept both in timestamp order), then the branch
+merged back to `main` with every log. The docker files could not be switched by
+`git checkout` (the documented bind-mount "Device or resource busy" — the
+checkout silently left `main`'s 0.7.2 content in place while switching the
+index); they were moved with the Edit tool and `git status --porcelain` verified
+clean before the build, exactly as the §9 worksite rule prescribes.
+
+**Compute (7 harness commands, no exit 124, no wedge, all foreground).**
+- `20260823T200135Z_OPS-18-step3b-build-011.log` — image rebuilt to
+  `dolfinx/dolfinx:v0.11.0`, exit 0, 132 s.
+- `20260823T200356Z_OPS-18-step3b-confirm.log` — **red baseline reproduced on
+  the rebuilt image**: `1 failed, 6 passed, 4 skipped`, Status 1, 16 s, `-n 2`,
+  real. The one failure is exactly step 2's filed drift, quoted by the log:
+  `uniform sizing moved tag 1 (coil_1) by 4.251e-04 ... 1.191750413e-04 ->
+  1.192257046e-04 m^3`.
+- `…200509Z…-confirm-run1.log` / `…200533Z…-confirm-run2.log` (`-s`) /
+  `…200550Z…-confirm-run3.log` (`-s`) — after the re-record, **`7 passed,
+  4 skipped` / exit 0 three times**, 15 / 14 / 14 s, both rank footers identical
+  in each. **Anchor (iv) met.**
+- `…200620Z…-collect-real.log`, `…200631Z…-collect-complex.log` —
+  **`437 collected`, 0 errors, `PYTEST_RC=0` in both modes.**
+- `…200704Z…-collect-tree.log` — per-module collect at `-n 1` for the count
+  reconciliation; `…200740Z…-env-probe.log` — the version probe §5.3's table
+  is written from.
+
+**Measured numbers.**
+- Re-record under class ruling (1\*), version-tagged, **1e-9 band untouched**:
+  tag 1 1.191750413e-04 → **1.192257046e-04** (+4.251e-04 rel), tag 2
+  1.188402981e-04 → **1.185069486e-04** (−2.805e-03), tag 3 4.943767949e-04
+  **unmoved**, tag 4 1.143560787e-02 → **1.143589055e-02** (+2.472e-05).
+- Condition (b′) arithmetic: **every printed digit is identical across the two
+  `-s` runs** — run-to-run move **0.0**, i.e. 0% of the band. The identity the
+  drift could have broken still closes exactly: tagged-volume partition ratio
+  **1.000000000000** on the integrity mesh, the uniform mesh and the policy mesh.
+  `GEO-17`'s sign and CAD-recovery gates green on their own digits (0.833417 /
+  0.755006, 0.835563 / 0.750454, 0.992751 / 0.983531).
+- Environment: dolfinx `0.11.0.post0`, Python 3.12.3, numpy 2.4.6, gmsh
+  4.15.2-git-657c8e9, h5py 3.16.0 / HDF5 2.1.1, petsc4py 3.25.1, mpi4py 4.1.2.
+- Collect reconciliation, **counted per module, not assumed**: 418 (step 2)
+  + 5 `test_port_birdcage_four_port.py` (leg (d), `66a770d`)
+  + 4 `test_port_birdcage_termination_probe.py` (leg (c), `c040b13`)
+  + 2 `test_port_birdcage_lumped_column.py` (leg (d0), `c2d751f`)
+  + 5 `test_port_lumped_sheet_asymmetric.py` (leg (d2), `47515a1`)
+  + 3 `test_straight_wire.py` 4 → 7 (`MAG-18`, `d494d81`) = **437**. Exact, no
+  residual. Validation 232 → 251 by the same arithmetic (all six modules are
+  under `tests/validation/`).
+
+**Doc work landed.** §5.3 table rewritten from the probe; `TH-10`'s 128 MHz
+55 251 → 55 241 re-record made explicit in its table row; three known-issues
+entries closed (numpy-2 `!r` → `445a3ea`; two-torus re-records and the
+non-determinism entry → `5df1e39`, the latter quoting (b′) verbatim); §7
+`OPS-18` flipped to ✅ with the scope caveat below; §9 item 3 marked done.
+
+**Owed to the review — read this before treating 0.11 as fully re-gated.** The
+real-mode `MAG` family has **never** been observed green on 0.11. Its last 0.11
+observation is step 3 attempt 3's `17 passed / 1 failed`, and the one failure
+was `test_straight_wire_b_field` against a 15% band that `MAG-18` has since
+**retired** (the number is now printed, not gated), so that specific failure
+cannot recur — but the gates that replaced it, `TestStraightWire::test_domain_l2_*`
+(`E_Ω` 25.3787 / 10.7288 / 6.6708%, rate 1.6842), are **0.7.2 numbers** and
+unmeasured on the image `main` now boots. This slot's anchor was the environment
++ mesh-tag family and the two collects, per the item, so the leg was out of
+scope and was not run rather than run and half-reported. The known-issues
+straight-wire entry is marked **superseded, not resolved**, and says the same.
+That leg is the natural next item: one heavy real-mode command.
+
+**Nothing parked, nothing loosened.** No band, assertion or gated physics number
+was moved; the only records written are the four mesh volumes, version-tagged
+under a standing class ruling with the band unchanged. No denial hit the
+allowlist. `main` is clean and, by design, now boots 0.11 — the worksite rule's
+"restore 0.7.2" clause expired with this merge, which is what step 3b is.
+
+**Hypothesis for the next attempt.** Run the real-mode `MAG` leg on 0.11
+(`tests/environment` + `tests/validation/test_straight_wire.py` + the rest of
+the `MAG` family, real, `-n 2`, heavy): the prediction is that `E_Ω` moves at
+the same ~1e-3 mesh-drift scale as the volumes and stays inside its rate band,
+because attempt 4 already measured the 0.11 ladder's *rate* at 1.99 against
+0.7.2's 1.10 — i.e. the image is the more accurate solver on this fixture, and
+a rate band is the one statistic that survives a mesh change.

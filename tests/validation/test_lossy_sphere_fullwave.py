@@ -452,7 +452,9 @@ def _power_rung(series: LossySphereSeries, resolution_sphere: float, resolution_
     sphere_cells = np.asarray(
         cell_tags.indices[cell_tags.values == SPHERE_TAG], dtype=np.int32
     )
-    e_series_fn.interpolate(_series_interior_interpolant(series), cells=sphere_cells)
+    # `OPS-18` step 3: dolfinx 0.11 renamed `interpolate`'s cell restriction
+    # `cells` -> `cells0` (the source-mesh list is now `cells1`).
+    e_series_fn.interpolate(_series_interior_interpolant(series), cells0=sphere_cells)
     p_series = _ohmic_power(
         e_series_fn,
         fields.sigma_field,

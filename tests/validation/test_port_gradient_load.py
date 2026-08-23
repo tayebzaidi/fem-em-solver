@@ -273,6 +273,7 @@ def gradient_load():
         ufl.inner(ufl.grad(psi_trial), ufl.grad(q)) * ufl.dx,
         ufl.inner(j_vec, ufl.grad(q)) * dx_driven,
         bcs=poisson_bcs,
+        petsc_options_prefix="fem_em_test_gradient_load_",
         petsc_options={
             "ksp_type": "preonly",
             "pc_type": "lu",

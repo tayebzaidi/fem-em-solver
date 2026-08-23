@@ -120,13 +120,58 @@ E_OMEGA_RATE_MIN = 0.7
 # defined on this field can beat it. The band below is the pre-registered
 # *record* band 1e-4; the 1e-10 clause is a finding for the review, recorded in
 # docs/testing/known-issues.md, not something loosened here.
-E_OMEGA_H0025_RECORD = 1.0728835983e-01
+#
+# OPS-18 step 3a re-record, 2026-08-23 (18:00 review ruling (1) of 2026-08-22
+# extended to leg 2 by ruling (2); condition (b) as restated (b') on
+# 2026-08-23). The value below is the one measured on image tag v0.11.0
+# (dolfinx 0.11.0.post0, gmsh 4.15.2), where the rung meshes to 147 235 cells;
+# on 0.7.2 / 145 884 cells it read 1.0728835983e-01, quoted above and kept here
+# as the record's provenance. The mesh moved +0.92% with the image's gmsh and
+# the record moved -1.04% with it, while the *gate* -- the fitted rate -- moved
+# 7e-04 (1.6842 -> 1.6854), which is the point of MAG-18. Under (b') the record
+# printed twice in one 0.11 run agrees to 7e-10, i.e. 7e-06 of its 1e-4 band.
+# No band moved.
+E_OMEGA_H0025_RECORD = 1.061717e-01
 E_OMEGA_RECORD_BAND = 1e-4
 
 # Attempt-5 row reproduced as the negative control: the statistic MAG-18
 # replaces, printed beside E_Omega on the gated rung so the log carries the
 # sampler swing side by side with the norm that removes it.
-NPOINTS_CONTROL = {8: 0.158028, 10: 0.127485, 20: 0.114984}
+#
+# Keyed by image, because *that* is what this control exists to say. The
+# retired statistic is not version-portable -- the same solved field on the
+# same fixture reads a 21% different 10-point number on 0.11 -- so a single
+# row would either fail on one image or have to be banded loosely enough to
+# hide the effect. Both rows are measurements, neither is a physics bound:
+#   0.7.2  / gmsh 4.11.1, 145 884 cells --
+#     20260822T201014Z_OPS-18-step3-wire-ladder-npoints-072.log
+#   0.11.0 / gmsh 4.15.2, 147 235 cells --
+#     20260823T051410Z_OPS-18-step3a-leg2-wire-011.log
+NPOINTS_CONTROL_BY_VERSION = {
+    "0.7": {8: 0.158028, 10: 0.127485, 20: 0.114984},
+    "0.11": {8: 0.166033, 10: 0.153848, 20: 0.136986},
+}
+
+
+def _npoints_control():
+    """The sampler control row recorded on the image this run is using.
+
+    Raises rather than defaulting: an unrecognised image means the control has
+    no record on it, and silently reusing another image's row is exactly the
+    mis-attribution OPS-18 step 3 spent four attempts untangling.
+    """
+    import dolfinx
+
+    key = ".".join(dolfinx.__version__.split(".")[:2])
+    if key not in NPOINTS_CONTROL_BY_VERSION:
+        raise AssertionError(
+            f"no n_points control recorded for dolfinx {dolfinx.__version__} "
+            f"(have {sorted(NPOINTS_CONTROL_BY_VERSION)}); measure it, do not "
+            f"borrow another image's row"
+        )
+    return key, NPOINTS_CONTROL_BY_VERSION[key]
+
+
 NPOINTS_CONTROL_BAND = 1e-4
 
 
@@ -431,8 +476,9 @@ class TestStraightWire:
         mesh, b_field = _solve_straight_wire(res, comm)
         e_omega = _domain_l2_error(mesh, b_field)
 
+        image_key, npoints_control = _npoints_control()
         sampled = {}
-        for n_points in sorted(NPOINTS_CONTROL):
+        for n_points in sorted(npoints_control):
             _, b_num_mag, b_ana_mag, _ = _sample_radial(
                 b_field, n_points, comm, R_MIN, R_MAX_BC
             )
@@ -443,20 +489,23 @@ class TestStraightWire:
             print(f"\nMAG-18 record rung h={res}, {n_cells} cells, "
                   f"{comm.size} ranks:")
             print(f"  E_Omega = {e_omega:.10e}  ({e_omega:.4%})")
-            print("  negative control -- the statistic this replaces:")
+            print(f"  negative control -- the statistic this replaces "
+                  f"(dolfinx {image_key} row):")
             for n_points, err in sampled.items():
-                ref = NPOINTS_CONTROL[n_points]
+                ref = npoints_control[n_points]
                 print(f"    n_points {n_points:3d}  rel_error {err:.6%} "
-                      f"(attempt-5 record {ref:.4%}, "
+                      f"(recorded {ref:.4%}, "
                       f"{(err - ref) / ref:+.3e} relative)")
 
         # The sampler swing is the finding, so it is asserted, not just
-        # printed: the same field read three ways spans 15.80% -> 11.50%.
+        # printed: on 0.7.2 the same field read three ways spans 15.80% ->
+        # 11.50%, on 0.11 16.60% -> 13.70%.
         for n_points, err in sampled.items():
-            ref = NPOINTS_CONTROL[n_points]
+            ref = npoints_control[n_points]
             assert abs(err - ref) / ref < NPOINTS_CONTROL_BAND, (
                 f"n_points={n_points} control {err:.6%} does not reproduce the "
-                f"attempt-5 record {ref:.4%} within {NPOINTS_CONTROL_BAND}"
+                f"dolfinx {image_key} record {ref:.4%} within "
+                f"{NPOINTS_CONTROL_BAND}"
             )
 
         if E_OMEGA_H0025_RECORD is None:

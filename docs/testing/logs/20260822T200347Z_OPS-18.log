@@ -1,0 +1,38 @@
+# Test Run
+- Chunk: OPS-18
+- Commit: b8bf0a705da25356423ca423047280d08464ec71
+- Time (UTC): 2026-08-22 20:03:48
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 30 python3 -c "import dolfinx, gmsh; print(dolfinx.__version__, gmsh.__version__)"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 22 15:01 .
+drwxr-xr-x 15 taz5297 taz5297 4096 Aug 22 15:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 22 15:01 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  869 Aug 22 15:01 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 30 python3 -c "import dolfinx, gmsh; print(dolfinx.__version__, gmsh.__version__)"'\'''
+0.11.0.post0 4.15.2
+
+## Exit
+- Status: 0
+- Elapsed (s): 4

@@ -169,7 +169,13 @@ def current_divergence_residual(
 
     from dolfinx.fem.petsc import LinearProblem  # local: needs a PETSc build
 
-    problem = LinearProblem(a, rhs, bcs=[bc], petsc_options=options)
+    problem = LinearProblem(
+        a,
+        rhs,
+        bcs=[bc],
+        petsc_options=options,
+        petsc_options_prefix="fem_em_current_divergence_",
+    )
     phi = problem.solve()
     iterations = int(problem.solver.getIterationNumber())
 
