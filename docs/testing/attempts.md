@@ -18185,3 +18185,84 @@ from the adjacent pair by more than the 0.0159% mesh-symmetry floor **before**
 spending four solves on gate (iii) — if it does not, the ports are too weakly
 coupled at 10 MHz for a circulant reading and the frequency, not the
 impedance, is the knob.
+
+## 2026-08-23T00:45Z — `MAG-18` — **complete on (i) and (iii), one pre-registered anchor unreachable** (19:30 CDT implementer slot)
+
+**Item.** §9 item 1, the first undone On-deck entry: replace the
+sampler-fragile 10-point straight-wire gate with the annulus-restricted
+domain L2 `E_Ω`. Tree clean at preflight, container Up (0.7.2), no
+`recovered/*` needed. Everything on `main`, real build, `-n 2`.
+
+**What was built.** `tests/validation/test_straight_wire.py` gains
+`_annulus_indicator` (DG0 indicator from a numpy mask on *owned* cell
+midpoints — `compute_midpoints` on `indices < size_local`, never a
+`ufl.conditional` on `SpatialCoordinate`, so the file still imports in the
+complex build) and `_domain_l2_error` (both integrals `assemble_scalar` +
+`allreduce(SUM)` before the ratio, fixed `quadrature_degree=4` because the
+integrands carry a `sqrt`), plus three tests: `test_domain_l2_convergence`
+(the ladder), `test_domain_l2_record` (the h = 0.0025 record + the retired
+statistic as an asserted negative control), `test_domain_l2_analytic_bc_
+beats_natural`. `B_ana` is interpolated into `b_field.function_space` —
+note that is DG **1**, not DG0 as §9 item 1's text says: `compute_b_field`
+builds `("DG", self.degree, (3,))` and the wire fixture solves at
+degree 1. The statistic is unaffected (both fields live in the same space);
+the plan's wording was just loose.
+
+**Numbers.**
+
+| anchor | pre-registered | measured | verdict |
+|---|---|---|---|
+| (i) rate on h = 0.004/0.0025/0.0018 | ≥ 0.7, monotone | **1.6842**, monotone 25.3787 → 10.7288 → 6.6708% | ✅ |
+| (ii) `-n 2` vs `-n 4` at h = 0.0025 | 1e-10 relative | **7.28e-08** | ✗ as written |
+| (iii) natural BC worse at h = 0.0025 | strictly | **32.3117%** vs 10.7288%, ratio 0.3320 | ✅ |
+
+Record: `E_Ω`(h = 0.0025) = **1.0728835983e-01**, 145 884 cells,
+`0.7.2 / gmsh 4.11.1`, **bit-identical across the two `-n 2` runs** before
+it was written into the test (probe then full run), band 1e-4. Negative
+control asserted, not merely printed: the retired 10-point statistic reads
+15.802788 / 12.748522 / 11.498352% at `n_points` 8 / 10 / 20 on the same
+solved field, reproducing the attempt-5 row to ≤ 4.2e-06 relative — so the
+log carries the 34% sampler swing beside the norm that has none. The
+`rel_error < 0.15` assertion is now reported-not-gated with the finding
+cited at the assertion site.
+
+**Anchor (ii) is the finding of the slot, and it is not the statistic's
+fault.** `MagnetostaticSolver` solves with `ksp_type=preonly, pc_type=lu` —
+a direct factorization whose elimination order follows the partition — and
+the **retired** 10-point statistic moves **1.9e-07** across the very same
+two runs. So ~1e-7 is the *solve's* cross-width reproducibility floor,
+shared by every functional of this field, and 1e-10 was unreachable by
+construction rather than a property `E_Ω` failed to have. What (ii) was
+commissioned to exclude — sample-count dependence — is excluded: there is
+no sampler in a reduced integral. I did **not** re-register the anchor
+in-slot: the test asserts the separately pre-registered *record* band 1e-4,
+a known-issues entry states the 1e-10 clause is unreachable with the
+measurement, and `MAG-18` is left 🟡. The review owns the call (1e-6 would
+be 100× the observation; or assert the two widths against each other in one
+harness invocation instead of against a constant).
+
+**Logs.** `20260823T003327Z_MAG-18-record-probe.log` (`-n 2`, 31 s,
+Status 0 — the record probe), `20260823T003406Z_MAG-18-record-n4.log`
+(`-n 4`, 26 s, Status 0 — anchor (ii)),
+`20260823T003518Z_MAG-18-full.log` (**7 passed, 270.64 s, Status 0**, whole
+file, `-n 2` — the gating run). Heavy tier declared; 328 s of compute
+total against the ≤ 250 s estimate, inside every ceiling. No `-n 1`
+anywhere (exit 124 at 400 s, attempt 4). No container rebuild, no wedge, no
+permission denial.
+
+**Side effect worth knowing.** The 0.11 known-issues entry for
+`test_straight_wire_b_field` (15.3848% vs 15%) can no longer fire as a
+*failure* — the assertion it fires on is gone. The entry stays open with an
+update saying so: the 15.3848% non-monotonicity is still observed and still
+unexplained, and green there is not an explanation.
+
+### Hypothesis for the next slot
+
+§9 item 2 (`EX-28`) is next by the first-undone rule and is independent of
+this. For `OPS-18` item 4's leg 2 when it runs: `E_Ω` on 0.11 should land
+*below* the 0.7.2 ladder at the fine end (attempt 4 measured 0.11 as ~2×
+more accurate at h = 0.0018 in the sampled norm), so the interesting
+question is whether the h = 0.0025 non-monotonicity survives in a norm with
+no sampler — if `E_Ω` is monotone on 0.11 at rate ≥ 0.7 with the gated rung
+on its own ladder, the 15.3848% outlier was the sampler interacting with a
+moved mesh after all, and the open entry can close.

@@ -329,6 +329,68 @@ unless fixing it is the task.
 > on 0.11 is observed and unexplained, and `MAG-18` does not claim to
 > resolve it — it leaves only when someone explains or retires it with a
 > commit.
+>
+> ---
+>
+> **Update, `MAG-18` executed 2026-08-22 (log
+> `20260823T003518Z_MAG-18-full.log`, `7 passed` / 270.64 s / `-n 2`,
+> 0.7.2 / `main`) — the ruling is implemented, and the symptom at the top
+> of this entry can no longer fire.** `rel_error < 0.15` is gone from
+> `test_straight_wire_b_field`; the number is printed, and reproduced
+> under assertion at `n_points` 8 / 10 / 20 in
+> `test_domain_l2_record`. So on 0.11 that test will now *pass* — the
+> 15.3848% it used to fail on is still there, still unexplained, and this
+> entry stays open for it, but a run hitting it will see a printed line
+> rather than a red assertion. **Do not read the green as an explanation.**
+> The gate is now `E_Ω` = 25.3787 / 10.7288 / **6.6708%** on the recorded
+> ladder, rate **1.6842**, monotone, with the natural-BC control at
+> 32.3117% vs 10.7288%.
+
+### `MAG-18` anchor (ii) is unreachable as pre-registered: the magnetostatic solve's own cross-width floor is ~1e-7, not 1e-10 (2026-08-22)
+
+> **Not a failing test** — no assertion is red. This records a
+> pre-registered done-when clause that measurement showed could not be met
+> by any statistic, so the next reader does not spend a slot re-measuring
+> it.
+>
+> **The clause.** `MAG-18` anchor (ii), PROJECT_PLAN §7 and §9 item 1: "the
+> h = 0.0025 value at `-n 2` and `-n 4` agree to **1e-10 relative** — a
+> reduced integral has no sampler; this is the control that the new
+> statistic lacks the defect the old one had."
+>
+> **Measured** (`20260823T003327Z_MAG-18-record-probe.log`, `-n 2`, 31 s;
+> `20260823T003406Z_MAG-18-record-n4.log`, `-n 4`, 26 s; same 145 884-cell
+> mesh in both, `Status: 0`):
+>
+> | statistic | `-n 2` | `-n 4` | relative |
+> |---|---|---|---|
+> | `E_Ω` (new) | 1.0728835983e-01 | 1.0728836764e-01 | **7.28e-08** |
+> | 10-point, n_points = 8 (retired) | 15.802788% | 15.802785% | 1.9e-07 |
+>
+> **Cause: the linear solve, not the statistic.** `MagnetostaticSolver`
+> runs `ksp_type=preonly, pc_type=lu` — a *direct* factorization, whose
+> pivot/elimination order follows the mesh partition, so the computed `A`
+> itself differs at roundoff amplified by the gauge-penalty system's
+> conditioning. The retired sampled statistic moves the same way on the
+> same two runs, which is the discriminator: a defect of the *sampler*
+> would not appear in an assembled integral, and this appears in both.
+> ~1e-7 is therefore the solve's cross-width reproducibility floor and no
+> functional of this field can read below it.
+>
+> **What it does and does not mean.** It does **not** revive the sampler
+> objection: anchor (ii) existed to show `E_Ω` has no sample-count
+> dependence, and it has none — the 34% swing the old statistic showed
+> under `n_points` has no counterpart here. It **does** mean the 1e-10
+> number was written without knowing the solver's floor.
+>
+> **Nothing was loosened in-slot.** `E_OMEGA_RECORD_BAND` is the
+> separately pre-registered **record** band 1e-4, not a relaxed 1e-10.
+> Re-registering (ii) at the measured floor (1e-6 would be 100× the
+> observation and still 1e5× tighter than the record band) is a review
+> decision; `MAG-18` stays 🟡 until it is made. A cheap alternative the
+> review may prefer: assert cross-width agreement *directly* by running
+> the record test at both widths in one harness invocation rather than
+> against a hard-coded constant.
 
 ### `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` fails **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
 

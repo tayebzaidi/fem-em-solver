@@ -49,8 +49,12 @@ What is validated, to what tolerance, and what must not be trusted.
 
 - **Magnetostatics** (`core/solvers.py`, N1curl + gauge penalty, default
   1.0): Helmholtz **0.04%** centre / 0.83% mean; circular loop 7.07%;
-  straight wire 12.75% at the landed gate (3.74% at the finest measured
-  rung), rate ≥ 1.1; PEC cavity modes **0.0436%**.
+  straight wire **`E_Ω` = 10.7288%** at h = 0.0025, falling
+  25.3787 → 10.7288 → **6.6708%** on the h = 0.004/0.0025/0.0018 ladder at
+  fitted rate **1.68** (`MAG-18`, 2026-08-22 — the annulus-restricted
+  domain L2 that replaced the 10-point radial sample; the retired sampled
+  statistic read 12.75% at n_points = 10 and 15.80% at 8 on the *same*
+  field, so it never licensed a number); PEC cavity modes **0.0436%**.
 - **Time-harmonic complex solve** (`TH-1`, complex build mandatory — real
   mode raises): MMS rate 0.9929; lossy plane wave α **0.019%** / β 0.059%
   (`TH-6`); evanescent waveguide γ **0.006%** (`TH-7`); quasi-static
@@ -2679,7 +2683,7 @@ idiom `max|Im| ≤ 1e-12·max| |` asserted before the cast.)*
 | `MAG-15` | Lagrange-multiplier Coulomb gauge (cross-check) | ✅ | smoke | 7 passed, 13 s |
 | `MAG-16` | Complex-build-safe magnetostatic energy | ✅ 2026-08-05 | smoke | 10 passed complex `-n 2` in 4.9 s; cross-build pin 2.9e-07, `Im W` exactly 0; retires known-issues 8 |
 | `MAG-17` | Coulomb-gauge multiplier does not vanish for a divergence-free source: h-ladder discriminator (`OPS-17` step-2 defect 2, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | ✅ *(audited COMPLIANT 2026-08-21 18:00 review — rate 2.4476 vs the pre-registered ≥ 0.7 verified in `…final2.log`; one nuance on record: the cited "ladder" log is exit 1 — a sign-convention fix in the fit sits between it and the record run, same spreads, band unmoved)* | standard |
-| `MAG-18` | Sampler-independent straight-wire gate: annulus-restricted domain L2 of `|B_h| − |B_ana|` with a pre-registered rate band (`OPS-18` step 3 attempt 5 finding, known-issues 2026-08-22: the 10-point radial L2 swings 34% under its own sampler and the 15% band already fails on 0.7.2 at `n_points = 8`; commissioned 2026-08-22 18:00 review) | 🧪 | heavy |
+| `MAG-18` | Sampler-independent straight-wire gate: annulus-restricted domain L2 of `|B_h| − |B_ana|` with a pre-registered rate band (`OPS-18` step 3 attempt 5 finding, known-issues 2026-08-22: the 10-point radial L2 swings 34% under its own sampler and the 15% band already fails on 0.7.2 at `n_points = 8`; commissioned 2026-08-22 18:00 review) | 🟡 **2026-08-22** — the gate is built, live on `main` and green: `E_Ω` 25.3787 → 10.7288 → 6.6708% on the recorded ladder, **rate 1.6842 ≥ 0.7** and monotone (i ✅); natural-BC wall 32.3117% vs analytic 10.7288%, ratio 0.3320, strictly worse (iii ✅); the h = 0.0025 record 1.0728835983e-01 at 145 884 cells reproduced bit-identically across two `-n 2` runs; the retired 10-point row reproduced under assertion at all three sample counts (15.802788 / 12.748522 / 11.498352% vs 15.8028 / 12.7485 / 11.4984, ≤ 4.2e-06 relative). **Anchor (ii) not met as pre-registered:** `-n 2` vs `-n 4` agree to **7.28e-08**, not 1e-10 — the solve is a direct LU whose factorization order follows the partition, and the *retired* statistic moves the same way on the same two runs (1.9e-07), so ~1e-7 is the solve's cross-width floor and no norm on this field beats it. Known-issues entry filed; the 1e-10 clause is the review's to dispose of. `7 passed`/270.64 s/`-n 2` | heavy |
 
 **`MAG-17` — the Coulomb-gauge multiplier does not vanish for a
 divergence-free source: h-ladder discriminator** ✅ *(step 1 closed
@@ -2822,7 +2826,7 @@ chunk.)*
 >   harness run and ending its turn SIGKILLs the tree) — the reason every
 >   scheduled-slot recipe runs harness commands foreground.
 
-**`MAG-18` — sampler-independent straight-wire gate** 🧪 *(commissioned
+**`MAG-18` — sampler-independent straight-wire gate** 🟡 *(commissioned
 2026-08-22 18:00 review as the disposal of `OPS-18` step 3 leg 2; §9
 item 1 carries the executable rubric.)* **Why it exists.**
 `test_straight_wire_b_field` gates a relative L2 over **10 radial sample
@@ -2871,6 +2875,39 @@ fine and the instrument is not.
 >   rate < 0.7 or non-monotone means the wire gate was never converging
 >   in a norm — known-issues entry, §2.1 wire line flagged, `OPS-18`
 >   item 4 runs leg 1 only; never fit the band to the result.
+> * **Executed 2026-08-22** (log `20260823T003518Z_MAG-18-full.log`,
+>   `7 passed` / 270.64 s / `-n 2`, heavy; probes
+>   `20260823T003327Z_MAG-18-record-probe.log` `-n 2` and
+>   `20260823T003406Z_MAG-18-record-n4.log` `-n 4`, 31 s + 26 s). **(i)
+>   holds**: `E_Ω` = 25.3787% / 10.7288% / 6.6708% at
+>   h = 0.004 / 0.0025 / 0.0018 (38 750 / 145 884 / 383 248 cells),
+>   monotone, fitted rate **1.6842** against the pre-registered 0.7 — the
+>   field *was* converging; the instrument was the problem, exactly as the
+>   commission read it. **(iii) holds**: at h = 0.0025 the natural-BC wall
+>   reads **32.3117%** against the analytic wall's 10.7288%, ratio 0.3320
+>   — `MAG-13`'s claim is stronger in the new norm than in the old one
+>   (0.63 at h = 0.004 sampled). **(ii) does not hold as written**: `-n 2`
+>   1.0728835983e-01 vs `-n 4` 1.0728836764e-01 is **7.28e-08** relative,
+>   not 1e-10. The cause is measured, not guessed — `MagnetostaticSolver`
+>   solves with `ksp_type=preonly, pc_type=lu`, a direct factorization
+>   whose pivot order follows the partition, and the **retired** 10-point
+>   statistic moves 1.9e-07 across the same two runs. ~1e-7 is the
+>   *solve's* cross-width reproducibility floor, shared by every functional
+>   of this field, so the 1e-10 pre-registration was unreachable by
+>   construction and says nothing about the sampler defect (ii) was
+>   commissioned to exclude. Nothing was loosened in-slot: the test asserts
+>   the pre-registered **record** band 1e-4, the deviation is filed to
+>   known-issues, and re-registering (ii) at the measured floor is the
+>   review's call. The record 1.0728835983e-01 / 145 884 cells /
+>   `0.7.2 gmsh 4.11.1` reproduced **bit-identically** across the two
+>   `-n 2` runs before it was written into the test. The negative control
+>   is asserted, not merely printed: 15.802788 / 12.748522 / 11.498352%
+>   at `n_points` 8 / 10 / 20 reproduce the attempt-5 row to ≤ 4.2e-06
+>   relative, so the log carries the 34% sampler swing beside the norm
+>   that has none. `test_straight_wire_b_field`'s `rel_error < 0.15` is now
+>   reported-not-gated with the finding cited at the assertion site.
+>   **Chunk stays 🟡** on (ii) alone: `OPS-18` item 4's leg 2 may
+>   re-measure `E_Ω` on 0.11 — the gate is on `main`.
 
 **Open follow-ups in MAG:**
 
@@ -6254,7 +6291,17 @@ any slot that rebuilt the live container ends by restoring it from
 "Device or resource busy", a *silent* wrong-content switch) — move them
 with the Edit tool and verify `git status --porcelain`.
 
-1. **`MAG-18` — replace the sampler-fragile straight-wire gate with a
+1. ~~**`MAG-18` — replace the sampler-fragile straight-wire gate with a
+   domain-L2 statistic**~~ — **done 2026-08-22, 19:30 slot** (`7 passed` /
+   270.64 s / `-n 2`, `20260823T003518Z_MAG-18-full.log`): the gate is on
+   `main`, anchors (i) rate **1.6842** monotone and (iii) natural-BC
+   32.3117% vs 10.7288% both hold; anchor (ii) reads **7.28e-08**, not the
+   pre-registered 1e-10, because the direct-LU solve's cross-width floor is
+   ~1e-7 and the *retired* statistic moves 1.9e-07 the same way —
+   known-issues entry filed, `MAG-18` left 🟡 for the review to re-register
+   (ii) or accept it. Item 4's leg 2 may proceed: the gate is landed.
+   Original text:
+   **`MAG-18` — replace the sampler-fragile straight-wire gate with a
    domain-L2 statistic (heavy, `-n 2`, real build, 0.7.2, `main`).**
    Execute the §7 `MAG-18` entry (commissioned this review; full rubric
    there). In `tests/validation/test_straight_wire.py`, add a function
