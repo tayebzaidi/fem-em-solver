@@ -13984,3 +13984,93 @@ retroactively: the 0.10 image is gone from `main`, so no run can ever separate
 the two causes again. Whoever rules should also note that leg (c)'s
 degeneracy-gate margin is the fragile quantity across all of this: 598× at the
 records' mesh, 253× here, 0.79× on step B's mesh.
+
+## 2026-08-24T11:00Z — `EX-29` (§9 item 3) — **complete**: the doc-reference checker now freshness-gates every example's own `paraview_output/`; the census goes 24 → 55
+
+**Preflight.** `main` clean at `bda3353`, container Up 15 h. No exception
+clause needed.
+
+**Item selection.** §9 item 1 (`PORT-9` leg (d3b)) was executed by the 04:30
+slot and its own §9 annotation says the re-record "needs a ruling" — the three
+gates are already green, and the only action left on it is a two-cause
+re-record that ruling (4\*) reserves to a review. Re-running it would
+reproduce identical digits and either change nothing or make an in-slot review
+call. Item 2 is explicitly serial: "if (d3b)'s records are not on `main`, skip
+to item 3" — they are not. So item 3.
+
+**What ran** (four foreground harness commands, all `-n 1`, smoke tier, no
+solve):
+
+- `20260824T110150Z_EX-29-prefix-control.log` — the **pre-fix** checker on the
+  committed tree, run *before any edit*: `dead=0 guide=0 stale=24
+  stale_severity=report exit=2`, 36 guides / 117 references. Elapsed 1 s.
+- `20260824T110342Z_EX-29-unit.log` — first post-fix run, **red on purpose's
+  opposite**: `dead=1`, `git ls-files` exit 128 in the container (below).
+- `20260824T110512Z_EX-29-unit.log` — `15 passed in 3.71 s`, Elapsed 5 s.
+- `20260824T110531Z_EX-29-census.log` — the companion full-census docrefs run:
+  `dead=0 guide=0 stale=55 stale_severity=report exit=2`, Elapsed 1 s.
+- `20260824T110540Z_EX-29-unit-run2.log` — second in-slot pass, widened to the
+  whole directory: `tests/unit` **22 passed in 7.33 s**, Elapsed 9 s. The 8
+  pre-existing `OPS-19` tests are unchanged and green in both.
+
+**The measurement.** Same tree, same 36 guides, same 117 references:
+**pre-fix `stale=24` → post-fix `stale=55`**. Gate (d)'s test walks every
+`examples/**/paraview_output/` plus the repo root itself, independently of the
+checker's resolution helpers, and reproduces the printed figure exactly —
+`stale=55 checked=58 hidden_pre_fix=32`. So **32 of the 58 resolved artifact
+references** sat outside the repo-root directory and were exempted by basename;
+the old count was a census of 5 examples, as the weekly review suspected, and
+it was hiding more than half the total.
+
+**Changes.** `check_example_doc_references.py`: `collect_references` now keeps
+the citing guide (not just its printable name) so an artifact resolves in that
+guide's own `paraview_output/` first and `--output-dir` second
+(`candidate_dirs`); the in-tree exemption is `tracked_artifacts`, i.e. exactly
+what `git ls-files` reports under the docs root; violation and staleness
+messages name the directories actually searched. `examples/magnetostatics/
+paraview_output/` (9 orphaned 2026-08-03/04 `circular_loop_*` files, untracked
+and gitignored) deleted. Four new fixtures + two guards in
+`tests/unit/test_doc_reference_exit_codes.py`.
+
+**Two findings the §7 entry did not predict, both measured, both journaled to
+known-issues and §7:**
+
+1. **The tracked set is not empty.** The entry said to assert it is ("none
+   today"). `git ls-files examples/ | grep -E '\.(xdmf|h5|bp|csv|json|png|msh)$'`
+   returns three real committed artifacts —
+   `ansys_benchmarks/loop_over_lossy_slab_10MHz/metrics.json`,
+   `ansys_benchmarks/two_torus_gap_ports_10MHz/metrics.json`,
+   `magnetostatics/straight_wire_validation.png` — which are precisely the
+   "committed next to its own case" artifacts the exemption exists for. Writing
+   `assert tracked == {}` would have been writing a false assertion, so the
+   anti-widening guard is the same shape one level down: the set is **pinned by
+   path** (`COMMITTED_EXAMPLE_ARTIFACTS`), so committing a new artifact must be
+   declared and re-broadening to untracked scratch fails.
+2. **`git` does not work inside the container without help.** `git ls-files` in
+   `/workspace` exits 128 with `fatal: detected dubious ownership in repository
+   at '/workspace'` — the container runs as root over a bind mount owned by the
+   host user. That is how run 1 went red, and the failure mode is nasty: the
+   exemption silently empties, and the two tracked `metrics.json` are then
+   reported as **dead references** (`dead=1 exit=1`) — a hard violation
+   invented by an environment quirk. Fixed by passing
+   `-c safe.directory=<repo root>` and `-c safe.directory=<docs root>`
+   (`safe_directory_args`); `-c` is protected configuration so git honours it
+   and the value cannot come from the repo under inspection. **Any future
+   in-container `git` call needs the same** — worth an entry in the harness
+   recipe if a second one appears.
+
+**Tree:** `main` clean and green. This commit carries the checker, the test
+file, the five logs and their test-results rows, the `EX-29` §7 close and
+status flip, the §9 item-3 done mark, the `OPS-19` carry-forward correction
+(24 → 55), the `EX-30` re-sizing note, and the known-issues entry's retirement.
+
+**Compute:** five foreground harness runs, 1 + 3 + 5 + 1 + 9 = **19 s** total,
+every one inside `timeout -k 30 120`/`180`/`300`. No denial, no wedge, no exit
+124.
+
+**Hypothesis for the next attempt.** `EX-30` is the obvious follow-on but must
+be **re-sized by a review first**: it was scoped as "13 examples, two legs" off
+the invisible-set estimate, and the instrument now says 55 stale references. A
+review should also decide whether the docrefs call belongs in
+`run_examples.sh` now that `exit=2` is a legible signal — with the census
+honest, a per-run freshness reading is worth something it was not worth before.

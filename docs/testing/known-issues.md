@@ -1330,7 +1330,7 @@ red-but-benign companion log each on 2026-08-16, which is what commissioned
 `OPS-19`. The `EX-18` heading violations once filed here, three missing
 headings in `examples/ports/01_two_torus_port_pair.md`, were fixed 2026-08-16.)*
 
-### `check_example_doc_references.py` freshness-gates only 5 of 27 examples — every `stale=24, none of them mine` line is not an all-clear (weekly review 2026-08-23, `EX-29`)
+### ~~`check_example_doc_references.py` freshness-gates only 5 of 27 examples — every `stale=24, none of them mine` line is not an all-clear~~ — RESOLVED 2026-08-24 (`EX-29`; found by the weekly review 2026-08-23)
 
 **Found by the 2026-08-23 weekly examples audit (read-only, not a test
 failure).** The checker's `--output-dir` defaults to the single repo-root
@@ -1356,12 +1356,30 @@ and always names the same set.
 files) is an orphan — `02_circular_loop.py` has written to the repo root
 since `EX-17`, and nothing regenerates that directory.
 
-**Disposition.** `EX-29` (§7) fixes the checker — scan each referenced
-artifact at its example-relative path and restrict the exemption to
-`git ls-files`-tracked paths — with the unit-test negative control that an
-untracked in-tree artifact older than `--max-age-s` must read stale;
-`EX-30` refreshes the 13-example set. Until `EX-29` lands, read every
-`stale=` figure as a lower bound over 5 examples, not a census.
+**RESOLVED 2026-08-24 by `EX-29`** (`tests/unit/test_doc_reference_exit_codes.py`,
+15 tests, green twice in-slot; logs `20260824T110512Z_EX-29-unit.log` /
+`20260824T110540Z_EX-29-unit-run2.log`). The checker now resolves each
+referenced artifact in the citing guide's own `paraview_output/` first and the
+shared `--output-dir` second, and exempts only paths `git ls-files` reports as
+tracked. Measured on the same tree, same slot: **pre-fix `stale=24`**
+(`20260824T110150Z_EX-29-prefix-control.log`) → **post-fix `stale=55`**
+(`20260824T110531Z_EX-29-census.log`, `dead=0 guide=0 exit=2`), with
+**32 of 58** resolved artifact references sitting outside the repo-root
+directory — the set the old exemption hid. The orphaned
+`examples/magnetostatics/paraview_output/` is deleted. `EX-30` refreshes the
+now-visible stale set and is re-sized from 55 by a review.
+
+Two corrections to this entry's own text, both measured: (a) the tracked set
+is **not** empty — `git ls-files` reports three committed artifacts under
+`examples/` (`ansys_benchmarks/*/metrics.json` ×2,
+`magnetostatics/straight_wire_validation.png`), which are exactly the
+"committed next to its own case" exemption the rule was written for and are
+pinned by path in the test; (b) `git` inside the `fem-em-solver` container
+fails with `fatal: detected dubious ownership in repository at '/workspace'`
+(root over a host-owned bind mount), which would have silently emptied the
+exemption and reported the two tracked `metrics.json` as **dead references** —
+the checker passes `-c safe.directory=` for both the repo root and the docs
+root. Any future in-container `git` call needs the same.
 
 ### The container-side `timeout` in the standard harness recipe does not reliably stop an `mpiexec` job, and an overrun can wedge the container (`MAT-6` step 10, 2026-08-12)
 

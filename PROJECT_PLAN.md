@@ -1003,7 +1003,7 @@ dated annotation. The ID stays stable.)*
 > **Result.** `scripts/testing/check_example_doc_references.py` now exits `EXIT_OK`/`EXIT_HARD`/`EXIT_STALE_ONLY` = 0/1/2, with `--stale-severity {fail,report}` defaulting to `report` (`fail` reproduces the pre-split reading bit for bit) and a machine-readable `RESULT: dead=… guide=… stale=… stale_severity=… exit=…` line; `--max-age-s` (`OPS-15`'s 48 h) unchanged, no example re-run or refreshed.
 > **Gated:** `tests/unit/test_doc_reference_exit_codes.py`, 8 tests, 1.91 s, smoke, `-n 1` (`20260816T213312Z_OPS-19-step1-rerun.log`) — on the committed tree `dead=0 guide=0 stale=24 stale_severity=report exit=2`, guide pass green at **21/21 examples, 0 pending**; each fixture asserts the exit code against the literal and against arithmetic over the printed counts. **Negative controls:** a dead artifact reference and a missing `.py` both still exit 1 (`dead=1 stale=0`); boundary on the untouched default: 47 h → `stale=0 exit=0`, 49 h → `stale=1 exit=2`.
 > **Bug fixed in passing:** `collect_references` called `doc.relative_to(REPO_ROOT)` unconditionally, so any `--docs-root` outside the repo raised `ValueError` (first run `20260816T213248Z_OPS-19-step1.log`, 7 failed / 1 passed, 2 s); now `display_path()`.
-> **Carry-forwards:** the checker has exactly one call site class (ad hoc harness commands; `run_examples.sh` has none) — if a docrefs call is ever added to the runner, `0` and `2` are both pass. The 24 stale `paraview_output/` artifacts remain a standing backlog, not this chunk's (see `EX-29`/`EX-30`, 2026-08-23: the checker freshness-gates only the 5 examples that write to the repo-root directory).
+> **Carry-forwards:** the checker has exactly one call site class (ad hoc harness commands; `run_examples.sh` has none) — if a docrefs call is ever added to the runner, `0` and `2` are both pass. The stale `paraview_output/` artifacts remain a standing backlog, not this chunk's — and the figure is **55**, not 24: `EX-29` closed 2026-08-24 and the pre-fix count was a census of the 5 examples that write to the repo-root directory (`EX-30` refreshes the set).
 > Full narrative: `docs/planning/plan-archive.md`, entry «§7 OPS-19 full narrative — archived 2026-08-23 (weekly review)».
 
 **`OPS-16` — retry-on-529 in the automation launchers** ⬛ **WON'T FIX** *(commissioned 2026-08-13, 10:30 review; blocked 2026-08-14, 21:00 run; **declined by the human operator 2026-08-22, interactive session**; archived 2026-08-23. Do not re-commission, do not re-raise the permission ask, and do not queue it in §9.)*
@@ -3355,7 +3355,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-26` | Poynting power-balance audit (`POST-5`'s newly gated capability: `poynting_power_balance` with the impressed-source term — the output-quantity angle no example covers, power accounting rather than fields; commissioned 2026-08-20 03:00 review) | ✅ (2026-08-20: `th:8`, `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide; **both fixtures on one run, closed as written** — driven cylinder three-term **16.7465%** inside the imported, unmoved `POYNTING_IMBALANCE_MAX` = 25% with the two-term reading of the *same field* printed at **116.7465%** and asserted to *miss* that band (`EX-18` inverted pattern), `TH-6` plane wave source-free **8.185716%** with each leg scored against its own closed form at **8.1205% / 0.0711%** inside the imported `POST5_STEP3_LEG_BAND` = 10%, and the `POST-5` step-4 control exact — source term `0.0` W at J = 0 with all **7** other dict keys bit-identical to the source-free call. Second control the tests carry and the example re-executes: σ-blind (lossless medium, same field) volume leg exactly 0.0 W, residual 83.2535% = **4.97×** the honest reading against the pre-registered 3.0× floor and the 5.97× arithmetic ceiling. All **8** records reproduced inside a pre-stated 1% band, worst drift **3.00e-04** (the `TH-6` Ohmic-leg error, the record quoted to the fewest digits); driven-fixture drifts 1.40e-06 / 2.01e-07 / 3.36e-07 / 1.11e-07 / 3.36e-07. Two combined XDMFs carrying `E` (CG1) plus `B` and the real Poynting vector `½Re(E×H̄)` as **DG0 cell fields** — `curl E` of a degree-1 N1curl field is cell-wise constant, so smoothing to vertices would invent resolution the solve does not have. 1 405 cells driven / 10 368 cells `TH-6`, **4.7 s** in-script (8 s harness) at `-n 2`. Every band, fixture, drive and analytic leg imported from `tests/solver/test_time_harmonic_smoke.py`, `tests/validation/test_poynting_balance.py` and the `TH-6` module (`ANS-1`); restated with provenance only where the gate holds the number as printed output rather than a named constant — `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368 — all unloosened and all asserted. Logs `20260820T170422Z_EX-26-example-n2.log` (exit 0) and `20260820T170540Z_EX-26-docrefs.log` — **`dead=0 guide=0 stale=0 stale_severity=report exit=0`**, the second `exit=0` under the `OPS-19` contract, 34 guides scanned and `EX-22`'s stale-0 restore still holding at this commit. **Tier note for the review:** commissioned standard, **measured smoke** (8 s harness). The commission's 8 s + 152 s estimate charged this example the whole `TH-6` file; the 152 s belongs to that file's *other* tests — the 24³ rung and the piecewise-σ / piecewise-μᵣ families — not to the 12³ rung the example audits. *Audited COMPLIANT 2026-08-21 18:00 review — records asserted through the example path, XDMF artifacts on disk, docrefs exit 0, tier relabel confirmed*) | standard (measured smoke) |
 | `EX-27` | Region-resolution policy on the coil+phantom mesh (`GEO-17`'s newly gated capability: first example whose subject is a mesh-*sizing policy* — policy-on vs clamps-only on one fixture, the volume-recovery angle no example covers; `EX-21` grades one conductor by an explicit `h_c`, a different angle. Mesh-only, no solve; this is the mesh capability `MAT-4`'s SAR-on-a-coil route runs through. Commissioned 2026-08-21 18:00 review; full rubric in the §9 item) | ✅ (2026-08-22: `mesh:5`, `examples/meshing/05_region_resolution_policy.py` + same-stem guide; **closed as written on the first run**, every element of the rubric executed and no band moved. Policy coil meshed/CAD **0.835563 / 0.833730** against the imported, unmoved `POLICY_MIN_CAD_RECOVERY` = 0.755, both reproducing the `GEO-17` records to every printed digit inside the pre-stated 1% band; the clamps-only mesh asserted to **miss** that same floor at **0.754685 / 0.752565** (`EX-18` inverted pattern) — and because the floor was pre-registered as "the uniform mesh's own recovery", that control clears by only ~3.2e-4 **by construction**, so the example gates the *sizing* separation separately at a pre-stated `SIZING_SEPARATION` = 0.05, measured **+0.080879 / +0.081165**. Sign identity on all three refined tags (+10.7169% / +10.7851% / +0.9374%) with the one coarsened region, the air, the one that pays (**−0.2643%**); inscription bound meshed/CAD ≤ 1 on both meshes, all three curved tags (max 0.992751); tagged-volume partition **1.000000000000** on both meshes at the imported `VOLUME_PARTITION_BAND` = 1e-9; and the clamps-only path re-asserted against the imported `OPS-17` record on all **4** tags at 1e-9 — the negative control on `GEO-17`'s fix itself, which may not touch a mesh that asks for one size everywhere. Two combined XDMFs with `CellTags` (`EX-21`/`EX-23` mesh-only precedent); 19 792 cells clamps-only / 20 843 policy, 5.4 s in-script at `-n 2`. Geometry, policy sizes, floor, refined-tag list, CAD volumes and the `OPS-17` table are all **imported** from `tests/mesh/test_mesh_tag_integrity.py` (`ANS-1`) — `POLICY_RESOLUTIONS` was hoisted to module level in that file by this chunk so the sizing itself is imported rather than restated (3 passed, 13 s regression, `20260822T033508Z_EX-27-geo17-regression.log`); the two policy *recovery* records are restated with log provenance and a 1% band, the `EX-26` precedent, because the gate holds them as printed output. Logs `20260822T033345Z_EX-27-example-n2.log` (exit 0) and `20260822T033529Z_EX-27-docrefs.log` — **`dead=0 guide=0 stale=24 stale_severity=report exit=2`**, `exit != 1` under the `OPS-19` contract, 35 guides scanned; the 24 stale entries are `EX-22`'s 48 h window re-growing exactly as the commission predicted ("stale re-grows from ~2026-08-22 by design") and none of them is an `EX-27` artifact. **Tier note for the review:** commissioned standard, **measured smoke** (8 s harness) — the commission's 13 s estimate was the two meshes alone and was close; the exports cost less than assumed. *Audited COMPLIANT 2026-08-22 03:00 review: every gate is CAD-analytic, record, or monotonicity; nothing loosened; the regression's "13 s" is pytest-internal, the harness row says 15 s — both true*) | standard (measured smoke) |
 | `EX-28` | Gapped birdcage with leg terminals and port sheets (`GEO-18`'s newly gated capability, both steps: first example with a **discontinuous conductor** — planar disk terminals on a cut leg and an interior sheet spanning metal to metal on a coil; `EX-21` is the uncut graded birdcage, `EX-23` the two-torus sheet — a geometry angle no example covers. Mesh-only, no solve; this is the mesh `PORT-9` step 3 solves on. Commissioned 2026-08-22 03:00 review, deferred from 08-21 until the fixture stopped moving; full rubric in the §9 item) | ✅ (2026-08-23: `mesh:6`, `examples/meshing/06_birdcage_leg_gaps_port_sheets.py` + same-stem guide; **closed as written on the first run**, every element of the rubric executed and no band moved. Sheeted rung **116 416 cells**, meshed/CAD conductor **0.970193** against the imported, unmoved `CAD_MASS_GATE` = 0.95; per port the sheet is **54 facets, `1.120000000e-04 m²`, meshed/analytic `1.000000000000`** against the analytic `dx·g`, `h = 8.000000000e-03 m` = the gap exactly, **`w_eff/w_bbox = 1.000000000000`** (the `PORT-9` step 2b convention, i.e. the facet set is the whole rectangle), out-of-plane spread `2.512e-16` m (P1/P3) / `9.714e-17` m (P2/P4), halves **`0.500000000000/0.500000000000`** of the analytic gap box, terminal `2.236196e-04 m²` = **0.988616** of the closed-form `2.261946711e-04 m²` inside the imported `TERMINAL_AREA_BAND` [0.95, 1.0] *and* inside step 1's pre-stated `1e-5` record band, closure **`1.000000000000`**; **C4 sheet spread `8.470e-16`** — every figure reproducing `GEO-18` step 2's log to the printed digit. `GEO-9` partition `< 1e-9` on both rungs. **Negative control (inverted, `EX-18`/`EX-23` pattern):** the uncut rung at **98 474 cells, ratio 1.000000** against `EX-21`'s record and meshed/CAD **0.967019** = the record, cell tags `[1, 2, 3, 101-104]` with no `11x` half tag, conductor-facing area **exactly `0.000000e+00 m²`** on all four ports (leg (b)'s finding re-measured) — **and the `210+i` facet groups asserted absent by measurement**, `_global_facet_count` = 0 on all four after an `_interface_facet_tags` rebuild on the uncut mesh, which closes the one clause `GEO-18` step 2's audit found implied rather than asserted. Three combined XDMFs (sheeted cells, sheeted sheet facets 211-214, uncut cells) for the side-by-side. Every constant **imported** from `tests/mesh/test_birdcage_leg_gaps.py` and `tests/mesh/test_birdcage_port_sheets.py` and the modules they import (`ANS-1`); nothing restated, no pre-existing test touched. Logs `20260823T020338Z_EX-28-example-n2.log` (exit 0, **43.1 s in-script / 46 s harness at `-n 2`**, sheeted 21.46 s mesh / 23.41 s rung, uncut 19.02 s) and `20260823T020531Z_EX-28-docrefs.log` — **`dead=0 guide=0 stale=24 stale_severity=report exit=2`**, `exit != 1` under the `OPS-19` contract, 36 guides scanned, none of the 24 stale entries an `EX-28` artifact. **Tier note for the review:** commissioned standard, **measured standard** (46 s harness against the commission's ~75 s estimate; the `EX-27` precedent that exports are cheaper than the meshes held again — the two builds are 42 s of the 43 s)) | standard |
-| `EX-29` | Doc-reference checker freshness-gates every example's own `paraview_output/` (22 of 27 examples were never checked — known-issues 2026-08-23; commissioned 2026-08-23 weekly review) | ⬜ | smoke |
+| `EX-29` | Doc-reference checker freshness-gates every example's own `paraview_output/` (22 of 27 examples were never checked — known-issues 2026-08-23; commissioned 2026-08-23 weekly review) | ✅ | smoke |
 | `EX-30` | Refresh the 13-example stale artifact set the checker could not see (10–17 d old on 2026-08-23; two legs; commissioned 2026-08-23 weekly review) | ⬜ | heavy |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
@@ -3563,7 +3563,7 @@ Log `20260808T020414Z_EX-3-gate.log` (14 s, `-n 2`). Imposed field only —
 no SAR-on-a-coil claim.
 
 **`EX-29` — the doc-reference checker must freshness-gate every example's
-own `paraview_output/`** ⬜ *(commissioned 2026-08-23 weekly review, examples
+own `paraview_output/`** ✅ *(commissioned 2026-08-23 weekly review, examples
 health audit; known-issues entry of the same date. Smoke tier, `-n 1`, no
 solve.)* **Defect:** `check_example_doc_references.py` defaults
 `--output-dir` to the repo-root `paraview_output/` (`:241-242`) and exempts
@@ -3594,15 +3594,53 @@ count — assert the two differ, so the change is demonstrated, not assumed.
 elapsed recorded; the companion docrefs run prints the full-census `RESULT:`
 line; `EX-30` is re-sized from that count. No example re-run here.
 
+**Closed 2026-08-24, 06:00 slot.** All three "Do" items landed and the gate is
+green twice in-slot: `tests/unit/test_doc_reference_exit_codes.py` **15 passed
+in 3.71 s** (`20260824T110512Z_EX-29-unit.log`, harness Elapsed 5 s, `-n 1`)
+and the whole `tests/unit` directory **22 passed in 7.33 s**
+(`20260824T110540Z_EX-29-unit-run2.log`, Elapsed 9 s) — the 8 pre-existing
+`OPS-19` tests unchanged and still green. **The negative control, measured on
+the same tree in the same slot:** the pre-fix checker read
+`dead=0 guide=0 stale=24 exit=2`
+(`20260824T110150Z_EX-29-prefix-control.log`, run before any edit); the
+post-fix checker reads `dead=0 guide=0 stale=55 exit=2`
+(`20260824T110531Z_EX-29-census.log`, Elapsed 1 s) — the same 36 guides and
+117 references, **24 → 55**. Gate (d)'s independent walk of every
+`examples/**/paraview_output/` + the repo root reproduces the printed figure
+exactly (`stale=55 checked=58 hidden_pre_fix=32`): **32 of the 58 resolved
+artifact references live outside the repo-root directory**, i.e. the old
+basename exemption hid more than half the census. `EX-30` is re-sized from
+**55**, not 24, by a review.
+
+**Two findings the entry's own text did not predict, both measured.** (1) The
+tracked set is **not empty**: `git ls-files` reports three committed artifacts
+under `examples/` — `ansys_benchmarks/loop_over_lossy_slab_10MHz/metrics.json`,
+`ansys_benchmarks/two_torus_gap_ports_10MHz/metrics.json`, and
+`magnetostatics/straight_wire_validation.png`. These are exactly the
+"committed next to its own case" artifacts the exemption was written for, so
+the exemption is kept and **pinned by path** in
+`COMMITTED_EXAMPLE_ARTIFACTS` (the "assert it is empty" instruction would have
+been a false assertion; pinning the paths serves the same anti-widening
+purpose). (2) `git` inside the container fails —
+`fatal: detected dubious ownership in repository at '/workspace'`, root over a
+host-owned bind mount — and the failure is silent in the *wrong* direction: an
+empty exemption made the two tracked `metrics.json` read as **dead references**
+(`dead=1 exit=1`, seen on the first run of the day). The checker passes
+`-c safe.directory=` for the repo root and the docs root; any future
+in-container `git` call needs the same. Both are recorded in known-issues,
+whose `EX-29` entry closes with this commit.
+
 **`EX-30` — refresh the 13-example stale artifact set the checker could not
 see** ⬜ *(commissioned 2026-08-23 weekly review; §5.4 "XDMF outputs still
 reflect current capability" — staleness stated: as of 2026-08-23 the
 artifacts of `mesh:1` (~17 d), `mesh:2` (~16 d), `mri:2` (~15 d), `mat:1`,
 `th:1`–`th:4`, `ans:1` (~14 d), `th:5` (~13 d), `ports:1`, `th:6` (~10 d)
 all predate `OPS-17`'s test replacement and have not been regenerated
-since. Heavy tier, `-n 2`, two legs so each fits one slot; may run before
-`EX-29` lands — if so, the before/after freshness is read by `find -mmin`,
-not by the checker.)* **Leg (a), cheap set:** `mesh:1`, `mesh:2`, `mri:2`,
+since. Heavy tier, `-n 2`, two legs so each fits one slot.)* **`EX-29` landed
+2026-08-24, so the checker is now the census instrument and the number to
+size against is `stale=55`, not the 24 this entry was written beside
+(`20260824T110531Z_EX-29-census.log`); a review re-scopes the two legs from
+it before this chunk is queued.** **Leg (a), cheap set:** `mesh:1`, `mesh:2`, `mri:2`,
 `mat:1`, `ans:1`, `ports:1` via `./run_examples.sh` (their recorded
 in-script times sum to well under 480 s; `ports:1` is the sink at ~134 s).
 **Leg (b), time-harmonic set:** `th:1`–`th:6` (`th:6` 24 s, the rest ≤ 60 s
@@ -3961,7 +3999,18 @@ uses the Edit tool and verifies `git status --porcelain`.
    drifted digits in §7, stop; a `PORT-9` red that a mesh-tagged
    re-record does not explain is a finding about the route×mesh
    interaction — known-issues + §7, stop.
-3. **`EX-29` — the doc-reference checker freshness-gates every example's
+3. ✅ **Done 2026-08-24, 06:00 slot — `EX-29` closed.** Pre-fix `stale=24` →
+   post-fix `stale=55` on the same tree (`dead=0 guide=0 exit=2` both sides);
+   gate (d)'s independent walk reproduces 55 exactly, with 32 of 58 resolved
+   references outside the repo-root directory. 15 tests green, whole
+   `tests/unit` 22 green in the second in-slot pass; orphaned
+   `examples/magnetostatics/paraview_output/` deleted; known-issues entry
+   retired. **Two findings for the review:** the tracked-artifact set is *not*
+   empty (three committed `ans:`/`mag` artifacts — pinned by path instead of
+   asserted empty), and in-container `git` needs `-c safe.directory=` or it
+   reports tracked artifacts as dead references. **`EX-30` re-sizes from 55.**
+   Full digits in §7. Original text:
+   **`EX-29` — the doc-reference checker freshness-gates every example's
    `paraview_output/` (smoke, `-n 1`, no solve, `main`; independent).**
    Execute the §7 `EX-29` entry: resolve referenced artifacts at their
    example-relative paths, restrict the in-tree exemption to

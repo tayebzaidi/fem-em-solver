@@ -11,8 +11,12 @@ exist. Two classes of reference, checked differently:
   is what caught ``PARAVIEW_VALIDATION_GUIDE.md``'s ``03_helmholtz_coil.py``,
   removed long before the guide was updated.
 * **Run artifacts** (``.xdmf``/``.h5``/``.bp``/``.csv``/``.json``/``.png``/
-  ``.msh``) — must exist in the output directory *and* be newer than
-  ``--max-age-s``. Existence alone is not enough: ``paraview_output/`` is
+  ``.msh``) — must exist *and* be newer than ``--max-age-s``. An artifact is
+  looked for in the citing guide's own ``paraview_output/`` first and in the
+  shared ``--output-dir`` second (`EX-29`, 2026-08-24), because that is where
+  each example actually writes; only artifacts **git tracks** under the docs
+  root are exempt from the freshness rule. Existence alone is not enough:
+  ``paraview_output/`` is
   gitignored scratch that accumulates files from months-old runs, so a stale
   leftover would let a dead reference pass. Freshness is what makes the check
   mean "a run actually produces this". This is what caught the
@@ -139,16 +143,100 @@ def display_path(path: Path) -> Path:
         return path
 
 
-def collect_references(doc_paths: list[Path]) -> dict[str, list[str]]:
-    """Map referenced filename -> list of "<relpath>:<line>" citation sites."""
-    references: dict[str, list[str]] = {}
+def collect_references(doc_paths: list[Path]) -> dict[str, list[tuple[Path, int]]]:
+    """Map referenced filename -> list of ``(guide path, line number)`` sites.
+
+    The *guide* is kept, not just its printable name, because `EX-29` resolves
+    an artifact against the directory the citing example actually writes to.
+    """
+    references: dict[str, list[tuple[Path, int]]] = {}
     for doc in doc_paths:
-        rel = display_path(doc)
         for lineno, line in enumerate(doc.read_text().splitlines(), start=1):
             for match in REFERENCE_RE.finditer(line):
                 name = Path(match.group(0)).name
-                references.setdefault(name, []).append(f"{rel}:{lineno}")
+                references.setdefault(name, []).append((doc, lineno))
     return references
+
+
+def format_sites(sites: list[tuple[Path, int]]) -> str:
+    """The "<relpath>:<line>, ..." citation string reports carry."""
+    return ", ".join(f"{display_path(doc)}:{lineno}" for doc, lineno in sites)
+
+
+# Every example writes its artifacts to a `paraview_output/` directory; which
+# one depends on the example (`Path(__file__).parent / "paraview_output"` for
+# everything outside `mag`/`mri:1`, which write to the repo root).
+OUTPUT_SUBDIR = "paraview_output"
+
+
+def candidate_dirs(sites: list[tuple[Path, int]], output_dir: Path) -> list[Path]:
+    """Directories an artifact cited at `sites` could legitimately live in.
+
+    Example-relative first — that is the directory the citing example writes —
+    then the shared `--output-dir`. Before `EX-29` only the latter was searched
+    and any basename found anywhere under the docs root was exempted outright,
+    so **22 of 27** runnable examples were never freshness-checked and every
+    `stale=` reading was a census of the 5 that write to the repo root
+    (known-issues 2026-08-23; measured pre-fix on 2026-08-24 at `stale=24`).
+    """
+    dirs: list[Path] = []
+    for doc, _ in sites:
+        example_dir = doc.parent / OUTPUT_SUBDIR
+        if example_dir not in dirs:
+            dirs.append(example_dir)
+    if output_dir not in dirs:
+        dirs.append(output_dir)
+    return dirs
+
+
+def safe_directory_args(docs_root: Path) -> list[str]:
+    """`-c safe.directory=...` for every root a `git ls-files` here could need.
+
+    The container runs as root over a bind mount owned by the host user, so a
+    bare `git ls-files` in `/workspace` dies with "detected dubious ownership"
+    (exit 128) — measured 2026-08-24 in the `fem-em-solver` image. Left
+    unhandled that failure is silent in the wrong direction: `tracked_artifacts`
+    returns `{}`, the `ans:` benchmark cases lose their committed-artifact
+    exemption, and their `metrics.json` is reported as a *dead reference*. Both
+    the repo root and the docs root are named because the exit-code fixtures
+    point `--docs-root` at a throwaway repo of their own. `-c` is protected
+    configuration, so git honours it; the value is not read from the repository
+    under inspection.
+    """
+    roots = [REPO_ROOT, docs_root.resolve()]
+    return [arg for root in roots for arg in ("-c", f"safe.directory={root}")]
+
+
+def tracked_artifacts(docs_root: Path) -> dict[str, list[Path]]:
+    """Artifact basenames git actually tracks under `docs_root`.
+
+    A committed artifact is its own evidence — no run has to produce it, so the
+    freshness rule does not apply. The pre-`EX-29` code assumed *any* artifact
+    found under `examples/` was committed, but `.gitignore` ignores
+    `paraview_output/` at every depth, so the exemption swallowed the entire
+    scratch census. Asking git is the only reading of "committed" that cannot
+    drift; a docs root that is not in a work tree yields an empty exemption,
+    which is the safe direction.
+    """
+    if not docs_root.is_dir():
+        return {}
+    try:
+        proc = subprocess.run(
+            ["git", *safe_directory_args(docs_root), "ls-files", "-z", "--", "."],
+            cwd=docs_root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return {}
+    tracked: dict[str, list[Path]] = {}
+    for entry in proc.stdout.split("\0"):
+        if not entry or not entry.endswith(ARTIFACT_SUFFIXES):
+            continue
+        path = docs_root / entry
+        tracked.setdefault(path.name, []).append(path)
+    return tracked
 
 
 def repo_basenames() -> set[str]:
@@ -273,17 +361,13 @@ def main() -> int:
 
     references = collect_references(doc_paths)
     known_scripts = repo_basenames()
-    in_tree_artifacts = {
-        path.name
-        for suffix in ARTIFACT_SUFFIXES
-        for path in docs_root.rglob(f"*{suffix}")
-    }
+    tracked = tracked_artifacts(docs_root)
     now = time.time()
     violations: list[str] = []
     stale: list[str] = []
 
     for name in sorted(references):
-        sites = ", ".join(references[name])
+        sites = format_sites(references[name])
         if name in ALLOWLIST:
             continue
         if name.endswith(".py"):
@@ -293,21 +377,25 @@ def main() -> int:
 
         # An artifact committed next to its own case (the `ans:` benchmarks keep
         # theirs in the case directory) is its own evidence — existence is
-        # enough. Only the shared scratch directory needs the freshness rule.
-        if name in in_tree_artifacts:
+        # enough. Only run-written scratch needs the freshness rule, and only
+        # git decides which is which (`EX-29`).
+        if name in tracked:
             continue
 
-        target = output_dir / name
-        if not target.exists():
+        searched = candidate_dirs(references[name], output_dir)
+        target = next((d / name for d in searched if (d / name).exists()), None)
+        if target is None:
+            where = ", ".join(f"{display_path(d)}/" for d in searched)
             violations.append(
-                f"{name}: no run produced it in {args.output_dir}/, and it is "
+                f"{name}: no run produced it in {where}, and it is "
                 f"not committed under {args.docs_root}/  [{sites}]"
             )
             continue
         age = now - artifact_mtime(target)
         if age > args.max_age_s:
             stale.append(
-                f"{name}: stale in {args.output_dir}/ ({age / 3600:.1f} h old, "
+                f"{name}: stale in {display_path(target.parent)}/ "
+                f"({age / 3600:.1f} h old, "
                 f"limit {args.max_age_s / 3600:.1f} h) — rerun the example that "
                 f"writes it, or the reference is dead  [{sites}]"
             )
