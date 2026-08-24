@@ -15,6 +15,17 @@ every example's own output directory, and the stale census jumped 24 → 55
 
 ## Waiting on you
 
+0. ✅ **You raised the container memory ceiling 64 GiB → 128 GiB
+   (2026-08-24, interactive session).** Applied, container recreated, and
+   verified: `/sys/fs/cgroup/memory.max` reads 137438953472 = 128.0 GiB
+   exactly, both dolfinx modes boot (0.11.0.post0 / py3.12.3). Host is
+   754 GiB, so this is ~17% of a shared box. **Nothing owed by you** — this
+   item is a receipt. *For the reviews:* four adjudicated negatives were
+   measured against the old wall and are now unmeasured rather than false —
+   `TH-11` step 5, `TH-12`'s degree-2 wall, `OPS-17`'s
+   `coil_loading_degree2` deferral, and the §10 coil-trend epitaph. None is
+   auto-reopened; §5.1 and the epitaph carry the caveat, and re-pricing any
+   of them is a review call. Next review: delete this item.
 1. 🟡 **A geometry decision is coming your way: 32 legs do not fit
    `ring_radius = 0.07 m` with 14 mm port boxes.** The layout clearance
    floor caps the leg count at **N ≤ 25**; 32 legs need

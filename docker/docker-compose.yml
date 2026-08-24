@@ -22,8 +22,16 @@ services:
     tty: true
     deploy:
       resources:
+        # Raised 64G -> 128G by operator directive 2026-08-24 (interactive
+        # session). The host has 754 GiB total / 743 GiB free, so this is ~17%
+        # of a shared box, not a claim on all of it. Chunks must not raise it
+        # further on their own -- see the standing constraint in PROJECT_PLAN
+        # section 9. Several adjudicated results (TH-11 step 5, TH-12, OPS-17's
+        # coil_loading_degree2 deferral) were negatives measured against the
+        # old 64 GiB wall and may now be reachable; the reviews decide that,
+        # not an implementer slot.
         limits:
-          memory: 64G
+          memory: 128G
         reservations:
           memory: 4G
 

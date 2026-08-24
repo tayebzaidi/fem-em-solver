@@ -282,6 +282,22 @@ cores.** Every verification command declares a tier and must not exceed it:
   for anything a rank-local bug could hide in (`MAG-11` was a missing allreduce
   visible only under MPI), and note that CI runs at `-n 2`, so a test that only
   passes at wider ranks is not CI-portable.
+- **Memory ceiling: the container is capped at 128 GiB** (`docker-compose.yml`
+  `deploy.resources.limits.memory`; raised from 64 GiB by operator directive
+  2026-08-24, host has 754 GiB). Read it from
+  `/sys/fs/cgroup/memory.max` rather than assuming — `memory.peak` does not
+  exist at container level on this box, so track `memory.current` between
+  commands. **Memory is a tier dimension like time:** a case that pegs the
+  ceiling is redesigned smaller, never granted more. Raising the limit is an
+  operator decision, not a chunk's (§9 standing constraint).
+  **⚠️ Several recorded negatives were measured against the *old* 64 GiB wall
+  and are not evidence about this box any more** — `TH-11` step 5 (2.81 M
+  cells OOM, 0.99 M pegged), `TH-12`'s degree-2 wall (61.94 GiB on the coarse
+  rung), `OPS-17`'s `coil_loading_degree2` deferral, and the §10 epitaph
+  killing the coil-loading-trend target. None of them is automatically
+  reopened: re-pricing one is a **review** decision, and any revival needs its
+  finest rung priced first (the epitaph's own lesson). Do not cite "does not
+  fit the box" from a pre-2026-08-24 measurement without re-measuring.
 - Record real elapsed time in `docs/testing/test-results.md`.
 - **A tier is a measurement, not an intention.** A chunk whose runtime has never
   been measured is `unmeasured`. Cost-probe first: build the mesh, print the cell
@@ -4026,8 +4042,8 @@ file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
 to it is write access to *what the container mounts from the host*. The
 operator granted this knowingly and narrowly (2026-08-22). **Edit only
 `environment:` keys. Do not touch `volumes:`, do not add a mount, do not
-widen a path, do not raise the 64 G memory limit, in this or any future
-chunk.** A chunk that believes it needs a mount change is a **blocked
+widen a path, and do not change the memory limit (**128 G**, raised from
+64 G by operator directive 2026-08-24) — in this or any future chunk.** A chunk that believes it needs a mount change is a **blocked
 finding for the operator**. The `Edit(docker/.claude/**)` caution stands
 for the same reason: a nested `.claude/` is a settings-override surface.
 One surviving mechanic: `git checkout` cannot swap `docker/Dockerfile` /
@@ -4630,7 +4646,16 @@ interface, not the solver. No dated estimate, same rule.
   bracket that would have licensed a trend claim does not fit a 64 GiB
   box at degree 1 (2.81 M cells OOM, 0.99 M pegged) or degree 2 (61.94
   GiB on the *coarse* rung). The lesson: a trend target needs its finest
-  rung priced before it is named. The Larmor coil question lives on as
+  rung priced before it is named.
+  **Caveat added 2026-08-24: the box is no longer 64 GiB.** The operator
+  raised the container ceiling to **128 GiB**, so the affordability half
+  of this epitaph is now unmeasured rather than false — 2.81 M cells at
+  degree 1 and the degree-2 coarse rung both sat *inside* 2× their old
+  wall. The *physics* half is untouched and is the load-bearing one:
+  `TH-11` step 4 showed the three-point trend was the resolution term,
+  flat in f, and more RAM does not make a resolution artefact a trend.
+  Reviving this target therefore needs a new argument, not just a bigger
+  rung — the weekly review owns that call. The Larmor coil question lives on as
   `PORT-11` (identity gates on the loaded birdcage) and subgoal 4, not as
   a ΔR(f) fit.
 
