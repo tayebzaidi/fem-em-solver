@@ -14499,3 +14499,174 @@ is the pre-run census, which this slot leaves at **55** — the same number item
 predicts, now re-measured on a tree that has one more example in it, so a
 post-run 44 is the arithmetic the item asks for and any other value is about
 `th:1`–`th:8`, not about `EX-31`.
+
+---
+
+## 2026-08-24T21:55Z — `EX-30` leg (th) (§9 item 4) — **incomplete (measured, nothing re-recorded)**: 5 of 8 examples refreshed, and three separate reds — two of them `OPS-18` migration debt that has been sitting red on `main` since the 0.11 merge
+
+**Outcome:** incomplete. The leg's own gate (census 55 → **44**) is **not** met:
+the census reads **50**. Five of the eight examples ran green and refreshed
+their artifacts; three are red, for three different reasons, and **no record was
+re-recorded and no band was moved**. Nothing to park — this slot made no code
+change. `main` clean, container Up with zero stray `python3` at handoff.
+
+### What ran
+
+| example | status | in-script elapsed | note |
+|---|---|---|---|
+| `th:1` lossy plane wave | **green** | 12.6 s | records reproduce (below) |
+| `th:2` PEC cavity resonances | **red — crash** | — | `TypeError` in `src/.../core/cavity.py:129` |
+| `th:3` dielectric sphere | **green** | 7.7 s | "All assertions hold" |
+| `th:4` evanescent waveguide | **green** | 5.7 s | "All assertions hold" |
+| `th:5` resonance guard sweep | **red — crash** | — | same defect, via `cavity.py:324` |
+| `th:6` Larmor lossy sphere | **red — record drift** | — | 64 MHz reproduces, 128 MHz does not |
+| `th:7` element order | **red — crash** | — | `TypeError`, example-only API site |
+| `th:8` Poynting power balance | **green** | 7.8 s | "All assertions hold on both fixtures" |
+
+Logs: `20260824T213114Z_EX-30-th-census-pre.log` (exit 2),
+`…T213123Z_EX-30-th-run-1to4.log` (exit 1, 22 s),
+`…T213209Z_EX-30-th-run-3to4.log` (**exit 0**, 16 s),
+`…T213228Z_EX-30-th-run-5to8.log` (exit 1, 2 s),
+`…T213236Z_EX-30-th-run-6to8.log` (**exit 124**, 300 s — see below),
+`…T213804Z_EX-30-th-run-7to8.log` (exit 1, 2 s),
+`…T213813Z_EX-30-th-run-8.log` (**exit 0**, 10 s),
+`…T213836Z_EX-30-th-census-post.log` (exit 2),
+`…T213908Z_EX-30-th-cavity-gate-probe.log` (exit 1, 4 s).
+`run_examples.sh` is `set -e`, so each red truncated its batch and the remaining
+examples were re-driven individually — that is why there are five run logs for
+eight examples, not two.
+
+### The census arithmetic, and it is exact
+
+Pre-run **`dead=0 guide=0 stale=55 stale_severity=report exit=2`**, 11 of the 55
+in `examples/time_harmonic/paraview_output/` — the item's predicted negative
+control, reproduced. Post-run **`stale=50`**: the five refreshed artifacts are
+`lossy_plane_wave_combined.xdmf` (`th:1`), `dielectric_sphere_combined.xdmf`
+(`th:3`), `evanescent_waveguide_combined.xdmf` (`th:4`) and both
+`poynting_audit_*_combined.xdmf` (`th:8`). The **six** that remain are exactly
+the artifacts of the three red examples — `pec_cavity_mode` (`th:2`),
+`resonance_guard` (`th:5`), `larmor_sphere_64MHz` + `larmor_sphere_128MHz`
+(`th:6`), `element_order_sphere_degree1` + `degree2` (`th:7`). 11 − 5 = 6, and
+no other family's count moved. So the delta is fully attributed: every artifact
+still stale is stale because a named example is red, not because a run was
+missed.
+
+### Finding 1 (the serious one) — `core/cavity.py` never migrated to 0.11, and its **gates** are red on `main`, not just its examples
+
+`th:2` and `th:5` both die with the identical literal symptom:
+
+```
+TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+```
+
+raised from `src/fem_em_solver/core/cavity.py:129`
+(`A = assemble_matrix(stiffness, bcs=[bc], diagonal=bc_diagonal)`) and its
+sibling at line 131, reached from `_cavity_forms` via `cavity.py:229`
+(`solve_pec_cavity_modes`, `th:2`) and `cavity.py:324` (`th:5`).
+
+Because this is a `src/` site and not an example one, the obvious question is
+whether the gates are red too. **They are.** Probe, complex build,
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-n 2`, 2.11 s in-test /
+4 s harness (`20260824T213908Z_EX-30-th-cavity-gate-probe.log`):
+
+```
+4 failed, 9 passed in 2.11s
+FAILED tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_match_closed_form
+FAILED tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_improve_under_refinement
+FAILED tests/validation/test_cavity_resonances.py::test_n1curl_gradient_modes_form_a_clean_zero_cluster
+FAILED tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode
+```
+
+— all four with the same `TypeError`. **All 9 `tests/environment` tests pass in
+the same run**, so this is not an environment regression: it is `OPS-18`
+migration debt at a site nothing re-ran. `TH-9`'s closed-form cavity gate and
+the resonance guard have therefore been **non-executing on `main` since the
+0.11 merge (2026-08-23)** and nobody has read a number from either since. Not
+fixed here: fixing a `src/` API site is `OPS-18`'s scope, not an example-refresh
+leg's, and implementer.md's rule for an unrelated failure is a known-issues
+entry rather than a fix in passing. Entry written.
+
+### Finding 2 — `th:6`'s 128 MHz record moved 3.14%, and the mesh did **not** move
+
+`th:6` gets through 64 MHz cleanly and asserts its way out of 128 MHz:
+
+```
+[64 MHz]  h=0.00833 (17667 cells): relL2 = 3.643%, separation 18.67x
+[64 MHz]  vs the TH-10 record: relL2 3.643% against 3.643% (drift 4.04e-05),
+          separation 18.67x against 18.68x (drift 2.96e-04) — band 1%
+[128 MHz] h=0.00833 (17667 cells): relL2 = 3.302%, separation 31.75x
+[128 MHz] h=0.00556 (55241 cells): relL2 = 1.769%, separation 59.16x
+AssertionError: [128 MHz] fine-rung interior relL2: this run measured 0.0176864
+against the `TH-10` record 0.01826, a drift of 3.14% outside the 1% band
+```
+
+The item predicted these records would reproduce, because the bands are ~1%
+analytic-comparison bands and the 0.11 image motion is ~1e-4. **At 64 MHz that
+prediction is exactly right — 4.04e-05.** At 128 MHz it is wrong by two decades,
+and the discriminating detail is that **the fine rung meshes to 55 241 cells,
+which is `TH-10`'s own re-recorded count** — so unlike every 0.11 record motion
+so far in this project, this one is *not* the mesh moving underneath the solve.
+Same code, same mesh, same rung, 3.14% different answer at 3 T and 4e-05 at
+1.5 T. That asymmetry is the finding: whatever moved is frequency-dependent, and
+128 MHz is the harder-conditioned of the two (`|m|k₀a` = 1.374 vs 0.850, series
+N = 8 vs 7). Nothing re-recorded — the assertion's own message says a drift this
+large "is a finding about one of them, not a band to widen", and §9 item 4's
+negative-result clause says the same. This is the figure CLAUDE.md §2 and
+PROJECT_PLAN §2 quote as `TH-10`'s close (3.643% / 1.826%), so **the 1.826%
+half of that claim is now unreproduced on the image `main` boots.**
+
+**The exit 124 on that log is a teardown hang, not a compute overrun.** The
+assertion fires at ~40 s of real work, then MPI deadlocks in
+`mpi4py.MPI.commlock_free_cb` during interpreter shutdown
+(`SystemError: … returned a result with an exception set`), the container-side
+`timeout -k 30 300` fires, and PETSc reports signal 15. The `-k 30` did its job:
+`docker compose ps` reads Up and `pgrep -c python3` reads **0** immediately
+after. No wedge, no force-recreate. `th:7`/`th:8` never started in that batch
+and were re-driven separately.
+
+### Finding 3 — `th:7` uses an example-only 0.11-broken API, so the example and its gate have diverged
+
+```
+TypeError: Function.interpolate() got an unexpected keyword argument 'cells'
+```
+
+at `examples/time_harmonic/07_element_order_lossy_sphere.py:198`
+(`e_series_fn.interpolate(_series_interior_interpolant(series), cells=sphere_cells)`).
+A repo-wide grep for `interpolate(...cells=` over `src/`, `tests/` and
+`examples/` returns **exactly one hit — that line**. So `th:7`'s guide claims it
+imports its fixture "wholesale from tests/validation/test_lossy_sphere_degree2.py"
+(the example says so in its own banner), but this interpolation step is the
+example's own code and the gate module does not exercise it. The gate is
+presumably still green; the example cannot run. That divergence is itself the
+`ANS-1`-rule violation the example layer exists to prevent, and it is worth more
+than the crash: an example that re-derives a step instead of importing it is an
+example that can rot independently of its gate, which is what happened here.
+
+### Scope discipline
+
+Three reds, three distinct causes, **zero** records re-recorded, zero bands
+moved, zero `src/` edits. Two of the three (findings 1 and 3) are pre-existing
+`OPS-18` migration debt this leg *discovered* rather than caused — neither was in
+known-issues, and finding 1 in particular was invisible because no scheduled run
+touches `tests/validation/test_cavity_resonances.py`. Three known-issues entries
+written. Total compute this slot ~**6 minutes** across nine harness commands, all
+foreground, no `-n 1`, no rank count above 2, no rebuild, no permission denial,
+no branch parked.
+
+### Hypothesis for the next slot
+
+The leg cannot close as written — its gate is "the 11 `time_harmonic` stale
+entries drop to 0", and 6 of them are behind three reds that an example-refresh
+leg is not licensed to fix. **What a review should split off, in this order:**
+(i) an `OPS-18` follow-on that migrates `core/cavity.py`'s two
+`assemble_matrix(..., diagonal=)` calls and re-runs `TH-9`'s gates — cheap
+(the probe is 2.11 s) and it restores a dead validation gate, which matters
+more than the two artifacts it also unblocks; (ii) the same for `th:7`'s single
+`interpolate(cells=)` site, with the `ANS-1` question attached — should that
+interpolation be hoisted into the gate module rather than repaired in place;
+(iii) `th:6`'s 128 MHz drift is **not** a migration fix and should not be
+bundled with them — it needs the `TH-10` gate module itself re-run on 0.11 to
+decide whether the gate reproduces 1.826% (making it an example-path divergence)
+or measures 1.7686% too (making it a real 0.11 physics motion in a number §2
+quotes). That single run is the highest-information next measurement in this
+whole area, and it is one standard-tier command.

@@ -28,6 +28,155 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🚫 OPEN — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family is **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
+
+**Test ids — four, all red on `main` with no local change:**
+
+```
+tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_match_closed_form
+tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_improve_under_refinement
+tests/validation/test_cavity_resonances.py::test_n1curl_gradient_modes_form_a_clean_zero_cluster
+tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode
+```
+
+and the two examples on the same code path, `th:2`
+(`examples/time_harmonic/02_pec_cavity_resonances.py`) and `th:5`
+(`examples/time_harmonic/05_resonance_guard_sweep.py`), which crash outright.
+
+**Literal symptom**, identical at every site:
+
+```
+TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+```
+
+from `src/fem_em_solver/core/cavity.py:129`
+(`A = assemble_matrix(stiffness, bcs=[bc], diagonal=bc_diagonal)`) and its
+sibling `cavity.py:131` (`B = assemble_matrix(mass, bcs=[bc], diagonal=1.0)`),
+reached through `_cavity_forms` from `cavity.py:229` (`solve_pec_cavity_modes`)
+and `cavity.py:324`.
+
+Gate probe, complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment`
+first, `-n 2`: **`4 failed, 9 passed in 2.11s`**
+(`docs/testing/logs/20260824T213908Z_EX-30-th-cavity-gate-probe.log`, Status 1,
+4 s harness). Example crashes:
+`20260824T213123Z_EX-30-th-run-1to4.log` (`th:2`) and
+`20260824T213228Z_EX-30-th-run-5to8.log` (`th:5`).
+
+**Verified at:** `main` @ `7529fa4` (2026-08-24), 0.11.0.post0 image.
+
+**Cause — diagnosed, and it is ours.** `dolfinx.fem.petsc.assemble_matrix`
+dropped the `diagonal=` keyword between 0.7.2 and 0.11. `OPS-18` step 2 migrated
+the codebase to the 0.11 API but missed this module, and the miss was invisible
+because **nothing scheduled runs these two test modules** — they are not in any
+chunk's verification path, so the 0.11 merge (2026-08-23) landed on a green-
+looking tree with a dead subsystem inside it. **All 9 `tests/environment` tests
+pass in the same probe run**, so this is not an environment or complex-mode
+regression.
+
+**What this costs, stated plainly.** `TH-9`'s closed-form eigenfrequency
+comparison and the energy-continuity resonance guard have produced **no number
+since 2026-08-23**. Any reading of either as "gated" is unsupported until this
+is fixed — per §9's standing rule, a status without a log reads "unknown".
+
+**Retire when:** the two calls are migrated to the 0.11 signature and all four
+tests above run green, with the closed-form eigenfrequency comparison quoted.
+Scoped by `EX-30` leg (th) as an `OPS-18` follow-on for a review to queue; it
+also unblocks 2 of the 6 `time_harmonic` artifacts that leg could not refresh.
+
+### 🚫 OPEN — `th:7` calls `Function.interpolate(cells=)`, removed in 0.11 — the **only** such site in the repo, so the example has diverged from the gate it claims to import (`EX-30` leg (th), 2026-08-24)
+
+**Test id:** none — no test asserts this. The failing artifact is the example
+`examples/time_harmonic/07_element_order_lossy_sphere.py` (`th:7`), which cannot
+run at all. `tests/validation/test_lossy_sphere_degree2.py`, the gate it builds
+on, does **not** exercise this call and is not implicated by this entry.
+
+**Literal symptom**
+(`docs/testing/logs/20260824T213804Z_EX-30-th-run-7to8.log`, Status 1, 2 s,
+`-n 2`, complex build):
+
+```
+File "/workspace/examples/time_harmonic/07_element_order_lossy_sphere.py", line 198, in _row_and_fields
+  e_series_fn.interpolate(_series_interior_interpolant(series), cells=sphere_cells)
+TypeError: Function.interpolate() got an unexpected keyword argument 'cells'
+```
+
+**Verified at:** `main` @ `7529fa4` (2026-08-24), 0.11.0.post0 image.
+
+**Cause — diagnosed.** 0.11 renamed the cell-restriction argument of
+`Function.interpolate`. A repo-wide grep for `interpolate(...cells=)` across
+`src/`, `tests/` and `examples/` returns **exactly one hit**: that line. So this
+is not a migration class, it is a single site — and the reason it is a *lone*
+site is the interesting part. The example's own banner says its fixture is
+"imported wholesale from tests/validation/test_lossy_sphere_degree2.py and the
+TH-10 module it builds on", but this interpolation step is the example's own
+code, not imported. The gate is green and the example is dead, which is exactly
+the drift the `ANS-1` rule (records and machinery live in the gate, examples
+import them) exists to prevent.
+
+**Retire when:** the call is migrated *or*, preferably, the interpolation is
+hoisted into the gate module and imported — a review should decide which, since
+repairing it in place preserves the divergence. Unblocks 2 of the 6
+`time_harmonic` artifacts `EX-30` leg (th) could not refresh.
+
+### 🚫 OPEN — `th:6`'s **128 MHz** interior relL2 does not reproduce the `TH-10` record on the 0.11 image (1.76864% vs 1.826%, 3.14% drift) while **64 MHz reproduces to 4.04e-05 on the same mesh** (`EX-30` leg (th), 2026-08-24)
+
+**Test id:** the assertion is in the example,
+`examples/time_harmonic/06_larmor_lossy_sphere.py:186` (`_check_record`), which
+gates against a 1% reproduction band. The owning gate module for the record
+itself is `TH-10`'s; **it has not been re-run on 0.11**, which is the open
+question below.
+
+**Literal symptom**
+(`docs/testing/logs/20260824T213236Z_EX-30-th-run-6to8.log`):
+
+```
+[64 MHz]  h_sphere = 0.00833 ( 17667 cells): relL2 = 3.643%, separation 18.67x
+[64 MHz]  vs the TH-10 record: relL2 3.643% against 3.643% (drift 4.04e-05),
+          separation 18.67x against 18.68x (drift 2.96e-04) — band 1%
+[128 MHz] h_sphere = 0.00833 ( 17667 cells): relL2 = 3.302%, separation 31.75x
+[128 MHz] h_sphere = 0.00556 ( 55241 cells): relL2 = 1.769%, separation 59.16x
+AssertionError: [128 MHz] fine-rung interior relL2: this run measured 0.0176864
+against the `TH-10` record 0.01826, a drift of 3.14% outside the 1% reproduction band
+```
+
+**Verified at:** `main` @ `7529fa4` (2026-08-24), 0.11.0.post0 image, `-n 2`,
+complex build.
+
+**Cause — NOT diagnosed. One thing is excluded by measurement: the mesh.** Every
+0.11 record motion recorded in this file so far has been a moved mesh underneath
+a converged solve. This one is not: the 128 MHz fine rung meshes to **55 241
+cells, which is `TH-10`'s own re-recorded count**, and the coarse rung to 17 667,
+also on record. Same code, same mesh, same rung — 3.14% different answer at
+128 MHz and 4.04e-05 at 64 MHz. The frequency asymmetry is the whole finding;
+128 MHz is the harder-conditioned rung (`|m|k₀a` = 1.374 vs 0.850, series N = 8
+vs 7, last-term bound 7.2e-16 vs 8.1e-16, so the series itself is not the
+suspect).
+
+**Why this matters more than an example red.** 3.643% / 1.826% is the pair
+CLAUDE.md and PROJECT_PLAN §2 quote as `TH-10`'s close — the Larmor-frequency
+validation gate. The 64 MHz half reproduces; **the 128 MHz half is currently
+unreproduced on the image `main` boots.**
+
+**Nothing was re-recorded and no band was moved** — the assertion's own message
+and §9 item 4's negative-result clause both forbid it, and the drift is 3× the
+band on a quantity §2 depends on.
+
+**The next measurement, and it is one standard-tier command:** re-run `TH-10`'s
+own gate module on 0.11. If the gate reproduces 1.826%, this is an example/gate
+path divergence (cf. the `th:7` entry above, same family, same slot). If the gate
+also measures ~1.7686%, it is a real 0.11 motion in a §2 figure and the §2
+sentence needs revising. Until one of those is done, this is undiagnosed.
+
+**Also on that log — the `Status: 124` is a teardown hang, not a compute
+overrun.** After the assertion fires (~40 s of real work), MPI deadlocks in
+`mpi4py.MPI.commlock_free_cb` during interpreter shutdown (`SystemError: …
+returned a result with an exception set`); the container-side `timeout -k 30 300`
+fired and PETSc reported signal 15. The `-k 30` worked as designed —
+`docker compose ps` read Up and `pgrep -c python3` read **0** immediately after,
+no wedge and no force-recreate. Worth knowing: an assertion failure in this
+example does not exit cleanly under `mpiexec`, so budget for the full timeout
+when re-running it red.
+
 ### 🚫 OPEN — the gapped birdcage's **open-limit (1e6 Ω) driven self-impedance `Z₁₁` is not mesh-converged**: it moves ~40% under a 0.24% cell-count change, while the terminated column moves 1.9e-02 (`GEO-19` step B attempt 2, 2026-08-24)
 
 **Test id:** `tests/validation/test_port_birdcage_termination_probe.py::test_the_open_control_reproduces_leg_c_before_the_knob_turns`

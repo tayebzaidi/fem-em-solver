@@ -1,0 +1,79 @@
+# Test Run
+- Chunk: EX-30-th-run-5to8
+- Commit: 7529fa4a9156196c99869cc41fa881aaef7f3ad2
+- Time (UTC): 2026-08-24 21:32:28
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: ./scripts/run_examples.sh -e th:5,th:6,th:7,th:8 -n 2 -t 300
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 24 16:32 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc './scripts/run_examples.sh -e th:5,th:6,th:7,th:8 -n 2 -t 300'
+Running 4 example(s) with mpiexec -n 2 (timeout 300s each)
+COMPOSE_FILE=/home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+
+==> examples/time_harmonic/05_resonance_guard_sweep.py (complex build)
+========================================================================
+EX-8 — the near-resonance guard firing on a frequency sweep
+========================================================================
+
+[why] with PEC walls and a lossless interior the curl-curl operator is exactly singular at this box's cavity modes, and the direct solver exits cleanly anyway. The guard is the energy-continuity check S = |dlnW/dlnf| ~ 2f/|f-f0|, which is O(1) in a quiet band and diverges on approach.
+[geometry] 1.0 x 0.8 x 0.6 m PEC box, N1curl degree 2 on a (8, 7, 5) mesh, air interior, uniform z-directed drive (the `TH-1` step-5 fixture, imported)
+Traceback (most recent call last):
+  File "/workspace/examples/time_harmonic/05_resonance_guard_sweep.py", line 363, in <module>
+Traceback (most recent call last):
+  File "/workspace/examples/time_harmonic/05_resonance_guard_sweep.py", line 363, in <module>
+    main()
+  File "/workspace/examples/time_harmonic/05_resonance_guard_sweep.py", line 176, in main
+    main()
+  File "/workspace/examples/time_harmonic/05_resonance_guard_sweep.py", line 176, in main
+    spectrum = solve_pec_cavity_modes(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/fem_em_solver/core/cavity.py", line 229, in solve_pec_cavity_modes
+    spectrum = solve_pec_cavity_modes(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/fem_em_solver/core/cavity.py", line 229, in solve_pec_cavity_modes
+    A, B, n_bc = _cavity_forms(V, bc_diagonal)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    A, B, n_bc = _cavity_forms(V, bc_diagonal)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/fem_em_solver/core/cavity.py", line 129, in _cavity_forms
+  File "/workspace/src/fem_em_solver/core/cavity.py", line 129, in _cavity_forms
+    A = assemble_matrix(stiffness, bcs=[bc], diagonal=bc_diagonal)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    A = assemble_matrix(stiffness, bcs=[bc], diagonal=bc_diagonal)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/functools.py", line 909, in wrapper
+  File "/usr/lib/python3.12/functools.py", line 909, in wrapper
+    return dispatch(args[0].__class__)(*args, **kw)
+    return dispatch(args[0].__class__)(*args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+
+## Exit
+- Status: 1
+- Elapsed (s): 2

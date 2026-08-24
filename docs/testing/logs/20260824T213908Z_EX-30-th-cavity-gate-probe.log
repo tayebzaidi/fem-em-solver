@@ -1,0 +1,111 @@
+# Test Run
+- Chunk: EX-30-th-cavity-gate-probe
+- Commit: 7529fa4a9156196c99869cc41fa881aaef7f3ad2
+- Time (UTC): 2026-08-24 21:39:08
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_cavity_resonances.py tests/validation/test_resonance_guard.py -v --tb=line'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 24 16:39 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_cavity_resonances.py tests/validation/test_resonance_guard.py -v --tb=line'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 13 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  7%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 13 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  7%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 15%]PASSED [ 15%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 23%]PASSED [ 23%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 30%]PASSED [ 30%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 38%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter 
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 46%]PASSED [ 38%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 46%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 61%]
+tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_match_closed_form PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 61%]
+tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_match_closed_form FAILED [ 69%]
+tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_improve_under_refinement FAILED [ 69%]
+tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_improve_under_refinement FAILED [ 76%]FAILED [ 76%]
+tests/validation/test_cavity_resonances.py::test_n1curl_gradient_modes_form_a_clean_zero_cluster 
+tests/validation/test_cavity_resonances.py::test_n1curl_gradient_modes_form_a_clean_zero_cluster FAILED [ 84%]
+tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode FAILED [ 84%]
+tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode FAILED [ 92%]FAILED [ 92%]
+tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps 
+tests/validation/test_resonance_guard.py::test_guard_rejects_malformed_sweeps PASSED [100%]PASSED [100%]
+
+=================================== FAILURES ===================================
+E   TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+/usr/lib/python3.12/functools.py:909: TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+E   TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+/usr/lib/python3.12/functools.py:909: TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+E   TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+/usr/lib/python3.12/functools.py:909: TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+E   TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+/usr/lib/python3.12/functools.py:909: TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+=========================== short test summary info ============================
+FAILED tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_match_closed_form - TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+FAILED tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_improve_under_refinement - TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+FAILED tests/validation/test_cavity_resonances.py::test_n1curl_gradient_modes_form_a_clean_zero_cluster - TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+FAILED tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode - TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+========================= 4 failed, 9 passed in 2.11s ==========================
+
+
+=================================== FAILURES ===================================
+E   TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+/usr/lib/python3.12/functools.py:909: TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+E   TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+/usr/lib/python3.12/functools.py:909: TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+E   TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+/usr/lib/python3.12/functools.py:909: TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+E   TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+/usr/lib/python3.12/functools.py:909: TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+=========================== short test summary info ============================
+FAILED tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_match_closed_form - TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+FAILED tests/validation/test_cavity_resonances.py::test_pec_cavity_resonances_improve_under_refinement - TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+FAILED tests/validation/test_cavity_resonances.py::test_n1curl_gradient_modes_form_a_clean_zero_cluster - TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+FAILED tests/validation/test_resonance_guard.py::test_energy_continuity_guard_fires_near_a_cavity_mode - TypeError: assemble_matrix() got an unexpected keyword argument 'diagonal'
+========================= 4 failed, 9 passed in 2.11s ==========================
+
+## Exit
+- Status: 1
+- Elapsed (s): 4
