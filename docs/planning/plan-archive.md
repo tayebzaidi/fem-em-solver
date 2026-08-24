@@ -20234,3 +20234,338 @@ uses the Edit tool and verifies `git status --porcelain`.
    solve, no port claim. **Negative result:** a gate red at 16 legs is a
    generator finding at the new count — known-issues + §7 annotation,
    stop; never widen a `GEO-18` band.
+
+## §9 On deck — 2026-08-24 10:30 review block (recap + ruling (5*) + items 1–5 with done/attempt texts) — archived 2026-08-24 (18:00 review)
+
+Last reviewed 2026-08-24, **10:30 review**. Interval (since 03:00): four
+slots scheduled, four ran — **two closes, one blocked-with-a-ruling-request,
+one drain**. 04:30 — item 1 executed: `PORT-9` leg (d3b) ran the three
+birdcage modules twice on the fixed route and all three gates are green
+(‖S−Sᵀ‖/‖S‖ ~1e-14, ~2.5e+9× below the terminated conversion; σ_max
+0.999993391; class spreads ≤ 0.0617% vs 0.5%), but `main` meshes the gapped
+birdcage at **116 368 cells against the records' 116 416** — the `OPS-18`
+0.11 image, isolated as the cause by measurement — so two `Z` reproduction
+controls are red, **nothing was re-recorded**, and the slot correctly
+stopped at measurement and asked for a ruling (granted below, (5\*)).
+06:00 — item 3 closed: `EX-29`, pre-fix `stale=24` → post-fix `stale=55`
+on the same tree with an independent in-test census reproducing 55
+exactly; two unpredicted findings journaled (the tracked-artifact set is
+non-empty and is now pinned by path; in-container `git` needs
+`-c safe.directory=`). 07:30 — item 4 closed: `GEO-20` step 1, all eight
+ring ports green twice in-slot, both negative controls green, one
+quadrature finding (union mass 0.999998939803, discriminated to OCC
+quadrature — Pappus on the primitives is 1.000000000000, gated there).
+09:00 — **queue drained**: items 2 and 5 are serial behind item 1's ruling
+request, so the slot journaled per the drain instruction and stopped — the
+predicted cost of one slot, paid exactly once. Tree clean at every handoff,
+no exit 124, no wedge, no `recovered/*`. **Audits (§4): `EX-29`
+COMPLIANT** (five harness footers with elapsed, the census equality
+asserted in `test_committed_tree_stale_count_equals_an_independent_full_census`,
+the red first run retained and disclosed); **`GEO-20` step 1 COMPLIANT —
+the close stands — with two recorded digits corrected by this review**
+(the terminal-equality spread was written as 2.1e-09 but the assertion
+never prints it, and deriving it from the printed per-port areas gives
+≈ 2.1e-08 — still three decades inside the 1e-5 gate; and the 12-port
+mesh time 25.2 s was quoted from a red run, the green log reads 24.9 s —
+both fixed in §7 with a dated note, nothing demoted). Ramp: `GEO-20`
+step 1 owes a `mesh:` example → `EX-31` commissioned (item 3 below);
+`EX-29` is checker infrastructure — the instrument the example layer is
+audited *with* — so no example is owed for it. `EX-30` re-scoped from the
+honest census (§7: 55 stale across four sets — 26 repo-root, 11
+`time_harmonic`, 10 `meshing`, 4 `ports` + 2 `ans` + 1 each
+`mri`/`materials`); its `time_harmonic` leg is queueable now (item 4),
+the rest stay gated on the re-record settlement.
+
+**Ruling this review — (5\*): the image-caused birdcage re-record is
+granted; single-cause is a per-record discipline, and every record here
+has its cause measured.** Four parts. *(i) The cause set is closed.* The
+route is excluded by call graph and by commit surface (legs (c)/(d0) never
+call the sweep's S assembly; `8fd5af7` touched only
+`_assemble_sparameter_matrix`); the `GEO-19` tag encoding is excluded by
+`0f8ea96`'s own measurement (116 368 both before and after its change);
+what remains is the `OPS-18` 0.11 image — the same ~1e-4 motion the
+retired 0.11 known-issues entry recorded for the two-torus family, now on
+the birdcage family, which nothing re-gated on 0.11. Every geometric
+identity holds on the moved mesh (sheet area, `h` exact, out-of-plane
+8.882e-19 m, four identical sheets): mesher tie-breaking, not geometry.
+*(ii) Tags follow measured causes.* The two red reproduction controls —
+leg (c)'s driven current, leg (d0)'s `Z₁₁` — are image-caused alone:
+re-derive them **image-tagged** at 116 368. The moved in-class diagnostics
+((d0) discrimination margin 598.4002× → 253.2002×, adjacent spread
+0.0152% → 0.0359%, class means, the 116 416 cell record) re-record in
+class under (1\*). Any *new* record the fixed route creates on the
+birdcage (its S digits) is taken at 116 368 on the power-wave route and
+tagged **image+route jointly** — the 0.10 image is gone from `main`, so
+for those quantities the two causes are retroactively inseparable, and
+the tag says so instead of pretending to a split no run can ever measure.
+*(iii) The digits are (d3b)'s.* Measured twice in-slot, bit-identical
+across the two runs in every `Z` digit, every gate green on them; item 1
+below re-derives from a fresh run and treats a mismatch against (d3b)'s
+digits as a defect, never as something to re-record over. *(iv) Ruling
+(4\*) survives.* Step B's mesh-cause re-record (item 2) now compares
+against item 1's baselines, so each subsequent re-record is again
+single-cause (the step-B mesh); (4\*)(iii)'s pre-registered degeneracy
+disposition stands unchanged — and it matters, because leg (c)'s
+degeneracy margin is the fragile quantity across all of this (598× at
+116 416, 253× at 116 368, 0.79× on step B's mesh). Refusal was considered
+and rejected: the records must live on the image `main` boots, no future
+run can take them on the 0.10 image, so refusal buys no information and
+leaves two red controls standing indefinitely. **Branches:** all three
+keep their standing dispositions — `attempt/PORT-9-d1-20260823T124500Z`
+parked (lands with (d1′)); `attempt/GEO-19-20260823T214500Z` parked
+(item 5's payload); `attempt/GEO-19-stepB-20260824T034500Z` parked,
+deleted by item 2 after its module is green from `main`. Previous
+interval's recap, ruling (4\*)'s full text, and the done texts of items
+1–5: `docs/planning/plan-archive.md`.
+
+**Five open items.** Items 1, 3 and 4 are **independent of each other**;
+item 2 is serial on item 1 (if (d3c)'s records are not on `main`, skip to
+item 3); item 5 is serial on item 2 (if step B is not on `main`, stop and
+journal — nothing follows it). Everything runs on the 0.11 image `main`
+boots. Still unqueued by design: `PORT-11` step 1 (serial on `PORT-9` ✅),
+`PORT-9` leg (d1′) (serial on the (d3c)+step-B digits, review-queued),
+`GEO-20` step 2 (serial on `GEO-19`), and `EX-30`'s remaining legs
+(gated on the re-record settlement, §7).
+
+**⚠️ Standing constraint on the compose allow — read before editing that
+file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
+to it is write access to *what the container mounts from the host*. The
+operator granted this knowingly and narrowly (2026-08-22). **Edit only
+`environment:` keys. Do not touch `volumes:`, do not add a mount, do not
+widen a path, and do not change the memory limit (**128 G**, raised from
+64 G by operator directive 2026-08-24) — in this or any future chunk.** A chunk that believes it needs a mount change is a **blocked
+finding for the operator**. The `Edit(docker/.claude/**)` caution stands
+for the same reason: a nested `.claude/` is a settings-override surface.
+One surviving mechanic: `git checkout` cannot swap `docker/Dockerfile` /
+`docker-compose.yml` in this sandbox — bind-mounted, "Device or resource
+busy", a *silent* wrong-content switch — so any chunk that must move them
+uses the Edit tool and verifies `git status --porcelain`.
+
+1. ✅ **DONE 2026-08-24, 12:00 slot** — the re-record landed as ruled and
+   both runs read `19 passed` (115.7 s / 113.2 s;
+   `20260824T170332Z_PORT-9-step3d3c-run1.log`,
+   `…T170544Z_…-run2.log`), every edited record reproducing within-run to
+   ≤ 2.4e-10 against its 1e-9 band and matching (d3b)'s digits exactly; the
+   gates re-confirmed on the new constants (σ_max 0.999993391, margin
+   253.2002×, class spreads 0.0617 / 0.0359 / 0.0237%, `‖S−Sᵀ‖/‖S‖`
+   1.15e-14 / 4.56e-15 — the order-of-magnitude quantity), no band moved,
+   known-issues entry retired, `PORT-9` still 🟡 pending (d1′). Item 2 is
+   unblocked. Original text: **`PORT-9` leg (d3c) — execute ruling (5\*):
+   the image-tagged birdcage re-record at 116 368 (standard, `-n 2`,
+   complex, `main`; independent).** Edit the records per (5\*), all digits from (d3b)'s
+   two runs (`20260824T093133Z`/`093526Z` logs; the two runs are
+   bit-identical in every `Z` digit): the two red reproduction controls
+   **image-tagged** — leg (c) driven current
+   `+9.992781266e-07+3.346865998e-09j A`, leg (d0) `Z₁₁`
+   `+2.172952668e+01+7.461413742e+00j Ω` — the in-class moved
+   diagnostics under (1\*) ((d0) margin 253.2002×, adjacent spread
+   0.0359%, class means 2.297360911e+01 / 1.701075777e+01 /
+   1.605637772e+01 Ω, cell record 116 368), and any new fixed-route S
+   record **image+route-tagged**; bands and gates unmoved. Then re-run
+   the three birdcage modules (legs (c), (d0), (d)) **twice in-slot**:
+   expect **19 passed** both runs. **Anchors:** the (d3b) gates
+   re-confirmed — (i) `‖S−Sᵀ‖/‖S‖` ≤ 1e-3 (expect ~1e-14; noise over
+   noise, reproducible in order of magnitude only); (ii) σ_max ≤ 1 +
+   1e-9 (0.999993391); (iii′) class spreads ≤ 0.5% (0.0617 / 0.0359 /
+   0.0237%). **Negative control:** within-run reproduction — every
+   edited record reproduces to its 1e-9 print-precision band in both
+   runs; a mismatch against (d3b)'s digits means the mesh or route moved
+   *again* and is a defect to journal, never to re-record over. Retire
+   the known-issues "two birdcage reproduction controls" entry in the
+   same commit. **Cost:** two module runs ~125 s each + record edits
+   ≈ 10 min; `timeout -k 30 400`. **Traps:** complex build +
+   `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; `-s` for the
+   records; 0-byte `.c` stubs; do **not** touch
+   `attempt/GEO-19-stepB-*`. **Scope:** `PORT-9` stays 🟡 — (d1′) is the
+   closing leg and only a review queues it; this item unblocks item 2.
+   **Negative result:** a gate red on the re-recorded constants
+   contradicts a twice-reproduced measurement — known-issues + §7,
+   nothing landed, stop.
+2. 🚫 **ATTEMPTED 2026-08-24, 13:30 slot — not landed; a ruling is
+   requested.** The merge onto post-`GEO-20` `main` is clean (one conflict, at
+   the `sheet_of_ordinal` encoding, resolved so both port families share
+   `GEO-20`'s C_N-covariant `(normal, point)` form) and leg (a) is **green from
+   `main`**: `3 passed` / 96 s, 116 085 sheeted / 114 655 gapped exactly as
+   predicted, C4 spread 6.050e-16, terminal ratios 0.988616 × 4, no-gap
+   negative control 98 666 digit for digit
+   (`20260824T183257Z_GEO-19-stepB-invariance.log`). Legs (b)+(c) measured
+   everything the item asked for (`20260824T183519Z_…-port9-measure.log`,
+   `3 failed, 16 passed` / 117.80 s): the two licensed re-records are in hand
+   mesh-tagged (leg (c) `I₁` moves 1.381e-03, leg (d0) `Z₁₁` 1.852e-02), and
+   the (4\*)(iii) disposition resolves **against keeping the gate** (margin
+   5.0594× → 0.7906×, complex 6.9398× → 1.5951×, not restored). **What stopped
+   the landing is a third red the ruling did not predict:** the open-limit
+   (1e6 Ω) `Z₁₁` moves **~40%** under a 0.24% mesh change while the terminated
+   column moves 1.9e-02 — a conditioning finding, not a record that moved, and
+   the item's own negative-result clause routes it to known-issues + §7. The
+   terminated fixture meanwhile *improves* throughout (margin 253.2002× →
+   2256.9707×, class separation 150.3584× → 166.6766×, all three gates green),
+   so the flipped gate's anti-degeneracy duty is already redundant. Parked on
+   `attempt/GEO-19-stepB-20260824T183000Z` (`6c1f54e`);
+   `attempt/GEO-19-stepB-20260824T034500Z` **not** deleted — its content is
+   still not green from `main`. **The review is asked to choose** between
+   retiring the open-limit column as a record-bearing fixture (landing step B
+   with that retirement, re-siting leg (c)'s anchor on the terminated fixture,
+   re-scoping (d1′)) and measuring the open column's conditioning first. Full
+   text in §7 `GEO-19`, step B attempt 2. Item 5 stays serial behind this.
+   Original text: **`GEO-19` step B lands + birdcage mesh-cause re-record (standard,
+   `-n 2`, real for the mesh modules and complex for the `PORT-9`
+   modules, `main`; serial on item 1 — if (d3c)'s records are not on
+   `main`, skip to item 3; executes ruling (4\*) on item 1's
+   baselines).** Merge `12737a8` from
+   `attempt/GEO-19-stepB-20260824T034500Z` (`src/fem_em_solver/io/mesh.py`
+   only) to `main`. Then: (a) run the invariance control from `main`
+   (`tests/mesh/test_birdcage_port_sheets.py` +
+   `test_birdcage_leg_gaps.py`, real, ~90 s) — terminal ratios
+   0.988616 × 4, C4 spread 6.050e-16, every analytic identity exact, and
+   re-record the cell counts mesh-tagged under (1\*): expected 116 085
+   sheeted / 114 655 gapped (a *within-run* non-reproduction is a defect;
+   a value differing from the attempt's is a finding to journal, not
+   re-record blind); (b) re-run the three `PORT-9` birdcage modules
+   (complex, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first) and
+   re-record the moved records **mesh-tagged beside item 1's digits** —
+   the step-B regression log's moves (leg (c) driven current ~1.4e-03,
+   leg (d0) `Z₁₁` ~1.8e-02) were measured against the *pre-0.11*
+   records, so quote both the old and the (d3c) baselines when
+   journaling the deltas; (c) execute the pre-registered degeneracy
+   disposition of ruling (4\*): print the full `|Z_i1|` class
+   means/spreads, compare against item 1's 116 368 baseline (margin
+   253.2002×; step B's attempt measured 0.79×), and either keep the gate
+   (separation restored) or replace it with recorded class
+   means/spreads + the known-issues thin-separation entry flagged for
+   the weekly review — both branches licensed, neither is an in-slot
+   judgement. **Anchors:** invariance control green from `main`; the
+   three `PORT-9` modules green **twice in-slot** post re-record; the
+   class-structure digits journaled either way. **Negative control:**
+   the untouched no-gap path reproduces **98 666** cells digit for digit
+   (it did in all four step-B logs). **Cost:** control ~90 s + `PORT-9`
+   modules ~125 s × 2 + record edits ≈ 12 min; `timeout -k 30 400` per
+   command. **Traps:** gmsh fresh model per mesh; the half tags are
+   `100+i` / `200+i`; 0-byte `.c` stubs; delete
+   `attempt/GEO-19-stepB-20260824T034500Z` only after its content is
+   green from `main`; leave `attempt/GEO-19-20260823T214500Z` alone —
+   it is item 5's payload. **Scope:** retires the known-issues blocker-B
+   entry (it closes with this commit); `GEO-19` stays 🟡 (step C owed);
+   `PORT-9` stays 🟡; no 16-leg run here. **Negative result:** an
+   invariance miss from `main` is a merge defect — park again, quote the
+   drifted digits in §7, stop; a `PORT-9` red that a mesh-tagged
+   re-record does not explain is a finding about the route×mesh
+   interaction — known-issues + §7, stop.
+3. ✅ **DONE 2026-08-24, 15:00 slot** — `mesh:7` landed and closed as written
+   on the first run: exit 0, 70.6 s in-script / 75 s harness at `-n 2`
+   (`20260824T200613Z_EX-31-example-n2.log`), every gated figure reproducing
+   `GEO-20` step 1's log to the printed digit — ring terminal 0.974454791 /
+   0.974454832 (record band 0.974455 ± 1e-5, spread 2.099e-08 vs 1e-5),
+   closure / volume / sheet `1.000000000000`, out-of-plane ≤ 1.448e-17 m,
+   C4+mirror 1.666e-15 / 2.443e-16, Pappus 1.000000000000, cells 110 786 /
+   128 402 / 98 666, both terminal families exact on the 12-port rung, the
+   kwarg-off control lacking every ring tag with 0 facets on 215-222. The
+   three records were hoisted **into the gate module** and asserted there too
+   (module re-ran 2 passed / 70.4 s,
+   `20260824T200739Z_EX-31-gate-module.log`); docrefs
+   `dead=0 guide=0 stale=55 exit=2`, 28 examples scanned. No band moved.
+   Original text: **`EX-31` — ring-gapped birdcage with dual port families: the `mesh:`
+   example `GEO-20` step 1 is owed (standard, `-n 2`, real, `main`;
+   independent).** Execute the §7 `EX-31` entry: `mesh:7`,
+   `examples/meshing/07_birdcage_ring_gap_ports.py` + same-stem guide,
+   mesh-only, no solve — the ring-gapped rung (8 ring ports, the first
+   example with terminals as exact disks from radial cut planes) and the
+   leg+ring **12-port** rung (the first dual-family port mesh), the
+   geometry angle `EX-28` (leg gaps only) does not cover. **Anchors**
+   (every constant imported from `tests/mesh/test_birdcage_ring_gaps.py`,
+   `ANS-1` pattern): ring terminal **0.974455** of `2·π·r_ring²` inside
+   [0.95, 1.0], equal across 8 to 1e-5; closure / port volume / sheet
+   identities at 1e-9; C4 + mirror spreads < 1e-12; on the 12-port rung
+   both identity families exact with leg terminals reproducing
+   **0.988616**; cell counts 110 786 / 128 402 inside the module's own
+   band — both are 0.11-image records taken 2026-08-24, no licence
+   needed. **Negative control** (`EX-18` inverted pattern): the
+   kwarg-off uncut rung with ring-port tags asserted *absent*. Combined
+   XDMF per rung via `./run_examples.sh`; docrefs `exit != 1`.
+   **Cost:** meshes 20.9 / 24.9 s measured + exports; ≈ 120 s total;
+   `timeout -k 30 400`. **Traps:** the `GEO-18` bounding-box planarity
+   check is **not reusable** on a radial sheet (project onto the sheet's
+   azimuthal normal — the test module already does); gmsh fresh model
+   per rung; allgather facet tags; no solve, no port claim, no `GEO-18`
+   band touched. **Scope:** discharges `GEO-20` step 1's ramp
+   obligation; `GEO-20` itself stays 🟡 (step 2 serial on `GEO-19`).
+   **Negative result:** a record missing its band through the example
+   path is a finding about example/test divergence — known-issues + §7,
+   stop.
+4. 🟡 **ATTEMPTED 2026-08-24, 16:30 slot — not closed; three reds to
+   dispose of.** Census **55 → 50**, not the predicted 44: the pre-run
+   control reproduced `stale=55` exactly, `th:1`/`th:3`/`th:4`/`th:8` ran
+   green with their own records reproducing (`th:1` rate 0.9998, α 0.0173%,
+   β 0.0600% against 1%) and cleared five artifacts, and the six survivors
+   are exactly the artifacts of the three red examples — the delta is fully
+   attributed, no other family moved. The reds are **three distinct causes,
+   none of them re-recordable by this leg**: (i) `th:2`+`th:5` crash in
+   `core/cavity.py:129/131` on `assemble_matrix(..., diagonal=)`, unmigrated
+   since 0.11 — and the gate probe reads **`4 failed, 9 passed in 2.11s`**
+   with `tests/environment` all green, so **`TH-9`'s cavity gate and the
+   resonance guard have been non-executing on `main` since the 0.11 merge**;
+   (ii) `th:7` crashes on `Function.interpolate(cells=)`, the repo's only
+   such site — an example/gate divergence, not a migration class;
+   (iii) `th:6`'s **128 MHz** relL2 reads 1.76864% vs the `TH-10` record
+   1.826% (**3.14%** drift) **on the record's own 55 241-cell mesh**, while
+   64 MHz reproduces to 4.04e-05 — so, uniquely among the 0.11 record
+   motions on file, the mesh did *not* move. Nothing re-recorded, no band
+   moved, no `src/` edit, no branch parked; three known-issues entries
+   written. **The review is asked** to split (i) and (ii) off as `OPS-18`
+   follow-ons and (iii) as a `TH-10` gate re-run on 0.11 — that one
+   standard-tier command decides whether (iii) is example-path divergence or
+   a real motion in a figure §2 quotes — and to re-queue leg (th) behind
+   them. Original text: **`EX-30` leg (th) — refresh the `time_harmonic` stale set (heavy,
+   `-n 2`, complex, `main`; independent).** Re-run `th:1`–`th:8` via
+   `./run_examples.sh`; each asserts its own gated numbers (`th:6`
+   3.643% / 1.826% / 3.629% inside 1% bands, `th:7` both element-order
+   records, `th:8` all 8 power records) — those are analytic-comparison
+   bands at ~1% and the 0.11 image motion is ~1e-4, so the records are
+   *expected* to reproduce, and the run doubles as the example layer's
+   0.11 re-gate for this family. **Anchors:** every example exits 0
+   with its own records asserted; the post-run checker census drops the
+   11 `examples/time_harmonic/paraview_output/` stale entries to 0
+   (`RESULT:` line; `exit != 1` is pass, staleness elsewhere remains
+   and is other legs' business). **Negative control:** the pre-run
+   census on the same tree reads the standing `stale=55`; expect
+   post-run 44 = 55 − 11 (print both; if another leg's artifacts aged
+   or ran in between, report the delta, don't force it). **Cost:**
+   recorded in-script times ≤ 60 s each, `th:6` 24 s, `th:7` 13 s,
+   `th:8` 5 s; well under one slot; `timeout -k 30 660` per command,
+   split across commands rather than raising a ceiling. **Traps:**
+   complex build + `FEM_EM_REQUIRE_COMPLEX=1`; `./run_examples.sh`,
+   never raw pytest; docrefs exit 2 is information; **do not re-record
+   any example record** — a drift is a finding naming the chunk that
+   owns the record (known-issues), and the §10 ramp count drops by one
+   until adjudicated. **Scope:** the `time_harmonic` leg only; the
+   repo-root, `meshing`, and `ports`+`ans` legs stay unqueued (§7 —
+   the `meshing` leg waits on item 1's cell-record settlement, the
+   `ports` leg on items 1–2 plus a (1\*) example-record licence).
+   **Negative result:** an example red on its own record is a 0.11
+   finding about that family — known-issues entry, §7 annotation, stop.
+5. **`GEO-19` step C — the parked 16-leg gates module (heavy, `-n 2`,
+   real, `main`; serial on item 2 — if step B is not on `main`, stop and
+   journal; spare).** Land `tests/mesh/test_birdcage_port_scaleup.py`
+   from `attempt/GEO-19-20260823T214500Z` (`321c933`) on `main` and run
+   gates (i)–(v) of the §7 entry at `leg_count = 16`: `GEO-9` partition
+   < 1e-9; 16 terminals inside [0.95, 1.0] of `2·π·r_leg²`, equal to
+   1e-5; every sheet `dx·g` = 1 to 1e-9 with **C16** area spread
+   < 1e-12; conductor meshed/CAD ≥ 0.95; layout separation ≥ the floor
+   (2.731e-02 vs 1.750000e-02 m, the measured 1.56×). **Negative
+   control:** the in-module 4-leg run reproduces the **step-B mesh-tagged
+   record** — 116 085 cells / 0.988616 × 4 / C4 spread 6.050e-16 —
+   digit for digit; 116 368 and 116 416 are both history and must
+   **not** be the asserted value (the parked module's constant may still
+   carry one — update before running). **Stop rule (binding):** > 1 M
+   cells or > 600 s of mesh time ⇒ record the count and the 4 → 16
+   scaling and stop — that number *is* Phase 6's deliverable. **Cost:**
+   the 4-leg rung is 21.15 s / ~116 k cells; 16 legs is unmeasured —
+   measuring it is the point; `timeout -k 30 1200`. **Traps:** delete
+   the attempt branch only after the module runs green from `main`;
+   gmsh fresh model per count; print per-port diagnostics once, not per
+   rank. **Scope:** mesh identities at 16 legs + Phase 6's first
+   measured cost; `GEO-19` ✅ on this; no solve, no port claim.
+   **Negative result:** a gate red at 16 legs is a generator finding at
+   the new count — known-issues + §7 annotation, stop; never widen a
+   `GEO-18` band.
+

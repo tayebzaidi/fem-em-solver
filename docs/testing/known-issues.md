@@ -82,6 +82,8 @@ is fixed — per §9's standing rule, a status without a log reads "unknown".
 tests above run green, with the closed-form eigenfrequency comparison quoted.
 Scoped by `EX-30` leg (th) as an `OPS-18` follow-on for a review to queue; it
 also unblocks 2 of the 6 `time_harmonic` artifacts that leg could not refresh.
+**Commissioned as `OPS-24`** (2026-08-24 18:00 review, §9 item 2); §2.1 now
+carries the non-executing caveat on the cavity figure until this retires.
 
 ### 🚫 OPEN — `th:7` calls `Function.interpolate(cells=)`, removed in 0.11 — the **only** such site in the repo, so the example has diverged from the gate it claims to import (`EX-30` leg (th), 2026-08-24)
 
@@ -117,6 +119,9 @@ import them) exists to prevent.
 hoisted into the gate module and imported — a review should decide which, since
 repairing it in place preserves the divergence. Unblocks 2 of the 6
 `time_harmonic` artifacts `EX-30` leg (th) could not refresh.
+**Ruled and commissioned as `OPS-25`** (2026-08-24 18:00 review, §9 item 3):
+hoist and import — in-place repair is rejected because it preserves the
+divergence this entry documents.
 
 ### 🚫 OPEN — `th:6`'s **128 MHz** interior relL2 does not reproduce the `TH-10` record on the 0.11 image (1.76864% vs 1.826%, 3.14% drift) while **64 MHz reproduces to 4.04e-05 on the same mesh** (`EX-30` leg (th), 2026-08-24)
 
@@ -166,6 +171,26 @@ own gate module on 0.11. If the gate reproduces 1.826%, this is an example/gate
 path divergence (cf. the `th:7` entry above, same family, same slot). If the gate
 also measures ~1.7686%, it is a real 0.11 motion in a §2 figure and the §2
 sentence needs revising. Until one of those is done, this is undiagnosed.
+
+**DIAGNOSED 2026-08-24, 18:00 review — from documentation; the measurement
+already existed.** `TH-10`'s gate module *was* re-run on 0.11, on 2026-08-22,
+by `OPS-18` step 3 attempt 1: green log
+`20260822T123746Z_OPS-18-step3-th10-rerun.log` (11 passed, exit 0) prints the
+128 MHz fine rung at **relL2 1.769%, separation 59.16×, 55 241 cells** — the
+re-record 1.826% → 1.769% is explicit in §7 `OPS-18` ("*with its mesh*,
+55 251 → 55 241"). `th:6` measured 1.76864% / 59.16× on 55 241 cells: the
+gate's own 0.11 digits to 2e-4, against its never-updated restated constants
+(`RECORD_INTERIOR_L2[128 MHz]` 0.01826, `RECORD_SEPARATION[128 MHz]` 57.31).
+So this is the **example/gate-divergence branch** — same class as the `th:7`
+entry — not a physics motion; the "mesh did not move" observation above was
+correct and is exactly why: the mesh had already moved *at the re-record*,
+and the record moved with it while the example's copy did not.
+
+**Retire when:** `th:6`'s two 128 MHz constants are re-recorded
+version-tagged from the `20260822T123746Z` log (0.7.2 digits kept beside)
+and the example runs green — licensed to `EX-30` leg (th)'s re-run
+(§9 item 4, 2026-08-24 18:00 review). §2 and CLAUDE.md now quote the
+version-tagged pair.
 
 **Also on that log — the `Status: 124` is a teardown hang, not a compute
 overrun.** After the assertion fires (~40 s of real work), MPI deadlocks in
@@ -228,6 +253,15 @@ both gated on `main`, both green, both improved by step B.
 **Flagged to the weekly review** (§10 Phase 6): if the open-limit column is
 retired as a record, `PORT-9` leg (c)'s reproduction anchor needs a replacement
 on the terminated fixture, and leg (d1′) should be re-scoped to match.
+
+**Ruled 2026-08-24, 18:00 review — (6\*), option (A): the open-limit column
+is retired as a record-bearing fixture; step B lands with the retirement
+(§9 item 1), leg (c)'s anchor re-sites on its driven `I₁` + the terminated
+fixture, (d1′) re-scoped.** The entry stays OPEN as the record of the
+conditioning finding itself. **Retire when:** an h-refinement rung measures
+the open column's conditioning, or Phase 6 adjudicates that no open-limit
+quantity is record-bearing for the tuning workflow — whichever a review
+commissions first. The Phase 6 flag above stands.
 
 **Verified at:** `cc4ab78` (`main`) + `6c1f54e`
 (`attempt/GEO-19-stepB-20260824T183000Z`), 2026-08-24.
