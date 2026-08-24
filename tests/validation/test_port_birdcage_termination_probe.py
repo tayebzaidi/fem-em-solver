@@ -37,7 +37,7 @@ result, so both must hold in the same solve.
 **Negative controls.**  (1) The 1e6 Ω column reproduces leg (c)'s record to its
 printed digits — if it does not, the fixture moved and nothing measured at 50 Ω
 is comparable to anything.  (2) ``|I₁|`` at 50 Ω is more than 10× the open
-value 9.992734880e-07 A: the termination must have closed a current path, and if
+value 9.992781266e-07 A: the termination must have closed a current path, and if
 it did not, the sheets are not in the circuit and the margin below means nothing.
 
 **Scope.**  Closes nothing in §2 and does not close step 3, which stays 🟡 until
@@ -104,19 +104,31 @@ from tests.validation.test_port_package_sparameters import REFERENCE_IMPEDANCE_O
 OPEN_PORT_IMPEDANCE_OHM = PROBE_PORT_IMPEDANCE_OHM  # 1e6 Ohm, leg (c)'s value
 TERMINATED_PORT_IMPEDANCE_OHM = REFERENCE_IMPEDANCE_OHM  # 50 Ohm, the ports' z0
 
-# Leg (c)'s record — `20260822T213612Z_PORT-9-step3c-rerun.log`, 116 416 cells,
+# Leg (c)'s record — `20260824T093133Z_PORT-9-step3d3b-run1.log`, 116 368 cells,
 # f = 0.5 sheets, P1 driven, 10 MHz, `-n 2`, reproduced bit-identically across
-# that slot's two runs.  Compared here to the digits the log printed (9 decimal
-# places = 10 significant figures), which is what "bit-identical" can be checked
-# to through a record; the band below is that print precision, not a physics
-# tolerance.
-LEG_C_I1_A = +9.992734880e-07 + 3.351870842e-09j
+# that slot's two runs (`...093526Z_...-run2.log`).  Compared here to the digits
+# the log printed (9 decimal places = 10 significant figures), which is what
+# "bit-identical" can be checked to through a record; the band below is that
+# print precision, not a physics tolerance.
+#
+# **Image-tagged re-record, 2026-08-24 (ruling (5\*), §9).**  The previous digits
+# (`20260822T213612Z_PORT-9-step3c-rerun.log`, 116 416 cells: `I_1` =
+# +9.992734880e-07 + 3.351870842e-09j A, `Z_11` = +7.157807613e+02 −
+# 3.356708736e+03j Ω) were taken on the pre-`OPS-18`-0.11 container image.  The
+# 0.11 image moves this mesh to 116 368 cells by mesher tie-breaking — every
+# geometric identity is unchanged (sheet area, `h` exact, out-of-plane 8.882e-19
+# m, four identical sheets) — and the field records move with it by ~7e-06
+# (`I_1`) and ~2e-03 (`Z`).  The cause is the image alone: the leg (c)/(d0) call
+# graph never touches the power-wave S assembly `8fd5af7` changed, and `0f8ea96`
+# measured 116 368 both before and after the `GEO-19` tag encoding.  No band
+# moves here; only the digits the image now produces.
+LEG_C_I1_A = +9.992781266e-07 + 3.346865998e-09j
 LEG_C_Z_COLUMN = np.array(
     [
-        +7.157807613e02 - 3.356708736e03j,
-        +1.234475890e01 - 1.879647891e03j,
-        +1.190817590e01 - 1.879802412e03j,
-        +1.231173574e01 - 1.879351468e03j,
+        +7.111692404e02 - 3.351665665e03j,
+        +1.224919287e01 - 1.878346946e03j,
+        +1.193721196e01 - 1.878700877e03j,
+        +1.231338434e01 - 1.878312313e03j,
     ],
     dtype=np.complex128,
 )

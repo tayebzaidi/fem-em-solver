@@ -10,7 +10,8 @@ form) and split each gap box at its mid-plane (step 2: sheet area ``dx·g`` at
 
 **What it does.**  One mesh of the step-2 fixture
 (``birdcage_port_domain(leg_gap_length=LEG_GAP_LENGTH, emit_port_sheets=True,
-conductor_resolution=1.6e-3)``, 116 416 cells at scoping), the four ``21x``
+conductor_resolution=1.6e-3)``, 116 368 cells on the `OPS-18` 0.11 image;
+116 416 at scoping, on the image that preceded it), the four ``21x``
 sheets narrowed to `PORT-9` step 2b's gated interior width ``f = 0.5`` with its
 ``w = A/h`` convention, a :class:`LumpedSheetPortSpec` on every one of them, and
 **one** package solve at the two-torus records' 10 MHz with **port 1 driven
@@ -101,8 +102,14 @@ PHANTOM_CELL_TAG = 3
 ADJACENT_SPREAD_BAND = 0.05
 
 # `GEO-18` step 2's record for the sheeted mesh, the fixture anchor: the mesh
-# this leg solves on must be the mesh the sheets were gated on.
-STEP2_CELL_COUNT = 116416
+# this leg solves on must be the mesh the sheets were gated on.  **Image-tagged
+# re-record, 2026-08-24 (ruling (5\*), §9)**: 116 416 was `GEO-18` step 2's count
+# on the pre-`OPS-18`-0.11 container image; the 0.11 image the tree now boots
+# meshes the same CAD at 116 368 (ratio 0.999588), a mesher tie-breaking motion
+# with every geometric identity of step 2 unchanged.  The 2% band below is
+# unmoved and both counts sit inside it — this constant is the fixture's
+# identity record, not a gate.
+STEP2_CELL_COUNT = 116368
 STEP2_CELL_COUNT_BAND = 0.02
 
 # Above this the negative control (the open-limit second solve) is not run and

@@ -28,60 +28,6 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### 🚫 OPEN — two birdcage **reproduction controls** are red on `main`: the 0.11 image meshes the gapped birdcage at **116 368** cells, the records were taken at **116 416** (`PORT-9` leg (d3b), 2026-08-24)
-
-**Test ids** (both `@complex_only`, both fail on `main` with no local change):
-
-```
-tests/validation/test_port_birdcage_termination_probe.py::test_the_open_control_reproduces_leg_c_before_the_knob_turns
-tests/validation/test_port_birdcage_four_port.py::test_the_driven_column_reproduces_leg_d0
-```
-
-**Literal symptom**, `-n 2`, complex build, `2 failed, 17 passed`:
-
-```
-AssertionError: the open solve's driven current +9.992781266e-07+3.346865998e-09j A
-deviates 6.829e-06 from leg (c)'s recorded +9.992734880e-07+3.351870842e-09j A
-AssertionError: Z_11 = +2.172952668e+01+7.461413742e+00j Ohm deviates 1.449e-04 from
-leg (d0)'s recorded +2.173224483e+01+7.459491479e+00j Ohm against the 1e-09
-print-precision band
-```
-
-`docs/testing/logs/20260824T093133Z_PORT-9-step3d3b-run1.log` and
-`…T093526Z_…-run2.log` — both runs identical in every Z digit.
-
-**Verified at:** `main` @ `082e30f` (2026-08-24), 0.11.0.post0 image.
-
-**Cause — measured, not a mystery: the mesh moved, and it is not the route.**
-All three modules print `116368 cells (record 116416, ratio 0.999588)`. The
-`PORT-9` leg (c)/(d0)/(d) records were taken 2026-08-22/23 **before** the
-`OPS-18` step 3b merge put main on dolfinx/gmsh 0.11, and 0f8ea96 already
-measured 116 368 on 2026-08-23 *both before and after* its own tag change, so
-the tag encoding is excluded. This is the same 1e-4 record motion the retired
-0.11 entry above recorded for the two-torus family, recurring for the birdcage
-family, which nothing re-gated on 0.11. The `PORT-9` leg (d3) route change
-cannot be the cause: it touched only `_assemble_sparameter_matrix`, and these
-two modules never call the sweep's S assembly at all. **Every physics identity
-still holds** on the moved mesh — sheet area `5.930614898e-05 m²`, `h` exactly
-`8.000000000e-03 m`, out-of-plane `8.882e-19 m`, all four sheets identical, C4
-class spreads 0.0617 / 0.0359 / 0.0237% and the (d0) discrimination margin
-253.2002× against a 10× floor.
-
-**Do not re-record these two constants without a review ruling.** Ruling (4\*)
-(2026-08-24 03:00) sequenced leg (d3b) first precisely so each re-record has
-exactly one cause; the mesh-cause re-record it plans belongs to `GEO-19` step
-B's landing, and this is a *third*, earlier cause (the image) that the ruling
-did not know about. The digits above are what an image-tagged re-record would
-write.
-
-**Retire when:** a review adjudicates the image-caused birdcage re-record and
-the two records are re-derived at 116 368 image-tagged beside the pre-0.11
-digits. **Adjudicated 2026-08-24, 10:30 review — ruling (5\*) grants the
-re-record** (image-tagged for these two controls, whose cause is single and
-measured; image+route-tagged for any new fixed-route S record, the split
-being retroactively unmeasurable with the 0.10 image gone); execution is
-`PORT-9` leg (d3c), §9 item 1, and this entry retires with that commit.
-
 ### 🚫 OPEN — `birdcage_port_domain(emit_port_sheets=True)` **cannot build any birdcage with more than four legs**: the mid-plane sheet is an axis-aligned rectangle (`GEO-19` attempt 1, 2026-08-23)
 
 **Test id:** no test asserts this on `main` — the module that hits it,
@@ -162,6 +108,55 @@ start). Related and separate: the layout clearance floor independently caps
 this geometry at `N <= 25` legs — see the `GEO-19` §7 entry.
 
 ---
+
+### ✅ RETIRED 2026-08-24 (`PORT-9` leg (d3c), 12:00 implementer slot) — two birdcage **reproduction controls** were red on `main`: the 0.11 image meshes the gapped birdcage at **116 368** cells, the records were taken at **116 416** (`PORT-9` leg (d3b), 2026-08-24)
+
+**Test ids** (both `@complex_only`, both failed on `main` with no local change):
+
+```
+tests/validation/test_port_birdcage_termination_probe.py::test_the_open_control_reproduces_leg_c_before_the_knob_turns
+tests/validation/test_port_birdcage_four_port.py::test_the_driven_column_reproduces_leg_d0
+```
+
+**Literal symptom**, `-n 2`, complex build, `2 failed, 17 passed`:
+
+```
+AssertionError: the open solve's driven current +9.992781266e-07+3.346865998e-09j A
+deviates 6.829e-06 from leg (c)'s recorded +9.992734880e-07+3.351870842e-09j A
+AssertionError: Z_11 = +2.172952668e+01+7.461413742e+00j Ohm deviates 1.449e-04 from
+leg (d0)'s recorded +2.173224483e+01+7.459491479e+00j Ohm against the 1e-09
+print-precision band
+```
+
+`docs/testing/logs/20260824T093133Z_PORT-9-step3d3b-run1.log` and
+`…T093526Z_…-run2.log` — both runs identical in every Z digit.
+
+**Verified at:** `main` @ `082e30f` (2026-08-24), 0.11.0.post0 image.
+
+**Cause — measured, not a mystery: the mesh moved, and it is not the route.**
+All three modules printed `116368 cells (record 116416, ratio 0.999588)`. The
+`PORT-9` leg (c)/(d0)/(d) records were taken 2026-08-22/23 **before** the
+`OPS-18` step 3b merge put main on dolfinx/gmsh 0.11, and 0f8ea96 already
+measured 116 368 on 2026-08-23 *both before and after* its own tag change, so
+the tag encoding is excluded. This is the same 1e-4 record motion the retired
+0.11 entry below recorded for the two-torus family, recurring for the birdcage
+family, which nothing re-gated on 0.11. The `PORT-9` leg (d3) route change
+cannot be the cause: it touched only `_assemble_sparameter_matrix`, and these
+two modules never call the sweep's S assembly at all. **Every physics identity
+still held** on the moved mesh — sheet area `5.930614898e-05 m²`, `h` exactly
+`8.000000000e-03 m`, out-of-plane `8.882e-19 m`, all four sheets identical, C4
+class spreads 0.0617 / 0.0359 / 0.0237% and the (d0) discrimination margin
+253.2002× against a 10× floor.
+
+**Retired by:** ruling (5\*) (2026-08-24 10:30 review) granted the image-caused
+re-record; `PORT-9` leg (d3c) executed it in the 12:00 slot. The two controls
+are now recorded image-tagged at 116 368 — leg (c) `I_1` =
++9.992781266e-07 + 3.346865998e-09j A, leg (d0) `Z_11` =
++2.172952668e+01 + 7.461413742e+00j Ω, both beside the pre-0.11 digits in the
+modules' own comments — and both runs of the re-record read **19 passed** with
+every edited constant reproducing to ≤ 2.4e-10 against its 1e-9 band
+(`20260824T170332Z_PORT-9-step3d3c-run1.log`,
+`20260824T170544Z_PORT-9-step3d3c-run2.log`). No band was moved.
 
 ### ✅ RETIRED 2026-08-23 (`OPS-18` step 3b merge) — the two-torus port fixtures **SIGABRT'd in `gmsh.model.mesh.generate` only in the 0.11 image**: numpy 2 renders `!r` of a numpy scalar as `np.float64(…)` inside a gmsh `MathEval` string (`OPS-18` step 3 attempt 2, 2026-08-22; entered by the 10:30 review)
 

@@ -411,7 +411,7 @@ needs `-f docker/docker-compose.yml`.
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Complete and trustworthy** |
 | 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — every analytic gate closed (`TH-1`/`TH-6`/`TH-7`/`TH-8`/`TH-9` ✅); Larmor sphere `TH-10` ✅; coil trend `TH-11` ✅ closed on a measured negative (no 64 MHz h → 0 bracket fits the box, 2026-08-18); degree-2 `TH-12` steps 1–3 ✅, production order decided degree 1 for coil-fed solves (§10, 2026-08-23), `TH-13` discriminator open; `TH-2`/`TH-3` API hardening ⚠️ |
 | 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58% pinned / 1.5834% on the production projected drive, step 3; eddy-current regime); SAR gated on an **imposed** uniform field only (`MAT-4` steps 1+3: lossy-sphere closed form 3.5%, mass-averaging exact at 1 g/10 g) — coil-driven SAR and the C95.3 claim still open |
-| 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-11` | `PORT-1` ✅ 2026-08-15 (field-derived S through the package, two-torus fixture only, two named systematics); `PORT-10` ✅ 08-16; `PORT-9` 🟡 — steps 1–2c ✅ on the two-torus (lumped-sheet BC, 1.8333% cross-route, reciprocity 2.6e-11), step 3 on the gapped birdcage has two gated legs (c)/(d0) at 10 MHz (C4 spread 0.0152–0.0159% vs 5%, 50 Ω termination separates the classes 598×) and **leg (d) closed 2026-08-23 — the 4×4 passes all three gates** (reciprocity 2.495292352e-05 vs 1e-3, σ_max 0.862659137 ≤ 1, class spreads 0.0199 / 0.0180 / 0.0108% vs 5%, gate (iii) since tightened to 0.5%); leg (d1)'s geometric control ran 2026-08-23 and **found the route loses reciprocity (5.57e-03 vs 1e-3) once the fixture is asymmetric**; leg (d2) (asymmetric two-torus, 13:30 slot) traced it to the assembly — the readout *is* the source's adjoint (1.33e-10), the asymmetry is the terminated-`Z` per-column normalisation — and the 18:00 review ruled the power-wave S fix (leg (d3)) with the class re-record (d3b), (d1′) serial on (d3b); `PORT-11` (64/128 MHz) scoped 2026-08-23, serial on it; `PORT-4`…`PORT-8` open |
+| 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-11` | `PORT-1` ✅ 2026-08-15 (field-derived S through the package, two-torus fixture only, two named systematics); `PORT-10` ✅ 08-16; `PORT-9` 🟡 — steps 1–2c ✅ on the two-torus (lumped-sheet BC, 1.8333% cross-route, reciprocity 2.6e-11), step 3 on the gapped birdcage has two gated legs (c)/(d0) at 10 MHz (C4 spread 0.0152–0.0159% vs 5%, 50 Ω termination separates the classes 598× — re-recorded image-tagged on the 0.11 image 2026-08-24 by leg (d3c): 0.0359%, 253.2002×) and **leg (d) closed 2026-08-23 — the 4×4 passes all three gates** (reciprocity 2.495292352e-05 vs 1e-3, σ_max 0.862659137 ≤ 1, class spreads 0.0199 / 0.0180 / 0.0108% vs 5%, gate (iii) since tightened to 0.5%); leg (d1)'s geometric control ran 2026-08-23 and **found the route loses reciprocity (5.57e-03 vs 1e-3) once the fixture is asymmetric**; leg (d2) (asymmetric two-torus, 13:30 slot) traced it to the assembly — the readout *is* the source's adjoint (1.33e-10), the asymmetry is the terminated-`Z` per-column normalisation — and the 18:00 review ruled the power-wave S fix (leg (d3)) with the class re-record (d3b), (d1′) serial on (d3b); `PORT-11` (64/128 MHz) scoped 2026-08-23, serial on it; `PORT-4`…`PORT-8` open |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 for excitation; both meshes (coil+phantom, birdcage) generate and are identity-gated in CI (`GEO-9`, 2026-08-03); the birdcage fixture is loaded (phantom inside) and since `GEO-18` ✅ 2026-08-22 has terminals and port sheets — the first B1+ chunk is scoped by the daily review when `PORT-9` closes (§10 subgoal 4) |
 | 6 | Birdcage tuning at 64/128 MHz: mode spectrum, lumped capacitors, circuit co-simulation (the HFSS + Circuit split); production target: **32-port high-pass birdcage at 1.5 T** (§10 operator directive 2026-08-17) | subgoals owned by the weekly review (§10); mesh prerequisites `GEO-19` (16 legs, cost rung) + `GEO-20` (ring-gap ports) scoped 2026-08-23 | Not started — mesh prerequisites may run any time (CAD-identity gates); physics subgoals wait on `PORT-9`/`PORT-11` |
 | 7 | Implants: parametric implant geometry in the phantom, local SAR / near-implant hot spots | subgoals owned by the weekly review (§10) | Not started |
@@ -3210,6 +3210,45 @@ the answer is already gated**.
 >   >   the moved diagnostics, image+route-tagged for any new fixed-route
 >   >   S record (the 0.10 image is gone, the split is unmeasurable) —
 >   >   executed as leg (d3c), §9 item 1; full text in §9.
+>   > * **Leg (d3c) executed 2026-08-24, 12:00 slot — ruling (5\*) carried
+>   >   out: the birdcage records now live on the image `main` boots, and the
+>   >   two red reproduction controls are green (🟡, (d1′) still owed).**
+>   >   The edits, all digits taken from (d3b)'s two bit-identical runs:
+>   >   leg (c)'s `I₁` = **+9.992781266e-07 + 3.346865998e-09j A** and its
+>   >   1e6 Ω `Z` column (`Z₁₁` = +7.111692404e+02 − 3.351665665e+03j,
+>   >   `Z₂₁` = +1.224919287e+01 − 1.878346946e+03j, `Z₃₁` =
+>   >   +1.193721196e+01 − 1.878700877e+03j, `Z₄₁` = +1.231338434e+01 −
+>   >   1.878312313e+03j Ω) **image-tagged**; leg (d0)'s 50 Ω column
+>   >   (`Z₁₁` = **+2.172952668e+01 + 7.461413742e+00j**, `Z₂₁` =
+>   >   +1.700667611e+01 + 2.379070919e-01j, `Z₃₁` = +1.602683719e+01 −
+>   >   9.541994594e-01j, `Z₄₁` = +1.701267933e+01 + 2.390098116e-01j Ω)
+>   >   **image-tagged**; the fixture's cell record 116 416 → **116 368**
+>   >   (`GEO-18` step 2's count on the 0.11 image; its 2% band unmoved, and
+>   >   all three modules now print ratio 1.000000); the moved in-class
+>   >   diagnostics under (1\*) (margin 253.2002×, adjacent spread 0.0359%,
+>   >   class means 2.297360911e+01 / 1.701075777e+01 / 1.605637772e+01 Ω);
+>   >   and the fixed-route S digits recorded **image+route-tagged** in leg
+>   >   (d)'s module docstring, the joint tag stated as unmeasurable-by-any-
+>   >   future-run rather than split. Every pre-0.11 digit is kept beside its
+>   >   replacement in the same comment. **Verification — the three modules
+>   >   re-run whole, twice in-slot: `19 passed` both times**, 115.7 s and
+>   >   113.2 s (harness 118 s / 115 s;
+>   >   `20260824T170332Z_PORT-9-step3d3c-run1.log`,
+>   >   `20260824T170544Z_PORT-9-step3d3c-run2.log`). **Negative control —
+>   >   within-run reproduction of every edited record**: leg (c)'s `I₁` at
+>   >   4.211e-11 / 4.212e-11 and its `Z` column at ≤ 2.360e-10, leg (d0)'s
+>   >   column at ≤ 1.452e-10, all against the 1e-9 print-precision band, and
+>   >   no digit differs from (d3b)'s — the mesh did not move again. **The
+>   >   gates re-confirmed on the re-recorded constants:** (i) `‖S−Sᵀ‖/‖S‖`
+>   >   = 1.152855902e-14 / 4.557532901e-15 vs 1e-3 (the order-of-magnitude
+>   >   quantity (d3b) named, spanning 4.6e-15–1.2e-14 across the four runs
+>   >   now on record); (ii) `σ_max(S)` = 0.999993391, max column power sum
+>   >   0.808049459; (iii) class spreads 0.0617 / 0.0359 / 0.0237% vs the
+>   >   module's unmoved 5%, pooled separation 150.3584× vs the 10× floor;
+>   >   (d0)'s margin 253.2002× vs 10×. No band or gate was moved. The
+>   >   known-issues "two birdcage reproduction controls" entry retires with
+>   >   this commit. `PORT-9` stays 🟡 — (d1′) is the closing leg and only a
+>   >   review queues it; §9 item 2 (`GEO-19` step B) is unblocked.
 
 **`PORT-10` — the two `PORT-1` systematics: composition measured, not
 assumed** ✅ *(scoped 2026-08-16, weekly planning review — the first of the
@@ -3996,9 +4035,18 @@ One surviving mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-1. **`PORT-9` leg (d3c) — execute ruling (5\*): the image-tagged birdcage
-   re-record at 116 368 (standard, `-n 2`, complex, `main`;
-   independent).** Edit the records per (5\*), all digits from (d3b)'s
+1. ✅ **DONE 2026-08-24, 12:00 slot** — the re-record landed as ruled and
+   both runs read `19 passed` (115.7 s / 113.2 s;
+   `20260824T170332Z_PORT-9-step3d3c-run1.log`,
+   `…T170544Z_…-run2.log`), every edited record reproducing within-run to
+   ≤ 2.4e-10 against its 1e-9 band and matching (d3b)'s digits exactly; the
+   gates re-confirmed on the new constants (σ_max 0.999993391, margin
+   253.2002×, class spreads 0.0617 / 0.0359 / 0.0237%, `‖S−Sᵀ‖/‖S‖`
+   1.15e-14 / 4.56e-15 — the order-of-magnitude quantity), no band moved,
+   known-issues entry retired, `PORT-9` still 🟡 pending (d1′). Item 2 is
+   unblocked. Original text: **`PORT-9` leg (d3c) — execute ruling (5\*):
+   the image-tagged birdcage re-record at 116 368 (standard, `-n 2`,
+   complex, `main`; independent).** Edit the records per (5\*), all digits from (d3b)'s
    two runs (`20260824T093133Z`/`093526Z` logs; the two runs are
    bit-identical in every `Z` digit): the two red reproduction controls
    **image-tagged** — leg (c) driven current

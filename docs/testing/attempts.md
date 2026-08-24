@@ -14227,3 +14227,91 @@ between them, so the cost of this drain is one slot, not the rest of the day,
 provided the 10:30 review makes the image-tagged-re-record call and re-tops §9
 to five items. If a slot lands here again before that ruling, the honest action
 is the same entry, not an invented chunk.
+
+## 2026-08-24T17:10Z — `PORT-9` leg (d3c) (§9 item 1) — **complete**: ruling (5\*) executed, the birdcage records now live on the image `main` boots
+
+**Preflight.** `main` clean at `f1096c4`, container Up 21 h. §9 item 1 taken as
+written — the first open item, no fallback.
+
+**What was done.** The image-caused re-record ruling (5\*) granted, all digits
+lifted from leg (d3b)'s two bit-identical runs
+(`20260824T093133Z`/`093526Z`), nothing re-measured to decide a value:
+
+* `tests/validation/test_port_birdcage_termination_probe.py` — leg (c)'s
+  record **image-tagged**: `I₁` +9.992734880e-07 + 3.351870842e-09j →
+  **+9.992781266e-07 + 3.346865998e-09j** A, and the whole 1e6 Ω `Z` column
+  (`Z₁₁` +7.157807613e+02 − 3.356708736e+03j → **+7.111692404e+02 −
+  3.351665665e+03j** Ω, and the three mutuals). Both the pre-0.11 digits and
+  the measured cause (mesher tie-breaking under the `OPS-18` 0.11 image; the
+  route excluded by call graph, the tag encoding by `0f8ea96`) are kept in the
+  comment beside the new constants.
+* `tests/validation/test_port_birdcage_four_port.py` — leg (d0)'s 50 Ω column
+  **image-tagged** (`Z₁₁` +2.173224483e+01 + 7.459491479e+00j →
+  **+2.172952668e+01 + 7.461413742e+00j** Ω, plus the three mutuals), and a new
+  docstring block recording the fixed-route S digits **image+route-tagged**,
+  stating explicitly that with the 0.10 image gone from `main` no future run
+  can split those two causes.
+* `tests/validation/test_port_birdcage_lumped_column.py` — the fixture's cell
+  record `STEP2_CELL_COUNT` 116416 → **116368** (`GEO-18` step 2's count on the
+  0.11 image), its 2% band unmoved; all three modules now print ratio 1.000000.
+* In-class under (1\*): the (d0) margin 253.2002×, adjacent spread 0.0359%,
+  class means 2.297360911e+01 / 1.701075777e+01 / 1.605637772e+01 Ω.
+
+**No band and no gate was moved**, in either direction.
+
+**Verification (standard tier, `-n 2`, complex build, `tests/environment`
+first, three modules whole, twice in-slot):**
+
+| run | log | result | in-test elapsed | harness elapsed |
+|---|---|---|---|---|
+| 1 | `20260824T170332Z_PORT-9-step3d3c-run1.log` | **19 passed** | 115.73 s | 118 s |
+| 2 | `20260824T170544Z_PORT-9-step3d3c-run2.log` | **19 passed** | 113.24 s | 115 s |
+
+**Negative control — within-run reproduction of every edited record, both
+runs** (band 1e-9, print precision): leg (c) `I₁` 4.211e-11 / 4.212e-11, its
+`Z` column ≤ 2.360e-10 (worst `Z₃₁`), leg (d0)'s column ≤ 1.452e-10 (worst
+`Z₄₁`). **No digit differs from (d3b)'s** — the mesh did not move again, which
+is what the item said to treat as a defect if it had.
+
+**Gates re-confirmed on the re-recorded constants:** (i) `‖S−Sᵀ‖/‖S‖` =
+1.152855902e-14 (run 1) / 4.557532901e-15 (run 2) vs the unmoved 1e-3 — the
+order-of-magnitude quantity (d3b) named, now spanning 4.56e-15–1.16e-14 across
+four runs; (ii) `σ_max(S)` = 0.999993391 ≤ 1 + 1e-9, max column power sum
+0.808049459; (iii) class spreads 0.0617 / 0.0359 / 0.0237% vs the module's
+unmoved 5% (and inside the review's tighter 0.5% reading, which this module
+does not gate), pooled separation 150.3584× vs the 10× floor; leg (d0)'s
+discrimination margin 253.2002× vs the 10× floor.
+
+**Finding, small and worth the review's attention.** The `‖S−Sᵀ‖/‖S‖` reading
+is the only quantity in this family that does not reproduce digit for digit —
+4.56e-15, 8.24e-15, 1.15e-14, 1.16e-14 over the four runs on record, a 2.5×
+spread. That is the pre-registered behaviour (noise over noise on a matrix
+symmetric to the float floor), not a defect, but it means anchor (i) can only
+ever be re-recorded as an order of magnitude. The module docstring now says so
+in the record itself rather than quoting one run's digits as if they were
+reproducible.
+
+**Bookkeeping.** Known-issues "two birdcage reproduction controls" entry moved
+to ✅ RETIRED in the same commit, with the retiring digits and both log names.
+§7 `PORT-9` gains a leg (d3c) bullet; the §6 phase-4 row's 598× / 0.0152%
+digits carry an image-tagged pointer to 253.2002× / 0.0359%. §9 item 1 marked
+done in the same commit.
+
+**Scope held.** `PORT-9` stays 🟡 — (d1′) is the closing leg and only a review
+queues it. Item 2 (`GEO-19` step B) is now unblocked: (d3c)'s records are on
+`main`, so step B's mesh-cause re-record compares against a single-cause
+baseline exactly as ruling (4\*)(iv) requires.
+
+**Branches:** all three untouched and still parked —
+`attempt/PORT-9-d1-20260823T124500Z`, `attempt/GEO-19-20260823T214500Z`,
+`attempt/GEO-19-stepB-20260824T034500Z` (this item explicitly must not touch
+the last). No `recovered/*`. **Tree:** `main` clean after the commit.
+**Compute:** two harness commands, `timeout -k 30 400` each, both returned
+footers with Status 0; no exit 124, no wedge, no denial.
+
+**Hypothesis for the next attempt.** Item 2 should now run clean: its
+prerequisite is exactly the thing this slot landed, and the two `PORT-9`
+baselines it re-records against are the digits above. The one thing to watch
+there is the degeneracy margin — 253.2002× at 116 368 against step B's measured
+0.79×, so the pre-registered (4\*)(iii) disposition is likely to be exercised
+rather than skipped.
