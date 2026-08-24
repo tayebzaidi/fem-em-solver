@@ -76,7 +76,11 @@ write.
 
 **Retire when:** a review adjudicates the image-caused birdcage re-record and
 the two records are re-derived at 116 368 image-tagged beside the pre-0.11
-digits.
+digits. **Adjudicated 2026-08-24, 10:30 review — ruling (5\*) grants the
+re-record** (image-tagged for these two controls, whose cause is single and
+measured; image+route-tagged for any new fixed-route S record, the split
+being retroactively unmeasurable with the 0.10 image gone); execution is
+`PORT-9` leg (d3c), §9 item 1, and this entry retires with that commit.
 
 ### 🚫 OPEN — `birdcage_port_domain(emit_port_sheets=True)` **cannot build any birdcage with more than four legs**: the mid-plane sheet is an axis-aligned rectangle (`GEO-19` attempt 1, 2026-08-23)
 
