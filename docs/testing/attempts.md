@@ -14166,3 +14166,64 @@ gate is C16 — but it is serial on `GEO-19` step B landing, i.e. on the §9
 item-1/item-2 chain, so a review should queue it only after that unblocks.
 The `mesh:` example the ramp rule owes for this chunk is the other follow-on
 and needs no compute beyond one build.
+
+---
+
+## 2026-08-24T14:01Z — §9 On-deck queue **drained** — **anomaly** (no chunk work)
+
+**Outcome: no chunk attempted.** Every one of the five On-deck items is done,
+blocked, or gated shut by its own serial rule, and §9's drain instruction names
+no fallback chunk ("There is no fallback chunk"), so this slot journals and
+stops. Preflight was clean: `git status --porcelain` empty on `main` at
+`d32a1cb`, container Up 18 h. No anomaly in the tree — the anomaly is the
+**queue**, which the 03:00 review sized at five items for four slots and which
+three slots have now consumed.
+
+**Item-by-item disposition, each verified against the repo rather than assumed:**
+
+| item | state | why this slot cannot take it |
+|---|---|---|
+| 1 `PORT-9` (d3b) | 🟡 executed 04:30 (`bda3353`) | Its own §9 annotation: the mesh moved under the records (116 368 vs 116 416), so ruling (4\*)'s one-cause premise fails and "the image-tagged birdcage re-record **needs a ruling**". Re-running the three modules reproduces the same two red reproduction controls — the blocker is a review call, not compute. |
+| 2 `GEO-19` step B | gated shut | Item text is explicit: "serial on item 1 — if (d3b)'s records are not on `main`, skip to item 3". Item 1 re-recorded nothing (`bda3353` is `test(...)`, no record edits), so the antecedent holds. |
+| 3 `EX-29` | ✅ 06:00 slot (`d778924`) | done |
+| 4 `GEO-20` step 1 | ✅ 07:30 slot (`d32a1cb`) | done |
+| 5 `GEO-19` step C | gated shut | "serial on item 2 — if step B is not on `main`, **stop and journal**". Verified: `git log main -- src/fem_em_solver/io/mesh.py` tops out at `d32a1cb` / `0f8ea96`; `12737a8` is still only on `attempt/GEO-19-stepB-20260824T034500Z`. |
+
+**What the review is actually owed (one decision unblocks three items).** The
+whole tail of the queue hangs off a single ruling: whether the birdcage record
+set may be re-recorded **image-tagged** at 116 368 under (1\*) even though the
+cause (the `OPS-18` 0.11 image) is not the cause ruling (4\*) pre-registered
+(the route). Item 1's digits are already measured and sitting in
+known-issues.md §"🚫 OPEN — two birdcage reproduction controls are red" —
+leg (c) driven current 6.829e-06, leg (d0) `Z_11` 1.449e-04, both against 1e-9
+bands, with the route and the tag encoding excluded *by measurement*
+(`0f8ea96` measured 116 368 on both sides of its own change). Granting the
+image-tagged re-record closes item 1, which unblocks item 2 (step B's
+mesh-cause re-record), which unblocks item 5 (step C's 4-leg negative control
+reads step B's mesh-tagged count). Refusing it is also a legible outcome, but
+then items 2 and 5 need re-scoping onto a different baseline, because the
+records they compare against do not exist on this image.
+
+**Second finding, smaller.** Two chunks closed since the 03:00 review
+(`EX-29`, `GEO-20` step 1) and both are owed follow-ons the review must scope,
+neither of which is currently queued: `EX-30` re-sized from the honest
+`stale=55` census, and the `mesh:` example the ramp rule owes `GEO-20`. Either
+would have been takeable this slot had it been on deck; both are cheap
+(`GEO-20`'s example needs one build, no solve). Noting them so the next review
+has two items that are *not* serial on the birdcage ruling.
+
+**Branches:** untouched — `attempt/PORT-9-d1-20260823T124500Z`,
+`attempt/GEO-19-20260823T214500Z`, `attempt/GEO-19-stepB-20260824T034500Z` all
+still parked exactly as the 03:00 review left them. No `recovered/*`.
+
+**Tree:** `main` clean, this entry is the only change. **Compute:** none — no
+harness run, no container command beyond the `ps` preflight; nothing to log,
+and the no-op guard (§5.2) does not apply because the protocol's step-2 drain
+branch mandates exactly this entry. No denial, no wedge.
+
+**Hypothesis for the next attempt.** The next implementer slot (12:00 local)
+hits this same wall unless a review runs first — the 10:30 review is scheduled
+between them, so the cost of this drain is one slot, not the rest of the day,
+provided the 10:30 review makes the image-tagged-re-record call and re-tops §9
+to five items. If a slot lands here again before that ruling, the honest action
+is the same entry, not an invented chunk.
