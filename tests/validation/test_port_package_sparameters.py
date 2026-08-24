@@ -114,7 +114,15 @@ BLIND_FIXTURE_IM_Z12_OHM = 0.0
 # unchanged in the same run.  (b'): across two same-slot runs the record moved
 # 1.2e-10, i.e. 1.2e-04 of its own 1e-6 band, and is written to the digits both
 # runs share.
-RECORDED_PASSIVITY_MAX_SIGMA = 0.861356895
+#
+# PORT-9 leg (d3) re-record, 2026-08-24 (ruling (2*), 2026-08-23 18:00 review):
+# the sweep now assembles S from power waves (`S_ij = b_i/a_j`) instead of
+# converting the terminated `Z`, so every field-route S moves.  Route-tagged
+# beside the old digits: terminated-Z conversion 0.861356895 (v0.11.0) /
+# 0.861449 (v0.7.2); power-wave assembly **0.864809457** on the same
+# 184 176-cell mesh, a 4.008e-03 relative move.  No band moved and the physics
+# gates are untouched: sigma_max stays well inside 1, reciprocity inside 1e-3.
+RECORDED_PASSIVITY_MAX_SIGMA = 0.864809457
 PASSIVITY_REPRODUCTION_BAND = 1.0e-6
 # ||S - S^T||/||S|| = 2.5494e-05 (Frobenius) is what step 4 gated.  For a 2x2,
 # S - S^T has exactly two non-zero entries of equal magnitude, so
@@ -131,7 +139,14 @@ PASSIVITY_REPRODUCTION_BAND = 1.0e-6
 # is amplified to 1.0e-06 relative and the 7th digit is not reproducible.  Under
 # (b') the move is 3e-11 absolute against a 5e-7 absolute band (6e-05 of band).
 # The band is unchanged, and the 1e-3 physics gate is untouched.
-RECORDED_S_SYMMETRY_RATIO = 3.11213e-05
+#
+# PORT-9 leg (d3) re-record, 2026-08-24, same ruling: terminated-Z conversion
+# 3.11213e-05 (v0.11.0) / 2.5494e-05 (v0.7.2); power-wave assembly
+# **4.758625e-05**.  The gap-voltage route's undriven ports are not terminated
+# in `z0`, so leg (d3)'s exact `S_ij ∝ I_i(drive j)` identity — which the
+# lumped-sheet route's matched drive does satisfy, at 1.3e-16 — does not apply
+# here; this residual is the route's own, gated as before by the unmoved 1e-3.
+RECORDED_S_SYMMETRY_RATIO = 4.758625e-05
 SYMMETRY_RATIO_BAND = 5.0e-7
 # The heuristic route's S is perfectly matched at every driven port (b = 0 on
 # the diagonal), so its S is numerically unitary and sigma_max sits at 1.

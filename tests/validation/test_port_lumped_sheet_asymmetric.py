@@ -75,7 +75,10 @@ from mpi4py import MPI
 from fem_em_solver.core import HomogeneousMaterial, TimeHarmonicProblem
 from fem_em_solver.ports.definitions import PortDefinition
 from fem_em_solver.ports.lumped import LumpedSheetPortSpec
-from fem_em_solver.ports.sparameters import run_n_port_sparameter_sweep
+from fem_em_solver.ports.sparameters import (
+    run_n_port_sparameter_sweep,
+    sparameters_from_impedance,
+)
 
 from tests.complex_mode import complex_only
 from tests.mesh.test_two_torus_port_facets import _facet_group_area
@@ -98,7 +101,7 @@ from tests.validation.test_port_package_sparameters import (
 )
 from tests.validation.test_port_lumped_narrowed_sheet import _narrowed_sheet_tags
 from tests.validation.test_port_lumped_two_torus import (
-    PROBE_PORT_IMPEDANCE_OHM,
+    PROBE_PORT_IMPEDANCE_OHM,  # noqa: F401 — the 1e6 Ohm probe leg (d2) ran at
     _build,
 )
 from tests.validation.test_port_lumped_sheet_sweep import (
@@ -117,8 +120,33 @@ ASYMMETRIC_FRACTIONS = (0.5, 0.735)
 # (2026-08-18, 22:30 slot). Anchor (a) reproduces it to ≤ 1e-9 absolute — the
 # control is the same configuration, so anything larger means this module's
 # fixture is not step 2c's.
+# Leg (d3) retires the *assertion* on it (different assembly, different
+# termination — see PORT_IMPEDANCE_OHM below); the digit stays as the printed
+# history the control is read against.
 STEP2C_RECIPROCITY_RECORD = 2.574249e-11
-CONTROL_REPRODUCTION_BAND = 1.0e-9
+CONTROL_REPRODUCTION_BAND = 1.0e-9  # leg (d2)'s band, no longer asserted
+
+# **Leg (d3), 2026-08-24.**  The route now assembles S from power waves
+# (`S_ij = b_i/a_j`) instead of converting the terminated `Z`, and that identity
+# is exact only at a **matched** drive: with `Z_p = z0` the undriven ports give
+# `b_i = −√z0·I_i` and the driven port `a_j = V_src/(2√z0)`, so `S_ij ∝ I_i(d j)`
+# and leg (d2)'s measured transadmittance symmetry (1.33e-10, unchanged below)
+# carries straight into S.  Leg (d2) ran this module at the 1e6 Ohm probe, where
+# `a_j` still carries the driven port's own current; the sweeps below therefore
+# run at `Z_p = z0 = 50 Ohm`, which is also the termination leg (d0) found for
+# the birdcage.
+PORT_IMPEDANCE_OHM = REFERENCE_IMPEDANCE_OHM
+
+# The fixed route's gate: exact in infinite precision, so the band is the linear
+# solver's floor with margin — five orders below leg (d1)'s 5.57e-03 and four
+# below the 1e-3 the terminated conversion was ever gated at.  Never widened.
+FIXED_ROUTE_BAND = 1.0e-6
+
+# The mechanism's own negative control, computed in the same run from the
+# retained (terminated) `Z`: the old conversion must still read at least this,
+# i.e. at least 100x the fixed route's band.  A miss here would mean the fix had
+# nothing to fix on this fixture and anchor (a) proves nothing.
+OLD_CONVERSION_FLOOR = 1.0e-4
 
 # Pre-stated band for the two mechanism identities of hypothesis A′ (see the
 # module docstring). Both are exact in infinite precision; the floor is the
@@ -201,7 +229,7 @@ def _run_sweep(msh, cell_tags, facet_tags, fractions, comm, label):
             LumpedSheetPortSpec(
                 port_id=f"P{k + 1}",
                 facet_tag=sheet_tag,
-                port_impedance_ohm=PROBE_PORT_IMPEDANCE_OHM,
+                port_impedance_ohm=PORT_IMPEDANCE_OHM,
                 gap_height_m=h,
                 sheet_width_m=w,
                 drive_direction=(0.0, 1.0, 0.0),
@@ -335,61 +363,120 @@ def test_the_two_sweeps_differ_only_in_sheet_width(asymmetric_sweeps):
         )
 
 
-@complex_only
-def test_the_symmetric_control_reproduces_step2c(asymmetric_sweeps):
-    """**Anchor (a).**  ``f = 0.5 / 0.5`` reproduces step 2c's 2.574249e-11.
+def _pair_ratio(s: np.ndarray) -> float:
+    """``max_{i<j} |S_ij/S_ji − 1|`` — the per-pair asymmetry.
 
-    Pre-registered at ≤ 1e-9 absolute.  This is the control the whole leg is
-    read against: it is step 2c's configuration on step 2c's fixture, so if it
-    does not land on step 2c's number, the asymmetric reading below measures
-    this module rather than the route.
+    The Frobenius ratio ``‖S − Sᵀ‖/‖S‖`` is grain-limited by the largest entry;
+    leg (d2) found a 0.25% per-pair asymmetry hiding inside a 8.3e-09 Frobenius
+    reading at ``Z_p`` = 1e6 Ohm.  This is the pair-resolved statistic that saw
+    it, asserted here beside the norm so neither can hide the other.
     """
-    ratio, z_ratio = _reciprocity(asymmetric_sweeps["control"]["result"])
-    delta = abs(ratio - STEP2C_RECIPROCITY_RECORD)
+    worst = 0.0
+    n = s.shape[0]
+    for i in range(n):
+        for j in range(i + 1, n):
+            if abs(s[j, i]) == 0.0:
+                continue
+            worst = max(worst, float(abs(s[i, j] / s[j, i] - 1.0)))
+    return worst
+
+
+def _old_conversion(result) -> tuple[float, float]:
+    """``(‖S − Sᵀ‖/‖S‖, per-pair)`` of the *retired* terminated-Z conversion.
+
+    Computed in the same run from the ``z_matrix`` the route still returns as a
+    diagnostic, so the negative control shares every solve with the gated
+    reading — no second fixture, no second mesh, no second solver call.
+    """
+    s_old = sparameters_from_impedance(result.z_matrix, z0_ohm=REFERENCE_IMPEDANCE_OHM)
+    return (
+        float(np.linalg.norm(s_old - s_old.T) / np.linalg.norm(s_old)),
+        _pair_ratio(s_old),
+    )
+
+
+@complex_only
+def test_the_symmetric_control_is_reciprocal_on_the_fixed_route(asymmetric_sweeps):
+    """**Anchor (a), control half.**  ``f = 0.5 / 0.5`` at the matched drive.
+
+    Leg (d2)'s version of this test reproduced step 2c's 2.574249e-11, which was
+    the *terminated conversion's* residual on a symmetric fixture at the 1e6 Ohm
+    probe.  Leg (d3) changes both the assembly (power waves) and the termination
+    (``Z_p = z0 = 50 Ohm``), so that digit is history, not a target — it is
+    printed beside the new reading and never asserted.  What is asserted is the
+    fixed route's own gate, on the fixture whose symmetry cannot fail it: an
+    equivalent-port sweep that misses ``1e-6`` would mean the assembly itself is
+    broken and nothing below is a reading of the asymmetry.
+    """
+    r = asymmetric_sweeps["control"]["result"]
+    ratio, z_ratio = _reciprocity(r)
+    pair = _pair_ratio(r.s_matrix)
 
     if MPI.COMM_WORLD.rank == 0:
         print(
-            f"\n[PORT-9 step3d2] ANCHOR (a) CONTROL f = 0.5 / 0.5:\n"
-            f"    ||S - S^T||/||S|| = {ratio:.9e}  "
-            f"(step 2c record {STEP2C_RECIPROCITY_RECORD:.6e}, "
-            f"delta {delta:.3e}, band {CONTROL_REPRODUCTION_BAND:.0e} absolute)\n"
-            f"    ||Z - Z^T||/||Z|| = {z_ratio:.9e}",
+            f"\n[PORT-9 step3d3] ANCHOR (a) CONTROL f = 0.5 / 0.5, "
+            f"Z_p = z0 = {PORT_IMPEDANCE_OHM:.0f} Ohm, power-wave S "
+            f"(band {FIXED_ROUTE_BAND:.0e}):\n"
+            f"    ||S - S^T||/||S|| = {ratio:.9e}   per-pair = {pair:.9e}\n"
+            f"    ||Z - Z^T||/||Z|| = {z_ratio:.9e}  (terminated Z, diagnostic)\n"
+            f"    leg (d2) history at Z_p = 1e6 Ohm through the terminated "
+            f"conversion: {STEP2C_RECIPROCITY_RECORD:.6e} (step 2c's record, "
+            f"not a target here)",
             flush=True,
         )
 
-    assert delta <= CONTROL_REPRODUCTION_BAND, (
-        f"the symmetric control reads ||S - S^T||/||S|| = {ratio:.9e}, "
-        f"{delta:.3e} from step 2c's recorded {STEP2C_RECIPROCITY_RECORD:.6e} "
-        f"and outside the pre-stated {CONTROL_REPRODUCTION_BAND:.0e} — this "
-        "module's fixture is not step 2c's, so nothing below is a reading of "
-        "the route"
+    assert ratio <= FIXED_ROUTE_BAND, (
+        f"the symmetric control reads ||S - S^T||/||S|| = {ratio:.9e} against "
+        f"the pre-stated {FIXED_ROUTE_BAND:.0e} — the power-wave assembly is "
+        "not reciprocal even on equivalent ports, so nothing below reads the "
+        "asymmetry"
+    )
+    assert pair <= FIXED_ROUTE_BAND, (
+        f"the symmetric control's per-pair asymmetry is {pair:.9e} against "
+        f"{FIXED_ROUTE_BAND:.0e}"
     )
 
 
 @complex_only
 def test_the_asymmetric_two_port_is_reciprocal(asymmetric_sweeps):
-    """**Anchor (b), the leg's gate.**  ``‖S − Sᵀ‖/‖S‖ ≤ 1e-3`` at 0.5 / 0.735.
+    """**Anchor (a), the leg's gate.**  0.5 / 0.735 at the matched drive.
 
-    Step 2's band, unmoved, on a fixture whose two ports are no longer
-    equivalent.  Pre-registered predictions (§7 leg (d2)): **A** — the readout
-    is not the source's adjoint — reads O(1e-2); **B** — the route is
-    discretely reciprocal — reads ≤ 1e-9 like the control, and the birdcage's
-    5.57e-03 is then birdcage-specific.  Either outcome is the finding; the
-    band is never widened to admit one.
+    Leg (d2) left this fixture reading a 0.25% *per-pair* asymmetry through the
+    terminated conversion, traced to ``_assemble_impedance_matrix`` normalising
+    each column by the driven port's own current.  Ruling (2\\*) fixed it at the
+    assembly: S now comes from power waves, and at ``Z_p = z0`` the driven
+    current drops out, leaving ``S_ij ∝ I_i(drive j)`` — symmetric by the
+    transadmittance identity the next test re-measures.
+
+    Both statistics are gated at ``1e-6`` **while the old conversion, computed
+    in the same run from the retained terminated ``Z``, must still read at least
+    ``1e-4``** — the mechanism's own negative control, at least 100x separation.
+    A fixed route missing the gate refutes ruling (2\\*)'s mechanism; the bands
+    are never widened to admit either outcome.
     """
     r = asymmetric_sweeps["asymmetric"]["result"]
     ratio, z_ratio = _reciprocity(r)
+    pair = _pair_ratio(r.s_matrix)
+    old_ratio, old_pair = _old_conversion(r)
     z = r.z_matrix
     z_pair = z[0, 1] / z[1, 0]
     control_ratio, _ = _reciprocity(asymmetric_sweeps["control"]["result"])
 
     if MPI.COMM_WORLD.rank == 0:
         print(
-            f"\n[PORT-9 step3d2] ANCHOR (b) ASYMMETRIC f = 0.5 / 0.735 "
-            f"(band {RECIPROCITY_BAND:.0e}, step 2's, unmoved):\n"
-            f"    ||S - S^T||/||S|| = {ratio:.9e}   "
-            f"({ratio / control_ratio:.6e} x the control)\n"
-            f"    ||Z - Z^T||/||Z|| = {z_ratio:.9e}\n"
+            f"\n[PORT-9 step3d3] ANCHOR (a) ASYMMETRIC f = 0.5 / 0.735, "
+            f"Z_p = z0 = {PORT_IMPEDANCE_OHM:.0f} Ohm "
+            f"(gate {FIXED_ROUTE_BAND:.0e}, control floor "
+            f"{OLD_CONVERSION_FLOOR:.0e}, step 2's {RECIPROCITY_BAND:.0e} "
+            f"unmoved above both):\n"
+            f"    FIXED (power waves)      ||S - S^T||/||S|| = {ratio:.9e}   "
+            f"per-pair = {pair:.9e}\n"
+            f"    OLD (terminated Z -> S)  ||S - S^T||/||S|| = {old_ratio:.9e}   "
+            f"per-pair = {old_pair:.9e}\n"
+            f"    separation: {old_pair / max(pair, 1e-300):.6e} x on the "
+            f"per-pair statistic\n"
+            f"    control (symmetric fixture) fixed route: {control_ratio:.9e}\n"
+            f"    ||Z - Z^T||/||Z|| = {z_ratio:.9e}  (terminated Z, diagnostic)\n"
             f"    |Z12/Z21| = {abs(z_pair):.9f}, "
             f"phase = {np.degrees(np.angle(z_pair)):+.9f} deg\n"
             f"    Z12 = {z[0, 1]:+.9e} Ohm, Z21 = {z[1, 0]:+.9e} Ohm\n"
@@ -397,15 +484,26 @@ def test_the_asymmetric_two_port_is_reciprocal(asymmetric_sweeps):
             flush=True,
         )
 
-    assert ratio <= RECIPROCITY_BAND, (
-        f"the asymmetric two-port reads ||S - S^T||/||S|| = {ratio:.9e} against "
-        f"the unmoved {RECIPROCITY_BAND:.0e} band, {ratio / control_ratio:.3e}x "
-        f"the symmetric control's {control_ratio:.9e} — hypothesis A stands: "
-        "the lumped-sheet route's reciprocity has only ever been measured "
-        "where the fixture's symmetry enforced it (§7 `PORT-9` leg (d2), "
-        "negative result: §7 annotation + known-issues, no fix in-slot, the "
-        "readout change that would follow moves the 2b/2c/(c)/(d0)/(d) "
-        "records and is a review's ruling)"
+    assert old_pair >= OLD_CONVERSION_FLOOR, (
+        f"the retired terminated-Z conversion reads a per-pair asymmetry of "
+        f"only {old_pair:.9e} on this fixture, below the pre-stated "
+        f"{OLD_CONVERSION_FLOOR:.0e} negative-control floor — there is nothing "
+        "here for the power-wave assembly to have fixed, so the gate below is "
+        "not evidence for ruling (2*)"
+    )
+    assert ratio <= FIXED_ROUTE_BAND, (
+        f"the asymmetric two-port reads ||S - S^T||/||S|| = {ratio:.9e} on the "
+        f"power-wave route against the pre-stated {FIXED_ROUTE_BAND:.0e} "
+        f"(old conversion {old_ratio:.9e} in the same run) — ruling (2*)'s "
+        "mechanism is refuted: the asymmetry is not (only) the terminated-Z "
+        "normalisation (§7 `PORT-9` leg (d3), negative result: §7 annotation + "
+        "known-issues quoting this number, nothing re-recorded, stop)"
+    )
+    assert pair <= FIXED_ROUTE_BAND, (
+        f"the asymmetric two-port's per-pair asymmetry is {pair:.9e} on the "
+        f"power-wave route against {FIXED_ROUTE_BAND:.0e} (old conversion "
+        f"{old_pair:.9e}) — the Frobenius norm passed and the pair-resolved "
+        "statistic did not, exactly the grain leg (d2) warned about"
     )
 
 

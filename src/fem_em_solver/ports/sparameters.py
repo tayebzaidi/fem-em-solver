@@ -46,9 +46,12 @@ class SParameterSweepResult:
     excitation_results: dict[str, SinglePortExcitationResult]
     sanity_report: SMatrixSanityReport
     is_placeholder: bool = True
-    # Present only on the solved-field (gap-voltage) route, where S is built
-    # from a measured Z rather than from per-port power waves.  `None` on the
-    # heuristic route, which has no impedance matrix to speak of.
+    # Present only on the solved-field routes (gap-voltage, lumped sheet), as a
+    # **diagnostic**: it is the *terminated transimpedance* assembled by
+    # :func:`_assemble_impedance_matrix`, not the open-circuit impedance matrix
+    # reciprocity symmetrises, so it is never reciprocity-gated (`PORT-9` leg
+    # (d2) mechanism (ii), leg (d3)).  S itself comes from power waves.  `None`
+    # on the heuristic route, which has no impedance matrix to speak of.
     z_matrix: Optional[np.ndarray] = None
 
 
@@ -159,8 +162,25 @@ def summarize_sparameter_sanity(
 def _assemble_sparameter_matrix(
     ports: Sequence[PortDefinition],
     excitation_results: dict[str, SinglePortExcitationResult],
+    *,
+    z0_ohm: Optional[float] = None,
 ) -> np.ndarray:
-    """Assemble S-matrix from per-driven-port response sets."""
+    """Assemble S from per-port power waves: ``S_ij = b_i / a_j``.
+
+    ``a`` and ``b`` are the incident/reflected amplitudes of :func:`_power_waves`
+    read off the port states of the solve driven at ``j``.  On the gated
+    solved-field routes this is what makes S reciprocal: with every port
+    terminated in ``Z_p`` and the reference ``z0 = Z_p``, the undriven ports give
+    ``b_i = −√z0 · I_i`` and the driven port gives ``a_j = V_src/(2√z0)``, so
+    ``S_ij ∝ I_i(drive j)``, which leg (d2) measured to be symmetric to 1.33e-10
+    (the readout *is* the impressed source's adjoint).  The terminated ``Z``
+    assembled alongside carries a per-column normalisation by the driven port's
+    own current and is a diagnostic only (`PORT-9` leg (d3), ruling (2*) of the
+    2026-08-23 18:00 review).
+
+    ``z0_ohm`` overrides the ports' own ``z0_ohm`` for both waves, matching the
+    scalar-reference convention of the sweep.
+    """
     n_ports = len(ports)
     s_matrix = np.zeros((n_ports, n_ports), dtype=np.complex128)
 
@@ -176,7 +196,7 @@ def _assemble_sparameter_matrix(
         a_drive, _ = _power_waves(
             drive_response.voltage_v,
             drive_response.current_a,
-            driven_port.z0_ohm,
+            driven_port.z0_ohm if z0_ohm is None else float(z0_ohm),
         )
         if np.isclose(abs(a_drive), 0.0):
             raise ValueError(
@@ -188,7 +208,7 @@ def _assemble_sparameter_matrix(
             _, b_recv = _power_waves(
                 recv_response.voltage_v,
                 recv_response.current_a,
-                recv_port.z0_ohm,
+                recv_port.z0_ohm if z0_ohm is None else float(z0_ohm),
             )
             s_matrix[recv_row, drive_col] = b_recv / a_drive
 
@@ -253,9 +273,9 @@ def run_n_port_sparameter_sweep(
     * **solved field** (`PORT-1` step 4) — pass one
       :class:`~fem_em_solver.ports.gap_voltage.GapVoltagePortSpec` per port and
       the sweep runs one impressed-gap solve per port, reads ``V`` and ``I`` off
-      the field, assembles ``Z`` column by column and converts it with
-      :func:`sparameters_from_impedance`.  ``is_placeholder`` is False and
-      ``z_matrix`` is populated.
+      the field, and assembles ``S = b_i/a_j`` from the per-port power waves.
+      ``is_placeholder`` is False and ``z_matrix`` is populated with the
+      *terminated transimpedance* as a diagnostic.
     * **lumped sheet** (`PORT-9` step 2c) — pass one
       :class:`~fem_em_solver.ports.lumped.LumpedSheetPortSpec` per port plus the
       mesh's ``lumped_sheet_facet_tags``, and every port becomes a resistive
@@ -263,7 +283,10 @@ def run_n_port_sparameter_sweep(
       source.  ``V`` and ``I`` come from the sheets' own constitutive law on the
       generator convention (``V = V_src − I·Z_p``); ``Z`` and ``S`` are then
       assembled exactly as on the gap-voltage route.  This is the route
-      `PORT-9` step 3's reciprocity gate runs through.
+      `PORT-9` step 3's reciprocity gate runs through — and that gate is only
+      exact at a **matched** drive, ``Z_p = z0``, where ``a_j`` reduces to
+      ``V_src/(2√z0)`` and the driven port's own current drops out of the
+      normalisation (leg (d3)).
     * **heuristic** (the retiring `PORT-0` path, kept reachable and deprecated)
       — with ``gap_voltage_ports=None`` the port quantities come from
       ``excitation.py``'s proximity model and mean nothing physically.  It emits
@@ -325,8 +348,13 @@ def run_n_port_sparameter_sweep(
             z0_ohm = references.pop()
         else:
             z0_ohm = float(reference_impedance_ohm)
+        # S from power waves (`PORT-9` leg (d3)).  The terminated Z is retained
+        # beside it as a diagnostic, never as S's source: pushing it through
+        # `sparameters_from_impedance` — which assumes the open-circuit matrix —
+        # inherits the per-column normalisation asymmetry leg (d2) measured and
+        # adds a conversion bias on top of it.
         z_matrix = _assemble_impedance_matrix(ports, excitation_results)
-        s_matrix = sparameters_from_impedance(z_matrix, z0_ohm=z0_ohm)
+        s_matrix = _assemble_sparameter_matrix(ports, excitation_results, z0_ohm=z0_ohm)
     else:
         warnings.warn(
             "run_n_port_sparameter_sweep() without gap_voltage_ports uses the "

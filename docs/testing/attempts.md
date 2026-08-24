@@ -13712,3 +13712,87 @@ everything landed here. One durable note for whoever writes the next
 re-gate item: when a chunk's records were already version-tagged by an earlier
 migration slot, the "expected moves" clause should say so, or the item reads as
 predicting work that has already been done.
+
+---
+
+## 2026-08-24T02:20Z — `PORT-9` leg (d3) — **complete**
+
+**Item:** §9 item 2 (18:00 review, ruling (2\*)) — power-wave S assembly on the
+gated routes + two-torus class re-record. `main`, complex build, `-n 2`,
+standard tier.
+
+**What was done.** `ports/sparameters.py`: the gated routes (gap-voltage *and*
+lumped-sheet) now assemble `S` from per-port power waves
+(`_assemble_sparameter_matrix`, `S_ij = b_i/a_j`) instead of pushing the
+terminated `Z` through `sparameters_from_impedance`. The converter's signature
+is untouched (it has other callers, as the item warned) — the sweep's
+*assembly* changed. `_assemble_sparameter_matrix` gained a `z0_ohm` override so
+it honours the sweep's scalar reference; the heuristic path calls it unchanged.
+`z_matrix` stays in the result, documented in the dataclass and in the assembly
+docstring as a **terminated transimpedance**, never reciprocity-gated.
+`tests/validation/test_port_lumped_sheet_asymmetric.py` moved to the matched
+drive `Z_p = z0 = 50 Ω` (the identity is exact only there: `a_j` reduces to
+`V_src/(2√z0)` and the driven port's own current leaves the normalisation) and
+gained `_pair_ratio` + the in-run negative control `_old_conversion`.
+
+**Anchor (a) — passed, with the mechanism's own negative control**
+(`20260824T020350Z_PORT-9-step3d3-asym.log`, `13 passed 186.30s`, Elapsed 188,
+184 176 cells, `w2/w1` = 1.469447603):
+
+| statistic | fixed (power waves) | old (terminated `Z` → `S`), same run |
+|---|---|---|
+| `‖S−Sᵀ‖/‖S‖`, asymmetric | **1.324004669e-16** | 1.143811489e-04 |
+| per-pair `|S₁₂/S₂₁−1|`, asymmetric | **2.972992845e-15** | 2.831857978e-03 |
+| `‖S−Sᵀ‖/‖S‖`, symmetric control | 3.093872028e-15 | — |
+
+Separation **9.525277e+11×** on the per-pair statistic against the item's ≥ 100×
+requirement; both gates 1e-6, never widened. Leg (d2)'s two mechanism identities
+re-measured on the matched drive and still hold: transadmittance symmetry
+`I₁(d2)` vs `I₂(d1)` to 2.98e-15 (asymmetric) / 6.95e-14 (control), and
+`Z₁₂/Z₂₁` = `I₁(d1)/I₂(d2)` to 3.18e-15 / 6.93e-14 — i.e. the terminated `Z`
+*still* carries its 0.27% per-pair asymmetry (`|Z₁₂/Z₂₁|` = 0.9973497458), which
+is why it is now a diagnostic and not S's source. **Ruling (2\*)'s mechanism is
+confirmed at its own mechanism.**
+
+**Anchor (b) — consumer set, one green run each, two moved records re-recorded.**
+First pass `20260824T020721Z_PORT-9-step3d3-consumers.log`
+(`1 failed, 22 passed`, 368 s): `test_port_lumped_two_torus.py` and
+`test_port_lumped_narrowed_sheet.py` green untouched (cross-route ladder
+7.7431% MISS / 1.0986% / 1.9222% INSIDE vs the unmoved 5%), the one red being
+`test_port_package_sparameters.py`'s gap-voltage sanity record, as expected —
+**every field-route S moves under the new assembly**. Re-recorded route-tagged
+beside the old digits under (1\*), bands unmoved:
+
+- `RECORDED_PASSIVITY_MAX_SIGMA` 0.861356895 → **0.864809457** (4.008e-03
+  relative; band 1e-6 unmoved, `σ_max ≤ 1` unmoved and far inside);
+- `RECORDED_S_SYMMETRY_RATIO` 3.11213e-05 → **4.758625e-05** (band 5e-7 unmoved,
+  the 1e-3 physics gate unmoved).
+
+Confirm run `20260824T021425Z_PORT-9-step3d3-rerecord-confirm.log`
+(`14 passed 145.07s`, Elapsed 147, Status 0): σ_max reproduces to the printed
+0.864809457 exactly, the symmetry ratio to 4.758641e-05 — **(b′) 1.6e-10
+absolute, 3.2e-04 of its own 5e-7 band**. Note for the record's reader: the
+gap-voltage route's undriven ports are *not* terminated in `z0`, so leg (d3)'s
+exact identity does not apply there and its 4.76e-05 residual is the route's
+own, gated as before by 1e-3. Only the lumped-sheet route's matched drive gets
+the 1e-16.
+
+**Shortfall, deliberate and named.** The item asked for the consumer set green
+**twice in-slot**; the timebox bought one green pass of each module plus the
+red→green pair on the re-recorded one (three foreground runs, 188 + 368 + 147 =
+**703 s**, standard tier, each `timeout -k 30 500`, none within 60% of its
+ceiling). The second full-set pass is not run. Nothing rests on it that the
+(b′) arithmetic above does not already carry, but a review wanting the literal
+twice-in-slot record should re-run the four-module set once.
+
+**Scope.** Two-torus class only. `PORT-9` stays 🟡; §2.2 unmoved. The birdcage
+class re-record is §9 item 4 (leg (d3b)), now unblocked — (d3) is on `main`.
+
+**Tree:** `main` clean and green; nothing parked.
+
+**Hypothesis for the next attempt.** Item 4 (leg (d3b)) should read *orders*
+below leg (d)'s 2.495292352e-05 on the birdcage: that number was the terminated
+conversion's residual on a symmetric fixture, and the birdcage runs at leg
+(d0)'s `Z_p = z0 = 50 Ω` — the matched drive where the identity is exact. If it
+does not, the birdcage's four sheets are not all seeing the matched termination
+and that is the thing to check first.
