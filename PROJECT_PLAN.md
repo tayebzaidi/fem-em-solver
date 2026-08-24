@@ -3489,7 +3489,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-28` | Gapped birdcage with leg terminals and port sheets (`GEO-18`'s newly gated capability, both steps: first example with a **discontinuous conductor** — planar disk terminals on a cut leg and an interior sheet spanning metal to metal on a coil; `EX-21` is the uncut graded birdcage, `EX-23` the two-torus sheet — a geometry angle no example covers. Mesh-only, no solve; this is the mesh `PORT-9` step 3 solves on. Commissioned 2026-08-22 03:00 review, deferred from 08-21 until the fixture stopped moving; full rubric in the §9 item) | ✅ (2026-08-23: `mesh:6`, `examples/meshing/06_birdcage_leg_gaps_port_sheets.py` + same-stem guide; **closed as written on the first run**, every element of the rubric executed and no band moved. Sheeted rung **116 416 cells**, meshed/CAD conductor **0.970193** against the imported, unmoved `CAD_MASS_GATE` = 0.95; per port the sheet is **54 facets, `1.120000000e-04 m²`, meshed/analytic `1.000000000000`** against the analytic `dx·g`, `h = 8.000000000e-03 m` = the gap exactly, **`w_eff/w_bbox = 1.000000000000`** (the `PORT-9` step 2b convention, i.e. the facet set is the whole rectangle), out-of-plane spread `2.512e-16` m (P1/P3) / `9.714e-17` m (P2/P4), halves **`0.500000000000/0.500000000000`** of the analytic gap box, terminal `2.236196e-04 m²` = **0.988616** of the closed-form `2.261946711e-04 m²` inside the imported `TERMINAL_AREA_BAND` [0.95, 1.0] *and* inside step 1's pre-stated `1e-5` record band, closure **`1.000000000000`**; **C4 sheet spread `8.470e-16`** — every figure reproducing `GEO-18` step 2's log to the printed digit. `GEO-9` partition `< 1e-9` on both rungs. **Negative control (inverted, `EX-18`/`EX-23` pattern):** the uncut rung at **98 474 cells, ratio 1.000000** against `EX-21`'s record and meshed/CAD **0.967019** = the record, cell tags `[1, 2, 3, 101-104]` with no `11x` half tag, conductor-facing area **exactly `0.000000e+00 m²`** on all four ports (leg (b)'s finding re-measured) — **and the `210+i` facet groups asserted absent by measurement**, `_global_facet_count` = 0 on all four after an `_interface_facet_tags` rebuild on the uncut mesh, which closes the one clause `GEO-18` step 2's audit found implied rather than asserted. Three combined XDMFs (sheeted cells, sheeted sheet facets 211-214, uncut cells) for the side-by-side. Every constant **imported** from `tests/mesh/test_birdcage_leg_gaps.py` and `tests/mesh/test_birdcage_port_sheets.py` and the modules they import (`ANS-1`); nothing restated, no pre-existing test touched. Logs `20260823T020338Z_EX-28-example-n2.log` (exit 0, **43.1 s in-script / 46 s harness at `-n 2`**, sheeted 21.46 s mesh / 23.41 s rung, uncut 19.02 s) and `20260823T020531Z_EX-28-docrefs.log` — **`dead=0 guide=0 stale=24 stale_severity=report exit=2`**, `exit != 1` under the `OPS-19` contract, 36 guides scanned, none of the 24 stale entries an `EX-28` artifact. **Tier note for the review:** commissioned standard, **measured standard** (46 s harness against the commission's ~75 s estimate; the `EX-27` precedent that exports are cheaper than the meshes held again — the two builds are 42 s of the 43 s)) | standard |
 | `EX-29` | Doc-reference checker freshness-gates every example's own `paraview_output/` (22 of 27 examples were never checked — known-issues 2026-08-23; commissioned 2026-08-23 weekly review) | ✅ | smoke |
 | `EX-30` | Refresh the 13-example stale artifact set the checker could not see (10–17 d old on 2026-08-23; commissioned 2026-08-23 weekly review; **re-scoped 2026-08-24 10:30 review to four legs from the honest `stale=55` census** — see prose entry) | ⬜ | heavy |
-| `EX-31` | Ring-gapped birdcage with dual port families (`GEO-20` step 1's newly gated capability: first example with ring-gap terminals as exact disks from radial cut planes, and the first 12-port dual-family mesh — a geometry angle `EX-28` (leg gaps only) does not cover; mesh-only, no solve; commissioned 2026-08-24 10:30 review) | ⬜ | standard |
+| `EX-31` | Ring-gapped birdcage with dual port families (`GEO-20` step 1's newly gated capability: first example with ring-gap terminals as exact disks from radial cut planes, and the first 12-port dual-family mesh — a geometry angle `EX-28` (leg gaps only) does not cover; mesh-only, no solve; commissioned 2026-08-24 10:30 review) | ✅ (2026-08-24: `mesh:7`, `examples/meshing/07_birdcage_ring_gap_ports.py` + same-stem guide; **closed as written on the first run**, every element of the rubric executed and no band moved — see the prose entry for the digits) | standard (measured standard) |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
 **Logs:** `20260820T170422Z_EX-26-example-n2.log` (exit 0), `20260820T170540Z_EX-26-docrefs.log` (`dead=0 guide=0 stale=0 exit=0`).
@@ -3816,6 +3816,61 @@ elapsed, the reproduced records quoted, and the post-run artifact census.
 > reproduced records quoted, post-leg census delta); the chunk is ✅ when
 > all four legs have run and the census reads 0 stale for their sets.
 
+**`EX-31` ✅ 2026-08-24** — ring-gapped birdcage with dual port families.
+`mesh:7`, `examples/meshing/07_birdcage_ring_gap_ports.py` + same-stem guide,
+**closed as written on the first run** (log
+`20260824T200613Z_EX-31-example-n2.log`, exit 0, **70.6 s in-script / 75 s
+harness at `-n 2`**, real build; ring-gapped rung 21.24 s mesh / 23.37 s rung,
+leg+ring 25.35 s / 27.32 s, uncut control 17.14 s / 18.63 s — the three builds
+are 69 s of the 70.6 s, the `EX-27`/`EX-28` precedent that exports are cheaper
+than the meshes holding a third time). Tier: commissioned standard, **measured
+standard**. Every gated figure reproduces `GEO-20` step 1's own log
+(`20260824T124525Z`) **to the printed digit**, so the example path and the gate
+path agree exactly.
+**Ring-gapped rung (110 786 cells = the record; 4 leg + 8 ring ports):**
+terminal `9.796288043e-05` / `9.796288455e-05 m²` = **0.974454791** /
+**0.974454832** of the closed-form `1.005309649e-04 m²` — inside the imported
+`[0.95, 1.0]` inscribed band *and* the new `0.974455 ± 1e-5` record band —
+with terminal spread **2.099e-08** against the 1e-5 equality gate; closure and
+volume/analytic **`1.000000000000`** on all eight against the analytic wedge
+(`8.008718871e-07 m³`, surface `5.206757303e-04 m²`); sheet **14 facets,
+`1.000000000e-04 m²`, meshed/analytic `1.000000000000`** against `w²`;
+out-of-plane spread `5.042e-18`–`1.448e-17` m along each sheet's *own*
+azimuthal normal (the `GEO-18` bounding-box planarity check is not reusable on
+a radial sheet — the extents read `(7.071068e-03, 7.071068e-03, 1.000000e-02)`,
+the `w = 1e-2` rectangle seen edge-on at 45°); C4+mirror spreads **1.666e-15**
+(volume) / **2.443e-16** (sheet) against 1e-12; Pappus on the ring primitives
+**`1.000000000000`** pre-boolean; `GEO-9` partition < 1e-9; meshed/CAD
+conductor **0.969275** ≥ the imported 0.95; phantom-facing area exactly 0 on
+all eight.
+**12-port dual-family rung (128 402 cells = the record):** both identity
+families exact on the same mesh — closure and volume/analytic
+**`1.000000000000`** on all 12, leg terminals **0.988615809–0.988615855**
+against `GEO-18` step 1's `0.988616 ± 1e-5` and ring terminals against
+`0.974455 ± 1e-5`. The two opt-ins do not interact.
+**Negative control (inverted, `EX-18`/`EX-28` pattern):** `ring_gap_length=None`
+gives cell tags `[1, 2, 3, 101-104]` — the four leg boxes and **no ring port
+tag at all** — 98 666 cells (ratio 1.001950 against the module's 98 474 record,
+inside its own 1% band: the 0.11 image's count, nothing re-recorded) and
+meshed/CAD **0.966977** vs `EX-21`'s 0.967019; and, measured rather than
+implied, `_global_facet_count` **= 0** on every ring sheet group `215`–`222`
+after running the *same* `_interface_facet_tags` rebuild on that mesh.
+**Records hoisted to the gate, not restated in the example** (the `ANS-1`
+rule): `RING_TERMINAL_RATIO` = 0.974455 (band 1e-5), `RING_GAP_CELL_RECORD` =
+110 786 and `LEG_RING_CELL_RECORD` = 128 402 now live in
+`tests/mesh/test_birdcage_ring_gaps.py` and are asserted **there** as well, so
+a record that moves fails at its own source; the module re-ran green with them
+(`20260824T200739Z_EX-31-gate-module.log`, 2 passed / 70.4 s, `-n 2`, real) —
+this is a strengthening of `GEO-20` step 1's gate, no band moved and no
+assertion loosened. Four combined XDMFs (ring cells, ring sheet facets
+215-222, leg+ring cells, uncut cells). Docrefs
+`20260824T200857Z_EX-31-docrefs.log` — **`dead=0 guide=0 stale=55
+stale_severity=report exit=2`**, `exit != 1` under the `OPS-19` contract, **28**
+runnable examples now scanned (27 before this one), the standing `stale=55`
+census unchanged and none of it an `EX-31` artifact.
+
+<details><summary>Original entry (commissioning + rubric)</summary>
+
 **`EX-31` — ring-gapped birdcage with dual port families** ⬜ *(commissioned
 2026-08-24 10:30 review; `GEO-20` step 1's ramp obligation — first example
 with ring-gap terminals (exact disks from the radial cut planes
@@ -3840,6 +3895,8 @@ in ParaView, run via `./run_examples.sh`, docrefs `exit != 1`. **Cost:**
 ~120 s at `-n 2`, standard. **Negative result:** a record missing its band
 through the example path is an example/test divergence finding —
 known-issues + this entry, stop.
+
+</details>
 
 ### ANS — Ansys benchmark cases (§5.4)
 
@@ -4228,7 +4285,20 @@ uses the Edit tool and verifies `git status --porcelain`.
    drifted digits in §7, stop; a `PORT-9` red that a mesh-tagged
    re-record does not explain is a finding about the route×mesh
    interaction — known-issues + §7, stop.
-3. **`EX-31` — ring-gapped birdcage with dual port families: the `mesh:`
+3. ✅ **DONE 2026-08-24, 15:00 slot** — `mesh:7` landed and closed as written
+   on the first run: exit 0, 70.6 s in-script / 75 s harness at `-n 2`
+   (`20260824T200613Z_EX-31-example-n2.log`), every gated figure reproducing
+   `GEO-20` step 1's log to the printed digit — ring terminal 0.974454791 /
+   0.974454832 (record band 0.974455 ± 1e-5, spread 2.099e-08 vs 1e-5),
+   closure / volume / sheet `1.000000000000`, out-of-plane ≤ 1.448e-17 m,
+   C4+mirror 1.666e-15 / 2.443e-16, Pappus 1.000000000000, cells 110 786 /
+   128 402 / 98 666, both terminal families exact on the 12-port rung, the
+   kwarg-off control lacking every ring tag with 0 facets on 215-222. The
+   three records were hoisted **into the gate module** and asserted there too
+   (module re-ran 2 passed / 70.4 s,
+   `20260824T200739Z_EX-31-gate-module.log`); docrefs
+   `dead=0 guide=0 stale=55 exit=2`, 28 examples scanned. No band moved.
+   Original text: **`EX-31` — ring-gapped birdcage with dual port families: the `mesh:`
    example `GEO-20` step 1 is owed (standard, `-n 2`, real, `main`;
    independent).** Execute the §7 `EX-31` entry: `mesh:7`,
    `examples/meshing/07_birdcage_ring_gap_ports.py` + same-stem guide,

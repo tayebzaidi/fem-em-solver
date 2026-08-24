@@ -14415,3 +14415,87 @@ assertions in favour of the terminated ones, re-record leg (c)'s `I₁`, run the
 three modules twice, expect 19 passed. Watch for: leg (c)'s module imports
 `STEP2_CELL_COUNT` (116 368 on `main`) and it must move to 116 085 in the same
 commit, or the fixture-identity band carries the wrong anchor.
+
+---
+
+## 2026-08-24T20:15Z — `EX-31` — **complete** (15:00 CDT implementer slot)
+
+**Preflight.** Tree clean, container Up (2 h), `main` at `8836c6b`. §9 item 1 is
+✅ (12:00 slot), item 2 is 🚫 with a ruling requested (13:30 slot), so the
+first-undone rule takes **item 3, `EX-31`** — explicitly independent of items 1
+and 2. No fallback, no anomaly, no denial.
+
+### What was built
+
+`examples/meshing/07_birdcage_ring_gap_ports.py` + same-stem guide,
+auto-discovered as `mesh:7` by `scripts/run_examples.sh` (no runner edit needed —
+the `EX-28` precedent). Three rungs: the ring-gapped birdcage (8 ring ports, the
+4 leg boxes left uncut and floating, asserted so), the leg+ring **12-port**
+dual-family mesh, and the kwarg-off inverted control. Mesh only — no solve, no
+port model, no port claim.
+
+**The one code change outside the example** is a strengthening of the gate, not a
+loosening: `GEO-20` step 1's three records were living only in prose, so
+`RING_TERMINAL_RATIO` = 0.974455 (band 1e-5), `RING_GAP_CELL_RECORD` = 110 786
+and `LEG_RING_CELL_RECORD` = 128 402 were hoisted into
+`tests/mesh/test_birdcage_ring_gaps.py`, asserted **there** as well as imported
+by the example (the `ANS-1` rule needs them importable; a record asserted only in
+the example would drift silently at its own source). No existing assertion or
+band was touched.
+
+### Numbers (all reproducing `GEO-20` step 1's `20260824T124525Z` log digit for digit)
+
+| quantity | measured | gate |
+|---|---|---|
+| ring terminal / `2·pi·r_ring²` | 0.974454791 / 0.974454832 | [0.95, 1.0] and 0.974455 ± 1e-5 |
+| ring terminal spread (8 ports) | **2.099e-08** | 1e-5 |
+| closure, volume/analytic (8 ring ports) | **1.000000000000** | 1e-9 |
+| sheet meshed/analytic (14 facets, `1.0e-04 m²`) | **1.000000000000** | 1e-9 |
+| sheet out-of-plane (own azimuthal normal) | 5.042e-18 – 1.448e-17 m | 1e-12 |
+| C4+mirror spread, volume / sheet | 1.666e-15 / 2.443e-16 | 1e-12 |
+| Pappus on the ring primitives (pre-boolean) | **1.000000000000** | 1e-9 |
+| meshed/CAD conductor | 0.969275 | ≥ 0.95 |
+| cells, ring-gapped / leg+ring | **110 786 / 128 402** | records, 1% band |
+| 12-port rung: leg terminals / ring terminals | 0.988615809–0.988615855 / 0.974454791–…832 | 0.988616 ± 1e-5 / 0.974455 ± 1e-5 |
+| 12-port rung: closure, volume on all 12 | **1.000000000000** | 1e-9 |
+
+**Negative control (inverted).** `ring_gap_length=None`: cell tags
+`[1, 2, 3, 101-104]`, **no ring port tag at all**; 98 666 cells (ratio 1.001950
+against the 98 474 record, inside its own 1% band — the 0.11 image's count,
+nothing re-recorded); meshed/CAD 0.966977 vs `EX-21`'s 0.967019; and
+`_global_facet_count` **= 0** on every ring sheet group 215-222 after running the
+*same* `_interface_facet_tags` rebuild on that mesh — absence measured, not
+implied (`EX-28`'s clause, applied to the ring family).
+
+**One thing worth writing down for the next example on this fixture.** The
+`GEO-18` planarity check (smallest bounding-box extent is zero) is **not**
+reusable on a ring sheet and the guide now says why in prose: a radial sheet's
+extents read `(7.071068e-03, 7.071068e-03, 1.000000e-02)` — the `w = 1e-2`
+rectangle seen edge-on at 45° — so the bounding box never collapses. The example
+imports the gate module's `_out_of_plane_spread` and its `_ring_gap_frame`, which
+derive `(n̂_phi, gap centre)` from the port ordinal alone.
+
+### Logs and cost
+
+`20260824T200613Z_EX-31-example-n2.log` — **exit 0, 70.6 s in-script / 75 s
+harness at `-n 2`** (ring rung 21.24 s mesh / 23.37 s, leg+ring 25.35 / 27.32,
+uncut 17.14 / 18.63; all four exports ~1 s together).
+`20260824T200739Z_EX-31-gate-module.log` — the edited gate module, **2 passed /
+70.4 s / 72 s harness**, real, `-n 2`.
+`20260824T200857Z_EX-31-docrefs.log` — **`dead=0 guide=0 stale=55
+stale_severity=report exit=2`** = PASS under the `OPS-19` `exit != 1` contract;
+**28** runnable examples scanned (27 before this one), all with guides carrying
+the required headings, and the standing `stale=55` census is unchanged — none of
+it is an `EX-31` artifact, the four new XDMFs are fresh. Tier: commissioned
+standard, **measured standard**. Total compute this slot **~150 s** against the
+rubric's `timeout -k 30 400` ceiling. No `-n 1`, no rebuild, no wedge, no exit
+124, no permission denial, no branch parked.
+
+### Hypothesis for the next slot
+
+§9 item 4 (`EX-30` leg (th), the `time_harmonic` stale refresh) is next by the
+first-undone rule and is independent of everything here; its own negative control
+is the pre-run census, which this slot leaves at **55** — the same number item 4
+predicts, now re-measured on a tree that has one more example in it, so a
+post-run 44 is the arithmetic the item asks for and any other value is about
+`th:1`–`th:8`, not about `EX-31`.

@@ -88,6 +88,15 @@ EXACT = 1.0e-9              # closure, sheet area, GEO-9 partition
 SYMMETRY = 1.0e-12          # C_N spread and top/bottom mirror on exact forms
 TERMINAL_EQUALITY = 1.0e-5  # meshed terminal equality across the ring ports
 
+# Records from the `GEO-20` step 1 close (2026-08-24, 0.11 image; logs
+# `20260824T124525Z_GEO-20-step1-ringgaps.log` and the `124646Z` re-run). They
+# live here, at the gate, so the `EX-31` example can import rather than restate
+# them (the `ANS-1` rule) and so a record that moves fails at its own source.
+RING_TERMINAL_RATIO = 0.974455  # 9.796288e-05 m^2 / (2*pi*r_ring^2)
+RING_TERMINAL_RATIO_BAND = 1.0e-5  # `GEO-18` step 1's record-band convention
+RING_GAP_CELL_RECORD = 110786  # ring-gapped rung, 20.9 s mesh at -n 2
+LEG_RING_CELL_RECORD = 128402  # leg+ring 12-port rung, 24.9 s mesh at -n 2
+
 RING_PORT_FIRST = LEG_COUNT + 1
 RING_PORT_LAST = LEG_COUNT + 2 * LEG_COUNT
 RING_PORTS = list(range(RING_PORT_FIRST, RING_PORT_LAST + 1))
@@ -391,6 +400,11 @@ def test_ring_gaps_give_every_end_ring_port_two_disk_terminals():
         )
         low, high = TERMINAL_AREA_BAND
         ratio = a_c / terminal_analytic
+        assert abs(ratio - RING_TERMINAL_RATIO) < RING_TERMINAL_RATIO_BAND, (
+            f"ring port P{i} terminal ratio {ratio:.9f} against the step 1 record "
+            f"{RING_TERMINAL_RATIO} (band {RING_TERMINAL_RATIO_BAND:.0e}); the "
+            "inscribed triangulation of the ring's cut disk moved"
+        )
         assert low <= ratio <= high, (
             f"ring port P{i} terminal area {a_c:.9e} m^2 is {ratio:.9f} of the "
             f"closed-form {terminal_analytic:.9e} m^2 (two disks of radius "
@@ -439,6 +453,12 @@ def test_ring_gaps_give_every_end_ring_port_two_disk_terminals():
         f"ring terminal areas {terminals} are not equal to "
         f"{TERMINAL_EQUALITY} (spread {_spread(terminals):.3e}); the eight "
         "ports are not the same port and a circulant premise would fail"
+    )
+
+    assert abs(n_cells / RING_GAP_CELL_RECORD - 1.0) < CELL_COUNT_BAND, (
+        f"the ring-gapped rung meshed {n_cells} cells vs step 1's record "
+        f"{RING_GAP_CELL_RECORD} (ratio {n_cells / RING_GAP_CELL_RECORD:.6f}); the "
+        "gap geometry or the grading moved"
     )
 
     # 4. Negative control.
@@ -515,6 +535,10 @@ def test_leg_and_ring_gaps_coexist_as_a_twelve_port_mesh():
 
     assert abs(v_total / _analytic_box_volume(gap_dy) - 1.0) < EXACT
     assert abs(sum(volumes.values()) / v_total - 1.0) < EXACT
+    assert abs(n_cells / LEG_RING_CELL_RECORD - 1.0) < CELL_COUNT_BAND, (
+        f"the leg+ring rung meshed {n_cells} cells vs step 1's record "
+        f"{LEG_RING_CELL_RECORD} (ratio {n_cells / LEG_RING_CELL_RECORD:.6f})"
+    )
     low, high = TERMINAL_AREA_BAND
     for i in leg_ports + RING_PORTS:
         surface = leg_surface if i in leg_ports else ring_surface
