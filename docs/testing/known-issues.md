@@ -28,6 +28,61 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🚫 OPEN — the gapped birdcage's **open-limit (1e6 Ω) driven self-impedance `Z₁₁` is not mesh-converged**: it moves ~40% under a 0.24% cell-count change, while the terminated column moves 1.9e-02 (`GEO-19` step B attempt 2, 2026-08-24)
+
+**Test id:** `tests/validation/test_port_birdcage_termination_probe.py::test_the_open_control_reproduces_leg_c_before_the_knob_turns`
+(and, on the same fixture,
+`tests/validation/test_port_birdcage_lumped_column.py::test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not`).
+**Neither is red on `main`** — `main` does not carry `GEO-19` step B. This
+entry records what step B's mesh does to them, so the next attempt does not
+re-discover it. Reproduce by cherry-picking `6c1f54e` from
+`attempt/GEO-19-stepB-20260824T183000Z`.
+
+**Literal symptom**, `20260824T183519Z_GEO-19-stepB-port9-measure.log`
+(`3 failed, 16 passed` / 117.80 s / Status 1), the open (1e6 Ω) column at
+116 085 cells against its record at 116 368:
+
+```
+Z_11 +9.201557829e+02-4.718342449e+03j  vs record +7.111692404e+02-3.351665665e+03j
+Z_21 +1.390012417e+01-1.872224592e+03j  vs record +1.224919287e+01-1.878346946e+03j
+Z_31 +1.322525314e+01-1.872769896e+03j  vs record +1.193721196e+01-1.878700877e+03j
+Z_41 +1.465032447e+01-1.872096207e+03j  vs record +1.231338434e+01-1.878312313e+03j
+```
+
+`|Z₁₁|` goes 3.42e+03 → 4.81e+03 Ω, a **40.6%** move; the three mutuals move
+0.3%; the driven current moves 1.381e-03. On the *terminated* (50 Ω) fixture
+the same mesh change moves `Z₁₁` by 1.852e-02 and `Z₄₁` by 5.9e-04.
+
+**Cause — measured, and it is not a defect in step B.** The mesh moved for the
+reason ruling (4\*) already adjudicated (the local-frame construction is
+exact-onto at the four axis azimuths but not bit-identical to the old one;
+gmsh tie-breaking turns ~5 ulps into 116 368 → 116 085 cells). What is new is
+the *sensitivity*: at `Z_p = 1e6 Ω` the port is very nearly open, so `I₁` is a
+near-cancellation residual (~1e-9 A) and `Z₁₁ = V₁/I₁` inherits its
+conditioning. The same fixture's degeneracy margin flips in step with it —
+leg (c)'s magnitude-only reading 5.0594× → **0.7906×**, and the complex form
+6.9398× → 1.5951×, both already below leg (d0)'s 10× floor *before* step B.
+The terminated fixture shows the opposite behaviour and gets **better**:
+margin 253.2002× → 2256.9707×, class separation 150.3584× → 166.6766×, every
+intra-class spread down (0.0617/0.0359/0.0237% → 0.0553/0.0353/0.0214%).
+
+**Why this is not disposed of by a re-record.** §9 item 2 licensed a
+mesh-tagged re-record of the moved records and a pre-registered disposition for
+the degeneracy gate. It did not anticipate a 40% move, and pinning `Z₁₁` at a
+1e-9 print band on a quantity with no demonstrated mesh stability would record
+noise as a fact. The reading this entry offers the review: **the open-limit
+column is a diagnostic, not a record-bearing fixture**, and the anti-degeneracy
+role it was carrying is already carried, with two decades more margin, by leg
+(d0)'s terminated discrimination gate and leg (d)'s 4×4 class separation —
+both gated on `main`, both green, both improved by step B.
+
+**Flagged to the weekly review** (§10 Phase 6): if the open-limit column is
+retired as a record, `PORT-9` leg (c)'s reproduction anchor needs a replacement
+on the terminated fixture, and leg (d1′) should be re-scoped to match.
+
+**Verified at:** `cc4ab78` (`main`) + `6c1f54e`
+(`attempt/GEO-19-stepB-20260824T183000Z`), 2026-08-24.
+
 ### 🚫 OPEN — `birdcage_port_domain(emit_port_sheets=True)` **cannot build any birdcage with more than four legs**: the mid-plane sheet is an axis-aligned rectangle (`GEO-19` attempt 1, 2026-08-23)
 
 **Test id:** no test asserts this on `main` — the module that hits it,

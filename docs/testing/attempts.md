@@ -14315,3 +14315,103 @@ baselines it re-records against are the digits above. The one thing to watch
 there is the degeneracy margin — 253.2002× at 116 368 against step B's measured
 0.79×, so the pre-registered (4\*)(iii) disposition is likely to be exercised
 rather than skipped.
+
+---
+
+## 2026-08-24T18:30Z — `GEO-19` step B (§9 item 2) — **incomplete (parked, ruling requested)**
+
+**Slot:** 13:30 local implementer run. **Tier:** standard, `-n 2`, two harness
+commands, `timeout -k 30 400` each, both returned footers. Preflight clean, container
+Up 49 min, no wedge, no exit 124, no denial.
+
+**Tried.** Cherry-picked `12737a8` (`src/fem_em_solver/io/mesh.py` only) from
+`attempt/GEO-19-stepB-20260824T034500Z` onto post-`GEO-20` `main`. One conflict,
+at the `sheet_of_ordinal` type annotation: `main` still had the leg ports on the
+old `(axis, coordinate)` encoding while `GEO-20` had added a parallel
+`ring_sheet_of_ordinal` keyed by `(normal, point)`. Resolved to step B's
+`(normal, point)` for the legs, keeping `GEO-20`'s ring dict and its
+`n_ports_total <= 99` check — both families now share the C_N-covariant form,
+which is what `GEO-20`'s own comment asked for. Then ran leg (a) (real) and
+legs (b)+(c) (complex) exactly as the item specified.
+
+**Measured — leg (a), invariance control from `main`.** `3 passed` / Status 0 /
+**96 s** (`20260824T183257Z_GEO-19-stepB-invariance.log`). Sheeted **116 085**,
+gapped **114 655** — the attempt's predictions, hit exactly. C4 sheet spread
+**6.050e-16**; terminal ratios **0.988616 × 4**; sheet meshed/analytic, halves,
+closure all `1.000000000000`; out-of-plane ≤ 7.103e-18 m. **Negative control the
+item named:** the untouched no-gap path reproduces **98 666** cells digit for
+digit. The rewrite survives the merge intact.
+
+**Measured — legs (b)+(c), `PORT-9` regression.** `3 failed, 16 passed` /
+117.80 s / Status 1 (`20260824T183519Z_GEO-19-stepB-port9-measure.log`).
+
+| quantity | 116 368 (item 1, d3c) | 116 085 (step B) | move |
+| --- | --- | --- | --- |
+| leg (c) driven `I₁` | `+9.992781266e-07+3.346865998e-09j` A | `+9.990584892e-07+4.709566544e-09j` A | 1.381e-03 |
+| leg (d0) terminated `Z₁₁` | `+2.172952668e+01+7.461413742e+00j` Ω | `+2.215494591e+01+7.460189773e+00j` Ω | 1.852e-02 |
+| **open-limit `Z₁₁`** | `+7.111692404e+02−3.351665665e+03j` Ω | `+9.201557829e+02−4.718342449e+03j` Ω | **~40%** |
+| open-limit mutuals | ~1.878e+03 Ω | ~1.872e+03 Ω | 0.3% |
+| leg (c) magnitude-only margin | 5.0594× | **0.7906×** | flips |
+| open complex margin (1e6 Ω) | 6.9398× | 1.5951× | both < 10× floor |
+| **terminated margin (50 Ω)** | 253.2002× | **2256.9707×** | improves 8.9× |
+| class means (self/adj/opp) | 2.297360911e+01 / 1.701075777e+01 / 1.605637772e+01 Ω | 2.338160261e+01 / 1.700854304e+01 / 1.606048044e+01 Ω | — |
+| class spreads | 0.0617 / 0.0359 / 0.0237% | 0.0553 / 0.0353 / 0.0214% | all down |
+| pooled separation | 150.3584× | **166.6766×** | improves |
+| σ_max(S) | 0.999993391 | 0.999992805 | both PASS |
+| reciprocity, rel | 2.049e-14 | 2.152e-14 | both PASS |
+| max column power sum | 0.808049459 | 0.793823974 | both PASS |
+
+**Outcome — parked, and the reason is the third row of that table.** Two of the
+three failures are the re-records §9 item 2 licensed, and both digits are in
+hand and applied on the branch. The (4\*)(iii) pre-registered disposition
+resolves cleanly *against* keeping the degeneracy gate — the separation is not
+restored, and it was already below leg (d0)'s 10× floor before step B. But the
+open-limit `Z₁₁` moving **40% under a 0.24% mesh change** is not a record that
+moved; it is evidence the quantity has no mesh stability at all. At `Z_p = 1e6 Ω`
+the port is nearly open, `I₁` is a ~1e-9 A near-cancellation residual, and
+`Z₁₁ = V₁/I₁` inherits the conditioning. Item 2's negative-result clause is
+explicit: a `PORT-9` red a mesh-tagged re-record does not explain is a finding →
+known-issues + §7 → stop. Pinning it at a 1e-9 print band would have recorded
+noise as a fact, which is the one thing the standing rules forbid outright.
+
+**The contrast is the actual deliverable.** Everything on the *terminated*
+fixture improves under step B — margin 8.9× better, class separation better,
+every intra-class spread down, all three gates green. So the anti-degeneracy duty
+the flipped leg (c) gate was carrying is already discharged, with two decades
+more margin, by two gates that are on `main`, green, and better on step B's mesh.
+That is what makes retiring the open-limit column a *plausible* ruling rather than
+a loss of coverage — but retiring a record-bearing gate is not an in-slot
+judgement, and neither branch is the one item 2 pre-registered, so the implementer
+declines to choose.
+
+**Ruling requested (for the 18:00 review).** Either (A) retire the open-limit
+column as a record-bearing fixture — step B lands with that retirement, leg (c)'s
+reproduction anchor is re-sited on the terminated fixture, (d1′) re-scoped to
+match; or (B) measure the open column's conditioning first (an h-refinement rung
+on the open fixture) and leave step B parked another cycle. (A) is one slot; (B)
+is at least two and buys a number nothing currently gates on.
+
+**Branch:** `attempt/GEO-19-stepB-20260824T183000Z` (`6c1f54e`) — carries the
+merged `mesh.py` and the mesh-tagged leg (d0) re-record in
+`test_port_birdcage_four_port.py`, with both prior baselines (116 368 0.11-image,
+116 416 pre-0.11) retained in-comment as version-tagged history.
+`attempt/GEO-19-stepB-20260824T034500Z` **not deleted** — the item conditions its
+deletion on the content being green from `main`, and it is not.
+`attempt/GEO-19-20260823T214500Z` and `attempt/PORT-9-d1-20260823T124500Z`
+untouched. No `recovered/*`.
+
+**On `main` this commit:** the two harness logs + test-results.md rows, the new
+🚫 OPEN known-issues entry (open-limit `Z₁₁` not mesh-converged, with both
+columns and all four margins), the §7 `GEO-19` "step B attempt 2" block, and the
+§9 item 2 🚫 annotation. No source or test change on `main`; the blocker-B
+known-issues entry stays open because step B is still not landed. Tree clean.
+
+**Hypothesis for the next attempt.** Ruling (A) is the cheap and, I think,
+correct one: the open-limit column was introduced as leg (d0)'s *control*, not as
+a result, and its two duties (fixture-identity anchor, anti-degeneracy) are both
+better served on the terminated fixture that step B improves. If (A) is granted,
+the next attempt is a single slot — land `6c1f54e`, retire the open column's two
+assertions in favour of the terminated ones, re-record leg (c)'s `I₁`, run the
+three modules twice, expect 19 passed. Watch for: leg (c)'s module imports
+`STEP2_CELL_COUNT` (116 368 on `main`) and it must move to 116 085 in the same
+commit, or the fixture-identity band carries the wrong anchor.
