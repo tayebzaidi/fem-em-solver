@@ -14074,3 +14074,95 @@ the invisible-set estimate, and the instrument now says 55 stale references. A
 review should also decide whether the docrefs call belongs in
 `run_examples.sh` now that `exit=2` is a legible signal — with the census
 honest, a per-run freshness reading is worth something it was not worth before.
+
+---
+
+## 2026-08-24T12:53Z — `GEO-20` step 1 — **complete**
+
+**Item taken.** §9 On deck **item 4**. Items 1–3 were skipped by the queue's
+own rules, verified rather than assumed: item 1 is 🟡 from the 04:30 slot and
+its own annotation says the image-tagged birdcage re-record "needs a ruling",
+so it cannot complete in an implementer slot without a review call; item 2's
+text is explicit — "serial on item 1 — if (d3b)'s records are not on `main`,
+skip to item 3" — and item 1 re-recorded nothing; item 3 is ✅ from the 06:00
+slot. Preflight clean, container Up 16 h, no anomaly.
+
+**Outcome: `GEO-20` step 1 closed, green twice in-slot, on `main`.**
+
+**The design call worth reading.** The `GEO-18` leg-gap docstring says the
+end-ring alternative "gives oblique torus sections at 45 degrees and no closed
+form at all". That is true of an **axis-aligned box** cutting the ring, and it
+is why the §7 entry's promise of a `pi·r_ring²` terminal is only reachable one
+way: cut the ring with the two **radial** half-planes `phi = phi_c ± alpha`
+(which is what a partial-torus arc already ends on), so both cut faces are
+exact disks. The port solid then has to be bounded by those same planes or the
+terminal is not the interface — so it is the `GEO-18` box **rotated into the
+gap's own frame**: the wedge `|phi − phi_c| ≤ alpha` intersected with
+`|z − z_ring| ≤ w/2` and `|u − R| ≤ w/2`, `u = rho·cos(phi − phi_c)`. Six
+planar faces, hence `V = 2·R·w²·tan(alpha)`, `A = 2·w²/cos(alpha) +
+8·R·w·tan(alpha)` and a `w²` mid-plane sheet, all exact under a linear mesh.
+A constant-`rho` (curved) face would have turned all three 1e-9 gates into
+faceting bands — that choice is the whole reason the gate list is achievable.
+Corners are evaluated directly in global coordinates, never built at `phi = 0`
+and rotated (ruling (4\*)'s ulp lesson, applied pre-emptively).
+
+**Measured** (`20260824T124525Z` 2 passed / 70.4 s; `20260824T124646Z`
+5 passed / 158.0 s, the second pass carrying `GEO-18`'s two modules as a
+regression check — both green, nothing pre-existing moved):
+
+| gate | reading | band |
+|---|---|---|
+| terminal / `2·pi·r_ring²` | **0.974455** (9.796288e-05 m²) | [0.95, 1.0] |
+| terminal equality, 8 ports | **2.1e-09** spread | 1e-5 |
+| closure `(A_c+A_a+A_p)/A` | **1.000000000000** | 1e-9 |
+| port volume / analytic | **1.000000000000** | 1e-9 |
+| sheet / `w²` | **1.000000000000**, 14 facets | 1e-9 |
+| sheet out-of-plane | **5.042e-18 m** | 1e-12 |
+| C4 + top/bottom mirror | < 1e-12 on volume and sheet | 1e-12 |
+| conductor meshed/CAD | **0.969275** | ≥ 0.95 |
+
+`g = 8.0e-03 m`, `alpha = 5.714285714e-02 rad`, `w = 1.0e-02 m`; 110 786 cells
+(20.9 s mesh) ring-gapped, 128 402 (25.2 s) for the leg+ring rung.
+
+**Negative controls.** Kwarg off → 4 port tags only, **98 666** cells (ratio
+1.001950 against the module's own 98 474 record, inside its 1% band, so
+nothing re-recorded) and meshed/CAD **0.966977** vs `EX-21`'s 0.967019. Leg
+gaps + ring gaps together → the **12-port** mesh with both identity families
+exact; leg terminals reproduce `GEO-18` step 1's **0.988616** digit for digit.
+
+**One finding for the review.** The *union* mass identity (gapped CAD
+conductor = uncut − `2N·pi·r_ring²·g`) reads **0.999998939803**, 1.06e-06 off,
+against the 1e-9 the leg cut reached. It is **not** the arcs: I added a
+discriminator rather than widen a band, and Pappus on the ring primitives
+*before any boolean* reads **1.000000000000** on both the 8 arcs
+(4.099883683960e-05 m³) and the 2 uncut tori (4.421582771688e-05 m³) — the
+swept angles are exactly `2·pi/N − g/R`. The residual is OCC quadrature on a
+union of 28 vs 20 curved pieces, differenced. The module therefore gates the
+primitive identity at 1e-9 and **records** the union ratio. No pre-registered
+`GEO-20` gate was touched (the union identity was never one — it is inherited
+from `GEO-18`, which had already moved its own assertion off the difference
+form for the same amplification reason).
+
+**Two dead ends worth one line each**, both caught in-slot: the builder needed
+`port_clearance` threaded into it (`NameError`, first run), and the `GEO-18`
+planarity check — "smallest bounding-box extent is zero" — is **not reusable**
+on a radial sheet, because a plane at 45° has no constant global coordinate
+(P5's extents are 7.071068e-03 / 7.071068e-03 / 1.0e-02, exactly the `w`
+rectangle seen edge-on). Replaced with the projection onto the sheet's own
+azimuthal normal, which is the stronger statement anyway.
+
+**Tree:** `main` clean and green. This commit carries `ring_gap_length` in
+`io/mesh.py`, `tests/mesh/test_birdcage_ring_gaps.py`, the five logs and their
+test-results rows, the `GEO-20` §7 step-1 close and status flip, and the §9
+item-4 done mark.
+
+**Compute:** five foreground harness runs, 3.5 + 3.6 + 61.5 + 70.4 + 158.0 =
+**297 s** total, every one inside `timeout -k 30 400`. No denial, no wedge, no
+exit 124.
+
+**Hypothesis for the next attempt.** `GEO-20` step 2 (16 legs / 32 ports) is
+now cheap to reach — the layout code is `leg_count`-generic and the only new
+gate is C16 — but it is serial on `GEO-19` step B landing, i.e. on the §9
+item-1/item-2 chain, so a review should queue it only after that unblocks.
+The `mesh:` example the ramp rule owes for this chunk is the other follow-on
+and needs no compute beyond one build.

@@ -2816,6 +2816,120 @@ class MeshGenerator:
         }
 
     @staticmethod
+    def _birdcage_ring_gap_layout(
+        *,
+        leg_count: int,
+        ring_radius: float,
+        leg_radius_eff: float,
+        leg_spacing: float,
+        ring_minor_radius: float,
+        phantom_radius: float,
+        ring_gap_length: float,
+        port_clearance: float,
+        min_port_face_area: float,
+    ) -> Dict[str, float]:
+        """Size and validate the `GEO-20` ring-gap port layout (high-pass).
+
+        The gap is an *arc* of length ``g`` centred on the mid-azimuth between
+        each adjacent leg pair, on both end rings — ``2·leg_count`` of them. It
+        is cut by the two half-planes ``phi = phi_c +- alpha`` with
+        ``alpha = g / (2·ring_radius)``, so both cut faces are exact planar
+        disks of area ``pi·ring_minor_radius²``: the closed form only exists
+        because the cut planes are *radial*, which is why the box that spans
+        the gap must live in the gap's own ``(r_hat, phi_hat, z_hat)`` frame
+        rather than being axis-aligned (`GEO-18`'s leg construction rotated).
+
+        That port solid is the box ``|z − z_ring| <= w/2``,
+        ``|u − ring_radius| <= w/2`` (``u`` = the radial coordinate *of the
+        gap's own frame*, i.e. ``rho·cos(phi − phi_c)``) intersected with the
+        wedge ``|phi − phi_c| <= alpha``. Every one of its six faces is planar,
+        so its volume, surface area and mid-plane section all have exact closed
+        forms and a linear mesh reproduces them to machine precision — a
+        constant-``rho`` face would not, being curved.
+
+        Returns the closed forms and clearances; the geometry itself is built
+        in `_build_birdcage_port_model`.
+        """
+        if ring_gap_length <= 0.0:
+            raise ValueError("ring_gap_length must be > 0")
+        if port_clearance <= 0.0:
+            raise ValueError("ring_gap_length requires port_clearance > 0")
+
+        half_angle = 0.5 * ring_gap_length / ring_radius
+        leg_half_angle = np.pi / leg_count
+        if half_angle >= leg_half_angle:
+            raise ValueError(
+                "ring_gap_length spans past the neighbouring leg: "
+                f"half-angle={half_angle:.6e} rad, leg half-spacing="
+                f"{leg_half_angle:.6e} rad"
+            )
+
+        box_width = 2.0 * ring_minor_radius + 2.0 * port_clearance
+        # Arc clearance between the gap's end plane and the nearest leg's
+        # surface, measured along the ring centreline. The port solid spans the
+        # gap exactly, so this is also the metal the terminals sit on.
+        leg_arc_clearance = (
+            ring_radius * (leg_half_angle - half_angle) - leg_radius_eff
+        )
+        if leg_arc_clearance <= 0.0:
+            raise ValueError(
+                "Ring gap reaches the legs: "
+                f"clearance={leg_arc_clearance:.6e} m"
+            )
+
+        port_face_area = np.pi * ring_minor_radius**2
+        if port_face_area < min_port_face_area:
+            raise ValueError(
+                "Ring-gap terminal area too small for robust tagging: "
+                f"area={port_face_area:.6e} m^2, "
+                f"required>={min_port_face_area:.6e} m^2"
+            )
+
+        # The port solid's innermost point sits at u = ring_radius - w/2 on the
+        # gap's own radial ray; the phantom must stay outside it or the port
+        # region is not the clean air+two-disks volume assumed.
+        phantom_radial_clearance = ring_radius - 0.5 * box_width - phantom_radius
+        if phantom_radial_clearance <= 0.0:
+            raise ValueError(
+                "Ring port/phantom radial overlap detected: "
+                f"clearance={phantom_radial_clearance:.6e} m"
+            )
+        # The gap solid straddles the ring plane; it must not reach the legs'
+        # own gap region or the ring tube's own z extent is not what is cut.
+        if 0.5 * box_width <= ring_minor_radius:
+            raise ValueError(
+                "Ring port box is thinner than the ring tube: "
+                f"w/2={0.5 * box_width:.6e} m, r={ring_minor_radius:.6e} m"
+            )
+
+        tan_half = float(np.tan(half_angle))
+        return {
+            "ring_gap_length_m": float(ring_gap_length),
+            "ring_gap_half_angle_rad": float(half_angle),
+            "ring_port_box_width_m": float(box_width),
+            "ring_port_count": int(2 * leg_count),
+            # V = 2·R·w²·tan(alpha) — the wedge∩slab∩slab solid, exact.
+            "ring_port_volume_m3": float(
+                2.0 * ring_radius * box_width**2 * tan_half
+            ),
+            # A = 2·w²/cos(alpha) + 8·R·w·tan(alpha) — two radial caps, two
+            # z-faces, two u-faces, all planar.
+            "ring_port_surface_m2": float(
+                2.0 * box_width**2 / float(np.cos(half_angle))
+                + 8.0 * ring_radius * box_width * tan_half
+            ),
+            # The mid-plane section (phi = phi_c) is the w x w rectangle.
+            "ring_port_sheet_area_m2": float(box_width**2),
+            "ring_terminal_area_m2": float(2.0 * port_face_area),
+            "ring_removed_mass_m3": float(
+                2 * leg_count * np.pi * ring_minor_radius**2 * ring_gap_length
+            ),
+            "ring_leg_arc_clearance_m": float(leg_arc_clearance),
+            "ring_phantom_radial_clearance_m": float(phantom_radial_clearance),
+            "ring_gap_z_m": float(0.5 * leg_spacing),
+        }
+
+    @staticmethod
     def birdcage_port_domain(
         leg_count: int = 4,
         ring_radius: float = 0.07,
@@ -2830,6 +2944,7 @@ class MeshGenerator:
         min_port_face_area: float = 2.5e-5,
         min_port_center_separation: Optional[float] = None,
         leg_gap_length: Optional[float] = None,
+        ring_gap_length: Optional[float] = None,
         emit_port_sheets: bool = False,
         air_padding: float = 0.03,
         resolution: float = 0.015,
@@ -2870,8 +2985,26 @@ class MeshGenerator:
             closed-form area ``π·r_leg²`` each, the drive direction is ``ẑ``
             for every port, and the four-port layout is exactly C4-invariant.
             `port_box_size` is ignored in this mode — the gap sets it.
+        ring_gap_length : float, optional
+            `GEO-20` step 1 — the **high-pass** layout, independent of
+            `leg_gap_length` (a high-pass birdcage has uncut legs, so ``None``
+            for that one is the normal pairing). ``None`` (default) keeps the
+            rings whole and the geometry bit-for-bit. When given, the arc
+            ``|phi − phi_mid| <= g/(2·ring_radius)`` is removed from **both**
+            end rings at the mid-azimuth between every adjacent leg pair —
+            ``2·leg_count`` gaps — and one port solid is placed in each,
+            spanning the gap exactly in the gap's own ``(r_hat, phi_hat,
+            z_hat)`` frame. The cut planes are radial, so the two terminals per
+            port are exact planar disks of area ``pi·ring_minor_radius²`` and
+            the drive direction is ``phi_hat``. The ring ports take ordinals
+            ``leg_count+1 .. leg_count+2·leg_count``, after the leg ports, so
+            every existing tag keeps its meaning.
         emit_port_sheets : bool, optional
-            `GEO-18` step 2, requires `leg_gap_length`. ``False`` (default)
+            `GEO-18` step 2, requires `leg_gap_length` or `ring_gap_length`.
+            A port only gets a sheet if it has terminals: with
+            `ring_gap_length` alone, the four floating leg boxes stay single
+            pieces at ``100+i`` and only the ring ports split.
+            ``False`` (default)
             leaves the gapped mesh bit-for-bit as step 1 built it. When ``True``,
             each port box is split by the axis-aligned coordinate plane
             containing its own leg axis (y-normal for a leg on the x-axis,
@@ -2930,16 +3063,29 @@ class MeshGenerator:
         if ring_radius <= 0.0:
             raise ValueError("ring_radius must be > 0")
 
-        if emit_port_sheets and leg_gap_length is None:
+        if emit_port_sheets and leg_gap_length is None and ring_gap_length is None:
             # Checked here, before any gmsh state exists: the mode is a
             # contradiction, not a build failure.
             raise ValueError(
-                "emit_port_sheets requires leg_gap_length: the sheet is the leg "
-                "gap box's mid-plane, and without a gap the port boxes float in "
-                "the air with no terminals to span"
+                "emit_port_sheets requires leg_gap_length or ring_gap_length: "
+                "the sheet is a gap box's mid-plane, and without a gap the port "
+                "boxes float in the air with no terminals to span"
             )
 
         leg_radius_eff = 0.5 * leg_width
+        ring_port_layout: Optional[Dict[str, float]] = None
+        if ring_gap_length is not None:
+            ring_port_layout = MeshGenerator._birdcage_ring_gap_layout(
+                leg_count=leg_count,
+                ring_radius=ring_radius,
+                leg_radius_eff=leg_radius_eff,
+                leg_spacing=leg_spacing,
+                ring_minor_radius=ring_minor_radius,
+                phantom_radius=phantom_radius,
+                ring_gap_length=ring_gap_length,
+                port_clearance=port_clearance,
+                min_port_face_area=min_port_face_area,
+            )
         if leg_gap_length is None:
             port_diagnostics = MeshGenerator.birdcage_port_layout_diagnostics(
                 leg_count=leg_count,
@@ -2996,6 +3142,8 @@ class MeshGenerator:
                     port_box_size=port_box_size,
                     port_radius=port_diagnostics["port_radius_m"],
                     leg_gap_length=leg_gap_length,
+                    ring_gap_length=ring_gap_length,
+                    port_clearance=port_clearance,
                     emit_port_sheets=emit_port_sheets,
                     air_padding=air_padding,
                     resolution=resolution,
@@ -3037,6 +3185,12 @@ class MeshGenerator:
             None if leg_gap_length is None else float(leg_gap_length)
         )
         diagnostics["port_layout"] = dict(port_diagnostics)
+        diagnostics["ring_gap_length_m"] = (
+            None if ring_gap_length is None else float(ring_gap_length)
+        )
+        diagnostics["ring_port_layout"] = (
+            None if ring_port_layout is None else dict(ring_port_layout)
+        )
         return mesh, cell_tags, facet_tags, diagnostics
 
     @staticmethod
@@ -3055,6 +3209,8 @@ class MeshGenerator:
         air_padding: float,
         resolution: float,
         leg_gap_length: Optional[float] = None,
+        ring_gap_length: Optional[float] = None,
+        port_clearance: float = 1.0e-3,
         emit_port_sheets: bool = False,
         conductor_resolution: Optional[float] = None,
         conductor_refine_distance: Optional[float] = None,
@@ -3065,11 +3221,74 @@ class MeshGenerator:
 
         # Simplified conductor scaffold: two rings plus vertical legs.
         z_ring_offset = 0.5 * leg_spacing
-        top_ring = gmsh.model.occ.addTorus(0, 0, z_ring_offset, ring_radius, ring_minor_radius)
-        bottom_ring = gmsh.model.occ.addTorus(0, 0, -z_ring_offset, ring_radius, ring_minor_radius)
+        theta = np.linspace(0.0, 2.0 * np.pi, leg_count, endpoint=False)
+        # Mid-azimuth between each adjacent leg pair — the gap centres, and the
+        # same angles the ungapped port boxes have always floated at.
+        phi_mid = theta + np.pi / leg_count
+
+        ring_tags: List[int] = []
+        # Each ring gap centre, in build order: bottom ring first, then top, so
+        # port ordinal `leg_count + 1 + j` and `leg_count + 1 + leg_count + j`
+        # are the mirror pair the top/bottom gate compares.
+        ring_gap_centres: List[Tuple[float, float]] = []
+        # Pappus on the ring primitives, before the fragment touches them: the
+        # swept volume is `pi·r²·R·angle` whether the sweep is 2*pi or an arc.
+        # Measured here so a mass discrepancy after the union can be attributed —
+        # OCC's own quadrature on this primitive vs the arcs being the wrong
+        # arcs. `GEO-18`'s leg cut had no equivalent (its removed segment is a
+        # plain cylinder, integrated exactly).
+        ring_analytic_mass = 0.0
+        if ring_gap_length is None:
+            for z_sign in (+1.0, -1.0):
+                ring_tags.append(
+                    gmsh.model.occ.addTorus(
+                        0, 0, z_sign * z_ring_offset, ring_radius, ring_minor_radius
+                    )
+                )
+                ring_analytic_mass += (
+                    np.pi * ring_minor_radius**2 * ring_radius * 2.0 * np.pi
+                )
+        else:
+            # `GEO-20` step 1: `leg_count` arcs per ring instead of one torus.
+            # The removed arcs are bounded by the radial half-planes
+            # `phi = phi_mid +- alpha`, so each cut face is an exact disk of
+            # area pi*r^2 and the removed mass is exactly pi*r^2*g per gap.
+            # `addTorus`'s partial sweep starts on the +x half-plane, so build
+            # the arc at phi = 0 and rotate its start into place.
+            half_angle = 0.5 * ring_gap_length / ring_radius
+            arc_sweep = 2.0 * np.pi / leg_count - 2.0 * half_angle
+            for z_sign in (-1.0, +1.0):
+                z_ring = z_sign * z_ring_offset
+                for j in range(leg_count):
+                    ring_gap_centres.append((float(phi_mid[j]), float(z_ring)))
+                    arc = gmsh.model.occ.addTorus(
+                        0,
+                        0,
+                        z_ring,
+                        ring_radius,
+                        ring_minor_radius,
+                        angle=arc_sweep,
+                    )
+                    gmsh.model.occ.rotate(
+                        [(3, arc)],
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                        float(phi_mid[j]) + half_angle,
+                    )
+                    ring_tags.append(arc)
+                    ring_analytic_mass += (
+                        np.pi * ring_minor_radius**2 * ring_radius * arc_sweep
+                    )
+
+        ring_cad_mass = float(
+            sum(gmsh.model.occ.getMass(3, tag) for tag in ring_tags)
+        )
 
         leg_tags: List[int] = []
-        theta = np.linspace(0.0, 2.0 * np.pi, leg_count, endpoint=False)
         for angle in theta:
             x = ring_radius * np.cos(angle)
             y = ring_radius * np.sin(angle)
@@ -3123,17 +3342,24 @@ class MeshGenerator:
         # coordinate the plane pins, and at what value.
         sheet_tags: List[int] = []
         sheet_of_ordinal: Dict[int, Tuple[str, float]] = {}
+        # `GEO-20`: the ring gaps' mid-planes are radial, so their half-space
+        # test is a `(normal, point)` pair in the gap's own frame — the
+        # `GEO-18` lower/upper coordinate convention is not C_N-covariant and
+        # must not be reused here.
+        ring_sheet_of_ordinal: Dict[int, Tuple[np.ndarray, np.ndarray]] = {}
+        n_ports_total = leg_count + (0 if ring_gap_length is None else 2 * leg_count)
         if emit_port_sheets:
-            if leg_gap_length is None:
+            if leg_gap_length is None and ring_gap_length is None:
                 raise ValueError(
-                    "emit_port_sheets requires leg_gap_length: the sheet is the "
-                    "leg gap box's mid-plane, and without a gap there is no box "
-                    "on the leg to split"
+                    "emit_port_sheets requires leg_gap_length or ring_gap_length: "
+                    "the sheet is a gap box's mid-plane, and without a gap there "
+                    "is no box on the metal to split"
                 )
-            if leg_count > 99:
+            if n_ports_total > 99:
                 raise ValueError(
                     "emit_port_sheets encodes the port halves as cell tags "
-                    f"100+i and 200+i, so leg_count must be <= 99, got {leg_count}"
+                    f"100+i and 200+i, so the port count must be <= 99, got "
+                    f"{n_ports_total}"
                 )
         for idx, angle in enumerate(theta):
             if leg_gap_length is None:
@@ -3158,7 +3384,7 @@ class MeshGenerator:
             )
             port_tags.append(port)
 
-            if emit_port_sheets:
+            if emit_port_sheets and leg_gap_length is not None:
                 # The plane contains the leg axis *and* the radial direction, so
                 # its normal is azimuthal: y-normal for a leg on the x-axis,
                 # x-normal for a leg on the y-axis. `addRectangle` only builds in
@@ -3193,6 +3419,75 @@ class MeshGenerator:
                     )
                 sheet_tags.append(sheet)
 
+        # `GEO-20` step 1: one port solid per ring gap, in the gap's own frame.
+        # Cross-section in that frame is the trapezoid bounded by the two radial
+        # half-planes and by u = ring_radius +- w/2 (u = rho·cos(phi - phi_c)),
+        # extruded through w in z. Six planar faces — so volume, surface and the
+        # mid-plane section are exact under a linear mesh, which a constant-rho
+        # (curved) face would not be. Corners are evaluated directly in global
+        # coordinates rather than built at phi = 0 and rotated: the rotation is
+        # what puts the C4 images ulps apart (`GEO-19` ruling (4*)).
+        if ring_gap_length is not None:
+            half_angle = 0.5 * ring_gap_length / ring_radius
+            tan_half = float(np.tan(half_angle))
+            ring_w = 2.0 * ring_minor_radius + 2.0 * port_clearance
+            for phi_c, z_ring in ring_gap_centres:
+                cos_c, sin_c = float(np.cos(phi_c)), float(np.sin(phi_c))
+                corners = []
+                for u, v in (
+                    (ring_radius - 0.5 * ring_w, -(ring_radius - 0.5 * ring_w) * tan_half),
+                    (ring_radius + 0.5 * ring_w, -(ring_radius + 0.5 * ring_w) * tan_half),
+                    (ring_radius + 0.5 * ring_w, +(ring_radius + 0.5 * ring_w) * tan_half),
+                    (ring_radius - 0.5 * ring_w, +(ring_radius - 0.5 * ring_w) * tan_half),
+                ):
+                    corners.append(
+                        gmsh.model.occ.addPoint(
+                            u * cos_c - v * sin_c,
+                            u * sin_c + v * cos_c,
+                            z_ring - 0.5 * ring_w,
+                        )
+                    )
+                lines = [
+                    gmsh.model.occ.addLine(corners[k], corners[(k + 1) % 4])
+                    for k in range(4)
+                ]
+                loop = gmsh.model.occ.addCurveLoop(lines)
+                face = gmsh.model.occ.addPlaneSurface([loop])
+                extruded = gmsh.model.occ.extrude([(2, face)], 0.0, 0.0, ring_w)
+                solids = [tag for dim, tag in extruded if dim == 3]
+                if len(solids) != 1:
+                    raise RuntimeError(
+                        "birdcage_port_domain: ring-gap port extrusion produced "
+                        f"{len(solids)} solids, expected 1"
+                    )
+                port_tags.append(solids[0])
+
+                if emit_port_sheets:
+                    ordinal = len(port_tags)
+                    sheet_corners = [
+                        gmsh.model.occ.addPoint(u * cos_c, u * sin_c, z)
+                        for u, z in (
+                            (ring_radius - 0.5 * ring_w, z_ring - 0.5 * ring_w),
+                            (ring_radius + 0.5 * ring_w, z_ring - 0.5 * ring_w),
+                            (ring_radius + 0.5 * ring_w, z_ring + 0.5 * ring_w),
+                            (ring_radius - 0.5 * ring_w, z_ring + 0.5 * ring_w),
+                        )
+                    ]
+                    sheet_lines = [
+                        gmsh.model.occ.addLine(
+                            sheet_corners[k], sheet_corners[(k + 1) % 4]
+                        )
+                        for k in range(4)
+                    ]
+                    sheet = gmsh.model.occ.addPlaneSurface(
+                        [gmsh.model.occ.addCurveLoop(sheet_lines)]
+                    )
+                    sheet_tags.append(sheet)
+                    ring_sheet_of_ordinal[ordinal] = (
+                        np.array([-sin_c, cos_c, 0.0]),
+                        np.array([ring_radius * cos_c, ring_radius * sin_c, z_ring]),
+                    )
+
         radial_extent = ring_radius + max(leg_radius_eff, ring_minor_radius) + port_dy + air_padding
         z_extent = max(0.5 * coil_length, 0.5 * leg_spacing + ring_minor_radius, 0.5 * phantom_height) + air_padding
         air_tag = gmsh.model.occ.addBox(
@@ -3204,7 +3499,7 @@ class MeshGenerator:
             2.0 * z_extent,
         )
 
-        conductor_tags = [top_ring, bottom_ring] + leg_tags
+        conductor_tags = ring_tags + leg_tags
 
         # GEO-9 step 2b. The previous `occ.cut(..., removeTool=False)` carved the
         # air box around the tools but never booleaned the tools against *each
@@ -3262,7 +3557,7 @@ class MeshGenerator:
                 ordinal = min(
                     port_ordinal[tag] for tag in sources if tag in port_ordinal
                 )
-                if emit_port_sheets:
+                if ordinal in sheet_of_ordinal:
                     # `GEO-18` step 2 / `GEO-16`: with the sheet in, each port box
                     # is two pieces, one either side of its own mid-plane. The
                     # sheet is a dim-2 input and so never an ancestor; the halves
@@ -3274,6 +3569,16 @@ class MeshGenerator:
                     group_of_piece[piece] = (
                         200 + ordinal if value > coordinate else 100 + ordinal
                     )
+                elif ordinal in ring_sheet_of_ordinal:
+                    # `GEO-20`: same discipline, but the mid-plane is radial, so
+                    # the side is the sign of (centroid - gap centre)·phi_hat.
+                    normal, point = ring_sheet_of_ordinal[ordinal]
+                    centre = np.asarray(gmsh.model.occ.getCenterOfMass(3, piece))
+                    group_of_piece[piece] = (
+                        200 + ordinal
+                        if float(np.dot(centre - point, normal)) > 0.0
+                        else 100 + ordinal
+                    )
                 else:
                     group_of_piece[piece] = 100 + ordinal
             else:
@@ -3283,17 +3588,20 @@ class MeshGenerator:
         for piece, group in sorted(group_of_piece.items()):
             pieces_by_group.setdefault(group, []).append(piece)
 
+        # A port is split only if it actually has a sheet: with `ring_gap_length`
+        # alone the floating leg boxes have no terminals and stay single pieces.
+        sheeted_ordinals = sorted(set(sheet_of_ordinal) | set(ring_sheet_of_ordinal))
         group_names = {1: "conductor", 2: "air", 3: "phantom"}
         for idx in port_ordinal.values():
+            has_sheet = idx in sheet_of_ordinal or idx in ring_sheet_of_ordinal
             group_names[100 + idx] = (
-                f"port_P{idx}_lower" if emit_port_sheets else f"port_P{idx}"
+                f"port_P{idx}_lower" if has_sheet else f"port_P{idx}"
             )
-            if emit_port_sheets:
+            if has_sheet:
                 group_names[200 + idx] = f"port_P{idx}_upper"
 
         expected_groups = [1, 2, 3] + [100 + i for i in port_ordinal.values()]
-        if emit_port_sheets:
-            expected_groups += [200 + i for i in port_ordinal.values()]
+        expected_groups += [200 + i for i in sheeted_ordinals]
         missing_groups = [
             group_names[tag] for tag in expected_groups if tag not in pieces_by_group
         ]
@@ -3342,8 +3650,8 @@ class MeshGenerator:
         # meshed reading is scored against, and the `PORT-9` step-2b effective
         # width `w = A/h` its extents.
         port_sheet_cad: Dict[str, object] = {}
-        if emit_port_sheets:
-            for ordinal in sorted(port_ordinal.values()):
+        if sheeted_ordinals:
+            for ordinal in sheeted_ordinals:
                 shared = sorted(
                     {
                         surf
@@ -3486,5 +3794,7 @@ class MeshGenerator:
             "cad_mass_by_group": cad_mass_by_group,
             "mesh_wall_time_s": float(mesh_wall_time),
             "conductor_resolution_m": conductor_resolution,
+            "ring_cad_mass_m3": float(ring_cad_mass),
+            "ring_analytic_mass_m3": float(ring_analytic_mass),
             "port_sheet_cad": port_sheet_cad,
         }

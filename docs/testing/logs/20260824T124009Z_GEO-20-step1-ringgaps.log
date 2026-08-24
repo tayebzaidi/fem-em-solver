@@ -1,0 +1,86 @@
+# Test Run
+- Chunk: GEO-20-step1-ringgaps
+- Commit: d778924fab8522defb1bd41be990dc7d26102739
+- Time (UTC): 2026-08-24 12:40:10
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_ring_gaps.py::test_ring_gaps_give_every_end_ring_port_two_disk_terminals -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 23 15:12 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 24 07:38 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  869 Aug 23 15:12 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_ring_gaps.py::test_ring_gaps_give_every_end_ring_port_two_disk_terminals -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 1 item
+
+tests/mesh/test_birdcage_ring_gaps.py::test_ring_gaps_give_every_end_ring_port_two_disk_terminals collected 1 item
+
+tests/mesh/test_birdcage_ring_gaps.py::test_ring_gaps_give_every_end_ring_port_two_disk_terminals FAILEDFAILED
+
+=================================== FAILURES ===================================
+__________ test_ring_gaps_give_every_end_ring_port_two_disk_terminals __________
+tests/mesh/test_birdcage_ring_gaps.py:181: in test_ring_gaps_give_every_end_ring_port_two_disk_terminals
+    mesh, cells, _, diag, elapsed = _build(
+tests/mesh/test_birdcage_ring_gaps.py:105: in _build
+    mesh, cell_tags, facet_tags, diagnostics = MeshGenerator.birdcage_port_domain(
+src/fem_em_solver/io/mesh.py:3162: in birdcage_port_domain
+    raise RuntimeError(
+E   RuntimeError: birdcage_port_domain geometry generation failed on rank 0
+=========================== short test summary info ============================
+FAILED tests/mesh/test_birdcage_ring_gaps.py::test_ring_gaps_give_every_end_ring_port_two_disk_terminals - RuntimeError: birdcage_port_domain geometry generation failed on rank 0
+============================== 1 failed in 3.54s ===============================
+
+
+=================================== FAILURES ===================================
+__________ test_ring_gaps_give_every_end_ring_port_two_disk_terminals __________
+tests/mesh/test_birdcage_ring_gaps.py:181: in test_ring_gaps_give_every_end_ring_port_two_disk_terminals
+    mesh, cells, _, diag, elapsed = _build(
+tests/mesh/test_birdcage_ring_gaps.py:105: in _build
+    mesh, cell_tags, facet_tags, diagnostics = MeshGenerator.birdcage_port_domain(
+src/fem_em_solver/io/mesh.py:3161: in birdcage_port_domain
+    raise build_error
+src/fem_em_solver/io/mesh.py:3133: in birdcage_port_domain
+    build_diagnostics = MeshGenerator._build_birdcage_port_model(
+src/fem_em_solver/io/mesh.py:3414: in _build_birdcage_port_model
+    ring_w = 2.0 * ring_minor_radius + 2.0 * port_clearance
+                                             ^^^^^^^^^^^^^^
+E   NameError: name 'port_clearance' is not defined
+=========================== short test summary info ============================
+FAILED tests/mesh/test_birdcage_ring_gaps.py::test_ring_gaps_give_every_end_ring_port_two_disk_terminals - NameError: name 'port_clearance' is not defined
+============================== 1 failed in 3.58s ===============================
+
+## Exit
+- Status: 1
+- Elapsed (s): 6
