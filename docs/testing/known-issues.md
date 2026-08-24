@@ -92,6 +92,16 @@ the gates run is a separate deliverable and does not hold it open.
 > Re-recording those digits is §9 item 4's licence, and the flipped gate is a
 > ruling, so this entry stays open until a review disposes of it.
 
+> **Ruled 2026-08-24 03:00 review — ruling (4\*), full text in §9.** The
+> rewrite is adjudicated correct; the cell-count digit-for-digit expectation
+> was unsatisfiable (the old construction sat ~5 ulps off exact positions and
+> gmsh tie-breaking amplifies that to ~1e-3 in cell count; CAD and every
+> analytic identity reproduce digit for digit). Sequencing: `PORT-9` leg
+> (d3b) re-records the birdcage class on the **unmoved** mesh first (§9
+> item 1), then step B lands with a mesh-tagged re-record (§9 item 2), whose
+> licence includes the pre-registered degeneracy-gate disposition. **This
+> entry retires with §9 item 2's commit.**
+
 Blocks `GEO-19`; does **not** block `GEO-20` (ring-gap ports
 sit at different azimuths and are scoped to their own local frame from the
 start). Related and separate: the layout clearance floor independently caps
