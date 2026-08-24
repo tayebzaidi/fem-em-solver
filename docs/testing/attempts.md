@@ -13636,3 +13636,79 @@ a planar rectangle meshed by a conforming fragment, so `dx·g` is still exact),
 and the C16 spread stays at float-summation scale — the count was never the
 physics. **For the review:** the `N ≤ 25` finding is the more consequential of
 the two and belongs in §10 Phase 6's geometry, not just in `GEO-19`.
+
+## 2026-08-24T00:45Z — `MAG-18` `E_Ω` re-gate on 0.11 (§9 item 1) — **complete** (all three anchors green twice in-slot; nothing re-recorded)
+
+**Slot:** 19:30 CDT implementer run, 2026-08-23. §9 item 1, ruling (3\*) of the
+18:00 review — the last open `OPS-18` ✅ scope caveat.
+
+**Preflight:** `main` clean, container Up (4 h), real build (no complex source —
+this is the real-mode `MAG` leg).
+
+**What was run** — the `MAG-18` gate module exactly as its 2026-08-22 close, no
+code change of any kind:
+
+| log | width | cmd | result | elapsed |
+|---|---|---|---|---|
+| `20260824T003059Z_MAG-18-regate-run1.log` | `-n 2` | full module, `-v -s` | `7 passed` / Status 0 | 296 s |
+| `20260824T003606Z_MAG-18-regate-n4.log` | `-n 4` | `test_domain_l2_record` | `1 passed` / Status 0 | 32 s |
+| `20260824T003650Z_MAG-18-regate-run2.log` | `-n 2` | full module, `-v -s` | `7 passed` / Status 0 | 296 s |
+
+**Anchors, measured on the image `main` boots:**
+
+- **(i) ladder** — `E_Ω` 25.2868 → 10.6172 → **6.6458%** on
+  h = 0.004/0.0025/0.0018 (38 740 / 147 235 / 383 146 cells), monotone,
+  fitted rate **1.6854** ≥ 0.7. The 0.7.2 ladder was
+  25.3787 → 10.7288 → 6.6708% at rate 1.6842: **the gate moved 7e-04** across
+  a version change that moved the gated rung's mesh 145 884 → 147 235 cells
+  (+0.93%) and its error −1.04%. That is exactly the property `MAG-18` was
+  commissioned for, now demonstrated across an actual image change rather
+  than argued.
+- **(ii) rank width** — `-n 2` 1.0617170177e-01 vs `-n 4` 1.0617175341e-01 =
+  **4.86e-07 relative**, inside the 03:00 review's re-registered 1e-6. The two
+  `-n 2` runs agree to 1.86e-08. Note for the record: the 0.7.2 observation
+  was 7.28e-08, so the clause has ~2× headroom on 0.11, not the 14× the
+  re-registration was sized against — known-issues updated with that, no band
+  touched.
+- **(iii) BC wall** — natural `n × H = 0` **32.315493%** vs analytic
+  **10.617170%**, ratio 0.3285, strictly worse. Identical to ten digits in
+  both `-n 2` runs.
+
+**The expected re-record did not happen, and that is the finding.** The item
+pre-registered that the `E_Ω` records "will likely miss print-precision
+reproduction" and licensed a (1\*) version-tagged re-record. None was needed:
+`E_OMEGA_H0025_RECORD` had *already* been re-recorded to the 0.11 value
+(1.061717e-01) by `OPS-18` step 3a leg 2 on 2026-08-22, and this slot
+reproduces it to **2.9e-09** of its 1e-4 band. The `NPOINTS_CONTROL_BY_VERSION`
+`"0.11"` row likewise reproduces at all three sample counts (−1.4e-06 /
++2.7e-06 / +3.3e-06 relative). So **no constant was written, no band moved, no
+source file changed** — the diff is documentation plus three logs. The retired
+10-point statistic still reads 15.3848% on 0.11; it is printed and gates
+nothing.
+
+**Disposals landed:**
+
+- §2.1's `MAG` bullet now quotes the 0.11 digits and its `OPS-18` 3b caveat is
+  **removed**.
+- §7 `OPS-18`'s ✅ **scope caveat is discharged** — every §2.1 family has now
+  been re-gated on 0.11.
+- §7 `MAG-18` carries the re-gate paragraph with all three anchors and the log
+  names.
+- known-issues: the `test_straight_wire_b_field` entry (superseded-not-resolved
+  since step 3b, held open *only* on this measurement) is **RETIRED**; the
+  `MAG-18` anchor-(ii) floor entry gains the 0.11 cross-width datum.
+
+**Compute:** three foreground harness runs, 296 + 32 + 296 = **624 s** at
+`-n 2`/`-n 4`, heavy tier, each wrapped `timeout -k 30 590` / `-k 30 400` and
+none within 50% of its ceiling. No exit 124, no wedge, no JIT-cache poisoning.
+
+**Tree:** `main` clean and green; no branch parked; §9 item 1 marked done in
+this commit.
+
+**Hypothesis for the next attempt.** Nothing is owed on this front — the item
+closes cleanly and `MAG-18` needs no further work. The next slot takes §9
+item 2 (`PORT-9` leg (d3), the power-wave S assembly), which is independent of
+everything landed here. One durable note for whoever writes the next
+re-gate item: when a chunk's records were already version-tagged by an earlier
+migration slot, the "expected moves" clause should say so, or the item reads as
+predicting work that has already been done.

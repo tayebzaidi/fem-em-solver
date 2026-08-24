@@ -277,7 +277,24 @@ this geometry at `N <= 25` legs — see the `GEO-19` §7 entry.
 > moved. **This entry closes with step 3b's merge commit**, which is what
 > carries these branch-only writes to `main`.
 
-### `test_straight_wire_b_field` fails **only in the 0.11 image**: the discretization error moved 12.75% → 15.3848% against a 15% band, on a mesh that grew 145 900 → 147 235 cells (`OPS-18` step 3 attempt 3, 2026-08-22)
+### ✅ RETIRED 2026-08-23 (`MAG-18` re-gate, 19:30 implementer slot) — `test_straight_wire_b_field` failed **only in the 0.11 image**: the discretization error moved 12.75% → 15.3848% against a 15% band, on a mesh that grew 145 900 → 147 235 cells (`OPS-18` step 3 attempt 3, 2026-08-22)
+
+> **Closing note (2026-08-23, 19:30 slot).** This entry stayed open after
+> step 3b only because the `MAG-18` `E_Ω` ladder was unobserved on 0.11
+> (see the scope update below). It has now been observed, on `main`, on
+> the image the project boots, twice in the same slot: `7 passed` /
+> exit 0 at `-n 2` (`20260824T003059Z_MAG-18-regate-run1.log` and
+> `20260824T003650Z_MAG-18-regate-run2.log`, 296 s each), plus a `-n 4`
+> record probe (`20260824T003606Z_MAG-18-regate-n4.log`, 32 s). The mesh
+> growth this entry is about is *real and unchanged* — the h = 0.0025
+> rung still meshes to **147 235** cells on 0.11 — but in the `MAG-18`
+> norm it costs the gate nothing: `E_Ω` = 25.2868 → 10.6172 → 6.6458%,
+> monotone, fitted rate **1.6854** against 0.7.2's 1.6842 (7e-04 of
+> move), cross-width agreement 4.86e-07 ≤ 1e-6, natural-BC ratio 0.3285.
+> The 10-point number this entry names is still 15.3848% on 0.11 — it is
+> printed, reproduced under the version-keyed control row to 2.7e-06,
+> and gates nothing. Nothing was re-recorded and no band moved. Retired,
+> not merely superseded.
 
 > **Where this fires.** `tests/validation/test_straight_wire.py::TestStraightWire::test_straight_wire_b_field`,
 > real build, on the `attempt/OPS-18` worksite only. `main` boots 0.7.2 and
@@ -548,6 +565,16 @@ this geometry at `N <= 25` legs — see the `GEO-19` §7 entry.
 > solve is now a *known* floor for any future rank-independence clause,
 > and the 2026-08-23 run-to-run entry below puts the single-width floor
 > at ~1e-9–1e-10.
+>
+> **The floor confirmed on 0.11 (2026-08-23, 19:30 slot).** The re-gate
+> re-measured the same pair on the image `main` now boots: `-n 2`
+> 1.0617170177e-01 vs `-n 4` 1.0617175341e-01, **4.86e-07 relative** —
+> 6.7× the 0.7.2 observation, still inside the re-registered 1e-6, and
+> the two same-width runs agree to 1.86e-08. So the floor is a property
+> of the direct-LU-under-partition solve and not of one image, and the
+> 1e-6 clause has ~2× headroom on 0.11, not 14×. A future clause tighter
+> than 1e-6 on this fixture would be pre-registering against the solver
+> again.
 
 ### ✅ RESOLVED 2026-08-23 (`OPS-18` step 3b) — `test_region_resolution_policy_refines_the_tagged_volumes_toward_cad` failed **only in the 0.11 image**: the uniform-sizing meshed volume moved 4.251e-04 relative against its `OPS-17` record (`OPS-18` step 2, 2026-08-22)
 
