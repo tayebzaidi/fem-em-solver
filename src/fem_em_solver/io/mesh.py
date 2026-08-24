@@ -126,6 +126,58 @@ def _interface_facet_tags(
     return dolfinx.mesh.meshtags(mesh, fdim, all_indices, all_values)
 
 
+def _z_rotation_affine(angle: float) -> Tuple[float, ...]:
+    """Row-major 4x4 rotation about `ẑ`, snapped exact on the coordinate axes.
+
+    `GEO-19` step B places the birdcage port boxes and their sheets by rotating
+    an azimuth-0 construction, so at a multiple of 90 degrees the transform must
+    be the *exact* identity or the exact coordinate swap — `occ.rotate` would
+    instead apply `cos(pi/2) = 6.1e-17` and move every vertex by a few ulps.
+    That is not cosmetic: the ulp is below any geometric tolerance, but gmsh's
+    tie-breaking is not tolerant, and last-bit coordinates change the cell count
+    at the 1e-3 level (measured, `GEO-19` step B, 2026-08-24).
+    """
+    c, s = float(np.cos(angle)), float(np.sin(angle))
+    for name, value in (("c", c), ("s", s)):
+        for exact in (-1.0, 0.0, 1.0):
+            if abs(value - exact) < 1.0e-12:
+                if name == "c":
+                    c = exact
+                else:
+                    s = exact
+    return (c, -s, 0.0, 0.0, s, c, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0)
+
+
+def _rotate_about_z(dim: int, tag: int, angle: float) -> None:
+    """Rotate one entity about `ẑ` through the origin; a no-op at azimuth 0."""
+    matrix = _z_rotation_affine(angle)
+    if matrix[0] == 1.0 and matrix[4] == 0.0:
+        return
+    gmsh.model.occ.affineTransform([(dim, tag)], list(matrix))
+
+
+def _place_sheet_in_leg_frame(tag: int, angle: float) -> None:
+    """Take an xy-plane rectangle to the leg's mid-plane at `angle`.
+
+    One transform, `R_z(angle) . R_x(pi/2)`, so no intermediate rounding: the
+    in-plane extent that must become the gap goes to `ẑ` and the `y`-normal
+    plane of a leg on `+x` turns to the leg's own azimuth. Snapped by
+    `_z_rotation_affine`, so at 0 / 90 / 180 / 270 degrees every entry is
+    exactly 0 or +-1 and the rectangle's corners stay exactly on their
+    coordinate values.
+    """
+    c, _ms, _z0, _z1, s, *_ = _z_rotation_affine(angle)
+    gmsh.model.occ.affineTransform(
+        [(2, tag)],
+        [
+            c, 0.0, s, 0.0,
+            s, 0.0, -c, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        ],
+    )
+
+
 class MeshGenerator:
     """Generate meshes for common geometries using Gmsh."""
 
@@ -3338,10 +3390,13 @@ class MeshGenerator:
         # in the plane containing that leg's axis. Added as dim-2 *tools* to the
         # same fragment below so the tets conform to it — exactly the box's
         # cross-section, no larger, or the fragment would cut the conductor and
-        # the air box along the same plane. Keyed by port ordinal: which
-        # coordinate the plane pins, and at what value.
+        # the air box along the same plane. Keyed by port ordinal: the plane as
+        # a (unit normal, in-plane point) pair in the xy plane. `GEO-19` step B
+        # replaced the old (pinned axis, coordinate) encoding, which could only
+        # name a plane whose normal was x̂ or ŷ — i.e. only legs on a coordinate
+        # axis, `leg_count <= 4`.
         sheet_tags: List[int] = []
-        sheet_of_ordinal: Dict[int, Tuple[str, float]] = {}
+        sheet_of_ordinal: Dict[int, Tuple[Tuple[float, float], Tuple[float, float]]] = {}
         # `GEO-20`: the ring gaps' mid-planes are radial, so their half-space
         # test is a `(normal, point)` pair in the gap's own frame — the
         # `GEO-18` lower/upper coordinate convention is not C_N-covariant and
@@ -3374,49 +3429,57 @@ class MeshGenerator:
                 box_angle = angle
             cx = port_radius * np.cos(box_angle)
             cy = port_radius * np.sin(box_angle)
-            port = gmsh.model.occ.addBox(
-                cx - 0.5 * port_dx,
-                cy - 0.5 * port_dy,
-                -0.5 * port_dz,
-                port_dx,
-                port_dy,
-                port_dz,
-            )
+            if leg_gap_length is None:
+                port = gmsh.model.occ.addBox(
+                    cx - 0.5 * port_dx,
+                    cy - 0.5 * port_dy,
+                    -0.5 * port_dz,
+                    port_dx,
+                    port_dy,
+                    port_dz,
+                )
+            else:
+                # `GEO-19` step B: on the leg, the box is the leg's *own* local
+                # box — built at azimuth 0 and rotated about `ẑ` by the leg
+                # azimuth, so its transverse faces stay normal to `φ̂` at any
+                # count. It has to move with the sheet: a rotated mid-plane
+                # rectangle of width `dx` only spans an axis-aligned square
+                # section when the azimuth is a multiple of 90 degrees, and a
+                # sheet that does not span its box leaves the box one piece,
+                # i.e. no port halves at all. In gap mode the section *is* a
+                # square (`_birdcage_leg_gap_layout` sets dx = dy = box_width),
+                # so at the four axis azimuths this rotation maps the box onto
+                # exactly the box the previous axis-aligned construction built.
+                port = gmsh.model.occ.addBox(
+                    port_radius - 0.5 * port_dx,
+                    -0.5 * port_dy,
+                    -0.5 * port_dz,
+                    port_dx,
+                    port_dy,
+                    port_dz,
+                )
+                _rotate_about_z(3, port, float(box_angle))
             port_tags.append(port)
 
             if emit_port_sheets and leg_gap_length is not None:
                 # The plane contains the leg axis *and* the radial direction, so
-                # its normal is azimuthal: y-normal for a leg on the x-axis,
-                # x-normal for a leg on the y-axis. `addRectangle` only builds in
-                # the xy plane, so build it there and rotate the in-plane extent
-                # that must become the gap into z. Both rectangles are symmetric
-                # about the rotation axis, so the sign convention of the 90-degree
-                # rotation cannot matter.
+                # its normal is azimuthal, `φ̂ = (-sin θ, cos θ)`. `addRectangle`
+                # only builds in the xy plane, so build the azimuth-0 rectangle
+                # there and take it to the leg's mid-plane with the same
+                # snapped rotation the box above takes — the sheet is that
+                # box's mid-section by construction at every azimuth. The
+                # rectangle is symmetric about both rotation axes, so neither
+                # sign convention matters.
                 ordinal = idx + 1
-                if abs(np.sin(box_angle)) < 1.0e-12:
-                    sheet = gmsh.model.occ.addRectangle(
-                        cx - 0.5 * port_dx, -0.5 * port_dz, 0.0, port_dx, port_dz
-                    )
-                    gmsh.model.occ.rotate(
-                        [(2, sheet)], 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.5 * np.pi
-                    )
-                    gmsh.model.occ.translate([(2, sheet)], 0.0, cy, 0.0)
-                    sheet_of_ordinal[ordinal] = ("y", float(cy))
-                elif abs(np.cos(box_angle)) < 1.0e-12:
-                    sheet = gmsh.model.occ.addRectangle(
-                        -0.5 * port_dz, cy - 0.5 * port_dy, 0.0, port_dz, port_dy
-                    )
-                    gmsh.model.occ.rotate(
-                        [(2, sheet)], 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.5 * np.pi
-                    )
-                    gmsh.model.occ.translate([(2, sheet)], cx, 0.0, 0.0)
-                    sheet_of_ordinal[ordinal] = ("x", float(cx))
-                else:
-                    raise NotImplementedError(
-                        "emit_port_sheets builds axis-aligned rectangles, so every "
-                        "leg must sit on a coordinate axis; port "
-                        f"P{ordinal} is at {np.degrees(box_angle):.3f} degrees"
-                    )
+                sheet = gmsh.model.occ.addRectangle(
+                    port_radius - 0.5 * port_dx, -0.5 * port_dz, 0.0, port_dx, port_dz
+                )
+                _place_sheet_in_leg_frame(sheet, float(box_angle))
+                cos_t, _, _, _, sin_t, *_ = _z_rotation_affine(float(box_angle))
+                sheet_of_ordinal[ordinal] = (
+                    (-sin_t, cos_t),
+                    (port_radius * cos_t, port_radius * sin_t),
+                )
                 sheet_tags.append(sheet)
 
         # `GEO-20` step 1: one port solid per ring gap, in the gap's own frame.
@@ -3561,13 +3624,21 @@ class MeshGenerator:
                     # `GEO-18` step 2 / `GEO-16`: with the sheet in, each port box
                     # is two pieces, one either side of its own mid-plane. The
                     # sheet is a dim-2 input and so never an ancestor; the halves
-                    # are told apart by centroid against the plane's coordinate,
-                    # the same centroid discipline the two-torus branch uses.
-                    axis, coordinate = sheet_of_ordinal[ordinal]
+                    # are told apart by the signed projection of the centroid on
+                    # the plane's own normal, the same centroid discipline the
+                    # two-torus branch uses. `GEO-19` step B: the projection is
+                    # C4-covariant where the old x-or-y coordinate test was not,
+                    # so "upper" is now the `+φ̂` side at *every* azimuth. On the
+                    # four axis azimuths that relabels two of the four ports
+                    # (the old rule always took the positive coordinate axis);
+                    # nothing downstream reads the labels' sense — the sheet is
+                    # the interface *between* the pair and the drive polarity is
+                    # `ẑ` — so the relabel is inert.
+                    (nx, ny), (px, py) = sheet_of_ordinal[ordinal]
                     centre = gmsh.model.occ.getCenterOfMass(3, piece)
-                    value = centre[0] if axis == "x" else centre[1]
+                    value = (centre[0] - px) * nx + (centre[1] - py) * ny
                     group_of_piece[piece] = (
-                        200 + ordinal if value > coordinate else 100 + ordinal
+                        200 + ordinal if value > 0.0 else 100 + ordinal
                     )
                 elif ordinal in ring_sheet_of_ordinal:
                     # `GEO-20`: same discipline, but the mid-plane is radial, so

@@ -207,10 +207,16 @@ when re-running it red.
 **Test id:** `tests/validation/test_port_birdcage_termination_probe.py::test_the_open_control_reproduces_leg_c_before_the_knob_turns`
 (and, on the same fixture,
 `tests/validation/test_port_birdcage_lumped_column.py::test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not`).
-**Neither is red on `main`** — `main` does not carry `GEO-19` step B. This
-entry records what step B's mesh does to them, so the next attempt does not
-re-discover it. Reproduce by cherry-picking `6c1f54e` from
-`attempt/GEO-19-stepB-20260824T183000Z`.
+**Neither is red on `main`, and neither can be: step B landed 2026-08-25
+under ruling (6\*) and both open-limit record assertions are gone with it**
+(the Z-column reproduction retired, the degeneracy ordering assertion
+retired; both quantities are still solved and printed as diagnostics, with
+their digits kept in-comment as mesh-tagged history). `19 passed` twice from
+`main` at 116 085 cells — `20260825T003622Z_GEO-19-stepB-port9-run1.log`,
+`20260825T003832Z_...-run2.log`. This entry is no longer about a red; it is
+the standing record of the **conditioning finding itself**, which is
+unmeasured and unfixed. The attempt branch it once pointed at is deleted;
+the content is on `main`.
 
 **Literal symptom**, `20260824T183519Z_GEO-19-stepB-port9-measure.log`
 (`3 failed, 16 passed` / 117.80 s / Status 1), the open (1e6 Ω) column at
@@ -263,8 +269,18 @@ the open column's conditioning, or Phase 6 adjudicates that no open-limit
 quantity is record-bearing for the tuning workflow — whichever a review
 commissions first. The Phase 6 flag above stands.
 
+**Executed 2026-08-25 (§9 item 1, 19:30 slot).** The retirement is in code
+on `main` and the three modules are green twice in-slot. Nothing about the
+*finding* changed: `|Z₁₁|` at `Z_p = 1e6 Ω` is still unconverged, still
+undiagnosed beyond the near-cancellation argument above, and no h-refinement
+rung has been run. What changed is that no record now rests on it. The two
+gates that absorbed the anti-degeneracy duty read **2256.9707×** (leg (d0),
+floor 10×) and **166.6766×** (leg (d) class separation, floor 10×) on step
+B's mesh, both improved. Retire-when is unchanged.
+
 **Verified at:** `cc4ab78` (`main`) + `6c1f54e`
-(`attempt/GEO-19-stepB-20260824T183000Z`), 2026-08-24.
+(`attempt/GEO-19-stepB-20260824T183000Z`), 2026-08-24; re-verified on `main`
+2026-08-25 with the retirement landed.
 
 ### 🚫 OPEN — `birdcage_port_domain(emit_port_sheets=True)` **cannot build any birdcage with more than four legs**: the mid-plane sheet is an axis-aligned rectangle (`GEO-19` attempt 1, 2026-08-23)
 

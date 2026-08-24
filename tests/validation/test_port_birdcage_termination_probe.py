@@ -34,10 +34,12 @@ reachable rather than wished for.  The spread condition is not decoration: a
 margin bought by breaking the layout's C4 symmetry is a mesh finding, not a
 result, so both must hold in the same solve.
 
-**Negative controls.**  (1) The 1e6 Ω column reproduces leg (c)'s record to its
-printed digits — if it does not, the fixture moved and nothing measured at 50 Ω
-is comparable to anything.  (2) ``|I₁|`` at 50 Ω is more than 10× the open
-value 9.992781266e-07 A: the termination must have closed a current path, and if
+**Negative controls.**  (1) The 1e6 Ω solve reproduces leg (c)'s recorded driven
+current ``I₁`` to its printed digits — if it does not, the fixture moved and
+nothing measured at 50 Ω is comparable to anything.  (Ruling (6\*), 2026-08-24:
+the open column's ``Z`` entries are **no longer** part of this control; see the
+control's own docstring.)  (2) ``|I₁|`` at 50 Ω is more than 10× the open
+value 9.990695896e-07 A: the termination must have closed a current path, and if
 it did not, the sheets are not in the circuit and the margin below means nothing.
 
 **Scope.**  Closes nothing in §2 and does not close step 3, which stays 🟡 until
@@ -122,16 +124,40 @@ TERMINATED_PORT_IMPEDANCE_OHM = REFERENCE_IMPEDANCE_OHM  # 50 Ohm, the ports' z0
 # graph never touches the power-wave S assembly `8fd5af7` changed, and `0f8ea96`
 # measured 116 368 both before and after the `GEO-19` tag encoding.  No band
 # moves here; only the digits the image now produces.
-LEG_C_I1_A = +9.992781266e-07 + 3.346865998e-09j
-LEG_C_Z_COLUMN = np.array(
-    [
-        +7.111692404e02 - 3.351665665e03j,
-        +1.224919287e01 - 1.878346946e03j,
-        +1.193721196e01 - 1.878700877e03j,
-        +1.231338434e01 - 1.878312313e03j,
-    ],
-    dtype=np.complex128,
-)
+#
+# **Mesh-tagged re-record, 2026-08-24 (`GEO-19` step B, §9 item 1).**  Step B's
+# local-frame port construction meshes the same CAD at 116 085 cells (0.24%
+# below 116 368; `STEP2_CELL_COUNT` moved with it, at its source in leg (c)'s
+# module).  The driven current moves **1.381e-03** with the mesh —
+# +9.992781266e-07 + 3.346865998e-09j A (116 368) ->
+# +9.990584892e-07 + 4.709566544e-09j A (116 085), measured
+# `20260824T183519Z_GEO-19-stepB-port9-measure.log`.
+LEG_C_I1_A = +9.990584892e-07 + 4.709566544e-09j
+
+# **Retired as a record by ruling (6\*) (2026-08-24 18:00 review, §9 item 1):
+# the open-limit (1e6 Ω) column is a printed diagnostic, not a record-bearing
+# fixture.**  At `Z_p = 1e6 Ω` the port is nearly open, `I₁` is a ~1e-9 A
+# near-cancellation residual, and `Z₁₁ = V₁/I₁` inherits its conditioning:
+# `|Z₁₁|` moved **40.6%** (3.42e+03 -> 4.81e+03 Ω) under the 0.24% cell-count
+# change above, while the mutuals moved 0.3% and the *terminated* column moved
+# 1.9e-02.  Pinning that at a 1e-9 print band would record noise as a fact.  No
+# band widens: the reproduction duty is carried by `LEG_C_I1_A` above and by the
+# terminated column's record in `test_port_birdcage_four_port.py`.  The digits
+# stay here as mesh-tagged history and the column is still printed below.
+#
+#     116 416 (pre-0.11)  Z₁₁ +7.157807613e+02 - 3.356708736e+03j Ω
+#     116 368 (0.11)      +7.111692404e+02 - 3.351665665e+03j
+#                         +1.224919287e+01 - 1.878346946e+03j
+#                         +1.193721196e+01 - 1.878700877e+03j
+#                         +1.231338434e+01 - 1.878312313e+03j
+#     116 085 (step B)    +9.201557829e+02 - 4.718342449e+03j
+#                         +1.390012417e+01 - 1.872224592e+03j
+#                         +1.322525314e+01 - 1.872769896e+03j
+#                         +1.465032447e+01 - 1.872096207e+03j
+#
+# The conditioning known-issues entry stays OPEN; it retires when an
+# h-refinement rung measures the open column or Phase 6 adjudicates that no
+# open-limit quantity is record-bearing.
 LEG_C_REPRODUCTION_BAND = 1.0e-9
 
 # **The gate**, pre-stated at scoping (18:00 review 2026-08-22, §7 `PORT-9` step
@@ -141,7 +167,8 @@ LEG_C_REPRODUCTION_BAND = 1.0e-9
 DISCRIMINATION_MARGIN_FLOOR = 10.0
 
 # Negative control (2): the termination has to close a current path.  Leg (c)'s
-# open |I_1| is 9.9927e-07 A; at 50 Ohm the driven current must exceed it by this
+# open |I_1| is 9.9907e-07 A at 116 085 cells (9.9927e-07 at 116 368 — the ratio
+# this floor reads on is unaffected); at 50 Ohm the driven current must exceed it by this
 # factor, or the sheets are not in the circuit and the margin means nothing.
 CURRENT_GAIN_FLOOR = 10.0
 
@@ -401,13 +428,24 @@ def test_the_probe_solved_the_gated_fixture_through_the_field_route(
 
 @complex_only
 def test_the_open_control_reproduces_leg_c_before_the_knob_turns(termination_probe):
-    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s record.
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
 
-    Leg (c)'s column was reproduced bit-identically across two runs in its own
-    slot; this run must land on the same digits, or the fixture moved and nothing
-    measured at 50 Ω is comparable to the record it is being read against.  The
-    band is the log's print precision (1e-9 relative), not a physics tolerance —
-    no physics band is defined here and none moves.
+    Leg (c)'s driven current was reproduced bit-identically across two runs in
+    its own slot; this run must land on the same digits, or the fixture moved
+    and nothing measured at 50 Ω is comparable to the record it is being read
+    against.  The band is the log's print precision (1e-9 relative), not a
+    physics tolerance — no physics band is defined here and none moves.
+
+    **Ruling (6\*) (2026-08-24 18:00 review, §9 item 1): the open column's four
+    ``Z`` entries are printed here but no longer asserted.**  ``Z₁₁ = V₁/I₁``
+    at ``Z_p = 1e6 Ω`` divides by a ~1e-9 A near-cancellation residual and
+    inherits its conditioning — it moved 40.6% under a 0.24% cell-count change
+    that moved ``I₁`` by 1.4e-03 — so it has no demonstrated mesh stability to
+    pin at a 1e-9 print band.  This is a replacement, not a loosening: the
+    reproduction duty it carried sits on ``I₁`` below (unchanged band) and on
+    the terminated column's record in ``test_port_birdcage_four_port.py``
+    (which moved 1.9e-02 and is asserted at the same 1e-9 band).  The retired
+    digits are kept as mesh-tagged history beside ``LEG_C_REPRODUCTION_BAND``.
     """
     sv = termination_probe["solves"]["open"]
     assert sv["z_p"] == pytest.approx(1.0e6)
@@ -416,17 +454,16 @@ def test_the_open_control_reproduces_leg_c_before_the_knob_turns(termination_pro
     if MPI.COMM_WORLD.rank == 0:
         print(
             f"\n[PORT-9 step3d0] control (1): 1e6 Ohm vs leg (c)'s record "
-            f"(`20260822T213612Z_PORT-9-step3c-rerun.log`), band "
-            f"{LEG_C_REPRODUCTION_BAND:.0e} relative:\n"
-            f"    I_1 rel. deviation {i_err:.3e}",
+            f"(`20260824T183519Z_GEO-19-stepB-port9-measure.log`, 116 085 "
+            f"cells), band {LEG_C_REPRODUCTION_BAND:.0e} relative:\n"
+            f"    I_1 {sv['i_driven']:+.9e} A  rel. deviation {i_err:.3e}  "
+            f"(GATED)",
             flush=True,
         )
-        for k, (z, z_rec) in enumerate(
-            zip(sv["z_column"], LEG_C_Z_COLUMN), start=1
-        ):
+        for k, z in enumerate(sv["z_column"], start=1):
             print(
-                f"    Z_{k}1 {z:+.9e} vs record {z_rec:+.9e}  rel. deviation "
-                f"{abs(z - z_rec) / abs(z_rec):.3e}",
+                f"    Z_{k}1 {z:+.9e} Ohm  (diagnostic, not gated — ruling "
+                f"(6*) retired the open-limit column as a record)",
                 flush=True,
             )
 
@@ -435,13 +472,6 @@ def test_the_open_control_reproduces_leg_c_before_the_knob_turns(termination_pro
         f"{i_err:.3e} from leg (c)'s recorded {LEG_C_I1_A:+.9e} A — the fixture "
         "moved; the 50 Ohm reading is not comparable to the record"
     )
-    for k, (z, z_rec) in enumerate(zip(sv["z_column"], LEG_C_Z_COLUMN), start=1):
-        err = abs(z - z_rec) / abs(z_rec)
-        assert err < LEG_C_REPRODUCTION_BAND, (
-            f"Z_{k}1 = {z:+.9e} Ohm deviates {err:.3e} from leg (c)'s recorded "
-            f"{z_rec:+.9e} Ohm against the {LEG_C_REPRODUCTION_BAND:.0e} print-"
-            "precision band — this is not leg (c)'s solve"
-        )
 
 
 @complex_only

@@ -10,8 +10,9 @@ form) and split each gap box at its mid-plane (step 2: sheet area ``dx·g`` at
 
 **What it does.**  One mesh of the step-2 fixture
 (``birdcage_port_domain(leg_gap_length=LEG_GAP_LENGTH, emit_port_sheets=True,
-conductor_resolution=1.6e-3)``, 116 368 cells on the `OPS-18` 0.11 image;
-116 416 at scoping, on the image that preceded it), the four ``21x``
+conductor_resolution=1.6e-3)``, 116 085 cells on `GEO-19` step B's local-frame
+port construction; 116 368 on the `OPS-18` 0.11 image before it and 116 416 at
+scoping, on the image that preceded that), the four ``21x``
 sheets narrowed to `PORT-9` step 2b's gated interior width ``f = 0.5`` with its
 ``w = A/h`` convention, a :class:`LumpedSheetPortSpec` on every one of them, and
 **one** package solve at the two-torus records' 10 MHz with **port 1 driven
@@ -30,10 +31,15 @@ and must see the same mutual impedance:
     ``|Z₂₁ − Z₄₁| / |Z₂₁| ≤ 5%``
 
 — gate (iii)'s own band, pre-stated at scoping (§7 `PORT-9` step 3 leg (c)) and
-not to be widened.  The *opposite* port ``Z₃₁`` is asserted to differ from the
-adjacent pair by **more** than that spread, so a Z that is all one number — the
-failure mode a symmetry check on its own cannot see — cannot pass.  ``Re Z₁₁``
-is printed, not gated.
+not to be widened.  ``Re Z₁₁`` is printed, not gated.
+
+The *opposite*-port ordering assertion this module used to carry alongside it
+— the anti-degeneracy check — was **retired by ruling (6\*) (2026-08-24 18:00
+review, §9 item 1)** when it was measured to track the open-limit fixture's
+conditioning rather than its geometry; the duty moved, with two decades more
+margin, to the terminated fixture's gates in legs (d0) and (d).  Details and
+both mesh-tagged readings are in
+:func:`test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not`.
 
 **Scope.**  Closes nothing in §2.  Reciprocity, passivity and the full 4×4 are
 leg (d)'s, and need four solves priced from this one.  No resonance, no
@@ -109,7 +115,19 @@ ADJACENT_SPREAD_BAND = 0.05
 # with every geometric identity of step 2 unchanged.  The 2% band below is
 # unmoved and both counts sit inside it — this constant is the fixture's
 # identity record, not a gate.
-STEP2_CELL_COUNT = 116368
+#
+# **Mesh-tagged re-record, 2026-08-24 (`GEO-19` step B, §9 item 1).**  Step B's
+# local-frame port construction is exact-onto at the four axis azimuths but not
+# bit-identical to the old one, so gmsh tie-breaking moves the same CAD from
+# 116 368 to **116 085** cells (ratio 0.997568, a 0.24% change; ruling (4\*)
+# adjudicated the cause, and the invariance control reproduces every geometric
+# identity on the new mesh — sheet area `dx·g` 1.000000000000, C4 spread
+# 6.050e-16, terminal ratios 0.988616 x 4,
+# `20260824T183257Z_GEO-19-stepB-invariance.log`).  History, all three inside
+# the unmoved 2% band: 116 416 (pre-`OPS-18` image) -> 116 368 (0.11 image) ->
+# 116 085 (step B).  The termination-probe and four-port modules **import** this
+# constant — it moves here, once, and nowhere else.
+STEP2_CELL_COUNT = 116085
 STEP2_CELL_COUNT_BAND = 0.02
 
 # Above this the negative control (the open-limit second solve) is not run and
@@ -433,10 +451,34 @@ def test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not(
     spread above it is the mesh-asymmetry finding §7 `PORT-9` step 3 names, and
     its disposal is a known-issues entry and a stop.
 
-    The second assertion is what stops the first from passing on nothing: a
-    numerically degenerate solve in which every mutual impedance is the same
-    number would satisfy any symmetry check, so the *opposite* port is required
-    to sit further from the adjacent pair than the pair sits from itself.
+    **The anti-degeneracy ordering assertion is retired here (ruling (6\*),
+    2026-08-24 18:00 review; §9 item 1, executing (4\*)(iii)'s pre-registered
+    disposition).**  It used to require the *opposite* port to sit further from
+    the adjacent pair than the pair sits from itself — the check that stops the
+    symmetry gate above from passing on a constant.  Two measurements retired
+    it, and neither is a loosening:
+
+    * The reading is not mesh-stable on **this** fixture.  At ``Z_p = 1e6 Ω``
+      the port is nearly open, ``I₁`` is a ~1e-9 A near-cancellation residual,
+      and the margin moves with its conditioning: magnitude-only 5.0594x
+      (116 368 cells) -> **0.7906x** (116 085), complex form 6.9398x ->
+      1.5951x, under a 0.24% cell-count change that moves ``Z₁₁`` 40.6%
+      (known-issues, `GEO-19` step B attempt 2, still OPEN).  Both readings
+      were already below leg (d0)'s pre-stated 10x floor *before* step B.
+    * The duty it carried is held elsewhere, with two decades more margin, by
+      two gates that are on `main`, green, and *better* on step B's mesh:
+      leg (d0)'s terminated discrimination margin (253.2002x -> **2256.9707x**,
+      floor 10x, `test_port_birdcage_termination_probe.py`) and leg (d)'s 4x4
+      class separation (150.3584x -> **166.6766x**,
+      `test_port_birdcage_four_port.py`), whose recorded class means/spreads
+      are 2.338160261e+01 Ω / 0.0553%, 1.700854304e+01 Ω / 0.0353% and
+      1.606048044e+01 Ω / 0.0214% — three classes an all-one-number Z cannot
+      produce.
+
+    So the discrimination margin below is **printed as a diagnostic, not
+    gated**, with its two mesh-tagged readings kept above as history.  The 5%
+    C4 band is untouched and stays the gate.  The thin separation itself stays
+    flagged to the weekly review for §10 Phase 6.
     """
     z = birdcage_column["z_column"]
     z11, z21, z31, z41 = (complex(v) for v in z)
@@ -481,10 +523,9 @@ def test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not(
         "(c), negative result: magnitudes into the entry and known-issues, park, "
         "stop; never widen)"
     )
-    assert opposite_deviation > spread, (
-        f"the opposite port |Z31| = {abs(z31):.9e} Ohm sits "
-        f"{opposite_deviation * 100:.4f}% from the adjacent pair's mean "
-        f"{adjacent_mean:.9e} Ohm, no further than the pair's own "
-        f"{spread * 100:.4f}% spread — column 1 of Z is degenerate at this grain, "
-        "so the symmetry gate above passed on a constant, not on the geometry"
-    )
+    # Retired by ruling (6*) — see the docstring.  The margin is reported above
+    # and deliberately not asserted: on the open-limit fixture it read 5.0594x
+    # at 116 368 cells and 0.7906x at 116 085 (complex form 6.9398x -> 1.5951x),
+    # a conditioning motion, not a geometry one.  Anti-degeneracy is gated on
+    # the terminated fixture instead (leg (d0), floor 10x, reads 2256.9707x;
+    # leg (d)'s 4x4 class separation, reads 166.6766x).

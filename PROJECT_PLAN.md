@@ -1460,7 +1460,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-16` | **Emit the gap boxes' longitudinal port-sheet mid-plane in `two_torus_domain`** (the `PORT-9` step-1 mesh prerequisite; commissioned 2026-08-16 18:00 review) | ✅ | standard |
 | `GEO-17` | `coil_phantom_domain` region-resolution policy shrinks the coil volumes it refines (−21.68%/−22.62%; `OPS-17` step-2 defect 1, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) — step 1 ✅ 2026-08-20: the sizes were never applied (`getBoundary` `combined=True` ⇒ 0 points); `Min`-over-`Constant`-fields, coil meshed/CAD 0.7547 → **0.8356** | ✅ *(audited COMPLIANT 2026-08-21 18:00 review — 1e-9 negative-control gate, sign-of-refinement identity and partition 1.000000000000 verified against `20260820T110549Z…final.log`)* | standard |
 | `GEO-18` | Birdcage conductor gaps: cut the legs so the port boxes have terminals (`PORT-9` step-3 mesh prerequisite; commissioned 2026-08-20 03:00 review from step 3 legs (a)+(b) 🚫) | ✅ 2026-08-22 (*step 2 audited COMPLIANT 2026-08-22 03:00 review — every figure verbatim in `20260822T020113Z_GEO-18-step2.log:8569-8576`, no pre-existing test touched; one transparency note: the sheets-off control asserts the `110+i` **cell** tags absent, and the `210+i` facet absence the entry and commit claim is implied by that, not measured — `EX-28` is commissioned to assert it directly*; **step 1 ✅ 2026-08-20** — terminals exist: 2.236196e-04 m² per port, **0.988616** of the closed-form `2·π·r_leg²`, all four equal to the printed 7 digits, *audited COMPLIANT 2026-08-21 18:00 review — closed-form band, closure and mass identities verified against all three logs, the pre-derivation red disclosed*; **step 2 ✅ 2026-08-22** — the sheets exist and are exact: meshed sheet area `1.120000000e-04 m²` = the analytic `dx·g` at **1.000000000000** on all four ports, `w_eff = A/h` equal to the bbox extent to 1.000000000000, out-of-plane spread ≤ 2.512e-16 m, half-volumes 0.500000000000 each, C4 sheet spread **8.470e-16**, step 1's terminal band and closure re-asserted on the sheeted mesh) | standard |
-| `GEO-19` | `birdcage_port_domain` at `leg_count = 16`, gapped + sheeted: identity family re-gated (C16), cost rung measured — 32-port directive item (a) (commissioned 2026-08-23 weekly review) | 🟡 | heavy (probe first) |
+| `GEO-19` | `birdcage_port_domain` at `leg_count = 16`, gapped + sheeted: identity family re-gated (C16), cost rung measured — 32-port directive item (a) (commissioned 2026-08-23 weekly review) | 🟡 *(**step B ✅ 2026-08-25** — the local-frame port construction is on `main` under ruling (6\*): invariance control `3 passed` from `main` at 116 085 / 114 655 cells, C4 spread 6.050e-16, terminals 0.988616 × 4, no-gap control 98 666 digit for digit; the three `PORT-9` modules `19 passed` **twice in-slot** on the mesh-tagged re-records, σ_max 0.999992805, class separation 166.6766×, (d0) margin 2256.9707×, leg (c)'s `I₁` reproducing to 5.934e-12 against a 1e-9 band. The open-limit (1e6 Ω) column is retired as a record-bearing fixture — no band widened. Step C, the 16-leg cost rung, is what remains)* | heavy (probe first) |
 | `GEO-20` | High-pass birdcage ring-gap port layout (`ring_gap_length`, `2·leg_count` ports, the `GEO-18` pattern on the end rings) — 32-port directive item (b); step 1 at 4 legs, step 2 at 16 after `GEO-19` (commissioned 2026-08-23 weekly review) | 🟡 *(**step 1 ✅ 2026-08-24** — the 8 ring ports exist at 4 legs and every pre-stated gate is green twice in-slot: terminal **0.974455** of the closed-form `2·π·r_ring²` inside the [0.95, 1.0] inscribed band and equal across the 8 to **≈ 2e-8** (gate 1e-5; digit corrected by the 10:30 review audit — see the prose entry), closure and port-volume **1.000000000000**, sheet meshed/analytic **1.000000000000** with out-of-plane spread **5.042e-18 m**, C4 and top/bottom-mirror spreads below 1e-12, `GEO-9` partition green, conductor 0.969275 ≥ 0.95; negative controls green — kwarg off reproduces the uncut birdcage and the leg+ring mesh is a 12-port mesh with **both** identity families exact. Step 2 (16 legs, 32 ports) is serial on `GEO-19`)* | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
@@ -1928,7 +1928,8 @@ on the open fixture), in which case step B stays parked for another cycle. The
 implementer declines to choose: retiring a record-bearing gate is not an
 in-slot judgement, and neither branch is the one item 2 pre-registered.
 `GEO-19` stays 🟡; the blocker-B known-issues entry stays open (step B is still
-not on `main`); step C (§9 item 5) remains serial behind this.
+not on `main`); step C (§9 item 5) remains serial behind this. *(Superseded by
+the step-B ✅ entry below: step B landed 2026-08-25 under ruling (6\*).)*
 
 **Ruling (6\*), 2026-08-24 18:00 review — option (A) granted: the open-limit
 column is retired as a record-bearing fixture, and step B lands with the
@@ -1942,6 +1943,52 @@ digits kept as history. Option (B) — an h-refinement conditioning rung on
 the open fixture — was considered and **not** commissioned: ≥ 2 slots for a
 number nothing gates on. `PORT-9` leg (d1′) is re-scoped to the terminated
 anchors. Full text in §9.
+
+**Step B ✅ — landed on `main` 2026-08-25 (§9 item 1, executing (6\*)).**
+`6c1f54e` cherry-picked onto `main` clean (no conflict: nothing between
+`cc4ab78` and `9ee3ee2` touched `mesh.py` or the birdcage port modules), and
+the retirement executed in the same commit. Everything the item pre-stated
+was measured, and every anchor hit its expected digit:
+
+*(a) The invariance control, from `main`* —
+`20260825T003437Z_GEO-19-stepB-invariance-main.log`, **`3 passed` / Status 0
+/ 95 s**. Sheeted **116 085** cells, gapped **114 655**, C4 sheet spread
+**6.050e-16**, terminal meshed/analytic **0.988616 × 4**, sheet `dx·g` and
+closure `1.000000000000` on all four ports, out-of-plane ≤ 7.103e-18 m. The
+negative control the item named — the untouched no-gap path — meshes
+**98 666** cells digit for digit.
+
+*(b) The three `PORT-9` modules, twice in-slot* —
+`20260825T003622Z_...-run1.log` and `20260825T003832Z_...-run2.log`, **`19
+passed` / Status 0 / 118 s and 117 s**. Fixture identity: 116 085 cells,
+ratio to the re-recorded `STEP2_CELL_COUNT` **1.000000**. Gates, all
+pre-stated and unmoved: σ_max(S) **0.999992805** ≤ 1 + 1e-9; pooled class
+separation **166.6766×** ≥ 10× (worst intra-class spread 0.0553%); leg (d0)
+discrimination margin **2256.9707×** ≥ 10×; leg (c)'s C4 adjacent-pair
+spread inside its 5% band; reciprocity gated at 1e-3 and *reported* as an
+order of magnitude — `‖S−Sᵀ‖/‖S‖` read 9.490519548e-15 and 1.464324816e-14
+across the two runs, which is the (d3c) finding, not a motion. Re-recorded
+constants reproduce inside their bands: leg (c)'s driven `I₁` to
+**5.934e-12** (band 1e-9, both runs bit-identical) and leg (d0)'s terminated
+column to 1.071e-10…2.568e-10.
+
+*(c) The retirement, in code.* `STEP2_CELL_COUNT` 116 368 → **116 085**,
+moved once at its source (leg (c)'s module; the other two import it).
+`LEG_C_I1_A` re-recorded mesh-tagged to **+9.990584892e-07 +
+4.709566544e-09j A**. `LEG_C_Z_COLUMN`'s reproduction assertion is retired —
+the four entries are still solved and printed as a diagnostic, their digits
+kept in-comment as mesh-tagged history at all three cell counts. Leg (c)'s
+anti-degeneracy *ordering* assertion executes (4\*)(iii)'s pre-registered
+disposition: retired, margin still printed, both readings (5.0594× at
+116 368, 0.7906× at 116 085) recorded in the docstring alongside the two
+gates that now hold the duty. **No band widened anywhere**, and the two
+gates the duty moved to are green and *better* on step B's mesh.
+
+`GEO-19` stays 🟡 — step C (16 legs, the cost rung; §9 item 5) is what the
+chunk is actually for, and blocker B's known-issues entry stays open until
+it runs. The open-limit conditioning entry also stays OPEN, now carrying
+(6\*)'s retire-when. Both step-B attempt branches
+(`…T034500Z`, `…T183000Z`) deleted after the greens from `main`.
 
 **`GEO-20` — high-pass birdcage: ring-gap port layout (`ring_gap_length`),
 the `GEO-18` pattern on the end rings** 🟡 *(commissioned 2026-08-23 weekly
@@ -4273,7 +4320,23 @@ One surviving mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-1. **`GEO-19` step B lands under ruling (6\*) (standard, `-n 2`, real
+1. ✅ **Done 2026-08-25 (19:30 slot).** Landed exactly as scoped: `6c1f54e`
+   cherry-picked clean, (6\*) executed in the same commit, invariance
+   `3 passed` / 95 s from `main` (116 085 / 114 655 / 6.050e-16 /
+   0.988616 × 4 / no-gap control 98 666), the three `PORT-9` modules
+   **`19 passed` twice** (118 s, 117 s) with every expected digit —
+   σ_max 0.999992805, separation 166.6766×, (d0) margin 2256.9707×,
+   `STEP2_CELL_COUNT` 116 085 at ratio 1.000000, leg (c)'s `I₁`
+   reproducing to 5.934e-12 and leg (d0)'s column to ≤ 2.6e-10 against
+   the unmoved 1e-9 band; `‖S−Sᵀ‖/‖S‖` 9.49e-15 / 1.46e-14, reported as
+   an order of magnitude per (d3c). No band widened. Both step-B attempt
+   branches deleted. `GEO-19` stays 🟡 (step C); `PORT-9` stays 🟡
+   ((d1′)); the conditioning known-issues entry stays OPEN with (6\*)'s
+   retire-when. Logs `20260825T003437Z_GEO-19-stepB-invariance-main.log`,
+   `20260825T003622Z_GEO-19-stepB-port9-run1.log`,
+   `20260825T003832Z_GEO-19-stepB-port9-run2.log`. **Item 5 is now
+   unblocked.** *Original text, for the review's audit:* **`GEO-19` step
+   B lands under ruling (6\*) (standard, `-n 2`, real
    for the mesh module and complex for the `PORT-9` modules, `main`;
    independent).** Land `6c1f54e` from
    `attempt/GEO-19-stepB-20260824T183000Z` (the merged `mesh.py` +

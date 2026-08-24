@@ -14670,3 +14670,104 @@ decide whether the gate reproduces 1.826% (making it an example-path divergence)
 or measures 1.7686% too (making it a real 0.11 physics motion in a number §2
 quotes). That single run is the highest-information next measurement in this
 whole area, and it is one standard-tier command.
+
+## 2026-08-25T00:55Z — `GEO-19` step B (§9 item 1) — **complete**: landed under ruling (6\*), the open-limit column retired, `19 passed` twice (19:30 CDT implementer slot)
+
+**Preflight.** Tree clean, container Up, `main` at `9ee3ee2`. No anomaly, no
+parked branch to recover.
+
+**What was done.** Exactly §9 item 1, in one commit.
+
+1. `git cherry-pick 6c1f54e` from `attempt/GEO-19-stepB-20260824T183000Z` —
+   **clean, no conflict**. Nothing landed on `main` between `cc4ab78` (the
+   attempt's parent) and `9ee3ee2` touches `src/fem_em_solver/io/mesh.py` or
+   the three birdcage port modules, so the merge the attempt did by hand held.
+2. Ruling (6\*) executed on top, amended into the same commit:
+   - `STEP2_CELL_COUNT` 116 368 → **116 085**, moved **once at its source**
+     (`test_port_birdcage_lumped_column.py:112`; the termination-probe and
+     four-port modules import it — the attempt's own trap note, respected).
+     History for all three counts kept in-comment, 2% band untouched.
+   - `LEG_C_I1_A` re-recorded mesh-tagged to **+9.990584892e-07 +
+     4.709566544e-09j A** (from `20260824T183519Z_GEO-19-stepB-port9-measure.log`),
+     prior digits kept beside it.
+   - `LEG_C_Z_COLUMN`'s reproduction assertion **retired**: the four entries
+     are still solved and printed, labelled "diagnostic, not gated", and their
+     digits at 116 416 / 116 368 / 116 085 are kept in-comment as mesh-tagged
+     history. The constant array itself is gone (nothing else referenced it).
+   - Leg (c)'s anti-degeneracy **ordering** assertion (`opposite_deviation >
+     spread`) retired per (4\*)(iii): the margin is still computed and printed,
+     both readings (5.0594× at 116 368, **0.7906×** at 116 085) recorded in the
+     test's docstring, together with the two gates that now carry the duty and
+     their measured margins. The 5% C4 band — the module's actual gate — is
+     untouched.
+
+**Measured (all three anchors, all green).**
+
+| run | log | result |
+|---|---|---|
+| invariance control, real, `-n 2`, from `main` | `20260825T003437Z_GEO-19-stepB-invariance-main.log` | **`3 passed`** / Status 0 / **95 s** |
+| three `PORT-9` modules, complex, `-n 2`, run 1 | `20260825T003622Z_GEO-19-stepB-port9-run1.log` | **`19 passed`** / Status 0 / **118 s** |
+| three `PORT-9` modules, complex, `-n 2`, run 2 | `20260825T003832Z_GEO-19-stepB-port9-run2.log` | **`19 passed`** / Status 0 / **117 s** |
+
+Invariance: sheeted **116 085**, gapped **114 655**, C4 sheet spread
+**6.050e-16**, terminal meshed/analytic **0.988616 × 4**, sheet `dx·g` and
+closure `1.000000000000`, out-of-plane ≤ 7.103e-18 m; the negative control
+(no-gap path, untouched) meshes **98 666** digit for digit. Every number the
+item predicted, to the printed digit.
+
+`PORT-9`, both runs: cell count 116 085 at ratio **1.000000** to the
+re-recorded constant; σ_max(S) **0.999992805** (expected 0.999992805);
+pooled class separation **166.6766×** against the 10× floor, worst
+intra-class spread 0.0553%; leg (d0) discrimination margin **2256.9707×**
+against the 10× floor; current-gain control 13798.4157× against 10×. The
+re-recorded constants reproduce **within-run** at the 1e-9 print band with
+margin to spare: leg (c)'s `I₁` at **5.934e-12** (bit-identical across the
+two runs), leg (d0)'s terminated column at 1.071e-10 … 2.568e-10.
+Reciprocity is gated at 1e-3 and *reported*: `‖S−Sᵀ‖/‖S‖` read
+**9.490519548e-15** (run 1) and **1.464324816e-14** (run 2) — inside the
+4.6e-15 … 1.2e-14 span the (d3c) slot recorded, i.e. an order of magnitude,
+which is exactly the standing fact and not a motion. `‖Z−Zᵀ‖/‖Z‖`
+8.814400604e-05, reported.
+
+**No band was widened anywhere.** The retirement removed two reproduction
+duties from a quantity with no demonstrated mesh stability and left every
+tolerance in the three modules at its pre-stated value.
+
+**Branch dispositions.** Both step-B attempt branches deleted after the
+greens came from `main`: `attempt/GEO-19-stepB-20260824T183000Z` (payload
+landed) and `attempt/GEO-19-stepB-20260824T034500Z` (its `mesh.py` content
+is inside `6c1f54e` via the cherry-pick, per the 18:00 review's disposition).
+`attempt/GEO-19-20260823T214500Z` and `attempt/PORT-9-d1-20260823T124500Z`
+untouched — they are items 5 and (d1′)'s payloads.
+
+**Status flips.** `GEO-19` **step B ✅** (chunk stays 🟡 — step C, the 16-leg
+cost rung, is §9 item 5 and is **now unblocked**); `PORT-9` stays 🟡 pending
+(d1′), whose re-scope to the terminated anchors is now executable since the
+anchors it needs are on `main`. §7 table row and prose entry updated; the
+open-limit conditioning known-issues entry stays **OPEN** — the finding is
+unmeasured and unfixed, only its record-bearing status changed — with its
+(6\*) retire-when and a note that neither named test can be red any more.
+
+**One reading offered to the review, not a blocker.** §9 item 1 says "retire
+the open-limit column's **two** record assertions". In code there is one
+retirable reproduction assertion on that column (the `LEG_C_Z_COLUMN` loop),
+plus the separately-named ordering assertion in leg (c). I retired both and
+kept the `I₁` assertion, which is what ruling (6\*)'s own text and the
+known-issues entry specify ("leg (c)'s anchor re-sites on its driven `I₁` +
+the terminated fixture"); if the review meant a third site, it is not in
+these three modules — `grep` for `LEG_C_` and `9.992781266` finds nothing
+else in `tests/` or `src/`.
+
+**Next attempt hypothesis.** Nothing follows for this item. Item 5
+(`GEO-19` step C) was serial on this and is now runnable: it needs the
+parked module's cell constant updated to 116 085 before it runs, since the
+mesh-tagged record it must reproduce moved in this commit.
+
+**One sandbox note for the review (not a blocker).** `git branch -D` printed
+`error: could not lock config file .git/config` twice before deleting both
+branches. The refs *are* deleted (`git branch` confirms), but git could not
+strip the branches' `[branch "..."]` config sections because the sandbox
+denies writes under `.git/`. Harmless today; it means stale branch sections
+will accumulate in `.git/config` as attempt branches are disposed of. Worth
+one allowlist decision at some point, or periodic manual pruning by the
+operator.

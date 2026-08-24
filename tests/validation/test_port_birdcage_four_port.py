@@ -3,14 +3,14 @@
 Leg (c) put the first field on `GEO-18`'s gapped, sheeted birdcage and read one
 column of ``Z`` at the two-torus probe impedance; leg (d0) found the termination
 that puts the structure in a circuit at all (``Z_p = z0 = 50 Ohm``, discrimination
-margin 253.2x against a 10x floor, adjacent spread 0.0359% inside the unmoved 5%
-band).  Neither is a network: two columns of ``Z`` carry no reciprocity, no
+margin 2256.9707x against a 10x floor, adjacent spread 0.0040% inside the unmoved
+5% band — `GEO-19` step B's mesh; 253.2002x / 0.0359% on the pre-step-B one).  Neither is a network: two columns of ``Z`` carry no reciprocity, no
 passivity and no circulant reading.
 
 This module drives **all four ports in turn** through
 :func:`~fem_em_solver.ports.sparameters.run_n_port_sparameter_sweep`'s
 lumped-sheet route (step 2c's :class:`LumpedSheetPortSpec`, the route leg (d0)
-used for its single column), on leg (d0)'s fixture exactly — 116 368 cells, four
+used for its single column), on leg (d0)'s fixture exactly — 116 085 cells, four
 ``f = 0.5`` sheets on facet tags 211-214, ``w = A/h``, 10 MHz, ``Z_p = 50 Ohm``
 on every port — and reads the assembled 4x4.
 
@@ -33,23 +33,28 @@ what a blind gate would take) must be at least 10x the worst intra-class spread:
 otherwise gate (iii) is passing on noise rather than resolving structure.  Leg
 (d0)'s column puts that ratio near 164x, so 10x is arithmetically reachable.
 
-**The fixed-route records, image+route-tagged (2026-08-24, ruling (5\*)).**  On
-the power-wave S assembly (leg (d3), `8fd5af7`) and the `OPS-18` 0.11 image's
-116 368-cell mesh, measured twice in-slot and bit-identical in every ``Z`` digit
-across the two runs (`20260824T093133Z` / `20260824T093526Z`, leg (d3b)):
+**The fixed-route records, mesh-tagged (2026-08-24, ruling (4\*), `GEO-19`
+step B).**  On the power-wave S assembly (leg (d3), `8fd5af7`) and the
+local-frame port construction's **116 085**-cell mesh:
 ``‖S − Sᵀ‖/‖S‖`` ~ 1e-14 (band 1e-3; noise over noise, so this one is
-reproducible **in order of magnitude only** — 8.244846162e-15 and
-1.161493453e-14 in (d3b)'s two runs, 1.152855902e-14 and 4.557532901e-15 in
-(d3c)'s), ``σ_max(S)`` = 0.999993391 (band 1 + 1e-9), maximum
-column power sum 0.808049459, and the three class means/spreads 2.297360911e+01
-Ohm / 0.0617%, 1.701075777e+01 Ohm / 0.0359%, 1.605637772e+01 Ohm / 0.0237%
+reproducible **in order of magnitude only** — 2.152e-14 relative here against
+2.049e-14 pre-step-B), ``σ_max(S)`` = 0.999992805 (band 1 + 1e-9), maximum
+column power sum 0.793823974, and the three class means/spreads 2.338160261e+01
+Ohm / 0.0553%, 1.700854304e+01 Ohm / 0.0353%, 1.606048044e+01 Ohm / 0.0214%
 against this module's unmoved 5% band (and inside the 10:30 review's tighter
-(iii′) reading of 0.5% as well, which is not gated here).  The tag is
-**joint**: the 0.10 image is gone
-from `main`, so for a quantity the fixed route created no run can ever separate
-the image's contribution from the route's, and the record says so rather than
-claiming a split it cannot measure.  Leg (d0)'s ``Z`` column above is
-image-tagged **alone** — that route is unchanged by `8fd5af7`.
+(iii′) reading of 0.5% as well, which is not gated here); the pooled-vs-worst
+separation of negative control (2) reads 166.6766x.
+
+The **pre-step-B** baselines these replace are the image+route-tagged ones of
+ruling (5\*), taken on the 116 368-cell mesh and measured twice in-slot,
+bit-identical in every ``Z`` digit (`20260824T093133Z` / `20260824T093526Z`,
+leg (d3b); re-derived at `20260824T170332Z` / `170544Z`, leg (d3c)):
+``σ_max(S)`` = 0.999993391, maximum column power sum 0.808049459, class
+means/spreads 2.297360911e+01 Ohm / 0.0617%, 1.701075777e+01 Ohm / 0.0359%,
+1.605637772e+01 Ohm / 0.0237%, separation 150.3584x.  Every gate is green on
+both meshes and no band moved; the class structure **improves** under step B
+(separation 150.4x → 166.7x, every intra-class spread down).  The 0.11 image
+is common to both, so this re-record's single cause is the mesh.
 
 **Scope.**  10 MHz, the port model's frequency — no Larmor, resonance or tuning
 claim.  Gates (i)-(iii) green make step 3 ✅ *as measured on the undisplaced
@@ -128,23 +133,31 @@ PASSIVITY_SIGMA_TOLERANCE = 1.0e-9
 # log's print precision (9 decimal places), not a physics tolerance: no physics
 # band is defined here and none moves.
 #
-# **Image-tagged re-record, 2026-08-24 (ruling (5\*), §9).**  The previous digits
-# (`20260823T033304Z_PORT-9-step3d0.log`, 116 416 cells: +2.173224483e+01 +
-# 7.459491479e+00j, +1.700799365e+01 + 2.384284683e-01j, +1.602758027e+01 −
-# 9.538522445e-01j, +1.701057452e+01 + 2.384109272e-01j Ohm) were taken on the
-# pre-`OPS-18`-0.11 image, which meshes this fixture at 116 416 cells against the
-# 0.11 image's 116 368.  The moves are 1.4e-04 (`Z_11`) down to 5.1e-05
-# (`Z_31`) relative — mesher tie-breaking, not geometry or route: legs (c)/(d0)
-# never call the power-wave S assembly, and every geometric identity on the
-# moved mesh is unchanged.  The 4x4's own S digits, by contrast, are
-# image+route-tagged (see the module docstring): the 0.10 image is gone from
-# `main`, so for those quantities no run can ever separate the two causes.
+# **Mesh-tagged re-record, 2026-08-24 (ruling (4\*), `GEO-19` step B).**  The
+# port sheets and gap boxes are now built in each leg's own local frame and
+# rotated in by one snapped transform, which is exact-onto at the four axis
+# azimuths but not *bit*-identical to the old axis-aligned construction — the
+# old code's own `ring_radius·cos(π/2)` = 4.286263797e-18 put its boxes ~5 ulps
+# off exact, and gmsh's tie-breaking turns that into 116 368 → 116 085 cells.
+# So this fixture moved and its `Z` column moved with it, by 1.9e-02 (`Z_11`)
+# down to 5.9e-04 (`Z_41`) relative.  Cause is the mesh **alone**: the 0.11
+# image is common to these digits and the ones they replace, and the route is
+# untouched by `12737a8` (a `src/fem_em_solver/io/mesh.py`-only commit).
+#
+# The two prior baselines, both retained as version-tagged history:
+#   116 368 cells, 0.11 image (ruling (5\*), `20260824T170332Z`, leg (d3c)) —
+#     +2.172952668e+01 + 7.461413742e+00j, +1.700667611e+01 + 2.379070919e-01j,
+#     +1.602683719e+01 − 9.541994594e-01j, +1.701267933e+01 + 2.390098116e-01j;
+#   116 416 cells, pre-0.11 image (`20260823T033304Z_PORT-9-step3d0.log`) —
+#     +2.173224483e+01 + 7.459491479e+00j, +1.700799365e+01 + 2.384284683e-01j,
+#     +1.602758027e+01 − 9.538522445e-01j, +1.701057452e+01 + 2.384109272e-01j.
+# Measured at `20260824T183519Z_GEO-19-stepB-port9-measure.log` (lines 9220-9223).
 LEG_D0_Z_COLUMN = np.array(
     [
-        +2.172952668e01 + 7.461413742e00j,
-        +1.700667611e01 + 2.379070919e-01j,
-        +1.602683719e01 - 9.541994594e-01j,
-        +1.701267933e01 + 2.390098116e-01j,
+        +2.215494591e01 + 7.460189773e00j,
+        +1.700770839e01 + 2.351108372e-01j,
+        +1.603004601e01 - 9.503096442e-01j,
+        +1.700838310e01 + 2.350192948e-01j,
     ],
     dtype=np.complex128,
 )
@@ -153,8 +166,9 @@ LEG_D0_REPRODUCTION_BAND = 1.0e-9
 # **Negative control (2)**: the pooled off-diagonal class (adjacent and opposite
 # read as one) must spread at least this many times the worst intra-class spread,
 # or gate (iii) is passing on noise rather than resolving the layout's structure.
-# Leg (d0)'s column reads 5.9% pooled against 0.0359% intra-class (~164x), so the
-# floor is reachable rather than wished for.
+# Leg (d0)'s column reads 5.9% pooled against 0.0353% intra-class (~167x on the
+# `GEO-19` step-B mesh, ~150x on the pre-step-B one), so the floor is reachable
+# rather than wished for.
 POOLED_SEPARATION_FLOOR = 10.0
 
 
