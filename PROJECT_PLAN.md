@@ -3152,6 +3152,54 @@ the answer is already gated**.
 >   >   old conversion ≥ 1e-4, fixed route ≤ 1e-6) and **(d3b)** birdcage
 >   >   (§9 item 4). **(d1′) is serial on (d3b)** and stays a review's to
 >   >   queue from (d3b)'s digits.
+>   > * **Leg (d3b) executed 2026-08-24, 04:30 slot — all three gates pass on
+>   >   the birdcage's fixed route, and the re-record turns out to have a
+>   >   second cause the ruling did not know about (🟡, one ruling owed).**
+>   >   Three modules (legs (c), (d0), (d)) re-run whole on `main`, complex,
+>   >   `-n 2`, twice in-slot: `2 failed, 17 passed` at 121.4 s and 112.7 s
+>   >   (`20260824T093133Z_PORT-9-step3d3b-run1.log`,
+>   >   `20260824T093526Z_PORT-9-step3d3b-run2.log`; harness 124 s / 114 s).
+>   >   **Anchor (i) lands as pre-registered, orders below leg (d):**
+>   >   `‖S−Sᵀ‖/‖S‖` = **8.244846162e-15** (run 1) / **1.161493453e-14**
+>   >   (run 2) against the unmoved 1e-3 band and against the terminated
+>   >   conversion's 2.495292352e-05 — a **~2.5e+9×** improvement, the
+>   >   birdcage confirmation of ruling (2\*). The two runs differ in this
+>   >   digit alone, at 1.4× of each other: `S` is symmetric to the float
+>   >   floor, so the *ratio* is noise over noise and reproduces only in
+>   >   order of magnitude — everything else below is bit-identical across
+>   >   the two runs. **(ii)** `σ_max(S)` = **0.999993391** ≤ 1 + 1e-9
+>   >   (leg (d)'s conversion read 0.862659137), column power sums
+>   >   0.807772326 / 0.807647060 / 0.807688415 / **0.808049459** ≤ 1.
+>   >   **(iii′)** the C4 class spreads of the diagnostic `Z` read **0.0617%
+>   >   self / 0.0359% adjacent / 0.0237% opposite**, inside the tightened
+>   >   0.5% (iii′) as well as the module's unmoved 5%; class means
+>   >   |Z| = 2.297360911e+01 / 1.701075777e+01 / 1.605637772e+01 Ω, pooled
+>   >   off-diagonal 9.2727% = **150.3584×** the worst intra-class spread
+>   >   (floor 10×). Leg (d0)'s discrimination margin re-measured at
+>   >   **253.2002×** (record 598.4002×), its adjacent spread 0.0359%
+>   >   (record 0.0152%), the 1e6 Ω control at 6.9398× / 0.0039%.
+>   >   `‖Z−Zᵀ‖/‖Z‖` = 9.852810597e-05 — the terminated `Z` keeps its
+>   >   asymmetry, as (d3) demoted it to a diagnostic.
+>   >   **The finding: the birdcage mesh moved with the image, so the
+>   >   re-record is not single-cause.** All three modules print **116 368
+>   >   cells against the record's 116 416** (ratio 0.999588), and the two
+>   >   `Z` reproduction controls fail on that: leg (c)'s driven current at
+>   >   6.829e-06 and leg (d0)'s `Z₁₁` at 1.449e-04 relative, against
+>   >   1e-9 print-precision bands. The route cannot be the cause — legs (c)
+>   >   and (d0) never call the sweep's S assembly, and (d3) touched only
+>   >   `_assemble_sparameter_matrix` — and the tag encoding is excluded by
+>   >   `0f8ea96`'s own 116 368 measured before *and* after its change. What
+>   >   is left is the `OPS-18` step 3b image (the birdcage records are all
+>   >   pre-0.11), the same 1e-4 motion the retired 0.11 known-issues entry
+>   >   recorded for the two-torus family. Every geometric identity holds on
+>   >   the moved mesh (sheet area 5.930614898e-05 m², `h` = 8.000000000e-03
+>   >   m exactly, out-of-plane 8.882e-19 m, four identical sheets).
+>   >   **Nothing was re-recorded and no band moved**: ruling (4\*)'s whole
+>   >   sequencing rests on one cause per re-record, and this is a third,
+>   >   earlier cause it did not know about, so the image-tagged birdcage
+>   >   re-record is **owed to a review** (the digits above are what it would
+>   >   write). Known-issues entry filed for the two red controls. `PORT-9`
+>   >   stays 🟡; (d1′) still unqueued.
 
 **`PORT-10` — the two `PORT-1` systematics: composition measured, not
 assumed** ✅ *(scoped 2026-08-16, weekly planning review — the first of the
@@ -3830,7 +3878,21 @@ One surviving mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-1. **`PORT-9` leg (d3b) — birdcage class re-record on the fixed route,
+1. 🟡 **Executed 2026-08-24, 04:30 slot — the three gates are green on the
+   birdcage's fixed route, the re-record is NOT single-cause and is owed to a
+   review.** (i) `‖S−Sᵀ‖/‖S‖` = 8.244846162e-15 / 1.161493453e-14 across two
+   in-slot runs vs leg (d)'s 2.495292352e-05 (the pre-registered "orders
+   below", ~2.5e+9×); (ii) σ_max 0.999993391, max column power 0.808049459;
+   (iii′) spreads 0.0617 / 0.0359 / 0.0237% ≤ 0.5%, class means 22.97 / 17.01 /
+   16.06 Ω, pooled separation 150.3584×; (d0) margin 253.2002× (record
+   598.4002×). **But `main` meshes 116 368 cells against the records' 116 416**
+   (the `OPS-18` 0.11 image, not the route and not the tag encoding — both
+   excluded by measurement), so two `Z` reproduction controls are red at
+   6.829e-06 / 1.449e-04 and **nothing was re-recorded**: ruling (4\*)'s
+   one-cause-per-re-record premise does not hold and the image-tagged birdcage
+   re-record needs a ruling. Known-issues entry filed; item 2 is **not**
+   unblocked by this. Full digits in §7. Original text:
+   **`PORT-9` leg (d3b) — birdcage class re-record on the fixed route,
    unmoved mesh (standard, `-n 2`, complex, `main`; independent — (d3) is
    on `main`; ruling (4\*) holds `GEO-19` step B parked until this lands,
    so this re-record is single-cause: the route).** Re-run the three

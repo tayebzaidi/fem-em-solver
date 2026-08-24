@@ -28,6 +28,56 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🚫 OPEN — two birdcage **reproduction controls** are red on `main`: the 0.11 image meshes the gapped birdcage at **116 368** cells, the records were taken at **116 416** (`PORT-9` leg (d3b), 2026-08-24)
+
+**Test ids** (both `@complex_only`, both fail on `main` with no local change):
+
+```
+tests/validation/test_port_birdcage_termination_probe.py::test_the_open_control_reproduces_leg_c_before_the_knob_turns
+tests/validation/test_port_birdcage_four_port.py::test_the_driven_column_reproduces_leg_d0
+```
+
+**Literal symptom**, `-n 2`, complex build, `2 failed, 17 passed`:
+
+```
+AssertionError: the open solve's driven current +9.992781266e-07+3.346865998e-09j A
+deviates 6.829e-06 from leg (c)'s recorded +9.992734880e-07+3.351870842e-09j A
+AssertionError: Z_11 = +2.172952668e+01+7.461413742e+00j Ohm deviates 1.449e-04 from
+leg (d0)'s recorded +2.173224483e+01+7.459491479e+00j Ohm against the 1e-09
+print-precision band
+```
+
+`docs/testing/logs/20260824T093133Z_PORT-9-step3d3b-run1.log` and
+`…T093526Z_…-run2.log` — both runs identical in every Z digit.
+
+**Verified at:** `main` @ `082e30f` (2026-08-24), 0.11.0.post0 image.
+
+**Cause — measured, not a mystery: the mesh moved, and it is not the route.**
+All three modules print `116368 cells (record 116416, ratio 0.999588)`. The
+`PORT-9` leg (c)/(d0)/(d) records were taken 2026-08-22/23 **before** the
+`OPS-18` step 3b merge put main on dolfinx/gmsh 0.11, and 0f8ea96 already
+measured 116 368 on 2026-08-23 *both before and after* its own tag change, so
+the tag encoding is excluded. This is the same 1e-4 record motion the retired
+0.11 entry above recorded for the two-torus family, recurring for the birdcage
+family, which nothing re-gated on 0.11. The `PORT-9` leg (d3) route change
+cannot be the cause: it touched only `_assemble_sparameter_matrix`, and these
+two modules never call the sweep's S assembly at all. **Every physics identity
+still holds** on the moved mesh — sheet area `5.930614898e-05 m²`, `h` exactly
+`8.000000000e-03 m`, out-of-plane `8.882e-19 m`, all four sheets identical, C4
+class spreads 0.0617 / 0.0359 / 0.0237% and the (d0) discrimination margin
+253.2002× against a 10× floor.
+
+**Do not re-record these two constants without a review ruling.** Ruling (4\*)
+(2026-08-24 03:00) sequenced leg (d3b) first precisely so each re-record has
+exactly one cause; the mesh-cause re-record it plans belongs to `GEO-19` step
+B's landing, and this is a *third*, earlier cause (the image) that the ruling
+did not know about. The digits above are what an image-tagged re-record would
+write.
+
+**Retire when:** a review adjudicates the image-caused birdcage re-record and
+the two records are re-derived at 116 368 image-tagged beside the pre-0.11
+digits.
+
 ### 🚫 OPEN — `birdcage_port_domain(emit_port_sheets=True)` **cannot build any birdcage with more than four legs**: the mid-plane sheet is an axis-aligned rectangle (`GEO-19` attempt 1, 2026-08-23)
 
 **Test id:** no test asserts this on `main` — the module that hits it,

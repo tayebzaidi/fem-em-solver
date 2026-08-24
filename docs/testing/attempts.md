@@ -13901,3 +13901,86 @@ margin's cousin always was, not about this rewrite; or (b) `PORT-9`'s birdcage
 records are re-pinned to a fixture the geometry rewrite does not touch, and
 step B lands alone. (a) is cheaper; (b) is the one that keeps item 4's
 measurement single-cause.
+
+## 2026-08-24T09:40Z — `PORT-9` leg (d3b) (§9 item 1) — **incomplete (measured, nothing re-recorded)**: the three gates are green on the birdcage's fixed route, and the re-record has a second cause the ruling did not know about
+
+**Preflight.** `main` clean at `082e30f`, container Up 13 h, no zero-byte `.c`
+stubs, no stray `python3`. No exception clause needed.
+
+**What ran.** Legs (c), (d0), (d) as three whole modules plus
+`tests/environment`, complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `-n 2`, `-s`,
+`timeout -k 30 500`, **twice in-slot**:
+
+- `20260824T093133Z_PORT-9-step3d3b-run1.log` — `2 failed, 17 passed in
+  121.37s`, harness Elapsed 124 s
+- `20260824T093526Z_PORT-9-step3d3b-run2.log` — `2 failed, 17 passed in
+  112.67s`, harness Elapsed 114 s
+
+No code change was made this slot; both runs are `main` as the 03:00 review
+left it.
+
+**The anchors, all three green.**
+
+- **(i)** `‖S−Sᵀ‖/‖S‖` = **8.244846162e-15** (run 1) / **1.161493453e-14**
+  (run 2) vs the unmoved 1e-3 band, against leg (d)'s terminated-conversion
+  **2.495292352e-05** — the pre-registered "orders below" lands at ~2.5e+9×.
+  The two runs agree only in order of magnitude here, and that is the honest
+  reading: `S` is symmetric to the float floor, so the ratio is noise over
+  noise. Every other digit below is bit-identical across the two runs.
+- **(ii)** `σ_max(S)` = **0.999993391** ≤ 1 + 1e-9 (leg (d): 0.862659137);
+  column power sums 0.807772326 / 0.807647060 / 0.807688415 / 0.808049459.
+- **(iii′)** class spreads **0.0617% self / 0.0359% adjacent / 0.0237%
+  opposite**, inside the tightened 0.5% and the module's unmoved 5%; class
+  means |Z| = 2.297360911e+01 / 1.701075777e+01 / 1.605637772e+01 Ω; pooled
+  off-diagonal 9.2727% = **150.3584×** the worst intra-class spread (floor
+  10×). Leg (d0)'s discrimination margin **253.2002×** (record 598.4002×),
+  adjacent spread 0.0359% (record 0.0152%), 1e6 Ω control 6.9398% margin /
+  0.0039% spread. `‖Z−Zᵀ‖/‖Z‖` = 9.852810597e-05, the diagnostic's own
+  asymmetry, unchanged in character.
+
+**The finding, and why I re-recorded nothing.** All three modules print
+**116 368 cells against the record's 116 416** (ratio 0.999588), and the two
+`Z` reproduction controls fail on it — leg (c)'s driven current at 6.829e-06,
+leg (d0)'s `Z₁₁` at 1.449e-04, both against 1e-9 print-precision bands. These
+are red on `main` with no local change, so they are not this slot's doing.
+Cause, by elimination and all of it measured: the route is excluded (legs (c)
+and (d0) never call the sweep's S assembly, and `8fd5af7` touched only
+`_assemble_sparameter_matrix`); the `GEO-19` tag encoding is excluded
+(`0f8ea96` measured 116 368 both before and after its own change, in one
+slot); what is left is the `OPS-18` step 3b image — every birdcage record is
+pre-0.11 — which is the same ~1e-4 record motion the retired 0.11 entry
+recorded for the two-torus family. Geometry identities all hold on the moved
+mesh (sheet area 5.930614898e-05 m², `h` = 8.000000000e-03 m exactly,
+out-of-plane 8.882e-19 m, four identical sheets), so this is tie-breaking in
+the mesher, not a broken fixture.
+
+Ruling (4\*) sequenced (d3b) first *so that this re-record would have exactly
+one cause: the route*. It has two, and the second one is earlier than either
+cause the ruling contemplated. Writing route-tagged digits that are in fact
+image-caused would put a false attribution on the record, so I stopped at
+measurement: known-issues entry filed with the exact digits an image-tagged
+re-record would write, §7 and §9 annotated, no band and no constant moved.
+
+**Tree:** `main` clean and unchanged in `src/` and `tests/`; this commit is
+the two logs, their test-results rows, the §7 (d3b) entry, the §9 item-1
+annotation, and the known-issues entry. The two red tests were red before this
+slot and remain so, now baselined.
+
+**Not done from the item:** the re-record itself, and therefore item 2 is
+**not** unblocked — `GEO-19` step B's landing was to be the *second* cause
+beside a settled route re-record, and the route re-record has not settled.
+`attempt/GEO-19-stepB-20260824T034500Z` untouched, as the item required.
+
+**Compute:** two foreground harness runs, 124 + 114 = **238 s**, both far
+inside the `timeout -k 30 500` ceiling. No denial, no wedge, no exit 124.
+
+**Hypothesis for the next attempt.** One review ruling disposes of all of it,
+and the shape is now clear because the image cause is common to (d3b), item 2
+and (d1′): re-record the birdcage class **once**, image-tagged *and*
+route-tagged together, at 116 368 on the 0.11 image, taking this slot's digits
+— they are measured, reproduced twice, and every gate on them is green. The
+alternative — an image-only re-record first, then the route — is not available
+retroactively: the 0.10 image is gone from `main`, so no run can ever separate
+the two causes again. Whoever rules should also note that leg (c)'s
+degeneracy-gate margin is the fragile quantity across all of this: 598× at the
+records' mesh, 253× here, 0.79× on step B's mesh.
