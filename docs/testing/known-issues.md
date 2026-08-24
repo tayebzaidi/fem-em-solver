@@ -68,7 +68,31 @@ half test taken along the leg's radial normal, and `GEO-19`'s gates (i)–(v)
 run at 16 legs. **Fix scoped 2026-08-23 18:00 review as `GEO-19` step B
 (§9 item 3, rotated construction + 4-leg invariance control); the 16-leg
 gates are step C (§9 item 5). This entry retires with step B's commit** —
-the gates run is a separate deliverable and does not hold it open. Blocks `GEO-19`; does **not** block `GEO-20` (ring-gap ports
+the gates run is a separate deliverable and does not hold it open.
+
+> **Step B attempt 1, 2026-08-24 03:30Z implementer slot — the rewrite exists,
+> is green, and is parked rather than landed.** `attempt/GEO-19-stepB-`
+> `20260824T034500Z` (`12737a8`) carries it: box and sheet both built at
+> azimuth 0 and taken to the leg's azimuth by one snapped rotation about `ẑ`,
+> half-assignment by signed projection on the plane's own normal, the raise
+> deleted. The `GEO-18` step-1 + step-2 invariance control is `3 passed` /
+> Status 0 **twice in-slot** (90.08 s / 88.97 s,
+> `20260824T033811Z_GEO-19-stepB-snapped-run1.log`,
+> `20260824T033956Z_…-run2.log`), reproducing the record's terminal ratios
+> (0.988616 × 4) and C4 sheet spread (**6.050e-16**, exactly) with every
+> analytic identity exact and the CAD digit-identical.
+> **What holds it back is not the geometry but its consumers:** the mesh cell
+> count moves (116 368 → **116 085** sheeted, 114 855 → **114 655** gapped),
+> and on that moved fixture three `PORT-9` birdcage assertions go red
+> (`20260824T034214Z_GEO-19-stepB-port9-regression.log`, `3 failed, 16 passed`
+> / 124.68 s): leg (c)'s driven current deviates 1.376e-03 from record, leg
+> (d0)'s `Z_11` 1.840e-02 against a 1e-9 print band, and leg (c)'s
+> class-degeneracy gate **flips** — the opposite port sits 0.0321% from the
+> adjacent pair's mean against the pair's own 0.0407% spread, i.e. inside it.
+> Re-recording those digits is §9 item 4's licence, and the flipped gate is a
+> ruling, so this entry stays open until a review disposes of it.
+
+Blocks `GEO-19`; does **not** block `GEO-20` (ring-gap ports
 sit at different azimuths and are scoped to their own local frame from the
 start). Related and separate: the layout clearance floor independently caps
 this geometry at `N <= 25` legs — see the `GEO-19` §7 entry.

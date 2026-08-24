@@ -13796,3 +13796,108 @@ conversion's residual on a symmetric fixture, and the birdcage runs at leg
 (d0)'s `Z_p = z0 = 50 Ω` — the matched drive where the identity is exact. If it
 does not, the birdcage's four sheets are not all seeing the matched termination
 and that is the thing to check first.
+
+---
+
+## 2026-08-24T03:45Z — `GEO-19` step B (§9 item 3) — **blocked** (rewrite written and green twice in-slot; parked because landing it turns three `PORT-9` birdcage assertions red)
+
+**Slot:** 2026-08-23 22:30 CDT implementer run, 60-minute timebox. Preflight
+clean, container Up 7 h. Items 1 and 2 marked done, so item 3 was taken.
+
+**What was built** (parked on `attempt/GEO-19-stepB-20260824T034500Z`,
+`12737a8`, `src/fem_em_solver/io/mesh.py` only). The
+`NotImplementedError: emit_port_sheets builds axis-aligned rectangles` is
+deleted. Gap box *and* mid-plane rectangle are built at azimuth 0 and taken to
+the leg azimuth by one transform about `ẑ`; the half-assignment is the signed
+projection of the piece centroid on the plane's own normal `(−sin θ, cos θ)`,
+replacing the x-or-y coordinate test.
+
+Two things the rescope did not name, both forced by measurement:
+
+1. **The box has to rotate with the sheet.** A rotated rectangle of width `dx`
+   spans an axis-aligned square section only at multiples of 90°; elsewhere it
+   is shorter than the chord, the fragment leaves the box one piece and the
+   `port_Pi_upper` group is missing outright. Rotating the sheet alone would
+   not have built at 16 legs. Gap mode has `dx = dy = box_width`, so the
+   rotation is exact-onto at the axis azimuths.
+2. **`occ.rotate` is not exact at those azimuths** — it applies
+   `cos(π/2) = 6.1e-17`. Both transforms now go through
+   `occ.affineTransform` with entries snapped to 0/±1 (`_z_rotation_affine`,
+   `_place_sheet_in_leg_frame`), giving an exact identity or coordinate swap
+   at 0/90/180/270°.
+
+**The invariance control, twice in-slot** —
+`tests/mesh/test_birdcage_port_sheets.py` + `test_birdcage_leg_gaps.py`,
+`-n 2`, real build, `timeout -k 30 400`, standard tier:
+`20260824T033811Z_GEO-19-stepB-snapped-run1.log` (`3 passed`, 90.08 s,
+Elapsed 92, Status 0) and `20260824T033956Z_…-run2.log` (`3 passed`, 88.97 s,
+Elapsed 91, Status 0), bit-identical to each other.
+
+| record digit | 0.11 record | step B | verdict |
+| --- | --- | --- | --- |
+| terminal ratios | 0.988616 × 4 | 0.988616 × 4 | ✓ |
+| C4 sheet spread | 6.050e-16 | 6.050e-16 | ✓ exactly |
+| sheeted cells | 116 368 | 116 085 | ✗ −0.24% |
+| gapped cells | 114 855 | 114 655 | ✗ −0.17% |
+
+Everything analytic is exact: sheet/`dx·g` = 1.000000000000, halves
+0.500000000000 each, closure 1.000000000000, `w_eff/w_bbox` =
+1.000000000000. The **CAD is digit-identical** to the record — masses
+(conductor 9.939058968e-05, air 1.118814235e-02, halves 7.840000000e-07),
+sheet areas and CAD extents, fragment volume counts (34/30/26), grading
+surface counts. Out-of-plane sheet spread improves 2.5e-16 → 1.8e-18 m.
+
+**Why the count moved — measured, not asserted.** Three geometries differing
+by ≤ 5 ulps give three counts: old 116 368, unsnapped `occ.rotate` rewrite
+**116 437** (`20260824T033344Z_GEO-19-stepB-run1.log`, `3 passed` 91.47 s),
+snapped **116 085**. The old code's `cx = ring_radius·cos(π/2)` is
+**4.286263797e-18**, not 0 (measured in-container), so the pre-change boxes at
+90/180/270° sat ~5 ulps off their exact positions and no correct local-frame
+construction can reproduce them. gmsh tie-breaking turns that into ~1e-3
+relative cell count. Two controls back it: the two snapped runs reproduce each
+other exactly (the pipeline is deterministic, so this is input coordinates and
+not chance), and the **untouched** no-gap path reproduces 98 666 cells digit
+for digit in all four logs. Reading: the gate's *intent* — no geometry drift —
+is met; "cell count digit for digit" is not a property any correct rewrite of
+the placement can have. Not loosened, not re-recorded, handed to the review.
+
+**What actually blocked the landing.** `PORT-9`'s birdcage modules mesh this
+same fixture, so the moved mesh moves their recorded digits:
+`20260824T034214Z_GEO-19-stepB-port9-regression.log` (complex build,
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `-n 2`,
+`timeout -k 30 550`) is **`3 failed, 16 passed` in 124.68 s, Status 1**:
+
+- leg (c) open driven current `+9.990584892e-07+4.709566544e-09j` A deviates
+  **1.376e-03** from the record `+9.992734880e-07+3.351870842e-09j` A;
+- leg (d0) `Z_11 = +2.215494591e+01+7.460189773e+00j` Ω deviates **1.840e-02**
+  from `+2.173224483e+01+7.459491479e+00j` Ω against a 1e-9 print band;
+- leg (c)'s class-degeneracy gate **flips**: `|Z31| = 1.872816593e+03` Ω sits
+  **0.0321%** from the adjacent pair's mean `1.872214861e+03` Ω, against that
+  pair's own **0.0407%** spread — the opposite port is no longer separated
+  from the adjacent class.
+
+The first two are re-records and belong to §9 item 4's licence, not to a mesh
+chunk. The third is a gate changing sense on the fixture `PORT-9` legs
+(c)/(d0)/(d) are built on. Landing step B would leave `main` red, so it is
+parked whole.
+
+**Tree:** `main` clean, unchanged code, green. Code on
+`attempt/GEO-19-stepB-20260824T034500Z`. This commit carries the four logs,
+their test-results rows, the §7 step-B annotation, the §9 item-3 block, and
+the known-issues blocker-B update (entry stays **open** — the raise is still
+on `main`).
+
+**Compute:** four foreground harness runs, 94 + 92 + 91 + 126 = **403 s**,
+each well inside its `timeout -k 30` ceiling. No denial, no wedge, no exit 124.
+
+**Hypothesis for the next attempt.** Do not re-attempt step B as a mesh chunk —
+it is written and green, and a second attempt would reproduce these numbers.
+What is needed is a review ruling on sequencing, and there are exactly two
+shapes: (a) step B lands *with* the birdcage re-record, which makes §9 item 4
+a two-cause measurement (mesh + power-wave route) and needs the degeneracy gate
+adjudicated on the new mesh first — if the opposite port is genuinely
+unseparated at 0.0321%, that is a finding about how thin leg (c)'s 598×
+margin's cousin always was, not about this rewrite; or (b) `PORT-9`'s birdcage
+records are re-pinned to a fixture the geometry rewrite does not touch, and
+step B lands alone. (a) is cheaper; (b) is the one that keeps item 4's
+measurement single-cause.

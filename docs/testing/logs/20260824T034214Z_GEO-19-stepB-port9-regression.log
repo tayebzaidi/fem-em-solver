@@ -1,0 +1,165 @@
+# Test Run
+- Chunk: GEO-19-stepB-port9-regression
+- Commit: 8fd5af7efc896501db5f8cc61af51a086a6bc667
+- Time (UTC): 2026-08-24 03:42:14
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 550 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_birdcage_lumped_column.py tests/validation/test_port_birdcage_termination_probe.py tests/validation/test_port_birdcage_four_port.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 23 15:12 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 23 22:41 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297  869 Aug 23 15:12 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && FEM_EM_REQUIRE_COMPLEX=1 PYTHONPATH=/workspace/src timeout -k 30 550 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_port_birdcage_lumped_column.py tests/validation/test_port_birdcage_termination_probe.py tests/validation/test_port_birdcage_four_port.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 19 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  5%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 19 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  5%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 10%]PASSED [ 10%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 15%]PASSED [ 15%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 21%]PASSED [ 21%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact 
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 26%]PASSED [ 26%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter 
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 31%]PASSED [ 31%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 36%]PASSED [ 36%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 42%]PASSED [ 42%]
+tests/validation/test_port_birdcage_lumped_column.py::test_the_birdcage_column_came_off_the_solved_field 
+tests/validation/test_port_birdcage_lumped_column.py::test_the_birdcage_column_came_off_the_solved_field PASSED [ 47%]
+tests/validation/test_port_birdcage_lumped_column.py::test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not PASSED [ 47%]
+tests/validation/test_port_birdcage_lumped_column.py::test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not FAILED [ 52%]
+tests/validation/test_port_birdcage_termination_probe.py::test_the_probe_solved_the_gated_fixture_through_the_field_route FAILED [ 52%]
+tests/validation/test_port_birdcage_termination_probe.py::test_the_probe_solved_the_gated_fixture_through_the_field_route PASSED [ 57%]
+tests/validation/test_port_birdcage_termination_probe.py::test_the_open_control_reproduces_leg_c_before_the_knob_turns PASSED [ 57%]
+tests/validation/test_port_birdcage_termination_probe.py::test_the_open_control_reproduces_leg_c_before_the_knob_turns FAILED [ 63%]
+tests/validation/test_port_birdcage_termination_probe.py::test_the_termination_closed_a_current_path PASSED [ 68%]
+tests/validation/test_port_birdcage_termination_probe.py::test_fifty_ohm_termination_separates_adjacent_from_opposite_coupling PASSED [ 73%]
+tests/validation/test_port_birdcage_four_port.py::test_the_sweep_drove_four_solved_field_ports_on_the_gated_fixture FAILED [ 63%]
+tests/validation/test_port_birdcage_termination_probe.py::test_the_termination_closed_a_current_path PASSED [ 68%]
+tests/validation/test_port_birdcage_termination_probe.py::test_fifty_ohm_termination_separates_adjacent_from_opposite_coupling PASSED [ 73%]
+tests/validation/test_port_birdcage_four_port.py::test_the_sweep_drove_four_solved_field_ports_on_the_gated_fixture PASSED [ 78%]
+tests/validation/test_port_birdcage_four_port.py::test_the_driven_column_reproduces_leg_d0 PASSED [ 78%]
+tests/validation/test_port_birdcage_four_port.py::test_the_driven_column_reproduces_leg_d0 FAILED [ 84%]
+tests/validation/test_port_birdcage_four_port.py::test_the_four_port_network_is_reciprocal PASSED [ 89%]
+tests/validation/test_port_birdcage_four_port.py::test_the_four_port_network_is_passive FAILED [ 84%]PASSED [ 94%]
+tests/validation/test_port_birdcage_four_port.py::test_the_four_port_network_is_reciprocal 
+tests/validation/test_port_birdcage_four_port.py::test_the_impedance_matrix_is_c4_circulant PASSED [100%]PASSED [ 89%]
+tests/validation/test_port_birdcage_four_port.py::test_the_four_port_network_is_passive PASSED [ 94%]
+tests/validation/test_port_birdcage_four_port.py::test_the_impedance_matrix_is_c4_circulant PASSED [100%]
+
+=================================== FAILURES ===================================
+__ test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not ___
+tests/validation/test_port_birdcage_lumped_column.py:477: in test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not
+    assert opposite_deviation > spread, (
+E   AssertionError: the opposite port |Z31| = 1.872816593e+03 Ohm sits 0.0321% from the adjacent pair's mean 1.872214861e+03 Ohm, no further than the pair's own 0.0407% spread — column 1 of Z is degenerate at this grain, so the symmetry gate above passed on a constant, not on the geometry
+E   assert 0.0003214013626828572 > 0.0004065140141166576
+_________ test_the_open_control_reproduces_leg_c_before_the_knob_turns _________
+tests/validation/test_port_birdcage_termination_probe.py:421: in test_the_open_control_reproduces_leg_c_before_the_knob_turns
+    assert i_err < LEG_C_REPRODUCTION_BAND, (
+E   AssertionError: the open solve's driven current +9.990584892e-07+4.709566544e-09j A deviates 1.376e-03 from leg (c)'s recorded +9.992734880e-07+3.351870842e-09j A — the fixture moved; the 50 Ohm reading is not comparable to the record
+E   assert 0.0013756050972126331 < 1e-09
+___________________ test_the_driven_column_reproduces_leg_d0 ___________________
+tests/validation/test_port_birdcage_four_port.py:450: in test_the_driven_column_reproduces_leg_d0
+    assert err < LEG_D0_REPRODUCTION_BAND, (
+E   AssertionError: Z_11 = +2.215494591e+01+7.460189773e+00j Ohm deviates 1.840e-02 from leg (d0)'s recorded +2.173224483e+01+7.459491479e+00j Ohm against the 1e-09 print-precision band — this 4x4 is not built on leg (d0)'s solve
+E   assert np.float64(0.01839687008081962) < 1e-09
+=========================== short test summary info ============================
+FAILED tests/validation/test_port_birdcage_lumped_column.py::test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not - AssertionError: the opposite port |Z31| = 1.872816593e+03 Ohm sits 0.0321% from the adjacent pair's mean 1.872214861e+03 Ohm, no further than the pair's own 0.0407% spread — column 1 of Z is degenerate at this grain, so the symmetry gate above passed on a constant, not on the geometry
+assert 0.0003214013626828572 > 0.0004065140141166576
+FAILED tests/validation/test_port_birdcage_termination_probe.py::test_the_open_control_reproduces_leg_c_before_the_knob_turns - AssertionError: the open solve's driven current +9.990584892e-07+4.709566544e-09j A deviates 1.376e-03 from leg (c)'s recorded +9.992734880e-07+3.351870842e-09j A — the fixture moved; the 50 Ohm reading is not comparable to the record
+assert 0.0013756050972126331 < 1e-09
+FAILED tests/validation/test_port_birdcage_four_port.py::test_the_driven_column_reproduces_leg_d0 - AssertionError: Z_11 = +2.215494591e+01+7.460189773e+00j Ohm deviates 1.840e-02 from leg (d0)'s recorded +2.173224483e+01+7.459491479e+00j Ohm against the 1e-09 print-precision band — this 4x4 is not built on leg (d0)'s solve
+assert np.float64(0.01839687008081962) < 1e-09
+=================== 3 failed, 16 passed in 124.68s (0:02:04) ===================
+
+
+=================================== FAILURES ===================================
+__ test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not ___
+tests/validation/test_port_birdcage_lumped_column.py:477: in test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not
+    assert opposite_deviation > spread, (
+E   AssertionError: the opposite port |Z31| = 1.872816593e+03 Ohm sits 0.0321% from the adjacent pair's mean 1.872214861e+03 Ohm, no further than the pair's own 0.0407% spread — column 1 of Z is degenerate at this grain, so the symmetry gate above passed on a constant, not on the geometry
+E   assert 0.0003214013626828572 > 0.0004065140141166576
+----------------------------- Captured stdout call -----------------------------
+
+[PORT-9 step3c] C4 ADJACENT-PAIR gate (band 5%, gate (iii)'s own, pre-stated at scoping and unmoved):
+    Z21 = +1.390012417e+01-1.872224592e+03j Ohm  |Z21| = 1.872276191e+03
+    Z41 = +1.465032447e+01-1.872096207e+03j Ohm  |Z41| = 1.872153531e+03
+    |Z21 - Z41|/|Z21| = 0.0407%  INSIDE
+    Z31 = +1.322525314e+01-1.872769896e+03j Ohm  |Z31| = 1.872816593e+03  deviation from the adjacent mean 0.0321% (must exceed the spread; discrimination margin 0.7906x)
+    Z11 = +9.201557829e+02-4.718342449e+03j Ohm  (Re Z11 = +9.201557829e+02 Ohm, reported, not gated)
+[PORT-9 step3c] PRICE: one solve 9.78 s wall at -n 2 (control ceiling 300 s — the open-limit second solve is affordable; leg (d)'s four solves project to 39.1 s of solve time)
+_________ test_the_open_control_reproduces_leg_c_before_the_knob_turns _________
+tests/validation/test_port_birdcage_termination_probe.py:421: in test_the_open_control_reproduces_leg_c_before_the_knob_turns
+    assert i_err < LEG_C_REPRODUCTION_BAND, (
+E   AssertionError: the open solve's driven current +9.990584892e-07+4.709566544e-09j A deviates 1.376e-03 from leg (c)'s recorded +9.992734880e-07+3.351870842e-09j A — the fixture moved; the 50 Ohm reading is not comparable to the record
+E   assert 0.0013756050972126331 < 1e-09
+----------------------------- Captured stdout call -----------------------------
+
+[PORT-9 step3d0] control (1): 1e6 Ohm vs leg (c)'s record (`20260822T213612Z_PORT-9-step3c-rerun.log`), band 1e-09 relative:
+    I_1 rel. deviation 1.376e-03
+    Z_11 +9.201557829e+02-4.718342449e+03j vs record +7.157807613e+02-3.356708736e+03j  rel. deviation 4.012e-01
+    Z_21 +1.390012417e+01-1.872224592e+03j vs record +1.234475890e+01-1.879647891e+03j  rel. deviation 4.035e-03
+    Z_31 +1.322525314e+01-1.872769896e+03j vs record +1.190817590e+01-1.879802412e+03j  rel. deviation 3.806e-03
+    Z_41 +1.465032447e+01-1.872096207e+03j vs record +1.231173574e+01-1.879351468e+03j  rel. deviation 4.056e-03
+___________________ test_the_driven_column_reproduces_leg_d0 ___________________
+tests/validation/test_port_birdcage_four_port.py:450: in test_the_driven_column_reproduces_leg_d0
+    assert err < LEG_D0_REPRODUCTION_BAND, (
+E   AssertionError: Z_11 = +2.215494591e+01+7.460189773e+00j Ohm deviates 1.840e-02 from leg (d0)'s recorded +2.173224483e+01+7.459491479e+00j Ohm against the 1e-09 print-precision band — this 4x4 is not built on leg (d0)'s solve
+E   assert np.float64(0.01839687008081962) < 1e-09
+----------------------------- Captured stdout call -----------------------------
+
+[PORT-9 step3d] control (1): the P1-driven column vs leg (d0)'s record (`20260823T033304Z_PORT-9-step3d0.log`), band 1e-09 relative:
+    Z_11 +2.215494591e+01+7.460189773e+00j vs record +2.173224483e+01+7.459491479e+00j  rel. deviation 1.840e-02
+    Z_21 +1.700770839e+01+2.351108372e-01j vs record +1.700799365e+01+2.384284683e-01j  rel. deviation 1.958e-04
+    Z_31 +1.603004601e+01-9.503096442e-01j vs record +1.602758027e+01-9.538522445e-01j  rel. deviation 2.688e-04
+    Z_41 +1.700838310e+01+2.350192948e-01j vs record +1.701057452e+01+2.384109272e-01j  rel. deviation 2.374e-04
+=========================== short test summary info ============================
+FAILED tests/validation/test_port_birdcage_lumped_column.py::test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not - AssertionError: the opposite port |Z31| = 1.872816593e+03 Ohm sits 0.0321% from the adjacent pair's mean 1.872214861e+03 Ohm, no further than the pair's own 0.0407% spread — column 1 of Z is degenerate at this grain, so the symmetry gate above passed on a constant, not on the geometry
+assert 0.0003214013626828572 > 0.0004065140141166576
+FAILED tests/validation/test_port_birdcage_termination_probe.py::test_the_open_control_reproduces_leg_c_before_the_knob_turns - AssertionError: the open solve's driven current +9.990584892e-07+4.709566544e-09j A deviates 1.376e-03 from leg (c)'s recorded +9.992734880e-07+3.351870842e-09j A — the fixture moved; the 50 Ohm reading is not comparable to the record
+assert 0.0013756050972126331 < 1e-09
+FAILED tests/validation/test_port_birdcage_four_port.py::test_the_driven_column_reproduces_leg_d0 - AssertionError: Z_11 = +2.215494591e+01+7.460189773e+00j Ohm deviates 1.840e-02 from leg (d0)'s recorded +2.173224483e+01+7.459491479e+00j Ohm against the 1e-09 print-precision band — this 4x4 is not built on leg (d0)'s solve
+assert np.float64(0.01839687008081962) < 1e-09
+=================== 3 failed, 16 passed in 124.68s (0:02:04) ===================
+
+## Exit
+- Status: 1
+- Elapsed (s): 126

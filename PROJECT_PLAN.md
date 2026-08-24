@@ -1727,6 +1727,73 @@ original 0.7.2 digits (116 416 / 8.470e-16), which stand as
 version-tagged history. The `N ≤ 25` layout ceiling is recorded above
 and flagged to the weekly review for §10 Phase 6; it gates nothing here.
 
+**Step B attempt 1, 2026-08-24 03:30Z slot — 🟡 the rewrite is written,
+green twice in-slot, and parked on
+`attempt/GEO-19-stepB-20260824T034500Z` (`12737a8`). It is not a defect
+in the rewrite that stopped it; it is what the rewrite does to
+`PORT-9`'s recorded digits.**
+
+*What was built.* The `NotImplementedError` is gone. Both the gap box and
+its mid-plane rectangle are constructed at azimuth 0 and taken to the
+leg's azimuth by **one** transform about `ẑ`; the half-assignment is the
+signed projection of the piece centroid on the plane's own normal
+`φ̂ = (−sin θ, cos θ)`. Two things the rescope did not name turned out to
+be forced. (1) **The box has to rotate with the sheet.** A rotated
+rectangle of width `dx` spans an *axis-aligned* square section only at
+multiples of 90°; anywhere else the sheet is shorter than the chord, the
+fragment leaves the box one piece, and there are no port halves at all —
+so the sheet alone would not have built at 16 legs either. In gap mode
+the section is a square (`dx = dy = box_width`), so the rotation is
+exact-onto at the four axis azimuths. (2) **`occ.rotate` is not exact
+there.** It applies `cos(π/2) = 6.1e-17`, moving vertices a few ulps, so
+the transforms go through `occ.affineTransform` with a matrix whose
+entries are snapped to 0/±1 (`_z_rotation_affine`) — at 0/90/180/270 an
+exact identity or coordinate swap.
+
+*The invariance control, twice in-slot.* `3 passed` / Status 0, 90.08 s
+and 88.97 s (`20260824T033811Z_GEO-19-stepB-snapped-run1.log`,
+`20260824T033956Z_…-run2.log`), bit-identical to each other. Of the
+three record digits: terminal ratios **0.988616 × 4 ✓**, C4 sheet spread
+**6.050e-16 ✓** (exactly), cell count **116 085 vs 116 368 ✗** (−0.24%;
+gapped 114 655 vs 114 855, −0.17%). Every analytic identity is exact
+(sheet area / `dx·g` = 1.000000000000, halves 0.500000000000, closure
+1.000000000000) and the **CAD is digit-identical** to the record —
+masses, sheet areas, sheet CAD extents, fragment volume counts, grading
+surface counts all reproduce. Out-of-plane sheet spread *improves*,
+2.5e-16 → 1.8e-18 m.
+
+*Why the count moved, measured rather than asserted.* Three geometries
+differing by ≤ 5 ulps give three cell counts: the old construction
+116 368, an unsnapped `occ.rotate` rewrite **116 437**
+(`20260824T033344Z_GEO-19-stepB-run1.log`), the snapped one 116 085.
+The old code's own `cx = ring_radius·cos(π/2)` is **4.286263797e-18**,
+not 0 — so the pre-change boxes at 90/180/270° sat ~5 ulps off their
+exact positions, and *no* correct local-frame construction can reproduce
+that. gmsh's tie-breaking amplifies ulp-level input into ~1e-3 relative
+cell count. Controls: both runs reproduce each other exactly, and the
+untouched no-gap path reproduces **98 666** cells digit for digit across
+all four logs. **So "cell count digit for digit" is not a property this
+gate can have; the gate's intent — no geometry drift — is met, and the
+review is asked to rule on the digit rather than the implementer
+loosening it.**
+
+*What actually blocks the landing.* On the moved fixture three `PORT-9`
+birdcage assertions go red — `3 failed, 16 passed` / 124.68 s,
+`20260824T034214Z_GEO-19-stepB-port9-regression.log`: leg (c)'s open
+driven current deviates **1.376e-03** from record, leg (d0)'s `Z_11`
+**1.840e-02** against a 1e-9 print band, and leg (c)'s class-degeneracy
+gate **flips** — `|Z31|` sits 0.0321% from the adjacent pair's mean
+against that pair's own 0.0407% spread, i.e. the opposite port is no
+longer separated from the adjacent class. The first two are re-records
+and belong to §9 item 4's licence, not to a mesh chunk. The third is not
+a re-record: it is a gate changing sense, on a fixture whose C4/degeneracy
+structure `PORT-9` legs (c)/(d0)/(d) are built on. Landing step B would
+leave `main` red, so it is parked. **Next attempt:** a review ruling that
+sequences step B against `PORT-9` — either step B lands together with the
+birdcage re-record (making item 4 a two-cause measurement, which is why it
+was not done here), or `PORT-9`'s birdcage records are pinned to a mesh
+the geometry rewrite does not touch.
+
 **`GEO-20` — high-pass birdcage: ring-gap port layout (`ring_gap_length`),
 the `GEO-18` pattern on the end rings** ⬜ *(commissioned 2026-08-23 weekly
 review — item (b) of the 32-port directive. First at `leg_count = 4`
@@ -3836,7 +3903,27 @@ verifies `git status --porcelain`.)
    **Negative result:** the fixed route failing anchor (a) refutes
    ruling (2\*)'s mechanism — §7 annotation + known-issues update quoting
    the number, nothing re-recorded, stop.
-3. **`GEO-19` step B — port sheets built in the leg's local frame, 4-leg
+3. **🚫 BLOCKED 2026-08-24, 22:30 slot — the rewrite is done and green
+   twice in-slot, and parked on `attempt/GEO-19-stepB-20260824T034500Z`
+   (`12737a8`) because landing it turns three `PORT-9` birdcage
+   assertions red. Needs a review ruling, not another attempt.** The
+   invariance control is `3 passed` × 2 (90.08 / 88.97 s) with terminal
+   ratios 0.988616 × 4 ✓, C4 spread 6.050e-16 ✓ (exactly), every
+   analytic identity exact and the CAD digit-identical; the cell count
+   is **116 085 vs 116 368** ✗, and that miss is measured to be
+   ulp-level tie-breaking, not geometry — the old code's own
+   `ring_radius·cos(π/2)` is 4.286e-18, so the pre-change boxes at
+   90/180/270° were ~5 ulps off exact and no correct local-frame
+   construction reproduces them (three ≤ 5-ulp-apart geometries give
+   116 368 / 116 437 / 116 085; the untouched no-gap path reproduces
+   98 666 in all four logs). On the moved mesh, leg (c)'s driven current
+   deviates 1.376e-03 and leg (d0)'s `Z_11` 1.840e-02 from record — item
+   4's licence — but leg (c)'s class-degeneracy gate **flips** (0.0321%
+   against the adjacent pair's own 0.0407% spread), which is a ruling.
+   Full numbers and the two candidate sequencings: the `GEO-19` §7
+   entry, step B attempt 1. **Item 5 is serial on this and must skip.**
+   *Original item text:*
+   **`GEO-19` step B — port sheets built in the leg's local frame, 4-leg
    invariance control (standard, `-n 2`, real, `main`; independent; mesh
    only, no solve).** At the raise site (`mesh.py:3189`,
    `_build_birdcage_port_model`): build the `(w, g)` sheet rectangle at
