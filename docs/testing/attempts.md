@@ -15070,3 +15070,96 @@ precedent the review asked for — analytic-comparison examples re-gate cleanly 
 them, which is a documentation problem and not a physics one.
 
 **No denials, no anomalies, no parked branches.** Tree clean at handoff.
+
+---
+
+## 2026-08-25T09:35Z — `PORT-9` leg (d1′), §9 item 1 — **incomplete (mesh half landed green on `main`)**
+
+**Slot** 04:30 CDT scheduled implementer run. Preflight clean, container Up
+16 h. Took §9 item 1 as written (first item not done or blocked).
+
+**What was tried.** Item 1 asks for the whole of leg (d1′): land the
+`leg_azimuth_offsets_rad` mesh knob and the displaced fixture from
+`attempt/PORT-9-d1-20260823T124500Z`, commit the (iii′) 5% → 0.5% tightening,
+and run the displaced 4×4 through the (d3) power-wave assembly. I landed and
+gated **the mesh half only**, and ran out of slot before the solve half.
+
+**Landed on `main`, green.** `src/fem_em_solver/io/mesh.py` gains
+`leg_azimuth_offsets_rad` on `birdcage_port_domain`,
+`_birdcage_leg_gap_layout` (so the pairwise centre-separation floor sees the
+displaced spacing rather than assuming one uniform gap) and
+`_build_birdcage_port_model`, plus `tests/mesh/test_birdcage_leg_offset.py`
+(adapted from the parked branch).
+
+**Finding worth the review's attention: the parked payload is largely
+superseded, and the knob is now much smaller than the item assumed.**
+`GEO-19` step B (landed 19:30 yesterday) already replaced the axis-aligned
+box/sheet construction with the general local-frame one — each box is built at
+azimuth 0 and rotated onto its leg, each sheet's mid-plane is carried as a
+`(normal, point)` pair. So the branch's two substantive mesh edits (the rigid
+`gmsh.model.occ.rotate` of port + sheet, and the `("x"|"y", coord)` → `(n, p)`
+rewrite) are **already on `main` in a more general form** and were *not*
+re-landed. What the knob needed on top of step B was one added vector of
+azimuths (`theta_leg = theta + offsets`, feeding the leg stubs and the port
+loop) plus the argument plumbing. `theta` itself stays nominal so `GEO-20`'s
+`phi_mid` is untouched.
+
+**Measured (harness `20260825T093515Z_PORT-9-step3d1-mesh.log`, Status 0,
+elapsed 84 s; `6 passed 81.42 s` at `-n 2`, real build, standard tier):**
+
+* **Identity control, exact** — no-kwarg baseline and all-zero offsets both mesh
+  **116 085** cells (step B's mesh-tagged record, digit for digit), with the
+  same global cell-tag set and the same four sheet areas
+  (`1.120000000e-04 m²` each). The offsets are *added* and adding an exact zero
+  is exact, so this is an identity, not a small-angle limit — I dropped the
+  branch's "skip the rotation at zero" special case as unnecessary and said so
+  in the code comment.
+* **Displaced rung**, leg 1 at `π/(2·leg_count)` = 22.5°: **116 475** cells
+  (a print, not an assert — the mesh regenerates whole); P1's sheet bbox centre
+  reads **22.5000°** while P2/P3/P4 stay at 90/180/270° to < 1e-6°, so the port
+  travelled with its leg and nothing else moved.
+* **Negative control of the control — every `GEO-18` identity survives the
+  rotation**: sheet area `1.120000000e-04 m²` = analytic `dx·g` at
+  **1.000000000000** on all four ports; out-of-plane spread ≤ **1.610e-17 m**
+  measured in each port's *own* azimuthal direction (P1 1.610e-17, P2
+  2.388e-18, P3 8.695e-18, P4 3.468e-18); terminals **0.989368** (P1, the
+  displaced one) and **0.988616** ×3 inside `GEO-18` step 1's [0.95, 1.0]
+  interval; box halves **0.500000000000** each, summing to **1.000000000000**;
+  frame extents `w = 1.400000000e-02`, `h = 8.000000000e-03` m against the
+  box's own `dx`/`dz` to 1e-9.
+* **Three refusals gated**: offsets without `leg_gap_length` (the ungapped
+  layout floats its boxes at mid-azimuths, so a leg has no port to carry);
+  offsets with `ring_gap_length` (**new**, not in the parked branch — the
+  `GEO-20` arcs are centred on the *uniform* mid-azimuths, which a displaced
+  leg no longer bisects, so a combined build would silently de-centre every
+  ring gap); a wrong-length offset vector.
+
+**Not done.** The solve half — the displaced 4×4 through the (d3) power-wave
+assembly, anchors (a)/(b)/(c) — and the **(iii′) 5% → 0.5% tightening**. The
+tightening is deliberately *not* in this commit: `ADJACENT_SPREAD_BAND` lives in
+`tests/validation/test_port_birdcage_lumped_column.py` and is imported by two
+other gate modules, so moving it needs its own green run of all three, which is
+a separate compute command I had no slot left for. **No band was moved and no
+assertion loosened in this commit**; `PORT-9` stays 🟡 and §2.2 is unmoved.
+
+**Branch.** `attempt/PORT-9-d1-20260823T124500Z` **stays parked** — its solve
+half (`tests/validation/test_port_birdcage_leg_offset_sweep.py`, 599 lines) is
+still the payload the next attempt adapts. Nothing on it was deleted. Its
+mesh-side commit is now superseded, per the finding above.
+
+**Next attempt hypothesis (the concrete blocker I hit).** The solve half cannot
+reuse leg (c)/(d)'s sheet narrowing: `_narrowed_transverse` chooses a *global*
+axis off the sheet's bounding box, which has no meaning for a sheet at 22.5°.
+The parked branch already carries the fix — `_narrowed_radial` (step 2b's
+midpoint filter along the port's own radial direction) plus `_projected_extents`
+/ `_sheet_azimuth_deg`, the last two of which are in the module I just landed
+and are therefore importable from `main` today. A next attempt should: (1) copy
+`test_port_birdcage_leg_offset_sweep.py` off the branch, (2) point its imports
+at the landed mesh module, (3) drop the retired open-limit anchors and replace
+its `LEG_D_Z_MATRIX` reproduction anchor with leg (c)'s mesh-tagged driven `I₁`
+(+9.990584892e-07 + 4.709566544e-09j A at 116 085 cells, 1e-9 band) and leg
+(d0)'s terminated column per (6\*)(v), (4) commit (iii′) with a run of all three
+consumer modules. Budget it as two compute commands (~2 min mesh + ~5 min
+eight-solve), i.e. a full slot with the module adaptation done first.
+
+**No denials, no anomalies.** Tree clean at handoff, `main` green.

@@ -1,6 +1,6 @@
 """Mesh generation utilities for EM simulations."""
 
-from typing import Optional, Tuple, List, Dict
+from typing import Optional, Sequence, Tuple, List, Dict
 import time
 import numpy as np
 import gmsh
@@ -2780,6 +2780,7 @@ class MeshGenerator:
         port_clearance: float,
         min_port_face_area: float,
         min_port_center_separation: Optional[float],
+        leg_azimuth_offsets_rad: Optional[Sequence[float]] = None,
     ) -> Tuple[Tuple[float, float, float], Dict[str, float]]:
         """Size and validate the `GEO-18` gapped-leg port layout.
 
@@ -2819,7 +2820,14 @@ class MeshGenerator:
             )
 
         # Ports now sit on the legs, so their separation is the leg separation.
+        # `PORT-9` step 3 leg (d1): with a per-leg azimuth offset the spacing is
+        # no longer uniform, so the pairwise minimum below — which already
+        # scanned every pair rather than assuming one gap — is the check that has
+        # to see the displaced layout, and that is why the offsets reach here at
+        # all rather than only the builder.
         theta = np.linspace(0.0, 2.0 * np.pi, leg_count, endpoint=False)
+        if leg_azimuth_offsets_rad is not None:
+            theta = theta + np.asarray(leg_azimuth_offsets_rad, dtype=float)
         centers = [
             np.array([ring_radius * np.cos(a), ring_radius * np.sin(a)]) for a in theta
         ]
@@ -2997,6 +3005,7 @@ class MeshGenerator:
         min_port_center_separation: Optional[float] = None,
         leg_gap_length: Optional[float] = None,
         ring_gap_length: Optional[float] = None,
+        leg_azimuth_offsets_rad: Optional[Sequence[float]] = None,
         emit_port_sheets: bool = False,
         air_padding: float = 0.03,
         resolution: float = 0.015,
@@ -3051,6 +3060,26 @@ class MeshGenerator:
             the drive direction is ``phi_hat``. The ring ports take ordinals
             ``leg_count+1 .. leg_count+2·leg_count``, after the leg ports, so
             every existing tag keeps its meaning.
+        leg_azimuth_offsets_rad : sequence of float, optional
+            `PORT-9` step 3 leg (d1), the geometric negative control of the C4
+            symmetry gate. ``None`` (the default) and an all-zero sequence both
+            keep the uniform layout **bit-for-bit** — the offsets are *added* to
+            the nominal azimuths, and adding an exact zero is exact, so the
+            all-zero build is the same construction and not a zero-angle
+            rotation of it. Otherwise entry ``i`` is added to leg ``i``'s
+            azimuth, and leg ``i`` **with everything that belongs to it** — its
+            two stubs, its gap, its terminals, its port box and (with
+            `emit_port_sheets`) its sheet — moves rigidly about the z axis by
+            that angle, while the rings, the phantom and every other leg stay
+            put. The coil loses C4; nothing else about it changes. Since
+            `GEO-19` step B the box and sheet are already built in the leg's own
+            local frame and rotated onto its azimuth, so a displaced port stays
+            square about its leg axis and its sheet stays the plane containing
+            that axis and its own radial direction. Requires `leg_gap_length`
+            (an ungapped layout floats its boxes *between* legs, so a leg has no
+            port to carry) and is refused with `ring_gap_length` (the ring gaps
+            sit at mid-azimuths that a displaced leg would no longer bisect).
+            Length must be `leg_count`.
         emit_port_sheets : bool, optional
             `GEO-18` step 2, requires `leg_gap_length` or `ring_gap_length`.
             A port only gets a sheet if it has terminals: with
@@ -3124,6 +3153,36 @@ class MeshGenerator:
                 "boxes float in the air with no terminals to span"
             )
 
+        if leg_azimuth_offsets_rad is not None:
+            # `PORT-9` step 3 leg (d1). Checked before gmsh exists, like the
+            # `emit_port_sheets` contradiction above.
+            offsets = np.asarray(leg_azimuth_offsets_rad, dtype=float)
+            if offsets.shape != (leg_count,):
+                raise ValueError(
+                    "leg_azimuth_offsets_rad must carry one angle per leg: got "
+                    f"shape {tuple(offsets.shape)} for leg_count={leg_count}"
+                )
+            if leg_gap_length is None:
+                # Without a gap the port boxes sit at the *midpoint* azimuths
+                # between legs, so "rotate the leg with its port" has no
+                # referent; refusing is honest, silently moving legs out from
+                # under unmoved boxes is not.
+                raise ValueError(
+                    "leg_azimuth_offsets_rad requires leg_gap_length: the "
+                    "ungapped layout floats its port boxes between legs, so a "
+                    "leg cannot carry its port around with it"
+                )
+            if ring_gap_length is not None:
+                # `GEO-20` cuts each ring at the mid-azimuth between adjacent
+                # legs. A displaced leg no longer bisects those arcs, so the
+                # ring gaps would silently stop being centred on anything.
+                raise ValueError(
+                    "leg_azimuth_offsets_rad cannot be combined with "
+                    "ring_gap_length: the ring gaps are centred on the "
+                    "mid-azimuths of the *uniform* layout, which a displaced "
+                    "leg no longer bisects"
+                )
+
         leg_radius_eff = 0.5 * leg_width
         ring_port_layout: Optional[Dict[str, float]] = None
         if ring_gap_length is not None:
@@ -3168,6 +3227,7 @@ class MeshGenerator:
                 port_clearance=port_clearance,
                 min_port_face_area=min_port_face_area,
                 min_port_center_separation=min_port_center_separation,
+                leg_azimuth_offsets_rad=leg_azimuth_offsets_rad,
             )
 
         # The generator below can raise (overlapping facets, GEO-9 step 2b). Two
@@ -3195,6 +3255,7 @@ class MeshGenerator:
                     port_radius=port_diagnostics["port_radius_m"],
                     leg_gap_length=leg_gap_length,
                     ring_gap_length=ring_gap_length,
+                    leg_azimuth_offsets_rad=leg_azimuth_offsets_rad,
                     port_clearance=port_clearance,
                     emit_port_sheets=emit_port_sheets,
                     air_padding=air_padding,
@@ -3237,6 +3298,11 @@ class MeshGenerator:
             None if leg_gap_length is None else float(leg_gap_length)
         )
         diagnostics["port_layout"] = dict(port_diagnostics)
+        diagnostics["leg_azimuth_offsets_rad"] = (
+            None
+            if leg_azimuth_offsets_rad is None
+            else tuple(float(a) for a in leg_azimuth_offsets_rad)
+        )
         diagnostics["ring_gap_length_m"] = (
             None if ring_gap_length is None else float(ring_gap_length)
         )
@@ -3262,6 +3328,7 @@ class MeshGenerator:
         resolution: float,
         leg_gap_length: Optional[float] = None,
         ring_gap_length: Optional[float] = None,
+        leg_azimuth_offsets_rad: Optional[Sequence[float]] = None,
         port_clearance: float = 1.0e-3,
         emit_port_sheets: bool = False,
         conductor_resolution: Optional[float] = None,
@@ -3275,8 +3342,19 @@ class MeshGenerator:
         z_ring_offset = 0.5 * leg_spacing
         theta = np.linspace(0.0, 2.0 * np.pi, leg_count, endpoint=False)
         # Mid-azimuth between each adjacent leg pair — the gap centres, and the
-        # same angles the ungapped port boxes have always floated at.
+        # same angles the ungapped port boxes have always floated at. Deliberately
+        # off `theta`, the *nominal* layout: `birdcage_port_domain` refuses to
+        # combine leg offsets with ring gaps, so the two never disagree here.
         phi_mid = theta + np.pi / leg_count
+        # `PORT-9` step 3 leg (d1): the legs and the leg ports (and only those)
+        # ride the displaced azimuths. Adding an exact zero is exact, so `None`
+        # and an all-zero vector both give back `theta` bit-for-bit — the
+        # identity case is the same construction, not a zero-angle rotation.
+        theta_leg = theta + (
+            0.0
+            if leg_azimuth_offsets_rad is None
+            else np.asarray(leg_azimuth_offsets_rad, dtype=float)
+        )
 
         ring_tags: List[int] = []
         # Each ring gap centre, in build order: bottom ring first, then top, so
@@ -3341,7 +3419,7 @@ class MeshGenerator:
         )
 
         leg_tags: List[int] = []
-        for angle in theta:
+        for angle in theta_leg:
             x = ring_radius * np.cos(angle)
             y = ring_radius * np.sin(angle)
             if leg_gap_length is None:
@@ -3416,9 +3494,9 @@ class MeshGenerator:
                     f"100+i and 200+i, so the port count must be <= 99, got "
                     f"{n_ports_total}"
                 )
-        for idx, angle in enumerate(theta):
+        for idx, angle in enumerate(theta_leg):
             if leg_gap_length is None:
-                next_angle = theta[(idx + 1) % leg_count]
+                next_angle = theta_leg[(idx + 1) % leg_count]
                 box_angle = np.arctan2(
                     np.sin(angle) + np.sin(next_angle),
                     np.cos(angle) + np.cos(next_angle),
