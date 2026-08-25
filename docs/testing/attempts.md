@@ -15822,3 +15822,233 @@ sites, and the 216/232 `OPS-17` denominator must be re-derived on top of
 §9 item 4 (`EX-30` leg (mesh)) unless the review re-queues.
 
 `main` clean at handoff.
+
+---
+
+## 2026-08-25T22:10Z — `EX-30` leg (mesh) — **incomplete**
+
+**Chunk:** `EX-30`, leg (mesh) — §9 item 4. **Outcome: incomplete.** Four of
+seven `examples/meshing/` examples green, three red, **two of the three reds
+are validation gates red on `main`**. The leg's (1\*) example-record licence
+was granted and **deliberately not used**: nothing re-recorded, no band moved,
+no assertion removed or loosened. `EX-30` stays 🟡.
+
+**Preflight.** Tree clean on `main` @ `9b679d8`, container Up 28 h. No anomaly,
+no prior dirty-tree entry. §9 items 1 and 3 are done (12:00 and 15:00 slots);
+item 2 is 🚫 blocked on a ruling and says so in its own text ("The next slot
+takes item 3", and item 3 has since closed), so item 4 is the first open item.
+
+**What was tried, in order.** (1) Pre-run census as the negative control,
+before anything else. (2) `mesh:1..5` as one batch. (3) `mesh:4`+`mesh:5` after
+`set -e` truncated at `mesh:3`. (4) `mesh:6`+`mesh:7`. (5) `mesh:5` alone after
+the second batch truncated at `mesh:4`. (6) A direct pytest probe of the two
+gate modules the reds point at, rather than inferring their state. (7) A direct
+probe of the third gate module. (8) One measurement-only resolution/sizing
+probe to turn the `mesh:3` red into a one-line review call. (9) Post-run census
+against a *derived* expectation.
+
+### The census, derived and exact
+
+Pre-run: `dead=0 guide=0 stale=26 stale_severity=report exit=2`
+(`20260825T213116Z_EX-30-mesh-precensus.log`, 1 s) — reproducing the 09:00
+slot's post-census figure exactly. Attributed by family before anything ran:
+**13 `meshing`** + 7 repo-root + 4 `ports` + 2 `ans` = 26. A clean leg
+predicted **26 − 13 = 13**.
+
+Post-run: **`dead=0 guide=0 stale=19 exit=2`**
+(`20260825T213732Z_EX-30-mesh-postcensus.log`, 1 s). `meshing` **13 → 6**;
+**no other family moved** — repo-root 7 → 7, `ports` 4 → 4, `ans` 2 → 2,
+`dead=0 guide=0` on both readings, both passing the `OPS-19` `exit != 1` gate.
+13 − 7 = 6 and 6 + 7 + 4 + 2 = 19, exact. The six survivors are *precisely*
+the three red examples' artifacts: `birdcage_graded_conductors_{baseline,
+graded}_combined.xdmf`, `two_torus_port_sheet_{combined,facets}.xdmf`,
+`region_resolution_policy_{clamps_only,policy}_combined.xdmf`.
+
+Attribution of the seven that cleared: `mesh:1` 2, `mesh:2` 2, `mesh:6` 3.
+`mesh:7` was green with **0** stale artifacts and so contributed no delta —
+worth noting for the review, since the item sized this leg against 13 and 13 is
+what six examples carried, not seven.
+
+Worth recording **against** leg (root)'s observation. There, `mag:6`'s XDMF
+cleared despite exit 1, and the entry warned the census is not a proxy for "the
+example passed". In *this* family it is: no red example's artifacts cleared —
+`mesh:3` aborts before its first mesh exists, and `mesh:4`/`mesh:5` assert
+before their exports. The two readings are both right; the difference is where
+each example puts its writes.
+
+### Green, with what each one proves
+
+`20260825T213142Z_EX-30-mesh-run-1to5.log` (Status 1, 25 s — truncated at
+`mesh:3`): **`mesh:1`** "All identities hold. Total elapsed 15.7 s",
+`[mesh] 79070 cells built in 14.2 s`; **`mesh:2`** "All identities hold. Total
+elapsed 1.4 s", `5717 cells` — its `RECORDED_WALL_RATIO` / `RECORDED_INTERIOR_RATIO`
+gates and its cell count all unmoved on 0.11.
+
+`20260825T213323Z_EX-30-mesh-run-6to7.log` (Status 0, **124 s**): **`mesh:6`**
+"All identities hold. Total elapsed 45.4 s" and **`mesh:7`** "All identities
+hold. Total elapsed 75.8 s". `mesh:7`'s 75.8 s sits right on `EX-31`'s recorded
+70.6 s.
+
+### Red 1 — `mesh:3`, and the `GEO-15` gate under it
+
+`examples/meshing/03_birdcage_graded_conductors.py` aborts on the **baseline**
+rung (`_rung(None, comm)`, built first, line 204):
+
+```
+Error   : Invalid boundary mesh (overlapping facets) on surface 59 surface 79
+RuntimeError: birdcage_port_domain geometry generation failed on rank 0
+```
+
+Because the baseline is first, the *graded* rung — the one carrying the gate —
+never ran. The example imports `CONDUCTOR_RUNGS` / `CAD_MASS_GATE` /
+`_check_geo9_identities` from the gate module per `ANS-1`, so I probed the gate
+rather than reasoning from that: `20260825T213821Z_EX-30-mesh-birdcage-gate-probe.log`,
+`-n 2`, real, **`1 failed in 2.51s`**, `Status: 1`, same
+`_mesh(conductor_resolution=None)` line, same gmsh message.
+**`tests/mesh/test_birdcage_conductor_sizing.py::test_graded_conductor_sizing_recovers_the_cad_mass`
+is red on `main` at `9b679d8` and has been since the 0.11 merge, unobserved** —
+the third such gate `EX-30` has surfaced, after `OPS-24`'s cavity gate and leg
+(root)'s `MAG-13` convergence gate.
+
+**Localised in one 39 s run, and it is *not* the axis leg (root) found.**
+`tests/mesh/probe_birdcage_conductor_resolution.py` (new, measurement only, no
+assertion, imported by nothing — the `probe_straight_wire_mesh_resolution.py`
+precedent), `20260825T213926Z_EX-30-mesh-birdcage-resolution-probe.log`,
+`Status: 0`, `-n 1`:
+
+```
+Leg A -- the fixture's global resolution (0.015), conductor sizing swept:
+  h_c = None    (baseline) FAIL  Invalid boundary mesh (overlapping facets) on surface 59 surface 79 (1.8 s)
+  h_c = 3.2000e-03         OK       47975 cells (10.4 s)
+  h_c = 1.6000e-03         OK       98666 cells (20.7 s)
+
+Leg B -- the baseline's conductor sizing (h_c = None), global resolution stepped finer:
+  h = 0.0150              FAIL  ... on surface 59 surface 79 (1.7 s)
+  h = 0.0130              FAIL  ... on surface 48 surface 48 (1.5 s)
+  h = 0.0110              FAIL  ... on surface 65 surface 65 (1.3 s)
+```
+
+**It is the conductor sizing, not the resolution.** Both `GEO-15` rungs mesh at
+the *same* global 0.015 the baseline dies at, and refining the global size does
+not walk out of it — three finer steps fail on three *different* surface pairs.
+Leg (root)'s `straight_wire_domain` finding was the reverse (resolution alone
+explained it; every geometry failed at h = 0.01). Same family — 0.11 gmsh
+meeting a parameter set no green gate exercises — **different axis**, so the
+review needs two rulings here, not one.
+
+One bracket for whoever rules: the graded rung meshes **98 666 cells** against
+the 2026-08-16 record of 98 474. That is from the probe, which does not run the
+gate's assertions, so it is a bracket and **not** a re-record.
+
+### Red 2 — `mesh:4`, and the `GEO-16` gate under it
+
+`20260825T213228Z_EX-30-mesh-run-4to5.log`, Status 1, 32 s (truncated at
+`mesh:4`, so `mesh:5` was re-run alone):
+
+```
+AssertionError: the default path meshed 79070 cells against the recorded 79534:
+  the opt-in sheet perturbed the mesh every gated PORT-1 / PORT-10 number was measured on
+```
+
+Probed, not inferred: `20260825T213632Z_EX-30-mesh-gate-probe.log`, `-n 2`,
+real, **`1 failed, 5 passed, 4 warnings in 42.06s`**, `Status: 1` —
+**`tests/mesh/test_two_torus_port_sheet.py::test_kwarg_off_reproduces_the_recorded_mesh`
+is red on `main`.**
+
+**The assertion's blame is misplaced and the leg can show it.** Two independent
+*no-sheet* builds in this slot agree exactly at **79 070** — `mesh:1`, which
+does not assert a cell count and ran green, and `mesh:4`'s own kwarg-off
+control — while the sheeted build is a properly distinct **79 940**. So the
+opt-in sheet did not perturb anything; the 79 534 record, measured on 0.7.2 in
+`20260817T003524Z_GEO-16.log`, is stale. The module's five other assertions
+pass, including the CAD port-interface area and the 0.970–0.980 meshed band its
+own comment names as the constant's guard.
+
+**Deliberately not re-recorded, and this is the leg's judgement call.** The
+(1\*) licence covers *example* records; `NCELLS_UNGATED_RECORD` lives in a
+**gate module** (`tests/mesh/test_two_torus_port_sheet.py:78`) and the licence
+does not reach it. I also left `mesh:1`'s guide alone (docstring line 52 and
+`01_two_torus_ports.md:50` both say "79 534 cells, 12.9 s"), which the licence
+*does* reach: re-recording the example's copy of a number while the gate still
+asserts the old one would manufacture precisely the example/gate divergence
+`ANS-1` exists to prevent, and would pre-empt a ruling that could go the other
+way. The review's call, stated as a fork: re-record the gate constant to 79 070
+and the `mesh:1` guide with it, or treat the 464-cell move (0.58%) as a
+regression to diagnose.
+
+### Red 3 — `mesh:5`, example-side only, gate module green
+
+`20260825T213601Z_EX-30-mesh-run-5.log`, Status 1, 7 s:
+
+```
+  clamps_only  cells=   19618  mesh=  2.40 s
+  policy       cells=   20745  mesh=  2.65 s
+AssertionError: clamps-only mesh recovers 0.755006 of tag 1 (coil_1)'s CAD volume,
+  clearing the 0.755 floor the policy is supposed to be needed for
+  (on record: 0.754685 / 0.752565). The control no longer separates —
+  the premise needs re-examining, not the floor.
+```
+
+An `EX-18`/`EX-20` **inverted** assertion that lost its separation: the
+clamps-only control is supposed to *fail* the floor and on 0.11 it clears it by
+**6.0e-6** relative, having sat at 0.754685 — a 3.2e-4 move.
+
+`tests/mesh/test_mesh_tag_integrity.py` passed **all four** of its tests in the
+same probe run, and the reason is structural: the gate asserts the floor
+**one-sidedly on the policy mesh** (`policy_volumes[tag] / cad_volume >=
+POLICY_MIN_CAD_RECOVERY`, line 248) and never asserts that the control fails
+it. The stricter inverted claim exists only in the example. So this one is not
+a gate red — it is an example whose control premise has thinned to nothing.
+
+**Not re-recorded and not widened.** The licence covers counts and CAD masses,
+not a control's separation premise; moving `POLICY_MIN_CAD_RECOVERY` or the
+0.754685 record to recover the assertion would be loosening a gate, and the
+assertion's own message says the premise is what needs re-examining.
+
+### Cost
+
+**251 s of compute across seven runs** (25 + 32 + 124 + 7 + 44 + 4 + 39) plus
+two 1 s censuses. Commissioned standard, **measured standard**; nothing came
+near its `-t 300` / `timeout -k 30 400` ceiling. `-n 2` throughout except the
+resolution probe's deliberate `-n 1` (the generator builds its gmsh model under
+`if comm.rank == rank:` while `_model_to_mesh` is collective, so a rank-0 gmsh
+exception deadlocks the other ranks instead of reporting — the straight-wire
+probe documents the same trap).
+
+### Docs and tree
+
+**Landed on `main`:** the new measurement probe, nine harness logs (seven
+compute runs + two censuses) +
+`test-results.md` rows, three known-issues entries (none retired), the §7
+`EX-30` table row and a leg-(mesh) prose block, and §9 item 4 annotated 🟡 with
+the three rulings named. **No source or test code changed**, so no `attempt/*`
+branch was needed and nothing was parked. No denials, no anomalies.
+
+### Hypothesis for the next attempt
+
+Leg (mesh) cannot close until the review disposes of all three reds, and none
+of them is `EX-30`'s to fix. All three are cheap for a review to rule on
+because the measurement is already done:
+
+* **`GEO-16`** is the cheapest — 79 070 is confirmed by two independent builds
+  plus the gate probe, so a one-line re-record licence *scoped to gate modules*
+  (which this leg was correctly denied) closes `mesh:4` with no further compute.
+* **`GEO-17`** needs a choice, not a measurement: re-choose the clamps-only
+  control to a sizing that fails the floor by a stated margin, or retire the
+  inverted claim. The 6.0e-6 margin says the control was always marginal and
+  0.11 merely tipped it.
+* **`GEO-15`** is the real one, and the probe has already narrowed it to the
+  ungraded conductor path at *any* global resolution tried. The candidate
+  readings are: harden `birdcage_port_domain` against the ungraded path, or
+  re-choose the baseline control to a coarse-but-meshable `h_c` — noting that
+  the gate's *inverted* premise needs a baseline that fails the CAD-mass gate,
+  which a meshable coarse `h_c` may well still do (the 3.2e-3 rung recovers
+  enough to be worth measuring first, at 10 s).
+
+Beyond this leg: `EX-30` has now surfaced **three** gates non-executing on
+`main` since the 0.11 merge, in three different subsystems, each found only
+because an example ran. That is a pattern worth a chunk of its own — the
+`OPS-26` step 2 execution census is the obvious owner, and this leg's three
+modules should seed its list.
+
+`main` clean at handoff.

@@ -28,6 +28,150 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🔴 OPEN 2026-08-25 (`EX-30` leg (mesh), 16:30 implementer slot) — `test_graded_conductor_sizing_recovers_the_cad_mass` is **red on `main`**: the `GEO-15` gate's *baseline* rung no longer meshes, and it is the **ungraded conductor path**, not the resolution
+
+> **Where this fires.**
+> `tests/mesh/test_birdcage_conductor_sizing.py::test_graded_conductor_sizing_recovers_the_cad_mass`,
+> and through it `examples/meshing/03_birdcage_graded_conductors.py` (`mesh:3`),
+> which imports `CONDUCTOR_RUNGS` / `CAD_MASS_GATE` / `_check_geo9_identities`
+> from that module per `ANS-1`. Both build `baseline = _mesh(conductor_resolution=None)`
+> **first**, so both abort before the graded rung — the rung that actually
+> carries the gate — ever runs.
+>
+> **Literal symptom** (`20260825T213821Z_EX-30-mesh-birdcage-gate-probe.log`,
+> `-n 2`, real, **`1 failed in 2.51s`**, `Status: 1`; the example's own abort is
+> `20260825T213142Z_EX-30-mesh-run-1to5.log`, `Status: 1`):
+>
+> ```
+>     baseline = _mesh(conductor_resolution=None)
+> E   RuntimeError: birdcage_port_domain geometry generation failed on rank 0
+> E   Exception: Invalid boundary mesh (overlapping facets) on surface 59 surface 79
+> ```
+>
+> **Localised, not inferred** — `tests/mesh/probe_birdcage_conductor_resolution.py`
+> (new with this entry; measurement only, asserts nothing, imported by nothing),
+> `20260825T213926Z_EX-30-mesh-birdcage-resolution-probe.log`, `Status: 0`,
+> 39 s, `-n 1`:
+>
+> ```
+> Leg A -- the fixture's global resolution (0.015), conductor sizing swept:
+>   h_c = None    (baseline) FAIL  Invalid boundary mesh (overlapping facets) on surface 59 surface 79 (1.8 s)
+>   h_c = 3.2000e-03         OK       47975 cells (10.4 s)
+>   h_c = 1.6000e-03         OK       98666 cells (20.7 s)
+>
+> Leg B -- the baseline's conductor sizing (h_c = None), global resolution stepped finer:
+>   h = 0.0150              FAIL  ... on surface 59 surface 79 (1.7 s)
+>   h = 0.0130              FAIL  ... on surface 48 surface 48 (1.5 s)
+>   h = 0.0110              FAIL  ... on surface 65 surface 65 (1.3 s)
+> ```
+>
+> **It is the conductor sizing, not the resolution.** Both `GEO-15` rungs mesh
+> at the *same* global 0.015 that the baseline fails at, and refining the global
+> size does not walk out of the failure — three finer steps fail on three
+> *different* surface pairs. This is the **opposite** reading from the
+> `straight_wire_domain` entry below, where `resolution` alone explained
+> everything and every geometry failed at h = 0.01; the two findings are the
+> same *family* (0.11 gmsh meeting a parameter set no green gate exercises) but
+> not the same axis, and a single ruling will not cover both.
+>
+> **Consequence.** The `GEO-15` graded-conductor CAD-mass gate — the one
+> `EX-21` and `mesh:3` rest on — has been **non-executing on `main` since the
+> 0.11 merge**, unobserved, in the same class as `OPS-24`'s cavity gate and leg
+> (root)'s `MAG-13` convergence gate. What it *would* have measured is now
+> partly known: the graded rung meshes at **98 666 cells**, against the
+> 2026-08-16 record of 98 474 (0.7.2) — but that number comes from this probe,
+> which does not run the gate's assertions, so it is a bracket, not a re-record.
+>
+> **Not diagnosed further, and deliberately not fixed.** Whether the baseline
+> control moves to a sizing that meshes, `birdcage_port_domain` is hardened
+> against the ungraded path, or the inverted control is re-chosen is a
+> `GEO-15`/`EX-21` ruling, not `EX-30`'s — this chunk files reds, it does not
+> repair them, and no band was touched.
+>
+> **Verified at** `9b679d8`.
+
+### 🔴 OPEN 2026-08-25 (`EX-30` leg (mesh), 16:30 implementer slot) — `test_kwarg_off_reproduces_the_recorded_mesh` is **red on `main`**: the `GEO-16` kwarg-off cell record reads 79 534, the 0.11 image meshes **79 070**
+
+> **Where this fires.**
+> `tests/mesh/test_two_torus_port_sheet.py::test_kwarg_off_reproduces_the_recorded_mesh`
+> (`NCELLS_UNGATED_RECORD = 79_534`, line 78), and through the `ANS-1` import
+> also `examples/meshing/04_two_torus_port_sheet.py` (`mesh:4`), which fails on
+> the same constant.
+>
+> **Literal symptom** (`20260825T213632Z_EX-30-mesh-gate-probe.log`, `-n 2`,
+> real, **`1 failed, 5 passed, 4 warnings in 42.06s`**, `Status: 1`):
+>
+> ```
+> E   AssertionError: the default path meshed 79070 cells against the recorded 79534:
+>     the opt-in sheet perturbed the mesh every gated PORT-1 / PORT-10 number was measured on
+> E   assert 79070 == 79534
+> ```
+>
+> **The assertion's own premise is *not* what broke.** The message blames the
+> opt-in port sheet, and the sheet is innocent: two independent no-sheet builds
+> in this leg agree exactly at **79 070** — `mesh:1`
+> (`01_two_torus_ports.py`, which does not assert a cell count and ran **green**,
+> `[mesh] 79070 cells built in 14.2 s`) and `mesh:4`'s own kwarg-off control
+> (`[control] emit_port_sheet=False: 79070 cells in 13.6 s`) — while the
+> *sheeted* build is a properly distinct 79 940. So the default path is
+> self-consistent on 0.11 and it is the 79 534 record, measured on 0.7.2 in
+> `20260817T003524Z_GEO-16.log`, that is stale. The five other assertions in the
+> module pass, including the CAD port-interface area and the 0.970–0.980
+> meshed-band cross-check the constant's own comment names as its guard.
+>
+> **Deliberately not re-recorded**, though `EX-30` leg (mesh) holds an in-class
+> (1\*) example-record licence for moved cell counts: this constant lives in a
+> **gate module**, not an example, and the licence does not reach it. Aligning
+> the example's guide to 79 070 while the gate still asserts 79 534 would create
+> exactly the example/gate divergence `ANS-1` exists to prevent, so the
+> `mesh:1` guide's "79 534 cells / 12.9 s" was left standing too. The review
+> owns the call: re-record the gate constant to 79 070 (and the `mesh:1` guide
+> with it), or treat the 464-cell move as a regression to diagnose.
+>
+> **Verified at** `9b679d8`.
+
+### 🔴 OPEN 2026-08-25 (`EX-30` leg (mesh), 16:30 implementer slot) — `mesh:5`'s **inverted control lost its separation**: the clamps-only mesh now *clears* the 0.755 floor it is asserted to fail, by 6e-6
+
+> **Where this fires.** `examples/meshing/05_region_resolution_policy.py`
+> (`mesh:5`), line 255 — the `EX-18`/`EX-20` inverted-assertion pattern:
+> `assert recovery["clamps_only"][tag] < POLICY_MIN_CAD_RECOVERY`.
+>
+> **Literal symptom** (`20260825T213601Z_EX-30-mesh-run-5.log`, `-n 2`, real,
+> `Status: 1`, 7 s):
+>
+> ```
+>   clamps_only  cells=   19618  mesh=  2.40 s
+>   policy       cells=   20745  mesh=  2.65 s
+> AssertionError: clamps-only mesh recovers 0.755006 of tag 1 (coil_1)'s CAD volume,
+>   clearing the 0.755 floor the policy is supposed to be needed for
+>   (on record: 0.754685 / 0.752565). The control no longer separates —
+>   the premise needs re-examining, not the floor.
+> ```
+>
+> **This is example-side only; the gate module is green.**
+> `tests/mesh/test_mesh_tag_integrity.py` passed all four of its tests in the
+> same probe run (`20260825T213632Z_EX-30-mesh-gate-probe.log`) because it
+> asserts the floor **one-sidedly on the policy mesh** (`policy_volumes[tag] /
+> cad_volume >= POLICY_MIN_CAD_RECOVERY`, line 248) and never asserts that the
+> clamps-only control fails it. The stricter inverted claim exists only in the
+> example, which is why only the example is red.
+>
+> **The margin is the whole finding: 0.755006 against a 0.755 floor** — the
+> control clears it by 6.0e-6 relative, having sat at 0.754685 on 0.7.2, a
+> 3.2e-4 move. The example's own comment anticipates this shape ("a baseline
+> sitting at 0.949 would clear 'fails the gate' while saying nothing"), and
+> `CONTROL_SEPARATION = 0.05` exists for the `mesh:3` fixture but has no
+> counterpart here.
+>
+> **Deliberately not re-recorded and not widened.** The (1\*) licence covers
+> moved cell counts and CAD masses, not a control's separation premise, and
+> moving `POLICY_MIN_CAD_RECOVERY` or the record to recover the assertion would
+> be loosening a gate — the assertion message itself says the premise is what
+> needs re-examining. A `GEO-17` ruling: re-choose the clamps-only control so it
+> fails by a stated margin, or retire the inverted claim.
+>
+> **Verified at** `9b679d8`.
+
 ### 🔴 OPEN 2026-08-25 (`OPS-26` step 1, 15:00 implementer slot) — two `scripts/probes/` scripts were **never migrated to dolfinx 0.11**: they construct `fem.petsc.LinearProblem` without 0.11's required `petsc_options_prefix`
 
 > **Where this fires.** `scripts/probes/mag13_step2b_recovery.py:180` and
