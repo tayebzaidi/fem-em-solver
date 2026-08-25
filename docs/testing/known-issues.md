@@ -2998,7 +2998,34 @@ runs of the *same* command on an *unchanged* tree
 | **Ruling, 2026-08-23 03:00 review** | Restated as **(b′)**, per-record rather than one relative number — the proposed "≤ 1e-9 relative" would itself reject `‖S−Sᵀ‖/‖S‖` (1.0e-06 relative, cancellation-amplified): *the move across two same-slot runs must be ≤ 1% of the record's own unmoved band, and the value is written only to the digits both runs share, never fewer than the band resolves.* All four records pass (1.2e-4, 3.3e-6, 6e-5 and 7e-6 of their bands); the symmetry record is written as 3.11213e-05. Full text in PROJECT_PLAN §7 `OPS-18`. **This entry closes with the `OPS-18` 3a commit that writes the records** (§9 item 2). |
 | **Closed, `OPS-18` step 3b (2026-08-23, 15:00 slot)** | The stated condition is met: the records-writing commit is **`5df1e39`** (3a attempt 8), on `main` with this step's merge. The criterion that replaces "bit-identical" is (b′), quoted verbatim from the ruling above: *"the move across two same-slot runs must be ≤ 1% of the record's own unmoved band, and the value is written only to the digits both runs share, never fewer than the band resolves."* Every record written under it since — the four of attempt 7, the two of attempt 8 (1.2e-4 / 3.3e-6 / 6e-5 / 7e-6, then 6.6e-6 and below the printed digits, all as fractions of their own bands), and step 3b's four `UNIFORM_VOLUMES_RECORD` volumes (move 0.0 across two runs) — satisfies it with no band moved anywhere. **The underlying wobble is not fixed and is not a defect**: it is the ~1e-10 assembly/factorisation-order floor named in the Cause row, the same class as `MAG-18`'s 7.28e-08 cross-width floor, and it stays the reason no criterion in this project may say "bit-identical" of a *solved* number. |
 
-### Gate (iii) is blind to a broken C4 on the *opposite* class, and the lumped-sheet 4-port sweep loses reciprocity by 223× on an asymmetric layout (`PORT-9` step 3 leg (d1), 2026-08-23)
+### ✅ RETIRED 2026-08-25 — Gate (iii) is blind to a broken C4 on the *opposite* class, and the lumped-sheet 4-port sweep loses reciprocity by 223× on an asymmetric layout (`PORT-9` step 3 leg (d1), 2026-08-23)
+
+**Retirement evidence (leg (d1′), 06:00 slot, `20260825T110438Z_PORT-9-step3d1.log`,
+`13 passed 106.64 s`; confirmed by `20260825T110643Z_PORT-9-step3d1-consumers.log`,
+`24 passed 222.15 s`).** Both findings are disposed on `main`, and the module that
+carried them is now on `main` and green rather than parked:
+
+* **Finding 1 (gate blindness) — disposed by tightening, not by widening.** Gate
+  (iii)'s 5% became **(iii′) 0.5%** at its single source with all three consumers
+  re-run green under it (leg (c) 0.0407%, leg (d0) 0.0040%, leg (d) 0.0553 /
+  0.0353 / 0.0214%). Under (iii′) the 22.5° rotation breaks **all three** classes,
+  not two: self **6.2219%**, adjacent **7.1142%**, and the opposite class — the
+  one this entry named as blind at 1.6476% against 5% — **2.8474%**, an amplifi­
+  cation of 133.11× over the symmetric rung. The 08-23 10:30 review's open
+  question about whether the opposite class belongs in the geometric control is
+  therefore answered affirmatively by measurement.
+* **Finding 2 (reciprocity) — disposed by the (d3) power-wave assembly.** On the
+  same displaced fixture the route now reads `‖S−Sᵀ‖/‖S‖` = **2.259e-14** against
+  the unmoved 1e-3, versus this entry's **5.57e-03**: a **2.466e+11×** separation
+  against the (d3) ruling's ≥ 100× bar, and the first test of that fix on a
+  fixture that is both 3D and asymmetric. Per (d3c) the reading is an order of
+  magnitude only (the confirm run read 6.846e-14).
+
+`PORT-9` ✅ 2026-08-25 at 10 MHz; the branch
+`attempt/PORT-9-d1-20260823T124500Z` is deleted. Original text kept verbatim
+below.
+
+---
 
 Two findings from one run, both **measured, neither disposed** — the leg's own
 negative-result clause (§7 `PORT-9` step 3 leg (d1)) sends both to the review.

@@ -4,7 +4,7 @@ Leg (c) put the first field on `GEO-18`'s gapped, sheeted birdcage and read one
 column of ``Z`` at the two-torus probe impedance; leg (d0) found the termination
 that puts the structure in a circuit at all (``Z_p = z0 = 50 Ohm``, discrimination
 margin 2256.9707x against a 10x floor, adjacent spread 0.0040% inside the unmoved
-5% band — `GEO-19` step B's mesh; 253.2002x / 0.0359% on the pre-step-B one).  Neither is a network: two columns of ``Z`` carry no reciprocity, no
+0.5% band, leg (d1')'s (iii') tightening — `GEO-19` step B's mesh; 253.2002x / 0.0359% on the pre-step-B one).  Neither is a network: two columns of ``Z`` carry no reciprocity, no
 passivity and no circulant reading.
 
 This module drives **all four ports in turn** through
@@ -21,7 +21,7 @@ leg (d) as scoped by the 2026-08-23 03:00 review):
   imported, not restated);
 * **(ii) passivity** — ``σ_max(S) ≤ 1 + 1e-9`` and every column power sum ``≤ 1``;
 * **(iii) C4 symmetry** — the maximum relative spread within each of the three
-  circulant classes ``{Z_ii}``, ``{Z_i,i±1}`` and ``{Z_i,i+2}`` is ``≤ 5%``
+  circulant classes ``{Z_ii}``, ``{Z_i,i±1}`` and ``{Z_i,i+2}`` is ``≤ 0.5%``
   (``ADJACENT_SPREAD_BAND``, imported from leg (c)), taken **on Z**, so the
   sweep's termination convention does not enter the symmetry reading.
 
@@ -41,9 +41,10 @@ reproducible **in order of magnitude only** — 2.152e-14 relative here against
 2.049e-14 pre-step-B), ``σ_max(S)`` = 0.999992805 (band 1 + 1e-9), maximum
 column power sum 0.793823974, and the three class means/spreads 2.338160261e+01
 Ohm / 0.0553%, 1.700854304e+01 Ohm / 0.0353%, 1.606048044e+01 Ohm / 0.0214%
-against this module's unmoved 5% band (and inside the 10:30 review's tighter
-(iii′) reading of 0.5% as well, which is not gated here); the pooled-vs-worst
-separation of negative control (2) reads 166.6766x.
+against the imported band, which is now the 10:30 review's (iii′) reading of
+**0.5%** — leg (d1′) executed that tightening on 2026-08-25 and re-ran this
+module green under it, unchanged in every digit; the pooled-vs-worst separation
+of negative control (2) reads 166.6766x.
 
 The **pre-step-B** baselines these replace are the image+route-tagged ones of
 ruling (5\*), taken on the 116 368-cell mesh and measured twice in-slot,
@@ -394,7 +395,7 @@ def four_port_sweep():
             + f"\n    class spreads: self {spreads['self'] * 100:.4f}%  "
             f"adjacent {spreads['adjacent'] * 100:.4f}%  "
             f"opposite {spreads['opposite'] * 100:.4f}%  "
-            f"(band {ADJACENT_SPREAD_BAND * 100:.0f}%); pooled off-diagonal "
+            f"(band {ADJACENT_SPREAD_BAND * 100:.1f}%); pooled off-diagonal "
             f"{pooled * 100:.4f}%",
             flush=True,
         )
@@ -575,7 +576,7 @@ def test_the_four_port_network_is_passive(four_port_sweep):
 
 @complex_only
 def test_the_impedance_matrix_is_c4_circulant(four_port_sweep):
-    """**Gate (iii).**  Each circulant class of ``Z`` spreads ``≤ 5%``.
+    """**Gate (iii′).**  Each circulant class of ``Z`` spreads ``≤ 0.5%``.
 
     The four legs sit at 0/90/180/270 deg on a layout that is C4-invariant by
     construction (`GEO-18`: square-section port boxes on the legs, drive ``ẑ``),
@@ -596,7 +597,7 @@ def test_the_impedance_matrix_is_c4_circulant(four_port_sweep):
     if MPI.COMM_WORLD.rank == 0:
         print(
             f"\n[PORT-9 step3d] GATE (iii) C4 circulant symmetry of Z "
-            f"(band {ADJACENT_SPREAD_BAND * 100:.0f}%, leg (c)'s, unmoved):",
+            f"(band {ADJACENT_SPREAD_BAND * 100:.1f}%, leg (c)'s, unmoved):",
             flush=True,
         )
         for name in ("self", "adjacent", "opposite"):
@@ -619,7 +620,7 @@ def test_the_impedance_matrix_is_c4_circulant(four_port_sweep):
     for name, value in spreads.items():
         assert value <= ADJACENT_SPREAD_BAND, (
             f"the {name} class of Z spreads {value * 100:.4f}% against the "
-            f"pre-stated {ADJACENT_SPREAD_BAND * 100:.0f}% band — on an "
+            f"pre-stated {ADJACENT_SPREAD_BAND * 100:.1f}% band — on an "
             "undisplaced, C4-invariant layout that is mesh-induced asymmetry at "
             "the graded sizing (§7 `PORT-9` step 3 leg (d), negative result: "
             "record all three class spreads and both controls, stop; never widen)"

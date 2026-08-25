@@ -28,10 +28,10 @@ for.
 ports *adjacent* to the driven one are related by the mirror that fixes port 1
 and must see the same mutual impedance:
 
-    ``|Z₂₁ − Z₄₁| / |Z₂₁| ≤ 5%``
+    ``|Z₂₁ − Z₄₁| / |Z₂₁| ≤ 0.5%``
 
-— gate (iii)'s own band, pre-stated at scoping (§7 `PORT-9` step 3 leg (c)) and
-not to be widened.  ``Re Z₁₁`` is printed, not gated.
+— gate (iii′)'s own band, pre-stated at scoping (§7 `PORT-9` step 3 leg (c)) at
+5% and **tightened to 0.5% with leg (d1′) on 2026-08-25**; not to be widened.  ``Re Z₁₁`` is printed, not gated.
 
 The *opposite*-port ordering assertion this module used to carry alongside it
 — the anti-degeneracy check — was **retired by ruling (6\*) (2026-08-24 18:00
@@ -105,7 +105,20 @@ PHANTOM_CELL_TAG = 3
 # driven one are mirror images of each other about the drive, so their mutual
 # impedances must agree to this.  Never widened — an adjacent spread above it is
 # the mesh-asymmetry finding the step-3 entry already names.
-ADJACENT_SPREAD_BAND = 0.05
+#
+# **(iii') tightening 5% -> 0.5%, ruled 2026-08-23 10:30 and executed with
+# `PORT-9` leg (d1') on 2026-08-25 (§9 item 1).**  This is a *narrowing*: every
+# symmetric reading on `GEO-19` step B's mesh already satisfies it with two
+# decades to spare, measured, not assumed — leg (c)'s adjacent pair 0.0407%
+# (`20260825T003832Z_GEO-19-stepB-port9-run2.log:9217`), leg (d0)'s terminated
+# column 0.0040% (same log, :9224), leg (d)'s three 4x4 classes 0.0553 / 0.0353
+# / 0.0214%.  The reason to tighten is leg (d1')'s geometric negative control:
+# at 5% a quarter-pitch rotation of one leg is the *only* asymmetry the gate can
+# resolve, so the band was measuring nothing between 0.05% and 5%.  All three
+# consumer modules (this one, `test_port_birdcage_termination_probe.py`,
+# `test_port_birdcage_four_port.py`) were run green at the new value in the same
+# slot the value moved.  The old 5% is history, kept here; it never widens back.
+ADJACENT_SPREAD_BAND = 0.005
 
 # `GEO-18` step 2's record for the sheeted mesh, the fixture anchor: the mesh
 # this leg solves on must be the mesh the sheets were gated on.  **Image-tagged
@@ -442,12 +455,12 @@ def test_the_birdcage_column_came_off_the_solved_field(birdcage_column):
 def test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not(
     birdcage_column,
 ):
-    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 5%``, with ``Z₃₁`` apart.
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
 
     The layout is C4-invariant by construction, and the mirror plane through the
     driven leg swaps P2 and P4 while fixing P1 and P3.  The solved field must
     carry that symmetry into the mutual impedances: the adjacent pair agrees to
-    gate (iii)'s own 5% band.  The band is pre-stated and never widened — a
+    gate (iii′)'s own 0.5% band.  The band is pre-stated and never widened — a
     spread above it is the mesh-asymmetry finding §7 `PORT-9` step 3 names, and
     its disposal is a known-issues entry and a stop.
 
@@ -476,8 +489,8 @@ def test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not(
       produce.
 
     So the discrimination margin below is **printed as a diagnostic, not
-    gated**, with its two mesh-tagged readings kept above as history.  The 5%
-    C4 band is untouched and stays the gate.  The thin separation itself stays
+    gated**, with its two mesh-tagged readings kept above as history.  The C4
+    band stays the gate, at (iii′)'s tightened 0.5%.  The thin separation itself stays
     flagged to the weekly review for §10 Phase 6.
     """
     z = birdcage_column["z_column"]
@@ -491,7 +504,7 @@ def test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not(
     if MPI.COMM_WORLD.rank == 0:
         print(
             f"\n[PORT-9 step3c] C4 ADJACENT-PAIR gate (band "
-            f"{ADJACENT_SPREAD_BAND * 100:.0f}%, gate (iii)'s own, pre-stated at "
+            f"{ADJACENT_SPREAD_BAND * 100:.1f}%, gate (iii)'s own, pre-stated at "
             f"scoping and unmoved):\n"
             f"    Z21 = {z21:+.9e} Ohm  |Z21| = {abs(z21):.9e}\n"
             f"    Z41 = {z41:+.9e} Ohm  |Z41| = {abs(z41):.9e}\n"
@@ -518,7 +531,7 @@ def test_adjacent_ports_of_the_driven_leg_agree_and_the_opposite_one_does_not(
     assert spread <= ADJACENT_SPREAD_BAND, (
         f"the two ports adjacent to the driven leg read |Z21| = {abs(z21):.9e} "
         f"and |Z41| = {abs(z41):.9e} Ohm, a spread of {spread * 100:.4f}% against "
-        f"the pre-stated {ADJACENT_SPREAD_BAND * 100:.0f}% band — the solved "
+        f"the pre-stated {ADJACENT_SPREAD_BAND * 100:.1f}% band — the solved "
         "field does not carry the layout's C4 symmetry (§7 `PORT-9` step 3 leg "
         "(c), negative result: magnitudes into the entry and known-issues, park, "
         "stop; never widen)"

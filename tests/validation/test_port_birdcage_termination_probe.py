@@ -28,7 +28,8 @@ at 50 Ω the discrimination margin
 
     ``|Z₃₁ − ½(Z₂₁ + Z₄₁)| / |Z₂₁ − Z₄₁| ≥ 10``
 
-**while** the adjacent spread ``|Z₂₁ − Z₄₁|/|Z₂₁|`` stays ``≤ 5%``.  Leg (c)'s
+**while** the adjacent spread ``|Z₂₁ − Z₄₁|/|Z₂₁|`` stays ``≤ 0.5%`` ((iii′)'s
+tightened band, imported; 5% until leg (d1′) on 2026-08-25).  Leg (c)'s
 floor is 1.0060× at 0.0159%, so 10× is a 0.16% separation on the same floor —
 reachable rather than wished for.  The spread condition is not decoration: a
 margin bought by breaking the layout's C4 symmetry is a mesh finding, not a
@@ -369,7 +370,7 @@ def termination_probe():
                 print(f"    Z_{k}1 = {z:+.9e} Ohm  |Z| = {abs(z):.9e}", flush=True)
             print(
                 f"    adjacent spread |Z21 - Z41|/|Z21| = {sv['spread'] * 100:.4f}%  "
-                f"(band {ADJACENT_SPREAD_BAND * 100:.0f}%, "
+                f"(band {ADJACENT_SPREAD_BAND * 100:.1f}%, "
                 f"{'INSIDE' if sv['spread'] <= ADJACENT_SPREAD_BAND else 'MISS'})\n"
                 f"    |Z31 - (Z21+Z41)/2| = {sv['opposite_gap']:.9e} Ohm, "
                 f"|Z21 - Z41| = {sv['pair_gap']:.9e} Ohm  =>  discrimination "
@@ -512,7 +513,7 @@ def test_the_termination_closed_a_current_path(termination_probe):
 def test_fifty_ohm_termination_separates_adjacent_from_opposite_coupling(
     termination_probe,
 ):
-    """**Leg (d0)'s gate.**  Margin ≥ 10× at 50 Ω, C4 spread still ≤ 5%.
+    """**Leg (d0)'s gate.**  Margin ≥ 10× at 50 Ω, C4 spread still ≤ 0.5%.
 
     Both conditions in the same solve, both pre-stated (18:00 review 2026-08-22,
     §7 `PORT-9` step 3 leg (d0)), neither widened.  A margin bought by breaking
@@ -533,7 +534,7 @@ def test_fifty_ohm_termination_separates_adjacent_from_opposite_coupling(
         print(
             f"\n[PORT-9 step3d0] GATE at Z_p = {sv['z_p']:.1f} Ohm "
             f"(margin floor {DISCRIMINATION_MARGIN_FLOOR:.0f}x, spread band "
-            f"{ADJACENT_SPREAD_BAND * 100:.0f}%, both pre-stated and unmoved):\n"
+            f"{ADJACENT_SPREAD_BAND * 100:.1f}%, both pre-stated and unmoved):\n"
             f"    margin  {sv['margin']:.4f}x  "
             f"{'PASS' if sv['margin'] >= DISCRIMINATION_MARGIN_FLOOR else 'MISS'}"
             f"   (control at 1e6 Ohm: {control['margin']:.4f}x)\n"
@@ -547,7 +548,7 @@ def test_fifty_ohm_termination_separates_adjacent_from_opposite_coupling(
     assert sv["spread"] <= ADJACENT_SPREAD_BAND, (
         f"at {sv['z_p']:.1f} Ohm the ports adjacent to the driven leg read a "
         f"spread of {sv['spread'] * 100:.4f}% against the pre-stated "
-        f"{ADJACENT_SPREAD_BAND * 100:.0f}% band — the termination broke the "
+        f"{ADJACENT_SPREAD_BAND * 100:.1f}% band — the termination broke the "
         "layout's C4 symmetry, so any margin it buys is a mesh finding, not a "
         "result"
     )

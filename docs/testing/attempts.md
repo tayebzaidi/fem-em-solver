@@ -15163,3 +15163,100 @@ consumer modules. Budget it as two compute commands (~2 min mesh + ~5 min
 eight-solve), i.e. a full slot with the module adaptation done first.
 
 **No denials, no anomalies.** Tree clean at handoff, `main` green.
+
+---
+
+## 2026-08-25T11:15Z — `PORT-9` leg (d1′), §9 item 1 — **complete (chunk ✅)**
+
+**Slot** 06:00 CDT scheduled implementer run. Preflight clean, container Up 17 h.
+Took §9 item 1 as written (first item not done or blocked — it was left 🟡 by the
+04:30 slot with only its mesh half landed).
+
+**What was tried.** The solve half of leg (d1′): adapt the parked branch's
+`test_port_birdcage_leg_offset_sweep.py` onto `main`, commit the (iii′) 5% → 0.5%
+tightening, and run the displaced 4×4 through the (d3) power-wave assembly against
+anchors (a)/(b)/(c). All three anchors green; **`PORT-9` closes**.
+
+**Module adaptation (the item's (6\*)(v) instruction, executed).** The branch's
+`LEG_D_Z_MATRIX` 4×4 reproduction anchor was **dropped** — it records the pre-0.11,
+pre-step-B, pre-(d3) fixture and is history three times over. It is replaced by
+`LEG_D0_Z_COLUMN` **imported** from `test_port_birdcage_four_port.py` (leg (d0)'s
+terminated column on step B's mesh) plus step B's `σ_max` = 0.999992805, so this
+module restates nothing it can import. The retired open-limit anchors did not come
+back. Everything else came across unchanged: `_narrowed_radial` (step 2b's midpoint
+filter along the port's **own** radial direction — `_narrowed_transverse` picks a
+global axis off the bbox and cannot narrow a sheet at 22.5°) and `_port_frame`,
+with `_projected_extents` / `_sheet_azimuth_deg` imported from the mesh module the
+04:30 slot landed.
+
+**Measured — run 1 (`20260825T110438Z_PORT-9-step3d1.log`, Status 0, elapsed 108 s;
+`13 passed 106.64 s` at `-n 2`, complex, standard tier; meshes 22.71 / 22.89 s,
+sweeps 25.75 / 27.84 s):**
+
+* **Anchor (a), identity control — the zero rung *is* leg (d)'s solve.** 116 085
+  cells at ratio **1.000000**; leg (d0)'s terminated column reproduced to
+  ≤ **2.568e-10** relative on all four entries (band 1e-9); `σ_max(S)` =
+  **0.999992805** to 4.065e-10; class spreads **0.0553 / 0.0353 / 0.0214%** —
+  step B's records digit for digit, all inside (iii′).
+* **Anchor (b), reciprocity on an asymmetric 3D fixture.** Displaced
+  `‖S−Sᵀ‖/‖S‖` = **2.259e-14** vs the unmoved 1e-3 (`σ_max` 0.999992337). Recorded
+  as an **order of magnitude only** per (d3c) — the confirm run read 6.846e-14, the
+  zero rung 1.044e-14 / 8.660e-15. **The pre-fix negative control is the finding:**
+  the terminated-`Z` route read **5.57e-03** on this exact displaced fixture
+  (`20260823T140422Z_PORT-9-step3d1.log`), so the separation is **2.466e+11×**
+  against the (d3) ruling's ≥ 100× bar. Leg (d1)'s miss was the assembly, and the
+  power-wave fix holds on the first fixture that is both 3D and asymmetric.
+* **Anchor (c), the leg's substance — gate (iii′) sees the broken C4.** With leg 1
+  rotated 22.5° the gated classes break 0.5% by two orders: self **6.2219%**
+  (112.58× amplification over the symmetric rung), adjacent **7.1142%** (201.52×).
+  **Reading for the review:** the opposite class was pre-ruled *reported, not
+  gated* (physically the flattest under a single-leg rotation), and it read
+  **2.8474%** (133.11×) — it **also** exceeds the band. So on this fixture all
+  three classes respond, and the 08-23 10:30 review's open question (if it stays
+  under 0.5%, report it and the review rules whether it belongs in the geometric
+  control) is answered affirmatively by measurement rather than left open.
+* **Negative control of the control.** Every sheet the displaced rung solved on is
+  still the clean `GEO-18` construction: full-sheet `dx·g` ratio inside 1e-9,
+  out-of-plane spread < 1e-12 m in each port's own frame, narrowed `w = A/h` below
+  the full radial extent. No spread above is a broken port.
+
+**The (iii′) tightening, committed with a green run of all three consumers.**
+`ADJACENT_SPREAD_BAND` moves 0.05 → **0.005** at its single source
+(`test_port_birdcage_lumped_column.py`). This is a **narrowing**, ruled 2026-08-23
+10:30, and every symmetric reading already satisfied it — verified, not assumed,
+before moving it: leg (c) 0.0407%, leg (d0) 0.0040%, leg (d) 0.0553 / 0.0353 /
+0.0214%. **Run 2 (`20260825T110643Z_PORT-9-step3d1-consumers.log`, Status 0,
+elapsed 224 s; `24 passed 222.15 s`)** runs all three consumers plus this module
+at the new value: all green, every figure unmoved (leg (d0) margin 2256.9707×, leg
+(d) separation 166.6766×), and the sweep module's class spreads reproduce to the
+printed digit across both runs (0.0553 / 0.0353 / 0.0214 and 6.2219 / 7.1142 /
+2.8474). The `.0f` percent format specifiers in all three consumers became `.1f`
+so the band prints as 0.5% and not 0%.
+
+**No band was widened and no assertion loosened anywhere in this commit.** The only
+band that moved moved *down*. Docstring prose naming 5% in the three consumers was
+updated to 0.5% (documentation only, no code path).
+
+**Docs.** §7 `PORT-9` prose entry gains a leg (d1′) solve-half closure block; the §7
+table row and the §6 Phase 4 row flip to ✅ with the scope caveat attached; **§2.2's
+"No coil or birdcage has ports" head is retired** and rewritten to cover what is
+still unvalidated (any 64/128 MHz figure, any resonance/tuning claim, 16-leg and
+32-port layouts, B1+/SAR on a coil field), with a new §2.1 bullet recording exactly
+what the 10 MHz closure licenses; §10 Phase 4's "Loaded birdcage + phantom runs end
+to end" box ticks **at 10 MHz** on its own pre-stated condition, with the Larmor
+claim explicitly left to `PORT-11`; §9 item 1 marked done.
+
+**Branch.** `attempt/PORT-9-d1-20260823T124500Z` **deleted** — both halves of its
+payload are now on `main` and green from `main` (the mesh side superseded by
+`GEO-19` step B and re-landed smaller at 04:30; the solve side adapted and landed
+here). Nothing else was parked.
+
+**Next attempt hypothesis.** `PORT-11` step 1 is unblocked and is the obvious next
+commission — the same three gates at 64 MHz on this fixture — but it is heavy and
+unpriced: the displaced/undisplaced pair here cost 106 s at 10 MHz, and 64 MHz on
+this mesh is a different regime (displacement current, and the §2.2 memory wall
+sits on the *coil* fixture, not this one, so it needs its own cost probe first).
+The remaining queue items 2–5 (`GEO-19` step C, three `EX-30` legs) are all
+independent and untouched by this slot.
+
+**No denials, no anomalies.** Tree clean at handoff, `main` green.
