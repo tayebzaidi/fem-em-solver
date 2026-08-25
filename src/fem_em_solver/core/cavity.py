@@ -126,9 +126,13 @@ def _cavity_forms(V, bc_diagonal: float):
     zero.x.array[:] = 0.0
     bc = fem.dirichletbc(zero, boundary_dofs)
 
-    A = assemble_matrix(stiffness, bcs=[bc], diagonal=bc_diagonal)
+    # dolfinx 0.11 renamed this keyword ``diagonal`` -> ``diag``; the semantics
+    # are unchanged (BC rows/columns zeroed, the diagonal set to the value), so
+    # the constrained-DOF eigenvalues still land at ``bc_diagonal``/1.0 and the
+    # ``spurious_cutoff`` reasoning above holds verbatim (`OPS-24`, 2026-08-25).
+    A = assemble_matrix(stiffness, bcs=[bc], diag=bc_diagonal)
     A.assemble()
-    B = assemble_matrix(mass, bcs=[bc], diagonal=1.0)
+    B = assemble_matrix(mass, bcs=[bc], diag=1.0)
     B.assemble()
     return A, B, boundary_dofs.size
 

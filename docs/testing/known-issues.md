@@ -28,7 +28,23 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### 🚫 OPEN — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family is **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
+### ✅ RETIRED 2026-08-25 by `OPS-24` — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family was **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
+
+**Retired.** The keyword was renamed `diagonal=` → `diag=` in 0.11 with unchanged
+semantics (0.11 docstring: "Rows/columns that are constrained by a Dirichlet
+boundary condition are zeroed, with the diagonal to set to `diag`"), verified by
+introspecting the installed `dolfinx.fem.petsc.assemble_matrix` signature rather
+than assumed. Both sites migrated; all four tests green at `-n 2` complex, and
+every recorded figure reproduces the pre-0.11 record **to the printed digit**:
+per-mode errors 0.0123 / 0.0153 / 0.0201 / **0.0436%** worst-mode against the
+closed form on 720 cells / 5330 dofs, refinement 0.0436% → 0.0102% at fitted
+rate 3.85, null cluster 8/8 with max |λ| = 5.560e-14, guard 137.554 (near-
+resonant) vs 21.951 (clear) against the 50.0 threshold. `13 passed in 29.71s`
+(with `tests/environment`), Status 0, 31 s harness —
+`20260825T020157Z_OPS-24-green-quoted.log`; the red baseline was reproduced
+in-slot first (`4 failed, 9 passed in 1.83s`,
+`20260825T020052Z_OPS-24-red-baseline.log`). No band, tolerance or recorded
+eigenfrequency was touched. Original entry below, for the audit trail.
 
 **Test ids — four, all red on `main` with no local change:**
 

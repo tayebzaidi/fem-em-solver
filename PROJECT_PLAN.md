@@ -55,10 +55,11 @@ What is validated, to what tolerance, and what must not be trusted.
   domain L2 that replaced the 10-point radial sample; the retired sampled
   statistic read 12.75% at n_points = 10 and 15.80% at 8 on the *same*
   field, so it never licensed a number); PEC cavity modes **0.0436%**
-  ⚠️ **non-executing on the 0.11 image since 2026-08-23** —
-  `core/cavity.py` was missed by the `OPS-18` migration, so the `TH-9`
-  cavity gate and the resonance guard currently produce no number
-  (known-issues 2026-08-24; `OPS-24` queued to restore them).
+  (re-gated on the 0.11 image 2026-08-25 by `OPS-24` — `core/cavity.py` had
+  been missed by the `OPS-18` migration and the `TH-9` gates were
+  non-executing 2026-08-23 → 08-25; the migrated calls reproduce the 0.7.2
+  per-mode errors 0.0123 / 0.0153 / 0.0201 / 0.0436% to the printed digit,
+  known-issues entry retired).
   The `E_Ω` digits quoted here are the **0.11 image** ones, re-gated on
   `main` 2026-08-23 (§9 item 1, ruling (3\*)): the ladder is monotone at
   fitted rate **1.6854**, the record rung reproduces
@@ -501,11 +502,45 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-21` | Make the combined-XDMF test scalar-type-aware and rank-deterministic (known-issues 2026-08-18, two defects in one test; commissioned 2026-08-18 10:30 review) | ✅ | standard |
 | `OPS-22` | Make the three magnetostatic loop-drive fixtures complex-safe: replace the `ufl.max_value` / `<=` predicates in their `current_density` callables (known-issues 2026-08-19; commissioned 2026-08-19 03:00 review from the `OPS-17` leg-(b2) attempt-2 diagnosis; unblocks 5 tests in leg (b2)) | ✅ *(2026-08-19, 04:30 slot — all three files fixed, no `@real_only` needed; real-mode digits unmoved to the last printed figure across three runs, and the complex build now runs all three files to a footer: **5 passed, 412.12 s, exit 0**, both ranks identical. *Audited COMPLIANT 2026-08-19 10:30 review — footers, closed-form assertions and the new `Im`-bound idiom verified against all five logs; one caveat on record: `test_helmholtz_v2.py`'s complex coverage rests on a silenced `ComplexWarning` `float()` cast, not an assertion — fold an `Im`-bound in whenever that file is next touched*)* | standard |
 | `OPS-23` | Sweep the `OPS-21` rank-0-return defect pattern (4 measured sites in 3 test files) + the `test_helmholtz_v2.py` Im-bound (commissioned 2026-08-20 03:00 review from the 00:00 slot's grep survey) | ✅ | smoke-to-standard | 3 real sites (all in `test_csv_export_stats_parity.py`) + the Im-bound fixed; 2 of the commissioned sites were print-only false positives and 1 exempted site was a real defect; 12 passed both ranks, 5.00 s. *Audited COMPLIANT 2026-08-21 18:00 review — red-baseline byte-identity re-verified against the log's rank blocks; benign omission: the first exit-0 helmholtz-real log is in test-results.md but uncited in the annotation* |
-| `OPS-24` | Migrate `core/cavity.py`'s two `assemble_matrix(..., diagonal=)` sites to the 0.11 signature — `TH-9`'s cavity gate + resonance guard have been **non-executing on `main` since the 0.11 merge** (known-issues 2026-08-24; found by `EX-30` leg (th); commissioned 2026-08-24 18:00 review) | ⬜ | standard |
+| `OPS-24` | Migrate `core/cavity.py`'s two `assemble_matrix(..., diagonal=)` sites to the 0.11 signature — `TH-9`'s cavity gate + resonance guard have been **non-executing on `main` since the 0.11 merge** (known-issues 2026-08-24; found by `EX-30` leg (th); commissioned 2026-08-24 18:00 review; closed 2026-08-25 — `diagonal=` → `diag=`, all four green, 0.0436% worst-mode reproduced to the printed digit) | ✅ | standard |
 | `OPS-25` | Re-join `th:7` to its gate: hoist the series-interior interpolation into the gate module and import it, migrating the repo's only `interpolate(cells=)` site (known-issues 2026-08-24; ruled hoist-not-repair by the 2026-08-24 18:00 review) | ⬜ | standard |
 
-**`OPS-24` — migrate `core/cavity.py` to 0.11; turn `TH-9`'s gates back on** ⬜
-*(commissioned 2026-08-24 18:00 review from `EX-30` leg (th)'s finding 1.)*
+**`OPS-24` — migrate `core/cavity.py` to 0.11; turn `TH-9`'s gates back on** ✅
+*(commissioned 2026-08-24 18:00 review from `EX-30` leg (th)'s finding 1;
+closed 2026-08-25, 21:00 CDT slot.)*
+> **Closed 2026-08-25.** The break was a pure keyword rename, established by
+> introspecting the installed 0.11 `dolfinx.fem.petsc.assemble_matrix` rather
+> than assumed: `diagonal=` → **`diag=`**, docstring "Rows/columns that are
+> constrained by a Dirichlet boundary condition are zeroed, with the diagonal
+> to set to `diag`" — semantics unchanged, so the constrained-DOF eigenvalues
+> still land at `bc_diagonal`/1.0 and `solve_pec_cavity_modes`'s
+> `spurious_cutoff = 0.5 · bc_diagonal` reasoning holds verbatim. Two lines
+> changed in `core/cavity.py` (`:129`, `:131`) plus a migration comment; no
+> test, band, tolerance or recorded eigenfrequency touched, and no solver
+> path altered. **Red baseline reproduced in-slot first** — `4 failed, 9
+> passed in 1.83s`, all 9 `tests/environment` green, Status 1
+> (`20260825T020052Z_OPS-24-red-baseline.log`, 4 s) — matching the
+> commissioning probe's `4 failed, 9 passed in 2.11s` exactly. **After the
+> fix, `13 passed` twice**: 32.11 s / Status 0 / 33 s harness
+> (`20260825T020111Z_OPS-24-green.log`) and 29.71 s / Status 0 / 31 s
+> harness with `-s` for the printed diagnostics
+> (`20260825T020157Z_OPS-24-green-quoted.log`), both `-n 2`, complex,
+> `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first. **Every recorded
+> figure reproduces the pre-0.11 record to the printed digit** — the
+> closed-form eigenfrequency comparison on 720 cells / 5330 dofs prints
+> 239.9805 / 291.3904 / 312.3465 / 346.5469 MHz against analytic
+> 239.9510 / 291.3459 / 312.2838 / 346.3958 MHz, i.e. **0.0123 / 0.0153 /
+> 0.0201 / 0.0436%**, worst-mode **0.0436%** equal to the `TH-9` record and
+> to the test module's own header table; `null_modes_in_band = 0`;
+> refinement h 0.1667 → 0.1143 takes max err 0.0436% → **0.0102%** at fitted
+> rate **3.85** (gate > 2.0); the gradient-mode zero cluster is 8/8 below
+> 2.529e-07 with max |λ| = **5.560e-14** against k₁² = 25.2909 (gate 1e-8
+> relative); the energy-continuity guard fires **137.554** near-resonant and
+> reads **21.951** clear against the 50.0 threshold. That digit-for-digit
+> agreement is itself the evidence the rename was semantics-preserving.
+> Retires the cavity known-issues entry and the §2.1 non-executing caveat;
+> `th:2` / `th:5` are unblocked for `EX-30` leg (th) (§9 item 4), which owns
+> re-running them — this chunk did not.
 `cavity.py:129`/`:131` still pass `diagonal=` to
 `dolfinx.fem.petsc.assemble_matrix`, dropped in 0.11 — `OPS-18` step 2's
 migration missed the module because nothing scheduled runs
@@ -4379,7 +4414,25 @@ uses the Edit tool and verifies `git status --porcelain`.
    retire-when; update it and §7 in the landing commit. **Negative
    result:** any red the in-hand digits do not explain contradicts a
    measured run — known-issues + §7, nothing landed, stop.
-2. **`OPS-24` — migrate `core/cavity.py` to 0.11 and turn `TH-9`'s
+2. ✅ **Done 2026-08-25 (21:00 slot).** Landed exactly as scoped and cheaply:
+   the break was a pure keyword rename (`diagonal=` → **`diag=`**), read off
+   the installed 0.11 signature, semantics unchanged per its docstring, so
+   the BC diagonal still carries `bc_diagonal`/1.0 and the `spurious_cutoff`
+   logic is untouched. Red baseline reproduced first (`4 failed, 9 passed in
+   1.83s`, Status 1), then **`13 passed` twice** (32.11 s and 29.71 s, the
+   second with `-s`), all four target tests green with **every recorded
+   figure reproducing to the printed digit**: worst-mode **0.0436%** against
+   the closed form (per-mode 0.0123 / 0.0153 / 0.0201 / 0.0436%, 720 cells /
+   5330 dofs, zero null modes in band), refinement 0.0436% → 0.0102% at rate
+   **3.85**, gradient zero cluster 8/8 with max |λ| **5.560e-14**, guard
+   137.554 vs 21.951 against 50.0. No band, tolerance or eigenfrequency
+   moved; two source lines plus a comment, no test change. Cavity
+   known-issues entry retired, §2.1 non-executing caveat removed. Logs
+   `20260825T020052Z_OPS-24-red-baseline.log`,
+   `20260825T020111Z_OPS-24-green.log`,
+   `20260825T020157Z_OPS-24-green-quoted.log`. `th:2` / `th:5` are unblocked
+   for item 4, which owns re-running them. *Original text, for the review's
+   audit:* **`OPS-24` — migrate `core/cavity.py` to 0.11 and turn `TH-9`'s
    gates back on (standard, `-n 2`, complex, `main`; independent).**
    Fix the two dead sites — `cavity.py:129`
    (`assemble_matrix(stiffness, bcs=[bc], diagonal=bc_diagonal)`) and

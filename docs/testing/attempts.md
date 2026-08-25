@@ -14771,3 +14771,94 @@ denies writes under `.git/`. Harmless today; it means stale branch sections
 will accumulate in `.git/config` as attempt branches are disposed of. Worth
 one allowlist decision at some point, or periodic manual pruning by the
 operator.
+
+---
+
+## 2026-08-25T02:05Z — `OPS-24` (§9 item 2) — **complete**: `core/cavity.py` migrated to 0.11, `TH-9`'s four gates green, every figure reproducing to the printed digit (21:00 CDT implementer slot)
+
+**Preflight.** Tree clean, container Up 8 h, `main` @ `8e4d04a`. Item 1 was
+marked done by the 19:30 slot, so the first open On-deck item is item 2.
+
+**What the break actually was — established, not assumed.** Before touching
+anything I introspected the installed API in the container:
+`dolfinx.fem.petsc.assemble_matrix(a, bcs=None, diag=1, constants=None,
+coeffs=None, kind=None)`. The keyword was **renamed** `diagonal=` → `diag=`
+between 0.7.2 and 0.11; the docstring is explicit that the semantics are
+unchanged ("Rows/columns that are constrained by a Dirichlet boundary
+condition are zeroed, with the diagonal to set to `diag`"). The §9 item told
+me to read what 0.11 does by default before assuming, and this is that
+reading: the BC diagonal is still applied and still takes the caller's value,
+so the constrained-DOF eigenvalues still land at `bc_diagonal` (stiffness) and
+1.0 (mass), and `solve_pec_cavity_modes`'s `spurious_cutoff = 0.5 ·
+bc_diagonal` reasoning — the whole reason the module passes a large diagonal —
+holds verbatim. No compensating code was needed.
+
+**Change.** Two lines in `src/fem_em_solver/core/cavity.py` (`:129`, `:131`)
+plus a four-line migration comment recording the rename and why the cutoff
+reasoning survives. No test file, no band, no tolerance, no recorded
+eigenfrequency, no solver path. SLEPc untouched, as the item required.
+
+**Negative control, run first.** Reproduced the red on the unmodified tree with
+the commissioning probe's exact command: **`4 failed, 9 passed in 1.83s`**,
+Status 1, 4 s harness, all 9 `tests/environment` green, all four failures the
+same `TypeError: assemble_matrix() got an unexpected keyword argument
+'diagonal'` — matching the 2026-08-24 probe's `4 failed, 9 passed in 2.11s`
+exactly. Log `20260825T020052Z_OPS-24-red-baseline.log`.
+
+**Green, twice.** Same command, `-n 2`, complex,
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first:
+- `20260825T020111Z_OPS-24-green.log` — **`13 passed in 32.11s`**, Status 0,
+  33 s harness.
+- `20260825T020157Z_OPS-24-green-quoted.log` — **`13 passed in 29.71s`**,
+  Status 0, 31 s harness, re-run with `-s` so the modules' own diagnostics
+  land in a log rather than being asserted silently.
+
+Both runs well inside the standard tier (`timeout -k 30 300` budgeted, ~30 s
+used); the item's "expect well under" estimate was right.
+
+**Measured numbers — all four gates, and the point of the chunk.** The
+closed-form eigenfrequency comparison (720 cells, 5330 dofs, 8 converged,
+`null_modes_in_band = 0`, 0.4 s):
+
+```
+  239.9805 MHz vs  239.9510 MHz  (0.0123%)
+  291.3904 MHz vs  291.3459 MHz  (0.0153%)
+  312.3465 MHz vs  312.2838 MHz  (0.0201%)
+  346.5469 MHz vs  346.3958 MHz  (0.0436%)
+```
+
+Worst-mode **0.0436%** — *equal to the `TH-9` record and to the test module's
+own pre-0.11 header table, digit for digit, on all four modes*. Refinement:
+h 0.1667 → 0.1143 takes max err 0.0436% → **0.0102%** at fitted rate **3.85**
+(gate > 2.0), 1.9 s. Gradient-mode zero cluster: 8/8 below 2.529e-07 against
+k₁² = 25.2909, max |λ| **5.560e-14** (gate 1e-8 relative), 0.2 s. Energy-
+continuity guard: **137.554** on the near-resonant band (implied detuning
+1.454%) and **21.951** on the clear band (9.111%), against the 50.0 threshold
+— fires and clears as recorded.
+
+**Why that agreement is the evidence.** A rename that quietly changed BC
+handling would have moved the constrained-DOF eigenvalues and perturbed the
+spectrum; four modes agreeing to four decimals with the 0.7.2 record, plus an
+unchanged convergence rate and an unchanged null cluster, is a stronger check
+on the migration than the gates were designed to be. Nothing was loosened to
+get here — the tolerances are the ones that were already in the file.
+
+**Docs.** Cavity known-issues entry flipped to ✅ RETIRED with the retirement
+evidence above the original text (which is kept verbatim for the audit trail);
+§2.1's ⚠️ non-executing caveat on the 0.0436% figure replaced by a re-gated
+note naming the outage window (2026-08-23 → 08-25); §7 table row ⬜ → ✅ and
+the prose entry given a full closure block; §9 item 2 marked done with the
+original text preserved.
+
+**Scope discipline.** Did not refresh `th:2` / `th:5` — they are unblocked by
+this fix but item 4 owns re-running them, and the item said so. Did not touch
+`th:6`/`th:7` or any `OPS-25` surface. No `src/` change beyond the two calls.
+
+**Next attempt hypothesis.** Nothing follows for this item. Item 3 (`OPS-25`)
+is independent and unaffected. Item 4 (`EX-30` leg (th)) is now half-unblocked:
+`th:2` and `th:5` should run on the same code path this chunk just gated, so
+if item 3 also lands, the leg's census arithmetic can include all four
+previously-dead `time_harmonic` artifacts. If item 4 runs before item 3, `th:7`
+will still be red at line 198 and the census must be attributed, not forced.
+
+**No denials, no anomalies, no parked branches.** Tree clean at handoff.
