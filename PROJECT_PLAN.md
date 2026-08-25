@@ -532,6 +532,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-23` | Sweep the `OPS-21` rank-0-return defect pattern (4 measured sites in 3 test files) + the `test_helmholtz_v2.py` Im-bound (commissioned 2026-08-20 03:00 review from the 00:00 slot's grep survey) | ✅ | smoke-to-standard | 3 real sites (all in `test_csv_export_stats_parity.py`) + the Im-bound fixed; 2 of the commissioned sites were print-only false positives and 1 exempted site was a real defect; 12 passed both ranks, 5.00 s. *Audited COMPLIANT 2026-08-21 18:00 review — red-baseline byte-identity re-verified against the log's rank blocks; benign omission: the first exit-0 helmholtz-real log is in test-results.md but uncited in the annotation* |
 | `OPS-24` | Migrate `core/cavity.py`'s two `assemble_matrix(..., diagonal=)` sites to the 0.11 signature — `TH-9`'s cavity gate + resonance guard have been **non-executing on `main` since the 0.11 merge** (known-issues 2026-08-24; found by `EX-30` leg (th); commissioned 2026-08-24 18:00 review; closed 2026-08-25 — `diagonal=` → `diag=`, all four green, 0.0436% worst-mode reproduced to the printed digit) | ✅ | standard |
 | `OPS-25` | Re-join `th:7` to its gate: hoist the series-interior interpolation into the gate module and import it, migrating the repo's only `interpolate(cells=)` site (known-issues 2026-08-24; ruled hoist-not-repair by the 2026-08-24 18:00 review) | ✅ (2026-08-25: hoisted to `series_interior_function` in `test_lossy_sphere_fullwave.py`; `th:7` green in 14 s with both element-order records reproducing — degree 1 8.1541% / 8.3869%, degree 2 0.1405% / 0.0058%, drifts ≤ 1.48e-03 in a 1% band — and the gate's `P_series(meshed)` **bit-identical to all ten printed digits** across the refactor; `13 passed in 25.28s`) | standard |
+| `OPS-26` | **Systematic dolfinx-0.11 migration completeness sweep** — re-run `OPS-17`'s "observed in a completed run" census on the 0.11 image and statically sweep `src/` for un-migrated call sites. Two silently-broken gates have already been found *by examples rather than by the upgrade's own re-gate* (`TH-9` cavity, `OPS-24`; straight-wire h-refinement, red on `main`, found 2026-08-25 by `mag:6`); a third is likelier than not. **Commissioned 2026-08-25 by operator directive, interactive session** — queue at the next review. | ⬜ | heavy (split across ≥ 2 slots) |
 
 **`OPS-24` — migrate `core/cavity.py` to 0.11; turn `TH-9`'s gates back on** ✅
 *(commissioned 2026-08-24 18:00 review from `EX-30` leg (th)'s finding 1;
@@ -582,6 +583,73 @@ comparison quoted (record 0.0436% worst-mode), no band or recorded
 eigenfrequency touched; retires the cavity known-issues entry and removes
 the §2.1 non-executing caveat.
 
+**`OPS-26` — systematic dolfinx-0.11 migration completeness sweep** ⬜
+*(commissioned 2026-08-25, operator directive, interactive session: "queue
+the systematic sweep to make sure the transition to 0.11 actually worked
+properly". Queue at the next review — it was not in §9 when the directive
+landed.)*
+> **Why this exists, stated as evidence rather than worry.** `OPS-18` was
+> audited COMPLIANT and its §4 close stands — but "every cited log is green"
+> and "every gate executes" are different claims, and the upgrade's re-gate
+> checked the first. Two defects have since surfaced, **both found by the
+> examples layer, neither by the upgrade**:
+> * `core/cavity.py` — `assemble_matrix(diagonal=)` → `diag=`. `TH-9`'s
+>   closed-form cavity gate and the resonance guard were **non-executing on
+>   `main` from the 0.11 merge until `OPS-24` (2026-08-25)**, invisible
+>   because nothing scheduled runs those two modules.
+> * `tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire`
+>   — **red on `main` right now**: fitted rate 1.9038 outside the `MAG-13`
+>   band, the h = 0.0018 rung's error having collapsed 9.26% → 4.4605% on
+>   0.11. Found 2026-08-25 by `mag:6`. `MAG-18` re-gated the `E_Ω` ladder and
+>   not this test, which is how it survived. **Diagnosing it is not this
+>   chunk's job** (that is a `MAG-13`/`MAG-18` call) — enumerating its class
+>   is.
+>
+> The common shape: a module that no scheduled command runs can be red or
+> dead indefinitely. `OPS-17` built exactly the instrument for this and
+> closed at **216 of 216 runnable validation tests observed in completed
+> runs** — but that census was taken on **0.7.2**, and the image has since
+> changed underneath it. This chunk re-takes it.
+>
+> * **Step 1 — static sweep (smoke, no solves).** Sweep `src/` and `tests/`
+>   for call sites whose signature changed between 0.7.2 and 0.11.
+>   **Introspect the installed module in the container** (`inspect.signature`)
+>   rather than testing against a hardcoded list — the known five
+>   (`io.gmshio` → `io.gmsh` / `model_to_mesh`'s `MeshData`,
+>   `LinearProblem(petsc_options_prefix=)`, `fem.FunctionSpace` →
+>   `functionspace`, `interpolate(cells=)` → `cells0=`,
+>   `assemble_matrix(diagonal=)` → `diag=`,
+>   `create_cell_partitioner(max_facet_to_cell_links=)`) are the ones already
+>   *found*, so a list-based check can only rediscover them. **Anchor (§4):**
+>   a machine-checkable count of call sites per API, reconciled against the
+>   sites the five landed migrations touched, with **zero un-migrated sites
+>   surviving** — or each survivor named with its module and line.
+>   **Negative control:** the checker must flag a deliberately reverted call
+>   site in a temp copy; a sweep that cannot fail is not a sweep.
+> * **Step 2 — execution census on 0.11 (heavy, likely 2+ slots).** Re-run
+>   `OPS-17` leg (b2)'s methodology on the current image: every collected test
+>   **observed in a completed run with a footer**, real and complex, at each
+>   file's recorded rank width. **Anchor (§4):** an observed/collected count
+>   with the complement enumerated *by name*, each carrying one of exactly
+>   three dispositions — **green**, **red with a filed known-issues entry**,
+>   or **deferred with a stated reason**. The 216/232 denominator is the prior
+>   and **must be re-derived, not inherited** (`GEO-18`/`GEO-19`/`GEO-20`,
+>   `PORT-9` and `EX-31` have all added tests since).
+>   **Cost discipline, from `OPS-17`'s own lessons:** grep each file's
+>   existing logs for its *recorded* rank width and elapsed time before
+>   sizing; a family's first complex command pays ~2.4–3× cold-JIT; read
+>   *all* of a file's logs, not the first match. Budget one file per ~400 s
+>   window where its record says so.
+> * **Traps.** (i) `--collect-only` proves nothing about runtime — both
+>   found defects collect clean. (ii) A red found here is **filed, never
+>   fixed in-slot** and never re-recorded: a failing analytic comparison is
+>   evidence about the test as much as the code. (iii) Do not loosen a band
+>   to make the census green — the census's value is that it counts reds.
+> * **Negative result (a real one, not a fallback).** If the census comes
+>   back with the straight-wire test as the only red and no new dead module,
+>   that is the chunk's deliverable and it closes ✅ — "we looked
+>   systematically and there are two" is the result the directive asked for.
+>
 **`OPS-25` — re-join `th:7` to its gate (hoist the series-interior
 interpolation)** ✅ *(2026-08-25, 22:30 implementer slot)* *(commissioned 2026-08-24 18:00 review from `EX-30`
 leg (th)'s finding 3.)* `th:7` line 198 is the repo's **only**
