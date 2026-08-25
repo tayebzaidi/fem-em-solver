@@ -166,6 +166,19 @@ unless fixing it is the task.
 > working rung), or give `straight_wire_domain` a guard/clamp so a
 > too-coarse request fails legibly instead of inside gmsh. `EX-30` leg (root)
 > has no licence for either. **Nothing was re-recorded.**
+>
+> **RULED 2026-08-25, 10:30 review: the example moves to
+> `resolution = 0.008`** (old 0.01 kept in-comment citing the probe log
+> `20260825T142512Z_EX-30-root-mag1-mesh-probe.log`), executed inside
+> `EX-30` leg (root)'s completion slot — owning chunk is now `EX-30`.
+> **No guard is written in-slot**: the threshold is unbisected
+> (0.008 works, 0.010 fails, the boundary between them is unmeasured), and
+> a guard constant without a measured boundary would encode a guess. The
+> coarse-resolution floor itself stays on record **in this entry** as
+> documented 0.11-image behaviour after the example fix lands — the entry
+> then re-heads as the floor finding (the example symptom retired), and
+> retires fully only when a measured-threshold guard lands in
+> `straight_wire_domain` or the upstream image moves the floor.
 
 ### ✅ RETIRED 2026-08-25 by `OPS-24` — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family was **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
 
@@ -625,6 +638,19 @@ than today's) or agreement of the *discretization* across azimuths (in which
 case the band is h-dependent and wants a refinement rung, not a constant). Both
 readings are consistent with the measurement; choosing between them is a
 ruling, not an implementer judgement.
+
+**RULED 2026-08-25, 10:30 review: construction symmetry.** The ≤ 2e-7
+intra-class tightness says the construction is exactly C_N-covariant, and the
+inter-class 8.4e-04 is the inscribed triangulation's azimuthal variation
+(13× below its own ~1.1% under-read scale) — gating it at 1e-5 gates the
+mesh, not the generator. The reading becomes per-azimuth-class: intra-class
+equality asserted at **1e-6** (tighter than today; basis ≤ 2e-7), inter-class
+spread asserted under a coarse **5e-3** discretization ceiling (basis
+8.434e-04; half the under-read scale) so a broken port cannot hide, the
+absolute [0.95, 1.0] band and every C4 module's 1e-5 unmoved. Full landing
+instructions in the `GEO-19` §7 entry. **This entry now retires with the
+commit that lands the ruled module green from `main`** (§9 item 1,
+2026-08-25 10:30 queue).
 
 ---
 
