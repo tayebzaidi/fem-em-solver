@@ -15657,3 +15657,98 @@ a claim about F-human, and it will have to move with the fixture — the weekly
 review owns that.
 
 `main` clean at handoff.
+
+---
+
+## 2026-08-25T18:40Z — `MAG-19` step 1 — **blocked (ruling requested)**
+
+**Item.** §9 On-deck item 2 (item 1 was closed by the 12:00 slot). Preflight
+clean, container Up 25 h, `main` at `3026c2c`.
+
+**What was tried.** The §7 discriminator as written: one command, four solves
+(the gate's three rungs plus the priced interpolating rung h = 0.0030), both
+norms computed on the **same** solved field per rung — the sampled 10-point
+relative L2 via the gate's own `solve_h_refinement`, and the `MAG-18` `E_Ω`
+annulus norm via the imported `test_straight_wire._domain_l2_error` (`ANS-1`;
+neither restated). New probe `tests/validation/probe_straight_wire_dual_norm.py`,
+which **asserts nothing** — it prints the 4×2 table, all six pairwise rates for
+both norms, the least-squares fits on three subsets, and both reproduction
+controls. First invocation died in 2 s on `ModuleNotFoundError: tests`
+(`PYTHONPATH=/workspace/src` alone; the tree's probes need
+`/workspace/src:/workspace` — see `20260822T184158Z`). Second run green.
+
+**Measured** (`20260825T183555Z_MAG-19-step1-dualnorm-fits.log`, Status 0,
+**160 s** at `-n 2`, real build; earlier identical run without the fits block
+is `20260825T183158Z_MAG-19-step1-dualnorm.log`, 161 s, and the two agree to
+≤ 1.3e-06 relative, which is the solve's own cross-run floor):
+
+| h (m) | cells | sampled 10-pt | `E_Ω` | rung s |
+| --- | --- | --- | --- | --- |
+| 0.0040 | 38 740 | 21.841675% | 25.286827% | 6.9 |
+| 0.0030 | 88 018 | 18.473177% | 14.288381% | 16.5 |
+| 0.0025 | 147 235 | 15.384843% | 10.617170% | 30.6 |
+| 0.0018 | 383 146 | 4.460528% | 6.645807% | 103.8 |
+
+*Anchor (the red reproduced before disposal):* the three original rungs match
+`20260825T141636Z` to ≤ **1.321e-06** relative and the sampled three-rung fit
+is **1.9038**, the red digit for digit. *Negative control (the item's own):*
+the `E_Ω` three-rung fit through the imported machinery is **1.6854**, the
+`MAG-18` re-gate value, and the h = 0.0025 `E_Ω` record reads
+1.0617170222e-01 against the recorded 1.0617170000e-01 — **2.094e-08**
+relative, against a 1e-4 band. The import is sound; the physics is what moved.
+
+Pairwise rates — sampled 0.5822 / 0.7456 / 1.9894 / 1.0034 / 2.7819 / 3.7690;
+`E_Ω` 1.9843 / 1.8464 / 1.6735 / 1.6288 / 1.4985 / 1.4261. Fits — original 3
+rungs: sampled **1.9038**, `E_Ω` 1.6854; all 4: 1.9707 / 1.6661; **without
+h = 0.0018**: sampled **0.7309**, `E_Ω` 1.8588.
+
+**Outcome: the pre-stated rule's third branch — neither reading — so per the
+rule as written I reported, updated known-issues, and stopped at 🟡.**
+Reading (a) requires every sampled pair *avoiding* h = 0.0018 to be in band;
+they are 2/3, because 0.004→0.003 reads **0.5822** — a second outlier, and it
+lands on the very rung (a) would promote. Reading (b) requires the sampled
+rates scattered even on those pairs; they are not — dropping h = 0.0018 alone
+returns the fit to **0.7309**, inside [0.7, 1.5]. I did not pick a branch
+after seeing the table; the rule was applied as pre-stated.
+
+**The finding worth the slot.** Two things this measurement settles that the
+commissioning entry could not have known. (1) The red is overwhelmingly the
+h = 0.0018 rung's — all three pairs involving it are out of band (1.9894 /
+2.7819 / 3.7690) and removing it alone moves the fit 1.9038 → 0.7309 — so
+(a)'s *substance* is right even though its precondition fails. (2) But **(b)'s
+duty transfer is unavailable as written**: `E_Ω` is decisively the stable
+instrument (pairwise 1.4261–1.9843, fits 1.6661–1.8588, 6/6 pairs above its
+own one-sided ≥ 0.7) and yet it sits **above 1.5 on every subset**, so moving
+the two-sided [0.7, 1.5] onto it would be red on arrival. That is why `E_Ω`'s
+live gate is one-sided. Symmetrically, (a)'s re-chosen sequence
+[0.004, 0.003, 0.0025] fits 0.7309 — **0.03** above the band edge, on a
+statistic already known to swing 34% under its own sampler. So both branches
+need a band decision the §7 entry explicitly forbade making in-slot ("no band
+moves in any branch"), which is precisely why this is a ruling and not a
+landing.
+
+**Landed on `main`:** the probe (non-asserting, no gate touched), both harness
+logs + `test-results.md` rows, the known-issues update with the 4×2 table (the
+entry **stays open** — the gate is still red for the same reason), the §7
+`MAG-19` flip ⬜ → 🟡 with the three ruling options, and §9 item 2 marked 🚫
+so the 15:00 slot takes item 3 (`OPS-26` step 1). *Disclosure:* protocol step 4
+says park code on `attempt/*` when incomplete; I landed the probe on `main`
+instead, on the reading that the rule exists to stop half-applied **gate**
+changes — this module asserts nothing, is never collected by pytest, changes no
+band, and parking it would strand the artifact the ruling has to read. Same
+placement as `probe_straight_wire_ladder.py`. `mag:6` was **not** run: it is
+the consumer check for a disposition, and no gate changed. No band moved,
+nothing re-recorded, no assertion loosened, no branch created.
+
+**Hypothesis for the next attempt.** The review should take option (i) —
+transfer the rate duty to `E_Ω` under `E_Ω`'s **own** one-sided ≥ 0.7
+criterion (which it passes 6/6) rather than under the two-sided band, leaving
+this test its monotone-decay assertion plus the 4×2 table as report. That is
+branch (b)'s intent with the band question named honestly, it moves duty to a
+statistic with no sampler rather than re-choosing rungs of one that has one,
+and it costs no new compute: every number it needs is in this run's log. If
+the review would rather keep a two-sided bound, the prior question is (iii) —
+whether the upper edge means anything on 0.11 at all, given **both**
+statistics now fit above 1.5 on the full ladder.
+
+`main` clean at handoff.

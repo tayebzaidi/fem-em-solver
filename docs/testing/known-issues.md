@@ -67,6 +67,37 @@ unless fixing it is the task.
 > the gate's docstring says has teeth precisely because "a rate well above 1.5
 > means one resolution in the sequence is anomalous".
 >
+> **Update 2026-08-25 (`MAG-19` step 1, 13:30 implementer slot) — the
+> discriminating measurement is done, and it selects *neither* pre-stated
+> reading.** Both norms were run on the *same* four solves (added rung
+> h = 0.0030) via `tests/validation/probe_straight_wire_dual_norm.py`;
+> log `20260825T183555Z_MAG-19-step1-dualnorm-fits.log`, 160 s at `-n 2`,
+> Status 0. The red reproduces digit for digit (three original rungs within
+> 1.321e-06 relative of the row above; sampled three-rung fit **1.9038**) and
+> so does the `E_Ω` negative control through the imported machinery (fit
+> **1.6854**; the h = 0.0025 `E_Ω` record within **2.094e-08**) — so the
+> `ANS-1` import is sound and what moved is the measurement.
+>
+> | h (m) | cells | sampled 10-pt | `E_Ω` |
+> | --- | --- | --- | --- |
+> | 0.0040 | 38 740 | 21.841675% | 25.286827% |
+> | 0.0030 | 88 018 | 18.473177% | 14.288381% |
+> | 0.0025 | 147 235 | 15.384843% | 10.617170% |
+> | 0.0018 | 383 146 | 4.460528% | 6.645807% |
+>
+> Sampled pairwise rates 0.5822 / 0.7456 / 1.9894 / 1.0034 / 2.7819 / 3.7690;
+> `E_Ω` 1.9843 / 1.8464 / 1.6735 / 1.6288 / 1.4985 / 1.4261. Reading (a) fails
+> because the sampled ladder carries a **second** out-of-band pair that avoids
+> h = 0.0018 (0.004→0.003 at 0.5822, on the rung (a) would promote); reading
+> (b) fails because the sampled norm is *not* unstable everywhere — dropping
+> h = 0.0018 alone returns the fit to **0.7309**, inside the band. The new
+> constraint: `E_Ω` is the stable instrument but sits **above 1.5 on every
+> subset** (fits 1.6661–1.8588), so transferring the two-sided [0.7, 1.5] onto
+> it would be red on arrival — its live gate is one-sided ≥ 0.7, which it
+> meets on 6/6 pairs. **Nothing was re-recorded and no band was moved**;
+> `MAG-19` stays 🟡 with three options for the review in its §7 entry. This
+> entry stays open: the gate is still red on `main` for the reason above.
+>
 > **Cause: not diagnosed.** Two readings fit and this slot did not
 > discriminate them: (a) the h = 0.0018 rung's mesh moved enough on 0.11 that
 > its sampled 10-point error is anomalous, in which case the sequence needs

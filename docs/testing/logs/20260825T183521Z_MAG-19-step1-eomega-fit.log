@@ -1,0 +1,70 @@
+# Test Run
+- Chunk: MAG-19-step1-eomega-fit
+- Commit: 3026c2c7cd7fbc8ac0b26fd4dac24f23bf1180a2
+- Time (UTC): 2026-08-25 18:35:21
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src:/workspace timeout -k 30 60 python3 -c "
+import numpy as np
+from tests.validation.test_convergence import fit_convergence_rate
+h=[0.004,0.0025,0.0018]
+eo=[0.25286826,0.10617170,0.06645807]
+sa=[0.21841677,0.15384842,0.04460533]
+print('E_Omega 3-rung fit', round(fit_convergence_rate(np.array(h),np.array(eo)),4))
+print('sampled 3-rung fit', round(fit_convergence_rate(np.array(h),np.array(sa)),4))
+h4=[0.004,0.003,0.0025,0.0018]
+eo4=[0.25286826,0.14288379,0.10617170,0.06645807]
+sa4=[0.21841677,0.18473184,0.15384842,0.04460533]
+print('E_Omega 4-rung fit', round(fit_convergence_rate(np.array(h4),np.array(eo4)),4))
+print('sampled 4-rung fit', round(fit_convergence_rate(np.array(h4),np.array(sa4)),4))
+h3b=[0.004,0.003,0.0025]
+print('sampled fit no-0.0018', round(fit_convergence_rate(np.array(h3b),np.array(sa4[:3])),4))
+print('E_Omega fit no-0.0018', round(fit_convergence_rate(np.array(h3b),np.array(eo4[:3])),4))
+"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 25 13:34 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src:/workspace timeout -k 30 60 python3 -c "
+import numpy as np
+from tests.validation.test_convergence import fit_convergence_rate
+h=[0.004,0.0025,0.0018]
+eo=[0.25286826,0.10617170,0.06645807]
+sa=[0.21841677,0.15384842,0.04460533]
+print('\''E_Omega 3-rung fit'\'', round(fit_convergence_rate(np.array(h),np.array(eo)),4))
+print('\''sampled 3-rung fit'\'', round(fit_convergence_rate(np.array(h),np.array(sa)),4))
+h4=[0.004,0.003,0.0025,0.0018]
+eo4=[0.25286826,0.14288379,0.10617170,0.06645807]
+sa4=[0.21841677,0.18473184,0.15384842,0.04460533]
+print('\''E_Omega 4-rung fit'\'', round(fit_convergence_rate(np.array(h4),np.array(eo4)),4))
+print('\''sampled 4-rung fit'\'', round(fit_convergence_rate(np.array(h4),np.array(sa4)),4))
+h3b=[0.004,0.003,0.0025]
+print('\''sampled fit no-0.0018'\'', round(fit_convergence_rate(np.array(h3b),np.array(sa4[:3])),4))
+print('\''E_Omega fit no-0.0018'\'', round(fit_convergence_rate(np.array(h3b),np.array(eo4[:3])),4))
+"'\'''
+3-rung: -c: line 1: unexpected EOF while looking for matching `"'
+
+## Exit
+- Status: 2
+- Elapsed (s): 1
