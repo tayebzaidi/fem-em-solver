@@ -28,6 +28,116 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🔴 OPEN 2026-08-25 (`EX-30` leg (root), 09:00 implementer slot) — `tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire` is **red on `main`**: the fitted rate is **1.90** against the `MAG-13` band `[0.7, 1.5]`, because the finest rung's error collapsed 9.26% → **4.4605%** on the 0.11 image
+
+> **Where this fires.** `tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire`,
+> real build, on **`main`** at `878fa3e`. Not a worksite, not an example path:
+> the gate itself. It was found from the example side — `examples/magnetostatics/06_h_convergence_rate.py`
+> imports `RATE_MIN`, `RATE_MAX`, `RESOLUTIONS`, `solve_h_refinement` and
+> `fit_convergence_rate` from this very module (the `ANS-1` rule, already
+> applied), so `-e 6` runs the gate's computation — and the gate was then
+> probed directly to confirm it, rather than inferred.
+>
+> **Literal symptom** (`20260825T141636Z_EX-30-root-mag6-gate-probe.log`,
+> `1 failed in 143.11s`, `Status: 1`, `-n 2`, both rank footers identical):
+>
+> ```
+> Convergence rate: 1.90
+> Expected rate for linear elements: ~1.0
+> AssertionError: Convergence rate 1.90 outside [0.7, 1.5] (expected ~1.0 for
+>   N1curl degree 1); errors [0.21841667267163878, 0.15384842035994292,
+>   0.04460534278989355] at h [0.004, 0.0025, 0.0018]
+> ```
+>
+> **What moved, rung by rung.** The band is unchanged; the error ladder is not.
+> Against the `MAG-13` record (`20260730T125522Z_MAG-13.log`, 0.7.2):
+>
+> | h (m) | cells (0.11) | rel L2 (0.11) | rel L2 on record | move |
+> | --- | --- | --- | --- | --- |
+> | 0.0040 | 38 740 | 21.8417% | 22.19% | −0.35 pp |
+> | 0.0025 | 147 235 | 15.3848% | 12.75% | +2.63 pp |
+> | 0.0018 | 383 146 | 4.4605% | 9.26% | **−4.80 pp** |
+>
+> The middle rung is exactly the 147 235 cells / 15.3848% the retired
+> `MAG-18` entry below already names, so two of the three rungs are accounted
+> for by the documented 0.11 gmsh mesh motion. The **finest rung is not**: a
+> better-than-halved error is what levers the fitted slope from 1.10 to 1.90.
+> The sequence is still monotone, so the example's own negative control
+> (monotone decay) passes — it is the *rate* that breaks, on the upper edge
+> the gate's docstring says has teeth precisely because "a rate well above 1.5
+> means one resolution in the sequence is anomalous".
+>
+> **Cause: not diagnosed.** Two readings fit and this slot did not
+> discriminate them: (a) the h = 0.0018 rung's mesh moved enough on 0.11 that
+> its sampled 10-point error is anomalous, in which case the sequence needs
+> re-choosing the way `MAG-13` excluded h = 0.0035; (b) the sampled 10-point
+> norm is the wrong instrument on 0.11 and the `MAG-18` `E_Ω` norm — which
+> **is** green on 0.11 at rate 1.6854 (see the retired entry below) — is the
+> one to gate. Deciding between them is a `MAG-13`/`MAG-18` question, not an
+> `EX-30` one; **nothing was re-recorded and no band was moved.**
+>
+> **Owning chunk:** `MAG-13` (the band and the resolution sequence), with
+> `OPS-18` as the image that moved the ladder under it. **Consequence for
+> `EX-30`:** `examples/magnetostatics/06_h_convergence_rate.py` exits 1 for
+> this reason and nothing else — its artifact
+> (`h_convergence_rate_combined.xdmf`) is written *before* the assertion and
+> did refresh, so it is not in the stale census.
+
+### 🔴 OPEN 2026-08-25 (`EX-30` leg (root), 09:00 implementer slot) — `examples/magnetostatics/01_straight_wire.py` **no longer meshes on the 0.11 image**: gmsh aborts with duplicated facets at the example's own coarse resolution, which no gate exercises
+
+> **Where this fires.** `./run_examples.sh -e 1`, real build, on **`main`** at
+> `878fa3e`. The crash is in the mesh generator, before any solve, so the
+> example produces nothing: its **seven** repo-root artifacts
+> (`straight_wire_{A,B}.bp`, `straight_wire_{A,B,B_analytical}.xdmf`,
+> `straight_wire_combined.{h5,xdmf}`) are the entire remainder of leg
+> (root)'s stale census.
+>
+> **Literal symptom** (`20260825T140159Z_EX-30-root-run-mag1to2.log`,
+> `Status: 124` — the 124 is a post-`MPI_Abort` teardown hang against the
+> runner's `-t 300`, not a compute overrun; the failure itself is immediate):
+>
+> ```
+> Info    : Reconstructing mesh...
+> Info    :  - Creating surface mesh
+> Info    : Found two duplicated facets.
+> Info    :   1st: [145, 20, 216] #1
+> Info    :   2nd: [145, 20, 216] #1
+> Error   : Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+> ...
+>   File "/workspace/src/fem_em_solver/io/mesh.py", line 304, in straight_wire_domain
+>     gmsh.model.mesh.generate(3)
+> Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+> ```
+>
+> **`MeshGenerator.straight_wire_domain` is not broken in general** — that is
+> the whole content of this entry. The *same* generator meshed three times in
+> the same slot, in the run immediately after, at 38 740 / 147 235 / 383 146
+> cells (`20260825T141141Z_EX-30-root-run-mag6.log`). What differs is the
+> parameter set, and the example's is exercised by **no** gate:
+>
+> | | wire_length | domain_radius | resolution |
+> | --- | --- | --- | --- |
+> | `01_straight_wire.py:118-121` | **0.3** | **0.04** | **0.01** |
+> | `test_straight_wire.py:62-65` | 0.20 | 0.03 | 0.0025 |
+> | `test_convergence.py:41-61` | 0.2 | 0.03 | 0.004 / 0.0025 / 0.0018 |
+>
+> The example's resolution is 4× coarser than the coarsest gated rung and its
+> box is larger, and `resolution = 0.01` carries the source comment "coarse,
+> cron-safe runtime". On the 0.11 image's gmsh that combination reconstructs a
+> boundary with duplicated facets on the wire surface.
+>
+> **Cause: not diagnosed** beyond the parameter dependence above; no bisect of
+> resolution or gmsh option was run, and `straight_wire_domain` itself is
+> untouched since the 0.11 API migration (`d176bc1`, `OPS-18` step 2) — this
+> is image behaviour meeting an ungated parameter set, not a code regression
+> in the repo.
+>
+> **Owning chunk:** unassigned — a review call. It is example-side by
+> construction (no gate uses these parameters), but the fix is either a
+> parameter change in the example or a robustness change in
+> `straight_wire_domain`, and `EX-30` leg (root) has no licence to make
+> either. **Nothing was re-recorded.**
+
 ### ✅ RETIRED 2026-08-25 by `OPS-24` — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family was **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
 
 **Retired.** The keyword was renamed `diagonal=` → `diag=` in 0.11 with unchanged

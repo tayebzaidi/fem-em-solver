@@ -15352,3 +15352,180 @@ the construction is exactly C16-covariant and the residue is the mesh.
 
 **No denials, no anomalies.** `main` clean and green at handoff — no code
 landed on it this slot; the module is on the attempt branch alone.
+
+---
+
+## 2026-08-25T14:30Z — `EX-30` leg (root) (§9 item 3) — **incomplete**: six of eight examples green, census 47 → 26 exact, two reds — and one of them is a `MAG-13` convergence gate that is **red on `main`** (09:00 CDT implementer slot)
+
+**Preflight.** Tree clean on `main` @ `878fa3e`, container Up 20 h. No anomaly,
+no prior dirty-tree entry to dispose of. §9 item 1 is done (`PORT-9` closed at
+the 06:00 slot); item 2 is 🟡 parked *asking the review to rule* which quantity
+its equality gate asserts, which is a review-level decision an implementer slot
+cannot make for it — treated as blocked, so item 3 is the first open item.
+
+**What was tried, in order.** (1) Pre-run census as the negative control,
+*before* anything else. (2) `mag:1`+`mag:2`. (3) `mag:2`+`mag:4`+`mag:5` after
+the first batch was truncated by `set -e`. (4) `mag:6` alone. (5)
+`mri:1`+`mri:2`+`mat:1`. (6) A direct probe of the gate `mag:6`'s red points
+at, rather than inferring it. (7) Post-run census against a *derived*
+expectation.
+
+**No code changed and nothing was re-recorded.** The leg has no licence and
+this slot did not need one. The only tracked edits are logs,
+`test-results.md`, two known-issues entries and the §7/§9 annotations.
+
+### The census, derived and exact
+
+Pre-run: `dead=0 guide=0 stale=47 stale_severity=report exit=2`
+(`20260825T140117Z_EX-30-root-precensus.log`, 1 s). Attributed by family
+before any example ran: **26 repo-root + 1 `mri` + 1 `materials` = 28** for
+this leg, plus 13 `meshing`, 4 `ports`, 2 `ans` that are not. So a clean leg
+predicted **47 − 28 = 19**.
+
+Post-run: **`dead=0 guide=0 stale=26 exit=2`**
+(`20260825T141928Z_EX-30-root-postcensus.log`, 1 s). **21 of the 28 cleared**,
+and the seven that did not are *precisely* the `straight_wire_*` set of the one
+example that never meshed — `straight_wire_{A,B}.bp`,
+`straight_wire_{A,B,B_analytical}.xdmf`, `straight_wire_combined.{h5,xdmf}`.
+19 + 7 = 26, exact. **No other family moved**: `meshing` 13 → 13, `ports`
+4 → 4, `ans` 2 → 2; `dead=0 guide=0` on both readings, both pass the `OPS-19`
+`exit != 1` gate. Note for the review: `meshing` reads **13**, not the 10 the
+item quotes — staleness is wall-clock and item 4 should size against 13.
+
+Worth recording: `h_convergence_rate_combined.xdmf` **did** clear even though
+`mag:6` exits 1 — the export happens before the assertion. The census is
+therefore not a proxy for "the example passed", and was not read as one.
+
+### Red (ii), the one that matters: a gate is red on `main`
+
+`examples/magnetostatics/06_h_convergence_rate.py` exits 1 with
+
+```
+  fitted rate  : 1.9038   (band 0.7 < p < 1.5, MAG-13 gate; 1.10 on record)
+AssertionError: fitted convergence rate 1.9038 outside the MAG-13 band [0.7, 1.5]
+```
+
+(`20260825T141141Z_EX-30-root-run-mag6.log`, `Status: 1`, 142 s). That example
+*imports* `RATE_MIN`, `RATE_MAX`, `RESOLUTIONS`, `solve_h_refinement` and
+`fit_convergence_rate` from `tests/validation/test_convergence.py` — the
+`ANS-1` rule, already applied here — so `-e 6` **is** the gate's computation.
+Rather than reason from that, I probed the gate:
+`20260825T141636Z_EX-30-root-mag6-gate-probe.log`, `-n 2`, real,
+**`1 failed in 143.11s`, `Status: 1`**, `Convergence rate: 1.90`, identical
+errors to 7 significant figures. **`tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire`
+is red on `main` at `878fa3e` and has been since the 0.11 merge, unobserved.**
+
+| h (m) | cells (0.11) | rel L2 (0.11) | `MAG-13` record | move |
+| --- | --- | --- | --- | --- |
+| 0.0040 | 38 740 | 21.8417% | 22.19% | −0.35 pp |
+| 0.0025 | 147 235 | 15.3848% | 12.75% | +2.63 pp |
+| 0.0018 | 383 146 | **4.4605%** | 9.26% | **−4.80 pp** |
+
+Two of the three rungs are already documented: 147 235 / 15.3848% is verbatim
+the retired `MAG-18` known-issues entry. The **finest** rung is not — its error
+more than halved, and that is what levers the slope 1.10 → 1.90. The sequence
+is still monotone, so the example's own negative control (monotone decay)
+passes; it is the rate that breaks, on the upper edge whose docstring says a
+rate well above 1.5 means one resolution in the sequence is anomalous.
+
+**Not diagnosed, deliberately.** Two readings fit and discriminating them is a
+`MAG-13`/`MAG-18` decision: (a) the h = 0.0018 rung is anomalous on 0.11 and
+the sequence needs re-choosing the way `MAG-13` once excluded h = 0.0035; or
+(b) the sampled 10-point norm is the wrong instrument on 0.11 and the
+`MAG-18` `E_Ω` norm — green on 0.11 at rate **1.6854** — is what should gate.
+`MAG-18`'s own retired entry flags that it re-gated the `E_Ω` ladder and *not*
+this test, which is exactly how the red survived. **No band was touched.**
+
+### Red (i): `mag:1` no longer meshes
+
+`20260825T140159Z_EX-30-root-run-mag1to2.log`, `Status: 124`. The 124 is a
+post-`MPI_Abort` teardown hang against the runner's `-t 300` (the `th:6` trap,
+now seen on the `mag` side); the failure itself is immediate:
+
+```
+Info    : Found two duplicated facets.
+Error   : Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+  File "/workspace/src/fem_em_solver/io/mesh.py", line 304, in straight_wire_domain
+Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+```
+
+**`MeshGenerator.straight_wire_domain` is not broken in general.** The same
+generator meshed three times in the very next run at 38 740 / 147 235 /
+383 146 cells. What differs is a parameter set **no gate exercises**:
+the example runs `wire_length = 0.3`, `domain_radius = 0.04`,
+`resolution = 0.01` (source comment: "coarse, cron-safe runtime"), against the
+gates' 0.20 / 0.03 / 0.0025 and 0.2 / 0.03 / {0.004, 0.0025, 0.0018}. Four
+times coarser than the coarsest gated rung, in a bigger box. `straight_wire_domain`
+is untouched since `d176bc1` (`OPS-18` step 2), so this is image behaviour
+meeting an ungated parameter set, not a repo regression. Cost 301 s, the
+single largest spend of the slot, all of it teardown.
+
+### Green, with what each one actually proves
+
+`20260825T140737Z_EX-30-root-run-mag2to5.log`, `Status: 0`, **231 s**, real:
+`mag:2`, `mag:4`, `mag:5`. Only `mag:5` asserts (7 `assert` statements;
+`mag:2` and `mag:4` have **zero** — they are report-only): "All assertions
+hold. Total elapsed 4.8 s (2 ranks, **14 055 cells**)", matching its guide's
+recorded mesh digit for digit, with the `MAG-15` gauge cross-check ratios
+inside their 5% / 1e-6 bands.
+
+`20260825T141416Z_EX-30-root-run-mri-mat.log`, `Status: 0`, **88 s**, complex:
+`mri:1`, `mri:2`, `mat:1`. The quantitative anchors —
+
+```
+[point]  SAR_point(0,0,0) = 8.00835406e-08 W/kg vs closed form [3.31e-16 relative]
+[field]  DG0 SAR averaged over the sphere = 8.00835406e-08 W/kg vs closed form [2.81e-15 relative]
+[1 g]    ratio = 1.00000000 [0.000% vs the 0.5% budget]; meshed mass 0.0120% vs 0.1%
+[10 g]   ratio = 1.00000000 [0.000% vs the 0.5% budget]; meshed mass 0.0041% vs 0.1%
+[ΔR]     relative error 1.5838% against the 2% ceiling (1.5834% on the `MAT-6` step-3 record)
+```
+
+`mat:1` reproduces the `MAT-6` Dodd–Deeds record to **4e-04** and `mri:2`
+lands its closed-form SAR identity at machine precision — both on 0.11, both
+unmoved. `mri:1` exits 0 but asserts nothing.
+
+### Third finding, for the review: leg (root) needs the same licence
+
+`mag:2`, `mag:4` and `mri:1` assert nothing, and their guides carry
+0.7.2-tagged record tables the 0.11 gmsh has moved by sub-percent amounts:
+
+| guide record | 0.7.2 on record | measured 0.11 |
+| --- | --- | --- |
+| `mag:2` cells / axis relL2 | 411 393 / 6.3046% | **409 596 / 6.2134%** |
+| `mag:4` cells (3 rungs) | 70 054 / 103 984 / 160 478 | **69 918 / 103 950 / 160 677** |
+| `mri:1` phantom `\|E\|` mean | 1.975909e+02 | **1.979842e+02** |
+
+This is exactly the in-class (1\*) situation legs (mesh) and (ports) were
+granted an example-record licence for at the 03:00 review. Leg (root) was
+explicitly given **none** ("no re-record licence on this leg — every record it
+asserts is either analytic or `MAG-18` re-gated"), which is right about the
+*asserted* records and does not cover these *un-asserted guide tables*. So the
+digits stand un-re-recorded and the leg asks for the licence.
+
+### Cost
+
+**907 s of compute across five runs** (301 + 231 + 142 + 88 + 145) plus two
+1 s censuses. Commissioned standard, measured standard; nothing approached its
+`-t 300` / `timeout -k 30 400` ceiling except the `mag:1` teardown hang, which
+is the ceiling doing its job. `-n 2` throughout.
+
+**Docs.** Two known-issues entries opened (the gate red; the `mag:1` mesh
+break), none retired. §7 `EX-30` table row and prose entry given a leg-(root)
+attempt block; §9 item 3 annotated 🟡 with both review calls named. `EX-30`
+stays 🟡; legs (mesh) and (ports) are untouched and remain queueable — they do
+not depend on this leg.
+
+**`main` clean and unchanged in substance** — no code landed, so no
+`attempt/*` branch was needed and nothing was parked. **No denials, no
+anomalies.**
+
+**Hypothesis for the next attempt.** Leg (root) cannot close until the review
+disposes of both reds, and neither is `EX-30`'s to fix. The cheap one first:
+commission a `MAG-13` re-gate chunk that re-measures the h-ladder on 0.11 and
+decides between re-choosing the resolution sequence and moving the gate to the
+`MAG-18` `E_Ω` norm — one standard-tier command already sized at 145 s. Then
+`mag:1` needs a one-line ruling on whether the example's coarse parameter set
+moves or `straight_wire_domain` gets hardened; a resolution bisect between
+0.01 and 0.004 would cost one smoke run and would probably localise it. With
+both disposed and an (1\*) licence for the three report-only guides, the leg
+is one slot.
