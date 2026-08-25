@@ -41,6 +41,9 @@ The `th:` group sources the complex DolfinX build automatically; a real build
 raises immediately. Measured cost at `-n 2`: **24 s** of compute, 27 s wall
 (`docs/testing/logs/20260813T200415Z_EX-19-example-n2.log`, exit 0) — five
 solves, 5 866 → 55 251 cells, the 128 MHz fine rung dominating at 12.5 s.
+Re-measured on the 0.11 image 2026-08-25: **55 s** wall for `th:5` + `th:6`
+together, the 128 MHz fine rung 11.3 s at 55 241 cells
+(`20260825T050232Z_EX-30-th-run-5to6.log`, exit 0).
 
 ## How to analyze it, step by step
 
@@ -48,22 +51,28 @@ solves, 5 866 → 55 251 cells, the 128 MHz fine rung dominating at 12.5 s.
 
 ```
 [64 MHz]  h = 0.01250 (  5866 cells): relL2 = 8.154%, separation =  8.42x
-[64 MHz]  h = 0.00833 ( 17670 cells): relL2 = 3.643%, separation = 18.68x
-[128 MHz] h = 0.00833 ( 17670 cells): relL2 = 3.299%, separation = 31.78x
-[128 MHz] h = 0.00556 ( 55251 cells): relL2 = 1.826%, separation = 57.31x
+[64 MHz]  h = 0.00833 ( 17667 cells): relL2 = 3.643%, separation = 18.67x
+[128 MHz] h = 0.00833 ( 17667 cells): relL2 = 3.302%, separation = 31.75x
+[128 MHz] h = 0.00556 ( 55241 cells): relL2 = 1.769%, separation = 59.16x
 ```
+
+*(Transcript from the DolfinX **0.11** image,
+`20260825T050232Z_EX-30-th-run-5to6.log`. On 0.7.2 the same rungs meshed to
+17 670 / 55 251 cells and the 128 MHz fine rung read 1.826% / 57.31× — the
+record moved with its mesh at `OPS-18` step 3, and the four-digit motions in
+the 64 MHz and coarse rows are that same ~5-ulp mesh tie-break.)*
 
 The gate is the level (`< 5%`) **and** the direction (decreasing with `h`); the
 example asserts both, at `TH-10`'s unmoved band. Note the cross-frequency
-reading the run makes available for free: at the *same* 17 670-cell mesh,
-128 MHz (3.299%) is more accurate than 64 MHz (3.643%). Whatever sets the ~3%
+reading the run makes available for free: at the *same* 17 667-cell mesh,
+128 MHz (3.302%) is more accurate than 64 MHz (3.643%). Whatever sets the ~3%
 floor here, it is not interior-wavelength resolution — that refutation is
 `GEO-14`'s question, and this example reproduces the measurement it rests on.
 
 ### 2. Check the separation column — that is the negative control
 
 `relL2(FEM vs quasi-static)` is 68.0% at 64 MHz and 104.7% at 128 MHz, so the
-solve sits 18.68× / 57.31× closer to the full-wave series than to the
+solve sits 18.67× / 59.16× closer to the full-wave series than to the
 quasi-static closed form, against a `> 10×` floor. A solver that had merely
 reproduced `EX-6`'s physics at a higher frequency fails this by construction.
 
@@ -88,12 +97,14 @@ band, and the run prints the drift:
 
 | quantity | record | this run's drift |
 |---|---|---|
-| 64 MHz fine relL2 | 3.643% | 8.4e-05 |
-| 64 MHz separation | 18.68× | 1.7e-04 |
-| 128 MHz fine relL2 | 1.826% | 1.8e-05 |
-| 128 MHz separation | 57.31× | 7.2e-05 |
+| 64 MHz fine relL2 | 3.643% | 4.04e-05 |
+| 64 MHz separation | 18.68× | 2.96e-04 |
+| 128 MHz fine relL2 | 1.769% *(0.11; 1.826% on 0.7.2)* | 2.02e-04 |
+| 128 MHz separation | 59.16× *(0.11; 57.31× on 0.7.2)* | 5.45e-05 |
 | 64 MHz ohmic power | 3.629% | inside band |
 | 64 MHz quasi-static power miss | 58.1% | inside band |
+
+*(Drifts measured on the 0.11 image, `20260825T050232Z_EX-30-th-run-5to6.log`.)*
 
 Records: `20260813T093212Z_TH-10-step2-64mhz.log`,
 `20260813T123211Z_TH-10-step3-128mhz.log`,

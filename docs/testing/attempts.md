@@ -14967,3 +14967,106 @@ read 0 if item 4's alignment lands; if `th:6` still misses after the re-record,
 that is a fresh physics finding, not the stale-constant story.
 
 **No denials, no anomalies, no parked branches.** Tree clean at handoff.
+
+## 2026-08-25T05:10Z — `EX-30` leg (th) (§9 item 4) — **complete**: all eight `th:` examples green, `time_harmonic` census 4 → 0, the licensed 128 MHz alignment confirmed by measurement (00:00 CDT implementer slot)
+
+**Preflight.** Tree clean on `main` @ `1086413`, container Up 11 h. No anomaly,
+no prior dirty-tree entry to dispose of.
+
+**What was tried, in order.** (1) Pre-run census as the negative control,
+*before* any edit. (2) The alignment the 18:00 review licensed, and nothing
+else. (3) `th:1`–`th:8` driven in pairs. (4) Post-run census against a
+*derived* expectation.
+
+**The alignment (documentation-diagnosed, now measured).** In
+`examples/time_harmonic/06_larmor_lossy_sphere.py`:
+`RECORD_INTERIOR_L2[FREQUENCY_128_HZ]` 0.01826 → **0.01769** and
+`RECORD_SEPARATION[FREQUENCY_128_HZ]` 57.31 → **59.16**, both version-tagged in
+a comment block naming the source log
+(`20260822T123746Z_OPS-18-step3-th10-rerun.log`, `TH-10`'s own gate re-run on
+0.11: relL2 1.769%, separation 59.16×, 55 241 cells) and keeping the 0.7.2
+digits and their 55 251-cell mesh beside them. **`REPRODUCTION_BAND` (1%) did
+not move. The 64 MHz constants did not move. No `src/` change, no test change.**
+
+**The measurement that closes the `th:6` question.**
+`20260825T050232Z_EX-30-th-run-5to6.log`, Status 0, 55 s:
+
+```
+[128 MHz] h_sphere = 0.00556 (  55241 cells, 11.3 s): relL2 = 1.769%, separation = 59.16x
+[128 MHz] vs the TH-10 record: relL2 1.769% against 1.769% (drift 2.02e-04),
+          separation 59.16x against 59.16x (drift 5.45e-05) — band 1%
+[64 MHz]  vs the TH-10 record: relL2 3.643% against 3.643% (drift 4.04e-05),
+          separation 18.67x against 18.68x (drift 2.96e-04) — band 1%
+```
+
+Both licensed constants now reproduce **three decades inside** the unmoved 1%
+band, on the record's own 55 241-cell mesh. The 18:00 review's
+from-documentation diagnosis — example/gate divergence, a stale restated
+constant, not a physics motion — is confirmed. The power block is unchanged and
+inside its own band (3.629% vs the 5% band, quasi-static miss 58.140% vs the
+50% floor).
+
+**Census — derived, never memorized** (the standing instruction, and item 3's
+warning). Pre-run: `dead=0 guide=0 stale=51 stale_severity=report exit=2`
+(`20260825T050102Z_EX-30-th-precensus.log`), containing **exactly four**
+`time_harmonic` entries — `th:6`'s `larmor_sphere_{64,128}MHz_combined.xdmf`,
+`th:2`'s `pec_cavity_mode_combined.xdmf`, `th:5`'s
+`resonance_guard_combined.xdmf`. That matches item 3's handoff reading (50 after
+the 16:30 slot, +1 from wall-clock aging, `th:7`'s two already gone), so the
+predicted post-run total is 51 − 4 = **47**. Post-run:
+**`dead=0 guide=0 stale=47 exit=2`**
+(`20260825T050353Z_EX-30-th-postcensus.log`) with **zero** `time_harmonic`
+entries. Prediction hit exactly; no other family's count moved. Both readings
+pass the `OPS-19` `exit != 1` gate.
+
+**All eight green, driven in pairs.** The item warned that `run_examples.sh` is
+`set -e` and one red truncates a batch, so I ran four harness commands rather
+than one, keeping attribution while bounding the blast radius. All Status 0,
+`-n 2`, complex build sourced by the runner, `-t 300`:
+
+| run | log | elapsed |
+|---|---|---|
+| `th:1`+`th:2` | `20260825T050147Z_EX-30-th-run-1to2.log` | 23 s |
+| `th:3`+`th:4` | `20260825T050214Z_EX-30-th-run-3to4.log` | 14 s |
+| `th:5`+`th:6` | `20260825T050232Z_EX-30-th-run-5to6.log` | 55 s |
+| `th:7`+`th:8` | `20260825T050335Z_EX-30-th-run-7to8.log` | 13 s |
+
+**105 s of compute total. Commissioned heavy, measured standard** — the
+budgeted `timeout -k 30 300` per command was never approached, and the `th:6`
+teardown-hang trap (exit 124 on a red) never fired because nothing was red.
+`th:5` reproduced the `TH-1` guard record (approach slope 137.554 / quiet
+21.951, separation 6.267×, amplification 16.505× vs the pole law's 16.0× ⇒
+3.156% against a 10% ceiling).
+
+**Worth recording for the review: this leg doubled as the example layer's 0.11
+re-gate for the whole family.** `th:2` and `th:5` ran for the first time since
+the 0.11 merge (`OPS-24` fixed the code path 3 h ago) and `th:7` ran through
+`OPS-25`'s hoisted import. Items 2, 3 and 4 together took the `time_harmonic`
+example family from three reds and six stale artifacts to eight greens and
+zero, in three consecutive slots, without moving a single band.
+
+**Docs.** `th:6` known-issues entry flipped ✅ RETIRED with the retirement
+evidence above the original text (kept verbatim); §7 `EX-30` table row and prose
+entry given a leg-(th) closure block; §9 item 4 marked done with its original
+text preserved. The companion guide `06_larmor_lossy_sphere.md` had its
+transcript block, drift table and cost line re-recorded version-tagged from this
+run's log (17 670 → 17 667 and 55 251 → 55 241 cells, 1.826%/57.31× →
+1.769%/59.16×, with the 0.7.2 pair called out in place) — the guide restates the
+run, so leaving it on 0.7.2 digits would have rebuilt the exact divergence this
+leg just retired.
+
+**Scope discipline.** Re-recorded exactly the two licensed constants and the
+documentation that restates them. Did not touch `src/`, any test, any band, any
+64 MHz constant, or the other three `EX-30` legs. **`EX-30` stays 🟡** — legs
+(root), (mesh) and (ports) are untouched and still gated as §7 scopes them.
+
+**Next attempt hypothesis.** Leg (th) is closed and nothing is serial on it. The
+queue's remaining open item is **§9 item 5** (`GEO-19` step C, the parked 16-leg
+gates module), which item 1 unblocked this morning. For `EX-30` itself, leg
+(root) is the natural next commission: its 26 repo-root artifacts are the
+largest single block of the remaining 47, and leg (th) has now supplied the
+precedent the review asked for — analytic-comparison examples re-gate cleanly on
+0.11, with record motion confined to constants whose gate already re-recorded
+them, which is a documentation problem and not a physics one.
+
+**No denials, no anomalies, no parked branches.** Tree clean at handoff.

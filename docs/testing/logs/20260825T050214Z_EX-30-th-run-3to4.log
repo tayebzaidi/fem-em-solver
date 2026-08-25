@@ -1,0 +1,201 @@
+# Test Run
+- Chunk: EX-30-th-run-3to4
+- Commit: 1086413b070bd799ee560f3af060de233ce49e10
+- Time (UTC): 2026-08-25 05:02:15
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: ./scripts/run_examples.sh -e th:3,th:4 -n 2 -t 300
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 25 00:02 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc './scripts/run_examples.sh -e th:3,th:4 -n 2 -t 300'
+Running 2 example(s) with mpiexec -n 2 (timeout 300s each)
+COMPOSE_FILE=/home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+
+==> examples/time_harmonic/03_dielectric_sphere_in_uniform_field.py (complex build)
+========================================================================
+EX-6 — dielectric sphere in a uniform field: the SOLVED interior
+========================================================================
+
+[geometry] sphere R = 0.05 m inside a 0.2 m air box; the exact exterior field is Dirichlet data on the wall, the interior is the solver's own output
+[material] eps_r = 78.0 in the sphere (water/saline), vacuum outside, sigma = 0 — lossless, so the answer is real
+[regime] f = 4.7713 MHz, k0*R = 5.0e-03: quasi-static, the retardation the closed form drops is O((k_in R)^2) ~ 0.2%
+[closed form] E_in/E0 = 3/(eps+2) = 0.037500 (26.7x smaller than the drive), beta = 0.962500
+[vs EX-3] `EX-3` *imposes* its field on a sphere and weights it by the material; here eps *sets* the field, and nothing in the boundary data states the interior value
+Info    : Meshing 1D...
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 30%] Meshing curve 5 (Line)
+Info    : [ 40%] Meshing curve 6 (Line)
+Info    : [ 50%] Meshing curve 7 (Line)
+Info    : [ 50%] Meshing curve 8 (Line)
+Info    : [ 60%] Meshing curve 9 (Line)
+Info    : [ 70%] Meshing curve 10 (Line)
+Info    : [ 70%] Meshing curve 11 (Line)
+Info    : [ 80%] Meshing curve 12 (Line)
+Info    : [ 90%] Meshing curve 13 (Line)
+Info    : [ 90%] Meshing curve 14 (Line)
+Info    : [100%] Meshing curve 15 (Line)
+Info    : Done meshing 1D (Wall 0.00290928s, CPU 0.002911s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Sphere, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.249661s, CPU 0.236277s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 2848 nodes...
+Info    : Done tetrahedrizing 2856 nodes (Wall 0.053833s, CPU 0.052837s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.101005s, CPU 0.088684s)
+Info    : Found volume 1
+Info    : Found volume 2
+Info    : It. 0 - 0 nodes created - worst tet radius 8.90734 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 1.86934 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 1.52118 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 1.36996 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 1.26617 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 1.1919 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 1.12928 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 1.07956 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 1.03794 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 1.00244 (nodes removed 0 0)
+Info    : 3D refinement terminated (7376 nodes total):
+Info    :  - 0 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 40390 tetrahedra created in 0.485139 sec. (83254 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 0.72439s, CPU 0.706478s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 0.000520627) with worst = 0.0155675 / average = 0.774633:
+Info    : 0.00 < quality < 0.10 :        19 elements
+Info    : 0.10 < quality < 0.20 :        64 elements
+Info    : 0.20 < quality < 0.30 :       118 elements
+Info    : 0.30 < quality < 0.40 :       192 elements
+Info    : 0.40 < quality < 0.50 :       302 elements
+Info    : 0.50 < quality < 0.60 :       471 elements
+Info    : 0.60 < quality < 0.70 :      1038 elements
+Info    : 0.70 < quality < 0.80 :      2526 elements
+Info    : 0.80 < quality < 0.90 :      3825 elements
+Info    : 0.90 < quality < 1.00 :      1746 elements
+Info    : 198 edge swaps, 1 node relocations (volume = 0.000520627): worst = 0.230527 / average = 0.786645 (Wall 0.011355s, CPU 0.011356s)
+Info    : 199 edge swaps, 1 node relocations (volume = 0.000520627): worst = 0.296493 / average = 0.786709 (Wall 0.0123336s, CPU 0.012307s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         1 elements
+Info    : 0.30 < quality < 0.40 :       187 elements
+Info    : 0.40 < quality < 0.50 :       295 elements
+Info    : 0.50 < quality < 0.60 :       445 elements
+Info    : 0.60 < quality < 0.70 :      1051 elements
+Info    : 0.70 < quality < 0.80 :      2546 elements
+Info    : 0.80 < quality < 0.90 :      3868 elements
+Info    : 0.90 < quality < 1.00 :      1728 elements
+Info    : Optimizing volume 2
+Info    : Optimization starts (volume = 0.00747937) with worst = 0.00733461 / average = 0.768793:
+Info    : 0.00 < quality < 0.10 :        69 elements
+Info    : 0.10 < quality < 0.20 :       204 elements
+Info    : 0.20 < quality < 0.30 :       307 elements
+Info    : 0.30 < quality < 0.40 :       490 elements
+Info    : 0.40 < quality < 0.50 :       768 elements
+Info    : 0.50 < quality < 0.60 :      1594 elements
+Info    : 0.60 < quality < 0.70 :      3707 elements
+Info    : 0.70 < quality < 0.80 :      7804 elements
+Info    : 0.80 < quality < 0.90 :     10283 elements
+Info    : 0.90 < quality < 1.00 :      4860 elements
+Info    : 569 edge swaps, 21 node relocations (volume = 0.00747937): worst = 0.150587 / average = 0.780886 (Wall 0.0220197s, CPU 0.02202s)
+Info    : 576 edge swaps, 23 node relocations (volume = 0.00747937): worst = 0.263903 / average = 0.781016 (Wall 0.0266916s, CPU 0.026692s)
+Info    : 577 edge swaps, 24 node relocations (volume = 0.00747937): worst = 0.263903 / average = 0.781014 (Wall 0.0307397s, CPU 0.030741s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         2 elements
+Info    : 0.30 < quality < 0.40 :       471 elements
+Info    : 0.40 < quality < 0.50 :       744 elements
+Info    : 0.50 < quality < 0.60 :      1550 elements
+Info    : 0.60 < quality < 0.70 :      3720 elements
+Info    : 0.70 < quality < 0.80 :      7850 elements
+Info    : 0.80 < quality < 0.90 :     10353 elements
+Info    : 0.90 < quality < 1.00 :      4868 elements
+Info    : Done optimizing mesh (Wall 0.130056s, CPU 0.122173s)
+Info    : 7376 nodes 45600 elements
+
+[solve] 39684 cells (h_sphere = 0.00625, h_far = 0.0125 — the `TH-8` gate's finest mesh), solved in 6.4 s
+[interior] 25 probe points inside 0.55 R: E_z = 0.038416 V/m vs closed form 0.037500 V/m (2.442%, ceiling 5%, 2.443% on the TH-8 record)
+[interior] spread 0.080%, transverse/E_z 0.084%, |Im|/|Re| 0.000e+00 — the closed-form interior field is uniform, z-directed and real, and the solve has to be all three
+
+[cross-check] the same interior average, measured a second way: int_sphere E_z dx / int_sphere dx = 0.038410 V/m over the tagged sphere cells, 0.014% from the probe average — assembly over the whole ball vs point location on two shells, and they agree because the interior really is uniform
+[cross-check] the tagged region is the sphere: assembled volume 5.206270e-04 m^3 vs 4/3*pi*R^3 = 5.235988e-04 m^3 (0.568%) — a faceted tetrahedral ball under-fills the true sphere, which is exactly what this reads
+
+[jump] over the pole at r = 1.2 R: E_z = 2.274306 V/m vs closed form 2.110091 V/m (7.782%); E_out/E_in = 59.20x vs 56.27x — the discontinuity ParaView shows, measured
+
+[jump] at the equator at r = 1.2 R: E_z = 0.440163 V/m vs closed form 0.443516 V/m (0.756%); E_out/E_in = 11.46x vs 11.83x — the discontinuity ParaView shows, measured
+
+[control] this gate cannot pass by reading back its own boundary data, and the `TH-8` gate measured that: the identical solve with the sphere dropped from the material_map — same mesh, same Dirichlet data, vacuum interior — returns E_z = 0.918143 V/m, 2348.4% off the closed form, a factor 23.9 above what this run measured. Cited from 20260731T200457Z_TH-8-gate-final.log, not re-run: the wall data contributes at most 2*beta*R^3/W^3 = 24.1% of E0, while the asserted interior is 26.7x below E0
+
+[paraview] wrote /workspace/examples/time_harmonic/paraview_output/dielectric_sphere_combined.xdmf
+[paraview] colour by `E_magnitude`: the sphere is a dark ball in a bright box, and that contrast is 3/(eps+2) = 0.0375. `Threshold` on `CellTags` (1 = sphere, 2 = air) isolates either region; `Glyph` on `E_real` in a y = 0 clip shows the dipole outside and the uniform z-directed field inside.
+
+All assertions hold. Total elapsed 6.6 s.
+
+==> examples/time_harmonic/04_evanescent_waveguide_decay.py (complex build)
+========================================================================
+EX-7 — evanescent TE10: decay with no loss anywhere in the problem
+========================================================================
+
+[geometry] PEC guide 0.05 x 0.025 x 0.05 m; the exact evanescent field is Dirichlet data on the whole boundary, which pins the two end faces — the slope between them is the solver's own output
+[material] eps_r = 1, mu_r = 1, sigma = 0 — lossless, so nothing in the medium can be causing the decay, and the phasor must come out real
+[regime] f = 2.4 GHz against the TE10 cutoff f_c = c/2a = 2.998 GHz: below cutoff, so the mode is evanescent and gamma is real (no pole in the band)
+[closed form] k_c = 62.8319 1/m, k0 = 50.3003 1/m, gamma = sqrt(k_c^2 - k0^2) = 37.652670 Np/m (gamma*L = 1.883, an amplitude drop of 6.57x across the guide)
+[vs EX-4] `EX-4` decays because Im(eps_c) absorbs the wave; here the operator's real part alone does it, and a solver blind to k0 would still decay — at k_c = 62.83 Np/m, 1.67x too fast, at every frequency
+
+[solve] 41472 cells (n = 24 — the `TH-7` gate's finer mesh), solved in 4.2 s
+[decay] 41 probe points on an off-lattice line, fit window z/L in [0.15, 0.85] (the drive and far faces are excluded — fitting them fits the boundary data): gamma = 37.650399 Np/m vs closed form 37.652670 Np/m (0.006%, ceiling 5%, 0.006% on the TH-7 record)
+[field] whole-domain relative L2 error 4.406648e-02 (4.406648e-02 on the record), residual |Im E_y|/|Re E_y| on the line 0.000e+00 — lossless and real-data, so the quadrature component is round-off or the convention has leaked
+
+[cross-check] the same decay, refitted from the CG1 array that is written to XDMF: gamma = 37.640293 Np/m, 0.027% from the N1curl fit — so what ParaView colours is the field the anchor was measured on, not a look-alike
+[mode profile] 25 points across the guide at z = 0.50 L, x/a in [0.12, 0.88]: peak-normalised |E_y| is 0.124% RMS from sin(pi x/a) — the TE10 half-arch is in the exported array, not just in the picture
+
+[control] this gate cannot pass by reading back its own boundary data, and the `TH-7` gate measured that: a k0-blind solver returns gamma = k_c = 62.8319 Np/m at *every* frequency, so its gamma across the gate's 1.0/2.4/2.8 GHz sweep would have ratio 1.0. The measured ratio was 2.6373 against the closed form's 2.6383 (0.038%), asserted > 2.0 — cited from 20260731T123411Z_TH-7-gate-final.log, not re-run (sweep frequencies 1.0, 2.4, 2.8 GHz). This run's own share of that control: gamma = 37.6504 sits 1.67x below k_c, which a k0-blind operator cannot do at any mesh
+
+[paraview] wrote /workspace/examples/time_harmonic/paraview_output/evanescent_waveguide_combined.xdmf
+[paraview] |E| spans 5.154846e-17 … 1.000725e+00 V/m over the guide — the floor is the PEC side wall at x = 0, a, where sin(pi x/a) pins the field to zero, and the peak is the drive face
+[paraview] colour by `E_magnitude`: `Plot Over Line` along z on a log scale is the straight line whose slope is the gamma asserted above; the same filter along x at fixed z is the sin(pi x/a) half-arch.
+
+All assertions hold. Total elapsed 4.8 s.
+
+Done.
+
+## Exit
+- Status: 0
+- Elapsed (s): 14

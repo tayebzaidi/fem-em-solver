@@ -24,12 +24,14 @@ solve falsifiable, and this example measures it in every run:
 
 * *The anchors, reproduced digit-for-digit through the example path* — the
   fine-rung interior relative L2 against the series, **3.643%** at 64 MHz and
-  **1.826%** at 128 MHz, at the gate's own unmoved 5% band; the quasi-static
-  separations, **18.68×** and **57.31×**, against the gate's > 10× floor; and
+  **1.769%** at 128 MHz, at the gate's own unmoved 5% band; the quasi-static
+  separations, **18.68×** and **59.16×**, against the gate's > 10× floor; and
   the SAR-relevant volume integral ½∫σ|E|², **3.629%** from the series integral
   over the same meshed cells. Records: ``20260813T093212Z_TH-10-step2-64mhz.log``,
   ``20260813T123211Z_TH-10-step3-128mhz.log``,
-  ``20260813T170337Z_TH-10-step4-power.log``.
+  ``20260813T170337Z_TH-10-step4-power.log``; the 128 MHz pair is the
+  **0.11** re-record (1.826% / 57.31× on 0.7.2, moved with its mesh
+  55 251 → 55 241), ``20260822T123746Z_OPS-18-step3-th10-rerun.log``.
 * *The negative controls are executed here, not cited* — the quasi-static
   separations and the > 50% quasi-static power miss are computed on this run's
   own solved field, because they come from the imported fixture's own helpers.
@@ -109,8 +111,19 @@ from tests.validation.test_lossy_sphere_fullwave import (  # noqa: E402
 #: module docstring. These are anchors, never targets: a run outside the band
 #: below is a regression finding about the solver or the fixture, not a
 #: tolerance question.
-RECORD_INTERIOR_L2 = {FREQUENCY_64_HZ: 0.03643, FREQUENCY_128_HZ: 0.01826}
-RECORD_SEPARATION = {FREQUENCY_64_HZ: 18.68, FREQUENCY_128_HZ: 57.31}
+#:
+#: **Version-tagged (2026-08-25, `EX-30` leg (th)).** The two 128 MHz constants
+#: are the DolfinX **0.11** digits, re-recorded from `TH-10`'s own gate module
+#: re-run on the 0.11 image (`OPS-18` step 3 attempt 1, green log
+#: ``20260822T123746Z_OPS-18-step3-th10-rerun.log``: relL2 1.769%, separation
+#: 59.16× at 55 241 cells). The 0.7.2 digits they replace — ``0.01826`` and
+#: ``57.31``, measured on 55 251 cells — are history, not a target: the record
+#: moved *with its mesh* at that re-record and this restated copy was never
+#: updated, which is the example/gate divergence the `th:6` known-issues entry
+#: documents. The 64 MHz constants are unchanged and reproduce to 4.04e-05 on
+#: both images.
+RECORD_INTERIOR_L2 = {FREQUENCY_64_HZ: 0.03643, FREQUENCY_128_HZ: 0.01769}
+RECORD_SEPARATION = {FREQUENCY_64_HZ: 18.68, FREQUENCY_128_HZ: 59.16}
 RECORD_COARSE_L2_64 = 0.08154
 RECORD_POWER_ERROR = 0.03629
 RECORD_POWER_QS_MISS = 0.581

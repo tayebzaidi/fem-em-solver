@@ -3664,7 +3664,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-27` | Region-resolution policy on the coil+phantom mesh (`GEO-17`'s newly gated capability: first example whose subject is a mesh-*sizing policy* — policy-on vs clamps-only on one fixture, the volume-recovery angle no example covers; `EX-21` grades one conductor by an explicit `h_c`, a different angle. Mesh-only, no solve; this is the mesh capability `MAT-4`'s SAR-on-a-coil route runs through. Commissioned 2026-08-21 18:00 review; full rubric in the §9 item) | ✅ (2026-08-22: `mesh:5`, `examples/meshing/05_region_resolution_policy.py` + same-stem guide; **closed as written on the first run**, every element of the rubric executed and no band moved. Policy coil meshed/CAD **0.835563 / 0.833730** against the imported, unmoved `POLICY_MIN_CAD_RECOVERY` = 0.755, both reproducing the `GEO-17` records to every printed digit inside the pre-stated 1% band; the clamps-only mesh asserted to **miss** that same floor at **0.754685 / 0.752565** (`EX-18` inverted pattern) — and because the floor was pre-registered as "the uniform mesh's own recovery", that control clears by only ~3.2e-4 **by construction**, so the example gates the *sizing* separation separately at a pre-stated `SIZING_SEPARATION` = 0.05, measured **+0.080879 / +0.081165**. Sign identity on all three refined tags (+10.7169% / +10.7851% / +0.9374%) with the one coarsened region, the air, the one that pays (**−0.2643%**); inscription bound meshed/CAD ≤ 1 on both meshes, all three curved tags (max 0.992751); tagged-volume partition **1.000000000000** on both meshes at the imported `VOLUME_PARTITION_BAND` = 1e-9; and the clamps-only path re-asserted against the imported `OPS-17` record on all **4** tags at 1e-9 — the negative control on `GEO-17`'s fix itself, which may not touch a mesh that asks for one size everywhere. Two combined XDMFs with `CellTags` (`EX-21`/`EX-23` mesh-only precedent); 19 792 cells clamps-only / 20 843 policy, 5.4 s in-script at `-n 2`. Geometry, policy sizes, floor, refined-tag list, CAD volumes and the `OPS-17` table are all **imported** from `tests/mesh/test_mesh_tag_integrity.py` (`ANS-1`) — `POLICY_RESOLUTIONS` was hoisted to module level in that file by this chunk so the sizing itself is imported rather than restated (3 passed, 13 s regression, `20260822T033508Z_EX-27-geo17-regression.log`); the two policy *recovery* records are restated with log provenance and a 1% band, the `EX-26` precedent, because the gate holds them as printed output. Logs `20260822T033345Z_EX-27-example-n2.log` (exit 0) and `20260822T033529Z_EX-27-docrefs.log` — **`dead=0 guide=0 stale=24 stale_severity=report exit=2`**, `exit != 1` under the `OPS-19` contract, 35 guides scanned; the 24 stale entries are `EX-22`'s 48 h window re-growing exactly as the commission predicted ("stale re-grows from ~2026-08-22 by design") and none of them is an `EX-27` artifact. **Tier note for the review:** commissioned standard, **measured smoke** (8 s harness) — the commission's 13 s estimate was the two meshes alone and was close; the exports cost less than assumed. *Audited COMPLIANT 2026-08-22 03:00 review: every gate is CAD-analytic, record, or monotonicity; nothing loosened; the regression's "13 s" is pytest-internal, the harness row says 15 s — both true*) | standard (measured smoke) |
 | `EX-28` | Gapped birdcage with leg terminals and port sheets (`GEO-18`'s newly gated capability, both steps: first example with a **discontinuous conductor** — planar disk terminals on a cut leg and an interior sheet spanning metal to metal on a coil; `EX-21` is the uncut graded birdcage, `EX-23` the two-torus sheet — a geometry angle no example covers. Mesh-only, no solve; this is the mesh `PORT-9` step 3 solves on. Commissioned 2026-08-22 03:00 review, deferred from 08-21 until the fixture stopped moving; full rubric in the §9 item) | ✅ (2026-08-23: `mesh:6`, `examples/meshing/06_birdcage_leg_gaps_port_sheets.py` + same-stem guide; **closed as written on the first run**, every element of the rubric executed and no band moved. Sheeted rung **116 416 cells**, meshed/CAD conductor **0.970193** against the imported, unmoved `CAD_MASS_GATE` = 0.95; per port the sheet is **54 facets, `1.120000000e-04 m²`, meshed/analytic `1.000000000000`** against the analytic `dx·g`, `h = 8.000000000e-03 m` = the gap exactly, **`w_eff/w_bbox = 1.000000000000`** (the `PORT-9` step 2b convention, i.e. the facet set is the whole rectangle), out-of-plane spread `2.512e-16` m (P1/P3) / `9.714e-17` m (P2/P4), halves **`0.500000000000/0.500000000000`** of the analytic gap box, terminal `2.236196e-04 m²` = **0.988616** of the closed-form `2.261946711e-04 m²` inside the imported `TERMINAL_AREA_BAND` [0.95, 1.0] *and* inside step 1's pre-stated `1e-5` record band, closure **`1.000000000000`**; **C4 sheet spread `8.470e-16`** — every figure reproducing `GEO-18` step 2's log to the printed digit. `GEO-9` partition `< 1e-9` on both rungs. **Negative control (inverted, `EX-18`/`EX-23` pattern):** the uncut rung at **98 474 cells, ratio 1.000000** against `EX-21`'s record and meshed/CAD **0.967019** = the record, cell tags `[1, 2, 3, 101-104]` with no `11x` half tag, conductor-facing area **exactly `0.000000e+00 m²`** on all four ports (leg (b)'s finding re-measured) — **and the `210+i` facet groups asserted absent by measurement**, `_global_facet_count` = 0 on all four after an `_interface_facet_tags` rebuild on the uncut mesh, which closes the one clause `GEO-18` step 2's audit found implied rather than asserted. Three combined XDMFs (sheeted cells, sheeted sheet facets 211-214, uncut cells) for the side-by-side. Every constant **imported** from `tests/mesh/test_birdcage_leg_gaps.py` and `tests/mesh/test_birdcage_port_sheets.py` and the modules they import (`ANS-1`); nothing restated, no pre-existing test touched. Logs `20260823T020338Z_EX-28-example-n2.log` (exit 0, **43.1 s in-script / 46 s harness at `-n 2`**, sheeted 21.46 s mesh / 23.41 s rung, uncut 19.02 s) and `20260823T020531Z_EX-28-docrefs.log` — **`dead=0 guide=0 stale=24 stale_severity=report exit=2`**, `exit != 1` under the `OPS-19` contract, 36 guides scanned, none of the 24 stale entries an `EX-28` artifact. **Tier note for the review:** commissioned standard, **measured standard** (46 s harness against the commission's ~75 s estimate; the `EX-27` precedent that exports are cheaper than the meshes held again — the two builds are 42 s of the 43 s)) | standard |
 | `EX-29` | Doc-reference checker freshness-gates every example's own `paraview_output/` (22 of 27 examples were never checked — known-issues 2026-08-23; commissioned 2026-08-23 weekly review) | ✅ | smoke |
-| `EX-30` | Refresh the 13-example stale artifact set the checker could not see (10–17 d old on 2026-08-23; commissioned 2026-08-23 weekly review; **re-scoped 2026-08-24 10:30 review to four legs from the honest `stale=55` census** — see prose entry) | 🟡 (2026-08-24: leg (th) attempted, census 55 → 50 against a predicted 44; `th:1`/`th:3`/`th:4`/`th:8` green and reproducing, three reds journaled to known-issues — `core/cavity.py` unmigrated to 0.11 with `TH-9`'s gates non-executing on `main`, `th:7`'s lone `interpolate(cells=)` site, and `th:6`'s 128 MHz 3.14% drift on an unmoved mesh; nothing re-recorded) | heavy |
+| `EX-30` | Refresh the 13-example stale artifact set the checker could not see (10–17 d old on 2026-08-23; commissioned 2026-08-23 weekly review; **re-scoped 2026-08-24 10:30 review to four legs from the honest `stale=55` census** — see prose entry) | 🟡 (**leg (th) ✅ 2026-08-25**: all eight `th:` examples green, `time_harmonic` census 4 → 0 inside a derived 51 → 47, the licensed 128 MHz alignment executed — 0.01826 → 0.01769 / 57.31 → 59.16, version-tagged — and `th:6` reproducing to 2.02e-04 / 5.45e-05 in its unmoved 1% band; 105 s, measured standard. Legs (root), (mesh), (ports) still open and gated) | heavy |
 | `EX-31` | Ring-gapped birdcage with dual port families (`GEO-20` step 1's newly gated capability: first example with ring-gap terminals as exact disks from radial cut planes, and the first 12-port dual-family mesh — a geometry angle `EX-28` (leg gaps only) does not cover; mesh-only, no solve; commissioned 2026-08-24 10:30 review) | ✅ (2026-08-24: `mesh:7`, `examples/meshing/07_birdcage_ring_gap_ports.py` + same-stem guide; **closed as written on the first run**, every element of the rubric executed and no band moved — see the prose entry for the digits. *Audited COMPLIANT 2026-08-24 18:00 review: all three footers verified (75 / 72 / 1 s, statuses 0/0/2 with exit 2 = the `OPS-19` stale-only contract), the printed assertions match this entry to the last decimal, the gate-module strengthening is real (records asserted at their source, lines 403/458/538, imported by the example not restated), and `git show 7529fa4 -- tests/` is 24 insertions / 0 deletions — purely additive, nothing loosened*) | standard (measured standard) |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
@@ -4040,6 +4040,39 @@ elapsed, the reproduced records quoted, and the post-run artifact census.
 > example/gate divergence — and the leg is re-queued as §9 item 4 with the
 > alignment licence (the two 128 MHz constants re-recorded version-tagged
 > from that log, nothing else).
+
+> **Leg (th) ✅ CLOSED 2026-08-25, 00:00 implementer slot — all eight
+> examples green, `time_harmonic` census 4 → 0.** The alignment was executed
+> exactly as licensed and nothing else was re-recorded:
+> `RECORD_INTERIOR_L2[128 MHz]` 0.01826 → **0.01769** and
+> `RECORD_SEPARATION[128 MHz]` 57.31 → **59.16** in
+> `examples/time_harmonic/06_larmor_lossy_sphere.py`, version-tagged from
+> `20260822T123746Z_OPS-18-step3-th10-rerun.log` with the 0.7.2 digits and
+> their 55 251-cell mesh kept in-comment beside them; the 1% reproduction
+> band and every 64 MHz constant untouched. `th:6` then reproduced **1.769%
+> against 1.769% (drift 2.02e-04)** and **59.16× against 59.16× (drift
+> 5.45e-05)** at 55 241 cells, with 64 MHz unmoved at 3.643% / 18.67×
+> (4.04e-05 / 2.96e-04) — the 18:00 review's documentation-only diagnosis of
+> (iii) confirmed by measurement, three decades inside the band.
+> **Census, derived not memorized:** the pre-run control read `dead=0
+> guide=0 stale=51 exit=2` (`20260825T050102Z_EX-30-th-precensus.log`) with
+> exactly **four** `time_harmonic` entries (`th:6` × 2, `th:2`, `th:5` — the
+> 16:30 reading of 50 plus item 3's `th:7` refresh landing at 51), so the
+> predicted post-run count was 51 − 4 = **47**; the post-run census reads
+> **`stale=47`** with **zero** `time_harmonic` entries
+> (`20260825T050353Z_EX-30-th-postcensus.log`), and no other family moved.
+> All four runs Status 0, `-n 2`, complex, driven in pairs so no red could
+> truncate a batch: `th:1`+`th:2` 23 s
+> (`20260825T050147Z_EX-30-th-run-1to2.log`), `th:3`+`th:4` 14 s
+> (`…T050214Z_…-3to4.log`), `th:5`+`th:6` 55 s (`…T050232Z_…-5to6.log`),
+> `th:7`+`th:8` 13 s (`…T050335Z_…-7to8.log`) — **105 s of compute total**,
+> commissioned heavy, **measured standard**. `th:2` and `th:5` ran for the
+> first time since the 0.11 merge (`OPS-24`) and `th:7` through its hoisted
+> import (`OPS-25`), so the leg also served as the example layer's 0.11
+> re-gate for the whole family. The `th:6` known-issues entry is retired;
+> the companion guide's transcript, drift table and cost line are
+> re-recorded version-tagged from the run. **`EX-30` stays 🟡** — legs
+> (root), (mesh) and (ports) are untouched and still gated as scoped above.
 
 **`EX-31` ✅ 2026-08-24** — ring-gapped birdcage with dual port families.
 `mesh:7`, `examples/meshing/07_birdcage_ring_gap_ports.py` + same-stem guide,
@@ -4549,7 +4582,30 @@ uses the Edit tool and verifies `git status --porcelain`.
    result:** a record missing its band through the example path after
    the hoist is a real example/gate divergence in the *records* —
    known-issues + §7, stop.
-4. **`EX-30` leg (th) re-run + the `th:6` record alignment (heavy,
+4. ✅ **Done 2026-08-25 (00:00 slot).** Leg (th) closed exactly as scoped, and
+   the review's documentation-only diagnosis of `th:6` held up under
+   measurement. The alignment landed first and alone — `RECORD_INTERIOR_L2[128
+   MHz]` 0.01826 → **0.01769**, `RECORD_SEPARATION[128 MHz]` 57.31 → **59.16**,
+   version-tagged from `20260822T123746Z_OPS-18-step3-th10-rerun.log` with the
+   0.7.2 digits and their 55 251-cell mesh kept in-comment; no band and no
+   64 MHz constant moved. Then all eight examples green in four paired runs,
+   Status 0, `-n 2`, complex: 23 / 14 / 55 / 13 s — **105 s total, commissioned
+   heavy, measured standard**. `th:6` reproduced **1.769% vs 1.769% (drift
+   2.02e-04)** and **59.16× vs 59.16× (drift 5.45e-05)** at 55 241 cells, 64 MHz
+   unmoved at 3.643% / 18.67× (4.04e-05 / 2.96e-04). **Census derived, not
+   memorized:** pre-run `stale=51` with exactly four `time_harmonic` entries
+   (`th:6` × 2, `th:2`, `th:5`) ⇒ predicted **47**; post-run reads **`stale=47`
+   with zero `time_harmonic`**, no other family moved. `th:2`/`th:5` ran for the
+   first time since the 0.11 merge and `th:7` through its hoisted import, so this
+   doubled as the example layer's 0.11 re-gate for the family. `th:6`'s
+   known-issues entry retired; the companion guide's transcript, drift table and
+   cost line re-recorded version-tagged. **`EX-30` stays 🟡** — legs (root),
+   (mesh), (ports) untouched. Logs
+   `20260825T050102Z_EX-30-th-precensus.log`,
+   `…T050147Z_…-run-1to2.log`, `…T050214Z_…-run-3to4.log`,
+   `…T050232Z_…-run-5to6.log`, `…T050335Z_…-run-7to8.log`,
+   `…T050353Z_…-postcensus.log`. *Original text, for the review's audit:*
+   **`EX-30` leg (th) re-run + the `th:6` record alignment (heavy,
    `-n 2`, complex, `main`; serial on items 2 and 3 — if either is not
    on `main`, run what is runnable and report the attributed census,
    leg stays 🟡).** First, execute the alignment this review licensed

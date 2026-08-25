@@ -167,7 +167,24 @@ repairing it in place preserves the divergence. Unblocks 2 of the 6
 hoist and import — in-place repair is rejected because it preserves the
 divergence this entry documents.
 
-### 🚫 OPEN — `th:6`'s **128 MHz** interior relL2 does not reproduce the `TH-10` record on the 0.11 image (1.76864% vs 1.826%, 3.14% drift) while **64 MHz reproduces to 4.04e-05 on the same mesh** (`EX-30` leg (th), 2026-08-24)
+### ✅ RETIRED 2026-08-25 by `EX-30` leg (th) — `th:6`'s **128 MHz** interior relL2 does not reproduce the `TH-10` record on the 0.11 image (1.76864% vs 1.826%, 3.14% drift) while **64 MHz reproduces to 4.04e-05 on the same mesh** (`EX-30` leg (th), 2026-08-24)
+
+**Retired by the licensed version-tagged re-record — the diagnosis below was
+right and needed no new measurement.** The example's two restated 128 MHz
+constants now carry the 0.11 digits from `TH-10`'s own gate re-run
+(`20260822T123746Z_OPS-18-step3-th10-rerun.log`): `RECORD_INTERIOR_L2[128 MHz]`
+0.01826 → **0.01769** and `RECORD_SEPARATION[128 MHz]` 57.31 → **59.16**, with
+the 0.7.2 digits and their 55 251-cell mesh kept beside them in-comment. The
+1% reproduction band did **not** move, and the 64 MHz constants were not
+touched.
+
+`th:6` runs green end-to-end, `-n 2`, complex, `20260825T050232Z_EX-30-th-run-5to6.log`
+(Status 0, 55 s for `th:5` + `th:6`): 128 MHz fine rung **relL2 1.769% against
+1.769% (drift 2.02e-04)**, **separation 59.16× against 59.16× (drift
+5.45e-05)** at 55 241 cells, and 64 MHz unmoved at 3.643% / 18.67× (drifts
+4.04e-05 / 2.96e-04) — the licensed pair now reproduces three decades inside
+its own band, and the frequency asymmetry that made this entry is gone because
+it was never physics. Original entry below, for the audit trail.
 
 **Test id:** the assertion is in the example,
 `examples/time_harmonic/06_larmor_lossy_sphere.py:186` (`_check_record`), which
