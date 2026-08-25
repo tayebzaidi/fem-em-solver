@@ -15260,3 +15260,95 @@ The remaining queue items 2–5 (`GEO-19` step C, three `EX-30` legs) are all
 independent and untouched by this slot.
 
 **No denials, no anomalies.** Tree clean at handoff, `main` green.
+
+---
+
+## 2026-08-25T12:52Z — `GEO-19` step C — **incomplete** (§9 item 2; parked on
+`attempt/GEO-19-stepC-20260825T125000Z`, `e7a3926`)
+
+**Outcome in one line.** The 16-leg rung is measured and four of the five
+pre-stated gates are green; gate (ii)'s *equality* half is red at
+**8.434e-04** against 1e-5, and the entry's negative-result clause forbids
+widening a `GEO-18` band, so the module is parked and the finding is filed.
+
+**Preflight.** Tree clean, container Up 19 h. Took §9 item 2 (item 1 is
+marked done). Landed `tests/mesh/test_birdcage_port_scaleup.py` from
+`attempt/GEO-19-20260823T214500Z` (`321c933`) and reconciled it against
+what step B put on `main`.
+
+**Reconciliations (all in `e7a3926`, none a band move).**
+1. Sheet extents were read by the axis-aligned `_sheet_axes` /
+   `_sheet_extents` pair. Only 4 of 16 ports sit on a coordinate axis, so
+   the reading is now `PORT-9` leg (d1)'s `_projected_extents` /
+   `_sheet_azimuth_deg` — projections onto the port's own
+   (radial, azimuthal, axial) frame, which reduce to the bounding box term
+   by term for an axis port. Imported, not restated (`ANS-1` rule).
+2. `CONTROL_CELL_COUNT` 116 368 → **116 085**, mesh-tagged to step B; both
+   116 416 (0.7.2) and 116 368 (0.11 + old construction) kept in-comment as
+   history, per the item's "must not be the asserted value".
+3. Layout diagnostics moved under `diagnostics["port_layout"]` when
+   `GEO-20` added a parallel `ring_port_layout`; gate (v) reads through a
+   `_layout()` accessor now.
+
+**Runs.**
+- `20260825T123306Z_GEO-19-stepC-collect.log` — imports + the no-mesh
+  encoding test, `1 passed` / Status 0 / **6 s**.
+- `20260825T123320Z_GEO-19-stepC.log` — **Status 124 / 561 s**, and the
+  cause is worth the next module's attention: a `KeyError` on the moved
+  diagnostics key was raised *inside* `if comm.rank == 0:`, so rank 1 sat in
+  the next collective and the job burned the whole window after pytest had
+  already finished in **97 s**. The module now reports through a guard that
+  catches on rank 0, broadcasts the message and asserts it after the gates.
+  The 16-leg mesh itself is in this log: **74.22 s**, all 32 port CAD masses
+  7.84e-07 m³.
+- `20260825T124357Z_GEO-19-stepC-run1.log` — the measurement,
+  `1 failed, 1 passed` / **114 s** / `-n 2`. Commissioned heavy, measured
+  standard.
+
+**Numbers.**
+- *Cost rung (the deliverable):* 4 → 16 legs, **116 085 → 307 296 cells
+  (2.6472×)**, mesh **22.93 → 74.18 s (3.2357×)**. Stop rule (1 M cells /
+  600 s) not approached.
+- *Negative control:* 4-leg build in the same run reads **116 085** cells
+  (delta **0**), C4 sheet spread **6.050e-16** vs the recorded 6.050e-16,
+  terminal ratios 0.988616 × 4, terminal spread 3.184e-08.
+- *Green at 16:* partition **1.000000000000**, air box
+  **1.000000000000**, 32 halves **0.500000000000**, 16 sheets `dx·g`
+  **1.000000000000**, `A/h/w` **1.000000000000**, closure
+  **1.000000000000**, C16 sheet spread **1.331e-15** (band 1e-12),
+  out-of-plane ≤ **1.736e-17 m**, conductor meshed/CAD **0.981503**
+  (control 0.970069), separation **2.731265e-02** vs **1.750000e-02 m**,
+  margin **1.560723×** — the closed-form prediction from attempt 1.
+- *Red:* terminal spread **8.434e-04** vs 1e-5. The 16 ratios take three
+  values sorted by azimuth — **0.988616** (the eight multiples of 45°),
+  **0.989367** (22.5/157.5/202.5/337.5°), **0.989450**
+  (67.5/112.5/247.5/292.5°) — and are **≤ 2e-7** tight inside each class.
+  All 16 stay inside `GEO-18` step 1's [0.95, 1.0].
+
+**Why it is parked and not re-recorded.** The 1e-5 was measured at C4, where
+the four ports are exact 90° coordinate permutations and so run identical
+arithmetic; at 22.5° they are not, the disk's inscribed polygon lands on
+different nodes, and the resulting spread (8.4e-04) is **13× smaller than
+the inscribed triangulation's own ~1.1% under-read of the closed form**.
+That is a band-domain question, and the §7 entry says a gate red at 16 legs
+is a finding — "never widen a `GEO-18` band". No band, tolerance or floor
+moved anywhere in this slot.
+
+**Docs on `main`.** §7 `GEO-19` prose gains a step-C attempt block; the §7
+table row carries the rung and the red; §9 item 2 is annotated 🟡 with the
+ruling request. Blocker B's known-issues entry is **retired** — its own
+retire-when was "gates (i)–(v) run at 16 legs", and they did; a new OPEN
+entry carries the terminal-equality finding with the three-class table.
+
+**Next attempt hypothesis.** The ruling is binary and both branches are
+cheap. If the gate asserts C_N symmetry of the *construction*, the reading
+is per-azimuth-class and the gate gets **tighter** (~1e-6 intra-class, with
+the inter-class structure printed) — a one-slot edit to the parked module,
+then land. If it asserts agreement of the *discretization*, the band is
+h-dependent and wants a refinement rung at 16 legs (mesh cost 74 s at
+`h_c = 1.6e-3`, so one refinement is affordable in a heavy slot) before any
+constant is written. My reading is the first: the intra-class ≤ 2e-7 says
+the construction is exactly C16-covariant and the residue is the mesh.
+
+**No denials, no anomalies.** `main` clean and green at handoff — no code
+landed on it this slot; the module is on the attempt branch alone.

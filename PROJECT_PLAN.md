@@ -1563,7 +1563,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-16` | **Emit the gap boxes' longitudinal port-sheet mid-plane in `two_torus_domain`** (the `PORT-9` step-1 mesh prerequisite; commissioned 2026-08-16 18:00 review) | ✅ | standard |
 | `GEO-17` | `coil_phantom_domain` region-resolution policy shrinks the coil volumes it refines (−21.68%/−22.62%; `OPS-17` step-2 defect 1, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) — step 1 ✅ 2026-08-20: the sizes were never applied (`getBoundary` `combined=True` ⇒ 0 points); `Min`-over-`Constant`-fields, coil meshed/CAD 0.7547 → **0.8356** | ✅ *(audited COMPLIANT 2026-08-21 18:00 review — 1e-9 negative-control gate, sign-of-refinement identity and partition 1.000000000000 verified against `20260820T110549Z…final.log`)* | standard |
 | `GEO-18` | Birdcage conductor gaps: cut the legs so the port boxes have terminals (`PORT-9` step-3 mesh prerequisite; commissioned 2026-08-20 03:00 review from step 3 legs (a)+(b) 🚫) | ✅ 2026-08-22 (*step 2 audited COMPLIANT 2026-08-22 03:00 review — every figure verbatim in `20260822T020113Z_GEO-18-step2.log:8569-8576`, no pre-existing test touched; one transparency note: the sheets-off control asserts the `110+i` **cell** tags absent, and the `210+i` facet absence the entry and commit claim is implied by that, not measured — `EX-28` is commissioned to assert it directly*; **step 1 ✅ 2026-08-20** — terminals exist: 2.236196e-04 m² per port, **0.988616** of the closed-form `2·π·r_leg²`, all four equal to the printed 7 digits, *audited COMPLIANT 2026-08-21 18:00 review — closed-form band, closure and mass identities verified against all three logs, the pre-derivation red disclosed*; **step 2 ✅ 2026-08-22** — the sheets exist and are exact: meshed sheet area `1.120000000e-04 m²` = the analytic `dx·g` at **1.000000000000** on all four ports, `w_eff = A/h` equal to the bbox extent to 1.000000000000, out-of-plane spread ≤ 2.512e-16 m, half-volumes 0.500000000000 each, C4 sheet spread **8.470e-16**, step 1's terminal band and closure re-asserted on the sheeted mesh) | standard |
-| `GEO-19` | `birdcage_port_domain` at `leg_count = 16`, gapped + sheeted: identity family re-gated (C16), cost rung measured — 32-port directive item (a) (commissioned 2026-08-23 weekly review) | 🟡 *(**step B ✅ 2026-08-25** — the local-frame port construction is on `main` under ruling (6\*): invariance control `3 passed` from `main` at 116 085 / 114 655 cells, C4 spread 6.050e-16, terminals 0.988616 × 4, no-gap control 98 666 digit for digit; the three `PORT-9` modules `19 passed` **twice in-slot** on the mesh-tagged re-records, σ_max 0.999992805, class separation 166.6766×, (d0) margin 2256.9707×, leg (c)'s `I₁` reproducing to 5.934e-12 against a 1e-9 band. The open-limit (1e6 Ω) column is retired as a record-bearing fixture — no band widened. Step C, the 16-leg cost rung, is what remains)* | heavy (probe first) |
+| `GEO-19` | `birdcage_port_domain` at `leg_count = 16`, gapped + sheeted: identity family re-gated (C16), cost rung measured — 32-port directive item (a) (commissioned 2026-08-23 weekly review) | 🟡 *(**step B ✅ 2026-08-25** — the local-frame port construction is on `main` under ruling (6\*): invariance control `3 passed` from `main` at 116 085 / 114 655 cells, C4 spread 6.050e-16, terminals 0.988616 × 4, no-gap control 98 666 digit for digit; the three `PORT-9` modules `19 passed` **twice in-slot** on the mesh-tagged re-records, σ_max 0.999992805, class separation 166.6766×, (d0) margin 2256.9707×, leg (c)'s `I₁` reproducing to 5.934e-12 against a 1e-9 band. The open-limit (1e6 Ω) column is retired as a record-bearing fixture — no band widened. **Step C attempt 1 2026-08-25**: the rung is measured — 116 085 → **307 296 cells (2.6472×)**, mesh 22.93 → **74.18 s (3.2357×)**, inside the 1 M / 600 s stop rule — and gates (i)/(iii)/(iv)/(v) are green at 16 legs (partition and closure 1.000000000000, C16 sheet spread **1.331e-15**, conductor 0.981503, separation margin 1.560723×) with the 4-leg control reproducing step B's record at delta **0** cells / 6.050e-16. Gate (ii)'s *equality* half is red at **8.434e-04** vs 1e-5 — a three-valued azimuth-class structure with ≤ 2e-7 inside each class, i.e. a C4 band applied to C16; parked on `attempt/GEO-19-stepC-20260825T125000Z`, no band widened, ruling requested)* | heavy (probe first) |
 | `GEO-20` | High-pass birdcage ring-gap port layout (`ring_gap_length`, `2·leg_count` ports, the `GEO-18` pattern on the end rings) — 32-port directive item (b); step 1 at 4 legs, step 2 at 16 after `GEO-19` (commissioned 2026-08-23 weekly review) | 🟡 *(**step 1 ✅ 2026-08-24** — the 8 ring ports exist at 4 legs and every pre-stated gate is green twice in-slot: terminal **0.974455** of the closed-form `2·π·r_ring²` inside the [0.95, 1.0] inscribed band and equal across the 8 to **≈ 2e-8** (gate 1e-5; digit corrected by the 10:30 review audit — see the prose entry), closure and port-volume **1.000000000000**, sheet meshed/analytic **1.000000000000** with out-of-plane spread **5.042e-18 m**, C4 and top/bottom-mirror spreads below 1e-12, `GEO-9` partition green, conductor 0.969275 ≥ 0.95; negative controls green — kwarg off reproduces the uncut birdcage and the leg+ring mesh is a 12-port mesh with **both** identity families exact. Step 2 (16 legs, 32 ports) is serial on `GEO-19`)* | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
@@ -2092,6 +2092,73 @@ chunk is actually for, and blocker B's known-issues entry stays open until
 it runs. The open-limit conditioning entry also stays OPEN, now carrying
 (6\*)'s retire-when. Both step-B attempt branches
 (`…T034500Z`, `…T183000Z`) deleted after the greens from `main`.
+
+**Step C attempt 1, 2026-08-25 07:30 slot — 🟡 the rung is measured and four
+of the five gates are green at sixteen legs; the fifth is red on a band that
+turns out to be a C4 band. Parked on
+`attempt/GEO-19-stepC-20260825T125000Z` (`e7a3926`).**
+`20260825T124357Z_GEO-19-stepC-run1.log`, `-n 2`, `1 failed, 1 passed` /
+**114 s** (heavy commissioned, standard measured).
+
+*The cost rung — Phase 6's deliverable, and it fits.* 4 → 16 legs takes
+**116 085 → 307 296 cells (2.6472×)** and **22.93 → 74.18 s of mesh wall
+time (3.2357×)**, both far inside the entry's stop rule (1 M cells / 600 s).
+The scaling is sub-linear in neither direction by accident: the air box and
+phantom are unchanged, so only the conductor and the 32 half-boxes grow.
+
+*The negative control, digit for digit.* The in-module 4-leg build reproduces
+step B's mesh-tagged record exactly — **116 085** cells (delta **0**,
+relative 0.000e+00), C4 sheet spread **6.050e-16** against the recorded
+6.050e-16, terminal ratios 0.988616 × 4, terminal spread 3.184e-08. So
+everything gate 1 measures is the construction and not the count, which is
+what the control was for.
+
+*Gates (i), (iii), (iv), (v) at sixteen legs.* `GEO-9` partition
+**1.000000000000** and air box **1.000000000000**; all 32 half-boxes
+**0.500000000000**; all 16 sheets meshed/analytic `dx·g`
+**1.000000000000** with C16 area spread **1.331e-15** (band 1e-12),
+out-of-plane extent ≤ **1.736e-17 m** *in each port's own frame*, effective
+width `A/h/w` **1.000000000000**, and closure **1.000000000000** on every
+port; conductor meshed/CAD **0.981503** ≥ 0.95 — *better* than the 4-leg
+control's 0.970069 at the same `h_c`; minimum port-centre separation
+**2.731265e-02 m** against the floor 1.750000e-02 m, margin **1.560723×**,
+matching the closed-form prediction recorded in attempt 1 to the digit.
+
+*Gate (ii), and why it is a finding rather than a re-record.* The terminals
+are all inside `GEO-18` step 1's inscribed band (min/max **0.988615667 /
+0.989449760** of `2·π·r_leg²`), but their spread across the 16 is
+**8.434e-04** against the pre-stated 1e-5. The ratios take exactly three
+values sorted by azimuth — 0.988616 at the eight multiples of 45°,
+0.989367 at 22.5/157.5/202.5/337.5°, 0.989450 at 67.5/112.5/247.5/292.5° —
+with **≤ 2e-7 spread inside each class**, i.e. tighter than the band. The
+1e-5 was measured where the ports are exact 90° coordinate permutations of
+each other and so run identical arithmetic; at 22.5° they do not, and an
+inscribed triangulation of a disk under-reads its area by ~1.1% to begin
+with. The spread is **13× smaller than that under-read**. The entry's
+negative-result clause is binding, so no band was widened and the module is
+parked; the ruling asked for is which quantity the equality gate asserts —
+C_N symmetry of the construction (per-azimuth-class, and *tighter* than
+today at ~1e-6) or agreement of the discretization across azimuths (h-
+dependent, wanting a refinement rung rather than a constant). Both fit the
+measurement; choosing is not an in-slot judgement. Known-issues entry filed.
+
+*Reconciliations the landing needed* (all in `e7a3926`, none of them a band
+move): the parked module's sheet reading was the axis-aligned
+`_sheet_axes`/`_sheet_extents` pair, replaced by `PORT-9` leg (d1)'s
+projection helpers since only 4 of 16 ports sit on a coordinate axis; the
+control constant re-recorded 116 368 → **116 085**, mesh-tagged to step B,
+with 116 416 and 116 368 kept in-comment as history; the layout diagnostics
+read through `diagnostics["port_layout"]`, where `GEO-20`'s parallel
+`ring_port_layout` put them. **One trap paid, recorded for the next
+module:** a `KeyError` inside a `if comm.rank == 0:` report block left rank 1
+in the following collective, so 97 s of pytest became a **561 s Status 124**
+(`20260825T123320Z_GEO-19-stepC.log`) — the whole heavy window for a wrong
+dictionary key. The module now reports through a guard that broadcasts the
+failure and asserts it after the gates.
+
+Blocker B's known-issues entry is **retired** by this run — the
+`NotImplementedError` is unreachable and the 16-leg fixture builds. `GEO-19`
+stays 🟡 on gate (ii) alone; `GEO-20` step 2 stays serial behind it.
 
 **`GEO-20` — high-pass birdcage: ring-gap port layout (`ring_gap_length`),
 the `GEO-18` pattern on the end rings** 🟡 *(commissioned 2026-08-23 weekly
@@ -4629,7 +4696,31 @@ uses the Edit tool and verifies `git status --porcelain`.
    the symmetric and 2D-asymmetric fixtures could not see —
    known-issues + §7, chunk stays 🟡, stop.
 2. **`GEO-19` step C — the parked 16-leg gates module (heavy, `-n 2`,
-   real, `main`; independent — step B is on `main`).** Land
+   real, `main`; independent — step B is on `main`).** 🟡 **attempted
+   2026-08-25, 07:30 slot — four of five gates green, the rung measured,
+   parked on gate (ii); a ruling is needed before it can land.** *(The
+   cost rung, which is what Phase 6 wanted: **116 085 → 307 296 cells
+   (2.6472×)**, mesh **22.93 → 74.18 s (3.2357×)**, inside the stop rule
+   with room. Green at 16 legs: `GEO-9` partition and every closure
+   1.000000000000, 32 halves 0.500000000000, all 16 sheets `dx·g`
+   1.000000000000 with **C16 spread 1.331e-15** and out-of-plane
+   ≤ 1.736e-17 m in each port's own frame, conductor **0.981503**,
+   separation **2.731265e-02** vs 1.750000e-02 m (**1.560723×**). The
+   negative control reproduces step B's record digit for digit — 116 085
+   cells at delta **0**, C4 spread **6.050e-16**, ratios 0.988616 × 4.
+   **Red:** gate (ii)'s equality half, terminal spread **8.434e-04** vs
+   1e-5, with the 16 ratios taking three azimuth-sorted values
+   (0.988616 / 0.989367 / 0.989450) that are ≤ 2e-7 tight **inside** each
+   class — a band measured on exact 90° coordinate permutations applied
+   to ports that are not permutations of each other, and 13× smaller than
+   the inscribed triangulation's own 1.1% under-read. Nothing widened;
+   module parked on `attempt/GEO-19-stepC-20260825T125000Z` (`e7a3926`),
+   log `20260825T124357Z_GEO-19-stepC-run1.log` (114 s), known-issues
+   entry filed, blocker B's entry **retired**. **The review is asked to
+   rule** which quantity the equality gate asserts — C_N symmetry of the
+   construction (per-azimuth-class, ~1e-6, *tighter* than today) or
+   agreement of the discretization across azimuths (h-dependent, wanting
+   a refinement rung). Both fit the measurement.)* Land
    `tests/mesh/test_birdcage_port_scaleup.py` from
    `attempt/GEO-19-20260823T214500Z` (`321c933`) on `main` and run
    gates (i)–(v) of the §7 entry at `leg_count = 16`: `GEO-9` partition

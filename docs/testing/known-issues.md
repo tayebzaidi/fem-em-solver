@@ -343,7 +343,19 @@ B's mesh, both improved. Retire-when is unchanged.
 (`attempt/GEO-19-stepB-20260824T183000Z`), 2026-08-24; re-verified on `main`
 2026-08-25 with the retirement landed.
 
-### 🚫 OPEN — `birdcage_port_domain(emit_port_sheets=True)` **cannot build any birdcage with more than four legs**: the mid-plane sheet is an axis-aligned rectangle (`GEO-19` attempt 1, 2026-08-23)
+### ✅ RETIRED 2026-08-25 (`GEO-19` step C, 07:30 implementer slot) — `birdcage_port_domain(emit_port_sheets=True)` **cannot build any birdcage with more than four legs**: the mid-plane sheet is an axis-aligned rectangle (`GEO-19` attempt 1, 2026-08-23)
+
+**Retired on the run this entry named as its retire-when.** Step B's
+local-frame construction landed on `main` 2026-08-25, and step C built the
+16-leg fixture from `main`: **307 296 cells / 74.18 s of mesh time**, all 16
+sheets at `dx·g` = 1.000000000000 with a C16 area spread of **1.331e-15** and
+out-of-plane extents ≤ 1.736e-17 m in each port's own frame, 32 half-boxes at
+0.500000000000, `GEO-9` partition 1.000000000000
+(`20260825T124357Z_GEO-19-stepC-run1.log`, `-n 2`, 114 s). The
+`NotImplementedError` is unreachable: ports P2/P4/… sit at 22.5° + 45k and
+build. What step C found instead is a *band-domain* question on gate (ii)'s
+equality half, filed as its own entry below — the capability limit this entry
+described is gone.
 
 **Test id:** no test asserts this on `main` — the module that hits it,
 `tests/mesh/test_birdcage_port_scaleup.py`, is parked on
@@ -417,10 +429,63 @@ the gates run is a separate deliverable and does not hold it open.
 > licence includes the pre-registered degeneracy-gate disposition. **This
 > entry retires with §9 item 2's commit.**
 
-Blocks `GEO-19`; does **not** block `GEO-20` (ring-gap ports
+Blocked `GEO-19` until step C ran; never blocked `GEO-20` (ring-gap ports
 sit at different azimuths and are scoped to their own local frame from the
 start). Related and separate: the layout clearance floor independently caps
 this geometry at `N <= 25` legs — see the `GEO-19` §7 entry.
+
+---
+
+### 🚫 OPEN — `GEO-18` step 1's **1e-5 terminal-equality band is a C4 band, not a C_N one**: at 16 legs the terminal disks spread **8.434e-04**, two decades wide of it, while every ratio stays inside the closed form's [0.95, 1.0] (`GEO-19` step C, 2026-08-25)
+
+**Test id:** `tests/mesh/test_birdcage_port_scaleup.py::`
+`test_sixteen_leg_identity_family_and_cost_rung`, parked on
+`attempt/GEO-19-stepC-20260825T125000Z` (`e7a3926`) rather than landed red.
+
+**Literal symptom**, at `leg_count = 16`, `-n 2`
+(`docs/testing/logs/20260825T124357Z_GEO-19-stepC-run1.log`, 114 s):
+
+```
+AssertionError: 16 legs: the 16 terminal areas differ by 8.434e-04 relative
+against the pre-stated 1e-05; the ports are not the same disk under a rotation
+assert np.float64(0.0008433598402112139) < 1e-05
+```
+
+**Verified at:** `main` @ `d74c7a5`, 0.11.0.post0 image, step B's local-frame
+construction.
+
+**Cause — diagnosed, and it is arithmetic rather than geometry.** The 16
+meshed terminal ratios take **three** values, and they sort by azimuth:
+
+| azimuth | ratio to `2·π·r_leg²` | ports |
+|---|---|---|
+| 0/45/90/…/315° | 0.988615667 … 0.988615857 | P1 P3 P5 P7 P9 P11 P13 P15 |
+| 22.5/157.5/202.5/337.5° | 0.989367491 … 0.989367549 | P2 P8 P10 P16 |
+| 67.5/112.5/247.5/292.5° | 0.989449699 … 0.989449760 | P4 P6 P12 P14 |
+
+Within each class the spread is ≤ 2e-7 — *tighter* than the 1e-5 band. The
+band was measured at C4, where the four ports are related by exact 90°
+coordinate permutations, so their inscribed triangulations are the same
+arithmetic and agree to 3.2e-08 (this run's control reproduces that:
+**3.184e-08**). At 22.5° there is no coordinate permutation; the disk's
+inscribed polygon lands on different nodes, and an inscribed triangulation
+under-reads a circle by ~1.1% to begin with. The observed 8.4e-04 spread is
+**thirteen times smaller than that under-read** — it is the discretization
+error's own azimuthal variation, not a broken port.
+
+**Not a widening candidate in-slot.** The `GEO-19` §7 entry's negative-result
+clause is explicit ("a gate red at 16 legs is a generator finding at the new
+count — known-issues + §7 annotation, stop; never widen a `GEO-18` band"), so
+the band is untouched and the module is parked. Everything else step C
+pre-stated is green and is recorded in the §7 entry.
+
+**Retire when:** a review rules on which of these the equality gate is asserting
+— exact C_N symmetry of the *construction* (in which case the reading is
+per-azimuth-class and the gate becomes an intra-class one at ~1e-6, tighter
+than today's) or agreement of the *discretization* across azimuths (in which
+case the band is h-dependent and wants a refinement rung, not a constant). Both
+readings are consistent with the measurement; choosing between them is a
+ruling, not an implementer judgement.
 
 ---
 
