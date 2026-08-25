@@ -15529,3 +15529,48 @@ moves or `straight_wire_domain` gets hardened; a resolution bisect between
 0.01 and 0.004 would cost one smoke run and would probably localise it. With
 both disposed and an (1\*) licence for the three report-only guides, the leg
 is one slot.
+
+### Addendum, 14:27Z — red (i) localised, and it is not the example's box
+
+With time left in the slot I spent one more 29 s run inside this leg's own
+scope, turning red (i) from "not diagnosed" into a one-line review call:
+`tests/validation/probe_straight_wire_mesh_resolution.py` (new, measurement
+only, no assertion, imported by nothing),
+`20260825T142512Z_EX-30-root-mag1-mesh-probe.log`, `Status: 0`, `-n 1`:
+
+```
+Leg A -- the example's geometry (L = 0.3, R = 0.04), resolution swept:
+  h = 0.0100  FAIL  Invalid boundary mesh (overlapping facets) on surface 1 surface 1 (0.3 s)
+  h = 0.0080  OK       21830 cells (2.6 s)
+  h = 0.0060  OK       34250 cells (4.2 s)
+  h = 0.0050  OK       55306 cells (7.0 s)
+  h = 0.0040  OK       98778 cells (13.0 s)
+
+Leg B -- the example's resolution (h = 0.01), geometry stepped to the gate's:
+  L = 0.30  R = 0.040 FAIL   L = 0.30  R = 0.030 FAIL
+  L = 0.20  R = 0.040 FAIL   L = 0.20  R = 0.030 FAIL
+```
+
+**It is `resolution` alone.** `h = 0.01` fails for *every* geometry tried —
+including the gate's own `L = 0.20 / R = 0.030` — and everything from
+`h = 0.008` down meshes. So my own first reading in this entry ("the example's
+parameter set is unusual") is too generous to the gates: the gates' geometry
+would break at that resolution too, and the only reason no gate sees it is
+that no gate runs that coarse. This is a **coarse-resolution floor in
+`straight_wire_domain` on the 0.11 image**, and the fix is a review call
+between moving the example to `h = 0.008` (2.6 s of meshing, the nearest
+working rung) and giving the generator a legible guard. *Why* 0.01
+specifically is still open — `h = 0.01` is 1.67× the wire diameter and
+`h = 0.008` is 1.33× it and works, so "coarser than the wire" is not the
+threshold; bisecting 0.008–0.010 was not run.
+
+Two `-n 1` notes worth carrying: `straight_wire_domain` builds its gmsh model
+inside `if comm.rank == rank:` while `_model_to_mesh` is collective, so a gmsh
+throw on rank 0 **deadlocks** every other rank — a multi-rank probe of a
+meshing failure hangs instead of reporting, which is why this one is `-n 1`
+and says so in its docstring. And the generator reaches its `gmsh.finalize()`
+only on the success path, so the probe finalises defensively in its own
+`except` or the next case inherits a live gmsh session.
+
+Slot total is therefore **936 s** of compute across six runs plus two 1 s
+censuses. `main` clean at handoff.

@@ -4309,7 +4309,12 @@ elapsed, the reproduced records quoted, and the post-run artifact census.
 > `mesh.py:304 straight_wire_domain`, at the example's own
 > `resolution = 0.01` / `domain_radius = 0.04` parameter set that **no
 > gate exercises** (the same generator meshed three times in the very next
-> run); (ii) `mag:6` exits 1 on **fitted rate 1.9038 outside the `MAG-13`
+> run) — **localised in 29 s** by
+> `tests/validation/probe_straight_wire_mesh_resolution.py` to
+> `resolution` **alone**: `h = 0.01` fails for every geometry tried
+> including the gate's own `L = 0.20 / R = 0.030`, while `h = 0.008 /
+> 0.006 / 0.005 / 0.004` all mesh, so it is a coarse-resolution floor in
+> the generator on 0.11 rather than an odd box; (ii) `mag:6` exits 1 on **fitted rate 1.9038 outside the `MAG-13`
 > band [0.7, 1.5]** — and because that example *imports* the band, the
 > resolutions and the fit from `tests/validation/test_convergence.py`
 > (the `ANS-1` rule), the gate was probed directly and is **red on `main`
@@ -4823,8 +4828,16 @@ uses the Edit tool and verifies `git status --porcelain`.
    `resolution = 0.01` / `domain_radius = 0.04`, a parameter set **no
    gate exercises**; the same generator meshed 38 740 / 147 235 /
    383 146 cells in the next run, so this is image behaviour meeting an
-   ungated parameter set, not a generator regression. Its **7**
-   `straight_wire_*` artifacts are the entire stale remainder.
+   ungated parameter set, not a generator regression. **Localised in
+   29 s** by `tests/validation/probe_straight_wire_mesh_resolution.py`
+   (`…T142512Z_…-mag1-mesh-probe.log`, `-n 1`): it is `resolution`
+   **alone** — `h = 0.01` fails for *every* geometry tried including the
+   gate's own `L = 0.20 / R = 0.030`, and `h = 0.008 / 0.006 / 0.005 /
+   0.004` all mesh (21 830 / 34 250 / 55 306 / 98 778 cells). A
+   coarse-resolution floor in `straight_wire_domain` on the 0.11 image,
+   not an odd box; the review's call is whether the example moves to
+   0.008 (2.6 s of meshing) or the generator gets a legible guard. Its
+   **7** `straight_wire_*` artifacts are the entire stale remainder.
    **Census, derived:** pre `stale=47`
    (`…T140117Z_…-precensus.log`) containing exactly **28** of this
    leg's entries ⇒ clean-leg prediction **19**; post **`stale=26`**

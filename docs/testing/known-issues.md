@@ -109,34 +109,63 @@ unless fixing it is the task.
 > Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1
 > ```
 >
-> **`MeshGenerator.straight_wire_domain` is not broken in general** — that is
-> the whole content of this entry. The *same* generator meshed three times in
-> the same slot, in the run immediately after, at 38 740 / 147 235 / 383 146
-> cells (`20260825T141141Z_EX-30-root-run-mag6.log`). What differs is the
-> parameter set, and the example's is exercised by **no** gate:
+> **`MeshGenerator.straight_wire_domain` is not broken in general** — the
+> *same* generator meshed three times in the same slot, in the run immediately
+> after, at 38 740 / 147 235 / 383 146 cells
+> (`20260825T141141Z_EX-30-root-run-mag6.log`). The parameter sets differ, and
+> the example's is exercised by **no** gate:
 >
 > | | wire_length | domain_radius | resolution |
 > | --- | --- | --- | --- |
-> | `01_straight_wire.py:118-121` | **0.3** | **0.04** | **0.01** |
+> | `01_straight_wire.py:118-121` | 0.3 | 0.04 | **0.01** |
 > | `test_straight_wire.py:62-65` | 0.20 | 0.03 | 0.0025 |
 > | `test_convergence.py:41-61` | 0.2 | 0.03 | 0.004 / 0.0025 / 0.0018 |
 >
-> The example's resolution is 4× coarser than the coarsest gated rung and its
-> box is larger, and `resolution = 0.01` carries the source comment "coarse,
-> cron-safe runtime". On the 0.11 image's gmsh that combination reconstructs a
-> boundary with duplicated facets on the wire surface.
+> **Cause, localised — it is `resolution` alone, and the geometry is
+> irrelevant.** `tests/validation/probe_straight_wire_mesh_resolution.py`
+> walks the two axes separately
+> (`20260825T142512Z_EX-30-root-mag1-mesh-probe.log`, `Status: 0`, **29 s**,
+> `-n 1`; the probe documents why `-n 1` — a gmsh throw on rank 0 deadlocks
+> the collective `_model_to_mesh` on the others):
 >
-> **Cause: not diagnosed** beyond the parameter dependence above; no bisect of
-> resolution or gmsh option was run, and `straight_wire_domain` itself is
-> untouched since the 0.11 API migration (`d176bc1`, `OPS-18` step 2) — this
-> is image behaviour meeting an ungated parameter set, not a code regression
-> in the repo.
+> ```
+> Leg A -- the example's geometry (L = 0.3, R = 0.04), resolution swept:
+>   h = 0.0100  FAIL  Invalid boundary mesh (overlapping facets) on surface 1 surface 1 (0.3 s)
+>   h = 0.0080  OK       21830 cells (2.6 s)
+>   h = 0.0060  OK       34250 cells (4.2 s)
+>   h = 0.0050  OK       55306 cells (7.0 s)
+>   h = 0.0040  OK       98778 cells (13.0 s)
 >
-> **Owning chunk:** unassigned — a review call. It is example-side by
-> construction (no gate uses these parameters), but the fix is either a
-> parameter change in the example or a robustness change in
-> `straight_wire_domain`, and `EX-30` leg (root) has no licence to make
-> either. **Nothing was re-recorded.**
+> Leg B -- the example's resolution (h = 0.01), geometry stepped to the gate's:
+>   L = 0.30  R = 0.040 FAIL  ...
+>   L = 0.30  R = 0.030 FAIL  ...
+>   L = 0.20  R = 0.040 FAIL  ...
+>   L = 0.20  R = 0.030 FAIL  ...
+> ```
+>
+> So: **`h = 0.01` is the only failing rung, it fails for every geometry
+> tried including the gate's own `L = 0.20 / R = 0.030`, and everything from
+> `h = 0.008` down meshes.** This is therefore *not* "the example's box is
+> unusual" — it is a coarse-resolution floor in `straight_wire_domain` on the
+> 0.11 image, and the gate's geometry would hit it too if any gate ever ran
+> that coarse. None does, which is why only the example sees it. The failure
+> is instant (0.2–0.3 s) and perfectly reproducible across all five cases.
+>
+> **Still not diagnosed:** *why* 0.01 specifically. The obvious suspect is the
+> wire cylinder — `resolution = 0.01` is 1.67× the wire *diameter*
+> (2·0.003 m), so the wire surface cannot carry a well-formed facet loop —
+> but `h = 0.008` is still 1.33× that diameter and meshes fine, so the
+> threshold is not simply "coarser than the wire". Bisecting 0.008–0.010 was
+> not run. `straight_wire_domain` is untouched since the 0.11 API migration
+> (`d176bc1`, `OPS-18` step 2), so this is image behaviour, not a repo
+> regression.
+>
+> **Owning chunk:** unassigned — a review call, and the localisation above
+> makes it a cheap one. Two fixes are available: move the example off
+> `resolution = 0.01` (0.008 costs 2.6 s of meshing and is the nearest
+> working rung), or give `straight_wire_domain` a guard/clamp so a
+> too-coarse request fails legibly instead of inside gmsh. `EX-30` leg (root)
+> has no licence for either. **Nothing was re-recorded.**
 
 ### ✅ RETIRED 2026-08-25 by `OPS-24` — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family was **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
 
