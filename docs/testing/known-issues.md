@@ -101,7 +101,35 @@ also unblocks 2 of the 6 `time_harmonic` artifacts that leg could not refresh.
 **Commissioned as `OPS-24`** (2026-08-24 18:00 review, §9 item 2); §2.1 now
 carries the non-executing caveat on the cavity figure until this retires.
 
-### 🚫 OPEN — `th:7` calls `Function.interpolate(cells=)`, removed in 0.11 — the **only** such site in the repo, so the example has diverged from the gate it claims to import (`EX-30` leg (th), 2026-08-24)
+### ✅ RETIRED 2026-08-25 by `OPS-25` — `th:7` calls `Function.interpolate(cells=)`, removed in 0.11 — the **only** such site in the repo, so the example has diverged from the gate it claims to import (`EX-30` leg (th), 2026-08-24)
+
+**Retired by hoist, per the ruling — the divergence is gone, not just the
+`TypeError`.** The five lines the example had re-derived (CG2 vector space →
+`Function` → sphere-cell index array → restricted `interpolate`) now live once,
+in the gate module, as `series_interior_function(series, msh, cell_tags)`
+(`test_lossy_sphere_fullwave.py:367`); the gate's `_power_rung` and the example
+both call it, so there is no second copy left to rot. The example's private
+`cells=` line is deleted, not repaired; the surviving call site is the gate's
+already-migrated `cells0=`.
+
+**Evidence the hoist is behaviour-preserving.** The gate's own power figures
+reproduce the pre-refactor green log
+(`20260822T123746Z_OPS-18-step3-th10-rerun.log`) **bit-identically to all ten
+printed digits** — `P_series(meshed)` = 1.048951142e-07 W at the coarse rung and
+1.066439173e-07 W at the fine rung, errors 8.387% / 3.629%, quadrature-16
+recheck 1.24e-16 — and that is the *only* quantity the moved code produces.
+`13 passed in 25.28s`, Status 0, 27 s harness, `-n 2` complex with
+`tests/environment` first, covering `test_lossy_sphere_fullwave.py` **and**
+`test_lossy_sphere_degree2.py` (`20260825T033221Z_OPS-25-gate-green.log`).
+
+**`th:7` green end-to-end**, `./scripts/run_examples.sh -e th:7 -n 2 -t 300`,
+Status 0, 14 s (`20260825T033152Z_OPS-25-th7-green.log`), asserting both
+element-order records against their own 1% band: degree 1 relL2 8.1541%
+(drift 4.00e-06) / power 8.3869% (1.18e-05), degree 2 relL2 0.1405%
+(5.50e-05) / power 0.0058% (1.48e-03). The red was reproduced in-slot first
+(`20260825T033114Z_OPS-25-red-baseline.log`, Status 1, `TypeError` at line 198).
+No record, band or assertion moved anywhere — this was a hoist. Original entry
+below, for the audit trail.
 
 **Test id:** none — no test asserts this. The failing artifact is the example
 `examples/time_harmonic/07_element_order_lossy_sphere.py` (`th:7`), which cannot

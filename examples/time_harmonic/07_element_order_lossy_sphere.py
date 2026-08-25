@@ -98,13 +98,12 @@ from tests.validation.test_lossy_sphere_fullwave import (  # noqa: E402
     SALINE_EPSILON_R,
     SALINE_SIGMA,
     SPHERE_RADIUS,
-    SPHERE_TAG,
     _integrate_over_sphere,
     _interior_probe_points,
     _mesh_and_solve,
     _rel_l2,
     _series,
-    _series_interior_interpolant,
+    series_interior_function,
 )
 
 #: The `TH-12` step-1 records this example reproduces, measured at ``-n 2`` on
@@ -190,12 +189,9 @@ def _row_and_fields(degree: int, comm: MPI.Comm) -> dict:
 
     # Same meshed cells, same σ, only E differs — `TH-10` step 4's construction,
     # so the power error compares against its record and not a new definition.
-    series_space = fem.functionspace(msh, ("Lagrange", 2, (3,)))
-    e_series_fn = fem.Function(series_space, name="E_series")
-    sphere_cells = np.asarray(
-        cell_tags.indices[cell_tags.values == SPHERE_TAG], dtype=np.int32
-    )
-    e_series_fn.interpolate(_series_interior_interpolant(series), cells=sphere_cells)
+    # `OPS-25`: imported, not re-derived. The private copy that used to live
+    # here rotted independently of the gate across the 0.11 migration.
+    e_series_fn = series_interior_function(series, msh, cell_tags)
     p_series = float(
         np.real(
             _integrate_over_sphere(

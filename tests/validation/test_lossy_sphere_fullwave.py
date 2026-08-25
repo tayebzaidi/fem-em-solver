@@ -364,6 +364,28 @@ def _series_interior_interpolant(series: LossySphereSeries):
     return field
 
 
+def series_interior_function(series: LossySphereSeries, msh, cell_tags):
+    """``E_series`` on the meshed sphere: CG2 vector ``Function``, sphere cells only.
+
+    Hoisted by `OPS-25` (2026-08-24) so this is the *only* copy.  The `th:7`
+    example re-derived these four lines privately instead of importing them,
+    and its copy rotted when 0.11 renamed ``interpolate``'s cell restriction
+    ``cells`` -> ``cells0`` (the source-mesh list is now ``cells1``) while this
+    module was migrated — the example/gate divergence the `ANS-1` rule exists
+    to prevent.  Public name because the example imports it.
+
+    Cells outside ``SPHERE_TAG`` are left at their initial value; every caller
+    integrates over the sphere region only, so they are never read.
+    """
+    v_space = fem.functionspace(msh, ("Lagrange", 2, (3,)))
+    e_series_fn = fem.Function(v_space, name="E_series")
+    sphere_cells = np.asarray(
+        cell_tags.indices[cell_tags.values == SPHERE_TAG], dtype=np.int32
+    )
+    e_series_fn.interpolate(_series_interior_interpolant(series), cells0=sphere_cells)
+    return e_series_fn
+
+
 def _integrate_over_sphere(integrand, msh, cell_tags, comm, quadrature_degree: int):
     """``∫_sphere integrand dV``, allreduced.
 
@@ -447,14 +469,7 @@ def _power_rung(series: LossySphereSeries, resolution_sphere: float, resolution_
     # *same* σ field: the only thing that differs between p_fem and p_series is
     # E, which is what this gate is about.  The exact-ball value below carries
     # the geometry question separately.
-    v_space = fem.functionspace(msh, ("Lagrange", 2, (3,)))
-    e_series_fn = fem.Function(v_space, name="E_series")
-    sphere_cells = np.asarray(
-        cell_tags.indices[cell_tags.values == SPHERE_TAG], dtype=np.int32
-    )
-    # `OPS-18` step 3: dolfinx 0.11 renamed `interpolate`'s cell restriction
-    # `cells` -> `cells0` (the source-mesh list is now `cells1`).
-    e_series_fn.interpolate(_series_interior_interpolant(series), cells0=sphere_cells)
+    e_series_fn = series_interior_function(series, msh, cell_tags)
     p_series = _ohmic_power(
         e_series_fn,
         fields.sigma_field,

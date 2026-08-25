@@ -503,7 +503,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-22` | Make the three magnetostatic loop-drive fixtures complex-safe: replace the `ufl.max_value` / `<=` predicates in their `current_density` callables (known-issues 2026-08-19; commissioned 2026-08-19 03:00 review from the `OPS-17` leg-(b2) attempt-2 diagnosis; unblocks 5 tests in leg (b2)) | ✅ *(2026-08-19, 04:30 slot — all three files fixed, no `@real_only` needed; real-mode digits unmoved to the last printed figure across three runs, and the complex build now runs all three files to a footer: **5 passed, 412.12 s, exit 0**, both ranks identical. *Audited COMPLIANT 2026-08-19 10:30 review — footers, closed-form assertions and the new `Im`-bound idiom verified against all five logs; one caveat on record: `test_helmholtz_v2.py`'s complex coverage rests on a silenced `ComplexWarning` `float()` cast, not an assertion — fold an `Im`-bound in whenever that file is next touched*)* | standard |
 | `OPS-23` | Sweep the `OPS-21` rank-0-return defect pattern (4 measured sites in 3 test files) + the `test_helmholtz_v2.py` Im-bound (commissioned 2026-08-20 03:00 review from the 00:00 slot's grep survey) | ✅ | smoke-to-standard | 3 real sites (all in `test_csv_export_stats_parity.py`) + the Im-bound fixed; 2 of the commissioned sites were print-only false positives and 1 exempted site was a real defect; 12 passed both ranks, 5.00 s. *Audited COMPLIANT 2026-08-21 18:00 review — red-baseline byte-identity re-verified against the log's rank blocks; benign omission: the first exit-0 helmholtz-real log is in test-results.md but uncited in the annotation* |
 | `OPS-24` | Migrate `core/cavity.py`'s two `assemble_matrix(..., diagonal=)` sites to the 0.11 signature — `TH-9`'s cavity gate + resonance guard have been **non-executing on `main` since the 0.11 merge** (known-issues 2026-08-24; found by `EX-30` leg (th); commissioned 2026-08-24 18:00 review; closed 2026-08-25 — `diagonal=` → `diag=`, all four green, 0.0436% worst-mode reproduced to the printed digit) | ✅ | standard |
-| `OPS-25` | Re-join `th:7` to its gate: hoist the series-interior interpolation into the gate module and import it, migrating the repo's only `interpolate(cells=)` site (known-issues 2026-08-24; ruled hoist-not-repair by the 2026-08-24 18:00 review) | ⬜ | standard |
+| `OPS-25` | Re-join `th:7` to its gate: hoist the series-interior interpolation into the gate module and import it, migrating the repo's only `interpolate(cells=)` site (known-issues 2026-08-24; ruled hoist-not-repair by the 2026-08-24 18:00 review) | ✅ (2026-08-25: hoisted to `series_interior_function` in `test_lossy_sphere_fullwave.py`; `th:7` green in 14 s with both element-order records reproducing — degree 1 8.1541% / 8.3869%, degree 2 0.1405% / 0.0058%, drifts ≤ 1.48e-03 in a 1% band — and the gate's `P_series(meshed)` **bit-identical to all ten printed digits** across the refactor; `13 passed in 25.28s`) | standard |
 
 **`OPS-24` — migrate `core/cavity.py` to 0.11; turn `TH-9`'s gates back on** ✅
 *(commissioned 2026-08-24 18:00 review from `EX-30` leg (th)'s finding 1;
@@ -555,7 +555,7 @@ eigenfrequency touched; retires the cavity known-issues entry and removes
 the §2.1 non-executing caveat.
 
 **`OPS-25` — re-join `th:7` to its gate (hoist the series-interior
-interpolation)** ⬜ *(commissioned 2026-08-24 18:00 review from `EX-30`
+interpolation)** ✅ *(2026-08-25, 22:30 implementer slot)* *(commissioned 2026-08-24 18:00 review from `EX-30`
 leg (th)'s finding 3.)* `th:7` line 198 is the repo's **only**
 `interpolate(cells=)` site — the example re-derived a step its banner claims
 to import, and the private copy rotted while the gate
@@ -565,6 +565,45 @@ divergence the `ANS-1` rule exists to prevent. Full rubric in the §9 item.
 Done-when: `th:7` green via `./run_examples.sh` with both element-order
 records unchanged, the gate module green after the refactor, no `src/`
 change; retires the `th:7` known-issues entry.
+> **Closed 2026-08-25.** The hoist is `series_interior_function(series, msh,
+> cell_tags)` at `test_lossy_sphere_fullwave.py:367` — CG2 vector space,
+> `Function`, sphere-cell index array and the migrated `cells0=`
+> interpolation, in one place. `_power_rung` and
+> `07_element_order_lossy_sphere.py:_row_and_fields` both call it; the
+> example's private copy is **deleted**, and `SPHERE_TAG` /
+> `_series_interior_interpolant` dropped out of the example's import list
+> with it, so the example can no longer re-derive this step at all. No
+> `src/` change; no record, band or assertion moved.
+> **The quantitative anchor is a bit-identical reproduction.** The moved
+> code's only output is the gate's meshed-series ohmic power, and it
+> reproduces `OPS-18` step 3's green log
+> (`20260822T123746Z_OPS-18-step3-th10-rerun.log`) to every printed digit:
+> `P_series(meshed)` = **1.048951142e-07 W** (coarse, 5 866 cells) and
+> **1.066439173e-07 W** (fine, 17 667 cells), power errors 8.387% / 3.629%,
+> quadrature-16 recheck 1.24e-16 — and the `TH-10` field figures beside them
+> are unmoved (3.643% at 64 MHz, 1.769% / 59.16× at 128 MHz).
+> `13 passed in 25.28s` (Status 0, 27 s harness, `-n 2`, complex,
+> `tests/environment` first, both `test_lossy_sphere_fullwave.py` and
+> `test_lossy_sphere_degree2.py`),
+> `20260825T033221Z_OPS-25-gate-green.log`.
+> **`th:7` end to end:** Status 0, **14 s**,
+> `20260825T033152Z_OPS-25-th7-green.log`, asserting its own records inside
+> the 1% band — degree 1 relL2 8.1541% (drift 4.00e-06) / power 8.3869%
+> (1.18e-05), degree 2 relL2 0.1405% (5.50e-05) / power 0.0058% (1.48e-03),
+> `|Im P|/Re P` = 0.000e+00 at both orders. Red reproduced in-slot first
+> (`20260825T033114Z_OPS-25-red-baseline.log`, Status 1, `TypeError` at line
+> 198), so the fix is bracketed by a measured red and a measured green.
+> **Census delta (item 4 owns the arithmetic):** docrefs reads
+> `dead=0 guide=0 stale=51 stale_severity=report exit=2`
+> (`20260825T033312Z_OPS-25-docrefs.log`) — passes the `OPS-19` `exit != 1`
+> gate. `th:7`'s two artifacts
+> (`element_order_sphere_degree{1,2}_combined.xdmf`) left the stale set as
+> this run refreshed them; **four `time_harmonic` entries remain** — `th:2`'s
+> `pec_cavity_mode`, `th:5`'s `resonance_guard`, and `th:6`'s two
+> `larmor_sphere_{64,128}MHz`. The total moved 55 → 51 against the `EX-31`
+> log, not −2, because staleness is wall-clock: five other artifacts were
+> refreshed by intervening slots and three `birdcage_leg_gaps_*` ones aged
+> past the 48 h limit. Do not read a memorized total.
 
 **`OPS-18` — DolfinX version upgrade, recurring** ⬜
 *(commissioned 2026-08-16, operator session. The base image is pinned at
@@ -4460,7 +4499,30 @@ uses the Edit tool and verifies `git status --porcelain`.
    gated eigenfrequency outside its band is a 0.11 finding about the
    cavity family — known-issues + §7, do not land the fix as green,
    stop.
-3. **`OPS-25` — re-join `th:7` to its gate: hoist the series-interior
+3. ✅ **Done 2026-08-25 (22:30 slot).** Executed the ruling exactly — hoist, not
+   repair. The example's five private lines became
+   `series_interior_function(series, msh, cell_tags)` in the gate module
+   (`test_lossy_sphere_fullwave.py:367`), called by `_power_rung` and by the
+   example; the `cells=` line is deleted and `SPHERE_TAG` /
+   `_series_interior_interpolant` fell out of the example's import list with it.
+   Red reproduced first (`TypeError` at line 198, Status 1), then **`th:7`
+   green in 14 s** with both element-order records inside their 1% band
+   (degree 1 8.1541% / 8.3869%, drifts 4.00e-06 / 1.18e-05; degree 2 0.1405% /
+   0.0058%, drifts 5.50e-05 / 1.48e-03), and the two gate modules **`13 passed
+   in 25.28s`**. The anchor for the refactor itself is a **bit-identical**
+   reproduction of the moved code's only output — `P_series(meshed)`
+   1.048951142e-07 / 1.066439173e-07 W, all ten printed digits, against
+   `OPS-18` step 3's green log. No `src/` change, no record or band moved.
+   Docrefs `dead=0 guide=0 stale=51 exit=2` (passes `exit != 1`); `th:7`'s two
+   artifacts left the stale set, **four `time_harmonic` entries remain**
+   (`th:2`, `th:5`, `th:6` × 2) — item 4's arithmetic, do not assume a
+   memorized total. `th:7`'s known-issues entry retired. Logs
+   `20260825T033114Z_OPS-25-red-baseline.log`,
+   `20260825T033152Z_OPS-25-th7-green.log`,
+   `20260825T033221Z_OPS-25-gate-green.log`,
+   `20260825T033312Z_OPS-25-docrefs.log`. **Item 4 is now fully unblocked**
+   (items 2 and 3 both on `main`). *Original text, for the review's audit:*
+   **`OPS-25` — re-join `th:7` to its gate: hoist the series-interior
    interpolation, migrate the lone `interpolate(cells=)` site
    (standard, `-n 2`, complex, `main`; independent).** Ruling: **hoist
    and import**, not repair-in-place — the gate module

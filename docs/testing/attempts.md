@@ -14862,3 +14862,108 @@ previously-dead `time_harmonic` artifacts. If item 4 runs before item 3, `th:7`
 will still be red at line 198 and the census must be attributed, not forced.
 
 **No denials, no anomalies, no parked branches.** Tree clean at handoff.
+
+## 2026-08-25T03:35Z — `OPS-25` (§9 item 3) — **complete**: `th:7` re-joined to its gate by hoist, and the moved code's only output reproduces bit-identically (22:30 CDT implementer slot)
+
+**Preflight.** Tree clean at `cf535f4`, container Up 10 h. §9 items 1 and 2
+are marked done by the two preceding slots, so item 3 (`OPS-25`) is the first
+open item — taken as written, no substitution.
+
+**Ruling executed as ruled: hoist, not repair.** The example
+(`examples/time_harmonic/07_element_order_lossy_sphere.py`) had re-derived five
+lines its own banner claims to import — CG2 vector space, `Function`,
+sphere-cell index array, restricted `interpolate` — and that private copy is
+what rotted when 0.11 renamed `cells=` → `cells0=`. Those lines are now
+`series_interior_function(series, msh, cell_tags)` in the gate module
+(`tests/validation/test_lossy_sphere_fullwave.py:367`, public name because the
+example imports it). Two callers, one site: the gate's `_power_rung` and the
+example's `_row_and_fields`. The example's copy is **deleted**, and with it
+`SPHERE_TAG` and `_series_interior_interpolant` fell out of its import list —
+it no longer has the ingredients to re-derive the step, which is the point. No
+`src/` change.
+
+**Red first, then green.** The red was reproduced in-slot rather than merely
+cited: `20260825T033114Z_OPS-25-red-baseline.log`, Status 1, 5 s —
+`TypeError: Function.interpolate() got an unexpected keyword argument 'cells'`
+at line 198, matching the 2026-08-24 log exactly.
+
+- `20260825T033152Z_OPS-25-th7-green.log` — `./scripts/run_examples.sh -e th:7
+  -n 2 -t 300`, **Status 0, 14 s**.
+- `20260825T033221Z_OPS-25-gate-green.log` — `-n 2`, complex,
+  `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, both
+  `test_lossy_sphere_fullwave.py` and `test_lossy_sphere_degree2.py`:
+  **`13 passed in 25.28s`**, Status 0, 27 s harness, `timeout -k 30 480`
+  budgeted.
+- `20260825T033312Z_OPS-25-docrefs.log` — census, exit 2.
+
+**Measured numbers.** `th:7`'s own asserts, both element-order records against
+a 1% band, nothing re-recorded:
+
+```
+  [record] degree 1: relL2 8.1541% vs 8.1541% (drift 4.00e-06),
+                     power error 8.3869% vs 8.3870% (drift 1.18e-05)
+  [record] degree 2: relL2 0.1405% vs 0.1405% (drift 5.50e-05),
+                     power error 0.0058% vs 0.0058% (drift 1.48e-03)
+  [identity] |Im P|/Re P = 0.000e+00 at both orders (family bound 1e-09)
+```
+
+**The anchor that actually tests the hoist.** The moved code produces exactly
+one quantity — the meshed-series ohmic power — so the check is whether that
+quantity survived the move. It did, **bit-identically to all ten printed
+digits**, against `OPS-18` step 3's green log
+(`20260822T123746Z_OPS-18-step3-th10-rerun.log`):
+
+```
+  coarse (  5866 cells): P_series(meshed) = 1.048951142e-07 W => error 8.387%
+  fine   ( 17667 cells): P_series(meshed) = 1.066439173e-07 W => error 3.629%
+  quadrature-16 recheck: meshed series power moves 1.24e-16 at the fine rung
+```
+
+The `TH-10` field figures beside them are unmoved too — 3.643% at 64 MHz,
+1.769% / 59.16× at 128 MHz, i.e. the `OPS-18` pair the 18:00 review
+established, not the 0.7.2 pair. A digit-for-digit match on the one number the
+refactor could plausibly have broken is stronger evidence than the gate's own
+tolerances would have demanded.
+
+**Census delta — reported, not asserted (item 4 owns the arithmetic).**
+`dead=0 guide=0 stale=51 stale_severity=report exit=2`, which passes the
+`OPS-19` `exit != 1` gate. This run refreshed `th:7`'s two artifacts and they
+left the stale set. **Four `time_harmonic` entries remain:** `th:2`'s
+`pec_cavity_mode_combined.xdmf`, `th:5`'s `resonance_guard_combined.xdmf`, and
+`th:6`'s `larmor_sphere_{64,128}MHz_combined.xdmf`. Note for item 4: the total
+went 55 → 51 against the `EX-31` log, **not** −2 — staleness is wall-clock, so
+five artifacts were refreshed by intervening slots while three
+`birdcage_leg_gaps_*` ones aged past the 48 h limit in the same window. Derive
+the expected count, never assert a memorized one; this run is a live example of
+why.
+
+**One wasted command, journaled for honesty.** The first harness invocation
+tried to drive `run_examples.sh` *inside* the container
+(`20260825T033104Z_OPS-25-red-baseline.log`, Status 127, 1 s): the runner is a
+host-side driver that shells out to `docker compose` itself, so it dies on
+`docker: command not found`. The log is committed as-is rather than deleted.
+The correct form — the one the 16:30 slot used — is
+`./scripts/run_examples.sh -e th:7 -n 2 -t 300` at the top level of the
+harness command, with no `docker compose exec` wrapper. Worth a line in the
+runner's usage header if a future slot repeats it.
+
+**Docs.** `th:7` known-issues entry flipped ✅ RETIRED with the retirement
+evidence above the original text (kept verbatim); §7 table row ⬜ → ✅ and the
+prose entry given a closure block; §9 item 3 marked done with the original
+text preserved.
+
+**Scope discipline.** Did not re-record anything. Did not touch `th:6`'s two
+licensed constants or run `th:1`–`th:8` — that is item 4's chunk, and the item
+said the artifact refresh here is incidental. Did not touch `src/`. The gate
+modules' own assertions are untouched; the only test-file change is the
+extraction plus its docstring.
+
+**Next attempt hypothesis.** Nothing follows for this item. **Item 4
+(`EX-30` leg (th)) is now fully unblocked** — items 2 and 3 are both on `main`,
+so `th:2`, `th:5` and `th:7` should all run green on the code paths those two
+chunks just gated, leaving `th:6` (the licensed re-record) as the only
+remaining `time_harmonic` red. Expect the post-run `time_harmonic` census to
+read 0 if item 4's alignment lands; if `th:6` still misses after the re-record,
+that is a fresh physics finding, not the stale-constant story.
+
+**No denials, no anomalies, no parked branches.** Tree clean at handoff.
