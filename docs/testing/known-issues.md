@@ -89,6 +89,24 @@ unless fixing it is the task.
 > repair them, and no band was touched.
 >
 > **Verified at** `9b679d8`.
+>
+> **RULED 2026-08-25, 18:00 review — the disposition is commissioned as
+> `GEO-21` (§7), following the `MAG-13`→`MAG-19` precedent: `GEO-15`'s ✅ is
+> the 0.7.2 close and stands; a new chunk disposes of the 0.11 red.**
+> Measure-first, decision rule pre-stated in the `GEO-21` entry: probe
+> `h_c = 3.2e-3`'s CAD-mass recovery (10 s, already priced) — if it sits
+> clearly below the gate the way `h_c = None`'s 0.7403 did, the baseline
+> control moves there version-tagged (old `None` in-comment citing the
+> resolution probe log); if it *clears* the gate, the inverted premise has no
+> meshable carrier and the finding is reported, never manufactured around.
+> The generator finding — `birdcage_port_domain(conductor_resolution=None)`
+> cannot mesh on 0.11 at any global resolution tried — **stays in this entry
+> even after the gate goes green**: hardening the ungraded path is
+> deliberately not commissioned while no production path uses it, and that
+> decision is recorded here rather than silently made. **Retire-when
+> (narrowed):** the gate-red portion retires with the commit that lands
+> `GEO-21` green; the ungraded-path generator limitation then re-heads this
+> entry and stays open.
 
 ### 🔴 OPEN 2026-08-25 (`EX-30` leg (mesh), 16:30 implementer slot) — `test_kwarg_off_reproduces_the_recorded_mesh` is **red on `main`**: the `GEO-16` kwarg-off cell record reads 79 534, the 0.11 image meshes **79 070**
 
@@ -129,6 +147,22 @@ unless fixing it is the task.
 > with it), or treat the 464-cell move as a regression to diagnose.
 >
 > **Verified at** `9b679d8`.
+>
+> **RULED 2026-08-25, 18:00 review — re-record, licensed and scoped to this
+> constant.** `NCELLS_UNGATED_RECORD` 79 534 → **79 070**, version-tagged to
+> the 0.11 image (gmsh 4.15.2), old digit in-comment citing both
+> `20260817T003524Z_GEO-16.log` and this entry's probe log; the `mesh:1` and
+> `mesh:4` guide copies move in the **same commit** so example and gate
+> cannot diverge. Basis: two independent no-sheet builds agree exactly at
+> 79 070 with the sheeted build properly distinct at 79 940 (the sheet is
+> exonerated), the module's five other assertions are green including the
+> 0.970–0.980 meshed-band guard the constant's comment names, and the −0.58%
+> move is in family with the measured 0.11-gmsh mesh motion already ruled
+> re-recordable under (1\*) (two-torus solve fixture −0.40%, `TH-10` −0.02%).
+> Not a regression to diagnose: the record is a change-detector, and what it
+> detected is the documented image change. No band moves. Landing is §9
+> item 3 (18:00 queue). **Retire-when:** the commit that lands the re-record
+> with the gate module and `mesh:4` green.
 
 ### 🔴 OPEN 2026-08-25 (`EX-30` leg (mesh), 16:30 implementer slot) — `mesh:5`'s **inverted control lost its separation**: the clamps-only mesh now *clears* the 0.755 floor it is asserted to fail, by 6e-6
 
@@ -171,6 +205,23 @@ unless fixing it is the task.
 > fails by a stated margin, or retire the inverted claim.
 >
 > **Verified at** `9b679d8`.
+>
+> **RULED 2026-08-25, 18:00 review — re-choose the control, measure-first;
+> demote to report only if no separating control exists.** The example may
+> not carry an inverted assertion whose separation is 6e-6 on a record that
+> moved 3.2e-4 under an image change. The landing (§9 item 3, second half)
+> probes the clamps-only configuration at 2–3 coarser sizings (~2.4 s per
+> mesh) and adopts the coarsest sensible control that **fails the 0.755
+> floor with ≥ 0.05 relative separation** — the `CONTROL_SEPARATION`
+> precedent the example itself cites for the `mesh:3` fixture — old sizing
+> in-comment, version-tagged. If no clamps-only sizing both fails the floor
+> and remains a legitimate control, the inverted assertion is demoted to a
+> printed report and the guide states the finding honestly: on 0.11 the
+> clamps-only mesh already recovers the floor, so the policy's necessity is
+> not demonstrable on this fixture at this floor. `POLICY_MIN_CAD_RECOVERY`,
+> the one-sided gate-module assertion, and the records never move.
+> **Retire-when:** the commit that lands `mesh:5` green under whichever
+> branch the measurement selects.
 
 ### 🔴 OPEN 2026-08-25 (`OPS-26` step 1, 15:00 implementer slot) — two `scripts/probes/` scripts were **never migrated to dolfinx 0.11**: they construct `fem.petsc.LinearProblem` without 0.11's required `petsc_options_prefix`
 
@@ -292,6 +343,28 @@ unless fixing it is the task.
 > this reason and nothing else — its artifact
 > (`h_convergence_rate_combined.xdmf`) is written *before* the assertion and
 > did refresh, so it is not in the stale census.
+>
+> **RULED 2026-08-25, 18:00 review — option (i): the rate duty transfers to
+> the `E_Ω` ladder under `E_Ω`'s own one-sided ≥ 0.7 criterion, which
+> `MAG-18` already gates live and green on 0.11.**
+> `test_h_refinement_straight_wire` keeps its monotone-decay assertion and
+> prints the error table as a report; the two-sided [0.7, 1.5] on the sampled
+> 10-point statistic is **retired with its basis stated**, not widened: that
+> statistic swings 34% of its own value under its sampler (measured on both
+> images, `OPS-18` step 3 attempt 5) and the band already failed on 0.7.2 at
+> `n_points = 8` — the gate was passing on a sampler choice, and `MAG-18`
+> built `E_Ω` precisely to replace it. On option (iii)'s question: the upper
+> edge is **not** re-imposed on `E_Ω` — no two-sided band has ever been
+> validated on 0.11 for either statistic, under-convergence (the ≥ 0.7 side)
+> is the failure mode a rate gate exists to catch, and a superconvergence
+> guard, if ever wanted, must be commissioned with its own measured basis
+> (a weekly-review question, deliberately not opened here). Option (ii)
+> rejected: a 0.03 margin on a statistic with a 34% sampler swing is not a
+> gate. Landing is `MAG-19` step 2 (§9 item 2, 18:00 queue); `mag:6` imports
+> `RATE_MIN`/`RATE_MAX`/the fit from this module, so the landing reconciles
+> the example to the transferred duty in the same commit (old text
+> in-comment) and runs `-e 6` as the consumer check. **Retire-when:** the
+> commit that lands `MAG-19` step 2 green including `mag:6`.
 
 ### 🔴 OPEN 2026-08-25 (`EX-30` leg (root), 09:00 implementer slot) — `examples/magnetostatics/01_straight_wire.py` **no longer meshes on the 0.11 image**: gmsh aborts with duplicated facets at the example's own coarse resolution, which no gate exercises
 

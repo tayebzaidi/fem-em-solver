@@ -1,109 +1,101 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-25 10:30, **daily review (scheduled, ran normally)**.
-Headline: **`PORT-9` is closed — the loaded 4-leg birdcage has a fully
-gated 4×4 S-matrix at 10 MHz**, and the §10 Phase-4 box "loaded birdcage +
-phantom runs end to end" ticks at 10 MHz on its own pre-stated condition
-(the 64/128 MHz claim is `PORT-11`, unrun). The 16-leg cost rung is
-measured (307 296 cells / 74 s — comfortably affordable). The interval
-also surfaced the sharpest finding since the 0.11 merge: a
-**magnetostatics convergence gate has been red on `main` unobserved since
-the merge**, found by the examples layer — which is exactly the failure
-class your migration-sweep directive (`OPS-26`, now queued) exists to
-enumerate. Source of truth is `PROJECT_PLAN.md`; this page is a read-only
-digest for the human operator.
+**Updated:** 2026-08-25 18:00, **daily review (scheduled, ran normally)**.
+Headline: **`GEO-19` is closed — the 16-leg birdcage mesh is gated** (CAD
+identities, C16 sheet symmetry, a per-azimuth-class terminal reading that
+collapses to the old gate at 4 legs, and Phase 6's first measured cost
+rung: 307 296 cells / 74 s, comfortably affordable). Your `OPS-26` sweep's
+static half came back **clean** — 434 DolfinX call sites across 159 files,
+zero un-migrated survivors in `src`/`tests` with a binding negative
+control — which sharpens the remaining risk to exactly one class:
+**gates that no scheduled command executes**. That class now has three
+confirmed members (cavity, straight-wire rate, and — found this
+interval — the `GEO-15` graded-conductor gate, whose baseline no longer
+meshes on 0.11), every one found by the examples layer. All three now
+have rulings or dispositions queued, and the execution census (`OPS-26`
+step 2) is seeded with them by name. Source of truth is
+`PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
 
 ## Waiting on you
 
-1. ✅→📋 **Your two directives from this morning's interactive session are
-   both filed and moving**: `OPS-26` (0.11 migration completeness sweep)
-   is queued — step 1 runs in this interval's slots; the fixture-scale
-   directive (F-small / F-human) is placed in §10 Phase 6 for the Sunday
-   2026-08-30 weekly review to dispose of, cost probe first. Nothing
-   needed from you unless you want to pre-empt the weekly review's
-   scoping.
-2. 🟢 **The `ANS-3` AED run is unblocked** (unchanged since 08-16). Your
+1. 🟢 **The `ANS-3` AED run is unblocked** (unchanged since 08-16). Your
    half: replicate `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`
    in Ansys Electronics Desktop and fill the blank AED columns in
    `COMPARISON.md`.
-3. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
+2. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
-4. **ANS-1 Ansys replication** — still yours; ANS-3 (item 2) is the
+3. **ANS-1 Ansys replication** — still yours; ANS-3 (item 1) is the
    second case in the same queue.
-5. FYI: local `main` is well ahead of origin (push is manual).
+4. FYI: local `main` is well ahead of origin (push is manual). FYI on
+   your two 08-25 directives: `OPS-26` step 1 is **done and clean** (two
+   `scripts/probes/` stragglers filed); the fixture-scale directive
+   waits on the Sunday 08-30 weekly review as addressed. Nothing needs
+   your input on either.
 
-## Honest current state (digest of §2 — two changes this interval)
+## Honest current state (digest of §2 — three changes this interval)
 
 | Capability | State | Gate |
 |---|---|---|
-| Magnetostatics | ⚠️ validated, but **one rate gate red on `main`** | closed forms green (Helmholtz 0.04%, `E_Ω` ladder rate 1.6854 on 0.11); `test_h_refinement_straight_wire` fits **1.9038 vs [0.7, 1.5]** — the finest rung's sampled error collapsed on the 0.11 image; disposition chunk `MAG-19` queued with a pre-stated two-branch decision rule, no band moves either way |
+| Magnetostatics | ⚠️ one rate gate red on `main`, **ruled — landing queued** | closed forms green (Helmholtz 0.04%, `E_Ω` ladder rate 1.6854 on 0.11); the sampled-norm two-sided rate gate measured unstable under its own sampler on **both** images — ruled: rate duty transfers to the already-green one-sided `E_Ω` gate (`MAG-19` step 2, queue item 2), nothing widened |
 | Time-harmonic curl-curl | ✅ validated, example family fully re-gated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77% + power 3.63%; degree-2 gated at 0.1405% |
-| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (`MAT-6`); Larmor coil loading stays an extrapolation; 128 GiB re-pricing stays a weekly-review call |
+| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (`MAT-6`); Larmor coil loading stays an extrapolation; `PORT-11` step 1 (the 64 MHz port probe) is queue item 1 |
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (`MAT-4`); never on a coil |
-| S-parameters | ✅ **birdcage gated at 10 MHz — `PORT-9` closed 08-25** | power-wave 4×4 on the loaded gapped birdcage: reciprocity 2.259e-14 vs 1e-3 (2.466e+11× from the pre-fix broken route), σ_max 0.999992805, class spreads 0.055 / 0.035 / 0.021% vs the tightened 0.5%, and the displaced-leg negative control breaks all three classes by two orders. **No Larmor, resonance, or tuning claim** — that is `PORT-11`, next in the queue line |
-| Test-suite trust | ⚠️ under systematic re-audit | two gates have now been found silently broken post-0.11 by the examples layer, not by the upgrade's re-gate; your `OPS-26` sweep (queued) re-derives the "observed in a completed run" census on 0.11 |
+| S-parameters | ✅ birdcage gated at 10 MHz (`PORT-9`); **16-leg mesh now gated too (`GEO-19` ✅ 08-25)** | 16 legs: identities exact, terminal classes ≤ 2e-7 tight, cost rung 2.65× cells / 3.23× time over 4 legs; **mesh only — no solve, no port, no tuning claim above 4 legs** |
+| Test-suite trust | ⚠️ static half **clean**, execution half pending | `OPS-26` step 1: 434 call sites / 159 files, zero survivors in `src`/`tests`, binding negative control; the silently-non-executing-gate class has 3 confirmed members + 1 stale record — all ruled/dispositioned this review, and step 2's census is seeded with them |
 
-## Recent activity (2026-08-25 03:00 → 10:30)
+## Recent activity (2026-08-25 10:30 → 18:00)
 
-- **04:30 + 06:00:** `PORT-9` leg (d1′) landed in two slots — mesh knob
-  first (every `GEO-18` identity survives the 22.5° rotation), then the
-  displaced 4×4 through the power-wave assembly. **Chunk ✅**; the
-  (iii′) 5% → 0.5% tightening committed with all three consumer modules
-  green; §2.2's "no coil or birdcage has ports" head retired; attempt
-  branch deleted. Audited §4-COMPLIANT this review: every log footer and
-  anchor digit verified, the only band change is the licensed tightening.
-- **07:30:** `GEO-19` step C measured the 16-leg rung — 307 296 cells /
-  74.18 s (2.65× / 3.24× over 4 legs), four of five gates green, parked
-  on the terminal-equality gate: the 1e-5 band was measured at C4 where
-  ports are exact coordinate permutations; at 16 legs the spread is
-  8.4e-04 in three azimuth classes ≤ 2e-7 tight inside each. **Ruled
-  this review: construction symmetry** — per-class reading, tighter
-  where it overlaps the old gate, nothing widened; landing queued item 1.
-- **09:00:** `EX-30` leg (root) — six of eight examples green (SAR
-  closed-form identities at machine precision, Dodd–Deeds to 4e-04),
-  census 47 → 26 exact and derived, and two reds: the `MAG-13` rate gate
-  red on `main` (above) and `mag:1`'s mesh failing at its own coarse
-  resolution — localised in a 29 s probe to a geometry-independent
-  resolution floor on the 0.11 image. **Ruled this review:** the example
-  moves to the nearest working rung (0.008); the gate red is `MAG-19`'s.
-- **10:20/10:26:** your interactive session landed the `OPS-26`
-  commission and the fixture-scale directive; both ingested above.
+- **12:00:** `GEO-19` step C landed under the construction-symmetry
+  ruling — **chunk ✅**, audited §4-COMPLIANT this review (all footers,
+  every anchor digit, 645-insertion/0-deletion diff verified; two
+  cosmetic observations noted in the review commit). `GEO-20` step 2
+  unblocked; attempt branch deleted.
+- **13:30:** `MAG-19` step 1 measured the dual-norm 4×2 table and
+  honestly reported that the pre-stated rule selects **neither** branch —
+  and found the constraint that decided the ruling (`E_Ω` is stable but
+  fits above 1.5 everywhere, so the two-sided band cannot transfer).
+  **Ruled this review: option (i), duty transfer**; landing queued.
+- **15:00:** `OPS-26` step 1 closed — the static sweep is clean, the
+  negative control binds (six reverted migrations all caught), two
+  un-migrated `scripts/probes/` files filed not fixed.
+- **16:30:** `EX-30` leg (mesh) — 4 of 7 green, census exact (13 → 6,
+  no other family moved), three reds surfaced and filed without using
+  its re-record licence: the `GEO-15` gate red (baseline unmeshable —
+  conductor-sizing axis, localised in one 39 s probe), the `GEO-16`
+  stale cell record (79 534 → 79 070, sheet exonerated), and `mesh:5`'s
+  control premise thinned to 6e-6. **All three ruled this review**
+  (re-choice / re-record / new chunk `GEO-21`).
 
 ## Automation health
 
 - Four slots scheduled, four ran, all four productive: one chunk close,
-  one two-slot landing, two disciplined parks that asked for exactly the
-  rulings this review made. No exit-124 waste except one known teardown
-  trap, no wedge, no `recovered/*`, tree clean at every handoff. One
-  paid trap worth naming: a rank-0 `KeyError` in a report block turned
-  97 s of green pytest into a 561 s hang — the parked module now carries
-  a broadcast guard.
-- Branches: `attempt/GEO-19-stepC-20260825T125000Z` parked (item 1's
-  payload, ruling applied at landing); the superseded 08-23 `GEO-19`
-  branch deleted by this review after diff verification.
-- The queue holds **six items — 1–5 independent, item 6 explicitly
-  serial on item 2**. Newly commissioned, not yet queued: `EX-32` (first
-  birdcage-port example) and `OPS-26` step 2 (waits on step 1's list).
-  `PORT-11` step 1 is unblocked and first in line at the next review.
+  one step close, two disciplined stops that asked for exactly the
+  rulings made here. No wedges, no `recovered/*`, no attempt branches
+  left, tree clean at every handoff and at this review.
+- The audit pipeline is working as designed: every red this interval
+  was *filed with its measurement done*, so all four review rulings
+  cost zero new compute to make.
+- The queue holds **six items — 1, 2, 4, 5 independent; item 3 is two
+  independent halves; item 6 serial on item 2**. Newly commissioned,
+  not yet queued: `GEO-21` is queued (item 4); `EX-33` (first 16-leg
+  example), `EX-32`, `GEO-20` step 2, and `OPS-26` step 2 (seeded) are
+  first in line at the next review.
 
 ## On deck (§9 — six items this review)
 
-1. **`GEO-19` step C** — land the 16-leg module under the
-   construction-symmetry ruling; closes `GEO-19`, unblocks `GEO-20`
-   step 2 (standard, independent)
-2. **`MAG-19` step 1** — discriminate the red rate gate: anomalous rung
-   vs wrong instrument, both norms on the same four-rung ladder
-   (standard, independent)
-3. **`OPS-26` step 1** — the static 0.11 migration sweep, introspected
-   signatures, must-fail negative control (smoke, independent,
-   operator-directed)
-4. **`EX-30` leg (mesh)** — meshing examples, licensed re-records
-   (standard, independent)
-5. **`EX-30` leg (ports)** — ports + `ans` examples, licensed re-records
-   (standard, independent; spare)
-6. **`EX-30` leg (root) completion** — executes this review's three
-   rulings; **serial on item 2**, skips with a journal entry if item 2
-   did not land
+1. **`PORT-11` step 1** — the 64 MHz solve on the loaded birdcage,
+   priced, with the 10 MHz column as in-run anchor (standard,
+   independent; the mission's first Larmor-frequency port measurement)
+2. **`MAG-19` step 2** — land the duty-transfer ruling; retires the
+   rate-gate red (standard, independent)
+3. **`EX-30` mesh-red pair** — `GEO-16` re-record + `mesh:5` control
+   re-choice, each half independent (standard)
+4. **`GEO-21` step 1** — re-choose the unmeshable graded-gate baseline,
+   measure-first (standard, independent)
+5. **`EX-30` leg (ports)** — ports + `ans` examples, licensed
+   re-records (standard, independent; spare)
+6. **`EX-30` leg (root) completion** — serial on item 2, skips with a
+   journal entry if item 2 did not land
 
 ---
 
