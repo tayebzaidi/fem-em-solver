@@ -465,7 +465,7 @@ needs `-f docker/docker-compose.yml`.
 | 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58% pinned / 1.5834% on the production projected drive, step 3; eddy-current regime); SAR gated on an **imposed** uniform field only (`MAT-4` steps 1+3: lossy-sphere closed form 3.5%, mass-averaging exact at 1 g/10 g) — coil-driven SAR and the C95.3 claim still open |
 | 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-11` | `PORT-1` ✅ 2026-08-15 (field-derived S through the package, two-torus fixture only, two named systematics); `PORT-10` ✅ 08-16; **`PORT-9` ✅ 2026-08-25 at 10 MHz on the gapped 4-leg birdcage** — leg (d1′)'s geometric negative control passed on the power-wave route (displaced classes 6.2219 / 7.1142 / 2.8474% vs the tightened (iii′) 0.5%, reciprocity 2.259e-14 vs 1e-3, 2.466e+11× from the pre-fix 5.57e-03), no Larmor/resonance/tuning claim; history: steps 1–2c ✅ on the two-torus (lumped-sheet BC, 1.8333% cross-route, reciprocity 2.6e-11), step 3 on the gapped birdcage has two gated legs (c)/(d0) at 10 MHz (C4 spread 0.0152–0.0159% vs 5%, 50 Ω termination separates the classes 598× — re-recorded image-tagged on the 0.11 image 2026-08-24 by leg (d3c): 0.0359%, 253.2002×) and **leg (d) closed 2026-08-23 — the 4×4 passes all three gates** (reciprocity 2.495292352e-05 vs 1e-3, σ_max 0.862659137 ≤ 1, class spreads 0.0199 / 0.0180 / 0.0108% vs 5%, gate (iii) since tightened to 0.5%); leg (d1)'s geometric control ran 2026-08-23 and **found the route loses reciprocity (5.57e-03 vs 1e-3) once the fixture is asymmetric**; leg (d2) (asymmetric two-torus, 13:30 slot) traced it to the assembly — the readout *is* the source's adjoint (1.33e-10), the asymmetry is the terminated-`Z` per-column normalisation — and the 18:00 review ruled the power-wave S fix (leg (d3)) with the class re-record (d3b), (d1′) serial on (d3b); `PORT-11` (64/128 MHz) scoped 2026-08-23, serial on it; `PORT-4`…`PORT-8` open |
 | 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 for excitation; both meshes (coil+phantom, birdcage) generate and are identity-gated in CI (`GEO-9`, 2026-08-03); the birdcage fixture is loaded (phantom inside) and since `GEO-18` ✅ 2026-08-22 has terminals and port sheets — the first B1+ chunk is scoped by the daily review when `PORT-9` closes (§10 subgoal 4) |
-| 6 | Birdcage tuning at 64/128 MHz: mode spectrum, lumped capacitors, circuit co-simulation (the HFSS + Circuit split); production target: **32-port high-pass birdcage at 1.5 T** (§10 operator directive 2026-08-17) | subgoals owned by the weekly review (§10); mesh prerequisites `GEO-19` (16 legs, cost rung) + `GEO-20` (ring-gap ports) scoped 2026-08-23 | Not started — mesh prerequisites may run any time (CAD-identity gates); physics subgoals wait on `PORT-9`/`PORT-11` |
+| 6 | Birdcage tuning at 64/128 MHz: mode spectrum, lumped capacitors, circuit co-simulation (the HFSS + Circuit split); production target: **32-port high-pass birdcage at 1.5 T** (§10 operator directive 2026-08-17); **fixture scale re-directed 2026-08-25 — two fixtures, F-small (today's 0.07 m gate fixture, records frozen) and F-human (≈ 0.15 m radius / 0.30 m long high-pass, the deliverable fixture); the `N ≤ 25` ceiling was arithmetic on the wrong radius and dissolves at human scale. Full directive in §10 Phase 6 — the 2026-08-30 weekly review must dispose of it, cost probe first** | subgoals owned by the weekly review (§10); mesh prerequisites `GEO-19` (16 legs, cost rung) + `GEO-20` (ring-gap ports) scoped 2026-08-23 | Not started — mesh prerequisites may run any time (CAD-identity gates); physics subgoals wait on `PORT-9`/`PORT-11` |
 | 7 | Implants: parametric implant geometry in the phantom, local SAR / near-implant hot spots | subgoals owned by the weekly review (§10) | Not started |
 | 8 | Thermal: Pennes bioheat driven by SAR | subgoals owned by the weekly review (§10) | Not started |
 | 9 | Advanced: MPI scaling, AMR, sweeps, optimization | — | Deferred |
@@ -5349,6 +5349,84 @@ named; a CLASS verdict makes a gauged degree-2 formulation the next
 chunk, a FEED verdict points at the port model, and either re-opens this
 decision at the following weekly review. The 32-port cost rung (`GEO-19`)
 is priced at degree 1 accordingly.
+
+**OPERATOR DIRECTIVE 2026-08-25 (interactive session) — two fixtures, and
+the fixture-scale finding behind it. FOR THE 2026-08-30 WEEKLY REVIEW: this
+is the disposition of the `N ≤ 25` question the 08-23 review deferred to you,
+and it must be answered in that review's §10 pass. The weekly review owns the
+final scoping; the operator has stated the intent and the reasoning below is
+the interactive session's, offered as a recommendation, not as a decision.**
+
+> **The finding.** `birdcage_port_domain`'s default `ring_radius = 0.07 m`
+> is a **14 cm-diameter, 14 cm-long coil around a 6 cm phantom**. That is a
+> bench-scale fixture, not a human coil — the operator's actual target is
+> "rather large, it had to fit a human, like 30 cm diameter and length."
+> **No entry in this plan has ever justified 0.07 m**; it is an unexamined
+> inheritance from an early coarse fixture, and every downstream constraint
+> derived from it inherits that. In particular the `N ≤ 25` ceiling is just
+> arithmetic on the wrong radius: `2π(0.07)/17.5 mm = 25.1`. At
+> `ring_radius = 0.15` the same 17.5 mm clearance floor admits **53 legs**
+> (32 legs give 29.5 mm spacing), so the 32-port directive has no geometry
+> problem at human scale and needs neither a bigger clearance rule nor
+> narrower boxes.
+>
+> **Why this is a physics finding and not a bookkeeping one.** At 64 MHz the
+> wavelength in tissue (εᵣ ≈ 80) is ≈ 0.52 m; at 128 MHz ≈ 0.26 m. A 30 cm
+> coil is a substantial fraction of a wavelength — that is *why* this project
+> needs a full-wave solve rather than a quasi-static one (§1). A 14 cm coil
+> around a 6 cm phantom is electrically far smaller and will **systematically
+> understate exactly the effects Phase 5/6 exist to capture**: B1+
+> inhomogeneity, dielectric/wavelength behaviour, and the SAR distribution.
+> Those come out *qualitatively* wrong, not merely imprecise. For the 10 MHz
+> gating work done so far this was harmless — at 30 m wavelength nothing is
+> scale-sensitive — which is why it has gone unnoticed for the whole port
+> lineage.
+>
+> **The directive.** Maintain **two** fixtures, not one:
+> * **(F-small) the gate fixture** — today's `ring_radius = 0.07 m`
+>   parameters, unchanged. It keeps every existing record valid (116 085
+>   cells, `PORT-9`'s S-matrix, the `GEO-18`/`19`/`20` identities,
+>   `EX-28`/`EX-31`), stays cheap enough to run in an ordinary slot, and
+>   remains the home of the CAD-identity and reciprocity/passivity gates.
+>   **Its records must not move for this.**
+> * **(F-human) the production fixture** — a **human-scale high-pass
+>   birdcage**: `ring_radius ≈ 0.15 m`, `coil_length ≈ 0.30 m`, phantom
+>   scaled to match (a 6 cm phantom in a 30 cm coil is not a load), the
+>   **high-pass ring-gap topology** `GEO-20` already builds, at the
+>   directive's 32 ports. This is the fixture the Phase 5/6 *deliverables*
+>   run on — B1+ maps, coil-driven SAR, mode spectrum, tuning.
+>
+> Keeping them separate is the point: it buys the right physics for the
+> deliverables **without** a mass re-record of the validation lineage, and
+> F-small stays useful precisely *because* it is cheap.
+>
+> **What the weekly review must decide (not pre-empted here).**
+> 1. **Cost, first and blocking.** Volume goes as r³: 0.07 → 0.15 m is ≈ 10×
+>    at fixed resolution. `GEO-19` step C measured 16 legs at **307 296
+>    cells / 74.18 s** on F-small; F-human at 32 ports plausibly lands at
+>    **3–4 M cells**, and `TH-11` step 5 measured **2.81 M as an OOM** — at
+>    the *old* 64 GiB ceiling. **The ceiling is now 128 GiB** (§5.1,
+>    operator directive 2026-08-24), so this is the first real test of that
+>    raise and is exactly the re-pricing the `TH-11`/`TH-12`/`OPS-17`
+>    memory-premise caveats were left open for. **A cost probe comes before
+>    any dated commitment** — §5.1's "a tier is a measurement, not an
+>    intention", and the §10 epitaph's own lesson (a target needs its finest
+>    rung priced before it is named).
+> 2. Whether F-human is a **new parameter set** on `birdcage_port_domain` or
+>    a **separate constructor**, and which gates transfer to it. The
+>    CAD-identity families should transfer unchanged — they are scale-free.
+> 3. Whether `GEO-19` step C's parked C16 terminal-equality band question
+>    should be settled on F-small first (it is a C4 band applied to C16,
+>    independent of scale) so that F-human does not inherit an open ruling.
+> 4. Sequencing against Phase 5 subgoal 4: the first B1+ chunk was to be
+>    scoped "the day `PORT-9` closes" (2026-08-25) on the *loaded F-small*
+>    birdcage at 10 MHz. That should still happen — it is the cheap way to
+>    gate the B1+ machinery — with the human-scale map following on F-human.
+>    **Do not block subgoal 4 on F-human.**
+>
+> **What this directive does not do:** it does not re-record anything, does
+> not change a default, does not commission a chunk, and does not move the
+> 32-port target. `GEO-19`/`GEO-20` continue as scoped on F-small.
 
 **Phase 6 — tuning.** Mode spectrum of the birdcage (the `TH-9` eigensolver
 machinery on the birdcage mesh), lumped capacitors at the gap/port level,
