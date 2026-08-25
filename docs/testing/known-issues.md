@@ -588,7 +588,7 @@ this geometry at `N <= 25` legs — see the `GEO-19` §7 entry.
 
 ---
 
-### 🚫 OPEN — `GEO-18` step 1's **1e-5 terminal-equality band is a C4 band, not a C_N one**: at 16 legs the terminal disks spread **8.434e-04**, two decades wide of it, while every ratio stays inside the closed form's [0.95, 1.0] (`GEO-19` step C, 2026-08-25)
+### ✅ RETIRED 2026-08-25 (`GEO-19` step C, 12:00 implementer slot) — `GEO-18` step 1's **1e-5 terminal-equality band is a C4 band, not a C_N one**: at 16 legs the terminal disks spread **8.434e-04**, two decades wide of it, while every ratio stays inside the closed form's [0.95, 1.0] (`GEO-19` step C, 2026-08-25)
 
 **Test id:** `tests/mesh/test_birdcage_port_scaleup.py::`
 `test_sixteen_leg_identity_family_and_cost_rung`, parked on
@@ -651,6 +651,27 @@ absolute [0.95, 1.0] band and every C4 module's 1e-5 unmoved. Full landing
 instructions in the `GEO-19` §7 entry. **This entry now retires with the
 commit that lands the ruled module green from `main`** (§9 item 1,
 2026-08-25 10:30 queue).
+
+**RETIRED 2026-08-25, 12:00 slot — the ruled module is green from `main`,
+and the class table above reproduces port for port.**
+`20260825T170316Z_GEO-19-stepC-ruled.log` (`2 passed` / **117 s**, Status 0)
+and the record run `20260825T170523Z_GEO-19-stepC-ruled-record.log`
+(`2 passed` / **115 s**, Status 0, `-s`). The partition is taken from the
+mesh's own coordinate mirrors (`_azimuth_class`), not from the measured
+areas, and it lands on exactly the three classes tabulated above:
+
+| class | ports | meshed/analytic | intra-class spread (band 1e-6) |
+|---|---|---|---|
+| aligned (0/45/…/315°) | 8 | 0.988615772 | **1.923e-07** |
+| 22.5/157.5/202.5/337.5° | 4 | 0.989367514 | **5.849e-08** |
+| 67.5/112.5/247.5/292.5° | 4 | 0.989449735 | **6.144e-08** |
+
+Inter-class spread **8.431e-04** against the 5e-3 ceiling. The four-leg
+control returns **one** class at **3.184e-08** — the back-compat identity the
+ruling asked for, i.e. the reading reduces to the old flat gate exactly — with
+116 085 cells (delta **0**) and C4 sheet spread 6.050e-16. No band outside
+`tests/mesh/test_birdcage_port_scaleup.py` moved; the C4 modules keep their
+1e-5 and `TERMINAL_AREA_BAND` keeps [0.95, 1.0].
 
 ---
 

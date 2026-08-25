@@ -15574,3 +15574,86 @@ only on the success path, so the probe finalises defensively in its own
 
 Slot total is therefore **936 s** of compute across six runs plus two 1 s
 censuses. `main` clean at handoff.
+
+---
+
+## 2026-08-25T17:10Z — `GEO-19` step C (§9 item 1) — **complete (chunk ✅)**: the ruled gate (ii) is green at sixteen legs, the 4-leg control returns one class, and the cost rung is restated as the deliverable (12:00 CDT implementer slot)
+
+Preflight clean, container Up 23 h, `main` @ `e7a2f7e`. §9 item 1 taken as
+written; no fallback, no denial, no anomaly.
+
+**What was tried.** Exactly the landing the 10:30 ruling pre-stated.
+`tests/mesh/test_birdcage_port_scaleup.py` was taken off
+`attempt/GEO-19-stepC-20260825T125000Z` (`e7a3926`) — it is the only file on
+that branch that is not documentation, so the checkout is a single path — and
+gate (ii)'s equality half rewritten per azimuth class. The one judgement the
+ruling left open was *how to key the classes*, and it was resolved
+non-circularly: the key is the **mesh's own symmetry**, not the measured
+areas. The air box and phantom are symmetric under `x → −x` and `y → −y`, so
+every azimuth folds into [0, 90]°; that fold alone separates
+{22.5, 157.5, 202.5, 337.5} from {67.5, 112.5, 247.5, 292.5} exactly as
+attempt 1 measured. The aligned folds {0, 45, 90} are merged into one class
+because they read one value to ≤ 2e-7 — an empirical merge, deliberately kept
+on the *asserting* side so that a future split shows up as an intra-class red
+(a generator finding) rather than being absorbed. The 90° rotation is **not**
+assumed anywhere: assuming it would merge 22.5° with 67.5°, and those differ
+by 8.4e-05, two decades above the intra-class band. `_azimuth_class` carries
+that reasoning in its docstring.
+
+**Measured numbers**, `-n 2`, real build, from `main`:
+
+| class | ports | meshed/analytic | intra spread (band 1e-6) |
+|---|---|---|---|
+| aligned (0/45/…/315°) | 8 | 0.988615772 | **1.923e-07** |
+| 22.5/157.5/202.5/337.5° | 4 | 0.989367514 | **5.849e-08** |
+| 67.5/112.5/247.5/292.5° | 4 | 0.989449735 | **6.144e-08** |
+
+Inter-class **8.431e-04** vs the 5e-3 ceiling. **Back-compat identity, which
+is the control the ruling asked for:** at four legs every port is aligned, the
+module reports **1 azimuth class**, intra **3.184e-08**, inter **0.000e+00** —
+the per-class reading *is* the old flat gate. Every other anchor the item
+named reproduces: partition / air box / halves / `dx·g` / closure all
+**1.000000000000**, C16 sheet spread **1.331e-15**, out-of-plane ≤ 3.4e-18 m,
+conductor meshed/CAD **0.981503**, separation 2.731265e-02 m vs 1.750000e-02 m
+(margin **1.560723×**), control **116 085** cells (delta **0**, relative
+0.000e+00) and C4 sheet spread **6.050e-16**. Cost rung: **116 085 → 307 296
+cells (2.6472×)**, mesh **22.99 → 74.37 s (3.2346×)** — attempt 1 read
+2.6472× / 3.2357×, so the rung reproduces.
+
+**Harness logs.** `20260825T170316Z_GEO-19-stepC-ruled.log` — `2 passed` /
+**117 s**, Status 0. `20260825T170523Z_GEO-19-stepC-ruled-record.log` —
+`2 passed` / **115 s**, Status 0, same command plus `-s`. The second run
+exists because pytest **captures stdout on a green test**: the first log
+proved the gates, but the per-port and per-class tables the item asks to be
+recorded were not in it. Worth carrying forward — every prior `GEO-19` log
+that carried its record was a log with a *failure* in it, so the capture had
+never bitten. Slot total **232 s** of compute across two runs, heavy
+commissioned, standard measured both times.
+
+**Bands.** One file changed. `TERMINAL_EQUALITY_BAND = 1e-5` → replaced by
+`TERMINAL_INTRA_CLASS_BAND = 1e-6` and `TERMINAL_INTER_CLASS_CEILING = 5e-3`,
+each with its measured basis in-comment. Nothing outside the module moved: the
+C4 modules keep their 1e-5, `TERMINAL_AREA_BAND` keeps [0.95, 1.0], zero
+assertions removed, zero skips. The net effect on the 4-leg control is a
+**tightening** 1e-5 → 1e-6.
+
+**Landed** on `main` with the §7 status flip (`GEO-19` 🟡 → ✅, table row and
+prose entry), the §2.2 head corrected (the 16-leg *mesh* is gated; there is
+still no solve and no port model at 16 legs, and `GEO-20` step 2 is still
+unbuilt), §9 item 1 marked done, and the terminal-equality known-issues entry
+retired with its closing table. `attempt/GEO-19-stepC-20260825T125000Z`
+deleted after the green from `main`.
+
+**Next.** `GEO-20` step 2 (16 legs, 32 ring-gap ports) is now unblocked and is
+the natural successor — it is the other half of the 32-port directive's mesh
+prerequisite, and this run priced the 16-leg build at 74 s of mesh, so it is a
+standard-tier slot rather than the heavy one `GEO-19` was commissioned as.
+Note for whoever queues it: the module's own
+`test_sheet_encoding_admits_the_production_leg_count` still asserts that **32
+legs do not clear the separation floor on this ring** (`N ≤ 25` at
+`ring_radius = 0.07`), which is the arithmetic the 2026-08-25 fixture-scale
+directive says was done on the wrong radius. That assertion is a *record*, not
+a claim about F-human, and it will have to move with the fixture — the weekly
+review owns that.
+
+`main` clean at handoff.
