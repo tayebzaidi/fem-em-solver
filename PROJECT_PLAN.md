@@ -534,7 +534,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-23` | Sweep the `OPS-21` rank-0-return defect pattern (4 measured sites in 3 test files) + the `test_helmholtz_v2.py` Im-bound (commissioned 2026-08-20 03:00 review from the 00:00 slot's grep survey) | ✅ | smoke-to-standard | 3 real sites (all in `test_csv_export_stats_parity.py`) + the Im-bound fixed; 2 of the commissioned sites were print-only false positives and 1 exempted site was a real defect; 12 passed both ranks, 5.00 s. *Audited COMPLIANT 2026-08-21 18:00 review — red-baseline byte-identity re-verified against the log's rank blocks; benign omission: the first exit-0 helmholtz-real log is in test-results.md but uncited in the annotation* |
 | `OPS-24` | Migrate `core/cavity.py`'s two `assemble_matrix(..., diagonal=)` sites to the 0.11 signature — `TH-9`'s cavity gate + resonance guard have been **non-executing on `main` since the 0.11 merge** (known-issues 2026-08-24; found by `EX-30` leg (th); commissioned 2026-08-24 18:00 review; closed 2026-08-25 — `diagonal=` → `diag=`, all four green, 0.0436% worst-mode reproduced to the printed digit) | ✅ | standard |
 | `OPS-25` | Re-join `th:7` to its gate: hoist the series-interior interpolation into the gate module and import it, migrating the repo's only `interpolate(cells=)` site (known-issues 2026-08-24; ruled hoist-not-repair by the 2026-08-24 18:00 review) | ✅ (2026-08-25: hoisted to `series_interior_function` in `test_lossy_sphere_fullwave.py`; `th:7` green in 14 s with both element-order records reproducing — degree 1 8.1541% / 8.3869%, degree 2 0.1405% / 0.0058%, drifts ≤ 1.48e-03 in a 1% band — and the gate's `P_series(meshed)` **bit-identical to all ten printed digits** across the refactor; `13 passed in 25.28s`) | standard |
-| `OPS-26` | **Systematic dolfinx-0.11 migration completeness sweep** — re-run `OPS-17`'s "observed in a completed run" census on the 0.11 image and statically sweep `src/` for un-migrated call sites. Two silently-broken gates have already been found *by examples rather than by the upgrade's own re-gate* (`TH-9` cavity, `OPS-24`; straight-wire h-refinement, red on `main`, found 2026-08-25 by `mag:6`); a third is likelier than not. **Commissioned 2026-08-25 by operator directive, interactive session** — queue at the next review. *Queued 2026-08-25 10:30 review: step 1 is §9 item 3; step 2 held until step 1's site list lands.* | ⬜ | heavy (split across ≥ 2 slots) |
+| `OPS-26` | **Systematic dolfinx-0.11 migration completeness sweep** — re-run `OPS-17`'s "observed in a completed run" census on the 0.11 image and statically sweep `src/` for un-migrated call sites. Two silently-broken gates have already been found *by examples rather than by the upgrade's own re-gate* (`TH-9` cavity, `OPS-24`; straight-wire h-refinement, red on `main`, found 2026-08-25 by `mag:6`); a third is likelier than not. **Commissioned 2026-08-25 by operator directive, interactive session** — queue at the next review. *Queued 2026-08-25 10:30 review: step 1 is §9 item 3; step 2 held until step 1's site list lands.* ***Step 1 ✅ 2026-08-25, 15:00 slot** — `src`/`tests` clean at 434 call sites / 29 APIs, negative control binding and passing, two survivors filed in `scripts/probes/`; step 2 (execution census) is now unblocked.* | 🟡 | heavy (split across ≥ 2 slots) |
 
 **`OPS-24` — migrate `core/cavity.py` to 0.11; turn `TH-9`'s gates back on** ✅
 *(commissioned 2026-08-24 18:00 review from `EX-30` leg (th)'s finding 1;
@@ -615,7 +615,35 @@ list shapes the census.**)*
 > runs** — but that census was taken on **0.7.2**, and the image has since
 > changed underneath it. This chunk re-takes it.
 >
-> * **Step 1 — static sweep (smoke, no solves).** Sweep `src/` and `tests/`
+> * **Step 1 — static sweep ✅ 2026-08-25, 15:00 implementer slot.**
+>   `scripts/testing/check_dolfinx_api_migration.py` resolves every DolfinX
+>   call site against the **installed** module's `inspect.signature`, in two
+>   passes: a dotted pass (`fem.functionspace(...)`) and a **method pass**
+>   (`obj.interpolate(...)`), the latter added because the dotted pass
+>   structurally cannot see `OPS-25`'s actual defect — an instance method on a
+>   `Function`. Gate module `tests/environment/test_dolfinx_api_migration.py`,
+>   **3 passed / 18.60 s** at `-n 2`
+>   (`20260825T201054Z_OPS-26.log`, smoke). **Result: `src/` + `tests/` are
+>   clean** — **434** resolved call sites over **29** distinct APIs across
+>   **159** files, `violations=0`, `uncheckable=0`, `shadowed=0`
+>   (`20260825T200851Z_OPS-26.log`). **Two survivors outside the gated roots**,
+>   filed not fixed: `scripts/probes/mag13_step2b_recovery.py:180` and
+>   `scripts/probes/post3_step3_debug.py:55` construct `LinearProblem` without
+>   0.11's required `petsc_options_prefix` (`20260825T200918Z_OPS-26.log`;
+>   known-issues 2026-08-25). `examples/` is clean. The **negative control is
+>   binding and passes**: six landed migrations reverted in a temp copy, each
+>   matched to a finding **in the file it was reverted in**, covering all three
+>   violation classes (`applied=6 baseline=0 reverted=7 status=pass`).
+>   Two false-positive classes were paid and are now structural, not listed:
+>   `create_cell_partitioner` is a `functools.singledispatch` whose base
+>   signature is *not* the one the repo's green call matches (a call must
+>   violate **every** registered overload), and the method pass's exclusions
+>   are **derived** — `dir(numpy.ndarray)`, `dir(object)`, and every method
+>   name any class in the swept tree defines — never hand-listed. Note for
+>   step 2: `FunctionSpace` still **exists** in 0.11 as a three-argument class,
+>   so the rename is an **arity** break, not a lookup one — by-eye and
+>   grep-for-the-name review cannot see it.
+> * **Step 1 as originally scoped — static sweep (smoke, no solves).** Sweep `src/` and `tests/`
 >   for call sites whose signature changed between 0.7.2 and 0.11.
 >   **Introspect the installed module in the container** (`inspect.signature`)
 >   rather than testing against a hardcoded list — the known five
@@ -5111,7 +5139,26 @@ uses the Edit tool and verifies `git status --porcelain`.
    `mag:1`'s mesh floor is item 6's, and `[0.7, 1.5]` never widens.
    **Negative result:** the neither-branch outcome is itself the
    finding — known-issues updated with the 4×2 table, stop.
-3. **`OPS-26` step 1 — the static 0.11 migration sweep (smoke, no
+3. ✅ **DONE 2026-08-25, 15:00 slot — `OPS-26` step 1 closes; the chunk
+   stays 🟡 for step 2.** The sweep introspects the installed module
+   (`inspect.signature`), in a dotted pass **and** a method pass — the
+   latter added in-slot because the dotted pass structurally cannot see
+   `OPS-25`'s own defect (`e_series_fn.interpolate(cells=)` on an
+   instance). **`src/` + `tests/` clean**: 434 resolved call sites, 29
+   APIs, 159 files, `violations=0 uncheckable=0 shadowed=0`
+   (`20260825T200851Z_OPS-26.log`). Gate `3 passed / 18.60 s` at `-n 2`
+   (`20260825T201054Z_OPS-26.log`, smoke). **Negative control binding and
+   green** — six reverts, each matched to a finding *in the file it was
+   reverted in*, all three violation classes covered (`applied=6
+   baseline=0 reverted=7 status=pass`). **The sixth the sweep was for:
+   two survivors outside the gated roots**, filed not fixed —
+   `scripts/probes/mag13_step2b_recovery.py:180` and
+   `scripts/probes/post3_step3_debug.py:55` build `LinearProblem` without
+   0.11's required `petsc_options_prefix` (`20260825T200918Z_OPS-26.log`);
+   `examples/` clean. Two false-positive classes paid and made structural
+   (singledispatch overload union; derived rather than hand-listed method
+   exclusions). Step 2's site list has landed, so step 2 is queueable.
+   *(Original item:)* **`OPS-26` step 1 — the static 0.11 migration sweep (smoke, no
    solves, `main`; independent; operator-directed).** Execute the §7
    `OPS-26` step 1 as written: sweep `src/` and `tests/` for call sites
    whose signature changed between 0.7.2 and 0.11, **introspecting the

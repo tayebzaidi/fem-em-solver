@@ -15752,3 +15752,73 @@ whether the upper edge means anything on 0.11 at all, given **both**
 statistics now fit above 1.5 on the full ladder.
 
 `main` clean at handoff.
+
+---
+
+## 2026-08-25T20:12Z — `OPS-26` step 1 — **complete**
+
+**Item taken:** §9 item 3 (item 1 done at 12:00, item 2 🚫 on a ruling and
+naming item 3 explicitly). Slot 15:00 CDT, 60-minute timebox. Tree clean at
+preflight (`e26c128`), container Up 26 h.
+
+**What was built.** `scripts/testing/check_dolfinx_api_migration.py` — a static
+sweep that resolves every DolfinX call site against `inspect.signature` of the
+**installed** module, never against a list of known renames. Five finding
+classes, all introspected: `missing-attr`, `unknown-kwarg`, `missing-required`,
+`too-many-positional`, plus informational `uncheckable`. Gate module
+`tests/environment/test_dolfinx_api_migration.py` (3 tests: zero survivors with
+census floors, the negative control, the filed-survivor set).
+
+**Measured.** `src` + `tests`: **159 files, 434 resolved call sites, 29 distinct
+APIs, `violations=0 uncheckable=0 shadowed=0`**
+(`20260825T200851Z_OPS-26.log`, 6 s). Gate module **3 passed / 18.60 s** at
+`-n 2`, elapsed 20 s, smoke (`20260825T201054Z_OPS-26.log`). Negative control
+**`applied=6 baseline=0 reverted=7 status=pass`** — six landed migrations
+reverted in a temp copy, each matched to a finding *in the file it was reverted
+in*, covering all three violation classes.
+
+**The finding (the "sixth" the sweep existed for).** Two un-migrated survivors
+**outside** the gated roots: `scripts/probes/mag13_step2b_recovery.py:180` and
+`scripts/probes/post3_step3_debug.py:55` construct `fem.petsc.LinearProblem`
+without 0.11's required `petsc_options_prefix`
+(`20260825T200918Z_OPS-26.log`). **Filed, not fixed**, per the chunk's own
+rule; known-issues entry opened with a retire-when, and the gate's third test
+pins the survivor set at exactly these two so it goes red in either direction.
+`examples/` is clean — 68 files, 280 call sites, 22 APIs across
+`examples` + `scripts` with those two as the only violations.
+
+**Two false-positive classes paid, both now structural rather than listed.**
+(1) `dolfinx.mesh.create_cell_partitioner` is a `functools.singledispatch`;
+`inspect.signature` reports only the **base** implementation, so the repo's
+landed, green `OPS-18` call read as a missing required argument. Fixed by
+requiring a call to violate **every** registered overload. (2) The method pass
+first reported 180 baseline violations — `np.array(dtype=)` and this project's
+own `solver.solve(current_density=)`. Fixed by **deriving** the exclusion set
+(`dir(numpy.ndarray)`, `dir(object)`, every method name any class in the swept
+tree defines) plus a receiver rule: a call whose base name comes from a
+non-DolfinX import, or from one assignment off one, is skipped. Third pass:
+`tree.write(encoding=)` on an `ElementTree` — the one-step provenance rule.
+One self-inflicted control failure worth recording: the first control reverted
+`cells0=` inside **this module's own docstring** (prose sorts before code), a
+no-op that read as a detection failure; reversions now apply only at a line the
+AST shows carrying a call or import.
+
+**Note for step 2.** `fem.FunctionSpace` still **exists** in 0.11 as a
+three-argument class, so the 0.7.2 → 0.11 rename is an **arity** break, not a
+lookup one. Grep-for-the-name review cannot see it; only a signature check can.
+The sweep also cannot see **return-shape** changes (`model_to_mesh` →
+`MeshData`) or type changes to still-accepted arguments — that class is
+squarely step 2's, and step 2 is now unblocked because the site list exists.
+
+**Landed on `main`:** the checker, the gate module, four harness logs +
+`test-results.md` rows, the known-issues entry, the §7 `OPS-26` step 1 close
+(chunk ⬜ → 🟡, step 2 open), and §9 item 3 marked done. No band moved, no
+assertion loosened, nothing re-recorded, no branch created.
+
+**Hypothesis for the next attempt.** Step 2 (execution census) should size off
+this sweep's file list rather than re-deriving one: 159 files carry DolfinX call
+sites, and the 216/232 `OPS-17` denominator must be re-derived on top of
+`GEO-18`/`GEO-19`/`GEO-20`/`PORT-9`/`EX-31`'s additions. The next slot takes
+§9 item 4 (`EX-30` leg (mesh)) unless the review re-queues.
+
+`main` clean at handoff.

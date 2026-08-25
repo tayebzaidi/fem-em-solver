@@ -1,0 +1,79 @@
+# Test Run
+- Chunk: OPS-26
+- Commit: e26c128636372e2c210051a42666a45e256f300e
+- Time (UTC): 2026-08-25 20:04:14
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 scripts/testing/check_dolfinx_api_migration.py --roots src tests --show-apis'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 25 15:04 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 scripts/testing/check_dolfinx_api_migration.py --roots src tests --show-apis'\'''
+/workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+/workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+/workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+  """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+/workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+/workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+  """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+per-API call-site census over src, tests:
+     79  dolfinx.fem.form
+     73  dolfinx.fem.assemble_scalar
+     60  dolfinx.fem.Function
+     48  dolfinx.fem.Constant
+     48  dolfinx.fem.functionspace
+     28  dolfinx.default_scalar_type
+     15  dolfinx.mesh.create_box
+     10  dolfinx.mesh.meshtags
+      8  dolfinx.fem.dirichletbc
+      8  dolfinx.fem.locate_dofs_topological
+      8  dolfinx.mesh.exterior_facet_indices
+      7  dolfinx.fem.petsc.LinearProblem
+      7  dolfinx.mesh.create_unit_cube
+      6  dolfinx.mesh.compute_midpoints
+      5  dolfinx.cpp.mesh.entities_to_geometry
+      5  dolfinx.fem.petsc.assemble_matrix
+      4  dolfinx.io.XDMFFile
+      3  dolfinx.mesh.locate_entities
+      2  dolfinx.fem.Expression
+      1  dolfinx.__version__.split
+      1  dolfinx.fem.assemble_vector
+      1  dolfinx.fem.locate_dofs_geometrical
+      1  dolfinx.geometry.bb_tree
+      1  dolfinx.geometry.compute_colliding_cells
+      1  dolfinx.geometry.compute_collisions_points
+      1  dolfinx.io.VTKFile
+      1  dolfinx.io.gmsh.model_to_mesh
+      1  dolfinx.mesh.create_cell_partitioner
+      1  dolfinx.mesh.locate_entities_boundary
+no un-migrated call sites: every resolved DolfinX call matches the installed signature
+RESULT: files=159 calls=434 apis=29 violations=0 uncheckable=0 shadowed=0
+
+## Exit
+- Status: 0
+- Elapsed (s): 8

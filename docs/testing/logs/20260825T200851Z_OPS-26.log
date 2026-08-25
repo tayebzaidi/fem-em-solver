@@ -1,0 +1,146 @@
+# Test Run
+- Chunk: OPS-26
+- Commit: e26c128636372e2c210051a42666a45e256f300e
+- Time (UTC): 2026-08-25 20:08:51
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 python3 scripts/testing/check_dolfinx_api_migration.py --roots src tests --show-apis && timeout -k 30 180 python3 scripts/testing/check_dolfinx_api_migration.py --roots src tests --negative-control'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 25 15:08 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 python3 scripts/testing/check_dolfinx_api_migration.py --roots src tests --show-apis && timeout -k 30 180 python3 scripts/testing/check_dolfinx_api_migration.py --roots src tests --negative-control'\'''
+/workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+/workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+/workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+  """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+/workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+/workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+  """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+/workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+/workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+/workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+  """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+/workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+/workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+  """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+per-API call-site census over src, tests:
+     79  dolfinx.fem.form
+     73  dolfinx.fem.assemble_scalar
+     60  dolfinx.fem.Function
+     48  dolfinx.fem.Constant
+     48  dolfinx.fem.functionspace
+     28  dolfinx.default_scalar_type
+     15  dolfinx.mesh.create_box
+     10  dolfinx.mesh.meshtags
+      8  dolfinx.fem.dirichletbc
+      8  dolfinx.fem.locate_dofs_topological
+      8  dolfinx.mesh.exterior_facet_indices
+      7  dolfinx.fem.petsc.LinearProblem
+      7  dolfinx.mesh.create_unit_cube
+      6  dolfinx.mesh.compute_midpoints
+      5  dolfinx.cpp.mesh.entities_to_geometry
+      5  dolfinx.fem.petsc.assemble_matrix
+      4  dolfinx.io.XDMFFile
+      3  dolfinx.mesh.locate_entities
+      2  dolfinx.fem.Expression
+      1  dolfinx.__version__.split
+      1  dolfinx.fem.assemble_vector
+      1  dolfinx.fem.locate_dofs_geometrical
+      1  dolfinx.geometry.bb_tree
+      1  dolfinx.geometry.compute_colliding_cells
+      1  dolfinx.geometry.compute_collisions_points
+      1  dolfinx.io.VTKFile
+      1  dolfinx.io.gmsh.model_to_mesh
+      1  dolfinx.mesh.create_cell_partitioner
+      1  dolfinx.mesh.locate_entities_boundary
+no un-migrated call sites: every resolved DolfinX call matches the installed signature
+RESULT: files=159 calls=434 apis=29 methods=7 violations=0 uncheckable=0 shadowed=0
+/workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+/workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+/workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+  """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+/workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+/workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+  """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+/workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+/workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+/workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+  """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+/workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+/workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+  """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+/tmp/ops26-negctl-jcghaaxa/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+/tmp/ops26-negctl-jcghaaxa/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+/tmp/ops26-negctl-jcghaaxa/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+  """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+/tmp/ops26-negctl-jcghaaxa/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+/tmp/ops26-negctl-jcghaaxa/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+  """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+/tmp/ops26-negctl-jcghaaxa/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+/tmp/ops26-negctl-jcghaaxa/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+/tmp/ops26-negctl-jcghaaxa/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+  """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+/tmp/ops26-negctl-jcghaaxa/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+  """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+/tmp/ops26-negctl-jcghaaxa/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+  """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+negative control — baseline over src, tests
+  baseline violations: 0
+  revert dolfinx.fem.functionspace( -> dolfinx.fem.FunctionSpace( in src/fem_em_solver/io/mesh.py (expect missing-required)
+  revert fem.functionspace( -> fem.FunctionSpace( in src/fem_em_solver/core/cavity.py (expect missing-required)
+  revert cells0= -> cells= in tests/validation/test_lossy_sphere_degree2.py (expect unknown-kwarg)
+  revert diag= -> diagonal= in src/fem_em_solver/core/cavity.py (expect unknown-kwarg)
+  revert petsc_options_prefix= -> legacy_options_prefix= in src/fem_em_solver/core/solvers.py (expect unknown-kwarg)
+  revert from dolfinx.io import gmsh as -> from dolfinx.io import gmshio as in src/fem_em_solver/io/mesh.py (expect missing-attr)
+  reverted-tree violations: 7 (baseline 0)
+    src/fem_em_solver/core/cavity.py:133: [unknown-kwarg] dolfinx.fem.petsc.assemble_matrix — installed signature does not accept 'diagonal'; accepts: a, bcs, diag, constants, coeffs, kind
+    src/fem_em_solver/core/cavity.py:222: [missing-required] dolfinx.fem.FunctionSpace — required parameter 'cppV' not supplied; signature: (mesh: 'Mesh[Real]', element: 'ufl.finiteelement.AbstractFiniteElement', cppV: '_cpp.fem.FunctionSpace_float32 | _cpp.fem.FunctionSpace_float64')
+    src/fem_em_solver/core/solvers.py:385: [unknown-kwarg] dolfinx.fem.petsc.LinearProblem — installed signature does not accept 'legacy_options_prefix'; accepts: a, L, petsc_options_prefix, bcs, u, P, kind, petsc_options, form_compiler_options, jit_options, entity_maps
+    src/fem_em_solver/core/solvers.py:385: [missing-required] dolfinx.fem.petsc.LinearProblem — required parameter 'petsc_options_prefix' not supplied; signature: (a: 'ufl.Form | Sequence[Sequence[ufl.Form]]', L: 'ufl.Form | Sequence[ufl.Form]', *, petsc_options_prefix: 'str', bcs: 'Sequence[DirichletBC] | None' = None, u: '_Function | Sequence[_Function] | None' = None, P: 'ufl.Form | Sequence[Sequence[ufl.Form]] | None' = None, kind: 'str | Sequence[Sequence[str]] | None' = None, petsc_options: 'dict | None' = None, form_compiler_options: 'dict | None' = None, jit_options: 'dict | None' = None, entity_maps: 'Sequence[_EntityMap] | None' = None) -> 'None'
+    src/fem_em_solver/io/mesh.py:26: [missing-attr] dolfinx.io.gmshio.model_to_mesh — dolfinx.io has no attribute 'gmshio'
+    src/fem_em_solver/io/mesh.py:78: [missing-required] dolfinx.fem.FunctionSpace — required parameter 'cppV' not supplied; signature: (mesh: 'Mesh[Real]', element: 'ufl.finiteelement.AbstractFiniteElement', cppV: '_cpp.fem.FunctionSpace_float32 | _cpp.fem.FunctionSpace_float64')
+    tests/validation/test_lossy_sphere_degree2.py:205: [unknown-kwarg] <instance>.interpolate — no DolfinX class defining 'interpolate' accepts 'cells'; consulted: dolfinx.fem.Function.interpolate
+RESULT: negative-control applied=6 baseline=0 reverted=7 status=pass
+
+## Exit
+- Status: 0
+- Elapsed (s): 18

@@ -28,6 +28,41 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🔴 OPEN 2026-08-25 (`OPS-26` step 1, 15:00 implementer slot) — two `scripts/probes/` scripts were **never migrated to dolfinx 0.11**: they construct `fem.petsc.LinearProblem` without 0.11's required `petsc_options_prefix`
+
+> **Where this fires.** `scripts/probes/mag13_step2b_recovery.py:180` and
+> `scripts/probes/post3_step3_debug.py:55`. Neither is a test, neither is an
+> example, and **nothing scheduled runs either of them** — which is exactly the
+> shape `OPS-26` exists to enumerate. They are one-off diagnostic probes kept
+> for their write-ups.
+>
+> **Literal symptom** (static, from the sweep — these scripts were not
+> executed; `20260825T200918Z_OPS-26.log`, `Status: 1`, 4 s):
+>
+> ```
+> scripts/probes/mag13_step2b_recovery.py:180: [missing-required]
+>   dolfinx.fem.petsc.LinearProblem — required parameter
+>   'petsc_options_prefix' not supplied
+> scripts/probes/post3_step3_debug.py:55: [missing-required] (same)
+> ```
+>
+> 0.11 made `petsc_options_prefix` a keyword-only parameter with no default, so
+> each line raises `TypeError` on the first call. `src/` and `tests/` carry
+> **zero** such sites (log `20260825T200851Z_OPS-26.log`, 434 resolved call
+> sites over 29 APIs, `violations=0`) — the migration is complete everywhere a
+> gate can reach; these two are outside that reach.
+>
+> **Not diagnosed further, and deliberately not fixed** — `OPS-26` files
+> survivors rather than repairing them in-slot, and a probe script's value is
+> its recorded output, not its ability to re-run. Fixing them is a two-line
+> change whenever someone wants one of them again.
+>
+> **Verified at** `e26c128` (tree state of the 15:00 slot).
+> **Retire when** both sites take `petsc_options_prefix`, or the scripts are
+> deleted; `tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged`
+> pins the survivor set at exactly these two and goes red in **either**
+> direction, so this entry cannot rot silently.
+
 ### 🔴 OPEN 2026-08-25 (`EX-30` leg (root), 09:00 implementer slot) — `tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire` is **red on `main`**: the fitted rate is **1.90** against the `MAG-13` band `[0.7, 1.5]`, because the finest rung's error collapsed 9.26% → **4.4605%** on the 0.11 image
 
 > **Where this fires.** `tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire`,
