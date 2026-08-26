@@ -16250,3 +16250,156 @@ alone (the teardown-hang trap) and can treat `mag:6` as already-measured at
 148 s.
 
 `main` clean at handoff.
+
+---
+
+## 2026-08-26T03:45Z — `EX-30` §9 item 3 (`GEO-16` re-record + `GEO-17`/`mesh:5` control re-choice) — **complete**: both halves landed green, both known-issues entries retired (22:30 CDT implementer slot)
+
+Preflight clean (`main`, no `attempt/*` or `recovered/*`), container Up 34 h.
+Items 1 and 2 already marked done, so item 3 was the first open item; taken as
+written, both halves, in one slot.
+
+### Half A — `GEO-16` re-record (ruling (2) of the 18:00 review)
+
+`tests/mesh/test_two_torus_port_sheet.py`: `NCELLS_UNGATED_RECORD` 79 534 →
+**79 070**, version-tagged to the 0.11 image (dolfinx 0.11 / gmsh 4.15.2), the
+0.7.2 digit and both provenance logs (`20260817T003524Z_GEO-16.log`, the 08-25
+gate probe) in-comment together with the sheet-exoneration basis. The four
+guide copies moved in the same commit per the ruling: `mesh:1`'s docstring and
+`01_two_torus_ports.md`, `mesh:4`'s docstring and three lines of
+`04_two_torus_port_sheet.md`. `mesh:4` **imports** the constant (`ANS-1`), so
+only prose moved on the example side.
+
+Anchors, all met:
+
+| run | log | result |
+|---|---|---|
+| gate pair, `-n 2`, real | `20260826T033222Z_GEO-16-rerecord-gate-pair.log` | **5 passed / 55.84 s**, Status 0, elapsed 57 s |
+| `mesh:4`, `-n 2` | `20260826T033350Z_GEO-16-rerecord-mesh4.log` | Status 0, 31 s |
+| `mesh:1`, `-n 2` | `20260826T033431Z_GEO-16-rerecord-mesh1.log` | Status 0, 16 s |
+
+The gate pair printed `[GEO-16 control] cells=79070` and the cross-check the
+constant's own comment names as its guard, `meshed/analytic=0.974490841`,
+inside the unmoved 0.970–0.980 band; both sheet areas
+`meshed/CAD=1.000000000000`. `mesh:4` printed `[mesh] 79940` sheeted against
+`[control] emit_port_sheet=False: 79070 cells in 13.9 s (record 79070)` — the
+sheeted build stays properly distinct, which is the assertion's actual premise.
+`mesh:1` printed `[mesh] 79070 cells built in 14.1 s`.
+
+Two further guide figures re-recorded under the same in-class (1\*) licence,
+both un-asserted: `mesh:4`'s sheet-facet count **84 → 82** (measured this slot
+on both sheets) and its cells/wall-time row. No band, floor or gate moved.
+
+I ran the `GEO-16` module first alone (`…033131Z`, `3 passed / 34.14 s`) before
+noticing the item's "expect 6 passed" counts that module **plus**
+`test_two_torus_port_facets.py`, which is where the meshed-band guard lives;
+the pair run above is the one the anchor asks for. Both are in the index.
+
+### Half B — `GEO-17`/`mesh:5` control re-choice (ruling (3))
+
+Measure-first, as ruled. New probe
+`scripts/probes/geo17_mesh5_control_sizing_probe.py` (prints only, asserts
+nothing, `-n 1` per the FAIL-deadlock trap) measured coil meshed/CAD at four
+uniform sizings — `20260826T033622Z_GEO-17-mesh5-sizing-probe.log`, Status 0,
+**8 s**:
+
+```
+h=0.015  cells=19618  coil 0.755006 / 0.750454  margin below floor -0.000006  (the red)
+h=0.018  cells=12471  coil 0.649812 / 0.648431  margin +0.105188  SEPARATES  <- adopted
+h=0.020  cells= 9291  coil 0.595547 / 0.579713  margin +0.159453
+h=0.025  cells= 6774  coil 0.471986 / 0.510423  margin +0.244577
+```
+
+`CONTROL_RESOLUTION = 0.018` adopted — the **first** candidate that separates;
+the probe measured the rest of the ladder in the same run but the choice
+stopped there, per the item's "never hunt sizings past the first that
+separates". The whole table is in-comment at the constant.
+
+**The design decision worth the review's attention: the control is a third
+build, not a re-pointed one.** The obvious reading of "re-choose the
+clamps-only control" is to change the clamps-only sizing to 0.018. That would
+have broken negative control (a) — the example asserts the clamps-only tagged
+volumes reproduce `UNIFORM_VOLUMES_RECORD` to 1e-9, and that is a `GEO-17`
+**gate constant measured at h = 0.015** which nothing licensed me to move.
+Losing (a) to gain (b) would have been a net loss of coverage. So:
+
+* `clamps_only` (h = 0.015) stays — it is the `OPS-17` table reproduction and
+  the baseline the refine/coarsen sign identities are read against;
+* `coarse_control` (h = 0.018) is new and carries only the inverted assertion,
+  now gated at `CONTROL_SEPARATION = 0.05` instead of the bare `<` that went
+  red;
+* `SIZING_SEPARATION` is asserted against **both** baselines (+0.078411 /
+  +0.085109 against clamps-only, +0.183605 / +0.187132 against the coarse
+  control), so keeping the tighter of the two is not quietly dropped.
+
+Cost of the third mesh: **1.59 s**. `tests/mesh/test_mesh_tag_integrity.py` was
+not edited at all; `POLICY_MIN_CAD_RECOVERY`, the one-sided gate-module
+assertion, `RECORD_BAND`, `VOLUME_PARTITION_BAND` and every record are
+untouched.
+
+Green twice: `20260826T033758Z_GEO-17-mesh5-control-rechoice.log` (Status 0,
+8 s) and, after the docstring/guide edits changed the header print, the confirm
+`20260826T033959Z_GEO-17-mesh5-confirm.log` (Status 0, 9 s). Both print
+`inverted control at h=0.018 m … tag 1 0.649812 (margin +0.105188)  tag 2
+0.648431 (margin +0.106569)`.
+
+One thing the run surfaced and I did **not** touch: on 0.11 the policy recovery
+reads 0.833417 (coil_1) / 0.835563 (coil_2), i.e. the two tags' values have
+effectively swapped relative to `POLICY_RECOVERY_RECORD` `{1: 0.835563,
+2: 0.833730}`. Both stay inside the pre-stated 1% `RECORD_BAND` (green), the
+constant is the `GEO-17` record and not licensed to move, and the guide's 0.7.2
+digits are preserved beside the new ones. Flagged, not fixed.
+
+### The census, derived before it was read
+
+Predicted from the item: these two halves own 4 of the 6 surviving `meshing`
+artifacts, item 4 (`GEO-21`) has not landed, so **6 → 2** and the total
+**19 → 15** with no other family moving.
+
+Measured: `20260826T034022Z_EX-30-mesh-census-after-item3.log`, 1 s,
+**`dead=0 guide=0 stale=15 exit=2`** against the 16:30 slot's post-census 19.
+`meshing` **6 → 2** — `two_torus_port_sheet_{combined,facets}.xdmf` and
+`region_resolution_policy_{clamps_only,policy}_combined.xdmf` all cleared;
+repo-root **7 → 7**, `ports` **4 → 4**, `ans` **2 → 2**, `dead=0 guide=0` on
+both readings, both passing the `OPS-19` `exit != 1` gate. 6 − 4 = 2 and
+2 + 7 + 4 + 2 = 15, exact. The two survivors are
+`birdcage_graded_conductors_{baseline,graded}_combined.xdmf` — `mesh:3`'s,
+which is item 4's, exactly as predicted.
+
+Note for whoever takes item 4: the `coarse_control` build writes **no**
+ParaView output by design, so it adds nothing to the census and the meshing
+family's clean-leg target is still 0, not 1.
+
+### Compute
+
+Eight harness commands, all foreground, all standard tier or below, total
+**~2.7 min** of container time: 34 + 57 + 31 + 16 + 8 + 8 + 9 + 1 s (plus one
+exit-127 no-op, below). Nothing was killed, nothing overran, no rank count
+above 2 — the sizing probe ran at 1.
+
+One wasted command worth journaling: `run_examples.sh` invoked **inside** the
+container exits 127 (`docker: command not found`) — the runner is a host-side
+script that shells into the container itself, and its `-e` flag takes exactly
+one example, later `-e` values overwriting earlier ones rather than
+accumulating. `20260826T033328Z_GEO-16-rerecord-examples.log`, 1 s, no compute
+burned.
+
+### Committed together
+
+`tests/mesh/test_two_torus_port_sheet.py`, six `examples/meshing/` files
+(`01_*.py/.md`, `04_*.py/.md`, `05_*.py/.md`), the new probe script, the
+harness logs + `test-results.md` rows, the §7 `GEO-16` and `GEO-17` rows
+annotated with the landing, §9 item 3 marked done with the census arithmetic,
+and both known-issues entries re-headed 🔴 → ✅ with their measurement bases.
+Both chunks' ✅ statuses stand as they were — neither half was a status flip.
+
+### Hypothesis for the next attempt
+
+Item 4 (`GEO-21` step 1) is the next open item and is independent of this one.
+It is the last of leg (mesh)'s three reds; if it lands, the meshing census goes
+2 → 0 and `EX-30`'s leg (mesh) can be declared done — this slot's census log is
+the pre-census that item should derive its prediction against. Items 5 (leg
+(ports)) and 6 (leg (root), whose serial dependency the 21:00 slot discharged)
+remain after it.
+
+`main` clean at handoff.

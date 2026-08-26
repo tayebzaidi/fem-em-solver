@@ -49,7 +49,12 @@ Output lands in ``examples/meshing/paraview_output/``: open
 ``two_torus_ports_facets.xdmf`` alongside it for the facet groups — the array
 is ``mesh_tags`` (1 = outer boundary, 201/202 = the port cuts).
 
-Measured 2026-08-06 at ``-n 2``: 79 534 cells in 12.9 s, 13.1 s total.
+Measured at ``-n 2`` on the **0.11 image** (dolfinx 0.11 / gmsh 4.15.2):
+79 070 cells in 14.1 s, 14.2 s total (measured 2026-08-26). The 0.7.2 image
+meshed 79 534 cells in 12.9 s (13.1 s total,
+measured 2026-08-06); the −0.58% move is the documented image change, ruled
+re-recordable 2026-08-25 alongside the `GEO-16` gate constant this count
+shares a code path with.
 """
 
 from __future__ import annotations

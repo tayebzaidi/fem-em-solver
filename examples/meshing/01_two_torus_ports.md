@@ -47,8 +47,12 @@ than merely exports.
 ```
 
 Real DolfinX build (no complex mode needed); the runner selects it. Tier:
-**standard**. On record at `-n 2`: **79 534 cells, mesh built in 12.9 s, 13.1 s
-total** (measured 2026-08-06, recorded in the script docstring). Add `-n <k>`
+**standard**. On record at `-n 2` on the **0.11 image** (dolfinx 0.11 /
+gmsh 4.15.2): **79 070 cells, mesh built in 14.1 s, 14.2 s total** (measured
+2026-08-26, log `20260826T033431Z_GEO-16-rerecord-mesh1.log`; the 0.7.2 image
+meshed 79 534 cells in 12.9 s,
+13.1 s total, measured 2026-08-06; the −0.58% move is the documented image
+change, ruled re-recordable 2026-08-25). Add `-n <k>`
 to change rank count and `-t <s>` to lower the per-example timeout.
 
 Exit status 0 means every identity above passed. A non-zero exit is an

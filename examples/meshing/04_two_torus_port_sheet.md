@@ -35,20 +35,21 @@ MPI-reduced `dS` area of the reconstructed facet set must therefore **equal**
 the CAD mid-plane area `(2·gap_half_xz)·(2·gap_half_y)`, not merely approach
 it.
 
-| Assertion | Gate | Measured 2026-08-17 |
+| Assertion | Gate | Measured 2026-08-26 (0.11 image) |
 | --- | --- | --- |
 | sheet 211 meshed/CAD = 1 to `AREA_IDENTITY_BAND` (1e-9) | `GEO-16` | **1.000000000000** |
 | sheet 212 meshed/CAD, same band | `GEO-16` | **1.000000000000** |
 | 211/212 area symmetry < `1e-12` | mirror premise | areas bit-identical |
-| kwarg-off control: 79 534 cells, **no** `21x` tags | inverted control | 79 534, `[]` |
+| kwarg-off control: 79 070 cells, **no** `21x` tags | inverted control | 79 070, `[]` |
 
-Each facet group is asserted **non-empty first** (84 facets each). That order
+Each facet group is asserted **non-empty first** (82 facets each on the 0.11
+image; 84 on 0.7.2 — a count, never a gate). That order
 matters: a reconstruction matching zero facets would give `0 == 0` and pass the
 area identity vacuously.
 
 The kwarg-off run is the `EX-18` / `EX-21` inverted-assertion pattern. Every
 gated `PORT-1` / `PORT-10` number was measured on the sheet-less mesh, so the
-opt-in sheet may not perturb it: the control asserts the recorded 79 534 cells,
+opt-in sheet may not perturb it: the control asserts the recorded 79 070 cells,
 cell tags `{1, 2, 3, 101, 102}`, facet tags `{1, 201, 202}`, and that the
 sheet tags are *absent*.
 
@@ -73,10 +74,14 @@ restated, so this example cannot drift from the gate it demonstrates.
 ```
 
 Real DolfinX build (no complex mode needed); the runner selects it. Tier:
-**standard**. On record at `-n 2`: sheet mesh **79 888 cells in 13.7 s**,
-kwarg-off control **79 534 cells in 12.2 s**, **26.0 s** in-script total
-including both ParaView exports — 30 s of harness wall clock, measured
-2026-08-17, log `20260817T140242Z_EX-23-example-n2.log`. Add `-n <k>` to change
+**standard**. On record at `-n 2` on the **0.11 image** (dolfinx 0.11 /
+gmsh 4.15.2): sheet mesh **79 940 cells in 14.6 s**, kwarg-off control
+**79 070 cells in 13.9 s**, **28.7 s** in-script total including both ParaView
+exports — 31 s of harness wall clock, measured 2026-08-26, log
+`20260826T033350Z_GEO-16-rerecord-mesh4.log`. The 0.7.2 image recorded
+79 888 / 13.7 s and 79 534 / 12.2 s, 26.0 s in-script
+(`20260817T140242Z_EX-23-example-n2.log`); the cell counts moved with the
+image, ruled re-recordable 2026-08-25. Add `-n <k>` to change
 rank count and `-t <s>` to lower the per-example timeout.
 
 Exit status 0 means both area identities *and* the inverted control held. A
@@ -133,7 +138,7 @@ mode is a geometry or tagging defect. The three to know:
 - **Area off by ~2.5%** — the facet set is picking up the arc-end cuts rather
   than the mid-plane; that is the chordal deficit of the curved tube surface,
   and it means the tag reconstruction matched the wrong interface.
-- **Control cell count off 79 534** — the opt-in sheet perturbed the default
+- **Control cell count off 79 070** — the opt-in sheet perturbed the default
   mesh. Every gated `PORT-1` / `PORT-10` number was measured on that mesh, so
   this invalidates them rather than just this example.
 - **Hang at `-n 2`, no output** — the interior-facet assembly needs

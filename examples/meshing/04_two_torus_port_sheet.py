@@ -32,7 +32,7 @@ Each facet group is asserted **non-empty first**: a reconstruction matching
 zero facets would otherwise pass the area identity vacuously at 0 == 0.
 
 **Negative control — the kwarg-off mesh, asserted to lack the sheet.** With
-``emit_port_sheet=False`` the mesh must bit-match its record: 79 534 cells,
+``emit_port_sheet=False`` the mesh must bit-match its record: 79 070 cells,
 cell tags ``{1, 2, 3, 101, 102}``, facet tags ``{1, 201, 202}``, and **no**
 ``21x`` group anywhere (the `EX-18` / `EX-21` inverted-assertion pattern).
 Every gated `PORT-1` / `PORT-10` number was measured on that mesh, so the

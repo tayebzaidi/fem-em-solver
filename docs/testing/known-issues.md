@@ -108,7 +108,7 @@ unless fixing it is the task.
 > `GEO-21` green; the ungraded-path generator limitation then re-heads this
 > entry and stays open.
 
-### 🔴 OPEN 2026-08-25 (`EX-30` leg (mesh), 16:30 implementer slot) — `test_kwarg_off_reproduces_the_recorded_mesh` is **red on `main`**: the `GEO-16` kwarg-off cell record reads 79 534, the 0.11 image meshes **79 070**
+### ✅ RETIRED 2026-08-25 (`EX-30` item 3 half A, 22:30 implementer slot) — `test_kwarg_off_reproduces_the_recorded_mesh` was **red on `main`**: the `GEO-16` kwarg-off cell record read 79 534, the 0.11 image meshes **79 070** (`EX-30` leg (mesh), 2026-08-25)
 
 > **Where this fires.**
 > `tests/mesh/test_two_torus_port_sheet.py::test_kwarg_off_reproduces_the_recorded_mesh`
@@ -163,8 +163,24 @@ unless fixing it is the task.
 > detected is the documented image change. No band moves. Landing is §9
 > item 3 (18:00 queue). **Retire-when:** the commit that lands the re-record
 > with the gate module and `mesh:4` green.
+>
+> **✅ RETIRED 2026-08-25, 22:30 implementer slot — landed exactly as ruled.**
+> `NCELLS_UNGATED_RECORD` 79 534 → **79 070**, version-tagged to the 0.11 image
+> with the old digit and both provenance logs in-comment; the `mesh:1`
+> docstring + guide and the four `mesh:4` guide copies moved in the same commit.
+> Green on all three anchors: the gate pair
+> (`20260826T033222Z_GEO-16-rerecord-gate-pair.log`, `-n 2`, real, **5 passed
+> in 55.84 s**, Status 0, elapsed 57 s) printing `[GEO-16 control] cells=79070`
+> and the 0.970–0.980 meshed-band cross-check at **0.974490841**; `mesh:4`
+> (`20260826T033350Z_GEO-16-rerecord-mesh4.log`, Status 0, 31 s) —
+> `[mesh] 79940` sheeted, `[control] emit_port_sheet=False: 79070 cells in
+> 13.9 s (record 79070)`, sheet tags absent; `mesh:1`
+> (`20260826T033431Z_GEO-16-rerecord-mesh1.log`, Status 0, 16 s) —
+> `[mesh] 79070 cells built in 14.1 s`. No band moved. Also re-recorded under
+> the same (1\*) class: the `mesh:4` guide's sheet-facet count 84 → **82** and
+> its wall-time/cell-count row, both un-asserted guide figures.
 
-### 🔴 OPEN 2026-08-25 (`EX-30` leg (mesh), 16:30 implementer slot) — `mesh:5`'s **inverted control lost its separation**: the clamps-only mesh now *clears* the 0.755 floor it is asserted to fail, by 6e-6
+### ✅ RETIRED 2026-08-25 (`EX-30` item 3 half B, 22:30 implementer slot) — `mesh:5`'s **inverted control lost its separation**: the clamps-only mesh *cleared* the 0.755 floor it is asserted to fail, by 6e-6 (`EX-30` leg (mesh), 2026-08-25)
 
 > **Where this fires.** `examples/meshing/05_region_resolution_policy.py`
 > (`mesh:5`), line 255 — the `EX-18`/`EX-20` inverted-assertion pattern:
@@ -222,6 +238,35 @@ unless fixing it is the task.
 > the one-sided gate-module assertion, and the records never move.
 > **Retire-when:** the commit that lands `mesh:5` green under whichever
 > branch the measurement selects.
+>
+> **✅ RETIRED 2026-08-25, 22:30 implementer slot — the re-choose branch, not
+> the demotion.** A separating sizing exists, so the inverted assertion stays
+> an assertion. The probe
+> (`20260826T033622Z_GEO-17-mesh5-sizing-probe.log`, `-n 1`, 8 s) measured coil
+> meshed/CAD at four uniform sizings — h = 0.015: 0.755006 / 0.750454 (margin
+> **−0.000006**, the red); **h = 0.018: 0.649812 / 0.648431 (margin +0.105188 /
+> +0.106569, SEPARATES)**; h = 0.020: 0.595547 / 0.579713; h = 0.025:
+> 0.471986 / 0.510423. `CONTROL_RESOLUTION = 0.018` adopted as the first
+> candidate that separates, with the whole table in-comment; the probe stopped
+> there rather than hunting a margin.
+>
+> The control is a **third build**, not a re-pointed one: `UNIFORM_VOLUMES_RECORD`
+> is a `GEO-17` gate constant measured at h = 0.015, so moving the clamps-only
+> sizing would have broken negative control (a) — the `OPS-17` table
+> reproduction at 1e-9 — which is not licensed to move. The clamps-only mesh
+> therefore stays as that reproduction and as the baseline the refine/coarsen
+> sign identities read against; the new `coarse_control` build carries only the
+> inverted assertion, now gated at `CONTROL_SEPARATION = 0.05` rather than on
+> the bare `<` that went red. `SIZING_SEPARATION` is asserted against **both**
+> baselines (+0.078411 / +0.085109 against clamps-only, +0.183605 / +0.187132
+> against the coarse control) so keeping the tighter of the two is not quietly
+> dropped. `POLICY_MIN_CAD_RECOVERY`, the one-sided gate-module assertion and
+> every record are untouched; `tests/mesh/test_mesh_tag_integrity.py` was not
+> edited at all.
+>
+> Green: `20260826T033758Z_GEO-17-mesh5-control-rechoice.log` and the
+> post-doc-edit confirm `20260826T033959Z_GEO-17-mesh5-confirm.log` (both
+> `-n 2`, real, Status 0, 8 / 9 s), printing the control's failing margin.
 
 ### 🔴 OPEN 2026-08-25 (`OPS-26` step 1, 15:00 implementer slot) — two `scripts/probes/` scripts were **never migrated to dolfinx 0.11**: they construct `fem.petsc.LinearProblem` without 0.11's required `petsc_options_prefix`
 

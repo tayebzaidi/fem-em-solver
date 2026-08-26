@@ -25,15 +25,26 @@ sizing must not move the geometry" — is false for a curved region, and would n
 
 * **policy** (`Min` over per-volume Constant fields): coil recovery >=
   ``POLICY_MIN_CAD_RECOVERY`` (0.755), the floor `GEO-17` step 1 pre-registered.
-  On record: **0.835563 / 0.833730**.
+  On the 0.11 image: **0.833417 / 0.835563**.
 * **clamps-only** (the same call with no per-region sizes — one global 0.015):
-  asserted *to fail* the same 0.755 floor, the `EX-18`/`EX-20` inverted-assertion
-  pattern. On record: **0.754685 / 0.752565**, and this control is thin *by
-  construction* — the floor was chosen as "the uniform mesh's own recovery,
-  which a finer request must beat", so it sits ~3.2e-4 above the control. The
-  separation that actually discriminates is between the two *sizings*
-  (**+0.0809 / +0.0812**), and that is gated separately at
-  ``SIZING_SEPARATION``.
+  the fixture's own uniform mesh, reproducing the `OPS-17` volume table to 1e-9
+  and carrying the refine/coarsen identities. On the 0.11 image the coil
+  recovers **0.755006 / 0.750454**.
+* **coarse control** (one global ``CONTROL_RESOLUTION`` = 0.018): asserted *to
+  fail* the 0.755 floor by at least ``CONTROL_SEPARATION`` (0.05), the
+  `EX-18`/`EX-20` inverted-assertion pattern. On record: **0.649812 / 0.648431**,
+  missing the floor by **+0.105188 / +0.106569**.
+
+The inverted control was the clamps-only mesh itself until 2026-08-26. That
+worked only *by construction* — the floor is the uniform mesh's own recovery,
+so the control sat ~3.2e-4 below it — and on the 0.11 image that mesh moved up
+and **cleared** the floor by 6.0e-6, taking the example red. The 2026-08-25
+18:00 review ruled the control re-chosen measure-first rather than the floor
+moved; ``CONTROL_RESOLUTION``'s comment carries the four-sizing probe table it
+was chosen from. The separation between the two *sizings* is gated separately
+at ``SIZING_SEPARATION``, now against both baselines
+(**+0.078411 / +0.085109** against clamps-only,
+**+0.183605 / +0.187132** against the coarse control).
 
 Every number above that is a gate is **imported** from the `GEO-17` module that
 gated it (`tests/mesh/test_mesh_tag_integrity.py`, the `ANS-1` rule): the
@@ -42,8 +53,8 @@ volumes, and the `OPS-17` uniform-volume record. The two *recovery* records are
 restated here with provenance, because the gate holds them as printed output
 rather than as named constants (the `EX-26` precedent).
 
-**Also re-asserted, unmoved:** the tagged-volume partition identity on *both*
-meshes — the four tags sum to the mesh volume to ``VOLUME_PARTITION_BAND``
+**Also re-asserted, unmoved:** the tagged-volume partition identity on *all
+three* meshes — the four tags sum to the mesh volume to ``VOLUME_PARTITION_BAND``
 (1e-9) — and the `OPS-17` uniform-sizing volume table to 1e-9. A sizing policy
 changes element sizes, not the partition: an identity that moves means a region
 lost its physical group or got meshed twice, which is a defect in the size field
@@ -64,12 +75,18 @@ Output lands in ``examples/meshing/paraview_output/``: open
 visibly faceted in the clamps-only mesh and round in the policy mesh, while the
 air is coarser — that trade is the point of the example.
 
-Measured 2026-08-22 at ``-n 2``: clamps-only 19 792 cells / 2.89 s mesh, policy
-20 843 cells / 2.38 s mesh; coil meshed/CAD **0.754685 -> 0.835563** and
-**0.752565 -> 0.833730**, separations **+0.080879 / +0.081165**; 5.4 s in-script
-total including both exports (8 s of harness wall clock — commissioned standard,
-measured smoke). Volumes and ratios are bit-identical to the `GEO-17` records;
-only the wall times move.
+Measured 2026-08-26 at ``-n 2`` on the **0.11 image** (dolfinx 0.11 /
+gmsh 4.15.2), log ``20260826T033758Z_GEO-17-mesh5-control-rechoice.log``:
+clamps-only 19 618 cells / 2.39 s mesh, policy 20 745 cells / 2.64 s mesh,
+coarse control 12 471 cells / 1.59 s mesh; coil meshed/CAD
+**0.755006 -> 0.833417** and **0.750454 -> 0.835563**, separations
+**+0.078411 / +0.085109**; 6.8 s in-script total including both exports (8 s of
+harness wall clock — commissioned standard, measured smoke). The 0.7.2 image
+read clamps-only 19 792 cells / 2.89 s and policy 20 843 cells / 2.38 s, coil
+**0.754685 -> 0.835563** and **0.752565 -> 0.833730**, 5.4 s in-script
+(measured 2026-08-22). Every band and floor is unmoved across that move; the
+`OPS-17` volume table this reproduces to 1e-9 is the 0.11 record its own gate
+module carries.
 """
 
 from __future__ import annotations
@@ -123,9 +140,38 @@ COIL_TAGS = (1, 2)
 POLICY_RECOVERY_RECORD = {1: 0.835563, 2: 0.833730}
 RECORD_BAND = 0.01  # 1%, pre-stated in the EX-27 commission
 
-# The clamps-only mesh recovers 0.754685 / 0.752565, but that is not restated:
-# it is UNIFORM_VOLUMES_RECORD[tag] / CAD_VOLUMES[tag], both imported, so the
-# control's own record is derived from the gate's constants.
+# The clamps-only mesh's own recovery is not restated: it is
+# UNIFORM_VOLUMES_RECORD[tag] / CAD_VOLUMES[tag], both imported, so the uniform
+# build's record is derived from the gate's constants.
+
+# The inverted control's sizing — one global characteristic length, COARSER
+# than the fixture's own ``GEOMETRY["resolution"]``.
+#
+# It read ``GEOMETRY["resolution"]`` (0.015 m) until 2026-08-26: the floor was
+# chosen as "the uniform mesh's own recovery, which a finer request must beat",
+# so the control sat ~3.2e-4 below the floor *by construction*. On the 0.11
+# image (dolfinx 0.11 / gmsh 4.15.2) that mesh moved up and the control
+# **cleared** the floor by 6.0e-6 — measured 0.755006 on coil_1 in
+# ``20260825T213601Z_EX-30-mesh-run-5.log``, red. An inverted assertion whose
+# separation is 6e-6 on a record that moved 3.2e-4 under an image change is not
+# a control, so the 2026-08-25 18:00 review ruled it re-chosen measure-first:
+# adopt the first coarser sizing that fails the floor by >= CONTROL_SEPARATION.
+# Measured in ``20260826T033622Z_GEO-17-mesh5-sizing-probe.log`` at -n 1, coil
+# recovery / margin below the 0.755 floor:
+#     h = 0.015  0.755006 / 0.750454   -0.000006  (the old control — no)
+#     h = 0.018  0.649812 / 0.648431   +0.105188  SEPARATES  <- adopted
+#     h = 0.020  0.595547 / 0.579713   +0.159453
+#     h = 0.025  0.471986 / 0.510423   +0.244577
+# 0.018 is the first candidate that separates and the probe stopped there:
+# hunting past it would be fitting the control to a margin. Version-tag this
+# if the image moves again. ``POLICY_MIN_CAD_RECOVERY`` and every band are
+# untouched — the control moved, the gate did not.
+CONTROL_RESOLUTION = 0.018
+
+# How far below the floor the inverted control must sit for its failure to mean
+# something, the ``CONTROL_SEPARATION`` precedent this example cites for the
+# `mesh:3` fixture. Pre-stated at 0.05 by the ruling; measured +0.105 / +0.107.
+CONTROL_SEPARATION = 0.05
 
 # The gap the example actually needs to be real. The inverted control (uniform
 # missing the 0.755 floor) clears by ~3.2e-4 by construction, so on its own it
@@ -134,11 +180,16 @@ RECORD_BAND = 0.01  # 1%, pre-stated in the EX-27 commission
 SIZING_SEPARATION = 0.05
 
 
-def _build(label, comm, **resolutions):
-    """One sizing: mesh, tags, tagged volumes (partition-gated), wall time."""
+def _build(label, comm, _geometry=None, **resolutions):
+    """One sizing: mesh, tags, tagged volumes (partition-gated), wall time.
+
+    ``_geometry`` overrides the imported ``GEOMETRY`` wholesale — used only by
+    the coarse inverted control, which needs a different global ``resolution``
+    and would otherwise collide with the imported one.
+    """
     started = time.perf_counter()
     mesh, cell_tags, _ = MeshGenerator.coil_phantom_domain(
-        comm=comm, **resolutions, **GEOMETRY
+        comm=comm, **resolutions, **(GEOMETRY if _geometry is None else _geometry)
     )
     elapsed = time.perf_counter() - started
 
@@ -195,20 +246,31 @@ def main() -> None:
             f"\n[mesh]     policy     : "
             + "  ".join(f"{k.split('_')[0]}={v}" for k, v in POLICY_RESOLUTIONS.items())
             + " m"
+            f"\n[mesh]     control    : one global resolution="
+            f"{CONTROL_RESOLUTION} m (the inverted control)"
             f"\n[gate]     policy coil meshed/CAD >= {POLICY_MIN_CAD_RECOVERY}; "
-            "clamps-only asserted to FAIL it",
+            f"the coarse control asserted to MISS it by >= {CONTROL_SEPARATION}",
             flush=True,
         )
 
-    # ---- sizing 1: the negative control, built first ----------------------
+    # ---- sizing 1: the fixture's own uniform mesh, built first -------------
+    # Not the inverted control any more (see CONTROL_RESOLUTION); it is the
+    # `OPS-17` record reproduction and the baseline the policy's refine/coarsen
+    # identities are read against.
     clamps = _build("clamps_only", comm)
 
     # ---- sizing 2: the policy that carries the gate -----------------------
     policy = _build("policy", comm, **POLICY_RESOLUTIONS)
 
+    # ---- sizing 3: the inverted control, coarser and asserted to FAIL ------
+    control_geometry = dict(GEOMETRY)
+    control_geometry["resolution"] = CONTROL_RESOLUTION
+    control = _build("coarse_control", comm, _geometry=control_geometry)
+
+    builds = (clamps, policy, control)
     recovery = {
         build["label"]: {tag: build["v"][tag] / cad for tag, cad in CAD_VOLUMES.items()}
-        for build in (clamps, policy)
+        for build in builds
     }
 
     if comm.rank == 0:
@@ -216,9 +278,9 @@ def main() -> None:
             f"\n[EX-27] partition identity holds on both meshes to "
             f"{VOLUME_PARTITION_BAND:.0e} (printed above)\n"
         )
-        for build in (clamps, policy):
+        for build in builds:
             print(
-                f"  {build['label']:<12s} cells={build['n_cells']:>8d}  "
+                f"  {build['label']:<14s} cells={build['n_cells']:>8d}  "
                 f"mesh={build['mesh_wall_time_s']:6.2f} s"
             )
         print("\n[GEO-17] tagged volumes, clamps-only -> policy:")
@@ -236,7 +298,18 @@ def main() -> None:
                 f"clamps {recovery['clamps_only'][tag]:.6f} -> "
                 f"policy {recovery['policy'][tag]:.6f}  "
                 f"(separation {recovery['policy'][tag] - recovery['clamps_only'][tag]:+.6f})"
+                f"  [coarse control {recovery['coarse_control'][tag]:.6f}]"
             )
+        print(
+            f"\n[GEO-17] inverted control at h={CONTROL_RESOLUTION} m, coil "
+            "recovery vs the "
+            f"{POLICY_MIN_CAD_RECOVERY} floor it must FAIL: "
+            + "  ".join(
+                f"tag {t} {recovery['coarse_control'][t]:.6f} "
+                f"(margin {POLICY_MIN_CAD_RECOVERY - recovery['coarse_control'][t]:+.6f})"
+                for t in COIL_TAGS
+            )
+        )
         print(flush=True)
 
     # ---- negative control (a): the fix may not move the clamps-only path ---
@@ -250,14 +323,20 @@ def main() -> None:
             f"OPS-17 record: {v_recorded:.9e} -> {clamps['v'][tag]:.9e} m^3"
         )
 
-    # ---- negative control (b): the same measurement must FAIL the gate -----
+    # ---- negative control (b): a coarser sizing must FAIL the gate ---------
+    # And fail it by a stated margin: a control that misses by 6e-6 would pass
+    # even if the policy did essentially nothing, which is how the h = 0.015
+    # version of this assertion went red on the 0.11 image.
     for tag in COIL_TAGS:
-        assert recovery["clamps_only"][tag] < POLICY_MIN_CAD_RECOVERY, (
-            f"clamps-only mesh recovers {recovery['clamps_only'][tag]:.6f} of tag "
-            f"{tag} ({REQUIRED_COIL_PHANTOM_TAGS[tag]})'s CAD volume, clearing the "
-            f"{POLICY_MIN_CAD_RECOVERY} floor the policy is supposed to be needed "
-            "for (on record: 0.754685 / 0.752565). The control no longer "
-            "separates — the premise needs re-examining, not the floor."
+        margin = POLICY_MIN_CAD_RECOVERY - recovery["coarse_control"][tag]
+        assert margin >= CONTROL_SEPARATION, (
+            f"the coarse control (h = {CONTROL_RESOLUTION} m) recovers "
+            f"{recovery['coarse_control'][tag]:.6f} of tag {tag} "
+            f"({REQUIRED_COIL_PHANTOM_TAGS[tag]})'s CAD volume, missing the "
+            f"{POLICY_MIN_CAD_RECOVERY} floor by only {margin:+.6f} against the "
+            f"pre-stated {CONTROL_SEPARATION} (on record: +0.105188 / +0.106569). "
+            "The control no longer separates — re-choose the sizing, never the "
+            "floor."
         )
 
     # ---- the gate: the policy clears the floor, at both records ------------
@@ -294,7 +373,7 @@ def main() -> None:
     )
 
     # ---- and both stay under the inscription bound ------------------------
-    for label in ("clamps_only", "policy"):
+    for label in ("clamps_only", "policy", "coarse_control"):
         for tag, cad in CAD_VOLUMES.items():
             assert recovery[label][tag] <= 1.0, (
                 f"{label} mesh recovers {recovery[label][tag]:.6f} of tag {tag} "
@@ -302,16 +381,22 @@ def main() -> None:
                 "— an inscribing linear-tet mesh cannot exceed 1.0"
             )
 
-    # ---- the separation that makes the control mean something -------------
-    for tag in COIL_TAGS:
-        separation = recovery["policy"][tag] - recovery["clamps_only"][tag]
-        assert separation >= SIZING_SEPARATION, (
-            f"tag {tag} ({REQUIRED_COIL_PHANTOM_TAGS[tag]}) separates the two "
-            f"sizings by only {separation:.6f}, under the pre-stated "
-            f"{SIZING_SEPARATION} (on record: +0.0809 / +0.0812). The floor sits "
-            "3.2e-4 above the control, so without this margin the example would "
-            "pass on a policy that did essentially nothing."
-        )
+    # ---- the separation that makes the comparison mean something ----------
+    # Asserted against BOTH baselines: the fixture's own uniform mesh (the
+    # tighter of the two, +0.0784 / +0.0851 measured) and the coarse control
+    # the inverted assertion runs on. Dropping the uniform one when the control
+    # moved out to h = 0.018 would have been a quiet loosening.
+    for label in ("clamps_only", "coarse_control"):
+        for tag in COIL_TAGS:
+            separation = recovery["policy"][tag] - recovery[label][tag]
+            assert separation >= SIZING_SEPARATION, (
+                f"tag {tag} ({REQUIRED_COIL_PHANTOM_TAGS[tag]}) separates policy "
+                f"from {label} by only {separation:.6f}, under the pre-stated "
+                f"{SIZING_SEPARATION} (on record: clamps_only +0.078411 / "
+                "+0.085109, coarse_control +0.183605 / +0.187132). Without this "
+                "margin the example would pass on a policy that did essentially "
+                "nothing."
+            )
 
     # ---- ParaView ---------------------------------------------------------
     written = {build["label"]: _write_paraview(build, comm) for build in (clamps, policy)}

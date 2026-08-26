@@ -66,8 +66,20 @@ from tests.mesh.test_two_torus_port_facets import (
 SHEET_FACET_TAGS = (211, 212)
 GAP_CELL_TAGS_WITH_SHEET = (101, 111, 102, 112)
 
-# The kwarg-off record: 79 534 cells, measured on this fixture at `-n 2` in
-# ``20260817T003524Z_GEO-16.log``. `PORT-1`/`PORT-10` pin no cell count for
+# The kwarg-off record: 79 070 cells, measured on this fixture at `-n 2` on the
+# **0.11 image** (dolfinx 0.11 / gmsh 4.15.2) in
+# ``20260825T213632Z_EX-30-mesh-gate-probe.log``. It read 79 534 until
+# 2026-08-26, measured on the 0.7.2 image in ``20260817T003524Z_GEO-16.log``;
+# that digit is stale, not a regression. The sheet is exonerated by two
+# independent no-sheet builds on 0.11 agreeing exactly at 79 070 (`mesh:1`,
+# which asserts no count, and `mesh:4`'s own kwarg-off control) while the
+# sheeted build stays properly distinct at 79 940, and by this module's five
+# other assertions staying green through the move — including the 0.970–0.980
+# meshed-band cross-check named below, which is the constant's actual guard.
+# The −0.58% move is in family with the 0.11-gmsh mesh motion already recorded
+# elsewhere (two-torus solve fixture −0.40%, `TH-10` −0.02%). Re-record ruled
+# by the 2026-08-25 18:00 review; version-tag this constant if the image moves
+# again. `PORT-1`/`PORT-10` pin no cell count for
 # *this* (mesh-only, RESOLUTION = 0.01) fixture, so the count is pinned from
 # that run rather than imported; what is imported and independently on record
 # is the CAD port-interface area 1.604721e-04 m^2 and the 0.970–0.980 meshed
@@ -75,7 +87,7 @@ GAP_CELL_TAGS_WITH_SHEET = (101, 111, 102, 112)
 # run alongside this file, it is the cross-check that the shared code path did
 # not move. The point of the constant is that the *opt-in* sheet may not
 # perturb the mesh every gated `PORT-1` / `PORT-10` number was measured on.
-NCELLS_UNGATED_RECORD = 79_534
+NCELLS_UNGATED_RECORD = 79_070
 
 # A planar surface meshed by linear tets is exact; the only slack is roundoff
 # in the sum. 1e-9 relative is the `GEO-15` CAD-denominator band.

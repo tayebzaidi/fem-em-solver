@@ -49,21 +49,30 @@ measured). The old band would now reject a correct mesh.
 
 | | on record | where it comes from |
 |---|---|---|
-| policy coil meshed/CAD ≥ `POLICY_MIN_CAD_RECOVERY` = 0.755 | **0.835563 / 0.833730** | imported from the `GEO-17` module |
-| clamps-only coil meshed/CAD **< 0.755** (inverted control) | **0.754685 / 0.752565** | derived from imported `UNIFORM_VOLUMES_RECORD` ÷ `CAD_VOLUMES` |
-| separation between the two sizings ≥ `SIZING_SEPARATION` = 0.05 | **+0.080879 / +0.081165** | measured here |
-| policy volume > clamps-only volume on every refined tag (1, 2, 3) | +10.7169% / +10.7851% / +0.9374% | the sign identity |
-| air (the one coarsened region) *loses* volume | −0.2643% | the volume has to come from somewhere |
-| meshed/CAD ≤ 1 on both meshes, all three curved tags | max 0.992751 | the inscription bound |
-| tagged-volume partition = 1 to `VOLUME_PARTITION_BAND` (1e-9) on **both** meshes | `1.000000000000` | imported helper |
+| policy coil meshed/CAD ≥ `POLICY_MIN_CAD_RECOVERY` = 0.755 | **0.833417 / 0.835563** | imported from the `GEO-17` module |
+| coarse control (`CONTROL_RESOLUTION` = 0.018) coil meshed/CAD **misses 0.755 by ≥ `CONTROL_SEPARATION` = 0.05** (inverted control) | **0.649812 / 0.648431**, margin **+0.105188 / +0.106569** | measured here |
+| separation policy − each baseline ≥ `SIZING_SEPARATION` = 0.05 | **+0.078411 / +0.085109** (clamps-only), **+0.183605 / +0.187132** (coarse control) | measured here |
+| policy volume > clamps-only volume on every refined tag (1, 2, 3) | +10.3855% / +11.3410% / +0.9374% | the sign identity |
+| air (the one coarsened region) *loses* volume | −0.2663% | the volume has to come from somewhere |
+| meshed/CAD ≤ 1 on all three meshes, all three curved tags | max 0.992751 | the inscription bound |
+| tagged-volume partition = 1 to `VOLUME_PARTITION_BAND` (1e-9) on **all three** meshes | `1.000000000000` | imported helper |
 | clamps-only table unmoved from the `OPS-17` record to 1e-9 | 4/4 tags | imported `UNIFORM_VOLUMES_RECORD` |
 
-The inverted control is thin **by construction** and the script says so: the
-0.755 floor was pre-registered as "the uniform mesh's own recovery, which a
-finer request must beat", so it sits ~3.2e-4 above the control it inverts. On
-its own that assertion would pass even if the policy did almost nothing, which
-is why `SIZING_SEPARATION` is gated separately — that margin is the one that
-discriminates.
+**The inverted control moved on 2026-08-26, and why.** It used to be the
+clamps-only mesh itself, which worked only **by construction**: the 0.755 floor
+was pre-registered as "the uniform mesh's own recovery, which a finer request
+must beat", so the control sat ~3.2e-4 below it. On the 0.11 image (dolfinx
+0.11 / gmsh 4.15.2) that mesh moved up and the control *cleared* the floor by
+6.0e-6 — 0.755006 on coil_1, red
+(`20260825T213601Z_EX-30-mesh-run-5.log`). The 2026-08-25 18:00 review ruled the
+**control** re-chosen measure-first, never the floor: a four-sizing probe
+(`20260826T033622Z_GEO-17-mesh5-sizing-probe.log`) measured coil recovery at
+h = 0.015 / 0.018 / 0.020 / 0.025 and the example adopted **0.018**, the first
+coarser sizing missing the floor by ≥ 0.05. The clamps-only mesh stays in the
+script as the `OPS-17` record reproduction and the baseline the sign identities
+read against, and `SIZING_SEPARATION` is now asserted against *both* baselines
+so that keeping the tighter of the two is not quietly dropped.
+`POLICY_MIN_CAD_RECOVERY` and every band are untouched.
 
 Every gate above is **imported** from `tests/mesh/test_mesh_tag_integrity.py`
 (the `ANS-1` rule), including the policy sizes themselves. The two policy
@@ -82,10 +91,13 @@ SAR-on-a-coil route runs through, and nothing downstream of it.
 ```
 
 Real DolfinX build (no complex mode needed); the runner selects it. Commissioned
-**standard**, measured **smoke**: on record at `-n 2`, clamps-only **19 792
-cells in 2.89 s**, policy **20 843 cells in 2.38 s**, **5.4 s** in-script total
+**standard**, measured **smoke**: on record at `-n 2` on the 0.11 image,
+clamps-only **19 618 cells in 2.39 s**, policy **20 745 cells in 2.64 s**,
+coarse control **12 471 cells in 1.59 s**, **6.8 s** in-script total
 including both ParaView exports — 8 s of harness wall clock, measured
-2026-08-22, log `20260822T033345Z_EX-27-example-n2.log`. Add `-n <k>` to change
+2026-08-26, log `20260826T033758Z_GEO-17-mesh5-control-rechoice.log`. The 0.7.2
+image read 19 792 / 2.89 s and 20 843 / 2.38 s, 5.4 s in-script
+(`20260822T033345Z_EX-27-example-n2.log`). Add `-n <k>` to change
 rank count and `-t <s>` to lower the per-example timeout.
 
 Exit status 0 means the gate, the inverted control, the sign identity and both
@@ -95,7 +107,8 @@ rendering problem.
 ## 3. How to analyze it, step by step
 
 **Step 1 — read the two partition blocks before anything else.** The script
-prints `[EX-27 clamps_only]` and `[EX-27 policy]` tagged-volume partitions, each
+prints `[EX-27 clamps_only]`, `[EX-27 policy]` and `[EX-27 coarse_control]`
+tagged-volume partitions, each
 ending in `ratio 1.000000000000`. If either misses 1e-9, stop: a region lost its
 physical group or got meshed twice, and every ratio below is then being computed
 on a mesh that does not partition its own volume. That is a defect in the size
@@ -110,10 +123,10 @@ uniform path, and the comparison in step 3 no longer has a fixed baseline.
 **Step 3 — read the volume table, watching the signs.** Expected:
 
 ```
-  tag 1 (coil_1  ) 1.191750413e-04 -> 1.319468693e-04 m^3  (+10.7169%)
-  tag 2 (coil_2  ) 1.188402981e-04 -> 1.316573175e-04 m^3  (+10.7851%)
+  tag 1 (coil_1  ) 1.192257046e-04 -> 1.316079092e-04 m^3  (+10.3855%)
+  tag 2 (coil_2  ) 1.185069486e-04 -> 1.319468693e-04 m^3  (+11.3410%)
   tag 3 (phantom ) 4.943767949e-04 -> 4.990112950e-04 m^3  ( +0.9374%)
-  tag 4 (air     ) 1.143560787e-02 -> 1.140538452e-02 m^3  ( -0.2643%)
+  tag 4 (air     ) 1.143589055e-02 -> 1.140543393e-02 m^3  ( -0.2663%)
 ```
 
 Three plus signs and one minus, and the minus is on the one region the policy
@@ -130,15 +143,20 @@ directions, are where the policy earns its cost.
 floor.**
 
 ```
-  tag 1 (coil_1  ) CAD 1.579136704e-04 m^3  clamps 0.754685 -> policy 0.835563  (separation +0.080879)
-  tag 2 (coil_2  ) CAD 1.579136704e-04 m^3  clamps 0.752565 -> policy 0.833730  (separation +0.081165)
+  tag 1 (coil_1  ) CAD 1.579136704e-04 m^3  clamps 0.755006 -> policy 0.833417  (separation +0.078411)  [coarse control 0.649812]
+  tag 2 (coil_2  ) CAD 1.579136704e-04 m^3  clamps 0.750454 -> policy 0.835563  (separation +0.085109)  [coarse control 0.648431]
+
+[GEO-17] inverted control at h=0.018 m, coil recovery vs the 0.755 floor it must FAIL: tag 1 0.649812 (margin +0.105188)  tag 2 0.648431 (margin +0.106569)
 ```
 
 Read the separation column first. The floor (0.755) is cleared by the policy by
-0.08 and missed by the control by 0.0003, so "policy ≥ floor > control" is true
-but nearly vacuous on the control side; the 0.08 separation is what says the
-policy did something. Both readings share a denominator that is analytic, so
-neither can drift from a mesh artifact in the other.
+~0.08 over the fixture's own uniform mesh, and the coarse control misses it by
+~0.105 — both margins are asserted, so neither side of "control < floor ≤
+policy" is vacuous. Note where the clamps-only column now sits: 0.755006 on
+coil_1, *above* the floor by 6e-6. That is exactly why the inverted control
+moved to h = 0.018; a control whose failure margin is smaller than the image's
+own mesh motion is not measuring anything. All readings share a denominator
+that is analytic, so none can drift from a mesh artifact in another.
 
 Recovery `> 1` on any tag is a hard failure the script asserts on: a linear-tet
 mesh cannot contain more volume than the curved CAD it inscribes, so a ratio
@@ -157,9 +175,10 @@ Threshold on `CellTags` (1 = coil_1, 2 = coil_2, 3 = phantom, 4 = air) and open
 the two side by side. Threshold to `1 ≤ CellTags ≤ 2` in both: the tori are
 visibly faceted under the clamps and round under the policy — that difference is
 the 8 points of CAD recovery, made visual. Then threshold to `CellTags = 4` and
-look at the air: it is coarser in the policy mesh, and the cell counts (19 792 →
-20 843) show the trade is nearly free — the policy buys torus fidelity by
-spending the air, for ~5% more cells.
+look at the air: it is coarser in the policy mesh, and the cell counts (19 618 →
+20 745) show the trade is nearly free — the policy buys torus fidelity by
+spending the air, for ~6% more cells. The coarse control writes no ParaView
+output; it exists only to carry the inverted assertion.
 
 **Step 6 — if a number moved.** A drift outside the pre-stated bands is an
 example-path regression against a gated capability. Record the measured value in
