@@ -16168,3 +16168,85 @@ inherit from this probe is the terminal-power print: if a review wants the
 own small chunk and should be commissioned as one.
 
 `main` clean at handoff.
+
+## 2026-08-26T02:25Z — `MAG-19` step 2 (§9 item 2) — **complete**: the rate duty transferred to `E_Ω`, red reproduced before it was disposed of, chunk ✅ (21:00 CDT implementer slot)
+
+Preflight clean: `git status` empty on `main` at `daaf2e1`, container Up
+(32 h). Took §9 item 2 — item 1 was already marked done by the 19:30 slot.
+Executed the 18:00 review's ruling (i) exactly as the §7 landing
+instructions state it; no measurement was needed beyond the gate and example
+runs, as the ruling predicted.
+
+### What ran, in order
+
+| # | run | log `…Z_MAG-19-step2-…` | result | elapsed |
+| --- | --- | --- | --- | --- |
+| 1 | red, **before any edit** | `20260826T020124Z_…-red` | Status **1**, rate **1.90** | 145.27 s |
+| 2 | the disposition | `20260826T020508Z_…-green` | `1 passed` / Status 0 | 142.36 s |
+| 3 | `MAG-18` module, **untouched** | `20260826T020739Z_…-mag18` | `7 passed` / Status 0 | 362.68 s |
+| 4 | `-e 6` consumer | `20260826T021403Z_…-e6` | Status 0, "All assertions hold" | 148 s |
+
+All four `-n 2`, real build, standard tier, `timeout -k 30 400` (400 / 400 /
+560 / `-t 400`), foreground. ~13.3 min of compute; no overrun, no denial, no
+container trouble.
+
+### Numbers
+
+Run 1 reproduces `MAG-19` step 1 digit for digit — **21.8417% / 15.3848% /
+4.4605%** at 38 740 / 147 235 / 383 146 cells, fit **1.90** against
+[0.7, 1.5] — so the red was reproduced before it was disposed of. Run 2
+returns those three errors **bit-identically**: the only difference between
+Status 1 and Status 0 is the assertion. The fitted rate still prints
+(1.9038), now beside the retired band and a new `RATE_DUTY_OWNER` string;
+what the test gates is monotone decay.
+
+**The negative control held.** `tests/validation/test_straight_wire.py` has
+**zero** edits and run 3 is `7 passed`: `E_Ω` 25.2868 → 10.6172 → 6.6458% at
+fitted **1.6854 ≥ 0.7**, record 1.0617170177e-01, natural-BC ratio 0.3285 —
+the 2026-08-23 re-gate reproducing. The duty moved onto a gate that is
+executing and green, not onto a claim.
+
+### Docs and tree
+
+Landed together on `main`: the rewritten
+`test_h_refinement_straight_wire` + its ~30-line retirement block (both the
+34% sampler swing and the 0.11 pairwise rates in-comment, all logs cited),
+the licensed `mag:6` alignment (old rate assertion in-comment; the monotone
+assertion it already carried promoted from negative control to anchor; still
+importing, still restating nothing per `ANS-1`), four harness logs +
+`test-results.md` rows, the §7 `MAG-19` row 🟡 → ✅ with its step-2 prose,
+the `MAG-13` row's disposition note, §9 item 2 marked done, and the
+known-issues entry retired 🔴 → ✅. **No band moved anywhere**;
+`RATE_MIN`/`RATE_MAX` keep their names and values and are still exported.
+
+### For the review
+
+Two things this slot deliberately did **not** do.
+
+1. **A residual sampled upper edge.**
+   `test_straight_wire.py::TestStraightWire::test_straight_wire_convergence`
+   gates a *two-rung, 8-point sampled* fit on the same `[0.7, 1.5]` — the
+   statistic the ruling just retired, on a two-point fit, which fits any
+   slope exactly. It is green (**0.7900**, run 3), it sits inside the module
+   the negative control required be left untouched, and it was outside
+   `MAG-19`'s named scope, so I left it and filed it — in-comment at the
+   constants, in the retired known-issues entry, and here. Whether ruling
+   (i)'s "no upper edge on a sampled statistic" reaches it is a review
+   question. It is cheap to answer: the test is two rungs at h = 0.004 /
+   0.0025, ~40 s.
+2. **`RATE_MIN`/`RATE_MAX` kept their names.** Renaming them to something
+   like `SAMPLED_RATE_BAND_RETIRED` would read better, but it would have
+   forced an edit to the untouchable module in the same commit. The
+   retirement is carried by comments and by the fact that this ladder no
+   longer asserts on them.
+
+### Hypothesis for the next attempt
+
+§9 item 6 (`EX-30` leg (root) completion) was serial on this item and its
+dependency is now **discharged**: `mag:6` is green from `main` at this
+commit with zero further example-side edits, which is exactly the condition
+item 6 (ii) states. A slot taking item 6 should re-run `mag:1` first and
+alone (the teardown-hang trap) and can treat `mag:6` as already-measured at
+148 s.
+
+`main` clean at handoff.

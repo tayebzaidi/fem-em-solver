@@ -60,14 +60,46 @@ DOMAIN_RADIUS = 0.03
 # case rather than raising the timeout.
 RESOLUTIONS = [0.004, 0.0025, 0.0018]
 
-# Two-sided bound (MAG-13 step 5). N1curl degree 1 predicts ~1.0 for this
-# quantity; the measured three-point fit over the resolutions above
-# (22.19% -> 12.75% -> 9.26%) is **1.10** (log 20260730T125522Z_MAG-13).
-# The upper bound matters as much as the lower one: a rate well above 1.5 is
-# not "better than expected" convergence but a sign that one resolution in the
-# sequence is anomalous (a mesh whose cells happen to straddle the sample
-# points favourably), which is exactly how the old `rate > 0.5` check would
-# have kept passing while the fixture drifted.
+# --- MAG-19 (2026-08-25): the rate duty left this statistic -------------------
+# The rate gate below WAS `RATE_MIN < rate < RATE_MAX` on the sampled 10-point
+# statistic (MAG-13 step 5, band [0.7, 1.5], fit 1.10 on record in
+# 20260730T125522Z_MAG-13.log over 22.19% -> 12.75% -> 9.26%). It is retired as
+# a *gate* by the 2026-08-25 18:00 review's ruling (i) on MAG-19 -- retired with
+# its basis measured, never widened, and the duty moved rather than dropped:
+#
+# * On the 0.11 image the fit reads **1.9038** over 21.8417% -> 15.3848% ->
+#   4.4605% (reproduced this slot, 20260826T020124Z_MAG-19-step2-red.log).
+#   MAG-19 step 1 ran both norms on the *same four solves*
+#   (20260825T183555Z_MAG-19-step1-dualnorm-fits.log) and the sampled ladder is
+#   not anomalous at one rung: its pairwise rates are 0.5822 / 0.7456 / 1.9894 /
+#   1.0034 / 2.7819 / 3.7690, i.e. out of band on both ends and on pairs that do
+#   not involve the finest rung.
+# * The statistic itself is the defect: OPS-18 step 3 attempt 5 measured a
+#   **34%** swing of this norm under its own sample count (15.8028 / 12.7485 /
+#   11.4984% at n_points = 8 / 10 / 20 on the recording image), and the band
+#   already failed on 0.7.2 at n_points = 8 -- i.e. it was passing on a sampler
+#   choice (known-issues 2026-08-22 / 2026-08-25).
+# * MAG-18 built the sampler-free replacement for exactly this reason. The rate
+#   duty now belongs to its E_Omega annulus ladder, which is live and green on
+#   0.11 at fit **1.6854** with 6/6 pairwise rates above its own one-sided
+#   >= 0.7 (20260824T003059Z_MAG-18-regate-run1.log).
+#
+# No upper edge is re-imposed here or anywhere: none has a validated basis on
+# 0.11 (both statistics fit above 1.5 on the full ladder), and under-convergence
+# is the failure mode a rate gate exists to catch. A superconvergence guard, if
+# ever wanted, needs its own measured basis and a commissioning.
+RATE_DUTY_OWNER = (
+    "tests/validation/test_straight_wire.py::TestStraightWire::"
+    "test_domain_l2_convergence (MAG-18: E_Omega rate >= 0.7, one-sided)"
+)
+
+# Retained, and still consumed, but no longer this ladder's gate:
+#   * this module and examples/magnetostatics/06_h_convergence_rate.py print
+#     them beside the fitted rate as the *report* band;
+#   * test_straight_wire.py::test_straight_wire_convergence gates its own
+#     two-rung 8-point fit on them. That test was not in MAG-19's scope and is
+#     left untouched (MAG-18's module is this disposition's negative control);
+#     its residual upper edge is a finding for the review, not this chunk's.
 RATE_MIN = 0.7
 RATE_MAX = 1.5
 
@@ -167,8 +199,19 @@ class TestConvergence:
         """
         Test h-convergence (mesh refinement) for straight wire problem.
 
-        As mesh size h decreases, error should decrease at expected rate.
-        For linear Nedelec elements, expect rate ~1.0.
+        **The rate duty is not here any more** (MAG-19, ruling (i) of the
+        2026-08-25 18:00 review): the sampled 10-point statistic swings 34%
+        under its own sample count, so its fitted slope cannot gate anything.
+        The owner of the h-convergence rate is ``RATE_DUTY_OWNER`` -- MAG-18's
+        sampler-free E_Omega annulus ladder, one-sided ``rate >= 0.7``, live and
+        green on 0.11. See the retirement block above ``RATE_DUTY_OWNER`` for
+        the measurements; nothing was widened.
+
+        What this test still gates is the part of the sequence that does not
+        depend on the sampler's accidents: the errors must decay
+        **monotonically** coarse to fine. A discretization blind to h shows no
+        systematic decay and fails this. The fitted rate and the error table are
+        printed as a *report* beside the retired band.
 
         The outer wall carries the analytic potential as Dirichlet data
         (MAG-13, ``exterior_dirichlet_bc``). This is what makes the test a
@@ -202,19 +245,22 @@ class TestConvergence:
         rate = fit_convergence_rate(resolutions, errors)
 
         if comm.rank == 0:
-            print(f"\n  Convergence Results:")
+            print(f"\n  Convergence Results (report -- the rate is NOT gated here):")
             print(f"    Resolutions (h): {resolutions}")
             print(f"    Errors: {[f'{e:.4%}' for e in errors]}")
-            print(f"    Convergence rate: {rate:.2f}")
-            print(f"    Expected rate for linear elements: ~1.0")
+            print(f"    Convergence rate: {rate:.4f}")
+            print(f"    Retired report band: [{RATE_MIN}, {RATE_MAX}] (MAG-19)")
+            print(f"    Rate duty owner: {RATE_DUTY_OWNER}")
 
-        # Two-sided bound (MAG-13 step 5); the band and the reason for its
-        # upper edge are recorded at RATE_MIN / RATE_MAX above.
-        assert RATE_MIN < rate < RATE_MAX, (
-            f"Convergence rate {rate:.2f} outside [{RATE_MIN}, {RATE_MAX}] "
-            f"(expected ~1.0 for N1curl degree 1); errors {errors} at h "
-            f"{resolutions}"
-        )
+        # The gate: systematic decay, coarse to fine. The rate the retired band
+        # used to bound is reported above and owned by RATE_DUTY_OWNER.
+        for i in range(1, len(errors)):
+            assert errors[i] < errors[i - 1], (
+                f"error rose from {errors[i - 1]:.4%} at h = {resolutions[i - 1]} "
+                f"to {errors[i]:.4%} at h = {resolutions[i]}: the sampled error "
+                "is not decaying with the mesh, which no sampler accident "
+                f"explains; errors {errors} at h {resolutions}"
+            )
 
 
 # OPS-17 step 2 (2026-08-17): test_p_refinement_straight_wire and

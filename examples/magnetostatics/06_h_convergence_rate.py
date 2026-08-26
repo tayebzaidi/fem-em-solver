@@ -22,12 +22,16 @@ module that closed `MAG-13` (``tests/validation/test_convergence.py``:
 parameters, per-resolution solve, sample line and the rate fit itself), never
 restated, and the anchor is the gate's own:
 
-* **Anchor** — the fitted rate inside the gate's band ``0.7 < rate < 1.5``
-  (``test_h_refinement_straight_wire``; **1.10** on record in
-  ``20260730T125522Z_MAG-13.log``, over errors 22.19% -> 12.75% -> 9.26%).
-  N1curl degree 1 predicts ~1.0 for this quantity. The upper edge has teeth
-  too: a rate well above 1.5 means one resolution in the sequence is anomalous,
-  not that the solver did better than theory.
+* **Anchor** — the sampled errors decay **monotonically** across the sequence
+  (``test_h_refinement_straight_wire``, imported gate). Until 2026-08-25 the
+  anchor here was the fitted rate inside ``0.7 < rate < 1.5`` (**1.10** on
+  record in ``20260730T125522Z_MAG-13.log``, over errors 22.19% -> 12.75% ->
+  9.26%); `MAG-19` ruling (i) retired that band on this statistic — it swings
+  34% under its own sample count — and moved the rate duty to `MAG-18`'s
+  sampler-free ``E_Omega`` ladder, which gates ``rate >= 0.7`` one-sided and is
+  green on 0.11 at 1.6854. This example follows the gate it imports: the rate
+  and the retired band are still **printed**, and this file re-states neither
+  (`ANS-1`). The band is not widened here or anywhere.
 * **Negative control, and it is solved here rather than cited** — a discretization
   blind to h shows no systematic decay, so the three errors are asserted to
   decrease **monotonically**, coarse to fine. A run that produced the right
@@ -78,6 +82,7 @@ from fem_em_solver.utils.analytical import (  # noqa: E402
 )
 from tests.validation.test_convergence import (  # noqa: E402
     CURRENT,
+    RATE_DUTY_OWNER,
     RATE_MAX,
     RATE_MIN,
     RESOLUTIONS,
@@ -213,9 +218,10 @@ def main() -> None:
         print()
         print(
             f"  fitted rate  : {rate:.4f}   "
-            f"(band {RATE_MIN} < p < {RATE_MAX}, MAG-13 gate; "
-            f"{ON_RECORD_RATE:.2f} on record)"
+            f"(report only since MAG-19; retired band {RATE_MIN} < p < "
+            f"{RATE_MAX}, {ON_RECORD_RATE:.2f} on record)"
         )
+        print(f"  rate duty    : {RATE_DUTY_OWNER}")
         print(
             f"  error decay  : {errors[0]:.4%} -> {errors[-1]:.4%} "
             f"over a {RESOLUTIONS[0] / RESOLUTIONS[-1]:.2f}x refinement"
@@ -228,13 +234,18 @@ def main() -> None:
         )
         print(flush=True)
 
-    # ---- anchor: the fitted rate sits in the gate's band --------------------
-    assert RATE_MIN < rate < RATE_MAX, (
-        f"fitted convergence rate {rate:.4f} outside the MAG-13 band "
-        f"[{RATE_MIN}, {RATE_MAX}] (expected ~1.0 for N1curl degree 1); "
-        f"errors {errors} at h {RESOLUTIONS}"
-    )
-
+    # ---- anchor: the monotone decay the imported gate now asserts ------------
+    # MAG-19 ruling (i), 2026-08-25 18:00 review: the fitted-rate assertion that
+    # stood here --
+    #   assert RATE_MIN < rate < RATE_MAX, "... outside the MAG-13 band ..."
+    # -- retired with the band itself, because the sampled statistic it fits
+    # swings 34% under its own sample count (OPS-18 step 3 attempt 5) and the
+    # ladder's pairwise rates are out of band on both ends on 0.11 (MAG-19
+    # step 1, 20260825T183555Z_MAG-19-step1-dualnorm-fits.log). The rate duty is
+    # MAG-18's E_Omega ladder; this example asserts what its imported gate
+    # asserts, which is the monotone decay checked below. Licensed alignment
+    # under that ruling, not a loosening: no band moved anywhere, and this file
+    # continues to restate nothing (ANS-1).
     assert export_error < errors[0], (
         f"the exported CG1 field's error {export_error:.4%} is worse than the "
         f"coarsest solved resolution's {errors[0]:.4%} (h = {RESOLUTIONS[0]}): "
@@ -243,7 +254,11 @@ def main() -> None:
         "example measures"
     )
 
-    # ---- negative control: the decay is systematic, not an averaged slope ---
+    # ---- anchor (MAG-19) / negative control: the decay is systematic --------
+    # This assertion is unchanged; what changed is its standing. It was the
+    # negative control under the retired rate band -- "the right average slope
+    # from a non-monotone sequence would fail this" -- and it is now also the
+    # anchor, the same one test_h_refinement_straight_wire keeps.
     for i in range(1, len(errors)):
         assert errors[i] < errors[i - 1], (
             f"error rose from {errors[i - 1]:.4%} at h = {RESOLUTIONS[i - 1]} to "

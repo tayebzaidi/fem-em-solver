@@ -258,7 +258,7 @@ unless fixing it is the task.
 > pins the survivor set at exactly these two and goes red in **either**
 > direction, so this entry cannot rot silently.
 
-### 🔴 OPEN 2026-08-25 (`EX-30` leg (root), 09:00 implementer slot) — `tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire` is **red on `main`**: the fitted rate is **1.90** against the `MAG-13` band `[0.7, 1.5]`, because the finest rung's error collapsed 9.26% → **4.4605%** on the 0.11 image
+### ✅ CLOSED 2026-08-25 (`MAG-19` step 2, 21:00 implementer slot) — `tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire` was **red on `main`**: the fitted rate is **1.90** against the `MAG-13` band `[0.7, 1.5]`, because the finest rung's error collapsed 9.26% → **4.4605%** on the 0.11 image
 
 > **Where this fires.** `tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire`,
 > real build, on **`main`** at `878fa3e`. Not a worksite, not an example path:
@@ -365,6 +365,35 @@ unless fixing it is the task.
 > the example to the transferred duty in the same commit (old text
 > in-comment) and runs `-e 6` as the consumer check. **Retire-when:** the
 > commit that lands `MAG-19` step 2 green including `mag:6`.
+>
+> **RETIRED 2026-08-25, 21:00 implementer slot — the retire-when is met, in
+> one commit, on four logged runs at `-n 2`, real build, on `main`.**
+> (1) *The red reproduced first*, before anything was edited:
+> `20260826T020124Z_MAG-19-step2-red.log`, Status 1, 145.27 s — 21.8417% /
+> 15.3848% / 4.4605% at 38 740 / 147 235 / 383 146 cells, rate **1.90**, the
+> same digits `20260825T141636Z` and `MAG-19` step 1 recorded. (2) *The
+> disposition's own green*: `20260826T020508Z_MAG-19-step2-green.log`,
+> `1 passed` / Status 0 / 142.36 s on **bit-identical** errors (the fit still
+> prints, at 1.9038, as a report beside the retired band and the duty owner).
+> (3) *Negative control — `MAG-18`'s gate module green **untouched***, zero
+> edits to `test_straight_wire.py`: `20260826T020739Z_MAG-19-step2-mag18.log`,
+> `7 passed` / Status 0 / 362.68 s, `E_Ω` 25.2868 → 10.6172 → 6.6458% at fitted
+> rate **1.6854 ≥ 0.7**, the h = 0.0025 record 1.0617170177e-01 and the
+> natural-BC ratio 0.3285 — all three reproducing the 2026-08-23 re-gate, so
+> the duty was transferred to a gate that is executing and green, not to a
+> claim. (4) *Consumer check*: `20260826T021403Z_MAG-19-step2-e6.log`,
+> `-e 6 -n 2`, Status 0 / 148 s, "All assertions hold", printing the same three
+> errors, the report-only rate and the duty owner.
+>
+> **No band moved anywhere.** `RATE_MIN` / `RATE_MAX` keep their values and
+> their names; what changed is that nothing on this ladder asserts on them.
+> **One residual, filed rather than fixed:** `test_straight_wire.py::TestStraightWire::test_straight_wire_convergence`
+> still gates a *two-rung, 8-point sampled* fit on the same two-sided band, and
+> it is green (fitted **0.7900** in run (3)). It was outside `MAG-19`'s scope
+> and inside the module this landing had to leave untouched, so it was left
+> alone and is named in-comment at the constants. Whether the ruling's "no
+> upper edge on a sampled statistic" extends there is a review question, not an
+> implementer's.
 
 ### 🔴 OPEN 2026-08-25 (`EX-30` leg (root), 09:00 implementer slot) — `examples/magnetostatics/01_straight_wire.py` **no longer meshes on the 0.11 image**: gmsh aborts with duplicated facets at the example's own coarse resolution, which no gate exercises
 

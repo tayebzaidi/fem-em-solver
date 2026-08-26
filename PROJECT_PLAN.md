@@ -1436,13 +1436,13 @@ Full narrative: `docs/planning/plan-archive.md`, entry «§7 OPS-23 full narrati
 | `MAG-10` | Gauge penalty was below the safe window | ✅ | standard | default now 1.0 |
 | `MAG-11` | Parallel energy was rank-local (missing allreduce) | ✅ | smoke | |
 | `MAG-12` | `evaluate_at_points` used the MAG-7 broken pattern | ✅ | smoke | |
-| `MAG-13` | Analytic-Dirichlet outer boundary for wire/loop | ✅ | heavy | wire 12.75%, loop 7.07%, rate 1.10; 167 s + 196 s. **2026-08-25: its rate gate (`test_h_refinement_straight_wire`, band [0.7, 1.5]) is red on `main` on the 0.11 image — fitted 1.9038, the finest rung's error collapsed 9.26% → 4.4605% (known-issues 2026-08-25). Disposition is `MAG-19`; the ✅ here is the 0.7.2 close and stands.** |
+| `MAG-13` | Analytic-Dirichlet outer boundary for wire/loop | ✅ | heavy | wire 12.75%, loop 7.07%, rate 1.10; 167 s + 196 s. **2026-08-25: its rate gate (`test_h_refinement_straight_wire`, band [0.7, 1.5]) is red on `main` on the 0.11 image — fitted 1.9038, the finest rung's error collapsed 9.26% → 4.4605% (known-issues 2026-08-25). Disposition is `MAG-19`; the ✅ here is the 0.7.2 close and stands.** **Disposed 2026-08-25 by `MAG-19` step 2 (ruling (i)): the sampled two-sided band is retired with its basis, the rate duty now belongs to `MAG-18`'s one-sided `E_Ω` ≥ 0.7 gate, and `test_h_refinement_straight_wire` gates monotone decay and is green.** |
 | `MAG-14` | Helmholtz magnitude comparison in the test suite | ✅ | smoke | 0.728% vs closed form (1.731% before `GEO-8`); 11 s, in CI |
 | `MAG-15` | Lagrange-multiplier Coulomb gauge (cross-check) | ✅ | smoke | 7 passed, 13 s |
 | `MAG-16` | Complex-build-safe magnetostatic energy | ✅ 2026-08-05 | smoke | 10 passed complex `-n 2` in 4.9 s; cross-build pin 2.9e-07, `Im W` exactly 0; retires known-issues 8 |
 | `MAG-17` | Coulomb-gauge multiplier does not vanish for a divergence-free source: h-ladder discriminator (`OPS-17` step-2 defect 2, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) | ✅ *(audited COMPLIANT 2026-08-21 18:00 review — rate 2.4476 vs the pre-registered ≥ 0.7 verified in `…final2.log`; one nuance on record: the cited "ladder" log is exit 1 — a sign-convention fix in the fit sits between it and the record run, same spreads, band unmoved)* | standard |
 | `MAG-18` | Sampler-independent straight-wire gate: annulus-restricted domain L2 of `|B_h| − |B_ana|` with a pre-registered rate band (`OPS-18` step 3 attempt 5 finding, known-issues 2026-08-22: the 10-point radial L2 swings 34% under its own sampler and the 15% band already fails on 0.7.2 at `n_points = 8`; commissioned 2026-08-22 18:00 review) | 🟡 **2026-08-22** — the gate is built, live on `main` and green: `E_Ω` 25.3787 → 10.7288 → 6.6708% on the recorded ladder, **rate 1.6842 ≥ 0.7** and monotone (i ✅); natural-BC wall 32.3117% vs analytic 10.7288%, ratio 0.3320, strictly worse (iii ✅); the h = 0.0025 record 1.0728835983e-01 at 145 884 cells reproduced bit-identically across two `-n 2` runs; the retired 10-point row reproduced under assertion at all three sample counts (15.802788 / 12.748522 / 11.498352% vs 15.8028 / 12.7485 / 11.4984, ≤ 4.2e-06 relative). **Anchor (ii) not met as pre-registered:** `-n 2` vs `-n 4` agree to **7.28e-08**, not 1e-10 — the solve is a direct LU whose factorization order follows the partition, and the *retired* statistic moves the same way on the same two runs (1.9e-07), so ~1e-7 is the solve's cross-width floor and no norm on this field beats it. Known-issues entry filed; the 1e-10 clause is the review's to dispose of. `7 passed`/270.64 s/`-n 2`. **✅ 2026-08-23 03:00 review** — (ii) re-registered at ≤ 1e-6 relative (14× the measured floor, five orders under the sampler defect it excludes), met by the logged `-n 2`/`-n 4` pair; prose entry has the audit. **Re-gated on 0.11 2026-08-23 (§9 item 1, ruling (3\*)) — all three anchors green on the image `main` boots, `7 passed` / exit 0 twice in-slot** (`20260824T003059Z_MAG-18-regate-run1.log`, 296 s; `20260824T003650Z_MAG-18-regate-run2.log`, 296 s; `-n 4` record probe `20260824T003606Z_MAG-18-regate-n4.log`, 32 s): (i) `E_Ω` 25.2868 → 10.6172 → **6.6458%** monotone at fitted rate **1.6854** (0.7.2 read 1.6842 — the *gate* moved 7e-04 across a version change that moved the mesh 145 884 → 147 235 cells, which is the point of `MAG-18`); (ii) `-n 2` 1.0617170177e-01 vs `-n 4` 1.0617175341e-01 = **4.86e-07 relative**, inside the re-registered 1e-6 and consistent with the ~1e-7 LU floor, with the two `-n 2` runs agreeing to 1.86e-08; (iii) natural BC 32.315493% vs analytic 10.617170%, ratio **0.3285**, strictly worse. **No record moved and no band moved** — `E_OMEGA_H0025_RECORD` (1.061717e-01, already version-tagged v0.11.0 by 3a leg 2) reproduces to 2.9e-09 of its 1e-4 band, and the `0.11` `n_points` control row reproduces at all three counts (≤ 3.6e-06 relative). | heavy |
-| `MAG-19` | Dispose of the red straight-wire rate gate on 0.11 (fitted 1.9038 vs [0.7, 1.5]; the finest rung's sampled error collapsed on the image): anomalous rung vs wrong instrument, discriminated by running both norms on the same four-rung ladder (commissioned 2026-08-25 10:30 review; known-issues 2026-08-25) | 🟡 *(**step 1 measured 2026-08-25, 13:30 slot** — the 4×2 table exists and both in-run anchors reproduce digit for digit: the sampled three-rung fit is **1.9038** (the red) and the `E_Ω` three-rung fit is **1.6854** with the h = 0.0025 `E_Ω` record at 2.094e-08 relative, i.e. the `ANS-1` import is right and the physics is what moved. **The pre-stated decision rule selects neither branch**, and says so cleanly: (a) fails because the sampled ladder has a *second* out-of-band pair that does not involve h = 0.0018 (0.004→0.003 at **0.5822**), and (b) fails because the sampled norm is not scattered everywhere — dropping h = 0.0018 alone returns the fit to **0.7309**, inside [0.7, 1.5]. New finding for the ruling: `E_Ω` is stable but **cannot carry the two-sided band** — its pairwise rates run 1.4261–1.9843 and its fit is 1.6661–1.8588 on every subset, so a duty *transfer* of [0.7, 1.5] as written would be instantly red; `E_Ω`'s live gate is one-sided ≥ 0.7 and it passes that on 6/6 pairs. Probe `tests/validation/probe_straight_wire_dual_norm.py` (asserts nothing), log `20260825T183555Z_MAG-19-step1-dualnorm-fits.log`, 160 s at `-n 2`; h = 0.0030 priced at 88 018 cells / 16.5 s. No band moved; ruling requested — options in the prose entry. **Ruled 2026-08-25 18:00 review: option (i)** — rate duty transfers to the `E_Ω` ladder under its own one-sided ≥ 0.7 (already `MAG-18`-gated, green on 0.11); this test keeps monotone decay + the table as report; the sampled two-sided band retires with its basis stated, no upper edge re-imposed anywhere. Step 2 is the landing, §9 item 2)* | standard |
+| `MAG-19` | Dispose of the red straight-wire rate gate on 0.11 (fitted 1.9038 vs [0.7, 1.5]; the finest rung's sampled error collapsed on the image): anomalous rung vs wrong instrument, discriminated by running both norms on the same four-rung ladder (commissioned 2026-08-25 10:30 review; known-issues 2026-08-25) | ✅ **2026-08-25** *(**step 1 measured 2026-08-25, 13:30 slot** — the 4×2 table exists and both in-run anchors reproduce digit for digit: the sampled three-rung fit is **1.9038** (the red) and the `E_Ω` three-rung fit is **1.6854** with the h = 0.0025 `E_Ω` record at 2.094e-08 relative, i.e. the `ANS-1` import is right and the physics is what moved. **The pre-stated decision rule selects neither branch**, and says so cleanly: (a) fails because the sampled ladder has a *second* out-of-band pair that does not involve h = 0.0018 (0.004→0.003 at **0.5822**), and (b) fails because the sampled norm is not scattered everywhere — dropping h = 0.0018 alone returns the fit to **0.7309**, inside [0.7, 1.5]. New finding for the ruling: `E_Ω` is stable but **cannot carry the two-sided band** — its pairwise rates run 1.4261–1.9843 and its fit is 1.6661–1.8588 on every subset, so a duty *transfer* of [0.7, 1.5] as written would be instantly red; `E_Ω`'s live gate is one-sided ≥ 0.7 and it passes that on 6/6 pairs. Probe `tests/validation/probe_straight_wire_dual_norm.py` (asserts nothing), log `20260825T183555Z_MAG-19-step1-dualnorm-fits.log`, 160 s at `-n 2`; h = 0.0030 priced at 88 018 cells / 16.5 s. No band moved; ruling requested — options in the prose entry. **Ruled 2026-08-25 18:00 review: option (i)** — rate duty transfers to the `E_Ω` ladder under its own one-sided ≥ 0.7 (already `MAG-18`-gated, green on 0.11); this test keeps monotone decay + the table as report; the sampled two-sided band retires with its basis stated, no upper edge re-imposed anywhere. Step 2 is the landing, §9 item 2. **Step 2 LANDED 2026-08-25, 21:00 slot ⇒ chunk ✅** — the red reproduced first (Status 1, rate **1.90**, 21.8417 / 15.3848 / **4.4605%** at 38 740 / 147 235 / 383 146 cells, 145.27 s), then the disposition green on **bit-identical** errors (`1 passed` / Status 0 / 142.36 s), `MAG-18`'s module green **untouched** as the negative control (`7 passed` / Status 0 / 362.68 s, `E_Ω` fit **1.6854 ≥ 0.7**, record 1.0617170177e-01, natural-BC ratio 0.3285) and `-e 6` green (Status 0 / 148 s, "All assertions hold"). No band moved; one residual sampled upper edge in `test_straight_wire_convergence` (green at 0.7900) filed for the review, not fixed. Logs `20260826T020124Z` / `…020508Z` / `…020739Z` / `…021403Z_MAG-19-step2-*`)* | standard |
 
 **`MAG-17` — the Coulomb-gauge multiplier does not vanish for a
 divergence-free source: h-ladder discriminator** ✅ *(step 1 closed 2026-08-20, 07:30 implementer slot — and the chunk closes; audited COMPLIANT 2026-08-21 18:00 review)*.
@@ -1784,6 +1784,41 @@ chunk is the one that *disposes* of it.)*
 > known-issues entry retires with this commit. No new solve beyond the gate
 > and example runs is needed — every number the ruling used is in step 1's
 > log.
+>
+> **Step 2 LANDED — 2026-08-25, 21:00 slot ⇒ chunk ✅.** The ruling executed
+> as written, in one commit, on four `-n 2` real-build runs, and the red was
+> reproduced before it was disposed of:
+>
+> | run | log (`…Z_MAG-19-step2-…`) | result | elapsed |
+> | --- | --- | --- | --- |
+> | red, pre-edit | `20260826T020124Z_…-red` | Status **1**, rate **1.90** | 145.27 s |
+> | disposition | `20260826T020508Z_…-green` | **`1 passed`** / Status 0 | 142.36 s |
+> | `MAG-18` control | `20260826T020739Z_…-mag18` | **`7 passed`** / Status 0 | 362.68 s |
+> | `-e 6` consumer | `20260826T021403Z_…-e6` | Status 0, "All assertions hold" | 148 s |
+>
+> *Anchor.* The red run reproduces `MAG-19` step 1 digit for digit — 21.8417 /
+> 15.3848 / **4.4605%** at 38 740 / 147 235 / 383 146 cells — and the green run
+> reproduces those three **bit-identically**, so the only thing that changed
+> between Status 1 and Status 0 is the assertion, not the physics. The fitted
+> rate still prints (1.9038) beside the retired band and the new
+> `RATE_DUTY_OWNER` string; what the test now gates is monotone decay.
+> *Negative control, and it held:* `MAG-18`'s module is **untouched** (zero
+> edits to `test_straight_wire.py`) and green — `E_Ω` 25.2868 → 10.6172 →
+> 6.6458% at fitted **1.6854 ≥ 0.7**, record 1.0617170177e-01, natural-BC ratio
+> 0.3285, i.e. the 2026-08-23 re-gate reproducing. The duty moved onto a gate
+> that is executing and green. *Consumer:* `mag:6` needed only the licensed
+> alignment (its rate assertion retired in-comment with both logs cited, the
+> monotone assertion it already carried promoted from negative control to
+> anchor) and passes; `RESOLUTIONS`/`RATE_MIN`/`RATE_MAX`/the fit are still
+> exported and still imported, nothing restated (`ANS-1`).
+> **No band moved.** *One residual, filed not fixed:*
+> `test_straight_wire.py::test_straight_wire_convergence` still gates a
+> two-rung 8-point sampled fit on the same `[0.7, 1.5]` (green at **0.7900** in
+> the control run). It sits inside the module this landing had to leave
+> untouched and outside `MAG-19`'s scope, so it was left alone, named
+> in-comment at the constants and in the retired known-issues entry — whether
+> the ruling's "no upper edge on a sampled statistic" reaches it is a review
+> question.
 
 **Open follow-ups in MAG:**
 
@@ -5317,7 +5352,18 @@ uses the Edit tool and verifies `git status --porcelain`.
    review. **Negative result:** an unaffordable price or a resolution
    floor is exactly what the probe exists to find — §7 annotation +
    known-issues if red, stop.
-2. **`MAG-19` step 2 — land ruling (i): the duty transfer (standard,
+2. **DONE 2026-08-25, 21:00 slot — `MAG-19` step 2 landed, chunk ✅.** All
+   four runs green in order: red reproduced first (Status 1, rate 1.90,
+   145.27 s), disposition `1 passed` on bit-identical errors (142.36 s),
+   `MAG-18`'s module green **untouched** (`7 passed`, 362.68 s, `E_Ω` fit
+   1.6854 ≥ 0.7), `-e 6` green (148 s). No band moved; the known-issues
+   entry is retired; item 6's serial dependency is **discharged**. One
+   residual filed for the review, not fixed:
+   `test_straight_wire_convergence` still gates a two-rung 8-point sampled
+   fit on `[0.7, 1.5]` (green at 0.7900) — inside the module this landing
+   had to leave untouched. Digits in the §7 `MAG-19` entry; logs
+   `20260826T020124Z` / `…020508Z` / `…020739Z` / `…021403Z_MAG-19-step2-*`.
+   Original item: **`MAG-19` step 2 — land ruling (i): the duty transfer (standard,
    `-n 2`, real, `main`; independent).** Execute the ruling in the §7
    entry: `test_h_refinement_straight_wire` keeps monotone decay + the
    error table as report with a duty statement naming `MAG-18`'s
