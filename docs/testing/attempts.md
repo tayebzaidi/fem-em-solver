@@ -17154,3 +17154,121 @@ is the first evidence about Phase 6 sizing and nothing in §10 has consumed it;
 bookkeeping is owed for both it and `PORT-9`/`GEO-20` step 1.
 
 `main` clean at handoff.
+
+---
+
+## 2026-08-26T20:15Z — `EX-32` (§9 item 6) — **complete**: the birdcage's 4-port power-wave S-matrix example lands green on the first run and the chunk closes (15:00 CDT implementer slot)
+
+**Outcome:** complete. `examples/ports/04_birdcage_four_port_sparameters.py`
+(`ports:4`) + same-stem guide, the §5.4 ramp `PORT-9` ✅ owes and the first
+example in this repo that solves a port **on the coil** — every other
+S-parameter example is two-torus (`EX-18`/`EX-20`/`EX-24`) and both prior
+birdcage examples (`EX-28`, `EX-31`) are mesh-only.
+
+**Construction, not just constants, imported.** The example does not
+re-implement the sweep: `tests/validation/test_port_birdcage_four_port.py`'s
+module fixture body was lifted to a module-level `build_four_port_sweep()`
+(purely additive — the fixture now calls it, and the extra returned keys
+`mesh`/`cell_tags`/`facet_tags`/`problem`/`port_defs`/`specs`/`mesh_time`/`halves`
+are read by no gate), and the example calls it. So the fixture, the sheet
+construction and the power-wave assembly here *are* `PORT-9` leg (d)'s. This
+is the `EX-33` reading of the `ANS-1` rule applied a second time, and it makes
+the `EX-30` class of divergence — an example restating a record the gate has
+since moved — impossible here by construction.
+
+One harness log is an operator error, kept because the log index is
+append-only: `20260826T200530Z_EX-32-run1.log`, Status **127**, 1 s — the
+first invocation wrapped `./run_examples.sh` inside `docker compose exec`, but
+the runner is a **host-side** dispatcher that calls `docker compose exec`
+itself, so it found no `docker` binary in the container. The correct harness
+form for any `run_examples.sh` verification is the bare command, as `EX-33`'s
+log shows. No compute was burned.
+
+**Green, first run.** `./run_examples.sh -e ports:4 -n 2 -t 400` through the
+harness: `20260826T200545Z_EX-32-run1.log`, Status 0, **88 s** wall clock
+(85.0 s in-script) — standard, as commissioned (the entry budgeted ~120 s).
+Breakdown printed: mesh 26.9 s, four driven solves 25.2 s, heuristic control
+25.0 s, ParaView re-solve 6.1 s.
+
+**Every gate-module record reproduced exactly. Nothing re-recorded, no band,
+tolerance or record moved anywhere.**
+
+| Reading | Measured | Band / record | Source |
+| --- | --- | --- | --- |
+| cells | 116 085 (ratio 1.000000) | `GEO-19` step B record | print, never asserted |
+| anchor: P1 column vs leg (d0) | 1.788e-10 / 2.568e-10 / 1.071e-10 / 1.505e-10 | < 1e-9 rel. | `LEG_D0_Z_COLUMN` |
+| (i) `‖S−Sᵀ‖/‖S‖` | 4.183068067e-13 (~1e-12) | ≤ 1e-3 | `RECIPROCITY_BAND` |
+| (ii) σ_max(S) | 0.999992805 | ≤ 1 + 1e-9 | `PASSIVITY_SIGMA_TOLERANCE` |
+| (ii) max column power sum | 0.793823974 | ≤ 1 | same |
+| (iii′) class spreads self/adj/opp | 0.0553 / 0.0353 / 0.0214% | ≤ 0.5% | `ADJACENT_SPREAD_BAND` |
+| (iii′) pooled/worst separation | 166.6766× | ≥ 10× | `POOLED_SEPARATION_FLOOR` |
+| control: max\|S_heur − S_field\| | 6.446452e-01 | > 2e-3 | `EX-20` floor |
+
+Class means 2.338160261e+01 / 1.700854304e+01 / 1.606048044e+01 Ω, all four
+column power sums 0.793823974 / 0.793773625 / 0.793405064 / 0.793694395, the
+four singular values 0.999992805 / 0.881814917 / 0.835880534 / 0.835713847 —
+every one of them the gate module's current digits.
+
+**Negative control executed and asserted.** The retired `PORT-0` coupling
+heuristic on the same problem and mesh keeps `is_placeholder=True`, emits its
+`DeprecationWarning`, and prints an **identically zero** off-diagonal — the
+`EX-32` entry predicted exactly that, and it is what a ring-distance rule with
+no field in it looks like on a 4-port. It has to be handed the gap-box *cell*
+tags (`PORT_UPPER+i` / `PORT_LOWER+i`) rather than the port sheets, because
+`validate_required_port_tags_exist` checks terminals against **cell** tags and
+the heuristic predates the port sheet entirely; that is as much of the
+control's content as the separation number.
+
+**The one reading that moved — and it is the one the module declares
+non-reproducible.** `‖S−Sᵀ‖/‖S‖` reads **4.183068067e-13** in this run against
+leg (d)'s recorded **~2.152e-14** on this same mesh through this same
+construction, while every other digit in the run is bit-identical to the
+record. Per the (d3c) rule this quantity reproduces **in order of magnitude
+only** — it is noise over noise — so this is the rule earning its keep, not a
+divergence: both readings sit ~11 decades under the 1e-3 gate and the example
+prints the residual as a decade, gating only on the imported band. **Nothing
+was re-recorded and the module's record stands unchanged.** For the review:
+this is the first independent measurement of how wide (d3c)'s "order of
+magnitude" actually is — **1.3 decades**, not a fraction of one. Anything that
+quotes a power-wave reciprocity residual to more than a decade is quoting
+noise.
+
+**Gate module green from `main` after the refactor.** `tests/environment` +
+`test_port_birdcage_four_port.py` at `-n 2`, complex:
+`16 passed in 71.98s` (`20260826T200746Z_EX-32-gate.log`, Status 0, 73 s) —
+the negative control on the refactor being additive, held by execution rather
+than by claim.
+
+**Census after** (`20260826T200908Z_EX-32-census.log`, 1 s): **`dead=0 guide=0
+stale=0 exit=0`**, **30** runnable examples all guided, 39 guides / 130
+references. The new example owns its own freshness immediately; the corpus
+stays at the clean reading `EX-30` left it at, now one example wider.
+
+ParaView: `birdcage_four_port_sparameters_combined.xdmf` carries the
+P1-driven `E_real`/`E_imag`/`E_magnitude` (CG1) and `B_magnitude` (DG0,
+`B = ∇×E/(−jω)` from Faraday's law) beside `CellTags`, with a `_facets`
+companion for `mesh_tags` 211–214 — the first field picture of a driven
+birdcage port in the examples tree. It costs one extra solve (6.1 s), the
+`EX-20` pattern, because the sweep returns readings and not fields.
+
+No known-issues entry owed. No assertion loosened; nothing re-recorded.
+
+### Hypothesis for the next attempt
+
+**The queue is drained.** Items 1–6 of the 03:00 review's §9 list are all done
+and there is no fallback chunk — the drain instruction applies, so the 16:30
+slot should stop and journal unless the 18:00 review has topped the queue by
+then. Three things belong to that review, not to an implementer:
+(a) **the (d3c) decade width measured above** — 1.3 decades on a quantity two
+entries describe as reproducible "in order of magnitude"; worth a wording pass
+over `PORT-9` leg (d)/(d3c) and `PORT-11`;
+(b) **§5.4 example-ramp bookkeeping is now owed for `PORT-9` as well as
+`GEO-19`** — both ramps discharged in the last two slots, nothing recorded
+against them;
+(c) the previous slot's two open items are unchanged — the 4→16 mesh-time
+superlinearity has still not been consumed by §10, and the
+`straight_wire_domain` coarse-resolution floor is still unassigned.
+Deliberately not queued but ready: `OPS-26` step 2 (heavy, ≥ 2 slots),
+`GEO-20` step 2, `MAG-20`.
+
+`main` clean at handoff.

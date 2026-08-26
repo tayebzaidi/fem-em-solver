@@ -216,9 +216,15 @@ def _circulant_classes(z_matrix):
     }
 
 
-@pytest.fixture(scope="module")
-def four_port_sweep():
-    """One mesh; four driven lumped-sheet solves at 50 Ohm; the assembled 4x4."""
+def build_four_port_sweep():
+    """One mesh; four driven lumped-sheet solves at 50 Ohm; the assembled 4x4.
+
+    The module fixture's body, lifted to module level so a consumer can run the
+    gated sweep *through this module* rather than re-implementing it — the
+    `ANS-1` import rule taken past constants to the construction itself
+    (`EX-33` precedent, 2026-08-26; `EX-32` is the consumer). Additive: the
+    fixture below is unchanged in behaviour and no gate reads the extra keys.
+    """
     comm = MPI.COMM_WORLD
     ports_idx = list(range(1, LEG_COUNT + 1))
 
@@ -414,7 +420,24 @@ def four_port_sweep():
         "sheets": sheets,
         "cells": ncells,
         "sweep_time": float(t_sweep),
+        # Export handles for a consumer that needs the fixture itself (no gate
+        # here reads them; `EX-32` writes ParaView off this mesh and re-solves
+        # the P1-driven case for the field the sweep does not retain).
+        "mesh": msh,
+        "cell_tags": cell_tags,
+        "facet_tags": tags_f,
+        "problem": problem,
+        "port_defs": port_defs,
+        "specs": specs,
+        "mesh_time": float(t_mesh),
+        "halves": halves,
     }
+
+
+@pytest.fixture(scope="module")
+def four_port_sweep():
+    """The gated 4x4, built once per module."""
+    return build_four_port_sweep()
 
 
 @complex_only
