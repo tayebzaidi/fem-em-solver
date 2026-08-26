@@ -16564,3 +16564,113 @@ is not satisfiable this interval — the 22:30 slot's prediction of 2 → 0 was
 conditional on item 4 landing, and it did not.
 
 `main` clean at handoff.
+
+## 2026-08-26T09:40Z — `GEO-21` step 2 (§9 item 1) — **complete**: ruling (b) landed, the gate is green on a coarse-graded control and the chunk closes (04:30 CDT implementer slot)
+
+Preflight clean: `git status --porcelain` empty on `main` at `eadace3`, container
+Up 40 h. Took §9 item 1, the first item not done or blocked.
+
+### What was tried
+
+Exactly what the 03:00 review ruled, no more. The `GEO-15` gate's negative
+control moved from `conductor_resolution=None` — which has not meshed on the
+0.11 image since the merge — to `BASELINE_CONTROL_RESOLUTION = 4.8e-3`, and the
+claim the gate makes was demoted **in writing** in four places.
+
+* `tests/mesh/test_birdcage_conductor_sizing.py`: the new constant carries the
+  whole six-rung probe table in-comment (`None` FAIL, 9.6e-3 FAIL at a fourth
+  surface pair, 6.4e-3 0.767219, **4.8e-3 0.846150 adopted**, 3.2e-3 0.916742,
+  1.6e-3 0.966977), citing step 1's three logs, why 3.2e-3 was excluded by the
+  module's own 0.90 guard and why 6.4e-3 was rejected for cliff adjacency, and
+  a "version-tag this if the image moves again" note.
+* The demoted claim — **fine vs coarse grading**, no longer "grading required",
+  that answer being the 0.7.2 close and left there — is stated in the module
+  docstring, the test's own docstring, the `mesh:3` example docstring, and the
+  `mesh:3` guide (a dedicated ⚠️ section, plus a superseded-record column in
+  its assertion table).
+* `examples/meshing/03_birdcage_graded_conductors.py` now **imports**
+  `BASELINE_CONTROL_RESOLUTION` per `ANS-1` instead of restating `None`, so
+  this class of divergence cannot recur.
+
+### Measured numbers
+
+Gate module from `main`, `20260826T093202Z_GEO-21-step2-gate.log`, `-n 2`,
+real, **`1 passed in 41.11s`**, Status 0, 43 s (the 2026-08-16 close was 41 s):
+
+```
+  h_c= 4.8000e-03  cells=   33185  meshed/CAD=0.846150   (the control)
+  h_c= 3.2000e-03  cells=   47975  meshed/CAD=0.916742
+  h_c= 1.6000e-03  cells=   98666  meshed/CAD=0.966977   (the gate)
+CAD (occ) mass = 1.030097043e-04 m^3, identical across all three
+```
+
+Every step-1 probe figure reproduced **exactly**, and this time through the
+gate's own assertions rather than a probe — that is the anchor. All three
+asserted quantities held at their **unmoved** values: graded ≥ `CAD_MASS_GATE`
+(0.95) with 0.017 margin, control < `CAD_MASS_GATE - 0.05` = 0.90 with **0.0538**
+margin, ladder monotone in h, CAD mass constant to 1e-12, and the `GEO-9` box
+identities to 1e-9 on every rung. No record needed re-recording under (1\*):
+this module holds no named cell or recovery constant, so its own assertions
+never demanded it, and none was invented.
+
+Consumer check, `20260826T093403Z_GEO-21-step2-mesh3.log`, `-n 2`, Status 0,
+29 s: `mesh:3` green, control 0.846150 / 33 185 cells / 6.43 s, graded 0.966977
+/ 98 666 cells / 18.32 s, **separation 0.120826**, both ParaView exports
+written.
+
+Census, `20260826T093552Z_GEO-21-step2-docrefs.log`:
+`RESULT: dead=0 guide=0 stale=13 stale_severity=report exit=2` — passes the
+`OPS-19` `exit != 1` rule. The 13 attribute cleanly as **ansys 2 / ports 4 /
+magnetostatics 7**, with `birdcage_graded_conductors_{baseline,graded}_combined`
+gone from the list: **`meshing` 2 → 0**, no other family moved. That is the
+census §9 items 3/4 were told to consume.
+
+### Two latent bugs found and fixed by the same edit
+
+Both created by the control acquiring an `h_c`, neither visible in any number:
+
+1. `graded = [r for r in rungs if r["h_c"] is not None]` would have folded the
+   control into its own monotone comparison (`ratio > previous` against
+   itself) — now sliced positionally, `rungs[1:]`.
+2. The ladder-budget early exit keyed on the same `h_c is not None` test — now
+   `len(rungs) > 1`, which is what the budget rule actually meant.
+
+Recording them because a reader checking only the digits would not see them.
+
+### What was deliberately **not** done
+
+The red was **not** re-reproduced (step 1 discharged it; the ruling says so).
+No band moved: `CAD_MASS_GATE`, the `- 0.05` separation guard,
+`CONDUCTOR_RUNGS`, `LADDER_BUDGET_S` and the example's `CONTROL_SEPARATION` are
+all byte-identical. The generator limitation was not hardened — still
+deliberately uncommissioned, no production path uses a coarse conductor sizing
+now. The XDMF stem `_baseline_` was kept (guide + on-disk continuity), noted
+in-comment rather than churned.
+
+### Compute
+
+Four harness commands, all foreground, all standard tier or below: 43 + 29 + 1 s
+of useful container time plus two cheap invocation misfires on the first
+`mesh:3` attempt (`-e 3` is not the runner's syntax — it wants `-e mesh:3`; and
+`run_examples.sh` is a **host-side** script that calls `docker` itself, so it
+must not be wrapped in `docker compose exec`, exit 127, 1 s). Nothing killed,
+nothing overran, no rank count above 2. Both misfire logs are committed as-is.
+
+### Committed on `main`
+
+The gate module, the `mesh:3` example and its guide, the four harness logs +
+`test-results.md` rows, the §7 `GEO-21` entry with a full step-2 narrative and
+its status row 🟡 → ✅, the `GEO-15` row and §2's `PORT-9`-prerequisite bullet
+both annotated with the demotion, the known-issues entry re-headed on the
+generator-continuum finding with the gate red retired, and §9 item 1 marked
+done. No `attempt/*` branch — the work completed.
+
+### Hypothesis for the next attempt
+
+§9 items 2–6 are all open and mutually independent; the next slot takes item 2
+(`PORT-11` step 2, the 4×4 at 64 MHz, standard tier off step 1's measured
+price). The ordering note in the §9 header is now **discharged**: with
+`meshing = 0` derivable, whichever of items 3/4 lands last can close `EX-30` at
+the chunk level rather than reporting `meshing = 2` and leaving it 🟡.
+
+`main` clean at handoff.

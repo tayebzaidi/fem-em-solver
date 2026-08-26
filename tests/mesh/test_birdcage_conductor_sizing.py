@@ -11,6 +11,16 @@ therefore tends to 1 under refinement. Against that denominator the deficit is
 resolution alone, so grading is measurable.
 
 Mesh-only: no solve, no port claim. The output feeds `PORT-9` step 3's gate.
+
+**What this gate claims, since 2026-08-26 (`GEO-21` step 2) — read this before
+citing it.** It compared *graded vs ungraded* sizing until the 0.11 image
+(dolfinx 0.11 / gmsh 4.15.2) stopped meshing the ungraded rung entirely; see
+``BASELINE_CONTROL_RESOLUTION`` below. Its control is now a **coarse graded**
+rung, so what it demonstrates is **fine-vs-coarse conductor grading** — still
+quantitative, still monotone, but *no longer* evidence that grading is
+*required*. That stronger claim closed on the 0.7.2 image (`GEO-15`,
+2026-08-16, 0.740335 ungraded vs 0.967019 graded) and **stays closed there**;
+do not restate it off this module's present numbers.
 """
 
 from __future__ import annotations
@@ -51,6 +61,44 @@ CONDUCTOR_RUNGS = (2.0 * 0.4 * RING_MINOR_RADIUS, 0.4 * RING_MINOR_RADIUS)
 LADDER_BUDGET_S = 300.0
 
 CAD_MASS_GATE = 0.95
+
+# The negative control's conductor sizing — COARSER than every `CONDUCTOR_RUNGS`
+# rung, and the rung the gate's separation guard measures against.
+#
+# It was ``None`` (one global ``setSize = 0.015``, no conductor grading at all)
+# until 2026-08-26. On the 0.11 image that build stopped meshing: it aborts in
+# gmsh with "Invalid boundary mesh (overlapping facets) on surface 59 surface
+# 79" *before* the graded rung ever runs, so this whole gate had been
+# non-executing on `main` since the 0.11 merge (found by `EX-30` leg (mesh),
+# 2026-08-25; red reproduced in ``20260826T050100Z_GEO-21-step1-red-repro.log``).
+# Refining the global size does not walk out of it — three finer steps fail on
+# three different surface pairs.
+#
+# `GEO-21` step 1 measured the replacement candidates instead of guessing.
+# Through this module's own ``_mesh``
+# (``20260826T050134Z_GEO-21-step1-cad-mass-probe.log``, -n 2) and the
+# coarse-ward ladder (``20260826T050319Z_GEO-21-step1-control-ladder.log``,
+# -n 1 because the coarse end can FAIL — the rank-0 gmsh deadlock trap),
+# meshed/CAD against this same denominator:
+#     h_c = None     FAIL  "overlapping facets" on surfaces 59/79
+#     h_c = 9.6e-3   FAIL  same family, surfaces 54/86
+#     h_c = 6.4e-3   0.767219   27 912 cells
+#     h_c = 4.8e-3   0.846150   33 185 cells   <- adopted
+#     h_c = 3.2e-3   0.916742   47 975 cells   (width control exact vs -n 2)
+#     h_c = 1.6e-3   0.966977   98 666 cells   (the graded rung, the gate)
+# The 2026-08-26 03:00 review ruled 4.8e-3: 3.2e-3 fails this module's own
+# ``CAD_MASS_GATE - 0.05`` = 0.90 separation guard (0.916742, by 0.016742) and
+# the only route to green from there is loosening a guard whose message says the
+# premise needs re-examining; 6.4e-3 was rejected for cliff adjacency, the
+# meshability cliff having already moved once at the 0.11 merge and 9.6e-3
+# failing today. 4.8e-3 clears the 0.90 guard by 0.0538 and sits 0.104 below the
+# 0.95 gate — 2x the guard width. ``CAD_MASS_GATE``, the 0.05 guard and
+# ``CONDUCTOR_RUNGS`` are all untouched: the control moved, the gate did not.
+# Version-tag this if the image moves again. Note the demoted claim in the
+# module docstring — this is fine-vs-coarse grading now, not graded-vs-ungraded.
+# The generator limitation itself (coarse conductor sizings, ``None`` included,
+# cannot mesh on 0.11) stays open in docs/testing/known-issues.md.
+BASELINE_CONTROL_RESOLUTION = 4.8e-3
 
 
 def _mesh(conductor_resolution=None):
@@ -128,14 +176,18 @@ def _check_geo9_identities(rung, comm):
 def test_graded_conductor_sizing_recovers_the_cad_mass():
     """Gate: graded conductor meshed volume >= 0.95 x its CAD (occ) mass.
 
-    Negative control: the baseline global-``setSize`` mesh re-measured in-run on
-    the *same* CAD-mass denominator. Its distance below the band is the effect
-    size; the 0.7091-vs-analytic-sum number on record cannot serve, because it
-    is a different denominator.
+    Negative control: the coarse-graded ``BASELINE_CONTROL_RESOLUTION`` mesh
+    re-measured in-run on the *same* CAD-mass denominator. Its distance below
+    the band is the effect size; the 0.7091-vs-analytic-sum number on record
+    cannot serve, because it is a different denominator.
+
+    Since the control went coarse-graded (`GEO-21` step 2, 2026-08-26) this
+    measures **fine vs coarse** conductor grading — see the module docstring for
+    what that does and does not claim.
     """
     comm = MPI.COMM_WORLD
 
-    baseline = _mesh(conductor_resolution=None)
+    baseline = _mesh(conductor_resolution=BASELINE_CONTROL_RESOLUTION)
     _check_geo9_identities(baseline, comm)
 
     v_conductor_analytic = 2.0 * (
@@ -147,7 +199,10 @@ def test_graded_conductor_sizing_recovers_the_cad_mass():
     started = time.perf_counter()
     for h_c in CONDUCTOR_RUNGS:
         remaining = LADDER_BUDGET_S - (time.perf_counter() - started)
-        if rungs[-1]["h_c"] is not None and remaining < 2.0 * rungs[-1]["wall_time_s"]:
+        # Guarded on ``len(rungs) > 1``, not on ``h_c is not None``: since the
+        # control went coarse-graded it also carries an ``h_c``, and the budget
+        # rule is about *ladder* rungs, not about which sizing is set.
+        if len(rungs) > 1 and remaining < 2.0 * rungs[-1]["wall_time_s"]:
             if comm.rank == 0:
                 print(
                     f"[GEO-15] ladder stopped before h_c={h_c:.6e} m: "
@@ -191,7 +246,10 @@ def test_graded_conductor_sizing_recovers_the_cad_mass():
             flush=True,
         )
 
-    graded = [r for r in rungs if r["h_c"] is not None]
+    # ``rungs[0]`` is the control; everything after it is a ladder rung. Sliced
+    # positionally rather than filtered on ``h_c is not None`` — the control has
+    # an ``h_c`` too now, and filtering would fold it into its own comparison.
+    graded = rungs[1:]
     assert graded, "no graded rung completed inside the ladder budget"
 
     baseline_ratio = baseline["v"][1] / cad_conductor
@@ -211,14 +269,17 @@ def test_graded_conductor_sizing_recovers_the_cad_mass():
         f"graded conductor keeps only {ratios[-1]:.6f} of its CAD mass at "
         f"h_c={finest['h_c']:.4e} m ({finest['n_cells']} cells, "
         f"{finest['mesh_wall_time_s']:.2f} s mesh) — below the {CAD_MASS_GATE} gate. "
-        f"Baseline global sizing keeps {baseline_ratio:.6f}. This is the measured "
+        f"Coarse-graded control at h_c={BASELINE_CONTROL_RESOLUTION:.4e} m keeps "
+        f"{baseline_ratio:.6f}. This is the measured "
         "frontier: record it in the GEO-15 entry rather than moving the gate."
     )
 
     # The negative control has to be *separated* from the gate, not merely below
     # it: a baseline that already sat at 0.949 would make the gate meaningless.
     assert baseline_ratio < CAD_MASS_GATE - 0.05, (
-        f"baseline global-setSize mesh keeps {baseline_ratio:.6f} of the CAD mass, "
+        f"coarse-graded control (h_c={BASELINE_CONTROL_RESOLUTION:.4e} m) keeps "
+        f"{baseline_ratio:.6f} of the CAD mass, "
         f"within 0.05 of the {CAD_MASS_GATE} gate; the negative control no longer "
-        "separates and the chunk's premise needs re-examining"
+        "separates and the chunk's premise needs re-examining (on record from "
+        "GEO-21 step 1: 0.846150 — see BASELINE_CONTROL_RESOLUTION)"
     )

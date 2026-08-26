@@ -147,10 +147,12 @@ What is validated, to what tolerance, and what must not be trusted.
   2026-08-16 both named prerequisites have **executed and closed**:
   `PORT-10` (the two systematics compose additively, cross-term
   −0.0604 pp) and `GEO-15` (graded conductor sizing reaches 0.967 of CAD
-  mass; `PORT-9` budgets from 98 k cells — measured on 0.7.2; **the gate
-  behind that figure is non-executing on `main` since the 0.11 merge**,
-  its ungraded baseline no longer meshes; disposition `GEO-21`,
-  known-issues 2026-08-25). `PORT-9` **step 1 closed
+  mass; `PORT-9` budgets from 98 k cells — measured on 0.7.2; the gate
+  behind that figure was non-executing on `main` from the 0.11 merge until
+  `GEO-21` ✅ 2026-08-26, which greened it on a **coarse-graded** control —
+  0.966977 at 98 666 cells now reproduces the 0.967 / 98 k figure, but the
+  live gate measures fine-vs-coarse grading, and the graded-vs-ungraded
+  answer to this prerequisite question remains the 0.7.2 close). `PORT-9` **step 1 closed
   2026-08-17**: the mesh prerequisite `GEO-16` landed (longitudinal sheet
   on an opt-in kwarg, area = CAD to roundoff), the parked formulation
   branch was merged with its six exact identities green, and the first
@@ -1893,13 +1895,13 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-12` | **Widen the two `1e-9` wall tolerances and gate the `outer_boundary` group** (known-issues 12) | ✅ | standard |
 | `GEO-13` | **Decouple `cylindrical_domain`'s wall tolerance from `resolution`** (known-issues 13) | ✅ | standard |
 | `GEO-14` | **The shared ~3% geometry floor: faceting vs resolution** (entry lives after `TH-11`, beside the fixtures it measures) | ✅ *(closed 2026-08-15 review on the refuted hypothesis: RESOLUTION, 3.643% → 1.781% at 55 251 cells, rate 1.77 in h — no faceting floor)* | standard |
-| `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | ✅ 2026-08-16 (graded sizing recovers **0.9670** of the conductor's CAD mass at h_c = 1.6 mm vs **0.7403** baseline, gate cleared, `GEO-9` identities unmoved at < 1e-9; 41 s at `-n 2`; closed by the 10:30 review — the chunk was its one question, now answered by measurement. **2026-08-25: its gate `test_graded_conductor_sizing_recovers_the_cad_mass` is red on `main` on the 0.11 image — the ungraded baseline rung no longer meshes (conductor-sizing axis, not resolution; known-issues 2026-08-25). Disposition is `GEO-21`; the ✅ here is the 0.7.2 close and stands**) | standard |
+| `GEO-15` | **Birdcage conductor sizing: is graded sizing a `PORT-9` prerequisite?** (the 0.7091 question; named prerequisite of `PORT-9` step 3) | ✅ 2026-08-16 (graded sizing recovers **0.9670** of the conductor's CAD mass at h_c = 1.6 mm vs **0.7403** baseline, gate cleared, `GEO-9` identities unmoved at < 1e-9; 41 s at `-n 2`; closed by the 10:30 review — the chunk was its one question, now answered by measurement. **2026-08-25: its gate `test_graded_conductor_sizing_recovers_the_cad_mass` is red on `main` on the 0.11 image — the ungraded baseline rung no longer meshes (conductor-sizing axis, not resolution; known-issues 2026-08-25). Disposition is `GEO-21`; the ✅ here is the 0.7.2 close and stands**. **2026-08-26: `GEO-21` ✅ — the gate is green again on a *coarse-graded* control (`BASELINE_CONTROL_RESOLUTION` = 4.8e-3, 0.846150 vs graded 0.966977), so what the live module measures is now **fine vs coarse grading**. The graded-vs-ungraded answer to the `PORT-9`-prerequisite question is the 0.7.2 close and must be cited as such — do not restate it off the module's present numbers**) | standard |
 | `GEO-16` | **Emit the gap boxes' longitudinal port-sheet mid-plane in `two_torus_domain`** (the `PORT-9` step-1 mesh prerequisite; commissioned 2026-08-16 18:00 review) | ✅ **2026-08-25: `test_kwarg_off_reproduces_the_recorded_mesh` is red on `main` — the kwarg-off record 79 534 (0.7.2) vs 79 070 measured on 0.11, sheet exonerated by two independent no-sheet builds. Ruled 2026-08-25 18:00 review: re-record licensed, gate constant + both guide copies in one commit (§9 item 3, known-issues entry has the full scope); the ✅ stands. **LANDED 2026-08-25, 22:30 slot** — `NCELLS_UNGATED_RECORD` = **79 070** version-tagged to the 0.11 image with the 0.7.2 digit and both provenance logs in-comment; gate pair `5 passed / 55.84 s / Status 0` printing `cells=79070` and the meshed-band cross-check **0.974490841** inside 0.970–0.980 (`20260826T033222Z_GEO-16-rerecord-gate-pair.log`), `mesh:4` green with the sheeted build properly distinct at **79 940** (`…033350Z`, 31 s) and `mesh:1` at **79 070 / 14.1 s** (`…033431Z`, 16 s); the `mesh:1` docstring + guide and four `mesh:4` guide copies moved in the same commit. No band moved; known-issues entry retired** | standard |
 | `GEO-17` | `coil_phantom_domain` region-resolution policy shrinks the coil volumes it refines (−21.68%/−22.62%; `OPS-17` step-2 defect 1, known-issues 2026-08-17; commissioned 2026-08-17 10:30 review) — step 1 ✅ 2026-08-20: the sizes were never applied (`getBoundary` `combined=True` ⇒ 0 points); `Min`-over-`Constant`-fields, coil meshed/CAD 0.7547 → **0.8356** | ✅ *(audited COMPLIANT 2026-08-21 18:00 review — 1e-9 negative-control gate, sign-of-refinement identity and partition 1.000000000000 verified against `20260820T110549Z…final.log`. **2026-08-25: `mesh:5`'s example-side inverted control lost its separation on 0.11 — clamps-only clears the 0.755 floor by 6e-6; the gate module itself is green (one-sided on the policy mesh). Ruled 2026-08-25 18:00 review: re-choose the control measure-first with ≥ 0.05 separation, demote to report only if none exists — §9 item 3, known-issues entry has the branches; the ✅ stands. **LANDED 2026-08-25, 22:30 slot — the re-choose branch, not the demotion.** A four-sizing probe (`20260826T033622Z_GEO-17-mesh5-sizing-probe.log`, `-n 1`, 8 s) measured coil meshed/CAD at h = 0.015 / 0.018 / 0.020 / 0.025 (0.755006 / **0.649812** / 0.595547 / 0.471986 on coil_1) and the example adopted `CONTROL_RESOLUTION` = **0.018**, the first coarser sizing missing the 0.755 floor by ≥ `CONTROL_SEPARATION` = 0.05 — measured margins **+0.105188 / +0.106569**, whole probe table in-comment, hunting stopped at the first that separated. The control is a **third build**, not a re-pointed one: `UNIFORM_VOLUMES_RECORD` is a gate constant at h = 0.015, so the clamps-only mesh stays as its 1e-9 reproduction and as the sign-identity baseline, and `SIZING_SEPARATION` is now asserted against **both** baselines (+0.078411 / +0.085109 and +0.183605 / +0.187132). `POLICY_MIN_CAD_RECOVERY`, the one-sided gate-module assertion and every record are untouched — `test_mesh_tag_integrity.py` was not edited. `mesh:5` green twice (`…033758Z`, `…033959Z`, Status 0, 8 / 9 s); known-issues entry retired**)* | standard |
 | `GEO-18` | Birdcage conductor gaps: cut the legs so the port boxes have terminals (`PORT-9` step-3 mesh prerequisite; commissioned 2026-08-20 03:00 review from step 3 legs (a)+(b) 🚫) | ✅ 2026-08-22 (*step 2 audited COMPLIANT 2026-08-22 03:00 review — every figure verbatim in `20260822T020113Z_GEO-18-step2.log:8569-8576`, no pre-existing test touched; one transparency note: the sheets-off control asserts the `110+i` **cell** tags absent, and the `210+i` facet absence the entry and commit claim is implied by that, not measured — `EX-28` is commissioned to assert it directly*; **step 1 ✅ 2026-08-20** — terminals exist: 2.236196e-04 m² per port, **0.988616** of the closed-form `2·π·r_leg²`, all four equal to the printed 7 digits, *audited COMPLIANT 2026-08-21 18:00 review — closed-form band, closure and mass identities verified against all three logs, the pre-derivation red disclosed*; **step 2 ✅ 2026-08-22** — the sheets exist and are exact: meshed sheet area `1.120000000e-04 m²` = the analytic `dx·g` at **1.000000000000** on all four ports, `w_eff = A/h` equal to the bbox extent to 1.000000000000, out-of-plane spread ≤ 2.512e-16 m, half-volumes 0.500000000000 each, C4 sheet spread **8.470e-16**, step 1's terminal band and closure re-asserted on the sheeted mesh) | standard |
 | `GEO-19` | `birdcage_port_domain` at `leg_count = 16`, gapped + sheeted: identity family re-gated (C16), cost rung measured — 32-port directive item (a) (commissioned 2026-08-23 weekly review) | ✅ *(**step B ✅ 2026-08-25** — the local-frame port construction is on `main` under ruling (6\*): invariance control `3 passed` from `main` at 116 085 / 114 655 cells, C4 spread 6.050e-16, terminals 0.988616 × 4, no-gap control 98 666 digit for digit; the three `PORT-9` modules `19 passed` **twice in-slot** on the mesh-tagged re-records, σ_max 0.999992805, class separation 166.6766×, (d0) margin 2256.9707×, leg (c)'s `I₁` reproducing to 5.934e-12 against a 1e-9 band. The open-limit (1e6 Ω) column is retired as a record-bearing fixture — no band widened. **Step C attempt 1 2026-08-25**: the rung is measured — 116 085 → **307 296 cells (2.6472×)**, mesh 22.93 → **74.18 s (3.2357×)**, inside the 1 M / 600 s stop rule — and gates (i)/(iii)/(iv)/(v) are green at 16 legs (partition and closure 1.000000000000, C16 sheet spread **1.331e-15**, conductor 0.981503, separation margin 1.560723×) with the 4-leg control reproducing step B's record at delta **0** cells / 6.050e-16. Gate (ii)'s *equality* half is red at **8.434e-04** vs 1e-5 — a three-valued azimuth-class structure with ≤ 2e-7 inside each class, i.e. a C4 band applied to C16; parked on `attempt/GEO-19-stepC-20260825T125000Z`, no band widened, ruling requested. **Ruled 2026-08-25 10:30 review: construction symmetry — per-azimuth-class reading, intra-class 1e-6, inter-class ceiling 5e-3, every existing band unmoved; landing instructions in the prose entry, queued §9 item 1**. **Step C landed 2026-08-25 12:00 slot — chunk ✅**: the ruled module is `2 passed` / **117 s** from `main` (`20260825T170316Z_GEO-19-stepC-ruled.log`; record run `…T170523Z…-ruled-record.log`, 115 s). Gate (ii) per class from the mesh's own coordinate mirrors — three classes, intra **1.923e-07 / 5.849e-08 / 6.144e-08** against 1e-6, inter **8.431e-04** against 5e-3; the 4-leg control returns **one** class at **3.184e-08**, i.e. the reading reduces to the old flat gate. Four already-green gates reproduce (partition/closure/halves/`dx·g` 1.000000000000, C16 sheet spread 1.331e-15, conductor 0.981503, margin 1.560723×) and the control meshes **116 085** cells, delta **0**. **Cost rung: 116 085 → 307 296 cells (2.6472×), mesh 22.99 → 74.37 s (3.2346×)** — Phase 6's first measured rung, on F-small. No band outside the module moved; `GEO-20` step 2 unblocked)* | heavy (probe first) |
 | `GEO-20` | High-pass birdcage ring-gap port layout (`ring_gap_length`, `2·leg_count` ports, the `GEO-18` pattern on the end rings) — 32-port directive item (b); step 1 at 4 legs, step 2 at 16 after `GEO-19` (commissioned 2026-08-23 weekly review) | 🟡 *(**step 1 ✅ 2026-08-24** — the 8 ring ports exist at 4 legs and every pre-stated gate is green twice in-slot: terminal **0.974455** of the closed-form `2·π·r_ring²` inside the [0.95, 1.0] inscribed band and equal across the 8 to **≈ 2e-8** (gate 1e-5; digit corrected by the 10:30 review audit — see the prose entry), closure and port-volume **1.000000000000**, sheet meshed/analytic **1.000000000000** with out-of-plane spread **5.042e-18 m**, C4 and top/bottom-mirror spreads below 1e-12, `GEO-9` partition green, conductor 0.969275 ≥ 0.95; negative controls green — kwarg off reproduces the uncut birdcage and the leg+ring mesh is a 12-port mesh with **both** identity families exact. Step 2 (16 legs, 32 ports) is serial on `GEO-19`)* | standard |
-| `GEO-21` | Dispose of the red `GEO-15` graded-conductor gate on 0.11: the ungraded baseline (`conductor_resolution=None`) no longer meshes at any global resolution tried, so the whole gate is non-executing on `main` (found by `EX-30` leg (mesh); commissioned 2026-08-25 18:00 review; known-issues 2026-08-25) | 🟡 *(step 1 measured 2026-08-26, **blocked on a ruling** — the candidate control `h_c = 3.2e-3` recovers **0.916742** of the CAD mass, which is **neither** pre-stated branch: not ≤ 0.90 "clearly below", not clearing 0.95, and **inside the module's own `CAD_MASS_GATE - 0.05` = 0.90 separation guard**, so branch (2) as named cannot produce a green gate without loosening that guard. Graded side green — 0.966977 at 98 666 cells. Coarse-ward ladder measured and handed over, nothing adopted; see the entry. **Ruled 2026-08-26 03:00 review: option (b), control = 4.8e-3** — separation 0.846150 vs 0.966977 with the 0.90 guard unmoved, demoted claim (fine-vs-coarse grading) stated; 6.4e-3 rejected for cliff adjacency. Step 2 is §9 item 1)* | standard |
+| `GEO-21` | Dispose of the red `GEO-15` graded-conductor gate on 0.11: the ungraded baseline (`conductor_resolution=None`) no longer meshes at any global resolution tried, so the whole gate is non-executing on `main` (found by `EX-30` leg (mesh); commissioned 2026-08-25 18:00 review; known-issues 2026-08-25) | 🟡 *(step 1 measured 2026-08-26, **blocked on a ruling** — the candidate control `h_c = 3.2e-3` recovers **0.916742** of the CAD mass, which is **neither** pre-stated branch: not ≤ 0.90 "clearly below", not clearing 0.95, and **inside the module's own `CAD_MASS_GATE - 0.05` = 0.90 separation guard**, so branch (2) as named cannot produce a green gate without loosening that guard. Graded side green — 0.966977 at 98 666 cells. Coarse-ward ladder measured and handed over, nothing adopted; see the entry. **Ruled 2026-08-26 03:00 review: option (b), control = 4.8e-3** — separation 0.846150 vs 0.966977 with the 0.90 guard unmoved, demoted claim (fine-vs-coarse grading) stated; 6.4e-3 rejected for cliff adjacency. **Step 2 ✅ 2026-08-26 (04:30 slot) — landed as written and the chunk closes**: control `None` → 4.8e-3 version-tagged with the six-rung probe table in-comment, demoted claim (fine vs coarse grading) in the module docstring and the `mesh:3` guide, gate `1 passed in 41.11s` at 0.846150 / 0.916742 / 0.966977 with the 0.95 gate and the 0.90 separation guard unmoved, `mesh:3` green at separation 0.120826, docrefs `dead=0 guide=0 stale=13 exit=2` giving `meshing` 2 → 0; known-issues gate red retired, generator-continuum finding re-headed and open)* | standard |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -2617,7 +2619,9 @@ the same gates after `GEO-19` and is priced there.
 >   **One finding, measured and not gated.** The union form of the mass identity — gapped CAD conductor = uncut CAD conductor − `2·leg_count·pi·r_ring²·g` — reads **0.999998939803**, 1.06e-06 off, well past the 1e-9 the leg cut achieved. It is *not* the arcs: Pappus on the ring primitives before any boolean reads **1.000000000000** on both the 8 arcs (4.099883683960e-05 m³) and the 2 uncut tori (4.421582771688e-05 m³), so the swept angles are exactly `2·pi/N − g/R`. The residual is OCC's quadrature on a union of 28 vs 20 curved pieces, differenced; the module therefore gates the primitive identity at 1e-9 and records the union ratio. `GEO-18` step 1 hit the same amplification (28× on its own difference) and moved its assertion for the same reason — there the primitive was a cylinder and needed no separate check.
 
 **`GEO-21` — dispose of the red `GEO-15` graded-conductor gate on 0.11: the
-ungraded baseline no longer meshes** 🟡 *(commissioned 2026-08-25 18:00
+ungraded baseline no longer meshes** ✅ *2026-08-26 (step 2 landed the 03:00
+review's ruling (b); gate and `mesh:3` green, claim demoted in writing, census
+`meshing` 2 → 0 — see step 2 below)* *(commissioned 2026-08-25 18:00
 review from `EX-30` leg (mesh)'s finding, the `MAG-13`→`MAG-19` precedent:
 `GEO-15`'s ✅ is the 0.7.2 close and stands; this chunk owns the 0.11 red.
 `tests/mesh/test_birdcage_conductor_sizing.py::test_graded_conductor_sizing_recovers_the_cad_mass`
@@ -2745,6 +2749,50 @@ the gate has been non-executing since the 0.11 merge. Known-issues
 >   known-issues gate red retires (the generator-continuum finding re-heads
 >   and stays open, as that entry states), and the `EX-30` leg (mesh) census
 >   2 → 0 becomes derivable.
+> * **Step 2 ✅ 2026-08-26 (04:30 slot) — the ruling landed as written, chunk
+>   closed.** `BASELINE_CONTROL_RESOLUTION = 4.8e-3` in
+>   `tests/mesh/test_birdcage_conductor_sizing.py`, version-tagged with the
+>   whole six-rung probe table in-comment (the FAILs at `None` and 9.6e-3, the
+>   two rejected candidates and why) citing step 1's three logs and the
+>   known-issues entry; the demoted claim — **fine vs coarse grading**, the
+>   graded-vs-ungraded claim closed on 0.7.2 and left there — stated in the
+>   module docstring, the test's own docstring, the `mesh:3` example docstring
+>   and its guide, in this one commit.
+>   * **Gate green from `main`** (`20260826T093202Z_GEO-21-step2-gate.log`,
+>     `-n 2`, real, `1 passed in 41.11s`, Status 0, 43 s — the 08-16 close was
+>     41 s): control **0.846150** / 33 185 cells, 3.2e-3 **0.916742** / 47 975,
+>     graded **0.966977** / 98 666, CAD mass 1.030097043e-04 m³ identical
+>     across all three. Every step-1 probe figure reproduced **exactly**, now
+>     through the gate's own assertions rather than a probe — which is the
+>     anchor: the ≥ 0.95 gate, the `CAD_MASS_GATE - 0.05` = 0.90 separation
+>     guard (cleared by 0.0538) and the monotone-in-h ladder all asserted at
+>     their unmoved values. No record needed re-recording under (1\*): this
+>     module holds no named cell or recovery constant, so its own assertions
+>     never demanded it.
+>   * **Consumer check green** (`20260826T093403Z_GEO-21-step2-mesh3.log`,
+>     `-n 2`, Status 0, 29 s): `mesh:3` through the `ANS-1` import — the
+>     example now imports `BASELINE_CONTROL_RESOLUTION` rather than restating
+>     `None`, so this class of divergence cannot recur — separation
+>     **0.120826**, both ParaView exports written, `GEO-9` identities held on
+>     both rungs.
+>   * **Census derived:** `20260826T093552Z_GEO-21-step2-docrefs.log`,
+>     `RESULT: dead=0 guide=0 stale=13 stale_severity=report exit=2` — passes
+>     the `OPS-19` `exit != 1` rule, and the 13 attribute cleanly as ansys 2 /
+>     ports 4 / magnetostatics 7 with **`meshing` 2 → 0**, no other family
+>     moved. That is the `EX-30` leg (mesh) census the §9 items 3/4 consume.
+>   * **Two latent bugs in the gate module fixed by the same edit**, both
+>     created by the control acquiring an `h_c`: `graded = [r for r in rungs
+>     if r["h_c"] is not None]` would have folded the control into its own
+>     monotone comparison (now sliced positionally, `rungs[1:]`), and the
+>     ladder-budget early exit keyed on the same `h_c is not None` test (now
+>     `len(rungs) > 1`). Named here because neither is visible in the numbers.
+>   * **Two bands checked and not moved, deliberately:** the 0.05 separation
+>     guard and `CONTROL_SEPARATION` in the example. **Not re-reproduced:**
+>     the red — step 1 discharged it, as the ruling directs.
+>   * Known-issues: the gate-red portion **retired**; the entry re-headed on
+>     the generator-continuum finding (coarse conductor sizings, `None`
+>     included, cannot mesh on 0.11), which stays open and still
+>     uncommissioned.
 
 ### TH — Time-harmonic Maxwell (Phase 2)
 
@@ -5448,8 +5496,24 @@ One surviving mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-1. **`GEO-21` step 2 — land ruling (b): the coarse-graded control at
-   `h_c = 4.8e-3` (standard, `-n 2`, real, `main`; independent).**
+1. ✅ **DONE 2026-08-26 (04:30 slot) — `GEO-21` step 2 landed as written and
+   the chunk closes.** Control `None` → `BASELINE_CONTROL_RESOLUTION` =
+   4.8e-3, version-tagged with the six-rung probe table in-comment; demoted
+   claim (fine vs coarse grading) in the module docstring, the test
+   docstring, the `mesh:3` example docstring and its guide. Gate green from
+   `main` at the **unmoved** anchor values — graded 0.966977 ≥ 0.95, control
+   0.846150 < 0.90, separation guard untouched, ladder monotone
+   (`20260826T093202Z_GEO-21-step2-gate.log`, `1 passed in 41.11s`, Status 0,
+   43 s); `mesh:3` green through the `ANS-1` import at separation 0.120826
+   (`20260826T093403Z_GEO-21-step2-mesh3.log`, Status 0, 29 s), the example
+   now **importing** the control rather than restating it. Census derived:
+   `dead=0 guide=0 stale=13 exit=2`, **`meshing` 2 → 0** — items 3/4 can
+   consume it. Nothing re-recorded under (1\*) (the module holds no named
+   record); no band moved; known-issues gate red retired, generator-continuum
+   finding re-headed and still open.
+
+   ~~**`GEO-21` step 2 — land ruling (b): the coarse-graded control at
+   `h_c = 4.8e-3` (standard, `-n 2`, real, `main`; independent).**~~
    Execute the ruling as written in the §7 entry: baseline control
    `None` → `4.8e-3` version-tagged, old `None` in-comment citing the
    three step-1 logs and the known-issues entry; the demoted-claim

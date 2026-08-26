@@ -28,9 +28,43 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### 🔴 OPEN 2026-08-25 (`EX-30` leg (mesh), 16:30 implementer slot) — `test_graded_conductor_sizing_recovers_the_cad_mass` is **red on `main`**: the `GEO-15` gate's *baseline* rung no longer meshes, and it is the **ungraded conductor path**, not the resolution
+### 🔴 OPEN 2026-08-25, re-headed 2026-08-26 (`GEO-21` step 2) — `birdcage_port_domain` **cannot mesh a coarse conductor sizing on the 0.11 image**: `conductor_resolution=None` and everything coarser than ~4.8 mm abort in gmsh with "Invalid boundary mesh (overlapping facets)"
 
-> **Where this fires.**
+> **✅ The gate-red portion of this entry RETIRED 2026-08-26** (`GEO-21` step 2,
+> 04:30 implementer slot), exactly as the retire-when below specifies.
+> `test_graded_conductor_sizing_recovers_the_cad_mass` and `mesh:3` are **green
+> on `main`**: the negative control moved `None` → `BASELINE_CONTROL_RESOLUTION`
+> = 4.8e-3 (the 03:00 review's ruling (b)), version-tagged with the six-rung
+> probe table in-comment, and the demoted claim — **fine vs coarse grading**,
+> no longer "grading required" — stated in the module docstring and the `mesh:3`
+> guide. Gate `20260826T093202Z_GEO-21-step2-gate.log`, `1 passed in 41.11s`,
+> Status 0, 43 s, `-n 2`: control **0.846150** at 33 185 cells, 3.2e-3
+> **0.916742** at 47 975, graded **0.966977** at 98 666 — every step-1 probe
+> figure reproduced exactly, now through the gate's own assertions. Consumer
+> check `20260826T093403Z_GEO-21-step2-mesh3.log`, Status 0, 29 s, separation
+> 0.120826. `CAD_MASS_GATE`, the `- 0.05` separation guard and `CONDUCTOR_RUNGS`
+> are all unmoved; nothing was loosened.
+>
+> **What stays open is the generator limitation in the heading**, which
+> `GEO-21` step 1 measured to be *wider* than "the ungraded path": 9.6e-3 fails
+> the same way at a fourth distinct surface pair, so `conductor_resolution=None`
+> is the coarsest point of a continuum whose coarse end stopped meshing at the
+> 0.11 merge, not a special broken path. Hardening `birdcage_port_domain`
+> against it would have to cover coarse *graded* sizings too. Still
+> **deliberately not commissioned** — no production path uses a coarse
+> conductor sizing now that the control sits at 4.8e-3, and that decision is
+> recorded here rather than silently made. **Retire-when:** a chunk that
+> hardens the generator, or a gmsh/image change that makes the coarse end mesh
+> again — re-measure the ladder before retiring, do not infer it.
+>
+> **Verified at** the `GEO-21` step 2 landing commit.
+>
+> ---
+>
+> *Everything below is the history of the retired gate red, kept because the
+> measurements in it are what the disposition rests on.*
+>
+> **Where this fired.**
 > `tests/mesh/test_birdcage_conductor_sizing.py::test_graded_conductor_sizing_recovers_the_cad_mass`,
 > and through it `examples/meshing/03_birdcage_graded_conductors.py` (`mesh:3`),
 > which imports `CONDUCTOR_RUNGS` / `CAD_MASS_GATE` / `_check_geo9_identities`
@@ -158,7 +192,8 @@ unless fixing it is the task.
 > generator-continuum finding above re-heads and stays open, still
 > deliberately uncommissioned.
 >
-> **Verified at** `ab55ff1`.
+> **Verified at** `ab55ff1`. **Landed 2026-08-26 — see the retirement note at
+> the head of this entry.**
 
 ### ✅ RETIRED 2026-08-25 (`EX-30` item 3 half A, 22:30 implementer slot) — `test_kwarg_off_reproduces_the_recorded_mesh` was **red on `main`**: the `GEO-16` kwarg-off cell record read 79 534, the 0.11 image meshes **79 070** (`EX-30` leg (mesh), 2026-08-25)
 
