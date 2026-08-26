@@ -20,17 +20,30 @@ close; and the outer boundary uses the **analytic Dirichlet** condition
 wall that `-e 1` leaves in place. That is why this example lands an order of
 magnitude closer to its closed form than the straight wire does.
 
-On record at `-n 2` (`20260810T093203Z_EX-15-step1-refresh-allmag.log`,
-2026-08-10):
+On record at `-n 2` (`20260826T170305Z_EX-30-root2-run-mag2to4.log`,
+2026-08-26, commit `c466143`, dolfinx 0.11):
 
 | Quantity | Value |
 | --- | --- |
-| Mesh | **411 393 cells** (resolution 0.002 m) |
-| `B_z` at centre, numerical | **2.974560e-05 T** |
+| Mesh | **409 596 cells** (resolution 0.002 m) |
+| `B_z` at centre, numerical | **2.976768e-05 T** |
 | `B_z` at centre, analytic `μ₀I/2a` | **3.141593e-05 T** |
-| Relative L2 error on the axis | **6.3046%** |
-| Max relative error | **13.5037%** (at z = +0.0240 m) |
-| Magnetic energy | **2.466288e-08 J** |
+| Relative L2 error on the axis | **6.2134%** |
+| Max relative error | **11.6541%** |
+| Magnetic energy | **2.466102e-08 J** |
+
+<!-- Re-recorded 2026-08-26 (EX-30 leg (root) completion, in-class (1*)
+     licence for un-asserted guide tables — this example carries 0 assert
+     statements). Superseded 0.7.2-image digits
+     (20260810T093203Z_EX-15-step1-refresh-allmag.log, 2026-08-10):
+     411 393 cells, B_z centre 2.974560e-05 T, relL2 6.3046%, max rel
+     13.5037% (at z = +0.0240 m), energy 2.466288e-08 J. The motion is the
+     0.11 mesh motion — 411 393 -> 409 596 cells, 0.44% — and every derived
+     figure moves sub-percent with it, except the max relative error, which
+     is a single-point statistic and moved 13.5037% -> 11.6541%. The run
+     prints no z for that maximum, so the old location is not carried
+     forward as if it had been re-measured. Analytic mu0*I/2a unmoved at
+     3.141593e-05 T. No band, tolerance or gate constant moved. -->
 
 The gate for this physics is `MAG-13` (✅, heavy tier): the loop fixture in
 `tests/validation/test_circular_loop.py` lands at **7.07%** with measured

@@ -27,13 +27,18 @@ separate mesh-only file to open.
 - `straight_wire_validation.png` - |B| vs r, numerical against analytic
 
 A copy of this plot is checked in next to the example so it can be read
-without running anything. It is regenerated from a real run whenever the
-example changes; the copy in the repo is from 2026-08-09 and reads relative
-L2 error 65.8739%, max relative error 85.2498% (the last digit of the max
-moves between runs — 85.2499% is equally on record) — the numbers for
-this fixture, which is coarse on purpose (`resolution = 0.01 m`) so the
-scheduled runs stay cheap. The error is large because of the mesh, not
-because the comparison is wrong.
+without running anything. **That checked-in copy is stale as of 2026-08-26**:
+it is from 2026-08-09 and reads relative L2 error 65.8739%, max relative error
+85.2498% (the last digit of the max moved between runs — 85.2499% was equally
+on record), which are this example's numbers at its **old**
+`resolution = 0.01 m`. That resolution no longer meshes on the dolfinx 0.11
+image, so the example moved to `resolution = 0.008 m` (`EX-30` leg (root),
+2026-08-26; see `01_straight_wire.md` and `docs/testing/known-issues.md`) and
+now reads **51.9781% / 76.7330%** at 21 830 cells. A live run rewrites
+`paraview_output/straight_wire_validation.png` with the current numbers —
+read that one, not the checked-in copy, until the copy is refreshed. The
+error is large in either case because of the mesh, not because the comparison
+is wrong.
 
 ### VTX Format (Modern, requires ADIOS2)
 

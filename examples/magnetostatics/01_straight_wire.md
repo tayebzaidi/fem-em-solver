@@ -16,11 +16,24 @@ and compared point by point against the infinite-wire closed form
 
 | Quantity | On record at `-n 2` |
 | --- | --- |
-| Relative L2 error vs `μ₀I/2πr` | **65.8739%** |
-| Max relative error | **85.2498%** |
-| Decay ratio `B(3 mm)/B(38 mm)`, numerical | **29.83** (analytic: **12.67**) |
-| Magnetic energy | **2.307201e-08 J** |
-| Mesh | **15 001 cells, 3 259 vertices** |
+| Relative L2 error vs `μ₀I/2πr` | **51.9781%** |
+| Max relative error | **76.7330%** |
+| Decay ratio `B(3 mm)/B(38 mm)`, numerical | **20.31** (analytic: **12.67**) |
+| Magnetic energy | **2.630243e-08 J** |
+| Mesh | **21 830 cells, 4 662 vertices** |
+
+<!-- Record re-recorded 2026-08-26 (EX-30 leg (root) completion) from
+     docs/testing/logs/20260826T170155Z_EX-30-root2-run-mag1.log, Status 0,
+     9 s, `./scripts/run_examples.sh -e 1 -n 2 -t 300` at commit c466143.
+     The move is caused by the ruled resolution change 0.01 -> 0.008 (the
+     0.11-image coarse-resolution floor in `straight_wire_domain`; see
+     docs/testing/known-issues.md), not by any solver change — a coarser
+     mesh was over-predicting the mirror, so the finer mesh lands closer to
+     the closed form on every row. Superseded digits, valid at
+     `resolution = 0.01` on the 0.7.2 image (2026-08-04,
+     20260804T174037Z_MAG-EX.log): relL2 65.8739%, max rel 85.2498%, decay
+     ratio 29.83, energy 2.307201e-08 J, mesh 15 001 cells / 3 259 vertices.
+     Un-asserted guide table; no band, tolerance or gate constant moved. -->
 
 Two independent reasons, both physical rather than numerical: the wire is
 **finite** (0.3 m) while the closed form is infinite, and the outer wall carries
@@ -65,18 +78,20 @@ mismatch raises rather than printing a warning. Before the fix the run printed
 **Step 1 — check the printed numbers against the record above.** In order of
 diagnostic value:
 
-1. **Cell/vertex count** (`15 001` / `3 259`). If this moved, nothing below is
+1. **Cell/vertex count** (`21 830` / `4 662`). If this moved, nothing below is
    comparable — a mesh change explains any error change on its own.
-2. **Relative L2 error 65.8739%** and **max relative error 85.2498%**. These
-   reproduce digit for digit across runs and across the 2026-08-04 record
-   (`20260804T174037Z_MAG-EX.log`) — this example is deterministic at fixed
-   rank count, so *any* movement in these digits is a real change in the
+2. **Relative L2 error 51.9781%** and **max relative error 76.7330%**. These
+   reproduce digit for digit across runs at fixed rank count (the 2026-08-26
+   run reproduces both across its two in-run passes) — this example is
+   deterministic, so *any* movement in these digits is a real change in the
    solver, the mesh, or the evaluation path, not noise.
-3. **Decay ratio 29.83 vs analytic 12.67.** A ratio moving *toward* 12.67 means
+3. **Decay ratio 20.31 vs analytic 12.67.** A ratio moving *toward* 12.67 means
    the boundary treatment changed (that would be good, and would belong in a
    chunk); a ratio moving further above means the mirror got stronger, i.e. the
-   wall moved inward.
-4. **Magnetic energy 2.307201e-08 J** — the one global, non-pointwise number
+   wall moved inward. The 0.01 → 0.008 resolution move already took it
+   29.83 → 20.31 for exactly the second reason in reverse: resolving the wire
+   better weakens the numerical over-steepening, it does not move the wall.
+4. **Magnetic energy 2.630243e-08 J** — the one global, non-pointwise number
    here; it catches errors that pointwise sampling at a handful of radii can
    miss.
 
@@ -126,7 +141,7 @@ analytic. A copy regenerated on 2026-08-09 is committed at
 `examples/magnetostatics/straight_wire_validation.png` (provenance: `EX-12`;
 the original 2026-02-18 image predated the example's 2026-08-03 rewrite and was
 replaced). What to look at: two curves, both falling, the numerical one falling
-faster — the visual form of the 29.83 vs 12.67 ratio.
+faster — the visual form of the 20.31 vs 12.67 ratio.
 
 ## Related
 

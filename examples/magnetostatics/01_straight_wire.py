@@ -117,7 +117,19 @@ def main():
     current = 1.0              # Current [A]
     wire_length = 0.3          # Wire length [m]
     domain_radius = 0.04       # Domain radius [m] (4 cm)
-    resolution = 0.01          # Mesh resolution [m] (coarse, cron-safe runtime)
+    # Mesh resolution [m] (coarse, cron-safe runtime).
+    # Was 0.01 until 2026-08-26. On the dolfinx 0.11 image `straight_wire_domain`
+    # has a coarse-resolution floor: h = 0.01 aborts inside gmsh with "Invalid
+    # boundary mesh (overlapping facets)" for *every* geometry tried, including
+    # the gate's own L = 0.20 / R = 0.030, while h = 0.008 / 0.006 / 0.005 /
+    # 0.004 all mesh. Localised by
+    # tests/validation/probe_straight_wire_mesh_resolution.py, log
+    # docs/testing/logs/20260825T142512Z_EX-30-root-mag1-mesh-probe.log
+    # (h = 0.0080 OK, 21830 cells, 2.6 s). 0.008 is the nearest working rung.
+    # The floor's exact threshold is unbisected, so no guard is written here;
+    # see docs/testing/known-issues.md (EX-30 leg (root)) — ruled 2026-08-25
+    # 10:30 review, executed by EX-30 leg (root) completion.
+    resolution = 0.008
     wire_radius = 0.003       # Wire radius [m] (1.5 mm)
     
     print(f"\nParameters:")

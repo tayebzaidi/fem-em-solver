@@ -16915,3 +16915,149 @@ whether `ports:1`/`ports:2` should reach their records through a shared
 example-side module rather than restating them a third time.
 
 `main` clean at handoff.
+
+
+## 2026-08-26T17:20Z — `EX-30` leg (root) completion — **complete** (and `EX-30` closes)
+
+**Slot:** 12:00 CDT scheduled implementer run. §9 item 4, taken as the first
+open On-deck item. Preflight: tree clean on `main` at `c466143`; the container
+was **not** Up and was started with
+`docker compose -f docker/docker-compose.yml up -d` before any work.
+
+### What was tried
+
+The item's rubric executed as written, in its stated order.
+
+**Pre-census (control).** `dead=0 guide=0 stale=7 exit=2`
+(`20260826T170118Z_EX-30-root2-precensus.log`, 1 s) — and the 7 were exactly
+the `straight_wire_*` set leg (ports) predicted, no other family present. So a
+clean leg predicts **0**, corpus-wide.
+
+**(i) `mag:1`'s mesh red — the 08-25 10:30 ruling, executed.**
+`examples/magnetostatics/01_straight_wire.py:120`, `resolution` `0.01` →
+**`0.008`**, with the old value, the 0.11-image floor, the probe's five-rung
+result and the log citation in-comment at the constant. Run **first and alone**
+per the teardown-hang trap. Green:
+`20260826T170155Z_EX-30-root2-run-mag1.log`, Status 0, **9 s**, real, `-n 2`.
+
+Numbers: **21 830 cells / 4 662 vertices** — the 08-25 probe's
+`h = 0.0080 OK 21830 cells` reproduced **exactly**, which is the thing worth
+recording: the localisation to `resolution` alone was right, not an artifact of
+that probe's geometry. Quantitative anchors, both closed-form and both unmoved:
+analytic `B(3 mm) = 6.666667e-05 T` (= `μ₀I/2πr`) and analytic decay ratio
+`B(3 mm)/B(38 mm) = 12.67` (= 38/3). Derived figures moved with the mesh —
+relL2 65.8739% → **51.9781%**, max rel 85.2498% → **76.7330%**, numerical decay
+29.83 → **20.31**, energy 2.307201e-08 → **2.630243e-08 J** — every one of them
+*toward* the closed form, the expected sign for a finer mesh under an unmoved
+natural wall.
+
+**(ii) `mag:6` — re-run, green, zero example-side edits**, exactly as the item
+predicted from the `MAG-19` landing:
+`20260826T170746Z_EX-30-root2-run-mag6.log`, Status 0, **163 s**, "All
+assertions hold". Errors **21.8417% / 15.3848% / 4.4605%** at 38 740 / 147 235 /
+383 146 cells — bit-identical to the `MAG-19` step-2 record — with fitted
+**1.9038** printing report-only beside the retired band and the `MAG-18` duty
+owner. Nothing was touched to make this pass.
+
+**(iii) The (1\*) licensed guide tables.** All three predicted digits hit
+**exactly**, so the licence was spent on arithmetic and not on judgement:
+`mag:2` **409 596 cells / relL2 6.2134%**, `mag:4` **69 918 / 103 950 /
+160 677** cells (`20260826T170305Z_EX-30-root2-run-mag2to4.log`, Status 0,
+**270 s**); `mri:1` phantom `|E|` mean **1.979842e+02**
+(`20260826T171038Z_EX-30-root2-run-mri1.log`, Status 0, **5 s**, complex).
+Each re-record is version-tagged to this slot's own log **and commit
+`c466143`**, superseded 0.7.2 digits in-comment. Analytic anchors beside them
+checked rather than copied, and unmoved: `mag:2`'s `μ₀I/2a = 3.141593e-05 T`,
+`mag:4`'s centre field `3.531057e-09 T`.
+
+**Post-census.** `dead=0 guide=0 stale=0 exit=0`
+(`20260826T171345Z_EX-30-root2-postcensus.log`, 1 s). Prediction met on the
+nose, and the first `exit=0` the checker has returned since `EX-29` made it the
+census instrument.
+
+### Judgement calls, flagged for the review rather than buried
+
+1. **Three readings changed shape, not just value, and were written up in
+   prose instead of silently re-recorded.** `mag:4`'s max on-axis error is
+   **no longer monotone** — 7.92 → 4.64 → 5.33% against the 0.7.2 record's
+   7.98 → 6.07 → 4.05%, and the guide's old paragraph asserted that
+   monotonicity as a reading. It now says the opposite, with the reasoning
+   (single worst point, finest rung's worst sample sits in a flat run of three
+   equal FEM values at `z = -0.0084 m`, 5.33% is inside the band the centre
+   error already wanders in) and notes that the *mean* still behaves like
+   discretisation error (2.15 → 1.03 → 1.56%) and the central CV is unmoved in
+   character. Similarly `mri:1`'s `|B|` min (8.79e-08 → 1.37e-07) and max
+   `|E|/|B|` ratio moved far outside the ~0.2% mesh-motion class the rest of
+   that table sits in. All are un-asserted single-extremum statistics on a
+   field `mri:1` already labels non-physical by construction — but a licence to
+   re-record a number is not a licence to keep a stale *claim* about it.
+
+2. **Two edits beyond the three named tables, both forced by (i).** `mag:1`'s
+   own guide table is un-asserted and described the *old* resolution; it was
+   re-recorded on identical terms (it was absent from the named three only
+   because `mag:1` had never run to produce a digit). And
+   `magnetostatics/PARAVIEW_GUIDE.md` quoted the checked-in
+   `straight_wire_validation.png`'s 65.8739% / 85.2498% as current; that
+   paragraph now states the copy is **stale**, marks those digits as the old
+   resolution's, gives the new ones, and points at the live
+   `paraview_output/` copy the run rewrites. **The PNG binary was deliberately
+   not replaced** — it is not census-tracked and no licence covers rewriting
+   checked-in figures. If the review wants it refreshed, that is a one-line
+   commission.
+
+3. **`mag:1`'s VTX round-trip check did not execute** on either rank:
+   `⚠ VTX round-trip read-back unavailable: AttributeError: module 'adios2'
+   has no attribute 'ADIOS'`. This is **pre-existing** and unrelated to this
+   leg (it appears identically in the `mag:2` run in the same slot, and the
+   example degrades to a warning by design rather than raising), so per the
+   discipline it was not fixed in passing. Not filed as a new known-issues
+   entry because it is a warning-path degradation on an export check, not a
+   failing gate — but it does mean `01_straight_wire.md`'s `EX-14` anchor
+   block describes output the current image does not produce. **Flagged for
+   the review**: either the image's adios2 moved under `EX-14`, or the check
+   needs migrating. Nobody owns this today.
+
+### Outcome
+
+**Complete.** `EX-30` leg (root) closes, and with it **`EX-30` itself** — the
+chunk-level close rule is met: all four legs ((th), (root), (mesh), (ports))
+have run and are logged, and the census reads 0 for their sets. It in fact
+reads 0 for the *entire* corpus. Item 1's `GEO-21` landing had already taken
+`meshing` 2 → 0, so no ordering caveat applies.
+
+**Compute:** 447 s across four example runs plus two 1 s censuses.
+Commissioned standard, **measured standard**. No command approached its
+`timeout`; nothing was backgrounded; no allowlist denial was hit.
+
+**Committed together:** the one script edit, five guide/spec files, six harness
+logs + `test-results.md` rows, the §7 `EX-30` leg (root) narrative and its
+status-row flip to ✅, §9 item 4 marked done, and the known-issues re-head.
+No `attempt/*` branch — the work completed. **No band, tolerance, gate constant
+or reproduction band moved anywhere in this slot.**
+
+**Known-issues: one re-headed, none retired.** The `EX-30` leg (root) entry now
+heads as the **`straight_wire_domain` coarse-resolution floor** with the example
+symptom recorded as retired. It stays open because no guard was written: the
+generator still aborts inside gmsh on `resolution = 0.01` instead of raising
+legibly, the `[0.008, 0.010)` threshold is unbisected, and *why* 0.01
+specifically is undiagnosed (the wire-diameter hypothesis is contradicted by
+0.008 working at 1.33× the diameter). Retire-when and owner (**unassigned**)
+are stated in the entry.
+
+### Hypothesis for the next attempt
+
+The queue's remaining open items are 5 (`EX-33`) and 6 (`EX-32`), both
+independent and both example chunks; the next slot takes item 5. Note for it:
+the corpus census is now `stale=0 exit=0`, so **any** new example immediately
+owns its own freshness — an `EX-33` that lands and is not re-run will be the
+sole non-zero entry, which makes its census attribution trivially readable
+rather than a subtraction. For the review, three things want a decision and
+none belongs to an implementer: (a) an owner for the coarse-resolution floor
+now that `EX-30` is closed and the entry is unassigned; (b) the adios2 /
+`EX-14` VTX round-trip divergence in item 3 above; (c) whether the checked-in
+`straight_wire_validation.png` should be regenerated, now that the guide
+explicitly calls it stale. Also worth noting for §5.4: with `EX-30` ✅ the
+example corpus is fully fresh for the first time on the 0.11 image, which is
+the precondition the ramp bookkeeping has been waiting on.
+
+`main` clean at handoff.

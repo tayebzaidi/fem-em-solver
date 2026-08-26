@@ -30,7 +30,7 @@ Two specific reasons the numbers are not physics, both visible in the output:
 
 What *is* real: `TH-6` (the lossy plane wave, ✅ 2026-07-31) gates the
 time-harmonic formulation itself, and `th:1` demonstrates it. That gate says
-nothing about *this* geometry — the mesh here is 9261 cells at the `debug`
+nothing about *this* geometry — the mesh here is 9291 cells at the `debug`
 preset, unconverged by any measure.
 
 Since `EX-16` (2026-08-10) the frequency-domain leg solves through the solver's
@@ -82,22 +82,49 @@ so they still carry the vertex-convention artifact — bounding it on the export
 paths is `POST-4` step 4, still open. Do not read a ParaView vertex value of
 `A`/`B`/`E` as the field at that vertex.
 
-On record at `-n 2`, `debug` preset (`20260811T183211Z_POST-4-step3-n2.log`,
-exit 0, 6 s harness-wall; the `-n 4` companion is
-`…183222Z_POST-4-step3-n4.log`, 4 s, and `-n 1` is `…183229Z`, 9 s):
+On record at `-n 2`, `debug` preset
+(`20260826T171038Z_EX-30-root2-run-mri1.log`, exit 0, 5 s harness-wall,
+2026-08-26, commit `c466143`, dolfinx 0.11). The **Rank-stable?** column is
+*not* from this run — it is `POST-4` step 3's three-width measurement
+(`20260811T183211Z_POST-4-step3-n2.log` and its `-n 4` / `-n 1` companions
+`…183222Z` / `…183229Z`), which this slot did not repeat; the percentages are
+carried forward with that provenance, not re-measured:
 
-| Quantity | Value | Rank-stable? |
+| Quantity | Value | Rank-stable? (`POST-4`, 2026-08-11) |
 | --- | --- | --- |
-| Mesh | 9261 cells, 2077 vertices | — |
-| Cell tags | coil_1 **385**, coil_2 **350**, phantom **493**, air **8033** | — |
+| Mesh | 9291 cells, 2083 vertices | — |
+| Cell tags | coil_1 **391**, coil_2 **349**, phantom **493**, air **8058** | — |
 | Frequency-domain KSP | `preonly` / `lu`, `converged=True (reason=4)`, 1 iteration, `residual_norm=0.000000e+00` | — |
-| Phantom `\|E\|` min/max/mean | 1.244231e+02 / 3.150176e+02 / **1.975909e+02** | **yes** — 0.007326% |
-| Phantom `\|B\|` min/max/mean | 8.790509e-08 / 2.771695e-06 / **1.292004e-06** | **yes** — 0.007326% |
-| `\|E\|/\|B\|` mean ratio | **1.529336e+08** (max 1.136553e+08) | — (non-physical by construction) |
+| Phantom `\|E\|` min/max/mean | 1.276853e+02 / 3.043725e+02 / **1.979842e+02** | **yes** — 0.007326% |
+| Phantom `\|B\|` min/max/mean | 1.371178e-07 / 2.856700e-06 / **1.294602e-06** | **yes** — 0.007326% |
+| `\|E\|/\|B\|` mean ratio | **1.529306e+08** (max 1.065469e+08) | — (non-physical by construction) |
 | Sampling coverage | 493/493/493, 0 dropped | — |
-| Centerline, `z = 0` | `\|E\| = 2.370446e+02`, `\|B\| = 5.325383e-07` | **yes** — 0.008613% across `-n 1`/`-n 2`/`-n 4` (was 23.5539% pre-`POST-4`) |
+| Centerline, `z = 0` | `\|E\| = 2.364640e+02`, `\|B\| = 6.261281e-07` | **yes** — 0.008613% across `-n 1`/`-n 2`/`-n 4` (was 23.5539% pre-`POST-4`) |
 | Centerline samples valid (E/B) | 5/5, 5/5 | — |
 | quick-look status | **WARN** (the imbalance warning above) | — |
+
+<!-- Re-recorded 2026-08-26 (EX-30 leg (root) completion, in-class (1*)
+     licence for un-asserted guide tables — this example carries 0 assert
+     statements). Superseded 0.7.2-image digits
+     (20260811T183211Z_POST-4-step3-n2.log, 2026-08-11): mesh 9261 cells /
+     2077 vertices; tags coil_1 385, coil_2 350, phantom 493, air 8033;
+     |E| 1.244231e+02 / 3.150176e+02 / 1.975909e+02; |B| 8.790509e-08 /
+     2.771695e-06 / 1.292004e-06; ratio mean 1.529336e+08 (max
+     1.136553e+08); span ratios 0.605028 / 0.968283; centerline five pairs
+     (z = -0.045 .. +0.045) |E| 1.368268 / 2.315512 / 2.370446 / 2.380360 /
+     1.410509 e+02 and |B| 5.038754e-07 / 4.288120e-07 / 5.325383e-07 /
+     5.249071e-07 / 4.252024e-07. The step-1..5 transcripts further down the
+     guide are re-recorded from the same run, per the leg (th) precedent
+     (a transcript that disagrees with its own table is worse than either).
+     The 0.11 mesh motion is 9261 -> 9291 cells (0.32%) and it redistributes
+     the coil/air tags by a few cells; the phantom tag count is unmoved at
+     493, so the sampled set is the same 493 points. |E| mean moves 0.20%,
+     |B| mean 0.20%, the mean ratio 2.0e-05 relative -- all sub-percent and
+     of the mesh-motion class. Two readings move more: the |B| min
+     (8.79e-08 -> 1.37e-07) and the max |E|/|B| ratio, both single-extremum
+     statistics on a field the guide already labels non-physical by
+     construction. Nothing here is asserted; no band, tolerance or gate
+     constant moved. -->
 
 The `WARN` status is the expected output, not a failure.
 
@@ -130,10 +157,10 @@ before running it in a slot.
 number, read the tag summary:
 
 ```
-  tag 1 (coil_1): 385 cells
-  tag 2 (coil_2): 350 cells
+  tag 1 (coil_1): 391 cells
+  tag 2 (coil_2): 349 cells
   tag 3 (phantom): 493 cells
-  tag 4 (air): 8033 cells
+  tag 4 (air): 8058 cells
 ```
 
 These are **global** counts (allreduced), so they must be identical at every
@@ -165,8 +192,8 @@ does not make the printed numbers physics.
 **Step 3 — read the phantom-region aggregates, which are the trustworthy block.**
 
 ```
-  |E| min/max/mean: 1.244231e+02 / 3.150176e+02 / 1.975909e+02
-  |B| min/max/mean: 8.791014e-08 / 2.771692e-06 / 1.292004e-06
+  |E| min/max/mean: 1.276853e+02 / 3.043725e+02 / 1.979842e+02
+  |B| min/max/mean: 1.371178e-07 / 2.856700e-06 / 1.294602e-06
   sampling coverage (valid/sampling/requested): 493/493/493
   dropped samples (boundary-adjacent, invalid E, invalid B): 0, 0, 0
 ```
@@ -180,8 +207,8 @@ as boundary-adjacent or invalid, so the aggregate is over the whole phantom.
 **Step 4 — read the consistency block, and expect it to warn.**
 
 ```
-    |E|/|B| mean ratio: 1.529336e+08 (max ratio: 1.136553e+08)
-    span ratios (E/B): 0.605028 / 0.968283
+    |E|/|B| mean ratio: 1.529306e+08 (max ratio: 1.065469e+08)
+    span ratios (E/B): 0.580497 / 0.952001
     mean-balance relative diff: 1.000000
     warnings:
       - |E| and |B| mean magnitudes are strongly imbalanced; ...
@@ -199,11 +226,11 @@ related.
 
 ```
 Centerline sample magnitudes (z, |E|, |B|):
-  z=-0.0450 m -> |E|=1.368268e+02, |B|=5.038754e-07
-  z=-0.0225 m -> |E|=2.315512e+02, |B|=4.288120e-07
-  z=+0.0000 m -> |E|=2.370446e+02, |B|=5.325383e-07
-  z=+0.0225 m -> |E|=2.380360e+02, |B|=5.249071e-07
-  z=+0.0450 m -> |E|=1.410509e+02, |B|=4.252024e-07
+  z=-0.0450 m -> |E|=1.375062e+02, |B|=5.524745e-07
+  z=-0.0225 m -> |E|=2.311610e+02, |B|=5.189696e-07
+  z=+0.0000 m -> |E|=2.364640e+02, |B|=6.261281e-07
+  z=+0.0225 m -> |E|=2.375048e+02, |B|=6.235341e-07
+  z=+0.0450 m -> |E|=1.421742e+02, |B|=4.875386e-07
 ```
 
 The shape is sensible — both fields peak at the mid-plane between the coils —
@@ -242,7 +269,7 @@ read when you need to know *which* run produced a picture.
 
 **Step 8 — what a deviation means.** `converged=False (reason=-3)` → an
 iterative solver override has returned; that is the `EX-16` regression. Cell-tag
-counts differing from 385/350/493/8033 at the `debug` preset → the mesh changed;
+counts differing from 391/349/493/8058 at the `debug` preset → the mesh changed;
 nothing below is comparable to this record. Phantom aggregates moving by more
 than ~0.01% across rank counts → a *new* defect, because that path is the
 rank-stable one; report it, it is not the old centerline issue. Centerline

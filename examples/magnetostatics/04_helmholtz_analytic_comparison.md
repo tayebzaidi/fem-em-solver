@@ -41,21 +41,41 @@ source:
    overrides it.
 
 On record at `-n 2`, all three rungs from one run
-(`20260810T093203Z_EX-15-step1-refresh-allmag.log`, 2026-08-10; analytic centre
-field `3.531057e-09 T` throughout):
+(`20260826T170305Z_EX-30-root2-run-mag2to4.log`, 2026-08-26, commit `c466143`,
+dolfinx 0.11; analytic centre field `3.531057e-09 T` throughout):
 
 | `h` [m] | `h/a` | cells | mesh / solve | centre `B_z` FEM | centre rel err | on-axis mean / max | central CV |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0.005 | 1.00 | 70 054 | 8.6 s / 4.0 s | 3.562433e-09 T | **0.89%** | 2.11% / 7.98% | 0.111% |
-| 0.0035 | 0.70 | 103 984 | 13.6 s / 6.9 s | 3.522577e-09 T | **0.24%** | 0.88% / 6.07% | 0.013% |
-| 0.0025 | 0.50 | 160 478 | 22.3 s / 16.5 s | 3.485828e-09 T | **1.28%** | 1.47% / 4.05% | 0.051% |
+| 0.005 | 1.00 | 69 918 | 11.8 s / 5.1 s | 3.563601e-09 T | **0.92%** | 2.15% / 7.92% | 0.075% |
+| 0.0035 | 0.70 | 103 950 | 17.2 s / 12.1 s | 3.519075e-09 T | **0.34%** | 1.03% / 4.64% | 0.028% |
+| 0.0025 | 0.50 | 160 677 | 30.1 s / 20.1 s | 3.483786e-09 T | **1.34%** | 1.56% / 5.33% | 0.056% |
+
+<!-- Re-recorded 2026-08-26 (EX-30 leg (root) completion, in-class (1*)
+     licence for un-asserted guide tables — this example carries 0 assert
+     statements). Superseded 0.7.2-image digits
+     (20260810T093203Z_EX-15-step1-refresh-allmag.log, 2026-08-10):
+     70 054 / 103 984 / 160 478 cells; centre B_z 3.562433 / 3.522577 /
+     3.485828e-09 T at 0.89 / 0.24 / 1.28%; on-axis mean/max 2.11-7.98 /
+     0.88-6.07 / 1.47-4.05%; central CV 0.111 / 0.013 / 0.051%; mesh/solve
+     8.6-4.0 / 13.6-6.9 / 22.3-16.5 s. The 0.11 mesh motion is sub-percent
+     on every rung (0.19 / 0.03 / 0.12%) and the centre errors move with
+     it. The max on-axis error is the one reading that changed shape, not
+     just value -- see the paragraph below. Analytic centre field unmoved
+     at 3.531057e-09 T. No band, tolerance or gate constant moved. -->
 
 **The centre error is not monotone in `h`, and that is the result, not a
 defect** — it is what hitting the systematic floor looks like: refinement moves
 the answer around inside the few-percent band set by `a/R` and the truncation,
-instead of walking it toward zero. The *max* on-axis error does fall
-monotonically (7.98 → 6.07 → 4.05%), because that number is dominated by the
-far points where discretisation still rules.
+instead of walking it toward zero. **On the 0.11 image the *max* on-axis error
+is no longer monotone either** (7.92 → 4.64 → 5.33%, where the 0.7.2 record
+fell 7.98 → 6.07 → 4.05%). Read that as the same floor reaching a statistic
+that used to sit above it: the max is a single worst point, the finest rung's
+worst point sits at `z = -0.0084 m` where the profile has a flat run of three
+equal FEM samples, and 5.33% is well inside the few-percent band the centre
+error already wanders in. The *mean* on-axis error still behaves like
+discretisation error (2.15 → 1.03 → 1.56%), and the central CV — the flatness
+figure this example exists to show — is unmoved in character at 0.075 / 0.028 /
+0.056%. Nothing here is gated; `MAG-14` below is.
 
 The gated Helmholtz number is a different fixture: `MAG-14` (✅, smoke), the
 magnitude comparison in the test suite, **0.728%** vs closed form (1.731%

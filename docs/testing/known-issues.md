@@ -535,7 +535,7 @@ unless fixing it is the task.
 > under the sampler; keep it, recorded as *validated*, if it is stable at
 > every count. Either outcome is a measurement.
 
-### 🔴 OPEN 2026-08-25 (`EX-30` leg (root), 09:00 implementer slot) — `examples/magnetostatics/01_straight_wire.py` **no longer meshes on the 0.11 image**: gmsh aborts with duplicated facets at the example's own coarse resolution, which no gate exercises
+### 🔴 OPEN 2026-08-25, **re-headed 2026-08-26** (`EX-30` leg (root)) — `MeshGenerator.straight_wire_domain` has a **coarse-resolution floor on the dolfinx 0.11 image**: `resolution = 0.01` aborts inside gmsh with duplicated facets for every geometry tried, `0.008` and finer mesh, and the threshold between them is unbisected — no guard exists, so a too-coarse request still fails illegibly
 
 > **Where this fires.** `./run_examples.sh -e 1`, real build, on **`main`** at
 > `878fa3e`. The crash is in the mesh generator, before any solve, so the
@@ -631,6 +631,37 @@ unless fixing it is the task.
 > then re-heads as the floor finding (the example symptom retired), and
 > retires fully only when a measured-threshold guard lands in
 > `straight_wire_domain` or the upstream image moves the floor.
+>
+> **EXAMPLE SYMPTOM RETIRED 2026-08-26 (`EX-30` leg (root) completion, 12:00
+> implementer slot); the floor finding above stays OPEN.** The ruling was
+> executed exactly as written: `01_straight_wire.py:120` moved
+> `resolution` `0.01` → **`0.008`**, with the old value and the probe's full
+> reasoning in-comment at the constant. `-e 1 -n 2` is now **green from
+> `main`** (`20260826T170155Z_EX-30-root2-run-mag1.log`, Status 0, **9 s**,
+> real build) and meshes at **21 830 cells / 4 662 vertices** — the probe's
+> `h = 0.0080 OK 21830 cells` reproduced exactly, which is the confirmation
+> that the localisation was right and not a coincidence of that probe's
+> geometry. Closed forms unmoved and reproduced: `B(3 mm)` analytic
+> `6.666667e-05 T` = `μ₀I/2πr`, analytic decay ratio `B(3 mm)/B(38 mm)` =
+> **12.67** = 38/3. The example's derived figures moved with the mesh
+> (relL2 65.8739% → **51.9781%**, max rel 85.2498% → **76.7330%**, numerical
+> decay 29.83 → **20.31**, energy 2.307201e-08 → **2.630243e-08 J**) and are
+> re-recorded version-tagged in `01_straight_wire.md` under the leg's (1\*)
+> guide-table licence, old digits in-comment. The seven `straight_wire_*`
+> artifacts cleared: census `stale=7` → **`stale=0`**
+> (`20260826T170118Z_…-precensus.log` → `20260826T171345Z_…-postcensus.log`,
+> `dead=0 guide=0 exit=0`).
+>
+> **What is still open, and it is the whole reason this entry survives:** no
+> guard was written, so `straight_wire_domain(resolution=0.01)` still aborts
+> inside gmsh with `Invalid boundary mesh (overlapping facets)` rather than
+> raising something a caller can read. The threshold in `[0.008, 0.010)`
+> remains unbisected and *why* 0.01 specifically remains undiagnosed (the
+> wire-diameter hypothesis is contradicted by 0.008 working at 1.33× the
+> diameter). **Retire-when:** a measured-threshold guard lands in
+> `straight_wire_domain`, or the upstream image moves the floor and that is
+> measured. **Owning chunk:** unassigned — `EX-30` owned only the example
+> fix, and it is done.
 
 ### ✅ RETIRED 2026-08-25 by `OPS-24` — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family was **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
 
