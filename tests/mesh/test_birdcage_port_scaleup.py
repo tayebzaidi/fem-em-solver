@@ -282,6 +282,12 @@ def _measure(leg_count):
     return {
         "leg_count": leg_count,
         "ports": ports,
+        # The mesh objects themselves are carried so a consumer can export them
+        # without rebuilding (`EX-33`/`mesh:8` writes the 16-leg XDMF from this
+        # dict). Additive: no gate below reads them.
+        "mesh": mesh,
+        "cells": cells,
+        "sheet_tags": sheet_tags,
         "halves": halves,
         "tag_set": tag_set,
         "diag": diag,

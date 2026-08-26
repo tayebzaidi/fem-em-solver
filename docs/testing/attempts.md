@@ -17061,3 +17061,96 @@ example corpus is fully fresh for the first time on the 0.11 image, which is
 the precondition the ramp bookkeeping has been waiting on.
 
 `main` clean at handoff.
+
+## 2026-08-26T18:45Z — `EX-33` (§9 item 5) — **complete**: the 16-leg gapped + sheeted birdcage example lands green on the first run and the chunk closes (13:30 CDT implementer slot)
+
+Preflight clean (`git status` empty at `478e8f1`, container Up ~1 h). Took §9
+item 5, the first item not marked done. No fallback, no denial, no
+known-issues entry owed, nothing parked.
+
+### What was built
+
+`examples/meshing/08_birdcage_sixteen_legs.py` (`mesh:8` — the runner
+discovers meshing examples by filename glob, so no runner edit was needed) and
+its same-stem guide. The design decision worth recording: the example does not
+re-implement the identity family, it **calls the gate module's own**
+`_measure` / `_report_safely` / `_assert_identity_family` from
+`tests/mesh/test_birdcage_port_scaleup.py` on its own two builds. That is the
+`ANS-1` import rule pushed past constants to the assertions themselves, and it
+makes the `EX-30` class of divergence (an example restating a record the gate
+has since moved) structurally impossible here rather than merely avoided.
+
+One gate-module change, additive: `_measure` now also returns `mesh`, `cells`
+and `sheet_tags` in its dict so a consumer can write XDMF without rebuilding a
+307 296-cell mesh. No gate reads those keys. The module was re-run from `main`
+after the edit as the regression check — `2 passed in 124.56s`
+(`20260826T183618Z_EX-33-gate.log`, Status 0, 126 s).
+
+### Measured
+
+Run: `./run_examples.sh -e mesh:8 -n 2 -t 400`,
+`20260826T183240Z_EX-33-run1.log`, Status 0, **131 s** wall clock (127.7 s
+in-script) — standard, as commissioned; the entry's ~150 s estimate was good.
+
+16 legs, every band imported and unmoved:
+
+- partition `sum(tags)/total` and `total/analytic air box` both
+  `1.000000000000`; 32 halves all `0.500000000000`;
+- 16 sheets `meshed/analytic = 1.000000000000`, `w_eff/w_bbox
+  = 1.000000000000`, out-of-plane spread `~1e-18` m; **C16 sheet spread
+  1.331e-15** vs `SHEET_SPREAD_BAND` 1e-12;
+- closure `1.000000000000` per port; terminal ratios in `[0.95, 1.0]`;
+- meshed/CAD conductor **0.981503** vs `CAD_MASS_GATE`; port-centre separation
+  margin **1.560723×**.
+
+The ruled per-class terminal table (the reading a C4 fixture cannot produce):
+
+| class | ports | meshed/analytic | intra-class spread |
+|---|---|---|---|
+| `aligned` | 8 | 0.988615772 | 1.923e-07 |
+| `22.500 deg` | 4 | 0.989367514 | 5.849e-08 |
+| `67.500 deg` | 4 | 0.989449735 | 6.144e-08 |
+
+against the imported intra 1e-6; **inter-class 8.431e-04** vs the 5e-3
+ceiling. These reproduce `GEO-19` step C's own readings.
+
+**Negative control, executed and asserted** (not merely printed): the in-run
+4-leg build on the same code path reports **one** azimuth class — `aligned`,
+4 ports, 0.988615842, intra 3.184e-08, inter-class exactly `0.000e+00` — at
+**116 085** cells, relative **0.000e+00** against the imported
+`CONTROL_CELL_COUNT`, with all four terminal ratios on
+`CONTROL_TERMINAL_RATIO` inside its imported band. The example also asserts
+the *three*-class count at sixteen against the mesh's mirror fold
+`{0,45,90} / 22.5 / 67.5` — a structural count taken from `_azimuth_class`'s
+docstring, not from this run's areas.
+
+Cost rung (printed, never asserted — Phase 6's first): cells
+`116 085 → 307 296` (**2.6472×**, the 307 296 record reproduced exactly), mesh
+`26.51 → 84.25 s` (**3.1777×**), build rung `29.52 → 96.38 s`. Cells grow
+sublinearly in leg count; mesh seconds grow *faster than cells*. Separation
+margin `5.656854× → 1.560723×` — the term that closes at 26 legs and the
+reason this rung is 16 and not the directive's 32.
+
+Census after (`20260826T183831Z_EX-33-census.log`, 1 s): **`dead=0 guide=0
+stale=0 exit=0`**, 29 runnable examples all guided, 38 guides / 128
+references. The new example owns its own freshness immediately, exactly as the
+previous slot's note predicted — the corpus stays at the clean reading `EX-30`
+left it at.
+
+No band, gate constant, tolerance or record moved anywhere in this slot.
+
+### Hypothesis for the next attempt
+
+Item 6 (`EX-32`, the birdcage 4-port power-wave S-matrix example at 10 MHz) is
+the only open item left and the next slot takes it; it is complex-build, so
+`FEM_EM_REQUIRE_COMPLEX=1` and `tests/environment` first. After that the queue
+drains and the drain instruction applies — the 15:00 slot has an item, the
+16:30 one does not unless the 18:00 review has run by then. Worth flagging to
+the review: `EX-32` is the last queued item, so **the queue is one slot from
+empty**. Two things this slot surfaced that belong to a review, not an
+implementer: (a) the 4→16 mesh-time superlinearity (3.18× on 2.65× the cells)
+is the first evidence about Phase 6 sizing and nothing in §10 has consumed it;
+(b) with `GEO-19`'s ramp now discharged by this chunk, §5.4's example-ramp
+bookkeeping is owed for both it and `PORT-9`/`GEO-20` step 1.
+
+`main` clean at handoff.

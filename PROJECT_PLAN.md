@@ -4566,7 +4566,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-30` | Refresh the 13-example stale artifact set the checker could not see (10–17 d old on 2026-08-23; commissioned 2026-08-23 weekly review; **re-scoped 2026-08-24 10:30 review to four legs from the honest `stale=55` census** — see prose entry) | ✅ *(2026-08-26, all four legs)* (**leg (th) ✅ 2026-08-25**: all eight `th:` examples green, `time_harmonic` census 4 → 0 inside a derived 51 → 47, the licensed 128 MHz alignment executed — 0.01826 → 0.01769 / 57.31 → 59.16, version-tagged — and `th:6` reproducing to 2.02e-04 / 5.45e-05 in its unmoved 1% band; 105 s, measured standard. Legs (root), (mesh), (ports) all queued 2026-08-25 03:00 review — §9 items 3–5, with in-class (1\*) example-record licences granted for (mesh)/(ports). **Leg (root) attempted 2026-08-25 09:00 — not closed**: 6 of 8 green, census 47 → 26 fully attributed, two reds filed as known-issues, one of them a `MAG-13` convergence **gate red on `main`** since the 0.11 merge — see prose entry. **Leg (mesh) attempted 2026-08-25 16:30 — not closed**: 4 of 7 green, census 13 → 6 fully attributed inside a derived 26 → 19, licence granted but **not used** — nothing re-recorded — and three reds, **two of them further gate reds on `main`** (`GEO-15` graded-conductor, `GEO-16` kwarg-off cell record), the third an inverted control that lost its separation by 6e-6). **Leg (ports) ✅ 2026-08-26 (07:30 slot)**: all five examples green, `ports` census 4 → 0 and `ans` 2 → 0 inside a derived 13 → 7, and the (1\*) licence used exactly once — `ports:2`'s restated `‖S−Sᵀ‖/‖S‖` was red at a 8.666e-01 relative miss because the `PORT-9` leg (d3) power-wave assembly moved the record 2.5494e-05 → **4.758625e-05** (the gate module's current digit, matched bit-for-bit), with `‖S‖₂` 0.861449 → **0.864809457** the same class hiding *inside* the band; re-recorded version-tagged, no band moved, `ans:3` fixed by import with zero script edits. **Leg (root) ✅ 2026-08-26 (12:00 slot) and with it the chunk**: both ruled reds disposed — `mag:1` moved `resolution` 0.01 → **0.008** per the 08-25 10:30 ruling and is green at **21 830 cells**, the 08-25 probe's count reproduced exactly with its analytic `B(3 mm) = 6.666667e-05 T` and decay ratio 12.67 unmoved; `mag:6` green through the landed `MAG-19` with **zero** example-side edits on bit-identical errors 21.8417 / 15.3848 / 4.4605%. The (1\*) licence hit all three predicted digits exactly (`mag:2` 409 596 / 6.2134%, `mag:4` 69 918 / 103 950 / 160 677, `mri:1` 1.979842e+02), version-tagged to this slot's logs and commit `c466143`; three shape-changing readings flagged in prose rather than silently re-recorded (`mag:4`'s max on-axis error is no longer monotone). Census `stale=7` → **`stale=0`, `dead=0 guide=0 exit=0`** — the prediction met exactly and the first clean corpus-wide census since `EX-29`. 447 s, measured standard; no band moved; the `straight_wire_domain` coarse-resolution floor re-heads and stays open, unassigned) | heavy (measured standard per leg) |
 | `EX-31` | Ring-gapped birdcage with dual port families (`GEO-20` step 1's newly gated capability: first example with ring-gap terminals as exact disks from radial cut planes, and the first 12-port dual-family mesh — a geometry angle `EX-28` (leg gaps only) does not cover; mesh-only, no solve; commissioned 2026-08-24 10:30 review) | ✅ (2026-08-24: `mesh:7`, `examples/meshing/07_birdcage_ring_gap_ports.py` + same-stem guide; **closed as written on the first run**, every element of the rubric executed and no band moved — see the prose entry for the digits. *Audited COMPLIANT 2026-08-24 18:00 review: all three footers verified (75 / 72 / 1 s, statuses 0/0/2 with exit 2 = the `OPS-19` stale-only contract), the printed assertions match this entry to the last decimal, the gate-module strengthening is real (records asserted at their source, lines 403/458/538, imported by the example not restated), and `git show 7529fa4 -- tests/` is 24 insertions / 0 deletions — purely additive, nothing loosened*) | standard (measured standard) |
 | `EX-32` | Birdcage 4-port power-wave S-matrix at 10 MHz (`PORT-9`'s newly gated capability: first example solving ports on the **birdcage** — every existing S-parameter example is two-torus (`EX-20`/`EX-24`/ports:1–3), and `EX-28`/`EX-31` are mesh-only; commissioned 2026-08-25 10:30 review, §5.4 ramp) | ⬜ | standard |
-| `EX-33` | 16-leg gapped + sheeted birdcage mesh (`GEO-19`'s newly gated capability: first example above four legs — `EX-28`/`EX-31`/`mesh:3` are all 4-leg, so the geometry angle is new; mesh-only, no solve, no port claim; commissioned 2026-08-25 18:00 review, §5.4 ramp) | ⬜ | standard |
+| `EX-33` | 16-leg gapped + sheeted birdcage mesh (`GEO-19`'s newly gated capability: first example above four legs — `EX-28`/`EX-31`/`mesh:3` are all 4-leg, so the geometry angle is new; mesh-only, no solve, no port claim; commissioned 2026-08-25 18:00 review, §5.4 ramp) | ✅ | standard |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
 **Logs:** `20260820T170422Z_EX-26-example-n2.log` (exit 0), `20260820T170540Z_EX-26-docrefs.log` (`dead=0 guide=0 stale=0 exit=0`).
@@ -5379,7 +5379,53 @@ port on the birdcage. Sized for one implementer run.)*
 > divergence finding — known-issues + this entry, stop; nothing
 > re-recorded.
 
-**`EX-33` — 16-leg gapped + sheeted birdcage mesh** ⬜
+**`EX-33` — 16-leg gapped + sheeted birdcage mesh** ✅ 2026-08-26
+*(closed 2026-08-26, 13:30 implementer slot, green on the first run.)*
+`examples/meshing/08_birdcage_sixteen_legs.py` + same-stem guide, dispatched
+through the runner's `mesh:` group (`./run_examples.sh -e mesh:8 -n 2 -t 400`,
+log `20260826T183240Z_EX-33-run1.log`, **131 s** wall clock / 127.7 s in-script,
+Status 0 — standard, as commissioned).
+
+The whole `GEO-19` identity family holds at sixteen legs, asserted by the gate
+module's **own** `_assert_identity_family` on this run's own mesh rather than
+re-implemented (the `ANS-1` rule taken one step further than restraint from
+restating constants): partition and air box `1.000000000000`, all 32 halves at
+`0.500000000000`, all 16 sheets at `dx·g` `1.000000000000` with `w_eff/w_bbox`
+`1.000000000000` and out-of-plane spread `~1e-18` m, C16 sheet spread
+**1.331e-15** vs the imported `1e-12`, closure `1.000000000000` per port,
+meshed/CAD conductor **0.981503** vs `CAD_MASS_GATE`, separation margin
+**1.560723×**. The ruled per-class terminal table reads three classes —
+`aligned` (8 ports) 0.988615772, `22.500 deg` (4) 0.989367514, `67.500 deg` (4)
+0.989449735 — intra-class spreads **1.923e-07 / 5.849e-08 / 6.144e-08** against
+the imported 1e-6, inter-class **8.431e-04** against the 5e-3 ceiling.
+
+**Negative control executed and asserted:** the four-leg build on the same code
+path in the same run reports **one** azimuth class (`aligned`, spread 3.184e-08,
+inter-class exactly 0.000e+00) — `GEO-19`'s back-compat identity, so the class
+partition is demonstrably reading azimuths and not areas — at **116 085** cells,
+relative **0.000e+00** against the imported step-B record, with all four
+terminal ratios on `CONTROL_TERMINAL_RATIO` inside its imported band. The
+three-class count at sixteen is asserted too, against the mesh's mirror fold
+`{0,45,90} / 22.5 / 67.5`, not against the measurement.
+
+**Phase 6's first cost rung, printed never asserted:** 4 → 16 legs, cells
+`116 085 → 307 296` (**2.6472×**, the 307 296 record reproduced exactly), mesh
+`26.51 → 84.25 s` (**3.1777×**), build rung `29.52 → 96.38 s`. Cells grow
+sublinearly in leg count, mesh seconds faster than cells — the term that bites
+first on the way to a production count. Both XDMF files land in
+`examples/meshing/paraview_output/` (`..._combined`, `..._facets` with
+`mesh_tags` 211-226).
+
+One additive change to the gate module: `_measure` now also returns `mesh`,
+`cells` and `sheet_tags` so a consumer can export without rebuilding. No gate
+reads them; the module re-ran green from `main` after the change
+(`20260826T183618Z_EX-33-gate.log`, `2 passed in 124.56s`, Status 0, 126 s).
+Census after: **`dead=0 guide=0 stale=0 exit=0`**, 29/29 runnable examples
+guided (`20260826T183831Z_EX-33-census.log`) — the corpus stays clean.
+No band, gate constant or record moved anywhere; no known-issues entry owed.
+
+<details><summary>Original entry (commissioning + plan)</summary>
+
 *(commissioned 2026-08-25 18:00 review, §5.4 ramp on `GEO-19` ✅ 2026-08-25.
 Angle no existing example covers: every birdcage example is 4-leg
 (`EX-28` leg gaps, `EX-31` ring gaps, `mesh:3` graded conductors); no
@@ -5412,6 +5458,8 @@ port model, no F-human claim. Sized for one implementer run.)*
 > ring layout is `GEO-20` step 2. **Negative result:** an imported band red
 > through the example path is an example/test divergence finding —
 > known-issues + this entry, stop; nothing re-recorded.
+
+</details>
 
 ### ANS — Ansys benchmark cases (§5.4)
 
@@ -5889,9 +5937,33 @@ uses the Edit tool and verifies `git status --porcelain`.
    applies if this lands last (needs item 1 landed for `meshing = 0`).
    **Negative result:** report the measurement, known-issues + §7,
    chunk stays 🟡, stop.~~
-5. **`EX-33` — 16-leg gapped + sheeted birdcage mesh example
+5. ✅ **DONE 2026-08-26 (13:30 slot) — `EX-33` landed as written and the chunk
+   closes, green on the first run.** `mesh:8` +
+   `08_birdcage_sixteen_legs.py`/`.md`; the whole `GEO-19` identity family
+   asserted at 16 legs by the gate module's own `_assert_identity_family` (not
+   re-implemented), all bands imported and **unmoved**: C16 sheet spread
+   1.331e-15 vs 1e-12, intra-class terminal spreads 1.923e-07 / 5.849e-08 /
+   6.144e-08 vs 1e-6, inter-class 8.431e-04 vs 5e-3, meshed/CAD 0.981503,
+   separation margin 1.560723×. The ruled three-class table reads
+   `aligned` 0.988615772 (8 ports) / `22.500 deg` 0.989367514 (4) /
+   `67.500 deg` 0.989449735 (4). **Negative control green:** the in-run 4-leg
+   build reports **one** class (spread 3.184e-08, inter-class 0.000e+00) at
+   116 085 cells, relative 0.000e+00 against the imported step-B record. Cost
+   rung printed never asserted: 116 085 → 307 296 cells (2.6472×, the record
+   reproduced exactly), 26.51 → 84.25 s mesh (3.1777×). `131 s`
+   (`20260826T183240Z_EX-33-run1.log`, Status 0). One additive gate-module
+   change (`_measure` returns `mesh`/`cells`/`sheet_tags` for export); module
+   re-ran green from `main`, `2 passed in 124.56s`
+   (`20260826T183618Z_EX-33-gate.log`, Status 0, 126 s). Census
+   `dead=0 guide=0 stale=0 exit=0`, 29/29 guided
+   (`20260826T183831Z_EX-33-census.log`). No known-issues entry owed.
+   **Owed to the next review, deliberately not moved in-slot:** §5.4's
+   example-ramp bookkeeping for the `GEO-19` ramp now discharged, and whether
+   the 4→16 cost rung licenses anything in §10's Phase 6 sizing.
+
+   ~~**`EX-33` — 16-leg gapped + sheeted birdcage mesh example
    (standard, `-n 2`, real, `main`; independent; §5.4 ramp on
-   `GEO-19` ✅).** Execute the §7 `EX-33` entry as written — it
+   `GEO-19` ✅).**~~ Execute the §7 `EX-33` entry as written — it
    carries the full rubric. In brief: `mesh:8`
    (`examples/meshing/08_birdcage_sixteen_legs.py` + same-stem guide),
    `birdcage_port_domain(leg_count=16)` gapped + sheeted, printing the
@@ -5910,7 +5982,7 @@ uses the Edit tool and verifies `git status --porcelain`.
    only — no solve at 16 legs, no F-human claim; the 32-port ring
    layout is `GEO-20` step 2. **Negative result:** an imported band
    red through the example path is an example/test divergence
-   finding — known-issues + §7, stop.
+   finding — known-issues + §7, stop.~~
 6. **`EX-32` — birdcage 4-port power-wave S-matrix example at 10 MHz
    (standard, `-n 2`, complex, `main`; independent; §5.4 ramp on
    `PORT-9` ✅; spare for the four pre-review slots).** Execute the §7
