@@ -18,10 +18,13 @@ shows its :class:`DeprecationWarning`, and asserts its S-matrix differs from the
 solved-field one.  A heuristic that happened to agree would be a finding about
 the gate, not a passing example.
 
-**Anchor.**  Every asserted number reproduces
-``docs/testing/logs/20260813T183606Z_PORT-1-step4-packagegate.log`` within a
+**Anchor.**  Every asserted number reproduces its gate-module record within a
 pre-stated **1%** relative band: raw mutual ``0.894543``, corrected
-``0.939849``, ``||S - S^T||/||S|| = 2.5494e-05``, ``||S||_2 = 0.861449``.  The
+``0.939849`` (both from
+``docs/testing/logs/20260813T183606Z_PORT-1-step4-packagegate.log``), and the
+two S-matrix records the `PORT-9` leg (d3) power-wave assembly moved,
+``||S - S^T||/||S|| = 4.758625e-05`` and ``||S||_2 = 0.864809457`` (v0.7.2
+terminated-Z digits ``2.5494e-05`` / ``0.861449`` kept in-comment below).  The
 raw mutual is printed **first and labelled a miss** — at -10.55% the unmoved 10%
 band would not accept it; only the two named systematics bring it inside.
 
@@ -112,15 +115,38 @@ REFERENCE_IMPEDANCE_OHM = 50.0
 PATH_QUADRATURE_ORDER = 4097
 
 # ---------------------------------------------------------------------------
-# The anchor.  Recorded digits from
+# The anchor.  The two mutual-ratio digits are from
 # docs/testing/logs/20260813T183606Z_PORT-1-step4-packagegate.log (PORT-1
-# step 4, the package-path gate at -n 2).  The band is the one the EX-20 rubric
-# pre-stated: 1% relative on each, deliberately looser than the digits it cites,
-# never to be tightened onto the measurement nor widened to make a run pass.
+# step 4, the package-path gate at -n 2); the two S-matrix digits are the
+# route-current ones (see the re-record note below).  The band is the one the
+# EX-20 rubric pre-stated: 1% relative on each, deliberately looser than the
+# digits it cites, never to be tightened onto the measurement nor widened to
+# make a run pass.
 RECORDED_RAW_RATIO = 0.894543
 RECORDED_CORRECTED_RATIO = 0.939849
-RECORDED_S_SYMMETRY_RESIDUAL = 2.5494e-05
-RECORDED_S_SPECTRAL_NORM = 0.861449
+# EX-30 leg (ports) re-record, 2026-08-26, under the in-class (1*) example-record
+# licence granted by the 2026-08-25 03:00 review (PROJECT_PLAN §9 item 3): the
+# two S-matrix records below are the ones the `PORT-9` leg (d3) power-wave
+# assembly moved (`S_ij = b_i/a_j` instead of converting the terminated `Z`), and
+# they are re-recorded from the gate module's *current* digits —
+# tests/validation/test_port_package_sparameters.py's
+# RECORDED_S_SYMMETRY_RATIO / RECORDED_PASSIVITY_MAX_SIGMA, which carry leg
+# (d3)'s route-tagged derivation in-comment.  The example restates rather than
+# imports them because examples run with PYTHONPATH=/workspace/src and must not
+# depend on `tests/` (same reason as the fixture block above); ans:3 imports them
+# from *here*, so this file stays the single example-side source.
+#
+# Old digits, kept: ||S - S^T||/||S|| read 2.5494e-05 on v0.7.2 / 184 919 cells
+# (the 20260813T183606Z step-4 log this block used to cite whole), 3.11213e-05 on
+# v0.11.0 / 184 176 cells through the terminated-Z conversion, and 4.758625e-05
+# on the same 184 176-cell mesh through the power-wave assembly.  ||S||_2 read
+# 0.861449 (v0.7.2), 0.861356895 (v0.11.0, terminated-Z) and 0.864809457
+# (power-wave).  Measured on current `main` this slot at 4.7586e-05 / 0.864809
+# (20260826T123139Z_EX-30-ports-run-1to2.log, the red that found the drift).
+# No band moved: REPRODUCTION_BAND_RELATIVE stays 1%, and the physics gates
+# (sigma_max <= 1, the gate module's unmoved 1e-3 symmetry band) are untouched.
+RECORDED_S_SYMMETRY_RESIDUAL = 4.758625e-05
+RECORDED_S_SPECTRAL_NORM = 0.864809457
 REPRODUCTION_BAND_RELATIVE = 0.01
 
 # PORT-1's own mutual band, unmoved since 3b-ii: the gate the corrected ratio

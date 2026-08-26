@@ -64,7 +64,7 @@ Network identities on the same matrices:
 
 * `|Z₁₂ − Z₂₁|/|Z₂₁|` = 5.8309e-04 — two solves, two integrands, one operator,
   so this is a *measured* reciprocity, not an algebraic one;
-* `‖S − Sᵀ‖/‖S‖` = 2.5494e-05, `‖S‖₂` = 0.861449 ≤ 1 (passive).
+* `‖S − Sᵀ‖/‖S‖` = 4.7586e-05, `‖S‖₂` = 0.864809 ≤ 1 (passive).
 
 The negative control, same mesh and same ports:
 
@@ -80,14 +80,25 @@ report at this port separation — while the field route's is
 
 ## Gates
 
-All asserted values are allreduced. The bands cite
-`docs/testing/logs/20260813T183606Z_PORT-1-step4-packagegate.log` and are
-deliberately **looser** than the digits they cite.
+All asserted values are allreduced. The two mutual-ratio bands cite
+`docs/testing/logs/20260813T183606Z_PORT-1-step4-packagegate.log`; the two
+S-matrix records are the `PORT-9` leg (d3) power-wave digits carried by the
+gate module `tests/validation/test_port_package_sparameters.py`. All four
+bands are deliberately **looser** than the digits they cite.
 
-* four reproductions of the step-4 record inside a pre-stated **1% relative**
-  band — raw 0.894543, corrected 0.939849, `‖S − Sᵀ‖/‖S‖` 2.5494e-05, `‖S‖₂`
-  0.861449; measured misses **3.33e-07 / 3.23e-07 / 3.67e-06 / 2.29e-07**, i.e.
-  four orders of magnitude inside the band;
+* four reproductions inside a pre-stated **1% relative** band — raw 0.894543,
+  corrected 0.939849, `‖S − Sᵀ‖/‖S‖` 4.7586e-05, `‖S‖₂` 0.864809457; measured
+  misses **2.98e-05 / 2.92e-05 / 3.13e-06 / 1.32e-10**
+  (`20260826T123904Z_EX-30-ports-run-2to3.log`), i.e. at least two orders of
+  magnitude inside the band.
+
+  **Re-recorded 2026-08-26** (`EX-30` leg (ports), in-class (1\*) licence):
+  the two S-matrix digits read 2.5494e-05 / 0.861449 until this date, from
+  the v0.7.2 terminated-Z conversion. Leg (d3) changed the sweep to assemble
+  `S` from power waves, so both moved; the symmetry record was the one that
+  went red here (measured miss 8.67e-01 against the 1% band,
+  `20260826T123139Z_EX-30-ports-run-1to2.log`) and it is what found the
+  drift. No band moved and no physics gate was touched;
 * the **raw** mutual asserted *outside* the unmoved `MUTUAL_TOLERANCE = 10%`
   and the corrected one *inside* it — the systematics have to be doing work;
 * `‖S‖₂ ≤ 1` as an inequality (passivity), not a reproduction;

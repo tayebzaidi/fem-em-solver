@@ -16780,3 +16780,138 @@ review: with `PORT-11` ✅ the §2.2/§10 moves it names are now owed, and step 
 changed, so it prices at ~180 s, standard tier.
 
 `main` clean at handoff.
+
+---
+
+## 2026-08-26T12:55Z — `EX-30` leg (ports) — **complete**
+
+Scheduled implementer slot 07:30 CDT. §9 item 3, taken as the first On-deck
+item not marked done (items 1 and 2 landed in the 04:30 and 06:00 slots).
+Preflight clean, container Up 43 h, no anomaly.
+
+### What was tried
+
+The leg as written: run `ports:1`–`ports:3` plus the two `ans` benchmark
+cases, with the census derived before it was read, and the in-class (1\*)
+example-record licence held in reserve for the (d3)-moved field-route S
+constants.
+
+**Pre-run census control** (`20260826T123129Z_EX-30-ports-precensus.log`,
+2 s): `dead=0 guide=0 stale=13 stale_severity=report exit=2` — reproducing the
+04:30 slot's `GEO-21` step-2 post-census exactly. Attributed by family before
+anything ran: **ansys 2 + ports 4 + magnetostatics 7**. This leg owns the
+first six, so the predicted post-run count was **13 − 6 = 7**, and the seven
+survivors were predicted by name (the `straight_wire_*` set §9 item 4 owns).
+
+**Run 1, `ports:1,ports:2`** (`…T123139Z_EX-30-ports-run-1to2.log`, `-n 2`,
+complex, **Status 1**, 301 s). `ports:1` green in 139.2 s on 177 998 cells —
+raw 0.894516 printed first and labelled the miss it is, corrected 0.939822
+(−6.02%, inside the unmoved 10%), terminal angles ±0.175335123 rad to 1e-06,
+reciprocity `|Z₁₂−Z₂₁|/|Z₁₂|` = 7.1198e-04 printed. `ports:2` **red**:
+
+```
+AssertionError: symmetry does not reproduce the PORT-1 step-4 record
+2.5494e-05 within 1%: relative miss 8.666e-01
+```
+
+### The red, diagnosed without a second run
+
+Measured `‖S − Sᵀ‖/‖S‖` = **4.7586e-05**. That is *bit-for-bit* the current
+record in the gate module `tests/validation/test_port_package_sparameters.py`:
+`RECORDED_S_SYMMETRY_RATIO = 4.758625e-05`, re-recorded there by `PORT-9`
+leg (d3) on 2026-08-24 when `run_n_port_sparameter_sweep` moved from
+converting the terminated `Z` to assembling `S` from power waves
+(`S_ij = b_i/a_j`). The example restated the v0.7.2 digit and nobody moved it
+with the route. So: a stale example-side restatement of a moved *gate* record —
+precisely the class the 2026-08-25 03:00 review licensed for this leg — and
+**not** a physics drift. The check that settles it: the gate module's own
+physics gate on the same quantity is `S_SYMMETRY_BAND = 1.0e-3`, unmoved, and
+4.7586e-05 clears it by two decades in the same run.
+
+`‖S‖₂` was the identical class **hiding inside the band**: restated 0.861449,
+gated 0.864809457, measured 0.864809 — a 3.90e-03 relative miss that passed
+the 1% band and would have gone on passing. Worth recording: the band caught
+one of the two moved constants and not the other; the *lineage*, not the band,
+is what found the second.
+
+### What was re-recorded (and what was not)
+
+Under the licence, version-tagged, old digits in-comment, **no band moved**:
+
+* `examples/ports/02_package_sparameter_sweep.py` —
+  `RECORDED_S_SYMMETRY_RESIDUAL` 2.5494e-05 → **4.758625e-05**,
+  `RECORDED_S_SPECTRAL_NORM` 0.861449 → **0.864809457**, both taken from the
+  gate module's current digits, with the three-route lineage stated in-comment
+  (v0.7.2 terminated-Z 2.5494e-05 / 0.861449 → v0.11.0 terminated-Z
+  3.11213e-05 / 0.861356895 → power-wave 4.758625e-05 / 0.864809457).
+* `examples/ports/01_two_torus_port_pair.py` — the same two names, but this
+  example assembles S through `sparameters_from_impedance`, i.e. the
+  **terminated-Z** route, and prints them **without asserting**. Re-recorded to
+  that route's current digits 3.11213e-05 / 0.861356895 (measured 3.1121e-05 /
+  0.861357), so the print stops reading as a drift it is not.
+* Guides: `01_…md`, `02_…md`, the `ans:3` guide and `SPEC.md`.
+
+**Not** re-recorded: `RECORDED_RAW_RATIO` / `RECORDED_CORRECTED_RATIO` in
+either example (they reproduce at 2.98e-05 / 2.92e-05 and leg (d3) did not move
+them), and no band, gate tolerance or reproduction band anywhere. The
+`ANS-1` import rule is why `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/`
+needed **zero script edits** — it imports all four records from `ports:2`, so
+one edit fixed both consumers. The structure the item asked for ("import rather
+than restate, so this class of divergence cannot recur") was already in place
+for `ans:3` and is what kept this leg to one file.
+
+### Green after the re-record
+
+* `…T123904Z_EX-30-ports-run-2to3.log`, Status 0, 424 s. `ports:2` **187.0 s**
+  (mesh 28.7 / sweep 59.3 / heuristic control 50.1 / export solve 25.4 s),
+  four misses **2.98e-05 / 2.92e-05 / 3.13e-06 / 1.32e-10** against the 1%
+  band; the retired heuristic route still deprecated and separated by
+  `max|ΔS| = 3.030e-01` with its `DeprecationWarning` shown — the negative
+  control held. `ports:3` **232.7 s**, "All gates hold".
+* `…T124617Z_EX-30-ports-run-ans.log`, Status 0, 208 s. `ans:1` **63.3 s**,
+  ΔR relative error **1.5838%** against the 2% Dodd–Deeds ceiling (1.5834% on
+  the `MAT-6` step-3 record). `ans:3` **141.3 s**, misses ≤ **1.34e-06**,
+  `‖S − Sᵀ‖/‖S‖ = 4.7586e-05 < 1e-3`, `‖S‖₂ = 0.864809 ≤ 1`; `metrics.json`
+  and `COMPARISON.md` regenerated from the run, as designed.
+
+Reciprocity residuals were read as order of magnitude per (d3c) and never
+pinned at a print band.
+
+### The census, derived then measured
+
+Predicted 7. Measured **`dead=0 guide=0 stale=7 exit=2`**
+(`…T124953Z_EX-30-ports-postcensus.log`, 1 s): zero `ports`, zero `ansys`, and
+the seven survivors are exactly the predicted `straight_wire_*` set. **`ports`
+4 → 0, `ans` 2 → 0, no other family moved.**
+
+### Compute
+
+935 s across four example runs (301 + 424 + 208, plus the 2 s and 1 s
+censuses), `-n 2` throughout, complex build for `ports:*`/`ans:*` as the runner
+sources it. Commissioned standard; the 2-to-3 batch measured 424 s, i.e.
+**heavy at batch granularity, standard per example**. Nothing was denied by the
+permission layer; everything that executed code went through `run_and_log.sh`.
+
+### Committed
+
+Both example scripts, four guide/spec files, the two regenerated `ans`
+artifact pairs, five harness logs + `test-results.md` rows, the §7 `EX-30`
+leg (ports) narrative and its status-row annotation, and §9 item 3 marked done.
+No `attempt/*` branch — the work completed. No known-issues entry owed: the
+single red is fully explained by its own gate module and disposed of by the
+licence.
+
+### Hypothesis for the next attempt
+
+The next slot takes §9 item 4 (`EX-30` leg (root) completion) — this slot's
+post-census, `stale=7`, is the pre-census it should predict against, and all
+seven are its `straight_wire_*` set, so its predicted post-run count is **0**.
+If it lands, the chunk-level `EX-30` close rule is satisfied (four legs' logs +
+0 stale for their sets) and `EX-30` goes ✅ in that same commit; `meshing = 0`
+since item 1, so no ordering caveat remains. For the review: leg (ports) is
+evidence that the `ANS-1` import rule is load-bearing — the one example that
+imports needed no edit, the two that restate both went stale. Worth asking
+whether `ports:1`/`ports:2` should reach their records through a shared
+example-side module rather than restating them a third time.
+
+`main` clean at handoff.

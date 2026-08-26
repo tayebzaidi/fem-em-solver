@@ -2,7 +2,7 @@
   "case": "two_torus_gap_ports_10MHz",
   "chunk": "ANS-3",
   "spec": "SPEC.md (authority for geometry/materials/BCs/ports)",
-  "generated_utc": "2026-08-16T11:06:05Z",
+  "generated_utc": "2026-08-26T12:49:45Z",
   "regime": "eddy-current at 10 MHz; NOT a Larmor frequency (\u00a72.1)",
   "gated_path": "run_n_port_sparameter_sweep via examples/ports/02_package_sparameter_sweep.py (EX-20)",
   "frequency_hz": 10000000.0,
@@ -24,89 +24,89 @@
     "gap_overhang_m": 0.0002,
     "path_quadrature_order": 4097
   },
-  "n_cells": 178055,
+  "n_cells": 177998,
   "mpi_ranks": 2,
-  "mesh_seconds": 35.93709545399906,
-  "sweep_seconds": 46.28784059800091,
-  "export_solve_seconds": 21.390595659999235,
-  "total_seconds": 128.1223238370003,
+  "mesh_seconds": 29.434012999990955,
+  "sweep_seconds": 57.14944137795828,
+  "export_solve_seconds": 30.068743431009352,
+  "total_seconds": 141.25509876699653,
   "z_matrix_ohm": [
     [
       {
-        "re": 3.818953124865478,
-        "im": 7.434918373181395
+        "re": 3.819596798105853,
+        "im": 7.28863175451466
       },
       {
-        "re": 0.008603227404692089,
-        "im": 1.11015591118248
+        "re": 0.008600669359189033,
+        "im": 1.109979863966395
       }
     ],
     [
       {
-        "re": 0.008624931484991995,
-        "im": 1.1108032693352108
+        "re": 0.008623361209740651,
+        "im": 1.1107698417299954
       },
       {
-        "re": 3.820035933651044,
-        "im": 7.185446132370967
+        "re": 3.8201326260807345,
+        "im": 7.164396053160897
       }
     ]
   ],
   "s_matrix": [
     [
       {
-        "re": -0.8225834450969254,
-        "im": 0.25156554282726923
+        "re": -0.8245952693090629,
+        "im": 0.24709964046946015
       },
       {
-        "re": 0.010310513844110936,
-        "im": 0.036178011293080556
+        "re": 0.002408881411591718,
+        "im": 0.02145368749598927
       }
     ],
     [
       {
-        "re": 0.010317071127403718,
-        "im": 0.03619895678722679
+        "re": 0.0024495820530262453,
+        "im": 0.021458409543841026
       },
       {
-        "re": -0.8248019043772021,
-        "im": 0.24340843653365465
+        "re": -0.8256891051596613,
+        "im": 0.2430309845235554
       }
     ]
   ],
   "omega_m12_ohm": 1.2417546159268154,
-  "im_z21_ohm": 1.1108032693352108,
+  "im_z21_ohm": 1.1107698417299954,
   "systematics_ladder": {
-    "raw": 0.8945432979173058,
-    "raw_deviation": -0.1054567020826942,
-    "box_corrected": 0.9114432979173058,
-    "box_deviation": -0.08855670208269417,
-    "corrected": 0.9398493032590061,
-    "deviation": -0.060150696740993936
+    "raw": 0.8945163782628212,
+    "raw_deviation": -0.10548362173717885,
+    "box_corrected": 0.9114163782628212,
+    "box_deviation": -0.08858362173717882,
+    "corrected": 0.9398215446276472,
+    "deviation": -0.06017845537235278
   },
   "systematics": {
     "pec_box": 0.0169,
     "gap_physics": -0.030224
   },
   "mutual_tolerance": 0.1,
-  "s_symmetry_residual": 2.5494093575950286e-05,
+  "s_symmetry_residual": 4.75863139253604e-05,
   "s_symmetry_rtol": 0.001,
-  "s_spectral_norm": 0.8614491970506227,
+  "s_spectral_norm": 0.8648094566961518,
   "s_spectral_norm_ceiling": 1.0,
-  "z_reciprocity_residual": 0.0005830936784106664,
+  "z_reciprocity_residual": 0.0007114703332222629,
   "reproduction_record": {
     "source": "docs/testing/logs/20260813T183606Z_PORT-1-step4-packagegate.log",
     "raw": 0.894543,
     "corrected": 0.939849,
-    "symmetry": 2.5494e-05,
-    "spectral": 0.861449,
+    "symmetry": 4.758625e-05,
+    "spectral": 0.864809457,
     "band_relative": 0.01
   },
   "reproduction_miss": {
-    "raw": 3.330385524506327e-07,
-    "corrected": 3.2266779665470794e-07,
-    "symmetry": 3.670508758363866e-06,
-    "spectral": 2.2874322531897553e-07
+    "raw": 2.976015370845497e-05,
+    "corrected": 2.9212535580529214e-05,
+    "symmetry": 1.3433578060964086e-06,
+    "spectral": 3.513469543936365e-10
   },
   "xdmf": "paraview_output/ans3_two_torus_gap_ports_combined.xdmf",
   "aed": null

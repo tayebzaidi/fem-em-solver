@@ -27,12 +27,17 @@ Three things are on show, in this order:
    rather than quietly report a "corrected" number.
 2. **The corrected number and the identities.** After the two named systematics
    the ratio is 0.939849 (−6.02%, inside the band); reciprocity
-   ‖S − Sᵀ‖/‖S‖ = 2.5494e-05 against the 1e-3 gate, and passivity
-   ‖S‖₂ = 0.861449 ≤ 1.
+   ‖S − Sᵀ‖/‖S‖ = 4.7586e-05 against the 1e-3 gate, and passivity
+   ‖S‖₂ = 0.864809 ≤ 1. (Those two read 2.5494e-05 / 0.861449 until
+   2026-08-26 — the `PORT-9` leg (d3) power-wave assembly moved both; this
+   case *imports* all four records from `ports:2`, so they re-recorded here
+   with no edit to this case's script. `EX-30` leg (ports).)
 3. **That it is the gated path, not a lookalike.** Every one of those four
    numbers is asserted to reproduce the `PORT-1` step-4 record within a
-   pre-stated **1%** band. The measured misses are ≤ 3.67e-06 — six orders of
-   magnitude of headroom — because the geometry, drive, quadrature and
+   pre-stated **1%** band. The measured misses are ≤ 2.98e-05
+   (`20260826T124617Z_EX-30-ports-run-ans.log`; ≤ 3.67e-06 when this case
+   closed on 2026-08-16) — at least two orders of magnitude of headroom —
+   because the geometry, drive, quadrature and
    correction constants are *imported* from `examples/ports/02_package_sparameter_sweep.py`
    (`EX-20`) rather than restated here. If the gated path moves, this benchmark
    moves with it and the reproduction assertions fire.

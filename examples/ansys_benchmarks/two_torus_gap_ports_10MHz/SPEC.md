@@ -3,7 +3,9 @@
 **Commissioned 2026-08-16 (weekly planning review).** Second Ansys benchmark
 case, on the physics `PORT-1` gated 2026-08-15: field-derived S-parameters
 through `run_n_port_sparameter_sweep` on the two-torus fixture, reciprocity
-`‖S−Sᵀ‖/‖S‖ = 2.5494e-05` against the 1e-3 gate. (`ANS-2` is reserved by
+`‖S−Sᵀ‖/‖S‖ = 4.7586e-05` against the 1e-3 gate (2.5494e-05 until 2026-08-26;
+the `PORT-9` leg (d3) power-wave assembly moved it — the **gate** is unmoved).
+(`ANS-2` is reserved by
 §10 for the future B1+/SAR-map case; the numbering gap is deliberate.)
 
 **Why this case:** `PORT-1` closed carrying **two named systematics**
@@ -117,8 +119,8 @@ model, not alarming.
 | Quantity | Closed form (filamentary) | Our FEM (gated) | Notes |
 |---|---|---|---|
 | Im Z₁₂ | ωM₁₂ = +1.241755 Ω (spans 66.5% of nominal over ±r_wire — an anchor, not a gate) | corrected ratio 0.939849 × ωM₁₂ (−6.02%); raw 0.894543 × ωM₁₂ before the two systematic corrections | both printed; the 10% mutual band is the gate |
-| ‖S−Sᵀ‖/‖S‖ | 0 (reciprocity) | 2.5494e-05 | gated at 1e-3 |
-| ‖S‖₂ | ≤ 1 (passivity) | 0.861449 | inequality + reproduction |
+| ‖S−Sᵀ‖/‖S‖ | 0 (reciprocity) | 4.7586e-05 (2.5494e-05 before the leg (d3) power-wave assembly) | gated at 1e-3 |
+| ‖S‖₂ | ≤ 1 (passivity) | 0.864809 (0.861449 before leg (d3)) | inequality + reproduction |
 
 Exact values, logs, and provenance are filled into `COMPARISON.md` by the
 `ANS-3` runnable-half chunk, which regenerates them through

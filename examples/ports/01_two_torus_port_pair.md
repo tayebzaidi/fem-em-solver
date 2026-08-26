@@ -49,7 +49,12 @@ Network identities on the same Z:
 
 * `|Z₁₂ − Z₂₁|/|Z₁₂|` = 5.8343e-04 (printed — two solves, two integrands, one
   operator, so this is a *measured* reciprocity, not an algebraic one);
-* `‖S − Sᵀ‖/‖S‖` = 2.5494e-05, `‖S‖₂` = 0.861449 ≤ 1 (passive).
+* `‖S − Sᵀ‖/‖S‖` = 3.1121e-05, `‖S‖₂` = 0.861357 ≤ 1 (passive) — printed
+  beside their records, never asserted here (`EX-30` leg (ports) re-record,
+  2026-08-26, from `20260826T123139Z_EX-30-ports-run-1to2.log`; the v0.7.2
+  digits were 2.5494e-05 / 0.861449 — this route is the terminated-Z
+  conversion, so its records moved with the 0.11 image, not with the
+  `PORT-9` leg (d3) power-wave assembly).
 
 ## Gates
 

@@ -142,8 +142,22 @@ TERMINAL_ANGLE_TOLERANCE = 1.0e-6
 # re-derivation of the gate) and are never to be tightened onto the measurement.
 RECORDED_RAW_RATIO = 0.894283
 RECORDED_CORRECTED_RATIO = 0.939581
-RECORDED_S_SYMMETRY_RESIDUAL = 2.5494e-05
-RECORDED_S_SPECTRAL_NORM = 0.861449
+# EX-30 leg (ports) re-record, 2026-08-26, under the same in-class (1*) licence
+# as ports:2 (PROJECT_PLAN §9 item 3).  These two are **printed beside the
+# measurement, never asserted** here — this example's gates are the two mutual
+# ratios above — but their v0.7.2 digits (2.5494e-05 / 0.861449) had gone stale
+# against what this route now produces, so the print read as a drift that is not
+# one.  This example assembles S with `sparameters_from_impedance`, i.e. the
+# *terminated-Z conversion* route, not ports:2's power-wave assembly, so the
+# route-current digits are the v0.11.0 terminated-Z ones the gate module
+# tests/validation/test_port_package_sparameters.py carries in-comment beside
+# RECORDED_S_SYMMETRY_RATIO / RECORDED_PASSIVITY_MAX_SIGMA: 3.11213e-05 and
+# 0.861356895 on its 184 176-cell mesh.  Measured here this slot on 177 998
+# cells: 3.1121e-05 and 0.861357
+# (20260826T123139Z_EX-30-ports-run-1to2.log).  Old digits kept above; nothing
+# asserted changed and no band moved.
+RECORDED_S_SYMMETRY_RESIDUAL = 3.11213e-05
+RECORDED_S_SPECTRAL_NORM = 0.861356895
 
 # |raw - recorded| band: 7.7x the difference between the 3b-xviii digit and the
 # 3b-xi padding-sweep record at the same padding (0.894543 - 0.894283 = 2.60e-4),
