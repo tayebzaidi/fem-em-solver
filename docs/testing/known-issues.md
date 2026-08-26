@@ -107,6 +107,47 @@ unless fixing it is the task.
 > (narrowed):** the gate-red portion retires with the commit that lands
 > `GEO-21` green; the ungraded-path generator limitation then re-heads this
 > entry and stays open.
+>
+> **MEASURED 2026-08-26 (`GEO-21` step 1, 00:00 implementer slot) — the
+> ruling's own branch is excluded, and the generator finding gets wider.**
+> The red reproduced unchanged first (`20260826T050100Z_GEO-21-step1-red-repro.log`,
+> `1 failed in 4.80s`, same surfaces 59/79). Then the number the ruling turned
+> on, measured through the gate module's own `_mesh`
+> (`20260826T050134Z_GEO-21-step1-cad-mass-probe.log`, `-n 2`, Status 0, 35 s):
+>
+> ```
+>   h_c = 3.2000e-03  cells=  47975  meshed/CAD=0.916742
+>   h_c = 1.6000e-03  cells=  98666  meshed/CAD=0.966977
+> ```
+>
+> **0.916742 is neither branch** — not ≤ 0.90, not clearing 0.95 — and it sits
+> inside the gate module's pre-registered guard
+> `baseline_ratio < CAD_MASS_GATE - 0.05` = 0.90, failing it by 0.016742. So
+> moving the baseline control to `h_c = 3.2e-3` would relocate this red to the
+> separation guard rather than clear it, and no licence permits loosening a
+> guard that says the premise needs re-examining. The graded rung is *not* in
+> question: 0.966977 ≥ 0.95, 98 666 cells matching this entry's bracket exactly.
+>
+> **The generator limitation is broader than "the ungraded path".** A
+> coarse-ward graded ladder (`20260826T050319Z_GEO-21-step1-control-ladder.log`,
+> `-n 1`, Status 0, 30 s; measurement only, no control adopted) reads
+> 3.2e-3 → 0.916742 (width control exact vs `-n 2`), 4.8e-3 → 0.846150,
+> 6.4e-3 → 0.767219, and **9.6e-3 → FAIL, "Invalid boundary mesh (overlapping
+> facets) on surface 54 surface 86"** — the same failure family as
+> `h_c = None`, at a fourth distinct surface pair. `conductor_resolution=None`
+> is therefore not a special path that broke: it is the **coarsest point of a
+> continuum whose coarse end stopped meshing at the 0.11 merge**. That widens
+> the finding this entry keeps open after the gate red retires — hardening
+> `birdcage_port_domain` would have to cover coarse graded sizings too, not
+> just the `None` default. Still deliberately not commissioned; still no
+> production path uses it.
+>
+> **Gate red stays OPEN**: disposition needs a review ruling between (b) a
+> coarse-graded control (4.8e-3 or 6.4e-3, both separating) and (c) retiring
+> the baseline comparison — options and their cost in claim-strength are in the
+> §7 `GEO-21` entry. Retire-when is unchanged.
+>
+> **Verified at** `ab55ff1`.
 
 ### ✅ RETIRED 2026-08-25 (`EX-30` item 3 half A, 22:30 implementer slot) — `test_kwarg_off_reproduces_the_recorded_mesh` was **red on `main`**: the `GEO-16` kwarg-off cell record read 79 534, the 0.11 image meshes **79 070** (`EX-30` leg (mesh), 2026-08-25)
 

@@ -16403,3 +16403,164 @@ the pre-census that item should derive its prediction against. Items 5 (leg
 remain after it.
 
 `main` clean at handoff.
+
+## 2026-08-26T05:10Z — `GEO-21` step 1 (§9 item 4) — **blocked (ruling requested)**: the candidate control reads **0.916742**, which is neither pre-stated branch, and adopting it would turn the gate's own separation guard red (00:00 CDT implementer slot)
+
+**Outcome:** blocked. The measurement the ruling turns on was made, both
+branches of the pre-stated decision rule were tested against it, and **neither
+fires**. Nothing was adopted, no constant moved, no band moved, the gate is
+untouched and still red on `main`. `GEO-21` ⬜ → 🟡; the known-issues entry
+stays open with the measurement added.
+
+### What the ruling asked for, and what it got
+
+The `GEO-21` §7 entry pre-stated a two-branch rule on one unmeasured number —
+the CAD-mass recovery of the coarse graded rung `h_c = 3.2e-3`, the candidate
+replacement for the dead `h_c = None` baseline control:
+
+* branch (2) — a reading **≤ 0.90** ("clearly below" the 0.95 gate, the way
+  `None`'s 0.7403 was) ⇒ move the baseline control there, version-tagged, and
+  re-run the gate green;
+* branch (3) — a reading that **clears** the gate ⇒ the inverted premise has no
+  meshable carrier on 0.11; report, keep the graded-side assertion, stop.
+
+Measured (`20260826T050134Z_GEO-21-step1-cad-mass-probe.log`, `-n 2`, real,
+Status 0, 35 s, standard tier):
+
+```
+  h_c = 3.2000e-03  cells=   47975  meshed/CAD=0.916742  CAD=1.030097043e-04 m^3  mesh=  9.88 s
+  h_c = 1.6000e-03  cells=   98666  meshed/CAD=0.966977  CAD=1.030097043e-04 m^3  mesh= 20.28 s
+```
+
+**0.916742 is in neither branch.** It is not ≤ 0.90, and it does not clear
+0.95. This is the third-branch shape `MAG-19` step 1 hit on 2026-08-25 — the
+rule was written against two anticipated readings and the fixture returned a
+third — so the same disposition applies: measure the axis the review needs,
+report, do not rule in-slot.
+
+**And the third branch is not merely "unruled" — one branch is now positively
+excluded.** The gate module carries its own pre-registered guard on exactly
+this quantity:
+
+```python
+    assert baseline_ratio < CAD_MASS_GATE - 0.05, (
+        f"baseline global-setSize mesh keeps {baseline_ratio:.6f} of the CAD mass, "
+        f"within 0.05 of the {CAD_MASS_GATE} gate; the negative control no longer "
+        "separates and the chunk's premise needs re-examining"
+    )
+```
+
+`CAD_MASS_GATE - 0.05` = 0.90, so a baseline at 0.916742 fails that assertion
+by 0.016742. Branch (2) as written would therefore not have produced a green
+gate at all — it would have moved the red from the ungraded mesh build to the
+separation guard, and the only way to reach green from there is to loosen the
+0.05 guard, which no licence covers and which the guard's own message
+pre-emptively forbids ("the chunk's premise needs re-examining"). The rung the
+review named is *disqualified by the module's own criterion*, not by mine.
+
+The fine rung is measured in passing and is the good news: **0.966977** at
+98 666 cells, comfortably over the 0.95 gate and consistent with the 2026-08-16
+close's 0.967 — whatever control the gate ends up with, the graded side of it
+still passes on 0.11. The 98 666 cells reproduce the resolution probe's bracket
+exactly, against the 0.7.2 record of 98 474.
+
+### The negative control: the red reproduced first
+
+Per the §7 entry, before anything was measured:
+`20260826T050100Z_GEO-21-step1-red-repro.log`, `-n 2`, real, **`1 failed in
+4.80s`**, Status 1, 7 s — `RuntimeError: birdcage_port_domain geometry
+generation failed on rank 0` / `Exception: Invalid boundary mesh (overlapping
+facets) on surface 59 surface 79`, the **same surface pair** the 2026-08-25
+entry recorded. The red is exactly where it was left.
+
+### The extra measurement, handed to the review rather than acted on
+
+With branch (2)'s named rung disqualified, the live question becomes the one
+the review will have to rule: is there a *coarser graded* sizing that separates,
+and what would adopting one cost in meaning? I measured the axis and adopted
+nothing (`20260826T050319Z_GEO-21-step1-control-ladder.log`, `-n 1`, real,
+Status 0, 30 s):
+
+```
+  h_c = 3.2000e-03  cells=   47975  meshed/CAD=0.916742  mesh=  9.80 s  [width control vs -n 2: +0.000000]
+  h_c = 4.8000e-03  cells=   33185  meshed/CAD=0.846150  mesh=  6.74 s
+  h_c = 6.4000e-03  cells=   27912  meshed/CAD=0.767219  mesh=  5.74 s
+  h_c = 9.6000e-03  FAIL  Invalid boundary mesh (overlapping facets) on surface 54 surface 86
+```
+
+Three readings worth the review's attention:
+
+1. **The width control is exact.** 3.2e-3 reproduces its `-n 2` reading to
+   `+0.000000` at `-n 1`, so 0.916742 is a property of the sizing, not of the
+   reduction. Every meshing rung in both probes also passed
+   `_check_geo9_identities` — total volume, tagged-sum and all four port boxes
+   at < 1e-9 — imported from the gate module, not restated.
+2. **A separating graded control does exist**: 4.8e-3 reads 0.846150 (0.104
+   below the gate, clearing the 0.05 guard with 2× margin), 6.4e-3 reads
+   0.767219 (nearest of any meshable rung to the dead baseline's 0.7403). So
+   the review's option (b) is *feasible* — this slot deliberately did not take
+   it, per the entry's "never manufacture a control by hunting sizings until
+   one fails".
+3. **The generator failure is the coarse-sizing limit of a continuum, not a
+   property of `None`.** 9.6e-3 fails with the *same* "Invalid boundary mesh
+   (overlapping facets)" family, on a different surface pair (54/86, vs 59/79
+   for `None` and three more pairs in the 08-25 resolution probe). `h_c = None`
+   is not a special path that broke; it is simply the coarsest point on an axis
+   whose coarse end stopped meshing at the 0.11 merge. That is new information
+   about the known-issues generator finding and is added there.
+
+### The ruling this needs, stated as the review will have to decide it
+
+Not a band question and not a fix — a question about what the gate is *for*.
+The dead `h_c = None` control made the gate demonstrate **grading vs no
+grading**, which is the form in which `GEO-15` answered "is graded sizing a
+`PORT-9` prerequisite?". Every meshable replacement is itself a graded sizing,
+so any option-(b) control demotes the gate to **fine grading vs coarse
+grading** — still a real, quantitative, monotone claim on this fixture, but no
+longer evidence that grading is required at all. The options, with the numbers
+each now has:
+
+* **(b) coarse-graded control** — adopt 4.8e-3 (0.846150) or 6.4e-3 (0.767219),
+  version-tagged, `CONDUCTOR_RUNGS` unchanged; gate green, guard cleared with
+  margin, and the demoted claim stated in-comment and in the guide. 6.4e-3 is
+  the closer analogue of the retired 0.7403.
+* **(c) retire the baseline comparison** — keep the graded-side assertion
+  (0.966977 ≥ 0.95, measured green today) and the monotone ladder across the
+  two `CONDUCTOR_RUNGS`, drop the negative control with the finding stated.
+  Costs the effect size, keeps the gate honest about what it can still show.
+* **(a) is excluded by measurement** — 3.2e-3 as named cannot be adopted
+  without loosening the 0.05 guard.
+
+Whichever way it goes, the graded-side number is already in hand and the two
+probes are reusable.
+
+### Compute
+
+Three harness commands, all foreground, all standard tier or below: **7 + 35 +
+30 s** of container time, 72 s total. `-n 2` for the gate and the CAD-mass
+probe, `-n 1` for the coarse ladder — deliberately, because its last rung was
+expected to be able to FAIL and a rank-0 gmsh exception deadlocks the other
+ranks (the trap the §7 entry names). Nothing killed, nothing overran, no rank
+count above 2.
+
+### Committed on `main`
+
+Two measurement-only probe scripts (`tests/mesh/probe_birdcage_conductor_cad_mass.py`,
+`tests/mesh/probe_birdcage_conductor_control_ladder.py` — imported by nothing,
+asserting nothing beyond the imported `GEO-9` identities), the three harness
+logs + `test-results.md` rows, the §7 `GEO-21` entry annotated with the
+measurement and the three options, its status row ⬜ → 🟡, the known-issues
+entry extended with both readings and the continuum finding, and §9 item 4
+marked with the outcome. **No test, example, constant or band was modified.**
+No `attempt/*` branch: there is no code change to park.
+
+### Hypothesis for the next attempt
+
+The next slot should take §9 item 5 (`EX-30` leg (ports)) or item 6 (leg
+(root)) — both independent of this one; item 4 cannot advance without the
+review's choice between (b) and (c). `EX-30`'s leg (mesh) census stays at 2
+(`mesh:3`'s two artifacts) until `GEO-21` lands, so the chunk-level close rule
+is not satisfiable this interval — the 22:30 slot's prediction of 2 → 0 was
+conditional on item 4 landing, and it did not.
+
+`main` clean at handoff.
