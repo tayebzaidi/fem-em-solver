@@ -408,6 +408,13 @@ def _four_port_rung(name, offsets, frequency_hz=FREQUENCY_HZ):
         "cells": ncells,
         "sheet_analytic": sheet_analytic,
         "sweep_time": float(t_sweep),
+        # Additive, for `PORT-11` step 3's pre-gate resolution reading: the mesh
+        # and its cell tags travel with the rung so a consumer can measure the
+        # phantom's cell size (cells per skin depth / per wavelength) on the
+        # *solved* mesh instead of building a fourth one.  Nothing in this module
+        # reads them and no rung's numbers moved when they were added.
+        "mesh": msh,
+        "cell_tags": cell_tags,
     }
 
 

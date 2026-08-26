@@ -17272,3 +17272,94 @@ Deliberately not queued but ready: `OPS-26` step 2 (heavy, ≥ 2 slots),
 `GEO-20` step 2, `MAG-20`.
 
 `main` clean at handoff.
+
+---
+
+## 2026-08-26T21:34Z — `PORT-11` step 3 (16:30 implementer slot) — **complete**
+
+**Item taken:** §9 On-deck item 7 — `PORT-11` step 3, the same three gates at
+128 MHz. It was the only unclaimed item (items 1–6 all landed earlier today;
+item 7 was appended ~16:15 local by an interactive session on operator
+instruction after the queue drained). Preflight clean, container Up.
+
+**Outcome: complete, green on the first run, chunk's last step.** The item's
+instruction was literal — "step 2 repeated with one constant changed" — and it
+was executed that way: new module
+`tests/validation/test_port_birdcage_larmor_gate_128.py` mirroring
+`..._larmor_gate.py`, with `FREQUENCY_128_HZ` imported from
+`test_lossy_sphere_fullwave` (not restated), the same `_four_port_rung`, the
+same `GEO-19` step-B fixture, the same `TH-10` saline, the same four `f = 0.5`
+sheets at `Z_p = z0 = 50 Ω`, every band imported from the `PORT-9` modules.
+
+**Numbers.** Log `20260826T213414Z_PORT-11-step3.log`, `18 passed in 197.85s`,
+Status 0, elapsed **201 s** at `-n 2` on the complex build (sweeps 27.70 /
+31.61 / 26.75 s; both undisplaced meshes at ratio 1.000000 of the 116 085-cell
+record).
+
+* **Pre-gate resolution, measured on the solved mesh** (phantom h_mean
+  1.958701e-02 m over 537 owned cells): loss tangent **0.9002** — the phantom
+  does cross to displacement-dominated — δ 1.015497e-01 m, λ 2.448845e-01 m,
+  so **cells/λ = 12.5024** vs the pre-stated floor of 10 and cells/δ = 5.1845
+  vs step 1's 2.0. The §9 item's predictions (0.9002, 1.0155e-01, ≈ 5.18,
+  ≈ 12.5) were met to every quoted digit.
+* **(i)** `‖S−Sᵀ‖/‖S‖` = 7.030990825e-15 vs 1e-3 (10 MHz control on the same
+  mesh 6.711362163e-14; 64 MHz record 2.581325834e-14 — all one order, (d3c)).
+* **(ii)** `σ_max(S)` = 0.998974779 ≤ 1 + 1e-9; max column power sum
+  0.861668762 (64 MHz 0.999721388 / 0.804704664).
+* **(iii′)** class spreads self 0.1012% / adjacent 0.0916% / opposite 0.0654%
+  vs 0.5%, pooled-vs-worst separation 576.9483× vs the 10× floor.
+* **Frequency control:** worst S deviation from leg (d)'s recorded 4×4
+  **1.158e-10** vs 1e-6 — bit-for-bit the digit step 2 measured — and leg
+  (d0)'s column to 2.567e-10 at its 1e-9 band.
+* **Negative control at 128 MHz:** 22.5° on leg 1 breaks all three classes —
+  self 16.7006% (165.08×), adjacent 34.6556% (378.18×), opposite 13.2091%
+  (reported only) — while (i) holds at 1.837477555e-15 and σ_max at
+  0.998871340. Breakage asserted, no factor pinned (rubric rule 2).
+
+**Two judgement calls, both journaled rather than silent.**
+
+1. **The 64 MHz rung was not re-solved.** §9 item 7 allows it "if it fits the
+   tier"; step 2 measured 59 s/rung, so a fourth rung lands ~240 s against
+   §5.1's 180 s standard ceiling. Step 2's digits are instead carried in a
+   version-tagged `STEP2_64MHZ` dict and **printed beside every 128 MHz
+   reading** — printed, never gated: this module asserts against the `PORT-9`
+   bands, not against step 2's numbers. The differential is therefore in the
+   log for the review, at zero risk of a reproduction band nobody pre-stated.
+2. **One additive change outside the new module.** `_four_port_rung` now also
+   returns `mesh` and `cell_tags`. Its *signature* was not touched (the item's
+   explicit trap); the alternative was a fourth 26 s mesh build purely to
+   measure the phantom's cell size. The consumer re-ran green from `main`:
+   `16 passed in 130.04s` (`20260826T213748Z_PORT-11-step3-consumer.log`,
+   Status 0, 132 s). The 64 MHz module (`..._larmor_gate.py`) also imports
+   `_four_port_rung` and was **not** re-run — the change is additive, the
+   consumer run exercises the same function, and a third 180 s command did not
+   fit the slot. Flagged here so the review can call it if it disagrees.
+
+**The pre-gate rule is enforced mechanically, not just documented.** Each
+128 MHz gate calls `_require_resolution` first, so a cells/λ miss makes the
+gates *fail with the resolution as their message* rather than reporting a pass
+the item forbids quoting.
+
+Elapsed 201 s is marginally past the 180 s standard nominal — the same overrun
+step 2 recorded at 179 s; noted, not hidden. No band, tolerance or record
+moved; nothing re-recorded; no known-issues entry owed. `main` clean at
+handoff.
+
+### Hypothesis for the next attempt
+
+**The queue is drained again** — item 7 was the last one and there is no
+fallback chunk, so the next slot stops and journals unless the 18:00 review has
+topped it up. That review now owns the entire `PORT-11` ledger, which has grown
+by three: (a) §2.2's Larmor-port sentence, §10's Target-box "loaded birdcage
+runs end to end" tick and `ANS-4`'s commissioning — owed since step 2 and now
+backed by *both* Larmor frequencies; (b) the §7 reconciliation item 7 was
+explicitly told the review owns (the "128 MHz is unrun and unqueued" text is
+now stale in this commit's own entry); (c) two fresh readings — the C4 spreads
+widen ~1.7× from 64 to 128 MHz on a band with ~5× of margin left (worth a
+sentence on where (iii′) stops discriminating if a third frequency is ever
+asked for), and `|Im P|/Re P` climbs 0.336728 → 1.755210 → **2.659902**, which
+is the stored-energy curve a tuning chunk will want. Carried forward unchanged
+from the previous slots: the (d3c) decade-width wording pass, §5.4 ramp
+bookkeeping for `PORT-9`/`GEO-19`, the 4→16 mesh-time superlinearity, and the
+unassigned `straight_wire_domain` coarse-resolution floor. Ready but unqueued:
+`OPS-26` step 2 (heavy, ≥ 2 slots), `GEO-20` step 2, `MAG-20`.
