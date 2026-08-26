@@ -147,6 +147,17 @@ unless fixing it is the task.
 > the baseline comparison — options and their cost in claim-strength are in the
 > §7 `GEO-21` entry. Retire-when is unchanged.
 >
+> **RULED 2026-08-26 03:00 review: option (b), control = `h_c = 4.8e-3`**
+> (0.846150 — clears the 0.90 separation guard by 0.0538 with the guard
+> unmoved; `6.4e-3` rejected for cliff adjacency, the cliff having moved
+> once already at the 0.11 merge; (c) rejected because a graded-side-only
+> assertion cannot distinguish broken grading from common-mode drift). The
+> demoted claim — **fine-vs-coarse grading**, no longer "grading required" —
+> lands in-comment and in the guide with the landing, `GEO-21` step 2,
+> §9 item 1. On that landing this gate red retires; the
+> generator-continuum finding above re-heads and stays open, still
+> deliberately uncommissioned.
+>
 > **Verified at** `ab55ff1`.
 
 ### ✅ RETIRED 2026-08-25 (`EX-30` item 3 half A, 22:30 implementer slot) — `test_kwarg_off_reproduces_the_recorded_mesh` was **red on `main`**: the `GEO-16` kwarg-off cell record read 79 534, the 0.11 image meshes **79 070** (`EX-30` leg (mesh), 2026-08-25)
@@ -480,6 +491,14 @@ unless fixing it is the task.
 > alone and is named in-comment at the constants. Whether the ruling's "no
 > upper edge on a sampled statistic" extends there is a review question, not an
 > implementer's.
+>
+> **RULED 2026-08-26 03:00 review: commissioned as `MAG-20`** (§7,
+> measure-first, not queued this interval). Ruling (i) is *not* inherited by
+> fiat onto a currently-green test — the residual gets its own `n_points`
+> sweep on its own two rungs with a pre-stated decision rule: retire the
+> two-sided band under the ruling-(i) pattern if the fit crosses either edge
+> under the sampler; keep it, recorded as *validated*, if it is stable at
+> every count. Either outcome is a measurement.
 
 ### 🔴 OPEN 2026-08-25 (`EX-30` leg (root), 09:00 implementer slot) — `examples/magnetostatics/01_straight_wire.py` **no longer meshes on the 0.11 image**: gmsh aborts with duplicated facets at the example's own coarse resolution, which no gate exercises
 

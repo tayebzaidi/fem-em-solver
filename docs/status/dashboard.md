@@ -1,19 +1,17 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-25 18:00, **daily review (scheduled, ran normally)**.
-Headline: **`GEO-19` is closed — the 16-leg birdcage mesh is gated** (CAD
-identities, C16 sheet symmetry, a per-azimuth-class terminal reading that
-collapses to the old gate at 4 legs, and Phase 6's first measured cost
-rung: 307 296 cells / 74 s, comfortably affordable). Your `OPS-26` sweep's
-static half came back **clean** — 434 DolfinX call sites across 159 files,
-zero un-migrated survivors in `src`/`tests` with a binding negative
-control — which sharpens the remaining risk to exactly one class:
-**gates that no scheduled command executes**. That class now has three
-confirmed members (cavity, straight-wire rate, and — found this
-interval — the `GEO-15` graded-conductor gate, whose baseline no longer
-meshes on 0.11), every one found by the examples layer. All three now
-have rulings or dispositions queued, and the execution census (`OPS-26`
-step 2) is seeded with them by name. Source of truth is
+**Updated:** 2026-08-26 03:00, **daily review (scheduled, ran normally)**.
+Headline: **a perfect interval — four slots, four landings, zero parked
+branches** — and the mission front moved: the **first Larmor-frequency
+solve on the loaded birdcage exists** (`PORT-11` step 1: 64 MHz resolves
+on the gated mesh, phantom resolution 5.9 cells/skin-depth vs the 2.0
+floor, and the frequency costs *nothing* — MUMPS is mesh-bound, so the
+full 4×4 S-matrix at 64 MHz is a ~60 s standard-tier run, now queued).
+The straight-wire rate-gate red is disposed (`MAG-19` ✅, audited
+compliant), both `EX-30` mesh-red rulings landed exactly as ruled, and
+the one remaining 0.11 gate red (`GEO-15`'s) came back from its
+measurement needing a ruling — made this review: a coarse-graded control
+at `h_c = 4.8e-3`, landing queued first. Source of truth is
 `PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
 
 ## Waiting on you
@@ -26,76 +24,73 @@ step 2) is seeded with them by name. Source of truth is
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
 3. **ANS-1 Ansys replication** — still yours; ANS-3 (item 1) is the
    second case in the same queue.
-4. FYI: local `main` is well ahead of origin (push is manual). FYI on
-   your two 08-25 directives: `OPS-26` step 1 is **done and clean** (two
-   `scripts/probes/` stragglers filed); the fixture-scale directive
-   waits on the Sunday 08-30 weekly review as addressed. Nothing needs
-   your input on either.
+4. FYI: local `main` is well ahead of origin (push is manual). The
+   fixture-scale directive still waits on the Sunday 08-30 weekly review
+   as addressed. Nothing needs your input on either.
 
-## Honest current state (digest of §2 — three changes this interval)
+## Honest current state (digest of §2 — two changes this interval)
 
 | Capability | State | Gate |
 |---|---|---|
-| Magnetostatics | ⚠️ one rate gate red on `main`, **ruled — landing queued** | closed forms green (Helmholtz 0.04%, `E_Ω` ladder rate 1.6854 on 0.11); the sampled-norm two-sided rate gate measured unstable under its own sampler on **both** images — ruled: rate duty transfers to the already-green one-sided `E_Ω` gate (`MAG-19` step 2, queue item 2), nothing widened |
-| Time-harmonic curl-curl | ✅ validated, example family fully re-gated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77% + power 3.63%; degree-2 gated at 0.1405% |
-| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (`MAT-6`); Larmor coil loading stays an extrapolation; `PORT-11` step 1 (the 64 MHz port probe) is queue item 1 |
+| Magnetostatics | ✅ **rate-gate red disposed** (`MAG-19` ✅ 08-25, audited compliant) | closed forms green; rate duty now lives on the one-sided `E_Ω` ladder (1.6854 ≥ 0.7 on 0.11), the unstable sampled two-sided band retired with its measured basis, nothing widened; one sibling sampled gate (green) gets its own measurement (`MAG-20`, commissioned) |
+| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77% + power 3.63%; degree-2 gated at 0.1405% |
+| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (`MAT-6`); Larmor coil loading stays an extrapolation |
+| S-parameters / ports | ✅ birdcage gated at 10 MHz; **64 MHz now solved and priced** (`PORT-11` step 1, 08-25) | 10 MHz column reproduces the gated record to 2.6e-10 with frequency the only knob; cells/δ 5.92 ≥ 2.0 floor; **no gate claim at 64 MHz yet** — the 4×4 under the unmoved reciprocity/passivity/class gates is queue item 2 |
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (`MAT-4`); never on a coil |
-| S-parameters | ✅ birdcage gated at 10 MHz (`PORT-9`); **16-leg mesh now gated too (`GEO-19` ✅ 08-25)** | 16 legs: identities exact, terminal classes ≤ 2e-7 tight, cost rung 2.65× cells / 3.23× time over 4 legs; **mesh only — no solve, no port, no tuning claim above 4 legs** |
-| Test-suite trust | ⚠️ static half **clean**, execution half pending | `OPS-26` step 1: 434 call sites / 159 files, zero survivors in `src`/`tests`, binding negative control; the silently-non-executing-gate class has 3 confirmed members + 1 stale record — all ruled/dispositioned this review, and step 2's census is seeded with them |
+| Test-suite trust | ⚠️ one known gate red on `main`, ruled | the `GEO-15` graded-conductor gate (baseline unmeshable on 0.11) — measured 08-26, ruled this review, landing is queue item 1; `OPS-26` step 2 (execution census) still first in line for a multi-slot interval |
 
-## Recent activity (2026-08-25 10:30 → 18:00)
+## Recent activity (2026-08-25 18:00 → 08-26 03:00)
 
-- **12:00:** `GEO-19` step C landed under the construction-symmetry
-  ruling — **chunk ✅**, audited §4-COMPLIANT this review (all footers,
-  every anchor digit, 645-insertion/0-deletion diff verified; two
-  cosmetic observations noted in the review commit). `GEO-20` step 2
-  unblocked; attempt branch deleted.
-- **13:30:** `MAG-19` step 1 measured the dual-norm 4×2 table and
-  honestly reported that the pre-stated rule selects **neither** branch —
-  and found the constraint that decided the ruling (`E_Ω` is stable but
-  fits above 1.5 everywhere, so the two-sided band cannot transfer).
-  **Ruled this review: option (i), duty transfer**; landing queued.
-- **15:00:** `OPS-26` step 1 closed — the static sweep is clean, the
-  negative control binds (six reverted migrations all caught), two
-  un-migrated `scripts/probes/` files filed not fixed.
-- **16:30:** `EX-30` leg (mesh) — 4 of 7 green, census exact (13 → 6,
-  no other family moved), three reds surfaced and filed without using
-  its re-record licence: the `GEO-15` gate red (baseline unmeshable —
-  conductor-sizing axis, localised in one 39 s probe), the `GEO-16`
-  stale cell record (79 534 → 79 070, sheet exonerated), and `mesh:5`'s
-  control premise thinned to 6e-6. **All three ruled this review**
-  (re-choice / re-record / new chunk `GEO-21`).
+- **19:30:** `PORT-11` step 1 closed as written on the first run — one
+  64 MHz lumped-sheet solve on the loaded gapped birdcage, stop rule
+  cleared, 10 MHz anchor to 2.6e-10, step 2 priced at standard tier.
+- **21:00:** `MAG-19` step 2 landed the duty-transfer ruling — red
+  reproduced first on the pre-fix parent, disposition green on
+  bit-identical errors, `MAG-18` untouched as negative control. Chunk ✅;
+  audited §4-COMPLIANT this review (all four footers, every digit, zero
+  edits to the control module verified).
+- **22:30:** both `EX-30` mesh-red rulings landed — the `GEO-16` cell
+  record re-recorded version-tagged (79 070), the `mesh:5` control
+  re-chosen measure-first (0.018, margins +0.105/+0.107) as a third
+  build so no gate constant moved. Census exact, both known-issues
+  entries retired.
+- **00:00:** `GEO-21` step 1 measured its candidate control into a third
+  branch (0.9167 — inside the module's own separation guard, so the
+  named branch is excluded by measurement), handed over a measured
+  coarse-ward ladder, adopted nothing. **Ruled this review: control =
+  4.8e-3** (separation 2× the guard width, guard unmoved; the
+  cliff-adjacent 6.4e-3 rejected).
 
 ## Automation health
 
-- Four slots scheduled, four ran, all four productive: one chunk close,
-  one step close, two disciplined stops that asked for exactly the
-  rulings made here. No wedges, no `recovered/*`, no attempt branches
-  left, tree clean at every handoff and at this review.
-- The audit pipeline is working as designed: every red this interval
-  was *filed with its measurement done*, so all four review rulings
-  cost zero new compute to make.
-- The queue holds **six items — 1, 2, 4, 5 independent; item 3 is two
-  independent halves; item 6 serial on item 2**. Newly commissioned,
-  not yet queued: `GEO-21` is queued (item 4); `EX-33` (first 16-leg
-  example), `EX-32`, `GEO-20` step 2, and `OPS-26` step 2 (seeded) are
-  first in line at the next review.
+- Four slots scheduled, four ran, all four landed on `main` clean — two
+  chunk/step closes and two disciplined stops-with-measurements. No
+  wedges, no `recovered/*`, no `attempt/*`, tree clean at every handoff
+  and at this review.
+- The measure-first discipline keeps paying: every ruling this review
+  made (GEO-21 control, MAG-20 commissioning, PORT-11 step-2 tier) was
+  made from numbers already in the logs, at zero new compute.
+- Queue holds **six items, all mutually independent — no serial
+  dependencies this interval**. Commissioned but not queued: `MAG-20`
+  (the last sampled-band residual, measure-first), `GEO-20` step 2,
+  `OPS-26` step 2 (needs ≥ 2 consecutive slots).
 
 ## On deck (§9 — six items this review)
 
-1. **`PORT-11` step 1** — the 64 MHz solve on the loaded birdcage,
-   priced, with the 10 MHz column as in-run anchor (standard,
-   independent; the mission's first Larmor-frequency port measurement)
-2. **`MAG-19` step 2** — land the duty-transfer ruling; retires the
-   rate-gate red (standard, independent)
-3. **`EX-30` mesh-red pair** — `GEO-16` re-record + `mesh:5` control
-   re-choice, each half independent (standard)
-4. **`GEO-21` step 1** — re-choose the unmeshable graded-gate baseline,
-   measure-first (standard, independent)
-5. **`EX-30` leg (ports)** — ports + `ans` examples, licensed
-   re-records (standard, independent; spare)
-6. **`EX-30` leg (root) completion** — serial on item 2, skips with a
-   journal entry if item 2 did not land
+1. **`GEO-21` step 2** — land the ruled coarse-graded control
+   (4.8e-3); retires the last of the three example-found 0.11 gate
+   reds (standard, independent)
+2. **`PORT-11` step 2** — the 4×4 S-matrix at 64 MHz under the unmoved
+   `PORT-9` gates, displaced-mesh negative control (standard,
+   independent; the mission's first Larmor port *gate*)
+3. **`EX-30` leg (ports)** — ports + `ans` examples, licensed
+   re-records (standard, independent)
+4. **`EX-30` leg (root) completion** — the ruled reds + licensed guide
+   tables; serial dependency discharged, now independent (standard)
+5. **`EX-33`** — first 16-leg birdcage example (`GEO-19` ramp;
+   standard, independent)
+6. **`EX-32`** — first birdcage S-parameter example (`PORT-9` ramp;
+   standard, independent; spare)
 
 ---
 
