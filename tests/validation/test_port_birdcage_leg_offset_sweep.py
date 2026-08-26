@@ -196,11 +196,19 @@ def _narrowed_radial(msh, facet_tags, tag, fraction, centre, radial, half_width)
     return dolfinx.mesh.meshtags(msh, fdim, new_idx[order], new_val[order])
 
 
-def _four_port_rung(name, offsets):
+def _four_port_rung(name, offsets, frequency_hz=FREQUENCY_HZ):
     """Build one rung, narrow its four sheets in their own frames, drive all four.
 
     Returns the assembled ``Z``/``S``, the circulant class spreads, the
     reciprocity readings and the per-port sheet geometry, all reduced over ranks.
+
+    ``frequency_hz`` defaults to `PORT-9`'s 10 MHz, which is the only frequency
+    this module runs; it is a parameter so that `PORT-11` step 2 can drive the
+    identical construction at 64 MHz without a second copy of it (the frequency
+    is then demonstrably the only knob turned — see
+    `tests/validation/test_port_birdcage_larmor_gate.py`).  Nothing else about
+    this function moved when the parameter was added, and every rung below still
+    calls it at the default.
     """
     comm = MPI.COMM_WORLD
     ports_idx = list(range(1, LEG_COUNT + 1))
@@ -274,7 +282,7 @@ def _four_port_rung(name, offsets):
 
     problem = TimeHarmonicProblem(
         mesh=msh,
-        frequency_hz=FREQUENCY_HZ,
+        frequency_hz=frequency_hz,
         material=HomogeneousMaterial(sigma=0.0, epsilon_r=1.0, mu_r=1.0),
         cell_tags=cell_tags,
         material_map={
@@ -330,18 +338,23 @@ def _four_port_rung(name, offsets):
     classes = _circulant_classes(z_matrix)
     spreads = {n: _class_spread(v) for n, v in classes.items()}
     sigma = np.linalg.svd(s_matrix, compute_uv=False)
+    column_power = np.sum(np.abs(s_matrix) ** 2, axis=0)
     reciprocity = float(
         np.linalg.norm(s_matrix - s_matrix.T) / np.linalg.norm(s_matrix)
     )
     z_reciprocity = float(
         np.linalg.norm(z_matrix - z_matrix.T) / np.linalg.norm(z_matrix)
     )
+    pooled = _class_spread(
+        np.concatenate([classes["adjacent"], classes["opposite"]])
+    )
 
     if comm.rank == 0:
         print(
             f"\n[PORT-9 step3d1] rung '{name}': {ncells} cells (record "
             f"{STEP2_CELL_COUNT}, ratio {ncells / STEP2_CELL_COUNT:.6f}), mesh "
-            f"{diag['mesh_wall_time_s']:.2f} s, rung {t_mesh:.2f} s; four driven "
+            f"{diag['mesh_wall_time_s']:.2f} s, rung {t_mesh:.2f} s; f = "
+            f"{frequency_hz:.6e} Hz; four driven "
             f"solves in {t_sweep:.2f} s wall at -n 2; analytic sheet dx*g = "
             f"{sheet_analytic:.9e} m^2",
             flush=True,
@@ -368,15 +381,21 @@ def _four_port_rung(name, offsets):
             f"    ||S - S^T||/||S|| = {reciprocity:.9e}   "
             f"||Z - Z^T||/||Z|| = {z_reciprocity:.9e}\n"
             f"    sigma(S) = " + ", ".join(f"{v:.9f}" for v in sigma) + "\n"
-            f"    class spreads: self {spreads['self'] * 100:.4f}%  adjacent "
+            f"    column power sums = "
+            + ", ".join(f"{v:.9f}" for v in column_power)
+            + f"\n    class spreads: self {spreads['self'] * 100:.4f}%  adjacent "
             f"{spreads['adjacent'] * 100:.4f}%  opposite "
             f"{spreads['opposite'] * 100:.4f}%  (band "
-            f"{ADJACENT_SPREAD_BAND * 100:.1f}%)",
+            f"{ADJACENT_SPREAD_BAND * 100:.1f}%); pooled off-diagonal "
+            f"{pooled * 100:.4f}%",
             flush=True,
         )
 
     return {
         "name": name,
+        "frequency_hz": float(frequency_hz),
+        "column_power": column_power,
+        "pooled": pooled,
         "result": result,
         "z": z_matrix,
         "s": s_matrix,

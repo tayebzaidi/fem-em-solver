@@ -16674,3 +16674,109 @@ price). The ordering note in the §9 header is now **discharged**: with
 the chunk level rather than reporting `meshing = 2` and leaving it 🟡.
 
 `main` clean at handoff.
+
+## 2026-08-26T11:15Z — `PORT-11` step 2 (§9 item 2) — **complete**: the birdcage 4×4 gates at 64 MHz on the first run and the chunk closes (06:00 CDT implementer slot)
+
+Preflight clean, container Up 41 h, `main` at `31b5e8b`. §9 item 1 was already
+done by the 04:30 slot, so this run took item 2 as written.
+
+### What was executed
+
+A new module `tests/validation/test_port_birdcage_larmor_gate.py` running
+**three rungs, twelve driven solves**, one knob turned per step:
+
+1. `control_10mhz` — undisplaced, 10 MHz, the in-run frequency control;
+2. `larmor_64mhz` — undisplaced, 64 MHz, the gated rung;
+3. `displaced_64mhz` — leg 1 rotated `LEG_OFFSET_RAD` = 22.5°, 64 MHz, the
+   geometric negative control.
+
+All three go through leg (d1′)'s `_four_port_rung` — **imported, not copied**.
+That function grew a `frequency_hz` parameter defaulting to `PORT-9`'s 10 MHz;
+nothing else in it moved, and every `PORT-9` rung still calls it at the default.
+That was the only edit to an existing gated module, and it is the reason the
+frequency is demonstrably the only difference between rungs 1 and 2. Every band
+is imported from the `PORT-9` modules (`RECIPROCITY_BAND`,
+`PASSIVITY_SIGMA_TOLERANCE`, `ADJACENT_SPREAD_BAND`, `POOLED_SEPARATION_FLOOR`,
+`LEG_D0_Z_COLUMN`, `LEG_D0_REPRODUCTION_BAND`), never restated.
+
+### Measured
+
+Meshes: undisplaced rungs 116 085 cells at ratio 1.000000 of the `GEO-19`
+step-B record; displaced 116 475 (1.003360). Sweeps 26.43 / 25.13 / 25.06 s.
+
+**The three gates at 64 MHz** — all PASS, bands unmoved:
+
+| gate | 64 MHz | band | 10 MHz control (same mesh) |
+|---|---|---|---|
+| (i) `‖S−Sᵀ‖/‖S‖` | **2.581325834e-14** | 1e-3 | 1.106208688e-14 |
+| (ii) `σ_max(S)` | **0.999721388** | 1 + 1e-9 | 0.999992805 |
+| (ii) max column power sum | **0.804704664** | 1 | — |
+| (iii′) self / adjacent / opposite spread | **0.0573 / 0.0599 / 0.0370%** | 0.5% | 0.0553 / 0.0353 / 0.0214% |
+| (iii′) anti-noise: pooled/worst | **671.0527×** | ≥ 10× | 166.6766× |
+
+The pooled off-diagonal spread is 40.1838% at 64 MHz against 9.2115% at
+10 MHz: the adjacent/opposite structure is *better* resolved in the
+displacement-current regime, not worse, so gate (iii′) is passing on structure
+and not on noise.
+
+**Frequency control** — the 10 MHz rung reproduces leg (d)'s recorded 4×4
+entry by entry to a worst **1.158e-10** against the pre-stated 1e-6
+(`LEG_D_S_MATRIX_10MHZ`, version-tagged in-module from
+`20260825T110438Z_PORT-9-step3d1.log` lines 4661-4665, the run that closed
+`PORT-9`), and leg (d0)'s terminated column to 2.568e-10 at its own 1e-9
+print band. The reciprocity residual is reported as an order of magnitude
+only, per the (d3c) rule.
+
+**Negative control at 64 MHz** — 22.5° on leg 1 breaks all three classes:
+self **12.8947%**, adjacent **27.7509%** (both gated, both EXCEED), opposite
+**7.7239%** (reported only, per the 08-25 pre-ruling), while gate (i) holds at
+**1.252073140e-15** and `σ_max` at 0.999699491. Breakage was asserted, never a
+factor — the 10 MHz signature ran 5–14× the band and pinning an amplification
+at a new frequency would have been an unfounded prediction (rubric rule 2).
+
+**Printed, never gated** (step 1's limitation (a) carried forward): the driven
+port's terminal `|Im P|/Re P` = **1.755210** at 64 MHz vs 0.336728 at 10 MHz —
+step 1's figures to every printed digit, on the sweep route rather than the
+single-solve one, and the sweep's 64 MHz column 1 of `Z` is bit-identical to
+step 1's. 1.625909 on the displaced rung.
+
+**Consumer** — `test_port_birdcage_leg_offset_sweep.py` re-run after the
+parameter: `5 passed`, reproducing every digit `PORT-9` closed on (σ_max
+0.999992805, zero 0.0553 / 0.0353 / 0.0214%, displaced 6.2219 / 7.1142 /
+2.8474%, both reciprocity readings ≤ 1.4e-13). The parameterisation moved
+nothing.
+
+### What was deliberately **not** done
+
+No band moved and nothing was re-recorded — the only new constant is the
+frequency control's own record. 128 MHz (step 3) was **not** run: it is a
+separate step and the entry says "only after step 2 gates". §2.2's Larmor-port
+sentence, §10's "loaded birdcage … runs end to end" tick and any `ANS-4`
+commissioning were **not** touched — §9 item 2 says those move at the next
+review, not in-slot. No known-issues entry is owed: nothing failed.
+
+### Compute
+
+Two harness commands, both foreground, both standard tier, both `-n 2`,
+`timeout -k 30 400`: 179 s and 105 s. Nothing killed, nothing overran, no rank
+count above 2, no denied command.
+
+### Committed on `main`
+
+The new gate module, the one-parameter change to
+`test_port_birdcage_leg_offset_sweep.py`, both harness logs +
+`test-results.md` rows, the §7 `PORT-11` entry with a full step-2 narrative,
+its chunk head and status row 🧪 → ✅, and §9 item 2 marked done. No
+`attempt/*` branch — the work completed.
+
+### Hypothesis for the next attempt
+
+§9 items 3–6 are open and mutually independent; the next slot takes item 3
+(`EX-30` leg (ports), complex build, `ports:1` the ~134 s sink). The §9 header
+ordering note stays discharged — `meshing = 0` since item 1 landed — so
+whichever of items 3/4 lands last can close `EX-30` at the chunk level. For the
+review: with `PORT-11` ✅ the §2.2/§10 moves it names are now owed, and step 3
+(128 MHz) is unblocked but unqueued — it is the same module with one constant
+changed, so it prices at ~180 s, standard tier.
+
+`main` clean at handoff.
