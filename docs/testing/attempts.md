@@ -16052,3 +16052,119 @@ because an example ran. That is a pattern worth a chunk of its own — the
 modules should seed its list.
 
 `main` clean at handoff.
+
+## 2026-08-26T00:45Z — `PORT-11` step 1 (§9 item 1) — **complete**: the 64 MHz solve on the loaded gapped birdcage exists, resolves, and prices standard (19:30 CDT implementer slot)
+
+**Outcome:** complete. Both anchors passed on the first run and reproduced by a
+second in-slot run; `PORT-11` moves ⬜ → 🧪 with step 1 done. No gate claim at
+64 MHz — that is step 2's, and step 2 is the review's to commission.
+
+### What was tried
+
+New module `tests/validation/test_port_birdcage_larmor_probe.py`: one mesh
+(`_build(True)`, the `GEO-19` step-B gapped + sheeted birdcage), the leg
+(c)/(d0)/(d) sheet construction copied unchanged, then **two** lumped-sheet
+solves at `Z_p = z0 = 50 Ω` on all four ports — 10 MHz first (the control),
+then 64 MHz. Phantom at the `TH-10` saline values (`SALINE_SIGMA` = 0.5 S/m,
+`SALINE_EPSILON_R` = 78), conductor at `SIGMA_WIRE_S_PER_M`. Every constant,
+record and band imported (`ANS-1`); nothing restated. Three tests: structural,
+the anchor, the stop rule.
+
+### Measured numbers
+
+Mesh **116 085 cells, ratio 1.000000** of `STEP2_CELL_COUNT`; mesh 23.16 s,
+rung 26.01 s. Per-region cell diameters (owned cells only, globally reduced):
+conductor 35 917 cells / h_mean 3.883165e-03 m, air 74 326 / 9.441074e-03 m,
+phantom 537 / 1.958701e-02 m.
+
+| quantity | 10 MHz (control) | 64 MHz |
+|---|---|---|
+| solve wall, `-n 2`, run 1 / run 2 | 6.56 / 6.50 s | **9.49 / 6.36 s** |
+| phantom loss tangent | 11.5225 | **1.8004** |
+| phantom δ | 2.350483e-01 m | **1.159804e-01 m** |
+| phantom **cells/δ** | 12.0002 | **5.9213** (floor 2.0, **PASS**) |
+| phantom cells/λ | 69.1393 | **21.8936** |
+| air λ / cells/λ | 29.979 m / 3175.4062 | **4.684257 m / 496.1572** |
+| `\|Im P\|/Re P` (terminal) | 0.336728 | **1.755210** |
+
+Summed `ru_maxrss` across ranks **1.8247 GiB** (run 1) / **1.8207 GiB** (run 2).
+
+Column 1 of `Z` at 64 MHz, **bit-identical across both runs**:
+
+    Z_11  +2.647082952e+01 + 4.646185233e+01j Ω
+    Z_21  +1.877079735e+01 + 6.864775531e-01j
+    Z_31  +1.429428638e+01 − 4.749063864e+00j
+    Z_41  +1.877383419e+01 + 6.947656906e-01j
+
+**Anchor (the in-run frequency control), passed:** the 10 MHz leg reproduces
+`PORT-9` leg (d0)'s `LEG_D0_Z_COLUMN` (imported from the four-port module) to
+1.788e-10 / 2.568e-10 / 1.071e-10 / 1.505e-10 relative, worst **2.568e-10**
+against the pre-stated **1e-6** band — 3 894× of headroom. The frequency is the
+only knob this module turned, and it stayed the only one.
+
+**Stop rule, cleared:** phantom cells/δ **5.9213 ≥ 2.0**, so the follow-on is
+step 2 and *not* a `GEO` phantom-sizing chunk. δ is taken from the full lossy
+propagation constant `k = ω√(μ₀ε₀ε_c)` with `ε_c` from the imported
+`complex_permittivity`, deliberately **not** `√(2/ωμσ)`: at a loss tangent of
+1.80 the good-conductor approximation would misreport δ by tens of percent, and
+this is the number a stop rule turns on.
+
+### The deliverable: step 2's price
+
+MUMPS is mesh-bound exactly as the §7 entry predicted — 64 MHz costs **9.49 s
+then 6.36 s** against the *same mesh's* 6.56 / 6.50 s at 10 MHz, i.e. **no
+frequency penalty beyond run-to-run scatter** (the 9.49 s is first-touch). So
+step 2's 4×4 is ~26 s of mesh + 4 solves ≈ **55–65 s**: **standard tier, not
+heavy**, and `PORT-11`'s tier column now says so.
+
+### Two named limitations (both stated in the module's own docstring)
+
+1. **`|Im P|/Re P` is not the `TH-11` family quantity.**
+   `run_lumped_sheet_port_case` returns per-port `V`/`I` and **no fields**, so
+   the volume integral `½∫σE·Ē` cannot be formed from its return value. What is
+   printed is the driven port's **terminal complex power** `½·V₁·conj(I₁)` — a
+   different quantity whose imaginary part at 64 MHz is stored energy (physics),
+   not numerical noise. Printed, never gated, and labelled as such at every
+   print site. Surfacing `TimeHarmonicFields` from the lumped-sheet route would
+   close the gap; it is unscoped and I did not scope it in-slot.
+2. **This fixture has no separate vessel-wall region.** `GEO-18`'s partition is
+   conductor (1) / air (2) / phantom (3), so §7's "cells/λ in air and wall"
+   reads air and phantom here. Stated in the log rather than papered over.
+
+### Unasserted arithmetic, for the review only
+
+Derivable from the printed 64 MHz column and **not gated, not a claim**: the
+adjacent spread `|Z₂₁−Z₄₁|/|Z₂₁|` is ~0.047% and leg (d0)'s discrimination
+margin ~798×. Both are step-2 quantities and must be measured through the sweep
+on the full 4×4 under the unmoved gates, never inferred from one column — this
+is noted only because it bears on how likely step 2 is to gate.
+
+### Cost
+
+**128 s of compute across two runs** (67 s + 61 s harness, `14 passed` both),
+`-n 2`, complex build, `timeout -k 30 400`, well inside the standard tier and
+nowhere near the ceiling. Commissioned standard, **measured standard**.
+
+### Docs and tree
+
+**Landed on `main`:** the new probe module, two harness logs +
+`test-results.md` rows, the §7 `PORT-11` table row (⬜ → 🧪) and its step-1
+bullet, and §9 item 1 marked done. No known-issues entry was needed — nothing
+unrelated failed. No source or existing test file changed, so no `attempt/*`
+branch and nothing parked. No denials, no anomalies.
+
+### Hypothesis for the next attempt
+
+Step 2 is ready to commission and cheap: same module structure, four driven
+solves through `run_n_port_sparameter_sweep` at 64 MHz with the 10 MHz sweep
+re-run in the same command as the frequency control, `PORT-9` step 3's three
+gates unchanged ((i) 1e-3, (ii) 1 + 1e-9, (iii′) 0.5%), plus the displaced-mesh
+negative control the §7 entry names. On this slot's price that is one
+`timeout -k 30 400` command, not a heavy-tier booking — the entry's "heavy
+(probe first)" label was a pre-measurement guess and the tier column now
+carries the measured reading beside it. The one thing step 2 should *not*
+inherit from this probe is the terminal-power print: if a review wants the
+`½∫σE·Ē` bound at 64 MHz, surfacing fields from the lumped-sheet route is its
+own small chunk and should be commissioned as one.
+
+`main` clean at handoff.
