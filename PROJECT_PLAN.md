@@ -4365,7 +4365,9 @@ the 22.5° displaced control breaks (iii′) at 12.8947 / 27.7509% with (i)
 still at 1.25e-15, and the in-run 10 MHz rung reproduces leg (d)'s 4×4 to
 1.158e-10 vs 1e-6). **No resonance, tuning or absolute-accuracy claim** —
 this is a self-consistency identity set on one fixture, and 128 MHz (step 3)
-is unrun and unqueued. *(commissioned 2026-08-23 weekly
+is unrun — **queued 2026-08-26 ~16:15 local as §9 item 7** by an interactive
+session on operator instruction (the 10:30 review did not run); whether it was
+correctly commissioned is the 18:00 review's to confirm. *(commissioned 2026-08-23 weekly
 review as §10 subgoal 2b — the birdcage half of `PORT-9` closes at 10 MHz,
 the two-torus records' frequency, and the mission's ports are at 64/128 MHz.
 **Serial on `PORT-9` ✅** — step 3 leg (d)'s gates (i)–(iii) on the 4×4 at
@@ -5778,7 +5780,13 @@ still first in line at a review that can give it consecutive slots),
 `PORT-4`…`PORT-8`.
 
 **Six items this queue, all six mutually independent — no serial
-dependencies.** Item 6's ordering note: the chunk-level `EX-30` close
+dependencies.** **Item 7 was appended 2026-08-26 ~16:15 local by an
+interactive session on operator instruction, after items 1–6 had all
+landed and the queue drained** — the 10:30 review that would have refilled
+it never ran (host/WSL relocation: no log, no commit, and the 09:00
+implementer slot was lost in the same window). Item 7 is independent of
+items 1–6 and is the 16:30 slot's item; the 18:00 review owns its
+disposition. Item 6's ordering note: the chunk-level `EX-30` close
 rule (all four legs' logs + a census reading 0 for their sets) is
 satisfiable only after item 1 lands (`mesh:3`'s two artifacts stay stale
 until the `GEO-21` disposition greens the gate `-e 3` imports);
@@ -6095,6 +6103,73 @@ uses the Edit tool and verifies `git status --porcelain`.
    imported record missing its band through the example path is an
    example/test divergence finding — known-issues + §7, stop; nothing
    re-recorded.~~
+
+7. **`PORT-11` step 3 — the same three gates at 128 MHz (standard, `-n 2`,
+   complex, `main`; independent).** *(Queued 2026-08-26 ~16:15 local by an
+   **interactive session on operator instruction**, not by a scheduled
+   review — the 10:30 review did not run (host/WSL relocation, no log, no
+   commit), so the 03:00 queue was never topped up and drained at the 15:00
+   slot. The 18:00 review owns the disposition of this item and of the
+   commissioning question step 2 left it; §7's `PORT-11` "128 MHz is unrun
+   and unqueued" text and this entry are reconciled by that review, not
+   in-slot.)* Execute the §7 step-3 line as written: **step 2 repeated with
+   one constant changed.** `tests/validation/test_port_birdcage_larmor_gate.py`
+   is the module; `FREQUENCY_128_HZ = 128.0e6` already exists beside
+   `FREQUENCY_64_HZ` in `tests/validation/test_lossy_sphere_fullwave.py` and
+   is the same `TH-10` import path — import it, do not restate 128e6.
+   Everything else is unchanged: `run_n_port_sparameter_sweep`, lumped-sheet
+   route, `GEO-19` step-B fixture (116 085-cell record, ratio 1.000000), four
+   `f = 0.5` sheets at `Z_p = z0 = 50 Ω`, `TH-10` saline (σ = 0.5 S/m,
+   εᵣ = 78.0 — frequency-independent by construction; the preset table and
+   `with_frequency_adjustment`'s exponents are **not** to be touched).
+   **Anchor:** the three gates as the `PORT-9` modules assert them today,
+   imported never restated — (i) `‖S−Sᵀ‖/‖S‖ ≤ 1e-3`, (ii) `σ_max(S) ≤
+   1 + 1e-9` with unit column power sums ≤ 1, (iii′) C4 class spreads
+   ≤ 0.5% — plus the in-run **10 MHz** frequency control reproducing leg
+   (d)'s recorded 4×4 to 1e-6 (reciprocity *residuals* order-of-magnitude
+   only, the (d3c) rule; step 2 measured 1.158e-10). Keep the 64 MHz rung in
+   the same command as a second control if it fits the tier — it is the rung
+   this step is differential against, and step 2's digits are on record
+   (2.581325834e-14 / 0.999721388 / 0.0573 / 0.0599 / 0.0370%).
+   **Pre-gate stop rule — measure it, do not assume it.** Step 1's floor was
+   phantom **cells/δ ≥ 2.0** and 64 MHz cleared it at 5.9213. The mesh is
+   frozen by the `GEO-19` record, so at 128 MHz the resolution *falls*:
+   predicted δ = 1.0155e-01 m (loss tangent **0.9002**, so the phantom
+   crosses from conduction- to **displacement-dominated** — this is the
+   regime change the chunk exists to probe), giving **cells/δ ≈ 5.18** —
+   still clear. The number that actually tightens is **cells/λ in the
+   phantom: ≈ 12.5**, down from 21.8936 at 64 MHz (λ 0.4288 → 0.2449 m).
+   Print both against their 64 MHz values before any gate is read. **If
+   cells/λ lands below 10 the gates are not to be read as a pass** — report
+   the resolution as the finding and stop; a mesh refinement at 128 MHz is a
+   `GEO` sizing chunk and a review's to commission, never an in-slot knob.
+   **Negative control:** the `leg_azimuth_offsets_rad` 22.5° displaced mesh
+   at 128 MHz — class spreads must break (iii′) while (i) holds (the 64 MHz
+   signature: self 12.8947% / adjacent 27.7509%, (i) at 1.252073140e-15).
+   Assert breakage, not a fixed factor (rubric rule 2). **Cost:** step 1
+   measured MUMPS **frequency-flat** (9.49 / 6.36 s at 64 MHz vs 6.50–6.56 s
+   at 10 MHz on this mesh), so ~26 s mesh + 4 solves ≈ 55–65 s per fixture;
+   two fixtures + the 10 MHz control ≈ 200–260 s, ~300 s if the 64 MHz rung
+   is retained. **Standard tier**; budget two commands at
+   `timeout -k 30 400`. Complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` first in the path list. **Traps:** the 0-byte FFCx
+   stub sweep if a compile is killed; `|Im P|/Re P` rises with frequency
+   (1.755210 at 64 MHz, 0.336728 at 10 MHz) — stored energy, **printed never
+   gated**, and its 128 MHz value is a reading for the review, not a gate;
+   the fixture has no vessel-wall region (report air + phantom); the
+   consumer `test_port_birdcage_leg_offset_sweep.py` re-runs green only
+   because `_four_port_rung` takes `frequency_hz` — do not re-signature it
+   again. **Scope:** 128 MHz only. **No resonance, tuning or
+   absolute-accuracy claim** — this is a self-consistency identity set on one
+   fixture, exactly as at 64 MHz. §2.2's Larmor-port sentence, §10's Target
+   box tick and `ANS-4`'s commissioning were already owed to the 18:00
+   review by step 2; this step adds to that ledger and moves none of it
+   in-slot. **Negative result:** a gate that fails at 128 MHz and passes at
+   64 MHz **on the same mesh** is the finding this step exists to surface —
+   record the numbers per gate against their 64 MHz values, open a
+   known-issues entry, stop; **never widen**, and never re-mesh to chase a
+   pass. On a clean close `PORT-11` carries both Larmor frequencies and
+   step 3 is the chunk's last step.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
