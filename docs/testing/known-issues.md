@@ -662,6 +662,13 @@ unless fixing it is the task.
 > `straight_wire_domain`, or the upstream image moves the floor and that is
 > measured. **Owning chunk:** unassigned — `EX-30` owned only the example
 > fix, and it is done.
+>
+> **OWNER ASSIGNED 2026-08-26, 18:00 review: `GEO-22`** — bisect
+> `[0.008, 0.010)` on both geometries with the existing `-n 1` probe, land a
+> `ValueError` guard at the *measured* `h_ok`, gate it with the exception
+> type, the probe cell count and `mag:1`'s unmoved 21 830; the straight-wire
+> gate ladders are the negative control. Full rubric in the §7 entry;
+> queued as a §9 spare. This entry retires when that guard lands.
 
 ### ✅ RETIRED 2026-08-25 by `OPS-24` — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family was **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
 

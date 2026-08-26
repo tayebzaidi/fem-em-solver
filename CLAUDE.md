@@ -18,9 +18,13 @@ boots — re-recorded with its mesh by `OPS-18`, 2026-08-22). Coil loading is ga
 is measuring it). SAR is gated against the lossy-sphere closed form to 3.5%
 (`MAT-4` step 1, 2026-08-03) on an **imposed uniform field**, never on a
 coil. S-parameters are field-derived through the package (`PORT-1` closed
-2026-08-15), but **only on the two-torus validation fixture with two named
-systematics** — no coil or birdcage has ports at all; read PROJECT_PLAN.md
-§2 before trusting any S-parameter or coil-loading/SAR figure. Anything
+2026-08-15; feed systematics named on the two-torus fixture), and the
+gapped 4-leg birdcage carries four lumped-sheet ports whose 4×4 passes
+reciprocity / passivity / C4-symmetry gates at 10, 64 and 128 MHz
+(`PORT-9` ✅ 2026-08-25, `PORT-11` ✅ 2026-08-26) — **self-consistency
+identities on one fixture, not an absolute-accuracy, resonance or tuning
+claim**; read PROJECT_PLAN.md §2 before trusting any S-parameter or
+coil-loading/SAR figure. Anything
 that solves in the frequency domain needs the complex DolfinX build
 (`source /usr/local/bin/dolfinx-complex-mode`); real mode raises.
 

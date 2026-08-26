@@ -1,18 +1,21 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-26 03:00, **daily review (scheduled, ran normally)**.
-Headline: **a perfect interval — four slots, four landings, zero parked
-branches** — and the mission front moved: the **first Larmor-frequency
-solve on the loaded birdcage exists** (`PORT-11` step 1: 64 MHz resolves
-on the gated mesh, phantom resolution 5.9 cells/skin-depth vs the 2.0
-floor, and the frequency costs *nothing* — MUMPS is mesh-bound, so the
-full 4×4 S-matrix at 64 MHz is a ~60 s standard-tier run, now queued).
-The straight-wire rate-gate red is disposed (`MAG-19` ✅, audited
-compliant), both `EX-30` mesh-red rulings landed exactly as ruled, and
-the one remaining 0.11 gate red (`GEO-15`'s) came back from its
-measurement needing a ruling — made this review: a coarse-graded control
-at `h_c = 4.8e-3`, landing queued first. Source of truth is
-`PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
+**Updated:** 2026-08-26 18:00, **daily review (scheduled, ran normally)**.
+Headline: **the loaded birdcage now passes its port gates at both Larmor
+frequencies** — `PORT-11` closed today: the 4×4 S-matrix at 64 MHz and at
+128 MHz satisfies reciprocity, passivity and C4 symmetry on imported,
+unmoved bands, with frequency demonstrably the only knob (the in-run
+10 MHz rung reproduces the gated record to 1e-10). At 128 MHz the phantom
+crosses to displacement-dominated and the mesh still resolves the wave
+(12.5 cells/λ against a pre-stated floor of 10, checked before any gate is
+read). **Seven slots ran, seven landed clean, five chunks closed** — the
+example corpus is fully fresh for the first time since `EX-29`, the last
+example-found 0.11 gate red is disposed, and the first 16-leg and first
+birdcage-S-parameter examples exist. All five closures audited §4-compliant.
+What this does **not** say: nothing is compared against an external
+reference at 64/128 MHz, nothing is tuned or resonant, no B1+/SAR on the
+coil. Source of truth is `PROJECT_PLAN.md`; this page is a read-only digest
+for the human operator.
 
 ## Waiting on you
 
@@ -24,73 +27,77 @@ at `h_c = 4.8e-3`, landing queued first. Source of truth is
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
 3. **ANS-1 Ansys replication** — still yours; ANS-3 (item 1) is the
    second case in the same queue.
-4. FYI: local `main` is well ahead of origin (push is manual). The
-   fixture-scale directive still waits on the Sunday 08-30 weekly review
-   as addressed. Nothing needs your input on either.
+4. FYI, no action: **the 10:30 review and the 09:00 implementer slot did
+   not run today** (host/WSL relocation — no log, no commit). The 18:00
+   review ran normally and nothing was lost except the two slots; an
+   interactive session bridged the drained queue in between. If the
+   relocation recurs, cron on the new host is the thing to check.
+5. FYI: the Sunday 08-30 weekly review now owes three decisions — the
+   F-human fixture directive (unchanged), **`ANS-4` commissioning** (the
+   birdcage 4-port at the Larmor frequencies is now gated physics; only
+   the weekly review may commission ANS cases), and whether a 128 MHz
+   resolution study is warranted (C4 spreads grow ~1.7× per Larmor step,
+   still 5× inside the band). Local `main` remains well ahead of origin
+   (push is manual).
 
-## Honest current state (digest of §2 — two changes this interval)
+## Honest current state (digest of §2 — one change this interval)
 
 | Capability | State | Gate |
 |---|---|---|
-| Magnetostatics | ✅ **rate-gate red disposed** (`MAG-19` ✅ 08-25, audited compliant) | closed forms green; rate duty now lives on the one-sided `E_Ω` ladder (1.6854 ≥ 0.7 on 0.11), the unstable sampled two-sided band retired with its measured basis, nothing widened; one sibling sampled gate (green) gets its own measurement (`MAG-20`, commissioned) |
+| Magnetostatics | ✅ validated | closed forms green; rate duty on the one-sided `E_Ω` ladder (1.6854 ≥ 0.7); one sibling sampled band gets its own measurement (`MAG-20`, queued) |
 | Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77% + power 3.63%; degree-2 gated at 0.1405% |
 | Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (`MAT-6`); Larmor coil loading stays an extrapolation |
-| S-parameters / ports | ✅ birdcage gated at 10 MHz; **64 MHz now solved and priced** (`PORT-11` step 1, 08-25) | 10 MHz column reproduces the gated record to 2.6e-10 with frequency the only knob; cells/δ 5.92 ≥ 2.0 floor; **no gate claim at 64 MHz yet** — the 4×4 under the unmoved reciprocity/passivity/class gates is queue item 2 |
+| S-parameters / ports | ✅ **birdcage gated at 10, 64 and 128 MHz** (`PORT-11` ✅ 08-26, audited compliant) | reciprocity ~1e-14, σ_max ≤ 1, C4 spreads 0.06–0.10% vs 0.5% at each frequency; displaced-leg control breaks the gate by 100–400×; **self-consistency identities only — absolute accuracy at Larmor is `ANS-4` (weekly review)** |
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (`MAT-4`); never on a coil |
-| Test-suite trust | ⚠️ one known gate red on `main`, ruled | the `GEO-15` graded-conductor gate (baseline unmeshable on 0.11) — measured 08-26, ruled this review, landing is queue item 1; `OPS-26` step 2 (execution census) still first in line for a multi-slot interval |
+| Test-suite trust | ⚠️ **no known gate red on `main`**; systematic census not yet run | all three example-found 0.11 reds disposed (`OPS-24`, `MAG-19`, `GEO-21`); `OPS-26` step 2 (execution census) is queue items 1–2 — the first interval with the consecutive slots it needs |
 
-## Recent activity (2026-08-25 18:00 → 08-26 03:00)
+## Recent activity (2026-08-26 03:00 → 18:00)
 
-- **19:30:** `PORT-11` step 1 closed as written on the first run — one
-  64 MHz lumped-sheet solve on the loaded gapped birdcage, stop rule
-  cleared, 10 MHz anchor to 2.6e-10, step 2 priced at standard tier.
-- **21:00:** `MAG-19` step 2 landed the duty-transfer ruling — red
-  reproduced first on the pre-fix parent, disposition green on
-  bit-identical errors, `MAG-18` untouched as negative control. Chunk ✅;
-  audited §4-COMPLIANT this review (all four footers, every digit, zero
-  edits to the control module verified).
-- **22:30:** both `EX-30` mesh-red rulings landed — the `GEO-16` cell
-  record re-recorded version-tagged (79 070), the `mesh:5` control
-  re-chosen measure-first (0.018, margins +0.105/+0.107) as a third
-  build so no gate constant moved. Census exact, both known-issues
-  entries retired.
-- **00:00:** `GEO-21` step 1 measured its candidate control into a third
-  branch (0.9167 — inside the module's own separation guard, so the
-  named branch is excluded by measurement), handed over a measured
-  coarse-ward ladder, adopted nothing. **Ruled this review: control =
-  4.8e-3** (separation 2× the guard width, guard unmoved; the
-  cliff-adjacent 6.4e-3 rejected).
+- **04:30:** `GEO-21` step 2 — ruled coarse-graded control landed, gate
+  green at unmoved bands, chunk ✅.
+- **06:00:** `PORT-11` step 2 — **first Larmor-frequency port gate**, 4×4
+  at 64 MHz green on the first run, displaced control breaks as required.
+- **07:30 / 12:00:** `EX-30` legs (ports) and (root) — chunk ✅; corpus-wide
+  census `stale=0 dead=0 guide=0` for the first time since `EX-29`; the
+  one re-record licence used exactly once, on a record the gate had moved.
+- **13:30:** `EX-33` ✅ — first 16-leg birdcage example, green first run.
+- **15:00:** `EX-32` ✅ — first birdcage S-parameter example, green first
+  run. Queue drained.
+- **~16:15:** interactive session (operator instruction) queued the 128 MHz
+  step after the 10:30 review failed to run.
+- **16:30:** `PORT-11` step 3 — 128 MHz green on the first run, chunk ✅.
+- **18:00 review:** all five closures audited compliant; §2/§10/CLAUDE.md
+  brought current (four stale "PORT-11 unrun" sentences, one stale 🟡);
+  `EX-34` (Larmor frequency-ladder example) and `GEO-22` (straight-wire
+  resolution guard) commissioned; `OPS-26` census split into two legs
+  and queued first.
 
 ## Automation health
 
-- Four slots scheduled, four ran, all four landed on `main` clean — two
-  chunk/step closes and two disciplined stops-with-measurements. No
-  wedges, no `recovered/*`, no `attempt/*`, tree clean at every handoff
-  and at this review.
-- The measure-first discipline keeps paying: every ruling this review
-  made (GEO-21 control, MAG-20 commissioning, PORT-11 step-2 tier) was
-  made from numbers already in the logs, at zero new compute.
-- Queue holds **six items, all mutually independent — no serial
-  dependencies this interval**. Commissioned but not queued: `MAG-20`
-  (the last sampled-band residual, measure-first), `GEO-20` step 2,
-  `OPS-26` step 2 (needs ≥ 2 consecutive slots).
+- Seven of eight scheduled slots ran (09:00 lost with the 10:30 review to
+  the host relocation); all seven landed on `main` clean — five chunk
+  closes, two step closes, zero parked branches, zero wedges.
+- The interactive bridge worked as designed: item 7 was appended with the
+  full rubric and this review confirmed the commissioning was correct.
+- Queue holds **six items**: two census legs (independent, disjoint
+  directories), then `MAG-20`, `GEO-20` step 2, `EX-34`, `GEO-22` — no
+  serial dependencies.
 
 ## On deck (§9 — six items this review)
 
-1. **`GEO-21` step 2** — land the ruled coarse-graded control
-   (4.8e-3); retires the last of the three example-found 0.11 gate
-   reds (standard, independent)
-2. **`PORT-11` step 2** — the 4×4 S-matrix at 64 MHz under the unmoved
-   `PORT-9` gates, displaced-mesh negative control (standard,
-   independent; the mission's first Larmor port *gate*)
-3. **`EX-30` leg (ports)** — ports + `ans` examples, licensed
-   re-records (standard, independent)
-4. **`EX-30` leg (root) completion** — the ruled reds + licensed guide
-   tables; serial dependency discharged, now independent (standard)
-5. **`EX-33`** — first 16-leg birdcage example (`GEO-19` ramp;
-   standard, independent)
-6. **`EX-32`** — first birdcage S-parameter example (`PORT-9` ramp;
-   standard, independent; spare)
+1. **`OPS-26` step 2 leg (a)** — execution census, cheap test directories
+   (heavy tier, fail-closed dispositions; operator directive of 08-25)
+2. **`OPS-26` step 2 leg (b)** — execution census, `validation` + `ports`
+   (heavy; may not finish in one slot by design — the unreached tail is
+   named, not hidden)
+3. **`MAG-20`** — measure-then-dispose the last sampled two-sided rate
+   band (standard)
+4. **`GEO-20` step 2** — 32 ring-gap ports at 16 legs under the per-class
+   reading (standard)
+5. **`EX-34`** — birdcage S-matrix across 10 / 64 / 128 MHz on one mesh
+   (`PORT-11` ramp; standard)
+6. **`GEO-22`** — bisect and guard the straight-wire coarse-resolution
+   floor (spare)
 
 ---
 
