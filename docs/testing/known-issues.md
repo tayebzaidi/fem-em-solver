@@ -28,6 +28,25 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (f), 13:30 slot) — **five more stale exact cell-count records across five modules, and the class collapses to THREE shared meshes, not nine independent constants**
+
+> **CANDIDATE OWNER: `OPS-27`** (§9 item 2), whose rubric as written names
+> **two** sites. The census has now found **nine red names over eight
+> modules**, and this entry is the one that changes the shape of the job:
+> the nine reds carry only **four distinct** 0.7.2-era cell counts, because
+> the same mesh is recorded independently in several modules. Re-recording
+> is therefore four measurements and ~nine edits, not nine measurements —
+> but a per-file fix that misses a sibling leaves a red behind.
+
+| | |
+|---|---|
+| **Tests (5 new names, all footered Status 1, all at `cf03754`)** | `test_coil_loading_richardson_ladder.py::test_the_rung_has_its_recorded_cell_count[10MHz]` and `[30MHz]`; `test_coil_loading_larmor_probe.py::test_the_mesh_is_the_mat6_step3_baseline`; `test_coil_loading_transition_30mhz.py::test_the_mesh_is_the_step1_baseline`; `test_dodd_deeds_resistance_slab_resolution.py::test_the_refinement_landed_in_the_slab_and_not_on_the_wire_or_far_field`; `test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved`; `test_coil_loading_larmor_resolution.py::test_the_mesh_is_the_mat6_step8_fine_rung` |
+| **Logs** | `20260827T183121Z_OPS-26-step2f-richardson.log` (`2 failed, 23 passed in 141.15s`, `-n 2` complex, 143 s); `20260827T185143Z_OPS-26-step2f-probe-30mhz.log` (`2 failed, 21 passed in 137.35s`, `-n 2` complex, 139 s); `20260827T183401Z_OPS-26-step2f-dodd-slab-resolution.log` (`1 failed, 15 passed in 429.91s`, `-n 2` complex, 431 s); `20260827T184138Z_OPS-26-step2f-dodd-combined-knobs.log` (`1 failed, 14 passed in 568.26s`, `-n 8` complex, 570 s); `20260827T185422Z_OPS-26-step2f-larmor-resolution.log` (`1 failed, 16 passed in 428.37s`, `-n 2` complex, 430 s). Rank streams identical on all five. |
+| **Symptom** | Each is `AssertionError: … the count must be … <recorded>; got <measured>`, with only three distinct pairs across seven of the nine census names: **138 619 → 138 490** (−129, **−0.093%**) in `richardson_ladder` ×2, `larmor_probe`, `transition_30mhz`; **417 914 → 418 888** (+974, **+0.233%**) in `slab_resolution`, `larmor_resolution` and (leg (e)) `third_rung`; **697 401 → 697 926** (+525, **+0.075%**) in `combined_knobs`. The fourth quantity is leg (d)'s **2 807 309 → 2 808 204** (+0.032%) in `mesh_cache`. |
+| **Cause — not diagnosed in code** | 0.11's gmsh meshes the *same* geometry to a slightly different cell count than 0.7.2 did; the records are exact equalities never swept when `OPS-18` re-recorded. **Drift is not one signed constant** — it is −0.093%, +0.032%, +0.075%, +0.233% on four meshes, so it is per-mesh, not a global offset, and cannot be predicted for an unmeasured record. Every affected module's *other* names are green in the same run: the physics reproduces, the cell count does not. |
+| **What this adds to `OPS-27`'s rubric** | (1) The sweep must be **by cell-count value across modules**, not per file — 138 619 alone appears in three modules, 417 914 in three. (2) `grep -rn '0\.7\.2' tests/` is insufficient (leg (e)'s note, now confirmed twice): none of these five was reachable by version tag, only by reading a red's assertion message. (3) One re-record of a shared mesh retires up to four red names at once, so the job is **four measurements**, not nine. |
+| **Disposition** | Filed, **not fixed** — `OPS-26` step 2 is a census and lands no fix. Expected on `main`; **not yours**. |
+
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (e), 12:00 slot) — `test_coil_loading_larmor_third_rung.py` asserts an **exact** fine-rung cell count recorded on the 0.7.2 image (417 914) and 0.11 meshes 418 888: the **fourth** site of the stale-record class, and the largest drift yet at 0.233%
 
 > **CANDIDATE OWNER: `OPS-27`** (§9 item 2) — same class, same remedy

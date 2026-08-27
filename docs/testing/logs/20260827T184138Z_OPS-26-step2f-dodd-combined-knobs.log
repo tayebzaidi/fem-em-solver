@@ -1,0 +1,1134 @@
+# Test Run
+- Chunk: OPS-26-step2f-dodd-combined-knobs
+- Commit: cf03754129dfad03dde314b4e43453ce6e5b0f32
+- Time (UTC): 2026-08-27 18:41:38
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 615 mpiexec -n 8 python3 -m pytest tests/environment tests/validation/test_dodd_deeds_reactance_combined_knobs.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 13:41 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 615 mpiexec -n 8 python3 -m pytest tests/environment tests/validation/test_dodd_deeds_reactance_combined_knobs.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  6%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  6%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [  6%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  6%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [  6%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  6%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  6%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  6%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 13%]PASSED [ 13%]PASSED [ 13%]PASSED [ 13%]PASSED [ 13%]PASSED [ 13%]PASSED [ 13%]PASSED [ 13%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 20%]PASSED [ 20%]PASSED [ 20%]PASSED [ 20%]PASSED [ 20%]PASSED [ 20%]PASSED [ 20%]PASSED [ 20%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 26%]PASSED [ 26%]PASSED [ 26%]PASSED [ 26%]PASSED [ 26%]PASSED [ 26%]PASSED [ 26%]PASSED [ 26%]
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites PASSED [ 33%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 33%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 33%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 33%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 33%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 33%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 33%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 33%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 40%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 40%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 40%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 40%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 40%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 40%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 40%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 40%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 46%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 60%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 66%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 73%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved PASSED [ 46%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 60%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 46%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 60%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 66%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 73%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved PASSED [ 66%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 73%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved PASSED [ 46%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 60%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 66%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 73%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved PASSED [ 46%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 60%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 66%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 73%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved PASSED [ 46%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 60%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 66%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 73%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved PASSED [ 46%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 60%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 66%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 73%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved PASSED [ 46%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 60%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 66%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 73%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved FAILED [ 80%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_meshed_torus_recovers_volume_on_the_combined_mesh FAILED [ 80%]FAILED [ 80%]PASSED [ 86%]FAILED [ 80%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_meshed_torus_recovers_volume_on_the_combined_mesh FAILED [ 80%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_meshed_torus_recovers_volume_on_the_combined_mesh 
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_resistance_change_matches_dodd_deeds 
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_meshed_torus_recovers_volume_on_the_combined_mesh 
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_meshed_torus_recovers_volume_on_the_combined_mesh PASSED [ 86%]PASSED [ 86%]PASSED [ 93%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_resistance_change_matches_dodd_deeds 
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_resistance_change_matches_dodd_deeds 
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_reactance_change_has_the_right_sign_and_magnitude PASSED [ 86%]PASSED [ 86%]PASSED [ 93%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_resistance_change_matches_dodd_deeds 
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_resistance_change_matches_dodd_deeds PASSED [ 93%]PASSED [100%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_reactance_change_has_the_right_sign_and_magnitude 
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_reactance_change_has_the_right_sign_and_magnitude PASSED [ 93%]PASSED [ 93%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_reactance_change_has_the_right_sign_and_magnitude PASSED [100%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_reactance_change_has_the_right_sign_and_magnitude PASSED [100%]PASSED [100%]PASSED [100%]FAILED [ 80%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_meshed_torus_recovers_volume_on_the_combined_mesh PASSED [ 86%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_resistance_change_matches_dodd_deeds PASSED [ 93%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_reactance_change_has_the_right_sign_and_magnitude PASSED [100%]FAILED [ 80%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_meshed_torus_recovers_volume_on_the_combined_mesh PASSED [ 86%]
+
+=================================== FAILURES ===================================
+__________ test_the_combined_mesh_is_the_probes_and_both_knobs_moved ___________
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py:244: in test_the_combined_mesh_is_the_probes_and_both_knobs_moved
+    assert ncells == NCELLS_COMBINED, (
+E   AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+E   assert 697926 == 697401
+---------------------------- Captured stdout setup -----------------------------
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 50%] Meshing curve 11 (Line)
+Info    : [ 60%] Meshing curve 12 (Line)
+Info    : [ 60%] Meshing curve 13 (Line)
+Info    : [ 60%] Meshing curve 14 (Line)
+Info    : [ 70%] Meshing curve 15 (Line)
+Info    : [ 70%] Meshing curve 16 (Line)
+Info    : [ 80%] Meshing curve 17 (Line)
+Info    : [ 80%] Meshing curve 18 (Line)
+Info    : [ 90%] Meshing curve 19 (Line)
+Info    : [ 90%] Meshing curve 20 (Line)
+Info    : [100%] Meshing curve 21 (Line)
+Info    : [100%] Meshing curve 22 (Line)
+Info    : Done meshing 1D (Wall 0.0741281s, CPU 0.074128s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.600032s, CPU 0.596066s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 3 volumes with 1 connected component
+Info    : Tetrahedrizing 11849 nodes...
+Info    : Done tetrahedrizing 11857 nodes (Wall 0.317181s, CPU 0.309035s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.68296s, CPU 0.630191s)
+Info    : Found volume 4
+Info    : Found volume 3
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 114.471 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 6.19834 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 4.60399 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 4.03857 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 3.78073 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 3.35715 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 3.16386 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 3.00739 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 2.8788 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 2.76694 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 2.67593 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 2.59563 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 2.52569 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 2.46529 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 2.40468 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 2.34781 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 2.30022 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 2.2545 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 2.21504 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 2.17819 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 2.14067 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 2.10804 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 2.07644 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 2.04584 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 2.01851 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 1.99117 (nodes removed 0 0)
+Info    : It. 13000 - 13000 nodes created - worst tet radius 1.96401 (nodes removed 0 0)
+Info    : It. 13500 - 13500 nodes created - worst tet radius 1.9401 (nodes removed 0 0)
+Info    : It. 14000 - 14000 nodes created - worst tet radius 1.91879 (nodes removed 0 0)
+Info    : It. 14500 - 14500 nodes created - worst tet radius 1.89554 (nodes removed 0 0)
+Info    : It. 15000 - 15000 nodes created - worst tet radius 1.90161 (nodes removed 0 0)
+Info    : It. 15500 - 15500 nodes created - worst tet radius 1.85227 (nodes removed 0 0)
+Info    : It. 16000 - 16000 nodes created - worst tet radius 1.83237 (nodes removed 0 0)
+Info    : It. 16500 - 16500 nodes created - worst tet radius 1.8122 (nodes removed 0 0)
+Info    : It. 17000 - 17000 nodes created - worst tet radius 1.794 (nodes removed 0 0)
+Info    : It. 17500 - 17500 nodes created - worst tet radius 1.77695 (nodes removed 0 0)
+Info    : It. 18000 - 18000 nodes created - worst tet radius 1.76054 (nodes removed 0 0)
+Info    : It. 18500 - 18500 nodes created - worst tet radius 1.7444 (nodes removed 0 0)
+Info    : It. 19000 - 19000 nodes created - worst tet radius 1.72911 (nodes removed 0 0)
+Info    : It. 19500 - 19500 nodes created - worst tet radius 1.73231 (nodes removed 0 0)
+Info    : It. 20000 - 19998 nodes created - worst tet radius 1.6996 (nodes removed 0 2)
+Info    : It. 20500 - 20498 nodes created - worst tet radius 1.6849 (nodes removed 0 2)
+Info    : It. 21000 - 20998 nodes created - worst tet radius 1.67211 (nodes removed 0 2)
+Info    : It. 21500 - 21498 nodes created - worst tet radius 1.65863 (nodes removed 0 2)
+Info    : It. 22000 - 21998 nodes created - worst tet radius 1.64736 (nodes removed 0 2)
+Info    : It. 22500 - 22498 nodes created - worst tet radius 1.63573 (nodes removed 0 2)
+Info    : It. 23000 - 22998 nodes created - worst tet radius 1.62412 (nodes removed 0 2)
+Info    : It. 23500 - 23498 nodes created - worst tet radius 1.61306 (nodes removed 0 2)
+Info    : It. 24000 - 23998 nodes created - worst tet radius 1.60163 (nodes removed 0 2)
+Info    : It. 24500 - 24498 nodes created - worst tet radius 1.59148 (nodes removed 0 2)
+Info    : It. 25000 - 24998 nodes created - worst tet radius 1.5815 (nodes removed 0 2)
+Info    : It. 25500 - 25498 nodes created - worst tet radius 1.57143 (nodes removed 0 2)
+Info    : It. 26000 - 25998 nodes created - worst tet radius 1.56132 (nodes removed 0 2)
+Info    : It. 26500 - 26498 nodes created - worst tet radius 1.55187 (nodes removed 0 2)
+Info    : It. 27000 - 26998 nodes created - worst tet radius 1.54213 (nodes removed 0 2)
+Info    : It. 27500 - 27498 nodes created - worst tet radius 1.53306 (nodes removed 0 2)
+Info    : It. 28000 - 27998 nodes created - worst tet radius 1.52446 (nodes removed 0 2)
+Info    : It. 28500 - 28498 nodes created - worst tet radius 1.51551 (nodes removed 0 2)
+Info    : It. 29000 - 28998 nodes created - worst tet radius 1.5065 (nodes removed 0 2)
+Info    : It. 29500 - 29498 nodes created - worst tet radius 1.49884 (nodes removed 0 2)
+Info    : It. 30000 - 29998 nodes created - worst tet radius 1.49037 (nodes removed 0 2)
+Info    : It. 30500 - 30498 nodes created - worst tet radius 1.48271 (nodes removed 0 2)
+Info    : It. 31000 - 30998 nodes created - worst tet radius 1.47529 (nodes removed 0 2)
+Info    : It. 31500 - 31498 nodes created - worst tet radius 1.46768 (nodes removed 0 2)
+Info    : It. 32000 - 31998 nodes created - worst tet radius 1.46019 (nodes removed 0 2)
+Info    : It. 32500 - 32498 nodes created - worst tet radius 1.4523 (nodes removed 0 2)
+Info    : It. 33000 - 32998 nodes created - worst tet radius 1.445 (nodes removed 0 2)
+Info    : It. 33500 - 33498 nodes created - worst tet radius 1.43713 (nodes removed 0 2)
+Info    : It. 34000 - 33998 nodes created - worst tet radius 1.4302 (nodes removed 0 2)
+Info    : It. 34500 - 34498 nodes created - worst tet radius 1.42356 (nodes removed 0 2)
+Info    : It. 35000 - 34998 nodes created - worst tet radius 1.41643 (nodes removed 0 2)
+Info    : It. 35500 - 35498 nodes created - worst tet radius 1.41 (nodes removed 0 2)
+Info    : It. 36000 - 35998 nodes created - worst tet radius 1.40336 (nodes removed 0 2)
+Info    : It. 36500 - 36498 nodes created - worst tet radius 1.39688 (nodes removed 0 2)
+Info    : It. 37000 - 36998 nodes created - worst tet radius 1.39076 (nodes removed 0 2)
+Info    : It. 37500 - 37498 nodes created - worst tet radius 1.38404 (nodes removed 0 2)
+Info    : It. 38000 - 37998 nodes created - worst tet radius 1.37792 (nodes removed 0 2)
+Info    : It. 38500 - 38498 nodes created - worst tet radius 1.37226 (nodes removed 0 2)
+Info    : It. 39000 - 38998 nodes created - worst tet radius 1.36661 (nodes removed 0 2)
+Info    : It. 39500 - 39498 nodes created - worst tet radius 1.36129 (nodes removed 0 2)
+Info    : It. 40000 - 39998 nodes created - worst tet radius 1.3665 (nodes removed 0 2)
+Info    : It. 40500 - 40498 nodes created - worst tet radius 1.35051 (nodes removed 0 2)
+Info    : It. 41000 - 40998 nodes created - worst tet radius 1.34497 (nodes removed 0 2)
+Info    : It. 41500 - 41498 nodes created - worst tet radius 1.33982 (nodes removed 0 2)
+Info    : It. 42000 - 41998 nodes created - worst tet radius 1.33428 (nodes removed 0 2)
+Info    : It. 42500 - 42498 nodes created - worst tet radius 1.32913 (nodes removed 0 2)
+Info    : It. 43000 - 42998 nodes created - worst tet radius 1.3244 (nodes removed 0 2)
+Info    : It. 43500 - 43498 nodes created - worst tet radius 1.31954 (nodes removed 0 2)
+Info    : It. 44000 - 43998 nodes created - worst tet radius 1.31435 (nodes removed 0 2)
+Info    : It. 44500 - 44498 nodes created - worst tet radius 1.3094 (nodes removed 0 2)
+Info    : It. 45000 - 44998 nodes created - worst tet radius 1.3069 (nodes removed 0 2)
+Info    : It. 45500 - 45498 nodes created - worst tet radius 1.30022 (nodes removed 0 2)
+Info    : It. 46000 - 45998 nodes created - worst tet radius 1.29565 (nodes removed 0 2)
+Info    : It. 46500 - 46498 nodes created - worst tet radius 1.29097 (nodes removed 0 2)
+Info    : It. 47000 - 46998 nodes created - worst tet radius 1.28672 (nodes removed 0 2)
+Info    : It. 47500 - 47498 nodes created - worst tet radius 1.28233 (nodes removed 0 2)
+Info    : It. 48000 - 47998 nodes created - worst tet radius 1.27783 (nodes removed 0 2)
+Info    : It. 48500 - 48498 nodes created - worst tet radius 1.27371 (nodes removed 0 2)
+Info    : It. 49000 - 48998 nodes created - worst tet radius 1.2693 (nodes removed 0 2)
+Info    : It. 49500 - 49498 nodes created - worst tet radius 1.26481 (nodes removed 0 2)
+Info    : It. 50000 - 49998 nodes created - worst tet radius 1.27625 (nodes removed 0 2)
+Info    : It. 50500 - 50498 nodes created - worst tet radius 1.25654 (nodes removed 0 2)
+Info    : It. 51000 - 50998 nodes created - worst tet radius 1.2523 (nodes removed 0 2)
+Info    : It. 51500 - 51498 nodes created - worst tet radius 1.24847 (nodes removed 0 2)
+Info    : It. 52000 - 51998 nodes created - worst tet radius 1.2441 (nodes removed 0 2)
+Info    : It. 52500 - 52498 nodes created - worst tet radius 1.24023 (nodes removed 0 2)
+Info    : It. 53000 - 52998 nodes created - worst tet radius 1.2364 (nodes removed 0 2)
+Info    : It. 53500 - 53498 nodes created - worst tet radius 1.23242 (nodes removed 0 2)
+Info    : It. 54000 - 53998 nodes created - worst tet radius 1.22853 (nodes removed 0 2)
+Info    : It. 54500 - 54498 nodes created - worst tet radius 1.22479 (nodes removed 0 2)
+Info    : It. 55000 - 54998 nodes created - worst tet radius 1.22123 (nodes removed 0 2)
+Info    : It. 55500 - 55498 nodes created - worst tet radius 1.21758 (nodes removed 0 2)
+Info    : It. 56000 - 55998 nodes created - worst tet radius 1.21395 (nodes removed 0 2)
+Info    : It. 56500 - 56498 nodes created - worst tet radius 1.21037 (nodes removed 0 2)
+Info    : It. 57000 - 56998 nodes created - worst tet radius 1.2068 (nodes removed 0 2)
+Info    : It. 57500 - 57498 nodes created - worst tet radius 1.20352 (nodes removed 0 2)
+Info    : It. 58000 - 57998 nodes created - worst tet radius 1.19996 (nodes removed 0 2)
+Info    : It. 58500 - 58498 nodes created - worst tet radius 1.19683 (nodes removed 0 2)
+Info    : It. 59000 - 58998 nodes created - worst tet radius 1.19356 (nodes removed 0 2)
+Info    : It. 59500 - 59498 nodes created - worst tet radius 1.19023 (nodes removed 0 2)
+Info    : It. 60000 - 59998 nodes created - worst tet radius 1.19307 (nodes removed 0 2)
+Info    : It. 60500 - 60498 nodes created - worst tet radius 1.18386 (nodes removed 0 2)
+Info    : It. 61000 - 60998 nodes created - worst tet radius 1.18034 (nodes removed 0 2)
+Info    : It. 61500 - 61498 nodes created - worst tet radius 1.17687 (nodes removed 0 2)
+Info    : It. 62000 - 61998 nodes created - worst tet radius 1.17369 (nodes removed 0 2)
+Info    : It. 62500 - 62498 nodes created - worst tet radius 1.17059 (nodes removed 0 2)
+Info    : It. 63000 - 62998 nodes created - worst tet radius 1.1674 (nodes removed 0 2)
+Info    : It. 63500 - 63498 nodes created - worst tet radius 1.16447 (nodes removed 0 2)
+Info    : It. 64000 - 63998 nodes created - worst tet radius 1.1614 (nodes removed 0 2)
+Info    : It. 64500 - 64498 nodes created - worst tet radius 1.15859 (nodes removed 0 2)
+Info    : It. 65000 - 64998 nodes created - worst tet radius 1.15564 (nodes removed 0 2)
+Info    : It. 65500 - 65498 nodes created - worst tet radius 1.15274 (nodes removed 0 2)
+Info    : It. 66000 - 65998 nodes created - worst tet radius 1.14988 (nodes removed 0 2)
+Info    : It. 66500 - 66498 nodes created - worst tet radius 1.14706 (nodes removed 0 2)
+Info    : It. 67000 - 66998 nodes created - worst tet radius 1.14422 (nodes removed 0 2)
+Info    : It. 67500 - 67498 nodes created - worst tet radius 1.14143 (nodes removed 0 2)
+Info    : It. 68000 - 67998 nodes created - worst tet radius 1.13862 (nodes removed 0 2)
+Info    : It. 68500 - 68498 nodes created - worst tet radius 1.13579 (nodes removed 0 2)
+Info    : It. 69000 - 68998 nodes created - worst tet radius 1.13271 (nodes removed 0 2)
+Info    : It. 69500 - 69498 nodes created - worst tet radius 1.13007 (nodes removed 0 2)
+Info    : It. 70000 - 69998 nodes created - worst tet radius 1.12719 (nodes removed 0 2)
+Info    : It. 70500 - 70498 nodes created - worst tet radius 1.12457 (nodes removed 0 2)
+Info    : It. 71000 - 70998 nodes created - worst tet radius 1.12195 (nodes removed 0 2)
+Info    : It. 71500 - 71498 nodes created - worst tet radius 1.11944 (nodes removed 0 2)
+Info    : It. 72000 - 71998 nodes created - worst tet radius 1.11676 (nodes removed 0 2)
+Info    : It. 72500 - 72498 nodes created - worst tet radius 1.11407 (nodes removed 0 2)
+Info    : It. 73000 - 72998 nodes created - worst tet radius 1.11171 (nodes removed 0 2)
+Info    : It. 73500 - 73498 nodes created - worst tet radius 1.10913 (nodes removed 0 2)
+Info    : It. 74000 - 73998 nodes created - worst tet radius 1.1068 (nodes removed 0 2)
+Info    : It. 74500 - 74498 nodes created - worst tet radius 1.10435 (nodes removed 0 2)
+Info    : It. 75000 - 74998 nodes created - worst tet radius 1.10199 (nodes removed 0 2)
+Info    : It. 75500 - 75498 nodes created - worst tet radius 1.09962 (nodes removed 0 2)
+Info    : It. 76000 - 75998 nodes created - worst tet radius 1.09707 (nodes removed 0 2)
+Info    : It. 76500 - 76498 nodes created - worst tet radius 1.09477 (nodes removed 0 2)
+Info    : It. 77000 - 76998 nodes created - worst tet radius 1.09252 (nodes removed 0 2)
+Info    : It. 77500 - 77498 nodes created - worst tet radius 1.09018 (nodes removed 0 2)
+Info    : It. 78000 - 77998 nodes created - worst tet radius 1.08782 (nodes removed 0 2)
+Info    : It. 78500 - 78498 nodes created - worst tet radius 1.08569 (nodes removed 0 2)
+Info    : It. 79000 - 78998 nodes created - worst tet radius 1.0833 (nodes removed 0 2)
+Info    : It. 79500 - 79498 nodes created - worst tet radius 1.08111 (nodes removed 0 2)
+Info    : It. 80000 - 79998 nodes created - worst tet radius 1.07889 (nodes removed 0 2)
+Info    : It. 80500 - 80498 nodes created - worst tet radius 1.07674 (nodes removed 0 2)
+Info    : It. 81000 - 80998 nodes created - worst tet radius 1.07457 (nodes removed 0 2)
+Info    : It. 81500 - 81498 nodes created - worst tet radius 1.07229 (nodes removed 0 2)
+Info    : It. 82000 - 81998 nodes created - worst tet radius 1.07027 (nodes removed 0 2)
+Info    : It. 82500 - 82498 nodes created - worst tet radius 1.06822 (nodes removed 0 2)
+Info    : It. 83000 - 82998 nodes created - worst tet radius 1.06629 (nodes removed 0 2)
+Info    : It. 83500 - 83498 nodes created - worst tet radius 1.06404 (nodes removed 0 2)
+Info    : It. 84000 - 83998 nodes created - worst tet radius 1.06193 (nodes removed 0 2)
+Info    : It. 84500 - 84498 nodes created - worst tet radius 1.05993 (nodes removed 0 2)
+Info    : It. 85000 - 84998 nodes created - worst tet radius 1.058 (nodes removed 0 2)
+Info    : It. 85500 - 85498 nodes created - worst tet radius 1.05599 (nodes removed 0 2)
+Info    : It. 86000 - 85998 nodes created - worst tet radius 1.0539 (nodes removed 0 2)
+Info    : It. 86500 - 86498 nodes created - worst tet radius 1.05196 (nodes removed 0 2)
+Info    : It. 87000 - 86998 nodes created - worst tet radius 1.05001 (nodes removed 0 2)
+Info    : It. 87500 - 87498 nodes created - worst tet radius 1.04801 (nodes removed 0 2)
+Info    : It. 88000 - 87998 nodes created - worst tet radius 1.04609 (nodes removed 0 2)
+Info    : It. 88500 - 88498 nodes created - worst tet radius 1.04414 (nodes removed 0 2)
+Info    : It. 89000 - 88998 nodes created - worst tet radius 1.04219 (nodes removed 0 2)
+Info    : It. 89500 - 89498 nodes created - worst tet radius 1.04036 (nodes removed 0 2)
+Info    : It. 90000 - 89998 nodes created - worst tet radius 1.03844 (nodes removed 0 2)
+Info    : It. 90500 - 90498 nodes created - worst tet radius 1.03673 (nodes removed 0 2)
+Info    : It. 91000 - 90998 nodes created - worst tet radius 1.03495 (nodes removed 0 2)
+Info    : It. 91500 - 91498 nodes created - worst tet radius 1.03318 (nodes removed 0 2)
+Info    : It. 92000 - 91998 nodes created - worst tet radius 1.03142 (nodes removed 0 2)
+Info    : It. 92500 - 92498 nodes created - worst tet radius 1.02951 (nodes removed 0 2)
+Info    : It. 93000 - 92998 nodes created - worst tet radius 1.02778 (nodes removed 0 2)
+Info    : It. 93500 - 93498 nodes created - worst tet radius 1.02582 (nodes removed 0 2)
+Info    : It. 94000 - 93998 nodes created - worst tet radius 1.02404 (nodes removed 0 2)
+Info    : It. 94500 - 94498 nodes created - worst tet radius 1.0222 (nodes removed 0 2)
+Info    : It. 95000 - 94998 nodes created - worst tet radius 1.02046 (nodes removed 0 2)
+Info    : It. 95500 - 95498 nodes created - worst tet radius 1.01874 (nodes removed 0 2)
+Info    : It. 96000 - 95998 nodes created - worst tet radius 1.01702 (nodes removed 0 2)
+Info    : It. 96500 - 96498 nodes created - worst tet radius 1.01538 (nodes removed 0 2)
+Info    : It. 97000 - 96998 nodes created - worst tet radius 1.01365 (nodes removed 0 2)
+Info    : It. 97500 - 97498 nodes created - worst tet radius 1.01195 (nodes removed 0 2)
+Info    : It. 98000 - 97998 nodes created - worst tet radius 1.01022 (nodes removed 0 2)
+Info    : It. 98500 - 98498 nodes created - worst tet radius 1.00864 (nodes removed 0 2)
+Info    : It. 99000 - 98998 nodes created - worst tet radius 1.00702 (nodes removed 0 2)
+Info    : It. 99500 - 99498 nodes created - worst tet radius 1.00533 (nodes removed 0 2)
+Info    : It. 100000 - 99998 nodes created - worst tet radius 1.00357 (nodes removed 0 2)
+Info    : It. 100500 - 100498 nodes created - worst tet radius 1.00193 (nodes removed 0 2)
+Info    : It. 101000 - 100998 nodes created - worst tet radius 1.00035 (nodes removed 0 2)
+Info    : 3D refinement terminated (112957 nodes total):
+Info    :  - 8 Delaunay cavities modified for star shapeness
+Info    :  - 2 nodes could not be inserted
+Info    :  - 709862 tetrahedra created in 13.4403 sec. (52815 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 17.9053s, CPU 17.743s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 4.83554e-06) with worst = 0.018988 / average = 0.760825:
+Info    : 0.00 < quality < 0.10 :        53 elements
+Info    : 0.10 < quality < 0.20 :       169 elements
+Info    : 0.20 < quality < 0.30 :       327 elements
+Info    : 0.30 < quality < 0.40 :       507 elements
+Info    : 0.40 < quality < 0.50 :       751 elements
+Info    : 0.50 < quality < 0.60 :      1161 elements
+Info    : 0.60 < quality < 0.70 :      2847 elements
+Info    : 0.70 < quality < 0.80 :      6762 elements
+Info    : 0.80 < quality < 0.90 :      8266 elements
+Info    : 0.90 < quality < 1.00 :      3407 elements
+Info    : 541 edge swaps, 10 node relocations (volume = 4.83554e-06): worst = 0.0521506 / average = 0.775149 (Wall 0.018915s, CPU 0.018917s)
+Info    : 547 edge swaps, 12 node relocations (volume = 4.83554e-06): worst = 0.0521506 / average = 0.775328 (Wall 0.0238346s, CPU 0.023838s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         1 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       504 elements
+Info    : 0.40 < quality < 0.50 :       707 elements
+Info    : 0.50 < quality < 0.60 :      1051 elements
+Info    : 0.60 < quality < 0.70 :      2871 elements
+Info    : 0.70 < quality < 0.80 :      6847 elements
+Info    : 0.80 < quality < 0.90 :      8391 elements
+Info    : 0.90 < quality < 1.00 :      3368 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 0.0625) with worst = 0.00539711 / average = 0.777985:
+Info    : 0.00 < quality < 0.10 :       232 elements
+Info    : 0.10 < quality < 0.20 :       720 elements
+Info    : 0.20 < quality < 0.30 :      1283 elements
+Info    : 0.30 < quality < 0.40 :      1966 elements
+Info    : 0.40 < quality < 0.50 :      3362 elements
+Info    : 0.50 < quality < 0.60 :      5577 elements
+Info    : 0.60 < quality < 0.70 :     12113 elements
+Info    : 0.70 < quality < 0.80 :     27254 elements
+Info    : 0.80 < quality < 0.90 :     42855 elements
+Info    : 0.90 < quality < 1.00 :     21718 elements
+Info    : 2210 edge swaps, 80 node relocations (volume = 0.0625): worst = 0.157527 / average = 0.789812 (Wall 0.106133s, CPU 0.106134s)
+Info    : 2232 edge swaps, 84 node relocations (volume = 0.0625): worst = 0.157527 / average = 0.789918 (Wall 0.140589s, CPU 0.14059s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         1 elements
+Info    : 0.20 < quality < 0.30 :         1 elements
+Info    : 0.30 < quality < 0.40 :      1965 elements
+Info    : 0.40 < quality < 0.50 :      3227 elements
+Info    : 0.50 < quality < 0.60 :      5453 elements
+Info    : 0.60 < quality < 0.70 :     11913 elements
+Info    : 0.70 < quality < 0.80 :     27656 elements
+Info    : 0.80 < quality < 0.90 :     43230 elements
+Info    : 0.90 < quality < 1.00 :     21618 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 0.0624952) with worst = 0.00301655 / average = 0.783798:
+Info    : 0.00 < quality < 0.10 :      1081 elements
+Info    : 0.10 < quality < 0.20 :      3355 elements
+Info    : 0.20 < quality < 0.30 :      6163 elements
+Info    : 0.30 < quality < 0.40 :      9926 elements
+Info    : 0.40 < quality < 0.50 :     15910 elements
+Info    : 0.50 < quality < 0.60 :     26119 elements
+Info    : 0.60 < quality < 0.70 :     52310 elements
+Info    : 0.70 < quality < 0.80 :    123857 elements
+Info    : 0.80 < quality < 0.90 :    216747 elements
+Info    : 0.90 < quality < 1.00 :    113063 elements
+Info    : 10498 edge swaps, 321 node relocations (volume = 0.0624952): worst = 0.196205 / average = 0.795428 (Wall 0.550103s, CPU 0.550105s)
+Info    : 10528 edge swaps, 323 node relocations (volume = 0.0624952): worst = 0.272832 / average = 0.795464 (Wall 0.735342s, CPU 0.735345s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         1 elements
+Info    : 0.30 < quality < 0.40 :      9851 elements
+Info    : 0.40 < quality < 0.50 :     15392 elements
+Info    : 0.50 < quality < 0.60 :     25122 elements
+Info    : 0.60 < quality < 0.70 :     52041 elements
+Info    : 0.70 < quality < 0.80 :    126104 elements
+Info    : 0.80 < quality < 0.90 :    218256 elements
+Info    : 0.90 < quality < 1.00 :    112335 elements
+Info    : Done optimizing mesh (Wall 3.05726s, CPU 2.96039s)
+Info    : 112957 nodes 722331 elements
+
+[MAT-6 step 7 Part 2 | projected | W = 0.25 m, resolution_wire = 0.001 m] 697926 cells, mesh 30.2 s, solves 264.2 s + 249.4 s at -n 8
+[MAT-6 step 7 Part 2] I' = 0.979884 A; meshed torus I = 0.979886 A
+[MAT-6 step 7 Part 2] FEM   dZ = +3.2543650e-01 + j(-6.0569537e-01) Ohm
+[MAT-6 step 7 Part 2] exact dZ = +3.2259615e-01 + j(-6.1586749e-01) Ohm
+[MAT-6 step 7 Part 2] dR rel. error 0.8805%
+[MAT-6 step 7 Part 2] dX ratio 0.9835 vs additive prediction 0.9843 → defect -0.082 pp
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_resistance_change_matches_dodd_deeds PASSED [ 93%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_reactance_change_has_the_right_sign_and_magnitude PASSED [100%]FAILED [ 80%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_meshed_torus_recovers_volume_on_the_combined_mesh PASSED [ 86%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_resistance_change_matches_dodd_deeds PASSED [ 93%]
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_combined_reactance_change_has_the_right_sign_and_magnitude PASSED [100%]
+
+=================================== FAILURES ===================================
+__________ test_the_combined_mesh_is_the_probes_and_both_knobs_moved ___________
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py:244: in test_the_combined_mesh_is_the_probes_and_both_knobs_moved
+    assert ncells == NCELLS_COMBINED, (
+E   AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+E   assert 697926 == 697401
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 697926 vs 138619 baseline → 5.03×
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-n7lmlab9/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-n7lmlab9/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-n7lmlab9/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-n7lmlab9/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-n7lmlab9/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved - AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+assert 697926 == 697401
+============ 1 failed, 14 passed, 30 warnings in 568.26s (0:09:28) =============
+
+
+=================================== FAILURES ===================================
+__________ test_the_combined_mesh_is_the_probes_and_both_knobs_moved ___________
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py:244: in test_the_combined_mesh_is_the_probes_and_both_knobs_moved
+    assert ncells == NCELLS_COMBINED, (
+E   AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+E   assert 697926 == 697401
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 697926 vs 138619 baseline → 5.03×
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-_6kc25qk/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-_6kc25qk/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-_6kc25qk/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-_6kc25qk/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-_6kc25qk/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved - AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+assert 697926 == 697401
+============ 1 failed, 14 passed, 30 warnings in 568.24s (0:09:28) =============
+
+
+=================================== FAILURES ===================================
+__________ test_the_combined_mesh_is_the_probes_and_both_knobs_moved ___________
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py:244: in test_the_combined_mesh_is_the_probes_and_both_knobs_moved
+    assert ncells == NCELLS_COMBINED, (
+E   AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+E   assert 697926 == 697401
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 697926 vs 138619 baseline → 5.03×
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ls6dkh8y/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ls6dkh8y/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ls6dkh8y/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ls6dkh8y/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ls6dkh8y/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved - AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+assert 697926 == 697401
+============ 1 failed, 14 passed, 30 warnings in 568.27s (0:09:28) =============
+
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 697926 vs 138619 baseline → 5.03×
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-9145hnsc/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-9145hnsc/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-9145hnsc/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-9145hnsc/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-9145hnsc/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved - AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+assert 697926 == 697401
+============ 1 failed, 14 passed, 30 warnings in 568.26s (0:09:28) =============
+
+
+=================================== FAILURES ===================================
+__________ test_the_combined_mesh_is_the_probes_and_both_knobs_moved ___________
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py:244: in test_the_combined_mesh_is_the_probes_and_both_knobs_moved
+    assert ncells == NCELLS_COMBINED, (
+E   AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+E   assert 697926 == 697401
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 697926 vs 138619 baseline → 5.03×
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-2pa7_ou7/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-2pa7_ou7/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-2pa7_ou7/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-2pa7_ou7/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-2pa7_ou7/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved - AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+assert 697926 == 697401
+============ 1 failed, 14 passed, 30 warnings in 568.27s (0:09:28) =============
+
+
+=================================== FAILURES ===================================
+__________ test_the_combined_mesh_is_the_probes_and_both_knobs_moved ___________
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py:244: in test_the_combined_mesh_is_the_probes_and_both_knobs_moved
+    assert ncells == NCELLS_COMBINED, (
+E   AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+E   assert 697926 == 697401
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 697926 vs 138619 baseline → 5.03×
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ahwt9vk0/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ahwt9vk0/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ahwt9vk0/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ahwt9vk0/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-ahwt9vk0/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved - AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+assert 697926 == 697401
+============ 1 failed, 14 passed, 30 warnings in 568.29s (0:09:28) =============
+
+
+=================================== FAILURES ===================================
+__________ test_the_combined_mesh_is_the_probes_and_both_knobs_moved ___________
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py:244: in test_the_combined_mesh_is_the_probes_and_both_knobs_moved
+    assert ncells == NCELLS_COMBINED, (
+E   AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+E   assert 697926 == 697401
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 697926 vs 138619 baseline → 5.03×
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-tka8qus5/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-tka8qus5/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-tka8qus5/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-tka8qus5/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-tka8qus5/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved - AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+assert 697926 == 697401
+============ 1 failed, 14 passed, 30 warnings in 568.27s (0:09:28) =============
+
+
+=================================== FAILURES ===================================
+__________ test_the_combined_mesh_is_the_probes_and_both_knobs_moved ___________
+tests/validation/test_dodd_deeds_reactance_combined_knobs.py:244: in test_the_combined_mesh_is_the_probes_and_both_knobs_moved
+    assert ncells == NCELLS_COMBINED, (
+E   AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+E   assert 697926 == 697401
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 697926 vs 138619 baseline → 5.03×
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-17plhgk1/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-17plhgk1/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-17plhgk1/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-17plhgk1/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-17plhgk1/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_dodd_deeds_reactance_combined_knobs.py::test_the_combined_mesh_is_the_probes_and_both_knobs_moved - AssertionError: the mesh is deterministic and both knobs are at their single-knob settings, so the count must be the probe's 697401; got 697926
+assert 697926 == 697401
+============ 1 failed, 14 passed, 30 warnings in 568.25s (0:09:28) =============
+
+## Exit
+- Status: 1
+- Elapsed (s): 570

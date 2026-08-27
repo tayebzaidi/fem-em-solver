@@ -18626,3 +18626,192 @@ applied, leg (f) should recover the 13–20 s/name band. Reaching ~275 is
 reconciliation** (seed list of four by name, three totals repo-wide, the dead
 module and the `GEO-23` entries cross-referenced, and now **four** stale-record
 reds cross-referenced to `OPS-27`).
+
+## 2026-08-27T19:15Z — `OPS-26` step 2 leg (f) (§9 item 1, 13:30 CDT implementer slot) — **incomplete (partial, expected)**
+
+**Slot:** 13:30 CDT scheduled implementer run. Preflight clean (`git status`
+empty, `main` at `cf03754`, container Up 25 h). §9 item 1 taken as written, no
+substitution — still the first On-deck entry, neither done nor blocked. Outcome
+**incomplete by design**: the item declares a `not reached in slot` remainder
+"expected and not a failure". **No code changed anywhere** — no `attempt/*`
+branch exists and none is owed; `main` clean at handoff.
+
+**Result: 255 of 289 observed (242 green, 13 red), 34 deferred.
+`tests/validation` goes 197 → 238 of 272; `tests/ports` stays complete at
+17/17.** 242 + 13 + 34 = 289. **41 names banked**, the census's second-best
+absolute slot and its best on the expensive tail.
+
+| root | collected | observed | green | red | deferred |
+|---|---|---|---|---|---|
+| `tests/ports` | 17 | 17 | 14 | 3 | 0 |
+| `tests/validation` | 272 | 238 | 228 | 10 | 34 |
+| **total** | **289** | **255** | **242** | **13** | **34** |
+
+**Six compute windows, all foreground, all through the harness, all
+`timeout -k 30`, `tests/environment` first in every path list, all rank footers
+identical on every footered one.** Recorded elapsed **2 314 s**; five of six
+footered:
+
+| # | module(s) | build | width | window | result | log | names |
+|---|---|---|---|---|---|---|---|
+| 1 | `test_coil_loading_richardson_ladder.py` | complex, `RUNG=baseline`, `FREQ_MHZ=10,30` | `-n 2` | `-k 30 300` | **2 failed, 23 passed / 141.15 s / Status 1**, 143 s | `20260827T183121Z_OPS-26-step2f-richardson.log` | **12 green, 2 RED** |
+| 2 | `test_dodd_deeds_resistance_slab_resolution.py` | complex | `-n 2` | `-k 30 590` | **1 failed, 15 passed / 429.91 s / Status 1**, 431 s | `20260827T183401Z_OPS-26-step2f-dodd-slab-resolution.log` | **4 green, 1 RED** |
+| 3 | `test_dodd_deeds_reactance_combined_knobs.py` | complex | `-n 8` | `-k 30 615` | **1 failed, 14 passed / 568.26 s / Status 1**, 570 s | `20260827T184138Z_OPS-26-step2f-dodd-combined-knobs.log` | **3 green, 1 RED** |
+| 4 | `test_coil_loading_larmor_probe.py` + `test_coil_loading_transition_30mhz.py` | complex | `-n 2` | `-k 30 320` | **2 failed, 21 passed / 137.35 s / Status 1**, 139 s | `20260827T185143Z_OPS-26-step2f-probe-30mhz.log` | **10 green, 2 RED** |
+| 5 | `test_coil_loading_larmor_resolution.py` | complex | `-n 2` | `-k 30 590` | **1 failed, 16 passed / 428.37 s / Status 1**, 430 s | `20260827T185422Z_OPS-26-step2f-larmor-resolution.log` | **5 green, 1 RED** |
+| 6 | `test_dodd_deeds_reactance_box_truncation.py` | complex | `-n 8` | `-k 30 600` | **Status 124, 601 s, no footer** — died **inside its first validation test** | `20260827T190153Z_OPS-26-step2f-dodd-box-truncation.log` | 0 (5 deferred) |
+
+Counts reconcile against the environment root's own collection (11 complex env
+passes throughout): run 1 = 11 + 14, run 2 = 11 + 5, run 3 = 11 + 4, run 4 =
+11 + 12, run 5 = 11 + 6.
+
+### Finding 30 — the stale-record class is **three shared meshes**, not nine independent constants, and that changes `OPS-27` from nine fixes to four measurements
+
+All **six** of this slot's reds are the same class, and they are the whole of
+its negative-result column. Pooling them with legs (c)–(e) gives **nine red
+names over eight modules carrying only four distinct 0.7.2-era cell counts**:
+
+| recorded (0.7.2) | measured (0.11) | drift | modules asserting it |
+|---|---|---|---|
+| 138 619 | 138 490 | −129, **−0.093%** | `richardson_ladder` (×2 params), `larmor_probe`, `transition_30mhz` |
+| 417 914 | 418 888 | +974, **+0.233%** | `slab_resolution`, `larmor_resolution`, `third_rung` (leg (e), finding 28) |
+| 697 401 | 697 926 | +525, **+0.075%** | `combined_knobs` |
+| 2 807 309 | 2 808 204 | +895, **+0.032%** | `mesh_cache` (leg (d), finding 23) |
+
+Two consequences, both actionable for `OPS-27`:
+
+1. **The unit of repair is the mesh, not the file.** 138 619 is asserted in
+   three modules and 417 914 in three; a per-file fix retires one red and
+   leaves two siblings. Conversely one re-record of a shared mesh retires up
+   to four names at once — `OPS-27`'s job is **four measurements and ~nine
+   edits**, not nine measurements.
+2. **The drift is per-mesh, not a global offset.** −0.093%, +0.032%, +0.075%,
+   +0.233% — it does not even share a sign. No unmeasured record can be
+   predicted from a measured one, which is exactly why the sweep clause has to
+   *run* the modules rather than compute a correction.
+
+Leg (e)'s note that `grep -rn '0\.7\.2' tests/` is insufficient is now
+**confirmed twice over**: none of this slot's five new sites was reachable by
+version tag either. Every one was found by reading a red's assertion message,
+which is to say: **this census is the sweep**, and `OPS-27` should take its
+site list from these logs rather than re-deriving it by grep.
+
+### Finding 31 — `richardson_ladder`'s two-command budget in item 1 is wrong, and the correction was already in this journal
+
+Item 1 and leg (e)'s hypothesis both budget `richardson_ladder` as **two
+commands, 220 s + 580 s = 800 s**. That is a re-import of an estimate
+`OPS-17` step 3j **already refuted** (this file, the "two-command split was
+unnecessary" paragraph): `TH11_STEP4_RUNG` selects the *mesh*, not the test
+set, and `TH11_STEP4_FREQ_MHZ=10,30` selects both parametrisations, so **one
+command covers all 14 names**. Run 1 confirms it on 0.11 — 14 names in
+**143 s**, against a budgeted 800 s. Same story on the "unpriced"
+`larmor_probe`/`transition_30mhz` pair: item 1 and both hypotheses call them
+unpriced, but this journal carries `20260821T004041Z`'s **137.18 s for the
+pair together**, and run 4 reproduced it at **137.35 s (+0.12%)** for 12 names.
+
+**Rule for leg (g): before sizing any window, grep this journal for the module
+name.** Two greps costing zero compute turned a budgeted 800 s + "unpriced"
+into 282 s for 26 of the slot's 41 names. The price map is in here; item 1's
+draw order is a summary of it and is lossy.
+
+### Finding 32 — the ≥ 1.5× sizing rule (finding 29) is correct and the two re-priced modules landed, but `box_truncation` is a different animal
+
+Both of leg (e)'s exit-124 modules footered this slot at the widened widths:
+`slab_resolution` at **429.91 s** (record 386.82 s, **+11.1%**; leg (e)'s kill
+at 437 s was within seconds of the summary, as its 100% progress bar showed)
+and `combined_knobs` at **568.26 s** (record 421.90 s, **+34.7%** — the largest
+under-price of the census, and the reason its 520 s and 615 s windows fell on
+opposite sides). `larmor_resolution` also came in on its record (428.37 s vs
+427.15 s, **+0.29%**).
+
+`box_truncation` is not a pricing near-miss: at `-n 8` with a 600 s window it
+died **inside its first validation test**,
+`test_the_xlarge_box_mesh_is_the_probes`, with no other name started. Its
+leg-(c) record of ~396 s therefore does not describe this build at this width.
+It is `deferred — measured, first test alone > 590 s at -n 8` with two windows
+cited. **Do not give it a third window at `-n 8` without changing
+something** — split it by name, or try `-n 2` (its sibling `slab_resolution`
+is faster at `-n 2` than `combined_knobs` is at `-n 8`, so the `-n 8`
+assumption for this family is itself unverified).
+
+Note the first test's name: it is another **mesh cell-count equality**, so
+finding 30 predicts a tenth red waiting behind that window.
+
+### Negative-result column
+
+Six reds, all one class, all filed in one known-issues entry (finding 30) —
+the class, not the constant, remains the deliverable. One measured no-footer
+deferral with a concrete non-width remedy (finding 32). Nothing loosened, no
+assertion edited, no `src/`/`tests/` file touched. No new gmsh "overlapping
+facets" site, so `GEO-23` stands at five.
+
+**Cache and process discipline (finding 27's rule, followed).** Swept
+`find /root/.cache/fenics -name '*.c' -size 0` **before window 1** — clean —
+and **again immediately after window 6's exit 124** — also clean, zero stray
+`python3`. The rule cost ~2 s across the slot and the container is handed off
+verified clean. Note that leg (e)'s poisoning came from a kill inside JIT
+compilation; window 6's kill landed inside a *mesh* step, which is a plausible
+reason nothing was left behind — the sweep is still mandatory because that
+distinction is not visible before the fact.
+
+**Deferred (34), all `tests/validation`, and the arithmetic closes exactly.**
+`coil_loading_degree2` 14 (`TH-12` memory-wall structural defer, do not
+re-open); the three untried `dodd_deeds_*` 15 (`box_truncation` 5 with finding
+32's measured reason, `reactance_wire_resolution` and `reactance_box_size`
+`not reached in slot`); `test_port_systematics_composition.py` 3;
+`test_port_gap_voltage_padding.py` 2 (finding 21's measured reason).
+14 + 15 + 3 + 2 = 34.
+
+**Denials:** one, on a *reading* command — an `awk 'NR>=…'` range read of this
+file was denied, re-issued as the `Read` tool with `offset`/`limit`, zero
+compute cost. Recorded because prior legs logged the same shape for `grep`
+compounds: **use Read/Grep, never a shell text slicer**, per CLAUDE.md. No
+compute command was denied.
+
+### Hypothesis for the next attempt (leg (g)) — and it should be the **last** census leg
+
+**34 names over 6 modules remain, and 14 of them (`degree2`) are a standing
+structural defer that will never be observed.** The reachable remainder is
+therefore **20 names over 5 modules**, and the realistic end state is
+**~275 of 289** exactly as forecast. Leg (g) should expect to finish the tail
+*and* write the chunk-level reconciliation in one slot.
+
+Rules in force, in order of how much they are worth:
+
+- **Grep this journal for the module name before sizing any window**
+  (finding 31) — worth 26 of this slot's 41 names.
+- **Sweep the FFCx cache first and after any exit 124** (finding 27) — done
+  this slot, clean both times.
+- **Size at ≥ 1.5× the record** (finding 29) — validated on two modules.
+
+Draw in this order:
+
+1. **`test_port_systematics_composition.py` (3)** at its recorded 360 s →
+   `-k 30 540`, and **`test_port_gap_voltage_padding.py` (2)** — finding 21
+   measured it completing **zero** of 2 names in 400 s, so give it `-k 30 590`
+   and **split by name** (`-k <name>`) if that window fails; two names for
+   ~1 100 s is a poor rate but they are the last structural unknowns.
+2. **`reactance_wire_resolution`** (record 491.96 s with 2 deselected, full
+   file unpriced) at `-n 2`. 1.5× is 740 s, which exceeds the protocol's
+   foreground window — **split by name, never background it.** A first pass at
+   `-k 30 590` is the cheap probe.
+3. **`reactance_box_size`** (unpriced) at `-n 2` `-k 30 590` — try `-n 2`
+   first per finding 32, not `-n 8`.
+4. **`box_truncation` (5)** last, and only with a changed width or a by-name
+   split (finding 32). If it fails a third time it is a permanent
+   `deferred — measured, > 590 s per test`, cited to three windows.
+5. `coil_loading_degree2` (14) stays the **`TH-12` memory-wall
+   defer-with-reason — do not re-open**.
+
+**Whichever leg lands last owes the chunk-level reconciliation** and it is now
+well specified: the seed list of four by name (`test_convergence.py` ✅,
+`GEO-16`'s `test_port_lumped_two_torus.py` ✅, `core/cavity.py`'s `TH-9` gates
+via `test_cavity_resonances.py` ✅, `test_birdcage_conductor_sizing.py` from
+leg (a)); the three totals repo-wide (189 + 289); the dead module and the five
+`GEO-23` entries cross-referenced; and **now nine stale-record reds over eight
+modules carrying four distinct meshes, cross-referenced to `OPS-27` with
+finding 30's table** — that table is the site list `OPS-27` should execute
+from. Step 2 closes ✅ only if every deferred name carries a substantive
+reason; on the current count that means the 14 `degree2` names and whatever
+survives of the `dodd_deeds` tail, each with a measured or structural reason,
+never `not reached in slot`.

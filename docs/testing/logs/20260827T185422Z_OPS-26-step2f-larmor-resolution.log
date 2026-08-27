@@ -1,0 +1,501 @@
+# Test Run
+- Chunk: OPS-26-step2f-larmor-resolution
+- Commit: cf03754129dfad03dde314b4e43453ce6e5b0f32
+- Time (UTC): 2026-08-27 18:54:22
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 590 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_coil_loading_larmor_resolution.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 13:54 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose -f docker/docker-compose.yml exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 590 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_coil_loading_larmor_resolution.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 17 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  5%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 17 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  5%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 11%]PASSED [ 11%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 17%]PASSED [ 17%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 23%]PASSED [ 23%]
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites PASSED [ 29%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 29%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 35%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 35%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 41%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 47%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 52%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 58%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 64%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_mesh_is_the_mat6_step8_fine_rung PASSED [ 41%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 47%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 52%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 58%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 64%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_mesh_is_the_mat6_step8_fine_rung FAILED [ 70%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_both_solves_are_driven_by_the_same_projected_current PASSED [ 76%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_complex_power_identity_holds_on_the_fine_rung[loaded] PASSED [ 82%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_complex_power_identity_holds_on_the_fine_rung[free] PASSED [ 88%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_fine_rung PASSED [ 94%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_loaded_coil_still_dissipates_and_expels_flux_on_the_fine_rung PASSED [100%]FAILED [ 70%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_both_solves_are_driven_by_the_same_projected_current PASSED [ 76%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_complex_power_identity_holds_on_the_fine_rung[loaded] PASSED [ 82%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_complex_power_identity_holds_on_the_fine_rung[free] PASSED [ 88%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_free_solve_dissipates_exactly_nothing_on_the_fine_rung PASSED [ 94%]
+tests/validation/test_coil_loading_larmor_resolution.py::test_the_loaded_coil_still_dissipates_and_expels_flux_on_the_fine_rung PASSED [100%]
+
+=================================== FAILURES ===================================
+__________________ test_the_mesh_is_the_mat6_step8_fine_rung ___________________
+tests/validation/test_coil_loading_larmor_resolution.py:277: in test_the_mesh_is_the_mat6_step8_fine_rung
+    assert ncells == NCELLS_FINE, (
+E   AssertionError: frequency does not reach the mesh generator, so the count must be step 8's 417914; got 418888
+E   assert 418888 == 417914
+---------------------------- Captured stdout setup -----------------------------
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 50%] Meshing curve 11 (Line)
+Info    : [ 60%] Meshing curve 12 (Line)
+Info    : [ 60%] Meshing curve 13 (Line)
+Info    : [ 60%] Meshing curve 14 (Line)
+Info    : [ 70%] Meshing curve 15 (Line)
+Info    : [ 70%] Meshing curve 16 (Line)
+Info    : [ 80%] Meshing curve 17 (Line)
+Info    : [ 80%] Meshing curve 18 (Line)
+Info    : [ 90%] Meshing curve 19 (Line)
+Info    : [ 90%] Meshing curve 20 (Line)
+Info    : [100%] Meshing curve 21 (Line)
+Info    : [100%] Meshing curve 22 (Line)
+Info    : Done meshing 1D (Wall 0.0791596s, CPU 0.079159s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.269303s, CPU 0.269279s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 3 volumes with 1 connected component
+Info    : Tetrahedrizing 5756 nodes...
+Info    : Done tetrahedrizing 5764 nodes (Wall 0.102651s, CPU 0.094616s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.238929s, CPU 0.21065s)
+Info    : Found volume 4
+Info    : Found volume 3
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 33.2446 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 4.90422 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 3.91331 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 3.42159 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 3.87733 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 2.87069 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 2.69559 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 2.56452 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 2.45577 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 2.36105 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 2.28321 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 2.21105 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 2.14985 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 2.09775 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 2.04716 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 2.00287 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 2.00536 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 1.92244 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 1.88644 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 1.85134 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 1.82021 (nodes removed 0 0)
+Info    : It. 10500 - 10500 nodes created - worst tet radius 1.79162 (nodes removed 0 0)
+Info    : It. 11000 - 11000 nodes created - worst tet radius 1.76455 (nodes removed 0 0)
+Info    : It. 11500 - 11500 nodes created - worst tet radius 1.73881 (nodes removed 0 0)
+Info    : It. 12000 - 12000 nodes created - worst tet radius 1.71553 (nodes removed 0 0)
+Info    : It. 12500 - 12500 nodes created - worst tet radius 1.69272 (nodes removed 0 0)
+Info    : It. 13000 - 13000 nodes created - worst tet radius 1.68546 (nodes removed 0 0)
+Info    : It. 13500 - 13500 nodes created - worst tet radius 1.64965 (nodes removed 0 0)
+Info    : It. 14000 - 14000 nodes created - worst tet radius 1.63068 (nodes removed 0 0)
+Info    : It. 14500 - 14500 nodes created - worst tet radius 1.61232 (nodes removed 0 0)
+Info    : It. 15000 - 15000 nodes created - worst tet radius 1.59468 (nodes removed 0 0)
+Info    : It. 15500 - 15500 nodes created - worst tet radius 1.57689 (nodes removed 0 0)
+Info    : It. 16000 - 16000 nodes created - worst tet radius 1.56079 (nodes removed 0 0)
+Info    : It. 16500 - 16500 nodes created - worst tet radius 1.54608 (nodes removed 0 0)
+Info    : It. 17000 - 17000 nodes created - worst tet radius 1.5644 (nodes removed 0 0)
+Info    : It. 17500 - 17500 nodes created - worst tet radius 1.51633 (nodes removed 0 0)
+Info    : It. 18000 - 18000 nodes created - worst tet radius 1.50147 (nodes removed 0 0)
+Info    : It. 18500 - 18500 nodes created - worst tet radius 1.48785 (nodes removed 0 0)
+Info    : It. 19000 - 19000 nodes created - worst tet radius 1.47625 (nodes removed 0 0)
+Info    : It. 19500 - 19500 nodes created - worst tet radius 1.46426 (nodes removed 0 0)
+Info    : It. 20000 - 20000 nodes created - worst tet radius 1.45151 (nodes removed 0 0)
+Info    : It. 20500 - 20500 nodes created - worst tet radius 1.4396 (nodes removed 0 0)
+Info    : It. 21000 - 21000 nodes created - worst tet radius 1.42732 (nodes removed 0 0)
+Info    : It. 21500 - 21500 nodes created - worst tet radius 1.416 (nodes removed 0 0)
+Info    : It. 22000 - 22000 nodes created - worst tet radius 1.40547 (nodes removed 0 0)
+Info    : It. 22500 - 22500 nodes created - worst tet radius 1.39488 (nodes removed 0 0)
+Info    : It. 23000 - 23000 nodes created - worst tet radius 1.38518 (nodes removed 0 0)
+Info    : It. 23500 - 23500 nodes created - worst tet radius 1.37532 (nodes removed 0 0)
+Info    : It. 24000 - 24000 nodes created - worst tet radius 1.36547 (nodes removed 0 0)
+Info    : It. 24500 - 24500 nodes created - worst tet radius 1.35662 (nodes removed 0 0)
+Info    : It. 25000 - 25000 nodes created - worst tet radius 1.3479 (nodes removed 0 0)
+Info    : It. 25500 - 25500 nodes created - worst tet radius 1.33903 (nodes removed 0 0)
+Info    : It. 26000 - 26000 nodes created - worst tet radius 1.32982 (nodes removed 0 0)
+Info    : It. 26500 - 26500 nodes created - worst tet radius 1.32186 (nodes removed 0 0)
+Info    : It. 27000 - 27000 nodes created - worst tet radius 1.31284 (nodes removed 0 0)
+Info    : It. 27500 - 27500 nodes created - worst tet radius 1.30505 (nodes removed 0 0)
+Info    : It. 28000 - 28000 nodes created - worst tet radius 1.29761 (nodes removed 0 0)
+Info    : It. 28500 - 28500 nodes created - worst tet radius 1.29044 (nodes removed 0 0)
+Info    : It. 29000 - 29000 nodes created - worst tet radius 1.28287 (nodes removed 0 0)
+Info    : It. 29500 - 29500 nodes created - worst tet radius 1.33865 (nodes removed 0 0)
+Info    : It. 30000 - 30000 nodes created - worst tet radius 1.26935 (nodes removed 0 0)
+Info    : It. 30500 - 30500 nodes created - worst tet radius 1.26264 (nodes removed 0 0)
+Info    : It. 31000 - 31000 nodes created - worst tet radius 1.25639 (nodes removed 0 0)
+Info    : It. 31500 - 31500 nodes created - worst tet radius 1.2503 (nodes removed 0 0)
+Info    : It. 32000 - 32000 nodes created - worst tet radius 1.24395 (nodes removed 0 0)
+Info    : It. 32500 - 32500 nodes created - worst tet radius 1.23773 (nodes removed 0 0)
+Info    : It. 33000 - 33000 nodes created - worst tet radius 1.25748 (nodes removed 0 0)
+Info    : It. 33500 - 33500 nodes created - worst tet radius 1.22511 (nodes removed 0 0)
+Info    : It. 34000 - 34000 nodes created - worst tet radius 1.21912 (nodes removed 0 0)
+Info    : It. 34500 - 34500 nodes created - worst tet radius 1.21291 (nodes removed 0 0)
+Info    : It. 35000 - 35000 nodes created - worst tet radius 1.2073 (nodes removed 0 0)
+Info    : It. 35500 - 35500 nodes created - worst tet radius 1.23591 (nodes removed 0 0)
+Info    : It. 36000 - 36000 nodes created - worst tet radius 1.19612 (nodes removed 0 0)
+Info    : It. 36500 - 36500 nodes created - worst tet radius 1.19031 (nodes removed 0 0)
+Info    : It. 37000 - 37000 nodes created - worst tet radius 1.18496 (nodes removed 0 0)
+Info    : It. 37500 - 37500 nodes created - worst tet radius 1.17985 (nodes removed 0 0)
+Info    : It. 38000 - 38000 nodes created - worst tet radius 1.17511 (nodes removed 0 0)
+Info    : It. 38500 - 38500 nodes created - worst tet radius 1.16969 (nodes removed 0 0)
+Info    : It. 39000 - 39000 nodes created - worst tet radius 1.16516 (nodes removed 0 0)
+Info    : It. 39500 - 39500 nodes created - worst tet radius 1.16047 (nodes removed 0 0)
+Info    : It. 40000 - 40000 nodes created - worst tet radius 1.15564 (nodes removed 0 0)
+Info    : It. 40500 - 40500 nodes created - worst tet radius 1.15086 (nodes removed 0 0)
+Info    : It. 41000 - 41000 nodes created - worst tet radius 1.14627 (nodes removed 0 0)
+Info    : It. 41500 - 41500 nodes created - worst tet radius 1.14181 (nodes removed 0 0)
+Info    : It. 42000 - 42000 nodes created - worst tet radius 1.13742 (nodes removed 0 0)
+Info    : It. 42500 - 42500 nodes created - worst tet radius 1.13319 (nodes removed 0 0)
+Info    : It. 43000 - 43000 nodes created - worst tet radius 1.12888 (nodes removed 0 0)
+Info    : It. 43500 - 43500 nodes created - worst tet radius 1.12459 (nodes removed 0 0)
+Info    : It. 44000 - 44000 nodes created - worst tet radius 1.12025 (nodes removed 0 0)
+Info    : It. 44500 - 44500 nodes created - worst tet radius 1.11567 (nodes removed 0 0)
+Info    : It. 45000 - 45000 nodes created - worst tet radius 1.11145 (nodes removed 0 0)
+Info    : It. 45500 - 45500 nodes created - worst tet radius 1.10762 (nodes removed 0 0)
+Info    : It. 46000 - 46000 nodes created - worst tet radius 1.10375 (nodes removed 0 0)
+Info    : It. 46500 - 46500 nodes created - worst tet radius 1.1 (nodes removed 0 0)
+Info    : It. 47000 - 47000 nodes created - worst tet radius 1.09606 (nodes removed 0 0)
+Info    : It. 47500 - 47500 nodes created - worst tet radius 1.0923 (nodes removed 0 0)
+Info    : It. 48000 - 48000 nodes created - worst tet radius 1.08811 (nodes removed 0 0)
+Info    : It. 48500 - 48500 nodes created - worst tet radius 1.08448 (nodes removed 0 0)
+Info    : It. 49000 - 49000 nodes created - worst tet radius 1.08093 (nodes removed 0 0)
+Info    : It. 49500 - 49500 nodes created - worst tet radius 1.07714 (nodes removed 0 0)
+Info    : It. 50000 - 50000 nodes created - worst tet radius 1.07336 (nodes removed 0 0)
+Info    : It. 50500 - 50500 nodes created - worst tet radius 1.06971 (nodes removed 0 0)
+Info    : It. 51000 - 51000 nodes created - worst tet radius 1.06636 (nodes removed 0 0)
+Info    : It. 51500 - 51500 nodes created - worst tet radius 1.06278 (nodes removed 0 0)
+Info    : It. 52000 - 52000 nodes created - worst tet radius 1.05918 (nodes removed 0 0)
+Info    : It. 52500 - 52500 nodes created - worst tet radius 1.05574 (nodes removed 0 0)
+Info    : It. 53000 - 53000 nodes created - worst tet radius 1.05274 (nodes removed 0 0)
+Info    : It. 53500 - 53500 nodes created - worst tet radius 1.04942 (nodes removed 0 0)
+Info    : It. 54000 - 54000 nodes created - worst tet radius 1.04637 (nodes removed 0 0)
+Info    : It. 54500 - 54500 nodes created - worst tet radius 1.04327 (nodes removed 0 0)
+Info    : It. 55000 - 55000 nodes created - worst tet radius 1.04007 (nodes removed 0 0)
+Info    : It. 55500 - 55500 nodes created - worst tet radius 1.03713 (nodes removed 0 0)
+Info    : It. 56000 - 56000 nodes created - worst tet radius 1.03404 (nodes removed 0 0)
+Info    : It. 56500 - 56500 nodes created - worst tet radius 1.03074 (nodes removed 0 0)
+Info    : It. 57000 - 57000 nodes created - worst tet radius 1.02766 (nodes removed 0 0)
+Info    : It. 57500 - 57500 nodes created - worst tet radius 1.02487 (nodes removed 0 0)
+Info    : It. 58000 - 58000 nodes created - worst tet radius 1.06241 (nodes removed 0 0)
+Info    : It. 58500 - 58500 nodes created - worst tet radius 1.01902 (nodes removed 0 0)
+Info    : It. 59000 - 59000 nodes created - worst tet radius 1.01619 (nodes removed 0 0)
+Info    : It. 59500 - 59500 nodes created - worst tet radius 1.01371 (nodes removed 0 0)
+Info    : It. 60000 - 60000 nodes created - worst tet radius 1.01084 (nodes removed 0 0)
+Info    : It. 60500 - 60500 nodes created - worst tet radius 1.00797 (nodes removed 0 0)
+Info    : It. 61000 - 61000 nodes created - worst tet radius 1.00525 (nodes removed 0 0)
+Info    : It. 61500 - 61500 nodes created - worst tet radius 1.00263 (nodes removed 0 0)
+Info    : It. 62000 - 62000 nodes created - worst tet radius 1.00005 (nodes removed 0 0)
+Info    : 3D refinement terminated (67765 nodes total):
+Info    :  - 0 Delaunay cavities modified for star shapeness
+Info    :  - 0 nodes could not be inserted
+Info    :  - 426149 tetrahedra created in 7.54702 sec. (56465 tets/s)
+Info    : 1 node relocations
+Info    : Done meshing 3D (Wall 9.60119s, CPU 9.50396s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 4.54141e-06) with worst = 0.0101317 / average = 0.804738:
+Info    : 0.00 < quality < 0.10 :         1 elements
+Info    : 0.10 < quality < 0.20 :         5 elements
+Info    : 0.20 < quality < 0.30 :        18 elements
+Info    : 0.30 < quality < 0.40 :        41 elements
+Info    : 0.40 < quality < 0.50 :        51 elements
+Info    : 0.50 < quality < 0.60 :        96 elements
+Info    : 0.60 < quality < 0.70 :       240 elements
+Info    : 0.70 < quality < 0.80 :       765 elements
+Info    : 0.80 < quality < 0.90 :      1307 elements
+Info    : 0.90 < quality < 1.00 :       672 elements
+Info    : 24 edge swaps, 0 node relocations (volume = 4.54141e-06): worst = 0.303135 / average = 0.809702 (Wall 0.00112749s, CPU 0.001117s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :        40 elements
+Info    : 0.40 < quality < 0.50 :        48 elements
+Info    : 0.50 < quality < 0.60 :        97 elements
+Info    : 0.60 < quality < 0.70 :       240 elements
+Info    : 0.70 < quality < 0.80 :       763 elements
+Info    : 0.80 < quality < 0.90 :      1311 elements
+Info    : 0.90 < quality < 1.00 :       675 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 0.0135) with worst = 0.00187387 / average = 0.778869:
+Info    : 0.00 < quality < 0.10 :       510 elements
+Info    : 0.10 < quality < 0.20 :      1540 elements
+Info    : 0.20 < quality < 0.30 :      2655 elements
+Info    : 0.30 < quality < 0.40 :      4539 elements
+Info    : 0.40 < quality < 0.50 :      7312 elements
+Info    : 0.50 < quality < 0.60 :     12472 elements
+Info    : 0.60 < quality < 0.70 :     24082 elements
+Info    : 0.70 < quality < 0.80 :     51819 elements
+Info    : 0.80 < quality < 0.90 :     88773 elements
+Info    : 0.90 < quality < 1.00 :     48289 elements
+Info    : 4641 edge swaps, 161 node relocations (volume = 0.0135): worst = 0.180692 / average = 0.790618 (Wall 0.245062s, CPU 0.245065s)
+Info    : 4680 edge swaps, 161 node relocations (volume = 0.0135): worst = 0.216063 / average = 0.790714 (Wall 0.324853s, CPU 0.324843s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         5 elements
+Info    : 0.30 < quality < 0.40 :      4462 elements
+Info    : 0.40 < quality < 0.50 :      7161 elements
+Info    : 0.50 < quality < 0.60 :     12216 elements
+Info    : 0.60 < quality < 0.70 :     23911 elements
+Info    : 0.70 < quality < 0.80 :     52853 elements
+Info    : 0.80 < quality < 0.90 :     89440 elements
+Info    : 0.90 < quality < 1.00 :     47827 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 0.0134955) with worst = 0.00263551 / average = 0.779118:
+Info    : 0.00 < quality < 0.10 :       364 elements
+Info    : 0.10 < quality < 0.20 :      1117 elements
+Info    : 0.20 < quality < 0.30 :      2005 elements
+Info    : 0.30 < quality < 0.40 :      3175 elements
+Info    : 0.40 < quality < 0.50 :      5141 elements
+Info    : 0.50 < quality < 0.60 :      8873 elements
+Info    : 0.60 < quality < 0.70 :     18227 elements
+Info    : 0.70 < quality < 0.80 :     40607 elements
+Info    : 0.80 < quality < 0.90 :     66938 elements
+Info    : 0.90 < quality < 1.00 :     34512 elements
+Info    : 3443 edge swaps, 74 node relocations (volume = 0.0134955): worst = 0.213664 / average = 0.791141 (Wall 0.180743s, CPU 0.180734s)
+Info    : 3451 edge swaps, 76 node relocations (volume = 0.0134955): worst = 0.300041 / average = 0.791169 (Wall 0.248462s, CPU 0.248425s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :      3132 elements
+Info    : 0.40 < quality < 0.50 :      4913 elements
+Info    : 0.50 < quality < 0.60 :      8544 elements
+Info    : 0.60 < quality < 0.70 :     18188 elements
+Info    : 0.70 < quality < 0.80 :     41291 elements
+Info    : 0.80 < quality < 0.90 :     67571 elements
+Info    : 0.90 < quality < 1.00 :     34197 elements
+Info    : Done optimizing mesh (Wall 1.86667s, CPU 1.78992s)
+Info    : 67765 nodes 430805 elements
+
+[TH-11 step 2 | f = 64.0 MHz | W = 0.15 m, wire 0.002, near 0.0025] 418888 cells, mesh 18.2 s, solves 193.6 s + 192.9 s at -n 2
+[TH-11 step 2] skin depth 6.29 mm (2.52 cells per delta; step 1's rung: 1.26)
+[TH-11 step 2] I' = 0.920256 A
+[TH-11 step 2] FEM   dZ = +1.3838596e+00 + j(-5.8745128e+00) Ohm
+[TH-11 step 2] Dodd-Deeds (QUASI-STATIC, the comparison and not the reference at this f) dZ = +1.3460987e+00 + j(-6.1738852e+00) Ohm
+[TH-11 step 2] dR deviation from the quasi-static prediction +2.8052%  (step 1's coarse rung at 64 MHz: +10.2698%; move -7.4646 pp)
+[TH-11 step 2] the 10 MHz 2x2 for the same knob, cited never re-solved: 1.5834% (near 0.005) -> 0.2829% (near 0.0025), i.e. -1.3005 pp
+[TH-11 step 2] PRE-REGISTERED READING: RESOLUTION-DOMINATED (< 3%): the trend needs finer rungs first
+[TH-11 step 2] dX ratio 0.9515  (step 1 at 64 MHz: 0.9690; this mesh at 10 MHz: 0.9160)
+[TH-11 step 2] dR via dissipation 2P/I'^2 = +1.3838596e+00 Ohm vs reaction +1.3838596e+00 Ohm (reported)
+[TH-11 step 2] complex-power identity residual: loaded 1.4551e-13, free 2.6481e-14 (bound 1e-09)
+[TH-11 step 2] sigma-blind control: P_loss loaded +5.8597548e-01 W vs free +0.0000000e+00 W
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 418888 (step 8 record: 417914)
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-wzi_vrdx/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-wzi_vrdx/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-wzi_vrdx/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-wzi_vrdx/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-wzi_vrdx/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_coil_loading_larmor_resolution.py::test_the_mesh_is_the_mat6_step8_fine_rung - AssertionError: frequency does not reach the mesh generator, so the count must be step 8's 417914; got 418888
+assert 418888 == 417914
+============ 1 failed, 16 passed, 30 warnings in 428.37s (0:07:08) =============
+
+
+=================================== FAILURES ===================================
+__________________ test_the_mesh_is_the_mat6_step8_fine_rung ___________________
+tests/validation/test_coil_loading_larmor_resolution.py:277: in test_the_mesh_is_the_mat6_step8_fine_rung
+    assert ncells == NCELLS_FINE, (
+E   AssertionError: frequency does not reach the mesh generator, so the count must be step 8's 417914; got 418888
+E   assert 418888 == 417914
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 418888 (step 8 record: 417914)
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-m0gyejpp/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-m0gyejpp/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-m0gyejpp/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-m0gyejpp/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-m0gyejpp/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/validation/test_coil_loading_larmor_resolution.py::test_the_mesh_is_the_mat6_step8_fine_rung - AssertionError: frequency does not reach the mesh generator, so the count must be step 8's 417914; got 418888
+assert 418888 == 417914
+============ 1 failed, 16 passed, 30 warnings in 428.33s (0:07:08) =============
+
+## Exit
+- Status: 1
+- Elapsed (s): 430
