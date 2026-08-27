@@ -1,0 +1,97 @@
+# Test Run
+- Chunk: OPS-26-step2b-v10-gapvolt
+- Commit: 800e3342a3c749734a119a28ef213183061587fb
+- Time (UTC): 2026-08-27 11:03:20
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 560 mpiexec -n 2 python3 -m pytest tests/validation/test_port_gap_voltage_impedance.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 06:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 560 mpiexec -n 2 python3 -m pytest tests/validation/test_port_gap_voltage_impedance.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 20 items
+
+tests/validation/test_port_gap_voltage_impedance.py::test_lifted_systematics_ladder_is_bit_identical collected 20 items
+
+tests/validation/test_port_gap_voltage_impedance.py::test_lifted_systematics_ladder_is_bit_identical PASSED [  5%]
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_respects_the_skin_depth_constraint PASSED [ 10%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_box_meshes_exactly_at_the_reduced_overhang PASSED [  5%]
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_respects_the_skin_depth_constraint PASSED [ 10%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_box_meshes_exactly_at_the_reduced_overhang PASSED [ 15%]
+tests/validation/test_port_gap_voltage_impedance.py::test_port_discs_are_the_arc_end_cut PASSED [ 20%]
+tests/validation/test_port_gap_voltage_impedance.py::test_arc_quadrature_nodes_lie_strictly_inside_the_gap PASSED [ 25%]
+tests/validation/test_port_gap_voltage_impedance.py::test_path_voltage_is_converged_in_the_quadrature PASSED [ 30%]
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_angles_match_the_meshed_gap_extent PASSED [ 35%]
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_to_terminal_voltage_retiles_the_closure_decomposition PASSED [ 40%]
+tests/validation/test_port_gap_voltage_impedance.py::test_reaction_route_on_the_gapped_fixture_reproduces_its_record PASSED [ 45%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_mutual_matches_the_same_fixture_reaction_control PASSED [ 50%]PASSED [ 15%]
+tests/validation/test_port_gap_voltage_impedance.py::test_control_sigma_ladder_separates_loss_from_gap 
+tests/validation/test_port_gap_voltage_impedance.py::test_port_discs_are_the_arc_end_cut PASSED [ 55%]PASSED [ 20%]
+tests/validation/test_port_gap_voltage_impedance.py::test_production_sigma_ladder_removes_the_loss_from_the_gapped_route 
+tests/validation/test_port_gap_voltage_impedance.py::test_arc_quadrature_nodes_lie_strictly_inside_the_gap PASSED [ 60%]PASSED [ 25%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_port_pair_mutual_carries_its_systematics 
+tests/validation/test_port_gap_voltage_impedance.py::test_path_voltage_is_converged_in_the_quadrature PASSED [ 30%]PASSED [ 65%]
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_angles_match_the_meshed_gap_extent 
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_scattering_matrix_is_symmetric_and_passive PASSED [ 35%]
+tests/validation/test_port_gap_voltage_impedance.py::test_terminal_to_terminal_voltage_retiles_the_closure_decomposition PASSED [ 40%]
+tests/validation/test_port_gap_voltage_impedance.py::test_reaction_route_on_the_gapped_fixture_reproduces_its_record PASSED [ 45%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_mutual_matches_the_same_fixture_reaction_control PASSED [ 50%]
+tests/validation/test_port_gap_voltage_impedance.py::test_control_sigma_ladder_separates_loss_from_gap PASSED [ 55%]
+tests/validation/test_port_gap_voltage_impedance.py::test_production_sigma_ladder_removes_the_loss_from_the_gapped_route PASSED [ 60%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_port_pair_mutual_carries_its_systematics PASSED [ 65%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_scattering_matrix_is_symmetric_and_passive PASSED [ 70%]PASSED [ 70%]
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_z_matrix_is_reciprocal 
+tests/validation/test_port_gap_voltage_impedance.py::test_gap_voltage_z_matrix_is_reciprocal PASSED [ 75%]PASSED [ 75%]
+tests/validation/test_port_gap_voltage_impedance.py::test_undriven_port_is_open_and_the_diagonal_is_reported 
+tests/validation/test_port_gap_voltage_impedance.py::test_undriven_port_is_open_and_the_diagonal_is_reported PASSED [ 80%]PASSED [ 80%]
+tests/validation/test_port_gap_voltage_impedance.py::test_closure_arc_nodes_lie_in_the_expected_material 
+tests/validation/test_port_gap_voltage_impedance.py::test_closure_arc_nodes_lie_in_the_expected_material PASSED [ 85%]
+tests/validation/test_port_gap_voltage_impedance.py::test_wire_arc_quadrature_is_converged PASSED [ 85%]
+tests/validation/test_port_gap_voltage_impedance.py::test_wire_arc_quadrature_is_converged PASSED [ 90%]
+tests/validation/test_port_gap_voltage_impedance.py::test_loop_closure_sum_recovers_the_emf PASSED [ 90%]PASSED [ 95%]
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_sweep_keeps_the_undriven_port_open 
+tests/validation/test_port_gap_voltage_impedance.py::test_loop_closure_sum_recovers_the_emf PASSED [100%]PASSED [ 95%]
+tests/validation/test_port_gap_voltage_impedance.py::test_sigma_sweep_keeps_the_undriven_port_open PASSED [100%]
+
+======================== 20 passed in 481.47s (0:08:01) ========================
+
+
+======================== 20 passed in 481.46s (0:08:01) ========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 483

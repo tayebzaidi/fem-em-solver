@@ -17921,3 +17921,168 @@ is the best names-per-second target after the singletons, and
 finding 14: converting a real-build complex-only skip is **not** reliably a
 green — budget those commands as if they may land on a rank-divergent abort
 and give each its own window.
+
+
+## 2026-08-27T11:20Z — `OPS-26` step 2 leg (b), attempt 2 — **incomplete (partial, expected)**
+
+**Slot:** 06:00 CDT scheduled implementer run. Preflight clean (`git status`
+empty, `main` at `800e334`, container Up 18 h). §9 item 1 taken as written, no
+substitution — the item is still the first On-deck entry and is neither done
+nor blocked. Outcome **incomplete by design**: the item states that a
+`not reached in slot` remainder "is expected and is not a failure". **No code
+changed anywhere**, so nothing was parked and no `attempt/*` branch exists;
+`main` is clean at handoff.
+
+**Result: 139 of 289 observed (136 green, 3 red), 150 deferred. `tests/ports`
+remains COMPLETE at 17/17; `tests/validation` goes 5 → 122 of 272. All 117 of
+this slot's names are green.** 136 + 3 + 150 = 289.
+
+| root | collected | observed | green | red | deferred |
+|---|---|---|---|---|---|
+| `tests/ports` | 17 | 17 | 14 | 3 | 0 |
+| `tests/validation` | 272 | 122 | 122 | 0 | 150 |
+| **total** | **289** | **139** | **136** | **3** | **150** |
+
+**Twenty-seven commands, all foreground, all through the harness, one module
+each (the previous slot's declared batching deviation was NOT repeated), all
+with `timeout -k 30`, all `-n 2`, all Status 0, both rank footers identical on
+every one.** Recorded elapsed **2 028 s** total. Complex build
+(`source /usr/local/bin/dolfinx-complex-mode`, `FEM_EM_REQUIRE_COMPLEX=1`)
+unless marked **real**:
+`…110129Z_…v05-lumpedbc` (6 s, 6, `6 passed in 4.05s` — the slot's deliberate
+JIT warm-up, and it cost 4 s);
+`…110144Z_…v06-currentdiv` (7 s, 3);
+`…110155Z_…v07-massavgsar` (22 s, 2);
+`…110221Z_…v08-massavgstd` (16 s, 3);
+`…110240Z_…v09-resguard` (33 s, 2);
+`…110320Z_…v10-gapvolt` (**483 s**, **20**);
+`…111131Z_…v11-poynting` (133 s, 11);
+`…111349Z_…v12-reactionz` (174 s, 9);
+`…111650Z_…v13-mutualind` (3 s, 7, **real**, `7 passed in 0.94s`);
+`…111700Z_…v14-cavity` (7 s, 3, **real**);
+`…111714Z_…v15-pkgsparam` (163 s, 6);
+`…112203Z_…v16-solenoidal` (42 s, 5);
+`…112249Z_…v17-selfimped` (40 s, 3);
+`…112332Z_…v18-twotorus` (92 s, 5 — the corrected `GEO-16` seed name);
+`…112513Z_…v19-sheetsweep` (111 s, 3);
+`…112707Z_…v20-gradload` (39 s, 3);
+`…112750Z_…v21-narrowed` (150 s, 4);
+`…113026Z_…v22-deg2mech` (21 s, 4);
+`…113051Z_…v23-lsdeg2` (9 s, 2);
+`…113104Z_…v24-lsfullwave` (23 s, 3);
+`…113131Z_…v25-lssar` (34 s, 1);
+`…113209Z_…v26-dielsphere` (15 s, 2);
+`…113229Z_…v27-planewave` (21 s, 2);
+`…113253Z_…v28-thmms` (7 s, 2);
+`…113304Z_…v29-waveguide` (14 s, 2);
+`…113324Z_…v30-circloop` (**350 s**, 3);
+`…113927Z_…v31-coilphantom` (13 s, 1, **real**).
+
+### Finding 15 — the build, not the module order, is this root's dominant census variable
+
+`grep -L complex tests/validation/test_*.py` returns **6 of 59** modules
+(`test_cavity_resonances.py`, `test_coil_phantom_bfield_metrics.py`,
+`test_mutual_inductance_reference.py`, `test_field_consistency_metrics.py`,
+`test_convergence.py`, `test_tolerance_policy.py`). **53 of 59
+`tests/validation` modules are complex-gated**, so a real-build command over
+them scores runtime skips — `deferred — <skip reason>`, never green. That is
+the structural reason attempt 1, which ran the real build, banked 5 names from
+this root; it is not a property of its module ordering. This slot ran the
+complex build for the 53 and the real build for the other 6 and banked **117**
+against attempt 1's 5. Cost of the check: one `grep -L`, zero compute.
+**Rule for leg (c): read the module's build gate before sizing its command; in
+`tests/validation` the complex build is the default and the real build the
+exception.** Corollary, now measured: **all 6 real-build modules of
+`tests/validation` are observed and green** (`convergence`,
+`tolerance_policy`, `field_consistency_metrics` from attempt 1;
+`mutual_inductance_reference`, `cavity_resonances`,
+`coil_phantom_bfield_metrics` here), so the entire 150-name remainder is
+complex-build work.
+
+### Finding 16 — cost is concentrated in a few modules, and "largest module first" paid
+
+Two modules are **833 s of the slot's 2 028 s (41%) for 23 of 117 names
+(20%)** — `test_port_gap_voltage_impedance.py` 483 s and
+`test_circular_loop.py` 350 s; the other 25 commands bought 94 names for
+1 195 s, and the twelve cheapest bought 33 names for 214 s. Drawing the
+20-test module early was still right: at 24 s/name it beats
+`test_convergence.py` (143 s for 1) and the unpriced `test_straight_wire.py`
+(~363 s for 7). **0.11 prices banked for leg (c)**, none previously recorded
+on this image: gap-voltage 483 s, circular-loop 350 s, reaction-Z 174 s,
+package-S 163 s, narrowed-sheet 150 s, Poynting 133 s, sheet-sweep 111 s,
+two-torus 92 s, solenoidal 42 s, self-impedance 40 s, gradient-load 39 s,
+lossy-sphere-SAR 34 s, resonance-guard 33 s. Also measured: the complex
+build's cold-JIT premium did **not** appear — the warm-up module ran in
+4.05 s — so `OPS-17` (b2)'s 2.4–3× first-command rule is a ceiling here, not a
+floor, presumably because the 04:30 slot warmed the same cache 90 minutes
+earlier.
+
+### Finding 17 — `test_circular_loop.py`, the `OPS-19`/`OPS-22` JIT casualty, is green on 0.11
+
+`OPS-17` (b2) attempts 1–2 were stopped twice by this file: it "cannot
+JIT-compile one form in the complex build", traced to fixture-side
+`ufl.max_value`/comparison predicates on complex operands and commissioned as
+`OPS-22`. It is now **`3 passed in 348.74s`, Status 0, complex, `-n 2`**
+(`…113324Z_…v30-circloop.log`) — `OPS-22`'s fixture fix holds on the 0.11
+image, and the file is expensive but not broken. The census's job was to
+observe it, not to re-adjudicate it; recording the confirmation because two
+prior legs lost windows to this name.
+
+### Negative-result column: empty, and that is the observation
+
+Zero reds, zero no-footer deferrals, zero exit-124 windows across
+twenty-seven commands including two windows over 340 s — against leg (a)'s
+three gmsh aborts and a deadlocking module, and attempt 1's three
+`tests/ports` reds. Notably `test_coil_phantom_bfield_metrics.py`, drawn
+deliberately because leg (a)'s coil+phantom gmsh abort made it the slot's
+best red candidate, is `1 passed in 11.34s`. The 0.11 damage found so far is
+**not** distributed across `tests/validation`'s solved-field suites; it sits
+in the mesh-generating and test-double paths (`GEO-23`, finding 12). Nothing
+filed this slot because nothing failed.
+
+**Deferred (150).** One with a substantive reason, carried unchanged from
+attempt 1:
+`validation/test_geometry_floor_discriminator.py::test_larmor_sphere_residual_at_the_priced_fine_mesh`
+— `deferred — complex-only, SKIPPED in the real build`. The other **149** are
+`deferred — not reached in slot`, the item's declared legal disposition.
+
+**Denials:** one. `awk` is not on the allowlist (used to count `<Function`
+nodes per module in the collect log); worked around by reading the log with
+the Read tool and counting there, at no compute cost. Not worth an allowlist
+change on this evidence alone — recording it because a third occurrence would
+be.
+
+### Hypothesis for the next attempt (leg (c))
+
+**150 names over 28 modules remain, all complex-build** (finding 15's
+corollary). The cheap tail is now nearly exhausted — what is left is
+structured, and leg (c) should draw in this order:
+
+1. **The 13-name cheap remainder, first, ~10 min:**
+   `test_port_lumped_sheet_asymmetric.py` (5),
+   `test_port_box_padding_sweep.py` (3),
+   `test_port_systematics_composition.py` (3, its own window — recorded
+   360 s, the `PORT-10` batch-C killer), `test_port_gap_voltage_padding.py`
+   (2, an `OPS-17` (b2) formal deferral — re-price it, do not inherit the
+   deferral), `test_helmholtz_v2.py` (1, which **hung** in `OPS-17` (b2)
+   attempt 2 — give it its own bounded window and expect a possible
+   no-footer).
+2. **`test_straight_wire.py`** (7 at ~363 s) — one window; also the module
+   `MAG-20` (§9 item 2) needs green, so leg (c) landing it green is worth a
+   cross-reference.
+3. **The two families, 96 of the 150, which are the real work:**
+   `coil_loading_*` (58) and `dodd_deeds_*` (38). Both are priced in
+   `OPS-17` (b2) at their **recorded rank widths** — read *all* of a file's
+   logs, not the first match — one file per ~400–560 s window, and
+   `larmor_third_rung` needs `TH11_STEP5_RUNG=fine` pinned (the default
+   `third` is the `TH-11` OOM, status 137 at 908 s).
+   `coil_loading_degree2` (14) is the `TH-12` memory-wall
+   defer-with-reason; take it as such, do not re-open it.
+4. **The birdcage `PORT-9`/`PORT-11` block (32)**, priced at 72–201 s each.
+
+At this slot's measured rates, items 1–2 and the birdcage block are one slot;
+the two families are one to two more. Second hypothesis, from this slot's
+clean sheet: `tests/validation` will finish green, so step 2 should close in
+two or three further slots — and whichever leg lands last owes the
+chunk-level reconciliation (seed list of four by name, three totals repo-wide,
+the dead module and the `GEO-23` entries cross-referenced).

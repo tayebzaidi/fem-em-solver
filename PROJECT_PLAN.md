@@ -567,7 +567,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-23` | Sweep the `OPS-21` rank-0-return defect pattern (4 measured sites in 3 test files) + the `test_helmholtz_v2.py` Im-bound (commissioned 2026-08-20 03:00 review from the 00:00 slot's grep survey) | ✅ | smoke-to-standard | 3 real sites (all in `test_csv_export_stats_parity.py`) + the Im-bound fixed; 2 of the commissioned sites were print-only false positives and 1 exempted site was a real defect; 12 passed both ranks, 5.00 s. *Audited COMPLIANT 2026-08-21 18:00 review — red-baseline byte-identity re-verified against the log's rank blocks; benign omission: the first exit-0 helmholtz-real log is in test-results.md but uncited in the annotation* |
 | `OPS-24` | Migrate `core/cavity.py`'s two `assemble_matrix(..., diagonal=)` sites to the 0.11 signature — `TH-9`'s cavity gate + resonance guard have been **non-executing on `main` since the 0.11 merge** (known-issues 2026-08-24; found by `EX-30` leg (th); commissioned 2026-08-24 18:00 review; closed 2026-08-25 — `diagonal=` → `diag=`, all four green, 0.0436% worst-mode reproduced to the printed digit) | ✅ | standard |
 | `OPS-25` | Re-join `th:7` to its gate: hoist the series-interior interpolation into the gate module and import it, migrating the repo's only `interpolate(cells=)` site (known-issues 2026-08-24; ruled hoist-not-repair by the 2026-08-24 18:00 review) | ✅ (2026-08-25: hoisted to `series_interior_function` in `test_lossy_sphere_fullwave.py`; `th:7` green in 14 s with both element-order records reproducing — degree 1 8.1541% / 8.3869%, degree 2 0.1405% / 0.0058%, drifts ≤ 1.48e-03 in a 1% band — and the gate's `P_series(meshed)` **bit-identical to all ten printed digits** across the refactor; `13 passed in 25.28s`) | standard |
-| `OPS-26` | **Systematic dolfinx-0.11 migration completeness sweep** — re-run `OPS-17`'s "observed in a completed run" census on the 0.11 image and statically sweep `src/` for un-migrated call sites. Two silently-broken gates have already been found *by examples rather than by the upgrade's own re-gate* (`TH-9` cavity, `OPS-24`; straight-wire h-refinement, red on `main`, found 2026-08-25 by `mag:6`); a third is likelier than not. **Commissioned 2026-08-25 by operator directive, interactive session** — queue at the next review. *Queued 2026-08-25 10:30 review: step 1 is §9 item 3; step 2 held until step 1's site list lands.* ***Step 1 ✅ 2026-08-25, 15:00 slot** — `src`/`tests` clean at 434 call sites / 29 APIs, negative control binding and passing, two survivors filed in `scripts/probes/`; step 2 (execution census) is now unblocked.* ***Step 2 leg (a) DONE 2026-08-27 (four consecutive slots, 19:30 → 00:00)** — the seven cheap roots at **184 / 189 observed (182 green, 2 red), 5 deferred**, every deferral with a substantive reason and `182 + 2 + 5 = 189`; two reds and one rank-dependent deadlock filed in known-issues (all three carry the 0.11 "overlapping facets" string on *different* generators — owner **`GEO-23`**, commissioned by the 03:00 review), one dead module filed. The fix that unstuck `tests/solver` (0 → 47/51 in ~220 s) was one command per module; leg (b) adopts it from the start. Step 2 stays 🟡 on leg (b) (§9 item 1).* ***Step 2 leg (b) PARTIAL 2026-08-27 (04:30 slot)** — denominator re-derived at **289 / 63 modules** (`validation` 272/59, `ports` 17/4); **22 observed (19 green, 3 red), 267 deferred**, `tests/ports` **complete at 17/17**, `tests/validation` at 5/272. New defect class found (**finding 12**): `tests/ports/test_port_orientation_sensitivity.py` is red because `OPS-14`'s rank-safety `comm.allgather` outgrew its `_DummyComm` double — not a 0.11 break, and invisible to step 1's static sweep by construction. The owed `materials` complex conversion **failed onto a fifth `GEO-23` "overlapping facets" site**, the second rank-dependent one; leg (a)'s 184/189 is unchanged with that name's deferral reason upgraded. Two known-issues entries filed. Leg (c) owns the ~267-name `tests/validation` remainder.* | 🟡 | heavy (split across ≥ 2 slots) |
+| `OPS-26` | **Systematic dolfinx-0.11 migration completeness sweep** — re-run `OPS-17`'s "observed in a completed run" census on the 0.11 image and statically sweep `src/` for un-migrated call sites. Two silently-broken gates have already been found *by examples rather than by the upgrade's own re-gate* (`TH-9` cavity, `OPS-24`; straight-wire h-refinement, red on `main`, found 2026-08-25 by `mag:6`); a third is likelier than not. **Commissioned 2026-08-25 by operator directive, interactive session** — queue at the next review. *Queued 2026-08-25 10:30 review: step 1 is §9 item 3; step 2 held until step 1's site list lands.* ***Step 1 ✅ 2026-08-25, 15:00 slot** — `src`/`tests` clean at 434 call sites / 29 APIs, negative control binding and passing, two survivors filed in `scripts/probes/`; step 2 (execution census) is now unblocked.* ***Step 2 leg (a) DONE 2026-08-27 (four consecutive slots, 19:30 → 00:00)** — the seven cheap roots at **184 / 189 observed (182 green, 2 red), 5 deferred**, every deferral with a substantive reason and `182 + 2 + 5 = 189`; two reds and one rank-dependent deadlock filed in known-issues (all three carry the 0.11 "overlapping facets" string on *different* generators — owner **`GEO-23`**, commissioned by the 03:00 review), one dead module filed. The fix that unstuck `tests/solver` (0 → 47/51 in ~220 s) was one command per module; leg (b) adopts it from the start. Step 2 stays 🟡 on leg (b) (§9 item 1).* ***Step 2 leg (b) PARTIAL 2026-08-27 (04:30 slot)** — denominator re-derived at **289 / 63 modules** (`validation` 272/59, `ports` 17/4); **22 observed (19 green, 3 red), 267 deferred**, `tests/ports` **complete at 17/17**, `tests/validation` at 5/272. New defect class found (**finding 12**): `tests/ports/test_port_orientation_sensitivity.py` is red because `OPS-14`'s rank-safety `comm.allgather` outgrew its `_DummyComm` double — not a 0.11 break, and invisible to step 1's static sweep by construction. The owed `materials` complex conversion **failed onto a fifth `GEO-23` "overlapping facets" site**, the second rank-dependent one; leg (a)'s 184/189 is unchanged with that name's deferral reason upgraded. Two known-issues entries filed. Leg (c) owns the ~267-name `tests/validation` remainder.* ***Step 2 leg (b) PARTIAL, second slot 2026-08-27 (06:00)** — **139 / 289 observed (136 green, 3 red), 150 deferred**; `tests/validation` **5 → 122 of 272**, this slot's **117 names all green**, twenty-seven module-per-command runs, no batching, **no red, no no-footer deferral, no exit 124**, 2 028 s. **Finding 15:** `grep -L complex tests/validation/test_*.py` returns **6 of 59** — 53 modules are complex-gated, so the real build scores them as runtime skips, which is the structural reason attempt 1 banked 5 names; running the complex build for the 53 and the real build for the 6 banked **117** in one slot at the cost of one zero-compute grep, and all 6 real-build modules are now green, so the remainder is entirely complex work. **Finding 16:** cost is concentrated, not spread — gap-voltage 483 s + circular-loop 350 s are 41% of the slot for 20% of its names — and thirteen 0.11 prices are banked for leg (c). **Finding 17:** `test_circular_loop.py`, which stopped `OPS-17` (b2) attempts 1–2 with the JIT failure that commissioned `OPS-22`, is `3 passed in 348.74s` complex — the fixture fix holds on 0.11. Leg (c) owns the remaining **150** names over **28** modules (`coil_loading_*` 58, `dodd_deeds_*` 38, birdcage 32, straight-wire 7, a 13-name cheap remainder, the one complex-only skip).* | 🟡 | heavy (split across ≥ 2 slots) |
 
 **`OPS-24` — migrate `core/cavity.py` to 0.11; turn `TH-9`'s gates back on** ✅
 *(commissioned 2026-08-24 18:00 review from `EX-30` leg (th)'s finding 1;
@@ -1294,6 +1294,138 @@ list shapes the census.**)*
 >   applies, and `test_port_gap_voltage_impedance.py` (**20** tests, the
 >   root's largest module) is the best names-per-second target after the
 >   singletons.
+> * **Step 2 leg (b) — PARTIAL (second slot), 2026-08-27 06:00 implementer
+>   slot. 139 of 289 observed (136 green, 3 red), 150 deferred.
+>   `tests/validation` 5 → 122 of 272, all 117 of this slot's names green,
+>   zero reds, zero exit-124 windows.** Twenty-seven commands, one module
+>   each, `-n 2` throughout, **2 028 s** of recorded elapsed. No code changed
+>   anywhere; `main` clean at handoff.
+>
+>   | root | collected | observed | green | red | deferred |
+>   |---|---|---|---|---|---|
+>   | `tests/ports` | 17 | 17 | 14 | 3 | 0 |
+>   | `tests/validation` | 272 | 122 | 122 | 0 | 150 |
+>   | **total** | **289** | **139** | **136** | **3** | **150** |
+>
+>   136 + 3 + 150 = 289, as the fail-closed control requires.
+>
+>   **Finding 15 — the build, not the module order, is this root's dominant
+>   census variable, and the previous slot's shape was costing it every
+>   name.** `grep -L complex tests/validation/test_*.py` returns **6 of 59**
+>   modules: `test_cavity_resonances.py`,
+>   `test_coil_phantom_bfield_metrics.py`,
+>   `test_mutual_inductance_reference.py`,
+>   `test_field_consistency_metrics.py`, `test_convergence.py`,
+>   `test_tolerance_policy.py`. **53 of 59 `tests/validation` modules are
+>   complex-gated**, so a real-build command over them scores runtime skips
+>   — `deferred — <skip reason>`, never green — which is exactly what
+>   attempt 1's real-build shape would have produced for the whole root, and
+>   is the structural reason it banked only 5 names. This slot ran the
+>   complex build (`source /usr/local/bin/dolfinx-complex-mode`,
+>   `FEM_EM_REQUIRE_COMPLEX=1`) for the 53 and the real build for the other
+>   6, and converted **117 names in one slot against attempt 1's 5**. Cost of
+>   the check: one `grep -L`, zero compute. **Rule for leg (c): read the
+>   module's build gate before sizing its command; in `tests/validation` the
+>   complex build is the default and the real build the exception.**
+>   Corollary, now measured: **all 6 real-build modules are observed and
+>   green**, so the entire 150-name remainder is complex-build work.
+>
+>   **Observed green by name, one command per module (no batching — the
+>   previous slot's declared deviation was not repeated), `-n 2`, Status 0
+>   and identical rank footers on all twenty-seven.** Complex build:
+>   `test_port_lumped_bc.py` (6) **6 s** (`…110129Z_…v05-lumpedbc.log`,
+>   `6 passed in 4.05s` — the slot's deliberate JIT warm-up, and it cost 4 s,
+>   not the priced 2.4–3×);
+>   `test_current_divergence.py` (3) **7 s** (`…v06-currentdiv`);
+>   `test_mass_averaged_sar.py` (2) **22 s** (`…v07-massavgsar`);
+>   `test_mass_averaged_sar_standard_masses.py` (3) **16 s** (`…v08-massavgstd`);
+>   `test_resonance_guard.py` (2) **33 s** (`…v09-resguard`);
+>   `test_port_gap_voltage_impedance.py` (**20**) **483 s**
+>   (`…110320Z_…v10-gapvolt.log`, `20 passed in 481.47s`);
+>   `test_poynting_balance.py` (11) **133 s** (`…v11-poynting`);
+>   `test_port_reaction_impedance.py` (9) **174 s** (`…v12-reactionz`);
+>   `test_port_package_sparameters.py` (6) **163 s** (`…v15-pkgsparam`);
+>   `test_port_solenoidal_drive.py` (5) **42 s** (`…v16-solenoidal`);
+>   `test_port_self_impedance_energy.py` (3) **40 s** (`…v17-selfimped`);
+>   `test_port_lumped_two_torus.py` (5) **92 s** (`…v18-twotorus`);
+>   `test_port_lumped_sheet_sweep.py` (3) **111 s** (`…v19-sheetsweep`);
+>   `test_port_gradient_load.py` (3) **39 s** (`…v20-gradload`);
+>   `test_port_lumped_narrowed_sheet.py` (4) **150 s** (`…v21-narrowed`);
+>   `test_degree2_energy_mechanism.py` (4) **21 s** (`…v22-deg2mech`);
+>   `test_lossy_sphere_degree2.py` (2) **9 s** (`…v23-lsdeg2`);
+>   `test_lossy_sphere_fullwave.py` (3) **23 s** (`…v24-lsfullwave`);
+>   `test_lossy_sphere_sar.py` (1) **34 s** (`…v25-lssar`);
+>   `test_dielectric_sphere.py` (2) **15 s** (`…v26-dielsphere`);
+>   `test_lossy_plane_wave.py` (2) **21 s** (`…v27-planewave`);
+>   `test_time_harmonic_mms.py` (2) **7 s** (`…v28-thmms`);
+>   `test_waveguide_cutoff.py` (2) **14 s** (`…v29-waveguide`);
+>   `test_circular_loop.py` (3) **350 s** (`…113324Z_…v30-circloop.log`).
+>   Real build: `test_mutual_inductance_reference.py` (7) **3 s**
+>   (`…v13-mutualind`, `7 passed in 0.94s`);
+>   `test_cavity_resonances.py` (3) **7 s** (`…v14-cavity`);
+>   `test_coil_phantom_bfield_metrics.py` (1) **13 s** (`…v31-coilphantom`).
+>
+>   **Seed-list note.** The corrected `GEO-16` seed name from attempt 1,
+>   `test_port_lumped_two_torus.py`, is **green** (5 passed, 92 s) — three
+>   of the item's four named seeds are now observed green, and the fourth
+>   (the `PORT-11` pair) is in leg (c)'s birdcage block.
+>
+>   **Finding 16 — the cost is concentrated in a few modules, not spread,
+>   and the item's own "largest module first" heuristic paid.** Two modules
+>   are **833 s of the slot's 2 028 s (41%) for 23 of the 117 names (20%)** —
+>   gap-voltage 483 s and circular-loop 350 s; the other 25 commands bought
+>   94 names for 1 195 s, and the twelve cheapest bought 33 names for 214 s.
+>   The 20-test module was nevertheless the right early draw: at 24 s/name it
+>   is still cheaper per name than `test_convergence.py` (143 s for 1) and
+>   far cheaper than the unpriced `test_straight_wire.py` (~363 s for 7).
+>   **Pricing banked for leg (c)**, previously unrecorded on 0.11:
+>   gap-voltage 483, circular-loop 350, reaction-Z 174, package-S 163,
+>   narrowed-sheet 150, Poynting 133, sheet-sweep 111, two-torus 92,
+>   solenoidal 42, self-impedance 40, gradient-load 39, lossy-sphere-SAR 34,
+>   resonance-guard 33 s — size from these, not from the `OPS-17`-era 0.7.2
+>   records.
+>
+>   **Finding 17 — `test_circular_loop.py`, the `OPS-19`/`OPS-22` JIT
+>   casualty, is green on 0.11.** `OPS-17` (b2) attempts 1–2 were each
+>   stopped by this file ("cannot JIT-compile one form in the complex
+>   build", traced to fixture-side `ufl.max_value`/comparison predicates on
+>   complex operands, commissioned as `OPS-22`). It is now `3 passed in
+>   348.74s`, Status 0, complex, `-n 2` — **`OPS-22`'s fixture fix holds on
+>   the 0.11 image**; the file is expensive, not broken. Recorded because two
+>   prior legs lost windows to this name.
+>
+>   **Negative-result column: empty, and that is itself the observation.**
+>   Zero reds, zero no-footer deferrals, zero exit-124 windows across
+>   twenty-seven commands including two windows over 340 s — against leg
+>   (a)'s three gmsh aborts and a deadlocking module, and attempt 1's three
+>   `tests/ports` reds. `test_coil_phantom_bfield_metrics.py`, drawn
+>   deliberately because leg (a)'s coil+phantom gmsh abort made it the
+>   slot's best red candidate, is `1 passed in 11.34s`. The 0.11 migration
+>   damage found so far is **not** distributed across `tests/validation`'s
+>   solved-field suites; it sits in the mesh-generating and test-double
+>   paths (`GEO-23`, finding 12).
+>
+>   **Deferred (150).** One with a substantive reason, carried unchanged
+>   from attempt 1:
+>   `validation/test_geometry_floor_discriminator.py::test_larmor_sphere_residual_at_the_priced_fine_mesh`
+>   — `deferred — complex-only, SKIPPED in the real build`; finding 15 says
+>   the conversion command is a complex one and should be cheap. The other
+>   **149** are `deferred — not reached in slot`.
+>
+>   **What remains for leg (c)** (150 names over 28 modules, all
+>   `tests/validation`, all complex-build): the `coil_loading_*` family
+>   (58, priced in `OPS-17` (b2), needing its recorded rank widths and
+>   `TH11_STEP5_RUNG=fine`; `coil_loading_degree2`'s 14 are the `TH-12`
+>   memory-wall defer-with-reason), the `dodd_deeds_*` family (38), the
+>   `PORT-9`/`PORT-11` birdcage block (32 at 72–201 s each),
+>   `test_straight_wire.py` (7 at ~363 s, also `MAG-20`'s anchor module), a
+>   13-name cheap remainder (`sheet_asymmetric` 5, `box_padding_sweep` 3,
+>   `systematics_composition` 3 at its recorded 360 s,
+>   `gap_voltage_padding` 2 — an `OPS-17` (b2) formal deferral to re-price
+>   rather than inherit — and `helmholtz_v2` 1, which **hung** in `OPS-17`
+>   (b2) attempt 2 and needs its own bounded window), plus the one
+>   complex-only skip. Ascending recorded cost still applies; the build-gate
+>   check of finding 15 now applies first.
 > * **Step 2 — execution census on 0.11 (heavy, likely 2+ slots).** Re-run
 >   `OPS-17` leg (b2)'s methodology on the current image: every collected test
 >   **observed in a completed run with a footer**, real and complex, at each

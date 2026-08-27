@@ -1,0 +1,67 @@
+# Test Run
+- Chunk: OPS-26-step2b-v16-solenoidal
+- Commit: 800e3342a3c749734a119a28ef213183061587fb
+- Time (UTC): 2026-08-27 11:22:03
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/validation/test_port_solenoidal_drive.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 06:21 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/validation/test_port_solenoidal_drive.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 5 items
+
+tests/validation/test_port_solenoidal_drive.py::test_projected_drive_diagonal_is_inductive collected 5 items
+
+tests/validation/test_port_solenoidal_drive.py::test_projected_drive_diagonal_is_inductive PASSED [ 20%]
+tests/validation/test_port_solenoidal_drive.py::test_complex_power_identity_holds_on_the_projected_drive PASSED [ 40%]
+tests/validation/test_port_solenoidal_drive.py::test_projection_is_idempotent_on_its_own_output PASSED [ 60%]
+tests/validation/test_port_solenoidal_drive.py::test_spurious_electric_energy_collapses PASSED [ 80%]
+tests/validation/test_port_solenoidal_drive.py::test_projected_diagonal_against_grover PASSED [100%]PASSED [ 20%]
+tests/validation/test_port_solenoidal_drive.py::test_complex_power_identity_holds_on_the_projected_drive PASSED [ 40%]
+tests/validation/test_port_solenoidal_drive.py::test_projection_is_idempotent_on_its_own_output PASSED [ 60%]
+tests/validation/test_port_solenoidal_drive.py::test_spurious_electric_energy_collapses PASSED [ 80%]
+tests/validation/test_port_solenoidal_drive.py::test_projected_diagonal_against_grover PASSED [100%]
+
+============================== 5 passed in 41.11s ==============================
+
+
+============================== 5 passed in 41.07s ==============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 42

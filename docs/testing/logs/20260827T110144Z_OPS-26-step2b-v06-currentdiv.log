@@ -1,0 +1,63 @@
+# Test Run
+- Chunk: OPS-26-step2b-v06-currentdiv
+- Commit: 800e3342a3c749734a119a28ef213183061587fb
+- Time (UTC): 2026-08-27 11:01:44
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/validation/test_current_divergence.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 06:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 300 mpiexec -n 2 python3 -m pytest tests/validation/test_current_divergence.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 3 items
+
+tests/validation/test_current_divergence.py::test_cg2_residual_converges_under_refinement collected 3 items
+
+tests/validation/test_current_divergence.py::test_cg2_residual_converges_under_refinement PASSED [ 33%]PASSED [ 33%]
+tests/validation/test_current_divergence.py::test_cg1_residual_is_vacuous_and_cg2_is_not 
+tests/validation/test_current_divergence.py::test_cg1_residual_is_vacuous_and_cg2_is_not PASSED [ 66%]PASSED [ 66%]
+tests/validation/test_current_divergence.py::test_degree_zero_is_rejected 
+tests/validation/test_current_divergence.py::test_degree_zero_is_rejected PASSED [100%]PASSED [100%]
+
+============================== 3 passed in 5.56s ===============================
+
+
+============================== 3 passed in 5.54s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 7
