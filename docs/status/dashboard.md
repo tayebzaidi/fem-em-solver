@@ -1,16 +1,17 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-27 03:00, **daily review (scheduled, ran normally)**.
-Headline: **the 0.11 execution census has covered its cheap half** —
-`OPS-26` step 2 leg (a) took all four slots of the interval and finished:
-184 of 189 tests in the seven cheap directories observed in footered runs
-(182 green, 2 red), 5 deferred with a stated reason each, arithmetic
-reconciled (182 + 2 + 5 = 189). The census did its job: it found **two new
-reds and one rank-dependent deadlock**, all carrying the same 0.11 gmsh
-"overlapping facets" string on three *different* geometry generators — so
-the earlier "coarse-resolution floor" reading no longer covers the evidence
-and a single owner (`GEO-23`) is commissioned. It also found a test module
-that has silently been collecting zero tests. No chunk closed this interval;
+**Updated:** 2026-08-27 10:30, **daily review (scheduled, ran normally)**.
+Headline: **the 0.11 execution census is at 207 of 289 on its expensive
+half** — `OPS-26` step 2 took all four slots again (legs (b)–(d)) and is
+now 202 green / 5 red / 82 deferred over `tests/validation` + `tests/ports`,
+arithmetic reconciled at every handoff. The four reds that count are all
+*bookkeeping*, none physics: a test double that an earlier rank-safety fix
+outgrew (2 tests), and **two stale constants recorded on the old 0.7.2
+image and never swept when the 0.11 figures were re-recorded** (a 128 MHz
+error record, an exact mesh cell count). The birdcage `PORT-9`/`PORT-11`
+block is 32/32 green on 0.11; two inherited "horror story" modules turned
+out to run fine in the right build. Two small chunks commissioned
+(`OPS-27`, `OPS-28`); the census tail is 2–3 more slots. No chunk closed;
 nothing in §2 moved. What this does **not** say: nothing is compared
 against an external reference at 64/128 MHz, nothing is tuned or resonant,
 no B1+/SAR on the coil. Source of truth is `PROJECT_PLAN.md`; this page is
@@ -30,65 +31,76 @@ a read-only digest for the human operator.
    the F-human fixture directive, **`ANS-4` commissioning**, and whether a
    128 MHz resolution study is warranted. Local `main` remains well ahead
    of origin (push is manual).
-5. FYI, no action: **the test suite on 0.11 is less healthy than "no known
-   gate red" suggested** — three gmsh-abort sites and one dead module were
-   found by the census in one night; none is a physics gate, all are
-   filed and owned. Expect `GEO-23` in the queue for a slot or two.
+5. FYI, no action: **three `main` reds are stale 0.7.2-era records, not
+   regressions** — the solver reproduces the re-recorded 0.11 numbers; the
+   tests hold the old ones. `OPS-27` re-records them version-tagged (queue
+   item 2). Do not read the `test_geometry_floor_discriminator.py` failure
+   as a `TH-10` problem.
 
 ## Honest current state (digest of §2 — unchanged this interval)
 
 | Capability | State | Gate |
 |---|---|---|
-| Magnetostatics | ✅ validated | closed forms green; rate duty on the one-sided `E_Ω` ladder (1.6854 ≥ 0.7); one sibling sampled band gets its own measurement (`MAG-20`, queued) |
+| Magnetostatics | ✅ validated | closed forms green; rate duty on the one-sided `E_Ω` ladder (1.6854 ≥ 0.7); one sibling sampled band gets its own measurement (`MAG-20`, queued); `test_straight_wire.py` 7/7 green on 0.11 (314 s) |
 | Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77% + power 3.63%; degree-2 gated at 0.1405% |
 | Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (`MAT-6`); Larmor coil loading stays an extrapolation |
-| S-parameters / ports | ✅ birdcage gated at 10, 64 and 128 MHz (`PORT-11` ✅ 08-26) | reciprocity ~1e-14, σ_max ≤ 1, C4 spreads 0.06–0.10% vs 0.5%; **self-consistency identities only — absolute accuracy at Larmor is `ANS-4` (weekly review)** |
+| S-parameters / ports | ✅ birdcage gated at 10, 64 and 128 MHz (`PORT-11` ✅ 08-26; all 32 birdcage gate tests green on 0.11, 08-27) | reciprocity ~1e-14, σ_max ≤ 1, C4 spreads 0.06–0.10% vs 0.5%; **self-consistency identities only — absolute accuracy at Larmor is `ANS-4` (weekly review)** |
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (`MAT-4`); never on a coil |
-| Test-suite trust | ⚠️ **census half done**: cheap roots 184/189 observed, **2 reds + 1 rank-dependent deadlock + 1 dead module filed** (none a physics gate) | `OPS-26` leg (b) — `validation` + `ports`, the expensive half — is queue item 1; the gmsh family is `GEO-23` |
+| Test-suite trust | ⚠️ **census 391/478 repo-wide** (cheap roots 184/189 done; expensive half 207/289): **7 reds filed, none a physics gate** — 3 gmsh "overlapping facets" sites (`GEO-23`), 2 stale 0.7.2 records (`OPS-27`), 1 stale test double (`OPS-28`), 1 matched-port diagonal (entry 3); 1 dead module | `OPS-26` leg (e) is queue item 1, 82 names, 2–3 slots |
 
-## Recent activity (2026-08-26 18:00 → 2026-08-27 03:00)
+## Recent activity (2026-08-27 03:00 → 10:30)
 
-- **19:30:** `OPS-26` leg (a), slot 1 — denominator re-derived (189, not the
-  inherited 216/232); 30/189 observed; first red (coil+phantom gmsh abort)
-  and the discovery that a red's teardown eats the rest of the command.
-- **21:00:** slot 2 — 93/189; a second gmsh red on `birdcage_port_domain`'s
-  own partition test; the dead `test_cylindrical_domain.py` filed.
-- **22:30:** slot 3 — 137/189; `post` and `mesh` complete; `tests/solver`
-  still 0/51 after two whole-root commands died; 23 non-green names
-  **discarded** for want of a footer (fail-closed control).
-- **00:00:** slot 4 — 184/189, **leg (a) done**; one command per module
-  took `tests/solver` 0 → 47/51 and vindicated the discard: 21 of those 23
-  would have been false reds. The one module that would not run deadlocked
-  in both builds with the same test passing on one rank and failing on the
-  other.
-- **03:00 review:** no closures to audit; leg (a) dropped from the queue,
-  leg (b) rewritten to the module-per-command shape and queued first;
-  `GEO-23` commissioned as owner of the four new known-issues entries.
+- **04:30:** leg (b), slot 1 — denominator re-derived (289, not the
+  inherited 232); `tests/ports` complete 17/17 with 3 reds; **new defect
+  class**: `OPS-14`'s correct rank-safety `allgather` outgrew a test
+  double, which no static sweep can see. The owed `materials` complex
+  conversion landed on a fifth gmsh site, rank-divergent.
+- **06:00:** slot 2 — 139/289, **117 names green, zero reds**, after
+  reading the build gate before sizing (53 of 59 validation modules are
+  complex-gated; the previous slot's real-build shape was scoring them as
+  skips). `test_circular_loop.py`, the old JIT casualty, is green.
+- **07:30:** slot 3 — 188/289; birdcage block 32/32 green at the census's
+  best rate; one *manufactured* red (a magnetostatics module run in the
+  complex build — the classifier keyed on a comment); one genuine red, the
+  pre-`OPS-18` 128 MHz constant. The `helmholtz_v2` "hang" was the same
+  build-gate artifact.
+- **09:00:** slot 4 — 207/289; the exact 0.7.2 cell count vs 0.11's
+  +0.032%; `third_rung`'s 174.86 s record exposed as a warm-cache price
+  (cold: exit 124 at 300 s).
+- **10:30 review:** nothing to audit; leg (e) queued first with leg (d)'s
+  draw order; `OPS-27` (stale records) and `OPS-28` (test double)
+  commissioned; the `materials` site folded into `GEO-23`'s table.
 
 ## Automation health
 
 - Four of four scheduled slots ran, all landed on `main` clean — zero
   parked branches, zero wedges, zero denials. All four went to one item,
-  by design (the census needed consecutive slots).
-- ~4 100 s of harness compute across 31 logs; the leg's real cost was the
-  three exit-124 windows before the per-module shape was adopted.
-- Queue holds **six items**: `OPS-26` leg (b), then `MAG-20`, `GEO-20`
-  step 2, `EX-34`, `GEO-22`, `GEO-23` — no serial dependencies.
+  by design.
+- 55 harness logs, ~5 500 s of recorded compute; the real losses were one
+  misclassified-build window (192 s) and two exit-124 windows (401 s,
+  301 s) — all three now carry a rule or a re-price.
+- Queue holds **eight items**: `OPS-26` leg (e), `OPS-27`, `OPS-28`, then
+  `MAG-20`, `GEO-20` step 2, `EX-34`, `GEO-22`, `GEO-23` step 1 — no
+  serial dependencies.
 
-## On deck (§9 — six items this review)
+## On deck (§9 — eight items this review)
 
-1. **`OPS-26` step 2 leg (b)** — execution census, `validation` + `ports`,
-   one command per module (heavy; may not finish in one slot by design)
-2. **`MAG-20`** — measure-then-dispose the last sampled two-sided rate
+1. **`OPS-26` step 2 leg (e)** — the 82-name census tail in leg (d)'s
+   costed order, then the chunk-level reconciliation (heavy; 2–3 slots)
+2. **`OPS-27`** — re-record the two stale 0.7.2 constants version-tagged,
+   sweep for siblings (standard, ~4 min compute)
+3. **`OPS-28`** — give the `_DummyComm` double its `allgather`, re-read
+   known-issues entry 3 (smoke)
+4. **`MAG-20`** — measure-then-dispose the last sampled two-sided rate
    band (standard)
-3. **`GEO-20` step 2** — 32 ring-gap ports at 16 legs under the per-class
+5. **`GEO-20` step 2** — 32 ring-gap ports at 16 legs under the per-class
    reading (standard)
-4. **`EX-34`** — birdcage S-matrix across 10 / 64 / 128 MHz on one mesh
+6. **`EX-34`** — birdcage S-matrix across 10 / 64 / 128 MHz on one mesh
    (`PORT-11` ramp; standard)
-5. **`GEO-22`** — bisect and guard the straight-wire coarse-resolution
+7. **`GEO-22`** — bisect and guard the straight-wire coarse-resolution
    floor (smoke + standard)
-6. **`GEO-23` step 1** — classify the three "overlapping facets" sites by
-   rank width, ladder the resolution, revive or delete the dead module
+8. **`GEO-23` step 1** — classify the (now four) "overlapping facets" sites
+   by rank width, ladder the resolution, revive or delete the dead module
    (smoke + standard; spare)
 
 ---

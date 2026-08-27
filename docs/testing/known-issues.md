@@ -30,6 +30,10 @@ unless fixing it is the task.
 
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (d), 09:00 slot) — `test_coil_loading_larmor_mesh_cache.py` asserts an **exact** third-rung cell count recorded on the 0.7.2 image (2 807 309) and 0.11 meshes 2 808 204: a 0.032% gmsh drift against an equality record
 
+> **OWNER ASSIGNED 2026-08-27, 10:30 review: `OPS-27`** (§9 item 2) — the
+> stale-record class, one chunk for both open sites; re-record exact and
+> version-tagged on the `GEO-16` precedent, no band. Retires with it.
+
 | | |
 |---|---|
 | **Test** | `tests/validation/test_coil_loading_larmor_mesh_cache.py::test_the_cached_rung_is_the_priced_mesh` (1 of the module's 5 collected names; the other 4 are green in the same run) |
@@ -40,6 +44,10 @@ unless fixing it is the task.
 | **Disposition** | Filed, **not fixed** — `OPS-26` step 2 is a census and lands no fix (`OPS-26` §7 scope). The fix is a one-constant re-record on the 0.11 image with the basis stated in-comment, and an equality assertion on a mesher cell count is arguably the wrong shape in the first place (a ±0.1% band would survive an image bump); both calls belong to a chunk, not to this slot. Until then this red is expected on `main` and is **not yours**. |
 
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (c), 07:30 slot) — `test_geometry_floor_discriminator.py` asserts the **pre-`OPS-18`** 128 MHz record (1.8260%) and measures `OPS-18`'s re-recorded 1.7686%: a stale constant, not a physics regression
+
+> **OWNER ASSIGNED 2026-08-27, 10:30 review: `OPS-27`** (§9 item 2) —
+> `RECORD_128_RELL2` / `RECORD_128_SEPARATION` → `OPS-18`'s 0.017686 /
+> 59.16, every docstring copy moved in the same commit. Retires with it.
 
 | | |
 |---|---|
@@ -52,6 +60,12 @@ unless fixing it is the task.
 | **Census accounting** | Counted as the census's 4th red repo-wide and as leg (b)'s owed complex conversion: the name carried by leg (b) as `deferred — complex-only, SKIPPED in the real build` is now **observed**, and it resolved to a red rather than the green the conversion pattern produced six times in leg (d). |
 
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (b), 04:30 slot) — the whole of `tests/ports/test_port_orientation_sensitivity.py` dies on `'_DummyComm' object has no attribute 'allgather'`: an **`OPS-14` rank-safety reduction broke its test double**, and nothing scheduled has run the module since
+
+> **OWNER ASSIGNED 2026-08-27, 10:30 review: `OPS-28`** (§9 item 3). Ruling
+> on the open question: the deprecated placeholder route **stays runnable**
+> (it is `PORT-1` step 4's negative control), so the fix is the double, not
+> the route. `OPS-28` also re-reads entry 3 against what the module then
+> actually asserts.
 
 | | |
 |---|---|
