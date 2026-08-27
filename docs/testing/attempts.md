@@ -18260,3 +18260,177 @@ reconciliation** (seed list of four by name, three totals repo-wide, the dead
 module and the `GEO-23` entries cross-referenced) — which whichever leg lands
 last owes. With `coil_loading_degree2`'s 14 structurally deferred, the
 realistic end state of step 2 is ~275 of 289 observed, not 289.
+
+## 2026-08-27T14:55Z — `OPS-26` step 2 leg (d) (§9 item 1, 09:00 CDT implementer slot) — **incomplete (partial, expected)**
+
+**Slot:** 09:00 CDT scheduled implementer run. Preflight clean (`git status`
+empty, `main` at `5590b81`, container Up 21 h). §9 item 1 taken as written, no
+substitution — still the first On-deck entry, neither done nor blocked; the
+previous slot's hypothesis names this leg (d) and its draw order was followed
+with one measured departure (below). Outcome **incomplete by design**: the item
+declares a `not reached in slot` remainder "expected and not a failure". **No
+code changed anywhere** — no `attempt/*` branch exists and none is owed; `main`
+clean at handoff.
+
+**Result: 207 of 289 observed (202 green, 5 red), 82 deferred.
+`tests/validation` goes 171 → 190 of 272; `tests/ports` stays complete at
+17/17.** 202 + 5 + 82 = 289.
+
+| root | collected | observed | green | red | deferred |
+|---|---|---|---|---|---|
+| `tests/ports` | 17 | 17 | 14 | 3 | 0 |
+| `tests/validation` | 272 | 190 | 188 | 2 | 82 |
+| **total** | **289** | **207** | **202** | **5** | **82** |
+
+**Four commands, all foreground, all through the harness, one module each (no
+batching), all `timeout -k 30`, `tests/environment` first in every path list,
+both rank footers identical on every footered one.** Recorded elapsed
+**704 s**:
+
+| # | module | build | width | window | result | log | names |
+|---|---|---|---|---|---|---|---|
+| 1 | `test_coil_loading_larmor_third_rung.py` | complex, `TH11_STEP5_RUNG=fine` | `-n 8` | `-k 30 300` | **Status 124, 301 s, no footer** | `20260827T140201Z_OPS-26-step2d-thirdrung.log` | 0 (7 deferred) |
+| 2 | `test_dodd_deeds_impedance.py` | complex | `-n 2` | `-k 30 400` | **21 passed / 100.36 s / Status 0**, 102 s | `20260827T140720Z_OPS-26-step2d-dodd-impedance.log` | **10 green** |
+| 3 | `test_dodd_deeds_projected_drive.py` | complex | `-n 2` | `-k 30 400` | **15 passed / 80.62 s / Status 0**, 82 s | `20260827T140922Z_OPS-26-step2d-dodd-projdrive.log` | **4 green** |
+| 4 | `test_coil_loading_larmor_mesh_cache.py` | **real** | `-n 2` | `-k 30 300` | **1 failed, 11 passed, 4 skipped / 217.70 s / Status 1**, 219 s | `20260827T141059Z_OPS-26-step2d-meshcache-real.log` | **4 green, 1 RED** |
+
+Counts reconcile against the environment root's own collection: **11** in the
+complex build (leg (c)'s figure — runs 2 and 3 are 11 + 10 and 11 + 4) and
+**11** in the real build of which 4 are complex-only skips (run 4 is
+7 env passed + 4 env skipped + 4 module passed + 1 module failed = 16). **The 4
+skips are all in `tests/environment`, not in a census root**, so no census name
+is deferred on a skip this slot.
+
+### Finding 23 — the third site of "records not swept after the `OPS-18` re-record" (red, filed)
+
+`test_coil_loading_larmor_mesh_cache.py::test_the_cached_rung_is_the_priced_mesh`:
+`AssertionError: the third rung meshed to 2808204 cells, not the probe's
+recorded 2807309: the fixture changed rather than being re-meshed`, Status 1,
+both ranks. The drift is **+895 cells on 2 807 309 = +0.032%** — the size of a
+gmsh tetrahedralisation difference between the 0.7.2 and 0.11 images, not of a
+geometry change, and the module's **other four names are green in the same
+run** (the round-trip preserves cell count, both tag populations, and the tag
+names), which is exactly what one would expect if the mesh is fine and only the
+*record* is stale.
+
+The value of this red is not the constant. It is the **third** instance of one
+class in three slots: leg (c)'s finding 19
+(`test_geometry_floor_discriminator.py`, a pre-`OPS-18` 128 MHz figure) and
+`GEO-16`'s two-torus red are the other two. Leg (c) already wrote that the
+class looks like "records not swept after a re-record, not 0.11 broke
+something"; a third independent site on a different quantity (cell count, not a
+residual) makes that reading much harder to argue with. **A review should
+commission one sweep chunk over all exact-equality records made on 0.7.2**
+rather than three one-constant fixes — and should decide separately whether an
+`==` on a mesher cell count is the right assertion shape at all, since a ±0.1%
+band would have survived the image bump without hiding anything. Filed in
+known-issues 2026-08-27, **not fixed**: a census lands no fix.
+
+### Finding 24 — a gate-classifier "not complex-gated" verdict is worth half a window, and finding 18's rule paid for itself
+
+`larmor_mesh_cache` is priced in `OPS-17` (b2) at **445.55 s complex** (its
+attempt-8 run 2) and its own module docstring says "complex build not required
+— this command never solves". Finding 18's gate-based classifier
+(`complex_mode|requires_complex|is_complex|skipif`) left it out of the gated
+set, which is the one module of this leg's sixteen it excluded. Run **real**
+it is **219 s** — **2.03×** cheaper — and the resulting 4 skips are all
+`tests/environment` complex tests, none of them census names. So the classifier
+was right, its verdict was directly worth ~226 s of a 60-minute slot, and the
+complex/real ratio it exposes (2.03×) sits just under leg (b2)'s 2.7× warm
+figure and attempt 9's 3.15× for this very file. Note the asymmetry with
+finding 18: running a real module in the complex build **manufactures reds**;
+running a complex-capable module in the real build merely **skips**, and skips
+are visible. The cheap direction to be wrong in is the real one.
+
+### Finding 25 — `third_rung`'s 174.86 s record is a *warm-cache* price, and this slot paid for reading only the timing and not the ordering
+
+Command 1 drew `test_coil_loading_larmor_third_rung.py` at the width, rung and
+env var its own `OPS-17` (b2) attempt-8 record specifies (`-n 8`,
+`TH11_STEP5_RUNG=fine`, recorded `11 passed / 174.86 s / exit 0`), in a
+`-k 30 300` window sized at 1.7× that record. It returned **Status 124 at
+301 s** having got only its first, non-solving test
+(`test_the_rung_is_inside_the_priced_ceiling`) out on every rank — so, like
+finding 21, a genuine cost wall rather than a finding-11 teardown case.
+Counted `deferred — no footer, exit 124 at 300 s`.
+
+The cause is almost certainly **ordering, not the image**. In attempt 8 the
+three commands ran `larmor_resolution` → `larmor_mesh_cache` → `third_rung`,
+and `mesh_cache`'s `cached_rung` fixture *writes the rung's on-disk cache*
+(`test_coil_loading_larmor_mesh_cache.py:109`, "where this rung's cache
+lives — importable"). `third_rung` ran third, against a populated cache. This
+slot ran it **first**, cold, and it spent the whole window meshing 2.8 M cells.
+That the very next command in this slot — `mesh_cache`, real — then meshed the
+rung in 219 s **is the corroboration**: the mesh alone is ~200 s, so a cold
+`third_rung` cannot fit a 300 s window that also has to solve.
+
+**Rule for leg (e), and it generalises past this file:** the price-map
+discipline this census has been running ("read the file's own recorded width
+and elapsed before sizing") is **incomplete** — read the recorded run's
+*position in its slot* too. A record made third in a slot may be priced against
+state its predecessors created. Concretely: run `mesh_cache` **first** and
+`third_rung` **immediately after**, at `-k 30 500`, in the same slot.
+
+### Finding 26 — the rate table now clearly favours priced multi-name modules
+
+Leg (c)'s finding 22 said prefer a priced block to an unpriced cheap tail. This
+slot's numbers sharpen it: the two `dodd_deeds` modules returned **14 names for
+184 s = 13.1 s/name**, the best rate of the whole census (previous best was the
+birdcage block's 18.5 s/name), while `mesh_cache` cost 219 s for 5 names
+(43.8 s/name) and `third_rung` cost 301 s for **zero**. Slot average over the
+704 s spent: **37 s/name** — but 26 s/name if the one mis-sized window is
+excluded, and the two windows that followed the price map exactly are the two
+that beat it.
+
+### Negative-result column
+
+One genuine red (finding 23, filed), one no-footer deferral with a diagnosed
+cause and a concrete remedy (finding 25). No gmsh "overlapping facets" site
+appeared this slot, so `GEO-23`'s count stands at five and nothing was added to
+it. Nothing loosened, no assertion edited, no `src/`/`tests/` file touched.
+
+**Deferred (82).** Seven with a substantive measured reason —
+`third_rung`'s per finding 25 — plus leg (c)'s two on
+`test_port_gap_voltage_padding.py` per finding 21. The other **73** are
+`deferred — not reached in slot`, the item's declared legal disposition.
+
+**Denials:** none this slot. The composition traps prior legs recorded
+(`$(...)` substitution, `for` loops, a `grep` *pattern* containing the word
+`pytest`) were avoided rather than re-tested; one `for`-loop attempt over the
+module list was denied for `simple_expansion` early in the slot at zero compute
+cost and was replaced with an explicit multi-file `grep`.
+
+### Hypothesis for the next attempt (leg (e))
+
+**82 names over 13 modules remain, all `tests/validation`.** Draw in this
+order:
+
+1. **`larmor_mesh_cache` then `third_rung`, back to back** (finding 25) —
+   `mesh_cache` **real** at `-k 30 300` (219 s measured this slot, and its one
+   red is now filed so it is a known 4-green/1-red module), then `third_rung`
+   complex `-n 8` `TH11_STEP5_RUNG=fine` at `-k 30 500` against the warm cache.
+   +7 names for ~520 s if the ordering hypothesis is right; if it is **not**,
+   that is the measurement — record it and stop drawing this file.
+2. **The five remaining `dodd_deeds_*` (24 names)** at the widths leg (c)'s
+   price table records: `reactance_combined_knobs` **`-n 8`** 421.90 s,
+   `resistance_slab_resolution` `-n 2` 386.82 s, `reactance_box_truncation`
+   **`-n 8`** 396.39 s (its record has 1 failed — read it before believing a
+   red), `reactance_wire_resolution` `-n 2` 491.96 s **with 2 deselected**
+   (full file unpriced, budget 600 s), `reactance_box_size` **unpriced** and
+   already ≥ 400 s at `-n 2` without finishing — try it at `-n 8` like its
+   siblings. One file per window, ~400 s each: this family is ~2 more slots on
+   its own.
+3. **`larmor_resolution` (6, `-n 2`, 427 s)** and **`richardson_ladder` (14,
+   two commands: baseline 135.83 s, fine-30 MHz 381.56 s, widths from
+   `20260817T033320Z` / `034258Z`)**, then the cheap unpriced
+   `larmor_probe`/`transition_30mhz` pair (12 between them).
+4. `coil_loading_degree2` (14) stays the **`TH-12` memory-wall
+   defer-with-reason** — do not re-open it. `test_port_systematics_composition.py`
+   (3) at its recorded 360 s and `test_port_gap_voltage_padding.py` (2) at
+   ≥ 600 s or split by name.
+
+Realistic end state of step 2 is unchanged at **~275 of 289** observed (289 −
+`degree2`'s 14), and reaching it is **two to three more slots**, not one — the
+whole remainder is ~400 s-per-module single-fixture solves. Whichever leg lands
+last still owes the **chunk-level reconciliation** (seed list of four by name,
+three totals repo-wide, the dead module and the `GEO-23` entries
+cross-referenced).
