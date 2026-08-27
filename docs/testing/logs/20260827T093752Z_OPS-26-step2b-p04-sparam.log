@@ -1,0 +1,135 @@
+# Test Run
+- Chunk: OPS-26-step2b-p04-sparam
+- Commit: b39799e2d3b711fd27a56aad216922c0438c6d9a
+- Time (UTC): 2026-08-27 09:37:52
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/ports/test_sparameter_assembly.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 04:37 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/ports/test_sparameter_assembly.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 4 items
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape collected 4 items
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape FAILED [ 25%]
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive PASSED [ 50%]
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_report_low_reciprocity_delta_for_symmetric_matrix PASSED [ 75%]
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_emit_warnings_for_non_reciprocal_or_non_passive_matrix PASSED [100%]FAILED [ 25%]
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive PASSED [ 50%]
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_report_low_reciprocity_delta_for_symmetric_matrix PASSED [ 75%]
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_emit_warnings_for_non_reciprocal_or_non_passive_matrix PASSED [100%]
+
+=================================== FAILURES ===================================
+________ test_n_port_sweep_assembles_finite_matrix_with_expected_shape _________
+tests/ports/test_sparameter_assembly.py:104: in test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+    assert np.all(np.abs(diagonal) > 0.0)
+E   AssertionError: assert np.False_
+E    +  where np.False_ = <function all at 0x74e8c6b6d8f0>(array([0., 0., 0.]) > 0.0)
+E    +    where <function all at 0x74e8c6b6d8f0> = np.all
+E    +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+E    +      where <ufunc 'absolute'> = np.abs
+----------------------------- Captured stdout call -----------------------------
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2, P3
+  S-matrix shape: (3, 3)
+  diagonal terms: S11=0.000e+00+0.000e+00j, S22=0.000e+00+0.000e+00j, S33=0.000e+00+0.000e+00j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=3.750e-02, max column power sum=7.031e-04
+    warnings: none
+=============================== warnings summary ===============================
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+  /workspace/tests/ports/test_sparameter_assembly.py:90: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    result = run_n_port_sparameter_sweep(
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive
+  /workspace/tests/ports/test_sparameter_assembly.py:168: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    run_n_port_sparameter_sweep(_DummyProblem(), ports)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape - AssertionError: assert np.False_
+ +  where np.False_ = <function all at 0x74e8c6b6d8f0>(array([0., 0., 0.]) > 0.0)
+ +    where <function all at 0x74e8c6b6d8f0> = np.all
+ +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+ +      where <ufunc 'absolute'> = np.abs
+=================== 1 failed, 3 passed, 2 warnings in 0.69s ====================
+
+
+=================================== FAILURES ===================================
+________ test_n_port_sweep_assembles_finite_matrix_with_expected_shape _________
+tests/ports/test_sparameter_assembly.py:104: in test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+    assert np.all(np.abs(diagonal) > 0.0)
+E   AssertionError: assert np.False_
+E    +  where np.False_ = <function all at 0x79a61a7894f0>(array([0., 0., 0.]) > 0.0)
+E    +    where <function all at 0x79a61a7894f0> = np.all
+E    +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+E    +      where <ufunc 'absolute'> = np.abs
+----------------------------- Captured stdout call -----------------------------
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2, P3
+  S-matrix shape: (3, 3)
+  diagonal terms: S11=0.000e+00+0.000e+00j, S22=0.000e+00+0.000e+00j, S33=0.000e+00+0.000e+00j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=3.750e-02, max column power sum=7.031e-04
+    warnings: none
+=============================== warnings summary ===============================
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+  /workspace/tests/ports/test_sparameter_assembly.py:90: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    result = run_n_port_sparameter_sweep(
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive
+  /workspace/tests/ports/test_sparameter_assembly.py:168: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    run_n_port_sparameter_sweep(_DummyProblem(), ports)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape - AssertionError: assert np.False_
+ +  where np.False_ = <function all at 0x79a61a7894f0>(array([0., 0., 0.]) > 0.0)
+ +    where <function all at 0x79a61a7894f0> = np.all
+ +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+ +      where <ufunc 'absolute'> = np.abs
+=================== 1 failed, 3 passed, 2 warnings in 0.69s ====================
+
+## Exit
+- Status: 1
+- Elapsed (s): 2

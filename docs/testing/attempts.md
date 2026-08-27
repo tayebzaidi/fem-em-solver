@@ -17805,3 +17805,119 @@ most likely to diverge, and finding 9 says a single diverging module run inside
 a batch costs the entire batch's observations — which is precisely how leg (b)
 was predicted to fail.
 
+
+## 2026-08-27T09:45Z — `OPS-26` step 2 leg (b), attempt 1 — **incomplete (partial, expected)**
+
+**Slot:** 04:30 CDT scheduled implementer run. Preflight clean (`git status`
+empty, `main` at `b39799e`, container Up 16 h). §9 item 1 taken as written, no
+substitution. Outcome **incomplete by design** — the item states that a
+`not reached in slot` remainder "is expected and is not a failure". No code
+changed anywhere, so nothing was parked and no `attempt/*` branch exists;
+`main` is clean and green at handoff.
+
+**Result: 22 of 289 observed (19 green, 3 red), 267 deferred. `tests/ports` is
+COMPLETE at 17/17. `tests/validation` is 5 of 272.** 19 + 3 + 267 = 289.
+
+**Denominator re-derived, not inherited** (`20260827T093400Z_OPS-26-step2b-collect.log`,
+real, `--collect-only -q`, Status 0, 3 s): **289 tests over 63 modules** —
+`tests/validation` 272 / 59, `tests/ports` 17 / 4. The item expected the
+`OPS-17`-era 232 to have moved and it has, but read it correctly: 232 was
+repo-wide on 0.7.2, 272 is `tests/validation` alone.
+
+| root | collected | observed | green | red | deferred |
+|---|---|---|---|---|---|
+| `tests/ports` | 17 | 17 | 14 | 3 | 0 |
+| `tests/validation` | 272 | 5 | 5 | 0 | 267 |
+| **total** | **289** | **22** | **19** | **3** | **267** |
+
+**Commands run (8), all foreground, all through the harness, all with
+`timeout -k 30`.** `…093043Z_..._materials-complex` (Status 124, 181 s);
+`…093400Z_..._collect` (0, 3 s); `…093506Z_..._v01-convergence` (0, 143 s);
+`…093737Z_..._p01-freqsweep` (0, 1 s); `…093742Z_..._p02-portdef` (0, 2 s);
+`…093747Z_..._p03-orient` (**1**, 2 s); `…093752Z_..._p04-sparam` (**1**, 2 s);
+`…093823Z_..._v02-tolpolicy` (0, 1 s); `…093827Z_..._v03-fieldconsist` (0, 2 s);
+`…093832Z_..._v04-geomfloor` (0, 13 s). Recorded elapsed ~350 s total, of which
+181 s was one rank-divergent teardown and 143 s was `test_convergence.py` — the
+other 21 names cost 26 s between them.
+
+### Finding 12 — a new defect class, and step 1 structurally could not see it
+
+`tests/ports/test_port_orientation_sensitivity.py` (both tests) fails with
+`AttributeError: '_DummyComm' object has no attribute 'allgather'`. Diagnosed
+to one line: `OPS-14` added a rank-safety reduction at
+`src/fem_em_solver/ports/excitation.py:265`
+(`problem.mesh.comm.allgather(...)`), and the module's stub comm
+(`test_port_orientation_sensitivity.py:16-21`) defines only `rank` and
+`allreduce`. **Not a 0.11 migration break, not a gmsh regression — test-double
+drift behind a correct rank-safety fix.** `check_dolfinx_api_migration.py`
+cannot see this by construction (`comm.allgather` is valid mpi4py;
+`_DummyComm` is not a DolfinX type), which is the cleanest argument yet, made
+by measurement, for why step 2 exists after step 1 came back clean. The
+reduction must not be reverted; the double is stale. Filed, not fixed.
+
+### Finding 13 — "already filed" is not the same as "not a red"
+
+Of the three reds, known-issues entry 3 already lists two names — but one of
+them, `…::test_port_orientation_flip_changes_off_diagonal_sparameter_sign`,
+**no longer fails for the filed reason**: it dies in the tag reduction and
+never reaches its S-matrix assertion, so entry 3's diagnosis is now
+*unreachable* on it rather than refuted.
+`…::test_port_orientation_flip_changes_induced_voltage_sign` was in no entry
+at all. A census that scored already-filed names as not-reds would have missed
+both the new name and the changed symptom. All three counted; new entry filed,
+entry 3 left standing and cross-referenced.
+
+### Finding 14 — the owed `materials` conversion failed onto a fifth `GEO-23` site
+
+The item's "first thing, ~30 s" complex command did **not** convert the leg (a)
+runtime skip to green. `tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring`
+resolves **differently on the two ranks** — `PASSED [ 66%]` on one,
+`FAILED [100%]` on the other with `Invalid boundary mesh (overlapping facets)
+on surface 1 surface 1` — then teardown ate the window (Status 124, 181 s,
+after `1 failed, 14 passed in 20.79s` had printed). Per leg (a) finding 11 this
+is **not** a counted red (no Status-0/1 footer); the deferral reason is
+upgraded from `skipped at runtime in the real build` to `rank-divergent gmsh
+abort, no footer`, and **leg (a)'s 184 / 189 (182 + 2 + 5) is unchanged**. For
+`GEO-23`: a **fifth** site carrying that string and the **second**
+demonstrably partition-dependent one. Two independent rank-dependent sites is
+materially stronger evidence against the shared resolution-floor reading than
+leg (a)'s single site was.
+
+### Seed-list note — one seed name is stale
+
+`test_convergence.py` is green (1 passed, 141.51 s), confirming `MAG-19` step
+2's disposition executes on `main` at the retired band. But the item's second
+named seed, **`test_two_torus_port_sheet.py`, does not exist in either leg-(b)
+root**. The `GEO-16` fixture the ruling meant is
+`tests/validation/test_port_lumped_two_torus.py` (5 tests), still unobserved —
+leg (c) should use that name.
+
+### Procedural note — declared method deviation
+
+The slot's last command batched **two** modules
+(`test_geometry_floor_discriminator.py` + `test_helmholtz_magnitude.py`)
+rather than one, against the item's module-per-command rule, to fit the
+timebox. It returned Status 0 so no observation was lost, but the shortcut is
+recorded rather than hidden: had either diverged, both would have been
+`deferred — no footer`. Not to be repeated in leg (c).
+
+**Deferred with a substantive reason (1).**
+`validation/test_geometry_floor_discriminator.py::test_larmor_sphere_residual_at_the_priced_fine_mesh`
+— `deferred — complex-only, SKIPPED in the real build`. The other **266** are
+`deferred — not reached in slot`, the item's declared legal disposition.
+
+**Denials:** none. No command in this slot was refused by the permission layer.
+
+### Hypothesis for the next attempt (leg (c))
+
+The cheap tail of `tests/validation` is *very* cheap — 21 names for 26 s this
+slot — and the cost is concentrated in the handful of modules the item already
+priced. So leg (c) should **run the singletons and the large cheap modules
+first and the priced heavies last**, inverting nothing but making the slot
+boundary fall in the cheap region rather than mid-heavy;
+`test_port_gap_voltage_impedance.py` (**20** tests, the root's largest module)
+is the best names-per-second target after the singletons, and
+`test_straight_wire.py` (7 at ~363 s) is the worst. Second hypothesis, from
+finding 14: converting a real-build complex-only skip is **not** reliably a
+green — budget those commands as if they may land on a rank-divergent abort
+and give each its own window.

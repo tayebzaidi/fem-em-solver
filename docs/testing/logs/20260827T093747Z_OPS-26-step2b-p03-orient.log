@@ -1,0 +1,133 @@
+# Test Run
+- Chunk: OPS-26-step2b-p03-orient
+- Commit: b39799e2d3b711fd27a56aad216922c0438c6d9a
+- Time (UTC): 2026-08-27 09:37:47
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/ports/test_port_orientation_sensitivity.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 04:37 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/ports/test_port_orientation_sensitivity.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 2 items
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign collected 2 items
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign FAILED [ 50%]
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign FAILED [ 50%]
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign FAILED [100%]FAILED [100%]
+
+=================================== FAILURES ===================================
+___________ test_port_orientation_flip_changes_induced_voltage_sign ____________
+tests/ports/test_port_orientation_sensitivity.py:72: in test_port_orientation_flip_changes_induced_voltage_sign
+    aligned = run_placeholder_port_coupling_case(problem, aligned_ports, driven_port_id="P1")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/fem_em_solver/ports/excitation.py:265: in run_placeholder_port_coupling_case
+    {int(v) for values in problem.mesh.comm.allgather(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: '_DummyComm' object has no attribute 'allgather'
+_______ test_port_orientation_flip_changes_off_diagonal_sparameter_sign ________
+tests/ports/test_port_orientation_sensitivity.py:98: in test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+    aligned = run_n_port_sparameter_sweep(problem, aligned_ports)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/fem_em_solver/ports/sparameters.py:368: in run_n_port_sparameter_sweep
+    excitation_results[port.port_id] = run_placeholder_port_coupling_case(
+src/fem_em_solver/ports/excitation.py:265: in run_placeholder_port_coupling_case
+    {int(v) for values in problem.mesh.comm.allgather(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: '_DummyComm' object has no attribute 'allgather'
+=============================== warnings summary ===============================
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:72: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    aligned = run_placeholder_port_coupling_case(problem, aligned_ports, driven_port_id="P1")
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:98: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    aligned = run_n_port_sparameter_sweep(problem, aligned_ports)
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/src/fem_em_solver/ports/sparameters.py:368: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    excitation_results[port.port_id] = run_placeholder_port_coupling_case(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign - AttributeError: '_DummyComm' object has no attribute 'allgather'
+FAILED tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign - AttributeError: '_DummyComm' object has no attribute 'allgather'
+======================== 2 failed, 3 warnings in 0.68s =========================
+
+
+=================================== FAILURES ===================================
+___________ test_port_orientation_flip_changes_induced_voltage_sign ____________
+tests/ports/test_port_orientation_sensitivity.py:72: in test_port_orientation_flip_changes_induced_voltage_sign
+    aligned = run_placeholder_port_coupling_case(problem, aligned_ports, driven_port_id="P1")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/fem_em_solver/ports/excitation.py:265: in run_placeholder_port_coupling_case
+    {int(v) for values in problem.mesh.comm.allgather(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: '_DummyComm' object has no attribute 'allgather'
+_______ test_port_orientation_flip_changes_off_diagonal_sparameter_sign ________
+tests/ports/test_port_orientation_sensitivity.py:98: in test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+    aligned = run_n_port_sparameter_sweep(problem, aligned_ports)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/fem_em_solver/ports/sparameters.py:368: in run_n_port_sparameter_sweep
+    excitation_results[port.port_id] = run_placeholder_port_coupling_case(
+src/fem_em_solver/ports/excitation.py:265: in run_placeholder_port_coupling_case
+    {int(v) for values in problem.mesh.comm.allgather(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: '_DummyComm' object has no attribute 'allgather'
+=============================== warnings summary ===============================
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:72: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    aligned = run_placeholder_port_coupling_case(problem, aligned_ports, driven_port_id="P1")
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:98: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    aligned = run_n_port_sparameter_sweep(problem, aligned_ports)
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/src/fem_em_solver/ports/sparameters.py:368: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    excitation_results[port.port_id] = run_placeholder_port_coupling_case(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign - AttributeError: '_DummyComm' object has no attribute 'allgather'
+FAILED tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign - AttributeError: '_DummyComm' object has no attribute 'allgather'
+======================== 2 failed, 3 warnings in 0.69s =========================
+
+## Exit
+- Status: 1
+- Elapsed (s): 2
