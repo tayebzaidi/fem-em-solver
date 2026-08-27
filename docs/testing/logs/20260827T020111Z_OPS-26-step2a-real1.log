@@ -1,0 +1,206 @@
+# Test Run
+- Chunk: OPS-26-step2a-real1
+- Commit: 2dfc93289d2e709d33f98bcdad037247c16a9cf7
+- Time (UTC): 2026-08-27 02:01:11
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 540 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_conductor_sizing.py tests/unit tests/io tests/materials tests/solver -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 26 21:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 540 mpiexec -n 2 python3 -m pytest tests/mesh/test_birdcage_conductor_sizing.py tests/unit tests/io tests/materials tests/solver -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 89 items
+
+tests/mesh/test_birdcage_conductor_sizing.py::test_graded_conductor_sizing_recovers_the_cad_mass collected 89 items
+
+tests/mesh/test_birdcage_conductor_sizing.py::test_graded_conductor_sizing_recovers_the_cad_mass PASSED [  1%]PASSED [  1%]
+tests/unit/test_analytical_lightweight.py::test_straight_wire_analytical_direction_and_magnitude 
+tests/unit/test_analytical_lightweight.py::test_straight_wire_analytical_direction_and_magnitude PASSED [  2%]PASSED [  2%]
+tests/unit/test_analytical_lightweight.py::test_helmholtz_center_formula_matches_closed_form 
+tests/unit/test_analytical_lightweight.py::test_helmholtz_center_formula_matches_closed_form PASSED [  3%]PASSED [  3%]
+tests/unit/test_analytical_lightweight.py::test_wire_vector_potential_conductor_branch_is_finite_and_curls_correctly 
+tests/unit/test_analytical_lightweight.py::test_wire_vector_potential_conductor_branch_is_finite_and_curls_correctly PASSED [  4%]PASSED [  4%]
+tests/unit/test_analytical_lightweight.py::test_loop_vector_potential_reproduces_on_axis_closed_form 
+tests/unit/test_analytical_lightweight.py::test_loop_vector_potential_reproduces_on_axis_closed_form PASSED [  5%]PASSED [  5%]
+tests/unit/test_analytical_lightweight.py::test_loop_magnetic_field_matches_on_axis_closed_form_and_curl_of_A 
+tests/unit/test_analytical_lightweight.py::test_loop_magnetic_field_matches_on_axis_closed_form_and_curl_of_A PASSED [  6%]PASSED [  6%]
+tests/unit/test_analytical_lightweight.py::test_error_metrics_are_zero_for_identical_arrays 
+tests/unit/test_analytical_lightweight.py::test_error_metrics_are_zero_for_identical_arrays PASSED [  7%]PASSED [  7%]
+tests/unit/test_doc_reference_exit_codes.py::test_current_tree_is_free_of_hard_violations_and_obeys_the_contract 
+tests/unit/test_doc_reference_exit_codes.py::test_current_tree_is_free_of_hard_violations_and_obeys_the_contract PASSED [  8%]
+tests/unit/test_doc_reference_exit_codes.py::test_staleness_alone_exits_with_the_staleness_code PASSED [  8%]
+tests/unit/test_doc_reference_exit_codes.py::test_staleness_alone_exits_with_the_staleness_code PASSED [ 10%]
+tests/unit/test_doc_reference_exit_codes.py::test_stale_severity_fail_restores_the_old_all_or_nothing_reading PASSED [ 10%]
+tests/unit/test_doc_reference_exit_codes.py::test_stale_severity_fail_restores_the_old_all_or_nothing_reading PASSED [ 11%]
+tests/unit/test_doc_reference_exit_codes.py::test_dead_reference_still_exits_one_after_the_split[dead-artifact] PASSED [ 11%]
+tests/unit/test_doc_reference_exit_codes.py::test_dead_reference_still_exits_one_after_the_split[dead-artifact] PASSED [ 12%]
+tests/unit/test_doc_reference_exit_codes.py::test_dead_reference_still_exits_one_after_the_split[dead-script] PASSED [ 12%]
+tests/unit/test_doc_reference_exit_codes.py::test_dead_reference_still_exits_one_after_the_split[dead-script] PASSED [ 13%]
+tests/unit/test_doc_reference_exit_codes.py::test_fresh_and_resolvable_references_exit_zero PASSED [ 13%]
+tests/unit/test_doc_reference_exit_codes.py::test_fresh_and_resolvable_references_exit_zero PASSED [ 14%]
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_is_unchanged_by_this_chunk[within-48h] PASSED [ 14%]
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_is_unchanged_by_this_chunk[within-48h] PASSED [ 15%]
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_is_unchanged_by_this_chunk[past-48h] PASSED [ 15%]
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_is_unchanged_by_this_chunk[past-48h] PASSED [ 16%]
+tests/unit/test_doc_reference_exit_codes.py::test_untracked_in_tree_artifact_is_freshness_checked PASSED [ 16%]
+tests/unit/test_doc_reference_exit_codes.py::test_untracked_in_tree_artifact_is_freshness_checked PASSED [ 17%]
+tests/unit/test_doc_reference_exit_codes.py::test_tracked_in_tree_artifact_is_exempt_from_freshness PASSED [ 17%]
+tests/unit/test_doc_reference_exit_codes.py::test_tracked_in_tree_artifact_is_exempt_from_freshness PASSED [ 19%]
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_holds_on_example_relative_paths[within-48h] PASSED [ 19%]
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_holds_on_example_relative_paths[within-48h] PASSED [ 20%]
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_holds_on_example_relative_paths[past-48h] PASSED [ 20%]
+tests/unit/test_doc_reference_exit_codes.py::test_default_window_holds_on_example_relative_paths[past-48h] PASSED [ 21%]
+tests/unit/test_doc_reference_exit_codes.py::test_committed_tree_stale_count_equals_an_independent_full_census PASSED [ 21%]
+tests/unit/test_doc_reference_exit_codes.py::test_committed_tree_stale_count_equals_an_independent_full_census PASSED [ 22%]
+tests/unit/test_doc_reference_exit_codes.py::test_the_in_tree_exemption_cannot_silently_widen PASSED [ 23%]
+tests/unit/test_doc_reference_exit_codes.py::test_the_orphaned_magnetostatics_output_dir_is_gone PASSED [ 24%]
+tests/unit/test_paraview_combined_xdmf.py::test_combined_xdmf_is_single_grid_with_all_attributes PASSED [ 22%]
+tests/unit/test_doc_reference_exit_codes.py::test_the_in_tree_exemption_cannot_silently_widen PASSED [ 23%]
+tests/unit/test_doc_reference_exit_codes.py::test_the_orphaned_magnetostatics_output_dir_is_gone PASSED [ 24%]
+tests/unit/test_paraview_combined_xdmf.py::test_combined_xdmf_is_single_grid_with_all_attributes PASSED [ 25%]PASSED [ 25%]
+tests/io/test_mesh_qa_diagnostics.py::test_format_expected_tag_counts_reports_missing_and_present_tags 
+tests/io/test_mesh_qa_diagnostics.py::test_format_expected_tag_counts_reports_missing_and_present_tags PASSED [ 26%]
+tests/io/test_mesh_qa_diagnostics.py::test_print_required_tag_failure_summary_includes_expected_and_observed PASSED [ 26%]
+tests/io/test_mesh_qa_diagnostics.py::test_print_required_tag_failure_summary_includes_expected_and_observed PASSED [ 28%]
+tests/io/test_mesh_qa_diagnostics.py::test_format_cell_tag_summary_empty_counts_is_explicit PASSED [ 28%]PASSED [ 29%]
+tests/io/test_touchstone_export.py::test_touchstone_export_and_roundtrip_loader 
+tests/io/test_mesh_qa_diagnostics.py::test_format_cell_tag_summary_empty_counts_is_explicit PASSED [ 29%]
+tests/io/test_touchstone_export.py::test_touchstone_export_and_roundtrip_loader PASSED [ 30%]PASSED [ 30%]
+tests/io/test_touchstone_export.py::test_touchstone_loader_rejects_frequency_metadata_mismatch 
+tests/io/test_touchstone_export.py::test_touchstone_loader_rejects_frequency_metadata_mismatch PASSED [ 31%]PASSED [ 31%]
+tests/io/test_touchstone_export.py::test_touchstone_loader_rejects_z0_metadata_mismatch 
+tests/io/test_touchstone_export.py::test_touchstone_loader_rejects_z0_metadata_mismatch PASSED [ 32%]PASSED [ 32%]
+tests/io/test_touchstone_export.py::test_touchstone_export_refuses_placeholder_data_by_default 
+tests/io/test_touchstone_export.py::test_touchstone_export_refuses_placeholder_data_by_default PASSED [ 33%]PASSED [ 33%]
+tests/io/test_touchstone_export.py::test_touchstone_export_allows_placeholder_when_explicit 
+tests/io/test_touchstone_export.py::test_touchstone_export_allows_placeholder_when_explicit PASSED [ 34%]PASSED [ 34%]
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank PASSED [ 35%]PASSED [ 35%]
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank PASSED [ 37%]PASSED [ 37%]
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises PASSED [ 38%]PASSED [ 38%]
+tests/materials/test_phantom_material_model.py::test_gelled_saline_preset_table_supports_low_mid_high_conductivity_variants 
+tests/materials/test_phantom_material_model.py::test_gelled_saline_preset_table_supports_low_mid_high_conductivity_variants PASSED [ 39%]PASSED [ 39%]
+tests/materials/test_phantom_material_model.py::test_gelled_saline_frequency_adjustment_hook_produces_finite_terms 
+tests/materials/test_phantom_material_model.py::test_gelled_saline_frequency_adjustment_hook_produces_finite_terms PASSED [ 40%]PASSED [ 40%]
+tests/materials/test_phantom_material_model.py::test_gelled_saline_material_container_frequency_term_is_finite 
+tests/materials/test_phantom_material_model.py::test_gelled_saline_material_container_frequency_term_is_finite PASSED [ 41%]PASSED [ 41%]
+tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring 
+tests/materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [ 42%]SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [ 42%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values 
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values PASSED [ 43%]PASSED [ 43%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value 
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value PASSED [ 44%]PASSED [ 44%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set 
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set FAILED [ 46%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [ 47%]
+tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form FAILED [ 48%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic PASSED [ 49%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[4-0-monotone-decrease] PASSED [ 50%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[7-1-mostly-decreasing] PASSED [ 51%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-1-mostly-decreasing] PASSED [ 52%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[5-3-mostly-decreasing] PASSED [ 53%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-1-mostly-decreasing] PASSED [ 55%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-1-mixed] PASSED [ 56%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-2-mixed] PASSED [ 57%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-5-mostly-increasing] PASSED [ 58%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-3-mostly-increasing] PASSED [ 59%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-2-mostly-increasing] PASSED [ 60%]FAILED [ 46%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[0-4-mostly-increasing] 
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [ 47%]PASSED [ 61%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_negative_controls 
+tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form PASSED [ 62%]
+tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [ 64%]
+tests/solver/test_cylinder.py::test_cylinder_solver_b_field_matches_the_straight_wire_closed_form FAILED [ 65%]FAILED [ 48%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_the_real_build_value 
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic PASSED [ 49%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[4-0-monotone-decrease] PASSED [ 50%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[7-1-mostly-decreasing] PASSED [ 51%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-1-mostly-decreasing] PASSED [ 52%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[5-3-mostly-decreasing] PASSED [ 53%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-1-mostly-decreasing] PASSED [ 55%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-1-mixed] PASSED [ 56%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-2-mixed] PASSED [ 57%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-5-mostly-increasing] PASSED [ 58%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-3-mostly-increasing] PASSED [ 59%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-2-mostly-increasing] PASSED [ 60%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[0-4-mostly-increasing] PASSED [ 61%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_negative_controls PASSED [ 62%]
+tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [ 64%]
+tests/solver/test_cylinder.py::test_cylinder_solver_b_field_matches_the_straight_wire_closed_form ERROR [ 66%]
+tests/solver/test_energy_and_point_evaluation.py::test_discarded_imaginary_part_of_the_energy_is_negligible FAILED [ 65%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_the_real_build_value ERROR [ 67%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_explicitly_reduced_assembly ERROR [ 68%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_satisfies_discrete_work_energy_identity ERROR [ 69%]
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_matches_collision_based_evaluation ERROR [ 70%]
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_rejects_points_outside_mesh ERROR [ 71%]
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field ERROR [ 66%]
+tests/solver/test_energy_and_point_evaluation.py::test_discarded_imaginary_part_of_the_energy_is_negligible ERROR [ 73%]
+tests/solver/test_gauge_lagrange.py::test_lagrange_removes_null_space_component ERROR [ 67%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_explicitly_reduced_assembly ERROR [ 74%]
+tests/solver/test_gauge_lagrange.py::test_gauge_multiplier_is_nan_without_a_lagrange_solve ERROR [ 75%]
+tests/solver/test_gauge_lagrange.py::test_incompatible_wire_multiplier_stays_at_its_recorded_scale ERROR [ 68%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_satisfies_discrete_work_energy_identity ERROR [ 76%]
+tests/solver/test_gauge_multiplier_convergence.py::test_multiplier_spread_converges_for_a_divergence_free_source ERROR [ 69%]
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_matches_collision_based_evaluation ERROR [ 77%]
+tests/solver/test_gauge_multiplier_convergence.py::test_multiplier_still_separates_an_incompatible_source ERROR [ 70%]
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_rejects_points_outside_mesh ERROR [ 78%]
+tests/solver/test_gauge_penalty.py::test_default_gauge_penalty_is_inside_the_safe_window PASSED [ 79%]
+tests/solver/test_gauge_penalty.py::test_small_gauge_penalty_warns_about_null_space_contamination ERROR [ 71%]
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field ERROR [ 73%]
+tests/solver/test_gauge_lagrange.py::test_lagrange_removes_null_space_component FAILED [ 80%]
+tests/solver/test_gauge_penalty.py::test_default_gauge_penalty_does_not_warn FAILED [ 82%]ERROR [ 74%]
+tests/solver/test_gauge_lagrange.py::test_gauge_multiplier_is_nan_without_a_lagrange_solve 
+tests/solver/test_gauge_penalty.py::test_null_space_magnitude_scales_inversely_with_gauge_penalty ERROR [ 75%]
+tests/solver/test_gauge_lagrange.py::test_incompatible_wire_multiplier_stays_at_its_recorded_scale FAILED [ 83%]
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates ERROR [ 76%]
+tests/solver/test_gauge_multiplier_convergence.py::test_multiplier_spread_converges_for_a_divergence_free_source ERROR [ 77%]
+tests/solver/test_gauge_multiplier_convergence.py::test_multiplier_still_separates_an_incompatible_source ERROR [ 78%]
+tests/solver/test_gauge_penalty.py::test_default_gauge_penalty_is_inside_the_safe_window PASSED [ 79%]
+tests/solver/test_gauge_penalty.py::test_small_gauge_penalty_warns_about_null_space_contamination FAILED [ 80%]
+tests/solver/test_gauge_penalty.py::test_default_gauge_penalty_does_not_warn FAILED [ 82%]
+tests/solver/test_gauge_penalty.py::test_null_space_magnitude_scales_inversely_with_gauge_penalty 
+## Exit
+- Status: 124
+- Elapsed (s): 540

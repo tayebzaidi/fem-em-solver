@@ -787,6 +787,124 @@ list shapes the census.**)*
 >   **leg (b)**; only `environment/test_dolfinx_api_migration.py` mentions
 >   `cavity` under leg (a) and it is not a consumer. Recorded so the
 >   reconciliation does not later look for a seed that was never in this leg.
+> * **Step 2 leg (a), second slot — PARTIAL, 2026-08-26 21:00 implementer
+>   slot. Cumulative 93 of 189 observed (91 green, 2 red), 96 deferred**
+>   (was 30/189). **Leg (a)'s built-in positive is discharged**: the seed
+>   module `test_birdcage_conductor_sizing.py` (`GEO-21`) is observed
+>   **green** in a **Status-0** run. Leg (a) is still NOT complete and stays
+>   queued. One new red, filed (known-issues 2026-08-27).
+>
+>   | root | collected | observed | green | red | deferred |
+>   |---|---|---|---|---|---|
+>   | `tests/environment` | 11 | 11 | 11 | 0 | 0 |
+>   | `tests/unit` | 22 | 22 | 22 | 0 | 0 |
+>   | `tests/io` | 8 | 8 | 8 | 0 | 0 |
+>   | `tests/materials` | 7 | 6 | 6 | 0 | 1 |
+>   | `tests/post` | 33 | 19 | 18 | 1 | 14 |
+>   | `tests/mesh` | 57 | 27 | 26 | 1 | 30 |
+>   | `tests/solver` | 51 | 0 | 0 | 0 | 51 |
+>   | **total** | **189** | **93** | **91** | **2** | **96** |
+>
+>   91 + 2 + 96 = 189, as the fail-closed control requires. Denominator not
+>   re-derived this slot and not inherited from outside the leg: the only
+>   commit since the 19:30 derivation (`2dfc932`) is documentation-only
+>   (`git diff --stat 18bb604 2dfc932` touches `docs/` alone), so **189 over
+>   54 modules still holds**.
+>
+>   **Newly observed green by name** (real build, `-n 2`,
+>   `20260827T022014Z_OPS-26-step2a-real3-cheap.log`, **Status 0, 47 s**,
+>   `37 passed, 1 skipped in 46.12s` — the count is exactly seed 1 + `unit`
+>   22 + `io` 8 + `materials` 7 = 38): `mesh/test_birdcage_conductor_sizing.py`
+>   (1, **the seed**); `unit/test_analytical_lightweight.py` (6),
+>   `test_doc_reference_exit_codes.py` (15), `test_paraview_combined_xdmf.py`
+>   (1); `io/test_mesh_qa_diagnostics.py` (3), `test_touchstone_export.py`
+>   (5); `materials/test_material_map_rank_safety.py` (3),
+>   `test_phantom_material_model.py` (3 of 4).
+>
+>   And from the `tests/mesh` pass (real, `-n 2`,
+>   `20260827T022114Z_OPS-26-step2a-real4-mesh.log`, Status 124 at 480 s,
+>   27 of 57 reported before the kill): `test_birdcage_finalize_isolation.py`
+>   (1), `test_birdcage_leg_gaps.py` (1), `test_birdcage_leg_offset.py` (6),
+>   `test_birdcage_port_scaleup.py` (2),
+>   `test_birdcage_port_sheet_prerequisite.py` (1),
+>   `test_birdcage_port_sheets.py` (2), `test_birdcage_port_tags.py` (2 of 3),
+>   `test_birdcage_port_terminals.py` (1), `test_birdcage_ring_gaps.py` (2),
+>   `test_boundary_classification_margins.py` (5),
+>   `test_coil_phantom_conforming.py` (2).
+>
+>   **Finding 4 — a new red, and the "overlapping facets" string now spans
+>   three generators.**
+>   `mesh/test_birdcage_port_tags.py::test_birdcage_volumes_partition_the_box`
+>   aborts with **`Invalid boundary mesh (overlapping facets) on surface 59
+>   surface 79`** from `birdcage_port_domain` itself
+>   (`src/fem_em_solver/io/mesh.py:3245`), after a *successful* OCC fragment
+>   (`volumes=26`, all four ports at 8.000000e-07 m³). Isolated:
+>   `1 failed in 2.54s`, **Status 1, 4 s**
+>   (`20260827T022935Z_OPS-26-step2a-mesh-red-tb.log`). With `GEO-21`'s open
+>   birdcage and the 19:30 slot's coil+phantom, that is **three call paths,
+>   one symptom** — a shared 0.11 gmsh cause is now the more economical
+>   hypothesis than three independent sizings, but this census measures
+>   nothing about the cause and does not claim one. **Not a kill artifact:**
+>   the run that found it followed a Status-0 run, and the isolated re-run
+>   raises a gmsh exception, not a `dolfinx/jit.py` `RuntimeError`. Filed,
+>   not fixed.
+>
+>   **Finding 5 — `tests/solver` is fail-closed at 0/51, deliberately.** Two
+>   commands attempted it and **both were killed at 540 s**
+>   (`20260827T020111Z_OPS-26-step2a-real1.log`, Status 124;
+>   `20260827T021051Z_OPS-26-step2a-real2-solver.log`, Status 124, run after
+>   `rm -rf /root/.cache/fenics`). The first followed the 19:30 slot's two
+>   killed runs, so known-issues' **"do not trust *any* failure in a run that
+>   follows a killed one until the cache is cleared"** applies to it; the
+>   second was itself a cold-cache run, which that same entry's sizing
+>   corollary says must never share a window with measurement. The two runs
+>   also **disagree with each other** — e.g.
+>   `test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path` is
+>   SKIPPED in the first and PASSED in the second, and
+>   `test_energy_matches_explicitly_reduced_assembly` is ERROR then PASSED —
+>   which is the instability that entry describes, not a physics reading. Both
+>   runs' ~25 ERROR/FAILED lines are therefore **discarded, not filed and not
+>   counted**, and all 51 tests are `deferred — real-mode runs killed at 540 s
+>   in a cold/poisoned FFCx-cache chain; results not trustworthy per
+>   known-issues`. **New measurement worth keeping:** `tests/solver` does
+>   **not** fit one 540 s foreground window in the **real** build on a cold
+>   cache — the sizing corollary previously recorded this only for complex
+>   (480 s exhausted at 61%). Next leg must clear the cache in a throwaway
+>   warm-up command and measure in a *second* command.
+>
+>   **Finding 6 — the 19:30 slot's standing prediction is half-answered.** Of
+>   the four coil+phantom consumers named as candidates to red like finding 1,
+>   two are now observed **green**: `mesh/test_coil_phantom_conforming.py`
+>   (2/2) and `materials/test_phantom_material_model.py` (3 green, 1 skipped).
+>   `mesh/test_coil_phantom_mesh.py` and `mesh/test_mesh_tag_integrity.py`
+>   remain unreached. So the coil+phantom generator is fine at *those two*
+>   modules' resolutions, which is evidence for a sizing-dependent rather than
+>   a blanket failure — but finding 4 arrived from a third generator in the
+>   same slot, so this does not narrow to "fixture-specific".
+>
+>   **Deferred by name (96), one disposition each.**
+>   `materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring`
+>   (1) — *`deferred — skipped at runtime in the real build`*, by name, never
+>   folded into observed. `post` (14), unchanged from the 19:30 table:
+>   `test_phantom_phasor_semantics.py` (3) — *`deferred — command killed at
+>   900 s while this module was executing`*; `test_quicklook_report.py` (3);
+>   `test_tagged_cell_partition_invariance.py` (8). `solver` (51) — the whole
+>   root, reason under finding 5. `mesh` (30), all *`deferred — not reached in
+>   slot`*: `test_coil_phantom_mesh.py` (3),
+>   `test_domain_sizing_heuristics.py` (6), `test_geometry_sanity_report.py`
+>   (2), `test_mesh_tag_integrity.py` (3), `test_region_resolution_policy.py`
+>   (3), `test_two_torus_conforming.py` (2), `test_two_torus_gapped.py` (2),
+>   `test_two_torus_outer_boundary.py` (2), `test_two_torus_port_facets.py`
+>   (2), `test_two_torus_port_sheet.py` (3),
+>   `test_wall_boundary_tag_areas.py` (2). (`test_cylindrical_domain.py`
+>   collects zero tests and is outside the 189 — finding 3, already filed.)
+>
+>   **What leg (c) needs**, in order: (i) `tests/solver` 51, as a cache
+>   warm-up command plus a measurement command, real build; (ii) the 30
+>   `tests/mesh` names above, ~300 s at the observed rate; (iii) the 14 `post`
+>   names in the complex build with
+>   `--deselect tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite`.
+>   That is one slot if (i) behaves and two if it does not.
 > * **Step 2 — execution census on 0.11 (heavy, likely 2+ slots).** Re-run
 >   `OPS-17` leg (b2)'s methodology on the current image: every collected test
 >   **observed in a completed run with a footer**, real and complex, at each
@@ -6090,19 +6208,29 @@ mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-1. 🟡 **PARTIAL 2026-08-26 19:30 slot — 30/189 observed (29 green, 1 red),
-   159 deferred; stays first in the queue.** Denominator re-derived at
-   **189** over 54 modules. Two roots done (`environment` 11/11 green,
-   `post` 19/33), five unreached. A new red —
-   `post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite`,
-   gmsh `Invalid boundary mesh (overlapping facets)`, the `GEO-21` string on
-   the coil+phantom generator — **also hangs MPI teardown and consumed the
-   900 s window**, which is what stopped the leg. Filed (known-issues
-   2026-08-27), not fixed. Third finding: `tests/mesh/test_cylindrical_domain.py`
-   collects zero tests. Full table + deferred-by-name list in the §7 entry.
-   **Next attempt:** `timeout -k 30 540` per command, take `unit`/`io`/
-   `materials`/`solver`/`mesh` **first**, and `--deselect` the hanging test
-   by name; the two seed modules under these roots are still owed.
+1. 🟡 **PARTIAL again 2026-08-26 21:00 slot — cumulative 93/189 observed
+   (91 green, 2 red), 96 deferred (was 30/189); stays first in the queue.**
+   Denominator **189/54 modules** still holds (the only intervening commit
+   is documentation-only). **Leg (a)'s built-in positive is discharged**:
+   the seed `test_birdcage_conductor_sizing.py` is green in a **Status-0**
+   run (`20260827T022014Z…real3-cheap`, 47 s, `37 passed, 1 skipped`).
+   `environment`/`unit`/`io` are complete; `materials` 6/7 (1 named runtime
+   skip); `mesh` 27/57; `post` 19/33; **`solver` 0/51, fail-closed on
+   purpose** — both attempts were killed at 540 s in a cold/poisoned FFCx
+   cache chain and *disagree with each other*, so their ~25 ERROR/FAILED
+   lines are discarded, not filed (known-issues' "do not trust any failure
+   in a run that follows a killed one"). New measurement: `tests/solver`
+   does not fit one 540 s window in the **real** build cold. **Second new
+   red**, filed 2026-08-27:
+   `mesh/test_birdcage_port_tags.py::test_birdcage_volumes_partition_the_box`
+   — `Invalid boundary mesh (overlapping facets) on surface 59 surface 79`
+   from `birdcage_port_domain`, isolated at Status 1 / 4 s. That string now
+   spans **three** generators. Full table + deferred-by-name (96) in the §7
+   entry. **Next attempt (leg (c)), in order:** (i) `tests/solver` as a
+   throwaway cache warm-up command *plus* a separate measurement command,
+   real, `timeout -k 30 540`; (ii) the 30 named `tests/mesh` remainder
+   (~300 s); (iii) the 14 `post` names in complex with `--deselect` of the
+   hanging test by name.
    **`OPS-26` step 2 leg (a) — execution census on 0.11, the cheap
    directories (heavy by tier, one slot; `-n 2` default, per-file recorded
    width where a module's own docstring or log says otherwise; real build,

@@ -17485,3 +17485,127 @@ gmsh regression as `GEO-21`, then other coil+phantom consumers —
 the census will say so by name. If they are all green, the coil+phantom
 generator is fine at *their* resolutions and finding (1) is a fixture-specific
 sizing, which narrows the diagnosis for free.
+
+## 2026-08-27T02:45Z — `OPS-26` step 2 leg (a), second slot (§9 item 1, 21:00 CDT implementer slot) — **incomplete**
+
+Preflight clean (`main` at `2dfc932`, no `attempt/*`, no `recovered/*`,
+container Up 9 h). Took §9 item 1, which is the same item the 19:30 slot left
+🟡 at 30/189. **Leg (a) advanced to 93/189 observed (91 green, 2 red, 96
+deferred) and is still not complete.** Nothing was loosened, no band or record
+moved, and **no file under `src/`, `tests/` or `scripts/` was edited** — this
+slot is a census plus two filings.
+
+### What ran
+
+Four harness commands, all foreground, all `-n 2`:
+
+| log | build | scope | Status | elapsed |
+|---|---|---|---|---|
+| `20260827T020111Z_OPS-26-step2a-real1.log` | real | seed + `unit`+`io`+`materials`+`solver` | 124 | 540 s |
+| `20260827T021051Z_OPS-26-step2a-real2-solver.log` | real | `solver` after `rm -rf /root/.cache/fenics` | 124 | 540 s |
+| `20260827T022014Z_OPS-26-step2a-real3-cheap.log` | real | seed + `unit`+`io`+`materials` | **0** | **47 s** |
+| `20260827T022114Z_OPS-26-step2a-real4-mesh.log` | real | `tests/mesh` | 124 | 480 s |
+| `20260827T022935Z_OPS-26-step2a-mesh-red-tb.log` | real | the new red, isolated | **1** | **4 s** |
+
+Denominator **not** re-derived and **not** inherited from outside the leg: the
+only commit since the 19:30 derivation is `2dfc932`, and `git diff --stat
+18bb604 2dfc932` touches `docs/` only, so 189 over 54 modules stands.
+
+### Measured
+
+Per-root, cumulative across both leg-(a) slots — `environment` 11/11,
+`unit` 22/22, `io` 8/8, `materials` 6/7, `post` 19/33, `mesh` 27/57,
+`solver` **0/51**. Totals 91 green + 2 red + 96 deferred = **189**, as the
+fail-closed control requires. Full table and the 96 deferred names are in the
+§7 entry.
+
+**The built-in positive is discharged.** `mesh/test_birdcage_conductor_sizing.py`
+(`GEO-21`'s seed) is observed **green in a Status-0 run**: `37 passed, 1
+skipped in 46.12s`, which is exactly seed 1 + `unit` 22 + `io` 8 +
+`materials` 7 = 38. Leg (a)'s other seed clause (`core/cavity.py` consumers)
+resolves to nothing under these roots — already recorded by the 19:30 slot.
+
+### Finding 4 — a second red, and the gmsh string now spans three generators
+
+`mesh/test_birdcage_port_tags.py::test_birdcage_volumes_partition_the_box`
+fails with
+
+```
+Exception: Invalid boundary mesh (overlapping facets) on surface 59 surface 79
+```
+
+from `MeshGenerator.birdcage_port_domain` (`src/fem_em_solver/io/mesh.py:3245`,
+wrapped at `:3276`), *after* a successful OCC fragment (`volumes=26`, all four
+ports at 8.000000e-07 m³). Isolated: `1 failed in 2.54s`, Status 1, 4 s.
+
+This is the **third** call path to carry that exact string — `GEO-21`'s open
+birdcage, the 19:30 slot's coil+phantom, and now the ported birdcage. Three
+generators, one symptom; a shared 0.11 gmsh cause is now more economical than
+three independent sizings. **Hypothesis from three shared strings, not a
+measurement** — nothing here bisects a resolution. Filed (known-issues
+2026-08-27), not fixed, not re-recorded, per the item's own rule.
+
+**It is not a kill artifact.** The batch that found it followed the Status-0
+`real3-cheap` run, so known-issues' "do not trust any failure that follows a
+killed run" does not apply, and the isolated re-run raises a gmsh exception in
+2.5 s rather than a `dolfinx/jit.py` `RuntimeError`.
+
+### Finding 5 — `tests/solver` is 0/51 on purpose, and that is the honest count
+
+Both solver attempts were killed at 540 s. The first followed the 19:30 slot's
+two killed runs; the second cleared `/root/.cache/fenics` and was therefore a
+cold-cache run, which the same known-issues entry's sizing corollary says must
+never share a window with measurement. The two runs **disagree with each
+other** — `test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path`
+SKIPPED then PASSED, `test_energy_matches_explicitly_reduced_assembly` ERROR
+then PASSED — which is that entry's instability, not a physics reading. I
+therefore **discarded ~25 ERROR/FAILED lines rather than filing them**, and
+counted all 51 as `deferred — killed at 540 s in a cold/poisoned FFCx-cache
+chain`. Filing them would have been the more impressive-looking outcome and
+the wrong one.
+
+**New measurement worth keeping:** `tests/solver` does not fit one 540 s
+foreground window in the **real** build on a cold cache. The corollary had
+recorded this only for complex (480 s exhausted at 61%).
+
+### Finding 6 — the 19:30 slot's standing prediction, half-answered
+
+Two of the four named coil+phantom consumers are green —
+`mesh/test_coil_phantom_conforming.py` (2/2) and
+`materials/test_phantom_material_model.py` (3 green, 1 named skip);
+`mesh/test_coil_phantom_mesh.py` and `mesh/test_mesh_tag_integrity.py` are
+unreached. Evidence for sizing-dependence rather than a blanket generator
+failure — but finding 4 arrived from a *third* generator in the same slot, so
+it does not narrow to "fixture-specific" either.
+
+### Procedural note
+
+The 19:30 slot's oversized-command error was not repeated: every command this
+slot was foreground and ≤ 540 s container-side with `-k 30`. The cost was
+instead paid to the cache-poisoning chain that slot's kills created, which I
+did not anticipate before spending the first 540 s window on it.
+
+### Hypothesis for the next attempt (leg (c))
+
+Leg (a) has **96 tests left**, and the order matters more than the budget:
+
+1. **`tests/solver` (51) needs two commands, not one** — a throwaway warm-up
+   (`rm -rf /root/.cache/fenics` then the directory, expect Status 124, count
+   nothing) and then a *separate* measurement command on the now-warm cache,
+   where the recorded real-mode warm figure is ~41 s for the directory. Do not
+   let compilation and measurement share a window; that is exactly what cost
+   this slot two of its four.
+2. **`tests/mesh` remainder (30 named)** — the observed rate was 27 tests in
+   480 s cold, and the expensive modules (`ring_gaps`, `port_scaleup`) are
+   already *behind* us, so the tail should be well under 300 s warm.
+3. **`post` remainder (14)** — complex build, `tests/environment` first in the
+   path list, and `--deselect
+   tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite`
+   by name, recording it as the already-filed red.
+
+If (1) behaves, leg (c) closes leg (a) in one slot. **Prediction to test:** the
+warm real-mode `tests/solver` run comes back green or near-green — the ~25
+non-passes seen this slot are cache artifacts, and if any of them survives a
+warm Status-0 run it is a genuine finding that this census has been unable to
+see through the noise for two slots running.
+

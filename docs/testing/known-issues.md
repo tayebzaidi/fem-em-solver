@@ -28,6 +28,67 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a), second slot) — `test_birdcage_volumes_partition_the_box` aborts in gmsh with **the same "Invalid boundary mesh (overlapping facets)"** — this is the **third** geometry to carry that string, and the first on `birdcage_port_domain`'s own production path
+
+> **Where this fired.**
+> `tests/mesh/test_birdcage_port_tags.py::test_birdcage_volumes_partition_the_box`,
+> **real** build, `mpiexec -n 2`. Found by the `OPS-26` step 2 execution
+> census (2026-08-26 21:00 implementer slot), first in the batch run
+> (`20260827T022114Z_OPS-26-step2a-real4-mesh.log`, FAILED at 28% on both
+> ranks) and then isolated for its traceback
+> (`20260827T022935Z_OPS-26-step2a-mesh-red-tb.log`, **Status 1, 4 s**,
+> `1 failed in 2.54s`).
+>
+> **Symptom, verbatim.**
+>
+> ```
+> Exception: Invalid boundary mesh (overlapping facets) on surface 59 surface 79
+> ```
+>
+> raised from `/usr/local/lib/gmsh.py:2189` inside
+> `MeshGenerator.birdcage_port_domain`
+> (`src/fem_em_solver/io/mesh.py:3245` → re-raised at `:3275`, wrapped at
+> `:3276` as `RuntimeError: birdcage_port_domain geometry generation failed
+> on rank 0`). The fragment line printed immediately before the abort is
+>
+> ```
+> [birdcage-mesh] fragment volumes=26 conductor=1.030097e-04(20p) air=1.006440e-02(1p)
+> phantom=2.261947e-04(1p) port_P1=8.000000e-07(1p) port_P2=8.000000e-07(1p)
+> port_P3=8.000000e-07(1p) port_P4=8.000000e-07(1p)
+> ```
+>
+> so the OCC fragment succeeds and the failure is in 2-D meshing, exactly as
+> in the two entries below.
+>
+> **Why this matters — the string now spans three generators.** `GEO-21`
+> filed it on the **open birdcage** conductor sizing, the 19:30 slot filed it
+> on the **coil+phantom** generator, and this is `birdcage_port_domain` with
+> ports and a phantom. Three different call paths, one symptom. The
+> single-generator readings ("a coarse-resolution floor", "a fixture-specific
+> sizing") no longer cover the observations; a shared 0.11 gmsh cause is now
+> the more economical hypothesis. **Stated as a hypothesis from three shared
+> error strings, not as a measurement** — nothing here bisects a resolution
+> or attributes a cause.
+>
+> **Not a kill artifact.** The batch run that found it followed
+> `20260827T022014Z_OPS-26-step2a-real3-cheap.log`, which exited **Status 0**,
+> so the "do not trust a failure that follows a killed run" rule below does
+> not apply; the isolated re-run then reproduced it in 2.54 s with an
+> assertion-free gmsh exception, not a `dolfinx/jit.py` `RuntimeError`.
+>
+> **Adjacent, and green:** the other two tests in the same module pass
+> (`test_birdcage_port_layout_diagnostics_match_the_closed_forms`,
+> `test_birdcage_port_layout_rejects_too_small_or_overlapping_port_regions`),
+> as do `tests/mesh/test_coil_phantom_conforming.py` (2/2) and
+> `tests/materials/test_phantom_material_model.py` (3 green, 1 skipped) —
+> two of the four coil+phantom consumers the 19:30 slot named as candidates
+> to red the same way did **not** red. That narrows the blast radius but does
+> not diagnose it.
+>
+> **Filed, not fixed, not re-recorded**, per the census item's own rule.
+> Disposition belongs to a `mesh`-owning chunk, which should take all three
+> entries together rather than one at a time.
+
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a)) — `test_phantom_field_metrics_and_exports_are_finite` aborts in gmsh with **the same "Invalid boundary mesh (overlapping facets)"** as the entry below, on the **coil+phantom** geometry — and its MPI teardown then **hangs the rest of the command**
 
 > **Where this fired.**

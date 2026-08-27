@@ -1,0 +1,128 @@
+# Test Run
+- Chunk: OPS-26-step2a-real2-solver
+- Commit: 2dfc93289d2e709d33f98bcdad037247c16a9cf7
+- Time (UTC): 2026-08-27 02:10:52
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && rm -rf /root/.cache/fenics && PYTHONPATH=/workspace/src timeout -k 30 540 mpiexec -n 2 python3 -m pytest tests/solver -v --tb=line'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 26 21:10 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && rm -rf /root/.cache/fenics && PYTHONPATH=/workspace/src timeout -k 30 540 mpiexec -n 2 python3 -m pytest tests/solver -v --tb=line'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 51 items
+
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values PASSED [  1%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value PASSED [  3%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set collected 51 items
+
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values PASSED [  1%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value PASSED [  3%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set FAILED [  5%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [  7%]
+tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form FAILED [  9%]FAILED [  5%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic 
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path PASSED [ 11%]SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [  7%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[4-0-monotone-decrease] 
+tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form PASSED [ 13%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[7-1-mostly-decreasing] PASSED [ 15%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-1-mostly-decreasing] PASSED [ 17%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[5-3-mostly-decreasing] PASSED [ 19%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-1-mostly-decreasing] PASSED [ 21%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-1-mixed] PASSED [ 23%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-2-mixed] PASSED [ 25%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-5-mostly-increasing] PASSED [ 27%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-3-mostly-increasing] PASSED [ 29%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-2-mostly-increasing] PASSED [ 31%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[0-4-mostly-increasing] PASSED [ 33%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_negative_controls PASSED [ 35%]
+tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [ 37%]
+tests/solver/test_cylinder.py::test_cylinder_solver_b_field_matches_the_straight_wire_closed_form FAILED [ 39%]FAILED [  9%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_the_real_build_value 
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic PASSED [ 11%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[4-0-monotone-decrease] PASSED [ 13%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[7-1-mostly-decreasing] PASSED [ 15%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-1-mostly-decreasing] PASSED [ 17%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[5-3-mostly-decreasing] PASSED [ 19%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-1-mostly-decreasing] ERROR [ 41%]
+tests/solver/test_energy_and_point_evaluation.py::test_discarded_imaginary_part_of_the_energy_is_negligible PASSED [ 21%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-1-mixed] ERROR [ 43%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_explicitly_reduced_assembly PASSED [ 23%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-2-mixed] ERROR [ 45%]PASSED [ 25%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_satisfies_discrete_work_energy_identity 
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-5-mostly-increasing] ERROR [ 47%]PASSED [ 27%]
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_matches_collision_based_evaluation 
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-3-mostly-increasing] PASSED [ 29%]ERROR [ 49%]
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_rejects_points_outside_mesh 
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-2-mostly-increasing] PASSED [ 31%]ERROR [ 50%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[0-4-mostly-increasing] 
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field PASSED [ 33%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_negative_controls PASSED [ 35%]
+tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [ 37%]
+tests/solver/test_cylinder.py::test_cylinder_solver_b_field_matches_the_straight_wire_closed_form FAILED [ 39%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_the_real_build_value ERROR [ 52%]ERROR [ 41%]
+tests/solver/test_gauge_lagrange.py::test_lagrange_removes_null_space_component 
+tests/solver/test_energy_and_point_evaluation.py::test_discarded_imaginary_part_of_the_energy_is_negligible ERROR [ 43%]ERROR [ 54%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_matches_explicitly_reduced_assembly 
+tests/solver/test_gauge_lagrange.py::test_gauge_multiplier_is_nan_without_a_lagrange_solve ERROR [ 45%]ERROR [ 56%]
+tests/solver/test_energy_and_point_evaluation.py::test_energy_satisfies_discrete_work_energy_identity 
+tests/solver/test_gauge_lagrange.py::test_incompatible_wire_multiplier_stays_at_its_recorded_scale ERROR [ 47%]ERROR [ 58%]
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_matches_collision_based_evaluation 
+tests/solver/test_gauge_multiplier_convergence.py::test_multiplier_spread_converges_for_a_divergence_free_source ERROR [ 49%]
+tests/solver/test_energy_and_point_evaluation.py::test_evaluate_at_points_rejects_points_outside_mesh ERROR [ 50%]
+tests/solver/test_gauge_lagrange.py::test_penalty_and_lagrange_agree_on_b_field ERROR [ 52%]ERROR [ 60%]
+tests/solver/test_gauge_lagrange.py::test_lagrange_removes_null_space_component 
+tests/solver/test_gauge_multiplier_convergence.py::test_multiplier_still_separates_an_incompatible_source ERROR [ 62%]ERROR [ 54%]
+tests/solver/test_gauge_lagrange.py::test_gauge_multiplier_is_nan_without_a_lagrange_solve 
+tests/solver/test_gauge_penalty.py::test_default_gauge_penalty_is_inside_the_safe_window PASSED [ 64%]
+tests/solver/test_gauge_penalty.py::test_small_gauge_penalty_warns_about_null_space_contamination ERROR [ 56%]
+tests/solver/test_gauge_lagrange.py::test_incompatible_wire_multiplier_stays_at_its_recorded_scale ERROR [ 58%]
+tests/solver/test_gauge_multiplier_convergence.py::test_multiplier_spread_converges_for_a_divergence_free_source ERROR [ 60%]
+tests/solver/test_gauge_multiplier_convergence.py::test_multiplier_still_separates_an_incompatible_source ERROR [ 62%]FAILED [ 66%]
+tests/solver/test_gauge_penalty.py::test_default_gauge_penalty_does_not_warn 
+tests/solver/test_gauge_penalty.py::test_default_gauge_penalty_is_inside_the_safe_window PASSED [ 64%]
+tests/solver/test_gauge_penalty.py::test_small_gauge_penalty_warns_about_null_space_contamination FAILED [ 68%]
+tests/solver/test_gauge_penalty.py::test_null_space_magnitude_scales_inversely_with_gauge_penalty FAILED [ 66%]
+tests/solver/test_gauge_penalty.py::test_default_gauge_penalty_does_not_warn FAILED [ 70%]FAILED [ 68%]
+tests/solver/test_gauge_penalty.py::test_null_space_magnitude_scales_inversely_with_gauge_penalty 
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates 
+## Exit
+- Status: 124
+- Elapsed (s): 540
