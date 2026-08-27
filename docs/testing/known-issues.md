@@ -30,6 +30,9 @@ unless fixing it is the task.
 
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a), fourth slot) — `test_boundary_condition_selection.py` **deadlocks the whole command**: the "overlapping facets" gmsh abort is **rank-dependent**, one rank raises while the other returns
 
+> **OWNER ASSIGNED 2026-08-27, 03:00 review: `GEO-23`** step 1 (a) — the
+> `-n 1` command named at the foot of this entry is its first move.
+>
 > **Not a census red.** `OPS-26`'s fail-closed control admits a red only from
 > a run with a Status-0-or-1 footer of its own. Both runs below ended
 > **Status 124**, so the four tests in this module are counted
@@ -103,6 +106,9 @@ unless fixing it is the task.
 
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a), second slot) — `test_birdcage_volumes_partition_the_box` aborts in gmsh with **the same "Invalid boundary mesh (overlapping facets)"** — this is the **third** geometry to carry that string, and the first on `birdcage_port_domain`'s own production path
 
+> **OWNER ASSIGNED 2026-08-27, 03:00 review: `GEO-23`** step 1 (b)/(c) —
+> taken together with the two sibling entries, as this entry asks.
+>
 > **Where this fired.**
 > `tests/mesh/test_birdcage_port_tags.py::test_birdcage_volumes_partition_the_box`,
 > **real** build, `mpiexec -n 2`. Found by the `OPS-26` step 2 execution
@@ -164,6 +170,8 @@ unless fixing it is the task.
 
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a)) — `test_phantom_field_metrics_and_exports_are_finite` aborts in gmsh with **the same "Invalid boundary mesh (overlapping facets)"** as the entry below, on the **coil+phantom** geometry — and its MPI teardown then **hangs the rest of the command**
 
+> **OWNER ASSIGNED 2026-08-27, 03:00 review: `GEO-23`** step 1 (b)/(c).
+>
 > **Where this fired.**
 > `tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite`,
 > complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `mpiexec -n 2`. Found by the
@@ -224,6 +232,9 @@ unless fixing it is the task.
 
 ### ⚫ DEAD MODULE, filed 2026-08-27 (`OPS-26` step 2 leg (a)) — `tests/mesh/test_cylindrical_domain.py` collects **zero tests**
 
+> **OWNER ASSIGNED 2026-08-27, 03:00 review: `GEO-23`** step 1 (d) — convert
+> to one asserting test or delete; either retires this entry.
+>
 > The file is a module-level *script*, not a test module: it calls
 > `MeshGenerator.cylindrical_domain(...)` and `print`s at import time and
 > defines no `test_*` function. `--collect-only` on the seven leg-(a)

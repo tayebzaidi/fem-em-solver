@@ -567,7 +567,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-23` | Sweep the `OPS-21` rank-0-return defect pattern (4 measured sites in 3 test files) + the `test_helmholtz_v2.py` Im-bound (commissioned 2026-08-20 03:00 review from the 00:00 slot's grep survey) | ✅ | smoke-to-standard | 3 real sites (all in `test_csv_export_stats_parity.py`) + the Im-bound fixed; 2 of the commissioned sites were print-only false positives and 1 exempted site was a real defect; 12 passed both ranks, 5.00 s. *Audited COMPLIANT 2026-08-21 18:00 review — red-baseline byte-identity re-verified against the log's rank blocks; benign omission: the first exit-0 helmholtz-real log is in test-results.md but uncited in the annotation* |
 | `OPS-24` | Migrate `core/cavity.py`'s two `assemble_matrix(..., diagonal=)` sites to the 0.11 signature — `TH-9`'s cavity gate + resonance guard have been **non-executing on `main` since the 0.11 merge** (known-issues 2026-08-24; found by `EX-30` leg (th); commissioned 2026-08-24 18:00 review; closed 2026-08-25 — `diagonal=` → `diag=`, all four green, 0.0436% worst-mode reproduced to the printed digit) | ✅ | standard |
 | `OPS-25` | Re-join `th:7` to its gate: hoist the series-interior interpolation into the gate module and import it, migrating the repo's only `interpolate(cells=)` site (known-issues 2026-08-24; ruled hoist-not-repair by the 2026-08-24 18:00 review) | ✅ (2026-08-25: hoisted to `series_interior_function` in `test_lossy_sphere_fullwave.py`; `th:7` green in 14 s with both element-order records reproducing — degree 1 8.1541% / 8.3869%, degree 2 0.1405% / 0.0058%, drifts ≤ 1.48e-03 in a 1% band — and the gate's `P_series(meshed)` **bit-identical to all ten printed digits** across the refactor; `13 passed in 25.28s`) | standard |
-| `OPS-26` | **Systematic dolfinx-0.11 migration completeness sweep** — re-run `OPS-17`'s "observed in a completed run" census on the 0.11 image and statically sweep `src/` for un-migrated call sites. Two silently-broken gates have already been found *by examples rather than by the upgrade's own re-gate* (`TH-9` cavity, `OPS-24`; straight-wire h-refinement, red on `main`, found 2026-08-25 by `mag:6`); a third is likelier than not. **Commissioned 2026-08-25 by operator directive, interactive session** — queue at the next review. *Queued 2026-08-25 10:30 review: step 1 is §9 item 3; step 2 held until step 1's site list lands.* ***Step 1 ✅ 2026-08-25, 15:00 slot** — `src`/`tests` clean at 434 call sites / 29 APIs, negative control binding and passing, two survivors filed in `scripts/probes/`; step 2 (execution census) is now unblocked.* | 🟡 | heavy (split across ≥ 2 slots) |
+| `OPS-26` | **Systematic dolfinx-0.11 migration completeness sweep** — re-run `OPS-17`'s "observed in a completed run" census on the 0.11 image and statically sweep `src/` for un-migrated call sites. Two silently-broken gates have already been found *by examples rather than by the upgrade's own re-gate* (`TH-9` cavity, `OPS-24`; straight-wire h-refinement, red on `main`, found 2026-08-25 by `mag:6`); a third is likelier than not. **Commissioned 2026-08-25 by operator directive, interactive session** — queue at the next review. *Queued 2026-08-25 10:30 review: step 1 is §9 item 3; step 2 held until step 1's site list lands.* ***Step 1 ✅ 2026-08-25, 15:00 slot** — `src`/`tests` clean at 434 call sites / 29 APIs, negative control binding and passing, two survivors filed in `scripts/probes/`; step 2 (execution census) is now unblocked.* ***Step 2 leg (a) DONE 2026-08-27 (four consecutive slots, 19:30 → 00:00)** — the seven cheap roots at **184 / 189 observed (182 green, 2 red), 5 deferred**, every deferral with a substantive reason and `182 + 2 + 5 = 189`; two reds and one rank-dependent deadlock filed in known-issues (all three carry the 0.11 "overlapping facets" string on *different* generators — owner **`GEO-23`**, commissioned by the 03:00 review), one dead module filed. The fix that unstuck `tests/solver` (0 → 47/51 in ~220 s) was one command per module; leg (b) adopts it from the start. Step 2 stays 🟡 on leg (b) (§9 item 1).* | 🟡 | heavy (split across ≥ 2 slots) |
 
 **`OPS-24` — migrate `core/cavity.py` to 0.11; turn `TH-9`'s gates back on** ✅
 *(commissioned 2026-08-24 18:00 review from `EX-30` leg (th)'s finding 1;
@@ -2394,6 +2394,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-20` | High-pass birdcage ring-gap port layout (`ring_gap_length`, `2·leg_count` ports, the `GEO-18` pattern on the end rings) — 32-port directive item (b); step 1 at 4 legs, step 2 at 16 after `GEO-19` (commissioned 2026-08-23 weekly review) | 🟡 *(**step 1 ✅ 2026-08-24** — the 8 ring ports exist at 4 legs and every pre-stated gate is green twice in-slot: terminal **0.974455** of the closed-form `2·π·r_ring²` inside the [0.95, 1.0] inscribed band and equal across the 8 to **≈ 2e-8** (gate 1e-5; digit corrected by the 10:30 review audit — see the prose entry), closure and port-volume **1.000000000000**, sheet meshed/analytic **1.000000000000** with out-of-plane spread **5.042e-18 m**, C4 and top/bottom-mirror spreads below 1e-12, `GEO-9` partition green, conductor 0.969275 ≥ 0.95; negative controls green — kwarg off reproduces the uncut birdcage and the leg+ring mesh is a 12-port mesh with **both** identity families exact. Step 2 (16 legs, 32 ports) is serial on `GEO-19`)* | standard |
 | `GEO-21` | Dispose of the red `GEO-15` graded-conductor gate on 0.11: the ungraded baseline (`conductor_resolution=None`) no longer meshes at any global resolution tried, so the whole gate is non-executing on `main` (found by `EX-30` leg (mesh); commissioned 2026-08-25 18:00 review; known-issues 2026-08-25) | ✅ **2026-08-26** *(status marker flipped by the 18:00 review audit — the prose entry and the `GEO-15` row already read ✅; history: step 1 measured 2026-08-26, blocked on a ruling — the candidate control `h_c = 3.2e-3` recovers **0.916742** of the CAD mass, which is **neither** pre-stated branch: not ≤ 0.90 "clearly below", not clearing 0.95, and **inside the module's own `CAD_MASS_GATE - 0.05` = 0.90 separation guard**, so branch (2) as named cannot produce a green gate without loosening that guard. Graded side green — 0.966977 at 98 666 cells. Coarse-ward ladder measured and handed over, nothing adopted; see the entry. **Ruled 2026-08-26 03:00 review: option (b), control = 4.8e-3** — separation 0.846150 vs 0.966977 with the 0.90 guard unmoved, demoted claim (fine-vs-coarse grading) stated; 6.4e-3 rejected for cliff adjacency. **Step 2 ✅ 2026-08-26 (04:30 slot) — landed as written and the chunk closes**: control `None` → 4.8e-3 version-tagged with the six-rung probe table in-comment, demoted claim (fine vs coarse grading) in the module docstring and the `mesh:3` guide, gate `1 passed in 41.11s` at 0.846150 / 0.916742 / 0.966977 with the 0.95 gate and the 0.90 separation guard unmoved, `mesh:3` green at separation 0.120826, docrefs `dead=0 guide=0 stale=13 exit=2` giving `meshing` 2 → 0; known-issues gate red retired, generator-continuum finding re-headed and open)* | standard |
 | `GEO-22` | `straight_wire_domain` coarse-resolution floor on 0.11: bisect the `[0.008, 0.010)` threshold and land a measured guard so a too-coarse request raises legibly instead of aborting inside gmsh (owner for the `EX-30` leg (root) finding; commissioned 2026-08-26 18:00 review; known-issues 2026-08-25, re-headed 08-26) | ⬜ | smoke (probe `-n 1`) + standard (gate) |
+| `GEO-23` | The 0.11 "Invalid boundary mesh (overlapping facets)" family: one owner for the three `OPS-26` census reds (coil+phantom generator, `birdcage_port_domain` partition test, and the **rank-dependent** `test_boundary_condition_selection.py` deadlock) plus the dead `test_cylindrical_domain.py` module — classify each as geometry-deterministic or partition-dependent, ladder the resolution, land no fix (commissioned 2026-08-27 03:00 review; four known-issues entries of 2026-08-27) | ⬜ | smoke (`-n 1` probes) + standard (`-n 2` ladders) |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -3328,6 +3329,69 @@ exists; known-issues entry of 2026-08-25, re-headed 08-26.)*
 >   (a rung between two meshing rungs fails) is a finding — record the
 >   ladder, land no guard, known-issues + this entry, stop. On green the
 >   known-issues entry retires.
+
+**`GEO-23` — the 0.11 "overlapping facets" family: classify, ladder, own** ⬜
+*(commissioned 2026-08-27 03:00 review. `OPS-26` step 2 leg (a) filed the
+same gmsh string on **three more call paths** in one night — the
+coil+phantom generator (`post/test_phantom_field_metrics.py`, complex, 1.24 s),
+`birdcage_port_domain` (`mesh/test_birdcage_port_tags.py::
+test_birdcage_volumes_partition_the_box`, real, 2.54 s) and
+`solver/test_boundary_condition_selection.py`, where the **same test passed on
+one rank and failed on the other in the same run** and the survivor then
+deadlocked the command in both builds (Status 124 × 2). With `GEO-21`'s open
+generator-continuum entry that is four generators, one symptom, and the
+single-generator "resolution floor" reading no longer covers the
+observations — but one rank-asymmetric failure is an observation from two
+footerless runs, not a diagnosis. Each entry says "a `mesh`-owning chunk
+should take all of these together"; this is that chunk. It also owns the
+dead `tests/mesh/test_cylindrical_domain.py` (collects zero tests, meshes at
+import time) filed the same night.)*
+> * **Step 1 — classify and ladder (one slot; probes smoke `-n 1`, ladders
+>   standard `-n 2`, real unless the module requires complex; `main`).**
+>   (a) **The `-n 1` command `OPS-26` deliberately did not spend**:
+>   `tests/solver/test_boundary_condition_selection.py` alone, `-n 1`,
+>   `timeout -k 30 120`, real; then the same at `-n 2` with `-k 30 120` for
+>   the paired reading. **Pre-stated reading:** a Status-1 footer at `-n 1`
+>   ⇒ the failure is real and the deadlock is only the rank asymmetry; green
+>   at `-n 1` ⇒ the failure itself is partition-dependent. Either is the
+>   deliverable. (b) The other two reds isolated the same way, `-n 1` then
+>   `-n 2` (`test_phantom_field_metrics.py` needs the complex build and
+>   `FEM_EM_REQUIRE_COMPLEX=1`; both fail in < 3 s when they fail), giving a
+>   2 × 3 table of Status / exception type by width — that table is the
+>   step's **anchor (§4)**: every cell is a footered observation, and a cell
+>   that differs between widths is the measured partition dependence.
+>   (c) For each geometry that fails at *both* widths, a five-rung resolution
+>   ladder on the fixture's own sizing parameter (the `GEO-21` step-1
+>   pattern: geometric steps from the failing value towards fine, `-n 1`,
+>   each rung its own command, `-k 30 120`) recording the coarsest meshing
+>   rung and cell count — no rung adopted, no fixture edited. (d) If time
+>   remains: convert `test_cylindrical_domain.py` into one asserting
+>   `test_*` (the partition identity it already prints, gated at 1e-9) or
+>   delete it, and show `--collect-only` on `tests/mesh` gains exactly that
+>   count. **Negative control:** `GEO-21`'s ruled control — the
+>   `test_birdcage_conductor_sizing.py` gate at its unmoved 0.95 / 0.90
+>   bands, `-n 2` — green in the same slot (its record is 41–43 s), so
+>   "overlapping facets" is shown *absent* on a sizing this project already
+>   ruled meshable on the same image; and the two adjacent green tests in
+>   `test_birdcage_port_tags.py` stay green. **Cost:** six probe commands at
+>   ≤ 3 s of work each but budget 120 s for a hang; ladders ≤ 5 × ~20 s per
+>   geometry; the control 43 s — ~10 min of recorded elapsed, well inside a
+>   slot. **Traps:** a gmsh throw on rank 0 deadlocks the collective — every
+>   command that may fail runs at `-n 1` first and gets its own footer, and
+>   `-n 2` runs sit at `-k 30 120` so a hang costs two minutes, not a window;
+>   a `mag:1`-class teardown can leave `MPI_Abort` in the trailer after a
+>   complete pytest summary — read the summary, record Status 124 as what it
+>   is; sweep 0-byte FFCx stubs first; the real-build log's two streams
+>   interleave mid-line, so per-test attribution comes from the complex log
+>   or from `-n 1`; `IndexError: index 0 is out of bounds for axis 0 with
+>   size 0` in the same module is the leg-(c) candidate signature — record
+>   it, do not chase it in this slot. **Scope:** classification and ladders;
+>   no fix to gmsh, no fixture resolution moved, no band touched, no
+>   re-record. A guard or a sizing change is **step 2**, which a review
+>   commissions from step 1's table. **Negative result:** a geometry that
+>   fails at every ladder rung, or a `-n 1` red with a different exception
+>   than the `-n 2` one, is the finding — record the table, known-issues +
+>   this entry, stop. The four known-issues entries retire only with step 2.
 
 ### TH — Time-harmonic Maxwell (Phase 2)
 
@@ -6361,86 +6425,60 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed **2026-08-26, 18:00 review**. Interval (since the 03:00
-review — the 10:30 review did not run: host/WSL relocation, no log, no
-commit, and the 09:00 implementer slot was lost in the same window):
-**seven slots ran, seven landed on `main` clean, five chunks closed** —
-04:30 `GEO-21` step 2 (chunk ✅, the last example-found 0.11 gate red
-disposed at the unmoved 0.95 / 0.90 bands, `meshing` census 2 → 0);
-06:00 `PORT-11` step 2 (**the first Larmor-frequency port gate**: 4×4 at
-64 MHz, three gates green on imported bands, displaced control breaks
-(iii′) at 12.9 / 27.8%); 07:30 `EX-30` leg (ports) (the (1\*) licence used
-exactly once, on a record the (d3) assembly had moved, `ports`/`ans`
-census → 0); 12:00 `EX-30` leg (root) and **the chunk ✅** — corpus-wide
-`stale=0 dead=0 guide=0 exit=0`, the first clean reading since `EX-29`;
-13:30 `EX-33` ✅ (first 16-leg example, `_assert_identity_family`
-imported, cost rung 2.6472× cells / 3.1777× wall); 15:00 `EX-32` ✅ (first
-birdcage S-parameter example, every record bit-identical except the one
-(d3c) declares non-reproducible) — **queue drained**; ~16:15 an
-interactive session on operator instruction appended item 7; 16:30
-`PORT-11` step 3 (**128 MHz, chunk ✅** — the phantom crossed to
-displacement-dominated at loss tangent 0.9002, cells/λ 12.5024 vs a
-pre-stated floor of 10 enforced before any gate is read, three gates
-green, spreads ~1.7× their 64 MHz values with ~5× of band left). Queue
-drained a second time.
+Last reviewed **2026-08-27, 03:00 review**. Interval (since the 18:00
+review): **four slots ran, four landed on `main` clean, all four on one
+item** — `OPS-26` step 2 leg (a), which needed exactly the consecutive
+slots the 18:00 review gave it. 19:30: denominator re-derived (**189** over
+54 modules, not the inherited 216/232), 30/189 observed, first red
+(coil+phantom gmsh abort) and the discovery that a red's MPI teardown eats
+the rest of the command; 21:00: 93/189, a second gmsh red on
+`birdcage_port_domain`'s own partition test, the dead
+`test_cylindrical_domain.py` filed; 22:30: 137/189, `post`/`mesh` complete,
+`tests/solver` still 0/51 after two whole-root commands died at exit 124,
+and 23 non-green names **discarded** for want of a footer; 00:00: **leg (a)
+done at 184/189 (182 green, 2 red), 5 deferred with substantive reasons**,
+`tests/solver` 0 → 47/51 in ~220 s by running one command per module —
+which vindicated the discard: 21 of the 23 would have been false reds. The
+one module that would not run, `test_boundary_condition_selection.py`,
+deadlocked in *both* builds with the same test PASSED on one rank and
+FAILED on the other. No chunk closed.
 
-**Audit (§4): all five closures COMPLIANT** — `GEO-21`, `PORT-11` (steps
-2 + 3), `EX-30`, `EX-33`, `EX-32` — one delegated auditor each, findings
-checked by this review against the logs they cite. Every footer verified
-(Status/elapsed: `GEO-21` 0/43, 0/29, 2/1; `PORT-11` 0/179, 0/105, 0/201,
-0/132; `EX-30` eleven logs incl. the deliberate red at Status 1 / 301 s;
-`EX-33` 0/131, 0/126, 0/1; `EX-32` 0/88, 0/73, 0/1 plus one Status-127
-aborted launch disclosed in attempts.md), every claimed digit greps out of
-its log, and `git show` on every closing commit carries **no `-` line on
-any tolerance** — the `tests/` edits are additive (`frequency_hz=`
-default, extra return keys, a lifted fixture body) and `EX-30`'s two
-commits touch zero test files. Two bookkeeping defects found and fixed
-here: `GEO-21`'s §7 status-table cell still read 🟡 while its prose entry
-and the `GEO-15` row read ✅ (flipped); and four sentences in §2.1/§2.2/§10
-still said `PORT-11` was "unrun" (rewritten — the closures had explicitly
-deferred them to this review). Two cosmetic notes, no action: each
-`PORT-11` log carries two pytest summary lines differing at 0.01 s, and
-`EX-30`'s "bit-for-bit" 4.758625e-05 / 0.864809457 rest on the gate
-module's constants (the examples print 5–6 s.f.), which is what the claim
-said.
+**Audit (§4): nothing to audit** — no status changed to ✅ this interval.
+Spot-check of the leg-(d) logs this review did anyway: the two deadlock
+footers read Status 124 / 241 s and 124 / 180 s as journaled, the
+`complex-skips` command `33 passed` / Status 0 / 34 s, `m09-energy` `6
+passed` / 0 / 6 s, both rank summaries identical; the 189 denominator and
+the 182 + 2 + 5 reconciliation are the run's own arithmetic and stand.
 
-**Rulings this review.** (1) **`PORT-11` step 3's out-of-band
-commissioning was correct** — it executed the entry's own "step 2 repeated
-with one constant changed" line at standard tier under unmoved imported
-bands, with a pre-gate resolution stop rule the item stated and the run
-measured; the §7 head is reconciled, §2.1 gains the Larmor-gate bullet,
-§2.2's head is rewritten to what is *actually* unvalidated (absolute
-accuracy at 64/128 MHz, resonance/tuning, B1+/SAR), §10's Target-box tick
-extends to the Larmor frequencies, and `CLAUDE.md`'s stale "no coil or
-birdcage has ports at all" is corrected. (2) **`ANS-4` is not
-commissioned here** — §5.4 reserves ANS cases to the weekly review; handed
-to the 2026-08-30 one with the note that `EX-34`'s frequency ladder is its
-runnable half, so it can take the `ANS-3` shape at ≤ 1 slot. (3) The 128
-MHz C4 widening (0.057 → 0.101%) and `|Im P|/Re P` = 2.66 **license no
-wording change and no band** — recorded as readings in §2.2; the thing
-that would explain them is a resolution study at 128 MHz, which is a `GEO`
-sizing chunk the weekly review may commission against Phase 6's F-human
-directive, not a daily-review invention. (4) `EX-30`'s owed
-`straight_wire_domain` floor owner → **`GEO-22`** commissioned (measured
-guard, both geometries, exception-type gate); §5.4 ramp bookkeeping: the
-`PORT-9` and `GEO-19` obligations are discharged by `EX-32`/`EX-33`, and
-`PORT-11`'s is **`EX-34`** (commissioned, queued). (5) **`OPS-26` step 2
-finally gets its consecutive slots** — split by directory into two
-one-slot legs with a fail-closed `deferred: not reached in slot`
-disposition, so neither leg can over-claim.
+**Rulings this review.** (1) **Leg (a) is closed as a step; the chunk stays
+🟡** until leg (b) writes the reconciliation — exactly the item's own rule.
+The two `deferred` follow-ups the run flagged are folded into leg (b)
+(the ~30 s complex command for the one `materials` name) and into a new
+chunk (the deadlocking module). (2) **`GEO-23` commissioned** as the single
+owner the three "overlapping facets" known-issues entries each asked for:
+with `GEO-21`'s continuum entry that string now spans **four generators**,
+and one site is rank-partition-dependent, which the resolution-floor
+reading does not explain. Step 1 is classification (a 2 × 3 Status table by
+rank width) plus ladders — it lands no fix, and the `-n 1` command `OPS-26`
+refused to spend is its first move. The dead module rides on it as leg (d).
+(3) **Leg (b) is rewritten to the module-per-command shape** — the measured
+lesson of this interval is that a single diverging module inside a batch
+costs the batch's every observation, and leg (b)'s roots hold the modules
+most likely to diverge. (4) The "no known gate red on `main`" digest line
+is **narrowed**: none of the new reds is a physics gate, but three gmsh
+abort sites and a dead module in one night is not "healthy", and the
+dashboard says so.
 
 Branch dispositions: none owed — no `attempt/*`, no `recovered/*`, tree
-clean at all seven handoffs and at this review. Deliberately not queued:
-`PORT-4`…`PORT-8` (§9 item 3, after the `OPS-26` census), and any 128 MHz
-resolution study (weekly review's call).
+clean at all four handoffs and at this review. Deliberately not queued:
+`PORT-4`…`PORT-8` (§9 item 3, after the census), any 128 MHz resolution
+study and `ANS-4` (weekly review's calls), and a `GEO-23` step 2 (needs
+step 1's table).
 
-**Six items this queue.** Items 1 and 2 are the two halves of one census
-and are **independent of each other** (disjoint directories; whichever
-lands last writes the reconciliation) — the operator directive of 08-25
-has waited three reviews for a slot pair, and it gets items 1–2 rather
-than the cheap example so that a lost slot costs the census a leg, not the
-whole thing. Items 3–6 are mutually independent and independent of 1–2.
-No serial dependencies anywhere in this queue.
+**Six items this queue, all mutually independent.** Item 1 is the second
+half of the census and does not depend on anything; items 2–5 are the
+18:00 review's items unchanged; item 6 is new. `GEO-22` and `GEO-23` both
+probe gmsh at `-n 1` on different generators and share no file.
 
 **⚠️ Standing constraint on the compose allow — read before editing that
 file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
@@ -6457,140 +6495,60 @@ mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-1. ✅ **LEG (a) DONE 2026-08-27 00:00 slot (leg (d)) — cumulative 184/189
-   observed (182 green, 2 red), 5 deferred, every one with a substantive
-   reason and no `not reached in slot` remaining. This item is CLOSED; the
-   next review should drop it and leave item 2 (leg (b)) first in the
-   queue.** `tests/solver` went **0/51 → 47/51 green** in ~220 s of compute
-   after three prior slots had observed none of it. The fix was this item's
-   own leg-(d) prescription: **one command per module** — twelve of the
-   thirteen modules returned a Status-0 footer. Denominator re-derived for
-   the root (51 over 13 modules, Status 0, 4 s); 182 + 2 + 5 = 189. Leg
-   (c)'s 23 discarded names are now *positively* vindicated — eight of the
-   nine modules carrying the shared `IndexError` are green in footered runs,
-   so the fail-closed control prevented 21 false reds. The one survivor,
-   `test_boundary_condition_selection.py` (4), deadlocked in **both** builds
-   (Status 124 × 2) and is deferred, not scored; the complex log shows *the
-   same test* PASSED on one rank and FAILED on the other with `Invalid
-   boundary mesh (overlapping facets)`, so that string is
-   **rank-partition-dependent** on this call path — which the three prior
-   resolution-floor entries do not explain. Mechanism filed in known-issues
-   as a finding, explicitly **not** as a counted red; the settling command
-   (`-n 1`) was deliberately not spent, because `-n 1` is not the census's
-   recorded width and an observation at it would not count. **Two small
-   things owed, neither blocking:** the 1 `materials` name
-   (`test_phantom_material_assignment_and_time_harmonic_pipeline_wiring`)
-   needs one ~30 s complex command — this slot showed that route converts
-   such skips, six times — and `test_boundary_condition_selection.py` needs
-   a `solver`/`mesh` owner, not the census. Full tables, all fifteen log
-   names and findings 9–11 are in the §7 entry. **Leg (b) should adopt the
-   module-per-command shape from the start.**
-
-   *(Superseded — the 22:30 slot's status, kept for the review's audit
-   trail.)* 🟡 **PARTIAL a third time 2026-08-26 22:30 slot — cumulative 137/189
-   observed (135 green, 2 red), 52 deferred (was 93/189); stays first in
-   the queue.** Denominator **189/54 modules** still holds (every
-   intervening commit is documentation-only). **`tests/post` and
-   `tests/mesh` are now complete roots** — leg (c) landed the 30-name
-   `mesh` remainder (Status 0, 135 s, `29 passed, 1 skipped`) and the
-   14-name `post` remainder in complex (Status 0, 60 s, `27 passed`), and
-   the one real-build skip is green in complex. `environment`/`unit`/`io`
-   complete; `materials` 6/7 (1 named runtime skip). **The entire
-   remaining gap is `tests/solver`, still 0/51 and fail-closed.** Two
-   measured negatives this slot: the item's own warm-up-then-measure
-   recipe bought **nothing** (both commands died at the same 70% mark, in
-   `test_single_port_excitation.py`), and `--ignore`-ing that module did
-   not rescue the root either — one rank reached 100% while the other hung
-   at 97%, `MPI_Abort(59)`, so `tests/solver` holds a `mag:1`-class
-   divergence independent of the single-port module. That run's 23
-   non-green names (21 of them the *same*
-   `IndexError: index 0 is out of bounds for axis 0 with size 0`, one a
-   *fourth* "overlapping facets" call path) are **discarded, not filed** —
-   its `0.85s` summary contradicts its 481 s wall clock and it has no
-   footer of its own. 1 001 of the slot's 1 677 s went to the two solver
-   commands. Full table + deferred-by-name (52) + the candidate signature
-   in the §7 entry. **Next attempt (leg (d)): stop running `tests/solver`
-   as one command.** One command **per module**, `timeout -k 30 240`,
-   ascending size, so each module gets its own footer and a diverging
-   module costs one module not the root;
-   `test_boundary_condition_selection.py` first (distinct symptom),
-   `test_single_port_excitation.py` / `test_two_cylinder.py` /
-   `test_two_torus.py` last; ~8 modules per slot, 13 modules likely two
-   slots. A module's reds may be filed only once it has a footer of its
-   own.
-   **`OPS-26` step 2 leg (a) — execution census on 0.11, the cheap
-   directories (heavy by tier, one slot; `-n 2` default, per-file recorded
-   width where a module's own docstring or log says otherwise; real build,
-   complex where the module requires it; `main`; independent — leg (b) is
-   item 2 and does not wait for this).** Directories: `tests/environment`,
-   `tests/unit`, `tests/io`, `tests/mesh`, `tests/materials`, `tests/post`,
-   `tests/solver`. Derive the denominator first — `--collect-only -q` on
-   the current tree per directory, **not** the inherited 216/232 — then
-   run each directory (split a directory across commands where its
-   recorded elapsed says so: grep `docs/testing/test-results.md` and
-   `docs/testing/logs/` for every module's last footer *before* sizing;
-   `tests/mesh` alone holds the 16-leg scale-up at 125 s, the ring-gap
-   module at 158 s and the conductor-sizing gate at 43 s). **Anchor
-   (§4):** per directory an `observed / collected` count with the
-   complement enumerated **by name**, each carrying exactly one of
-   `green` / `red — known-issues filed` / `deferred — <reason>`; the
-   seed modules `test_birdcage_conductor_sizing.py` (`GEO-21`) and any
-   `core/cavity.py` consumer under these roots (`OPS-24`) must appear by
-   name as observed-green — they were red/dead before their fixes and
-   are this census's built-in positives. **Negative control (fail-closed
-   by construction):** a run without a footer counts its every module as
-   `deferred — no footer`, never green; a module that is collected but
-   skipped at runtime (rank-width or build guards) is `deferred — <skip
-   reason>` by name, never folded into observed; the census prints the
-   three totals and they must sum to the collected count. **Cost:**
-   cheap directories are mostly < 60 s per module — budget commands at
-   `timeout -k 30 1200` grouped to ≤ ~900 s of recorded elapsed each,
-   ≤ 4 commands; the sum of these seven directories' recorded elapsed is
-   the first number the slot reports. **Traps:** `--collect-only` proves
-   nothing about runtime (both `OPS-26` defects collected clean); pipe
-   nothing inside the harness command (footer records the pipe's exit,
-   `OPS-17` step 2); `-k a or b` splits inside the quoted container
-   command; the 0-byte FFCx stub sweep if any compile is killed; a red
-   found here is **filed, never fixed or re-recorded in-slot**. **Scope:**
-   these seven directories only; the chunk stays 🟡 until leg (b) lands
-   and the reconciliation is written by whichever lands last. **Negative
-   result:** a red module is the deliverable, not a failure — file it
-   (known-issues + this entry) and continue the census; a slot that runs
-   out lists the unreached modules as `deferred — not reached in slot`
-   and stops. Journal the per-directory table in the §7 entry.
-2. **`OPS-26` step 2 leg (b) — execution census on 0.11, the heavy
-   directories `tests/validation` + `tests/ports` (heavy, one slot,
-   `main`; independent of item 1 — disjoint roots; same rules, same
-   three dispositions, same fail-closed control).** These roots hold the
-   modules that cost: the straight-wire module 363 s, `test_convergence.py`
-   ~145 s, the three birdcage-port `PORT-9` modules 72–104 s, the two
-   `PORT-11` gates 179 / 201 s, the two-torus port suites 130–240 s, the
-   lossy-sphere family 25–70 s — **this leg will very likely not finish
-   in one slot**, and the item is written so that is not a failure: size
-   commands from recorded footers to ≤ ~900 s each at `timeout -k 30
-   1200`, run the **seed modules first by name** —
-   `test_convergence.py` (`MAG-19`'s disposition, must be observed green
-   at the retired band), `test_two_torus_port_sheet.py` (`GEO-16`
-   ruling), then the `PORT-11` pair — and take the rest in ascending
-   recorded cost so the unreached tail is the expensive one. **Anchor
-   (§4):** as item 1 — `observed / collected` per root, complement by
-   name with one disposition each, totals summing to collected. **Cost:**
-   recorded elapsed for these two roots sums to roughly 40–60 min of
-   compute; 4 commands max; complex build + `FEM_EM_REQUIRE_COMPLEX=1`
-   with `tests/environment` first in every complex path list. **Traps:**
-   as item 1, plus: `mag:1`-class teardown hangs (a red in a module that
-   calls `MPI_Abort` burns the window — that is what `-k 30` is for); the
-   first complex command in a slot pays ~2.4–3× cold JIT (`OPS-17`); the
-   `PORT-11` gates sit at the 180 s nominal — budget them as 400 s each.
-   **Scope:** these two roots; whichever of items 1/2 lands last writes
-   the chunk-level reconciliation (seed list of four by name, three
-   totals repo-wide) and closes the chunk ✅ only if the deferred list is
-   empty or every name carries a substantive reason — a `not reached in
-   slot` remainder holds it 🟡 and the next review queues leg (c) for
-   the named remainder. **Negative result:** as item 1 — reds are the
-   deliverable; file, continue, stop at the slot boundary with the tail
-   named.
-3. **`MAG-20` step 1 — measure the residual two-sided sampled rate band
+1. **`OPS-26` step 2 leg (b) — execution census on 0.11, the heavy
+   directories `tests/validation` + `tests/ports`, **one command per
+   module** (heavy, one slot and very likely more, `main`; independent;
+   same three dispositions and the same fail-closed control as leg (a),
+   whose §7 tables are the template).** Leg (a)'s measured lesson governs
+   the shape: a whole-root command loses every observation to one
+   diverging module, and per-module commands took `tests/solver` from
+   0/51 after three slots to 47/51 in ~220 s. So: derive the denominator
+   first (`--collect-only -q` per root, real build; expect the
+   `OPS-17`-era 232 validation to have moved — record what it is), then
+   **one harness command per module**, ascending recorded cost, each with
+   its own `timeout -k 30` sized from the module's *last recorded footer*
+   (grep `docs/testing/test-results.md` and `docs/testing/logs/` — the
+   straight-wire module 363 s, `test_convergence.py` ~145 s, the three
+   `PORT-9` birdcage modules 72–104 s, the `PORT-11` pair 179 / 201 s
+   nominal — budget 400 s each, the two-torus port suites 130–240 s, the
+   lossy-sphere family 25–70 s, `coil_loading_*` per its `OPS-17` (b2)
+   pricing: the three ~400 s single-fixture files as their own windows at
+   their **recorded** rank width, `larmor_third_rung` at `-n 8` with
+   `TH11_STEP5_RUNG=fine` pinned, `degree2` = defer-with-reason, the
+   `TH-12` wall). Seed modules first by name: `test_convergence.py`
+   (`MAG-19`'s disposition, green at the retired band),
+   `test_two_torus_port_sheet.py` (`GEO-16`), then the `PORT-11` pair.
+   **Also owed from leg (a), first thing, ~30 s:**
+   `tests/materials/test_phantom_material_model.py` in the complex build
+   with `FEM_EM_REQUIRE_COMPLEX=1` (`tests/environment` first in the path
+   list) to convert the one remaining `materials` runtime skip — leg (d)
+   converted six such skips this way. **Anchor (§4):** `observed /
+   collected` per root, complement by name with exactly one of `green` /
+   `red — known-issues filed` / `deferred — <reason>`, the three totals
+   summing to collected; a module's reds are filed **only from a footered
+   run of its own**. **Negative control:** fail-closed by construction — a
+   run without a Status-0/1 footer counts its module as `deferred — no
+   footer`, never green and never red; runtime skips are `deferred —
+   <skip reason>` by name. **Cost:** recorded elapsed for these two roots
+   sums to roughly 40–60 min *warm*; the first complex command in the slot
+   pays ~2.4–3× cold JIT (`OPS-17` (b2)) — warm on a cheap module and
+   count it. Stop at the slot boundary with the unreached tail named;
+   **a `not reached in slot` remainder is expected and is not a failure**
+   — the next review queues leg (c) for it. **Traps:** everything in leg
+   (a)'s list (pipe nothing inside the harness command; `-k a or b`
+   splits; sweep 0-byte FFCx stubs first; `--collect-only` proves nothing
+   about runtime) plus: `mag:1`-class teardown — a red that calls
+   `MPI_Abort` burns its window, which is what per-module `-k 30` bounds
+   to one module; the real-build log's two rank streams interleave, so
+   read per-test outcomes from the summary line and the complex log; a
+   rung/mode env var that changes the mesh is **not** a test-set partition
+   (attempt 8's lost window). **Scope:** these two roots; whichever leg
+   finishes the repo writes the chunk-level reconciliation (seed list of
+   four by name, three totals repo-wide, the dead module and the `GEO-23`
+   entries cross-referenced) and closes step 2 ✅ only if every deferred
+   name carries a substantive reason. **Negative result:** reds are the
+   deliverable — file, continue, stop at the boundary with the tail named.
+2. **`MAG-20` step 1 — measure the residual two-sided sampled rate band
    in `test_straight_wire_convergence`, then dispose (standard, `-n 2`,
    real, `main`; independent; commissioned 03:00 review, full rubric in
    the §7 entry).** In brief: sweep `n_points` ∈ {8, 10, 20} on the
@@ -6611,7 +6569,7 @@ uses the Edit tool and verifies `git status --porcelain`.
    one test. **Negative result:** a red that is neither sampler
    instability nor rate physics (fit crosses *and* `E_Ω` moves) is a new
    finding — known-issues + §7, stop.
-4. **`GEO-20` step 2 — the ring-gap port layout at 16 legs: 32 ring
+3. **`GEO-20` step 2 — the ring-gap port layout at 16 legs: 32 ring
    ports under the `GEO-19` per-class reading (standard, `-n 2`, real,
    `main`; independent; unblocked since `GEO-19` ✅ 08-25).** Instantiate
    `birdcage_port_domain(leg_count=16, ring_gap_length=RING_GAP_LENGTH)`
@@ -6656,7 +6614,7 @@ uses the Edit tool and verifies `git status --porcelain`.
    32-port build that fails in gmsh, or a class structure the per-class
    bands do not admit, is the measurement — record the ladder and the
    class table, land no band, known-issues + §7, chunk stays 🟡, stop.
-5. **`EX-34` — birdcage 4-port S-matrix across the 10 / 64 / 128 MHz
+4. **`EX-34` — birdcage 4-port S-matrix across the 10 / 64 / 128 MHz
    ladder on one mesh (standard, `-n 2`, complex, `main`; independent;
    §5.4 ramp on `PORT-11` ✅).** Execute the §7 `EX-34` entry as written
    — it carries the full rubric. In brief: `ports:5`
@@ -6679,9 +6637,9 @@ uses the Edit tool and verifies `git status --porcelain`.
    **Negative result:** a red imported band through the example path is
    an example/test divergence — known-issues + §7, nothing re-recorded,
    stop.
-6. **`GEO-22` — bisect the `straight_wire_domain` coarse-resolution floor
+5. **`GEO-22` — bisect the `straight_wire_domain` coarse-resolution floor
    and land a measured guard (smoke probe `-n 1` + standard gate `-n 2`,
-   real, `main`; independent; spare).** Execute the §7 `GEO-22` entry as
+   real, `main`; independent).** Execute the §7 `GEO-22` entry as
    written. In brief: bisect `[0.008, 0.010)` to 2.5e-4 on the example's
    and the gate's geometries with the existing probe; guard at the
    *measured* `h_ok` raising `ValueError` before gmsh. **Anchor:** the
@@ -6696,6 +6654,33 @@ uses the Edit tool and verifies `git status --porcelain`.
    conservative value with both in-comment. **Scope:** a measured guard,
    not a diagnosis of gmsh. **Negative result:** a non-monotone floor is a
    finding — record the ladder, land no guard, known-issues + §7, stop.
+6. **`GEO-23` step 1 — classify the three 0.11 "overlapping facets" sites
+   by rank width, ladder the resolution, own the dead module (smoke `-n 1`
+   probes + standard `-n 2` ladders, real/complex per module, `main`;
+   independent; spare).** Execute the §7 `GEO-23` entry as written — it
+   carries the full rubric. In brief: (a) the `-n 1` command `OPS-26`
+   refused to spend — `tests/solver/test_boundary_condition_selection.py`
+   alone, `-k 30 120`, then `-n 2`; (b) the same pair for
+   `mesh/test_birdcage_port_tags.py::test_birdcage_volumes_partition_the_box`
+   (real) and `post/test_phantom_field_metrics.py` (complex,
+   `FEM_EM_REQUIRE_COMPLEX=1`); (c) a five-rung `-n 1` resolution ladder
+   for any geometry red at both widths; (d) if time remains, make
+   `tests/mesh/test_cylindrical_domain.py` one asserting test or delete
+   it. **Anchor:** the 2 × 3 Status / exception-type table, every cell a
+   footered run; a cell differing between widths *is* the measured
+   partition dependence. **Negative control:** `GEO-21`'s ruled
+   conductor-sizing gate green at its unmoved bands in the same slot
+   (~43 s) and the two adjacent green tests in `test_birdcage_port_tags.py`
+   still green. **Cost:** ~10 min recorded elapsed; every command that may
+   fail is `-n 1` first with its own footer, `-n 2` runs at `-k 30 120`.
+   **Traps:** rank-0 gmsh throw deadlocks the collective; `MPI_Abort`
+   trailer after a complete summary is still Status 124 — record it as
+   such; interleaved real-build streams; the `IndexError … size 0`
+   signature in the same module is recorded, not chased. **Scope:** land
+   no fix, move no resolution, no band, no re-record — step 2 is a review's
+   call from the table. **Negative result:** a geometry red at every rung,
+   or a `-n 1` exception different from the `-n 2` one, is the finding —
+   table, known-issues + §7, stop.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
