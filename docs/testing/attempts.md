@@ -18086,3 +18086,177 @@ clean sheet: `tests/validation` will finish green, so step 2 should close in
 two or three further slots — and whichever leg lands last owes the
 chunk-level reconciliation (seed list of four by name, three totals repo-wide,
 the dead module and the `GEO-23` entries cross-referenced).
+
+## 2026-08-27T13:10Z — `OPS-26` step 2 leg (c) (§9 item 1, 07:30 CDT implementer slot) — **incomplete (partial, expected)**
+
+**Slot:** 07:30 CDT scheduled implementer run. Preflight clean (`git status`
+empty, `main` at `58c77d9`, container Up 19 h). §9 item 1 taken as written, no
+substitution — still the first On-deck entry, neither done nor blocked.
+Outcome **incomplete by design**: the item declares a `not reached in slot`
+remainder "expected and not a failure". **No code changed anywhere** — no
+`attempt/*` branch exists and none is owed; `main` clean at handoff.
+
+**Result: 188 of 289 observed (184 green, 4 red), 101 deferred. The birdcage
+`PORT-9`/`PORT-11` block is COMPLETE at 32/32 green; `tests/validation` goes
+122 → 171 of 272; `tests/ports` remains complete at 17/17.**
+184 + 4 + 101 = 289.
+
+| root | collected | observed | green | red | deferred |
+|---|---|---|---|---|---|
+| `tests/ports` | 17 | 17 | 14 | 3 | 0 |
+| `tests/validation` | 272 | 171 | 170 | 1 | 101 |
+| **total** | **289** | **188** | **184** | **4** | **101** |
+
+**Fourteen commands, all foreground, all through the harness, one module each
+(no batching), all `timeout -k 30`, all `-n 2`, both rank footers identical on
+every footered one.** Recorded elapsed **1 874 s**. Complex build
+(`source /usr/local/bin/dolfinx-complex-mode`, `FEM_EM_REQUIRE_COMPLEX=1`)
+unless marked **real**:
+`…123130Z_…v32-sheetasym` (206 s, 5 — plus `tests/environment` as §9's
+mandated env guard, `16 passed` = 11 + 5; this command paid the cold JIT);
+`…123529Z_…v33-bc-lumpedcol` (40 s, 2);
+`…123616Z_…v34-bc-larmorprobe` (43 s, 3);
+`…123704Z_…v35-bc-termprobe` (41 s, 4);
+`…123748Z_…v36-bc-fourport` (57 s, 5);
+`…123849Z_…v37-bc-legoffset` (106 s, 5);
+`…124039Z_…v38-bc-larmorgate` (152 s, 6);
+`…124317Z_…v39-bc-larmorgate128` (154 s, 7);
+`…124600Z_…v40-straightwire` (192 s, **0 counted — finding 18, wrong build**);
+`…124937Z_…v41-straightwire-real` (**314 s**, 7, **real**);
+`…125507Z_…v42-geomfloor` (23 s, 1 **RED**);
+`…125543Z_…v43-helmholtzv2` (3 s, 1, **real**);
+`…125551Z_…v44-boxpadding` (142 s, 3);
+`…125818Z_…v45-gapvoltpad` (401 s, **Status 124, 0 observed**).
+
+### Finding 18 — leg (b)'s build classifier is unsound, and its failure mode is the one thing the fail-closed control cannot catch
+
+Finding 15 classified `tests/validation` modules with
+`grep -L complex tests/validation/test_*.py`. **`test_straight_wire.py` — a
+magnetostatics module — contains "complex" only in a comment** (line 94, about
+avoiding complex comparisons), so the classifier scored it complex-gated. Run
+in the complex build it returned `3 failed, 4 passed in 190.42s`, **Status 1**,
+both ranks identical: `test_domain_l2_convergence`, `test_domain_l2_record`,
+`test_domain_l2_analytic_bc_beats_natural`, each
+`TypeError: '>' not supported between instances of 'complex' and 'float'` at
+`test_straight_wire.py:231` — `assert den > 0.0` on a complex-valued
+`fem.assemble_scalar`.
+
+**That is a fully footered, rank-identical Status-1 red manufactured entirely
+by the census's own build choice.** It is worth stating precisely because the
+census's negative control does not reach it: fail-closed bounds *missing*
+observations (no footer ⇒ deferred), not *fabricated* ones. Had this slot
+trusted the classifier, three green magnetostatics tests would have been filed
+in known-issues as 0.11 breaks, with a real log and a real traceback behind
+them. Re-run in the real build: **`7 passed in 312.60s`, Status 0, 314 s.**
+Cost of the error: one 192 s window, paid and recorded rather than hidden.
+
+**Replacement rule for leg (d): classify by the gate, not the word** —
+`grep -l "complex_mode\|requires_complex\|is_complex\|skipif"`. Run on this
+slot's five candidates it named `test_port_box_padding_sweep.py`,
+`test_port_gap_voltage_padding.py`, `test_port_systematics_composition.py`,
+`test_geometry_floor_discriminator.py` as gated and left
+`test_helmholtz_v2.py` out — which finding 20 then confirmed by measurement.
+Finding 15's **117-name result stands** (all 53 of those modules really are
+gated); its *method* does not generalise to a module it was not asked about.
+
+Cross-reference for `MAG-20` (§9 item 2): its anchor module
+`test_straight_wire.py` is **green on `main` at `58c77d9`**, and its 0.11
+price is **314 s**, so the inherited ~363 s is a ceiling.
+
+### Finding 19 — the owed complex conversion lands on a red, and the red is a stale record (filed)
+
+`test_geometry_floor_discriminator.py::test_larmor_sphere_residual_at_the_priced_fine_mesh`
+— leg (b)'s one `deferred — complex-only` name — is now **observed and red**:
+`AssertionError: the 128 MHz relL2 moved to 1.7686% from the recorded 1.8260%
+(3.14% > 1%) at the mesh it was recorded on`, Status 1, 23 s, both ranks.
+
+The measured **1.7686% is `OPS-18`'s own re-recorded 0.11 value** — §2 and
+CLAUDE.md both carry "1.769% on the 0.11 image `main` boots — re-recorded with
+its mesh by `OPS-18`, 2026-08-22" — while **1.8260% is the 0.7.2 figure from
+`TH-10` closure (2026-08-13)**. The file therefore holds the pre-`OPS-18`
+constant, and its own assertion message ("a regression in the fixture or this
+file, not a geometry finding") names the correct disposition: it is this file.
+**Not evidence against `TH-10`; do not re-open it.** Filed in known-issues
+2026-08-27, **not fixed** — a census lands no fix, and the one-constant
+re-record with the `OPS-18` mesh cited in-comment needs a chunk that can
+re-run the priced fine mesh and state the basis. Worth a review's attention:
+this is the second time (with `GEO-16`'s two-torus red) that an `OPS-18`
+re-record left a downstream constant stale, which suggests the class is
+"records not swept after a re-record", not "0.11 broke something".
+
+### Finding 20 — the `OPS-17` (b2) hang was a finding-18 artifact
+
+`test_helmholtz_v2.py`, which **hung** in `OPS-17` (b2) attempt 2 and which
+the previous slot's hypothesis queued for "its own bounded window and a
+possible no-footer", is `1 passed in 1.24s`, **Status 0, real build, 3 s**.
+With finding 17 (`test_circular_loop.py`, the `OPS-19`/`OPS-22` JIT casualty,
+green complex) that is two inherited horror stories in two slots resolving to
+"runs fine, in the right build". The census's value is turning out to be as
+much in retiring inherited fear as in finding new reds.
+
+### Finding 21 — a deferral re-priced rather than inherited, and it stayed deferred on measurement
+
+`test_port_gap_voltage_padding.py` (2), the `OPS-17` (b2) formal deferral the
+item explicitly said to re-price and not inherit: **Status 124 at 400 s** with
+**zero `PASSED`/`FAILED` lines anywhere in the log** (`grep -c` = 0). It
+completed neither of its two tests inside the window, so this is *not* a
+finding-11 teardown-ate-the-footer case — it is a genuine cost wall. Counted
+`deferred — no footer, exit 124 at 400 s, zero test outcomes printed`; the
+reason is now measured on 0.11 rather than inherited from 0.7.2. Leg (d)
+should give it ≥ 600 s or run it one test at a time.
+
+### Finding 22 — value-ordering beats cost-ordering when the tail is unpriced
+
+The item's "ascending recorded cost" was followed for the cheap remainder's
+first module and bought **5 names for 206 s**. The slot then reordered to take
+the **priced** birdcage block, which returned **32 names for 593 s = 18.5
+s/name** — the best rate in this census (slot average 38 s/name; leg (b) 17
+s/name overall but 24 s/name on its best module). The unpriced tail then went
+on to spend 401 s for **zero** names (finding 21). **Rule the two slots
+jointly support: prefer a priced block to an unpriced cheap tail** — an
+unpriced 2-name module can cost more than a priced 7-name one, and "cheap" in
+the queue meant "few tests", not "few seconds".
+
+### Negative-result column
+
+One genuine red (finding 19, filed), one manufactured red retracted with its
+cause named (finding 18), one no-footer deferral with a measured reason
+(finding 21). No gmsh "overlapping facets" site appeared this slot, so
+`GEO-23`'s count stands at five and nothing was added to it.
+
+**Deferred (101).** Two with a substantive measured reason —
+`test_port_gap_voltage_padding.py`'s two names per finding 21. The other
+**99** are `deferred — not reached in slot`, the item's declared legal
+disposition.
+
+**Denials:** none this slot. One self-inflicted friction worth recording:
+`run_and_log.sh … && grep … $(ls -t …)` was denied for
+`command_substitution` as the protocol warns; re-issued with the literal log
+path and it ran. Do not compose the harness call with a substitution, ever.
+
+### Hypothesis for the next attempt (leg (d))
+
+**101 names over 16 modules remain, all `tests/validation`.** Draw in this
+order:
+
+1. **`dodd_deeds_*` (38 over 7 modules)** — the larger unpriced family, but
+   `MAT-6`-era eddy-current fixtures that are individually modest; take them
+   ascending by test count, `-k 30 600` each, and bank the 0.11 prices.
+2. **`coil_loading_*` (58 over 7 modules)** — priced in `OPS-17` (b2) at
+   their **recorded rank widths** (read *all* of a file's logs, not the first
+   match). `larmor_third_rung` needs `TH11_STEP5_RUNG=fine` pinned — the
+   default `third` is the `TH-11` OOM, status 137 at 908 s.
+   `coil_loading_degree2` (14) is the `TH-12` memory-wall
+   **defer-with-reason**: take it as such, do not re-open it. That is 14 of
+   the 58 that will not be observed by any leg.
+3. **`test_port_systematics_composition.py` (3)** at its recorded 360 s in its
+   own window, and **`test_port_gap_voltage_padding.py` (2)** at ≥ 600 s or
+   split by name.
+
+Apply **finding 18's gate-based classifier** before sizing any command; do not
+re-use `grep -L complex`. Realistic expectation: leg (d) closes items 1 and 3
+and most of 2, leaving step 2 one short slot from the **chunk-level
+reconciliation** (seed list of four by name, three totals repo-wide, the dead
+module and the `GEO-23` entries cross-referenced) — which whichever leg lands
+last owes. With `coil_loading_degree2`'s 14 structurally deferred, the
+realistic end state of step 2 is ~275 of 289 observed, not 289.

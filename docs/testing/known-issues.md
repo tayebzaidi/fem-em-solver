@@ -28,6 +28,18 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (c), 07:30 slot) — `test_geometry_floor_discriminator.py` asserts the **pre-`OPS-18`** 128 MHz record (1.8260%) and measures `OPS-18`'s re-recorded 1.7686%: a stale constant, not a physics regression
+
+| | |
+|---|---|
+| **Test** | `tests/validation/test_geometry_floor_discriminator.py::test_larmor_sphere_residual_at_the_priced_fine_mesh` (the module's only test) |
+| **Log** | `docs/testing/logs/20260827T125507Z_OPS-26-step2c-v42-geomfloor.log` — `1 failed in 22.15s`, **Status 1**, elapsed 23 s, `-n 2`, **complex build** (`FEM_EM_REQUIRE_COMPLEX=1`), smoke tier. Both rank streams identical. Footered, so it counts as a red under the census's fail-closed control. Verified at `58c77d9`. |
+| **Symptom** | `AssertionError: the 128 MHz relL2 moved to 1.7686% from the recorded 1.8260% (3.14% > 1%) at the mesh it was recorded on. That is a regression in the fixture or this file, not a geometry finding — the 64 MHz reading above must not be interpreted until it is explained`, `assert 0.03141140883816601 < 0.01`. The 64 MHz leg passes; only the 128 MHz record fires. |
+| **Cause — not diagnosed in code, but the number is already explained on `main`** | The measured 1.7686% is **`OPS-18`'s value**. PROJECT_PLAN §2 and CLAUDE.md both record that `TH-10`'s 128 MHz figure "is 1.769% on the 0.11 image `main` boots — re-recorded with its mesh by `OPS-18`, 2026-08-22", against the 1.826% originally recorded on the 0.7.2 image at `TH-10` closure (2026-08-13). This file's constant is therefore the **pre-`OPS-18`** one: the assertion is comparing a 0.11 measurement against a 0.7.2 record, and its own message ("a regression in the fixture or this file") names the right disposition — it is *this file*. The test is doing its job; nobody updated it when `OPS-18` re-recorded. |
+| **What this does *not* mean** | It is **not** evidence against `TH-10`, and not a new 0.11 break. The 3.14% is the distance between two *recorded* numbers, not a drift in the solve; the solve reproduces `OPS-18` to the digits printed. Do not re-open `TH-10` on this. |
+| **Disposition** | Filed, not fixed — `OPS-26` step 2 is a census and lands no fix (`OPS-26` §7, leg (c) scope). The fix is a one-constant re-record with the `OPS-18` mesh cross-referenced in-comment, and it belongs to a chunk that can re-run the priced fine mesh and state the basis; a review should commission it. Until then this red is expected on `main` and is **not yours**. |
+| **Census accounting** | Counted as the census's 4th red repo-wide and as leg (b)'s owed complex conversion: the name carried by leg (b) as `deferred — complex-only, SKIPPED in the real build` is now **observed**, and it resolved to a red rather than the green the conversion pattern produced six times in leg (d). |
+
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (b), 04:30 slot) — the whole of `tests/ports/test_port_orientation_sensitivity.py` dies on `'_DummyComm' object has no attribute 'allgather'`: an **`OPS-14` rank-safety reduction broke its test double**, and nothing scheduled has run the module since
 
 | | |
