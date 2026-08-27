@@ -18982,3 +18982,214 @@ closes ✅ only if every deferred name carries a substantive reason — on the
 current count that is `degree2` 14 (structural), `gap_voltage_padding` 2
 (finding 33, measured), and whatever survives of `box_size`/`box_truncation`;
 **no `not reached in slot` may remain**.
+
+## 2026-08-27T22:20Z — `OPS-26` step 2 leg (h) (§9 item 1, 16:30 CDT implementer slot) — **complete (leg (h) done; step 2 ✅; chunk `OPS-26` ✅)**
+
+**Item:** §9 item 1, the census tail, **seventh and final** consecutive slot on
+it. Leg (g)'s written prescription was followed verbatim in its own draw
+order, with no deviation. Bookkeeping only — no `src/`, `tests/`, `scripts/`
+or `examples/` change, nothing parked, `main` clean at handoff.
+
+**Preflight.** Tree clean, container Up (28 h), `main` at `21b0f09`. FFCx
+0-byte stub sweep before window 1: clean, zero stray `python3` (finding 27's
+rule); swept again between windows 2 and 3 and again after window 3's exit
+124 — clean all three times.
+
+**Three compute windows, 1 166 s, two footered (Status 0 / 0) and one Status
+124. +4 names ⇒ 264 → 268 of 289 (254 green, 14 red), 21 deferred.**
+
+| # | drawn | build | width | window | result | log | names |
+|---|---|---|---|---|---|---|---|
+| 1 | `reactance_box_size` `-k projected` | complex | `-n 2` | `-k 30 400` | **2 passed, 2 deselected / 282.59 s**, Status 0 | `20260827T213058Z_OPS-26-step2h-dodd-boxsize-projected.log` | **2 green** |
+| 2 | `reactance_box_size` `-k pinned` | complex | `-n 2` | `-k 30 400` | **2 passed, 2 deselected / 289.44 s**, Status 0 | `20260827T213549Z_OPS-26-step2h-dodd-boxsize-pinned.log` | **2 green** |
+| 3 | `reactance_box_truncation` full file | complex | `-n 2` | `-k 30 590` | **Status 124, 591 s**, `collected 5 items` then the first test's name and nothing else | `20260827T214053Z_OPS-26-step2h-dodd-box-truncation-n2.log` | 0 (5 deferred) |
+
+Both rank streams identical in outcome and elapsed time on the two footered
+windows (282.59 / 282.61 s and 289.44 / 289.44 s).
+
+**Arithmetic.** Observed 268 = 254 green + 14 red. `tests/ports` complete at
+17/17 (unchanged); `tests/validation` **247 → 251 of 272**. Deferred **21** =
+`coil_loading_degree2` 14 (`TH-12` memory-wall structural defer) +
+`box_truncation` 5 (finding 36, measured) + `port_gap_voltage_padding` 2
+(finding 33, measured). 268 + 21 = 289. **No `not reached in slot` remains.**
+
+### Finding 36 — `reactance_box_truncation` is a permanent measured deferral, cited to two windows at two widths
+
+Leg (f) ran it `-n 8` at `-k 30 600` (Status 124 at 601 s, dying inside its
+first validation test with no other name started); this slot ran it `-n 2` at
+`-k 30 590` (Status 124 at 591 s, `collected 5 items`, then
+`test_the_xlarge_box_mesh_is_the_probes` and no outcome line). Finding 32's
+open question — whether the `-n 8` assumption for this family was the problem
+— is now answered: **it was not**. The width is not the constraint. Its
+`projected_xlarge_box` fixture at
+`test_dodd_deeds_reactance_box_truncation.py:231` is
+`@pytest.fixture(scope="module")` and every one of the file's five tests
+consumes it, so a by-name split pays the same setup — the same structural
+argument finding 33 made for `gap_voltage_padding`, and it rules out the
+remaining cheap remedy by reading the source rather than by spending a third
+window. Reason, final: **`deferred — measured, module fixture + first test
+alone > 590 s at both -n 2 and -n 8`, two windows cited**. That is
+substantive, so step 2's close criterion is met with it deferred. A future
+attempt needs a *smaller fixture* (a coarser xlarge box), not a narrower
+selection or a different rank count — that is a `MAT-6`/`dodd_deeds` pricing
+question, not a census one.
+
+**Finding 30's prediction is pending, not confirmed and not refuted.** Leg (g)
+predicted an eleventh stale-record red behind `box_truncation`'s first test
+(`test_the_xlarge_box_mesh_is_the_probes`, another cell-count equality). It
+never reached an outcome line in either window, so the class stands at **ten
+names / five meshes** and `OPS-27` sizes from finding 35's table unchanged.
+Record it as a known unknown that only a smaller fixture can settle.
+
+### Finding 37 — `reactance_box_size`'s recorded `-k` halves reproduced closely, and taking the halves was the right call
+
+Journal record (2026-08-20, `MAT-6` step 4): full file **559.58 s** at `-n 2`
+in a 570 s window (**98.2%** of it, no margin), or two `-k` halves of
+**271.08 s + 260.07 s**. This slot ran the halves: **282.59 s (+4.2%)** and
+**289.44 s (+11.3%)**, total **572 s** across two safe windows. Both fit their
+400 s budgets with room; the full file at 559.58 s + 11% would have been
+~620 s and **would have blown a 590 s window**, so the squeeze leg (g) flagged
+was real. Third data point on finding 29's sizing rule: this family is
+*slightly slower* on 0.11 (+4% to +11%), where `wire_resolution` was −12% and
+`combined_knobs` +35%. The spread is per-module and unpredictable, which is
+exactly why sizing up is right and predicting is not.
+
+---
+
+## `OPS-26` step 2 — CHUNK-LEVEL RECONCILIATION (owed by the last leg)
+
+### (1) The three totals, repo-wide
+
+Two disjoint censuses were run: leg (a)'s seven cheap roots (`tests/unit`,
+`io`, `materials`, `mesh`, `solver`, `post`, `environment`) at a **189**
+denominator, and legs (b)–(h)'s `tests/validation` + `tests/ports` at a
+**289** denominator. Both denominators were **re-derived, not inherited**
+(`20260827T003050Z_OPS-26.log`, `20260827T093400Z_OPS-26-step2b-collect.log`).
+
+| root set | collected | observed | green | red | deferred |
+|---|---|---|---|---|---|
+| leg (a)'s seven cheap roots | 189 | 184 | 182 | 2 | 5 |
+| `tests/validation` (59 modules) | 272 | 251 | 237 | 14 | 21 |
+| `tests/ports` (4 modules) | 17 | 17 | 17 | 0 | 0 |
+| **repo-wide** | **478** | **452** | **436** | **16** | **26** |
+
+452 + 26 = 478 ✓; 436 + 16 = 452 ✓. **94.6% of the repo's collected tests
+were observed in a footered run on the 0.11 image**, and every one of the 26
+unobserved names carries a substantive stated reason (§4 below). No name is
+`not reached in slot`.
+
+### (2) The seed list of four, by name — the class this chunk exists to catch
+
+The 2026-08-25 18:00 review named four modules the census must reach by name.
+All four were reached; all four are **green** on 0.11:
+
+| seed module | why seeded | census reading | log |
+|---|---|---|---|
+| `tests/validation/test_convergence.py` | `MAG-19` rate gate; recorded **red on `main`** when `OPS-26` was commissioned | **1 passed / 141.51 s**, Status 0 — `TestConvergence::test_h_refinement_straight_wire` **PASSED** on both ranks | `20260827T093506Z_OPS-26-step2b-v01-convergence.log` |
+| `tests/validation/test_port_lumped_two_torus.py` | `GEO-16`'s stale-record red | **5 passed / 90.97 s**, Status 0 | `20260827T112332Z_OPS-26-step2b-v18-twotorus.log` |
+| `tests/validation/test_cavity_resonances.py` (`core/cavity.py`'s `TH-9` gates) | non-executing on `main` from the 0.11 merge until `OPS-24` | **3 passed / 5.59 s**, Status 0 | `20260827T111700Z_OPS-26-step2b-v14-cavity.log` |
+| `tests/mesh/test_birdcage_conductor_sizing.py` | `GEO-21` CAD-mass gate | `test_graded_conductor_sizing_recovers_the_cad_mass` **PASSED**, inside leg (a)'s footered 38-item run | `20260827T022014Z_OPS-26-step2a-real3-cheap.log` |
+
+**The seed list's headline worry did not reproduce.** `test_convergence.py`'s
+h-refinement rate gate — cited in this chunk's own "why this exists" as *red
+on `main` right now* — is green in the census. It is a single-name module and
+it passed on both ranks. `MAG-20` step 1 (§9 item 4) owns that band; the
+census's contribution is the datum that the gate **executes and passes** on
+0.11, so whatever `MAG-20` finds is about the band's width, not about a
+non-executing gate.
+
+### (3) The reds — 16 repo-wide, in exactly three families
+
+| family | names | owner | note |
+|---|---|---|---|
+| **stale 0.7.2-era exact records** (nine mesh cell counts, one relative-L2) | **10** over 8 modules, **5 distinct meshes** | **`OPS-27`** (§9 item 2) | finding 35's table is the site list; drift is per-mesh, not a global offset, and does not share a sign (−0.093%, +0.233%, +0.075%, +0.032%, −0.0647%) |
+| **0.11 "Invalid boundary mesh (overlapping facets)"** | **3** reds, plus 1 dead module and 1 rank-divergent `materials` site = **5 sites** | **`GEO-23`** | two of the five are demonstrably **partition-dependent**, not geometry-deterministic |
+| **test-double drift** (`OPS-14`'s `allgather` outgrew `_DummyComm`) | **3** (`tests/ports/test_port_orientation_sensitivity.py`) | **`OPS-28`** (§9 item 3) | finding 12; **invisible to step 1's static sweep by construction** — a `src/` sweep cannot see a test's own mock |
+
+Every red is filed in `docs/testing/known-issues.md` and every one has a named
+owner chunk. **No red was fixed in-slot and no band was loosened anywhere in
+the census** (traps (ii)/(iii) of the step-2 rubric, held across seven slots).
+
+### (4) The 26 deferrals, each with its substantive reason
+
+| name(s) | count | reason |
+|---|---|---|
+| `test_coil_loading_degree2.py` | 14 | **`TH-12` memory wall** — structural, measured, not re-openable in a scheduled slot |
+| `test_dodd_deeds_reactance_box_truncation.py` | 5 | **finding 36** — module fixture + first test > 590 s at both `-n 2` and `-n 8`, two windows cited |
+| `test_port_gap_voltage_padding.py` | 2 | **finding 33** — module fixture alone > 590 s at `-n 2`, two windows (400 s, 590 s) cited |
+| leg (a)'s five | 5 | four `GEO-23` sites (three reds' siblings plus the dead `test_cylindrical_domain.py` module) and the rank-dependent `test_boundary_condition_selection.py` deadlock, all filed |
+
+26 = 14 + 5 + 2 + 5 ✓. **Zero `deferred — no footer` and zero `not reached in
+slot` survive**; every remaining deferral is a *measured cost or a filed
+defect*, which is what step 2's close criterion requires.
+
+### (5) The dead module and the `GEO-23` cross-reference
+
+`tests/mesh/test_cylindrical_domain.py` is the census's one **dead module** —
+it collects and cannot run on 0.11 (overlapping facets on its own generator).
+Filed 2026-08-27; it is `GEO-23` step 1 (d)'s conversion target. With the
+`materials` complex-conversion site leg (b) added, `GEO-23` stands at **five**
+sites, and no leg (f)/(g)/(h) window added a sixth.
+
+### (6) Verdict against the step-2 rubric and §4
+
+- **Anchor met.** `observed / collected` per root with the complement
+  enumerated **by name**, each carrying exactly one of green /
+  red-with-filed-entry / deferred-with-reason; the three totals sum to the
+  denominator on every root and repo-wide (452 + 26 = 478).
+- **Quantitative assertions** are the counts themselves plus the per-mesh
+  drift measurements the reds produced (five meshes, −0.093% … +0.233%).
+- **Fail-closed control held for seven slots.** No Status-0/1 footer ⇒
+  `deferred`, never green and never red. Two failure modes the control
+  *cannot* see were found and are now standing rules: **finding 18** (a
+  misclassified build manufactures a footered red — classify by the gate,
+  never the word) and **finding 27** (a poisoned 0-byte FFCx stub yields a
+  footered run whose names are ERROR — sweep the cache before the first
+  window and after any exit 124).
+- **The directive is answered.** The operator asked whether the 0.11
+  transition actually worked. It did, with three named exceptions, none of
+  them a formulation or solver break: ten stale *records* (the physics
+  reproduces; only version-pinned constants moved), one gmsh boundary-mesh
+  family on five generator sites, and one test double that a *prior* chunk's
+  rank-safety fix outgrew. **`OPS-18`'s §4 close stands** — every §2 physics
+  claim's gate was observed executing and passing on 0.11.
+
+**Step 2 ✅. `OPS-26` ✅** (step 1 ✅ 2026-08-25, step 2 ✅ 2026-08-27; eight
+slots total — one static sweep, seven census legs).
+
+### Negative-result column
+
+No red found this slot — `box_size` is 4/4 green, the first `dodd_deeds`
+module of the tail with no stale-record site. One measured no-footer deferral
+whose one remaining remedy was ruled out by reading the source rather than by
+spending a third window. Nothing loosened, no assertion edited, no
+`src/`/`tests/` file touched in seven census slots. No new `GEO-23` site.
+
+**Cache and process discipline (finding 27's rule, followed).** Swept
+`find /root/.cache/fenics -name '*.c' -size 0` before window 1, between
+windows 2 and 3, and again after window 3's exit 124 — clean every time, zero
+stray `python3`. Third confirmation that a kill inside a *mesh/fixture* step
+leaves no stub; the sweep stays mandatory because that distinction is not
+visible before the fact.
+
+**Denials:** no compute command denied. One tool-level friction worth
+recording as a shape: a `for f in …; do … done` loop over log files was
+rejected by the permission layer (`simple_expansion`) — issue such greps as
+separate top-level commands, which parallelise anyway. A large heredoc
+(`cat >> file <<'EOF'`) was also rejected as over-length; write the text with
+the Write tool to a scratch path inside the worktree and append it with a
+single short command. Zero compute cost for both.
+
+### Hypothesis for the next attempt — `OPS-26` is closed; the queue moves on
+
+§9 item 1 is **done**. The next slot takes **item 2, `OPS-27`**, whose site
+list is now final and is *not* the grep the item describes: take finding 35's
+five-mesh table from leg (g) plus `RECORD_128_RELL2`, i.e. **five
+measurements and ~ten edits**, and note that two of the five meshes (138 619
+and 417 914) each back 3–4 names, so re-record by *mesh value*, not by file.
+The `grep -rn '0\.7\.2' tests/` sweep is still worth running as a
+completeness check, but it reached **none** of the five sites — every one was
+found by reading a red's assertion message. One open item `OPS-27` should
+carry rather than guess: `box_truncation::test_the_xlarge_box_mesh_is_the_probes`
+is a *suspected sixth site* that no window has ever reached (finding 36), so
+it cannot be re-recorded until that fixture is cheaper — file it as pending.
