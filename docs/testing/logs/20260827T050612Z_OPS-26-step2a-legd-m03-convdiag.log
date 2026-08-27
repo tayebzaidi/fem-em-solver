@@ -1,0 +1,87 @@
+# Test Run
+- Chunk: OPS-26-step2a-legd-m03-convdiag
+- Commit: 3d23ea9ad9a03dfd297194982b6bf23c8cd8659c
+- Time (UTC): 2026-08-27 05:06:12
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/solver/test_convergence_diagnostics.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 00:06 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/solver/test_convergence_diagnostics.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 14 items
+
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic collected 14 items
+
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_summaries_are_deterministic PASSED [  7%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[4-0-monotone-decrease] PASSED [  7%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[4-0-monotone-decrease] PASSED [ 14%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[7-1-mostly-decreasing] PASSED [ 14%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[7-1-mostly-decreasing] PASSED [ 21%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-1-mostly-decreasing] PASSED [ 21%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-1-mostly-decreasing] PASSED [ 28%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[5-3-mostly-decreasing] PASSED [ 28%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[5-3-mostly-decreasing] PASSED [ 35%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-1-mostly-decreasing] PASSED [ 35%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-1-mostly-decreasing] PASSED [ 42%]PASSED [ 42%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-1-mixed] 
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-1-mixed] PASSED [ 50%]PASSED [ 50%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-2-mixed] 
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[2-2-mixed] PASSED [ 57%]PASSED [ 57%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-5-mostly-increasing] 
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[3-5-mostly-increasing] PASSED [ 64%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-3-mostly-increasing] PASSED [ 71%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-2-mostly-increasing] PASSED [ 78%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[0-4-mostly-increasing] PASSED [ 85%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_negative_controls PASSED [ 92%]
+tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [100%]PASSED [ 64%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-3-mostly-increasing] PASSED [ 71%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[1-2-mostly-increasing] PASSED [ 78%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_is_an_exact_function_of_the_decrease_fraction[0-4-mostly-increasing] PASSED [ 85%]
+tests/solver/test_convergence_diagnostics.py::test_classify_residual_trend_negative_controls PASSED [ 92%]
+tests/solver/test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics SKIPPED64); source
+/usr/local/bin/dolfinx-complex-mode)                                     [100%]
+
+======================== 13 passed, 1 skipped in 0.67s =========================
+
+
+======================== 13 passed, 1 skipped in 0.61s =========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 2

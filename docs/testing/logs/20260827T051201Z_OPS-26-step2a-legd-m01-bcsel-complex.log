@@ -1,0 +1,212 @@
+# Test Run
+- Chunk: OPS-26-step2a-legd-m01-bcsel-complex
+- Commit: 3d23ea9ad9a03dfd297194982b6bf23c8cd8659c
+- Time (UTC): 2026-08-27 05:12:01
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/environment tests/solver/test_boundary_condition_selection.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 00:11 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/environment tests/solver/test_boundary_condition_selection.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  6%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form collected 15 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  6%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 13%]PASSED [ 13%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not 
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 20%]PASSED [ 20%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly 
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 26%]PASSED [ 26%]
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites 
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites PASSED [ 33%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 33%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 40%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 40%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 46%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 60%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 66%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 73%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values PASSED [ 80%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value PASSED [ 86%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set PASSED [ 46%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 53%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 60%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 66%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [ 73%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_accepts_enum_and_string_values PASSED [ 80%]
+tests/solver/test_boundary_condition_selection.py::test_normalize_boundary_condition_rejects_unknown_value PASSED [ 86%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set FAILED [ 93%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path FAILED [100%]
+
+=================================== FAILURES ===================================
+____ test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set ____
+tests/solver/test_boundary_condition_selection.py:53: in test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set
+    solver = TimeHarmonicSolver(_make_problem(TimeHarmonicBoundaryCondition.NATURAL), degree=1)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/solver/test_boundary_condition_selection.py:22: in _make_problem
+    mesh, cell_tags, facet_tags = MeshGenerator.cylindrical_domain(
+src/fem_em_solver/io/mesh.py:805: in cylindrical_domain
+    gmsh.model.mesh.generate(3)
+/usr/local/lib/gmsh.py:2189: in generate
+    raise Exception(logger.getLastError())
+E   Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+----------------------------- Captured stdout call -----------------------------
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 20%] Meshing curve 2 (Line)
+Info    : [ 40%] Meshing curve 3 (Circle)
+Info    : [ 60%] Meshing curve 4 (Circle)
+Info    : [ 70%] Meshing curve 5 (Line)
+Info    : [ 90%] Meshing curve 6 (Circle)
+Info    : Done meshing 1D (Wall 0.000559797s, CPU 0.000554s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Cylinder, Frontal-Delaunay)
+Info    : [  0%] 6 triangles are equivalent
+Info    : [  0%] Meshing surface 1 (Cylinder, MeshAdapt)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 4 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.0318417s, CPU 0.031782s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 184 nodes...
+Info    : Done tetrahedrizing 192 nodes (Wall 0.00224199s, CPU 0.00224s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    : Found two duplicated facets.
+Info    :   1st: [11, 53, 54] #1
+Info    :   2nd: [11, 53, 54] #1
+----------------------------- Captured stderr call -----------------------------
+Error   : Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+_______ test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path ________
+tests/solver/test_boundary_condition_selection.py:64: in test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path
+    solver = TimeHarmonicSolver(_make_problem("pec_zero_tangential_a"), degree=1)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/solver/test_boundary_condition_selection.py:22: in _make_problem
+    mesh, cell_tags, facet_tags = MeshGenerator.cylindrical_domain(
+src/fem_em_solver/io/mesh.py:809: in cylindrical_domain
+    mesh, cell_tags, facet_tags = _model_to_mesh(
+src/fem_em_solver/io/mesh.py:26: in _model_to_mesh
+    data = dolfinx_gmsh.model_to_mesh(model, comm, rank, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/dolfinx-complex/lib/python3.12/dist-packages/dolfinx/io/gmsh.py:363: in model_to_mesh
+    tdim = int(entity_tdim[perm_sort[0]])
+                           ^^^^^^^^^^^^
+E   IndexError: index 0 is out of bounds for axis 0 with size 0
+----------------------------- Captured stdout call -----------------------------
+Info    : I'm busy! Ask me that later...
+----------------------------- Captured stderr call -----------------------------
+Warning : Gmsh has aleady been initialized
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-72exrhc9/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-72exrhc9/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-72exrhc9/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-72exrhc9/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-72exrhc9/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.htmlFAILED [ 93%]
+tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path 
+=========================== short test summary info ============================
+FAILED tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set - Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+FAILED tests/solver/test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path - IndexError: index 0 is out of bounds for axis 0 with size 0
+================== 2 failed, 13 passed, 30 warnings in 21.53s ==================
+[0]PETSC ERROR: ------------------------------------------------------------------------
+[0]PETSC ERROR: Caught signal number 15 Terminate: Some process (or the batch system) has told this process to end
+[0]PETSC ERROR: Try option -start_in_debugger or -on_error_attach_debugger
+[0]PETSC ERROR: or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/
+[0]PETSC ERROR: configure using --with-debugging=yes, recompile, link, and run 
+[0]PETSC ERROR: to get more information on the crash.
+Abort(59) on node 0 (rank 0 in comm 0): application called MPI_Abort(MPI_COMM_WORLD, 59) - process 0
+
+## Exit
+- Status: 124
+- Elapsed (s): 180

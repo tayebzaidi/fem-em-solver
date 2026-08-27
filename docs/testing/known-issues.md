@@ -28,6 +28,79 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a), fourth slot) — `test_boundary_condition_selection.py` **deadlocks the whole command**: the "overlapping facets" gmsh abort is **rank-dependent**, one rank raises while the other returns
+
+> **Not a census red.** `OPS-26`'s fail-closed control admits a red only from
+> a run with a Status-0-or-1 footer of its own. Both runs below ended
+> **Status 124**, so the four tests in this module are counted
+> `deferred — module-scoped command deadlocked; no footer`, and the failures
+> here are recorded as a **mechanism finding**, not as a counted red. The next
+> chunk that owns this must re-establish it in a footered run before treating
+> any name below as failing.
+>
+> **Where this fired.** `tests/solver/test_boundary_condition_selection.py`,
+> `mpiexec -n 2`, both builds, `OPS-26` step 2 leg (d) (2026-08-27 00:00
+> implementer slot), each as a command containing **only this module**:
+>
+> | log | build | timeout | Status / elapsed |
+> |---|---|---|---|
+> | `20260827T050123Z_OPS-26-step2a-legd-m01-bcsel.log` | real | `-k 30 240` | **124 / 241 s** |
+> | `20260827T051201Z_OPS-26-step2a-legd-m01-bcsel-complex.log` | complex, `FEM_EM_REQUIRE_COMPLEX=1` | `-k 30 180` | **124 / 180 s** |
+>
+> **The finding — the same test PASSES on one rank and FAILS on the other, in
+> the same run.** The complex log is the clean read of it (the real log's two
+> streams interleave mid-line and its per-test attribution cannot be trusted):
+>
+> ```
+> ...::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set PASSED [ 46%]
+> ...::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set FAILED [ 93%]
+> ```
+>
+> (`20260827T051201Z_..._bcsel-complex.log:69,76`.) The failing rank raises
+>
+> ```
+> Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+> ```
+>
+> **That is the mechanism of the hang.** One rank raises inside gmsh and
+> leaves the collective; the other completes and blocks in the next
+> collective; nothing progresses until `timeout -k 30` sends KILL, and the
+> trailer is a PETSc `Caught signal number 15` followed by
+> `Abort(59) ... MPI_Abort(MPI_COMM_WORLD, 59)`. This is the `mag:1`-class
+> divergence the leg-(c) slot inferred for `tests/solver` as a root
+> (`PROJECT_PLAN.md` §7 `OPS-26`, finding 8) — leg (d) localizes it to **this
+> one module**: the other **twelve** `tests/solver` modules each returned a
+> Status-0 footer when run as their own command.
+>
+> **Two consequences worth keeping.**
+> 1. **"Overlapping facets" is not deterministic.** Every prior entry for that
+>    string (`GEO-21` open birdcage; the coil+phantom generator; and
+>    `birdcage_port_domain`, the entry below) reads as a property of a
+>    geometry. Here the *same* geometry, in the *same* run, meshes on one rank
+>    and fails on the other — so at least on this call path the trigger is
+>    rank-partition-dependent, which a resolution-floor reading does not
+>    explain. Stated as an observation from two runs, not a diagnosis.
+> 2. **The second test's failure is the leg-(c) candidate signature.**
+>    `test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path` fails
+>    with `IndexError: index 0 is out of bounds for axis 0 with size 0` —
+>    the identical string the leg-(c) slot recorded on 21 of 23 discarded
+>    names. It appears here on a module run in isolation on a swept cache,
+>    which makes "one shared cause cascading" more plausible than it was; it
+>    is still not established, because this run has no footer either.
+>
+> **Cache state is exonerated.** The slot opened with
+> `find /root/.cache/fenics -name '*.c' -size 0 -print -delete`, which printed
+> **nothing** (`20260827T050052Z_OPS-26-step2a-legd-collect.log:34`), and the
+> real-build run above was the *first* command after it. The poisoned-stub
+> entry lower in this file does not apply.
+>
+> **Next step for the owning chunk (a `solver`/`mesh` chunk, not the census):**
+> run this module at `-n 1`. If it returns a Status-1 footer, the failure is
+> real and the deadlock is purely the rank asymmetry; if it goes green, the
+> failure itself is partition-dependent. One smoke-tier command settles it.
+> `OPS-26` deliberately did not spend it — `-n 1` is not the census's recorded
+> width and an observation at it would not count.
+
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a), second slot) — `test_birdcage_volumes_partition_the_box` aborts in gmsh with **the same "Invalid boundary mesh (overlapping facets)"** — this is the **third** geometry to carry that string, and the first on `birdcage_port_domain`'s own production path
 
 > **Where this fired.**

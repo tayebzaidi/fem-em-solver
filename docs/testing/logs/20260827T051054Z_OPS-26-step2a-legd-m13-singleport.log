@@ -1,0 +1,123 @@
+# Test Run
+- Chunk: OPS-26-step2a-legd-m13-singleport
+- Commit: 3d23ea9ad9a03dfd297194982b6bf23c8cd8659c
+- Time (UTC): 2026-08-27 05:10:55
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/solver/test_single_port_excitation.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 00:10 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/solver/test_single_port_excitation.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 4 items
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates collected 4 items
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates PASSED [ 25%]PASSED [ 25%]
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_missing_required_tags 
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_missing_required_tags PASSED [ 50%]PASSED [ 50%]
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_driven_index_mismatch 
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_driven_index_mismatch PASSED [ 75%]PASSED [ 75%]
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map 
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map PASSED [100%]PASSED [100%]
+
+=============================== warnings summary ===============================
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+  /workspace/tests/solver/test_single_port_excitation.py:78: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    result = run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_missing_required_tags
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_driven_index_mismatch
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/src/fem_em_solver/ports/excitation.py:380: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    return run_placeholder_port_coupling_case(*args, **kwargs)
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_missing_required_tags
+  /workspace/tests/solver/test_single_port_excitation.py:119: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_driven_index_mismatch
+  /workspace/tests/solver/test_single_port_excitation.py:158: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/tests/solver/test_single_port_excitation.py:198: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/tests/solver/test_single_port_excitation.py:206: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 4 passed, 9 warnings in 0.70s =========================
+
+
+=============================== warnings summary ===============================
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+  /workspace/tests/solver/test_single_port_excitation.py:78: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    result = run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_returns_finite_estimates
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_missing_required_tags
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_driven_index_mismatch
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/src/fem_em_solver/ports/excitation.py:380: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    return run_placeholder_port_coupling_case(*args, **kwargs)
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_missing_required_tags
+  /workspace/tests/solver/test_single_port_excitation.py:119: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_driven_index_mismatch
+  /workspace/tests/solver/test_single_port_excitation.py:158: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/tests/solver/test_single_port_excitation.py:198: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+tests/solver/test_single_port_excitation.py::test_single_port_excitation_rejects_invalid_passive_termination_map
+  /workspace/tests/solver/test_single_port_excitation.py:206: DeprecationWarning: run_single_port_excitation_case() is a misleading name for a placeholder model and will be removed; use run_placeholder_port_coupling_case(). Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    run_single_port_excitation_case(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 4 passed, 9 warnings in 0.69s =========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 1

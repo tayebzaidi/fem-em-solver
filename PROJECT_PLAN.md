@@ -1018,6 +1018,142 @@ list shapes the census.**)*
 >   `test_two_cylinder.py` / `test_two_torus.py` last. Budget ~8 modules per
 >   slot; 13 modules is likely two slots. Only after a module has a
 >   Status-0-or-Status-1 footer of its own may its reds be filed.
+> * **Step 2 leg (a), fourth slot (leg (d)) — leg (a) SUBSTANTIVELY COMPLETE,
+>   2026-08-27 00:00 implementer slot. Cumulative 184 of 189 observed (182
+>   green, 2 red), 5 deferred** (was 137/189). **`tests/solver` went 0/51 →
+>   47/51 green** — the root that three whole-root commands had failed to
+>   observe at all. Six of the seven leg-(a) roots are now complete; the
+>   remaining 5 deferred names carry substantive, non-`not reached in slot`
+>   reasons. No code changed. One known-issues entry added (a *mechanism*
+>   finding, explicitly not a counted red).
+>
+>   | root | collected | observed | green | red | deferred |
+>   |---|---|---|---|---|---|
+>   | `tests/environment` | 11 | 11 | 11 | 0 | 0 |
+>   | `tests/unit` | 22 | 22 | 22 | 0 | 0 |
+>   | `tests/io` | 8 | 8 | 8 | 0 | 0 |
+>   | `tests/materials` | 7 | 6 | 6 | 0 | 1 |
+>   | `tests/post` | 33 | 33 | 32 | 1 | 0 |
+>   | `tests/mesh` | 57 | 57 | 56 | 1 | 0 |
+>   | `tests/solver` | 51 | 47 | 47 | 0 | 4 |
+>   | **total** | **189** | **184** | **182** | **2** | **5** |
+>
+>   182 + 2 + 5 = 189, as the fail-closed control requires. **Denominator
+>   re-derived for this root, not inherited** (`20260827T050052Z_OPS-26-step2a-legd-collect.log`,
+>   real, `--collect-only -q`, **Status 0, 4 s**): `tests/solver` collects
+>   **51 tests over 13 modules** — `test_boundary_condition_selection.py` 4,
+>   `test_coil_phantom_magnetostatics.py` 1, `test_convergence_diagnostics.py`
+>   14, `test_cylinder.py` 1, `test_energy_and_point_evaluation.py` 6,
+>   `test_gauge_lagrange.py` 4, `test_gauge_multiplier_convergence.py` 2,
+>   `test_gauge_penalty.py` 4, `test_single_port_excitation.py` 4,
+>   `test_time_harmonic_smoke.py` 8, `test_tolerance_policy.py` 1,
+>   `test_two_cylinder.py` 1, `test_two_torus.py` 1. That matches the 51 the
+>   19:30 slot derived for this root, so the 189/54 total is unchanged.
+>
+>   **Finding 9 — the module-per-command design is the fix, and it is not
+>   marginal.** Three consecutive slots had run `tests/solver` as one command
+>   and observed **zero** of 51. Run as **one command per module** at
+>   `timeout -k 30 120…240`, `-n 2`, real build, **twelve of the thirteen
+>   modules returned a Status-0 footer** and the whole root cost **~220 s of
+>   compute**, against the 1 001 s that bought nothing in leg (c). The
+>   divergence was never a property of the root; it was one module, and
+>   batching let it eat every other module's result.
+>
+>   **Newly observed green by name (real build, `-n 2`, one command each).**
+>   `test_tolerance_policy.py` (1) — Status 0, 1 s
+>   (`20260827T050605Z_..._m02-tolpolicy.log`);
+>   `test_convergence_diagnostics.py` (13 of 14) — Status 0, 2 s
+>   (`…050612Z_..._m03-convdiag.log`, `13 passed, 1 skipped`);
+>   `test_gauge_penalty.py` (4) — Status 0, 14 s (`…050623Z_..._m04-gaugepen.log`);
+>   `test_gauge_multiplier_convergence.py` (2) — Status 0, **129 s**
+>   (`…050643Z_..._m05-gaugemult.log`, the root's dominant single cost);
+>   `test_gauge_lagrange.py` (4) — Status 0, 6 s (`…050902Z_..._m06-gaugelag.log`);
+>   `test_cylinder.py` (1) — Status 0, 36 s (`…050913Z_..._m07-cylinder.log`);
+>   `test_coil_phantom_magnetostatics.py` (1) — Status 0, 7 s
+>   (`…050955Z_..._m08-coilphantom.log`);
+>   `test_energy_and_point_evaluation.py` (6) — Status 0, 6 s
+>   (`…051007Z_..._m09-energy.log`);
+>   `test_time_harmonic_smoke.py` (3 of 8) — Status 0, 3 s
+>   (`…051024Z_..._m10-thsmoke.log`, `3 passed, 5 skipped`);
+>   `test_two_cylinder.py` (1) — Status 0, 3 s (`…051038Z_..._m11-twocyl.log`);
+>   `test_two_torus.py` (1) — Status 0, 2 s (`…051046Z_..._m12-twotorus.log`);
+>   `test_single_port_excitation.py` (4) — Status 0, 1 s
+>   (`…051054Z_..._m13-singleport.log`).
+>   Then the six real-build complex-only skips, **all green in complex** and
+>   therefore converted to observed rather than deferred: complex build +
+>   `FEM_EM_REQUIRE_COMPLEX=1`, `-n 2`, `tests/environment` first,
+>   `20260827T051113Z_OPS-26-step2a-legd-complex-skips.log`, **Status 0, 34 s**
+>   (`33 passed` = `environment` 11 + `convergence_diagnostics` **14** +
+>   `time_harmonic_smoke` **8**, i.e. zero skipped in complex) —
+>   `test_convergence_diagnostics.py::test_time_harmonic_solver_emits_optional_solve_health_diagnostics`
+>   (1) and the five `test_time_harmonic_smoke.py` names.
+>
+>   **Finding 10 — leg (c)'s 23 discarded names were correctly discarded, and
+>   the discard is now *positively* confirmed rather than merely prudent.** Of
+>   the nine modules that carried the shared
+>   `IndexError: index 0 is out of bounds for axis 0 with size 0` in the
+>   footerless leg-(c) run, **eight are green here in footered runs**
+>   (`test_energy_and_point_evaluation.py`, `test_gauge_lagrange.py`,
+>   `test_gauge_multiplier_convergence.py`, `test_gauge_penalty.py`,
+>   `test_time_harmonic_smoke.py`, `test_two_cylinder.py`, `test_two_torus.py`,
+>   `test_cylinder.py`, `test_coil_phantom_magnetostatics.py`). The
+>   fail-closed control paid for itself: filing those 21 names would have put
+>   21 false reds in known-issues.
+>
+>   **Finding 11 — the one surviving module, and the "overlapping facets"
+>   string is rank-dependent.** `test_boundary_condition_selection.py` (4)
+>   deadlocked in **both** builds — real `timeout -k 30 240` **Status 124 at
+>   241 s** (`20260827T050123Z_..._m01-bcsel.log`), complex `timeout -k 30
+>   180` **Status 124 at 180 s** (`20260827T051201Z_..._m01-bcsel-complex.log`).
+>   The complex log shows the *same test* PASSED on one rank at `[ 46%]` and
+>   FAILED on the other at `[ 93%]` with
+>   `Invalid boundary mesh (overlapping facets) on surface 1 surface 1`, then
+>   `MPI_Abort(59)` on the kill — so one rank raising inside gmsh while the
+>   other proceeds **is** the hang mechanism, and on this call path the
+>   overlapping-facets trigger is partition-dependent, not a property of the
+>   geometry alone. That cuts against the resolution-floor reading the three
+>   prior entries for that string share. The module's second failure is
+>   `IndexError: index 0 is out of bounds for axis 0 with size 0` — leg (c)'s
+>   candidate signature, on a swept cache in an isolated module. **Filed as a
+>   mechanism finding, explicitly NOT as a counted red** (known-issues
+>   2026-08-27, fourth slot): neither run has a footer, and the control admits
+>   reds only from footered runs. The one command that would settle it — this
+>   module at `-n 1` — was deliberately **not** spent: `-n 1` is not the
+>   census's recorded width, so an observation at it would not count. It is
+>   named in the known-issues entry as the next owner's first move.
+>
+>   **Cache state exonerated for this whole slot.** First command swept
+>   `find /root/.cache/fenics -name '*.c' -size 0 -print -delete` and it
+>   printed nothing (`…050052Z_..._legd-collect.log:34`), and no command in the
+>   slot ran on the heels of a kill except the two `bcsel` retries themselves.
+>
+>   **Deferred by name (5), one disposition each — no `not reached in slot`
+>   remains in leg (a).** `tests/solver/test_boundary_condition_selection.py`
+>   (4: `test_normalize_boundary_condition_accepts_enum_and_string_values`,
+>   `test_normalize_boundary_condition_rejects_unknown_value`,
+>   `test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set`,
+>   `test_time_harmonic_solver_boundary_pec_is_applied_to_solve_path`) —
+>   `deferred — module-scoped commands deadlocked at -n 2 in both builds
+>   (Status 124 × 2); no Status-0/1 footer, so no name may be scored green or
+>   red; mechanism filed in known-issues`.
+>   `materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring`
+>   (1) — `deferred — skipped at runtime in the real build`; **unchanged and
+>   now the cheapest open name in leg (a)** — it was never re-attempted in
+>   complex, and this slot's complex command shows that route converts such
+>   skips (it converted six). One ~30 s complex command should close it.
+>
+>   **Slot cost:** fifteen commands, **~660 s** of recorded elapsed, of which
+>   421 s went to the two `bcsel` deadlocks — i.e. 239 s bought 47 of the 51
+>   names.
+>
+>   **What remains for leg (a):** the 1 `materials` name in complex, and a
+>   decision on `test_boundary_condition_selection.py` that is a `solver`/`mesh`
+>   chunk's to make, not the census's. Leg (a) is otherwise complete. The
+>   chunk stays 🟡 until **leg (b)** (`tests/validation` + `tests/ports`, §9
+>   item 2) lands and its owner writes the chunk-level reconciliation.
+>   **Leg (b) should adopt the module-per-command shape from the start** —
+>   finding 9 is the strongest methodological result this chunk has produced,
+>   and leg (b)'s roots hold the modules most likely to diverge.
 > * **Step 2 — execution census on 0.11 (heavy, likely 2+ slots).** Re-run
 >   `OPS-17` leg (b2)'s methodology on the current image: every collected test
 >   **observed in a completed run with a footer**, real and complex, at each
@@ -6321,7 +6457,37 @@ mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-1. 🟡 **PARTIAL a third time 2026-08-26 22:30 slot — cumulative 137/189
+1. ✅ **LEG (a) DONE 2026-08-27 00:00 slot (leg (d)) — cumulative 184/189
+   observed (182 green, 2 red), 5 deferred, every one with a substantive
+   reason and no `not reached in slot` remaining. This item is CLOSED; the
+   next review should drop it and leave item 2 (leg (b)) first in the
+   queue.** `tests/solver` went **0/51 → 47/51 green** in ~220 s of compute
+   after three prior slots had observed none of it. The fix was this item's
+   own leg-(d) prescription: **one command per module** — twelve of the
+   thirteen modules returned a Status-0 footer. Denominator re-derived for
+   the root (51 over 13 modules, Status 0, 4 s); 182 + 2 + 5 = 189. Leg
+   (c)'s 23 discarded names are now *positively* vindicated — eight of the
+   nine modules carrying the shared `IndexError` are green in footered runs,
+   so the fail-closed control prevented 21 false reds. The one survivor,
+   `test_boundary_condition_selection.py` (4), deadlocked in **both** builds
+   (Status 124 × 2) and is deferred, not scored; the complex log shows *the
+   same test* PASSED on one rank and FAILED on the other with `Invalid
+   boundary mesh (overlapping facets)`, so that string is
+   **rank-partition-dependent** on this call path — which the three prior
+   resolution-floor entries do not explain. Mechanism filed in known-issues
+   as a finding, explicitly **not** as a counted red; the settling command
+   (`-n 1`) was deliberately not spent, because `-n 1` is not the census's
+   recorded width and an observation at it would not count. **Two small
+   things owed, neither blocking:** the 1 `materials` name
+   (`test_phantom_material_assignment_and_time_harmonic_pipeline_wiring`)
+   needs one ~30 s complex command — this slot showed that route converts
+   such skips, six times — and `test_boundary_condition_selection.py` needs
+   a `solver`/`mesh` owner, not the census. Full tables, all fifteen log
+   names and findings 9–11 are in the §7 entry. **Leg (b) should adopt the
+   module-per-command shape from the start.**
+
+   *(Superseded — the 22:30 slot's status, kept for the review's audit
+   trail.)* 🟡 **PARTIAL a third time 2026-08-26 22:30 slot — cumulative 137/189
    observed (135 green, 2 red), 52 deferred (was 93/189); stays first in
    the queue.** Denominator **189/54 modules** still holds (every
    intervening commit is documentation-only). **`tests/post` and

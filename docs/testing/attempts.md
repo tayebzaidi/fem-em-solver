@@ -17699,3 +17699,109 @@ the cheap `tests/solver` modules will be green in isolation and the
 `IndexError` cascade will collapse to **one** genuinely red module whose
 failure poisons the shared fixture for the rest of the root.
 
+---
+
+## 2026-08-27T05:20Z — `OPS-26` step 2 leg (a), attempt 4 ("leg (d)") — **complete (leg (a) done; chunk stays 🟡 on leg (b))**
+
+**Slot:** 2026-08-27 00:00 local scheduled implementer run. Preflight clean
+(`git status --porcelain` empty, branch `main` at `3d23ea9`), container Up
+12 h. Took §9 item 1, the first item not done or blocked — `OPS-26` step 2
+leg (a), which the 22:30 slot left 🟡 at 137/189 with an explicit leg-(d)
+recipe: **stop running `tests/solver` as one command; run one command per
+module.**
+
+**Outcome: cumulative 184/189 observed (182 green, 2 red), 5 deferred**, up
+from 137/189. `tests/solver` went **0/51 → 47/51 green**. 182 + 2 + 5 = 189,
+so the fail-closed control holds. Six of leg (a)'s seven roots are complete
+and **no `deferred — not reached in slot` remains anywhere in leg (a)** — the
+5 open names each carry a substantive reason. Leg (a) is done; the chunk stays
+🟡 because leg (b) (`tests/validation` + `tests/ports`, §9 item 2) has not run.
+No `src/` or `tests/` change; documentation and logs only, plus one
+known-issues entry.
+
+**The previous slot's prediction was right, and that is the headline.** It
+predicted "the cheap modules will be green in isolation and the `IndexError`
+cascade will collapse to one genuinely red module." Measured: twelve of the
+thirteen modules returned Status-0 footers, and the cascade collapsed to
+exactly one module.
+
+**What was run** (fifteen commands, ~660 s of recorded elapsed):
+
+1. `20260827T050052Z_OPS-26-step2a-legd-collect.log` — Status 0, 4 s. Stub
+   sweep `find /root/.cache/fenics -name '*.c' -size 0 -print -delete`
+   printed **nothing** (cache exonerated for the whole slot), then
+   `--collect-only -q` re-derived the root's denominator: **51 tests over 13
+   modules**, matching the 19:30 figure, so 189/54 stands.
+2–13. One command per module, real build, `-n 2`, `timeout -k 30 120…240`,
+   logs `…050605Z_m02-tolpolicy` … `…051054Z_m13-singleport`. **Twelve Status-0
+   footers**: `tolerance_policy` 1/1 s, `convergence_diagnostics` 13+1skip/2 s,
+   `gauge_penalty` 4/14 s, `gauge_multiplier_convergence` 2/**129 s** (the
+   root's dominant single cost), `gauge_lagrange` 4/6 s, `cylinder` 1/36 s,
+   `coil_phantom_magnetostatics` 1/7 s, `energy_and_point_evaluation` 6/6 s,
+   `time_harmonic_smoke` 3+5skip/3 s, `two_cylinder` 1/3 s, `two_torus` 1/2 s,
+   `single_port_excitation` 4/1 s.
+14. `20260827T051113Z_OPS-26-step2a-legd-complex-skips.log` — complex,
+   `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, **Status 0, 34 s**,
+   `33 passed` (= environment 11 + `convergence_diagnostics` **14** +
+   `time_harmonic_smoke` **8**, zero skipped). All six real-build
+   complex-only skips convert to observed green.
+15. `20260827T051201Z_OPS-26-step2a-legd-m01-bcsel-complex.log` — the retry
+   of the one survivor in complex. **Status 124 at 180 s.**
+
+Plus the module-1 real run, `20260827T050123Z_OPS-26-step2a-legd-m01-bcsel.log`,
+**Status 124 at 241 s**, run first per the item's ordering.
+
+**Measured numbers worth keeping.** The whole `tests/solver` root costs
+**~220 s** run module-by-module. Leg (c) spent **1 001 s** on it and observed
+zero. The divergence was never a property of the root.
+
+**Finding — `test_boundary_condition_selection.py` is the one survivor, and
+"overlapping facets" is rank-partition-dependent.** Both builds deadlock
+(Status 124 × 2). The complex log is the clean read: the *same* test,
+`test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set`,
+prints `PASSED [ 46%]` from one rank and `FAILED [ 93%]` from the other, the
+failing rank raising `Invalid boundary mesh (overlapping facets) on surface 1
+surface 1`; the surviving rank then blocks in the next collective until
+`timeout -k 30` KILLs it, trailer `MPI_Abort(MPI_COMM_WORLD, 59)`. So one rank
+raising inside gmsh **is** the hang mechanism, and on this call path the
+overlapping-facets trigger depends on the mesh partition — which the three
+prior entries for that string (all reading it as a geometry/resolution
+property) do not explain. The module's other failure is
+`IndexError: index 0 is out of bounds for axis 0 with size 0`, leg (c)'s
+candidate signature, here on a swept cache in an isolated module.
+
+**Filed as a mechanism finding, NOT as a counted red** (known-issues
+2026-08-27, fourth slot). Neither run has a footer, and the census control
+admits reds only from footered runs; the four names are
+`deferred — module-scoped commands deadlocked at -n 2 in both builds; no
+Status-0/1 footer`. **The one command that would settle it — this module at
+`-n 1` — was deliberately not spent**, because `-n 1` is not the census's
+recorded width and an observation at it would not count toward the census. It
+is named in the known-issues entry as the next owner's first move.
+
+**Finding — the fail-closed control paid for itself, measurably.** Of the nine
+modules that carried the shared `IndexError` in leg (c)'s footerless run,
+**eight are green here in footered runs**. Had leg (c) filed its 23 non-green
+names, 21 of them would have been false reds in known-issues.
+
+**Deferred by name (5), no `not reached in slot` left.**
+`tests/solver/test_boundary_condition_selection.py` (4), reason above;
+`materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring`
+(1) — `deferred — skipped at runtime in the real build`, unchanged since the
+21:00 slot and **never re-attempted in complex**.
+
+**Denials:** none. No command in this slot was refused by the permission
+layer.
+
+**For the review.** §9 item 1 is closed and should be dropped from the queue;
+item 2 (leg (b)) becomes first. Two cheap follow-ups are owed and neither
+blocks anything: (i) one ~30 s complex command for the single `materials`
+name — this slot converted six such skips the same way, so the probability it
+closes is high; (ii) an owner for `test_boundary_condition_selection.py`,
+which is a `solver`/`mesh` question, not a census one, and whose first move is
+the `-n 1` command named above. **Hypothesis for leg (b): it should adopt the
+module-per-command shape from the start.** Leg (b)'s roots hold the modules
+most likely to diverge, and finding 9 says a single diverging module run inside
+a batch costs the entire batch's observations — which is precisely how leg (b)
+was predicted to fail.
+
