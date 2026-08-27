@@ -17363,3 +17363,125 @@ from the previous slots: the (d3c) decade-width wording pass, §5.4 ramp
 bookkeeping for `PORT-9`/`GEO-19`, the 4→16 mesh-time superlinearity, and the
 unassigned `straight_wire_domain` coarse-resolution floor. Ready but unqueued:
 `OPS-26` step 2 (heavy, ≥ 2 slots), `GEO-20` step 2, `MAG-20`.
+
+## 2026-08-27T00:55Z — `OPS-26` step 2 leg (a) (§9 item 1, 19:30 CDT implementer slot) — **incomplete**
+
+**Outcome: incomplete — 30 of 189 collected tests observed (29 green, 1 red),
+159 deferred.** Two of the seven leg-(a) roots are done; five were never
+launched. No code changed, so nothing is parked on an `attempt/*` branch —
+this slot's whole product is measurement plus three filed findings. `main`
+clean at handoff, §9 item 1 annotated 🟡 and left first in the queue.
+
+### What was done
+
+1. **Denominator re-derived, not inherited** (`20260827T003050Z_OPS-26.log`,
+   real build, `--collect-only`, Status 0, **5 s**): **189** tests over **54**
+   collecting modules — `environment` 11 / `unit` 22 / `io` 8 / `mesh` 57 /
+   `materials` 7 / `post` 33 / `solver` 51. The inherited 216/232 is a 0.7.2
+   repo-wide figure and does not apply to this root set.
+2. **Complex-build census command** over `environment` + `post` + `materials`
+   + the three complex-requiring `solver` modules +
+   `mesh/test_two_torus_conforming.py` (79 collected in that subset, which
+   reconciles exactly against the real-mode per-directory counts):
+   `20260827T003201Z_OPS-26-step2a-complex.log`, `-n 2`,
+   `FEM_EM_REQUIRE_COMPLEX=1` — **Status 124, 901 s**.
+3. **Isolated re-run of the red** for its traceback:
+   `20260827T004755Z_OPS-26-step2a-red-tb.log` — **Status 124, 201 s**,
+   pytest summary `1 failed, 1 passed in 1.24s`.
+
+### Measured result
+
+| root | collected | observed | green | red | deferred |
+|---|---|---|---|---|---|
+| `tests/environment` | 11 | 11 | 11 | 0 | 0 |
+| `tests/post` | 33 | 19 | 18 | 1 | 14 |
+| `tests/unit` | 22 | 0 | 0 | 0 | 22 |
+| `tests/io` | 8 | 0 | 0 | 0 | 8 |
+| `tests/mesh` | 57 | 0 | 0 | 0 | 57 |
+| `tests/materials` | 7 | 0 | 0 | 0 | 7 |
+| `tests/solver` | 51 | 0 | 0 | 0 | 51 |
+| **total** | **189** | **30** | **29** | **1** | **159** |
+
+29 + 1 + 159 = 189 — the fail-closed control's sum identity holds. Per-name
+green and deferred lists are in the §7 entry; the deferred list carries
+`not reached in slot` except `post/test_phantom_phasor_semantics.py`, which is
+`deferred — command killed at 900 s while this module was executing`.
+
+### Three findings, all filed
+
+**(1) A new red, and it is exactly the class `OPS-26` was commissioned to
+catch.**
+`post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite`
+aborts in gmsh:
+
+```
+E   Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+```
+
+preceded by `[coil-phantom-mesh] fragment volumes=4 masses[m^3]:
+1:1.381745e-04, 2:1.381745e-04, 3:2.261947e-04, 4:9.865456e-03`. That string is
+**identical** to `GEO-21`'s open birdcage entry — but this is the
+**coil+phantom** generator, a different path. If the cause is shared, the 0.11
+gmsh regression is not birdcage-specific. Stated as a hypothesis from one
+shared error string, not as a measurement; a `mesh`-owning chunk should check
+whether the fixture sits at the coarse end of a continuum the way `GEO-21`
+step 1 found for the birdcage. Real-mode disposition of this test is
+**unmeasured** — the census only reached it in the complex build. Filed, not
+fixed, not re-recorded, per the item's own rule.
+
+**(2) The red also eats the command — this is what stopped the leg.** It fails
+at 1.24 s and then the ranks diverge and never tear down: the isolated run
+printed its complete pytest summary and *then* ran to `timeout -k 30 200`
+(Status 124, 201 s, PETSc trailer after the summary). In the batch the same
+divergence hung the following module and burned the rest of the 900 s window.
+This is the `mag:1`-class teardown trap the item's traps list anticipated for
+leg (b), met instead in `tests/post`.
+
+**(3) A dead module.** `tests/mesh/test_cylindrical_domain.py` collects
+**zero** tests — it is a module-level script (`MeshGenerator.cylindrical_domain`
++ `print`, no `test_*` function) that still executes a mesh build at *import*,
+i.e. as collection-time work no disposition covers. Absent from the collection
+tree, present in the directory listing. Filed.
+
+### The slot's own procedural error, stated plainly
+
+The first census command was sized `timeout -k 30 900`, above the ~590 s
+container-side ceiling the protocol sets for a foreground harness run. It
+exceeded the Bash tool's 660 s window and was moved to the background; it was
+recovered by blocking on the task rather than ending the turn, so the log has
+its footer and the tree stayed clean — but the sizing was wrong and cost the
+slot its margin independently of finding (2). Both causes are real; neither
+excuses the other.
+
+Nothing was loosened, no band or record moved, no source or test file edited.
+
+### Hypothesis for the next attempt
+
+Leg (a) is roughly **five roots and ~160 tests** of unfinished work and is
+sized for one more slot if it is run in the right order. Concretely:
+
+- **Size every command `timeout -k 30 540`** and run it in the foreground.
+- **Take the cheap real-mode roots first** — `unit`, `io`, `materials`,
+  `solver` — before anything that touches the phantom fixture. That front-loads
+  ~88 tests. (Note for the reconciliation: the item's `core/cavity.py` seed
+  clause resolves to **no module under leg (a)** — both cavity consumers are in
+  `tests/validation`, i.e. leg (b). Leg (a)'s only seed is
+  `test_birdcage_conductor_sizing.py`.)
+- **`--deselect
+  tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite`**
+  in any batch containing `tests/post`, and record it as the already-filed red
+  rather than re-observing it; that alone recovers the 14 deferred `post` tests
+  and the `phasor_semantics` module.
+- **`tests/mesh` is the tail** (57 tests, the 16-leg scale-up at 125 s and the
+  ring-gap module at 158 s dominate) and holds the `GEO-21` seed module
+  `test_birdcage_conductor_sizing.py`; run that seed **by name first** inside
+  the mesh command so a window loss cannot cost the built-in positive.
+
+Standing prediction worth testing next slot: if finding (1) is the same 0.11
+gmsh regression as `GEO-21`, then other coil+phantom consumers —
+`materials/test_phantom_material_model.py`,
+`mesh/test_coil_phantom_conforming.py`, `mesh/test_coil_phantom_mesh.py`,
+`mesh/test_mesh_tag_integrity.py` — are candidates to red the same way, and
+the census will say so by name. If they are all green, the coil+phantom
+generator is fine at *their* resolutions and finding (1) is a fixture-specific
+sizing, which narrows the diagnosis for free.

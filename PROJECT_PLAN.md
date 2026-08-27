@@ -706,6 +706,87 @@ list shapes the census.**)*
 >   legal disposition and the chunk stays 🟡 until the deferred list is
 >   empty or every remaining name carries a *substantive* reason.
 >   Whichever leg lands last writes the reconciliation.*
+> * **Step 2 leg (a) — PARTIAL, 2026-08-26 19:30 implementer slot. 30 of 189
+>   observed (29 green, 1 red), 159 deferred. Leg (a) is NOT complete and
+>   stays queued.** Two findings, both filed in known-issues 2026-08-27.
+>
+>   **Denominator re-derived, not inherited** (`20260827T003050Z_OPS-26.log`,
+>   real build, `--collect-only`, Status 0, 5 s): the seven leg-(a)
+>   directories collect **189** tests over **54** modules —
+>   `environment` 11 / `unit` 22 / `io` 8 / `mesh` 57 / `materials` 7 /
+>   `post` 33 / `solver` 51. (The inherited 216/232 was a repo-wide 0.7.2
+>   figure and does not apply to this root set.)
+>
+>   | root | collected | observed | green | red | deferred |
+>   |---|---|---|---|---|---|
+>   | `tests/environment` | 11 | 11 | 11 | 0 | 0 |
+>   | `tests/post` | 33 | 19 | 18 | 1 | 14 |
+>   | `tests/unit` | 22 | 0 | 0 | 0 | 22 |
+>   | `tests/io` | 8 | 0 | 0 | 0 | 8 |
+>   | `tests/mesh` | 57 | 0 | 0 | 0 | 57 |
+>   | `tests/materials` | 7 | 0 | 0 | 0 | 7 |
+>   | `tests/solver` | 51 | 0 | 0 | 0 | 51 |
+>   | **total** | **189** | **30** | **29** | **1** | **159** |
+>
+>   The three totals sum to the collected count (29 + 1 + 159 = 189), as the
+>   fail-closed control requires.
+>
+>   **Observed green by name** (complex build, `FEM_EM_REQUIRE_COMPLEX=1`,
+>   `-n 2`, `20260827T003201Z_OPS-26-step2a-complex.log`):
+>   `environment/test_complex_mode.py` (4), `test_dolfinx_api_migration.py`
+>   (3), `test_dolfinx_version.py` (4); `post/test_csv_export_stats_parity.py`
+>   (7), `test_drop_set_semantics_planar.py` (3),
+>   `test_drop_set_semantics_sphere.py` (2),
+>   `test_interface_guardrail_fallback.py` (5),
+>   `test_phantom_field_metrics.py::test_evaluate_on_cells_fallback_skips_invalid_cell_point_pairs`
+>   (1, from the isolated re-run).
+>
+>   **Finding 1 — a new red, and it is the class this chunk exists to catch.**
+>   `post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite`
+>   aborts in gmsh with **`Invalid boundary mesh (overlapping facets) on
+>   surface 1`** — *the identical symptom string* as `GEO-21`'s birdcage
+>   entry, but on the **coil+phantom** generator. `1 failed, 1 passed in
+>   1.24s` (`20260827T004755Z_OPS-26-step2a-red-tb.log`). If the shared string
+>   is a shared cause, the 0.11 gmsh regression is **not birdcage-specific**;
+>   that is a hypothesis for a `mesh`-owning chunk, not a claim this census
+>   lands. **Filed, not fixed, not re-recorded**, per the item's own rule.
+>
+>   **Finding 2 — the red also eats the command.** After failing at 1.24 s the
+>   ranks diverge and teardown never returns: the isolated run hit `timeout -k
+>   30 200` (Status 124, 201 s) *after* printing its full summary, and in the
+>   batch it hung the next module (`post/test_phantom_phasor_semantics.py`,
+>   never reported) until the 900 s window expired (Status 124, 901 s). **That
+>   lost window is why leg (a) stopped at two of seven roots** — the census
+>   command was correct, the module under it is a rank-divergence trap of the
+>   `mag:1` class the item's own traps list warned about, met in `tests/post`
+>   rather than in leg (b). The slot's own procedural error is separate and
+>   smaller: the first census command was sized `timeout -k 30 900`, above the
+>   protocol's ~590 s foreground ceiling, so it also had to be recovered from
+>   the background. Next leg: size every command `timeout -k 30 540` and run
+>   `tests/post` **after** the other roots, or `--deselect` this test by name.
+>
+>   **Finding 3 — a dead module.** `tests/mesh/test_cylindrical_domain.py`
+>   collects **zero** tests: it is a module-level script (no `test_*`
+>   function) that nonetheless executes a mesh build at import. It is absent
+>   from the collection tree while present in the directory listing — the
+>   `OPS-26` class exactly. Filed; disposition belongs to a `mesh` chunk.
+>
+>   **Deferred by name, all `deferred — not reached in slot` unless stated.**
+>   `post`: `test_phantom_phasor_semantics.py` (3) — *`deferred — command
+>   killed at 900 s while this module was executing; no per-test result`*;
+>   `test_quicklook_report.py` (3); `test_tagged_cell_partition_invariance.py`
+>   (8). Whole roots unreached: `unit` (3 modules / 22),
+>   `io` (2 / 8), `mesh` (23 collecting modules / 57 — including the seed
+>   module `test_birdcage_conductor_sizing.py`), `materials` (2 / 7),
+>   `solver` (13 / 51). **Leg (a)'s built-in positive is still owed**: the seed
+>   module `test_birdcage_conductor_sizing.py` (`GEO-21`) sits in the unreached
+>   `mesh` root. The item's other seed clause, "any `core/cavity.py` consumer
+>   under these roots" (`OPS-24`), resolves to **none** — the two cavity
+>   consumers (`validation/test_cavity_resonances.py`,
+>   `validation/test_resonance_guard.py`) are under `tests/validation`, i.e.
+>   **leg (b)**; only `environment/test_dolfinx_api_migration.py` mentions
+>   `cavity` under leg (a) and it is not a consumer. Recorded so the
+>   reconciliation does not later look for a seed that was never in this leg.
 > * **Step 2 — execution census on 0.11 (heavy, likely 2+ slots).** Re-run
 >   `OPS-17` leg (b2)'s methodology on the current image: every collected test
 >   **observed in a completed run with a footer**, real and complex, at each
@@ -6009,7 +6090,20 @@ mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-1. **`OPS-26` step 2 leg (a) — execution census on 0.11, the cheap
+1. 🟡 **PARTIAL 2026-08-26 19:30 slot — 30/189 observed (29 green, 1 red),
+   159 deferred; stays first in the queue.** Denominator re-derived at
+   **189** over 54 modules. Two roots done (`environment` 11/11 green,
+   `post` 19/33), five unreached. A new red —
+   `post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite`,
+   gmsh `Invalid boundary mesh (overlapping facets)`, the `GEO-21` string on
+   the coil+phantom generator — **also hangs MPI teardown and consumed the
+   900 s window**, which is what stopped the leg. Filed (known-issues
+   2026-08-27), not fixed. Third finding: `tests/mesh/test_cylindrical_domain.py`
+   collects zero tests. Full table + deferred-by-name list in the §7 entry.
+   **Next attempt:** `timeout -k 30 540` per command, take `unit`/`io`/
+   `materials`/`solver`/`mesh` **first**, and `--deselect` the hanging test
+   by name; the two seed modules under these roots are still owed.
+   **`OPS-26` step 2 leg (a) — execution census on 0.11, the cheap
    directories (heavy by tier, one slot; `-n 2` default, per-file recorded
    width where a module's own docstring or log says otherwise; real build,
    complex where the module requires it; `main`; independent — leg (b) is

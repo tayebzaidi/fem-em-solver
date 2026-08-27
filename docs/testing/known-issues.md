@@ -28,6 +28,90 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a)) — `test_phantom_field_metrics_and_exports_are_finite` aborts in gmsh with **the same "Invalid boundary mesh (overlapping facets)"** as the entry below, on the **coil+phantom** geometry — and its MPI teardown then **hangs the rest of the command**
+
+> **Where this fired.**
+> `tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite`,
+> complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `mpiexec -n 2`. Found by the
+> `OPS-26` step 2 execution census (2026-08-26 19:30 implementer slot) — i.e.
+> by the instrument built to find exactly this class, not by an example.
+>
+> **Literal symptom** (`20260827T004755Z_OPS-26-step2a-red-tb.log`, isolated,
+> `--tb=short`):
+>
+> ```
+> raise Exception(logger.getLastError())
+> E   Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+> ```
+>
+> with the fragment census printed immediately before the abort:
+> `[coil-phantom-mesh] fragment volumes=4 masses[m^3]: 1:1.381745e-04,
+> 2:1.381745e-04, 3:2.261947e-04, 4:9.865456e-03 | air=4 coil_1=1 coil_2=2
+> phantom=3`. **`1 failed, 1 passed in 1.24s`** — the failure is immediate and
+> cheap, not a cost or JIT problem. The sibling test in the module,
+> `test_evaluate_on_cells_fallback_skips_invalid_cell_point_pairs`, is green.
+>
+> **Second-order damage — this red burns the whole command.** After the
+> failure the ranks diverge and teardown never completes: the isolated run
+> printed its full pytest summary at 1.24 s and then sat until `timeout -k 30
+> 200` killed it (**Status 124, elapsed 201 s**, PETSc error trailer after the
+> summary line). In the census batch the same divergence hung the *next*
+> module — `tests/post/test_phantom_phasor_semantics.py` never produced a
+> result and the 900 s window was consumed
+> (`20260827T003201Z_OPS-26-step2a-complex.log`, Status 124, 901 s). Anyone
+> batching `tests/post` must expect to lose the tail of the command, not just
+> this test. Budget it isolated.
+>
+> **Cause.** Not diagnosed. The symptom string is **identical** to the
+> `GEO-21` entry immediately below, which measured the coarse end of
+> `birdcage_port_domain`'s conductor sizing to have stopped meshing at the
+> 0.11 merge. This occurrence is on a **different generator** (the
+> coil+phantom fragment path, `air`/`coil_1`/`coil_2`/`phantom`), which is
+> evidence that the 0.11 gmsh regression is **not birdcage-specific** — but
+> that is a hypothesis stated from one shared error string, not a measurement.
+> Whoever takes it should first check whether the fixture's resolution is at
+> the coarse end of a continuum, as `GEO-21` step 1 found for the birdcage.
+>
+> **Not.** Not a tolerance or physics failure — no assertion is reached. Not
+> the retired `DummyMagnetostaticSolver` red under §1 (that was an
+> `AttributeError` and its code path was deleted by `TH-1`). Not diagnosed as
+> real-mode-affected: the census only reached this module in the complex build,
+> so the real-mode disposition of this test is **unmeasured**.
+>
+> **Filed, not fixed** — `OPS-26` step 2 is a census and files reds by
+> construction (§9 item 1: "a red found here is filed, never fixed or
+> re-recorded in-slot").
+>
+> **Retire-when:** the test is green through the harness on `main` in both
+> builds, with the fixture's meshing resolution recorded.
+>
+> **Verified at** `18bb604` (tree clean at slot start; no source edited this
+> slot).
+
+### ⚫ DEAD MODULE, filed 2026-08-27 (`OPS-26` step 2 leg (a)) — `tests/mesh/test_cylindrical_domain.py` collects **zero tests**
+
+> The file is a module-level *script*, not a test module: it calls
+> `MeshGenerator.cylindrical_domain(...)` and `print`s at import time and
+> defines no `test_*` function. `--collect-only` on the seven leg-(a)
+> directories lists every other module in `tests/mesh` and **omits this one
+> entirely** (`20260827T003050Z_OPS-26.log`, 189 collected, Status 0, 5 s) —
+> so it contributes 0 to the census denominator while looking, by filename,
+> like coverage.
+>
+> Worse than dead: pytest **imports** it during every collection of
+> `tests/mesh`, so its mesh build runs — as collection-time work no
+> disposition covers — and any exception it raises would surface as a
+> collection error rather than a test failure.
+>
+> This is the `OPS-26` class in its purest form: a module no scheduled command
+> can report on. **Filed, not fixed** — turning it into a real test (or
+> deleting it) is a `mesh`-owning chunk's call, not the census's.
+>
+> **Retire-when:** the file either defines an asserting `test_*` function
+> observed green through the harness, or is removed.
+>
+> **Verified at** `18bb604`.
+
 ### 🔴 OPEN 2026-08-25, re-headed 2026-08-26 (`GEO-21` step 2) — `birdcage_port_domain` **cannot mesh a coarse conductor sizing on the 0.11 image**: `conductor_resolution=None` and everything coarser than ~4.8 mm abort in gmsh with "Invalid boundary mesh (overlapping facets)"
 
 > **✅ The gate-red portion of this entry RETIRED 2026-08-26** (`GEO-21` step 2,

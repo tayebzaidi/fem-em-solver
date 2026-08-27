@@ -1,0 +1,133 @@
+# Test Run
+- Chunk: OPS-26-step2a-red-tb
+- Commit: 18bb604e2a3972f82a746a58ffcbf7f4793521ec
+- Time (UTC): 2026-08-27 00:47:55
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && export FEM_EM_REQUIRE_COMPLEX=1 && PYTHONPATH=/workspace/src timeout -k 30 200 mpiexec -n 2 python3 -m pytest tests/post/test_phantom_field_metrics.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 26 19:47 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && export FEM_EM_REQUIRE_COMPLEX=1 && PYTHONPATH=/workspace/src timeout -k 30 200 mpiexec -n 2 python3 -m pytest tests/post/test_phantom_field_metrics.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 2 items
+
+tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite collected 2 items
+
+tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite FAILED [ 50%]
+tests/post/test_phantom_field_metrics.py::test_evaluate_on_cells_fallback_skips_invalid_cell_point_pairs PASSED [100%]
+
+=================================== FAILURES ===================================
+______________ test_phantom_field_metrics_and_exports_are_finite _______________
+tests/post/test_phantom_field_metrics.py:28: in test_phantom_field_metrics_and_exports_are_finite
+    mesh, cell_tags, facet_tags = MeshGenerator.coil_phantom_domain(
+src/fem_em_solver/io/mesh.py:2640: in coil_phantom_domain
+    gmsh.model.mesh.generate(3)
+/usr/local/lib/gmsh.py:2189: in generate
+    raise Exception(logger.getLastError())
+E   Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+----------------------------- Captured stdout call -----------------------------
+[coil-phantom-mesh] fragment volumes=4 masses[m^3]: 1:1.381745e-04, 2:1.381745e-04, 3:2.261947e-04, 4:9.865456e-03 | air=4 coil_1=1 coil_2=2 phantom=3
+[coil-phantom-mesh] sizing ownership: air: field 1 on volume 4 -> 3.000000e-02 m, coil_1: field 2 on volume 1 -> 3.000000e-02 m, coil_2: field 3 on volume 2 -> 3.000000e-02 m, phantom: field 4 on volume 3 -> 3.000000e-02 m | Min field 5 | clamps min=3.000000e-02 max=3.000000e-02 m
+[coil-phantom-mesh] region resolution policy: coil=3.000000e-02 m, phantom=3.000000e-02 m, air=3.000000e-02 m
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 20%] Meshing curve 3 (Circle)
+Info    : [ 20%] Meshing curve 4 (Circle)
+Info    : [ 30%] Meshing curve 5 (Circle)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 40%] Meshing curve 7 (Circle)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 50%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 60%] Meshing curve 11 (Line)
+Info    : [ 60%] Meshing curve 12 (Line)
+Info    : [ 70%] Meshing curve 13 (Line)
+Info    : [ 70%] Meshing curve 14 (Line)
+Info    : [ 80%] Meshing curve 15 (Line)
+Info    : [ 80%] Meshing curve 16 (Line)
+Info    : [ 90%] Meshing curve 17 (Line)
+Info    : [ 90%] Meshing curve 18 (Line)
+Info    : [100%] Meshing curve 19 (Line)
+Info    : Done meshing 1D (Wall 0.0019324s, CPU 0.001934s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [  0%] 46 triangles are equivalent
+Info    : [  0%] Meshing surface 1 (Torus, MeshAdapt)
+Info    : [ 10%] Meshing surface 2 (Torus, Frontal-Delaunay)
+Info    : [ 10%] 48 triangles are equivalent
+Info    : [ 10%] Meshing surface 2 (Torus, MeshAdapt)
+Info    : [ 10%] Serializing surface 2 and refining all its bounding edges
+Info    : [ 20%] Meshing surface 3 (Cylinder, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 2 (Torus, Frontal-Delaunay)
+Info    : [100%] 8-| Splitting those edges and trying again
+Info    : [100%] :-) All edges recovered after 1 iteration
+Info    : Done meshing 2D (Wall 0.208713s, CPU 0.208709s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 4 volumes with 1 connected component
+Info    : Tetrahedrizing 818 nodes...
+Info    : Done tetrahedrizing 826 nodes (Wall 0.0102579s, CPU 0.010255s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    : Found two duplicated facets.
+Info    :   1st: [148, 18, 151] #1
+Info    :   2nd: [148, 18, 151] #1
+----------------------------- Captured stderr call -----------------------------
+Warning : 2 elements remain invalid in surface 2
+Error   : Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+=========================== short test summary info ============================
+FAILED tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite - Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+========================= 1 failed, 1 passed in 1.24s ==========================
+[0]PETSC ERROR: ------------------------------------------------------------------------
+[0]PETSC ERROR: Caught signal number 15 Terminate: Some process (or the batch system) has told this process to end
+[0]PETSC ERROR: Try option -start_in_debugger or -on_error_attach_debugger
+[0]PETSC ERROR: or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/
+[0]PETSC ERROR: configure using --with-debugging=yes, recompile, link, and run 
+[0]PETSC ERROR: to get more information on the crash.
+Abort(59) on node 0 (rank 0 in comm 0): application called MPI_Abort(MPI_COMM_WORLD, 59) - process 0
+
+## Exit
+- Status: 124
+- Elapsed (s): 201
