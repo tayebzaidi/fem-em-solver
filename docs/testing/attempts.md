@@ -18815,3 +18815,170 @@ from. Step 2 closes ✅ only if every deferred name carries a substantive
 reason; on the current count that means the 14 `degree2` names and whatever
 survives of the `dodd_deeds` tail, each with a measured or structural reason,
 never `not reached in slot`.
+
+## 2026-08-27T20:50Z — `OPS-26` step 2 leg (g) (§9 item 1, 15:00 CDT implementer slot) — **incomplete (partial, expected)**
+
+**Item:** §9 item 1, the census tail, sixth consecutive slot on it. Leg (f)'s
+written next-leg prescription was followed in its own draw order, with two
+deviations, both journal-derived and both recorded below. Bookkeeping only —
+no `src/`, `tests/`, `scripts/` or `examples/` change, nothing parked, `main`
+clean at handoff.
+
+**Preflight.** Tree clean, container Up (27 h), `main` at `4586a13`. FFCx
+0-byte stub sweep before window 1: clean, zero stray `python3` (finding 27's
+rule).
+
+**Four compute windows, 1 606 s, three footered (Status 0 / 0 / 1) and one
+Status 124. +9 names ⇒ 255 → 264 of 289 (250 green, 14 red), 25 deferred.**
+
+| # | drawn | build | width | window | result | log | names |
+|---|---|---|---|---|---|---|---|
+| 1 | `test_port_systematics_composition.py` (+ `tests/environment`) | complex | `-n 2` | `-k 30 540` | **14 passed / 363.35 s**, Status 0 | `20260827T200110Z_OPS-26-step2g-port-systematics.log` | **3 green** |
+| 2 | `test_port_gap_voltage_padding.py` | complex | `-n 2` | `-k 30 590` | **Status 124, 590 s**, `collected 2 items` then the first test's name and nothing else | `20260827T200754Z_OPS-26-step2g-gapvoltpad.log` | 0 (2 deferred) |
+| 3 | `reactance_wire_resolution` `-k pinned` | complex | `-n 2` | `-k 30 400` | **2 passed, 4 deselected / 214.36 s**, Status 0 | `20260827T201823Z_OPS-26-step2g-dodd-wireres-pinned.log` | **2 green** |
+| 4 | `reactance_wire_resolution`, the 4 complementary names **by node id** | complex | `-n 2` | `-k 30 590` | **1 failed, 3 passed / 434.40 s**, Status 1 | `20260827T202222Z_OPS-26-step2g-dodd-wireres-projected.log` | **3 green, 1 red** |
+
+Both rank streams identical in outcome and elapsed time on all four
+(434.36 / 434.40 s on the red, 363.35 s on window 1).
+
+**Arithmetic.** Observed 264 = 250 green + 14 red. `tests/ports` complete at
+17/17 (unchanged); `tests/validation` **238 → 247 of 272**. Deferred **25** =
+`coil_loading_degree2` 14 (`TH-12` memory-wall structural defer) +
+`box_truncation` 5 (finding 32, measured) + `reactance_box_size` 4 (not
+reached in slot) + `port_gap_voltage_padding` 2 (finding 33, measured).
+264 + 25 = 289.
+
+### Finding 33 — `test_port_gap_voltage_padding.py` is a structural deferral, and a by-name split provably cannot rescue it
+
+Two windows at the same `-n 2` width now bracket it: 400 s (finding 21) and
+**590 s** this slot, both Status 124 having printed `collected 2 items`, then
+`test_the_enlarged_box_is_the_fixture_it_claims_to_be`, and no outcome line
+for either name. The remedy leg (f) prescribed — "split by name if that window
+fails" — is ruled out by reading the file rather than spending a window on it:
+`gap_ports_padded` at `test_port_gap_voltage_padding.py:95` is
+`@pytest.fixture(scope="module")`, so each by-name command pays the same
+setup, and the setup is what exceeds 590 s. Its deferral reason is upgraded
+from finding 21's "completed zero of 2 names in 400 s" to
+**`deferred — measured, module fixture alone > 590 s at -n 2`, two windows
+cited** — a substantive reason, which is what step 2's close criterion needs.
+Same shape as `box_truncation`. Any future attempt needs a *different* rank
+width or a smaller fixture, not a narrower selection.
+
+### Finding 34 — `reactance_wire_resolution` was never unpriced, and the journal's recorded `-k` halves beat the item's window budget by 91 s
+
+Item 1 and leg (f)'s prescription both size this file as "record 491.96 s with
+2 deselected, full file unpriced, 1.5× is 740 s — exceeds the foreground
+window, split by name". The journal (2026-08-20, the `dodd_deeds` closing
+slot) already carries **two disjoint `-k` halves covering all 6 validation
+names**: `pinned` at 242.68 s and `projected or refinement` at 499.80 s, both
+`-n 2`, both including 4 environment tests. Run at those boundaries with the
+environment root dropped, they came in at **214.36 s (−11.7%)** and
+**434.40 s (−13.1%)** — the file is **complete at 6/6 for 649 s**, against a
+budgeted ≥ 740 s for a single window that could not legally have been run in
+the foreground at all.
+
+Two rules confirmed and one qualified:
+
+- **Grep the journal for the module name before sizing** (finding 31) — third
+  consecutive slot where it changed the plan.
+- **Select by node id, never `-k "a or b"`** inside a harness command. The
+  recorded half used `-k "projected or refinement"`; nested double quotes
+  inside the harness's own quoting is the trap the leg lists warn about, and
+  four `path::name` arguments are the exact same selection with no quoting at
+  all. The cheap half needed no trick — `-k pinned` has no space.
+- **Finding 29's ≥ 1.5× rule is a *sizing* rule, not a prediction.** This is
+  the first module to come in **under** its 0.7.2-era price, on both halves
+  and by a similar factor. Sizing up stays right (a 124 costs the whole
+  window; slack costs nothing), but "0.11 is slower" is not a fact about the
+  image — `combined_knobs` was +34.7% and these were −12%.
+
+### Finding 35 — a tenth stale-record red, a fifth mesh, and this one has **no sibling**
+
+`wire_resolution::test_the_refinement_landed_on_the_wire_and_not_on_the_far_field`
+asserts the exact 0.7.2 count **366 207** and 0.11 meshes **365 970** —
+**−237, −0.0647%**, the second negative drift of the five. The module's other
+five names are green across the two halves, so once again the physics
+reproduces and only the count does not (`dR 1.0562%`-class readings unmoved).
+
+The zero-compute sweep this time is the finding: `grep -rn '366207\|366_207'
+tests/` returns **only** `:268` and its own message at `:270`. So the
+value→module map of the class is **ragged — 4, 3, 1, 1, 1**:
+
+| mesh (0.7.2 → 0.11) | drift | modules holding it |
+|---|---|---|
+| 138 619 → 138 490 | −0.093% | `richardson_ladder` ×2 params, `larmor_probe`, `transition_30mhz` (**4 names**) |
+| 417 914 → 418 888 | +0.233% | `slab_resolution`, `larmor_resolution`, `third_rung` (**3**) |
+| 697 401 → 697 926 | +0.075% | `combined_knobs` (**1**) |
+| 2 807 309 → 2 808 204 | +0.032% | `mesh_cache` (**1**) |
+| **366 207 → 365 970** | **−0.0647%** | **`wire_resolution` (1) — new this slot** |
+
+Finding 30's "one re-record retires up to four names" is therefore an **upper
+bound, not the typical case**. `OPS-27` should size itself as **five
+measurements and ~ten edits**, and the by-value sweep still matters (it is
+what protects the 4- and 3-module meshes) — it is just not a 2× saving on the
+tail. Filed as one new known-issues entry above the leg (f) one.
+
+### Negative-result column
+
+One red, same single class, filed not fixed. One measured no-footer deferral
+with a *structural* remedy ruled out by reading the source rather than by
+spending a second window on it. Nothing loosened, no assertion edited, no
+`src/`/`tests/` file touched. No new gmsh "overlapping facets" site, so
+`GEO-23` stands at five.
+
+**Cache and process discipline (finding 27's rule, followed).** Swept
+`find /root/.cache/fenics -name '*.c' -size 0` before window 1 — clean — and
+again immediately after window 2's exit 124 — also clean, zero stray
+`python3`. Windows 3 and 4 ran after that kill and both footered normally,
+which is the second confirmation that a kill inside a *mesh* step leaves no
+stub (leg (f)'s note); the sweep stays mandatory because that distinction is
+not visible before the fact.
+
+**Denials:** one, and it is worth recording as a *shape*. Writing the
+multi-line commit message to `.git/ATTEMPT_ENTRY.md` was denied as a
+sensitive path — `.git/` is not a scratch area. Use a path under the repo
+worktree (or `$TMPDIR`) for `git commit -F`, never inside `.git/`. Zero
+compute cost. No compute command was denied.
+
+### Hypothesis for the next attempt (leg (h)) — this one really is the last census leg
+
+**25 names over 4 modules remain and only 9 over 2 are reachable.** The other
+16 are both defers-with-reason and must not be re-opened: `degree2` 14
+(`TH-12` memory wall) and `gap_voltage_padding` 2 (finding 33). So the end
+state is **273 of 289** — 2 below leg (e)'s ~275 forecast, the difference
+being finding 33's pair moving from "unknown" to "structurally deferred".
+
+Draw order, both windows sized from the journal (finding 31):
+
+1. **`reactance_box_size` (4)** — *not* unpriced. Its own record is
+   **559.58 s for the full file at `-n 2`** (2026-08-20), which was 98.2% of
+   its 570 s window with no margin, **and** two independent `-k` halves of
+   **271.08 s + 260.07 s** (`MAT-6` step 4) that simply add, because this file
+   has **no module-scoped fixture** — it is the per-test-solve shape.
+   **Take the two halves**, `-k 30 400` each: two safe windows, ~530 s total,
+   4 names, and no repeat of the 98.2% squeeze. Finding 34's `-k`/node-id rule
+   applies to the split.
+2. **`box_truncation` (5)** last. It is the one-setup shape (a single ~400 s
+   fixture, every other call ≤ 0.03 s), so a by-name split is as useless here
+   as it is for `gap_voltage_padding` — **change the width, not the
+   selection**: `-n 2` at `-k 30 590`, per finding 32's own note that the
+   `-n 8` assumption for this family is unverified and that its sibling
+   `slab_resolution` is faster at `-n 2` than `combined_knobs` is at `-n 8`.
+   If that third window also returns no footer it is a permanent
+   `deferred — measured, > 590 s per test`, cited to three windows at two
+   widths, and the census closes with it deferred. Finding 30 predicts an
+   **eleventh** red behind it either way: its first test,
+   `test_the_xlarge_box_mesh_is_the_probes`, is another cell-count equality.
+
+**Leg (h) owes the chunk-level reconciliation** and should budget ~20 minutes
+for it after the two windows — it is fully specified now: the seed list of
+four by name (`test_convergence.py` ✅, `GEO-16`'s
+`test_port_lumped_two_torus.py` ✅, `core/cavity.py`'s `TH-9` gates via
+`test_cavity_resonances.py` ✅, `test_birdcage_conductor_sizing.py` from leg
+(a)); the three totals repo-wide (189 + 289); the dead module and the five
+`GEO-23` entries cross-referenced; and the stale-record class as **finding
+35's five-mesh table**, which is the site list `OPS-27` executes from. Step 2
+closes ✅ only if every deferred name carries a substantive reason — on the
+current count that is `degree2` 14 (structural), `gap_voltage_padding` 2
+(finding 33, measured), and whatever survives of `box_size`/`box_truncation`;
+**no `not reached in slot` may remain**.

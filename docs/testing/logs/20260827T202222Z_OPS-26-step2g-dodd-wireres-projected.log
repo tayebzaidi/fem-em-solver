@@ -1,0 +1,334 @@
+# Test Run
+- Chunk: OPS-26-step2g-dodd-wireres-projected
+- Commit: 4586a136e17e4c6ff63badbf9f312cef3b0fd107
+- Time (UTC): 2026-08-27 20:22:22
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 590 mpiexec -n 2 python3 -m pytest tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_the_refinement_landed_on_the_wire_and_not_on_the_far_field tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_the_meshed_torus_recovers_volume_under_wire_refinement tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_fine_wire tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_fine_wire -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 15:22 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 590 mpiexec -n 2 python3 -m pytest tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_the_refinement_landed_on_the_wire_and_not_on_the_far_field tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_the_meshed_torus_recovers_volume_under_wire_refinement tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_fine_wire tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_fine_wire -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 4 items
+
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_the_refinement_landed_on_the_wire_and_not_on_the_far_field collected 4 items
+
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_the_refinement_landed_on_the_wire_and_not_on_the_far_field FAILED [ 25%]
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_the_meshed_torus_recovers_volume_under_wire_refinement FAILED [ 25%]
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_the_meshed_torus_recovers_volume_under_wire_refinement PASSED [ 50%]
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_fine_wire PASSED [ 75%]
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_fine_wire PASSED [100%]PASSED [ 50%]
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_projected_resistance_change_matches_dodd_deeds_on_the_fine_wire PASSED [ 75%]
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_projected_reactance_change_has_the_right_sign_and_magnitude_on_the_fine_wire PASSED [100%]
+
+=================================== FAILURES ===================================
+_______ test_the_refinement_landed_on_the_wire_and_not_on_the_far_field ________
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py:268: in test_the_refinement_landed_on_the_wire_and_not_on_the_far_field
+    assert ncells == 366_207, (
+E   AssertionError: the mesh is deterministic and only resolution_wire moved, so the cell count must be the probe's 366207; got 365970
+E   assert 365970 == 366207
+---------------------------- Captured stdout setup -----------------------------
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 10%] Meshing curve 2 (Circle)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 40%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 50%] Meshing curve 10 (Line)
+Info    : [ 50%] Meshing curve 11 (Line)
+Info    : [ 60%] Meshing curve 12 (Line)
+Info    : [ 60%] Meshing curve 13 (Line)
+Info    : [ 60%] Meshing curve 14 (Line)
+Info    : [ 70%] Meshing curve 15 (Line)
+Info    : [ 70%] Meshing curve 16 (Line)
+Info    : [ 80%] Meshing curve 17 (Line)
+Info    : [ 80%] Meshing curve 18 (Line)
+Info    : [ 90%] Meshing curve 19 (Line)
+Info    : [ 90%] Meshing curve 20 (Line)
+Info    : [100%] Meshing curve 21 (Line)
+Info    : [100%] Meshing curve 22 (Line)
+Info    : Done meshing 1D (Wall 0.0736217s, CPU 0.073624s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Torus, Frontal-Delaunay)
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 50%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 7 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 8 (Plane, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 9 (Plane, Frontal-Delaunay)
+Info    : [ 80%] Meshing surface 10 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 11 (Plane, Frontal-Delaunay)
+Info    : [100%] Meshing surface 12 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.402863s, CPU 0.402858s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 3 volumes with 1 connected component
+Info    : Tetrahedrizing 7576 nodes...
+Info    : Done tetrahedrizing 7584 nodes (Wall 0.219664s, CPU 0.203368s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    :  - Identifying boundary edges
+Info    :  - Recovering boundary
+Info    : Done reconstructing mesh (Wall 0.430432s, CPU 0.39423s)
+Info    : Found volume 4
+Info    : Found volume 3
+Info    : Found volume 1
+Info    : It. 0 - 0 nodes created - worst tet radius 68.8954 (nodes removed 0 0)
+Info    : It. 500 - 500 nodes created - worst tet radius 4.97445 (nodes removed 0 0)
+Info    : It. 1000 - 1000 nodes created - worst tet radius 3.7186 (nodes removed 0 0)
+Info    : It. 1500 - 1500 nodes created - worst tet radius 3.201 (nodes removed 0 0)
+Info    : It. 2000 - 2000 nodes created - worst tet radius 2.89409 (nodes removed 0 0)
+Info    : It. 2500 - 2500 nodes created - worst tet radius 2.82108 (nodes removed 0 0)
+Info    : It. 3000 - 3000 nodes created - worst tet radius 2.55067 (nodes removed 0 0)
+Info    : It. 3500 - 3500 nodes created - worst tet radius 2.43429 (nodes removed 0 0)
+Info    : It. 4000 - 4000 nodes created - worst tet radius 2.32641 (nodes removed 0 0)
+Info    : It. 4500 - 4500 nodes created - worst tet radius 2.24098 (nodes removed 0 0)
+Info    : It. 5000 - 5000 nodes created - worst tet radius 2.16377 (nodes removed 0 0)
+Info    : It. 5500 - 5500 nodes created - worst tet radius 2.10863 (nodes removed 0 0)
+Info    : It. 6000 - 6000 nodes created - worst tet radius 2.03505 (nodes removed 0 0)
+Info    : It. 6500 - 6500 nodes created - worst tet radius 1.98249 (nodes removed 0 0)
+Info    : It. 7000 - 7000 nodes created - worst tet radius 1.93333 (nodes removed 0 0)
+Info    : It. 7500 - 7500 nodes created - worst tet radius 1.89143 (nodes removed 0 0)
+Info    : It. 8000 - 8000 nodes created - worst tet radius 1.84938 (nodes removed 0 0)
+Info    : It. 8500 - 8500 nodes created - worst tet radius 1.81159 (nodes removed 0 0)
+Info    : It. 9000 - 9000 nodes created - worst tet radius 1.77895 (nodes removed 0 0)
+Info    : It. 9500 - 9500 nodes created - worst tet radius 1.74517 (nodes removed 0 0)
+Info    : It. 10000 - 10000 nodes created - worst tet radius 1.7182 (nodes removed 0 0)
+Info    : It. 10500 - 10498 nodes created - worst tet radius 1.69063 (nodes removed 0 2)
+Info    : It. 11000 - 10998 nodes created - worst tet radius 1.71705 (nodes removed 0 2)
+Info    : It. 11500 - 11498 nodes created - worst tet radius 1.63895 (nodes removed 0 2)
+Info    : It. 12000 - 11998 nodes created - worst tet radius 1.61644 (nodes removed 0 2)
+Info    : It. 12500 - 12498 nodes created - worst tet radius 1.62572 (nodes removed 0 2)
+Info    : It. 13000 - 12998 nodes created - worst tet radius 1.58088 (nodes removed 0 2)
+Info    : It. 13500 - 13498 nodes created - worst tet radius 1.55915 (nodes removed 0 2)
+Info    : It. 14000 - 13998 nodes created - worst tet radius 1.54121 (nodes removed 0 2)
+Info    : It. 14500 - 14498 nodes created - worst tet radius 1.52255 (nodes removed 0 2)
+Info    : It. 15000 - 14998 nodes created - worst tet radius 1.50632 (nodes removed 0 2)
+Info    : It. 15500 - 15498 nodes created - worst tet radius 1.48985 (nodes removed 0 2)
+Info    : It. 16000 - 15998 nodes created - worst tet radius 1.47426 (nodes removed 0 2)
+Info    : It. 16500 - 16498 nodes created - worst tet radius 1.45907 (nodes removed 0 2)
+Info    : It. 17000 - 16998 nodes created - worst tet radius 1.44561 (nodes removed 0 2)
+Info    : It. 17500 - 17498 nodes created - worst tet radius 1.43177 (nodes removed 0 2)
+Info    : It. 18000 - 17998 nodes created - worst tet radius 1.4187 (nodes removed 0 2)
+Info    : It. 18500 - 18498 nodes created - worst tet radius 1.40527 (nodes removed 0 2)
+Info    : It. 19000 - 18998 nodes created - worst tet radius 1.3926 (nodes removed 0 2)
+Info    : It. 19500 - 19498 nodes created - worst tet radius 1.37987 (nodes removed 0 2)
+Info    : It. 20000 - 19998 nodes created - worst tet radius 1.36819 (nodes removed 0 2)
+Info    : It. 20500 - 20498 nodes created - worst tet radius 1.35774 (nodes removed 0 2)
+Info    : It. 21000 - 20998 nodes created - worst tet radius 1.34656 (nodes removed 0 2)
+Info    : It. 21500 - 21498 nodes created - worst tet radius 1.33592 (nodes removed 0 2)
+Info    : It. 22000 - 21998 nodes created - worst tet radius 1.32582 (nodes removed 0 2)
+Info    : It. 22500 - 22498 nodes created - worst tet radius 1.31617 (nodes removed 0 2)
+Info    : It. 23000 - 22998 nodes created - worst tet radius 1.30741 (nodes removed 0 2)
+Info    : It. 23500 - 23498 nodes created - worst tet radius 1.29901 (nodes removed 0 2)
+Info    : It. 24000 - 23998 nodes created - worst tet radius 1.28998 (nodes removed 0 2)
+Info    : It. 24500 - 24498 nodes created - worst tet radius 1.28144 (nodes removed 0 2)
+Info    : It. 25000 - 24998 nodes created - worst tet radius 1.27288 (nodes removed 0 2)
+Info    : It. 25500 - 25498 nodes created - worst tet radius 1.26487 (nodes removed 0 2)
+Info    : It. 26000 - 25998 nodes created - worst tet radius 1.25723 (nodes removed 0 2)
+Info    : It. 26500 - 26498 nodes created - worst tet radius 1.24973 (nodes removed 0 2)
+Info    : It. 27000 - 26998 nodes created - worst tet radius 1.24263 (nodes removed 0 2)
+Info    : It. 27500 - 27498 nodes created - worst tet radius 1.23486 (nodes removed 0 2)
+Info    : It. 28000 - 27998 nodes created - worst tet radius 1.22759 (nodes removed 0 2)
+Info    : It. 28500 - 28498 nodes created - worst tet radius 1.22039 (nodes removed 0 2)
+Info    : It. 29000 - 28998 nodes created - worst tet radius 1.21306 (nodes removed 0 2)
+Info    : It. 29500 - 29498 nodes created - worst tet radius 1.20657 (nodes removed 0 2)
+Info    : It. 30000 - 29998 nodes created - worst tet radius 1.19965 (nodes removed 0 2)
+Info    : It. 30500 - 30498 nodes created - worst tet radius 1.19291 (nodes removed 0 2)
+Info    : It. 31000 - 30998 nodes created - worst tet radius 1.18642 (nodes removed 0 2)
+Info    : It. 31500 - 31498 nodes created - worst tet radius 1.18007 (nodes removed 0 2)
+Info    : It. 32000 - 31998 nodes created - worst tet radius 1.17327 (nodes removed 0 2)
+Info    : It. 32500 - 32498 nodes created - worst tet radius 1.1669 (nodes removed 0 2)
+Info    : It. 33000 - 32998 nodes created - worst tet radius 1.16094 (nodes removed 0 2)
+Info    : It. 33500 - 33498 nodes created - worst tet radius 1.15511 (nodes removed 0 2)
+Info    : It. 34000 - 33998 nodes created - worst tet radius 1.14901 (nodes removed 0 2)
+Info    : It. 34500 - 34498 nodes created - worst tet radius 1.14335 (nodes removed 0 2)
+Info    : It. 35000 - 34998 nodes created - worst tet radius 1.13778 (nodes removed 0 2)
+Info    : It. 35500 - 35498 nodes created - worst tet radius 1.13216 (nodes removed 0 2)
+Info    : It. 36000 - 35998 nodes created - worst tet radius 1.12689 (nodes removed 0 2)
+Info    : It. 36500 - 36498 nodes created - worst tet radius 1.12156 (nodes removed 0 2)
+Info    : It. 37000 - 36998 nodes created - worst tet radius 1.1163 (nodes removed 0 2)
+Info    : It. 37500 - 37498 nodes created - worst tet radius 1.11129 (nodes removed 0 2)
+Info    : It. 38000 - 37998 nodes created - worst tet radius 1.10639 (nodes removed 0 2)
+Info    : It. 38500 - 38498 nodes created - worst tet radius 1.10159 (nodes removed 0 2)
+Info    : It. 39000 - 38998 nodes created - worst tet radius 1.09685 (nodes removed 0 2)
+Info    : It. 39500 - 39498 nodes created - worst tet radius 1.09211 (nodes removed 0 2)
+Info    : It. 40000 - 39998 nodes created - worst tet radius 1.08781 (nodes removed 0 2)
+Info    : It. 40500 - 40498 nodes created - worst tet radius 1.08332 (nodes removed 0 2)
+Info    : It. 41000 - 40998 nodes created - worst tet radius 1.07919 (nodes removed 0 2)
+Info    : It. 41500 - 41498 nodes created - worst tet radius 1.07491 (nodes removed 0 2)
+Info    : It. 42000 - 41998 nodes created - worst tet radius 1.0707 (nodes removed 0 2)
+Info    : It. 42500 - 42498 nodes created - worst tet radius 1.06665 (nodes removed 0 2)
+Info    : It. 43000 - 42998 nodes created - worst tet radius 1.06229 (nodes removed 0 2)
+Info    : It. 43500 - 43498 nodes created - worst tet radius 1.05809 (nodes removed 0 2)
+Info    : It. 44000 - 43998 nodes created - worst tet radius 1.0544 (nodes removed 0 2)
+Info    : It. 44500 - 44498 nodes created - worst tet radius 1.05028 (nodes removed 0 2)
+Info    : It. 45000 - 44998 nodes created - worst tet radius 1.04628 (nodes removed 0 2)
+Info    : It. 45500 - 45498 nodes created - worst tet radius 1.04256 (nodes removed 0 2)
+Info    : It. 46000 - 45998 nodes created - worst tet radius 1.03882 (nodes removed 0 2)
+Info    : It. 46500 - 46498 nodes created - worst tet radius 1.0353 (nodes removed 0 2)
+Info    : It. 47000 - 46998 nodes created - worst tet radius 1.03157 (nodes removed 0 2)
+Info    : It. 47500 - 47498 nodes created - worst tet radius 1.02822 (nodes removed 0 2)
+Info    : It. 48000 - 47998 nodes created - worst tet radius 1.02477 (nodes removed 0 2)
+Info    : It. 48500 - 48498 nodes created - worst tet radius 1.02116 (nodes removed 0 2)
+Info    : It. 49000 - 48998 nodes created - worst tet radius 1.01784 (nodes removed 0 2)
+Info    : It. 49500 - 49498 nodes created - worst tet radius 1.01438 (nodes removed 0 2)
+Info    : It. 50000 - 49998 nodes created - worst tet radius 1.01077 (nodes removed 0 2)
+Info    : It. 50500 - 50498 nodes created - worst tet radius 1.00739 (nodes removed 0 2)
+Info    : It. 51000 - 50998 nodes created - worst tet radius 1.00434 (nodes removed 0 2)
+Info    : It. 51500 - 51498 nodes created - worst tet radius 1.00114 (nodes removed 0 2)
+Info    : 3D refinement terminated (59263 nodes total):
+Info    :  - 7 Delaunay cavities modified for star shapeness
+Info    :  - 2 nodes could not be inserted
+Info    :  - 372291 tetrahedra created in 6.37532 sec. (58395 tets/s)
+Info    : 0 node relocations
+Info    : Done meshing 3D (Wall 8.54766s, CPU 8.47147s)
+Info    : Optimizing mesh...
+Info    : Optimizing volume 1
+Info    : Optimization starts (volume = 4.83554e-06) with worst = 0.018988 / average = 0.761116:
+Info    : 0.00 < quality < 0.10 :        49 elements
+Info    : 0.10 < quality < 0.20 :       168 elements
+Info    : 0.20 < quality < 0.30 :       333 elements
+Info    : 0.30 < quality < 0.40 :       506 elements
+Info    : 0.40 < quality < 0.50 :       749 elements
+Info    : 0.50 < quality < 0.60 :      1145 elements
+Info    : 0.60 < quality < 0.70 :      2847 elements
+Info    : 0.70 < quality < 0.80 :      6776 elements
+Info    : 0.80 < quality < 0.90 :      8317 elements
+Info    : 0.90 < quality < 1.00 :      3399 elements
+Info    : 543 edge swaps, 10 node relocations (volume = 4.83554e-06): worst = 0.0521506 / average = 0.775385 (Wall 0.0163242s, CPU 0.016323s)
+Info    : 547 edge swaps, 12 node relocations (volume = 4.83554e-06): worst = 0.0521506 / average = 0.775501 (Wall 0.0204143s, CPU 0.020414s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         1 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :       501 elements
+Info    : 0.40 < quality < 0.50 :       702 elements
+Info    : 0.50 < quality < 0.60 :      1047 elements
+Info    : 0.60 < quality < 0.70 :      2873 elements
+Info    : 0.70 < quality < 0.80 :      6868 elements
+Info    : 0.80 < quality < 0.90 :      8429 elements
+Info    : 0.90 < quality < 1.00 :      3358 elements
+Info    : Optimizing volume 3
+Info    : Optimization starts (volume = 0.0135) with worst = 0.00576397 / average = 0.770388:
+Info    : 0.00 < quality < 0.10 :       105 elements
+Info    : 0.10 < quality < 0.20 :       283 elements
+Info    : 0.20 < quality < 0.30 :       490 elements
+Info    : 0.30 < quality < 0.40 :       853 elements
+Info    : 0.40 < quality < 0.50 :      1419 elements
+Info    : 0.50 < quality < 0.60 :      2517 elements
+Info    : 0.60 < quality < 0.70 :      5106 elements
+Info    : 0.70 < quality < 0.80 :     10687 elements
+Info    : 0.80 < quality < 0.90 :     15718 elements
+Info    : 0.90 < quality < 1.00 :      8081 elements
+Info    : 860 edge swaps, 15 node relocations (volume = 0.0135): worst = 0.164465 / average = 0.781919 (Wall 0.0333324s, CPU 0.033332s)
+Info    : 868 edge swaps, 15 node relocations (volume = 0.0135): worst = 0.278922 / average = 0.78203 (Wall 0.0418474s, CPU 0.041849s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         1 elements
+Info    : 0.30 < quality < 0.40 :       854 elements
+Info    : 0.40 < quality < 0.50 :      1382 elements
+Info    : 0.50 < quality < 0.60 :      2505 elements
+Info    : 0.60 < quality < 0.70 :      5024 elements
+Info    : 0.70 < quality < 0.80 :     10869 elements
+Info    : 0.80 < quality < 0.90 :     15826 elements
+Info    : 0.90 < quality < 1.00 :      8029 elements
+Info    : Optimizing volume 4
+Info    : Optimization starts (volume = 0.0134952) with worst = 0.00357192 / average = 0.779776:
+Info    : 0.00 < quality < 0.10 :       576 elements
+Info    : 0.10 < quality < 0.20 :      1791 elements
+Info    : 0.20 < quality < 0.30 :      3334 elements
+Info    : 0.30 < quality < 0.40 :      5184 elements
+Info    : 0.40 < quality < 0.50 :      8527 elements
+Info    : 0.50 < quality < 0.60 :     14637 elements
+Info    : 0.60 < quality < 0.70 :     29984 elements
+Info    : 0.70 < quality < 0.80 :     69257 elements
+Info    : 0.80 < quality < 0.90 :    111700 elements
+Info    : 0.90 < quality < 1.00 :     57749 elements
+Info    : 5657 edge swaps, 145 node relocations (volume = 0.0134952): worst = 0.217934 / average = 0.791357 (Wall 0.255602s, CPU 0.255591s)
+Info    : 5680 edge swaps, 145 node relocations (volume = 0.0134952): worst = 0.300007 / average = 0.791403 (Wall 0.337675s, CPU 0.337666s)
+Info    : No ill-shaped tets in the mesh :-)
+Info    : 0.00 < quality < 0.10 :         0 elements
+Info    : 0.10 < quality < 0.20 :         0 elements
+Info    : 0.20 < quality < 0.30 :         0 elements
+Info    : 0.30 < quality < 0.40 :      5143 elements
+Info    : 0.40 < quality < 0.50 :      8248 elements
+Info    : 0.50 < quality < 0.60 :     14103 elements
+Info    : 0.60 < quality < 0.70 :     29990 elements
+Info    : 0.70 < quality < 0.80 :     70459 elements
+Info    : 0.80 < quality < 0.90 :    112383 elements
+Info    : 0.90 < quality < 1.00 :     57367 elements
+Info    : Done optimizing mesh (Wall 1.3725s, CPU 1.30376s)
+Info    : 59263 nodes 381677 elements
+
+[MAT-6 step 5 | projected | resolution_wire = 0.001 m] 365970 cells, mesh 15.6 s, solves 102.2 s + 102.8 s at -n 2
+[MAT-6 step 5 | projected] I = 0.979884 A
+[MAT-6 step 5 | projected] FEM   dZ = +3.2600829e-01 + j(-5.6624763e-01) Ohm
+[MAT-6 step 5 | projected] exact dZ = +3.2259615e-01 + j(-6.1586749e-01) Ohm
+[MAT-6 step 5 | projected] dR rel. error 1.0577%; dX ratio 0.9194 (coarse wire was 0.92; moved -0.0006)
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 365970 at resolution_wire = 0.001 m vs 138619 landed → 2.64×
+=========================== short test summary info ============================
+FAILED tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_the_refinement_landed_on_the_wire_and_not_on_the_far_field - AssertionError: the mesh is deterministic and only resolution_wire moved, so the cell count must be the probe's 366207; got 365970
+assert 365970 == 366207
+=================== 1 failed, 3 passed in 434.40s (0:07:14) ====================
+
+
+=================================== FAILURES ===================================
+_______ test_the_refinement_landed_on_the_wire_and_not_on_the_far_field ________
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py:268: in test_the_refinement_landed_on_the_wire_and_not_on_the_far_field
+    assert ncells == 366_207, (
+E   AssertionError: the mesh is deterministic and only resolution_wire moved, so the cell count must be the probe's 366207; got 365970
+E   assert 365970 == 366207
+----------------------------- Captured stdout call -----------------------------
+
+  cells: 365970 at resolution_wire = 0.001 m vs 138619 landed → 2.64×
+=========================== short test summary info ============================
+FAILED tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_the_refinement_landed_on_the_wire_and_not_on_the_far_field - AssertionError: the mesh is deterministic and only resolution_wire moved, so the cell count must be the probe's 366207; got 365970
+assert 365970 == 366207
+=================== 1 failed, 3 passed in 434.36s (0:07:14) ====================
+
+## Exit
+- Status: 1
+- Elapsed (s): 436

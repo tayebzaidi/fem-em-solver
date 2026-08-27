@@ -1,0 +1,61 @@
+# Test Run
+- Chunk: OPS-26-step2g-dodd-wireres-pinned
+- Commit: 4586a136e17e4c6ff63badbf9f312cef3b0fd107
+- Time (UTC): 2026-08-27 20:18:24
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/validation/test_dodd_deeds_reactance_wire_resolution.py -k pinned -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 15:18 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/validation/test_dodd_deeds_reactance_wire_resolution.py -k pinned -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 6 items / 4 deselected / 2 selected
+
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_pinned_resistance_change_matches_dodd_deeds_on_the_fine_wire collected 6 items / 4 deselected / 2 selected
+
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_pinned_resistance_change_matches_dodd_deeds_on_the_fine_wire PASSED [ 50%]
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_pinned_reactance_change_has_the_right_sign_and_magnitude_on_the_fine_wire PASSED [100%]PASSED [ 50%]
+tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_pinned_reactance_change_has_the_right_sign_and_magnitude_on_the_fine_wire PASSED [100%]
+
+================= 2 passed, 4 deselected in 214.36s (0:03:34) ==================
+
+
+================= 2 passed, 4 deselected in 214.36s (0:03:34) ==================
+
+## Exit
+- Status: 0
+- Elapsed (s): 215

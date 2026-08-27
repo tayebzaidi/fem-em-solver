@@ -28,6 +28,25 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (g), 15:00 slot) — a **tenth** stale exact cell-count record, and it is a **fifth** mesh with **no sibling**: `test_dodd_deeds_reactance_wire_resolution.py` records 366 207 and 0.11 meshes 365 970
+
+> **CANDIDATE OWNER: `OPS-27`** (§9 item 2), extending the leg (f) entry
+> below. This one refines that entry's shape rather than repeating it: the
+> class is now **ten red names over nine modules carrying five distinct
+> meshes**, and this fifth mesh is recorded in **exactly one** place, so
+> "one re-record retires up to four names" is an upper bound, not the
+> typical case — the sweep must still be by value, but the value→module
+> map is ragged (4, 3, 1, 1, 1).
+
+| | |
+|---|---|
+| **Test (1 new name, footered Status 1, at `4586a13`)** | `tests/validation/test_dodd_deeds_reactance_wire_resolution.py::test_the_refinement_landed_on_the_wire_and_not_on_the_far_field` (1 of the module's 6 validation names; the other 5 are green — 2 in the same run, 2 `pinned` in `20260827T201823Z`, the 6th selected in the same node-id list and green) |
+| **Log** | `docs/testing/logs/20260827T202222Z_OPS-26-step2g-dodd-wireres-projected.log` — `1 failed, 3 passed in 434.40s`, **Status 1**, elapsed 436 s, `-n 2`, **complex build**, heavy tier, four names selected by node id. Both rank streams identical (434.36 / 434.40 s). |
+| **Symptom** | `AssertionError: the mesh is deterministic and only resolution_wire moved, so the cell count must be the probe's 366207; got 365970`, at `test_dodd_deeds_reactance_wire_resolution.py:268`. |
+| **Cause — not diagnosed in code** | Same class: an exact-equality cell count recorded on 0.7.2, never swept when `OPS-18` moved the image. Drift **−237 on 366 207 = −0.0647%**, a *fifth* distinct per-mesh figure and the second negative one (−0.093%, −0.065%, +0.032%, +0.075%, +0.233%) — confirming again that no unmeasured record can be predicted from a measured one. The test's stated premise ("the mesh is deterministic and only `resolution_wire` moved") is not what failed; the *record* is stale. |
+| **Sibling sweep (zero compute)** | `grep -rn '366207\|366_207' tests/` returns **only** `:268` and its message at `:270` — no sibling module carries this mesh, unlike 138 619 (three modules) and 417 914 (three). |
+| **Disposition** | Filed, **not fixed** — `OPS-26` step 2 is a census and lands no fix. Expected on `main`; **not yours**. |
+
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (f), 13:30 slot) — **five more stale exact cell-count records across five modules, and the class collapses to THREE shared meshes, not nine independent constants**
 
 > **CANDIDATE OWNER: `OPS-27`** (§9 item 2), whose rubric as written names
