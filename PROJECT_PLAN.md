@@ -567,8 +567,8 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-23` | Sweep the `OPS-21` rank-0-return defect pattern (4 measured sites in 3 test files) + the `test_helmholtz_v2.py` Im-bound (commissioned 2026-08-20 03:00 review from the 00:00 slot's grep survey) | ✅ | smoke-to-standard | 3 real sites (all in `test_csv_export_stats_parity.py`) + the Im-bound fixed; 2 of the commissioned sites were print-only false positives and 1 exempted site was a real defect; 12 passed both ranks, 5.00 s. *Audited COMPLIANT 2026-08-21 18:00 review — red-baseline byte-identity re-verified against the log's rank blocks; benign omission: the first exit-0 helmholtz-real log is in test-results.md but uncited in the annotation* |
 | `OPS-24` | Migrate `core/cavity.py`'s two `assemble_matrix(..., diagonal=)` sites to the 0.11 signature — `TH-9`'s cavity gate + resonance guard have been **non-executing on `main` since the 0.11 merge** (known-issues 2026-08-24; found by `EX-30` leg (th); commissioned 2026-08-24 18:00 review; closed 2026-08-25 — `diagonal=` → `diag=`, all four green, 0.0436% worst-mode reproduced to the printed digit) | ✅ | standard |
 | `OPS-25` | Re-join `th:7` to its gate: hoist the series-interior interpolation into the gate module and import it, migrating the repo's only `interpolate(cells=)` site (known-issues 2026-08-24; ruled hoist-not-repair by the 2026-08-24 18:00 review) | ✅ (2026-08-25: hoisted to `series_interior_function` in `test_lossy_sphere_fullwave.py`; `th:7` green in 14 s with both element-order records reproducing — degree 1 8.1541% / 8.3869%, degree 2 0.1405% / 0.0058%, drifts ≤ 1.48e-03 in a 1% band — and the gate's `P_series(meshed)` **bit-identical to all ten printed digits** across the refactor; `13 passed in 25.28s`) | standard |
-| `OPS-26` | **Systematic dolfinx-0.11 migration completeness sweep** — re-run `OPS-17`'s "observed in a completed run" census on the 0.11 image and statically sweep `src/` for un-migrated call sites. Two silently-broken gates have already been found *by examples rather than by the upgrade's own re-gate* (`TH-9` cavity, `OPS-24`; straight-wire h-refinement, red on `main`, found 2026-08-25 by `mag:6`); a third is likelier than not. **Commissioned 2026-08-25 by operator directive, interactive session** — queue at the next review. *Queued 2026-08-25 10:30 review: step 1 is §9 item 3; step 2 held until step 1's site list lands.* ***Step 1 ✅ 2026-08-25, 15:00 slot** — `src`/`tests` clean at 434 call sites / 29 APIs, negative control binding and passing, two survivors filed in `scripts/probes/`; step 2 (execution census) is now unblocked.* ***Step 2 leg (a) DONE 2026-08-27 (four consecutive slots, 19:30 → 00:00)** — the seven cheap roots at **184 / 189 observed (182 green, 2 red), 5 deferred**, every deferral with a substantive reason and `182 + 2 + 5 = 189`; two reds and one rank-dependent deadlock filed in known-issues (all three carry the 0.11 "overlapping facets" string on *different* generators — owner **`GEO-23`**, commissioned by the 03:00 review), one dead module filed. The fix that unstuck `tests/solver` (0 → 47/51 in ~220 s) was one command per module; leg (b) adopts it from the start. Step 2 stays 🟡 on leg (b) (§9 item 1).* ***Step 2 leg (b) PARTIAL 2026-08-27 (04:30 slot)** — denominator re-derived at **289 / 63 modules** (`validation` 272/59, `ports` 17/4); **22 observed (19 green, 3 red), 267 deferred**, `tests/ports` **complete at 17/17**, `tests/validation` at 5/272. New defect class found (**finding 12**): `tests/ports/test_port_orientation_sensitivity.py` is red because `OPS-14`'s rank-safety `comm.allgather` outgrew its `_DummyComm` double — not a 0.11 break, and invisible to step 1's static sweep by construction. The owed `materials` complex conversion **failed onto a fifth `GEO-23` "overlapping facets" site**, the second rank-dependent one; leg (a)'s 184/189 is unchanged with that name's deferral reason upgraded. Two known-issues entries filed. Leg (c) owns the ~267-name `tests/validation` remainder.* ***Step 2 leg (b) PARTIAL, second slot 2026-08-27 (06:00)** — **139 / 289 observed (136 green, 3 red), 150 deferred**; `tests/validation` **5 → 122 of 272**, this slot's **117 names all green**, twenty-seven module-per-command runs, no batching, **no red, no no-footer deferral, no exit 124**, 2 028 s. **Finding 15:** `grep -L complex tests/validation/test_*.py` returns **6 of 59** — 53 modules are complex-gated, so the real build scores them as runtime skips, which is the structural reason attempt 1 banked 5 names; running the complex build for the 53 and the real build for the 6 banked **117** in one slot at the cost of one zero-compute grep, and all 6 real-build modules are now green, so the remainder is entirely complex work. **Finding 16:** cost is concentrated, not spread — gap-voltage 483 s + circular-loop 350 s are 41% of the slot for 20% of its names — and thirteen 0.11 prices are banked for leg (c). **Finding 17:** `test_circular_loop.py`, which stopped `OPS-17` (b2) attempts 1–2 with the JIT failure that commissioned `OPS-22`, is `3 passed in 348.74s` complex — the fixture fix holds on 0.11. Leg (c) owns the remaining **150** names over **28** modules (`coil_loading_*` 58, `dodd_deeds_*` 38, birdcage 32, straight-wire 7, a 13-name cheap remainder, the one complex-only skip).* ***Step 2 leg (c) PARTIAL 2026-08-27 (07:30 slot)** — **188 / 289 observed (184 green, 4 red), 101 deferred**; `tests/validation` **122 → 171 of 272**, fourteen module-per-command runs, 1 874 s. The **birdcage `PORT-9`/`PORT-11` block is complete at 32/32 green** for 593 s (18.5 s/name, the census's best rate — priced blocks before unpriced cheap tails is what bought the slot 49 names). **Finding 18 — leg (b)'s build classifier is unsound and its failure mode is invisible to the fail-closed control:** `grep -L complex` misfiled the real-build magnetostatics module `test_straight_wire.py` as complex-gated on a *comment* at line 94, and running it in the complex build produced a **footered Status-1 red** (`TypeError: '>' not supported between instances of 'complex' and 'float'`, 3 failed / 4 passed, 192 s) indistinguishable from a genuine red; in the real build the same module is **7 passed, Status 0, 314 s**. Sound classifier, now used: grep the actual gate (`complex_mode|requires_complex|is_complex|skipif`). **Finding 19 (red, filed):** leg (b)'s owed complex conversion of `test_geometry_floor_discriminator.py` lands on a genuine red — it asserts the **pre-`OPS-18`** 128 MHz record 1.8260% and measures `OPS-18`'s 1.7686% (3.14% > 1%); a stale constant, not a `TH-10` finding. **Finding 20:** `test_helmholtz_v2.py`, the `OPS-17` (b2) attempt-2 *hang*, is `1 passed in 1.24s` in the **real** build — the hang was a finding-18-class build-gate artifact. **Finding 21:** `test_port_gap_voltage_padding.py`, the `OPS-17` (b2) formal deferral, re-priced not inherited — **Status 124 at 400 s with zero `PASSED`/`FAILED` lines printed**, i.e. it completed none of its 2 tests in the window; deferral upgraded from inherited to measured. Leg (d) owns the remaining **101** names over **16** modules: `coil_loading_*` 58, `dodd_deeds_*` 38, `test_port_systematics_composition.py` 3, and finding 21's 2.* ***Step 2 leg (d) PARTIAL 2026-08-27 (09:00 slot)** — **207 / 289 observed (202 green, 5 red), 82 deferred**; `tests/validation` **171 → 190 of 272**, four module-per-command runs, 704 s, three footered (Status 0/0/1) and one Status 124. **Finding 23 (red, filed):** `test_coil_loading_larmor_mesh_cache.py::test_the_cached_rung_is_the_priced_mesh` asserts the **exact** 0.7.2-era cell count 2 807 309 and 0.11's gmsh meshes **2 808 204** — **+0.032%**, a mesher-version drift against an equality record, with the module's other 4 names green in the same run. That is the **third** site of the class leg (c)'s finding 19 named (`test_geometry_floor_discriminator.py`) and `GEO-16` first showed: **records made on 0.7.2 and not swept when `OPS-18` re-recorded**. The class, not the constant, is the deliverable — a review should commission one sweep over all exact-equality records rather than three one-constant fixes. **Finding 24:** the real-build route for `larmor_mesh_cache` is real and cheap — `OPS-17` (b2) priced it at 445.55 s **complex**, this slot ran it **real at 219 s (2.03×)**, and its 4 environment skips are all complex-only tests outside the census roots, so a gate-classifier "not complex-gated" verdict (finding 18's rule) is worth **half the window** on this module. **Finding 25:** `test_coil_loading_larmor_third_rung.py` did **not** reproduce its `OPS-17` (b2) record — recorded `11 passed / 174.86 s / exit 0` at `-n 8` with `TH11_STEP5_RUNG=fine`, this slot **Status 124 at 300 s** with only the module's first (non-solving) test out, `deferred — no footer`. The likely cause is **ordering**: in attempt 8 `mesh_cache` ran immediately *before* it and populated the rung's on-disk cache, so 174.86 s is a **warm-cache** price, not the module's. Leg (e) should run `mesh_cache` first and `third_rung` second in the same slot, at `-k 30 500`. **Rate note (finding 22 confirmed):** the two priced `dodd_deeds` modules returned **14 names for 184 s = 13 s/name**, the census's best rate to date, against 219 s for 5 names on the unpriced-in-this-build `mesh_cache`. Leg (e) owns the remaining **82** names over **13** modules: `coil_loading_*` 53 (of which `degree2`'s 14 are the `TH-12` structural defer and `third_rung`'s 7 need the cache ordering), `dodd_deeds_*` 24 over 5 modules (all ~400 s single-fixture files, widths in the leg-(c) price table), `test_port_systematics_composition.py` 3, `test_port_gap_voltage_padding.py` 2.* *Queued as leg (e) by the 2026-08-27 10:30 review (§9 item 1); the three stale-record reds are `OPS-27`, finding 12's test double is `OPS-28`.* ***Step 2 leg (e) PARTIAL 2026-08-27 (12:00 slot)** — **214 / 289 observed (208 green, 6 red), 75 deferred**; `tests/validation` **190 → 197 of 272**, five compute windows, 1 853 s, three footered (Status 1/1/1) and two Status 124. **Finding 25 CONFIRMED and the ordering remedy works:** `mesh_cache` real first (262 s, its 4 green + the filed finding-23 red reproduced verbatim), then `third_rung` complex `-n 8` `fine` against the warm cache — which **footered at 304 s**, where the same command cold had been Status 124 at 301 s. The recorded 174.86 s was indeed a warm-cache price; the module's own cold price is ≥ 500 s. **Finding 27 — the trap list's "sweep 0-byte FFCx stubs first" is not optional, and skipping it cost this slot a 329 s window.** The first warm `third_rung` attempt returned a **footered Status 1 with all 7 census names in ERROR**, every one `RuntimeError: Failed JIT compilation of form: JIT compilation timed out, probably due to a failed previous compile … libffcx_forms_1ea5a4c22c3fbbdfad7ef834d249519203ba0bb6.c`. The cache held **exactly one** 0-byte `.c`, timestamped 14:07 — i.e. created by *leg (d)'s own* 300 s kill of this very module five hours earlier. One `rm` and the identical command produced `1 failed, 17 passed`. **This is the failure mode the fail-closed control cannot see** (compare finding 18): a poisoned stub yields a *footered* run whose names are ERROR, not absent, so a census that trusted the footer would have recorded 7 spurious reds. **Rule, now mandatory: sweep `find /root/.cache/fenics -name '*.c' -size 0` before the first window of every slot, and again after any exit-124 window, because a killed window poisons the cache for the next one.** **Finding 28 (red, filed, the fourth stale-record site):** `third_rung::test_the_rung_is_inside_the_priced_ceiling` asserts the exact 0.7.2 fine-rung count **417 914** and 0.11 meshes **418 888** — **+0.233%**, seven times the `mesh_cache` site's relative drift, same sign, with the module's other 6 names (both complex-power identities, the free-solve dissipation identity, and `test_the_fine_rung_reproduces_step2s_recorded_deviation`) green in the same run. So the rung's *physics* reproduces its `TH-11` record while only its cell count does not. **Note for `OPS-27`: its planned `grep -rn '0\.7\.2' tests/` would not necessarily reach this constant** — it was found by reading a red's assertion message, so the sweep clause should be widened to exact-equality mesh counts regardless of version tag. **Finding 29 — two `dodd_deeds` prices from leg (c) did not hold on this image, both near-misses:** `reactance_combined_knobs` `-n 8` (recorded 421.90 s) was **Status 124 at 521 s** having printed one `PASSED`, and `resistance_slab_resolution` `-n 2` (recorded 386.82 s) was **Status 124 at 437 s** having reached **100% of its progress bar on both ranks** before dying in teardown/summary. Both are `deferred — no footer` by the fail-closed control despite the second one visibly finishing its tests — the control is working as designed, and the remedy is width, not interpretation: budget these two at **≥ 600 s** (slab is worth ~450 s + margin, knobs unknown above 520 s). No stub and no stray `python3` was left by either kill. Leg (f) owns the remaining **75** names over **12** modules: `dodd_deeds_*` 24 over 5 (two of them now re-priced upward), `coil_loading_*` 46 (of which `degree2`'s 14 remain the `TH-12` structural defer), `test_port_systematics_composition.py` 3, `test_port_gap_voltage_padding.py` 2.* ***Step 2 leg (f) PARTIAL 2026-08-27 (13:30 slot)** — **255 / 289 observed (242 green, 13 red), 34 deferred**; `tests/validation` **197 → 238 of 272**, six compute windows, 2 314 s, five footered (Status 1 ×5) and one Status 124; **41 names banked**, the census's best rate on the expensive tail. **Finding 30 — the stale-record class collapses to shared meshes, and it re-shapes `OPS-27`:** this slot's six reds are all of that class, and pooling them with legs (c)–(e) gives **nine red names over eight modules carrying only FOUR distinct 0.7.2-era cell counts** — 138 619 → 138 490 (**−0.093%**) in `richardson_ladder` ×2 params, `larmor_probe` and `transition_30mhz`; 417 914 → 418 888 (**+0.233%**) in `slab_resolution`, `larmor_resolution` and `third_rung`; 697 401 → 697 926 (**+0.075%**) in `combined_knobs`; 2 807 309 → 2 808 204 (**+0.032%**) in `mesh_cache`. Two consequences: the **unit of repair is the mesh, not the file** (a per-file fix leaves siblings red; one re-record retires up to four names, so `OPS-27` is **four measurements and ~nine edits**, not nine measurements), and the **drift is per-mesh, not a global offset** (it does not even share a sign, so no unmeasured record can be predicted from a measured one). Leg (e)'s note that `grep -rn '0\.7\.2' tests/` is insufficient is confirmed twice over — none of the five new sites was reachable by version tag; all were found by reading a red's assertion message. **The census is the sweep: `OPS-27` should take its site list from finding 30's table, not re-derive it by grep.** **Finding 31 — item 1's own draw order is lossy and cost-relevant:** `richardson_ladder` was budgeted as two commands / 800 s, but `OPS-17` step 3j had already refuted the split in the journal (`TH11_STEP4_RUNG` selects the *mesh*, `FREQ_MHZ=10,30` selects both parametrisations) — **one command, all 14 names, 143 s**; and the "unpriced" `larmor_probe`/`transition_30mhz` pair was priced in the journal at 137.18 s and reproduced at **137.35 s (+0.12%) for 12 names**. Two zero-compute greps turned a budgeted 800 s + "unpriced" into 282 s for 26 of the slot's 41 names. **Rule: grep `attempts.md` for the module name before sizing any window.** **Finding 32:** finding 29's ≥ 1.5× sizing rule is validated — `slab_resolution` footered at 429.91 s (+11.1% over record) and `combined_knobs` at 568.26 s (**+34.7%**, the census's largest under-price, which is why its 520 s and 615 s windows fell on opposite sides) — but `reactance_box_truncation` is not a pricing near-miss: at `-n 8` / 600 s it died **inside its first validation test** with no other name started, so it is `deferred — measured, first test alone > 590 s at -n 8` and must not get a third `-n 8` window without a by-name split or a width change (its first test is itself another cell-count equality, so finding 30 predicts a tenth red behind it). Finding 27's cache sweep was run before window 1 and again after the exit 124 — **clean both times**, zero stray `python3`. Leg (g) owns the remaining **34** names over **6** modules, of which only **20 over 5** are reachable (`degree2`'s 14 stay the `TH-12` structural defer): the three untried `dodd_deeds_*` 15, `test_port_systematics_composition.py` 3, `test_port_gap_voltage_padding.py` 2 — one slot should finish the tail **and** write the chunk-level reconciliation.* ***Step 2 leg (g) PARTIAL 2026-08-27 (15:00 slot)** — **264 / 289 observed (250 green, 14 red), 25 deferred**; `tests/validation` **238 → 247 of 272**, four compute windows, 1 606 s, three footered (Status 0/0/1) and one Status 124; **9 names banked**, and the reachable tail is down to **9 names over 3 modules**. The two `PORT` unknowns are now resolved in opposite directions: `test_port_systematics_composition.py` is **14 passed / 363.35 s** (`-n 2`, +0.87% on its `20260821T034507Z` record of 360.23 s) — its 3 census names green, and the `PORT-10` batch-C killer is simply an expensive file, not a broken one. **Finding 33 — `test_port_gap_voltage_padding.py` is a measured structural deferral, not a pricing miss, and it is now cited to two windows at the same width:** at `-n 2` / **590 s** it printed `collected 2 items` and then the name of its first test and nothing else — Status 124, zero `PASSED`/`FAILED` lines, exactly as at 400 s (finding 21). Its `gap_ports_padded` fixture is `scope="module"`, so a by-name split cannot help — it would pay the same setup twice — and the deferral reason is upgraded to **`deferred — measured, module fixture alone > 590 s at -n 2`, two windows (400 s, 590 s)**. That makes it the same shape as `box_truncation` (finding 32) and a *substantive* reason for step 2's close criterion, not a `not reached in slot`. **Finding 34 — finding 31's journal-grep rule paid a third time, and `reactance_wire_resolution` was never unpriced:** item 1 budgets it as "record 491.96 s with 2 deselected, full file unpriced, ≥ 740 s" and therefore unrunnable in one foreground window, but the journal carries **two disjoint `-k` halves** from 2026-08-20 (`pinned` 242.68 s, `projected or refinement` 499.80 s) that together cover all 6 validation names. Run at those boundaries — with the environment root dropped and the second half selected by **node id** rather than `-k "a or b"` (the quoting trap) — the halves came in at **214.36 s (−11.7%)** and **434.40 s (−13.1%)**, *both under their records*, and the file is complete at 6/6 in 649 s against a budgeted ≥ 740 s for one window that could not have run. Note the sign: this is the first module family to come in **under** its 0.7.2-era price, which is why finding 29's ≥ 1.5× rule must stay a *sizing* rule and never becomes a prediction. **Finding 35 (red, filed) — a tenth stale-record name, a fifth mesh, and it has no sibling:** `wire_resolution::test_the_refinement_landed_on_the_wire_and_not_on_the_far_field` asserts the exact 0.7.2 count **366 207** and 0.11 meshes **365 970** (**−0.0647%**, the second negative drift), with the module's other 5 names green across the two halves. A zero-compute `grep -rn '366207' tests/` finds **only this site** — so finding 30's "one re-record retires up to four names" is an upper bound and the value→module map is ragged (**4, 3, 1, 1, 1**); `OPS-27` should size itself as **five measurements, ~ten edits**. Finding 27's cache sweep ran before window 1 and again after the exit 124 — clean both times, zero stray `python3`. Leg (h) owns the remaining **25** names over **4** modules, of which only **9 over 2** are reachable: `reactance_box_size` **4** (journal-priced at **559.58 s full file at `-n 2`**, or two recorded `-k` halves of 271.08 s + 260.07 s — take the halves, the full file was 98.2% of its window) and `box_truncation` **5** (finding 32: `-n 2` or a by-name split, never a third `-n 8` window); `degree2`'s 14 and `gap_voltage_padding`'s 2 are both defers-with-reason and are **not** to be re-opened. **Leg (h) should finish the tail and owes the chunk-level reconciliation.*** ***Step 2 ✅ 2026-08-27 (16:30 slot, leg (h)) ⇒ chunk ✅.** Final: **268 / 289 observed (254 green, 14 red), 21 deferred**; `tests/validation` **247 → 251 of 272**, `tests/ports` 17/17. Three windows, 1 166 s, two footered (Status 0/0) and one Status 124. `reactance_box_size` is **4/4 green** on its two recorded `-k` halves (282.59 s + 289.44 s = 572 s, +4.2% / +11.3% on the 2026-08-20 record — **finding 37**: taking the halves was right, the full file's 559.58 s + 11% would have blown a 590 s window). **Finding 36:** `reactance_box_truncation` is a **permanent measured deferral** — Status 124 at both `-n 8`/600 s (leg (f)) and `-n 2`/590 s (this slot), each dying inside its first validation test; its `projected_xlarge_box` fixture is `scope="module"` and all five tests consume it, so width is not the constraint and a by-name split cannot help. It needs a *smaller fixture*, not a different selection — a `MAT-6` pricing question, not a census one. Finding 30's predicted eleventh red sits behind that fixture and is **pending**, not falsified. **Chunk-level reconciliation (written in `attempts.md`, 2026-08-27T22:20Z):** repo-wide over both censuses, **478 collected → 452 observed (436 green, 16 red), 26 deferred** (452 + 26 = 478), i.e. **94.6% of the repo's collected tests observed in a footered run on 0.11**, with **zero `not reached in slot` and zero `deferred — no footer`** surviving. The **seed list of four is green by name** — `test_convergence.py` **1 passed / 141.51 s** (its `test_h_refinement_straight_wire`, cited in this chunk's own rationale as *red on `main` right now*, **PASSED**; `MAG-20` owns the band, but the gate executes), `test_port_lumped_two_torus.py` 5 passed / 90.97 s, `test_cavity_resonances.py` 3 passed / 5.59 s, `test_birdcage_conductor_sizing.py` PASSED in leg (a)'s 38-item run. The **16 reds are exactly three families with named owners**: ten stale 0.7.2-era exact records over 8 modules but only **5 distinct meshes** (`OPS-27`), five "overlapping facets" sites including the dead `test_cylindrical_domain.py` module (`GEO-23`), and three test-double-drift names (`OPS-28`, finding 12 — invisible to step 1's static sweep by construction). The **26 deferrals** are `degree2` 14 (`TH-12` memory wall), `box_truncation` 5 (finding 36), `gap_voltage_padding` 2 (finding 33), leg (a)'s 5 (all `GEO-23`/filed) — every one a measured cost or a filed defect. **No band was loosened and no red fixed in-slot across seven census slots.** **Answer to the operator's directive:** the 0.11 transition worked; the three exception families are stale *records* (the physics reproduces), one gmsh boundary-mesh family, and one mock a prior chunk's rank-safety fix outgrew — **`OPS-18`'s §4 close stands**, every §2 physics claim's gate was observed executing and passing on 0.11.* | ✅ | heavy (split across ≥ 2 slots) |
-| `OPS-27` | **Re-record the 0.7.2-era exact records the `OPS-18` re-record did not reach, version-tagged on the `GEO-16` precedent, and sweep for siblings** — two reds on `main` filed by the `OPS-26` census: `test_geometry_floor_discriminator.py` `RECORD_128_RELL2` = 0.01826 vs `OPS-18`'s 1.7686% (leg (c) finding 19) and `test_coil_loading_larmor_mesh_cache.py` `NCELLS_THIRD` = 2 807 309 vs 0.11's 2 808 204 (leg (d) finding 23, +0.032% mesher drift); `GEO-16`'s 79 534 → 79 070 was the first of the class. No band introduced; a `grep -rn '0\.7\.2' tests/` sweep (11 files) tabulated for a third site. Commissioned 2026-08-27 10:30 review; full rubric in §9 item 2 | 🧪 | standard |
+| `OPS-26` | **Systematic dolfinx-0.11 migration completeness sweep** — re-run `OPS-17`'s "observed in a completed run" census on the 0.11 image and statically sweep `src/` for un-migrated call sites. Two silently-broken gates have already been found *by examples rather than by the upgrade's own re-gate* (`TH-9` cavity, `OPS-24`; straight-wire h-refinement, red on `main`, found 2026-08-25 by `mag:6`); a third is likelier than not. **Commissioned 2026-08-25 by operator directive, interactive session** — queue at the next review. *Queued 2026-08-25 10:30 review: step 1 is §9 item 3; step 2 held until step 1's site list lands.* ***Step 1 ✅ 2026-08-25, 15:00 slot** — `src`/`tests` clean at 434 call sites / 29 APIs, negative control binding and passing, two survivors filed in `scripts/probes/`; step 2 (execution census) is now unblocked.* ***Step 2 leg (a) DONE 2026-08-27 (four consecutive slots, 19:30 → 00:00)** — the seven cheap roots at **184 / 189 observed (182 green, 2 red), 5 deferred**, every deferral with a substantive reason and `182 + 2 + 5 = 189`; two reds and one rank-dependent deadlock filed in known-issues (all three carry the 0.11 "overlapping facets" string on *different* generators — owner **`GEO-23`**, commissioned by the 03:00 review), one dead module filed. The fix that unstuck `tests/solver` (0 → 47/51 in ~220 s) was one command per module; leg (b) adopts it from the start. Step 2 stays 🟡 on leg (b) (§9 item 1).* ***Step 2 leg (b) PARTIAL 2026-08-27 (04:30 slot)** — denominator re-derived at **289 / 63 modules** (`validation` 272/59, `ports` 17/4); **22 observed (19 green, 3 red), 267 deferred**, `tests/ports` **complete at 17/17**, `tests/validation` at 5/272. New defect class found (**finding 12**): `tests/ports/test_port_orientation_sensitivity.py` is red because `OPS-14`'s rank-safety `comm.allgather` outgrew its `_DummyComm` double — not a 0.11 break, and invisible to step 1's static sweep by construction. The owed `materials` complex conversion **failed onto a fifth `GEO-23` "overlapping facets" site**, the second rank-dependent one; leg (a)'s 184/189 is unchanged with that name's deferral reason upgraded. Two known-issues entries filed. Leg (c) owns the ~267-name `tests/validation` remainder.* ***Step 2 leg (b) PARTIAL, second slot 2026-08-27 (06:00)** — **139 / 289 observed (136 green, 3 red), 150 deferred**; `tests/validation` **5 → 122 of 272**, this slot's **117 names all green**, twenty-seven module-per-command runs, no batching, **no red, no no-footer deferral, no exit 124**, 2 028 s. **Finding 15:** `grep -L complex tests/validation/test_*.py` returns **6 of 59** — 53 modules are complex-gated, so the real build scores them as runtime skips, which is the structural reason attempt 1 banked 5 names; running the complex build for the 53 and the real build for the 6 banked **117** in one slot at the cost of one zero-compute grep, and all 6 real-build modules are now green, so the remainder is entirely complex work. **Finding 16:** cost is concentrated, not spread — gap-voltage 483 s + circular-loop 350 s are 41% of the slot for 20% of its names — and thirteen 0.11 prices are banked for leg (c). **Finding 17:** `test_circular_loop.py`, which stopped `OPS-17` (b2) attempts 1–2 with the JIT failure that commissioned `OPS-22`, is `3 passed in 348.74s` complex — the fixture fix holds on 0.11. Leg (c) owns the remaining **150** names over **28** modules (`coil_loading_*` 58, `dodd_deeds_*` 38, birdcage 32, straight-wire 7, a 13-name cheap remainder, the one complex-only skip).* ***Step 2 leg (c) PARTIAL 2026-08-27 (07:30 slot)** — **188 / 289 observed (184 green, 4 red), 101 deferred**; `tests/validation` **122 → 171 of 272**, fourteen module-per-command runs, 1 874 s. The **birdcage `PORT-9`/`PORT-11` block is complete at 32/32 green** for 593 s (18.5 s/name, the census's best rate — priced blocks before unpriced cheap tails is what bought the slot 49 names). **Finding 18 — leg (b)'s build classifier is unsound and its failure mode is invisible to the fail-closed control:** `grep -L complex` misfiled the real-build magnetostatics module `test_straight_wire.py` as complex-gated on a *comment* at line 94, and running it in the complex build produced a **footered Status-1 red** (`TypeError: '>' not supported between instances of 'complex' and 'float'`, 3 failed / 4 passed, 192 s) indistinguishable from a genuine red; in the real build the same module is **7 passed, Status 0, 314 s**. Sound classifier, now used: grep the actual gate (`complex_mode|requires_complex|is_complex|skipif`). **Finding 19 (red, filed):** leg (b)'s owed complex conversion of `test_geometry_floor_discriminator.py` lands on a genuine red — it asserts the **pre-`OPS-18`** 128 MHz record 1.8260% and measures `OPS-18`'s 1.7686% (3.14% > 1%); a stale constant, not a `TH-10` finding. **Finding 20:** `test_helmholtz_v2.py`, the `OPS-17` (b2) attempt-2 *hang*, is `1 passed in 1.24s` in the **real** build — the hang was a finding-18-class build-gate artifact. **Finding 21:** `test_port_gap_voltage_padding.py`, the `OPS-17` (b2) formal deferral, re-priced not inherited — **Status 124 at 400 s with zero `PASSED`/`FAILED` lines printed**, i.e. it completed none of its 2 tests in the window; deferral upgraded from inherited to measured. Leg (d) owns the remaining **101** names over **16** modules: `coil_loading_*` 58, `dodd_deeds_*` 38, `test_port_systematics_composition.py` 3, and finding 21's 2.* ***Step 2 leg (d) PARTIAL 2026-08-27 (09:00 slot)** — **207 / 289 observed (202 green, 5 red), 82 deferred**; `tests/validation` **171 → 190 of 272**, four module-per-command runs, 704 s, three footered (Status 0/0/1) and one Status 124. **Finding 23 (red, filed):** `test_coil_loading_larmor_mesh_cache.py::test_the_cached_rung_is_the_priced_mesh` asserts the **exact** 0.7.2-era cell count 2 807 309 and 0.11's gmsh meshes **2 808 204** — **+0.032%**, a mesher-version drift against an equality record, with the module's other 4 names green in the same run. That is the **third** site of the class leg (c)'s finding 19 named (`test_geometry_floor_discriminator.py`) and `GEO-16` first showed: **records made on 0.7.2 and not swept when `OPS-18` re-recorded**. The class, not the constant, is the deliverable — a review should commission one sweep over all exact-equality records rather than three one-constant fixes. **Finding 24:** the real-build route for `larmor_mesh_cache` is real and cheap — `OPS-17` (b2) priced it at 445.55 s **complex**, this slot ran it **real at 219 s (2.03×)**, and its 4 environment skips are all complex-only tests outside the census roots, so a gate-classifier "not complex-gated" verdict (finding 18's rule) is worth **half the window** on this module. **Finding 25:** `test_coil_loading_larmor_third_rung.py` did **not** reproduce its `OPS-17` (b2) record — recorded `11 passed / 174.86 s / exit 0` at `-n 8` with `TH11_STEP5_RUNG=fine`, this slot **Status 124 at 300 s** with only the module's first (non-solving) test out, `deferred — no footer`. The likely cause is **ordering**: in attempt 8 `mesh_cache` ran immediately *before* it and populated the rung's on-disk cache, so 174.86 s is a **warm-cache** price, not the module's. Leg (e) should run `mesh_cache` first and `third_rung` second in the same slot, at `-k 30 500`. **Rate note (finding 22 confirmed):** the two priced `dodd_deeds` modules returned **14 names for 184 s = 13 s/name**, the census's best rate to date, against 219 s for 5 names on the unpriced-in-this-build `mesh_cache`. Leg (e) owns the remaining **82** names over **13** modules: `coil_loading_*` 53 (of which `degree2`'s 14 are the `TH-12` structural defer and `third_rung`'s 7 need the cache ordering), `dodd_deeds_*` 24 over 5 modules (all ~400 s single-fixture files, widths in the leg-(c) price table), `test_port_systematics_composition.py` 3, `test_port_gap_voltage_padding.py` 2.* *Queued as leg (e) by the 2026-08-27 10:30 review (§9 item 1); the three stale-record reds are `OPS-27`, finding 12's test double is `OPS-28`.* ***Step 2 leg (e) PARTIAL 2026-08-27 (12:00 slot)** — **214 / 289 observed (208 green, 6 red), 75 deferred**; `tests/validation` **190 → 197 of 272**, five compute windows, 1 853 s, three footered (Status 1/1/1) and two Status 124. **Finding 25 CONFIRMED and the ordering remedy works:** `mesh_cache` real first (262 s, its 4 green + the filed finding-23 red reproduced verbatim), then `third_rung` complex `-n 8` `fine` against the warm cache — which **footered at 304 s**, where the same command cold had been Status 124 at 301 s. The recorded 174.86 s was indeed a warm-cache price; the module's own cold price is ≥ 500 s. **Finding 27 — the trap list's "sweep 0-byte FFCx stubs first" is not optional, and skipping it cost this slot a 329 s window.** The first warm `third_rung` attempt returned a **footered Status 1 with all 7 census names in ERROR**, every one `RuntimeError: Failed JIT compilation of form: JIT compilation timed out, probably due to a failed previous compile … libffcx_forms_1ea5a4c22c3fbbdfad7ef834d249519203ba0bb6.c`. The cache held **exactly one** 0-byte `.c`, timestamped 14:07 — i.e. created by *leg (d)'s own* 300 s kill of this very module five hours earlier. One `rm` and the identical command produced `1 failed, 17 passed`. **This is the failure mode the fail-closed control cannot see** (compare finding 18): a poisoned stub yields a *footered* run whose names are ERROR, not absent, so a census that trusted the footer would have recorded 7 spurious reds. **Rule, now mandatory: sweep `find /root/.cache/fenics -name '*.c' -size 0` before the first window of every slot, and again after any exit-124 window, because a killed window poisons the cache for the next one.** **Finding 28 (red, filed, the fourth stale-record site):** `third_rung::test_the_rung_is_inside_the_priced_ceiling` asserts the exact 0.7.2 fine-rung count **417 914** and 0.11 meshes **418 888** — **+0.233%**, seven times the `mesh_cache` site's relative drift, same sign, with the module's other 6 names (both complex-power identities, the free-solve dissipation identity, and `test_the_fine_rung_reproduces_step2s_recorded_deviation`) green in the same run. So the rung's *physics* reproduces its `TH-11` record while only its cell count does not. **Note for `OPS-27`: its planned `grep -rn '0\.7\.2' tests/` would not necessarily reach this constant** — it was found by reading a red's assertion message, so the sweep clause should be widened to exact-equality mesh counts regardless of version tag. **Finding 29 — two `dodd_deeds` prices from leg (c) did not hold on this image, both near-misses:** `reactance_combined_knobs` `-n 8` (recorded 421.90 s) was **Status 124 at 521 s** having printed one `PASSED`, and `resistance_slab_resolution` `-n 2` (recorded 386.82 s) was **Status 124 at 437 s** having reached **100% of its progress bar on both ranks** before dying in teardown/summary. Both are `deferred — no footer` by the fail-closed control despite the second one visibly finishing its tests — the control is working as designed, and the remedy is width, not interpretation: budget these two at **≥ 600 s** (slab is worth ~450 s + margin, knobs unknown above 520 s). No stub and no stray `python3` was left by either kill. Leg (f) owns the remaining **75** names over **12** modules: `dodd_deeds_*` 24 over 5 (two of them now re-priced upward), `coil_loading_*` 46 (of which `degree2`'s 14 remain the `TH-12` structural defer), `test_port_systematics_composition.py` 3, `test_port_gap_voltage_padding.py` 2.* ***Step 2 leg (f) PARTIAL 2026-08-27 (13:30 slot)** — **255 / 289 observed (242 green, 13 red), 34 deferred**; `tests/validation` **197 → 238 of 272**, six compute windows, 2 314 s, five footered (Status 1 ×5) and one Status 124; **41 names banked**, the census's best rate on the expensive tail. **Finding 30 — the stale-record class collapses to shared meshes, and it re-shapes `OPS-27`:** this slot's six reds are all of that class, and pooling them with legs (c)–(e) gives **nine red names over eight modules carrying only FOUR distinct 0.7.2-era cell counts** — 138 619 → 138 490 (**−0.093%**) in `richardson_ladder` ×2 params, `larmor_probe` and `transition_30mhz`; 417 914 → 418 888 (**+0.233%**) in `slab_resolution`, `larmor_resolution` and `third_rung`; 697 401 → 697 926 (**+0.075%**) in `combined_knobs`; 2 807 309 → 2 808 204 (**+0.032%**) in `mesh_cache`. Two consequences: the **unit of repair is the mesh, not the file** (a per-file fix leaves siblings red; one re-record retires up to four names, so `OPS-27` is **four measurements and ~nine edits**, not nine measurements), and the **drift is per-mesh, not a global offset** (it does not even share a sign, so no unmeasured record can be predicted from a measured one). Leg (e)'s note that `grep -rn '0\.7\.2' tests/` is insufficient is confirmed twice over — none of the five new sites was reachable by version tag; all were found by reading a red's assertion message. **The census is the sweep: `OPS-27` should take its site list from finding 30's table, not re-derive it by grep.** **Finding 31 — item 1's own draw order is lossy and cost-relevant:** `richardson_ladder` was budgeted as two commands / 800 s, but `OPS-17` step 3j had already refuted the split in the journal (`TH11_STEP4_RUNG` selects the *mesh*, `FREQ_MHZ=10,30` selects both parametrisations) — **one command, all 14 names, 143 s**; and the "unpriced" `larmor_probe`/`transition_30mhz` pair was priced in the journal at 137.18 s and reproduced at **137.35 s (+0.12%) for 12 names**. Two zero-compute greps turned a budgeted 800 s + "unpriced" into 282 s for 26 of the slot's 41 names. **Rule: grep `attempts.md` for the module name before sizing any window.** **Finding 32:** finding 29's ≥ 1.5× sizing rule is validated — `slab_resolution` footered at 429.91 s (+11.1% over record) and `combined_knobs` at 568.26 s (**+34.7%**, the census's largest under-price, which is why its 520 s and 615 s windows fell on opposite sides) — but `reactance_box_truncation` is not a pricing near-miss: at `-n 8` / 600 s it died **inside its first validation test** with no other name started, so it is `deferred — measured, first test alone > 590 s at -n 8` and must not get a third `-n 8` window without a by-name split or a width change (its first test is itself another cell-count equality, so finding 30 predicts a tenth red behind it). Finding 27's cache sweep was run before window 1 and again after the exit 124 — **clean both times**, zero stray `python3`. Leg (g) owns the remaining **34** names over **6** modules, of which only **20 over 5** are reachable (`degree2`'s 14 stay the `TH-12` structural defer): the three untried `dodd_deeds_*` 15, `test_port_systematics_composition.py` 3, `test_port_gap_voltage_padding.py` 2 — one slot should finish the tail **and** write the chunk-level reconciliation.* ***Step 2 leg (g) PARTIAL 2026-08-27 (15:00 slot)** — **264 / 289 observed (250 green, 14 red), 25 deferred**; `tests/validation` **238 → 247 of 272**, four compute windows, 1 606 s, three footered (Status 0/0/1) and one Status 124; **9 names banked**, and the reachable tail is down to **9 names over 3 modules**. The two `PORT` unknowns are now resolved in opposite directions: `test_port_systematics_composition.py` is **14 passed / 363.35 s** (`-n 2`, +0.87% on its `20260821T034507Z` record of 360.23 s) — its 3 census names green, and the `PORT-10` batch-C killer is simply an expensive file, not a broken one. **Finding 33 — `test_port_gap_voltage_padding.py` is a measured structural deferral, not a pricing miss, and it is now cited to two windows at the same width:** at `-n 2` / **590 s** it printed `collected 2 items` and then the name of its first test and nothing else — Status 124, zero `PASSED`/`FAILED` lines, exactly as at 400 s (finding 21). Its `gap_ports_padded` fixture is `scope="module"`, so a by-name split cannot help — it would pay the same setup twice — and the deferral reason is upgraded to **`deferred — measured, module fixture alone > 590 s at -n 2`, two windows (400 s, 590 s)**. That makes it the same shape as `box_truncation` (finding 32) and a *substantive* reason for step 2's close criterion, not a `not reached in slot`. **Finding 34 — finding 31's journal-grep rule paid a third time, and `reactance_wire_resolution` was never unpriced:** item 1 budgets it as "record 491.96 s with 2 deselected, full file unpriced, ≥ 740 s" and therefore unrunnable in one foreground window, but the journal carries **two disjoint `-k` halves** from 2026-08-20 (`pinned` 242.68 s, `projected or refinement` 499.80 s) that together cover all 6 validation names. Run at those boundaries — with the environment root dropped and the second half selected by **node id** rather than `-k "a or b"` (the quoting trap) — the halves came in at **214.36 s (−11.7%)** and **434.40 s (−13.1%)**, *both under their records*, and the file is complete at 6/6 in 649 s against a budgeted ≥ 740 s for one window that could not have run. Note the sign: this is the first module family to come in **under** its 0.7.2-era price, which is why finding 29's ≥ 1.5× rule must stay a *sizing* rule and never becomes a prediction. **Finding 35 (red, filed) — a tenth stale-record name, a fifth mesh, and it has no sibling:** `wire_resolution::test_the_refinement_landed_on_the_wire_and_not_on_the_far_field` asserts the exact 0.7.2 count **366 207** and 0.11 meshes **365 970** (**−0.0647%**, the second negative drift), with the module's other 5 names green across the two halves. A zero-compute `grep -rn '366207' tests/` finds **only this site** — so finding 30's "one re-record retires up to four names" is an upper bound and the value→module map is ragged (**4, 3, 1, 1, 1**); `OPS-27` should size itself as **five measurements, ~ten edits**. Finding 27's cache sweep ran before window 1 and again after the exit 124 — clean both times, zero stray `python3`. Leg (h) owns the remaining **25** names over **4** modules, of which only **9 over 2** are reachable: `reactance_box_size` **4** (journal-priced at **559.58 s full file at `-n 2`**, or two recorded `-k` halves of 271.08 s + 260.07 s — take the halves, the full file was 98.2% of its window) and `box_truncation` **5** (finding 32: `-n 2` or a by-name split, never a third `-n 8` window); `degree2`'s 14 and `gap_voltage_padding`'s 2 are both defers-with-reason and are **not** to be re-opened. **Leg (h) should finish the tail and owes the chunk-level reconciliation.*** ***Step 2 ✅ 2026-08-27 (16:30 slot, leg (h)) ⇒ chunk ✅.** Final: **268 / 289 observed (254 green, 14 red), 21 deferred**; `tests/validation` **247 → 251 of 272**, `tests/ports` 17/17. Three windows, 1 166 s, two footered (Status 0/0) and one Status 124. `reactance_box_size` is **4/4 green** on its two recorded `-k` halves (282.59 s + 289.44 s = 572 s, +4.2% / +11.3% on the 2026-08-20 record — **finding 37**: taking the halves was right, the full file's 559.58 s + 11% would have blown a 590 s window). **Finding 36:** `reactance_box_truncation` is a **permanent measured deferral** — Status 124 at both `-n 8`/600 s (leg (f)) and `-n 2`/590 s (this slot), each dying inside its first validation test; its `projected_xlarge_box` fixture is `scope="module"` and all five tests consume it, so width is not the constraint and a by-name split cannot help. It needs a *smaller fixture*, not a different selection — a `MAT-6` pricing question, not a census one. Finding 30's predicted eleventh red sits behind that fixture and is **pending**, not falsified. **Chunk-level reconciliation (written in `attempts.md`, 2026-08-27T22:20Z):** repo-wide over both censuses, **478 collected → 452 observed (436 green, 16 red), 26 deferred** (452 + 26 = 478), i.e. **94.6% of the repo's collected tests observed in a footered run on 0.11**, with **zero `not reached in slot` and zero `deferred — no footer`** surviving. The **seed list of four is green by name** — `test_convergence.py` **1 passed / 141.51 s** (its `test_h_refinement_straight_wire`, cited in this chunk's own rationale as *red on `main` right now*, **PASSED**; `MAG-20` owns the band, but the gate executes), `test_port_lumped_two_torus.py` 5 passed / 90.97 s, `test_cavity_resonances.py` 3 passed / 5.59 s, `test_birdcage_conductor_sizing.py` PASSED in leg (a)'s 38-item run. The **16 reds are exactly three families with named owners**: ten stale 0.7.2-era exact records over 8 modules but only **5 distinct meshes** (`OPS-27`), three "overlapping facets" reds (five `GEO-23` *sites* counting the dead `test_cylindrical_domain.py` module and the rank-divergent `materials` conversion — 10 + 3 + 3 = 16), and three test-double-drift names (`OPS-28`, finding 12 — invisible to step 1's static sweep by construction). The **26 deferrals** are `degree2` 14 (`TH-12` memory wall), `box_truncation` 5 (finding 36), `gap_voltage_padding` 2 (finding 33), leg (a)'s 5 (all `GEO-23`/filed) — every one a measured cost or a filed defect. **No band was loosened and no red fixed in-slot across seven census slots.** **Answer to the operator's directive:** the 0.11 transition worked; the three exception families are stale *records* (the physics reproduces), one gmsh boundary-mesh family, and one mock a prior chunk's rank-safety fix outgrew — **`OPS-18`'s §4 close stands**, every §2 physics claim's gate was observed executing and passing on 0.11.* *Audited COMPLIANT 2026-08-27 18:00 review — all 18 leg (e)–(h) footers re-read (statuses and per-leg elapsed sums 1 853 / 2 314 / 1 606 / 1 166 s reproduce from the logs), 18 matching `test-results.md` rows, reconciliation arithmetic verified (268 + 21 = 289, 452 + 26 = 478, 16 = 10 + 3 + 3, 26 = 14 + 5 + 2 + 5); one wording defect corrected in this row (the reds-vs-sites conflation above). The §7 prose entry below narrates step 1 and leg (a) only — the leg (b)–(h) evidence lives in this row and `attempts.md`.* | ✅ | heavy (split across ≥ 2 slots) |
+| `OPS-27` | **Re-record the 0.7.2-era exact records the `OPS-18` re-record did not reach, version-tagged on the `GEO-16` precedent, and sweep for siblings** — two reds on `main` filed by the `OPS-26` census: `test_geometry_floor_discriminator.py` `RECORD_128_RELL2` = 0.01826 vs `OPS-18`'s 1.7686% (leg (c) finding 19) and `test_coil_loading_larmor_mesh_cache.py` `NCELLS_THIRD` = 2 807 309 vs 0.11's 2 808 204 (leg (d) finding 23, +0.032% mesher drift); `GEO-16`'s 79 534 → 79 070 was the first of the class. No band introduced; a `grep -rn '0\.7\.2' tests/` sweep (11 files) tabulated for a third site. Commissioned 2026-08-27 10:30 review. *Re-scoped 2026-08-27 18:00 review from the finished census: the class is **ten names / eight modules / five meshes** plus the relative-L2 pair, every 0.11 value already measured in a census log — split into **step 1** (cheap half: geomfloor, the 138 619 family, `mesh_cache`; ≈ 570 s) and **step 2** (expensive half: the 417 914 family, `combined_knobs`, `wire_resolution`; ≈ 1 440 s), independent; `box_truncation`'s suspected sixth mesh pending on a cheaper fixture. Rubrics: §9 items 1 and 2.* | 🧪 | step 1 standard / step 2 heavy |
 | `OPS-28` | **Give `tests/ports/test_port_orientation_sensitivity.py`'s `_DummyComm` the `allgather` that `OPS-14`'s rank-safety reduction calls, then read the module's real assertions back against known-issues entry 3** — census leg (b) finding 12: a correct reduction outgrew a test double, a class step 1's static sweep cannot see. The reduction stays; the deprecated placeholder route stays runnable (`PORT-1` step 4's negative control). Commissioned 2026-08-27 10:30 review; full rubric in §9 item 3 | 🧪 | smoke |
 
 **`OPS-24` — migrate `core/cavity.py` to 0.11; turn `TH-9`'s gates back on** ✅
@@ -1612,6 +1612,55 @@ green from `main` with their unmoved bands (the 1% drift band, the
 the two known-issues entries retired. Not a band, not a `TH-10` re-open, not
 a fix of any third site the table surfaces — that is filed. Full rubric
 (anchor, control, cost, traps, negative result) is §9 item 2.
+
+> **Re-scoped 2026-08-27, 18:00 review, from the finished census.** The
+> class is **ten red names over eight modules carrying five distinct meshes**
+> plus the one relative-L2 record, not two sites — and every 0.11 value is
+> *already measured* in a footered census log at a recorded commit, so this
+> chunk buys **no new measurements**: it edits by value and re-runs one
+> module per mesh as the anchor. Site list (finding 35's table in
+> `attempts.md`, leg (g); known-issues entries of 08-27):
+>
+> | record (0.7.2 → 0.11) | drift | sites (names) | census log |
+> |---|---|---|---|
+> | `RECORD_128_RELL2` 0.01826 → 0.017686, `RECORD_128_SEPARATION` 57.31 → 59.16 | — | `test_geometry_floor_discriminator.py` (1) | `20260827T125507Z…` / `20260822T123746Z_OPS-18-step3-th10-rerun.log` |
+> | 138 619 → 138 490 | −0.093% | `richardson_ladder` ×2 params, `larmor_probe`, `transition_30mhz` (4) | `…183121Z_OPS-26-step2f-richardson.log`, `…185143Z_…probe-30mhz.log` |
+> | 2 807 309 → 2 808 204 | +0.032% | `larmor_mesh_cache` `NCELLS_THIRD` (1) | `…141059Z_…meshcache-real.log` |
+> | 417 914 → 418 888 | +0.233% | `slab_resolution`, `larmor_resolution`, `third_rung` (3) | `…183401Z`, `…185422Z`, `…171110Z…destubbed.log` |
+> | 697 401 → 697 926 | +0.075% | `reactance_combined_knobs` (1) | `…184138Z_…combined-knobs.log` |
+> | 366 207 → 365 970 | −0.0647% | `reactance_wire_resolution` (1) | `…202222Z_…wireres-projected.log` |
+>
+> **Split into two independent steps by re-run cost** (each step is one
+> implementer run; different files, either order):
+> * **Step 1 — the cheap half (standard):** the relative-L2 pair, the
+>   138 619 family (4 names, 2 modules) and `mesh_cache` — six names, four
+>   files. Anchor re-runs: geomfloor complex `-n 2` (23 s), richardson
+>   complex `-n 2` (143 s, one command — `FREQ_MHZ=10,30` selects both
+>   params, `OPS-17` step 3j), the probe/30 MHz pair complex `-n 2`
+>   (139 s), mesh_cache real `-n 2` (262 s): ≈ 570 s over four commands.
+> * **Step 2 — the expensive half (heavy):** the 417 914 family (3 names,
+>   3 modules), `combined_knobs` and `wire_resolution` — five names, five
+>   files. Anchor re-runs: `slab_resolution` complex `-n 2` (430 s, sized
+>   ≥ 600), `combined_knobs` complex `-n 8` (570 s, sized 660 — finding 32's
+>   +35% under-price), `wire_resolution` **projected half by node id**
+>   (436 s, sized 600); `larmor_resolution` and `third_rung` are edited but
+>   **not** re-run (their 0.11 count is the same mesh value the slab run
+>   asserts; `third_rung` is a warm-cache-only 304 s at `-n 8`) — say so in
+>   the commit. ≈ 1 440 s over three commands.
+> * **Pending, not in either step:** `box_truncation::test_the_xlarge_box_mesh_is_the_probes`
+>   is a suspected sixth mesh no window has reached (finding 36) — it stays
+>   filed here until its `projected_xlarge_box` fixture is cheaper, a
+>   `MAT-6` pricing question.
+> * The `grep -rn '0\.7\.2' tests/` sweep stays as a **completeness check
+>   only** — it reached none of the ten sites; the table above is the site
+>   list. Every re-record stays an exact equality, version-tagged, 0.7.2 digit
+>   and census log in-comment (`GEO-16` precedent); **no band anywhere**.
+> * Done-when (amended): all eleven names green from `main` on their re-run
+>   modules, every affected module's *other* names byte-identical to its
+>   census log, `git show -- tests/` touching only the constants and their
+>   comment/docstring copies, and the five known-issues entries of this class
+>   (leg (c) geomfloor, leg (d) `mesh_cache`, leg (e) `third_rung`, leg (f)
+>   five, leg (g) `wire_resolution`) retired by the step that lands each.
 
 **`OPS-28` — restore the `_DummyComm` double behind `OPS-14`'s reduction**
 🧪 *(commissioned 2026-08-27 10:30 review from `OPS-26` step 2 finding
@@ -6872,64 +6921,69 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed **2026-08-27, 10:30 review**. Interval (since the 03:00
+Last reviewed **2026-08-27, 18:00 review**. Interval (since the 10:30
 review): **four slots ran, four landed on `main` clean, all four on item
-1** — `OPS-26` step 2 legs (b)–(d), the expensive half of the census.
-04:30: denominator re-derived (**289** over 63 modules — `validation`
-272/59, `ports` 17/4), `tests/ports` complete at 17/17 with **3 reds**, and
-a new defect class (finding 12: `OPS-14`'s rank-safety `allgather` outgrew
-a test double — invisible to step 1's static sweep by construction);
-06:00: 139/289, **117 names green in one slot, zero reds**, once the build
-gate was read before sizing (53 of 59 validation modules are complex-gated);
-07:30: 188/289, the birdcage `PORT-9`/`PORT-11` block 32/32 green, one
-*manufactured* red (a magnetostatics module run in the complex build —
-finding 18, the one failure mode the fail-closed control cannot see) and
-one genuine red that is a **stale pre-`OPS-18` constant**; 09:00:
-**207/289 (202 green, 5 red), 82 deferred** — a third stale-record red
-(an exact 0.7.2 cell count vs 0.11's +0.032%), `third_rung`'s recorded
-174.86 s exposed as a warm-cache price. No chunk closed; §2 unchanged.
+1 — and item 1 closed.** `OPS-26` step 2 legs (e)–(h) took the census
+from 207 to **268 / 289 observed (254 green, 14 red), 21 deferred**, with
+zero `not reached in slot` and zero `deferred — no footer` surviving, and
+leg (h) wrote the chunk-level reconciliation: repo-wide **478 collected →
+452 observed (436 green, 16 red), 26 deferred**, 94.6%. The seed list of
+four is green by name — including `test_convergence.py`'s h-refinement
+gate, cited as *red on `main`* when the chunk was commissioned. The 16
+reds are three owned families: **ten stale 0.7.2-era exact records over
+eight modules carrying only five distinct meshes** (drifts −0.093%,
+−0.065%, +0.032%, +0.075%, +0.233% — per-mesh, not a global offset,
+`OPS-27`), three "overlapping facets" reds on five `GEO-23` sites, and
+three test-double names (`OPS-28`). The 26 deferrals are all measured
+costs or filed defects (`degree2` 14 on the `TH-12` wall;
+`box_truncation` 5 and `gap_voltage_padding` 2, each cited to two
+exit-124 windows and a `scope="module"` fixture; leg (a)'s 5). Two
+standing rules came out of the tail: finding 27 (a 0-byte FFCx stub from
+a killed window yields a *footered* run whose names are all ERROR — sweep
+before the first window and after any exit 124) and finding 31 (grep
+`attempts.md` for a module's price before sizing its window — three
+"unpriced" modules were priced in the journal). **`OPS-26` ✅ — the
+operator's directive is answered: the 0.11 transition worked, and
+`OPS-18`'s §4 close stands.** §2 unchanged.
 
-**Audit (§4): nothing to audit** — no status changed to ✅ this interval.
-Spot-check anyway: the five red footers read Status 1 as journaled
-(`p03-orient` 2 s, `p04-sparam` 2 s, `v42-geomfloor` 23 s,
-`meshcache-real` 219 s; `v40-straightwire` 192 s is the manufactured one
-and is *not* counted), the two exit-124 windows (`v45-gapvoltpad` 401 s,
-`thirdrung` 301 s) are deferred not red, and 202 + 5 + 82 = 289 is the
-run's own arithmetic and stands. `test_results.md` carries all 55 rows.
+**Audit (§4): `OPS-26` COMPLIANT** — one auditor over the 18 leg (e)–(h)
+logs: every footer's Status and elapsed re-read and the per-leg sums
+(1 853 / 2 314 / 1 606 / 1 166 s) reproduce; 18 matching
+`test-results.md` rows; the reconciliation arithmetic verifies in full
+(268 + 21 = 289; 452 + 26 = 478; 16 = 10 + 3 + 3; 26 = 14 + 5 + 2 + 5).
+One wording defect in the §7 row conflated "five `GEO-23` sites" with
+reds (10 + 5 + 3 ≠ 16) — corrected in this commit. The §7 prose entry
+narrates only step 1 and leg (a); the row and `attempts.md` carry the
+rest, noted there.
 
-**Rulings this review.** (1) **Item 1 is rewritten as leg (e)** — 82
-names over 13 modules, drawn in the order leg (d)'s journal already
-costed; two to three slots, then the chunk-level reconciliation. Nothing
-else moves ahead of it. (2) **Three stale-record reds are one chunk, not
-three fixes** — `OPS-27` commissioned: the two open sites
-(`RECORD_128_RELL2` = 0.01826 vs `OPS-18`'s 1.7686%; `NCELLS_THIRD` =
-2 807 309 vs 2 808 204) re-recorded version-tagged on the `GEO-16`
-precedent, plus a zero-compute sweep of every `0.7.2`-tagged record for
-siblings. Equality on a mesher cell count is arguably the wrong shape, but
-**no band is introduced** — re-record exactly, as `GEO-16` did. (3)
-**`OPS-28` commissioned** for finding 12's test double: the `OPS-14`
-reduction is correct and stays; the double gets `allgather`, and the
-module's *actual* assertions are then read back against known-issues
-entry 3, whose diagnosis is currently unreachable. Ruling on the question
-the census declined: the deprecated placeholder route **stays runnable** —
-it is `PORT-1` step 4's negative control. (4) Finding 18's gate-based
-build classifier is adopted into leg (e) as a rule; finding 15's
-word-based one is retired. (5) The `materials` rank-divergent site is
-folded into `GEO-23` step 1's table (a fifth site, second rank-dependent
-one) — that entry is amended below, not re-scoped.
+**Rulings this review.** (1) **`OPS-27` is re-scoped and split** from
+"two constants + a grep" to the census's final site list — eleven names,
+nine modules, five meshes plus the relative-L2 pair, **every 0.11 value
+already measured in a footered census log**, so the chunk buys no new
+measurement and only re-runs one module per mesh as its anchor. Step 1
+(cheap half, ≈ 570 s) and step 2 (expensive half, ≈ 1 440 s) are
+independent and are items 1 and 2. The `0.7.2` grep is demoted to a
+completeness check — it reached none of the ten sites. (2)
+`box_truncation`'s suspected sixth mesh (finding 36, never reached in
+two windows at two widths) is **filed pending in `OPS-27`'s entry, not
+queued** — it needs a cheaper `projected_xlarge_box` fixture, a `MAT-6`
+pricing call this review does not make. (3) No example chunk is owed:
+`OPS-26` closed an operations census, not a quantitative physics gate,
+so §5.4's ramp clause does not fire. (4) No new chunk is commissioned
+beyond the split — the backlog still reaches §10 and step 5 forbids
+invention.
 
 Branch dispositions: none owed — no `attempt/*`, no `recovered/*`, tree
 clean at all four handoffs and at this review. Deliberately not queued:
-`PORT-4`…`PORT-8` (after the census), any 128 MHz resolution study and
-`ANS-4` (weekly review's calls), a `GEO-23` step 2 (needs step 1's table),
-and a `coil_loading_degree2` re-open (the `TH-12` wall stands).
+`PORT-4`…`PORT-8` (weekly review's call now the census is done), any
+128 MHz resolution study and `ANS-4` (weekly review, 08-30), a `GEO-23`
+step 2 (needs step 1's table), a `coil_loading_degree2` re-open (the
+`TH-12` wall stands), and a `box_truncation` fixture re-price (ruling 2).
 
-**Eight items this queue, all mutually independent.** Item 1 is the census
-tail; items 2–3 are the two chunks the census earned this interval, both
-cheap; items 4–8 are the 03:00 review's items unchanged. `OPS-27` touches
-two test constants that item 1 will also *run* — order is harmless in
-either direction because the census counts reds from footered runs at a
-recorded commit, never from the current tree.
+**Eight items this queue, all mutually independent.** Items 1–2 are the
+two halves of `OPS-27` (either order — different files); item 3 is
+`OPS-28`; items 4–8 are the 03:00 review's items unchanged. Nothing in
+the queue depends on anything else landing.
 
 **⚠️ Standing constraint on the compose allow — read before editing that
 file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
@@ -6946,108 +7000,88 @@ mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-1. **DONE 2026-08-27 (16:30 slot, leg (h)) — `OPS-26` step 2 ✅ and the
-   chunk ✅.** The tail closed at **268 / 289 observed (254 green, 14 red),
-   21 deferred**, and the chunk-level reconciliation is written
-   (`attempts.md` 2026-08-27T22:20Z): repo-wide **478 collected → 452
-   observed (436 green, 16 red), 26 deferred**, seed list of four green by
-   name, reds in three owned families (`OPS-27` / `GEO-23` / `OPS-28`), no
-   `not reached in slot`. Legs (e)–(h) ran the tail across four slots after
-   this item was written; the original leg-(e) text is preserved below for
-   the review's audit. **The next slot takes item 2.**
-
-   *Original item text (superseded, kept for audit):*
-   **`OPS-26` step 2 leg (e) — the census tail: 82 names over 13
-   `tests/validation` modules, one command per module, then the
-   chunk-level reconciliation (heavy, two to three slots by leg (d)'s own
-   costing, `main`; independent; same three dispositions and the same
-   fail-closed control as legs (a)–(d), whose §7 tables are the
-   template).** The tail is entirely ~400 s single-fixture solves, so the
-   draw order is the slot's whole strategy — take leg (d)'s journal order
-   verbatim (`docs/testing/attempts.md`, "Hypothesis for the next attempt
-   (leg (e))"): **(i)** `test_coil_loading_larmor_mesh_cache.py` **real**
-   `-n 2` `-k 30 300` (219 s measured; a known 4-green/1-red module — its
-   red is filed, count it and move on), then *immediately*
-   `test_coil_loading_larmor_third_rung.py` complex `-n 8`
-   `TH11_STEP5_RUNG=fine` `-k 30 500` against the warm on-disk cache
-   (finding 25: the recorded 174.86 s was warm-cache; cold it timed out at
-   300 s with one non-solving test out). **(ii)** the five remaining
-   `dodd_deeds_*` (24 names) at leg (c)'s recorded widths —
-   `reactance_combined_knobs` `-n 8` 422 s, `resistance_slab_resolution`
-   `-n 2` 387 s, `reactance_box_truncation` `-n 8` 396 s (its record has
-   1 failed — read it before believing a red), `reactance_wire_resolution`
-   `-n 2` 492 s with 2 deselected (full file unpriced — budget 600),
-   `reactance_box_size` unpriced and ≥ 400 s at `-n 2` — try `-n 8`. One
-   file per window. **(iii)** `larmor_resolution` (6, `-n 2`, 427 s),
-   `richardson_ladder` (14, two commands: 136 s baseline, 382 s fine
-   30 MHz), then the unpriced `larmor_probe` / `transition_30mhz` pair
-   (12). **(iv)** `coil_loading_degree2` (14) stays the **`TH-12`
-   memory-wall defer-with-reason — do not re-open**;
-   `test_port_systematics_composition.py` (3) at its recorded 360 s;
-   `test_port_gap_voltage_padding.py` (2) at ≥ 600 s or split by name
-   (finding 21: 400 s printed zero outcomes). **Build rule (finding 18,
-   replacing finding 15):** classify by the *gate*, not the word — `grep
-   -l "complex_mode\|requires_complex\|is_complex\|skipif"` — a
-   misclassified build manufactures a footered Status-1 red the
-   fail-closed control cannot distinguish from a real one. **Anchor
-   (§4):** `observed / collected` per root, complement by name with
-   exactly one of `green` / `red — known-issues filed` / `deferred —
-   <reason>`, the three totals summing to 289; a module's reds are filed
-   **only from a footered run of its own**. **Negative control:**
-   fail-closed by construction — no Status-0/1 footer ⇒ `deferred — no
-   footer`, never green and never red. **Cost:** ~2 600 s of recorded
-   prices for the priced modules alone; the realistic end state is **~275
-   of 289** (289 − `degree2`'s 14), two to three slots. Stop at the slot
-   boundary with the unreached tail named; **a `not reached in slot`
-   remainder is expected and is not a failure**. **Traps:** everything in
-   legs (a)–(d)'s lists (pipe nothing inside the harness command; `-k a or
-   b` splits; sweep 0-byte FFCx stubs first; interleaved real-build rank
-   streams; a rung/mode env var is not a test-set partition; a red's
-   `MPI_Abort` teardown burns its window). **Scope:** whichever slot
-   finishes the tail writes the **chunk-level reconciliation** — the seed
-   list of four by name (`test_convergence.py` ✅ green, `GEO-16`'s
-   `test_port_lumped_two_torus.py` ✅ green, `core/cavity.py`'s `TH-9`
-   gates via `test_cavity_resonances.py` ✅ green,
-   `test_birdcage_conductor_sizing.py` from leg (a)), three totals
-   repo-wide (189 + 289), the dead module and the `GEO-23` entries
-   cross-referenced, and the three stale-record reds cross-referenced to
-   `OPS-27` — and closes step 2 ✅ only if every deferred name carries a
-   substantive reason. **Negative result:** reds are the deliverable —
-   file, continue, stop at the boundary with the tail named; if
-   `third_rung` still times out warm, that is the measurement (record it,
-   stop drawing the file — it becomes a `TH-11` pricing finding, not a
-   census failure).
-2. **`OPS-27` — re-record the two stale 0.7.2-era constants the census
-   found red, version-tagged on the `GEO-16` precedent, and sweep for
-   siblings (standard, `-n 2`, one complex + one real command, `main`;
-   independent; commissioned this review — full rubric in the §7 entry).**
-   In brief: `tests/validation/test_geometry_floor_discriminator.py`
-   `RECORD_128_RELL2` 0.01826 → `OPS-18`'s 0.017686 and
-   `RECORD_128_SEPARATION` 57.31 → 59.16 (the values
-   `20260822T123746Z_OPS-18-step3-th10-rerun.log` prints and §2 carries),
-   every docstring copy of 1.826% / 57.31× moved in the same commit with
-   the 0.7.2 digit kept in-comment; `test_coil_loading_larmor_mesh_cache.py`
-   `NCELLS_THIRD` 2_807_309 → **2 808 204**, still an exact equality,
-   version-tagged with the 0.7.2 digit and the census log in-comment; then
-   `grep -rn '0\.7\.2' tests/` (11 files) tabulated by constant with each
-   one's 0.11 status from the census logs. **Anchor:** both modules green
-   from `main` afterwards — geomfloor `1 passed` with 128 MHz drift inside
-   its unmoved 1% band *and* the 64 MHz `RECORD_64_RELL2_COARSER_MESH`
-   0.03643 leg unmoved; mesh_cache `5 passed` with the other four names'
-   readings byte-identical to `…141059Z_OPS-26-step2d-meshcache-real.log`.
+1. **`OPS-27` step 1 — re-record the cheap half of the stale 0.7.2-era
+   records by mesh value: the 128 MHz relative-L2 pair, the 138 619 mesh
+   (four names, two modules) and `mesh_cache`'s `NCELLS_THIRD` (standard,
+   `-n 2`, three complex + one real command, `main`; independent;
+   re-scoped this review — site table in the §7 entry).** Edits, all
+   exact equalities, version-tagged with the 0.7.2 digit and the census log
+   in-comment (`GEO-16` precedent, **no band**):
+   `tests/validation/test_geometry_floor_discriminator.py`
+   `RECORD_128_RELL2` 0.01826 → 0.017686 and `RECORD_128_SEPARATION`
+   57.31 → 59.16 (every docstring copy of 1.826% / 57.31× moved too);
+   the **138 619 → 138 490** count wherever it is held in
+   `test_coil_loading_richardson_ladder.py` (both params),
+   `test_coil_loading_larmor_probe.py` and
+   `test_coil_loading_transition_30mhz.py` — find it by value (`grep -rn
+   '138619\|138_619' tests/`), not by file, and expect exactly these
+   holders; `test_coil_loading_larmor_mesh_cache.py` `NCELLS_THIRD`
+   2_807_309 → **2 808 204**. **Anchor:** the four modules green from
+   `main` afterwards — geomfloor `1 passed` with the 128 MHz drift inside
+   its unmoved 1% band and the 64 MHz `RECORD_64_RELL2_COARSER_MESH`
+   0.03643 leg untouched; richardson **one command** (`FREQ_MHZ=10,30`,
+   `OPS-17` step 3j — it selects both params) `25 passed` where the census
+   read `2 failed, 23 passed`; the probe/30 MHz pair `23 passed` where it
+   read `2 failed, 21 passed`; mesh_cache real `5 passed` with the other
+   four names' readings byte-identical to `…141059Z_OPS-26-step2d-meshcache-real.log`.
    **Negative control:** `git show -- tests/` touches only the named
-   constants and their comment/docstring copies; no band, no `src/`.
-   **Cost:** 23 s complex (`…125507Z`) + 219 s real (`…141059Z`), `-k 30
-   120` and `-k 30 400`; the grep is zero-compute. **Traps:** geomfloor is
-   complex-gated (`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first);
-   mesh_cache real, alone in its command; `OPS-26` leg (e) may run either
-   module in the same interval — harmless, the census counts from footered
-   runs at a recorded commit. **Scope:** two re-records and a *list*; a
-   third red the sweep finds is filed, not fixed in-slot; `TH-10` and its
-   §2 figures are untouched. **Negative result:** a 0.11 reading that is
-   *not* 1.7686% / 2 808 204 in this slot means the record is not stable
-   run-to-run — known-issues, no re-record, stop. On landing, retires the
-   two 2026-08-27 known-issues entries it names.
+   constants and their comment/docstring copies — no band, no `src/`, and
+   every *physics* reading in the four modules (`dR`-class deviations, the
+   `TH-10` figures) unchanged to the printed digit against its census log.
+   **Cost:** 23 s + 143 s + 139 s complex, 262 s real — ≈ 570 s over four
+   commands, `-k 30 120 / 300 / 300 / 400`. **Traps:** geomfloor and the
+   three coil-loading modules are complex-gated
+   (`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first); mesh_cache is
+   **real** and alone in its command (finding 18: the wrong build
+   manufactures a footered red); sweep 0-byte FFCx stubs before the first
+   window (finding 27); the census counted 138 619 in **four** names —
+   if the grep finds a fifth holder, edit it too and say so. **Scope:** six
+   names, four files; step 2's five files are untouched even if convenient;
+   no `TH-10` re-open. **Negative result:** a 0.11 reading that is *not*
+   the census value (0.017686 / 138 490 / 2 808 204) means the count is
+   not stable run-to-run on this image — known-issues, no re-record of that
+   site, stop; the others still land. On landing, retires the leg (c)
+   geomfloor entry, the leg (d) `mesh_cache` entry and the four 138 619
+   lines of the leg (f) entry.
+2. **`OPS-27` step 2 — re-record the expensive half by mesh value: the
+   417 914 mesh (three names, three modules), `combined_knobs`'s 697 401
+   and `wire_resolution`'s 366 207 (heavy, complex, `main`; independent
+   of step 1 — different files, either order; re-scoped this review).**
+   Edits, same discipline as item 1: **417 914 → 418 888** in
+   `test_dodd_deeds_resistance_slab_resolution.py`,
+   `test_coil_loading_larmor_resolution.py` and
+   `test_coil_loading_larmor_third_rung.py:443` (find by value); **697 401
+   → 697 926** in `test_dodd_deeds_reactance_combined_knobs.py`; **366 207
+   → 365 970** at `test_dodd_deeds_reactance_wire_resolution.py:268`.
+   **Anchor:** three re-runs — `slab_resolution` `-n 2` `16 passed` where
+   the census read `1 failed, 15 passed`; `combined_knobs` `-n 8` `15
+   passed` where it read `1 failed, 14`; `wire_resolution`'s **projected
+   half selected by node id** (`test_the_refinement_landed_on_the_wire…`
+   and its three siblings from `…202222Z`, never `-k "a or b"`) `4
+   passed` where it read `1 failed, 3 passed`; every other name's physics
+   reading byte-identical to its census log. `larmor_resolution` and
+   `third_rung` are **edited but not re-run** — the 418 888 count they
+   assert is the same mesh value the slab run asserts, and `third_rung` is
+   a warm-cache-only 304 s at `-n 8` (finding 25) — state that in the
+   commit and leave their known-issues lines marked "re-recorded, re-run
+   owed to the next census". **Negative control:** `git show -- tests/`
+   touches only the five constants and their comment/docstring copies; no
+   band, no `src/`; `combined_knobs` and `slab_resolution` `dR`/`dX`
+   physics readings unchanged to the printed digit. **Cost:** 430 s +
+   570 s + 436 s ≈ 1 440 s over three commands, sized on finding 29's ≥
+   1.5× rule where a window allows: slab `-k 30 600`, knobs `-k 30 660`
+   (its +35% under-price is the census's largest), wire-projected `-k 30
+   600`. **Traps:** all three are complex-gated; sweep 0-byte stubs before
+   window 1 and after any exit 124; knobs at `-n 8` has one recorded 521 s
+   exit-124 — if it repeats at 660 s, that is the measurement, land the
+   edit unverified-in-slot and say so; `-n 2` for slab and wire (their
+   recorded widths). **Scope:** five names, five files; `box_truncation`'s
+   suspected sixth mesh is **pending in the §7 entry, do not open its
+   fixture**. **Negative result:** a count that differs from the census
+   value is a run-to-run instability finding — known-issues, no re-record
+   of that site, stop; the rest still land. On landing, retires the leg
+   (e) `third_rung` entry, the leg (g) `wire_resolution` entry and the
+   remaining lines of the leg (f) entry.
 3. **`OPS-28` — give `test_port_orientation_sensitivity.py`'s `_DummyComm`
    the `allgather` `OPS-14`'s reduction calls, then read the module's real
    assertions back against known-issues entry 3 (smoke, `-n 2`, real,
