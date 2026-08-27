@@ -905,6 +905,119 @@ list shapes the census.**)*
 >   names in the complex build with
 >   `--deselect tests/post/test_phantom_field_metrics.py::test_phantom_field_metrics_and_exports_are_finite`.
 >   That is one slot if (i) behaves and two if it does not.
+> * **Step 2 leg (a), third slot (leg (c)) — PARTIAL, 2026-08-26 22:30
+>   implementer slot. Cumulative 137 of 189 observed (135 green, 2 red), 52
+>   deferred** (was 93/189). **`tests/post` and `tests/mesh` are now complete
+>   roots** — every collected test in them observed, zero deferred. Leg (a)
+>   is still NOT complete: `tests/solver` remains fail-closed at 0/51 and is
+>   the entire remaining gap. No new red filed; no code changed.
+>
+>   | root | collected | observed | green | red | deferred |
+>   |---|---|---|---|---|---|
+>   | `tests/environment` | 11 | 11 | 11 | 0 | 0 |
+>   | `tests/unit` | 22 | 22 | 22 | 0 | 0 |
+>   | `tests/io` | 8 | 8 | 8 | 0 | 0 |
+>   | `tests/materials` | 7 | 6 | 6 | 0 | 1 |
+>   | `tests/post` | 33 | 33 | 32 | 1 | 0 |
+>   | `tests/mesh` | 57 | 57 | 56 | 1 | 0 |
+>   | `tests/solver` | 51 | 0 | 0 | 0 | 51 |
+>   | **total** | **189** | **137** | **135** | **2** | **52** |
+>
+>   135 + 2 + 52 = 189, as the fail-closed control requires. Denominator not
+>   re-derived and not inherited from outside the leg: the only commits since
+>   the 19:30 derivation are documentation-only, so **189 over 54 modules
+>   still holds**.
+>
+>   **Newly observed green by name.** Real build, `-n 2`,
+>   `20260827T034820Z_OPS-26-step2a-mesh-rest.log`, **Status 0, 135 s**
+>   (`29 passed, 1 skipped in 133.51s`) — the whole 30-name `tests/mesh`
+>   remainder: `test_coil_phantom_mesh.py` (3),
+>   `test_domain_sizing_heuristics.py` (6), `test_geometry_sanity_report.py`
+>   (2), `test_mesh_tag_integrity.py` (3), `test_region_resolution_policy.py`
+>   (3), `test_two_torus_conforming.py` (1 of 2),
+>   `test_two_torus_gapped.py` (2), `test_two_torus_outer_boundary.py` (2),
+>   `test_two_torus_port_facets.py` (2), `test_two_torus_port_sheet.py` (3),
+>   `test_wall_boundary_tag_areas.py` (2). Complex build +
+>   `FEM_EM_REQUIRE_COMPLEX=1`, `-n 2`, `tests/environment` first,
+>   `20260827T035101Z_OPS-26-step2a-post-complex.log`, **Status 0, 60 s**
+>   (`27 passed in 58.74s`) — the 14-name `tests/post` remainder:
+>   `test_phantom_phasor_semantics.py` (3), `test_quicklook_report.py` (3),
+>   `test_tagged_cell_partition_invariance.py` (8), plus
+>   `mesh/test_two_torus_conforming.py::test_driven_torus_field_reaches_the_air_region`
+>   (the one real-build skip above — **green in complex**, so it converts to
+>   observed rather than staying deferred) and `tests/environment`'s 11
+>   re-observed. The hanging `post/test_phantom_field_metrics.py` needed no
+>   `--deselect`: the 14 owed names are three whole modules, so it was simply
+>   not listed.
+>
+>   **Finding 7 — the warm-up/measure design for `tests/solver` is a measured
+>   negative, and the "warm cache" hypothesis is refuted.** The item's leg-(c)
+>   recipe was executed exactly: a throwaway warm-up
+>   (`20260827T033100Z_OPS-26-step2a-warmup.log`, real, `-n 2`, `timeout -k 30
+>   500`, **Status 124 at 501 s**, stub sweep first, results discarded) then a
+>   separate measurement command
+>   (`20260827T033932Z_OPS-26-step2a-solver.log`, **Status 124 at 500 s**).
+>   **Both died at the same 70% mark, in the same module**
+>   (`test_single_port_excitation.py`) — i.e. paying a full 500 s of warm-up
+>   bought the measurement run *nothing*. The known-issues sizing corollary's
+>   "warm cache ⇒ `tests/solver` in 111 s complex / 41 s real" **does not
+>   hold on the current tree**; whatever now costs the time is not JIT
+>   compilation. All 51 stay `deferred — two real-mode runs killed at 500 s;
+>   no completed footered run`.
+>
+>   **Finding 8 — removing the stalling module does not rescue the root, and
+>   the stall is a teardown/rank divergence, not an unfinished sweep.** Third
+>   command, `--ignore=tests/solver/test_single_port_excitation.py`
+>   (`20260827T035220Z_OPS-26-step2a-solver-minus.log`, real, `-n 2`,
+>   `timeout -k 30 480`, **Status 124 at 481 s**, 47 collected): one rank
+>   reached **100%** and printed
+>   `11 failed, 17 passed, 7 skipped, 12 errors in 0.85s`, while the other sat
+>   at **97%** (`test_two_cylinder.py` / `test_two_torus.py`) until the kill,
+>   ending in `MPI_Abort(59)` on a PETSc SIGTERM trailer. So `tests/solver`
+>   holds a `mag:1`-class divergence *independent of* the single-port module.
+>   **These 23 non-green names are NOT filed and NOT counted**: the summary's
+>   own `0.85s` is irreconcilable with the 481 s wall clock, which is the
+>   two-summary-lines artifact family, and the run has no footer of its own —
+>   the fail-closed control says such a run counts every module as deferred,
+>   never green and never red.
+>
+>   **Candidate signature worth keeping for the next leg** (a hypothesis, not
+>   a census result): **21 of the 23** non-green names carry the *identical*
+>   `IndexError: index 0 is out of bounds for axis 0 with size 0`, spanning
+>   `test_energy_and_point_evaluation.py`, `test_gauge_lagrange.py`,
+>   `test_gauge_multiplier_convergence.py`, `test_gauge_penalty.py`,
+>   `test_time_harmonic_smoke.py`, `test_two_cylinder.py`, `test_two_torus.py`,
+>   `test_cylinder.py` and `test_coil_phantom_magnetostatics.py` — one shared
+>   cause cascading, not nine independent reds. The 22nd is
+>   `test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set`
+>   with **`Invalid boundary mesh (overlapping facets) on surface 1 surface
+>   1`** — which would make a **fourth** call path for that string if it
+>   survives a trustworthy run. It has not been shown to, here.
+>
+>   **Deferred by name (52), one disposition each.** `tests/solver` (51) —
+>   the whole root, `deferred — three real-mode commands (warm-up, measure,
+>   measure-minus-stall) all killed at 480–500 s; no completed footered run,
+>   results discarded per the fail-closed control`.
+>   `materials/test_phantom_material_model.py::test_phantom_material_assignment_and_time_harmonic_pipeline_wiring`
+>   (1) — `deferred — skipped at runtime in the real build` (unchanged; it
+>   was not re-attempted in complex this slot).
+>
+>   **Slot cost:** five commands, 1 677 s of recorded elapsed (501 + 500 +
+>   135 + 60 + 481); **1 001 s of it bought nothing** — the two solver
+>   commands the item's own recipe prescribed.
+>
+>   **What leg (d) needs.** The cheap roots are done; only `tests/solver`
+>   remains, and three consecutive whole-root commands have now failed the
+>   same way, so **stop running the root as one command**. Run it
+>   **module-by-module**, one command per module at `timeout -k 30 240`, in
+>   ascending module size, so every module gets its own footer and one
+>   diverging module costs one module rather than the root: that converts a
+>   guaranteed 0/51 into at worst a partial with named survivors. Take
+>   `test_boundary_condition_selection.py` first (it is the one carrying the
+>   distinct symptom) and `test_single_port_excitation.py` /
+>   `test_two_cylinder.py` / `test_two_torus.py` last. Budget ~8 modules per
+>   slot; 13 modules is likely two slots. Only after a module has a
+>   Status-0-or-Status-1 footer of its own may its reds be filed.
 > * **Step 2 — execution census on 0.11 (heavy, likely 2+ slots).** Re-run
 >   `OPS-17` leg (b2)'s methodology on the current image: every collected test
 >   **observed in a completed run with a footer**, real and complex, at each
@@ -6208,29 +6321,37 @@ mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-1. 🟡 **PARTIAL again 2026-08-26 21:00 slot — cumulative 93/189 observed
-   (91 green, 2 red), 96 deferred (was 30/189); stays first in the queue.**
-   Denominator **189/54 modules** still holds (the only intervening commit
-   is documentation-only). **Leg (a)'s built-in positive is discharged**:
-   the seed `test_birdcage_conductor_sizing.py` is green in a **Status-0**
-   run (`20260827T022014Z…real3-cheap`, 47 s, `37 passed, 1 skipped`).
-   `environment`/`unit`/`io` are complete; `materials` 6/7 (1 named runtime
-   skip); `mesh` 27/57; `post` 19/33; **`solver` 0/51, fail-closed on
-   purpose** — both attempts were killed at 540 s in a cold/poisoned FFCx
-   cache chain and *disagree with each other*, so their ~25 ERROR/FAILED
-   lines are discarded, not filed (known-issues' "do not trust any failure
-   in a run that follows a killed one"). New measurement: `tests/solver`
-   does not fit one 540 s window in the **real** build cold. **Second new
-   red**, filed 2026-08-27:
-   `mesh/test_birdcage_port_tags.py::test_birdcage_volumes_partition_the_box`
-   — `Invalid boundary mesh (overlapping facets) on surface 59 surface 79`
-   from `birdcage_port_domain`, isolated at Status 1 / 4 s. That string now
-   spans **three** generators. Full table + deferred-by-name (96) in the §7
-   entry. **Next attempt (leg (c)), in order:** (i) `tests/solver` as a
-   throwaway cache warm-up command *plus* a separate measurement command,
-   real, `timeout -k 30 540`; (ii) the 30 named `tests/mesh` remainder
-   (~300 s); (iii) the 14 `post` names in complex with `--deselect` of the
-   hanging test by name.
+1. 🟡 **PARTIAL a third time 2026-08-26 22:30 slot — cumulative 137/189
+   observed (135 green, 2 red), 52 deferred (was 93/189); stays first in
+   the queue.** Denominator **189/54 modules** still holds (every
+   intervening commit is documentation-only). **`tests/post` and
+   `tests/mesh` are now complete roots** — leg (c) landed the 30-name
+   `mesh` remainder (Status 0, 135 s, `29 passed, 1 skipped`) and the
+   14-name `post` remainder in complex (Status 0, 60 s, `27 passed`), and
+   the one real-build skip is green in complex. `environment`/`unit`/`io`
+   complete; `materials` 6/7 (1 named runtime skip). **The entire
+   remaining gap is `tests/solver`, still 0/51 and fail-closed.** Two
+   measured negatives this slot: the item's own warm-up-then-measure
+   recipe bought **nothing** (both commands died at the same 70% mark, in
+   `test_single_port_excitation.py`), and `--ignore`-ing that module did
+   not rescue the root either — one rank reached 100% while the other hung
+   at 97%, `MPI_Abort(59)`, so `tests/solver` holds a `mag:1`-class
+   divergence independent of the single-port module. That run's 23
+   non-green names (21 of them the *same*
+   `IndexError: index 0 is out of bounds for axis 0 with size 0`, one a
+   *fourth* "overlapping facets" call path) are **discarded, not filed** —
+   its `0.85s` summary contradicts its 481 s wall clock and it has no
+   footer of its own. 1 001 of the slot's 1 677 s went to the two solver
+   commands. Full table + deferred-by-name (52) + the candidate signature
+   in the §7 entry. **Next attempt (leg (d)): stop running `tests/solver`
+   as one command.** One command **per module**, `timeout -k 30 240`,
+   ascending size, so each module gets its own footer and a diverging
+   module costs one module not the root;
+   `test_boundary_condition_selection.py` first (distinct symptom),
+   `test_single_port_excitation.py` / `test_two_cylinder.py` /
+   `test_two_torus.py` last; ~8 modules per slot, 13 modules likely two
+   slots. A module's reds may be filed only once it has a footer of its
+   own.
    **`OPS-26` step 2 leg (a) — execution census on 0.11, the cheap
    directories (heavy by tier, one slot; `-n 2` default, per-file recorded
    width where a module's own docstring or log says otherwise; real build,

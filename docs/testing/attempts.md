@@ -17609,3 +17609,93 @@ non-passes seen this slot are cache artifacts, and if any of them survives a
 warm Status-0 run it is a genuine finding that this census has been unable to
 see through the noise for two slots running.
 
+---
+
+## 2026-08-27T03:30Z — `OPS-26` step 2 leg (a), attempt 3 ("leg (c)") — **incomplete (partial, expected)**
+
+**Slot:** 2026-08-26 22:30 local scheduled implementer run. Preflight clean
+(`git status --porcelain` empty), container Up 10 h. Took §9 item 1, the first
+item not done or blocked — `OPS-26` step 2 leg (a), which the 18:00 review left
+🟡 at 93/189 with an explicit leg-(c) recipe.
+
+**Outcome: cumulative 137/189 observed (135 green, 2 red), 52 deferred**, up
+from 93/189. `tests/post` and `tests/mesh` are now **complete roots** (zero
+deferred). Leg (a) stays 🟡; the whole remaining gap is `tests/solver` at 0/51.
+No code changed, no new red filed, nothing parked — `main` clean, docs + logs
+only.
+
+**What was tried, in the item's stated order.** Five harness commands,
+1 677 s of recorded elapsed:
+
+| # | log | build / width | Status | s | result |
+|---|---|---|---|---|---|
+| 1 | `20260827T033100Z_OPS-26-step2a-warmup.log` | real, `-n 2` | 124 | 501 | throwaway warm-up, discarded |
+| 2 | `20260827T033932Z_OPS-26-step2a-solver.log` | real, `-n 2` | 124 | 500 | measurement — killed at the same 70% |
+| 3 | `20260827T034820Z_OPS-26-step2a-mesh-rest.log` | real, `-n 2` | **0** | 135 | `29 passed, 1 skipped` — the 30 `mesh` names |
+| 4 | `20260827T035101Z_OPS-26-step2a-post-complex.log` | complex, `-n 2` | **0** | 60 | `27 passed` — the 14 `post` names |
+| 5 | `20260827T035220Z_OPS-26-step2a-solver-minus.log` | real, `-n 2` | 124 | 481 | `--ignore` the stalling module — still killed |
+
+**Measured numbers.** `mesh` remainder `29 passed, 1 skipped in 133.51s`; the
+one skip (`test_two_torus_conforming.py::test_driven_torus_field_reaches_the_air_region`,
+"requires the complex build") came back **green in complex** in command 4, so
+it converts to observed rather than staying deferred. `post` remainder
+`27 passed in 58.74s` (14 owed `post` names + 11 `environment` re-observed + 2
+`mesh`). Per-root table and the 52 deferred names are in the §7 entry;
+135 + 2 + 52 = 189 as the fail-closed control requires.
+
+**Two measured negatives on `tests/solver` — both worth more than the census
+line they failed to fill.**
+
+*Finding 7 — the warm-up/measure recipe is refuted.* Executed exactly as the
+item wrote it (0-byte stub sweep, throwaway warm-up, then a separate
+measurement command). Both commands died at the **same 70% mark, in the same
+module** (`test_single_port_excitation.py`). A full 500 s of warm-up bought the
+measurement run nothing, so known-issues' sizing corollary ("warm ⇒ 41 s real
+for the directory") **does not hold on the current tree** — whatever now costs
+the time is not JIT compilation.
+
+*Finding 8 — the stall is a rank divergence, not an unfinished sweep, and
+dropping the stalling module does not rescue the root.* Command 5 ignored
+`test_single_port_excitation.py`; one rank reached **100%** and printed
+`11 failed, 17 passed, 7 skipped, 12 errors in 0.85s` while the other sat at
+**97%** (`test_two_cylinder.py` / `test_two_torus.py`) until the kill, ending
+in `MPI_Abort(59)` on a PETSc SIGTERM trailer. So there is a `mag:1`-class
+divergence in `tests/solver` *independent of* the single-port module.
+
+**Why those 23 names are not filed.** The summary's own `0.85s` is
+irreconcilable with the 481 s wall clock — the two-summary-lines artifact
+family — and the run carries no footer of its own. The item's fail-closed
+control is explicit that such a run counts every module as deferred, never
+green and never red. Filing them would be exactly the over-claim the control
+exists to prevent. **Kept as a hypothesis only:** 21 of the 23 carry the
+*identical* `IndexError: index 0 is out of bounds for axis 0 with size 0`
+across nine modules — one shared cause cascading, not nine independent reds —
+and the 22nd is
+`test_boundary_condition_selection.py::test_time_harmonic_solver_boundary_natural_selects_empty_dirichlet_set`
+with `Invalid boundary mesh (overlapping facets) on surface 1 surface 1`, which
+would be a **fourth** call path for that string if a trustworthy run reproduces
+it.
+
+**Denominator.** Not re-derived this slot and not inherited from outside the
+leg: every commit since the 19:30 derivation is documentation-only, so 189 over
+54 modules still holds.
+
+**Nothing parked, nothing denied.** No `attempt/*` branch — the slot produced
+no code changes. No permission denial encountered; all five commands went
+through `run_and_log.sh` in the foreground at `timeout -k 30 460…500`, under
+the ~590 s protocol ceiling, and every one returned a footer.
+
+**Hypothesis for the next attempt (leg (d)).** Three consecutive whole-root
+commands have now failed the same way, so the root-as-one-command approach is
+the thing to abandon, not the sizing. Run `tests/solver` **module by module**,
+one command each at `timeout -k 30 240`, ascending size — then every module
+gets its own footer, one diverging module costs one module instead of the root,
+and a guaranteed 0/51 becomes at worst a partial with named survivors. Take
+`test_boundary_condition_selection.py` first (it carries the distinct symptom)
+and `test_single_port_excitation.py` / `test_two_cylinder.py` /
+`test_two_torus.py` last. ~8 modules per slot; 13 modules is likely two. Only a
+module with a footer of its own may have its reds filed. Concrete prediction:
+the cheap `tests/solver` modules will be green in isolation and the
+`IndexError` cascade will collapse to **one** genuinely red module whose
+failure poisons the shared fixture for the rest of the root.
+

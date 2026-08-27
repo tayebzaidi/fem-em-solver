@@ -1,0 +1,66 @@
+# Test Run
+- Chunk: OPS-26-step2a-warmup
+- Commit: 862bf43cd65890f1700a0168ba2580dadc40ea64
+- Time (UTC): 2026-08-27 03:31:00
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && find /root/.cache/fenics -name "*.c" -size 0 -print -delete; PYTHONPATH=/workspace/src timeout -k 30 500 mpiexec -n 2 python3 -m pytest tests/solver -q --tb=no -p no:randomly'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 26 22:30 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && find /root/.cache/fenics -name "*.c" -size 0 -print -delete; PYTHONPATH=/workspace/src timeout -k 30 500 mpiexec -n 2 python3 -m pytest tests/solver -q --tb=no -p no:randomly'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 51 items
+
+tests/solver/test_boundary_condition_selection.py ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collected 51 items
+
+tests/solver/test_boundary_condition_selection.py ....Fs                   [  7%]
+tests/solver/test_coil_phantom_magnetostatics.py FF                       [  9%]
+tests/solver/test_convergence_diagnostics.py s.                   [  7%]
+tests/solver/test_coil_phantom_magnetostatics.py ............s              [ 37%]
+tests/solver/test_cylinder.py FF                                          [ 39%]
+tests/solver/test_energy_and_point_evaluation.py                        [  9%]
+tests/solver/test_convergence_diagnostics.py .....E.E..E.E.E.E                  [ 50%].
+tests/solver/test_gauge_lagrange.py .s              [ 37%]
+tests/solver/test_cylinder.py F                                          [ 39%]
+tests/solver/test_energy_and_point_evaluation.py EEEEEEEE                                 [ 58%]
+tests/solver/test_gauge_multiplier_convergence.py EE                  [ 50%]
+tests/solver/test_gauge_lagrange.py EEEE                     [ 62%]
+tests/solver/test_gauge_penalty.py .EE                                 [ 58%]
+tests/solver/test_gauge_multiplier_convergence.py EE                     [ 62%]
+tests/solver/test_gauge_penalty.py .FFFFF                                  [ 70%]
+tests/solver/test_single_port_excitation.py 
+## Exit
+- Status: 124
+- Elapsed (s): 501
