@@ -19193,3 +19193,133 @@ found by reading a red's assertion message. One open item `OPS-27` should
 carry rather than guess: `box_truncation::test_the_xlarge_box_mesh_is_the_probes`
 is a *suspected sixth site* that no window has ever reached (finding 36), so
 it cannot be re-recorded until that fixture is cheaper — file it as pending.
+
+---
+
+## 2026-08-28T00:55Z — `OPS-27` step 1 — **complete**
+
+**Slot:** 19:30 local scheduled implementer run (2026-08-27). Tree clean at
+preflight, container Up 31 h, branch `main` at `d7c0ca6`. §9 item 1 taken as
+written; no fallback.
+
+**What was tried.** The cheap half of the stale-0.7.2-record class: re-record
+by *mesh value* from the census logs (no new measurement bought), then re-run
+one module per mesh as the anchor. Five files, six names, all exact
+equalities, version-tagged with the 0.7.2 digit and the census log in-comment
+(`GEO-16` precedent), **no band introduced or moved**, `git diff -- src/`
+empty.
+
+| constant | 0.7.2 → 0.11 | drift | holder | basis log |
+|---|---|---|---|---|
+| `RECORD_128_RELL2` | 0.01826 → **0.017686** | −3.14% | `test_geometry_floor_discriminator.py:89` | `20260827T125507Z_OPS-26-step2c-v42-geomfloor.log` (+ `20260822T123746Z_OPS-18-step3-th10-rerun.log`) |
+| `RECORD_128_SEPARATION` | 57.31 → **59.16** | +3.22% | same file, `:90` | same |
+| `NCELLS_BASELINE` | 138_619 → **138_490** | −0.093% | `test_coil_loading_larmor_probe.py:100` | `…183121Z_…richardson.log`, `…185143Z_…probe-30mhz.log` |
+| `NCELLS_THIRD` | 2_807_309 → **2_808_204** | +0.032% | `test_coil_loading_larmor_mesh_cache.py:75` | `20260827T141059Z_OPS-26-step2d-meshcache-real.log` |
+
+Docstring/comment copies moved in the same commit in all five files. In
+`test_geometry_floor_discriminator.py` the dated **2026-08-13 result block**
+was *annotated, not rewritten* — those digits are the 0.7.2 image's
+measurement and rewriting them would falsify a dated record; a following
+paragraph carries the 0.11 readings (55 241 cells, 1.7686% / 59.16× at
+128 MHz, 1.766% at 64 MHz) and states that the band classification
+(**RESOLUTION**, improvement 2.063×) and reading 2 are unchanged.
+
+**Measured numbers — four anchor windows, all Status 0, 604 s total.**
+
+| window | command | result | census read | Status / elapsed |
+|---|---|---|---|---|
+| 1 | geomfloor, `-n 2` complex, `-k 30 120` | **12 passed in 46.45s** | `1 failed in 22.15s` | 0 / 49 s |
+| 2 | richardson, `-n 2` complex, `TH11_STEP4_RUNG=baseline TH11_STEP4_FREQ_MHZ=10,30`, `-k 30 300` | **25 passed in 147.00s** | `2 failed, 23 passed in 141.15s` | 0 / 149 s |
+| 3 | probe + `transition_30mhz`, `-n 2` complex, `-k 30 300` | **23 passed in 149.09s** | `2 failed, 21 passed in 137.35s` | 0 / 150 s |
+| 4 | `mesh_cache`, `-n 2` **real**, alone, `-k 30 400` | **12 passed, 4 skipped in 254.75s** | `1 failed, 11 passed, 4 skipped in 217.70s` | 0 / 256 s |
+
+Every window carried `tests/environment` first. Rank streams identical in all
+four. Prices held within the item's estimates on windows 2 and 3 (+4.2% and
++8.6% on the census) and ran long on 1 and 4 (23 → 49 s and 219 → 256 s,
+both from adding the `tests/environment` root, which the census's geomfloor
+run omitted and which the item's 23 s figure therefore under-priced).
+
+**Negative control (the item's, executed).** `git show -- tests/` touches
+only the four constants and their comment/docstring copies — no band, no
+`src/`. Collected counts are **identical** to the census runs (25 / 23 / 16),
+so exactly the six stale-record names flipped green and no other name's
+status moved. A printed-digit comparison of the *physics* readings was **not
+available and never was**: pytest captures stdout on green tests, so the
+census logs only ever printed the failing names' output. The
+name-and-status-level check above is the strongest form of that control the
+logs support — recording this so the review does not read "byte-identical"
+as having been verified digit-by-digit.
+
+**Findings.**
+
+* **38 — the 138 619 family is ONE constant, not four.** `richardson_ladder`,
+  `transition_30mhz` and `degree2` all *import*
+  `test_coil_loading_larmor_probe.NCELLS_BASELINE`; a single edit retired four
+  reds. This is finding 30's "the unit of repair is the mesh, not the file" in
+  its strongest form, and it cuts the other way too: a per-file sweep would
+  have found **nothing to edit** in two of the three red modules. `OPS-27`
+  step 2 should check the same shape before assuming its 417 914 family needs
+  three edits — `larmor_resolution.py:89` and `slab_resolution.py:98` each
+  define their own `NCELLS_FINE`, and `third_rung` and `richardson_ladder`
+  *import* one of them, so step 2's "three files" is probably **two**.
+* **39 — the `0.7.2` completeness grep is confirmed empty.**
+  `grep -rn '0\.7\.2' tests/` returns 26 hits over 11 files and **none** is
+  one of this chunk's sites; every hit is an already-swept record carrying
+  both digits, or prose. The 18:00 review's demotion of the grep to a
+  completeness check was correct.
+* **40 — stale *prose* copies survive outside either step's scope.** The value
+  greps find `138 619` in `test_coil_loading_degree2.py` (×5),
+  `test_degree2_energy_mechanism.py`, `test_dodd_deeds_impedance.py` (×2),
+  `test_dodd_deeds_projected_drive.py`, `test_dodd_deeds_reactance_box_size.py`,
+  `test_dodd_deeds_reactance_box_truncation.py` (×3),
+  `test_dodd_deeds_reactance_combined_knobs.py` (×3),
+  `test_dodd_deeds_reactance_wire_resolution.py` (×3) and
+  `test_dodd_deeds_resistance_slab_resolution.py`, and `417 914` in
+  `richardson_ladder` (×3). **None is asserted** — verified by reading the
+  `_dodd_deeds_` sites, where `growth = ncells / 138_619` feeds a `print` and
+  the assertion beside it is `ncells == NCELLS_COMBINED` (or the module's own
+  constant). They were left untouched under this step's "five names, five
+  files" scope. They are stale documentation and want **one prose sweep after
+  step 2 lands**, not an in-scope edit; a review should decide whether that is
+  worth a chunk or a line in step 2's commit.
+
+**Cache and process discipline (finding 27's rule, followed).** Swept
+`find /root/.cache/fenics -name '*.c' -size 0` before window 1 and again
+before window 4 — clean both times, zero stray `python3`. No exit 124 this
+slot, so no post-kill sweep was owed.
+
+**Known-issues.** Two entries **retired** (leg (c) geomfloor, leg (d)
+`mesh_cache`) and one **partially retired** (leg (f): its four 138 619 names
+are green, its 417 914 ×2 and 697 401 names stay open for step 2). The leg
+(d) entry's disposition line argued an equality on a mesher count is
+"arguably the wrong shape" and that a ±0.1% band would survive an image bump
+— **that call was not taken**, the review's exact-and-version-tagged ruling
+was, and the retirement note says so explicitly.
+
+**Logs.** `20260828T003300Z_OPS-27-step1-geomfloor.log`,
+`20260828T003400Z_OPS-27-step1-richardson.log`,
+`20260828T003636Z_OPS-27-step1-probe-30mhz.log`,
+`20260828T003915Z_OPS-27-step1-meshcache-real.log`. Four matching
+`test-results.md` rows.
+
+**Denials:** no compute command denied. One friction, same shape as the last
+slot's: a `for f in …; do python3 - <<EOF … EOF; done` loop (to do the
+`138 619` → `138 490` prose replacement mechanically) was rejected by the
+permission layer as `simple_expansion`. Done with eleven `Edit` calls
+instead — zero compute cost, and arguably the better outcome since it forced
+each copy to be read in context, which is how the dated-result-block
+distinction above was caught.
+
+### Hypothesis for the next attempt — `OPS-27` step 2
+
+Take **§9 item 2** unchanged; it is independent of this step and touches five
+different files. Two things this slot learned that change its sizing:
+finding 38 says check `NCELLS_FINE`'s definition/import graph **before**
+editing — the item's "three files" for the 417 914 family is likely two
+definitions plus imports, and a `grep -rn 'NCELLS_FINE'` costs nothing; and
+finding 40 says leave the prose copies alone again and let a review dispose of
+them in one pass. The item's own traps stand: all three modules complex-gated,
+`knobs` at `-n 8` has a recorded 521 s exit 124 so its 660 s window is the
+measurement if it repeats, `slab` and `wire` at `-n 2`, wire's projected half
+selected **by node id**, and `larmor_resolution` / `third_rung` are edited but
+not re-run with that stated in the commit.

@@ -18,7 +18,7 @@ physics is trustworthy as a *reading*:
 * the σ = 0 negative control (`EX-11`'s): the free solve's ohmic dissipation
   ``½∫σ|E|²`` must be ``+0.0`` **exactly**, not small — a σ-blind pipeline
   would return the loaded value;
-* mesh determinism: the same 138 619 cells `MAT-6` step 3 solved.
+* mesh determinism: the same 138 490 cells `MAT-6` step 3 solved.
 
 ΔR and ΔX at 64 MHz are **printed beside the Dodd–Deeds prediction and never
 asserted**.  At 64 MHz that closed form is the *comparison*, not the reference
@@ -33,7 +33,7 @@ W = 0.25 / ``resolution_near`` 0.0025 fixture (ΔR 0.8835% on record at
 record)".  Those two are different fixtures: 0.8835% is the *combined-knobs*
 mesh (W = 0.25, ``resolution_wire`` = 0.001, 697 401 cells, 178–196 s **per
 solve at -n 8**, step 7 Part 2c), while 70–75 s at ``-n 2`` is the step-3
-**baseline** (W = 0.15, ``resolution_wire`` = 0.002, 138 619 cells).  A cost
+**baseline** (W = 0.15, ``resolution_wire`` = 0.002, 138 490 cells).  A cost
 probe is priced from the cheap rung up (implementer.md, "cost-probe unmeasured
 cases first"), and 64 MHz on this fixture is unmeasured in every respect, so
 this module runs the priced rung — the step-3 baseline at ``-n 2``, whose
@@ -95,9 +95,21 @@ LARMOR_FREQUENCY_HZ = 64.0e6
 
 MU_0 = 4.0e-7 * np.pi
 
-# The step-3 baseline mesh, deterministic and on record at this parameter set
-# (`20260804T213600Z_MAT-6-step3-gate-final.log`, and step 8's probe ladder).
-NCELLS_BASELINE = 138_619
+# The step-3 baseline mesh, deterministic and on record at this parameter set.
+# Re-recorded on the **0.11 image** (dolfinx 0.11 / gmsh 4.15.2) by `OPS-27`
+# step 1: 138 490 cells at `-n 2` in
+# ``20260827T183121Z_OPS-26-step2f-richardson.log`` and
+# ``20260827T185143Z_OPS-26-step2f-probe-30mhz.log``.  It read 138 619 until
+# 2026-08-27 — measured on the **0.7.2** image / gmsh 4.11.1 in
+# ``20260804T213600Z_MAT-6-step3-gate-final.log`` and step 8's probe ladder —
+# and that digit is stale, not a regression: the drift is −0.093%, it is the
+# gmsh version bump, and every *physics* reading on this fixture (the ΔR/ΔX
+# deviations, the complex-power identities) reproduced its record in the same
+# runs.  This one constant is the record for four names in three modules
+# (`richardson_ladder` ×2 params, this module, `transition_30mhz`), which is
+# why it is held here and imported, never restated.  Version-tag it again if
+# the image moves.
+NCELLS_BASELINE = 138_490
 
 # `MAT-6` step 3's 10 MHz reading on this exact fixture and drive — the
 # like-for-like comparison for everything printed here, cited never recomputed.
@@ -330,7 +342,7 @@ def larmor_loading():
 @complex_only
 @pytest.mark.integration
 def test_the_mesh_is_the_mat6_step3_baseline(larmor_loading):
-    """138 619 cells: the same mesh the 10 MHz record was measured on.
+    """138 490 cells: the same mesh the 10 MHz record was measured on.
 
     The mesh is deterministic and frequency never reaches the generator, so a
     different count would mean the comparison against `MAT-6`'s 1.5834% is not

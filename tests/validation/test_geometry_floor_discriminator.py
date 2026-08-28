@@ -9,7 +9,8 @@ error does not fall the way a volume-resolution error does.
 
 The discriminator is one command, and it is cheap because the mesh is already
 priced: `TH-10` step 3 solved the **128 MHz** gate at ``h_sphere = 0.00556``
-(55 251 cells, 1.826%, separation 57.31×).  Step 1 here re-runs the **64 MHz**
+(55 251 cells, 1.826%, separation 57.31× on the 0.7.2 image; 55 241 cells,
+1.7686%, 59.16× on 0.11 — `OPS-27` step 1).  Step 1 here re-runs the **64 MHz**
 gate — nothing else changed — at that same mesh.
 
 **Pre-registered bands** (stated in §7 before this file existed; classification
@@ -24,7 +25,8 @@ is printed, not asserted, because all three are legitimate readings):
 * between ⇒ mixed; report both.
 
 **Negative control, asserted:** the same command reproduces `TH-10` step 3's
-recorded 128 MHz digits at that mesh (1.826% relL2, 57.31× separation) to a
+recorded 128 MHz digits at that mesh (1.7686% relL2, 59.16× separation on the
+0.11 image; 1.826% / 57.31× on 0.7.2) to a
 pre-stated 1% relative band — the band `EX-19` measured this fixture's
 reproducibility at (max drift 1.7e-04, 2026-08-13).  A run that moves the
 *recorded* frequency's numbers is a bug in this file or in the fixture, not a
@@ -56,6 +58,13 @@ not floored).  Control exact: 55 251 cells, 128 MHz at 1.826% / 57.31×, drift
    The two claims were conflated when the band was written; the band name is
    left exactly as registered rather than re-worded after the fact.
 
+The digits in that result block are the **0.7.2** image's and are left exactly
+as measured.  On the **0.11** image (`OPS-27` step 1, 2026-08-27) the same
+command reads 55 241 cells, 128 MHz at **1.7686% / 59.16×** and 64 MHz at
+**1.766%** — so both frequencies moved down together by ~0.9% relative, the
+band classification is unchanged (**RESOLUTION**, improvement 2.063×), and
+reading 2 above holds a fortiori: the two frequencies still sit together.
+
 Run (complex build required)::
 
     docker compose exec -T fem-em-solver bash -lc \\
@@ -85,9 +94,18 @@ from tests.validation.test_lossy_sphere_fullwave import (
 DISCRIMINATOR_RESOLUTION = RESOLUTIONS_128[-1]
 PRICED_CELL_COUNT = 55251
 
-# `TH-10` step 3's recorded 128 MHz numbers at exactly this mesh.
-RECORD_128_RELL2 = 0.01826
-RECORD_128_SEPARATION = 57.31
+# `TH-10` step 3's recorded 128 MHz numbers at exactly this mesh, re-recorded on
+# the **0.11 image** (dolfinx 0.11 / gmsh 4.15.2) by `OPS-27` step 1: 1.7686% /
+# 59.16×, read at `-n 2` in ``20260827T125507Z_OPS-26-step2c-v42-geomfloor.log``
+# and agreeing with `OPS-18`'s own 128 MHz re-run
+# (``20260822T123746Z_OPS-18-step3-th10-rerun.log``, 1.769%).  They read
+# 0.01826 / 57.31 until 2026-08-27 — measured on the **0.7.2** image in
+# ``20260813T123211Z_TH-10-step3-128mhz.log`` — and those digits are stale, not
+# a regression: the mesh moved with gmsh (55 251 → 55 241 cells, −1.8e-04,
+# inside `CELL_COUNT_BAND`) and `TH-10`'s own 5% gate never moved.  The band
+# below is unchanged; version-tag these constants again if the image moves.
+RECORD_128_RELL2 = 0.017686
+RECORD_128_SEPARATION = 59.16
 # Reproduction band, pre-stated: `EX-19` reproduced four records through a
 # second code path at max drift 1.7e-04, so 1% is ~60× the observed drift and
 # still far tighter than any of the bands being discriminated between.

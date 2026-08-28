@@ -1,7 +1,8 @@
 """`TH-11` step 5a, command 1: cache the 64 MHz third rung to XDMF.
 
 Step 5 attempt 1 priced the third rung (``resolution_near`` = 0.00125) at
-**2 807 309 cells** and **288.2 s of meshing** — inside §7's 3.4 M ceiling but
+**2 807 309 cells** on 0.7.2 (**2 808 204** on the 0.11 image, `OPS-27` step 1)
+and **288.2 s of meshing** — inside §7's 3.4 M ceiling but
 so expensive that a mesh-plus-pair command cannot return inside a scheduled
 session's ~590 s foreground window.  The 10:30 review's decision (a) is this
 module: generate that mesh **once**, write it to XDMF, and read it back in the
@@ -11,7 +12,7 @@ solves off the cache and pays 0 s of meshing.
 **What is gated** — that the cache is the same mesh, not merely a mesh:
 
 * the owned cell count on the written mesh is the probe's exact record
-  ``NCELLS_THIRD == 2_807_309`` (the ``third`` rung only; the ``smoke`` rung has
+  ``NCELLS_THIRD == 2_808_204`` (the ``third`` rung only; the ``smoke`` rung has
   no record and gates the round trip alone);
 * the read-back mesh has the **same** owned cell count;
 * the cell-tag and facet-tag **value sets** survive the round trip, and so do
@@ -69,10 +70,20 @@ from tests.validation.test_dodd_deeds_impedance import (
     FEM_WIRE_RADIUS,
 )
 
-# The probe's exact record (`20260817T123353Z_TH-11-step5-probe.log`): the mesh
-# generator never sees the frequency, so this count is a property of the rung
-# and must reproduce to the cell.
-NCELLS_THIRD = 2_807_309
+# The probe's exact record: the mesh generator never sees the frequency, so this
+# count is a property of the rung and must reproduce to the cell.  Re-recorded
+# on the **0.11 image** (dolfinx 0.11 / gmsh 4.15.2) by `OPS-27` step 1:
+# 2 808 204 cells at `-n 2` in
+# ``20260827T141059Z_OPS-26-step2d-meshcache-real.log`` (the same count read
+# twice there — at mesh time and at read-back — with the cell tags
+# {1: 13342, 2: 1067531, 3: 1727331} unchanged).  It read 2 807 309 until
+# 2026-08-27 — measured on the **0.7.2** image / gmsh 4.11.1 in
+# ``20260817T123353Z_TH-11-step5-probe.log`` — and that digit is stale, not a
+# regression: the drift is +0.032%, the smallest of this class, and the
+# module's other four names (the ceiling, the round-trip, the tag sets) stayed
+# green through the move.  `NCELLS_THIRD_CEILING` is unchanged.  Version-tag
+# this constant again if the image moves.
+NCELLS_THIRD = 2_808_204
 
 # Grid names the cache is written under.  5b reads by name; changing either of
 # these invalidates every existing cache file, which is why they are constants
@@ -244,7 +255,7 @@ def cached_rung():
 
 @pytest.mark.integration
 def test_the_cached_rung_is_the_priced_mesh(cached_rung):
-    """The written mesh is the probe's exact 2 807 309-cell third rung.
+    """The written mesh is the probe's exact 2 808 204-cell third rung.
 
     Frequency never reaches the mesh generator, so the rung's count is fixed by
     its sizing parameters alone: a different number means 5b would extrapolate

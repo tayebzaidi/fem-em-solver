@@ -1,7 +1,7 @@
 """`TH-11` step 4: the fixed-frequency Richardson ladder at 10 and 30 MHz.
 
 Steps 1–3 put three coil-loading points on **one** mesh rung
-(``resolution_near`` = 0.005, 138 619 cells): the ΔR deviation from the
+(``resolution_near`` = 0.005, 138 490 cells): the ΔR deviation from the
 quasi-static Dodd–Deeds prediction reads **1.5834%** at 10 MHz, **+5.5912%**
 at 30 MHz and **+10.2698%** at 64 MHz.  Monotone — but so is the confound:
 cells per skin depth falls 3.18 → 1.84 → 1.26 across the same three points,
@@ -11,7 +11,7 @@ along a line where physics and mesh error move together is not a trend.
 
 This module walks the *other* axis: **h at fixed f**.  Each run solves the
 loaded/free pair on one rung at one frequency; running the two rungs
-(0.005 → 0.0025, a factor 2 in h, 138 619 → 417 914 cells) at the same
+(0.005 → 0.0025, a factor 2 in h, 138 490 → 417 914 cells) at the same
 frequency gives the pair the extrapolation needs.  Everything else — fixture,
 drive, solver, helpers — is step 1's, imported rather than re-declared, so the
 rungs are like-for-like by construction.
@@ -20,7 +20,7 @@ rungs are like-for-like by construction.
 "two harness commands, one per f", split further to keep each command inside
 one foreground window):
 
-* ``TH11_STEP4_RUNG``      — ``baseline`` (default, 138 619 cells) or ``fine``
+* ``TH11_STEP4_RUNG``      — ``baseline`` (default, 138 490 cells) or ``fine``
   (417 914 cells);
 * ``TH11_STEP4_FREQ_MHZ``  — comma list, default ``10,30``.
 
@@ -338,7 +338,7 @@ def ladder_rung(request):
 @complex_only
 @pytest.mark.integration
 def test_the_rung_has_its_recorded_cell_count(ladder_rung):
-    """138 619 / 417 914 exactly — the mesh never sees the frequency.
+    """138 490 / 417 914 exactly — the mesh never sees the frequency.
 
     Both counts are twice on record (`MAT-6` step 3 and step 8).  A different
     count means the ladder's two rungs are not the two rungs whose 64 MHz move

@@ -47,7 +47,31 @@ unless fixing it is the task.
 | **Sibling sweep (zero compute)** | `grep -rn '366207\|366_207' tests/` returns **only** `:268` and its message at `:270` — no sibling module carries this mesh, unlike 138 619 (three modules) and 417 914 (three). |
 | **Disposition** | Filed, **not fixed** — `OPS-26` step 2 is a census and lands no fix. Expected on `main`; **not yours**. |
 
-### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (f), 13:30 slot) — **five more stale exact cell-count records across five modules, and the class collapses to THREE shared meshes, not nine independent constants**
+### 🔴 PARTIALLY RETIRED 2026-08-27 (`OPS-26` step 2 leg (f), 13:30 slot) — **five more stale exact cell-count records across five modules, and the class collapses to THREE shared meshes, not nine independent constants**
+
+> **✅ THE 138 619 FAMILY RETIRED 2026-08-27, 19:30 implementer slot
+> (`OPS-27` step 1); the 417 914 and 697 401 families stay OPEN for
+> `OPS-27` step 2 (§9 item 2).** Four of this entry's six names are green
+> from `main` — `richardson_ladder::test_the_rung_has_its_recorded_cell_count`
+> `[10MHz]` and `[30MHz]`, `larmor_probe::test_the_mesh_is_the_mat6_step3_baseline`,
+> `transition_30mhz::test_the_mesh_is_the_step1_baseline`. Finding 30's
+> "the unit of repair is the mesh, not the file" is **confirmed to its
+> strongest form here**: all four names read one constant,
+> `test_coil_loading_larmor_probe.NCELLS_BASELINE`, imported by the other
+> two modules (and by `test_coil_loading_degree2.py`), so **one edit**
+> 138_619 → **138_490** retired four reds. Logs, both `-n 2` complex,
+> standard tier, both rank streams identical:
+> `20260828T003400Z_OPS-27-step1-richardson.log` — **25 passed in 147.00s**,
+> Status 0, elapsed 149 s (census: `2 failed, 23 passed`);
+> `20260828T003636Z_OPS-27-step1-probe-30mhz.log` — **23 passed in 149.09s**,
+> Status 0, elapsed 150 s (census: `2 failed, 21 passed`). Same collected
+> counts as the census runs (25 / 23), so only the two stale-record names
+> per run flipped. **Still open in this entry:**
+> `slab_resolution::test_the_refinement_landed_in_the_slab_and_not_on_the_wire_or_far_field`
+> and `larmor_resolution::test_the_mesh_is_the_mat6_step8_fine_rung`
+> (417 914 → 418 888) and
+> `combined_knobs::test_the_combined_mesh_is_the_probes_and_both_knobs_moved`
+> (697 401 → 697 926).
 
 > **CANDIDATE OWNER: `OPS-27`** (§9 item 2), whose rubric as written names
 > **two** sites. The census has now found **nine red names over eight
@@ -83,7 +107,20 @@ unless fixing it is the task.
 | **Class — fourth instance this census** | Same class as leg (d)'s finding 23 (`mesh_cache`, 0.032%), leg (c)'s finding 19 (`test_geometry_floor_discriminator.py`) and `GEO-16`'s two-torus red: **exact-equality records made on 0.7.2, never swept after the 0.11 bump**. Four sites, three distinct quantities (residual, cell count ×2, separation ratio). Note for `OPS-27`: its planned `grep -rn '0\.7\.2' tests/` sweep would **not** necessarily have found this one — the constant at `:443` must be reached by *reading the assertion messages of the census reds*, not only by the version tag, so the sweep clause should be widened to exact-equality mesh counts regardless of tag. |
 | **Disposition** | Filed, **not fixed** — `OPS-26` step 2 is a census and lands no fix. Expected on `main`; **not yours**. |
 
-### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (d), 09:00 slot) — `test_coil_loading_larmor_mesh_cache.py` asserts an **exact** third-rung cell count recorded on the 0.7.2 image (2 807 309) and 0.11 meshes 2 808 204: a 0.032% gmsh drift against an equality record
+### ✅ RETIRED 2026-08-27 (`OPS-27` step 1, 19:30 implementer slot) — `test_coil_loading_larmor_mesh_cache.py` asserted an **exact** third-rung cell count recorded on the 0.7.2 image (2 807 309) and 0.11 meshes 2 808 204: a 0.032% gmsh drift against an equality record
+
+> **✅ RETIRED 2026-08-27, 19:30 implementer slot.** `NCELLS_THIRD`
+> 2_807_309 → **2_808_204**, version-tagged with the 0.7.2 digit and
+> `20260827T141059Z_OPS-26-step2d-meshcache-real.log` in-comment, docstring
+> copies moved. The disposition line below argues an equality on a mesher
+> count is "arguably the wrong shape"; **that call was not taken** — the
+> review ruled exact-and-version-tagged (`GEO-16` precedent, no band), and
+> `NCELLS_THIRD_CEILING` is unchanged. Green from `main`:
+> `20260828T003915Z_OPS-27-step1-meshcache-real.log` — **12 passed, 4
+> skipped in 254.75s**, Status 0, elapsed 256 s, `-n 2` **real** build,
+> standard tier, both rank streams identical; against the census's `1
+> failed, 11 passed, 4 skipped`, i.e. the same 4 `tests/environment`
+> complex-only skips and the one red flipped.
 
 > **OWNER ASSIGNED 2026-08-27, 10:30 review: `OPS-27`** (§9 item 2) — the
 > stale-record class, one chunk for both open sites; re-record exact and
@@ -98,7 +135,18 @@ unless fixing it is the task.
 | **Class — third instance this census** | This is the same defect class as leg (c)'s finding 19 (`test_geometry_floor_discriminator.py`, a pre-`OPS-18` 128 MHz constant) and `GEO-16`'s two-torus red: **records not swept after the 0.11 re-record**. Three sites now. The census's value here is that the class, not the individual constant, is the finding — a review should commission one sweep chunk over all exact-equality records made on 0.7.2 rather than three one-constant fixes. |
 | **Disposition** | Filed, **not fixed** — `OPS-26` step 2 is a census and lands no fix (`OPS-26` §7 scope). The fix is a one-constant re-record on the 0.11 image with the basis stated in-comment, and an equality assertion on a mesher cell count is arguably the wrong shape in the first place (a ±0.1% band would survive an image bump); both calls belong to a chunk, not to this slot. Until then this red is expected on `main` and is **not yours**. |
 
-### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (c), 07:30 slot) — `test_geometry_floor_discriminator.py` asserts the **pre-`OPS-18`** 128 MHz record (1.8260%) and measures `OPS-18`'s re-recorded 1.7686%: a stale constant, not a physics regression
+### ✅ RETIRED 2026-08-27 (`OPS-27` step 1, 19:30 implementer slot) — `test_geometry_floor_discriminator.py` asserted the **pre-`OPS-18`** 128 MHz record (1.8260%) and measured `OPS-18`'s re-recorded 1.7686%: a stale constant, not a physics regression
+
+> **✅ RETIRED 2026-08-27, 19:30 implementer slot — landed exactly as ruled.**
+> `RECORD_128_RELL2` 0.01826 → **0.017686** and `RECORD_128_SEPARATION`
+> 57.31 → **59.16**, version-tagged with the 0.7.2 digits and both census
+> logs in-comment (`GEO-16` precedent), every docstring copy moved and the
+> dated 2026-08-13 result block annotated rather than rewritten. **No band
+> touched** (`REPRODUCTION_BAND` 1%, `CELL_COUNT_BAND` 1% unchanged) and the
+> 64 MHz leg untouched. Green from `main`:
+> `20260828T003300Z_OPS-27-step1-geomfloor.log` — **12 passed in 46.45s**
+> (11 `tests/environment` + this module's one test), Status 0, elapsed 49 s,
+> `-n 2` complex, smoke tier, both rank streams identical.
 
 > **OWNER ASSIGNED 2026-08-27, 10:30 review: `OPS-27`** (§9 item 2) —
 > `RECORD_128_RELL2` / `RECORD_128_SEPARATION` → `OPS-18`'s 0.017686 /

@@ -11,7 +11,7 @@ evidence and none is attempted here.
 What is still missing is a *third point* between the two ends of the
 eddy→displacement transition.  This module is that point: step 1's module at
 **f = 30 MHz**, on step 1's own fixture (W = 0.15, ``resolution_wire`` 0.002,
-``resolution_near`` 0.005, **138 619 cells**), everything else pinned and every
+``resolution_near`` 0.005, **138 490 cells**), everything else pinned and every
 helper imported from step 1 rather than re-declared, so the three readings are
 like-for-like by construction.
 
@@ -25,7 +25,7 @@ as a physics trend would be exactly the inference step 2 refuted.
 **What is gated** is the solver's own bookkeeping, exactly as steps 1–2: the
 complex-power identity ``Im Z = 4ω(W_m − W_e)/I′²`` on each solve at the
 step-2f family bound of 1e-9, the σ = 0 dissipation control at exact ``+0.0``,
-the drive control at 1e-24, and the cell count at step 1's exact 138 619.
+the drive control at 1e-24, and the cell count at step 1's exact 138 490.
 Dodd–Deeds at 30 MHz is the *comparison*, not the reference — its deviation is
 never called an error (§7 trap list) — so no band is drawn around the physics.
 
@@ -89,7 +89,7 @@ RESOLUTION_NEAR_STEP1 = 0.005
 
 @pytest.fixture(scope="module")
 def transition_loading():
-    """One 138 619-cell mesh, the loaded/free pair at 30 MHz, solved once.
+    """One 138 490-cell mesh, the loaded/free pair at 30 MHz, solved once.
 
     Step 1's fixture body with ``LARMOR_FREQUENCY_HZ`` replaced by
     ``TRANSITION_FREQUENCY_HZ``; the solve helper, the energy helpers and the
@@ -250,7 +250,7 @@ def transition_loading():
 @complex_only
 @pytest.mark.integration
 def test_the_mesh_is_the_step1_baseline(transition_loading):
-    """138 619 cells: the same mesh steps 1 and `MAT-6` step 3 were read on.
+    """138 490 cells: the same mesh steps 1 and `MAT-6` step 3 were read on.
 
     The mesh is deterministic and frequency never reaches the generator, so a
     different count would mean the 10 MHz (1.5834%) and 64 MHz (+10.2698%)
