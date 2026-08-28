@@ -31,14 +31,14 @@ For a straight wire carrying current **I** along the z-axis, the magnetic field 
 
 **RECOMMENDED:** Use the combined file which has the `CellTags` cell array and the B/B_analytical fields on the same grid:
 ```
-File → Open → paraview_output/straight_wire_combined.xdmf
+File → Open → paraview_output/magnetostatics_01_straight_wire_combined.xdmf
 Reader: Xdmf3ReaderT
 Click "Apply"
 ```
 
 **Alternative:** Use individual files:
 ```
-File → Open → paraview_output/straight_wire_B.xdmf
+File → Open → paraview_output/magnetostatics_01_straight_wire_B.xdmf
 Reader: Xdmf3ReaderT
 Click "Apply"
 ```

@@ -98,7 +98,7 @@ pass.
 
 ## ParaView
 
-Writes `examples/ports/paraview_output/two_torus_port_pair_combined.xdmf`
+Writes `examples/ports/paraview_output/ports_01_two_torus_port_pair_combined.xdmf`
 (+ `.h5`): mesh, `CellTags`, and the port-1 drive's `E_real` / `E_imag` /
 `E_magnitude` as CG1 Lagrange interpolants (XDMF cannot carry N1curl; the
 writers take Lagrange only — the `EX-14`/`EX-17` lesson). Threshold on

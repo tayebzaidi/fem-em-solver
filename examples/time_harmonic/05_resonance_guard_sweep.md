@@ -131,7 +131,7 @@ the sweep index or a stale field being written, which on a picture of this kind
 would be undetectable.
 
 **Step 6 — open it in ParaView, and use the same colour scale for both.**
-`File → Open → examples/time_harmonic/paraview_output/resonance_guard_combined.xdmf`.
+`File → Open → examples/time_harmonic/paraview_output/time_harmonic_05_resonance_guard_combined.xdmf`.
 
 1. Colour by `E_magnitude_near`, then by `E_magnitude_quiet`, **with the range
    locked**. The near-resonant field saturates the scale; the quiet one is

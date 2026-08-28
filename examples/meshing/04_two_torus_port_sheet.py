@@ -57,9 +57,9 @@ Run it through the example runner::
     ./run_examples.sh -e mesh:4
 
 Output lands in ``examples/meshing/paraview_output/``: open
-``two_torus_port_sheet_combined.xdmf`` and threshold on ``CellTags``
+``meshing_04_two_torus_port_sheet_combined.xdmf`` and threshold on ``CellTags``
 (1 = wire 1, 2 = wire 2, 3 = air, 101/111 and 102/112 = the two halves of each
-gap box), and ``two_torus_port_sheet_facets.xdmf`` alongside it for the facet
+gap box), and ``meshing_04_two_torus_port_sheet_facets.xdmf`` alongside it for the facet
 groups — the array is ``mesh_tags`` (1 = outer boundary, 201/202 = the port
 cuts, **211/212 = the port sheets**).
 """
@@ -133,7 +133,7 @@ FACET_TAG_NAMES = {
 SHEET_SYMMETRY_BAND = 1.0e-12
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "two_torus_port_sheet"
+BASENAME = "meshing_04_two_torus_port_sheet"
 
 
 def _write_paraview(msh, cell_tags, facet_tags, comm):

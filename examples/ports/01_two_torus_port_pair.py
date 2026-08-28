@@ -54,7 +54,7 @@ Run (complex build required)::
     ./run_examples.sh -e ports:1
     ./run_examples.sh -e ports:1 -n 2 -t 570
 
-Outputs ``paraview_output/two_torus_port_pair_combined.xdmf`` (mesh + CellTags +
+Outputs ``paraview_output/ports_01_two_torus_port_pair_combined.xdmf`` (mesh + CellTags +
 the port-1 drive's ``E`` fields; threshold on ``CellTags`` to see the gap boxes).
 """
 
@@ -183,7 +183,7 @@ S_SPECTRAL_NORM_CEILING = 1.0
 BLIND_FIXTURE_IM_Z12_OHM = 0.0
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "two_torus_port_pair"
+BASENAME = "ports_01_two_torus_port_pair"
 
 
 def _mutual_inductance(a: float, rho: float, z: float) -> float:

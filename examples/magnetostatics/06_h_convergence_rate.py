@@ -23,7 +23,7 @@ parameters, per-resolution solve, sample line and the rate fit itself), never
 restated, and the anchor is the gate's own:
 
 * **Anchor** — the sampled errors decay **monotonically** across the sequence
-  (``test_h_refinement_straight_wire``, imported gate). Until 2026-08-25 the
+  (``test_h_refinement_magnetostatics_01_straight_wire``, imported gate). Until 2026-08-25 the
   anchor here was the fitted rate inside ``0.7 < rate < 1.5`` (**1.10** on
   record in ``20260730T125522Z_MAG-13.log``, over errors 22.19% -> 12.75% ->
   9.26%); `MAG-19` ruling (i) retired that band on this statistic — it swings
@@ -118,7 +118,7 @@ ON_RECORD_RATE = 1.10
 EXPORT_ERROR_REFERENCE = "coarsest solved resolution"
 
 OUTPUT_DIR = "paraview_output"
-BASENAME = "h_convergence_rate"
+BASENAME = "magnetostatics_06_h_convergence_rate"
 
 
 def main() -> None:
@@ -273,7 +273,7 @@ def main() -> None:
         for name, path in sorted(written_files.items()):
             print(f"  {name:>14}: {path}")
         print()
-        print("  Open h_convergence_rate_combined.xdmf: it carries the mesh, the")
+        print("  Open magnetostatics_06_h_convergence_rate_combined.xdmf: it carries the mesh, the")
         print("  'CellTags' array (1 = wire, 2 = air) and the computed B field")
         print("  at the finest resolution. The closed form is deliberately not")
         print("  written beside it: valid only for r > a, it would put a 1/r")

@@ -75,7 +75,7 @@ identities print as ratios. Check, in order:
    not survive the boolean fragmentation, so there is no port cut to drive.
 
 **Step 2 — open the cell tags.** In ParaView:
-`File → Open → examples/meshing/paraview_output/two_torus_ports_combined.xdmf`.
+`File → Open → examples/meshing/paraview_output/meshing_01_two_torus_ports_combined.xdmf`.
 Apply a **Threshold** on the `CellTags` cell array:
 
 - `1` = wire torus 1, `2` = wire torus 2, `3` = air,
@@ -87,7 +87,7 @@ its gap box**, and the gap boxes must sit *in* the ring, sharing faces with it
 and it should be a rectangular solid spanning the wire cross-section.
 
 **Step 3 — open the facet tags.** Open
-`examples/meshing/paraview_output/two_torus_ports_facets.xdmf` alongside it and
+`examples/meshing/paraview_output/meshing_01_two_torus_ports_facets.xdmf` alongside it and
 colour by the `mesh_tags` array: `1` = outer boundary, `201` / `202` = the port
 cuts. What to look at: tag `1` must cover **all six box walls** with no holes
 (a hole is the visual form of a wall-area ratio below 1), and `201`/`202` must

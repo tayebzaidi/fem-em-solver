@@ -46,8 +46,8 @@ automatically; a real build raises)::
     ./run_examples.sh -e th:7 -n 2 -t 400
 
 Output lands in ``examples/time_harmonic/paraview_output``: one combined XDMF
-per order, ``element_order_sphere_degree1_combined.xdmf`` and
-``element_order_sphere_degree2_combined.xdmf``, on the identical mesh. In the
+per order, ``time_harmonic_07_element_order_sphere_degree1_combined.xdmf`` and
+``time_harmonic_07_element_order_sphere_degree2_combined.xdmf``, on the identical mesh. In the
 complex build the XDMF writer splits every attribute into ``real_<name>`` /
 ``imag_<name>`` (correct writer behaviour — see the `OPS-21` known-issues
 entry), so in ParaView the fields are ``real_E_magnitude``, ``real_E_real``,
@@ -269,7 +269,7 @@ def _export(row: dict, comm: MPI.Comm) -> Path:
     e_re, e_im, e_mag = _paraview_fields(row["msh"], row["fields"])
     OUTPUT_DIR.mkdir(exist_ok=True)
     xdmf_path, _ = write_xdmf_with_tags(
-        OUTPUT_DIR / f"element_order_sphere_degree{row['degree']}_combined",
+        OUTPUT_DIR / f"time_harmonic_07_element_order_sphere_degree{row['degree']}_combined",
         row["msh"],
         row["cell_tags"],
         {"E_real": e_re, "E_imag": e_im, "E_magnitude": e_mag},

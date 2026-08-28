@@ -158,10 +158,10 @@ readings:
    1e-4.
 
 **Step 6 — open the field in ParaView.**
-`examples/ports/paraview_output/lumped_sheet_port_widths_combined.xdmf` carries
+`examples/ports/paraview_output/ports_03_lumped_sheet_port_widths_combined.xdmf` carries
 the `f = 0.5` solved phasor (`E_real`, `E_imag`, `E_magnitude`) on the same grid
 as `CellTags` (`1`/`2` wires, `3` air, `101`/`111` and `102`/`112` the gap-box
-halves). Open `lumped_sheet_port_widths_facets.xdmf` alongside it and threshold
+halves). Open `ports_03_lumped_sheet_port_widths_facets.xdmf` alongside it and threshold
 `mesh_tags` on `211`/`212` — those are the port sheets the BC lives on. The
 picture worth looking at is `E_magnitude` clipped through `z = +0.025` m: the
 field concentrates in the *undriven* gap, which is the coupling `Z₁₂` measures.

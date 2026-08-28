@@ -243,7 +243,7 @@ located in some cell. What this block still is **not**: physics. It is an
 ungated proxy field printed faithfully.
 
 **Step 6 — open it in ParaView.**
-`File → Open → examples/mri/paraview_output/mri_coil_phantom_fields_combined.xdmf`.
+`File → Open → examples/mri/paraview_output/mri_01_coil_phantom_fields_combined.xdmf`.
 
 1. **Threshold** on `CellTags` (1/2 = the two coils, 3 = phantom, 4 = air) and
    keep 1–3 to see the geometry without the air box. That view alone is most of
@@ -254,16 +254,16 @@ ungated proxy field printed faithfully.
    doing what it should qualitatively.
 3. **Colour by `E`** on the same clip. Compare *shapes*, not scales — the scales
    are eight orders of magnitude apart for the reason in step 4.
-4. `mri_coil_phantom_fields_A.xdmf`, `mri_coil_phantom_fields_B.xdmf` and
-   `mri_coil_phantom_fields_E.xdmf` hold the same fields separately if you
+4. `mri_01_coil_phantom_fields_A.xdmf`, `mri_01_coil_phantom_fields_B.xdmf` and
+   `mri_01_coil_phantom_fields_E.xdmf` hold the same fields separately if you
    prefer one file per quantity.
 
 **Step 7 — the machine-readable artifacts.** Alongside the XDMF the run writes
-`mri_coil_phantom_phantom_metrics.json` (the step-3/step-4 blocks as JSON),
-`mri_coil_phantom_phantom_E_samples.csv` and
-`mri_coil_phantom_phantom_B_samples.csv` (the 493 per-cell samples),
-`mri_coil_phantom_quicklook.json` / `mri_coil_phantom_quicklook.md` (the WARN
-block), and `mri_coil_phantom_manifest.json` — which records the git commit,
+`mri_01_coil_phantom_phantom_metrics.json` (the step-3/step-4 blocks as JSON),
+`mri_01_coil_phantom_phantom_E_samples.csv` and
+`mri_01_coil_phantom_phantom_B_samples.csv` (the 493 per-cell samples),
+`mri_01_coil_phantom_quicklook.json` / `mri_01_coil_phantom_quicklook.md` (the WARN
+block), and `mri_01_coil_phantom_manifest.json` — which records the git commit,
 every parameter, and whether each artifact exists. The manifest is the file to
 read when you need to know *which* run produced a picture.
 

@@ -134,7 +134,7 @@ only, so no gated bound existed to inherit. The interior anchor was **not**
 touched — it stands at the gate's own 5%.
 
 **Step 6 — open it in ParaView.**
-`File → Open → examples/time_harmonic/paraview_output/dielectric_sphere_combined.xdmf`,
+`File → Open → examples/time_harmonic/paraview_output/time_harmonic_03_dielectric_sphere_combined.xdmf`,
 then colour by `E_magnitude`.
 
 1. **What to look at first:** a dark ball inside a bright box. That contrast

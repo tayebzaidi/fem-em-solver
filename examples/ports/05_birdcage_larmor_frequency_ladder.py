@@ -66,10 +66,10 @@ sources complex mode for the ``ports:`` group automatically::
     ./run_examples.sh -e ports:5 -n 2 -t 400
 
 Outputs, in ``paraview_output/``:
-``birdcage_larmor_frequency_ladder_128mhz_combined.xdmf`` (the 128 MHz
+``ports_05_birdcage_larmor_frequency_ladder_128mhz_combined.xdmf`` (the 128 MHz
 port-1-driven ``E``/``B`` phasor magnitudes — the rung no example has exported),
 ``..._10mhz_combined.xdmf`` for the side-by-side, and
-``birdcage_larmor_frequency_ladder_facets.xdmf``; threshold ``mesh_tags`` on
+``ports_05_birdcage_larmor_frequency_ladder_facets.xdmf``; threshold ``mesh_tags`` on
 211–214 in the last to see the four port sheets the BC lives on.
 """
 
@@ -147,7 +147,7 @@ from tests.validation.test_port_package_sparameters import (  # noqa: E402
 )
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "birdcage_larmor_frequency_ladder"
+BASENAME = "ports_05_birdcage_larmor_frequency_ladder"
 
 # The negative control's floor, the `EX-20` constant and rationale (`EX-32`
 # carries the same one at 10 MHz): the heuristic S must differ from the

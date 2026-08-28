@@ -63,7 +63,7 @@ Run it through the example runner::
     ./run_examples.sh -e mesh:6 -n 2 -t 400
 
 Output lands in ``examples/meshing/paraview_output/``: open
-``birdcage_leg_gaps_port_sheets_sheeted_combined.xdmf`` and threshold on
+``meshing_06_birdcage_leg_gaps_port_sheets_sheeted_combined.xdmf`` and threshold on
 ``CellTags`` (1 = conductor, 2 = air, 3 = phantom, 101-104 and 111-114 = the
 lower/upper halves of the four gap boxes) — the gaps are visible as breaks in
 the legs. ``..._uncut_combined.xdmf`` is the same view of `EX-21`'s coil for
@@ -150,7 +150,7 @@ from tests.mesh.test_two_torus_port_sheet import _sheet_extents  # noqa: E402
 CELL_TAG_NAMES = {1: "conductor", 2: "air", 3: "phantom"}
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "birdcage_leg_gaps_port_sheets"
+BASENAME = "meshing_06_birdcage_leg_gaps_port_sheets"
 
 PORTS = list(range(1, LEG_COUNT + 1))
 

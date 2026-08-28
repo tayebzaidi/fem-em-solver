@@ -161,8 +161,8 @@ every solve.
 ### 5. Open the XDMF and glyph the power flow
 
 ```
-examples/time_harmonic/paraview_output/poynting_audit_driven_smoke_combined.xdmf
-examples/time_harmonic/paraview_output/poynting_audit_th6_plane_wave_combined.xdmf
+examples/time_harmonic/paraview_output/time_harmonic_08_poynting_audit_driven_smoke_combined.xdmf
+examples/time_harmonic/paraview_output/time_harmonic_08_poynting_audit_th6_plane_wave_combined.xdmf
 ```
 
 In the **complex build** the DolfinX XDMF writer splits every attribute into

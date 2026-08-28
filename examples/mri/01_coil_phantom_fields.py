@@ -215,9 +215,9 @@ def _write_output_manifest(
 ) -> Path:
     """Write a reproducible run manifest capturing config + produced artifacts."""
     artifact_paths = [Path(path) for path in written_files.values()]
-    phantom_metrics_json = output_dir / "mri_coil_phantom_phantom_metrics.json"
-    phantom_e_csv = output_dir / "mri_coil_phantom_phantom_E_samples.csv"
-    phantom_b_csv = output_dir / "mri_coil_phantom_phantom_B_samples.csv"
+    phantom_metrics_json = output_dir / "mri_01_coil_phantom_phantom_metrics.json"
+    phantom_e_csv = output_dir / "mri_01_coil_phantom_phantom_E_samples.csv"
+    phantom_b_csv = output_dir / "mri_01_coil_phantom_phantom_B_samples.csv"
     artifact_paths.extend([phantom_metrics_json, phantom_e_csv, phantom_b_csv])
 
     if quicklook_artifacts is not None:
@@ -258,7 +258,7 @@ def _write_output_manifest(
         },
     }
 
-    manifest_path = output_dir / "mri_coil_phantom_manifest.json"
+    manifest_path = output_dir / "mri_01_coil_phantom_manifest.json"
     manifest_path.write_text(json.dumps(manifest_payload, indent=2, sort_keys=True) + "\n")
     return manifest_path
 
@@ -394,7 +394,7 @@ def main(argv: list[str] | None = None):
         cell_tags,
         phantom_tag=3,
         output_dir=output_dir,
-        basename="mri_coil_phantom",
+        basename="mri_01_coil_phantom",
         comm=comm,
     )
 
@@ -404,7 +404,7 @@ def main(argv: list[str] | None = None):
         quicklook_artifacts = write_phantom_quicklook_report(
             quicklook,
             output_dir=output_dir,
-            basename="mri_coil_phantom",
+            basename="mri_01_coil_phantom",
             write_markdown=True,
             write_json=True,
         )
@@ -423,7 +423,7 @@ def main(argv: list[str] | None = None):
 
     written_files = write_combined_paraview_output(
         output_dir=output_dir,
-        basename="mri_coil_phantom_fields",
+        basename="mri_01_coil_phantom_fields",
         mesh=mesh,
         cell_tags=cell_tags,
         fields={
@@ -506,9 +506,9 @@ def main(argv: list[str] | None = None):
         print("\nParaView output:")
         for name, path in written_files.items():
             print(f"  {name}: {Path(path).name}")
-        print("  phantom metrics json: mri_coil_phantom_phantom_metrics.json")
-        print("  phantom E csv: mri_coil_phantom_phantom_E_samples.csv")
-        print("  phantom B csv: mri_coil_phantom_phantom_B_samples.csv")
+        print("  phantom metrics json: mri_01_coil_phantom_phantom_metrics.json")
+        print("  phantom E csv: mri_01_coil_phantom_phantom_E_samples.csv")
+        print("  phantom B csv: mri_01_coil_phantom_phantom_B_samples.csv")
         if quicklook_artifacts["json"] is not None:
             print(f"  quick-look json: {Path(quicklook_artifacts['json']).name}")
         if quicklook_artifacts["markdown"] is not None:

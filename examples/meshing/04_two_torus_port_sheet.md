@@ -121,8 +121,8 @@ the cell and facet groups it found. Expected:
    the sheet — printed as a cross-check that the shared code path did not move.
 
 **Step 3 — open the mesh in ParaView.** `File → Open →`
-`examples/meshing/paraview_output/two_torus_port_sheet_combined.xdmf`, then
-`two_torus_port_sheet_facets.xdmf` alongside it.
+`examples/meshing/paraview_output/meshing_04_two_torus_port_sheet_combined.xdmf`, then
+`meshing_04_two_torus_port_sheet_facets.xdmf` alongside it.
 
 - In the `_combined` file, threshold the `CellTags` cell array: `1`/`2` are the
   two wires, `3` the air, and `101`/`111`, `102`/`112` are the lower and upper

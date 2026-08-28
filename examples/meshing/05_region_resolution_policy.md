@@ -167,8 +167,8 @@ being meshed.
 `examples/meshing/paraview_output/`:
 
 ```
-region_resolution_policy_clamps_only_combined.xdmf
-region_resolution_policy_policy_combined.xdmf
+meshing_05_region_resolution_policy_clamps_only_combined.xdmf
+meshing_05_region_resolution_policy_policy_combined.xdmf
 ```
 
 Threshold on `CellTags` (1 = coil_1, 2 = coil_2, 3 = phantom, 4 = air) and open

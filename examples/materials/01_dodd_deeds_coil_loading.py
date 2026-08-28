@@ -45,7 +45,7 @@ automatically)::
     ./run_examples.sh -e mat:1
 
 Output lands in ``examples/materials/paraview_output/``: open
-``dodd_deeds_coil_loading_combined.xdmf``, threshold on ``CellTags``
+``materials_01_dodd_deeds_coil_loading_combined.xdmf``, threshold on ``CellTags``
 (3 = the lossy slab, 1 = the wire) and colour by ``J_magnitude``. The induced
 current hugs the slab surface under the loop and falls off with the skin depth
 δ = 1/sqrt(pi f mu0 sigma) printed by the run.
@@ -105,7 +105,7 @@ DELTA_R_RTOL = 0.02
 MU0 = 4.0e-7 * np.pi
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "dodd_deeds_coil_loading"
+BASENAME = "materials_01_dodd_deeds_coil_loading"
 
 
 def _reduced_real(form, comm) -> float:

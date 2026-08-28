@@ -73,11 +73,11 @@ straight-wire fix). A healthy run prints, on rank 0,
     relative difference = 0.000e+00  (tol 1e-10)
 ```
 
-— the written `circular_loop_B.bp` read back through ADIOS2 and compared with
+— the written `magnetostatics_02_circular_loop_B.bp` read back through ADIOS2 and compared with
 the field still in memory (`20260810T200154Z_EX-17-gate-mag2.log`, exit 0,
 124 s at `-n 2`). A mismatch raises rather than printing a warning. Before the
 fix the run printed `⚠ VTX output failed (ADIOS2 may not be available)` on
-every rank and left `circular_loop_A.bp` with zero ADIOS2 variables; if you see
+every rank and left `magnetostatics_02_circular_loop_A.bp` with zero ADIOS2 variables; if you see
 that line, the tree predates the fix. Exit status 0 either way — the XDMF files
 were always written.
 
@@ -92,7 +92,7 @@ diagnostic to worry about — that is the mirrored-wall signature, and it means
 the domain radius or the boundary condition changed.
 
 **Step 2 — read the on-axis table.** The run prints five sample points and
-writes the full sweep to `circular_loop_results.txt` in the working directory.
+writes the full sweep to `magnetostatics_02_circular_loop_results.txt` in the working directory.
 On record:
 
 | z [m] | `B_z` num [T] | `B_z` ana [T] | error |
@@ -116,7 +116,7 @@ does not depend on where you sampled. It is the fastest check that a change was
 harmless: pointwise on-axis values can stay put while the off-axis field moves.
 
 **Step 4 — open the fields in ParaView.**
-`File → Open → paraview_output/circular_loop_combined.xdmf` — one grid carrying
+`File → Open → paraview_output/magnetostatics_02_circular_loop_combined.xdmf` — one grid carrying
 `CellTags`, `A`, `B` and `B_analytical`.
 
 1. **Threshold** on `CellTags` to hide the conductor cells (the analytic

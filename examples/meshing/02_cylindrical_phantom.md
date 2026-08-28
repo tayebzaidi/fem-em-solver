@@ -93,7 +93,7 @@ A ratio **above 1** anywhere is a defect, not noise: an inscribed mesh cannot
 exceed the smooth object.
 
 **Step 3 — open the cell tags.** `File → Open →
-examples/meshing/paraview_output/cylindrical_phantom_combined.xdmf`, then
+examples/meshing/paraview_output/meshing_02_cylindrical_phantom_combined.xdmf`, then
 **Threshold** on `CellTags`: `1` = inner phantom cylinder, `2` = surrounding
 domain. What to look at: threshold to `1` alone and you should clearly see a
 **heptagonal prism**, not a cylinder — that is the point of the `0.8710264`
@@ -101,7 +101,7 @@ number above, made visible. Seeing a smooth cylinder at these defaults would
 mean the mesh size or the generator defaults changed.
 
 **Step 4 — open the facet tags.** Open
-`examples/meshing/paraview_output/cylindrical_phantom_facets.xdmf` and colour
+`examples/meshing/paraview_output/meshing_02_cylindrical_phantom_facets.xdmf` and colour
 by `mesh_tags`: `1` = `outer_boundary`, `2` = `inner_boundary`. What to look
 at: tag `1` must be the outer curved wall **plus its two end caps and nothing
 else**; if any part of the inner prism carries tag `1`, the classification has

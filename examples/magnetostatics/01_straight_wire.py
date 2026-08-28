@@ -325,7 +325,7 @@ def main():
     try:
         written_files = write_combined_paraview_output(
             output_dir=output_dir,
-            basename="straight_wire",
+            basename="magnetostatics_01_straight_wire",
             mesh=mesh,
             cell_tags=cell_tags,
             fields={
@@ -354,14 +354,14 @@ def main():
     # the DG-space `B` object.  The two writers also get one `try` each: the
     # original single block meant a failure on `A` silently skipped `B` as well.
     print("\n  Writing VTX files (modern ADIOS2 format)...")
-    b_bp_path = output_dir / "straight_wire_B.bp"
+    b_bp_path = output_dir / "magnetostatics_01_straight_wire_B.bp"
     vtx_B_written = False
     try:
         # VTXWriter for the vector potential A (Lagrange interpolant of N1curl A)
-        vtx_A = io.VTXWriter(comm, output_dir / "straight_wire_A.bp", [A_lag], engine="BP4")
+        vtx_A = io.VTXWriter(comm, output_dir / "magnetostatics_01_straight_wire_A.bp", [A_lag], engine="BP4")
         vtx_A.write(0.0)  # time = 0.0 for static problem
         vtx_A.close()
-        print("    ✓ Vector potential A saved to straight_wire_A.bp/")
+        print("    ✓ Vector potential A saved to magnetostatics_01_straight_wire_A.bp/")
     except Exception as e:
         print(f"    ⚠ VTX output of A failed: {e}")
 
@@ -371,7 +371,7 @@ def main():
         vtx_B.write(0.0)
         vtx_B.close()
         vtx_B_written = True
-        print("    ✓ Magnetic field B saved to straight_wire_B.bp/")
+        print("    ✓ Magnetic field B saved to magnetostatics_01_straight_wire_B.bp/")
     except Exception as e:
         print(f"    ⚠ VTX output of B failed: {e}")
 
@@ -382,7 +382,7 @@ def main():
     print("ParaView Instructions:")
     print("=" * 60)
     print("\n  RECOMMENDED: Use the combined file!")
-    print("    File -> Open -> straight_wire_combined.xdmf")
+    print("    File -> Open -> magnetostatics_01_straight_wire_combined.xdmf")
     print("    - Cell tags are the 'CellTags' cell array, on the SAME grid")
     print("      as A, B, and B_analytical (thresholds like any other array)")
     print("    - B field available for Glyph, Stream Tracer, etc.")
@@ -395,13 +395,13 @@ def main():
     print("    3. Compare with exact field via Calculator:")
     print("       - mag(B - B_analytical) gives the pointwise error")
     print("\n  Alternative: Individual files")
-    print("    - straight_wire_A.xdmf (vector potential)")
-    print("    - straight_wire_B.xdmf (magnetic field)")
-    print("    - straight_wire_B_analytical.xdmf (exact field)")
+    print("    - magnetostatics_01_straight_wire_A.xdmf (vector potential)")
+    print("    - magnetostatics_01_straight_wire_B.xdmf (magnetic field)")
+    print("    - magnetostatics_01_straight_wire_B_analytical.xdmf (exact field)")
     print("    Each also carries the mesh and the CellTags array.")
     print("\n  Alternative: VTX/ADIOS2 directories (EX-14)")
-    print("    - straight_wire_A.bp/ (vector potential, Lagrange interpolant)")
-    print("    - straight_wire_B.bp/ (magnetic field, Lagrange interpolant)")
+    print("    - magnetostatics_01_straight_wire_A.bp/ (vector potential, Lagrange interpolant)")
+    print("    - magnetostatics_01_straight_wire_B.bp/ (magnetic field, Lagrange interpolant)")
     print("    Open the directory itself; ParaView picks the ADIOS2VTXReader.")
     print("=" * 60)
     
@@ -432,7 +432,7 @@ def main():
         ax.grid(True, alpha=0.3)
         
         plt.tight_layout()
-        plot_path = output_dir / "straight_wire_validation.png"
+        plot_path = output_dir / "magnetostatics_01_straight_wire_validation.png"
         plt.savefig(plot_path, dpi=150, bbox_inches='tight')
         print(f"\n  Plot saved to: {plot_path.resolve()}")
         plt.close()

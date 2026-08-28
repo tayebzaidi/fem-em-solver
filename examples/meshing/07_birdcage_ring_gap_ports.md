@@ -148,10 +148,10 @@ and `ring sheet facets found by the same rebuild: P5=0 … P12=0`. That last lin
 is a measurement of absence.
 
 **Step 5 — open the meshes in ParaView.** `File → Open →`
-`examples/meshing/paraview_output/birdcage_ring_gap_ports_ring_combined.xdmf`,
-then `birdcage_ring_gap_ports_legring_combined.xdmf`,
-`birdcage_ring_gap_ports_uncut_combined.xdmf` and
-`birdcage_ring_gap_ports_ring_facets.xdmf` alongside it.
+`examples/meshing/paraview_output/meshing_07_birdcage_ring_gap_ports_ring_combined.xdmf`,
+then `meshing_07_birdcage_ring_gap_ports_legring_combined.xdmf`,
+`meshing_07_birdcage_ring_gap_ports_uncut_combined.xdmf` and
+`meshing_07_birdcage_ring_gap_ports_ring_facets.xdmf` alongside it.
 
 - Threshold the `CellTags` cell array in any `_combined` file: `1` is the
   conductor, `2` the air, `3` the phantom, `101-104` the leg boxes, and

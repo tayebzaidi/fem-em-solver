@@ -151,9 +151,9 @@ rebuild: P1=0 P2=0 P3=0 P4=0`. That last line is a measurement of absence, and
 it is the clause this example exists to close.
 
 **Step 4 — open the meshes in ParaView.** `File → Open →`
-`examples/meshing/paraview_output/birdcage_leg_gaps_port_sheets_sheeted_combined.xdmf`,
-then `birdcage_leg_gaps_port_sheets_uncut_combined.xdmf` and
-`birdcage_leg_gaps_port_sheets_sheeted_facets.xdmf` alongside it.
+`examples/meshing/paraview_output/meshing_06_birdcage_leg_gaps_port_sheets_sheeted_combined.xdmf`,
+then `meshing_06_birdcage_leg_gaps_port_sheets_uncut_combined.xdmf` and
+`meshing_06_birdcage_leg_gaps_port_sheets_sheeted_facets.xdmf` alongside it.
 
 - Threshold the `CellTags` cell array in either `_combined` file: `1` is the
   conductor, `2` the air, `3` the phantom, and `101-104` / `111-114` the lower

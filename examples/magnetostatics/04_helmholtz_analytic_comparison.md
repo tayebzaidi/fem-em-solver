@@ -127,7 +127,7 @@ rebuilt differently per rung and the comparison is meaningless.
 
 **Step 3 — read the on-axis table at the finest rung.** The run prints
 `z`, FEM `B_z`, analytic `B_z`, and the pointwise error over the sampled axis,
-and writes the full sweep to `paraview_output/helmholtz_on_axis.csv`. On
+and writes the full sweep to `paraview_output/magnetostatics_04_helmholtz_on_axis.csv`. On
 record at `h = 0.0025 m` the error runs ~1–2% over the central span, with local
 excursions to 4.05% near `z = 0.0084 m`. What to look at: **repeated identical
 FEM values at consecutive z** (e.g. `3.481650e-09` at both 0.00120 and 0.00240)
@@ -136,7 +136,7 @@ finer than the mesh there. It is expected at these resolutions and it caps how
 much of the error is really "pointwise".
 
 **Step 4 — open the fields in ParaView.** `File → Open →
-paraview_output/helmholtz_combined.xdmf` (mesh + `CellTags` + `A`, `B`,
+paraview_output/magnetostatics_04_helmholtz_combined.xdmf` (mesh + `CellTags` + `A`, `B`,
 `B_analytical` on one grid; `CellTags` 1/2 = the two wire tori, 3 = air).
 
 1. **Threshold** on `CellTags` to 3 to keep only air.
@@ -148,8 +148,8 @@ paraview_output/helmholtz_combined.xdmf` (mesh + `CellTags` + `A`, `B`,
    (truncation floor), with the mid-air region clean. Error filling the central
    volume instead means the solve, not the floors.
 
-Individual files `helmholtz_A.xdmf`, `helmholtz_B.xdmf` and
-`helmholtz_B_analytical.xdmf` carry the same mesh if you prefer one field per
+Individual files `magnetostatics_04_helmholtz_A.xdmf`, `magnetostatics_04_helmholtz_B.xdmf` and
+`magnetostatics_04_helmholtz_B_analytical.xdmf` carry the same mesh if you prefer one field per
 reader.
 
 **Step 5 — what a deviation means.** Centre error high at *every* rung and

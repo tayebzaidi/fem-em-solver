@@ -49,7 +49,7 @@ automatically)::
     ./run_examples.sh -e th:5
 
 Output lands in ``examples/time_harmonic/paraview_output``: open
-``resonance_guard_combined.xdmf`` and colour by ``E_magnitude_near`` and then by
+``time_harmonic_05_resonance_guard_combined.xdmf`` and colour by ``E_magnitude_near`` and then by
 ``E_magnitude_quiet`` with the *same* range — the near-resonant field saturates
 the scale while the quiet one is nearly black, which is the pole made visible.
 Both are clean, plausible-looking fields; only their *magnitudes* betray that
@@ -114,7 +114,7 @@ RECORD_AMPLIFICATION = 16.505
 RECORD_IMPLIED_DETUNING = 0.01454
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "resonance_guard"
+BASENAME = "time_harmonic_05_resonance_guard"
 
 
 def _magnitude_field(msh, fields, name: str) -> tuple[fem.Function, float]:

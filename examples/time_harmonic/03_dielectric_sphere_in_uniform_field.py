@@ -64,7 +64,7 @@ automatically; a real build raises)::
     ./run_examples.sh -e th:3
 
 Output lands in ``examples/time_harmonic/paraview_output``: open
-``dielectric_sphere_combined.xdmf`` and colour by ``E_magnitude``. The sphere is
+``time_harmonic_03_dielectric_sphere_combined.xdmf`` and colour by ``E_magnitude``. The sphere is
 a dark ball inside a bright box — that contrast *is* ``3/(ε+2)``. ``Threshold``
 on ``CellTags`` (1 = sphere, 2 = air) to isolate either region, and ``Glyph`` on
 ``E_real`` in a clip through ``y = 0`` to see the dipole pattern outside and the
@@ -158,7 +158,7 @@ VOLUME_VS_PROBE_MAX = 0.03
 EXTERIOR_RTOL = 0.10
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "dielectric_sphere"
+BASENAME = "time_harmonic_03_dielectric_sphere"
 
 
 def _exterior_probe_points() -> np.ndarray:

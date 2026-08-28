@@ -133,14 +133,14 @@ scripts/testing/run_and_log.sh EX-32 "docker compose exec -T fem-em-solver \
    point — the two are not the same kind of object.
 
 5. **The picture.** Open
-   `paraview_output/birdcage_four_port_sparameters_combined.xdmf`:
+   `paraview_output/ports_04_birdcage_four_port_sparameters_combined.xdmf`:
 
    - colour by `E_magnitude` and clip to see the driven leg's gap;
    - colour by `B_magnitude` (DG0, ``B = ∇×E/(−jω)`` from Faraday's law) for
      the field the coil exists to make;
    - threshold `CellTags` to isolate the conductor and the phantom.
 
-   Then open `paraview_output/birdcage_four_port_sparameters_facets.xdmf` and
+   Then open `paraview_output/ports_04_birdcage_four_port_sparameters_facets.xdmf` and
    threshold `mesh_tags` on 211–214 to see the four port sheets the
    lumped-element boundary condition lives on. Only port 1 is driven in the
    exported case; the other three sheets are in the operator and terminated,

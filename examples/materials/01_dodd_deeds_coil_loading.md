@@ -167,7 +167,7 @@ value would put an 8% error straight into ΔR. If this number drifts far from
 0.92 at the same mesh, suspect the drive or the wire tagging before the solver.
 
 **Step 7 — open it in ParaView.**
-`File → Open → examples/materials/paraview_output/dodd_deeds_coil_loading_combined.xdmf`,
+`File → Open → examples/materials/paraview_output/materials_01_dodd_deeds_coil_loading_combined.xdmf`,
 then colour by `J_magnitude` (A/m²).
 
 1. **Threshold** on `CellTags` — `3` is the lossy slab, `1` is the wire. Keep

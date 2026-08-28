@@ -114,8 +114,8 @@ regression finding about the solver or the fixture, not a tolerance question.
 ### 5. Open the fields
 
 ```
-examples/time_harmonic/paraview_output/larmor_sphere_64MHz_combined.xdmf
-examples/time_harmonic/paraview_output/larmor_sphere_128MHz_combined.xdmf
+examples/time_harmonic/paraview_output/time_harmonic_06_larmor_sphere_64MHz_combined.xdmf
+examples/time_harmonic/paraview_output/time_harmonic_06_larmor_sphere_128MHz_combined.xdmf
 ```
 
 Colour by `E_magnitude`; `Threshold` on `CellTags` (1 = sphere, 2 = surrounding

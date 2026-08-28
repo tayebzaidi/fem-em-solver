@@ -14,17 +14,17 @@ run creates a `paraview_output/` directory with the visualization files below.
 ## Output Files
 
 ### XDMF Format (Traditional)
-- `straight_wire_A.xdmf` + `.h5` - Vector potential A field
-- `straight_wire_B.xdmf` + `.h5` - Magnetic field B
-- `straight_wire_B_analytical.xdmf` + `.h5` - Exact analytical B field
-- `straight_wire_combined.xdmf` + `.h5` - mesh + CellTags + A + B + B_analytical on one grid
+- `magnetostatics_01_straight_wire_A.xdmf` + `.h5` - Vector potential A field
+- `magnetostatics_01_straight_wire_B.xdmf` + `.h5` - Magnetic field B
+- `magnetostatics_01_straight_wire_B_analytical.xdmf` + `.h5` - Exact analytical B field
+- `magnetostatics_01_straight_wire_combined.xdmf` + `.h5` - mesh + CellTags + A + B + B_analytical on one grid
 
 Every XDMF file above carries the mesh and a `CellTags` cell array (an
 ordinary array like the fields, usable directly in Threshold), so there is no
 separate mesh-only file to open.
 
 ### Matplotlib summary
-- `straight_wire_validation.png` - |B| vs r, numerical against analytic
+- `magnetostatics_01_straight_wire_validation.png` - |B| vs r, numerical against analytic
 
 A copy of this plot is checked in next to the example so it can be read
 without running anything. **That checked-in copy is stale as of 2026-08-26**:
@@ -35,15 +35,15 @@ on record), which are this example's numbers at its **old**
 image, so the example moved to `resolution = 0.008 m` (`EX-30` leg (root),
 2026-08-26; see `01_straight_wire.md` and `docs/testing/known-issues.md`) and
 now reads **51.9781% / 76.7330%** at 21 830 cells. A live run rewrites
-`paraview_output/straight_wire_validation.png` with the current numbers —
+`paraview_output/magnetostatics_01_straight_wire_validation.png` with the current numbers —
 read that one, not the checked-in copy, until the copy is refreshed. The
 error is large in either case because of the mesh, not because the comparison
 is wrong.
 
 ### VTX Format (Modern, requires ADIOS2)
 
-- `straight_wire_A.bp/` - Vector potential A (Lagrange interpolant)
-- `straight_wire_B.bp/` - Magnetic field B (Lagrange interpolant)
+- `magnetostatics_01_straight_wire_A.bp/` - Vector potential A (Lagrange interpolant)
+- `magnetostatics_01_straight_wire_B.bp/` - Magnetic field B (Lagrange interpolant)
 
 Both are directories, not files. Repaired 2026-08-10 (`EX-14`): the writers
 used to be handed the N1curl `A`, which `VTXWriter` cannot write, under a
@@ -51,7 +51,7 @@ single `try` that swallowed `B` with it, so no `.bp` was ever produced. They
 now get the same `A_lag`/`B_lag` interpolants the XDMF path uses, and each
 writer has its own `try`.
 
-The run verifies the artifact rather than trusting it: `straight_wire_B.bp` is
+The run verifies the artifact rather than trusting it: `magnetostatics_01_straight_wire_B.bp` is
 read back through the ADIOS2 Python bindings and its max |B| is compared with
 the in-memory value, printed as the "VTX round-trip check" block. On record
 (`docs/testing/logs/20260810T140337Z_EX-14-gate-mag1-v2.log`, `-n 2`) both read
@@ -59,7 +59,7 @@ the in-memory value, printed as the "VTX round-trip check" block. On record
 tolerance. A mismatch raises.
 
 `02_circular_loop.py` carried the identical defect and was repaired the same
-way on 2026-08-10 (`EX-17`), so `circular_loop_A.bp/` and `circular_loop_B.bp/`
+way on 2026-08-10 (`EX-17`), so `magnetostatics_02_circular_loop_A.bp/` and `magnetostatics_02_circular_loop_B.bp/`
 now exist too, with the same round-trip check — both **7.756122914931e-05 T**,
 relative difference **0.000e+00** (`docs/testing/logs/20260810T200154Z_EX-17-gate-mag2.log`).
 
@@ -72,7 +72,7 @@ relative difference **0.000e+00** (`docs/testing/logs/20260810T200154Z_EX-17-gat
 1. **Open ParaView**
 2. **File → Open**
 3. Navigate to `paraview_output/`
-4. Select `straight_wire_B.xdmf` (the magnetic field)
+4. Select `magnetostatics_01_straight_wire_B.xdmf` (the magnetic field)
 5. In the dialog, choose **"Xdmf3ReaderT"** as the reader
 6. Click **"Apply"** in the Properties panel on the left
 
@@ -81,12 +81,12 @@ You should now see the mesh loaded!
 ### Method 2: VTX Files (Modern)
 
 1. **File → Open**
-2. Navigate to `paraview_output/` and select the `straight_wire_B.bp`
+2. Navigate to `paraview_output/` and select the `magnetostatics_01_straight_wire_B.bp`
    **directory** itself (do not descend into it)
 3. Choose the **"ADIOS2VTXReader"** when prompted
 4. Click **"Apply"**
 
-`straight_wire_A.bp` opens the same way for the vector potential.
+`magnetostatics_01_straight_wire_A.bp` opens the same way for the vector potential.
 
 ---
 
@@ -143,7 +143,7 @@ This shows the field in a 2D slice through the domain!
 
 If you just want to see the mesh structure:
 
-1. Open `straight_wire_combined.xdmf`
+1. Open `magnetostatics_01_straight_wire_combined.xdmf`
 2. In the toolbar, change representation from "Surface" to **"Wireframe"** or **"Surface with Edges"**
 
 ---
@@ -172,7 +172,7 @@ If you just want to see the mesh structure:
 - Use the XDMF files meanwhile; they carry every field this example writes
 
 ### "ParaView crashes when opening file"
-- Try opening a single-field file first: `straight_wire_B.xdmf`
+- Try opening a single-field file first: `magnetostatics_01_straight_wire_B.xdmf`
 - If that works, then open the combined file
 - Check ParaView version - need 5.10+ for best XDMF support
 

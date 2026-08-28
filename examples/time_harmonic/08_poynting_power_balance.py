@@ -60,8 +60,8 @@ automatically; a real build raises)::
     ./run_examples.sh -e th:8 -n 2 -t 400
 
 Output lands in ``examples/time_harmonic/paraview_output``: two combined XDMF
-files, ``poynting_audit_driven_smoke_combined.xdmf`` and
-``poynting_audit_th6_plane_wave_combined.xdmf``, each carrying ``E``, ``B`` and
+files, ``time_harmonic_08_poynting_audit_driven_smoke_combined.xdmf`` and
+``time_harmonic_08_poynting_audit_th6_plane_wave_combined.xdmf``, each carrying ``E``, ``B`` and
 the **real Poynting vector** ``½Re(E×H̄)`` as a cell field. In the complex build
 the XDMF writer splits every attribute into ``real_<name>`` / ``imag_<name>``
 (correct writer behaviour — see the `OPS-21` known-issues entry), so in ParaView
@@ -624,7 +624,7 @@ def main() -> None:
 
     # ---- ParaView -----------------------------------------------------------
     driven_path = _export(
-        "poynting_audit_driven_smoke_combined",
+        "time_harmonic_08_poynting_audit_driven_smoke_combined",
         driven["mesh"],
         driven["cell_tags"],
         driven["fields"].e_complex,
@@ -633,7 +633,7 @@ def main() -> None:
         comm,
     )
     wave_path = _export(
-        "poynting_audit_th6_plane_wave_combined",
+        "time_harmonic_08_poynting_audit_th6_plane_wave_combined",
         wave["mesh"],
         None,
         wave["fields"].e_complex,

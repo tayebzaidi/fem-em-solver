@@ -98,7 +98,7 @@ def run_case(
     air_padding=None,
     far_resolution=None,
     output_dir=None,
-    basename="helmholtz",
+    basename="magnetostatics_04_helmholtz",
 ):
     """Solve at one wire resolution; return diagnostics dict on rank 0."""
     t0 = time.time()
@@ -282,7 +282,7 @@ def main() -> int:
     p.add_argument(
         "--basename",
         type=str,
-        default="helmholtz",
+        default="magnetostatics_04_helmholtz",
         help="Base filename for ParaView output.",
     )
     args = p.parse_args()

@@ -88,7 +88,7 @@ write, which carries the same physical groups as a `CellTags` array.
 
 **Open in ParaView:**
 ```
-paraview_output/straight_wire_combined.xdmf
+paraview_output/magnetostatics_01_straight_wire_combined.xdmf
 ```
 
 **What to check** (colour by `CellTags`, then Filters → Clip through the axis):
@@ -103,7 +103,7 @@ Step 3 below covers the same file in more detail; this step is the quick
 
 **Load mesh with tags:**
 ```
-Open: paraview_output/straight_wire_combined.xdmf
+Open: paraview_output/magnetostatics_01_straight_wire_combined.xdmf
 Reader: Xdmf3ReaderT
 Apply
 ```

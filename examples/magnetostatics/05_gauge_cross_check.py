@@ -99,7 +99,7 @@ NULLSPACE_RATIO_MAX = 1e-6
 VOLUME_AGREEMENT_RTOL = 0.05
 
 OUTPUT_DIR = "paraview_output"
-BASENAME = "gauge_cross_check"
+BASENAME = "magnetostatics_05_gauge_cross_check"
 
 
 def solve_with(gauge, mesh, cell_tags, current_density, comm):
@@ -296,7 +296,7 @@ def main() -> None:
         for name, path in sorted(written_files.items()):
             print(f"  {name:>14}: {path}")
         print()
-        print("  Open gauge_cross_check_combined.xdmf: it carries the mesh, the")
+        print("  Open magnetostatics_05_gauge_cross_check_combined.xdmf: it carries the mesh, the")
         print("  'CellTags' array (1 = wire, 2 = air), both A fields, both B")
         print("  fields, and their difference on one grid. A_penalty and")
         print("  A_lagrange look nothing alike; B_penalty and B_lagrange do, and")

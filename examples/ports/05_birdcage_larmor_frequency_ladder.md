@@ -155,11 +155,11 @@ Standard tier: 139 s at `-n 2`.
    back leg (d)'s recorded 4×4 to 1e-6, or the harness moved rather than the
    frequency and nothing the Larmor rungs read is comparable.
 5. **Open the fields.** In `paraview_output/`,
-   `birdcage_larmor_frequency_ladder_128mhz_combined.xdmf` and
-   `birdcage_larmor_frequency_ladder_10mhz_combined.xdmf` carry `E_real` / `E_imag` / `E_magnitude` (CG1) and
+   `ports_05_birdcage_larmor_frequency_ladder_128mhz_combined.xdmf` and
+   `ports_05_birdcage_larmor_frequency_ladder_10mhz_combined.xdmf` carry `E_real` / `E_imag` / `E_magnitude` (CG1) and
    `B_magnitude` (DG0, `B = ∇×E/(−jω)` from Faraday's law) beside `CellTags`.
    They are **on the same mesh**, so they open side by side and subtract. Open
-   `birdcage_larmor_frequency_ladder_facets.xdmf` and threshold `mesh_tags` on
+   `ports_05_birdcage_larmor_frequency_ladder_facets.xdmf` and threshold `mesh_tags` on
    211–214 to see the four port sheets the lumped BC lives on.
 
 ## Related

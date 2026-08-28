@@ -112,7 +112,7 @@ condition (`n × E = 0`) is visible in the array itself and not merely in the
 formulation.
 
 **Step 5 — open it in ParaView.**
-`File → Open → examples/time_harmonic/paraview_output/pec_cavity_mode_combined.xdmf`,
+`File → Open → examples/time_harmonic/paraview_output/time_harmonic_02_pec_cavity_mode_combined.xdmf`,
 then colour by `E_mode1_magnitude`.
 
 1. **What to look at first:** brightest on the mid-plane, falling to zero on

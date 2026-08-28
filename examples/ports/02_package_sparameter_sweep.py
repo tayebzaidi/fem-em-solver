@@ -48,7 +48,7 @@ Run (complex build required)::
     ./run_examples.sh -e ports:2
     ./run_examples.sh -e ports:2 -n 2 -t 540
 
-Outputs ``paraview_output/package_sparameter_sweep_combined.xdmf`` (mesh +
+Outputs ``paraview_output/ports_02_package_sparameter_sweep_combined.xdmf`` (mesh +
 CellTags + the port-1 drive's ``E`` fields; threshold on ``CellTags`` to see the
 gap boxes 101/102 and the conductors 1/2).
 """
@@ -161,7 +161,7 @@ S_SPECTRAL_NORM_CEILING = 1.0
 HEURISTIC_SEPARATION_FLOOR = 2.0e-3
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "package_sparameter_sweep"
+BASENAME = "ports_02_package_sparameter_sweep"
 
 
 def _mutual_inductance(a: float, rho: float, z: float) -> float:

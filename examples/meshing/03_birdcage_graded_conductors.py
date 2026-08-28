@@ -59,7 +59,7 @@ Run it through the example runner::
     ./run_examples.sh -e mesh:3
 
 Output lands in ``examples/meshing/paraview_output/``: open
-``birdcage_graded_conductors_combined.xdmf`` and threshold on ``CellTags``
+``meshing_03_birdcage_graded_conductors_combined.xdmf`` and threshold on ``CellTags``
 (1 = conductor, 2 = air, 3 = phantom, 101-104 = the four leg port boxes).
 Both rungs are exported, ``_baseline_`` (the coarse-graded control; the stem is
 kept for continuity with the guide and the on-disk record) and ``_graded_``, so
@@ -128,7 +128,7 @@ GRADED_H_C = CONDUCTOR_RUNGS[-1]
 CELL_TAG_NAMES = {1: "conductor", 2: "air", 3: "phantom"}
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "birdcage_graded_conductors"
+BASENAME = "meshing_03_birdcage_graded_conductors"
 
 # The example asserts the *inverted* control, so the separation it needs is
 # the same one the `GEO-15` test enforces: a baseline sitting at 0.949 would

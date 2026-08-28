@@ -69,8 +69,8 @@ Run it through the example runner::
     ./run_examples.sh -e mesh:5
 
 Output lands in ``examples/meshing/paraview_output/``: open
-``region_resolution_policy_clamps_only_combined.xdmf`` and
-``region_resolution_policy_policy_combined.xdmf`` side by side and threshold on
+``meshing_05_region_resolution_policy_clamps_only_combined.xdmf`` and
+``meshing_05_region_resolution_policy_policy_combined.xdmf`` side by side and threshold on
 ``CellTags`` (1 = coil_1, 2 = coil_2, 3 = phantom, 4 = air). The tori are
 visibly faceted in the clamps-only mesh and round in the policy mesh, while the
 air is coarser — that trade is the point of the example.
@@ -125,7 +125,7 @@ from tests.mesh.test_mesh_tag_integrity import (  # noqa: E402
 )
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "region_resolution_policy"
+BASENAME = "meshing_05_region_resolution_policy"
 
 # The two coil tags, the regions the policy refines *and* whose CAD volume is a
 # torus — the phantom (tag 3) is a cylinder and starts at 0.98 recovery, so it

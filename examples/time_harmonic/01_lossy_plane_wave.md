@@ -113,7 +113,7 @@ written array and not only in the fit — the picture and the measurement agree 
 0.2%.
 
 **Step 6 — open it in ParaView.**
-`File → Open → examples/time_harmonic/paraview_output/lossy_plane_wave_combined.xdmf`,
+`File → Open → examples/time_harmonic/paraview_output/time_harmonic_01_lossy_plane_wave_combined.xdmf`,
 then colour by `E_magnitude`.
 
 1. **What to look at first:** brightest on the `x = 0` face, fading by ~3.7×

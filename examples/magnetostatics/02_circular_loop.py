@@ -276,7 +276,7 @@ def main():
 
     written_files = write_combined_paraview_output(
         output_dir=output_dir,
-        basename="circular_loop",
+        basename="magnetostatics_02_circular_loop",
         mesh=mesh,
         cell_tags=cell_tags,
         fields={
@@ -298,14 +298,14 @@ def main():
     # the DG-space `B` object.  The two writers also get one `try` each: the
     # original single block meant a failure on `A` silently skipped `B` as well.
     print("\n  Writing VTX files...")
-    b_bp_path = output_dir / "circular_loop_B.bp"
+    b_bp_path = output_dir / "magnetostatics_02_circular_loop_B.bp"
     vtx_B_written = False
     try:
         # VTXWriter for the vector potential A (Lagrange interpolant of N1curl A)
-        vtx_A = io.VTXWriter(comm, output_dir / "circular_loop_A.bp", [A_lag], engine="BP4")
+        vtx_A = io.VTXWriter(comm, output_dir / "magnetostatics_02_circular_loop_A.bp", [A_lag], engine="BP4")
         vtx_A.write(0.0)
         vtx_A.close()
-        print("    ✓ Vector potential A saved to circular_loop_A.bp/")
+        print("    ✓ Vector potential A saved to magnetostatics_02_circular_loop_A.bp/")
     except Exception as e:
         print(f"    ⚠ VTX output of A failed: {e}")
 
@@ -315,7 +315,7 @@ def main():
         vtx_B.write(0.0)
         vtx_B.close()
         vtx_B_written = True
-        print("    ✓ Magnetic field B saved to circular_loop_B.bp/")
+        print("    ✓ Magnetic field B saved to magnetostatics_02_circular_loop_B.bp/")
     except Exception as e:
         print(f"    ⚠ VTX output of B failed: {e}")
 
@@ -323,7 +323,7 @@ def main():
         print("    Note: XDMF files were still created and can be used instead")
 
     print("\n  ✓ ParaView files saved to paraview_output/")
-    print("    Open circular_loop_combined.xdmf in ParaView: it carries the")
+    print("    Open magnetostatics_02_circular_loop_combined.xdmf in ParaView: it carries the")
     print("    'CellTags' cell array plus A, B, and B_analytical on one grid,")
     print("    so Threshold on CellTags and Calculator mag(B - B_analytical)")
     print("    both work directly.")
@@ -333,10 +333,10 @@ def main():
         print("\n  Saving results...")
         data = np.column_stack([z_eval, B_num_z, B_ana_z, 
                                  np.abs(B_num_z - B_ana_z)])
-        np.savetxt('circular_loop_results.txt', data, 
+        np.savetxt('magnetostatics_02_circular_loop_results.txt', data, 
                    header='z[m] Bz_num[T] Bz_ana[T] error[T]',
                    fmt='%.6e')
-        print("  Results saved to: circular_loop_results.txt")
+        print("  Results saved to: magnetostatics_02_circular_loop_results.txt")
         
         # Print some values
         print("\n  Sample values:")

@@ -130,7 +130,7 @@ scoped here.
 
 ## ParaView
 
-Writes `examples/ports/paraview_output/package_sparameter_sweep_combined.xdmf`
+Writes `examples/ports/paraview_output/ports_02_package_sparameter_sweep_combined.xdmf`
 (+ `.h5`): mesh, `CellTags`, and the port-1 drive's `E_real` / `E_imag` /
 `E_magnitude` as CG1 Lagrange interpolants (XDMF cannot carry N1curl — the
 `EX-14`/`EX-17` lesson). Threshold on `CellTags` to isolate the gap boxes

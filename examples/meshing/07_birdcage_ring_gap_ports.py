@@ -54,7 +54,7 @@ Run it through the example runner::
     ./run_examples.sh -e mesh:7 -n 2 -t 400
 
 Output lands in ``examples/meshing/paraview_output/``: open
-``birdcage_ring_gap_ports_ring_combined.xdmf`` and threshold on ``CellTags``
+``meshing_07_birdcage_ring_gap_ports_ring_combined.xdmf`` and threshold on ``CellTags``
 (1 = conductor, 2 = air, 3 = phantom, 101-104 = the four uncut leg boxes,
 105-112 / 205-212 = the lower/upper halves of the eight ring gap boxes) — the
 gaps are visible as breaks in the two end rings, at the mid-azimuth between
@@ -151,7 +151,7 @@ from tests.mesh.test_two_torus_port_sheet import _sheet_extents  # noqa: E402
 CELL_TAG_NAMES = {1: "conductor", 2: "air", 3: "phantom"}
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "birdcage_ring_gap_ports"
+BASENAME = "meshing_07_birdcage_ring_gap_ports"
 
 LEG_PORTS = list(range(1, LEG_COUNT + 1))
 

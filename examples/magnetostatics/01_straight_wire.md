@@ -67,7 +67,7 @@ on rank 0,
     relative difference = 0.000e+00  (tol 1e-10)
 ```
 
-— the written `straight_wire_B.bp` read back through ADIOS2 and compared with
+— the written `magnetostatics_01_straight_wire_B.bp` read back through ADIOS2 and compared with
 the field still in memory (`20260810T140337Z_EX-14-gate-mag1-v2.log`). A
 mismatch raises rather than printing a warning. Before the fix the run printed
 `⚠ VTX output failed (ADIOS2 may not be available)` on every rank and wrote no
@@ -116,7 +116,7 @@ dominates by two orders. Off-axis components growing with r instead of
 shrinking would mean the current is not confined to the wire volume.
 
 **Step 4 — open the fields in ParaView.**
-`File → Open → paraview_output/straight_wire_combined.xdmf` (one file carrying
+`File → Open → paraview_output/magnetostatics_01_straight_wire_combined.xdmf` (one file carrying
 `A`, `B`, `B_analytical` and `CellTags` on the *same* grid):
 
 1. **Threshold** on `CellTags`, min 2 max 2, to drop the wire cells (tag 1 =
@@ -131,14 +131,14 @@ shrinking would mean the current is not confined to the wire volume.
    one azimuthal sector instead means a mesh or partitioning artefact — that is
    worth a known-issues entry.
 
-Individual files (`straight_wire_A.xdmf`, `straight_wire_B.xdmf`,
-`straight_wire_B_analytical.xdmf`) carry the same mesh and `CellTags` if you
+Individual files (`magnetostatics_01_straight_wire_A.xdmf`, `magnetostatics_01_straight_wire_B.xdmf`,
+`magnetostatics_01_straight_wire_B_analytical.xdmf`) carry the same mesh and `CellTags` if you
 prefer one field per reader.
 
 **Step 5 — the validation plot.** The run writes
-`paraview_output/straight_wire_validation.png`, `|B|` vs `r` for numerical and
+`paraview_output/magnetostatics_01_straight_wire_validation.png`, `|B|` vs `r` for numerical and
 analytic. A copy regenerated on 2026-08-09 is committed at
-`examples/magnetostatics/straight_wire_validation.png` (provenance: `EX-12`;
+`examples/magnetostatics/magnetostatics_01_straight_wire_validation.png` (provenance: `EX-12`;
 the original 2026-02-18 image predated the example's 2026-08-03 rewrite and was
 replaced). What to look at: two curves, both falling, the numerical one falling
 faster — the visual form of the 20.31 vs 12.67 ratio.

@@ -130,7 +130,7 @@ misrepresents the sequence. Do not read the exported field as if it were the
 9.26% one.
 
 **Step 5 — open the field in ParaView.**
-`File → Open → paraview_output/h_convergence_rate_combined.xdmf` — one grid at
+`File → Open → paraview_output/magnetostatics_06_h_convergence_rate_combined.xdmf` — one grid at
 the finest resolution carrying `CellTags` (1 = wire, 2 = air) and `B_numeric`.
 
 1. **Stream Tracer** or **Glyph** on `B_numeric`. What to look at: azimuthal

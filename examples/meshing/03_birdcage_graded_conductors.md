@@ -130,9 +130,9 @@ count, `meshed/CAD`, and mesh wall time. Check, in order:
    birdcage is not free, and every solve on it pays this cell count.
 
 **Step 2 — open the two meshes side by side.** In ParaView:
-`File → Open → examples/meshing/paraview_output/birdcage_graded_conductors_baseline_combined.xdmf`,
+`File → Open → examples/meshing/paraview_output/meshing_03_birdcage_graded_conductors_baseline_combined.xdmf`,
 then the same for
-`examples/meshing/paraview_output/birdcage_graded_conductors_graded_combined.xdmf`.
+`examples/meshing/paraview_output/meshing_03_birdcage_graded_conductors_graded_combined.xdmf`.
 Apply a **Threshold** on the
 `CellTags` cell array in each:
 

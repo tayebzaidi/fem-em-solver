@@ -58,9 +58,9 @@ Run it through the example runner::
     ./run_examples.sh -e mesh:2
 
 Output lands in ``examples/meshing/paraview_output/``: open
-``cylindrical_phantom_combined.xdmf`` and threshold on ``CellTags``
+``meshing_02_cylindrical_phantom_combined.xdmf`` and threshold on ``CellTags``
 (1 = inner phantom cylinder, 2 = surrounding domain), and open
-``cylindrical_phantom_facets.xdmf`` alongside it for ``mesh_tags``
+``meshing_02_cylindrical_phantom_facets.xdmf`` alongside it for ``mesh_tags``
 (1 = outer_boundary, 2 = inner_boundary).
 
 Measured 2026-08-07 at ``-n 2``: 5 717 cells, mesh built in 0.7 s.
@@ -135,7 +135,7 @@ CAP_RTOL = 1e-12
 SQUARE_RATIO = 2.0 / np.pi
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "cylindrical_phantom"
+BASENAME = "meshing_02_cylindrical_phantom"
 
 
 def _analytic_volumes():

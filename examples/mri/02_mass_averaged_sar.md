@@ -135,7 +135,7 @@ entire 2.19× comes from the numerator losing its exterior share — which is
 precisely the statement "the kernel respects `σ(x)`".
 
 **Step 5 — open it in ParaView.**
-`File → Open → examples/mri/paraview_output/mass_averaged_sar_combined.xdmf`,
+`File → Open → examples/mri/paraview_output/mri_02_mass_averaged_sar_combined.xdmf`,
 then colour by `SAR` (W/kg).
 
 1. **What to look at first:** a uniformly coloured ball in a black box. Outside

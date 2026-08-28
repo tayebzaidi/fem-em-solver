@@ -109,7 +109,7 @@ operator. The multiplier absorbs exactly that component. It is mesh-dependent, s
 it is printed and never pinned — do not turn it into an assertion.
 
 **Step 5 — open the fields in ParaView.**
-`File → Open → paraview_output/gauge_cross_check_combined.xdmf` — one grid
+`File → Open → paraview_output/magnetostatics_05_gauge_cross_check_combined.xdmf` — one grid
 carrying `CellTags` (1 = wire, 2 = air), `A_penalty`, `A_lagrange`, `B_penalty`,
 `B_lagrange` and `B_difference`.
 

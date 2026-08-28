@@ -53,7 +53,7 @@ automatically)::
     ./run_examples.sh -e mri:2
 
 Output lands in ``examples/mri/paraview_output/``: open
-``mass_averaged_sar_combined.xdmf``, threshold on ``CellTags``
+``mri_02_mass_averaged_sar_combined.xdmf``, threshold on ``CellTags``
 (1 = lossy sphere, everything else is lossless air) and colour by ``SAR``.
 
 Measured 2026-08-08 at ``-n 2`` (``20260808T020414Z_EX-3-gate.log``, exit 0,
@@ -129,7 +129,7 @@ SEPARATION_FLOOR = 1.5
 CEILING_RTOL = 0.05
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "mass_averaged_sar"
+BASENAME = "mri_02_mass_averaged_sar"
 
 MASSES = (("1 g", ONE_GRAM_KG), ("10 g", TEN_GRAM_KG))
 
@@ -197,7 +197,7 @@ def _pointwise_sar_field(fixture):
     """``sigma(x)|E|²/(2 rho(x))`` as a DG0 function — what ParaView colours by.
 
     ``ufl.inner`` conjugates its second argument in complex UFL, so this is the
-    same expression :func:`~fem_em_solver.post.sar.mass_averaged_sar` integrates,
+    same expression :func:`~fem_em_solver.post.sar.mri_02_mass_averaged_sar` integrates,
     not a real-mode look-alike. The imaginary part is identically zero by
     construction and is dropped so the array ParaView reads is unambiguous.
     """

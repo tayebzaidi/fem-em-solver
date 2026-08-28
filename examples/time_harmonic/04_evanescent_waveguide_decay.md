@@ -128,7 +128,7 @@ The exported `|E|` spans **5.147567e-17 … 1.000725e+00** V/m, so the PEC
 side-wall zero is visible in the array, not merely in the formulation.
 
 **Step 6 — open it in ParaView.**
-`File → Open → examples/time_harmonic/paraview_output/evanescent_waveguide_combined.xdmf`,
+`File → Open → examples/time_harmonic/paraview_output/time_harmonic_04_evanescent_waveguide_combined.xdmf`,
 then colour by `E_magnitude`.
 
 1. **What to look at first:** the bright end is the drive face at `z = 0`, and

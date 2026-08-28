@@ -55,7 +55,7 @@ automatically; a real build raises)::
     ./run_examples.sh -e th:4
 
 Output lands in ``examples/time_harmonic/paraview_output``: open
-``evanescent_waveguide_combined.xdmf`` and colour by ``E_magnitude``. The bright
+``time_harmonic_04_evanescent_waveguide_combined.xdmf`` and colour by ``E_magnitude``. The bright
 end is the drive face at ``z = 0`` and the field fades along ``+z`` — that fade
 *is* ``e^{−γz}``. ``Plot Over Line`` along ``z`` on a log scale gives the
 straight line the fit above measured; the same filter along ``x`` at fixed ``z``
@@ -155,7 +155,7 @@ PROFILE_X_MAX_FRACTION = 0.88
 N_PROFILE = 25
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "evanescent_waveguide"
+BASENAME = "time_harmonic_04_evanescent_waveguide"
 
 
 def _profile_points() -> np.ndarray:

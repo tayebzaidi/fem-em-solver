@@ -15,13 +15,13 @@ We've created a custom XDMF writer (`fem_em_solver.io.paraview_utils.write_xdmf_
 After running the examples, you'll now get:
 
 **Individual files (standard DOLFINx output):**
-- `straight_wire_A.xdmf` - vector potential A, on the mesh with its `CellTags` array
-- `straight_wire_B.xdmf` - magnetic field B, on the mesh with its `CellTags` array
-- `straight_wire_B_analytical.xdmf` - exact analytical B on the same mesh
+- `magnetostatics_01_straight_wire_A.xdmf` - vector potential A, on the mesh with its `CellTags` array
+- `magnetostatics_01_straight_wire_B.xdmf` - magnetic field B, on the mesh with its `CellTags` array
+- `magnetostatics_01_straight_wire_B_analytical.xdmf` - exact analytical B on the same mesh
 
 **Combined file (recommended):**
-- `straight_wire_combined.xdmf` - **mesh + CellTags + A + B + B_analytical on one grid** ✨
-- `straight_wire_combined.h5` - associated HDF5 data
+- `magnetostatics_01_straight_wire_combined.xdmf` - **mesh + CellTags + A + B + B_analytical on one grid** ✨
+- `magnetostatics_01_straight_wire_combined.h5` - associated HDF5 data
 
 The cell tags are written as a DG0 *function* named `CellTags` (via
 `write_function`, not `write_meshtags`), so ParaView sees them as an ordinary
@@ -31,7 +31,7 @@ cell array exactly like the field arrays. Untagged cells get value 0.
 
 ### Open the Combined File
 
-1. **File → Open** → `paraview_output/straight_wire_combined.xdmf`
+1. **File → Open** → `paraview_output/magnetostatics_01_straight_wire_combined.xdmf`
 2. **Reader**: Select `Xdmf3ReaderT`
 3. **Properties panel**: Check both:
    - ☑ Cell Arrays: `CellTags`
@@ -140,7 +140,7 @@ This feature is now integrated into:
 
 After running the straight wire example:
 
-1. Open `straight_wire_combined.xdmf` in ParaView
+1. Open `magnetostatics_01_straight_wire_combined.xdmf` in ParaView
 2. Check Properties panel - you should see:
    - Cell Arrays: `CellTags`
    - Point Arrays: `A`, `B`, `B_analytical`

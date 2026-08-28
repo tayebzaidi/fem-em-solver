@@ -114,8 +114,8 @@ total field. See the known-issues entry before reading across.
 ### 5. Open both XDMF files together
 
 ```
-examples/time_harmonic/paraview_output/element_order_sphere_degree1_combined.xdmf
-examples/time_harmonic/paraview_output/element_order_sphere_degree2_combined.xdmf
+examples/time_harmonic/paraview_output/time_harmonic_07_element_order_sphere_degree1_combined.xdmf
+examples/time_harmonic/paraview_output/time_harmonic_07_element_order_sphere_degree2_combined.xdmf
 ```
 
 In the **complex build** the DolfinX XDMF writer splits every attribute into

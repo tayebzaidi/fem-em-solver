@@ -62,9 +62,9 @@ sources complex mode for the ``ports:`` group automatically::
 
     ./run_examples.sh -e ports:3
 
-Outputs ``paraview_output/lumped_sheet_port_widths_combined.xdmf`` (mesh +
+Outputs ``paraview_output/ports_03_lumped_sheet_port_widths_combined.xdmf`` (mesh +
 CellTags + the ``f = 0.5`` solved ``E_real`` / ``E_imag`` / ``E_magnitude``) and
-``lumped_sheet_port_widths_facets.xdmf`` alongside it — threshold ``mesh_tags``
+``ports_03_lumped_sheet_port_widths_facets.xdmf`` alongside it — threshold ``mesh_tags``
 on 211/212 there to see the port sheets the BC lives on.
 """
 
@@ -164,7 +164,7 @@ from tests.validation.test_port_reaction_impedance import (  # noqa: E402
 )
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "lumped_sheet_port_widths"
+BASENAME = "ports_03_lumped_sheet_port_widths"
 
 CELL_TAG_NAMES = {
     1: "wire 1 (z<0)",

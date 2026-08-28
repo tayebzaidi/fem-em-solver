@@ -46,7 +46,7 @@ automatically)::
     ./run_examples.sh -e th:1
 
 Output lands in ``examples/time_harmonic/paraview_output``: open
-``lossy_plane_wave_combined.xdmf`` and colour by ``E_magnitude`` — the field is
+``time_harmonic_01_lossy_plane_wave_combined.xdmf`` and colour by ``E_magnitude`` — the field is
 brightest on the ``x = 0`` face and fades by ~3.7× across the box. ``Plot Over
 Line`` along x through the middle of the box reproduces the fitted exponential
 directly; ``E_real``/``E_imag`` show the phase winding underneath it.
@@ -96,7 +96,7 @@ ALPHA_BETA_RTOL = 0.01
 N_COARSE, N_FINE = 12, 24
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "lossy_plane_wave"
+BASENAME = "time_harmonic_01_lossy_plane_wave"
 
 
 def _paraview_fields(msh, fields):

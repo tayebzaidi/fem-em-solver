@@ -174,12 +174,12 @@ needs, and it is printed rather than asserted: a machine-to-machine comparison
 of these seconds means nothing.
 
 **Step 5 — open the mesh in ParaView.** `File → Open →`
-`examples/meshing/paraview_output/birdcage_sixteen_legs_combined.xdmf`, and
-`birdcage_sixteen_legs_facets.xdmf` alongside it.
+`examples/meshing/paraview_output/meshing_08_birdcage_sixteen_legs_combined.xdmf`, and
+`meshing_08_birdcage_sixteen_legs_facets.xdmf` alongside it.
 
 - Threshold the `CellTags` cell array in the `_combined` file: `1` conductor,
   `2` air, `3` phantom, `101-116` / `201-216` the lower and upper halves of the
-  sixteen gap boxes. Put it beside `birdcage_leg_gaps_port_sheets_sheeted_combined.xdmf`
+  sixteen gap boxes. Put it beside `meshing_06_birdcage_leg_gaps_port_sheets_sheeted_combined.xdmf`
   (`mesh:6`) — same construction, four legs, 90° pitch.
 - Threshold `101` and `201` separately: the flat interface between them *is*
   port 1's sheet.

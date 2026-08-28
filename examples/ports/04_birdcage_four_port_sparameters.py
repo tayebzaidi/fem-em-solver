@@ -56,10 +56,10 @@ sources complex mode for the ``ports:`` group automatically::
 
     ./run_examples.sh -e ports:4
 
-Outputs ``paraview_output/birdcage_four_port_sparameters_combined.xdmf``
+Outputs ``paraview_output/ports_04_birdcage_four_port_sparameters_combined.xdmf``
 (mesh + CellTags + the port-1-driven ``E``/``B`` phasor magnitudes — the first
 field picture of a driven birdcage port in the examples tree) and
-``birdcage_four_port_sparameters_facets.xdmf`` alongside it; threshold
+``ports_04_birdcage_four_port_sparameters_facets.xdmf`` alongside it; threshold
 ``mesh_tags`` on 211–214 there to see the four port sheets the BC lives on.
 """
 
@@ -120,7 +120,7 @@ from tests.validation.test_port_package_sparameters import (  # noqa: E402
 )
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "birdcage_four_port_sparameters"
+BASENAME = "ports_04_birdcage_four_port_sparameters"
 
 # The negative control's floor, the `EX-20` constant and rationale: the
 # heuristic S must differ from the field-derived one by more than this. It is a

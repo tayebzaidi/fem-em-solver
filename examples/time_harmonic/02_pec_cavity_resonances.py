@@ -57,7 +57,7 @@ build)::
     ./run_examples.sh -e th:2
 
 Output lands in ``examples/time_harmonic/paraview_output``: open
-``pec_cavity_mode_combined.xdmf`` and colour by ``E_mode1_magnitude`` — the
+``time_harmonic_02_pec_cavity_mode_combined.xdmf`` and colour by ``E_mode1_magnitude`` — the
 TE₁₀₁ field is brightest on the mid-plane and falls to zero on the PEC walls,
 which is the boundary condition made visible. ``Glyph`` on
 ``E_mode1`` shows the single half-wave along x and along z, and none along y.
@@ -111,7 +111,7 @@ RECORD_NULL_CLUSTER_RATIO = 3.2e-15
 RECORD_NULL_COUNT = 8
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "pec_cavity_mode"
+BASENAME = "time_harmonic_02_pec_cavity_mode"
 
 
 def _rayleigh_quotient(mode: fem.Function, comm: MPI.Comm) -> float:

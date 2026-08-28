@@ -44,9 +44,9 @@ Run it through the example runner::
     ./run_examples.sh -e mesh:1
 
 Output lands in ``examples/meshing/paraview_output/``: open
-``two_torus_ports_combined.xdmf`` and threshold on ``CellTags``
+``meshing_01_two_torus_ports_combined.xdmf`` and threshold on ``CellTags``
 (1 = wire 1, 2 = wire 2, 3 = air, 101/102 = the two gap boxes), and open
-``two_torus_ports_facets.xdmf`` alongside it for the facet groups — the array
+``meshing_01_two_torus_ports_facets.xdmf`` alongside it for the facet groups — the array
 is ``mesh_tags`` (1 = outer boundary, 201/202 = the port cuts).
 
 Measured at ``-n 2`` on the **0.11 image** (dolfinx 0.11 / gmsh 4.15.2):
@@ -103,7 +103,7 @@ VOLUME_RTOL = 1e-9
 AREA_RTOL = 1e-9
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "two_torus_ports"
+BASENAME = "meshing_01_two_torus_ports"
 
 
 def _box_halves():

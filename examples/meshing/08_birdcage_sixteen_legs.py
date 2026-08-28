@@ -59,9 +59,9 @@ Run it through the example runner::
     ./run_examples.sh -e mesh:8 -n 2 -t 400
 
 Output lands in ``examples/meshing/paraview_output/``: open
-``birdcage_sixteen_legs_combined.xdmf`` and threshold on ``CellTags``
+``meshing_08_birdcage_sixteen_legs_combined.xdmf`` and threshold on ``CellTags``
 (1 = conductor, 2 = air, 3 = phantom, 101-116 and 201-216 = the lower/upper
-halves of the sixteen gap boxes), and ``birdcage_sixteen_legs_facets.xdmf``
+halves of the sixteen gap boxes), and ``meshing_08_birdcage_sixteen_legs_facets.xdmf``
 for ``mesh_tags`` 211-226, the sixteen reconstructed port sheets.
 """
 
@@ -126,7 +126,7 @@ from tests.mesh.test_birdcage_leg_gaps import _analytic_terminal_area  # noqa: E
 CELL_TAG_NAMES = {1: "conductor", 2: "air", 3: "phantom"}
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "paraview_output"
-BASENAME = "birdcage_sixteen_legs"
+BASENAME = "meshing_08_birdcage_sixteen_legs"
 
 # The back-compat identity `GEO-19`'s `_azimuth_class` docstring states and this
 # example asserts as its negative control: at four legs every port is aligned,

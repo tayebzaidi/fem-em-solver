@@ -52,8 +52,8 @@ automatically; a real build raises)::
     ./run_examples.sh -e th:6 -n 2 -t 540
 
 Output lands in ``examples/time_harmonic/paraview_output``: one combined XDMF
-per frequency, ``larmor_sphere_64MHz_combined.xdmf`` and
-``larmor_sphere_128MHz_combined.xdmf``. Colour by ``E_magnitude`` and the
+per frequency, ``time_harmonic_06_larmor_sphere_64MHz_combined.xdmf`` and
+``time_harmonic_06_larmor_sphere_128MHz_combined.xdmf``. Colour by ``E_magnitude`` and the
 saline ball is dark inside a bright box — but unlike `EX-6`'s uniform interior,
 this one carries structure, and the 128 MHz picture carries more of it than the
 64 MHz one. That is ``|m|k₀a`` growing from 0.850 to 1.374: the interior
@@ -303,7 +303,7 @@ def _export(result: dict, comm: MPI.Comm) -> Path:
     """Combined XDMF of the fine-rung field, in and around the sphere."""
     e_re, e_im, e_mag = _paraview_fields(result["msh"], result["fields"])
     OUTPUT_DIR.mkdir(exist_ok=True)
-    basename = f"larmor_sphere_{result['label'].replace(' ', '')}_combined"
+    basename = f"time_harmonic_06_larmor_sphere_{result['label'].replace(' ', '')}_combined"
     xdmf_path, _ = write_xdmf_with_tags(
         OUTPUT_DIR / basename,
         result["msh"],
