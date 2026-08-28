@@ -20267,3 +20267,109 @@ differ from the three retired here in a way worth stating: those three were
 *consumer call sites* choosing a sizing the generator could not mesh, fixed by
 moving the consumer; the birdcage two are the *generator itself* failing across
 a continuum of sizings, which no call-site move can fix.
+
+---
+
+## 2026-08-28T20:40Z — `GEO-20` step 2a — **complete** (measurement chunk step; §9 item 3)
+
+**Preflight.** Tree clean at `61e97f1`, container Up (2 days). §9 item 3 was
+the first item not marked done or blocked; taken as written.
+
+**Read before acting, and it changes how to read the result.** Since the 10:30
+review wrote this queue, an interactive session with the human operator
+**diagnosed** the defect (commit `1de508f`): `birdcage_port_domain` calls
+`_model_to_mesh` with no partitioner, i.e. `GhostMode.none`, so an interior
+port facet on a partition boundary has no second cell to classify from. That
+refutes the *location* in item 3's hypothesis (`_interface_facet_tags`) while
+making the **same** phenomenological prediction, and it was verified on the
+4-leg fixture only. I ran the item unchanged: the table it commissions is still
+the right measurement, and 16 legs / 32 ports is where it had never been taken.
+
+**What was done.** Copied the parked module onto the working tree
+(`git show attempt/GEO-20-step2-20260828T094500Z:… > …`, no merge), added
+`_port_rank_ownership` — an `allgather`ed count of **owned** cells per
+`PORT_LOWER+i` / `PORT_UPPER+i` tag (`cells.indices < size_local`, since
+`cells.values` is rank-local and the index set runs over ghosts) — plus a
+per-port ownership line and a `DISCRIMINATOR` summary comparing the broken-sheet
+set to the straddling set. No `src/` change; the module stays off `main`.
+
+**Measured.** Two footered windows, standard tier, real build, `-s`,
+`-k 30 400`:
+
+| log | ranks | Status | elapsed | broken sheets (of 32) | straddling ports | agree |
+|---|---|---|---|---|---|---|
+| `20260828T200204Z_GEO-20-step2a-n4.log` | 4 | 1 | **189 s** | P25, P29, P37, P41, P45 | same five | **yes**, ∅ both ways |
+| `20260828T200524Z_GEO-20-step2a-n8.log` | 8 | 1 | **189 s** | P17, P21, P26, P30, P37, P44, P48 | same seven | **yes**, ∅ both ways |
+
+against the 04:30 `-n 2` record {P30, P37, P45}. Three different sets; neither
+new set nested in the old (P45 breaks at 2 and 4 but not 8, P30 at 2 and 8 but
+not 4). The 4-leg / 8-ring-port control in the same runs is **0 broken, 0
+straddling at both widths**. Status 1 is the expected footer — the module's
+sheet gate is red at 16 legs by construction; the evidence is the prints.
+
+**The pre-stated refuting observation did not occur.** Item 3's anchor was
+"every broken port has its half-boxes on different ranks and every intact port
+is on one rank, across 32 × 3 ports; one counter-example refutes". Across
+32 ports × 2 new widths the symmetric difference is empty in **both**
+directions. Failure shape unchanged from `-n 2`: sheet lost whole (0 facets) or
+as a fragment (5 facets / **0.315302109223** of `w²` at `-n 4`, 6 facets /
+**0.449137697797** at `-n 8`) while the terminal keeps its intact value
+(0.974454791–0.974455668) and volume/analytic stays **1.000000000000**; closure
+drops (0.991120008826 P29 `-n 4`, 0.991064589826 P44 `-n 8`) only on the one
+port per run that also loses an **air** facet — the 4-leg-at-`-n 12` signature.
+
+**Negative controls, both widths, digit for digit.** 40/40 port volumes
+**1.000000000000** of `2·R·w²·tan α`; `GEO-9` partition and air-box closure
+**1.000000000000**; ring arcs vs Pappus **1.000000000000**; conductor 0.976465
+(16 legs) / 0.969275 (4 legs) of CAD; kwarg-off 16-leg control **307 296** cells
+(ratio 1.000000) with C16 sheet spread **1.331e-15** = the record; 4-leg ring
+**110 786** cells (ratio 1.000000). Cost rung reproduced: 110 786 → 265 621
+cells (2.3976×), mesh 22.02 → 69.78 s (3.1683×). Nothing outside the sheet
+reconstruction moved at any width.
+
+**Outcome and disposition.** *Confirmed*, which the ruling says is **stop**: no
+`src/` line, no band, no record moved. `GEO-20` stays 🟡. `main` carries the two
+logs, the `test-results.md` rows, the §7 step-2a entry, the §9 item-3 flip, the
+known-issues block, and the instrumented module as
+`scripts/probes/geo20_step2a_ownership_scaleup.py`. No denials hit, no container
+trouble, no exit 124. Nothing under `tests/` or `src/` moved.
+
+**⚠️ Anomaly, mid-slot and NOT mine — a concurrent session is editing the tree.**
+Preflight at 15:00 was clean at `61e97f1`. When I went to commit, `git status`
+showed **59 modified `examples/` files** — a systematic rename of output
+basenames (`straight_wire` → `magnetostatics_01_straight_wire` and the same
+shape across every example family, 162 insertions / 162 deletions). None of it
+is mine: this slot touched no `examples/` path and ran no example. So a human
+or another session was editing `examples/` while this run was in flight. I
+committed **explicitly enumerated paths only** — never `git add -A` — and left
+those 59 files untouched and uncommitted for their author. The daily review
+should expect them, and the *next* implementer run will meet a dirty tree at
+preflight; this entry is the journal that makes it a second encounter under
+`implementer-run.md` step 1 if it is still dirty then.
+
+**Why the probe, not the branch.** The §7 entry offered either. The branch was
+not available: `examples/ports/05_birdcage_larmor_frequency_ladder.{py,md}`
+differs between `main` and `attempt/GEO-20-step2-20260828T094500Z` **and** is
+one of the 59 files the concurrent session holds modified, so `git checkout` of
+the branch would have refused (correctly) rather than silently carrying them.
+Stashing was not an option — they are not my edits. The probe is the module
+verbatim plus the ~30 lines of instrumentation, with a header saying so; the
+branch is unchanged and still holds the uninstrumented original.
+
+**For the daily review — one judgement to confirm.** I read this table as
+evidence for the operator's **ghost-layer** cause and *not* for the
+`_interface_facet_tags` location: ownership predicts breakage perfectly because
+a straddling port is precisely one whose interior sheet facets have a
+neighbour cell `GhostMode.none` never materialises, and the volume identity
+(which does not route through facet reconstruction) is exact everywhere. Both
+hypotheses predict this table, so it does not discriminate *between* them — the
+4-leg `shared_facet` probe already did that. Consequence: the ruling's
+conditional "confirmed ⇒ commission step 2b with a re-record licence" should be
+**discharged into `GEO-24`** rather than opened as a second chunk, since
+`GEO-24` already owns the identical fix and sweep by operator commission.
+
+**Hypothesis for the next attempt.** `GEO-24` step 1 (the before-readings at
+`-n 2` / `-n 12` on the modules that live on `main`) is now the only
+unmeasured half; with this table, `GEO-24` step 2's plumb predicts the 16-leg
+broken set goes empty at every width, which turns `GEO-20` step 2 into a re-run
+of the parked module rather than an investigation.

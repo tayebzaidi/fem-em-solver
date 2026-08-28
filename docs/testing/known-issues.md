@@ -4728,6 +4728,60 @@ The tests are **not on `main`**: they are parked on
 > lands. `GEO-19`'s own remark that passing at `-n 2` is "luck of the
 > partition, not immunity" is now measured rather than suspected.
 
+> **📐 `GEO-20` STEP 2a EXECUTED 2026-08-28 (15:00 slot, at `61e97f1`) — the
+> ownership table, on the 16-leg / 32-port fixture itself. The set moves with
+> the width and agrees with rank ownership port for port, 32 × 2 with no
+> exception.** Logs `20260828T200204Z_GEO-20-step2a-n4.log` (Status 1 / 189 s)
+> and `20260828T200524Z_GEO-20-step2a-n8.log` (Status 1 / 189 s), standard
+> tier, real build, the parked module plus a per-port `allgather`ed count of
+> owned `PORT_LOWER+i` / `PORT_UPPER+i` cells. No `src/` change.
+>
+> | ranks | broken sheets (of 32) | ports whose two half-boxes are not on one rank | sets agree |
+> |---|---|---|---|
+> | 2 (recorded 04:30) | P30, P37, P45 | *(not instrumented)* | — |
+> | 4 | **P25, P29, P37, P41, P45** (5) | P25, P29, P37, P41, P45 | **yes**, ∅ either way |
+> | 8 | **P17, P21, P26, P30, P37, P44, P48** (7) | P17, P21, P26, P30, P37, P44, P48 | **yes**, ∅ either way |
+>
+> The 4-leg / 8-ring-port control in the same runs is **0 broken, 0 straddling
+> at both widths** — consistent with the width probe above, where the small
+> fixture only breaks at `-n 12`. The set is not nested and not monotone in
+> membership (P45 breaks at 2 and 4 but not 8; P30 at 2 and 8 but not 4), which
+> is what a partition boundary sweeping through a fixed geometry looks like and
+> what no geometry-deterministic defect can produce.
+>
+> **Failure shape, unchanged from `-n 2`:** a broken port loses its sheet
+> **entirely** (0 facets) or keeps a fragment — P29/P45 at `-n 4` **5 facets /
+> 0.315302109223** of `w²`, P26 at `-n 8` **6 facets / 0.449137697797** — while
+> its *terminal* stays exact (0.974454791–0.974455668, the intact value) and
+> its **volume/analytic is 1.000000000000**. Boundary closure drops only on the
+> one port per run that also loses an **air** facet (P29 at `-n 4`,
+> 0.991120008826, 179 vs 180; P44 at `-n 8`, 0.991064589826, 175 vs 176) —
+> the same one-facet loss the 4-leg fixture shows at `-n 12`.
+>
+> **Negative controls, both widths, digit for digit:** all 40 port
+> volume/analytic readings **1.000000000000**, `GEO-9` partition and air-box
+> closure **1.000000000000**, ring arcs against Pappus **1.000000000000**,
+> conductor 0.976465 / 0.969275 of CAD, kwarg-off at 16 legs **307 296** cells
+> (ratio 1.000000) with C16 sheet spread **1.331e-15**, 4-leg ring rung
+> **110 786** cells (ratio 1.000000). The volume identity does not route
+> through `_interface_facet_tags` and did not move at any width — so the defect
+> is confined to facet reconstruction, exactly as the ghost-layer diagnosis
+> says.
+>
+> **Reading.** This is confirmation of the *phenomenology* the 10:30 ruling
+> asked for, on the large fixture, and it is consistent with the ghost-layer
+> cause rather than with the `_interface_facet_tags` location — ownership
+> predicts breakage perfectly because a straddling port is precisely one whose
+> interior sheet facets have a neighbour cell that `GhostMode.none` does not
+> materialise. Per the ruling, **confirmed is stop**: no `src/` line moved, no
+> band, no record. The instrumented module is
+> `scripts/probes/geo20_step2a_ownership_scaleup.py` (the parked module verbatim
+> plus the ownership print — the attempt branch still holds the uninstrumented
+> original; see attempts.md 2026-08-28T20:40Z for why it did not go to the
+> branch). The fix and the re-record sweep stay
+> `GEO-24`'s, and `GEO-24` step 1 now owes only the before/after readings on
+> the modules that already live on `main`.
+
 ## Recording a new entry
 
 Add an entry when you find a failure you are **not** fixing. Include: the test id, the
