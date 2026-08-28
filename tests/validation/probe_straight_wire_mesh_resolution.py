@@ -27,6 +27,18 @@ here is rank-dependent: gmsh's boundary reconstruction is serial on rank 0
 whatever the width, and the cell counts are the same mesh.
 
     mpiexec -n 1 python3 -u tests/validation/probe_straight_wire_mesh_resolution.py
+
+**Leg C (`GEO-22` step 1, 2026-08-28).**  Legs A and B left the floor
+localised but *unbisected*: 0.008 meshes, 0.010 fails, nothing in between was
+tried, so no guard constant could be written without guessing.  Leg C closes
+that by sweeping the whole open interval `[0.008, 0.010]` on a uniform 2.5e-4
+grid -- nine rungs -- on **both** geometries.  A uniform sweep rather than a
+true bisection deliberately: at 0.3 s per failing rung and ~2.6 s per meshing
+one the full grid costs about what three bisection steps would, and it is the
+only form of the measurement that can *see* a non-monotone floor (a failing
+rung between two meshing ones), which `GEO-22` names as a stop condition.
+
+    mpiexec -n 1 python3 -u tests/validation/probe_straight_wire_mesh_resolution.py bisect
 """
 
 import os
@@ -66,6 +78,21 @@ GEOMETRY_LADDER = [
 ]
 
 
+# Leg C: the open interval legs A/B bracketed, on a uniform 2.5e-4 grid --
+# 0.00800, 0.00825, ... 0.01000.  Built with integer arithmetic so the rungs
+# are exact multiples of 2.5e-4 and reproduce bit-for-bit between runs.
+BISECT_GRID = [round(80 + 2.5 * i, 4) / 10000.0 for i in range(9)]
+
+# Both geometries get the same grid: `GEO-22` step 1 must say whether the
+# floor is geometry-dependent, and leg B already showed h = 0.01 fails on all
+# four (L, R) pairs.  These are the two that matter -- the example's and the
+# gate's.
+BISECT_GEOMETRIES = [
+    ("example", EXAMPLE_WIRE_LENGTH, EXAMPLE_DOMAIN_RADIUS),
+    ("gate", GATE_WIRE_LENGTH, GATE_DOMAIN_RADIUS),
+]
+
+
 def attempt(comm, wire_length, domain_radius, resolution):
     """Mesh one case.  Returns (ok, cells_or_None, message, seconds).
 
@@ -96,9 +123,66 @@ def attempt(comm, wire_length, domain_radius, resolution):
     return True, cells, "", time.time() - t0
 
 
+def bisect_main(comm):
+    """Leg C -- sweep [0.008, 0.010] at 2.5e-4 on both geometries."""
+    rank0 = comm.rank == 0
+    if rank0:
+        print("straight_wire_domain: bisecting the coarse-resolution floor")
+        print(f"  grid {BISECT_GRID[0]} .. {BISECT_GRID[-1]} at 2.5e-4, "
+              f"fixed wire_radius = {EXAMPLE_WIRE_RADIUS} m; "
+              f"{comm.size} rank(s)\n")
+
+    summary = []
+    for name, wire_length, domain_radius in BISECT_GEOMETRIES:
+        if rank0:
+            print(f"Leg C/{name} -- L = {wire_length}, R = {domain_radius}:")
+        h_ok, h_fail, cells_at_h_ok = None, None, None
+        for resolution in BISECT_GRID:
+            ok, cells, message, elapsed = attempt(
+                comm, wire_length, domain_radius, resolution
+            )
+            comm.Barrier()
+            # `h_ok` is the *coarsest* meshing rung and `h_fail` the *finest*
+            # failing one; the grid runs fine-to-coarse, so each keeps its
+            # last observation of the respective kind.
+            if ok:
+                h_ok, cells_at_h_ok = resolution, cells
+            else:
+                if h_fail is None:
+                    h_fail = resolution
+            if rank0:
+                if ok:
+                    print(f"  h = {resolution:<8.5f} OK    {cells:>8d} cells "
+                          f"({elapsed:.1f} s)")
+                else:
+                    print(f"  h = {resolution:<8.5f} FAIL  {message} "
+                          f"({elapsed:.1f} s)")
+        summary.append((name, h_ok, cells_at_h_ok, h_fail))
+        if rank0:
+            print("")
+
+    if rank0:
+        print("Summary -- coarsest meshing rung / finest failing rung:")
+        for name, h_ok, cells_at_h_ok, h_fail in summary:
+            print(f"  {name:<8s} h_ok = {h_ok}  ({cells_at_h_ok} cells)   "
+                  f"h_fail = {h_fail}")
+        # Monotone means: every rung at or below h_ok meshed and every rung
+        # above it failed.  A violation is `GEO-22`'s stop condition, so it is
+        # printed as such rather than inferred by the reader.
+        for name, h_ok, _cells, h_fail in summary:
+            if h_ok is not None and h_fail is not None and h_fail < h_ok:
+                print(f"  {name}: NON-MONOTONE -- a failing rung "
+                      f"({h_fail}) lies below a meshing one ({h_ok}).")
+        print("\nMeasurement only -- no assertion, nothing re-recorded.")
+
+
 def main():
     comm = MPI.COMM_WORLD
     rank0 = comm.rank == 0
+
+    if len(sys.argv) > 1 and sys.argv[1] == "bisect":
+        bisect_main(comm)
+        return
 
     if rank0:
         print("straight_wire_domain: where does the 0.11 image stop meshing?")

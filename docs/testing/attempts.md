@@ -19792,3 +19792,118 @@ example makes visible for free: the sweep time is frequency-flat (24.0 / 23.9 /
 24.1 s for four MUMPS solves each), so a 16-leg / 32-port solve is priced by
 cells alone and `GEO-20`'s blocked rank-width finding is the only thing between
 here and it.
+
+## 2026-08-28T12:35Z — `GEO-22` step 1 (§9 item 3, 07:30 implementer slot) — **complete (negative result: there is no resolution floor — the failure is non-monotone and deterministic, so no guard is writable)**
+
+**Preflight.** Tree clean on `main` at `d849db2`, container Up 43 h. §9 item 1
+is 🚫 (`GEO-20`, blocked on a review ruling), item 2 is done (`EX-34`, 06:00
+slot), so item 3 — `GEO-22` — is the first open one. No fallback used, no
+anomaly.
+
+**What was tried.** `GEO-22` step 1 as written, with one deliberate
+substitution of method. The entry asks for a bisection of `[0.008, 0.010)` to
+2.5e-4 on both geometries; I swept the **whole interval on a uniform 2.5e-4
+grid** instead — nine rungs (0.00800 … 0.01000), both geometries, `-n 1`.
+Rationale, and it turned out to be the whole ballgame: at 0.2–0.3 s per
+failing rung and 1–3 s per meshing one the full grid costs about what three
+bisection steps would, and a bisection *assumes* monotonicity — it can only
+return a threshold, never discover there isn't one. The sweep landed as leg C
+of `tests/validation/probe_straight_wire_mesh_resolution.py` (the existing
+legs A and B are untouched and still reproduce). Nothing in `src/` was
+touched at any point.
+
+**Measured — the table, both runs identical:**
+
+| `resolution` | example (L = 0.3, R = 0.04) | gate (L = 0.20, R = 0.030) |
+| --- | --- | --- |
+| 0.00800 | OK 21 830 | OK 8 262 |
+| 0.00825 | OK 18 745 | OK 8 004 |
+| 0.00850 | OK 17 644 | OK 7 755 |
+| 0.00875 | **FAIL** | **FAIL** |
+| 0.00900 | OK 14 709 | **FAIL** |
+| 0.00925 | **FAIL** | OK 6 894 |
+| 0.00950 | OK 17 683 | OK 6 768 |
+| 0.00975 | **FAIL** | OK 12 200 |
+| 0.01000 | **FAIL** | **FAIL** |
+
+Every failure is the same literal `Invalid boundary mesh (overlapping facets)
+on surface 1 surface 1` in 0.2–0.3 s.
+
+**Outcome: §7's pre-registered stop condition fired, so no guard landed.**
+`h = 0.00875` fails on both geometries while *coarser* rungs mesh. There is no
+threshold, so a `resolution > RESOLUTION_FLOOR` guard at any constant would
+either reject meshing rungs or admit failing ones — writing one would encode a
+fiction, which is exactly what the 08-25 ruling refused to do for the weaker
+reason that the boundary was unmeasured. It is now measured, and it doesn't
+exist.
+
+**This also falsifies a reading the project has carried since 2026-08-25.**
+"0.008 and finer mesh, 0.010 fails, the floor is somewhere between" was an
+artefact of the old leg-A ladder sampling only those two values plus finer
+ones. Four of the nine rungs in the gap fail and they are interleaved with
+meshing ones. The known-issues entry is re-headed accordingly.
+
+**Anchor (§4).** Two independent invocations of the identical command
+reproduce **bit-identically** — same OK/FAIL in all 18 cells, same cell count
+to the digit. So the pattern is a deterministic function of (geometry,
+resolution), not gmsh run-to-run noise from randomised point insertion. That
+is the quantitative assertion and it is the one step 2 most needs: a
+retry-on-failure fix cannot work, because a repeat of the same request
+reproduces the same failure. Free control, passed: the example's own 0.008
+rung reads **21 830 cells** in both runs, the `EX-30` / `mag:1` record to the
+digit.
+
+**Two secondary findings.** (1) The cell count is non-monotone in `h` too, and
+not marginally — gate 6 768 cells at 0.00950 versus **12 200** at the coarser
+0.00975, a 1.80× jump; example 14 709 at 0.00900 versus 17 683 at 0.00950. The
+mesher's whole response to `resolution` is discontinuous in this band. (2)
+Mechanism localised, not diagnosed: *every* rung in the band, meshing ones
+included, prints `[ 0%] NNN triangles are equivalent` on surface 1 (the wire
+cylinder) and falls back `Frontal-Delaunay` → `MeshAdapt` for that surface
+alone. So coincident triangles on the wire surface are the constant, and
+whether the fallback yields a boundary the 3D reconstruction accepts is the
+variable. This is consistent with the wire-diameter suspicion being near the
+mark without being the mechanism — 0.008 is 1.33× the 0.006 m diameter, also
+triggers the fallback, and merely survives it. Not chased: step 1's scope
+excludes diagnosing gmsh.
+
+**Not run, deliberately, and this is a scope call the review should check.**
+`mag:1` (9 s) and the straight-wire gate ladders (363 s) were §7's negative
+controls *for a guard* — they exist to show the guard does not fire on
+gated rungs. No guard landed and no `src/` line changed, so they control
+nothing that could have moved; spending 372 s to show an unmodified generator
+is unmodified is not a measurement. The 0.008 = 21 830 reproduction inside the
+sweep is the control that was worth having and it came free.
+
+**Harness logs.** `20260828T123115Z_GEO-22-step1-bisect.log` (Status 0, 23 s,
+smoke, `-n 1`) and `20260828T123205Z_GEO-22-step1-bisect-repeat.log`
+(Status 0, 22 s) — the repeat is the determinism anchor, not a re-run of a
+failure. No command overran, nothing was backgrounded, no denial hit.
+
+**Landed on `main`:** probe leg C, the known-issues re-head with the full
+table and a restated retire-when, the §7 step-1 record and 🟡 status flip, the
+§7 table row, the §9 item-3 completion note, this entry, `test-results.md`
+rows. No branch parked — nothing was incomplete.
+
+**Hypothesis for the next attempt (step 2, and it needs a review ruling
+first).** The guard question has changed shape: a guard *value* is impossible,
+so step 2 must choose a guard *form*. Three candidates, cheapest first —
+(a) a post-mesh validity check inside `straight_wire_domain` that catches the
+gmsh exception and re-raises a `ValueError` naming `resolution` and the
+verified rungs, which is honest and cheap but guards nothing, only relabels;
+(b) an explicit gmsh size field on the wire cylinder instead of the single
+global `resolution`, which the mechanism reading suggests would remove the
+coincident-triangle fallback entirely and is the only candidate that could
+*fix* rather than *report* — but it changes meshes and would move `mag:1`'s
+21 830 and the three gate ladders' 38 740 / 147 235 / 383 146, so it needs its
+own re-record licence; (c) a documented allowlist of verified rungs, which is
+defensible only because the pattern is now proven deterministic. My reading is
+that (b) is the real fix and (a) is what fits a scheduled slot, and that the
+review should not commission (b) without deciding the re-record question
+first. Worth noting for the wider backlog: `GEO-21` and `GEO-23` are chasing
+the *same* `overlapping facets` string on four other generators, and finding
+(2) here — Frontal-Delaunay emitting coincident triangles on a curved surface,
+with a MeshAdapt fallback that sometimes rescues it — is a mechanism candidate
+for that family too, and a cheaper one to test than the rank-width hypothesis
+`GEO-20` is blocked on.
+

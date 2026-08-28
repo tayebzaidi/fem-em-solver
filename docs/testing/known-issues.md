@@ -1142,6 +1142,86 @@ unless fixing it is the task.
 > type, the probe cell count and `mag:1`'s unmoved 21 830; the straight-wire
 > gate ladders are the negative control. Full rubric in the §7 entry;
 > queued as a §9 spare. This entry retires when that guard lands.
+>
+> **RE-HEADED 2026-08-28 (`GEO-22` step 1, 07:30 implementer slot) — there is
+> no floor, and no guard is possible: the failure is NON-MONOTONE in
+> `resolution` on both geometries, deterministically so.** The bisection ran
+> as commissioned and returned a measured negative. `probe_…_resolution.py`
+> gained a leg C that sweeps the whole open interval `[0.008, 0.010]` on a
+> uniform **2.5e-4** grid — nine rungs — on the example's geometry *and* the
+> gate's, at `-n 1` (`20260828T123115Z_GEO-22-step1-bisect.log`, `Status 0`,
+> **23 s**; repeat `20260828T123205Z_GEO-22-step1-bisect-repeat.log`,
+> `Status 0`, **22 s**). A uniform sweep was run rather than a true bisection
+> deliberately: it costs about what three bisection steps would and it is the
+> only form of the measurement that can *see* non-monotonicity. It did.
+>
+> | `resolution` | example (L = 0.3, R = 0.04) | gate (L = 0.20, R = 0.030) |
+> | --- | --- | --- |
+> | 0.00800 | OK 21 830 | OK 8 262 |
+> | 0.00825 | OK 18 745 | OK 8 004 |
+> | 0.00850 | OK 17 644 | OK 7 755 |
+> | 0.00875 | **FAIL** | **FAIL** |
+> | 0.00900 | OK 14 709 | **FAIL** |
+> | 0.00925 | **FAIL** | OK 6 894 |
+> | 0.00950 | OK 17 683 | OK 6 768 |
+> | 0.00975 | **FAIL** | OK 12 200 |
+> | 0.01000 | **FAIL** | **FAIL** |
+>
+> Every failing cell is the same literal `Invalid boundary mesh (overlapping
+> facets) on surface 1 surface 1`, in 0.2–0.3 s, as before.
+>
+> **Three findings, in order of consequence.**
+>
+> 1. **The failing set is interleaved, not a floor.** `h = 0.00875` fails on
+>    both geometries while the *coarser* 0.00900 (example) and 0.00925 /
+>    0.00950 / 0.00975 (gate) mesh. So "everything from 0.008 down works,
+>    everything above fails" — the reading this entry has carried since
+>    2026-08-25 — is **false**; it was an artefact of the old leg-A ladder
+>    sampling only 0.010 and 0.008 and nothing between. There is no threshold
+>    to encode, so `GEO-22` step 1's pre-registered stop condition fires and
+>    **no guard was written.** A `resolution > RESOLUTION_FLOOR` guard at any
+>    constant would either reject meshing rungs or admit failing ones.
+> 2. **It is deterministic.** The two runs above are independent invocations
+>    and reproduce **bit-identically** — same OK/FAIL at all 18 cells, same
+>    cell count to the digit. So this is not run-to-run instability in gmsh's
+>    randomised insertion; it is a reproducible function of `(geometry,
+>    resolution)`. That matters for step 2: a retry-with-jitter fix would have
+>    to *perturb* the request, not merely repeat it.
+> 3. **The cell count is non-monotone in `h` too, and by a lot.** Example:
+>    0.00900 → 14 709 but the *coarser* 0.00950 → 17 683 (+20%). Gate:
+>    0.00950 → 6 768 but 0.00975 → **12 200**, a **1.80×** jump for a coarser
+>    request. So the mesher's whole response to `resolution` is discontinuous
+>    in this band, and the failures are the visible part of that.
+>
+> **Mechanism, localised but not diagnosed.** Every rung in the sweep — the
+> meshing ones included — prints `[ 0%] NNN triangles are equivalent` on
+> surface 1 (the wire cylinder) and then falls back
+> `Frontal-Delaunay` → **`MeshAdapt`** for that surface alone. So
+> Frontal-Delaunay is producing coincident triangles on the wire at every
+> size in this band; whether gmsh's fallback then yields a boundary the 3D
+> reconstruction accepts is what varies rung to rung. That is consistent with
+> all three findings and with the wire-diameter suspicion being *near* the
+> mark without being the mechanism (0.008 is 1.33× the 0.006 m diameter and
+> also triggers the fallback — it just survives it). **Not chased in-slot:**
+> `GEO-22` step 1's scope explicitly excludes diagnosing gmsh.
+>
+> **Not run, deliberately:** `mag:1` and the straight-wire gate ladders were
+> the negative controls *for a guard*. No guard landed, no `src/` line
+> changed, so there is nothing for them to control and spending 370 s on them
+> would prove only that an unmodified generator is unmodified. The example's
+> own 0.008 rung is reproduced inside this very sweep at **21 830 cells**,
+> which is the `EX-30`/`mag:1` record to the digit — that is the control that
+> was worth having, and it is free.
+>
+> **Retire-when — restated, because the old condition is now unreachable:** a
+> *measured-threshold* guard cannot land. This entry retires when either (a)
+> `straight_wire_domain` stops emitting the coincident-triangle surface mesh
+> (an upstream image move, or a generator change that meshes the wire surface
+> differently — e.g. an explicit size field on the cylinder rather than a
+> global `resolution`), or (b) a `GEO-22` step 2 lands a guard of a *different
+> shape* — a post-mesh validity check, or a documented allowlist of verified
+> rungs — and a review rules that shape sufficient. **Owning chunk:**
+> `GEO-22`, step 1 done as a measured negative, step 2 a review's call.
 
 ### ✅ RETIRED 2026-08-25 by `OPS-24` — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family was **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
 

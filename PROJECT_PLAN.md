@@ -3020,7 +3020,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-19` | `birdcage_port_domain` at `leg_count = 16`, gapped + sheeted: identity family re-gated (C16), cost rung measured — 32-port directive item (a) (commissioned 2026-08-23 weekly review) | ✅ *(**step B ✅ 2026-08-25** — the local-frame port construction is on `main` under ruling (6\*): invariance control `3 passed` from `main` at 116 085 / 114 655 cells, C4 spread 6.050e-16, terminals 0.988616 × 4, no-gap control 98 666 digit for digit; the three `PORT-9` modules `19 passed` **twice in-slot** on the mesh-tagged re-records, σ_max 0.999992805, class separation 166.6766×, (d0) margin 2256.9707×, leg (c)'s `I₁` reproducing to 5.934e-12 against a 1e-9 band. The open-limit (1e6 Ω) column is retired as a record-bearing fixture — no band widened. **Step C attempt 1 2026-08-25**: the rung is measured — 116 085 → **307 296 cells (2.6472×)**, mesh 22.93 → **74.18 s (3.2357×)**, inside the 1 M / 600 s stop rule — and gates (i)/(iii)/(iv)/(v) are green at 16 legs (partition and closure 1.000000000000, C16 sheet spread **1.331e-15**, conductor 0.981503, separation margin 1.560723×) with the 4-leg control reproducing step B's record at delta **0** cells / 6.050e-16. Gate (ii)'s *equality* half is red at **8.434e-04** vs 1e-5 — a three-valued azimuth-class structure with ≤ 2e-7 inside each class, i.e. a C4 band applied to C16; parked on `attempt/GEO-19-stepC-20260825T125000Z`, no band widened, ruling requested. **Ruled 2026-08-25 10:30 review: construction symmetry — per-azimuth-class reading, intra-class 1e-6, inter-class ceiling 5e-3, every existing band unmoved; landing instructions in the prose entry, queued §9 item 1**. **Step C landed 2026-08-25 12:00 slot — chunk ✅**: the ruled module is `2 passed` / **117 s** from `main` (`20260825T170316Z_GEO-19-stepC-ruled.log`; record run `…T170523Z…-ruled-record.log`, 115 s). Gate (ii) per class from the mesh's own coordinate mirrors — three classes, intra **1.923e-07 / 5.849e-08 / 6.144e-08** against 1e-6, inter **8.431e-04** against 5e-3; the 4-leg control returns **one** class at **3.184e-08**, i.e. the reading reduces to the old flat gate. Four already-green gates reproduce (partition/closure/halves/`dx·g` 1.000000000000, C16 sheet spread 1.331e-15, conductor 0.981503, margin 1.560723×) and the control meshes **116 085** cells, delta **0**. **Cost rung: 116 085 → 307 296 cells (2.6472×), mesh 22.99 → 74.37 s (3.2346×)** — Phase 6's first measured rung, on F-small. No band outside the module moved; `GEO-20` step 2 unblocked)* | heavy (probe first) |
 | `GEO-20` | High-pass birdcage ring-gap port layout (`ring_gap_length`, `2·leg_count` ports, the `GEO-18` pattern on the end rings) — 32-port directive item (b); step 1 at 4 legs, step 2 at 16 after `GEO-19` (commissioned 2026-08-23 weekly review) | 🟡 *(**step 1 ✅ 2026-08-24** — the 8 ring ports exist at 4 legs and every pre-stated gate is green twice in-slot: terminal **0.974455** of the closed-form `2·π·r_ring²` inside the [0.95, 1.0] inscribed band and equal across the 8 to **≈ 2e-8** (gate 1e-5; digit corrected by the 10:30 review audit — see the prose entry), closure and port-volume **1.000000000000**, sheet meshed/analytic **1.000000000000** with out-of-plane spread **5.042e-18 m**, C4 and top/bottom-mirror spreads below 1e-12, `GEO-9` partition green, conductor 0.969275 ≥ 0.95; negative controls green — kwarg off reproduces the uncut birdcage and the leg+ring mesh is a 12-port mesh with **both** identity families exact. Step 2 (16 legs, 32 ports) is serial on `GEO-19`. **Step 2 attempt 1 2026-08-28 — negative result, parked on `attempt/GEO-20-step2-20260828T094500Z`, no band landed.** The 16-leg ring-gapped fixture **builds** (265 621 cells, 48 ports = 16 leg + 32 ring) and is **green at `-n 1`** (`20260828T093352Z_GEO-20-step2-probe1.log`, `1 passed` / 275 s) but **red at `-n 2` on the identical geometry** (`20260828T093839Z_GEO-20-step2-record.log`, Status 1 / 198 s): three of the 32 ring sheets do not reconstruct — P30 and P37 at **0 facets**, P45 at **5 facets / 0.315302109223** of `w²` — against 1.000000000000 on the other 29, and P30's boundary closure reads **0.981164653445** against 1e-9. Everything not routed through a sheet is exact at both widths: 32/32 port volumes 1.000000000000 of `2·R·w²·tan α`, `GEO-9` partition and air-box closure 1.000000000000, ring arcs against Pappus 1.000000000000, conductor 0.976465 of CAD, no phantom contact. **The terminals are the finding that did land as information:** all 32 read 0.974454791–0.974455668, spread **2.572e-07**, i.e. the ring family shows **no** azimuth-class split at 16 legs where the leg family split three ways at 8.434e-04 (`GEO-19` step C) — the ruled per-class bands were applied from the start and would have passed, as would the flat 1e-5. Both negative controls reproduce digit for digit in the same run: kwarg off at 16 legs **307 296** cells / C16 sheet spread **1.331e-15** (ratio 1.000000), and the 4-leg ring rung **110 786** cells (ratio 1.000000) with **one** azimuth class at intra 4.198e-08. **Cost rung measured and citable** (a cell count and a wall time, not a reconstruction reading): 4 → 16 legs ring-gapped **110 786 → 265 621 cells (2.3976×)**, mesh **23.30 → 72.23 s (3.1003×)** — cheaper than the leg-gapped 16-leg build's 307 296 / 72.23 s. Known-issues entry opened; the rank-width dependence is **not diagnosed**, the hypothesis is `_interface_facet_tags` matching on owned cells only, and the `-n 4`/`-n 8` discriminator costs no `src/` change. A fix in `_interface_facet_tags` touches every module that reconstructs a sheet and could move existing records — **a review's ruling, not an in-slot fix**)* | standard |
 | `GEO-21` | Dispose of the red `GEO-15` graded-conductor gate on 0.11: the ungraded baseline (`conductor_resolution=None`) no longer meshes at any global resolution tried, so the whole gate is non-executing on `main` (found by `EX-30` leg (mesh); commissioned 2026-08-25 18:00 review; known-issues 2026-08-25) | ✅ **2026-08-26** *(status marker flipped by the 18:00 review audit — the prose entry and the `GEO-15` row already read ✅; history: step 1 measured 2026-08-26, blocked on a ruling — the candidate control `h_c = 3.2e-3` recovers **0.916742** of the CAD mass, which is **neither** pre-stated branch: not ≤ 0.90 "clearly below", not clearing 0.95, and **inside the module's own `CAD_MASS_GATE - 0.05` = 0.90 separation guard**, so branch (2) as named cannot produce a green gate without loosening that guard. Graded side green — 0.966977 at 98 666 cells. Coarse-ward ladder measured and handed over, nothing adopted; see the entry. **Ruled 2026-08-26 03:00 review: option (b), control = 4.8e-3** — separation 0.846150 vs 0.966977 with the 0.90 guard unmoved, demoted claim (fine-vs-coarse grading) stated; 6.4e-3 rejected for cliff adjacency. **Step 2 ✅ 2026-08-26 (04:30 slot) — landed as written and the chunk closes**: control `None` → 4.8e-3 version-tagged with the six-rung probe table in-comment, demoted claim (fine vs coarse grading) in the module docstring and the `mesh:3` guide, gate `1 passed in 41.11s` at 0.846150 / 0.916742 / 0.966977 with the 0.95 gate and the 0.90 separation guard unmoved, `mesh:3` green at separation 0.120826, docrefs `dead=0 guide=0 stale=13 exit=2` giving `meshing` 2 → 0; known-issues gate red retired, generator-continuum finding re-headed and open)* | standard |
-| `GEO-22` | `straight_wire_domain` coarse-resolution floor on 0.11: bisect the `[0.008, 0.010)` threshold and land a measured guard so a too-coarse request raises legibly instead of aborting inside gmsh (owner for the `EX-30` leg (root) finding; commissioned 2026-08-26 18:00 review; known-issues 2026-08-25, re-headed 08-26) | ⬜ | smoke (probe `-n 1`) + standard (gate) |
+| `GEO-22` | `straight_wire_domain` coarse-resolution floor on 0.11: bisect the `[0.008, 0.010)` threshold and land a measured guard so a too-coarse request raises legibly instead of aborting inside gmsh (owner for the `EX-30` leg (root) finding; commissioned 2026-08-26 18:00 review; known-issues 2026-08-25, re-headed 08-26 and again 08-28) | 🟡 — **step 1 ✅ 2026-08-28 as a measured negative: there is no floor.** The 2.5e-4 sweep of `[0.008, 0.010]` reads **non-monotone on both geometries** — `h = 0.00875` fails while coarser rungs mesh — and reproduces **bit-identically** across two runs, so no `RESOLUTION_FLOOR` can be written and none was; `src/` untouched. Step 2 is a review's call on guard *shape* | smoke (probe `-n 1`) + standard (gate) |
 | `GEO-23` | The 0.11 "Invalid boundary mesh (overlapping facets)" family: one owner for the three `OPS-26` census reds (coil+phantom generator, `birdcage_port_domain` partition test, and the **rank-dependent** `test_boundary_condition_selection.py` deadlock) plus the dead `test_cylindrical_domain.py` module — classify each as geometry-deterministic or partition-dependent, ladder the resolution, land no fix (commissioned 2026-08-27 03:00 review; four known-issues entries of 2026-08-27) | ⬜ | smoke (`-n 1` probes) + standard (`-n 2` ladders) |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
@@ -3915,7 +3915,10 @@ the gate has been non-executing since the 0.11 merge. Known-issues
 >     uncommissioned.
 
 **`GEO-22` — `straight_wire_domain`: bisect the coarse-resolution floor and
-guard it** ⬜ *(commissioned 2026-08-26 18:00 review as the owner
+guard it** 🟡 *(step 1 ✅ 2026-08-28 as a **measured negative** — the floor
+is non-monotone on both geometries and deterministically so, so no threshold
+exists and no guard was written; the chunk stays 🟡 pending a review ruling on
+guard **shape**, not value. Commissioned 2026-08-26 18:00 review as the owner
 `EX-30` leg (root) left unassigned. The floor is localised — `h = 0.010`
 aborts in gmsh with duplicated facets for every geometry tried, `0.008`
 meshes at 21 830 cells — but the threshold is unbisected and no guard
@@ -3956,6 +3959,43 @@ exists; known-issues entry of 2026-08-25, re-headed 08-26.)*
 >   (a rung between two meshing rungs fails) is a finding — record the
 >   ladder, land no guard, known-issues + this entry, stop. On green the
 >   known-issues entry retires.
+>   * **Step 1 ✅ 2026-08-28 (07:30 implementer slot) — executed in full and
+>     the answer is a measured negative: the floor is NON-MONOTONE on both
+>     geometries, so no threshold exists and no guard was written.** The
+>     probe gained a leg C sweeping `[0.008, 0.010]` on a uniform **2.5e-4**
+>     grid (nine rungs, both geometries, `-n 1`) rather than bisecting —
+>     same cost as three bisection steps and the only form that can *see*
+>     non-monotonicity. Example geometry: OK at 0.00800 / 0.00825 / 0.00850
+>     / 0.00900 / 0.00950, **FAIL** at 0.00875 / 0.00925 / 0.00975 / 0.01000.
+>     Gate geometry: OK at 0.00800 / 0.00825 / 0.00850 / 0.00925 / 0.00950 /
+>     0.00975, **FAIL** at 0.00875 / 0.00900 / 0.01000. `h = 0.00875` fails
+>     on both while coarser rungs mesh, which falsifies the "everything from
+>     0.008 down works" reading this project has carried since 2026-08-25 —
+>     that was an artefact of the old ladder sampling only 0.010 and 0.008.
+>     §7's pre-registered stop condition therefore fired: **no
+>     `RESOLUTION_FLOOR`, no `ValueError` guard, `src/` untouched.**
+>     **Anchor (§4):** 18 rungs × 2 independent runs reproduce
+>     **bit-identically** — same OK/FAIL in all 18 cells, same cell count to
+>     the digit (`20260828T123115Z_GEO-22-step1-bisect.log` 23 s /
+>     `20260828T123205Z_GEO-22-step1-bisect-repeat.log` 22 s, both
+>     `Status 0`, smoke), so the pattern is a deterministic function of
+>     (geometry, resolution) and not gmsh run-to-run noise. **Control, free
+>     and passed:** the example's own 0.008 rung reads **21 830 cells** in
+>     both runs — the `EX-30`/`mag:1` record to the digit. Two further
+>     findings: the cell count is non-monotone in `h` as well (gate 6 768 at
+>     0.00950 → **12 200** at the coarser 0.00975, a 1.80× jump), and every
+>     rung in the band — meshing ones included — falls back
+>     `Frontal-Delaunay` → `MeshAdapt` on the wire surface after "N triangles
+>     are equivalent", which localises the mechanism to the wire-surface mesh
+>     without diagnosing it (out of scope). **Not run, deliberately:**
+>     `mag:1` and the straight-wire ladders were controls *for a guard*; no
+>     guard landed and no `src/` line changed, so they control nothing.
+>     Known-issues re-headed with the full table and a restated retire-when
+>     (the old "measured-threshold guard" condition is now unreachable).
+>     **Step 2 is a review's call** on guard *shape*, not guard value: a
+>     post-mesh validity check, an explicit size field on the wire cylinder
+>     instead of a global `resolution`, or a documented allowlist of verified
+>     rungs.
 
 **`GEO-23` — the 0.11 "overlapping facets" family: classify, ladder, own** ⬜
 *(commissioned 2026-08-27 03:00 review. `OPS-26` step 2 leg (a) filed the
@@ -7283,7 +7323,18 @@ uses the Edit tool and verifies `git status --porcelain`.
    **Negative result:** a red imported band through the example path is
    an example/test divergence — known-issues + §7, nothing re-recorded,
    stop.
-3. **`GEO-22` — bisect the `straight_wire_domain` coarse-resolution floor
+3. **✅ DONE 2026-08-28 07:30 slot, as a negative result** — the bisection
+   ran in full and found the floor **non-monotone on both geometries**
+   (`h = 0.00875` fails while the coarser 0.00900 / 0.00925 / 0.00950 /
+   0.00975 mesh), reproducing **bit-identically** across two runs
+   (`20260828T123115Z_GEO-22-step1-bisect.log` 23 s,
+   `…T123205Z_…-repeat.log` 22 s, both Status 0). §7's stop condition fired:
+   **no guard written, `src/` untouched**, the example's 0.008 rung
+   reproduced at 21 830 cells as a free control. Known-issues re-headed;
+   `GEO-22` 🟡 with **step 2 owed a review ruling on guard shape** (post-mesh
+   validity check / explicit wire size field / verified-rung allowlist) —
+   a guard *value* is now known to be impossible. Original item text below.
+   **`GEO-22` — bisect the `straight_wire_domain` coarse-resolution floor
    and land a measured guard (smoke probe `-n 1` + standard gate `-n 2`,
    real, `main`; independent).** Execute the §7 `GEO-22` entry as
    written. In brief: bisect `[0.008, 0.010)` to 2.5e-4 on the example's
