@@ -243,6 +243,18 @@ unless fixing it is the task.
 
 ### 🔴 OPEN 2026-08-27, re-headed 2026-08-28 (`GEO-23` step 1) — a **fifth** site of "Invalid boundary mesh (overlapping facets)" — ~~and the **second** confirmed rank-dependent one~~ **NOT rank-dependent: it fails at `-n 1` too, and the "PASSES on one rank" reading was a log-interleave artifact**
 
+> **DEADLOCK HALF CLOSED 2026-08-28 (`GEO-23` step 2a, 12:00 slot).** The
+> `-n 2` command no longer hangs: `coil_phantom_domain`'s rank-0 gmsh build is
+> now wrapped, so rank 1 raises
+> `RuntimeError: coil_phantom_domain geometry generation failed on rank 0
+> (resolution=0.03); this is rank 1` instead of blocking in `_model_to_mesh`.
+> **Status 1 in 2 s** where step 1 recorded **Status 124 at 120 s**, summary
+> unchanged at `1 failed, 3 passed`
+> (`20260828T170347Z_GEO-23-step2a-phantommaterial-n2.log`; `-n 1` control
+> unchanged, `20260828T170340Z_…-n1.log`). **The entry stays OPEN for the
+> geometry red itself** — the sizing lever (`GEO-23` step 2b) is what retires
+> it; only the cost of observing it changed.
+>
 > **CORRECTED 2026-08-28 by measurement (`GEO-23` step 1, 09:00 slot).** This
 > entry's "PASSED on one rank, FAILED on the other" claim does not survive an
 > `-n 1` run. At `-n 1` the test is **Status 1 in 2 s** with the same
@@ -274,6 +286,17 @@ unless fixing it is the task.
 
 ### 🔴 OPEN 2026-08-27, re-headed 2026-08-28 (`GEO-23` step 1) — `test_boundary_condition_selection.py` **deadlocks the whole command** at `-n 2` — ~~the "overlapping facets" gmsh abort is **rank-dependent**, one rank raises while the other returns~~ **the abort is geometry-deterministic (red at `-n 1`); only the deadlock is rank-dependent**
 
+> **DEADLOCK HALF CLOSED 2026-08-28 (`GEO-23` step 2a, 12:00 slot) — the
+> headline "deadlocks the whole command at `-n 2`" no longer holds.**
+> `cylindrical_domain`'s rank-0 gmsh build is now wrapped, so rank 1 raises
+> `RuntimeError: cylindrical_domain geometry generation failed on rank 0
+> (resolution=0.04); this is rank 1` instead of blocking in `_model_to_mesh`.
+> **Status 1 in 2 s** where step 1 recorded **Status 124 at 120 s**, summary
+> unchanged at `1 failed, 2 passed, 1 skipped`
+> (`20260828T170311Z_GEO-23-step2a-bcsel-n2.log`; `-n 1` control unchanged,
+> `20260828T170303Z_…-n1.log`). **The entry stays OPEN for the geometry red
+> itself** — `GEO-23` step 2b's sizing move is what retires it.
+>
 > **CORRECTED 2026-08-28 by measurement (`GEO-23` step 1, 09:00 slot) — this
 > entry's own requested `-n 1` command has now been spent, and it resolves the
 > pre-stated reading against rank-dependence.** At `-n 1` the test is **Status
@@ -455,6 +478,17 @@ unless fixing it is the task.
 
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a)) — `test_phantom_field_metrics_and_exports_are_finite` aborts in gmsh with **the same "Invalid boundary mesh (overlapping facets)"** as the entry below, on the **coil+phantom** geometry — and its MPI teardown then **hangs the rest of the command**
 
+> **DEADLOCK HALF CLOSED 2026-08-28 (`GEO-23` step 2a, 12:00 slot).** The
+> predicted removal below is now measured: with `coil_phantom_domain`'s rank-0
+> build wrapped, rank 1 raises
+> `RuntimeError: coil_phantom_domain geometry generation failed on rank 0
+> (resolution=0.03); this is rank 1` and the `-n 2` command footers at
+> **Status 1 in 3 s** where step 1 recorded **Status 124 at 120 s**, summary
+> unchanged at `1 failed, 1 passed`
+> (`20260828T170331Z_GEO-23-step2a-phantommetrics-n2.log`; `-n 1` control
+> unchanged, `20260828T170323Z_…-n1.log`). **The entry stays OPEN for the
+> geometry red itself** — `GEO-23` step 2b's sizing move is what retires it.
+>
 > **MEASURED 2026-08-28 (`GEO-23` step 1, 09:00 slot) — geometry-deterministic,
 > with a measured floor one step away.** `-n 1` **Status 1, 3 s**
 > (`1 failed, 1 passed in 1.17s`,
@@ -1326,6 +1360,22 @@ unless fixing it is the task.
 > probe leg predicting 0 fallbacks / 18 of 18 OK. This entry retires with
 > the step-2a wrap **only if** the review then rules the wrap sufficient;
 > otherwise it stays open pointing at the size-field decision.
+>
+> **WRAP LANDED 2026-08-28 (`GEO-23` step 2a, 12:00 slot) — the adopted half is
+> done; the entry stays OPEN.** `straight_wire_domain` now carries the shared
+> `_raise_geometry_failure_on_every_rank` raise path, and the gate is
+> `tests/mesh/test_geometry_failure_is_collective.py`: the `mag:1` example
+> geometry at `h = 0.00875` raises on **every** rank (the caught flag is
+> `allreduce`d, and rank 1's message is asserted to name both the generator and
+> the resolution), `1 passed in 0.91s` at `-n 2` inside a `-k 30 60` window
+> (`20260828T170254Z_GEO-23-step2a-gate-n2.log`, Status 0, 3 s; `-n 1`
+> `20260828T170247Z_…-n1.log`). The wrap moved no mesh — `mag:1` re-reads
+> **21 830 cells** and `B(3 mm) = 6.666667e-05 T`
+> (`20260828T170414Z_GEO-23-step2a-control-mag1.log`). What is **not** done is
+> the other clause of the restated done-when: the size-field probe table (§9
+> item 5) is unrun, and no fallback line count changed, so the coincident-
+> triangle emission this entry is about is untouched. Retirement still needs a
+> review's ruling that the wrap is sufficient, or the size field.
 
 ### ✅ RETIRED 2026-08-25 by `OPS-24` — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family was **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
 

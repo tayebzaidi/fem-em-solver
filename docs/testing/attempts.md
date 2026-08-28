@@ -20070,3 +20070,109 @@ Neither is a gmsh fix; `GEO-22`'s straight-wire floor is the sibling question
 and note the contrast — **that** floor is non-monotone (2026-08-28 07:30 slot),
 these two are cleanly monotone, so "coarse-resolution floor" is not one
 mechanism across the whole `overlapping facets` family either.
+
+## 2026-08-28T17:10Z — `GEO-23` step 2a (§9 item 1, 12:00 implementer slot) — **complete**
+
+**Outcome: complete.** The raise-path lever landed on all three generators.
+Twelve compute windows, **72 s of recorded elapsed**, all twelve footered,
+nothing parked, `main` clean and green on every control.
+
+**What was done.** One shared helper,
+`_raise_geometry_failure_on_every_rank` (`src/fem_em_solver/io/mesh.py:30–61`),
+now carries the `birdcage_port_domain` pattern (`mesh.py:3266–3278`, `GEO-9`
+step 2b) for `straight_wire_domain`, `cylindrical_domain` and
+`coil_phantom_domain`: the rank-0 build body moved inside a `try`,
+`BaseException` is caught, `gmsh.finalize()` runs if initialised, the flag is
+`comm.bcast`, and every rank raises *before* the collective `_model_to_mesh` —
+the building rank re-raising the original gmsh `Exception`, the others a
+`RuntimeError` naming the generator, the building rank and the `resolution`.
+
+**Method note worth keeping — the diff is 750 lines and 76 of them are real.**
+The three rank-0 blocks are 82 / 95 / 186 lines of inline gmsh calls, so
+wrapping them is mostly a reindent, and hand-editing 363 lines of exact
+whitespace is how a silent transcription defect gets in. It was done instead
+by a throwaway container-side script (`.geo23_wrap.py`, deleted before the
+commit) that inserted the `try`/`except` and shifted the bodies by four
+columns mechanically, and the result was audited with **`git diff -w`**:
+**+76 insertions, 0 deletions**, i.e. the whitespace-insensitive diff contains
+only the helper, three `build_error` declarations, three `try:`/`except`
+pairs and three helper calls. No geometry, tolerance or sizing line moved, and
+that is checkable in one command rather than by reading 363 lines. Recommend
+this shape for any future block-wrapping edit in `io/mesh.py`.
+
+**Anchor (§4) — the three deadlocking rows of the step-1 table, `-n 2`:**
+
+| module | step 1 | step 2a | summary |
+|---|---|---|---|
+| `solver/test_boundary_condition_selection.py` | Status 124, 120 s | **Status 1, 2 s** | `1 failed, 2 passed, 1 skipped` (unchanged) |
+| `post/test_phantom_field_metrics.py` (complex) | Status 124, 120 s | **Status 1, 3 s** | `1 failed, 1 passed` (unchanged) |
+| `materials/test_phantom_material_model.py` (complex) | Status 124, 121 s | **Status 1, 2 s** | `1 failed, 3 passed` (unchanged) |
+
+≈ **50× cheaper per observation**, and rank 1's traceback in each ends in the
+wrapped type — verbatim, e.g.
+`RuntimeError: cylindrical_domain geometry generation failed on rank 0
+(resolution=0.04); this is rank 1` and the same for `coil_phantom_domain` at
+`resolution=0.03`. Step 1's reading is confirmed end to end: **the deadlock
+was a raise-path property, nothing about the geometry changed.**
+
+**`GEO-22`'s gate.** New module `tests/mesh/test_geometry_failure_is_collective.py`:
+the `mag:1` straight-wire geometry (L = 0.3, r = 0.003, R = 0.04) at
+`h = 0.00875`, a rung `GEO-22` step 1 measured as FAIL bit-reproducibly. The
+assertion is the **`allreduce`d** caught flag against `comm.size` — a rank
+that sailed past the throw fails the test, which single-rank `pytest.raises`
+could not see — plus rank 1's message naming the generator and the resolution.
+`1 passed in 0.91s` at `-n 2` (Status 0, 3 s) and `0.96s` at `-n 1`. The
+docstring says explicitly that this asserts a *raise path* and not a floor,
+because step 1's finding is that the failing set is non-monotone in `h`.
+
+**Negative controls, all green, all unmoved.**
+- The same three modules at `-n 1`: Status 1 at 2–3 s, the same
+  `Invalid boundary mesh (overlapping facets) on surface 1 surface 1` string,
+  the same summaries as step 1's `-n 1` column — the wrap did not change
+  single-rank behaviour.
+- `mag:1` (`./scripts/run_examples.sh -e 1 -n 2 -t 300`): **21 830 cells** and
+  `B(3 mm) = 6.666667e-05 T`, both to the digit, Status 0 in 6 s.
+- `tests/mesh/test_cylindrical_domain.py` `1 passed in 1.27s` at its unmoved
+  0.02, the 1e-9 partition identity.
+- `tests/mesh/test_coil_phantom_mesh.py` `3 passed in 5.32s` at `-n 2` — **not
+  in the rubric, added deliberately**: the rubric's controls exercise
+  `coil_phantom_domain` only on its *failing* path, so without this one the
+  wrap's success path on that generator would have been unmeasured.
+- `GEO-21` control `tests/mesh/test_birdcage_conductor_sizing.py`
+  `1 passed in 36.76s` at `-n 2`, inside its 38–43 s record, bands unmoved.
+
+FFCx 0-byte stub sweep before the first complex window: **clean, zero stubs**.
+No exit 124 anywhere in the slot, so no re-sweep was owed (finding 27).
+
+**Logs** (all `docs/testing/logs/`, all with footers):
+`20260828T170247Z_GEO-23-step2a-gate-n1` (0/2 s),
+`…170254Z_…gate-n2` (0/3),
+`…170303Z_…bcsel-n1` (1/2), `…170311Z_…bcsel-n2` (1/2),
+`…170323Z_…phantommetrics-n1` (1/3), `…170331Z_…phantommetrics-n2` (1/3),
+`…170340Z_…phantommaterial-n1` (1/2), `…170347Z_…phantommaterial-n2` (1/2),
+`…170414Z_…control-mag1` (0/6), `…170435Z_…control-cyl-n2` (0/3),
+`…170443Z_…control-geo21` (0/38), `…170537Z_…control-coilphantom-n2` (0/6).
+
+**Scope held.** No resolution moved, no band, no record, no `src/` change
+beyond the wrap, nothing in `tests/` but the new gate. The three census reds
+**stay red** — they are geometry reds and `GEO-23` step 2b's to retire — but
+they now footer in seconds instead of burning a 120 s window each. The three
+known-issues entries are re-headed with the deadlock half closed and stay OPEN
+for the geometry red.
+
+**`GEO-22` does not close on this, and the §9 item's parenthetical
+overstated it.** Its restated done-when has two clauses — the wrap plus gate
+(met, above) *and* "this probe's table recorded either way", i.e. the
+size-field probe that is §9 item 5 and was not run in this slot. `GEO-22`
+therefore stays 🟡 on exactly one unrun measurement; a review that wants it
+closed should either run item 5 or rule the second clause discharged, but a
+slot cannot rule that for itself.
+
+**Hypothesis for the next attempt (step 2b, §9 item 2).** Its windows can now
+be sized at `-k 30 60` rather than the item's contingency `-k 30 120`: with
+2a landed, a call site that still fails to mesh at the new sizing footers in
+2–3 s instead of hanging, so the whole "if item 1 has not landed" clause of
+item 2 is discharged and the sizing move is observable at smoke cost. The
+substantive risk in 2b is unchanged and is the physics half, not the meshing
+half — three call sites move to a coarser mesh (1 213 / 5 464 cells), and a
+physics assertion that goes red there is the finding to report, not re-bound.

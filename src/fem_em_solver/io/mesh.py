@@ -26,6 +26,40 @@ def _model_to_mesh(model, comm, rank, **kwargs):
     data = dolfinx_gmsh.model_to_mesh(model, comm, rank, **kwargs)
     return data.mesh, data.cell_tags, data.facet_tags
 
+
+def _raise_geometry_failure_on_every_rank(
+    comm: MPI.Intracomm,
+    rank: int,
+    generator: str,
+    build_error: Optional[BaseException],
+    resolution: Optional[float] = None,
+) -> None:
+    """`GEO-23` step 2a: turn a rank-local gmsh throw into a collective raise.
+
+    Only the building rank runs the gmsh model construction, so a throw there
+    (``Invalid boundary mesh (overlapping facets)`` is this project's recurring
+    one) leaves every other rank blocked forever inside the collective
+    ``_model_to_mesh``: the command dies on the harness timeout instead of
+    reporting the geometry failure.  Step 1 measured the price — the three
+    unwrapped sites cost Status 124 at 120–121 s each where the already-wrapped
+    ``birdcage_port_domain`` footers at Status 1 in 5 s.
+
+    The pattern (originally ``birdcage_port_domain``, `GEO-9` step 2b): catch
+    ``BaseException`` on the building rank, ``gmsh.finalize()`` so the failure
+    does not poison later ``occ`` calls in the same process (known-issues 7),
+    then ``bcast`` the flag and re-raise on *every* rank before the collective.
+    The building rank re-raises the original exception; the others raise a
+    ``RuntimeError`` naming the generator, the building rank and the
+    ``resolution`` that failed.
+    """
+    if comm.bcast(build_error is not None, root=rank):
+        if build_error is not None:
+            raise build_error
+        raise RuntimeError(
+            f"{generator} geometry generation failed on rank {rank} "
+            f"(resolution={resolution!r}); this is rank {comm.rank}"
+        )
+
 #: `GEO-13`: ``cylindrical_domain``'s surface-classification tolerance, as a
 #: fraction of the radial gap ``outer_radius - inner_radius``.  Set from
 #: `20260807T033127Z_GEO-13-probe.log`; see the sizing note at its use site.
@@ -220,89 +254,103 @@ class MeshGenerator:
         facet_tags : dolfinx.mesh.MeshTags
             Facet tags for boundaries
         """
+        build_error: Optional[BaseException] = None
         if comm.rank == rank:
-            # Initialize Gmsh
-            gmsh.initialize()
-            gmsh.model.add("straight_wire")
+            try:
+                # Initialize Gmsh
+                gmsh.initialize()
+                gmsh.model.add("straight_wire")
             
-            # Create wire (cylinder along z-axis)
-            wire_tag = gmsh.model.occ.addCylinder(
-                0, 0, -wire_length/2,  # center of bottom face
-                0, 0, wire_length,      # axis direction and height
-                wire_radius
-            )
+                # Create wire (cylinder along z-axis)
+                wire_tag = gmsh.model.occ.addCylinder(
+                    0, 0, -wire_length/2,  # center of bottom face
+                    0, 0, wire_length,      # axis direction and height
+                    wire_radius
+                )
             
-            # Create surrounding domain (hollow cylinder)
-            domain_tag = gmsh.model.occ.addCylinder(
-                0, 0, -wire_length/2,
-                0, 0, wire_length,
-                domain_radius
-            )
+                # Create surrounding domain (hollow cylinder)
+                domain_tag = gmsh.model.occ.addCylinder(
+                    0, 0, -wire_length/2,
+                    0, 0, wire_length,
+                    domain_radius
+                )
             
-            # Cut wire out of domain to create separate volumes
-            # Actually, we want both as separate volumes, so we fragment
-            ov, ovv = gmsh.model.occ.fragment(
-                [(3, domain_tag)],
-                [(3, wire_tag)]
-            )
-            gmsh.model.occ.synchronize()
+                # Cut wire out of domain to create separate volumes
+                # Actually, we want both as separate volumes, so we fragment
+                ov, ovv = gmsh.model.occ.fragment(
+                    [(3, domain_tag)],
+                    [(3, wire_tag)]
+                )
+                gmsh.model.occ.synchronize()
             
-            # Get volumes
-            volumes = gmsh.model.getEntities(dim=3)
-            wire_volume = None
-            domain_volume = None
+                # Get volumes
+                volumes = gmsh.model.getEntities(dim=3)
+                wire_volume = None
+                domain_volume = None
             
-            # Tag volumes based on their bounding box
-            for vol in volumes:
-                bbox = gmsh.model.getBoundingBox(vol[0], vol[1])
-                # Check if this is the wire (small radius)
-                x_min, y_min, z_min, x_max, y_max, z_max = bbox
-                r_max = np.sqrt(max(x_max**2, y_max**2))
-                if r_max < 2 * wire_radius:
-                    wire_volume = vol[1]
-                else:
-                    domain_volume = vol[1]
+                # Tag volumes based on their bounding box
+                for vol in volumes:
+                    bbox = gmsh.model.getBoundingBox(vol[0], vol[1])
+                    # Check if this is the wire (small radius)
+                    x_min, y_min, z_min, x_max, y_max, z_max = bbox
+                    r_max = np.sqrt(max(x_max**2, y_max**2))
+                    if r_max < 2 * wire_radius:
+                        wire_volume = vol[1]
+                    else:
+                        domain_volume = vol[1]
             
-            # Add physical groups
-            if wire_volume:
-                gmsh.model.addPhysicalGroup(3, [wire_volume], tag=1)
-                gmsh.model.setPhysicalName(3, 1, "wire")
+                # Add physical groups
+                if wire_volume:
+                    gmsh.model.addPhysicalGroup(3, [wire_volume], tag=1)
+                    gmsh.model.setPhysicalName(3, 1, "wire")
             
-            if domain_volume:
-                gmsh.model.addPhysicalGroup(3, [domain_volume], tag=2)
-                gmsh.model.setPhysicalName(3, 2, "domain")
+                if domain_volume:
+                    gmsh.model.addPhysicalGroup(3, [domain_volume], tag=2)
+                    gmsh.model.setPhysicalName(3, 2, "domain")
             
-            # Tag boundaries
-            surfaces = gmsh.model.getEntities(dim=2)
-            boundary_surfaces = []
-            wire_surfaces = []
+                # Tag boundaries
+                surfaces = gmsh.model.getEntities(dim=2)
+                boundary_surfaces = []
+                wire_surfaces = []
             
-            for surf in surfaces:
-                bbox = gmsh.model.getBoundingBox(surf[0], surf[1])
-                x_min, y_min, z_min, x_max, y_max, z_max = bbox
-                r_max = np.sqrt(max(x_max**2, y_max**2))
+                for surf in surfaces:
+                    bbox = gmsh.model.getBoundingBox(surf[0], surf[1])
+                    x_min, y_min, z_min, x_max, y_max, z_max = bbox
+                    r_max = np.sqrt(max(x_max**2, y_max**2))
                 
-                # Cylindrical boundary of domain
-                if abs(r_max - domain_radius) < resolution:
-                    boundary_surfaces.append(surf[1])
-                # Wire surface
-                elif r_max < 2 * wire_radius:
-                    wire_surfaces.append(surf[1])
+                    # Cylindrical boundary of domain
+                    if abs(r_max - domain_radius) < resolution:
+                        boundary_surfaces.append(surf[1])
+                    # Wire surface
+                    elif r_max < 2 * wire_radius:
+                        wire_surfaces.append(surf[1])
             
-            if boundary_surfaces:
-                gmsh.model.addPhysicalGroup(2, boundary_surfaces, tag=1)
-                gmsh.model.setPhysicalName(2, 1, "boundary")
+                if boundary_surfaces:
+                    gmsh.model.addPhysicalGroup(2, boundary_surfaces, tag=1)
+                    gmsh.model.setPhysicalName(2, 1, "boundary")
             
-            if wire_surfaces:
-                gmsh.model.addPhysicalGroup(2, wire_surfaces, tag=2)
-                gmsh.model.setPhysicalName(2, 2, "wire_surface")
+                if wire_surfaces:
+                    gmsh.model.addPhysicalGroup(2, wire_surfaces, tag=2)
+                    gmsh.model.setPhysicalName(2, 2, "wire_surface")
             
-            # Set mesh size
-            gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
+                # Set mesh size
+                gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
             
-            # Generate mesh
-            gmsh.model.mesh.generate(3)
-            gmsh.model.mesh.optimize("Netgen")
+                # Generate mesh
+                gmsh.model.mesh.generate(3)
+                gmsh.model.mesh.optimize("Netgen")
+            except BaseException as exc:  # noqa: BLE001 - re-raised on every rank
+                build_error = exc
+                if gmsh.isInitialized():
+                    gmsh.finalize()
+
+        # Collective: every rank learns whether the geometry exists before
+        # any of them enters the collective `_model_to_mesh` below (GEO-23
+        # step 2a; the unwrapped throw deadlocked at 120 s instead of
+        # failing in seconds).
+        _raise_geometry_failure_on_every_rank(
+            comm, rank, 'straight_wire_domain', build_error, resolution
+        )
 
         # Convert to dolfinx mesh
         mesh, cell_tags, facet_tags = _model_to_mesh(
@@ -708,102 +756,116 @@ class MeshGenerator:
         facet_tags : dolfinx.mesh.MeshTags
             Facet tags for boundaries
         """
+        build_error: Optional[BaseException] = None
         if comm.rank == rank:
-            # Initialize Gmsh
-            gmsh.initialize()
-            gmsh.model.add("cylindrical_domain")
+            try:
+                # Initialize Gmsh
+                gmsh.initialize()
+                gmsh.model.add("cylindrical_domain")
             
-            # Create inner cylinder along z-axis
-            inner_tag = gmsh.model.occ.addCylinder(
-                0, 0, -length/2,  # center of bottom face
-                0, 0, length,      # axis direction and height
-                inner_radius
-            )
+                # Create inner cylinder along z-axis
+                inner_tag = gmsh.model.occ.addCylinder(
+                    0, 0, -length/2,  # center of bottom face
+                    0, 0, length,      # axis direction and height
+                    inner_radius
+                )
             
-            # Create outer cylinder
-            outer_tag = gmsh.model.occ.addCylinder(
-                0, 0, -length/2,
-                0, 0, length,
-                outer_radius
-            )
+                # Create outer cylinder
+                outer_tag = gmsh.model.occ.addCylinder(
+                    0, 0, -length/2,
+                    0, 0, length,
+                    outer_radius
+                )
             
-            # Fragment to create separate volumes (inner and outer region)
-            ov, ovv = gmsh.model.occ.fragment(
-                [(3, outer_tag)],
-                [(3, inner_tag)]
-            )
-            gmsh.model.occ.synchronize()
+                # Fragment to create separate volumes (inner and outer region)
+                ov, ovv = gmsh.model.occ.fragment(
+                    [(3, outer_tag)],
+                    [(3, inner_tag)]
+                )
+                gmsh.model.occ.synchronize()
             
-            # Get volumes and tag them
-            volumes = gmsh.model.getEntities(dim=3)
-            inner_volume = None
-            outer_volume = None
+                # Get volumes and tag them
+                volumes = gmsh.model.getEntities(dim=3)
+                inner_volume = None
+                outer_volume = None
             
-            for vol in volumes:
-                bbox = gmsh.model.getBoundingBox(vol[0], vol[1])
-                x_min, y_min, z_min, x_max, y_max, z_max = bbox
+                for vol in volumes:
+                    bbox = gmsh.model.getBoundingBox(vol[0], vol[1])
+                    x_min, y_min, z_min, x_max, y_max, z_max = bbox
                 
-                # Check if this is the inner cylinder by radius
-                r_max = np.sqrt(max(x_max**2, y_max**2))
-                if r_max < (inner_radius + outer_radius) / 2:
-                    inner_volume = vol[1]
-                else:
-                    outer_volume = vol[1]
+                    # Check if this is the inner cylinder by radius
+                    r_max = np.sqrt(max(x_max**2, y_max**2))
+                    if r_max < (inner_radius + outer_radius) / 2:
+                        inner_volume = vol[1]
+                    else:
+                        outer_volume = vol[1]
             
-            # Add physical groups
-            if inner_volume:
-                gmsh.model.addPhysicalGroup(3, [inner_volume], tag=1)
-                gmsh.model.setPhysicalName(3, 1, "inner")
+                # Add physical groups
+                if inner_volume:
+                    gmsh.model.addPhysicalGroup(3, [inner_volume], tag=1)
+                    gmsh.model.setPhysicalName(3, 1, "inner")
             
-            if outer_volume:
-                gmsh.model.addPhysicalGroup(3, [outer_volume], tag=2)
-                gmsh.model.setPhysicalName(3, 2, "outer")
+                if outer_volume:
+                    gmsh.model.addPhysicalGroup(3, [outer_volume], tag=2)
+                    gmsh.model.setPhysicalName(3, 2, "outer")
             
-            # Tag boundaries
-            surfaces = gmsh.model.getEntities(dim=2)
-            outer_boundary_surfaces = []
-            inner_boundary_surfaces = []
+                # Tag boundaries
+                surfaces = gmsh.model.getEntities(dim=2)
+                outer_boundary_surfaces = []
+                inner_boundary_surfaces = []
             
-            # `GEO-13`: the classification tolerance is a fraction of the radial
-            # gap, never `resolution` — a tolerance keyed to mesh size makes the
-            # margin geometry-over-mesh-size, and at `resolution >= 0.09` (the
-            # gap itself) the inner cylinder was swept into `outer_boundary`
-            # (known-issues 13, 6 of 6 surfaces accepted;
-            # `20260807T033127Z_GEO-13-probe.log`).  0.01 sits in the middle of
-            # the measured window [1e-4, 0.05] where both sides of the `GEO-11`
-            # two-sided margin hold on every geometry this generator is called
-            # with: worst accepted 1.1e-4 x tol (ceiling 0.1, the gmsh OCC
-            # bounding-box padding is 1.000e-07) and nearest rejected 1.0e+02 x
-            # tol (floor 10).  Precondition: the gap must exceed ~1e-4 m, or the
-            # tolerance stops clearing that padding by 10x.
-            tol = _WALL_TOL_FRACTION * (outer_radius - inner_radius)
+                # `GEO-13`: the classification tolerance is a fraction of the radial
+                # gap, never `resolution` — a tolerance keyed to mesh size makes the
+                # margin geometry-over-mesh-size, and at `resolution >= 0.09` (the
+                # gap itself) the inner cylinder was swept into `outer_boundary`
+                # (known-issues 13, 6 of 6 surfaces accepted;
+                # `20260807T033127Z_GEO-13-probe.log`).  0.01 sits in the middle of
+                # the measured window [1e-4, 0.05] where both sides of the `GEO-11`
+                # two-sided margin hold on every geometry this generator is called
+                # with: worst accepted 1.1e-4 x tol (ceiling 0.1, the gmsh OCC
+                # bounding-box padding is 1.000e-07) and nearest rejected 1.0e+02 x
+                # tol (floor 10).  Precondition: the gap must exceed ~1e-4 m, or the
+                # tolerance stops clearing that padding by 10x.
+                tol = _WALL_TOL_FRACTION * (outer_radius - inner_radius)
 
-            for surf in surfaces:
-                bbox = gmsh.model.getBoundingBox(surf[0], surf[1])
-                x_min, y_min, z_min, x_max, y_max, z_max = bbox
-                r_max = np.sqrt(max(x_max**2, y_max**2))
+                for surf in surfaces:
+                    bbox = gmsh.model.getBoundingBox(surf[0], surf[1])
+                    x_min, y_min, z_min, x_max, y_max, z_max = bbox
+                    r_max = np.sqrt(max(x_max**2, y_max**2))
 
-                # Outer cylindrical boundary
-                if abs(r_max - outer_radius) < tol:
-                    outer_boundary_surfaces.append(surf[1])
-                # Inner cylinder surface
-                elif abs(r_max - inner_radius) < tol:
-                    inner_boundary_surfaces.append(surf[1])
+                    # Outer cylindrical boundary
+                    if abs(r_max - outer_radius) < tol:
+                        outer_boundary_surfaces.append(surf[1])
+                    # Inner cylinder surface
+                    elif abs(r_max - inner_radius) < tol:
+                        inner_boundary_surfaces.append(surf[1])
             
-            if outer_boundary_surfaces:
-                gmsh.model.addPhysicalGroup(2, outer_boundary_surfaces, tag=1)
-                gmsh.model.setPhysicalName(2, 1, "outer_boundary")
+                if outer_boundary_surfaces:
+                    gmsh.model.addPhysicalGroup(2, outer_boundary_surfaces, tag=1)
+                    gmsh.model.setPhysicalName(2, 1, "outer_boundary")
             
-            if inner_boundary_surfaces:
-                gmsh.model.addPhysicalGroup(2, inner_boundary_surfaces, tag=2)
-                gmsh.model.setPhysicalName(2, 2, "inner_boundary")
+                if inner_boundary_surfaces:
+                    gmsh.model.addPhysicalGroup(2, inner_boundary_surfaces, tag=2)
+                    gmsh.model.setPhysicalName(2, 2, "inner_boundary")
             
-            # Set mesh size
-            gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
+                # Set mesh size
+                gmsh.model.mesh.setSize(gmsh.model.getEntities(0), resolution)
             
-            # Generate mesh
-            gmsh.model.mesh.generate(3)
-            gmsh.model.mesh.optimize("Netgen")
+                # Generate mesh
+                gmsh.model.mesh.generate(3)
+                gmsh.model.mesh.optimize("Netgen")
+            except BaseException as exc:  # noqa: BLE001 - re-raised on every rank
+                build_error = exc
+                if gmsh.isInitialized():
+                    gmsh.finalize()
+
+        # Collective: every rank learns whether the geometry exists before
+        # any of them enters the collective `_model_to_mesh` below (GEO-23
+        # step 2a; the unwrapped throw deadlocked at 120 s instead of
+        # failing in seconds).
+        _raise_geometry_failure_on_every_rank(
+            comm, rank, 'cylindrical_domain', build_error, resolution
+        )
             
         # Convert to dolfinx mesh
         mesh, cell_tags, facet_tags = _model_to_mesh(
@@ -2452,193 +2514,207 @@ class MeshGenerator:
             region_resolutions=region_resolutions,
         )
 
+        build_error: Optional[BaseException] = None
         if comm.rank == rank:
-            gmsh.initialize()
-            gmsh.model.add("coil_phantom_domain")
+            try:
+                gmsh.initialize()
+                gmsh.model.add("coil_phantom_domain")
 
-            z_offset = coil_separation / 2
-            coil_1 = gmsh.model.occ.addTorus(0, 0, -z_offset, coil_major_radius, coil_minor_radius)
-            coil_2 = gmsh.model.occ.addTorus(0, 0, z_offset, coil_major_radius, coil_minor_radius)
-            phantom = gmsh.model.occ.addCylinder(
-                phantom_cx,
-                phantom_cy,
-                -phantom_height / 2,
-                0,
-                0,
-                phantom_height,
-                phantom_radius,
-            )
-
-            radial_extent = sizing["radial_extent_without_padding_m"]
-            z_extent = sizing["z_extent_without_padding_m"]
-            air = gmsh.model.occ.addBox(
-                -(radial_extent + effective_air_padding),
-                -(radial_extent + effective_air_padding),
-                -(z_extent + effective_air_padding),
-                2 * (radial_extent + effective_air_padding),
-                2 * (radial_extent + effective_air_padding),
-                2 * (z_extent + effective_air_padding),
-            )
-
-            gmsh.model.occ.fragment(
-                [(3, air)],
-                [(3, coil_1), (3, coil_2), (3, phantom)],
-            )
-            gmsh.model.occ.synchronize()
-
-            volumes = gmsh.model.getEntities(dim=3)
-            masses = {tag: gmsh.model.occ.getMass(3, tag) for _, tag in volumes}
-
-            # GEO-9 step 1: the group re-derivation below assumes fragment
-            # returned exactly four volumes (air + two coils + phantom). An
-            # extra piece (an overlap split off) would silently receive no
-            # physical group and surface far downstream as a dolfinx gmshio
-            # `assert len(entity_types) == 1`; a merged pair would raise
-            # IndexError on the phantom_tag line. Fail here instead, with the
-            # count and the masses that identify which happened.
-            if len(volumes) != 4:
-                raise RuntimeError(
-                    "coil_phantom_domain: occ.fragment returned "
-                    f"{len(volumes)} volumes, expected exactly 4 "
-                    "(air + coil_1 + coil_2 + phantom); per-volume masses [m^3]: "
-                    + ", ".join(f"tag {tag}: {mass:.6e}" for tag, mass in sorted(masses.items()))
+                z_offset = coil_separation / 2
+                coil_1 = gmsh.model.occ.addTorus(0, 0, -z_offset, coil_major_radius, coil_minor_radius)
+                coil_2 = gmsh.model.occ.addTorus(0, 0, z_offset, coil_major_radius, coil_minor_radius)
+                phantom = gmsh.model.occ.addCylinder(
+                    phantom_cx,
+                    phantom_cy,
+                    -phantom_height / 2,
+                    0,
+                    0,
+                    phantom_height,
+                    phantom_radius,
                 )
 
-            air_tag = max(masses, key=masses.get)
-
-            remaining = [tag for _, tag in volumes if tag != air_tag]
-            z_centers = {
-                tag: gmsh.model.occ.getCenterOfMass(3, tag)[2]
-                for tag in remaining
-            }
-
-            coil_1_tag = min(remaining, key=lambda tag: z_centers[tag])
-            coil_2_tag = max(remaining, key=lambda tag: z_centers[tag])
-            phantom_tag = [tag for tag in remaining if tag not in (coil_1_tag, coil_2_tag)][0]
-
-            gmsh.model.addPhysicalGroup(3, [coil_1_tag], tag=1)
-            gmsh.model.setPhysicalName(3, 1, "coil_1")
-            gmsh.model.addPhysicalGroup(3, [coil_2_tag], tag=2)
-            gmsh.model.setPhysicalName(3, 2, "coil_2")
-            gmsh.model.addPhysicalGroup(3, [phantom_tag], tag=3)
-            gmsh.model.setPhysicalName(3, 3, "phantom")
-            gmsh.model.addPhysicalGroup(3, [air_tag], tag=4)
-            gmsh.model.setPhysicalName(3, 4, "air")
-
-            # Every 3-D entity must carry a marker; a cell with none is exactly
-            # what gmshio asserts on. Checked against the model, not against the
-            # four tags we just wrote, so a renumbering by fragment cannot hide.
-            grouped_volumes = set()
-            for _, group_tag in gmsh.model.getPhysicalGroups(dim=3):
-                grouped_volumes.update(gmsh.model.getEntitiesForPhysicalGroup(3, group_tag))
-            ungrouped = sorted({tag for _, tag in volumes} - grouped_volumes)
-            if ungrouped:
-                raise RuntimeError(
-                    "coil_phantom_domain: 3-D entities carry no physical group: "
-                    f"{ungrouped}; masses [m^3]: "
-                    + ", ".join(f"tag {tag}: {masses[tag]:.6e}" for tag in ungrouped)
+                radial_extent = sizing["radial_extent_without_padding_m"]
+                z_extent = sizing["z_extent_without_padding_m"]
+                air = gmsh.model.occ.addBox(
+                    -(radial_extent + effective_air_padding),
+                    -(radial_extent + effective_air_padding),
+                    -(z_extent + effective_air_padding),
+                    2 * (radial_extent + effective_air_padding),
+                    2 * (radial_extent + effective_air_padding),
+                    2 * (z_extent + effective_air_padding),
                 )
 
-            print(
-                f"[coil-phantom-mesh] fragment volumes={len(volumes)} masses[m^3]: "
-                + ", ".join(f"{tag}:{mass:.6e}" for tag, mass in sorted(masses.items()))
-                + f" | air={air_tag} coil_1={coil_1_tag} coil_2={coil_2_tag} phantom={phantom_tag}",
-                flush=True,
-            )
+                gmsh.model.occ.fragment(
+                    [(3, air)],
+                    [(3, coil_1), (3, coil_2), (3, phantom)],
+                )
+                gmsh.model.occ.synchronize()
 
-            outer_boundary_surfaces = []
-            box_half_x = radial_extent + effective_air_padding
-            box_half_z = z_extent + effective_air_padding
-            for dim, surf in gmsh.model.getEntities(dim=2):
-                x_min, y_min, z_min, x_max, y_max, z_max = gmsh.model.getBoundingBox(dim, surf)
-                if (
-                    abs(abs(x_min) - box_half_x) < resolution or abs(abs(x_max) - box_half_x) < resolution
-                    or abs(abs(y_min) - box_half_x) < resolution or abs(abs(y_max) - box_half_x) < resolution
-                    or abs(abs(z_min) - box_half_z) < resolution or abs(abs(z_max) - box_half_z) < resolution
-                ):
-                    outer_boundary_surfaces.append(surf)
+                volumes = gmsh.model.getEntities(dim=3)
+                masses = {tag: gmsh.model.occ.getMass(3, tag) for _, tag in volumes}
 
-            if outer_boundary_surfaces:
-                gmsh.model.addPhysicalGroup(2, outer_boundary_surfaces, tag=1)
-                gmsh.model.setPhysicalName(2, 1, "outer_boundary")
-
-            # GEO-17 step 1 (2026-08-20): the region sizes are carried by gmsh
-            # size *fields*, composed with `Min`, not by `mesh.setSize` on CAD
-            # points. The point path this replaces was inert: it walked
-            # volume -> surfaces -> curves -> points with
-            # `gmsh.model.getBoundary`'s default `combined=True`, and the
-            # boundary of the *combined* closed shell of a volume is empty, so
-            # every region collected zero points and `setSize` was never called
-            # at all (measured `20260820T110127Z_GEO-17-step1-diag.log`: "air:
-            # 0 pts -> NO SIZE SET" for all four regions, both sizings). Mesh
-            # size then came only from the CharacteristicLength clamps, so
-            # asking for a finer coil (0.012) while any region asked for a
-            # coarser one (air 0.020) meshed the coil at the 0.020 ceiling and
-            # LOST 22% of its volume — known-issues "Four defects" §1. With a
-            # `Min` over per-volume Constant fields, a region's request bounds
-            # the size on its own boundary, so a shared curved interface takes
-            # the finer of the two neighbours rather than whatever the clamps
-            # allow.
-            region_size_requests = (
-                ("air", air_tag, region_h["air_resolution_m"]),
-                ("coil_1", coil_1_tag, region_h["coil_resolution_m"]),
-                ("coil_2", coil_2_tag, region_h["coil_resolution_m"]),
-                ("phantom", phantom_tag, region_h["phantom_resolution_m"]),
-            )
-
-            region_field_ids = []
-            for _, volume_tag, size_value in region_size_requests:
-                field_id = gmsh.model.mesh.field.add("Constant")
-                gmsh.model.mesh.field.setNumbers(field_id, "VolumesList", [volume_tag])
-                gmsh.model.mesh.field.setNumber(field_id, "IncludeBoundary", 1)
-                gmsh.model.mesh.field.setNumber(field_id, "VIn", size_value)
-                # Outside its own volume a region must not constrain anything;
-                # `Min` then reduces to the other fields there.
-                gmsh.model.mesh.field.setNumber(field_id, "VOut", 1.0e22)
-                region_field_ids.append(field_id)
-
-            size_field = gmsh.model.mesh.field.add("Min")
-            gmsh.model.mesh.field.setNumbers(size_field, "FieldsList", region_field_ids)
-            gmsh.model.mesh.field.setAsBackgroundMesh(size_field)
-
-            # gmsh's own sizing heuristics stay at their defaults on purpose.
-            # Measured both ways (`20260820T110302Z_GEO-17-step1-fieldfix.log`
-            # with MeshSizeExtendFromBoundary/FromPoints/FromCurvature forced to
-            # 0, `20260820T110407Z_GEO-17-step1-probe-defaults.log` with them
-            # left alone): forcing them off moves the *uniform* mesh's tagged
-            # volumes (coil_1 1.191750413e-04 -> 1.154535949e-04 m^3, -3.12%),
-            # while at the defaults the uniform table reproduces exactly and the
-            # policy mesh gains more coil volume (+10.72% vs +13.21% off a
-            # 3% lower base: 1.319468693e-04 vs 1.307098011e-04 m^3). With no
-            # point sizes set anywhere, the boundary-extension heuristic has
-            # nothing of its own to extend and does not compete with the field.
-
-            gmsh.option.setNumber("Mesh.CharacteristicLengthMin", region_h["min_resolution_m"])
-            gmsh.option.setNumber("Mesh.CharacteristicLengthMax", region_h["max_resolution_m"])
-
-            print(
-                "[coil-phantom-mesh] sizing ownership: "
-                + ", ".join(
-                    f"{name}: field {field_id} on volume {volume_tag} -> {size_value:.6e} m"
-                    for (name, volume_tag, size_value), field_id in zip(
-                        region_size_requests, region_field_ids
+                # GEO-9 step 1: the group re-derivation below assumes fragment
+                # returned exactly four volumes (air + two coils + phantom). An
+                # extra piece (an overlap split off) would silently receive no
+                # physical group and surface far downstream as a dolfinx gmshio
+                # `assert len(entity_types) == 1`; a merged pair would raise
+                # IndexError on the phantom_tag line. Fail here instead, with the
+                # count and the masses that identify which happened.
+                if len(volumes) != 4:
+                    raise RuntimeError(
+                        "coil_phantom_domain: occ.fragment returned "
+                        f"{len(volumes)} volumes, expected exactly 4 "
+                        "(air + coil_1 + coil_2 + phantom); per-volume masses [m^3]: "
+                        + ", ".join(f"tag {tag}: {mass:.6e}" for tag, mass in sorted(masses.items()))
                     )
+
+                air_tag = max(masses, key=masses.get)
+
+                remaining = [tag for _, tag in volumes if tag != air_tag]
+                z_centers = {
+                    tag: gmsh.model.occ.getCenterOfMass(3, tag)[2]
+                    for tag in remaining
+                }
+
+                coil_1_tag = min(remaining, key=lambda tag: z_centers[tag])
+                coil_2_tag = max(remaining, key=lambda tag: z_centers[tag])
+                phantom_tag = [tag for tag in remaining if tag not in (coil_1_tag, coil_2_tag)][0]
+
+                gmsh.model.addPhysicalGroup(3, [coil_1_tag], tag=1)
+                gmsh.model.setPhysicalName(3, 1, "coil_1")
+                gmsh.model.addPhysicalGroup(3, [coil_2_tag], tag=2)
+                gmsh.model.setPhysicalName(3, 2, "coil_2")
+                gmsh.model.addPhysicalGroup(3, [phantom_tag], tag=3)
+                gmsh.model.setPhysicalName(3, 3, "phantom")
+                gmsh.model.addPhysicalGroup(3, [air_tag], tag=4)
+                gmsh.model.setPhysicalName(3, 4, "air")
+
+                # Every 3-D entity must carry a marker; a cell with none is exactly
+                # what gmshio asserts on. Checked against the model, not against the
+                # four tags we just wrote, so a renumbering by fragment cannot hide.
+                grouped_volumes = set()
+                for _, group_tag in gmsh.model.getPhysicalGroups(dim=3):
+                    grouped_volumes.update(gmsh.model.getEntitiesForPhysicalGroup(3, group_tag))
+                ungrouped = sorted({tag for _, tag in volumes} - grouped_volumes)
+                if ungrouped:
+                    raise RuntimeError(
+                        "coil_phantom_domain: 3-D entities carry no physical group: "
+                        f"{ungrouped}; masses [m^3]: "
+                        + ", ".join(f"tag {tag}: {masses[tag]:.6e}" for tag in ungrouped)
+                    )
+
+                print(
+                    f"[coil-phantom-mesh] fragment volumes={len(volumes)} masses[m^3]: "
+                    + ", ".join(f"{tag}:{mass:.6e}" for tag, mass in sorted(masses.items()))
+                    + f" | air={air_tag} coil_1={coil_1_tag} coil_2={coil_2_tag} phantom={phantom_tag}",
+                    flush=True,
                 )
-                + f" | Min field {size_field}"
-                + f" | clamps min={region_h['min_resolution_m']:.6e} "
-                f"max={region_h['max_resolution_m']:.6e} m",
-                flush=True,
-            )
 
-            print(
-                "[coil-phantom-mesh] region resolution policy: "
-                f"coil={region_h['coil_resolution_m']:.6e} m, "
-                f"phantom={region_h['phantom_resolution_m']:.6e} m, "
-                f"air={region_h['air_resolution_m']:.6e} m"
-            )
+                outer_boundary_surfaces = []
+                box_half_x = radial_extent + effective_air_padding
+                box_half_z = z_extent + effective_air_padding
+                for dim, surf in gmsh.model.getEntities(dim=2):
+                    x_min, y_min, z_min, x_max, y_max, z_max = gmsh.model.getBoundingBox(dim, surf)
+                    if (
+                        abs(abs(x_min) - box_half_x) < resolution or abs(abs(x_max) - box_half_x) < resolution
+                        or abs(abs(y_min) - box_half_x) < resolution or abs(abs(y_max) - box_half_x) < resolution
+                        or abs(abs(z_min) - box_half_z) < resolution or abs(abs(z_max) - box_half_z) < resolution
+                    ):
+                        outer_boundary_surfaces.append(surf)
 
-            gmsh.model.mesh.generate(3)
-            gmsh.model.mesh.optimize("Netgen")
+                if outer_boundary_surfaces:
+                    gmsh.model.addPhysicalGroup(2, outer_boundary_surfaces, tag=1)
+                    gmsh.model.setPhysicalName(2, 1, "outer_boundary")
+
+                # GEO-17 step 1 (2026-08-20): the region sizes are carried by gmsh
+                # size *fields*, composed with `Min`, not by `mesh.setSize` on CAD
+                # points. The point path this replaces was inert: it walked
+                # volume -> surfaces -> curves -> points with
+                # `gmsh.model.getBoundary`'s default `combined=True`, and the
+                # boundary of the *combined* closed shell of a volume is empty, so
+                # every region collected zero points and `setSize` was never called
+                # at all (measured `20260820T110127Z_GEO-17-step1-diag.log`: "air:
+                # 0 pts -> NO SIZE SET" for all four regions, both sizings). Mesh
+                # size then came only from the CharacteristicLength clamps, so
+                # asking for a finer coil (0.012) while any region asked for a
+                # coarser one (air 0.020) meshed the coil at the 0.020 ceiling and
+                # LOST 22% of its volume — known-issues "Four defects" §1. With a
+                # `Min` over per-volume Constant fields, a region's request bounds
+                # the size on its own boundary, so a shared curved interface takes
+                # the finer of the two neighbours rather than whatever the clamps
+                # allow.
+                region_size_requests = (
+                    ("air", air_tag, region_h["air_resolution_m"]),
+                    ("coil_1", coil_1_tag, region_h["coil_resolution_m"]),
+                    ("coil_2", coil_2_tag, region_h["coil_resolution_m"]),
+                    ("phantom", phantom_tag, region_h["phantom_resolution_m"]),
+                )
+
+                region_field_ids = []
+                for _, volume_tag, size_value in region_size_requests:
+                    field_id = gmsh.model.mesh.field.add("Constant")
+                    gmsh.model.mesh.field.setNumbers(field_id, "VolumesList", [volume_tag])
+                    gmsh.model.mesh.field.setNumber(field_id, "IncludeBoundary", 1)
+                    gmsh.model.mesh.field.setNumber(field_id, "VIn", size_value)
+                    # Outside its own volume a region must not constrain anything;
+                    # `Min` then reduces to the other fields there.
+                    gmsh.model.mesh.field.setNumber(field_id, "VOut", 1.0e22)
+                    region_field_ids.append(field_id)
+
+                size_field = gmsh.model.mesh.field.add("Min")
+                gmsh.model.mesh.field.setNumbers(size_field, "FieldsList", region_field_ids)
+                gmsh.model.mesh.field.setAsBackgroundMesh(size_field)
+
+                # gmsh's own sizing heuristics stay at their defaults on purpose.
+                # Measured both ways (`20260820T110302Z_GEO-17-step1-fieldfix.log`
+                # with MeshSizeExtendFromBoundary/FromPoints/FromCurvature forced to
+                # 0, `20260820T110407Z_GEO-17-step1-probe-defaults.log` with them
+                # left alone): forcing them off moves the *uniform* mesh's tagged
+                # volumes (coil_1 1.191750413e-04 -> 1.154535949e-04 m^3, -3.12%),
+                # while at the defaults the uniform table reproduces exactly and the
+                # policy mesh gains more coil volume (+10.72% vs +13.21% off a
+                # 3% lower base: 1.319468693e-04 vs 1.307098011e-04 m^3). With no
+                # point sizes set anywhere, the boundary-extension heuristic has
+                # nothing of its own to extend and does not compete with the field.
+
+                gmsh.option.setNumber("Mesh.CharacteristicLengthMin", region_h["min_resolution_m"])
+                gmsh.option.setNumber("Mesh.CharacteristicLengthMax", region_h["max_resolution_m"])
+
+                print(
+                    "[coil-phantom-mesh] sizing ownership: "
+                    + ", ".join(
+                        f"{name}: field {field_id} on volume {volume_tag} -> {size_value:.6e} m"
+                        for (name, volume_tag, size_value), field_id in zip(
+                            region_size_requests, region_field_ids
+                        )
+                    )
+                    + f" | Min field {size_field}"
+                    + f" | clamps min={region_h['min_resolution_m']:.6e} "
+                    f"max={region_h['max_resolution_m']:.6e} m",
+                    flush=True,
+                )
+
+                print(
+                    "[coil-phantom-mesh] region resolution policy: "
+                    f"coil={region_h['coil_resolution_m']:.6e} m, "
+                    f"phantom={region_h['phantom_resolution_m']:.6e} m, "
+                    f"air={region_h['air_resolution_m']:.6e} m"
+                )
+
+                gmsh.model.mesh.generate(3)
+                gmsh.model.mesh.optimize("Netgen")
+            except BaseException as exc:  # noqa: BLE001 - re-raised on every rank
+                build_error = exc
+                if gmsh.isInitialized():
+                    gmsh.finalize()
+
+        # Collective: every rank learns whether the geometry exists before
+        # any of them enters the collective `_model_to_mesh` below (GEO-23
+        # step 2a; the unwrapped throw deadlocked at 120 s instead of
+        # failing in seconds).
+        _raise_geometry_failure_on_every_rank(
+            comm, rank, 'coil_phantom_domain', build_error, resolution
+        )
 
         mesh, cell_tags, facet_tags = _model_to_mesh(
             gmsh.model, comm, rank, gdim=3
