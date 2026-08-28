@@ -19,13 +19,23 @@ from tests.complex_mode import complex_only
 
 
 def _make_problem(boundary_condition: TimeHarmonicBoundaryCondition | str) -> TimeHarmonicProblem:
+    # GEO-23 step 2b (2026-08-28): 0.04 does not mesh on dolfinx 0.11 — gmsh
+    # throws "Invalid boundary mesh (overlapping facets)".  Step 1's -n 1
+    # ladder on this generator is monotone and its coarsest meshing rung is
+    # 0.032 (1 213 cells); the finer rungs are 0.0256 (1 769) / 0.02048
+    # (2 478) / 0.016384 (3 834).  Moved to the coarsest meshing rung.
     mesh, cell_tags, facet_tags = MeshGenerator.cylindrical_domain(
         inner_radius=0.01,
         outer_radius=0.08,
         length=0.12,
-        resolution=0.04,
+        resolution=0.032,
         comm=MPI.COMM_WORLD,
     )
+    _ncells = MPI.COMM_WORLD.allreduce(
+        mesh.topology.index_map(mesh.topology.dim).size_local, op=MPI.SUM
+    )
+    if MPI.COMM_WORLD.rank == 0:
+        print(f"GEO-23 step 2b: cylindrical_domain(resolution=0.032) -> {_ncells} cells")
     return TimeHarmonicProblem(
         mesh=mesh,
         frequency_hz=127.74e6,

@@ -25,6 +25,11 @@ def test_phantom_field_metrics_and_exports_are_finite():
     """Compute phantom |E|/|B| stats and verify phantom-only exports are written."""
     comm = MPI.COMM_WORLD
 
+    # GEO-23 step 2b (2026-08-28): 0.03 does not mesh on dolfinx 0.11 — gmsh
+    # throws "Invalid boundary mesh (overlapping facets)".  Step 1's -n 1
+    # ladder on this generator is monotone and its coarsest meshing rung is
+    # 0.024 (5 464 cells); the finer rungs are 0.0192 (9 330) / 0.01536
+    # (16 177) / 0.012288 (28 485).  Moved to the coarsest meshing rung.
     mesh, cell_tags, facet_tags = MeshGenerator.coil_phantom_domain(
         coil_major_radius=0.07,
         coil_minor_radius=0.010,
@@ -32,9 +37,14 @@ def test_phantom_field_metrics_and_exports_are_finite():
         phantom_radius=0.03,
         phantom_height=0.08,
         air_padding=0.04,
-        resolution=0.03,
+        resolution=0.024,
         comm=comm,
     )
+    _ncells = comm.allreduce(
+        mesh.topology.index_map(mesh.topology.dim).size_local, op=MPI.SUM
+    )
+    if comm.rank == 0:
+        print(f"GEO-23 step 2b: coil_phantom_domain(resolution=0.024) -> {_ncells} cells")
 
     background = HomogeneousMaterial(sigma=0.0, epsilon_r=1.0, mu_r=1.0)
     phantom = GelledSalinePhantomMaterial(

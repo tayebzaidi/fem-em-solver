@@ -20176,3 +20176,94 @@ item 2 is discharged and the sizing move is observable at smoke cost. The
 substantive risk in 2b is unchanged and is the physics half, not the meshing
 half — three call sites move to a coarser mesh (1 213 / 5 464 cells), and a
 physics assertion that goes red there is the finding to report, not re-bound.
+
+---
+
+## 2026-08-28T18:35Z — `GEO-23` step 2b (13:30 implementer slot) — **complete**
+
+**Outcome: complete. Step 2b ✅ ⇒ `GEO-23` ✅.** Eight footered windows, **40 s**
+recorded elapsed, `src/` untouched, no band / tolerance / record moved. §9
+item 2, executed as written.
+
+**What was tried.** The three call sites moved to step 1's coarsest *measured*
+meshing rung, each with that ladder in-comment and one `allreduce`d global
+cell-count `print` added so the anchor is observable:
+
+| site | was | now | ladder rung |
+|---|---|---|---|
+| `tests/solver/test_boundary_condition_selection.py:26` | 0.04 | **0.032** | 1 213 cells |
+| `tests/materials/test_phantom_material_model.py:110` | 0.03 | **0.024** | 5 464 cells |
+| `tests/post/test_phantom_field_metrics.py:35` | 0.03 | **0.024** | 5 464 cells |
+
+Each module run `-n 1` first (the item's trap), then `-n 2`. All six green:
+
+| module | build | `-n 1` | `-n 2` | census red was |
+|---|---|---|---|---|
+| bcsel | real | `3 passed, 1 skipped in 0.94s` | `3 passed, 1 skipped in 0.80s` | `1 failed, 2 passed, 1 skipped` |
+| phantom_material | complex | `4 passed in 2.66s` | `4 passed in 1.63s` | `1 failed, 3 passed` |
+| phantom_metrics | complex | `2 passed in 1.71s` | `2 passed in 1.67s` | `1 failed, 1 passed` |
+
+The rubric's "one may stay skipped" is the bcsel module's `complex_only` name,
+skipped in the real build exactly as before.
+
+**Measured numbers — the anchor is exact, not merely inside band.** The printed
+global count is **1213** on every `cylindrical_domain(0.032)` run and **5464**
+on every `coil_phantom_domain(0.024)` run — six independent processes, both
+rank widths — reproducing step 1's in-process ladder readings 1 213 / 5 464 to
+the digit, i.e. **0.00%** against the pre-stated ±1%. Two consequences worth
+banking beyond this chunk: the sizing is **bit-reproducible run-to-run**, and
+it is **rank-width independent**, which is a fresh-process confirmation of step
+1's finding that the ladder was measuring geometry and not gmsh state.
+
+**The step's pre-stated negative result did not occur.** Step 1 had verified
+that none of the three modules pins a cell count, so the only assertions at
+risk under the re-mesh were physics ones; all pass. No site was reverted and
+nothing was re-bounded. Modest but real: boundary-condition selection, phantom
+material-field assignment + time-harmonic wiring, and phantom |E|/|B| metrics
+and exports are all insensitive to a 0.8-step of resolution on these fixtures.
+
+**Negative controls.** `tests/mesh/test_cylindrical_domain.py` at its **unmoved**
+0.02 is `1 passed in 1.29s` at `-n 2` on the 1e-9 partition identity, matching
+step 2a's 1.27 s — confirming three *test* call sites moved and no generator.
+Complex `tests/environment` `11 passed in 20.12s` ahead of the four complex
+windows, so the complex greens are not real-build skips in disguise. FFCx
+0-byte stub sweep clean before window 1; no exit 124 in the slot, so no
+re-sweep owed (finding 27).
+
+**Logs** (all `docs/testing/logs/`, all footered, Status/elapsed):
+`20260828T183106Z_GEO-23-step2b-bcsel-n1` (0/2 s),
+`…183116Z_…bcsel-n2` (0/2), `…183137Z_…env-complex` (0/21),
+`…183204Z_…phantommaterial-n1` (0/4), `…183214Z_…phantommaterial-n2` (0/3),
+`…183223Z_…phantommetrics-n1` (0/3), `…183231Z_…phantommetrics-n2` (0/3),
+`…183242Z_…control-cyldomain` (0/2).
+
+**Scope held.** `git diff --stat` on code is three test files, +36 lines,
+nothing under `src/`. The three geometry known-issues entries are **RETIRED**
+in this commit — both halves closed, 2a's deadlock and 2b's geometry.
+
+**Sizing note confirming the last entry's hypothesis.** Every `-n 2` window was
+budgeted at `-k 30 60`/`-k 30 180` and returned in 2–3 s; with 2a landed there
+is no residual deadlock risk in this family, so the previous entry's claim that
+item 2's "if item 1 has not landed" contingency was discharged is now measured
+rather than predicted.
+
+**Residual for the daily review — flagged, not absorbed.** `GEO-23` was
+commissioned over **four** sites and the fourth,
+`test_birdcage_volumes_partition_the_box` on `birdcage_port_domain`, is **still
+red**. Step 1 never laddered it and neither step-2 lever reaches it: its
+coarse-resolution floor is already `GEO-21`'s open known-issues entry and its
+fixture is `GEO-20`'s working front, so a sizing move here would duplicate one
+chunk's measurement and pre-empt another's. I flipped `GEO-23` to ✅ on its
+stated done-when (classify / ladder / own, plus both commissioned levers) and
+recorded the residual explicitly in the §7 entry and §9 item rather than
+quietly counting it. **The review should rule whether that red is re-homed to
+`GEO-21` or reopened as a `GEO-23` step 3** — a slot should not re-home another
+chunk's defect for itself.
+
+**Hypothesis for the next attempt.** None owed by this chunk. The repo's
+"overlapping facets" family is now down to two open sites, both on
+`birdcage_port_domain` (`GEO-21`'s floor entry, `GEO-20`'s fixture), and both
+differ from the three retired here in a way worth stating: those three were
+*consumer call sites* choosing a sizing the generator could not mesh, fixed by
+moving the consumer; the birdcage two are the *generator itself* failing across
+a continuum of sizings, which no call-site move can fix.

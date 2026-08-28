@@ -241,7 +241,22 @@ unless fixing it is the task.
 | **Verified at** | `b39799e`, real build, `-n 2`. |
 | **Fix** | **Deliberately not fixed** — `OPS-26` is a census and files rather than repairs, per the item's own rule. The repair is one line (give `_DummyComm` an `allgather` returning `[value]`), but it belongs with a `PORT-0`/`PORT-1` owner who can also dispose of entry 3's assertions on the same module, and it needs a decision this census may not take: whether the deprecated placeholder route is kept runnable at all. |
 
-### 🔴 OPEN 2026-08-27, re-headed 2026-08-28 (`GEO-23` step 1) — a **fifth** site of "Invalid boundary mesh (overlapping facets)" — ~~and the **second** confirmed rank-dependent one~~ **NOT rank-dependent: it fails at `-n 1` too, and the "PASSES on one rank" reading was a log-interleave artifact**
+### ✅ RETIRED 2026-08-28 (`GEO-23` step 2b, 13:30 implementer slot) — ~~🔴 OPEN 2026-08-27, re-headed 2026-08-28 (`GEO-23` step 1) — a **fifth** site of "Invalid boundary mesh (overlapping facets)"~~ — **`tests/materials/test_phantom_material_model.py:110` moved from `resolution=0.03` (does not mesh) to step 1's coarsest meshing rung `0.024`; the module is `4 passed` at `-n 1` and `-n 2` complex, `5464` cells to the digit**
+
+> **GEOMETRY HALF CLOSED 2026-08-28 (`GEO-23` step 2b, 13:30 slot) — the
+> sizing lever.** The call site is the only thing that moved: `0.03 → 0.024`,
+> the coarsest rung step 1's monotone `-n 1` ladder measured as meshing on
+> `coil_phantom_domain` (5 464 cells; the finer rungs are 0.0192 / 0.01536 /
+> 0.012288). Nothing in `src/` and no band, tolerance or record was touched —
+> the module pins no cell count, so the assertions that had to survive the
+> re-mesh are its physics ones, and they all pass. Complex build,
+> `FEM_EM_REQUIRE_COMPLEX=1`: `4 passed in 2.66s` at `-n 1`
+> (`20260828T183204Z_GEO-23-step2b-phantommaterial-n1.log`, Status 0, 4 s) and
+> `4 passed in 1.63s` at `-n 2`
+> (`20260828T183214Z_GEO-23-step2b-phantommaterial-n2.log`, Status 0, 3 s),
+> against the census red's `1 failed, 3 passed`. The printed global cell count
+> is **5464 at both widths**, reproducing the step-1 ladder's 5 464 exactly
+> (0.00% against the ±1% band). Both halves of this entry are now closed.
 
 > **DEADLOCK HALF CLOSED 2026-08-28 (`GEO-23` step 2a, 12:00 slot).** The
 > `-n 2` command no longer hangs: `coil_phantom_domain`'s rank-0 gmsh build is
@@ -284,7 +299,22 @@ unless fixing it is the task.
 | **Verified at** | `b39799e`, complex build, `-n 2`. |
 | **Fix** | Not fixed, not diagnosed further — `OPS-26` files, `GEO-23` owns. |
 
-### 🔴 OPEN 2026-08-27, re-headed 2026-08-28 (`GEO-23` step 1) — `test_boundary_condition_selection.py` **deadlocks the whole command** at `-n 2` — ~~the "overlapping facets" gmsh abort is **rank-dependent**, one rank raises while the other returns~~ **the abort is geometry-deterministic (red at `-n 1`); only the deadlock is rank-dependent**
+### ✅ RETIRED 2026-08-28 (`GEO-23` step 2b, 13:30 implementer slot) — ~~🔴 OPEN 2026-08-27 — `test_boundary_condition_selection.py` **deadlocks the whole command** at `-n 2`~~ — **`tests/solver/test_boundary_condition_selection.py:26` moved from `resolution=0.04` (does not mesh) to step 1's coarsest meshing rung `0.032`; the module is `3 passed, 1 skipped` at `-n 1` and `-n 2`, `1213` cells to the digit**
+
+> **GEOMETRY HALF CLOSED 2026-08-28 (`GEO-23` step 2b, 13:30 slot) — the
+> sizing lever.** `_make_problem`'s `cylindrical_domain` call moved
+> `0.04 → 0.032`, the coarsest rung step 1's monotone `-n 1` ladder measured
+> as meshing (1 213 cells; the finer rungs are 0.0256 / 0.02048 / 0.016384).
+> Nothing in `src/`, no band and no record: the module pins no cell count, so
+> the assertions that had to survive the re-mesh are the boundary-condition
+> physics ones, and they all pass. Real build: `3 passed, 1 skipped in 0.94s`
+> at `-n 1` (`20260828T183106Z_GEO-23-step2b-bcsel-n1.log`, Status 0, 2 s) and
+> `3 passed, 1 skipped in 0.80s` at `-n 2`
+> (`20260828T183116Z_GEO-23-step2b-bcsel-n2.log`, Status 0, 2 s), against the
+> census red's `1 failed, 2 passed, 1 skipped`; the one skip is the
+> `complex_only` name, unchanged. Printed global cell count **1213 at both
+> widths**, reproducing the step-1 ladder exactly (0.00% against ±1%). Both
+> halves of this entry are now closed.
 
 > **DEADLOCK HALF CLOSED 2026-08-28 (`GEO-23` step 2a, 12:00 slot) — the
 > headline "deadlocks the whole command at `-n 2`" no longer holds.**
@@ -476,7 +506,23 @@ unless fixing it is the task.
 > Disposition belongs to a `mesh`-owning chunk, which should take all three
 > entries together rather than one at a time.
 
-### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a)) — `test_phantom_field_metrics_and_exports_are_finite` aborts in gmsh with **the same "Invalid boundary mesh (overlapping facets)"** as the entry below, on the **coil+phantom** geometry — and its MPI teardown then **hangs the rest of the command**
+### ✅ RETIRED 2026-08-28 (`GEO-23` step 2b, 13:30 implementer slot) — ~~🔴 OPEN 2026-08-27 — `test_phantom_field_metrics_and_exports_are_finite` aborts in gmsh with "Invalid boundary mesh (overlapping facets)" on the **coil+phantom** geometry~~ — **`tests/post/test_phantom_field_metrics.py:35` moved from `resolution=0.03` (does not mesh) to step 1's coarsest meshing rung `0.024`; the module is `2 passed` at `-n 1` and `-n 2` complex, `5464` cells to the digit**
+
+> **GEOMETRY HALF CLOSED 2026-08-28 (`GEO-23` step 2b, 13:30 slot) — the
+> sizing lever.** Same generator and same rung as the
+> `test_phantom_material_model.py` entry above (step 1 found the two modules
+> call `coil_phantom_domain` with byte-identical kwargs, so the unit of repair
+> is the generator call): `0.03 → 0.024`, 5 464 cells. Nothing in `src/`, no
+> band, no record; the module pins no cell count, so the assertions that had
+> to survive the re-mesh are its phantom |E|/|B| metric and export ones, and
+> they all pass. Complex build, `FEM_EM_REQUIRE_COMPLEX=1`:
+> `2 passed in 1.71s` at `-n 1`
+> (`20260828T183223Z_GEO-23-step2b-phantommetrics-n1.log`, Status 0, 3 s) and
+> `2 passed in 1.67s` at `-n 2`
+> (`20260828T183231Z_GEO-23-step2b-phantommetrics-n2.log`, Status 0, 3 s),
+> against the census red's `1 failed, 1 passed`. Printed global cell count
+> **5464 at both widths**, reproducing the step-1 ladder exactly (0.00%
+> against ±1%). Both halves of this entry are now closed.
 
 > **DEADLOCK HALF CLOSED 2026-08-28 (`GEO-23` step 2a, 12:00 slot).** The
 > predicted removal below is now measured: with `coil_phantom_domain`'s rank-0
