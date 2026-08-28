@@ -1312,6 +1312,20 @@ unless fixing it is the task.
 > shape* — a post-mesh validity check, or a documented allowlist of verified
 > rungs — and a review rules that shape sufficient. **Owning chunk:**
 > `GEO-22`, step 1 done as a measured negative, step 2 a review's call.
+>
+> **RULED 2026-08-28, 10:30 review — guard shape.** The allowlist is
+> **rejected** (nine rungs on two geometries is a sample, not a truth). The
+> post-mesh wrap is **adopted** and lands as part of `GEO-23` step 2a (§9
+> item 1): `straight_wire_domain` gets the `birdcage_port_domain` raise path
+> (catch on the building rank, `bcast`, raise on every rank) so a failing
+> rung footers in seconds at `-n 2` instead of deadlocking, with a gate at
+> `h = 0.00875` asserting the raise on every rank. The size field (branch
+> (a) above) is the only candidate that could *fix* the fallback and would
+> move `mag:1`'s 21 830 and the three ladder records — its *licence* is the
+> 2026-08-30 weekly review's; its *measurement* is §9 item 5, a no-`src/`
+> probe leg predicting 0 fallbacks / 18 of 18 OK. This entry retires with
+> the step-2a wrap **only if** the review then rules the wrap sufficient;
+> otherwise it stays open pointing at the size-field decision.
 
 ### ✅ RETIRED 2026-08-25 by `OPS-24` — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family was **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
 
@@ -4465,6 +4479,15 @@ The tests are **not on `main`**: they are parked on
 | **Cause** | **Not diagnosed.** Hypothesis with the signature attached: `_interface_facet_tags` matches a facet by the cell tags of its two adjacent **owned** cells, so a port whose `PORT_LOWER+i` and `PORT_UPPER+i` half-regions land on different ranks contributes no facet on either — which is exactly the 0-facet / partial-facet pattern. Discriminator that costs no `src/` change: re-run at `-n 4` / `-n 8` and see whether the broken port *set* moves with the rank count. |
 | **Consequence** | `GEO-20` stays **🟡**; step 2 landed **no band and no record**. The 16-leg ring cost rung (110 786 → 265 621 cells, 2.3976×; mesh 23.30 → 72.23 s, 3.1003×) is measured and is safe to cite — it is a cell count and a wall time, not a reconstruction reading. Nothing licenses reading the 32-port fixture's sheets, or building a port model on it, until this is disposed. `GEO-19`'s 16-leg fixture passing at `-n 2` is luck of the partition, not immunity. |
 | **Resolves with** | `GEO-20` step 2 attempt 2: confirm or refute the partition reading at `-n 4`/`-n 8` first. If confirmed, the fix is in `_interface_facet_tags` (ghost-layer-aware matching), which is `src/` work touching every module that reconstructs a sheet and could move existing records — a **review's ruling**, not an in-slot fix. |
+
+> **RULED 2026-08-28, 10:30 review — `GEO-20` step 2a queued (§9 item 3):**
+> the `-n 4`/`-n 8` discriminator with a per-port print of which rank owns
+> each `PORT_LOWER+i`/`PORT_UPPER+i` cell set, no `src/` change; the
+> hypothesis predicts a *moving* broken-port set and exact agreement between
+> "half-boxes on different ranks" and "sheet broken" across 32 × 3 ports. The
+> `_interface_facet_tags` fix is withheld until a review holds that table.
+> The attempt branch is kept as the fixture. Entry retires with the fix
+> commit, whichever chunk lands it.
 
 ## Recording a new entry
 
