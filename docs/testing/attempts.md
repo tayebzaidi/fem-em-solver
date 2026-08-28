@@ -19625,3 +19625,98 @@ adds a second instance of the same shape: `MAG-20`'s probe cost 49 s to answer
 a question that had been open for two reviews, and both the `MAG-19` and
 `MAG-20` probes are now unrun-by-default files. Cheap probes that carry a
 chunk's evidence are worth a scheduled command as much as cheap tests are.
+
+## 2026-08-28T09:50Z — `GEO-20` step 2 (§9 item 1, 04:30 implementer slot) — **incomplete (negative result: a measured, partition-dependent sheet-reconstruction defect at 32 ring ports)**
+
+**Outcome.** The 32-port ring-gap fixture at 16 legs **builds, and 29 of its 32
+ring ports are exact** — but the module is **green at `-n 1` and red at `-n 2`
+on the identical geometry**, so no band landed. Parked on
+`attempt/GEO-20-step2-20260828T094500Z`. `GEO-20` stays 🟡. Two commands,
+275 s + 198 s = **473 s**, both footered, both inside their `-k 30 580`
+windows; no exit 124, no kill, no shrink, no denied command.
+
+**What was built.** `tests/mesh/test_birdcage_ring_gaps_scaleup.py` (parked),
+one test, exactly the §9 item's scope: `birdcage_port_domain(leg_count=16,
+ring_gap_length=RING_GAP_LENGTH, emit_port_sheets=True)`, every constant and
+band imported (`EXACT`, `SYMMETRY`, `TERMINAL_AREA_BAND`, `CAD_MASS_GATE`,
+`CELL_COUNT_BAND`, `RING_GAP_CELL_RECORD`, `RING_TERMINAL_RATIO`,
+`CONTROL_CELL_COUNT_BAND`, and the ruled `TERMINAL_INTRA_CLASS_BAND` /
+`TERMINAL_INTER_CLASS_CEILING`), nothing restated. Both negative controls the
+item named, in the same run.
+
+**The measurements. Logs `20260828T093352Z_GEO-20-step2-probe1.log` (`-n 1`,
+`1 passed` / 275 s, Status 0) and `20260828T093839Z_GEO-20-step2-record.log`
+(`-n 2 -s`, `1 failed` / 198 s, Status 1).**
+
+1. **The `-n 1` probe passed every gate**, including the C32 sheet spread and
+   the per-class terminal reading. It carries no numbers — pytest captured
+   stdout on a passing test and the probe was run without `-s`. *Method note
+   for the next attempt: this module's evidence lives in `print`, so `-s` is
+   not optional on either width.*
+2. **`-n 2`, the same geometry, three of 32 sheets are wrong.** P30 and P37
+   reconstruct **0 facets / 0.000000000000** of `w²`; P45 reconstructs **5
+   facets / 0.315302109223**. The other **29 read 1.000000000000** to the 1e-9
+   band, planar to ≤ 1.2e-17 m in their own radial frames. The C32 sheet spread
+   is therefore **2.890e-01**, and P30's boundary closure is **0.981164653445**
+   against 1e-9 — the assertion that actually fired.
+3. **Everything that does not go through the sheet is exact at both widths.**
+   All 32 port volumes read **1.000000000000** of the analytic wedge
+   `2·R·w²·tan α` = 8.008718871e-07 m³; the `GEO-9` partition and the air-box
+   closure read **1.000000000000**; the ring arcs satisfy Pappus at
+   3.134786420778e-05 / 3.134786420778e-05 = **1.000000000000**; the conductor
+   keeps **0.976465** of its CAD mass (gate 0.95); no ring port touches the
+   phantom. So the defect is confined to the **facet-set reconstruction across
+   a rank boundary**, not to the CAD, the cut, or the volume tagging.
+4. **The terminals are the surprise, and they are good news.** All 32 read
+   **0.974454791–0.974455668** of the closed form — spread **2.572e-07**, i.e.
+   the ring family shows **no** azimuth-class split at 16 legs, unlike the leg
+   terminals (`GEO-19` step C: 8.434e-04 between three classes). The per-class
+   machinery was applied from the start as the item required and would have
+   passed; so would the flat 1e-5 band it replaces. The module's
+   `EXPECTED_CLASS_COUNT` prediction (four classes at 16, one at 4) is a
+   *structural* claim about where the gap centres sit and is untested at 16
+   legs, because `_azimuth_class` raised `ValueError: cannot convert float NaN
+   to integer` on P30/P37 — a missing sheet gives `_sheet_azimuth_deg` an
+   `inf + -inf` bbox centre. **The `_report_safely` guard did its job**: the
+   raise was caught on rank 0, broadcast, and the run failed on the gate
+   instead of hanging to Status 124.
+5. **Both negative controls reproduce, digit for digit.** (i) kwarg off at 16
+   legs: **307 296** cells, ratio **1.000000** against `GEO-19` step C, C16
+   sheet spread **1.331e-15** — the recorded digit exactly; the ring opt-in is
+   opt-in. (ii) 4 legs ring-gapped on this same code path: **110 786** cells,
+   ratio **1.000000** against step 1's record, terminals 0.974454791/0.974454832,
+   C8 sheet spread **2.443e-16**, and **one** azimuth class `'aligned'` at
+   intra **4.198e-08** — the per-class reading reduces to step 1's flat gate
+   exactly, as designed.
+6. **The cost rung, measured (this is Phase 6 input regardless of the defect).**
+   4 → 16 legs ring-gapped: **110 786 → 265 621 cells (2.3976×)**, mesh
+   **23.30 → 72.23 s (3.1003×)**, rung 25.20 → 80.00 s. The item predicted
+   ~350 k cells / 95–120 s; the real figure is **24% fewer cells** and inside
+   the low end of the time band. For comparison the *leg*-gapped 16-leg build
+   is 307 296 cells / 72 s (control (i), 85.91 s rung), so the high-pass
+   fixture is **cheaper** than the low-pass one at the same count.
+
+**Reading.** This is the item's pre-authorised negative result, arrived at from
+an unexpected direction: not gmsh, and not a class structure the bands cannot
+admit, but a **rank-width dependence in the sheet facet reconstruction that
+appears only at 32 ports**. The 4-leg ring fixture (8 ports) and the 16-leg leg
+fixture (16 ports) are both green at `-n 2` in this same run, so neither the
+count alone nor the ring construction alone is sufficient — it takes both. No
+band was widened, nothing was re-recorded, and nothing landed on `main` but the
+logs and this entry.
+
+**Hypothesis for the next attempt.** The ring port solid is ~8e-7 m³ — a
+handful of cells — and 32 of them are scattered around the rings, so with two
+ranks some port's two half-regions land on **different** ranks and the facets
+between them are on neither rank's owned-cell interface, which is exactly the
+0-facet / 5-facet signature (`_interface_facet_tags` matches a facet by the
+tags of its two adjacent *owned* cells). Two cheap discriminators, in order:
+(a) re-run at `-n 4`/`-n 8` — if the broken port *set* changes with the rank
+count the partition reading is confirmed and the mechanism is located without
+touching `src/`; (b) print, per broken port, the rank ownership of the
+`PORT_LOWER+i` / `PORT_UPPER+i` cells. If confirmed, the fix is in
+`_interface_facet_tags` (include the ghost layer when matching), it is `src/`
+work touching every module that reconstructs a sheet, and the records it could
+move make it a **review's call, not an in-slot fix** — which is why nothing was
+attempted here. Note also that `GEO-19`'s 16-leg leg fixture passing at `-n 2`
+is luck of the partition, not immunity.
