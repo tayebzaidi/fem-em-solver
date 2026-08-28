@@ -3145,7 +3145,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-20` | High-pass birdcage ring-gap port layout (`ring_gap_length`, `2·leg_count` ports, the `GEO-18` pattern on the end rings) — 32-port directive item (b); step 1 at 4 legs, step 2 at 16 after `GEO-19` (commissioned 2026-08-23 weekly review) | 🟡 *(**step 1 ✅ 2026-08-24** — the 8 ring ports exist at 4 legs and every pre-stated gate is green twice in-slot: terminal **0.974455** of the closed-form `2·π·r_ring²` inside the [0.95, 1.0] inscribed band and equal across the 8 to **≈ 2e-8** (gate 1e-5; digit corrected by the 10:30 review audit — see the prose entry), closure and port-volume **1.000000000000**, sheet meshed/analytic **1.000000000000** with out-of-plane spread **5.042e-18 m**, C4 and top/bottom-mirror spreads below 1e-12, `GEO-9` partition green, conductor 0.969275 ≥ 0.95; negative controls green — kwarg off reproduces the uncut birdcage and the leg+ring mesh is a 12-port mesh with **both** identity families exact. Step 2 (16 legs, 32 ports) is serial on `GEO-19`. **Step 2 attempt 1 2026-08-28 — negative result, parked on `attempt/GEO-20-step2-20260828T094500Z`, no band landed.** The 16-leg ring-gapped fixture **builds** (265 621 cells, 48 ports = 16 leg + 32 ring) and is **green at `-n 1`** (`20260828T093352Z_GEO-20-step2-probe1.log`, `1 passed` / 275 s) but **red at `-n 2` on the identical geometry** (`20260828T093839Z_GEO-20-step2-record.log`, Status 1 / 198 s): three of the 32 ring sheets do not reconstruct — P30 and P37 at **0 facets**, P45 at **5 facets / 0.315302109223** of `w²` — against 1.000000000000 on the other 29, and P30's boundary closure reads **0.981164653445** against 1e-9. Everything not routed through a sheet is exact at both widths: 32/32 port volumes 1.000000000000 of `2·R·w²·tan α`, `GEO-9` partition and air-box closure 1.000000000000, ring arcs against Pappus 1.000000000000, conductor 0.976465 of CAD, no phantom contact. **The terminals are the finding that did land as information:** all 32 read 0.974454791–0.974455668, spread **2.572e-07**, i.e. the ring family shows **no** azimuth-class split at 16 legs where the leg family split three ways at 8.434e-04 (`GEO-19` step C) — the ruled per-class bands were applied from the start and would have passed, as would the flat 1e-5. Both negative controls reproduce digit for digit in the same run: kwarg off at 16 legs **307 296** cells / C16 sheet spread **1.331e-15** (ratio 1.000000), and the 4-leg ring rung **110 786** cells (ratio 1.000000) with **one** azimuth class at intra 4.198e-08. **Cost rung measured and citable** (a cell count and a wall time, not a reconstruction reading): 4 → 16 legs ring-gapped **110 786 → 265 621 cells (2.3976×)**, mesh **23.30 → 72.23 s (3.1003×)** — cheaper than the leg-gapped 16-leg build's 307 296 / 72.23 s. Known-issues entry opened; the rank-width dependence is **not diagnosed**, the hypothesis is `_interface_facet_tags` matching on owned cells only, and the `-n 4`/`-n 8` discriminator costs no `src/` change. A fix in `_interface_facet_tags` touches every module that reconstructs a sheet and could move existing records — **a review's ruling, not an in-slot fix**. **Cause diagnosed 2026-08-28, interactive session — and it is not in `_interface_facet_tags`:** `birdcage_port_domain` is built with **no partitioner**, i.e. `GhostMode.none`, so an interior port facet on a partition boundary has no second cell to read a tag from. The class is width-driven, not leg-count-driven — the **4-leg** 12-port rung is exact at `-n 1/2/4/8` and loses one air facet at `-n 12` (P8 closure **0.990103697427**), and the same mesh reads `1.000000000000` on all 12 with `shared_facet` plumbed. The fix and the re-record sweep are **`GEO-24`**; see the re-headed known-issues entry. **Step 2a ✅ 2026-08-28 (15:00 slot)** — the ownership table is measured on the 32-port fixture at `-n 4` and `-n 8` (Status 1 / 189 s each, no `src/` change): the broken-sheet set **moves with the width** — {P25, P29, P37, P41, P45} at 4 and {P17, P21, P26, P30, P37, P44, P48} at 8 against {P30, P37, P45} at 2, neither new set nested in the old — and is **identical to the set of ports whose two half-boxes are not owned by one rank**, symmetric difference empty both ways at both widths, 32 × 2 with no exception; the 4-leg control is 0 broken / 0 straddling at both. All 40 port volumes, both closures and Pappus stay **1.000000000000** and both cell-count controls reproduce at ratio 1.000000, so the defect is confined to facet reconstruction. Confirmed ⇒ stop per the ruling; chunk stays 🟡, the fix is `GEO-24`'s)* | standard |
 | `GEO-21` | Dispose of the red `GEO-15` graded-conductor gate on 0.11: the ungraded baseline (`conductor_resolution=None`) no longer meshes at any global resolution tried, so the whole gate is non-executing on `main` (found by `EX-30` leg (mesh); commissioned 2026-08-25 18:00 review; known-issues 2026-08-25) | ✅ **2026-08-26** *(status marker flipped by the 18:00 review audit — the prose entry and the `GEO-15` row already read ✅; history: step 1 measured 2026-08-26, blocked on a ruling — the candidate control `h_c = 3.2e-3` recovers **0.916742** of the CAD mass, which is **neither** pre-stated branch: not ≤ 0.90 "clearly below", not clearing 0.95, and **inside the module's own `CAD_MASS_GATE - 0.05` = 0.90 separation guard**, so branch (2) as named cannot produce a green gate without loosening that guard. Graded side green — 0.966977 at 98 666 cells. Coarse-ward ladder measured and handed over, nothing adopted; see the entry. **Ruled 2026-08-26 03:00 review: option (b), control = 4.8e-3** — separation 0.846150 vs 0.966977 with the 0.90 guard unmoved, demoted claim (fine-vs-coarse grading) stated; 6.4e-3 rejected for cliff adjacency. **Step 2 ✅ 2026-08-26 (04:30 slot) — landed as written and the chunk closes**: control `None` → 4.8e-3 version-tagged with the six-rung probe table in-comment, demoted claim (fine vs coarse grading) in the module docstring and the `mesh:3` guide, gate `1 passed in 41.11s` at 0.846150 / 0.916742 / 0.966977 with the 0.95 gate and the 0.90 separation guard unmoved, `mesh:3` green at separation 0.120826, docrefs `dead=0 guide=0 stale=13 exit=2` giving `meshing` 2 → 0; known-issues gate red retired, generator-continuum finding re-headed and open)* | standard |
 | `GEO-22` | `straight_wire_domain` coarse-resolution floor on 0.11: bisect the `[0.008, 0.010)` threshold and land a measured guard so a too-coarse request raises legibly instead of aborting inside gmsh (owner for the `EX-30` leg (root) finding; commissioned 2026-08-26 18:00 review; known-issues 2026-08-25, re-headed 08-26 and again 08-28) | 🟡 — **step 1 ✅ 2026-08-28 as a measured negative: there is no floor.** The 2.5e-4 sweep of `[0.008, 0.010]` reads **non-monotone on both geometries** — `h = 0.00875` fails while coarser rungs mesh — and reproduces **bit-identically** across two runs, so no `RESOLUTION_FLOOR` can be written and none was; `src/` untouched. Step 2 is a review's call on guard *shape* | smoke (probe `-n 1`) + standard (gate) |
-| `GEO-23` | The 0.11 "Invalid boundary mesh (overlapping facets)" family: one owner for the three `OPS-26` census reds (coil+phantom generator, `birdcage_port_domain` partition test, and the **rank-dependent** `test_boundary_condition_selection.py` deadlock) plus the dead `test_cylindrical_domain.py` module — classify each as geometry-deterministic or partition-dependent, ladder the resolution, land no fix (commissioned 2026-08-27 03:00 review; four known-issues entries of 2026-08-27). ***Step 1 ✅ 2026-08-28 (09:00 slot)** — all four sites are **geometry-deterministic**, red at `-n 1` (2–4 s, Status 1); the two "rank-dependent" claims are **log-interleave artifacts, withdrawn by measurement**; the `-n 2` deadlock is a **raise-path** property (row 2's wrapped re-raise footers at Status 1 in 5 s where the three unwrapped sites cost 120 s each); both laddered generators are **monotone**, each failing exactly one 0.8-step above a meshing sizing (`cylindrical_domain` 0.040 → meshes 0.032/1 213 cells; `coil_phantom_domain` 0.030 → meshes 0.024/5 464 cells); the four sites are **three generators** (the two phantom modules share one byte-identical call); the recorded `IndexError … size 0` signature is **in-process gmsh contamination, not a second defect**; control green at unmoved bands; the dead module is now one asserting 1e-9 partition test. Step 2 (a review's call) has two measured, separable levers — sizing and raise-path.* ***Step 2a ✅ 2026-08-28 (12:00 slot)** — the raise-path lever landed: one shared `_raise_geometry_failure_on_every_rank` helper wraps the rank-0 gmsh build in `straight_wire_domain`, `cylindrical_domain` and `coil_phantom_domain` (`git diff -w` = +76 lines, 0 deletions — the rest is indentation). All three deadlocking rows of the step-1 table now footer at **Status 1 in 2–3 s** where step 1 recorded **Status 124 at 120–121 s**, summaries unchanged, each non-building rank's traceback ending in the wrapped `RuntimeError` naming generator and `resolution`; `GEO-22`'s gate (`tests/mesh/test_geometry_failure_is_collective.py`, the `allreduce`d caught flag at `h = 0.00875`) is `1 passed in 0.91s` at `-n 2`. Controls green and unmoved: the three modules at `-n 1` exactly as step 1, `mag:1` at **21 830 cells / 6.666667e-05 T**, `test_cylindrical_domain.py` 1 passed, `test_coil_phantom_mesh.py` 3 passed, the `GEO-21` control 36.76 s. Twelve windows, 72 s. The three census reds stay red (geometry reds, step 2b's) but cost seconds to observe. **Step 2b (sizing) is the only step left.*** ***Step 2b ✅ 2026-08-28 (13:30 slot) ⇒ chunk ✅** — the sizing lever landed and **all three census reds are green**: three call sites moved to step 1's coarsest measured meshing rung (`test_boundary_condition_selection.py:26` 0.04 → **0.032**, `test_phantom_material_model.py:110` and `test_phantom_field_metrics.py:35` 0.03 → **0.024**), each with the step-1 ladder in-comment and a reduced global cell-count print. Every module green at **both** widths: bcsel `3 passed, 1 skipped` at `-n 1` (0.94 s) and `-n 2` (0.80 s) real, phantom-material `4 passed` at `-n 1` (2.66 s) and `-n 2` (1.63 s) complex, phantom-metrics `2 passed` at `-n 1` (1.71 s) and `-n 2` (1.67 s) complex — against the census reds' `1 failed, 2 passed, 1 skipped` / `1 failed, 3 passed` / `1 failed, 1 passed`. The printed counts are **1213** and **5464 / 5464**, reproducing the step-1 ladder's 1 213 / 5 464 **exactly** (0.00% against the pre-stated ±1%), so the sizing is stable run-to-run and across rank width. **No physics assertion moved** — the negative result this step existed to expose did not occur, and since no module pins a cell count the only assertions at risk were physics ones. Controls: `test_cylindrical_domain.py` at its unmoved 0.02 `1 passed in 1.29s` at `-n 2`, and the complex `tests/environment` gate `11 passed` before the complex windows. `src/` untouched; `git diff --stat` is three test files plus docs. Eight footered windows, 40 s recorded elapsed, FFCx stub sweep clean before window 1 and no exit 124 in the slot. The three geometry known-issues entries are **RETIRED** (both halves closed — 2a's deadlock, 2b's geometry). **Residual, and a review's call, not this chunk's:** the fourth site the chunk was commissioned over — `test_birdcage_volumes_partition_the_box` on `birdcage_port_domain` — is **still red** and was never laddered here, because its resolution floor is already `GEO-21`'s open entry and its fixture is `GEO-20`'s; no `GEO-23` step remains for it.* | ✅ | smoke (`-n 1` probes) + standard (`-n 2` ladders) |
+| `GEO-23` | The 0.11 "Invalid boundary mesh (overlapping facets)" family: one owner for the three `OPS-26` census reds (coil+phantom generator, `birdcage_port_domain` partition test, and the **rank-dependent** `test_boundary_condition_selection.py` deadlock) plus the dead `test_cylindrical_domain.py` module — classify each as geometry-deterministic or partition-dependent, ladder the resolution, land no fix (commissioned 2026-08-27 03:00 review; four known-issues entries of 2026-08-27). ***Step 1 ✅ 2026-08-28 (09:00 slot)** — all four sites are **geometry-deterministic**, red at `-n 1` (2–4 s, Status 1); the two "rank-dependent" claims are **log-interleave artifacts, withdrawn by measurement**; the `-n 2` deadlock is a **raise-path** property (row 2's wrapped re-raise footers at Status 1 in 5 s where the three unwrapped sites cost 120 s each); both laddered generators are **monotone**, each failing exactly one 0.8-step above a meshing sizing (`cylindrical_domain` 0.040 → meshes 0.032/1 213 cells; `coil_phantom_domain` 0.030 → meshes 0.024/5 464 cells); the four sites are **three generators** (the two phantom modules share one byte-identical call); the recorded `IndexError … size 0` signature is **in-process gmsh contamination, not a second defect**; control green at unmoved bands; the dead module is now one asserting 1e-9 partition test. Step 2 (a review's call) has two measured, separable levers — sizing and raise-path.* ***Step 2a ✅ 2026-08-28 (12:00 slot)** — the raise-path lever landed: one shared `_raise_geometry_failure_on_every_rank` helper wraps the rank-0 gmsh build in `straight_wire_domain`, `cylindrical_domain` and `coil_phantom_domain` (`git diff -w` = +76 lines, 0 deletions — the rest is indentation). All three deadlocking rows of the step-1 table now footer at **Status 1 in 2–3 s** where step 1 recorded **Status 124 at 120–121 s**, summaries unchanged, each non-building rank's traceback ending in the wrapped `RuntimeError` naming generator and `resolution`; `GEO-22`'s gate (`tests/mesh/test_geometry_failure_is_collective.py`, the `allreduce`d caught flag at `h = 0.00875`) is `1 passed in 0.91s` at `-n 2`. Controls green and unmoved: the three modules at `-n 1` exactly as step 1, `mag:1` at **21 830 cells / 6.666667e-05 T**, `test_cylindrical_domain.py` 1 passed, `test_coil_phantom_mesh.py` 3 passed, the `GEO-21` control 36.76 s. Twelve windows, 72 s. The three census reds stay red (geometry reds, step 2b's) but cost seconds to observe. **Step 2b (sizing) is the only step left.*** ***Step 2b ✅ 2026-08-28 (13:30 slot) ⇒ chunk ✅** — the sizing lever landed and **all three census reds are green**: three call sites moved to step 1's coarsest measured meshing rung (`test_boundary_condition_selection.py:26` 0.04 → **0.032**, `test_phantom_material_model.py:110` and `test_phantom_field_metrics.py:35` 0.03 → **0.024**), each with the step-1 ladder in-comment and a reduced global cell-count print. Every module green at **both** widths: bcsel `3 passed, 1 skipped` at `-n 1` (0.94 s) and `-n 2` (0.80 s) real, phantom-material `4 passed` at `-n 1` (2.66 s) and `-n 2` (1.63 s) complex, phantom-metrics `2 passed` at `-n 1` (1.71 s) and `-n 2` (1.67 s) complex — against the census reds' `1 failed, 2 passed, 1 skipped` / `1 failed, 3 passed` / `1 failed, 1 passed`. The printed counts are **1213** and **5464 / 5464**, reproducing the step-1 ladder's 1 213 / 5 464 **exactly** (0.00% against the pre-stated ±1%), so the sizing is stable run-to-run and across rank width. **No physics assertion moved** — the negative result this step existed to expose did not occur, and since no module pins a cell count the only assertions at risk were physics ones. Controls: `test_cylindrical_domain.py` at its unmoved 0.02 `1 passed in 1.29s` at `-n 2`, and the complex `tests/environment` gate `11 passed` before the complex windows. `src/` untouched; `git diff --stat` is three test files plus docs. Eight footered windows, 40 s recorded elapsed, FFCx stub sweep clean before window 1 and no exit 124 in the slot. The three geometry known-issues entries are **RETIRED** (both halves closed — 2a's deadlock, 2b's geometry). **Residual, and a review's call, not this chunk's:** the fourth site the chunk was commissioned over — `test_birdcage_volumes_partition_the_box` on `birdcage_port_domain` — is **still red** and was never laddered here, because its resolution floor is already `GEO-21`'s open entry and its fixture is `GEO-20`'s; no `GEO-23` step remains for it.* ***Demoted ✅ → 🧪 by the 2026-08-28 18:00 review audit (§4 clause 3).** The step-2b anchor — 1213 / 5464 cells reproducing step 1's ladder at ±1% — is a `print` at each of the three call sites, compared by the reader against a comment; no test asserts it. The only assertion 2a/2b *added* (`test_geometry_failure_is_collective.py:60`, `total_caught == comm.size`) is a did-raise property, and the three re-greened modules' own gates are finiteness/positivity except a pre-existing σ/ε DG0 identity (`test_phantom_material_model.py:139,185`) that 2b did not add. Logs, agent execution and elapsed all check out (20 footered windows, 112 s); nothing was loosened; `src/` untouched. **Step 2c (queued, §9 item 1):** turn each of the three prints into an asserted `abs(n_global / N_REF − 1) ≤ 0.01` against the step-1 ladder value (a documented reference from a prior run, §4 3(iv)), `allreduce`d before the assert; on green the chunk returns to ✅.* | 🧪 | smoke (`-n 1` probes) + standard (`-n 2` ladders) |
 | `GEO-24` | **Give `birdcage_port_domain` the `shared_facet` ghost layer, and re-read every module that reconstructs a sheet on it at `-n 2` and `-n 12`** — the diagnosed cause of the `GEO-20` step 2 rank-width defect (known-issues re-headed 2026-08-28; commissioned by the human operator, interactive session, 2026-08-28) | ⬜ | standard |
 
 
@@ -3211,6 +3211,31 @@ planned it.)*
 > both widths, with elapsed times; at least one quantitative identity per
 > module (the closures and C4/mirror spreads already printed qualify); and
 > the known-issues entry retired or re-headed with what survived.
+>
+> **Slot split, ruled 2026-08-28 18:00 review.** Step 1 and step 2 as written
+> are each larger than one implementer hour: the by-construction consumer
+> list (`grep -rl birdcage_port_domain tests/ examples/` ∩ the
+> `_interface_facet_tags` / `port_sheet` users, taken today) is **seven
+> `tests/mesh/` modules** (`test_birdcage_port_sheets`, `_port_terminals`,
+> `_ring_gaps`, `_leg_gaps`, `_leg_offset`, `_port_scaleup`,
+> `_port_sheet_prerequisite`) plus **five `tests/validation/`** modules
+> (`test_port_birdcage_lumped_column`, `_four_port`, `_larmor_probe`,
+> `_termination_probe`, `_leg_offset_sweep`) and three `examples/meshing/`
+> scripts (06/07/08), and the recorded prices are 72–160 s per mesh module
+> (`GEO-20` step 1, `GEO-19` step B) and 105–224 s per validation module
+> (`PORT-9` d1 consumers, `PORT-11` steps 2–3, complex) — ≈ 10–25 min per
+> width per family. So: **1a** = the mesh family at `-n 2` and `-n 12`
+> (real build); **1b** = the validation family at both widths (complex
+> build, `tests/environment` first); **2a** / **2b** = the plumb plus the
+> same two families re-read. 1a and 1b are independent of each other; 2a
+> depends on 1a's table, 2b on 1b's. The examples are read in 2b as a
+> control, not in step 1 (they print, they do not gate). **A single `-n 12`
+> window that overruns its ceiling is a cost finding** — record it, mark
+> the module's `-n 12` cell "unmeasured", move on; the step is not owed
+> that module's price. `test_birdcage_port_scaleup` (16 legs, 307 296
+> cells; `GEO-19` step C hit exit 124 at 561 s on a bundled window) gets
+> its own window at `-k 30 600` and is the module most likely to be
+> unmeasured at `-n 12`.
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
 > fixture in `io/mesh.py` still uses a single global `setSize` and tight padding,
@@ -7758,70 +7783,76 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed **2026-08-28, 10:30 review**. Interval (since the 03:00
-review): **four slots ran, four footered clean, one chunk closed and three
-measured negatives** — `GEO-20` step 2 (04:30, 473 s, the 16-leg ring
-fixture builds and is green at `-n 1` but three of 32 sheets fail to
-reconstruct at `-n 2`; parked on `attempt/GEO-20-step2-20260828T094500Z`,
-no band landed), `EX-34` (06:00, 139 s, `ports:5` — one 116 085-cell mesh,
-twelve solves, three gates green on three rungs ⇒ **`EX-34` ✅**), `GEO-22`
-step 1 (07:30, 45 s, the straight-wire floor is **non-monotone and
-bit-reproducible** on both geometries ⇒ no guard value exists, none
-written), and `GEO-23` step 1 (09:00, 318 s, **no** "overlapping facets"
-site is partition-dependent — all four red at `-n 1`; the two
-rank-divergence claims were log-interleave artifacts; the `-n 2` deadlock
-is a raise-path property; both ladders monotone, one 0.8-step above a
-meshing sizing; the dead module is now one asserting test). Residual
-`main` reds unchanged: the two entry-3 names plus `GEO-23`'s three. §2
+Last reviewed **2026-08-28, 18:00 review**. Interval (since the 10:30
+review): **four slots ran, four footered clean, the whole queue drained
+except the spare** — `GEO-23` step 2a (12:00, 72 s, the raise-path wrap:
+three 120-s deadlocks now footer Status 1 in 2–3 s, `git diff -w` = +76
+lines), `GEO-23` step 2b (13:30, 40 s, three call sites moved to the
+measured coarsest meshing rung; all three census reds green at `-n 1` and
+`-n 2`, printed counts 1213 / 5464 / 5464 exactly step 1's ladder),
+`GEO-20` step 2a (15:00, 378 s, the broken-sheet set **moves with the
+width** and equals the straddling set at 32 × 2 ports, no exception —
+confirmed ⇒ stop), and `OPS-27` step 3 (16:30, 719 s, `17 passed` /
+`18 passed` on the two owed 418 888 modules, prose sweep 19 of 33 copies
+with the other 14 named). Between slots an **interactive session** landed
+`OPS-29` (the `phantom_material` empty-tag check was rank-local, breaking
+`mri:1` at `-n 12`; fixed and gated), **diagnosed `GEO-20`'s defect**
+(`birdcage_port_domain` has no ghost layer — `GhostMode.none`; the 4-leg
+rung loses one facet at `-n 12`; plumbing `shared_facet` returns
+1.000000000000 on all 12 at the same cell count; patch reverted, not
+landed) and **commissioned `GEO-24`** to land it with a two-width
+re-read, opened `ANS-5` for the weekly review (our degree 1 is HFSS "Zero
+Order", not its default), and renamed every example's output artifacts.
+Residual `main` reds: the two entry-3 names and
+`test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry). §2
 unchanged.
 
-**Audit (§4), one auditor, COMPLIANT.** `EX-34`: `20260828T110615Z_EX-34-run2.log`
-Status 0 / 139 s with the three gates printed per rung (reciprocity
-1.657e-14 / 1.179e-15 / 5.457e-15, σ_max 0.999992805 / 0.999721388 /
-0.998974779, C4 spreads ≤ 0.1012% vs 0.5%), the 64/128 MHz records inside
-1% (worst 1.075e-03 / 6.755e-04), cells/λ 12.5024 CLEAR, heuristic
-separation 1.585461e+00; the consumer module's 158-line edit is the
-`reuse=` branch, purely additive — no constant, band or assertion moved,
-`5 passed in 103.07s` re-run; `src/` untouched. One nit recorded here, not
-demoted: the census2 log footers Status **2** (`stale_severity=report`, 31
-pre-existing stale artifacts), which `test-results.md` records honestly
-and the commit message omits. Nothing demoted.
+**Audit (§4), one auditor plus this review's own reading.** `OPS-29`
+**COMPLIANT** — `20260828T165646Z_OPS-29-green-n12.log` / `…165703Z_…-n2.log`
+Status 0, `6 passed` on every rank stream, 3 s / 2 s recorded; the new
+module asserts DG0 integrals of σ, μ, ε against the tagged-cell volume at
+`rel=1e-12` on every rank and the red baseline is footered (Status 124,
+181 s); `31 passed, 1 skipped` materials regression. `GEO-23` **demoted
+✅ → 🧪** on clause 3: the 1213 / 5464 anchor is a `print` compared to a
+comment, the one added test asserts did-raise-on-every-rank, and the
+re-greened modules' own gates are finiteness/positivity save a
+pre-existing σ/ε identity; logs (20 windows, 112 s), agent execution,
+elapsed and no-loosening all check. The fix is one asserted ±1% band per
+site — item 1. `EX-34` and `MAG-20` were audited at 10:30 / 03:00.
 
-**Rulings this review.** (1) **`GEO-23` step 2 split into two independent
-steps, both commissioned** — 2a the raise-path wrap (three generators plus
-`straight_wire_domain`; converts three 120-s deadlocks into ≤ 10-s footers,
-touches no mesh) and 2b the sizing move (three call sites to the measured
-coarsest meshing rung, re-record licence granted narrowly because no
-module pins a cell count; any physics red after the move is *reported*,
-never re-bounded). (2) **`GEO-22` guard shape:** (a) adopted and folded
-into `GEO-23` 2a; (c) allowlist rejected — nine rungs is a sample; (b) the
-size field would move `mag:1`'s 21 830 and three ladder records, so the
-*licence* is the 08-30 weekly review's, but the *measurement* is queued
-as a no-`src/` probe (item 5). Done-when restated. (3) **`GEO-20` step 2:**
-the attempt's partition hypothesis predicts a moving broken-port set —
-step 2a queues the `-n 4`/`-n 8` discriminator with per-port rank
-ownership, no `src/`; the `_interface_facet_tags` fix is withheld until a
-review holds the table (it touches every sheet-reconstructing module).
-(4) **No example chunk is owed:** `EX-34` *is* the example; `GEO-22`/
-`GEO-23` step 1 gated no capability. `GEO-20`'s `mesh:` example waits on a
-green 32-port sheet. (5) Backlog still reaches §10 — items 1–2 retire
-census reds on the working front, 3 is the 32-port directive's blocker,
-4 the `OPS-27` tail; no new chunk ID.
+**Rulings this review.** (1) **`GEO-23` step 2c commissioned** (the
+assert). (2) **`GEO-24` split into four slots** — the by-construction
+consumer list is seven `tests/mesh/` + five `tests/validation/` modules at
+72–224 s each, so step 1 is 1a (mesh family) + 1b (validation family),
+step 2 likewise 2a + 2b; the split, the module list and the price rung are
+annotated on the `GEO-24` entry. **A `-n 12` overrun is a cost finding,
+not a failure** — the cell is "unmeasured". (3) **`GEO-20` step 2 is now
+a re-run, not an investigation** — it waits on `GEO-24` step 2 green and is
+not queued; the `_interface_facet_tags` fix that the 10:30 review withheld
+is **withdrawn entirely** (the diagnosis says the reconstruction logic is
+correct). (4) **No example chunk is owed:** `OPS-29` is a fix demonstrated
+by the existing `mri:1` at `-n 12`; `GEO-23` and `GEO-20` 2a gated no
+capability; `GEO-24` step 2 green will make `mesh:7` at `-n 12` the demo
+without a new script. (5) Backlog still reaches §10 — `GEO-24` is the
+32-port directive's only blocker, the working front; no new chunk ID.
+(6) The `test_birdcage_volumes_partition_the_box` residual stays with
+`GEO-21`'s open floor entry — the weekly review's, since a coarse
+conductor floor on `birdcage_port_domain` is a size-field question.
 
 **Branch dispositions.** `attempt/GEO-20-step2-20260828T094500Z` **kept**
-— its module is the fixture item 3 runs and is not on `main`; delete it
-with the commit that lands or retires the module. No `recovered/*`; tree
-clean at all four handoffs and at this review. Deliberately not queued:
-`PORT-4`…`PORT-8`, any 128 MHz resolution study and `ANS-4` (weekly
-review's), the `_interface_facet_tags` fix (ruling 3), the wire size
-field in `src/` (ruling 2), a `coil_loading_degree2` re-open, a
-`box_truncation` re-price, a `MAG-20` third rung.
+— its module is the 32-port fixture `GEO-20` step 2 will re-run after
+`GEO-24`; delete it with the commit that lands or retires the module. No
+`recovered/*`; tree clean at all four handoffs and at this review.
+Deliberately not queued: `GEO-24` 2b (needs 1b's table — next review
+queues it), `PORT-4`…`PORT-8`, any 128 MHz resolution study, `ANS-4` and
+`ANS-5` (weekly review's, ruling required), the wire size field in `src/`
+(10:30 ruling 2), a `coil_loading_degree2` re-open, a `box_truncation`
+re-price, a `MAG-20` third rung, a cold-cache `third_rung` price.
 
-**Five items this queue, all mutually independent.** Items 1–2 are the
-`GEO-23` split, 3 the `GEO-20` discriminator, 4 the `OPS-27` tail carried
-from the 03:00 queue, 5 the `GEO-22` probe as spare. Item 2 runs whether
-or not item 1 landed (it sizes its windows for the deadlock); nothing
-else depends on anything.
+**Five items this queue; one serial link.** Item 1 the `GEO-23` assert,
+items 2–3 the two `GEO-24` step-1 families (independent of each other and
+of item 1), item 4 `GEO-24` step 2a **depends on item 2 landing** — if it
+did not, skip to item 5 — and item 5 the `GEO-22` probe carried as spare.
 
 **⚠️ Standing constraint on the compose allow — read before editing that
 file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
@@ -7838,150 +7869,113 @@ mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-1. ✅ **DONE 2026-08-28, 12:00 slot** — all three anchors met (Status 1 in
-   2–3 s vs step 1's Status 124 at 120–121 s), the `GEO-22` gate green at
-   `-n 2`, every negative control unmoved; `GEO-22` itself stays 🟡 on its
-   second clause (item 5's probe table). See the `GEO-23` step 2a entry in §7.
-   **`GEO-23` step 2a — the raise-path lever: wrap the rank-0 gmsh throw
-   in `cylindrical_domain`, `coil_phantom_domain` and `straight_wire_domain`
-   (standard, real + complex, `-n 2`, `main`; independent; ruled 2026-08-28
-   10:30 review, also discharges `GEO-22`'s guard shape).** Execute the §7
-   `GEO-23` step 2a entry as written — it carries the full rubric. In
-   brief: copy the `birdcage_port_domain` pattern
-   (`src/fem_em_solver/io/mesh.py:3266–3278` — catch on the building rank,
-   `finalize`, `bcast` the flag, raise on every rank *before*
-   `model_to_mesh`) into the three generators. **Anchor:** rows 1 / 3 / 4 of
-   the step-1 table footer **Status 1 in ≤ 10 s at `-n 2`** where step 1
-   recorded Status 124 at 120–121 s, summaries unchanged; plus a new
-   `tests/mesh/` gate asserting `straight_wire_domain(resolution=0.00875)`
-   on the example geometry raises on **every** rank at `-n 2` (assert the
-   `allreduce`d caught-flag, not one rank's `pytest.raises`). **Negative
-   controls:** the three modules at `-n 1` footer exactly as step 1's
-   `-n 1` column; `mag:1` at **21 830** cells / `B(3 mm) = 6.666667e-05 T`;
-   `test_cylindrical_domain.py` `1 passed`; the `GEO-21` control green.
-   **Cost:** ≈ 3 min recorded elapsed — every `-n 2` window `-k 30 60`.
-   **Traps:** `-n 1` first for anything that may throw; complex-gated
-   phantom modules need `tests/environment` first + `FEM_EM_REQUIRE_COMPLEX=1`;
-   FFCx stub sweep before the complex window. **Scope:** no resolution
-   moved, no band, no record — the three geometry reds stay red and footer
-   honestly. **Negative result:** a module still at Status 124 means a
-   second deadlock path after the bcast — record which, known-issues, stop.
-2. ✅ **DONE 2026-08-28, 13:30 slot** — all three modules green at `-n 1`
-   **and** `-n 2` (`3 passed, 1 skipped` / `4 passed` / `2 passed`), the
-   printed cell counts **1213 / 5464 / 5464** reproducing the step-1 ladder
-   **exactly** (0.00% against ±1%), no physics assertion moved, no site
-   reverted, controls green, `src/` untouched; the three geometry
-   known-issues entries are RETIRED and **`GEO-23` is ✅**. One residual
-   flagged for the review: the fourth commissioned site
-   (`test_birdcage_volumes_partition_the_box`) stays red under `GEO-21`'s
-   floor entry — see the `GEO-23` step 2b entry in §7.
-   **`GEO-23` step 2b — the sizing lever: move three call sites to the
-   coarsest meshing rung step 1 measured (smoke `-n 1` probes + standard
-   `-n 2`, real + complex, `main`; independent of item 1 — if item 1 has
-   not landed, every `-n 2` command sits at `-k 30 120`; ruled 2026-08-28
-   10:30 review).** Execute the §7 `GEO-23` step 2b entry as written. In
-   brief: `test_boundary_condition_selection.py:26` `0.04 → 0.032`,
-   `test_phantom_material_model.py:110` and `test_phantom_field_metrics.py:35`
-   `0.03 → 0.024`, the step-1 ladder in-comment at each site, nothing in
-   `src/`. **Anchor:** the four census reds go green on footered `-n 2`
-   runs (`4 passed` / `2 passed` / `4 passed`, a skip allowed on the first)
-   with printed cell counts reproducing **1 213 / 5 464** at ± 1%.
-   **Negative control:** no module pins a cell count (checked), so the only
-   assertions that can move are physics ones — **any physics red after the
-   move is reported, not re-bounded**: revert that one site in the same
-   slot, record the assertion and value. `test_cylindrical_domain.py` at its
-   unmoved 0.02 stays green. **Cost:** ≈ 1 min recorded plus probes.
-   **Traps:** one meshing attempt per process (`GEO-23` finding F); complex
-   gating as item 1. **Scope:** three edits, no band, no `src/`; the three
-   geometry known-issues entries retire only if all three modules are
-   green. **Negative result:** a module that meshes but fails a physics
-   assertion is the finding — revert, known-issues, stop.
-3. ✅ **DONE 2026-08-28, 15:00 slot** — the discriminator ran at both widths
-   (189 s each, Status 1 as expected, no `src/` change) and the pre-stated
-   assertion holds with no exception: the broken-sheet set **moves** with the
-   rank width ({P25,P29,P37,P41,P45} at 4, {P17,P21,P26,P30,P37,P44,P48} at 8,
-   vs {P30,P37,P45} at 2) and is **identical to the straddling set** at both,
-   symmetric difference empty in both directions across 32 × 2 ports; every
-   negative control (40/40 port volumes, both closures, Pappus, both cell-count
-   controls) reproduces digit for digit. Confirmed ⇒ stop per the ruling — the
-   fix stays **`GEO-24`**'s, which the human operator commissioned after this
-   queue was written and whose diagnosis (`GhostMode.none`, not
-   `_interface_facet_tags`) this table is consistent with. See the `GEO-20`
-   step 2a entry in §7 and the known-issues block.
-   **`GEO-20` step 2a — the partition discriminator at `-n 4` / `-n 8`
-   with per-port rank ownership (standard, real, `main` + the parked
-   branch's module; independent; no `src/` change; ruled 2026-08-28 10:30
-   review).** Execute the §7 `GEO-20` step 2a entry as written. In brief:
-   take the test from `attempt/GEO-20-step2-20260828T094500Z` (copy the
-   file, do not merge), add an `allgather`ed print of which rank owns each
-   port's `PORT_LOWER+i` / `PORT_UPPER+i` cells, run the one test at `-n 4`
-   and `-n 8` **with `-s`**, each its own command at `-k 30 400`.
-   **Anchor:** the broken-port set per width against the `-n 2` record
-   {P30, P37, P45} — the hypothesis predicts a *different* set at each
-   width and exact agreement between "half-boxes on different ranks" and
-   "sheet broken" across all 32 × 3 ports; one counter-example refutes it.
-   **Negative control:** all 32 port volumes at **1.000000000000** of
-   `2·R·w²·tan α` at both new widths (the volume identity does not route
-   through the sheet). **Cost:** ~150–200 s per width, ≈ 400 s over two
-   commands. **Traps:** `-s` is mandatory (evidence lives in `print`); keep
-   the `_report_safely` NaN guard; fresh gmsh model per build. **Scope:**
-   measurement only — no `_interface_facet_tags` edit, no band, no record;
-   the module stays on the branch (commit the ownership print there or as
-   a `scripts/probes/` probe). **Negative result:** the same three ports
-   broken at every width refutes the partition reading — table into the
-   known-issues entry, 🟡, stop; *confirmed* is also stop — the fix is a
-   review-commissioned step 2b with a re-record licence.
-4. ✅ **DONE 2026-08-28, 16:30 slot** — both anchor windows green from `main`
-   (719 s total, Status 0 ×2): `larmor_resolution` `-n 2` complex **`17 passed`
-   / 424.32 s** and `third_rung` `-n 8` complex `fine` **`18 passed` / 291.03 s`**,
-   collected counts identical to the census (17 / 18) so exactly the two
-   stale-record names flipped; both known-issues entries RETIRED. The prose
-   sweep landed **19 of 33** copies — the other 14 are dated result blocks,
-   executable growth denominators with their coupled ratios, or meshes the
-   census never measured on 0.11, each named in the §7 entry (finding 45).
-   `git diff -- src/` empty. Finding 44: `third_rung`'s feared cold price is
-   still unmeasured — the 900 s window returned at 291 s, again warm.
-   See the `OPS-27` step 3 entry in §7.
-   **`OPS-27` step 3 — close the chunk's owed tail: re-run the two
-   edited-but-not-re-run 418 888 modules and sweep the finding-40 prose
-   copies (heavy, complex, `-n 2` + `-n 8`, `main`; independent;
-   commissioned 2026-08-28 03:00 review, carried unchanged).** Two anchor
-   windows and one no-compute edit pass. **Anchor:**
-   `test_coil_loading_larmor_resolution.py` `-n 2` complex green where the
-   census read `1 failed, 16 passed`
-   (`20260827T185422Z_OPS-26-step2f-larmor-resolution.log`) — expect
-   `17 passed`, its `NCELLS_FINE == 418_888` equality now green and every
-   other name's status unchanged; `test_coil_loading_larmor_third_rung.py`
-   `-n 8` complex `TH11_STEP5_RUNG=fine` green where the destubbed census
-   read `1 failed, 17 passed`
-   (`20260827T171110Z_OPS-26-step2e-thirdrung-destubbed.log`) — expect
-   `18 passed`, the imported-alias site of finding 41. Then the prose sweep:
-   every non-asserted `138 619` / `417 914` copy finding 40 lists (nine
-   modules; `grep -rn '138[ _]\?619\|417[ _]\?914' tests/` is the site
-   list) becomes the 0.11 value with the 0.7.2 digit kept in the same
-   comment — **read each copy in context first**: step 1 found dated
-   result blocks that must *keep* the old digit because they narrate an
-   old run. **Negative control:** `git show -- tests/` touches
-   prose/comments only for the sweep — no constant, no assertion, no
-   `src/`; the collected counts (17 / 18) match the census. **Cost:**
-   `larmor_resolution` 428 s recorded (`-k 30 640`, finding 32's ≥ 1.5×);
-   `third_rung` is **cold-cache** in a fresh slot — the 304 s figure is
-   warm (finding 25), the cold price is unrecorded: size `-k 30 900` and
-   run it *second* so `larmor_resolution`'s window warms the shared
-   fixtures; ≈ 1 100–1 350 s over two commands, well inside the hour with
-   the prose edits. **Traps:** both complex-gated, `tests/environment`
-   first; sweep 0-byte FFCx stubs before window 1 and after any exit 124
-   (finding 27 — `third_rung` is the module that produced the poisoned
-   all-ERROR footer on 08-27); the `for … python3 - <<EOF` replacement
-   loop is denied by the permission layer (step 1) — use `Edit` per copy;
-   `-n 8` for `third_rung`, `-n 2` for `larmor_resolution` (recorded
-   widths). **Scope:** two re-runs and a prose pass; `box_truncation`'s
-   sixth mesh stays pending — do **not** open `projected_xlarge_box`; no
-   band, no re-record of anything the census did not measure. **Negative
-   result:** a `third_rung` exit 124 at 900 s is the cold price — record
-   it, land the prose sweep, leave its known-issues line 🟡, stop; any
-   count that is not 418 888 is run-to-run instability — known-issues, stop.
-   On green, retire the leg (e) `third_rung` known-issues entry.
+1. **`GEO-23` step 2c — assert the cell-count anchor step 2b only printed
+   (smoke, real + complex, `-n 1` + `-n 2`, `main`; independent; ruled
+   2026-08-28 18:00 review audit — returns the chunk to ✅ on green).**
+   At each of the three moved call sites
+   (`tests/solver/test_boundary_condition_selection.py:26`,
+   `tests/materials/test_phantom_material_model.py:110`,
+   `tests/post/test_phantom_field_metrics.py:35`) the step-2b `print` of
+   the global cell count becomes a module constant `N_CELLS_REF` (1213 /
+   5464 / 5464, version-tagged `0.11` in-comment with the 0.7.2-era
+   sizing that no longer meshes) and one assertion
+   `abs(n_global / N_CELLS_REF - 1) <= 0.01` where `n_global` is
+   `mesh.topology.index_map(3).size_global` (already global — do **not**
+   `allreduce` a `size_local` sum on top of it). **Anchor:** §4 3(iv), a
+   documented reference from a prior run — the step-1 ladder and step 2b's
+   two-width reproduction (0.00%). **Negative control:** a deliberately
+   wrong constant (e.g. `1213 → 1300`, 7.2% off) fails the new assertion
+   in a throwaway run, then is restored — cite the red footer; the modules'
+   existing physics assertions (`np.isclose(sigma_min, phantom.sigma)`
+   etc.) stay green. **Cost:** step 2b's eight windows were 40 s total —
+   `-k 30 60` per window, ≈ 2 min recorded, `tests/environment` first for
+   the two complex modules with `FEM_EM_REQUIRE_COMPLEX=1`. **Traps:** one
+   meshing attempt per process (`GEO-23` finding F); FFCx stub sweep before
+   the complex windows; pytest hides prints without `-s` (the print may
+   stay, the assert is the gate). **Scope:** three assertions, no
+   resolution, band or `src/` change; the `GEO-21` residual is not this
+   item's. **Negative result:** a count outside ±1% at either width is
+   run-to-run mesh instability on 0.11 — record both widths' counts in a
+   known-issues entry, leave the assert **out**, chunk stays 🧪, stop.
+2. **`GEO-24` step 1a — read the seven `tests/mesh/` birdcage-sheet
+   modules at `-n 2` and `-n 12` before any `src/` change (standard, real,
+   `main`; independent; no `src/`; commissioned by the human operator
+   2026-08-28, slot split ruled 18:00 review).** Execute the §7 `GEO-24`
+   step 1 as written for the **mesh family only**: `test_birdcage_port_sheets`,
+   `_port_terminals`, `_ring_gaps`, `_leg_gaps`, `_leg_offset`,
+   `_port_scaleup`, `_port_sheet_prerequisite` — re-derive the list by
+   construction first (`grep -rl birdcage_port_domain tests/` ∩ the
+   `_interface_facet_tags` / `port_sheet` users) and record any
+   difference. One module per window, two widths, `-s`. **Anchor:** the
+   per-module table — pass/fail, every printed identity digit (closures,
+   sheet meshed/analytic, C4/mirror spreads) and the global cell count —
+   with the prediction from the diagnosis: **every cell count identical
+   across widths**, `-n 2` green everywhere (the recorded width), and at
+   `-n 12` some port closure reading `< 1` by roughly one facet's area
+   (the 4-leg rung's P8 read **0.990103697427**, 175 vs 176 air facets).
+   **Negative control:** the terminal ratios and port-volume identities
+   (which do not route through a facet reconstruction) read
+   1.000000000000 / 0.9744… identically at both widths. **Cost:** 72–160 s
+   per mesh module at `-n 2` (`GEO-20` step 1, `GEO-19` step B); `-n 12`
+   partitions faster but meshes on rank 0 the same — budget ≈ 25 min of
+   compute over 14 windows, `-k 30 400` each, **`test_birdcage_port_scaleup`
+   at `-k 30 600` and last** (16 legs, 307 296 cells; `GEO-19` step C hit
+   exit 124 at 561 s on a bundled window). **Traps:** a `-n 12` overrun is
+   a cost finding — mark that cell "unmeasured", move on; `-s` mandatory;
+   prints are rank-0's — read rank streams, not the first line; the
+   `GEO-21` floor entry's `test_birdcage_volumes_partition_the_box` is red
+   for its own reason and is excluded from this table by name. **Scope:**
+   measurement only — no plumb, no band, no record moves; `-n 12` reds are
+   the measurement. **Negative result:** a *`-n 2`* red, or a cell count
+   that differs between widths, contradicts the diagnosis — table it into
+   the `GEO-20` known-issues entry, do not proceed to any plumb, stop.
+3. **`GEO-24` step 1b — the same two-width read for the five
+   `tests/validation/` birdcage-port modules (standard, complex, `main`;
+   independent of items 1–2; no `src/`; ruled 18:00 review).**
+   `test_port_birdcage_lumped_column`, `_four_port`, `_larmor_probe`,
+   `_termination_probe`, `_leg_offset_sweep` — same by-construction
+   re-derivation, same table columns, plus each module's own printed
+   S-matrix identities (reciprocity residual, σ_max, C4 class spreads) and
+   the 4×4 records. **Anchor:** identical cell counts across widths; every
+   `-n 2` reading identical to the `PORT-9` / `PORT-11` records (reciprocity
+   2.495292352e-05 at 10 MHz, σ_max 0.862659137, class spreads 0.0199 /
+   0.0180 / 0.0108%); at `-n 12`, either identical or a closure-driven
+   drift — record the digit, do not judge it. **Negative control:** the
+   `two_torus_domain` consumer `test_port_lumped_two_torus.py` at `-n 12`
+   (already `shared_facet`-plumbed, `PORT-1` 3b-iv) reads its record
+   exactly. **Cost:** 105–224 s per module at `-n 2` (`PORT-9` d1
+   consumers, `PORT-11` steps 2–3); ≈ 30 min over 12 windows at
+   `-k 30 480` — if the running total passes 40 min, journal the table so
+   far in the `GEO-24` entry and leave the remaining modules named as
+   unmeasured. **Traps:** complex build + `FEM_EM_REQUIRE_COMPLEX=1`,
+   `tests/environment` first; FFCx stub sweep before window 1 and after any
+   exit 124; `-n 12` complex solves share the 128 G box — one window at a
+   time, never two. **Scope:** measurement only. **Negative result:** as
+   item 2 — a `-n 2` digit that does not match its record is a finding
+   about the record, not about `GEO-24`; known-issues, stop.
+4. **`GEO-24` step 2a — land the one-keyword plumb and re-read the mesh
+   family at both widths (standard, real, `main`; DEPENDS ON ITEM 2 — if
+   item 2's table is not in the `GEO-24` entry, skip to item 5; ruled
+   18:00 review).** `io/mesh.py:3356`: pass
+   `partitioner=create_cell_partitioner(GhostMode.shared_facet, 2)` exactly
+   as `two_torus_domain` does (copy that site's comment), nothing else in
+   `src/`. Re-run item 2's seven modules at `-n 2` and `-n 12`, same
+   windows. **Anchor:** the three-column table per module — **every cell
+   count identical, every `-n 2` digit identical to item 2's, every
+   previously-red `-n 12` reading now 1.000000000000** (the 4-leg probe
+   already showed P8 back to 176 facets at 128 111 cells, 26.08 s). **Negative
+   control:** `mag:1`'s 21 830 cells and `test_cylindrical_domain.py` are
+   untouched fixtures and must not move; `tests/mesh/test_two_torus_port_sheet.py`
+   green. **Cost:** as item 2, ≈ 25 min plus the `-n 12` re-read of
+   `port_scaleup` at `-k 30 600`. **Traps:** the `Edit` tool for the one
+   line; `git diff -- src/` must be that line plus its comment; a `-n 12`
+   overrun is "unmeasured", same as before, not a reason to shrink the
+   list. **Scope:** the mesh family only — the validation family is step 2b
+   (next review queues it from item 3's table); no record is re-written
+   here even if a `-n 12` digit moved (step 3's). **Negative result:** a
+   `-n 2` digit that *moves* is the finding the chunk entry names — a
+   record was partition-dependent — revert the plumb in the same slot,
+   table it, known-issues, stop.
 5. **`GEO-22` step 2 — the wire-surface size-field probe: does an explicit
    gmsh size field on the wire cylinder remove the `triangles are
    equivalent` fallback across the nine rungs? (smoke, `-n 1`, real,
@@ -8003,7 +7997,9 @@ uses the Edit tool and verifies `git status --porcelain`.
    field in `straight_wire_domain` (weekly review's re-record call).
    **Negative result:** fallbacks persist or any rung FAILs — (b) is not a
    fix either; record the 18-cell table beside step 1's in the known-issues
-   entry, stop. Either way the chunk closes on item 1's wrap.
+   entry, stop. Either way the chunk closes on `GEO-23` step 2a's wrap
+   (landed 12:00 slot) — this probe only informs the weekly review's
+   size-field licence.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
