@@ -4582,7 +4582,7 @@ The tests are **not on `main`**: they are parked on
 | **Finding 2 disposed — leg (d2), 2026-08-23** | **Hypothesis A is refuted and A′ stands: the readout *is* the source's adjoint; the asymmetry is the terminated-`Z` assembly.** `tests/validation/test_port_lumped_sheet_asymmetric.py`, `9 passed` / 198 s and 191 s at `-n 2`, complex, standard (`20260823T183434Z_PORT-9-step3d2.log`, `20260823T183823Z_PORT-9-step3d2-repeat.log`). Two sweeps on **one** 184 919-cell two-torus mesh — control `f` = 0.5/0.5 and asymmetric `f` = 0.5/0.735, `w₂/w₁` = 1.472822047, `Z_p` = 1e6 Ω. Control reproduces step 2c: `‖S−Sᵀ‖/‖S‖` = 2.574356760e-11, **1.078e-15** from the record (band 1e-9). Asymmetric: **8.255602536e-09** — 320.7× the control but **5 orders inside** the unmoved 1e-3, i.e. prediction **B** at the Frobenius grain, so A's O(1e-2) does not happen. Mechanism, asserted at a pre-stated 1e-6: (i) `I₁(drive 2)` = `I₂(drive 1)` to **1.33e-10** — the transadmittance is discretely symmetric, so the current readout **is** the impressed source's adjoint (same facet set `S_i`, same weighting `ĥ_i/(R_i h_i)`, same vector the source is built from, on a complex-symmetric operator); (ii) `Z₁₂/Z₂₁` = `I₁(d1)/I₂(d2)` to **1.33e-10** — `_assemble_impedance_matrix` divides column *j* by the **driven** port's own current, so what it calls `Z` is a *terminated* transimpedance, not the open-circuit matrix reciprocity makes symmetric, and `Z_ij/Z_ji` collapses exactly to the ratio of the two driven-port self-currents (1 for equivalent ports, nothing in particular otherwise). Both runs identical to 8–10 digits. **Read the per-pair number, not the Frobenius one:** here `\|Z₁₂/Z₂₁\|` = **0.997537168** (phase −0.020146017°), a **0.25%** per-pair asymmetry — the same order as (d1)'s 0.2–1.6% table — which the Frobenius ratio hides because at `Z_p` = 1e6 Ω the kΩ diagonal (6.21 − 2.93j / 3.73 − 3.28j) drowns the ~1.13 Ω mutuals, whereas the birdcage's 50 Ω termination puts `Z₁₁` ≈ 21.7 Ω beside 17 Ω mutuals and lets the same per-pair asymmetry surface as 5.57e-03. **So (d1)'s reciprocity miss is not a discretisation residual and not birdcage-specific: it is the assembly's per-column normalisation, made visible by a matched termination.** Not fixed in-slot per the leg's scope — the fix is an assembly change (an open-circuit `Z`, or `S` from power waves as `_assemble_sparameter_matrix` already does) and it **moves the 2b/2c/(c)/(d0)/(d) records**, which is a review's ruling. |
 | **Ruling (2\*), 2026-08-23 18:00 review — fix scoped** | The fix is the **power-wave S assembly** on the gated routes (`S_ij = b_i/a_j`, `a_j` = `V_src/(2√z0)` at a matched drive — symmetric by mechanism identity (i)); the open-circuit-`Z` alternative is rejected on leg (c)'s near-degenerate 1e6 Ω column. The terminated `Z` stays as a documented diagnostic, never reciprocity-gated. Scoped as `PORT-9` legs **(d3)** (two-torus + class re-record under the (1\*) pattern, §9 item 2) and **(d3b)** (birdcage re-record, §9 item 4); **(d1′) serial on (d3b)**. This entry still closes with the (d1′) commit. |
 
-### `GEO-20` step 2 — the 32-port ring-gap sheet reconstruction is rank-width dependent
+### `GEO-20` step 2, re-headed 2026-08-28 (interactive session) — ~~the **32-port** ring-gap sheet reconstruction is rank-width dependent~~ **`birdcage_port_domain` is built with no ghost layer (`GhostMode.none`), so interior port facets on a partition boundary are unclassifiable — at *every* leg count; it reaches the 4-leg fixture at `-n 12`**
 
 | | |
 | --- | --- |
@@ -4603,6 +4603,84 @@ The tests are **not on `main`**: they are parked on
 > `_interface_facet_tags` fix is withheld until a review holds that table.
 > The attempt branch is kept as the fixture. Entry retires with the fix
 > commit, whichever chunk lands it.
+
+> **🔬 DIAGNOSED 2026-08-28, interactive session (at `883c52e`) — the
+> hypothesis above is WRONG in its location, and the cause is now measured.
+> The defect is not in `_interface_facet_tags`; it is that
+> `birdcage_port_domain` never asks for a ghost layer.**
+>
+> Found by the human operator running
+> `examples/meshing/07_birdcage_ring_gap_ports.py` at **`-n 12`**: `port P8
+> closure 0.990103697427 on the doubly-gapped mesh`, on the **4-leg,
+> 12-port** rung — the fixture `GEO-20` step 1 closed as exact. So the class
+> is *not* confined to 16 legs / 32 ports.
+>
+> **The `-n 4`/`-n 8` discriminator the ruling asked for, answered on the
+> small fixture** (probe: build the doubly-gapped rung, print every port's
+> closure; logs `20260828T1727*`–`20260828T1730*Z_GEO-20-widthprobe-n{1,2,4,8,12}.log`,
+> ~32 s each, **128 111 cells at every width**):
+>
+> | ranks | 1 | 2 | 4 | 8 | 12 |
+> |---|---|---|---|---|---|
+> | red ports | — | — | — | — | **P8** |
+>
+> Same geometry, same cell count; only the partition moves. The defect is a
+> **partition-density** property, not a leg-count or port-count property —
+> which is why 16 legs breaks at `-n 2` and 4 legs survives to `-n 8`.
+>
+> **The lost quantity is one facet.** P8 reads **175** air facets against 176
+> on every other ring port; its conductor count (102) and terminal ratio
+> (0.974454791) are identical to P7/P11/P12, i.e. the *sheet* reconstructs
+> correctly and only the boundary partition loses area.
+>
+> **Mechanism, measured** (`20260828T173142Z`/`20260828T173221Z_GEO-20-facetprobe-n{1,12}.log`)
+> — facets the rank **owns** whose second cell is not present locally, not
+> even as a ghost:
+>
+> ```
+> WIDTH  1: owned facets touching P8 = 1417, locally one-sided (counts==1) =  0
+> WIDTH 12: owned facets touching P8 = 1417, locally one-sided (counts==1) = 19  (ranks 2 and 5)
+> ```
+>
+> `_interface_facet_tags` selects `interior = counts == 2`, so all 19 drop out
+> of every interface group. Most are sheet-plane facets that belong to none of
+> the three groups anyway; exactly one faced air, and that is the missing
+> 0.99%.
+>
+> **Cause — diagnosed, one line.** `birdcage_port_domain` calls
+> `_model_to_mesh(gmsh.model, comm, rank, gdim=3)` (`io/mesh.py:3356`) with
+> **no partitioner**, i.e. gmshio's default `GhostMode.none` — no ghost layer
+> at all. `two_torus_domain` was given
+> `create_cell_partitioner(GhostMode.shared_facet, 2)` in `PORT-1` step
+> 3b-iv for exactly this reason, and that site's comment says so verbatim:
+> the port facets are *interior*, classifying one needs the tag of the cell
+> on both sides, and "`shared_facet` is what makes that cell present as a
+> ghost … Plumbed here only, so no other fixture changes partition." The
+> birdcage reconstructs interior port facets the same way and was never given
+> the ghost layer that reconstruction requires.
+>
+> **Confirmed by construction, then reverted** (`20260828T173412Z_GEO-20-ghostfix-probe-n12.log`):
+> with the same partitioner plumbed into `birdcage_port_domain`, `-n 12` reads
+> **`1.000000000000` on all 12 ports**, P8 back to **176** air facets,
+> **128 111** cells unchanged, mesh 26.08 s unchanged. The patch was **not
+> landed** — it changes the partition of the fixture `GEO-19`, `GEO-20`,
+> `PORT-9` and `PORT-11` all share, which is a re-record question. `GEO-24`
+> owns it.
+>
+> **What this revises in the rows above.** "Resolves with" is superseded: the
+> fix is **not** ghost-layer-aware matching inside `_interface_facet_tags`
+> (no reconstruction logic changes), and it does **not** touch every module
+> that reconstructs a sheet — it is one keyword at one call site. The
+> ruling's predicted "moving broken-port set" is confirmed as *width*-moving;
+> the per-rank ownership table it asked for is no longer needed to locate the
+> cause, though `GEO-24` step 1 still owes the before/after readings.
+>
+> **A record this puts a caveat on:** `GEO-20` step 1's "closure and
+> volume/analytic `1.000000000000` on all 12" is **width-conditional** — true
+> at ≤ 8 ranks, false at 12. Every reading taken through
+> `_interface_facet_tags` on this fixture inherits that caveat until the plumb
+> lands. `GEO-19`'s own remark that passing at `-n 2` is "luck of the
+> partition, not immunity" is now measured rather than suspected.
 
 ## Recording a new entry
 
