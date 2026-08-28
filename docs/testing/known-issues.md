@@ -241,7 +241,25 @@ unless fixing it is the task.
 | **Verified at** | `b39799e`, real build, `-n 2`. |
 | **Fix** | **Deliberately not fixed** — `OPS-26` is a census and files rather than repairs, per the item's own rule. The repair is one line (give `_DummyComm` an `allgather` returning `[value]`), but it belongs with a `PORT-0`/`PORT-1` owner who can also dispose of entry 3's assertions on the same module, and it needs a decision this census may not take: whether the deprecated placeholder route is kept runnable at all. |
 
-### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (b), 04:30 slot) — a **fifth** site of "Invalid boundary mesh (overlapping facets)", and the **second** confirmed rank-dependent one: `test_phantom_material_assignment_and_time_harmonic_pipeline_wiring` PASSES on one rank and FAILS on the other
+### 🔴 OPEN 2026-08-27, re-headed 2026-08-28 (`GEO-23` step 1) — a **fifth** site of "Invalid boundary mesh (overlapping facets)" — ~~and the **second** confirmed rank-dependent one~~ **NOT rank-dependent: it fails at `-n 1` too, and the "PASSES on one rank" reading was a log-interleave artifact**
+
+> **CORRECTED 2026-08-28 by measurement (`GEO-23` step 1, 09:00 slot).** This
+> entry's "PASSED on one rank, FAILED on the other" claim does not survive an
+> `-n 1` run. At `-n 1` the test is **Status 1 in 2 s** with the same
+> `overlapping facets` string (`20260828T140613Z_GEO-23-step1b-phantommaterial-n1.log`,
+> `1 failed, 3 passed in 1.18s`), so the failure is a deterministic property of
+> the geometry. Re-reading the `-n 2` log with that in hand
+> (`20260828T140622Z_…-n2.log`, lines 48–56): the second rank prints its three
+> passes and then **nothing** — it never reaches the fourth name. **Absence of
+> a verdict is not a PASS.** The `-n 2` Status 124 is the surviving rank
+> blocking in the collective after the other raises — a **teardown/raise-path**
+> effect, not a partition-dependent trigger. Consequently the row below headed
+> "What it adds to `GEO-23`" is withdrawn: there is **no** second
+> partition-dependent site, and the resolution-floor reading is *supported*,
+> not weakened — `GEO-23` step 1's ladder shows this generator failing only at
+> its own `resolution=0.03` and meshing at 0.024 / 0.0192 / 0.01536 / 0.012288.
+> The entry stays OPEN (it retires with `GEO-23` step 2); only its *diagnosis*
+> is corrected.
 
 | | |
 |---|---|
@@ -254,8 +272,34 @@ unless fixing it is the task.
 | **Verified at** | `b39799e`, complex build, `-n 2`. |
 | **Fix** | Not fixed, not diagnosed further — `OPS-26` files, `GEO-23` owns. |
 
-### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a), fourth slot) — `test_boundary_condition_selection.py` **deadlocks the whole command**: the "overlapping facets" gmsh abort is **rank-dependent**, one rank raises while the other returns
+### 🔴 OPEN 2026-08-27, re-headed 2026-08-28 (`GEO-23` step 1) — `test_boundary_condition_selection.py` **deadlocks the whole command** at `-n 2` — ~~the "overlapping facets" gmsh abort is **rank-dependent**, one rank raises while the other returns~~ **the abort is geometry-deterministic (red at `-n 1`); only the deadlock is rank-dependent**
 
+> **CORRECTED 2026-08-28 by measurement (`GEO-23` step 1, 09:00 slot) — this
+> entry's own requested `-n 1` command has now been spent, and it resolves the
+> pre-stated reading against rank-dependence.** At `-n 1` the test is **Status
+> 1 in 3 s** with the same `overlapping facets on surface 1 surface 1`
+> (`20260828T140041Z_GEO-23-step1a-bcsel-n1.log`,
+> `1 failed, 2 passed, 1 skipped in 1.85s`). The failure is therefore a
+> deterministic property of the geometry, and `GEO-23` step 1's ladder confirms
+> it: `cylindrical_domain` fails **only** at this fixture's own
+> `resolution=0.04` and meshes at 0.032 (1 213 cells) / 0.0256 / 0.02048 /
+> 0.016384.
+>
+> **The "one rank raises while the other returns" observation is a
+> log-interleave artifact.** In the `-n 2` log
+> (`20260828T140055Z_GEO-23-step1a-bcsel-n2.log`, lines 48–54) the apparent
+> `PASSED [ 25%]` on the failing name is the *other* rank's verdict for its own
+> **first** test, appended mid-line to this rank's name line — the percentages
+> settle it (`[ 25%]` cannot be the third of four tests), and the failing
+> name's only verdict anywhere in the log is `FAILED [ 75%]`. This is exactly
+> the interleave trap `GEO-23`'s §7 entry warns about. What *is* rank-dependent
+> is only the **teardown**: one rank raises, the survivor blocks in the
+> collective, Status 124 at 121 s. `birdcage_port_domain` is the control —
+> it re-raises the rank-0 throw as a `RuntimeError` on every rank and footers
+> at Status 1 in 5 s, so wrapping the raise is a step-2 lever that would retire
+> the deadlock without touching any mesh. Entry stays OPEN (retires with
+> `GEO-23` step 2); only its diagnosis is corrected.
+>
 > **OWNER ASSIGNED 2026-08-27, 03:00 review: `GEO-23`** step 1 (a) — the
 > `-n 1` command named at the foot of this entry is its first move.
 >
@@ -332,6 +376,21 @@ unless fixing it is the task.
 
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a), second slot) — `test_birdcage_volumes_partition_the_box` aborts in gmsh with **the same "Invalid boundary mesh (overlapping facets)"** — this is the **third** geometry to carry that string, and the first on `birdcage_port_domain`'s own production path
 
+> **MEASURED 2026-08-28 (`GEO-23` step 1, 09:00 slot) — geometry-deterministic,
+> and this site is the family's positive control.** Red at **both** widths with
+> the same string: `-n 1` **Status 1, 4 s** (`1 failed, 2 passed in 2.73s`,
+> `20260828T140313Z_GEO-23-step1b-birdcagepart-n1.log`) and `-n 2` **Status 1,
+> 5 s** (`20260828T140326Z_…-n2-ports.log`). Note the `-n 2` status: unlike the
+> three sibling sites, this one **does not deadlock** — `birdcage_port_domain`
+> re-raises the rank-0 gmsh throw as `RuntimeError: birdcage_port_domain
+> geometry generation failed on rank 0` on *every* rank, so the command footers
+> in 5 s where the unwrapped siblings burn 120 s each. That makes this entry
+> the evidence that the family's deadlock is a **raise-path** property, not a
+> geometry one, and wrapping the throw is a `GEO-23` step-2 lever that touches
+> no mesh, band or record. The two adjacent tests in the module stayed green at
+> both widths. Not laddered here — `GEO-21` step 2 already laddered this
+> generator and `GEO-23` must not re-record it. Entry stays OPEN.
+>
 > **OWNER ASSIGNED 2026-08-27, 03:00 review: `GEO-23`** step 1 (b)/(c) —
 > taken together with the two sibling entries, as this entry asks.
 >
@@ -396,6 +455,22 @@ unless fixing it is the task.
 
 ### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (a)) — `test_phantom_field_metrics_and_exports_are_finite` aborts in gmsh with **the same "Invalid boundary mesh (overlapping facets)"** as the entry below, on the **coil+phantom** geometry — and its MPI teardown then **hangs the rest of the command**
 
+> **MEASURED 2026-08-28 (`GEO-23` step 1, 09:00 slot) — geometry-deterministic,
+> with a measured floor one step away.** `-n 1` **Status 1, 3 s**
+> (`1 failed, 1 passed in 1.17s`,
+> `20260828T140352Z_GEO-23-step1b-phantommetrics-n1.log`); `-n 2` **Status 124,
+> 120 s** with a complete summary then `MPI_Abort`
+> (`20260828T140401Z_…-n2.log`) — so the abort is a property of the geometry
+> and only the *hang* is rank-dependent (see the `birdcage_port_domain` entry
+> above: wrapping the raise removes it). The `GEO-23` ladder, one process per
+> rung at `-n 1`, shows `coil_phantom_domain` failing **only** at this
+> fixture's own `resolution=0.03` and meshing at **0.024 (5 464 cells) /
+> 0.0192 (9 330) / 0.01536 (16 177) / 0.012288 (28 485)** — monotone, one
+> 0.8-step from green. **This site and
+> `tests/materials/test_phantom_material_model.py` are the SAME call**:
+> byte-identical `coil_phantom_domain` kwargs, so one sizing change would
+> retire both reds. Entry stays OPEN (retires with step 2).
+>
 > **OWNER ASSIGNED 2026-08-27, 03:00 review: `GEO-23`** step 1 (b)/(c).
 >
 > **Where this fired.**
@@ -456,10 +531,25 @@ unless fixing it is the task.
 > **Verified at** `18bb604` (tree clean at slot start; no source edited this
 > slot).
 
-### ⚫ DEAD MODULE, filed 2026-08-27 (`OPS-26` step 2 leg (a)) — `tests/mesh/test_cylindrical_domain.py` collects **zero tests**
+### ✅ RETIRED 2026-08-28 (`GEO-23` step 1 (d), 09:00 slot) — ~~DEAD MODULE, filed 2026-08-27 (`OPS-26` step 2 leg (a)) — `tests/mesh/test_cylindrical_domain.py` collects **zero tests**~~
 
-> **OWNER ASSIGNED 2026-08-27, 03:00 review: `GEO-23`** step 1 (d) — convert
-> to one asserting test or delete; either retires this entry.
+> **RETIRED by conversion, not deletion.** The module is now one asserting
+> test, `test_cylindrical_domain_tag_volumes_partition_the_mesh`: the identity
+> the old script only `print`ed, in quantitative form — the inner and outer tag
+> volumes sum to the mesh volume at the shared helper's **1e-9** band (and the
+> helper *reduces*, where the old `(ct.values == 1).sum()` counts were
+> rank-local and never were) — plus an outer > inner ordering assertion that
+> catches a tag swap the sum alone cannot see. `1 passed in 1.38s` at `-n 2`,
+> and `tests/mesh --collect-only` now reports **58** where this module
+> contributed **0** before
+> (`20260828T141217Z_GEO-23-step1d-cylindrical-module.log`, Status 0, 5 s). The
+> collection-time mesh build is gone with it — the build now happens inside the
+> test. Its `resolution=0.02` was deliberately left unmoved: `GEO-23` step 1's
+> ladder puts this generator's floor at 0.04-fails / 0.032-meshes, so 0.02 is
+> comfortably inside the meshing range and is not that chunk's to change.
+>
+> ~~**OWNER ASSIGNED 2026-08-27, 03:00 review: `GEO-23`** step 1 (d) — convert
+> to one asserting test or delete; either retires this entry.~~
 >
 > The file is a module-level *script*, not a test module: it calls
 > `MeshGenerator.cylindrical_domain(...)` and `print`s at import time and

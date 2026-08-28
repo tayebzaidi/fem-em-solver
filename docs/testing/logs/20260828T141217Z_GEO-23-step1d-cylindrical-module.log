@@ -1,0 +1,62 @@
+# Test Run
+- Chunk: GEO-23-step1d-cylindrical-module
+- Commit: 200916a5bd44c336bcae6a6edd3b64245ce83c87
+- Time (UTC): 2026-08-28 14:12:17
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/mesh/test_cylindrical_domain.py -v --tb=short && PYTHONPATH=/workspace/src timeout -k 30 60 python3 -m pytest tests/mesh --collect-only -q 2>&1 | tail -3'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 28 09:11 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 2 python3 -m pytest tests/mesh/test_cylindrical_domain.py -v --tb=short && PYTHONPATH=/workspace/src timeout -k 30 60 python3 -m pytest tests/mesh --collect-only -q 2>&1 | tail -3'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 1 item
+
+tests/mesh/test_cylindrical_domain.py::test_cylindrical_domain_tag_volumes_partition_the_mesh collected 1 item
+
+tests/mesh/test_cylindrical_domain.py::test_cylindrical_domain_tag_volumes_partition_the_mesh PASSED [100%]PASSED [100%]
+
+============================== 1 passed in 1.38s ===============================
+
+
+============================== 1 passed in 1.36s ===============================
+        <Function test_sphere_in_box_outer_boundary_area>
+
+========================= 58 tests collected in 1.34s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 5

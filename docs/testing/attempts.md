@@ -19907,3 +19907,166 @@ with a MeshAdapt fallback that sometimes rescues it — is a mechanism candidate
 for that family too, and a cheaper one to test than the rank-width hypothesis
 `GEO-20` is blocked on.
 
+
+---
+
+## 2026-08-28T14:15Z — `GEO-23` step 1 — **complete** (09:00 implementer slot)
+
+**Outcome: complete.** The 2 × 4 Status-by-rank-width table, the resolution
+ladders, the `GEO-21` negative control and clause (d) all landed on `main`;
+`src/` untouched, no band moved, no record re-recorded, no fix attempted.
+`GEO-23` goes ⬜ → 🟡 — step 2 is a review's call from this table, exactly as
+the §7 entry scopes it. Eight compute windows, 318 s of recorded elapsed.
+
+**The table (every cell a footered run).** Real build unless noted.
+
+| # | Module | Build | `-n 1` | `-n 2` |
+|---|---|---|---|---|
+| 1 | `solver/test_boundary_condition_selection.py` | real | **Status 1, 3 s** — `Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1`; `1 failed, 2 passed, 1 skipped in 1.85s` | **Status 124, 121 s** — same exception, complete summary `1 failed, 2 passed, 1 skipped in 0.92s`, then `Abort(59) … MPI_Abort` |
+| 2 | `mesh/test_birdcage_port_tags.py` (+ `tests/ports` rider at `-n 2`) | real | **Status 1, 4 s** — `… on surface 59 surface 79`; `1 failed, 2 passed in 2.73s` | **Status 1, 5 s** — `3 failed, 17 passed in 2.79s`, **no deadlock**; the non-raising rank reports the wrapped `RuntimeError: birdcage_port_domain geometry generation failed on rank 0` |
+| 3 | `post/test_phantom_field_metrics.py` | complex | **Status 1, 3 s** — `… on surface 1 surface 1`; `1 failed, 1 passed in 1.17s` | **Status 124, 120 s** — same exception, complete summary `1 failed, 1 passed in 1.10s`, `MPI_Abort` |
+| 4 | `materials/test_phantom_material_model.py` | complex | **Status 1, 2 s** — `… on surface 1 surface 1`; `1 failed, 3 passed in 1.18s` | **Status 124, 121 s** — same exception, complete summary `1 failed, 3 passed in 1.14s`, `MPI_Abort` |
+
+Logs, in order: `20260828T140041Z_GEO-23-step1a-bcsel-n1.log`,
+`20260828T140055Z_GEO-23-step1a-bcsel-n2.log`,
+`20260828T140313Z_GEO-23-step1b-birdcagepart-n1.log`,
+`20260828T140326Z_GEO-23-step1b-birdcagepart-n2-ports.log`,
+`20260828T140352Z_GEO-23-step1b-phantommetrics-n1.log`,
+`20260828T140401Z_GEO-23-step1b-phantommetrics-n2.log`,
+`20260828T140613Z_GEO-23-step1b-phantommaterial-n1.log`,
+`20260828T140622Z_GEO-23-step1b-phantommaterial-n2.log`.
+
+**Finding A — the headline, and it inverts the family's standing reading: NO
+site is partition-dependent. All four fail at `-n 1`.** The step's pre-stated
+reading ("green at `-n 1` ⇒ the failure itself is partition-dependent")
+therefore resolves the *other* way on every row: the gmsh abort is a
+deterministic property of each geometry at its own sizing, and rank width
+changes only what happens **after** the throw.
+
+**Finding B — the two "rank-divergent" observations in known-issues are
+log-interleave artifacts, not measurements.** Both entries (2026-08-27, the
+bcsel one and the `phantom_material_model` one) claim the same test PASSED on
+one rank and FAILED on the other. Re-read with the `-n 1` reading in hand,
+neither log says that:
+
+* bcsel `-n 2` (this slot, lines 48–54): rank B's `PASSED [ 25%]` is appended
+  mid-line to rank A's *name* line for the failing test — the **percentages
+  settle it**, `[ 25%]` is rank B's verdict for its own first test
+  (`accepts_enum_and_string_values`), and the failing name's only verdict
+  anywhere in the log is `FAILED [ 75%]`. This is precisely the trap the §7
+  entry itself names ("the real-build log's two streams interleave mid-line").
+* `phantom_material_model` `-n 2` (lines 48–56): the second rank prints its
+  three passes and then **nothing** — it never reaches the fourth name at all.
+  Absence of a verdict is not a PASS.
+
+So the "two independent partition-dependent sites" argument — which the
+2026-08-27 10:30 review called "the strongest evidence yet against the shared
+resolution-floor reading" — is withdrawn by measurement. The resolution-floor
+reading is not merely intact; findings C/D below are direct evidence *for* it.
+
+**Finding C — row 2 is the control that explains the deadlock, and the
+deadlock is a raise-path property, not a geometry one.** `birdcage_port_domain`
+fails on rank 0 through a wrapper that re-raises a `RuntimeError` on **every**
+rank, so `-n 2` footers cleanly at Status 1 in 5 s. The three unwrapped sites
+let one rank exit the collective while the other blocks, and cost 120 s each.
+That is a concrete, cheap step-2 lever: wrapping the raise makes three
+currently-deadlocking modules footer in seconds without touching any mesh.
+
+**Finding D — the resolution ladders: both generators sit exactly ONE 0.8-step
+above a meshing sizing, and both are monotone.** Fresh process per rung,
+`-n 1`, `scripts/probes/geo23_step1_ladder_probe.py`:
+
+```
+cylindrical_domain   h=0.040000  FAIL   overlapping facets on surface 1 surface 1  (0.0 s)   <- the fixture's own value
+                     h=0.032000  MESHES cells=    1213  (0.2 s)   <- coarsest meshing rung
+                     h=0.025600  MESHES cells=    1769  (0.2 s)
+                     h=0.020480  MESHES cells=    2478  (0.3 s)
+                     h=0.016384  MESHES cells=    3834  (0.5 s)
+coil_phantom_domain  h=0.030000  FAIL   overlapping facets on surface 1 surface 1  (0.2 s)   <- the fixture's own value
+                     h=0.024000  MESHES cells=    5464  (0.7 s)   <- coarsest meshing rung
+                     h=0.019200  MESHES cells=    9330  (1.3 s)
+                     h=0.015360  MESHES cells=   16177  (2.1 s)
+                     h=0.012288  MESHES cells=   28485  (3.4 s)
+```
+
+(`20260828T141022Z_GEO-23-step1c-ladder-cylindrical-perproc.log`, 6 s;
+`20260828T141037Z_GEO-23-step1c-ladder-coilphantom.log`, 13 s. Both Status 0.)
+`birdcage_port_domain` was deliberately **not** laddered — `GEO-21` step 2
+already did it and this chunk must not re-record that.
+
+**Finding E — the four sites are three generators, and two of them are one
+call.** `test_phantom_field_metrics.py:28` and
+`test_phantom_material_model.py:103` call `coil_phantom_domain` with
+**byte-identical** kwargs (`0.07 / 0.010 / 0.08 / 0.03 / 0.08 / 0.04`,
+`resolution=0.03`). So the family's "five sites" are **three geometries**:
+`cylindrical_domain` @ 0.04, `coil_phantom_domain` @ 0.03 (×2 modules), and
+`birdcage_port_domain` (`GEO-21`'s). One sizing change retires two of the
+census reds; the unit of repair is the generator call, not the file — the same
+shape `OPS-26` finding 30 found for the stale-record family.
+
+**Finding F — methodological, and it disposes of a signature the plan told me
+to record and not chase.** My first ladder walked all five cylindrical rungs
+**in one process** and read `FAIL` on every rung, with rungs 2–5 returning
+`IndexError: index 0 is out of bounds for axis 0 with size 0` in **0.0 s**
+(`20260828T140947Z_GEO-23-step1c-ladder-cylindrical.log`, Status 0). Re-run
+one-process-per-rung, the identical rungs **mesh** (finding D). So an
+in-process ladder over this family measures **gmsh state after a prior throw**,
+not the geometry — and the `IndexError … size 0` signature the §7 entry flagged
+as "the leg-(c) candidate signature" is **contamination, not a second defect**.
+Two logs from the same probe, opposite verdicts, is the evidence. The probe
+carries this as a code comment so nobody re-derives it; the rule for the family
+is *one meshing attempt per process, always*.
+
+**Clause (b) rider (finding 44, ruled 2026-08-28 03:00) — discharged, no
+drift.** `tests/ports` appended to row 2's real `-n 2` command collected its 17
+names in the same 5 s window and read exactly the two pre-existing entry-3
+names red (`test_port_orientation_flip_changes_off_diagonal_sparameter_sign`,
+`assert np.float64(0.0) > 0.0`;
+`test_n_port_sweep_assembles_finite_matrix_with_expected_shape`,
+`assert np.False_`) — i.e. the expected `2 failed, 15 passed`, no third red, no
+new double drift. `tests/ports` is now inside a scheduled command.
+
+**Negative control — green.** `tests/mesh/test_birdcage_conductor_sizing.py`
+at `-n 2`, bands unmoved: `1 passed in 38.81s`, Status 0, 40 s recorded
+(`20260828T141100Z_GEO-23-step1-control-conductorsizing.log`) against its
+41–43 s record. "Overlapping facets" is shown **absent** on a sizing this
+project already ruled meshable on the same image. Row 2's two adjacent tests
+(`…layout_diagnostics_match_the_closed_forms`,
+`…rejects_too_small_or_overlapping_port_regions`) stayed green at both widths.
+
+**Clause (d) — the dead module is now one asserting test.**
+`tests/mesh/test_cylindrical_domain.py` collected **zero** tests, meshed at
+import time and only `print`ed three rank-local counts. It is now
+`test_cylindrical_domain_tag_volumes_partition_the_mesh`: the printed identity
+in its quantitative form, tagged volumes summing to the mesh volume at the
+helper's 1e-9 band (which reduces, where the old counts never did), plus an
+outer > inner ordering assertion the sum alone cannot see. `1 passed in 1.38s`
+at `-n 2`, and `tests/mesh --collect-only` now reports **58** tests where the
+module contributed 0 before
+(`20260828T141217Z_GEO-23-step1d-cylindrical-module.log`, Status 0, 5 s). Its
+`resolution=0.02` was left untouched — inside finding D's meshing range, and
+not this chunk's to move.
+
+**FFCx stub sweep** (finding 27 rule): run before window 1 and again after each
+of the two exit-124 windows — **0 zero-byte `.c` files, 0 stray `python3`, all
+three times.**
+
+**Scope kept.** No `src/` change, no fixture resolution moved, no band touched,
+no re-record, no gmsh fix. The four known-issues entries stay OPEN — they
+retire only with step 2 — but all four are re-headed with this measurement, and
+the two that asserted rank-divergence are corrected in place.
+
+**Hypothesis for step 2 (a review's call, not mine).** The family is one defect
+with two independent, cheap levers, and they are separable: (i) a **sizing**
+lever — every failing call sits one 0.8-step above a meshing value, so moving
+three call sites' `resolution` retires four census reds, at the cost of a
+re-record licence for anything pinned to those meshes (finding E says two of
+the four share one call, so it is three edits, not four); (ii) a **raise-path**
+lever — wrapping the rank-0 gmsh throw the way `birdcage_port_domain` already
+does (finding C) converts three 120 s deadlocks into 5 s footered reds and
+touches no mesh, no band and no record at all. (ii) is strictly cheaper, is
+independent of (i), and would have saved this slot ~240 s of its own 318 s.
+Neither is a gmsh fix; `GEO-22`'s straight-wire floor is the sibling question
+and note the contrast — **that** floor is non-monotone (2026-08-28 07:30 slot),
+these two are cleanly monotone, so "coarse-resolution floor" is not one
+mechanism across the whole `overlapping facets` family either.

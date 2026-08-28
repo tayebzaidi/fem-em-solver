@@ -1,0 +1,80 @@
+# Test Run
+- Chunk: GEO-23-step1c-ladder-cylindrical
+- Commit: 200916a5bd44c336bcae6a6edd3b64245ce83c87
+- Time (UTC): 2026-08-28 14:09:48
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 scripts/probes/geo23_step1_ladder_probe.py cylindrical'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 28 09:09 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 scripts/probes/geo23_step1_ladder_probe.py cylindrical'\'''
+
+[probe] === cylindrical_domain === five rungs from h0=0.04 at ratio 0.8
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Circle)
+Info    : [ 20%] Meshing curve 2 (Line)
+Info    : [ 40%] Meshing curve 3 (Circle)
+Info    : [ 60%] Meshing curve 4 (Circle)
+Info    : [ 70%] Meshing curve 5 (Line)
+Info    : [ 90%] Meshing curve 6 (Circle)
+Info    : Done meshing 1D (Wall 0.00203709s, CPU 0.002039s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Cylinder, Frontal-Delaunay)
+Info    : [  0%] 6 triangles are equivalent
+Info    : [  0%] Meshing surface 1 (Cylinder, MeshAdapt)
+Info    : [ 20%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 40%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 60%] Meshing surface 4 (Cylinder, Frontal-Delaunay)
+Info    : [ 70%] Meshing surface 5 (Plane, Frontal-Delaunay)
+Info    : [ 90%] Meshing surface 6 (Plane, Frontal-Delaunay)
+Info    : Done meshing 2D (Wall 0.0348518s, CPU 0.034774s)
+Info    : Meshing 3D...
+Info    : 3D Meshing 2 volumes with 1 connected component
+Info    : Tetrahedrizing 184 nodes...
+Info    : Done tetrahedrizing 192 nodes (Wall 0.00178669s, CPU 0.001786s)
+Info    : Reconstructing mesh...
+Info    :  - Creating surface mesh
+Info    : Found two duplicated facets.
+Info    :   1st: [11, 53, 54] #1
+Info    :   2nd: [11, 53, 54] #1
+Error   : Invalid boundary mesh (overlapping facets) on surface 1 surface 1
+[probe] cylindrical_domain h=0.040000   FAIL   Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1  (0.1 s)
+Warning : Gmsh has aleady been initialized
+Info    : I'm busy! Ask me that later...
+[probe] cylindrical_domain h=0.032000   FAIL   IndexError: index 0 is out of bounds for axis 0 with size 0  (0.0 s)
+Warning : Gmsh has aleady been initialized
+Info    : I'm busy! Ask me that later...
+[probe] cylindrical_domain h=0.025600   FAIL   IndexError: index 0 is out of bounds for axis 0 with size 0  (0.0 s)
+Warning : Gmsh has aleady been initialized
+Info    : I'm busy! Ask me that later...
+Warning : Gmsh has aleady been initialized
+[probe] cylindrical_domain h=0.020480   FAIL   IndexError: index 0 is out of bounds for axis 0 with size 0  (0.0 s)
+Info    : I'm busy! Ask me that later...
+[probe] cylindrical_domain h=0.016384   FAIL   IndexError: index 0 is out of bounds for axis 0 with size 0  (0.0 s)
+
+## Exit
+- Status: 0
+- Elapsed (s): 1

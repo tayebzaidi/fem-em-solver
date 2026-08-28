@@ -3021,7 +3021,7 @@ Independent of the §2.1 physics defect; meshes are meshes.
 | `GEO-20` | High-pass birdcage ring-gap port layout (`ring_gap_length`, `2·leg_count` ports, the `GEO-18` pattern on the end rings) — 32-port directive item (b); step 1 at 4 legs, step 2 at 16 after `GEO-19` (commissioned 2026-08-23 weekly review) | 🟡 *(**step 1 ✅ 2026-08-24** — the 8 ring ports exist at 4 legs and every pre-stated gate is green twice in-slot: terminal **0.974455** of the closed-form `2·π·r_ring²` inside the [0.95, 1.0] inscribed band and equal across the 8 to **≈ 2e-8** (gate 1e-5; digit corrected by the 10:30 review audit — see the prose entry), closure and port-volume **1.000000000000**, sheet meshed/analytic **1.000000000000** with out-of-plane spread **5.042e-18 m**, C4 and top/bottom-mirror spreads below 1e-12, `GEO-9` partition green, conductor 0.969275 ≥ 0.95; negative controls green — kwarg off reproduces the uncut birdcage and the leg+ring mesh is a 12-port mesh with **both** identity families exact. Step 2 (16 legs, 32 ports) is serial on `GEO-19`. **Step 2 attempt 1 2026-08-28 — negative result, parked on `attempt/GEO-20-step2-20260828T094500Z`, no band landed.** The 16-leg ring-gapped fixture **builds** (265 621 cells, 48 ports = 16 leg + 32 ring) and is **green at `-n 1`** (`20260828T093352Z_GEO-20-step2-probe1.log`, `1 passed` / 275 s) but **red at `-n 2` on the identical geometry** (`20260828T093839Z_GEO-20-step2-record.log`, Status 1 / 198 s): three of the 32 ring sheets do not reconstruct — P30 and P37 at **0 facets**, P45 at **5 facets / 0.315302109223** of `w²` — against 1.000000000000 on the other 29, and P30's boundary closure reads **0.981164653445** against 1e-9. Everything not routed through a sheet is exact at both widths: 32/32 port volumes 1.000000000000 of `2·R·w²·tan α`, `GEO-9` partition and air-box closure 1.000000000000, ring arcs against Pappus 1.000000000000, conductor 0.976465 of CAD, no phantom contact. **The terminals are the finding that did land as information:** all 32 read 0.974454791–0.974455668, spread **2.572e-07**, i.e. the ring family shows **no** azimuth-class split at 16 legs where the leg family split three ways at 8.434e-04 (`GEO-19` step C) — the ruled per-class bands were applied from the start and would have passed, as would the flat 1e-5. Both negative controls reproduce digit for digit in the same run: kwarg off at 16 legs **307 296** cells / C16 sheet spread **1.331e-15** (ratio 1.000000), and the 4-leg ring rung **110 786** cells (ratio 1.000000) with **one** azimuth class at intra 4.198e-08. **Cost rung measured and citable** (a cell count and a wall time, not a reconstruction reading): 4 → 16 legs ring-gapped **110 786 → 265 621 cells (2.3976×)**, mesh **23.30 → 72.23 s (3.1003×)** — cheaper than the leg-gapped 16-leg build's 307 296 / 72.23 s. Known-issues entry opened; the rank-width dependence is **not diagnosed**, the hypothesis is `_interface_facet_tags` matching on owned cells only, and the `-n 4`/`-n 8` discriminator costs no `src/` change. A fix in `_interface_facet_tags` touches every module that reconstructs a sheet and could move existing records — **a review's ruling, not an in-slot fix**)* | standard |
 | `GEO-21` | Dispose of the red `GEO-15` graded-conductor gate on 0.11: the ungraded baseline (`conductor_resolution=None`) no longer meshes at any global resolution tried, so the whole gate is non-executing on `main` (found by `EX-30` leg (mesh); commissioned 2026-08-25 18:00 review; known-issues 2026-08-25) | ✅ **2026-08-26** *(status marker flipped by the 18:00 review audit — the prose entry and the `GEO-15` row already read ✅; history: step 1 measured 2026-08-26, blocked on a ruling — the candidate control `h_c = 3.2e-3` recovers **0.916742** of the CAD mass, which is **neither** pre-stated branch: not ≤ 0.90 "clearly below", not clearing 0.95, and **inside the module's own `CAD_MASS_GATE - 0.05` = 0.90 separation guard**, so branch (2) as named cannot produce a green gate without loosening that guard. Graded side green — 0.966977 at 98 666 cells. Coarse-ward ladder measured and handed over, nothing adopted; see the entry. **Ruled 2026-08-26 03:00 review: option (b), control = 4.8e-3** — separation 0.846150 vs 0.966977 with the 0.90 guard unmoved, demoted claim (fine-vs-coarse grading) stated; 6.4e-3 rejected for cliff adjacency. **Step 2 ✅ 2026-08-26 (04:30 slot) — landed as written and the chunk closes**: control `None` → 4.8e-3 version-tagged with the six-rung probe table in-comment, demoted claim (fine vs coarse grading) in the module docstring and the `mesh:3` guide, gate `1 passed in 41.11s` at 0.846150 / 0.916742 / 0.966977 with the 0.95 gate and the 0.90 separation guard unmoved, `mesh:3` green at separation 0.120826, docrefs `dead=0 guide=0 stale=13 exit=2` giving `meshing` 2 → 0; known-issues gate red retired, generator-continuum finding re-headed and open)* | standard |
 | `GEO-22` | `straight_wire_domain` coarse-resolution floor on 0.11: bisect the `[0.008, 0.010)` threshold and land a measured guard so a too-coarse request raises legibly instead of aborting inside gmsh (owner for the `EX-30` leg (root) finding; commissioned 2026-08-26 18:00 review; known-issues 2026-08-25, re-headed 08-26 and again 08-28) | 🟡 — **step 1 ✅ 2026-08-28 as a measured negative: there is no floor.** The 2.5e-4 sweep of `[0.008, 0.010]` reads **non-monotone on both geometries** — `h = 0.00875` fails while coarser rungs mesh — and reproduces **bit-identically** across two runs, so no `RESOLUTION_FLOOR` can be written and none was; `src/` untouched. Step 2 is a review's call on guard *shape* | smoke (probe `-n 1`) + standard (gate) |
-| `GEO-23` | The 0.11 "Invalid boundary mesh (overlapping facets)" family: one owner for the three `OPS-26` census reds (coil+phantom generator, `birdcage_port_domain` partition test, and the **rank-dependent** `test_boundary_condition_selection.py` deadlock) plus the dead `test_cylindrical_domain.py` module — classify each as geometry-deterministic or partition-dependent, ladder the resolution, land no fix (commissioned 2026-08-27 03:00 review; four known-issues entries of 2026-08-27) | ⬜ | smoke (`-n 1` probes) + standard (`-n 2` ladders) |
+| `GEO-23` | The 0.11 "Invalid boundary mesh (overlapping facets)" family: one owner for the three `OPS-26` census reds (coil+phantom generator, `birdcage_port_domain` partition test, and the **rank-dependent** `test_boundary_condition_selection.py` deadlock) plus the dead `test_cylindrical_domain.py` module — classify each as geometry-deterministic or partition-dependent, ladder the resolution, land no fix (commissioned 2026-08-27 03:00 review; four known-issues entries of 2026-08-27). ***Step 1 ✅ 2026-08-28 (09:00 slot)** — all four sites are **geometry-deterministic**, red at `-n 1` (2–4 s, Status 1); the two "rank-dependent" claims are **log-interleave artifacts, withdrawn by measurement**; the `-n 2` deadlock is a **raise-path** property (row 2's wrapped re-raise footers at Status 1 in 5 s where the three unwrapped sites cost 120 s each); both laddered generators are **monotone**, each failing exactly one 0.8-step above a meshing sizing (`cylindrical_domain` 0.040 → meshes 0.032/1 213 cells; `coil_phantom_domain` 0.030 → meshes 0.024/5 464 cells); the four sites are **three generators** (the two phantom modules share one byte-identical call); the recorded `IndexError … size 0` signature is **in-process gmsh contamination, not a second defect**; control green at unmoved bands; the dead module is now one asserting 1e-9 partition test. Step 2 (a review's call) has two measured, separable levers — sizing and raise-path.* | 🟡 | smoke (`-n 1` probes) + standard (`-n 2` ladders) |
 
 > `GEO-4`'s substance is discharged for the two-torus fixture (`air_padding` +
 > graded sizing), but it stays 🧪 until its own test executes. **Every other
@@ -3997,7 +3997,7 @@ exists; known-issues entry of 2026-08-25, re-headed 08-26.)*
 >     instead of a global `resolution`, or a documented allowlist of verified
 >     rungs.
 
-**`GEO-23` — the 0.11 "overlapping facets" family: classify, ladder, own** ⬜
+**`GEO-23` — the 0.11 "overlapping facets" family: classify, ladder, own** 🟡
 *(commissioned 2026-08-27 03:00 review. `OPS-26` step 2 leg (a) filed the
 same gmsh string on **three more call paths** in one night — the
 coil+phantom generator (`post/test_phantom_field_metrics.py`, complex, 1.24 s),
@@ -4013,7 +4013,59 @@ footerless runs, not a diagnosis. Each entry says "a `mesh`-owning chunk
 should take all of these together"; this is that chunk. It also owns the
 dead `tests/mesh/test_cylindrical_domain.py` (collects zero tests, meshes at
 import time) filed the same night.)*
-> * **Step 1 — classify and ladder (one slot; probes smoke `-n 1`, ladders
+> * **Step 1 ✅ 2026-08-28 (09:00 slot) — classified, laddered, controlled,
+>   dead module retired; eight footered windows, 318 s; `src/` untouched, no
+>   band moved, no record re-recorded.** The 2 × 4 table resolves the step's
+>   pre-stated reading the *opposite* way on every row: **no site is
+>   partition-dependent — all four fail at `-n 1`** (Status 1 at 2–4 s each,
+>   the same `Invalid boundary mesh (overlapping facets)` string), and rank
+>   width changes only what happens *after* the throw. **The two
+>   "rank-divergent" observations are log-interleave artifacts** — in the
+>   bcsel `-n 2` log the apparent `PASSED [ 25%]` on the failing name is the
+>   *other* rank's verdict for its own first test appended mid-line (the
+>   percentages settle it; the failing name's only verdict is `FAILED
+>   [ 75%]`), and in the `phantom_material_model` `-n 2` log the second rank
+>   never prints the fourth name at all. The 10:30 review's "two independent
+>   partition-dependent sites … the strongest evidence yet against the shared
+>   resolution-floor reading" is **withdrawn by measurement**. Rows 1 / 3 / 4
+>   deadlock at `-n 2` (Status 124 at 120–121 s, each with a complete summary
+>   then `MPI_Abort`); **row 2 does not** — `birdcage_port_domain` re-raises
+>   its rank-0 gmsh throw as a `RuntimeError` on *every* rank and footers at
+>   Status 1 in 5 s, so **the deadlock is a raise-path property, not a
+>   geometry one**. Ladders, one process per rung, `-n 1`: `cylindrical_domain`
+>   FAILs at its own 0.040 and **meshes at 0.032 (1 213 cells) / 0.0256
+>   (1 769) / 0.02048 (2 478) / 0.016384 (3 834)`; `coil_phantom_domain` FAILs
+>   at its own 0.030 and **meshes at 0.024 (5 464) / 0.0192 (9 330) / 0.01536
+>   (16 177) / 0.012288 (28 485)` — both **monotone**, each fixture sitting
+>   exactly one 0.8-step above a meshing sizing (contrast `GEO-22`, whose
+>   straight-wire floor is non-monotone: "coarse-resolution floor" is not one
+>   mechanism across the whole family). The four sites are **three
+>   generators** — the two phantom modules call `coil_phantom_domain` with
+>   byte-identical kwargs, so the unit of repair is the generator call, not
+>   the file. **Methodological finding, and it disposes of a signature this
+>   entry told the implementer to record and not chase:** an *in-process*
+>   ladder measures gmsh state after a prior throw, not geometry — rungs 2–5
+>   returned `IndexError: index 0 is out of bounds for axis 0 with size 0` in
+>   0.0 s where a fresh process meshes them, so that `IndexError` is
+>   **contamination, not a second defect** (two logs, same probe, opposite
+>   verdicts). Negative control green: `test_birdcage_conductor_sizing.py`
+>   `1 passed in 38.81s` at `-n 2` on unmoved bands, and row 2's two adjacent
+>   tests green at both widths. Finding-44 rider discharged — `tests/ports`
+>   read exactly the expected `2 failed, 15 passed`, no new drift. Clause (d)
+>   done: the dead `test_cylindrical_domain.py` (zero tests, meshed at import,
+>   printed rank-local counts) is now one asserting test on the reduced
+>   tagged-volume partition identity at 1e-9, `1 passed in 1.38s`, and
+>   `tests/mesh` collects **58**. FFCx stub sweep clean before window 1 and
+>   after both exit-124s. Logs `20260828T140041Z` … `20260828T141217Z`; full
+>   narrative and the step-2 hypothesis in `attempts.md` 2026-08-28T14:15Z.
+>   **Step 2 is a review's call from this table** — two independent levers are
+>   now measured and separable: a *sizing* lever (three call sites, retires
+>   four census reds, needs a re-record licence) and a *raise-path* lever
+>   (wrap the throw as row 2 already does; converts three 120 s deadlocks into
+>   5 s footered reds and touches no mesh, band or record). The four
+>   known-issues entries stay OPEN, all four re-headed with this measurement.
+> * **Step 1 as originally scoped — classify and ladder (one slot; probes
+>   smoke `-n 1`, ladders
 >   standard `-n 2`, real unless the module requires complex; `main`).**
 >   (a) **The `-n 1` command `OPS-26` deliberately did not spend**:
 >   `tests/solver/test_boundary_condition_selection.py` alone, `-n 1`,
@@ -7351,7 +7403,23 @@ uses the Edit tool and verifies `git status --porcelain`.
    conservative value with both in-comment. **Scope:** a measured guard,
    not a diagnosis of gmsh. **Negative result:** a non-monotone floor is a
    finding — record the ladder, land no guard, known-issues + §7, stop.
-4. **`GEO-23` step 1 — classify the three 0.11 "overlapping facets" sites
+4. **✅ DONE 2026-08-28 09:00 slot** — `GEO-23` step 1 complete on `main`:
+   eight footered windows, 318 s, `src/` untouched. The 2 × 4 table resolves
+   the pre-stated reading the **opposite** way on every row — all four sites
+   fail at `-n 1`, so **none is partition-dependent**, and the two
+   "rank-divergent" observations are **log-interleave artifacts withdrawn by
+   measurement**. The `-n 2` deadlock is a **raise-path** property (row 2's
+   wrapped re-raise footers Status 1 in 5 s; the three unwrapped sites are
+   Status 124 at 120 s). Both ladders **monotone**, each fixture one 0.8-step
+   above a meshing sizing (`cylindrical_domain` 0.040 → 0.032/1 213 cells;
+   `coil_phantom_domain` 0.030 → 0.024/5 464 cells); four sites are **three
+   generators**; the recorded `IndexError … size 0` is **contamination, not a
+   defect**. Control `1 passed in 38.81s` on unmoved bands; the finding-44
+   `tests/ports` rider read exactly `2 failed, 15 passed`; the dead module is
+   now one asserting 1e-9 partition test and `tests/mesh` collects 58.
+   `GEO-23` 🟡 with step 2 owed a review ruling between two measured,
+   separable levers (sizing vs raise-path). Original item text below.
+   **`GEO-23` step 1 — classify the three 0.11 "overlapping facets" sites
    by rank width, ladder the resolution, own the dead module (smoke `-n 1`
    probes + standard `-n 2` ladders, real/complex per module, `main`;
    independent).** Execute the §7 `GEO-23` entry as written — it

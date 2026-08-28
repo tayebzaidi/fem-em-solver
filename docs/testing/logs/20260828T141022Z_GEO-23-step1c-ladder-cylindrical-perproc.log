@@ -1,0 +1,42 @@
+# Test Run
+- Chunk: GEO-23-step1c-ladder-cylindrical-perproc
+- Commit: 200916a5bd44c336bcae6a6edd3b64245ce83c87
+- Time (UTC): 2026-08-28 14:10:22
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 300 bash -c "for h in 0.040000 0.032000 0.025600 0.020480 0.016384; do mpiexec -n 1 python3 scripts/probes/geo23_step1_ladder_probe.py cylindrical \$h 2>&1 | grep -a probe; done"'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 28 09:09 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 300 bash -c "for h in 0.040000 0.032000 0.025600 0.020480 0.016384; do mpiexec -n 1 python3 scripts/probes/geo23_step1_ladder_probe.py cylindrical \$h 2>&1 | grep -a probe; done"'\'''
+[probe] cylindrical_domain h=0.040000   FAIL   Exception: Invalid boundary mesh (overlapping facets) on surface 1 surface 1  (0.0 s)
+[probe] cylindrical_domain h=0.032000   MESHES cells=    1213  (0.2 s)
+[probe] cylindrical_domain h=0.025600   MESHES cells=    1769  (0.2 s)
+[probe] cylindrical_domain h=0.020480   MESHES cells=    2478  (0.3 s)
+[probe] cylindrical_domain h=0.016384   MESHES cells=    3834  (0.5 s)
+
+## Exit
+- Status: 0
+- Elapsed (s): 6
