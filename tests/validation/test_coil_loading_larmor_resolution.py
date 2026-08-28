@@ -1,7 +1,8 @@
 """`TH-11` step 2: the resolution rung at 64 MHz — bounding the mesh term.
 
 Step 1 measured coil loading at 64 MHz on the `MAT-6` step-3 baseline mesh
-(138 619 cells, ``resolution_near`` = 0.005) and found ΔR **+10.2698%** away
+(138 490 cells on 0.11 / 138 619 on 0.7.2, ``resolution_near`` = 0.005) and
+found ΔR **+10.2698%** away
 from the Dodd–Deeds quasi-static prediction, against **1.5834%** at 10 MHz on
 the same fixture and drive.  That deviation is *not yet attributable*: skin
 depth falls from 15.9 mm to 6.29 mm between the two frequencies, so the same
@@ -14,7 +15,8 @@ boundary layer.
 
 This module runs step 1's measurement **once more with one knob moved**:
 ``resolution_near`` 0.005 → 0.0025 on the same W = 0.15 / ``resolution_wire``
-0.002 fixture — the `MAT-6` step-8 ladder rung, **417 914 cells**, δ/h = 2.52
+0.002 fixture — the `MAT-6` step-8 ladder rung, **418 888 cells** on 0.11
+(0.7.2: 417 914), δ/h = 2.52
 at 64 MHz.  Everything else is step 1's, imported from its module rather than
 re-declared, so the two readings are like-for-like by construction.
 
@@ -34,7 +36,8 @@ three outcomes are findings).**  At 10 MHz this knob moved ΔR by −1.3005 pp.
 **What is gated** is the solver's own bookkeeping, exactly as step 1: the
 complex-power identity on each solve at the step-2f family bound of 1e-9, the
 σ = 0 dissipation control at exact ``+0.0``, the drive control at 1e-24, and
-the cell count at step 8's exact 417 914.  Dodd–Deeds at 64 MHz is the
+the cell count at step 8's rung, exact — 418 888 on 0.11 (0.7.2: 417 914).
+Dodd–Deeds at 64 MHz is the
 *comparison*, not the reference — its deviation is never called an error
 (§7 trap list) — so no band is drawn around the physics.
 
@@ -112,7 +115,8 @@ BAND_RESOLUTION_DOMINATED = 0.03
 
 @pytest.fixture(scope="module")
 def larmor_loading_fine():
-    """One 417 914-cell mesh, the loaded/free pair at 64 MHz, solved once.
+    """One 418 888-cell mesh (0.7.2: 417 914), the loaded/free pair at 64 MHz,
+    solved once.
 
     Step 1's fixture body with ``resolution_near`` moved; the solve helper,
     the energy helpers and the dissipation helper are step 1's own imports, so
@@ -271,7 +275,8 @@ def larmor_loading_fine():
 @complex_only
 @pytest.mark.integration
 def test_the_mesh_is_the_mat6_step8_fine_rung(larmor_loading_fine):
-    """417 914 cells: the mesh step 8's 10 MHz record was measured on.
+    """418 888 cells (0.7.2: 417 914): the mesh step 8's 10 MHz record was
+    measured on.
 
     The mesh is deterministic and frequency never reaches the generator, so a
     different count means the 0.2829% baseline being cited belongs to a

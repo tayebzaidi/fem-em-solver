@@ -20373,3 +20373,90 @@ conditional "confirmed ⇒ commission step 2b with a re-record licence" should b
 unmeasured half; with this table, `GEO-24` step 2's plumb predicts the 16-leg
 broken set goes empty at every width, which turns `GEO-20` step 2 into a re-run
 of the parked module rather than an investigation.
+
+---
+
+## 2026-08-28T21:30Z — `OPS-27` step 3 — **complete** (16:30 implementer slot)
+
+**Outcome: complete.** §9 item 4 as written; §4-done — verification executed in
+this session, quantitative assertions are the two exact cell-count equalities
+(`NCELLS_FINE == 418_888` in `larmor_resolution` and its imported alias at
+`third_rung:443`), tier heavy, elapsed recorded. Preflight clean tree at
+`ac7f03f`, container Up, FFCx stub cache clean before window 1 (`find
+/root/.cache/fenics -name '*.c' -size 0` → 0) and again before window 2, zero
+stray `python3` at both checks.
+
+### The two anchor windows
+
+| # | Module | Build / env | Ranks | Window | Result | Log | Census read |
+|---|---|---|---|---|---|---|---|
+| 1 | `test_coil_loading_larmor_resolution.py` | complex | `-n 2` | `-k 30 640` | **17 passed / 424.32 s / Status 0**, 426 s | `20260828T213049Z_OPS-27-step3-larmor-resolution.log` | `1 failed, 16 passed` (`20260827T185422Z`) |
+| 2 | `test_coil_loading_larmor_third_rung.py` | complex, `TH11_STEP5_RUNG=fine` | `-n 8` | `-k 30 900` | **18 passed / 291.03 s / Status 0**, 293 s | `20260828T213807Z_OPS-27-step3-thirdrung.log` | `1 failed, 17 passed` (`20260827T171110Z`) |
+
+719 s over two commands against a budgeted 1 100–1 350 s. **Collected counts
+identical to the census runs (17 / 18)** — the rubric's negative control — so
+exactly the two stale-record names flipped and no other name's status moved.
+Rank streams identical within each run (424.31–424.32 s on two ranks;
+290.98–291.05 s on eight). Both known-issues entries retired in this commit:
+the `third_rung` 🟡 "re-recorded, re-run owed" entry, and the "re-run owed"
+clause on the 417 914-family retirement block.
+
+### Finding 44 — `third_rung`'s cold price is still unmeasured, and the ≥ 500 s figure should stop being quoted
+
+The rubric sized a 900 s window on `OPS-26` finding 25's inference that this
+module is "warm-cache-only 304 s, cold ≥ 500 s". It returned at **291 s —
+below the warm figure itself**. But that is not a refutation, because the
+rubric also ordered `larmor_resolution` first "so its window warms the shared
+fixtures", and it did: this is a third warm reading, not a cold one. The honest
+state is that **no run on record has measured this module cold** — the two
+"cold" data points are both 300 s *kills*, which bound it from below by 300 s
+and say nothing else. Anyone sizing this module should keep budgeting ≥ 900 s
+and stop citing 500 s as measured.
+
+### Finding 45 — the prose sweep is a judgement pass; 19 of 33 copies moved
+
+Per the rubric I read each copy in context first, and that mattered: `grep
+-rno '138 619\|417 914' tests/` was **33** at `ac7f03f`, and only **19** sites
+took the 0.11 digit (`grep -rno '138 490\|418 888' tests/` 14 → 33). Each
+rewrite keeps the 0.7.2 digit in the same comment, so the old-digit count does
+not fall. Re-recorded: `richardson_ladder` ×3, `larmor_resolution` ×5,
+`third_rung` ×2, `degree2` ×5, `dodd_deeds_impedance` ×2, `projected_drive`,
+`slab_resolution`. **Deliberately left, in three kinds:**
+
+1. **Dated result blocks** — the rubric's own exception. `slab_resolution:30–39`
+   and `wire_resolution:20–28` (log-cited measured ladders), `degree2:150` and
+   `:170` (the `20260818T…` calibration/probe comments),
+   `degree2_energy_mechanism:5` ("`TH-12` step 2 measured, on the 138 619-cell
+   fixture"). These narrate 0.7.2 runs and must keep the digit they measured.
+2. **Executable growth denominators and everything coupled to them** —
+   `wire_resolution:263/266`, `combined_knobs:246/247` plus its docstring
+   "5.03×", `box_truncation:334` plus its "4.29×", `slab_resolution`'s
+   `NCELLS_LANDED = 138_619` (which `OPS-27` step 2 explicitly left, with its
+   reason in-comment), `box_size:75`'s "2.17× (138 619 → 300 591)". Moving the
+   prose digit without the denominator makes the file self-inconsistent;
+   moving the denominator is a **constant** edit that this step's negative
+   control forbids. Neither half is in scope, so both stay.
+3. **Meshes the census never measured on 0.11** — `box_truncation`'s fixture
+   (finding 36: permanent measured deferral, the suspected sixth mesh) and
+   `box_size`'s 300 591. No unmeasured digit was invented.
+
+So the residue is **not leftover prose**: it is a coupled-constant job that
+belongs to whichever chunk re-prices those `dodd_deeds` fixtures, and the
+review may want to name that rather than re-queue a sweep.
+
+**Scope control.** `git diff -- src/` empty. `git diff -- tests/` is 57
+changed lines, every one inside a docstring or a `#` comment — no constant, no
+assertion, no band, no resolution. The seven edited modules `py_compile` clean
+in-container (`20260828T214616Z_OPS-27-step3-prose-sweep-compile.log`,
+Status 0, 1 s) — a syntax check only, deliberately not a re-run, since the two
+modules whose *behaviour* could have moved are the two that ran green above.
+`box_truncation`'s `projected_xlarge_box` was not opened, as ruled.
+
+**Hypothesis for the next attempt.** `OPS-27` is fully closed — nothing is
+owed on any of its entries. The nearest live thread the sweep touched is
+finding 45's kind (2): the `dodd_deeds` reactance family carries 0.7.2-era
+growth denominators in *executable* code on fixtures the census could not
+price on 0.11, and `box_truncation`'s predicted eleventh red still sits behind
+a fixture that needs shrinking, not re-selecting — a `MAT-6` pricing question,
+as finding 36 said.
+

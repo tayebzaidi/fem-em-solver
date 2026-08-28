@@ -11,7 +11,8 @@ along a line where physics and mesh error move together is not a trend.
 
 This module walks the *other* axis: **h at fixed f**.  Each run solves the
 loaded/free pair on one rung at one frequency; running the two rungs
-(0.005 → 0.0025, a factor 2 in h, 138 490 → 417 914 cells) at the same
+(0.005 → 0.0025, a factor 2 in h, 138 490 → 418 888 cells; the fine rung read
+417 914 on the 0.7.2 image, re-recorded by `OPS-27` step 2) at the same
 frequency gives the pair the extrapolation needs.  Everything else — fixture,
 drive, solver, helpers — is step 1's, imported rather than re-declared, so the
 rungs are like-for-like by construction.
@@ -21,7 +22,7 @@ rungs are like-for-like by construction.
 one foreground window):
 
 * ``TH11_STEP4_RUNG``      — ``baseline`` (default, 138 490 cells) or ``fine``
-  (417 914 cells);
+  (418 888 cells; 0.7.2: 417 914);
 * ``TH11_STEP4_FREQ_MHZ``  — comma list, default ``10,30``.
 
 **What is gated.**  The step-1 identity family on every rung, unchanged and
@@ -338,7 +339,9 @@ def ladder_rung(request):
 @complex_only
 @pytest.mark.integration
 def test_the_rung_has_its_recorded_cell_count(ladder_rung):
-    """138 490 / 417 914 exactly — the mesh never sees the frequency.
+    """138 490 / 418 888 exactly — the mesh never sees the frequency.
+
+    (0.7.2 read 138 619 / 417 914; both re-recorded by `OPS-27` steps 1–2.)
 
     Both counts are twice on record (`MAT-6` step 3 and step 8).  A different
     count means the ladder's two rungs are not the two rungs whose 64 MHz move

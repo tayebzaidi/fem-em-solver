@@ -13,7 +13,8 @@ left a Richardson **bracket** for the 10 MHz ΔR deviation at h → 0,
 ``[−2.1492%, −0.9050%]`` (imported from
 :mod:`tests.validation.test_coil_loading_larmor_third_rung`, never restated),
 extrapolated from two rungs at assumed rates p = 1 and p = 2.  If degree 2 on
-the *coarse* 138 619-cell rung lands inside that bracket, a degree-2 rung is the
+the *coarse* 138 490-cell rung (0.7.2: 138 619) lands inside that bracket, a
+degree-2 rung is the
 live replacement for the memory-infeasible degree-1 third rung — and that swap
 is the review's call, not this module's.
 
@@ -29,7 +30,8 @@ bounds, on every solve at both orders:
   shows up here and a wrong ``I′`` cancels;
 * the σ = 0 control: the free solve's ``½∫σ|E|²`` is ``+0.0`` **exactly**;
 * the drive control at 1e-24 — loaded and free must use the identical ``J′``;
-* the mesh is the 138 619-cell `MAT-6` step-3 baseline, exactly.
+* the mesh is the 138 490-cell `MAT-6` step-3 baseline (0.7.2: 138 619),
+  exactly.
 
 **Negative control** (§7, and step 1's pattern): degree 1 on this fixture, *in
 the same process, on the same mesh object*, must reproduce its recorded ΔR
@@ -433,7 +435,8 @@ def test_the_memory_exponent_measured_on_the_fine_rung():
     *pre-registered guess* of 1.5 whose projection (69.49 GiB) and linear end
     (30.54 GiB) straddle the threshold — i.e. the guess, not the measurement,
     decided the step.  This test replaces it with a number: the same solve on
-    the `TH-11` **fine** rung (417 914 cells, `MAT-6` step 8's own second rung,
+    the `TH-11` **fine** rung (418 888 cells on 0.11 / 417 914 on 0.7.2,
+    `MAT-6` step 8's own second rung,
     imported not restated) gives a second (DOFs, RSS) point at unchanged order,
     solver, drive and rank count, and two points fix ``p``.
 
@@ -441,7 +444,8 @@ def test_the_memory_exponent_measured_on_the_fine_rung():
     second solve adds no memory information because MUMPS factors the same
     sparsity structure either way.
 
-    Quantitative assertion: the fine rung meshes to its recorded 417 914 cells,
+    Quantitative assertion: the fine rung meshes to its recorded 418 888 cells
+    (0.7.2: 417 914; the assertion imports `NCELLS_FINE`, never restates it),
     so the two points really are the two rungs whose records `TH-11` measured;
     and the fitted exponent must exceed 1, which is what "MUMPS fill-in grows
     faster than the unknown count" means — a fit at or below 1 would say this
@@ -537,7 +541,8 @@ def test_the_memory_exponent_measured_on_the_fine_rung():
 @complex_only
 @pytest.mark.integration
 def test_the_mesh_is_the_mat6_step3_baseline(degree_rows):
-    """138 619 cells: the mesh both the record and step 4's bracket sit on.
+    """138 490 cells (0.7.2: 138 619): the mesh both the record and step 4's
+    bracket sit on.
 
     The element order never reaches the mesh generator, so a different count
     would mean the degree comparison is across two different problems and the

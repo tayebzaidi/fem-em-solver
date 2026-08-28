@@ -80,6 +80,11 @@ unless fixing it is the task.
 > re-run in this slot** — it asserts the same 418 888 the slab run
 > measured on the same mesh; its re-run is owed to the next census (see
 > the `third_rung` entry below, which shares the constant by import).
+> **The owed re-run landed 2026-08-28, 16:30 slot (`OPS-27` step 3):**
+> `20260828T213049Z_OPS-27-step3-larmor-resolution.log` — **17 passed in
+> 424.32s**, Status 0, elapsed 426 s, `-n 2` complex, both rank streams
+> identical, against the census's `1 failed, 16 passed` on the same
+> collected 17. Nothing is owed on this entry any more.
 
 > **✅ THE 138 619 FAMILY RETIRED 2026-08-27, 19:30 implementer slot
 > (`OPS-27` step 1); the 417 914 and 697 401 families closed by step 2
@@ -122,7 +127,24 @@ unless fixing it is the task.
 | **What this adds to `OPS-27`'s rubric** | (1) The sweep must be **by cell-count value across modules**, not per file — 138 619 alone appears in three modules, 417 914 in three. (2) `grep -rn '0\.7\.2' tests/` is insufficient (leg (e)'s note, now confirmed twice): none of these five was reachable by version tag, only by reading a red's assertion message. (3) One re-record of a shared mesh retires up to four red names at once, so the job is **four measurements**, not nine. |
 | **Disposition** | Filed, **not fixed** — `OPS-26` step 2 is a census and lands no fix. Expected on `main`; **not yours**. |
 
-### 🟡 RE-RECORDED, RE-RUN OWED 2026-08-27 (`OPS-27` step 2, 21:00 implementer slot) — `test_coil_loading_larmor_third_rung.py` asserted an **exact** fine-rung cell count recorded on the 0.7.2 image (417 914) and 0.11 meshes 418 888: the **fourth** site of the stale-record class, and the largest drift yet at 0.233%
+### ✅ RETIRED 2026-08-28 (`OPS-27` step 3, 16:30 implementer slot) — `test_coil_loading_larmor_third_rung.py` asserted an **exact** fine-rung cell count recorded on the 0.7.2 image (417 914) and 0.11 meshes 418 888: the **fourth** site of the stale-record class, and the largest drift yet at 0.233%
+
+> **✅ RETIRED 2026-08-28, 16:30 implementer slot (`OPS-27` step 3) — the
+> owed re-run executed and the module is green.**
+> `20260828T213807Z_OPS-27-step3-thirdrung.log` — **18 passed in 291.03s**,
+> Status 0, elapsed 293 s, `-n 8` complex, `TH11_STEP5_RUNG=fine`, heavy
+> tier; all eight rank streams identical (290.98–291.05 s). The census read
+> `1 failed, 17 passed` on the same collected 18, so exactly the one
+> stale-record name flipped and no other name's status moved. No code
+> changed in this slot — the import of `NCELLS_FINE` from
+> `larmor_resolution` (finding 41) is what re-recorded it in step 2; this
+> entry stayed open only for the missing execution. **Cost note (a
+> correction to finding 25's inference):** the module's *cold* price was
+> never measured — the 900 s window ruled for it returned at 291 s, i.e.
+> the 304 s warm figure was essentially the whole price, and this slot's
+> `larmor_resolution` window ran first as ruled, so the figure is again
+> warm-fixture. The ≥ 500 s cold estimate is **not** confirmed; nothing on
+> record measures this module cold.
 
 > **🟡 RE-RECORDED but NOT RE-RUN in the 21:00 slot.** This module holds no
 > constant of its own: `:443` asserts the `expected` drawn from the `fine`

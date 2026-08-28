@@ -22,7 +22,7 @@ bracket *plus* a measured rate.
 environment and the first command is a probe:
 
 * ``TH11_STEP5_RUNG`` — ``third`` (default, ``near`` = 0.00125) or ``fine``
-  (0.0025, 417 914 cells — the negative-control rung);
+  (0.0025, 418 888 cells on 0.11 / 417 914 on 0.7.2 — the negative-control rung);
 * ``TH11_STEP5_MODE`` — ``probe`` (mesh + the **loaded** solve only, no ΔZ and
   no ladder) or ``full`` (default: the loaded/free pair, ΔZ, and the ladder).
 
@@ -104,7 +104,9 @@ from tests.validation.test_dodd_deeds_projected_drive import _reduced_real
 RESOLUTION_NEAR_THIRD = 0.00125
 
 # §7's stop condition, as a literal so the gate cannot drift from the wording:
-# 8× the 417 914-cell fine rung.  A count past this means the rung is not
+# 8× the 418 888-cell fine rung (0.7.2: 417 914; the 3 400 000 literal is §7's
+# wording and does not move with the re-record).  A count past this means the
+# rung is not
 # affordable in a scheduled slot and shrinking it is the review's call.
 NCELLS_THIRD_CEILING = 3_400_000
 

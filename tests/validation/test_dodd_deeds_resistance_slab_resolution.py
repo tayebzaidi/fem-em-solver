@@ -168,7 +168,8 @@ def _ohmic_resistance(msh, cell_tags, e_field, sigma_slab, current, comm) -> flo
 def projected_fine_slab():
     """Loaded/free pair on the production default (projected) drive.
 
-    Module-scoped: 417 914 cells and 108.8 s per solve at ``-n 4`` on record,
+    Module-scoped: 418 888 cells on 0.11 (0.7.2: 417 914) and 108.8 s per solve
+    at ``-n 4`` on record,
     so the pair is meshed and solved exactly once for the whole module.
     """
     comm = MPI.COMM_WORLD

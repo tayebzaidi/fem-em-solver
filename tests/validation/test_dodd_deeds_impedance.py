@@ -221,7 +221,8 @@ FEM_LOOP_RADIUS = 0.04
 FEM_LIFTOFF = 0.020
 FEM_WIRE_RADIUS = 0.0025
 FEM_CURRENT_A = 1.0
-# W = 0.15 m: 138 619 cells, ~27 s per solve at -n 2.  ΔR moves 0.268% between
+# W = 0.15 m: 138 490 cells on 0.11 (0.7.2: 138 619), ~27 s per solve at -n 2.
+# ΔR moves 0.268% between
 # W = 0.15 and W = 0.20, so ΔR is converged in box size here; ΔX is not (5.57%
 # still moving), which is why ΔX is gated only on sign and magnitude below.
 FEM_BOX_HALF_WIDTH = 0.15
@@ -312,7 +313,8 @@ def _reaction_impedance(msh, cell_tags, e_a, e_b, current_a, comm) -> complex:
 def fem_impedance_change():
     """Mesh once, solve three times, return the two reaction integrals.
 
-    Module-scoped because the mesh is 138 619 cells and each solve is ~27 s at
+    Module-scoped because the mesh is 138 490 cells on 0.11 (0.7.2: 138 619)
+    and each solve is ~27 s at
     ``-n 2``: the gate, the ΔX check and the null control share one fixture.
     """
     comm = MPI.COMM_WORLD

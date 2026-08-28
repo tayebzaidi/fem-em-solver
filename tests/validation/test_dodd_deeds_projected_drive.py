@@ -106,7 +106,8 @@ def _solve_projected(msh, cell_tags, sigma_slab, comm):
 def projected_impedance_change():
     """Mesh once, solve the loaded/free pair on the default path.
 
-    Module-scoped for the same reason step 2b's fixture is: 138 619 cells and
+    Module-scoped for the same reason step 2b's fixture is: 138 490 cells on
+    0.11 (0.7.2: 138 619) and
     ~27 s per solve at ``-n 2``.
     """
     comm = MPI.COMM_WORLD
