@@ -207,13 +207,28 @@ unless fixing it is the task.
 | **Disposition** | Filed, not fixed — `OPS-26` step 2 is a census and lands no fix (`OPS-26` §7, leg (c) scope). The fix is a one-constant re-record with the `OPS-18` mesh cross-referenced in-comment, and it belongs to a chunk that can re-run the priced fine mesh and state the basis; a review should commission it. Until then this red is expected on `main` and is **not yours**. |
 | **Census accounting** | Counted as the census's 4th red repo-wide and as leg (b)'s owed complex conversion: the name carried by leg (b) as `deferred — complex-only, SKIPPED in the real build` is now **observed**, and it resolved to a red rather than the green the conversion pattern produced six times in leg (d). |
 
-### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (b), 04:30 slot) — the whole of `tests/ports/test_port_orientation_sensitivity.py` dies on `'_DummyComm' object has no attribute 'allgather'`: an **`OPS-14` rank-safety reduction broke its test double**, and nothing scheduled has run the module since
+### ✅ RETIRED 2026-08-28 (`OPS-28`, 22:30 implementer slot) — the whole of `tests/ports/test_port_orientation_sensitivity.py` dies on `'_DummyComm' object has no attribute 'allgather'`: an **`OPS-14` rank-safety reduction broke its test double**, and nothing scheduled has run the module since
 
-> **OWNER ASSIGNED 2026-08-27, 10:30 review: `OPS-28`** (§9 item 3). Ruling
-> on the open question: the deprecated placeholder route **stays runnable**
-> (it is `PORT-1` step 4's negative control), so the fix is the double, not
-> the route. `OPS-28` also re-reads entry 3 against what the module then
-> actually asserts.
+> **RETIRED 2026-08-28 by `OPS-28`.** `_DummyComm` gained
+> `allgather(value) -> [value]` beside its `allreduce`
+> (`tests/ports/test_port_orientation_sensitivity.py:23-31`); `src/` is
+> untouched, the reduction stays, the deprecated route stays runnable.
+> Bracketed by measurement: `20260828T033037Z_OPS-28-red-baseline.log`
+> reproduces the `AttributeError` on both names (`3 failed, 14 passed in
+> 1.50s`, Status 1, 3 s) and `20260828T033055Z_OPS-28-gate.log` is
+> `2 failed, 15 passed in 0.79s` (Status 1, 2 s) on the identical command.
+> **Disposition of the two names.**
+> `…::test_port_orientation_flip_changes_induced_voltage_sign` is **green**
+> — it asserts the sign-flip identity on the placeholder route
+> (`V(P2) = +5.000000e-02 V` aligned, `−5.000000e-02 V` flipped, equal in
+> magnitude to `rel=1e-12`, coupling factor `+1.0e-01 → −1.0e-01`), and
+> that name is now retired outright.
+> `…::test_port_orientation_flip_changes_off_diagonal_sparameter_sign`
+> **now reaches its S-matrix assertion and is red there** — it belongs to
+> **entry 3** and only to entry 3, which is re-dated below with the
+> correction this run measured (the vanishing wave on *this* test is the
+> **off-diagonal**, not the diagonal). The `AttributeError` symptom this
+> entry filed is gone from both names, so the entry retires whole.
 
 | | |
 |---|---|
@@ -2382,13 +2397,33 @@ membership assertion passed vacuously. Armed, and the test now gates
 | **Gate** | 18 passed at `-n 2` under the complex build in 0.93 s (`20260808T050622Z_OPS-12-gate-final.log`); the classifier identity is asserted with `==` on an 11-row parameterized family spanning both sides of `f = 0.5` and of the retired `f = 0.75`, with negative controls |
 | **CI** | `tests/solver/test_convergence_diagnostics.py` is now in the `validation-complex` job, which is what this entry's old status line named as its exit condition |
 
-### 3. Port tests assert a non-zero S-matrix diagonal on a matched port
+### 3. Port tests assert a non-zero power wave where the placeholder's fake makes it exactly zero (re-dated 2026-08-28 by `OPS-28`)
+
+> **Re-dated 2026-08-28 (`OPS-28`, 22:30 slot) — still open, and the
+> *reason* is confirmed while the entry's old one-line statement was
+> imprecise for one of the two names.** With the `_DummyComm` double
+> repaired, `…::test_port_orientation_flip_changes_off_diagonal_sparameter_sign`
+> reaches its S-matrix assertion for the first time since `OPS-14` and dies
+> at `tests/ports/test_port_orientation_sensitivity.py:115`,
+> `assert aligned_s21.real > 0.0` → `assert np.float64(0.0) > 0.0`. On that
+> fixture the **diagonal is not zero at all** — the log prints
+> `S11 = 9.047e-01 − 1.289e-02j, S22 = 9.047e-01 − 1.289e-02j` — it is the
+> **off-diagonal** that vanishes, because the placeholder gives the
+> *undriven* port `V = 5.000000e-02 V`, `I = 1.000000e-03 A` at
+> `Z₀ = 50 Ω`, i.e. `V = Z₀I` exactly, so `b = (V − Z₀I)/(2√Z₀) = 0` and
+> `S21 = S12 = 0` identically. Same mechanism as the 3-port diagonal case
+> below, different matrix entry, so the entry's title is corrected above
+> and both names stay filed. `OPS-28`'s scope was the double only — no
+> assertion moved, no `sparameters.py` edit, `git show -- src/` empty.
+> Log: `20260828T033055Z_OPS-28-gate.log` (`2 failed, 15 passed in 0.79s`,
+> Status 1, elapsed 2 s, `-n 2`, real build, smoke). Verified at the
+> `OPS-28` commit. Disposition unchanged: `PORT-0`/`PORT-1` own it.
 
 | | |
 |---|---|
-| **Tests** | `tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape`<br>`tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign` |
-| **Symptom** | `assert np.all(np.abs(diagonal) > 0.0)` fails on `array([0.+0.j, 0.+0.j, 0.+0.j])` |
-| **Cause** | Both fakes set `current = voltage / port.z0_ohm` at the driven port, i.e. a perfectly matched port. The reflected power wave is then `b = (V − Z₀I)/(2√Z₀) = 0` exactly, so the diagonal is *legitimately* zero and the assertion cannot hold. |
+| **Tests** | `tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape` (zero **diagonal**, 3-port fake)<br>`tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign` (zero **off-diagonal**, 2-port fake — measured 2026-08-28, see the note above) |
+| **Symptom** | `assert np.all(np.abs(diagonal) > 0.0)` fails on `array([0.+0.j, 0.+0.j, 0.+0.j])`; on the orientation test, `assert aligned_s21.real > 0.0` fails on `np.float64(0.0)` |
+| **Cause** | The fakes set `current = voltage / port.z0_ohm` — a perfectly matched port. The power wave `b = (V − Z₀I)/(2√Z₀)` is then `0` exactly, so the corresponding S entry is *legitimately* zero and the assertion cannot hold: on the 3-port fake that is every diagonal term, on the 2-port orientation fake it is the off-diagonal terms (the undriven port is the matched one there). |
 | **Fix** | **Deliberately not fixed.** These exercise the placeholder coupling model's arithmetic (see `PORT-0`). Repairing them means tuning assertions to match a heuristic that `PORT-1` deletes. Resolve them there. |
 | **Verified pre-existing at** | `53f6428` and earlier |
 | **Progress 2026-08-04** | `PORT-1` step 3b-ii, the step that would replace these fakes with a driven gap port, was **attempted and parked** (`attempt/PORT-1-step3bii-20260804T141200Z`). The drive works — reciprocity `2.2840e-04`, undriven port open at `2.32e-03` — but `Im Z₁₂` is +72.12% off `ωM₁₂`, traced to the gap box's 1.83×-oversized cross-section rather than to the solve. These two tests stay red and unchanged; see PROJECT_PLAN §7 `PORT-1` step 3b-ii for the measurement and the ranked successor. |

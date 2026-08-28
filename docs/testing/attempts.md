@@ -19437,3 +19437,96 @@ the step. `src/` must stay untouched (`excitation.py:262-268` is correct).
 Beyond it, the review owes a disposition on the prose sweep (finding 40) and
 on `third_rung`'s owed re-run.
 
+
+---
+
+## 2026-08-28T03:35Z — `OPS-28` — **complete** (22:30 implementer slot)
+
+**Outcome: `OPS-28` ✅, chunk closed in one slot, ~12 minutes wall clock, two
+compute windows totalling 5 s.** The prior slot's hypothesis was right on
+both counts: the item was cheap, and its one substantive unknown resolved to
+the *red* branch — which the rubric pre-authorised as a recorded outcome, not
+a failure.
+
+**What was done.** One `staticmethod allgather(value) -> [value]` added to
+`_DummyComm` at `tests/ports/test_port_orientation_sensitivity.py:23-31`,
+with an in-comment citation of `OPS-14`'s reduction and of `OPS-26` step 2
+finding 12. Nothing else: `git diff -- src/` is **empty**, no assertion, band
+or record moved, the deprecated placeholder route stays runnable per the
+10:30 review's ruling.
+
+**Bracketed by measurement**, both windows the identical command
+(`tests/ports` whole root, `-n 2`, **real** build, smoke, `timeout -k 30
+120`):
+
+| window | log | footer | Status | elapsed |
+|---|---|---|---|---|
+| red baseline | `20260828T033037Z_OPS-28-red-baseline.log` | `3 failed, 14 passed, 5 warnings in 1.50s` | 1 | 3 s |
+| gate | `20260828T033055Z_OPS-28-gate.log` | `2 failed, 15 passed, 7 warnings in 0.79s` | 1 | 2 s |
+
+The baseline reproduces leg (b)'s `AttributeError: '_DummyComm' object has no
+attribute 'allgather'` on both names verbatim, so the fix is bracketed by a
+measured red and a measured green rather than asserted.
+
+**Quantitative anchor (§4) — a sign-flip identity, green.**
+`…::test_port_orientation_flip_changes_induced_voltage_sign` passes:
+`V(P2) = +5.000000e-02 V` aligned against `−5.000000e-02 V` flipped, equal in
+magnitude to `rel=1e-12`, with the coupling factor going `+1.000000e-01 →
+−1.000000e-01`. That name is retired outright — it was never in entry 3.
+
+**Finding 44 — entry 3's one-line statement was wrong for the second name,
+and the correction is measured, not argued.**
+`…::test_port_orientation_flip_changes_off_diagonal_sparameter_sign` reaches
+its S-matrix assertion for the first time since `OPS-14` and dies at line
+115, `assert aligned_s21.real > 0.0` → `assert np.float64(0.0) > 0.0`. Entry
+3 files it under "non-zero S-matrix **diagonal** on a matched port", but on
+this 2-port fixture the diagonal is *not* zero — the run prints
+`S11 = S22 = 9.047e-01 − 1.289e-02j` — and it is the **off-diagonal** that
+vanishes identically. Reason: the placeholder gives the *undriven* port
+`V = 5.000000e-02 V` and `I = 1.000000e-03 A` at `Z₀ = 50 Ω`, i.e. `V = Z₀I`
+exactly, so `b = (V − Z₀I)/(2√Z₀) = 0` and `S21 = S12 = 0`. That is entry 3's
+own mechanism (`sparameters.py:64-65`) landing on a different matrix entry,
+because on the 3-port fake the *driven* port is the matched one and here the
+undriven one is. So: **mechanism confirmed, statement corrected, entry stays
+filed** — re-dated 2026-08-28, title changed from "diagonal" to "power wave",
+per-name annotations added, disposition unchanged (`PORT-0`/`PORT-1` own it,
+`PORT-1` deletes the heuristic). No `sparameters.py` edit, nothing tuned.
+
+**Negative control.** The other three `tests/ports` modules are unchanged
+between the two windows: `test_frequency_sweep_planner.py` 3 green,
+`test_port_definition.py` 8 green, `test_sparameter_assembly.py` 3 green + 1
+red (entry 3's *other* name, the 3-port zero diagonal — untouched, as scoped).
+The +1 in the gate's pass count is exactly the sign-flip anchor.
+
+**Known-issues.** The leg (b) `allgather` entry is **retired whole** (its
+filed symptom is gone from both names); entry 3 is **re-dated and kept**.
+One retired, one re-dated, none loosened.
+
+**Housekeeping.** Finding 27's cache sweep ran before the first window —
+`find /root/.cache/fenics -name '*.c' -size 0` empty, zero stray `python3`;
+no exit 124 in this slot, so no second sweep was owed. No compute command
+denied. Last slot's `git commit -F` friction avoided by writing the message
+outside `.git/`.
+
+### Hypothesis for the next attempt — `MAG-20` step 1 (§9 item 4)
+
+Items 1–3 are all closed, so the queue advances to item 4, `MAG-20` step 1 —
+the two-sided sampled rate band in `test_straight_wire_convergence`. It is a
+**standard**-tier, real-build, two-command item (probe ~90 s + module ~365 s,
+`timeout -k 30 500` each) and structurally different from the last three
+slots: it is a *measurement with a pre-stated disposition rule*, not an edit,
+so the trap is landing a band change the probe does not license. Note for
+whoever takes it: the module is `test_straight_wire.py` and finding 18 named
+it explicitly as the classifier's misfile — it is **real**-build (a
+`complex` string at line 94 is a comment), and running it complex
+manufactures a footered red. Grep `attempts.md` for its price first (finding
+31): it is journaled at 314 s real in leg (c) and 363 s in `GEO-22`'s
+estimate, so 500 s is the right width.
+
+For the review, two things this slot did not touch and one it raises:
+`OPS-27` step 2's owed `larmor_resolution` / `third_rung` re-runs and the
+step-1 prose sweep (finding 40) are both still open; and **finding 44's
+method point** — `tests/ports` is 17 names in **2 s** at `-n 2` and is in no
+scheduled command, which is the whole reason a one-line double drifted for
+weeks undetected. Pricing it into a scheduled command is cheaper than the
+next repair.

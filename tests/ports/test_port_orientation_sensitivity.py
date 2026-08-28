@@ -20,6 +20,15 @@ class _DummyComm:
     def allreduce(value):
         return value
 
+    @staticmethod
+    def allgather(value):
+        # OPS-14's rank-safety reduction in excitation.py:263-267 gathers each
+        # rank's local tag list and flattens; on a single-rank mock the gather
+        # is the one-element list.  OPS-28 (from OPS-26 step 2 finding 12):
+        # the reduction is correct and stays -- this double was what went
+        # stale, silently, because nothing scheduled runs tests/ports.
+        return [value]
+
 
 class _DummyMesh:
     comm = _DummyComm()

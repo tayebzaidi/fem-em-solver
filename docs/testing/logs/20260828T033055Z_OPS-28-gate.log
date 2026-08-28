@@ -1,0 +1,301 @@
+# Test Run
+- Chunk: OPS-28-gate
+- Commit: 7b6e8836c7e4fa1b24a129a1a13f6dd623190a44
+- Time (UTC): 2026-08-28 03:30:55
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/ports -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 27 22:30 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 2 python3 -m pytest tests/ports -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 17 items
+
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_coarse_only_is_deterministic_and_inclusive collected 17 items
+
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_coarse_only_is_deterministic_and_inclusive PASSED [  5%]
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_coarse_plus_refined_merges_and_sorts_frequencies PASSED [ 11%]
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_rejects_invalid_refined_config PASSED [ 17%]
+tests/ports/test_port_definition.py::test_port_definition_defaults_and_tag_name_contract PASSED [ 23%]
+tests/ports/test_port_definition.py::test_required_port_tags_collection_and_validation_success PASSED [ 29%]
+tests/ports/test_port_definition.py::test_validate_required_port_tags_exist_raises_for_missing_tags PASSED [ 35%]
+tests/ports/test_port_definition.py::test_port_definition_rejects_invalid_values PASSED [ 41%]PASSED [  5%]
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_accepts_consistent_order_orientation_and_area 
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_coarse_plus_refined_merges_and_sorts_frequencies PASSED [ 47%]
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_order_mismatch_with_checklist_reference PASSED [ 11%]PASSED [ 52%]
+tests/ports/test_frequency_sweep_planner.py::test_plan_frequency_sweep_rejects_invalid_refined_config 
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_missing_orientation_metadata PASSED [ 58%]PASSED [ 17%]
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_inconsistent_face_area_ratio 
+tests/ports/test_port_definition.py::test_port_definition_defaults_and_tag_name_contract PASSED [ 64%]PASSED [ 23%]
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign 
+tests/ports/test_port_definition.py::test_required_port_tags_collection_and_validation_success PASSED [ 29%]
+tests/ports/test_port_definition.py::test_validate_required_port_tags_exist_raises_for_missing_tags PASSED [ 35%]
+tests/ports/test_port_definition.py::test_port_definition_rejects_invalid_values PASSED [ 41%]
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_accepts_consistent_order_orientation_and_area PASSED [ 47%]
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_order_mismatch_with_checklist_reference PASSED [ 52%]
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_missing_orientation_metadata PASSED [ 70%]PASSED [ 58%]
+tests/ports/test_port_definition.py::test_run_port_calibration_checks_rejects_inconsistent_face_area_ratio PASSED [ 64%]
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign 
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign PASSED [ 70%]
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign FAILED [ 76%]
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape FAILED [ 76%]
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape FAILED [ 82%]
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive PASSED [ 88%]
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_report_low_reciprocity_delta_for_symmetric_matrix PASSED [ 94%]
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_emit_warnings_for_non_reciprocal_or_non_passive_matrix PASSED [100%]
+
+=================================== FAILURES ===================================
+_______ test_port_orientation_flip_changes_off_diagonal_sparameter_sign ________
+tests/ports/test_port_orientation_sensitivity.py:115: in test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+    assert aligned_s21.real > 0.0
+E   assert np.float64(0.0) > 0.0
+E    +  where np.float64(0.0) = np.complex128(0j).real
+----------------------------- Captured stdout call -----------------------------
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=cw, distance=1, coupling=1.000000e-01, termination=50.000000 ohm, V=5.000000e-02+0.000000e+00j V, I=1.000000e-03+0.000000e+00j A
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P2 (index=1)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=False, orientation=cw, distance=1, coupling=1.000000e-01, termination=50.000000 ohm, V=5.000000e-02+0.000000e+00j V, I=1.000000e-03+0.000000e+00j A
+  P2: idx=1, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2
+  S-matrix shape: (2, 2)
+  diagonal terms: S11=9.047e-01+-1.289e-02j, S22=9.047e-01+-1.289e-02j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=9.048e-01, max column power sum=8.186e-01
+    warnings: none
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=ccw, distance=1, coupling=-1.000000e-01, termination=50.000000 ohm, V=-5.000000e-02+0.000000e+00j V, I=-1.000000e-03+0.000000e+00j A
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P2 (index=1)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=False, orientation=cw, distance=1, coupling=-1.000000e-01, termination=50.000000 ohm, V=-5.000000e-02+0.000000e+00j V, I=-1.000000e-03+0.000000e+00j A
+  P2: idx=1, driven=True, orientation=ccw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2
+  S-matrix shape: (2, 2)
+  diagonal terms: S11=9.047e-01+-1.289e-02j, S22=9.047e-01+-1.289e-02j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=9.048e-01, max column power sum=8.186e-01
+    warnings: none
+________ test_n_port_sweep_assembles_finite_matrix_with_expected_shape _________
+tests/ports/test_sparameter_assembly.py:104: in test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+    assert np.all(np.abs(diagonal) > 0.0)
+E   AssertionError: assert np.False_
+E    +  where np.False_ = <function all at 0x758959394570>(array([0., 0., 0.]) > 0.0)
+E    +    where <function all at 0x758959394570> = np.all
+E    +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+E    +      where <ufunc 'absolute'> = np.abs
+----------------------------- Captured stdout call -----------------------------
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2, P3
+  S-matrix shape: (3, 3)
+  diagonal terms: S11=0.000e+00+0.000e+00j, S22=0.000e+00+0.000e+00j, S33=0.000e+00+0.000e+00j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=3.750e-02, max column power sum=7.031e-04
+    warnings: none
+=============================== warnings summary ===============================
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:81: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    aligned = run_placeholder_port_coupling_case(problem, aligned_ports, driven_port_id="P1")
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:82: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    flipped = run_placeholder_port_coupling_case(problem, flipped_ports, driven_port_id="P1")
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:107: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    aligned = run_n_port_sparameter_sweep(problem, aligned_ports)
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/src/fem_em_solver/ports/sparameters.py:368: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    excitation_results[port.port_id] = run_placeholder_port_coupling_case(
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:108: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    flipped = run_n_port_sparameter_sweep(problem, flipped_ports)
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+  /workspace/tests/ports/test_sparameter_assembly.py:90: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    result = run_n_port_sparameter_sweep(
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive
+  /workspace/tests/ports/test_sparameter_assembly.py:168: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    run_n_port_sparameter_sweep(_DummyProblem(), ports)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign - assert np.float64(0.0) > 0.0
+ +  where np.float64(0.0) = np.complex128(0j).real
+FAILED tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape - AssertionError: assert np.False_
+ +  where np.False_ = <function all at 0x758959394570>(array([0., 0., 0.]) > 0.0)
+ +    where <function all at 0x758959394570> = np.all
+ +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+ +      where <ufunc 'absolute'> = np.absFAILED [ 82%]
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive PASSED [ 88%]
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_report_low_reciprocity_delta_for_symmetric_matrix PASSED [ 94%]
+tests/ports/test_sparameter_assembly.py::test_sparameter_sanity_metrics_emit_warnings_for_non_reciprocal_or_non_passive_matrix PASSED [100%]
+
+=================================== FAILURES ===================================
+_______ test_port_orientation_flip_changes_off_diagonal_sparameter_sign ________
+tests/ports/test_port_orientation_sensitivity.py:115: in test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+    assert aligned_s21.real > 0.0
+E   assert np.float64(0.0) > 0.0
+E    +  where np.float64(0.0) = np.complex128(0j).real
+----------------------------- Captured stdout call -----------------------------
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=cw, distance=1, coupling=1.000000e-01, termination=50.000000 ohm, V=5.000000e-02+0.000000e+00j V, I=1.000000e-03+0.000000e+00j A
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P2 (index=1)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=False, orientation=cw, distance=1, coupling=1.000000e-01, termination=50.000000 ohm, V=5.000000e-02+0.000000e+00j V, I=1.000000e-03+0.000000e+00j A
+  P2: idx=1, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2
+  S-matrix shape: (2, 2)
+  diagonal terms: S11=9.047e-01+-1.289e-02j, S22=9.047e-01+-1.289e-02j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=9.048e-01, max column power sum=8.186e-01
+    warnings: none
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P1 (index=0)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=True, orientation=cw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+  P2: idx=1, driven=False, orientation=ccw, distance=1, coupling=-1.000000e-01, termination=50.000000 ohm, V=-5.000000e-02+0.000000e+00j V, I=-1.000000e-03+0.000000e+00j A
+*** PLACEHOLDER PORT MODEL -- values below are NOT from the solved field ***
+single-port excitation diagnostics:
+  driven_port: P2 (index=1)
+  frequency [Hz]: 1.277400e+08
+  P1: idx=0, driven=False, orientation=cw, distance=1, coupling=-1.000000e-01, termination=50.000000 ohm, V=-5.000000e-02+0.000000e+00j V, I=-1.000000e-03+0.000000e+00j A
+  P2: idx=1, driven=True, orientation=ccw, distance=0, coupling=1.000000e+00, termination=50.000000 ohm, V=1.000000e+00+0.000000e+00j V, I=1.000000e-03+1.421299e-04j A
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2
+  S-matrix shape: (2, 2)
+  diagonal terms: S11=9.047e-01+-1.289e-02j, S22=9.047e-01+-1.289e-02j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=9.048e-01, max column power sum=8.186e-01
+    warnings: none
+________ test_n_port_sweep_assembles_finite_matrix_with_expected_shape _________
+tests/ports/test_sparameter_assembly.py:104: in test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+    assert np.all(np.abs(diagonal) > 0.0)
+E   AssertionError: assert np.False_
+E    +  where np.False_ = <function all at 0x760d66083e70>(array([0., 0., 0.]) > 0.0)
+E    +    where <function all at 0x760d66083e70> = np.all
+E    +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+E    +      where <ufunc 'absolute'> = np.abs
+----------------------------- Captured stdout call -----------------------------
+n-port S-parameter sweep diagnostics:
+  frequency [Hz]: 1.277400e+08
+  ports: P1, P2, P3
+  S-matrix shape: (3, 3)
+  diagonal terms: S11=0.000e+00+0.000e+00j, S22=0.000e+00+0.000e+00j, S33=0.000e+00+0.000e+00j
+  S-matrix sanity metrics:
+    reciprocity: max|Sij-Sji|=0.000e+00, max rel=0.000e+00
+    passivity: sigma_max=3.750e-02, max column power sum=7.031e-04
+    warnings: none
+=============================== warnings summary ===============================
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:81: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    aligned = run_placeholder_port_coupling_case(problem, aligned_ports, driven_port_id="P1")
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_induced_voltage_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:82: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    flipped = run_placeholder_port_coupling_case(problem, flipped_ports, driven_port_id="P1")
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:107: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    aligned = run_n_port_sparameter_sweep(problem, aligned_ports)
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/src/fem_em_solver/ports/sparameters.py:368: PlaceholderPortModelWarning: Port voltages/currents come from a hardcoded proximity heuristic, NOT from the solved field. S-parameters, sanity metrics, and Touchstone exports derived from them are physically meaningless. See PORT-0/PORT-1.
+    excitation_results[port.port_id] = run_placeholder_port_coupling_case(
+
+tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign
+  /workspace/tests/ports/test_port_orientation_sensitivity.py:108: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    flipped = run_n_port_sparameter_sweep(problem, flipped_ports)
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape
+  /workspace/tests/ports/test_sparameter_assembly.py:90: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    result = run_n_port_sparameter_sweep(
+
+tests/ports/test_sparameter_assembly.py::test_n_port_sweep_rejects_zero_incident_drive
+  /workspace/tests/ports/test_sparameter_assembly.py:168: DeprecationWarning: run_n_port_sparameter_sweep() without gap_voltage_ports uses the PORT-0 coupling heuristic, not the solved field; pass gap_voltage_ports=[GapVoltagePortSpec(...)] for the gated route (PORT-1 step 4). The heuristic path is deprecated.
+    run_n_port_sparameter_sweep(_DummyProblem(), ports)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/ports/test_port_orientation_sensitivity.py::test_port_orientation_flip_changes_off_diagonal_sparameter_sign - assert np.float64(0.0) > 0.0
+ +  where np.float64(0.0) = np.complex128(0j).real
+FAILED tests/ports/test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape - AssertionError: assert np.False_
+ +  where np.False_ = <function all at 0x760d66083e70>(array([0., 0., 0.]) > 0.0)
+ +    where <function all at 0x760d66083e70> = np.all
+ +    and   array([0., 0., 0.]) = <ufunc 'absolute'>(array([0.+0.j, 0.+0.j, 0.+0.j]))
+ +      where <ufunc 'absolute'> = np.abs
+=================== 2 failed, 15 passed, 7 warnings in 0.79s ===================
+
+=================== 2 failed, 15 passed, 7 warnings in 0.87s ===================
+
+## Exit
+- Status: 1
+- Elapsed (s): 2
