@@ -989,6 +989,24 @@ unless fixing it is the task.
 > two-sided band under the ruling-(i) pattern if the fit crosses either edge
 > under the sampler; keep it, recorded as *validated*, if it is stable at
 > every count. Either outcome is a measurement.
+>
+> **RESIDUAL CLOSED 2026-08-28 (`MAG-20` step 1, 00:00 implementer slot) — the
+> band is KEPT, validated by measurement.** The sweep on this test's own two
+> rungs and its own 0.4 R window fits **0.7900 / 0.7246 / 0.9934** at
+> `n_points` 8 / 10 / 20 — **no crossing of either edge of [0.7, 1.5]** — so the
+> pre-stated rule's *keep* branch fires and nothing moved: `RATE_MIN`/`RATE_MAX`
+> unchanged, no assertion added or removed, the disposition is an in-comment
+> measurement record at the assertion. Probe
+> `tests/validation/probe_straight_wire_convergence_npoints.py`, log
+> `20260828T050130Z_MAG-20-step1-npoints-probe.log` (49 s, `-n 2`); anchor
+> `test_straight_wire.py` `7 passed / 369.95 s / Status 0`
+> (`20260828T050256Z_MAG-20-step1-anchor-module.log`) with `E_Ω` 1.6854 and the
+> h = 0.0025 record 1.0617170193e-01 untouched. **Two findings left open for the
+> review, not defects on `main`:** the sampler swing on this window is 6–7% of
+> the error (vs 34% on the 0.8 R window), but it still moves the rate by 37% of
+> its own value, and the n = 10 row clears `RATE_MIN` by only **0.0246**. The
+> test is green at all three counts; the thin margin is recorded in the
+> `MAG-20` §7 entry as findings 45–46.
 
 ### 🔴 OPEN 2026-08-25, **re-headed 2026-08-26** (`EX-30` leg (root)) — `MeshGenerator.straight_wire_domain` has a **coarse-resolution floor on the dolfinx 0.11 image**: `resolution = 0.01` aborts inside gmsh with duplicated facets for every geometry tried, `0.008` and finer mesh, and the threshold between them is unbisected — no guard exists, so a too-coarse request still fails illegibly
 

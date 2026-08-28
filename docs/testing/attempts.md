@@ -19530,3 +19530,98 @@ method point** — `tests/ports` is 17 names in **2 s** at `-n 2` and is in no
 scheduled command, which is the whole reason a one-line double drifted for
 weeks undetected. Pricing it into a scheduled command is cheaper than the
 next repair.
+
+## 2026-08-28T05:00Z — `MAG-20` step 1 — **complete** (00:00 implementer slot)
+
+**Outcome: complete, `MAG-20` ✅.** The pre-stated decision rule selected its
+*keep* branch: the two-sided sampled rate band in
+`test_straight_wire_convergence` is **validated by measurement**, and no band,
+assertion or `src/` file moved. Tree clean at handoff; nothing parked.
+
+**Preflight.** `git status` clean on `main` at `fd1479c`, container Up 36 h.
+Finding 27's sweep run before the first window — `find /root/.cache/fenics
+-name '*.c' -size 0` empty, zero stray `python3` — and not needed again (no
+exit 124 this slot).
+
+**What was tried.** A new probe,
+`tests/validation/probe_straight_wire_convergence_npoints.py` (asserts
+nothing, the `MAG-19` step-1 pattern): solve each of the test's own two rungs
+**once**, then re-sample the same solved field at `n_points` ∈ {8, 10, 20} and
+fit the two-rung rate at each count. Everything imported from the module that
+owns it (`ANS-1`) — `_solve_straight_wire`, `_sample_radial`,
+`fit_convergence_rate`, `RATE_MIN`/`RATE_MAX`.
+
+**The one thing this probe had to get right first.** The module already
+carries an `n_points` control row, `NPOINTS_CONTROL_BY_VERSION["0.11"]` =
+16.6033 / 15.3848 / 13.6986%, and it would have been easy to read that as the
+answer and skip the measurement. It is **a different statistic**: that row is
+sampled over `R_MIN → R_MAX_BC` (0.8 R), whereas
+`test_straight_wire_convergence` samples the `_sample_radial` default `R_MIN →
+R_MAX` (0.4 R). The measured swings differ by a factor of ~5 (below), so
+borrowing the row would have mis-attributed the instrument — the same
+mis-attribution class `OPS-18` step 3 spent four attempts untangling.
+
+**Measured** (0.11 / gmsh 4.15.2, `-n 2`,
+`20260828T050130Z_MAG-20-step1-npoints-probe.log`, **49 s** — the entry
+budgeted ~90 s):
+
+| h | cells | n=8 | n=10 | n=20 | swing |
+|---|---|---|---|---|---|
+| 0.0040 | 38 740 | 21.5512% | 21.1826% | 22.6647% | +7.00% |
+| 0.0025 | 147 235 | 14.8669% | 15.0685% | 14.2097% | +6.04% |
+| **fitted rate** | | **0.7900** | **0.7246** | **0.9934** | |
+
+**No count crosses either edge of [0.7, 1.5] ⇒ VALIDATED.** The probe's
+negative control on the imported machinery is exact: the n = 8 fit reproduces
+`MAG-19` step 2's recorded **0.7900** to four decimals.
+
+**Anchor (§4).** `test_straight_wire.py` from `main` after the edit:
+**7 passed / 369.95 s / Status 0**
+(`20260828T050256Z_MAG-20-step1-anchor-module.log`), `E_Ω` fit **1.6854**, h =
+0.0025 record **1.0617170193e-01** against the tagged 1.0617170177e-01 —
+**1.5e-09** relative, 1.5e-05 of its 1e-4 band. **Negative control:** `git
+show -- tests/` is two *pure-addition* hunks, both inside
+`test_straight_wire_convergence` (lines 397–428); no other test, no `src/`.
+
+**Findings for the review (45–46), filed not acted on.**
+
+- **45 — the band survived for a reason, and the reason is the window.** The
+  sampler swing on this test's 0.4 R window is **6–7%** of the error, against
+  the **34%** `MAG-19` measured on the 0.8 R window. The near-boundary region
+  is where the sampler is unstable; this test does not sample it. That is a
+  substantive difference between the two tests, not a difference in luck, and
+  it is why ruling (i)'s conclusion was correctly *not* inherited.
+- **46 — "validated" is a narrower claim than it sounds.** The 6–7% error
+  swing still moves the **rate** by **37% of its own value** (0.7246 …
+  0.9934), and the n = 10 row clears `RATE_MIN` by only **0.0246** (~3% of the
+  rate). The gate is green at all three counts a pre-stated rule named; it is
+  green with a thin lower margin on a two-rung fit. No band was widened and
+  none was narrowed — the rule said keep, and keep is what landed.
+
+**Cost.** Two compute commands, 49 s + 371 s = **420 s**, both Status 0, both
+inside their `-k 30 500` windows; no exit 124, no kill, no shrink. Standard
+tier, `-n 2`, real build (finding 18: this module is real-build despite the
+`complex` string at line 94 — the last slot's note was correct and was
+followed). No denied command this slot.
+
+### Hypothesis for the next attempt — §9 item 5, `GEO-20` step 2
+
+Items 1–4 are now closed, so the queue advances to item 5, `GEO-20` step 2 —
+the ring-gap port layout at 16 legs / 32 ring ports under the `GEO-19`
+per-class reading. It is a new test module rather than a disposition, and its
+one live risk is named in the item: the `TERMINAL_EQUALITY` 1e-5 band is a C4
+band and must be read **per azimuth class from the start** (intra
+`TERMINAL_INTRA_CLASS_BAND`, inter `TERMINAL_INTER_CLASS_CEILING`), or it
+reproduces `GEO-19` step C's parked red for the same reason. Price note from
+`GEO-19` step C: the 16-leg mesh is **307 296 cells / 74 s**, so a
+standard-tier window is right but the control builds are not free — the
+kwarg-off control at 16 legs is a second 307 k mesh.
+
+Two things this slot did not touch and one it repeats: `OPS-27` step 2's owed
+`larmor_resolution` / `third_rung` re-runs and the step-1 prose sweep (finding
+40) are still open; and **finding 44's method point stands unaddressed** —
+`tests/ports` is 17 names in 2 s and is in no scheduled command. This slot
+adds a second instance of the same shape: `MAG-20`'s probe cost 49 s to answer
+a question that had been open for two reviews, and both the `MAG-19` and
+`MAG-20` probes are now unrun-by-default files. Cheap probes that carry a
+chunk's evidence are worth a scheduled command as much as cheap tests are.

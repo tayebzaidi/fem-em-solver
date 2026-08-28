@@ -403,6 +403,10 @@ class TestStraightWire:
         with the fitted log-log slope gated on the same ``[RATE_MIN, RATE_MAX]``
         band ``test_convergence.py::test_h_refinement_straight_wire`` uses, and
         with the same fitting routine, imported rather than re-derived.
+
+        MAG-20 step 1 (2026-08-28): this band **survived a pre-stated
+        sampler sweep and is kept on measurement, not on inertia**. See the
+        n_points table at the assertion below.
         """
         comm = MPI.COMM_WORLD
         resolutions = [0.004, 0.0025]
@@ -421,6 +425,35 @@ class TestStraightWire:
         if comm.rank == 0:
             print(f"  Fitted convergence rate: {rate:.4f}")
 
+        # MAG-20 step 1, 2026-08-28 — the band below is VALIDATED by
+        # measurement, under a decision rule stated before the numbers existed
+        # (PROJECT_PLAN MAG-20 step 1): sweep n_points over this test's own two
+        # rungs; any crossing of *either* edge retires the two-sided band under
+        # the MAG-19 ruling-(i) pattern, stability inside it at every count
+        # keeps the band and records the stability. Measured on the 0.11 image
+        # (dolfinx 0.11.0.post0 / gmsh 4.15.2, -n 2, one solve per rung
+        # re-sampled at each count, window r in [R_MIN, R_MAX] = the 0.4 R
+        # default this test uses; probe
+        # tests/validation/probe_straight_wire_convergence_npoints.py, log
+        # 20260828T050130Z_MAG-20-step1-npoints-probe.log, 49 s):
+        #
+        #   h        cells      n=8         n=10        n=20
+        #   0.0040    38 740    21.5512%    21.1826%    22.6647%   (swing +7.00%)
+        #   0.0025   147 235    14.8669%    15.0685%    14.2097%   (swing +6.04%)
+        #   fitted two-rung rate:  0.7900      0.7246      0.9934
+        #
+        # No count crosses either edge => VALIDATED, band kept, nothing moved.
+        # Two things the measurement says that the verdict does not:
+        #  - the sampler swing on *this* window is ~6-7% of the error, not the
+        #    34% MAG-19 measured on the 0.8 R window (NPOINTS_CONTROL_BY_VERSION
+        #    above) — the statistic this test samples is the better-behaved one;
+        #  - but the swing still moves the *rate* by 37% of its own value
+        #    (0.7246 .. 0.9934), and the n=10 row clears RATE_MIN by only
+        #    0.0246. The band holds at all three counts; the margin is thin, and
+        #    that is filed for the review rather than acted on here — a band is
+        #    never widened, and this one was not narrowed either.
+        # The n=8 fit reproduces MAG-19 step 2's recorded 0.7900 exactly, which
+        # is the probe's negative control on the imported machinery.
         assert RATE_MIN < rate < RATE_MAX, (
             f"Convergence rate {rate:.4f} outside [{RATE_MIN}, {RATE_MAX}] "
             f"(expected ~1.0 for N1curl degree 1); errors "
