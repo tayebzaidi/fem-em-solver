@@ -86,7 +86,13 @@ RESOLUTION_NEAR_STEP1 = 0.005
 
 # `MAT-6` step 8's probe count on this exact parameter set, twice on record
 # (`test_dodd_deeds_resistance_slab_resolution.NCELLS_FINE`).
-NCELLS_FINE = 417_914
+# Re-recorded for the dolfinx-0.11 image (`OPS-27` step 2): the 0.7.2 mesher read
+# 417 914; 0.11 meshes the same fixture at 418 888 (+0.233%), measured by the
+# `OPS-26` census in `20260827T185422Z_OPS-26-step2f-larmor-resolution.log` (and
+# again in the slab-resolution log — it is the same mesh).  Exact equality, no band.
+# `test_coil_loading_larmor_third_rung` imports this name, so this one edit also
+# re-records its `fine` rung (step 1 finding 38's import-graph rule).
+NCELLS_FINE = 418_888
 
 # Step 8's 10 MHz reading on this mesh and this drive — cited, not recomputed
 # (`20260811T125226Z_MAT-6-step8-gate-final.log`).

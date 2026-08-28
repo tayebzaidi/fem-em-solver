@@ -28,7 +28,20 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (g), 15:00 slot) — a **tenth** stale exact cell-count record, and it is a **fifth** mesh with **no sibling**: `test_dodd_deeds_reactance_wire_resolution.py` records 366 207 and 0.11 meshes 365 970
+### ✅ RETIRED 2026-08-27 (`OPS-27` step 2, 21:00 implementer slot) — a **tenth** stale exact cell-count record, and it is a **fifth** mesh with **no sibling**: `test_dodd_deeds_reactance_wire_resolution.py` recorded 366 207 and 0.11 meshes 365 970
+
+> **✅ RETIRED 2026-08-27, 21:00 implementer slot (`OPS-27` step 2).** The
+> literal at `:268` is re-recorded 366_207 → **365_970**, exact equality,
+> version-tagged with the 0.7.2 digit and the census log in-comment
+> (`GEO-16` precedent, no band). Anchor: the projected half re-run from
+> `main` at the same four node ids as the census —
+> `20260828T022006Z_OPS-27-step2-wire-projected.log`, **4 passed in
+> 459.44s**, Status 0, elapsed 462 s, `-n 2` complex, both rank streams
+> identical, against the census's `1 failed, 3 passed`. Same collected
+> count (4), so exactly this one name flipped. The module's `growth`
+> denominator `138_619` at `:263` is **not** a record (it feeds the printed
+> ratio and the unmoved `2.0 < growth < 3.5` band) and was left at its
+> 0.7.2 digit — step 1 finding 40's prose class.
 
 > **CANDIDATE OWNER: `OPS-27`** (§9 item 2), extending the leg (f) entry
 > below. This one refines that entry's shape rather than repeating it: the
@@ -47,11 +60,30 @@ unless fixing it is the task.
 | **Sibling sweep (zero compute)** | `grep -rn '366207\|366_207' tests/` returns **only** `:268` and its message at `:270` — no sibling module carries this mesh, unlike 138 619 (three modules) and 417 914 (three). |
 | **Disposition** | Filed, **not fixed** — `OPS-26` step 2 is a census and lands no fix. Expected on `main`; **not yours**. |
 
-### 🔴 PARTIALLY RETIRED 2026-08-27 (`OPS-26` step 2 leg (f), 13:30 slot) — **five more stale exact cell-count records across five modules, and the class collapses to THREE shared meshes, not nine independent constants**
+### ✅ RETIRED 2026-08-27 (`OPS-27` steps 1 and 2) — **five more stale exact cell-count records across five modules, and the class collapses to THREE shared meshes, not nine independent constants**
+
+> **✅ THE 417 914 AND 697 401 FAMILIES RETIRED 2026-08-27, 21:00
+> implementer slot (`OPS-27` step 2) — this entry is now fully retired.**
+> Two edits closed all three remaining names:
+> `test_dodd_deeds_resistance_slab_resolution.NCELLS_FINE` and
+> `test_coil_loading_larmor_resolution.NCELLS_FINE`, both 417_914 →
+> **418_888**, and
+> `test_dodd_deeds_reactance_combined_knobs.NCELLS_COMBINED` 697_401 →
+> **697_926** — exact equalities, version-tagged, no band, `git diff --
+> src/` empty. Anchors from `main`, both rank-stream-identical:
+> `20260828T020157Z_OPS-27-step2-slab.log` — **16 passed in 479.37s**,
+> Status 0, elapsed 482 s, `-n 2` complex (census: `1 failed, 15 passed`);
+> `20260828T021014Z_OPS-27-step2-knobs.log` — **15 passed in 577.00s**,
+> Status 0, elapsed 579 s, `-n 8` complex (census: `1 failed, 14 passed`).
+> Collected counts identical to the census runs (16 / 15), so exactly the
+> two stale-record names flipped. `larmor_resolution` was **edited but not
+> re-run in this slot** — it asserts the same 418 888 the slab run
+> measured on the same mesh; its re-run is owed to the next census (see
+> the `third_rung` entry below, which shares the constant by import).
 
 > **✅ THE 138 619 FAMILY RETIRED 2026-08-27, 19:30 implementer slot
-> (`OPS-27` step 1); the 417 914 and 697 401 families stay OPEN for
-> `OPS-27` step 2 (§9 item 2).** Four of this entry's six names are green
+> (`OPS-27` step 1); the 417 914 and 697 401 families closed by step 2
+> above.** Four of this entry's six names are green
 > from `main` — `richardson_ladder::test_the_rung_has_its_recorded_cell_count`
 > `[10MHz]` and `[30MHz]`, `larmor_probe::test_the_mesh_is_the_mat6_step3_baseline`,
 > `transition_30mhz::test_the_mesh_is_the_step1_baseline`. Finding 30's
@@ -90,7 +122,20 @@ unless fixing it is the task.
 | **What this adds to `OPS-27`'s rubric** | (1) The sweep must be **by cell-count value across modules**, not per file — 138 619 alone appears in three modules, 417 914 in three. (2) `grep -rn '0\.7\.2' tests/` is insufficient (leg (e)'s note, now confirmed twice): none of these five was reachable by version tag, only by reading a red's assertion message. (3) One re-record of a shared mesh retires up to four red names at once, so the job is **four measurements**, not nine. |
 | **Disposition** | Filed, **not fixed** — `OPS-26` step 2 is a census and lands no fix. Expected on `main`; **not yours**. |
 
-### 🔴 OPEN 2026-08-27 (`OPS-26` step 2 leg (e), 12:00 slot) — `test_coil_loading_larmor_third_rung.py` asserts an **exact** fine-rung cell count recorded on the 0.7.2 image (417 914) and 0.11 meshes 418 888: the **fourth** site of the stale-record class, and the largest drift yet at 0.233%
+### 🟡 RE-RECORDED, RE-RUN OWED 2026-08-27 (`OPS-27` step 2, 21:00 implementer slot) — `test_coil_loading_larmor_third_rung.py` asserted an **exact** fine-rung cell count recorded on the 0.7.2 image (417 914) and 0.11 meshes 418 888: the **fourth** site of the stale-record class, and the largest drift yet at 0.233%
+
+> **🟡 RE-RECORDED but NOT RE-RUN in the 21:00 slot.** This module holds no
+> constant of its own: `:443` asserts the `expected` drawn from the `fine`
+> entry of its rung table, which is `NCELLS_FINE` **imported from**
+> `tests/validation/test_coil_loading_larmor_resolution` (step 1
+> finding 38's import-graph rule, repeating). So the single 417_914 →
+> **418_888** edit in `larmor_resolution` re-records this name too, and
+> `git diff -- tests/validation/test_coil_loading_larmor_third_rung.py` is
+> empty. The same mesh value was **measured green** in the slab run
+> (`20260828T020157Z_OPS-27-step2-slab.log`, 16 passed), but this module
+> was not itself re-executed: it is a warm-cache-only ~304 s at `-n 8`
+> (`OPS-26` finding 25) and did not fit beside the slot's three windows.
+> **Re-run owed to the next census.** Entry stays filed until then.
 
 > **CANDIDATE OWNER: `OPS-27`** (§9 item 2) — same class, same remedy
 > (re-record exact, version-tagged, `GEO-16` precedent, no band). `OPS-27`'s

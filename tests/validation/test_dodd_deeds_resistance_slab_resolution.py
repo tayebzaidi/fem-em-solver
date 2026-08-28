@@ -95,7 +95,12 @@ SKIN_DEPTH_M = 1.0 / np.sqrt(np.pi * FEM_FREQUENCY_HZ * 4.0e-7 * np.pi * FEM_SIG
 
 # The cell counts this step's own probe measured, both on record:
 NCELLS_LANDED = 138_619
-NCELLS_FINE = 417_914
+# Re-recorded for the dolfinx-0.11 image (`OPS-27` step 2): the 0.7.2 probe read
+# 417 914; 0.11 meshes the same fixture at 418 888 (+0.233%), measured by the
+# `OPS-26` census in `20260827T183401Z_OPS-26-step2f-dodd-slab-resolution.log`.
+# Exact equality, no band.  (NCELLS_LANDED above is a printed growth denominator,
+# not a record — see `OPS-27` step 1 finding 40 — so it is left at its 0.7.2 digit.)
+NCELLS_FINE = 418_888
 
 # The ΔR ladder this step refines against — read off the logs, not recomputed:
 #   wire 0.002 (landed)  ΔR rel. error 1.5834%

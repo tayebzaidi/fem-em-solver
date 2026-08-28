@@ -19323,3 +19323,117 @@ them in one pass. The item's own traps stand: all three modules complex-gated,
 measurement if it repeats, `slab` and `wire` at `-n 2`, wire's projected half
 selected **by node id**, and `larmor_resolution` / `third_rung` are edited but
 not re-run with that stated in the commit.
+
+## 2026-08-28T02:35Z — `OPS-27` step 2 (§9 item 2, 21:00 CDT implementer slot) — **complete (step 2 done; chunk `OPS-27` ✅)**
+
+**Preflight.** Tree clean at `df7295d`, container Up 33 h, no `attempt/*` or
+`recovered/*` owed. `find /root/.cache/fenics -name '*.c' -size 0` **empty**
+before the first window (finding 27's mandatory sweep), zero stray `python3`.
+No window hit exit 124, so the post-124 re-sweep was not owed.
+
+**What was tried.** §9 item 2 verbatim: re-record the expensive half of the
+stale 0.7.2-era exact records by mesh value, then re-run one module per mesh
+from `main` as the anchor. Every 0.11 value was already measured in a
+footered `OPS-26` census log, so the step bought no new measurement.
+
+**Edits — four, not the rubric's five (finding 41).** The `grep -rn
+'417914|417_914' tests/` the last slot's hypothesis called for returned only
+**two** definitions:
+
+| file | name | 0.7.2 → 0.11 | drift |
+|---|---|---|---|
+| `test_dodd_deeds_resistance_slab_resolution.py:98` | `NCELLS_FINE` | 417_914 → **418_888** | +0.233% |
+| `test_coil_loading_larmor_resolution.py:89` | `NCELLS_FINE` | 417_914 → **418_888** | +0.233% |
+| `test_dodd_deeds_reactance_combined_knobs.py:90` | `NCELLS_COMBINED` | 697_401 → **697_926** | +0.075% |
+| `test_dodd_deeds_reactance_wire_resolution.py:268` | (inline literal) | 366_207 → **365_970** | −0.0647% |
+
+`test_coil_loading_larmor_third_rung.py:443` — the third site the rubric
+names for the 417 914 family — holds **no constant**: it asserts the
+`expected` from its rung table (`:145 "fine": (RESOLUTION_NEAR_FINE,
+NCELLS_FINE)`), and `NCELLS_FINE` is **imported** from `larmor_resolution` at
+`:81-86`. `git diff` on that module is empty. All four values verified
+against their census logs before editing (`grep` for the measured digit in
+`…183401Z`, `…185422Z`, `…184138Z`, `…202222Z`). Each edit carries the 0.7.2
+digit, the drift and its census log in-comment (`GEO-16` precedent); **no
+band introduced or moved**, `git diff -- src/` empty.
+
+**Anchors — three windows, 1 523 s, all Status 0, rank streams identical.**
+
+| window | build / width | result | census reading | log | elapsed |
+|---|---|---|---|---|---|
+| `slab_resolution` (+ `tests/environment`) | complex `-n 2`, `-k 30 600` | **16 passed / 479.37 s** | `1 failed, 15 passed / 429.91 s` | `20260828T020157Z_OPS-27-step2-slab.log` | 482 s |
+| `combined_knobs` (+ `tests/environment`) | complex `-n 8`, `-k 30 660` | **15 passed / 577.00 s** | `1 failed, 14 passed / 568.26 s` | `20260828T021014Z_OPS-27-step2-knobs.log` | 579 s |
+| `wire_resolution` projected half, four node ids | complex `-n 2`, `-k 30 600` | **4 passed / 459.44 s** | `1 failed, 3 passed / 434.40 s` | `20260828T022006Z_OPS-27-step2-wire-projected.log` | 462 s |
+
+Collected counts identical to the census runs (16 / 15 / 4), so exactly the
+four stale-record names flipped and no other name's status moved. Three
+matching `test-results.md` rows.
+
+**Negative control.** `git show -- tests/` touches only the four constants
+and the in-comment version tags beside them — no band, no `src/`, no fixture,
+no other module. `wire_resolution`'s `growth = ncells / 138_619` denominator
+at `:263` and its `2.0 < growth < 3.5` band were deliberately **not** touched
+(step 1 finding 40's prose class; the ratio reads 2.64 either way), and
+neither was `slab_resolution`'s `NCELLS_LANDED = 138_619`, which is a printed
+growth denominator and not asserted. **Finding 43:** the physics-reading
+comparison the rubric asks for is not executable from these logs — pytest
+captures stdout on **passing** tests, so the `[MAT-6 step 8 …] 418888 cells,
+mesh 17.6 s, solves …` lines visible in the census logs are failure-capture
+output and have no counterpart in an all-green run. The control is therefore
+executed at **name-and-status-and-collected-count** level, exactly as step 1
+recorded; claiming a byte-identical `ΔR`/`ΔX` comparison would be false.
+
+**Finding 41 — two of the census's ten sites are import aliases.** Step 1
+found four names behind one `NCELLS_BASELINE`; this step found `third_rung`
+behind `larmor_resolution`'s `NCELLS_FINE`. Pooled over the chunk: the ten
+red names sit on **eight** editable records, and a per-file sweep would have
+edited nothing in three of the nine modules. The rule that generalises is
+step 1's: **resolve the import graph of the constant before counting edits**
+— `grep -rn '<VALUE>' tests/` finds definitions, `grep -rn '<NAME>' tests/`
+finds the aliases, and the two greps disagree by design.
+
+**Finding 42 — the finding-32 widening held, and all three anchors ran
+slower than their census readings.** `combined_knobs` at `-n 8` came in at
+577.00 s inside the 660 s window ruled from its +34.7% under-price, against
+the 568.26 s census reading (+1.5%) and the 521 s exit-124 that started it;
+`slab` +11.5% (479.37 vs 429.91 s) and the wire half +5.8% (459.44 vs
+434.40 s). Three for three above record, on a quiet box, editing only an
+integer literal — so the ≥ 1.5× sizing rule is doing real work and must stay
+a *sizing* rule, never a prediction (finding 34's counter-example still
+stands in the other direction).
+
+**Not done, deliberately.** `larmor_resolution` and `third_rung` are edited
+but **not re-run** — the 418 888 they assert is the same mesh value the slab
+window measured, and `third_rung` is a warm-cache-only ~304 s at `-n 8`
+(finding 25) that did not fit beside three windows. Their known-issues line
+is re-headed 🟡 **"re-recorded, re-run owed to the next census"** rather than
+retired. `box_truncation`'s suspected sixth mesh stays pending (finding 36);
+its `projected_xlarge_box` fixture was not opened. The stale **prose** copies
+of 138 619 / 417 914 in nine out-of-scope modules (step 1 finding 40) are
+still unswept.
+
+**Known-issues.** Leg (g) `wire_resolution` entry **retired**; leg (f) entry
+**retired in full** (its last three names green); leg (e) `third_rung` entry
+**re-headed 🟡** with the import-alias explanation and the owed re-run. Two
+entries retired, one re-headed, none loosened.
+
+**Denials:** no compute command denied. One friction: `Write` to a scratch
+file under `.git/` for the multi-line commit message was refused as a
+sensitive path — the entry and message were composed with `Edit`/`Write` in
+tracked locations instead. Worth noting for the next slot: the scratch file
+for `git commit -F` must live outside `.git/`.
+
+### Hypothesis for the next attempt — `OPS-28` (§9 item 3)
+
+`OPS-27` is closed, so the queue advances to item 3, which is cheap (~10 s,
+`tests/ports` whole root, `-k 30 120`, **real** build) and independent. Its
+one substantive unknown is whether
+`test_port_orientation_flip_changes_off_diagonal_sparameter_sign` reaches its
+S-matrix assertion once `_DummyComm` gains `allgather` — green retires
+known-issues entry 3's line for it, red re-dates entry 3 for the
+zero-diagonal reason and it stays filed. Either outcome is a *recorded*
+outcome and closes the item; the trap is treating a red there as a failure of
+the step. `src/` must stay untouched (`excitation.py:262-268` is correct).
+Beyond it, the review owes a disposition on the prose sweep (finding 40) and
+on `third_rung`'s owed re-run.
+

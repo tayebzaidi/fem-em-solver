@@ -265,9 +265,14 @@ def test_the_refinement_landed_on_the_wire_and_not_on_the_far_field(
         f"\n  cells: {ncells} at resolution_wire = {RESOLUTION_WIRE_FINE} m "
         f"vs 138619 landed → {growth:.2f}×"
     )
-    assert ncells == 366_207, (
+    # Re-recorded for the dolfinx-0.11 image (`OPS-27` step 2): gmsh meshes this
+    # fixture at 365 970 where the 0.7.2 probe measured 366 207 (−0.0647%).  The
+    # 0.11 value is the one the census measured, in
+    # `20260827T202222Z_OPS-26-step2g-dodd-wireres-projected.log`; the record stays an
+    # exact equality (`GEO-16` precedent), no band.
+    assert ncells == 365_970, (
         "the mesh is deterministic and only resolution_wire moved, so the cell "
-        f"count must be the probe's 366207; got {ncells}"
+        f"count must be the probe's 365970; got {ncells}"
     )
     assert 2.0 < growth < 3.5, f"refinement growth {growth:.2f}× is not wire-local"
 

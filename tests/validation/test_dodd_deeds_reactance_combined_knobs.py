@@ -87,7 +87,11 @@ RESOLUTION_WIRE_FINE = 0.001
 # `20260808T183121Z_MAT-6-step6-probe.log`,
 # `20260808T183648Z_MAT-6-step6-probe-n8.log`,
 # `20260811T003136Z_MAT-6-step7-part2-probe.log`.
-NCELLS_COMBINED = 697_401
+# Re-recorded for the dolfinx-0.11 image (`OPS-27` step 2): the three readings
+# above are the 0.7.2 mesher's 697 401; 0.11 meshes the same fixture at 697 926
+# (+0.075%), measured by the `OPS-26` census in
+# `20260827T184138Z_OPS-26-step2f-dodd-combined-knobs.log`.  Exact equality, no band.
+NCELLS_COMBINED = 697_926
 
 # The three projected-drive ΔX ratios this step composes, each read off its own
 # log rather than recomputed here:
