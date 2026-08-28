@@ -7490,7 +7490,112 @@ next weekly review adjudicates the returned numbers.
 |---|---|---|---|
 | `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ✅ | standard |
 | `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ✅ | heavy |
+| `ANS-5` | **Pin the element-order correspondence in every ANS `SPEC.md`/`COMPARISON.md`** — our production `degree 1` is what HFSS calls **Zero Order**, not its default **First Order**; the specs do not say so, and a default-settings replication is a different discretization (operator observation, interactive session 2026-08-28) | ⬜ **FOR THE 2026-08-30 WEEKLY REVIEW — ruling required before any step runs** | smoke |
 
+
+**`ANS-5` — pin the element-order correspondence in the benchmark specs** ⬜
+*(raised by the human operator, interactive session 2026-08-28, on noticing
+that Ansys defaults to First Order basis functions with Zero / Second / Mixed
+offered. **The weekly review owns §5.4 and must rule on (a) and (b) below
+before any step executes**; this entry is the drafting session's
+recommendation, not a decision.)*
+
+> **The finding, measured.** Ansys and FEniCS name curl-conforming bases by
+> different conventions — HFSS by the polynomial order of the tangential
+> field, FEniCS by the Nédélec index — and they are off by one. Unknowns per
+> tetrahedron, our side measured directly on the 0.11 image (2026-08-28):
+>
+> | HFSS name | unknowns/tet | ours | measured DOF/tet |
+> |---|---|---|---|
+> | Zero Order | 6 (edges only) | `degree=1` — **our production order** | **6** |
+> | **First Order** *(HFSS default)* | 20 (edges + faces) | `degree=2` | **20** |
+> | Second Order | 45 | `degree=3` | **45** |
+> | Mixed Order | per element | **no equivalent** — `TimeHarmonicSolver.degree` is one global int | — |
+>
+> The 6/20/45 column is measured; the HFSS column is the standard basis
+> definition and **the review should have the operator confirm it against the
+> matrix statistics AED prints** before it is written into a spec as fact.
+>
+> **Why it matters here.** A replication run at AED's defaults compares a
+> 20-unknown element against our 6-unknown one. That is a discretization
+> difference, not a modelling difference, and it lands in the same column as
+> the physics: any ΔZ / S-parameter gap would be misattributed. The size of
+> the effect is not hypothetical — on `TH-10`'s sphere at *identical* 5 866
+> cells, degree 1 → degree 2 moves interior relL2 **8.1541% → 0.1405%** and
+> ohmic power error **8.3869% → 0.0058%** (`TH-12` step 1 / `EX-25`). Ohmic
+> power is the integral SAR routes through.
+>
+> **Where the specs are silent.** `examples/ansys_benchmarks/README.md`
+> promises a `SPEC.md` "precise enough to build in AED with **no further
+> questions**". It is not, on this axis: `ANS-3`'s *Frequency and solver*
+> section says "HFSS driven solve with the two lumped ports … Direct solver
+> preferred" and stops; `ANS-1`'s *Solve and mesh guidance* pins adaptive
+> refinement to ≤ 0.5% energy error and elements per skin depth but no order.
+> Our own side is already stated — `ANS-1`'s `COMPARISON.md` *Solve metadata*
+> row reads "138490 tetrahedra, lowest-order Nédélec edge elements (`N1curl`,
+> degree 1)" with the AED cell blank — so the asymmetry is that **we declare
+> our order and never ask AED for its own.** By the weekly review's own
+> commissioning standard — a `SPEC.md` with "no judgement calls left to the
+> operator" (docs/automation/weekly-review.md step 5) — the basis order is a
+> judgement call the specs currently leave to the operator, and the operator
+> made it by accepting a default.
+>
+> **(a) THE RULING: which side moves.** The three options are not symmetric
+> and the drafting session does **not** recommend one:
+>
+> 1. **Set AED to Zero Order.** Apples-to-apples, zero cost, keeps our
+>    production order. But it benchmarks a configuration no HFSS user runs,
+>    and it makes the operator's default experience diverge from the
+>    benchmark's.
+> 2. **Raise our side to `degree=2` for benchmark cases.** Matches the AED
+>    default — but for **coil-fed** solves this is exactly the configuration
+>    §10 rejected on 2026-08-23: complex-power identity miss **3–5e-9** vs a
+>    1e-9 bound, **99.6%** spurious electric energy, **96.8%** of `memory.max`
+>    on the 138 k-cell fixture. Putting a benchmark on an order the plan does
+>    not license for that drive would make the benchmark unciteable for the
+>    thing it exists to check.
+> 3. **Report both orders on our side.** AED's default column then faces our
+>    degree 2, and our production degree 1 is carried alongside. Costs one
+>    extra solve per case and doubles the `COMPARISON.md` table width; on the
+>    coil cases it also means publishing a degree-2 column the plan says is
+>    not production-grade, which needs wording, not just a number.
+>
+> **(b) THE SECOND RULING: what "matched order" means for `ANS-1`.** It is a
+> **Maxwell 3D eddy-current** case, not an HFSS driven solve; the basis
+> dropdown the operator saw is not the same control. The review must say
+> whether `ANS-1` is in scope at all, or whether this chunk is HFSS-solver
+> cases only (`ANS-3`, and `ANS-4` when commissioned).
+>
+> **Step 1 — the template (no compute).** Add a mandatory *Basis / element
+> order* line to the SPEC solver section and a matching row to
+> `COMPARISON.md`'s *Solve metadata*, with the correspondence table above
+> stated once in `examples/ansys_benchmarks/README.md`. **Whatever (a) rules,
+> the spec must forbid Mixed Order** — we have no per-element order and could
+> not reproduce it, so a Mixed-Order AED run is not comparable to any run of
+> ours.
+>
+> **Step 2 — retro-fill.** Apply the ruling to `ANS-1` and `ANS-3`, and fold
+> it into `ANS-4`'s spec when the review commissions it. If either case has
+> **already** been replicated in AED by then, its returned numbers were taken
+> at an unrecorded order and the review must decide whether they stand,
+> re-run, or are annotated as order-unknown.
+>
+> **Step 3 — only if (a) rules option 3.** Add the second solve to each
+> runnable half and record both orders with elapsed times. This is the only
+> step with compute; `ANS-3` is heavy tier (131 s at `-n 2` on 178 055 cells),
+> so a second order roughly doubles it and `degree=2` memory on that fixture
+> is unpriced — **price it before adopting option 3.**
+>
+> **Definition of done (§4).** Documentary for steps 1–2: no band, no
+> tolerance, no recorded figure moves, and no physics claim is added. If step
+> 3 runs, its gate is the recorded pair of solves with elapsed times, and the
+> `COMPARISON.md` wording must carry §10's licence limits verbatim rather than
+> presenting a degree-2 coil column as production.
+>
+> **Non-goals.** This chunk does **not** re-open the production element order
+> — that is §10's decision of 2026-08-23 and `TH-13`'s discriminator, and a
+> benchmark convenience is not the evidence class that moves it. It commissions
+> no new benchmark case. It does not touch `TH-13`.
 **`ANS-1` ✅ 2026-08-09** *(scoped 2026-08-09, weekly review; full plan and
 closure narrative in `docs/planning/plan-archive.md`)*. Runnable half of
 the first AED benchmark, dispatched through the runner's `ans:` group
