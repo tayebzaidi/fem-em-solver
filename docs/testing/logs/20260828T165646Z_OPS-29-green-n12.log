@@ -1,0 +1,231 @@
+# Test Run
+- Chunk: OPS-29-green-n12
+- Commit: 15e596fc90431893d197325541d70560082c4d19
+- Time (UTC): 2026-08-28 16:56:46
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.13.12
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 12 python3 -m pytest tests/materials/test_material_map_rank_safety.py -v --tb=short -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 28 11:56 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 180 mpiexec -n 12 python3 -m pytest tests/materials/test_material_map_rank_safety.py -v --tb=short -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank collected 6 items
+
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_tag_is_accepted_on_every_rank [OPS-13] ranks=12 cells=162 V_tagged=6.17283950617284090e-03 (closed form 6.17283950617283916e-03) int(sigma)=1.23456790123456805e+00 sigma*V=1.23456790123456828e+00
+PASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSED
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_tag_is_rejected_on_every_rank PASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSED
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises 
+tests/materials/test_material_map_rank_safety.py::test_material_map_without_cell_tags_still_raises PASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSED
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_single_rank_owned_phantom_tag_is_accepted_on_every_rank [OPS-29] ranks=12 empty_phantom_ranks=11 int(sigma)=4.44444444444444531e-03 closed form=4.44444444444444444e-03
+PASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSED
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank 
+tests/materials/test_material_map_rank_safety.py::test_absent_phantom_tag_is_rejected_on_every_rank PASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSED
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction 
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction 
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction 
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction 
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction 
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction 
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction 
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction 
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction 
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction 
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction 
+tests/materials/test_material_map_rank_safety.py::test_phantom_guards_survive_the_reduction PASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSEDPASSED
+
+============================== 6 passed in 0.94s ===============================
+
+
+============================== 6 passed in 0.93s ===============================
+
+
+============================== 6 passed in 0.91s ===============================
+
+
+============================== 6 passed in 0.92s ===============================
+
+
+============================== 6 passed in 0.92s ===============================
+
+
+============================== 6 passed in 0.94s ===============================
+
+
+============================== 6 passed in 0.92s ===============================
+
+
+============================== 6 passed in 0.91s ===============================
+
+
+============================== 6 passed in 0.94s ===============================
+
+
+============================== 6 passed in 0.93s ===============================
+
+
+============================== 6 passed in 0.94s ===============================
+
+
+============================== 6 passed in 0.94s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 3

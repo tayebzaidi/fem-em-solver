@@ -30,6 +30,7 @@ import dolfinx
 from dolfinx import fem
 from dolfinx.fem.petsc import LinearProblem
 from petsc4py import PETSc
+from mpi4py import MPI
 
 from ..materials import GelledSalinePhantomMaterial
 from ..utils.constants import EPSILON_0, MU_0
@@ -253,7 +254,17 @@ def build_material_fields(
             )
 
         phantom_cells = cell_tags.indices[cell_tags.values == int(phantom_tag)]
-        if phantom_cells.size == 0:
+        # `OPS-29`: reduce before testing, for exactly the reason
+        # `_validate_material_map_tags` above does. `cell_tags.values` is
+        # rank-local, so a phantom small enough that some rank owns none of it
+        # made this raise there and return normally everywhere else -- and the
+        # returning ranks then walk into `scatter_forward` below while the
+        # raising ones unwind, which is a deadlock, not an error. Measured on
+        # the coil+phantom example (2026-08-28, resolution 0.02, 493 phantom
+        # cells globally): clean at `-n 8`, four ranks empty at `-n 12`.
+        # Ghost cells can be counted twice here; irrelevant to a `> 0` test.
+        phantom_cells_globally = mesh.comm.allreduce(int(phantom_cells.size), op=MPI.SUM)
+        if phantom_cells_globally == 0:
             raise ValueError(
                 f"phantom_material requested but no cells found for phantom_tag={phantom_tag}"
             )

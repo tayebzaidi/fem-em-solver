@@ -28,6 +28,7 @@ from fem_em_solver.core.time_harmonic import (
     build_material_fields,
     build_mu_r_field,
 )
+from fem_em_solver.materials import GelledSalinePhantomMaterial
 
 # 3x3x3 hexes, each split into 6 tetrahedra by DolfinX's Kuhn subdivision, so
 # every cell of the unit cube has the same volume 1/162 -- a closed form the
@@ -219,4 +220,165 @@ def test_material_map_without_cell_tags_still_raises(unit_cube_with_one_tagged_c
         build_material_fields(
             mesh, DEFAULT_MATERIAL, cell_tags=None, material_map={TAGGED_TAG: TAGGED_MATERIAL}
         )
+    assert mesh.comm.allreduce(1, op=MPI.SUM) == mesh.comm.size
+
+
+# ---------------------------------------------------------------------------
+# `OPS-29` — the same defect, twenty lines below its own fix.
+#
+# `build_material_fields`'s `phantom_material` branch was added after `OPS-13`
+# and never got the reduction: it tested `phantom_cells.size == 0` on the
+# rank-local `cell_tags.values` and raised on every rank that happened to own
+# none of the phantom.  Measured on the real fixture (interactive session,
+# 2026-08-28, `examples/mri/01_coil_phantom_fields.py`, `coil_phantom_domain`
+# at resolution 0.02, 9291 cells, 493 phantom cells globally): at `-n 8` every
+# rank owns phantom cells and the example runs; at `-n 12` the per-rank counts
+# are [22, 0, 73, 35, 71, 0, 58, 0, 102, 27, 0, 105] and four ranks raise while
+# eight walk on into the first collective.  The tag exists globally at both
+# widths -- only the partition differs.
+#
+# The fixture below is the `OPS-13` one unchanged: exactly one cell of the whole
+# mesh carries the tag, so at any rank count above 1 some rank's local phantom
+# array is empty.  That is the worst case, reached deterministically at smoke
+# cost, and it is the same case the coil+phantom mesh reaches by accident.
+# ---------------------------------------------------------------------------
+
+PHANTOM_TAG = 3
+PHANTOM_SIGMA = 0.72
+PHANTOM_EPSILON_R = 76.5
+# The example's frequency; the phantom model needs one to validate, and no
+# assertion here depends on its value.
+PHANTOM_FREQUENCY_HZ = 1.2774e8
+
+
+def _phantom_material(sigma: float = PHANTOM_SIGMA) -> GelledSalinePhantomMaterial:
+    return GelledSalinePhantomMaterial(
+        sigma=sigma,
+        epsilon_r=PHANTOM_EPSILON_R,
+        frequency_hz=PHANTOM_FREQUENCY_HZ,
+        mu_r=1.0,
+    )
+
+
+def test_single_rank_owned_phantom_tag_is_accepted_on_every_rank(unit_cube_with_one_tagged_cell):
+    """The fix: a phantom tag living on one rank builds on **all** ranks.
+
+    Anchors, both asserted on every rank:
+
+    1. exact set identity -- the allgathered tag set is `{PHANTOM_TAG}`, so the
+       tag is present globally and absent locally on at least one rank at any
+       width above 1 (the second half is asserted directly below);
+    2. exact volume identity -- the assembled DG0 sigma field integrates to
+       `PHANTOM_SIGMA x 1/162`, the closed-form volume of one Kuhn tetrahedron
+       of the 3x3x3 unit cube.  Partition-independent by construction, so the
+       same digits are owed at every rank count.
+    """
+    mesh, cell_tags = unit_cube_with_one_tagged_cell
+    comm = mesh.comm
+
+    # Re-tag the single cell with the phantom tag, keeping the fixture's
+    # "exactly one cell globally" property.
+    tdim = mesh.topology.dim
+    local_indices = np.asarray(cell_tags.indices[cell_tags.values == TAGGED_TAG], dtype=np.int32)
+    phantom_tags = dolfinx.mesh.meshtags(
+        mesh, tdim, local_indices, np.full(local_indices.size, PHANTOM_TAG, dtype=np.int32)
+    )
+
+    assert _global_tag_set(mesh, phantom_tags) == {PHANTOM_TAG}
+
+    # The precondition that makes this a rank-safety test rather than a
+    # tautology: at least one rank owns no phantom cell whenever there is more
+    # than one rank.  Asserted, not assumed -- if a future partitioner change
+    # broke it, the test would silently stop covering the defect.
+    local_phantom_cells = int(local_indices.size)
+    empty_ranks = comm.allreduce(int(local_phantom_cells == 0), op=MPI.SUM)
+    if comm.size > 1:
+        assert empty_ranks >= 1, (
+            f"fixture no longer reproduces the defect: all {comm.size} ranks own phantom cells"
+        )
+
+    # The call the old code failed on every rank owning no phantom cell.
+    sigma_field, epsilon_field = build_material_fields(
+        mesh,
+        DEFAULT_MATERIAL,
+        cell_tags=phantom_tags,
+        phantom_material=_phantom_material(),
+        phantom_tag=PHANTOM_TAG,
+    )
+
+    # Every rank got here: agreement is the property under test, so prove it
+    # collectively rather than trusting rank 0's word for it.
+    assert comm.allreduce(1, op=MPI.SUM) == comm.size
+
+    sigma_integral = _assemble_dg0_integral(sigma_field)
+    epsilon_integral = _assemble_dg0_integral(epsilon_field)
+
+    if comm.rank == 0:
+        print(
+            f"[OPS-29] ranks={comm.size} empty_phantom_ranks={empty_ranks} "
+            f"int(sigma)={sigma_integral:.17e} "
+            f"closed form={PHANTOM_SIGMA * EXPECTED_CELL_VOLUME:.17e}"
+        )
+
+    # Anchor 2: sigma_default is 0.0, so the integral is the bare product
+    # sigma_phantom x (volume of the one tagged cell) = 0.72 / 162.
+    assert sigma_integral == pytest.approx(PHANTOM_SIGMA * EXPECTED_CELL_VOLUME, rel=1e-12)
+
+    expected_eps_integral = (
+        float(DEFAULT_MATERIAL.epsilon_r) * (1.0 - EXPECTED_CELL_VOLUME)
+        + PHANTOM_EPSILON_R * EXPECTED_CELL_VOLUME
+    )
+    assert epsilon_integral == pytest.approx(expected_eps_integral, rel=1e-12)
+
+
+def test_absent_phantom_tag_is_rejected_on_every_rank(unit_cube_with_one_tagged_cell):
+    """Negative control: a globally missing phantom tag must raise on all ranks.
+
+    The reduction must not turn the guard off.  A tag no rank owns is a real
+    error -- silently building a phantom-free field would hand back a lossless
+    answer for a lossy problem, the same class of silent-wrong-answer the
+    module's real-mode refusal exists to prevent.
+    """
+    mesh, cell_tags = unit_cube_with_one_tagged_cell
+    comm = mesh.comm
+
+    with pytest.raises(ValueError) as excinfo:
+        build_material_fields(
+            mesh,
+            DEFAULT_MATERIAL,
+            cell_tags=cell_tags,
+            phantom_material=_phantom_material(),
+            phantom_tag=ABSENT_TAG,
+        )
+    assert str(ABSENT_TAG) in str(excinfo.value)
+
+    # Raised everywhere, not just where the local array happened to be empty.
+    raised = comm.allgather(True)
+    assert len(raised) == comm.size and all(raised)
+
+
+def test_phantom_guards_survive_the_reduction(unit_cube_with_one_tagged_cell):
+    """The two pre-existing phantom guards are untouched by the fix."""
+    mesh, cell_tags = unit_cube_with_one_tagged_cell
+
+    with pytest.raises(ValueError, match="problem.cell_tags"):
+        build_material_fields(
+            mesh,
+            DEFAULT_MATERIAL,
+            cell_tags=None,
+            phantom_material=_phantom_material(),
+            phantom_tag=PHANTOM_TAG,
+        )
+
+    # Same tag claimed by both assignment paths: still rejected, on every rank.
+    with pytest.raises(ValueError, match="choose one assignment path"):
+        build_material_fields(
+            mesh,
+            DEFAULT_MATERIAL,
+            cell_tags=cell_tags,
+            material_map={TAGGED_TAG: TAGGED_MATERIAL},
+            phantom_material=_phantom_material(),
+            phantom_tag=TAGGED_TAG,
+        )
+
     assert mesh.comm.allreduce(1, op=MPI.SUM) == mesh.comm.size

@@ -3145,6 +3145,71 @@ ranks died. Reach for the force-recreate rather than repeating the
 restart/kill pair. Not diagnosed: whether the wedge is specific to a job that
 survived its `timeout`, or to any long `docker compose exec` under load.
 
+### A killed `mpiexec` job leaks its `/dev/shm/mpich_shm_*` segment, and once the container's 64 MB `/dev/shm` fills, **every** later run dies with `EXIT CODE: 135` (interactive session, 2026-08-28)
+
+**Verified at `15e596f`, interactive session.** An `examples/run_examples`
+invocation was interrupted by the human operator mid-run. Every subsequent
+`mpiexec` — including ones that had been green minutes earlier — then aborted
+immediately with
+
+```
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID <pid> RUNNING AT <container-id>
+=   EXIT CODE: 135
+=   CLEANING UP REMAINING PROCESSES
+```
+
+**135 = 128 + 7 = SIGBUS**, raised when MPICH touches a shared-memory page it
+cannot back. `df -h /dev/shm` inside the container read **64M used, 0 avail,
+100%**, holding **28** orphaned `mpich_shm_*` segments dated 2026-08-27 through
+2026-08-28 — three of them 16.9 MB, from the interrupted run. No MPI process
+was alive; nothing owned them. **Recovery is cheap** — no force-recreate, no
+container restart:
+
+```bash
+docker compose -f docker/docker-compose.yml exec -T fem-em-solver \
+  bash -lc 'rm -f /dev/shm/mpich_shm_*; df -h /dev/shm'
+```
+
+Verified clean afterwards: shm 0%, and `mpiexec -n 2 python3 -c "from mpi4py
+import MPI; c=MPI.COMM_WORLD; print(c.rank, c.allreduce(1))"` returns `2` on
+both ranks, exit 0.
+
+**The segment size is a pure function of local rank count**, ~1.06 MB/rank,
+independent of problem size or mesh — measured live, and the 16-rank row is not
+extrapolation (it is the size of the orphans the interrupted run left):
+
+| ranks | segment | orphaned runs before `/dev/shm` is full |
+|---|---|---|
+| 1 | 1.06 MB | 60 |
+| 2 | 2.12 MB | 30 |
+| 8 | 8.46 MB | 7 |
+| 12 | 12.69 MB (measured live at `15e596f`) | 5 |
+| 16 | 16.92 MB | 3 |
+
+So a *single* run of any legal width fits comfortably; what kills the container
+is **accumulation**. A clean exit releases its segment, so this is purely a
+kill/timeout aftermath — and each kill permanently burns a slot until someone
+clears it. At the project's `-n 12` ceiling the **sixth** killed run poisons the
+box; the standard `-n 2` recipes give 30. Note that `timeout -k 30` firing
+(exit 124) is itself a kill and leaks a segment like any other.
+
+**Do not read a post-kill `EXIT CODE: 135` as a regression** — same discipline
+as the FFCx JIT-cache entry below, and the two compound: a killed run can leave
+*both* a poisoned JIT cache and a leaked shm segment, so clear both before
+trusting any failure that follows a kill. Suspect this whenever a previously
+green command fails instantly with 135 and no Python traceback.
+
+**Not fixed, and one-line to fix:** `docker/docker-compose.yml` sets no
+`shm_size`, so the container is on Docker's 64 MB default. `shm_size: 2gb`
+would raise the orphan headroom to ~120 sixteen-rank runs and costs nothing
+unused (`/dev/shm` is tmpfs — RAM is consumed only by pages actually touched).
+Deliberately left unapplied here; it needs a container re-create to take effect.
+Related: the **12-rank ceiling is not enforced against an interactive session** —
+`scripts/automation/hooks/bash_guard.py:36-43` is a PreToolUse hook, so it
+denies `mpiexec -n >12` only from agent sessions. The 16.9 MB orphans above are
+what an unguarded human-typed `n` looks like.
+
 ### A killed harness run poisons the FFCx JIT cache, and the *next* run fails unrelated forms with "JIT compilation timed out" (`OPS-17` step 3 attempt 3, 2026-08-18)
 
 **Verified at `2f97048`, 00:00 implementer slot.** Two complex-mode legs were
