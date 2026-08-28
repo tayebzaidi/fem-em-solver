@@ -5880,7 +5880,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-31` | Ring-gapped birdcage with dual port families (`GEO-20` step 1's newly gated capability: first example with ring-gap terminals as exact disks from radial cut planes, and the first 12-port dual-family mesh — a geometry angle `EX-28` (leg gaps only) does not cover; mesh-only, no solve; commissioned 2026-08-24 10:30 review) | ✅ (2026-08-24: `mesh:7`, `examples/meshing/07_birdcage_ring_gap_ports.py` + same-stem guide; **closed as written on the first run**, every element of the rubric executed and no band moved — see the prose entry for the digits. *Audited COMPLIANT 2026-08-24 18:00 review: all three footers verified (75 / 72 / 1 s, statuses 0/0/2 with exit 2 = the `OPS-19` stale-only contract), the printed assertions match this entry to the last decimal, the gate-module strengthening is real (records asserted at their source, lines 403/458/538, imported by the example not restated), and `git show 7529fa4 -- tests/` is 24 insertions / 0 deletions — purely additive, nothing loosened*) | standard (measured standard) |
 | `EX-32` | Birdcage 4-port power-wave S-matrix at 10 MHz (`PORT-9`'s newly gated capability: first example solving ports on the **birdcage** — every existing S-parameter example is two-torus (`EX-20`/`EX-24`/ports:1–3), and `EX-28`/`EX-31` are mesh-only; commissioned 2026-08-25 10:30 review, §5.4 ramp) | ✅ *(2026-08-26, green on the first run; every gate-module record reproduced exactly and the only reading that moved is the one (d3c) declares non-reproducible)* | standard (measured standard, 88 s) |
 | `EX-33` | 16-leg gapped + sheeted birdcage mesh (`GEO-19`'s newly gated capability: first example above four legs — `EX-28`/`EX-31`/`mesh:3` are all 4-leg, so the geometry angle is new; mesh-only, no solve, no port claim; commissioned 2026-08-25 18:00 review, §5.4 ramp) | ✅ *(audited COMPLIANT 2026-08-26 18:00 review: three footers Status 0 at 131 / 126 / 1 s, all 16 claimed digits grep out of the run log, bands *and* `_assert_identity_family` imported from the gate module, the gate-module diff a single +6-line additive hunk)* | standard |
-| `EX-34` | Birdcage 4-port S-matrix across the frequency ladder 10 / 64 / 128 MHz on **one** mesh (`PORT-11`'s newly gated capability: first example solving ports at a Larmor frequency — `EX-32` is 10 MHz only, `EX-19`/`EX-25` are Larmor on the sphere with no ports; the drive/output angle is the frequency ladder itself: loss tangent, cells/δ, cells/λ, `\|Im P\|/Re P` and the three gate readings side by side; commissioned 2026-08-26 18:00 review, §5.4 ramp) | ⬜ | standard |
+| `EX-34` | Birdcage 4-port S-matrix across the frequency ladder 10 / 64 / 128 MHz on **one** mesh (`PORT-11`'s newly gated capability: first example solving ports at a Larmor frequency — `EX-32` is 10 MHz only, `EX-19`/`EX-25` are Larmor on the sphere with no ports; the drive/output angle is the frequency ladder itself: loss tangent, cells/δ, cells/λ, `\|Im P\|/Re P` and the three gate readings side by side; commissioned 2026-08-26 18:00 review, §5.4 ramp) | ✅ 2026-08-28 (`ports:5`, `20260828T110615Z_EX-34-run2.log`, **139 s** Status 0 at `-n 2` complex; one 116 085-cell mesh, 12 driven solves, all three gates green on all three rungs; 128 MHz cells/λ 12.5024 ≥ 10) | standard |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
 **Logs:** `20260820T170422Z_EX-26-example-n2.log` (exit 0), `20260820T170540Z_EX-26-docrefs.log` (`dead=0 guide=0 stale=0 exit=0`).
@@ -6760,7 +6760,77 @@ port on the birdcage. Sized for one implementer run.)*
 </details>
 
 **`EX-34` — birdcage 4-port S-matrix across the Larmor frequency ladder,
-one mesh** ⬜ *(commissioned 2026-08-26 18:00 review — `PORT-11`'s §5.4 ramp
+one mesh** ✅ 2026-08-28 *(closed 2026-08-28, 06:00 implementer slot; green on
+the second run — the first was the `EX-32` runner trap, `run_examples.sh`
+drives `docker` itself and must run on the **host**, not inside the container.)*
+`examples/ports/05_birdcage_larmor_frequency_ladder.py` + same-stem guide,
+dispatched through the runner's `ports:` group (`./run_examples.sh -e ports:5
+-n 2 -t 400`, log `20260828T110615Z_EX-34-run2.log`, **139 s** wall clock /
+136.8 s in-script, Status 0 — standard, as commissioned).
+
+**One mesh, three rungs, twelve driven solves, and the ladder is an asserted
+property, not a docstring claim.** The `GEO-19` step-B fixture is built once —
+**116 085** cells at ratio **1.000000** of the record, 24.0 s — and reused by
+all three rungs (sweeps 24.0 + 23.9 + 24.1 s); the 64 and 128 MHz rungs assert
+`reused_mesh` *and* that their mesh is the same Python object as the 10 MHz
+rung's. The gate modules build a mesh per rung, which is correct for a gate and
+is exactly what this example does not do.
+
+**The three `PORT-9` gates, imported and asserted on every rung** (never
+restated), through the gate module's own `_four_port_rung`:
+
+| rung | ‖S − Sᵀ‖/‖S‖ | σ_max(S) | max col. power | self / adj / opp | pooled/worst |
+|---|---|---|---|---|---|
+| 10 MHz | 1.657e-14 | 0.999992805 | 0.793823974 | 0.0553 / 0.0353 / 0.0214% | 166.6766× |
+| 64 MHz | 1.179e-15 | 0.999721388 | 0.804704664 | 0.0573 / 0.0599 / 0.0370% | 671.0527× |
+| 128 MHz | 5.457e-15 | 0.998974779 | 0.861668762 | 0.1012 / 0.0916 / 0.0654% | 576.9483× |
+
+against 1e-3, 1 + 1e-9, 0.5% and 10× respectively. **The pre-gate stop rule ran
+first**, through the 128 MHz module's own `_require_resolution`: phantom
+cells/λ **12.5024** against the imported floor of 10 (cells/δ 5.1845), on a
+phantom whose loss tangent walks **11.5225 → 1.8004 → 0.9002** up the ladder —
+conduction- to displacement-dominated, which is why δ stops falling and λ is
+the binding scale.
+
+**Anchors all reproduced.** 10 MHz gives back leg (d)'s recorded 4×4 to a worst
+**1.158e-10** against the imported 1e-6 and leg (d0)'s terminated column to
+**2.568e-10**. The Larmor rungs reproduce `PORT-11` step 2/3's records inside
+the pre-stated 1% band: σ_max to **2.814e-10** / **4.374e-11** and the column
+power maximum to **1.276e-10** / **3.493e-10**; the worst misses are the class
+spreads at **1.075e-03** (64 MHz) and **6.755e-04** (128 MHz), which is the
+four-significant-figure print precision of the recorded spreads, not a
+difference. Reciprocity residuals are excluded by the (d3c) rule and printed as
+decades only.
+
+**Negative control executed and asserted, at 128 MHz** — the rung no control had
+been run on: the deprecated `PORT-0` heuristic on the same problem and mesh
+emits its `DeprecationWarning`, reports `is_placeholder=True`, prints an
+**identically zero** off-diagonal (`max|off-diagonal| = 0.000000e+00` — it
+predicts no coupling between the coil's legs at all) and separates from the
+field-derived `S` by **1.585461e+00** against the `EX-20` 2e-3 floor.
+
+Two combined XDMF files land in `examples/ports/paraview_output/` (128 MHz —
+the rung no example had exported — and 10 MHz for the side-by-side, **on the
+same mesh**, so they subtract) plus one `_facets` file, `mesh_tags` 211–214.
+
+**One additive change to a gate module:** `_four_port_rung` takes a `reuse=`
+parameter (hand it a rung it already returned and the mesh, narrowed sheet tags
+and sheet geometry come from that rung instead of being rebuilt) and returns
+six more keys (`facet_tags`, `problem`, `port_defs`, `specs`, `mesh_time`,
+`reused_mesh`). Every gate caller passes the default and rebuilds as before; no
+gate reads the new keys. The module re-ran green from `main` after the change —
+`20260828T111019Z_EX-34-gate.log`, **`5 passed in 103.07s`**, Status 0, 104 s,
+against the 103.82 s on its closing record. Census after: **`dead=0 guide=0`**,
+31/31 runnable examples guided (`20260828T111008Z_EX-34-census2.log`; the 31
+stale-artifact reports are the corpus's pre-existing 48-hour clock, severity
+`report`, untouched by this chunk). No band, gate constant or record moved
+anywhere; no known-issues entry owed. **Scope unchanged and stated verbatim in
+the guide: self-consistency identities on one fixture — no resonance, tuning,
+B1+/SAR or absolute-accuracy claim.**
+
+<details><summary>Original entry (commissioning + plan)</summary>
+
+*(commissioned 2026-08-26 18:00 review — `PORT-11`'s §5.4 ramp
 obligation, both steps. Sized for one implementer run.)*
 `examples/ports/05_birdcage_larmor_frequency_ladder.py` + same-stem guide,
 `ports:5`. Build the `GEO-19` step-B fixture **once** (116 085-cell record,
@@ -6804,6 +6874,8 @@ reciprocity as an order of magnitude. Combined XDMF of the port-1-driven
 > path is an example/test divergence finding — known-issues + this entry,
 > nothing re-recorded, stop. **Done-when:** `ports:5` green from `main`
 > with elapsed recorded, guide present, census attributed.
+
+</details>
 
 **`EX-33` — 16-leg gapped + sheeted birdcage mesh** ✅ 2026-08-26
 *(closed 2026-08-26, 13:30 implementer slot, green on the first run.)*
@@ -7181,7 +7253,14 @@ uses the Edit tool and verifies `git status --porcelain`.
    32-port build that fails in gmsh, or a class structure the per-class
    bands do not admit, is the measurement — record the ladder and the
    class table, land no band, known-issues + §7, chunk stays 🟡, stop.
-2. **`EX-34` — birdcage 4-port S-matrix across the 10 / 64 / 128 MHz
+2. **✅ DONE 2026-08-28 06:00 slot** — `ports:5` green on `main`,
+   `20260828T110615Z_EX-34-run2.log`, 139 s, Status 0: one 116 085-cell mesh,
+   twelve driven solves, all three gates on all three rungs, the 128 MHz
+   stop rule cleared at cells/λ 12.5024, both Larmor records reproduced
+   inside the 1% band and the heuristic control separated by 1.585461e+00.
+   Consumer gate module re-ran `5 passed in 103.07s` after its `reuse=`
+   parameter. `EX-34` ✅ in §7. Original item text below.
+   **`EX-34` — birdcage 4-port S-matrix across the 10 / 64 / 128 MHz
    ladder on one mesh (standard, `-n 2`, complex, `main`; independent;
    §5.4 ramp on `PORT-11` ✅).** Execute the §7 `EX-34` entry as written
    — it carries the full rubric. In brief: `ports:5`

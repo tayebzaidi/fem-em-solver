@@ -196,7 +196,7 @@ def _narrowed_radial(msh, facet_tags, tag, fraction, centre, radial, half_width)
     return dolfinx.mesh.meshtags(msh, fdim, new_idx[order], new_val[order])
 
 
-def _four_port_rung(name, offsets, frequency_hz=FREQUENCY_HZ):
+def _four_port_rung(name, offsets, frequency_hz=FREQUENCY_HZ, reuse=None):
     """Build one rung, narrow its four sheets in their own frames, drive all four.
 
     Returns the assembled ``Z``/``S``, the circulant class spreads, the
@@ -209,76 +209,94 @@ def _four_port_rung(name, offsets, frequency_hz=FREQUENCY_HZ):
     `tests/validation/test_port_birdcage_larmor_gate.py`).  Nothing else about
     this function moved when the parameter was added, and every rung below still
     calls it at the default.
+
+    ``reuse`` is the second additive parameter, for `EX-34`: hand it a rung this
+    function already returned and the mesh, the narrowed sheet tags and the sheet
+    geometry are taken from it instead of being rebuilt, so a frequency ladder
+    runs on **one** mesh.  ``offsets`` is then unread — the reused rung's geometry
+    *is* the geometry, which is exactly the property the ladder needs.  Every
+    caller in this repo's gates passes ``reuse=None`` (the default) and rebuilds
+    as before; nothing below reads the extra return keys.
     """
     comm = MPI.COMM_WORLD
     ports_idx = list(range(1, LEG_COUNT + 1))
 
-    msh, cell_tags, _facet_tags, diag, t_mesh = _build(offsets)
-    tdim = msh.topology.dim
-    ncells = int(msh.topology.index_map(tdim).size_global)
-    # Hoisted on every rank before any facet-restricted form (known-issues 9).
-    msh.topology.create_connectivity(tdim - 1, tdim)
-    msh.topology.create_entity_permutations()
+    if reuse is not None:
+        msh = reuse["mesh"]
+        cell_tags = reuse["cell_tags"]
+        tags_f = reuse["facet_tags"]
+        sheets = reuse["sheets"]
+        ncells = int(reuse["cells"])
+        sheet_analytic = float(reuse["sheet_analytic"])
+        diag = {"mesh_wall_time_s": 0.0}
+        t_mesh = 0.0
+    else:
+        msh, cell_tags, _facet_tags, diag, t_mesh = _build(offsets)
+        tdim = msh.topology.dim
+        ncells = int(msh.topology.index_map(tdim).size_global)
+        # Hoisted on every rank before any facet-restricted form (known-issues 9).
+        msh.topology.create_connectivity(tdim - 1, tdim)
+        msh.topology.create_entity_permutations()
 
-    tags_f, full_areas = _sheet_areas(msh, cell_tags, ports_idx, comm)
-    dx, _dy, dz = diag["port_box_size_m"]
-    sheet_analytic = float(dx) * float(dz)
+        tags_f, full_areas = _sheet_areas(msh, cell_tags, ports_idx, comm)
+        dx, _dy, dz = diag["port_box_size_m"]
+        sheet_analytic = float(dx) * float(dz)
 
-    # Measure each full sheet in its own frame, then narrow radially to step 2b's
-    # gated fraction and re-measure `w = A/h` on the filtered set.
-    geometry = {}
-    for i in ports_idx:
-        tag = SHEET_IFACE + i
-        azimuth = _sheet_azimuth_deg(msh, tags_f, tag, comm)
-        radial, azimuthal, axial = _port_frame(azimuth)
-        spans, centres = _projected_extents(
-            msh, tags_f, tag, comm, [radial, azimuthal, axial]
-        )
-        geometry[i] = {
-            "tag": tag,
-            "azimuth_deg": float(azimuth),
-            "radial": radial,
-            "w_full": float(spans[0]),
-            "out_of_plane_full": float(spans[1]),
-            "h_full": float(spans[2]),
-            "centre_radial": float(centres[0]),
-            "area_full": float(full_areas[i]),
-            "area_ratio_full": float(full_areas[i] / sheet_analytic),
-        }
-
-    for i in ports_idx:
-        g = geometry[i]
-        tags_f = _narrowed_radial(
-            msh,
-            tags_f,
-            g["tag"],
-            GATED_WIDTH_FRACTION,
-            g["centre_radial"],
-            g["radial"],
-            0.5 * g["w_full"],
-        )
-
-    sheets = []
-    for i in ports_idx:
-        g = geometry[i]
-        n_facets = _sheet_facet_count(msh, tags_f, g["tag"], comm)
-        assert n_facets > 0, f"sheet {g['tag']}: no owned facets anywhere"
-        area = _facet_group_area(msh, tags_f, g["tag"], comm)
-        radial, azimuthal, axial = _port_frame(g["azimuth_deg"])
-        spans, _centres = _projected_extents(
-            msh, tags_f, g["tag"], comm, [radial, azimuthal, axial]
-        )
-        sheets.append(
-            {
-                **g,
-                "facets": int(n_facets),
-                "area": float(area),
-                "h": float(spans[2]),
-                "w": float(area / spans[2]),
-                "w_bbox": float(spans[0]),
-                "out_of_plane": float(spans[1]),
+        # Measure each full sheet in its own frame, then narrow radially to step
+        # 2b's gated fraction and re-measure `w = A/h` on the filtered set.
+        geometry = {}
+        for i in ports_idx:
+            tag = SHEET_IFACE + i
+            azimuth = _sheet_azimuth_deg(msh, tags_f, tag, comm)
+            radial, azimuthal, axial = _port_frame(azimuth)
+            spans, centres = _projected_extents(
+                msh, tags_f, tag, comm, [radial, azimuthal, axial]
+            )
+            geometry[i] = {
+                "tag": tag,
+                "azimuth_deg": float(azimuth),
+                "radial": radial,
+                "w_full": float(spans[0]),
+                "out_of_plane_full": float(spans[1]),
+                "h_full": float(spans[2]),
+                "centre_radial": float(centres[0]),
+                "area_full": float(full_areas[i]),
+                "area_ratio_full": float(full_areas[i] / sheet_analytic),
             }
-        )
+
+        for i in ports_idx:
+            g = geometry[i]
+            tags_f = _narrowed_radial(
+                msh,
+                tags_f,
+                g["tag"],
+                GATED_WIDTH_FRACTION,
+                g["centre_radial"],
+                g["radial"],
+                0.5 * g["w_full"],
+            )
+
+        sheets = []
+        for i in ports_idx:
+            g = geometry[i]
+            n_facets = _sheet_facet_count(msh, tags_f, g["tag"], comm)
+            assert n_facets > 0, f"sheet {g['tag']}: no owned facets anywhere"
+            area = _facet_group_area(msh, tags_f, g["tag"], comm)
+            radial, azimuthal, axial = _port_frame(g["azimuth_deg"])
+            spans, _centres = _projected_extents(
+                msh, tags_f, g["tag"], comm, [radial, azimuthal, axial]
+            )
+            sheets.append(
+                {
+                    **g,
+                    "facets": int(n_facets),
+                    "area": float(area),
+                    "h": float(spans[2]),
+                    "w": float(area / spans[2]),
+                    "w_bbox": float(spans[0]),
+                    "out_of_plane": float(spans[1]),
+                }
+            )
 
     problem = TimeHarmonicProblem(
         mesh=msh,
@@ -415,6 +433,16 @@ def _four_port_rung(name, offsets, frequency_hz=FREQUENCY_HZ):
         # reads them and no rung's numbers moved when they were added.
         "mesh": msh,
         "cell_tags": cell_tags,
+        # Additive again, for `EX-34`'s one-mesh frequency ladder: the narrowed
+        # sheet tags and the assembled problem/port objects, so a consumer can
+        # hand this rung back as ``reuse=`` (and re-solve one driven case for a
+        # field the sweep does not retain).  No gate in this repo reads them.
+        "facet_tags": tags_f,
+        "problem": problem,
+        "port_defs": port_defs,
+        "specs": specs,
+        "mesh_time": float(diag["mesh_wall_time_s"]),
+        "reused_mesh": reuse is not None,
     }
 
 

@@ -1,0 +1,74 @@
+# Test Run
+- Chunk: EX-34-census2
+- Commit: 5479c17ccddef49ed19cce082cf529c508ac9e42
+- Time (UTC): 2026-08-28 11:10:09
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && python3 scripts/testing/check_example_doc_references.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 28 06:10 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && python3 scripts/testing/check_example_doc_references.py'\'''
+Scanned 40 guide(s) under examples/, 134 distinct file reference(s) checked, 1 allowlisted.
+PASS: every referenced file exists.
+STALE: 31 stale artifact(s) (--stale-severity report):
+  - birdcage_graded_conductors_baseline_combined.xdmf: stale in examples/meshing/paraview_output/ (49.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/03_birdcage_graded_conductors.md:133]
+  - birdcage_graded_conductors_graded_combined.xdmf: stale in examples/meshing/paraview_output/ (49.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/03_birdcage_graded_conductors.md:135]
+  - birdcage_leg_gaps_port_sheets_sheeted_combined.xdmf: stale in examples/meshing/paraview_output/ (61.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/06_birdcage_leg_gaps_port_sheets.md:154, examples/meshing/08_birdcage_sixteen_legs.md:182]
+  - birdcage_leg_gaps_port_sheets_sheeted_facets.xdmf: stale in examples/meshing/paraview_output/ (61.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/06_birdcage_leg_gaps_port_sheets.md:156]
+  - birdcage_leg_gaps_port_sheets_uncut_combined.xdmf: stale in examples/meshing/paraview_output/ (61.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/06_birdcage_leg_gaps_port_sheets.md:155]
+  - birdcage_ring_gap_ports_legring_combined.xdmf: stale in examples/meshing/paraview_output/ (61.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/07_birdcage_ring_gap_ports.md:152]
+  - birdcage_ring_gap_ports_ring_combined.xdmf: stale in examples/meshing/paraview_output/ (61.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/07_birdcage_ring_gap_ports.md:151]
+  - birdcage_ring_gap_ports_ring_facets.xdmf: stale in examples/meshing/paraview_output/ (61.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/07_birdcage_ring_gap_ports.md:154]
+  - birdcage_ring_gap_ports_uncut_combined.xdmf: stale in examples/meshing/paraview_output/ (61.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/07_birdcage_ring_gap_ports.md:153]
+  - cylindrical_phantom_combined.xdmf: stale in examples/meshing/paraview_output/ (61.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/02_cylindrical_phantom.md:96]
+  - cylindrical_phantom_facets.xdmf: stale in examples/meshing/paraview_output/ (61.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/02_cylindrical_phantom.md:104]
+  - dielectric_sphere_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (78.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/03_dielectric_sphere_in_uniform_field.md:137]
+  - dodd_deeds_coil_loading_combined.xdmf: stale in examples/materials/paraview_output/ (68.9 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/materials/01_dodd_deeds_coil_loading.md:170]
+  - element_order_sphere_degree1_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (78.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/07_element_order_lossy_sphere.md:117]
+  - element_order_sphere_degree2_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (78.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/07_element_order_lossy_sphere.md:118]
+  - evanescent_waveguide_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (78.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/04_evanescent_waveguide_decay.md:131]
+  - gauge_cross_check_combined.xdmf: stale in paraview_output/ (69.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/magnetostatics/05_gauge_cross_check.md:112]
+  - larmor_sphere_128MHz_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (78.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/06_larmor_lossy_sphere.md:118]
+  - larmor_sphere_64MHz_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (78.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/06_larmor_lossy_sphere.md:117]
+  - lossy_plane_wave_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (78.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/01_lossy_plane_wave.md:116]
+  - mass_averaged_sar_combined.xdmf: stale in examples/mri/paraview_output/ (68.9 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/mri/02_mass_averaged_sar.md:138]
+  - pec_cavity_mode_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (78.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/02_pec_cavity_resonances.md:115]
+  - poynting_audit_driven_smoke_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (78.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/08_poynting_power_balance.md:164]
+  - poynting_audit_th6_plane_wave_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (78.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/08_poynting_power_balance.md:165]
+  - region_resolution_policy_clamps_only_combined.xdmf: stale in examples/meshing/paraview_output/ (55.5 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/05_region_resolution_policy.md:170]
+  - region_resolution_policy_policy_combined.xdmf: stale in examples/meshing/paraview_output/ (55.5 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/05_region_resolution_policy.md:171]
+  - resonance_guard_combined.xdmf: stale in examples/time_harmonic/paraview_output/ (78.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/time_harmonic/05_resonance_guard_sweep.md:134]
+  - two_torus_port_sheet_combined.xdmf: stale in examples/meshing/paraview_output/ (55.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/04_two_torus_port_sheet.md:124]
+  - two_torus_port_sheet_facets.xdmf: stale in examples/meshing/paraview_output/ (55.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/04_two_torus_port_sheet.md:125]
+  - two_torus_ports_combined.xdmf: stale in examples/meshing/paraview_output/ (55.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/01_two_torus_ports.md:78]
+  - two_torus_ports_facets.xdmf: stale in examples/meshing/paraview_output/ (55.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/meshing/01_two_torus_ports.md:90]
+Guide pass: 31 runnable example(s) from scripts/run_examples.sh --list, 31 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=0 guide=0 stale=31 stale_severity=report exit=2
+
+## Exit
+- Status: 2
+- Elapsed (s): 0

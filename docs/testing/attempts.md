@@ -19720,3 +19720,75 @@ work touching every module that reconstructs a sheet, and the records it could
 move make it a **review's call, not an in-slot fix** — which is why nothing was
 attempted here. Note also that `GEO-19`'s 16-leg leg fixture passing at `-n 2`
 is luck of the partition, not immunity.
+
+---
+
+## 2026-08-28T11:15Z — `EX-34` — complete
+
+**Slot.** 06:00 CDT scheduled implementer run. Preflight clean, container Up 42 h.
+On-deck item 1 (`GEO-20` step 2) is marked 🚫 blocked by the 03:00 review, so the
+first not-done/not-blocked item is **item 2, `EX-34`**.
+
+**What was tried.** The §7 `EX-34` plan as written:
+`examples/ports/05_birdcage_larmor_frequency_ladder.py` + same-stem guide, the
+birdcage 4-port S-matrix at 10 / 64 / 128 MHz on **one** `GEO-19` step-B mesh.
+The angle needed a mesh-reuse hook, since the gate modules deliberately rebuild
+per rung: `_four_port_rung`
+(`tests/validation/test_port_birdcage_leg_offset_sweep.py`) took an additive
+`reuse=` parameter and six additive return keys. Nothing else in `tests/` or
+anything in `src/` was touched.
+
+**Outcome: complete, all anchors green.**
+`20260828T110615Z_EX-34-run2.log`, Status 0, **139 s** wall / 136.8 s in-script,
+`-n 2`, complex build, standard tier — inside the commissioned 110–140 s window.
+
+* one mesh, **116 085** cells at ratio 1.000000, 24.0 s, reused by all three
+  rungs (asserted: `reused_mesh` *and* mesh object identity); sweeps
+  24.0 + 23.9 + 24.1 s = twelve driven solves;
+* the three `PORT-9` gates green on **every** rung — reciprocity
+  1.657e-14 / 1.179e-15 / 5.457e-15 vs 1e-3; σ_max 0.999992805 / 0.999721388 /
+  0.998974779 vs 1 + 1e-9; class spreads 0.0553/0.0353/0.0214%,
+  0.0573/0.0599/0.0370%, 0.1012/0.0916/0.0654% vs 0.5%; pooled/worst
+  166.6766× / 671.0527× / 576.9483× vs 10×;
+* pre-gate stop rule cleared **by measurement** through the 128 MHz module's own
+  `_require_resolution`: phantom cells/λ **12.5024** vs the floor of 10
+  (cells/δ 5.1845), loss tangent 11.5225 → 1.8004 → 0.9002 up the ladder;
+* anchors: 10 MHz reproduces leg (d)'s 4×4 to **1.158e-10** vs 1e-6 and leg
+  (d0)'s column to **2.568e-10**; 64/128 MHz reproduce `PORT-11`'s records to a
+  worst **1.075e-03** / **6.755e-04** vs the pre-stated 1e-2 (both are the
+  four-significant-figure print precision of the recorded class spreads; σ_max
+  and column power reproduce to 2.814e-10 / 4.374e-11);
+* negative control at 128 MHz: `is_placeholder=True`, one `DeprecationWarning`,
+  off-diagonal **identically 0.000000e+00**, separation **1.585461e+00** vs the
+  `EX-20` 2e-3 floor.
+
+**Logs.** `20260828T110514Z_EX-34-run1.log` (Status 127 — see traps),
+`20260828T110524Z_EX-34-run1.log` (Status 1 — see traps),
+`20260828T110615Z_EX-34-run2.log` (**the run**, Status 0, 139 s),
+`20260828T110954Z_EX-34-census.log` (dead=1, my own guide's `..._10mhz` elided
+filename), `20260828T111008Z_EX-34-census2.log` (**dead=0 guide=0**, 31/31
+guided; exit=2 is the corpus's pre-existing 31 stale artifacts at severity
+`report`, untouched by this chunk), `20260828T111019Z_EX-34-gate.log`
+(consumer module re-run, `5 passed in 103.07s`, Status 0, 104 s, against
+103.82 s on its closing record).
+
+**Two traps paid, both cheap, both worth recording.**
+(1) `run_examples.sh` drives `docker` itself, so it must be invoked from the
+**host** and not through `docker compose exec` — `EX-32` paid the identical
+`docker: command not found` (Status 127) on 2026-08-26. Worth a line in the
+example-runner docs if a third chunk pays it.
+(2) An `if reuse is None: … else: …` refactor left the re-indented
+sheet-construction block in the *wrong* branch; `UnboundLocalError` on the first
+rung, 29 s. Fixed by ordering the reuse branch first.
+
+**Nothing moved.** No band, gate constant, record or assertion changed anywhere;
+no `src/` change; no known-issues entry owed (the census's 31 stale artifacts are
+the corpus's 48-hour clock and predate this slot). `main` clean, `EX-34` ✅ in the
+§7 table, the prose entry and §9 item 2.
+
+**Hypothesis for the next attempt.** None owed — the chunk is closed. If a review
+wants the next rung of this ladder, the cheap one is the *cost* reading this
+example makes visible for free: the sweep time is frequency-flat (24.0 / 23.9 /
+24.1 s for four MUMPS solves each), so a 16-leg / 32-port solve is priced by
+cells alone and `GEO-20`'s blocked rank-width finding is the only thing between
+here and it.
