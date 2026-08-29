@@ -20893,3 +20893,97 @@ were immovable across three widths here — so the risk sits entirely in the
 with rank width even with a ghost layer present. Budget the full ~12 min of
 complex-mode windows and read the two classes with the two different gates the
 item specifies.
+
+---
+
+## 2026-08-29T11:10Z — `GEO-24` step 2b — **complete** (06:00 CDT implementer slot)
+
+**Item.** §9 item 2, taken as the first open On-deck entry (item 1 was marked
+done by the 04:30 slot). Its dependency gate passed before any compute:
+`git log -1 --format=%s -- src/fem_em_solver/io/mesh.py` is `470f410`, the
+`GEO-24` plumb — so the item ran rather than skipping to item 3. Preflight
+clean: `git status --porcelain` empty on `main`, container Up.
+
+**What was done.** Re-read the five `tests/validation/` birdcage-port consumers
+on the plumbed tree at `-n 2` and `-n 12`, complex build,
+`FEM_EM_REQUIRE_COMPLEX=1`, `-s`, `-k 30 480`, one module per width per window,
+standard tier. **No `src/` or `tests/` change in the slot** — this is a
+measurement step. Environment gate first (`11 passed`, 21 s).
+
+**Outcome: every module green at both widths, every pre-stated anchor met, and
+`GEO-24` closes.** Eleven windows, all **Status 0**, **485 s** of container
+time against the item's ~12 min estimate.
+
+| module | cells (`-n 2` / `-n 12`) | `-n 2` | `-n 12` |
+|---|---|---|---|
+| `_lumped_column` | 116 085 / 116 085 | 2 passed, 33 s | 2 passed, 30 s |
+| `_four_port` | 116 085 / 116 085 | 5 passed, 49 s | 5 passed, 39 s |
+| `_larmor_probe` | 116 085 / 116 085 | 3 passed, 38 s | 3 passed, 33 s |
+| `_termination_probe` | 116 085 / 116 085 | 4 passed, 38 s | 4 passed, 33 s |
+| `_leg_offset_sweep` | 116 085 + 116 475, both | 5 passed, 97 s | 5 passed, 74 s |
+
+**Class (i), reconstruction — required identical to the digit, and is.** All
+four `_lumped_column` sheets **26 facets / 5.835298880e-05 m² / `w = A/h`
+7.294123600e-03 m / out-of-plane 0.000e+00 m** at both widths (full-sheet bbox
+1.400000000e-02 m, filtered 9.167340025e-03 m), the same in `_four_port`; every
+cell count identical across widths and equal to step 1b at ratio **1.000000**
+(displaced rung 116 475 / 1.003360, as before).
+
+**Class (ii), solved — required inside each module's own in-file band, and every
+one passes at both widths.** `Z_{11,21,31,41}` at rel. deviation
+**1.071e-10–2.568e-10** of their `PORT-9` records; `sigma_max(S)`
+**0.999992805**; max column power sum **0.793823974**; C4 class spreads
+**0.0553 / 0.0353 / 0.0214 %** (band 0.5%), pooled off-diagonal 9.2115%,
+separation 166.6766×; `||S−S^T||/||S||` 1.044255156e-14 (`-n 2`) /
+1.897457072e-14 (`-n 12`), band 1e-3; termination margin **2256.9707×** /
+spread **0.0040%** (open control 1.5951× / 0.0407%); displaced rung
+**6.2219 / 7.1142 / 2.8474 %** with amplifications 112.58× / 201.52× / 133.11×;
+phantom `cells/delta` 5.9213 at 64 MHz.
+
+**The only `-n 12` movement anywhere** is `_lumped_column`'s `Z_11`
+(+9.201557829e+02−4.718342449e+03j → +9.201557791e+02−4.718342444e+03j,
+**4.1e-9** relative) and the two Frobenius asymmetry residuals at the 1e-14
+floor — reported, not a failure, and orders below the 1e-4 that `PORT-12`
+established as the threshold worth reporting at all. Step 1b's worry (that the
+plumb might surface a solve-side width drift like the two-torus one) did not
+materialise on this family.
+
+**Negative control.** As the item pre-stated, this family has no kwarg-off
+control; the control is step 1b's own `main`-side table, and every `-n 2` digit
+reproduces it. The two-torus module was deliberately **not** re-run — its
+`-n 12` red belongs to `PORT-12` and is not moved by this patch.
+
+**Not run.** The three optional `examples/meshing/06–08` print-only controls —
+the item conditioned them on ≥ 15 min of slack after the compute, and the
+remaining time went to the documentation this closure owes. They gate nothing.
+
+**Logs** (all Status 0, `docs/testing/logs/`, prefix `GEO-24-step2b-`):
+`20260829T110037Z_…-env` (21 s), `…110108Z_…-column-n2` (33 s),
+`…110150Z_…-column-n12` (30 s), `…110230Z_…-fourport-n2` (49 s),
+`…110328Z_…-fourport-n12` (39 s), `…110414Z_…-larmorprobe-n2` (38 s),
+`…110500Z_…-larmorprobe-n12` (33 s), `…110540Z_…-termination-n2` (38 s),
+`…110625Z_…-termination-n12` (33 s), `…110705Z_…-legoffsweep-n2` (97 s),
+`…110850Z_…-legoffsweep-n12` (74 s).
+
+**Docs landed with the logs.** `GEO-24` §7 row flipped **🟡 → ✅** with the
+step-2b table and both gate classes recorded; the `GEO-20`/`GEO-24`
+known-issues entry **retired** (header struck through and re-headed, closing
+block appended); the width-conditional caveat on `GEO-20` step 1's
+"1.000000000000 on all 12" **dropped** in both the known-issues paragraph
+(struck through, audit trail kept) and the `GEO-20` §7 row, which now records
+step 2 as an unblocked re-run; §9 item 2 marked done. Nothing loosened, no band
+moved, no record in `tests/` touched. No `attempt/*` branch — the slot
+completed.
+
+**Hypothesis for the next attempt.** `GEO-20` step 2 (the 32-port re-run of the
+module parked on `attempt/GEO-20-step2-20260828T094500Z`) is now genuinely
+unblocked and is the highest-value follow-on: the ghost-layer cause is fixed and
+verified at 4 legs / 12 ranks, so the prediction is **zero broken sheets at any
+width** — all 32 ring sheets `meshed/analytic` 1.000000000000 and P30's closure
+back to 1.000000000000 from 0.981164653445, at an unchanged 265 621 cells. Note
+it is **not** on the current §9 queue (the 03:00 review deferred it behind
+`GEO-24`), so the next review should queue it; its `-n 2` window cost 198 s and
+`-n 1` cost 275 s, so a `-n 2` + `-n 12` pair fits one slot with room. The
+residual `main` reds are unchanged by this slot: the two entry-3 names and
+`test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), plus
+`PORT-12`'s `-n 12`-only two-torus drift.

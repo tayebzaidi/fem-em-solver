@@ -4650,7 +4650,7 @@ The tests are **not on `main`**: they are parked on
 | **Finding 2 disposed — leg (d2), 2026-08-23** | **Hypothesis A is refuted and A′ stands: the readout *is* the source's adjoint; the asymmetry is the terminated-`Z` assembly.** `tests/validation/test_port_lumped_sheet_asymmetric.py`, `9 passed` / 198 s and 191 s at `-n 2`, complex, standard (`20260823T183434Z_PORT-9-step3d2.log`, `20260823T183823Z_PORT-9-step3d2-repeat.log`). Two sweeps on **one** 184 919-cell two-torus mesh — control `f` = 0.5/0.5 and asymmetric `f` = 0.5/0.735, `w₂/w₁` = 1.472822047, `Z_p` = 1e6 Ω. Control reproduces step 2c: `‖S−Sᵀ‖/‖S‖` = 2.574356760e-11, **1.078e-15** from the record (band 1e-9). Asymmetric: **8.255602536e-09** — 320.7× the control but **5 orders inside** the unmoved 1e-3, i.e. prediction **B** at the Frobenius grain, so A's O(1e-2) does not happen. Mechanism, asserted at a pre-stated 1e-6: (i) `I₁(drive 2)` = `I₂(drive 1)` to **1.33e-10** — the transadmittance is discretely symmetric, so the current readout **is** the impressed source's adjoint (same facet set `S_i`, same weighting `ĥ_i/(R_i h_i)`, same vector the source is built from, on a complex-symmetric operator); (ii) `Z₁₂/Z₂₁` = `I₁(d1)/I₂(d2)` to **1.33e-10** — `_assemble_impedance_matrix` divides column *j* by the **driven** port's own current, so what it calls `Z` is a *terminated* transimpedance, not the open-circuit matrix reciprocity makes symmetric, and `Z_ij/Z_ji` collapses exactly to the ratio of the two driven-port self-currents (1 for equivalent ports, nothing in particular otherwise). Both runs identical to 8–10 digits. **Read the per-pair number, not the Frobenius one:** here `\|Z₁₂/Z₂₁\|` = **0.997537168** (phase −0.020146017°), a **0.25%** per-pair asymmetry — the same order as (d1)'s 0.2–1.6% table — which the Frobenius ratio hides because at `Z_p` = 1e6 Ω the kΩ diagonal (6.21 − 2.93j / 3.73 − 3.28j) drowns the ~1.13 Ω mutuals, whereas the birdcage's 50 Ω termination puts `Z₁₁` ≈ 21.7 Ω beside 17 Ω mutuals and lets the same per-pair asymmetry surface as 5.57e-03. **So (d1)'s reciprocity miss is not a discretisation residual and not birdcage-specific: it is the assembly's per-column normalisation, made visible by a matched termination.** Not fixed in-slot per the leg's scope — the fix is an assembly change (an open-circuit `Z`, or `S` from power waves as `_assemble_sparameter_matrix` already does) and it **moves the 2b/2c/(c)/(d0)/(d) records**, which is a review's ruling. |
 | **Ruling (2\*), 2026-08-23 18:00 review — fix scoped** | The fix is the **power-wave S assembly** on the gated routes (`S_ij = b_i/a_j`, `a_j` = `V_src/(2√z0)` at a matched drive — symmetric by mechanism identity (i)); the open-circuit-`Z` alternative is rejected on leg (c)'s near-degenerate 1e6 Ω column. The terminated `Z` stays as a documented diagnostic, never reciprocity-gated. Scoped as `PORT-9` legs **(d3)** (two-torus + class re-record under the (1\*) pattern, §9 item 2) and **(d3b)** (birdcage re-record, §9 item 4); **(d1′) serial on (d3b)**. This entry still closes with the (d1′) commit. |
 
-### `GEO-20` step 2, re-headed 2026-08-28 (interactive session) — ~~the **32-port** ring-gap sheet reconstruction is rank-width dependent~~ **`birdcage_port_domain` is built with no ghost layer (`GhostMode.none`), so interior port facets on a partition boundary are unclassifiable — at *every* leg count; it reaches the 4-leg fixture at `-n 12`**
+### ✅ RETIRED 2026-08-29 (`GEO-24` step 2b, 06:00 implementer slot) — ~~the **32-port** ring-gap sheet reconstruction is rank-width dependent~~ ~~**`birdcage_port_domain` is built with no ghost layer (`GhostMode.none`), so interior port facets on a partition boundary are unclassifiable — at *every* leg count; it reaches the 4-leg fixture at `-n 12`**~~ — **fixed by the `shared_facet` plumb landed in `470f410` (`GEO-24` step 2a′) and cleared by the two-family re-read; the two-torus `-n 12` drift found inside this entry lives on as `PORT-12` below**
 
 | | |
 | --- | --- |
@@ -4743,11 +4743,13 @@ The tests are **not on `main`**: they are parked on
 > the per-rank ownership table it asked for is no longer needed to locate the
 > cause, though `GEO-24` step 1 still owes the before/after readings.
 >
-> **A record this puts a caveat on:** `GEO-20` step 1's "closure and
-> volume/analytic `1.000000000000` on all 12" is **width-conditional** — true
-> at ≤ 8 ranks, false at 12. Every reading taken through
-> `_interface_facet_tags` on this fixture inherits that caveat until the plumb
-> lands. `GEO-19`'s own remark that passing at `-n 2` is "luck of the
+> **A record this puts a caveat on** — ***caveat DROPPED 2026-08-29 by
+> `GEO-24` step 2a′/2b; the plumb is landed and the reading is measured true
+> at 12 ranks. Kept struck-through for the audit trail:*** ~~`GEO-20` step
+> 1's "closure and volume/analytic `1.000000000000` on all 12" is
+> **width-conditional** — true at ≤ 8 ranks, false at 12. Every reading taken
+> through `_interface_facet_tags` on this fixture inherits that caveat until
+> the plumb lands.~~ `GEO-19`'s own remark that passing at `-n 2` is "luck of the
 > partition, not immunity" is now measured rather than suspected.
 
 > **📐 `GEO-20` STEP 2a EXECUTED 2026-08-28 (15:00 slot, at `61e97f1`) — the
@@ -5101,6 +5103,71 @@ The tests are **not on `main`**: they are parked on
 > **This entry stays open**: step 2b (the validation family, §9 item 2)
 > retires it. Nothing loosened, no band moved, no record in `tests/`
 > touched.
+>
+> **✅ Step 2b 2026-08-29, 06:00 slot — the validation family re-reads clean
+> on the plumbed tree at both widths, and THIS ENTRY IS RETIRED.** Eleven
+> windows / **485 s** of container time at `470f410`, complex build,
+> `FEM_EM_REQUIRE_COMPLEX=1`, `-s`, `-k 30 480`, one module per width per
+> window, no `src/` change in the slot; logs
+> `20260829T1100*`–`20260829T1108*Z_GEO-24-step2b-*.log`, all **Status 0**.
+> Environment gate `11 passed` / 21 s first.
+>
+> | module | cells (`-n 2` / `-n 12`) | `-n 2` | `-n 12` |
+> |---|---|---|---|
+> | `test_port_birdcage_lumped_column` | 116 085 / 116 085 | ✅ 2 passed, 33 s | ✅ 2 passed, 30 s |
+> | `test_port_birdcage_four_port` | 116 085 / 116 085 | ✅ 5 passed, 49 s | ✅ 5 passed, 39 s |
+> | `test_port_birdcage_larmor_probe` | 116 085 / 116 085 | ✅ 3 passed, 38 s | ✅ 3 passed, 33 s |
+> | `test_port_birdcage_termination_probe` | 116 085 / 116 085 | ✅ 4 passed, 38 s | ✅ 4 passed, 33 s |
+> | `test_port_birdcage_leg_offset_sweep` | 116 085 + 116 475, both widths | ✅ 5 passed, 97 s | ✅ 5 passed, 74 s |
+>
+> **The gate was pre-stated in two classes, and both are met** (the 03:00
+> ruling's lesson, and step 1b's).
+>
+> *(i) Reconstruction readings — required identical to the digit, and they
+> are.* All four `_lumped_column` sheets **26 facets / 5.835298880e-05 m² /
+> `w = A/h` 7.294123600e-03 m / out-of-plane 0.000e+00 m** at `-n 2` and
+> `-n 12` alike (same in `_four_port`), full-sheet bbox 1.400000000e-02 m,
+> filtered bbox 9.167340025e-03 m; every cell count identical across widths
+> and equal to step 1b's records at ratio **1.000000** (the displaced rung
+> 116 475, ratio 1.003360 against the shared record, exactly as before).
+>
+> *(ii) Solved digits — required inside each module's own in-file band, and
+> every one passes at both widths.* `_larmor_probe`: `Z_{11,21,31,41}`
+> reproduce their `PORT-9` records at rel. deviation **1.071e-10 –
+> 2.568e-10** (`-n 2`) and **1.071e-10 – 2.566e-10** (`-n 12`), phantom
+> `cells/delta` 5.9213 (10 MHz control 12.0002). `_four_port`:
+> `sigma_max(S)` **0.999992805** and max column power sum **0.793823974** at
+> both widths, C4 class spreads **0.0553 / 0.0353 / 0.0214 %** (band 0.5%) at
+> both, pooled off-diagonal 9.2115% and separation 166.6766×,
+> `||S−S^T||/||S||` 1.044255156e-14 (`-n 2`) / 1.897457072e-14 (`-n 12`),
+> band 1e-3. `_termination_probe`: margin **2256.9707×** and spread
+> **0.0040%** at both, open control 1.5951× / 0.0407%. `_leg_offset_sweep`:
+> displaced rung breaking (iii′) at **6.2219 / 7.1142 / 2.8474 %** against
+> the zero rung's 0.0553 / 0.0353 / 0.0214 %, amplifications 112.58× /
+> 201.52× / 133.11×, at both widths. The only `-n 12` movement anywhere is
+> in the last displayed digits of `Z_11` in `_lumped_column`
+> (+9.201557829e+02−4.718342449e+03j → +9.201557791e+02−4.718342444e+03j,
+> **4.1e-9** relative) and in the two Frobenius asymmetry residuals at the
+> 1e-14 floor — reported, orders inside every band, and far below the 1e-4
+> the `PORT-12` precedent set as the threshold worth reporting at all.
+>
+> **Negative control** (pre-stated: this family has no kwarg-off control, so
+> the control is step 1b's own table): every `-n 2` digit reproduces step
+> 1b's `main`-side reading, so the plumb changed nothing this family could
+> see — which is the expected result, step 1b having shown the family took no
+> damage from `GhostMode.none` in the first place. The two-torus control was
+> **deliberately not re-run**: its `-n 12` red is `PORT-12`'s and is not
+> moved by this patch.
+>
+> **Disposition.** `GEO-24` **✅** — the ghost layer is plumbed and both
+> consumer families are re-read at `-n 2` and `-n 12`. `GEO-20` step 1's
+> "closure and volume/analytic `1.000000000000` on all 12" loses its
+> **width-conditional caveat** (above): it is now measured true at 12 ranks
+> on the landed tree (`GEO-24` step 2a′, port P8 176 air facets / closure
+> 1.000000000000). `GEO-20` step 2 remains 🟡 as a **re-run** of the parked
+> 32-port module, now unblocked. Step 1a's `-n 2` **255 / 0.979885** stands
+> annotated *defective* (one facet short; `-n 1` truth 256 / 0.984183).
+> Nothing loosened, no band moved, no record in `tests/` touched.
 
 ### `PORT-12` — the two-torus gap-route reproduction record drifts with rank width on a fixture that already has the `shared_facet` ghost layer (found 2026-08-29 by `GEO-24` step 1b)
 
