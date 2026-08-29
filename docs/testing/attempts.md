@@ -20987,3 +20987,122 @@ it is **not** on the current §9 queue (the 03:00 review deferred it behind
 residual `main` reds are unchanged by this slot: the two entry-3 names and
 `test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), plus
 `PORT-12`'s `-n 12`-only two-torus drift.
+
+## 2026-08-29T12:40Z — `GEO-22` step 2 — **complete** (07:30 CDT implementer slot)
+
+**Item.** §9 item 3, ruled 2026-08-28 10:30 review: the wire-surface size-field
+probe. Does an explicit gmsh size field on the wire cylinder remove the
+`triangles are equivalent` fallback across the nine rungs? No `src/`, no guard,
+no record moved — a measurement the 08-30 weekly review needs before it can
+decide the size-field re-record licence. Items 1 and 2 were already done
+(04:30 / 06:00 slots), so item 3 was the first open one.
+
+**Preflight.** Tree clean at `f8f4cce`, container Up.
+
+**Result — the hypothesis is CONFIRMED, on both pre-registered numbers.**
+Leg D reads **18/18 OK** and **0/18 rungs with a `triangles are equivalent`
+line**. The whole log contains **zero** occurrences of that string and **zero**
+of `MeshAdapt`, against **18** (exactly one per rung, all 18 cells) in each of
+step 1's runs and in this slot's control. Every one of leg C's seven failing
+rungs meshes under the field, including `h = 0.01000` — the rung that opened
+the known-issues entry on 2026-08-25.
+
+| `resolution` | example legC | example legD | gate legC | gate legD |
+| --- | --- | --- | --- | --- |
+| 0.00800 | OK 21 830 | OK 19 823 | OK 8 262 | OK 10 196 |
+| 0.00825 | OK 18 745 | OK 18 807 | OK 8 004 | OK 9 596 |
+| 0.00850 | OK 17 644 | OK 17 563 | OK 7 755 | OK 9 248 |
+| 0.00875 | **FAIL** | OK 16 655 | **FAIL** | OK 8 892 |
+| 0.00900 | OK 14 709 | OK 15 909 | **FAIL** | OK 8 579 |
+| 0.00925 | **FAIL** | OK 15 464 | OK 6 894 | OK 8 144 |
+| 0.00950 | OK 17 683 | OK 14 980 | OK 6 768 | OK 7 918 |
+| 0.00975 | **FAIL** | OK 14 331 | OK 12 200 | OK 7 757 |
+| 0.01000 | **FAIL** | OK 13 837 | **FAIL** | OK 7 407 |
+
+**Negative control, executed and bit-identical.** Leg C re-run
+(`20260829T123413Z_GEO-22-step2-legC-control.log`, Status 0, 20 s) reproduces
+step 1's table cell for cell — same OK/FAIL in all 18 cells, same cell counts
+to the digit (21 830 at the example's 0.008; the gate's 6 768 at 0.00950 and
+12 200 at the coarser 0.00975), both `NON-MONOTONE` verdicts. Leg C and leg D
+are separate command-line modes and were run as **two commands**, so the
+control saw exactly the process history step 1 gave it — the change is the
+field's, not the day's or the process's.
+
+**A third reading, free.** Leg D's cell count is **monotone decreasing in `h`**
+on both geometries (example 19 823 → 13 837, gate 10 196 → 7 407) where leg C's
+is not (the gate's 1.80× jump at a *coarser* request). So step 1's finding 3 —
+the discontinuous response of the cell count to `resolution` — is *also* the
+wire surface, not the volume mesher. That is new and was not asked for.
+
+**What was built.** One test-side file:
+`tests/validation/probe_straight_wire_mesh_resolution.py` gains a `sizefield`
+mode (leg D) that re-runs `BISECT_GRID` × `BISECT_GEOMETRIES` with a
+`Distance`/`Threshold` field anchored on the generator's own `wire_surface`
+physical group (`SizeMin = wire_radius = 0.003` — chosen against the mechanism,
+not tuned: the fallback is gmsh collapsing triangles on a cylinder of
+circumference 0.0188 m meshed at h ≈ 0.009, i.e. two points around the circle;
+one element per radius puts ~6 there — `SizeMax` = the rung's own `h`,
+`DistMin = 0.003`, `DistMax = 0.006`). The field is installed by patching
+`gmsh.model.mesh.generate` for the duration of one call (`_SizeFieldPatch`),
+with `Mesh.MeshSizeFromPoints`, `…ExtendFromBoundary` and `…FromCurvature` set
+to 0 so the generator's `setSize(points, resolution)` cannot override it, and
+the same wrapper counts the fallback lines through `gmsh.logger`. Everything
+upstream — geometry, fragment, physical groups, the `GEO-23` collective raise
+path, `_model_to_mesh` — is the shipped code, and **`src/` is untouched**,
+which was the scope.
+
+**Executed quantitative assertion (§4).** The probe deliberately asserts
+nothing, so the chunk's own gate was re-run in-slot:
+`tests/mesh/test_geometry_failure_is_collective.py` `1 passed in 0.90s` on both
+rank streams at `-n 2` (`20260829T123459Z_GEO-22-step2-gate-n2.log`, Status 0,
+3 s) — the `allreduce`d caught flag equals `comm.size` at `h = 0.00875`.
+
+**Cost-probe first**, per §5.1: one rung on both geometries before the
+unmeasured 18-cell sweep (`20260829T123308Z_GEO-22-step2-costprobe.log`,
+Status 0, 7 s, 2.8 s / 1.5 s per mesh, 0 fallbacks) — which sized the full
+sweep well inside the smoke ceiling.
+
+**Logs** (all `-n 1` unless noted, all Status 0, `docs/testing/logs/`):
+`20260829T123308Z_GEO-22-step2-costprobe.log` (7 s),
+`20260829T123331Z_GEO-22-step2-sizefield.log` (33 s),
+`20260829T123413Z_GEO-22-step2-legC-control.log` (20 s),
+`20260829T123459Z_GEO-22-step2-gate-n2.log` (`-n 2`, 3 s).
+Four windows, **63 s** total.
+
+**Correction for the review — a false premise in the item.** §9 item 3 and the
+§7 ruling both say to copy leg C's per-rung fork. **Leg C does not fork and
+never did**: it runs all nine rungs in one process, calling `gmsh.finalize()`
+on the failure path. Step 1's answer to `GEO-23` finding F was empirical, not
+structural — it ran the leg twice and got bit-identical tables. Leg D keeps
+that same in-process shape deliberately, so the two tables are comparable rung
+for rung, and the hygiene was raised where it was cheap and safe: **each leg is
+its own process** (forking an MPI rank mid-run to isolate a gmsh call is a
+worse trade than the reproduction evidence already in hand). The control's
+bit-identical re-run is the evidence that this was sufficient.
+
+**Docs landed with the logs.** `GEO-22` §7 row **🟡 → ✅** and the §7 entry
+header rewritten with the closing rationale; a step-2 bullet added to the entry
+in chronological order; the known-issues entry gains a `SIZE-FIELD PROBE RUN`
+block with the four-column table and **stays OPEN**, since its retire-when is a
+review ruling the wrap sufficient *or* the field landing in `src/`; §9 item 3
+marked done. Nothing loosened, no band moved, no record in `tests/` touched. No
+`attempt/*` branch — the slot completed.
+
+**Hypothesis for the next attempt.** The open decision is now entirely the
+**2026-08-30 weekly review's**: license the size field into
+`straight_wire_domain` or not. If it does, the successor chunk is a re-record,
+not a fix — leg D reads **19 823** where `mag:1` records 21 830 at the same
+`h = 0.008`, so `mag:1`'s cell count, its derived figures in
+`01_straight_wire.md`, and the three `test_convergence.py` straight-wire ladder
+records (38 740 / 147 235 / 383 146) all move, and the convergence *rate* band
+`[0.7, 1.5]` would have to be re-measured on the refined-wire meshes before
+anything is claimed — that is the risk worth naming, because a size field that
+resolves the wire will change the error at the near-wire probe points where
+`MAG-19` already found the rate sensitive. Prediction if it lands: the fallback
+disappears from every straight-wire gate log, the ladder cell counts rise
+~10–20% at fixed `h`, and the rate moves. The `GEO-20` step-2 re-run
+(`attempt/GEO-20-step2-20260828T094500Z`) is still the highest-value unqueued
+follow-on and remains off the §9 queue — the previous slot's entry says the
+same and this slot did not touch it. Residual `main` reds unchanged: the two
+entry-3 names, `test_birdcage_volumes_partition_the_box` (`GEO-21`), and
+`PORT-12`'s `-n 12`-only two-torus drift.

@@ -39,6 +39,38 @@ only form of the measurement that can *see* a non-monotone floor (a failing
 rung between two meshing ones), which `GEO-22` names as a stop condition.
 
     mpiexec -n 1 python3 -u tests/validation/probe_straight_wire_mesh_resolution.py bisect
+
+**Leg D (`GEO-22` step 2, 2026-08-29).**  Step 1's second finding was that
+*every* rung in `[0.008, 0.010]` -- the meshing ones included -- falls back
+`Frontal-Delaunay` -> `MeshAdapt` on the wire surface after gmsh reports "N
+triangles are equivalent", which localises the mechanism to the wire-surface
+mesh.  The 08-28 10:30 review ruled that the one candidate which could
+actually *fix* that is an explicit size field on the wire cylinder in place of
+the global `resolution`, and commissioned this leg to measure it -- no `src/`
+change, no record moved, no guard.  Leg D re-runs leg C's nine rungs on both
+geometries with a gmsh `Distance`/`Threshold` field anchored on the
+`wire_surface` physical group, and reports per rung the count of "triangles
+are equivalent" lines alongside OK/FAIL.  The hypothesis predicts 0 fallbacks
+and 18/18 OK.
+
+The size field is installed without touching `MeshGenerator`: leg D patches
+`gmsh.model.mesh.generate` for the duration of one call, so the field is added
+to the finished model just before meshing starts and the generator's own
+`setSize(points, resolution)` is switched off via `Mesh.MeshSizeFromPoints`.
+Everything upstream -- geometry, fragment, physical groups, the collective
+raise path, `_model_to_mesh` -- is the shipped code.
+
+    mpiexec -n 1 python3 -u tests/validation/probe_straight_wire_mesh_resolution.py sizefield
+
+**One leg per process, deliberately.**  `GEO-23` finding F is that in-process
+meshing ladders can read gmsh contamination rather than geometry.  Leg C's own
+answer to that is empirical -- step 1 ran it twice and the 18 cells reproduced
+bit-identically -- and leg D keeps the same in-process shape so that its table
+is comparable rung for rung.  What is *not* shared is the process: leg C and
+leg D are separate command-line modes and must be run as two commands, so
+leg C's re-run sees exactly the process history step 1 gave it and is a true
+control.  (The `GEO-22` step 2 ruling describes leg C as forking per rung; it
+does not, and never did -- the reproducibility evidence is the repeat run.)
 """
 
 import os
@@ -93,13 +125,105 @@ BISECT_GEOMETRIES = [
 ]
 
 
-def attempt(comm, wire_length, domain_radius, resolution):
+# Leg D: the wire-surface size field.  `SizeMin` on the wire, growing to the
+# rung's own `resolution` by `DIST_MAX`, so away from the wire leg D meshes at
+# exactly leg C's size and the only difference between the two tables is the
+# wire surface -- which is where step 1 localised the fallback.
+#
+# `SizeMin = wire_radius` is chosen against the mechanism, not tuned: the
+# fallback is gmsh collapsing triangles on a cylinder of circumference
+# 2*pi*0.003 = 0.0188 m meshed at h = 0.008-0.010, i.e. two points around the
+# circle.  One element per wire radius puts ~6 there.  `DIST_MAX = 2*R` keeps
+# the refined shell thin enough that the cell count stays in leg C's decade.
+FIELD_SIZE_MIN = EXAMPLE_WIRE_RADIUS
+FIELD_DIST_MIN = EXAMPLE_WIRE_RADIUS
+FIELD_DIST_MAX = 2 * EXAMPLE_WIRE_RADIUS
+
+# The generator's own physical group for the wire lateral+cap surfaces
+# (`mesh.py:332`-`334`: dim 2, tag 2, name "wire_surface").
+WIRE_SURFACE_PHYSICAL_TAG = 2
+
+FALLBACK_MARKER = "triangles are equivalent"
+
+
+class _SizeFieldPatch:
+    """Run one `straight_wire_domain` call with a wire-surface size field.
+
+    Patches `gmsh.model.mesh.generate` rather than `MeshGenerator`: the wrapper
+    fires after the model is built and its physical groups are set, adds the
+    `Distance`/`Threshold` pair on the wire surface, disables the point sizes
+    the generator wrote from `resolution`, and then calls the real `generate`.
+    `src/` is untouched, which is this step's scope.
+
+    Also counts gmsh's "N triangles are equivalent" lines over that same call
+    (via `gmsh.logger`), which is leg D's anchor.  `install=False` gives the
+    counting without the field, for a same-process comparison.
+    """
+
+    def __init__(self, resolution, install=True):
+        self.resolution = resolution
+        self.install = install
+        self.fallbacks = None
+        self._original = None
+
+    def __enter__(self):
+        self._original = gmsh.model.mesh.generate
+        gmsh.model.mesh.generate = self._generate
+        return self
+
+    def __exit__(self, *_exc):
+        gmsh.model.mesh.generate = self._original
+        return False
+
+    def _generate(self, *args, **kwargs):
+        if self.install:
+            surfaces = gmsh.model.getEntitiesForPhysicalGroup(
+                2, WIRE_SURFACE_PHYSICAL_TAG
+            )
+            distance = gmsh.model.mesh.field.add("Distance")
+            gmsh.model.mesh.field.setNumbers(
+                distance, "SurfacesList", [int(s) for s in surfaces]
+            )
+            gmsh.model.mesh.field.setNumber(distance, "Sampling", 100)
+            threshold = gmsh.model.mesh.field.add("Threshold")
+            gmsh.model.mesh.field.setNumber(threshold, "InField", distance)
+            gmsh.model.mesh.field.setNumber(threshold, "SizeMin", FIELD_SIZE_MIN)
+            gmsh.model.mesh.field.setNumber(threshold, "SizeMax", self.resolution)
+            gmsh.model.mesh.field.setNumber(threshold, "DistMin", FIELD_DIST_MIN)
+            gmsh.model.mesh.field.setNumber(threshold, "DistMax", FIELD_DIST_MAX)
+            gmsh.model.mesh.field.setAsBackgroundMesh(threshold)
+            # Without these the generator's `setSize(points, resolution)` and
+            # gmsh's boundary-extension still drive the wire surface and the
+            # field would be advisory only.
+            gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
+            gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+            gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
+        gmsh.logger.start()
+        try:
+            return self._original(*args, **kwargs)
+        finally:
+            # Read before the caller's `gmsh.finalize()` on the failure path.
+            lines = gmsh.logger.get()
+            gmsh.logger.stop()
+            self.fallbacks = sum(1 for line in lines if FALLBACK_MARKER in line)
+
+
+def attempt(comm, wire_length, domain_radius, resolution, patch=None):
     """Mesh one case.  Returns (ok, cells_or_None, message, seconds).
 
     The cell count is reduced across ranks -- `mesh.topology.index_map(3).size_local`
     is rank-local and a rank-local count is not a number worth printing.
+
+    `patch` is an unentered `_SizeFieldPatch` (leg D) or None (legs A/B/C).
     """
     t0 = time.time()
+    if patch is not None:
+        with patch:
+            return _attempt_inner(comm, wire_length, domain_radius, resolution, t0)
+    return _attempt_inner(comm, wire_length, domain_radius, resolution, t0)
+
+
+def _attempt_inner(comm, wire_length, domain_radius, resolution, t0):
     try:
         mesh, _cell_tags, _facet_tags = MeshGenerator.straight_wire_domain(
             wire_length=wire_length,
@@ -176,12 +300,84 @@ def bisect_main(comm):
         print("\nMeasurement only -- no assertion, nothing re-recorded.")
 
 
+def sizefield_main(comm):
+    """Leg D -- leg C's grid again, with a wire-surface size field."""
+    rank0 = comm.rank == 0
+    if rank0:
+        print("straight_wire_domain: leg C's grid with a wire-surface size field")
+        print(f"  grid {BISECT_GRID[0]} .. {BISECT_GRID[-1]} at 2.5e-4, "
+              f"fixed wire_radius = {EXAMPLE_WIRE_RADIUS} m; "
+              f"{comm.size} rank(s)")
+        print(f"  Distance/Threshold on physical group (2, "
+              f"{WIRE_SURFACE_PHYSICAL_TAG}): SizeMin = {FIELD_SIZE_MIN}, "
+              f"SizeMax = the rung's own h, DistMin = {FIELD_DIST_MIN}, "
+              f"DistMax = {FIELD_DIST_MAX}\n")
+
+    # `sizefield <h>` runs the single named rung on both geometries -- the
+    # cost probe the compute budget (§5.1) asks for before an unmeasured
+    # 18-cell sweep.
+    grid = BISECT_GRID
+    if len(sys.argv) > 2:
+        grid = [float(sys.argv[2])]
+        if rank0:
+            print(f"  COST PROBE: single rung {grid[0]}, not the full grid\n")
+
+    summary = []
+    for name, wire_length, domain_radius in BISECT_GEOMETRIES:
+        if rank0:
+            print(f"Leg D/{name} -- L = {wire_length}, R = {domain_radius}:")
+        n_ok, n_fallback_cells = 0, 0
+        for resolution in grid:
+            patch = _SizeFieldPatch(resolution)
+            ok, cells, message, elapsed = attempt(
+                comm, wire_length, domain_radius, resolution, patch=patch
+            )
+            comm.Barrier()
+            fallbacks = patch.fallbacks
+            if ok:
+                n_ok += 1
+            if fallbacks:
+                n_fallback_cells += 1
+            if rank0:
+                verdict = (f"OK    {cells:>8d} cells" if ok
+                           else f"FAIL  {message}")
+                print(f"  h = {resolution:<8.5f} {verdict}   "
+                      f"fallbacks = {fallbacks}  ({elapsed:.1f} s)")
+        summary.append((name, n_ok, n_fallback_cells))
+        if rank0:
+            print("")
+
+    if rank0:
+        total_ok = sum(n_ok for _n, n_ok, _f in summary)
+        total_fallback = sum(f for _n, _o, f in summary)
+        n_cells = len(BISECT_GEOMETRIES) * len(grid)
+        print("Summary -- the two numbers `GEO-22` step 2 asked for:")
+        for name, n_ok, n_fallback in summary:
+            print(f"  {name:<8s} OK {n_ok}/{len(grid)}   "
+                  f"rungs with >= 1 fallback: {n_fallback}/{len(grid)}")
+        print(f"  total    OK {total_ok}/{n_cells}   "
+              f"rungs with >= 1 fallback: {total_fallback}/{n_cells}")
+        # The pre-registered hypothesis, printed as a verdict rather than left
+        # to the reader: step 1 read >= 1 fallback in all 18 cells and 7 FAILs.
+        if total_ok == n_cells and total_fallback == 0:
+            print(f"  VERDICT: hypothesis CONFIRMED -- {n_cells}/{n_cells} OK, "
+                  "0 fallbacks.")
+        else:
+            print("  VERDICT: hypothesis REFUTED -- the size field does not "
+                  "give 18/18 OK with 0 fallbacks.")
+        print("\nMeasurement only -- no assertion, nothing re-recorded.")
+
+
 def main():
     comm = MPI.COMM_WORLD
     rank0 = comm.rank == 0
 
     if len(sys.argv) > 1 and sys.argv[1] == "bisect":
         bisect_main(comm)
+        return
+
+    if len(sys.argv) > 1 and sys.argv[1] == "sizefield":
+        sizefield_main(comm)
         return
 
     if rank0:

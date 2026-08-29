@@ -1444,6 +1444,70 @@ unless fixing it is the task.
 > item 5) is unrun, and no fallback line count changed, so the coincident-
 > triangle emission this entry is about is untouched. Retirement still needs a
 > review's ruling that the wrap is sufficient, or the size field.
+>
+> **SIZE-FIELD PROBE RUN 2026-08-29 (`GEO-22` step 2, 07:30 implementer slot) —
+> the hypothesis is CONFIRMED: a wire-surface size field removes the fallback
+> entirely and every rung meshes. The entry stays OPEN; nothing landed in
+> `src/`.** `probe_straight_wire_mesh_resolution.py` gained a **leg D** that
+> re-runs leg C's nine rungs on both geometries with a gmsh
+> `Distance`/`Threshold` field anchored on the generator's own `wire_surface`
+> physical group — `SizeMin = wire_radius = 0.003`, `SizeMax` = the rung's own
+> `h`, `DistMin = 0.003`, `DistMax = 0.006` — installed by patching
+> `gmsh.model.mesh.generate` for the duration of one call (so geometry,
+> fragment, physical groups, the raise path and `_model_to_mesh` are all the
+> shipped code) with `Mesh.MeshSizeFromPoints` /
+> `…ExtendFromBoundary` / `…FromCurvature` off so the generator's
+> `setSize(points, resolution)` cannot override the field.
+> `20260829T123331Z_GEO-22-step2-sizefield.log`, `Status 0`, **33 s**, `-n 1`.
+>
+> | `resolution` | example, leg C | example, leg D | gate, leg C | gate, leg D |
+> | --- | --- | --- | --- | --- |
+> | 0.00800 | OK 21 830 | OK 19 823 | OK 8 262 | OK 10 196 |
+> | 0.00825 | OK 18 745 | OK 18 807 | OK 8 004 | OK 9 596 |
+> | 0.00850 | OK 17 644 | OK 17 563 | OK 7 755 | OK 9 248 |
+> | 0.00875 | **FAIL** | OK 16 655 | **FAIL** | OK 8 892 |
+> | 0.00900 | OK 14 709 | OK 15 909 | **FAIL** | OK 8 579 |
+> | 0.00925 | **FAIL** | OK 15 464 | OK 6 894 | OK 8 144 |
+> | 0.00950 | OK 17 683 | OK 14 980 | OK 6 768 | OK 7 918 |
+> | 0.00975 | **FAIL** | OK 14 331 | OK 12 200 | OK 7 757 |
+> | 0.01000 | **FAIL** | OK 13 837 | **FAIL** | OK 7 407 |
+>
+> **The two numbers the ruling asked for.** Leg D reads **18/18 OK** and
+> **0/18 rungs with a `triangles are equivalent` line**; the whole log contains
+> **zero** occurrences of that string and **zero** of `MeshAdapt`, against
+> **18** occurrences (exactly one per rung) in both leg C runs. So
+> Frontal-Delaunay now completes the wire surface unaided at every size in the
+> band, and the seven step-1 failures are gone with it — including
+> `h = 0.01000`, the rung that opened this entry on 2026-08-25.
+>
+> **Negative control, executed in its own process and reproduced
+> bit-identically:** leg C re-run
+> (`20260829T123413Z_GEO-22-step2-legC-control.log`, `Status 0`, **20 s**)
+> returns step 1's table cell for cell — same OK/FAIL in all 18 cells, same
+> cell counts to the digit (21 830 at the example's 0.008; the gate's 6 768 at
+> 0.00950 and the 12 200 at the coarser 0.00975), same two `NON-MONOTONE`
+> verdicts. Leg C and leg D are separate command-line modes and were run as
+> two commands, so the control saw exactly the process history step 1 gave it
+> (`GEO-23` finding F). The change is therefore the size field's and not the
+> day's or the process's.
+>
+> **A third reading, free:** leg D's cell count is **monotone decreasing in
+> `h`** on both geometries (example 19 823 → 13 837, gate 10 196 → 7 407),
+> where leg C's jumps around (gate 6 768 at 0.00950 → 12 200 at the coarser
+> 0.00975, 1.80×). So the discontinuous response to `resolution` recorded as
+> step 1 finding 3 is *also* the wire surface, not the volume mesher.
+>
+> **Still not licensed.** The field is in the probe only; `src/` is untouched
+> and no record moved. Landing it in `straight_wire_domain` would move
+> `mag:1`'s **21 830** (leg D reads 19 823 at the same `h`) and the three
+> straight-wire ladder records, so the re-record call is the 2026-08-30 weekly
+> review's, per the 08-28 10:30 ruling. **Retire-when, unchanged in substance:**
+> this entry retires when either a review rules the `GEO-23` step-2a wrap
+> sufficient, or the size field lands in `straight_wire_domain` under that
+> licence with the moved records re-recorded. **Owning chunk:** `GEO-22`, now
+> **✅** — both clauses of its restated done-when are met (wrap + gate landed
+> 08-28; this table recorded 08-29), and the size-field decision is the weekly
+> review's, not a `GEO-22` step.
 
 ### ✅ RETIRED 2026-08-25 by `OPS-24` — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family was **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
 
