@@ -20717,3 +20717,115 @@ its gate should be "every digit above unchanged", since this family had no
 `-n 12` red to fix. The two-torus control says step 2b must not read a 1e-4
 move in a *solved* digit at `-n 12` as a plumbing failure; only the
 reconstruction identities (1.000000000000) are the plumb's own evidence.
+
+## 2026-08-29T05:25Z — `GEO-24` step 2a — **blocked** (the item's own negative-result clause)
+
+Scheduled implementer, 00:00 local slot, at `169c28c`. Preflight clean, container Up.
+§9 item 4 taken as the first item not done or blocked; its dependency (item 2,
+step 1a's table) is in the `GEO-24` §7 entry, so the item ran rather than skipping
+to item 5.
+
+**Outcome in one line: the plumb is measured good, it is NOT on `main`, and one
+review ruling stands between it and landing.**
+
+**What was tried.** The one keyword at `io/mesh.py:3356` —
+`partitioner=dolfinx.mesh.create_cell_partitioner(dolfinx.mesh.GhostMode.shared_facet, 2)`,
+copied with its comment from the `two_torus_domain` site (`PORT-1` step 3b-iv,
+`OPS-18` step 3 for the second argument). `git diff -- src/` was that call plus
+its comment block and nothing else. Then step 1a's seven `tests/mesh/` modules
+re-read at `-n 2` and `-n 12`, one module per window, `-s`, `-k 30 400`
+(`-k 30 570` for `port_scaleup`).
+
+**Gate clauses 1 and 3 pass outright.**
+- **Every cell count identical** to step 1a at both widths: 116 085 / 98 666 /
+  128 111 / 114 655 / 116 085 + 116 475 / 98 666 / 307 296, and every kwarg-off
+  control reproduces (98 666 at ratio 1.001950, 114 655, 116 085; the scale-up's
+  own check prints `cells 116085 vs 116085 (delta 0, relative 0.000e+00)`).
+  The plumb changes partitioning, not meshing, as predicted.
+- **Both previously-red `-n 12` readings are repaired.** `test_birdcage_ring_gaps`
+  port P8 returns to **176 air facets, closure 1.000000000000** from 175 /
+  **0.990103697427**; `test_birdcage_port_terminals`' phantom↔air positive
+  control returns to **256 facets** from 245. All seven modules `passed` at both
+  widths — no red anywhere in the family after the plumb.
+
+**Gate clause 2 fails in exactly one cell, and that is the stop.**
+`test_birdcage_port_terminals`' `-n 2` phantom↔air reading moves
+**255 facets / 0.979885 → 256 facets / 2.040655e-02 m² / 0.984183** of the
+closed-form 2.073451e-02 m². The test passes either way (band [0.95, 1.0]), but
+item 4 is explicit that a moving `-n 2` digit stops the chunk for a review, so
+the slot stopped. Every *other* `-n 2` digit across all seven modules is
+identical to step 1a: C4 sheet spread 6.050e-16, leg terminals
+0.988615825–0.988615858, ring terminals 0.974454791 / 0.974454832, Pappus
+1.000000000000, all 12 `volume/analytic` 1.000000000000, the 16-leg azimuth
+classes 0.989367514 / 0.989449735 / 0.988615772 with intra spreads 5.849e-08 /
+6.144e-08 / 1.923e-07 and inter-class 8.431e-04, C16 sheet spread 1.331e-15 at
+`-n 2` and 1.210e-15 at `-n 12` (the 1e-15 floor, exactly as in step 1a).
+
+**The moved digit is diagnosed, not left for the review to guess.** Two extra
+serial windows, ~25 s each, settle it: at `-n 1` on the **plumbed** tree the
+reading is **256 facets / 0.984183**, and at `-n 1` on **`main`** with the plumb
+reverted it is **256 facets / 0.984183** — identical, 98 666 cells both. A
+single rank has no partition boundary and therefore needs no ghost layer, so it
+reads the true interface on either tree. **256 is the truth; step 1a's recorded
+255 / 0.979885 was itself one facet short of it, from the same `GhostMode.none`
+gap, at every parallel width.** So the record was *defective*, not
+partition-dependent physics — which is the benign side of the two readings item
+4 anticipated. After the plumb the value is 256 / 0.984183 at `-n 1`, `-n 2` and
+`-n 12` alike: width-independent and equal to the serial truth.
+
+**Note on how the slot was run.** The stop trigger fired on window 3 of 14. I
+reverted the plumb immediately and took the two `-n 1` diagnostics, then
+re-applied it and finished the remaining ten table windows before reverting for
+good. That is more compute than a bare "stop" would spend, and it is a
+judgement call I am flagging rather than burying: the clause's premise is "a
+record was partition-dependent", the `-n 1` control had already refuted that,
+and the open question the review actually needs answered is whether *other*
+modules' `-n 2` digits move too — which only the rest of the table can say. They
+do not. Nothing was landed on `main` on the strength of that judgement; had any
+further `-n 2` digit moved, the finding would only have grown.
+
+**Pre-stated negative controls, run with the plumb applied: green and unmoved.**
+`tests/mesh/test_two_torus_port_sheet.py` + `tests/mesh/test_cylindrical_domain.py`
+are `4 passed` / Status 0 / 33 s, `GEO-16` control at **79 070** cells with tags
+`[1, 2, 3, 101, 102]` / `[1, 201, 202]`. No other fixture's partitioner touched.
+
+**Where the code is.** Reverted on `main` (`git status --porcelain -- src/`
+empty; the only `create_cell_partitioner` in `io/mesh.py` is the two-torus one
+it has always had) and parked on **`attempt/GEO-24-step2a-20260829T052300Z`**,
+commit **`e1dede8`**, `src/fem_em_solver/io/mesh.py` only. `main` carries logs,
+the known-issues step-2a table, the §7 annotation (step 2a 🟡) and the §9 item-4
+annotation (🚫 with the ruling named).
+
+**Cost.** Seventeen footered windows, **≈ 870 s** of compute: sheets 66 / 62 s;
+terminals 26 / 26 s plus `-n 1` diagnostics 26 s (plumbed) and 25 s (`main`);
+ring_gaps 85 / 85 s; leg_gaps 51 / 51 s; leg_offset 84 / 83 s; prerequisite
+23 / 23 s; scale-up 118 / 117 s; controls 33 s. Every window Status 0. No exit
+124, no container wedge, no denied command. `-n 12` again costs the same wall
+clock as `-n 2` (±2 s) throughout — the mesh is built on rank 0 either way — and
+`port_scaleup` at `-n 12` took 117 s inside `-k 30 570`, so nothing is
+unmeasured.
+
+**Harness logs** (all `docs/testing/logs/`, `20260829T05…Z_GEO-24-step2a-…`):
+`…0100Z_…-sheets-n2` (0/66 s), `…0219Z_…-sheets-n12` (0/62 s),
+`…0328Z_…-terminals-n2` (0/26 s), `…0421Z_…-terminals-n12` (0/26 s),
+`…0500Z_…-terminals-n1-plumbed` (0/26 s), `…0535Z_…-terminals-n1-main` (0/25 s),
+`…0636Z_…-ringgaps-n2` (0/85 s), `…0808Z_…-ringgaps-n12` (0/85 s),
+`…0942Z_…-leggaps-n2` (0/51 s), `…1040Z_…-leggaps-n12` (0/51 s),
+`…1139Z_…-legoffset-n2` (0/84 s), `…1309Z_…-legoffset-n12` (0/83 s),
+`…1440Z_…-prereq-n2` (0/23 s), `…1509Z_…-prereq-n12` (0/23 s),
+`…1540Z_…-scaleup-n2` (0/118 s), `…1749Z_…-scaleup-n12` (0/117 s),
+`…1958Z_…-controls-n2` (0/33 s).
+
+**Hypothesis for the next attempt.** There is nothing left to measure on the
+mesh family; the next move is a **ruling, not a run**. If the review accepts that
+255 → 256 / 0.984183 is a defect repair rather than a re-baseline — the `-n 1`
+control on `main` is the evidence — then landing is a `git cherry-pick e1dede8`
+plus re-recording that one figure with its width and provenance stated, which is
+step 3's business and costs one short slot. Step 2b (the validation family) is
+independent of the ruling in substance — that family had no reconstruction red
+to fix, so its gate is "every digit unchanged" — but it measures the same patch,
+so queueing it before the disposition risks re-running it. Worth the review's eye:
+step 1a's table treated `-n 2` as the reference width throughout, and this slot
+shows `-n 2` can be short on an interface too, so any other "before" digit taken
+at `-n 2` on this fixture may carry the same one-facet deficit; `-n 1` is the
+cheap discriminator and costs ~25 s per module.

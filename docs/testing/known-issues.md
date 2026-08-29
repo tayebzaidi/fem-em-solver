@@ -4953,6 +4953,93 @@ The tests are **not on `main`**: they are parked on
 > matches its `PORT-9` / `PORT-11` record, so CI is unaffected and no record
 > is owed a re-write from step 1b. Step 2b (the plumb re-read of this family)
 > is unblocked.
+>
+> **📐 `GEO-24` STEP 2a EXECUTED 2026-08-29 (00:00 slot, at `169c28c`) — the
+> plumb repairs both `-n 12` reds, every cell count and every other `-n 2`
+> digit holds, and it moves *one* `-n 2` reading, which is §9 item 4's
+> pre-stated stop. The plumb is REVERTED on `main` and parked on
+> `attempt/GEO-24-step2a-20260829T052300Z` (`e1dede8`); nothing under `src/`
+> landed.** Sixteen windows, one module per window, `-s`, standard tier, real
+> build, `-k 30 400` (`-k 30 570` for `port_scaleup`); logs
+> `20260829T0501*`–`20260829T0519*Z_GEO-24-step2a-*.log`, **≈ 870 s** of
+> compute (14 table windows + 2 serial diagnostics + 1 control window).
+>
+> The patch is one keyword at `io/mesh.py:3356` —
+> `partitioner=create_cell_partitioner(GhostMode.shared_facet, 2)`, the
+> `two_torus_domain` site's kwarg and comment, nothing else in `src/`.
+>
+> | module | cells (`-n 2` / `-n 12`) | `-n 2` before → after | `-n 12` before → after |
+> |---|---|---|---|
+> | `test_birdcage_port_sheets` | 116 085 / 116 085 (control 114 655) | ✅ → ✅ 2 passed, 66 s | ✅ → ✅ 2 passed, 62 s |
+> | `test_birdcage_port_terminals` | 98 666 / 98 666 | ✅ → ✅ 1 passed, 26 s **(digit moved, below)** | ❌ → ✅ 1 passed, 26 s |
+> | `test_birdcage_ring_gaps` | 128 111 / 128 111 (control 98 666) | ✅ → ✅ 2 passed, 85 s | ❌ → ✅ 2 passed, 85 s |
+> | `test_birdcage_leg_gaps` | 114 655 / 114 655 (control 98 666) | ✅ → ✅ 1 passed, 51 s | ✅ → ✅ 1 passed, 51 s |
+> | `test_birdcage_leg_offset` | 116 085 / 116 475 / 116 085, both widths | ✅ → ✅ 6 passed, 84 s | ✅ → ✅ 6 passed, 83 s |
+> | `test_birdcage_port_sheet_prerequisite` | 98 666 / 98 666 | ✅ → ✅ 1 passed, 23 s | ✅ → ✅ 1 passed, 23 s |
+> | `test_birdcage_port_scaleup` | 307 296 / 307 296 (control 116 085) | ✅ → ✅ 2 passed, 118 s | ✅ → ✅ 2 passed, 117 s |
+>
+> **Gate clause 1 — every cell count identical: ✅.** All seven modules read
+> the same counts as step 1a at both widths, and every kwarg-off control
+> reproduces (98 666 at ratio 1.001950, 114 655, 116 085, the scale-up's
+> `cells 116085 vs 116085 (delta 0, relative 0.000e+00)`). The plumb changes
+> partitioning, not meshing, exactly as predicted.
+>
+> **Gate clause 3 — both previously-red `-n 12` readings now green: ✅.**
+> `test_birdcage_ring_gaps` port P8 returns to **176 air facets, closure
+> 1.000000000000** from 175 / **0.990103697427**, at an unchanged 128 111
+> cells, with all 12 ports' `volume/analytic` and all 8 ring sheets still
+> 1.000000000000. `test_birdcage_port_terminals`' phantom↔air control returns
+> to **256 facets** from 245, and all four port boxes stay exact (air 24
+> facets / 5.200000e-04 m², closure 1.000000000000, conductor 0).
+>
+> **Gate clause 2 — every `-n 2` digit identical: ❌ in one cell, and that is
+> the stop.** `test_birdcage_port_terminals`' positive control reads
+> **256 facets / 2.040655e-02 m² / 0.984183** of the closed-form
+> 2.073451e-02 m² after the plumb, against step 1a's recorded **255 facets /
+> 0.979885** at `-n 2`. The test passes either way (the band is [0.95, 1.0]),
+> but the digit moved, and §9 item 4's negative-result clause is explicit:
+> a moving `-n 2` digit stops the chunk for a review. Every *other* `-n 2`
+> digit in all seven modules is identical to step 1a's — the C4 sheet spread
+> 6.050e-16, leg terminals 0.988615825–0.988615858, ring terminals
+> 0.974454791 / 0.974454832, Pappus 1.000000000000, and the scale-up's three
+> azimuth classes 0.989367514 / 0.989449735 / 0.988615772 with intra spreads
+> 5.849e-08 / 6.144e-08 / 1.923e-07, inter-class 8.431e-04, C16 sheet spread
+> 1.331e-15 at `-n 2` and 1.210e-15 at `-n 12` (the 1e-15 floor, as before).
+>
+> **What the moved digit actually is — measured, not argued.** Two extra
+> serial windows settle it. On the **plumbed** tree at `-n 1`:
+> **256 facets / 0.984183**. On **`main`** at `-n 1`, plumb reverted:
+> **256 facets / 0.984183** — identical (`…050500Z_…-terminals-n1-plumbed.log`
+> and `…050535Z_…-terminals-n1-main.log`, Status 0, 26 s / 25 s, 98 666 cells
+> both). A single rank has no partition boundary, so it needs no ghost layer
+> and reads the true interface either way. **So 256 is the truth, and the
+> recorded `-n 2` value of 255 / 0.979885 was itself one facet short from the
+> same `GhostMode.none` gap** — the record was *defective at every parallel
+> width*, not partition-dependent physics. After the plumb the reading is
+> 256 / 0.984183 at `-n 1`, `-n 2` and `-n 12` alike, i.e. width-independent
+> and equal to the serial truth. This is the fix working on a surface where
+> step 1a had mistaken a short reading for the baseline.
+>
+> **Negative controls, pre-stated, with the plumb applied: green and
+> unmoved.** `tests/mesh/test_two_torus_port_sheet.py` and
+> `tests/mesh/test_cylindrical_domain.py` — untouched fixtures — are
+> `4 passed` / Status 0 / 33 s with the `GEO-16` control at its usual
+> **79 070** cells and tags `[1, 2, 3, 101, 102] / [1, 201, 202]`
+> (`…051958Z_…-controls-n2.log`). No other fixture's partitioner was touched.
+>
+> **Cost: nothing unmeasured.** `-n 12` again costs the same wall clock as
+> `-n 2` throughout (±2 s), the mesh being built on rank 0 either way;
+> `port_scaleup` took 117 s at `-n 12` inside `-k 30 570`.
+>
+> **What a review owes this chunk.** The measurement says the plumb is safe
+> and correct on the mesh family and that step 1a's 255 is a defective
+> record to be re-written to 256 / 0.984183 with the `-n 1` provenance —
+> but re-writing records is **step 3's**, and item 4's scope is explicit that
+> no record moves in step 2a. So: rule on the 255 → 256 re-record, then the
+> parked branch lands as-is. Step 2b (the validation family) is unaffected by
+> this stop — it reads a family that showed no reconstruction red at all —
+> but it should not run before the plumb's disposition is ruled, since it
+> measures the same patch.
 
 ## Recording a new entry
 
