@@ -1508,6 +1508,20 @@ unless fixing it is the task.
 > **✅** — both clauses of its restated done-when are met (wrap + gate landed
 > 08-28; this table recorded 08-29), and the size-field decision is the weekly
 > review's, not a `GEO-22` step.
+>
+> **NOW GATED, ENTRY STILL OPEN (`GEO-22` step 2c, 2026-08-29 16:30 slot).**
+> The two numbers above are no longer prose only:
+> `tests/mesh/test_straight_wire_size_field_probe.py` builds the example
+> geometry at `h = 0.008` twice in one process — under the probe's imported
+> `_SizeFieldPatch` and without — and asserts **19 823 cells with 0
+> fallbacks** patched against **21 830 cells with ≥ 1 fallback** unpatched,
+> each count within ±1%. Both readings reproduce **exactly** at `-n 1`
+> (`20260829T213132Z_GEO-22-step2c-n1.log`, 8 s) and `-n 2`
+> (`…213148Z_…-n2.log`, 7 s). This changes nothing about the licence: the
+> field is still probe-only, `src/` is still untouched, and `mag:1`'s 21 830
+> is still the shipped record — the gate now *pins* both sides of the
+> comparison, so a future landing of the field in `straight_wire_domain`
+> must move this module's references deliberately rather than silently.
 
 ### ✅ RETIRED 2026-08-25 by `OPS-24` — `core/cavity.py` was **never migrated to dolfinx 0.11**: `assemble_matrix(..., diagonal=)` no longer exists, so the whole `TH-9` cavity + resonance-guard family was **non-executing on `main`** (`EX-30` leg (th), 2026-08-24)
 

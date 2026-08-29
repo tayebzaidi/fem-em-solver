@@ -21486,3 +21486,73 @@ two entry-3 names, `test_birdcage_volumes_partition_the_box` (`GEO-21`),
 `PORT-12`'s two-torus drift at `-n 4/8/12`, and `WF-6` step 1's gate (ii). §9
 items 4 (`GEO-22` step 2c) and 5 (`TH-13` step 1) remain open and independent,
 so the 16:30 slot takes item 4. Tree clean at handoff; no anomalies.
+
+---
+
+## 2026-08-29T21:35Z — `GEO-22` step 2c — **complete** (16:30 CDT implementer slot)
+
+**Preflight.** Tree clean, container Up (3 days), no `attempt/*` or
+`recovered/*` branch. §9 items 1–3 were already done (12:00 / 13:30 / 15:00
+slots; item 2 is the 🧪 negative result its entry says not to re-run), so this
+slot took **item 4**, `GEO-22` step 2c, as written. No fallback used, no
+denied commands.
+
+**What was tried.** The §4 clause-3 remedy the 10:30 review commissioned: turn
+`GEO-22` step 2's size-field probe finding — a printed table that asserts
+nothing — into one gate. New module
+`tests/mesh/test_straight_wire_size_field_probe.py` (smoke, real build, `-s`)
+builds the `mag:1` example geometry at `resolution = 0.008` **twice in one
+process** through the probe's own `attempt`: once under
+`_SizeFieldPatch(install=True)` and once under `install=False`, which keeps the
+`gmsh.logger` instrument running without the `Distance`/`Threshold` field. The
+field parameters, the patch and the fallback marker are all **imported** from
+`tests/validation/probe_straight_wire_mesh_resolution.py`, never restated, so a
+change to the probe's field moves this gate with it. `src/` untouched; the diff
+is one new file.
+
+**Measured numbers — both anchors hit exactly, at both widths.**
+
+| build | cells | ref | fallbacks | ref |
+|---|---|---|---|---|
+| patched (size field) | **19 823** | 19 823 | **0** | == 0 |
+| control (no field) | **21 830** | 21 830 | **1** | >= 1 |
+
+0.00% against the pre-stated ±1% band on both counts, byte-identical at
+`-n 1` and `-n 2`. The step's own negative control — the unpatched build — did
+**not** agree with the patched one (2 007 cells and one fallback apart), so the
+`Mesh.MeshSizeFromPoints` trio installed and the reading is the field's.
+
+**Gate shown load-bearing and rank-symmetric** (`GEO-23` step-2c precedent,
+not required by the item but cheap): `PATCHED_CELLS_REF` 19 823 → 20 814 (5%
+off) gives `1 failed` / Status 1 / 7 s at `-n 2`, the new `AssertionError`
+naming measured count and reference on **both** rank streams; the constant was
+restored and re-run green **from the restored file**.
+
+**Rank-safety.** gmsh builds on rank 0 only, so `patch.fallbacks` is `None`
+elsewhere and is `bcast` from root before it is asserted; the cell count is the
+probe's `allreduce`d one, never rank-local. Both ranks print and assert the
+same two numbers.
+
+**Harness logs, four windows, all footered, 29 s total.**
+`20260829T213132Z_GEO-22-step2c-n1.log` (Status 0, 8 s),
+`…213148Z_GEO-22-step2c-n2.log` (Status 0, 7 s),
+`…213211Z_GEO-22-step2c-negcontrol.log` (Status 1, 7 s, deliberate),
+`…213227Z_GEO-22-step2c-restore-n2.log` (Status 0, 7 s). Every command
+`timeout -k 30 120`; none came near its window.
+
+**Scope held.** No size field in `src/`, no record moved, no guard, no band
+widened. `GEO-22` flips 🧪 → **✅** (row + step-2c bullet), §9 item 4 marked
+done, and the known-issues entry gains the gate but **stays OPEN** — the
+licence to land the field in `straight_wire_domain` (which would move `mag:1`'s
+21 830 and the three ladder records) is still the 2026-08-30 weekly review's.
+
+**Hypothesis for the next attempt on this line:** none needed — the chunk
+closed. What the run adds for the weekly review's licence decision is that both
+sides of the trade are now pinned by one module, so landing the field is a
+two-constant edit here plus the record re-record, not an open-ended search.
+
+**Residual `main` reds after this slot:** unchanged — the two entry-3 names,
+`test_birdcage_volumes_partition_the_box` (`GEO-21`), `PORT-12`'s two-torus
+drift at `-n 4/8/12`, and `WF-6` step 1's gate (ii). §9 item 5 (`TH-13`
+step 1) is the only open queue item left, so the 19:30 slot takes it and the
+queue then drains. Tree clean at handoff; no anomalies.
