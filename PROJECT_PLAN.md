@@ -6634,7 +6634,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-32` | Birdcage 4-port power-wave S-matrix at 10 MHz (`PORT-9`'s newly gated capability: first example solving ports on the **birdcage** — every existing S-parameter example is two-torus (`EX-20`/`EX-24`/ports:1–3), and `EX-28`/`EX-31` are mesh-only; commissioned 2026-08-25 10:30 review, §5.4 ramp) | ✅ *(2026-08-26, green on the first run; every gate-module record reproduced exactly and the only reading that moved is the one (d3c) declares non-reproducible)* | standard (measured standard, 88 s) |
 | `EX-33` | 16-leg gapped + sheeted birdcage mesh (`GEO-19`'s newly gated capability: first example above four legs — `EX-28`/`EX-31`/`mesh:3` are all 4-leg, so the geometry angle is new; mesh-only, no solve, no port claim; commissioned 2026-08-25 18:00 review, §5.4 ramp) | ✅ *(audited COMPLIANT 2026-08-26 18:00 review: three footers Status 0 at 131 / 126 / 1 s, all 16 claimed digits grep out of the run log, bands *and* `_assert_identity_family` imported from the gate module, the gate-module diff a single +6-line additive hunk)* | standard |
 | `EX-34` | Birdcage 4-port S-matrix across the frequency ladder 10 / 64 / 128 MHz on **one** mesh (`PORT-11`'s newly gated capability: first example solving ports at a Larmor frequency — `EX-32` is 10 MHz only, `EX-19`/`EX-25` are Larmor on the sphere with no ports; the drive/output angle is the frequency ladder itself: loss tangent, cells/δ, cells/λ, `\|Im P\|/Re P` and the three gate readings side by side; commissioned 2026-08-26 18:00 review, §5.4 ramp) | ✅ 2026-08-28 (`ports:5`, `20260828T110615Z_EX-34-run2.log`, **139 s** Status 0 at `-n 2` complex; one 116 085-cell mesh, 12 driven solves, all three gates green on all three rungs; 128 MHz cells/λ 12.5024 ≥ 10) | standard |
-| `EX-35` | 16-leg **ring-gapped** birdcage mesh — the 32-ring-port high-pass layout (`GEO-20` step 2's newly gated capability, 2026-08-29: `EX-31`/`mesh:7` cuts the rings at 4 legs, `EX-33`/`mesh:8` cuts the **legs** at 16 — no example has the production high-pass topology at the production leg count; mesh-only, no solve, no port claim; commissioned 2026-08-29 10:30 review, §5.4 ramp) | ⬜ | standard |
+| `EX-35` | 16-leg **ring-gapped** birdcage mesh — the 32-ring-port high-pass layout (`GEO-20` step 2's newly gated capability, 2026-08-29: `EX-31`/`mesh:7` cuts the rings at 4 legs, `EX-33`/`mesh:8` cuts the **legs** at 16 — no example has the production high-pass topology at the production leg count; mesh-only, no solve, no port claim; commissioned 2026-08-29 10:30 review, §5.4 ramp) | ✅ | standard |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
 **Logs:** `20260820T170422Z_EX-26-example-n2.log` (exit 0), `20260820T170540Z_EX-26-docrefs.log` (`dead=0 guide=0 stale=0 exit=0`).
@@ -7714,7 +7714,7 @@ port model, no F-human claim. Sized for one implementer run.)*
 </details>
 
 **`EX-35` — 16-leg ring-gapped birdcage mesh: the 32-ring-port high-pass
-layout** ⬜ *(commissioned 2026-08-29 10:30 review, §5.4 ramp on `GEO-20` ✅
+layout** ✅ *(commissioned 2026-08-29 10:30 review, §5.4 ramp on `GEO-20` ✅
 2026-08-29. Angle no existing example covers: `mesh:7` is ring gaps at 4
 legs, `mesh:8` is 16 legs with **leg** gaps; the §10 directive's production
 topology — 16 rungs, both end rings cut, one sheet per ring gap, 32 sheets
@@ -7749,6 +7749,47 @@ Mesh-only; no solve, no port model, no F-human claim. One implementer run.)*
 > in-slot. **Scope:** mesh capability only. **Negative result:** an imported
 > band red through the example path is an example/test divergence —
 > known-issues + this entry, stop; nothing re-recorded.
+>
+> ***✅ 2026-08-29, 15:00 slot — green first attempt, 104 s at `-n 2`,
+> standard*** (`20260829T200308Z_EX-35-run1.log`, Status 0, 101.1 s in-script).
+> `examples/meshing/09_birdcage_sixteen_ring_gaps.py` + same-stem guide,
+> dispatched as `mesh:9` with **no runner edit** — `scripts/run_examples.sh`
+> selects meshing examples by filename number, so the file lands in the group
+> by existing. The example path reproduces **every** record the commissioning
+> review printed for comparison, to the digit: **265 621 cells** (relative
+> `0.000e+00`), terminal ratio range **0.974454791–0.974455668**, C32 sheet
+> spread **4.985e-16** (band 1e-12), meshed/CAD conductor **0.976465** (gate
+> 0.95), Pappus on the 32 arcs `3.134786420778e-05 / 3.134786420778e-05 =
+> 1.000000000000`, partition and air box `1.000000000000`, and all 32 ports at
+> closure / wedge volume / `w²` sheet `1.000000000000` with out-of-plane
+> `~2e-18 m`. **Anchor executed:** `_assert_ring_identity_family` imported from
+> the gate module and run on this run's own mesh, both rungs. **Azimuth classes
+> 4 at 16 legs / 1 at 4** as the construction predicts; class means
+> 0.974454812 / 0.974454921 / 0.974454916 / 0.974455135, intra-class spreads
+> 4.198e-08 / 4.498e-07 / 4.681e-07 / 8.997e-07 (band 1e-6 — the `78.750 deg`
+> class is the family's tightest margin), **inter-class spread 3.315e-07**
+> against the 5e-3 ceiling. That is four orders inside the ceiling against the
+> *leg* family's 8.431e-04 at the same leg count (`EX-33`) — new information,
+> written into the guide: a ring gap's cut faces are exact planar disks whose
+> triangulation barely notices azimuth, where a leg gap's terminal is a disk
+> read against a box the air mesh does not rotate with. **Negative control:**
+> the in-run 4-leg ring rung meshed **110 786** cells (relative `0.000e+00`
+> against `RING_GAP_CELL_RECORD`), returned **one** azimuth class at
+> inter-class spread `0.000e+00`, and all eight terminal ratios asserted
+> against step 1's `0.974455`. **Cost rung (printed, never asserted):** cells
+> `110 786 → 265 621` (2.3976×), ring ports 8 → 32 (4×), mesh
+> `22.29 → 66.95 s` (3.0042×), build rung `24.11 → 74.35 s` — cells sublinear
+> in leg count, mesh seconds superlinear in cells, the same shape `EX-33`
+> measured on the leg family (3.18× on 2.65×); two independent cut families now
+> agree that meshing time, not cell count, is the term that bites first on the
+> way to a production count. Leg-arc clearance **3.744468e-03 m** at 16 legs
+> against 4.497787e-02 m at 4 is the ring family's analogue of `EX-33`'s
+> port-centre separation margin and is recorded here for the Phase 6 count
+> study. The licensed additive hunk **was** needed — `_measure_ring` did not
+> hand back the mesh — so `mesh`/`cells`/`sheet_tags` were added to its return
+> dict (additive; no gate reads them), and the gate module re-ran **green from
+> `main` in-slot**, 1 passed in 183.33 s
+> (`20260829T200504Z_EX-35-gate-rerun.log`, Status 0, 185 s).
 
 ### ANS — Ansys benchmark cases (§5.4)
 
@@ -8200,7 +8241,13 @@ uses the Edit tool and verifies `git status --porcelain`.
    record the three power shares / the mismatch in a new known-issues
    entry, keep the asserts, chunk stays ⬜/🧪, stop; a review separates
    bookkeeping from defect.
-3. **`EX-35` — 16-leg ring-gapped birdcage mesh, the 32-ring-port high-pass
+3. **✅ DONE 2026-08-29, 15:00 slot — green first attempt, 104 s at `-n 2`:
+   `mesh:9` reproduces all four printed records to the digit (265 621 cells,
+   terminals 0.974454791–0.974455668, C32 spread 4.985e-16, conductor
+   0.976465), 4 azimuth classes vs the control's 1 at inter-class spread
+   3.315e-07, and the licensed additive `_measure_ring` hunk was taken with
+   the gate module re-run green from `main` in-slot (183.33 s). — `EX-35` —
+   16-leg ring-gapped birdcage mesh, the 32-ring-port high-pass
    layout as `mesh:9` (standard, real, host-side runner; independent;
    §5.4 ramp on `GEO-20` ✅; commissioned this review).** Execute the §7
    `EX-35` entry as written: `examples/meshing/09_birdcage_sixteen_ring_gaps.py`

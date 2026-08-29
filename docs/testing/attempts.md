@@ -21403,3 +21403,86 @@ drift at `-n 4/8/12`, and **new: this module's gate (ii)** — one test, red at
 every width, documented. §9 items 3–5 (`EX-35`, `GEO-22` step 2c, `TH-13` step 1)
 remain open and independent, so the 15:00 slot takes item 3. Tree clean at
 handoff; no anomalies.
+
+---
+
+## 2026-08-29T20:10Z — `EX-35` — **complete** (15:00 CDT implementer slot)
+
+**Item taken:** §9 On-deck item 3, the first item not marked done or blocked
+(item 1 `PORT-12` step 1 closed in the 12:00 slot; item 2 `WF-6` step 1 was
+executed in the 13:30 slot and its entry says in terms **do NOT re-run this
+item as written**). Preflight: tree clean, container Up 3 days.
+
+**What was built.** `examples/meshing/09_birdcage_sixteen_ring_gaps.py` +
+same-stem guide — the 16-leg **ring**-gapped birdcage, 32 ring ports, the
+production high-pass layout `GEO-20` step 2 gated on 2026-08-29 and that no
+example covered (`mesh:7` is ring gaps at 4 legs, `mesh:8` is 16 legs with
+*leg* gaps). **No runner edit was needed**: `scripts/run_examples.sh` selects
+meshing examples by filename number, so `09_*.py` becomes `mesh:9` by existing.
+The identity family is asserted by the gate module's own
+`_assert_ring_identity_family`, imported and run on this run's own mesh (the
+`ANS-1` rule) — nothing restated.
+
+**The licensed additive hunk was needed.** `_measure_ring` did not hand back the
+mesh, so `mesh` / `cells` / `sheet_tags` were added to its return dict, with the
+`EX-33` comment convention naming the consumer and stating the hunk is additive.
+The gate module then re-ran **green from `main` in-slot** as the §7 entry
+requires.
+
+**Measured, first attempt, all green.**
+
+| reading | this run | record printed by the review |
+|---|---|---|
+| cells, 16-leg ring rung | **265 621** | 265 621 (relative 0.000e+00) |
+| terminal ratio range, 32 ports | **0.974454791–0.974455668** | 0.974454791–0.974455668 |
+| C32 sheet spread | **4.985e-16** | ~5e-16 (band 1e-12) |
+| meshed/CAD conductor | **0.976465** | 0.976465 (gate 0.95) |
+| azimuth classes, 16 / 4 legs | **4 / 1** | 4 / 1 (structural) |
+| control cells, 4-leg ring rung | **110 786** | `RING_GAP_CELL_RECORD` 110 786 |
+
+Every one of the 32 ports read closure / wedge volume / `w²` sheet at
+`1.000000000000` with out-of-plane `~2e-18 m`; Pappus on the 32 arcs
+`3.134786420778e-05 / 3.134786420778e-05 = 1.000000000000`; partition and air
+box `1.000000000000`.
+
+**The one genuinely new number.** Class means
+0.974454812 / 0.974454921 / 0.974454916 / 0.974455135, intra-class spreads
+4.198e-08 / 4.498e-07 / 4.681e-07 / 8.997e-07 against the 1e-6 band — the
+`78.750 deg` class at 9.0e-07 is the family's tightest margin and is the number
+to watch on any future mesh change. **Inter-class spread 3.315e-07** against the
+5e-3 ceiling: four orders inside it, where the *leg* family reads 8.431e-04 at
+the same leg count (`EX-33`). Written into the guide as the ring construction's
+advantage — a ring gap's cut faces are exact planar disks whose triangulation
+barely notices azimuth, where a leg gap's terminal is a disk read against a box
+the air mesh does not rotate with.
+
+**Cost rung (printed, never asserted):** cells `110 786 → 265 621` (2.3976×),
+ring ports 8 → 32 (4×), mesh `22.29 → 66.95 s` (3.0042×), build rung
+`24.11 → 74.35 s`. Cells sublinear in leg count, mesh seconds superlinear in
+cells — the same shape `EX-33` measured on the leg family (3.18× on 2.65×), so
+two independent cut families now agree that meshing time, not cell count, is the
+term that bites first on the way to a production count. Also recorded for the
+Phase 6 count study: leg-arc clearance **3.744468e-03 m** at 16 legs against
+4.497787e-02 m at 4 — the ring family's analogue of `EX-33`'s port-centre
+separation margin.
+
+**Harness logs, both footered.** `20260829T200308Z_EX-35-run1.log` (Status 0,
+**104 s**, `./run_examples.sh -e mesh:9 -n 2 -t 400`, 101.1 s in-script) and
+`20260829T200504Z_EX-35-gate-rerun.log` (Status 0, **185 s**,
+`mpiexec -n 2 pytest tests/mesh/test_birdcage_ring_gaps_scaleup.py`, 1 passed in
+183.33 s). Total compute ~5 min, inside the standard tier; neither command
+approached its `timeout -k 30` window. No denied commands.
+
+**Hypothesis for the next attempt on this line:** none needed for `EX-35` — it
+closed. The open question the run *raises* is for the weekly review's Phase 6
+work: the ring family's inter-class terminal spread (3.3e-07) is three orders
+tighter than the leg family's (8.4e-04) at the same leg count on the same
+grading, which suggests the 5e-3 inter-class ceiling is a leg-family band being
+carried by the ring family for free, not a shared limit. Worth qualifying by
+family before it is used as evidence about either construction.
+
+**Residual `main` reds after this slot:** unchanged from the 13:30 handoff — the
+two entry-3 names, `test_birdcage_volumes_partition_the_box` (`GEO-21`),
+`PORT-12`'s two-torus drift at `-n 4/8/12`, and `WF-6` step 1's gate (ii). §9
+items 4 (`GEO-22` step 2c) and 5 (`TH-13` step 1) remain open and independent,
+so the 16:30 slot takes item 4. Tree clean at handoff; no anomalies.

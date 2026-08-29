@@ -202,6 +202,13 @@ def _measure_ring(leg_count):
     return {
         "leg_count": leg_count,
         "ring_ports": ring_ports,
+        # The mesh objects themselves are carried so a consumer can export them
+        # without rebuilding (`EX-35`/`mesh:9` writes the 32-sheet XDMF from
+        # this dict, the same hunk `EX-33` added to `_measure`). Additive: no
+        # gate below reads them.
+        "mesh": mesh,
+        "cells": cells,
+        "sheet_tags": sheet_tags,
         "port_cell_tags": port_cell_tags,
         "tag_set": global_cell_tag_set(mesh, cells),
         "expected_tags": expected_tags,
