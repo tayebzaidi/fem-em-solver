@@ -20632,3 +20632,88 @@ remains independent; nothing here changes its sizing, but its complex windows
 should expect the same "cell counts do not move, reconstructions may" shape —
 and, given `port_terminals`, its non-port interface readings are worth reading
 as carefully as its S-matrix records.
+
+---
+
+## 2026-08-29T03:45Z — `GEO-24` step 1b — **complete**
+
+**Slot** 22:30 local (2026-08-28), Opus implementer, `main` at `d5b4586`,
+tree clean at preflight and at handoff, container Up. §9 On-deck item 3
+(items 1 and 2 already marked done by the 19:30 / 21:00 slots).
+
+**What was tried.** The `main`-side "before" read of the five
+`tests/validation/` birdcage-port consumers at `-n 2` and `-n 12`, complex
+build, `FEM_EM_REQUIRE_COMPLEX=1`, one module per window, `-s`, standard tier,
+`-k 30 480` (`-k 30 400` for `_lumped_column`, `-k 30 300` for the last
+control window). No `src/` change; the diff is documentation only.
+Consumer list re-derived by construction before running
+(`grep -rl birdcage_port_domain tests/ examples/` ∩ the
+`_interface_facet_tags` / `port_sheet` users): **no difference** from the
+18:00 review's five. Only `_lumped_column` calls the generator directly; the
+other four reach it through that module's `_build` and enter the intersection
+through their own sheet/facet imports. `test_port_birdcage_larmor_gate.py`
+and `_larmor_gate_128.py` are outside the intersection (they reconstruct
+nothing) and were not read.
+
+**Measured numbers.** Every cell count identical across widths — 116 085 in
+four modules, 116 085 + 116 475 (displaced rung) in `_leg_offset_sweep` — and
+**all five modules green at both widths**: `2 passed` / `5 passed` /
+`3 passed` / `4 passed` / `5 passed`, Status 0 in all ten windows. Gated
+digits identical at `-n 2` and `-n 12`: `Z_{11,21,31,41}` reproduce their
+`PORT-9` records at rel. deviation 1.07e-10 – 2.57e-10; `sigma_max(S)`
+**0.999992805**, max column power sum **0.793823974**; C4 class spreads
+**0.0553 / 0.0353 / 0.0214 %** (band 0.5%), pooled off-diagonal 9.2115%,
+separation 166.6766×; `||S−S^T||/||S||` **8.141422487e-15** (`-n 2`) →
+**1.116856988e-13** (`-n 12`), band 1e-3; `_termination_probe` margin
+**2256.9707×** and spread **0.0040%** (open control 1.5951% / 0.0407%);
+`_lumped_column`'s four sheets 26 facets / 5.835298880e-05 m² /
+`w = A/h` 7.294123600e-03 m / out-of-plane 0.000e+00 m; `_larmor_probe`
+`Z_11` +2.215494591e+01+7.460189773e+00j and +2.647082952e+01+4.646185233e+01j;
+`_leg_offset_sweep` displaced rung spreads 6.2219 / 7.1142 / 2.8474 % against
+the zero rung's 0.0553 / 0.0353 / 0.0214 %. **So the `GhostMode.none` gap
+costs the validation family nothing at `-n 12`** — it is confined to modules
+that read a facet group directly, which is step 1a's two reds.
+
+**The finding: the pre-stated negative control failed, `-n 12` only.**
+`tests/validation/test_port_lumped_two_torus.py`, on the fixture that
+*already* has `create_cell_partitioner(GhostMode.shared_facet, 2)`, is
+`5 passed` / Status 0 at `-n 2` with gap ratio **0.894141** — its record
+exactly — and `1 failed, 4 passed` / Status 1 at `-n 12` with **0.894274**,
+moved **1.33e-04** against a 1e-04 band. The mesh does not move (**184 176**
+cells at both widths) and the quantity that moves is a *solved* line integral
+(`Im Z12` 1.110303775 → 1.110469250, 1.5e-4 relative), not a reconstruction.
+Recorded in the `GEO-20`/`GEO-24` known-issues entry and on the §7 entry; no
+band touched, no record re-written — width-qualifying that band is a review's
+call.
+
+**Secondary observation for the review.** The anchor digits quoted in §9 item
+3 (reciprocity 2.495292352e-05, σ_max 0.862659137, class spreads
+0.0199 / 0.0180 / 0.0108 %) are **not** the records these modules carry today;
+they gate against 8.14e-15 / 0.999992805 / 0.0553 / 0.0353 / 0.0214 % and
+pass, each module comparing to its own in-file record. The quoted figures are
+leg (d)-era, superseded by (d3)/(d1′). Nothing was changed on that account.
+
+**Cost.** Thirteen footered windows, **660 s** of compute: env gate 21 s;
+`_lumped_column` 33 / 31 s; `_four_port` 51 / 40 s; `_larmor_probe` 40 / 32 s;
+`_termination_probe` 39 / 32 s; `_leg_offset_sweep` 96 / 77 s; two-torus
+control 84 s (`-n 12`) / 84 s (`-n 2`). No exit 124, no container wedge, no
+denied command. Complex `tests/environment` gate `11 passed` (21 s) before
+window 1; FFCx 0-byte stub sweep clean and zero stray `python3` at preflight.
+`-n 12` again costs the same wall clock as `-n 2` or less.
+
+**Harness logs** (all `docs/testing/logs/`, `20260829T03…Z_GEO-24-step1b-…`):
+`…3116Z_…-env` (0/21 s), `…3145Z_…-column-n2` (0/33 s),
+`…3226Z_…-column-n12` (0/31 s), `…3306Z_…-fourport-n2` (0/51 s),
+`…3411Z_…-fourport-n12` (0/40 s), `…3503Z_…-larmorprobe-n2` (0/40 s),
+`…3551Z_…-larmorprobe-n12` (0/32 s), `…3636Z_…-termination-n2` (0/39 s),
+`…3720Z_…-termination-n12` (0/32 s), `…3801Z_…-legoffsweep-n2` (0/96 s),
+`…3943Z_…-legoffsweep-n12` (0/77 s), `…4112Z_…-twotorus-control-n12`
+(**1**/84 s), `…4253Z_…-twotorus-control-n2` (0/84 s).
+
+**Hypothesis for the next attempt.** Item 4 (`GEO-24` step 2a, the mesh-family
+plumb) is unblocked and unchanged. Step 2b — the validation-family re-read
+after the plumb — is now cheap and well-specified: 10 windows, ≈ 8 min, and
+its gate should be "every digit above unchanged", since this family had no
+`-n 12` red to fix. The two-torus control says step 2b must not read a 1e-4
+move in a *solved* digit at `-n 12` as a plumbing failure; only the
+reconstruction identities (1.000000000000) are the plumb's own evidence.

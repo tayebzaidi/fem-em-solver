@@ -4872,6 +4872,87 @@ The tests are **not on `main`**: they are parked on
 > **Nothing on `main` is red at `-n 2`,** so CI is unaffected; the two reds
 > above are `-n 12`-only and are the measurement `GEO-24` step 1a was
 > commissioned to take.
+>
+> **📐 `GEO-24` STEP 1b EXECUTED 2026-08-29 (22:30 slot, at `d5b4586`) — the
+> `main`-side "before" table for the five `tests/validation/` consumers, at
+> `-n 2` and `-n 12`, complex build, no `src/` change. Every cell count is
+> identical across widths, every module is green at *both* widths, and every
+> printed S/Z identity is digit-identical — the validation family shows **no**
+> `-n 12` red at all. The one red in the slot is the pre-stated negative
+> control, and it is `-n 12`-only.** Thirteen windows, one module per window,
+> `-s`, standard tier, `-k 30 480` (`-k 30 400` for the two cheapest,
+> `-k 30 300` for the last control); logs
+> `20260829T0331*`–`20260829T0342*Z_GEO-24-step1b-*.log`, **660 s of compute**
+> in total (env gate + 10 module windows + 2 control windows).
+>
+> | module | cells (`-n 2` / `-n 12`) | `-n 2` | `-n 12` |
+> |---|---|---|---|
+> | `test_port_birdcage_lumped_column` | 116 085 / 116 085 | ✅ 2 passed, 33 s | ✅ 2 passed, 31 s |
+> | `test_port_birdcage_four_port` | 116 085 / 116 085 | ✅ 5 passed, 51 s | ✅ 5 passed, 40 s |
+> | `test_port_birdcage_larmor_probe` | 116 085 / 116 085 | ✅ 3 passed, 40 s | ✅ 3 passed, 32 s |
+> | `test_port_birdcage_termination_probe` | 116 085 / 116 085 | ✅ 4 passed, 39 s | ✅ 4 passed, 32 s |
+> | `test_port_birdcage_leg_offset_sweep` | 116 085 + 116 475, both widths | ✅ 5 passed, 96 s | ✅ 5 passed, 77 s |
+>
+> **Consumer list re-derived by construction, no difference:**
+> `grep -rln birdcage_port_domain tests/ examples/` ∩ the
+> `_interface_facet_tags` / `port_sheet` users is exactly these five under
+> `tests/validation/` — the 18:00 review's list is correct as written. Note
+> that only `_lumped_column` calls `birdcage_port_domain` directly; the other
+> four reach the fixture through its `_build` helper and appear in the
+> intersection through their own `_interface_facet_tags` / sheet imports.
+> `test_port_birdcage_larmor_gate.py` and `_larmor_gate_128.py` are **not** in
+> the intersection (they reconstruct nothing themselves) and were not read.
+>
+> **Digits, both widths, identical unless stated.** All four
+> `Z_{11,21,31,41}` reproduce their `PORT-9` records at rel. deviation
+> 1.07e-10 – 2.57e-10 in every module that gates them; 4×4 gates in
+> `_four_port`: `||S−S^T||/||S||` **8.141422487e-15** at `-n 2` and
+> **1.116856988e-13** at `-n 12` (band 1e-3, both PASS; `||Z−Z^T||/||Z||`
+> 8.814400605e-05 vs …604e-05 reported), `sigma_max(S)` **0.999992805** and
+> max column power sum **0.793823974** at both, C4 class spreads
+> **0.0553 / 0.0353 / 0.0214 %** at both (band 0.5%), pooled off-diagonal
+> 9.2115% and separation 166.6766×. `_lumped_column`: all four sheets 26
+> facets / 5.835298880e-05 m² / `w = A/h` 7.294123600e-03 m, out-of-plane
+> 0.000e+00 m, at both widths. `_larmor_probe`: `Z_11` +2.215494591e+01
+> +7.460189773e+00j (10 MHz) and +2.647082952e+01+4.646185233e+01j (Larmor
+> rung), identical at both. `_termination_probe`: margin **2256.9707×**,
+> spread **0.0040%**, open control 1.5951× / 0.0407%, `I_1` reproducing at
+> 5.9e-12 / 1.1e-11. `_leg_offset_sweep`: displaced rung 116 475 cells (ratio
+> 1.003360) with class spreads **6.2219 / 7.1142 / 2.8474 %** vs the zero
+> rung's 0.0553 / 0.0353 / 0.0214 %, `sigma_max` 0.999992337 vs 0.999992805,
+> `||S−S^T||/||S||` zero 1.044255156e-14 → 6.958642293e-14 and displaced
+> 2.009039801e-14 → 4.532499019e-13 across widths (band 1e-3).
+>
+> **⚠️ The pre-stated negative control did not hold, and it is the step's new
+> information.** `tests/validation/test_port_lumped_two_torus.py` — the
+> fixture that *already* has `create_cell_partitioner(GhostMode.shared_facet,
+> 2)` (`PORT-1` step 3b-iv) — is **green at `-n 2`** and **red at `-n 12`**:
+>
+> ```
+> gap ratio: 0.894274 against step 1's record 0.894141 — moved by 1.33e-04,
+>   above 1e-04; step 2's reads changed step 1's solve
+> ```
+>
+> (`20260829T034112Z_…-twotorus-control-n12.log`, `1 failed, 4 passed`,
+> Status 1, 84 s; `20260829T034253Z_…-twotorus-control-n2.log`, `5 passed`,
+> Status 0, 84 s, gap ratio **0.894141** = the record exactly.) The mesh does
+> **not** move — **184 176 cells at both widths** — and the four other tests in
+> the module pass at `-n 12`, so this is not the `GhostMode` reconstruction
+> defect: it is a *solved* quantity (the gap-route `V` line integral,
+> `Im Z12 = 1.110469250` at `-n 12` vs `1.110303775` at `-n 2`, 1.5e-4
+> relative) drifting with partition count on an already-plumbed fixture, at
+> the same order as the `OPS-18` step-3 re-record band it is gated against
+> (1e-4). **Consequence for step 2b:** a `-n 12` *solved* digit that moves at
+> 1e-4 after the birdcage plumb is not by itself evidence the plumb failed —
+> the gate must distinguish facet-reconstruction readings (which must return
+> exactly 1.000000000000) from solve-derived digits at 1e-4. Whether the
+> two-torus 1e-4 band should be width-qualified is a **review's call**, not
+> this chunk's; nothing was loosened here.
+>
+> **Nothing on `main` moved at `-n 2` in this family** — every `-n 2` reading
+> matches its `PORT-9` / `PORT-11` record, so CI is unaffected and no record
+> is owed a re-write from step 1b. Step 2b (the plumb re-read of this family)
+> is unblocked.
 
 ## Recording a new entry
 
