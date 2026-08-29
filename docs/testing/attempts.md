@@ -20541,3 +20541,94 @@ items 2 and 3 (`GEO-24` step 1a / 1b) remain independent and are the working
 front, and item 4 still depends on item 2's table landing in the `GEO-24`
 entry. Nothing this slot learned changes their sizing — the modules here are
 seconds-scale and share no fixture with the birdcage-sheet family.
+
+---
+
+## 2026-08-29T02:20Z — `GEO-24` step 1a — **complete**
+
+**Slot** 2026-08-28 21:00 CDT scheduled implementer run, at `deef8c5`, tree
+clean at preflight, container Up. §9 On-deck item 1 was already marked done by
+the 19:30 slot, so the first open item was **item 2 — `GEO-24` step 1a**, the
+`main`-side two-width read of the seven `tests/mesh/` birdcage-sheet consumers.
+Measurement only: **no `src/` change, `git diff -- src/` empty**, nothing under
+`tests/` moved.
+
+**Consumer list re-derived by construction first, as the item required.**
+`grep -rln birdcage_port_domain tests/ examples/` ∩ the `_interface_facet_tags`
+/ `port_sheet` users gives exactly `test_birdcage_port_sheets`,
+`_port_terminals`, `_ring_gaps`, `_leg_gaps`, `_leg_offset`, `_port_scaleup`,
+`_port_sheet_prerequisite` under `tests/mesh/` — **no difference** from the
+18:00 review's list, nothing to record.
+
+**Result — 14 windows, one module per width, `-s`, standard tier, real build,
+668 s of compute.** Every cell count identical at `-n 2` and `-n 12`; `-n 2`
+green in all seven; two `-n 12` reds, both facet reconstruction:
+
+| module | cells (2 / 12) | `-n 2` | `-n 12` |
+|---|---|---|---|
+| `port_sheets` | 116 085 / 116 085 | 2 passed, 52 s | 2 passed, 50 s |
+| `port_terminals` | 98 666 / 98 666 | 1 passed, 22 s | **1 failed**, 22 s |
+| `ring_gaps` | 128 111 / 128 111 | 2 passed, 74 s | **1 failed, 1 passed**, 74 s |
+| `leg_gaps` | 114 655 / 114 655 | 1 passed, 44 s | 1 passed, 44 s |
+| `leg_offset` | 116 085 / 116 475 / 116 085 both widths | 6 passed, 76 s | 6 passed, 75 s |
+| `port_sheet_prerequisite` | 98 666 / 98 666 | 1 passed, 22 s | 1 passed, 21 s |
+| `port_scaleup` | 307 296 / 307 296 | 2 passed, 109 s | 2 passed, 108 s |
+
+**The diagnosis's prediction is confirmed to the digit.** `ring_gaps` at
+`-n 12` fails on `port P8 closure 0.990103697427` (`assert
+0.009896302572964588 < 1e-09`) — the width probe's exact digit, the exact
+port, at an unchanged 128 111 cells, with every other reading in the module
+identical to its `-n 2` value.
+
+**New information the item did not predict.** The second red,
+`port_terminals`, is **not a port sheet** — it is that module's phantom↔air
+positive control: `phantom surface measures 1.939344e-02 m^2, 0.935322 of the
+closed-form 2.073451e-02 m^2` against the `[0.95, 1.0]` band, **245 facets at
+`-n 12` vs 255 / 0.979885 at `-n 2`**, i.e. 10 interface facets lost. All four
+port boxes in that module stay exact at both widths. So `GhostMode.none` costs
+this fixture *any* interior material interface, not only the port sheets.
+**Consequence for item 4 (`GEO-24` step 2a): its gate must also require the
+phantom control back at 255 facets / 0.979885 at `-n 12`** — that is now
+recorded on both the §7 entry and the queue item.
+
+**Pre-stated negative control holds.** Terminal ratios and port-volume
+identities — neither routes through a facet reconstruction — are identical at
+both widths in every module: ring terminals 0.974454791 / 0.974454832, leg
+terminals 0.988615826–0.988615858, all `volume/analytic` 1.000000000000,
+Pappus 1.000000000000 gapped and uncut, and the 16-leg scale-up's three
+azimuth classes 0.988615772 / 0.989367514 / 0.989449735 with intra-class
+spreads 1.923e-07 / 5.849e-08 / 6.144e-08 and inter-class 8.431e-04. The only
+digit that moves anywhere in the table is that module's C16 sheet spread,
+1.331e-15 → 1.210e-15, at the 1e-15 floor.
+
+**Cost finding: nothing was marked unmeasured.** `port_scaleup` — the module
+the review flagged as the likely `-n 12` overrun — finished in **108 s**,
+comfortably inside its window; `GEO-19` step C's exit 124 at 561 s was a
+*bundled* window, not this module's own price. `-n 12` costs the same wall
+clock as `-n 2` throughout (±2 s), the mesh being built on rank 0 either way.
+Its two windows were run at `-k 30 570` rather than the item's `-k 30 600` so
+the footer lands inside the 660 s foreground Bash ceiling (protocol: size the
+container-side timeout to ≤ ~590 s); it returned in 108 s, so the difference
+never bound.
+
+**Harness logs** (all `docs/testing/logs/`, `20260829T02…Z_GEO-24-step1a-…`):
+`…0035Z_…-sheets-n2` (0/52 s), `…0138Z_…-sheets-n12` (0/50 s),
+`…0236Z_…-terminals-n2` (0/22 s), `…0304Z_…-terminals-n12` (**1**/22 s),
+`…0337Z_…-ringgaps-n2` (0/74 s), `…0457Z_…-ringgaps-n12` (**1**/74 s),
+`…0619Z_…-leggaps-n2` (0/44 s), `…0709Z_…-leggaps-n12` (0/44 s),
+`…0759Z_…-legoffset-n2` (0/76 s), `…0921Z_…-legoffset-n12` (0/75 s),
+`…1041Z_…-prereq-n2` (0/22 s), `…1108Z_…-prereq-n12` (0/21 s),
+`…1138Z_…-scaleup-n2` (0/109 s), `…1334Z_…-scaleup-n12` (0/108 s).
+The two Status 1 logs are the measurement, not failures of the step. No exit
+124 occurred; no container wedge; no denied command.
+
+**Hypothesis for the next attempt.** Item 4 (`GEO-24` step 2a) is unblocked —
+its "before" column now exists, and the two reds it must turn green are named
+with their digits (P8 closure 0.990103697427 → 1.000000000000; phantom
+0.935322 / 245 facets → 0.979885 / 255). The `-n 12` prices measured here mean
+step 2a's 14 windows will cost ≈ the same 11 min, so the slot has room for the
+plumb, the re-read and the write-up. Item 3 (step 1b, validation family)
+remains independent; nothing here changes its sizing, but its complex windows
+should expect the same "cell counts do not move, reconstructions may" shape —
+and, given `port_terminals`, its non-port interface readings are worth reading
+as carefully as its S-matrix records.

@@ -4804,6 +4804,75 @@ The tests are **not on `main`**: they are parked on
 > `GEO-24`'s, and `GEO-24` step 1 now owes only the before/after readings on
 > the modules that already live on `main`.
 
+> **📐 `GEO-24` STEP 1a EXECUTED 2026-08-28 (21:00 slot, at `deef8c5`) — the
+> `main`-side "before" table for the seven `tests/mesh/` consumers, at `-n 2`
+> and `-n 12`, no `src/` change. Every cell count is identical across widths;
+> `-n 2` is green everywhere; two modules are red at `-n 12`, both by facet
+> reconstruction.** Fourteen windows, one module per window, `-s`, standard
+> tier, real build, `-k 30 400` (`-k 30 570` for `port_scaleup`);
+> logs `20260829T0200*`–`20260829T0213*Z_GEO-24-step1a-*-n{2,12}.log`,
+> **668 s of compute** in total.
+>
+> | module | cells (`-n 2` / `-n 12`) | `-n 2` | `-n 12` |
+> |---|---|---|---|
+> | `test_birdcage_port_sheets` | 116 085 / 116 085 (control 114 655) | ✅ 2 passed, 52 s | ✅ 2 passed, 50 s |
+> | `test_birdcage_port_terminals` | 98 666 / 98 666 | ✅ 1 passed, 22 s | ❌ **1 failed**, 22 s |
+> | `test_birdcage_ring_gaps` | 128 111 / 128 111 (control 98 666) | ✅ 2 passed, 74 s | ❌ **1 failed, 1 passed**, 74 s |
+> | `test_birdcage_leg_gaps` | 114 655 / 114 655 (control 98 666) | ✅ 1 passed, 44 s | ✅ 1 passed, 44 s |
+> | `test_birdcage_leg_offset` | 116 085 / 116 475 / 116 085, both widths | ✅ 6 passed, 76 s | ✅ 6 passed, 75 s |
+> | `test_birdcage_port_sheet_prerequisite` | 98 666 / 98 666 | ✅ 1 passed, 22 s | ✅ 1 passed, 21 s |
+> | `test_birdcage_port_scaleup` | 307 296 / 307 296 (control 116 085) | ✅ 2 passed, 109 s | ✅ 2 passed, 108 s |
+>
+> **Consumer list re-derived by construction, no difference:**
+> `grep -rln birdcage_port_domain tests/ examples/` ∩ the
+> `_interface_facet_tags` / `port_sheet` users is exactly these seven under
+> `tests/mesh/` — the 18:00 review's list is correct as written.
+>
+> **The prediction from the diagnosis is confirmed digit for digit.**
+> `test_birdcage_ring_gaps` fails at `-n 12` on
+> `port P8 closure 0.990103697427` (assert `0.009896302572964588 < 1e-09`) —
+> the exact digit the width probe recorded, on the exact port, at an
+> unchanged **128 111** cells. Every other reading in that module is
+> identical to its `-n 2` value: all 12 ports `volume/analytic
+> 1.000000000000`, all 8 ring sheets `1.000000000000`, ring terminals
+> 0.974454791 / 0.974454832, leg terminals 0.988615826–0.988615858, Pappus
+> 1.000000000000 both gapped and uncut, kwarg-off control **98 666** cells
+> at ratio 1.001950.
+>
+> **New information — the defect reaches a *second* surface, not only port
+> sheets.** `test_birdcage_port_terminals` is red at `-n 12` on its
+> **positive control**, the phantom↔air interface:
+> `phantom surface measures 1.939344e-02 m^2, 0.935322 of the closed-form
+> 2.073451e-02 m^2` against the `[0.95, 1.0]` inscribed band — **245 facets
+> at `-n 12` against 255 at `-n 2`** (0.979885), i.e. **10** interface facets
+> lost, the same one-cell-per-partition-boundary shortfall an order larger.
+> All four port boxes in that module stay exact at both widths (air 24 facets
+> / 5.200000e-04 m², closure 1.000000000000, conductor 0 facets). So the
+> `GhostMode.none` reconstruction gap is **not** specific to port sheets:
+> *any* interior material interface on this fixture inherits it. **Step 2a's
+> gate must include this reading** — the plumb should return 255 facets /
+> 0.979885 at `-n 12`, and if it does not, that is a finding.
+>
+> **Negative control as pre-stated, both widths, digit for digit:** the
+> terminal ratios and port-volume identities — neither of which routes through
+> a facet reconstruction — are identical at `-n 2` and `-n 12` in every
+> module, including the 16-leg scale-up's three azimuth classes
+> (0.988615772 / 0.989367514 / 0.989449735, intra-class spreads
+> 1.923e-07 / 5.849e-08 / 6.144e-08, inter-class 8.431e-04) and its C16 sheet
+> spread (1.331e-15 at `-n 2`, 1.210e-15 at `-n 12` — the only digit that
+> moves anywhere in the table, at the 1e-15 floor).
+>
+> **Cost finding: nothing was unmeasured.** `test_birdcage_port_scaleup` — the
+> module the review flagged as most likely to overrun at `-n 12` — completed
+> in **108 s**, well inside `-k 30 570`; `GEO-19` step C's exit 124 at 561 s
+> was a *bundled* window, not this module's own price. `-n 12` costs the same
+> wall clock as `-n 2` throughout (±2 s), since the mesh is built on rank 0
+> either way.
+>
+> **Nothing on `main` is red at `-n 2`,** so CI is unaffected; the two reds
+> above are `-n 12`-only and are the measurement `GEO-24` step 1a was
+> commissioned to take.
+
 ## Recording a new entry
 
 Add an entry when you find a failure you are **not** fixing. Include: the test id, the
