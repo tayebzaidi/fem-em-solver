@@ -3353,8 +3353,21 @@ class MeshGenerator:
                 f"birdcage_port_domain geometry generation failed on rank {rank}"
             )
 
+        # `GEO-24` step 2a, the same reason `two_torus_domain` was plumbed in
+        # `PORT-1` step 3b-iv: gmshio's default partitioner is
+        # `GhostMode.none`, which leaves `cells_ghost = 0` on every rank. The
+        # port facets rebuilt below are *interior* to the mesh, so classifying
+        # one needs the tag of the cell on both sides — and on a partition
+        # boundary one of those cells lives on the other rank. `shared_facet`
+        # is what makes that cell present as a ghost; it is also what a `dS`
+        # integral over those facets needs. `max_facet_to_cell_links = 2` is
+        # dolfinx 0.11's required second argument and the documented value for
+        # a non-branching manifold mesh (`OPS-18` step 3).
+        partitioner = dolfinx.mesh.create_cell_partitioner(
+            dolfinx.mesh.GhostMode.shared_facet, 2
+        )
         mesh, cell_tags, facet_tags = _model_to_mesh(
-            gmsh.model, comm, rank, gdim=3
+            gmsh.model, comm, rank, gdim=3, partitioner=partitioner
         )
 
         if comm.rank == rank:
