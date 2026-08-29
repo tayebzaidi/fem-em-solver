@@ -5040,6 +5040,35 @@ The tests are **not on `main`**: they are parked on
 > this stop — it reads a family that showed no reconstruction red at all —
 > but it should not run before the plumb's disposition is ruled, since it
 > measures the same patch.
+>
+> **RULED 2026-08-29, 03:00 review — defect repair, not re-baseline; land
+> the parked commit.** The `-n 1` control on `main` (no plumb,
+> `…050535Z_…-terminals-n1-main.log`, 256 facets / 0.984183, 98 666 cells)
+> is the serial truth: one rank has no partition boundary and reads the
+> interface whole. Step 1a's `-n 2` **255 / 0.979885** was therefore one
+> facet short from the same `GhostMode.none` gap — a *defective record*,
+> not partition-dependent physics — and no test carries it
+> (`test_birdcage_port_terminals` gates `[0.95, 1.0]`). Disposition:
+> §9 item 1 (`GEO-24` step 2a′) cherry-picks `e1dede8`, re-reads
+> `port_terminals` at `-n 1/2/12` and `ring_gaps` at `-n 2/12` on the
+> landed tree, and annotates the 255 in this table as defective; §9 item 2
+> (step 2b, the validation family) retires this entry on green; the
+> two-torus `-n 12` finding above is **split out** as its own entry
+> (`PORT-12`, below) so this entry can retire without losing it; `GEO-20`
+> step 2 is re-run as §9 item 4 after the plumb lands. No band, tolerance
+> or record in `tests/` moves under this ruling.
+
+### `PORT-12` — the two-torus gap-route reproduction record drifts with rank width on a fixture that already has the `shared_facet` ghost layer (found 2026-08-29 by `GEO-24` step 1b)
+
+| | |
+| --- | --- |
+| **Test id** | `tests/validation/test_port_lumped_two_torus.py` — the `STEP1_GAP_RATIO_RECORD` reproduction assertion (`REPRODUCTION_BAND` 1e-4). Green at `-n 2`, which is what CI runs; **red at `-n 12` only**. |
+| **Verified at** | `d5b4586`, 0.11 image, complex build, 2026-08-29 (`20260829T034253Z_GEO-24-step1b-twotorus-control-n2.log`, `5 passed` / 84 s; `20260829T034112Z_GEO-24-step1b-twotorus-control-n12.log`, `1 failed, 4 passed` / Status 1 / 84 s). |
+| **Symptom** | `gap ratio: 0.894274 against step 1's record 0.894141 — moved by 1.33e-04, above 1e-04` at `-n 12`; `-n 2` reads **0.894141**, the record exactly. `Im Z12` 1.110303775 (`-n 2`) → 1.110469250 (`-n 12`), 1.5e-4 relative. The mesh does **not** move — **184 176** cells at both widths — and the other four tests in the module pass at `-n 12`. |
+| **Not the `GEO-24` defect** | `two_torus_domain` has carried `create_cell_partitioner(GhostMode.shared_facet, 2)` since `PORT-1` step 3b-iv; the quantity that moves is a *solved* line integral (`V = −∫E·dl` on the gap route), not a facet reconstruction. It was run as `GEO-24` step 1b's pre-stated negative control ("an already-plumbed fixture is width-independent") and the control **failed**. |
+| **Cause** | **Not diagnosed.** Two candidates the `-n 4` / `-n 8` rungs separate: a solve-side drift with partition count (preconditioner / reduction ordering — `OPS-18` step 3a measured this fixture's run-to-run floor at ~1e-10 at `-n 2`, so 1.3e-4 is six orders above it) would move the gap, lumped and cross-route ratios together and monotonically; an evaluation-path effect in the line integral crossing a partition would move the gap route alone, possibly as a jump at one width. |
+| **Consequence** | The 1e-4 band is a `-n 2` statement until this is classified; every `PORT-1`/`OPS-18` two-torus record is quoted at `-n 2`. `GEO-24` step 2b (the birdcage validation family after the plumb) must not read a `-n 12` solved digit moving at ≤ 1e-4 as evidence the plumb failed. Nothing loosened, no record re-written. |
+| **Resolves with** | `PORT-12` step 1 (§9 item 5, measurement only: the `-n 4` / `-n 8` rungs, four-width table into this entry); step 2 is the 08-30 weekly review's call on width-qualifying `REPRODUCTION_BAND` — or on a solver-side fix if the drift is monotone and shared by all three routes. |
 
 ## Recording a new entry
 
