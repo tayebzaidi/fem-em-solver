@@ -21186,3 +21186,111 @@ unchanged by this slot: the two entry-3 names,
 `test_birdcage_volumes_partition_the_box` (`GEO-21`), and `PORT-12`'s
 `-n 12`-only two-torus drift. §9 is now **drained except item 5**
 (`PORT-12` step 1, the spare) — the next slot takes it.
+
+## 2026-08-29T17:05Z — `PORT-12` step 1 — **complete** (12:00 CDT implementer slot)
+
+**Item:** §9 item 1, the carried spare — classify the two-torus gap-route width
+drift at `-n 4` and `-n 8`. Measurement only by commission: no band moved, no
+record re-written, no width qualified, **no code change in the slot** (nothing
+under `src/`, `tests/` or `scripts/` touched).
+
+**Preflight:** tree clean on `main` at `c4630ed`, container Up (3 days). No
+`attempt/*` or `recovered/*` branch existed.
+
+**Executed — three windows / 189 s**, complex build
+(`source /usr/local/bin/dolfinx-complex-mode`), `FEM_EM_REQUIRE_COMPLEX=1`,
+`-s`, one width per window, `timeout -k 30` at 120 / 300 / 300 s:
+
+| log | width | result | elapsed |
+| --- | --- | --- | --- |
+| `20260829T170032Z_PORT-12-step1-env.log` | `-n 2`, `tests/environment` | `11 passed`, Status 0 | 21 s |
+| `20260829T170059Z_PORT-12-step1-twotorus-n4.log` | `-n 4` | `1 failed, 4 passed`, Status 1 | 87 s |
+| `20260829T170240Z_PORT-12-step1-twotorus-n8.log` | `-n 8` | `1 failed, 4 passed`, Status 1 | 81 s |
+
+The single red at each width is the pre-stated one —
+`test_step_1_measurements_reproduce` on the gap-route band. Per the item, "a red
+on the gap-route band at a new width is the measurement, not a failure to fix."
+The `-n 2` and `-n 12` readings were **not** re-run, as instructed; they are
+quoted from `…034253Z_GEO-24-step1b-twotorus-control-n2.log` and
+`…034112Z_GEO-24-step1b-twotorus-control-n12.log`.
+
+**The four-width table** (all on **184 176** cells):
+
+| width | gap ratio | Δ vs record | `Im Z12(gap)` | `Re V_gap` | lumped ratio | `Im Z12(lumped)` | cross-route |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `-n 2` | **0.894141** | 0 (= record) | 1.110303775 | +1.365256733e-02 | 0.828893 | 1.029281338 | 7.743060e-02 |
+| `-n 4` | **0.894274** | +1.33e-04 | 1.110469342 | +1.368962224e-02 | 0.828893 | 1.029281337 | 7.754834e-02 |
+| `-n 8` | **0.894347** | +2.06e-04 | 1.110559796 | +1.370291038e-02 | 0.828893 | 1.029281336 | 7.761484e-02 |
+| `-n 12` | **0.894274** | +1.33e-04 | 1.110469250 | +1.373904726e-02 | 0.828893 | 1.029281338 | 7.753298e-02 |
+
+**Finding — the shape is (b), and cleanly so: an evaluation-path effect confined
+to the gap route, non-monotone in width.** The item pre-registered two shapes;
+the measurement excludes the first *positively*, not by inference:
+
+1. **Not solve-side.** A preconditioner / reduction-ordering drift would move all
+   three routes together. It does not. The **lumped route reads the same solved
+   field through the sheet's own law and is flat to 2e-09** across all four
+   widths (`Im Z12(lumped)` 1.029281338 / …337 / …336 / …338; `I_sheet`
+   −4.122422e−08−1.000166e−06j at *every* width, to nine digits). Stronger: the
+   step-2 **surface** read of the same field, `mean E.yhat over the sheet`, is
+   **bit-identical to every printed digit at all four widths** — shadow
+   −2.958541e+00−7.177866e+01j, fringe +8.607682e-03−1.009219e-02j, ratio
+   0.000185. The solved field is width-independent to ~1e-9, five orders below
+   the gap route's 1.3e-04–2.1e-04 motion.
+2. **Not monotone.** `-n 8` (+2.06e-04) is the **worst** width, not `-n 12`
+   (+1.33e-04, equal to `-n 4` at six digits though not in `Im Z12`:
+   1.110469342 vs 1.110469250). There is no "more partitions ⇒ more drift" law.
+   The step-2 path/projection residual is non-monotone in the same way:
+   0.0689 / 0.0632 / 0.0662 / 0.0836 pp at 2 / 4 / 8 / 12.
+3. **Sub-shape worth the root-cause hunt:** `Re V_gap` **is** monotone across all
+   four widths (1.3652567e-02 → 1.3689622e-02 → 1.3702910e-02 → 1.3739047e-02,
+   6.5e-03 relative) while `Im V_gap` is not. That is what a `V = −∫E·dl` path
+   picking up partition-dependent contributions where it crosses a partition
+   boundary looks like — not what integrating a converged field correctly looks
+   like.
+4. Cross-route tracks the gap route exactly, as it must, being derived from it.
+
+**Pre-stated negative control — held.** Every reconstruction digit is identical
+at all four widths: 184 176 cells, sheet 212 **1583 owned facets**, meshed/CAD
+area **1.000000000000**, `w` 1.040000000e-02 m, `h` 1.395505060e-02 m, `w/h`
+0.745249896 squares, out-of-plane spread 0.0e+00 m, meshed/analytic gap volume
+**1.000000000000**. So this is **not** the `GEO-24` class of defect on a fixture
+believed plumbed — the larger finding the item warned about did not materialise.
+The module's own volume/area identity asserts (1e-9 bands) executed and passed at
+both new widths, which is the slot's quantitative anchor in the §4 sense
+alongside the four-width table itself.
+
+**Landed in one commit on `main`:** the known-issues `PORT-12` entry rewritten
+with the four-width table, the held negative control and the classification (its
+Cause row upgraded from "not diagnosed" to "classified, not yet root-caused");
+the §7 `PORT-12` row **⬜ → 🟡** with the step-1 annotation; §9 item 1 marked
+done; the three harness logs and their `test-results.md` rows. Nothing loosened,
+no band moved, no record re-written.
+
+**For the review — step 2's option set has changed.** The original framing
+offered "width-qualify `REPRODUCTION_BAND`, or a solver-side fix if the drift is
+monotone and shared by all three routes." It is **neither** monotone **nor**
+shared, so the solver-side option is off. What is left for the 08-30 weekly
+review: (i) width-qualify the band as a `-n 2` statement; (ii) a pre-registered
+parallel band ≥ 2.1e-04 justified by the non-monotone table; or (iii) commission
+a root-cause step on the gap-route line integral's partition crossing — my
+recommendation, since the localisation is now sharp (one route, one evaluation
+path, field provably stable) and the `Re V_gap` monotonicity is a concrete lead.
+Note the generalisation recorded in the known-issues Consequence row: any *other*
+`V = −∫E·dl` gap-route reading in the package is suspect at parallel width the
+same way, while **no lumped-sheet port reading is** — the lumped route is flat to
+2e-09 here, which is reassuring for the `PORT-9` / `PORT-11` birdcage 4×4.
+
+**Hypothesis for a next attempt** (if (iii) is commissioned): instrument
+`_sheet_chord_voltage` / the gap-route integration to print the per-station chord
+voltages at each width — if the drift lives in one or two transverse stations
+whose path crosses a partition, that localises it to the point-evaluation of `E`
+along the path rather than to the quadrature, and
+`evaluate_vector_field_parallel`'s ghost handling is the first thing to read.
+
+**Residual `main` reds unchanged by this slot:** the two entry-3 names,
+`test_birdcage_volumes_partition_the_box` (`GEO-21`), and `PORT-12`'s own
+two-torus drift — now known to be red at `-n 4`, `-n 8` and `-n 12`, green only
+at `-n 2` (which is what CI runs). §9 items 2–5 (`WF-6` step 1, `EX-35`,
+`GEO-22` step 2c, `TH-13` step 1) remain open and independent, so the 13:30 slot
+takes item 2. No denied commands, no anomalies, tree clean at handoff.
