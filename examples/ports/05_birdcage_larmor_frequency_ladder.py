@@ -81,7 +81,6 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-import ufl
 from mpi4py import MPI
 
 from dolfinx import default_scalar_type, fem, io
@@ -104,6 +103,7 @@ from fem_em_solver.ports.lumped import (  # noqa: E402
     lumped_port_linear_term,
 )
 from fem_em_solver.ports.sparameters import run_n_port_sparameter_sweep  # noqa: E402
+from fem_em_solver.post import magnetic_flux_density_from_e  # noqa: E402
 
 from tests.mesh.test_birdcage_port_sheets import PORT_LOWER, PORT_UPPER  # noqa: E402
 from tests.mesh.test_birdcage_port_tags import LEG_COUNT  # noqa: E402
@@ -195,8 +195,10 @@ def _paraview_fields(msh, e_complex, omega):
     XDMF cannot carry N1curl and the writers take Lagrange interpolants only
     (`EX-14`/`EX-17`), so the phasor is interpolated before it is split. ``B``
     comes from Faraday's law, ``B = ∇×E/(−jω)``, on DG0 — the natural home of a
-    curl of an N1curl field. Lifted unchanged from `EX-32`, which is the point:
-    the picture is the same, only the frequency moved.
+    curl of an N1curl field, through
+    :func:`~fem_em_solver.post.magnetic_flux_density_from_e` (`WF-6` step 1
+    lifted the private copy into ``post/``). Lifted unchanged from `EX-32`,
+    which is the point: the picture is the same, only the frequency moved.
     """
     v_cg = fem.functionspace(msh, ("Lagrange", 1, (3,)))
     e_cg = fem.Function(v_cg, name="E_phasor")
@@ -213,13 +215,7 @@ def _paraview_fields(msh, e_complex, omega):
     components = np.abs(e_cg.x.array.reshape(-1, 3))
     e_mag.x.array[:] = np.sqrt(np.sum(components * components, axis=1))
 
-    w_dg = fem.functionspace(msh, ("DG", 0, (3,)))
-    b_fn = fem.Function(w_dg, name="B_phasor")
-    b_fn.interpolate(
-        fem.Expression(
-            ufl.curl(e_complex) / (-1j * omega), w_dg.element.interpolation_points
-        )
-    )
+    b_fn = magnetic_flux_density_from_e(e_complex, omega)
     s_dg = fem.functionspace(msh, ("DG", 0))
     b_mag = fem.Function(s_dg, name="B_magnitude")
     b_components = np.abs(b_fn.x.array.reshape(-1, 3))

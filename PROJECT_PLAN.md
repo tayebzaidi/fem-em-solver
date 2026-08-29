@@ -6461,7 +6461,7 @@ it*, the phantom's cells/δ and cells/λ are what change).
 | `WF-3` | Quick-look phantom metrics report | ⚠️ | standard |
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
-| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry** | ⬜ | heavy (step 1 standard, complex) |
+| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists** | 🧪 | heavy (step 1 standard, complex) |
 | `WF-7` | SAR10g hotspot identification | ⬜ | heavy |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 
@@ -6469,7 +6469,7 @@ it*, the phantom's cells/δ and cells/λ are what change).
 > physically meaningless numbers. The plumbing is fine and becomes useful the
 > moment `TH-1` lands.
 
-**`WF-6` — B1+ field mapping and homogeneity** ⬜ *(step 1 scoped 2026-08-29
+**`WF-6` — B1+ field mapping and homogeneity** 🧪 *(step 1 scoped 2026-08-29
 10:30 review. §10 subgoal 4 said the first B1+ chunk "can be scoped by the
 daily review the day `PORT-9` closes" — that was 08-25, `PORT-11` followed
 08-26, and the 08-25 operator directive says "do not block subgoal 4 on
@@ -6544,6 +6544,47 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 >   ⬜/🧪, stop (a sheet-power bookkeeping error and a real solver defect
 >   look identical here and only a review separates them); (ii) above 5% is
 >   reported the same way — never widen either band in-slot.
+> * **Step 1 executed, 2026-08-29 13:30 implementer slot — built as written,
+>   gate (i) green, gate (ii) red; the step's own negative-result clause
+>   applied, so the chunk is 🧪 and `main` carries one deliberate red.**
+>   `src/fem_em_solver/post/faraday.py` landed with
+>   `magnetic_flux_density_from_e` and `b1_plus`, exported from `post/`, and
+>   both `examples/ports/04`,`05` now import the helper instead of carrying a
+>   private copy (each re-run green through the harness: `ports:4` 78 s Status 0
+>   `…183919Z_WF-6-step1-examples.log`, `ports:5` 128 s Status 0
+>   `…184042Z_WF-6-step1-examples-05.log`; the doc-reference census finds
+>   **no dead reference to either example's artifacts**,
+>   `…184303Z_WF-6-step1-docrefs.log`, its `dead=53 stale=2` being entirely
+>   examples this slot did not run).
+>   `tests/validation/test_birdcage_b1_plus_map.py` solves **four** single
+>   drives on `build_four_port_sweep`'s 116 085-cell fixture (5.6–6.0 s each)
+>   and reads:
+>   **Gate (i) ✅** — the three-way accounting closes to **9.795751e-03** of the
+>   supplied 6.856240413e-03 W at the P1 drive and **9.796209e-03** at P2,
+>   inside the pre-registered 1e-2, with shares **0.0008% phantom /
+>   6.5374% conductor / 92.4822% sheets** and the conductor-blind negative
+>   control missing by 7.517001e-02 (7.7× the band). The sheet term dominating
+>   at 92% is the honest reading of a 50 Ω termination on every port and is why
+>   1% rather than 1e-9 was the right first band.
+>   **Gate (ii) ❌ 8.6516% against 5%** on 51 tag-3 centroids
+>   (`r ≤ 0.02`, `|z| ≤ 0.02`); `|B₁⁺|` mean 2.077398e-08 T at `V_src = 1 V`.
+>   The 180° negative control **holds at 27.3161%** (3.2× the failing reading),
+>   so the estimator resolves the drive azimuth; the ungated diagnostics say
+>   the miss is *systematic* — pointwise deviation median 6.7395%, p90
+>   15.0357%, max 17.5662%, and the **second 90° instance (P4 at −90°) reads
+>   9.5808%**, alike to P2's. Both 90° instances agreeing rules out anything
+>   peculiar to P2 and points at DG0 cell-scatter on a mesh that is not itself
+>   C4-symmetric. Logs `…183450Z_WF-6-step1.log` (89 s, with
+>   `tests/environment`) and `…183728Z_WF-6-step1-diagnostic.log` (87 s).
+>   **No band was widened and no assert removed**, per the clause above.
+>   **Step 1b is a review's call**, with two candidates already separated in the
+>   known-issues entry: (a) the 5% band underestimated the DG0 scatter floor —
+>   the remedy is a better estimator (CG1-projected `B`, volume-weighted
+>   comparison, or a rotation-invariant sample set), not a looser band; (b) a
+>   real C4 asymmetry in the field, which the fixture's ≤ 0.5% `Z` class spreads
+>   bound an order of magnitude below this at the terminals. Steps 2 and 3 keep
+>   their prerequisite: step 1's shares are now on record, but the map itself is
+>   not gated until (ii) closes.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -8119,7 +8160,13 @@ uses the Edit tool and verifies `git status --porcelain`.
    table goes into the `PORT-12` known-issues entry and the slot stops; a
    non-monotone table or a moving reconstruction digit is *more*
    informative, not less.
-2. **`WF-6` step 1 — the first B₁⁺ map: 10 MHz on the loaded F-small
+2. **🧪 EXECUTED 2026-08-29, 13:30 slot — negative result, not a re-attempt:
+   gate (i) closed at 9.80e-3 (band 1e-2), gate (ii) read 8.65% against its
+   5% band with the 180° control holding at 27.3%. The `post/` helpers and
+   the module landed on `main`; the red is journaled in known-issues and the
+   §7 entry, and step 1b (a better covariance estimator vs. a real field
+   asymmetry) is a review's call — do NOT re-run this item as written.**
+   **`WF-6` step 1 — the first B₁⁺ map: 10 MHz on the loaded F-small
    birdcage from the `PORT-9` single-drive field, gated on a three-way
    power accounting and C4 covariance (standard, complex, `main`;
    independent; `src/` addition licensed — `post/faraday.py`; ruled this

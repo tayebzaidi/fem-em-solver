@@ -1,6 +1,7 @@
 """Post-processing and analysis."""
 
 from .consistency import compute_field_consistency_diagnostics
+from .faraday import b1_plus, magnetic_flux_density_from_e
 from .evaluation import evaluate_vector_field_parallel
 from .current_divergence import current_divergence_residual
 from .power_balance import poynting_power_balance
@@ -18,6 +19,8 @@ from .quicklook import (
 
 __all__ = [
     "compute_field_consistency_diagnostics",
+    "magnetic_flux_density_from_e",
+    "b1_plus",
     "evaluate_vector_field_parallel",
     "poynting_power_balance",
     "mean_sar",

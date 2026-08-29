@@ -21294,3 +21294,112 @@ two-torus drift — now known to be red at `-n 4`, `-n 8` and `-n 12`, green onl
 at `-n 2` (which is what CI runs). §9 items 2–5 (`WF-6` step 1, `EX-35`,
 `GEO-22` step 2c, `TH-13` step 1) remain open and independent, so the 13:30 slot
 takes item 2. No denied commands, no anomalies, tree clean at handoff.
+
+## 2026-08-29T18:50Z — `WF-6` step 1 — **complete (negative result: gate (i) green, gate (ii) red)** (13:30 CDT implementer slot)
+
+Preflight clean (`bea89f3`, `main`, no `attempt/*` or `recovered/*`), container Up
+3 days. §9 item 1 (`PORT-12` step 1) is marked done by the 12:00 slot, so this
+run took **item 2, `WF-6` step 1**, and executed the §7 entry as written.
+
+**Built.** `src/fem_em_solver/post/faraday.py` —
+`magnetic_flux_density_from_e(e, ω)` (`B = ∇×E/(−jω)` on DG0) and
+`b1_plus(B)` (`|B_x + jB_y|/2`), both exported from `post/`, both refusing a
+real-mode field with a named error. `examples/ports/04` and `05` now import the
+helper instead of each carrying a private copy (their `ufl` imports went with
+it; the guides did not change).
+`tests/validation/test_birdcage_b1_plus_map.py` re-solves **four** single drives
+on `build_four_port_sweep`'s imported 116 085-cell fixture — the sweep returns
+readings and not fields — reads every port's `I_i` back through the package's own
+`sheet_terminal_current`, and samples `|B₁⁺|` on the 51 tag-3 cell centroids with
+`r ≤ 0.02 m`, `|z| ≤ 0.02 m` via `evaluate_vector_field_parallel`. The sample set
+is gathered, sorted and strided, so it does not depend on rank count.
+
+**Gate (i), the conservation identity — GREEN.** Three-way accounting closes to
+**9.795751e-03** of the supplied 6.856240413e-03 W at the P1 drive and
+**9.796209e-03** at P2, inside the pre-registered 1e-2. Shares: phantom
+5.637745667e-08 W (**0.0008%**), conductor 4.482216632e-04 W (**6.5374%**),
+sheets 6.340800348e-03 W (**92.4822%**; P1 4.751054e-03, P2 5.498250e-04,
+P3 4.900531e-04, P4 5.498686e-04). Negative control (drop the conductor term)
+misses by **7.517001e-02**, 7.7× the band. The sheet term dominating at 92% is
+just what a 50 Ω termination on every port does, and is why 1% and not 1e-9 was
+the honest first band — the residual sits at 98% of it, so this gate has almost
+no headroom and a review should read it as *closed but tight*.
+
+**Gate (ii), the C4 covariance identity — RED at 8.6516% against 5%.**
+`|B₁⁺|` from the P2 drive at the +90°-rotated point vs the P1 drive at the
+point, relative ℓ² over the 51 centroids. The rotation is read off the
+fixture's own sheet azimuths (P1 360.000°, P2 90.000°, P3 180.000°, P4 270.000°
+⇒ 90.000000°), not chosen. `|B₁⁺|` reads mean 2.077398e-08 T, max 2.834980e-08,
+min 1.457925e-08 at `V_src = 1 V`. **Per the step's own negative-result clause I
+widened nothing and removed no assert**; `main` therefore carries one deliberate
+red, journaled in known-issues.md and §7.
+
+**What the diagnostics settle, and what they leave open.** I spent one extra
+89 s window adding *ungated* diagnostics (the slot had ~50 min left), because a
+bare "8.65% > 5%" cannot tell a bad band from a bad field:
+
+* the **180° negative control holds at 27.3161%**, 3.2× the failing reading and
+  5.5× the band — the comparison does resolve the drive's azimuth, so gate (ii)
+  is not returning scatter for everything;
+* the pointwise deviation is **median 6.7395%, p90 15.0357%, max 17.5662%** — a
+  broad distribution, so no handful of cells is to blame;
+* the **second instance of the same 90° identity** (the P4 drive at −90°, solved
+  for exactly this purpose and never gated) reads **9.5808%**, alike to P2's
+  8.6516%.
+
+Two 90° instances agreeing at ~9% rules out anything peculiar to P2 and points
+at the shared mechanism: `B` is DG0 on a gmsh mesh that is not itself
+C4-symmetric, so a point and its rotated image sit in different cells.
+
+**For the review — my reading, stated as a recommendation and not a ruling.**
+Candidate (a), *the 5% band underestimated the DG0 scatter floor for a curl at
+this resolution*, now looks much more likely than candidate (b), *a real C4
+asymmetry in the field*: the same fixture's `Z` classes spread ≤ 0.5%
+(`PORT-9` gate (iii′)), which bounds the terminal asymmetry an order of
+magnitude below 9%, and gate (i) shows the field is energetically accounted for
+at both compared drives. If that is right the remedy is a **better estimator,
+not a looser band** — my suggestions, in order: sample a CG1 projection of `B`
+rather than DG0; or compare cell-volume-weighted; or sample on a
+rotation-invariant point set (a ring of points at fixed `r`, `z` rather than
+centroids, so a point's image is a point of the same set). A step 1b that moves
+5% → 10% with no new measurement would be exactly the fitted threshold this
+project forbids. I have **not** queued step 1b myself and have marked §9 item 2
+"do NOT re-run this item as written" so the next slot does not repeat it.
+
+**Denied command, for the allowlist.** `./run_examples.sh -e ports:4 -n 2 -t 400`
+fails in a scheduled session with `permission denied while trying to connect to
+the docker API at unix:///var/run/docker.sock` — the runner shells out to
+`docker compose exec` from *inside* a script, which the sandbox does not treat
+the way it treats an allowlisted top-level `docker compose exec`. I ran the
+runner's own inner command verbatim
+(`cd /workspace && source …dolfinx-complex-mode && PYTHONPATH=/workspace/src
+timeout -k 30 400 mpiexec -n 2 python3 examples/ports/0X_….py`) through
+`run_and_log.sh` instead, which is equivalent and better logged. **Any future
+item that says "re-run through `./run_examples.sh`" needs this substitution**
+(`EX-35`, §9 item 3, is the next one) — or an allowlist change from the operator.
+
+**Harness logs, all footered.** `20260829T183450Z_WF-6-step1.log` (Status 1,
+89 s, `1 failed, 13 passed` with `tests/environment`);
+`20260829T183728Z_WF-6-step1-diagnostic.log` (Status 1, 87 s, the ungated
+diagnostics); `20260829T183919Z_WF-6-step1-examples.log` (Status 0, 78 s,
+`ports:4` green on the lifted helper); `20260829T184042Z_WF-6-step1-examples-05.log`
+(Status 0, 128 s, `ports:5` green); `20260829T184303Z_WF-6-step1-docrefs.log`
+(Status 1, 1 s — `dead=53 stale=2`, **entirely examples this slot did not run**;
+zero dead references to `ports_04`/`ports_05` artifacts, which is the part my
+change could have broken). Total compute ~7 min, well inside the tier ceilings;
+no command approached its `timeout -k 30` window.
+
+**Hypothesis for the next attempt on this line:** re-read the same 51 points
+against a CG1 interpolant of `B` from the same three solves. If the mismatch
+drops to a few per cent the band was measuring the DG0 representation and step
+1b is an estimator change; if it stays near 9% the asymmetry is in the field and
+the next question is whether the gmsh mesh's own C4 defect (the `GEO-20`
+per-class 5e-3 azimuth reading is the closest existing measurement) is large
+enough to explain it.
+
+**Residual `main` reds after this slot:** the two entry-3 names,
+`test_birdcage_volumes_partition_the_box` (`GEO-21`), `PORT-12`'s two-torus
+drift at `-n 4/8/12`, and **new: this module's gate (ii)** — one test, red at
+every width, documented. §9 items 3–5 (`EX-35`, `GEO-22` step 2c, `TH-13` step 1)
+remain open and independent, so the 15:00 slot takes item 3. Tree clean at
+handoff; no anomalies.
