@@ -20460,3 +20460,84 @@ price on 0.11, and `box_truncation`'s predicted eleventh red still sits behind
 a fixture that needs shrinking, not re-selecting — a `MAT-6` pricing question,
 as finding 36 said.
 
+
+---
+
+## 2026-08-29T00:35Z — `GEO-23` step 2c (scheduled implementer, 19:30 local slot)
+
+**Outcome: complete. Step 2c ✅ ⇒ `GEO-23` returns to ✅.** Nine footered
+windows, **44 s** recorded elapsed, no exit 124, `src/` untouched. §9 item 1,
+taken as written (first not-done, not-blocked item).
+
+**What was tried.** The 18:00 review's audit demoted `GEO-23` ✅ → 🧪 because
+step 2b's cell-count anchor was a `print` compared by a human reader against a
+comment. This step turns it into a gate. At each of the three step-2b call
+sites — `tests/solver/test_boundary_condition_selection.py:26`,
+`tests/materials/test_phantom_material_model.py:110`,
+`tests/post/test_phantom_field_metrics.py:35` — a module constant
+`N_CELLS_REF` now carries the step-1 `-n 1` ladder value (1213 / 5464 / 5464),
+version-tagged in-comment with the note that the 0.7.2-era sizing no longer
+meshes at all, and one assertion reads
+`abs(n_global / N_CELLS_REF - 1) <= 0.01`.
+
+**One deviation from the §7 entry's wording, deliberate and worth the next
+audit's attention.** The `GEO-23` §7 step-2c sketch says the count should be
+"`allreduce`d before the assert"; §9 item 1 says the opposite — use
+`mesh.topology.index_map(3).size_global` and do *not* `allreduce` a
+`size_local` sum on top of it. §9 is right and I followed it: `size_global` is
+already identical on every rank, so step 2b's
+`comm.allreduce(size_local, op=SUM)` was **removed**, not kept underneath the
+new gate. Had it been kept, the asserted quantity would still have been
+correct (the sum of `size_local` is `size_global`), but wrapping `size_global`
+in an `allreduce` — the literal reading of the §7 sentence — would have read
+`comm.size * n` and failed at `-n 2` for a reason that has nothing to do with
+meshing. The measurement below is the evidence that the chosen form is
+rank-width-independent: identical digits at `-n 1` and `-n 2`.
+
+**Measured numbers — six gate windows, all Status 0, every count exact.**
+
+| module | width | build | result | printed count | vs `N_CELLS_REF` | s |
+| --- | --- | --- | --- | --- | --- | --- |
+| `test_boundary_condition_selection.py` | `-n 1` | real | `3 passed, 1 skipped` | **1213** | 0.00% | 3 |
+| `test_boundary_condition_selection.py` | `-n 2` | real | `3 passed, 1 skipped` (both streams) | **1213** | 0.00% | 3 |
+| `test_phantom_material_model.py` | `-n 1` | complex | `4 passed` | **5464** | 0.00% | 3 |
+| `test_phantom_material_model.py` | `-n 2` | complex | `4 passed` (both streams) | **5464** | 0.00% | 4 |
+| `test_phantom_field_metrics.py` | `-n 1` | complex | `2 passed` | **5464** | 0.00% | 3 |
+| `test_phantom_field_metrics.py` | `-n 2` | complex | `2 passed` (both streams) | **5464** | 0.00% | 3 |
+
+So the ±1% band is met with three orders of magnitude of margin, at both
+widths, in both builds — which is the *stability* claim step 2b asserted in
+prose and could not gate.
+
+**Negative control executed, footered, and restored.** `N_CELLS_REF`
+1213 → 1300 (7.2% off) in `test_boundary_condition_selection.py`, run at
+`-n 2` real: `1 failed, 2 passed, 1 skipped`, **Status 1**, 2 s, with
+`AssertionError: cylindrical_domain(resolution=0.032) meshed 1213 cells,
+outside +/-1% of the GEO-23 step 1 ladder reference 1300` on **both** rank
+streams — so the gate is load-bearing and fires rank-symmetrically, not on
+rank 0 only. The modules' pre-existing assertions stayed green in that same
+run (2 passed), confirming the new assert is the only thing the wrong constant
+moved. Constant restored and re-run: `3 passed, 1 skipped`, Status 0, 2 s.
+
+**Controls and hygiene.** Complex `tests/environment` gate `11 passed` (21 s)
+before the first complex window. Finding 27's FFCx 0-byte stub sweep
+(`find /root/.cache/fenics -name '*.c' -size 0`) run before window 1 — clean,
+and zero stray `python3`; no exit 124 occurred, so no second sweep was owed.
+`git diff -- src/` empty. The `GEO-21` residual
+(`test_birdcage_volumes_partition_the_box`) was not touched and is not this
+chunk's.
+
+**Harness logs** (all `docs/testing/logs/`, `20260829T00…Z_GEO-23-step2c-…`):
+`…3115Z_…-bcsel-n1` (0/3 s), `…3124Z_…-bcsel-n2` (0/3 s),
+`…3132Z_…-env-complex` (0/21 s), `…3200Z_…-phantommaterial-n1` (0/3 s),
+`…3208Z_…-phantommaterial-n2` (0/4 s), `…3217Z_…-phantommetrics-n1` (0/3 s),
+`…3226Z_…-phantommetrics-n2` (0/3 s),
+`…3240Z_…-negcontrol-bcsel-n2` (**1**/2 s, the negative control),
+`…3253Z_…-bcsel-restored-n2` (0/2 s). Nine windows, 44 s.
+
+**Hypothesis for the next attempt.** `GEO-23` is closed on all three steps and
+nothing is owed on it. The queue's serial link is untouched by this slot:
+items 2 and 3 (`GEO-24` step 1a / 1b) remain independent and are the working
+front, and item 4 still depends on item 2's table landing in the `GEO-24`
+entry. Nothing this slot learned changes their sizing — the modules here are
+seconds-scale and share no fixture with the birdcage-sheet family.

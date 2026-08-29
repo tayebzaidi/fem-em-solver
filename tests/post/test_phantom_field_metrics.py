@@ -19,6 +19,13 @@ from fem_em_solver.post.phantom_fields import _evaluate_on_cells
 
 from tests.complex_mode import complex_only
 
+# GEO-23 step 2c (2026-08-28): the global cell count step 2b only printed,
+# now asserted.  Reference is step 1's -n 1 ladder on this generator, measured
+# on the dolfinx 0.11 image; the 0.7.2-era sizing (resolution=0.03) no longer
+# meshes at all, so there is no older count to compare against.  Step 2b
+# reproduced 5464 exactly (0.00%) at -n 1 and -n 2.
+N_CELLS_REF = 5464
+
 
 @complex_only
 def test_phantom_field_metrics_and_exports_are_finite():
@@ -40,11 +47,15 @@ def test_phantom_field_metrics_and_exports_are_finite():
         resolution=0.024,
         comm=comm,
     )
-    _ncells = comm.allreduce(
-        mesh.topology.index_map(mesh.topology.dim).size_local, op=MPI.SUM
-    )
+    # size_global is already a global quantity on every rank — do not sum
+    # size_local on top of it.
+    n_global = mesh.topology.index_map(mesh.topology.dim).size_global
     if comm.rank == 0:
-        print(f"GEO-23 step 2b: coil_phantom_domain(resolution=0.024) -> {_ncells} cells")
+        print(f"GEO-23 step 2b: coil_phantom_domain(resolution=0.024) -> {n_global} cells")
+    assert abs(n_global / N_CELLS_REF - 1) <= 0.01, (
+        f"coil_phantom_domain(resolution=0.024) meshed {n_global} cells, "
+        f"outside +/-1% of the GEO-23 step 1 ladder reference {N_CELLS_REF}"
+    )
 
     background = HomogeneousMaterial(sigma=0.0, epsilon_r=1.0, mu_r=1.0)
     phantom = GelledSalinePhantomMaterial(

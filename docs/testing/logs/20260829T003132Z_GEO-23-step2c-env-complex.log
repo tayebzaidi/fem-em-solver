@@ -1,0 +1,115 @@
+# Test Run
+- Chunk: GEO-23-step2c-env-complex
+- Commit: d2171c60600129eb9a2c49fd8770011c03d3d876
+- Time (UTC): 2026-08-29 00:31:33
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 60 mpiexec -n 1 python3 -m pytest tests/environment -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 28 19:31 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 60 mpiexec -n 1 python3 -m pytest tests/environment -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 11 items
+
+tests/environment/test_complex_mode.py::test_scalar_type_matches_active_dolfinx_build PASSED [  9%]
+tests/environment/test_complex_mode.py::test_complex_constant_assembles_to_closed_form PASSED [ 18%]
+tests/environment/test_complex_mode.py::test_inner_conjugates_second_argument_but_dot_does_not PASSED [ 27%]
+tests/environment/test_complex_mode.py::test_complex_weighted_n1curl_mass_matrix_scales_exactly PASSED [ 36%]
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites PASSED [ 45%]
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations PASSED [ 54%]
+tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged PASSED [ 63%]
+tests/environment/test_dolfinx_version.py::test_adopted_dolfinx_version_is_exact PASSED [ 72%]
+tests/environment/test_dolfinx_version.py::test_resolved_dolfinx_path_matches_mode_and_interpreter PASSED [ 81%]
+tests/environment/test_dolfinx_version.py::test_h5py_built_against_the_image_hdf5 PASSED [ 90%]
+tests/environment/test_dolfinx_version.py::test_complex_build_is_complex128 PASSED [100%]
+
+=============================== warnings summary ===============================
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d) — the 4x4 on the gapped birdcage at 50 Ohm.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (c) — the first port solve on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+    """**Leg (c)'s gate.**  ``|Z₂₁ − Z₄₁|/|Z₂₁| ≤ 0.5%``, with ``Z₃₁`` apart.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+    """`PORT-9` step 3 leg (d0) — the termination probe on the gapped birdcage.
+
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_no_unmigrated_call_sites
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /workspace/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+    """**Negative control (1).**  Z_p = 1e6 Ω reproduces leg (c)'s ``I₁``.
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-is145ekl/tests/validation/test_port_birdcage_four_port.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-is145ekl/tests/validation/test_port_birdcage_lumped_column.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-is145ekl/tests/validation/test_port_birdcage_lumped_column.py:458: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-is145ekl/tests/validation/test_port_birdcage_termination_probe.py:1: SyntaxWarning: invalid escape sequence '\*'
+
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+tests/environment/test_dolfinx_api_migration.py::test_negative_control_detects_reverted_migrations
+  /tmp/ops26-negctl-is145ekl/tests/validation/test_port_birdcage_termination_probe.py:432: SyntaxWarning: invalid escape sequence '\*'
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 11 passed, 30 warnings in 19.87s =======================
+
+## Exit
+- Status: 0
+- Elapsed (s): 21
