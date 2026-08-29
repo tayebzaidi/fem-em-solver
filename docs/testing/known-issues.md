@@ -4852,6 +4852,15 @@ The tests are **not on `main`**: they are parked on
 > *any* interior material interface on this fixture inherits it. **Step 2a's
 > gate must include this reading** — the plumb should return 255 facets /
 > 0.979885 at `-n 12`, and if it does not, that is a finding.
+> **⚠️ The 255 / 0.979885 in this paragraph is DEFECTIVE (annotated
+> 2026-08-29, step 2a′): it is one facet short. `-n 1` on `main`, no plumb,
+> reads 256 / 0.984183 (`…050535Z_…-terminals-n1-main.log`) — the serial
+> truth, which needs no ghost layer — so step 1a's `-n 2` reading inherited
+> the same `GhostMode.none` gap it was meant to be the reference for. The
+> post-plumb reading is 256 / 0.984183 at `-n 1`, `-n 2` and `-n 12` alike.
+> No test carried the 255 (the band is `[0.95, 1.0]`), so nothing in
+> `tests/` moved. Ruled a defect repair, not a re-baseline, by the
+> 2026-08-29 03:00 review.**
 >
 > **Negative control as pre-stated, both widths, digit for digit:** the
 > terminal ratios and port-volume identities — neither of which routes through
@@ -5057,6 +5066,41 @@ The tests are **not on `main`**: they are parked on
 > (`PORT-12`, below) so this entry can retire without losing it; `GEO-20`
 > step 2 is re-run as §9 item 4 after the plumb lands. No band, tolerance
 > or record in `tests/` moves under this ruling.
+>
+> **Step 2a′ ✅ 2026-08-29, 04:30 slot — the plumb is LANDED on `main` and
+> the defective digit is disposed of.** `e1dede8` cherry-picked onto
+> `31a4e0b` (`470f410`; `git diff HEAD~1 -- src/` is the one
+> `io/mesh.py:3356` kwarg + comment hunk, working tree clean after). Re-read
+> on the landed tree in six windows / **246 s** of container time:
+> `test_birdcage_port_terminals` at `-n 1` / `-n 2` / `-n 12`
+> (`…093031Z`, `…093103Z`, `…093130Z`, Status 0, 23 / 21 / 22 s) and
+> `test_birdcage_ring_gaps` at `-n 2` / `-n 12` (`…093201Z`, `…093326Z`,
+> Status 0, 75 s each), all prefixed `GEO-24-step2aP-`.
+>
+> **Every anchor met, digit for digit.** Phantom↔air positive control
+> **256 facets / 2.040655e-02 m² / 0.984183 at all three widths** on
+> **98 666** cells — the serial truth now reproduced in parallel, which is
+> the repair. `ring_gaps` port P8 at `-n 12`: **176 air facets / closure
+> 1.000000000000** (was 175 / 0.990103697427) on **128 111** cells, with all
+> 12 ports' `volume/analytic` 1.000000000000 and all 8 ring sheets
+> `meshed/analytic` 1.000000000000; the ring-gapped rung is **110 786**
+> cells and Pappus reads 1.000000000000 gapped and uncut. Every other
+> printed digit is identical to the step-2a table: leg terminals
+> 0.988615826 / 0.988615832 / 0.988615854 / 0.988615858, ring terminals
+> 0.974454791 / 0.974454832, the four leg port boxes air 24 facets /
+> 5.200000e-04 m² / closure 1.000000000000 / conductor 0, and the kwarg-off
+> control 98 666 cells / 0.966977. `-n 2` and `-n 12` agree everywhere.
+>
+> **Negative control, pre-stated: green and unmoved.**
+> `test_two_torus_port_sheet` + `test_cylindrical_domain` `4 passed`,
+> Status 0, 30 s, `GEO-16` control at **79 070** cells with tags
+> `[1, 2, 3, 101, 102] / [1, 201, 202]` (`…093452Z_…-controls-n2.log`). No
+> cell count moved anywhere, so the landed commit is the one that was
+> measured. The `attempt/GEO-24-step2a-20260829T052300Z` branch is deleted.
+>
+> **This entry stays open**: step 2b (the validation family, §9 item 2)
+> retires it. Nothing loosened, no band moved, no record in `tests/`
+> touched.
 
 ### `PORT-12` — the two-torus gap-route reproduction record drifts with rank width on a fixture that already has the `shared_facet` ghost layer (found 2026-08-29 by `GEO-24` step 1b)
 

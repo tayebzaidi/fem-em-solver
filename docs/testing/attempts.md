@@ -20829,3 +20829,67 @@ step 1a's table treated `-n 2` as the reference width throughout, and this slot
 shows `-n 2` can be short on an interface too, so any other "before" digit taken
 at `-n 2` on this fixture may carry the same one-facet deficit; `-n 1` is the
 cheap discriminator and costs ~25 s per module.
+
+---
+
+## 2026-08-29T09:36Z — `GEO-24` step 2a′ — **complete**
+
+**Slot.** 04:30 CDT scheduled implementer run. Preflight: tree clean at
+`31a4e0b`, container Up (2 days). §9 On-deck item 1 taken as written, no
+fallback.
+
+**What was done.** `git cherry-pick e1dede8` (the parked
+`attempt/GEO-24-step2a-20260829T052300Z` commit) landed as `470f410` on `main`;
+`git diff HEAD~1 -- src/` is the single `io/mesh.py:3356`
+`partitioner=create_cell_partitioner(GhostMode.shared_facet, 2)` kwarg + its
+comment, nothing else, and `git status --porcelain` was empty after. Then the
+five pre-stated re-read windows plus the control window on the landed tree, one
+width per window, `-s`, `timeout -k 30 300` throughout — no test, band or record
+in `tests/` was touched at any point.
+
+**Measured — every pre-stated anchor met, digit for digit.**
+- Phantom↔air positive control, `test_birdcage_port_terminals`: **256 facets /
+  2.040655e-02 m² / meshed-analytic 0.984183** at `-n 1`, `-n 2` **and** `-n 12`,
+  on **98 666** cells at all three widths. That is the repair: the serial truth
+  (which needs no ghost layer) now reproduces in parallel. Four port boxes exact
+  at every width — air 24 facets / 5.200000e-04 m² / closure 1.000000000000 /
+  conductor 0.
+- `test_birdcage_ring_gaps` port **P8 at `-n 12`: 176 air facets / closure
+  1.000000000000**, previously 175 / 0.990103697427 — the second of the two step-1a
+  `-n 12` reds, now green. **128 111** cells on the leg+ring rung, **110 786** on
+  the ring-gapped rung, all 12 ports `volume/analytic` 1.000000000000, all 8 ring
+  sheets `meshed/analytic` 1.000000000000, Pappus 1.000000000000 gapped and uncut.
+- Every other printed digit identical to the step-2a table at both widths: leg
+  terminals 0.988615826 / 0.988615832 / 0.988615854 / 0.988615858, ring terminals
+  0.974454791 / 0.974454832, kwarg-off control 98 666 cells / 0.966977.
+- **Negative control (untouched fixtures):** `test_two_torus_port_sheet` +
+  `test_cylindrical_domain` `4 passed`, `GEO-16` control at **79 070** cells,
+  tags `[1, 2, 3, 101, 102] / [1, 201, 202]`. No cell count moved anywhere, which
+  is the item's stated proof that the landed commit is the measured patch.
+
+**Cost.** Six windows, **246 s** of container time, well inside the item's ~5 min
+estimate; the whole slot used ~15 min of its 60.
+
+**Logs** (all Status 0, `docs/testing/logs/`, prefix `GEO-24-step2aP-`):
+`20260829T093031Z_…-terminals-n1` (23 s), `…093103Z_…-terminals-n2` (21 s),
+`…093130Z_…-terminals-n12` (22 s), `…093201Z_…-ringgaps-n2` (75 s),
+`…093326Z_…-ringgaps-n12` (75 s), `…093452Z_…-controls-n2` (30 s).
+
+**Docs landed with the code.** Step 1a's `-n 2` **255 / 0.979885** annotated
+**defective** (one facet short; `-n 1` truth 256 / 0.984183) both inline in the
+known-issues paragraph that set it as step 2a's gate and in a new step-2a′ block;
+`GEO-24` §7 row carries the step 2a ✅ annotation and stays 🟡 on step 2b; §9
+item 1 marked done. `attempt/GEO-24-step2a-20260829T052300Z` deleted, its commit
+now being an ancestor of `main`. The known-issues entry is **not** retired — that
+is step 2b's, as ruled.
+
+**Hypothesis for the next attempt.** §9 item 2 (`GEO-24` step 2b) is now
+unblocked and its dependency check passes: `git log -1 --format=%s --
+src/fem_em_solver/io/mesh.py` is the `GEO-24` plumb commit. Expect it to be
+uneventful on the reconstruction digits — the mesh family just showed the plumb
+changes nothing at `-n 2` except the one interface it repairs, and cell counts
+were immovable across three widths here — so the risk sits entirely in the
+*solved* digits, where `PORT-12` has already shown this codebase can drift ~1e-4
+with rank width even with a ghost layer present. Budget the full ~12 min of
+complex-mode windows and read the two classes with the two different gates the
+item specifies.
