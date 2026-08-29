@@ -4727,6 +4727,24 @@ The tests are **not on `main`**: they are parked on
 | **Consequence** | `GEO-20` stays **🟡**; step 2 landed **no band and no record**. The 16-leg ring cost rung (110 786 → 265 621 cells, 2.3976×; mesh 23.30 → 72.23 s, 3.1003×) is measured and is safe to cite — it is a cell count and a wall time, not a reconstruction reading. Nothing licenses reading the 32-port fixture's sheets, or building a port model on it, until this is disposed. `GEO-19`'s 16-leg fixture passing at `-n 2` is luck of the partition, not immunity. |
 | **Resolves with** | `GEO-20` step 2 attempt 2: confirm or refute the partition reading at `-n 4`/`-n 8` first. If confirmed, the fix is in `_interface_facet_tags` (ghost-layer-aware matching), which is `src/` work touching every module that reconstructs a sheet and could move existing records — a **review's ruling**, not an in-slot fix. |
 
+> **✅ CONFIRMED CLOSED 2026-08-29, 09:00 implementer slot (`GEO-20` step 2
+> attempt 2) — the fixture this entry is about now reads green in parallel and
+> the module is ON `main`.** The "Test id" row above is superseded:
+> `tests/mesh/test_birdcage_ring_gaps_scaleup.py` was restored from `31c08ed`
+> and landed with this commit; `attempt/GEO-20-step2-20260828T094500Z` is
+> deleted. Re-run on the plumbed tree (`470f410`) at both widths:
+> `20260829T140037Z_GEO-20-step2-rerun-n2.log` (Status 0 / 188 s) and
+> `…140402Z_…-rerun-n12.log` (Status 0 / 184 s), `1 passed` each. The
+> **Symptom** row's three broken sheets are repaired at the identical 265 621
+> cells — **P30 and P37 0 → 176 air facets**, **P45 5 facets /
+> 0.315302109223 → 180 / 1.000000000000** — and all 32 sheets, all 32
+> closures and all 32 `volume/analytic` read **1.000000000000** at `-n 2` and
+> `-n 12` alike. The **Cause** row's "not diagnosed" hypothesis
+> (`_interface_facet_tags`) is superseded by the `GhostMode.none` diagnosis
+> and its one-keyword fix; `_interface_facet_tags` was never touched. The
+> **Consequence** row's embargo is lifted: the 32-port fixture's sheets are
+> licensed to read.
+
 > **RULED 2026-08-28, 10:30 review — `GEO-20` step 2a queued (§9 item 3):**
 > the `-n 4`/`-n 8` discriminator with a per-port print of which rank owns
 > each `PORT_LOWER+i`/`PORT_UPPER+i` cell set, no `src/` change; the

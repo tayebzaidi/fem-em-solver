@@ -21106,3 +21106,83 @@ follow-on and remains off the §9 queue — the previous slot's entry says the
 same and this slot did not touch it. Residual `main` reds unchanged: the two
 entry-3 names, `test_birdcage_volumes_partition_the_box` (`GEO-21`), and
 `PORT-12`'s `-n 12`-only two-torus drift.
+
+## 2026-08-29T14:10Z — `GEO-20` step 2 (attempt 2) — **complete** (09:00 CDT implementer slot)
+
+**Item:** §9 item 4 — the 32-port ring-gap module as a re-run on the plumbed
+tree, at `-n 2` and `-n 12`. Items 1–3 were marked done by earlier slots, so
+this was the first open item; no fallback used.
+
+**Preflight.** Tree clean at `1e23732`, container Up (2 days). Dependency check
+per the item: `git log -1 --format=%s -- src/fem_em_solver/io/mesh.py` returns
+the `GEO-24` step 2a plumb commit, so the plumb is on `main` and the re-run was
+licensed rather than skipped to item 5.
+
+**What was done.** `git checkout 31c08ed -- tests/mesh/test_birdcage_ring_gaps_scaleup.py`
+— the single file on `attempt/GEO-20-step2-20260828T094500Z`, +569 lines. It
+imported and ran unmodified: the birdcage generator's signature has not moved
+since 2026-08-28, which was the item's named stop condition. **No `src/` change
+in this slot.** Two windows, one width each, standard tier, real build, `-s`,
+`-k 30 570`:
+
+| window | log | status | elapsed |
+| --- | --- | --- | --- |
+| `-n 2` | `20260829T140037Z_GEO-20-step2-rerun-n2.log` | 0, `1 passed` | 188 s |
+| `-n 12` | `20260829T140402Z_GEO-20-step2-rerun-n12.log` | 0, `1 passed` | 184 s |
+
+**372 s of compute over two windows.**
+
+**Result — green at both widths; every pre-stated anchor met.** The 16-leg
+ring-gapped fixture meshes **265 621** cells with 48 ports (16 leg + 32 ring) at
+both widths, and the whole reconstruction identity family reads to the digit:
+
+- **32/32 ring sheets** meshed/analytic **1.000000000000** of `w²` (grepped: 32
+  port lines per log, **0** lines off the digit at either width);
+- **32/32 boundary closures 1.000000000000** against the 1e-9 gate;
+- **32/32 `volume/analytic` 1.000000000000** of `2·R·w²·tan α`;
+- terminals **0.974454791–0.974455668**, spread **2.572e-07** against the 1e-5
+  band — one class at 4 legs, four at 16, the `GEO-19`-ruled per-class reading:
+  intra **4.198e-08 / 4.498e-07 / 4.681e-07 / 8.997e-07** (band 1e-6), inter
+  **3.315e-07** (ceiling 5e-3);
+- `GEO-9` partition **1.000000000000**, air-box closure **1.000000000000**,
+  Pappus ring arcs **1.000000000000**, conductor **0.976465** of CAD, C32 sheet
+  spread 4.488e-16.
+
+**The plumb's prediction is confirmed.** Attempt 1's three reds at `-n 2` are
+repaired on the identical geometry: **P30 and P37 0 → 176 air facets**, **P45
+5 facets / 0.315302109223 → 180 / closure 1.000000000000**. Zero broken sheets
+at either width, as the `GhostMode.none` diagnosis predicted;
+`_interface_facet_tags` was never touched.
+
+**Negative controls reproduce digit for digit at both widths** (the item's test
+that the module is reading the same generator attempt 1 did): kwarg off at 16
+legs **307 296** cells (ratio 1.000000), 4-leg ring rung **110 786** cells
+(ratio 1.000000) with one azimuth class at intra 4.198e-08. **One digit moves
+anywhere:** the C16 sheet spread, **1.331e-15** at `-n 2` vs **1.210e-15** at
+`-n 12` — the 1e-15 roundoff floor, the identical pair `GEO-24` step 1a
+reported; reported, not a failure. Cost rung re-measures unchanged: 4 → 16 legs
+**110 786 → 265 621 cells (2.3976×)**, mesh 21.63 → 68.19 s (3.1529×) at `-n 2`,
+21.74 → 67.72 s at `-n 12` — `-n 12` costs the same wall clock, as measured
+repeatedly this interval.
+
+**Landed in one commit:** the module on `main`, `GEO-20` **🟡 → ✅** on the §7
+row plus a prose bullet, §9 item 4 marked done, the two harness logs and their
+`test-results.md` rows, and a confirmation block on the known-issues entry
+(which `GEO-24` step 2b had already retired — **nothing was re-opened and
+nothing further retired**, per the item's scope).
+`attempt/GEO-20-step2-20260828T094500Z` **deleted**, per its standing
+disposition ("delete it with the commit that lands or retires the module").
+Nothing loosened, no band moved, no record re-written.
+
+**For the review.** `GEO-20` closes the 32-port directive's item (b) and, with
+`GEO-19` and `GEO-24`, the mesh prerequisites for Phase 6's 32-port high-pass
+birdcage — the fixture's sheets are now licensed to read at any width, which is
+what a port model on it needs. The obvious next question is a *physics* one and
+is not this chunk's: a 32-port S-matrix on this fixture is a `PORT-*` chunk at a
+cost nobody has probed (the 4-leg 4×4 costs ~50 s per solve on 116 085 cells;
+this fixture is 265 621 cells with 32 drives, so a naive extrapolation is well
+past a single slot — cost-probe before commissioning). Residual `main` reds
+unchanged by this slot: the two entry-3 names,
+`test_birdcage_volumes_partition_the_box` (`GEO-21`), and `PORT-12`'s
+`-n 12`-only two-torus drift. §9 is now **drained except item 5**
+(`PORT-12` step 1, the spare) — the next slot takes it.
