@@ -1,0 +1,39 @@
+# Test Run
+- Chunk: WF-6-step1d-examples-05
+- Commit: cbfe60faf08f5ded2307a9ec91c8f73f5bf9904d
+- Time (UTC): 2026-08-30 17:05:52
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 400 mpiexec -n 2 python3 examples/ports/05_birdcage_four_port_larmor_sweep.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 30 12:05 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 400 mpiexec -n 2 python3 examples/ports/05_birdcage_four_port_larmor_sweep.py'\'''
+python3: can't open file '/workspace/examples/ports/05_birdcage_four_port_larmor_sweep.py': [Errno 2] No such file or directory
+python3: can't open file '/workspace/examples/ports/05_birdcage_four_port_larmor_sweep.py': [Errno 2] No such file or directory
+
+## Exit
+- Status: 2
+- Elapsed (s): 1

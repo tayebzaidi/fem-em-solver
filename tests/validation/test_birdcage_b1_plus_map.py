@@ -66,9 +66,6 @@ import time
 import dolfinx
 import numpy as np
 import pytest
-import ufl
-from dolfinx import fem
-from dolfinx.fem.petsc import LinearProblem
 from mpi4py import MPI
 
 from fem_em_solver.core import TimeHarmonicSolver
@@ -82,6 +79,7 @@ from fem_em_solver.post import (
     evaluate_vector_field_parallel,
     magnetic_flux_density_from_e,
     mean_sar,
+    project_to_cg1,
 )
 
 from tests.complex_mode import complex_only
@@ -102,12 +100,23 @@ from tests.validation.test_port_birdcage_lumped_column import (
 # first band and the measured residual is the record either way.
 POWER_BALANCE_BAND = 1.0e-2
 
-# **Gate (ii)**, pre-registered the same day: the C4 covariance mismatch of the
-# ``|B₁⁺|`` map.  A *discretisation* band — ``B`` is DG0 on a gmsh mesh that is
-# not itself C4-symmetric, so a sample point and its 90°-rotated image sit in
-# different cells and the ceiling is cell-to-cell scatter.  It is deliberately
-# an order of magnitude looser than the 0.5% ``ADJACENT_SPREAD_BAND`` the
-# terminal quantities meet, and is never to be widened in-slot.
+# **Gate (ii)**, pre-registered 2026-08-29 (10:30 review) and **re-registered on
+# the CG1-projected estimator by the 2026-08-30 weekly review** (`WF-6` step 1d):
+# the C4 covariance mismatch of the ``|B₁⁺|`` map, now read from the L²-projected
+# CG1 ``B`` (:func:`~fem_em_solver.post.project_to_cg1`) at all three angles.
+#
+# The band's *value* did not move — 5% is the number pre-registered before any
+# reading — but its provenance is now measured rather than guessed: CG1 reads
+# 2.1870 / 2.1146 / 1.8911% at +90° / −90° / 180° (step 1b,
+# `20260830T003238Z_WF-6-step1b.log`), i.e. 2.3× of headroom, p90 ≤ 3.47%.
+# It stays a *discretisation* band and is never to be widened in-slot.
+#
+# What was dropped, and why: the DG0 curl reads 8.6516 / 9.5808 / 8.5970% at the
+# same three angles, and step 1c showed a rotation-closed 96-point sample set
+# moves that by ≤ 1.28 pp — the miss is the DG0 cell-to-cell scatter itself on a
+# gmsh mesh that is not C4-symmetric, not the field.  Gating a piecewise-constant
+# curl on a non-symmetric mesh gates the mesh (the `GEO-19` step-C precedent), so
+# the DG0 column is printed and recorded below, never asserted.
 C4_COVARIANCE_BAND = 5.0e-2
 
 # The sample set for (ii): tag-3 cell centroids inside this cylinder, so that a
@@ -437,23 +446,74 @@ def test_power_accounting_closes_at_each_single_drive(b1_plus_map):
 
 
 @complex_only
-def test_b1_plus_map_is_c4_covariant_under_the_drive_rotation(b1_plus_map):
-    """**Gate (ii)** — the symmetry identity, with its 180° negative control."""
-    mismatch = b1_plus_map["covariance"]
-    assert mismatch <= C4_COVARIANCE_BAND, (
-        f"|B1+| from the P2 drive at the 90deg-rotated point disagrees with the P1 "
-        f"drive by {mismatch * 100:.4f}% in relative l2 over "
-        f"{b1_plus_map['n_valid']} phantom centroids, outside the pre-registered "
-        f"{C4_COVARIANCE_BAND * 100:.1f}% discretisation band"
+def test_b1_plus_map_is_c4_covariant_under_the_drive_rotation(
+    cg1_estimator_table, b1_plus_map
+):
+    """**Gate (ii)** — the symmetry identity, with its mis-rotated control.
+
+    Re-registered on the CG1-projected estimator by the 2026-08-30 weekly review
+    (`WF-6` step 1d).  Three angles are gated, not one: ``+90°`` (P2), ``−90°``
+    (P4) and ``180°`` (P3), each drive read at the correspondingly rotated image
+    of the P1 sample set.  The 180° reading is the one step 1 never had and the
+    sharpest of the three — a cell-scatter floor misses equally at 90° and 180°,
+    a C2-preserving C4-breaking field asymmetry does not.
+
+    This is a **symmetry identity only**.  Nothing about homogeneity, CV or the
+    absolute accuracy of ``|B₁⁺|`` follows from it closing.
+    """
+    for label, record in STEP1B_CG1_RECORDS.items():
+        reading = cg1_estimator_table["table"][label]["cg1"]
+
+        assert reading <= C4_COVARIANCE_BAND, (
+            f"|B1+| from the {label} drive image disagrees with the P1 map by "
+            f"{reading * 100:.4f}% in relative l2 over "
+            f"{cg1_estimator_table['n_valid']} phantom centroids under the CG1 "
+            f"estimator, outside the {C4_COVARIANCE_BAND * 100:.1f}% "
+            "discretisation band"
+        )
+
+        # A record reproduction, not a second gate: step 1b measured this
+        # estimator on this fixture, and a covariance reading that drifts off
+        # its recorded value means the field or the projection moved, which the
+        # band alone (2.3x of headroom) would not catch.
+        assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+            f"the CG1 {label} mismatch reads {reading * 100:.6f}%, not step 1b's "
+            f"recorded {record * 100:.4f}% (rtol {CG1_RECORD_RTOL:.0e}) — same "
+            "mesh, same points, same estimator, so something upstream moved"
+        )
+
+    # Negative control: the mis-rotated P3 (180deg from P1, read at the +90deg
+    # image) must stay outside the band under CG1 — an estimator that cannot
+    # tell the wrong drive from the right one carries no azimuthal information.
+    # Asserted at both estimators in
+    # `test_the_cg1_estimator_still_resolves_the_drive_azimuth`; repeated here
+    # so gate (ii) is falsifiable on its own.
+    control = cg1_estimator_table["table"]["P3@+90deg"]["cg1"]
+    assert control > C4_COVARIANCE_BAND, (
+        f"the P3 drive (180deg from P1) matches the 90deg-rotated map to "
+        f"{control * 100:.4f}% under CG1, inside the "
+        f"{C4_COVARIANCE_BAND * 100:.1f}% band — the covariance gate is then not "
+        "resolving the drive's azimuth at all"
     )
 
-    # Negative control (2): the opposite port is the 180 deg image, not the 90.
-    opposite = b1_plus_map["opposite"]
-    assert opposite > C4_COVARIANCE_BAND, (
-        f"the P3 drive (180deg from P1) matches the 90deg-rotated map to "
-        f"{opposite * 100:.4f}%, inside the {C4_COVARIANCE_BAND * 100:.1f}% band — "
-        "the covariance gate is then not resolving the drive's azimuth at all"
-    )
+    # The DG0 column, recorded and never gated (see C4_COVARIANCE_BAND's note):
+    # step 1 read 8.6516 / 9.5808 / 8.5970% at these three angles and step 1c
+    # showed a rotation-closed sample set moves that by <= 1.28 pp.  Its
+    # reproduction at rtol 1e-4 is asserted in
+    # `test_cg1_projection_reads_the_same_field_as_step_1` — a moved DG0 column
+    # means the projection changed the field, not the estimator.
+    if b1_plus_map["sweep"]["mesh"].comm.rank == 0:
+        print(
+            "\n[WF-6 step1d] gate (ii) on the CG1 estimator, "
+            + ", ".join(
+                f"{label} {cg1_estimator_table['table'][label]['cg1'] * 100:.4f}%"
+                f" (DG0 {cg1_estimator_table['table'][label]['dg0'] * 100:.4f}%)"
+                for label in STEP1B_CG1_RECORDS
+            )
+            + f"; band {C4_COVARIANCE_BAND * 100:.1f}%, control "
+            f"{control * 100:.4f}%",
+            flush=True,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -490,6 +550,19 @@ STEP1_DG0_C4_MISMATCH = 8.6516e-2
 STEP1_GATE_I_P1_RESIDUAL = 9.795751e-03
 RECORD_RTOL = 1.0e-4
 
+# Step 1b's CG1 column, the provenance of gate (ii)'s band since step 1d
+# (`20260830T003238Z_WF-6-step1b.log`): 2.1870 / 2.1146 / 1.8911% at the three
+# covariance angles, pointwise p90 3.3040 / 3.4706 / 2.8471%.  Gate (ii) asserts
+# both the 5% band and the reproduction of these records; the looser rtol here
+# than ``RECORD_RTOL`` is deliberate — these are ~2% figures read through a
+# Krylov solve, not the 1e-4-reproducible scalars of step 1.
+STEP1B_CG1_RECORDS = {
+    "P2@+90deg": 2.1870e-2,
+    "P4@-90deg": 2.1146e-2,
+    "P3@180deg": 1.8911e-2,
+}
+CG1_RECORD_RTOL = 1.0e-3
+
 # The verdict bands, pre-registered by the 2026-08-29 18:00 review.  Recorded,
 # never asserted: (a) CG1 ≤ 5% at all three angles ⇒ estimator floor;
 # (b) CG1 ≥ 7% at ±90° with 180° ≤ 5% ⇒ a C4-breaking field asymmetry;
@@ -498,34 +571,11 @@ VERDICT_RESOLVED_BAND = 5.0e-2
 VERDICT_ASYMMETRY_BAND = 7.0e-2
 
 
-def _project_to_cg1(b_dg0):
-    """L² projection of the DG0 vector phasor onto ``("Lagrange", 1, (3,))``.
-
-    A mass-matrix solve, not ``interpolate``: a DG0 field has no vertex value,
-    so interpolating it into CG1 picks whichever incident cell the interpolation
-    machinery visits last, which is neither the average nor reproducible.  The
-    mass matrix is Hermitian positive definite in the complex build, so CG with
-    Jacobi is the right solver; ``ksp_rtol`` is tightened well below any
-    difference this leg is trying to measure.
-    """
-    msh = b_dg0.function_space.mesh
-    space = fem.functionspace(msh, ("Lagrange", 1, (3,)))
-    trial, test = ufl.TrialFunction(space), ufl.TestFunction(space)
-    problem = LinearProblem(
-        ufl.inner(trial, test) * ufl.dx,
-        ufl.inner(b_dg0, test) * ufl.dx,
-        bcs=[],
-        petsc_options={
-            "ksp_type": "cg",
-            "pc_type": "jacobi",
-            "ksp_rtol": 1.0e-12,
-            "ksp_atol": 1.0e-30,
-        },
-        petsc_options_prefix="wf6_step1b_mass_",
-    )
-    projected = problem.solve()
-    projected.x.scatter_forward()
-    return projected
+# Step 1d moved the projector into the package as
+# ``fem_em_solver.post.project_to_cg1`` — it is the production estimator now,
+# not a fixture-local experiment, so gate (ii) and any future example read the
+# same code path.  The DG0 ``magnetic_flux_density_from_e`` is untouched and
+# stays the raw curl.
 
 
 def _read_b1_plus_cg1(projected, points):
@@ -568,7 +618,7 @@ def cg1_estimator_table(b1_plus_map):
         "P3@+90deg": ("P3", _rotate_z(points, delta)),
     }
     projections = {
-        pid: _project_to_cg1(
+        pid: project_to_cg1(
             magnetic_flux_density_from_e(solves[pid]["fields"].e_complex, solves[pid]["omega"])
         )
         for pid in ("P1", "P2", "P3", "P4")

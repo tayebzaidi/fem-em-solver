@@ -8,6 +8,13 @@ private copies `examples/ports/04` and `examples/ports/05` each carried).
 ``B₁⁺`` is the circularly polarised component that rotates *with* the nuclear
 precession — the one an MRI transmit coil is judged on.  In the peak-phasor
 convention the solver works in, it is ``|B_x + jB_y|/2``.
+
+The DG0 field is the *raw* curl and stays that way.  For anything that reads
+``B`` at points — a map, a gate, an example — go through
+:func:`project_to_cg1` first: the 2026-08-30 weekly review's `WF-6` ruling made
+the L²-projected CG1 field the production estimator, on the measurement that
+the DG0 cell scatter alone misses the C4 covariance identity by 8.6516 /
+9.5808 / 8.5970% where CG1 reads 2.1870 / 2.1146 / 1.8911% (steps 1b and 1c).
 """
 
 from __future__ import annotations
@@ -16,7 +23,7 @@ import numpy as np
 import ufl
 from dolfinx import fem
 
-__all__ = ["magnetic_flux_density_from_e", "b1_plus"]
+__all__ = ["magnetic_flux_density_from_e", "b1_plus", "project_to_cg1"]
 
 
 def _require_complex(function, what: str) -> None:
@@ -50,6 +57,51 @@ def magnetic_flux_density_from_e(e_complex, omega_rad_per_s, *, name: str = "B_p
     )
     b_fn.x.scatter_forward()
     return b_fn
+
+
+def project_to_cg1(b_dg0, *, name: str = "B_phasor_cg1", ksp_rtol: float = 1.0e-12):
+    """L² projection of the DG0 vector phasor onto ``("Lagrange", 1, (3,))``.
+
+    A mass-matrix solve, never ``interpolate``: a DG0 field has no vertex value,
+    so interpolating it into CG1 picks whichever incident cell the interpolation
+    machinery visits last, which is neither the cell average nor reproducible.
+    The mass matrix is Hermitian positive definite in the complex build, so CG
+    with Jacobi is the right solver; ``ksp_rtol`` defaults well below any
+    difference a covariance or homogeneity reading is trying to measure.
+
+    Landed by `WF-6` step 1d (2026-08-30) out of step 1b's fixture, where it was
+    the estimator that took the C4 covariance mismatch from ~9% to ~2%.  The
+    caller forms ``|B_x + jB_y|/2`` from the *evaluated* projection, not from a
+    projected scalar — ``|·|`` is not linear.
+    """
+    from dolfinx.fem.petsc import LinearProblem  # local: needs a PETSc build
+
+    _require_complex(b_dg0, "project_to_cg1")
+    if b_dg0.function_space.element.value_shape != (3,):
+        raise ValueError(
+            "project_to_cg1 wants the 3-vector B phasor, got value shape "
+            f"{b_dg0.function_space.element.value_shape}"
+        )
+
+    msh = b_dg0.function_space.mesh
+    space = fem.functionspace(msh, ("Lagrange", 1, (3,)))
+    trial, test = ufl.TrialFunction(space), ufl.TestFunction(space)
+    problem = LinearProblem(
+        ufl.inner(trial, test) * ufl.dx,
+        ufl.inner(b_dg0, test) * ufl.dx,
+        bcs=[],
+        petsc_options={
+            "ksp_type": "cg",
+            "pc_type": "jacobi",
+            "ksp_rtol": float(ksp_rtol),
+            "ksp_atol": 1.0e-30,
+        },
+        petsc_options_prefix="fem_em_b_cg1_mass_",
+    )
+    projected = problem.solve()
+    projected.name = name
+    projected.x.scatter_forward()
+    return projected
 
 
 def b1_plus(b_complex, *, name: str = "B1_plus"):

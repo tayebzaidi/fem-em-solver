@@ -4047,7 +4047,7 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 | `WF-3` | Quick-look phantom metrics report | ⚠️ | standard |
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
-| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved** | 🧪 | heavy (step 1 standard, complex) |
+| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved. Step 1d executed 2026-08-30 12:00 — the ruling landed in the code: `post.project_to_cg1` is the packaged production estimator and gate (ii) is the CG1 covariance identity at all three angles, **2.1870 / 2.1146 / 1.8911%** against the unmoved 5% band, controls holding (mis-rotated 23.2642%, DG0 column unmoved at 8.6516 / 9.5808 / 8.5970%). `19 passed` / Status 0 / 97 s; **step 1 is ✅ and the chunk is 🟡** — a symmetry identity only, no CV / homogeneity / absolute claim; steps 2–3 are a review's to scope** | 🟡 | heavy (step 1 standard, complex) |
 | `WF-7` | SAR10g hotspot identification | ⬜ | heavy |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 
@@ -4055,7 +4055,8 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 > physically meaningless numbers. The plumbing is fine and becomes useful the
 > moment `TH-1` lands.
 
-**`WF-6` — B1+ field mapping and homogeneity** 🧪 *(step 1 scoped 2026-08-29
+**`WF-6` — B1+ field mapping and homogeneity** 🟡 *(step 1 ✅ 2026-08-30 with
+step 1d; steps 2–3 unscoped. Step 1 scoped 2026-08-29
 10:30 review. §10 subgoal 4 said the first B1+ chunk "can be scoped by the
 daily review the day `PORT-9` closes" — that was 08-25, `PORT-11` followed
 08-26, and the 08-25 operator directive says "do not block subgoal 4 on
@@ -4375,6 +4376,41 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 >     reproducing 1b's table at rtol 1e-3 is a finding about the projection
 >     path — record the new column in the known-issues entry, keep the old
 >     DG0 gate red, stop; never widen the 5%.
+>   * **Step 1d executed, 2026-08-30 12:00 implementer slot — ✅ as scoped.
+>     Gate (ii) closes on the CG1 estimator, `main`'s deliberate red retires,
+>     and `WF-6` is 🟡 with step 1 ✅.** Built as written. (a)
+>     `post/faraday.py` gained `project_to_cg1(b_dg0)` — step 1b's Hermitian
+>     mass-matrix `LinearProblem` (CG/Jacobi, `ksp_rtol` 1e-12, local PETSc
+>     import per the `current_divergence` precedent), exported from
+>     `post/__init__.py`, with the DG0 `magnetic_flux_density_from_e` kept
+>     untouched as the raw curl; the test module's fixture-local
+>     `_project_to_cg1` is gone and the fixture calls the package function.
+>     (b) `test_b1_plus_map_is_c4_covariant_under_the_drive_rotation` is now
+>     the CG1 covariance identity at **all three** angles against the
+>     **unchanged** `C4_COVARIANCE_BAND = 5e-2`, each angle *also* asserted
+>     against step 1b's record at rtol 1e-3 (a drifting reading would slip
+>     through 2.3× of headroom otherwise); the DG0 column is printed and cited
+>     in-comment, never gated.
+>     **Anchors, all green:** CG1 **2.1870 / 2.1146 / 1.8911%** at +90° /
+>     −90° / 180°, reproducing 1b exactly; gate (i)'s **9.795751e-03** at
+>     rtol 1e-4; mis-rotated control P3-at-+90° **23.2642%** under CG1,
+>     outside the band; `valid` 51/51 on every image. **Negative control:**
+>     the DG0 print still reads **8.6516 / 9.5808 / 8.5970%** (asserted at
+>     rtol 1e-4) — the projection changed the estimator, not the field.
+>     Log `20260830T170242Z_WF-6-step1d.log`, **19 passed / Status 0 / 97 s**
+>     with `tests/environment`, complex, `-n 2`.
+>     **The `src/` change's owed re-runs, both green:** `ports:4` 76 s
+>     Status 0 (`20260830T170431Z_WF-6-step1d-examples.log`), `ports:5` 127 s
+>     Status 0 (`20260830T170559Z_WF-6-step1d-examples-05.log`) — the runner's
+>     docker-socket denial recurred and the §9 substitution was used for both.
+>     Doc-reference census `exit=1`, `dead=53 guide=0 stale=2`
+>     (`20260830T170816Z_WF-6-step1d-docrefs.log`): no `ports_04_*` or
+>     `ports_05_*` artifact among the dead, so these two examples' references
+>     are live and the 53 are `EX-36`'s, unchanged.
+>     **What this does and does not claim:** gate (ii) is a **symmetry
+>     identity** on one fixture at 10 MHz. No B₁⁺ homogeneity, CV or
+>     absolute-accuracy claim follows, and §2 is not moved by it. Steps 2–3
+>     stay serial on step 1 and are a review's to scope.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -5157,8 +5193,9 @@ for a drained queue — is **not** adopted: the drain instruction exists so a
 slot cannot invent work, and the fix belongs upstream.
 
 **Residual `main` reds at `-n 2`:** the two entry-3 names,
-`test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), `WF-6`
-gate (ii) at 8.6516% (retires with item 1), `TH-13` step 1's precondition
+`test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), ~~`WF-6`
+gate (ii) at 8.6516%~~ (**retired 2026-08-30 12:00 by item 1** — green at
+2.1870% under CG1), `TH-13` step 1's precondition
 at 1.952350e-02 (retires with item 3); at `-n > 2` only, the two-torus
 `PORT-12` drift (retires with item 2). §2 unchanged — a B₁⁺ number exists
 but is not gated until item 1 lands.
@@ -5196,7 +5233,11 @@ fem-em-solver bash -lc 'cd /workspace && source
 -k 30 <T> mpiexec -n 2 python3 examples/<path>.py'`) and journal the
 denial; do not spend the slot on it.
 
-1. **`WF-6` step 1d — re-register gate (ii) on the CG1 estimator
+1. ✅ **DONE 2026-08-30 12:00 slot** — CG1 gate (ii) green at 2.1870 /
+   2.1146 / 1.8911% against the unmoved 5% band, `19 passed` / Status 0 /
+   97 s (`20260830T170242Z`); `WF-6` 🟡 with step 1 ✅, known-issues entry
+   retired, the deliberate red gone from `main`.
+   ~~**`WF-6` step 1d — re-register gate (ii) on the CG1 estimator
    (standard, complex, `-n 2`, `main`; independent; ruled 02:15 weekly
    review, §7 bullet written this review).** Execute the §7 step-1d bullet
    as written: `post/faraday.py` gains `project_to_cg1` (the mass-matrix
@@ -5222,7 +5263,7 @@ denial; do not spend the slot on it.
    absolute claim; known-issues entry and the deliberate red retire.
    **Negative result:** CG1 not reproducing 1b's table is a finding about
    the projection path — record, keep the DG0 gate red, stop; never widen
-   the 5%.
+   the 5%.~~
 2. **`PORT-12` step 2 — width-qualify the record, bound the parallel
    drift (smoke, complex, `-n 2` + `-n 8`, `main`; independent; ruled
    02:15 weekly review, §7 paragraph written this review).** Execute the

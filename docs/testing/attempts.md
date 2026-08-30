@@ -16167,3 +16167,79 @@ issued**.
   cheap fallback** — a drained-queue slot re-runs one *named* known-red gate for
   a fresh number instead of journaling a pure stop — so a review outage costs
   measurements rather than the whole day.
+
+## 2026-08-30T17:00Z — `WF-6` step 1d — outcome: `complete` (12:00 CDT implementer slot)
+
+- **Preflight.** Tree clean, container Up (4 days). §9 On deck's first open item
+  was item 1, `WF-6` step 1d — taken as written; the queue had been refilled by
+  the 10:30 review, so this is the first slot since 2026-08-29 22:30 to run a
+  chunk at all.
+- **What was built.** (a) Step 1b's fixture-local projector moved into the
+  package as `fem_em_solver.post.project_to_cg1(b_dg0)` — the Hermitian
+  mass-matrix `LinearProblem` (CG/Jacobi, `ksp_rtol` 1e-12, `ksp_atol` 1e-30),
+  exported from `post/__init__.py`, PETSc imported locally inside the function
+  per the `post/current_divergence.py` precedent so `post/__init__` stays
+  importable without a PETSc build. `magnetic_flux_density_from_e` is untouched
+  and stays the raw DG0 curl. The test module's `_project_to_cg1` is deleted and
+  its `cg1_estimator_table` fixture calls the package function; the module's now
+  unused `ufl` / `fem` / `LinearProblem` imports went with it.
+  (b) `test_b1_plus_map_is_c4_covariant_under_the_drive_rotation` is now the CG1
+  covariance identity at **all three** angles (+90° P2, −90° P4, 180° P3) on the
+  51 centroids against the **unchanged** `C4_COVARIANCE_BAND = 5e-2`. The DG0
+  column is printed and cited in-comment with its records, never gated.
+- **One thing added beyond the letter of the item, and why.** Each angle is also
+  asserted against step 1b's recorded value at rtol 1e-3
+  (`STEP1B_CG1_RECORDS`). The item asked for that reproduction as an anchor; the
+  reason it is worth stating is that the band alone carries 2.3× of headroom, so
+  a real upstream drift in the field or the projection could move a reading from
+  2.19% to 4% and gate (ii) would still pass silently. The record assert is what
+  makes the gate sensitive to that; it is a reproduction of a measured number,
+  not a new or tightened band.
+- **Measured — every anchor green, both negative controls holding.**
+  CG1 **2.1870% / 2.1146% / 1.8911%** at +90° / −90° / 180°, reproducing step
+  1b exactly (rtol 1e-3); gate (i)'s P1 residual **9.795751e-03** at rtol 1e-4;
+  mis-rotated control P3-at-+90° **23.2642%** under CG1, asserted outside the
+  band; DG0 column unmoved at **8.6516 / 9.5808 / 8.5970%** (asserted at rtol
+  1e-4 — the check that the projection changed the estimator and not the field);
+  `valid` **51 of 51** on every rotated image.
+- **Logs.** `20260830T170242Z_WF-6-step1d.log` — **19 passed / Status 0 / 97 s**,
+  `-n 2`, complex build with `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment`
+  first, `timeout -k 30 400` (standard tier, estimate was 98 s). The `src/`
+  change's owed example re-runs, both green:
+  `20260830T170431Z_WF-6-step1d-examples.log` (`ports:4`, **76 s, Status 0**)
+  and `20260830T170559Z_WF-6-step1d-examples-05.log` (`ports:5`, **127 s,
+  Status 0**). Doc-reference census
+  `20260830T170816Z_WF-6-step1d-docrefs.log`: `RESULT: dead=53 guide=0 stale=2
+  stale_severity=report exit=1` — **no `ports_04_*` or `ports_05_*` artifact
+  among the 53**, so these two examples' references are live and the whole dead
+  census is `EX-36`'s, unchanged.
+- **The runner trap fired again, as §9 warns.** `./run_examples.sh -e ports:4
+  -n 2 -t 300` on the host died with `permission denied while trying to connect
+  to the docker API at unix:///var/run/docker.sock`; the §9 substitution (inner
+  command verbatim through `run_and_log.sh`) was used for both examples and
+  cost about a minute. That is now **two occurrences** (the first 2026-08-29
+  13:30) — no longer a one-off, and worth the review deciding whether the
+  substitution becomes the documented default for scheduled slots rather than a
+  fallback. One self-inflicted retry inside that: `ports:5` is
+  `05_birdcage_larmor_frequency_ladder.py`, not the
+  `05_birdcage_four_port_larmor_sweep.py` I guessed from the §9 prose (1 s,
+  Status 2, log `20260830T170552Z`).
+- **Scope held.** Gate (ii) is a **symmetry identity on one fixture at 10 MHz**.
+  No B₁⁺ homogeneity, CV or absolute-accuracy claim follows and §2 was not
+  touched. `WF-6` is **🟡 with step 1 ✅**; steps 2–3 stay serial and are a
+  review's to scope. No band was moved anywhere.
+- **Residual `main` reds after this slot.** The two entry-3 names,
+  `test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), `TH-13`
+  step 1's precondition at 1.952350e-02; at `-n > 2` only, the two-torus
+  `PORT-12` drift. **`WF-6` gate (ii) is off this list** — its known-issues
+  entry is marked ✅ RETIRED with the step-1d row appended, in this commit.
+- **Branch parked this slot:** none. **Denied commands:** none (the docker-socket
+  denial above is the container's, not the permission layer's).
+- **Next-attempt hypothesis.** Nothing is owed on step 1d. The next slot takes
+  §9 item 2 (`PORT-12` step 2) unchanged — it is independent of everything here.
+  For whoever scopes `WF-6` step 2: the projector is now a packaged, tested code
+  path, so a homogeneity/CV leg does not have to re-derive it, and the honest
+  open question is whether a **CV** claim needs a rotation-closed sample set
+  (step 1c's ring construction) rather than the 51 centroids — the covariance
+  identity tolerated the centroid set, a homogeneity statistic over an
+  arbitrarily-shaped sample may not.
