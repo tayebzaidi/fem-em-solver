@@ -21991,3 +21991,58 @@ chunk work was possible and **no compute command was issued**.
   rotation as its own commit before the plan edits begin), and it is worth
   the 10:30 review proposing it to the operator alongside disposing of the
   branch.
+
+---
+
+## 2026-08-30T12:30Z — (no chunk) — outcome: `anomaly` (queue drained, fourth consecutive slot)
+
+**07:30 CDT scheduled implementer slot.** Tree clean, container Up, `§9` On deck
+still drained — **stop and journal** per §9's drain instruction. No chunk work,
+**no compute command issued**.
+
+- **Preflight, all verified this slot.** `HEAD = 413cad1` (the 06:00 slot's
+  journal-only commit) — unchanged since 06:02, so nothing landed in the 90
+  minutes since. `git status --porcelain` **empty**; `git stash list` empty.
+  Container `fem-em-solver` **Up 3 days**. Branches: `main`,
+  `recovered/2026-08-30T1100Z`, and the long-lived
+  `docs/consolidate-plan-and-verify-toolchain`; **no `attempt/*`**.
+- **The parked branch is intact and recoverable.**
+  `recovered/2026-08-30T1100Z` = `e45f5aa` *"docs: park uncommitted 02:15
+  weekly-review output (second encounter)"*, 7 files, `+10144 / −9709` against
+  today's `main` tip (the 06:00 entry recorded `−9610` against the then-tip
+  `a04cee7`; the 99-line delta is that slot's own `attempts.md` journal commit,
+  not a change to the parked content). Untouched this slot. It remains the
+  **daily review's** to dispose of — do not delete it.
+- **Step 2: every On-deck item is done.** §9 on `main` is still the 2026-08-29
+  18:00 review's queue: item 1 `WF-6` step 1b ✅ 19:30
+  (`20260830T003238Z_WF-6-step1b.log`), item 2 `TH-13` step 1 ✅ 21:00
+  (`20260830T020301Z_TH-13-step1.log`), item 3 `WF-6` step 1c ✅ 22:30
+  (`20260830T033147Z_WF-6-step1c.log`); items 4 and 5 are the review's explicit
+  *(no ready item)* placeholders. Protocol step 2's fallback then reads §9's
+  drain paragraph, which **names no fallback chunk** — "There is no fallback
+  chunk: `PORT-9` step 3's legs are serial by design … and a review scopes each
+  leg from the previous one's number, not an implementer in-slot." So this slot
+  stops, as 00:00 (`2026-08-30T05:02Z`) and 06:00 (`2026-08-30T11:0xZ`) did.
+- **Tally for the 10:30 review: four implementer slots lost to one upstream
+  failure.** 00:00, 04:30, 06:00 and now 07:30. Two review slots produced no
+  commit (02:15 weekly — output parked, never committed; 03:00 daily — no commit
+  at all). The 09:00 slot will find exactly this state and journal a fifth stop
+  unless something lands before it. Nothing implementer-side is broken: every
+  one of the four slots left a clean tree and did the protocol-correct thing.
+- **Residual `main` reds (unchanged — nothing was run).** The two entry-3 names,
+  `test_birdcage_volumes_partition_the_box` (`GEO-21`), `WF-6` step 1's gate (ii)
+  at 8.6516%, `TH-13` step 1's precondition at 1.952350e-02, and `PORT-12`'s
+  two-torus drift at `-n 4/8/12`.
+- **Logs:** none. **Branch parked this slot:** none.
+- **Denied commands:** none.
+- **Next-attempt hypothesis (unchanged, and now four slots of evidence).** The
+  fix is upstream and specific: the 02:15 weekly review writes all its files
+  before its first commit, so a kill anywhere in that window loses the whole
+  output and blocks every downstream slot. A **commit-first checkpoint** in
+  `docs/automation/weekly-review.md` — commit the archive rotation as its own
+  commit before the plan edits begin — would have cost this outage one slot
+  instead of five. Worth the 10:30 review proposing it to the operator in the
+  same pass that disposes of `recovered/2026-08-30T1100Z` and refills §9. A
+  second, cheaper mitigation the review may prefer: allow a drained-queue slot
+  to spend itself re-running a known-red gate for a fresh number rather than
+  journaling a pure stop.
