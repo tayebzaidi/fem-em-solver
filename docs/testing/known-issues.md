@@ -677,6 +677,23 @@ unless fixing it is the task.
 
 ### 🔴 OPEN 2026-08-25, re-headed 2026-08-26 (`GEO-21` step 2) — `birdcage_port_domain` **cannot mesh a coarse conductor sizing on the 0.11 image**: `conductor_resolution=None` and everything coarser than ~4.8 mm abort in gmsh with "Invalid boundary mesh (overlapping facets)"
 
+> **RULED 2026-08-30, weekly planning review — the floor stays a documented
+> limitation, deliberately uncommissioned; it becomes a stated trap, not a
+> chunk.** `GEO-23` has since classified the whole "overlapping facets"
+> family as geometry-deterministic and closed with "land no fix" by
+> commission; every gate that reads this generator is green on a graded
+> control (`h_c = 4.8e-3`, ruling (b) of 08-26), and the production
+> fixtures — F-small at 116 085 cells and the 16-leg rungs — all mesh with
+> `conductor_resolution = 0.4 × ring_minor_radius = 1.6 mm`, three times
+> finer than the floor. A root-cause hunt inside gmsh's boolean fragment
+> buys nothing the mission needs. **Where it bites next, stated now:** the
+> F-human cost probe (`GEO-25`, §7) scales `ring_radius` 0.07 → 0.15 m and
+> may be tempted to coarsen the conductor to hold the cell count — it may
+> not go coarser than 4.8 mm on the conductors without first re-measuring
+> this floor at that scale, and a probe rung that aborts with this string
+> is to be recorded against this entry, not diagnosed in-slot. Re-opens as
+> a chunk only if that probe finds no affordable rung *above* the floor.
+
 > **✅ The gate-red portion of this entry RETIRED 2026-08-26** (`GEO-21` step 2,
 > 04:30 implementer slot), exactly as the retire-when below specifies.
 > `test_graded_conductor_sizing_recovers_the_cad_mass` and `mesh:3` are **green
@@ -1200,7 +1217,29 @@ unless fixing it is the task.
 > test is green at all three counts; the thin margin is recorded in the
 > `MAG-20` §7 entry as findings 45–46.
 
-### 🔴 OPEN 2026-08-25, **re-headed 2026-08-26** (`EX-30` leg (root)) — `MeshGenerator.straight_wire_domain` has a **coarse-resolution floor on the dolfinx 0.11 image**: `resolution = 0.01` aborts inside gmsh with duplicated facets for every geometry tried, `0.008` and finer mesh, and the threshold between them is unbisected — no guard exists, so a too-coarse request still fails illegibly
+### ✅ RETIRED 2026-08-30 (weekly planning review — size-field licence **denied**, the `GEO-23` step-2a wrap ruled sufficient) — ~~`MeshGenerator.straight_wire_domain` has a **coarse-resolution floor on the dolfinx 0.11 image**: `resolution = 0.01` aborts inside gmsh with duplicated facets for every geometry tried, `0.008` and finer mesh, and the threshold between them is unbisected — no guard exists, so a too-coarse request still fails illegibly~~ (originally 🔴 OPEN 2026-08-25, re-headed 2026-08-26 by `EX-30` leg (root))
+
+> **RULED 2026-08-30, weekly planning review — the size field is NOT
+> licensed into `src/`, and this entry retires on the wrap.** The 08-28
+> ruling left one question here: whether the gmsh Distance→Threshold size
+> field that `GEO-22` step 2/2c measured (18/18 OK, 0 fallbacks, 19 823 vs
+> 21 830 cells at `h = 0.008`, asserted at `-n 1` and `-n 2`) should land in
+> `straight_wire_domain`. It should not, for three reasons that are each
+> sufficient: (1) it moves four **Phase-1** records for no physics gain —
+> `mag:1`'s 21 830 and the three `MAG-13`/`MAG-18` ladder records — and §10's
+> element-order note already rules that Phase 1 is complete and not worth
+> re-gating; (2) the defect the entry names — a too-coarse request failing
+> *illegibly* — is fixed: `GEO-23` step 2a's raise path lands the failure
+> on every rank in seconds, and `GEO-22` step 1 proved there is no floor to
+> guard (the `[0.008, 0.010]` sweep is non-monotone and bit-reproducible),
+> so a guard would be a fiction; (3) the example that fired this moved to
+> `resolution = 0.008` on 2026-08-25 and has been green since. The
+> size-field probe and its asserted gate (`tests/mesh/test_straight_wire_size_field_probe.py`)
+> stay as the on-record measurement of *why* the coarse rung fails (a
+> fallback triangulation under the unfielded mesher), available to any
+> future generator that needs it — and the first place to look if a
+> **new** geometry meets the same string is `GEO-23`'s classification, not
+> this entry. Nothing re-recorded, no band moved, `src/` untouched.
 
 > **Where this fires.** `./run_examples.sh -e 1`, real build, on **`main`** at
 > `878fa3e`. The crash is in the mesh generator, before any solve, so the
@@ -5279,6 +5318,7 @@ The tests are **not on `main`**: they are parked on
 | **Cause** | **Classified, not yet root-caused. The drift is an evaluation-path effect confined to the gap route, and it is *non-monotone* in width.** The two pre-stated candidates separate cleanly: (a) a *solve-side* drift would move all three routes together — it does not. The **lumped route reads the same solved field through the sheet's own law and is flat to 2e-09** across all four widths (`Im Z12(lumped)` 1.029281338 / …337 / …336 / …338; `I_sheet` −4.122422e−08−1.000166e−06j at every width), and the step-2 *surface* read of the same field, `mean E.yhat over the sheet`, is **bit-identical to every printed digit at all four widths** (shadow −2.958541e+00−7.177866e+01j, fringe +8.607682e-03−1.009219e-02j, ratio 0.000185). So the solved field itself is width-independent to ~1e-9, five orders below the gap route's 1.3e-04–2.1e-04 motion. (b) The **gap route alone moves**, and not monotonically: +1.33e-04 at `-n 4`, +2.06e-04 at `-n 8`, back to +1.33e-04 at `-n 12` — `-n 8`, not `-n 12`, is the worst width, so this is not a "more partitions ⇒ more drift" law. The cross-route figure tracks the gap route exactly (it is derived from it), and the step-2 path/projection residual is likewise non-monotone: 0.0689 / 0.0632 / 0.0662 / 0.0836 pp at 2 / 4 / 8 / 12. One sub-shape worth the root-cause hunt: `Re V_gap` **is** monotone in width (1.365256733e-02 → 1.368962224e-02 → 1.370291038e-02 → 1.373904726e-02, 6.5e-03 relative from `-n 2` to `-n 12`) while `Im V_gap` is not — consistent with the `V = −∫E·dl` path picking up partition-dependent contributions where it crosses a partition boundary, rather than with a converged field being integrated correctly. |
 | **Consequence** | The 1e-4 band is a `-n 2` statement until this is classified; every `PORT-1`/`OPS-18` two-torus record is quoted at `-n 2`. `GEO-24` step 2b (the birdcage validation family after the plumb) must not read a `-n 12` solved digit moving at ≤ 1e-4 as evidence the plumb failed. Nothing loosened, no record re-written. **Step 1 adds:** because the drift is on the evaluation path and not the solve, any *other* `V = −∫E·dl` gap-route reading in the package is suspect at parallel width in the same way — but no lumped-sheet port reading is, the lumped route being flat to 2e-09 here. |
 | **Resolves with** | ~~`PORT-12` step 1~~ **✅ 2026-08-29** (the four-width table and the classification above). **Step 2 is the 2026-08-30 weekly review's call** with this table in hand: the drift is *not* monotone and *not* shared by all three routes, so the "solver-side fix" option in the original framing is off — the choices are (i) width-qualify `REPRODUCTION_BAND` as a `-n 2` statement, (ii) widen it to a pre-registered parallel band ≥ 2.1e-04 with the non-monotone table as the justification, or (iii) commission a root-cause step on the gap-route line integral's partition crossing. |
+| **RULED 2026-08-30, weekly planning review — option (i) with a bounded envelope; option (iii) declined with an epitaph** | `REPRODUCTION_BAND` = 1e-4 stays what it is and is **stated as a `-n 2` record** (every `PORT-1`/`OPS-18` two-torus digit is quoted at that width; the constant's comment says so). At `comm.size > 2` the same assertion runs against a **separate pre-registered `PARALLEL_DRIFT_ENVELOPE = 3e-4`** whose provenance is the four-width table above (max observed +2.06e-04 at `-n 8`, 1.46× headroom), so the drift is *bounded on every width CI might run* rather than hidden by a skip; and the lumped route's width-flatness — `Im Z12(lumped)` within **1e-8** relative across widths, measured 2e-9 — is asserted as the module's new negative control, because that flatness is the reason the production port model is unaffected. **Not (ii)** as framed: widening the *record* band would let the `-n 2` record itself drift. **Not (iii):** the gap route is the two-torus `V = −∫E·dl` estimator, which no birdcage or Larmor quantity reads — `PORT-9`/`PORT-11` are lumped-sheet throughout and flat here to 2e-9 — so a root-cause hunt on a partition-crossing line integral is off the mission's shortest path; it re-opens the day a production quantity is read through a gap-route integral at parallel width. This is `PORT-12` **step 2**, scoped in §7 for the daily review to queue (smoke, real+complex, `-n 2` and one `-n > 2` window). This entry **retires with step 2's landing**. |
 
 ### `WF-6` — the first `|B₁⁺|` map is C4-covariant to only ~9%, against a 5% pre-registered discretisation band (found 2026-08-29 by `WF-6` step 1)
 
@@ -5297,6 +5337,7 @@ The tests are **not on `main`**: they are parked on
 | **What the table decides** | The pre-registered verdict is **(a) — the estimator floor**, unambiguously: CG1 is inside 5% at *all three* covariance angles, a factor 4–5 below DG0, while the mis-rotated control survives the projection at 23%, so the smoothing has not smoothed the map away. Read the 180° column, which step 1 never had: DG0 gives **8.5970%** there against 8.6516% at +90° — the *same* miss at both angles, which is the signature of a scatter floor and the opposite of what a C2-preserving, C4-breaking field asymmetry (candidate (b)) would produce. Candidate (b) is not supported by any reading on this fixture. **No band was moved:** re-registering gate (ii) on the CG1 estimator, with this table as the new band's provenance, is a **review's call** — the slot recorded and stopped, per the step's scope. `WF-6` stays 🧪 and the gate stays red until then. |
 | **Step 1c executed 2026-08-29 22:30 — the sample-set leg, the set is not the mechanism** | `20260830T033147Z_WF-6-step1c.log`, `1 failed, 18 passed` / Status 1 / **97 s** (the one failure is again *this* entry's gate (ii), untouched). Estimator held at DG0, sample set replaced by one closed under the C4 rotation: rings at `r ∈ {0.005, 0.010, 0.015, 0.020}` m × `z ∈ {−0.015, 0, +0.015}` m × 8 azimuths in 45° steps, azimuth start jittered 3.7° off the coordinate planes — 96 points, every ±90° and 180° image a member of the set. Anchors: `valid` **96 of 96** on all four drives and every rotated image; centroid-set DG0 P2-at-+90° reproduced **8.6516%** and gate (i)'s P1 residual **9.795751e-03**, both rtol 1e-4; the mis-rotated control P3-at-+90° **25.8213%**, asserted outside the band. **Ring-set table (centroid-set figure, delta):** <br>`P2 @ +90°` **9.9271%** (med 6.9433, p90 16.2927) — centroid 8.6516%, **+1.28 pp** <br>`P4 @ −90°` **9.9519%** (med 7.3968, p90 16.4548) — centroid 9.5808%, **+0.37 pp** <br>`P3 @ 180°` **8.4706%** (med 5.7448, p90 13.5804) — centroid 8.5970%, **−0.13 pp**. `\|B₁⁺\|` over the ring set, P1 driven: mean 2.023327e-08 T, max 3.263326e-08, min 1.419703e-08. |
 | **What the ring set decides** | The pre-registered verdict is **"sample set is not the mechanism"** — all three angles land within ±2 pp of the centroid set (max \|Δ\| 1.28 pp), so the centroid set's lack of closure under the rotation was not manufacturing the miss and the ~9% floor is the **DG0 scatter itself**. This is the one thing step 1b could not distinguish, and it corroborates 1b's verdict (a) from the opposite direction: 1b changed the estimator and the miss fell 4–5×; 1c changed the sample set and the miss did not move. The 180° column agrees with +90° on the ring set too (8.47 vs 9.93%), so candidate (b) remains unsupported. **Per-ring structure, for the review to read against the coil geometry:** no monotone radial trend — 6.33…11.65% at `r = 0.010`, 4.61…12.63% at `r = 0.020`, the single lowest ring being the outermost top one (`r = 0.020, z = +0.015`, 4.61 / 6.21 / 3.96%) and the highest an inner one (`r = 0.005, z = −0.015`, 11.25 / 12.27%); ring-to-ring spread of the same order as the overall figure is what a per-cell scatter looks like. **No band was moved**; gate (ii) stays red, `WF-6` stays 🧪, and re-registering the gate on the CG1 estimator remains the review's call. |
+| **RULED 2026-08-30, weekly planning review — gate (ii) is re-registered on the CG1-projected estimator; the DG0 5% assertion is replaced, not loosened** | The two legs read as a pair: change the estimator and the miss falls 4–5× (1b); change the sample set and it does not move (1c). That is the pre-registered candidate (a), and the 180° column (DG0 8.60% ≈ +90° 8.65%) rules out candidate (b) on this fixture. **Ruling:** (1) the production `|B₁⁺|` map estimator for gates and examples is `b1_plus` of the **L²-projected CG1 `B`** (mass-matrix `LinearProblem`, never `interpolate`), with the DG0 field kept as the raw curl; (2) gate (ii) becomes the CG1 covariance identity at **all three angles** (+90°, −90°, 180°) on the 51 centroids, band **5%** unchanged in value but now with a *measured* provenance — CG1 reads 2.19 / 2.11 / 1.89%, p90 ≤ 3.47%, so the band carries 2.3× headroom and is a discretisation floor someone has measured; (3) the mis-rotated 180°-vs-90° control stays asserted **> 5%** under CG1 (23.26%); (4) the DG0 readings are **printed and recorded**, not gated — the old DG0 assert is removed with its record (8.6516 / 9.5808 / 8.5970%) cited in-comment, because gating a curl at DG0 on a non-symmetric mesh gates the mesh, not the map (the `GEO-19` step-C precedent). No CV, homogeneity or absolute-accuracy claim follows from (ii) closing — it is a symmetry identity. This is **`WF-6` step 1d** (§7), one smoke/standard slot on the existing fixture; steps 2–3 stay serial on it. This entry **retires with step 1d's landing**; `main`'s deliberate red retires with it. |
 
 ## Recording a new entry
 

@@ -23,19 +23,37 @@ read-only digest for the human operator.
 
 ## Waiting on you
 
-1. 🟢 **The `ANS-3` AED run is unblocked** (unchanged since 08-16). Your
-   half: replicate `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/SPEC.md`
-   in Ansys Electronics Desktop and fill the blank AED columns in
-   `COMPARISON.md`. **Note `ANS-5` before you do:** our production
-   `degree 1` corresponds to HFSS **Zero Order**, not its default **First
-   Order** — the specs do not yet say so; the weekly review rules on the
-   wording tonight, but a default-settings AED run is a different
-   discretization.
-2. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
+*(Weekly planning review 2026-08-30 02:15 — items 1–3 rewritten; the
+rest is the 08-29 18:00 daily review's.)*
+
+1. 🟢 **NEW — `ANS-4`, the loaded birdcage 4-port S-matrix at 10 / 64 /
+   128 MHz, is commissioned and its `SPEC.md` is ready for you:**
+   `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/SPEC.md`.
+   This is the one that matters to the mission — it is the first
+   independent absolute check of the coil-fed port model at a Larmor
+   frequency (everything gated so far at 64/128 MHz is a self-consistency
+   identity), and it is the fixture B1+/SAR are being computed on. **It
+   ranks above `ANS-1`/`ANS-3` in your AED queue.** Per the `ANS-5` ruling
+   (below) it asks for two AED runs, Zero Order and the default First
+   Order, and asks you to confirm the unknowns-per-tet AED prints. The
+   runnable half (`ans:4`, our `COMPARISON.md` columns) is a §7 chunk the
+   daily review will queue; the spec does not depend on it.
+2. **`ANS-5` ruled (2026-08-30):** AED is run at **Zero Order** (= our
+   production `degree 1`) as the matched adjudication column, **and** at
+   its default **First Order** as an order-sensitivity column; Mixed Order
+   is forbidden; our side stays at one order. `ANS-1` is in scope for the
+   spec line (Maxwell 3D eddy-current: state the formulation and order AED
+   used). If you have **already** run `ANS-1` or `ANS-3` at an unrecorded
+   order, say which order — the numbers stand as an "order-unknown" column
+   rather than being discarded. The spec/README wording is `ANS-5` steps
+   1–2 (documentary, queued by the daily review).
+3. 🟢 **`ANS-3` and `ANS-1` AED runs** — still yours, now behind `ANS-4`
+   in priority (unchanged since 08-16 / 08-09; no AED number has come back
+   for either in three weeks, and until one does, no benchmark has been
+   adjudicated).
+4. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
-3. **ANS-1 Ansys replication** — still yours; ANS-3 (item 1) is the
-   second case in the same queue.
-4. **Information, one occurrence:** the 13:30 scheduled slot was denied
+5. **Information, one occurrence:** the 13:30 scheduled slot was denied
    `./run_examples.sh -e ports:4` at the docker socket
    (`permission denied … /var/run/docker.sock` from inside the runner
    script); it substituted the runner's inner command through
@@ -43,15 +61,18 @@ read-only digest for the human operator.
    `./run_examples.sh -e mesh:9` ran normally. If it recurs the runner
    needs an allowlist entry; until then §9 carries the substitution as a
    trap.
-5. FYI, no action: the Sunday **08-30 02:15 weekly review** owes the
-   rulings that unblock the next queue — `PORT-12` step 2 (options now:
-   width-qualify the band, a pre-registered parallel band ≥ 2.1e-4, or a
-   root-cause step on the gap-route line integral; the solver-side option
-   is off), `ANS-5`, the F-human / Phase-6 ring-rung probe directive
-   (facts in the 10:30 §9 ruling 4), `ANS-4`, a 128 MHz resolution study,
-   `PORT-4`…`PORT-8`, the `GEO-22` size-field licence, the `GEO-21` floor,
-   and the `MAT-4` stall (its fix is `WF-6` step 3, behind gate (ii)).
-   Local `main` remains well ahead of origin (push is manual).
+6. FYI, no action: the **08-30 02:15 weekly review ran** and made the
+   rulings the queue was waiting on — `PORT-12` step 2 (width-qualified
+   band + bounded parallel envelope, root-cause declined), `WF-6` step 1d
+   (gate (ii) re-registered on the CG1 estimator), `ANS-5` (item 2),
+   `ANS-4` (item 1), the F-human directive (cost probe `GEO-25` first, a
+   parameter set not a new constructor, subgoal 4 not blocked on it), the
+   Phase-6 ring-rung probe (`PORT-13`), the `GEO-22` size-field licence
+   (denied, entry retired), the `GEO-21` floor (documented trap, not a
+   chunk), the `MAT-4` stall (closes through `WF-6` step 3), `TH-13`'s
+   ω² rescope, and `EX-36` (24 examples' artifacts deleted by the 08-28
+   rename need re-running). Details in PROJECT_PLAN §10 and the review
+   commit. Local `main` remains well ahead of origin (push is manual).
 
 ## Honest current state (digest of §2 — unchanged this interval)
 
