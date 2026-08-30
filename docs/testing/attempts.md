@@ -21619,3 +21619,68 @@ queue then drains. Tree clean at handoff; no anomalies.
   drift at `-n 4/8/12`, and `WF-6` step 1's gate (ii). §9 open items after
   this slot: item 2 (`TH-13` step 1) and item 3 (`WF-6` step 1c). Tree clean
   at handoff; no anomalies, no denied commands.
+
+## 2026-08-30T02:10Z — `TH-13` step 1 — **complete (negative result)** (21:00 CDT implementer slot)
+
+- **Preflight:** `git status` clean on `main` at `e7f8718`, container Up
+  (3 days). No `attempt/*` or `recovered/*` branch. §9 item 1 (`WF-6` step
+  1b) already marked done by the 19:30 slot, so the first open item was
+  **item 2, `TH-13` step 1** — the carried spare, third listing, never
+  attempted. No fallback, no substitution.
+- **What was built:** `tests/validation/test_degree2_gradient_discriminator.py`
+  (new, tests only — **no `src/` change**, so no example re-run is owed). The
+  missing cell of `TH-12` step 3's table: `POST-5` step 2's closed azimuthal
+  loop (`_azimuthal_current`, imported — `div J = 0`, `J·n = 0`) on the smoke
+  box's own 1 405-cell cylindrical mesh at **10 MHz**, degrees 1 and 2, plus
+  step 3's two fixtures re-run through its own imported
+  `_solve_smoke_at_degree` / `_energies_of_sphere_row` / `_ratio_move` as the
+  negative control. Energy forms imported (`stored_electric_energy`,
+  `_stored_magnetic_energy`), never restated — §7 trap honoured. Solver
+  `gauge_penalty` left at the default, which is what every recorded `TH-12`
+  ratio was measured on.
+- **Outcome: the discriminator did not discriminate, on both pre-registered
+  clauses.** (i) **Precondition failed**, asserted and left failing:
+  degree-1 `W_e/W_m` = **1.952350e-02** against the pre-registered ≤ **1e-2**
+  — a factor-1.95 miss, so the fixture is not magnetically dominated. Not
+  loosened; per the §7 clause the step stops there and the red stays on
+  `main`. (ii) **Verdict IN-BETWEEN**: cross-order move **5.156e+01×**,
+  between the 10× (FEED) and 1e3× (CLASS) bands — recorded, that test skips,
+  no band invented in-slot.
+- **Numbers.** loop deg 1: `W_m` 2.879380e-17, `W_e` 5.621559e-19, ratio
+  1.952350e-02, 2 004 DOFs, dissipated 1.139571e-09 W; loop deg 2: `W_m`
+  3.555978e-17, `W_e` 3.579741e-17, ratio **1.006682**, 10 082 DOFs,
+  dissipated 7.256652e-08 W; `|Im P|/Re P` = **0.000e+00** at both orders.
+  Controls reproduced **to the digit**: smoke **1.155×** (2.164348 →
+  2.499688), sphere **1.015×** (1.068190 → 1.052552), both green at the
+  imported `EX-25` 1% band; the `POST-5` 1.199162e-06 W anchor and the
+  1 405 / 5 866-cell anchors green via step 3's own imported asserts.
+- **Why it missed, measured not guessed.** `W_e/W_m ~ ω²` at fixed impressed
+  current, and the smoke box's own 2.164348 at 127.74 MHz scales to 1.33e-2
+  at 10 MHz — within 1.5× of the 1.95e-2 read. The step's two halves were
+  therefore incompatible *before the run*: from a 1.95e-2 baseline a 1e3×
+  move requires `W_e/W_m` ≈ 20, well past the O(1) equipartition every other
+  fixture sits at, so **CLASS was arithmetically unreachable** whatever the
+  physics. That is the finding worth the slot, more than the two band misses.
+- **Logs:** `docs/testing/logs/20260830T020301Z_TH-13-step1.log` — one
+  window, `timeout -k 30 300`, **Status 1 / 36 s**, `1 failed, 12 passed,
+  1 skipped` with `tests/environment`. Well inside the standard tier; the
+  estimate in §9 was ≤ 60 s and the run was 36 s.
+- **Branch (if parked):** none — landed on `main`.
+- **Next-attempt hypothesis (for the review, deliberately not executed):**
+  re-run the *same* fixture at **1 MHz** instead of 10 MHz. The ω² scaling
+  puts the precondition at ~2e-4 (comfortably inside 1e-2) and leaves ~5e3×
+  of headroom below equipartition, so both bands become representable and the
+  step can actually return CLASS or FEED. §7 pins 10 MHz, so this is a band-
+  and-fixture rescope the review owns, not an in-slot edit. Second, weaker
+  hypothesis: degree 2 lifting the loop's `W_e` 63.7× while `W_m` moves 1.23×
+  — landing exactly at equipartition — looks like a contamination that
+  *saturates* there, which would make "cross-order move in `W_e/W_m`" the
+  wrong discriminant entirely and push straight to step 2's absolute gradient
+  content of `E`.
+- **Residual `main` reds after this slot:** the two entry-3 names,
+  `test_birdcage_volumes_partition_the_box` (`GEO-21`), `WF-6` step 1's gate
+  (ii), `PORT-12`'s two-torus drift at `-n 4/8/12`, and **new: `TH-13` step
+  1's precondition** (`test_the_loop_fixture_is_magnetically_dominated`,
+  deliberate, known-issues entry appended). §9 open items after this slot:
+  item 3 (`WF-6` step 1c) only. Tree clean at handoff; no anomalies, no
+  denied commands.
