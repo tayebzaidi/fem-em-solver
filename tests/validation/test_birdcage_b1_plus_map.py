@@ -66,6 +66,9 @@ import time
 import dolfinx
 import numpy as np
 import pytest
+import ufl
+from dolfinx import fem
+from dolfinx.fem.petsc import LinearProblem
 from mpi4py import MPI
 
 from fem_em_solver.core import TimeHarmonicSolver
@@ -451,3 +454,284 @@ def test_b1_plus_map_is_c4_covariant_under_the_drive_rotation(b1_plus_map):
         f"{opposite * 100:.4f}%, inside the {C4_COVARIANCE_BAND * 100:.1f}% band — "
         "the covariance gate is then not resolving the drive's azimuth at all"
     )
+
+
+# ---------------------------------------------------------------------------
+# `WF-6` step 1b — the estimator leg (scoped 2026-08-29 18:00 review)
+# ---------------------------------------------------------------------------
+#
+# Step 1 left gate (ii) red at 8.6516% against its 5% band with two candidate
+# explanations that its own readings cannot separate: **(a)** the band
+# underestimated the DG0 cell-scatter floor — the sample set is 51 centroids in
+# a 0.02 m-radius × 0.04 m cylinder, i.e. ≈ 1 cm phantom cells on the
+# 116 085-cell fixture, and a DG0 curl is piecewise constant over cells that
+# size; or **(b)** a real C4 asymmetry in the field.
+#
+# This leg changes the *estimator* and holds everything else fixed: the same
+# fixture, the same four solves, the same 51 points.  ``B_phasor`` is L²-projected
+# from DG0 onto ``("Lagrange", 1, (3,))`` through a mass-matrix solve (never
+# ``interpolate`` — DG0 → CG1 interpolation is ill-defined at vertices, where
+# the value depends on which incident cell the interpolator happens to pick),
+# and ``|B₁⁺| = |B_x + jB_y|/2`` is formed from the projected vector at the
+# evaluation points.  The three covariance angles are read side by side under
+# both estimators, the 180° one for the first time — it is the sharpest
+# discriminator available here, because a DG0 scatter floor is the same at 90°
+# and at 180°, while a C2-preserving, C4-breaking field asymmetry is not.
+#
+# **Nothing here moves a band.**  Gate (ii) stays red, the chunk stays 🧪, and
+# the verdict bands below are *recorded, not asserted*; only a review may
+# re-register gate (ii) on a different estimator, and only with these tables as
+# the provenance of the new band.
+
+# Step 1's own records, reproduced here at rtol 1e-4 — the proof that this leg
+# reads the same field on the same points as the run that made them.  Logs
+# `…183450Z_WF-6-step1.log` (89 s) and `…183728Z_WF-6-step1-diagnostic.log`.
+STEP1_DG0_C4_MISMATCH = 8.6516e-2
+STEP1_GATE_I_P1_RESIDUAL = 9.795751e-03
+RECORD_RTOL = 1.0e-4
+
+# The verdict bands, pre-registered by the 2026-08-29 18:00 review.  Recorded,
+# never asserted: (a) CG1 ≤ 5% at all three angles ⇒ estimator floor;
+# (b) CG1 ≥ 7% at ±90° with 180° ≤ 5% ⇒ a C4-breaking field asymmetry;
+# all three ≥ 7% ⇒ neither, and step 1c's sample set decides.
+VERDICT_RESOLVED_BAND = 5.0e-2
+VERDICT_ASYMMETRY_BAND = 7.0e-2
+
+
+def _project_to_cg1(b_dg0):
+    """L² projection of the DG0 vector phasor onto ``("Lagrange", 1, (3,))``.
+
+    A mass-matrix solve, not ``interpolate``: a DG0 field has no vertex value,
+    so interpolating it into CG1 picks whichever incident cell the interpolation
+    machinery visits last, which is neither the average nor reproducible.  The
+    mass matrix is Hermitian positive definite in the complex build, so CG with
+    Jacobi is the right solver; ``ksp_rtol`` is tightened well below any
+    difference this leg is trying to measure.
+    """
+    msh = b_dg0.function_space.mesh
+    space = fem.functionspace(msh, ("Lagrange", 1, (3,)))
+    trial, test = ufl.TrialFunction(space), ufl.TestFunction(space)
+    problem = LinearProblem(
+        ufl.inner(trial, test) * ufl.dx,
+        ufl.inner(b_dg0, test) * ufl.dx,
+        bcs=[],
+        petsc_options={
+            "ksp_type": "cg",
+            "pc_type": "jacobi",
+            "ksp_rtol": 1.0e-12,
+            "ksp_atol": 1.0e-30,
+        },
+        petsc_options_prefix="wf6_step1b_mass_",
+    )
+    projected = problem.solve()
+    projected.x.scatter_forward()
+    return projected
+
+
+def _read_b1_plus_cg1(projected, points):
+    """``|B_x + jB_y|/2`` from the projected CG1 vector, at ``points``.
+
+    Formed from the *evaluated* complex vector rather than from a projected
+    scalar: ``|·|`` is not linear, so taking the magnitude after the point
+    evaluation is the faithful reading of the projected field.
+    """
+    values, valid = evaluate_vector_field_parallel(projected, points)
+    values = np.asarray(values).reshape(-1, 3)
+    return np.abs(values[:, 0] + 1j * values[:, 1]) / 2.0, np.asarray(valid, dtype=bool)
+
+
+def _relative_l2(other, reference, mask):
+    return float(
+        np.linalg.norm(other[mask] - reference[mask]) / np.linalg.norm(reference[mask])
+    )
+
+
+@pytest.fixture(scope="module")
+def cg1_estimator_table(b1_plus_map):
+    """The three covariance angles under both estimators, on step 1's points.
+
+    ``+90°`` is P2, ``−90°`` is P4, ``180°`` is P3 — each drive read at the
+    correspondingly rotated image of the P1 sample set.  ``P3-at-+90°`` is the
+    mis-rotated negative control, and must stay outside the 5% band under
+    *both* estimators: a projection that smooths it away has smoothed the map
+    away with it.
+    """
+    solves = b1_plus_map["solves"]
+    points = b1_plus_map["points"]
+    delta = np.radians(b1_plus_map["delta_deg"])
+
+    images = {
+        "P1@0deg": ("P1", points),
+        "P2@+90deg": ("P2", _rotate_z(points, delta)),
+        "P4@-90deg": ("P4", _rotate_z(points, -delta)),
+        "P3@180deg": ("P3", _rotate_z(points, 2.0 * delta)),
+        "P3@+90deg": ("P3", _rotate_z(points, delta)),
+    }
+    projections = {
+        pid: _project_to_cg1(
+            magnetic_flux_density_from_e(solves[pid]["fields"].e_complex, solves[pid]["omega"])
+        )
+        for pid in ("P1", "P2", "P3", "P4")
+    }
+
+    dg0, cg1, valid = {}, {}, {}
+    for label, (pid, pts) in images.items():
+        dg0[label], v_dg0 = _read_b1_plus(solves[pid], pts)
+        cg1[label], v_cg1 = _read_b1_plus_cg1(projections[pid], pts)
+        valid[label] = v_dg0 & v_cg1
+
+    mask = np.logical_and.reduce([valid[label] for label in images])
+    reference = "P1@0deg"
+    table = {
+        label: {
+            "dg0": _relative_l2(dg0[label], dg0[reference], mask),
+            "cg1": _relative_l2(cg1[label], cg1[reference], mask),
+            "dg0_pointwise": np.abs(dg0[label][mask] - dg0[reference][mask])
+            / np.abs(dg0[reference][mask]),
+            "cg1_pointwise": np.abs(cg1[label][mask] - cg1[reference][mask])
+            / np.abs(cg1[reference][mask]),
+        }
+        for label in images
+        if label != reference
+    }
+
+    covariance_angles = ("P2@+90deg", "P4@-90deg", "P3@180deg")
+    cg1_readings = [table[label]["cg1"] for label in covariance_angles]
+    if max(cg1_readings) <= VERDICT_RESOLVED_BAND:
+        verdict = (
+            "(a) ESTIMATOR FLOOR — CG1 is inside 5% at all three covariance "
+            "angles; the DG0 miss was cell scatter and a review may re-register "
+            "gate (ii) on the CG1 estimator with this table as its provenance"
+        )
+    elif (
+        min(table[label]["cg1"] for label in ("P2@+90deg", "P4@-90deg"))
+        >= VERDICT_ASYMMETRY_BAND
+        and table["P3@180deg"]["cg1"] <= VERDICT_RESOLVED_BAND
+    ):
+        verdict = (
+            "(b) FIELD ASYMMETRY — CG1 holds the 180deg identity but not the "
+            "90deg ones; C2 survives and C4 does not, so the review commissions "
+            "a field-side hunt (per-port sheet current phases, the phantom fit)"
+        )
+    elif min(cg1_readings) >= VERDICT_ASYMMETRY_BAND:
+        verdict = (
+            "NEITHER — every CG1 angle is at or above 7%; the map's azimuthal "
+            "structure is not resolved at ~1 cm cells and step 1c's sample set "
+            "decides"
+        )
+    else:
+        verdict = (
+            "UNCLASSIFIED — the readings fall between the pre-registered bands; "
+            "recorded as measured, no band is invented in-slot"
+        )
+
+    if b1_plus_map["sweep"]["mesh"].comm.rank == 0:
+        print(
+            f"\n[WF-6 step1b] estimator leg on step 1's own sample set: "
+            f"{int(mask.sum())} of {points.shape[0]} phantom centroids, "
+            f"{b1_plus_map['sweep']['cells']} cells, degree 1, "
+            f"drive rotation {b1_plus_map['delta_deg']:.6f} deg\n"
+            f"    reference reproductions: DG0 P2-at-+90deg "
+            f"{b1_plus_map['covariance'] * 100:.4f}% vs step 1's "
+            f"{STEP1_DG0_C4_MISMATCH * 100:.4f}%; gate (i) P1 residual "
+            f"{abs(b1_plus_map['shares']['P1']['supplied'] - (b1_plus_map['shares']['P1']['phantom'] + b1_plus_map['shares']['P1']['conductor'] + b1_plus_map['shares']['P1']['sheet_total'])) / abs(b1_plus_map['shares']['P1']['supplied']):.6e}"
+            f" vs step 1's {STEP1_GATE_I_P1_RESIDUAL:.6e}",
+            flush=True,
+        )
+        print(
+            "    relative l2 mismatch vs the P1 map, DG0 | CG1 (median, p90 pointwise):",
+            flush=True,
+        )
+        for label in ("P2@+90deg", "P4@-90deg", "P3@180deg", "P3@+90deg"):
+            row = table[label]
+            role = (
+                "mis-rotated control (must stay > 5% under both)"
+                if label == "P3@+90deg"
+                else "covariance identity"
+            )
+            print(
+                f"        {label:<12} DG0 {row['dg0'] * 100:8.4f}%  "
+                f"(med {np.median(row['dg0_pointwise']) * 100:7.4f}%, p90 "
+                f"{np.percentile(row['dg0_pointwise'], 90) * 100:7.4f}%)   |   "
+                f"CG1 {row['cg1'] * 100:8.4f}%  "
+                f"(med {np.median(row['cg1_pointwise']) * 100:7.4f}%, p90 "
+                f"{np.percentile(row['cg1_pointwise'], 90) * 100:7.4f}%)   {role}",
+                flush=True,
+            )
+        print(
+            f"    |B1+| over the set, P1 driven: DG0 mean "
+            f"{np.mean(dg0['P1@0deg'][mask]):.6e} T, CG1 mean "
+            f"{np.mean(cg1['P1@0deg'][mask]):.6e} T\n"
+            f"    VERDICT (pre-registered, recorded not asserted): {verdict}",
+            flush=True,
+        )
+
+    return {
+        "table": table,
+        "mask": mask,
+        "n_valid": int(mask.sum()),
+        "n_points": int(points.shape[0]),
+        "all_valid": bool(np.all(mask)),
+        "dg0_p1": dg0["P1@0deg"],
+        "cg1_p1": cg1["P1@0deg"],
+        "verdict": verdict,
+    }
+
+
+@complex_only
+def test_cg1_projection_reads_the_same_field_as_step_1(cg1_estimator_table, b1_plus_map):
+    """Anchors (1) and (2): step 1's two records reproduce on this fixture.
+
+    Neither is a new claim — they are the proof that the estimator leg is
+    reading the same solved field, on the same points, as the run that recorded
+    the 8.6516% miss and the 9.795751e-03 power residual.
+    """
+    assert cg1_estimator_table["all_valid"], (
+        f"only {cg1_estimator_table['n_valid']} of "
+        f"{cg1_estimator_table['n_points']} sample points evaluated in every "
+        "drive and every rotated image; the set is inside the phantom by "
+        "construction, so a false here is a geometry mistake and the l2 would "
+        "silently drop points"
+    )
+
+    assert b1_plus_map["covariance"] == pytest.approx(
+        STEP1_DG0_C4_MISMATCH, rel=RECORD_RTOL
+    ), (
+        f"the DG0 P2-at-+90deg covariance mismatch reads "
+        f"{b1_plus_map['covariance'] * 100:.6f}%, not step 1's "
+        f"{STEP1_DG0_C4_MISMATCH * 100:.4f}% — same mesh, same points, so the "
+        "estimator leg is not reading the field step 1 recorded"
+    )
+
+    p1 = b1_plus_map["shares"]["P1"]
+    total = p1["phantom"] + p1["conductor"] + p1["sheet_total"]
+    residual = abs(p1["supplied"] - total) / abs(p1["supplied"])
+    assert residual == pytest.approx(STEP1_GATE_I_P1_RESIDUAL, rel=RECORD_RTOL), (
+        f"gate (i)'s P1 residual reads {residual:.9e}, not step 1's "
+        f"{STEP1_GATE_I_P1_RESIDUAL:.6e}"
+    )
+
+    for name, values in (("DG0", cg1_estimator_table["dg0_p1"]), ("CG1", cg1_estimator_table["cg1_p1"])):
+        masked = values[cg1_estimator_table["mask"]]
+        assert np.all(np.isfinite(masked)), f"{name} |B1+| is not finite on the sample set"
+        assert float(np.min(masked)) > 0.0, f"{name} |B1+| vanishes identically on the sample set"
+
+
+@complex_only
+def test_the_cg1_estimator_still_resolves_the_drive_azimuth(cg1_estimator_table):
+    """Anchor (3), the negative control: the mis-rotated P3 stays outside 5%.
+
+    A CG1 projection that smooths step 1's 27.3% control below the band has
+    smoothed the map away, and any comfortable reading at the covariance angles
+    would then be the projection's, not the field's.  That is a negative result
+    for this leg, not a pass — hence an assert and not a printed row.
+    """
+    control = cg1_estimator_table["table"]["P3@+90deg"]
+    for estimator in ("dg0", "cg1"):
+        assert control[estimator] > C4_COVARIANCE_BAND, (
+            f"the mis-rotated control (P3 at +90deg, 180deg from P1) matches the "
+            f"P1 map to {control[estimator] * 100:.4f}% under the {estimator.upper()} "
+            f"estimator, inside the {C4_COVARIANCE_BAND * 100:.1f}% band — that "
+            "estimator no longer resolves the drive's azimuth, so its covariance "
+            "readings carry no information about the field"
+        )

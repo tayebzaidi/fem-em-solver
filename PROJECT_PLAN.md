@@ -6489,7 +6489,7 @@ it*, the phantom's cells/δ and cells/λ are what change).
 | `WF-3` | Quick-look phantom metrics report | ⚠️ | standard |
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
-| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists** | 🧪 | heavy (step 1 standard, complex) |
+| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call** | 🧪 | heavy (step 1 standard, complex) |
 | `WF-7` | SAR10g hotspot identification | ⬜ | heavy |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 
@@ -6670,6 +6670,41 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 >     the known-issues `WF-6` entry and the slot stops; a CG1 that fails
 >     anchor (3) is recorded as "the projection over-smooths at this
 >     resolution" and the review looks at step 1c.
+>   * **Step 1b executed, 2026-08-29 19:30 implementer slot — ✅ as scoped, and
+>     the verdict is (a), the estimator floor. No band moved; gate (ii) is
+>     still red and the chunk is still 🧪.** Built as written on
+>     `test_birdcage_b1_plus_map.py`'s own `b1_plus_map` fixture (nothing in
+>     `src/` changed, so no example re-run was owed): a `cg1_estimator_table`
+>     module fixture L²-projects each drive's DG0 `B_phasor` onto
+>     `("Lagrange", 1, (3,))` through a Hermitian mass-matrix `LinearProblem`
+>     (CG/Jacobi, `ksp_rtol` 1e-12, `petsc_options_prefix` per 0.11) and forms
+>     `|B_x + jB_y|/2` from the **evaluated** projected vector at the same 51
+>     points — the magnitude is taken after the point evaluation, `|·|` being
+>     non-linear. Log `20260830T003238Z_WF-6-step1b.log`, `1 failed, 15 passed`
+>     / Status 1 / **98 s** with `tests/environment`; the single failure is
+>     gate (ii) itself, untouched.
+>     **Anchors, all three green:** DG0 P2-at-+90° reproduces **8.6516%** and
+>     gate (i)'s P1 residual reproduces **9.795751e-03**, both at rtol 1e-4;
+>     the mis-rotated control P3-at-+90° stays outside 5% under *both*
+>     estimators (DG0 **27.3161%**, CG1 **23.2642%**); `valid` all-true, 51 of
+>     51, on every rotated image.
+>     **The table (recorded, in the known-issues entry too):** `+90°` DG0
+>     8.6516% │ CG1 **2.1870%**; `−90°` DG0 9.5808% │ CG1 **2.1146%**;
+>     `180°` DG0 8.5970% │ CG1 **1.8911%**. CG1 is inside 5% at all three
+>     covariance angles ⇒ the pre-registered **candidate (a)** branch. The
+>     sharpest single reading is the 180° column, which step 1 never had: DG0
+>     misses by 8.5970% there, the *same* as at +90°, which is what a
+>     scatter floor looks like and is not what a C2-preserving, C4-breaking
+>     field asymmetry would produce — candidate (b) is unsupported by any
+>     reading on this fixture. The projection moves the mean `|B₁⁺|` by 0.38%
+>     (2.077398e-08 → 2.069556e-08 T), so it smooths the scatter and not the
+>     map.
+>     **What is owed next, and to whom:** re-registering gate (ii) on the CG1
+>     estimator with this table as the band's provenance is a **review's
+>     call**, explicitly not the slot's. Step 1c stays worth running as
+>     scoped — it is independent, and a ring-set DG0 reading near 8–9% would
+>     confirm the floor is the DG0 scatter itself rather than the centroid
+>     sampling, which is the one thing this leg cannot distinguish.
 >   * **Step 1c — the sample-set leg: a rotation-invariant point set at DG0.**
 >     Standard, complex, `-n 2`, `main`; **independent of 1b** (it does not
 >     need 1b's result and must not wait for it). Replace the centroid sample
@@ -8293,7 +8328,13 @@ bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode &&
 PYTHONPATH=/workspace/src timeout -k 30 <T> mpiexec -n 2 python3
 examples/<path>.py'`) and journal the denial; do not spend the slot on it.
 
-1. **`WF-6` step 1b — the estimator leg: CG1-projected `B` on the 51
+1. ~~**`WF-6` step 1b — the estimator leg**~~ — **done 2026-08-29 19:30**,
+   98 s, `20260830T003238Z_WF-6-step1b.log`. All three anchors green; verdict
+   **(a) estimator floor** — CG1 reads 2.1870 / 2.1146 / 1.8911% at
+   +90 / −90 / 180° against DG0's 8.6516 / 9.5808 / 8.5970%, control
+   23.2642%. No band moved, gate (ii) still red, chunk still 🧪; the
+   re-registration is the review's. Original text below.
+   **`WF-6` step 1b — the estimator leg: CG1-projected `B` on the 51
    centroids, and the 180° identity read for the first time (standard,
    complex, `-n 2`, `main`; independent; scoped this review).** Execute the
    §7 `WF-6` step-1b bullet as written: a new test function (or sibling

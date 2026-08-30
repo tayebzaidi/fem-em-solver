@@ -21556,3 +21556,66 @@ two-constant edit here plus the record re-record, not an open-ended search.
 drift at `-n 4/8/12`, and `WF-6` step 1's gate (ii). §9 item 5 (`TH-13`
 step 1) is the only open queue item left, so the 19:30 slot takes it and the
 queue then drains. Tree clean at handoff; no anomalies.
+
+## 2026-08-30T00:26Z — WF-6 step 1b — complete
+
+- **Preflight:** tree clean, container Up (3 days). Queue is the **18:00
+  review's**, not the 16:30 entry's forecast above — that entry predicted
+  `TH-13` step 1 for this slot, but the 18:00 review re-topped §9 and item 1
+  is `WF-6` step 1b, which is what a slot must take. `TH-13` step 1 is now
+  item 2 and is untouched.
+- **Tried:** the §7 `WF-6` step-1b bullet as written, as a new module fixture
+  `cg1_estimator_table` plus two tests on
+  `tests/validation/test_birdcage_b1_plus_map.py` — the existing `b1_plus_map`
+  fixture is reused, so the mesh and the four P1–P4 solves are paid once and
+  no existing assert, constant or band is touched. Each drive's DG0
+  `B_phasor` is L²-projected onto `("Lagrange", 1, (3,))` through a Hermitian
+  mass-matrix `LinearProblem` (CG/Jacobi, `ksp_rtol` 1e-12, `ksp_atol` 1e-30,
+  `petsc_options_prefix` per 0.11) — never `interpolate`, which has no
+  defined vertex value for a DG0 field. `|B_x + jB_y|/2` is formed from the
+  **evaluated** projected vector rather than from a projected scalar, `|·|`
+  being non-linear; the evaluation is
+  `evaluate_vector_field_parallel` throughout, whose return is already global
+  on every rank (not reduced twice). Nothing in `src/` changed, so no example
+  re-run was owed and none was made.
+- **Result / measured — ✅, and the verdict is the pre-registered (a).**
+  Anchors, all three green: DG0 P2-at-+90° reproduces step 1's **8.6516%**
+  and gate (i)'s P1 residual reproduces **9.795751e-03**, both at rtol 1e-4;
+  the mis-rotated control P3-at-+90° stays outside 5% under *both* estimators
+  (DG0 **27.3161%**, CG1 **23.2642%**); `valid` all-true, **51 of 51**, on the
+  P1 set and on all three rotated images. The three-angle × two-estimator
+  table (recorded, not asserted): `+90°` DG0 **8.6516%** (med 6.7395, p90
+  15.0357) │ CG1 **2.1870%** (med 1.5240, p90 3.3040); `−90°` DG0 **9.5808%**
+  │ CG1 **2.1146%**; `180°` DG0 **8.5970%** │ CG1 **1.8911%**. CG1 inside 5%
+  at all three angles ⇒ **candidate (a), the DG0 estimator floor**. The
+  sharpest reading is the 180° column, which step 1 never had: DG0 misses by
+  8.5970% there, the *same* as at +90°, which is the signature of a scatter
+  floor and not of a C2-preserving, C4-breaking asymmetry — candidate (b) is
+  unsupported by anything measured on this fixture. The projection moves the
+  mean `|B₁⁺|` by 0.38% (2.077398e-08 → 2.069556e-08 T), i.e. it smooths the
+  cell scatter and not the map, which is exactly what anchor (3) surviving at
+  23% says independently.
+- **Scope held.** Measurement only: **no band moved**, no assert loosened, no
+  CV, no 64/128 MHz. Gate (ii) is still red at 8.6516% and `WF-6` is still
+  🧪. Re-registering gate (ii) on the CG1 estimator with this table as the new
+  band's provenance is explicitly a **review's call** — the slot recorded and
+  stopped, per the step's own clause.
+- **Logs:** `docs/testing/logs/20260830T003238Z_WF-6-step1b.log` — one
+  window, `timeout -k 30 400`, **Status 1 / 98 s**, `1 failed, 15 passed`
+  with `tests/environment`. The single failure is gate (ii) itself,
+  unchanged and deliberately red (known-issues `WF-6`); both new tests pass.
+  Well inside the standard tier and inside its window.
+- **Branch (if parked):** none — landed on `main`.
+- **Next-attempt hypothesis:** for the review — the CG1 floor at ~2% is the
+  natural provenance for a re-registered gate (ii), but `WF-6` step 1c (§9
+  item 3) is still worth running before the band is written, because it is
+  the one reading this leg cannot produce: a ring-set **DG0** mismatch near
+  8–9% would say the floor is the DG0 scatter itself, while a ring-set DG0
+  mismatch well under that would say the *centroid sampling* was half the
+  mechanism and the CG1 number is flattering. The two legs are independent by
+  design and 1c does not need this result.
+- **Residual `main` reds after this slot:** unchanged — the two entry-3 names,
+  `test_birdcage_volumes_partition_the_box` (`GEO-21`), `PORT-12`'s two-torus
+  drift at `-n 4/8/12`, and `WF-6` step 1's gate (ii). §9 open items after
+  this slot: item 2 (`TH-13` step 1) and item 3 (`WF-6` step 1c). Tree clean
+  at handoff; no anomalies, no denied commands.
