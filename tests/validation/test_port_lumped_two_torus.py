@@ -182,7 +182,31 @@ STEP1_LUMPED_RATIO_RECORD = 0.828893     # × omega*M12
                                          # (v0.7.2 read 0.829782)
 STEP1_CROSS_ROUTE_RECORD = 0.077431      # |ΔZ12|/|Z12|
                                          # (v0.7.2 read 0.077095)
+# The lumped route's own `Im Z12`, in ohms — the width-flat quantity.  Measured
+# 1.029281338 / …337 / …336 / …338 at -n 2 / 4 / 8 / 12 (`PORT-12` step 1), i.e.
+# flat to 2e-9 relative where the gap route moves 2.06e-04.
+STEP1_LUMPED_IM_Z12_OHM = 1.029281338
+LUMPED_WIDTH_FLATNESS_RTOL = 1.0e-8      # 5x the measured 2e-9 spread
 REPRODUCTION_BAND = 1.0e-4               # 0.01 pp — the grain step 1 printed to
+# `PORT-12` step 2 (ruled 2026-08-30 weekly review, option (i) with a bounded
+# envelope).  REPRODUCTION_BAND above is a **`-n 2` record**: every
+# `PORT-1`/`OPS-18`/`PORT-9` two-torus digit quoted in this module was measured
+# at two ranks, and the gap route — a `V = -int E.dl` line integral whose path
+# crosses partition boundaries — drifts with rank width on this fixture even
+# with the `shared_facet` ghost layer present (`GEO-24` step 1b, `PORT-12`
+# step 1).  The drift is non-monotone and confined to the gap route:
+#   -n 2  gap 0.894141 (= record)   Im Z12(lumped) 1.029281338
+#   -n 4  gap 0.894274 (+1.33e-04)  Im Z12(lumped) 1.029281337
+#   -n 8  gap 0.894347 (+2.06e-04)  Im Z12(lumped) 1.029281336   <- worst width
+#   -n 12 gap 0.894274 (+1.33e-04)  Im Z12(lumped) 1.029281338
+# all on 184 176 cells, every reconstruction digit identical.  So at
+# ``comm.size > 2`` the same assertion runs against this pre-registered
+# envelope — 3e-4, 1.46x headroom over the worst observed +2.06e-04 — rather
+# than being skipped: the drift stays *bounded on every width CI might run*.
+# Widening the record band itself was declined (it would let the `-n 2` record
+# drift); so was a root-cause step on the line integral (no birdcage or Larmor
+# quantity reads a gap-route integral — see the lumped negative control below).
+PARALLEL_DRIFT_ENVELOPE = 3.0e-4         # `comm.size > 2` only; provenance above
 
 # Exact-arithmetic identities: these are algebra on one solved field, so they
 # hold to round-off or the code is wrong.
@@ -591,18 +615,77 @@ def test_step_1_measurements_reproduce(lumped_run):
     guard against the step-2 additions (an extra ``dS`` form over the sheet, a
     facet-tag-driven measure, ~5 000 point evaluations) having perturbed the
     assembly they read from.
+
+    The records are `-n 2` records (see ``REPRODUCTION_BAND``); at wider
+    partitions the gap route drifts by up to +2.06e-04 for reasons that are
+    the fixture's, not this step's (`PORT-12`), so the comparison there runs
+    against the pre-registered ``PARALLEL_DRIFT_ENVELOPE`` and the measured
+    drift is printed.  The band is never widened at `-n 2`.
     """
     r = lumped_run
+    comm = MPI.COMM_WORLD
+    parallel = comm.size > 2
+    band = PARALLEL_DRIFT_ENVELOPE if parallel else REPRODUCTION_BAND
     for name, measured, record in (
         ("gap ratio", r["ratio_gap"], STEP1_GAP_RATIO_RECORD),
         ("lumped ratio", r["ratio_lumped"], STEP1_LUMPED_RATIO_RECORD),
         ("cross-route", r["cross_route_complex"], STEP1_CROSS_ROUTE_RECORD),
     ):
-        assert abs(measured - record) < REPRODUCTION_BAND, (
+        if parallel and comm.rank == 0:
+            print(
+                f"[PORT-12 step2] {name} at -n {comm.size}: {measured:.6f} "
+                f"vs the -n 2 record {record:.6f} — drift "
+                f"{measured - record:+.2e} against the "
+                f"{PARALLEL_DRIFT_ENVELOPE:.0e} envelope",
+                flush=True,
+            )
+        assert abs(measured - record) < band, (
             f"{name}: {measured:.6f} against step 1's record {record:.6f} — "
-            f"moved by {abs(measured - record):.2e}, above "
-            f"{REPRODUCTION_BAND:.0e}; step 2's reads changed step 1's solve"
+            f"moved by {abs(measured - record):.2e}, above {band:.0e} "
+            f"at comm.size = {comm.size}; "
+            + (
+                "the parallel drift envelope is a bound on a known fixture "
+                "effect (PORT-12), not a licence — a reading outside it is a "
+                "new fact about the gap route"
+                if parallel
+                else "step 2's reads changed step 1's solve"
+            )
         )
+
+
+@complex_only
+def test_the_lumped_route_is_width_flat(lumped_run):
+    """The negative control for `PORT-12`'s width qualification.
+
+    The gap route's rank-width drift is tolerated above only because the
+    *lumped* route — the sheet's own constitutive law, which is what every
+    production port model reads (`PORT-9`, `PORT-11`) — reads the same solved
+    field and does not move: ``Im Z12(lumped)`` is 1.029281338 / …337 / …336 /
+    …338 at 2 / 4 / 8 / 12 ranks, flat to 2e-9 where the gap route moves
+    2.06e-04.  If this assertion ever fires, the field itself moved with the
+    partition and `PORT-12`'s envelope stops being a statement about one
+    line-integral estimator.
+
+    It is load-bearing at 1e-8: the gap route's own ``Im Z12`` is 1.110303775,
+    which misses this record by 7.9e-02 relative — seven orders outside.
+    """
+    r = lumped_run
+    measured = r["z12_lumped"].imag
+    rel = abs(measured - STEP1_LUMPED_IM_Z12_OHM) / abs(STEP1_LUMPED_IM_Z12_OHM)
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"[PORT-12 step2] Im Z12(lumped) at -n {MPI.COMM_WORLD.size}: "
+            f"{measured:.9f} Ohm vs the record "
+            f"{STEP1_LUMPED_IM_Z12_OHM:.9f} — relative {rel:.3e} against "
+            f"{LUMPED_WIDTH_FLATNESS_RTOL:.0e}",
+            flush=True,
+        )
+    assert rel < LUMPED_WIDTH_FLATNESS_RTOL, (
+        f"Im Z12(lumped) = {measured:.9f} Ohm against the width-flat record "
+        f"{STEP1_LUMPED_IM_Z12_OHM:.9f} — relative {rel:.3e}, above "
+        f"{LUMPED_WIDTH_FLATNESS_RTOL:.0e}: the lumped route moved with rank "
+        "width, so PORT-12's drift is not confined to the gap-route integral"
+    )
 
 
 @complex_only

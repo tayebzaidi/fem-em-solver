@@ -16243,3 +16243,70 @@ issued**.
   (step 1c's ring construction) rather than the 51 centroids — the covariance
   identity tolerated the centroid set, a homogeneity statistic over an
   arbitrarily-shaped sample may not.
+
+## 2026-08-30T18:30Z — `PORT-12` step 2 — outcome: `complete` (13:30 CDT implementer slot)
+
+- **Item.** §9 On-deck item 2, taken as the first item not done or blocked
+  (item 1, `WF-6` step 1d, closed in the 12:00 slot). Executed the §7 `PORT-12`
+  step-2 paragraph as written — the 02:15 weekly review's ruling, option (i)
+  with a bounded envelope. **Tests only; no `src/` change.**
+- **Preflight.** Tree clean, container Up (4 days). No anomaly, no parked
+  branch met.
+- **What was built** (`tests/validation/test_port_lumped_two_torus.py`):
+  `REPRODUCTION_BAND` stays **1e-4** and its comment now states it is a
+  **`-n 2` record**, carrying step 1's four-width table inline; a new
+  pre-registered **`PARALLEL_DRIFT_ENVELOPE = 3.0e-4`** (provenance: max
+  observed +2.06e-04 at `-n 8`, 1.46× headroom) is the band
+  `test_step_1_measurements_reproduce` uses when `comm.size > 2`, printing
+  each measured drift on rank 0; and a sixth test,
+  `test_the_lumped_route_is_width_flat`, asserts `Im Z12(lumped)` =
+  **1.029281338** Ω at rtol **1e-8**. `STEP1_GAP_RATIO_RECORD` untouched.
+- **Compute.** Three windows / **310 s**, complex build +
+  `FEM_EM_REQUIRE_COMPLEX=1`, `-s`, `timeout -k 30 300` each,
+  `tests/environment` first in every window (11 env tests green in all three),
+  plus one 82 s probe window. All foreground.
+- **Negative control, run first as pre-stated.** `-n 8` on **unpatched `main`**:
+  Status 1, `1 failed, 15 passed` / 105 s
+  (`20260830T183101Z_PORT-12-step2-control-n8-main.log`) —
+  `gap ratio: 0.894347 … moved by 2.06e-04, above 1e-04`. The envelope is
+  visibly load-bearing; without it the module is simply red at that width.
+- **Anchors, all met on the patched tree.**
+  - `-n 8` (the worst width, not `-n 12`): **17 passed** / Status 0 / 103 s
+    (`20260830T183340Z_PORT-12-step2-patched-n8.log`). Gap ratio **0.894347**,
+    drift **+2.06e-04** printed against the 3e-04 envelope; lumped ratio drift
+    **−2.99e-07**; cross-route **+1.84e-04**; `Im Z12(lumped)` **1.029281338**
+    at relative **2.344e-10**.
+  - `-n 2`: **17 passed** / Status 0 / 102 s
+    (`20260830T183533Z_PORT-12-step2-patched-n2.log`). Gap ratio **0.894141** —
+    step 1's record exactly, inside the unmoved 1e-4 — and `Im Z12(lumped)` at
+    relative **4.649e-10**.
+  - Step 1's table reproduced digit-for-digit at both widths: `Im Z12(gap)`
+    1.110303775 (`-n 2`) / 1.110559796 (`-n 8`), `I_sheet`
+    −4.122422e−08−1.000166e−06j at both.
+- **The 1e-8 assert was probed load-bearing**, as the §7 paragraph required.
+  A one-line edit pointed `STEP1_LUMPED_IM_Z12_OHM` at the **gap** route's
+  `Im Z12` 1.110303775: the test fails at relative **7.297e-02**
+  (`20260830T183730Z_PORT-12-step2-probe-n2.log`, Status 1,
+  `1 failed, 5 deselected` / 82 s). The edit was reverted before any commit and
+  is **not** in the diff — verified by grepping the diff for the probe value.
+- **Scope held.** This is a **width qualification with a bound**, not a
+  root-cause fix (option (iii) stays declined) and not a widened record
+  (option (ii) stays declined). No band was widened, no record re-written, no
+  physics claim moved; §2 untouched.
+- **Residual `main` reds after this slot.** The two entry-3 names,
+  `test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), `TH-13`
+  step 1's precondition at 1.952350e-02. **The two-torus `PORT-12` `-n > 2`
+  drift is off this list** — bounded and green at both widths; its known-issues
+  entry is marked ✅ RETIRED with the step-2 row appended, in this commit.
+- **Branch parked this slot:** none. **Denied commands:** one compound
+  `grep …; awk …` refused by the permission layer as multiple operations, and a
+  scratch write to `/tmp/claude/` refused by the sandbox; both re-done with the
+  Read/Edit tools at no cost. Nothing worth an allowlist change.
+- **Next-attempt hypothesis.** `PORT-12` is closed and owes nothing. The next
+  slot takes §9 item 3 (`TH-13` step 1′, the ω² rescope at 1 MHz), which is
+  independent of everything here and retires the last non-entry-3 red on
+  `main`. One observation for whoever scopes further width work: the
+  `comm.size > 2` branch means CI at `-n 2` never exercises the envelope, so
+  the envelope's own regression cover is exactly the `-n 8` window a human or
+  a slot chooses to run — if width coverage matters, it wants a scheduled
+  wide-width sweep, not a per-module constant.
