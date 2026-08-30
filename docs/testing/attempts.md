@@ -22046,3 +22046,59 @@ still drained — **stop and journal** per §9's drain instruction. No chunk wor
   second, cheaper mitigation the review may prefer: allow a drained-queue slot
   to spend itself re-running a known-red gate for a fresh number rather than
   journaling a pure stop.
+
+---
+
+## 2026-08-30T14:00Z — (no chunk) — outcome: `anomaly` (queue drained, fifth consecutive slot)
+
+**09:00 CDT scheduled implementer slot** — the last of the four before the 10:30
+daily review. Tree clean, container Up, `§9` On deck still drained — **stop and
+journal** per §9's drain instruction. No chunk work, **no compute command
+issued**.
+
+- **Preflight, all verified this slot.** `HEAD = 3f93e67` (the 07:30 slot's
+  journal-only commit) — unchanged since 07:31, so nothing landed in the 90
+  minutes since. `git status --porcelain` **empty**; `git stash list` empty.
+  Container `fem-em-solver` **Up 3 days**. Branches: `main`,
+  `recovered/2026-08-30T1100Z`, and the long-lived
+  `docs/consolidate-plan-and-verify-toolchain`; **no `attempt/*`**.
+- **The parked branch is intact and recoverable.**
+  `recovered/2026-08-30T1100Z` = `e45f5aa` *"docs: park uncommitted 02:15
+  weekly-review output (second encounter)"*, 7 files, `+10144 / −9764` against
+  today's `main` tip (the 07:30 entry recorded `−9709` against `413cad1`; the
+  55-line delta is that slot's own `attempts.md` journal commit, not a change to
+  the parked content). Untouched this slot. Still the **daily review's** to
+  dispose of — do not delete it.
+- **Step 2: every On-deck item is done.** §9 on `main` is still the 2026-08-29
+  18:00 review's queue — item 1 `WF-6` step 1b ✅ 19:30, item 2 `TH-13` step 1 ✅
+  21:00, item 3 `WF-6` step 1c ✅ 22:30, items 4 and 5 the review's explicit
+  *(no ready item)* placeholders. Protocol step 2's fallback then reads §9's
+  drain paragraph, which **names no fallback chunk**. So this slot stops, as
+  00:00, 04:30 (dirty-tree first encounter), 06:00 and 07:30 did.
+- **Final tally for the 10:30 review: five implementer slots lost to one
+  upstream failure** — 00:00, 04:30, 06:00, 07:30, 09:00 — i.e. the entire
+  post-02:15 block. Two review slots produced no commit (02:15 weekly, output
+  parked and never committed; 03:00 daily, no commit at all). Nothing
+  implementer-side is broken: all five slots left a clean tree and did the
+  protocol-correct thing. The 10:30 review is the first opportunity to refill
+  §9; if it also misses, the 12:00 / 13:30 / 15:00 / 16:30 slots stop
+  identically.
+- **Residual `main` reds (unchanged — nothing was run).** The two entry-3 names,
+  `test_birdcage_volumes_partition_the_box` (`GEO-21`), `WF-6` step 1's gate (ii)
+  at 8.6516%, `TH-13` step 1's precondition at 1.952350e-02, and `PORT-12`'s
+  two-torus drift at `-n 4/8/12`.
+- **Logs:** none. **Branch parked this slot:** none. **Denied commands:** none.
+- **Next-attempt hypothesis (unchanged; now five slots of evidence, which is
+  the whole argument).** The failure is upstream and specific: the 02:15 weekly
+  review writes all its files before its first commit, so a kill anywhere in
+  that window loses the entire output *and* leaves the tree dirty, which then
+  costs two further slots to the first-encounter/park rule. A **commit-first
+  checkpoint** in `docs/automation/weekly-review.md` — commit the archive
+  rotation as its own commit before the plan edits begin — would have bounded
+  this outage at one slot instead of five; worth the 10:30 review proposing it
+  to the operator in the same pass that disposes of
+  `recovered/2026-08-30T1100Z` and refills §9. The second, cheaper mitigation
+  this slot now endorses explicitly: give the drain paragraph a **standing
+  cheap fallback** — a drained-queue slot re-runs one *named* known-red gate for
+  a fresh number instead of journaling a pure stop — so a review outage costs
+  measurements rather than the whole day.
