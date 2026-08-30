@@ -4872,7 +4872,7 @@ next weekly review adjudicates the returned numbers.
 |---|---|---|---|
 | `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ✅ | standard |
 | `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ✅ | heavy |
-| `ANS-4` | **Gapped four-leg birdcage, phantom-loaded, four lumped ports: 4×4 S-matrix at 10 / 64 / 128 MHz — runnable half** (commissioned 2026-08-30 02:15 weekly review; authoritative spec `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/SPEC.md`; the first independent absolute check of the coil-fed port model at a Larmor frequency) | ⬜ *(spec landed; runnable-half chunk entry written by the 10:30 daily review, mirroring `ANS-3`'s shape)* | heavy (≈ 160 s at `-n 2`, one command) |
+| `ANS-4` | **Gapped four-leg birdcage, phantom-loaded, four lumped ports: 4×4 S-matrix at 10 / 64 / 128 MHz — runnable half** (commissioned 2026-08-30 02:15 weekly review; authoritative spec `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/SPEC.md`; the first independent absolute check of the coil-fed port model at a Larmor frequency) | ✅ **runnable half 2026-08-30** (`20260830T213415Z_ANS-4-run1.log`, Status 0, 125 s at `-n 2`) — all three gates on all three rungs of one 116 085-cell mesh (ratio 1.000000, `reused_mesh`); 10 MHz reproduces leg (d)'s 4×4 to **1.158e-10** (band 1e-6) and leg (d0)'s column to **2.568e-10** (band 1e-9); 64 / 128 MHz reproduce `PORT-11` steps 2/3 to worst **1.075e-03** / **6.755e-04** (band 1e-2); control separation **1.585460** vs 2e-3. **Operator's AED replication at both orders is now Waiting-on-you; adjudication is a weekly review's** | heavy (≈ 160 s at `-n 2`, one command; measured 125 s) |
 | `ANS-5` | **Pin the element-order correspondence in every ANS `SPEC.md`/`COMPARISON.md`** — our production `degree 1` is what HFSS calls **Zero Order**, not its default **First Order**; the specs do not say so, and a default-settings replication is a different discretization (operator observation, interactive session 2026-08-28) | ⬜ **RULED 2026-08-30 02:15 weekly review** — (a) AED runs at **Zero Order** (matched, the adjudication column) **and** at its default **First Order** (an order-sensitivity column); **Mixed Order forbidden**; our side stays at one order (none of options 1–3 as framed — option 1 for the adjudication column plus a second AED column, our side unchanged, step 3 **not** taken). (b) `ANS-1` **is in scope** for the spec line (state the Maxwell 3D formulation and order AED used). Already-returned numbers at an unrecorded order stand as an "order-unknown" column. Steps 1–2 are documentary and queueable; `ANS-4`'s spec already carries the wording | smoke (no compute) |
 
 
@@ -5058,7 +5058,7 @@ combined XDMF. Dispatch through the runner's `ans:` group
 </details>
 
 **`ANS-4` — loaded birdcage 4-port S-matrix at 10 / 64 / 128 MHz: runnable
-half** ⬜ *(commissioned 2026-08-30 by the weekly planning review — its
+half** ✅ **2026-08-30** *(commissioned 2026-08-30 by the weekly planning review — its
 `SPEC.md` landed via `recovered/2026-08-30T1100Z`; this entry written by the
 10:30 daily review to give the commission its runnable-half chunk, mirroring
 `ANS-3`'s shape. Physics gated by `PORT-9` ✅ and `PORT-11` ✅; the case is the
@@ -5100,6 +5100,39 @@ and one combined XDMF (the P1-driven field at 128 MHz through the shared
 > adjudicates. **Negative result:** any drift from the gated records outside
 > the imported bands is a finding about the example path — report, annotate
 > this entry, stop.
+>
+> **Executed 2026-08-30 16:30 slot — ✅, everything green on the first run.**
+> `./run_examples.sh -e ans:4 -n 2 -t 500` through the harness
+> (`20260830T213415Z_ANS-4-run1.log`, **Status 0, 125 s**, heavy tier): the
+> host runner did **not** hit the docker-socket denial, so no substitution was
+> needed. Written: `04_birdcage_four_port_10_64_128MHz.py` + same-stem guide,
+> `metrics.json`, `COMPARISON.md` (our column filled; **two** blank AED
+> columns, Zero Order and First Order, per `ANS-5`), and
+> `paraview_output/ans4_birdcage_four_port_128mhz_combined.xdmf` (P1-driven at
+> 128 MHz, 5.8 s export solve). **Measured:** mesh 116 085 cells, ratio
+> **1.000000**, `reused_mesh` asserted on both Larmor rungs; sweeps
+> 22.7 / 22.9 / 22.5 s (mesh built once in 21.9 s); gates (i)
+> **1.469e-14 / 1.126e-15 / 8.763e-16**,
+> (ii) σ_max **0.999992805 / 0.999721388 / 0.998974779** with column-power
+> maxima 0.793823974 / 0.804704664 / 0.861668762, (iii′) spreads
+> 0.0553 / 0.0353 / 0.0214%, 0.0573 / 0.0599 / 0.0370%,
+> 0.1012 / 0.0916 / 0.0654% with pooled separations 166.7× / 671.1× / 576.9×
+> against the 10× floor; stop rule 128 MHz cells/λ **12.5024** ≥ 10. **Records
+> reproduced:** 10 MHz leg (d)'s 4×4 worst entry **1.158e-10** (band 1e-6) and
+> leg (d0)'s column **2.568e-10** (band 1e-9); 64 MHz worst **1.075e-03** and
+> 128 MHz worst **6.755e-04** against `PORT-11` steps 2/3 (band 1e-2, the
+> misses are on spreads recorded to three digits — σ_max and column power
+> agree to 1e-10). **Negative control, printed first:** the retired `PORT-0`
+> heuristic at 128 MHz, `is_placeholder=True`, one `DeprecationWarning`,
+> max|off-diagonal| **0.000000e+00**, separation **1.585460** against the 2e-3
+> floor. Docrefs census `20260830T213718Z_ANS-4-docrefs2.log`: **guide=0**,
+> `dead=53` unchanged and entirely `EX-36`'s (the new case contributes none;
+> the first census run flagged the guide's three missing `EX-15` headings and
+> the guide was rewritten to carry them). No `src/` change, so nothing owed
+> host-side. **Carry-forward:** the runnable half only — the gates are
+> self-consistency identities on one fixture, and the AED replication at
+> **both** orders is now the dashboard's Waiting-on-you; adjudication is a
+> weekly review's, on the numbers the operator returns.
 
 ---
 
@@ -5376,7 +5409,16 @@ denial; do not spend the slot on it.
    **Scope:** step 1′ only; step 2 and the §10 decision are a review's.
    **Negative result:** in-between or saturated — record on the entry and
    the degree-2 known-issues entry, stop.~~
-4. **`ANS-4` — runnable half of the loaded-birdcage 4-port benchmark
+4. ✅ **DONE 2026-08-30 16:30 slot** — green on the first run,
+   `20260830T213415Z_ANS-4-run1.log` Status 0 / **125 s** (estimate was
+   160 s). All three gates on all three rungs, mesh ratio 1.000000 with
+   `reused_mesh`, 10 MHz records to 1.158e-10 / 2.568e-10, Larmor records to
+   worst 1.075e-03, control separation 1.585460. Script + guide +
+   `metrics.json` + `COMPARISON.md` (two blank AED columns) + 128 MHz XDMF
+   landed; docrefs `guide=0`, `dead=53` still `EX-36`'s. `ANS-4` ✅ — **the
+   operator's AED replication at both orders is the dashboard's Waiting-on-you
+   item; adjudication is a weekly review's.**
+   ~~**`ANS-4` — runnable half of the loaded-birdcage 4-port benchmark
    (heavy by the runner's `-t 500`, complex, `-n 2`, `main`; independent;
    commissioned 02:15 weekly review, §7 entry written this review).**
    Execute the §7 `ANS-4` entry as written:
@@ -5397,7 +5439,7 @@ denial; do not spend the slot on it.
    is `EX-36`'s — read this case's own references only. **Scope:**
    runnable half only, no adjudication, no absolute claim from our side;
    the operator's AED runs are already Waiting-on-you item 1. **Negative
-   result:** drift outside the imported bands — report, annotate, stop.
+   result:** drift outside the imported bands — report, annotate, stop.~~
 5. **`ANS-5` steps 1–2 — write the element-order ruling into the specs
    (smoke, **no compute**, `main`; independent; ruled 02:15 weekly review).**
    Step 1: a mandatory *Basis / element order* line in each `SPEC.md`

@@ -20,7 +20,9 @@ and `|Im P|/Re P` at the driven port rises 0.34 → 1.76 → 2.66.
 
 ## Status
 
-- [ ] Runnable half implemented (`ANS-4`, PROJECT_PLAN §7) — script in this
+- [x] Runnable half implemented (`ANS-4` ✅ 2026-08-30,
+      `docs/testing/logs/20260830T213415Z_ANS-4-run1.log`, Status 0, 125 s at
+      `-n 2`) — script in this
       directory dispatching through `./run_examples.sh -e ans:4`, importing
       every constant from the `PORT-9`/`PORT-11` gate modules and
       `examples/ports/05_birdcage_larmor_frequency_ladder.py`, writing

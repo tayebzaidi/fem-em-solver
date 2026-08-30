@@ -16383,3 +16383,82 @@ issued**.
   If the solver's RHS does not carry the `iωμ₀` factor the quasi-static
   argument assumes, that is a formulation reading worth having before step 2
   interprets any gradient norm.
+
+## 2026-08-30T21:40Z — `ANS-4` — outcome: `complete` (16:30 CDT implementer slot)
+
+- **Item.** §9 On-deck **item 4**, the first not-done/not-blocked entry (items
+  1–3 all executed by the three preceding slots). Preflight clean, container Up
+  4 days, no `attempt/*` or `recovered/*` outstanding.
+- **What was tried.** The §7 `ANS-4` entry as written: the runnable half of the
+  loaded-birdcage four-port benchmark. New
+  `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/04_birdcage_four_port_10_64_128MHz.py`
+  + same-stem guide, dispatched through the host runner
+  (`./run_examples.sh -e ans:4 -n 2 -t 500`) inside `run_and_log.sh`. The ladder
+  is `_four_port_rung` from the gate module, and every band, record, gate
+  assertion, heuristic control and ParaView field builder is imported from
+  `EX-34` (`examples/ports/05_birdcage_larmor_frequency_ladder.py`) — nothing
+  re-implemented, nothing transcribed. `build_four_port_sweep` was **not** used:
+  it builds `PORT-9`'s single 10 MHz sweep, whereas the three-rung one-mesh
+  ladder the SPEC promises AED is exactly what `_four_port_rung(..., reuse=)`
+  constructs, so importing it would have been a second path to the same fixture.
+  The example modules are loaded by `importlib.util.spec_from_file_location`
+  rather than `__import__` on a synthesised prefixed name (what `ANS-1`/`ANS-3`
+  do — see the denial/finding note below).
+- **Runs (heavy tier, complex, `-n 2`, foreground).**
+  `20260830T213415Z_ANS-4-run1.log` — **Status 0, 125 s**, green on the first
+  run, no shrink and no second window needed (estimate was 160 s). Census:
+  `20260830T213635Z_ANS-4-docrefs.log` flagged the guide's three missing `EX-15`
+  headings (`guide=3`); guide rewritten and
+  `20260830T213718Z_ANS-4-docrefs2.log` reads **`guide=0`**, `dead=53`
+  unchanged and entirely `EX-36`'s — the new case contributes no dead reference
+  and its own XDMF is fresh. Total compute this slot ≈ 130 s.
+- **Measured.** Mesh 116 085 cells, ratio **1.000000** against `GEO-19` step B,
+  built once in 21.9 s and `reused_mesh` asserted on both Larmor rungs; sweeps
+  22.7 / 22.9 / 22.5 s. Gate (i) `‖S−Sᵀ‖/‖S‖` **1.469e-14 / 1.126e-15 /
+  8.763e-16** (band 1e-3); gate (ii) σ_max **0.999992805 / 0.999721388 /
+  0.998974779**, column-power maxima 0.793823974 / 0.804704664 / 0.861668762
+  (tolerance 1e-9); gate (iii′) class spreads 0.0553 / 0.0353 / 0.0214%,
+  0.0573 / 0.0599 / 0.0370%, 0.1012 / 0.0916 / 0.0654% (band 0.5%) with pooled
+  separations 166.68× / 671.05× / 576.95× (floor 10×). Stop rule: 128 MHz
+  phantom cells/λ **12.5024** ≥ 10, enforced before any 128 MHz gate was read.
+  Records: 10 MHz leg (d)'s 4×4 worst entry **1.158e-10** (band 1e-6), leg
+  (d0)'s column **2.568e-10** (band 1e-9); 64 MHz worst **1.075e-03**, 128 MHz
+  worst **6.755e-04** against `PORT-11` steps 2/3 (band 1e-2) — σ_max and column
+  power agree to 1e-10, the whole miss is on spreads recorded to three digits.
+  Negative control printed **first**: retired `PORT-0` heuristic at 128 MHz,
+  `is_placeholder=True`, 1 `DeprecationWarning`, max|off-diagonal|
+  **0.000000e+00**, separation **1.585460** vs the 2e-3 floor (§9 predicted
+  1.585461 — the last digit is the run-to-run tail, not a move).
+- **Artifacts.** `metrics.json` (full complex 4×4 `Z` and `S` per rung, gate
+  figures, `|Im P|/Re P`, resolution table, basis metadata), `COMPARISON.md`
+  (our column filled; **two** blank AED columns, Zero Order and First Order, per
+  the `ANS-5` ruling, with the adjudication column named), and
+  `paraview_output/ans4_birdcage_four_port_128mhz_combined.xdmf` (P1-driven at
+  128 MHz, 5.8 s export solve).
+- **Outcome/scope.** `ANS-4` ⬜ → ✅ (runnable half). No `src/` change, so no
+  host-side re-runs owed. §2 untouched: these are **self-consistency identities
+  on one fixture** and the case claims nothing absolute — that is what the AED
+  columns are for. `SPEC.md`'s first status box ticked; the second and third
+  (operator replication, adjudication) are not ours. No branch parked, no
+  known-issues change, no red created or retired.
+- **Denials / findings for the review.** No command was denied. One incidental
+  finding, **not fixed here** (out of this chunk's scope, and it is a
+  documentation-adjacent code path in another case): `ANS-1` and `ANS-3` import
+  their gated example module as
+  `__import__("01_materials_01_dodd_deeds_coil_loading")` /
+  `__import__("02_ports_02_package_sparameter_sweep")`, but the files on disk
+  are `01_dodd_deeds_coil_loading.py` and `02_package_sparameter_sweep.py` —
+  those names cannot resolve. Either both cases are currently unrunnable or the
+  runner rewrites the module name; nobody has re-run `ans:1`/`ans:3` since
+  `67e4c1c` renamed the artifacts, and the census's two stale `ans1_`/`ans3_`
+  XDMF entries (104.8 h) are consistent with "unrunnable". `ANS-4` sidesteps it
+  by importing by path. **One `./run_examples.sh -e ans:1,3 -n 2 -t 500` window
+  (~5 min) settles it** and is the cheapest queueable item to come out of this
+  slot.
+- **Next-attempt hypothesis.** Nothing to retry — the chunk closed. The queue's
+  own next entry is item 5 (`ANS-5` steps 1–2, no compute), which this case's
+  `COMPARISON.md` now has a worked example of: the two-AED-column shape and the
+  6/20 unknowns-per-tet line are written out here and can be lifted into `ANS-1`
+  and `ANS-3` verbatim. The dashboard's Waiting-on-you should now carry
+  **three** commissioned AED replications, `ANS-4` being the only one at a
+  Larmor frequency.
