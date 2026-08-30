@@ -95,9 +95,25 @@ means — for yourself.
    to `docs/testing/attempts-archive.md` (create it with a one-paragraph
    preamble mirroring plan-archive.md's on first use).
 
-7. **Commit** as `docs(plan): weekly review YYYY-MM-DD`. If nothing needs
-   changing, commit nothing — §5.2's audit-note prohibition applies here
-   too.
+   **Commit-first checkpoint (added 2026-08-30).** Do the rotation
+   **before** any other edit in this session and commit it on its own as
+   `docs(plan): weekly review YYYY-MM-DD — archive rotation` the moment
+   the zero-loss check passes. Then, after each of steps 3–5 lands a
+   file, `git add` it and amend nothing — commit again as
+   `… — <step name>` if the step's output is complete, otherwise leave it
+   staged. Reason: the 2026-08-30 02:15 session wrote ~10 000 lines across
+   seven files between 02:19 and 02:52 and died before its single commit;
+   the dirty tree tripped the 04:30 slot's preflight, was parked by the
+   06:00 slot, and every implementer slot until the 10:30 daily review
+   found a drained §9 — five implementer slots and two review slots lost
+   to one un-checkpointed session (attempts.md `2026-08-30T09:31Z` …
+   `T14:00Z`). Several small commits are cheaper than that; §5.2's
+   audit-note prohibition is about content-free commits, not about
+   checkpointing real work.
+
+7. **Commit** the remainder as `docs(plan): weekly review YYYY-MM-DD`. If
+   nothing needs changing, commit nothing — §5.2's audit-note prohibition
+   applies here too.
 
 ## Realism rules (the reason this review exists)
 

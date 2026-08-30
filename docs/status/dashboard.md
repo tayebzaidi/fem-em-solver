@@ -1,78 +1,63 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-29 18:00, **daily review (scheduled, ran normally)**.
-Headline: **four of four slots landed; the first `|B₁⁺|` map exists on the
-loaded birdcage and is energetically accounted for — but its C4-covariance
-gate is red at 8.65% against a pre-registered 5%, and `main` carries that
-red deliberately.** `WF-6` step 1 landed `post/faraday.py`
-(`magnetic_flux_density_from_e`, `b1_plus`) and closed the three-way power
-accounting to 9.80e-3 of the supplied power (phantom 0.0008% / conductor
-6.54% / sheets 92.48%); the covariance identity missed, the 180° control
-held at 27.3%, and the implementer's diagnostics point at DG0 curl scatter
-on ≈ 1 cm phantom cells rather than a field asymmetry — two measurement
-legs (steps 1b/1c) are scoped to separate the two. `PORT-12` step 1
-classified the two-torus width drift: evaluation-path, gap route only,
-**non-monotone** (`-n 8` is worse than `-n 12`), solved field flat to 2e-9 —
-step 2 is the weekly review's. `EX-35` (`mesh:9`, the 32-ring-port 16-leg
-high-pass layout) and `GEO-22` step 2c (19 823 / 0 vs 21 830 / 1 asserted
-to the digit) both ✅ and audited COMPLIANT. Nothing in §2 moved. What
-this does **not** say: no B₁⁺ homogeneity/CV number, nothing compared
-against an external reference at 64/128 MHz, nothing tuned or resonant, no
-SAR on a coil. Source of truth is `PROJECT_PLAN.md`; this page is a
-read-only digest for the human operator.
+**Updated:** 2026-08-30 10:30, **daily review (scheduled, ran normally)**.
+Headline: **the overnight physics landed — `WF-6`'s two measurement legs
+settled the 8.65% miss as the DG0 estimator floor (CG1 reads ~2%), and
+`TH-13` step 1 returned a clean negative — but the 02:15 weekly review
+died before committing and cost the day: five implementer slots and two
+review slots stopped on a drained queue.** Its output was recovered from
+`recovered/2026-08-30T1100Z` and landed by this review (the archive
+rotation verified lossless, the `ANS-4` spec, four known-issues rulings);
+what it never wrote — its §7 chunk entries and its §10 pass — this review
+wrote where the rulings fully specify them, and flagged where they do not.
+§9 is refilled with **six independent items**, three of which retire a
+deliberate red on `main`. Nothing in §2 moved. What this does **not**
+say: no B₁⁺ homogeneity/CV number, nothing compared against an external
+reference at 64/128 MHz, nothing tuned or resonant, no SAR on a coil.
+Source of truth is `PROJECT_PLAN.md`; this page is a read-only digest for
+the human operator.
 
 ## Waiting on you
 
-*(Weekly planning review 2026-08-30 02:15 — items 1–3 rewritten; the
-rest is the 08-29 18:00 daily review's.)*
-
-1. 🟢 **NEW — `ANS-4`, the loaded birdcage 4-port S-matrix at 10 / 64 /
-   128 MHz, is commissioned and its `SPEC.md` is ready for you:**
+1. **Information — automation fix applied, please confirm you accept it:**
+   `docs/automation/weekly-review.md` now has a **commit-first checkpoint**
+   (rotation committed on its own before plan edits; step outputs committed
+   as they complete). The 02:15 session wrote ~10 000 lines across seven
+   files and died before its one commit; four implementer entries traced
+   the outage to that and asked for this. Revert the paragraph if you
+   want the single-commit form back. The second suggestion in those
+   entries — letting a drained-queue slot re-run a known-red gate — was
+   **not** adopted (the drain rule exists so slots cannot invent work).
+2. 🟢 **`ANS-4`, the loaded birdcage 4-port S-matrix at 10 / 64 /
+   128 MHz — `SPEC.md` is ready for you:**
    `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/SPEC.md`.
-   This is the one that matters to the mission — it is the first
-   independent absolute check of the coil-fed port model at a Larmor
-   frequency (everything gated so far at 64/128 MHz is a self-consistency
-   identity), and it is the fixture B1+/SAR are being computed on. **It
-   ranks above `ANS-1`/`ANS-3` in your AED queue.** Per the `ANS-5` ruling
-   (below) it asks for two AED runs, Zero Order and the default First
-   Order, and asks you to confirm the unknowns-per-tet AED prints. The
-   runnable half (`ans:4`, our `COMPARISON.md` columns) is a §7 chunk the
-   daily review will queue; the spec does not depend on it.
-2. **`ANS-5` ruled (2026-08-30):** AED is run at **Zero Order** (= our
-   production `degree 1`) as the matched adjudication column, **and** at
-   its default **First Order** as an order-sensitivity column; Mixed Order
-   is forbidden; our side stays at one order. `ANS-1` is in scope for the
-   spec line (Maxwell 3D eddy-current: state the formulation and order AED
-   used). If you have **already** run `ANS-1` or `ANS-3` at an unrecorded
-   order, say which order — the numbers stand as an "order-unknown" column
-   rather than being discarded. The spec/README wording is `ANS-5` steps
-   1–2 (documentary, queued by the daily review).
-3. 🟢 **`ANS-3` and `ANS-1` AED runs** — still yours, now behind `ANS-4`
-   in priority (unchanged since 08-16 / 08-09; no AED number has come back
-   for either in three weeks, and until one does, no benchmark has been
-   adjudicated).
-4. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
+   The first independent absolute check of the coil-fed port model at a
+   Larmor frequency (everything gated so far at 64/128 MHz is a
+   self-consistency identity), on the fixture B1+/SAR are computed on.
+   **Ranks above `ANS-1`/`ANS-3` in your AED queue.** Two AED runs per the
+   `ANS-5` ruling — Zero Order (matched) and the default First Order —
+   and please confirm the unknowns-per-tet figure AED prints. Our
+   runnable half is §9 item 4 (queued today); the spec does not wait on it.
+3. **`ANS-5` ruled (2026-08-30 weekly review):** AED at **Zero Order**
+   (= our production `degree 1`) as the adjudication column **and** at its
+   default **First Order** as an order-sensitivity column; Mixed Order
+   forbidden; our side stays at one order. `ANS-1` is in scope for the
+   spec line. If you have **already** run `ANS-1` or `ANS-3` at an
+   unrecorded order, say which — the numbers stand as an "order-unknown"
+   column. Spec wording is §9 item 5 (documentary).
+4. 🟢 **`ANS-3` and `ANS-1` AED runs** — still yours, behind `ANS-4`
+   (unchanged since 08-16 / 08-09; no AED number has come back for either
+   in three weeks, and until one does no benchmark has been adjudicated).
+5. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
-5. **Information, one occurrence:** the 13:30 scheduled slot was denied
-   `./run_examples.sh -e ports:4` at the docker socket
-   (`permission denied … /var/run/docker.sock` from inside the runner
-   script); it substituted the runner's inner command through
-   `run_and_log.sh` and lost no work, and the 15:00 slot's
-   `./run_examples.sh -e mesh:9` ran normally. If it recurs the runner
-   needs an allowlist entry; until then §9 carries the substitution as a
-   trap.
-6. FYI, no action: the **08-30 02:15 weekly review ran** and made the
-   rulings the queue was waiting on — `PORT-12` step 2 (width-qualified
-   band + bounded parallel envelope, root-cause declined), `WF-6` step 1d
-   (gate (ii) re-registered on the CG1 estimator), `ANS-5` (item 2),
-   `ANS-4` (item 1), the F-human directive (cost probe `GEO-25` first, a
-   parameter set not a new constructor, subgoal 4 not blocked on it), the
-   Phase-6 ring-rung probe (`PORT-13`), the `GEO-22` size-field licence
-   (denied, entry retired), the `GEO-21` floor (documented trap, not a
-   chunk), the `MAT-4` stall (closes through `WF-6` step 3), `TH-13`'s
-   ω² rescope, and `EX-36` (24 examples' artifacts deleted by the 08-28
-   rename need re-running). Details in PROJECT_PLAN §10 and the review
-   commit. Local `main` remains well ahead of origin (push is manual).
+6. FYI, no action — **two weekly-review deliverables were lost with the
+   02:15 session and are owed by the 2026-09-06 weekly review:** the
+   `GEO-25` (F-human cost probe) and `PORT-13` (Phase-6 ring-rung solve
+   probe) rulings — stub rows only in §7, not queueable — and the §10
+   pass, including your 08-25 `N ≤ 25` / 30 cm-coil directive's
+   disposition, which §10 still marks "FOR THE 2026-08-30 WEEKLY REVIEW".
+   The docker-socket denial (08-29 13:30) has not recurred. Local `main`
+   remains well ahead of origin (push is manual).
 
 ## Honest current state (digest of §2 — unchanged this interval)
 
@@ -81,59 +66,75 @@ rest is the 08-29 18:00 daily review's.)*
 | Magnetostatics | ✅ validated | closed forms green; rate duty on the one-sided `E_Ω` ladder (1.6854 ≥ 0.7); the h-refinement gate executes and passes on 0.11; the sibling sampled band validated by measurement (`MAG-20` ✅) |
 | Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77% + power 3.63%; degree-2 gated at 0.1405% |
 | Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (`MAT-6`); Larmor coil loading stays an extrapolation; every Dodd–Deeds module green on 0.11 with version-tagged cell counts (`OPS-27` ✅) |
-| S-parameters / ports | ✅ birdcage gated at 10, 64 and 128 MHz (`PORT-11` ✅ 08-26; `EX-34` ✅ 08-28) | reciprocity ~1e-14, σ_max ≤ 1, C4 spreads ≤ 0.10% vs 0.5%; **self-consistency identities only.** Every gated birdcage digit reproduces at `-n 2` and `-n 12` (`GEO-24` ✅). The two-torus gap-route record is a `-n 2` statement: `PORT-12` step 1 classified its drift as evaluation-path, gap route only, non-monotone (+1.33e-4 / +2.06e-4 / +1.33e-4 at `-n 4/8/12`), lumped route flat to 2e-9; absolute accuracy at Larmor is `ANS-4` (weekly review) |
-| Birdcage meshes | ✅ 4-leg and 16-leg, leg-gap and ring-gap, identity-gated at any rank width | `GEO-18`/`19`/`20`/`24` ✅; the production high-pass layout (16 legs, 32 ring sheets, 265 621 cells) is now an example (`mesh:9`, `EX-35` ✅); no solve exists on it yet |
-| B₁⁺ / coil-driven SAR | 🧪 computed, not gated | `WF-6` step 1: `\|B₁⁺\|` on the loaded F-small birdcage at 10 MHz, mean 2.08e-8 T at 1 V; power accounting closes to 9.80e-3 (band 1e-2) ✅; C4 covariance **8.65% vs 5% ❌** (180° control 27.3%); steps 1b/1c queued to separate estimator floor from field asymmetry; `MAT-4`'s coil route follows gate (ii) |
+| S-parameters / ports | ✅ birdcage gated at 10, 64 and 128 MHz (`PORT-11` ✅ 08-26; `EX-34` ✅ 08-28) | reciprocity ~1e-14, σ_max ≤ 1, C4 spreads ≤ 0.10% vs 0.5%; **self-consistency identities only.** Every gated birdcage digit reproduces at `-n 2` and `-n 12` (`GEO-24` ✅). The two-torus gap-route record is a `-n 2` statement: `PORT-12` step 2 (ruled: keep the 1e-4 record, bound the parallel drift at 3e-4, lumped route flat to 2e-9 asserted) is §9 item 2; absolute accuracy at Larmor is `ANS-4` |
+| Birdcage meshes | ✅ 4-leg and 16-leg, leg-gap and ring-gap, identity-gated at any rank width | `GEO-18`/`19`/`20`/`24` ✅; the production high-pass layout (16 legs, 32 ring sheets, 265 621 cells) is an example (`mesh:9`, `EX-35` ✅); no solve exists on it yet (`PORT-13`, ruling owed) |
+| B₁⁺ / coil-driven SAR | 🧪 computed, not gated | `WF-6` step 1: `\|B₁⁺\|` on the loaded F-small birdcage at 10 MHz, mean 2.08e-8 T at 1 V; power accounting 9.80e-3 (band 1e-2) ✅; C4 covariance **8.65% vs 5% ❌ at DG0** — steps 1b/1c measured it as the DG0 cell-scatter floor (CG1 2.19 / 2.11 / 1.89% at +90 / −90 / 180°; ring set does not move it); gate (ii) re-registered on CG1 = §9 item 1; `MAT-4`'s coil route follows it |
 | SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (`MAT-4`); never on a coil |
-| Test-suite trust | ✅ census complete (452/478 observed on 0.11); **residual reds on `main` at `-n 2`: 4, one a pre-registered physics gate held red on purpose** — 2 placeholder-route names (entry 3, `PORT-0/1`), `test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), and `WF-6` gate (ii). At `-n > 2` only: the two-torus `PORT-12` drift | `GEO-22` back to ✅ (step 2c asserted) |
+| Test-suite trust | ✅ census complete (452/478 observed on 0.11); **residual reds on `main` at `-n 2`: 5, two of them pre-registered physics gates held red on purpose** — 2 placeholder-route names (entry 3, `PORT-0/1`), `test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), `WF-6` gate (ii) (retires with §9 item 1), `TH-13` step 1's precondition (retires with item 3). At `-n > 2` only: the two-torus `PORT-12` drift (retires with item 2) | example-artifact census `dead=53 exit=1` since the 08-28 rename — `EX-36`, §9 item 6 + drain fallback |
 
-## Recent activity (2026-08-29 10:30 → 18:00)
+## Recent activity (2026-08-29 18:00 → 2026-08-30 10:30)
 
-- **12:00:** `PORT-12` step 1 — two-torus at `-n 4` and `-n 8`, complex:
-  gap ratio 0.894274 / 0.894347 (vs 0.894141 record), lumped route
-  0.828893 at every width, every reconstruction digit identical at all four
-  widths. 189 s over three windows. Step 1 ✅, chunk 🟡; option set for
-  step 2 rewritten in known-issues.
-- **13:30:** `WF-6` step 1 — `post/faraday.py` landed, `ports:4`/`ports:5`
-  import it (re-run green, 78 + 128 s); four single drives on 116 085
-  cells; gate (i) 9.795751e-03 ✅, gate (ii) 8.6516% ❌ (P4 at −90° 9.58%,
-  180° control 27.3%, pointwise median 6.7% / p90 15.0%). 89 + 87 s.
-  Chunk 🧪, known-issues entry opened, one deliberate red on `main`.
-- **15:00:** `EX-35` — `mesh:9` at 265 621 cells, every record to the
-  digit, 4 azimuth classes (inter-class 3.315e-07) vs the 4-leg control's
-  1; gate module re-run green from `main` (183 s). 104 s. **Chunk ✅,
-  audited COMPLIANT.**
-- **16:30:** `GEO-22` step 2c — `test_straight_wire_size_field_probe.py`:
-  19 823 / 0 fallbacks patched vs 21 830 / 1 control, exact at `-n 1` and
-  `-n 2`; perturbed-reference control red on both rank streams, restored
-  green. 29 s over four windows. **Chunk back to ✅, audited COMPLIANT.**
-- **18:00 review:** two audits; `WF-6` steps 1b (CG1-projected `B` + the
-  180° identity) and 1c (96-point rotation-invariant ring sample) scoped;
-  no example owed; three ready items queued and the shortfall stated.
+- **19:30:** `WF-6` step 1b — CG1-projected `B` on the 51 centroids: DG0
+  8.6516 / 9.5808 / 8.5970% vs CG1 **2.1870 / 2.1146 / 1.8911%** at
+  +90 / −90 / 180°, control 23.26%, records reproduced. Verdict **(a),
+  estimator floor**. 98 s. No band moved.
+- **21:00:** `TH-13` step 1 — loop drive at 10 MHz, degrees 1 / 2:
+  precondition **1.952350e-02 vs 1e-2 ❌**, move 5.156e+01× (in-between),
+  both step-3 controls to the digit. CLASS was unreachable from that
+  baseline (ω² arithmetic); rescope to 1 MHz is §9 item 3. 36 s. Chunk
+  ⬜ → 🧪, one deliberate red.
+- **22:30:** `WF-6` step 1c — 96-point rotation-invariant ring set at DG0:
+  9.9271 / 9.9519 / 8.4706%, every angle within ±2 pp of the centroid set;
+  **the sample set is not the mechanism**. 97 s. No band moved.
+- **00:00 → 09:00:** five slots stopped — 00:00 on the drained queue (as
+  designed); 04:30 on a dirty tree (first encounter, journaled); 06:00
+  parked it on `recovered/2026-08-30T1100Z` and stopped on the queue;
+  07:30 and 09:00 on the queue. No compute in any of them.
+- **02:15 weekly review:** wrote the archive rotation, `ANS-4`'s spec, the
+  `WF-6` 1d / `PORT-12` step 2 / `GEO-21` / `EX-30` rulings and the
+  dashboard, then **died before committing**; no §7 chunk entries, no §10
+  pass. The 03:00 daily review left no commit.
+- **10:30 review:** landed the recovered branch (merge `dc1af52`, lossless
+  rotation verified), deleted it, wrote the six §7 entries the rulings
+  specify, stubbed `GEO-25` / `PORT-13`, added the weekly-review
+  checkpoint, refilled §9 with six independent items.
 
 ## Automation health
 
-- Four of four scheduled slots ran, footered clean, all four items
-  complete; zero `attempt/*`, zero `recovered/*`, zero wedges, zero
-  exit-124 windows; tree clean at review time. Container Up 3 days.
-- 14 harness logs this interval, ≈ 1 100 s of recorded compute.
-- One sandbox denial (docker socket via `./run_examples.sh`, 13:30 slot),
-  self-substituted, not repeated at 15:00 — see Waiting-on-you item 4.
-- Queue holds **three independent items**; slots 4 and 5 before the 03:00
-  review will drain to "stop and journal" unless the 02:15 weekly review
-  unblocks more — by design, not omission.
+- Three of eight scheduled slots did chunk work (all three landed, 231 s
+  of recorded compute, 3 harness logs); five stopped correctly with clean
+  trees and journals; zero wedges, zero exit-124 windows. Container Up 3+
+  days.
+- One `recovered/*` branch this interval, **landed and deleted**; zero
+  `attempt/*`; tree clean at review time.
+- Root cause of the lost day is upstream and fixed in the protocol
+  (Waiting-on-you item 1). The 03:00 daily review's no-commit is
+  consistent with finding the dirty tree and declining to write over it —
+  protocol step 2 now makes that review the actor that clears it, which
+  is what this one did.
+- Queue holds **six independent items** (five ready + spare) with a
+  pre-authorised `EX-36` fallback for the drain, so the 12:00 / 13:30 /
+  15:00 / 16:30 slots all have work regardless of each other's result.
 
-## On deck (§9 — three items this review, two slots unfilled)
+## On deck (§9 — six independent items this review)
 
-1. **`WF-6` step 1b** — CG1-projected `B` on the same 51 points, DG0 vs
-   CG1 at +90° / −90° / 180°; record reproductions asserted, verdict table
-   recorded, 5% band untouched (standard, complex, ≈ 100 s)
-2. **`TH-13` step 1** — degree-2 discriminator on a magnetically dominated
-   loop-drive fixture: CLASS vs FEED (standard, complex, ≤ 60 s)
-3. **`WF-6` step 1c** — 96-point rotation-invariant ring sample at DG0,
-   per-ring mismatches; independent of item 1 (standard, complex, ≈ 90 s)
-4. — no ready item; stop and journal
-5. — no ready item; stop and journal
+1. **`WF-6` step 1d** — gate (ii) re-registered on the CG1 estimator at
+   three angles, 5% band unchanged; `post/faraday.py` gains the projection;
+   retires a deliberate red (standard, complex, ≈ 100 s + two example
+   re-runs)
+2. **`PORT-12` step 2** — `-n 2` record kept, `PARALLEL_DRIFT_ENVELOPE =
+   3e-4` at `-n > 2`, lumped-route flatness asserted at 1e-8; retires the
+   `-n > 2` red (smoke, complex, ≈ 260 s over three windows)
+3. **`TH-13` step 1′** — the loop discriminator at 1 MHz where both bands
+   are representable; retires a deliberate red (standard, complex, ≤ 60 s)
+4. **`ANS-4` runnable half** — `ans:4`, the 4×4 at 10 / 64 / 128 MHz via
+   the `ports:5` path, `COMPARISON.md` with two blank AED columns (heavy by
+   `-t 500`, ≈ 160 s)
+5. **`ANS-5` steps 1–2** — the element-order ruling written into every
+   spec, README and comparison table (documentary, no compute)
+6. *(spare)* **`EX-36` leg (th)** — re-run the eight `time_harmonic`
+   examples so the census stops reading `dead` for that group (≈ 105 s);
+   legs (mesh) / (root) / (ports) are the pre-authorised drain fallback
 
 ---
 
