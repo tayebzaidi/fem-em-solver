@@ -137,7 +137,8 @@ What is validated, to what tolerance, and what must not be trusted.
   on one gated fixture — it is *not* an absolute-accuracy, resonance,
   tuning, B1+ or SAR claim, and the feed systematics remain the
   two-torus ones (`PORT-1` 3b-xviii, `PORT-10`). The absolute comparison
-  is the AED benchmark's job (`ANS-4`, weekly review to commission).
+  is the AED benchmark's job (`ANS-4` — runnable half ✅ 2026-08-30, the
+  operator's AED replication at Zero and First Order pending).
 - `post/evaluation.py` point location (all point evaluation goes through
   it), gmsh generation + tag QA, the runner, and the logging harness.
 
@@ -152,8 +153,9 @@ What is validated, to what tolerance, and what must not be trusted.
   and is what this bullet now covers: the **absolute accuracy** of any
   S/Z/coupling figure at 64/128 MHz (the gates are reciprocity, passivity
   and C4 symmetry — a wrong-by-a-constant-factor port model passes all
-  three; the independent check is the AED benchmark `ANS-4`, which only
-  the weekly review may commission), any resonance, mode-spectrum or
+  three; the independent check is the AED benchmark `ANS-4` — its runnable
+  half landed 2026-08-30, the operator's AED replication is pending), any
+  resonance, mode-spectrum or
   tuning claim (Phase 6, no lumped capacitors exist), and B1+/SAR on a
   solved coil field. Two readings on record, gated by nothing: the C4
   spreads grow ~1.7× per Larmor step (0.055 → 0.057 → 0.101%) and
@@ -3520,9 +3522,12 @@ attributes that residual to resolution.
 — step 1 missed its precondition at 10 MHz and read IN-BETWEEN; step 1′
 measured the ω² rescope premise **refuted** (`W_e/W_m` is frequency-
 independent on this fixture) and the degree-2 **saturation** confirmed, so the
-cross-order ratio is the wrong observable and step 2 is the live route;
-readings below the two bullets; step 2 not run; commissioned 2026-08-23
-weekly review from
+cross-order ratio is the wrong observable; **step 2 rescoped 2026-08-30 18:00
+review** onto a mechanism the review found by reading
+`core/source_projection.py` — the drive projection is CG1 ∩ H¹₀ only, at any
+solve degree and under the default PMC boundary — and pre-registered as the
+gradient-projection identity, §9 item 2; readings below the two bullets;
+step 2 not run; commissioned 2026-08-23 weekly review from
 `TH-12` step 3's named confound — the one thing standing between the
 measured degree-2 numbers and a production-order decision for coil-fed
 solves; §10 "element-order lever". Standard tier, `-n 2`, complex build,
@@ -3658,22 +3663,93 @@ contamination", because neither cheap fixture is magnetically dominated.
 >   fixture, is what is wrong — go to **step 2** (`‖∇φ‖/‖E‖`, the absolute
 >   gradient content), whose pre-registered anchors do not depend on a
 >   magnetically-dominated fixture at all.
-> * **Step 2 (direct measure) — gradient content of `E`.** On the same
->   fixture and the sphere, project `E_h` onto the discrete gradient space
->   `∇H¹` (degree-matched Lagrange) and report `‖∇φ‖/‖E‖` at both orders;
->   pre-registered anchor: the sphere's ratio at degree 2 stays within 2×
->   its degree-1 value (compatible drive, no explosion — `TH-12` step 1's
->   0.1405% says the field is right), asserted; the loop fixture's ratio is
->   the quantity step 1's verdict predicts (CLASS ⇒ it explodes with
->   `W_e/W_m`; FEED ⇒ it does not), asserted against step 1's own reading.
-> **Anchors in-run:** smoke degree-1 dissipated power reproduces `POST-5`
-> **1.199162e-06 W** at rtol 1e-6; the sphere pair reproduces `TH-12` step 1
-> (0.1405% / 0.0058%). **Done-when:** both steps executed with the verdict
-> and both ratios recorded; the known-issues degree-2 complex-power entry
-> gets its disposition (CLASS ⇒ a gauged/tree-cotree or `H¹`-augmented
-> degree-2 formulation is the next chunk; FEED ⇒ the port model's feed is
-> the next chunk); §10's production-order decision is revisited by the
-> weekly review with the verdict on record.
+> * **Step 2 — RESCOPED 2026-08-30 18:00 review: the gradient-projection
+>   identity on the loop fixture, both orders.** *(Supersedes the
+>   "`‖∇φ‖/‖E‖` at both orders" framing, retired before it ran: that ratio
+>   is bounded by 1, and a uniform or quasi-static conduction field is
+>   itself a gradient — the sphere control would read ≈ 1 at both orders
+>   and say nothing — so it cannot separate physical from spurious gradient
+>   content.)* **What the review found by reading, not measuring:**
+>   `core/source_projection.py::remove_gradient_content` (the
+>   `project_source=True` default every solve in this family uses) removes
+>   the drive's gradient content against **`("Lagrange", 1)` ∩ H¹₀ only,
+>   at every solve degree and under every boundary mode**
+>   (`source_projection.py:108`, `:134–136`). A degree-2 N1curl test space
+>   contains `∇(Lagrange₂) ⊋ ∇(CG1)`, and this fixture's default `NATURAL`
+>   (PMC) boundary admits `∇q` for **all** `q ∈ CG`, not only `H¹₀` — so the
+>   projected `J′` keeps a gradient residue in exactly the directions the
+>   solve tests, and the discrete system answers it *exactly*: testing the
+>   assembled weak form with `v = ∇ψ` (curl ∇ψ = 0) leaves
+>   `−(k² E_h, ∇ψ) = (load_factor · J′, ∇ψ)` for every admissible `ψ`, i.e.
+>   **the `∇Lagrange_p`-projection of `E_h` equals the `∇Lagrange_p`-
+>   projection of `J′` times a constant fixed by the form's own
+>   coefficients** (homogeneous `k² = ω²μ₀ε₀ε_r − iωμ₀σ` on this box;
+>   `load_factor = −iωμ₀`, `time_harmonic.py:448`). With `σ ≫ ωε` (0.7 vs
+>   0.0434 S/m at 10 MHz) that constant's magnitude is `1/|σ + iωε|` —
+>   **frequency-flat**, which is the step-1′ reading: the "quasi-static
+>   `E ~ ωA`" argument failed because the dominant `E` is Ohm's-law response
+>   to the residue, not induction. A derivation, pre-registered here so the
+>   run can refute it.
+>   **Build:** in `test_degree2_gradient_discriminator.py`, for each of the
+>   four existing loop solves (degrees 1/2 × 10/1 MHz — no new physics
+>   solves), two Laplace projections in **degree-matched** Lagrange,
+>   `(∇χ, ∇q) = (E_h, ∇q)` and `(∇φ, ∇q) = (J′_used, ∇q)`, with the
+>   Dirichlet set the N1curl boundary mode actually implies (`NATURAL` ⇒
+>   none; PEC ⇒ `H¹₀` — read it off `build_boundary_conditions`, do not
+>   assume), `J′_used = solver._projection.current` (the whole-domain UFL
+>   expression the load integrates, `time_harmonic.py:461`), and the
+>   constant `c` read from `load_factor` and the form's mass coefficient
+>   rather than from theory.
+>   **Anchors:** **(A, exact identity)** `‖∇χ − c·∇φ‖ / ‖∇χ‖ ≤ 1e-6` at
+>   **both** degrees and both frequencies (direct MUMPS solves; expect
+>   ~1e-10) — the pre-registered discriminant: if it holds, every joule of
+>   degree-2 electric energy the known-issues entry calls "spurious" is the
+>   drive's *unremoved* gradient residue divided by `(σ + iωε)`, and no
+>   free "ungauged null-space mode" story survives (`k² ≠ 0` pins it).
+>   **(B, the mechanism's size, printed not gated):** `‖P_∇₂J′‖/‖P_∇₁J′‖`,
+>   and `ε₀ε_r‖∇χ‖²/2` as a share of the measured `W_e` at each degree —
+>   under (A) predicted to carry the 63.7× degree-2 lift (share ∈ [0, 1];
+>   no band invented). **(C, in-run controls):** `POST-5` **1.199162e-06 W**
+>   at rtol 1e-6, the four loop rows reproducing steps 1/1′ at rtol 1e-3,
+>   `|Im P|/Re P` = 0. **Negative controls:** (A) re-read with `c`
+>   deliberately off by 10% fails at ≥ 1e-1 (the `PORT-12` step-2
+>   load-bearing-probe precedent, reverted before commit); one extra
+>   **unprojected** degree-1 solve (`project_source=False`, ~8 s) reads
+>   `‖P_∇₁J‖/‖J‖` visibly above the projected `‖P_∇₁J′‖/‖J′‖` — the
+>   projection must be seen doing something (`PORT-1` step 2d/2e precedent,
+>   8.175e-06 → 0). **Cost:** the module is 32 s; four Laplace pairs on
+>   1 405 cells and one extra solve add ≤ 30 s — **≤ 90 s**, standard,
+>   `-n 2`, `-k 30 300`, complex + `FEM_EM_REQUIRE_COMPLEX=1`,
+>   `tests/environment` first. **Traps:** `ufl.inner` conjugates the test
+>   function — same convention on both sides of (A);
+>   `create_connectivity(tdim−1, tdim)` before `exterior_facet_indices`;
+>   `assemble_scalar` is rank-local — reduce every norm; pin
+>   `quadrature_degree` on the `SpatialCoordinate`-bearing forms (`POST-5`
+>   step 1); the Lagrange space's Dirichlet set must be the one the solver
+>   applied; leave the precondition assert red as it is (not this step's to
+>   retire). **Scope:** loop fixture only, **no `src/` change** — the
+>   degree-/boundary-matched projection is **step 3**, scoped by a review
+>   from (A)/(B)'s numbers and then priced on the coil; nothing here
+>   touches the coil's 229× or the 1e-9 identity tests directly.
+>   **Negative result:** (A) failing at either degree is a formulation
+>   finding — the discrete gradient equation is not what the form says —
+>   record on the degree-2 known-issues entry, stop; (B) reading
+>   `‖P_∇₁J′‖/‖J′‖ ≫ 1e-6` under a PEC mode is a projection-space finding,
+>   record, stop. Never loosen the precondition or invent a verdict band.
+> **Done-when (rescoped 2026-08-30 18:00):** step 2's (A) executed at both
+> degrees with (B)'s shares recorded; the known-issues degree-2
+> complex-power entry gets its disposition — **(A) HOLDS** ⇒ the injector is
+> the **degree-1-only, `H¹₀`-only source projection**, common to every
+> drive (the CG1-projected coil drive's residue lives in `∇Lagrange₂`; the
+> unprojected port sheets' residue is their full discrete divergence,
+> closed by the phantom's σ — which is physics), and the next chunk is the
+> degree-/boundary-matched projection (step 3, then re-measured on the coil
+> where `TH-12` step 2 read 229×); **(A) FAILS** ⇒ a formulation defect,
+> priced as a gauged/`H¹`-augmented second-order chunk; §10's
+> production-order decision is revisited by the weekly review with the
+> verdict on record. The original CLASS/FEED dichotomy is retired — if (A)
+> holds, both fixtures inject through the same mechanism at a size set by
+> their drive's residue, and the question was never which fixture.
 
 ### MAT — Materials & phantoms (Phase 3)
 
@@ -4094,7 +4170,7 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 | `WF-3` | Quick-look phantom metrics report | ⚠️ | standard |
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
-| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved. Step 1d executed 2026-08-30 12:00 — the ruling landed in the code: `post.project_to_cg1` is the packaged production estimator and gate (ii) is the CG1 covariance identity at all three angles, **2.1870 / 2.1146 / 1.8911%** against the unmoved 5% band, controls holding (mis-rotated 23.2642%, DG0 column unmoved at 8.6516 / 9.5808 / 8.5970%). `19 passed` / Status 0 / 97 s; **step 1 is ✅ and the chunk is 🟡** — a symmetry identity only, no CV / homogeneity / absolute claim; steps 2–3 are a review's to scope** | 🟡 | heavy (step 1 standard, complex) |
+| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved. Step 1d executed 2026-08-30 12:00 — the ruling landed in the code: `post.project_to_cg1` is the packaged production estimator and gate (ii) is the CG1 covariance identity at all three angles, **2.1870 / 2.1146 / 1.8911%** against the unmoved 5% band, controls holding (mis-rotated 23.2642%, DG0 column unmoved at 8.6516 / 9.5808 / 8.5970%). `19 passed` / Status 0 / 97 s; **step 1 is ✅ and the chunk is 🟡** — a symmetry identity only, no CV / homogeneity / absolute claim; steps 2–3 are a review's to scope. **Step 2 scoped 2026-08-30 18:00 review** — the quadrature drive by exact superposition of the four solved fields at 10 MHz, two symmetry identities (C4-invariance; the co/counter-rotating mirror identity `\|B₁⁺\|_ccw(x) = \|B₁⁻\|_cw(Mx)`) at the measured CG1 floor, and the first *ungated* CV / polarisation-purity figures; §9 item 3** | 🟡 | heavy (step 1 standard, complex) |
 | `WF-7` | SAR10g hotspot identification | ⬜ | heavy |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 
@@ -4103,7 +4179,8 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 > moment `TH-1` lands.
 
 **`WF-6` — B1+ field mapping and homogeneity** 🟡 *(step 1 ✅ 2026-08-30 with
-step 1d; steps 2–3 unscoped. Step 1 scoped 2026-08-29
+step 1d; **step 2 scoped 2026-08-30 18:00 review** — bullet after step 1d;
+2b (64/128 MHz) and 3 (SAR) unscoped. Step 1 scoped 2026-08-29
 10:30 review. §10 subgoal 4 said the first B1+ chunk "can be scoped by the
 daily review the day `PORT-9` closes" — that was 08-25, `PORT-11` followed
 08-26, and the 08-25 operator directive says "do not block subgoal 4 on
@@ -4458,6 +4535,65 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 >     identity** on one fixture at 10 MHz. No B₁⁺ homogeneity, CV or
 >     absolute-accuracy claim follows, and §2 is not moved by it. Steps 2–3
 >     stay serial on step 1 and are a review's to scope.
+>   * **Step 2 — scoped 2026-08-30 18:00 review: the quadrature drive by
+>     exact superposition, at 10 MHz on the same fixture; two symmetry
+>     identities and the first (ungated) homogeneity figures.** The four
+>     single-drive solves already in `b1_plus_map` share one mesh, one
+>     `V_src`, and the same linear sheet law on every port in every solve
+>     (`V = V_src − I·Z_p`, `Z_p = 50 Ω`), so the field of all four ports
+>     driven at once with phases `φ_k` is **exactly** `Σ_k e^{iφ_k} E_k` —
+>     no new solve, no new plumbing. **Build:** `post/faraday.py` gains
+>     `b1_minus` (`|B_x − jB_y|/2`, the counter-rotating component) beside
+>     `b1_plus`, exported; a new module
+>     `tests/validation/test_birdcage_b1_quadrature.py` forms the two
+>     rotation senses `B_ccw = Σ e^{+ikπ/2} B_k`, `B_cw = Σ e^{−ikπ/2} B_k`
+>     in port order, projects each through `post.project_to_cg1`, and reads
+>     `|B₁⁺|` / `|B₁⁻|` on the 51 centroids through
+>     `evaluate_vector_field_parallel`. **Anchors, asserted:** (a)
+>     **C4-invariance** — advancing the phase pattern by one port is a 90°
+>     rotation of the drive and multiplies the superposed field by a global
+>     phase, so `|B₁⁺|_ccw(R₉₀ x) = |B₁⁺|_ccw(x)`: relative L² ≤ **5e-2**
+>     (`C4_COVARIANCE_BAND`, whose CG1 provenance is step 1d's 2.19 / 2.11 /
+>     1.89% — a superposition of four fields each inside the floor is inside
+>     it); (b) **the mirror identity** — a 4-leg birdcage has a mirror plane
+>     through each port and `B` is a pseudovector, so reversing the rotation
+>     sense equals reflecting: `|B₁⁺|_ccw(x) = |B₁⁻|_cw(M x)`, `M` the
+>     reflection in the plane through port 1's azimuth, at the 51 centroids'
+>     mirror images, relative L² ≤ **5e-2** (the same floor — a
+>     non-symmetric mesh enters at the same order as in (a)); (c) step 1's
+>     records reproduce — gate (i) **9.795751e-03** at rtol 1e-4, the three
+>     CG1 covariance readings at rtol 1e-3. **Reported, not gated (no
+>     closed form; §2 does not move):** the centre-point polarisation purity
+>     `|B₁⁺|/|B₁⁻|` for each sense (an ideal quadrature birdcage gives ∞ for
+>     one and 0 for the other — the number MRI cares about), mean `|B₁⁺|`
+>     at 1 V per port, and the **CV** of `|B₁⁺|_ccw` over the 51 centroids
+>     and over step 1c's 96-point ring set — the first homogeneity figures,
+>     labelled as such. **Negative controls:** the mis-paired comparison
+>     `|B₁⁺|_ccw(x)` vs `|B₁⁺|_cw(M x)` must **miss** the 5% band (an ideal
+>     birdcage makes one of them ≈ 0 at the centre; assert > 5% only, as
+>     step 1d's 23.26% control does); the P1 single drive's centre purity is
+>     printed as the "what a non-rotating field reads" line (linear
+>     polarisation ⇒ `|B₁⁺| ≈ |B₁⁻|`). **Cost:** the map fixture is 97 s
+>     (mesh ~22 s, four solves 5.6–6.0 s); two extra CG1 projections and the
+>     point reads add ≤ 15 s — **≤ 120 s**, standard, `-n 2`, `-k 30 400`,
+>     complex + `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first. The
+>     `src/` change owes `ports:4` (76 s) and `ports:5` (127 s) re-runs and
+>     the docrefs census (`exit 1` from `EX-36`'s 53 is not this step's).
+>     **Traps:** the reflection plane goes through a **port** — read its
+>     azimuth off the fixture, the legs need not sit on the coordinate axes;
+>     magnitudes are taken *after* the point evaluation; the mirrored
+>     centroids are fresh points — assert `valid` 51/51 on them too; the
+>     phase sign convention only has to be consistent between the two
+>     senses; helper returns global arrays; runner on the host,
+>     docker-socket substitution. **Scope:** 10 MHz, F-small, degree 1,
+>     superposition only — no simultaneous-source solve, **no 64/128 MHz**
+>     (step 2b on the `PORT-11` ladder, serial on this landing), no
+>     homogeneity *claim* (CV is a printed number), no SAR (step 3), no
+>     literature or AED comparison; on green the chunk stays **🟡** with
+>     steps 1–2 ✅. **Negative result:** (a) or (b) missing 5% is a finding
+>     about the superposition path or the mirror assumption — record both
+>     readings in a known-issues entry, keep the assert, stop; never widen
+>     the band.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -4509,6 +4645,8 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-34` | Birdcage 4-port S-matrix across the frequency ladder 10 / 64 / 128 MHz on **one** mesh (`PORT-11`'s newly gated capability: first example solving ports at a Larmor frequency — `EX-32` is 10 MHz only, `EX-19`/`EX-25` are Larmor on the sphere with no ports; the drive/output angle is the frequency ladder itself: loss tangent, cells/δ, cells/λ, `\|Im P\|/Re P` and the three gate readings side by side; commissioned 2026-08-26 18:00 review, §5.4 ramp) | ✅ 2026-08-28 (`ports:5`, `20260828T110615Z_EX-34-run2.log`, **139 s** Status 0 at `-n 2` complex; one 116 085-cell mesh, 12 driven solves, all three gates green on all three rungs; 128 MHz cells/λ 12.5024 ≥ 10) | standard |
 | `EX-36` | Re-run the examples whose artifacts the 2026-08-28 rename (`67e4c1c`) orphaned — census `dead=53 exit=1` on 2026-08-29 — until it reads `dead=0`; four legs by runner group, each one slot (commissioned 2026-08-30 02:15 weekly review; entry written by the 10:30 daily review) | ⬜ | standard per leg (105 / ≈ 500 / 447 / 935 s measured by `EX-30`) |
 | `EX-35` | 16-leg **ring-gapped** birdcage mesh — the 32-ring-port high-pass layout (`GEO-20` step 2's newly gated capability, 2026-08-29: `EX-31`/`mesh:7` cuts the rings at 4 legs, `EX-33`/`mesh:8` cuts the **legs** at 16 — no example has the production high-pass topology at the production leg count; mesh-only, no solve, no port claim; commissioned 2026-08-29 10:30 review, §5.4 ramp) | ✅ | standard |
+| `EX-37` | **`ANS-1`/`ANS-3` are unrunnable since the 2026-08-28 rename**: `67e4c1c` rewrote the two cases' `__import__("01_dodd_deeds_coil_loading")` / `("02_package_sparameter_sweep")` strings along with their artifact basenames, and no module of the prefixed name exists — the `ANS-4` slot's observation, verified by the 18:00 review from `git log -S`; restore the two strings, re-run `ans:1` and `ans:3`, census (commissioned 2026-08-30 18:00 review; known-issues entry) | ⬜ | standard (≈ 5 + 70 + 131 s + census) |
+| `EX-38` | `\|B₁⁺\|` map of the loaded 4-leg birdcage at 10 MHz into ParaView (`WF-6` step 1's newly gated capability, 2026-08-30: the CG1-projected `\|B₁⁺\|` field under gates (i)/(ii) — no example writes a B₁⁺ field, `ports:4`/`ports:5` stop at S-matrices; the output-quantity angle; commissioned 2026-08-30 18:00 review, §5.4 ramp) | ⬜ | standard (≈ 70 s) |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
 **Logs:** `20260820T170422Z_EX-26-example-n2.log` (exit 0), `20260820T170540Z_EX-26-docrefs.log` (`dead=0 guide=0 stale=0 exit=0`).
@@ -4862,6 +5000,75 @@ gates on the census, which is why this is queued ahead of its size.
 > red example is a finding about that example on the 0.11 image — journal,
 > known-issues, stop.
 
+**`EX-37` — restore the `ANS-1`/`ANS-3` example imports the rename broke**
+⬜ *(commissioned 2026-08-30 18:00 review.)* `67e4c1c` prefixed every
+example's artifacts by a global text substitution, and in the two ANS
+scripts the substitution also hit the `__import__` string that loads the
+gated example module:
+`examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py:96`
+now asks for `01_materials_01_dodd_deeds_coil_loading` and
+`…/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:88` for
+`02_ports_02_package_sparameter_sweep`, while the files on disk are
+`examples/materials/01_dodd_deeds_coil_loading.py` and
+`examples/ports/02_package_sparameter_sweep.py` (`git log -S` shows both
+strings born in that commit; `EX-30` leg (ports) had both cases green two
+days earlier). Both raise `ModuleNotFoundError` at import; their ✅
+runnable halves are unrunnable and `EX-36` leg (ports + ans) would red on
+them. `ANS-4` sidestepped it by importing by path.
+> **Build:** restore the two strings to the on-disk stems (two one-line
+> edits, nothing else); `grep -rn '__import__(' examples tests` must show no
+> other renamed stem. **Anchor:** `./run_examples.sh -e ans:1 -n 2 -t 300`
+> and `-e ans:3 -n 2 -t 500` green — each script's own asserts against its
+> gate module's records (`ANS-1`'s Dodd–Deeds slab numbers, `ANS-3`'s
+> two-port Z/S at their 08-26 `EX-30` digits) are the quantitative check;
+> the post-run census reads the two cases' artifacts fresh (`dead=53` is
+> `EX-36`'s and stays — this chunk owns none of it). **Negative control,
+> first:** `ans:1` on unpatched `main` through the harness — Status ≠ 0
+> with `ModuleNotFoundError: No module named
+> '01_materials_01_dodd_deeds_coil_loading'` in the log, within seconds.
+> **Cost:** ≈ 5 s + 70 s (`ANS-1`, 08-09) + 131 s (`ANS-3`, 08-16) +
+> census ≈ **4 min**, standard, `-n 2`; runner on the host, docker-socket
+> denial ⇒ the §9 substitution. **Traps:** the `ans:` group nests one
+> directory deep; `-t` is the runner's own timeout; a script that reds for
+> any *other* reason is not fixed in-slot — known-issues, stop. **Scope:**
+> the two import strings only; no record, band, number or guide moves;
+> `EX-36` leg (ports + ans) is serial on this landing. **Negative result:**
+> either case still red after the fix — a second, different 08-28
+> breakage; extend the known-issues entry with the traceback, stop.
+
+**`EX-38` — the first `|B₁⁺|` field in ParaView: loaded 4-leg birdcage at
+10 MHz** ⬜ *(commissioned 2026-08-30 18:00 review, §5.4 ramp, from `WF-6`
+step 1 ✅.)* No example writes a B₁⁺ field — `ports:4`/`ports:5` stop at
+S-matrices, and `WF-6`'s map lives only in a test module.
+> **Build:** `examples/ports/06_birdcage_b1_plus_map.py` + same-stem guide
+> (`ports:6`): `build_four_port_sweep`'s fixture, **two** lumped-sheet
+> solves (P1 and P2, 5.6–6.0 s each on the 116 085-cell mesh),
+> `post.magnetic_flux_density_from_e` → `post.project_to_cg1` →
+> `post.b1_plus`, and one combined XDMF carrying the CG1 `B` phasor
+> (real/imag), `|B₁⁺|` and the phantom cell tags — the phantom `|B₁⁺|` map
+> is the deliverable. Every constant, band and record imported from
+> `tests/validation/test_birdcage_b1_plus_map.py` (`ANS-1`'s rule), nothing
+> restated. **Anchors (in-script asserts):** gate (i)'s three-way power
+> accounting at P1 reproduces **9.795751e-03** at rtol 1e-4 (band 1e-2
+> imported); the CG1 C4 covariance P1 → P2 at +90° reproduces **2.1870%**
+> at rtol 1e-3 against the imported 5% band; `valid` 51/51; cell ratio
+> 1.000000 with `reused_mesh`. **Negative control:** the DG0 `|B₁⁺|` read
+> on the same 51 points prints its **8.6516%** (rtol 1e-4) beside the CG1
+> figure — the example shows the estimator floor the gate was re-registered
+> around, and a DG0 column that moved would mean the field changed.
+> **Cost:** mesh ~22 s + two solves ~12 s + two projections + XDMF export
+> ≈ **70 s**, standard, `-n 2`, `-t 300`, complex; docrefs census
+> `exit != 1` for *this* example's artifacts (`EX-36`'s 53 are not this
+> chunk's). **Traps:** runner on the host, docker-socket substitution;
+> `ports:6` must not collide with an existing stem; DG0 `fem.Expression`
+> interpolation of a UFL `curl` needs the DG0 interpolation points;
+> `|B₁⁺|` is real stored complex — write `.real`. **Scope:** what gates
+> (i)/(ii) license — a map and its symmetry identity at 10 MHz on F-small;
+> **no** homogeneity/CV, no 64/128 MHz, no quadrature drive (`WF-6`
+> step 2), no absolute claim. **Negative result:** a record not
+> reproducing is a finding about the example path — known-issues, stop; no
+> band moves.
+
 ### ANS — Ansys benchmark cases (§5.4)
 
 Commissioned by the weekly planning review only, on gated physics only; the
@@ -4870,8 +5077,8 @@ next weekly review adjudicates the returned numbers.
 
 | ID | Title | Status | Tier |
 |---|---|---|---|
-| `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ✅ | standard |
-| `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ✅ | heavy |
+| `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ✅ *(**example path broken since 2026-08-28**, `67e4c1c` rewrote its `__import__` string — `EX-37` restores it; the 08-09 record stands)* | standard |
+| `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ✅ *(**example path broken since 2026-08-28**, same cause — `EX-37`; the 08-16 / 08-26 records stand)* | heavy |
 | `ANS-4` | **Gapped four-leg birdcage, phantom-loaded, four lumped ports: 4×4 S-matrix at 10 / 64 / 128 MHz — runnable half** (commissioned 2026-08-30 02:15 weekly review; authoritative spec `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/SPEC.md`; the first independent absolute check of the coil-fed port model at a Larmor frequency) | ✅ **runnable half 2026-08-30** (`20260830T213415Z_ANS-4-run1.log`, Status 0, 125 s at `-n 2`) — all three gates on all three rungs of one 116 085-cell mesh (ratio 1.000000, `reused_mesh`); 10 MHz reproduces leg (d)'s 4×4 to **1.158e-10** (band 1e-6) and leg (d0)'s column to **2.568e-10** (band 1e-9); 64 / 128 MHz reproduce `PORT-11` steps 2/3 to worst **1.075e-03** / **6.755e-04** (band 1e-2); control separation **1.585460** vs 2e-3. **Operator's AED replication at both orders is now Waiting-on-you; adjudication is a weekly review's** | heavy (≈ 160 s at `-n 2`, one command; measured 125 s) |
 | `ANS-5` | **Pin the element-order correspondence in every ANS `SPEC.md`/`COMPARISON.md`** — our production `degree 1` is what HFSS calls **Zero Order**, not its default **First Order**; the specs do not say so, and a default-settings replication is a different discretization (operator observation, interactive session 2026-08-28) | ⬜ **RULED 2026-08-30 02:15 weekly review** — (a) AED runs at **Zero Order** (matched, the adjudication column) **and** at its default **First Order** (an order-sensitivity column); **Mixed Order forbidden**; our side stays at one order (none of options 1–3 as framed — option 1 for the adjudication column plus a second AED column, our side unchanged, step 3 **not** taken). (b) `ANS-1` **is in scope** for the spec line (state the Maxwell 3D formulation and order AED used). Already-returned numbers at an unrecorded order stand as an "order-unknown" column. Steps 1–2 are documentary and queueable; `ANS-4`'s spec already carries the wording | smoke (no compute) |
 
@@ -5220,79 +5427,82 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed **2026-08-30, 10:30 review**. Interval (since the 08-29
-18:00 review): **three slots landed, five stopped, one review outage.**
-The three ready items all closed inside their estimates — `WF-6` step 1b
-(19:30, 98 s, verdict **(a) the DG0 estimator floor**: CG1 reads
-2.1870 / 2.1146 / 1.8911% where DG0 reads 8.6516 / 9.5808 / 8.5970%,
-control 23.26%), `TH-13` step 1 (21:00, 36 s, **negative on both
-clauses**: precondition 1.952350e-02 vs 1e-2, move 5.156e+01× in-between —
-CLASS was arithmetically unreachable from that baseline, chunk ⬜ → 🧪,
-one new deliberate red), `WF-6` step 1c (22:30, 97 s, **the sample set is
-not the mechanism**: ring set 9.9271 / 9.9519 / 8.4706%, every angle
-within ±2 pp of the centroid set). Then the queue drained as designed and
-the **02:15 weekly review died after writing its files and before its
-commit** — the 03:00 daily review left no commit, the 04:30 slot journaled
-the dirty tree (first encounter), the 06:00 slot parked it byte-identically
-on `recovered/2026-08-30T1100Z`, and 00:00 / 04:30 / 06:00 / 07:30 / 09:00
-all stopped on the drained queue. Five implementer slots and two review
-slots lost to one un-checkpointed session.
+Last reviewed **2026-08-30, 18:00 review**. Interval (since the 10:30
+review): **four slots, four landed, zero stopped, zero parked** — the first
+full interval since 08-28 in which every scheduled implementer run did chunk
+work, on a queue whose six items were independent by design. 12:00 `WF-6`
+step 1d (97 s): gate (ii) re-registered on the packaged CG1 estimator,
+**2.1870 / 2.1146 / 1.8911%** vs the unmoved 5%, DG0 column asserted
+unmoved, `WF-6` 🧪 → 🟡 with step 1 ✅. 13:30 `PORT-12` step 2 (310 s):
+`PARALLEL_DRIFT_ENVELOPE = 3e-4` at `-n > 2` with the `-n 8` control on
+`main` red first, the `-n 2` record untouched, lumped route flat at
+2.3e-10 — **chunk ✅**. 15:00 `TH-13` step 1′ (32 s): the ω² premise
+**refuted** — `W_e`, `W_m` and the dissipated power are frequency-flat
+across a decade (0.9869×), the precondition red moved to the 1 MHz row,
+the saturation trap fired (degree-2 `W_e/W_m` 1.0106 vs 1.0067). 16:30
+`ANS-4` (125 s): the runnable half green on the first run, every
+`PORT-9`/`PORT-11` record reproduced (1.158e-10 / 2.568e-10 / 1.075e-03 /
+6.755e-04), `COMPARISON.md` with two blank AED columns — **chunk ✅**. Tree
+clean, no `attempt/*`, no `recovered/*`, container Up. (The 10:30 review's
+interval journal — the recovered weekly-review branch, the commit-first
+checkpoint ruling — is in its commit `cbfe60f`.)
 
-**Branch dispositions.** `recovered/2026-08-30T1100Z` **landed as-is**
-(merge `dc1af52`, its own commit) after reading the diff: the archive
-rotation is verified lossless (0 non-blank lines of `PROJECT_PLAN.md` or
-`attempts.md` missing from the archives), the `ANS-4` `SPEC.md`, the
-known-issues rulings (`WF-6` step 1d, `PORT-12` step 2, `GEO-21` floor as
-a trap, `EX-30` size-field licence denied and entry retired) and the
-dashboard rewrite all describe reality. **What did not survive that
-session:** the weekly review's §7 chunk entries and its §10 pass were never
-written — the rulings exist only in known-issues and the dashboard's
-one-line summary. This review wrote the §7 entries the rulings fully
-specify (`WF-6` step 1d, `PORT-12` step 2, `TH-13` step 1′, `ANS-4`
-runnable half, `EX-36`, `ANS-5`'s ruling into its row); `GEO-25` and
-`PORT-13` carry stub rows only, because their anchors were lost with the
-session and the daily review does not scope Phase-6 or F-human work —
-**the 2026-09-06 weekly review owes them, and its §10 pass (the 08-25
-operator directive's `N ≤ 25` disposition is still marked "FOR THE
-2026-08-30 WEEKLY REVIEW").** Branch deleted after the merge. No
-`attempt/*`. Tree clean at review time.
+**Audit (§4).** `PORT-12` and `ANS-4` changed to ✅ this interval; both
+audited **COMPLIANT** by one auditor each: every claimed digit greps out of
+a `run_and_log.sh`-footered log (`20260830T1831…–1837…Z` ×4;
+`…213415Z`), elapsed times recorded (105 / 103 / 102 / 82 s; 125 s), the
+assertions are identities (a 1e-8 width-flatness reproduction and a
+pre-registered 3e-4 envelope with the `-n 2` band unmoved; reciprocity /
+passivity / C4 / record reproduction as real `assert`s imported from the
+gate module, not prints), and the `PORT-12` test-constant diff shows
+`REPRODUCTION_BAND`, `STEP1_GAP_RATIO_RECORD` and the two other records
+byte-identical against `cbfe60f`. `WF-6` step 1 ✅ is a step, not a chunk,
+and was read the same way (19 passed, Status 0, 97 s, DG0 column asserted
+unmoved at rtol 1e-4). No demotion.
 
-**Audit (§4).** Nothing changed to ✅ this interval — steps 1b/1c are
-measurement legs on a 🧪 chunk, `TH-13` went ⬜ → 🧪. No audit owed; no
-example chunk owed (§5.4 forbids an example on ungated capability, and
-nothing new is gated).
+**Two findings this review made by reading, both carried into §7.**
+(1) **`ANS-1` and `ANS-3` have been unrunnable since 2026-08-28** —
+`67e4c1c`'s artifact rename also rewrote the two `__import__` strings, and
+the module names it wrote do not exist (the `ANS-4` slot's observation,
+verified from `git log -S`; both were green in `EX-30` leg (ports) two
+days earlier). Known-issues entry; `EX-37` restores them, item 1.
+(2) **The `TH-13` mechanism has a candidate nobody had read off the
+code:** `remove_gradient_content` projects every drive against
+**CG1 ∩ H¹₀ only**, at any solve degree and under the default `NATURAL`
+(PMC) boundary — so a degree-2 solve (test space ⊇ `∇Lagrange₂`) and a PMC
+box (test space ⊇ `∇CG`, not only `∇H¹₀`) each see a gradient residue the
+projection never removed, and the discrete system answers it exactly,
+through Ohm's law at `1/|σ + iωε|` — frequency-flat, which is what
+step 1′ measured. Step 2 is rescoped onto that identity (item 2): if it
+holds at both degrees the "ungauged null-space" story is over and the fix
+is a one-line degree-/boundary-matched projection; if it fails, the
+formulation is wrong in a way no one has yet named. Either outcome closes
+a question; the frequency and fixture routes are retired.
 
-**Automation ruling, for the operator (dashboard Waiting-on-you item 1).**
-`docs/automation/weekly-review.md` now carries a **commit-first
-checkpoint**: the step-6 archive rotation is committed on its own before
-any plan edit begins, so a session kill costs one slot, not five. Four
-implementer entries argued for it; this review made the edit rather than
-proposing it, because the protocol file is documentation and the change
-is reversible. The second suggested mitigation — a standing cheap fallback
-for a drained queue — is **not** adopted: the drain instruction exists so a
-slot cannot invent work, and the fix belongs upstream.
+**Example chunk (§5.4).** `WF-6` step 1 newly gated the CG1 `|B₁⁺|` map
+and no example writes one — `EX-38` (`ports:6`) is added, item 6 (spare).
+`PORT-12`'s closure is a test-width qualification, not a capability — no
+example. `ANS-4` is itself an example.
 
 **Residual `main` reds at `-n 2`:** the two entry-3 names,
-`test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), ~~`WF-6`
-gate (ii) at 8.6516%~~ (**retired 2026-08-30 12:00 by item 1** — green at
-2.1870% under CG1), `TH-13`'s precondition — ~~step 1's 1.952350e-02 at
-10 MHz~~ **now step 1′'s 1.926692e-02 at 1 MHz** (2026-08-30 15:00: the red
-moved, it did not retire; the ω² rescope that was to retire it is itself
-refuted, and item 3's replacement is a review decision, not another rescope);
-~~at `-n > 2` only, the two-torus
-`PORT-12` drift~~ (**retired 2026-08-30 13:30 by item 2** — bounded by the
-3e-4 envelope, green at `-n 2` and `-n 8`). §2 unchanged — a B₁⁺ number exists
-but is not gated until item 1 lands.
+`test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), and
+`TH-13`'s precondition at **1.926692e-02 on the 1 MHz row** (a deliberate
+red held per §7; item 2 does not retire it — that is a review's call after
+(A) reads). Off the list this interval: `WF-6` gate (ii) (12:00) and the
+`-n > 2` `PORT-12` drift (13:30) — no `-n > 2`-only red remains. §2 moved
+in wording only: `ANS-4`'s runnable half exists; every 64/128 MHz claim is
+still an identity on one fixture.
 
 **Six items this queue, all independent — five ready plus a spare; none
-depends on another landing.** Items 1–3 each retire one deliberate red.
+depends on another landing.** Items 1–3 touch disjoint files (two example
+scripts; one test module; `post/faraday.py` + one new test module).
 Deliberately not queued: `PORT-4`…`PORT-8`, any 128 MHz resolution study,
-`GEO-25` and `PORT-13` (anchors owed by the weekly review), `WF-6` steps
-2–3 (serial on item 1, scoped by a review from its landing), `TH-13` step 2
-(scoped from item 3's verdict), a `MAG-20` third rung, `EX-36` legs (mesh)
-/ (root) / (ports) beyond the spare (queue them as slots free up — they are
-independent of everything here), and **`WF-6` step 1 as written** (do not
-re-run it).
+`GEO-25` and `PORT-13` (anchors owed by the 2026-09-06 weekly review),
+`TH-13` step 3 (the projection fix — serial on item 2's reading, and a
+`src/` change a review prices first), `WF-6` step 2b (64/128 MHz, serial
+on item 3) and step 3 (SAR), `EX-36` legs (mesh) / (root) / (ports + ans)
+beyond the drain fallback below, a `MAG-20` third rung, and **`TH-13`
+steps 1/1′ as written** (do not re-run them).
 
 **⚠️ Standing constraint on the compose allow — read before editing that
 file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
@@ -5309,138 +5519,92 @@ mechanic: `git checkout` cannot swap `docker/Dockerfile` /
 busy", a *silent* wrong-content switch — so any chunk that must move them
 uses the Edit tool and verifies `git status --porcelain`.
 
-**Runner trap (2026-08-29 13:30, one occurrence):** if `./run_examples.sh`
-fails with `permission denied … /var/run/docker.sock`, run the runner's
-inner command verbatim through `run_and_log.sh` (`docker compose exec -T
-fem-em-solver bash -lc 'cd /workspace && source
+**Runner trap (2026-08-29 13:30 and 2026-08-30 12:00 — two occurrences,
+intermittent; the 16:30 slot ran the host runner cleanly):** if
+`./run_examples.sh` fails with `permission denied … /var/run/docker.sock`,
+run the runner's inner command verbatim through `run_and_log.sh`
+(`docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source
 /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout
 -k 30 <T> mpiexec -n 2 python3 examples/<path>.py'`) and journal the
-denial; do not spend the slot on it.
+denial; do not spend the slot on it. The host runner stays the documented
+entry point (it is what the guides tell a reader to run) and the
+substitution stays the fallback — the 12:00 entry's proposal to invert
+that is declined until the denial is understood; it is on the dashboard as
+an operator FYI.
 
-1. ✅ **DONE 2026-08-30 12:00 slot** — CG1 gate (ii) green at 2.1870 /
-   2.1146 / 1.8911% against the unmoved 5% band, `19 passed` / Status 0 /
-   97 s (`20260830T170242Z`); `WF-6` 🟡 with step 1 ✅, known-issues entry
-   retired, the deliberate red gone from `main`.
-   ~~**`WF-6` step 1d — re-register gate (ii) on the CG1 estimator
-   (standard, complex, `-n 2`, `main`; independent; ruled 02:15 weekly
-   review, §7 bullet written this review).** Execute the §7 step-1d bullet
-   as written: `post/faraday.py` gains `project_to_cg1` (the mass-matrix
-   `LinearProblem` step 1b's fixture already carries, moved into the
-   package and exported), and
-   `test_b1_plus_map_is_c4_covariant_under_the_drive_rotation` becomes the
-   CG1 covariance identity at +90° / −90° / 180° on the 51 centroids
-   against the **unchanged** `C4_COVARIANCE_BAND = 5e-2`; DG0 printed and
-   cited in-comment, not gated. **Anchors, asserted:** CG1 reproduces step
-   1b's **2.1870 / 2.1146 / 1.8911%** at rtol 1e-3; gate (i)'s
-   **9.795751e-03** at rtol 1e-4; the mis-rotated control P3-at-+90° **> 5%**
-   under CG1 (record 23.2642%); `valid` 51/51. **Negative control:** the
-   control, and the DG0 print still reading 8.6516% (a moved DG0 column
-   means the field changed, not the estimator). **Cost:** module 98 s
-   (`20260830T003238Z`), `-k 30 400`; the `src/` change owes `ports:4`
-   (78 s) and `ports:5` (128 s) host-side re-runs, docrefs `exit != 1`
-   (expect `exit 1` from `EX-36`'s 53 dead references — read the census
-   for *these two examples'* artifacts only and journal the rest as
-   `EX-36`'s). **Traps:** magnitude after the point evaluation; helper
-   returns global arrays; `-s`; complex + `FEM_EM_REQUIRE_COMPLEX=1`,
-   `tests/environment` first; runner substitution above. **Scope:** chunk
-   → 🟡 with step 1 ✅ — a symmetry identity, no CV / homogeneity /
-   absolute claim; known-issues entry and the deliberate red retire.
-   **Negative result:** CG1 not reproducing 1b's table is a finding about
-   the projection path — record, keep the DG0 gate red, stop; never widen
-   the 5%.~~
-2. ✅ **DONE 2026-08-30 13:30 slot** — `PARALLEL_DRIFT_ENVELOPE = 3.0e-4`
-   landed with the `-n 2` qualification and the 1e-8 lumped negative
-   control: `-n 8` control on `main` Status 1 first, then `17 passed` /
-   Status 0 at `-n 8` (gap drift **+2.06e-04**) and at `-n 2` (gap
-   **0.894141**, the record), lumped `Im Z12` flat at 2.344e-10 / 4.649e-10;
-   310 s over three windows (`20260830T1831…–1835…Z`) plus the reverted
-   load-bearing probe. `PORT-12` ✅, known-issues entry retired, the
-   `-n > 2` red gone.
-   ~~**`PORT-12` step 2 — width-qualify the record, bound the parallel
-   drift (smoke, complex, `-n 2` + `-n 8`, `main`; independent; ruled
-   02:15 weekly review, §7 paragraph written this review).** Execute the
-   §7 `PORT-12` step-2 paragraph as written, tests only:
-   `REPRODUCTION_BAND = 1e-4` stays and is commented as a `-n 2` record;
-   new `PARALLEL_DRIFT_ENVELOPE = 3e-4` used by
-   `test_step_1_measurements_reproduce` when `comm.size > 2`; new
-   negative control asserting `Im Z12(lumped)` = **1.029281338** at rtol
-   1e-8 (measured flat to 2e-9 across four widths). **Anchors:** gap ratio
-   **0.894141** inside 1e-4 at `-n 2`; inside 3e-4 at `-n 8` with the
-   measured **+2.06e-04** printed; the lumped assert at 1e-8 on both
-   widths. **Negative control:** the `-n 8` window on `main` **first**,
-   footered Status 1 (`1 failed, 4 passed`) — the envelope must be visibly
-   load-bearing. **Cost:** 84 s per width, three windows ≈ **260 s**,
-   `-k 30 300` each. **Traps:** `-n 8` is the worst width, not `-n 12`;
-   `-s`; do not touch `STEP1_GAP_RATIO_RECORD`; complex build. **Scope:**
-   chunk ✅, known-issues entry retired; not a root-cause fix, not a
-   widened record. **Negative result:** a `-n 8` reading outside 3e-4 or
-   the lumped route moving at 1e-8 — record on the known-issues entry,
-   stop, do not widen.~~
-3. 🧪 **EXECUTED 2026-08-30 15:00 slot — negative, and the red did not
-   retire.** The rescope's own premise is refuted by measurement: the 1 MHz
-   row reads degree-1 `W_e/W_m` = **1.926692e-02**, **98.7×** the
-   pre-registered 1.95e-4 and **0.9869×** the 10 MHz reading — `W_e`, `W_m`
-   and the dissipated power are all frequency-independent on this fixture, so
-   the quasi-static `E ~ ωA` argument does not describe this solve. The
-   precondition fails again at the unmoved ≤ 1e-2, so per §7 the step stops
-   with the assert red: **the deliberate red moved from the 10 MHz row to the
-   1 MHz row rather than retiring.** The saturation trap fired (degree-2
-   `W_e/W_m` **1.010649** at 1 MHz vs 1.006682 at 10 MHz; move 5.246e+01× vs
-   5.156e+01×), so the cross-order ratio is the wrong discriminant at any
-   frequency. All negative controls green; 1 failed / 13 passed / 1 skipped,
-   32 s (`20260830T200543Z`). **The frequency route is exhausted — the review
-   owes a decision, and `TH-13` step 2 (`‖∇φ‖/‖E‖`) is the indicated one;
-   do not queue a third fixture rescope.**
-   ~~**`TH-13` step 1′ — the ω² rescope at 1 MHz (standard, complex,
-   `-n 2`, `main`; independent; §7 bullet written this review from the
-   step-1 reading).** Execute the §7 step-1′ bullet as written: a second
-   parametrised row of `test_degree2_gradient_discriminator.py` at
-   `LOOP_FREQUENCY_HZ = 1.0e6`, the 10 MHz row demoted to a recorded
-   reading (its precondition assert → print with 1.952350e-02 in-comment,
-   retiring `main`'s red). **Anchors:** degree-1 `W_e/W_m` at 1 MHz ≤
-   1e-2 **and** within 2× of the ω² prediction **1.95e-4**; smoke
-   **1.155×** / sphere **1.015×** at the imported 1% band; `POST-5`
-   **1.199162e-06 W** at rtol 1e-6; bands unchanged — ≥ 1e3× CLASS, ≤ 10×
-   FEED, between recorded. **Negative control:** the 10 MHz row's
-   **5.156e+01×** reproduces at rtol 1e-3. **Cost:** ≤ **60 s** (step 1
-   was 36 s), `-k 30 300`. **Traps:** no ordering comparison in the drive
-   callable; 0-byte FFCx stubs; a degree-2 `W_e/W_m ≈ 1` at 1 MHz too
-   means the contamination *saturates* — that is the finding, record it.
-   **Scope:** step 1′ only; step 2 and the §10 decision are a review's.
-   **Negative result:** in-between or saturated — record on the entry and
-   the degree-2 known-issues entry, stop.~~
-4. ✅ **DONE 2026-08-30 16:30 slot** — green on the first run,
-   `20260830T213415Z_ANS-4-run1.log` Status 0 / **125 s** (estimate was
-   160 s). All three gates on all three rungs, mesh ratio 1.000000 with
-   `reused_mesh`, 10 MHz records to 1.158e-10 / 2.568e-10, Larmor records to
-   worst 1.075e-03, control separation 1.585460. Script + guide +
-   `metrics.json` + `COMPARISON.md` (two blank AED columns) + 128 MHz XDMF
-   landed; docrefs `guide=0`, `dead=53` still `EX-36`'s. `ANS-4` ✅ — **the
-   operator's AED replication at both orders is the dashboard's Waiting-on-you
-   item; adjudication is a weekly review's.**
-   ~~**`ANS-4` — runnable half of the loaded-birdcage 4-port benchmark
-   (heavy by the runner's `-t 500`, complex, `-n 2`, `main`; independent;
-   commissioned 02:15 weekly review, §7 entry written this review).**
-   Execute the §7 `ANS-4` entry as written:
-   `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/04_birdcage_four_port_10_64_128MHz.py`
-   + guide, `./run_examples.sh -e ans:4 -n 2 -t 500`, importing
-   `build_four_port_sweep` / `_four_port_rung` from `ports:5` and the gate
-   modules; `metrics.json`, `COMPARISON.md` (our columns filled, Zero Order
-   **and** First Order AED columns blank per `ANS-5`), one combined XDMF.
-   **Anchors:** all three gates on all three rungs at the imported bands;
-   10 MHz `LEG_D_S_MATRIX_10MHZ` to 1e-6; 64 / 128 MHz inside
-   `LARMOR_RECORD_BAND = 1e-2` (σ_max 0.999721388 / 0.998974779);
-   116 085 cells, `reused_mesh`. **Negative control:** the `PORT-0`
-   heuristic at 128 MHz, separation **1.585461** vs 2e-3, printed first.
-   **Cost:** `ports:5` is 139 s + one export solve ≈ **160 s**, one
-   command, `timeout -k 30 500`. **Traps:** runner on the **host**;
-   docker-socket denial ⇒ substitution above; the `ans:` group nests one
-   directory deep, `04_` prefix and a guide for `guide=0`; census `exit 1`
-   is `EX-36`'s — read this case's own references only. **Scope:**
-   runnable half only, no adjudication, no absolute claim from our side;
-   the operator's AED runs are already Waiting-on-you item 1. **Negative
-   result:** drift outside the imported bands — report, annotate, stop.~~
-5. **`ANS-5` steps 1–2 — write the element-order ruling into the specs
+1. **`EX-37` — restore the `ANS-1`/`ANS-3` example imports and re-run
+   both (standard, complex, `-n 2`, host runner; independent; §7 entry +
+   known-issues entry written this review).**
+   `01_loop_over_lossy_slab_10MHz.py:96` →
+   `__import__("01_dodd_deeds_coil_loading")`,
+   `03_two_torus_gap_ports_10MHz.py:88` →
+   `__import__("02_package_sparameter_sweep")`; nothing else. **Negative
+   control first:** `./run_examples.sh -e ans:1 -n 2 -t 300` on unpatched
+   `main` through the harness — Status ≠ 0 with `ModuleNotFoundError …
+   '01_materials_01_dodd_deeds_coil_loading'` in the log. **Anchors:**
+   `ans:1` and `ans:3` (`-t 500`) green on the patched tree — each
+   script's own asserts against its gate records are the quantitative
+   check; census afterwards with the two cases' artifacts fresh (`dead=53`
+   is `EX-36`'s and stays). **Cost:** ≈ 5 + 70 + 131 s + census, one
+   runner window each; `-k 30` inside the substitution if the socket
+   denial fires. **Traps:** `ans:` nests one directory deep; a red for any
+   other reason is not fixed in-slot. **Scope:** two strings; no record,
+   band, number or guide moves; the ✅ rows keep their 08-09 / 08-16
+   records. **Negative result:** still red after the fix — extend the
+   known-issues entry with the traceback, stop.
+2. **`TH-13` step 2 — the gradient-projection identity on the loop
+   fixture, both orders (standard, complex, `-n 2`, tests only, `main`;
+   independent; rescoped this review — execute the §7 step-2 bullet as
+   written).** For each of the four existing loop solves, two
+   degree-matched Laplace projections — `(∇χ, ∇q) = (E_h, ∇q)` and
+   `(∇φ, ∇q) = (J′_used, ∇q)`, `J′_used = solver._projection.current`,
+   Dirichlet set = whatever `build_boundary_conditions` applied (default
+   `NATURAL` ⇒ none). **Anchor (A):** `‖∇χ − c·∇φ‖/‖∇χ‖ ≤ 1e-6` at
+   degrees 1 and 2, 10 and 1 MHz, `c` read from `load_factor` and the
+   form's mass coefficient (expect ~1e-10). **(B), printed:**
+   `‖P_∇₂J′‖/‖P_∇₁J′‖`, and `ε₀ε_r‖∇χ‖²/2` as a share of the measured
+   `W_e` at each degree. **(C):** `POST-5` **1.199162e-06 W** at rtol
+   1e-6; the steps 1/1′ rows at rtol 1e-3. **Negative controls:** `c`
+   off by 10% fails (A) at ≥ 1e-1 (probe, reverted before commit); one
+   `project_source=False` degree-1 solve reads `‖P_∇₁J‖/‖J‖` visibly
+   above the projected figure. **Cost:** ≤ **90 s** (module 32 s),
+   `-k 30 300`, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first.
+   **Traps:** `inner` conjugates the test function; `create_connectivity`
+   before `exterior_facet_indices`; reduce every norm; pin
+   `quadrature_degree`; leave the precondition red alone. **Scope:** no
+   `src/` change; the matched projection is step 3, a review's; the coil
+   is not touched. **Negative result:** (A) failing is a formulation
+   finding — degree-2 known-issues entry, stop; never invent a verdict
+   band.
+3. **`WF-6` step 2 — the quadrature drive by exact superposition at
+   10 MHz (standard, complex, `-n 2`, `main`; independent; scoped this
+   review — execute the §7 step-2 bullet as written).** `post/faraday.py`
+   gains `b1_minus`; a new `tests/validation/test_birdcage_b1_quadrature.py`
+   superposes the four solved single-drive fields with phases `±kπ/2`,
+   projects each sense through `post.project_to_cg1`, and reads
+   `|B₁⁺|`/`|B₁⁻|` on the 51 centroids. **Anchors:** (a) C4-invariance of
+   `|B₁⁺|_ccw` under the 90° rotation ≤ 5e-2 (imported
+   `C4_COVARIANCE_BAND`); (b) the mirror identity
+   `|B₁⁺|_ccw(x) = |B₁⁻|_cw(Mx)` at the mirrored centroids ≤ 5e-2, `M` the
+   reflection in the plane through port 1's azimuth (read it off the
+   fixture); (c) gate (i) **9.795751e-03** at rtol 1e-4 and step 1d's
+   three CG1 readings at rtol 1e-3. **Reported, ungated:** centre
+   `|B₁⁺|/|B₁⁻|` per sense, mean `|B₁⁺|`, CV over the 51 centroids and the
+   96-point ring set. **Negative controls:** the mis-paired
+   `|B₁⁺|_ccw(x)` vs `|B₁⁺|_cw(Mx)` must miss the band (> 5%); the P1
+   single-drive centre purity printed. **Cost:** ≤ **120 s** (fixture
+   97 s), `-k 30 400`; the `src/` change owes `ports:4` (76 s) and
+   `ports:5` (127 s) re-runs + docrefs (`exit 1` is `EX-36`'s).
+   **Traps:** magnitudes after the point evaluation; `valid` 51/51 on the
+   mirrored points; superposition is exact only because every solve
+   carries the same 50 Ω law on every port — assert the four solves share
+   `Z_p` and `V_src`; runner on the host, substitution. **Scope:** 10 MHz,
+   degree 1, superposition only — no simultaneous-source solve, no
+   64/128 MHz (step 2b, serial on this), no homogeneity claim, no SAR;
+   chunk stays 🟡 with steps 1–2 ✅. **Negative result:** (a) or (b)
+   missing — known-issues entry with both readings, keep the assert, stop;
+   never widen.
+4. **`ANS-5` steps 1–2 — write the element-order ruling into the specs
    (smoke, **no compute**, `main`; independent; ruled 02:15 weekly review).**
    Step 1: a mandatory *Basis / element order* line in each `SPEC.md`
    solver section and a matching *Solve metadata* row in each
@@ -5449,20 +5613,22 @@ denial; do not spend the slot on it.
    asked for Zero Order (adjudication column) **and** First Order
    (sensitivity column), unknowns-per-tet confirmation requested. Step 2:
    retro-fill `ANS-1` (Maxwell 3D — state formulation and order) and
-   `ANS-3`; `ANS-4`'s spec already carries the wording — bring the three
-   into one form. **Done-when (the entry's own, documentary):** no band,
+   `ANS-3`; `ANS-4`'s spec and `COMPARISON.md` already carry the wording
+   and the two-AED-column shape — lift them, bring the three into one
+   form. **Done-when (the entry's own, documentary):** no band,
    tolerance, recorded figure or physics claim moves; the diff is
    `examples/ansys_benchmarks/**/*.md` only; `git diff --stat` in the
    journal. **Negative control:** none applies — a documentary chunk; say
    so in the journal rather than inventing one. **Cost:** ≤ 20 min of
    editing, no harness log; journal the commit hash. **Scope:** steps 1–2
    only; step 3 is **not** taken (ruling (a)); do not touch `TH-13` or the
-   production order. **Negative result:** n/a — if the wording cannot be
-   made consistent across the three cases, journal the conflict and stop.
-6. *(spare)* **`EX-36` leg (th) — re-run the eight `time_harmonic`
+   production order; do not touch the two `.py` files item 1 edits.
+   **Negative result:** n/a — if the wording cannot be made consistent
+   across the three cases, journal the conflict and stop.
+5. **`EX-36` leg (th) — re-run the eight `time_harmonic`
    examples until the census reads `dead=0` for that group (standard,
-   complex, `-n 2`, host-side runner; independent; §7 entry written this
-   review).** Pre-leg census first (prints the group's non-zero `dead`
+   complex, `-n 2`, host-side runner; independent; §7 entry).** Pre-leg
+   census first (prints the group's non-zero `dead`
    count), then `./run_examples.sh -e th:1..8` (105 s total by `EX-30`
    leg (th)), then the census again. **Anchors:** each example's own
    in-script asserts against its gate records (`th:6` reproduces 1.769% /
@@ -5472,6 +5638,23 @@ denial; do not spend the slot on it.
    not fixed in-slot. **Scope:** artifacts only, no record moves; leg ✅,
    chunk stays ⬜ until all four legs land. **Negative result:** a red
    example is a known-issues entry and the leg stops at its census figure.
+6. *(spare)* **`EX-38` — `ports:6`, the first `|B₁⁺|` field in ParaView
+   (standard, complex, `-n 2`, host runner; independent; §7 entry written
+   this review, §5.4 ramp).** `examples/ports/06_birdcage_b1_plus_map.py`
+   + guide: `build_four_port_sweep`'s fixture, two solves (P1, P2),
+   `magnetic_flux_density_from_e` → `project_to_cg1` → `b1_plus`, one
+   combined XDMF with the CG1 `B` phasor, `|B₁⁺|` and the phantom tags.
+   **Anchors (in-script asserts, all imported from
+   `test_birdcage_b1_plus_map.py`):** gate (i) **9.795751e-03** at rtol
+   1e-4; CG1 C4 covariance at +90° **2.1870%** at rtol 1e-3 vs the imported
+   5%; `valid` 51/51; cell ratio 1.000000, `reused_mesh`. **Negative
+   control:** the DG0 read prints **8.6516%** (rtol 1e-4) beside the CG1
+   figure. **Cost:** ≈ **70 s**, `-t 300`; docrefs `exit != 1` for this
+   example's artifacts. **Traps:** host runner, substitution; DG0
+   `fem.Expression` needs the DG0 interpolation points; `.real` on the
+   magnitude. **Scope:** map + symmetry identity at 10 MHz only — no CV,
+   no Larmor, no quadrature, no absolute claim. **Negative result:** a
+   record not reproducing — known-issues, stop.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
@@ -5482,9 +5665,11 @@ If the queue drains: **stop and journal.** There is no fallback chunk:
 (d0) has a margin — and a review scopes each leg from the previous one's
 number, not an implementer in-slot. The remaining `EX-36` legs are the
 one exception a review has pre-authorised: if items 1–6 are all done or
-blocked, a slot may take `EX-36` leg (mesh), then (root), then (ports),
-each as scoped in §7 — they are independent of everything above. History
-of the birdcage-port hold in `docs/planning/plan-archive.md`.
+blocked, a slot may take `EX-36` leg (mesh), then (root), then
+(ports + ans) — the last **only if item 1 landed** (it reds on
+`ans:1`/`ans:3` otherwise) — each as scoped in §7; they are independent of
+everything above. History of the birdcage-port hold in
+`docs/planning/plan-archive.md`.
 
 Every frequency-domain command needs `source /usr/local/bin/dolfinx-complex-mode`
 **and** `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest
