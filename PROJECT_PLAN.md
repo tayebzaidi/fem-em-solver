@@ -3516,9 +3516,13 @@ attributes that residual to resolution.
 > ABC/PML is needed only for unshielded free-space validation geometries.
 
 **`TH-13` — the degree-2 gradient-subspace injector: feed model, or any
-`W_m ≫ W_e` fixture?** 🧪 *(step 1 executed 2026-08-30, negative result on
-both pre-registered clauses — reading below the step-1 bullet; step 2 not
-run; commissioned 2026-08-23 weekly review from
+`W_m ≫ W_e` fixture?** 🧪 *(steps 1 and 1′ executed 2026-08-30, both negative
+— step 1 missed its precondition at 10 MHz and read IN-BETWEEN; step 1′
+measured the ω² rescope premise **refuted** (`W_e/W_m` is frequency-
+independent on this fixture) and the degree-2 **saturation** confirmed, so the
+cross-order ratio is the wrong observable and step 2 is the live route;
+readings below the two bullets; step 2 not run; commissioned 2026-08-23
+weekly review from
 `TH-12` step 3's named confound — the one thing standing between the
 measured degree-2 numbers and a production-order decision for coil-fed
 solves; §10 "element-order lever". Standard tier, `-n 2`, complex build,
@@ -3611,6 +3615,49 @@ contamination", because neither cheap fixture is magnetically dominated.
 >   with the verdict on record. **Negative result:** an in-between ratio or
 >   a saturated degree-2 `W_e/W_m ≈ 1` is recorded on this entry and the
 >   known-issues degree-2 entry, stop.
+> * **Step-1′ reading — THE ω² PREMISE IS REFUTED; `W_e/W_m` IS
+>   FREQUENCY-INDEPENDENT ON THIS FIXTURE** *(2026-08-30 15:00 slot,
+>   `20260830T200543Z_TH-13-step1prime-final.log`, same module, standard tier,
+>   1 failed / 13 passed / 1 skipped, exit 1, **32 s** at `-n 2`, complex
+>   build; first window `20260830T200305Z_TH-13-step1prime.log`, 36 s, same
+>   numbers)*. The 1 MHz row was built exactly as scoped — same 1 405-cell
+>   mesh, same closed azimuthal drive, same imported energy forms, only
+>   `LOOP_FREQUENCY_HZ` moved. **Predicted 1.952350e-04, measured
+>   1.926692e-02**: **98.7×** the pre-registered prediction and **0.9869×**
+>   the 10 MHz reading across a full decade of ω. The energies themselves
+>   barely move — `W_e` 5.621559e-19 → 5.544787e-19 J, `W_m`
+>   2.879380e-17 → 2.877879e-17 J, dissipated power
+>   1.139571e-09 → 1.124008e-09 W — so both `E` and `H` are essentially
+>   frequency-independent here and the quasi-static `E ~ ωA`-at-fixed-
+>   impressed-current argument (used by step 1's hindsight paragraph *and* by
+>   this rescope) **does not describe this solve**; it should not be reused
+>   anywhere in this family without being measured first. **The precondition
+>   therefore fails again** (1.926692e-02 vs the unmoved ≤ 1e-2): frequency is
+>   not the knob that makes this fixture magnetically dominated, the fixture is
+>   still not the missing cell of step 3's table, and per this entry's own
+>   clause the step stops there with the assert left red rather than loosened —
+>   **`main`'s deliberate red moves from the 10 MHz row to the 1 MHz row; it
+>   does not multiply, and the ≤ 1e-2 / 10× / 1e3× bands are untouched.** The
+>   ω²-prediction clause, pre-registered here as an assertion, is **demoted to
+>   a printed record** with the measurement in-comment at
+>   `OMEGA_SQUARED_PREDICTED_RATIO` (MAG-10/MAG-15 precedent): a second red on
+>   a premise measurement has already killed gates nothing the precondition
+>   does not. **The saturation trap this bullet named fired:** degree-2
+>   `W_e/W_m` at 1 MHz is **1.010649** against 10 MHz's 1.006682, cross-order
+>   move **5.246e+01×** against 5.156e+01× — the contamination saturates at
+>   O(1) equipartition *independently of the degree-1 baseline*, so
+>   **"cross-order move in `W_e/W_m`" is the wrong discriminant** and no
+>   frequency will make it the right one. That is the finding, and it retires
+>   the frequency route rather than motivating a third rescope. **Negative
+>   controls, all green:** the 10 MHz row reproduced step 1 at rtol 1e-3 on
+>   both its degree-1 ratio and its move; step 3's smoke **1.155×** / sphere
+>   **1.015×** at the imported 1% band; the `POST-5` anchor **1.199162e-06 W**
+>   at rtol 1e-6 (newly asserted here); `|Im P|/Re P` = 0.000e+00 on all four
+>   loop solves. Nothing fixed, no coil number moved, known-issues entry
+>   updated and still open. **For the review:** the observable, not the
+>   fixture, is what is wrong — go to **step 2** (`‖∇φ‖/‖E‖`, the absolute
+>   gradient content), whose pre-registered anchors do not depend on a
+>   magnetically-dominated fixture at all.
 > * **Step 2 (direct measure) — gradient content of `E`.** On the same
 >   fixture and the sphere, project `E_h` onto the discrete gradient space
 >   `∇H¹` (degree-matched Lagrange) and report `‖∇φ‖/‖E‖` at both orders;
@@ -5195,8 +5242,11 @@ slot cannot invent work, and the fix belongs upstream.
 **Residual `main` reds at `-n 2`:** the two entry-3 names,
 `test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), ~~`WF-6`
 gate (ii) at 8.6516%~~ (**retired 2026-08-30 12:00 by item 1** — green at
-2.1870% under CG1), `TH-13` step 1's precondition
-at 1.952350e-02 (retires with item 3); ~~at `-n > 2` only, the two-torus
+2.1870% under CG1), `TH-13`'s precondition — ~~step 1's 1.952350e-02 at
+10 MHz~~ **now step 1′'s 1.926692e-02 at 1 MHz** (2026-08-30 15:00: the red
+moved, it did not retire; the ω² rescope that was to retire it is itself
+refuted, and item 3's replacement is a review decision, not another rescope);
+~~at `-n > 2` only, the two-torus
 `PORT-12` drift~~ (**retired 2026-08-30 13:30 by item 2** — bounded by the
 3e-4 envelope, green at `-n 2` and `-n 8`). §2 unchanged — a B₁⁺ number exists
 but is not gated until item 1 lands.
@@ -5293,7 +5343,22 @@ denial; do not spend the slot on it.
    widened record. **Negative result:** a `-n 8` reading outside 3e-4 or
    the lumped route moving at 1e-8 — record on the known-issues entry,
    stop, do not widen.~~
-3. **`TH-13` step 1′ — the ω² rescope at 1 MHz (standard, complex,
+3. 🧪 **EXECUTED 2026-08-30 15:00 slot — negative, and the red did not
+   retire.** The rescope's own premise is refuted by measurement: the 1 MHz
+   row reads degree-1 `W_e/W_m` = **1.926692e-02**, **98.7×** the
+   pre-registered 1.95e-4 and **0.9869×** the 10 MHz reading — `W_e`, `W_m`
+   and the dissipated power are all frequency-independent on this fixture, so
+   the quasi-static `E ~ ωA` argument does not describe this solve. The
+   precondition fails again at the unmoved ≤ 1e-2, so per §7 the step stops
+   with the assert red: **the deliberate red moved from the 10 MHz row to the
+   1 MHz row rather than retiring.** The saturation trap fired (degree-2
+   `W_e/W_m` **1.010649** at 1 MHz vs 1.006682 at 10 MHz; move 5.246e+01× vs
+   5.156e+01×), so the cross-order ratio is the wrong discriminant at any
+   frequency. All negative controls green; 1 failed / 13 passed / 1 skipped,
+   32 s (`20260830T200543Z`). **The frequency route is exhausted — the review
+   owes a decision, and `TH-13` step 2 (`‖∇φ‖/‖E‖`) is the indicated one;
+   do not queue a third fixture rescope.**
+   ~~**`TH-13` step 1′ — the ω² rescope at 1 MHz (standard, complex,
    `-n 2`, `main`; independent; §7 bullet written this review from the
    step-1 reading).** Execute the §7 step-1′ bullet as written: a second
    parametrised row of `test_degree2_gradient_discriminator.py` at
@@ -5310,7 +5375,7 @@ denial; do not spend the slot on it.
    means the contamination *saturates* — that is the finding, record it.
    **Scope:** step 1′ only; step 2 and the §10 decision are a review's.
    **Negative result:** in-between or saturated — record on the entry and
-   the degree-2 known-issues entry, stop.
+   the degree-2 known-issues entry, stop.~~
 4. **`ANS-4` — runnable half of the loaded-birdcage 4-port benchmark
    (heavy by the runner's `-t 500`, complex, `-n 2`, `main`; independent;
    commissioned 02:15 weekly review, §7 entry written this review).**

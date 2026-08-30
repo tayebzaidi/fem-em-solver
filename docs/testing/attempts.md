@@ -16310,3 +16310,76 @@ issued**.
   the envelope's own regression cover is exactly the `-n 8` window a human or
   a slot chooses to run — if width coverage matters, it wants a scheduled
   wide-width sweep, not a per-module constant.
+
+## 2026-08-30T20:10Z — `TH-13` step 1′ — **incomplete (negative result, chunk stays 🧪)**
+
+- **Slot:** scheduled implementer run, 15:00 CDT. Preflight clean (`git status`
+  empty, `main`, container Up 4 days). §9 item 3 was the first item not marked
+  done or blocked; items 1 and 2 are ✅ from the 12:00 and 13:30 slots.
+- **What was tried.** Exactly the §7 step-1′ bullet, tests only, no `src/`
+  change: `tests/validation/test_degree2_gradient_discriminator.py` gained a
+  second loop row at `LOOP_FREQUENCY_HZ = 1.0e6` on the same 1 405-cell mesh,
+  same closed azimuthal drive, same imported energy forms; the 10 MHz row was
+  demoted from gated precondition to a **recorded** row whose degree-1 ratio
+  and cross-order move are asserted against step 1 at rtol 1e-3; the `POST-5`
+  1.199162e-06 W anchor was added to the controls test at rtol 1e-6.
+- **Measured — the ω² premise is refuted.** Predicted degree-1 `W_e/W_m` at
+  1 MHz **1.952350e-04**; measured **1.926692e-02** — **98.7×** the prediction
+  and **0.9869×** the 10 MHz reading, i.e. flat across a full decade of ω.
+  The energies are flat too: `W_e` 5.621559e-19 → 5.544787e-19 J, `W_m`
+  2.879380e-17 → 2.877879e-17 J, dissipated power
+  1.139571e-09 → 1.124008e-09 W (10 MHz → 1 MHz). Both `E` and `H` are
+  essentially frequency-independent on this fixture, so the quasi-static
+  `E ~ ωA`-at-fixed-impressed-current argument the rescope rests on does not
+  describe this solve.
+- **Consequence: the deliberate red moved, it did not retire.** The
+  precondition assert fails at 1 MHz against the unmoved ≤ 1e-2, so per §7 the
+  step stops there with the assert left red — the same disposition step 1 took
+  at 10 MHz. Nothing was loosened; `MAGNETIC_DOMINANCE_MAX`, `FEED_RATIO_FACTOR`
+  and `CLASS_RATIO_FACTOR` are untouched. Net red count on `main` unchanged.
+- **The saturation trap §7 named fired.** Degree-2 `W_e/W_m` at 1 MHz is
+  **1.010649** against 10 MHz's **1.006682**; cross-order move **5.246e+01×**
+  against **5.156e+01×**. The contamination saturates at O(1) equipartition
+  independently of the degree-1 baseline, so **the cross-order ratio is the
+  wrong observable at any frequency** — which is the durable finding of this
+  slot and retires the frequency route rather than motivating a third rescope.
+- **One pre-registered assertion was demoted, deliberately and in the open.**
+  The ω²-prediction clause ("within 2× of 1.95e-4") was written as an assert,
+  ran red alongside the precondition, and is now a **printed record** with the
+  measurement in-comment at `OMEGA_SQUARED_PREDICTED_RATIO` (MAG-10/MAG-15
+  precedent). Rationale, for the review to overrule if it disagrees: the two
+  asserts are the same dead premise twice, and the precondition is the one §7
+  gives the stop-clause to. **No verdict band was invented or moved.**
+- **Negative controls, all green.** 10 MHz row reproduces step 1 at rtol 1e-3
+  on both numbers (1.952350e-02, 5.156e+01×); step 3's smoke **1.155×** /
+  sphere **1.015×** at the imported 1% band; `POST-5` **1.199162e-06 W** at
+  rtol 1e-6; `|Im P|/Re P` = 0.000e+00 on all four loop solves; 1 405 cells,
+  2 004 / 10 082 DOFs.
+- **Runs (standard tier, complex, `-n 2`, `timeout -k 30 300`, foreground).**
+  `20260830T200305Z_TH-13-step1prime.log` — 1 failed / 12 passed / 1 skipped,
+  Status 1, **36 s** (the two-assert version). Final:
+  `20260830T200543Z_TH-13-step1prime-final.log` — **1 failed / 13 passed /
+  1 skipped**, Status 1, **32 s**. Both windows identical on every number;
+  68 s of compute total, well inside the tier.
+- **Outcome/scope.** `TH-13` stays 🧪. No coil number moved, no `src/` change,
+  the two degree-2 identity tests stay failing at the unloosened 1e-9 bound,
+  known-issues degree-2 entry updated (step-1′ row) and still open. §2 and §10
+  untouched. **Branch parked:** none — the work is complete as a measurement
+  and belongs on `main` with its red, exactly as step 1's did. **Denied
+  commands:** one Write to `.git/` refused as a sensitive path (scratch commit
+  message); re-done in the repo scratch area at no cost.
+- **Residual `main` reds after this slot.** The two entry-3 names,
+  `test_birdcage_volumes_partition_the_box` (`GEO-21`'s floor entry), and
+  `TH-13`'s precondition — now `test_the_loop_fixture_is_magnetically_dominated`
+  at **1.926692e-02 (1 MHz)** rather than 1.952350e-02 (10 MHz).
+- **Next-attempt hypothesis.** Do **not** queue a third frequency or fixture
+  rescope: the saturation result says the discriminant, not the fixture, is
+  what is broken. `TH-13` **step 2** (`‖∇φ‖/‖E‖`, the absolute gradient content
+  of `E` on the loop and the sphere) is the indicated next chunk and its
+  pre-registered anchors do not require a magnetically-dominated fixture at
+  all — but §9 item 3's replacement is the review's to scope, not a slot's.
+  A cheaper question the review may want answered first, since it costs one
+  36 s window on the same module: *why* is this solve frequency-independent?
+  If the solver's RHS does not carry the `iωμ₀` factor the quasi-static
+  argument assumes, that is a formulation reading worth having before step 2
+  interprets any gradient norm.
