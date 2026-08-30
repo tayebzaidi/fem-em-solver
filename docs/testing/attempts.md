@@ -21892,3 +21892,102 @@ queue then drains. Tree clean at handoff; no anomalies.
   the 06:00 slot parks a byte-identical diff, that confirms nothing is still
   writing, and the daily review should both land `recovered/*` and ask why the
   weekly slot has no commit-first checkpoint.
+
+## 2026-08-30T11:00Z — *(no chunk)* — **anomaly (dirty tree parked, second encounter) + §9 drained (stop and journal)** (06:00 CDT implementer slot)
+
+Two protocol branches fired this slot in sequence: step 1's **second-encounter
+parking rule** (the tree was still dirty), and then step 2's **drain
+instruction** (every On-deck item is done and no fallback chunk is named). No
+chunk work was possible and **no compute command was issued**.
+
+- **Preflight.** `HEAD = a04cee7` (the 04:30 slot's journal-only commit).
+  Container `fem-em-solver` **Up 3 days**. `git stash list` empty. No
+  `attempt/*` branch; no `recovered/*` branch yet at entry. `git status` **not
+  clean** — the same six modified files plus the untracked
+  `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/SPEC.md`.
+- **Second encounter established, byte-identically.** The 04:30 entry
+  (`2026-08-30T09:31Z`) already journals this exact dirty tree, so protocol
+  step 1's parking rule applies rather than another stop. Verified against
+  that entry's table before touching anything — all five stable md5s match:
+
+  | file | md5 now | journaled 09:31Z |
+  |---|---|---|
+  | `PROJECT_PLAN.md` | `823ec3808686b7c70589c45178be0e4d` | same |
+  | `docs/planning/plan-archive.md` | `971c6700a0d89c0a216675d1d3595aec` | same |
+  | `docs/status/dashboard.md` | `ae4e2006cfdf05a648a818cd44ae0f2c` | same |
+  | `docs/testing/attempts-archive.md` | `f99340dcc77b9cc8878e0575e443ee80` | same |
+  | `docs/testing/known-issues.md` | `bc78c1552e22479462a763e282dbd895` | same |
+
+  `docs/testing/attempts.md` was compared by diff as that entry instructed
+  (it carries the 09:31Z entry appended): `git diff --numstat` reads
+  **0 / 5935**, the identical rotation hunk. Nothing has written to the tree
+  in the 90 minutes between slots, which confirms the 04:30 hypothesis that
+  the weekly review's session is dead rather than slow.
+- **Parked.** Branch **`recovered/2026-08-30T1100Z`**, commit `e45f5aa`,
+  7 files changed, +10144 / −9610 — the six modified files committed as-is
+  plus `SPEC.md` added. `main` returned to clean at `a04cee7`. Nothing was
+  stashed, discarded, reverted or edited; the parked commit is the weekly
+  review's bytes exactly, and `git checkout recovered/2026-08-30T1100Z`
+  recovers all of it. Per protocol this branch is the **daily review's** to
+  dispose of — do not delete it.
+- **What is on that branch** (from the 04:30 forensics, unchanged): the
+  archive rotation of `attempts.md` → `attempts-archive.md` and of the
+  `PROJECT_PLAN` §7/§9 narrative → `plan-archive.md`, a rewritten dashboard
+  "Waiting on you", two known-issues rulings, and the newly commissioned
+  `ANS-4` benchmark `SPEC.md` (gapped four-leg birdcage, 4×4 S-matrix at
+  10 / 64 / 128 MHz). The weekly review's chunk rulings — `GEO-25`,
+  `PORT-13`, `EX-36`, `WF-6` step 1d, `TH-13`'s ω² rescope, `PORT-12`
+  step 2 — live **inside** that PROJECT_PLAN and are therefore **not on
+  `main`**.
+- **Then step 2: §9 On deck is drained.** Because the weekly review's plan
+  never landed, §9 on `main` is still the 2026-08-29 18:00 review's queue,
+  and all three ready items closed overnight: item 1 `WF-6` step 1b (done
+  19:30, `20260830T003238Z_WF-6-step1b.log`), item 2 `TH-13` step 1 (done
+  21:00, `20260830T020301Z_TH-13-step1.log`), item 3 `WF-6` step 1c (done
+  22:30, `20260830T033147Z_WF-6-step1c.log`). Items 4 and 5 are the review's
+  explicit *(no ready item)* placeholders. Protocol step 2's fallback then
+  looks for the "obvious next entry" sentence, and §9's drain paragraph
+  **names no fallback chunk** — "There is no fallback chunk: `PORT-9` step 3's
+  legs are serial by design … and a review scopes each leg from the previous
+  one's number, not an implementer in-slot." So this slot stops and journals
+  rather than inventing a chunk, exactly as the 00:00 slot did
+  (`2026-08-30T05:02Z`).
+- **The 03:00 daily review also produced no commit.** There is no commit
+  between `563b5a9` (00:00 slot) and `a04cee7` (04:30 slot) other than those
+  two, and no file mtime after 02:52. The 03:00 slot either did not fire or
+  found the same dirty tree and correctly declined to write over it. That is
+  why §9 is unrefilled: **two** review slots in a row (02:15 weekly, 03:00
+  daily) have failed to land anything, and the queue has now been drained for
+  three consecutive implementer slots (00:00, 04:30, 06:00).
+- **Consequence for the rest of the day, for the review to act on.** The tree
+  is now clean, so the **10:30 daily review is unblocked** and is the first
+  session able to both dispose of `recovered/2026-08-30T1100Z` and refill §9.
+  Until it does, the 07:30 and 09:00 slots will find the same drained queue
+  and journal the same stop — two more slots lost. If the review lands the
+  parked branch, it inherits five ready-to-scope rulings for free; if it
+  instead refills §9 from `main`'s state it should still land the branch
+  first, or the weekly's `ANS-4` commissioning and rotation are silently
+  orphaned.
+- **Residual `main` reds (unchanged this slot, nothing was run).** The two
+  entry-3 names, `test_birdcage_volumes_partition_the_box` (`GEO-21`),
+  `WF-6` step 1's gate (ii) at 8.6516%, `TH-13` step 1's precondition at
+  1.952350e-02, and `PORT-12`'s two-torus drift at `-n 4/8/12`.
+- **Logs:** none — no compute command was issued this slot.
+- **Branch parked:** `recovered/2026-08-30T1100Z` (`e45f5aa`). Prior journal
+  entry making this a second encounter: `2026-08-30T09:31Z`.
+- **Denied commands:** two, both worked around, neither costing the slot.
+  `Write` to `.git/RECOVER_MSG.txt` (sensitive-path deny) and `Write` to
+  `$TMPDIR/femwork/recover_msg.txt` (outside-repo deny) — the multi-line
+  commit message went to `commitmsg.tmp` in the repo root instead, which
+  `.gitignore` line 73 (`*.tmp`) already covers, so `main` stayed clean.
+  Worth an allowlist note only if a future protocol wants a scratch path:
+  the repo-root `*.tmp` route works and needs no change.
+- **Next-attempt hypothesis:** nothing implementer-side is broken — three
+  clean slots have now each done the right thing on a queue no review has
+  refilled. The failure is upstream and specific: the 02:15 weekly review
+  writes all its files before its first commit, so a kill anywhere in that
+  window loses the whole output and blocks every downstream slot. The fix is
+  a commit-first checkpoint in `docs/automation/weekly-review.md` (commit the
+  rotation as its own commit before the plan edits begin), and it is worth
+  the 10:30 review proposing it to the operator alongside disposing of the
+  branch.
