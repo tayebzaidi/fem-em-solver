@@ -21744,3 +21744,49 @@ queue then drains. Tree clean at handoff; no anomalies.
   should journal that, per the drain instruction; the 02:15 weekly review
   owes the rulings that refill the queue. Tree clean at handoff; no
   anomalies, no denied commands.
+
+## 2026-08-30T05:02Z — *(no chunk)* — **blocked (queue drained — protocol drain instruction)** (00:00 CDT implementer slot)
+
+- **Preflight.** `git status` clean at `4af13f2`; container `fem-em-solver`
+  **Up 3 days**. No `attempt/*` or `recovered/*` branch exists. No anomaly.
+- **Item selection (protocol step 2).** §9 "On deck" has no item that is
+  neither done nor blocked:
+  - item 1 `WF-6` step 1b — **done** 2026-08-29 19:30 slot, 98 s;
+  - item 2 `TH-13` step 1 — **done** 21:00 slot, 36 s;
+  - item 3 `WF-6` step 1c — **done** 22:30 slot, 97 s;
+  - items 4 and 5 — the 18:00 review's explicit *"no ready item — stop and
+    journal"* placeholders, not chunks.
+  The queue's own drain instruction is unambiguous and overrides a search
+  for a fallback: *"If the queue drains: **stop and journal.** There is no
+  fallback chunk"* — `PORT-9` step 3's legs are serial by design and a
+  review, not an implementer in-slot, scopes each leg from the previous
+  one's number. §9's list of deliberately-not-queued work
+  (`PORT-4`…`PORT-8`, `ANS-4`/`ANS-5`, the wire size field in `src/`, the
+  `GEO-21` conductor floor, the Phase-6 ring-rung probe, `PORT-12` step 2,
+  `WF-6` steps 2–3, a `MAG-20` third rung, and `WF-6` step 1 as written)
+  therefore stays untouched. **No chunk work attempted; no compute run.**
+- **This is the predicted state, not a surprise.** The 22:30 slot's entry
+  closes with exactly this forecast ("the next slot should find no ready
+  item and should journal that"). The four-slot block after the 18:00
+  review ran three ready items and this fourth had nothing left — the
+  review said so in advance ("the queue is short by design, not by
+  omission … slots 4 and 5 drain to 'stop and journal' if the three land").
+  All three landed.
+- **What the next review is owed (unchanged from 22:30, restated for the
+  02:15 weekly).** The queue refills only on rulings: `PORT-12` step 2
+  (option set (i)/(ii)/(iii), solver-side fix off), `ANS-5`, the `GEO-22`
+  size-field licence, the `GEO-21` floor, the Phase-6 ring-rung probe, and
+  **`WF-6` gate (ii)'s disposition** — now two-sidedly evidenced by steps
+  1b and 1c (estimator moves it 4–5×, sample set does not move it at all),
+  so the DG0 ~9% is the cell-scatter floor at ≈ 1 cm phantom cells.
+- **Residual `main` reds (unchanged this slot, nothing was run).** The two
+  entry-3 names, `test_birdcage_volumes_partition_the_box` (`GEO-21`),
+  `WF-6` step 1's gate (ii), `TH-13` step 1's precondition, and `PORT-12`'s
+  two-torus drift at `-n 4/8/12`.
+- **Logs:** none — no compute command was issued this slot.
+- **Branch (if parked):** none; nothing to park. Tree clean at handoff.
+- **Denied commands:** none.
+- **Next-attempt hypothesis:** the 03:00 daily review runs before the next
+  implementer slot (04:30) and tops §9 back up to five; the 02:15 weekly
+  review lands the rulings above first. If a slot fires before §9 is
+  refilled it should journal the drain again rather than invent a chunk.
