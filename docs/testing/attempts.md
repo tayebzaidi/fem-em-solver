@@ -21790,3 +21790,105 @@ queue then drains. Tree clean at handoff; no anomalies.
   implementer slot (04:30) and tops §9 back up to five; the 02:15 weekly
   review lands the rulings above first. If a slot fires before §9 is
   refilled it should journal the drain again rather than invent a chunk.
+
+## 2026-08-30T09:31Z — *(no chunk)* — **anomaly (preflight dirty — first encounter, stop and journal)** (04:30 CDT implementer slot)
+
+- **Preflight.** `HEAD = 563b5a9` (the 00:00 slot's journal-only commit).
+  Container `fem-em-solver` **Up 3 days**. `git stash list` empty. No
+  `attempt/*` or `recovered/*` branch exists. **`git status` is NOT clean**,
+  so per protocol step 1 no chunk work was attempted and **no compute command
+  was issued**.
+- **The diff, recorded for byte-identical comparison by the next slot.**
+
+  ```
+   M PROJECT_PLAN.md                   (+264  -3653)
+   M docs/planning/plan-archive.md     (+3701    -0)
+   M docs/status/dashboard.md          (+42    -21)
+   M docs/testing/attempts-archive.md  (+5937    -0)
+   M docs/testing/attempts.md          (+0   -5935)
+   M docs/testing/known-issues.md      (+42     -1)
+  ?? examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/SPEC.md
+  ```
+
+  `git diff` (tracked files, before this entry was appended) md5
+  `2077290f4daeb83354b5256950a7652f`. Per-file md5 of the working copies as
+  found — note `docs/testing/attempts.md` changes when a later slot appends
+  to it, so compare that one by diff, not by digest:
+
+  | file | md5 as found |
+  |---|---|
+  | `PROJECT_PLAN.md` | `823ec3808686b7c70589c45178be0e4d` |
+  | `docs/planning/plan-archive.md` | `971c6700a0d89c0a216675d1d3595aec` |
+  | `docs/status/dashboard.md` | `ae4e2006cfdf05a648a818cd44ae0f2c` |
+  | `docs/testing/attempts-archive.md` | `f99340dcc77b9cc8878e0575e443ee80` |
+  | `docs/testing/attempts.md` | `c214d6b24084d563ccbbfba8bda445c5` |
+  | `docs/testing/known-issues.md` | `bc78c1552e22479462a763e282dbd895` |
+  | `examples/…/birdcage_four_port_10_64_128MHz/SPEC.md` | 158 lines, untracked |
+
+- **Whose work this is: the 02:15 Sunday weekly planning review, uncommitted.**
+  mtimes run 02:19 → 02:52 local (attempts.md / attempts-archive.md 02:19,
+  known-issues 02:22, dashboard 02:24, PROJECT_PLAN / plan-archive 02:52),
+  i.e. inside the weekly slot and nowhere near the 00:00 implementer slot,
+  which committed clean and journaled that it did. The content is
+  unmistakably weekly-review work per docs/automation/weekly-review.md: an
+  archive rotation of both long files (attempts.md → attempts-archive.md,
+  −5935/+5937; PROJECT_PLAN §7/§9 narrative → plan-archive.md, −3653/+3701),
+  a rewritten dashboard "Waiting on you", two known-issues rulings, and a
+  **newly commissioned `ANS-4` benchmark spec** (`SPEC.md`, gapped four-leg
+  birdcage, 4×4 S-matrix at 10/64/128 MHz — §5.4 commissioning is the weekly
+  review's alone). §9 is untouched, as that protocol requires. The review
+  evidently died or was killed after writing the files and before committing;
+  it left no journal entry (reviews do not write to attempts.md).
+- **Why this slot stops rather than landing it.** Protocol step 1's
+  already-journaled-documentation-drift exception requires a **prior**
+  attempts.md anomaly entry describing this exact diff. There is none — the
+  last entry (00:00 slot, 05:02Z) records the tree **clean** at handoff, so
+  this is a **first encounter** and neither the landing exception nor the
+  second-encounter parking rule applies. Two of the exception's other
+  conditions would fail anyway, which is worth stating so the next slot does
+  not mis-apply it either: the diff is not documentation-only in the
+  protocol's sense — the `PROJECT_PLAN.md` hunk carries §7 status and
+  done-when changes (the rulings name new or rescoped chunks `GEO-25`,
+  `PORT-13`, `EX-36`, `WF-6` step 1d, `TH-13`'s ω² rescope, `PORT-12` step 2)
+  — and there is an untracked directory, not just modified files. **Nothing
+  was stashed, discarded, reverted, checked out over, or landed.** Only this
+  entry is committed.
+- **Commit mechanics (so the next slot can verify the diff is untouched).**
+  `attempts.md` is itself one of the dirty files, so "commit only this entry"
+  was done by restoring the `HEAD` copy of `attempts.md`, appending this entry
+  to it, committing that file alone, and then putting the weekly review's
+  rotated working copy back with this entry appended. The rotation hunk in
+  the working tree is therefore unchanged, and after this commit
+  `git diff -- docs/testing/attempts.md` is the same −5935 rotation it was on
+  arrival. No other file was read into or out of the index.
+- **What the next slot (06:00 CDT) should do.** This becomes a **second
+  encounter**: if the tree is still dirty, protocol step 1's parking rule
+  applies — commit the diff as-is to `recovered/<UTC-timestamp>`, note this
+  entry (`2026-08-30T09:31Z`) as the prior journal, return to a clean `main`,
+  and then do chunk work normally. Note the consequence for §9: the weekly
+  review's rulings live **inside** the parked PROJECT_PLAN, and §9 On-deck on
+  `main` is still the 18:00 review's **drained** queue (items 1–3 done, 4–5
+  the "no ready item" placeholders). So after parking, the drain instruction
+  applies and the slot should journal the drain rather than invent a chunk —
+  unless the 03:00 daily review has by then refilled §9. Parking is still
+  right: it unsticks the tree, and the daily review disposes of the branch,
+  which is the only path by which the weekly's rulings reach `main` at all.
+- **The 03:00 daily review did not commit anything either.** There is no
+  commit after `563b5a9` and no file mtime between 02:52 and this slot, so
+  the 03:00 slot either did not fire or found this same dirty tree and made
+  no change. Either way §9 is unrefilled, which is why the drain caveat above
+  matters.
+- **Residual `main` reds (unchanged this slot, nothing was run).** The two
+  entry-3 names, `test_birdcage_volumes_partition_the_box` (`GEO-21`),
+  `WF-6` step 1's gate (ii), `TH-13` step 1's precondition, and `PORT-12`'s
+  two-torus drift at `-n 4/8/12`.
+- **Logs:** none — no compute command was issued this slot.
+- **Branch (if parked):** none; a first encounter does not park. Tree left
+  dirty exactly as found, plus this entry.
+- **Denied commands:** none.
+- **Next-attempt hypothesis:** the weekly review's session is being killed
+  before its commit step — the same failure mode as the 2026-08-10/11
+  backgrounded-harness deaths, but on a review rather than an implementer. If
+  the 06:00 slot parks a byte-identical diff, that confirms nothing is still
+  writing, and the daily review should both land `recovered/*` and ask why the
+  weekly slot has no commit-first checkpoint.
