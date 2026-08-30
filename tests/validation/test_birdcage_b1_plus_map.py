@@ -735,3 +735,264 @@ def test_the_cg1_estimator_still_resolves_the_drive_azimuth(cg1_estimator_table)
             "estimator no longer resolves the drive's azimuth, so its covariance "
             "readings carry no information about the field"
         )
+
+
+# ---------------------------------------------------------------------------
+# `WF-6` step 1c — the sample-set leg (scoped 2026-08-29 18:00 review)
+# ---------------------------------------------------------------------------
+#
+# Independent of step 1b and not reading its result: this leg holds the
+# *estimator* fixed at DG0 and changes the **sample set**.  Step 1's 51 points
+# are tag-3 cell centroids, and a centroid set is not closed under the C4
+# rotation — the 90°-rotated image of a centroid is an arbitrary interior point
+# of some other cell.  Under a piecewise-constant estimator that alone can
+# manufacture a mismatch, because the two readings are then never the "same
+# place in the cell" in any sense.
+#
+# The set here is closed under the rotation by construction: rings at
+# ``r ∈ {0.005, 0.010, 0.015, 0.020}`` m × ``z ∈ {−0.015, 0, +0.015}`` m × 8
+# azimuths in 45° steps, 96 points, every point's ±90° and 180° image a member
+# of the set.  The azimuth start is jittered by 3.7° so no point lands on a
+# cell facet, where the locator's answer is whichever incident cell it finds
+# first and therefore rank-dependent.  The rotation angle is the fixture's own
+# P1→P2 sheet separation, read from ``b1_plus_map``, not a literal 90°.
+#
+# **Nothing here moves a band.**  Gate (ii) stays red, the chunk stays 🧪, and
+# the ring-set figures are recorded, not asserted, against the centroid set's
+# 8.65 / 9.58 / 8.60% — agreement within ±2 pp says the sample set is not the
+# mechanism and the floor is the DG0 scatter itself; a per-ring radial pattern
+# is a structure the review reads against the coil geometry.
+
+# The ring set.  Every radius is well inside the tag-3 phantom (radius 0.03 m,
+# |z| ≤ 0.04 m), so a rotated image is interior too and ``valid`` must be
+# all-true — a false is a geometry mistake, not a sampling accident.
+RING_RADII_M = (0.005, 0.010, 0.015, 0.020)
+RING_HEIGHTS_M = (-0.015, 0.0, 0.015)
+RING_AZIMUTH_COUNT = 8
+# Jitter, in degrees, of the azimuth start.  45° steps starting at 0 would put
+# points on the coordinate planes and — on a mesh built around four sheets at
+# multiples of 90° — plausibly on cell facets.
+RING_AZIMUTH_JITTER_DEG = 3.7
+
+# Step 1b's 180° reading, for the ±2 pp comparison below.  Recorded, not
+# asserted: it came from a different sample set, and this leg exists to see
+# whether that matters.  Log `20260830T003238Z_WF-6-step1b.log`.
+STEP1B_DG0_180DEG_MISMATCH = 8.5970e-2
+
+
+def _ring_points():
+    """The 96-point rotation-invariant set, identical on every rank.
+
+    Built from constants only — no mesh query, no rank-local array — so the
+    set (and the reading on it) is the same at any rank count.
+    """
+    azimuths = np.radians(
+        RING_AZIMUTH_JITTER_DEG
+        + 360.0 / RING_AZIMUTH_COUNT * np.arange(RING_AZIMUTH_COUNT)
+    )
+    points = [
+        (r * np.cos(phi), r * np.sin(phi), z)
+        for r in RING_RADII_M
+        for z in RING_HEIGHTS_M
+        for phi in azimuths
+    ]
+    return np.asarray(points, dtype=np.float64)
+
+
+@pytest.fixture(scope="module")
+def ring_set_table(b1_plus_map):
+    """The three covariance angles at DG0 on the rotation-invariant ring set.
+
+    Same four solves as step 1 — only the points change.  ``P3@+90deg`` is the
+    mis-rotated negative control and is asserted, not printed.
+    """
+    solves = b1_plus_map["solves"]
+    delta = np.radians(b1_plus_map["delta_deg"])
+    points = _ring_points()
+
+    images = {
+        "P1@0deg": ("P1", points),
+        "P2@+90deg": ("P2", _rotate_z(points, delta)),
+        "P4@-90deg": ("P4", _rotate_z(points, -delta)),
+        "P3@180deg": ("P3", _rotate_z(points, 2.0 * delta)),
+        "P3@+90deg": ("P3", _rotate_z(points, delta)),
+    }
+    values, valid = {}, {}
+    for label, (pid, pts) in images.items():
+        values[label], valid[label] = _read_b1_plus(solves[pid], pts)
+
+    mask = np.logical_and.reduce([valid[label] for label in images])
+    reference = "P1@0deg"
+    table = {
+        label: {
+            "l2": _relative_l2(values[label], values[reference], mask),
+            "pointwise": np.abs(values[label][mask] - values[reference][mask])
+            / np.abs(values[reference][mask]),
+        }
+        for label in images
+        if label != reference
+    }
+
+    # Per-ring structure: each (r, z) separately, over its 8 azimuths, so a
+    # radial pattern in the scatter is on record for the review.
+    radii = np.hypot(points[:, 0], points[:, 1])
+    per_ring = {}
+    for r in RING_RADII_M:
+        for z in RING_HEIGHTS_M:
+            sel = (np.abs(radii - r) < 1.0e-9) & (np.abs(points[:, 2] - z) < 1.0e-9)
+            sel = sel & mask
+            if not sel.any():
+                continue
+            per_ring[(r, z)] = {
+                label: _relative_l2(values[label], values[reference], sel)
+                for label in ("P2@+90deg", "P4@-90deg", "P3@180deg")
+            }
+
+    centroid = {
+        "P2@+90deg": b1_plus_map["covariance"],
+        "P4@-90deg": b1_plus_map["counter_rotated"],
+        "P3@180deg": STEP1B_DG0_180DEG_MISMATCH,
+    }
+
+    if b1_plus_map["sweep"]["mesh"].comm.rank == 0:
+        print(
+            f"\n[WF-6 step1c] sample-set leg, DG0 estimator on a rotation-invariant "
+            f"ring set: {int(mask.sum())} of {points.shape[0]} points valid in every "
+            f"drive and image; r = {RING_RADII_M} m, z = {RING_HEIGHTS_M} m, "
+            f"{RING_AZIMUTH_COUNT} azimuths jittered {RING_AZIMUTH_JITTER_DEG} deg; "
+            f"drive rotation {b1_plus_map['delta_deg']:.6f} deg\n"
+            f"    reference reproductions: centroid-set DG0 P2-at-+90deg "
+            f"{b1_plus_map['covariance'] * 100:.4f}% vs step 1's "
+            f"{STEP1_DG0_C4_MISMATCH * 100:.4f}%; gate (i) P1 residual "
+            f"{abs(b1_plus_map['shares']['P1']['supplied'] - (b1_plus_map['shares']['P1']['phantom'] + b1_plus_map['shares']['P1']['conductor'] + b1_plus_map['shares']['P1']['sheet_total'])) / abs(b1_plus_map['shares']['P1']['supplied']):.6e}"
+            f" vs step 1's {STEP1_GATE_I_P1_RESIDUAL:.6e}",
+            flush=True,
+        )
+        print(
+            "    relative l2 mismatch vs the P1 map on the ring set "
+            "(centroid-set figure in parentheses, delta in pp):",
+            flush=True,
+        )
+        for label in ("P2@+90deg", "P4@-90deg", "P3@180deg", "P3@+90deg"):
+            row = table[label]
+            if label in centroid:
+                tail = (
+                    f"(centroid {centroid[label] * 100:7.4f}%, delta "
+                    f"{(row['l2'] - centroid[label]) * 100:+7.4f} pp)   "
+                    "covariance identity"
+                )
+            else:
+                tail = "mis-rotated control (must stay > 5%)"
+            print(
+                f"        {label:<12} {row['l2'] * 100:8.4f}%  "
+                f"(med {np.median(row['pointwise']) * 100:7.4f}%, p90 "
+                f"{np.percentile(row['pointwise'], 90) * 100:7.4f}%)   {tail}",
+                flush=True,
+            )
+        print("    per ring (r m, z m), relative l2 over the 8 azimuths:", flush=True)
+        for (r, z), row in sorted(per_ring.items()):
+            print(
+                f"        r = {r:.3f}, z = {z:+.3f}:  "
+                + "   ".join(
+                    f"{label} {row[label] * 100:7.4f}%"
+                    for label in ("P2@+90deg", "P4@-90deg", "P3@180deg")
+                ),
+                flush=True,
+            )
+        deltas_pp = {
+            label: (table[label]["l2"] - centroid[label]) * 100.0 for label in centroid
+        }
+        within = max(abs(v) for v in deltas_pp.values()) <= 2.0
+        print(
+            f"    |B1+| over the ring set, P1 driven: mean "
+            f"{np.mean(values['P1@0deg'][mask]):.6e} T, max "
+            f"{np.max(values['P1@0deg'][mask]):.6e} T, min "
+            f"{np.min(values['P1@0deg'][mask]):.6e} T\n"
+            f"    VERDICT (pre-registered, recorded not asserted): "
+            + (
+                "SAMPLE SET IS NOT THE MECHANISM — every angle within +/-2 pp of "
+                "the centroid set, so the floor is the DG0 scatter itself"
+                if within
+                else "SAMPLE-SET SENSITIVE — at least one angle moves more than "
+                "2 pp against the centroid set; the review reads the per-ring "
+                "rows against the coil geometry"
+            )
+            + "  (deltas pp: "
+            + ", ".join(f"{k} {v:+.4f}" for k, v in sorted(deltas_pp.items()))
+            + ")",
+            flush=True,
+        )
+
+    return {
+        "table": table,
+        "per_ring": per_ring,
+        "points": points,
+        "mask": mask,
+        "n_valid": int(mask.sum()),
+        "all_valid": bool(np.all(mask)),
+        "b1_plus_p1": values["P1@0deg"],
+    }
+
+
+@complex_only
+def test_the_ring_sample_set_lies_inside_the_phantom(ring_set_table):
+    """Anchor (1): every one of the 96 points, and every rotated image, evaluates.
+
+    The set is inside the tag-3 phantom by construction (max radius 0.020 m
+    against 0.030, |z| 0.015 against 0.040), and a rotation about z maps it to
+    itself, so a `valid` false is a geometry mistake — and it would silently
+    drop the point out of the ℓ² rather than fail anything.
+    """
+    assert ring_set_table["points"].shape[0] == (
+        len(RING_RADII_M) * len(RING_HEIGHTS_M) * RING_AZIMUTH_COUNT
+    )
+    assert ring_set_table["all_valid"], (
+        f"only {ring_set_table['n_valid']} of "
+        f"{ring_set_table['points'].shape[0]} ring points evaluated in every drive "
+        "and every rotated image; the set is interior by construction, so this is "
+        "a geometry mistake and the l2 would be reading a subset"
+    )
+    values = ring_set_table["b1_plus_p1"][ring_set_table["mask"]]
+    assert np.all(np.isfinite(values)), "|B1+| is not finite on the ring set"
+    assert float(np.min(values)) > 0.0, "|B1+| vanishes identically on the ring set"
+
+
+@complex_only
+def test_the_ring_set_reproduces_step_1s_records(ring_set_table, b1_plus_map):
+    """Anchor (2): the fixture this leg reads is still step 1's fixture.
+
+    Neither reading is new — they are the proof that changing the sample set
+    changed only the sample set.
+    """
+    assert b1_plus_map["covariance"] == pytest.approx(
+        STEP1_DG0_C4_MISMATCH, rel=RECORD_RTOL
+    ), (
+        f"the centroid-set DG0 P2-at-+90deg mismatch reads "
+        f"{b1_plus_map['covariance'] * 100:.6f}%, not step 1's "
+        f"{STEP1_DG0_C4_MISMATCH * 100:.4f}%"
+    )
+
+    p1 = b1_plus_map["shares"]["P1"]
+    total = p1["phantom"] + p1["conductor"] + p1["sheet_total"]
+    residual = abs(p1["supplied"] - total) / abs(p1["supplied"])
+    assert residual == pytest.approx(STEP1_GATE_I_P1_RESIDUAL, rel=RECORD_RTOL), (
+        f"gate (i)'s P1 residual reads {residual:.9e}, not step 1's "
+        f"{STEP1_GATE_I_P1_RESIDUAL:.6e}"
+    )
+
+
+@complex_only
+def test_the_ring_set_still_resolves_the_drive_azimuth(ring_set_table):
+    """Anchor (3), the negative control: the mis-rotated P3 stays outside 5%.
+
+    A ring set on which the 180°-away drive matches the P1 map inside the band
+    is a set that cannot see azimuth at all, and its comfortable covariance
+    readings would then say nothing about the field.
+    """
+    control = ring_set_table["table"]["P3@+90deg"]["l2"]
+    assert control > C4_COVARIANCE_BAND, (
+        f"on the ring set the mis-rotated control (P3 at +90deg, 180deg from P1) "
+        f"matches the P1 map to {control * 100:.4f}%, inside the "
+        f"{C4_COVARIANCE_BAND * 100:.1f}% band — the ring set is not resolving the "
+        "drive's azimuth, so its covariance readings carry no information"
+    )

@@ -21684,3 +21684,63 @@ queue then drains. Tree clean at handoff; no anomalies.
   deliberate, known-issues entry appended). §9 open items after this slot:
   item 3 (`WF-6` step 1c) only. Tree clean at handoff; no anomalies, no
   denied commands.
+
+## 2026-08-30T03:35Z — `WF-6` step 1c — **complete**
+
+- **Item:** §9 On deck item 3 (items 1 and 2 already done), the sample-set
+  leg scoped by the 2026-08-29 18:00 review. Preflight clean: tree clean on
+  `main`, container Up (3 days), no `attempt/*` or `recovered/*`.
+- **What was built.** One new module fixture `ring_set_table` plus three
+  tests on the existing `test_birdcage_b1_plus_map.py`, all reading the
+  `b1_plus_map` fixture's four already-solved drives — **no new solve, no
+  `src/` change, no example re-run owed, no existing assert or constant
+  touched**. The estimator stays DG0; only the *sample set* changes, to one
+  closed under the C4 rotation: `r ∈ {0.005, 0.010, 0.015, 0.020}` m ×
+  `z ∈ {−0.015, 0, +0.015}` m × 8 azimuths in 45° steps, start jittered
+  3.7°, 96 points, every ±90° / 180° image a member. Rotation read from the
+  fixture's sheet frames (90.000000°), evaluation via
+  `evaluate_vector_field_parallel` only.
+- **Anchors, all three green (asserted).** `valid` **96 of 96** on all four
+  drives and every rotated image; centroid-set DG0 P2-at-+90° reproduces
+  **8.6516%** and gate (i)'s P1 residual **9.795751e-03**, both at rtol
+  1e-4; mis-rotated control P3-at-+90° **25.8213%** on the ring set,
+  outside the 5% band.
+- **The measurement (recorded, not asserted).** Ring set vs centroid set:
+  `+90°` **9.9271%** vs 8.6516% (**+1.28 pp**), `−90°` **9.9519%** vs
+  9.5808% (**+0.37 pp**), `180°` **8.4706%** vs 1b's 8.5970%
+  (**−0.13 pp**). Every angle inside the pre-registered ±2 pp ⇒ **"the
+  sample set is not the mechanism"**. Per-ring, no monotone radial trend:
+  6.33…11.65% across the `r = 0.010` rings, 4.61…12.63% across `r = 0.020`;
+  lowest `r = 0.020, z = +0.015` (4.61 / 6.21 / 3.96%), highest
+  `r = 0.005, z = −0.015` (11.25 / 12.27 / 6.52%). `|B₁⁺|` on the ring set,
+  P1 driven: mean 2.023327e-08 T, max 3.263326e-08, min 1.419703e-08.
+- **What it means.** Two-sided with step 1b: change the *estimator* and the
+  miss falls 4–5× (1b), change the *sample set* and it does not move (1c).
+  The ~9% is the DG0 cell scatter itself. Candidate (b), a C4-breaking
+  field asymmetry, is unsupported on this fixture by any reading — the 180°
+  column agrees with +90° on the ring set too. **No band moved**; gate (ii)
+  is still red and `WF-6` is still 🧪 by design.
+- **Logs:** `docs/testing/logs/20260830T033147Z_WF-6-step1c.log` — one
+  window, standard tier, `timeout -k 30 400`, **Status 1 / 97 s**,
+  `1 failed, 18 passed` with `tests/environment` first. The single failure
+  is gate (ii) itself, the pre-existing deliberate red. §9 estimated 90 s.
+- **Branch (if parked):** none — landed on `main`.
+- **Next-attempt hypothesis (for the review, deliberately not executed):**
+  gate (ii)'s disposition is now fully evidenced and is a **review's call** —
+  re-register it on the CG1 estimator with 1b's table as the band's
+  provenance (1c having ruled out the sampling confound), or keep the DG0
+  estimator and widen the band to the measured ~10% scatter floor with both
+  tables as provenance. A third option the two legs make cheap: neither, and
+  instead a mesh-refinement leg — the floor is a resolution fact at ≈ 1 cm
+  phantom cells, so halving the phantom cell size should move the DG0 figure
+  and nothing else, which would close the argument by construction. That is
+  a heavy-tier price nobody has costed.
+- **Residual `main` reds after this slot:** unchanged from the 21:00 slot —
+  the two entry-3 names, `test_birdcage_volumes_partition_the_box`
+  (`GEO-21`), `WF-6` step 1's gate (ii), `TH-13` step 1's precondition, and
+  `PORT-12`'s two-torus drift at `-n 4/8/12`. **§9 is now drained: items 1,
+  2 and 3 all done, items 4 and 5 are the review's explicit "stop and
+  journal" placeholders.** The next slot should find no ready item and
+  should journal that, per the drain instruction; the 02:15 weekly review
+  owes the rulings that refill the queue. Tree clean at handoff; no
+  anomalies, no denied commands.

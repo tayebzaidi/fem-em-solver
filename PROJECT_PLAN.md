@@ -6524,7 +6524,7 @@ it*, the phantom's cells/δ and cells/λ are what change).
 | `WF-3` | Quick-look phantom metrics report | ⚠️ | standard |
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
-| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call** | 🧪 | heavy (step 1 standard, complex) |
+| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved** | 🧪 | heavy (step 1 standard, complex) |
 | `WF-7` | SAR10g hotspot identification | ⬜ | heavy |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 
@@ -6773,6 +6773,45 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 >     literal 90°; complex build, `-s`, `evaluate_vector_field_parallel`
 >     only. **Scope / negative result:** as 1b — table into the known-issues
 >     entry, chunk stays 🧪, no band moves.
+>   * **Step 1c executed, 2026-08-29 22:30 implementer slot — ✅ as scoped, and
+>     the verdict is "the sample set is not the mechanism". No band moved;
+>     gate (ii) is still red and the chunk is still 🧪.** Built as written on
+>     `test_birdcage_b1_plus_map.py`'s own `b1_plus_map` fixture (nothing in
+>     `src/` changed, no example re-run owed, no new solve — only the points
+>     changed): a `ring_set_table` module fixture reads the DG0 `|B₁⁺|` of the
+>     four existing drives on 96 points closed under the C4 rotation — `r ∈
+>     {0.005, 0.010, 0.015, 0.020}` m × `z ∈ {−0.015, 0, +0.015}` m × 8
+>     azimuths in 45° steps, start jittered 3.7° so no point sits on a
+>     coordinate plane (and so plausibly on a cell facet, where the locator's
+>     answer is rank-dependent). The rotation is again the fixture's own
+>     P1→P2 sheet separation, 90.000000°. Log
+>     `20260830T033147Z_WF-6-step1c.log`, `1 failed, 18 passed` / Status 1 /
+>     **97 s** with `tests/environment`; the single failure is gate (ii)
+>     itself, untouched.
+>     **Anchors, all three green:** `valid` **96 of 96** on all four drives
+>     and every rotated image (the set is interior by construction);
+>     centroid-set DG0 P2-at-+90° reproduces **8.6516%** and gate (i)'s P1
+>     residual **9.795751e-03**, both at rtol 1e-4; the mis-rotated control
+>     P3-at-+90° reads **25.8213%** on the ring set, asserted outside 5%.
+>     **The table (recorded, in the known-issues entry too), ring set vs the
+>     centroid set:** `+90°` **9.9271%** vs 8.6516% (**+1.28 pp**); `−90°`
+>     **9.9519%** vs 9.5808% (**+0.37 pp**); `180°` **8.4706%** vs 1b's
+>     8.5970% (**−0.13 pp**). Every angle inside ±2 pp ⇒ the pre-registered
+>     **"sample set is not the mechanism"** branch: the centroid set's lack of
+>     closure under the rotation was not manufacturing the miss, and the ~9%
+>     floor is the DG0 scatter itself. Together with 1b this is a two-sided
+>     result — change the estimator and the miss falls 4–5×, change the sample
+>     set and it does not move.
+>     **Per-ring structure, for the review:** no monotone radial trend
+>     (6.33…11.65% across the `r = 0.010` rings, 4.61…12.63% across
+>     `r = 0.020`); lowest ring `r = 0.020, z = +0.015` at 4.61 / 6.21 /
+>     3.96%, highest `r = 0.005, z = −0.015` at 11.25 / 12.27 / 6.52%. A
+>     ring-to-ring spread of the same order as the overall figure is what a
+>     per-cell scatter looks like. `|B₁⁺|` over the ring set, P1 driven: mean
+>     2.023327e-08 T, max 3.263326e-08, min 1.419703e-08.
+>     **What is owed next:** unchanged from 1b — re-registering gate (ii) on
+>     the CG1 estimator with 1b's table as provenance is a **review's call**,
+>     now with 1c's corroboration that the sampling is not the confound.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -8437,7 +8476,15 @@ examples/<path>.py'`) and journal the denial; do not spend the slot on it.
    result:** the precondition failing (fixture not magnetically dominated)
    or an in-between ratio is the finding — record it on the `TH-13` entry
    and the degree-2 known-issues entry, stop; no band invented in-slot.
-3. **`WF-6` step 1c — the sample-set leg: a 96-point rotation-invariant
+3. ~~**`WF-6` step 1c — the sample-set leg**~~ — **done 2026-08-29 22:30**,
+   97 s, `20260830T033147Z_WF-6-step1c.log`. All three anchors green
+   (`valid` 96/96, 8.6516% and 9.795751e-03 reproduced, control 25.8213%);
+   verdict **the sample set is not the mechanism** — ring set reads
+   9.9271 / 9.9519 / 8.4706% at +90 / −90 / 180° against the centroid set's
+   8.6516 / 9.5808 / 8.5970%, every angle inside ±2 pp, no monotone radial
+   pattern. No band moved, gate (ii) still red, chunk still 🧪. Original
+   text below.
+   **`WF-6` step 1c — the sample-set leg: a 96-point rotation-invariant
    ring set at DG0 (standard, complex, `-n 2`, `main`; independent of item
    1 — do not wait for it, do not read its result; scoped this review).**
    Execute the §7 `WF-6` step-1c bullet as written: rings at `r ∈ {0.005,
