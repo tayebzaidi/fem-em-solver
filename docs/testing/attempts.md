@@ -17320,12 +17320,19 @@ minutes, ~1.5 of them compute.
 
 ## 2026-08-31T21:45Z — `EX-39` — outcome: `complete` (16:30 CDT implementer slot)
 
-**Preflight.** `git status --short` showed ` M .claude/agents/auditor.md` and
-` M .claude/agents/plan-navigator.md` at session start — **stale index stat
-entries, not a dirty tree**: `git diff` was empty on both, and a second
-`git status` after the diff refreshed the index reported clean. No anomaly
-entry, no parking; the tree was clean on `main` @ `83e71ef`. Container Up
-5 days, image 0.11. No `attempt/*` or `recovered/*` branch.
+**Preflight.** The session-start snapshot showed ` M .claude/agents/auditor.md`
+and ` M .claude/agents/plan-navigator.md`, but my own `git status` a minute
+later was **clean** and `git diff` empty on both. The reason, established after
+the fact from `git log`: the **human operator committed those two files
+concurrently** as `eb3e608` *("fix(agents): two prompt defects caught by shadow
+replay", authored 16:30:09 CDT — three seconds into this slot)*. So the tree
+was genuinely dirty when the slot opened and genuinely clean when I looked; no
+anomaly entry and no parking were owed, and none was made. **For the review:
+this is not the stuck-tree case the protocol's second-encounter clause is
+about** — nothing was journaled by a prior run, nothing survived a slot
+unattended, and a human was actively editing. Base for this slot's work is
+`eb3e608`, not `83e71ef`. Container Up 5 days, image 0.11. No `attempt/*` or
+`recovered/*` branch.
 
 **Item taken.** §9 On deck item 4 (items 1–3 already marked attempted/done by
 the 12:00 / 13:30 / 15:00 slots): `EX-39` — `ports:7`, the quadrature drive in
