@@ -17140,3 +17140,110 @@ it retires a red without ever re-reading it. Dead: mesh caching (worth 4 s of
 with it. My reading is (a): 49 s of the module is already a usable guard, and
 the remaining ≥ 524 s is one factorization that a heavy tier can hold with
 margin. Slot cost: ~35 of 60 minutes, ~10.4 of them compute.
+
+## 2026-08-31T18:45Z — `WF-6` step 3 — **complete** (13:30 CDT implementer slot)
+
+**Preflight.** Tree clean at 75f60bc, container Up 5 days, no `attempt/*` or
+`recovered/*`. §9 item 1 was already disposed by the 12:00 slot ("item closed
+for this queue, the disposition is the review's"), so item 2 — `WF-6` step 3 —
+was the first open one. Executed as the §7 step-3 bullet is written; one
+control substituted, with the reason measured and journaled below.
+
+**Outcome: complete, and the result is the step's own pre-registered negative
+one.** The module was built, verified, and the five identities it asserts are
+red. Per §4 that is a delivered measurement, not an incomplete attempt: the
+quantitative assertions ran, the controls and the reproduction anchor passed,
+no band was moved and the reds are journaled in known-issues.
+
+**What was built.** New `tests/validation/test_birdcage_sar_map.py` — the
+point-SAR map `σ|E|²/(2ρ)` via `post.sar.point_sar` on step 1's 51 phantom
+centroids, for the four single drives and both quadrature senses. Everything
+imported (`ANS-1`'s rule): `b1_plus_map`, `_relative_l2`, `_rotate_z`,
+`C4_COVARIANCE_BAND`, `CG1_RECORD_RTOL`, `MIN_SAMPLE_POINTS`,
+`PHANTOM_RHO_KG_PER_M3` from step 1; `_port_index`, `_mirror_xy`,
+`QUADRATURE_STEP_DEG` from step 2; `SALINE_SIGMA` and `PHANTOM_CELL_TAG` from
+the fixture's own material modules. One small refactor in
+`test_birdcage_b1_quadrature.py`: the ccw/cw phase pattern is now
+`quadrature_phase_weights(ks, sense)`, called by that module's fixture and by
+this one, so the two legs cannot drift on the convention step 2 paid a run to
+get right. No `src/` change.
+
+**Measured (log `20260831T183526Z_WF-6-step3.log`, `5 failed, 16 passed` /
+Status 1 / 96 s, `-n 2` complex, `tests/environment` included, `-k 30 400`,
+against the ≈ 120 s estimate).** Band 5.0%, imported and unmoved.
+
+- Identities, all **red**: single-drive C4 `SAR_P2(Rx)` **25.1096%**,
+  `SAR_P4(−Rx)` **40.5462%**, `SAR_P3(180°)` **30.0142%**; quadrature C4
+  **38.6120%**; mirror `SAR_cw(Mx)` vs `SAR_ccw(x)` **28.1459%**. The `|B₁⁺|`
+  analogues on the same points read 2.19 / 2.11 / 1.89% and 0.98 / 0.81%.
+- Controls, both **green**: mis-rotated `SAR_P3(Rx)` **129.8187%**, quadrature
+  vs single-drive **334.5786%**, asserted `> 5%`.
+- Anchor (iii), **green and exact**: `mean_sar` phantom `dissipated_power_w` on
+  P1 = **5.637745667e-08 W**, gate (i)'s record to every printed digit.
+- Premise, **green**: phantom σ flat at **0.5 S/m** over 537 tag-3 cells,
+  MPI-reduced min/max/count, asserted before a scalar σ reaches `point_sar`.
+  All 51 points of every rotated and mirrored image evaluated (`point_sar`
+  raises rather than zero-filling, so reaching the assertions proves it).
+- Ungated, labelled: P1 peak **7.630679e-07** W/kg, mean **1.453536e-07**,
+  peak/mean **5.2497**; quadrature peak **2.065442e-06**, mean **7.706353e-07**,
+  peak/mean **2.6802**, at 1 V per port. Not safety figures.
+
+**Why this is an estimator finding and not a defect in the new code.** The
+three single-drive readings use *only* step 1's four solved fields and step
+1d's own image sets — no superposition, no mirror, nothing this step
+introduced — and they already miss by 25–40%. The one thing that changed
+against the B₁⁺ legs is what is read: `|B₁⁺|` comes from an L²-projected CG1
+`B`, SAR pointwise off the **primal N1curl `E`** with no projection. A Whitney
+`E` is normally discontinuous, so its centroid value carries an O(h) per-cell
+error the C4 rotation does not share, and squaring doubles the relative error;
+25–40% ≈ 2× a ~13–20% pointwise `|E|` floor. Same shape as step 1's 8.65% DG0
+curl, one estimator further out.
+
+**Scope deviation, deliberate and measured.** The 10:30 scoping listed "the
+mis-paired quadrature sense > 5%" as a control by analogy with step 2's
+`|B₁⁺|_cw(Mx)` (95.2%). The analogy does not carry: `|B₁⁺|`/`|B₁⁻|` are two
+quantities of one field, so mis-pairing compares a driven sense against a
+nulled one, whereas SAR is a single magnitude-squared — dropping the mirror
+asks only whether the quadrature map is mirror-symmetric, which a nearly
+axisymmetric rotating drive satisfies for free. Measured: the mirror-omitted
+comparison reads **28.1445%** against identity (iii)'s **28.1459%**, i.e. the
+mirror moves it by 1.4e-3 pp. It is printed ungated with the reason in the
+module docstring, and two controls that *do* separate are asserted instead. I
+did not want to assert a prediction I expected to be false; the disposition is
+the review's.
+
+**Collateral regression, green.** Step 2 re-run after the phase-weight
+refactor: `20260831T183734Z_WF-6-step3-step2-regression.log`, **`6 passed` /
+Status 0 / 80 s**, identities **0.9818 / 0.8087%** and control **95.1975%** —
+unmoved to the digit.
+
+**Discipline.** No assertion loosened, no band moved, no `src/` file touched,
+no ceiling raised, no third run. Five deliberate reds left on `main` with a
+known-issues entry (🔴 OPEN 2026-08-31) carrying every reading — the same
+precedent as step 1's gate (ii). `WF-6` stays 🟡 and **no SAR claim exists**.
+
+**Docs.** New known-issues entry; §7 `WF-6` row, heading and a step-3 result
+bullet; §9 item 2 annotated 🟡-executed with the original item text kept
+verbatim. Two `run_and_log` logs plus their `test-results.md` rows committed
+with the code. One dead log from a first invocation that died at collection on
+an import path (`point_sar` lives in `fem_em_solver.post.sar`, not re-exported
+from `fem_em_solver.post`) — `20260831T183502Z_WF-6-step3.log`, Status 2 / 4 s,
+committed for completeness.
+
+**Denials / anomalies.** None. Both windows returned footers; no container
+wedge.
+
+**Next-attempt hypothesis (for the review).** Step 3b, on step 1b's exact
+pattern: read the same five identities off an **L²-projected CG1 `E`**
+(`post.project_to_cg1` takes any vector field) beside the primal column, on the
+same 51 points, and decide between (a) a pointwise-`E` estimator floor — CG1
+lands inside 5% while both controls survive the projection — and (b) something
+the rotation does not share in the field itself, which the 180° column would
+expose. No new solve, ≈ 96 s. If (a), the review re-registers the SAR identity
+on the CG1 estimator exactly as it did gate (ii) for `|B₁⁺|`; if neither, the
+honest reading is that this fixture's ~1 cm phantom cells do not resolve a
+quadratic-in-`E` map and the band belongs to a finer rung, not to a slot.
+Second, smaller: the mis-paired-sense control should be struck from any future
+SAR step's scoping — it is degenerate for magnitude-squared quantities, and
+this run measured how degenerate. Slot cost: ~45 of 60 minutes, ~4.5 of them
+compute.

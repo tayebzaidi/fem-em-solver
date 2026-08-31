@@ -1,0 +1,95 @@
+# Test Run
+- Chunk: WF-6-step3
+- Commit: 75f60bc117b1035e57c771ea589794d34e17d439
+- Time (UTC): 2026-08-31 18:35:02
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_birdcage_sar_map.py -v -s'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 31 13:32 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/environment tests/validation/test_birdcage_sar_map.py -v -s'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 11 items / 1 error
+
+==================================== ERRORS ====================================
+__________ ERROR collecting tests/validation/test_birdcage_sar_map.py __________
+ImportError while importing test module '/workspace/tests/validation/test_birdcage_sar_map.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/dolfinx-env/lib/python3.12/site-packages/_pytest/python.py:507: in importtestmodule
+    mod = import_path(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_sar_map.py:95: in <module>
+    from fem_em_solver.post import mean_sar, point_sar
+E   ImportError: cannot import name 'point_sar' from 'fem_em_solver.post' (/workspace/src/fem_em_solver/post/__init__.py)
+=========================== short test summary info ============================
+ERROR tests/validation/test_birdcage_sar_map.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 1.61s ===============================
+collected 11 items / 1 error
+
+==================================== ERRORS ====================================
+__________ ERROR collecting tests/validation/test_birdcage_sar_map.py __________
+ImportError while importing test module '/workspace/tests/validation/test_birdcage_sar_map.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/dolfinx-env/lib/python3.12/site-packages/_pytest/python.py:507: in importtestmodule
+    mod = import_path(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+/dolfinx-env/lib/python3.12/site-packages/_pytest/pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/dolfinx-env/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:197: in exec_module
+    exec(co, module.__dict__)
+tests/validation/test_birdcage_sar_map.py:95: in <module>
+    from fem_em_solver.post import mean_sar, point_sar
+E   ImportError: cannot import name 'point_sar' from 'fem_em_solver.post' (/workspace/src/fem_em_solver/post/__init__.py)
+=========================== short test summary info ============================
+ERROR tests/validation/test_birdcage_sar_map.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 1.62s ===============================
+
+## Exit
+- Status: 2
+- Elapsed (s): 4

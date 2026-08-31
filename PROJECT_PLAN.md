@@ -4432,7 +4432,7 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 | `WF-3` | Quick-look phantom metrics report | ⚠️ | standard |
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
-| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved. Step 1d executed 2026-08-30 12:00 — the ruling landed in the code: `post.project_to_cg1` is the packaged production estimator and gate (ii) is the CG1 covariance identity at all three angles, **2.1870 / 2.1146 / 1.8911%** against the unmoved 5% band, controls holding (mis-rotated 23.2642%, DG0 column unmoved at 8.6516 / 9.5808 / 8.5970%). `19 passed` / Status 0 / 97 s; **step 1 is ✅ and the chunk is 🟡** — a symmetry identity only, no CV / homogeneity / absolute claim; steps 2–3 are a review's to scope. **Step 2 scoped 2026-08-30 18:00 review** — the quadrature drive by exact superposition of the four solved fields at 10 MHz, two symmetry identities (C4-invariance; the co/counter-rotating mirror identity `\|B₁⁺\|_ccw(x) = \|B₁⁻\|_cw(Mx)`) at the measured CG1 floor, and the first *ungated* CV / polarisation-purity figures; §9 item 3. Step 2 executed 2026-08-31 22:30 slot — **both identities green at the CG1 floor: (a) C4-invariance of the quadrature `\|B₁⁺\|` map **0.9818%** and (b) the mirror identity `\|B₁⁻\|_cw(Mx)` vs `\|B₁⁺\|_ccw(x)` **0.8087%**, against the unmoved imported 5% band, with the mis-paired control at **95.1975%**; `17 passed` / Status 0 / 96 s. Ungated and labelled: centre purity `\|B₁⁺\|/\|B₁⁻\|` **127.91** (ccw) / **0.0081** (cw) / **1.0006** (P1 linear), mean `\|B₁⁺\|` 7.976427e-08 T at 1 V per port, CV **2.7563%** (51 centroids) / **2.4577%** (96 ring points). `post.b1_minus` landed. **Steps 1–2 ✅, chunk stays 🟡** — symmetry identities on one fixture at 10 MHz, no homogeneity, absolute, tuning or Larmor claim. **Step 2b executed 2026-08-31 09:00 slot, green on the first run** — the same five identities at **64 and 128 MHz** on one mesh through `build_four_port_sweep(frequency_hz=…, reuse=…)`: gate (ii) **2.2187 / 2.1667 / 1.9574%** (64) and **2.1315 / 2.1735 / 1.9511%** (128), quadrature (a)/(b) **0.9570 / 0.7570%** and **0.9106 / 0.6968%**, gate (i) 9.5231e-03 / 9.2445e-03 — all inside the unmoved imported 5% / 1e-2 bands, controls 24.75 / 25.26% and 95.11%, and the 10 MHz rung reproducing all five records at rtol 1e-3. Phantom cells/λ 69.14 / 21.89 / **12.50** against `PORT-11`'s floor of 10: the pre-registered 128 MHz resolution question reads **no miss**. First Larmor B₁⁺ figures on record, ungated: centre purity 141.81 / 171.94 (ccw), mean `\|B₁⁺\|` 6.500452e-08 / 4.936577e-08 T at 1 V per port, CV 2.7738 / 3.0177%. `16 passed` / Status 0 / 202 s. **Steps 1–2b ✅, chunk stays 🟡** — identities on one unconverged fixture, still no homogeneity, absolute, tuning or SAR claim. **Step 3 (coil-driven SAR symmetry identities, 10 MHz) scoped 2026-08-31 10:30 review — see entry, §9 item 2** | 🟡 | heavy (step 1 standard, complex) |
+| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved. Step 1d executed 2026-08-30 12:00 — the ruling landed in the code: `post.project_to_cg1` is the packaged production estimator and gate (ii) is the CG1 covariance identity at all three angles, **2.1870 / 2.1146 / 1.8911%** against the unmoved 5% band, controls holding (mis-rotated 23.2642%, DG0 column unmoved at 8.6516 / 9.5808 / 8.5970%). `19 passed` / Status 0 / 97 s; **step 1 is ✅ and the chunk is 🟡** — a symmetry identity only, no CV / homogeneity / absolute claim; steps 2–3 are a review's to scope. **Step 2 scoped 2026-08-30 18:00 review** — the quadrature drive by exact superposition of the four solved fields at 10 MHz, two symmetry identities (C4-invariance; the co/counter-rotating mirror identity `\|B₁⁺\|_ccw(x) = \|B₁⁻\|_cw(Mx)`) at the measured CG1 floor, and the first *ungated* CV / polarisation-purity figures; §9 item 3. Step 2 executed 2026-08-31 22:30 slot — **both identities green at the CG1 floor: (a) C4-invariance of the quadrature `\|B₁⁺\|` map **0.9818%** and (b) the mirror identity `\|B₁⁻\|_cw(Mx)` vs `\|B₁⁺\|_ccw(x)` **0.8087%**, against the unmoved imported 5% band, with the mis-paired control at **95.1975%**; `17 passed` / Status 0 / 96 s. Ungated and labelled: centre purity `\|B₁⁺\|/\|B₁⁻\|` **127.91** (ccw) / **0.0081** (cw) / **1.0006** (P1 linear), mean `\|B₁⁺\|` 7.976427e-08 T at 1 V per port, CV **2.7563%** (51 centroids) / **2.4577%** (96 ring points). `post.b1_minus` landed. **Steps 1–2 ✅, chunk stays 🟡** — symmetry identities on one fixture at 10 MHz, no homogeneity, absolute, tuning or Larmor claim. **Step 2b executed 2026-08-31 09:00 slot, green on the first run** — the same five identities at **64 and 128 MHz** on one mesh through `build_four_port_sweep(frequency_hz=…, reuse=…)`: gate (ii) **2.2187 / 2.1667 / 1.9574%** (64) and **2.1315 / 2.1735 / 1.9511%** (128), quadrature (a)/(b) **0.9570 / 0.7570%** and **0.9106 / 0.6968%**, gate (i) 9.5231e-03 / 9.2445e-03 — all inside the unmoved imported 5% / 1e-2 bands, controls 24.75 / 25.26% and 95.11%, and the 10 MHz rung reproducing all five records at rtol 1e-3. Phantom cells/λ 69.14 / 21.89 / **12.50** against `PORT-11`'s floor of 10: the pre-registered 128 MHz resolution question reads **no miss**. First Larmor B₁⁺ figures on record, ungated: centre purity 141.81 / 171.94 (ccw), mean `\|B₁⁺\|` 6.500452e-08 / 4.936577e-08 T at 1 V per port, CV 2.7738 / 3.0177%. `16 passed` / Status 0 / 202 s. **Steps 1–2b ✅, chunk stays 🟡** — identities on one unconverged fixture, still no homogeneity, absolute, tuning or SAR claim. **Step 3 (coil-driven SAR symmetry identities, 10 MHz) scoped 2026-08-31 10:30 review — see entry, §9 item 2. Step 3 executed 2026-08-31 13:30 slot — the pre-registered negative result: the point-SAR map read off the primal N1curl `E` misses all five C4/mirror identities at **25.11 / 40.55 / 30.01 / 38.61 / 28.15%** against the unmoved imported 5% band, while both controls hold (129.82 / 334.58%, asserted > band), the phantom-σ premise holds (0.5 S/m over 537 cells) and `mean_sar`'s phantom power reproduces gate (i)'s record **5.637745667e-08 W** to every printed digit. The three single-drive misses use only step 1's fields and step 1d's image sets, so the finding is the **pointwise-`E` estimator floor** (no CG1 projection in this path; squaring doubles it), not the new code. Five deliberate reds on `main` + known-issues entry; `20260831T183526Z_WF-6-step3.log`, `5 failed, 16 passed` / Status 1 / 96 s. **No SAR claim exists**; step 3b (the same identities off an L²-projected CG1 `E`) is a review's to scope** | 🟡 | heavy (step 1 standard, complex) |
 | `WF-7` | SAR10g hotspot identification | ⬜ | heavy |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 
@@ -4445,7 +4445,13 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 against 5%, control 95.1975%, log `20260831T033704Z_WF-6-step2.log`),
 **step 2b ✅ 2026-08-31 09:00 slot** — the same five identities at 64 and
 128 MHz on one mesh, all inside the unmoved bands at 21.89 / 12.50 phantom
-cells/λ, log `20260831T140418Z_WF-6-step2b.log`; 3 (SAR) unscoped. Step 1 scoped 2026-08-29
+cells/λ, log `20260831T140418Z_WF-6-step2b.log`; **step 3 executed 2026-08-31
+13:30 slot and delivered its pre-registered negative result** — the coil-driven
+point-SAR map misses all five identities at 25–41% against the same unmoved 5%
+band, controls and the power-record reproduction holding, five deliberate reds
+on `main` and a known-issues entry, log `20260831T183526Z_WF-6-step3.log`; **no
+SAR claim exists** and step 3b (a CG1-`E` estimator leg) is a review's to scope.
+Step 1 scoped 2026-08-29
 10:30 review. §10 subgoal 4 said the first B1+ chunk "can be scoped by the
 daily review the day `PORT-9` closes" — that was 08-25, `PORT-11` followed
 08-26, and the 08-25 operator directive says "do not block subgoal 4 on
@@ -5060,6 +5066,68 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > finding exactly like step 1's DG0 floor — known-issues entry with every
 > reading, keep the assert, stop; whether point-SAR needs its own
 > re-registered band is the next review's ruling, never in-slot.
+>
+> **Step 3 executed 2026-08-31 13:30 slot — the pre-registered negative
+> result: every SAR identity misses, the controls and the reproduction
+> hold, and the finding is the estimator.** New
+> `tests/validation/test_birdcage_sar_map.py`, everything imported
+> (fixture, sample set, band, records, phase convention);
+> `20260831T183526Z_WF-6-step3.log`, **`5 failed, 16 passed` / Status 1 /
+> 96 s** at `-n 2` complex with `tests/environment`, against the ≈ 120 s
+> estimate.
+>
+>   * **The five identities, band 5% imported and unmoved:** single-drive
+>     C4 `SAR_P2(Rx)` **25.1096%**, `SAR_P4(−Rx)` **40.5462%**,
+>     `SAR_P3(180°)` **30.0142%**; quadrature C4 **38.6120%**; mirror
+>     `SAR_cw(Mx)` vs `SAR_ccw(x)` **28.1459%**. The `|B₁⁺|` analogues on
+>     the *same* points, same drives, same band read 2.19 / 2.11 / 1.89%
+>     and 0.98 / 0.81%.
+>   * **Everything that could have made it a defect instead passes.**
+>     Controls: mis-rotated `SAR_P3(Rx)` **129.8187%**, quadrature vs
+>     single drive **334.5786%**, both asserted `> 5%`. Anchor (iii):
+>     `mean_sar`'s phantom `dissipated_power_w` on P1 =
+>     **5.637745667e-08 W**, reproducing gate (i)'s record to every
+>     printed digit. Premise: phantom σ flat at **0.5 S/m** over 537
+>     tag-3 cells, asserted before a scalar σ is handed to `point_sar`;
+>     all 51 points of every image set evaluated (`point_sar` raises
+>     rather than zero-filling).
+>   * **The diagnosis is in the run, not in a hypothesis.** The three
+>     single-drive readings use only step 1's solved fields and step 1d's
+>     own image sets — no superposition, no mirror, no code this step
+>     introduced — and they already miss by 25–40%. What changed is the
+>     estimator: `|B₁⁺|` is read off an L²-projected CG1 `B`, SAR
+>     pointwise off the **primal N1curl `E`** with no projection. A
+>     Whitney `E` is normally discontinuous, so its centroid value carries
+>     an O(h) per-cell error the C4 rotation does not share, and squaring
+>     doubles it — 25–40% ≈ 2× a ~13–20% pointwise `|E|` floor. Step 1's
+>     8.65% DG0 curl, one estimator further out.
+>   * **One scoped control was degenerate and is reported instead of
+>     asserted.** The mirror-omitted comparison `SAR_ccw(Mx)` vs
+>     `SAR_ccw(x)` reads **28.1445%** against identity (iii)'s 28.1459% —
+>     the mirror moves it by 1.4e-3 pp. SAR is a magnitude-squared with no
+>     ± senses to mis-pair, so step 2's `|B₁⁺|_cw(Mx)` analogy does not
+>     carry; the module prints this ungated (docstring says why) and
+>     asserts the two controls that do separate. Disposition is the
+>     review's.
+>   * **Reported, ungated, labelled:** point SAR at 1 V per port — P1
+>     peak **7.630679e-07** W/kg, mean **1.453536e-07** W/kg, peak/mean
+>     **5.2497**; quadrature peak **2.065442e-06** W/kg, mean
+>     **7.706353e-07** W/kg, peak/mean **2.6802**. Not safety figures.
+>   * **Collateral, verified:** the phase convention now lives in one
+>     place — `quadrature_phase_weights` in
+>     `test_birdcage_b1_quadrature.py`, called by that module's fixture
+>     and by this one, so the two legs cannot drift on the thing step 2
+>     paid a run to get right. Step 2 re-ran green and unmoved:
+>     `20260831T183734Z_WF-6-step3-step2-regression.log`, **`6 passed` /
+>     Status 0 / 80 s**, identities 0.9818 / 0.8087%, control 95.1975%.
+>   * **Five deliberate reds on `main`** with a known-issues entry
+>     carrying every reading (🔴 OPEN 2026-08-31). **No band moved**,
+>     `WF-6` stays **🟡**, and **no SAR claim exists** — the step measured
+>     that the coil-driven point-SAR map is not yet gateable at the B₁⁺
+>     band, which is a finding, not a gate. **Resolves with** a step-3b
+>     estimator leg on step 1b's pattern: the same identities off an
+>     L²-projected CG1 `E` beside the primal column, no new solve, ≈ 96 s
+>     — a review's to scope.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -6358,7 +6426,25 @@ an operator FYI.
    timeline, and the disposition (cached mesh / coarser rung / module
    split, each of which moves a record) becomes a review decision made
    with data.
-2. **`WF-6` step 3 — coil-driven SAR symmetry identities at 10 MHz
+2. 🟡 **EXECUTED 2026-08-31 13:30 slot — the step's own pre-registered
+   negative result was delivered in full; item closed for this queue, the
+   disposition is the review's.** The module landed with every helper, band,
+   record and phase convention imported, ran green on its premise, both
+   controls and the power-record reproduction, and **red on all five
+   identities at 25.11 / 40.55 / 30.01 / 38.61 / 28.15%** against the unmoved
+   5% band (`20260831T183526Z_WF-6-step3.log`, `5 failed, 16 passed` /
+   Status 1 / 96 s). The finding is the **pointwise-`E` estimator floor** —
+   the three single-drive misses use only step 1's fields and step 1d's image
+   sets. Five deliberate reds on `main`, known-issues entry filed with every
+   reading, no band moved, no SAR claim. One scoped control (the mis-paired
+   quadrature sense) was **degenerate for a magnitude-squared quantity** —
+   28.1445% against the identity's 28.1459% — and is printed ungated with the
+   reason, two separating controls asserted in its place. **Next move is a
+   step-3b CG1-`E` estimator leg** (no new solve, ≈ 96 s); the review scopes
+   it. The original item text follows, unedited, as the record of what was
+   asked:
+
+   **`WF-6` step 3 — coil-driven SAR symmetry identities at 10 MHz
    (standard, complex, `-n 2`, `main`; independent; scoped this review —
    execute the §7 step-3 bullet as written).** New
    `tests/validation/test_birdcage_sar_map.py`, everything imported from

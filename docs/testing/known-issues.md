@@ -28,6 +28,29 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🔴 OPEN 2026-08-31 (`WF-6` step 3, 13:30 implementer slot) — the coil-driven **point-SAR** map misses every C4 / mirror identity by **25–40%** against the same 5% band the `|B₁⁺|` map meets at ~2%: the pointwise `|E|` estimator has its own, much larger floor, and nobody had measured it
+
+> **Five deliberate reds on `main`**, all in the new
+> `tests/validation/test_birdcage_sar_map.py`:
+> `test_single_drive_sar_map_is_c4_covariant` at all three parametrised angles,
+> `test_quadrature_sar_map_is_c4_invariant`, and
+> `test_reversing_the_rotation_sense_equals_reflecting_the_sar_map`. Kept red on
+> purpose, per the step's own pre-registered negative-result clause ("an identity
+> missing is an estimator finding exactly like step 1's DG0 floor — known-issues
+> with every reading, keep the assert, stop"). **No band was moved and none may
+> be moved in-slot.**
+
+| | |
+|---|---|
+| **Verified at** | `75f60bc` + this commit, 0.11 image, complex build, `-n 2`, 2026-08-31 — `20260831T183526Z_WF-6-step3.log`, `5 failed, 16 passed` / Status 1 / **96 s**, with `tests/environment`. |
+| **Literal symptom** | Relative ℓ² of `σ\|E\|²/(2ρ)` over the 51 phantom centroids, band **5.0%** imported unmoved from step 1d: `SAR_P2(Rx)` vs `SAR_P1(x)` **25.1096%**; `SAR_P4(−Rx)` **40.5462%**; `SAR_P3(180°)` **30.0142%**; quadrature `SAR_ccw(Rx)` vs `SAR_ccw(x)` **38.6120%**; mirror `SAR_cw(Mx)` vs `SAR_ccw(x)` **28.1459%**. |
+| **What is *not* wrong** | Every control and cross-check in the same run passes. The two negative controls hold with room to spare — mis-rotated `SAR_P3(Rx)` vs `SAR_P1(x)` **129.8187%**, quadrature vs single-drive **334.5786%**, both asserted `> 5%`. `mean_sar`'s phantom `dissipated_power_w` on P1 reads **5.637745667e-08 W**, reproducing step 1's gate-(i) record *to every printed digit* — the same `σ\|E\|²` integrated instead of sampled, so this module is demonstrably on step 1's solve. The phantom σ premise is asserted and holds: **0.5 S/m** flat over 537 tag-3 cells. `point_sar` raises rather than zero-filling, so all 51 points of every rotated and mirrored image set were evaluated. |
+| **Cause (diagnosed, on this run's own evidence)** | The **estimator**, not the field and not the new arithmetic. The three single-drive readings (i) use *only* step 1's four solved fields and step 1d's own image sets — no superposition, no mirror, no code this step introduced — and they already miss by 25–40%. What changed against the B₁⁺ legs is what is read: `|B₁⁺|` comes from an L²-projected CG1 `B` (step 1d's ruling, 2.19 / 2.11 / 1.89%), while SAR is read pointwise off the **primal N1curl `E`** through its DG interpolant, with no projection. A lowest-order Whitney `E` is tangentially continuous and normally discontinuous, so its *pointwise* value at a cell centroid carries an O(h) per-cell error that the C4 rotation does not share; squaring it doubles the relative error. 25–40% is ≈ 2× a ~13–20% pointwise `|E|` floor — the same shape of finding as step 1's 8.65% DG0 curl, one estimator further out. |
+| **A degeneracy worth recording** | The mirror-omitted comparison `SAR_ccw(Mx)` vs `SAR_ccw(x)` reads **28.1445%** against identity (iii)'s **28.1459%** — the mirror moves the reading by 1.4e-3 pp. The 10:30 scoping had listed the mis-paired sense as a *control*; it is not one for SAR (a magnitude-squared has no ± senses to mis-pair), and the module therefore prints it ungated and asserts the two controls that do separate instead. Documented in the module docstring; the disposition is the review's. |
+| **Recorded, ungated** | Point SAR at 1 V per port: P1 single drive peak **7.630679e-07** W/kg, mean **1.453536e-07** W/kg, peak/mean **5.2497**; quadrature (ccw) peak **2.065442e-06** W/kg, mean **7.706353e-07** W/kg, peak/mean **2.6802**. Not a safety figure — no converged mesh, no real drive, no mass averaging. |
+| **Consequence** | `WF-6` stays **🟡**: steps 1, 2 and 2b remain ✅ and **no SAR claim of any kind exists** — not homogeneity, not absolute, not C95.3. The `|B₁⁺|` gates are untouched (step 2's module re-run green and unmoved this slot, `20260831T183734Z_WF-6-step3-step2-regression.log`, `6 passed` / Status 0 / 80 s, identities 0.9818 / 0.8087%, control 95.1975%). |
+| **Resolves with** | A `WF-6` step-3b estimator leg on the step-1b pattern, which a review must scope: read the *same* identities off an L²-projected CG1 `E` (`post.project_to_cg1` already takes any vector field) beside the primal column, on the same 51 points, and decide between (a) a pointwise-`E` estimator floor — CG1 lands inside 5% while the two controls survive the projection — and (b) something the rotation does not share in the field itself, which the 180° column would show. Cheap: no new solve, ≈ the same 96 s. Until then the five asserts stay exactly as written. |
+
 ### ✅ RETIRED 2026-08-27 (`OPS-27` step 2, 21:00 implementer slot) — a **tenth** stale exact cell-count record, and it is a **fifth** mesh with **no sibling**: `test_dodd_deeds_reactance_wire_resolution.py` recorded 366 207 and 0.11 meshes 365 970
 
 > **✅ RETIRED 2026-08-27, 21:00 implementer slot (`OPS-27` step 2).** The

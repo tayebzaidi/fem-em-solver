@@ -136,6 +136,22 @@ def _port_index(azimuth_deg: float, reference_deg: float, step_deg: float) -> in
     return k % 4
 
 
+def quadrature_phase_weights(port_indices, sense):
+    """``e^{∓jkπ/2}`` on the fixture's own azimuth-increasing port index.
+
+    The single source of truth for the phase convention: this module's fixture
+    and `WF-6` step 3's SAR module both call it, so the two legs cannot drift
+    apart on the one thing that took a run to get right (see the sign-convention
+    note in :func:`quadrature_map`).  ``ccw`` is the sense that co-rotates with
+    ``B₁⁺``; on an azimuth-*increasing* index that is the pattern which lags.
+    """
+    ks = np.asarray(port_indices, dtype=float)
+    signs = {"ccw": -1.0, "cw": +1.0}
+    if sense not in signs:
+        raise ValueError(f"sense must be one of {sorted(signs)}, not {sense!r}")
+    return np.exp(signs[sense] * 1j * ks * np.pi / 2.0)
+
+
 def _superpose_dg0(b_fields, coefficients, name):
     """``Σ_k c_k B_k`` as a fresh DG0 vector ``Function`` on the shared space."""
     space = b_fields[0].function_space
@@ -224,8 +240,8 @@ def quadrature_map(b1_plus_map):
     # — 10× the CG1 floor, which is what a ~2% discretisation error looks like
     # on a quantity suppressed 120× by cancellation.  The band did not move; the
     # naming did.
-    ccw_phases = np.exp(-1j * ks * np.pi / 2.0)
-    cw_phases = np.exp(+1j * ks * np.pi / 2.0)
+    ccw_phases = quadrature_phase_weights(ks, "ccw")
+    cw_phases = quadrature_phase_weights(ks, "cw")
 
     dg0_ccw = _superpose_dg0(fields, ccw_phases, "B_phasor_ccw")
     dg0_cw = _superpose_dg0(fields, cw_phases, "B_phasor_cw")
