@@ -5180,7 +5180,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-36` | Re-run the examples whose artifacts the 2026-08-28 rename (`67e4c1c`) orphaned — census `dead=53 exit=1` on 2026-08-29 — until it reads `dead=0`; four legs by runner group, each one slot (commissioned 2026-08-30 02:15 weekly review; entry written by the 10:30 daily review). **Leg (th) ✅ 2026-08-31 — `dead` 53 → 42, group `dead`/`stale` both 0, 83 s**; three legs open | 🟡 | standard per leg (105 / ≈ 500 / 447 / 935 s measured by `EX-30`) |
 | `EX-35` | 16-leg **ring-gapped** birdcage mesh — the 32-ring-port high-pass layout (`GEO-20` step 2's newly gated capability, 2026-08-29: `EX-31`/`mesh:7` cuts the rings at 4 legs, `EX-33`/`mesh:8` cuts the **legs** at 16 — no example has the production high-pass topology at the production leg count; mesh-only, no solve, no port claim; commissioned 2026-08-29 10:30 review, §5.4 ramp) | ✅ | standard |
 | `EX-37` | **`ANS-1`/`ANS-3` are unrunnable since the 2026-08-28 rename**: `67e4c1c` rewrote the two cases' `__import__("01_dodd_deeds_coil_loading")` / `("02_package_sparameter_sweep")` strings along with their artifact basenames, and no module of the prefixed name exists — the `ANS-4` slot's observation, verified by the 18:00 review from `git log -S`; restore the two strings, re-run `ans:1` and `ans:3`, census (commissioned 2026-08-30 18:00 review; known-issues entry) | ✅ *(2026-08-31, 19:30 slot — negative control Status 1/3 s, both cases green, 63 s / 128 s)* | standard (≈ 5 + 70 + 131 s + census) |
-| `EX-38` | `\|B₁⁺\|` map of the loaded 4-leg birdcage at 10 MHz into ParaView (`WF-6` step 1's newly gated capability, 2026-08-30: the CG1-projected `\|B₁⁺\|` field under gates (i)/(ii) — no example writes a B₁⁺ field, `ports:4`/`ports:5` stop at S-matrices; the output-quantity angle; commissioned 2026-08-30 18:00 review, §5.4 ramp) | ⬜ | standard (≈ 70 s) |
+| `EX-38` | `\|B₁⁺\|` map of the loaded 4-leg birdcage at 10 MHz into ParaView (`WF-6` step 1's newly gated capability, 2026-08-30: the CG1-projected `\|B₁⁺\|` field under gates (i)/(ii) — no example writes a B₁⁺ field, `ports:4`/`ports:5` stop at S-matrices; the output-quantity angle; commissioned 2026-08-30 18:00 review, §5.4 ramp) | ✅ *(2026-08-31, 15:00 slot — `ports:6` green in 63 s: gate (i) 9.795751117e-03 vs record to 1.195e-08, CG1 C4 covariance 2.1870% vs the 5% band and the record to 1.643e-05, DG0 control 8.6516% to 3.227e-06, 51/51 valid, cell ratio 1.000000)* | standard (≈ 70 s) |
 | `EX-39` | Quadrature-driven birdcage: co- and counter-rotating `\|B₁⁺\|` / `\|B₁⁻\|` maps at 10 MHz into ParaView (`WF-6` step 2's newly gated capability, 2026-08-31: exact superposition of the four single-drive fields with `e^{∓jkπ/2}` phases, C4-invariance and the mirror identity at the CG1 floor — the **drive** angle: no example superposes ports or shows the two rotating senses side by side; `EX-38` is the single-drive map; commissioned 2026-08-31 03:00 review, §5.4 ramp) | ⬜ | standard (≈ 100 s) |
 | `EX-40` | `\|B₁⁺\|` maps at 64 and 128 MHz — the Larmor frequency ladder in ParaView (`WF-6` step 2b's newly gated capability, 2026-08-31: the five identities hold at 64/128 MHz on one mesh at 21.89 / 12.50 phantom cells/λ — the **frequency** angle: `EX-38`/`EX-39` are 10 MHz only, `EX-34` runs the ladder but stops at S-matrices; commissioned 2026-08-31 10:30 review, §5.4 ramp) | ⬜ | standard (≈ 130 s) |
 
@@ -5633,9 +5633,10 @@ them. `ANS-4` sidestepped it by importing by path.
 > 08-16 records, and the AED columns are still blank.
 
 **`EX-38` — the first `|B₁⁺|` field in ParaView: loaded 4-leg birdcage at
-10 MHz** ⬜ *(commissioned 2026-08-30 18:00 review, §5.4 ramp, from `WF-6`
-step 1 ✅.)* No example writes a B₁⁺ field — `ports:4`/`ports:5` stop at
-S-matrices, and `WF-6`'s map lives only in a test module.
+10 MHz** ✅ *(2026-08-31, 15:00 slot; commissioned 2026-08-30 18:00 review,
+§5.4 ramp, from `WF-6` step 1 ✅.)* No example writes a B₁⁺ field —
+`ports:4`/`ports:5` stop at S-matrices, and `WF-6`'s map lived only in a test
+module until this one.
 > **Build:** `examples/ports/06_birdcage_b1_plus_map.py` + same-stem guide
 > (`ports:6`): `build_four_port_sweep`'s fixture, **two** lumped-sheet
 > solves (P1 and P2, 5.6–6.0 s each on the 116 085-cell mesh),
@@ -5664,6 +5665,31 @@ S-matrices, and `WF-6`'s map lives only in a test module.
 > step 2), no absolute claim. **Negative result:** a record not
 > reproducing is a finding about the example path — known-issues, stop; no
 > band moves.
+>
+> **Landed 2026-08-31 (15:00 slot), `20260831T200401Z_EX-38.log`, Status 0,
+> 63 s wall / 60.5 s in-script at `-n 2`, complex, host runner (no socket
+> denial this slot).** `examples/ports/06_birdcage_b1_plus_map.py` + guide,
+> everything imported — the fixture through `build_four_port_sweep`, and the
+> gate module's own `_solve_driven` / `_power_shares` / `_sample_points` /
+> `_rotate_z` / `_read_b1_plus` / `_read_b1_plus_cg1` / `_relative_l2`, so the
+> example path *is* the gate's. One mesh (116 085 cells, ratio **1.000000**,
+> 22.0 s), the gated sweep's four solves 22.9 s, **two** field solves 5.5 +
+> 5.5 s. Every anchor met: gate (i) residual **9.795751117e-03** (record to
+> 1.195e-08, band 1e-2) with its conductor-blind control at 7.517001e-02 outside the
+> band; gate (ii) CG1 covariance **2.1870%** against the imported 5% band
+> (step 1b record to 1.643e-05); the DG0 control **8.6516%** (step 1 record to
+> 3.227e-06) and asserted to stay *outside* 5% — **3.96×** the CG1 figure, the
+> estimator floor made visible; **51/51** points valid; drive rotation
+> 90.000000° read off the fixture's sheet azimuths; both field solves asserted
+> to run on the sweep's own mesh object (`reused_mesh`). Recorded and ungated:
+> CG1 `|B₁⁺|` mean 2.069556e-08 T (max 2.886353e-08, min 1.475431e-08) at
+> `V_src = 1 V`, DG0 mean 2.077398e-08 T. Census
+> (`20260831T200629Z_EX-38-docrefs2.log`): `guide=0`, no `ports_06_*` dead
+> reference; the standing `dead=42` is `EX-36`'s and not this chunk's. One
+> mechanical note for the next example author: `post.b1_plus` builds its output
+> on `("DG", 0)` by construction, so the CG1 field picture needs the same
+> formula applied on the projection's own space — the example carries a
+> four-line `_b1_plus_cg1_field` saying so.
 
 **`EX-39` — the quadrature drive in ParaView: `|B₁⁺|` and `|B₁⁻|` of the
 loaded 4-leg birdcage at 10 MHz** ⬜ *(commissioned 2026-08-31 03:00 review,
@@ -6475,7 +6501,15 @@ an operator FYI.
    estimator finding exactly like step 1's DG0 floor — known-issues with
    every reading, keep the assert, stop; any re-registration is the next
    review's, never in-slot.
-3. **`EX-38` — `ports:6`, the first `|B₁⁺|` field in ParaView (standard,
+3. ✅ **DONE 2026-08-31 15:00 slot — chunk ✅, every anchor met on the first
+   run** (`20260831T200401Z_EX-38.log`, Status 0, 63 s): gate (i)
+   9.795751117e-03 (record to 1.195e-08), CG1 C4 covariance **2.1870%** vs the
+   imported 5% band (record to 1.643e-05), DG0 control **8.6516%** (record to
+   3.227e-06) and 3.96× the CG1 figure, 51/51 valid, cell ratio 1.000000,
+   `reused_mesh`; census `guide=0`, no `ports_06_*` dead reference. See the §7
+   `EX-38` entry. The original item text follows, unedited:
+
+   **`EX-38` — `ports:6`, the first `|B₁⁺|` field in ParaView (standard,
    complex, `-n 2`, host runner; independent; §7 entry, §5.4 ramp;
    carried from the 03:00 queue unchanged).**
    `examples/ports/06_birdcage_b1_plus_map.py` + guide:

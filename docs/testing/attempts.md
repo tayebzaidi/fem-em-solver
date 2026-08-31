@@ -17247,3 +17247,71 @@ Second, smaller: the mis-paired-sense control should be struck from any future
 SAR step's scoping — it is degenerate for magnitude-squared quantities, and
 this run measured how degenerate. Slot cost: ~45 of 60 minutes, ~4.5 of them
 compute.
+
+---
+
+## 2026-08-31T20:10Z — `EX-38` — **complete** (15:00 CDT implementer slot)
+
+**Item.** §9 On-deck item 3, taken as the first item not done or blocked (items
+1 and 2 both carry the 10:30 review's "closed for this queue" disposition).
+`EX-38` — `ports:6`, the first `|B₁⁺|` field in ParaView: the loaded 4-leg
+birdcage at 10 MHz. Executed as written; nothing rescoped in-slot.
+
+**What landed.** `examples/ports/06_birdcage_b1_plus_map.py` (+ same-stem
+guide). `PORT-9` leg (d)'s `build_four_port_sweep` gives the fixture; the gate
+module's own `_solve_driven`, `_power_shares`, `_sample_points`, `_rotate_z`,
+`_read_b1_plus`, `_read_b1_plus_cg1` and `_relative_l2` are imported from
+`tests/validation/test_birdcage_b1_plus_map.py`, so the example path *is* the
+gate's rather than a copy of it (`ANS-1`/`EX-33` rule). Two extra driven solves
+(P1, P2) are kept for their fields; `magnetic_flux_density_from_e` →
+`project_to_cg1` → `|B_x + jB_y|/2`. Nothing under `src/` or `tests/` moved.
+
+**Run.** `./run_examples.sh -e ports:6 -n 2 -t 300` on the host runner — **no
+docker-socket denial this slot** — `20260831T200401Z_EX-38.log`, **Status 0**,
+**63 s** wall / 60.5 s in-script at `-n 2` on the complex build. Mesh 116 085
+cells (ratio **1.000000** of `STEP2_CELL_COUNT`) in 22.0 s; the gated sweep's
+four solves 22.9 s; the two field solves 5.5 + 5.5 s.
+
+**Measured, every anchor met on the first run:**
+
+| anchor | reading | record / band | relative |
+| --- | --- | --- | --- |
+| gate (i) P1 power residual | 9.795751117e-03 | 9.795751e-03, band 1e-2 | 1.195e-08 |
+| gate (i) conductor-blind control | 7.517001e-02 | must exceed 1e-2 | — |
+| gate (ii) CG1 C4 covariance | 2.1870% | 2.1870%, band 5% | 1.643e-05 |
+| DG0 control covariance | 8.6516% | 8.6516%, asserted > 5% | 3.227e-06 |
+| valid sample points | 51 / 51 | ≥ `MIN_SAMPLE_POINTS` | — |
+| drive rotation | 90.000000° | read off the sheet azimuths | — |
+
+The DG0 read is **3.96×** the CG1 one on the same points and the same field —
+step 1d's estimator floor, now visible in ParaView as two colour arrays rather
+than a table. Recorded and **ungated** (no absolute claim): CG1 `|B₁⁺|` mean
+2.069556e-08 T (max 2.886353e-08, min 1.475431e-08) over the 51 points at
+`V_src = 1 V`; DG0 mean 2.077398e-08 T.
+
+**Census.** `20260831T200608Z_EX-38-docrefs.log` first read `guide=2` — the
+guide's own section titles have to *contain* `EX-15`'s three required headings
+verbatim ("How to run it", "How to analyze it, step by step"), which "Running
+it" / "What to open" do not. Renamed; `20260831T200629Z_EX-38-docrefs2.log`
+reads `guide=0` with **no `ports_06_*` dead reference**. `exit=1` /
+`dead=42` / `stale=12` is `EX-36`'s standing count, not this chunk's.
+
+**One mechanical finding, worth the next example author's time.**
+`post.b1_plus` builds its output on `("DG", 0)` **by construction**
+(`_rotating_component` allocates a DG0 scalar and writes the input's dof array
+into it), so it cannot be handed a CG1-projected `B`: the dof counts differ and
+the write would be silently wrong where it did not raise. The example therefore
+carries a four-line `_b1_plus_cg1_field` applying the same formula on the
+projection's own space, with a comment saying why. A future `post` touch could
+make `_rotating_component` allocate on the input's own mesh/space family
+instead — not this chunk's, and no caller needs it yet.
+
+**Denials / anomalies.** None. Both harness windows returned footers; no
+container wedge; the host runner worked.
+
+**Next-attempt hypothesis (for the review).** Nothing owed on `EX-38`. The
+lineage's next rung is §9 item 4, `EX-39` (`ports:7`, the quadrature drive) —
+unblocked and independent of this one, and its imports now have a landed
+precedent for reading a CG1 map out of a projected phasor. `EX-40` (the Larmor
+ladder maps) stays behind it as the review scoped. Slot cost: ~40 of 60
+minutes, ~1.5 of them compute.
