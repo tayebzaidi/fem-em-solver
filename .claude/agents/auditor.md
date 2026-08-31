@@ -57,7 +57,11 @@ INCONCLUSIVE, not a pass.
    declared scope.
 8. **Tier honesty.** The declared tier (smoke 30 s / standard 180 s /
    heavy 1200 s, §5.1) fits the footer's measured Elapsed. A "standard" chunk
-   whose command measured 256 s is mislabeled (the OPS-27 catch).
+   whose command measured 256 s is mislabeled (the OPS-27 catch). Judge this
+   against the chunk's OWN verification commands: a negative-control re-run
+   of ANOTHER chunk's module inherits that module's declared tier — an
+   over-tier control run is a Caveat, not a demotion (the MAG-19 precedent:
+   its 364 s MAG-18 control run did not demote a standard-tier chunk).
 
 ## Report format
 
