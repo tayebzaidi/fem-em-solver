@@ -5467,7 +5467,7 @@ next weekly review adjudicates the returned numbers.
 | `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ✅ *(example path restored 2026-08-31 by `EX-37` and re-run green, 63 s; the 08-09 record stands)* | standard |
 | `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ✅ *(example path restored 2026-08-31 by `EX-37` and re-run green, 128 s; the 08-16 / 08-26 records stand)* | heavy |
 | `ANS-4` | **Gapped four-leg birdcage, phantom-loaded, four lumped ports: 4×4 S-matrix at 10 / 64 / 128 MHz — runnable half** (commissioned 2026-08-30 02:15 weekly review; authoritative spec `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/SPEC.md`; the first independent absolute check of the coil-fed port model at a Larmor frequency) | ✅ **runnable half 2026-08-30** (`20260830T213415Z_ANS-4-run1.log`, Status 0, 125 s at `-n 2`) — all three gates on all three rungs of one 116 085-cell mesh (ratio 1.000000, `reused_mesh`); 10 MHz reproduces leg (d)'s 4×4 to **1.158e-10** (band 1e-6) and leg (d0)'s column to **2.568e-10** (band 1e-9); 64 / 128 MHz reproduce `PORT-11` steps 2/3 to worst **1.075e-03** / **6.755e-04** (band 1e-2); control separation **1.585460** vs 2e-3. **Operator's AED replication at both orders is now Waiting-on-you; adjudication is a weekly review's** | heavy (≈ 160 s at `-n 2`, one command; measured 125 s) |
-| `ANS-5` | **Pin the element-order correspondence in every ANS `SPEC.md`/`COMPARISON.md`** — our production `degree 1` is what HFSS calls **Zero Order**, not its default **First Order**; the specs do not say so, and a default-settings replication is a different discretization (operator observation, interactive session 2026-08-28) | ⬜ **RULED 2026-08-30 02:15 weekly review** — (a) AED runs at **Zero Order** (matched, the adjudication column) **and** at its default **First Order** (an order-sensitivity column); **Mixed Order forbidden**; our side stays at one order (none of options 1–3 as framed — option 1 for the adjudication column plus a second AED column, our side unchanged, step 3 **not** taken). (b) `ANS-1` **is in scope** for the spec line (state the Maxwell 3D formulation and order AED used). Already-returned numbers at an unrecorded order stand as an "order-unknown" column. Steps 1–2 are documentary and queueable; `ANS-4`'s spec already carries the wording. **Steps 1–2 executed 2026-08-31 00:00 slot — 🟡:** README correspondence table + a *Basis / element order* paragraph in all three SPECs (four `*.md` files, +71/−3, no band or figure moved); the `ANS-1`/`ANS-3` `COMPARISON.md` rows need a **generator `.py`** edit the item's scope forbids — carried as a finding, **priced as step 1b by the 03:00 review (§9 item 2)** | smoke (no compute; step 1b ≈ 200 s) |
+| `ANS-5` | **Pin the element-order correspondence in every ANS `SPEC.md`/`COMPARISON.md`** — our production `degree 1` is what HFSS calls **Zero Order**, not its default **First Order**; the specs do not say so, and a default-settings replication is a different discretization (operator observation, interactive session 2026-08-28) | ⬜ **RULED 2026-08-30 02:15 weekly review** — (a) AED runs at **Zero Order** (matched, the adjudication column) **and** at its default **First Order** (an order-sensitivity column); **Mixed Order forbidden**; our side stays at one order (none of options 1–3 as framed — option 1 for the adjudication column plus a second AED column, our side unchanged, step 3 **not** taken). (b) `ANS-1` **is in scope** for the spec line (state the Maxwell 3D formulation and order AED used). Already-returned numbers at an unrecorded order stand as an "order-unknown" column. Steps 1–2 are documentary and queueable; `ANS-4`'s spec already carries the wording. **Steps 1–2 executed 2026-08-31 00:00 slot — 🟡:** README correspondence table + a *Basis / element order* paragraph in all three SPECs (four `*.md` files, +71/−3, no band or figure moved); the `ANS-1`/`ANS-3` `COMPARISON.md` rows need a **generator `.py`** edit the item's scope forbids — carried as a finding, **priced as step 1b by the 03:00 review (§9 item 2)**. **Step 1b executed 2026-08-31 06:00 slot — chunk ✅** (steps 1, 1b, 2; step 3 ruled not taken): both generators' `_write_comparison` now emit `AED (Zero Order)` / `AED (First Order)` and a `Basis order` row, both cases re-run green on their own asserts (ΔR **1.5838%** vs 2%; `PORT-1` step-4 reproduction **2.98e-05 / 2.92e-05 / 1.71e-06 / 3.33e-10** inside 1%, reciprocity 4.7586e-05 < 1e-3, ‖S‖₂ 0.864809 ≤ 1), census at the standing `dead=53 guide=0 stale=10`. The pre-registered ≤ 1e-8 `metrics.json` negative control **is not a valid discriminator for `ANS-3`** — measured below | smoke (no compute; step 1b ≈ 200 s, measured 61 + 133 s + 125 s control + 1 s census) |
 
 
 **`ANS-5` — pin the element-order correspondence in the benchmark specs** 🟡
@@ -5666,6 +5666,51 @@ recommendation, not a decision.)*
 > both runs green, `metrics.json` physics unmoved — **`ANS-5` ✅** (steps 1,
 > 1b, 2; step 3 ruled not taken). **Negative result:** either case red for
 > any reason other than the edit — revert the edit, known-issues, stop.
+>
+> **Step 1b reading — executed 2026-08-31, 06:00 slot; `ANS-5` ✅.** Both
+> `_write_comparison` bodies now emit `AED (Zero Order)` / `AED (First
+> Order)` in every AED-bearing table and a `Basis order` row in Solve
+> metadata, with the `04_…py` order paragraph lifted verbatim; the README
+> *Cases* list gained `ANS-3` and `ANS-4`. The `.py` diff is confined to the
+> two functions — no constant, band, ceiling or record moved — and both
+> regenerated documents were read back to confirm the columns
+> (`COMPARISON.md` `:24`/`:66`/`:69` and `:23`/`:48`/`:57`/`:87`/`:90`).
+> **`ans:1`** `20260831T110240Z_ANS-5-step1b-ans1.log`, Status 0, 61 s: ΔR
+> **1.5838%** against the 2% ceiling, 4.048e-06 relative from the pin,
+> σ = 0 control exactly 0.0 W / 0.0 A/m², energy ratio 1.0000.
+> **`ans:3`** `20260831T110908Z_ANS-5-step1b-ans3-final.log`, Status 0,
+> 133 s: raw 0.894516 a **miss** at −10.55% (the inverted control),
+> corrected 0.939822 at −6.02% inside the 10% band, ‖S − Sᵀ‖/‖S‖
+> **4.7586e-05** < 1e-3, ‖S‖₂ **0.864809** ≤ 1, `PORT-1` step-4
+> reproduction **2.98e-05 / 2.92e-05 / 1.71e-06 / 3.33e-10** inside the 1%
+> band. Census `20260831T111136Z_ANS-5-step1b-census.log` at the standing
+> `dead=53 guide=0 stale=10 exit=1`, no `ans_*` among the ten stale.
+>
+> **Finding — the ≤ 1e-8 `metrics.json` negative control is not a valid
+> discriminator for `ANS-3`, and never was.** The first `ans:3` run
+> (`20260831T110348Z…`, Status 0, 123 s) moved `Z₁₁` Im by **4.9e-8**
+> relative against the committed file, over the pre-registered 1e-8. Rather
+> than stop on a control whose premise (*a moved figure means the edit
+> touched the physics path*) is untestable by inspection, the slot ran the
+> decisive experiment: `git checkout HEAD --` the generator and re-ran the
+> identical command (`20260831T110634Z_ANS-5-step1b-ans3-unedited-control.log`,
+> Status 0, 125 s). **The unedited generator misses the band too** — `Z₂₂`
+> Im 7.164396053162261 → 7.164396135620619 (**1.15e-8** relative), `S₂₂` Im
+> 1.1e-8, `‖S − Sᵀ‖/‖S‖` 4.7586448e-05 → 4.7586412e-05 (7.6e-7 relative,
+> cancellation-amplified). So the run-to-run scatter of this 177 998-cell
+> two-rank iterative sweep reaches ~1e-8–5e-8 on the Z/S entries
+> intrinsically; `EX-37`'s single ~3e-9 observation (2026-08-31 19:30),
+> from which the 1e-8 figure was priced, was one draw from that
+> distribution, not its width. `ANS-1` is unaffected — its physics
+> reproduces at ~1e-15 relative (`delta_R_ohm` 0.3277053865833211 →
+> …215) and passes ≤ 1e-8 comfortably. **For a review:** the honest
+> negative control for `ANS-3` is the scripts' own `PORT-1` step-4
+> reproduction band (1%, and every entry sits ≤ 3e-05 inside it), not a
+> byte-level `metrics.json` diff; a future item should either quote
+> ~1e-7 for `ANS-3` or drop the figure and cite the in-script band.
+> Consequently the chunk is closed on the pre-registered *gated* anchors,
+> which all held, with the band finding recorded rather than the band
+> quietly widened.
 
 **`ANS-1` ✅ 2026-08-09** *(scoped 2026-08-09, weekly review; full plan and
 closure narrative in `docs/planning/plan-archive.md`)*. Runnable half of
@@ -6087,7 +6132,18 @@ an operator FYI.
    result:** (i) red is a bug in the new code, fix in-slot; (ii) red with
    (i) green is a finding — (A)'s reading was incomplete — record both
    numbers in the known-issues entry, keep the assert, stop; never widen.
-2. **`ANS-5` step 1b — the generator half of the element-order ruling
+2. **✅ DONE 2026-08-31, 06:00 slot — `ANS-5` closes.** Both generators carry
+   the two AED columns and the `Basis order` row; `ans:1` green at ΔR
+   **1.5838%** (61 s) and `ans:3` green at reproduction **2.98e-05 /
+   2.92e-05 / 1.71e-06 / 3.33e-10** inside 1% (133 s); census at the
+   standing `dead=53 guide=0 stale=10`. **One finding for the review:** the
+   item's ≤ 1e-8 `metrics.json` negative control is not achievable for
+   `ANS-3` — the *unedited* generator misses it too (1.15e-8 on `Z₂₂` Im,
+   measured this slot with `git checkout HEAD --`), so the figure measures
+   iterative-solve scatter, not a physics-path touch. Chunk closed on the
+   gated anchors; the band was recorded, not widened (§7 step-1b reading).
+   Original item below.
+   **`ANS-5` step 1b — the generator half of the element-order ruling
    (standard, complex, `-n 2`, host runner; independent; scoped this
    review — §7 step-1b bullet).** In `01_loop_over_lossy_slab_10MHz.py::
    _write_comparison` (`:145`) and `03_two_torus_gap_ports_10MHz.py::

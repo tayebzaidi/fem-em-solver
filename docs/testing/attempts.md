@@ -16823,3 +16823,76 @@ issued**.
   call, not an implementer's. Until then `test_coil_loading_degree2.py` is
   effectively unrunnable in a scheduled slot, which also affects anything
   else that would re-gate it.
+
+## 2026-08-31T11:14Z — `ANS-5` step 1b — **complete** (06:00 CDT implementer slot)
+
+- **Item taken:** §9 On-deck **item 2** (`ANS-5` step 1b). Item 1 (`TH-13`
+  step 3a) was left 🟡 by the 04:30 slot with its remainder explicitly handed
+  to a review ("Left for a review": the `test_coil_loading_degree2.py`
+  mesh-time blocker), so it is not an implementer's to take; item 2 is the
+  first actionable one. Preflight clean, container Up 4 days.
+- **Build (the §7 step-1b bullet, executed as written).** In
+  `01_loop_over_lossy_slab_10MHz.py::_write_comparison` and
+  `03_two_torus_gap_ports_10MHz.py::_write_comparison`: the single `AED`
+  column became `AED (Zero Order)` / `AED (First Order)` in every AED-bearing
+  table (ANS-1 Terminal quantities + Solve metadata; ANS-3 Z-matrix, S-matrix,
+  Identities + Solve metadata), a `Basis order` row was added to both
+  Solve-metadata tables, and the `04_…py` two-column order paragraph was
+  lifted so the three documents read as one form. README *Cases* list gained
+  `ANS-3` and `ANS-4`. **The `.py` diff is confined to the two functions** —
+  no constant, band, ceiling, record or physics-path line moved; verified off
+  `git diff` before the first run. Both regenerated documents were read back
+  to confirm the columns and the row exist rather than assumed.
+- **Runs, all Status 0.**
+  - `ans:1` — `20260831T110240Z_ANS-5-step1b-ans1.log`, **61 s**: ΔR
+    **1.5838%** against the 2% ceiling (record 1.5834%), 4.048e-06 relative
+    from the pinned +3.2770406e-01 Ω, σ = 0 control exactly 0.0 W / 0.0 A/m²,
+    energy identity ratio 1.0000.
+  - `ans:3` — `20260831T110908Z_ANS-5-step1b-ans3-final.log`, **133 s**: raw
+    mutual 0.894516 a **miss** at −10.55% (the inverted control fires),
+    corrected 0.939822 at −6.02% inside the 10% band, ‖S − Sᵀ‖/‖S‖
+    **4.7586e-05** < 1e-3, ‖S‖₂ **0.864809** ≤ 1, `PORT-1` step-4 reproduction
+    **2.98e-05 / 2.92e-05 / 1.71e-06 / 3.33e-10** inside 1%.
+  - Census — `20260831T111136Z_ANS-5-step1b-census.log`, 1 s, `dead=53
+    guide=0 stale=10 stale_severity=report exit=1`: the standing baseline
+    exactly (08-30 / 08-31 records), and none of the ten stale is an `ans_*`.
+- **The pre-registered ≤ 1e-8 `metrics.json` negative control fired — and the
+  measurement says the control is wrong, not the edit.** The first `ans:3` run
+  (`20260831T110348Z…`, Status 0, 123 s) moved `Z₁₁` Im by **4.9e-8** relative
+  against the committed file. `_write_comparison` is a pure string formatter
+  that reads an already-computed `m`/`z`/`s` and writes a file, so the
+  control's premise (*a moved figure means the edit touched the physics path*)
+  cannot be settled by inspection. Rather than stop blind I ran the decisive
+  experiment: `git checkout HEAD --` on the generator only, identical command,
+  `20260831T110634Z_ANS-5-step1b-ans3-unedited-control.log`, Status 0, 125 s.
+  **The unedited generator misses the band too** — `Z₂₂` Im
+  7.164396053162261 → 7.164396135620619 (**1.15e-8** relative), `S₂₂` Im
+  1.1e-8, `‖S − Sᵀ‖/‖S‖` 4.7586448e-05 → 4.7586412e-05 (7.6e-7, a
+  cancellation-amplified difference of near-equal numbers). Run-to-run scatter
+  of this 177 998-cell two-rank iterative sweep is therefore ~1e-8–5e-8 on the
+  Z/S entries intrinsically. `EX-37`'s single ~3e-9 observation, which the
+  1e-8 figure was priced from, was one draw from that distribution rather than
+  its width. The edited generator was then restored and re-run so the
+  committed artifacts come from it (the 133 s final run).
+- **`ANS-1` is unaffected** and passes the same control comfortably:
+  `delta_R_ohm` 0.3277053865833211 → …215, ~1e-15 relative; every other
+  physical figure at the same order; only `generated_utc` and `*_seconds` move
+  materially.
+- **Nothing was widened.** No band, ceiling or assertion was touched anywhere.
+  The chunk is closed on the pre-registered **gated** anchors — the two
+  scripts' own asserts, all green — and the 1e-8 figure is recorded as a
+  finding in §7 for a review to dispose of.
+- **Docs.** §7 `ANS-5` table row → **✅** with the measured numbers; a step-1b
+  reading bullet plus the band finding in the narrative; §9 item 2 marked ✅
+  with the original text kept for the audit. No known-issues change — nothing
+  is failing.
+- **Denials / anomalies.** None. The docker-socket runner denial did not fire;
+  the host runner worked for all three windows.
+- **Next-attempt hypothesis (for the review, not an implementer).** The honest
+  negative control for `ANS-3` regeneration is the script's own `PORT-1`
+  step-4 reproduction band (1%; every entry sits ≤ 3e-05 inside it), not a
+  byte-level `metrics.json` diff. Any future item that re-runs `ans:3` should
+  quote ~1e-7, or drop the figure and cite the in-script band — otherwise it
+  will stop a slot on solver scatter, as this one nearly did. The same
+  question is worth asking of `ANS-4`, whose 4×4 sweep is larger still and has
+  never had its run-to-run scatter measured.
