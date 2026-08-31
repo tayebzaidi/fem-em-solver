@@ -42,6 +42,12 @@ from .solvers import (
 )
 
 
+# The third value of `TimeHarmonicSolver.solve(project_source=...)` beside
+# True/False (`TH-13` step 3a): project the drive's gradient content out
+# against the degree and the Dirichlet set this solve actually uses.
+PROJECT_SOURCE_MATCHED = "matched"
+
+
 class TimeHarmonicBoundaryCondition(str, Enum):
     """Supported time-harmonic boundary-condition modes (MVP set)."""
 
@@ -355,7 +361,7 @@ class TimeHarmonicSolver:
         subdomain_id: Optional[int] = None,
         subdomain_ids: Optional[Sequence[int]] = None,
         gauge_penalty: float = DEFAULT_GAUGE_PENALTY,
-        project_source: bool = True,
+        project_source: bool | str = True,
         extra_bilinear_terms: Optional[Sequence[Callable]] = None,
         extra_linear_terms: Optional[Sequence[Callable]] = None,
     ) -> TimeHarmonicFields:
@@ -378,6 +384,18 @@ class TimeHarmonicSolver:
         source, or a diagnosis that pins unprojected numbers.  It costs one CG1
         Poisson solve (~2 s on the 120k-cell port fixture) and is a no-op when
         ``current_density`` is ``None``.
+
+        ``project_source="matched"`` (`TH-13` step 3a) removes the residue
+        against the space this solve actually tests instead of against CG1 ∩
+        H¹₀ always: ``degree = self.degree`` and ``pin_exterior`` only under
+        PEC.  ``True`` remains the default and assembles the same load it
+        always has — at degree 1 under PEC the two are the same projection.
+        Step 2 measured what the mismatch costs on the loop fixture: the
+        unremoved gradient content reappears in ``E_h`` through the discrete
+        gradient equation ``P_∇E_h = c·P_∇J'`` and carried 99.98% (degree 1)
+        and 99.9997% (degree 2) of the stored electric energy.  It does **not**
+        reach the lumped-sheet birdcage drive, which is a surface term with
+        ``project_source=False`` (:mod:`fem_em_solver.ports.lumped`).
 
         ``extra_bilinear_terms`` / ``extra_linear_terms`` (`PORT-9` step 1) are
         surface terms a *port model* adds to the assembled forms — each a
@@ -438,6 +456,13 @@ class TimeHarmonicSolver:
 
         bcs, selected_bc, dirichlet_dof_count = self.build_boundary_conditions()
 
+        if project_source is not True and project_source is not False:
+            if project_source != PROJECT_SOURCE_MATCHED:
+                raise ValueError(
+                    f"project_source={project_source!r} is not one of True, False or "
+                    f"{PROJECT_SOURCE_MATCHED!r}"
+                )
+
         current = None if current_density is None else current_density(ufl.SpatialCoordinate(self.mesh))
         if current is None:
             zero = fem.Constant(self.mesh, np.zeros(3, dtype=PETSc.ScalarType))
@@ -447,6 +472,17 @@ class TimeHarmonicSolver:
             # silently flip the e^{+jωt} convention.
             load_factor = fem.Constant(self.mesh, PETSc.ScalarType(-1j * omega * MU_0))
             if project_source:
+                # `TH-13` step 3a: "matched" projects against the gradient
+                # subspace this solve's own test space contains, under the
+                # Dirichlet set its own boundary mode implies.  True keeps the
+                # CG1 ∩ H¹₀ projection every gated record was measured on.
+                matched = project_source == PROJECT_SOURCE_MATCHED
+                projection_degree = self.degree if matched else 1
+                pin_exterior = (
+                    selected_bc is TimeHarmonicBoundaryCondition.PEC_ZERO_TANGENTIAL_A
+                    if matched
+                    else True
+                )
                 # J′ has support everywhere (∇ψ does), so the tag restriction
                 # moves into the integrand as a DG0 indicator and the load is
                 # assembled on the whole domain — same integrand cell for cell.
@@ -457,6 +493,8 @@ class TimeHarmonicSolver:
                     subdomain_ids=self._normalized_subdomain_ids(
                         subdomain_id=subdomain_id, subdomain_ids=subdomain_ids
                     ),
+                    degree=projection_degree,
+                    pin_exterior=pin_exterior,
                 )
                 L = load_factor * ufl.inner(self._projection.current, v) * ufl.dx
             else:

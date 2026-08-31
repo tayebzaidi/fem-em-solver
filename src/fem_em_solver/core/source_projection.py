@@ -23,6 +23,19 @@ potential, which is the space in which ``∇q`` is an admissible N1curl test
 function.  ``J'`` is then divergence-free *weakly against CG1* — not
 pointwise, and pointwise is not what the load vector integrates.
 
+`TH-13` step 3a (2026-08-31) makes both of those choices explicit rather than
+hard-coded, because step 2 measured what they cost when the solve does not
+match them.  The defaults are unchanged — ``degree=1``, ``pin_exterior=True``
+— but a degree-2 N1curl solve tests ``∇Lagrange₂``, and a PMC (``NATURAL``)
+box admits every ``q ∈ Lagrange``, not only ``q ∈ H¹₀``.  Against those spaces
+the CG1 ∩ H¹₀ projection leaves a residue, and step 2 showed the residue is
+not benign: the discrete gradient equation pins ``P_∇ E_h = c·P_∇ J'`` exactly
+(residuals 2.970e-12 … 3.697e-13), so whatever gradient content survives the
+projection reappears in ``E_h`` divided by ``σ + jωε`` and carried 99.98% of
+the loop fixture's degree-1 ``W_e`` and 99.9997% of its degree-2 ``W_e``.
+Passing ``degree`` = the solve's and ``pin_exterior`` = whether the solve
+actually applies PEC removes it.
+
 Two consequences the caller inherits:
 
 * ``J'`` has support on the whole mesh even when ``J`` is confined to a tagged
@@ -48,6 +61,7 @@ import dolfinx
 from dolfinx import fem
 from dolfinx.fem.petsc import LinearProblem
 from mpi4py import MPI
+from petsc4py import PETSc
 
 
 @dataclass
@@ -60,7 +74,8 @@ class GradientProjection:
         The projected source ``J' = χJ − ∇ψ`` as a UFL expression, to be
         integrated over the **whole** domain (``ufl.dx``).
     potential:
-        The CG1 potential ``ψ``, kept alive because ``current`` refers to it.
+        The Lagrange potential ``ψ`` (degree 1 unless the caller asked for
+        another), kept alive because ``current`` refers to it.
     indicator:
         The DG0 subdomain indicator ``χ``, or ``None`` when the source was
         already whole-domain.  Also kept alive for the same reason.
@@ -81,9 +96,11 @@ def remove_gradient_content(
     *,
     cell_tags=None,
     subdomain_ids: Optional[Sequence[int]] = None,
+    degree: int = 1,
+    pin_exterior: bool = True,
     petsc_options: Optional[dict] = None,
 ) -> GradientProjection:
-    """Return ``J' = χJ − ∇ψ``, the CG1-weakly-solenoidal part of ``current``.
+    """Return ``J' = χJ − ∇ψ``, the weakly-solenoidal part of ``current``.
 
     Parameters
     ----------
@@ -96,6 +113,18 @@ def remove_gradient_content(
         The tagged cells the source is confined to.  When ``subdomain_ids`` is
         ``None`` the source is taken to live on the whole domain and no
         indicator is built.
+    degree:
+        The Lagrange degree of ``ψ``, i.e. of the gradient subspace the residue
+        is removed against.  Default 1, which is what every gated record was
+        measured on; pass the N1curl solve's own degree to match it
+        (`TH-13` step 3a).
+    pin_exterior:
+        Whether ``ψ`` is pinned to zero on the exterior facets (``H¹₀``).
+        Default ``True``, correct when the solve applies PEC.  Pass ``False``
+        under a natural/PMC boundary, where every ``q ∈ Lagrange`` has an
+        admissible ``∇q``: the Laplacian is then singular on constants, so a
+        single dof — the globally lowest-numbered one, pinned on the rank that
+        owns it — fixes the additive constant, which leaves ``∇ψ`` untouched.
     petsc_options:
         Overrides for the Poisson solve; defaults to the same direct LU/MUMPS
         settings the curl-curl solve uses.
@@ -105,7 +134,7 @@ def remove_gradient_content(
     ``create_connectivity(tdim-1, tdim)`` before ``exterior_facet_indices`` is
     mandatory — omitting it is what failed the step-2e probe.
     """
-    q_space = fem.functionspace(mesh, ("Lagrange", 1))
+    q_space = fem.functionspace(mesh, ("Lagrange", degree))
     q = ufl.TestFunction(q_space)
 
     indicator = None
@@ -129,12 +158,26 @@ def remove_gradient_content(
             subdomain_id=tuple(int(tag) for tag in subdomain_ids),
         )
 
-    tdim = mesh.topology.dim
-    mesh.topology.create_connectivity(tdim - 1, tdim)
-    facets = dolfinx.mesh.exterior_facet_indices(mesh.topology)
-    boundary_dofs = fem.locate_dofs_topological(q_space, tdim - 1, facets)
-    zero = fem.Function(q_space)
-    zero.x.array[:] = 0.0
+    if pin_exterior:
+        tdim = mesh.topology.dim
+        mesh.topology.create_connectivity(tdim - 1, tdim)
+        facets = dolfinx.mesh.exterior_facet_indices(mesh.topology)
+        boundary_dofs = fem.locate_dofs_topological(q_space, tdim - 1, facets)
+        zero = fem.Function(q_space)
+        zero.x.array[:] = 0.0
+        bcs = [fem.dirichletbc(zero, boundary_dofs)]
+    else:
+        # PMC: nothing pins the potential, so the Laplacian is singular on
+        # constants.  Pin the globally lowest-numbered dof — local index 0 on
+        # rank 0, dolfinx numbering the owned ranges in rank order — which is
+        # rank-safe and fixes only the additive constant.  Lifted from the
+        # `TH-13` step-2 projection helper that measured the identity.
+        pin = (
+            np.array([0], dtype=np.int32)
+            if mesh.comm.rank == 0
+            else np.zeros(0, dtype=np.int32)
+        )
+        bcs = [fem.dirichletbc(PETSc.ScalarType(0), pin, q_space)]
 
     options = {
         "ksp_type": "preonly",
@@ -147,7 +190,7 @@ def remove_gradient_content(
     problem = LinearProblem(
         ufl.inner(ufl.grad(ufl.TrialFunction(q_space)), ufl.grad(q)) * ufl.dx,
         rhs,
-        bcs=[fem.dirichletbc(zero, boundary_dofs)],
+        bcs=bcs,
         petsc_options=options,
         petsc_options_prefix="fem_em_source_projection_",
     )

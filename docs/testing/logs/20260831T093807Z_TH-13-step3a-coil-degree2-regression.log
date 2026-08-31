@@ -1,0 +1,109 @@
+# Test Run
+- Chunk: TH-13-step3a-coil-degree2-regression
+- Commit: db14ca0c82423f97225487318b381d0ebbddcabf
+- Time (UTC): 2026-08-31 09:38:07
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src TH12_STEP2_MODE=full timeout -k 30 570 mpiexec -n 8 python3 -m pytest tests/validation/test_coil_loading_degree2.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Aug 31 04:38 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''source /usr/local/bin/dolfinx-complex-mode && cd /workspace && PYTHONPATH=/workspace/src TH12_STEP2_MODE=full timeout -k 30 570 mpiexec -n 8 python3 -m pytest tests/validation/test_coil_loading_degree2.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 14 items
+
+tests/validation/test_coil_loading_degree2.py::test_the_memory_exponent_measured_on_the_fine_rung SKIPPED [  7%]
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline collected 14 items
+
+tests/validation/test_coil_loading_degree2.py::test_the_memory_exponent_measured_on_the_fine_rung SKIPPED [  7%]
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline collected 14 items
+
+tests/validation/test_coil_loading_degree2.py::test_the_memory_exponent_measured_on_the_fine_rung SKIPPED [  7%]
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline collected 14 items
+
+tests/validation/test_coil_loading_degree2.py::test_the_memory_exponent_measured_on_the_fine_rung SKIPPED [  7%]
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline collected 14 items
+
+tests/validation/test_coil_loading_degree2.py::test_the_memory_exponent_measured_on_the_fine_rung SKIPPED [  7%]
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline collected 14 items
+
+tests/validation/test_coil_loading_degree2.py::test_the_memory_exponent_measured_on_the_fine_rung SKIPPED [  7%]
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline collected 14 items
+
+tests/validation/test_coil_loading_degree2.py::test_the_memory_exponent_measured_on_the_fine_rung SKIPPED [  7%]
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline collected 14 items
+
+tests/validation/test_coil_loading_degree2.py::test_the_memory_exponent_measured_on_the_fine_rung SKIPPED [  7%]
+tests/validation/test_coil_loading_degree2.py::test_the_mesh_is_the_mat6_step3_baseline 
+## Exit
+- Status: 124
+- Elapsed (s): 571

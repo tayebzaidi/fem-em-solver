@@ -86,6 +86,22 @@ with the smoke column, as it does in step 3.
 fixtures are literally the same quantity measured four times.  ``ufl.inner``
 conjugates its second argument; a hand-rolled ``W_e`` would flip the convention.
 
+**Step 3a (2026-08-31) is the fix step 2's reading implies**, and it lives here
+because this is the fixture that measured the mechanism.  ``remove_gradient_content``
+gains ``degree`` and ``pin_exterior``, defaulting to today's CG1 ∩ H¹₀ choice bit
+for bit, and ``TimeHarmonicSolver.solve`` gains ``project_source="matched"``,
+which sets them from the solve's own degree and boundary mode.  The four loop
+rows are re-solved that way and read against bands pre-registered in §7 from
+step 2's numbers: the residue ``‖P_∇ₚJ′‖/‖J′‖`` to ≤ 1e-8 (it is a Laplace
+residual once the spaces match), the gradient share of ``W_e`` to ≤ 1e-6, and
+``W_e`` itself to the non-gradient remainder step 2 measured, with 100× and
+~3 000× of margin.  The default path is the negative control and every
+assertion above it is unchanged.  **The coil is out of reach:** the lumped-sheet
+birdcage drive is a surface term with ``project_source=False``
+(`ports/lumped.py:429`), so nothing here touches its 229×, the known-issues
+degree-2 entry stays open, and the two degree-2 coil identity tests stay
+failing at 1e-9.
+
 Scope: mechanism attribution only.  No coil solve runs here (the coil at degree
 2 is 61.94 GiB), no coil number moves, the two degree-2 coil identity tests stay
 failing, the known-issues degree-2 entry stays open, and §10's production-order
@@ -230,6 +246,49 @@ GRADIENT_IDENTITY_MAX = 1.0e-6
 # `c`, which is what a vacuous (A) would look like.
 MISTUNED_C_FACTOR = 1.1
 MISTUNED_C_MIN = 9.0e-2
+
+# ---------------------------------------------------------------------------
+# `TH-13` step 3a — the degree-/boundary-matched projection (PROJECT_PLAN §7,
+# scoped 2026-08-31 03:00 review).  Every band below was pre-registered there
+# from step 2's measured (A)/(B), with the margin stated; none is tuned to a
+# run.  The default (`project_source=True`) path is untouched and every
+# assertion above is its negative control.
+# ---------------------------------------------------------------------------
+# (i) projection exactness.  Under `"matched"` the degree-p Laplace projection
+# of `J′_used` against the matched space is the *residual* of the projection
+# that built `J′`, so it is a direct-solve round-off quantity.  Today's
+# unmatched figures are 1.298386e-02 at degree 1 and 8.049884x that at degree
+# 2, i.e. the bar sits six orders under what it has to beat.
+MATCHED_GRADIENT_RESIDUE_MAX = 1.0e-8
+# (c) the load-bearing check for (i): the `True` path's degree-2 residue and
+# `"matched"`'s must be at least this far apart, or (i) is passing on
+# something other than the new keywords.
+MATCHED_RESIDUE_SEPARATION_MIN = 1.0e3
+# (ii) the mechanism's prediction.  (A) says P_∇E_h = c·P_∇J′ exactly, so with
+# the residue gone the gradient part of E_h goes with it.  Step 2 measured the
+# gradient share of W_e at 1 MHz as 99.98% (degree 1) and 99.9997% (degree 2);
+# what is left over is therefore 0.02% resp. 3e-6 of the recorded W_e, and the
+# bands below clear those by 100x resp. ~3000x.
+MATCHED_GRADIENT_SHARE_MAX = 1.0e-6
+# The recorded default-path `W_e` each matched row is banded against.  §7
+# pre-registered 5.621559e-19 J (degree 1) and 3.579741e-17 J (degree 2); those
+# two are step 1′'s **10 MHz** readings, and step 2's table prints the 1 MHz
+# pair alongside them (5.544787e-19 / 3.592428e-17, within 1.4% and 0.4% of the
+# 10 MHz values — `W_e` is frequency-flat on this fixture, which is step 1′'s
+# own finding).  Every row is therefore banded against the record from its own
+# frequency, with the two pre-registered fractions unchanged.
+DEFAULT_W_E_RECORD_J = {
+    (LOOP_FREQUENCY_HZ, 1): 5.544787e-19,
+    (LOOP_FREQUENCY_HZ, 2): 3.592428e-17,
+    (LOOP_RECORD_FREQUENCY_HZ, 1): 5.621559e-19,
+    (LOOP_RECORD_FREQUENCY_HZ, 2): 3.579741e-17,
+}
+MATCHED_W_E_FRACTION = {1: 2.0e-2, 2: 1.0e-2}
+# (b) at degree 1 under PEC, `"matched"` *is* `True`: same Lagrange degree,
+# same H¹₀ Dirichlet set, so the same ψ and the same assembled load.  Not
+# "close" — the same floating-point number, up to the direct solve's own
+# reproducibility.
+MATCHED_IDENTICAL_RTOL = 1.0e-12
 
 
 def _complex_ohmic_power(e_complex, sigma: float, comm) -> complex:
@@ -416,7 +475,14 @@ def _gradient_identity_row(
 
 
 def _solve_loop_at_degree(
-    degree: int, comm, frequency_hz: float, *, project_source: bool = True
+    degree: int,
+    comm,
+    frequency_hz: float,
+    *,
+    project_source: bool | str = True,
+    boundary_condition: TimeHarmonicBoundaryCondition = (
+        TimeHarmonicBoundaryCondition.NATURAL
+    ),
 ) -> dict:
     """The closed azimuthal loop drive on the smoke box at ``frequency_hz``.
 
@@ -426,6 +492,11 @@ def _solve_loop_at_degree(
     solver default, which is what `TH-12` steps 2 and 3 measured every recorded
     ratio on — the ungauged second-order gradient space is the object under
     test, so gauging it here would answer a different question.
+
+    ``boundary_condition`` is the solver default (``NATURAL``, i.e. PMC) for
+    every row the steps above measured.  Step 3a's control (b) needs the *PEC*
+    box as well, because that is the one configuration where ``"matched"`` at
+    degree 1 is by construction the same projection as ``True``.
     """
     mesh, cell_tags, facet_tags = _smoke_mesh(SMOKE_RESOLUTION, comm)
     problem = TimeHarmonicProblem(
@@ -434,6 +505,7 @@ def _solve_loop_at_degree(
         material=HomogeneousMaterial(sigma=SIGMA, epsilon_r=EPSILON_R, mu_r=1.0),
         cell_tags=cell_tags,
         facet_tags=facet_tags,
+        boundary_condition=boundary_condition,
     )
     solver = TimeHarmonicSolver(problem, degree=degree)
 
@@ -474,6 +546,8 @@ def _solve_loop_at_degree(
     return {
         "degree": degree,
         "frequency_hz": frequency_hz,
+        "project_source": project_source,
+        "boundary_condition": boundary_condition.value,
         "step2": step2,
         "ncells": ncells,
         "n_dofs": n_dofs,
@@ -917,4 +991,217 @@ def test_the_source_projection_leaves_a_residue_the_solve_answers(
         f"{projected_share:.6e} — `remove_gradient_content` is not visibly "
         f"removing CG1 gradient content, so attributing the degree-2 energy to "
         f"what it *fails* to remove is unsupported"
+    )
+
+
+# ---------------------------------------------------------------------------
+# `TH-13` step 3a — the degree-/boundary-matched projection.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def matched_rows():
+    """The same four loop rows, re-solved with ``project_source="matched"``.
+
+    Four extra curl-curl solves on the same 1 405-cell mesh, nothing else
+    changed: the drive, the material, the boundary mode and the frequencies are
+    the rows above.  As there, every projection is computed inside the solve
+    helper and only floats escape it — holding the meshes alive is what
+    deadlocked step 2's first window in collective PETSc teardown.
+    """
+    comm = MPI.COMM_WORLD
+    return {
+        (frequency_hz, degree): _solve_loop_at_degree(
+            degree, comm, frequency_hz, project_source="matched"
+        )
+        for frequency_hz in LOOP_FREQUENCIES_HZ
+        for degree in (1, 2)
+    }
+
+
+@pytest.fixture(scope="module")
+def pin_exterior_control():
+    """Control (b): the PEC box at degree 1, solved ``True`` and ``"matched"``.
+
+    Under PEC the matched Dirichlet set *is* ``H¹₀`` and at degree 1 the matched
+    Lagrange degree *is* 1, so ``"matched"`` and ``True`` request the identical
+    projection.  Any difference in the resulting ``W_e`` is the new keyword
+    plumbing changing a load it was built not to change — which is the only way
+    the new arguments could be responsible for step 3a's readings by accident.
+    """
+    comm = MPI.COMM_WORLD
+    return {
+        label: _solve_loop_at_degree(
+            1,
+            comm,
+            LOOP_FREQUENCY_HZ,
+            project_source=project_source,
+            boundary_condition=TimeHarmonicBoundaryCondition.PEC_ZERO_TANGENTIAL_A,
+        )
+        for label, project_source in (("default", True), ("matched", "matched"))
+    }
+
+
+@complex_only
+@pytest.mark.integration
+def test_the_matched_projection_removes_the_residue_it_targets(
+    matched_rows, gradient_projections
+):
+    """(i) — under ``"matched"``, ``‖P_∇ₚJ′‖/‖J′‖ ≤ 1e-8`` on all four rows.
+
+    The pre-registered anchor of step 3a (PROJECT_PLAN §7).  ``J′`` is built by
+    a Laplace solve against exactly the space this ratio then projects onto, so
+    the ratio is that solve's own residual and round-off is the expected
+    reading; the default path leaves 1.298386e-02 at degree 1 and 8.049884× that
+    at degree 2, because it projects against CG1 ∩ H¹₀ whatever the solve does.
+
+    The separation against the default path is asserted as well (control (c)):
+    (i) has to be seen passing *because* the projection moved, not because the
+    ratio is small for every drive on this fixture.
+    """
+    comm = MPI.COMM_WORLD
+    default_rows = gradient_projections["rows"]
+
+    def residue(row) -> float:
+        return row["step2"]["norm_grad_phi"] / row["step2"]["norm_j_used"]
+
+    if comm.rank == 0:
+        print("\n[TH-13 step 3a] (i) ||P_grad_p J'|| / ||J'||, matched vs default:")
+        print("  fixture         deg   default        matched        separation")
+        for frequency_hz in LOOP_FREQUENCIES_HZ:
+            for degree in (1, 2):
+                d = default_rows[(frequency_hz, degree)]
+                default_share = d["norm_grad_phi"] / d["norm_j_used"]
+                matched_share = residue(matched_rows[(frequency_hz, degree)])
+                print(
+                    f"  {_label(frequency_hz):<14s}  {degree:d}  "
+                    f"{default_share:.6e}  {matched_share:.6e}  "
+                    f"{default_share / matched_share:.3e}x"
+                )
+        print(flush=True)
+
+    for frequency_hz in LOOP_FREQUENCIES_HZ:
+        for degree in (1, 2):
+            share = residue(matched_rows[(frequency_hz, degree)])
+            assert share <= MATCHED_GRADIENT_RESIDUE_MAX, (
+                f"the matched {_label(frequency_hz)} row at degree {degree} still "
+                f"reads ||P_grad{degree} J'||/||J'|| = {share:.6e}, over the "
+                f"pre-registered {MATCHED_GRADIENT_RESIDUE_MAX:.0e} — the "
+                f"degree-/boundary-matched projection is not removing the "
+                f"gradient content of the space it was matched to"
+            )
+
+    # (c): the load-bearing separation, read at degree 2 where the default
+    # path's residue is largest.
+    d = default_rows[(LOOP_FREQUENCY_HZ, 2)]
+    default_share = d["norm_grad_phi"] / d["norm_j_used"]
+    matched_share = residue(matched_rows[(LOOP_FREQUENCY_HZ, 2)])
+    assert default_share / matched_share >= MATCHED_RESIDUE_SEPARATION_MIN, (
+        f"the default and matched degree-2 residues at {_label(LOOP_FREQUENCY_HZ)} "
+        f"are {default_share:.6e} and {matched_share:.6e}, only "
+        f"{default_share / matched_share:.3e}x apart against the pre-registered "
+        f"{MATCHED_RESIDUE_SEPARATION_MIN:.0e} — (i) is not measuring the new "
+        f"keywords"
+    )
+
+
+@complex_only
+@pytest.mark.integration
+def test_the_matched_projection_collapses_the_stored_electric_energy(matched_rows):
+    """(ii) — the mechanism's own prediction for ``W_e``, pre-registered.
+
+    Step 2's (A) is an exact identity: ``P_∇ₚE_h = c·P_∇ₚJ′``.  With (i) green
+    the right-hand side is round-off, so the gradient part of ``E_h`` must go
+    with it — the share of ``W_e`` it carries falls from the measured 99.98%
+    (degree 1) / 99.9997% (degree 2) to ``≤ 1e-6``, and ``W_e`` itself falls to
+    the *non*-gradient remainder: ≤ 2% of 5.621559e-19 J at degree 1 and ≤ 1%
+    of 3.579741e-17 J at degree 2, bands that clear the measured remainders by
+    100× and ~3 000×.
+
+    Failing here with (i) green is a **finding**, not a tolerance to widen: it
+    would mean the gradient part of ``E_h`` is not set by the drive's residue
+    alone and (A)'s reading was incomplete.
+
+    All four rows are gated, each against the default-path ``W_e`` recorded at
+    its own frequency (:data:`DEFAULT_W_E_RECORD_J`); the 10 MHz shares step 2
+    measured are 98.24% / 99.97% rather than 99.98% / 99.9997%, which the
+    ``≤ 1e-6`` band clears by the same margins.
+    """
+    comm = MPI.COMM_WORLD
+
+    if comm.rank == 0:
+        print("\n[TH-13 step 3a] (ii) W_e under the matched projection:")
+        for frequency_hz in LOOP_FREQUENCIES_HZ:
+            for degree in (1, 2):
+                row = matched_rows[(frequency_hz, degree)]
+                share = row["step2"]["w_e_gradient_j"] / row["w_e"]
+                print(
+                    f"  {_label(frequency_hz):<14s}  degree {degree}: W_e = "
+                    f"{row['w_e']:.6e} J, W_m = {row['w_m']:.6e} J, "
+                    f"W_e/W_m = {row['w_e'] / row['w_m']:.6e}, gradient share "
+                    f"{share:.6e}, |Im P|/Re P = {row['power_imaginary']:.3e}"
+                )
+        one = matched_rows[(LOOP_FREQUENCY_HZ, 1)]["w_e"]
+        two = matched_rows[(LOOP_FREQUENCY_HZ, 2)]["w_e"]
+        print(
+            f"  RECORDED, not gated: the matched degree-2/degree-1 W_e ratio at "
+            f"{_label(LOOP_FREQUENCY_HZ)} is {two / one:.6e}x (the default path's "
+            f"was 63.7x, and that was the residue; what is left is the "
+            f"solenoidal electric energy of an unconverged 1 405-cell loop, for "
+            f"which no prediction exists)",
+            flush=True,
+        )
+
+    for frequency_hz in LOOP_FREQUENCIES_HZ:
+        for degree in (1, 2):
+            row = matched_rows[(frequency_hz, degree)]
+            share = row["step2"]["w_e_gradient_j"] / row["w_e"]
+            assert share <= MATCHED_GRADIENT_SHARE_MAX, (
+                f"the matched {_label(frequency_hz)} row at degree {degree} still "
+                f"carries {share:.6e} of its W_e in the gradient part of E_h, over "
+                f"the pre-registered {MATCHED_GRADIENT_SHARE_MAX:.0e} — with the "
+                f"drive's residue removed, (A) says this part should be round-off"
+            )
+            record = DEFAULT_W_E_RECORD_J[(frequency_hz, degree)]
+            fraction = MATCHED_W_E_FRACTION[degree]
+            assert row["w_e"] <= fraction * record, (
+                f"the matched {_label(frequency_hz)} row at degree {degree} reads "
+                f"W_e = {row['w_e']:.6e} J, over the pre-registered "
+                f"{fraction:.0%} of the recorded {record:.6e} J — the electric "
+                f"energy did not collapse with the residue the identity attributes "
+                f"it to"
+            )
+
+
+@complex_only
+@pytest.mark.integration
+def test_matched_equals_the_default_where_the_two_coincide(pin_exterior_control):
+    """(b) — the new keywords move nothing they were not asked to move.
+
+    At degree 1 under PEC, ``"matched"`` resolves to ``degree=1,
+    pin_exterior=True``, which is precisely the projection the default has
+    always built.  The two solves must therefore agree on ``W_e`` to
+    round-off — asserted at rtol 1e-12, i.e. as an identity rather than an
+    agreement — or the plumbing added in step 3a changes loads on the default
+    path too, and every record measured on it is in question.
+    """
+    comm = MPI.COMM_WORLD
+    default = pin_exterior_control["default"]
+    matched = pin_exterior_control["matched"]
+
+    if comm.rank == 0:
+        print(
+            f"\n[TH-13 step 3a] (b) PEC degree-1 control "
+            f"({default['boundary_condition']}): W_e = {default['w_e']:.15e} J "
+            f"(project_source=True) vs {matched['w_e']:.15e} J "
+            f"(project_source='matched'), relative difference "
+            f"{abs(matched['w_e'] - default['w_e']) / default['w_e']:.3e}",
+            flush=True,
+        )
+
+    assert np.isclose(matched["w_e"], default["w_e"], rtol=MATCHED_IDENTICAL_RTOL), (
+        f"under PEC at degree 1 the matched projection is the default "
+        f"projection, but the two solves read W_e = {matched['w_e']:.15e} J and "
+        f"{default['w_e']:.15e} J — the new keyword arguments are not "
+        f"default-preserving"
     )

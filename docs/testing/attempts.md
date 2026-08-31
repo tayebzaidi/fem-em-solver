@@ -16729,3 +16729,97 @@ issued**.
   review prices the two-generator edit above (or rules the SPECs sufficient,
   since the SPEC is what the operator builds from and it now asks for both
   columns). The next slot takes §9 item 5, `EX-36` leg (th).
+
+## 2026-08-31T09:55Z — `TH-13` step 3a — **incomplete** (04:30 CDT implementer slot)
+
+- **Item.** §9 On deck item 1, taken as the first item not done or blocked.
+  Preflight clean (`git status` empty, on `main`), container Up 4 days.
+- **Outcome: `incomplete`.** Both pre-registered anchors met with enormous
+  margin and the `src/` change is on `main`; **one of the two owed regression
+  re-runs could not be executed**, so the step is 🟡, not ✅. Nothing is
+  parked on a branch — what landed is complete and green in itself, and
+  `main` is clean.
+- **What was built** (`src/`, exactly the §7 step-3a bullet):
+  `remove_gradient_content` gains `degree: int = 1` and
+  `pin_exterior: bool = True`; the `pin_exterior=False` branch pins the
+  globally lowest-numbered dof (local index 0 on rank 0), lifted verbatim
+  from step 2's `_gradient_potential` rather than re-derived.
+  `TimeHarmonicSolver.solve` accepts `project_source="matched"` beside
+  `True`/`False` (validated against `PROJECT_SOURCE_MATCHED`), setting
+  `degree = self.degree` and
+  `pin_exterior = selected_bc is PEC_ZERO_TANGENTIAL_A`. Three new tests in
+  `test_degree2_gradient_discriminator.py` with two new module fixtures
+  (four matched loop solves; two PEC degree-1 solves for control (b)).
+- **Measured** (`20260831T094852Z_TH-13-step3a-final.log`, standard tier,
+  complex, `-n 2`, **37 s**, `1 failed / 18 passed / 1 skipped`, exit 1):
+  - **(i)** `‖P_∇ₚJ′‖/‖J′‖` under `"matched"` = **8.109635e-17** (degree 1),
+    **1.790460e-16** (degree 2), the same at 1 and 10 MHz, vs ≤ 1e-8.
+    Control (c): **1.601e+14×** / **5.838e+14×** apart from the default
+    path's 1.298386e-02 / 1.045186e-01, vs ≥ 1e3×.
+  - **(ii)** gradient share of `W_e` 99.98% / 99.9997% → **4.618447e-23** /
+    **3.109722e-21** (1 MHz; 4.390171e-25 / 2.738225e-23 at 10 MHz) vs
+    ≤ 1e-6; `W_e` → **9.856327e-23 J** (0.018% of the 5.544787e-19 J
+    record) and **9.349492e-23 J** (2.6e-4 % of 3.592428e-17 J) vs
+    ≤ 2% / ≤ 1%.
+  - **Recorded, ungated:** matched degree-2/degree-1 `W_e` ratio
+    **9.485777e-01×** (default path 63.7× — that was the residue);
+    `W_e/W_m` 3.424858e-06 / 2.630270e-06; `|Im P|/Re P` 0.000e+00.
+  - **Control (b):** PEC at degree 1, where `"matched"` *is* `True` —
+    `W_e` = 5.995936714066138e-23 J on both paths, **0.000e+00 relative**.
+  - **Control (a):** every step-1/1′/2 assertion reproduces to the digit
+    (2.970e-12 / 2.640e-11 / 3.697e-13 / 2.586e-12; mistuned 1.000e-01;
+    8.049884; 7.589863e-02 vs 1.298386e-02; `POST-5` 1.199162e-06 W).
+  - The single red is the deliberate step-1′ precondition, **1.926692e-02**
+    on the 1 MHz row, unmoved.
+- **Band correction made mid-slot; it tightened rather than widened.**
+  §7 pre-registered the `W_e` records 5.621559e-19 / 3.579741e-17 J; those
+  are step 1′'s **10 MHz** readings, and I had first gated them against the
+  **1 MHz** rows. Fixed by banding every row against the record from its own
+  frequency (`DEFAULT_W_E_RECORD_J`; the 1 MHz pair 5.544787e-19 /
+  3.592428e-17 comes from step 2's own printed table and sits 1.4% / 0.4%
+  away — `W_e` is frequency-flat here, step 1′'s finding), with the two
+  pre-registered fractions **unchanged**, and by gating all four rows rather
+  than two. The first run (`20260831T093439Z_TH-13-step3a.log`, same
+  18 passed, 39 s) is kept; every printed digit is identical between the two.
+- **The blocked re-run — and the finding inside it.**
+  `test_dodd_deeds_projected_drive.py`: **15 passed / exit 0 / 79 s**
+  (`20260831T093558Z_TH-13-step3a-dodd-regression.log`), matching its
+  2026-08-27 record. `test_coil_loading_degree2.py`: **exit 124 at 571 s**
+  (`20260831T093807Z_TH-13-step3a-coil-degree2-regression.log`, `-n 8`,
+  `TH12_STEP2_MODE=full`, `timeout -k 30 570`) — killed still inside
+  `test_the_mesh_is_the_mat6_step3_baseline`, i.e. it never finished
+  **meshing**, where on 2026-08-18 the entire module including the 61.94 GiB
+  degree-2 factorization ran in 543 s at the same rank width
+  (`20260818T200059Z_TH-12-step2-full.log`). Per §5.1 I did not re-run with
+  a longer ceiling, and the module has no cheaper variant an implementer may
+  pick — `TH12_STEP2_MODE=probe` skips the degree-2 solve but builds this
+  same mesh first. Filed as its own known-issues entry, with `OPS-18`'s gmsh
+  4.15.2 named as the untested suspect (it is known to have moved mesh
+  *counts* on several fixtures) and machine load as the unsampled
+  alternative. **Container verified healthy afterwards**: `Up`, zero stray
+  `python3`, `memory.max` 137438953472 — the `-k 30` did its job.
+- **What the unverified re-run costs the claim.** "The two degree-2 coil
+  identity tests stay failing at 1e-9 exactly as before" is *not* measured on
+  this commit. The default path is instead supported by control (b)'s
+  bit-identity, the dodd-deeds module, and a diff whose default branch is the
+  old code verbatim (`degree=1`, `pin_exterior=True` → the same `q_space`,
+  the same Dirichlet set, the same solve).
+- **Scope held.** No caller was switched to `"matched"`; `ports/lumped.py:429`
+  still drives with `project_source=False`, so 3a says nothing about the
+  coil's 229×; the known-issues degree-2 entry stays open with 3a's
+  disposition appended; the step-1′ precondition red stays on the default
+  path.
+- **Docs.** §7 `TH-13` gains a step-3a reading bullet and its table row is
+  updated; §9 item 1 marked 🟡 with the original text kept for the audit; two
+  known-issues changes (3a's disposition row on the degree-2 entry, and the
+  new mesh-time entry).
+- **Denials / anomalies.** None.
+- **Next-attempt hypothesis.** The cheapest thing that unblocks the owed
+  re-run is a **smoke-tier probe of the generator alone** —
+  `MeshGenerator.loop_over_half_space_domain` at the step-3 parameters, no
+  solve, timed — which separates "gmsh 4.15.2 made this mesh far slower"
+  from "the box was loaded at 04:38". If it is the generator, the disposal
+  (cached mesh, or a coarser baseline rung) moves a record and is a review's
+  call, not an implementer's. Until then `test_coil_loading_degree2.py` is
+  effectively unrunnable in a scheduled slot, which also affects anything
+  else that would re-gate it.
