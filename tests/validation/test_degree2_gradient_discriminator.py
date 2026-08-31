@@ -103,11 +103,14 @@ Run (complex build required)::
 
 from __future__ import annotations
 
+import dolfinx
 import numpy as np
 import pytest
 import ufl
 from dolfinx import fem
+from dolfinx.fem.petsc import LinearProblem
 from mpi4py import MPI
+from petsc4py import PETSc
 
 from fem_em_solver.core import (
     HomogeneousMaterial,
@@ -115,6 +118,8 @@ from fem_em_solver.core import (
     TimeHarmonicSolver,
 )
 from fem_em_solver.core.resonance import stored_electric_energy
+from fem_em_solver.core.time_harmonic import TimeHarmonicBoundaryCondition
+from fem_em_solver.utils.constants import EPSILON_0, MU_0
 
 from tests.complex_mode import complex_only
 from tests.solver.test_time_harmonic_smoke import (
@@ -209,6 +214,23 @@ OMEGA_SQUARED_PREDICTION_FACTOR = 2.0
 SMOKE_MOVE_RECORD = 1.155
 SPHERE_MOVE_RECORD = 1.015
 
+# ---------------------------------------------------------------------------
+# `TH-13` step 2: the gradient-projection identity (PROJECT_PLAN §7, rescoped
+# 2026-08-30 18:00 review).  Pre-registered before the run.
+# ---------------------------------------------------------------------------
+# (A) the discriminant: ‖∇χ − c∇φ‖/‖∇χ‖ at both degrees and both frequencies.
+# Both potentials come out of direct MUMPS solves of the *same* Laplace matrix
+# with proportional right-hand sides IF the discrete gradient equation holds,
+# so the expected reading is round-off (~1e-10) and 1e-6 is a generous bar.
+GRADIENT_IDENTITY_MAX = 1.0e-6
+# The load-bearing probe (`PORT-12` step 2 precedent), asserted rather than
+# run-and-reverted so it stays load-bearing: mistuning `c` by 10% must move the
+# residual to ≈ 0.1.  Exactly 0.1 when (A) holds to round-off, so the bar sits
+# just under it — the control fails loudly if the residual is insensitive to
+# `c`, which is what a vacuous (A) would look like.
+MISTUNED_C_FACTOR = 1.1
+MISTUNED_C_MIN = 9.0e-2
+
 
 def _complex_ohmic_power(e_complex, sigma: float, comm) -> complex:
     """``½σ∫ E·conj(E) dV`` over the whole box, kept complex.
@@ -225,7 +247,177 @@ def _complex_ohmic_power(e_complex, sigma: float, comm) -> complex:
     return complex(comm.allreduce(local, op=MPI.SUM))
 
 
-def _solve_loop_at_degree(degree: int, comm, frequency_hz: float) -> dict:
+def _subdomain_indicator(mesh, cell_tags, tag: int):
+    """The DG0 indicator of one cell tag — the same one the projection builds.
+
+    Needed for the unprojected negative control: with ``project_source=False``
+    the load integrates ``J`` over the tagged measure only, so the field whose
+    gradient content is being read is ``χ_tag J``, not the whole-domain ``J``.
+    """
+    dg0 = fem.functionspace(mesh, ("DG", 0))
+    indicator = fem.Function(dg0, name="source_indicator")
+    indicator.x.array[:] = 0.0
+    indicator.x.array[cell_tags.find(int(tag))] = 1.0
+    indicator.x.scatter_forward()
+    return indicator
+
+
+def _l2_norm(expression, comm) -> float:
+    """``(∫ expr·conj(expr) dx)^{1/2}`` over the whole domain, reduced.
+
+    ``ufl.inner`` conjugates its second argument, so this is the modulus norm
+    for a complex field and the ordinary L² norm for a real one — the same
+    convention on both sides of every ratio below.  ``assemble_scalar`` is
+    rank-local (§7 trap): the reduction happens here, once.
+    """
+    local = fem.assemble_scalar(
+        fem.form(ufl.inner(expression, expression) * ufl.dx)
+    )
+    return float(np.sqrt(abs(complex(comm.allreduce(local, op=MPI.SUM)))))
+
+
+def _gradient_potential(mesh, degree: int, source, comm, *, dirichlet_h10: bool):
+    """``χ ∈ Lagrange_degree`` with ``(∇χ, ∇q) = (source, ∇q) ∀ q``.
+
+    ``∇χ`` is the L²-projection of ``source`` onto ``∇Lagrange_degree`` — the
+    subspace the N1curl test space of the *same* degree contains, which is the
+    whole point: `core/source_projection.py` removes gradient content against
+    ``("Lagrange", 1) ∩ H¹₀`` at every solve degree and under every boundary
+    mode, so a degree-2 solve and a PMC box each test directions the projection
+    never touched.
+
+    The Dirichlet set is the one the N1curl boundary mode implies, read off
+    :meth:`TimeHarmonicSolver.build_boundary_conditions` by the caller rather
+    than assumed: PEC pins the tangential trace, so only ``q ∈ H¹₀`` has an
+    admissible ``∇q``; ``NATURAL`` (PMC) constrains nothing and *every*
+    ``q ∈ Lagrange`` is admissible.  In the PMC case the Laplacian is singular
+    on constants, so a single dof is pinned — that fixes the additive constant
+    without touching ``∇χ``, and both potentials of a pair are pinned at the
+    same dof so their difference is exact.
+    """
+    q_space = fem.functionspace(mesh, ("Lagrange", degree))
+    u = ufl.TrialFunction(q_space)
+    q = ufl.TestFunction(q_space)
+
+    if dirichlet_h10:
+        tdim = mesh.topology.dim
+        mesh.topology.create_connectivity(tdim - 1, tdim)
+        facets = dolfinx.mesh.exterior_facet_indices(mesh.topology)
+        zero = fem.Function(q_space)
+        zero.x.array[:] = 0.0
+        bcs = [
+            fem.dirichletbc(
+                zero, fem.locate_dofs_topological(q_space, tdim - 1, facets)
+            )
+        ]
+    else:
+        pin = (
+            np.array([0], dtype=np.int32)
+            if comm.rank == 0
+            else np.zeros(0, dtype=np.int32)
+        )
+        bcs = [fem.dirichletbc(PETSc.ScalarType(0), pin, q_space)]
+
+    problem = LinearProblem(
+        ufl.inner(ufl.grad(u), ufl.grad(q)) * ufl.dx,
+        ufl.inner(source, ufl.grad(q)) * ufl.dx,
+        bcs=bcs,
+        petsc_options={
+            "ksp_type": "preonly",
+            "pc_type": "lu",
+            "pc_factor_mat_solver_type": "mumps",
+        },
+        petsc_options_prefix="fem_em_th13_step2_",
+    )
+    chi = problem.solve()
+    chi.x.scatter_forward()
+    return chi
+
+
+def _form_constant(frequency_hz: float) -> complex:
+    """``c = −load_factor / (k₀² ε_c)``, read off the form, not off theory.
+
+    Testing the assembled weak form with ``v = ∇ψ`` kills the curl term
+    (``∇×∇ψ = 0``) and leaves ``−k₀²ε_c (E_h, ∇ψ) = load_factor (J′, ∇ψ)``,
+    i.e. ``(E_h, ∇ψ) = c (J′, ∇ψ)`` for every admissible ``ψ``.  The three
+    ingredients are exactly the solver's own — ``load_factor = −jωμ₀``
+    (`time_harmonic.py:448`), ``k₀² = ω²μ₀ε₀`` and
+    ``ε_c = ε_r − jσ/(ωε₀)`` (`:582–583`) — restated here only because the
+    material is homogeneous on this fixture, so the DG0 fields are the two
+    imported scalars.
+
+    Algebraically ``c = −1/(σ + jωε₀ε_r)``, whose *magnitude* is
+    ``1/|σ + jωε|`` — frequency-flat while ``σ ≫ ωε``, which is what step 1′
+    measured as "``W_e`` is frequency-independent on this fixture".  The test
+    prints both forms so the identity is visible, and asserts on the one built
+    from the form's coefficients.
+    """
+    omega = 2.0 * np.pi * frequency_hz
+    load_factor = -1j * omega * MU_0
+    k0_squared = omega * omega * MU_0 * EPSILON_0
+    epsilon_c = EPSILON_R - 1j * SIGMA / (omega * EPSILON_0)
+    return complex(-load_factor / (k0_squared * epsilon_c))
+
+
+def _gradient_identity_row(
+    *, mesh, cell_tags, solver, e_complex, j_raw, degree, frequency_hz, comm
+) -> dict:
+    """`TH-13` step 2 (A)/(B) for one solved row — floats only, nothing held.
+
+    ``J′_used`` is the expression the load actually integrated: the projection's
+    own ``χJ − ∇ψ`` when ``project_source`` was on (`time_harmonic.py:461`), and
+    the tag-restricted ``χJ`` when it was off, because that is what the tagged
+    measure integrates.  ``χ`` and ``φ`` are the two degree-matched Laplace
+    projections; the Dirichlet set comes from
+    :meth:`TimeHarmonicSolver.build_boundary_conditions` rather than from an
+    assumption about the mode (§7 trap).
+    """
+    boundary_mode = solver.build_boundary_conditions()[1]
+    dirichlet_h10 = boundary_mode != TimeHarmonicBoundaryCondition.NATURAL
+
+    indicator = None
+    if solver._projection is not None:
+        j_used = solver._projection.current
+        projected = True
+    else:
+        indicator = _subdomain_indicator(mesh, cell_tags, 1)
+        j_used = indicator * j_raw
+        projected = False
+
+    chi = _gradient_potential(
+        mesh, degree, e_complex, comm, dirichlet_h10=dirichlet_h10
+    )
+    phi = _gradient_potential(mesh, degree, j_used, comm, dirichlet_h10=dirichlet_h10)
+
+    c = _form_constant(frequency_hz)
+    c_const = fem.Constant(mesh, PETSc.ScalarType(c))
+    c_mistuned = fem.Constant(mesh, PETSc.ScalarType(MISTUNED_C_FACTOR * c))
+    grad_chi = ufl.grad(chi)
+    grad_phi = ufl.grad(phi)
+    norm_chi = _l2_norm(grad_chi, comm)
+
+    return {
+        "c": c,
+        "projected": projected,
+        "boundary_mode": boundary_mode.value,
+        "norm_grad_chi": norm_chi,
+        "norm_grad_phi": _l2_norm(grad_phi, comm),
+        "norm_j_used": _l2_norm(j_used, comm),
+        "residual": _l2_norm(grad_chi - c_const * grad_phi, comm) / norm_chi,
+        "residual_mistuned": (
+            _l2_norm(grad_chi - c_mistuned * grad_phi, comm) / norm_chi
+        ),
+        # (B): the electric energy carried by the gradient part of E, in the
+        # module's own imported convention — `stored_electric_energy` is
+        # (ε₀/4)∫εᵣ|E|², not the ε₀εᵣ‖·‖²/2 §7 wrote, and the share is only
+        # meaningful against the same convention it is a share of.
+        "w_e_gradient_j": 0.25 * EPSILON_0 * EPSILON_R * norm_chi**2,
+    }
+
+
+def _solve_loop_at_degree(
+    degree: int, comm, frequency_hz: float, *, project_source: bool = True
+) -> dict:
     """The closed azimuthal loop drive on the smoke box at ``frequency_hz``.
 
     Byte-for-byte the smoke fixture except for the two things this step varies:
@@ -252,16 +444,37 @@ def _solve_loop_at_degree(degree: int, comm, frequency_hz: float) -> dict:
         # SpatialCoordinate and is deliberately unused (`POST-5` step 2).
         return j_azimuthal
 
-    fields = solver.solve(current_density=current_density, subdomain_id=1)
+    fields = solver.solve(
+        current_density=current_density, subdomain_id=1, project_source=project_source
+    )
 
     tdim = mesh.topology.dim
     ncells = int(comm.allreduce(mesh.topology.index_map(tdim).size_local, op=MPI.SUM))
     v_space = fields.e_complex.function_space
     n_dofs = int(v_space.dofmap.index_map.size_global * v_space.dofmap.index_map_bs)
     p_complex = _complex_ohmic_power(fields.e_complex, SIGMA, comm)
+    # `TH-13` step 2 rides on this solve rather than on a stored handle to it.
+    # Every mesh, Function and PETSc object below dies when this call returns,
+    # on both ranks at the same point in the program — holding them alive in a
+    # module-scoped fixture instead let Python collect them in rank-dependent
+    # order, and PETSc destruction is collective: measured 2026-08-31, the
+    # module ran every assertion green and then deadlocked in teardown
+    # (`20260831T020528Z_TH-13-step2.log`, killed at the 300 s ceiling).
+    step2 = _gradient_identity_row(
+        mesh=mesh,
+        cell_tags=cell_tags,
+        solver=solver,
+        e_complex=fields.e_complex,
+        j_raw=j_azimuthal,
+        degree=degree,
+        frequency_hz=frequency_hz,
+        comm=comm,
+    )
+
     return {
         "degree": degree,
         "frequency_hz": frequency_hz,
+        "step2": step2,
         "ncells": ncells,
         "n_dofs": n_dofs,
         "w_e": stored_electric_energy(fields, comm=comm),
@@ -299,7 +512,20 @@ def discriminator_rows():
         degree: _energies_of_sphere_row(_run_at_degree(degree), comm)
         for degree in (1, 2)
     }
-    return {"loop": loop, "smoke": smoke, "sphere": sphere}
+    # Step 2's negative control (§7): the same fixture solved once with the
+    # source projection OFF, so `‖P_∇₁J‖/‖J‖` can be read against the projected
+    # `‖P_∇₁J′‖/‖J′‖` and the projection is seen doing something (`PORT-1`
+    # step 2d/2e precedent).  Degree 1, one extra solve, no energy is read off
+    # it and no recorded number depends on it.
+    unprojected = _solve_loop_at_degree(
+        1, comm, LOOP_FREQUENCY_HZ, project_source=False
+    )
+    return {
+        "loop": loop,
+        "smoke": smoke,
+        "sphere": sphere,
+        "loop_unprojected": unprojected,
+    }
 
 
 def _print_table(rows: dict) -> None:
@@ -533,3 +759,162 @@ def test_the_magnetically_dominated_compatible_drive_discriminates(
             f"reading is recorded in the plan and in known-issues and no band "
             f"is fabricated around it here"
         )
+
+
+# ---------------------------------------------------------------------------
+# `TH-13` step 2 — the gradient-projection identity.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def gradient_projections(discriminator_rows):
+    """Step 2's readings, computed inside each solve and collected here.
+
+    No new physics solve and no live PETSc object: every ``χ``/``φ`` pair was
+    built by :func:`_gradient_identity_row` while its own curl-curl solution was
+    still in scope, and what survives is a dict of floats.
+    """
+    rows = {
+        (frequency_hz, degree): dict(
+            discriminator_rows["loop"][frequency_hz][degree]["step2"],
+            w_e_j=discriminator_rows["loop"][frequency_hz][degree]["w_e"],
+        )
+        for frequency_hz in LOOP_FREQUENCIES_HZ
+        for degree in (1, 2)
+    }
+    control = dict(discriminator_rows["loop_unprojected"]["step2"])
+    control["gradient_share"] = control["norm_grad_phi"] / control["norm_j_used"]
+    return {"rows": rows, "unprojected": control}
+
+
+@complex_only
+@pytest.mark.integration
+def test_the_discrete_gradient_equation_is_an_exact_identity(gradient_projections):
+    """(A) — ``‖∇χ − c∇φ‖/‖∇χ‖ ≤ 1e-6`` at both degrees and both frequencies.
+
+    The pre-registered discriminant of step 2 (PROJECT_PLAN §7, rescoped
+    2026-08-30 18:00).  Testing the assembled weak form with ``v = ∇ψ`` kills
+    the curl term identically, so the discrete system pins the
+    ``∇Lagrange_p``-projection of ``E_h`` to ``c`` times that of ``J′`` for
+    every admissible ``ψ`` — ``c`` being ``−load_factor/(k₀²ε_c)``, read off the
+    form's own coefficients.  If it holds, the degree-2 electric energy the
+    known-issues entry calls "spurious" is the drive's **unremoved** gradient
+    residue divided by ``(σ + jωε)``, and no free "ungauged null-space mode"
+    story survives (``k² ≠ 0`` pins it).  If it fails at either degree the
+    discrete gradient equation is not what the form says, which is a
+    formulation finding and not a tolerance to widen.
+
+    The mistuned-``c`` reading is the load-bearing probe (`PORT-12` step 2
+    precedent): a 10% error in ``c`` must show up as a ≈ 10% residual, or the
+    ratio is insensitive to ``c`` and (A) passing means nothing.
+    """
+    comm = MPI.COMM_WORLD
+    rows = gradient_projections["rows"]
+    if comm.rank == 0:
+        print("\n[TH-13 step 2] the discrete gradient equation, per row:")
+        print(
+            "  fixture         deg  bc        |c|          "
+            "||grad chi||   ||grad phi||   residual    mistuned"
+        )
+        for frequency_hz in LOOP_FREQUENCIES_HZ:
+            for degree in (1, 2):
+                r = rows[(frequency_hz, degree)]
+                print(
+                    f"  {_label(frequency_hz):<14s}  {degree:d}  "
+                    f"{r['boundary_mode']:<8s}  {abs(r['c']):.6e}  "
+                    f"{r['norm_grad_chi']:.6e}  {r['norm_grad_phi']:.6e}  "
+                    f"{r['residual']:.3e}  {r['residual_mistuned']:.3e}"
+                )
+        for frequency_hz in LOOP_FREQUENCIES_HZ:
+            omega = 2.0 * np.pi * frequency_hz
+            r = rows[(frequency_hz, 1)]
+            ohmic = SIGMA + 1j * omega * EPSILON_0 * EPSILON_R
+            print(
+                f"  {_label(frequency_hz)}: c = {r['c']:.6e}, "
+                f"-1/(sigma + j*omega*eps) = {-1.0 / ohmic:.6e}, "
+                f"|c| * |sigma + j*omega*eps| = {abs(r['c']) * abs(ohmic):.9f}"
+            )
+        print(flush=True)
+
+    for frequency_hz in LOOP_FREQUENCIES_HZ:
+        for degree in (1, 2):
+            r = rows[(frequency_hz, degree)]
+            assert r["residual"] <= GRADIENT_IDENTITY_MAX, (
+                f"the {_label(frequency_hz)} row at degree {degree} reads "
+                f"||grad chi - c grad phi|| / ||grad chi|| = "
+                f"{r['residual']:.6e}, over the pre-registered "
+                f"{GRADIENT_IDENTITY_MAX:.0e} — the grad-Lagrange_{degree} "
+                f"projection of E_h is NOT c times that of J', so the discrete "
+                f"gradient equation is not what the assembled form says"
+            )
+            assert r["residual_mistuned"] >= MISTUNED_C_MIN, (
+                f"the {_label(frequency_hz)} row at degree {degree} still reads "
+                f"{r['residual_mistuned']:.6e} with c mistuned by "
+                f"{MISTUNED_C_FACTOR:.2f}x — the residual is insensitive to c, "
+                f"so the identity above is vacuous"
+            )
+
+
+@complex_only
+@pytest.mark.integration
+def test_the_source_projection_leaves_a_residue_the_solve_answers(
+    gradient_projections,
+):
+    """(B) the mechanism's size, printed; plus the projection's own control.
+
+    ``‖P_∇₂J′‖/‖P_∇₁J′‖`` and the share of the measured ``W_e`` carried by
+    ``∇χ`` are recorded, not gated — §7 pre-registers them as readings with no
+    band invented around them.  What *is* asserted is the control (`PORT-1`
+    step 2d/2e precedent): the unprojected drive must read a visibly larger
+    ``‖P_∇₁J‖/‖J‖`` than the projected one, or `remove_gradient_content` is not
+    doing the thing whose *incompleteness* this step attributes the degree-2
+    energy to.  Strict inequality only — no threshold is fabricated here.
+    """
+    comm = MPI.COMM_WORLD
+    rows = gradient_projections["rows"]
+    control = gradient_projections["unprojected"]
+
+    projected_share = (
+        rows[(LOOP_FREQUENCY_HZ, 1)]["norm_grad_phi"]
+        / rows[(LOOP_FREQUENCY_HZ, 1)]["norm_j_used"]
+    )
+
+    if comm.rank == 0:
+        print("\n[TH-13 step 2] (B) the residue's size, recorded not gated:")
+        for frequency_hz in LOOP_FREQUENCIES_HZ:
+            one = rows[(frequency_hz, 1)]
+            two = rows[(frequency_hz, 2)]
+            print(
+                f"  {_label(frequency_hz)}: ||P_grad2 J'|| / ||P_grad1 J'|| = "
+                f"{two['norm_grad_phi'] / one['norm_grad_phi']:.6e}"
+            )
+            for degree, r in ((1, one), (2, two)):
+                print(
+                    f"    degree {degree}: W_e(grad chi) = "
+                    f"{r['w_e_gradient_j']:.6e} J of a measured W_e = "
+                    f"{r['w_e_j']:.6e} J, share "
+                    f"{r['w_e_gradient_j'] / r['w_e_j']:.6f}; "
+                    f"||P_grad{degree} J'||/||J'|| = "
+                    f"{r['norm_grad_phi'] / r['norm_j_used']:.6e}"
+                )
+        print(
+            f"  projection control: unprojected ||P_grad1 J||/||J|| = "
+            f"{control['gradient_share']:.6e} against the projected "
+            f"{projected_share:.6e} "
+            f"(project_source was {'ON' if control['projected'] else 'OFF'} "
+            f"on the control solve)",
+            flush=True,
+        )
+
+    assert not control["projected"], (
+        "the negative-control solve kept its source projection — "
+        "`project_source=False` did not reach the solver, so the comparison "
+        "below is the projected drive against itself"
+    )
+    assert control["gradient_share"] > projected_share, (
+        f"the unprojected drive reads ||P_grad1 J||/||J|| = "
+        f"{control['gradient_share']:.6e}, not above the projected drive's "
+        f"{projected_share:.6e} — `remove_gradient_content` is not visibly "
+        f"removing CG1 gradient content, so attributing the degree-2 energy to "
+        f"what it *fails* to remove is unsupported"
+    )

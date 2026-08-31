@@ -16520,3 +16520,81 @@ issued**.
   run. `EX-36` leg (ports + ans) was serial on this and is now unblocked; it is
   the natural queue candidate, and the stale-artifact clock above suggests it
   will want a wider re-run window than the two cases here.
+
+## 2026-08-31T02:15Z — `TH-13` step 2 — **complete**
+
+- **Slot.** 21:00 CDT scheduled implementer run. §9 On-deck item 1 (`EX-37`)
+  was already struck through as done by the 19:30 slot, so the top open item
+  was **item 2, `TH-13` step 2**, executed as its §7 step-2 bullet is written.
+  Preflight clean, container Up, no `attempt/*` or `recovered/*`.
+- **Outcome: complete, chunk `TH-13` ✅** on its own done-when — **(A) HOLDS**.
+  `20260831T021154Z_TH-13-step2.log`, standard tier, complex build,
+  `-n 2`, **32 s**, 1 failed / 15 passed / 1 skipped, exit 1 (the one red is
+  the step-1′ precondition on the 1 MHz row, a deliberate red held per §7 and
+  explicitly not step 2's to retire).
+- **(A), the discriminant.** `‖∇χ − c∇φ‖/‖∇χ‖` = **2.970e-12** and
+  **2.640e-11** at 1 MHz degrees 1/2, **3.697e-13** and **2.586e-12** at
+  10 MHz, against the pre-registered ≤ 1e-6 — round-off, four orders inside
+  the bar, exactly as the review's derivation predicted. `c` was read off the
+  form's coefficients (`load_factor`, `k₀²`, `ε_c`) and reproduces
+  `−1/(σ + jωε₀εᵣ)` to `|c|·|σ + jωε| = 1.000000000` at both
+  frequencies; `|c|` moves only 1.425834 → 1.428544 across a decade of ω,
+  which is step 1′'s frequency-flatness now **explained** rather than observed.
+- **Load-bearing probe.** §7 scoped the mistuned-`c` control as a probe
+  reverted before commit; it is kept as a permanent **assertion** instead
+  (strictly stronger, and free) — `c` × 1.1 moves the residual to
+  **1.000e-01** on all four rows against a `≥ 9e-2` bar, so (A) is
+  demonstrably sensitive to `c` and not vacuous.
+- **(B), recorded, no band invented.** The gradient part of `E` carries
+  **99.98%** of the measured `W_e` at degree 1 and **99.9997%** at degree 2
+  (1 MHz; 98.24% / 99.97% at 10 MHz). `‖P_∇₂J′‖/‖P_∇₁J′‖` = **8.049884**
+  at *both* frequencies — and **8.049884² = 64.8** is step 1's **63.7×**
+  degree-2 `W_e` lift, i.e. the mechanism accounts for the lift quantitatively,
+  not just qualitatively.
+- **Projection control** (`PORT-1` step 2d/2e precedent). One extra
+  `project_source=False` degree-1 solve reads `‖P_∇₁J‖/‖J‖` =
+  **7.589863e-02** against the projected drive's **1.298386e-02** — the
+  projection removes 5.8× of the CG1 gradient content and leaves precisely the
+  non-`H¹₀` part a PMC box still tests, which is the mechanism.
+- **(C) in-run controls, all green** (the module's existing asserts, unmoved):
+  `POST-5` **1.199162e-06 W** at rtol 1e-6; steps 1/1′ reproduced at rtol 1e-3
+  (10 MHz 1.952350e-02 and 5.156e+01×); step 3's smoke **1.155×** / sphere
+  **1.015×** at the imported 1% band; `|Im P|/Re P` = 0.000e+00 on all five
+  loop solves.
+- **Trap paid — worth the family's attention.** The first window
+  (`20260831T020528Z_TH-13-step2.log`) ran **every assertion green with
+  byte-identical numbers** and then **deadlocked in teardown**, burning the
+  full 300 s ceiling to a `timeout -k 30` kill. Cause: the step-2 build held
+  each solve's mesh / `Function` / PETSc handles alive in a module-scoped
+  fixture, and PETSc destruction is **collective** — Python collected them in
+  rank-dependent order, so the two ranks entered different destructors. The
+  fix is structural, not a timeout bump: each row's Laplace projections are
+  computed inside `_solve_loop_at_degree` while its own solution is still in
+  scope, and only floats escape (which is what the module already did for the
+  energies). Second window: 32 s, clean exit path. **Rule of thumb for this
+  repo: do not return live dolfinx/PETSc objects from a per-solve helper into
+  a module-scoped fixture.**
+- **Scope kept.** No `src/` change, no coil solve, no coil number moved, no
+  band or record loosened; the two degree-2 coil identity tests stay failing at
+  the unloosened 1e-9 bound. One deviation from §7's letter, recorded in the
+  code: (B)'s `W_e` share uses the module's own imported convention
+  `(ε₀/4)∫εᵣ|E|²` (`stored_electric_energy`) rather than the
+  `ε₀εᵣ‖·‖²/2` §7 wrote, because a share is only meaningful against the
+  convention it is a share of.
+- **Docs.** `TH-13` 🧪 → ✅ in the §7 table and entry with the full step-2
+  reading; the known-issues degree-2 complex-power entry gets its
+  **disposition row** (diagnosis closed, entry stays **open** until step 3's
+  fix lands); §9 item 2 struck through with its original text kept for the
+  audit.
+- **Denials / anomalies.** One: appending to a test file via a heredoc `cat >>`
+  was denied by the permission layer ("brace with quote character"), so the
+  append was done with the Edit tool instead. No allowlist change is needed —
+  Edit is the documented reader/writer anyway.
+- **Next-attempt hypothesis.** Nothing to retry. The open follow-on is
+  **`TH-13` step 3** — the degree-/boundary-matched projection in
+  `core/source_projection.py` (match the Lagrange degree to the solve degree,
+  and drop the `H¹₀` Dirichlet set under `NATURAL`) — which (A) now says is a
+  one-line-class change with a predicted effect: it should drive
+  `‖P_∇ₚJ′‖/‖J′‖` to round-off and collapse the degree-2 `W_e` by ~64× on
+  this fixture. It is a `src/` change the plan explicitly reserves for a
+  review to price, and it owes a re-measurement on the coil's 229×.
