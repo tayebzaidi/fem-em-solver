@@ -16960,3 +16960,86 @@ slots rather than three, and the (ports + ans) 935 s leg is the only one
 that genuinely needs its own window. The `EX-30` per-leg estimates are
 holding (105 s predicted, 83 s measured, −21%), so sizing a paired item off
 them is safe.
+
+## 2026-08-31T14:10Z — `WF-6` step 2b — **complete** (09:00 CDT implementer slot)
+
+**Preflight.** Tree clean at 503131e, container Up 4 days, no `attempt/*` or
+`recovered/*`. §9 items 1–3 disposed (1 🟡 with its owed re-run explicitly
+left for a review, 2–3 ✅), so item 4 — `WF-6` step 2b — was the first open
+one. Executed as the §7 step-2b bullet is written; no re-scoping.
+
+**What was built.** Two additive keywords on `build_four_port_sweep`
+(`tests/validation/test_port_birdcage_four_port.py`), both defaulting to
+today's behaviour, on the `_four_port_rung` precedent: `frequency_hz` (used
+in the `TimeHarmonicProblem` and the one print) and `reuse` (mesh, cell
+tags, narrowed sheet facet tags, sheet geometry, `halves`, cell count taken
+from a rung this function already returned). No `src/` change; no existing
+caller touched; every gate in that module still takes both defaults.
+New `tests/validation/test_birdcage_b1_larmor.py` runs three rungs — 10, 64,
+128 MHz — on **one** mesh, importing every helper, band and record from
+steps 1/1c/1d/2 (`_solve_driven`, `_power_shares`, `_sample_points`,
+`_read_b1_plus`, `_read_b1_plus_cg1`, `_relative_l2`, `_ring_points`,
+`_rotate_z`, `_port_index`, `_superpose_dg0`, `_mirror_xy`, `_read_senses`,
+`_cv`, `POWER_BALANCE_BAND`, `C4_COVARIANCE_BAND`, `CG1_RECORD_RTOL`,
+`STEP1B_CG1_RECORDS`, `_resolution` + `PHANTOM_CELLS_PER_LAMBDA_FLOOR` from
+the `PORT-11` 128 MHz module, `STEP2_CELL_COUNT`). Only step 2's own two
+printed quadrature figures are restated, with their log for provenance, and
+both are asserted at step 1d's rtol on the 10 MHz rung only. Nothing
+restated is loosened; no band moved.
+
+**Result — green on the first run, no negative-result clause taken.**
+`16 passed` / Status 0 / **202 s** at `-n 2` (estimate 200–260 s),
+`20260831T140418Z_WF-6-step2b.log`. One mesh, 116 085 cells, ratio
+1.000000; 12 solves at 5.44–5.99 s, frequency-flat as `ANS-4` predicted.
+
+| reading (band) | 10 MHz | 64 MHz | 128 MHz |
+|---|---|---|---|
+| phantom cells/λ (floor 10) | 69.1393 | 21.8936 | **12.5024** |
+| gate (i) P1 residual (≤ 1e-2) | 9.7958e-03 | 9.5231e-03 | 9.2445e-03 |
+| gate (i) conductor-blind control (> 1e-2) | 10.19% | 10.19% | 13.05% |
+| gate (ii) +90° / −90° / 180° (≤ 5%) | 2.1870 / 2.1146 / 1.8911% | 2.2187 / 2.1667 / 1.9574% | 2.1315 / 2.1735 / 1.9511% |
+| mis-rotated control (> 5%) | 23.2642% | 24.7535% | 25.2589% |
+| quadrature (a) C4 / (b) mirror (≤ 5%) | 0.9818 / 0.8087% | 0.9570 / 0.7570% | 0.9106 / 0.6968% |
+| mis-paired control (> 5%) | 95.1975% | 95.1118% | 95.1161% |
+| centre purity ccw / cw / P1 linear (ungated) | 127.91 / 0.0081 / 1.0006 | 141.81 / 0.0087 / 1.0024 | 171.94 / 0.0092 / 1.0031 |
+| mean \|B₁⁺\| at 1 V/port (ungated) | 7.976427e-08 T | 6.500452e-08 T | 4.936577e-08 T |
+| CV centroids / ring (ungated) | 2.7563 / 2.4577% | 2.7738 / 2.3847% | 3.0177 / 2.5400% |
+
+`valid` 51/51 on every drive and image set, 96/96 on the ring set, at every
+rung; the shared `Z_p` = 50 Ω / `V_src` = 1 V superposition premise asserted
+per frequency; the 10 MHz rung reproduced all five step-1d/step-2 records at
+rtol 1e-3, which is the control that the frequency keyword is the only thing
+that moved.
+
+**The finding.** The pre-registered 128 MHz resolution question — does the
+5% band, a **10 MHz** floor measurement, survive at 12.5 phantom cells/λ? —
+reads **no miss**, and not marginally: the five identities are flat in
+frequency to ≈ 0.1 pp across a 12.8× frequency span and a 5.5× resolution
+span, with the two quadrature identities *improving* monotonically with
+frequency (0.9818 → 0.9570 → 0.9106%). Read narrowly: a symmetry identity is
+blind to any discretisation error the C4 rotation shares, so this says the
+CG1 estimator's *azimuthal* consistency does not degrade at 12.5 cells/λ —
+it says nothing about the absolute accuracy of `|B₁⁺|`, which no chunk has
+measured at any frequency. The rising centre purity (127.91 → 171.94) and
+the falling mean `|B₁⁺|` are the first Larmor B₁⁺ figures on record and are
+ungated by construction.
+
+**Docs.** §7 `WF-6` table row and prose header updated to steps 1–2b ✅ with
+the chunk still 🟡; a step-2b result block appended after the scoping
+bullet; §9 item 4 marked ✅ with the original item text kept for the audit.
+No known-issues change (nothing red, nothing new). No `src/` file touched.
+
+**Denials / anomalies.** None. No teardown deadlock (only floats, numpy
+arrays and plain dicts escape the solve helper, per the `TH-13` step-2
+trap); no container wedge; the single 600 s container-side window returned a
+footer at 202 s.
+
+**Next-attempt hypothesis (for the review).** Two things this slot puts in
+reach. (1) `WF-6` step 3 (SAR) now has a Larmor-frequency drive on a mesh
+whose resolution is on record — and `mean_sar` is already called in this
+path for gate (i)'s phantom term, so the step is a reading change, not a
+capability one. (2) The identities being frequency-flat means an **absolute**
+question is the honest next one, and nothing here answers it: a convergence
+rung (a second mesh at the same frequency) would be the first evidence that
+`|B₁⁺|` itself, not just its symmetry, is resolved. Both are a review's to
+scope. Slot cost: ~50 of 60 minutes, ~3.5 of them compute.

@@ -4367,7 +4367,7 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 | `WF-3` | Quick-look phantom metrics report | ⚠️ | standard |
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
-| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved. Step 1d executed 2026-08-30 12:00 — the ruling landed in the code: `post.project_to_cg1` is the packaged production estimator and gate (ii) is the CG1 covariance identity at all three angles, **2.1870 / 2.1146 / 1.8911%** against the unmoved 5% band, controls holding (mis-rotated 23.2642%, DG0 column unmoved at 8.6516 / 9.5808 / 8.5970%). `19 passed` / Status 0 / 97 s; **step 1 is ✅ and the chunk is 🟡** — a symmetry identity only, no CV / homogeneity / absolute claim; steps 2–3 are a review's to scope. **Step 2 scoped 2026-08-30 18:00 review** — the quadrature drive by exact superposition of the four solved fields at 10 MHz, two symmetry identities (C4-invariance; the co/counter-rotating mirror identity `\|B₁⁺\|_ccw(x) = \|B₁⁻\|_cw(Mx)`) at the measured CG1 floor, and the first *ungated* CV / polarisation-purity figures; §9 item 3. Step 2 executed 2026-08-31 22:30 slot — **both identities green at the CG1 floor: (a) C4-invariance of the quadrature `\|B₁⁺\|` map **0.9818%** and (b) the mirror identity `\|B₁⁻\|_cw(Mx)` vs `\|B₁⁺\|_ccw(x)` **0.8087%**, against the unmoved imported 5% band, with the mis-paired control at **95.1975%**; `17 passed` / Status 0 / 96 s. Ungated and labelled: centre purity `\|B₁⁺\|/\|B₁⁻\|` **127.91** (ccw) / **0.0081** (cw) / **1.0006** (P1 linear), mean `\|B₁⁺\|` 7.976427e-08 T at 1 V per port, CV **2.7563%** (51 centroids) / **2.4577%** (96 ring points). `post.b1_minus` landed. **Steps 1–2 ✅, chunk stays 🟡** — symmetry identities on one fixture at 10 MHz, no homogeneity, absolute, tuning or Larmor claim** | 🟡 | heavy (step 1 standard, complex) |
+| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved. Step 1d executed 2026-08-30 12:00 — the ruling landed in the code: `post.project_to_cg1` is the packaged production estimator and gate (ii) is the CG1 covariance identity at all three angles, **2.1870 / 2.1146 / 1.8911%** against the unmoved 5% band, controls holding (mis-rotated 23.2642%, DG0 column unmoved at 8.6516 / 9.5808 / 8.5970%). `19 passed` / Status 0 / 97 s; **step 1 is ✅ and the chunk is 🟡** — a symmetry identity only, no CV / homogeneity / absolute claim; steps 2–3 are a review's to scope. **Step 2 scoped 2026-08-30 18:00 review** — the quadrature drive by exact superposition of the four solved fields at 10 MHz, two symmetry identities (C4-invariance; the co/counter-rotating mirror identity `\|B₁⁺\|_ccw(x) = \|B₁⁻\|_cw(Mx)`) at the measured CG1 floor, and the first *ungated* CV / polarisation-purity figures; §9 item 3. Step 2 executed 2026-08-31 22:30 slot — **both identities green at the CG1 floor: (a) C4-invariance of the quadrature `\|B₁⁺\|` map **0.9818%** and (b) the mirror identity `\|B₁⁻\|_cw(Mx)` vs `\|B₁⁺\|_ccw(x)` **0.8087%**, against the unmoved imported 5% band, with the mis-paired control at **95.1975%**; `17 passed` / Status 0 / 96 s. Ungated and labelled: centre purity `\|B₁⁺\|/\|B₁⁻\|` **127.91** (ccw) / **0.0081** (cw) / **1.0006** (P1 linear), mean `\|B₁⁺\|` 7.976427e-08 T at 1 V per port, CV **2.7563%** (51 centroids) / **2.4577%** (96 ring points). `post.b1_minus` landed. **Steps 1–2 ✅, chunk stays 🟡** — symmetry identities on one fixture at 10 MHz, no homogeneity, absolute, tuning or Larmor claim. **Step 2b executed 2026-08-31 09:00 slot, green on the first run** — the same five identities at **64 and 128 MHz** on one mesh through `build_four_port_sweep(frequency_hz=…, reuse=…)`: gate (ii) **2.2187 / 2.1667 / 1.9574%** (64) and **2.1315 / 2.1735 / 1.9511%** (128), quadrature (a)/(b) **0.9570 / 0.7570%** and **0.9106 / 0.6968%**, gate (i) 9.5231e-03 / 9.2445e-03 — all inside the unmoved imported 5% / 1e-2 bands, controls 24.75 / 25.26% and 95.11%, and the 10 MHz rung reproducing all five records at rtol 1e-3. Phantom cells/λ 69.14 / 21.89 / **12.50** against `PORT-11`'s floor of 10: the pre-registered 128 MHz resolution question reads **no miss**. First Larmor B₁⁺ figures on record, ungated: centre purity 141.81 / 171.94 (ccw), mean `\|B₁⁺\|` 6.500452e-08 / 4.936577e-08 T at 1 V per port, CV 2.7738 / 3.0177%. `16 passed` / Status 0 / 202 s. **Steps 1–2b ✅, chunk stays 🟡** — identities on one unconverged fixture, still no homogeneity, absolute, tuning or SAR claim** | 🟡 | heavy (step 1 standard, complex) |
 | `WF-7` | SAR10g hotspot identification | ⬜ | heavy |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 
@@ -4375,11 +4375,12 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 > physically meaningless numbers. The plumbing is fine and becomes useful the
 > moment `TH-1` lands.
 
-**`WF-6` — B1+ field mapping and homogeneity** 🟡 *(steps 1 and 2 ✅ — step 1
+**`WF-6` — B1+ field mapping and homogeneity** 🟡 *(steps 1, 2 and 2b ✅ — step 1
 2026-08-30 with step 1d, **step 2 ✅ 2026-08-31 22:30 slot** (0.9818% / 0.8087%
-against 5%, control 95.1975%, log `20260831T033704Z_WF-6-step2.log`);
-**2b (64/128 MHz) scoped 2026-08-31 03:00 review** — bullet after step 2's
-record, §9 item 4; 3 (SAR) unscoped. Step 1 scoped 2026-08-29
+against 5%, control 95.1975%, log `20260831T033704Z_WF-6-step2.log`),
+**step 2b ✅ 2026-08-31 09:00 slot** — the same five identities at 64 and
+128 MHz on one mesh, all inside the unmoved bands at 21.89 / 12.50 phantom
+cells/λ, log `20260831T140418Z_WF-6-step2b.log`; 3 (SAR) unscoped. Step 1 scoped 2026-08-29
 10:30 review. §10 subgoal 4 said the first B1+ chunk "can be scoped by the
 daily review the day `PORT-9` closes" — that was 08-25, `PORT-11` followed
 08-26, and the 08-25 operator directive says "do not block subgoal 4 on
@@ -4899,6 +4900,60 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 >   every reading and the cells/λ beside it, keep the assert, stop; **never
 >   widen the band, never re-register it in-slot** (that is what step 1d's
 >   ruling was for, and it was a review's).
+>
+>   **Executed 2026-08-31 (09:00 slot) — green on the first run, chunk
+>   stays 🟡.** Built as written: `build_four_port_sweep(frequency_hz=…,
+>   reuse=…)` — two additive keywords on the `_four_port_rung` precedent,
+>   both defaulting to today's behaviour, no `src/` change — and
+>   `tests/validation/test_birdcage_b1_larmor.py`, which imports every
+>   helper, band and record from steps 1/1c/1d/2 and restates none.
+>   **One mesh, 116 085 cells (ratio 1.000000), three rungs, 12 solves at
+>   5.44–5.99 s each; `16 passed` / Status 0 / 202 s at `-n 2`**
+>   (`20260831T140418Z_WF-6-step2b.log`), against the 200–260 s estimate.
+>     * **Every identity inside the unmoved, imported 5% band at all three
+>       frequencies.** Gate (ii) at +90 / −90 / 180°: **2.1870 / 2.1146 /
+>       1.8911%** (10 MHz), **2.2187 / 2.1667 / 1.9574%** (64 MHz),
+>       **2.1315 / 2.1735 / 1.9511%** (128 MHz). Quadrature (a) C4 /
+>       (b) mirror: **0.9818 / 0.8087%**, **0.9570 / 0.7570%**,
+>       **0.9106 / 0.6968%**. Gate (i) P1 residual **9.7958e-03 /
+>       9.5231e-03 / 9.2445e-03** against 1e-2, its conductor-blind
+>       control 10.19 / 10.19 / 13.05% (P2 rows within 4e-5 of the P1
+>       rows at every rung).
+>     * **Controls all held**, and are the reason the readings mean
+>       something: mis-rotated `P3@+90deg` **23.2642 / 24.7535 / 25.2589%**
+>       and mis-paired `|B₁⁺|_cw(Mx)` **95.1975 / 95.1118 / 95.1161%**,
+>       both asserted strictly outside the band; `valid` 51/51 on every
+>       drive and image set and 96/96 on the ring set; the shared
+>       `Z_p` = 50 Ω / `V_src` = 1 V premise asserted per rung.
+>     * **The reproduction control is exact.** The 10 MHz rung of the new
+>       module reproduced all five step-1d/step-2 records at rtol 1e-3 —
+>       so the two Larmor columns differ from it by the frequency keyword
+>       and nothing else.
+>     * **The pre-registered 128 MHz resolution question is answered, and
+>       the answer is "no miss".** Phantom cells/λ **69.1393 / 21.8936 /
+>       12.5024** against `PORT-11`'s imported floor of 10; the five
+>       identities are flat in frequency to ≈ 0.1 pp across a 12.8×
+>       frequency span and a 5.5× resolution span. The CG1 floor the 5%
+>       band rests on — a 10 MHz measurement — therefore survives at
+>       12.5 cells/λ **on this fixture, for these symmetry quantities**.
+>       That is a statement about the estimator, not about accuracy: a
+>       symmetry identity is blind to any error the C4 rotation shares.
+>     * **First Larmor-frequency B₁⁺ figures in the repo — reported,
+>       ungated, labelled.** Centre purity `|B₁⁺|/|B₁⁻|` ccw **127.91 /
+>       141.81 / 171.94**, cw 0.0081 / 0.0087 / 0.0092, P1 linear
+>       1.0006 / 1.0024 / 1.0031 (the "what a non-rotating field reads"
+>       line, ≈ 1 at every frequency). Mean `|B₁⁺|` at 1 V per port
+>       **7.976427e-08 / 6.500452e-08 / 4.936577e-08 T**, falling with
+>       frequency as the loaded coil's terminal current does. CV
+>       **2.7563 / 2.7738 / 3.0177%** over the 51 centroids and 2.4577 /
+>       2.3847 / 2.5400% over the 96 ring points. **None of these is a
+>       homogeneity claim**: no converged mesh, no real drive, no tuning —
+>       §2.2's "every 64/128 MHz claim is an identity on one fixture"
+>       stands unchanged.
+>     * **Scope held.** Degree 1, F-small, symmetry identities only; no
+>       SAR, no absolute, tuning or homogeneity claim; §2 did not move.
+>       Steps 1, 2 and 2b ✅ and the chunk stays **🟡** — step 3 (SAR) is
+>       a review's to scope.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -6212,7 +6267,32 @@ an operator FYI.
    moves; leg ✅, chunk stays ⬜ until all four legs land. **Negative
    result:** a red example is a known-issues entry and the leg stops at
    its census figure.
-4. **`WF-6` step 2b — the B₁⁺ identities at 64 and 128 MHz (standard,
+4. **✅ DONE 2026-08-31, 09:00 slot — step 2b closes green on the first
+   run; the CG1 floor survives 128 MHz.** One mesh (116 085 cells, ratio
+   1.000000), three rungs, `16 passed` / Status 0 / **202 s**
+   (`20260831T140418Z_WF-6-step2b.log`). Every identity inside the
+   unmoved imported 5% band at **all three** frequencies — gate (ii)
+   +90 / −90 / 180°: 2.1870 / 2.1146 / 1.8911% (10 MHz), **2.2187 /
+   2.1667 / 1.9574%** (64), **2.1315 / 2.1735 / 1.9511%** (128);
+   quadrature (a)/(b): 0.9818 / 0.8087, **0.9570 / 0.7570**, **0.9106 /
+   0.6968%**. Gate (i) P1 residual 9.7958e-03 / 9.5231e-03 / 9.2445e-03
+   vs 1e-2, conductor-blind control 10.2 / 10.2 / 13.0%. Controls held:
+   mis-rotated 23.26 / 24.75 / 25.26%, mis-paired 95.1975 / 95.1118 /
+   95.1161%; `valid` 51/51 and 96/96 everywhere. The 10 MHz rung
+   reproduced all five step-1d/step-2 records at rtol 1e-3 — the
+   frequency keyword is the only thing that moved. Phantom cells/λ
+   **69.14 / 21.89 / 12.50** against the imported floor of 10: the
+   pre-registered 128 MHz resolution question is answered **no miss**,
+   the identities are flat in frequency to ~0.1 pp. **First Larmor B₁⁺
+   figures in the repo, ungated and labelled:** centre purity 127.91 /
+   **141.81** / **171.94** (ccw), 0.0081 / 0.0087 / 0.0092 (cw), P1
+   linear 1.0006 / 1.0024 / 1.0031; mean |B₁⁺| 7.976427e-08 /
+   **6.500452e-08** / **4.936577e-08** T at 1 V per port; CV 2.7563 /
+   **2.7738** / **3.0177%** (centroids) and 2.4577 / 2.3847 / 2.5400%
+   (ring). **Still identities on one unconverged fixture** — no
+   homogeneity, absolute, tuning or SAR claim; §2 does not move and the
+   chunk stays 🟡 (step 3 SAR is a review's). Original item below.
+   **`WF-6` step 2b — the B₁⁺ identities at 64 and 128 MHz (standard,
    complex, `-n 2`, `main`; independent; scoped this review — §7 step-2b
    bullet).** `build_four_port_sweep(frequency_hz=FREQUENCY_HZ)` (one
    keyword, existing default) and a new

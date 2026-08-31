@@ -216,7 +216,7 @@ def _circulant_classes(z_matrix):
     }
 
 
-def build_four_port_sweep():
+def build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=None):
     """One mesh; four driven lumped-sheet solves at 50 Ohm; the assembled 4x4.
 
     The module fixture's body, lifted to module level so a consumer can run the
@@ -224,76 +224,100 @@ def build_four_port_sweep():
     `ANS-1` import rule taken past constants to the construction itself
     (`EX-33` precedent, 2026-08-26; `EX-32` is the consumer). Additive: the
     fixture below is unchanged in behaviour and no gate reads the extra keys.
+
+    ``frequency_hz`` defaults to `PORT-9`'s 10 MHz — the only frequency this
+    module's gates run — and exists so that `WF-6` step 2b can drive the
+    identical construction at the Larmor frequencies without a second copy of
+    it, the frequency then being demonstrably the only knob turned (the
+    ``_four_port_rung`` precedent in
+    `tests/validation/test_port_birdcage_leg_offset_sweep.py`).
+
+    ``reuse`` is the second additive parameter, same precedent: hand it a dict
+    this function already returned and the mesh, the narrowed sheet facet tags
+    and the sheet geometry are taken from it rather than rebuilt, so a
+    frequency ladder runs on **one** mesh.  Every caller in this repo's gates
+    takes both defaults and is unchanged in behaviour.
     """
     comm = MPI.COMM_WORLD
     ports_idx = list(range(1, LEG_COUNT + 1))
 
-    msh, cell_tags, _facet_tags, diag, t_mesh = _build(True)
-    tdim = msh.topology.dim
-    ncells = int(msh.topology.index_map(tdim).size_global)
-    # Hoisted on every rank before any facet-restricted form (known-issues 9).
-    msh.topology.create_connectivity(tdim - 1, tdim)
-    msh.topology.create_entity_permutations()
+    if reuse is not None:
+        msh = reuse["mesh"]
+        cell_tags = reuse["cell_tags"]
+        tags_f = reuse["facet_tags"]
+        sheets = reuse["sheets"]
+        halves = reuse["halves"]
+        ncells = int(reuse["cells"])
+        diag = {"mesh_wall_time_s": 0.0}
+        t_mesh = 0.0
+    else:
+        msh, cell_tags, _facet_tags, diag, t_mesh = _build(True)
+        tdim = msh.topology.dim
+        ncells = int(msh.topology.index_map(tdim).size_global)
+        # Hoisted on every rank before any facet-restricted form (known-issues 9).
+        msh.topology.create_connectivity(tdim - 1, tdim)
+        msh.topology.create_entity_permutations()
 
-    halves = {i: (PORT_LOWER + i, PORT_UPPER + i) for i in ports_idx}
-    tags_f = _interface_facet_tags(
-        msh, cell_tags, {SHEET_IFACE + i: halves[i] for i in ports_idx}
-    )
-
-    # Leg (c)/(d0)'s sheet construction, unchanged: measure each full sheet, name
-    # its transverse axis off the measured extents, narrow to step 2b's f = 0.5
-    # with the midpoint filter, then re-measure `w = A/h` on the filtered set.
-    geometry = {}
-    for i in ports_idx:
-        tag = SHEET_IFACE + i
-        extents = _sheet_extents(msh, tags_f, tag, comm)
-        w_bbox, _h_bbox, _spread = _sheet_axes(extents, diag, i)
-        centroid = _sheet_bbox_centre(msh, tags_f, tag, comm)
-        geometry[i] = {
-            "tag": tag,
-            "axis": 0 if extents[0] >= extents[1] else 1,
-            "centroid": centroid,
-            "w_full": float(w_bbox),
-            "azimuth_deg": float(
-                np.degrees(np.arctan2(centroid[1], centroid[0])) % 360.0
-            ),
-        }
-
-    for i in ports_idx:
-        g = geometry[i]
-        tags_f = _narrowed_transverse(
-            msh,
-            tags_f,
-            g["tag"],
-            GATED_WIDTH_FRACTION,
-            float(g["centroid"][g["axis"]]),
-            g["axis"],
-            0.5 * g["w_full"],
+        halves = {i: (PORT_LOWER + i, PORT_UPPER + i) for i in ports_idx}
+        tags_f = _interface_facet_tags(
+            msh, cell_tags, {SHEET_IFACE + i: halves[i] for i in ports_idx}
         )
 
-    sheets = []
-    for i in ports_idx:
-        g = geometry[i]
-        n_facets = _sheet_facet_count(msh, tags_f, g["tag"], comm)
-        assert n_facets > 0, f"sheet {g['tag']}: no owned facets anywhere"
-        area = _facet_group_area(msh, tags_f, g["tag"], comm)
-        extents = _sheet_extents(msh, tags_f, g["tag"], comm)
-        w_bbox, h_bbox, spread = _sheet_axes(extents, diag, i)
-        sheets.append(
-            {
-                **g,
-                "facets": int(n_facets),
-                "area": float(area),
-                "h": float(h_bbox),
-                "w": float(area / h_bbox),
-                "w_bbox": float(w_bbox),
-                "out_of_plane": float(spread),
+        # Leg (c)/(d0)'s sheet construction, unchanged: measure each full sheet,
+        # name its transverse axis off the measured extents, narrow to step 2b's
+        # f = 0.5 with the midpoint filter, then re-measure `w = A/h` on the
+        # filtered set.
+        geometry = {}
+        for i in ports_idx:
+            tag = SHEET_IFACE + i
+            extents = _sheet_extents(msh, tags_f, tag, comm)
+            w_bbox, _h_bbox, _spread = _sheet_axes(extents, diag, i)
+            centroid = _sheet_bbox_centre(msh, tags_f, tag, comm)
+            geometry[i] = {
+                "tag": tag,
+                "axis": 0 if extents[0] >= extents[1] else 1,
+                "centroid": centroid,
+                "w_full": float(w_bbox),
+                "azimuth_deg": float(
+                    np.degrees(np.arctan2(centroid[1], centroid[0])) % 360.0
+                ),
             }
-        )
+
+        for i in ports_idx:
+            g = geometry[i]
+            tags_f = _narrowed_transverse(
+                msh,
+                tags_f,
+                g["tag"],
+                GATED_WIDTH_FRACTION,
+                float(g["centroid"][g["axis"]]),
+                g["axis"],
+                0.5 * g["w_full"],
+            )
+
+        sheets = []
+        for i in ports_idx:
+            g = geometry[i]
+            n_facets = _sheet_facet_count(msh, tags_f, g["tag"], comm)
+            assert n_facets > 0, f"sheet {g['tag']}: no owned facets anywhere"
+            area = _facet_group_area(msh, tags_f, g["tag"], comm)
+            extents = _sheet_extents(msh, tags_f, g["tag"], comm)
+            w_bbox, h_bbox, spread = _sheet_axes(extents, diag, i)
+            sheets.append(
+                {
+                    **g,
+                    "facets": int(n_facets),
+                    "area": float(area),
+                    "h": float(h_bbox),
+                    "w": float(area / h_bbox),
+                    "w_bbox": float(w_bbox),
+                    "out_of_plane": float(spread),
+                }
+            )
 
     problem = TimeHarmonicProblem(
         mesh=msh,
-        frequency_hz=FREQUENCY_HZ,
+        frequency_hz=frequency_hz,
         material=HomogeneousMaterial(sigma=0.0, epsilon_r=1.0, mu_r=1.0),
         cell_tags=cell_tags,
         material_map={
@@ -365,7 +389,7 @@ def build_four_port_sweep():
             f"\n[PORT-9 step3d] gapped+sheeted birdcage: {ncells} cells "
             f"(record {STEP2_CELL_COUNT}, ratio {ncells / STEP2_CELL_COUNT:.6f}), "
             f"mesh {diag['mesh_wall_time_s']:.2f} s, rung {t_mesh:.2f} s; "
-            f"f = {FREQUENCY_HZ:.3e} Hz, f_width = {GATED_WIDTH_FRACTION}; "
+            f"f = {frequency_hz:.3e} Hz, f_width = {GATED_WIDTH_FRACTION}; "
             f"four driven solves through the lumped-sheet sweep in "
             f"{t_sweep:.2f} s wall at -n 2\n"
             f"    Z_p (lumped sheet, leg (d0)'s termination) = "
