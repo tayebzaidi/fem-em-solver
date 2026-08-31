@@ -93,7 +93,7 @@ from tests.validation.test_dodd_deeds_projected_drive import (  # noqa: E402
 # the §9 `ANS-1` item requires sharing its path rather than duplicating it.
 _EX11 = _REPO_ROOT / "examples" / "materials" / "01_dodd_deeds_coil_loading.py"
 sys.path.insert(0, str(_EX11.parent))
-_ex11 = __import__("01_materials_01_dodd_deeds_coil_loading")  # noqa: E402  (leading digit)
+_ex11 = __import__("01_dodd_deeds_coil_loading")  # noqa: E402  (leading digit)
 
 _build_fixture = _ex11._build_fixture
 _sigma_field = _ex11._sigma_field

@@ -4645,7 +4645,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-34` | Birdcage 4-port S-matrix across the frequency ladder 10 / 64 / 128 MHz on **one** mesh (`PORT-11`'s newly gated capability: first example solving ports at a Larmor frequency — `EX-32` is 10 MHz only, `EX-19`/`EX-25` are Larmor on the sphere with no ports; the drive/output angle is the frequency ladder itself: loss tangent, cells/δ, cells/λ, `\|Im P\|/Re P` and the three gate readings side by side; commissioned 2026-08-26 18:00 review, §5.4 ramp) | ✅ 2026-08-28 (`ports:5`, `20260828T110615Z_EX-34-run2.log`, **139 s** Status 0 at `-n 2` complex; one 116 085-cell mesh, 12 driven solves, all three gates green on all three rungs; 128 MHz cells/λ 12.5024 ≥ 10) | standard |
 | `EX-36` | Re-run the examples whose artifacts the 2026-08-28 rename (`67e4c1c`) orphaned — census `dead=53 exit=1` on 2026-08-29 — until it reads `dead=0`; four legs by runner group, each one slot (commissioned 2026-08-30 02:15 weekly review; entry written by the 10:30 daily review) | ⬜ | standard per leg (105 / ≈ 500 / 447 / 935 s measured by `EX-30`) |
 | `EX-35` | 16-leg **ring-gapped** birdcage mesh — the 32-ring-port high-pass layout (`GEO-20` step 2's newly gated capability, 2026-08-29: `EX-31`/`mesh:7` cuts the rings at 4 legs, `EX-33`/`mesh:8` cuts the **legs** at 16 — no example has the production high-pass topology at the production leg count; mesh-only, no solve, no port claim; commissioned 2026-08-29 10:30 review, §5.4 ramp) | ✅ | standard |
-| `EX-37` | **`ANS-1`/`ANS-3` are unrunnable since the 2026-08-28 rename**: `67e4c1c` rewrote the two cases' `__import__("01_dodd_deeds_coil_loading")` / `("02_package_sparameter_sweep")` strings along with their artifact basenames, and no module of the prefixed name exists — the `ANS-4` slot's observation, verified by the 18:00 review from `git log -S`; restore the two strings, re-run `ans:1` and `ans:3`, census (commissioned 2026-08-30 18:00 review; known-issues entry) | ⬜ | standard (≈ 5 + 70 + 131 s + census) |
+| `EX-37` | **`ANS-1`/`ANS-3` are unrunnable since the 2026-08-28 rename**: `67e4c1c` rewrote the two cases' `__import__("01_dodd_deeds_coil_loading")` / `("02_package_sparameter_sweep")` strings along with their artifact basenames, and no module of the prefixed name exists — the `ANS-4` slot's observation, verified by the 18:00 review from `git log -S`; restore the two strings, re-run `ans:1` and `ans:3`, census (commissioned 2026-08-30 18:00 review; known-issues entry) | ✅ *(2026-08-31, 19:30 slot — negative control Status 1/3 s, both cases green, 63 s / 128 s)* | standard (≈ 5 + 70 + 131 s + census) |
 | `EX-38` | `\|B₁⁺\|` map of the loaded 4-leg birdcage at 10 MHz into ParaView (`WF-6` step 1's newly gated capability, 2026-08-30: the CG1-projected `\|B₁⁺\|` field under gates (i)/(ii) — no example writes a B₁⁺ field, `ports:4`/`ports:5` stop at S-matrices; the output-quantity angle; commissioned 2026-08-30 18:00 review, §5.4 ramp) | ⬜ | standard (≈ 70 s) |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
@@ -5001,7 +5001,8 @@ gates on the census, which is why this is queued ahead of its size.
 > known-issues, stop.
 
 **`EX-37` — restore the `ANS-1`/`ANS-3` example imports the rename broke**
-⬜ *(commissioned 2026-08-30 18:00 review.)* `67e4c1c` prefixed every
+✅ *(commissioned 2026-08-30 18:00 review; executed 2026-08-31, 19:30
+slot.)* `67e4c1c` prefixed every
 example's artifacts by a global text substitution, and in the two ANS
 scripts the substitution also hit the `__import__` string that loads the
 gated example module:
@@ -5035,6 +5036,39 @@ them. `ANS-4` sidestepped it by importing by path.
 > `EX-36` leg (ports + ans) is serial on this landing. **Negative result:**
 > either case still red after the fix — a second, different 08-28
 > breakage; extend the known-issues entry with the traceback, stop.
+
+> **DONE 2026-08-31 (19:30 slot), exactly as scoped — two strings, nothing
+> else.** **Negative control first**, on unpatched `main`
+> (`20260831T003025Z_EX-37.log`): `./run_examples.sh -e ans:1 -n 2 -t 300`,
+> **Status 1 / 3 s**, `ModuleNotFoundError: No module named
+> '01_materials_01_dodd_deeds_coil_loading'` — the first observation of this
+> defect in a harness log, the known-issues entry having been written from
+> reading alone. Both strings restored to their on-disk stems;
+> `grep -rn '__import__(' examples tests` shows those two call sites and no
+> other renamed stem. **Anchors, both green on the patched tree at `-n 2`:**
+> `ans:1` **Status 0 / 63 s** (`20260831T003037Z_EX-37.log`) with the script's
+> own Dodd–Deeds assert reading **ΔR 1.5838%** against its 2% ceiling and the
+> `MAT-6` step-3 record of 1.5834%; `ans:3` **Status 0 / 128 s**
+> (`20260831T003145Z_EX-37.log`) reproducing the `PORT-1` step-4 record inside
+> its 1% band (raw 2.98e-05, corrected 2.92e-05) with reciprocity
+> `max|Sij−Sji|` 4.097e-05 (rel 1.897e-03) and passivity `σ_max` 0.864809.
+> The two `metrics.json`/`COMPARISON.md` pairs are regenerated by the runs:
+> every physical figure reproduces its committed value to ≤ ~1e-8 relative
+> (`ANS-1` `R_ohm` 0.3277053865833211 vs …251; `ANS-3` `S₁₁` −8.2459527e-01
+> +2.4709965e-01j vs …964j) — **no record, band or ceiling was moved**; what
+> moved is timestamps, wall-clock timings and solver noise in the last digits.
+> **Census** (`20260831T003409Z_EX-37-docrefs.log`): `dead=53 guide=0
+> stale=10 stale_severity=report exit=1` — `dead=53` and `guide=0` unchanged
+> and entirely `EX-36`'s; the 10 stale are **age-only** (52.4 h / 52.2 h /
+> 52.1 h against a 48 h limit, eight `magnetostatics_01_straight_wire_*` plus
+> `ports_01_*`/`ports_02_*_combined.xdmf`) and **none is an `ans_*`
+> artifact** — this chunk's two cases wrote fresh ones and are absent from the
+> list. The `stale=2` → `10` step is the 48 h clock advancing over examples
+> nobody re-ran, not a regression; a review may decide whether that set is
+> worth a refresh run. Known-issues entry removed in this commit.
+> **`EX-36` leg (ports + ans) is unblocked.** No claim about either
+> benchmark's accuracy follows: the ✅ runnable halves keep their 08-09 /
+> 08-16 records, and the AED columns are still blank.
 
 **`EX-38` — the first `|B₁⁺|` field in ParaView: loaded 4-leg birdcage at
 10 MHz** ⬜ *(commissioned 2026-08-30 18:00 review, §5.4 ramp, from `WF-6`
@@ -5077,8 +5111,8 @@ next weekly review adjudicates the returned numbers.
 
 | ID | Title | Status | Tier |
 |---|---|---|---|
-| `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ✅ *(**example path broken since 2026-08-28**, `67e4c1c` rewrote its `__import__` string — `EX-37` restores it; the 08-09 record stands)* | standard |
-| `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ✅ *(**example path broken since 2026-08-28**, same cause — `EX-37`; the 08-16 / 08-26 records stand)* | heavy |
+| `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ✅ *(example path restored 2026-08-31 by `EX-37` and re-run green, 63 s; the 08-09 record stands)* | standard |
+| `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ✅ *(example path restored 2026-08-31 by `EX-37` and re-run green, 128 s; the 08-16 / 08-26 records stand)* | heavy |
 | `ANS-4` | **Gapped four-leg birdcage, phantom-loaded, four lumped ports: 4×4 S-matrix at 10 / 64 / 128 MHz — runnable half** (commissioned 2026-08-30 02:15 weekly review; authoritative spec `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/SPEC.md`; the first independent absolute check of the coil-fed port model at a Larmor frequency) | ✅ **runnable half 2026-08-30** (`20260830T213415Z_ANS-4-run1.log`, Status 0, 125 s at `-n 2`) — all three gates on all three rungs of one 116 085-cell mesh (ratio 1.000000, `reused_mesh`); 10 MHz reproduces leg (d)'s 4×4 to **1.158e-10** (band 1e-6) and leg (d0)'s column to **2.568e-10** (band 1e-9); 64 / 128 MHz reproduce `PORT-11` steps 2/3 to worst **1.075e-03** / **6.755e-04** (band 1e-2); control separation **1.585460** vs 2e-3. **Operator's AED replication at both orders is now Waiting-on-you; adjudication is a weekly review's** | heavy (≈ 160 s at `-n 2`, one command; measured 125 s) |
 | `ANS-5` | **Pin the element-order correspondence in every ANS `SPEC.md`/`COMPARISON.md`** — our production `degree 1` is what HFSS calls **Zero Order**, not its default **First Order**; the specs do not say so, and a default-settings replication is a different discretization (operator observation, interactive session 2026-08-28) | ⬜ **RULED 2026-08-30 02:15 weekly review** — (a) AED runs at **Zero Order** (matched, the adjudication column) **and** at its default **First Order** (an order-sensitivity column); **Mixed Order forbidden**; our side stays at one order (none of options 1–3 as framed — option 1 for the adjudication column plus a second AED column, our side unchanged, step 3 **not** taken). (b) `ANS-1` **is in scope** for the spec line (state the Maxwell 3D formulation and order AED used). Already-returned numbers at an unrecorded order stand as an "order-unknown" column. Steps 1–2 are documentary and queueable; `ANS-4`'s spec already carries the wording | smoke (no compute) |
 
@@ -5532,7 +5566,15 @@ substitution stays the fallback — the 12:00 entry's proposal to invert
 that is declined until the denial is understood; it is on the dashboard as
 an operator FYI.
 
-1. **`EX-37` — restore the `ANS-1`/`ANS-3` example imports and re-run
+1. ~~**`EX-37` — restore the `ANS-1`/`ANS-3` example imports and re-run
+   both.**~~ **DONE 2026-08-31, 19:30 slot** — negative control Status 1 /
+   3 s with the `ModuleNotFoundError` in the log, both cases green
+   (`ans:1` 63 s ΔR 1.5838% vs its 2% ceiling; `ans:3` 128 s reproducing
+   the `PORT-1` step-4 record inside 1%), census `dead=53 guide=0` unmoved
+   with 10 age-only stales, none of them `ans_*`. Known-issues entry
+   removed; `EX-36` leg (ports + ans) unblocked. Original item text below,
+   for the audit.
+   **`EX-37` — restore the `ANS-1`/`ANS-3` example imports and re-run
    both (standard, complex, `-n 2`, host runner; independent; §7 entry +
    known-issues entry written this review).**
    `01_loop_over_lossy_slab_10MHz.py:96` →

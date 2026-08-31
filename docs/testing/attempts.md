@@ -16462,3 +16462,61 @@ issued**.
   and `ANS-3` verbatim. The dashboard's Waiting-on-you should now carry
   **three** commissioned AED replications, `ANS-4` being the only one at a
   Larmor frequency.
+
+## 2026-08-31T00:40Z — `EX-37` — outcome: `complete` (19:30 CDT implementer slot)
+
+- **Preflight.** Tree clean at `786a8e8`, container Up (4 days). §9 item 1
+  taken as written; no fallback, no deviation.
+- **What was tried.** Exactly the scoped change: two `__import__` strings
+  restored to their on-disk stems —
+  `examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/01_loop_over_lossy_slab_10MHz.py:96`
+  `01_materials_01_dodd_deeds_coil_loading` → `01_dodd_deeds_coil_loading`, and
+  `.../two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:88`
+  `02_ports_02_package_sparameter_sweep` → `02_package_sparameter_sweep`.
+  `grep -rn '__import__(' examples tests` returns those two call sites and
+  nothing else, so no third renamed stem is hiding.
+- **Negative control, run first on unpatched `main`** —
+  `20260831T003025Z_EX-37.log`, `./run_examples.sh -e ans:1 -n 2 -t 300`:
+  **Status 1, 3 s**, `ModuleNotFoundError: No module named
+  '01_materials_01_dodd_deeds_coil_loading'`. This is the **first observation
+  of the defect in a harness log** — the known-issues entry had been written
+  from `git log -S` reading alone, and it was right.
+- **Anchors, patched tree, `-n 2`, host runner (no socket denial this slot).**
+  `ans:1` `20260831T003037Z_EX-37.log` **Status 0 / 63 s**, its own assert
+  reading **ΔR 1.5838%** against the 2% ceiling (`MAT-6` step-3 record
+  1.5834%). `ans:3` `20260831T003145Z_EX-37.log` **Status 0 / 128 s**,
+  reproducing the `PORT-1` step-4 record inside its 1% band (raw 2.98e-05,
+  corrected 2.92e-05), reciprocity `max|Sij−Sji|` 4.097e-05 (rel 1.897e-03),
+  passivity `σ_max` 0.864809. Both figures are the scripts' own asserts, not
+  prints. Costs came in under the estimate (70/131 → 63/128 s).
+- **The regenerated `metrics.json` / `COMPARISON.md` pairs.** Both runs rewrite
+  their tracked outputs. Checked line by line before committing: the only
+  changes are timestamps, wall-clock timings, and last-digit solver noise —
+  `ANS-1` `R_ohm` 0.3277053865833211 vs the committed …251, `ANS-3` `S₁₁`
+  −8.2459527e-01+2.4709965e-01j vs …964j, ≤ ~1e-8 relative throughout. **No
+  record, band, ceiling or guide text moved**, per the chunk's scope.
+- **Census** — `20260831T003409Z_EX-37-docrefs.log`, `dead=53 guide=0
+  **stale=10** stale_severity=report exit=1`, 1 s. `dead=53` and `guide=0` are
+  unmoved and entirely `EX-36`'s. The `stale=2 → 10` step is **not** this
+  chunk's: all ten are age-only (52.4 / 52.2 / 52.1 h against the 48 h limit) —
+  eight `magnetostatics_01_straight_wire_*` artifacts plus
+  `ports_01_two_torus_port_pair_combined.xdmf` and
+  `ports_02_package_sparameter_sweep_combined.xdmf`. **No `ans_*` artifact is
+  stale**; this slot's two cases wrote fresh ones. The 48 h clock simply
+  advanced past examples nobody re-ran since 08-28. Flagged for the review:
+  either a periodic refresh run or a longer limit is the fix, and neither is an
+  implementer's call.
+- **Docs.** `EX-37` ⬜ → ✅ with the full record in its §7 entry; the `ANS-1`
+  and `ANS-3` §7 table rows drop the "example path broken" annotation (their
+  08-09 / 08-16 records were never in question and are untouched); §9 item 1
+  struck through as done with its original text kept for the audit. The
+  known-issues entry was **removed** (implementer.md: remove the entry in the
+  commit that fixes it) and replaced by a one-paragraph pointer to the §7
+  record — the surrounding `WF-6` entries use a "RETIRED" row instead, so if
+  the review prefers that convention here it is a two-line edit.
+- **Denials / anomalies.** None. No red created, one known-issues entry
+  retired, `main` clean and green on both cases.
+- **Next-attempt hypothesis.** Nothing to retry — the chunk closed on the first
+  run. `EX-36` leg (ports + ans) was serial on this and is now unblocked; it is
+  the natural queue candidate, and the stale-artifact clock above suggests it
+  will want a wider re-run window than the two cases here.

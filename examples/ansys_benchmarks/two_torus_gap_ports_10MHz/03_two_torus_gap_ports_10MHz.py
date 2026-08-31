@@ -85,7 +85,7 @@ from fem_em_solver.ports.systematics import (  # noqa: E402
 # point). Every constant and helper below comes from it — the ANS-1 rule.
 _EX20 = _REPO_ROOT / "examples" / "ports" / "02_package_sparameter_sweep.py"
 sys.path.insert(0, str(_EX20.parent))
-_ex20 = __import__("02_ports_02_package_sparameter_sweep")  # noqa: E402  (leading digit)
+_ex20 = __import__("02_package_sparameter_sweep")  # noqa: E402  (leading digit)
 
 FREQUENCY_HZ = _ex20.FREQUENCY_HZ
 OMEGA = _ex20.OMEGA
