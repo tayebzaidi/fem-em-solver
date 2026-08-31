@@ -3968,6 +3968,37 @@ contamination", because neither cheap fixture is magnetically dominated.
 >   eat. Step 3a″ re-runs the module once, instrumented with `-s` so a second
 >   overrun lands with its phase timeline; the ceiling stays 570 s per §5.1.
 >   known-issues entry amended in the same commit.
+> * **Step 3a″ executed 2026-08-31 12:00 slot — 🟡 NEGATIVE RESULT, and the
+>   timeline it was written to produce is on record.** Second **exit 124 at
+>   571 s** on the item's command verbatim plus `-s`
+>   (`20260831T170038Z_TH-13-step3a2-coil-degree2-rerun.log`), ceiling
+>   **unchanged**, not retried a third time. The `-s` prints refute the mesh
+>   hypothesis *on the failing run itself*: **mesh 4.3 s, 138 490 cells**
+>   (record), full cost probe emitted (162 558 → 881 476 DOFs, 5.42×;
+>   projection 47.51 GiB vs the 102.40 GiB threshold; under cap), then SIGTERM
+>   inside the degree-2 pair. A second, cheap run partitions the window —
+>   `TH12_STEP2_MODE=probe`, the same module through the degree-1 pair and the
+>   probe, **8 passed / 6 skipped / exit 0 / 49 s**
+>   (`20260831T171059Z_TH-13-step3a2-coil-degree2-probe-phase.log`, standard
+>   tier). **Pre-degree-2 phase = 46.8 s** (mesh 4.1 s + solves 20.6 + 20.5 s),
+>   so the **degree-2 pair alone consumed ≥ 524 s of the 571 s** against the
+>   ≈ 496 s it took inside the 543 s whole-module record of 2026-08-18: a
+>   **≥ 5.6% regression confined to the degree-2 factorization**, with the mesh
+>   and the degree-1 pair unchanged. **Part of the owed claim is now measured:**
+>   at degree 1 on the default path, after 3a, the mesh test asserts 138 490
+>   cells, the ΔR control reproduces at **+1.5838% vs +1.5834% → +0.00039 pp**
+>   (floor 0.01 pp), and the complex-power identity residuals read
+>   **8.4704e-15 / 3.7068e-15** against the unloosened 1e-9 bound
+>   (`P_loss` +1.3876226e-01 W loaded vs +0.0000000e+00 W free) — step 3a moved
+>   **no degree-1 coil number**. **Still unverified:** the two `[loaded-2]` /
+>   `[free-2]` degree-2 identity reds, unobserved since 2026-08-18; step 3a
+>   stays **🟡** and the known-issues entry stays open. The entry's claim that
+>   probe mode "does not fit either" is **corrected by measurement** (49 s vs a
+>   180 s ceiling). **Disposition is the review's, now with data:** split the
+>   module so the degree-2 pair is its own heavy-tier run with real margin, or
+>   accept the degree-2 identities as unobservable in a scheduled slot and gate
+>   the module in probe mode. Mesh caching is dead (worth 4 s); a coarser rung
+>   moves the +1.5834% record.
 > * **Step 4 ruling 2026-08-31 10:30 — the step-1′ precondition red is
 >   re-pointed, not loosened (§9 item 6, spare).** The 03:00 review held the
 >   default-path red "until a review rules on it with 3a's numbers in hand";
@@ -6285,7 +6316,19 @@ substitution stays the fallback — the 12:00 entry's proposal to invert
 that is declined until the denial is understood; it is on the dashboard as
 an operator FYI.
 
-1. **`TH-13` step 3a″ — the owed coil regression re-run, instrumented
+1. 🟡 **ATTEMPTED 2026-08-31 12:00 slot — negative result delivered, item
+   closed for this queue; the disposition is the review's.** Second exit 124
+   at 571 s with the ceiling unchanged and no third retry; the `-s` timeline
+   and a 49 s probe-mode partition show the **degree-2 pair alone** costs
+   ≥ 524 s of the 571 s (mesh 4.3 s, degree-1 phase 46.8 s and green). The
+   degree-1 half of the owed claim is now measured (ΔR +0.00039 pp of record,
+   identity residuals 8.4704e-15 / 3.7068e-15); the two degree-2 reds stay
+   unverified. See the §7 step-3a″ bullet and the amended known-issues entry.
+   **Do not re-queue this command as written** — the next move is a module
+   split or a probe-mode gate, which the review must choose.
+   The original item text follows, unedited, as the record of what was asked:
+
+   **`TH-13` step 3a″ — the owed coil regression re-run, instrumented
    (standard tier by content, one heavy-length command, complex, `-n 8`;
    independent; scoped this review after the 10:30 diagnosis correction —
    see the §7 step-3a″ bullet and the amended known-issues entry).**

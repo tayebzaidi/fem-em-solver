@@ -17043,3 +17043,100 @@ question is the honest next one, and nothing here answers it: a convergence
 rung (a second mesh at the same frequency) would be the first evidence that
 `|B₁⁺|` itself, not just its symmetry, is resolved. Both are a review's to
 scope. Slot cost: ~50 of 60 minutes, ~3.5 of them compute.
+
+## 2026-08-31T17:20Z — `TH-13` step 3a″ — **incomplete** (12:00 CDT implementer slot)
+
+**Item.** §9 item 1, taken in order, tree clean at `d4e109a`, container Up 5
+days (`memory.max` 137438953472, zero stray `python3`, load 0.47).
+
+**What was tried.** The item's command **verbatim** plus `-s`:
+`TH12_STEP2_MODE=full`, container-side `timeout -k 30 570` **unchanged**,
+`-n 8`, complex build, Bash-tool timeout 660000, foreground.
+
+**Outcome: a second exit 124 at 571 s — and this time the log says where the
+time went.** `20260831T170038Z_TH-13-step3a2-coil-degree2-rerun.log`. The `-s`
+prints all land before the kill: **mesh 4.3 s, 138 490 cells** (record 138 490;
+`near 0.005`, skin depth 15.92 mm, 3.18 cells/δ), then the full cost probe —
+162 558 → 881 476 DOFs (5.42×), degree-1 summed peak RSS 7.06 GiB of which
+1.71 GiB baseline, projection 47.51 GiB at exponent 1.271 against the
+102.40 GiB threshold, **VERDICT under cap** — then PETSc signal 15 inside the
+degree-2 pair on ranks 0 and 4. The mesh-time hypothesis is refuted **on the
+failing run itself**, not merely by reading other logs, which is exactly what
+the instrumentation was scoped to settle.
+
+**The partition (the second command, and the reason this slot is worth
+reading).** The item asked for a phase timeline; `-s` alone gives only the mesh
+number, because the module prints nothing between the cost probe and the end of
+the degree-2 pair. So I ran the same module once more at
+`TH12_STEP2_MODE=probe`, which takes the fixture through mesh + degree-1 pair +
+probe and returns before degree 2:
+`20260831T171059Z_TH-13-step3a2-coil-degree2-probe-phase.log`, **8 passed,
+6 skipped, exit 0, 49 s** (pytest 46.8 s), standard tier, ceiling 180 s. This
+is verification-only — nothing under `src/` or `tests/` moved — and it is not a
+retry of the killed command.
+
+**Measured partition of the 571 s:**
+
+| phase | this slot | record |
+|---|---|---|
+| mesh | 4.1 / 4.3 s | 4.5 s (08-31 11:02Z), 4.8 s (08-27) |
+| degree-1 pair | 20.6 s + 20.5 s | — |
+| pre-degree-2 total | **46.8 s** | — |
+| degree-2 pair | **≥ 524 s, did not finish** | ≈ 496 s (inside the 543 s module of 08-18) |
+
+The regression is **≥ 5.6% and confined to the degree-2 factorization**. The
+mesh and the degree-1 pair are unchanged. Nothing ate a mesh; the module has no
+margin at degree 2 and this box is now on the wrong side of it.
+
+**What is now measured that was previously only inferred.** Green on this
+commit, at degree 1, on the default `project_source=True` path, after `TH-13`
+step 3a landed: the mesh test asserts **138 490 cells**; the degree-1 ΔR control
+reproduces its record at **+1.5838% vs +1.5834% → +0.00039 pp** against the
+0.01 pp floor; complex-power identity residuals **8.4704e-15 (loaded) /
+3.7068e-15 (free)** against the unloosened 1e-9 bound; `P_loss`
+**+1.3876226e-01 W** loaded vs **+0.0000000e+00 W** free; the cost probe prices
+degree 2 under cap. **Step 3a moved no degree-1 coil number** — that half of the
+owed claim is now a measurement rather than an inference from control (b)'s
+bit-identity.
+
+**What is still unverified.** The two `[loaded-2]` / `[free-2]` degree-2
+identity reds at 1e-9, unobserved since 2026-08-18. They stay red on `main` by
+assumption. `TH-13` step 3a stays **🟡**; the known-issues entry stays **open**.
+
+**Correction to that entry, by measurement.** Its `Not` row asserted that
+`TH12_STEP2_MODE=probe` "does not fit either" because it still builds the same
+mesh. It fits with 3.7× to spare (49 s vs 180 s) — the mesh was never the
+expensive part. A probe-mode row is therefore a real standing regression guard
+for everything except the two degree-2 identities.
+
+**Discipline.** The ceiling was **not** raised, the `full` command was **not**
+retried a third time, no assertion was loosened, and no test or `src/` file was
+touched.
+
+**Docs.** known-issues entry heading amended and extended with the two logs,
+the partition table and the `Not`-row correction; §7 `TH-13` gains a step-3a″
+result bullet; §9 item 1 annotated 🟡-attempted with the original item text kept
+verbatim for the audit. Two `run_and_log` logs and their `test-results.md` rows
+committed with the above.
+
+**Denials / anomalies.** One: the first harness invocation was denied because I
+wrote it as an absolute path
+(`/home/taz5297/.../scripts/testing/run_and_log.sh`) — the allowlist entry is
+the **repo-relative** `scripts/testing/run_and_log.sh *`. Re-issued relative and
+it ran. No allowlist change needed; noting it so the next session does not spend
+a minute on it. No container wedge; both windows returned footers; zero stray
+`python3` afterwards.
+
+**Next-attempt hypothesis (for the review).** The disposition is now a two-way
+choice, and the data picks against the other two. (a) **Split the module** —
+`test_coil_loading_degree2.py` currently hangs 14 tests off one module-scoped
+fixture that does mesh + both degree-1 solves + both degree-2 solves, so one
+570 s ceiling has to cover all of it; moving the degree-2 pair into its own
+heavy-tier module (1200 s, ~2.2× the measured cost) makes both halves
+observable and moves no record. (d) **Gate in probe mode** and accept the
+degree-2 identities as unobservable in a scheduled slot — cheap and honest, but
+it retires a red without ever re-reading it. Dead: mesh caching (worth 4 s of
+571 s); a coarser degree-2 rung moves the +1.5834% record and the step-4 bracket
+with it. My reading is (a): 49 s of the module is already a usable guard, and
+the remaining ≥ 524 s is one factorization that a heavy tier can hold with
+margin. Slot cost: ~35 of 60 minutes, ~10.4 of them compute.

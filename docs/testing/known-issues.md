@@ -3590,7 +3590,7 @@ build, `TH12_STEP2_MODE=full`, 138 619 cells at 10 MHz).
 | **`TH-13` step-2 reading (2026-08-31, `20260831T021154Z_TH-13-step2.log`, same module, 1 failed / 15 passed / 1 skipped, exit 1, 32 s at `-n 2`) — DISPOSITION: (A) HOLDS. The injector is the degree-1-only, `H¹₀`-only source projection.** | The pre-registered identity `‖∇χ − c∇φ‖/‖∇χ‖ ≤ 1e-6` reads **2.970e-12 / 2.640e-11** (1 MHz, degrees 1/2) and **3.697e-13 / 2.586e-12** (10 MHz) — round-off at every row, four orders inside the bar, with the load-bearing probe firing exactly as pre-registered (`c` mistuned by 1.1× moves the residual to **1.000e-01** on all four rows, so the reading is not insensitive to `c`). `c` was built from the form's own coefficients and agrees with `−1/(σ + jωε₀εᵣ)` to `|c|·|σ + jωε| = 1.000000000` at both frequencies; its magnitude moves only 1.425834 → 1.428544 across a decade of ω, which **is** step 1′'s frequency-flatness, now explained rather than observed. **(B), recorded not gated — the mechanism carries the whole effect:** the gradient part of `E` accounts for **99.98%** of the measured `W_e` at degree 1 and **99.9997%** at degree 2 (1 MHz; 98.24% / 99.97% at 10 MHz), and the residue grows across order by `‖P_∇₂J′‖/‖P_∇₁J′‖` = **8.049884** at *both* frequencies — whose square, **64.8**, is the 63.7× degree-2 `W_e` lift step 1 measured. So the degree-2 electric energy this entry calls "spurious" is, to four digits, the drive's unremoved gradient residue divided by `(σ + jωε)`: there is no free "ungauged null-space mode" (`k² ≠ 0` pins it), and the ungauged-second-order-gradient-space story in the "Cause" row above is **superseded**. **Projection control (`PORT-1` step 2d/2e precedent):** an extra `project_source=False` degree-1 solve reads `‖P_∇₁J‖/‖J‖` = **7.589863e-02** against the projected drive's **1.298386e-02** — `remove_gradient_content` removes 5.8× of the CG1 content and leaves the rest, which is exactly the non-`H¹₀` part a PMC box still tests. **Disposition of this entry:** the diagnosis is closed, the *fix* is not — a degree-/boundary-matched projection is `TH-13` step 3, a `src/` change a review prices and then re-measures on the coil (where `TH-12` step 2 read 229×). Until it lands this entry **stays open**, the two degree-2 identity tests stay failing at the unloosened 1e-9 bound, and no coil number moved. The step-1′ precondition assert also stays red on the 1 MHz row — a deliberate red held per §7, not this step's to retire. |
 | **`TH-13` step-3a reading (2026-08-31, `20260831T094852Z_TH-13-step3a-final.log`, same module, 1 failed / 18 passed / 1 skipped, exit 1, 37 s at `-n 2`) — THE FIX LANDS, AND IT DOES NOT REACH THIS ENTRY'S FIXTURE.** | The matched projection is now in `src/`: `remove_gradient_content` takes `degree` (default 1) and `pin_exterior` (default `True`), and `TimeHarmonicSolver.solve(project_source="matched")` sets them from the solve's own degree and boundary mode. On the loop fixture it does exactly what step 2's identity predicted. **(i)** `‖P_∇ₚJ′‖/‖J′‖` falls from **1.298386e-02** (degree 1) and **1.045186e-01** (degree 2) to **8.109635e-17** and **1.790460e-16** — a separation of **1.601e+14×** / **5.838e+14×** against the pre-registered ≤ 1e-8 and ≥ 1e3× bands. **(ii)** the gradient share of `W_e` falls from 99.98% / 99.9997% to **4.618447e-23** / **3.109722e-21** (1 MHz) and **4.390171e-25** / **2.738225e-23** (10 MHz), against ≤ 1e-6; and `W_e` itself collapses from 5.544787e-19 → **9.856327e-23 J** (degree 1) and 3.592428e-17 → **9.349492e-23 J** (degree 2) at 1 MHz, i.e. to 0.018% and 2.6e-4 % of record against the pre-registered ≤ 2% / ≤ 1%. **Recorded, not gated:** the matched degree-2/degree-1 `W_e` ratio is **9.485777e-01×** where the default path's was 63.7× — the 63.7 *was* the residue, and what is left is the solenoidal electric energy of an unconverged 1 405-cell loop, cross-order-flat. `W_e/W_m` under `"matched"` is 3.424858e-06 / 2.630270e-06 at 1 MHz (the step-1′ precondition is **not** re-asserted there); `\|Im P\|/Re P` = 0.000e+00 on every matched row. **Default path unmoved:** control (b) — PEC at degree 1, where `"matched"` *is* `True` — reads `W_e` = 5.995936714066138e-23 J on both paths, **0.000e+00 relative**; and every step-1/1′/2 assertion above reproduces to the digit (residuals 2.970e-12 / 2.640e-11 / 3.697e-13 / 2.586e-12, mistuned 1.000e-01, `‖P_∇₂J′‖/‖P_∇₁J′‖` = 8.049884, unprojected control 7.589863e-02, `POST-5` 1.199162e-06 W). `test_dodd_deeds_projected_drive.py` re-run green, **15 passed / exit 0 / 79 s** (`20260831T093558Z_TH-13-step3a-dodd-regression.log`), matching its 2026-08-27 record. **THIS ENTRY STAYS OPEN, and 3a cannot close it:** the lumped-sheet birdcage drive is a *surface* term with `current_density=None` and `project_source=False` (`ports/lumped.py:429`), so the matched projection never touches the coil's 229× — that residue is the sheets' own discrete divergence closed by the phantom's σ, and whether it should be removed at all is a formulation ruling for the weekly review (a possible step 3b). The two degree-2 coil identity tests stay failing at the unloosened 1e-9 bound, **unverified on this commit** — see the entry below; the step-1′ precondition red also stays on the default path. |
 
-### `test_coil_loading_degree2.py` no longer returns inside its 570 s ceiling (exit 124 at 571 s, 2026-08-31): the full module ran in 543 s on 2026-08-18, a 27 s margin something ate (`TH-13` step 3a; the original "mesh no longer builds" diagnosis corrected by the 10:30 review — the mesh is not the suspect)
+### `test_coil_loading_degree2.py` no longer returns inside its 570 s ceiling (exit 124 at 571 s, **twice** on 2026-08-31): the full module ran in 543 s on 2026-08-18, a 27 s margin something ate (`TH-13` steps 3a / 3a″; the original "mesh no longer builds" diagnosis corrected by the 10:30 review and then refuted by measurement at 17:00Z — **the cost is the degree-2 pair alone, ≥ 524 s of the 571 s**; the mesh is 4.3 s and the degree-1 phase is green in 46.8 s)
 
 **Verified at the step-3a working tree, 04:38 implementer slot,
 `20260831T093807Z_TH-13-step3a-coil-degree2-regression.log`** (exit **124**,
@@ -3604,6 +3604,61 @@ build, `TH12_STEP2_MODE=full`, 138 619 cells at 10 MHz).
 | **Not** | **Not** to be disposed of by raising the ceiling: CLAUDE.md §5.1 says overrun ⇒ kill and shrink, and this module has no cheap variant — `TH12_STEP2_MODE=probe` skips the degree-2 solve but still builds this same mesh first, so it does not fit either. Not evidence about the degree-2 identity bound, which was not reached. |
 | **Consequence right now** | `TH-13` step 3a owed two regression re-runs; `test_dodd_deeds_projected_drive.py` ran green (15 passed / 79 s) and **this one did not run at all**, so the claim "the two degree-2 coil identity tests still fail at 1e-9 exactly as before" is *unverified on this commit*. The direct evidence that the default path is unmoved is control (b)'s bit-identity (0.000e+00 relative), the dodd-deeds module, and the fact that the diff's default branch is the old code verbatim — strong, but not the same thing as the measurement. |
 | **Fix** | The 10:30 review discharged the entry's option (a) by reading — the two logs above price the generator at ~5 s — and scoped the live fix as **`TH-13` step 3a″ (§9 item 1)**: one instrumented re-run with `-s` at the unchanged 570 s ceiling. Green (exit 1 with exactly the two degree-2 identity reds) closes this entry and re-verifies the owed claim; a second exit 124 lands with a phase timeline, and the disposition (cached mesh / coarser rung / module split — each moves a record) becomes a review decision made with data. |
+
+**Step 3a″ reading, 12:00 implementer slot 2026-08-31 — a SECOND exit 124 at
+the same 571 s, and the phase timeline now apportions the window: the cost is
+entirely the degree-2 pair, and the pre-degree-2 phase is green and cheap.**
+Two runs, both `-n 8`, complex build, ceiling unchanged at `timeout -k 30 570`:
+
+- `20260831T170038Z_TH-13-step3a2-coil-degree2-rerun.log` — the item's command
+  verbatim plus `-s`, `TH12_STEP2_MODE=full`. **Exit 124 at 571 s**, the same
+  wall as 04:38. The `-s` prints land: **mesh 4.3 s, 138 490 cells** (record
+  138 490; `near 0.005`, skin depth 15.92 mm, 3.18 cells/δ), then the full cost
+  probe (162 558 → 881 476 DOFs, 5.42×; degree-1 summed peak RSS 7.06 GiB;
+  projection 47.51 GiB against the 102.40 GiB threshold; **VERDICT: under
+  cap**), then `SIGTERM` inside the degree-2 pair. The mesh-time hypothesis is
+  now **refuted by direct measurement on the failing run itself**, not only by
+  reading other logs.
+- `20260831T171059Z_TH-13-step3a2-coil-degree2-probe-phase.log` — the same
+  module at `TH12_STEP2_MODE=probe`, which runs mesh + the degree-1 pair + the
+  probe and stops before degree 2. **8 passed, 6 skipped, exit 0, 49 s**
+  (pytest's own 46.8 s), standard tier.
+
+**The partition.** Pre-degree-2 phase = **46.8 s** (mesh 4.1 s + degree-1
+solves **20.6 s + 20.5 s** + probe). So in the killed run the **degree-2 pair
+alone consumed ≥ 524 s of the 571 s and did not finish**, whereas on 2026-08-18
+the whole module finished in 543 s — i.e. the degree-2 pair then took ≈ 496 s.
+The regression is **≥ 5.6% on the degree-2 factorization only**; the mesh
+(4.1–4.3 s vs the 4.5 / 4.8 s records) and the degree-1 pair are unchanged.
+Nothing "ate" a mesh; the module simply has no margin at degree 2 and this box
+is now on the wrong side of it.
+
+**This corrects the `Not` row above.** `TH12_STEP2_MODE=probe` was asserted
+there to "not fit either" because it still builds the same mesh. Measured, it
+fits with 3.7× to spare (**49 s** against a 180 s standard ceiling) — the mesh
+was never the expensive part. That makes a probe-mode row a real standing
+regression guard for everything except the two degree-2 identities.
+
+**What this re-verifies, and what it does not.** Green on this commit at
+degree 1, on the default (`project_source=True`) path, after `TH-13` step 3a:
+the mesh test asserts **138 490 cells**; the degree-1 control reproduces its
+record at **+1.5838% vs +1.5834% ΔR deviation → +0.00039 pp** against the
+0.01 pp floor; the degree-1 complex-power identity residuals read **8.4704e-15
+(loaded) / 3.7068e-15 (free)** against the unloosened 1e-9 bound; `P_loss`
+**+1.3876226e-01 W** loaded vs **+0.0000000e+00 W** free; the cost probe
+prices degree 2 under cap. So step 3a moved **no degree-1 coil number** — that
+part of the owed claim is now measured, not inferred. **Still unverified:** the
+two `[loaded-2]` / `[free-2]` degree-2 identity reds at 1e-9. They stay red on
+`main` by assumption, and no run since 2026-08-18 has observed them.
+
+**This entry stays open.** Per §9 item 1 the ceiling was **not** raised and the
+`full` command was **not** retried a third time. The disposition is a review
+decision, and it now has data: (a) split the module so the degree-2 pair is its
+own heavy-tier run with a real margin; (b) cache the mesh (saves 4 s — worthless
+on this evidence); (c) a coarser degree-2 rung, which moves the +1.5834%
+record; or (d) accept the degree-2 identities as unobservable in a scheduled
+slot and gate the module in probe mode. The measured partition says (a) or (d);
+(b) is dead.
 
 ### ✅ RETIRED 2026-08-11 — "unexplained" mid-command termination of the logging harness was the background-and-end-turn trap (2026-08-08, 15:00 and 19:30 implementer slots)
 
