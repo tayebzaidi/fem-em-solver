@@ -118,6 +118,42 @@ CONTROL_MIN_MISMATCH = C4_COVARIANCE_BAND
 # evaluator: the centre purity lines below.
 CENTRE_POINT = np.zeros((1, 3), dtype=np.float64)
 
+# ---------------------------------------------------------------------------
+# This step's own records — exported so that a downstream reader reproduces them
+# instead of restating the literals.
+# ---------------------------------------------------------------------------
+#
+# Measured by this module's first green run, `20260831T033704Z_WF-6-step2.log`
+# (log lines 4697–4706) on the 116 085-cell fixture at degree 1, 10 MHz, CG1
+# estimator, 51 of 51 phantom centroids.  `WF-6` step 3's SAR module and `EX-39`
+# both read the same superposition path, and the 2026-08-31 10:30 review asked
+# that the next touch of this module export them rather than leave each caller
+# to copy the numbers out of the log.
+#
+# **These are records, not bands.**  The gates above assert
+# ``C4_COVARIANCE_BAND``; a record reproduction is the separate check that a
+# caller is standing on *this* fixture and *this* superposition, which the 5%
+# band (5× of headroom on (a)) would not catch on its own.
+STEP2_IDENTITY_RECORDS = {
+    "(a) C4 |B1+|_ccw(Rx) vs |B1+|_ccw(x)": 0.9818e-2,
+    "(b) mirror |B1-|_cw(Mx) vs |B1+|_ccw(x)": 0.8087e-2,
+}
+
+# The mis-paired control's measured size.  The *assertion* on it stays a lower
+# bound (``CONTROL_MIN_MISMATCH`` above) — how badly the wrong pairing misses is
+# a property of the coil's polarisation purity, not something pre-registered —
+# but a reproduction of the measured value is still evidence the two senses are
+# being told apart in the same way.
+STEP2_CONTROL_MISMATCH = 95.1975e-2
+
+# Reported-and-ungated in this module and everywhere downstream (no converged
+# mesh, no real drive): the centre polarisation purity in each sense, the mean
+# ``|B₁⁺|_ccw`` at 1 V per port, and the CV over the 51 centroids.  Exported for
+# printing beside a fresh reading, never for a homogeneity claim.
+STEP2_CENTRE_PURITY = {"ccw": 127.9083, "cw": 0.0081}
+STEP2_MEAN_B1_PLUS_CCW_T = 7.976427e-08
+STEP2_CV_CENTROIDS = 2.7563e-2
+
 
 def _port_index(azimuth_deg: float, reference_deg: float, step_deg: float) -> int:
     """``k`` in ``e^{±jkπ/2}`` for a sheet at ``azimuth_deg``.

@@ -17315,3 +17315,85 @@ unblocked and independent of this one, and its imports now have a landed
 precedent for reading a CG1 map out of a projected phasor. `EX-40` (the Larmor
 ladder maps) stays behind it as the review scoped. Slot cost: ~40 of 60
 minutes, ~1.5 of them compute.
+
+---
+
+## 2026-08-31T21:45Z — `EX-39` — outcome: `complete` (16:30 CDT implementer slot)
+
+**Preflight.** `git status --short` showed ` M .claude/agents/auditor.md` and
+` M .claude/agents/plan-navigator.md` at session start — **stale index stat
+entries, not a dirty tree**: `git diff` was empty on both, and a second
+`git status` after the diff refreshed the index reported clean. No anomaly
+entry, no parking; the tree was clean on `main` @ `83e71ef`. Container Up
+5 days, image 0.11. No `attempt/*` or `recovered/*` branch.
+
+**Item taken.** §9 On deck item 4 (items 1–3 already marked attempted/done by
+the 12:00 / 13:30 / 15:00 slots): `EX-39` — `ports:7`, the quadrature drive in
+ParaView. Executed as written; no fallback, no rescope.
+
+**What was built.** `examples/ports/07_birdcage_b1_quadrature_map.py` + the
+same-stem guide. Four `_solve_driven` calls on `build_four_port_sweep`'s
+fixture, the two rotation senses by exact superposition
+(`quadrature_phase_weights` → `_superpose_dg0`), `project_to_cg1` on each, and
+`_read_senses` on the three point sets (`x`, `Rx`, `Mx`). **The phase
+convention was not re-derived**: it is imported from step 2's module, which is
+the trap the §7 entry names (the sign slip that cost step 2 a window). One
+combined XDMF carries the ccw CG1 `B` phasor, `|B₁⁺|_ccw`, `|B₁⁻|_ccw` and
+`CellTags`.
+
+**Run.** `20260831T213402Z_EX-39.log`, host runner
+(`./run_examples.sh -e ports:7 -n 2 -t 400`), **Status 0, 81 s wall / 77.7 s
+in-script** at `-n 2`, complex build, standard tier (estimate was ≈ 100 s). One
+mesh 116 085 cells (ratio **1.000000**, 26.3 s), the gated sweep's four solves
+24.3 s, four field solves 6.2 / 6.4 / 5.8 / 6.0 s.
+
+**Measured, every anchor met on the first run:**
+
+| reading | this run | record | relative |
+| --- | --- | --- | --- |
+| (a) C4 invariance, `\|B₁⁺\|_ccw` | 0.9818% | 0.9818% | 9.619e-06 |
+| (b) mirror `\|B₁⁻\|_cw(Mx)` vs `\|B₁⁺\|_ccw(x)` | 0.8087% | 0.8087% | 3.585e-05 |
+| mis-paired control | 95.1975% | 95.1975% | asserted `> 5%` only |
+| gate (i) residual, P1 | 9.795751117e-03 | 9.795751e-03 | 1.195e-08 |
+| conductor-blind control | 7.517001e-02 | — | outside the 1e-2 band |
+| valid points | 51 / 51 | — | — |
+
+Both identities are inside the imported 5% band; the control is **118×**
+identity (b) on the same points, so the two rotation senses are resolved rather
+than smoothed together. The superposition premise is asserted, not assumed
+(one `Z_p = 50 Ω`, one `V_src = 1 V`, four solved drives equal to the
+fixture's), and the four quadrature slots (P1→k=0 … P4→k=3), the 90.000000°
+rotation and the mirror plane are all read off the fixture's own sheet
+azimuths. Printed and **ungated**, each beside step 2's record: centre purity
+127.9083 (ccw) / 0.0081 (cw), mean `|B₁⁺|_ccw` 7.976427e-08 T, CV 2.7563%.
+
+**Census.** `20260831T213623Z_EX-39-docrefs.log`: `RESULT: dead=42 guide=0
+stale=12 stale_severity=report exit=1`. **Zero `ports_07*` occurrences** in the
+whole log — neither dead nor stale — so the chunk's gate (`exit != 1` for *this
+example's artifacts*) is met; `dead=42` / `stale=12` is `EX-36`'s standing
+count, unchanged by this commit. `guide=0` on the first try (the `EX-15`
+heading names were taken from `EX-38`'s renamed guide, so this slot did not
+repeat the 15:00 slot's `guide=2`).
+
+**One repo change beyond the example, and why it is in scope.** The 2026-08-31
+10:30 review recorded a blemish against `WF-6` step 3: step 2's records are not
+exported by `test_birdcage_b1_quadrature.py`, so callers restate the literals,
+and "a future touch of that module should export them". This chunk is that
+touch — it is the second caller. Added `STEP2_IDENTITY_RECORDS`,
+`STEP2_CONTROL_MISMATCH`, `STEP2_CENTRE_PURITY`, `STEP2_MEAN_B1_PLUS_CCW_T`,
+`STEP2_CV_CENTROIDS`, each with its log line as provenance. **Constants only:
+no assertion, band or behaviour in that module moved**, and the example imports
+them rather than copying. `WF-6` step 3's SAR module still carries its own
+literals — switching it over is a one-line-per-constant edit for whichever slot
+next touches it, deliberately not done here (that module is red on five
+identities and is the review's to dispose of).
+
+**Denials / anomalies.** None. Both harness windows returned footers, no
+container wedge, no docker-socket denial on the host runner.
+
+**Next-attempt hypothesis (for the review).** Nothing owed on `EX-39`. The
+lineage's next rung is `EX-40` (`ports:8`, the 64/128 MHz maps), which the
+10:30 review wrote into §7 unqueued behind `EX-38`/`EX-39` — both have now
+landed, so it is queueable. §9 items 5 (`EX-36` legs, paired) and 6 (`TH-13`
+step 4, spare) are still open and untouched by this slot. Slot cost: ~48 of 60
+minutes, ~2 of them compute.

@@ -5181,7 +5181,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-35` | 16-leg **ring-gapped** birdcage mesh — the 32-ring-port high-pass layout (`GEO-20` step 2's newly gated capability, 2026-08-29: `EX-31`/`mesh:7` cuts the rings at 4 legs, `EX-33`/`mesh:8` cuts the **legs** at 16 — no example has the production high-pass topology at the production leg count; mesh-only, no solve, no port claim; commissioned 2026-08-29 10:30 review, §5.4 ramp) | ✅ | standard |
 | `EX-37` | **`ANS-1`/`ANS-3` are unrunnable since the 2026-08-28 rename**: `67e4c1c` rewrote the two cases' `__import__("01_dodd_deeds_coil_loading")` / `("02_package_sparameter_sweep")` strings along with their artifact basenames, and no module of the prefixed name exists — the `ANS-4` slot's observation, verified by the 18:00 review from `git log -S`; restore the two strings, re-run `ans:1` and `ans:3`, census (commissioned 2026-08-30 18:00 review; known-issues entry) | ✅ *(2026-08-31, 19:30 slot — negative control Status 1/3 s, both cases green, 63 s / 128 s)* | standard (≈ 5 + 70 + 131 s + census) |
 | `EX-38` | `\|B₁⁺\|` map of the loaded 4-leg birdcage at 10 MHz into ParaView (`WF-6` step 1's newly gated capability, 2026-08-30: the CG1-projected `\|B₁⁺\|` field under gates (i)/(ii) — no example writes a B₁⁺ field, `ports:4`/`ports:5` stop at S-matrices; the output-quantity angle; commissioned 2026-08-30 18:00 review, §5.4 ramp) | ✅ *(2026-08-31, 15:00 slot — `ports:6` green in 63 s: gate (i) 9.795751117e-03 vs record to 1.195e-08, CG1 C4 covariance 2.1870% vs the 5% band and the record to 1.643e-05, DG0 control 8.6516% to 3.227e-06, 51/51 valid, cell ratio 1.000000)* | standard (≈ 70 s) |
-| `EX-39` | Quadrature-driven birdcage: co- and counter-rotating `\|B₁⁺\|` / `\|B₁⁻\|` maps at 10 MHz into ParaView (`WF-6` step 2's newly gated capability, 2026-08-31: exact superposition of the four single-drive fields with `e^{∓jkπ/2}` phases, C4-invariance and the mirror identity at the CG1 floor — the **drive** angle: no example superposes ports or shows the two rotating senses side by side; `EX-38` is the single-drive map; commissioned 2026-08-31 03:00 review, §5.4 ramp) | ⬜ | standard (≈ 100 s) |
+| `EX-39` | Quadrature-driven birdcage: co- and counter-rotating `\|B₁⁺\|` / `\|B₁⁻\|` maps at 10 MHz into ParaView (`WF-6` step 2's newly gated capability, 2026-08-31: exact superposition of the four single-drive fields with `e^{∓jkπ/2}` phases, C4-invariance and the mirror identity at the CG1 floor — the **drive** angle: no example superposes ports or shows the two rotating senses side by side; `EX-38` is the single-drive map; commissioned 2026-08-31 03:00 review, §5.4 ramp) | ✅ *(2026-08-31, 16:30 slot — `ports:7` green in 81 s: identity (a) 0.9818% and (b) 0.8087% vs the 5% band and step 2's records to 9.619e-06 / 3.585e-05, mis-paired control 95.1975% at 118× identity (b), gate (i) 9.795751117e-03 to 1.195e-08, 51/51 valid, cell ratio 1.000000)* | standard (≈ 100 s) |
 | `EX-40` | `\|B₁⁺\|` maps at 64 and 128 MHz — the Larmor frequency ladder in ParaView (`WF-6` step 2b's newly gated capability, 2026-08-31: the five identities hold at 64/128 MHz on one mesh at 21.89 / 12.50 phantom cells/λ — the **frequency** angle: `EX-38`/`EX-39` are 10 MHz only, `EX-34` runs the ladder but stops at S-matrices; commissioned 2026-08-31 10:30 review, §5.4 ramp) | ⬜ | standard (≈ 130 s) |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
@@ -5692,7 +5692,7 @@ module until this one.
 > four-line `_b1_plus_cg1_field` saying so.
 
 **`EX-39` — the quadrature drive in ParaView: `|B₁⁺|` and `|B₁⁻|` of the
-loaded 4-leg birdcage at 10 MHz** ⬜ *(commissioned 2026-08-31 03:00 review,
+loaded 4-leg birdcage at 10 MHz** ✅ *(commissioned 2026-08-31 03:00 review,
 §5.4 ramp, from `WF-6` step 2 ✅.)* `WF-6` step 2 gated the quadrature drive
 by exact superposition (C4-invariance 0.9818%, mirror identity 0.8087% vs 5%)
 and read a centre polarisation purity of 127.9 — the number MRI cares about —
@@ -5737,6 +5737,37 @@ counter-rotating senses together.
 > **no** homogeneity/CV claim, no 64/128 MHz (`WF-6` step 2b), no SAR, no
 > absolute claim. **Negative result:** a record not reproducing is a
 > finding about the example path — known-issues, stop; no band moves.
+>
+> **Landed 2026-08-31 (16:30 slot), `20260831T213402Z_EX-39.log`, Status 0,
+> 81 s wall / 77.7 s in-script at `-n 2`, complex, host runner (no socket
+> denial).** `examples/ports/07_birdcage_b1_quadrature_map.py` + guide, every
+> band, record, helper and the fixture imported — `build_four_port_sweep`,
+> step 1's `_solve_driven` / `_power_shares` / `_sample_points` / `_rotate_z`,
+> and step 2's `quadrature_phase_weights` / `_superpose_dg0` / `_mirror_xy` /
+> `_port_index` / `_read_senses` / `_cv`, so the example path *is* the gate's
+> and the phase convention cannot drift from it. One mesh (116 085 cells, ratio
+> **1.000000**, 26.3 s), the gated sweep's four solves 24.3 s, **four** field
+> solves 6.2 / 6.4 / 5.8 / 6.0 s. Every anchor met: identity (a) C4-invariance
+> **0.9818%** and (b) mirror **0.8087%** against the imported 5% band, both
+> reproducing step 2's records to **9.619e-06 / 3.585e-05**; the mis-paired
+> control **95.1975%**, asserted `> 5%` and **118×** identity (b) on the same
+> points; gate (i) **9.795751117e-03** (step 1's record to 1.195e-08) with its
+> conductor-blind control at 7.517001e-02 outside the band; **51/51** points
+> valid in both senses on all three sets; the superposition premise asserted
+> (one `Z_p = 50 Ω`, one `V_src = 1 V`, four solved drives equal to the
+> fixture's); the four quadrature slots, the 90.000000° rotation and the mirror
+> plane all read off the fixture's sheet azimuths. Printed and ungated: centre
+> purity 127.9083 (ccw) / 0.0081 (cw), mean `|B₁⁺|_ccw` 7.976427e-08 T, CV
+> 2.7563% — each beside step 2's record. Census
+> (`20260831T213623Z_EX-39-docrefs.log`): `guide=0`, **no `ports_07_*` dead or
+> stale reference**; the standing `dead=42` / `stale=12` is `EX-36`'s and not
+> this chunk's. **One repo change beyond the example:**
+> `test_birdcage_b1_quadrature.py` now *exports* its records
+> (`STEP2_IDENTITY_RECORDS`, `STEP2_CONTROL_MISMATCH`, `STEP2_CENTRE_PURITY`,
+> `STEP2_MEAN_B1_PLUS_CCW_T`, `STEP2_CV_CENTROIDS`) rather than leaving them in
+> a log — the blemish the 2026-08-31 10:30 review noted against `WF-6` step 3,
+> now discharged for any future caller. Constants only; no assertion in that
+> module moved.
 
 **`EX-40` — the Larmor `|B₁⁺|` ladder in ParaView: 64 and 128 MHz maps of
 the loaded 4-leg birdcage** ⬜ *(commissioned 2026-08-31 10:30 review, §5.4
@@ -6527,7 +6558,19 @@ an operator FYI.
    magnitude. **Scope:** map + symmetry identity at 10 MHz only — no CV,
    no Larmor, no quadrature, no absolute claim. **Negative result:** a
    record not reproducing — known-issues, stop.
-4. **`EX-39` — `ports:7`, the quadrature drive in ParaView: `|B₁⁺|` and
+4. ✅ **DONE 2026-08-31 16:30 slot — chunk ✅, every anchor met on the first
+   run** (`20260831T213402Z_EX-39.log`, Status 0, 81 s): identity (a) **0.9818%**
+   and (b) **0.8087%** against the imported 5% band, both reproducing step 2's
+   records to 9.619e-06 / 3.585e-05; the mis-paired control **95.1975%**, 118×
+   identity (b); gate (i) 9.795751117e-03 (record to 1.195e-08); 51/51 valid in
+   both senses on all three point sets; cell ratio 1.000000, `reused_mesh`, the
+   superposition premise asserted; census `guide=0`, no `ports_07_*` dead or
+   stale reference. Also discharged in the same commit: the 10:30 review's noted
+   blemish — `test_birdcage_b1_quadrature.py` now exports its records instead of
+   leaving callers to copy literals out of a log. See the §7 `EX-39` entry. The
+   original item text follows, unedited:
+
+   **`EX-39` — `ports:7`, the quadrature drive in ParaView: `|B₁⁺|` and
    `|B₁⁻|` side by side (standard, complex, `-n 2`, host runner;
    independent of item 3 — the runner selects by filename prefix; §7
    entry, §5.4 ramp; carried from the 03:00 queue's spare slot
