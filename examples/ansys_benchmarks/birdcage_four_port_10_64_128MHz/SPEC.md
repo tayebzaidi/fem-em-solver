@@ -112,7 +112,8 @@ default, 20 unknowns/tet) — the order-sensitivity column. **Mixed Order is
 forbidden** (we have no per-element order and could not reproduce it).
 Please confirm the unknowns-per-tet figure AED prints in its matrix
 statistics for each run; the 6 / 20 correspondence is the standard basis
-definition and has not yet been confirmed against AED's own output.
+definition and has not yet been confirmed against AED's own output. See
+`examples/ansys_benchmarks/README.md` for the full correspondence table.
 
 ## Mesh guidance
 

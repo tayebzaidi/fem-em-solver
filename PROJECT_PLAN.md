@@ -5219,13 +5219,16 @@ next weekly review adjudicates the returned numbers.
 | `ANS-1` | Loop over a lossy slab at 10 MHz: runnable half of the first AED benchmark | ✅ *(example path restored 2026-08-31 by `EX-37` and re-run green, 63 s; the 08-09 record stands)* | standard |
 | `ANS-3` | Two coaxial gapped loops at 10 MHz: runnable half of the second AED benchmark (2-port Z/S; `ANS-2` reserved by §10 for the future B1+/SAR case) | ✅ *(example path restored 2026-08-31 by `EX-37` and re-run green, 128 s; the 08-16 / 08-26 records stand)* | heavy |
 | `ANS-4` | **Gapped four-leg birdcage, phantom-loaded, four lumped ports: 4×4 S-matrix at 10 / 64 / 128 MHz — runnable half** (commissioned 2026-08-30 02:15 weekly review; authoritative spec `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/SPEC.md`; the first independent absolute check of the coil-fed port model at a Larmor frequency) | ✅ **runnable half 2026-08-30** (`20260830T213415Z_ANS-4-run1.log`, Status 0, 125 s at `-n 2`) — all three gates on all three rungs of one 116 085-cell mesh (ratio 1.000000, `reused_mesh`); 10 MHz reproduces leg (d)'s 4×4 to **1.158e-10** (band 1e-6) and leg (d0)'s column to **2.568e-10** (band 1e-9); 64 / 128 MHz reproduce `PORT-11` steps 2/3 to worst **1.075e-03** / **6.755e-04** (band 1e-2); control separation **1.585460** vs 2e-3. **Operator's AED replication at both orders is now Waiting-on-you; adjudication is a weekly review's** | heavy (≈ 160 s at `-n 2`, one command; measured 125 s) |
-| `ANS-5` | **Pin the element-order correspondence in every ANS `SPEC.md`/`COMPARISON.md`** — our production `degree 1` is what HFSS calls **Zero Order**, not its default **First Order**; the specs do not say so, and a default-settings replication is a different discretization (operator observation, interactive session 2026-08-28) | ⬜ **RULED 2026-08-30 02:15 weekly review** — (a) AED runs at **Zero Order** (matched, the adjudication column) **and** at its default **First Order** (an order-sensitivity column); **Mixed Order forbidden**; our side stays at one order (none of options 1–3 as framed — option 1 for the adjudication column plus a second AED column, our side unchanged, step 3 **not** taken). (b) `ANS-1` **is in scope** for the spec line (state the Maxwell 3D formulation and order AED used). Already-returned numbers at an unrecorded order stand as an "order-unknown" column. Steps 1–2 are documentary and queueable; `ANS-4`'s spec already carries the wording | smoke (no compute) |
+| `ANS-5` | **Pin the element-order correspondence in every ANS `SPEC.md`/`COMPARISON.md`** — our production `degree 1` is what HFSS calls **Zero Order**, not its default **First Order**; the specs do not say so, and a default-settings replication is a different discretization (operator observation, interactive session 2026-08-28) | ⬜ **RULED 2026-08-30 02:15 weekly review** — (a) AED runs at **Zero Order** (matched, the adjudication column) **and** at its default **First Order** (an order-sensitivity column); **Mixed Order forbidden**; our side stays at one order (none of options 1–3 as framed — option 1 for the adjudication column plus a second AED column, our side unchanged, step 3 **not** taken). (b) `ANS-1` **is in scope** for the spec line (state the Maxwell 3D formulation and order AED used). Already-returned numbers at an unrecorded order stand as an "order-unknown" column. Steps 1–2 are documentary and queueable; `ANS-4`'s spec already carries the wording. **Steps 1–2 executed 2026-08-31 00:00 slot — 🟡:** README correspondence table + a *Basis / element order* paragraph in all three SPECs (four `*.md` files, +71/−3, no band or figure moved); the `ANS-1`/`ANS-3` `COMPARISON.md` rows need a **generator `.py`** edit the item's scope forbids — carried as a finding | smoke (no compute) |
 
 
-**`ANS-5` — pin the element-order correspondence in the benchmark specs** ⬜
+**`ANS-5` — pin the element-order correspondence in the benchmark specs** 🟡
 *(**RULED 2026-08-30 02:15 weekly review — see the table row above for (a)
-and (b); steps 1–2 are queued §9 item 5, step 3 is not taken.** Original
-entry follows unchanged.)* *(raised by the human operator, interactive session 2026-08-28, on noticing
+and (b); steps 1–2 are queued §9 item 5, step 3 is not taken.** **Steps 1–2
+executed 2026-08-31 00:00 slot** — the SPEC and README half landed on all
+three cases; the `ANS-1`/`ANS-3` `COMPARISON.md` half is a generator (`.py`)
+change this chunk's scope forbids, carried as a finding at the foot of this
+entry for a review to scope. Original entry follows unchanged.)* *(raised by the human operator, interactive session 2026-08-28, on noticing
 that Ansys defaults to First Order basis functions with Zero / Second / Mixed
 offered. **The weekly review owns §5.4 and must rule on (a) and (b) below
 before any step executes**; this entry is the drafting session's
@@ -5327,6 +5330,55 @@ recommendation, not a decision.)*
 > — that is §10's decision of 2026-08-23 and `TH-13`'s discriminator, and a
 > benchmark convenience is not the evidence class that moves it. It commissions
 > no new benchmark case. It does not touch `TH-13`.
+>
+> **Executed 2026-08-31 00:00 slot — steps 1–2 landed, documentary, no
+> compute (§9 item 4).** The ruling is now written into the specs. `git diff
+> --stat`: `examples/ansys_benchmarks/README.md` (+40),
+> `birdcage_four_port_10_64_128MHz/SPEC.md` (+3/−1),
+> `loop_over_lossy_slab_10MHz/SPEC.md` (+18/−1),
+> `two_torus_gap_ports_10MHz/SPEC.md` (+13/−1) — four files, `*.md` under
+> `examples/ansys_benchmarks/` only, **no band, tolerance, recorded figure or
+> physics claim moved**; the only numerals added are the 6 / 20 / 45
+> correspondence already stated in this entry. Written: the correspondence
+> table + the ruling (two AED columns, Mixed Order forbidden, unknowns/tet
+> confirmation asked, order-unknown disposition) once in the README as a
+> *Basis / element order — mandatory in every `SPEC.md`* section; a *Basis /
+> element order* paragraph in `ANS-3`'s *Frequency and solver* and `ANS-1`'s
+> *Solve and mesh guidance*, both pointing at the README table; `ANS-4`'s
+> existing paragraph given the same README pointer so the three read as one
+> form. `ANS-1`'s carries ruling (b) explicitly — Maxwell 3D, so it asks for
+> the **formulation** and the order AED used, and for an **order-unknown**
+> label if the solver offers no choice. Both SPEC *Quantities to export*
+> tables gained basis order / unknowns-per-tet in their Solve-metadata row.
+> **Documentary chunks execute no verification command; this one is the §5.2
+> no-op guard's licensed exception, ruled queueable by the 02:15 weekly
+> review — the done-when is the diff, and it is stated above.**
+>
+> **Finding carried to the review — step 1's `COMPARISON.md` half cannot be
+> done for `ANS-1`/`ANS-3` inside this chunk's scope.** Both files are
+> **generated whole** by their runnable halves
+> (`01_loop_over_lossy_slab_10MHz.py:145` and
+> `03_two_torus_gap_ports_10MHz.py:155` write the entire document, Solve
+> metadata table included), so a hand edit to either `.md` is silently
+> reverted by the next `ans:1` / `ans:3` run — and `EX-36` leg (ports + ans)
+> is queued to make exactly those runs. Adding the *Basis order* row and the
+> second AED column there is a **`.py` change**, which §9 item 4 forbids in
+> as many words ("do not touch the two `.py` files item 1 edits") and which
+> its `*.md`-only done-when excludes. Nothing was edited in those two files.
+> `ANS-4` needs no such change — its generator already emits `AED (Zero
+> Order)` / `AED (First Order)` columns and a `Basis order` row
+> (`04_birdcage_four_port_10_64_128MHz.py:192`). **Residual work, for a
+> review to scope:** a ≈ 10-line, two-file generator edit plus one `ans:1` +
+> `ans:3` re-run to regenerate both documents (≈ 70 + 131 s, one runner
+> window each). Until it lands the two older `COMPARISON.md` files carry a
+> single unlabelled `AED` column while their SPECs ask for two — the specs
+> are the authority the operator builds from, so the asymmetry misleads
+> nobody, but it is not the "one form" step 2 asks for.
+>
+> **Not done, deliberately:** step 3 (ruled not taken); the README's *Cases*
+> list, which still names only `ANS-1` and has been missing `ANS-3` and
+> `ANS-4` since each was commissioned — pre-existing drift, outside this
+> chunk's scope, flagged here for a review.
 **`ANS-1` ✅ 2026-08-09** *(scoped 2026-08-09, weekly review; full plan and
 closure narrative in `docs/planning/plan-archive.md`)*. Runnable half of
 the first AED benchmark, dispatched through the runner's `ans:` group
@@ -5776,7 +5828,24 @@ an operator FYI.
    chunk stays 🟡 with steps 1–2 ✅. **Negative result:** (a) or (b)
    missing — known-issues entry with both readings, keep the assert, stop;
    never widen.
-4. **`ANS-5` steps 1–2 — write the element-order ruling into the specs
+4. ~~**`ANS-5` steps 1–2 — write the element-order ruling into the specs.**~~
+   **DONE 2026-08-31, 00:00 slot** — four `*.md` files under
+   `examples/ansys_benchmarks/`, **+71/−3**, no band, tolerance, recorded
+   figure or physics claim moved (README +40, `ANS-1` SPEC +18/−1, `ANS-3`
+   SPEC +13/−1, `ANS-4` SPEC +3/−1): the 6 / 20 / 45 correspondence table
+   and the ruling stated once in the README, a *Basis / element order*
+   paragraph in each of the three SPEC solver sections (two AED columns,
+   Mixed Order forbidden, unknowns-per-tet confirmation asked), `ANS-1`'s
+   carrying ruling (b) — Maxwell 3D formulation + order, `order-unknown` if
+   the solver offers no choice — and both older SPECs' Solve-metadata export
+   rows extended. Documentary chunk: **no harness log, no negative control**,
+   as the item directs. **Finding:** step 1's `COMPARISON.md` half is
+   undoable for `ANS-1`/`ANS-3` in scope — both files are generated whole by
+   their runnable halves, so a hand edit is reverted by the next `ans:1` /
+   `ans:3` run; the row is a **`.py`** change this item forbids. ≈ 10 lines
+   in two generators + one re-run of each (≈ 70 + 131 s) for a review to
+   scope; `ANS-4` already complies. Original item text below, for the audit.
+   **`ANS-5` steps 1–2 — write the element-order ruling into the specs
    (smoke, **no compute**, `main`; independent; ruled 02:15 weekly review).**
    Step 1: a mandatory *Basis / element order* line in each `SPEC.md`
    solver section and a matching *Solve metadata* row in each

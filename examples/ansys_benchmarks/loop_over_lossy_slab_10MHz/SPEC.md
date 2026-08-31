@@ -81,6 +81,22 @@ near-cells per δ). Two solves, identical mesh settings:
 1. σ_slab = 100 S/m (the case above)
 2. σ_slab = 0 (replace slab material with air; geometry and mesh unchanged)
 
+**Basis / element order (`ANS-5` ruling, 2026-08-30):** our side is `degree = 1`
+Nédélec (`N1curl`, 6 unknowns per tetrahedron) = HFSS **Zero Order**. This case
+is a **Maxwell 3D eddy-current** solve, not an HFSS driven solve, so the basis
+dropdown is not the same control — but the case **is in scope** (ruling (b)):
+please **state the formulation and the element order AED actually used**, and
+run it **twice** where the solver offers the choice, reporting both columns:
+(a) **Zero Order** — the matched discretization, the adjudication column;
+(b) **First Order** (the AED default, 20 unknowns/tet) — the order-sensitivity
+column. **Mixed Order is forbidden** (we have no per-element order and could
+not reproduce it). Please confirm the unknowns-per-tet figure AED prints in its
+matrix statistics for each run; the 6 / 20 correspondence is the standard basis
+definition and has not yet been confirmed against AED's own output. If only one
+order is available for this solver, say so and label the column
+**order-unknown** rather than leaving it implicit. See
+`examples/ansys_benchmarks/README.md` for the full correspondence table.
+
 ## Quantities to export (both solves)
 
 | Quantity | Definition | Units |
@@ -89,7 +105,7 @@ near-cells per δ). Two solves, identical mesh settings:
 | X | Im Z at the coil terminals | Ω |
 | ΔR | R(σ=100) − R(σ=0) | Ω |
 | ΔX | X(σ=100) − X(σ=0) | Ω |
-| Solve metadata | element count, adaptive passes, final energy error | — |
+| Solve metadata | element count, adaptive passes, final energy error, **formulation, basis order and unknowns/tet** | — |
 
 Report all digits AED prints; do not round.
 

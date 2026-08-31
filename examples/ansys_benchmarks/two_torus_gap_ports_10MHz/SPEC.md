@@ -90,6 +90,17 @@ above (structure is ~λ/120 — electrically small is expected and fine; the
 comparison is FEM-vs-FEM on an identical problem, not a radiation study).
 Direct solver preferred.
 
+**Basis / element order (`ANS-5` ruling, 2026-08-30):** our side is
+`degree = 1` Nédélec (`N1curl`, 6 unknowns per tetrahedron) = HFSS **Zero
+Order**. Run AED **twice** and report both columns: (a) **Zero Order** — the
+matched discretization, the adjudication column; (b) **First Order** (the AED
+default, 20 unknowns/tet) — the order-sensitivity column. **Mixed Order is
+forbidden** (we have no per-element order and could not reproduce it). Please
+confirm the unknowns-per-tet figure AED prints in its matrix statistics for
+each run; the 6 / 20 correspondence is the standard basis definition and has
+not yet been confirmed against AED's own output. See
+`examples/ansys_benchmarks/README.md` for the full correspondence table.
+
 ## Mesh guidance
 
 Adaptive refinement at 10 MHz to ΔS ≤ 0.001, with initial seeding fine
@@ -105,7 +116,7 @@ h = 2.5 mm against the 10 mm wire diameter and resolves the gap boxes to
 | Z₁₁, Z₁₂, Z₂₁, Z₂₂ | complex Z-matrix at the two lumped ports | Ω |
 | S₁₁, S₁₂, S₂₁, S₂₂ | complex S-matrix renormalized to 50 Ω | — |
 | ‖S−Sᵀ‖/‖S‖ | reciprocity residual (Frobenius) — computable from the S entries; export the entries and we compute it | — |
-| Solve metadata | element count, adaptive passes, final ΔS, solve time | — |
+| Solve metadata | element count, adaptive passes, final ΔS, solve time, **basis order and unknowns/tet**, per basis order | — |
 
 The primary adjudication rows are **Im Z₁₂** (against the filamentary
 closed form ωM₁₂ = +1.241755 Ω and against our corrected estimate) and the

@@ -16663,3 +16663,69 @@ issued**.
   **step 2b** (the same two identities at 64/128 MHz on the `PORT-11` ladder,
   now unblocked by this landing) and **step 3** (SAR). `EX-38` (§9 item 6) can
   now also read `b1_minus` and print the purity number beside the map.
+
+## 2026-08-31T05:03Z — `ANS-5` steps 1–2 — **complete** (00:00 CDT implementer slot)
+
+- **Item.** §9 item 4, the first not-done entry (items 1–3 struck through by
+  the 19:30 / 21:00 / 22:30 slots). Documentary chunk, **no compute**, ruled
+  queueable by the 2026-08-30 02:15 weekly review. Preflight clean: tree
+  clean on `main`, container Up (4 days), no `attempt/*` or `recovered/*`.
+- **Done-when, met.** The item's own gate is the diff: `git diff --stat`
+  reads `examples/ansys_benchmarks/README.md` **+40**,
+  `birdcage_four_port_10_64_128MHz/SPEC.md` **+3/−1**,
+  `loop_over_lossy_slab_10MHz/SPEC.md` **+18/−1**,
+  `two_torus_gap_ports_10MHz/SPEC.md` **+13/−1** — **four files, +71/−3,
+  `*.md` under `examples/ansys_benchmarks/` only.** No band, tolerance,
+  recorded figure or physics claim moved; the only numerals introduced are
+  the 6 / 20 / 45 unknowns-per-tet correspondence already stated verbatim in
+  the §7 `ANS-5` entry. Nothing under `src/`, `tests/`, `scripts/`.
+- **Step 1 (template).** The correspondence table and the whole ruling now
+  live once in `examples/ansys_benchmarks/README.md` under *Basis / element
+  order — mandatory in every `SPEC.md`*: our `degree = 1` = HFSS **Zero
+  Order**, AED run **twice** (Zero Order = the matched adjudication column;
+  First Order = the default, order-sensitivity column), **Mixed Order
+  forbidden**, unknowns-per-tet confirmation requested from AED's matrix
+  statistics, already-returned numbers standing as an **order-unknown**
+  column, and the note that the HFSS side of the table is the standard basis
+  definition and is not yet confirmed against AED's output.
+- **Step 2 (retro-fill).** `ANS-3` gained a *Basis / element order* paragraph
+  in *Frequency and solver* — the `ANS-4` wording lifted, both now pointing
+  at the README table so the three cases read as one form. `ANS-1` gained the
+  same in *Solve and mesh guidance*, carrying **ruling (b)** explicitly: it is
+  a Maxwell 3D eddy-current solve, so the spec asks for the **formulation**
+  and the order AED used, asks for both orders where that solver offers the
+  choice, and asks for an explicit **order-unknown** label if it does not.
+  Both older SPECs' *Quantities to export* Solve-metadata rows extended with
+  basis order / unknowns-per-tet.
+- **Negative control.** None applies and none was invented — the item says so
+  in as many words for a documentary chunk. No harness log for the same
+  reason; §5.2's no-op guard is licensed here by the weekly review's ruling
+  that steps 1–2 are documentary and queueable.
+- **Finding for the review — step 1's `COMPARISON.md` half is undoable for
+  `ANS-1`/`ANS-3` inside this item's scope.** Both files are **generated
+  whole** by their runnable halves (`01_loop_over_lossy_slab_10MHz.py:145`,
+  `03_two_torus_gap_ports_10MHz.py:155` — the `path.write_text(f"""…""")`
+  covers the Solve-metadata table), so a hand edit to either `.md` is
+  silently reverted by the next `ans:1` / `ans:3` run — and `EX-36` leg
+  (ports + ans), now unblocked by `EX-37`, is queued to make exactly those
+  runs. The *Basis order* row and the second AED column are therefore a
+  **`.py`** change, which item 4 forbids in as many words ("do not touch the
+  two `.py` files item 1 edits") and which its `*.md`-only done-when
+  excludes. **I edited neither.** `ANS-4` needs nothing — its generator
+  already emits `AED (Zero Order)` / `AED (First Order)` and a `Basis order`
+  row (`04_birdcage_four_port_10_64_128MHz.py:192`). Residual work to scope:
+  ≈ 10 lines across the two generators plus one `ans:1` (≈ 70 s) and one
+  `ans:3` (≈ 131 s) re-run to regenerate both documents.
+- **Second, smaller finding.** `examples/ansys_benchmarks/README.md`'s *Cases*
+  list still names **only `ANS-1`** — `ANS-3` and `ANS-4` were never added
+  when they were commissioned. Pre-existing drift, outside this item's scope,
+  left untouched and flagged in the §7 entry.
+- **Docs.** §7 `ANS-5` header ⬜ → **🟡** and its table row updated; a full
+  execution record plus both findings appended to the entry. §9 item 4 struck
+  through with its original text kept for the audit. No known-issues change —
+  nothing ran, nothing went red.
+- **Denials / anomalies.** None.
+- **Next-attempt hypothesis.** Nothing to retry; `ANS-5` reaches ✅ when a
+  review prices the two-generator edit above (or rules the SPECs sufficient,
+  since the SPEC is what the operator builds from and it now asks for both
+  columns). The next slot takes §9 item 5, `EX-36` leg (th).
