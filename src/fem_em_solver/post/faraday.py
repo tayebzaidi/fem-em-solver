@@ -23,7 +23,7 @@ import numpy as np
 import ufl
 from dolfinx import fem
 
-__all__ = ["magnetic_flux_density_from_e", "b1_plus", "project_to_cg1"]
+__all__ = ["magnetic_flux_density_from_e", "b1_plus", "b1_minus", "project_to_cg1"]
 
 
 def _require_complex(function, what: str) -> None:
@@ -104,6 +104,23 @@ def project_to_cg1(b_dg0, *, name: str = "B_phasor_cg1", ksp_rtol: float = 1.0e-
     return projected
 
 
+def _rotating_component(b_complex, sign: float, what: str, name: str):
+    _require_complex(b_complex, what)
+    msh = b_complex.function_space.mesh
+    if b_complex.function_space.element.value_shape != (3,):
+        raise ValueError(
+            f"{what} wants the 3-vector B phasor, got value shape "
+            f"{b_complex.function_space.element.value_shape}"
+        )
+
+    s_dg = fem.functionspace(msh, ("DG", 0))
+    out = fem.Function(s_dg, name=name)
+    components = np.asarray(b_complex.x.array).reshape(-1, 3)
+    out.x.array[:] = np.abs(components[:, 0] + sign * 1j * components[:, 1]) / 2.0
+    out.x.scatter_forward()
+    return out
+
+
 def b1_plus(b_complex, *, name: str = "B1_plus"):
     """``|B₁⁺| = |B_x + jB_y| / 2`` as a DG0 scalar ``Function``.
 
@@ -112,17 +129,21 @@ def b1_plus(b_complex, *, name: str = "B1_plus"):
     complex array with zero imaginary part, so read ``.real`` after a point
     evaluation.
     """
-    _require_complex(b_complex, "b1_plus")
-    msh = b_complex.function_space.mesh
-    if b_complex.function_space.element.value_shape != (3,):
-        raise ValueError(
-            "b1_plus wants the 3-vector B phasor, got value shape "
-            f"{b_complex.function_space.element.value_shape}"
-        )
+    return _rotating_component(b_complex, +1.0, "b1_plus", name)
 
-    s_dg = fem.functionspace(msh, ("DG", 0))
-    out = fem.Function(s_dg, name=name)
-    components = np.asarray(b_complex.x.array).reshape(-1, 3)
-    out.x.array[:] = np.abs(components[:, 0] + 1j * components[:, 1]) / 2.0
-    out.x.scatter_forward()
-    return out
+
+def b1_minus(b_complex, *, name: str = "B1_minus"):
+    """``|B₁⁻| = |B_x − jB_y| / 2``, the counter-rotating component, as DG0.
+
+    The partner of :func:`b1_plus`: the circularly polarised component that
+    rotates *against* the nuclear precession and therefore does no transmit
+    work.  Their ratio is the polarisation purity a quadrature birdcage is
+    judged on — ideally ``|B₁⁺| ≫ |B₁⁻|`` in one drive sense and the reverse in
+    the other, and ``|B₁⁺| ≈ |B₁⁻|`` for a linearly polarised (single-port)
+    drive.  Added by `WF-6` step 2 (2026-08-30) with the quadrature
+    superposition that first needed it.
+
+    Same conventions as :func:`b1_plus`: DG0 vector phasor in, real magnitude
+    stored in a complex array out.
+    """
+    return _rotating_component(b_complex, -1.0, "b1_minus", name)

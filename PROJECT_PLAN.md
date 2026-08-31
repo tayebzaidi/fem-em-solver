@@ -4226,7 +4226,7 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 | `WF-3` | Quick-look phantom metrics report | ⚠️ | standard |
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
-| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved. Step 1d executed 2026-08-30 12:00 — the ruling landed in the code: `post.project_to_cg1` is the packaged production estimator and gate (ii) is the CG1 covariance identity at all three angles, **2.1870 / 2.1146 / 1.8911%** against the unmoved 5% band, controls holding (mis-rotated 23.2642%, DG0 column unmoved at 8.6516 / 9.5808 / 8.5970%). `19 passed` / Status 0 / 97 s; **step 1 is ✅ and the chunk is 🟡** — a symmetry identity only, no CV / homogeneity / absolute claim; steps 2–3 are a review's to scope. **Step 2 scoped 2026-08-30 18:00 review** — the quadrature drive by exact superposition of the four solved fields at 10 MHz, two symmetry identities (C4-invariance; the co/counter-rotating mirror identity `\|B₁⁺\|_ccw(x) = \|B₁⁻\|_cw(Mx)`) at the measured CG1 floor, and the first *ungated* CV / polarisation-purity figures; §9 item 3** | 🟡 | heavy (step 1 standard, complex) |
+| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved. Step 1d executed 2026-08-30 12:00 — the ruling landed in the code: `post.project_to_cg1` is the packaged production estimator and gate (ii) is the CG1 covariance identity at all three angles, **2.1870 / 2.1146 / 1.8911%** against the unmoved 5% band, controls holding (mis-rotated 23.2642%, DG0 column unmoved at 8.6516 / 9.5808 / 8.5970%). `19 passed` / Status 0 / 97 s; **step 1 is ✅ and the chunk is 🟡** — a symmetry identity only, no CV / homogeneity / absolute claim; steps 2–3 are a review's to scope. **Step 2 scoped 2026-08-30 18:00 review** — the quadrature drive by exact superposition of the four solved fields at 10 MHz, two symmetry identities (C4-invariance; the co/counter-rotating mirror identity `\|B₁⁺\|_ccw(x) = \|B₁⁻\|_cw(Mx)`) at the measured CG1 floor, and the first *ungated* CV / polarisation-purity figures; §9 item 3. Step 2 executed 2026-08-31 22:30 slot — **both identities green at the CG1 floor: (a) C4-invariance of the quadrature `\|B₁⁺\|` map **0.9818%** and (b) the mirror identity `\|B₁⁻\|_cw(Mx)` vs `\|B₁⁺\|_ccw(x)` **0.8087%**, against the unmoved imported 5% band, with the mis-paired control at **95.1975%**; `17 passed` / Status 0 / 96 s. Ungated and labelled: centre purity `\|B₁⁺\|/\|B₁⁻\|` **127.91** (ccw) / **0.0081** (cw) / **1.0006** (P1 linear), mean `\|B₁⁺\|` 7.976427e-08 T at 1 V per port, CV **2.7563%** (51 centroids) / **2.4577%** (96 ring points). `post.b1_minus` landed. **Steps 1–2 ✅, chunk stays 🟡** — symmetry identities on one fixture at 10 MHz, no homogeneity, absolute, tuning or Larmor claim** | 🟡 | heavy (step 1 standard, complex) |
 | `WF-7` | SAR10g hotspot identification | ⬜ | heavy |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 
@@ -4234,8 +4234,9 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 > physically meaningless numbers. The plumbing is fine and becomes useful the
 > moment `TH-1` lands.
 
-**`WF-6` — B1+ field mapping and homogeneity** 🟡 *(step 1 ✅ 2026-08-30 with
-step 1d; **step 2 scoped 2026-08-30 18:00 review** — bullet after step 1d;
+**`WF-6` — B1+ field mapping and homogeneity** 🟡 *(steps 1 and 2 ✅ — step 1
+2026-08-30 with step 1d, **step 2 ✅ 2026-08-31 22:30 slot** (0.9818% / 0.8087%
+against 5%, control 95.1975%, log `20260831T033704Z_WF-6-step2.log`);
 2b (64/128 MHz) and 3 (SAR) unscoped. Step 1 scoped 2026-08-29
 10:30 review. §10 subgoal 4 said the first B1+ chunk "can be scoped by the
 daily review the day `PORT-9` closes" — that was 08-25, `PORT-11` followed
@@ -4650,6 +4651,54 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 >     about the superposition path or the mirror assumption — record both
 >     readings in a known-issues entry, keep the assert, stop; never widen
 >     the band.
+>
+>     **Executed 2026-08-31, 22:30 slot — ✅, both identities green at the
+>     CG1 floor.** `post.b1_minus` landed beside `b1_plus` (shared private
+>     `_rotating_component`, exported from `post`), and
+>     `tests/validation/test_birdcage_b1_quadrature.py` built the two senses
+>     by superposing the four DG0 curls and projecting each through
+>     `project_to_cg1`. **17 passed / Status 0 / 96 s**, log
+>     `20260831T033704Z_WF-6-step2.log`.
+>     * **(a) C4-invariance 0.9818%** and **(b) mirror identity 0.8087%**,
+>       both against the **unmoved, imported** `C4_COVARIANCE_BAND = 5e-2` —
+>       i.e. inside step 1d's single-drive floor (2.19 / 2.11 / 1.89%) rather
+>       than merely inside the band, which is the right expectation for a sum
+>       of four fields each inside that floor. 51/51 points valid on all three
+>       image sets (`x`, `Rx`, `Mx`).
+>     * **Negative controls, both fired.** The mis-paired
+>       `|B₁⁺|_cw(Mx)` vs `|B₁⁺|_ccw(x)` reads **95.1975%** (asserted `> 5%`
+>       only); the P1 single drive's centre purity is **1.0006**, a linear
+>       polarisation splitting evenly between the senses exactly as it must.
+>     * **Reported, ungated, and labelled in the log as such:** centre
+>       `|B₁⁺|/|B₁⁻|` = **127.9083** (ccw) and **0.0081** (cw) — the
+>       polarisation-purity number MRI cares about, on one unconverged
+>       fixture; mean `|B₁⁺|_ccw` **7.976427e-08 T** at 1 V per port; **CV
+>       2.7563%** over the 51 centroids and **2.4577%** over step 1c's 96-point
+>       ring set. No homogeneity *claim* is made or entered in §2.
+>     * **The premise is asserted, not assumed:** a separate test reads the
+>       four specs' `port_impedance_ohm` and `drive_voltage_v` and the four
+>       solves' `source_voltage_v` and requires one value each — superposition
+>       is exact only because the operator is shared.
+>     * **A sign-convention error was made, measured and fixed before the
+>       commit, and the band never moved.** The first run
+>       (`20260831T033416Z_WF-6-step2.log`, Status 1) paired `e^{+jkπ/2}` with
+>       an azimuth-*increasing* `k`, which makes the gated sense the
+>       counter-rotating one: its centre purity read **0.0081** against the
+>       other sense's **127.91**, and both identities came back at **18.8192%
+>       / 20.2202%** — ~10× the CG1 floor, the signature of a ~2%
+>       discretisation error on a quantity suppressed ~120× by cancellation.
+>       In the `e^{jωt}` convention the sense `B₁⁺` reads is driven by a
+>       pattern that *lags* with azimuth, so the exponent sign was corrected by
+>       that derivation (the measurement is the confirmation, not the reason).
+>       Both readings are recorded in the module and in `attempts.md`.
+>     * **Owed re-runs, all green:** `ports:4` 76 s Status 0
+>       (`20260831T033900Z_…-examples-04.log`), `ports:5` 127 s Status 0
+>       (`…034019Z_…-examples-05.log`), doc-reference census `dead=53 guide=0
+>       stale=10` unmoved (`…034237Z_…-docrefs.log`; the `exit=1` is `EX-36`'s
+>       53, not this step's).
+>     * **Scope held.** 10 MHz, F-small, degree 1, superposition only. No
+>       simultaneous-source solve, no 64/128 MHz, no SAR, no absolute or
+>       tuning claim; §2 is not moved. Steps 1–2 ✅ and the chunk stays 🟡.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -5686,7 +5735,20 @@ an operator FYI.
    is not touched. **Negative result:** (A) failing is a formulation
    finding — degree-2 known-issues entry, stop; never invent a verdict
    band.
-3. **`WF-6` step 2 — the quadrature drive by exact superposition at
+3. ~~**`WF-6` step 2 — the quadrature drive by exact superposition at
+   10 MHz.**~~ **DONE 2026-08-31, 22:30 slot** — (a) C4-invariance
+   **0.9818%** and (b) the mirror identity **0.8087%** against the unmoved
+   imported 5% band, mis-paired control **95.1975%**, P1 linear centre purity
+   **1.0006**; `17 passed` / Status 0 / 96 s,
+   `20260831T033704Z_WF-6-step2.log`. Ungated: centre `|B₁⁺|/|B₁⁻|`
+   **127.9083** / **0.0081**, mean `|B₁⁺|` 7.976427e-08 T at 1 V per port, CV
+   **2.7563%** / **2.4577%**. `post.b1_minus` landed; `ports:4` 76 s and
+   `ports:5` 127 s green, census `dead=53 guide=0` unmoved. A first run
+   (`…033416Z`, Status 1) gated the counter-rotating sense by a phase-sign
+   slip and read 18.8192% / 20.2202% — corrected by derivation, band never
+   moved; both readings are journaled. **`WF-6` steps 1–2 ✅, chunk stays
+   🟡.** Original item text below, for the audit.
+   **`WF-6` step 2 — the quadrature drive by exact superposition at
    10 MHz (standard, complex, `-n 2`, `main`; independent; scoped this
    review — execute the §7 step-2 bullet as written).** `post/faraday.py`
    gains `b1_minus`; a new `tests/validation/test_birdcage_b1_quadrature.py`

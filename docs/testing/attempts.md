@@ -16598,3 +16598,68 @@ issued**.
   `‖P_∇ₚJ′‖/‖J′‖` to round-off and collapse the degree-2 `W_e` by ~64× on
   this fixture. It is a `src/` change the plan explicitly reserves for a
   review to price, and it owes a re-measurement on the coil's 229×.
+
+## 2026-08-31T03:45Z — `WF-6` step 2 — **complete**
+
+- **Slot.** Scheduled implementer run, 2026-08-30 22:30 CDT. Preflight clean:
+  `git status` empty, branch `main`, container Up. §9 item 3 was the first
+  On-deck item not done or blocked (items 1 `EX-37` and 2 `TH-13` step 2 were
+  struck through by the 19:30 and 21:00 slots).
+- **Built.** `post/faraday.py` gains `b1_minus` (`|B_x − jB_y|/2`, DG0 scalar)
+  beside `b1_plus`, both now on a shared private `_rotating_component`;
+  exported from `fem_em_solver.post`. New
+  `tests/validation/test_birdcage_b1_quadrature.py` imports step 1's
+  `b1_plus_map` / `cg1_estimator_table` fixtures, superposes the four DG0
+  curls with phases `e^{∓jkπ/2}` on the fixture's own azimuth index, projects
+  each sense through `post.project_to_cg1`, and reads both senses at the 51
+  centroids, their 90° rotation and their mirror images in port 1's plane.
+- **Measured (final run, `20260831T033704Z_WF-6-step2.log`, 17 passed /
+  Status 0 / 96 s, standard tier, `-n 2`, complex + `FEM_EM_REQUIRE_COMPLEX=1`,
+  `tests/environment` first).**
+  - (a) C4-invariance of `|B₁⁺|_ccw` under the 90° rotation: **0.9818%**.
+  - (b) mirror identity `|B₁⁻|_cw(Mx)` vs `|B₁⁺|_ccw(x)`: **0.8087%**.
+  - Both against the **imported, unmoved** `C4_COVARIANCE_BAND = 5e-2`, and
+    both *below* step 1d's single-drive CG1 floor (2.19 / 2.11 / 1.89%).
+  - Negative controls: mis-paired `|B₁⁺|_cw(Mx)` vs `|B₁⁺|_ccw(x)`
+    **95.1975%** (asserted `> 5%` only); P1 single-drive centre purity
+    **1.0006** (linear polarisation splits evenly, as it must).
+  - Record reproductions asserted: gate (i) P1 residual **9.795751e-03** at
+    rtol 1e-4; step 1d's three CG1 covariance records at rtol 1e-3.
+  - `b1_minus` export vs the after-evaluation magnitude: **0.000e+00**.
+  - Ungated, labelled: centre `|B₁⁺|/|B₁⁻|` **127.9083** (ccw) / **0.0081**
+    (cw); mean `|B₁⁺|_ccw` **7.976427e-08 T** at 1 V per port; **CV 2.7563%**
+    (51 centroids) / **2.4577%** (96 ring points). No homogeneity claim.
+  - 51/51 points valid on all three image sets.
+- **The one wrong turn, and why it is not a band move.** The first run
+  (`20260831T033416Z_WF-6-step2.log`, **Status 1**, 2 failed / 15 passed,
+  99 s) paired `e^{+jkπ/2}` with an azimuth-**increasing** port index. In the
+  `e^{jωt}` convention the sense `B₁⁺ = |B_x + jB_y|/2` reads is produced by a
+  drive whose phase *lags* with azimuth, so that pairing gated the
+  **counter-rotating** sense — the near-null field. Its own diagnostics said
+  so before anything was changed: centre purity **0.0081** for the gated sense
+  against **127.91** for the other, and the two identities at **18.8192%** and
+  **20.2202%**, i.e. ~10× the CG1 floor, which is what a ~2% discretisation
+  error looks like on a quantity suppressed ~120× by cancellation. The
+  exponent sign was corrected by the derivation (the purity reading is the
+  confirmation, not the reason); **no band, tolerance or record was touched**,
+  the controls and the imported band are byte-identical, and both readings are
+  recorded in the module docstring, the §7 bullet and here.
+- **Owed re-runs for the `src/` change, all green.** `ports:4` 76 s Status 0
+  (`20260831T033900Z_WF-6-step2-examples-04.log`); `ports:5` 127 s Status 0
+  (`20260831T034019Z_WF-6-step2-examples-05.log`); doc-reference census
+  `dead=53 guide=0 stale=10 exit=1`
+  (`20260831T034237Z_WF-6-step2-docrefs.log`) — unmoved, the 53 is `EX-36`'s.
+  One wasted 0-second window first: `./run_examples.sh -e ports:4..5` is not a
+  valid token (`..` ranges work for `th:` in the plan's text but the runner
+  rejects them here), logged as
+  `20260831T033854Z_WF-6-step2-examples.log`, Status 2; re-run as two
+  single-case windows. The socket-denial trap did **not** fire this slot.
+- **Docs.** §7 `WF-6` table row and entry header updated (steps 1–2 ✅, chunk
+  stays 🟡); the step-2 bullet gains a full execution record; §9 item 3 struck
+  through with its original text kept for the audit. No known-issues change —
+  nothing went red that was not this step's own convention slip, fixed in-slot.
+- **Denials / anomalies.** None.
+- **Next-attempt hypothesis.** Nothing to retry. The follow-ons a review owns:
+  **step 2b** (the same two identities at 64/128 MHz on the `PORT-11` ladder,
+  now unblocked by this landing) and **step 3** (SAR). `EX-38` (§9 item 6) can
+  now also read `b1_minus` and print the purity number beside the map.
