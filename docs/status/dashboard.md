@@ -1,129 +1,137 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-08-31 10:30, **daily review (scheduled, ran normally)**.
-Headline: **a third clean interval — four slots, four landings, `ANS-5`
-closed, and the first Larmor-frequency B₁⁺ numbers are on record.** `WF-6`
-step 2b ran the five B₁⁺ symmetry identities at 64 and 128 MHz on one mesh
-and every one held inside the unmoved 5% band down to 12.5 phantom
-cells/λ — the CG1 estimator floor measured at 10 MHz survives the full
-frequency ladder. The `TH-13` matched source projection landed and does
-exactly what the mechanism predicted (residue to ~1e-16, the spurious
-degree-2 electric energy collapses to 0.02% of record) — opt-in, loop
-fixture only, the coil untouched. What this does **not** say: the Larmor
-B₁⁺ figures (mean 6.5e-8 / 4.9e-8 T at 1 V/port, CV ≈ 2.8–3.0%) are
-identities on one unconverged fixture — no homogeneity, tuning, absolute
-or SAR claim; and one owed regression re-run (`test_coil_loading_degree2`)
-was killed at its unchanged ceiling, so the two degree-2 coil identity
-reds are unverified on the newest commit (re-run queued first). Source of
-truth is `PROJECT_PLAN.md`; this page is a read-only digest for the human
-operator.
+**Updated:** 2026-08-31 18:00, **daily review (scheduled, ran normally)**.
+Headline: **a fourth clean interval — four slots, four landings: the first
+two `|B₁⁺|` fields in ParaView (`EX-38`, `EX-39`, both ✅ on their first
+run), and two negative results delivered in full.** `WF-6` step 3 put the
+first coil-driven SAR readings on record and they **miss** every symmetry
+identity by 25–41% against the 5% band the `|B₁⁺|` map meets at ~2% — the
+controls, the σ premise and the power record all hold, so the finding is
+the pointwise-`E` estimator, not the field; five deliberate reds are filed
+and no band moved. `TH-13`'s owed coil regression re-run was killed a
+second time at its unchanged ceiling, but instrumented: the mesh is 4 s,
+the degree-1 half is green and unmoved, and the degree-2 pair alone eats
+≥ 524 of 571 s — the review has ruled a module split so those two reds can
+finally be observed. What this does **not** say: no SAR claim of any kind
+exists (not homogeneity, not absolute, not C95.3); the `|B₁⁺|` figures
+remain identities on one unconverged fixture. Source of truth is
+`PROJECT_PLAN.md`; this page is a read-only digest for the human operator.
 
 ## Waiting on you
 
 1. 🟢 **`ANS-4` is ready to replicate — both halves exist.**
    `examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/` (script,
    `metrics.json`, `COMPARISON.md` with our column filled and two blank AED
-   columns, a 128 MHz XDMF). Per the `ANS-5` ruling — now in every
-   `SPEC.md`, the README **and the generated `COMPARISON.md` tables**
-   (`ANS-5` closed 06:00 slot): AED at **Zero Order** (adjudication
-   column) and at its default **First Order** (sensitivity column), Mixed
-   Order not; please confirm the unknowns-per-tet figure AED prints.
-   Ranks above `ANS-1`/`ANS-3`. Adjudication is the 09-06 weekly review's.
+   columns, a 128 MHz XDMF). Per the `ANS-5` ruling: AED at **Zero Order**
+   (adjudication column) and at its default **First Order** (sensitivity
+   column), Mixed Order not; please confirm the unknowns-per-tet figure AED
+   prints. Ranks above `ANS-1`/`ANS-3`. Adjudication is the 09-06 weekly
+   review's.
 2. 🟢 **`ANS-3` and `ANS-1` AED runs** — still yours, behind `ANS-4`. Both
-   scripts runnable and green (re-verified 06:00 slot); their
-   `COMPARISON.md` tables now carry the two AED columns and a `Basis
-   order` row. If you have **already** run either at an unrecorded order,
-   say which — the numbers stand as an "order-unknown" column.
+   scripts runnable and green; their `COMPARISON.md` tables carry the two
+   AED columns and a `Basis order` row. If you have **already** run either
+   at an unrecorded order, say which — the numbers stand as an
+   "order-unknown" column.
 3. **Information — automation fix from the 08-30 10:30 review, still
    awaiting your OK:** `docs/automation/weekly-review.md` has a commit-first
    checkpoint (rotation committed before plan edits). Revert the paragraph
    if you want the single-commit form back.
 4. **One click: does ParaView open a DG1 `.bp`?** (unchanged since
    2026-08-12; `scripts/probes/post4_step5_probe.py` regenerates.)
-5. FYI, no action — the 09-06 weekly review owes: the `GEO-25` and
+5. FYI, no action — your six subagent definitions (`83e71ef`, `eb3e608`,
+   `7989f61`) were used for the first time by this review: two `auditor`
+   runs on `EX-38`/`EX-39`, both PASS, each with one digit re-traced by the
+   review as the protocol now requires through 09-03. The 16:30 slot saw
+   your concurrent commit as a momentarily dirty tree and correctly did
+   not park anything.
+6. FYI, no action — the 09-06 weekly review owes: the `GEO-25` and
    `PORT-13` rulings; the §10 pass; the `TH-12` production-order clause;
-   the `TH-13` "step 3b" sheet-drive formulation question; and two new
-   flags from this interval — the honest regeneration control for
-   `ANS-3`-class sweeps (run-to-run solver scatter measured at ~1e-8–5e-8,
-   so byte-level `metrics.json` controls are invalid there) and whether
-   `WF-6` should get a convergence rung for an *absolute* `|B₁⁺|` claim.
-   The docker-socket denial did not fire in any of the last 8 slots.
-   Local `main` remains well ahead of origin (push is manual).
+   the `TH-13` "step 3b" sheet-drive formulation question; the honest
+   regeneration control for `ANS-3`-class sweeps; whether `WF-6` gets a
+   convergence rung for an *absolute* `|B₁⁺|` claim; and, new this
+   interval, whether point-SAR on this fixture needs a finer rung if step
+   3b returns its verdict (c). The docker-socket denial did not fire in
+   any of the last 12 slots. Local `main` remains well ahead of origin
+   (push is manual).
 
-## Honest current state (digest of §2 — B₁⁺ row moved this interval)
+## Honest current state (digest of §2 — SAR row moved this interval)
 
 | Capability | State | Gate |
 |---|---|---|
 | Magnetostatics | ✅ validated | closed forms green; rate duty on the one-sided `E_Ω` ladder (1.6854 ≥ 0.7); the h-refinement gate executes and passes on 0.11 (`MAG-20` ✅) |
-| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77% + power 3.63%; degree-2 gated at 0.1405% on the sphere. The degree-2 "explosion" on volume-driven fixtures is diagnosed **and now fixed where the fix can reach**: the opt-in `project_source="matched"` projection lands the residue at ~1e-16 on the loop fixture (`TH-13` step 3a, 🟡 pending one blocked regression re-run); the **coil's** degree-2 identity failure stays open and is out of that fix's reach |
-| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (`MAT-6`); Larmor coil loading stays an extrapolation |
+| Time-harmonic curl-curl | ✅ validated | lossy plane wave < 0.06%; Larmor sphere 3.64% / 1.77% + power 3.63%; degree-2 gated at 0.1405% on the sphere. The degree-2 "explosion" on volume-driven fixtures is diagnosed and fixed where the fix can reach (`TH-13` step 3a, opt-in, loop fixture); the **coil's** two degree-2 identity reds are open and **still unobserved since 08-18** — the module has no margin at degree 2 (measured this interval); split ruled, §9 item 3 |
+| Coil loading | ⚠️ eddy-current regime only | Dodd–Deeds ΔR (`MAT-6`); the degree-1 coil control re-observed this interval at +1.5838% vs the +1.5834% record; Larmor coil loading stays an extrapolation |
 | S-parameters / ports | ✅ birdcage gated at 10, 64 and 128 MHz | reciprocity ~1e-14, σ_max ≤ 1, C4 spreads ≤ 0.10% vs 0.5%; **self-consistency identities only.** Absolute accuracy at Larmor is `ANS-4` — AED replication pending (Waiting-on-you 1) |
 | Birdcage meshes | ✅ 4-leg and 16-leg, leg-gap and ring-gap, identity-gated at any rank width | production high-pass layout is an example (`EX-35` ✅); no solve on it yet (`PORT-13`, ruling owed) |
-| B₁⁺ / coil-driven SAR | 🧪 computed; symmetry-gated at CG1 **at 10, 64 and 128 MHz**, not homogeneity-gated | `WF-6` steps 1–2b ✅ (08-30/31): single-drive + quadrature identities all inside the unmoved 5% band at all three frequencies on one 116 085-cell mesh (gate (ii) 1.89–2.22%, quadrature 0.70–0.98%, controls 23–25% / 95%); phantom cells/λ 69.1 / 21.9 / **12.5** vs floor 10 — no resolution miss. **Ungated, labelled:** mean `\|B₁⁺\|` 7.98 / 6.50 / 4.94e-8 T at 1 V/port, centre purity 128 / 142 / 172, CV 2.76 / 2.77 / 3.02%. SAR on the coil is step 3, scoped this review (§9 item 2); still **no homogeneity, absolute, tuning or SAR claim** |
-| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (`MAT-4`); never on a coil — first coil-driven SAR identities are §9 item 2 |
-| Test-suite trust | ✅ census complete; **residual reds on `main` at `-n 2`: 4 deliberate/known** — 2 placeholder-route names, `test_birdcage_volumes_partition_the_box`, `TH-13`'s precondition (re-point ruled, §9 item 6); plus the two degree-2 **coil** identity tests at 1e-9 (open, diagnosed, **unverified on the newest commit** — re-run is §9 item 1) | example-artifact census `dead=42` (was 53; `EX-36` leg (th) ✅, legs (mesh)+(root) paired as §9 item 5, (ports+ans) the drain fallback); 10 artifacts age-stale, none physics |
+| B₁⁺ | 🧪 computed; symmetry-gated at CG1 at 10, 64 and 128 MHz, not homogeneity-gated; **now in ParaView** | `WF-6` steps 1–2b ✅; `EX-38` (single drive) and `EX-39` (quadrature, `\|B₁⁺\|`/`\|B₁⁻\|` side by side) ✅ this interval with every gate record reproduced to ≤ 4e-5; `EX-40` (64/128 MHz maps) queued. Still **no homogeneity, absolute or tuning claim** |
+| Coil-driven SAR | 🔴 **measured, not gateable yet** | `WF-6` step 3 (this interval): point SAR off the primal N1curl `E` misses all five C4/mirror identities at **25–41%** vs 5% while both controls (130 / 335%), the σ premise and the power record (to every digit) hold — the pointwise-`E` estimator floor, ~2× a ~13–20% `\|E\|` floor. Five deliberate reds on `main`, band unmoved. Step 3b (CG1-`E` estimator beside it) is §9 item 1. **No SAR claim exists** |
+| SAR | ⚠️ imposed uniform field only | lossy sphere 3.5% (`MAT-4`); never gated on a coil |
+| Test-suite trust | ✅ census complete; **residual reds on `main` at `-n 2`: 9 deliberate/known** — 2 placeholder-route names, `test_birdcage_volumes_partition_the_box`, `TH-13`'s precondition (re-point is §9 item 5), and the five `WF-6` step-3 SAR asserts; plus the two degree-2 **coil** identity tests at 1e-9 (open, unobserved since 08-18 — §9 item 3 makes them observable) | example-artifact census `dead=42` / `stale=12` (`EX-36` legs (mesh)+(root) are §9 item 4, (ports+ans) the drain fallback) |
 
-## Recent activity (2026-08-31 03:00 → 10:30)
+## Recent activity (2026-08-31 10:30 → 18:00)
 
-- **04:30:** `TH-13` step 3a — the matched projection landed: residue
-  1.3e-2 / 1.0e-1 → **8.1e-17 / 1.8e-16** (vs ≤ 1e-8), spurious `W_e`
-  collapses to 0.018% / 2.6e-4 % of record, default path bit-identical
-  (0.000e+00). **🟡, not ✅:** the owed `test_coil_loading_degree2.py`
-  re-run was killed at its unchanged 570 s ceiling (exit 124). The slot's
-  "mesh regression" diagnosis was **corrected by this review**: the same
-  mesh built in 4.5 s the same morning — the module simply has a 5%
-  margin; instrumented re-run queued first.
-- **06:00:** `ANS-5` step 1b — both `COMPARISON.md` generators emit the
-  two AED columns + `Basis order` row; `ans:1`/`ans:3` green on their own
-  asserts. **Chunk ✅** (audited COMPLIANT). Bonus finding, measured with
-  an unedited-generator control: the ≤ 1e-8 `metrics.json` control was
-  solver scatter, not a physics-path signal — recorded, band not widened.
-- **07:30:** `EX-36` leg (th) — all eight `time_harmonic` examples green
-  on their gate records in 83 s; census **53 → 42 dead**, the group at
-  0 dead / 0 stale. **Leg ✅, chunk 🟡.**
-- **09:00:** `WF-6` step 2b — the five B₁⁺ identities at **64 and
-  128 MHz**, green on the first run (202 s): every reading inside the
-  unmoved bands, 10 MHz rung reproducing all records at rtol 1e-3, first
-  Larmor B₁⁺ figures on record (ungated). The pre-registered 128 MHz
-  resolution question: **no miss** at 12.5 cells/λ.
-- **10:30 review:** audited `ANS-5` and `WF-6` step 2b COMPLIANT;
-  corrected the coil-mesh known-issues diagnosis by reading (mesh
-  excluded, 4.5 s evidence); ruled the `TH-13` precondition re-point;
-  scoped `WF-6` step 3 (coil-driven SAR identities); commissioned `EX-40`
-  (Larmor `|B₁⁺|` ladder example); paired the two cheap `EX-36` legs;
-  refilled §9 with six independent items.
+- **12:00:** `TH-13` step 3a″ — the instrumented coil re-run: **second
+  exit 124 at 571 s**, ceiling unchanged, no third retry. The `-s`
+  timeline and a 49 s probe-mode run partition the window: mesh 4.3 s,
+  degree-1 phase 46.8 s and green (ΔR +0.00039 pp of record, identity
+  residuals ~1e-15), **degree-2 pair ≥ 524 s and unfinished**. Half the
+  owed claim is now measured; the two degree-2 reds are still unobserved.
+  🟡, disposition taken by this review (split).
+- **13:30:** `WF-6` step 3 — coil-driven point-SAR symmetry identities at
+  10 MHz: **all five miss** (25.11 / 40.55 / 30.01 / 38.61 / 28.15% vs
+  5%), both controls hold, `mean_sar` reproduces the power record to every
+  digit. Pre-registered negative result; five deliberate reds filed. One
+  scoped control found degenerate for a magnitude-squared quantity
+  (28.1445 vs 28.1459%) — reported, not asserted, and now struck. 🟡.
+- **15:00:** `EX-38` — `ports:6`, the first `|B₁⁺|` field in ParaView:
+  gate (i) 9.7958e-03 (record to 1.2e-08), CG1 covariance **2.1870%** vs
+  5%, DG0 control 8.6516% at 3.96× — the estimator floor visible as two
+  colour arrays. 63 s. **✅, audited PASS.**
+- **16:30:** `EX-39` — `ports:7`, the quadrature drive: identities
+  **0.9818 / 0.8087%** vs 5% (records to ≤ 3.6e-05), mis-paired control
+  95.1975% at 118×, purity 127.9 / 0.0081. Also exported step 2's records
+  from the gate module (constants only). 81 s. **✅, audited PASS.**
+- **Operator, between slots:** six specialist subagent definitions +
+  shadow-replay validation logs (`AGENT-VAL`), wired into the review and
+  implementer protocols.
+- **18:00 review:** audited `EX-38`/`EX-39` PASS (one `auditor` each, one
+  digit re-traced per report); ruled the `TH-13` coil module split (one
+  σ-half per window — the 660 s Bash window is the binding limit, not the
+  heavy tier); scoped `WF-6` step 3b (CG1-`E` estimator, pre-registered
+  three-way verdict, no band moves in-slot); queued `EX-40`; restated the
+  deliberate-red count (9); refilled §9 with five independent items.
 
 ## Automation health
 
-- **4 of 4 scheduled slots did chunk work; 3 ✅ + 1 🟡** (the 🟡 is a
-  blocked re-run, not a failed anchor — both its anchors hit with 6–14
-  orders of margin). Third consecutive clean interval: zero stops, zero
-  wedges, zero parked branches. Container Up 4 days.
-- The one exit 124 was handled per protocol: ceiling not raised, entry
-  filed, container verified healthy — and this review's reading corrected
-  the entry's diagnosis before it could misdirect a slot.
-- Docker-socket denial on the host runner: **0 of 8** slots over two
-  intervals — intermittent; the substitution remains documented.
-- Queue holds **six independent items** (five ready + spare); `EX-36`
-  leg (ports + ans) is the pre-authorised drain fallback.
+- **4 of 4 scheduled slots did chunk work; 2 ✅ + 2 🟡** (both 🟡 are
+  negative results delivered in full with every control green, not failed
+  anchors). Fourth consecutive clean interval: zero stops, zero wedges,
+  zero parked branches. Container Up 5 days.
+- The exit 124 was handled per protocol again: ceiling not raised, no
+  third retry, and the slot spent its remaining time on a 49 s
+  measurement that settled the diagnosis. One allowlist trap journaled
+  (absolute path to the harness is denied; relative works).
+- Docker-socket denial on the host runner: **0 of 12** slots over three
+  intervals — the substitution remains documented.
+- Queue holds **five independent items**; `EX-36` leg (ports + ans) is
+  the pre-authorised drain fallback.
 
-## On deck (§9 — six independent items this review)
+## On deck (§9 — five independent items this review)
 
-1. **`TH-13` step 3a″** — the owed coil regression re-run, instrumented
-   with `-s`, ceiling unchanged; green re-verifies the two degree-2 coil
-   identity reds and closes the known-issues ceiling entry (≈ 550 s)
-2. **`WF-6` step 3** — coil-driven SAR symmetry identities at 10 MHz via
-   `post.point_sar` on the solved birdcage field; first SAR-on-a-coil
-   readings, symmetry-gated only (standard, ≈ 120 s)
-3. **`EX-38`** — `ports:6`, the first `|B₁⁺|` field in ParaView at 10 MHz
-   (standard, ≈ 70 s)
-4. **`EX-39`** — `ports:7`, the quadrature `|B₁⁺|`/`|B₁⁻|` maps side by
-   side (standard, ≈ 100 s)
-5. **`EX-36` legs (mesh) + (root + mri + mat), paired** — census toward
-   `dead=0`; also clears the 10 age-stale artifacts (≈ 950 s in windows)
-6. *(spare)* **`TH-13` step 4** — re-point the deliberate precondition red
-   at the matched path, band unchanged; `main`'s deliberate reds 4 → 3
-   (≈ 50 s)
+1. **`WF-6` step 3b** — the same five SAR identities off an L²-projected
+   CG1 `E` beside the primal column; primal readings asserted as records,
+   CG1 readings printed with a pre-registered (a)/(b)/(c) verdict; no band
+   moves (standard, ≈ 130 s)
+2. **`EX-40`** — `ports:8`, the 64 / 128 MHz `|B₁⁺|` maps in ParaView
+   (`example-runner`, standard, ≈ 130 s)
+3. **`TH-13` step 3a‴** — split the coil degree-2 module, one σ-half per
+   window under a 600 s ceiling; expected exactly one identity red per
+   half — the first observation of those reds since 08-18 (≈ 12 min
+   compute in three windows)
+4. **`EX-36` legs (mesh) + (root + mri + mat), paired** — census toward
+   `dead=0` / `stale=0` (`example-runner`, ≈ 950 s in windows)
+5. **`TH-13` step 4** — re-point the deliberate precondition red at the
+   matched path, band unchanged; deliberate reds 9 → 8 (≈ 50 s)
 
 ---
 

@@ -49,7 +49,7 @@ unless fixing it is the task.
 | **A degeneracy worth recording** | The mirror-omitted comparison `SAR_ccw(Mx)` vs `SAR_ccw(x)` reads **28.1445%** against identity (iii)'s **28.1459%** — the mirror moves the reading by 1.4e-3 pp. The 10:30 scoping had listed the mis-paired sense as a *control*; it is not one for SAR (a magnitude-squared has no ± senses to mis-pair), and the module therefore prints it ungated and asserts the two controls that do separate instead. Documented in the module docstring; the disposition is the review's. |
 | **Recorded, ungated** | Point SAR at 1 V per port: P1 single drive peak **7.630679e-07** W/kg, mean **1.453536e-07** W/kg, peak/mean **5.2497**; quadrature (ccw) peak **2.065442e-06** W/kg, mean **7.706353e-07** W/kg, peak/mean **2.6802**. Not a safety figure — no converged mesh, no real drive, no mass averaging. |
 | **Consequence** | `WF-6` stays **🟡**: steps 1, 2 and 2b remain ✅ and **no SAR claim of any kind exists** — not homogeneity, not absolute, not C95.3. The `|B₁⁺|` gates are untouched (step 2's module re-run green and unmoved this slot, `20260831T183734Z_WF-6-step3-step2-regression.log`, `6 passed` / Status 0 / 80 s, identities 0.9818 / 0.8087%, control 95.1975%). |
-| **Resolves with** | A `WF-6` step-3b estimator leg on the step-1b pattern, which a review must scope: read the *same* identities off an L²-projected CG1 `E` (`post.project_to_cg1` already takes any vector field) beside the primal column, on the same 51 points, and decide between (a) a pointwise-`E` estimator floor — CG1 lands inside 5% while the two controls survive the projection — and (b) something the rotation does not share in the field itself, which the 180° column would show. Cheap: no new solve, ≈ the same 96 s. Until then the five asserts stay exactly as written. |
+| **Resolves with** | A `WF-6` step-3b estimator leg on the step-1b pattern, which a review must scope: read the *same* identities off an L²-projected CG1 `E` (`post.project_to_cg1` already takes any vector field) beside the primal column, on the same 51 points, and decide between (a) a pointwise-`E` estimator floor — CG1 lands inside 5% while the two controls survive the projection — and (b) something the rotation does not share in the field itself, which the 180° column would show. Cheap: no new solve, ≈ the same 96 s. Until then the five asserts stay exactly as written. **Scoped 2026-08-31 18:00 review as `WF-6` step 3b, §9 item 1** — the primal readings above become asserted records, the CG1 readings are printed beside them with a pre-registered three-way verdict ((a) estimator floor / (b) rotation-specific field feature, the 180° column deciding / (c) the fixture's cells do not resolve a quadratic-in-`E` map), and no band moves in-slot; whichever verdict prints is journaled here. The mis-paired-sense comparison is struck from SAR scopings. |
 
 ### ✅ RETIRED 2026-08-27 (`OPS-27` step 2, 21:00 implementer slot) — a **tenth** stale exact cell-count record, and it is a **fifth** mesh with **no sibling**: `test_dodd_deeds_reactance_wire_resolution.py` recorded 366 207 and 0.11 meshes 365 970
 
@@ -3682,6 +3682,21 @@ on this evidence); (c) a coarser degree-2 rung, which moves the +1.5834%
 record; or (d) accept the degree-2 identities as unobservable in a scheduled
 slot and gate the module in probe mode. The measured partition says (a) or (d);
 (b) is dead.
+
+**Ruled 2026-08-31 18:00 review: option (a), as `TH-13` step 3a‴ (§9 item 3).**
+The degree-2 pair moves to a new `test_coil_loading_degree2_pair.py` and runs
+**one σ-half per window** (`TH12_DEGREE2_HALF=loaded|free`; mesh + degree-1
+row + cost probe + one degree-2 solve, ≈ 310–330 s at `-n 8`) under
+`timeout -k 30 600` — the binding limit for a scheduled slot is the 660 s
+Bash-tool window a foregrounded harness run must return inside, which is why
+"its own heavy-tier run" alone would not do. The original module defaults to
+probe mode (49 s) as the standing guard. **The 570 s ceiling is not raised; the
+case is shrunk.** This entry closes with the commit in which both halves return
+footers inside their ceilings — expected `exit 1` with exactly one degree-2
+identity red each, which is the owed observation — and the degree-2 identity
+entry is re-pointed at the new module in the same commit. A third exit 124
+(one factorization alone > 550 s) is a stop, and the disposition — then (d) —
+returns to the review.
 
 ### ✅ RETIRED 2026-08-11 — "unexplained" mid-command termination of the logging harness was the background-and-end-turn trap (2026-08-08, 15:00 and 19:30 implementer slots)
 
