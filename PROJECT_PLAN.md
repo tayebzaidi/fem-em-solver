@@ -4948,7 +4948,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-32` | Birdcage 4-port power-wave S-matrix at 10 MHz (`PORT-9`'s newly gated capability: first example solving ports on the **birdcage** — every existing S-parameter example is two-torus (`EX-20`/`EX-24`/ports:1–3), and `EX-28`/`EX-31` are mesh-only; commissioned 2026-08-25 10:30 review, §5.4 ramp) | ✅ *(2026-08-26, green on the first run; every gate-module record reproduced exactly and the only reading that moved is the one (d3c) declares non-reproducible)* | standard (measured standard, 88 s) |
 | `EX-33` | 16-leg gapped + sheeted birdcage mesh (`GEO-19`'s newly gated capability: first example above four legs — `EX-28`/`EX-31`/`mesh:3` are all 4-leg, so the geometry angle is new; mesh-only, no solve, no port claim; commissioned 2026-08-25 18:00 review, §5.4 ramp) | ✅ *(audited COMPLIANT 2026-08-26 18:00 review: three footers Status 0 at 131 / 126 / 1 s, all 16 claimed digits grep out of the run log, bands *and* `_assert_identity_family` imported from the gate module, the gate-module diff a single +6-line additive hunk)* | standard |
 | `EX-34` | Birdcage 4-port S-matrix across the frequency ladder 10 / 64 / 128 MHz on **one** mesh (`PORT-11`'s newly gated capability: first example solving ports at a Larmor frequency — `EX-32` is 10 MHz only, `EX-19`/`EX-25` are Larmor on the sphere with no ports; the drive/output angle is the frequency ladder itself: loss tangent, cells/δ, cells/λ, `\|Im P\|/Re P` and the three gate readings side by side; commissioned 2026-08-26 18:00 review, §5.4 ramp) | ✅ 2026-08-28 (`ports:5`, `20260828T110615Z_EX-34-run2.log`, **139 s** Status 0 at `-n 2` complex; one 116 085-cell mesh, 12 driven solves, all three gates green on all three rungs; 128 MHz cells/λ 12.5024 ≥ 10) | standard |
-| `EX-36` | Re-run the examples whose artifacts the 2026-08-28 rename (`67e4c1c`) orphaned — census `dead=53 exit=1` on 2026-08-29 — until it reads `dead=0`; four legs by runner group, each one slot (commissioned 2026-08-30 02:15 weekly review; entry written by the 10:30 daily review) | ⬜ | standard per leg (105 / ≈ 500 / 447 / 935 s measured by `EX-30`) |
+| `EX-36` | Re-run the examples whose artifacts the 2026-08-28 rename (`67e4c1c`) orphaned — census `dead=53 exit=1` on 2026-08-29 — until it reads `dead=0`; four legs by runner group, each one slot (commissioned 2026-08-30 02:15 weekly review; entry written by the 10:30 daily review). **Leg (th) ✅ 2026-08-31 — `dead` 53 → 42, group `dead`/`stale` both 0, 83 s**; three legs open | 🟡 | standard per leg (105 / ≈ 500 / 447 / 935 s measured by `EX-30`) |
 | `EX-35` | 16-leg **ring-gapped** birdcage mesh — the 32-ring-port high-pass layout (`GEO-20` step 2's newly gated capability, 2026-08-29: `EX-31`/`mesh:7` cuts the rings at 4 legs, `EX-33`/`mesh:8` cuts the **legs** at 16 — no example has the production high-pass topology at the production leg count; mesh-only, no solve, no port claim; commissioned 2026-08-29 10:30 review, §5.4 ramp) | ✅ | standard |
 | `EX-37` | **`ANS-1`/`ANS-3` are unrunnable since the 2026-08-28 rename**: `67e4c1c` rewrote the two cases' `__import__("01_dodd_deeds_coil_loading")` / `("02_package_sparameter_sweep")` strings along with their artifact basenames, and no module of the prefixed name exists — the `ANS-4` slot's observation, verified by the 18:00 review from `git log -S`; restore the two strings, re-run `ans:1` and `ans:3`, census (commissioned 2026-08-30 18:00 review; known-issues entry) | ✅ *(2026-08-31, 19:30 slot — negative control Status 1/3 s, both cases green, 63 s / 128 s)* | standard (≈ 5 + 70 + 131 s + census) |
 | `EX-38` | `\|B₁⁺\|` map of the loaded 4-leg birdcage at 10 MHz into ParaView (`WF-6` step 1's newly gated capability, 2026-08-30: the CG1-projected `\|B₁⁺\|` field under gates (i)/(ii) — no example writes a B₁⁺ field, `ports:4`/`ports:5` stop at S-matrices; the output-quantity angle; commissioned 2026-08-30 18:00 review, §5.4 ramp) | ⬜ | standard (≈ 70 s) |
@@ -5305,6 +5305,27 @@ gates on the census, which is why this is queued ahead of its size.
 > the chunk ✅ when the whole census reads `dead=0`. **Negative result:** a
 > red example is a finding about that example on the 0.11 image — journal,
 > known-issues, stop.
+> **Leg (th) ✅ 2026-08-31, 07:30 slot.** All eight `time_harmonic`
+> examples green on their own in-script asserts in two host-runner windows
+> (`th:1–4` Status 0 / 27 s, `20260831T123115Z_EX-36-leg-th-a.log`;
+> `th:5–8` Status 0 / 56 s, `…123147Z_EX-36-leg-th-b.log` — **83 s**
+> against `EX-30`'s 105 s estimate). Anchors reproduced against their gate
+> records inside the scripts' own 1% bands: `th:6` 64 MHz relL2 3.643%
+> (drift 4.04e-05) / separation 18.67×, 128 MHz **1.769%** / **59.16×**
+> (drift 2.02e-04 / 5.45e-05), power 3.629% inside the 5% band with the
+> quasi-static control missing by 58.140%; `th:7` degree 1 8.1541% and
+> degree 2 0.1405% (drift 4.00e-06 / 5.50e-05); `th:8` driven residual
+> **16.7465%** inside the unmoved 25% band against the two-term form's
+> 116.7465%, and the `TH-6` source-free **8.185716%** both ways;
+> `th:5` amplification 16.505× vs the pole law's 16.0× (3.156%,
+> ceiling 10%). Census, negative control first
+> (`…123044Z_…-precensus.log`): **`dead=53 guide=0 stale=10`** with 11
+> `time_harmonic` names among the dead; after the leg
+> (`…123253Z_…-postcensus.log`): **`dead=42 guide=0 stale=10`** — the
+> group's `dead` is **0** and none of the 10 stale is a `time_harmonic`
+> artifact (8 magnetostatics, 2 ports, all age-only), so the group's
+> `stale` is 0 too. The residual `exit=1` is the other three legs'
+> 42. Chunk stays ⬜.
 
 **`EX-37` — restore the `ANS-1`/`ANS-3` example imports the rename broke**
 ✅ *(commissioned 2026-08-30 18:00 review; executed 2026-08-31, 19:30
@@ -6167,7 +6188,16 @@ an operator FYI.
    files carry the two AED columns and the row, both runs green, physics
    unmoved — **`ANS-5` ✅**. **Negative result:** either case red for a
    reason other than the edit — revert, known-issues, stop.
-3. **`EX-36` leg (th) — re-run the eight `time_harmonic` examples until
+3. **✅ DONE 2026-08-31, 07:30 slot — leg (th) closes.** Eight examples
+   green in two windows (27 s + 56 s = **83 s** vs the 105 s estimate),
+   every gate record reproduced inside the scripts' own bands (`th:6`
+   1.769% / 59.16× at 128 MHz, `th:8` 16.7465% vs the two-term
+   116.7465%); census **53 → 42 dead**, the group's `dead` and `stale`
+   both **0**. `EX-36` → 🟡, three legs open. **One note for the review:**
+   the leg used 6 of the slot's 60 minutes — legs (th) and (mesh) would
+   fit one slot together comfortably if the queue is tight. Original item
+   below.
+   **`EX-36` leg (th) — re-run the eight `time_harmonic` examples until
    the census reads `dead=0` for that group (standard, complex, `-n 2`,
    host-side runner; independent; §7 entry).** Pre-leg census first
    (prints the group's non-zero `dead` count), then the eight `th:<n>`

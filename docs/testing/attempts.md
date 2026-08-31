@@ -16896,3 +16896,67 @@ issued**.
   will stop a slot on solver scatter, as this one nearly did. The same
   question is worth asking of `ANS-4`, whose 4×4 sweep is larger still and has
   never had its run-to-run scatter measured.
+
+## 2026-08-31T12:34Z — `EX-36` leg (th) — **complete** (07:30 CDT implementer slot)
+
+**Item.** §9 On deck item 3 (items 1 🟡 with its remainder explicitly left
+for a review, 2 ✅). Preflight clean; container Up 4 days; no `attempt/*` or
+`recovered/*`.
+
+**What ran.** Four host-runner/harness windows, standard tier, `-n 2`,
+complex build sourced by the runner, total **86 s of compute**:
+
+| log | command | Status | s |
+| --- | --- | --- | --- |
+| `20260831T123044Z_EX-36-leg-th-precensus.log` | `check_example_doc_references.py`, `-k 30 120` | 1 | 2 |
+| `20260831T123115Z_EX-36-leg-th-a.log` | `./run_examples.sh -e th:1,th:2,th:3,th:4 -n 2 -t 150` | 0 | 27 |
+| `20260831T123147Z_EX-36-leg-th-b.log` | `./run_examples.sh -e th:5,th:6,th:7,th:8 -n 2 -t 200` | 0 | 56 |
+| `20260831T123253Z_EX-36-leg-th-postcensus.log` | same census | 1 | 1 |
+
+**Anchors (the leg's quantitative check is each script's own asserts against
+its gate module's records; all eight green).** `th:5` energy amplification
+**16.505×** vs the `|f−f₀|⁻²` pole law's 16.0× → 3.156% against the 10%
+ceiling, slope separation 6.267× on record. `th:6` 64 MHz relL2 **3.643%**
+(drift 4.04e-05) / separation 18.67× (2.96e-04), 128 MHz **1.769%** /
+**59.16×** (2.02e-04 / 5.45e-05), all inside the script's 1% reproduction
+band; power 64 MHz **3.629%** inside the 5% band with the quasi-static
+negative control missing by **58.140%** against its 50% floor. `th:7`
+degree 1 **8.1541%** / power 8.3869% and degree 2 **0.1405%** / 0.0058%
+(drifts ≤ 1.48e-03, band 1%) — 3.01× fewer cells at 25.9× the accuracy.
+`th:8` driven three-term residual **16.7465%** inside the unmoved 25% band
+against the two-term form's **116.7465%** asserted to miss it, and the
+`TH-6` source-free **8.185716%** identical both ways with the `J = 0`
+control exact; the five `POST-5` record drifts ≤ 1.40e-06.
+
+**Census (the leg's own gate).** Negative control first: **`dead=53
+guide=0 stale=10 stale_severity=report exit=1`**, with 11 `time_harmonic`
+names among the dead (the eight examples' combined XDMFs, `06` twice for
+64/128 MHz, `07` twice for degree 1/2). After the leg: **`dead=42 guide=0
+stale=10`** — the group's `dead` is **0**, and none of the 10 stale is a
+`time_harmonic` artifact (8 magnetostatics `01_straight_wire`, 2 `ports`,
+all age-only at 64 h vs the 48 h limit), so the group's `stale` is 0 as
+the item required. The surviving `exit=1` is the other three legs' 42;
+`guide` pass 33/33 unchanged.
+
+**Nothing else moved.** Artifacts only — `paraview_output/` is gitignored,
+so the only tree change is the four logs, their `test-results.md` rows and
+the docs below. No `src/`, `tests/` or record/band edit; no assertion
+touched; no known-issues change (nothing red).
+
+**Docs.** §7 `EX-36` table row ⬜ → **🟡** with the leg's numbers, a leg-(th)
+result paragraph in the entry, §9 item 3 marked ✅ with the original text
+kept for the audit.
+
+**Denials / anomalies.** None. The docker-socket runner denial (§9 runner
+trap) did not fire — the host runner worked in both windows, a third clean
+observation after the 16:30 slot's.
+
+**Next-attempt hypothesis (for the review).** The leg cost **6 minutes of a
+60-minute slot**, and the protocol's one-item rule left the rest idle. Legs
+(mesh, ≈ 500 s) and (root + mri + mat, 447 s) are each well under one slot
+too; a single queue item pairing two legs — or one item that names leg
+(mesh) with leg (root) as its explicit stretch — would clear `EX-36` in two
+slots rather than three, and the (ports + ans) 935 s leg is the only one
+that genuinely needs its own window. The `EX-30` per-leg estimates are
+holding (105 s predicted, 83 s measured, −21%), so sizing a paired item off
+them is safe.
