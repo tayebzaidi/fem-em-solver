@@ -66,6 +66,13 @@ clean tree. The per-command compute budget is unchanged and non-negotiable:
    saying so and stop.
 3. Execute the chunk following `.claude/agents/implementer.md` (read it
    first) and the chunk's §7 entry, which carries the implementation plan.
+   Specialist executors exist for three chunk classes — an EX-* example
+   chunk goes to `example-runner`, a measurement-only mesh/resolution probe
+   to `mesh-probe`, a version-bump record sweep to `record-reconciler`
+   (.claude/agents/); everything else stays with the implementer agent.
+   `plan-navigator` and `log-pathologist` are available read-only for
+   lookups and disputed prior logs. Never spawn `auditor` on your own
+   closure — auditing is the review's job.
 4. Outcome:
    - **Complete** (§4-done: verification executed, quantitative assertion,
      harness log + elapsed time recorded): commit code + tests + logs +

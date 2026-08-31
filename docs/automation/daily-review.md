@@ -9,7 +9,10 @@ logs is fine. You are maintaining the plan, not executing it.
 **Subagents are available to you, and web tools are not.** Because this session
 never solves or meshes, a subagent costs tokens rather than cores and does not
 touch the 12-core compute budget. Use them for the mechanical, parallel, read-
-heavy work — one auditor per newly-✅ chunk in step 3, an `Explore` sweep when
+heavy work — one `auditor` (.claude/agents/auditor.md) per newly-✅ chunk in
+step 3, a `log-pathologist` ruling on any disputed or status-changing log
+reading in step 4, `plan-navigator` for plan/known-issues lookups instead of
+paging those files yourself, an `Explore` sweep when
 step 5 asks whether the backlog still reaches §10 — and keep your own context
 for the judgement calls: what a negative result means, and what to queue next.
 A subagent's report is evidence, not a verdict; if one says a chunk passes §4,
@@ -54,13 +57,20 @@ are yours.
    executed by the agent itself, is at least one assertion quantitative
    (closed form / convergence rate / conservation, reciprocity, or symmetry
    identity), is elapsed time recorded? Demote anything non-compliant to 🧪
-   with a dated note. Do not re-run anything.
+   with a dated note. Do not re-run anything. Delegate each audit to the
+   `auditor` agent; treat its DEMOTE/PASS as evidence and re-cite its
+   log:line evidence yourself in the review commit. Through 2026-09-03:
+   re-verify one cited claim per agent report (a random digit trace) before
+   acting on it; this clause expires on its own after that date.
 
 4. For each incomplete attempt (attempts.md entries + `attempt/*` branches):
    diagnose from the logs and the parked diff; rescope the chunk's §7 entry —
    smaller case, sharper implementation plan, or split into two chunks — and
    record the diagnosis in the entry. Delete an attempt branch only when its
-   useful content is fully captured in the plan.
+   useful content is fully captured in the plan. Before banking a diagnosis
+   whose log reading is surprising or changes a status, get a
+   `log-pathologist` ruling; UNCOUNTABLE means diagnose from the parked diff
+   only.
 
 5. Assess against §10 success criteria: does the existing backlog still lead
    to the mission? If a gap exists, add new chunk entries (stable IDs,
@@ -129,7 +139,10 @@ named its closed form, its meshed-vs-nominal current correction, and the two
 traps that had each cost a run, which is why it returned a decisive negative
 inside one slot instead of a confused half-result. Below that bar, the
 implementer spends its hour rescoping instead of measuring. Every item added in
-step 5 or listed in step 6 states all six:
+step 5 or listed in step 6 states all six. An item whose chunk class has a
+specialist executor (`example-runner` for EX-* example chunks, `mesh-probe`
+for measurement-only mesh/resolution probes, `record-reconciler` for
+version-bump record sweeps) says so in its first line:
 
 1. **The anchor** — the specific closed form, conservation/reciprocity
    identity, or convergence rate the item will assert against, named with the

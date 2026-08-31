@@ -24,7 +24,16 @@ Subagents are available and web tools are not — same economics as the daily
 review: this session never solves, so subagents cost tokens, not cores. Use
 them for the read-heavy sweeps (pace measurement, examples audit); keep the
 judgement calls — what to kill, what to rescope, what a comparison result
-means — for yourself.
+means — for yourself. Six named agents exist in .claude/agents/ (`auditor`,
+`log-pathologist`, `plan-navigator`, `mesh-probe`, `example-runner`,
+`record-reconciler`); during the examples-audit sweep, flag any agent file
+whose "Last verified against" footer is older than ~30 days. First review
+after 2026-09-01: measure agent value — (a) demotion catch rate; (b)
+pathologist OVERRULED/UNCOUNTABLE rate; (c) review completion vs the
+2-of-3-died baseline; (d) navigator citation error count; (e) example-runner
+closures audited vs implementer-run baseline (the Sonnet-tier experiment).
+If reviews still die on limits, drop the pathologist to sonnet before other
+mitigations.
 
 ## Steps
 
