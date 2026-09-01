@@ -17637,3 +17637,79 @@ with the above.
 open queue entries; item 5 is the cheaper of the two (≈ 50 s) and retires one
 deliberate red. The degree-2 identity finding itself is unchanged and still
 belongs to the weekly review's formulation question, not to an implementer slot.
+
+---
+
+## 2026-09-01T05:19Z — `EX-36` legs (mesh) + (root + mri + mat) — **anomaly (slot died unjournaled; partial result landed by the 03:00 review)** (00:00 CDT implementer slot; **entry written by the 03:00 daily review** — the slot left none)
+
+**What the runner log shows** (`logs/automation/20260901T050001Z_implementer.log`,
+707 bytes, the whole of the slot's durable output). Preflight clean at
+df38553 (the operator's 23:32 commit enabling this repo's specialist agents in
+implementer slots), container Up 5 days. §9 items 1–3 already done; item 4
+taken and **delegated to `example-runner` — the first slot able to.** The
+slot's own status line at 05:12Z (minute 12): "Pre-census + `mesh:1–5` windows
+logged; `mesh:6–9` window was still solving `meshing/08_birdcage_sixteen_legs.py`
+in-container when the executor prematurely returned. It has been corrected on
+the foreground/background rule and restarted from that point." Then the CLI's
+`Background tasks still running after 600s; terminating`, and `exit=0` at
+05:19:23Z — minute 19 of 60. Nothing after that: no attempts.md entry, no
+commit, one modified (`test-results.md`, two rows) and three untracked files
+(the logs below) left for the review to find 2 h 40 min later. No implementer
+slot ran in between, so no preflight tripped on it.
+
+**What the harness logs show** (landed by the review as `b94034f`; six claims
+ruled by `log-pathologist`, five CONFIRMED, one OVERRULED — the review's first
+reading of the kill as "240 s, the Bash-tool default" is *not* licensed by the
+log; see below):
+
+- `20260901T050142Z_EX-36-legs-precensus.log` — Status 1 / 1 s,
+  **`dead=42 guide=0 stale=4 stale_severity=report exit=1`**: 19 `meshing_*`,
+  10 `magnetostatics_*`, 10 `mri_*`, 1 `materials_*`, 2 `ports_*` dead;
+  `meshing_09_*` ×2, `ports_01`, `ports_02` stale. The negative control, as
+  scoped.
+- `20260901T050211Z_EX-36-leg-mesh-a.log` — `-e mesh:1,mesh:2,mesh:3,mesh:4,mesh:5
+  -n 2 -t 150`, **Status 0 / 113 s**; five `==>` banners, five "All identities
+  hold" each immediately before the next banner (`run_examples.sh` is `set -e`,
+  so each example exited 0 on both ranks); in-script 19.6 / 0.7 / 37.9 / 37.6 /
+  9.1 s. `mesh:1`–`mesh:5` are green on record.
+- `20260901T050408Z_EX-36-leg-mesh-b.log` — `-e mesh:6,mesh:7,mesh:8,mesh:9 -n 2
+  -t 200`, **footerless**, no test-results row: last write 05:08:35Z, **267 s**
+  after its 05:04:08Z header. In-log: `mesh:6` "All identities hold. Total
+  elapsed 58.6 s" (line 8112), `mesh:7` 94.8 s (line 26498), `mesh:8` mesh built
+  91.72 s (line 43911, the last line) and nothing after; no `mesh:9` banner.
+  `meshing_06_*` / `_07_*` artifacts at 05:05:10Z / 05:06:48Z, inside the
+  window; `meshing_08_*` at **05:09:09Z, 34 s after the log's last write** —
+  the in-container `mpiexec -n 2` outlived the host-side kill and wrote them;
+  `meshing_09_*` untouched (2026-08-29). The kill mechanism is **not
+  determinable from the log**: not the container-side `timeout -k 30 200`
+  (which returns a footer through the `set -e` loop), not the 05:19Z session
+  end (11 minutes later); a 240 s tool timeout plus output drain and an
+  abandoned backgrounded window both fit, and the slot's own account is the
+  latter. The 58.6 / 94.8 / 91.72 s figures are warm-cache prices.
+
+**Diagnosis.** Two faults, one rule: (1) the executor did not hold its third
+harness window in the foreground under a 660 000 ms Bash timeout — it returned
+with the window running; (2) the slot then ended its turn with the resumed
+executor in flight, and the headless CLI's 600 s background-wait ceiling
+terminated the session. The 2026-08-10/11 trap (three slots) in its delegated
+form, on the first delegated slot. Disposition by the review: implementer-run.md
+step 3 gains a fourth spawning rule (executors foreground, the harness rule
+stated in the spawn prompt, never end the turn with one in flight); the
+daily-review rubric's trap list carries it; a launcher backstop
+(`export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0` in implementer-run.sh, so
+the 65-minute kill bounds a slot that backgrounds anyway) is proposed to the
+operator — the review's sandbox denied the edit under `scripts/automation/`;
+item 4 rescoped to `mesh:8` and `mesh:9` one window each, the root group
+un-paired into its own item.
+
+- Tried: §9 item 4 via `example-runner` — pre-census, `mesh:1–5`, `mesh:6–9`.
+- Result / measured: `mesh:1`–`mesh:7` green (7 of 9); `mesh:8` unwitnessed
+  past its mesh build; `mesh:9` not run; root group not started; census
+  pre-leg `dead=42 stale=4`, post-leg never run.
+- Logs: `20260901T050142Z_EX-36-legs-precensus.log`,
+  `20260901T050211Z_EX-36-leg-mesh-a.log`,
+  `20260901T050408Z_EX-36-leg-mesh-b.log` (footerless, not citable as a run).
+- Branch (if parked): none — no code changed; artifacts only.
+- Next-attempt hypothesis: §9 items 4 (`mesh:8`, `mesh:9`) and 7 (root
+  group) as rescoped; the executor rule is the thing under test in the 04:30
+  slot as much as the examples are.

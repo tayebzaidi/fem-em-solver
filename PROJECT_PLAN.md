@@ -5271,6 +5271,46 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 >     `(3,)` guard does not catch. One slot: print the KSP converged
 >     reason and iteration count, and read `‖E_cg1 − E‖/‖E‖` over the
 >     whole mesh beside the phantom-restricted figure.
+> **Step 3c scoped 2026-09-01 03:00 review — the projector diagnosis, §9
+> item 6.** Separate the three candidates in one slot, on the step-3b
+> module (`tests/validation/test_birdcage_sar_map.py`, the `sar_map_cg1`
+> fixture), no new solve. **(i)** The mass solve's convergence:
+> `post.project_to_cg1` builds a `LinearProblem` and discards its solver —
+> expose it behind an opt-in kwarg (default off, the `B` callers untouched)
+> and assert `getConvergedReason()` **> 0** with `getIterationNumber()`
+> printed; the expected value is `KSP_CONVERGED_RTOL` (2) at `ksp_rtol`
+> 1e-12 / `ksp_atol` 1e-30, and `DIVERGED_ITS` (−3) at PETSc's 10 000-step
+> default is what candidate 2 looks like. **(ii)** The exact-reproduction
+> control: interpolate `f = a + b × x` — in `N1curl₁ ∩ CG1³` — into the
+> solve's own N1curl space on the fixture mesh (as a complex `Function`;
+> the helper refuses real inputs), project it, and assert
+> `‖P f − f‖_{L²(Ω)}/‖f‖ ≤ 1e-10`: a pass refutes candidate 3 (an
+> element-side mismatch), a fail confirms it. The control's control is
+> `f = x² ê_x` (∉ CG1³), whose residual must read **> 1e-3**. **(iii)**
+> Printed, not gated: `‖E_cg1 − E‖/‖E‖` over the **whole mesh** beside the
+> phantom figure (1876.1871%, re-asserted at rtol 1e-3 as a record) and
+> over a **phantom core** — phantom cells none of whose vertices lie on the
+> phantom boundary (cell→vertex connectivity, rank-local; reduce every norm
+> with `assemble_scalar` + `allreduce`). A whole-mesh figure ≪ the phantom's
+> says the global fit is dominated elsewhere (candidate 1, the sheet /
+> conductor-edge `E`); a core figure ≪ the phantom's says the mechanism is
+> the CG1 smear of the normal-`E` jump at the σ interface — which no
+> vertex-continuous space represents — and the honest `E` estimator is
+> phantom-restricted or cellwise, a review's step 3d to scope. **Anchors:**
+> (i), (ii); every step-3b record (primal and CG1 columns, both control
+> sets, phantom power, the 1876% figure) reproducing at `CG1_RECORD_RTOL`;
+> the five deliberate reds kept exactly. **Negative control:** the `x²`
+> field's residual, and the mis-rotated CG1 control still asserted > 5%.
+> **Cost:** step 3b ran 100–105 s; two extra 116 085-cell vector mass solves
+> ≈ 10 s → **≈ 130 s**, `timeout -k 30 400`, `tests/environment` first.
+> **Traps:** no `<=` on complex operands; `project_to_cg1`'s default `name`
+> — pass one per field; the module's five primal asserts stay red and the
+> run's exit stays 1 — the anchors are read from the log, as 3b's were.
+> **Scope:** a diagnosis of the projector — no band, no SAR gate, no
+> re-registration, nothing in `src/` beyond the opt-in diagnostics return;
+> `WF-6` stays 🟡 whatever prints. **Negative result:** (ii) failing or (i)
+> ≤ 0 *is* the finding — known-issues "Resolves with" row, keep every
+> assert, do not raise the iteration cap in-slot, stop.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -5320,7 +5360,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-32` | Birdcage 4-port power-wave S-matrix at 10 MHz (`PORT-9`'s newly gated capability: first example solving ports on the **birdcage** — every existing S-parameter example is two-torus (`EX-20`/`EX-24`/ports:1–3), and `EX-28`/`EX-31` are mesh-only; commissioned 2026-08-25 10:30 review, §5.4 ramp) | ✅ *(2026-08-26, green on the first run; every gate-module record reproduced exactly and the only reading that moved is the one (d3c) declares non-reproducible)* | standard (measured standard, 88 s) |
 | `EX-33` | 16-leg gapped + sheeted birdcage mesh (`GEO-19`'s newly gated capability: first example above four legs — `EX-28`/`EX-31`/`mesh:3` are all 4-leg, so the geometry angle is new; mesh-only, no solve, no port claim; commissioned 2026-08-25 18:00 review, §5.4 ramp) | ✅ *(audited COMPLIANT 2026-08-26 18:00 review: three footers Status 0 at 131 / 126 / 1 s, all 16 claimed digits grep out of the run log, bands *and* `_assert_identity_family` imported from the gate module, the gate-module diff a single +6-line additive hunk)* | standard |
 | `EX-34` | Birdcage 4-port S-matrix across the frequency ladder 10 / 64 / 128 MHz on **one** mesh (`PORT-11`'s newly gated capability: first example solving ports at a Larmor frequency — `EX-32` is 10 MHz only, `EX-19`/`EX-25` are Larmor on the sphere with no ports; the drive/output angle is the frequency ladder itself: loss tangent, cells/δ, cells/λ, `\|Im P\|/Re P` and the three gate readings side by side; commissioned 2026-08-26 18:00 review, §5.4 ramp) | ✅ 2026-08-28 (`ports:5`, `20260828T110615Z_EX-34-run2.log`, **139 s** Status 0 at `-n 2` complex; one 116 085-cell mesh, 12 driven solves, all three gates green on all three rungs; 128 MHz cells/λ 12.5024 ≥ 10) | standard |
-| `EX-36` | Re-run the examples whose artifacts the 2026-08-28 rename (`67e4c1c`) orphaned — census `dead=53 exit=1` on 2026-08-29 — until it reads `dead=0`; four legs by runner group, each one slot (commissioned 2026-08-30 02:15 weekly review; entry written by the 10:30 daily review). **Leg (th) ✅ 2026-08-31 — `dead` 53 → 42, group `dead`/`stale` both 0, 83 s**; three legs open | 🟡 | standard per leg (105 / ≈ 500 / 447 / 935 s measured by `EX-30`) |
+| `EX-36` | Re-run the examples whose artifacts the 2026-08-28 rename (`67e4c1c`) orphaned — census `dead=53 exit=1` on 2026-08-29 — until it reads `dead=0`; four legs by runner group, each one slot (commissioned 2026-08-30 02:15 weekly review; entry written by the 10:30 daily review). **Leg (th) ✅ 2026-08-31 — `dead` 53 → 42, group `dead`/`stale` both 0, 83 s**; **leg (mesh) partial 2026-09-01 00:00 slot** — `mesh:1`–`mesh:7` green (113 s footered window + 58.6 / 94.8 s in a footerless one), `mesh:8`/`mesh:9` unobserved after a host-side harness kill 267 s into the third window, slot unjournaled, logs landed by the 03:00 review; the mesh remainder is §9 item 4, leg (root + mri + mat) item 7, leg (ports + ans) shrunk to `ports:1–3` as item 8 | 🟡 | standard per leg (105 / ≈ 500 / 447 / 935 s measured by `EX-30`) |
 | `EX-35` | 16-leg **ring-gapped** birdcage mesh — the 32-ring-port high-pass layout (`GEO-20` step 2's newly gated capability, 2026-08-29: `EX-31`/`mesh:7` cuts the rings at 4 legs, `EX-33`/`mesh:8` cuts the **legs** at 16 — no example has the production high-pass topology at the production leg count; mesh-only, no solve, no port claim; commissioned 2026-08-29 10:30 review, §5.4 ramp) | ✅ | standard |
 | `EX-37` | **`ANS-1`/`ANS-3` are unrunnable since the 2026-08-28 rename**: `67e4c1c` rewrote the two cases' `__import__("01_dodd_deeds_coil_loading")` / `("02_package_sparameter_sweep")` strings along with their artifact basenames, and no module of the prefixed name exists — the `ANS-4` slot's observation, verified by the 18:00 review from `git log -S`; restore the two strings, re-run `ans:1` and `ans:3`, census (commissioned 2026-08-30 18:00 review; known-issues entry) | ✅ *(2026-08-31, 19:30 slot — negative control Status 1/3 s, both cases green, 63 s / 128 s)* | standard (≈ 5 + 70 + 131 s + census) |
 | `EX-38` | `\|B₁⁺\|` map of the loaded 4-leg birdcage at 10 MHz into ParaView (`WF-6` step 1's newly gated capability, 2026-08-30: the CG1-projected `\|B₁⁺\|` field under gates (i)/(ii) — no example writes a B₁⁺ field, `ports:4`/`ports:5` stop at S-matrices; the output-quantity angle; commissioned 2026-08-30 18:00 review, §5.4 ramp) | ✅ *(2026-08-31, 15:00 slot — `ports:6` green in 63 s: gate (i) 9.795751117e-03 vs record to 1.195e-08, CG1 C4 covariance 2.1870% vs the 5% band and the record to 1.643e-05, DG0 control 8.6516% to 3.227e-06, 51/51 valid, cell ratio 1.000000)* | standard (≈ 70 s) |
@@ -5704,6 +5744,37 @@ gates on the census, which is why this is queued ahead of its size.
 > one slot in separate runner windows, and leg (th) used 6 of its 60
 > minutes; §9 item 5. Leg (ports + ans), 935 s, keeps its own slot as the
 > drain fallback.
+> **Leg (mesh), first attempt — 2026-09-01 00:00 slot: partial, unjournaled,
+> landed by the 03:00 review with a `log-pathologist` ruling.** The first
+> slot able to spawn `example-runner` (df38553) did. The pre-census
+> (`20260901T050142Z_EX-36-legs-precensus.log`, **`dead=42 guide=0 stale=4
+> exit=1`** — 19 meshing + 10 magnetostatics + 10 mri + 1 materials + 2
+> ports names dead; `meshing_09_*` ×2, `ports_01`, `ports_02` stale) and
+> `mesh:1`–`mesh:5` (`…050211Z_EX-36-leg-mesh-a.log`, **Status 0 / 113 s**,
+> every in-script identity green — `mesh:5` "All identities hold", the
+> `EX-27` partition to 1e-9) both footered inside it; `mesh:6`–`mesh:9`
+> (`…050408Z_EX-36-leg-mesh-b.log`) did not — **footerless**, killed
+> host-side at 05:08:35Z, **267 s** after its header; the log cannot say by
+> what (the Bash tool's 240 s default plus output drain, or a backgrounded
+> window abandoned when the executor returned — the slot's own account is
+> the latter), only that it was neither the container-side `timeout 200`
+> (which returns a footer) nor the 05:19Z session end. In-log before the
+> kill: `mesh:6` **"All identities hold. Total elapsed 58.6 s"**, `mesh:7`
+> **94.8 s** (warm-cache prices — `mesh:1`–`5` had just run in the same
+> container; do not size windows from them), `mesh:8` mesh built (91.72 s)
+> and nothing after; `mesh:9` never started. `mesh:8`'s artifacts carry
+> 05:09:09Z mtimes — the in-container process outlived the host-side kill
+> and wrote them — so the census will read them fresh while no run observed
+> their asserts: **re-run `mesh:8`; artifacts are not evidence.** The
+> executor returned early, the slot "resumed" it and ended its turn waiting,
+> and the headless CLI terminated the session 600 s later ("Background tasks
+> still running after 600s; terminating", exit 0 at 05:19Z, minute 19) — no
+> journal, no commit, three untracked logs; journaled by the review in
+> attempts.md, logs landed as `b94034f`. Rescoped as §9 items 4 and 7 —
+> `mesh:8` and `mesh:9` one window each, the root group in four windows,
+> census before and after each leg; the foreground / 660 000 ms rule now
+> binds an executor's windows explicitly (implementer-run.md step 3, fourth
+> rule).
 
 **`EX-37` — restore the `ANS-1`/`ANS-3` example imports the rename broke**
 ✅ *(commissioned 2026-08-30 18:00 review; executed 2026-08-31, 19:30
@@ -6489,111 +6560,124 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed **2026-08-31, 18:00 review**. Interval (since the 10:30
-review): **four slots, four landed — two ✅, two 🟡 negative results
-delivered in full; zero stopped, zero parked** — the fourth clean interval
-in a row on an all-independent queue, consumed in order. 12:00 `TH-13`
-step 3a″ (571 s kill + 49 s): a **second exit 124** at the unchanged 570 s
-ceiling, but instrumented — the `-s` timeline plus a probe-mode partition
-show the mesh at 4.3 s, the degree-1 phase green in 46.8 s (ΔR
-+1.5838% vs +1.5834% → +0.00039 pp of record; identity residuals
-8.4704e-15 / 3.7068e-15 vs 1e-9) and the **degree-2 pair alone eating
-≥ 524 s** — the module has no margin at degree 2 and the two degree-2
-coil identity reds remain unobserved since 08-18. 13:30 `WF-6` step 3
-(96 + 80 s): the coil-driven **point-SAR** map read off the primal N1curl
-`E` misses all five C4/mirror identities at **25.11 / 40.55 / 30.01 /
-38.61 / 28.15%** against the unmoved 5% band while both controls
-(129.82 / 334.58%), the phantom-σ premise and the gate-(i) power record
-(5.637745667e-08 W to every digit) hold — the pre-registered estimator
-finding; five deliberate reds on `main`, no band moved, no SAR claim.
-15:00 `EX-38` (63 s) and 16:30 `EX-39` (81 s): the first two `|B₁⁺|`
-fields in ParaView, every anchor met on the first run — **both chunks
-✅**. Between the slots the human operator landed the six specialist
-subagent definitions (`83e71ef`, `eb3e608`, `7989f61`; the `AGENT-VAL`
-logs are their shadow-replay validation, not chunk work) and wired them
-into this protocol. Tree clean, no `attempt/*`, no `recovered/*`,
-container Up 5 days.
+Last reviewed **2026-09-01, 03:00 review**. Interval (since the 18:00
+review): **four slots — three landed (one ✅, two 🟡 delivered in full),
+one died unjournaled.** 19:30 `WF-6` step 3b (105 + 100 s): verdict (c)
+printed, and the run's own diagnostics relocated the finding — the primal
+column reproduced step 3 to every digit, the CG1-`E` column read
+**worse** (152.05 / 109.78 / 169.51 / 53.19 / 40.84%), and
+`‖E_cg1 − E‖/‖E‖` over the phantom at **1876%** with CG1 phantom power
+**+35 199%** say `post.project_to_cg1` does not fit an N1curl `E`; no band
+moved, no SAR claim. 21:00 `EX-40` (113 s): the 64 / 128 MHz `|B₁⁺|` maps
+in ParaView, every anchor met on the first run — **✅**. 22:30 `TH-13`
+step 3a‴ (49 + 374 + 405 s): the module split landed and the two degree-2
+coil identity reds are **observed** for the first time since 08-18 —
+3.8990e-09 / 3.7235e-09 against the unloosened 1e-9, one per σ-half,
+every window footered inside its 600 s ceiling; the 570 s-ceiling
+known-issues entry retired, the identity entry re-pointed. Between slots
+the human operator landed df38553 (implementer slots may spawn this
+repo's specialist agents). 00:00 `EX-36` legs (mesh) + (root): **the first
+delegated slot, and it died** — `example-runner` returned with its third
+harness window still running, the slot "resumed" it and ended its turn,
+and the headless CLI terminated the session 600 s later (exit 0 at
+05:19Z, minute 19): no journal, no commit, one modified and three
+untracked files. What the logs prove (`log-pathologist` ruling, six
+claims): pre-census `dead=42 stale=4`; `mesh:1`–`mesh:5` **Status 0 /
+113 s**; `mesh:6` and `mesh:7` green in-log (58.6 / 94.8 s) in a
+footerless window killed host-side at 05:08:35Z, 267 s in; `mesh:8`
+unwitnessed past its mesh build (its artifacts were written 34 s *after*
+the kill by the orphaned container process); `mesh:9` untouched. Cleared
+by this review: logs landed as `b94034f`, the anomaly journaled in
+attempts.md by the review, the executor rule written into
+implementer-run.md, a launcher backstop proposed to the operator (this
+session cannot write `scripts/automation/`). Tree clean after `b94034f`,
+no `attempt/*`, no `recovered/*`, container Up 5 days.
 
-**Audit (§4).** `EX-38` and `EX-39` changed to ✅ this interval; one
-`auditor` each, both **PASS**, one cited digit re-traced by the review per
-report. `EX-38`: `20260831T200401Z_EX-38.log:4662` — `CG1 (projected, the
-gated estimator) 2.1870% vs band 5.0% PASS (step 1b record 2.1870%,
-relative 1.643e-05)`; `:4658` gate (i) 9.795751117e-03 vs band 1e-2;
-footer `:4685` `Elapsed (s): 63`; log commit `de848df` is the closing
-commit's parent. `EX-39`: `20260831T213402Z_EX-39.log:4660–4662` —
-identity (a) 0.9818% PASS, (b) 0.8087% PASS, control 95.1975% "MISSES the
-band, as it must"; `:4656` gate (i); footer `:4686` `Elapsed (s): 81`;
-log commit `eb3e608` is the closing commit's parent. Both example paths
-import the gate modules' helpers, bands and records rather than restating
-them; `EX-39` also exported step 2's five records from
-`test_birdcage_b1_quadrature.py` (constants only, no assertion moved) —
-the blemish the 10:30 audit filed, discharged. `TH-13` step 3a″ and
-`WF-6` step 3 were read against their footers and test-results rows
-(124 / 0 and 2 / 1 / 0 exactly as journaled); neither reached chunk-✅,
-nothing to demote. No `log-pathologist` ruling was needed: both negative
-readings are corroborated by a second run in the same slot (the probe
-partition; the step-2 regression), and the operator's shadow replay of
-the coil-mesh claim returned the same partition.
+**Audit (§4).** `EX-40` changed to ✅ this interval; one `auditor`,
+**PASS**, one cited digit re-traced by the review:
+`20260901T020415Z_EX-40.log:4708` — `P2@+90deg (the identity) 2.2187% vs
+band 5.0% PASS (step 2b record 2.2187%, relative 1.070e-05)`; `:4726` the
+128 MHz row 2.1315% (relative 1.788e-06); `:4756` `Elapsed (s): 113`; log
+commit `8497979` is the closing commit's sole parent; the test-module diff
+is a records export only (`STEP2B_LARMOR_RECORDS`), no assertion moved;
+executed `assert`s at `examples/ports/08_birdcage_b1_larmor_ladder.py:369,
+375, 452, 459, 464, 470`. `TH-13` step 3a‴ closed no chunk (✅ since step
+2) — its three footers and test-results rows read 0 / 1 / 1 at 49 / 374 /
+405 s exactly as journaled; `WF-6` step 3b reached no ✅. Nothing to
+demote. The `log-pathologist` was used once, on the 00:00 slot's
+footerless log: five claims confirmed, one **overruled** — the review had
+read the kill as "240 s, the Bash default"; the file's last write is 267 s
+after its header and the log does not identify the mechanism. The
+`EX-36` annotation and `b94034f` say what the ruling licenses and no more.
 
-**Plan work this review, all in §7.** (1) **`TH-13` step 3a ruled — the
-module is split, option (a).** The measured partition leaves two live
-options and the review takes the one that keeps the reds observable:
-the degree-2 pair moves to its own module, run **one σ-half per window**
-(mesh + degree-1 row + cost probe + one degree-2 solve ≈ 310–330 s at
-`-n 8`) so each window returns a footer with 1.8× margin inside the
-660 s Bash ceiling that actually bounds a scheduled slot; the trimmed
-original defaults to probe mode (49 s) as the standing guard. **No
-record, band or ceiling moves** — the 570 s ceiling is not raised, the
-case is shrunk, per the hard rule. Step 3a‴ is **item 3**. (2) **`WF-6`
-step 3b scoped** on step 1b's pattern: the same five SAR identities off an
-L²-projected CG1 `E` beside the primal column, the primal column asserted
-to reproduce step 3's five readings and both controls, the CG1 controls
-asserted to survive the projection, the CG1 identities **printed with a
-pre-registered three-way verdict and not gated** — re-registration, if
-any, is the next review's exactly as 1d was. The degenerate mis-paired-
-sense comparison is struck from SAR scopings. **Item 1.** (3) **`EX-40`
-queued** (item 2) now that `EX-38`/`EX-39` have landed in order. (4) §2's
-`WF-6` sentence and the SAR bullet updated to say what step 3 measured;
-the deliberate-red count on `main` is restated (4 → **9** at `-n 2`: the
-five SAR asserts are deliberate, filed, and held). Flagged to the 09-06
-weekly review, not queued: whether point-SAR on this fixture needs a
-finer rung if 3b returns verdict (c); everything the 10:30 review already
-flagged stands.
+**Plan work this review.** (1) **The 00:00 outage disposed** (step 2): the
+three orphaned logs landed (`b94034f`), the anomaly journaled by the
+review in attempts.md, `EX-36` leg (mesh) rescoped from what the logs
+prove — `mesh:8` and `mesh:9` remain, one window each (**item 4**); leg
+(root + mri + mat) un-paired into its own item (**item 7**) so no
+delegated slot carries more than ~8 min of windows until the executor
+rule has been seen to hold. (2) **The executor rule**
+(docs/automation/implementer-run.md step 3, fourth rule; the
+daily-review rubric's trap list): an executor is spawned in the
+foreground, every harness window inside it carries the 660 000 ms Bash
+timeout, and a slot never ends its turn with an executor in flight. A
+launcher backstop — `export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0` before
+the `claude` invocation in `scripts/automation/implementer-run.sh`, so the
+outer 65-minute kill rather than the CLI's 600 s ceiling bounds a slot
+that backgrounds anyway — is **proposed to the operator** (dashboard,
+Waiting-on-you 1): the review's sandbox denies writes under
+`scripts/automation/`, so the rule is in force and the backstop is not.
+(3) **`WF-6` step 3c scoped** — the projector diagnosis known-issues'
+"Resolves with" asked for: the mass solve's KSP converged reason, an
+exact-reproduction control on `a + b × x` with `x² ê_x` as its own
+control, and whole-mesh / phantom / phantom-core relative errors; §7
+bullet, **item 6**. (4) `EX-36` leg (ports + ans) shrunk to what the
+census still reads — `ports:1`–`ports:3` (`ans:1`/`ans:3` and
+`ports:4`–`ports:8` are fresh) — and promoted from drain fallback to
+**item 8**. (5) The item-3 date typo fixed (the 22:30 slot was
+2026-08-31). §2 is unchanged: no quantitative claim moved this interval.
+Flagged to the 09-06 weekly review, not queued: the `TH-13` degree-2
+coil reds are now observed and stay a formulation question; everything
+the 18:00 review flagged stands.
 
-**Example chunk (§5.4).** The two chunks that closed this interval are
-themselves examples; `WF-6` step 3 gated nothing (a negative result) and
-`TH-13` step 3a″ closed nothing. No new example chunk. `EX-40` is the
-lineage's next rung and is queued below.
+**Example chunk (§5.4).** `EX-40` is itself the example of `WF-6` step
+2b's gate; `TH-13` step 3a‴ observed two open reds and gated nothing;
+`WF-6` step 3b is a negative result. No new example chunk.
 
 **Residual `main` reds at `-n 2`:** **9 deliberate/known** — the two
 entry-3 names, `test_birdcage_volumes_partition_the_box` (`GEO-21`'s
 floor entry), `TH-13`'s precondition at 1.926692e-02 on the 1 MHz row
 (item 5 retires it by re-pointing), and the **five `WF-6` step-3 SAR
-identity asserts** (known-issues 🔴 OPEN 2026-08-31; item 1 measures the
-estimator, no band moves). Plus the two degree-2 **coil** identity tests
-at 1e-9 — open, diagnosed, and **observed 2026-09-01** (item 3 done): one red
-per σ-half of `test_coil_loading_degree2_pair.py` at 3.8990e-09 / 3.7235e-09,
-reachable only under `TH12_DEGREE2_HALF` at `-n 8`, so they are not part of the
-`-n 2` count. §2 moved only editorially (the
-`WF-6` sentence, the SAR bullet); every quantitative §2 claim stands.
+identity asserts** (known-issues 🔴 OPEN 2026-08-31; step 3b kept them
+and measured the CG1 column beside them; item 6 diagnoses the projector,
+no band moves). Plus the two degree-2 **coil** identity tests at 1e-9 —
+open, diagnosed, and **observed 2026-09-01** (item 3 done): one red per
+σ-half of `test_coil_loading_degree2_pair.py` at 3.8990e-09 / 3.7235e-09,
+reachable only under `TH12_DEGREE2_HALF` at `-n 8`, so they are not part
+of the `-n 2` count. Every quantitative §2 claim stands.
 
-**Five items this queue, all independent — no spare beyond the drain
-fallback; none depends on another landing.** Disjoint surfaces: item 1
-edits one test module (`test_birdcage_sar_map.py`); item 2 adds one
-`ports/` example; item 3 splits one test module into two and touches no
-other; item 4 runs examples; item 5 edits one test function in a module
-no other item touches. Items 3 and 5 both update the §2 residual-reds
-count — each states its own delta, whichever lands second re-counts.
-Deliberately not queued: `PORT-4`…`PORT-8`, `GEO-25` and `PORT-13`
-(anchors owed by the 2026-09-06 weekly review), **`TH-13` step 3b** (the
-sheet-drive residue — a formulation ruling, weekly), the `TH-12`
-production-order clause (weekly), `ANS-2` (weekly, §10 trigger), the
-`ANS-3`/`ANS-4` scatter question and `WF-6`'s absolute convergence rung
-(both flagged to the weekly review), `EX-36` leg (ports + ans) beyond the
-drain fallback below, a `MAG-20` third rung, **`TH-13` steps 1/1′/2/3a/3a″
-as written** (do not re-run `test_coil_loading_degree2.py` in `full` mode
-at any ceiling — item 3 replaces that command), and any re-registration
-of the SAR band (item 1 reports; the next review rules).
+**Five open items this queue (4–8), all independent — none depends on
+another landing; the spare is item 8.** Disjoint surfaces: items 4, 7
+and 8 run examples in three different runner groups, each with its own
+census lines (they share the census *script* and the executor, not a
+result — in different slots that is nothing); item 5 edits one test
+function; item 6 edits the step-3b module and adds an opt-in diagnostics
+return to `post/faraday.py`. Items 5 and 6 both touch known-issues —
+different entries. Deliberately not queued: `PORT-4`…`PORT-8`, `GEO-25`
+and `PORT-13` (anchors owed by the 2026-09-06 weekly review), **`TH-13`
+step 3b** (the sheet-drive residue — a formulation ruling, weekly), the
+`TH-12` production-order clause (weekly), `ANS-2` (weekly, §10 trigger),
+the `ANS-3`/`ANS-4` scatter question and `WF-6`'s absolute convergence
+rung (both flagged to the weekly review), a `MAG-20` third rung,
+**`TH-13` steps 1/1′/2/3a/3a″/3a‴ as written** (do not re-run
+`test_coil_loading_degree2.py` in `full` mode at any ceiling), `WF-6`
+step 3d (phantom-restricted or cellwise `E` estimator — scoped only from
+3c's reading), and any re-registration of the SAR band (the next review
+rules on 3c's finding). `plan-navigator` swept §7 for anything else
+executable: every other open chunk is weekly-owned (`TH-12`, `POST-3`,
+`PORT-13`), a bare row with no plan (`TH-5`, `MAT-3`, `MAT-5`, `WF-5`), or
+waits on the coil+phantom SAR path this queue is unblocking (`MAT-4`,
+`POST-1`).
 
 **⚠️ Standing constraint on the compose allow — read before editing that
 file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
@@ -6715,7 +6799,7 @@ denied; write it relative.
    magnitude. **Scope:** single-drive maps + one identity per rung — no
    quadrature, no CV/homogeneity, no SAR, no tuning, no absolute claim.
    **Negative result:** a record not reproducing — known-issues, stop.
-3. ✅ **done 2026-09-01 22:30 slot — all three windows footered as
+3. ✅ **done 2026-08-31 22:30 slot — all three windows footered as
    pre-registered, exactly one degree-2 identity red per half** (probe-mode
    original 8 passed / 1 skipped / exit 0 / 49 s; `loaded` and `free` halves
    1 failed / 6 passed / 2 skipped / exit 1 at 374 s and 405 s, residuals
@@ -6780,30 +6864,39 @@ denied; write it relative.
    result:** a half not returning inside 600 s — report the measurement,
    known-issues, stop; the disposition (option (d), probe-mode gate only)
    returns to the review.
-4. **`EX-36` legs (mesh) + (root + mri + mat), paired — re-run the
-   `meshing` group and the root-runner `mag:*`/`mri:*`/`mat:1` group
-   until the census reads `dead=0` and `stale=0` for both (standard,
-   `-n 2`, host runner; independent; §7 entry — pairing pre-authorised
-   by the 10:30 review: ≈ 500 + 447 s measured `EX-30` estimates, and
-   leg (th) used 6 of its 60 minutes). Executor: `example-runner`.**
-   Pre-leg census first (negative control: both groups' non-zero `dead`
-   counts printed), then the `mesh:<n>` selections and the root-group
-   selections — **one token per example**, no `..` ranges — split across
-   enough runner windows that no single command approaches 20 min, then
-   the census again. Run magnetostatics 01/02/04/05/06 and `mri:1`
-   **from the repo root** (cwd-relative `paraview_output/` paths — the
-   rename commit's note). **Anchors:** each example's own in-script
-   asserts against its gate records (a green run *is* the quantitative
-   check, `ANS-1`'s rule); post-leg census `dead` = 0 **and** `stale` = 0
-   for both groups — this also clears the age-stale artifacts, eight of
-   which are `magnetostatics_01_*`. **Cost:** ≈ 950 s + census across
-   3–4 windows; docker-socket denial ⇒ the substitution above.
-   **Traps:** a red example is not fixed in-slot — known-issues, and the
-   leg stops at its census figure. **Scope:** artifacts only; no record,
-   band or guide number moves; both legs ✅ leaves only leg
-   (ports + ans) — the chunk goes ✅ when the whole census reads
-   `dead=0`. **Negative result:** a red example is a finding about that
-   example on the 0.11 image — journal, known-issues, stop.
+4. **`EX-36` leg (mesh), remainder — `mesh:8` and `mesh:9`, one window
+   each, until the census reads `dead=0` / `stale=0` for `meshing_*`
+   (standard per window, `-n 2`, real build, host runner; independent;
+   §7 entry — **rescoped 2026-09-01 03:00 review after the 00:00 slot's
+   partial**: `mesh:1`–`mesh:7` are green on record, `b94034f`, and the
+   root group is item 7). Executor: `example-runner`, spawned in the
+   **foreground** (`run_in_background: false`) with the spawn prompt
+   stating that every harness window inside it runs foreground with
+   **Bash timeout 660000 ms**; the slot does not end its turn while the
+   executor is in flight (implementer-run.md step 3, fourth rule). The
+   00:00 slot's third window was killed host-side 267 s in with `mesh:8`
+   mid-run — the executor had returned with it still running.** Windows:
+   (a) `./run_examples.sh -e mesh:8 -n 2 -t 400` — its artifacts are
+   fresh (written by the orphaned container process after the kill) but
+   its asserts were never observed: **run it, do not skip it**; (b) `-e
+   mesh:9 -n 2 -t 400` (56.9 h stale). `EX-30` priced them at 131 / 104 s;
+   the 00:00 in-log 91.72 s mesh build for `mesh:8` is a warm-cache
+   figure. Pre-leg census first (negative control: the `meshing_09_*`
+   stale lines and whatever `meshing_*` still reads dead — print it),
+   census again after. **Anchors:** each example's own in-script asserts
+   against its gate records (`mesh:8` the 16-leg CAD identities and cost
+   rung, `mesh:9` the 32-ring-port identities — a green run *is* the
+   quantitative check, `ANS-1`'s rule); post-leg census `meshing_*`
+   `dead` = 0 **and** `stale` = 0. **Cost:** ≈ 240 s + two 1 s censuses
+   across two windows ≤ 400 s container-side each; docker-socket denial
+   ⇒ the substitution above. **Traps:** a red example is not fixed
+   in-slot — known-issues, and the leg stops at its census figure;
+   `mesh:8`'s artifacts reading fresh in the pre-census is *not* a reason
+   to skip it. **Scope:** artifacts only; no record, band or guide number
+   moves; leg (mesh) ✅ on the group's `dead=0 stale=0`; the chunk goes ✅
+   only when the whole census reads `dead=0` (items 7 and 8). **Negative
+   result:** a red example is a finding about that example on the 0.11
+   image — journal, known-issues, stop.
 5. **`TH-13` step 4 — re-point the step-1′ precondition red at the
    matched path (standard, complex, `-n 2`; independent — a different
    module from item 3; ruling made by the 10:30 review, §7 step-4
@@ -6828,6 +6921,87 @@ denied; write it relative.
    ratio not ≤ 1e-2 would contradict
    `20260831T094852Z_TH-13-step3a-final.log` — a reproducibility
    finding, not a rescope; known-issues, keep the assert, stop.
+6. **`WF-6` step 3c — the projector diagnosis: is `post.project_to_cg1` a
+   projector on N1curl input? (standard, complex, `-n 2`, `main`;
+   independent; scoped this review — execute the §7 step-3c bullet as
+   written).** On the step-3b module's existing `sar_map_cg1` fixture, no
+   new solve: **(i)** the mass solve's KSP converged reason and iteration
+   count, asserted **> 0** (expose the solver behind an opt-in kwarg on
+   `project_to_cg1`, default off; `B` callers untouched); **(ii)** the
+   exact-reproduction control `f = a + b × x` (in `N1curl₁ ∩ CG1³`)
+   interpolated as a complex `Function` into the solve's N1curl space and
+   projected, `‖P f − f‖/‖f‖ ≤ 1e-10`, with `x² ê_x` as the control's
+   control (residual > 1e-3); **(iii)** printed only: `‖E_cg1 − E‖/‖E‖`
+   over the whole mesh and over a phantom core (phantom cells with no
+   vertex on the phantom boundary) beside the phantom's **1876.1871%**,
+   re-asserted as a record at rtol 1e-3. **Anchors:** (i), (ii), and every
+   step-3b record — primal and CG1 identities, both control sets, phantom
+   power — reproducing at `CG1_RECORD_RTOL`; the five deliberate reds
+   kept exactly. **Negative control:** the `x²` field's residual, and the
+   mis-rotated CG1 control still asserted > 5%. **Cost:** ≈ **130 s** (3b
+   ran 100–105 s; two extra 116 085-cell vector mass solves), `timeout -k
+   30 400`, `tests/environment` first. **Traps:** the helper refuses real
+   inputs — interpolate the controls as complex; the expected reason is
+   `KSP_CONVERGED_RTOL` (2), and `DIVERGED_ITS` (−3) is candidate 2's
+   signature; core selection via cell→vertex connectivity is rank-local —
+   reduce every norm with `assemble_scalar` + `allreduce`; pass a `name`
+   per projected field; no `<=` on complex operands; the module's exit
+   stays 1 (five deliberate reds) — read the anchors from the log as 3b
+   did. **Scope:** a diagnosis — no band, no SAR gate, no re-registration,
+   nothing in `src/` beyond the opt-in diagnostics return; `WF-6` stays 🟡
+   whatever prints; the estimator that follows (step 3d) is the next
+   review's to scope from the three readings. **Negative result:** (ii)
+   failing or (i) ≤ 0 *is* the finding — known-issues "Resolves with"
+   row, keep every assert, do not raise the iteration cap in-slot, stop.
+7. **`EX-36` leg (root + mri + mat) — magnetostatics `1,2,4,5,6`, `mri:1`,
+   `mri:2`, `mat:1`, until the census reads `dead=0` / `stale=0` for
+   `magnetostatics_*`, `mri_*` and `materials_*` (standard per window,
+   `-n 2`, host runner from the **repo root**; independent of item 4 — a
+   different group, its own census lines; un-paired from item 4 this
+   review). Executor: `example-runner`, foreground, Bash timeout
+   660000 ms on every window, exactly as item 4.** The 09-01 pre-census
+   reads 10 `magnetostatics_*` (02, 04, 05, 06), 10 `mri_*` (01 ×9, 02) and
+   1 `materials_*` name dead. Windows, one token per example, no `..`
+   ranges, each sized so its worst case stays under the 660 s Bash
+   ceiling: (a) `-e 1,2 -t 250`; (b) `-e 4,5 -t 250`; (c) `-e 6 -t 300`
+   (`EX-30` root2: mag1 9 s, mag2–4 270 s together, mag6 163 s); (d) `-e
+   mri:1,mri:2,mat:1 -t 200` (complex, sourced by the runner; `EX-30`:
+   mri:1 + mat:1 88 s — `mri:2` is unpriced, hence its own cap). Census
+   before (negative control: the 21 names) and after. **Anchors:** each
+   example's own in-script asserts (`1` the straight-wire `E_Ω` record,
+   `4` the Helmholtz 0.04% centre field, `6` the h-rate, `mat:1` the
+   Dodd–Deeds ΔR 1.58%); post-leg census `dead` = 0 **and** `stale` = 0 for
+   the three groups. **Cost:** ≈ 700 s + censuses across four windows.
+   **Traps:** magnetostatics 01/02/04/05/06 and `mri:1` write cwd-relative
+   `paraview_output/` — run from the repo root or the census stays dead;
+   a red example is not fixed in-slot — known-issues, and the leg stops
+   at its census figure. **Scope:** artifacts only; no record, band or
+   guide number moves; leg ✅ on the groups' `dead=0 stale=0`; the chunk
+   goes ✅ when the whole census reads `dead=0`. **Negative result:** a
+   red example is a finding about that example on the 0.11 image —
+   journal, known-issues, stop.
+8. **`EX-36` leg (ports + ans), shrunk to what the census still reads —
+   `ports:1`, `ports:2`, `ports:3` (standard per window, `-n 2` complex,
+   host runner; independent of items 4 and 7; promoted from drain
+   fallback this review). Executor: `example-runner`, foreground, Bash
+   timeout 660000 ms on every window, as item 4.** The 09-01 pre-census
+   reads `ports_03_*` ×2 dead and `ports_01`/`ports_02` combined stale
+   (80.7 h); `ports:4`–`ports:8` and `ans:1`/`ans:3` are fresh (`EX-37`,
+   `EX-38`–`EX-40`) and are not run. Windows: (a) `-e ports:1 -t 400`; (b)
+   `-e ports:3 -t 400`; (c) `-e ports:2 -t 500` (`EX-30`: `ports:2`+`3`
+   424 s together, `ports:1`+`2` overran a 300 s window). Census before
+   (negative control: the two dead / two stale `ports_*` lines) and
+   after. **Anchors:** each example's in-script asserts (`ports:1` the
+   two-torus pair records, `ports:2` the package sweep's reciprocity,
+   `ports:3` the width ladder's 1.8333% at f = 0.5); post-census `ports_*`
+   `dead` = 0 and `stale` = 0. **Cost:** ≈ 600–700 s across three windows.
+   **Traps:** as item 4; a `ports_04`–`08` name turning age-stale by
+   census time (48 h limit) is age, not this leg's — journal it, do not
+   extend the leg. **Scope:** artifacts only; leg ✅ on the group's
+   `dead=0 stale=0`; if items 4 and 7 have also landed, the whole census
+   reads `dead=0` and the chunk goes ✅ — say so in the same commit;
+   otherwise the chunk stays 🟡. **Negative result:** a red example —
+   known-issues, stop.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
@@ -6836,11 +7010,10 @@ denied; write it relative.
 If the queue drains: **stop and journal.** There is no fallback chunk:
 `PORT-9` step 3's legs are serial by design — (d) is not queued until
 (d0) has a margin — and a review scopes each leg from the previous one's
-number, not an implementer in-slot. The one pre-authorised exception is
-`EX-36` leg (ports + ans) — 935 s, split into two windows, skip any case
-whose artifact the pre-leg census already reads fresh (legs (mesh) and
-(root + mri + mat) are item 5); it is independent of everything above.
-History of the birdcage-port hold in `docs/planning/plan-archive.md`.
+number, not an implementer in-slot. The former pre-authorised exception,
+`EX-36` leg (ports + ans), is item 8 now; nothing replaces it as a
+fallback. History of the birdcage-port hold in
+`docs/planning/plan-archive.md`.
 
 Every frequency-domain command needs `source /usr/local/bin/dolfinx-complex-mode`
 **and** `FEM_EM_REQUIRE_COMPLEX=1`, with `tests/environment` first in the pytest

@@ -89,6 +89,27 @@ clean tree. The per-command compute budget is unchanged and non-negotiable:
      evidence; you own the commit, the attempts.md entry, and the §4 claim,
      exactly as if you had run it. If its report and the logs disagree, the
      logs win.
+   - **Executors run in the foreground, and their harness windows carry
+     the 660 000 ms timeout.** Spawn with `run_in_background: false`, say
+     in the spawn prompt that the "Never run the harness with
+     `run_in_background`" rule below binds the executor's own Bash calls
+     (foreground, `timeout` 660000 ms, container-side `timeout -k 30`
+     sized to return a footer), and never end your turn while an executor
+     is in flight: the headless CLI waits at most 600 s for background
+     tasks and then terminates the whole session (`Background tasks still
+     running after 600s; terminating`), SIGKILLing the executor and any
+     harness window it holds. The 2026-09-01 00:00 slot — the first able
+     to delegate — lost `EX-36` leg (mesh) this way: `example-runner`
+     returned with its third `./run_examples.sh` window still running
+     (killed host-side 267 s in, mid-`mesh:8`, footerless; the container
+     process ran on and wrote artifacts nobody witnessed), the slot
+     "resumed" it and ended its turn, and the session was terminated at
+     minute 19 with no journal, no commit and three untracked logs. A
+     launcher backstop (`export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0`
+     in implementer-run.sh, so a slot that backgrounds anyway is bounded
+     by the 65-minute kill rather than the 600 s ceiling) is proposed to
+     the operator, not landed — reviews cannot write `scripts/automation/`.
+     Until it is, this rule is the only protection.
 4. Outcome:
    - **Complete** (§4-done: verification executed, quantitative assertion,
      harness log + elapsed time recorded): commit code + tests + logs +
@@ -127,7 +148,8 @@ answer prompts — a denied tool call is simply denied. Consequences:
   backgrounded harness — footerless log, untracked artifacts, no journal
   entry, and the tree left dirty for the next slot. Three consecutive slots
   paid this on 2026-08-10/11 (19:30, 22:30, 00:00 — the whole night) on the
-  same item. Run harness commands in the **foreground** with the Bash tool's
+  same item, and a spawned `example-runner` paid it again on 2026-09-01
+  00:00 (step 3, fourth rule). Run harness commands in the **foreground** with the Bash tool's
   `timeout` parameter at its 660000 ms maximum, and size the
   **container-side** `timeout` so the command returns a footer inside that
   window (≤ ~590 s of container time for a command with ~1 min of setup).

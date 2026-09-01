@@ -177,7 +177,14 @@ version-bump record sweeps) says so in its first line:
    turn exits the CLI and SIGKILLs the harness (footerless log, no journal —
    three slots on 2026-08-10/11): harness runs go foreground, Bash-tool
    timeout 660000 ms, container-side `timeout` sized to return a footer
-   inside that window; the container-side `timeout` needs `-k 30` — a plain
+   inside that window — and the same rule binds a **spawned executor's**
+   windows and the slot that spawned it: on 2026-09-01 00:00
+   `example-runner` returned with a `./run_examples.sh` window still
+   running (killed host-side 267 s in, footerless, the container process
+   orphaned), and the slot that ended its turn waiting for it was
+   terminated by the CLI's 600 s background ceiling with no journal —
+   spawn executors foreground, state the rule in the spawn prompt; the
+   container-side `timeout` needs `-k 30` — a plain
    TERM does not reliably stop an `mpiexec` job, and an overrun can wedge
    the container (MAT-6 step 10, 2026-08-12; recovery is
    `docker compose up -d --force-recreate`); piping pytest through
