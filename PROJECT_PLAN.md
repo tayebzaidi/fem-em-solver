@@ -5775,6 +5775,33 @@ gates on the census, which is why this is queued ahead of its size.
 > census before and after each leg; the foreground / 660 000 ms rule now
 > binds an executor's windows explicitly (implementer-run.md step 3, fourth
 > rule).
+> **Leg (mesh), remainder — ✅ 2026-09-01, 04:30 slot (item 4).**
+> Docker-socket denial recurred on `run_examples.sh -e mesh:8`, substituted
+> with the §9 inner command through `run_and_log.sh` (both windows), per
+> item 4's own contingency — deviation noted, not a violation. Pre-leg
+> census (`20260901T093312Z_EX-36-leg-mesh-remainder-precensus.log`):
+> **`dead=23 guide=0 stale=4 exit=1`** (no `meshing_*` dead lines — `mesh:1`
+> -`mesh:8` artifacts already fresh on disk from the killed 00:00 slot,
+> `mesh:8`'s asserts still unobserved per the ruling; `meshing_09_*` stale
+> ×2 at 61.5 h is the negative control). Predicted post-census, written
+> before running: `meshing_*` stale ×2 clears, `meshing_*` dead stays 0,
+> other groups untouched → `dead=23 stale=2 exit=1`. `mesh:8`
+> (`20260901T093339Z_EX-36-leg-mesh-remainder-mesh8.log`, **Status 0 /
+> 108 s** harness, 105.0 s in-script) — "All identities hold at 16 legs
+> and the 4-leg control collapses to one class," `EX-33`'s 3-class-vs-1
+> table and cost rung (116085→307296 cells, 2.6472×) reproduced against
+> the imported step-B record at 0.000e+00 relative. `mesh:9`
+> (`20260901T093535Z_EX-36-leg-mesh-remainder-mesh9.log`, **Status 0 /
+> 103 s** harness, 100.7 s in-script) — "All identities hold at 16 legs
+> across 32 ring ports, and the 4-leg control collapses to one azimuth
+> class," `EX-35`'s 4-class table and `GEO-20` step-2 record (265621
+> cells, 0.000e+00 relative, conductor 0.976465) reproduced. Post-leg
+> census (`20260901T093725Z_EX-36-leg-mesh-remainder-postcensus.log`):
+> **`dead=23 guide=0 stale=2 exit=1`**, prediction matched exactly, zero
+> `meshing_*` lines of either kind — the group reads `dead=0 stale=0`.
+> Residual `dead=23`/`stale=2` (`ports_01`/`ports_02` stale) are §9 items
+> 7/8's, unmoved. Leg (mesh) ✅ in full (mesh:1-9 all confirmed); the
+> chunk stays 🟡 pending the root/mri/mat and ports/ans legs.
 
 **`EX-37` — restore the `ANS-1`/`ANS-3` example imports the rename broke**
 ✅ *(commissioned 2026-08-30 18:00 review; executed 2026-08-31, 19:30
@@ -6897,6 +6924,12 @@ denied; write it relative.
    only when the whole census reads `dead=0` (items 7 and 8). **Negative
    result:** a red example is a finding about that example on the 0.11
    image — journal, known-issues, stop.
+   **✅ 2026-09-01 — item done, leg (mesh) closed.** Both windows run
+   (docker-socket denial substitution used again); `mesh:8` and `mesh:9`
+   both green (see §7 `EX-36` entry for logs and figures); post-leg census
+   `dead=23 guide=0 stale=2 exit=1` with zero `meshing_*` dead or stale
+   lines — group reads `dead=0 stale=0` as required. Item 7 (root + mri +
+   mat) and the ports/ans leg remain before the chunk itself closes.
 5. **`TH-13` step 4 — re-point the step-1′ precondition red at the
    matched path (standard, complex, `-n 2`; independent — a different
    module from item 3; ruling made by the 10:30 review, §7 step-4

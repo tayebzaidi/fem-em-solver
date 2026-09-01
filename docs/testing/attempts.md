@@ -17713,3 +17713,51 @@ un-paired into its own item.
 - Next-attempt hypothesis: §9 items 4 (`mesh:8`, `mesh:9`) and 7 (root
   group) as rescoped; the executor rule is the thing under test in the 04:30
   slot as much as the examples are.
+
+## 2026-09-01T09:40Z — `EX-36` leg (mesh), remainder — **complete** (04:30 CDT implementer slot)
+
+§9 item 4 as rescoped by the 03:00 review. Preflight clean (`70c6166`), container
+Up 5 days. Delegated to `example-runner` in the **foreground**, with the fourth
+spawning rule (implementer-run.md step 3) restated in the spawn prompt as binding
+the executor's own Bash calls; the executor was also told not to commit or write
+this file — the slot owns both. **The rule held**: both harness windows returned
+footered inside their ceilings and the executor returned with nothing in flight.
+That was as much under test this slot as the two examples were.
+
+- Tried: `mesh:8` then `mesh:9`, one window each, pre- and post-leg docrefs
+  census, real build, `-n 2`.
+- Result / measured: both green. `mesh:8` **Status 0 / 108 s** harness (105.0 s
+  in-script) — 16-vs-4-leg inter-class spread 8.431e-04 against the 0.005
+  ceiling, cost rung 116085 → 307296 cells (2.6472×) reproducing `EX-30` step
+  B's 116085 at 0.000e+00 relative. `mesh:9` **Status 0 / 103 s** harness
+  (100.7 s in-script) — spread 3.315e-07, 265621 cells and meshed/CAD conductor
+  0.976465 reproducing `GEO-20` step 2 at 0.000e+00 relative. Census pre
+  `dead=23 guide=0 stale=4 exit=1` (the two `meshing_09_*` lines at 61.5 h are
+  the negative control); predicted before reading the post-census: those two
+  clear, `meshing_*` dead stays 0, nothing else moves → post `dead=23 guide=0
+  stale=2 exit=1`, **matched exactly**. Zero `meshing_*` lines of either kind
+  post-leg, so the group reads `dead=0 stale=0` — leg (mesh) ✅ in full
+  (`mesh:1`–`mesh:9`). Residual `dead=23` / `stale=2` (`ports_01`, `ports_02`)
+  are items 7/8's and are unmoved; the global `exit=1` is that standing dead
+  count, not this leg.
+- Deviation from item 4 (one): `./run_examples.sh -e mesh:8` hit the documented
+  `permission denied … /var/run/docker.sock`, so both windows used item 4's own
+  contingency — the runner's inner command verbatim through the repo-relative
+  `scripts/testing/run_and_log.sh`. Third occurrence of the runner trap
+  (2026-08-29 13:30, 2026-08-30 12:00, now); it is no longer rare, and the
+  review may want to promote the substitution from fallback to default for
+  scheduled slots.
+- Two corrections the slot made to the executor's narrative before committing:
+  it wrote the pre-census as `stale=2` (the log's `RESULT:` line reads
+  `stale=4`) and labelled the slot "09:00-ish". Both fixed against the logs; no
+  figure of the leg itself was affected.
+- Logs: `20260901T093312Z_EX-36-leg-mesh-remainder-precensus.log`,
+  `20260901T093339Z_EX-36-leg-mesh-remainder-mesh8.log`,
+  `20260901T093535Z_EX-36-leg-mesh-remainder-mesh9.log`,
+  `20260901T093725Z_EX-36-leg-mesh-remainder-postcensus.log`.
+- Branch (if parked): none — complete on `main`. No `src/`, `tests/` or example
+  source changed; artifacts, logs and documentation only. No known-issues entry
+  (both examples green). No band, record or guide number moved.
+- Next-attempt hypothesis: `EX-36` itself stays 🟡 — items 7 (root + mri + mat)
+  and 8 (`ports:1`–`ports:3`) are what remain before the census can read
+  `dead=0`. The 06:00 slot takes item 5 (`TH-13` step 4).
