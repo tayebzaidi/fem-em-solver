@@ -18160,3 +18160,44 @@ executor returned with nothing in flight.
   13:30 entry: (a) whether to promote `_project_to_cg1_restricted` from the
   test module into `post/`, and (b) whether `post.project_to_cg1` needs a
   docstring warning about its use on `E`. Both are review work, not slot work.
+
+## 2026-09-01T21:30Z — (no chunk) — outcome: `anomaly` (queue drained, stop and journal)
+
+- **Slot: 16:30 local scheduled implementer run. No chunk attempted, by
+  instruction.** Preflight clean: `git status --porcelain` empty on `main` at
+  `32e2844`, container `fem-em-solver` Up 6 days, no `attempt/*` or
+  `recovered/*` branch. No compute issued, no harness log written — this entry
+  is the whole deliverable, exactly as the 15:00 slot's entry predicted.
+- **Why.** Protocol step 2 sends this slot to the first §9 "On deck" item not
+  marked done or blocked; every item 1–9 is done. Items 1–3 and 8–9 carry ✅
+  done-markers. Items 4–7 still carry none, so this slot ran the same `git log`
+  cross-check the 15:00 entry prescribed and reproduced its four commits
+  independently: item 4 `EX-36` leg (mesh) remainder = `1d098a2`, item 5
+  `TH-13` step 4 = `fa45a45`, item 6 `WF-6` step 3c = `f505cc5`, item 7 `EX-36`
+  leg (root + mri + mat) = `e3bc11a`. Items 8 and 9 = `ae67b4c` and `3a9f285`.
+  The 10:30 review's §9 preamble says the same in prose ("four slots, four
+  landed"; "**Two open items this queue (8 and 9)**") and names this slot by
+  number as one that would meet a drained queue.
+- **Drain instruction followed verbatim** (PROJECT_PLAN.md:7443): "If the queue
+  drains: **stop and journal.** There is no fallback chunk." Protocol step 2's
+  generic fallback does not apply — §9 explicitly names nothing as a fallback,
+  `PORT-9` step 3's legs are serial and review-scoped, and the former
+  pre-authorised exception (`EX-36` leg (ports + ans)) is item 8 and is closed.
+  Nothing was invented and no §9-excluded chunk was touched.
+- **The item 4–7 glyph lag is now two slots old — repeating it for the 18:00
+  review, unchanged and still glyph-only.** §9 items 4, 5, 6, 7
+  (PROJECT_PLAN.md:7173, :7212, :7246, :7299) are complete but read as open:
+  no leading ✅, no strikethrough. This slot did not edit them either — §9 is
+  the daily review's to maintain. The failure mode is concrete: a slot reading
+  §9 mechanically is sent to item 4 and re-runs a closed `EX-36` leg, burning a
+  slot on already-witnessed compute. Two consecutive slots have now avoided it
+  only by cross-checking `git log`; the third should not have to.
+- Nothing measured, no harness log filename, no branch parked, `main` clean and
+  unchanged (deliberate `-n 2` reds stand at **8** — untouched, not re-observed,
+  since no test ran). Elapsed: under 5 minutes of the 60-minute box.
+- Next-attempt hypothesis: the queue does not refill until the **18:00 daily
+  review**, so nothing changes before then; the 19:30 slot is the first that can
+  take new work. The review's two scoping calls are already named by the 13:30
+  entry — (a) promoting `_project_to_cg1_restricted` from the test module into
+  `post/`, and (b) a docstring warning on `post.project_to_cg1` about its use on
+  `E` — plus, now, the item 4–7 glyphs.
