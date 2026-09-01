@@ -18023,3 +18023,83 @@ executor returned with nothing in flight.
   licence would fit `record-reconciler`), and record that the examples census
   now reads `dead=0 guide=0 stale=0 exit=0` for the first time since the
   rename — the examples-health pass the 10:30 review asked it for.
+## 2026-09-01T18:45Z — `WF-6` step 3d — **complete** (13:30 CDT implementer slot)
+
+- Preflight: `main` clean at `3789652`, container Up 6 days. §9 item 8 is
+  done-marked, so **item 9 was the first item not marked done or blocked**;
+  taken as written, no substitution, no fallback.
+- Delegated to `implementer`, **foreground**, `run_in_background: false`, with
+  the foreground / 660 000 ms / `timeout -k 30` rules and the repo-relative
+  harness-path rule restated in the spawn prompt as binding on the executor's
+  own Bash calls. It returned with nothing in flight — the single window
+  footered. That is the fourth consecutive delegated slot in which the rule
+  held.
+- One harness run, no retries: `20260901T183416Z_WF-6-step3d.log`, standard
+  tier, complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first,
+  `-n 2`, `timeout -k 30 400`. **`5 failed, 52 passed` / Status 1 / 123 s**
+  against the item's ≈ 130 s estimate. Module exit stays 1 by design.
+- **This slot re-traced every reported digit in the log itself** before
+  accepting the executor's report (the logs win): `:4810` (18.7238% vs
+  1876.1871%, separation 100.20×), `:4811`–`:4812` (4.385695e-13 / reason 2,
+  21 its; 3.741459e-01 / reason 2, 25 its), `:4803` (six restricted solves,
+  `converged_reason` 2), `:4814`–`:4820` (the three-column identity table and
+  both controls), `:4821`–`:4822` (verdict (c) printed unchanged; restricted
+  phantom power), `:5030`/`:5041`/`:5042` (`5 failed, 52 passed`, Status 1,
+  Elapsed 123). The five `FAILED` lines at `:5020`–`:5036` are exactly step 3's
+  five primal asserts at **25.1096 / 40.5462 / 30.0142 / 38.6120 / 28.1459%** —
+  unmoved to the digit, none loosened, no band widened.
+- **Asserted anchors, all green on the first run.** (i) The best-approximation
+  inequality — a theorem about the code, so a violation would have been a
+  restriction defect — `‖P_Ω E − E‖_Ω/‖E‖_Ω` = **18.7238%** against
+  `STEP3B_PHANTOM_PROJECTION_RESIDUAL` 1876.1871%, a 100.20× margin, not
+  marginal. (ii) `a + b × x` restricted-projects to **4.385695e-13** (anchor
+  1e-10) and the pinned dofs read **exactly 0.000e+00** at `-n 2`; **170 free
+  of 21 397 owned CG1 blocks**, 64 191 dofs. (iii) all six restricted mass
+  solves `converged_reason` 2 (`KSP_CONVERGED_RTOL`), 21–25 iterations.
+  (iv) every 3b/3c record reproduced at `CG1_RECORD_RTOL` — and 3c's whole-mesh
+  **32.7802%** and phantom-core **838.8978%**, printed-only before, are now
+  asserted. Negative controls held and are asserted `> C4_COVARIANCE_BAND`:
+  restricted **123.6255%** (mis-rotated) and **333.0778%** (quadrature vs
+  single drive); `x² ê_x` restricted **3.741459e-01** against the 1e-4 floor —
+  the restriction makes the quadratic *harder* than the global 9.882703e-02,
+  which is the expected sign.
+- **Printed, NOT gated — the deliverable.** Five identities, primal / global
+  CG1 / restricted: P2(Rx) 25.1096 / 152.0459 / **8.2868%**; P4(−Rx) 40.5462 /
+  109.7797 / **9.4743%**; P3(180°) 30.0142 / 169.5050 / **7.3477%**; ccw(Rx)
+  38.6120 / 53.1869 / **6.8146%**; cw(Mx) 28.1459 / 40.8440 / **6.1185%** — a
+  3–6× improvement on the global column, and **all five still miss the 5%
+  band**. Restricted phantom power `½∫_Ω σ|E_Ω|²` = **5.440097168e-08 W**,
+  **−3.5058%** from the primal record 5.637745667e-08 W where the global CG1
+  read **+35 198.9%** (1.990062891e-05 W) — an independent corroboration, from
+  a quantity the projection is not obliged to conserve, that the restricted
+  projection is an honest `E` estimator and the global one was not.
+- **Verdict branch printed: (c)**, 3b's pre-registered text unchanged. What
+  step 3d adds is that (c)'s *reason* is no longer contradicted by the run's
+  own diagnostics: 3c exonerated the projector, 3d removes the global-fit tail
+  constructively (100× residual drop, power to −3.5%), and the residual
+  6.1–9.5% is what an honest estimator leaves — the fixture's ~1 cm phantom
+  cells reading a quadratic-in-`E` map. A finer rung is the weekly review's,
+  costed against `TH-11`; **no band moved, no SAR gate registered, nothing
+  re-registered, nothing under `src/`, `WF-6` stays 🟡, no SAR claim exists.**
+- Commit `3a9f285` on `main`: `tests/validation/test_birdcage_sar_map.py`
+  (test-local `_project_to_cg1_restricted`), the harness log,
+  `test-results.md`, the §7 step-3d bullet + table row, §9 item 9 done-marked,
+  and two known-issues rows. Diff scope verified by this slot —
+  **nothing under `src/`, `scripts/` or `examples/`**. No band, record or
+  assertion loosened. Deliberate `-n 2` reds unchanged at **8**.
+- Branch (if parked): none — complete on `main`. No permission denial, no
+  container trouble, no runner trap (no example ran).
+- Next-attempt hypothesis: the §9 queue is now **fully drained** — items 1–9
+  all done. The 15:00 and 16:30 slots should **stop and journal** per the drain
+  instruction, exactly as the 10:30 review predicted in writing; that is the
+  correct outcome, not a failure, and neither slot should invent an item. For
+  the 18:00 review: step 3d's verdict (c) is the pre-registered negative result
+  and needs a ruling on the finer-rung question (a phantom-resolution ladder
+  costed against `TH-11`), which the item text assigns to the **2026-09-06
+  weekly** review — the daily review's own calls are (a) whether to promote
+  `_project_to_cg1_restricted` out of the test module into `post/` now that it
+  is measured to be an honest estimator where the packaged `project_to_cg1` is
+  not on `E`, and (b) whether `post.project_to_cg1`'s use on `E` (not `B`)
+  warrants a docstring warning, since the `|B₁⁺|` gates that project `B` at
+  0.38% are untouched and must not be caught by any change. The SAR band is
+  **not** re-registerable on this column: all five miss.
