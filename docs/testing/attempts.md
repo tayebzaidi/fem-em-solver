@@ -17761,3 +17761,44 @@ That was as much under test this slot as the two examples were.
 - Next-attempt hypothesis: `EX-36` itself stays 🟡 — items 7 (root + mri + mat)
   and 8 (`ports:1`–`ports:3`) are what remain before the census can read
   `dead=0`. The 06:00 slot takes item 5 (`TH-13` step 4).
+
+## 2026-09-01T11:15Z — `TH-13` step 4 — **complete** (06:00 CDT implementer slot)
+
+§9 item 5, the 10:30 review's step-4 ruling executed unchanged. The step-1′
+precondition assert stops measuring the injector and starts measuring the
+fixture: it moves to the matched-path 1 MHz row at the **unchanged** 1e-2 band,
+and the default-path ratio it vacates becomes an asserted lower-bounded control
+so the residue stays on `main` rather than vanishing. Delegated to the
+`implementer` agent in the foreground; one harness window, footered.
+
+- Tried: `tests/environment` + `tests/validation/test_degree2_gradient_discriminator.py`,
+  standard tier, complex build, `-n 2`, container-side `timeout -k 30 300`.
+- Result / measured: **Status 0 / 38 s** harness (pytest 35.88 s), **19 passed
+  / 1 skipped** — the module's first exit 0. Matched-path degree-1 `W_e/W_m` =
+  **3.424858e-06** against the unmoved ≤ 1e-2 (2.920e+03× inside);
+  default-path control = **1.926692e-02**, asserted `>` the same band and at
+  rtol 1e-3 of the step-3a record. Both reproduce
+  `20260831T094852Z_TH-13-step3a-final.log` to every digit. Anchors unmoved:
+  cross-order moves 5.246e+01 / 5.156e+01× (loop 1 / 10 MHz) and 1.155 /
+  1.015× (smoke / sphere), step-2 residuals 2.970e-12 / 2.640e-11 /
+  3.697e-13 / 2.586e-12 with the mistuned-`c` probe at 1.000e-01,
+  `‖P_∇₂J′‖/‖P_∇₁J′‖` = 8.049884 at both frequencies, mesh 1405 cells.
+- Scope held: one test function (the control is asserted inside it, so the
+  module's test count stays 20), one new record constant
+  `STEP1PRIME_DEFAULT_DEGREE1_RATIO = 1.926692e-02`. `git diff -- src/` empty.
+  The shared `MAGNETIC_DOMINANCE_MAX` was **reused, not forked** — verified in
+  the diff by this slot, since forking it was item 5's named trap. No band,
+  tolerance or record moved.
+- One correction to the item's text, not to the work: item 5 said "update §2's
+  residual-reds count", but §2 carries no such count — the "9 deliberate/known"
+  figure lives in the §9 review preamble. That is the one taken 9 → 8. Worth
+  the review fixing in the item template.
+- Logs: `20260901T110318Z_TH-13-step4.log`.
+- Branch (if parked): none — complete on `main`, commit `fa45a45` (code + test,
+  log, test-results row, §7 step-4 EXECUTED bullet, §9 item 5 ✅, reds 9 → 8,
+  known-issues step-4 row plus amendments to the three places that claimed the
+  step-1′ red stays).
+- Next-attempt hypothesis: the 07:30 slot takes §9 item 6 (`WF-6` step 3c, the
+  projector diagnosis). The `TH-12` step-2 known-issues entry stays **open** —
+  the two degree-2 coil identity tests still fail at the unloosened 1e-9 and no
+  coil number moved by this step.
