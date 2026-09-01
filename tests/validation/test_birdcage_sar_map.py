@@ -101,6 +101,38 @@ beside the primal column, on the same solves, points, band and phase convention.
   the primal record.  A projection does not conserve power (step 1d's ``B``
   projection moved its mean by 0.38%), so this is a size, not a check.
 
+**Step 3c — the projector diagnosis (2026-09-01 03:00 review's scoping).**  Step
+3b's CG1 column read *worse* than the primal one at every identity, with
+``‖E_cg1 − E‖/‖E‖`` over the phantom at 1876%, which no fit of ``E`` can do.
+Three candidates were separated in one slot: the mass solve converges (reason 2,
+26 its), the projector reproduces ``a + b × x`` exactly (1.33e-13), and the
+domain table — 32.78% whole mesh, 1876.19% phantom, 838.90% phantom core — names
+the remaining one.  A **global** L² fit of this fixture is a fit of the sheet /
+conductor-edge ``E`` that dominates ``‖E‖``; the phantom, orders of magnitude
+lower in ``|E|``, gets that fit's tail.  Nothing is wrong with
+``post.project_to_cg1``; the *use* is.
+
+**Step 3d — the phantom-restricted estimator (2026-09-01 10:30 review's
+scoping).**  The honest estimator fits over the region it is read over.  Same
+``("Lagrange", 1, (3,))`` space, same CG + Jacobi at ``ksp_rtol`` 1e-12, on the
+same parent mesh (no submesh, no cross-mesh interpolation of an N1curl field) —
+but with the mass matrix and load integrated over ``dx(3)`` and every CG1 dof
+with no phantom-cell support pinned to zero.  Its **asserted anchors** are
+properties of the restriction, not of SAR: (i) the best-approximation inequality
+``‖P_Ω E − E‖_Ω ≤ ‖P E − E‖_Ω`` = 1876.1871%, which holds by construction and
+whose violation is a pinning or measure defect; (ii) ``P_Ω (a + b × x) = a + b ×
+x`` to 1e-10 with the pinned dofs exactly zero, its control ``x² ê_x`` above the
+arithmetic ``(h/D)² ≳ 1e-4`` floor; (iii) a positive ``converged_reason`` on all
+six restricted solves; (iv) every step-3b/3c record reproduced.  The two
+restricted controls are asserted to miss the band, exactly as the primal and
+global-CG1 ones are.  The **five restricted identity readings and the restricted
+phantom power are printed and journalled, never gated**, under step 3b's
+pre-registered (a)/(b)/(c) verdict, unchanged.  The cellwise route the step-3c
+entry named beside this one is struck by derivation, not run: a degree-1
+first-kind N1curl function is ``a + b × x`` on every cell, so a per-cell L²
+projection onto ``DG1³`` reproduces the primal ``E`` exactly and *is* the primal
+column.
+
 **Scope.**  10 MHz, F-small, degree 1, symmetry identities plus one
 reproduction, and an estimator comparison on one fixture.  **No** SAR10g /
 C95.3 averaging (`MAT-4` step 2 + `WF-7`), no mass-averaged claim, no Larmor
@@ -898,6 +930,31 @@ PROJECTOR_FIELD_A = (0.3, -0.7, 1.1)
 PROJECTOR_FIELD_B = (0.2, 0.5, -0.4)
 
 
+def _affine_field(x):
+    """``f = a + b × x`` as a **complex** array — the helper refuses real input.
+
+    Module level so step 3c's whole-mesh reading and step 3d's phantom-restricted
+    one are demonstrably the same field, not two transcriptions of it.
+    """
+    a = np.asarray(PROJECTOR_FIELD_A, dtype=np.complex128)
+    b = np.asarray(PROJECTOR_FIELD_B, dtype=np.complex128)
+    return np.array(
+        [
+            a[0] + b[1] * x[2] - b[2] * x[1],
+            a[1] + b[2] * x[0] - b[0] * x[2],
+            a[2] + b[0] * x[1] - b[1] * x[0],
+        ],
+        dtype=np.complex128,
+    )
+
+
+def _quadratic_field(x):
+    """``x² ê_x`` — in neither ``N1curl₁`` nor ``CG1³``, the control's control."""
+    return np.array(
+        [x[0] ** 2, np.zeros_like(x[0]), np.zeros_like(x[0])], dtype=np.complex128
+    )
+
+
 def _relative_l2_over_measure(projected, reference, dx):
     """``‖projected − reference‖_{L²(dx)} / ‖reference‖_{L²(dx)}``, MPI-reduced.
 
@@ -981,26 +1038,11 @@ def projector_diagnosis(b1_plus_map, sar_map_cg1):
     # (ii) the exact-reproduction control and its control, both interpolated
     # into the *solve's own* N1curl space (the helper refuses real inputs, so
     # the callables return complex arrays).
-    a = np.asarray(PROJECTOR_FIELD_A, dtype=np.complex128)
-    b = np.asarray(PROJECTOR_FIELD_B, dtype=np.complex128)
-
-    def affine(x):
-        return np.array(
-            [
-                a[0] + b[1] * x[2] - b[2] * x[1],
-                a[1] + b[2] * x[0] - b[0] * x[2],
-                a[2] + b[0] * x[1] - b[1] * x[0],
-            ],
-            dtype=np.complex128,
-        )
-
-    def quadratic(x):
-        return np.array(
-            [x[0] ** 2, np.zeros_like(x[0]), np.zeros_like(x[0])], dtype=np.complex128
-        )
-
     controls = {}
-    for label, callable_ in (("a + b x x", affine), ("x^2 e_x", quadratic)):
+    for label, callable_ in (
+        ("a + b x x", _affine_field),
+        ("x^2 e_x", _quadratic_field),
+    ):
         stem = "affine" if label.startswith("a") else "quadratic"
         source = fem.Function(n1curl, name=f"f_{stem}_n1curl")
         source.interpolate(callable_)
@@ -1206,4 +1248,507 @@ def test_the_cg1_phantom_power_reproduces_step_3bs_reading(sar_map_cg1):
     assert reading == pytest.approx(STEP3B_CG1_PHANTOM_POWER_W, rel=CG1_RECORD_RTOL), (
         f"the CG1 phantom power reads {reading:.9e} W, not step 3b's "
         f"{STEP3B_CG1_PHANTOM_POWER_W:.9e} W (rtol {CG1_RECORD_RTOL:.0e})"
+    )
+
+
+# --------------------------------------------------------------------------
+# Step 3d — the phantom-restricted CG1 ``E`` estimator, beside the primal and
+# global-CG1 columns.  Scoped by the 2026-09-01 10:30 review out of step 3c's
+# domain table: the projector is a projector (3c refuted the solver and the
+# element), but a **global** L² fit of a fixture whose ``‖E‖`` is dominated by
+# the sheets and conductor edges is not an ``E`` estimator inside the phantom,
+# which reads that fit's tail (whole mesh 32.78% vs phantom 1876.19%, 57×
+# apart).  The honest estimator restricts the fit to the region it is read
+# over.  Estimator comparison only — no band moves, no SAR gate is registered.
+# --------------------------------------------------------------------------
+
+# Step 3c's domain table, `20260901T123421Z_WF-6-step3c.log`.  The phantom
+# figure is asserted by
+# :func:`test_the_phantom_projection_residual_reproduces_step_3bs_reading`
+# above (it is step 3b's record); the other two are step 3c's own and are
+# asserted here, because step 3d's anchor (i) is a *comparison* against them
+# and a moved domain table would make the comparison meaningless.
+STEP3C_PROJECTION_RESIDUAL_RECORDS = {
+    "whole mesh": 32.7802e-2,
+    "phantom core": 838.8978e-2,
+}
+
+# Anchor (ii)'s companion: with every CG1 dof outside the phantom pinned by a
+# `dirichletbc` built from a zero `Function`, dolfinx's `set_bc` writes the
+# boundary value into the solution vector *after* the solve, so those dofs are
+# exactly representable zeros, not small numbers.  Anything above this is a
+# defect in the pinning (a complement taken over owned blocks only, say), not
+# a numerical tolerance to be widened.
+RESTRICTED_PINNED_DOF_MAX = 0.0
+
+# The control's control under the restriction.  ``x² ê_x`` is a quadratic, and
+# its best CG1 fit over a region of diameter ``D`` meshed at ``h`` leaves a
+# relative residual of order ``(h/D)²``.  This mesh's phantom is ~1 cm cells
+# over a ~20 cm phantom, so ``D/h ≲ 100`` and ``(h/D)² ≳ 1e-4``: the floor
+# below is arithmetic, not tuned to the reading.  (The *global* figure, over a
+# domain that includes the coil, was 9.882703e-02.)
+RESTRICTED_CONTROL_MIN_RESIDUAL = 1.0e-4
+
+# The six restricted mass solves anchor (iii) reads a converged reason from:
+# the four single drives plus the two projector controls.  The quadrature
+# senses are dof-array superpositions of the four (the restricted projection is
+# still linear and all six share one operator), so they cost no solve.
+RESTRICTED_SOLVE_LABELS = ("P1", "P2", "P3", "P4", "a + b x x", "x^2 e_x")
+
+
+def _project_to_cg1_restricted(
+    field, cell_tags, *, name, tag=PHANTOM_CELL_TAG, ksp_rtol=1.0e-12
+):
+    """L² projection onto ``CG1³`` **restricted to the tagged subdomain**.
+
+    A test-local sibling of :func:`~fem_em_solver.post.project_to_cg1` — same
+    ``("Lagrange", 1, (3,))`` space, same CG + Jacobi at ``ksp_rtol`` 1e-12,
+    same opt-in diagnostics — differing in exactly one thing: both the mass
+    matrix and the load are integrated over ``dx(tag)`` instead of ``dx``, so
+    the fit minimises ``‖· − field‖`` over the phantom alone and cannot be
+    dragged by the sheet / conductor-edge ``E`` that dominates the global norm.
+
+    The restricted mass matrix is singular on every dof with no tagged-cell
+    support (an all-zero row), so those dofs are pinned to zero by a
+    ``dirichletbc``, which makes the assembled matrix identity there and leaves
+    it SPD overall.  Three traps live in that one sentence:
+
+    * ``locate_dofs_topological`` on a **blocked** space returns *block*
+      indices, so the bc is built from a zero ``fem.Function`` on the space
+      (which dolfinx indexes by block) and never from a scalar ``Constant``.
+    * the complement is taken over ``size_local + num_ghosts`` blocks.  Over
+      owned blocks only, a ghost row on the far side of a partition cut goes
+      unpinned and the two-rank answer differs from the one-rank one — which is
+      exactly what running this module at ``-n 2`` exists to catch.
+    * ``cell_tags.find`` is rank-local and returns the local view *including
+      ghost cells*; that is what is wanted here, since a phantom cell ghosted
+      onto this rank still supports dofs this rank owns.
+
+    Kept test-local by the scoping: promoting it into ``post/`` is a review's
+    call after the readings below are on record, not this step's.
+    """
+    import ufl
+    from dolfinx.fem.petsc import LinearProblem
+
+    msh = field.function_space.mesh
+    comm = msh.comm
+    tdim = msh.topology.dim
+    space = fem.functionspace(msh, ("Lagrange", 1, (3,)))
+    trial, test = ufl.TrialFunction(space), ufl.TestFunction(space)
+    dx_tag = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)(tag)
+
+    cells = np.sort(np.asarray(cell_tags.find(tag), dtype=np.int32))
+    supported = np.asarray(
+        fem.locate_dofs_topological(space, tdim, cells), dtype=np.int32
+    )
+    imap = space.dofmap.index_map
+    n_blocks = int(imap.size_local + imap.num_ghosts)
+    pinned = np.setdiff1d(np.arange(n_blocks, dtype=np.int32), supported)
+
+    zero = fem.Function(space, name=f"{name}_zero")
+    zero.x.array[:] = 0.0
+    bc = fem.dirichletbc(zero, pinned)
+
+    problem = LinearProblem(
+        ufl.inner(trial, test) * dx_tag,
+        ufl.inner(field, test) * dx_tag,
+        bcs=[bc],
+        petsc_options={
+            "ksp_type": "cg",
+            "pc_type": "jacobi",
+            "ksp_rtol": float(ksp_rtol),
+            "ksp_atol": 1.0e-30,
+        },
+        petsc_options_prefix="fem_em_wf6_step3d_restricted_mass_",
+    )
+    projected = problem.solve()
+    projected.name = name
+    projected.x.scatter_forward()
+
+    ksp = problem.solver
+    owned = int(imap.size_local)
+    blocks = np.asarray(projected.x.array).reshape(-1, 3)
+    pinned_max = comm.allreduce(
+        float(np.max(np.abs(blocks[pinned]))) if pinned.size else 0.0, op=MPI.MAX
+    )
+    diagnostics = {
+        "converged_reason": int(ksp.getConvergedReason()),
+        "iterations": int(ksp.getIterationNumber()),
+        "ksp_rtol": float(ksp_rtol),
+        "dofs": int(imap.size_global * space.dofmap.index_map_bs),
+        "free_blocks": comm.allreduce(
+            int(supported[supported < owned].size), op=MPI.SUM
+        ),
+        "pinned_blocks": comm.allreduce(int(pinned[pinned < owned].size), op=MPI.SUM),
+        "pinned_max_abs": pinned_max,
+    }
+    return projected, diagnostics
+
+
+@pytest.fixture(scope="module")
+def sar_map_restricted(b1_plus_map, sar_map, sar_map_cg1, projector_diagnosis):
+    """The five identities and two controls off the phantom-restricted CG1 ``E``.
+
+    No new curl-curl solve and no submesh: six restricted mass solves on the
+    parent mesh (four drives, two projector controls), the quadrature senses by
+    superposing the projected dof arrays, ``point_sar`` on exactly the 51 points
+    the primal and global-CG1 columns used, and the two controls step 3b built.
+
+    Depends on ``projector_diagnosis`` so step 3c's domain table is printed —
+    and asserted — above these readings, which are only interpretable against
+    it.
+    """
+    import ufl
+
+    sweep = b1_plus_map["sweep"]
+    solves = b1_plus_map["solves"]
+    azimuths = b1_plus_map["azimuths"]
+    points = b1_plus_map["points"]
+    msh = sweep["mesh"]
+    comm = msh.comm
+    cell_tags = sweep["cell_tags"]
+    delta = np.radians(b1_plus_map["delta_deg"])
+    order = sorted(solves)
+    ks = [sar_map["indices"][pid] for pid in order]
+
+    dx_phantom = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)(
+        PHANTOM_CELL_TAG
+    )
+
+    diagnostics = {}
+    projected = {}
+    for pid in order:
+        projected[pid], diagnostics[pid] = _project_to_cg1_restricted(
+            solves[pid]["fields"].e_complex, cell_tags, name=f"E_cg1_restricted_{pid}"
+        )
+    split = {
+        pid: _split_complex(projected[pid], f"E_cg1_restricted_{pid}") for pid in order
+    }
+
+    # Anchor (i): the best-approximation inequality.  ``P_Ω`` minimises
+    # ``‖· − E‖_Ω`` over all of ``CG1³``, and the *global* projection restricted
+    # to the phantom is one member of that set, so the restricted residual
+    # cannot exceed step 3b/3c's 1876.1871%.  A violation is a bug in the
+    # restriction (the pinning or the measure), never a statement about SAR.
+    restricted_residual = _relative_l2_over_measure(
+        projected["P1"], solves["P1"]["fields"].e_complex, dx_phantom
+    )
+
+    # Anchor (ii): the exact-reproduction control and its control, re-run under
+    # the restriction on the solve's own N1curl space.
+    n1curl = solves["P1"]["fields"].e_complex.function_space
+    control_fields = {}
+    for label, callable_ in (
+        ("a + b x x", _affine_field),
+        ("x^2 e_x", _quadratic_field),
+    ):
+        stem = "affine" if label.startswith("a") else "quadratic"
+        source = fem.Function(n1curl, name=f"f_{stem}_n1curl_restricted")
+        source.interpolate(callable_)
+        source.x.scatter_forward()
+        fitted, diag = _project_to_cg1_restricted(
+            source, cell_tags, name=f"f_{stem}_cg1_restricted"
+        )
+        diagnostics[label] = diag
+        control_fields[label] = {
+            "residual": _relative_l2_over_measure(fitted, source, dx_phantom),
+            "diagnostics": diag,
+        }
+
+    kwargs = dict(sigma=SALINE_SIGMA, rho=PHANTOM_RHO_KG_PER_M3, comm=comm)
+    images = {
+        "P1@0deg": ("P1", points),
+        "P2@+90deg": ("P2", _rotate_z(points, delta)),
+        "P4@-90deg": ("P4", _rotate_z(points, -delta)),
+        "P3@180deg": ("P3", _rotate_z(points, 2.0 * delta)),
+        "P3@+90deg": ("P3", _rotate_z(points, delta)),
+    }
+    single = {
+        label: point_sar(*split[pid], pts, **kwargs)
+        for label, (pid, pts) in images.items()
+    }
+
+    mirrored = _mirror_xy(points, azimuths["P1"])
+    rotated = _rotate_z(points, delta)
+    superposed = {
+        sense: _split_complex(
+            _superpose_complex(
+                [projected[pid] for pid in order],
+                quadrature_phase_weights(ks, sense),
+                name=f"E_cg1_restricted_{sense}",
+            ),
+            f"E_cg1_restricted_{sense}",
+        )
+        for sense in ("ccw", "cw")
+    }
+    quad = {
+        ("ccw", "x"): point_sar(*superposed["ccw"], points, **kwargs),
+        ("ccw", "Rx"): point_sar(*superposed["ccw"], rotated, **kwargs),
+        ("cw", "Mx"): point_sar(*superposed["cw"], mirrored, **kwargs),
+    }
+
+    full = np.ones(points.shape[0], dtype=bool)
+    reference = single["P1@0deg"]
+    identities = {
+        "(i) SAR_P2(Rx) vs SAR_P1(x)": _relative_l2(single["P2@+90deg"], reference, full),
+        "(i) SAR_P4(-Rx) vs SAR_P1(x)": _relative_l2(single["P4@-90deg"], reference, full),
+        "(i) SAR_P3(180deg) vs SAR_P1(x)": _relative_l2(single["P3@180deg"], reference, full),
+        "(ii) SAR_ccw(Rx) vs SAR_ccw(x)": _relative_l2(
+            quad[("ccw", "Rx")], quad[("ccw", "x")], full
+        ),
+        "(iii) SAR_cw(Mx) vs SAR_ccw(x)": _relative_l2(
+            quad[("cw", "Mx")], quad[("ccw", "x")], full
+        ),
+    }
+    controls = {
+        "mis-rotated SAR_P3(Rx) vs SAR_P1(x)": _relative_l2(
+            single["P3@+90deg"], reference, full
+        ),
+        "quadrature SAR_ccw(x) vs single-drive SAR_P1(x)": _relative_l2(
+            quad[("ccw", "x")], reference, full
+        ),
+    }
+
+    phantom_power_w = float(
+        mean_sar(
+            projected["P1"],
+            sigma=solves["P1"]["fields"].sigma_field,
+            rho=PHANTOM_RHO_KG_PER_M3,
+            cell_tags=cell_tags,
+            comm=comm,
+            subdomain_ids=PHANTOM_CELL_TAG,
+        )["dissipated_power_w"]
+    )
+    verdict, verdict_text = _cg1_verdict(identities, controls, C4_COVARIANCE_BAND)
+
+    if comm.rank == 0:
+        primal_identities = sar_map["identities"]
+        primal_controls = sar_map["controls"]
+        global_identities = sar_map_cg1["identities"]
+        global_controls = sar_map_cg1["controls"]
+        p1 = diagnostics["P1"]
+        print(
+            f"\n[WF-6 step3d] the same point-SAR identities off a **phantom-"
+            f"restricted** CG1 E — mass matrix and load integrated over dx(tag "
+            f"{PHANTOM_CELL_TAG}) on the parent mesh, every CG1 dof with no "
+            f"phantom support pinned to zero — beside the primal N1curl and the "
+            f"global-CG1 columns, same {points.shape[0]} points, same four "
+            f"solves, band {C4_COVARIANCE_BAND * 100:.1f}% imported and unmoved\n"
+            f"    restriction: {p1['free_blocks']} free of "
+            f"{p1['free_blocks'] + p1['pinned_blocks']} owned CG1 blocks "
+            f"({p1['dofs']} dofs), pinned max |value| {p1['pinned_max_abs']:.3e} "
+            f"(ASSERTED == 0)\n"
+            f"    (iii) restricted mass solves (ASSERTED converged_reason > 0):",
+            flush=True,
+        )
+        for label in RESTRICTED_SOLVE_LABELS:
+            row = diagnostics[label]
+            print(
+                f"        {label:<12} reason {row['converged_reason']:>3}, "
+                f"{row['iterations']:>4} its",
+                flush=True,
+            )
+        print(
+            f"    (i) ||P_O E - E||_O/||E||_O restricted = "
+            f"{restricted_residual * 100:.4f}% vs the global fit's "
+            f"{STEP3B_PHANTOM_PROJECTION_RESIDUAL * 100:.4f}% over the same "
+            f"phantom (ASSERTED <=, best-approximation inequality; separation "
+            f"{STEP3B_PHANTOM_PROJECTION_RESIDUAL / restricted_residual:.2f}x)",
+            flush=True,
+        )
+        for label, row in control_fields.items():
+            print(
+                f"    (ii) ||P_O f - f||_O/||f||_O for f = {label:<9} "
+                f"{row['residual']:.6e}   (reason "
+                f"{row['diagnostics']['converged_reason']}, "
+                f"{row['diagnostics']['iterations']} its)",
+                flush=True,
+            )
+        print(
+            f"        {'':<36} {'primal':>10} {'CG1 glob':>10} {'CG1 restr':>10}",
+            flush=True,
+        )
+        for label in identities:
+            print(
+                f"        {label:<36} {primal_identities[label] * 100:9.4f}% "
+                f"{global_identities[label] * 100:9.4f}% "
+                f"{identities[label] * 100:9.4f}%   primal ASSERTED (red, step 3), "
+                "restricted PRINTED NOT GATED",
+                flush=True,
+            )
+        for label in controls:
+            print(
+                f"        {label:<36} {primal_controls[label] * 100:9.4f}% "
+                f"{global_controls[label] * 100:9.4f}% "
+                f"{controls[label] * 100:9.4f}%   control, all three ASSERTED > band",
+                flush=True,
+            )
+        print(
+            f"    pre-registered verdict (3b's, unchanged): {verdict} — {verdict_text}\n"
+            f"    restricted phantom power 1/2*int(sigma|E_O|^2) = "
+            f"{phantom_power_w:.9e} W vs primal "
+            f"{STEP1_GATE_I_P1_PHANTOM_POWER_W:.9e} W "
+            f"({(phantom_power_w / STEP1_GATE_I_P1_PHANTOM_POWER_W - 1.0) * 100:+.4f}%)"
+            f" and global CG1 {STEP3B_CG1_PHANTOM_POWER_W:.9e} W "
+            f"({(phantom_power_w / STEP3B_CG1_PHANTOM_POWER_W - 1.0) * 100:+.4f}%)"
+            " — REPORTED, NOT GATED: an L2 projection does not conserve power",
+            flush=True,
+        )
+
+    return {
+        "identities": identities,
+        "controls": controls,
+        "control_fields": control_fields,
+        "diagnostics": diagnostics,
+        "phantom_power_w": phantom_power_w,
+        "projection_relative_l2": restricted_residual,
+        "verdict": verdict,
+        "verdict_text": verdict_text,
+    }
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3C_PROJECTION_RESIDUAL_RECORDS))
+def test_the_projection_domain_table_reproduces_step_3cs_readings(
+    projector_diagnosis, label
+):
+    """Anchor (iv) on step 3c's own two figures — 32.7802% and 838.8978%.
+
+    The phantom figure is step 3b's and is asserted above.  These two are what
+    made the *use* the diagnosis: step 3d's restricted estimator is a
+    comparison against this table, so a moved table would make the comparison
+    unreadable.
+    """
+    reading = projector_diagnosis["residuals"][label]
+    record = STEP3C_PROJECTION_RESIDUAL_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"||E_cg1 - E||/||E|| over the {label} reads {reading * 100:.4f}%, not "
+        f"step 3c's {record * 100:.4f}% (rtol {CG1_RECORD_RTOL:.0e}) — step 3d's "
+        "restricted column is not being compared against step 3c's domain table"
+    )
+
+
+@complex_only
+def test_the_restricted_projection_cannot_beat_its_own_best_approximation(
+    sar_map_restricted,
+):
+    """Anchor (i): the best-approximation inequality, a theorem about the code.
+
+    ``P_Ω E`` minimises ``‖· − E‖_{L²(Ω)}`` over all of ``CG1³``.  The *global*
+    projection ``P E``, restricted to Ω, is one member of that set and leaves
+    step 3b/3c's 1876.1871%.  So ``‖P_Ω E − E‖_Ω ≤ ‖P E − E‖_Ω`` holds by
+    construction — no mesh, no fixture and no physics enters.  A violation is a
+    defect in the restriction (an unpinned ghost row, the wrong measure, a
+    non-converged solve), and must be journalled as that rather than read as a
+    statement about SAR or about the phantom.
+    """
+    reading = sar_map_restricted["projection_relative_l2"]
+    assert reading <= STEP3B_PHANTOM_PROJECTION_RESIDUAL, (
+        f"the phantom-restricted projection leaves {reading * 100:.4f}% over the "
+        f"phantom, ABOVE the global fit's {STEP3B_PHANTOM_PROJECTION_RESIDUAL * 100:.4f}% "
+        "on the same domain — the restricted fit minimises that very norm over a "
+        "space containing the global fit's restriction, so this is a bug in the "
+        "restriction (pinning or measure), not a finding about SAR"
+    )
+
+
+@complex_only
+def test_the_restricted_projector_reproduces_a_field_both_spaces_contain(
+    sar_map_restricted,
+):
+    """Anchor (ii): ``P_Ω f = f`` on Ω for ``f = a + b × x``.
+
+    The restriction changes the domain of integration, not the algebra: ``f``
+    lies in ``N1curl₁`` and in ``CG1³``, so its restricted L² projection must
+    return it over Ω to solver tolerance.  If it does not, the restricted
+    operator is not the projection it claims to be — a mis-tagged measure or a
+    pin that swallowed a dof the phantom needs — and every reading in the
+    restricted column is a reading of nothing.
+    """
+    residual = sar_map_restricted["control_fields"]["a + b x x"]["residual"]
+    assert residual <= PROJECTOR_EXACT_RESIDUAL, (
+        f"the phantom-restricted projection of f = a + b x x — in N1curl_1 AND in "
+        f"CG1^3 — leaves a relative L2 residual of {residual:.6e} over the phantom, "
+        f"above {PROJECTOR_EXACT_RESIDUAL:.0e}: the restricted operator is not the "
+        "L2 projection it is built to be"
+    )
+
+
+@complex_only
+def test_every_cg1_dof_outside_the_phantom_is_pinned_to_exactly_zero(
+    sar_map_restricted,
+):
+    """Anchor (ii)'s companion: the pin is a pin, on owned **and** ghost blocks.
+
+    If the complement were taken over owned blocks only, the ghost rows of a
+    partition cut would keep whatever the Krylov solve left in them, the two-rank
+    answer would differ from the one-rank one, and the restricted field would be
+    non-zero where the restricted problem does not define it.  ``set_bc`` writes
+    an exact zero, so the bound is 0 and not a tolerance.
+    """
+    pinned_max = sar_map_restricted["diagnostics"]["P1"]["pinned_max_abs"]
+    assert pinned_max <= RESTRICTED_PINNED_DOF_MAX, (
+        f"a CG1 dof with no phantom-cell support holds {pinned_max:.6e} after the "
+        "restricted solve — the zero Dirichlet pin did not reach every block "
+        "(check that the complement is taken over size_local + num_ghosts)"
+    )
+
+
+@complex_only
+def test_the_restricted_projector_control_field_is_not_reproduced(sar_map_restricted):
+    """The control's control under the restriction: ``x² ê_x`` must leave a residual.
+
+    Without it, a restricted "projection" that returned its own argument — or a
+    residual helper reading zero over a mis-tagged empty measure — would pass the
+    exact-reproduction test above and prove nothing.  The floor is arithmetic:
+    a quadratic's CG1 fit error over a region of ``D/h ≲ 100`` cells is of order
+    ``(h/D)² ≳ 1e-4``, and no phantom this mesh resolves at ~1 cm cells is finer.
+    """
+    residual = sar_map_restricted["control_fields"]["x^2 e_x"]["residual"]
+    assert residual > RESTRICTED_CONTROL_MIN_RESIDUAL, (
+        f"the control field x^2 e_x, in neither N1curl_1 nor CG1^3, restricted-"
+        f"projects with a relative L2 residual of only {residual:.6e} over the "
+        f"phantom — below the arithmetic floor {RESTRICTED_CONTROL_MIN_RESIDUAL:.0e}, "
+        "at which the exact-reproduction test beside it is not measuring anything"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", RESTRICTED_SOLVE_LABELS)
+def test_every_restricted_mass_solve_converges(sar_map_restricted, label):
+    """Anchor (iii): all six restricted mass solves converged.
+
+    The restricted matrix is the phantom mass matrix bordered by an identity
+    block, which is SPD, so CG with Jacobi is the right solver — but
+    ``LinearProblem.solve()`` does not raise on a non-converged KSP, and step 3c
+    only exonerated the *global* operator.  ``-3`` (``DIVERGED_ITS``) here would
+    mean the restriction, not the field, and the cap is not raised in-slot.
+    """
+    diag = sar_map_restricted["diagnostics"][label]
+    assert diag["converged_reason"] > 0, (
+        f"the restricted CG1 mass solve for '{label}' returned PETSc converged "
+        f"reason {diag['converged_reason']} after {diag['iterations']} iterations "
+        f"on {diag['dofs']} dofs — every restricted reading in this column rests "
+        "on this solve; record it, do not raise the iteration cap"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3_PRIMAL_CONTROL_RECORDS))
+def test_the_restricted_negative_controls_still_miss_the_band(sar_map_restricted, label):
+    """The restriction must not smooth the controls into the band either.
+
+    Primal reads 129.8% / 334.6% and the global CG1 column 163.6% / 75.9%.  A
+    restricted control landing *below* 5% would mean the restricted fit had
+    erased the azimuthal structure the identities claim to measure — and is
+    itself the finding, not a licence to read the identity column beside it.
+    """
+    control = sar_map_restricted["controls"][label]
+    assert control > CONTROL_MIN_MISMATCH, (
+        f"the phantom-restricted control '{label}' reads {control * 100:.4f}%, "
+        f"inside the {CONTROL_MIN_MISMATCH * 100:.1f}% band (primal reads "
+        f"{STEP3_PRIMAL_CONTROL_RECORDS[label] * 100:.4f}%, global CG1 "
+        f"{STEP3B_CG1_CONTROL_RECORDS[label] * 100:.4f}%) — the restricted fit has "
+        "smoothed away the structure the identities measure, so no restricted "
+        "identity reading here is interpretable"
     )
