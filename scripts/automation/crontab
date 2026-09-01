@@ -1,0 +1,26 @@
+# fem-em-solver scheduled automation — see docs/automation/ in the repo.
+# 90-minute grid, 16 slots/day: 3 Fable plan reviews (45 min cap) at
+# 03:00 / 10:30 / 18:00, each followed by 4 Opus implementer runs (65 min
+# hard kill). 01:30–03:00 is left as buffer before the 03:00 review.
+# Sunday AND Wednesday 02:15 run the weekly planning review (Fable, high
+# effort, 60 min cap) in that buffer slot — twice weekly since 2026-09-01,
+# splitting the interval 3/4 days so the long-horizon queue is refilled
+# mid-week instead of only at the week boundary. 02:15 is the only buffer
+# wide enough for a 60-min session and sits just after the 02:00 usage
+# reset. Note: a weekly run that uses its full hour ends at 03:15 and the
+# shared flock will make that day's 03:00 daily review skip.
+# Sessions never overlap; all runs share one flock. Per-command compute
+# stays under the repo's 10-minute tier ceiling.
+0 3,18 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/daily-review.sh
+30 10 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/daily-review.sh
+30 4,7,13,16,19,22 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/implementer-run.sh
+0 0,6,9,12,15,21 * * * /home/taz5297/Development/fem-em-solver/scripts/automation/implementer-run.sh
+15 2 * * 0,3 /home/taz5297/Development/fem-em-solver/scripts/automation/weekly-review.sh
+#
+# CANONICAL COPY. The live schedule lives in the user crontab spool; this file
+# is the version-controlled source of truth for it. Install with:
+#     crontab scripts/automation/crontab
+# Verify with `crontab -l`. Scheduled sessions cannot install it themselves:
+# /var/spool/cron is outside the sandbox's write scope and only `crontab -l`
+# is in .claude/settings.json's excludedCommands, so a change here reaches
+# cron only when a human (or an unsandboxed session) runs the install.

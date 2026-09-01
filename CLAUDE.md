@@ -98,18 +98,22 @@ review of returned diffs stay in the main (Fable) session.
 
 System cron runs headless sessions via `scripts/automation/` on a 90-minute
 grid — 3 reviews and 12 implementer runs a day, four runs after each review,
-plus one weekly planning review:
+plus two weekly planning reviews:
 
 - **Plan review** (Fable 5.1, medium effort, 03:00 / 10:30 / 18:00 local) — audits results
   against §4, rescopes failed attempts, disposes of `recovered/*` branches,
   tops the §9 "On deck" queue up to 5 items. Protocol:
   docs/automation/daily-review.md.
-- **Weekly planning review** (Fable 5.1, high effort, Sunday 02:15 local) —
+- **Weekly planning review** (Fable 5.1, high effort, Sunday **and Wednesday**
+  02:15 local) —
   owns the long horizon with brutal realism: §6 phase map and §10 roadmap
   (phases → subgoals, dated pace-based assessments), examples/ health, and
   commissioning/adjudicating `examples/ansys_benchmarks/` cases the human
   operator replicates in Ansys Electronics Desktop (PROJECT_PLAN §5.4).
-  Never edits §9. Protocol: docs/automation/weekly-review.md.
+  Never edits §9. Runs twice weekly since 2026-09-01, splitting the
+  interval 3/4 days; "this week" in that protocol means since the last
+  weekly-review commit, so pace arithmetic uses the measured elapsed time.
+  Protocol: docs/automation/weekly-review.md.
 - **Implementer runs** (Opus, 04:30 / 06:00 / 07:30 / 09:00 and the same
   offsets after each later review) — each attempts the top On-deck item
   inside a 1-hour timebox; incomplete work is parked on `attempt/*` branches

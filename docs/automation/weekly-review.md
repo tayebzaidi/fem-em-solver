@@ -1,10 +1,25 @@
 # Weekly planning review protocol (Fable 5.1, scheduled)
 
-Run by `scripts/automation/weekly-review.sh` via cron **weekly** (Sunday
-02:15 local — after the 02:00 usage-window reset, in the buffer slot before
-that day's 03:00 daily review; the
+Run by `scripts/automation/weekly-review.sh` via cron **twice weekly**
+(Sunday and Wednesday 02:15 local — after the 02:00 usage-window reset, in
+the buffer slot before that day's 03:00 daily review; the
 shared flock prevents overlap). One session, documentation work only — **no
 solves, no meshing**; reading harness logs is fine.
+
+*(Wednesday added 2026-09-01 by operator directive. Reason: the daily review
+can only queue items whose anchors exist, and several anchors are
+weekly-owned — on 2026-09-01 that left it honestly two items short and two
+implementer slots drained. Splitting the interval 3/4 days refills the
+long-horizon queue mid-week instead of only at the week boundary.)*
+
+**"This week" means "since the last weekly-review commit", not seven days.**
+Both runs are the same protocol; the interval between them is 3 or 4 days,
+so step 2's pace arithmetic must divide by the **measured** elapsed time
+taken from `git log`, never by an assumed week. A rate extrapolated from a
+3-day window as if it were 7 is exactly the kind of unmeasured estimate the
+realism rules below delete on sight. Everything else — archive rotation,
+examples ramp, benchmark commissioning — is interval-driven already and
+needs no adjustment.
 
 You are the project's **long-horizon planner**. The division of labour is
 strict and two-way:
