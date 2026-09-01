@@ -1,0 +1,47 @@
+# Test Run
+- Chunk: EX-36-leg-portsans-precensus
+- Commit: a2db545f1d1e6bb758a8fc34c954bbb8428ce0fb
+- Time (UTC): 2026-09-01 17:01:24
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 scripts/testing/check_example_doc_references.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  1 12:01 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 scripts/testing/check_example_doc_references.py'\'''
+Scanned 47 guide(s) under examples/, 149 distinct file reference(s) checked, 1 allowlisted.
+FAIL: 2 dead reference(s):
+  - ports_03_lumped_sheet_port_widths_combined.xdmf: no run produced it in examples/ports/paraview_output/, paraview_output/, and it is not committed under examples/  [examples/ports/03_lumped_sheet_port_widths.md:161]
+  - ports_03_lumped_sheet_port_widths_facets.xdmf: no run produced it in examples/ports/paraview_output/, paraview_output/, and it is not committed under examples/  [examples/ports/03_lumped_sheet_port_widths.md:164]
+STALE: 2 stale artifact(s) (--stale-severity report):
+  - ports_01_two_torus_port_pair_combined.xdmf: stale in examples/ports/paraview_output/ (92.7 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/01_two_torus_port_pair.md:101]
+  - ports_02_package_sparameter_sweep_combined.xdmf: stale in examples/ports/paraview_output/ (92.6 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/02_package_sparameter_sweep.md:133]
+Guide pass: 36 runnable example(s) from scripts/run_examples.sh --list, 36 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=2 guide=0 stale=2 stale_severity=report exit=1
+
+## Exit
+- Status: 1
+- Elapsed (s): 1

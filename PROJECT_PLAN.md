@@ -5529,7 +5529,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-32` | Birdcage 4-port power-wave S-matrix at 10 MHz (`PORT-9`'s newly gated capability: first example solving ports on the **birdcage** — every existing S-parameter example is two-torus (`EX-20`/`EX-24`/ports:1–3), and `EX-28`/`EX-31` are mesh-only; commissioned 2026-08-25 10:30 review, §5.4 ramp) | ✅ *(2026-08-26, green on the first run; every gate-module record reproduced exactly and the only reading that moved is the one (d3c) declares non-reproducible)* | standard (measured standard, 88 s) |
 | `EX-33` | 16-leg gapped + sheeted birdcage mesh (`GEO-19`'s newly gated capability: first example above four legs — `EX-28`/`EX-31`/`mesh:3` are all 4-leg, so the geometry angle is new; mesh-only, no solve, no port claim; commissioned 2026-08-25 18:00 review, §5.4 ramp) | ✅ *(audited COMPLIANT 2026-08-26 18:00 review: three footers Status 0 at 131 / 126 / 1 s, all 16 claimed digits grep out of the run log, bands *and* `_assert_identity_family` imported from the gate module, the gate-module diff a single +6-line additive hunk)* | standard |
 | `EX-34` | Birdcage 4-port S-matrix across the frequency ladder 10 / 64 / 128 MHz on **one** mesh (`PORT-11`'s newly gated capability: first example solving ports at a Larmor frequency — `EX-32` is 10 MHz only, `EX-19`/`EX-25` are Larmor on the sphere with no ports; the drive/output angle is the frequency ladder itself: loss tangent, cells/δ, cells/λ, `\|Im P\|/Re P` and the three gate readings side by side; commissioned 2026-08-26 18:00 review, §5.4 ramp) | ✅ 2026-08-28 (`ports:5`, `20260828T110615Z_EX-34-run2.log`, **139 s** Status 0 at `-n 2` complex; one 116 085-cell mesh, 12 driven solves, all three gates green on all three rungs; 128 MHz cells/λ 12.5024 ≥ 10) | standard |
-| `EX-36` | Re-run the examples whose artifacts the 2026-08-28 rename (`67e4c1c`) orphaned — census `dead=53 exit=1` on 2026-08-29 — until it reads `dead=0`; four legs by runner group, each one slot (commissioned 2026-08-30 02:15 weekly review; entry written by the 10:30 daily review). **Leg (th) ✅ 2026-08-31 — `dead` 53 → 42, group `dead`/`stale` both 0, 83 s**; **leg (mesh) partial 2026-09-01 00:00 slot** — `mesh:1`–`mesh:7` green (113 s footered window + 58.6 / 94.8 s in a footerless one), `mesh:8`/`mesh:9` unobserved after a host-side harness kill 267 s into the third window, slot unjournaled, logs landed by the 03:00 review; the mesh remainder is §9 item 4, leg (root + mri + mat) item 7, leg (ports + ans) shrunk to `ports:1–3` as item 8; **leg (root + mri + mat) ✅ 2026-09-01 09:00 slot** — pre-census `dead=23 stale=2 exit=1` (`…140133Z_EX-36-leg-rootmrimat-precensus.log`) with the 21 `magnetostatics_*`/`mri_*`/`materials_*` names matching the review's prediction exactly (10/10/1), 2 `ports_03_*` dead + 2 `ports_*` stale out of scope; four windows all green — (a) mag `1,2` `…140159Z_EX-36-leg-rootmrimat-a.log` Status 0 / 142 s; (b) mag `4,5` `…140436Z_EX-36-leg-rootmrimat-b.log` Status 0 / 84 s; (c) mag `6` `…140601Z_EX-36-leg-rootmrimat-c.log` Status 0 / 137 s; (d) `mri:1,mri:2,mat:1` `…140821Z_EX-36-leg-rootmrimat-d.log` Status 0 / 73 s; in-script anchors reproduced to the digit against the guide records — mag `1` energy 2.630244e-08 J (no hard assert, completes clean), mag `4` centre `B_z` 3.563601e-09/3.519075e-09/3.483787e-09 T at 0.92%/0.34%/1.34% matching `04_helmholtz_analytic_comparison.md`'s table exactly, mag `6` fitted rate 1.9038 (report-only, `MAG-18` duty ≥ 0.7 one-sided) with "All assertions hold", mag `5` gauge cross-check 0.0003%/0.0040%/2.773e-11 all under `MAG-15` ceilings, `mat:1` ΔR 1.5838% against the 2% ceiling (1.5834% `MAT-6` record); post-census `dead=2 guide=0 stale=2 exit=1` (`…141018Z_EX-36-leg-rootmrimat-postcensus.log`), matching the pre-stated prediction exactly, both remaining `dead` and both `stale` are `ports_*` (out of this leg's scope, owned by item 8) — `magnetostatics_*`/`mri_*`/`materials_*` all read `dead=0 stale=0`. 436 s compute + 2×1 s census, well under the ≈700 s budget. No record, band or guide number moved | 🟡 | standard per leg (105 / ≈ 500 / 447 / 935 s measured by `EX-30`) |
+| `EX-36` | Re-run the examples whose artifacts the 2026-08-28 rename (`67e4c1c`) orphaned — census `dead=53 exit=1` on 2026-08-29 — until it reads `dead=0`; four legs by runner group, each one slot (commissioned 2026-08-30 02:15 weekly review; entry written by the 10:30 daily review). **Leg (th) ✅ 2026-08-31 — `dead` 53 → 42, group `dead`/`stale` both 0, 83 s**; **leg (mesh) partial 2026-09-01 00:00 slot** — `mesh:1`–`mesh:7` green (113 s footered window + 58.6 / 94.8 s in a footerless one), `mesh:8`/`mesh:9` unobserved after a host-side harness kill 267 s into the third window, slot unjournaled, logs landed by the 03:00 review; the mesh remainder is §9 item 4, leg (root + mri + mat) item 7, leg (ports + ans) shrunk to `ports:1–3` as item 8; **leg (root + mri + mat) ✅ 2026-09-01 09:00 slot** — pre-census `dead=23 stale=2 exit=1` (`…140133Z_EX-36-leg-rootmrimat-precensus.log`) with the 21 `magnetostatics_*`/`mri_*`/`materials_*` names matching the review's prediction exactly (10/10/1), 2 `ports_03_*` dead + 2 `ports_*` stale out of scope; four windows all green — (a) mag `1,2` `…140159Z_EX-36-leg-rootmrimat-a.log` Status 0 / 142 s; (b) mag `4,5` `…140436Z_EX-36-leg-rootmrimat-b.log` Status 0 / 84 s; (c) mag `6` `…140601Z_EX-36-leg-rootmrimat-c.log` Status 0 / 137 s; (d) `mri:1,mri:2,mat:1` `…140821Z_EX-36-leg-rootmrimat-d.log` Status 0 / 73 s; in-script anchors reproduced to the digit against the guide records — mag `1` energy 2.630244e-08 J (no hard assert, completes clean), mag `4` centre `B_z` 3.563601e-09/3.519075e-09/3.483787e-09 T at 0.92%/0.34%/1.34% matching `04_helmholtz_analytic_comparison.md`'s table exactly, mag `6` fitted rate 1.9038 (report-only, `MAG-18` duty ≥ 0.7 one-sided) with "All assertions hold", mag `5` gauge cross-check 0.0003%/0.0040%/2.773e-11 all under `MAG-15` ceilings, `mat:1` ΔR 1.5838% against the 2% ceiling (1.5834% `MAT-6` record); post-census `dead=2 guide=0 stale=2 exit=1` (`…141018Z_EX-36-leg-rootmrimat-postcensus.log`), matching the pre-stated prediction exactly, both remaining `dead` and both `stale` are `ports_*` (out of this leg's scope, owned by item 8) — `magnetostatics_*`/`mri_*`/`materials_*` all read `dead=0 stale=0`. 436 s compute + 2×1 s census, well under the ≈700 s budget. No record, band or guide number moved; **leg (ports + ans) ✅ 2026-09-01 12:00 slot — and with it the chunk**: scope as shrunk to `ports:1`/`ports:3`/`ports:2`, pre-census `dead=2 guide=0 stale=2 exit=1` with all four flagged lines `ports_*` (`…170124Z_EX-36-leg-portsans-precensus.log:43`), three windows all green and footered — (a) `ports:1` `…170142Z_…-a.log` Status 0 / 141 s; (b) `ports:3` `…170411Z_…-b.log` Status 0 / 228 s; (c) `ports:2` `…170931Z_…-c.log` Status 0 / 182 s, **551 s** against ≈ 600–700 s — in-script anchors bit-matching their gate records (`ports:1` ‖S−Sᵀ‖/‖S‖ 3.1121e-05 and ‖S‖₂ 0.861357; `ports:2` reciprocity 4.7586e-05, ‖S‖₂ 0.864809 ≤ 1, heuristic control separated 3.030e-01; `ports:3` cross-route 1.9222% inside the unmoved 5% band with the 7.7431% full-width control asserted to MISS and reproducing `STEP1_CROSS_ROUTE_RECORD` at 1e-4), post-census **`dead=0 guide=0 stale=0 exit=0`** (`…171241Z_…-postcensus.log:39`) — prediction met exactly, the first clean corpus-wide census since the 08-28 rename. Artifacts only; no record, band or guide number moved. One finding left for the review: `ports:3`'s narrative ladder `7.7095% → 3.6730% → 1.8333%` (script docstring, guide, three test docstrings) predates the current parameterisation — the asserted `f = 1.0` rung reads 7.7431%, not the quoted 7.7095%, and no assert reads the triple | ✅ | standard per leg (105 / ≈ 500 / 447 / 935 s measured by `EX-30`) |
 | `EX-35` | 16-leg **ring-gapped** birdcage mesh — the 32-ring-port high-pass layout (`GEO-20` step 2's newly gated capability, 2026-08-29: `EX-31`/`mesh:7` cuts the rings at 4 legs, `EX-33`/`mesh:8` cuts the **legs** at 16 — no example has the production high-pass topology at the production leg count; mesh-only, no solve, no port claim; commissioned 2026-08-29 10:30 review, §5.4 ramp) | ✅ | standard |
 | `EX-37` | **`ANS-1`/`ANS-3` are unrunnable since the 2026-08-28 rename**: `67e4c1c` rewrote the two cases' `__import__("01_dodd_deeds_coil_loading")` / `("02_package_sparameter_sweep")` strings along with their artifact basenames, and no module of the prefixed name exists — the `ANS-4` slot's observation, verified by the 18:00 review from `git log -S`; restore the two strings, re-run `ans:1` and `ans:3`, census (commissioned 2026-08-30 18:00 review; known-issues entry) | ✅ *(2026-08-31, 19:30 slot — negative control Status 1/3 s, both cases green, 63 s / 128 s)* | standard (≈ 5 + 70 + 131 s + census) |
 | `EX-38` | `\|B₁⁺\|` map of the loaded 4-leg birdcage at 10 MHz into ParaView (`WF-6` step 1's newly gated capability, 2026-08-30: the CG1-projected `\|B₁⁺\|` field under gates (i)/(ii) — no example writes a B₁⁺ field, `ports:4`/`ports:5` stop at S-matrices; the output-quantity angle; commissioned 2026-08-30 18:00 review, §5.4 ramp) | ✅ *(2026-08-31, 15:00 slot — `ports:6` green in 63 s: gate (i) 9.795751117e-03 vs record to 1.195e-08, CG1 C4 covariance 2.1870% vs the 5% band and the record to 1.643e-05, DG0 control 8.6516% to 3.227e-06, 51/51 valid, cell ratio 1.000000)* | standard (≈ 70 s) |
@@ -5854,7 +5854,9 @@ not 48; no solve, no F-human claim. Full narrative archived in `docs/planning/pl
 > * Gate module green after the additive `_measure_ring` return (`20260829T200504Z_EX-35-gate-rerun.log`, 1 passed in 183.33 s).
 
 **`EX-36` — re-run the examples whose artifacts the 2026-08-28 rename
-orphaned, until the census reads `dead=0`** ⬜ *(commissioned 2026-08-30
+orphaned, until the census reads `dead=0`** ✅ *(all four legs; closed
+2026-09-01, 12:00 slot — census `dead=0 guide=0 stale=0 exit=0`)*
+*(commissioned 2026-08-30
 02:15 weekly review; this entry written by the 10:30 daily review from the
 surviving summary and the census on record.)* Commit `67e4c1c` (2026-08-28)
 prefixed every example's output artifacts with group and number across 66
@@ -5971,6 +5973,52 @@ gates on the census, which is why this is queued ahead of its size.
 > Residual `dead=23`/`stale=2` (`ports_01`/`ports_02` stale) are §9 items
 > 7/8's, unmoved. Leg (mesh) ✅ in full (mesh:1-9 all confirmed); the
 > chunk stays 🟡 pending the root/mri/mat and ports/ans legs.
+> **Leg (ports + ans) ✅ 2026-09-01, 12:00 slot (item 8) — and with it the
+> chunk.** Scope as shrunk by the 10:30 review: `ports:1`, `ports:3`,
+> `ports:2` only; `ports:4`–`ports:8` and `ans:1`/`ans:3` are fresh
+> (`EX-37`, `EX-38`–`EX-40`) and were not run. Pre-leg census
+> (`20260901T170124Z_EX-36-leg-portsans-precensus.log:43`): **`dead=2
+> guide=0 stale=2 stale_severity=report exit=1`**, all four flagged lines
+> `ports_*` (2× `ports_03_lumped_sheet_port_widths_*` dead,
+> `ports_01`/`ports_02` stale) — the negative control, matching the
+> review's prediction exactly. Three host-runner windows, all green and
+> all footered: (a) `ports:1` `…170142Z_…-a.log` **Status 0 / 141 s**;
+> (b) `ports:3` `…170411Z_…-b.log` **Status 0 / 228 s**; (c) `ports:2`
+> `…170931Z_…-c.log` **Status 0 / 182 s** — **551 s** against the
+> ≈ 600–700 s estimate, no docker-socket denial this slot (the runner trap
+> stays at three occurrences in 18 slots). In-script anchors reproduced
+> against their gate modules' records: `ports:1` the two-torus pair,
+> `‖S−Sᵀ‖/‖S‖ = 3.1121e-05` and `‖S‖₂ = 0.861357` **both bit-matching
+> their stated records** (`…-a.log:1402`), corrected ladder −6.02% inside
+> the 10% band (`:1406`); `ports:2` the package sweep, reciprocity
+> `max|Sij−Sji| = 4.097e-05` / `‖S−Sᵀ‖/‖S‖ = 4.7586e-05` with `‖S‖₂ =
+> 0.864809 ≤ 1` and the heuristic control separated by 3.030e-01
+> (`…-c.log:1436`); `ports:3` the width ladder, `f = 0.5` cross-route
+> **1.9222%** inside the unmoved 5% band (`…-b.log:2250`). **Negative
+> controls, both asserted to miss:** `ports:1`'s unfragmented fixture
+> (`Im Z12 = 0`) gives ladder ratio 0.017427, −98.26% (`…-a.log:1398`);
+> `ports:3`'s full-width sheet reads **7.7431% MISS** against the 5% band
+> and reproduces `STEP1_CROSS_ROUTE_RECORD = 0.077431` at
+> `REPRODUCTION_BAND` 1e-4. Post-leg census
+> (`20260901T171241Z_EX-36-leg-portsans-postcensus.log:39`): **`RESULT:
+> dead=0 guide=0 stale=0 stale_severity=report exit=0`** — the prediction
+> met exactly, and the **first clean corpus-wide census since the 08-28
+> rename**. Artifacts only; no record, band or guide number moved.
+> **One finding for the review, not acted on in-slot.** `ports:3`'s
+> `f = 0.5` rung measures **1.9222%** today, while the narrative in
+> `examples/ports/03_lumped_sheet_port_widths.py:22`, its guide
+> (`…03_lumped_sheet_port_widths.md:62,125,155`) and three test-module
+> docstrings quote the ladder as `7.7095% → 3.6730% → 1.8333%`. This is
+> **not** a drift in the fixture: the one rung that *is* asserted, `f = 1.0`,
+> reads 7.7431% and reproduces `STEP1_CROSS_ROUTE_RECORD` to 1e-4, whereas
+> the narrative quotes **7.7095%** for that same rung — so the whole
+> narrative triple predates the current parameterisation and no assert
+> reads it. `STEP2B_CROSS_ROUTE_AT_HALF_WIDTH = 0.018333`
+> (`tests/validation/test_port_lumped_sheet_sweep.py:88`) is commented
+> "for the printed comparison only (the drive differs)" and is used solely
+> in step 2c's descriptive printout, never gated against step 2b's fresh
+> ladder. Nothing is red and nothing was touched — the leg is
+> artifacts-only, and re-recording a narrative is a review's call.
 
 **`EX-37` — restore the `ANS-1`/`ANS-3` example imports the rename broke**
 ✅ *(commissioned 2026-08-30 18:00 review; executed 2026-08-31, 19:30
@@ -7230,8 +7278,17 @@ denied; write it relative.
    `EX-36` entry for logs and figures). No record, band or guide number moved.
    `EX-36` stays 🟡 — item 8 (`ports:1`–`ports:3`) is the last leg before the
    census can read `dead=0`.
-8. **`EX-36` leg (ports + ans), shrunk to what the census still reads —
-   `ports:1`, `ports:2`, `ports:3` (standard per window, `-n 2` complex,
+8. ✅ **done 2026-09-01 12:00 slot — all three windows green and footered
+   (141 / 228 / 182 s = 551 s), post-census `RESULT: dead=0 guide=0
+   stale=0 stale_severity=report exit=0`
+   (`20260901T171241Z_EX-36-leg-portsans-postcensus.log:39`), the first
+   clean corpus-wide census since the 08-28 rename — so the leg ✅ and
+   with it `EX-36` ✅. One finding left for the review: `ports:3`'s
+   narrative ladder `7.7095% → 3.6730% → 1.8333%` predates the current
+   parameterisation (the asserted `f = 1.0` rung reads 7.7431%, not
+   7.7095%; today's `f = 0.5` reads 1.9222%, not 1.8333%) — nothing red,
+   nothing asserted against it, nothing touched.** ~~`EX-36` leg (ports + ans), shrunk to what the census still reads —
+   `ports:1`, `ports:2`, `ports:3`~~ (standard per window, `-n 2` complex,
    host runner; independent of items 4 and 7; promoted from drain
    fallback this review). Executor: `example-runner`, foreground, Bash
    timeout 660000 ms on every window, as item 4.** The 09-01 pre-census

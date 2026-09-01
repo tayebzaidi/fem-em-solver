@@ -17947,3 +17947,79 @@ executor returned with nothing in flight.
   slot that runs it should say so in the same commit per item 8's scope note.
   With items 4–7 done the queue then has nothing open — the 12:00 slot after
   the 10:30 review takes whatever that review queues.
+
+## 2026-09-01T17:15Z — `EX-36` leg (ports + ans) — **complete**, and with it the chunk (12:00 CDT implementer slot)
+
+- Preflight: `main` clean at `a2db545`, container Up 6 days. §9 item 8 was the
+  first item not marked done or blocked; taken as written, no substitution.
+- Delegated to `example-runner`, **foreground**, `run_in_background: false`,
+  with the foreground rule restated in the spawn prompt as binding on the
+  executor's own Bash calls. It returned with nothing in flight — every window
+  footered, tree clean but for the five new logs and the `test-results.md`
+  index. That is the third consecutive delegated slot in which the rule held.
+- Scope as the 10:30 review shrunk it: `ports:1`, `ports:3`, `ports:2` only.
+  `ports:4`–`ports:8` and `ans:1`/`ans:3` are fresh (`EX-37`, `EX-38`–`EX-40`)
+  and were **not** run.
+- Pre-leg census (the negative control), `…-precensus.log:43`:
+  `RESULT: dead=2 guide=0 stale=2 stale_severity=report exit=1` — all four
+  flagged lines `ports_*` (2× `ports_03_lumped_sheet_port_widths_*` dead,
+  `ports_01`/`ports_02` stale), matching the review's prediction exactly.
+- Three host-runner windows, all `Status: 0`: (a) `ports:1` **141 s**;
+  (b) `ports:3` **228 s**; (c) `ports:2` **182 s** — **551 s** total against the
+  ≈ 600–700 s estimate. No docker-socket denial this slot, so the runner trap
+  stands at three occurrences in 18 slots and the substitution stays a fallback.
+- Anchors, each reproduced against its gate module's records — `ports:1`
+  `‖S−Sᵀ‖/‖S‖ = 3.1121e-05` and `‖S‖₂ = 0.861357`, both bit-matching their
+  stated records (`…-a.log:1402`), corrected ladder −6.02% inside the 10% band
+  (`:1406`); `ports:2` reciprocity `max|Sij−Sji| = 4.097e-05`,
+  `‖S−Sᵀ‖/‖S‖ = 4.7586e-05`, `‖S‖₂ = 0.864809 ≤ 1`, heuristic control separated
+  by 3.030e-01 (`…-c.log:1436`); `ports:3` cross-route **1.9222%** at `f = 0.5`
+  inside the unmoved 5% band (`…-b.log:2250`).
+- Negative controls, both asserted to miss: `ports:1`'s unfragmented fixture
+  (`Im Z12 = 0`) gives ladder ratio 0.017427, −98.26% (`…-a.log:1398`);
+  `ports:3`'s full-width sheet reads **7.7431% MISS** and reproduces
+  `STEP1_CROSS_ROUTE_RECORD = 0.077431` at `REPRODUCTION_BAND` 1e-4.
+- Post-leg census, `…-postcensus.log:39`: **`RESULT: dead=0 guide=0 stale=0
+  stale_severity=report exit=0`** — the pre-stated prediction met exactly, and
+  the **first clean corpus-wide census since the 08-28 rename** (`67e4c1c`).
+  Leg ✅; items 4 and 7 having landed, `EX-36` goes **✅** in this commit.
+- Slot corrections to the executor's report before committing: none of
+  substance. The slot re-verified both census `RESULT:` lines, all three
+  `Status: 0` footers with their elapsed times, and all five anchor figures
+  itself against the logs rather than taking the report's word.
+- **Finding for the daily review — flagged, not acted on.** The executor
+  reported `ports:3`'s `f = 0.5` rung as 1.9222% against the **1.8333%** that
+  §9 item 8 and the example's own docstring quote, and called it possible
+  staleness. Checked: it is staleness in the *narrative only*, and it is
+  broader than the one digit. The narrative ladder
+  `7.7095% → 3.6730% → 1.8333%` appears in
+  `examples/ports/03_lumped_sheet_port_widths.py:22`, its guide
+  (`03_lumped_sheet_port_widths.md:62,125,155`) and three test-module
+  docstrings; but the rung that is actually **asserted**, `f = 1.0`, reads
+  7.7431% and reproduces `STEP1_CROSS_ROUTE_RECORD` to 1e-4 — while the
+  narrative quotes 7.7095% for that same rung. So the whole triple predates the
+  current parameterisation, and **no assert reads any of it**:
+  `STEP2B_CROSS_ROUTE_AT_HALF_WIDTH = 0.018333`
+  (`tests/validation/test_port_lumped_sheet_sweep.py:88`) is commented "for the
+  printed comparison only (the drive differs)" and is used solely in step 2c's
+  descriptive printout, never gated against step 2b's fresh ladder. Nothing red,
+  no band or record involved. Left untouched: this leg is artifacts-only, and
+  re-recording a narrative is the review's call, not a slot's.
+- Logs: `20260901T170124Z_EX-36-leg-portsans-precensus.log`,
+  `20260901T170142Z_EX-36-leg-portsans-a.log`,
+  `20260901T170411Z_EX-36-leg-portsans-b.log`,
+  `20260901T170931Z_EX-36-leg-portsans-c.log`,
+  `20260901T171241Z_EX-36-leg-portsans-postcensus.log`.
+- Branch (if parked): none — complete on `main`. No `src/`, `tests/` or example
+  source changed; artifacts, logs and documentation only. No known-issues entry
+  (no example went red). No band, record or guide number moved.
+- Next-attempt hypothesis: the queue now holds **one** open item — item 9
+  (`WF-6` step 3d), which the 13:30 slot takes. The 15:00 and 16:30 slots will
+  then meet a fully drained queue and should **stop and journal** per the drain
+  instruction, exactly as the 10:30 review predicted in writing; that is the
+  correct outcome, not a failure. The 2026-09-06 weekly review owns every anchor
+  that would make a further item ready. It should also rule on the `ports:3`
+  narrative-ladder staleness above (a docstring/guide re-record under the (1*)
+  licence would fit `record-reconciler`), and record that the examples census
+  now reads `dead=0 guide=0 stale=0 exit=0` for the first time since the
+  rename — the examples-health pass the 10:30 review asked it for.
