@@ -228,8 +228,13 @@ What is validated, to what tolerance, and what must not be trusted.
   (2026-08-31) read the coil-driven **point-SAR** map off the primal
   N1curl `E` and measured it **25–41%** off the same five identities
   against the same 5% band — the pointwise-`E` estimator's own floor,
-  filed as five deliberate reds on `main` (known-issues); step 3b (the
-  CG1-`E` estimator beside it) is §9 item 1, and no SAR claim exists.
+  filed as five deliberate reds on `main` (known-issues). Step 3b
+  (2026-08-31) put the CG1-`E` estimator beside it and read **worse**
+  (152 / 110 / 170 / 53 / 41%) with the primal column reproducing to every
+  digit — and its own diagnostics (`‖E_cg1 − E‖/‖E‖` **1876%** over the
+  phantom, CG1 phantom power **+35 199%**) say `project_to_cg1` does not
+  fit an N1curl `E` at all, so that is now the open finding. **No SAR
+  claim exists**; the `|B₁⁺|` gates project `B` and are untouched.
 - **Coil loading at the Larmor frequencies is an extrapolation.** The
   apparent frequency trend is now attributed: `TH-11` step 4's fixed-f
   h-ladders read **flat in f** — the h → 0 brackets [−2.15, −0.91]% at
@@ -4466,7 +4471,7 @@ review; commissioned 2026-08-23 weekly review as §10 subgoal 2b, serial on `POR
 | `WF-3` | Quick-look phantom metrics report | ⚠️ | standard |
 | `WF-4` | Scenario presets (debug/dev/benchmark-lite) | 🧪 | standard |
 | `WF-5` | Loaded birdcage: frequency shift & Q degradation | ⬜ | heavy |
-| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved. Step 1d executed 2026-08-30 12:00 — the ruling landed in the code: `post.project_to_cg1` is the packaged production estimator and gate (ii) is the CG1 covariance identity at all three angles, **2.1870 / 2.1146 / 1.8911%** against the unmoved 5% band, controls holding (mis-rotated 23.2642%, DG0 column unmoved at 8.6516 / 9.5808 / 8.5970%). `19 passed` / Status 0 / 97 s; **step 1 is ✅ and the chunk is 🟡** — a symmetry identity only, no CV / homogeneity / absolute claim; steps 2–3 are a review's to scope. **Step 2 scoped 2026-08-30 18:00 review** — the quadrature drive by exact superposition of the four solved fields at 10 MHz, two symmetry identities (C4-invariance; the co/counter-rotating mirror identity `\|B₁⁺\|_ccw(x) = \|B₁⁻\|_cw(Mx)`) at the measured CG1 floor, and the first *ungated* CV / polarisation-purity figures; §9 item 3. Step 2 executed 2026-08-31 22:30 slot — **both identities green at the CG1 floor: (a) C4-invariance of the quadrature `\|B₁⁺\|` map **0.9818%** and (b) the mirror identity `\|B₁⁻\|_cw(Mx)` vs `\|B₁⁺\|_ccw(x)` **0.8087%**, against the unmoved imported 5% band, with the mis-paired control at **95.1975%**; `17 passed` / Status 0 / 96 s. Ungated and labelled: centre purity `\|B₁⁺\|/\|B₁⁻\|` **127.91** (ccw) / **0.0081** (cw) / **1.0006** (P1 linear), mean `\|B₁⁺\|` 7.976427e-08 T at 1 V per port, CV **2.7563%** (51 centroids) / **2.4577%** (96 ring points). `post.b1_minus` landed. **Steps 1–2 ✅, chunk stays 🟡** — symmetry identities on one fixture at 10 MHz, no homogeneity, absolute, tuning or Larmor claim. **Step 2b executed 2026-08-31 09:00 slot, green on the first run** — the same five identities at **64 and 128 MHz** on one mesh through `build_four_port_sweep(frequency_hz=…, reuse=…)`: gate (ii) **2.2187 / 2.1667 / 1.9574%** (64) and **2.1315 / 2.1735 / 1.9511%** (128), quadrature (a)/(b) **0.9570 / 0.7570%** and **0.9106 / 0.6968%**, gate (i) 9.5231e-03 / 9.2445e-03 — all inside the unmoved imported 5% / 1e-2 bands, controls 24.75 / 25.26% and 95.11%, and the 10 MHz rung reproducing all five records at rtol 1e-3. Phantom cells/λ 69.14 / 21.89 / **12.50** against `PORT-11`'s floor of 10: the pre-registered 128 MHz resolution question reads **no miss**. First Larmor B₁⁺ figures on record, ungated: centre purity 141.81 / 171.94 (ccw), mean `\|B₁⁺\|` 6.500452e-08 / 4.936577e-08 T at 1 V per port, CV 2.7738 / 3.0177%. `16 passed` / Status 0 / 202 s. **Steps 1–2b ✅, chunk stays 🟡** — identities on one unconverged fixture, still no homogeneity, absolute, tuning or SAR claim. **Step 3 (coil-driven SAR symmetry identities, 10 MHz) scoped 2026-08-31 10:30 review — see entry, §9 item 2. Step 3 executed 2026-08-31 13:30 slot — the pre-registered negative result: the point-SAR map read off the primal N1curl `E` misses all five C4/mirror identities at **25.11 / 40.55 / 30.01 / 38.61 / 28.15%** against the unmoved imported 5% band, while both controls hold (129.82 / 334.58%, asserted > band), the phantom-σ premise holds (0.5 S/m over 537 cells) and `mean_sar`'s phantom power reproduces gate (i)'s record **5.637745667e-08 W** to every printed digit. The three single-drive misses use only step 1's fields and step 1d's image sets, so the finding is the **pointwise-`E` estimator floor** (no CG1 projection in this path; squaring doubles it), not the new code. Five deliberate reds on `main` + known-issues entry; `20260831T183526Z_WF-6-step3.log`, `5 failed, 16 passed` / Status 1 / 96 s. **No SAR claim exists**; step 3b (the same identities off an L²-projected CG1 `E`) is a review's to scope. **Step 3b scoped 2026-08-31 18:00 review** — primal readings become asserted records, CG1 readings printed beside them with a pre-registered (a)/(b)/(c) verdict, no band moves in-slot; see entry, §9 item 1** | 🟡 | heavy (step 1 standard, complex) |
+| `WF-6` | B1+ field mapping and homogeneity (CV) — **step 1 scoped 2026-08-29 10:30 review (§10 subgoal 4's first B1+ chunk): `\|B₁⁺\| = \|B_x + jB_y\|/2` on the loaded F-small birdcage at 10 MHz from the `PORT-9` single-drive field, gated on a three-way power accounting and C4 covariance of the map; see entry. Step 1 executed 2026-08-29 13:30 slot — the `post/` helpers landed and gate (i) closed at 9.80e-3 of supplied power (band 1e-2), gate (ii) **red at 8.65% against its 5% band** (known-issues), so the chunk is 🧪 and no B1+ claim exists. Step 1b executed 2026-08-29 19:30 — the CG1-projected estimator reads 2.19 / 2.11 / 1.89% at +90 / −90 / 180° against DG0's 8.65 / 9.58 / 8.60%, with the mis-rotated control surviving at 23.3%: the pre-registered verdict is **(a), the DG0 estimator floor**. No band moved; gate (ii) stays red and re-registering it is a review's call. Step 1c executed 2026-08-29 22:30 — the DG0 reading on a 96-point rotation-invariant ring set is 9.93 / 9.95 / 8.47% against the centroid set's 8.65 / 9.58 / 8.60%, every angle inside ±2 pp: **the sample set is not the mechanism**, corroborating 1b's estimator-floor verdict from the other side. Still no band moved. Step 1d executed 2026-08-30 12:00 — the ruling landed in the code: `post.project_to_cg1` is the packaged production estimator and gate (ii) is the CG1 covariance identity at all three angles, **2.1870 / 2.1146 / 1.8911%** against the unmoved 5% band, controls holding (mis-rotated 23.2642%, DG0 column unmoved at 8.6516 / 9.5808 / 8.5970%). `19 passed` / Status 0 / 97 s; **step 1 is ✅ and the chunk is 🟡** — a symmetry identity only, no CV / homogeneity / absolute claim; steps 2–3 are a review's to scope. **Step 2 scoped 2026-08-30 18:00 review** — the quadrature drive by exact superposition of the four solved fields at 10 MHz, two symmetry identities (C4-invariance; the co/counter-rotating mirror identity `\|B₁⁺\|_ccw(x) = \|B₁⁻\|_cw(Mx)`) at the measured CG1 floor, and the first *ungated* CV / polarisation-purity figures; §9 item 3. Step 2 executed 2026-08-31 22:30 slot — **both identities green at the CG1 floor: (a) C4-invariance of the quadrature `\|B₁⁺\|` map **0.9818%** and (b) the mirror identity `\|B₁⁻\|_cw(Mx)` vs `\|B₁⁺\|_ccw(x)` **0.8087%**, against the unmoved imported 5% band, with the mis-paired control at **95.1975%**; `17 passed` / Status 0 / 96 s. Ungated and labelled: centre purity `\|B₁⁺\|/\|B₁⁻\|` **127.91** (ccw) / **0.0081** (cw) / **1.0006** (P1 linear), mean `\|B₁⁺\|` 7.976427e-08 T at 1 V per port, CV **2.7563%** (51 centroids) / **2.4577%** (96 ring points). `post.b1_minus` landed. **Steps 1–2 ✅, chunk stays 🟡** — symmetry identities on one fixture at 10 MHz, no homogeneity, absolute, tuning or Larmor claim. **Step 2b executed 2026-08-31 09:00 slot, green on the first run** — the same five identities at **64 and 128 MHz** on one mesh through `build_four_port_sweep(frequency_hz=…, reuse=…)`: gate (ii) **2.2187 / 2.1667 / 1.9574%** (64) and **2.1315 / 2.1735 / 1.9511%** (128), quadrature (a)/(b) **0.9570 / 0.7570%** and **0.9106 / 0.6968%**, gate (i) 9.5231e-03 / 9.2445e-03 — all inside the unmoved imported 5% / 1e-2 bands, controls 24.75 / 25.26% and 95.11%, and the 10 MHz rung reproducing all five records at rtol 1e-3. Phantom cells/λ 69.14 / 21.89 / **12.50** against `PORT-11`'s floor of 10: the pre-registered 128 MHz resolution question reads **no miss**. First Larmor B₁⁺ figures on record, ungated: centre purity 141.81 / 171.94 (ccw), mean `\|B₁⁺\|` 6.500452e-08 / 4.936577e-08 T at 1 V per port, CV 2.7738 / 3.0177%. `16 passed` / Status 0 / 202 s. **Steps 1–2b ✅, chunk stays 🟡** — identities on one unconverged fixture, still no homogeneity, absolute, tuning or SAR claim. **Step 3 (coil-driven SAR symmetry identities, 10 MHz) scoped 2026-08-31 10:30 review — see entry, §9 item 2. Step 3 executed 2026-08-31 13:30 slot — the pre-registered negative result: the point-SAR map read off the primal N1curl `E` misses all five C4/mirror identities at **25.11 / 40.55 / 30.01 / 38.61 / 28.15%** against the unmoved imported 5% band, while both controls hold (129.82 / 334.58%, asserted > band), the phantom-σ premise holds (0.5 S/m over 537 cells) and `mean_sar`'s phantom power reproduces gate (i)'s record **5.637745667e-08 W** to every printed digit. The three single-drive misses use only step 1's fields and step 1d's image sets, so the finding is the **pointwise-`E` estimator floor** (no CG1 projection in this path; squaring doubles it), not the new code. Five deliberate reds on `main` + known-issues entry; `20260831T183526Z_WF-6-step3.log`, `5 failed, 16 passed` / Status 1 / 96 s. **No SAR claim exists**; step 3b (the same identities off an L²-projected CG1 `E`) is a review's to scope. **Step 3b scoped 2026-08-31 18:00 review** — primal readings become asserted records, CG1 readings printed beside them with a pre-registered (a)/(b)/(c) verdict, no band moves in-slot; see entry, §9 item 1. **Step 3b executed 2026-08-31 19:30 slot — verdict (c) prints, but the run's own diagnostics relocate the finding: the primal column reproduced step 3's five identities and both controls to every digit (anchor held, now exported as `STEP3_PRIMAL_*`), the CG1 column read **worse** at every identity (152.05 / 109.78 / 169.51 / 53.19 / 40.84% vs primal 25.11 / 40.55 / 30.01 / 38.61 / 28.15%) with both CG1 controls surviving (163.61 / 75.91%), and the two projection diagnostics — CG1 phantom power **+35 198.9%** against the primal record, `‖E_cg1 − E‖/‖E‖` over the phantom **1876.19%** — say `post.project_to_cg1` does not fit the N1curl `E` at all. The measured finding is about the projector on `E`, **not** about phantom resolution; the `|B₁⁺|` gates (which project `B`, 0.38%) are untouched. `5 failed, 25 passed` / Status 1 / 105 s and 100 s. No band moved, no assert loosened, **no SAR claim exists**** | 🟡 | heavy (step 1 standard, complex) |
 | `WF-7` | SAR10g hotspot identification | ⬜ | heavy |
 | `WF-8` | Publication-quality visualization pipeline | ⬜ | standard |
 
@@ -5188,6 +5193,53 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > literals switch to `EX-39`'s exported `STEP2_*`. ≈ 130 s, `-n 2`,
 > standard. **No band moves in-slot; `WF-6` stays 🟡 under every
 > verdict.**
+>
+> **Step 3b executed 2026-08-31 19:30 slot — verdict (c) prints, and the
+> run's own diagnostics say (c)'s pre-registered *reason* is the wrong
+> one: the finding is `project_to_cg1` on an N1curl `E`, not the
+> phantom's resolution.** `20260901T003300Z_WF-6-step3b.log` (105 s) and
+> `20260901T003548Z_WF-6-step3b-diagnostic.log` (100 s, the added
+> projection diagnostic), both **`5 failed, 25 passed` / Status 1** at
+> `-n 2` complex with `tests/environment`, against the ≈ 130 s estimate.
+>
+>   * **The anchor held to every digit.** The primal column reproduced
+>     step 3's five identities — 25.1096 / 40.5462 / 30.0142 / 38.6120 /
+>     28.1459% — and both controls — 129.8187 / 334.5786% — at
+>     `CG1_RECORD_RTOL`, now exported as `STEP3_PRIMAL_IDENTITY_RECORDS` /
+>     `STEP3_PRIMAL_CONTROL_RECORDS` with the log line as provenance. The
+>     five primal asserts are untouched and are the run's five failures.
+>   * **The CG1 column is worse than the primal one everywhere**
+>     (printed, never gated): **152.0459 / 109.7797 / 169.5050 / 53.1869 /
+>     40.8440%**. Both CG1 controls survive the projection and are
+>     asserted — 163.6144 / 75.9135% against the 5% band — so the
+>     pre-registered verdict evaluates, in code, to **(c)**.
+>   * **(c)'s pre-registered reading does not survive the same run.** The
+>     CG1 phantom power `½∫σ|E_cg1|²` reads **1.990062891e-05 W** against
+>     the primal record 5.637745667e-08 W (**+35 198.9%**; step 1d's `B`
+>     projection moved its mean by 0.38%), and the diagnostic re-run's
+>     `‖E_cg1 − E‖/‖E‖` over the phantom reads **1876.1871%**. A
+>     projection cannot be 19× its own argument in the region being read
+>     *and* be a coarse-but-honest estimator of it, so the measurement is
+>     about the projector applied to `E`, not about ~1 cm phantom cells
+>     failing to resolve a quadratic map. The estimator step 1d registered
+>     for the DG0 `B` phasor is **not, as landed, a usable `E`
+>     estimator on this fixture**; the `|B₁⁺|` gates are untouched, since
+>     they project `B` and its 0.38% figure is unchanged.
+>   * **Nothing moved that a negative result may not move.** No band, no
+>     tolerance, no assert; the mis-paired-sense comparison stayed struck;
+>     the module carries no step-2 numeric literals, so the scoped
+>     `STEP2_*` collateral was a no-op (recorded so the next review does
+>     not re-scope it). Five deliberate reds on `main`, unchanged in count
+>     and in value. **No SAR claim exists** and `WF-6` stays **🟡**.
+>   * **Owed next, for a review to scope (in known-issues' new "Resolves
+>     with"):** separate the three candidates for the projector finding —
+>     a global L² fit dominated by the sheet/conductor-edge `E`
+>     singularities; a non-converged CG/Jacobi mass solve at `ksp_rtol`
+>     1e-12 on a vector CG1 space over 116 085 cells, which the helper
+>     never checks; or an element-side mismatch that the value-shape
+>     `(3,)` guard does not catch. One slot: print the KSP converged
+>     reason and iteration count, and read `‖E_cg1 − E‖/‖E‖` over the
+>     whole mesh beside the phantom-restricted figure.
 
 ### EX — Examples (§5.4 ramp)
 
@@ -6495,8 +6547,12 @@ stays the fallback. **Allowlist trap (12:00 slot):** the harness entry is
 the repo-relative `scripts/testing/run_and_log.sh *` — an absolute path is
 denied; write it relative.
 
-1. **`WF-6` step 3b — the coil-driven SAR identities off an L²-projected
-   CG1 `E`, beside the primal column (standard, complex, `-n 2`, `main`;
+1. ✅ **done 2026-08-31 19:30 slot — verdict (c) printed and the finding
+   relocated to `project_to_cg1` on N1curl `E` (see the §7 step-3b bullet
+   and known-issues; `20260901T003300Z` + `…003548Z`, `5 failed, 25
+   passed` / 105 s + 100 s, no band moved).** ~~`WF-6` step 3b — the
+   coil-driven SAR identities off an L²-projected
+   CG1 `E`, beside the primal column~~ (standard, complex, `-n 2`, `main`;
    independent; scoped this review — execute the §7 step-3b bullet as
    written).** In `tests/validation/test_birdcage_sar_map.py`, a second
    module fixture `sar_map_cg1(sar_map, b1_plus_map)`: for each of the

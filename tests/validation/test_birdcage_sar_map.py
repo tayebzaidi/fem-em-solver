@@ -71,14 +71,45 @@ per port for the P1 single drive and for the quadrature drive.  None of these
 is an absolute claim: no converged mesh, no real drive, no tuning, and a 1 V
 excitation is a normalisation and not a scanner.
 
+**Step 3b — the estimator column (2026-08-31 18:00 review's scoping).**  Step 3
+measured every identity above missing by 25–40%, with both controls holding and
+the power record reproducing to every digit; the diagnosis it recorded is the
+*estimator*, not the code — SAR is read pointwise off the primal N1curl ``E``,
+whose per-cell O(h) discontinuity the C4 rotation does not share, squared.  Step
+1b/1d settled the same question for ``|B₁⁺|`` by L²-projecting to CG1, so this
+step reads the same five identities off ``post.project_to_cg1(e_complex)``
+beside the primal column, on the same solves, points, band and phase convention.
+
+* The **primal column is now asserted against step 3's own readings**
+  (:data:`STEP3_PRIMAL_IDENTITY_RECORDS`, :data:`STEP3_PRIMAL_CONTROL_RECORDS`,
+  provenance in their docstrings) — the "nothing moved" anchor.  The five
+  primal identity asserts above stay exactly as written, and red.
+* The **CG1 column's two controls are asserted to still miss the band**: a
+  projection that smoothed the wrong drive and the wrong rotation into 5% would
+  buy the identities nothing.
+* The **five CG1 identity readings are printed and journalled, never gated**,
+  beside a pre-registered verdict — **(a)** all five inside the band with both
+  CG1 controls surviving ⇒ the pointwise-``E`` estimator floor, and
+  re-registering the SAR gate on CG1 is the *next review's* ruling exactly as 1d
+  did for ``|B₁⁺|``; **(b)** the 180° identity inside but a ±90° one outside ⇒
+  something rotation-specific in the field (sheet or mesh asymmetry), a review
+  reads it; **(c)** all five outside ⇒ this fixture's ~1 cm phantom cells do not
+  resolve a quadratic-in-``E`` map at this band, and a finer rung is the weekly
+  review's question.  Whichever prints **is** the deliverable; no band moves
+  in-slot under any of them.
+* **Reported, ungated:** the CG1 column's phantom power ``½∫σ|E_cg1|²`` beside
+  the primal record.  A projection does not conserve power (step 1d's ``B``
+  projection moved its mean by 0.38%), so this is a size, not a check.
+
 **Scope.**  10 MHz, F-small, degree 1, symmetry identities plus one
-reproduction.  **No** SAR10g / C95.3 averaging (`MAT-4` step 2 + `WF-7`), no
-mass-averaged claim, no Larmor SAR (a later step mirrors step 2b's rung
-pattern), no absolute or safety claim; `WF-6` stays 🟡.
+reproduction, and an estimator comparison on one fixture.  **No** SAR10g /
+C95.3 averaging (`MAT-4` step 2 + `WF-7`), no mass-averaged claim, no Larmor
+SAR (a later step mirrors step 2b's rung pattern), no absolute or safety claim;
+`WF-6` stays 🟡 under every verdict.
 
 Run (complex build required)::
 
-    scripts/testing/run_and_log.sh WF-6-step3 "docker compose exec -T fem-em-solver \\
+    scripts/testing/run_and_log.sh WF-6-step3b "docker compose exec -T fem-em-solver \\
       bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && \\
        PYTHONPATH=/workspace/src FEM_EM_REQUIRE_COMPLEX=1 timeout -k 30 400 \\
        mpiexec -n 2 python3 -m pytest tests/environment \\
@@ -92,7 +123,7 @@ import pytest
 from dolfinx import fem
 from mpi4py import MPI
 
-from fem_em_solver.post import mean_sar
+from fem_em_solver.post import mean_sar, project_to_cg1
 from fem_em_solver.post.sar import point_sar
 
 from tests.complex_mode import complex_only
@@ -132,6 +163,36 @@ PHANTOM_SIGMA_RTOL = 1.0e-12
 # mis-rotated control is: the *size* of a miss is a property of the coil, not
 # something this step pre-registers.
 CONTROL_MIN_MISMATCH = C4_COVARIANCE_BAND
+
+# Step 3's five primal identity readings, `20260831T183526Z_WF-6-step3.log`
+# (the fixture's identity table, `5 failed, 16 passed` / Status 1 / 96 s), and
+# its two control readings from the same table.  Step 3b asserts the primal
+# column against these at `CG1_RECORD_RTOL`: the estimator column below is only
+# interpretable if the column it is being compared *to* has not moved, so this
+# pair of records is the "nothing moved" anchor of the whole step.  They are
+# reproductions, not bands — a miss here is a fixture finding (a solve that is
+# no longer step 3's), never a licence to re-record.
+STEP3_PRIMAL_IDENTITY_RECORDS = {
+    "(i) SAR_P2(Rx) vs SAR_P1(x)": 25.1096e-2,
+    "(i) SAR_P4(-Rx) vs SAR_P1(x)": 40.5462e-2,
+    "(i) SAR_P3(180deg) vs SAR_P1(x)": 30.0142e-2,
+    "(ii) SAR_ccw(Rx) vs SAR_ccw(x)": 38.6120e-2,
+    "(iii) SAR_cw(Mx) vs SAR_ccw(x)": 28.1459e-2,
+}
+STEP3_PRIMAL_CONTROL_RECORDS = {
+    "mis-rotated SAR_P3(Rx) vs SAR_P1(x)": 129.8187e-2,
+    "quadrature SAR_ccw(x) vs single-drive SAR_P1(x)": 334.5786e-2,
+}
+
+# The three identities whose verdict clause (b) separates on: the 180° image is
+# a *different* rotation of the same problem from the ±90° ones (it maps the
+# port set to itself without exchanging the two mirror-related sheets), so a
+# field asymmetry the mesh carries can miss on ±90° while 180° holds.
+IDENTITY_180_LABEL = "(i) SAR_P3(180deg) vs SAR_P1(x)"
+IDENTITY_PM90_LABELS = (
+    "(i) SAR_P2(Rx) vs SAR_P1(x)",
+    "(i) SAR_P4(-Rx) vs SAR_P1(x)",
+)
 
 
 def _phantom_sigma_range(sweep, sigma_field):
@@ -188,6 +249,104 @@ def _superpose_split_e(solves, order, weights):
     e_real.x.scatter_forward()
     e_imag.x.scatter_forward()
     return e_real, e_imag
+
+
+def _split_complex(field, stem):
+    """A complex ``Function`` as the (real, imag) pair ``point_sar`` wants.
+
+    On the field's **own** space — the projection returns CG1 vectors, and
+    handing ``point_sar`` the complex function twice (a tempting shortcut, since
+    it takes ``np.real`` of each argument) would silently drop the imaginary
+    part and halve every SAR value in the column.
+    """
+    space = field.function_space
+    values = np.asarray(field.x.array)
+    parts = []
+    for part, values_part in (("real", np.real(values)), ("imag", np.imag(values))):
+        out = fem.Function(space, name=f"{stem}_{part}")
+        out.x.array[:] = values_part
+        out.x.scatter_forward()
+        parts.append(out)
+    return tuple(parts)
+
+
+def _superpose_complex(fields, weights, name):
+    """``Σ_k c_k f_k`` as a fresh complex ``Function`` on the shared space.
+
+    Superposing the *projected* fields equals projecting the superposition: the
+    L² projection is linear and all four solves share one mass operator, so no
+    fifth projection solve is needed for the quadrature senses.
+    """
+    space = fields[0].function_space
+    out = fem.Function(space, name=name)
+    acc = np.zeros_like(np.asarray(out.x.array))
+    for coeff, field in zip(weights, fields):
+        acc += complex(coeff) * np.asarray(field.x.array)
+    out.x.array[:] = acc
+    out.x.scatter_forward()
+    return out
+
+
+def _phantom_relative_l2_of_projection(projected, e_complex, cell_tags):
+    """``‖E_cg1 − E‖_{L²(phantom)} / ‖E‖_{L²(phantom)}``, MPI-reduced.
+
+    Diagnostic only, never asserted.  An L² projection is a *fit*: it does not
+    conserve power, but it also cannot be far from the field it fits.  This
+    number is what separates "the CG1 column is a coarser but honest estimator"
+    from "the projection is not approximating ``E`` at all on this element",
+    which the identity readings alone cannot distinguish.  ``assemble_scalar``
+    is rank-local, so both integrals are summed across ranks before the ratio.
+    """
+    import ufl
+    from dolfinx.fem import assemble_scalar, form
+
+    msh = e_complex.function_space.mesh
+    dx = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)(PHANTOM_CELL_TAG)
+    difference = projected - e_complex
+    numerator = assemble_scalar(form(ufl.inner(difference, difference) * dx))
+    denominator = assemble_scalar(form(ufl.inner(e_complex, e_complex) * dx))
+    comm = msh.comm
+    numerator = comm.allreduce(complex(numerator), op=MPI.SUM)
+    denominator = comm.allreduce(complex(denominator), op=MPI.SUM)
+    return float(np.sqrt(abs(numerator) / abs(denominator)))
+
+
+def _cg1_verdict(identities, controls, band):
+    """The (a)/(b)/(c) verdict, pre-registered by the 2026-08-31 18:00 review.
+
+    Evaluated from the readings rather than read off them by eye, so the log
+    line the review acts on cannot disagree with the numbers printed above it.
+    A reading pattern matching none of the three clauses is reported as such —
+    the pre-registration is not stretched to cover it in-slot.
+    """
+    controls_survive = all(value > band for value in controls.values())
+    inside = {label: value <= band for label, value in identities.items()}
+    if all(inside.values()) and controls_survive:
+        return "(a)", (
+            "all five CG1 identities inside the band with both CG1 controls "
+            "surviving — the pointwise-E estimator floor, exactly as step 1b "
+            "found for the DG0 curl; re-registering the SAR gate on the CG1 "
+            "estimator is the NEXT REVIEW's ruling, never in-slot"
+        )
+    if not any(inside.values()):
+        return "(c)", (
+            "all five CG1 identities miss — the projection is not the "
+            "mechanism, and this fixture's ~1 cm phantom cells do not resolve "
+            "a quadratic-in-E map at this band; a finer rung is the weekly "
+            "review's question"
+        )
+    if inside[IDENTITY_180_LABEL] and not all(inside[l] for l in IDENTITY_PM90_LABELS):
+        return "(b)", (
+            "the 180 deg identity is inside the band and a +-90 deg one is "
+            "not — something rotation-specific that the field does not share "
+            "(sheet or mesh asymmetry); a review reads it"
+        )
+    return "(none)", (
+        "the reading pattern matches none of the pre-registered clauses "
+        f"(controls survive: {controls_survive}; inside: "
+        + ", ".join(f"{label}={inside[label]}" for label in identities)
+        + ") — reported as-is for the review, not forced into a clause"
+    )
 
 
 @pytest.fixture(scope="module")
@@ -489,4 +648,206 @@ def test_mean_sar_reproduces_step_1s_phantom_power_record(sar_map):
         f"the phantom's dissipated power reads {measured:.9e} W, not step 1's "
         f"{STEP1_GATE_I_P1_PHANTOM_POWER_W:.9e} W — this leg is not on step 1's "
         "fixture, and the point-SAR map above is a map of some other solve"
+    )
+
+
+# --------------------------------------------------------------------------
+# Step 3b — the CG1 estimator column, beside the primal one above.
+# --------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def sar_map_cg1(sar_map, b1_plus_map):
+    """The same five identities and two controls, off an L²-projected CG1 ``E``.
+
+    No new curl-curl solve: step 1's four solved fields are projected with
+    :func:`~fem_em_solver.post.project_to_cg1` — the production estimator step 1d
+    registered — and read at exactly the image sets the primal column above used.
+    The quadrature senses superpose the *projected* fields (linear, hence equal
+    to projecting the superposition), so the column costs four vector mass solves
+    and nothing else.
+    """
+    sweep = b1_plus_map["sweep"]
+    solves = b1_plus_map["solves"]
+    azimuths = b1_plus_map["azimuths"]
+    points = b1_plus_map["points"]
+    comm = sweep["mesh"].comm
+    delta = np.radians(b1_plus_map["delta_deg"])
+    order = sorted(solves)
+    ks = [sar_map["indices"][pid] for pid in order]
+
+    projected = {
+        pid: project_to_cg1(solves[pid]["fields"].e_complex, name=f"E_cg1_{pid}")
+        for pid in order
+    }
+    split = {pid: _split_complex(projected[pid], f"E_cg1_{pid}") for pid in order}
+
+    kwargs = dict(sigma=SALINE_SIGMA, rho=PHANTOM_RHO_KG_PER_M3, comm=comm)
+    images = {
+        "P1@0deg": ("P1", points),
+        "P2@+90deg": ("P2", _rotate_z(points, delta)),
+        "P4@-90deg": ("P4", _rotate_z(points, -delta)),
+        "P3@180deg": ("P3", _rotate_z(points, 2.0 * delta)),
+        "P3@+90deg": ("P3", _rotate_z(points, delta)),
+    }
+    single = {
+        label: point_sar(*split[pid], pts, **kwargs)
+        for label, (pid, pts) in images.items()
+    }
+
+    mirrored = _mirror_xy(points, azimuths["P1"])
+    rotated = _rotate_z(points, delta)
+    superposed = {
+        sense: _split_complex(
+            _superpose_complex(
+                [projected[pid] for pid in order],
+                quadrature_phase_weights(ks, sense),
+                name=f"E_cg1_{sense}",
+            ),
+            f"E_cg1_{sense}",
+        )
+        for sense in ("ccw", "cw")
+    }
+    quad = {
+        ("ccw", "x"): point_sar(*superposed["ccw"], points, **kwargs),
+        ("ccw", "Rx"): point_sar(*superposed["ccw"], rotated, **kwargs),
+        ("cw", "Mx"): point_sar(*superposed["cw"], mirrored, **kwargs),
+    }
+
+    full = np.ones(points.shape[0], dtype=bool)
+    reference = single["P1@0deg"]
+    identities = {
+        "(i) SAR_P2(Rx) vs SAR_P1(x)": _relative_l2(single["P2@+90deg"], reference, full),
+        "(i) SAR_P4(-Rx) vs SAR_P1(x)": _relative_l2(single["P4@-90deg"], reference, full),
+        "(i) SAR_P3(180deg) vs SAR_P1(x)": _relative_l2(single["P3@180deg"], reference, full),
+        "(ii) SAR_ccw(Rx) vs SAR_ccw(x)": _relative_l2(
+            quad[("ccw", "Rx")], quad[("ccw", "x")], full
+        ),
+        "(iii) SAR_cw(Mx) vs SAR_ccw(x)": _relative_l2(
+            quad[("cw", "Mx")], quad[("ccw", "x")], full
+        ),
+    }
+    controls = {
+        "mis-rotated SAR_P3(Rx) vs SAR_P1(x)": _relative_l2(
+            single["P3@+90deg"], reference, full
+        ),
+        "quadrature SAR_ccw(x) vs single-drive SAR_P1(x)": _relative_l2(
+            quad[("ccw", "x")], reference, full
+        ),
+    }
+
+    phantom_power_w = float(
+        mean_sar(
+            projected["P1"],
+            sigma=solves["P1"]["fields"].sigma_field,
+            rho=PHANTOM_RHO_KG_PER_M3,
+            cell_tags=sweep["cell_tags"],
+            comm=comm,
+            subdomain_ids=PHANTOM_CELL_TAG,
+        )["dissipated_power_w"]
+    )
+    verdict, verdict_text = _cg1_verdict(identities, controls, C4_COVARIANCE_BAND)
+    projection_relative_l2 = _phantom_relative_l2_of_projection(
+        projected["P1"], solves["P1"]["fields"].e_complex, sweep["cell_tags"]
+    )
+
+    if comm.rank == 0:
+        primal_identities = sar_map["identities"]
+        primal_controls = sar_map["controls"]
+        print(
+            f"\n[WF-6 step3b] the same point-SAR identities off an L2-projected "
+            f"CG1 E (post.project_to_cg1, step 1d's production estimator) beside "
+            f"the primal N1curl column, same {points.shape[0]} points, same four "
+            f"solves, band {C4_COVARIANCE_BAND * 100:.1f}% imported and unmoved\n"
+            f"        {'':<36} {'primal':>10} {'CG1':>10}",
+            flush=True,
+        )
+        for label in identities:
+            print(
+                f"        {label:<36} {primal_identities[label] * 100:9.4f}% "
+                f"{identities[label] * 100:9.4f}%   primal ASSERTED (red, step 3), "
+                "CG1 PRINTED NOT GATED",
+                flush=True,
+            )
+        for label in controls:
+            print(
+                f"        {label:<36} {primal_controls[label] * 100:9.4f}% "
+                f"{controls[label] * 100:9.4f}%   control, both ASSERTED > band",
+                flush=True,
+            )
+        print(
+            f"    pre-registered verdict: {verdict} — {verdict_text}\n"
+            f"    CG1 phantom power 1/2*int(sigma|E_cg1|^2) = {phantom_power_w:.9e} W "
+            f"vs the primal record {STEP1_GATE_I_P1_PHANTOM_POWER_W:.9e} W "
+            f"({(phantom_power_w / STEP1_GATE_I_P1_PHANTOM_POWER_W - 1.0) * 100:+.4f}%)"
+            " — REPORTED, NOT GATED: an L2 projection does not conserve power\n"
+            f"    ||E_cg1 - E||/||E|| over the phantom (P1, diagnostic, NOT GATED) "
+            f"= {projection_relative_l2 * 100:.4f}% — a projection that fits E "
+            "reads O(h) here; an O(1) reading says the CG1 column is not a "
+            "reading of this field at all",
+            flush=True,
+        )
+
+    return {
+        "identities": identities,
+        "controls": controls,
+        "phantom_power_w": phantom_power_w,
+        "projection_relative_l2": projection_relative_l2,
+        "verdict": verdict,
+        "verdict_text": verdict_text,
+    }
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3_PRIMAL_IDENTITY_RECORDS))
+def test_the_primal_sar_identities_reproduce_step_3s_readings(sar_map_cg1, sar_map, label):
+    """The "nothing moved" anchor: the primal column is still step 3's column.
+
+    Comparing two estimators is only meaningful if the one being compared *to*
+    has not moved.  These are reproductions of
+    `20260831T183526Z_WF-6-step3.log`'s own table at ``CG1_RECORD_RTOL``, not
+    bands: a miss means this leg is not on step 3's solve, and the CG1 column
+    beside it says nothing about estimators.
+    """
+    reading = sar_map["identities"][label]
+    record = STEP3_PRIMAL_IDENTITY_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"the primal identity '{label}' reads {reading * 100:.4f}%, not step 3's "
+        f"recorded {record * 100:.4f}% (rtol {CG1_RECORD_RTOL:.0e}) — the primal "
+        "column has moved, so the CG1 column is not an estimator comparison"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3_PRIMAL_CONTROL_RECORDS))
+def test_the_primal_sar_controls_reproduce_step_3s_readings(sar_map_cg1, sar_map, label):
+    """The same anchor on the two controls — step 3's 129.8% and 334.6%."""
+    reading = sar_map["controls"][label]
+    record = STEP3_PRIMAL_CONTROL_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"the primal control '{label}' reads {reading * 100:.4f}%, not step 3's "
+        f"recorded {record * 100:.4f}% (rtol {CG1_RECORD_RTOL:.0e}) — same "
+        "fixture, same points, same drive, so this is a reproducibility finding"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3_PRIMAL_CONTROL_RECORDS))
+def test_the_cg1_negative_controls_still_miss_the_band(sar_map_cg1, label):
+    """The projection must not smooth the controls into the band.
+
+    The whole point of the CG1 column is that it may bring the *identities*
+    inside 5%.  If it brought the wrong drive and the wrong rotation inside too
+    — from primal ceilings of 129.8% and 334.6% — then the projection would have
+    erased the azimuthal structure rather than the estimator noise, and a CG1
+    identity inside the band would mean nothing at all.  A CG1 control anywhere
+    below the band is itself the finding.
+    """
+    control = sar_map_cg1["controls"][label]
+    assert control > CONTROL_MIN_MISMATCH, (
+        f"the CG1 control '{label}' reads {control * 100:.4f}%, inside the "
+        f"{CONTROL_MIN_MISMATCH * 100:.1f}% band (primal reads "
+        f"{STEP3_PRIMAL_CONTROL_RECORDS[label] * 100:.4f}%) — the L2 projection "
+        "has smoothed away the structure the identities claim to measure, so no "
+        "CG1 identity reading here is interpretable"
     )

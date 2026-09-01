@@ -17404,3 +17404,80 @@ lineage's next rung is `EX-40` (`ports:8`, the 64/128 MHz maps), which the
 landed, so it is queueable. §9 items 5 (`EX-36` legs, paired) and 6 (`TH-13`
 step 4, spare) are still open and untouched by this slot. Slot cost: ~48 of 60
 minutes, ~2 of them compute.
+
+---
+
+## 2026-09-01T00:35Z — `WF-6` step 3b — **complete** (negative result, delivered in full)
+
+**Item.** §9 item 1, taken first and unmodified: the coil-driven SAR identities
+off an L²-projected CG1 `E` beside the primal column. Executed here (not a
+specialist class — not an `EX-*` example, not a mesh probe, not a record sweep),
+following `.claude/agents/implementer.md`. Preflight: tree clean, container Up 5
+days, no `attempt/*`, no `recovered/*`.
+
+**Built as scoped.** A second module fixture `sar_map_cg1` in
+`tests/validation/test_birdcage_sar_map.py`: `post.project_to_cg1` on each of
+the four solves' `e_complex` with an explicit `name=` (the trap the scoping
+named), split into real/imag on the projection's own space, `point_sar` at
+exactly step 3's image sets, the two quadrature senses by superposing the
+*projected* fields with the imported `quadrature_phase_weights` (linear, so
+equal to projecting the superposition — no fifth mass solve). No new curl-curl
+solve, no band touched, no assert loosened, the mis-paired-sense comparison left
+struck.
+
+**Result — the pre-registered verdict is (c), and the run's own diagnostics say
+(c)'s pre-registered *reason* is wrong.**
+
+* **Anchor (asserted, passed):** the primal column reproduced step 3's five
+  identities **25.1096 / 40.5462 / 30.0142 / 38.6120 / 28.1459%** and both
+  controls **129.8187 / 334.5786%** at `CG1_RECORD_RTOL` = 1e-3, now exported as
+  `STEP3_PRIMAL_IDENTITY_RECORDS` / `STEP3_PRIMAL_CONTROL_RECORDS`. Nothing
+  about the fixture moved.
+* **CG1 column (printed, not gated):** **152.0459 / 109.7797 / 169.5050 /
+  53.1869 / 40.8440%** — *worse than the primal column at every identity*. Both
+  CG1 controls asserted and holding at **163.6144 / 75.9135%**. The verdict
+  helper evaluates this to **(c)** in code, not by eye.
+* **Why (c)'s reading does not stand.** CG1 phantom power `½∫σ|E_cg1|²` =
+  **1.990062891e-05 W** against the primal record **5.637745667e-08 W**
+  (**+35 198.9%**; step 1d's `B` projection moved its mean by 0.38%). That is
+  too large to be "a projection does not conserve power", so I added one ungated
+  diagnostic — `‖E_cg1 − E‖/‖E‖` over the phantom, `assemble_scalar` on both
+  integrals, MPI-reduced — and re-ran: **1876.1871%**. A projection cannot be
+  19× its argument in the region being read and still be a coarse-but-honest
+  estimator of it. **The finding is `post.project_to_cg1` applied to an N1curl
+  `E`, not the phantom's ~1 cm cells.** The `|B₁⁺|` gates project `B` and are
+  untouched (their 0.38% figure is unchanged).
+
+**Runs (both foreground, footered).** `20260901T003300Z_WF-6-step3b.log` —
+`5 failed, 25 passed` / Status 1 / **105 s**; `20260901T003548Z_WF-6-step3b-
+diagnostic.log` (same module plus the projection diagnostic) — `5 failed, 25
+passed` / Status 1 / **100 s**. Both `-n 2`, complex build,
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first, `timeout -k 30 400`,
+standard tier, against the ≈ 130 s estimate. The five failures are step 3's five
+primal identity asserts, deliberate and unmoved — `main`'s deliberate-red count
+is **9**, unchanged in count and in value, so no §2 re-count was owed.
+
+**Scope discipline.** No SAR gate registered, no band moved, no re-record; the
+CG1 identity readings are printed and journalled only, and re-registration (if
+any) is a review's. The scoped `STEP2_*` collateral turned out to be a **no-op**
+— this module carries no step-2 numeric literals, only a prose mention in its
+docstring — recorded in the §7 bullet so the next review does not re-scope it.
+
+**Denials / anomalies.** None. Both harness windows returned footers, no
+container wedge, no docker-socket denial (no host runner used this slot).
+
+**Next-attempt hypothesis (for the review).** The owed work is a diagnosis of
+`project_to_cg1` on N1curl input, and three candidates are cheaply separable in
+one slot: (1) the global L² fit is dominated by the sheet/conductor-edge `E`
+singularities, so the phantom reads a mass-matrix tail — the fix would be a
+phantom-restricted or cellwise projection; (2) the CG/Jacobi mass solve at
+`ksp_rtol` 1e-12 does not converge on a vector CG1 space over 116 085 cells, and
+neither the helper nor any caller has ever checked its converged reason; (3) an
+element-side mismatch that the value-shape `(3,)` guard does not catch. One
+window: print the KSP converged reason and iteration count, and read
+`‖E_cg1 − E‖/‖E‖` over the whole mesh beside the phantom-restricted figure. My
+weight is on (1) or (2), and (2) is the cheaper to exclude. Note for the review:
+if (2) holds, it would also be worth re-reading step 1d's `B` projection for a
+converged reason — that column's numbers are healthy, so nothing is in doubt,
+but the helper's silence is the same silence. Slot cost: ~55 of 60 minutes,
+~3.5 of them compute.
