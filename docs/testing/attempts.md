@@ -17565,3 +17565,75 @@ should list the *solves the anchors require* rather than a count, since the
 count and the anchor list disagreed here in a way a less careful run would have
 resolved by dropping the control. Slot cost: ~50 of 60 minutes, ~2 of them
 compute.
+
+## 2026-09-01T04:00Z — `TH-13` step 3a‴ — **complete** (22:30 CDT implementer slot)
+
+**Item.** §9 item 3, taken in order (items 1 and 2 already ✅ from the 19:30 and
+21:00 slots). Tree clean at `1d11abd`, container Up 5 days.
+
+**What was done.** The module split the 18:00 review ruled, option (a). Two
+helpers hoisted out of `tests/validation/test_coil_loading_degree2.py` —
+`_build_baseline_mesh` and `_cost_probe` — so the new module runs *the same*
+mesh call and *the same* §7 probe rather than a restated copy; the original's
+`_mode()` default flipped `full` → `probe` (`full` documented as interactive-only,
+`calibrate` untouched) and the four `@parametrize("degree", [1, 2])` decorators
+trimmed to `[1]`. New `tests/validation/test_coil_loading_degree2_pair.py`: its
+own module fixture, `TH12_DEGREE2_HALF=loaded|free` with **no default** (unset
+raises with both legal values named), mesh + the full degree-1 pair + the probe
++ **one** degree-2 solve via a new `_solve_half` (`_solve_pair`'s body with the
+second solve and every cross-half quantity removed, same imported helpers). The
+two cross-half tests skip with the reason.
+
+**Runs — three windows, all `-n 8`, complex build, ceilings unchanged.**
+
+| window | command | result |
+|---|---|---|
+| original, probe | `-k 30 180` | `20260901T033335Z_TH-13-step3a3-original-probe.log` — **8 passed / 1 skipped, exit 0, 49 s** |
+| `TH12_DEGREE2_HALF=loaded` | `-k 30 600` | `20260901T033434Z_TH-13-step3a3-degree2-loaded.log` — **1 failed / 6 passed / 2 skipped, exit 1, 374 s** |
+| `TH12_DEGREE2_HALF=free` | `-k 30 600` | `20260901T034059Z_TH-13-step3a3-degree2-free.log` — **1 failed / 6 passed / 2 skipped, exit 1, 405 s** |
+
+Every count matches the pre-registration exactly, including the 8 passed /
+exit 0 / ≈ 49 s the review predicted for the trimmed original.
+
+**The observation this step existed to make.** The two degree-2 coil identity
+reds, unobserved on any commit since 2026-08-18, are now **read**: loaded
+`Im Z` reaction −2.323123e+03 Ω vs energy −2.323123e+03 Ω, relative
+**3.8990e-09**; free −2.322561e+03 Ω vs −2.322561e+03 Ω, relative
+**3.7235e-09** — both against the **unloosened** 1e-9, both inside the 08-18
+record's 4.5931e-09 / 3.0030e-09. `W_e` 7.8593e-06 / 7.8594e-06 J against `W_m`
+3.1357e-08 / 3.3258e-08 J: the `W_e` explosion reproduced. The σ = 0 control is
+green at second order — free `P_loss` **+0.0000000e+00 W** exactly, loaded
+**+1.3543068e-01 W**.
+
+**Anchors re-observed in all three windows** (three observations of one record):
+mesh **138 490 cells**; degree-1 ΔR control **+1.5838%** vs record +1.5834% →
+**+0.00039 pp** against the 0.01 pp floor (identical to 3a″'s figure); both
+degree-1 identity residuals under 1e-9; cost probe 162 558 → **881 476** DOFs
+(5.423×), projection **52.35 GiB** vs the 102.40 GiB threshold, verdict under
+cap.
+
+**Margin.** 374 s and 405 s against the 600 s container ceiling and the 660 s
+Bash window — 1.60× and 1.48×, above the review's ≈ 310–330 s estimate but well
+inside. The degree-2 half solve costs ≈ 325 s / 355 s on top of the 47 s
+pre-degree-2 phase; the free half is the slower of the two.
+
+**Discipline.** The 570 s ceiling was **not** raised, `full` was **not** retried,
+no assertion, band, record, tolerance or fixture parameter moved, and nothing
+under `src/` was touched. The case was shrunk, per the hard rule.
+
+**Docs.** known-issues: the "no longer returns inside its 570 s ceiling" entry
+**retired** with the three logs (the split is its fix); the degree-2 identity
+entry's `Tests` row re-pointed at the new module and a step-3a‴ reading row
+added — that entry **stays open**. §7 `TH-13` gains a step-3a‴ result bullet and
+its step-3a note now records the owed claim as discharged; §9 item 3 marked done
+with the original text kept verbatim; the §9 residual-reds paragraph now reads
+the two coil reds as observed 2026-09-01 and notes they are not part of the
+`-n 2` count. Three `run_and_log` logs and their `test-results.md` rows commit
+with the above.
+
+**Denials / anomalies.** None.
+
+**Next.** §9 items 4 (`EX-36` legs) and 5 (`TH-13` step 4) are the remaining
+open queue entries; item 5 is the cheaper of the two (≈ 50 s) and retires one
+deliberate red. The degree-2 identity finding itself is unchanged and still
+belongs to the weekly review's formulation question, not to an implementer slot.

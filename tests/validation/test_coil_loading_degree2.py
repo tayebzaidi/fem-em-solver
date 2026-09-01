@@ -75,7 +75,13 @@ Run (complex build only)::
 
 ``TH12_STEP2_MODE=probe`` stops after the degree-1 control and the cost probe
 (the cheap rehearsal: mesh, one solved pair, the DOF count and the projection,
-no degree-2 solve).  ``full`` is the default.
+no degree-2 solve) and is **the default** since `TH-13` step 3a‴ (2026-08-31).
+``full`` — both degree-2 solves in one process — is retained for *interactive*
+use only: it is what twice hit exit 124 at the 570 s ceiling (3a′, 3a″), the
+degree-2 pair alone costing ≥ 524 s at ``-n 8``.  A **scheduled** run must use
+:mod:`tests.validation.test_coil_loading_degree2_pair`, which solves one σ-half
+per process and returns a footer inside the 660 s window; the six degree-2-only
+tests live there now, not here.  ``calibrate`` is unchanged.
 """
 
 from __future__ import annotations
@@ -176,7 +182,9 @@ PROBE_BASELINE_RSS_PRESOLVE = 1.22 * 2**30
 
 
 def _mode() -> str:
-    mode = os.environ.get("TH12_STEP2_MODE", "full").strip().lower()
+    # Default is ``probe`` since `TH-13` step 3a‴: ``full`` does not return
+    # inside any window a scheduled slot can offer (see the module docstring).
+    mode = os.environ.get("TH12_STEP2_MODE", "probe").strip().lower()
     if mode not in {"probe", "full", "calibrate"}:
         raise ValueError(
             f"TH12_STEP2_MODE must be 'probe', 'calibrate' or 'full'; got {mode!r}"
@@ -193,6 +201,63 @@ def _dof_count(msh, degree: int) -> int:
     space = fem.functionspace(msh, ("N1curl", degree))
     index_map = space.dofmap.index_map
     return int(index_map.size_global * space.dofmap.index_map_bs)
+
+
+def _build_baseline_mesh(comm):
+    """The `MAT-6` step-3 baseline rung — 138 490 cells (0.7.2: 138 619).
+
+    Hoisted out of the fixture by `TH-13` step 3a‴ so the split module builds
+    *the same* mesh from the same call rather than a restated copy of it; the
+    138 490-cell anchor is then one record observed in every window.
+    """
+    comm.Barrier()
+    t_mesh = time.perf_counter()
+    msh, cell_tags, _ = MeshGenerator.loop_over_half_space_domain(
+        loop_radius=FEM_LOOP_RADIUS,
+        wire_radius=FEM_WIRE_RADIUS,
+        liftoff=FEM_LIFTOFF,
+        box_half_width=FEM_BOX_HALF_WIDTH,
+        resolution_wire=0.002,
+        resolution_near=RESOLUTION_NEAR_STEP1,
+        resolution_far=0.025,
+        near_half_width=0.06,
+        near_depth=0.05,
+        near_height=0.03,
+        comm=comm,
+    )
+    comm.Barrier()
+    t_mesh = time.perf_counter() - t_mesh
+    ncells = int(
+        comm.allreduce(
+            msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM
+        )
+    )
+    return msh, cell_tags, ncells, t_mesh
+
+
+def _cost_probe(msh, comm, n_dofs_1: int, rss_peak_1: float, rss_baseline: float):
+    """The §7 stop rule: price degree 2 before assembling any of it.
+
+    Extracted by `TH-13` step 3a‴ so the split module runs the *same* probe,
+    on the same inputs, rather than a second implementation of it.  Returns the
+    projection dict; printing stays with the caller.
+    """
+    n_dofs_2 = _dof_count(msh, 2)
+    dof_ratio = n_dofs_2 / n_dofs_1
+    solve_part = max(rss_peak_1 - rss_baseline, 0.0)
+    projection = {
+        "n_dofs_2": n_dofs_2,
+        "dof_ratio": dof_ratio,
+        "rss_baseline": rss_baseline,
+        "solve_part": solve_part,
+        "linear": rss_baseline + solve_part * dof_ratio,
+        "guard": rss_baseline + solve_part * dof_ratio**MEMORY_GUARD_EXPONENT,
+    }
+    _, cap = _memory_peak_bytes()
+    projection["cap"] = cap
+    projection["threshold"] = cap * MEMORY_GUARD_FRACTION
+    projection["over_cap"] = bool(projection["guard"] > projection["threshold"])
+    return projection
 
 
 def _solve_pair(msh, cell_tags, degree: int, comm) -> dict:
@@ -292,26 +357,7 @@ def degree_rows():
         pytest.skip("calibrate mode measures the memory exponent, not the orders")
 
     comm = MPI.COMM_WORLD
-    comm.Barrier()
-    t_mesh = time.perf_counter()
-    msh, cell_tags, _ = MeshGenerator.loop_over_half_space_domain(
-        loop_radius=FEM_LOOP_RADIUS,
-        wire_radius=FEM_WIRE_RADIUS,
-        liftoff=FEM_LIFTOFF,
-        box_half_width=FEM_BOX_HALF_WIDTH,
-        resolution_wire=0.002,
-        resolution_near=RESOLUTION_NEAR_STEP1,
-        resolution_far=0.025,
-        near_half_width=0.06,
-        near_depth=0.05,
-        near_height=0.03,
-        comm=comm,
-    )
-    comm.Barrier()
-    t_mesh = time.perf_counter() - t_mesh
-    ncells = comm.allreduce(
-        msh.topology.index_map(msh.topology.dim).size_local, op=MPI.SUM
-    )
+    msh, cell_tags, ncells, t_mesh = _build_baseline_mesh(comm)
 
     # The pre-solve baseline: interpreter + dolfinx + this mesh.  Subtracted
     # from the degree-1 peak so the projection scales only what the solve costs.
@@ -320,21 +366,10 @@ def degree_rows():
     rows = {1: _solve_pair(msh, cell_tags, 1, comm)}
 
     # ---- the mandatory cost probe, before any degree-2 assembly -----------
-    n_dofs_2 = _dof_count(msh, 2)
-    dof_ratio = n_dofs_2 / rows[1]["n_dofs"]
-    solve_part = max(rows[1]["rss_peak"] - rss_baseline, 0.0)
-    projection = {
-        "n_dofs_2": n_dofs_2,
-        "dof_ratio": dof_ratio,
-        "rss_baseline": rss_baseline,
-        "solve_part": solve_part,
-        "linear": rss_baseline + solve_part * dof_ratio,
-        "guard": rss_baseline + solve_part * dof_ratio**MEMORY_GUARD_EXPONENT,
-    }
-    _, cap = _memory_peak_bytes()
-    projection["cap"] = cap
-    projection["threshold"] = cap * MEMORY_GUARD_FRACTION
-    projection["over_cap"] = bool(projection["guard"] > projection["threshold"])
+    projection = _cost_probe(
+        msh, comm, rows[1]["n_dofs"], rows[1]["rss_peak"], rss_baseline
+    )
+    n_dofs_2, dof_ratio = projection["n_dofs_2"], projection["dof_ratio"]
 
     if comm.rank == 0:
         print(
@@ -631,7 +666,7 @@ def _row_or_skip(degree_rows, degree: int) -> dict:
 
 @complex_only
 @pytest.mark.integration
-@pytest.mark.parametrize("degree", [1, 2])
+@pytest.mark.parametrize("degree", [1])
 @pytest.mark.parametrize("which", ["loaded", "free"])
 def test_complex_power_identity_holds_at_this_order(degree_rows, degree, which):
     """``Im Z = 4ω(W_m − W_e)/I′²`` to 1e-9 on every solve at every order.
@@ -658,7 +693,7 @@ def test_complex_power_identity_holds_at_this_order(degree_rows, degree, which):
 
 @complex_only
 @pytest.mark.integration
-@pytest.mark.parametrize("degree", [1, 2])
+@pytest.mark.parametrize("degree", [1])
 def test_the_free_solve_dissipates_exactly_nothing(degree_rows, degree):
     """σ = 0 ⇒ ``½∫σ|E|²`` is ``+0.0`` exactly; loaded ⇒ positive.
 
@@ -683,7 +718,7 @@ def test_the_free_solve_dissipates_exactly_nothing(degree_rows, degree):
 
 @complex_only
 @pytest.mark.integration
-@pytest.mark.parametrize("degree", [1, 2])
+@pytest.mark.parametrize("degree", [1])
 def test_both_solves_are_driven_by_the_same_projected_current(degree_rows, degree):
     """The drive control at both orders, at the family's 1e-24.
 
@@ -704,7 +739,7 @@ def test_both_solves_are_driven_by_the_same_projected_current(degree_rows, degre
 
 @complex_only
 @pytest.mark.integration
-@pytest.mark.parametrize("degree", [1, 2])
+@pytest.mark.parametrize("degree", [1])
 def test_the_loaded_coil_dissipates_and_expels_flux(degree_rows, degree):
     """Signs only: ΔR > 0, ΔX < 0 — passivity and Lenz's law, not Dodd–Deeds.
 
