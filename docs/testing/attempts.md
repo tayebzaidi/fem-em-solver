@@ -18103,3 +18103,60 @@ executor returned with nothing in flight.
   warrants a docstring warning, since the `|B₁⁺|` gates that project `B` at
   0.38% are untouched and must not be caught by any change. The SAR band is
   **not** re-registerable on this column: all five miss.
+
+## 2026-09-01T20:00Z — (no chunk) — outcome: `anomaly` (queue drained, stop and journal)
+
+- **Slot: 15:00 local scheduled implementer run. No chunk attempted, by
+  instruction.** Preflight clean: `git status --porcelain` empty on `main` at
+  `e100b56`, container `fem-em-solver` Up 6 days, no `attempt/*` or
+  `recovered/*` branch. Nothing was built, no compute was issued, no harness
+  log was written — this entry is the whole deliverable.
+- **Why.** Protocol step 2 sends this slot to the **first** §9 "On deck" item
+  not marked done or blocked. Every item 1–9 is done. Items 1–3 and 8–9 carry
+  explicit ✅ done-markers; items 4–7 do not, but each landed in the interval
+  the 10:30 review audited and each has its commit on `main`: item 4 `EX-36`
+  leg (mesh) remainder = `1d098a2`, item 5 `TH-13` step 4 = `fa45a45`, item 6
+  `WF-6` step 3c = `f505cc5`, item 7 `EX-36` leg (root + mri + mat) =
+  `e3bc11a`. The 10:30 review's own §9 preamble states the same in prose —
+  "four slots, four landed — every queued item done", and "**Two open items
+  this queue (8 and 9)**" — so the queue held exactly two open items, both
+  since taken (item 8 by the 12:00 slot at `ae67b4c`, item 9 by the 13:30 slot
+  at `3a9f285`).
+- **The drain instruction is explicit and was followed verbatim:** "If the
+  queue drains: **stop and journal.** There is no fallback chunk." Protocol
+  step 2's generic fallback ("the chunk named in §9's obvious next entry
+  sentence") does **not** apply — §9 names nothing as a fallback and says so
+  in terms: `PORT-9` step 3's legs are serial by design and a review scopes
+  each leg from the previous leg's number, never an implementer in-slot; the
+  former pre-authorised exception, `EX-36` leg (ports + ans), *is* item 8 and
+  is done. The 10:30 review predicted this outcome in writing for the 15:00
+  and 16:30 slots and called it "the correct outcome, not a failure"; the
+  13:30 slot's journal repeated the prediction. **No item was invented, no
+  §9-deliberately-excluded chunk was touched** (`PORT-4`…`PORT-8`, `GEO-25`,
+  `PORT-13`, `TH-13` step 3b, `TH-12`'s production-order clause, `ANS-2`,
+  `ANS-3`/`ANS-4`, `WF-6`'s absolute-convergence rung, a `MAG-20` third rung,
+  the cellwise `E` estimator, and any SAR-band re-registration are all
+  weekly-review- or review-owned).
+- **One bookkeeping observation for the 18:00 review — glyph-only, not a
+  status question.** §9 items 4, 5, 6 and 7 (PROJECT_PLAN.md:7173, :7212,
+  :7246, :7299) are complete but still read as open items: no leading ✅ and
+  no strikethrough on the title, unlike items 1–3 and 8–9. This slot did **not**
+  edit them: §9 is "maintained by the scheduled daily review", and this is the
+  same class of lag the 10:30 review itself reconciled for `OPS-18` and
+  `MAG-18` in §7. Flagged rather than fixed. Note that a future slot reading
+  §9 mechanically — first item without a done-marker — would be sent to item 4
+  and would re-run an already-closed `EX-36` leg; this slot avoided that only
+  by cross-checking against `git log` and the review's prose. Worth the
+  review's two minutes.
+- Nothing measured, no harness log filename, no branch parked, `main` clean
+  and green-as-before (deliberate `-n 2` reds unchanged at **8** — untouched,
+  not re-observed, since no test ran). Elapsed: under 5 minutes of the
+  60-minute box.
+- Next-attempt hypothesis: **the 16:30 slot will meet the same drained queue
+  and should stop and journal identically** — it should not read this entry as
+  licence to invent work, and it should apply the same `git log` cross-check
+  before trusting items 4–7's missing glyphs. The queue does not refill until
+  the **18:00 daily review**, whose scoping calls are already named by the
+  13:30 entry: (a) whether to promote `_project_to_cg1_restricted` from the
+  test module into `post/`, and (b) whether `post.project_to_cg1` needs a
+  docstring warning about its use on `E`. Both are review work, not slot work.
