@@ -5339,6 +5339,51 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > `WF-6` stays 🟡 whatever prints. **Negative result:** (ii) failing or (i)
 > ≤ 0 *is* the finding — known-issues "Resolves with" row, keep every
 > assert, do not raise the iteration cap in-slot, stop.
+>
+> **Step 3c executed 2026-09-01 07:30 slot — the projector is a projector;
+> candidates 2 and 3 are refuted and candidate 1 is what the domain table
+> says.** `20260901T123421Z_WF-6-step3c.log`, standard tier, complex, `-n 2`
+> with `tests/environment`, **`5 failed, 38 passed` / Status 1 / 103 s**
+> against the ≈ 130 s estimate. The five failures are step 3's five primal
+> asserts, unmoved to the digit (25.1096 / 40.5462 / 30.0142 / 38.6120 /
+> 28.1459%); every step-3b record — primal and CG1 identity columns, both
+> control sets, the CG1 phantom power 1.990062891e-05 W, the 1876.1871%
+> phantom residual — reproduced at `CG1_RECORD_RTOL` and is now asserted.
+>
+>   * **(i) The mass solve converges.** `converged_reason` **2**
+>     (`KSP_CONVERGED_RTOL`) in **26** iterations on **64 191** CG1 dofs at
+>     `ksp_rtol` 1e-12 — **candidate 2 (a non-converged Jacobi/CG mass solve
+>     the helper never checks) is refuted.** The solver is now readable
+>     through an opt-in `return_diagnostics` kwarg on `post.project_to_cg1`
+>     (default off; every `B` caller untouched).
+>   * **(ii) The projector reproduces what `CG1³` contains, exactly.**
+>     `f = a + b × x`, interpolated into the solve's own N1curl space as a
+>     complex `Function` and projected, leaves `‖P f − f‖/‖f‖` =
+>     **1.326607e-13** against the 1e-10 anchor (reason 2, 23 its); the
+>     control's control `x² ê_x` leaves **9.882703e-02**, above the 1e-3
+>     floor (reason 2, 26 its). **Candidate 3 (an element-side mismatch the
+>     value-shape `(3,)` guard misses) is refuted:** `project_to_cg1` *is*
+>     the L² projection it documents, on N1curl input.
+>   * **(iii) The domain table says candidate 1.** `‖E_cg1 − E‖/‖E‖` reads
+>     **32.7802%** over the **whole mesh**, **1876.1871%** over the
+>     **phantom** and **838.8978%** over the **phantom core** (33 of 537
+>     owned tag-3 cells, no vertex on the phantom boundary). The whole-mesh
+>     figure is **57× below** the phantom's: the global L² fit is a fit of
+>     the regions that dominate `‖E‖` — the sheets and conductor edges — and
+>     the phantom, whose `|E|` is orders of magnitude smaller, is a
+>     rounding-error corner of it. That is **candidate 1, measured.** The
+>     σ-interface smear is present but secondary: excluding every cell that
+>     touches the phantom boundary halves the residual (1876 → 839%) and
+>     leaves it O(10), so the interface jump is not the mechanism either.
+>   * **What this closes and what it does not.** `post.project_to_cg1`
+>     needs no fix — the `|B₁⁺|` gates that use it are untouched and remain
+>     correct (they read `B` where `B` is not 10³ times larger elsewhere).
+>     What is wrong is the *use*: a **global** L² projection is not an `E`
+>     estimator inside a low-field subdomain of a fixture with a huge-field
+>     region. The honest estimator is phantom-restricted (project on the
+>     phantom submesh) or cellwise; scoping that is **step 3d**, a review's
+>     call, not this slot's. **No band moved, no assert loosened, nothing
+>     re-registered, no SAR claim exists** and `WF-6` stays **🟡**.
 
 ### EX — Examples (§5.4 ramp)
 

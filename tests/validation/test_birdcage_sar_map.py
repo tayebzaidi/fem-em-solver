@@ -851,3 +851,359 @@ def test_the_cg1_negative_controls_still_miss_the_band(sar_map_cg1, label):
         "has smoothed away the structure the identities claim to measure, so no "
         "CG1 identity reading here is interpretable"
     )
+
+
+# --------------------------------------------------------------------------
+# Step 3c — the projector diagnosis: is ``post.project_to_cg1`` a projector on
+# N1curl input?  Scoped by the 2026-09-01 03:00 review out of step 3b's finding
+# that ``‖E_cg1 − E‖/‖E‖`` over the phantom reads 1876%, which no fit of ``E``
+# can do.  Three candidates, separated here: (1) a global L² fit dominated by
+# the sheet / conductor-edge ``E`` singularities, (2) a non-converged mass
+# solve the helper never checks, (3) an element-side mismatch the value-shape
+# ``(3,)`` guard does not catch.  Diagnosis only — no band, no SAR gate, no
+# re-registration.
+# --------------------------------------------------------------------------
+
+# Step 3b's readings, `20260901T003548Z_WF-6-step3b-diagnostic.log` lines
+# 4732–4741 (`5 failed, 25 passed` / Status 1 / 100 s).  Records, not bands:
+# the whole diagnosis below is about *this* projection of *this* solve, so a
+# miss here means the thing being diagnosed is not the thing step 3b measured.
+STEP3B_CG1_IDENTITY_RECORDS = {
+    "(i) SAR_P2(Rx) vs SAR_P1(x)": 152.0459e-2,
+    "(i) SAR_P4(-Rx) vs SAR_P1(x)": 109.7797e-2,
+    "(i) SAR_P3(180deg) vs SAR_P1(x)": 169.5050e-2,
+    "(ii) SAR_ccw(Rx) vs SAR_ccw(x)": 53.1869e-2,
+    "(iii) SAR_cw(Mx) vs SAR_ccw(x)": 40.8440e-2,
+}
+STEP3B_CG1_CONTROL_RECORDS = {
+    "mis-rotated SAR_P3(Rx) vs SAR_P1(x)": 163.6144e-2,
+    "quadrature SAR_ccw(x) vs single-drive SAR_P1(x)": 75.9135e-2,
+}
+STEP3B_CG1_PHANTOM_POWER_W = 1.990062891e-05
+STEP3B_PHANTOM_PROJECTION_RESIDUAL = 1876.1871e-2
+
+# ``a + b × x`` is the exact range of the lowest-order Nédélec (Whitney) edge
+# element *and* lies in ``CG1³``, so an L² projection onto ``CG1³`` must return
+# it to solver tolerance.  1e-10 is four orders above the mass solve's 1e-12
+# ``ksp_rtol`` and far below any residual an element-side mismatch could hide
+# under.  The control's control ``x² ê_x`` is in neither space; its residual
+# only has to be *visible* (> 1e-3) for the 1e-10 pass to mean something.
+PROJECTOR_EXACT_RESIDUAL = 1.0e-10
+PROJECTOR_CONTROL_MIN_RESIDUAL = 1.0e-3
+
+# The affine test field, fixed here so the reading is reproducible: neither
+# ``a`` nor ``b`` is axis-aligned, so no component of the identity passes by
+# a coordinate accident.
+PROJECTOR_FIELD_A = (0.3, -0.7, 1.1)
+PROJECTOR_FIELD_B = (0.2, 0.5, -0.4)
+
+
+def _relative_l2_over_measure(projected, reference, dx):
+    """``‖projected − reference‖_{L²(dx)} / ‖reference‖_{L²(dx)}``, MPI-reduced.
+
+    The measure is the caller's, so one helper serves the whole mesh, the
+    phantom and the phantom core.  ``assemble_scalar`` is rank-local — a rank
+    owning no cell of the subdomain returns 0 and would otherwise make the
+    ratio a rank-dependent fiction — so both integrals are summed across ranks
+    before the division.  ``ufl.inner`` conjugates its second argument, so
+    ``inner(d, d)`` is ``|d|²`` and the result is real up to round-off.
+    """
+    import ufl
+    from dolfinx.fem import assemble_scalar, form
+
+    comm = reference.function_space.mesh.comm
+    difference = projected - reference
+    numerator = comm.allreduce(
+        complex(assemble_scalar(form(ufl.inner(difference, difference) * dx))), op=MPI.SUM
+    )
+    denominator = comm.allreduce(
+        complex(assemble_scalar(form(ufl.inner(reference, reference) * dx))), op=MPI.SUM
+    )
+    return float(np.sqrt(abs(numerator) / abs(denominator)))
+
+
+def _phantom_core_cells(msh, cell_tags):
+    """Owned phantom cells with **no** vertex on the phantom's boundary.
+
+    Selection is by cell→vertex connectivity over the local view *including
+    ghosts* — a cell at a partition boundary must be able to see the
+    non-phantom cell across the cut, or the core would leak the interface it
+    exists to exclude.  Only owned cells are returned (dolfinx integrates over
+    owned cells; a ghost in the tag would be counted twice).
+    """
+    tdim = msh.topology.dim
+    msh.topology.create_connectivity(tdim, 0)
+    c2v = msh.topology.connectivity(tdim, 0)
+    imap = msh.topology.index_map(tdim)
+    n_all = int(imap.size_local + imap.num_ghosts)
+    offsets = np.asarray(c2v.offsets)
+    per_cell = int(offsets[1] - offsets[0])
+    conn = np.asarray(c2v.array)[: n_all * per_cell].reshape(n_all, per_cell)
+
+    is_phantom = np.zeros(n_all, dtype=bool)
+    tagged = np.asarray(cell_tags.find(PHANTOM_CELL_TAG), dtype=np.int64)
+    is_phantom[tagged[tagged < n_all]] = True
+
+    outside_vertices = np.unique(conn[~is_phantom]) if (~is_phantom).any() else np.zeros(0)
+    owned_phantom = tagged[tagged < int(imap.size_local)]
+    if owned_phantom.size == 0:
+        return np.zeros(0, dtype=np.int32), 0
+    rows = conn[owned_phantom]
+    touches = np.isin(rows, outside_vertices).any(axis=1)
+    core = np.sort(owned_phantom[~touches]).astype(np.int32)
+    return core, int(owned_phantom.size)
+
+
+@pytest.fixture(scope="module")
+def projector_diagnosis(b1_plus_map, sar_map_cg1):
+    """The three readings that separate the candidates, on step 3b's fixture.
+
+    No new curl-curl solve: three vector mass solves on the same 116 085-cell
+    mesh — ``E`` (re-projected with the diagnostics kwarg, so the KSP the helper
+    otherwise discards can be read), the affine control, and the control's
+    control.
+    """
+    import ufl
+    from dolfinx import mesh as dmesh
+
+    sweep = b1_plus_map["sweep"]
+    solves = b1_plus_map["solves"]
+    msh = sweep["mesh"]
+    comm = msh.comm
+    e_complex = solves["P1"]["fields"].e_complex
+    n1curl = e_complex.function_space
+
+    # (i) the mass solve on the real E, with its solver exposed.
+    e_cg1, e_diag = project_to_cg1(
+        e_complex, name="E_cg1_P1_diag", return_diagnostics=True
+    )
+
+    # (ii) the exact-reproduction control and its control, both interpolated
+    # into the *solve's own* N1curl space (the helper refuses real inputs, so
+    # the callables return complex arrays).
+    a = np.asarray(PROJECTOR_FIELD_A, dtype=np.complex128)
+    b = np.asarray(PROJECTOR_FIELD_B, dtype=np.complex128)
+
+    def affine(x):
+        return np.array(
+            [
+                a[0] + b[1] * x[2] - b[2] * x[1],
+                a[1] + b[2] * x[0] - b[0] * x[2],
+                a[2] + b[0] * x[1] - b[1] * x[0],
+            ],
+            dtype=np.complex128,
+        )
+
+    def quadratic(x):
+        return np.array(
+            [x[0] ** 2, np.zeros_like(x[0]), np.zeros_like(x[0])], dtype=np.complex128
+        )
+
+    controls = {}
+    for label, callable_ in (("a + b x x", affine), ("x^2 e_x", quadratic)):
+        stem = "affine" if label.startswith("a") else "quadratic"
+        source = fem.Function(n1curl, name=f"f_{stem}_n1curl")
+        source.interpolate(callable_)
+        source.x.scatter_forward()
+        projected, diag = project_to_cg1(
+            source, name=f"f_{stem}_cg1", return_diagnostics=True
+        )
+        controls[label] = {
+            "residual": _relative_l2_over_measure(projected, source, ufl.dx(domain=msh)),
+            "diagnostics": diag,
+        }
+
+    # (iii) the same E residual over three domains.
+    core_cells, owned_phantom = _phantom_core_cells(msh, sweep["cell_tags"])
+    core_tags = dmesh.meshtags(
+        msh,
+        msh.topology.dim,
+        core_cells,
+        np.full(core_cells.size, PHANTOM_CELL_TAG, dtype=np.int32),
+    )
+    dx_whole = ufl.dx(domain=msh)
+    dx_phantom = ufl.Measure("dx", domain=msh, subdomain_data=sweep["cell_tags"])(
+        PHANTOM_CELL_TAG
+    )
+    dx_core = ufl.Measure("dx", domain=msh, subdomain_data=core_tags)(PHANTOM_CELL_TAG)
+    residuals = {
+        "whole mesh": _relative_l2_over_measure(e_cg1, e_complex, dx_whole),
+        "phantom (tag 3)": _relative_l2_over_measure(e_cg1, e_complex, dx_phantom),
+        "phantom core": _relative_l2_over_measure(e_cg1, e_complex, dx_core),
+    }
+    core_count = comm.allreduce(int(core_cells.size), op=MPI.SUM)
+    phantom_count = comm.allreduce(int(owned_phantom), op=MPI.SUM)
+
+    if comm.rank == 0:
+        print(
+            f"\n[WF-6 step3c] is post.project_to_cg1 a projector on N1curl input? "
+            f"three readings on step 3b's fixture ({sweep['cells']} cells), no new "
+            f"curl-curl solve\n"
+            f"    (i)   mass solve on E: converged_reason "
+            f"{e_diag['converged_reason']} (ASSERTED > 0; 2 = KSP_CONVERGED_RTOL, "
+            f"-3 = DIVERGED_ITS = candidate 2), iterations "
+            f"{e_diag['iterations']}, {e_diag['dofs']} CG1 dofs, ksp_rtol "
+            f"{e_diag['ksp_rtol']:.0e}",
+            flush=True,
+        )
+        for label, row in controls.items():
+            print(
+                f"    (ii)  ||P f - f||/||f|| for f = {label:<9} "
+                f"{row['residual']:.6e}   (reason {row['diagnostics']['converged_reason']}, "
+                f"{row['diagnostics']['iterations']} its)",
+                flush=True,
+            )
+        print(
+            f"    (iii) ||E_cg1 - E||/||E|| by domain (PRINTED; the phantom figure "
+            f"also asserted against step 3b's record):",
+            flush=True,
+        )
+        for label, value in residuals.items():
+            print(f"        {label:<18} {value * 100:12.4f}%", flush=True)
+        print(
+            f"        phantom core is {core_count} of {phantom_count} owned tag-3 "
+            f"cells (no vertex on the phantom boundary)",
+            flush=True,
+        )
+
+    return {
+        "e_diagnostics": e_diag,
+        "controls": controls,
+        "residuals": residuals,
+        "core_count": core_count,
+        "phantom_count": phantom_count,
+    }
+
+
+@complex_only
+def test_the_cg1_mass_solve_converges(projector_diagnosis):
+    """Candidate 2: the mass solve ``project_to_cg1`` builds and throws away.
+
+    ``LinearProblem.solve()`` does not raise on a non-converged KSP, so a
+    Jacobi-preconditioned CG that hit PETSc's 10 000-iteration default on a
+    116 085-cell vector CG1 space would return a garbage "projection" that
+    looks exactly like a good one.  A positive reason rules that out; ``-3``
+    (``DIVERGED_ITS``) would confirm it — in which case the finding is recorded
+    and the cap is *not* raised in-slot.
+    """
+    diag = projector_diagnosis["e_diagnostics"]
+    assert diag["converged_reason"] > 0, (
+        f"the CG1 mass solve for E returned PETSc converged reason "
+        f"{diag['converged_reason']} after {diag['iterations']} iterations on "
+        f"{diag['dofs']} dofs — a non-converged mass solve is candidate 2 for step "
+        "3b's 1876% projection residual; record it, do not raise the iteration cap"
+    )
+
+
+@complex_only
+def test_the_projector_reproduces_a_field_both_spaces_contain(projector_diagnosis):
+    """Candidate 3: an element-side mismatch the ``(3,)`` value-shape guard misses.
+
+    ``f = a + b × x`` spans the lowest-order Nédélec element exactly and is also
+    in ``CG1³``, so ``P f = f`` is an algebraic identity of the L² projection —
+    it holds independently of the mesh, the solve and the fixture.  If it fails,
+    ``project_to_cg1`` is not computing the projection its docstring claims (a
+    wrong element, a mis-assembled right-hand side), and step 3b's CG1 column is
+    a reading of nothing.  If it passes, the projector is a projector and step
+    3b's 1876% is a statement about ``E``, not about the helper.
+    """
+    residual = projector_diagnosis["controls"]["a + b x x"]["residual"]
+    assert residual <= PROJECTOR_EXACT_RESIDUAL, (
+        f"projecting f = a + b x x — which lies in N1curl_1 AND in CG1^3 — leaves a "
+        f"relative L2 residual of {residual:.6e}, above {PROJECTOR_EXACT_RESIDUAL:.0e}: "
+        "the L2 projection of a field the target space contains must return it, so "
+        "post.project_to_cg1 is not the projection it documents"
+    )
+
+
+@complex_only
+def test_the_projector_control_field_is_not_reproduced(projector_diagnosis):
+    """The control's control: a field neither space contains must leave a residual.
+
+    Without this, a `project_to_cg1` that returned its own argument unchanged —
+    or a residual helper that always read zero — would pass the exact-reproduction
+    test above and prove nothing.
+    """
+    residual = projector_diagnosis["controls"]["x^2 e_x"]["residual"]
+    assert residual > PROJECTOR_CONTROL_MIN_RESIDUAL, (
+        f"the control field x^2 e_x, in neither N1curl_1 nor CG1^3, projects with a "
+        f"relative L2 residual of only {residual:.6e} — below "
+        f"{PROJECTOR_CONTROL_MIN_RESIDUAL:.0e}, at which the exact-reproduction test "
+        "beside it is not measuring anything"
+    )
+
+
+@complex_only
+def test_the_phantom_projection_residual_reproduces_step_3bs_reading(projector_diagnosis):
+    """The anchor for reading (iii): step 3b's 1876.1871%, re-measured.
+
+    The whole-mesh and phantom-core figures are only interpretable *against* the
+    phantom one, so the phantom one is asserted as a record.
+    """
+    reading = projector_diagnosis["residuals"]["phantom (tag 3)"]
+    assert reading == pytest.approx(
+        STEP3B_PHANTOM_PROJECTION_RESIDUAL, rel=CG1_RECORD_RTOL
+    ), (
+        f"||E_cg1 - E||/||E|| over the phantom reads {reading * 100:.4f}%, not step "
+        f"3b's {STEP3B_PHANTOM_PROJECTION_RESIDUAL * 100:.4f}% (rtol "
+        f"{CG1_RECORD_RTOL:.0e}) — this diagnosis is not on step 3b's projection"
+    )
+
+
+@complex_only
+def test_the_phantom_core_is_a_nonempty_subdomain(projector_diagnosis):
+    """Structural: the core reading needs cells to be read over.
+
+    A connectivity bug that selected nothing would make the core residual an
+    ``inf``/``nan`` rather than a small number, and a reviewer reading "core ≪
+    phantom" off an empty domain would draw exactly the wrong conclusion.
+    """
+    core = projector_diagnosis["core_count"]
+    phantom = projector_diagnosis["phantom_count"]
+    assert 0 < core < phantom, (
+        f"the phantom core holds {core} of {phantom} tag-3 cells — it must be a "
+        "proper, non-empty subset for the core residual to be a reading of the "
+        "phantom interior"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3B_CG1_IDENTITY_RECORDS))
+def test_the_cg1_sar_identities_reproduce_step_3bs_readings(sar_map_cg1, label):
+    """The CG1 column reproduces step 3b's, at ``CG1_RECORD_RTOL``.
+
+    Records of a printed column, not gates: the CG1 identities are *not*
+    asserted against the 5% band anywhere and no SAR claim follows from them.
+    """
+    reading = sar_map_cg1["identities"][label]
+    record = STEP3B_CG1_IDENTITY_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"the CG1 identity '{label}' reads {reading * 100:.4f}%, not step 3b's "
+        f"recorded {record * 100:.4f}% (rtol {CG1_RECORD_RTOL:.0e})"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3B_CG1_CONTROL_RECORDS))
+def test_the_cg1_sar_controls_reproduce_step_3bs_readings(sar_map_cg1, label):
+    """The same, for the two CG1 controls (163.6144% and 75.9135%)."""
+    reading = sar_map_cg1["controls"][label]
+    record = STEP3B_CG1_CONTROL_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"the CG1 control '{label}' reads {reading * 100:.4f}%, not step 3b's "
+        f"recorded {record * 100:.4f}% (rtol {CG1_RECORD_RTOL:.0e})"
+    )
+
+
+@complex_only
+def test_the_cg1_phantom_power_reproduces_step_3bs_reading(sar_map_cg1):
+    """Step 3b's ``½∫σ|E_cg1|²`` = 1.990062891e-05 W, re-measured.
+
+    Reported never gated (a projection does not conserve power); asserted here
+    only as the reproduction anchor step 3c's readings hang from.
+    """
+    reading = sar_map_cg1["phantom_power_w"]
+    assert reading == pytest.approx(STEP3B_CG1_PHANTOM_POWER_W, rel=CG1_RECORD_RTOL), (
+        f"the CG1 phantom power reads {reading:.9e} W, not step 3b's "
+        f"{STEP3B_CG1_PHANTOM_POWER_W:.9e} W (rtol {CG1_RECORD_RTOL:.0e})"
+    )

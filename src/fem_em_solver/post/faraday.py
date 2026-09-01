@@ -59,7 +59,13 @@ def magnetic_flux_density_from_e(e_complex, omega_rad_per_s, *, name: str = "B_p
     return b_fn
 
 
-def project_to_cg1(b_dg0, *, name: str = "B_phasor_cg1", ksp_rtol: float = 1.0e-12):
+def project_to_cg1(
+    b_dg0,
+    *,
+    name: str = "B_phasor_cg1",
+    ksp_rtol: float = 1.0e-12,
+    return_diagnostics: bool = False,
+):
     """L² projection of the DG0 vector phasor onto ``("Lagrange", 1, (3,))``.
 
     A mass-matrix solve, never ``interpolate``: a DG0 field has no vertex value,
@@ -73,6 +79,15 @@ def project_to_cg1(b_dg0, *, name: str = "B_phasor_cg1", ksp_rtol: float = 1.0e-
     the estimator that took the C4 covariance mismatch from ~9% to ~2%.  The
     caller forms ``|B_x + jB_y|/2`` from the *evaluated* projection, not from a
     projected scalar — ``|·|`` is not linear.
+
+    ``return_diagnostics`` (opt-in, default off so every existing ``B`` caller is
+    untouched) returns ``(projected, diagnostics)`` instead of the bare
+    ``Function``, where ``diagnostics`` carries the mass solve's PETSc
+    ``converged_reason`` and ``iterations``.  The helper otherwise *discards* its
+    solver, so a silently non-converged mass solve would look exactly like a
+    converged one — `WF-6` step 3c (2026-09-01) added this to tell those two
+    apart on an N1curl input.  A positive reason is convergence
+    (``KSP_CONVERGED_RTOL`` is 2); ``-3`` is ``DIVERGED_ITS``.
     """
     from dolfinx.fem.petsc import LinearProblem  # local: needs a PETSc build
 
@@ -101,6 +116,14 @@ def project_to_cg1(b_dg0, *, name: str = "B_phasor_cg1", ksp_rtol: float = 1.0e-
     projected = problem.solve()
     projected.name = name
     projected.x.scatter_forward()
+    if return_diagnostics:
+        ksp = problem.solver
+        return projected, {
+            "converged_reason": int(ksp.getConvergedReason()),
+            "iterations": int(ksp.getIterationNumber()),
+            "ksp_rtol": float(ksp_rtol),
+            "dofs": int(space.dofmap.index_map.size_global * space.dofmap.index_map_bs),
+        }
     return projected
 
 
