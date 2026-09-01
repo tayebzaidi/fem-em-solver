@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Scheduled daily plan review (Fable 5, medium effort). Installed in crontab; see
+# Scheduled daily plan review (Fable 5.1, medium effort). Installed in crontab; see
 # docs/automation/daily-review.md for the protocol the session follows.
 set -euo pipefail
 
@@ -31,7 +31,7 @@ START="$(date '+%Y-%m-%d %H:%M %Z')"
 # are ON for this session -- it is documentation-only, so they spend tokens,
 # not cores, and the 12-core compute budget is untouched.
 timeout --kill-after=120 2700 "$CLAUDE_BIN" \
-  --model claude-fable-5 \
+  --model claude-fable-5-1 \
   --effort medium \
   --permission-mode acceptEdits \
   --disallowedTools WebFetch WebSearch \

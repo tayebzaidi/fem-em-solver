@@ -100,11 +100,11 @@ System cron runs headless sessions via `scripts/automation/` on a 90-minute
 grid — 3 reviews and 12 implementer runs a day, four runs after each review,
 plus one weekly planning review:
 
-- **Plan review** (Fable 5, medium effort, 03:00 / 10:30 / 18:00 local) — audits results
+- **Plan review** (Fable 5.1, medium effort, 03:00 / 10:30 / 18:00 local) — audits results
   against §4, rescopes failed attempts, disposes of `recovered/*` branches,
   tops the §9 "On deck" queue up to 5 items. Protocol:
   docs/automation/daily-review.md.
-- **Weekly planning review** (Fable 5, high effort, Sunday 02:15 local) —
+- **Weekly planning review** (Fable 5.1, high effort, Sunday 02:15 local) —
   owns the long horizon with brutal realism: §6 phase map and §10 roadmap
   (phases → subgoals, dated pace-based assessments), examples/ health, and
   commissioning/adjudicating `examples/ansys_benchmarks/` cases the human

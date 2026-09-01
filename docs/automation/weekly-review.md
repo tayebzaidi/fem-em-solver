@@ -1,4 +1,4 @@
-# Weekly planning review protocol (Fable 5, scheduled)
+# Weekly planning review protocol (Fable 5.1, scheduled)
 
 Run by `scripts/automation/weekly-review.sh` via cron **weekly** (Sunday
 02:15 local — after the 02:00 usage-window reset, in the buffer slot before

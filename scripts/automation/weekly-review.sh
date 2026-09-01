@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Scheduled weekly planning review (Fable 5, high effort). Installed in crontab;
+# Scheduled weekly planning review (Fable 5.1, high effort). Installed in crontab;
 # see docs/automation/weekly-review.md for the protocol the session follows.
 set -euo pipefail
 
@@ -31,7 +31,7 @@ START="$(date '+%Y-%m-%d %H:%M %Z')"
 # pace extrapolation, benchmark adjudication) and runs once a week.
 # Documentation-only, so subagents spend tokens, not cores.
 timeout --kill-after=120 3600 "$CLAUDE_BIN" \
-  --model claude-fable-5 \
+  --model claude-fable-5-1 \
   --effort high \
   --permission-mode acceptEdits \
   --disallowedTools WebFetch WebSearch \
