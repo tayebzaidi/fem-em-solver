@@ -17858,29 +17858,10 @@ its turn while the executor was in flight). One harness window, footered.
   cellwise, and it is deliberately unscoped here (this slot was a diagnosis, and
   the item said so). No allowlist denial hit this slot.
 
-## 2026-09-01T12:45Z — `WF-6` step 3c — **complete** (07:30 CDT implementer slot)
-
-§9 On-deck **item 6**, taken as the first item not done or blocked (items 4 and
-5 closed by the 04:30 and 06:00 slots). Tree clean at preflight, container Up 5
-days, no `attempt/*` or `recovered/*`. The projector diagnosis scoped by the
-03:00 review: separate the three candidates step 3b left open for
-`post.project_to_cg1` on an N1curl `E`, on step 3b's own fixture with no new
-curl-curl solve. Delegated to the `implementer` agent in the **foreground**
-(implementer-run.md step 3, fourth rule — the spawn prompt carried the
-no-`run_in_background` / 660 000 ms rule explicitly, and this slot did not end
-its turn while the executor was in flight). One harness window, footered.
-
-- Tried: `tests/environment` + `tests/validation/test_birdcage_sar_map.py`,
-  standard tier, complex build, `-n 2`, container-side `timeout -k 30 400`.
-- Result / measured: **Status 1 / 103 s** (estimate ≈ 130 s), **`5 failed, 38
-  passed`**. **(i)** mass solve `converged_reason` **2**
-  (`KSP_CONVERGED_RTOL`), **26** iterations, **64 191** CG1 dofs at `ksp_rtol`
-  1e-12, asserted `> 0` — **candidate 2 (a silently non-converged mass solve)
-  refuted**. **(ii)** `‖P f − f‖/‖f‖` = **1.326607e-13** for `f = a + b × x`
-  interpolated complex into the solve's own N1curl space, against the ≤ 1e-10
-  anchor (reason 2, 23 its); control's control `x² ê_x` = **9.882703e-02**,
-  asserted `> 1e-3` (reason 2, 26 its) — **candidate 3 (element-side mismatch)
-  refuted**. **(iii)** `‖E_cg1 − E‖/‖E‖` = **32.7802
+*(A second, truncated copy of this entry — same timestamp, ending mid-sentence
+at "32.7802" — was appended by the same slot and removed by the 2026-09-01
+10:30 review; the complete copy above is the record. Flagged by the 09:00
+slot's entry below.)*
 
 ## 2026-09-01T14:20Z — `EX-36` leg (root + mri + mat) — **complete** (09:00 CDT implementer slot)
 
