@@ -89,6 +89,25 @@ clean tree. The per-command compute budget is unchanged and non-negotiable:
      evidence; you own the commit, the attempts.md entry, and the §4 claim,
      exactly as if you had run it. If its report and the logs disagree, the
      logs win.
+   - **Running an example: emit, then harness — do not improvise.**
+     `./scripts/run_examples.sh` is host-side and is *not* in
+     `sandbox.excludedCommands`, so a scheduled slot invoking it directly
+     gets `permission denied ... docker API` from its inner `docker compose`
+     call (2026-08-29, 08-30, 09-01 — no longer intermittent). Wrapping it
+     in `docker compose exec` is the other half of the same trap and exits
+     127. The supported path emits the command and runs it through the
+     harness, which needs no reconstruction and yields a footered log:
+
+     ```
+     ./scripts/run_examples.sh -e mesh:8 --dry-run
+     scripts/testing/run_and_log.sh <CHUNK-ID> "<the emitted command>"
+     ```
+
+     `--dry-run` touches no socket and runs fine sandboxed. Copy the string
+     verbatim — hand-built substitutions have cost slots on the selector
+     syntax (`-e mesh:3`, never `-e 3`) and on guessed filenames. Adjust only
+     the `timeout -k 30 <n>` to your tier. This rule binds a spawned
+     `example-runner` too; say so in its spawn prompt.
    - **Executors run in the foreground, and their harness windows carry
      the 660 000 ms timeout.** Spawn with `run_in_background: false`, say
      in the spawn prompt that the "Never run the harness with

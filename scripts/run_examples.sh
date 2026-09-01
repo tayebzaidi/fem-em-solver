@@ -26,6 +26,26 @@ set -euo pipefail
 #   --dry-run       Print the container commands without executing them
 #   --list          List available examples and exit
 #
+# SCHEDULED SESSIONS: this script is host-side and calls `docker compose`
+# itself, so never wrap it in `docker compose exec` (that is the Status-127
+# trap, paid 2026-08-26, 08-31 and 09-01). It is also NOT in
+# .claude/settings.json's `sandbox.excludedCommands` — `docker *` and
+# `scripts/testing/run_and_log.sh *` are, this is not — so a sandboxed
+# session running it directly gets
+# `permission denied while trying to connect to the docker API` from the
+# inner call, three occurrences on 2026-08-29 / 08-30 / 09-01.
+#
+# Until that exclusion is added, the supported path for a scheduled slot is
+# emit-then-harness, which needs no guessing and produces a footered log:
+#
+#   ./scripts/run_examples.sh -e mesh:8 --dry-run     # prints the inner command
+#   scripts/testing/run_and_log.sh <CHUNK-ID> "<that command, timeout adjusted>"
+#
+# `--dry-run` touches no socket, so it runs fine sandboxed. Copy the emitted
+# string verbatim rather than reconstructing it: hand-built substitutions have
+# cost slots on the `-e` selector syntax (`-e mesh:3`, never `-e 3`) and on
+# guessed example filenames.
+#
 # MRI, materials, time-harmonic, ports and Ansys-benchmark examples solve in the
 # frequency domain and are automatically run with the complex DolfinX build
 # sourced (/usr/local/bin/dolfinx-complex-mode); the magnetostatics and meshing

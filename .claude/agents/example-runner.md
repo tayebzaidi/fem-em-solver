@@ -38,12 +38,22 @@ where they disagree.
 
 ## Traps, each already paid for
 
-- `./run_examples.sh` is **host-side** and calls docker itself: never wrap it
-  in `docker compose exec` (Status 127, paid three times). Its selector is
-  `-e group:N`, not `-e N`.
-- In scheduled sessions the runner can hit a docker-socket denial. The
-  substitution: run the example's inner command directly through
-  `run_and_log.sh` — same command the runner would have issued.
+- `./scripts/run_examples.sh` is **host-side** and calls docker itself: never
+  wrap it in `docker compose exec` (Status 127, paid three times). Its
+  selector is `-e group:N`, not `-e N`.
+- **In a scheduled session, always emit-then-harness.** The runner is not in
+  `sandbox.excludedCommands`, so invoking it directly gets
+  `permission denied ... docker API` (2026-08-29, 08-30, 09-01 — treat it as
+  certain, not intermittent). Do this instead, copying the emitted string
+  verbatim rather than rebuilding it:
+
+  ```
+  ./scripts/run_examples.sh -e <group:N> --dry-run
+  scripts/testing/run_and_log.sh <CHUNK-ID> "<the emitted command>"
+  ```
+
+  `--dry-run` touches no socket and runs sandboxed. Adjust only the
+  `timeout -k 30 <n>` to your tier.
 - `run_examples.sh` runs `set -e`: one red example aborts the batch. Run the
   chunk's example alone first.
 - `paraview_output/` is gitignored — artifacts are deliverables on disk, not
