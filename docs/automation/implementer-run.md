@@ -73,6 +73,22 @@ clean tree. The per-command compute budget is unchanged and non-negotiable:
    `plan-navigator` and `log-pathologist` are available read-only for
    lookups and disputed prior logs. Never spawn `auditor` on your own
    closure — auditing is the review's job.
+
+   Three rules on spawning, all load-bearing:
+   - **Only this repo's agents exist.** `implementer-run.sh` denies every
+     built-in agent type by name, so `general-purpose`/`Explore`/`Plan` are
+     unavailable by construction. Never route chunk execution around the
+     specialist definitions — the executor's prompt *is* the accumulated
+     trap list, and a generic agent would rediscover them at your expense.
+   - **One executor at a time, never concurrent.** `example-runner` and
+     `mesh-probe` issue compute; two of them in parallel would double-book
+     the 12-core budget the guard hook enforces per-command but cannot
+     enforce across simultaneous sessions. One chunk per run makes this
+     natural — keep it that way.
+   - **A delegated chunk is still yours.** The executor's report is
+     evidence; you own the commit, the attempts.md entry, and the §4 claim,
+     exactly as if you had run it. If its report and the logs disagree, the
+     logs win.
 4. Outcome:
    - **Complete** (§4-done: verification executed, quantitative assertion,
      harness log + elapsed time recorded): commit code + tests + logs +
