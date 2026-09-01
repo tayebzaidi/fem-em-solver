@@ -9,6 +9,17 @@ LOGDIR="$REPO/logs/automation"
 CLAUDE_BIN="$HOME/.local/bin/claude"
 export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
+# Background-task ceiling OFF: a slot that ends its turn with work still
+# running is bounded by the 65-minute hard kill below, not by the headless
+# CLI's 600 s default. Without this the 2026-09-01 00:00 slot -- the first
+# able to delegate to an executor -- was terminated at minute 19 with no
+# journal, no commit and three orphaned harness logs, because `example-runner`
+# returned while a harness window was still live and the slot waited on it.
+# The protocol fix (foreground executors, never end a turn in flight) is
+# implementer-run.md step 3; this is the backstop for when it is not followed.
+# Requested by the 2026-09-01 03:00 review, which could not write this file.
+export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0
+
 mkdir -p "$LOGDIR"
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 LOG="$LOGDIR/${TS}_implementer.log"
