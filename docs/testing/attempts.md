@@ -17481,3 +17481,87 @@ if (2) holds, it would also be worth re-reading step 1d's `B` projection for a
 converged reason — that column's numbers are healthy, so nothing is in doubt,
 but the helper's silence is the same silence. Slot cost: ~55 of 60 minutes,
 ~3.5 of them compute.
+
+## 2026-09-01T02:10Z — `EX-40` — outcome: `complete` (21:00 CDT implementer slot)
+
+**Preflight.** Tree clean at 8497979, container Up 5 days. §9 On deck: item 1
+(`WF-6` step 3b) already marked done by the 19:30 slot, so the first open item
+is **item 2, `EX-40`** — taken in order, no fallback used.
+
+**Executor note (allowlist/tooling finding, for the review).** §9 item 2 and
+the §7 entry both name `example-runner` as the executor. This session has **no
+subagent-spawn tool available** — the tool list carries no `Agent`/`Task` tool
+and a `ToolSearch` for one returns nothing — so the chunk was executed directly
+by the implementer session under `.claude/agents/implementer.md`. Nothing was
+skipped; this is a note about *who* ran it, and the review may want to check
+whether the six specialist definitions landed on 2026-08-31 are actually
+reachable from a scheduled `claude -p` session before scoping more work to them.
+
+**What was built.** `examples/ports/08_birdcage_b1_larmor_ladder.py` +
+same-stem guide (`ports:8`, new stem, no collision). `build_four_port_sweep`
+called at 64 MHz to build the mesh and at 128 MHz with `reuse=base`; three
+driven solves kept per rung (P1, P2 for the identity, **P3 for the control**);
+`magnetic_flux_density_from_e` → `project_to_cg1` → `|B_x + jB_y|/2` on the
+projection's own CG1 space (`EX-38`'s `_b1_plus_cg1_field` pattern, since
+`post.b1_plus` allocates on DG0); one combined XDMF per rung with the CG1 `B`
+phasor, both `|B₁⁺|` reads and `CellTags`. Every band, record, helper and the
+fixture construction imported.
+
+**Measured — first run green, every anchor met.**
+
+```
+rung       cells/lambda   gate(i) P1     (ii) P2@+90   control P3@+90   mean |B1+| (P1)
+64 MHz       21.8936    9.5231e-03       2.2187%       24.7535%   1.695428e-08 T
+128 MHz      12.5024    9.2445e-03       2.1315%       25.2589%   1.294928e-08 T
+```
+
+Record reproduction against `20260831T140418Z_WF-6-step2b.log`: gate (i)
+relative **4.377e-08 / 5.362e-08** at `RECORD_RTOL` 1e-4; gate (ii) **1.070e-05
+/ 1.788e-06** and the control **1.899e-07 / 1.324e-06** at `CG1_RECORD_RTOL`
+1e-3; cells/λ to 1e-4. Identity inside the imported 5% band, control outside it,
+separation **11.2× / 11.9×**. Conductor-blind gate-(i) control 1.019080e-01 /
+1.304539e-01, outside the 1% band. 51 of 51 points valid at both rungs; one
+116 085-cell mesh at ratio 1.000000, `reused_mesh = True` (asserted by object
+identity, not by cell count alone).
+
+**Two departures from the §9 scoping, both deliberate and recorded in §7.**
+(1) The scoping says "two solves per rung (P1, P2)", but the anchors it lists
+include the mis-rotated **P3@+90°** control, which needs a third drive. The
+anchors were followed; three solves per rung, ≈ 5.6 s each, and the run still
+came in at 113 s against the ≈ 130 s estimate. (2) The scoping's "mean `|B₁⁺|`
+per rung (6.500452e-08 / 4.936577e-08 T)" is step 2b's **quadrature (ccw)**
+mean, and quadrature is explicitly out of this chunk's scope. The example prints
+its own **P1 single-drive** mean (1.695428e-08 / 1.294928e-08 T, ungated) and
+cites the two quadrature figures beside it as provenance, labelled as a
+different drive and not reproduced. No number was asserted that the scope
+forbids reading.
+
+**Collateral, constants only.** `STEP2B_LARMOR_RECORDS` exported from
+`tests/validation/test_birdcage_b1_larmor.py` — five records per Larmor rung,
+provenance comment naming the step-2b log — so the example reproduces rather
+than carries a second hard-coded copy (`EX-39`'s precedent). No assertion in
+that module moved; the module still imports cleanly (the example imported it).
+
+**Runs (both foreground, footered).** `20260901T020415Z_EX-40.log` — host
+runner `./run_examples.sh -e ports:8 -t 400`, **Status 0, 113 s** at `-n 2`,
+standard tier (mesh 24.8 s, the two sweeps' own four-solve rungs ≈ 46 s, six
+kept solves ≈ 34 s). `20260901T020716Z_EX-40-docrefs.log` and
+`20260901T020734Z_EX-40-docrefs2.log` — the example-doc census, 1 s each,
+`dead=42 guide=0 stale=4 exit=1`; the `dead=42` is `EX-36`'s standing count and
+`stale` fell 12 → 4 as `EX-38`/`EX-39`'s artifacts aged in. **Nothing in either
+list is attributable to this example** — the second census was run after adding
+the two XDMF filenames to the guide, and both resolve live.
+
+**Denials / anomalies.** None. No docker-socket denial — the host runner worked
+this slot. No container wedge, no timeout, no red on `main`. `main`'s deliberate
+-red count is unchanged at 9 (this chunk added no test and moved no band), so
+no §2 re-count was owed.
+
+**Next-attempt hypothesis (for the review).** Nothing owed on `EX-40`. Two
+things worth the review's attention: (a) the executor finding above — scoping
+work to a specialist agent that a scheduled session cannot spawn costs nothing
+today but will silently mis-route later; (b) the §9 scoping for an example
+should list the *solves the anchors require* rather than a count, since the
+count and the anchor list disagreed here in a way a less careful run would have
+resolved by dropping the control. Slot cost: ~50 of 60 minutes, ~2 of them
+compute.

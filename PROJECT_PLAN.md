@@ -5294,7 +5294,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-37` | **`ANS-1`/`ANS-3` are unrunnable since the 2026-08-28 rename**: `67e4c1c` rewrote the two cases' `__import__("01_dodd_deeds_coil_loading")` / `("02_package_sparameter_sweep")` strings along with their artifact basenames, and no module of the prefixed name exists — the `ANS-4` slot's observation, verified by the 18:00 review from `git log -S`; restore the two strings, re-run `ans:1` and `ans:3`, census (commissioned 2026-08-30 18:00 review; known-issues entry) | ✅ *(2026-08-31, 19:30 slot — negative control Status 1/3 s, both cases green, 63 s / 128 s)* | standard (≈ 5 + 70 + 131 s + census) |
 | `EX-38` | `\|B₁⁺\|` map of the loaded 4-leg birdcage at 10 MHz into ParaView (`WF-6` step 1's newly gated capability, 2026-08-30: the CG1-projected `\|B₁⁺\|` field under gates (i)/(ii) — no example writes a B₁⁺ field, `ports:4`/`ports:5` stop at S-matrices; the output-quantity angle; commissioned 2026-08-30 18:00 review, §5.4 ramp) | ✅ *(2026-08-31, 15:00 slot — `ports:6` green in 63 s: gate (i) 9.795751117e-03 vs record to 1.195e-08, CG1 C4 covariance 2.1870% vs the 5% band and the record to 1.643e-05, DG0 control 8.6516% to 3.227e-06, 51/51 valid, cell ratio 1.000000)* | standard (≈ 70 s) |
 | `EX-39` | Quadrature-driven birdcage: co- and counter-rotating `\|B₁⁺\|` / `\|B₁⁻\|` maps at 10 MHz into ParaView (`WF-6` step 2's newly gated capability, 2026-08-31: exact superposition of the four single-drive fields with `e^{∓jkπ/2}` phases, C4-invariance and the mirror identity at the CG1 floor — the **drive** angle: no example superposes ports or shows the two rotating senses side by side; `EX-38` is the single-drive map; commissioned 2026-08-31 03:00 review, §5.4 ramp) | ✅ *(2026-08-31, 16:30 slot — `ports:7` green in 81 s: identity (a) 0.9818% and (b) 0.8087% vs the 5% band and step 2's records to 9.619e-06 / 3.585e-05, mis-paired control 95.1975% at 118× identity (b), gate (i) 9.795751117e-03 to 1.195e-08, 51/51 valid, cell ratio 1.000000)* | standard (≈ 100 s) |
-| `EX-40` | `\|B₁⁺\|` maps at 64 and 128 MHz — the Larmor frequency ladder in ParaView (`WF-6` step 2b's newly gated capability, 2026-08-31: the five identities hold at 64/128 MHz on one mesh at 21.89 / 12.50 phantom cells/λ — the **frequency** angle: `EX-38`/`EX-39` are 10 MHz only, `EX-34` runs the ladder but stops at S-matrices; commissioned 2026-08-31 10:30 review, §5.4 ramp; **queued 18:00 review, §9 item 2**) | ⬜ | standard (≈ 130 s) |
+| `EX-40` | `\|B₁⁺\|` maps at 64 and 128 MHz — the Larmor frequency ladder in ParaView (`WF-6` step 2b's newly gated capability, 2026-08-31: the five identities hold at 64/128 MHz on one mesh at 21.89 / 12.50 phantom cells/λ — the **frequency** angle: `EX-38`/`EX-39` are 10 MHz only, `EX-34` runs the ladder but stops at S-matrices; commissioned 2026-08-31 10:30 review, §5.4 ramp; **queued 18:00 review, §9 item 2**) | ✅ *(2026-08-31 21:00 slot, `20260901T020415Z_EX-40.log`, Status 0, **113 s** at `-n 2` — every anchor met on the first run: gate (i) 9.5231e-03 / 9.2445e-03 reproducing step 2b to 4.4e-08 / 5.4e-08; gate (ii) 2.2187% / 2.1315% inside the 5% band, records to 1.1e-05 / 1.8e-06; the mis-rotated P3@+90° control 24.7535% / 25.2589% outside it, 11.2× / 11.9× separation; cells/λ 21.8936 / 12.5024 above the imported floor of 10; 51/51 valid; one mesh, ratio 1.000000, `reused_mesh`)* | standard (≈ 130 s; measured 113 s) |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
 **Logs:** `20260820T170422Z_EX-26-example-n2.log` (exit 0), `20260820T170540Z_EX-26-docrefs.log` (`dead=0 guide=0 stale=0 exit=0`).
@@ -5882,10 +5882,52 @@ counter-rotating senses together.
 > module moved.
 
 **`EX-40` — the Larmor `|B₁⁺|` ladder in ParaView: 64 and 128 MHz maps of
-the loaded 4-leg birdcage** ⬜ *(commissioned 2026-08-31 10:30 review, §5.4
+the loaded 4-leg birdcage** ✅ *(commissioned 2026-08-31 10:30 review, §5.4
 ramp, from `WF-6` step 2b ✅; **queued 2026-08-31 18:00 review as §9
 item 2** once `EX-38`/`EX-39` had landed in order — executor
-`example-runner`.)* Step 2b put the first Larmor B₁⁺ figures on
+`example-runner`.)*
+>
+> **Closed 2026-08-31 21:00 slot, first run green** —
+> `20260901T020415Z_EX-40.log` (Status 0, **113 s** at `-n 2`; mesh 24.8 s,
+> six kept solves ≈ 34 s) plus `20260901T020734Z_EX-40-docrefs2.log`. Both
+> rungs on one 116 085-cell mesh (ratio 1.000000, `reused_mesh = True`,
+> `sweeps[label]["mesh"] is base["mesh"]` asserted), 51 of 51 sample points
+> valid at each:
+>
+> | rung | cells/λ | gate (i) P1 | (ii) P2@+90° | control P3@+90° | mean \|B₁⁺\| (P1) |
+> |---|---|---|---|---|---|
+> | 64 MHz | 21.8936 | 9.5231e-03 | 2.2187% | 24.7535% | 1.695428e-08 T |
+> | 128 MHz | 12.5024 | 9.2445e-03 | 2.1315% | 25.2589% | 1.294928e-08 T |
+>
+> Every column reproduced step 2b's record — relative 4.4e-08 / 5.4e-08 on
+> gate (i) at `RECORD_RTOL` 1e-4, 1.1e-05 / 1.8e-06 on gate (ii) and
+> 1.9e-07 / 1.3e-06 on the control at `CG1_RECORD_RTOL` 1e-3, cells/λ to
+> 1e-4. Identity/control separation **11.2× / 11.9×**; the conductor-blind
+> gate-(i) control missed by 1.019080e-01 / 1.304539e-01, outside the 1%
+> band. Two `_combined` XDMFs written and referenced by the guide; census
+> `dead=42 guide=0 stale=4` — nothing attributable to this example (the
+> `dead=42` is `EX-36`'s standing count; `stale` fell 12 → 4 as `EX-38`/
+> `EX-39`'s artifacts aged in).
+>
+> **Two departures from the scoping, both recorded.** (1) The scoping said
+> "two solves per rung (P1, P2)"; the *anchors* it lists include the
+> mis-rotated **P3@+90°** control, which needs a third drive — three solves
+> per rung were kept (≈ 5.6 s each, inside the cost estimate, and the run
+> came in at 113 s against ≈ 130 s). The anchors were followed. (2) The
+> scoping's "mean `|B₁⁺|` per rung (6.500452e-08 / 4.936577e-08 T)" is
+> step 2b's **quadrature** (ccw) mean, and quadrature is explicitly out of
+> this chunk's scope. The example prints its own **P1 single-drive** mean —
+> ungated, as specified — and cites the two quadrature figures beside it as
+> provenance, labelled as a different drive and not reproduced. No number
+> was asserted that the chunk's scope forbids reading.
+>
+> **Collateral, constants only:** `STEP2B_LARMOR_RECORDS` exported from
+> `tests/validation/test_birdcage_b1_larmor.py` (the five records per Larmor
+> rung, provenance `20260831T140418Z_WF-6-step2b.log`) so the example
+> reproduces rather than re-hard-codes them — `EX-39`'s precedent, no
+> assertion in that module moved.
+>
+> *(Original entry follows unchanged.)* Step 2b put the first Larmor B₁⁺ figures on
 record (`20260831T140418Z_WF-6-step2b.log`) in a test module; no example
 writes a B₁⁺ field above 10 MHz.
 > **Build:** `examples/ports/08_birdcage_b1_larmor_ladder.py` + same-stem
@@ -6604,8 +6646,15 @@ denied; write it relative.
    prints is the deliverable — journal it in the §7 step-3b bullet and
    the known-issues entry's "Resolves with" row, keep every assert, stop;
    a primal record *not* reproducing is a fixture finding, not a rescope.
-2. **`EX-40` — `ports:8`, the Larmor `|B₁⁺|` ladder in ParaView: 64 and
-   128 MHz maps of the loaded 4-leg birdcage (standard, complex, `-n 2`,
+2. ✅ **done 2026-08-31 21:00 slot — first run green, chunk ✅** (`ports:8`
+   written and run, every anchor met: gate (i) 9.5231e-03 / 9.2445e-03,
+   gate (ii) 2.2187% / 2.1315% inside the 5% band, control 24.7535% /
+   25.2589% outside it, cells/λ 21.8936 / 12.5024, 51/51, one mesh at ratio
+   1.000000; `20260901T020415Z_EX-40.log`, Status 0, 113 s; see the §7
+   entry for the two recorded departures from this scoping — the third
+   solve the P3 control needs, and the single-drive mean printed in place
+   of step 2b's quadrature mean). ~~`EX-40` — `ports:8`, the Larmor `|B₁⁺|` ladder in ParaView: 64 and
+   128 MHz maps of the loaded 4-leg birdcage~~ (standard, complex, `-n 2`,
    host runner; independent; §7 entry written by the 10:30 review, §5.4
    ramp; queued this review now that `EX-38`/`EX-39` have landed).
    Executor: `example-runner`.** `examples/ports/08_birdcage_b1_larmor_ladder.py`

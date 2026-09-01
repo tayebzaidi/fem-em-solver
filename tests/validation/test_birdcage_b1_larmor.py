@@ -132,6 +132,35 @@ STEP2_QUADRATURE_RECORDS = {
 # frequency, where nothing predicts it.
 STEP2_MISPAIRED_CONTROL_10MHZ = 0.951975
 
+# What *this* module measured at the two Larmor rungs, read off its own closing
+# log `20260831T140418Z_WF-6-step2b.log` (the per-rung blocks and the summary
+# table).  Exported as constants only — no assertion in this module is moved or
+# restated by their presence — so that `EX-40`'s example path can reproduce the
+# records rather than hard-code a second copy of them (`ANS-1`'s rule; the same
+# export `EX-39` made of the step-2 records).
+#
+#   gate_i_p1_residual      the three-way real-power residual at the P1 drive
+#   cg1_p2_at_plus90        gate (ii)'s CG1 C4 covariance, P1 -> P2 at +90 deg
+#   control_p3_at_plus90    the mis-rotated control (P3 read at +90 deg)
+#   cells_per_lambda_phantom  phantom resolution at that frequency
+#   mean_b1_plus_ccw_t      mean |B1+| of the *quadrature* (ccw) map, ungated
+STEP2B_LARMOR_RECORDS = {
+    "64 MHz": {
+        "gate_i_p1_residual": 9.523130e-03,
+        "cg1_p2_at_plus90": 2.2187e-2,
+        "control_p3_at_plus90": 24.7535e-2,
+        "cells_per_lambda_phantom": 21.8936,
+        "mean_b1_plus_ccw_t": 6.500452e-08,
+    },
+    "128 MHz": {
+        "gate_i_p1_residual": 9.244511e-03,
+        "cg1_p2_at_plus90": 2.1315e-2,
+        "control_p3_at_plus90": 25.2589e-2,
+        "cells_per_lambda_phantom": 12.5024,
+        "mean_b1_plus_ccw_t": 4.936577e-08,
+    },
+}
+
 
 def _read_rung(sweep, label):
     """Every step-1d and step-2 reading, on one sweep, at one frequency.
