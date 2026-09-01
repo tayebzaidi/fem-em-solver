@@ -109,7 +109,10 @@ Thumbs.db
 # Generated example output (examples write result tables into cwd;
 # tracked-output policy per d3d23c0 — example output does not live in git.
 # Unignored, these trip every implementer preflight: attempts.md 2026-08-04T00:30Z)
-circular_loop_results.txt
+# (the 2026-08-28 rename 67e4c1c prefixed the basename to
+# magnetostatics_02_circular_loop_results.txt and orphaned the bare pattern;
+# glob covers both — 2026-09-01 09:00 slot, EX-36 leg (root + mri + mat))
+*circular_loop_results.txt
 
 # Operator-provided copyrighted reference texts: readable in-repo (the
 # sandbox blocks reads outside it) but never committed or pushed.

@@ -17881,3 +17881,88 @@ its turn while the executor was in flight). One harness window, footered.
   anchor (reason 2, 23 its); control's control `x² ê_x` = **9.882703e-02**,
   asserted `> 1e-3` (reason 2, 26 its) — **candidate 3 (element-side mismatch)
   refuted**. **(iii)** `‖E_cg1 − E‖/‖E‖` = **32.7802
+
+## 2026-09-01T14:20Z — `EX-36` leg (root + mri + mat) — **complete** (09:00 CDT implementer slot)
+
+§9 On-deck **item 7**, taken as the first item not done or blocked (items 4, 5
+and 6 were closed by the 04:30, 06:00 and 07:30 slots). Preflight clean at
+`60cda8b`, container Up 5 days, no `attempt/*` or `recovered/*`. Delegated to
+`example-runner` in the **foreground**, with implementer-run.md step 3's fourth
+rule restated in the spawn prompt as binding the executor's own Bash calls, and
+the executor told not to commit and not to write this file — the slot owns both.
+The rule held a second time: every harness window returned footered and the
+executor returned with nothing in flight.
+
+- Tried: magnetostatics `1,2` / `4,5` / `6` and `mri:1,mri:2,mat:1` in four
+  windows, host runner from the repo root, `-n 2`, pre- and post-leg docrefs
+  census.
+- Result / measured: **all four windows Status 0**, footers verified by the slot
+  in the log files themselves — (a) `1,2` **142 s**, (b) `4,5` **84 s**, (c) `6`
+  **137 s**, (d) `mri:1,mri:2,mat:1` (complex) **73 s**; 436 s compute + 2×1 s
+  census against the item's ≈ 700 s estimate. Anchors re-read from the logs by
+  the slot and checked against the guides: mag `1` relative L2 51.9781% / max
+  76.7331% / energy 2.630244e-08 J reproducing `01_straight_wire.md:19` (the
+  example completes clean; it carries no hard assert); mag `2` axis L2 6.2134%
+  = `02_circular_loop.md:31`; mag `4` centre `B_z` 3.563601e-09 / 3.519075e-09 /
+  3.483787e-09 T at 0.92% / 0.34% / 1.34% against
+  `04_helmholtz_analytic_comparison.md:49`'s 3.563601e-09 / 0.92% row; mag `5`
+  gauge cross-check 0.0003% / 0.0040% / 2.773e-11 under the `MAG-15` ceilings,
+  "All assertions hold"; mag `6` fitted rate **1.9038** (report-only since
+  `MAG-19`; the `MAG-18` ≥ 0.7 duty is a test, not this example); `mat:1` ΔR
+  **1.5838%** against the 2% ceiling, `MAT-6` record 1.5834%. Census pre
+  `dead=23 guide=0 stale=2 exit=1` with 21 of the 23 dead names in the three
+  target groups (10 `magnetostatics_*`, 10 `mri_*`, 1 `materials_*` — the
+  negative control, and exactly the review's stated figure); the executor
+  predicted `dead=2 … stale=2 exit=1` before reading the post-census and
+  **measured it exactly**. Zero `magnetostatics_*` / `mri_*` / `materials_*`
+  lines of either kind post-leg, so all three groups read `dead=0 stale=0` —
+  leg (root + mri + mat) ✅. The residual `dead=2` (`ports_03_*` ×2) and
+  `stale=2` (`ports_01` 89.8 h, `ports_02` 89.7 h) are item 8's and unmoved;
+  the global `exit=1` is that standing count, not this leg.
+- Deviations (three, all benign): (1) the executor's first window (a) invocation
+  tried `python3 scripts/run_examples.sh` inside `docker compose exec` and died
+  on a bash syntax error — `run_examples.sh` is a *host* script; corrected to
+  the item's documented `./run_examples.sh` from the repo root. The stray exit-1
+  log `20260901T140145Z_…-a.log` is landed with the rest rather than deleted: it
+  is an operator error, not an example failure, and the record should say so.
+  (2) **No docker-socket denial this slot** — the runner trap did not recur
+  (it hit the 04:30 slot), so the substitution was not needed. That is 1 of the
+  last 5 slots, not the "no longer rare" the 04:30 entry suggested; the review
+  may want to leave the substitution a fallback after all. (3) Example 2 writes
+  `magnetostatics_02_circular_loop_results.txt` into cwd, and `.gitignore:112`
+  still ignored the **pre-rename** basename `circular_loop_results.txt` — the
+  2026-08-28 rename (`67e4c1c`) orphaned the pattern, so the artifact landed
+  untracked at the repo root and would have failed the next slot's preflight.
+  Fixed in this commit by globbing the pattern (`*circular_loop_results.txt`);
+  the surrounding comment already records that unignored example output "trip[s]
+  every implementer preflight" (attempts.md 2026-08-04T00:30Z), so this is that
+  same defect re-opened by the rename, not a new policy.
+- Slot corrections to the executor's report before committing: none of substance
+  — its §7 `EX-36` edit was checked line by line against the logs and the guides
+  and every figure held. The slot re-verified all six footers, both census
+  `RESULT:` lines and all five anchor figures itself rather than taking the
+  report's word.
+- **Unrelated documentation drift, not touched** (append-only; flagged for the
+  daily review): the 07:30 slot's journal entry is committed **twice** — a
+  complete copy at attempts.md:17806 and a near-identical but **truncated** copy
+  at :17861 that ends mid-sentence at the end of the file. Same timestamp, same
+  chunk, slightly reworded. No figure differs between them where both are
+  present. The review disposes; this slot appended after the truncated copy
+  rather than editing it.
+- Logs: `20260901T140133Z_EX-36-leg-rootmrimat-precensus.log`,
+  `20260901T140145Z_EX-36-leg-rootmrimat-a.log` (the stray exit-1 invocation),
+  `20260901T140159Z_EX-36-leg-rootmrimat-a.log`,
+  `20260901T140436Z_EX-36-leg-rootmrimat-b.log`,
+  `20260901T140601Z_EX-36-leg-rootmrimat-c.log`,
+  `20260901T140821Z_EX-36-leg-rootmrimat-d.log`,
+  `20260901T141018Z_EX-36-leg-rootmrimat-postcensus.log`.
+- Branch (if parked): none — complete on `main`. No `src/`, `tests/` or example
+  source changed; artifacts, logs, `.gitignore` and documentation only. No
+  known-issues entry (no example went red). No band, record or guide number
+  moved, and `EX-36` stays 🟡.
+- Next-attempt hypothesis: item 8 (`EX-36` leg (ports + ans) — `ports:1`,
+  `ports:2`, `ports:3`) is the last open item in this queue and the last leg
+  before the census can read `dead=0`; it should close `EX-36` itself, and the
+  slot that runs it should say so in the same commit per item 8's scope note.
+  With items 4–7 done the queue then has nothing open — the 12:00 slot after
+  the 10:30 review takes whatever that review queues.
