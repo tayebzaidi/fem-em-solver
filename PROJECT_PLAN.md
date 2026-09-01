@@ -7073,6 +7073,27 @@ denied; write it relative.
    review's to scope from the three readings. **Negative result:** (ii)
    failing or (i) ≤ 0 *is* the finding — known-issues "Resolves with"
    row, keep every assert, do not raise the iteration cap in-slot, stop.
+   **✅ 2026-09-01 — item done; the projector is exonerated and the *use*
+   is the finding.** `20260901T123421Z_WF-6-step3c.log`, standard tier,
+   complex, `-n 2` with `tests/environment`, **`5 failed, 38 passed` /
+   Status 1 / 103 s** (estimate ≈ 130 s). (i) `converged_reason` **2**
+   (`KSP_CONVERGED_RTOL`), **26** iterations, 64 191 CG1 dofs at `ksp_rtol`
+   1e-12 — candidate 2 refuted, via a new opt-in `return_diagnostics` kwarg
+   on `post.project_to_cg1` (default off, `B` callers untouched). (ii)
+   `‖P f − f‖/‖f‖` = **1.326607e-13** for `f = a + b × x` against the 1e-10
+   anchor, control's control `x² ê_x` **9.882703e-02** (> 1e-3) —
+   candidate 3 refuted. (iii) `‖E_cg1 − E‖/‖E‖` = **32.7802%** whole mesh,
+   **1876.1871%** phantom (record reproduced), **838.8978%** phantom core
+   (33 of 537 owned tag-3 cells) — whole mesh 57× *below* the phantom, so
+   candidate 1 (the global fit is dominated by the sheet/conductor-edge
+   `E`) is what the domain table says; the σ-interface smear only halves
+   the phantom figure and is secondary. Every step-3b record reproduced at
+   `CG1_RECORD_RTOL` and is now asserted; the five deliberate reds are
+   unchanged in count and value. No band moved, nothing re-registered,
+   `WF-6` stays 🟡 and no SAR claim exists. Step 3d (phantom-submesh or
+   cellwise `E` estimator) is the next review's to scope — see the §7
+   step-3c annotation and the known-issues "Resolves with (step 3c's
+   finding)" row.
 7. **`EX-36` leg (root + mri + mat) — magnetostatics `1,2,4,5,6`, `mri:1`,
    `mri:2`, `mat:1`, until the census reads `dead=0` / `stale=0` for
    `magnetostatics_*`, `mri_*` and `materials_*` (standard per window,

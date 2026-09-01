@@ -17802,3 +17802,82 @@ so the residue stays on `main` rather than vanishing. Delegated to the
   projector diagnosis). The `TH-12` step-2 known-issues entry stays **open** —
   the two degree-2 coil identity tests still fail at the unloosened 1e-9 and no
   coil number moved by this step.
+
+## 2026-09-01T12:45Z — `WF-6` step 3c — **complete** (07:30 CDT implementer slot)
+
+§9 On-deck **item 6**, taken as the first item not done or blocked (items 4 and
+5 were closed by the 04:30 and 06:00 slots). Tree clean at preflight, container
+Up 5 days, no `attempt/*` or `recovered/*`. The projector diagnosis scoped by
+the 03:00 review: separate the three candidates step 3b left open for
+`post.project_to_cg1` on an N1curl `E`, on step 3b's own fixture with no new
+curl-curl solve. Delegated to the `implementer` agent in the **foreground**
+(implementer-run.md step 3, fourth rule — the spawn prompt carried the
+no-`run_in_background` / 660 000 ms rule explicitly, and this slot did not end
+its turn while the executor was in flight). One harness window, footered.
+
+- Tried: `tests/environment` + `tests/validation/test_birdcage_sar_map.py`,
+  standard tier, complex build, `-n 2`, container-side `timeout -k 30 400`.
+- Result / measured: **Status 1 / 103 s** (estimate ≈ 130 s), **`5 failed, 38
+  passed`**. **(i)** mass solve `converged_reason` **2**
+  (`KSP_CONVERGED_RTOL`), **26** iterations, **64 191** CG1 dofs at `ksp_rtol`
+  1e-12, asserted `> 0` — **candidate 2 (a silently non-converged mass solve)
+  refuted**. **(ii)** `‖P f − f‖/‖f‖` = **1.326607e-13** for `f = a + b × x`
+  interpolated complex into the solve's own N1curl space, against the ≤ 1e-10
+  anchor (reason 2, 23 its); the control's control `x² ê_x` = **9.882703e-02**,
+  asserted `> 1e-3` (reason 2, 26 its) — **candidate 3 (element-side mismatch)
+  refuted**. **(iii)** `‖E_cg1 − E‖/‖E‖` = **32.7802%** whole mesh /
+  **1876.1871%** phantom / **838.8978%** phantom core (33 of 537 owned tag-3
+  cells with no vertex on the phantom boundary). Whole mesh is **57× below**
+  the phantom — **candidate 1 measured**: the global L² fit is a fit of the
+  sheet/conductor-edge `E` that dominates `‖E‖`, and the low-`|E|` phantom gets
+  its tail. Excluding the σ-interface layer only halves the phantom figure
+  (1876 → 839%, still O(10)), so the interface smear is secondary, not the
+  mechanism.
+- Anchors / reds: every step-3b record reproduced at `CG1_RECORD_RTOL` and is
+  now **asserted** — primal identities 25.1096 / 40.5462 / 30.0142 / 38.6120 /
+  28.1459%, CG1 identities 152.0459 / 109.7797 / 169.5050 / 53.1869 /
+  40.8440%, primal controls 129.8187 / 334.5786%, CG1 controls 163.6144 /
+  75.9135%, CG1 phantom power 1.990062891e-05 W, the 1876.1871% residual. The
+  **five deliberate reds are unchanged in count and value** and are the run's
+  only failures — re-read from the log by this slot at
+  `20260901T123421Z_WF-6-step3c.log:4880–4985`, not taken on the executor's
+  word.
+- Scope held: the `src/` change is the opt-in `return_diagnostics=False` kwarg
+  on `post.project_to_cg1` only — diff re-read by this slot; the default path
+  returns exactly what it returned before, so **no `B` caller and no example
+  re-run is owed**. No band moved, no assert loosened, nothing re-registered,
+  no SAR gate touched. `WF-6` stays 🟡 and no SAR claim exists.
+- Logs: `20260901T123421Z_WF-6-step3c.log`.
+- Branch (if parked): none — complete on `main`, commit `f505cc5` (src + test,
+  log, test-results row, §7 step-3c EXECUTED annotation, two known-issues rows),
+  plus this slot's §9 item-6 ✅ and this entry.
+- Next-attempt hypothesis: the 09:00 slot takes §9 **item 7** (`EX-36` leg
+  (root + mri + mat)) — an `example-runner` leg, the second delegated slot under
+  the foreground executor rule. For the review: **step 3d is now the open
+  question** — the honest `E` estimator is phantom-submesh-restricted or
+  cellwise, and it is deliberately unscoped here (this slot was a diagnosis, and
+  the item said so). No allowlist denial hit this slot.
+
+## 2026-09-01T12:45Z — `WF-6` step 3c — **complete** (07:30 CDT implementer slot)
+
+§9 On-deck **item 6**, taken as the first item not done or blocked (items 4 and
+5 closed by the 04:30 and 06:00 slots). Tree clean at preflight, container Up 5
+days, no `attempt/*` or `recovered/*`. The projector diagnosis scoped by the
+03:00 review: separate the three candidates step 3b left open for
+`post.project_to_cg1` on an N1curl `E`, on step 3b's own fixture with no new
+curl-curl solve. Delegated to the `implementer` agent in the **foreground**
+(implementer-run.md step 3, fourth rule — the spawn prompt carried the
+no-`run_in_background` / 660 000 ms rule explicitly, and this slot did not end
+its turn while the executor was in flight). One harness window, footered.
+
+- Tried: `tests/environment` + `tests/validation/test_birdcage_sar_map.py`,
+  standard tier, complex build, `-n 2`, container-side `timeout -k 30 400`.
+- Result / measured: **Status 1 / 103 s** (estimate ≈ 130 s), **`5 failed, 38
+  passed`**. **(i)** mass solve `converged_reason` **2**
+  (`KSP_CONVERGED_RTOL`), **26** iterations, **64 191** CG1 dofs at `ksp_rtol`
+  1e-12, asserted `> 0` — **candidate 2 (a silently non-converged mass solve)
+  refuted**. **(ii)** `‖P f − f‖/‖f‖` = **1.326607e-13** for `f = a + b × x`
+  interpolated complex into the solve's own N1curl space, against the ≤ 1e-10
+  anchor (reason 2, 23 its); control's control `x² ê_x` = **9.882703e-02**,
+  asserted `> 1e-3` (reason 2, 26 its) — **candidate 3 (element-side mismatch)
+  refuted**. **(iii)** `‖E_cg1 − E‖/‖E‖` = **32.7802
