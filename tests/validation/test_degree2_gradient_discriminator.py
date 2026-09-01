@@ -96,7 +96,20 @@ step 2's numbers: the residue ``‖P_∇ₚJ′‖/‖J′‖`` to ≤ 1e-8 (it 
 residual once the spaces match), the gradient share of ``W_e`` to ≤ 1e-6, and
 ``W_e`` itself to the non-gradient remainder step 2 measured, with 100× and
 ~3 000× of margin.  The default path is the negative control and every
-assertion above it is unchanged.  **The coil is out of reach:** the lumped-sheet
+assertion above it is unchanged.
+
+**Step 4 (2026-09-01) re-points the step-1′ precondition at the path whose
+premise it measures**, on the 10:30 review's ruling of 2026-08-31 with 3a's
+numbers in hand.  The ≤ 1e-2 band and its direction do not move; the observable
+does.  Under ``"matched"`` the fixture reads ``W_e/W_m`` = 3.424858e-06 at
+degree 1 — magnetically dominated by ~3 000× — so the missing cell of `TH-12`
+step 3's table *is* occupied, and the 1.926692e-02 the default path reads is
+the injector's residue (step 2's identity, to four digits), not the fixture.
+That default reading becomes an asserted **lower-bounded control** so the
+residue stays measured on `main` rather than vanishing.  Nothing is hidden: the
+module goes exit 0 with both numbers gated in opposite directions.
+
+**The coil is out of reach:** the lumped-sheet
 birdcage drive is a surface term with ``project_source=False``
 (`ports/lumped.py:429`), so nothing here touches its 229×, the known-issues
 degree-2 entry stays open, and the two degree-2 coil identity tests stay
@@ -202,6 +215,18 @@ LOOP_FREQUENCIES_HZ = (LOOP_FREQUENCY_HZ, LOOP_RECORD_FREQUENCY_HZ)
 STEP1_RECORD_DEGREE1_RATIO = 1.952350e-02
 STEP1_RECORD_MOVE = 5.156e01
 STEP1_RECORD_RTOL = 1.0e-3
+
+# The **default-path** 1 MHz degree-1 ratio, step 1′'s own reading
+# (`20260830T200305Z_TH-13-step1prime.log`, reproduced to the digit by step 3a,
+# `20260831T094852Z_TH-13-step3a-final.log:2413`).  Step 4 (§7 ruling
+# 2026-08-31 10:30) turns it from the precondition's *subject* into its
+# **control**: step 2 showed this number is, to four digits, the CG1∩H¹₀
+# injector's residue answered through Ohm's law, so asserting it against the
+# 1e-2 band measured the injector rather than the fixture.  It is asserted here
+# *lower*-bounded — the residue must still be present and still read its
+# recorded size — so that a change which silently removes it on the default path
+# is caught rather than being rewarded with a green run.
+STEP1PRIME_DEFAULT_DEGREE1_RATIO = 1.926692e-02
 
 # The ω² prediction for the 1 MHz row, pre-registered in §7 before the run:
 # 1.952350e-02 × (1/10)² ≈ 1.95e-4, to be asserted within a factor of two.
@@ -647,10 +672,18 @@ def _print_table(rows: dict) -> None:
         f"sphere {_ratio_move(rows['sphere']):.3e}x (imposed field, control)"
     )
     for frequency_hz in LOOP_FREQUENCIES_HZ:
-        gated = "GATED" if frequency_hz == LOOP_FREQUENCY_HZ else "RECORDED, not gated"
+        # Step 4: the *default* path's ratios are no longer read against the
+        # band as preconditions — the 1 MHz one is the residue control
+        # (asserted `>` the band), the 10 MHz one stays a recorded row.  The
+        # precondition itself is asserted on the matched-path solve.
+        gated = (
+            "CONTROL, asserted > band"
+            if frequency_hz == LOOP_FREQUENCY_HZ
+            else "RECORDED, not gated"
+        )
         one = rows["loop"][frequency_hz][1]
         print(
-            f"  precondition ({gated}): {_label(frequency_hz)} degree-1 W_e/W_m "
+            f"  default path ({gated}): {_label(frequency_hz)} degree-1 W_e/W_m "
             f"= {one['w_e'] / one['w_m']:.6e} against the pre-registered "
             f"<= {MAGNETIC_DOMINANCE_MAX:.0e}"
         )
@@ -681,8 +714,8 @@ def _print_table(rows: dict) -> None:
 
 @complex_only
 @pytest.mark.integration
-def test_the_loop_fixture_is_magnetically_dominated(discriminator_rows):
-    """Precondition (§7 step 1′), asserted at 1 MHz: degree-1 ``W_e/W_m ≤ 1e-2``.
+def test_the_loop_fixture_is_magnetically_dominated(discriminator_rows, matched_rows):
+    """Precondition (§7 step 1′/step 4), on the **matched** 1 MHz row: ``≤ 1e-2``.
 
     Runs first and prints the whole table, so no verdict is read against an
     unverified fixture.  This is the entire reason the fixture exists: `TH-12`
@@ -692,28 +725,81 @@ def test_the_loop_fixture_is_magnetically_dominated(discriminator_rows):
     cell, the cross-order move below discriminates nothing, and §7 says the step
     stops on that finding rather than reinterpreting the number.
 
-    The band is step 1's, unmoved: what step 1′ changed is the *fixture's*
-    frequency, on the pre-registered ω² argument, not the bar it has to clear.
-    **The rescope failed** — 1.926692e-02 at 1 MHz against 1.952350e-02 at
-    10 MHz, so this assertion is red on `main` by design, as step 1's was at
-    10 MHz.  It is the chunk's finding, not a defect to be tuned away: no band
-    moves here without a fixture that actually clears it.
+    **Step 4 (§7 ruling 2026-08-31 10:30) re-points the observable, not the
+    band.**  The 1e-2 figure and its direction are step 1's, unmoved; what moves
+    is *which solve* is read against it.  Step 2 measured the default path's
+    1.926692e-02 as, to four digits, the CG1∩H¹₀ injector's unremoved gradient
+    residue divided by ``(σ + jωε)`` — so that assert was measuring the
+    injector, not the fixture, and no choice of frequency could have fixed it
+    (step 1′ refuted ω² by measurement).  Under ``project_source="matched"``,
+    which removes the residue in the space the solve actually tests, the same
+    fixture reads ``W_e/W_m`` = **3.424858e-06** at degree 1 and 2.630270e-06 at
+    degree 2 (`20260831T094852Z_TH-13-step3a-final.log:3683–3684`) — inside the
+    unchanged band by ~3 000×.  The fixture *is* magnetically dominated; only
+    the injector ever said otherwise.
+
+    The default-path ratio therefore becomes this test's **control**, asserted
+    *lower*-bounded against the same band and pinned to its recorded value, so
+    the residue stays measured on `main` instead of vanishing: if a later change
+    quietly removes it on the default path, both halves of the reading move at
+    once and this test says so.
     """
     _print_table(discriminator_rows)
     one = discriminator_rows["loop"][LOOP_FREQUENCY_HZ][1]
+    matched_one = matched_rows[(LOOP_FREQUENCY_HZ, 1)]
 
     assert one["ncells"] == 1405, (
         f"the loop fixture meshed to {one['ncells']} cells, not the smoke box's "
         f"recorded 1 405 — the mesh moved under the control columns"
     )
-    ratio = one["w_e"] / one["w_m"]
-    assert ratio <= MAGNETIC_DOMINANCE_MAX, (
+
+    matched_ratio = matched_one["w_e"] / matched_one["w_m"]
+    default_ratio = one["w_e"] / one["w_m"]
+    if MPI.COMM_WORLD.rank == 0:
+        print(
+            f"\n[TH-13 step 4] precondition, re-pointed: matched-path degree-1 "
+            f"W_e/W_m = {matched_ratio:.6e} against the unchanged "
+            f"<= {MAGNETIC_DOMINANCE_MAX:.0e} "
+            f"({MAGNETIC_DOMINANCE_MAX / matched_ratio:.3e}x inside); "
+            f"default-path control = {default_ratio:.6e}, asserted > the same "
+            f"band and at rtol {STEP1_RECORD_RTOL:.0e} of the recorded "
+            f"{STEP1PRIME_DEFAULT_DEGREE1_RATIO:.6e}",
+            flush=True,
+        )
+
+    assert matched_ratio <= MAGNETIC_DOMINANCE_MAX, (
         f"the closed azimuthal drive at {LOOP_FREQUENCY_HZ / 1e6:.0f} MHz reads "
-        f"W_e/W_m = {ratio:.6e} at degree 1, over the pre-registered "
-        f"{MAGNETIC_DOMINANCE_MAX:.0e} — this fixture is not magnetically "
-        f"dominated, so it is not the missing cell of `TH-12` step 3's table "
-        f"and its cross-order move discriminates FEED from CLASS not at all"
+        f"W_e/W_m = {matched_ratio:.6e} at degree 1 under the matched source "
+        f"projection, over the pre-registered {MAGNETIC_DOMINANCE_MAX:.0e} — "
+        f"this fixture is not magnetically dominated even with the injector's "
+        f"residue removed, so it is not the missing cell of `TH-12` step 3's "
+        f"table and its cross-order move discriminates FEED from CLASS not at "
+        f"all"
     )
+
+    # The control: the injector's residue is still there, and still its
+    # recorded size.  Lower-bounded — this number is *supposed* to miss the
+    # band, and a run in which it stops missing it is a change to the default
+    # path, not a fixture that improved.
+    assert default_ratio > MAGNETIC_DOMINANCE_MAX, (
+        f"the default (`project_source=True`) path reads W_e/W_m = "
+        f"{default_ratio:.6e} at degree 1, no longer above the "
+        f"{MAGNETIC_DOMINANCE_MAX:.0e} the CG1∩H¹₀ injector's residue put it "
+        f"over — the residue step 2 measured has vanished from the default "
+        f"path, so the matched-path reading above is no longer a comparison "
+        f"between two projections"
+    )
+    assert np.isclose(
+        default_ratio,
+        STEP1PRIME_DEFAULT_DEGREE1_RATIO,
+        rtol=STEP1_RECORD_RTOL,
+    ), (
+        f"the default-path 1 MHz row reads degree-1 W_e/W_m = "
+        f"{default_ratio:.6e} against step 1′'s recorded "
+        f"{STEP1PRIME_DEFAULT_DEGREE1_RATIO:.6e} — the residue moved, so this "
+        f"run's matched/default comparison is not the one step 2 measured"
+    )
+
     for frequency_hz in LOOP_FREQUENCIES_HZ:
         for degree in (1, 2):
             row = discriminator_rows["loop"][frequency_hz][degree]

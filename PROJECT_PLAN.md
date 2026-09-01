@@ -4025,6 +4025,34 @@ contamination", because neither cheap fixture is magnetically dominated.
 >   control (> 1e-2) so the residue's presence stays measured on `main`
 >   rather than vanishing. Residual deliberate reds at `-n 2` drop 4 → 3;
 >   nothing is hidden and no band moves.
+> * **Step 4 EXECUTED 2026-09-01, 09:00 implementer slot — the ruling
+>   lands and the module goes exit 0 for the first time.**
+>   `20260901T110318Z_TH-13-step4.log` (standard tier, complex, `-n 2`,
+>   `tests/environment` + the module): **19 passed / 1 skipped / Status 0
+>   / 38 s**, against step 3a's `1 failed / 18 passed / 1 skipped` at
+>   37 s. `test_the_loop_fixture_is_magnetically_dominated` now consumes
+>   `matched_rows` as well and asserts the **matched-path** degree-1
+>   reading **`W_e/W_m` = 3.424858e-06** against the **unchanged** 1e-2
+>   band — **2.920e+03× inside** — reproducing
+>   `20260831T094852Z_TH-13-step3a-final.log:3683` to every digit. The
+>   **default-path** 1 MHz degree-1 ratio **1.926692e-02** is asserted in
+>   the same test as a *lower*-bounded control (`> 1e-2`) **and** pinned
+>   at rtol 1e-3 to the new `STEP1PRIME_DEFAULT_DEGREE1_RATIO`, so the
+>   CG1∩H¹₀ injector's residue stays measured on `main` in the direction
+>   it actually reads: a change that silently removes it now turns the
+>   module red instead of green. No new test function (test count is
+>   20, as before), **nothing under `src/`**, no band, tolerance or record
+>   moved. Everything else in the module reproduces to the digit:
+>   cross-order moves 5.246e+01 / 5.156e+01× (loop) and 1.155 / 1.015×
+>   (smoke / sphere controls), `POST-5` anchor 1.199162e-06 W, step 2
+>   residuals 2.970e-12 / 2.640e-11 / 3.697e-13 / 2.586e-12 with the
+>   mistuned probe at 1.000e-01, `‖P_∇₂J′‖/‖P_∇₁J′‖` = 8.049884 at both
+>   frequencies, projection control 7.589863e-02 vs 1.298386e-02, step
+>   3a's matched degree-2/degree-1 `W_e` ratio 9.485777e-01×, `|Im P|/Re
+>   P` = 0.000e+00 on every row. `main`'s residual deliberate reds at
+>   `-n 2` go **9 → 8**; the `TH-12` step-2 known-issues entry stays
+>   **open** (this step retires only the step-1′ precondition red, not
+>   the coil's degree-2 identities, and no coil number moved).
 > * **Step 3a‴ ruled 2026-08-31 18:00 review — option (a), the module
 >   split (§9 item 3).** 3a″'s partition (mesh 4.3 s; degree-1 phase
 >   46.8 s and green; degree-2 pair ≥ 524 s and unfinished) leaves (a)
@@ -6671,10 +6699,14 @@ the 18:00 review flagged stands.
 2b's gate; `TH-13` step 3a‴ observed two open reds and gated nothing;
 `WF-6` step 3b is a negative result. No new example chunk.
 
-**Residual `main` reds at `-n 2`:** **9 deliberate/known** — the two
+**Residual `main` reds at `-n 2`:** **8 deliberate/known**
+*(was 9 — `TH-13`'s precondition retired 2026-09-01 by step 4's
+re-pointing, item 5 done: the assert now reads the matched path at
+3.424858e-06 against the unchanged 1e-2 band, and the 1.926692e-02
+default-path residue is asserted `>` that band as its control, so the
+module is exit 0 and nothing is hidden)* — the two
 entry-3 names, `test_birdcage_volumes_partition_the_box` (`GEO-21`'s
-floor entry), `TH-13`'s precondition at 1.926692e-02 on the 1 MHz row
-(item 5 retires it by re-pointing), and the **five `WF-6` step-3 SAR
+floor entry), and the **five `WF-6` step-3 SAR
 identity asserts** (known-issues 🔴 OPEN 2026-08-31; step 3b kept them
 and measured the CG1 column beside them; item 6 diagnoses the projector,
 no band moves). Plus the two degree-2 **coil** identity tests at 1e-9 —
@@ -6954,6 +6986,16 @@ denied; write it relative.
    ratio not ≤ 1e-2 would contradict
    `20260831T094852Z_TH-13-step3a-final.log` — a reproducibility
    finding, not a rescope; known-issues, keep the assert, stop.
+   **✅ 2026-09-01 — item done, first exit 0 for this module.**
+   `20260901T110318Z_TH-13-step4.log`, standard tier, complex, `-n 2`,
+   **19 passed / 1 skipped / Status 0 / 38 s**. Matched-path degree-1
+   `W_e/W_m` = **3.424858e-06** (2.920e+03× inside the unchanged 1e-2
+   band); default-path control **1.926692e-02**, asserted `>` the same
+   band and at rtol 1e-3 of step 3a's record. Every other reading in the
+   module reproduces to the digit (moves 5.246e+01 / 5.156e+01 / 1.155 /
+   1.015×, `‖P_∇₂J′‖/‖P_∇₁J′‖` 8.049884, unprojected control
+   7.589863e-02 vs 1.298386e-02, matched degree-2/degree-1 `W_e`
+   9.485777e-01×). No band moved, nothing under `src/` touched.
 6. **`WF-6` step 3c — the projector diagnosis: is `post.project_to_cg1` a
    projector on N1curl input? (standard, complex, `-n 2`, `main`;
    independent; scoped this review — execute the §7 step-3c bullet as
