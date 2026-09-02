@@ -1,0 +1,257 @@
+# Test Run
+- Chunk: WF-6-step3e
+- Commit: c207601f9741d65ff72c56263a524412cbd3bb4d
+- Time (UTC): 2026-09-02 00:35:18
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/validation/test_birdcage_sar_map.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  1 19:35 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 400 mpiexec -n 2 python3 -m pytest tests/validation/test_birdcage_sar_map.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 63 items
+
+tests/validation/test_birdcage_sar_map.py::test_the_phantom_conductivity_is_uniform_and_matches_the_saline_spec collected 63 items
+
+tests/validation/test_birdcage_sar_map.py::test_the_phantom_conductivity_is_uniform_and_matches_the_saline_spec PASSED [  1%]PASSED [  1%]
+tests/validation/test_birdcage_sar_map.py::test_the_sample_set_is_a_map_and_not_a_handful_of_cells 
+tests/validation/test_birdcage_sar_map.py::test_the_sample_set_is_a_map_and_not_a_handful_of_cells PASSED [  3%]PASSED [  3%]
+tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P2(Rx) vs SAR_P1(x)] 
+tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P2(Rx) vs SAR_P1(x)] FAILED [  4%]
+tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P4(-Rx) vs SAR_P1(x)] FAILED [  4%]
+tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P4(-Rx) vs SAR_P1(x)] FAILED [  6%]
+tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P3(180deg) vs SAR_P1(x)] FAILED [  6%]
+tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P3(180deg) vs SAR_P1(x)] FAILED [  7%]
+tests/validation/test_birdcage_sar_map.py::test_quadrature_sar_map_is_c4_invariant FAILED [  7%]
+tests/validation/test_birdcage_sar_map.py::test_quadrature_sar_map_is_c4_invariant FAILED [  9%]FAILED [  9%]
+tests/validation/test_birdcage_sar_map.py::test_reversing_the_rotation_sense_equals_reflecting_the_sar_map 
+tests/validation/test_birdcage_sar_map.py::test_reversing_the_rotation_sense_equals_reflecting_the_sar_map FAILED [ 11%]
+tests/validation/test_birdcage_sar_map.py::test_the_negative_controls_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] PASSED [ 12%]
+tests/validation/test_birdcage_sar_map.py::test_the_negative_controls_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] PASSED [ 14%]FAILED [ 11%]
+tests/validation/test_birdcage_sar_map.py::test_mean_sar_reproduces_step_1s_phantom_power_record 
+tests/validation/test_birdcage_sar_map.py::test_the_negative_controls_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] PASSED [ 15%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P2(Rx) vs SAR_P1(x)] PASSED [ 12%]
+tests/validation/test_birdcage_sar_map.py::test_the_negative_controls_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] PASSED [ 14%]
+tests/validation/test_birdcage_sar_map.py::test_mean_sar_reproduces_step_1s_phantom_power_record PASSED [ 15%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P2(Rx) vs SAR_P1(x)] PASSED [ 17%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P3(180deg) vs SAR_P1(x)] PASSED [ 19%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)] PASSED [ 20%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_identities_reproduce_step_3s_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)] PASSED [ 22%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_identities_reproduce_step_3s_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)] PASSED [ 23%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_controls_reproduce_step_3s_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] PASSED [ 25%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_controls_reproduce_step_3s_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] PASSED [ 26%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_negative_controls_still_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] PASSED [ 28%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_negative_controls_still_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] PASSED [ 30%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_mass_solve_converges PASSED [ 17%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P3(180deg) vs SAR_P1(x)] PASSED [ 19%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_identities_reproduce_step_3s_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)] PASSED [ 20%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_identities_reproduce_step_3s_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)] PASSED [ 22%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_identities_reproduce_step_3s_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)] PASSED [ 23%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_controls_reproduce_step_3s_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] PASSED [ 25%]
+tests/validation/test_birdcage_sar_map.py::test_the_primal_sar_controls_reproduce_step_3s_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] PASSED [ 26%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_negative_controls_still_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] PASSED [ 28%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_negative_controls_still_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] PASSED [ 30%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_mass_solve_converges PASSED [ 31%]PASSED [ 31%]
+tests/validation/test_birdcage_sar_map.py::test_the_projector_reproduces_a_field_both_spaces_contain 
+tests/validation/test_birdcage_sar_map.py::test_the_projector_reproduces_a_field_both_spaces_contain PASSED [ 33%]PASSED [ 33%]
+tests/validation/test_birdcage_sar_map.py::test_the_projector_control_field_is_not_reproduced 
+tests/validation/test_birdcage_sar_map.py::test_the_projector_control_field_is_not_reproduced PASSED [ 34%]PASSED [ 34%]
+tests/validation/test_birdcage_sar_map.py::test_the_phantom_projection_residual_reproduces_step_3bs_reading 
+tests/validation/test_birdcage_sar_map.py::test_the_phantom_projection_residual_reproduces_step_3bs_reading PASSED [ 36%]PASSED [ 36%]
+tests/validation/test_birdcage_sar_map.py::test_the_phantom_core_is_a_nonempty_subdomain 
+tests/validation/test_birdcage_sar_map.py::test_the_phantom_core_is_a_nonempty_subdomain PASSED [ 38%]PASSED [ 38%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P2(Rx) vs SAR_P1(x)] 
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P2(Rx) vs SAR_P1(x)] PASSED [ 39%]PASSED [ 39%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P3(180deg) vs SAR_P1(x)] 
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P3(180deg) vs SAR_P1(x)] PASSED [ 41%]PASSED [ 41%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)] 
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_identities_reproduce_step_3bs_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)] PASSED [ 42%]PASSED [ 42%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_identities_reproduce_step_3bs_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)] 
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_identities_reproduce_step_3bs_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)] PASSED [ 44%]PASSED [ 44%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_identities_reproduce_step_3bs_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)] 
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_identities_reproduce_step_3bs_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)] PASSED [ 46%]PASSED [ 46%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_controls_reproduce_step_3bs_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] 
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_controls_reproduce_step_3bs_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] PASSED [ 47%]PASSED [ 47%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_controls_reproduce_step_3bs_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] 
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_sar_controls_reproduce_step_3bs_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] PASSED [ 49%]PASSED [ 49%]
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_phantom_power_reproduces_step_3bs_reading 
+tests/validation/test_birdcage_sar_map.py::test_the_cg1_phantom_power_reproduces_step_3bs_reading PASSED [ 50%]
+tests/validation/test_birdcage_sar_map.py::test_the_projection_domain_table_reproduces_step_3cs_readings[phantom core] PASSED [ 50%]PASSED [ 52%]
+tests/validation/test_birdcage_sar_map.py::test_the_projection_domain_table_reproduces_step_3cs_readings[whole mesh] 
+tests/validation/test_birdcage_sar_map.py::test_the_projection_domain_table_reproduces_step_3cs_readings[phantom core] PASSED [ 52%]PASSED [ 53%]
+tests/validation/test_birdcage_sar_map.py::test_the_projection_domain_table_reproduces_step_3cs_readings[whole mesh] 
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_projection_cannot_beat_its_own_best_approximation PASSED [ 53%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_projection_cannot_beat_its_own_best_approximation PASSED [ 55%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_projector_reproduces_a_field_both_spaces_contain PASSED [ 55%]PASSED [ 57%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_projector_reproduces_a_field_both_spaces_contain 
+tests/validation/test_birdcage_sar_map.py::test_every_cg1_dof_outside_the_phantom_is_pinned_to_exactly_zero PASSED [ 57%]PASSED [ 58%]
+tests/validation/test_birdcage_sar_map.py::test_every_cg1_dof_outside_the_phantom_is_pinned_to_exactly_zero 
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_projector_control_field_is_not_reproduced PASSED [ 58%]PASSED [ 60%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_projector_control_field_is_not_reproduced 
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[P1] PASSED [ 60%]
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[P1] PASSED [ 61%]
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[P2] PASSED [ 61%]PASSED [ 63%]
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[P2] 
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[P3] PASSED [ 63%]PASSED [ 65%]
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[P3] 
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[P4] PASSED [ 65%]PASSED [ 66%]
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[P4] 
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[a + b x x] PASSED [ 66%]PASSED [ 68%]
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[a + b x x] 
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[x^2 e_x] PASSED [ 68%]PASSED [ 69%]
+tests/validation/test_birdcage_sar_map.py::test_every_restricted_mass_solve_converges[x^2 e_x] 
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_negative_controls_still_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] PASSED [ 69%]PASSED [ 71%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_negative_controls_still_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] 
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_negative_controls_still_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] PASSED [ 71%]PASSED [ 73%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_negative_controls_still_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] 
+tests/validation/test_birdcage_sar_map.py::test_the_packaged_restriction_separates_from_the_global_fit PASSED [ 73%]PASSED [ 74%]
+tests/validation/test_birdcage_sar_map.py::test_the_packaged_restriction_separates_from_the_global_fit 
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_phantom_residual_reproduces_step_3ds_reading PASSED [ 74%]PASSED [ 76%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_phantom_residual_reproduces_step_3ds_reading 
+tests/validation/test_birdcage_sar_map.py::test_the_packaged_restriction_pins_the_same_blocks PASSED [ 77%]PASSED [ 76%]
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P1] 
+tests/validation/test_birdcage_sar_map.py::test_the_packaged_restriction_pins_the_same_blocks PASSED [ 77%]PASSED [ 79%]
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P1] 
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P2] PASSED [ 79%]PASSED [ 80%]
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P2] 
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P3] PASSED [ 80%]PASSED [ 82%]
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P3] 
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P4] PASSED [ 82%]PASSED [ 84%]
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[P4] 
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[a + b x x] PASSED [ 84%]PASSED [ 85%]
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[a + b x x] 
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[x^2 e_x] PASSED [ 85%]PASSED [ 87%]
+tests/validation/test_birdcage_sar_map.py::test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record[x^2 e_x] 
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P2(Rx) vs SAR_P1(x)] PASSED [ 87%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P2(Rx) vs SAR_P1(x)] PASSED [ 88%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P3(180deg) vs SAR_P1(x)] PASSED [ 90%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)] PASSED [ 92%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_identities_reproduce_step_3ds_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)] PASSED [ 93%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_identities_reproduce_step_3ds_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)] PASSED [ 95%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_controls_reproduce_step_3ds_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] PASSED [ 96%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_controls_reproduce_step_3ds_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] PASSED [ 98%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_phantom_power_reproduces_step_3ds_reading PASSED [100%]PASSED [ 88%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P3(180deg) vs SAR_P1(x)] PASSED [ 90%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_identities_reproduce_step_3ds_readings[(i) SAR_P4(-Rx) vs SAR_P1(x)] PASSED [ 92%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_identities_reproduce_step_3ds_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)] PASSED [ 93%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_identities_reproduce_step_3ds_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)] PASSED [ 95%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_controls_reproduce_step_3ds_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)] PASSED [ 96%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_controls_reproduce_step_3ds_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)] PASSED [ 98%]
+tests/validation/test_birdcage_sar_map.py::test_the_restricted_phantom_power_reproduces_step_3ds_reading PASSED [100%]
+
+=================================== FAILURES ===================================
+____ test_single_drive_sar_map_is_c4_covariant[(i) SAR_P2(Rx) vs SAR_P1(x)] ____
+tests/validation/test_birdcage_sar_map.py:602: in test_single_drive_sar_map_is_c4_covariant
+    assert reading <= C4_COVARIANCE_BAND, (
+E   AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P2(Rx) vs SAR_P1(x) by 25.1096%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+E   assert 0.2510957276135487 <= 0.05
+___ test_single_drive_sar_map_is_c4_covariant[(i) SAR_P4(-Rx) vs SAR_P1(x)] ____
+tests/validation/test_birdcage_sar_map.py:602: in test_single_drive_sar_map_is_c4_covariant
+    assert reading <= C4_COVARIANCE_BAND, (
+E   AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P4(-Rx) vs SAR_P1(x) by 40.5462%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+E   assert 0.40546227558088505 <= 0.05
+__ test_single_drive_sar_map_is_c4_covariant[(i) SAR_P3(180deg) vs SAR_P1(x)] __
+tests/validation/test_birdcage_sar_map.py:602: in test_single_drive_sar_map_is_c4_covariant
+    assert reading <= C4_COVARIANCE_BAND, (
+E   AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P3(180deg) vs SAR_P1(x) by 30.0142%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+E   assert 0.300141665305935 <= 0.05
+___________________ test_quadrature_sar_map_is_c4_invariant ____________________
+tests/validation/test_birdcage_sar_map.py:619: in test_quadrature_sar_map_is_c4_invariant
+    assert reading <= C4_COVARIANCE_BAND, (
+E   AssertionError: the quadrature SAR map misses C4 invariance by 38.6120%, outside the imported 5.0% band — four fields each inside the band should superpose to one inside it, so this is a finding about the superposition path
+E   assert 0.3861201719337533 <= 0.05
+_______ test_reversing_the_rotation_sense_equals_reflecting_the_sar_map ________
+tests/validation/test_birdcage_sar_map.py:637: in test_reversing_the_rotation_sense_equals_reflecting_the_sar_map
+    assert reading <= C4_COVARIANCE_BAND, (
+E   AssertionError: the SAR mirror identity misses by 28.1459%, outside the imported 5.0% band — either the superposition or the mirror-plane reading is wrong; record both readings, do not widen
+E   assert 0.28145894519368675 <= 0.05
+=========================== short test summary info ============================
+FAILED tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P2(Rx) vs SAR_P1(x)] - AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P2(Rx) vs SAR_P1(x) by 25.1096%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+assert 0.2510957276135487 <= 0.05
+FAILED tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P4(-Rx) vs SAR_P1(x)] - AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P4(-Rx) vs SAR_P1(x) by 40.5462%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+assert 0.40546227558088505 <= 0.05
+FAILED tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P3(180deg) vs SAR_P1(x)] - AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P3(180deg) vs SAR_P1(x) by 30.0142%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+assert 0.300141665305935 <= 0.05
+FAILED tests/validation/test_birdcage_sar_map.py::test_quadrature_sar_map_is_c4_invariant - AssertionError: the quadrature SAR map misses C4 invariance by 38.6120%, outside the imported 5.0% band — four fields each inside the band should superpose to one inside it, so this is a finding about the superposition path
+assert 0.3861201719337533 <= 0.05
+FAILED tests/validation/test_birdcage_sar_map.py::test_reversing_the_rotation_sense_equals_reflecting_the_sar_map - AssertionError: the SAR mirror identity misses by 28.1459%, outside the imported 5.0% band — either the superposition or the mirror-plane reading is wrong; record both readings, do not widen
+assert 0.28145894519368675 <= 0.05
+=================== 5 failed, 58 passed in 96.12s (0:01:36) ====================
+
+
+=================================== FAILURES ===================================
+____ test_single_drive_sar_map_is_c4_covariant[(i) SAR_P2(Rx) vs SAR_P1(x)] ____
+tests/validation/test_birdcage_sar_map.py:602: in test_single_drive_sar_map_is_c4_covariant
+    assert reading <= C4_COVARIANCE_BAND, (
+E   AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P2(Rx) vs SAR_P1(x) by 25.1096%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+E   assert 0.2510957276135487 <= 0.05
+___ test_single_drive_sar_map_is_c4_covariant[(i) SAR_P4(-Rx) vs SAR_P1(x)] ____
+tests/validation/test_birdcage_sar_map.py:602: in test_single_drive_sar_map_is_c4_covariant
+    assert reading <= C4_COVARIANCE_BAND, (
+E   AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P4(-Rx) vs SAR_P1(x) by 40.5462%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+E   assert 0.40546227558088505 <= 0.05
+__ test_single_drive_sar_map_is_c4_covariant[(i) SAR_P3(180deg) vs SAR_P1(x)] __
+tests/validation/test_birdcage_sar_map.py:602: in test_single_drive_sar_map_is_c4_covariant
+    assert reading <= C4_COVARIANCE_BAND, (
+E   AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P3(180deg) vs SAR_P1(x) by 30.0142%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+E   assert 0.300141665305935 <= 0.05
+___________________ test_quadrature_sar_map_is_c4_invariant ____________________
+tests/validation/test_birdcage_sar_map.py:619: in test_quadrature_sar_map_is_c4_invariant
+    assert reading <= C4_COVARIANCE_BAND, (
+E   AssertionError: the quadrature SAR map misses C4 invariance by 38.6120%, outside the imported 5.0% band — four fields each inside the band should superpose to one inside it, so this is a finding about the superposition path
+E   assert 0.3861201719337533 <= 0.05
+_______ test_reversing_the_rotation_sense_equals_reflecting_the_sar_map ________
+tests/validation/test_birdcage_sar_map.py:637: in test_reversing_the_rotation_sense_equals_reflecting_the_sar_map
+    assert reading <= C4_COVARIANCE_BAND, (
+E   AssertionError: the SAR mirror identity misses by 28.1459%, outside the imported 5.0% band — either the superposition or the mirror-plane reading is wrong; record both readings, do not widen
+E   assert 0.28145894519368675 <= 0.05
+=========================== short test summary info ============================
+FAILED tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P2(Rx) vs SAR_P1(x)] - AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P2(Rx) vs SAR_P1(x) by 25.1096%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+assert 0.2510957276135487 <= 0.05
+FAILED tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P4(-Rx) vs SAR_P1(x)] - AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P4(-Rx) vs SAR_P1(x) by 40.5462%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+assert 0.40546227558088505 <= 0.05
+FAILED tests/validation/test_birdcage_sar_map.py::test_single_drive_sar_map_is_c4_covariant[(i) SAR_P3(180deg) vs SAR_P1(x)] - AssertionError: the single-drive SAR map misses C4 covariance at (i) SAR_P3(180deg) vs SAR_P1(x) by 30.0142%, outside the imported 5.0% band — SAR is read off the primal N1curl E with no projection chain, so this is an estimator finding about the E-field map (record it, do not widen the band)
+assert 0.300141665305935 <= 0.05
+FAILED tests/validation/test_birdcage_sar_map.py::test_quadrature_sar_map_is_c4_invariant - AssertionError: the quadrature SAR map misses C4 invariance by 38.6120%, outside the imported 5.0% band — four fields each inside the band should superpose to one inside it, so this is a finding about the superposition path
+assert 0.3861201719337533 <= 0.05
+FAILED tests/validation/test_birdcage_sar_map.py::test_reversing_the_rotation_sense_equals_reflecting_the_sar_map - AssertionError: the SAR mirror identity misses by 28.1459%, outside the imported 5.0% band — either the superposition or the mirror-plane reading is wrong; record both readings, do not widen
+assert 0.28145894519368675 <= 0.05
+=================== 5 failed, 58 passed in 96.11s (0:01:36) ====================
+
+## Exit
+- Status: 1
+- Elapsed (s): 98

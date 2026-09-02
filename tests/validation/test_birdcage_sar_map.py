@@ -155,7 +155,7 @@ import pytest
 from dolfinx import fem
 from mpi4py import MPI
 
-from fem_em_solver.post import mean_sar, project_to_cg1
+from fem_em_solver.post import mean_sar, project_to_cg1, project_to_cg1_restricted
 from fem_em_solver.post.sar import point_sar
 
 from tests.complex_mode import complex_only
@@ -1296,93 +1296,53 @@ RESTRICTED_CONTROL_MIN_RESIDUAL = 1.0e-4
 RESTRICTED_SOLVE_LABELS = ("P1", "P2", "P3", "P4", "a + b x x", "x^2 e_x")
 
 
-def _project_to_cg1_restricted(
-    field, cell_tags, *, name, tag=PHANTOM_CELL_TAG, ksp_rtol=1.0e-12
-):
-    """L² projection onto ``CG1³`` **restricted to the tagged subdomain**.
+# ---------------------------------------------------------------------------
+# `WF-6` step 3e (2026-09-02): the restricted projector moved into the package
+# as ``post.project_to_cg1_restricted`` — verbatim, `return_diagnostics` now
+# defaulting off to match ``project_to_cg1``, and this module its first caller
+# with ``return_diagnostics=True``.  Every record below is step 3d's, read off
+# `20260901T183416Z_WF-6-step3d.log`, and every one of them is asserted through
+# the *packaged* path: a code-location change whose only claim is reproduction.
+# Nothing here gates SAR — the five primal asserts above stay red and unmoved.
+STEP3D_RESTRICTED_PHANTOM_RESIDUAL = 18.7238e-2
 
-    A test-local sibling of :func:`~fem_em_solver.post.project_to_cg1` — same
-    ``("Lagrange", 1, (3,))`` space, same CG + Jacobi at ``ksp_rtol`` 1e-12,
-    same opt-in diagnostics — differing in exactly one thing: both the mass
-    matrix and the load are integrated over ``dx(tag)`` instead of ``dx``, so
-    the fit minimises ``‖· − field‖`` over the phantom alone and cannot be
-    dragged by the sheet / conductor-edge ``E`` that dominates the global norm.
+# The negative control for the promotion: the *global* ``post.project_to_cg1``
+# on the same field over the same phantom reads
+# ``STEP3B_PHANTOM_PROJECTION_RESIDUAL`` = 1876.1871%.  Step 3d measured the
+# separation at 100.20×; 50× is an order clear of any plausible drift and does
+# not buy a marginal red, which asserting 100× would.
+STEP3D_RESTRICTION_MIN_SEPARATION = 50.0
 
-    The restricted mass matrix is singular on every dof with no tagged-cell
-    support (an all-zero row), so those dofs are pinned to zero by a
-    ``dirichletbc``, which makes the assembled matrix identity there and leaves
-    it SPD overall.  Three traps live in that one sentence:
+# Anchor (iii)'s block census, globally reduced (owned blocks only, summed over
+# ranks) so it is rank-count independent, and anchors (iv)'s solver record.
+STEP3D_RESTRICTED_FREE_BLOCKS = 170
+STEP3D_RESTRICTED_OWNED_BLOCKS = 21397
+STEP3D_RESTRICTED_DOFS = 64191
+STEP3D_RESTRICTED_CONVERGED_REASON = 2  # KSP_CONVERGED_RTOL
+STEP3D_RESTRICTED_ITERATION_RANGE = (21, 25)
 
-    * ``locate_dofs_topological`` on a **blocked** space returns *block*
-      indices, so the bc is built from a zero ``fem.Function`` on the space
-      (which dolfinx indexes by block) and never from a scalar ``Constant``.
-    * the complement is taken over ``size_local + num_ghosts`` blocks.  Over
-      owned blocks only, a ghost row on the far side of a partition cut goes
-      unpinned and the two-rank answer differs from the one-rank one — which is
-      exactly what running this module at ``-n 2`` exists to catch.
-    * ``cell_tags.find`` is rank-local and returns the local view *including
-      ghost cells*; that is what is wanted here, since a phantom cell ghosted
-      onto this rank still supports dofs this rank owns.
+STEP3D_RESTRICTED_PHANTOM_POWER_W = 5.440097168e-08
 
-    Kept test-local by the scoping: promoting it into ``post/`` is a review's
-    call after the readings below are on record, not this step's.
-    """
-    import ufl
-    from dolfinx.fem.petsc import LinearProblem
+STEP3D_RESTRICTED_IDENTITY_RECORDS = {
+    "(i) SAR_P2(Rx) vs SAR_P1(x)": 8.2868e-2,
+    "(i) SAR_P4(-Rx) vs SAR_P1(x)": 9.4743e-2,
+    "(i) SAR_P3(180deg) vs SAR_P1(x)": 7.3477e-2,
+    "(ii) SAR_ccw(Rx) vs SAR_ccw(x)": 6.8146e-2,
+    "(iii) SAR_cw(Mx) vs SAR_ccw(x)": 6.1185e-2,
+}
+STEP3D_RESTRICTED_CONTROL_RECORDS = {
+    "mis-rotated SAR_P3(Rx) vs SAR_P1(x)": 123.6255e-2,
+    "quadrature SAR_ccw(x) vs single-drive SAR_P1(x)": 333.0778e-2,
+}
 
-    msh = field.function_space.mesh
-    comm = msh.comm
-    tdim = msh.topology.dim
-    space = fem.functionspace(msh, ("Lagrange", 1, (3,)))
-    trial, test = ufl.TrialFunction(space), ufl.TestFunction(space)
-    dx_tag = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)(tag)
-
-    cells = np.sort(np.asarray(cell_tags.find(tag), dtype=np.int32))
-    supported = np.asarray(
-        fem.locate_dofs_topological(space, tdim, cells), dtype=np.int32
-    )
-    imap = space.dofmap.index_map
-    n_blocks = int(imap.size_local + imap.num_ghosts)
-    pinned = np.setdiff1d(np.arange(n_blocks, dtype=np.int32), supported)
-
-    zero = fem.Function(space, name=f"{name}_zero")
-    zero.x.array[:] = 0.0
-    bc = fem.dirichletbc(zero, pinned)
-
-    problem = LinearProblem(
-        ufl.inner(trial, test) * dx_tag,
-        ufl.inner(field, test) * dx_tag,
-        bcs=[bc],
-        petsc_options={
-            "ksp_type": "cg",
-            "pc_type": "jacobi",
-            "ksp_rtol": float(ksp_rtol),
-            "ksp_atol": 1.0e-30,
-        },
-        petsc_options_prefix="fem_em_wf6_step3d_restricted_mass_",
-    )
-    projected = problem.solve()
-    projected.name = name
-    projected.x.scatter_forward()
-
-    ksp = problem.solver
-    owned = int(imap.size_local)
-    blocks = np.asarray(projected.x.array).reshape(-1, 3)
-    pinned_max = comm.allreduce(
-        float(np.max(np.abs(blocks[pinned]))) if pinned.size else 0.0, op=MPI.MAX
-    )
-    diagnostics = {
-        "converged_reason": int(ksp.getConvergedReason()),
-        "iterations": int(ksp.getIterationNumber()),
-        "ksp_rtol": float(ksp_rtol),
-        "dofs": int(imap.size_global * space.dofmap.index_map_bs),
-        "free_blocks": comm.allreduce(
-            int(supported[supported < owned].size), op=MPI.SUM
-        ),
-        "pinned_blocks": comm.allreduce(int(pinned[pinned < owned].size), op=MPI.SUM),
-        "pinned_max_abs": pinned_max,
-    }
-    return projected, diagnostics
+# The exact-reproduction control and its control, as step 3d measured them
+# through the test-local helper.  The *asserted* bounds stay
+# ``PROJECTOR_EXACT_RESIDUAL`` (1e-10) and ``RESTRICTED_CONTROL_MIN_RESIDUAL``
+# (1e-4); these two are printed beside them so a moved reading is visible.
+STEP3D_RESTRICTED_CONTROL_FIELD_RECORDS = {
+    "a + b x x": 4.385695e-13,
+    "x^2 e_x": 3.741459e-01,
+}
 
 
 @pytest.fixture(scope="module")
@@ -1418,8 +1378,12 @@ def sar_map_restricted(b1_plus_map, sar_map, sar_map_cg1, projector_diagnosis):
     diagnostics = {}
     projected = {}
     for pid in order:
-        projected[pid], diagnostics[pid] = _project_to_cg1_restricted(
-            solves[pid]["fields"].e_complex, cell_tags, name=f"E_cg1_restricted_{pid}"
+        projected[pid], diagnostics[pid] = project_to_cg1_restricted(
+            solves[pid]["fields"].e_complex,
+            cell_tags,
+            name=f"E_cg1_restricted_{pid}",
+            tag=PHANTOM_CELL_TAG,
+            return_diagnostics=True,
         )
     split = {
         pid: _split_complex(projected[pid], f"E_cg1_restricted_{pid}") for pid in order
@@ -1446,8 +1410,12 @@ def sar_map_restricted(b1_plus_map, sar_map, sar_map_cg1, projector_diagnosis):
         source = fem.Function(n1curl, name=f"f_{stem}_n1curl_restricted")
         source.interpolate(callable_)
         source.x.scatter_forward()
-        fitted, diag = _project_to_cg1_restricted(
-            source, cell_tags, name=f"f_{stem}_cg1_restricted"
+        fitted, diag = project_to_cg1_restricted(
+            source,
+            cell_tags,
+            name=f"f_{stem}_cg1_restricted",
+            tag=PHANTOM_CELL_TAG,
+            return_diagnostics=True,
         )
         diagnostics[label] = diag
         control_fields[label] = {
@@ -1528,8 +1496,9 @@ def sar_map_restricted(b1_plus_map, sar_map, sar_map_cg1, projector_diagnosis):
         global_controls = sar_map_cg1["controls"]
         p1 = diagnostics["P1"]
         print(
-            f"\n[WF-6 step3d] the same point-SAR identities off a **phantom-"
-            f"restricted** CG1 E — mass matrix and load integrated over dx(tag "
+            f"\n[WF-6 step3e] the same point-SAR identities off a **phantom-"
+            f"restricted** CG1 E, now through the packaged "
+            f"post.project_to_cg1_restricted — mass matrix and load integrated over dx(tag "
             f"{PHANTOM_CELL_TAG}) on the parent mesh, every CG1 dof with no "
             f"phantom support pinned to zero — beside the primal N1curl and the "
             f"global-CG1 columns, same {points.shape[0]} points, same four "
@@ -1561,7 +1530,8 @@ def sar_map_restricted(b1_plus_map, sar_map, sar_map_cg1, projector_diagnosis):
                 f"    (ii) ||P_O f - f||_O/||f||_O for f = {label:<9} "
                 f"{row['residual']:.6e}   (reason "
                 f"{row['diagnostics']['converged_reason']}, "
-                f"{row['diagnostics']['iterations']} its)",
+                f"{row['diagnostics']['iterations']} its; step 3d read "
+                f"{STEP3D_RESTRICTED_CONTROL_FIELD_RECORDS[label]:.6e})",
                 flush=True,
             )
         print(
@@ -1602,6 +1572,12 @@ def sar_map_restricted(b1_plus_map, sar_map, sar_map_cg1, projector_diagnosis):
         "diagnostics": diagnostics,
         "phantom_power_w": phantom_power_w,
         "projection_relative_l2": restricted_residual,
+        # step 3e's negative control: the *measured* global-fit residual over
+        # the same phantom, not the constant, so the separation below is a
+        # comparison of two readings from the same run.
+        "global_projection_relative_l2": projector_diagnosis["residuals"][
+            "phantom (tag 3)"
+        ],
         "verdict": verdict,
         "verdict_text": verdict_text,
     }
@@ -1751,4 +1727,148 @@ def test_the_restricted_negative_controls_still_miss_the_band(sar_map_restricted
         f"{STEP3B_CG1_CONTROL_RECORDS[label] * 100:.4f}%) — the restricted fit has "
         "smoothed away the structure the identities measure, so no restricted "
         "identity reading here is interpretable"
+    )
+
+
+# ---------------------------------------------------------------------------
+# `WF-6` step 3e — the promotion's own tests.  Each one asserts that a step-3d
+# record survives the move into ``post/``; none of them gates SAR.
+
+
+@complex_only
+def test_the_packaged_restriction_separates_from_the_global_fit(sar_map_restricted):
+    """Step 3e's negative control: the packaged restriction is not the global fit.
+
+    Both readings come from the same run over the same phantom cells on the same
+    ``E``: the global ``post.project_to_cg1`` leaves 1876.1871% there (step
+    3b/3c, asserted above) and the packaged ``post.project_to_cg1_restricted``
+    leaves 18.7238% (step 3d), a measured separation of 100.20×.  The bound is
+    **50×** — an order clear of any plausible drift, and deliberately not 100×,
+    which would buy a marginal red on a code-location change.  A promotion that
+    accidentally kept integrating over ``dx`` instead of ``dx(tag)`` would land
+    at a separation of 1.0 and is exactly what this catches.
+    """
+    restricted = sar_map_restricted["projection_relative_l2"]
+    global_fit = sar_map_restricted["global_projection_relative_l2"]
+    separation = global_fit / restricted
+    assert separation >= STEP3D_RESTRICTION_MIN_SEPARATION, (
+        f"the packaged post.project_to_cg1_restricted leaves "
+        f"{restricted * 100:.4f}% over the phantom against the global fit's "
+        f"{global_fit * 100:.4f}% — a separation of only {separation:.2f}x, below "
+        f"{STEP3D_RESTRICTION_MIN_SEPARATION:.0f}x (step 3d measured 100.20x). The "
+        "moved code is not restricting to the tagged subdomain"
+    )
+
+
+@complex_only
+def test_the_restricted_phantom_residual_reproduces_step_3ds_reading(sar_map_restricted):
+    """Anchor (i) as a *record*: 18.7238%, through the packaged path."""
+    reading = sar_map_restricted["projection_relative_l2"]
+    assert reading == pytest.approx(
+        STEP3D_RESTRICTED_PHANTOM_RESIDUAL, rel=CG1_RECORD_RTOL
+    ), (
+        f"the packaged restricted projection leaves {reading * 100:.4f}% over the "
+        f"phantom, not step 3d's {STEP3D_RESTRICTED_PHANTOM_RESIDUAL * 100:.4f}% "
+        f"(rtol {CG1_RECORD_RTOL:.0e}) — the promotion changed the estimator, not "
+        "just its address"
+    )
+
+
+@complex_only
+def test_the_packaged_restriction_pins_the_same_blocks(sar_map_restricted):
+    """Anchor (iii)'s census: 170 free of 21 397 owned blocks, 64 191 dofs.
+
+    Globally reduced sums over owned blocks, so the numbers are rank-count
+    independent; a pin taken over owned blocks only (the defect ``-n 2`` exists
+    to catch) would move the free count, not crash.
+    """
+    diag = sar_map_restricted["diagnostics"]["P1"]
+    owned = diag["free_blocks"] + diag["pinned_blocks"]
+    assert (diag["free_blocks"], owned, diag["dofs"]) == (
+        STEP3D_RESTRICTED_FREE_BLOCKS,
+        STEP3D_RESTRICTED_OWNED_BLOCKS,
+        STEP3D_RESTRICTED_DOFS,
+    ), (
+        f"the packaged restriction leaves {diag['free_blocks']} free of {owned} "
+        f"owned CG1 blocks on {diag['dofs']} dofs, not step 3d's "
+        f"{STEP3D_RESTRICTED_FREE_BLOCKS} / {STEP3D_RESTRICTED_OWNED_BLOCKS} / "
+        f"{STEP3D_RESTRICTED_DOFS}"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", RESTRICTED_SOLVE_LABELS)
+def test_every_packaged_restricted_solve_reproduces_step_3ds_solver_record(
+    sar_map_restricted, label
+):
+    """Anchor (iv) as a record: reason 2, 21–25 iterations, 64 191 dofs.
+
+    The test beside this one asserts only ``reason > 0``, which is the physics
+    gate; this one is the promotion's own, and is why the numbers are exact.  A
+    moved iteration count on an unchanged operator, mesh and ``ksp_rtol`` would
+    mean the packaged assembly differs from the test-local one.
+    """
+    diag = sar_map_restricted["diagnostics"][label]
+    low, high = STEP3D_RESTRICTED_ITERATION_RANGE
+    assert (
+        diag["converged_reason"] == STEP3D_RESTRICTED_CONVERGED_REASON
+        and low <= diag["iterations"] <= high
+        and diag["dofs"] == STEP3D_RESTRICTED_DOFS
+    ), (
+        f"the packaged restricted solve for '{label}' returned reason "
+        f"{diag['converged_reason']} after {diag['iterations']} its on "
+        f"{diag['dofs']} dofs, not step 3d's reason "
+        f"{STEP3D_RESTRICTED_CONVERGED_REASON} in {low}-{high} its on "
+        f"{STEP3D_RESTRICTED_DOFS} dofs"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3D_RESTRICTED_IDENTITY_RECORDS))
+def test_the_restricted_identities_reproduce_step_3ds_readings(
+    sar_map_restricted, label
+):
+    """Anchor (v): the five restricted identity readings, reproduced.
+
+    A *reproduction*, not a gate — these five sit at 6.1–9.5%, outside the 5%
+    band, and the primal asserts above stay red exactly as step 3 wrote them.
+    Nothing about SAR is claimed here; what is claimed is that moving the
+    estimator into ``post/`` moved no reading.
+    """
+    reading = sar_map_restricted["identities"][label]
+    record = STEP3D_RESTRICTED_IDENTITY_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"the packaged restricted identity '{label}' reads {reading * 100:.4f}%, "
+        f"not step 3d's {record * 100:.4f}% (rtol {CG1_RECORD_RTOL:.0e})"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3D_RESTRICTED_CONTROL_RECORDS))
+def test_the_restricted_controls_reproduce_step_3ds_readings(sar_map_restricted, label):
+    """Anchor (v)'s controls: 123.6255% and 333.0778%, reproduced."""
+    reading = sar_map_restricted["controls"][label]
+    record = STEP3D_RESTRICTED_CONTROL_RECORDS[label]
+    assert reading == pytest.approx(record, rel=CG1_RECORD_RTOL), (
+        f"the packaged restricted control '{label}' reads {reading * 100:.4f}%, "
+        f"not step 3d's {record * 100:.4f}% (rtol {CG1_RECORD_RTOL:.0e})"
+    )
+
+
+@complex_only
+def test_the_restricted_phantom_power_reproduces_step_3ds_reading(sar_map_restricted):
+    """Anchor (v): ``½∫_Ω σ|E_Ω|²`` = 5.440097168e-08 W through the packaged path.
+
+    Reported, not gated — an L² projection does not conserve power.  It is here
+    because it is the independent corroboration that the restricted fit is an
+    honest estimator (−3.51% from the primal record, against the global fit's
+    +35 198.9%), and a promotion that changed the fit would move it.
+    """
+    reading = sar_map_restricted["phantom_power_w"]
+    assert reading == pytest.approx(
+        STEP3D_RESTRICTED_PHANTOM_POWER_W, rel=CG1_RECORD_RTOL
+    ), (
+        f"the packaged restricted phantom power reads {reading:.9e} W, not step "
+        f"3d's {STEP3D_RESTRICTED_PHANTOM_POWER_W:.9e} W (rtol "
+        f"{CG1_RECORD_RTOL:.0e})"
     )

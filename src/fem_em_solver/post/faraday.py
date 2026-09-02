@@ -22,8 +22,15 @@ from __future__ import annotations
 import numpy as np
 import ufl
 from dolfinx import fem
+from mpi4py import MPI
 
-__all__ = ["magnetic_flux_density_from_e", "b1_plus", "b1_minus", "project_to_cg1"]
+__all__ = [
+    "magnetic_flux_density_from_e",
+    "b1_plus",
+    "b1_minus",
+    "project_to_cg1",
+    "project_to_cg1_restricted",
+]
 
 
 def _require_complex(function, what: str) -> None:
@@ -88,6 +95,23 @@ def project_to_cg1(
     converged one — `WF-6` step 3c (2026-09-01) added this to tell those two
     apart on an N1curl input.  A positive reason is convergence
     (``KSP_CONVERGED_RTOL`` is 2); ``-3`` is ``DIVERGED_ITS``.
+
+    .. warning::
+
+       This is a **global** L² fit, and a global L² fit is *not* a field
+       estimator inside a low-field subdomain of a fixture that also carries a
+       high-field region.  `WF-6` step 3c (2026-09-01) measured the domain
+       table on the loaded birdcage's ``E``: ``‖P E − E‖/‖E‖`` reads
+       **32.7802%** over the whole mesh but **1876.1871%** over the phantom
+       (and 838.8978% over the phantom core), because ``‖E‖`` lives on the
+       lumped sheets and the conductor edges and the phantom — orders of
+       magnitude lower ``|E|`` — receives only that fit's tail.  The projector
+       itself is sound (step 3c: ``a + b × x`` reproduced to 1.326607e-13,
+       mass solve reason 2 in 26 its); the *use* is what fails.  To read a
+       field over a subdomain, use :func:`project_to_cg1_restricted`, which
+       leaves 18.7238% on that same phantom.  ``B`` callers are unaffected:
+       they project on the whole mesh, where no comparable field-magnitude
+       contrast exists, and the projection moves ``|B₁⁺|`` by 0.38%.
     """
     from dolfinx.fem.petsc import LinearProblem  # local: needs a PETSc build
 
@@ -125,6 +149,120 @@ def project_to_cg1(
             "dofs": int(space.dofmap.index_map.size_global * space.dofmap.index_map_bs),
         }
     return projected
+
+
+def project_to_cg1_restricted(
+    field,
+    cell_tags,
+    *,
+    name: str,
+    tag: int,
+    ksp_rtol: float = 1.0e-12,
+    return_diagnostics: bool = False,
+):
+    """L² projection onto ``CG1³`` **restricted to a tagged subdomain**.
+
+    The sibling of :func:`project_to_cg1` — same ``("Lagrange", 1, (3,))``
+    space, same CG + Jacobi at ``ksp_rtol`` 1e-12, same opt-in diagnostics —
+    differing in exactly one thing: both the mass matrix and the load are
+    integrated over ``dx(tag)`` instead of ``dx``, so the fit minimises
+    ``‖· − field‖`` over the tagged cells alone and cannot be dragged by
+    whatever dominates the global norm outside them.  ``field`` may be any
+    vector field the forms can integrate — the N1curl ``E`` phasor included,
+    which is what it was built for.
+
+    Everything stays on the **parent** mesh: no submesh, and therefore no
+    cross-mesh N1curl interpolation.  The restricted mass matrix is singular on
+    every dof with no tagged-cell support (an all-zero row), so those dofs are
+    pinned to zero by a ``dirichletbc``, which makes the assembled matrix
+    identity there and leaves it SPD overall.  Three traps live in that one
+    sentence, all paid for by `WF-6` step 3d:
+
+    * ``locate_dofs_topological`` on a **blocked** space returns *block*
+      indices, so the bc is built from a zero ``fem.Function`` on the space
+      (which dolfinx indexes by block) and never from a scalar ``Constant``.
+    * the complement is taken over ``size_local + num_ghosts`` blocks.  Over
+      owned blocks only, a ghost row on the far side of a partition cut goes
+      unpinned and the two-rank answer differs from the one-rank one.
+    * ``cell_tags.find`` is rank-local and returns the local view *including
+      ghost cells*; that is what is wanted here, since a tagged cell ghosted
+      onto this rank still supports dofs this rank owns.
+
+    Landed by `WF-6` step 3d (2026-09-01) as a test-local helper and promoted
+    here by step 3e on its measurements: on the loaded birdcage's phantom it
+    leaves ``‖P_Ω E − E‖_Ω/‖E‖_Ω`` = **18.7238%** against the global fit's
+    **1876.1871%** over the same cells (a 100.20× separation of the
+    best-approximation inequality), and reproduces the primal phantom power to
+    **−3.51%** (5.440097168e-08 W vs 5.637745667e-08 W) where the global fit
+    reads +35 198.9%.  It is an *estimator*, not a gate: no SAR claim rests on
+    it.
+
+    ``return_diagnostics`` (opt-in, default off, matching
+    :func:`project_to_cg1`) returns ``(projected, diagnostics)`` with the mass
+    solve's PETSc ``converged_reason`` and ``iterations``, the global dof
+    count, the globally reduced free/pinned owned-block counts, and
+    ``pinned_max_abs`` — the max ``|value|`` left on a pinned block, reduced
+    over all ranks, which ``set_bc`` writes as an exact zero and which is
+    therefore a defect indicator, not a tolerance.
+    """
+    from dolfinx.fem.petsc import LinearProblem  # local: needs a PETSc build
+
+    msh = field.function_space.mesh
+    comm = msh.comm
+    tdim = msh.topology.dim
+    space = fem.functionspace(msh, ("Lagrange", 1, (3,)))
+    trial, test = ufl.TrialFunction(space), ufl.TestFunction(space)
+    dx_tag = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)(tag)
+
+    cells = np.sort(np.asarray(cell_tags.find(tag), dtype=np.int32))
+    supported = np.asarray(
+        fem.locate_dofs_topological(space, tdim, cells), dtype=np.int32
+    )
+    imap = space.dofmap.index_map
+    n_blocks = int(imap.size_local + imap.num_ghosts)
+    pinned = np.setdiff1d(np.arange(n_blocks, dtype=np.int32), supported)
+
+    zero = fem.Function(space, name=f"{name}_zero")
+    zero.x.array[:] = 0.0
+    bc = fem.dirichletbc(zero, pinned)
+
+    problem = LinearProblem(
+        ufl.inner(trial, test) * dx_tag,
+        ufl.inner(field, test) * dx_tag,
+        bcs=[bc],
+        petsc_options={
+            "ksp_type": "cg",
+            "pc_type": "jacobi",
+            "ksp_rtol": float(ksp_rtol),
+            "ksp_atol": 1.0e-30,
+        },
+        petsc_options_prefix="fem_em_restricted_cg1_mass_",
+    )
+    projected = problem.solve()
+    projected.name = name
+    projected.x.scatter_forward()
+
+    if not return_diagnostics:
+        return projected
+
+    ksp = problem.solver
+    owned = int(imap.size_local)
+    blocks = np.asarray(projected.x.array).reshape(-1, 3)
+    pinned_max = comm.allreduce(
+        float(np.max(np.abs(blocks[pinned]))) if pinned.size else 0.0, op=MPI.MAX
+    )
+    diagnostics = {
+        "converged_reason": int(ksp.getConvergedReason()),
+        "iterations": int(ksp.getIterationNumber()),
+        "ksp_rtol": float(ksp_rtol),
+        "dofs": int(imap.size_global * space.dofmap.index_map_bs),
+        "free_blocks": comm.allreduce(
+            int(supported[supported < owned].size), op=MPI.SUM
+        ),
+        "pinned_blocks": comm.allreduce(int(pinned[pinned < owned].size), op=MPI.SUM),
+        "pinned_max_abs": pinned_max,
+    }
+    return projected, diagnostics
 
 
 def _rotating_component(b_complex, sign: float, what: str, name: str):
