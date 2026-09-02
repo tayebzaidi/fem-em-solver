@@ -1,0 +1,50 @@
+# Test Run
+- Chunk: OPS-31
+- Commit: a30eabad44c8e1293694dd73d5ba00f10d91a4bf
+- Time (UTC): 2026-09-02 09:43:05
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 scripts/testing/check_example_doc_references.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  2 04:42 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 scripts/testing/check_example_doc_references.py'\'''
+Scanned 48 guide(s) under examples/, 150 distinct file reference(s) checked, 1 allowlisted.
+FAIL: 1 dead reference(s):
+  - ans1_aed_results.json: no run produced it in examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/paraview_output/, paraview_output/, and it is not committed under examples/  [examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/COMPARISON_private.md:6]
+STALE: 6 stale artifact(s) (--stale-severity report):
+  - ans4_birdcage_four_port_128mhz_combined.xdmf: stale in examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/paraview_output/ (60.1 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/04_birdcage_four_port_10_64_128MHz.md:22, examples/ansys_benchmarks/birdcage_four_port_10_64_128MHz/COMPARISON.md:206]
+  - ports_04_birdcage_four_port_sparameters_combined.xdmf: stale in examples/ports/paraview_output/ (54.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/04_birdcage_four_port_sparameters.md:136]
+  - ports_04_birdcage_four_port_sparameters_facets.xdmf: stale in examples/ports/paraview_output/ (54.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/04_birdcage_four_port_sparameters.md:143]
+  - ports_05_birdcage_larmor_frequency_ladder_10mhz_combined.xdmf: stale in examples/ports/paraview_output/ (54.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/05_birdcage_larmor_frequency_ladder.md:159]
+  - ports_05_birdcage_larmor_frequency_ladder_128mhz_combined.xdmf: stale in examples/ports/paraview_output/ (54.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/05_birdcage_larmor_frequency_ladder.md:158]
+  - ports_05_birdcage_larmor_frequency_ladder_facets.xdmf: stale in examples/ports/paraview_output/ (54.0 h old, limit 48.0 h) — rerun the example that writes it, or the reference is dead  [examples/ports/05_birdcage_larmor_frequency_ladder.md:162]
+Guide pass: 36 runnable example(s) from scripts/run_examples.sh --list, 36 checked against 3 required heading(s), 0 pending (EX-15 steps 2-3).
+PASS: every runnable example has a guide with all required sections.
+RESULT: dead=1 guide=0 stale=6 stale_severity=report exit=1
+
+## Exit
+- Status: 1
+- Elapsed (s): 1

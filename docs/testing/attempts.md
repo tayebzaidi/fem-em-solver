@@ -15864,3 +15864,79 @@ executor returned with nothing in flight.
   covers 00:00 before the 2026-09-02 02:15 weekly refills the queue; it should
   now import `post.project_to_cg1_restricted` from `post/faraday.py`, which
   item 1 landed at `e949dfa`.
+
+## 2026-09-02T09:30Z — `OPS-31` — complete (04:30 implementer slot)
+
+- **Preflight clean.** Tree clean at `03ed840` on `main`, container Up 6 days,
+  no `attempt/*`, no `recovered/*`. §9 item 1 (`OPS-31`, ⬜) taken as written;
+  no fallback, no substitution.
+- **Delegated to `record-reconciler`** (foreground, one executor, per protocol
+  step 3), which landed `a30eaba`. This slot re-verified every load-bearing
+  claim against the logs itself; the report and the logs agree.
+- **Anchor, re-traced by this slot:** `20260902T093147Z_OPS-31.log`, Status 0,
+  elapsed **235 s** (in-script 230.8 s). `ports:3` reproduced
+  `STEP1_CROSS_ROUTE_RECORD` **0.077431** to `REPRODUCTION_BAND` 1e-4, and the
+  ladder at `:2243–2246` reads **`f=1.000` 7.7431% MISS / `f=0.735` 1.0986%
+  INSIDE / `f=0.500` 1.9222% INSIDE**, with `[step 2b] GATE at f = 0.5:
+  1.9222% against the 5% band`. **Non-monotone** (`f=0.735` sits *below*
+  `f=0.5`) — the item's negative control, so this is a re-record and not a
+  fixture finding. "All gates hold."
+- **Re-recorded (forward-looking prose only):**
+  `examples/ports/03_lumped_sheet_port_widths.py` + `.md` (table + prose),
+  and docstrings in `test_port_lumped_two_torus.py`,
+  `test_port_lumped_narrowed_sheet.py`, `test_port_lumped_sheet_asymmetric.py`.
+  The dated §7 history of `PORT-9` steps 2 / 2b keeps its v0.7.2 figures.
+  Diff scanned by this slot for band/tolerance/gate edits: **none** —
+  `CROSS_ROUTE_BAND` (5%), `REPRODUCTION_BAND` (1e-4) and `RECIPROCITY_BAND`
+  (1e-3) are untouched; only measured readings moved.
+- **Item 4 decided:** `STEP2B_CROSS_ROUTE_AT_HALF_WIDTH`
+  (`test_port_lumped_sheet_sweep.py:91`) re-recorded **0.018333 → 0.019222**
+  with its `# (v0.7.2 read 0.018333)` tag, GEO-16 style. Justified: it is the
+  *same* ladder rung, and the new value comes from that same footered anchor
+  log's step-2b gate line (`:2245–2246`), not from a computed or expected
+  number. Verified by this slot that **every** consumer (4 sites in the
+  example, 3 in the test module) is inside an f-string print — **no assertion
+  reads it**, so no consumer re-run is owed.
+- ⚠️ **Flag 1 for the review — the (1*) drift gate was exceeded, knowingly.**
+  The reconciler's licence stops a site whose drift exceeds ~0.5%; this ladder
+  moved 3.6730% → 1.0986% and 1.8333% → 1.9222%. That gate is calibrated for
+  the mesher-cell-count class, and §9 item 1 *pre-authorised* these exact
+  figures as the re-record with monotonicity as the negative control (which
+  held), so the slot let it stand rather than filing it as a finding. If the
+  review reads the licence as binding regardless of an item's explicit anchor,
+  this is the clause to rule on.
+- ⚠️ **Flag 2 for the review — the second anchor did NOT hold, for reasons
+  outside this chunk.** The item required the census stay
+  `dead=0 guide=0 stale=0 exit=0`; it now reads **`dead=1 guide=0 stale=6
+  exit=1`** (`20260902T094305Z_OPS-31.log:34–46`, re-run through the harness by
+  this slot, 1 s). All seven hits are unrelated pre-existing drift: one dead
+  `ans1_aed_results.json` reference in a private `ANS-1` comparison doc, and
+  six xdmf artifacts aged past the 48 h limit (`ans4` 60.1 h; `ports_04` and
+  `ports_05` 54.0 h) — i.e. **time drift, not a prose orphan**. None touch
+  `ports:3`'s guide or its `03_lumped_sheet_port_widths_*` artifacts, which the
+  anchor run itself refreshed; guide pass clean at **36/36**, and the commit's
+  file list (confirmed via `git show --stat`) touches nothing those six guides
+  reference. The census reaching zero on 09-01 was therefore not durable — it
+  decays whenever `ports:4` / `ports:5` / `ans:4` go 48 h unrun. **A standing
+  census gate that any two quiet days will break is a queue-design problem for
+  the review**, not something this chunk should have absorbed.
+- ⚠️ **Flag 3 — tier honesty, the `OPS-30` class again.** The §7 row is
+  labelled **standard**, but standard's §5.1 ceiling is **180 s** and the
+  window measured **235 s**. No wrapped ceiling was exceeded (the item itself
+  specified `-t 400`, and 235 s < 400 s), so this is the 18:00-review scoping
+  pattern the 03:00 review just re-tiered rather than demoted on `OPS-30`. The
+  slot left the label as the item wrote it and flags it rather than
+  self-adjudicating a tier the review owns.
+- **Item 5 was already done:** `scripts/automation/crontab` reads "Sunday AND
+  Wednesday 02:15" / `15 2 * * 0,3` — fixed by `6501ad9` (2026-09-01), so the
+  item's premise was stale. No edit.
+- **No denials this slot.** No docker-socket denial; the runner was reached via
+  the dry-run-then-harness route, and the harness path was written repo-relative.
+  Commit message used a literal multi-line `-m` (the `-F` route stays unusable).
+- Next-attempt hypothesis: **§9 item 2 (`WF-6` step 3e′)** is the 06:00 slot's
+  — independent of everything here, and it should add a keyword-only
+  `degree: int = 1` to `post.project_to_cg1_restricted` rather than copy the
+  helper. Before it, a review may want to decide Flag 2: either re-rung the
+  census gate to ignore age-only staleness, or queue a cheap
+  `ports:4`/`ports:5`/`ans:4` refresh, because otherwise every future item
+  carrying "census stays at zero" as an anchor inherits a failure it cannot fix.
