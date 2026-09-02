@@ -85,7 +85,13 @@ What is validated, to what tolerance, and what must not be trusted.
   accuracy at 3.01× fewer cells, for 4.3× wall and 2.7× memory.
 - **Coil loading, eddy-current regime only** (`MAT-6`): ΔR vs Dodd–Deeds
   **1.58%** at 10 MHz, σ = 100 S/m, on the production drive; ΔX is
-  reported, never gated (not box-converged).
+  reported, never gated (not box-converged). The closed form is a
+  filament; the fixture is a 5 mm wire, and that modelling term is now
+  quantified (`MAT-8` ✅ 2026-09-02): **+0.115%** on ΔR, **+0.145%** on ΔX
+  at the fixture. It raises the closed form, and step 8's slab-refined
+  FEM sits −0.28% *below* the filament value, so the refined discrepancy
+  against the corrected form is ≈ −0.40%, and 0.115% is the floor under
+  any sub-0.5% ΔR claim on this fixture.
 - **SAR machinery on an imposed uniform field** (`MAT-4`): mean SAR vs the
   lossy-sphere closed form to 3.5%; the 1 g/10 g averaging operator exact.
 - **S-parameters, two-torus validation fixture only** (`PORT-1` ✅
@@ -593,8 +599,8 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-28` | **Give `tests/ports/test_port_orientation_sensitivity.py`'s `_DummyComm` the `allgather` that `OPS-14`'s rank-safety reduction calls, then read the module's real assertions back against known-issues entry 3** — census leg (b) finding 12: a correct reduction outgrew a test double, a class step 1's static sweep cannot see. The reduction stays; the deprecated placeholder route stays runnable (`PORT-1` step 4's negative control). Commissioned 2026-08-27 10:30 review; full rubric in §9 item 3. ***✅ 2026-08-28, 22:30 implementer slot** — one added `staticmethod allgather(value) -> [value]` on `_DummyComm`, nine lines including its comment, `src/` untouched (`git diff -- src/` empty). Bracketed by measurement on the identical command (`tests/ports`, `-n 2`, real, smoke, `-k 30 120`): red baseline `3 failed, 14 passed in 1.50s` / Status 1 / 3 s, gate `2 failed, 15 passed in 0.79s` / Status 1 / 2 s. The sign-flip anchor is **green** — `V(P2) = +5.000000e-02 V` aligned vs `−5.000000e-02 V` flipped, magnitudes equal to `rel=1e-12`, coupling factor `+1.0e-01 → −1.0e-01`. The S-matrix name reaches its assertion for the first time since `OPS-14` and is **red there**, so entry 3 is re-dated, not retired — with a correction it measured: on that 2-port fake the diagonal is **not** zero (`S11 = S22 = 9.047e-01 − 1.289e-02j`); the **off-diagonal** is, because the undriven port is the matched one (`V = 5.000000e-02 = Z₀I` at `Z₀ = 50 Ω` ⇒ `b = 0` exactly). Entry 3's mechanism is confirmed, its old title was imprecise for this name, and its disposition is unchanged (`PORT-0`/`PORT-1`). The leg (b) `allgather` known-issues entry retires whole. Negative control: the other three `tests/ports` modules unchanged — `sparameter_assembly` still 3 passed / 1 failed (entry 3's other name), planner 3 and `port_definition` 8 green in both runs. Logs `20260828T033037Z_OPS-28-red-baseline.log`, `20260828T033055Z_OPS-28-gate.log`.* | ✅ | smoke |
 | `OPS-29` | **Rank-safe the `phantom_material` empty-tag check in `build_material_fields`** — the `OPS-13` defect survived 20 lines below its own fix; measured breaking `examples/mri/01_coil_phantom_fields.py` at `-n 12` (interactive session, 2026-08-28) | ✅ 2026-08-28 | smoke |
 | `OPS-30` | **Migrate the two filed `scripts/probes/` survivors to dolfinx 0.11** — `mag13_step2b_recovery.py:180` and `post3_step3_debug.py:55` construct `fem.petsc.LinearProblem` without 0.11's required `petsc_options_prefix`, so each raises `TypeError` on its first call. Filed (not fixed) by `OPS-26` step 1 2026-08-25 and pinned since by `test_filed_survivors_outside_the_gated_roots_are_unchanged`, which goes red in **either** direction — so the fix and the pin move in one commit. Scoped 2026-09-01 18:00 review, §9 item 2. **✅ 2026-09-01 21:00 slot** — a `petsc_options_prefix` at each site (`fem_em_probe_mag13_step2b_` / `fem_em_probe_post3_step3_`) and nothing else; the scripts were not modernised or re-run. Count identity in both directions, smoke, `-n 1`: the `examples`+`scripts` sweep went **2 → 0** violations with its census **unchanged** at 82 files / 320 resolved call sites / 22 APIs, while `src`+`tests` stayed 177 / 484 / 30 with `violations=0` (pre-fix `20260902T020122Z_OPS-30.log`, `SURVIVOR_STATUS=1`, 12 s; post-fix `20260902T020238Z_OPS-30.log`, `SURVIVOR_STATUS=0`, 3 passed, 37 s). Pin moved in the same commit and **strengthened, not deleted**: `FILED_SURVIVORS` is now the empty set, guarded by census floors over `examples`+`scripts` and a reachability floor of ≥ 2 resolved `dolfinx.fem.petsc.LinearProblem` sites under `scripts/probes` — so "no violations" can no longer be produced by a sweep that fails to reach the two migrated files. *Audited 2026-09-02 03:00 review — `auditor` PASS on seven of eight checks and DEMOTE on tier honesty: the closing window measured **37 s** (`20260902T020238Z_OPS-30.log:133`) against the 30 s smoke ceiling the row declared. The label was the 18:00 review's own scoping error (it wrote "smoke" beside `timeout -k 30 120` and "well under 60 s"), not a slot overrun — no wrapped ceiling was exceeded — so the row is **re-tiered to standard** on the `OPS-27` precedent (its 256 s window re-tiered the row, no demotion) and stays ✅: every §4 clause holds with the label corrected. Digits re-traced by the review: pre-fix `20260902T020122Z_OPS-30.log:37–38` `violations=2` / `SURVIVOR_STATUS=1`, `:60` gated roots 177 / 484 / 30 at `violations=0`, `:65` 12 s; post-fix `…020238Z_OPS-30.log:35–36` `violations=0` / `SURVIVOR_STATUS=0`, `:58` gated roots unchanged, `:129` `3 passed`, `:133` 37 s.* | ✅ | standard (re-tiered from smoke 2026-09-02, 37 s measured) |
-| `OPS-32` | **Private-mode comparison writers for `ANS-3` and `ANS-4`** — both `03_two_torus_gap_ports_10MHz.py` and `04_birdcage_four_port_10_64_128MHz.py` regenerate their tracked `COMPARISON.md` with `write_text`, exactly the shape that would have published `ANS-1`'s AED numbers; port `ANS-1`'s `aed_results/` reader + `private=True` writer pattern (`14305c5`) to both **before** either gains AED numbers, and re-register their in-script *reproduction controls* at **1e-6** against the measured ≤ 5e-8 run-to-run Z/S scatter (`EX-37`; the 2026-09-02 weekly's ruling, (1*) record licence — no physics band moves). Done-when: each example re-run exit 0 with the tracked table's AED cells blank by construction and, with a stub `aed_results/*.json` present locally (deleted after), an untracked `COMPARISON_private.md` filled; census `exit != 1`. Standard (`ans:3` 128 s, `ans:4` 125 s measured). Scoped 2026-09-02 weekly review | ⬜ | standard |
-| `OPS-31` | **Re-record the `ports:3` cross-route narrative to the 0.11 image** — the executed ladder is `7.7431% → 1.0986% → 1.9222%` and the asserted `STEP1_CROSS_ROUTE_RECORD` is 0.077431, while the example script, its guide, three test docstrings and this plan's §9 preamble all still narrate the v0.7.2 triple `7.7095% → 3.6730% → 1.8333%`. A tenth-of-the-`OPS-27`-class stale record, journaled by the `EX-36` leg (ports + ans) run 2026-09-01 and explicitly left to a review. Executor `record-reconciler`. Scoped 2026-09-01 18:00 review, §9 item 3 | ✅ *(2026-09-02 — anchor `20260902T093147Z_OPS-31.log`, Status 0, 235 s: `ports:3` reproduced `STEP1_CROSS_ROUTE_RECORD` 0.077431 to 1e-4, ladder `7.7431% MISS / 1.0986% INSIDE / 1.9222% INSIDE`, non-monotone (`f=0.735` below `f=0.5`) as expected — not a fixture finding. Re-recorded the narrative at `examples/ports/03_lumped_sheet_port_widths.py`/`.md`, `tests/validation/test_port_lumped_two_torus.py`, `test_port_lumped_narrowed_sheet.py` and `test_port_lumped_sheet_asymmetric.py` (all docstrings quoting the stale triple). `STEP2B_CROSS_ROUTE_AT_HALF_WIDTH` re-recorded 0.018333 → 0.019222 with its v0.7.2 tag, matching the same ladder rung. `scripts/automation/crontab` already read "Sunday AND Wednesday 02:15" / `15 2 * * 0,3` (fixed by `6501ad9`, 2026-09-01) — no change needed. Corpus census (`scripts/testing/check_example_doc_references.py`) reads `dead=1 guide=0 stale=6 exit=1`, but every hit is unrelated pre-existing drift — a dead `ans1_aed_results.json` reference and 6 aged (>48 h) `ans4`/`ports_04`/`ports_05` xdmf artifacts — none touching `ports:3`'s guide or the `03_lumped_sheet_port_widths_*` artifacts, which this run's own anchor just refreshed; guide pass is clean at 36/36. No dead/stale/orphaned reference was introduced by this chunk's edits. No band/gate/tolerance moved.)* | standard |
+| `OPS-32` | **Private-mode comparison writers for `ANS-3` and `ANS-4`** — both `03_two_torus_gap_ports_10MHz.py` and `04_birdcage_four_port_10_64_128MHz.py` regenerate their tracked `COMPARISON.md` with `write_text`, exactly the shape that would have published `ANS-1`'s AED numbers; port `ANS-1`'s `aed_results/` reader + `private=True` writer pattern (`14305c5`) to both **before** either gains AED numbers, and re-register their in-script *reproduction controls* at **1e-6** against the measured ≤ 5e-8 run-to-run Z/S scatter (`EX-37`; the 2026-09-02 weekly's ruling, (1*) record licence — no physics band moves). Done-when: each example re-run exit 0 with the tracked table's AED cells blank by construction and, with a stub `aed_results/*.json` present locally (deleted after), an untracked `COMPARISON_private.md` filled; census `exit != 1`. Standard (`ans:3` 128 s, `ans:4` 125 s measured). Scoped 2026-09-02 weekly review. **Clause added 2026-09-02 10:30 review:** `scripts/testing/check_example_doc_references.py:357` scans every `*.md` under `examples/` including gitignored ones, so `ANS-1`'s `COMPARISON_private.md:6` already reads as a dead reference and the census sits at `dead=1 … exit=1` on `main` (`20260902T094305Z_OPS-31.log:36,46`; known-issues entry) — the two private files this chunk adds would make it three. Skip `*_private.md` (or anything `git check-ignore` matches) in the guide scan; done-when for the clause: with the private file present, the census reads `dead=0` and exits 0 or 2, and the scanned-guide count printed on the same line drops by exactly the number of private files present. Until this lands, every item whose anchor says "census `exit != 1`" reads it as "no dead reference other than the known `COMPARISON_private.md` line" | ⬜ | standard |
+| `OPS-31` | **Re-record the `ports:3` cross-route narrative to the 0.11 image** — the executed ladder is `7.7431% → 1.0986% → 1.9222%` and the asserted `STEP1_CROSS_ROUTE_RECORD` is 0.077431, while the example script, its guide, three test docstrings and this plan's §9 preamble all still narrate the v0.7.2 triple `7.7095% → 3.6730% → 1.8333%`. A tenth-of-the-`OPS-27`-class stale record, journaled by the `EX-36` leg (ports + ans) run 2026-09-01 and explicitly left to a review. Executor `record-reconciler`. Scoped 2026-09-01 18:00 review, §9 item 3 | ✅ *(2026-09-02 — anchor `20260902T093147Z_OPS-31.log`, Status 0, 235 s: `ports:3` reproduced `STEP1_CROSS_ROUTE_RECORD` 0.077431 to 1e-4, ladder `7.7431% MISS / 1.0986% INSIDE / 1.9222% INSIDE`, non-monotone (`f=0.735` below `f=0.5`) as expected — not a fixture finding. Re-recorded the narrative at `examples/ports/03_lumped_sheet_port_widths.py`/`.md`, `tests/validation/test_port_lumped_two_torus.py`, `test_port_lumped_narrowed_sheet.py` and `test_port_lumped_sheet_asymmetric.py` (all docstrings quoting the stale triple). `STEP2B_CROSS_ROUTE_AT_HALF_WIDTH` re-recorded 0.018333 → 0.019222 with its v0.7.2 tag, matching the same ladder rung. `scripts/automation/crontab` already read "Sunday AND Wednesday 02:15" / `15 2 * * 0,3` (fixed by `6501ad9`, 2026-09-01) — no change needed. Corpus census (`scripts/testing/check_example_doc_references.py`) reads `dead=1 guide=0 stale=6 exit=1`, but every hit is unrelated pre-existing drift — a dead `ans1_aed_results.json` reference and 6 aged (>48 h) `ans4`/`ports_04`/`ports_05` xdmf artifacts — none touching `ports:3`'s guide or the `03_lumped_sheet_port_widths_*` artifacts, which this run's own anchor just refreshed; guide pass is clean at 36/36. No dead/stale/orphaned reference was introduced by this chunk's edits. No band/gate/tolerance moved.)* *Audited 2026-09-02 10:30 review — `auditor` PASS on seven checks, **DEMOTE on tier honesty**: the anchor footer measured **235 s** (`20260902T093147Z_OPS-31.log:2290`, re-traced by the review) against the 180 s standard ceiling the row declared; no wrapped ceiling was exceeded (`-t 400`), so on the `OPS-27` / `OPS-30` precedent the row is **re-tiered to heavy and stays ✅**. Digits re-traced: ladder `:2243–2246`, census `20260902T094305Z_OPS-31.log:46`, `STEP2B_CROSS_ROUTE_AT_HALF_WIDTH` moved with an in-comment basis and the three bands absent from the diff. **Rulings on the slot's three flags:** (1) the `record-reconciler`'s ~0.5% drift stop is calibrated for mesher cell counts; an item that pre-authorises the exact re-record figures, with a negative control that held (the ladder's non-monotonicity), overrides it — no licence breach. (2) The census reads `dead=1` because `check_example_doc_references.py:357` scans **every** `*.md` under `examples/`, including the gitignored `COMPARISON_private.md` the operator's `ANS-1` run wrote (`…094305Z_OPS-31.log:36`): a checker-scope defect, not a corpus one. Known-issues entry filed; the fix is folded into `OPS-32` (which creates two more such files). The six `stale` hits are age-only (`exit 2` class) and are information, not failure, per `OPS-19`. (3) Tier: ruled above.* | heavy (re-tiered from standard 2026-09-02, 235 s measured) |
 
 
 **`OPS-29` — rank-safe the `phantom_material` empty-tag check** ✅
@@ -4126,8 +4132,8 @@ contamination", because neither cheap fixture is magnetically dominated.
 | `MAT-3` | Debye/Cole-Cole dispersion models | ⬜ | smoke |
 | `MAT-4` | SAR computation `σ|E|²/(2ρ)` | 🟡 | standard |
 | `MAT-5` | Temperature-dependent conductivity | ⬜ | smoke |
-| `MAT-6` | **Dodd–Deeds coil-over-lossy-half-space impedance** | ✅ *(step 11 scoped 2026-09-02 weekly review — promote the step-8 slab-refined fixture to production now that `ANS-1`'s external check is adjudicated: `resolution_near` 0.005 → 0.0025 in the gate fixture and every importer (`mat:1`, `ans:1`, the two `dodd_deeds_*` gate modules); done-when ΔR re-records at the step-8 reading **0.2829%** (417 914 cells) within 0.05 pp on the 0.11 image, the projected-drive no-op control (≤ 5e-5) and the σ = 0 exact-zero control unchanged, `ans:1` exit 0 and the census `exit != 1`; §2's headline moves 1.58% → the re-recorded figure in the same commit. Executor `record-reconciler` for the record sites, implementer for the fixture. Cost: `MAT-6` step 8 measured the 417 914-cell pair at `-n 8` inside the standard ceiling ×2 — heavy tier, `-n 8`, `timeout -k 30 900`. Scope: the fixture moves, no band moves; ΔX stays reported. Negative result: the 0.28% not reproducing on 0.11 is a known-issues entry and the promotion stops)* | heavy |
-| `MAT-8` | **Finite-wire correction to the Dodd–Deeds closed form** — eq. (1) of `utils/dodd_deeds.py` evaluated for a filament; the fixture is a 5 mm wire whose cross-section spans lift-off 17.5–22.5 mm and radius 37.5–42.5 mm, a second-order-in-`r/a` (≈ 0.06) modelling term nobody has quantified and the floor under any sub-0.5% ΔR claim (`ANS-1` adjudication, 2026-09-02) | ✅ *(scoped 2026-09-02 weekly review; smoke, closed form only, no solve. Add `coil_impedance_change_finite_wire(f, a, h, σ, r_wire)` averaging eq. (1) over the uniform-current disc (2-D quadrature in the wire cross-section, `mutual` kernel already in the module). **Anchors:** (i) `r_wire → 0` recovers the filament value to **1e-8** relative (asserted, three radii 1e-4/1e-5/1e-6 m); (ii) the perfect-conductor limit of the corrected form equals the disc-averaged image mutual inductance from `utils/analytical.py` to 1e-6 (the same constant-pinning check step 1 used); (iii) the correction at the fixture's `r_wire = 0.0025` is **printed and recorded**, ungated, beside the FEM ΔR's 1.58% / 0.28% — the reading everyone wants is whether it is 0.1% or 0.5%. **Negative control:** the correction changes sign of the ΔX term's second derivative … no — keep it simple: the correction vanishes for `h ≫ r_wire` faster than `(r/a)²` (assert monotone decay across three lift-offs). Cost < 30 s. Scope: a closed-form term and a record; no gate re-registers on it until `MAT-6` step 11 lands. Negative result: a limit not recovering is a bug in the quadrature, not physics)* — **✅ 2026-09-02 (07:30 slot).** `coil_impedance_change_finite_wire` + `image_limit_inductance_change_finite_wire` added to `utils/dodd_deeds.py` (purely additive, 198 lines, nothing existing modified); 7 asserts in `tests/validation/test_dodd_deeds_finite_wire.py`. **The kernel factorises** — the generalised eq. (1) is separable in source and observation filament, so the double disc average is one 2-D fixed Gauss–Legendre polar rule applied twice (`ΔZ = jωπμ₀∫Γ(α)F(α)²dα`), never a 4-D quadrature. Measured (`20260902T123618Z_MAT-8.log:42–87`, `7 passed`, Status 0, **4 s** — smoke by footer): `r_wire = 0` reproduces the filament form to **1.785e-16**; (i) r→0 residuals **2.2222e-06 / 2.2222e-08 / 2.2222e-10** at r = 1e-4/1e-5/1e-6 with decade ratios **100.0001 / 100.0002**; GL 16×16 vs 24×24 **9.819e-15**; (ii) PEC limit vs the 4-D elliptic disc-averaged image mutual **5.7833e-08** (ΔL −1.9786839059e-08 vs −1.9786840203e-08 H) with spurious-loss ratio 5.78e-08. **(iii) The ungated record, `MAT-6` fixture** (10 MHz, a = 0.04, h = 0.02, σ = 100, r_wire = 0.0025, r/a = 0.0625): ΔR 3.22596150e-01 → 3.22967899e-01 Ω, correction **+0.115237%**; ΔX −6.15867486e-01 → −6.16759345e-01 Ω, **+0.144814%**. So the answer to "0.1% or 0.5%" is **0.115% on ΔR** — negligible against the 1.58% production discrepancy but **≈ 41% of the 0.2829% step-8 slab-refined one**, which `MAT-6` step 11 must account for. **Two scoping deviations, both forced by measurement and neither a loosened bound.** (1) Anchor (i) as scoped is arithmetically impossible: the r→0 residual *is* the leading finite-wire term and scales as exactly r² (ratios above), so a 1e-8 bound at r = 1e-4 would require the very correction this chunk computes to be absent; the plan's bound is asserted at the tightest radius (r = 1e-6, 2.2222e-10) **plus** the second-order rate, which is strictly stronger than a single tolerance. (2) **The scoped negative control's premise is false** — the correction does not decay with lift-off, it *rises* monotonically (1.152e-3 → 1.946e-3 across h = 20…640 mm) to the closed-form limit **`r_wire²/(2a²)` = 1.953125e-03**: the *coupling's* lift-off dependence vanishes, but the wire's own mean-square-radius shift is a property of the loop, not of the half-space. Replaced by asserting monotone increase, every value below the closed form, monotone gap closure, and agreement to 0.38% at h = 640 mm — a closed-form anchor where the scoped control was only a monotonicity check. Both deviations are documented verbatim in the test docstrings with log filenames (MAG-10/MAG-15 precedent) and are the review's to ratify. Regression `20260902T123643Z_MAT-8.log`: `14 passed, 3 skipped` with `test_dodd_deeds_impedance.py` (the 3 are complex-only FEM tests), Status 0, 4 s. **Scope held:** no gate re-registers, no band moves, `MAT-6` stays ✅ at 1.58%, `ANS-1` untouched | smoke |
+| `MAT-6` | **Dodd–Deeds coil-over-lossy-half-space impedance** | ✅ *(step 11 scoped 2026-09-02 weekly review — promote the step-8 slab-refined fixture to production now that `ANS-1`'s external check is adjudicated: `resolution_near` 0.005 → 0.0025 in the gate fixture and every importer (`mat:1`, `ans:1`, the two `dodd_deeds_*` gate modules); done-when ΔR re-records at the step-8 reading **0.2829%** (417 914 cells) within 0.05 pp on the 0.11 image, the projected-drive no-op control (≤ 5e-5) and the σ = 0 exact-zero control unchanged, `ans:1` exit 0 and the census `exit != 1`; §2's headline moves 1.58% → the re-recorded figure in the same commit. Executor `record-reconciler` for the record sites, implementer for the fixture. Cost: `MAT-6` step 8 measured the 417 914-cell pair at `-n 8` inside the standard ceiling ×2 — heavy tier, `-n 8`, `timeout -k 30 900`. Scope: the fixture moves, no band moves; ΔX stays reported. Negative result: the 0.28% not reproducing on 0.11 is a known-issues entry and the promotion stops. **Finite-wire framing, 2026-09-02 10:30 review, from `MAT-8`:** the closed form's finite-wire term is **+0.115237%** on ΔR at this fixture, and the refined FEM's −0.2829% is *below* the filament form, so the refined discrepancy against the corrected closed form is ≈ **−0.40%** — the term widens it, it does not absorb it. Step 11's done-when stays a record against the filament form (the gate's anchor); the §2 sentence it moves must quote both the filament and the corrected figures, and any claim tighter than 0.5% on this fixture is bounded below by the 0.115% term)* | heavy |
+| `MAT-8` | **Finite-wire correction to the Dodd–Deeds closed form** — eq. (1) of `utils/dodd_deeds.py` evaluated for a filament; the fixture is a 5 mm wire whose cross-section spans lift-off 17.5–22.5 mm and radius 37.5–42.5 mm, a second-order-in-`r/a` (≈ 0.06) modelling term nobody has quantified and the floor under any sub-0.5% ΔR claim (`ANS-1` adjudication, 2026-09-02) | ✅ *(scoped 2026-09-02 weekly review; smoke, closed form only, no solve. Add `coil_impedance_change_finite_wire(f, a, h, σ, r_wire)` averaging eq. (1) over the uniform-current disc (2-D quadrature in the wire cross-section, `mutual` kernel already in the module). **Anchors:** (i) `r_wire → 0` recovers the filament value to **1e-8** relative (asserted, three radii 1e-4/1e-5/1e-6 m); (ii) the perfect-conductor limit of the corrected form equals the disc-averaged image mutual inductance from `utils/analytical.py` to 1e-6 (the same constant-pinning check step 1 used); (iii) the correction at the fixture's `r_wire = 0.0025` is **printed and recorded**, ungated, beside the FEM ΔR's 1.58% / 0.28% — the reading everyone wants is whether it is 0.1% or 0.5%. **Negative control:** the correction changes sign of the ΔX term's second derivative … no — keep it simple: the correction vanishes for `h ≫ r_wire` faster than `(r/a)²` (assert monotone decay across three lift-offs). Cost < 30 s. Scope: a closed-form term and a record; no gate re-registers on it until `MAT-6` step 11 lands. Negative result: a limit not recovering is a bug in the quadrature, not physics)* — **✅ 2026-09-02 (07:30 slot).** `coil_impedance_change_finite_wire` + `image_limit_inductance_change_finite_wire` added to `utils/dodd_deeds.py` (purely additive, 198 lines, nothing existing modified); 7 asserts in `tests/validation/test_dodd_deeds_finite_wire.py`. **The kernel factorises** — the generalised eq. (1) is separable in source and observation filament, so the double disc average is one 2-D fixed Gauss–Legendre polar rule applied twice (`ΔZ = jωπμ₀∫Γ(α)F(α)²dα`), never a 4-D quadrature. Measured (`20260902T123618Z_MAT-8.log:42–87`, `7 passed`, Status 0, **4 s** — smoke by footer): `r_wire = 0` reproduces the filament form to **1.785e-16**; (i) r→0 residuals **2.2222e-06 / 2.2222e-08 / 2.2222e-10** at r = 1e-4/1e-5/1e-6 with decade ratios **100.0001 / 100.0002**; GL 16×16 vs 24×24 **9.819e-15**; (ii) PEC limit vs the 4-D elliptic disc-averaged image mutual **5.7833e-08** (ΔL −1.9786839059e-08 vs −1.9786840203e-08 H) with spurious-loss ratio 5.78e-08. **(iii) The ungated record, `MAT-6` fixture** (10 MHz, a = 0.04, h = 0.02, σ = 100, r_wire = 0.0025, r/a = 0.0625): ΔR 3.22596150e-01 → 3.22967899e-01 Ω, correction **+0.115237%**; ΔX −6.15867486e-01 → −6.16759345e-01 Ω, **+0.144814%**. So the answer to "0.1% or 0.5%" is **0.115% on ΔR** — negligible against the 1.58% production discrepancy but **≈ 41% of the 0.2829% step-8 slab-refined one**, which `MAT-6` step 11 must account for. **Two scoping deviations, both forced by measurement and neither a loosened bound.** (1) Anchor (i) as scoped is arithmetically impossible: the r→0 residual *is* the leading finite-wire term and scales as exactly r² (ratios above), so a 1e-8 bound at r = 1e-4 would require the very correction this chunk computes to be absent; the plan's bound is asserted at the tightest radius (r = 1e-6, 2.2222e-10) **plus** the second-order rate, which is strictly stronger than a single tolerance. (2) **The scoped negative control's premise is false** — the correction does not decay with lift-off, it *rises* monotonically (1.152e-3 → 1.946e-3 across h = 20…640 mm) to the closed-form limit **`r_wire²/(2a²)` = 1.953125e-03**: the *coupling's* lift-off dependence vanishes, but the wire's own mean-square-radius shift is a property of the loop, not of the half-space. Replaced by asserting monotone increase, every value below the closed form, monotone gap closure, and agreement to 0.38% at h = 640 mm — a closed-form anchor where the scoped control was only a monotonicity check. Both deviations are documented verbatim in the test docstrings with log filenames (MAG-10/MAG-15 precedent) and are the review's to ratify. Regression `20260902T123643Z_MAT-8.log`: `14 passed, 3 skipped` with `test_dodd_deeds_impedance.py` (the 3 are complex-only FEM tests), Status 0, 4 s. **Scope held:** no gate re-registers, no band moves, `MAT-6` stays ✅ at 1.58%, `ANS-1` untouched. *Audited 2026-09-02 10:30 review — `auditor` PASS on all eight checks: the record log's `Commit:` is the closing commit's parent, 15 of 15 digits traced to `20260902T123618Z_MAT-8.log:42–91` (the review itself re-read `:71–72`, `+0.115237%`), the `dodd_deeds.py` diff is `+` lines only, anchors (i)/(ii) are asserts at `test_dodd_deeds_finite_wire.py:101,130,165–166`, and the 4 s footer sits inside the declared smoke ceiling. **Both scoping deviations are ratified**: an r² residual cannot meet 1e-8 at r = 1e-4 by arithmetic, and a bound at the tightest radius plus the asserted second-order rate is stronger than the single tolerance; and a control whose premise the measurement refutes is correctly replaced by the closed-form limit `r_wire²/(2a²)` it actually converges to — a sharper anchor, not a loosened one. **One correction to the slot's journal:** the sign. Step 8's slab-refined FEM reads **−0.2829%** — *below* the filament form — and the finite-wire term *raises* the closed form by 0.115%, so against the corrected form the refined discrepancy is ≈ **−0.40%**, not "nearer 0.17%"; the 10 MHz h → 0 bracket shifts to ≈ [−2.26%, −1.02%]. `MAT-6` step 11's framing is annotated accordingly. The module docstring's "Tier: standard" is corrected to smoke in this review's commit.* | smoke |
 
 > `MAT-1` is `⚠️` not because the preset table is wrong but because nothing
 > consumes it.
@@ -5801,6 +5807,67 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > touched, nothing solved; `WF-6` stays 🟡. **Step 3f is unblocked on the mesh
 > side** and remains serial on step 3e′.
 >
+> **Rulings of the 2026-09-02 10:30 review on steps 3e′ and 3f₀, and step 3g
+> scoped.** *(1) Step 3e′'s clause (γ) is read as the run read it, not as it
+> was written:* the CG2 restriction is not mis-assembled (every anchor green
+> with orders of room), and what the rung measured is that a better L² fit
+> of `E` over the phantom is *pointwise worse* at the 51 sample points.
+> With the projector (3b/3c) and the degree (3e′) both excluded, the
+> remaining candidates are mesh `h` and the construction itself — reading a
+> quadratic-in-`E` identity from a fitted field at points inherits the fit's
+> pointwise error, which no norm bound controls. **Ruling: run step 3f
+> anyway (it is now unblocked on both halves and is queued first), and read
+> its verdict knowing a better-resolved `E` can raise these numbers; and
+> scope the integral-form construction as step 3g, independent of 3f and
+> on the coarse mesh.** *(2) Step 3f₀'s 5.11× growth against the naive 8×*
+> is accepted as measured: the band held, the CAD identities held, and the
+> outside-tag-3 change was 1.9%; a thicker transition would buy cells, not
+> information. Step 3f's expectation is re-recorded from 3f₀'s measurement
+> — **2 746** phantom cells, 120 499 total — and no field parameter moves.
+> *(3) Step 3f's anchor (ii) is sharpened, not loosened:* the weekly's
+> "residual ≤ 18.7238%" compared two different meshes' primal fields and is
+> not a theorem; the theorem is the same-mesh best-approximation inequality
+> (restricted residual ≤ the global fit's residual on the *new* mesh), which
+> is what is asserted, with the 18.7238% comparison printed.
+>
+> **Step 3g scoped 2026-09-02 10:30 review — the integral-form SAR
+> identities, off the primal field, no estimator.** Let the coil axis be
+> `z` and `θ_j = jπ/2`. Define the smooth azimuthal partition of unity
+> `w_j(x) = ((c_j + √(c_j² + ε²))/2)²` with
+> `c_j = (x cos θ_j + y sin θ_j)/√(x² + y² + ε²)`, `ε = 1e-9 m` — at each
+> point only two adjacent `w_j` are non-zero and they sum to
+> `cos² + sin² = 1`, so `Σ_j w_j = 1` identically and `w_{j+1}(x) =
+> w_j(R⁻¹x)` exactly under the 90° rotation `R` (the regularised-`sqrt`
+> form exists because `ufl.max_value` is the `OPS-22` complex-build trap).
+> Read `P_j^{(k)} = ½ ∫_{dx(3)} σ w_j |E^{(k)}|² dx` for the four single
+> drives `k` and the four quadrants `j` — sixteen cell integrals of the
+> **primal** N1curl `E`, `assemble_scalar` reduced with `MPI.SUM`,
+> `quadrature_degree` pinned — plus the same four integrals for the
+> step-2 quadrature drive. **Anchors, asserted:** (i) the partition
+> identity `Σ_j P_j^{(k)} = P_phantom^{(k)}` at rtol 1e-10 for every drive,
+> with the gate-(i) drive's total reproducing the record **5.637745667e-08
+> W** at `CG1_RECORD_RTOL` — an exact identity of the construction, so a
+> miss is a defect in the integrals; (ii) the negative control — pairing
+> quadrant `j` under drive `k` with quadrant `j+2` (180°) under drive `k+1`
+> — reads *strictly larger* than the C4 pairing `j+1` for every `k`
+> (an ordering, no factor: nobody has measured this ceiling), ratio
+> printed. **Printed, not gated, verdict pre-registered:** the twelve C4
+> pairs `|P_{j+1}^{(k+1)} − P_j^{(k)}| / P_j^{(k)}` (rotation sense taken
+> from the pairing that made `test_birdcage_sar_map`'s `|B₁⁺|` gate green,
+> never re-derived in-slot) and the quadrature drive's four-quadrant
+> spread: **(a)** all ≤ 5% ⇒ the integral construction is the gateable one
+> and a review registers the first coil-driven SAR gate on it; **(b)**
+> between 5% and the pointwise primal 25–41% ⇒ report; **(c)** at or above
+> the pointwise readings ⇒ the sample set was not the mechanism and the
+> phantom's `h` is the last candidate standing (3f decides). Standard,
+> `-n 2` complex, four solves and no mass solves ⇒ ≈ 100–125 s (3e′'s 125
+> s carried six mass solves), `timeout -k 30 600`; new module
+> `tests/validation/test_birdcage_sar_integral.py` importing the sweep
+> builder, so its window can exit 0 beside the five primal reds. Scope:
+> C4 only, no mirror identity, no band, no gate, no SAR claim, `WF-6`
+> stays 🟡. Negative result: journal the verdict here and in the
+> known-issues step-3d row, keep every assert, stop.
+>
 > **Rulings on the two rungs the 10:30 review carried to this weekly:** the
 > *absolute-convergence rung* (an h-ladder for the `|B₁⁺|` map itself) is
 > **deferred behind step 3f** — it turns the same knob, and 3f's anchor (i)
@@ -5862,6 +5929,7 @@ demonstrates a **gated** capability from an angle no existing example covers.
 | `EX-38` | `\|B₁⁺\|` map of the loaded 4-leg birdcage at 10 MHz into ParaView (`WF-6` step 1's newly gated capability, 2026-08-30: the CG1-projected `\|B₁⁺\|` field under gates (i)/(ii) — no example writes a B₁⁺ field, `ports:4`/`ports:5` stop at S-matrices; the output-quantity angle; commissioned 2026-08-30 18:00 review, §5.4 ramp) | ✅ *(2026-08-31, 15:00 slot — `ports:6` green in 63 s: gate (i) 9.795751117e-03 vs record to 1.195e-08, CG1 C4 covariance 2.1870% vs the 5% band and the record to 1.643e-05, DG0 control 8.6516% to 3.227e-06, 51/51 valid, cell ratio 1.000000)* | standard (≈ 70 s) |
 | `EX-39` | Quadrature-driven birdcage: co- and counter-rotating `\|B₁⁺\|` / `\|B₁⁻\|` maps at 10 MHz into ParaView (`WF-6` step 2's newly gated capability, 2026-08-31: exact superposition of the four single-drive fields with `e^{∓jkπ/2}` phases, C4-invariance and the mirror identity at the CG1 floor — the **drive** angle: no example superposes ports or shows the two rotating senses side by side; `EX-38` is the single-drive map; commissioned 2026-08-31 03:00 review, §5.4 ramp) | ✅ *(2026-08-31, 16:30 slot — `ports:7` green in 81 s: identity (a) 0.9818% and (b) 0.8087% vs the 5% band and step 2's records to 9.619e-06 / 3.585e-05, mis-paired control 95.1975% at 118× identity (b), gate (i) 9.795751117e-03 to 1.195e-08, 51/51 valid, cell ratio 1.000000)* | standard (≈ 100 s) |
 | `EX-41` | **`mesh:6` and `mesh:7` get a footered run on the 0.11 image** — their newest log (`20260901T050408Z_EX-36-leg-mesh-b.log`) is the orphaned footerless window the 00:00 slot's executor left running; both printed "All identities hold" inside it (58.6 s / 94.8 s) but §4 wants a footer and an elapsed time, and the last footered run is `20260825T213323Z_EX-30-mesh-run-6to7.log`. One `example-runner` window, `-e mesh:6,mesh:7 -t 400`, anchors = each example's own identity asserts + `mesh:7`'s 12-port dual-family record reproduced to the digit; census `exit != 1`. Standard. Opened 2026-09-02 weekly review (examples-health pass) | ⬜ | standard |
+| `EX-42` | **`mat:1` prints the finite-wire-corrected Dodd–Deeds beside the filament form and the FEM ΔR** — `MAT-8` ✅ 2026-09-02 gated `utils/dodd_deeds.coil_impedance_change_finite_wire`, and no example shows it: `examples/materials/` `mat:1` (the `MAT-6` fixture, ΔR 1.5838% vs the filament form) is the one place the corrected column belongs, and the sign matters (the term *raises* the closed form; the refined FEM sits below it). Executor `example-runner`. Add one column and two guide sentences: the finite-wire closed form at the fixture's `r_wire = 0.0025`, the FEM ΔR's deviation from **both** forms, and the correction itself. **Anchors (asserted in-script):** the correction reproduces `MAT-8`'s record **+0.115237%** on ΔR / **+0.144814%** on ΔX at rtol 1e-6 (same function, same inputs — a reproduction, so a miss is a wiring defect); the existing 1.5838% filament deviation record unmoved; census `exit != 1` read past the known `COMPARISON_private.md` line until `OPS-32` lands. **Negative control:** the column at `r_wire = 0` equals the filament column to 1e-12 (`MAT-8` measured 1.785e-16). Cost: `mat:1` ran inside a 73 s three-example window (`20260901T140821Z_EX-36-leg-rootmrimat-d.log`) ⇒ **≈ 60 s**, `./run_examples.sh mat:1 -t 400`, `-n 2` complex, foreground. Scope: an output column and a record; no band, no gate, `MAT-6` stays at 1.58% until step 11. Negative result: a record not reproducing is a wiring defect — journal, stop. Opened 2026-09-02 10:30 review | ⬜ | standard |
 | `EX-40` | `\|B₁⁺\|` maps at 64 and 128 MHz — the Larmor frequency ladder in ParaView (`WF-6` step 2b's newly gated capability, 2026-08-31: the five identities hold at 64/128 MHz on one mesh at 21.89 / 12.50 phantom cells/λ — the **frequency** angle: `EX-38`/`EX-39` are 10 MHz only, `EX-34` runs the ladder but stops at S-matrices; commissioned 2026-08-31 10:30 review, §5.4 ramp; **queued 18:00 review, §9 item 2**) | ✅ *(2026-08-31 21:00 slot, `20260901T020415Z_EX-40.log`, Status 0, **113 s** at `-n 2` — every anchor met on the first run: gate (i) 9.5231e-03 / 9.2445e-03 reproducing step 2b to 4.4e-08 / 5.4e-08; gate (ii) 2.2187% / 2.1315% inside the 5% band, records to 1.1e-05 / 1.8e-06; the mis-rotated P3@+90° control 24.7535% / 25.2589% outside it, 11.2× / 11.9× separation; cells/λ 21.8936 / 12.5024 above the imported floor of 10; 51/51 valid; one mesh, ratio 1.000000, `reused_mesh`)* | standard (≈ 130 s; measured 113 s) |
 
 **`EX-26` — Poynting power-balance audit** ✅ *(2026-08-20, 12:00 slot; commissioned 2026-08-20 03:00 review, §5.4 ramp on `POST-5` step 4; audited COMPLIANT 2026-08-21 18:00 review)*. `examples/time_harmonic/08_poynting_power_balance.py` + same-stem guide, `th:8`. **Closed as written, both fixtures on one run, no band moved.** Driven cylinder three-term **16.7465%** inside the imported `POYNTING_IMBALANCE_MAX` = 25%, two-term 116.7465% asserted to *miss* (inverted control); `TH-6` plane wave source-free **8.185716%**, legs 8.1205% / 0.0711% inside `POST5_STEP3_LEG_BAND` = 10%; J = 0 source term `== 0.0` W with 7 other keys bit-identical; σ-blind residual 83.2535% = **4.97×** (floor 3.0×, ceiling 5.97×); impressed-source term = 100.0% of the largest term. All 8 records inside a 1% band, worst drift 3.00e-04. Restated with provenance: `TH6_RECORD_IMBALANCE` = 0.08185716, `TH6_RECORD_FLUX_ERROR` = 0.081205, `TH6_RECORD_DISSIPATED_ERROR` = 0.000711, `TH6_CELLS` = 10368. Two combined XDMFs (`E` CG1; `B` and `½Re(E×H̄)` as DG0 — honest resolution of a degree-1 `curl E`, faceted in ParaView by choice). 1 405 / 10 368 cells, 4.7 s in-script, 8 s harness at `-n 2`.
@@ -7136,104 +7204,103 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed **2026-09-02, 03:00 review**. Interval (since the 18:00
-review): **four implementer slots scheduled, two landed, two died at
-launch.** 19:30 `WF-6` step 3e (122 s): the restricted `E` estimator
-packaged as `post.project_to_cg1_restricted`, every step-3d anchor
-reproduced through it to every printed digit (18.7238% vs the same-run
-global fit's 1876.1871%, separation 100.20× against the 50× floor;
-`20260902T003813Z_WF-6-step3e-table.log`, `5 failed, 69 passed` / Status
-1). 21:00 `OPS-30` (12 + 37 s): the two filed `scripts/probes/` 0.11
-survivors migrated, count identity in both directions, the pin
-strengthened. **22:30 and 00:00 never ran** — both launchers died with
-`OAuth session expired and could not be refreshed`
-(`logs/automation/20260902T033001Z_implementer.log`,
-`…T050001Z_implementer.log`, 73 bytes each), as did the 02:15 Wednesday
-weekly, which the human operator then ran interactively (`f9462f0` …
-`944be5a`) and which is the source of every new §7 anchor this queue
-draws on. The operator also landed `ANS-1`'s AED half (`14305c5`,
-numbers held privately, adjudicated AGREE by the weekly). Tree clean at
-`944be5a`, no `attempt/*`, no `recovered/*`, container Up 6 days.
+Last reviewed **2026-09-02, 10:30 review**. Interval (since the 03:00
+review): **four implementer slots scheduled, four landed, four green on
+the first run.** 04:30 `OPS-31` (235 + 1 s, `record-reconciler`): the
+`ports:3` narrative re-recorded to the 0.11 ladder 7.7431 → 1.0986 →
+1.9222% (`20260902T093147Z_OPS-31.log:2243–2246`), bands untouched. 06:00
+`WF-6` step 3e′ (125 s): the CG2-restricted `E` is strictly better in its
+own norm (14.4724% vs 18.7238%) and reproduces `x² ê_x` to 1.5e-12 where
+CG1 left 6.7e-2 — **and the five SAR identities got worse** (19.35 /
+17.21 / 16.07 / 14.41 / 11.32% vs CG1's 8.29–6.12%), so clause (γ)
+printed with its own stated cause excluded
+(`20260902T110503Z_WF-6-step3e-prime.log`, `5 failed, 82 passed` /
+Status 1). 07:30 `MAT-8` (4 s): the finite-wire correction to Dodd–Deeds
+is **+0.115237% on ΔR** at the `MAT-6` fixture, filament limit 2.2e-10,
+PEC limit 5.8e-8 (`20260902T123618Z_MAT-8.log:42–91`). 09:00 `WF-6` step
+3f₀ (86 s): `phantom_resolution` on `birdcage_port_domain`, the `None`
+path an exact no-op (116 085 / 537 at 0.000e+00), the 0.0075 rung
+growing the phantom 5.1136× for +4 414 cells
+(`20260902T140410Z_WF-6-step3f0.log:13717–13721`). Tree clean at
+`e856e60`, no `attempt/*`, no `recovered/*`, container Up 6 days.
 
-**Audit (§4).** Two chunks changed to ✅ this interval, both delegated to
-the `auditor` and both re-traced by the review itself per the expiring
-re-verification clause. **`OPS-30`** at `799f9b5`: PASS on seven checks,
-**DEMOTE on tier honesty** — the closing window measured **37 s**
-(`20260902T020238Z_OPS-30.log:133`) against the 30 s smoke ceiling the
-row declared. The review's ruling: the label was the 18:00 review's own
-scoping error (it wrote "smoke" beside `timeout -k 30 120` and "well
-under 60 s"), no wrapped ceiling was exceeded, and the `OPS-27` precedent
-re-tiered rather than demoted, so **the row is re-tiered to standard and
-stays ✅** with the audit note in §7; the numbers re-traced are
-`20260902T020122Z_OPS-30.log:37–38` (`violations=2`,
-`SURVIVOR_STATUS=1`), `:60` (177 / 484 / 30, `violations=0`), `:65`
-(12 s) and `…020238Z_OPS-30.log:35–36` (`violations=0`,
-`SURVIVOR_STATUS=0`), `:58`, `:129` (`3 passed`), `:133` (37 s).
-**`TH-12`** at `1939a63` (the weekly's ruling closure, 🟡 → ✅ on the
-re-affirmed production-order clause): **PASS** — the closing commit
-touches only `PROJECT_PLAN.md`, every step's log carries a footer, and
-the review re-traced step 1's sphere line itself
-(`20260818T110442Z_TH-12-step1-sphere-degree2-rss.log:252`: 5 866 cells,
-39 634 DOFs, relL2 0.1405%, power error 0.0058%, 4.03 s solve; footer
-Status 0 / 7 s). The two degree-2 *coil* identity reds stay open in
-known-issues as the re-opening condition, exactly as the row says.
-**Nothing is demoted.** `WF-6` stays 🟡 (step 3e packaged an estimator
-and registered no gate).
+**Audit (§4).** Two chunks and one step changed to ✅ this interval; each
+went to an `auditor` and one digit per report was re-traced by the
+review itself (the clause expires 09-03). **`OPS-31`** at `a30eaba`:
+PASS on seven checks, **DEMOTE on tier honesty** — 235 s
+(`20260902T093147Z_OPS-31.log:2290`, re-read by the review) under a
+"standard" label; no wrapped ceiling exceeded (`-t 400`), so on the
+`OPS-27` / `OPS-30` precedent **the row is re-tiered to heavy and stays
+✅**. Its three flags are ruled in the §7 row: the item's pre-authorised
+figures override the reconciler's cell-count drift stop; the census
+`dead=1` is a checker-scope defect (it scans the gitignored
+`COMPARISON_private.md`, `…094305Z_OPS-31.log:36`) — known-issues entry,
+fix folded into `OPS-32`. **`MAT-8`** at `90c3de5`: **PASS** on all
+eight (review re-read `20260902T123618Z_MAT-8.log:71–72`); both scoping
+deviations **ratified** as sharper anchors, and the slot's "nearer 0.17%"
+reading is **corrected in sign** — step 8's refined FEM is *below* the
+filament form, the term raises it, so the corrected residual is ≈
+−0.40%; §2.1 and `MAT-6` step 11 carry that. **`WF-6` step 3f₀** at
+`d5f007d`: **PASS** (review re-read `…140410Z_WF-6-step3f0.log:13721`,
+5.1136× / 1.9083%); the 5.11× growth is accepted as measured. **Nothing
+is demoted.** `WF-6` stays 🟡 — 3e′ and 3f₀ registered no gate.
 
-**Plan work this review.** (1) **`WF-6` step 3f is not queueable as the
-weekly wrote it**: `birdcage_port_domain` has no `phantom_resolution`
-parameter — that keyword belongs to the coil+phantom family's
-resolution policy — and the four-port sweep reaches the mesh only through
-`tests/mesh/test_birdcage_port_sheets._build`, which passes two module
-constants. The rubric says an item that cannot state its anchor is not
-ready, and writing the anchor is the better item: **step 3f₀** (the knob,
-mesh-only, with the no-op control as anchor) is scoped in the §7 step-3f
-annotation and queued as item 4; step 3f proper is item 7, serial on 3f₀
-and 3e′. (2) The 19:30 slot reported that implementer-run.md's
-`git commit -F <file>` guidance is unusable in scheduled sessions (Write
-denied for `$TMPDIR` and `.git/`); **corrected in that file** to the
-literal multi-line `-m` route both slots actually used. (3) The queue
-below is rebuilt from the weekly's anchors: eight items, six of them
-scoped by the weekly, each checked against the code before listing.
+**Plan work this review.** (1) **Step 3e′'s (γ) adjudicated** in the §7
+`WF-6` annotation: the projector and the estimator degree are both
+excluded, so 3f runs anyway (unblocked on both halves, queued first) and
+is read knowing a better-resolved `E` can raise these numbers; the
+identity-from-a-fitted-field construction gets its own rung, **step 3g**
+— the same C4 identities as *integrals* of the primal `σ|E|²` over a
+smooth azimuthal partition of unity, whose partition sum is an exact
+anchor and which needs no estimator at all (item 4, independent of 3f).
+(2) Step 3f's anchor (ii) sharpened to the same-mesh theorem; its
+phantom-cell expectation re-recorded from 3f₀. (3) `OPS-32` gains the
+census-scope fix (skip gitignored `*_private.md`), and until it lands
+every "census `exit != 1`" anchor reads past the one known dead line. (4)
+`EX-42` opened: `mat:1` prints the finite-wire-corrected closed form
+beside the filament and the FEM — `MAT-8`'s newly gated quantity from
+the one angle no example shows (item 6, spare). (5) The four done items
+are removed from the list below; their records live in the §7 rows.
 
-**Automation health.** 2 of 4 slots fired; both losses launcher-side
-(expired OAuth login), none on limits, and the login is restored — this
-review is the first scheduled session to run since. Foreground-executor
-rule 5 for 5 since written. No docker-socket denial this interval (3 of
-22 slots overall). The tracked `scripts/automation/crontab` header still
-says "Sunday 02:15" against the live `15 2 * * 0,3` (item 1's
-collateral). **Nothing is waiting on the human operator** beyond the
-standing `ANS-4` / `ANS-3` replication requests.
+**Automation health.** 4 of 4 slots fired, all four landed green, none
+parked; every slot journaled and marked its own item done.
+Foreground-executor rule 9 for 9 since written. No docker-socket denial
+this interval (3 of 26 slots overall). Tier labels drifted twice in two
+reviews (`OPS-30` 37 s under smoke, `OPS-31` 235 s under standard) — both
+were the scoping review's estimate, not the slot's; items below declare
+the tier the *ceiling* implies, and the slot declares from the footer.
+The tracked crontab already carries `0,3` (`6501ad9`). **Nothing is
+waiting on the human operator** beyond the standing `ANS-4` / `ANS-3`
+replication requests.
 
-**Example chunk (§5.4).** `TH-12`'s closure is a ruling on steps
-measured 08-18/19, and
-`examples/time_harmonic/07_element_order_lossy_sphere.py` already
-demonstrates degree 2 on the sphere; `OPS-30` closed a migration gap, not
-a physics gate. **No new example chunk.**
+**Example chunk (§5.4).** `MAT-8` closed a quantitative gate on a new
+output quantity — the finite-wire-corrected closed form — that no example
+prints; `mat:1` shows the filament form only. **`EX-42` opened** (§7 EX
+table, item 6). `OPS-31` and step 3f₀ gated no new capability.
 
 **Residual `main` reds at `-n 2`: 8 deliberate/known**, unchanged — the
 two entry-3 names, `test_birdcage_volumes_partition_the_box`, and the five
-`WF-6` step-3 SAR asserts (step 3e kept all five red to the digit,
-`20260902T003813Z_WF-6-step3e-table.log:4965–5070`). Plus the two
-degree-2 coil identity tests at 1e-9, `-n 8` only. §2 is unchanged this
-interval.
+`WF-6` step-3 SAR asserts (step 3e′ kept all five red to the digit,
+`20260902T110503Z_WF-6-step3e-prime.log`). Plus the two degree-2 coil
+identity tests at 1e-9, `-n 8` only. The example-corpus census is
+`exit=1` on `main` for the checker-scope reason above (known-issues).
+**§2.1 changed this interval**: the `MAT-6` bullet now carries the
+finite-wire floor.
 
-**Eight items, independent unless the item says otherwise.** Items 1–6
-touch disjoint files: 1 example prose + guide + two test docstrings; 2 and
-7 the SAR test module (7 must re-read it as 2 leaves it); 3 a new closed
-form in `utils/dodd_deeds.py` and its test; 4 `io/mesh.py`, the port-sheet
-mesh test and the four-port test's builder; 5 two `ans` example scripts; 6
-logs only. Item 7 is serial on items 2 and 4 (**if either has not landed,
-skip it**); item 8 is the spare and the first heavy item. Deliberately not
-queued: `MAT-6` step 11 (heavy, `-n 8`, 900 s ceiling — the
-`record-reconciler` half and the fixture half want one slot each and a
-review to split them), `GEO-25` (three `mesh-probe` windows predicted
-5 + 12 + 30 min — the third alone breaches the 20-minute command ceiling,
-so the weekly should re-rung it at 0.07 / 0.10 / 0.125 or split the
-0.15 m rung into its own slot before it is listed), `ANS-2`, the
-absolute-convergence rung (deferred behind 3f by the weekly), `TH-13`
-steps as written, and any re-registration of the SAR band (a review's,
-and only after 3f prints (a)).
+**Six items, independent — no item depends on another.** Files are
+disjoint: 1 the four-port SAR test module (its 3f section); 2 two `ans`
+example scripts and the docrefs checker; 3 logs only; 4 a new SAR test
+module; 5 a new `PORT-13` test; 6 `mat:1` and its guide. Item 5 is the
+first heavy item; item 6 is the spare. Deliberately not queued: `MAT-6`
+step 11 (heavy, `-n 8`, 900 s ceiling — the `record-reconciler` half and
+the fixture half want one slot each and a review to split them; its
+framing now carries the finite-wire sign), `GEO-25` (three `mesh-probe`
+windows predicted 5 + 12 + 30 min — the third alone breaches the
+20-minute command ceiling, so the weekly should re-rung it at 0.07 /
+0.10 / 0.125 or split the 0.15 m rung into its own slot before it is
+listed), `ANS-2`, the absolute-convergence rung (deferred behind 3f by
+the weekly), `TH-13` steps as written, and any re-registration of the
+SAR band (a review's, and only after 3f or 3g prints (a)).
 
 **⚠️ Standing constraint on the compose allow — read before editing that
 file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
@@ -7263,263 +7330,66 @@ stays the fallback. **Allowlist trap (12:00 slot):** the harness entry is
 the repo-relative `scripts/testing/run_and_log.sh *` — an absolute path is
 denied; write it relative.
 
-1. **`OPS-31` ✅ DONE 2026-09-02 — re-record the `ports:3` cross-route narrative to
-   the 0.11 image** (standard, complex, `-n 2`, host runner; independent; scoped
-   this review — see the §7 row). Executor: **`record-reconciler`**, under
-   the (1*) licence: version-tagged environment-dependent records only,
-   **never a band, tolerance or gate**.
-   **The finding, already measured and journaled** by the 12:00 slot and
-   re-verified by this review from
-   `20260901T170411Z_EX-36-leg-portsans-b.log:2247–2250`: the executed
-   cross-route ladder is **`f = 1.000` → 7.7431% MISS, `f = 0.735` →
-   1.0986% INSIDE, `f = 0.500` → 1.9222% INSIDE**, and the asserted
-   constant is `STEP1_CROSS_ROUTE_RECORD = 0.077431`
-   (`tests/validation/test_port_lumped_two_torus.py:183`, already carrying
-   the `# (v0.7.2 read 0.077095)` tag). The **narrative** in
-   `examples/ports/03_lumped_sheet_port_widths.py:20,22`, its guide
-   (`…03_lumped_sheet_port_widths.md:30,62,63,65,125,155,171`) and the test
-   docstring at `test_port_lumped_two_torus.py:735` still quote the v0.7.2
-   triple **`7.7095% → 3.6730% → 1.8333%`** — including for the one rung
-   that *is* asserted, which reads 7.7431%. **No assert reads the stale
-   triple and nothing is red**; this is the `OPS-27` stale-record class in
-   prose.
-   **Anchor (asserted, by re-running the example):** `ports:3` reproduces
-   `STEP1_CROSS_ROUTE_RECORD` **0.077431** at `REPRODUCTION_BAND` 1e-4 and
-   prints the three-rung ladder **7.7431 / 1.0986 / 1.9222%** with the
-   `f = 0.5` gate INSIDE the unmoved 5% `CROSS_ROUTE_BAND` and the
-   `f = 1.0` control asserted to MISS it. The re-recorded prose must quote
-   those three figures and no others. **Second anchor:** the corpus census
-   stays **`dead=0 guide=0 stale=0 exit=0`** — item 1 of the previous
-   queue reached it for the first time since the 08-28 rename and a prose
-   edit must not break it (a guide edit can orphan a reference).
-   **Negative control:** the ladder is not a smooth function of width —
-   `f = 0.735` (1.0986%) sits **below** `f = 0.5` (1.9222%), which is the
-   non-monotonicity the old narrative's `7.7095 → 3.6730 → 1.8333`
-   monotone triple silently misrepresented. If a re-run returns a monotone
-   ladder, the fixture moved and that is a **finding, not a re-record** —
-   stop and journal.
-   **Also re-record, in the same commit:** `STEP2B_CROSS_ROUTE_AT_HALF_
-   WIDTH = 0.018333` (`tests/validation/test_port_lumped_sheet_sweep.py:88`)
-   is commented "for the printed comparison only (the drive differs)" and
-   feeds only step 2c's descriptive printout — re-record it **with its
-   v0.7.2 tag preserved** in the same `# (v0.7.2 read …)` style the
-   `STEP1_CROSS_ROUTE_RECORD` site already uses, or leave it and say in the
-   commit why, but do not leave it undecided. And fix the stale header
-   comment in `scripts/automation/crontab` (it still says "Sunday 02:15"
-   where the file's own cron line and the live spool both read
-   `15 2 * * 0,3`) — one line, no compute.
-   **Tier / ranks / cost:** standard, host runner
-   (`./run_examples.sh ports:3`), `-t 400`; the same window measured
-   **228 s** in the `EX-36` leg, which is the largest of that leg's three —
-   budget one window and nothing else.
-   **Traps already paid for:** the host runner intermittently fails with
-   `permission denied … /var/run/docker.sock` (three occurrences in 17
-   slots) — if it does, run the inner command verbatim through
-   `run_and_log.sh` and journal the denial; do not spend the slot on it.
-   The `EX-15` guide headings must remain *contained verbatim* ("How to run
-   it", "How to analyze it, step by step") — `EX-38` paid a census for
-   this. Run foreground with Bash timeout 660000 ms; the container-side
-   `timeout` needs `-k 30`.
-   **Scope — what this does NOT touch:** the **dated §7 history** of
-   `PORT-9` step 2 / 2b keeps its v0.7.2 figures **as history** — those are
-   true statements about what was measured on that image and re-writing
-   them would destroy the record. Only *forward-looking* sites move: the
-   example script, its guide, the test docstrings, and this §9 preamble's
-   quotation (already struck by this review). No band, no gate, no
-   tolerance, no `PORT-9` status.
-   **Negative result:** a rung not reproducing at 1e-4 is a **fixture
-   finding** — known-issues entry, no prose re-recorded, stop.
+1. **`WF-6` step 3f — the finer-phantom rung** (standard, `-n 2` complex,
+   `main`; independent — both former prerequisites landed: 3e′ at
+   `82ba0b7`, 3f₀ at `d5f007d`; scoped 2026-09-02 weekly, re-read by the
+   10:30 review after 3e′ — see the §7 rulings blockquote). Run the
+   four-drive sweep through `build_four_port_sweep(phantom_resolution=
+   0.0075)` — 3f₀ measured that mesh at **120 499 cells, 2 746 phantom
+   cells** (5.11× the 537, +4 414 overall; `20260902T140410Z_WF-6-
+   step3f0.log:13720–13721`) — and read the five SAR identities off
+   `post.project_to_cg1_restricted` (degree 1) on it.
+   **Anchors (asserted):** (i) the coil-side records must not move — gate
+   (i) power accounting inside the unmoved 1e-2 band and the `|B₁⁺|` C4
+   identities within **0.5 pp** of their 10 MHz records (2.1870 / 2.1146 /
+   1.8911%) on the new mesh; a larger move is a fixture finding; (ii) the
+   same-mesh best-approximation inequality — the restricted residual
+   `‖P_Ω E − E‖_Ω/‖E‖_Ω` ≤ the global `post.project_to_cg1` residual on
+   the **new** mesh (the theorem; the coarse-mesh 18.7238% is *printed*
+   beside it, not asserted) — and the `a + b × x` control ≤ 1e-10; (iii)
+   the cell counts reproduce 3f₀'s 120 499 / 2 746 at exact equality (the
+   knob reached the constructor).
+   **Printed, not gated, verdict pre-registered by the weekly:** the five
+   identities — **(a)** all ≤ 5% ⇒ (c) confirmed and a *review* may then
+   register the first coil-driven SAR gate; **(b)** they fall but stay >
+   5% ⇒ report the ratio (one halving should roughly quarter a
+   second-order residual, 6–9.5% → 1.5–2.5%); **(c)** unchanged or
+   **higher** ⇒ neither degree nor `h`; 3e′ showed a better-resolved `E`
+   can *raise* these numbers, so a rise is (c), not a defect — say which.
+   **Negative control:** both step-3b controls asserted to **survive** on
+   the new mesh (CG1 restricted read 123.6255% / 333.0778% on the coarse
+   one).
+   **Tier / ranks / cost:** standard, `-n 2` complex with
+   `tests/environment` first, `timeout -k 30 600`; `PORT-11` step 1 priced
+   116 k cells at ≈ 25 s/solve at `-n 2`, so four solves + six restricted
+   mass solves on 120 k cells ⇒ **≈ 150–200 s**. If the first window
+   returns 124, do not raise the ceiling — drop to `-n 4` once and, if
+   that overruns too, stop and report the price.
+   **Traps already paid for:** everything in step 3e's list; the
+   `reuse=` path must **not** be used across resolutions (it hands back
+   the coarse mesh); ghost-inclusive pinning at the new dof count;
+   `phantom_resolution` reaches the constructor through
+   `build_four_port_sweep` (3f₀ threaded it — check the signature, never
+   monkeypatch constants); a killed compile leaves a 0-byte FFCx stub.
+   **Scope:** one rung on F-small at 10 MHz. No band moves in-slot, no
+   gate is registered whatever prints, `WF-6` stays 🟡; the printed verdict
+   is the deliverable and the weekly's watch condition ("3f printed by
+   09-06").
+   **Negative result:** journal the verdict in the §7 step-3f bullet and
+   the step-3d known-issues "Resolves with" row, keep every assert, stop.
 
-2. **`WF-6` step 3e′ ✅ DONE 2026-09-02 (06:00 slot, `82ba0b7`) — the
-   estimator-degree rung: the same five SAR
-   identities off a **CG2**-restricted `E`** (standard, complex, `-n 2`,
-   `main`; independent of every other item; scoped by the 18:00 review —
-   see the §7 step 3e′ bullet. **Step 3e landed at `e949dfa`:** import
-   `post.project_to_cg1_restricted` with `return_diagnostics=True` for the
-   CG1 column. The packaged helper builds a `("Lagrange", 1, (3,))` space
-   internally and takes no degree argument — add a keyword-only
-   `degree: int = 1` (default unchanged, so no CG1 caller or record moves)
-   rather than a second copy of the helper, and build the CG2 bc from a
-   zero `Function` on the CG2 space). Verdict (c) attributes step 3d's residual **6.1–9.5%** to
-   the fixture's ~1 cm phantom cells reading a quadratic-in-`E` map, and
-   nothing on this fixture has separated **estimator degree** from **mesh
-   h**. This separates them for six mass solves and **no curl-curl solve**:
-   the same four solved fields, the same 51 points, the same two controls,
-   projected onto `("Lagrange", 2, (3,))` restricted to `dx(3)` by the
-   identical pinning. It is a different axis from the weekly's finer-*mesh*
-   rung and does not pre-empt it.
-   **Anchors (asserted).** (i) **A theorem about the code, so a violation
-   is a bug, not physics:** `CG1³ ⊂ CG2³` on the same mesh, so the
-   restricted best-approximation residual **cannot increase** with degree —
-   assert `‖P²_Ω E − E‖_Ω/‖E‖_Ω` **≤ 18.7238%** (step 3d's CG1 figure,
-   imported, not re-typed). (ii) **The control's control flips, and this is
-   the sharp one:** `x² ê_x` lies in `CG2³` **exactly**, so where the CG1
-   restriction left **3.741459e-01** the CG2 restriction must reproduce it
-   to **≤ 1e-10** — a pre-registered separation of **nine decades** on the
-   same fixture, and the strongest evidence available that the CG2
-   restriction is assembled correctly. (iii) `a + b × x` still
-   restricted-projects to ≤ 1e-10 (it is in both spaces). (iv) Pinned dofs
-   exactly **0.000e+00** over owned **and** ghost blocks at `-n 2`; report
-   the free/owned block counts (CG1 read 170 / 21 397 — CG2's will be much
-   larger and is **reported, not asserted**, since no record exists).
-   (v) All six CG2 restricted solves `converged_reason` **2**; iteration
-   count reported, not gated. (vi) Every CG1 record of step 3d reproduced
-   unchanged in the same run at `CG1_RECORD_RTOL` — the "nothing moved"
-   anchor.
-   **Printed, NOT gated — with the verdict pre-registered here, before the
-   run:** the five CG2 identity readings beside CG1's **8.2868 / 9.4743 /
-   7.3477 / 6.8146 / 6.1185%** and primal's 25.11–40.55%, plus the CG2
-   restricted phantom power against the primal record 5.637745667e-08 W
-   (CG1 read −3.51%). **(α)** all five fall inside 5% ⇒ the residual was
-   the *estimator's degree*, verdict (c) is wrong about its cause, and a
-   review — not the slot — re-opens the gate question. **(β)** the five
-   move by less than ~1 pp ⇒ degree is not the mechanism, (c) is
-   corroborated, and the weekly's finer-mesh rung is the remaining
-   candidate; **this is the expected outcome and it is the informative
-   one.** **(γ)** the five get *worse* ⇒ the CG2 restriction is
-   mis-assembled and anchors (i)/(ii) should have caught it — treat as a
-   defect in the step, not a reading about physics.
-   **Negative control:** both step-3b controls re-read on the CG2 column
-   and asserted to **survive** (CG1 restricted read **123.6255%** and
-   **333.0778%**) — a higher-degree fit must not smooth the mis-rotated or
-   the quadrature-vs-single-drive control into the band. A control landing
-   under 5% is itself the finding.
-   **Tier / ranks / cost — costed, and this is the item's main risk.**
-   Standard, `-n 2` complex with `tests/environment` first,
-   `timeout -k 30 600`. Step 3d ran **123 s** with six CG1³ restricted mass
-   solves on 64 191 dofs; `CG2³` on the same 116 085-cell mesh is roughly
-   **8×** the dofs (≈ 500 k), and a mass matrix stays well-conditioned so
-   CG + Jacobi should not blow up in iteration count — expect
-   **≈ 250–400 s**. If the first window returns 124, **do not raise the
-   ceiling**: drop to the four single drives (skip the two projector
-   controls' CG2 solves, keeping anchor (ii) by running it alone) and say
-   so in the journal. If that still overruns, **stop and report the
-   measurement** — a cost wall on the estimator axis is itself a result the
-   weekly needs.
-   **Traps already paid for:** everything in item 1's trap list applies
-   verbatim (blocked-space `locate_dofs_topological` returns block indices;
-   ghost-inclusive complement; rank-local `cell_tags.find` /
-   `assemble_scalar`; unique `petsc_options_prefix`; no `<=` or
-   `ufl.max_value` on complex operands; 0-byte FFCx stubs are a live lock —
-   sweep and delete stubs only, never the cache), plus two of its own: the
-   CG2 space needs its **own** `fem.functionspace` and its **own** zero
-   `Function` for the bc (reusing CG1's silently mis-sizes the pin), and
-   `point_sar` takes `np.real` of each split field — split the CG2 arrays,
-   never hand the complex function twice. Run foreground, Bash timeout
-   660000 ms.
-   **Scope — what this does NOT close:** an estimator-degree comparison on
-   **one** fixture at 10 MHz. No band moves, **no SAR gate is registered**,
-   nothing is re-registered, no homogeneity / absolute / C95.3 claim, the
-   five primal asserts stay exactly as written and red, the module still
-   exits 1, and `WF-6` stays **🟡** whichever of α/β/γ prints. It does not
-   answer the finer-mesh question and must not be journaled as if it had.
-   **Negative result:** the printed verdict **is** the deliverable —
-   journal it in the §7 step-3e′ bullet and the step-3d known-issues
-   "Resolves with" row, keep every assert, stop. Anchor (i) or (ii) failing
-   is a defect in the restriction to journal as such, not physics; a step-3d
-   record not reproducing is a fixture finding, not a rescope.
-
-3. **`MAT-8` ✅ DONE 2026-09-02 (07:30 slot) — the finite-wire correction to
-   the Dodd–Deeds closed form** — record: **+0.115237% on ΔR** at the `MAT-6`
-   fixture (see the §7 row; two scoping deviations flagged there for the
-   review, both forced by measurement).
-   (smoke by content, `-n 1`, real mode, `main`; independent; scoped
-   2026-09-02 weekly — see the §7 row). Add
-   `coil_impedance_change_finite_wire(f, a, h, sigma, r_wire)` to
-   `utils/dodd_deeds.py`: eq. (1) averaged over the uniform-current disc of
-   the wire cross-section (2-D quadrature over lift-off `h ± r` and radius
-   `a ± r`, the module's existing `mutual` kernel). The fixture is `MAT-6`'s
-   5 mm wire: cross-section spanning lift-off 17.5–22.5 mm and radius
-   37.5–42.5 mm, `r/a ≈ 0.06`.
-   **Anchors (asserted):** (i) `r_wire → 0` recovers the filament value to
-   **1e-8** relative at three radii 1e-4 / 1e-5 / 1e-6 m; (ii) the
-   perfect-conductor limit of the corrected form equals the disc-averaged
-   image mutual inductance from `utils/analytical.py` to **1e-6** — the same
-   constant-pinning check `MAT-6` step 1 used; (iii) the correction at
-   `r_wire = 0.0025` is **printed and recorded, ungated**, beside the FEM
-   ΔR readings 1.58% (production) / 0.28% (step-8 fixture) — whether it is
-   0.1% or 0.5% is the reading everyone wants.
-   **Negative control:** the correction decays with lift-off faster than
-   `(r/a)²` — assert monotone decrease of `|ΔR_wire − ΔR_filament|/ΔR_filament`
-   across three lift-offs (20, 40, 80 mm); a non-monotone sequence is a
-   quadrature defect, not physics.
-   **Tier / ranks / cost:** the arithmetic is < 10 s, but a pytest window on
-   this image carries ~10–20 s of import overhead — declare **standard**
-   and `timeout -k 30 120`, and write the §7 tier from the footer, not the
-   estimate (the `OPS-30` lesson: a 37 s window under a "smoke" label cost an
-   audit DEMOTE and a re-tier). `-n 1`, no complex mode needed (real closed
-   form).
-   **Traps already paid for:** `scipy.integrate.dblquad` on the `mutual`
-   kernel converges slowly near the disc edge — use a fixed Gauss–Legendre
-   product rule (≥ 16 × 16) and assert the two rule orders agree to 1e-9,
-   which is also anchor (i)'s convergence evidence; pytest captures prints
-   without `-s`; run through `run_and_log.sh` (`tests/validation` path, no
-   `tests/environment` needed in real mode).
-   **Scope:** a closed-form term and a record. No gate re-registers on it,
-   no band moves, `MAT-6` stays ✅ at its 1.58% headline until step 11
-   lands; the `ANS-1` private ruling is not touched.
-   **Negative result:** a limit not recovering is a bug in the quadrature —
-   journal in the §7 `MAT-8` row and known-issues, keep the asserts, stop.
-
-4. **`WF-6` step 3f₀ ✅ DONE 2026-09-02 (09:00 slot, `d5f007d`) — the
-   phantom-sizing knob on `birdcage_port_domain`** — the no-op control is
-   exact (`None` and `h_p = 0.015` both reproduce 116 085 cells / 537 tag-3
-   cells at 0.000e+00, asserted at integer equality), `h_p = 0.0075` grows
-   the phantom **5.1136×** (band [5, 12]) for **+4 414 cells overall**
-   (116 085 → 120 499) and moves cells outside tag 3 by 1.9083% (ceiling
-   10%); `GEO-18` sheet area 1.120000000e-04 m² ×4 and the `GEO-19`
-   partition 1.000000000000 hold on the refined mesh. Step 3f's mesh price
-   is now measured, inside the weekly's 5–10 k budget — see the §7
-   step-3f annotation, and the growth-factor note for the review.
-   (standard, `-n 2`, **real** mode, `main`; independent — mesh only, no
-   solve; scoped this review, see the §7 step-3f annotation). Add
-   `phantom_resolution: Optional[float] = None` to
-   `MeshGenerator.birdcage_port_domain` (`io/mesh.py:3069`) and to its
-   inner builder (`:3412`): a gmsh `Box` (or `Constant`-over-volume) size
-   field covering the phantom cylinder at `phantom_resolution`, combined
-   with the existing conductor Threshold field through the same `Min`
-   field, `None` meaning "leave the sizing exactly as it is". Thread a
-   `phantom_resolution=None` passthrough onto
-   `tests/mesh/test_birdcage_port_sheets._build` and
-   `tests/validation/test_port_birdcage_four_port.build_four_port_sweep`
-   (additive keywords, the `frequency_hz` / `reuse` precedent).
-   **Anchors (asserted, in a new test beside the port-sheet tests):**
-   (i) **the no-op control is the anchor:** with the parameter absent the
-   default four-port mesh reproduces its record — global cells **116 085**
-   and the phantom's **537** tag-3 cells — at **0.000e+00** relative, so
-   no existing record, gate or example can have moved; (ii) at
-   `phantom_resolution = 0.0075` the tag-3 cell count rises by a factor in
-   **[5, 12]** (the (0.015/0.0075)³ = 8× prediction with a wide band for
-   the size-field transition) and the cells *outside* tag 3 change by
-   **< 10%**; (iii) the scale-free CAD identities already gated —
-   `GEO-18`'s port-sheet area 1.120000000e-04 m² on all four ports and the
-   `GEO-19` volume partition 1.000000000000 — hold on the refined mesh.
-   **Negative control:** `phantom_resolution = 0.015` (equal to the global
-   sizing) must reproduce the default mesh's counts at 0.000e+00 as well —
-   a field that is present but inactive changes nothing; if it changes the
-   count, gmsh is honouring the field's *presence*, and the `None` path is
-   not a true no-op.
-   **Tier / ranks / cost:** standard, `-n 2` real, `timeout -k 30 300`.
-   The default mesh builds in the tens of seconds inside `WF-6`'s 122 s
-   window; three builds (default, 0.0075, 0.015) ⇒ expect **≈ 60–120 s**.
-   **Traps already paid for:** gmsh is serial — build on rank 0 and
-   broadcast exactly as the constructor already does; `cell_tags.values`
-   is rank-local, reduce the tag-3 count with `MPI.SUM` before asserting
-   (this is the defect `-n 2` exists to catch); do not touch
-   `conductor_resolution`'s Threshold (the `GEO-21` 4.8 mm floor ruling);
-   do not change any default; a 0-byte `.c` stub under
-   `/root/.cache/fenics` is a live lock (sweep
-   `find /root/.cache/fenics -name '*.c' -size 0`, delete stubs only).
-   **Scope:** a mesh parameter and its identity test. No solve, no
-   record, no gate, no default moves; `WF-6` stays 🟡; it does not answer
-   the finer-phantom question — that is item 7.
-   **Negative result:** the no-op control failing is a **stop** — journal
-   the cell-count delta in known-issues, revert, and hand the field design
-   back to a review; do not re-record 116 085 to make the parameter land.
-
-5. **`OPS-32` — private-mode comparison writers for `ANS-3` and `ANS-4`**
-   (standard, host runner, `-n 2` complex; independent; scoped 2026-09-02
-   weekly — see the §7 row). Port `ANS-1`'s `aed_results/` reader +
+2. **`OPS-32` — private-mode comparison writers for `ANS-3` and `ANS-4`,
+   plus the census-scope fix** (standard, host runner, `-n 2` complex;
+   independent; scoped 2026-09-02 weekly, clause added 10:30 review — see
+   the §7 row). **First, the checker:** `scripts/testing/
+   check_example_doc_references.py:357` scans every `*.md` under
+   `examples/` including gitignored ones, so `ANS-1`'s untracked
+   `COMPARISON_private.md` reads as a dead reference and the census sits
+   at `dead=1 … exit=1` on `main` (`20260902T094305Z_OPS-31.log:36,46`,
+   known-issues). Skip `*_private.md` in the guide scan; done-when: with
+   that file present the census reads `dead=0`, exits 0 or 2, and the
+   scanned-guide count drops by exactly the number of private files
+   present. **Then** port `ANS-1`'s `aed_results/` reader +
    `private=True` writer pattern (`14305c5`,
    `examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/01_…py`) to
    `03_two_torus_gap_ports_10MHz.py` and
@@ -7561,7 +7431,7 @@ denied; write it relative.
    finding (known-issues, stop); the writer half can still land if the
    control half is the only failure — say which landed.
 
-6. **`EX-41` — `mesh:6` and `mesh:7` get a footered run on the 0.11 image**
+3. **`EX-41` — `mesh:6` and `mesh:7` get a footered run on the 0.11 image**
    (standard, host runner; independent; opened 2026-09-02 weekly — see the
    §7 row). Executor: **`example-runner`**, spawned **foreground** with the
    rule stated in the prompt (a `./run_examples.sh` window still running
@@ -7572,7 +7442,11 @@ denied; write it relative.
    footered run is `20260825T213323Z_EX-30-mesh-run-6to7.log`.
    **Anchors (asserted):** each example's own identity asserts, plus
    `mesh:7`'s 12-port dual-family record reproduced to the digit against
-   that 08-25 footered log; census `exit != 1`.
+   that 08-25 footered log; census `exit != 1` **read past the one known
+   dead line** (`COMPARISON_private.md:6`, a checker-scope defect filed in
+   known-issues and fixed by item 2 — if item 2 has landed, the plain
+   `exit != 1` applies; if the census reports any *other* dead reference,
+   that is a stop).
    **Negative control:** the per-example wall clocks printed inside the
    footerless window (58.6 / 94.8 s) — a footered run far off them is a
    fixture or image change worth a sentence in the journal.
@@ -7587,50 +7461,53 @@ denied; write it relative.
    record is a `record-reconciler`-class finding — known-issues entry,
    stop; do not re-record in this slot.
 
-7. **`WF-6` step 3f — the finer-phantom rung** (standard, `-n 2` complex,
-   `main`; **serial on item 2 (3e′) and item 4 (3f₀) — if either has not
-   landed on `main`, skip this item; if 3e′ printed verdict (α), this item
-   is blocked and the weekly re-plans**; scoped 2026-09-02 weekly, knob
-   corrected by the §7 step-3f annotation). Run the four-drive sweep
-   through `build_four_port_sweep(phantom_resolution=0.0075)` — one
-   halving of the phantom's 1.5 cm cells, ≈ 8× ⇒ ≈ 4 300 phantom cells,
-   +≈ 4 k overall — and read the five SAR identities off the restricted
-   CG1 `E` estimator on that mesh.
-   **Anchors (asserted):** (i) the coil-side records must not move — gate
-   (i) power accounting inside the unmoved 1e-2 band and the `|B₁⁺|` C4
-   identities within **0.5 pp** of their 10 MHz records (2.1870 / 2.1146 /
-   1.8911%) on the new mesh; a larger move is a fixture finding; (ii) the
-   restricted estimator's best-approximation inequality holds with residual
-   **≤ 18.7238%** and the `a + b × x` control ≤ 1e-10 on the new mesh;
-   (iii) the five SAR identities are **printed, not gated**, with the
-   verdict pre-registered by the weekly: **(a)** all five ≤ 5% ⇒ (c)
-   confirmed and a *review* may then register the first coil-driven SAR
-   gate; **(b)** they fall but stay > 5% ⇒ report the ratio (one halving
-   should roughly quarter a second-order residual, 6–9.5% → 1.5–2.5%);
-   **(c)** unchanged ⇒ neither degree nor h, a review re-reads the
-   identities.
-   **Negative control:** both step-3b controls asserted to **survive** on
-   the new mesh (CG1 restricted read 123.6255% / 333.0778% on the coarse
-   one).
-   **Tier / ranks / cost:** standard, `-n 2` complex with
-   `tests/environment` first, `timeout -k 30 600`; `PORT-11` step 1 priced
-   116 k cells at ≈ 25 s/solve at `-n 2`, so four solves + six restricted
-   mass solves on ≈ 120 k cells ⇒ **≈ 150–200 s**. If the first window
-   returns 124, do not raise the ceiling — drop to `-n 4` once and, if
-   that overruns too, stop and report the price.
-   **Traps already paid for:** everything in step 3e's list; the
-   `reuse=` path must **not** be used across resolutions (it would hand
-   back the coarse mesh); ghost-inclusive pinning at the new dof count;
-   `phantom_resolution` reaches the constructor only if item 4 threaded it
-   through `_build` — check the signature, do not monkeypatch constants.
-   **Scope:** one rung on F-small at 10 MHz. No band moves in-slot, no gate
-   is registered whatever prints, `WF-6` stays 🟡; the printed verdict is
-   the deliverable and the weekly's watch condition ("3f printed by
-   09-06").
-   **Negative result:** journal the verdict in the §7 step-3f bullet and
-   the step-3d known-issues "Resolves with" row, keep every assert, stop.
+4. **`WF-6` step 3g — the integral-form SAR identities off the primal
+   field** (standard, `-n 2` complex, `main`; independent of item 1 — it
+   runs on the coarse 116 085-cell mesh; scoped 2026-09-02 10:30 review —
+   see the §7 step-3g blockquote for the construction). New module
+   `tests/validation/test_birdcage_sar_integral.py` importing
+   `build_four_port_sweep` at 10 MHz (default resolution, no
+   `phantom_resolution`). With `θ_j = jπ/2`, `c_j = (x cos θ_j + y sin
+   θ_j)/√(x² + y² + ε²)`, `ε = 1e-9`, and `w_j = ((c_j + √(c_j² +
+   ε²))/2)²`, read `P_j^{(k)} = ½ ∫_{dx(3)} σ w_j |E^{(k)}|²` for the four
+   single drives and the step-2 quadrature drive — twenty cell integrals of
+   the primal N1curl `E`, no projection.
+   **Anchors (asserted):** (i) `Σ_j P_j^{(k)} = P_phantom^{(k)}` at rtol
+   1e-10 for every drive — the partition of unity is exact
+   (`cos² + sin²`), so this is an identity of the construction and a miss
+   is a defect in the integrals; the gate-(i) drive's total reproduces the
+   step-3 record **5.637745667e-08 W** at `CG1_RECORD_RTOL`; (ii) the
+   mis-paired control (quadrant `j` under drive `k` against quadrant
+   `j+2` under drive `k+1`) reads *strictly larger* than the C4 pairing
+   for every `k` — an ordering, not a factor, because nobody has measured
+   this ceiling; print the ratio.
+   **Printed, not gated, verdict pre-registered:** the twelve C4 pairs
+   `|P_{j+1}^{(k+1)} − P_j^{(k)}| / P_j^{(k)}` and the quadrature drive's
+   four-quadrant spread — **(a)** all ≤ 5% ⇒ the integral construction is
+   the gateable one and a *review* registers it; **(b)** between 5% and
+   the pointwise primal 25–41% ⇒ report; **(c)** at or above the pointwise
+   readings ⇒ the sample set was not the mechanism and `h` (item 1)
+   decides.
+   **Tier / ranks / cost:** standard, `-n 2` complex, `tests/environment`
+   first, `timeout -k 30 600`; four solves and **no** mass solves ⇒ ≈
+   100–125 s (3e′ measured 125 s *with* six mass solves).
+   **Traps already paid for:** the rotation sense of the C4 pairing is
+   taken from `test_birdcage_sar_map`'s existing pairing (the one that
+   made the `|B₁⁺|` gate green), never re-derived in-slot; `ufl.max_value`
+   and any ordering comparison on complex operands do not compile — that
+   is why `w_j` is written with a regularised `sqrt`; pin
+   `metadata={"quadrature_degree": …}` on every `dx(3)` form
+   (`SpatialCoordinate`-bearing, `POST-5`); `assemble_scalar` is
+   rank-local — `MPI.SUM` before any assert; `-s` for the printed table;
+   the partition is about the **coil** axis (the C4 axis), wherever the
+   phantom sits.
+   **Scope:** C4 only, no mirror identity, no band, no gate, no SAR
+   claim, `WF-6` stays 🟡. Nothing under `src/`.
+   **Negative result:** journal the verdict in the §7 step-3g bullet and
+   the known-issues step-3d "Resolves with" row, keep every assert, stop.
+   A partition-identity miss is a defect in the integrals, not physics.
 
-8. **`PORT-13` step 1 — the first solve on the 32-ring-port high-pass
+5. **`PORT-13` step 1 — the first solve on the 32-ring-port high-pass
    layout** (heavy, `-n 8` complex, `main`; independent; spare; scoped
    2026-09-02 weekly — see the §7 row). One single-port solve on `mesh:9`
    (16 legs, 32 ring-gap lumped-sheet ports, 265 621 cells, the `EX-35`
@@ -7666,6 +7543,37 @@ denied; write it relative.
    2, scoped by a review from step 1's price.
    **Negative result:** a power-accounting miss or an overrun goes to
    known-issues with the price; nothing else moves.
+
+6. **`EX-42` — `mat:1` prints the finite-wire-corrected Dodd–Deeds beside
+   the filament form and the FEM ΔR** (standard by ceiling, host runner,
+   `-n 2` complex; independent; spare; opened 2026-09-02 10:30 review —
+   see the §7 row). Executor: **`example-runner`**, spawned **foreground**
+   with the never-background rule in the prompt. One column in
+   `examples/materials/` `mat:1`'s printed table plus two guide sentences:
+   `coil_impedance_change_finite_wire(f, a, h, σ, r_wire=0.0025)` at the
+   fixture, the FEM ΔR's deviation from the filament form (the existing
+   1.5838% record) *and* from the corrected form, and the correction
+   itself. **State the sign in the guide:** the term raises the closed
+   form; the slab-refined FEM sits below it.
+   **Anchors (asserted in-script):** the printed correction reproduces
+   `MAT-8`'s **+0.115237%** (ΔR) / **+0.144814%** (ΔX) at rtol 1e-6
+   (`20260902T123618Z_MAT-8.log:71–74`); the 1.5838% filament record
+   unmoved; census `exit != 1` read past the known `COMPARISON_private.md`
+   line (item 2 fixes it).
+   **Negative control:** the same function at `r_wire = 0` equals the
+   filament column to 1e-12 (`MAT-8` measured 1.785e-16).
+   **Tier / ranks / cost:** `./run_examples.sh mat:1 -t 400`; `mat:1`
+   shared a 73 s window with `mri:1,mri:2`
+   (`20260901T140821Z_EX-36-leg-rootmrimat-d.log`) ⇒ ≈ 60 s alone;
+   declare the tier from the footer.
+   **Traps already paid for:** docker-socket denial fallback as in item
+   2; the `EX-15` guide headings stay contained verbatim; the function is
+   real-valued arithmetic and needs no complex build, but `mat:1`'s solve
+   does.
+   **Scope:** an output column and a record. No band, no gate, `MAT-6`
+   stays ✅ at 1.58% until step 11; no §2 change.
+   **Negative result:** a record not reproducing at 1e-6 is a wiring
+   defect in the example, not physics — journal in the §7 row, stop.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and

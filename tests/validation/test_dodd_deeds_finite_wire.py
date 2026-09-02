@@ -15,7 +15,9 @@ factorises into a source and an observation term (see
 quadrature applied twice, not a 4-D one.  Everything here is arithmetic; the
 window is dominated by import overhead.
 
-Tier: **standard**, ``-n 1``, real mode (no complex build needed).
+Tier: **smoke** (4 s measured, ``20260902T123618Z_MAT-8.log``; declared from
+the footer by the 07:30 slot, corrected here by the 10:30 review), ``-n 1``,
+real mode (no complex build needed).
 
     scripts/testing/run_and_log.sh MAT-8 "docker compose exec -T fem-em-solver \\
       bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 \\

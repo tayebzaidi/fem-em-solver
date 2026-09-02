@@ -28,6 +28,15 @@ unless fixing it is the task.
 
 ## Failing tests
 
+### 🔴 OPEN 2026-09-02 (`OPS-31` slot, filed by the 10:30 review) — the example-corpus census reads `dead=1 … exit=1` on `main` because `check_example_doc_references.py` scans a **gitignored** `COMPARISON_private.md`
+
+| | |
+|---|---|
+| **Log** | `docs/testing/logs/20260902T094305Z_OPS-31.log:34–46` — `FAIL: 1 dead reference(s): ans1_aed_results.json … [examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/COMPARISON_private.md:6]`, `RESULT: dead=1 guide=0 stale=6 stale_severity=report exit=1`, Status 1, 1 s. Verified at `a30eaba`. |
+| **Symptom** | Any chunk whose anchor says "census `exit != 1`" (`OPS-32`, `EX-41`, every `EX-*` item) fails that anchor on `main` for a reason outside its own edits. The six `stale` hits in the same run are age-only (`ports_04`, `ports_05`, `ans4` artifacts past 48 h) — `exit 2` class, information not failure per `OPS-19`. |
+| **Cause** | `scripts/testing/check_example_doc_references.py:357` enumerates `docs_root.rglob("*.md")` with no `.gitignore` filter, so the operator's `ANS-1` private comparison (untracked by design, `14305c5`; `.gitignore:130`) is scanned as if it were a tracked guide, and its reference to the equally-gitignored `aed_results/` JSON is reported dead. A checker-scope defect; the tracked corpus has no dead reference. |
+| **Disposition** | Filed, not fixed. The fix is folded into **`OPS-32`** (skip `*_private.md` / `git check-ignore` matches in the guide scan; done-when in its §7 row), which is the chunk that will add two more such files. Until it lands, read the anchor as "no dead reference other than this line". Expected on `main`; **not yours**. |
+
 ### 🔴 OPEN 2026-08-31 (`WF-6` step 3, 13:30 implementer slot) — the coil-driven **point-SAR** map misses every C4 / mirror identity by **25–40%** against the same 5% band the `|B₁⁺|` map meets at ~2%: the pointwise `|E|` estimator has its own, much larger floor, and nobody had measured it
 
 > **Five deliberate reds on `main`**, all in the new
