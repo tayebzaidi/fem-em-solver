@@ -177,7 +177,13 @@ def _project_curl_to_cg1(solver, comm):
 
     comm.Barrier()
     t0 = time.perf_counter()
-    problem = LinearProblem(a, rhs, bcs=[], petsc_options=dict(PROJECTION_OPTIONS))
+    problem = LinearProblem(
+        a,
+        rhs,
+        bcs=[],
+        petsc_options_prefix="fem_em_probe_mag13_step2b_",
+        petsc_options=dict(PROJECTION_OPTIONS),
+    )
     b_cg1 = problem.solve()
     comm.Barrier()
     dt = time.perf_counter() - t0

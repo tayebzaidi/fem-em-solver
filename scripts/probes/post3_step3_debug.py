@@ -52,7 +52,13 @@ for opts in (
 ):
     say("trying", opts)
     try:
-        problem = LinearProblem(a, rhs, bcs=[bc], petsc_options=opts)
+        problem = LinearProblem(
+            a,
+            rhs,
+            bcs=[bc],
+            petsc_options_prefix="fem_em_probe_post3_step3_",
+            petsc_options=opts,
+        )
         phi = problem.solve()
         its = problem.solver.getIterationNumber()
         val = comm.allreduce(

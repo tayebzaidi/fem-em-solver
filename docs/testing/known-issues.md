@@ -1049,7 +1049,7 @@ unless fixing it is the task.
 > post-doc-edit confirm `20260826T033959Z_GEO-17-mesh5-confirm.log` (both
 > `-n 2`, real, Status 0, 8 / 9 s), printing the control's failing margin.
 
-### 🔴 OPEN 2026-08-25 (`OPS-26` step 1, 15:00 implementer slot) — two `scripts/probes/` scripts were **never migrated to dolfinx 0.11**: they construct `fem.petsc.LinearProblem` without 0.11's required `petsc_options_prefix`
+### ✅ CLOSED 2026-09-01 (`OPS-30`, 21:00 implementer slot) — two `scripts/probes/` scripts were **never migrated to dolfinx 0.11**: they construct `fem.petsc.LinearProblem` without 0.11's required `petsc_options_prefix`
 
 > **Where this fires.** `scripts/probes/mag13_step2b_recovery.py:180` and
 > `scripts/probes/post3_step3_debug.py:55`. Neither is a test, neither is an
@@ -1091,6 +1091,27 @@ unless fixing it is the task.
 > deleted; `tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_outside_the_gated_roots_are_unchanged`
 > pins the survivor set at exactly these two and goes red in **either**
 > direction, so this entry cannot rot silently.
+>
+> **Closed 2026-09-01 21:00 slot by `OPS-30`.** Both sites now pass
+> `petsc_options_prefix` (`fem_em_probe_mag13_step2b_` /
+> `fem_em_probe_post3_step3_`) and nothing else changed — the probes were not
+> modernised or re-run, their value is still their recorded output. Count
+> identity in both directions, smoke, `-n 1`: the `examples` + `scripts` sweep
+> read **2** violations at the two named sites pre-fix and **0** after, with
+> its census unchanged at **82 files / 320 resolved call sites / 22 APIs**,
+> while `src` + `tests` stayed **177 / 484 / 30** at `violations=0`
+> (pre-fix `20260902T020122Z_OPS-30.log`, `SURVIVOR_STATUS=1`, Status 0, 12 s;
+> post-fix `20260902T020238Z_OPS-30.log`, `SURVIVOR_STATUS=0`, `3 passed`,
+> Status 0, 37 s). The negative control was measured live pre-fix rather than
+> read from the August log, so the sweep is confirmed to reach `scripts/`.
+> The pin moved in the same commit and was **strengthened rather than
+> deleted**: `FILED_SURVIVORS` is now the empty set, guarded by census floors
+> over `examples` + `scripts` and a reachability floor of ≥ 2 resolved
+> `dolfinx.fem.petsc.LinearProblem` sites under `scripts/probes`, so "no
+> violations" can no longer be produced by a sweep that misses the two files.
+> The `src` + `tests` figures here (434 sites / 29 APIs, measured 2026-08-25)
+> are the August numbers; the tree has since grown to 484 / 30 — the gate
+> asserts floors, not equalities.
 
 ### ✅ CLOSED 2026-08-25 (`MAG-19` step 2, 21:00 implementer slot) — `tests/validation/test_convergence.py::TestConvergence::test_h_refinement_straight_wire` was **red on `main`**: the fitted rate is **1.90** against the `MAG-13` band `[0.7, 1.5]`, because the finest rung's error collapsed 9.26% → **4.4605%** on the 0.11 image
 
