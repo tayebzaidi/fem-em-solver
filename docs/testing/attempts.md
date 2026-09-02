@@ -18201,3 +18201,72 @@ executor returned with nothing in flight.
   entry — (a) promoting `_project_to_cg1_restricted` from the test module into
   `post/`, and (b) a docstring warning on `post.project_to_cg1` about its use on
   `E` — plus, now, the item 4–7 glyphs.
+
+## 2026-09-02T00:30Z — `WF-6` step 3e — outcome: `complete`
+
+- **Slot: 19:30 local scheduled implementer run.** Preflight clean:
+  `git status --porcelain` empty on `main` at `c207601`, container
+  `fem-em-solver` Up 6 days, no `attempt/*` or `recovered/*` branch. §9 On-deck
+  item 1 taken mechanically — the 18:00 review's rewritten queue carries clean
+  glyphs, so the two-slot `git log` cross-check the previous two entries needed
+  was not required this time (the item 4–7 glyph lag is retired at the source).
+- **Delegated to the `implementer` agent, foreground**, per protocol step 3;
+  the executor's report was checked against the logs and the tree by this slot
+  before anything was claimed (the numbers below are re-read from the logs, not
+  banked from the report). Commit `e949dfa` on `main`, tree clean after.
+- **What landed.** `_project_to_cg1_restricted` moved verbatim out of
+  `tests/validation/test_birdcage_sar_map.py` into
+  `src/fem_em_solver/post/faraday.py` as `post.project_to_cg1_restricted`,
+  signature `(field, cell_tags, *, name, tag, ksp_rtol=1e-12,
+  return_diagnostics=False)` — the default flipped **off** to match
+  `project_to_cg1`, PETSc prefix renamed off the step-scoped name to
+  `fem_em_restricted_cg1_mass_`, exported from `post/__init__.py` and both
+  `__all__`s, with the test module as its first caller at
+  `return_diagnostics=True`. 17 new test items (46 → 63 in the module), all
+  green. Collateral asked for by the step-3d known-issues row also landed: a
+  `.. warning::` on `project_to_cg1` carrying 3c's 32.7802 / 1876.1871 /
+  838.8978% domain table and pointing at the restricted sibling.
+- **Measured vs record — every §9 anchor reproduced to every printed digit**
+  (`20260902T003813Z_WF-6-step3e-table.log:4802–4822`): (i)
+  `‖P_Ω E − E‖_Ω/‖E‖_Ω` **18.7238%** against the same-run global fit's
+  **1876.1871%**, separation **100.20×** vs the pre-registered 50× floor;
+  (ii) `a + b × x` **4.385695e-13** (bound 1e-10, unmoved) and `x² ê_x`
+  **3.741459e-01** (floor 1e-4, unmoved); (iii) pinned max |value|
+  **0.000e+00** over owned **and** ghost blocks at `-n 2`, **170** free of
+  **21 397** owned blocks on **64 191** dofs; (iv) six solves `converged_reason`
+  **2** in 25/25/25/25/21/25 its; (v) restricted phantom power
+  **5.440097168e-08 W** (−3.5058% from the primal record) and identities
+  **8.2868 / 9.4743 / 7.3477 / 6.8146 / 6.1185%** with controls **123.6255%** /
+  **333.0778%**. Bound changes are tightenings only (`== 2`, `21 ≤ its ≤ 25`,
+  dof and block census); nothing loosened, no band, tolerance or record moved.
+- **Harness logs, all footered:** `20260902T003443Z_WF-6-step3e-env.log`
+  (`tests/environment`, 11 passed / Status 0 / **29 s**),
+  `20260902T003518Z_WF-6-step3e.log` (module only, 5 failed 58 passed /
+  Status 1 / **98 s**), `20260902T003813Z_WF-6-step3e-table.log` (env + module
+  with `-s` for the printed diagnostic table, 5 failed 69 passed / Status 1 /
+  **122 s**). Tier standard, `-n 2` complex, foreground, `timeout -k 30 400`;
+  the plan predicted ≈ 120–130 s and measured 122 s. The second window exists
+  only because pytest captures the table without `-s` — same code, same numbers.
+- **The 5 failures are step 3's five primal SAR asserts, unmoved to the digit**
+  — 25.1096 / 40.5462 / 30.0142 / 38.6120 / 28.1459%, verified by name at
+  `20260902T003813Z_WF-6-step3e-table.log:4965–5070`. Deliberate `-n 2` reds on
+  `main` therefore stand at **8**, unchanged.
+- **Scope held.** No gate registered, the module still exits 1, the SAR band did
+  not move, no SAR claim came into existence, verdict (c) is unaffected, `WF-6`
+  stays 🟡, and the known-issues step-3 entry stays **OPEN** with a step-3e row
+  appended. `B` callers are untouched by construction (`project_to_cg1`'s code
+  is byte-identical; only its docstring changed), so no example re-run is owed —
+  unlike step 1d, which changed the production estimator.
+- **One denial worth the review's attention.** The executor found `Write` to
+  both `$TMPDIR` and `.git/` denied, so the multi-line commit message went
+  through a literal `-m` instead. Protocol step 5 and the
+  "Working inside the permission allowlist" section still instruct
+  `git commit -F <file>` written with the Write tool; **that guidance is stale
+  for scheduled sessions** — there is no writable target. Nothing was lost, but
+  the protocol text should be corrected by a review (this slot does not edit
+  `docs/automation/` on its own initiative).
+- Next-attempt hypothesis: **§9 item 2 (`OPS-30`) is the 21:00 slot's**, and it
+  is independent of everything landed here. Separately, step 3e′ (the
+  estimator-degree rung) is now unblocked in the way its scoping assumed — it
+  can call the packaged `post.project_to_cg1_restricted` directly and needs only
+  a degree parameter, not a second copy of the helper.
