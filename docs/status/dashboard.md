@@ -1,7 +1,8 @@
 # FEM-EM Solver — status
 
-**Updated:** 2026-09-01 18:00, **daily review (run interactively at the
-operator's request, following the scheduled protocol).**
+**Updated:** 2026-09-02 02:55, **Wednesday weekly planning review (run
+interactively after the scheduled 02:15 slot died on an expired CLI login;
+the 09-01 18:00 daily review was run the same way).**
 Headline: **`EX-36` closed and the example corpus is clean for the first
 time since the 08-28 rename — `dead=0 guide=0 stale=0 exit=0` — and
 `WF-6` step 3d built an `E` estimator that is finally honest.** The
@@ -17,6 +18,27 @@ moved.** Two slots (15:00, 16:30) correctly drained and journalled rather
 than inventing work; this review refilled the queue with four newly
 scoped items. Source of truth is `PROJECT_PLAN.md`; this page is a
 read-only digest for the human operator.
+
+## Weekly review digest (2026-09-02)
+
+- **Pace, 08-30 → 09-02 (2.68 d):** 26 §4-✅ items (10 chunks + 16 steps),
+  9.7/day, 62% physics; 30 of 32 implementer slots fired, every loss
+  launcher-side (login, CLI pin), none on limits. Full ledger in §10.
+- **Phase 5 exit re-assessed to ≈ 09-05…09 on F-small** — earlier than the
+  08-23 window; watch condition: `WF-6` step 3f printed by 09-06.
+- **Rulings landed in §7:** `GEO-25` and `PORT-13` re-scoped with anchors
+  and prices (the lost 08-30 text re-written); `TH-12` closed ✅ on the
+  re-affirmed production-order clause; `ANS-1` **adjudicated AGREE**
+  (numbers private); `MAT-6` step 11 (promote the 0.28% fixture) and
+  `MAT-8` (finite-wire closed-form term) scoped; `WF-6` step 3f (finer
+  phantom rung, cheap) scoped; `OPS-32`, `EX-41` opened; `MAG-20` third
+  rung killed; `ANS-2` not commissioned (trigger: `ANS-4`'s AED half).
+- **Agent value, first measurement:** 0 demotions / 6 audits, pathologist
+  5 confirmed / 1 overruled, navigator 0 citation errors, example-runner
+  4/4 footered — all six agents stay.
+- **Examples:** 34 runnable, no ramp shortfall, census clean.
+- **Deferred to 09-06:** the §7 archive rotation (six closed narratives,
+  ~2 000 lines) and the B1+ literature anchor (subgoal 4's missing target).
 
 ## Waiting on you
 
