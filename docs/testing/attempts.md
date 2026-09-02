@@ -16097,3 +16097,62 @@ executor returned with nothing in flight.
 - Next-attempt hypothesis: the 09:00 slot takes **§9 item 4 (`WF-6` step 3f₀`)**
   — mesh-only, real mode, `-n 2`, independent. Landing it also unblocks item 7,
   whose other half (item 2) landed at 06:00.
+
+## 2026-09-02T14:20Z — `WF-6` step 3f₀ — outcome: `complete` (09:00 implementer slot)
+
+- **Preflight clean**: tree clean at `90c3de5`, `main`, container Up 6 days. No
+  dirty tree, no `attempt/*`, no `recovered/*`. Took §9 On-deck **item 4**, the
+  first item not marked done (items 1/2/3 are ✅ from the 04:30 / 06:00 / 07:30
+  slots). Delegated to the `implementer` agent, **foreground**, with the
+  never-background rule restated in the spawn prompt; the executor's harness
+  window ran in the foreground and returned footered.
+- **Landed** at `d5f007d` on `main`: `phantom_resolution: Optional[float] = None`
+  on `MeshGenerator.birdcage_port_domain` and `_build_birdcage_port_model`
+  (`io/mesh.py`), a gmsh `Box` field over the phantom's bounding box
+  (`VIn = phantom_resolution`, `VOut = resolution`, margin 1e-3 × extent,
+  `Thickness = 0`) collected with the existing conductor `Distance→Threshold`
+  into a new `size_fields` list and combined through a `Min`; additive
+  `phantom_resolution=None` passthroughs on `tests/mesh/
+  test_birdcage_port_sheets._build` and `test_port_birdcage_four_port.
+  build_four_port_sweep`; new `tests/mesh/test_birdcage_phantom_resolution.py`;
+  §7 step-3f annotation extended. `WF-6` stays 🟡, as scoped.
+- **The no-op is structural, not merely measured** — with `phantom_resolution=None`
+  **no field is created at all** and the tail reduces to the single
+  `setAsBackgroundMesh(threshold_field)` the code has always made. This slot read
+  the diff itself and confirms it: the refactor moves the three
+  `Mesh.MeshSizeFrom*` switches under `if size_fields:` unchanged, and the
+  one-field branch bypasses the `Min` entirely. That is why anchor (i) could be
+  asserted at **exact integer equality** rather than a band.
+- **Measured** (`20260902T140410Z_WF-6-step3f0.log:13717–13721`, re-read by this
+  slot, not taken from the executor's report):
+  | build | cells | tag-3 | outside | partition | sheets P1–P4 |
+  |---|---|---|---|---|---|
+  | `None` | **116 085** | **537** | 115 548 | 1.000000000000 | 1.120000000e-04 m² |
+  | `0.015` (neg. control) | **116 085** | **537** | 115 548 | 1.000000000000 | 1.120000000e-04 m² |
+  | `0.0075` | 120 499 | 2 746 | 117 753 | 1.000000000000 | 1.120000000e-04 m² |
+  Control vs record 0.000e+00 on both counts; growth **5.1136×** inside the
+  pre-registered [5, 12]; outside-tag-3 change **1.9083%** vs the 10% ceiling.
+  Mesh wall times 23.58 / 23.95 / 25.20 s. Tag-3 counts are `size_local`-
+  restricted and `MPI.SUM`-reduced, which is the defect `-n 2` exists to catch.
+- **Cost**: one harness window, foreground, Bash timeout 660000 ms,
+  `timeout -k 30 300`, `-n 2`, **real** mode, repo-relative harness path.
+  `1 passed in 83.94s`, footer **Status 0 / Elapsed 86 s** — **standard** tier,
+  declared from the footer, not the estimate (the `OPS-30` lesson). No 0-byte
+  FFCx stubs present. No known-issues entry added or removed; no unrelated red.
+- **For the review — one reading worth a ruling.** The growth factor is
+  **5.11×, not the naive (0.015/0.0075)³ = 8×**, and sits near the low edge of
+  the band the review wrote. The executor attributes it to the Box field's sharp
+  transition plus the Netgen optimise pass rather than a mis-sized field, and the
+  `< 10%` outside-change plus the exact CAD identities do rule out both spill and
+  mis-coverage. If a review wants ≈ 8×, the lever is a nonzero `Thickness` or a
+  `Constant`-over-volume field — **not** a smaller `phantom_resolution`. Worth
+  settling *before* item 7 pre-registers any phantom-cell-count expectation.
+- **Item 7 (`WF-6` step 3f) is now unblocked on both halves**: its serial
+  prerequisites were item 2 (step 3e′, landed 06:00 `82ba0b7`) and item 4 (this
+  slot). Step 3f's mesh price is measured rather than estimated — **+4 414 cells**
+  — inside the weekly's 5–10 k budget, so it stays standard tier.
+- **No denials this slot.** Commit message used the literal multi-line `-m` route.
+- Next-attempt hypothesis: the 12:00 slot takes **§9 item 5 (`OPS-32`)** as the
+  next open item in order; item 7 is available to a review that would rather
+  re-order now that its serial gate is discharged, but the protocol's
+  first-open-item rule points at 5.

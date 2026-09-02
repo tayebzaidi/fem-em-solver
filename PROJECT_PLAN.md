@@ -7461,7 +7461,16 @@ denied; write it relative.
    **Negative result:** a limit not recovering is a bug in the quadrature —
    journal in the §7 `MAT-8` row and known-issues, keep the asserts, stop.
 
-4. **`WF-6` step 3f₀ — the phantom-sizing knob on `birdcage_port_domain`**
+4. **`WF-6` step 3f₀ ✅ DONE 2026-09-02 (09:00 slot, `d5f007d`) — the
+   phantom-sizing knob on `birdcage_port_domain`** — the no-op control is
+   exact (`None` and `h_p = 0.015` both reproduce 116 085 cells / 537 tag-3
+   cells at 0.000e+00, asserted at integer equality), `h_p = 0.0075` grows
+   the phantom **5.1136×** (band [5, 12]) for **+4 414 cells overall**
+   (116 085 → 120 499) and moves cells outside tag 3 by 1.9083% (ceiling
+   10%); `GEO-18` sheet area 1.120000000e-04 m² ×4 and the `GEO-19`
+   partition 1.000000000000 hold on the refined mesh. Step 3f's mesh price
+   is now measured, inside the weekly's 5–10 k budget — see the §7
+   step-3f annotation, and the growth-factor note for the review.
    (standard, `-n 2`, **real** mode, `main`; independent — mesh only, no
    solve; scoped this review, see the §7 step-3f annotation). Add
    `phantom_resolution: Optional[float] = None` to
