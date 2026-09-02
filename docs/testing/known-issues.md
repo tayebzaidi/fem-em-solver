@@ -28,14 +28,14 @@ unless fixing it is the task.
 
 ## Failing tests
 
-### 🔴 OPEN 2026-09-02 (`OPS-31` slot, filed by the 10:30 review) — the example-corpus census reads `dead=1 … exit=1` on `main` because `check_example_doc_references.py` scans a **gitignored** `COMPARISON_private.md`
+### 🟡 OPEN 2026-09-02 (`OPS-32` slot) — `ans:3`'s four reproduction controls cannot be re-registered at **1e-6**: three of the four sit at 1.9e-06 … 3.0e-05 against the `PORT-1` step-4 **log record**, which is not a run-to-run comparison
 
 | | |
 |---|---|
-| **Log** | `docs/testing/logs/20260902T094305Z_OPS-31.log:34–46` — `FAIL: 1 dead reference(s): ans1_aed_results.json … [examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/COMPARISON_private.md:6]`, `RESULT: dead=1 guide=0 stale=6 stale_severity=report exit=1`, Status 1, 1 s. Verified at `a30eaba`. |
-| **Symptom** | Any chunk whose anchor says "census `exit != 1`" (`OPS-32`, `EX-41`, every `EX-*` item) fails that anchor on `main` for a reason outside its own edits. The six `stale` hits in the same run are age-only (`ports_04`, `ports_05`, `ans4` artifacts past 48 h) — `exit 2` class, information not failure per `OPS-19`. |
-| **Cause** | `scripts/testing/check_example_doc_references.py:357` enumerates `docs_root.rglob("*.md")` with no `.gitignore` filter, so the operator's `ANS-1` private comparison (untracked by design, `14305c5`; `.gitignore:130`) is scanned as if it were a tracked guide, and its reference to the equally-gitignored `aed_results/` JSON is reported dead. A checker-scope defect; the tracked corpus has no dead reference. |
-| **Disposition** | Filed, not fixed. The fix is folded into **`OPS-32`** (skip `*_private.md` / `git check-ignore` matches in the guide scan; done-when in its §7 row), which is the chunk that will add two more such files. Until it lands, read the anchor as "no dead reference other than this line". Expected on `main`; **not yours**. |
+| **Log** | `docs/testing/logs/20260902T183603Z_OPS-32.log:1405` — `[ANS-3] reproduction of the PORT-1 step-4 record (band 1% relative): raw 2.98e-05, corrected 2.92e-05, symmetry 1.91e-06, ‖S‖_2 3.07e-10`, Status 0, 171 s. Verified at the `OPS-32` commit. |
+| **Symptom** | `OPS-32` was scoped (2026-09-02 weekly, §9 item 2) to re-register both benchmark scripts' in-script reproduction controls at 1e-6 against `EX-37`'s measured ≤ 5e-8 run-to-run Z/S scatter. `ans:4` already carries 1e-6 / 1e-9 (`FREQUENCY_CONTROL_BAND`, `LEG_D0_REPRODUCTION_BAND`; measured 1.157e-10 and 2.568e-10 in `…183909Z_OPS-32.log:4801`) and needed nothing. `ans:3` at 1e-6 would fail on three of four entries. |
+| **Cause** | Not scatter. `ans:3`'s misses are taken against `RECORDED_*` constants transcribed from `20260813T183606Z_PORT-1-step4-packagegate.log`, a different code version and a different image; the 2.9e-05 raw/corrected offset is a standing record-vs-today gap, and the symmetry entry moved 1.71e-06 → 1.91e-06 between two runs of the same code (the residual is ~4.8e-05 absolute, so its *relative* miss amplifies scatter). Re-basing those constants is an `OPS-27`-class record job, not a band tightening. |
+| **Disposition** | The band stays at `EX-20`'s 1%, with the measurement recorded in a code comment at `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/03_two_torus_gap_ports_10MHz.py:113`. The writer half of `OPS-32` landed; the control half is this finding. A follow-up would re-record `RECORDED_RAW_RATIO` / `RECORDED_CORRECTED_RATIO` / `RECORDED_S_SYMMETRY_RESIDUAL` from a current run under the (1*) licence **and only then** register a 1e-6 control. Expected on `main`; **not yours**. |
 
 ### 🔴 OPEN 2026-08-31 (`WF-6` step 3, 13:30 implementer slot) — the coil-driven **point-SAR** map misses every C4 / mirror identity by **25–40%** against the same 5% band the `|B₁⁺|` map meets at ~2%: the pointwise `|E|` estimator has its own, much larger floor, and nobody had measured it
 

@@ -188,9 +188,73 @@ def _write_metrics(payload) -> Path:
     return path
 
 
-def _write_comparison(m) -> Path:
-    """``COMPARISON.md``: our columns filled, the two AED columns blank per SPEC."""
-    path = CASE_DIR / "COMPARISON.md"
+#: The operator's AED half, if it has ever run on this box. Gitignored since
+#: `ANS-1` (14305c5): Ansys licence terms restrict disclosure of benchmark
+#: results, so nothing read from here may reach a tracked file.
+AED_RESULTS_PATH = CASE_DIR / "aed_results" / "ans4_aed_results.json"
+
+#: Blank cell, byte-for-byte what the tracked table has always written.
+_BLANK = " "
+
+
+def _load_aed_results():
+    """The AED half if the JSON is on this box, else ``None`` (columns stay blank).
+
+    Schema (the `ANS-1` shape): ``{"zero_order": {"<key>": <value>, …},
+    "first_order": {…}, "_reading": "<prose>"}`` with keys
+    ``"<frequency label>|<row>"`` — e.g. ``"128 MHz|S21"``, ``"64 MHz|Z11"``,
+    ``"10 MHz|reciprocity"``, or the bare metadata rows ``"elements"``,
+    ``"basis_order"``, ``"passes"``, ``"delta_s"``, ``"solve_time"``,
+    ``"port_model"``. Values may be numbers, ``{"re": …, "im": …}`` pairs or
+    strings; whatever AED printed is reproduced with every digit.
+    """
+    if not AED_RESULTS_PATH.exists():
+        return None
+    return json.loads(AED_RESULTS_PATH.read_text())
+
+
+def _aed_fmt(value) -> str:
+    """One AED cell rendered with every digit the JSON carries."""
+    if isinstance(value, dict) and "re" in value:
+        return f"{value['re']!r} {value['im']!r}j"
+    return value if isinstance(value, str) else f"{value!r}"
+
+
+def _aed_cell(aed, order, key) -> str:
+    if aed is None:
+        return _BLANK
+    block = aed.get(order)
+    value = block.get(key) if isinstance(block, dict) else None
+    return _BLANK if value is None else f" {_aed_fmt(value)} "
+
+
+def _aed_vs(aed, key, ours) -> str:
+    """AED (Zero Order) against ours, signed relative — blank when either is absent."""
+    block = aed.get("zero_order") if aed is not None else None
+    value = block.get(key) if isinstance(block, dict) else None
+    if value is None or ours is None:
+        return _BLANK
+    if isinstance(value, dict) and "re" in value:
+        value = complex(value["re"], value["im"])
+    if not isinstance(value, (int, float, complex)) or abs(ours) == 0.0:
+        return _BLANK
+    return f" {abs(value - ours) / abs(ours):+.2%} "
+
+
+def _write_comparison(m, *, private: bool = False) -> Path:
+    """``COMPARISON.md`` (tracked, AED columns blank **by construction**) or, with
+    ``private=True``, the gitignored ``COMPARISON_private.md`` with those columns
+    filled from ``aed_results/``.
+
+    Ansys licence terms restrict disclosure of benchmark results (operator
+    directive 2026-09-02, `ANS-1` 14305c5), so the tracked table is written with
+    ``aed=None`` unconditionally: a re-run can neither publish AED numbers nor
+    erase a hand-filled private table.
+    """
+    aed = _load_aed_results() if private else None
+    a = lambda order, key: _aed_cell(aed, order, key)  # noqa: E731
+    vs = lambda key, ours: _aed_vs(aed, key, ours)  # noqa: E731
+    path = CASE_DIR / ("COMPARISON_private.md" if private else "COMPARISON.md")
 
     def s_table(label):
         s = np.asarray(
@@ -199,16 +263,21 @@ def _write_comparison(m) -> Path:
         return "\n".join(
             "| "
             + f"S{i + 1}{j + 1}"
-            + f" | {_fmt(s[i, j])} | | | |"
+            + f" | {_fmt(s[i, j])} |{a('zero_order', f'{label}|S{i + 1}{j + 1}')}"
+            + f"|{a('first_order', f'{label}|S{i + 1}{j + 1}')}"
+            + f"|{vs(f'{label}|S{i + 1}{j + 1}', s[i, j])}|"
             for i in range(LEG_COUNT)
             for j in range(LEG_COUNT)
         )
 
-    def z_diag(label):
+    def z11(label):
         z = np.asarray(
             [[complex(e["re"], e["im"]) for e in row] for row in m["rungs"][label]["z_matrix_ohm"]]
         )
-        return _fmt(z[0, 0])
+        return complex(z[0, 0])
+
+    def z_diag(label):
+        return _fmt(z11(label))
 
     def class_table(label):
         s = np.asarray(
@@ -217,7 +286,9 @@ def _write_comparison(m) -> Path:
         cls = _class_entries(s)
         return "\n".join(
             f"| {label} | {name} (S{'11' if name == 'self' else '21' if name == 'adjacent' else '31'}) "
-            f"| {_fmt(value)} | | | |"
+            f"| {_fmt(value)} |{a('zero_order', f'{label}|class_{name}')}"
+            f"|{a('first_order', f'{label}|class_{name}')}"
+            f"|{vs(f'{label}|class_{name}', value)}|"
             for name, value in cls.items()
         )
 
@@ -226,13 +297,15 @@ def _write_comparison(m) -> Path:
         f"{m['rungs'][label]['sigma_max']:.9f} | "
         f"{m['rungs'][label]['spreads']['self'] * 100:.4f} / "
         f"{m['rungs'][label]['spreads']['adjacent'] * 100:.4f} / "
-        f"{m['rungs'][label]['spreads']['opposite'] * 100:.4f}% | | |"
+        f"{m['rungs'][label]['spreads']['opposite'] * 100:.4f}% |"
+        f"{a('zero_order', f'{label}|identities')}|{a('first_order', f'{label}|identities')}|"
         for label, _ in LADDER
     )
     power = "\n".join(
         f"| {label} | {m['rungs'][label]['terminal_power_va']['re']:+.9e} | "
         f"{m['rungs'][label]['terminal_power_va']['im']:+.9e} | "
-        f"{m['rungs'][label]['im_over_re_power']:.6f} | | |"
+        f"{m['rungs'][label]['im_over_re_power']:.6f} |"
+        f"{a('zero_order', f'{label}|power')}|{a('first_order', f'{label}|power')}|"
         for label, _ in LADDER
     )
     reproduction = "\n".join(
@@ -242,8 +315,24 @@ def _write_comparison(m) -> Path:
     )
     classes = "\n".join(class_table(label) for label, _ in LADDER)
 
+    title = (
+        "our half filled, AED halves filled from the operator's private results"
+        if aed is not None
+        else "our half filled, both AED halves blank"
+    )
+    aed_note = (
+        "**PRIVATE — untracked, never commit or quote.** The AED columns are read "
+        "from `aed_results/ans4_aed_results.json`; Ansys licence terms restrict "
+        "disclosure of benchmark results."
+        if aed is not None
+        else "The AED columns are blank **by construction** in this tracked file: AED "
+        "numbers live only in the gitignored `aed_results/` and "
+        "`COMPARISON_private.md` on the operator's box."
+    )
     path.write_text(
-        f"""# ANS-4 — comparison table (our half filled, both AED halves blank)
+        f"""# ANS-4 — comparison table ({title})
+
+{aed_note}
 
 Generated by `04_birdcage_four_port_10_64_128MHz.py` on {m["generated_utc"]};
 every number in the "Ours (FEM)" column is produced by that run through the
@@ -305,9 +394,9 @@ The full complex 4×4 `Z` at every frequency is in `metrics.json`
 
 | Frequency | Ours (FEM) [Ω] | AED (Zero Order) | AED (First Order) | AED vs ours |
 |---|---|---|---|---|
-| 10 MHz | {z_diag("10 MHz")} | | | |
-| 64 MHz | {z_diag("64 MHz")} | | | |
-| 128 MHz | {z_diag("128 MHz")} | | | |
+| 10 MHz | {z_diag("10 MHz")} |{a("zero_order", "10 MHz|Z11")}|{a("first_order", "10 MHz|Z11")}|{vs("10 MHz|Z11", z11("10 MHz"))}|
+| 64 MHz | {z_diag("64 MHz")} |{a("zero_order", "64 MHz|Z11")}|{a("first_order", "64 MHz|Z11")}|{vs("64 MHz|Z11", z11("64 MHz"))}|
+| 128 MHz | {z_diag("128 MHz")} |{a("zero_order", "128 MHz|Z11")}|{a("first_order", "128 MHz|Z11")}|{vs("128 MHz|Z11", z11("128 MHz"))}|
 
 Our diagonal carries the sheet-width convention `w = A/h` (`PORT-9` step 2b): the
 lumped sheet is the interior half (`f = 0.5`) of the port box's mid-plane. An AED
@@ -361,12 +450,12 @@ be a finding about the heuristic, not a passing benchmark.
 
 | Item | Ours (FEM) | AED (Zero Order) | AED (First Order) |
 |---|---|---|---|
-| Elements | {m["n_cells"]} tetrahedra (`GEO-19` step B record {STEP2_CELL_COUNT}, ratio {m["cell_ratio"]:.6f}) | | |
-| Basis order | {BASIS_ORDER}, {BASIS_UNKNOWNS_PER_TET} unknowns/tet | | |
-| Adaptive passes | n/a — fixed graded mesh, **built once and reused by all three frequencies** | | |
-| Final ΔS | n/a — single non-adaptive driven solve per port per frequency | | |
-| Solve time | {m["mesh_seconds"]:.1f} s mesh + {" + ".join(f"{m['rungs'][l]['sweep_seconds']:.1f} s" for l, _ in LADDER)} for the three 4-column sweeps at `mpiexec -n {m["mpi_ranks"]}` (+ {m["export_solve_seconds"]:.1f} s export solve, {m["control_seconds"]:.1f} s control) | | |
-| Port model | {LEG_COUNT} lumped-element sheets, Z_p = {TERMINATED_PORT_IMPEDANCE_OHM:.1f} Ω on every undriven port, renormalized to Z₀ = {REFERENCE_IMPEDANCE_OHM:.1f} Ω | | |
+| Elements | {m["n_cells"]} tetrahedra (`GEO-19` step B record {STEP2_CELL_COUNT}, ratio {m["cell_ratio"]:.6f}) |{a("zero_order", "elements")}|{a("first_order", "elements")}|
+| Basis order | {BASIS_ORDER}, {BASIS_UNKNOWNS_PER_TET} unknowns/tet |{a("zero_order", "basis_order")}|{a("first_order", "basis_order")}|
+| Adaptive passes | n/a — fixed graded mesh, **built once and reused by all three frequencies** |{a("zero_order", "passes")}|{a("first_order", "passes")}|
+| Final ΔS | n/a — single non-adaptive driven solve per port per frequency |{a("zero_order", "delta_s")}|{a("first_order", "delta_s")}|
+| Solve time | {m["mesh_seconds"]:.1f} s mesh + {" + ".join(f"{m['rungs'][l]['sweep_seconds']:.1f} s" for l, _ in LADDER)} for the three 4-column sweeps at `mpiexec -n {m["mpi_ranks"]}` (+ {m["export_solve_seconds"]:.1f} s export solve, {m["control_seconds"]:.1f} s control) |{a("zero_order", "solve_time")}|{a("first_order", "solve_time")}|
+| Port model | {LEG_COUNT} lumped-element sheets, Z_p = {TERMINATED_PORT_IMPEDANCE_OHM:.1f} Ω on every undriven port, renormalized to Z₀ = {REFERENCE_IMPEDANCE_OHM:.1f} Ω |{a("zero_order", "port_model")}|{a("first_order", "port_model")}|
 
 ### Resolution on the one mesh
 
@@ -686,10 +775,19 @@ def main() -> None:
     }
     metrics_path = _write_metrics(metrics)
     comparison_path = _write_comparison(metrics)
+    private_note = "no aed_results/ on this box — private table not written"
+    if AED_RESULTS_PATH.exists():
+        private_path = _write_comparison(metrics, private=True)
+        private_note = f"{private_path.name} — AED columns filled (untracked, never commit)"
     if written is not None:
         print(f"[ANS-4] wrote {written} (+ .h5), {driven_id}-driven at 128 MHz "
               f"({t_export:.1f} s)", flush=True)
-    print(f"[ANS-4] wrote {metrics_path.name} and {comparison_path.name}", flush=True)
+    print(
+        f"[ANS-4] wrote {metrics_path.name} and {comparison_path.name} "
+        "(AED columns blank by construction — Ansys results are never tracked)",
+        flush=True,
+    )
+    print(f"[ANS-4] [private] {private_note}", flush=True)
     print(
         f"[ANS-4] all three gates green on all three rungs of one "
         f"{metrics['n_cells']}-cell mesh; elapsed {elapsed:.1f} s on "

@@ -354,7 +354,16 @@ def main() -> int:
 
     docs_root = REPO_ROOT / args.docs_root
     output_dir = REPO_ROOT / args.output_dir
-    doc_paths = sorted(docs_root.rglob("*.md"))
+    # `*_private.md` is the gitignored, operator-local half of an `ans:` case
+    # (`COMPARISON_private.md`, added by `ANS-1` at 14305c5): it exists only on
+    # the box that ran AED, carries numbers that may never be published, and its
+    # references are to files that a fresh clone does not have. Scanning it made
+    # the census read `dead=1 … exit=1` on a box where the operator's private
+    # table was present (`20260902T094305Z_OPS-31.log:36,46`) — a checker-scope
+    # defect, not corpus drift (`OPS-32`).
+    doc_paths = sorted(
+        p for p in docs_root.rglob("*.md") if not p.name.endswith("_private.md")
+    )
     if not doc_paths:
         print(f"FAIL: no markdown guides found under {docs_root}")
         return EXIT_HARD

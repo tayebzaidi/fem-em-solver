@@ -110,6 +110,16 @@ RECORDED_RAW_RATIO = _ex20.RECORDED_RAW_RATIO
 RECORDED_CORRECTED_RATIO = _ex20.RECORDED_CORRECTED_RATIO
 RECORDED_S_SYMMETRY_RESIDUAL = _ex20.RECORDED_S_SYMMETRY_RESIDUAL
 RECORDED_S_SPECTRAL_NORM = _ex20.RECORDED_S_SPECTRAL_NORM
+#: `EX-20`'s pre-stated 1% band, imported not restated. `OPS-32` (2026-09-02)
+#: was scoped to re-register this control at **1e-6** against `EX-37`'s measured
+#: ≤ 5e-8 run-to-run Z/S scatter; the measurement says no. These four misses are
+#: taken against the **`PORT-1` step-4 log record**, not against a repeat of this
+#: run, and the standing offsets are raw 2.9760e-05, corrected 2.9212e-05,
+#: symmetry 1.7054e-06, spectral 3.3321e-10 (this case's own committed
+#: `metrics.json`, reproduced by the `OPS-32` run). Three of the four exceed
+#: 1e-6, so 1e-6 would not be a tightening of a run-to-run control but a
+#: re-basing of a record comparison — the band stays where `EX-20` put it and
+#: the finding is filed in `docs/testing/known-issues.md`.
 REPRODUCTION_BAND_RELATIVE = _ex20.REPRODUCTION_BAND_RELATIVE
 MUTUAL_TOLERANCE = _ex20.MUTUAL_TOLERANCE
 S_SPECTRAL_NORM_CEILING = _ex20.S_SPECTRAL_NORM_CEILING
@@ -151,17 +161,100 @@ def _fmt(z: complex) -> str:
     return f"{np.real(z):+.7e} {np.imag(z):+.7e}j"
 
 
-def _write_comparison(m, z, s) -> Path:
-    """``COMPARISON.md``: our columns filled, the two AED columns blank per SPEC.
+#: The operator's AED half, if it has ever run on this box. Gitignored since
+#: `ANS-1` (14305c5): Ansys licence terms restrict disclosure of benchmark
+#: results, so nothing read from here may reach a tracked file.
+AED_RESULTS_PATH = CASE_DIR / "aed_results" / "ans3_aed_results.json"
+
+#: Blank cell, byte-for-byte what the tracked table has always written: the
+#: table rows below are `|{cell}|`-shaped, so a blank cell is a single space.
+_BLANK = " "
+
+
+def _load_aed_results():
+    """The AED half if the JSON is on this box, else ``None`` (columns stay blank).
+
+    Schema (the `ANS-1` shape, one block per HFSS element order):
+    ``{"zero_order": {"<row key>": <value>, …}, "first_order": {…},
+    "_meta": {"<row key>": "<free text>"}, "_reading": "<prose>"}``.
+    Values may be numbers, ``{"re": …, "im": …}`` pairs, or strings; whatever
+    AED printed is reproduced with every digit.
+    """
+    if not AED_RESULTS_PATH.exists():
+        return None
+    return json.loads(AED_RESULTS_PATH.read_text())
+
+
+def _aed_value(aed, order, key):
+    """The raw JSON value for one cell, or ``None``."""
+    if aed is None:
+        return None
+    block = aed.get(order)
+    if not isinstance(block, dict):
+        return None
+    return block.get(key)
+
+
+def _aed_fmt(value) -> str:
+    """One AED cell rendered with every digit the JSON carries."""
+    if isinstance(value, dict) and "re" in value:
+        return f"{value['re']!r} {value['im']!r}j"
+    return f"{value!r}" if not isinstance(value, str) else value
+
+
+def _aed_cell(aed, order, key) -> str:
+    value = _aed_value(aed, order, key)
+    return _BLANK if value is None else f" {_aed_fmt(value)} "
+
+
+def _aed_vs(aed, key, ours) -> str:
+    """AED (Zero Order) against ours, signed relative — blank when either is absent."""
+    value = _aed_value(aed, "zero_order", key)
+    if value is None or ours is None:
+        return _BLANK
+    if isinstance(value, dict) and "re" in value:
+        value = complex(value["re"], value["im"])
+    if not isinstance(value, (int, float, complex)) or abs(ours) == 0.0:
+        return _BLANK
+    return f" {abs(value - ours) / abs(ours):+.2%} "
+
+
+def _write_comparison(m, z, s, *, private: bool = False) -> Path:
+    """``COMPARISON.md`` (tracked, AED columns blank **by construction**) or, with
+    ``private=True``, the gitignored ``COMPARISON_private.md`` with those columns
+    filled from ``aed_results/``.
+
+    Ansys licence terms restrict disclosure of benchmark results (operator
+    directive 2026-09-02, `ANS-1` 14305c5), so the tracked table is written with
+    ``aed=None`` unconditionally: a re-run can neither publish AED numbers nor
+    erase a hand-filled private table.
 
     Every number comes from ``m``/``z``/``s``, which came from this run; the
     closed-form ``ωM₁₂`` is evaluated from ``AnalyticalSolutions`` seconds ago,
     not transcribed from a log.
     """
     lad = m["systematics_ladder"]
-    path = CASE_DIR / "COMPARISON.md"
+    aed = _load_aed_results() if private else None
+    a = lambda order, key: _aed_cell(aed, order, key)  # noqa: E731
+    vs = lambda key, ours: _aed_vs(aed, key, ours)  # noqa: E731
+    title = (
+        "our half filled, AED halves filled from the operator's private results"
+        if aed is not None
+        else "our half filled, both AED halves blank"
+    )
+    aed_note = (
+        "\n**PRIVATE — untracked, never commit or quote.** The AED columns are read "
+        "from `aed_results/ans3_aed_results.json`; Ansys licence terms restrict "
+        "disclosure of benchmark results.\n"
+        if aed is not None
+        else "\nThe AED columns are blank **by construction** in this tracked file: AED "
+        "numbers live only in the gitignored `aed_results/` and "
+        "`COMPARISON_private.md` on the operator's box.\n"
+    )
+    path = CASE_DIR / ("COMPARISON_private.md" if private else "COMPARISON.md")
     path.write_text(
-        f"""# ANS-3 — comparison table (our half filled, both AED halves blank)
+        f"""# ANS-3 — comparison table ({title})
+{aed_note}
 
 Generated by `03_two_torus_gap_ports_10MHz.py` on {m["generated_utc"]}; every
 number in the "Ours (FEM)" column is produced by that run through
@@ -185,10 +278,10 @@ forbidden — we have no per-element order and could not reproduce it.
 
 | Entry | Ours (FEM) | AED (Zero Order) | AED (First Order) | AED vs ours |
 |---|---|---|---|---|
-| Z₁₁ | {_fmt(z[0, 0])} | | | |
-| Z₁₂ | {_fmt(z[0, 1])} | | | |
-| Z₂₁ | {_fmt(z[1, 0])} | | | |
-| Z₂₂ | {_fmt(z[1, 1])} | | | |
+| Z₁₁ | {_fmt(z[0, 0])} |{a("zero_order", "Z11")}|{a("first_order", "Z11")}|{vs("Z11", z[0, 0])}|
+| Z₁₂ | {_fmt(z[0, 1])} |{a("zero_order", "Z12")}|{a("first_order", "Z12")}|{vs("Z12", z[0, 1])}|
+| Z₂₁ | {_fmt(z[1, 0])} |{a("zero_order", "Z21")}|{a("first_order", "Z21")}|{vs("Z21", z[1, 0])}|
+| Z₂₂ | {_fmt(z[1, 1])} |{a("zero_order", "Z22")}|{a("first_order", "Z22")}|{vs("Z22", z[1, 1])}|
 
 **Im Z₂₁ is the primary adjudication row.** Ours is
 {np.imag(z[1, 0]):+.7e} Ω against the filamentary closed form
@@ -210,18 +303,18 @@ model rather than alarming.
 
 | Entry | Ours (FEM) | AED (Zero Order) | AED (First Order) | AED vs ours |
 |---|---|---|---|---|
-| S₁₁ | {_fmt(s[0, 0])} | | | |
-| S₁₂ | {_fmt(s[0, 1])} | | | |
-| S₂₁ | {_fmt(s[1, 0])} | | | |
-| S₂₂ | {_fmt(s[1, 1])} | | | |
+| S₁₁ | {_fmt(s[0, 0])} |{a("zero_order", "S11")}|{a("first_order", "S11")}|{vs("S11", s[0, 0])}|
+| S₁₂ | {_fmt(s[0, 1])} |{a("zero_order", "S12")}|{a("first_order", "S12")}|{vs("S12", s[0, 1])}|
+| S₂₁ | {_fmt(s[1, 0])} |{a("zero_order", "S21")}|{a("first_order", "S21")}|{vs("S21", s[1, 0])}|
+| S₂₂ | {_fmt(s[1, 1])} |{a("zero_order", "S22")}|{a("first_order", "S22")}|{vs("S22", s[1, 1])}|
 
 ## Identities
 
 | Quantity | Exact | Ours (FEM) | Gate | AED (Zero Order) | AED (First Order) |
 |---|---|---|---|---|---|
-| ‖S − Sᵀ‖/‖S‖ (reciprocity) | 0 | {m["s_symmetry_residual"]:.4e} | < {S_SYMMETRY_RTOL:.0e} | | |
-| \\|Z₁₂ − Z₂₁\\|/\\|Z₂₁\\| | 0 | {m["z_reciprocity_residual"]:.4e} | reported | | |
-| ‖S‖₂ (passivity) | ≤ 1 | {m["s_spectral_norm"]:.6f} | ≤ {S_SPECTRAL_NORM_CEILING:.1f} | | |
+| ‖S − Sᵀ‖/‖S‖ (reciprocity) | 0 | {m["s_symmetry_residual"]:.4e} | < {S_SYMMETRY_RTOL:.0e} |{a("zero_order", "s_symmetry")}|{a("first_order", "s_symmetry")}|
+| \\|Z₁₂ − Z₂₁\\|/\\|Z₂₁\\| | 0 | {m["z_reciprocity_residual"]:.4e} | reported |{a("zero_order", "z_reciprocity")}|{a("first_order", "z_reciprocity")}|
+| ‖S‖₂ (passivity) | ≤ 1 | {m["s_spectral_norm"]:.6f} | ≤ {S_SPECTRAL_NORM_CEILING:.1f} |{a("zero_order", "s_spectral_norm")}|{a("first_order", "s_spectral_norm")}|
 
 ## Negative control (in-fixture, ours)
 
@@ -249,13 +342,13 @@ Each entry below is this run against the `PORT-1` step-4 record
 
 | Item | Ours (FEM) | AED (Zero Order) | AED (First Order) |
 |---|---|---|---|
-| Elements | {m["n_cells"]} tetrahedra, lowest-order Nédélec edge elements (`N1curl`, degree 1) | | |
-| Basis order | Nedelec first kind, degree 1 (N1curl), 6 unknowns/tet | | |
-| Adaptive passes | n/a — fixed graded mesh | | |
-| Final ΔS | n/a — single non-adaptive solve per port | | |
-| Solve time | {m["sweep_seconds"]:.1f} s for the 2-column sweep at `mpiexec -n {m["mpi_ranks"]}` (+ {m["export_solve_seconds"]:.1f} s for the export solve) | | |
-| Drive current per port | {DRIVE_CURRENT_A:.1f} A impressed across the gap box along +ŷ | | |
-| Skin depth δ in the wire | {m["skin_depth_m"] * 1e3:.2f} mm = {m["skin_depth_over_r_wire"]:.2f} r_wire | | |
+| Elements | {m["n_cells"]} tetrahedra, lowest-order Nédélec edge elements (`N1curl`, degree 1) |{a("zero_order", "elements")}|{a("first_order", "elements")}|
+| Basis order | Nedelec first kind, degree 1 (N1curl), 6 unknowns/tet |{a("zero_order", "basis_order")}|{a("first_order", "basis_order")}|
+| Adaptive passes | n/a — fixed graded mesh |{a("zero_order", "passes")}|{a("first_order", "passes")}|
+| Final ΔS | n/a — single non-adaptive solve per port |{a("zero_order", "delta_s")}|{a("first_order", "delta_s")}|
+| Solve time | {m["sweep_seconds"]:.1f} s for the 2-column sweep at `mpiexec -n {m["mpi_ranks"]}` (+ {m["export_solve_seconds"]:.1f} s for the export solve) |{a("zero_order", "solve_time")}|{a("first_order", "solve_time")}|
+| Drive current per port | {DRIVE_CURRENT_A:.1f} A impressed across the gap box along +ŷ |{a("zero_order", "drive_current")}|{a("first_order", "drive_current")}|
+| Skin depth δ in the wire | {m["skin_depth_m"] * 1e3:.2f} mm = {m["skin_depth_over_r_wire"]:.2f} r_wire |{a("zero_order", "skin_depth")}|{a("first_order", "skin_depth")}|
 
 Mesh sizing (from the gated fixture): wire {H_WIRE} m, far field {H_FAR} m,
 gap-arc {GAP_ARC_RESOLUTION:.1e} m; air padding {AIR_PADDING} m, which is what
@@ -576,9 +669,18 @@ def main() -> None:
         }
         metrics_path = _write_metrics(metrics)
         comparison_path = _write_comparison(metrics, z, s)
+        private_note = "no aed_results/ on this box — private table not written"
+        if AED_RESULTS_PATH.exists():
+            private_path = _write_comparison(metrics, z, s, private=True)
+            private_note = f"{private_path.name} — AED columns filled (untracked, never commit)"
         if written is not None:
             print(f"[ANS-3] wrote {written[0]} (+ .h5)", flush=True)
-        print(f"[ANS-3] wrote {metrics_path.name} and {comparison_path.name}", flush=True)
+        print(
+            f"[ANS-3] wrote {metrics_path.name} and {comparison_path.name} "
+            "(AED columns blank by construction — Ansys results are never tracked)",
+            flush=True,
+        )
+        print(f"[ANS-3] [private] {private_note}", flush=True)
         print(
             f"[ANS-3] all gates green: raw {ladder['raw']:.6f} (a miss), "
             f"corrected {ladder['corrected']:.6f} "
