@@ -157,6 +157,7 @@ def project_to_cg1_restricted(
     *,
     name: str,
     tag: int,
+    degree: int = 1,
     ksp_rtol: float = 1.0e-12,
     return_diagnostics: bool = False,
 ):
@@ -204,13 +205,26 @@ def project_to_cg1_restricted(
     ``pinned_max_abs`` — the max ``|value|`` left on a pinned block, reduced
     over all ranks, which ``set_bc`` writes as an exact zero and which is
     therefore a defect indicator, not a tolerance.
+
+    ``degree`` selects the Lagrange degree of the target space (default **1**,
+    so every caller and every record predating `WF-6` step 3e′ is untouched).
+    ``degree=2`` fits the same field over the same cells in ``CG2³``; because
+    ``CG1³ ⊂ CG2³`` on one mesh, the restricted residual it leaves cannot
+    *exceed* the ``degree=1`` residual on the same input — that inequality is
+    a theorem about this function, and step 3e′ asserts it.  Everything else
+    (the pinning of unsupported blocks, the ghost-inclusive complement, the
+    solver and its prefix) is degree-independent; the space and the bc's zero
+    ``Function`` are both built from ``degree``, so no CG1 object leaks into a
+    CG2 solve.
     """
     from dolfinx.fem.petsc import LinearProblem  # local: needs a PETSc build
 
     msh = field.function_space.mesh
     comm = msh.comm
     tdim = msh.topology.dim
-    space = fem.functionspace(msh, ("Lagrange", 1, (3,)))
+    if int(degree) < 1:
+        raise ValueError(f"project_to_cg1_restricted wants degree >= 1, got {degree}")
+    space = fem.functionspace(msh, ("Lagrange", int(degree), (3,)))
     trial, test = ufl.TrialFunction(space), ufl.TestFunction(space)
     dx_tag = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)(tag)
 
@@ -255,6 +269,7 @@ def project_to_cg1_restricted(
         "converged_reason": int(ksp.getConvergedReason()),
         "iterations": int(ksp.getIterationNumber()),
         "ksp_rtol": float(ksp_rtol),
+        "degree": int(degree),
         "dofs": int(imap.size_global * space.dofmap.index_map_bs),
         "free_blocks": comm.allreduce(
             int(supported[supported < owned].size), op=MPI.SUM

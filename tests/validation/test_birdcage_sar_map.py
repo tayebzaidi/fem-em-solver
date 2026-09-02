@@ -1872,3 +1872,559 @@ def test_the_restricted_phantom_power_reproduces_step_3ds_reading(sar_map_restri
         f"3d's {STEP3D_RESTRICTED_PHANTOM_POWER_W:.9e} W (rtol "
         f"{CG1_RECORD_RTOL:.0e})"
     )
+
+
+# ---------------------------------------------------------------------------
+# `WF-6` step 3e′ (2026-09-02): the **estimator-degree** rung.
+#
+# Verdict (c) — step 3b's, uncontradicted by 3c/3d/3e — attributes the residual
+# 6.1–9.5% miss of the five restricted-CG1 identities to the fixture's ~1 cm
+# phantom cells reading a quadratic-in-``E`` map.  Nothing on this fixture has
+# separated *estimator degree* from *mesh h*.  This block separates them for the
+# cost of six mass solves and **no curl-curl solve**: the same four solved
+# fields, the same 51 points, the same two controls, the same pinning, projected
+# onto ``("Lagrange", 2, (3,))`` restricted to ``dx(3)``.  It is a different
+# axis from step 3f's finer-*mesh* rung and does not pre-empt it.
+#
+# Everything below is **printed, not gated**, except the six anchors, which are
+# theorems about the code (a CG2 fit cannot be worse than the CG1 fit it
+# contains; a field lying in CG2³ must come back).  No band moves, no SAR gate
+# is registered, and the five primal asserts above stay red.
+
+# Anchor (i)'s bound: step 3d's CG1 restricted residual, imported from the
+# constant above and never re-typed.  ``CG1³ ⊂ CG2³`` on one mesh, so the
+# restricted best-approximation residual cannot *increase* with degree.
+STEP3E_PRIME_DEGREE = 2
+
+# Anchor (ii)/(iii): both control fields are carried on a ``CG3³`` space, where
+# an affine field and a quadratic field are each represented **exactly**.  That
+# matters and is the one deliberate deviation from the CG1 column's recipe: the
+# CG1 column interpolated its controls onto the solve's ``N1curl₁`` space first,
+# and the N1curl interpolant of ``x² ê_x`` is a tangentially-continuous
+# piecewise field that does *not* lie in CG2³ — projecting it would measure the
+# interpolation error, not the degree.  Carrying the exact quadratic instead is
+# what makes the pre-registered flip ("CG1 leaves 3.741459e-01, CG2 must
+# reproduce to 1e-10") a statement about degree.  The same-source CG1 reading is
+# measured in this fixture too (one extra cheap CG1 solve) so the nine-decade
+# separation is between two readings of one field, not across two recipes.
+STEP3E_PRIME_CONTROL_SOURCE_DEGREE = 3
+
+# The five CG1 restricted identity records this column is read against, and the
+# ~1 pp threshold the pre-registered (β) clause names.
+STEP3E_PRIME_NULL_MOVE_PP = 1.0
+
+STEP3E_PRIME_SOLVE_LABELS = RESTRICTED_SOLVE_LABELS
+
+
+def _cg2_degree_verdict(cg2_identities, cg1_records, controls, band):
+    """The α/β/γ verdict, pre-registered by the 2026-09-02 03:00 review.
+
+    Evaluated from the readings rather than read off them by eye, and in a fixed
+    precedence so the printed clause cannot disagree with the table above it:
+
+    * **(α)** all five CG2 identities inside ``band`` ⇒ the residual was the
+      *estimator's degree*, verdict (c) is wrong about its cause, and a review —
+      never this slot — re-opens the gate question.
+    * **(β)** every reading moves by less than ~1 pp from its CG1 record ⇒
+      degree is not the mechanism, (c) is corroborated, and step 3f's
+      finer-mesh rung is the remaining candidate.  **This is the expected
+      outcome and the informative one.**
+    * **(γ)** all five get *worse* ⇒ the CG2 restriction is mis-assembled and
+      anchors (i)/(ii) should have caught it — a defect in the step, not a
+      reading about physics.
+
+    ``controls`` is carried so the clause can never be reported while the
+    negative controls have collapsed into the band (they are asserted
+    separately; this is the belt to that braces).
+    """
+    controls_survive = all(value > band for value in controls.values())
+    deltas_pp = {
+        label: (cg2_identities[label] - cg1_records[label]) * 100.0
+        for label in cg1_records
+    }
+    if all(cg2_identities[label] <= band for label in cg1_records) and controls_survive:
+        return "(alpha)", (
+            "all five CG2 identities inside the band with both controls "
+            "surviving — the residual was the ESTIMATOR'S DEGREE, not the "
+            "phantom's cells; verdict (c) is wrong about its cause and "
+            "re-opening the SAR gate question is the NEXT REVIEW's ruling, "
+            "never in-slot"
+        ), deltas_pp
+    if all(abs(value) < STEP3E_PRIME_NULL_MOVE_PP for value in deltas_pp.values()):
+        return "(beta)", (
+            f"every CG2 identity moves by less than {STEP3E_PRIME_NULL_MOVE_PP:.1f} pp "
+            "from its CG1 record — DEGREE IS NOT THE MECHANISM, verdict (c) is "
+            "corroborated from the other side, and the finer-MESH rung (step 3f) "
+            "is the remaining candidate; the expected and informative outcome"
+        ), deltas_pp
+    if all(value > 0.0 for value in deltas_pp.values()):
+        return "(gamma)", (
+            "all five CG2 identities are WORSE than their CG1 records — a "
+            "richer space cannot fit the same field worse, so this is a "
+            "mis-assembled CG2 restriction (anchors (i)/(ii) should have caught "
+            "it); journal as a defect in the step, not as a reading about physics"
+        ), deltas_pp
+    return "(none)", (
+        "the reading pattern matches none of the three pre-registered clauses ("
+        + ", ".join(f"{label}={deltas_pp[label]:+.4f} pp" for label in deltas_pp)
+        + f"; controls survive: {controls_survive}) — reported as-is for the "
+        "review, not forced into a clause"
+    ), deltas_pp
+
+
+@pytest.fixture(scope="module")
+def sar_map_restricted_cg2(b1_plus_map, sar_map, sar_map_restricted):
+    """The same five identities and two controls off a **CG2**-restricted ``E``.
+
+    Six restricted mass solves at ``degree=2`` on the parent mesh (four drives,
+    two control fields), the quadrature senses by superposing the projected dof
+    arrays exactly as the CG1 column does, ``point_sar`` on the same 51 points.
+    No curl-curl solve, no submesh, no new mesh.
+
+    Depends on ``sar_map_restricted`` so the CG1 column it is compared against is
+    measured in the *same run* — anchor (vi), "nothing moved", is the existing
+    step-3d/3e reproduction tests, which share this window.
+    """
+    import ufl
+
+    sweep = b1_plus_map["sweep"]
+    solves = b1_plus_map["solves"]
+    azimuths = b1_plus_map["azimuths"]
+    points = b1_plus_map["points"]
+    msh = sweep["mesh"]
+    comm = msh.comm
+    cell_tags = sweep["cell_tags"]
+    delta = np.radians(b1_plus_map["delta_deg"])
+    order = sorted(solves)
+    ks = [sar_map["indices"][pid] for pid in order]
+
+    dx_phantom = ufl.Measure("dx", domain=msh, subdomain_data=cell_tags)(
+        PHANTOM_CELL_TAG
+    )
+
+    diagnostics = {}
+    projected = {}
+    for pid in order:
+        projected[pid], diagnostics[pid] = project_to_cg1_restricted(
+            solves[pid]["fields"].e_complex,
+            cell_tags,
+            name=f"E_cg2_restricted_{pid}",
+            tag=PHANTOM_CELL_TAG,
+            degree=STEP3E_PRIME_DEGREE,
+            return_diagnostics=True,
+        )
+    # Anchor (i): the degree-monotonicity of the restricted best approximation.
+    restricted_residual = _relative_l2_over_measure(
+        projected["P1"], solves["P1"]["fields"].e_complex, dx_phantom
+    )
+
+    # Anchors (ii)/(iii): the two control fields, carried exactly on CG3³ and
+    # restricted-projected at degree 2 — and, for ``x² ê_x``, at degree 1 too so
+    # the pre-registered flip is a same-source comparison.
+    source_space = fem.functionspace(
+        msh, ("Lagrange", STEP3E_PRIME_CONTROL_SOURCE_DEGREE, (3,))
+    )
+    control_fields = {}
+    for label, callable_ in (
+        ("a + b x x", _affine_field),
+        ("x^2 e_x", _quadratic_field),
+    ):
+        stem = "affine" if label.startswith("a") else "quadratic"
+        source = fem.Function(source_space, name=f"f_{stem}_cg3_exact")
+        source.interpolate(callable_)
+        source.x.scatter_forward()
+        fitted, diag = project_to_cg1_restricted(
+            source,
+            cell_tags,
+            name=f"f_{stem}_cg2_restricted",
+            tag=PHANTOM_CELL_TAG,
+            degree=STEP3E_PRIME_DEGREE,
+            return_diagnostics=True,
+        )
+        diagnostics[label] = diag
+        control_fields[label] = {
+            "residual": _relative_l2_over_measure(fitted, source, dx_phantom),
+            "diagnostics": diag,
+        }
+        if label == "x^2 e_x":
+            fitted_cg1, diag_cg1 = project_to_cg1_restricted(
+                source,
+                cell_tags,
+                name=f"f_{stem}_cg1_restricted_same_source",
+                tag=PHANTOM_CELL_TAG,
+                degree=1,
+                return_diagnostics=True,
+            )
+            control_fields[label]["degree_1_residual"] = _relative_l2_over_measure(
+                fitted_cg1, source, dx_phantom
+            )
+            control_fields[label]["degree_1_diagnostics"] = diag_cg1
+
+    kwargs = dict(sigma=SALINE_SIGMA, rho=PHANTOM_RHO_KG_PER_M3, comm=comm)
+    split = {
+        pid: _split_complex(projected[pid], f"E_cg2_restricted_{pid}") for pid in order
+    }
+    images = {
+        "P1@0deg": ("P1", points),
+        "P2@+90deg": ("P2", _rotate_z(points, delta)),
+        "P4@-90deg": ("P4", _rotate_z(points, -delta)),
+        "P3@180deg": ("P3", _rotate_z(points, 2.0 * delta)),
+        "P3@+90deg": ("P3", _rotate_z(points, delta)),
+    }
+    single = {
+        label: point_sar(*split[pid], pts, **kwargs)
+        for label, (pid, pts) in images.items()
+    }
+
+    mirrored = _mirror_xy(points, azimuths["P1"])
+    rotated = _rotate_z(points, delta)
+    superposed = {
+        sense: _split_complex(
+            _superpose_complex(
+                [projected[pid] for pid in order],
+                quadrature_phase_weights(ks, sense),
+                name=f"E_cg2_restricted_{sense}",
+            ),
+            f"E_cg2_restricted_{sense}",
+        )
+        for sense in ("ccw", "cw")
+    }
+    quad = {
+        ("ccw", "x"): point_sar(*superposed["ccw"], points, **kwargs),
+        ("ccw", "Rx"): point_sar(*superposed["ccw"], rotated, **kwargs),
+        ("cw", "Mx"): point_sar(*superposed["cw"], mirrored, **kwargs),
+    }
+
+    full = np.ones(points.shape[0], dtype=bool)
+    reference = single["P1@0deg"]
+    identities = {
+        "(i) SAR_P2(Rx) vs SAR_P1(x)": _relative_l2(single["P2@+90deg"], reference, full),
+        "(i) SAR_P4(-Rx) vs SAR_P1(x)": _relative_l2(single["P4@-90deg"], reference, full),
+        "(i) SAR_P3(180deg) vs SAR_P1(x)": _relative_l2(single["P3@180deg"], reference, full),
+        "(ii) SAR_ccw(Rx) vs SAR_ccw(x)": _relative_l2(
+            quad[("ccw", "Rx")], quad[("ccw", "x")], full
+        ),
+        "(iii) SAR_cw(Mx) vs SAR_ccw(x)": _relative_l2(
+            quad[("cw", "Mx")], quad[("ccw", "x")], full
+        ),
+    }
+    controls = {
+        "mis-rotated SAR_P3(Rx) vs SAR_P1(x)": _relative_l2(
+            single["P3@+90deg"], reference, full
+        ),
+        "quadrature SAR_ccw(x) vs single-drive SAR_P1(x)": _relative_l2(
+            quad[("ccw", "x")], reference, full
+        ),
+    }
+
+    phantom_power_w = float(
+        mean_sar(
+            projected["P1"],
+            sigma=solves["P1"]["fields"].sigma_field,
+            rho=PHANTOM_RHO_KG_PER_M3,
+            cell_tags=cell_tags,
+            comm=comm,
+            subdomain_ids=PHANTOM_CELL_TAG,
+        )["dissipated_power_w"]
+    )
+
+    verdict, verdict_text, deltas_pp = _cg2_degree_verdict(
+        identities, STEP3D_RESTRICTED_IDENTITY_RECORDS, controls, C4_COVARIANCE_BAND
+    )
+
+    if comm.rank == 0:
+        cg1_identities = sar_map_restricted["identities"]
+        cg1_controls = sar_map_restricted["controls"]
+        primal_identities = sar_map["identities"]
+        p1 = diagnostics["P1"]
+        cg1_p1 = sar_map_restricted["diagnostics"]["P1"]
+        print(
+            f"\n[WF-6 step3e'] the estimator-DEGREE rung: the same point-SAR "
+            f"identities off a **CG2**-restricted E, same mesh, same "
+            f"{points.shape[0]} points, same four solves, same pinning, NO new "
+            f"curl-curl solve — separating estimator degree from mesh h, which "
+            f"nothing on this fixture had done\n"
+            f"    (iv) restriction at degree {p1['degree']}: {p1['free_blocks']} free "
+            f"of {p1['free_blocks'] + p1['pinned_blocks']} owned CG2 blocks "
+            f"({p1['dofs']} dofs) vs CG1's {cg1_p1['free_blocks']} / "
+            f"{cg1_p1['free_blocks'] + cg1_p1['pinned_blocks']} / {cg1_p1['dofs']} "
+            f"— REPORTED, NOT ASSERTED (no CG2 record exists); pinned max |value| "
+            f"{p1['pinned_max_abs']:.3e} (ASSERTED == 0)\n"
+            f"    (v) restricted CG2 mass solves (ASSERTED converged_reason == 2, "
+            f"iterations REPORTED):",
+            flush=True,
+        )
+        for label in STEP3E_PRIME_SOLVE_LABELS:
+            row = diagnostics[label]
+            print(
+                f"        {label:<12} reason {row['converged_reason']:>3}, "
+                f"{row['iterations']:>4} its on {row['dofs']} dofs",
+                flush=True,
+            )
+        print(
+            f"    (i) ||P2_O E - E||_O/||E||_O = {restricted_residual * 100:.4f}% vs "
+            f"the CG1 restriction's {STEP3D_RESTRICTED_PHANTOM_RESIDUAL * 100:.4f}% "
+            f"(ASSERTED <=: CG1^3 subset CG2^3 on one mesh, so the restricted "
+            f"best-approximation residual CANNOT increase with degree — a theorem "
+            f"about the code, so a violation is a bug, not physics)",
+            flush=True,
+        )
+        for label, row in control_fields.items():
+            extra = (
+                f"; the SAME source at degree 1 reads "
+                f"{row['degree_1_residual']:.6e}, and the N1curl-borne CG1 column "
+                f"read {STEP3D_RESTRICTED_CONTROL_FIELD_RECORDS[label]:.6e}"
+                if "degree_1_residual" in row
+                else f"; CG1 column read "
+                f"{STEP3D_RESTRICTED_CONTROL_FIELD_RECORDS[label]:.6e}"
+            )
+            print(
+                f"    (ii/iii) ||P2_O f - f||_O/||f||_O for f = {label:<9} "
+                f"{row['residual']:.6e}   (ASSERTED <= "
+                f"{PROJECTOR_EXACT_RESIDUAL:.0e}; reason "
+                f"{row['diagnostics']['converged_reason']}, "
+                f"{row['diagnostics']['iterations']} its{extra})",
+                flush=True,
+            )
+        print(
+            f"        {'':<36} {'primal':>10} {'CG1 restr':>10} {'CG2 restr':>10} "
+            f"{'delta pp':>10}",
+            flush=True,
+        )
+        for label in identities:
+            print(
+                f"        {label:<36} {primal_identities[label] * 100:9.4f}% "
+                f"{cg1_identities[label] * 100:9.4f}% "
+                f"{identities[label] * 100:9.4f}% "
+                f"{deltas_pp[label]:+9.4f}   CG2 PRINTED NOT GATED",
+                flush=True,
+            )
+        for label in controls:
+            print(
+                f"        {label:<36} {'':>10} {cg1_controls[label] * 100:9.4f}% "
+                f"{controls[label] * 100:9.4f}% "
+                f"{(controls[label] - cg1_controls[label]) * 100:+9.4f}   control, "
+                "ASSERTED > band",
+                flush=True,
+            )
+        # The (γ) clause pre-registers *one* cause — a mis-assembled CG2
+        # restriction — and names anchors (i)/(ii) as what would catch it.  If
+        # those anchors are green while (γ) prints, the pre-registered cause is
+        # *excluded by this run's own measurements*, and the log must say so
+        # rather than leave a reviewer to act on the clause's prose.  This is a
+        # printed caveat, not a re-verdict: the clause label stands as computed.
+        anchors_green = (
+            restricted_residual <= STEP3D_RESTRICTED_PHANTOM_RESIDUAL
+            and all(
+                row["residual"] <= PROJECTOR_EXACT_RESIDUAL
+                for row in control_fields.values()
+            )
+            and p1["pinned_max_abs"] <= RESTRICTED_PINNED_DOF_MAX
+            and all(
+                diagnostics[label]["converged_reason"]
+                == STEP3D_RESTRICTED_CONVERGED_REASON
+                for label in STEP3E_PRIME_SOLVE_LABELS
+            )
+        )
+        if verdict == "(gamma)" and anchors_green:
+            print(
+                f"    NOTE, and it is the whole reading: (gamma)'s pre-registered "
+                f"cause — 'the CG2 restriction is mis-assembled' — is EXCLUDED by "
+                f"this run's own anchors, every one green with room. The degree-2 "
+                f"fit is strictly BETTER in the norm it minimises "
+                f"({restricted_residual * 100:.4f}% vs "
+                f"{STEP3D_RESTRICTED_PHANTOM_RESIDUAL * 100:.4f}%, anchor (i)), it "
+                f"reproduces both fields it contains to ~1e-12 (anchors (ii)/(iii), "
+                f"the quadratic flipping "
+                f"{control_fields['x^2 e_x']['degree_1_residual']:.6e} -> "
+                f"{control_fields['x^2 e_x']['residual']:.6e} on ONE source), the pin "
+                f"is exact 0 (anchor (iv)) and all six solves are reason 2 (anchor "
+                f"(v)). So what is measured is that a globally better L2 fit of E "
+                f"over the phantom is POINTWISE WORSE for these C4 identities at "
+                f"these {points.shape[0]} points: the CG1 fit's extra smoothing was "
+                f"flattering the identities, not resolving them. That is a finding "
+                f"about the identity-from-a-fitted-field construction itself, it is "
+                f"NOT a defect in this step and NOT a rescope this slot may make — "
+                f"a review adjudicates it.",
+                flush=True,
+            )
+        print(
+            f"    PRE-REGISTERED VERDICT: {verdict} — {verdict_text}\n"
+            f"    CG2-restricted phantom power 1/2*int(sigma|E_O|^2) = "
+            f"{phantom_power_w:.9e} W vs primal "
+            f"{STEP1_GATE_I_P1_PHANTOM_POWER_W:.9e} W "
+            f"({(phantom_power_w / STEP1_GATE_I_P1_PHANTOM_POWER_W - 1.0) * 100:+.4f}%)"
+            f" and CG1-restricted {STEP3D_RESTRICTED_PHANTOM_POWER_W:.9e} W "
+            f"({(phantom_power_w / STEP3D_RESTRICTED_PHANTOM_POWER_W - 1.0) * 100:+.4f}%)"
+            " — REPORTED, NOT GATED: an L2 projection does not conserve power.\n"
+            "    SCOPE: no band moved, NO SAR GATE IS REGISTERED, no homogeneity / "
+            "absolute / C95.3 claim, the five primal asserts stay red and WF-6 "
+            "stays yellow whichever clause printed.",
+            flush=True,
+        )
+
+    return {
+        "identities": identities,
+        "controls": controls,
+        "control_fields": control_fields,
+        "diagnostics": diagnostics,
+        "phantom_power_w": phantom_power_w,
+        "projection_relative_l2": restricted_residual,
+        "cg1_projection_relative_l2": sar_map_restricted["projection_relative_l2"],
+        "deltas_pp": deltas_pp,
+        "verdict": verdict,
+        "verdict_text": verdict_text,
+    }
+
+
+@complex_only
+def test_the_cg2_restriction_cannot_be_worse_than_the_cg1_one(sar_map_restricted_cg2):
+    """Anchor (i): degree monotonicity of the restricted best approximation.
+
+    ``CG1³ ⊂ CG2³`` on the same mesh, so the CG1 restricted fit is one member of
+    the set the CG2 fit minimises over — ``‖P²_Ω E − E‖_Ω ≤ ‖P¹_Ω E − E‖_Ω``
+    holds by construction.  No mesh, no fixture and no physics enters, so a
+    violation is a defect in the CG2 restriction (an unpinned ghost block, the
+    wrong measure, a non-converged solve) and must be journalled as that.  The
+    bound is step 3d's *measured* CG1 figure, imported from the constant and
+    compared against the same-run CG1 reading beside it.
+    """
+    reading = sar_map_restricted_cg2["projection_relative_l2"]
+    same_run_cg1 = sar_map_restricted_cg2["cg1_projection_relative_l2"]
+    assert reading <= STEP3D_RESTRICTED_PHANTOM_RESIDUAL, (
+        f"the CG2-restricted projection leaves {reading * 100:.4f}% over the "
+        f"phantom, ABOVE the CG1 restriction's "
+        f"{STEP3D_RESTRICTED_PHANTOM_RESIDUAL * 100:.4f}% (this run's CG1 column "
+        f"reads {same_run_cg1 * 100:.4f}%) — a richer space cannot fit the same "
+        "field worse, so this is a bug in the degree-2 restriction, not a "
+        "finding about SAR or about the phantom"
+    )
+
+
+@complex_only
+def test_the_cg2_restriction_reproduces_the_quadratic_control_exactly(
+    sar_map_restricted_cg2,
+):
+    """Anchor (ii), the sharp one: ``x² ê_x`` lies in ``CG2³`` **exactly**.
+
+    This is the control's control flipping sign of difficulty.  Under the CG1
+    restriction the quadratic could only be *fitted* — step 3d read
+    3.741459e-01, and the test beside it asserts that residual stays visible.
+    Under the CG2 restriction the same field is in the target space, so the
+    restricted projection must return it to solver tolerance: a pre-registered
+    separation of **nine decades** on one fixture, and the strongest evidence
+    available that the CG2 restriction is assembled correctly.  A miss here
+    means the CG2 space, its bc's zero ``Function`` or the pinned complement is
+    wrong — never that the phantom is coarse.
+    """
+    row = sar_map_restricted_cg2["control_fields"]["x^2 e_x"]
+    residual = row["residual"]
+    assert residual <= PROJECTOR_EXACT_RESIDUAL, (
+        f"the phantom-restricted CG2 projection of f = x^2 e_x — which lies in "
+        f"CG2^3 EXACTLY — leaves a relative L2 residual of {residual:.6e} over "
+        f"the phantom, above {PROJECTOR_EXACT_RESIDUAL:.0e}.  The same source at "
+        f"degree 1 reads {row['degree_1_residual']:.6e}; the degree-2 restricted "
+        "operator is not the L2 projection it is built to be"
+    )
+
+
+@complex_only
+def test_the_cg2_restriction_reproduces_the_affine_control_exactly(
+    sar_map_restricted_cg2,
+):
+    """Anchor (iii): ``a + b × x`` is in both spaces and must come back at either.
+
+    It is the CG1 column's exact-reproduction control (4.385695e-13 there), and
+    raising the degree cannot cost it: an affine field lies in ``CG2³`` too.
+    """
+    residual = sar_map_restricted_cg2["control_fields"]["a + b x x"]["residual"]
+    assert residual <= PROJECTOR_EXACT_RESIDUAL, (
+        f"the phantom-restricted CG2 projection of f = a + b x x leaves a "
+        f"relative L2 residual of {residual:.6e} over the phantom, above "
+        f"{PROJECTOR_EXACT_RESIDUAL:.0e} (the CG1 column reads "
+        f"{STEP3D_RESTRICTED_CONTROL_FIELD_RECORDS['a + b x x']:.6e})"
+    )
+
+
+@complex_only
+def test_the_quadratic_control_still_misses_at_degree_one_on_the_same_source(
+    sar_map_restricted_cg2,
+):
+    """Anchor (ii)'s other half: the flip is a flip, not a broken residual helper.
+
+    The nine-decade separation only means something if the *same* source field,
+    through the *same* restricted operator, still leaves a visible residual at
+    degree 1.  If both degrees read ~1e-10 the residual helper is measuring
+    nothing (an empty measure, a mis-tagged subdomain) and the test above proves
+    nothing.  The floor is the arithmetic one step 3d used: a quadratic's CG1 fit
+    error over a region of ``D/h ≲ 100`` cells is of order ``(h/D)² ≳ 1e-4``.
+    """
+    residual = sar_map_restricted_cg2["control_fields"]["x^2 e_x"]["degree_1_residual"]
+    assert residual > RESTRICTED_CONTROL_MIN_RESIDUAL, (
+        f"the exact quadratic source x^2 e_x restricted-projects at DEGREE 1 with "
+        f"a relative L2 residual of only {residual:.6e} over the phantom — below "
+        f"the arithmetic floor {RESTRICTED_CONTROL_MIN_RESIDUAL:.0e}, at which the "
+        "nine-decade degree-2 separation beside it is not measuring anything"
+    )
+
+
+@complex_only
+def test_every_cg2_dof_outside_the_phantom_is_pinned_to_exactly_zero(
+    sar_map_restricted_cg2,
+):
+    """Anchor (iv): the pin is a pin at degree 2, on owned **and** ghost blocks.
+
+    The CG2 space has its own dofmap, its own ghost layer and its own zero
+    ``Function`` for the bc — reusing CG1's would mis-size the pin silently.
+    ``set_bc`` writes an exact zero, so the bound is 0 and not a tolerance, and
+    ``-n 2`` is the only width at which a complement taken over owned blocks
+    alone is visible.
+    """
+    pinned_max = sar_map_restricted_cg2["diagnostics"]["P1"]["pinned_max_abs"]
+    assert pinned_max <= RESTRICTED_PINNED_DOF_MAX, (
+        f"a CG2 dof with no phantom-cell support holds {pinned_max:.6e} after the "
+        "degree-2 restricted solve — the zero Dirichlet pin did not reach every "
+        "block (check that the bc's zero Function is built on the CG2 space and "
+        "that the complement is taken over size_local + num_ghosts)"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", STEP3E_PRIME_SOLVE_LABELS)
+def test_every_cg2_restricted_mass_solve_converges(sar_map_restricted_cg2, label):
+    """Anchor (v): all six CG2 restricted mass solves returned reason 2.
+
+    ``LinearProblem.solve()`` does not raise on a non-converged KSP, and the CG2
+    mass matrix is worse conditioned than the CG1 one, so this is where a
+    degree-2 rung would fail quietly.  The iteration count is *reported*, not
+    gated: no CG2 record exists to gate it against, and inventing one in-slot
+    would be a band this step is not allowed to move.
+    """
+    diag = sar_map_restricted_cg2["diagnostics"][label]
+    assert diag["converged_reason"] == STEP3D_RESTRICTED_CONVERGED_REASON, (
+        f"the degree-2 restricted mass solve for '{label}' returned PETSc "
+        f"converged reason {diag['converged_reason']} after {diag['iterations']} "
+        f"iterations on {diag['dofs']} dofs — every CG2 reading in this column "
+        "rests on this solve; record it, do not raise the iteration cap"
+    )
+
+
+@complex_only
+@pytest.mark.parametrize("label", sorted(STEP3D_RESTRICTED_CONTROL_RECORDS))
+def test_the_cg2_negative_controls_still_miss_the_band(sar_map_restricted_cg2, label):
+    """The negative control: a higher-degree fit must not smooth the controls in.
+
+    The mis-rotated drive and the quadrature-vs-single-drive comparison read
+    123.6255% and 333.0778% under the CG1 restriction.  A CG2 control landing
+    *under* 5% would mean the richer fit had erased the azimuthal structure the
+    identities claim to measure — and is itself the finding, not a licence to
+    read the identity column beside it.
+    """
+    control = sar_map_restricted_cg2["controls"][label]
+    assert control > CONTROL_MIN_MISMATCH, (
+        f"the CG2-restricted control '{label}' reads {control * 100:.4f}%, inside "
+        f"the {CONTROL_MIN_MISMATCH * 100:.1f}% band (the CG1 restriction reads "
+        f"{STEP3D_RESTRICTED_CONTROL_RECORDS[label] * 100:.4f}%) — the degree-2 "
+        "fit has smoothed away the structure the identities measure, so no CG2 "
+        "identity reading here is interpretable"
+    )

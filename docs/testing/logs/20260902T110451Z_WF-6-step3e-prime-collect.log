@@ -1,0 +1,57 @@
+# Test Run
+- Chunk: WF-6-step3e-prime-collect
+- Commit: 590ddf361105944ee68144536e1966bd29c9ef3a
+- Time (UTC): 2026-09-02 11:04:51
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 120 python3 -m pytest tests/validation/test_birdcage_sar_map.py --collect-only -q 2>&1 | tail -20'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  2 06:02 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && source /usr/local/bin/dolfinx-complex-mode && PYTHONPATH=/workspace/src timeout -k 30 120 python3 -m pytest tests/validation/test_birdcage_sar_map.py --collect-only -q 2>&1 | tail -20'\'''
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(ii) SAR_ccw(Rx) vs SAR_ccw(x)]>
+        <Function test_the_restricted_identities_reproduce_step_3ds_readings[(iii) SAR_cw(Mx) vs SAR_ccw(x)]>
+        <Function test_the_restricted_controls_reproduce_step_3ds_readings[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_restricted_controls_reproduce_step_3ds_readings[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+        <Function test_the_restricted_phantom_power_reproduces_step_3ds_reading>
+        <Function test_the_cg2_restriction_cannot_be_worse_than_the_cg1_one>
+        <Function test_the_cg2_restriction_reproduces_the_quadratic_control_exactly>
+        <Function test_the_cg2_restriction_reproduces_the_affine_control_exactly>
+        <Function test_the_quadratic_control_still_misses_at_degree_one_on_the_same_source>
+        <Function test_every_cg2_dof_outside_the_phantom_is_pinned_to_exactly_zero>
+        <Function test_every_cg2_restricted_mass_solve_converges[P1]>
+        <Function test_every_cg2_restricted_mass_solve_converges[P2]>
+        <Function test_every_cg2_restricted_mass_solve_converges[P3]>
+        <Function test_every_cg2_restricted_mass_solve_converges[P4]>
+        <Function test_every_cg2_restricted_mass_solve_converges[a + b x x]>
+        <Function test_every_cg2_restricted_mass_solve_converges[x^2 e_x]>
+        <Function test_the_cg2_negative_controls_still_miss_the_band[mis-rotated SAR_P3(Rx) vs SAR_P1(x)]>
+        <Function test_the_cg2_negative_controls_still_miss_the_band[quadrature SAR_ccw(x) vs single-drive SAR_P1(x)]>
+
+========================= 76 tests collected in 2.60s ==========================
+
+## Exit
+- Status: 0
+- Elapsed (s): 5
