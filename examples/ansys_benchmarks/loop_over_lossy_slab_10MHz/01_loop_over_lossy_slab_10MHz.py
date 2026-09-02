@@ -142,8 +142,125 @@ def _write_metrics(payload) -> Path:
     return path
 
 
-def _write_comparison(m) -> Path:
-    """``COMPARISON.md``: our column filled, the two AED columns blank per SPEC.
+AED_RESULTS_PATH = CASE_DIR / "aed_results" / "ans1_aed_results.json"
+
+
+def _load_aed_results():
+    """The operator's AED half, if it has landed; ``None`` keeps the columns blank.
+
+    ``aed_results/`` is tracked (unlike ``aed/``, which holds the operator's
+    PyAEDT driver and is excluded); the JSON follows the driver's own schema
+    (``loworder``/``highorder`` -> ``"100"``/``"0"`` -> ``R_ohm``, ``L_H``,
+    ``X_ohm``, plus ``dR_ohm``/``dX_ohm``) with a hand-added ``_meta`` block.
+    Reading it here is what stops a re-run of this example from erasing the AED
+    columns — the 2026-09-01 hand-filled table was overwritten by construction.
+    """
+    if not AED_RESULTS_PATH.exists():
+        return None
+    return json.loads(AED_RESULTS_PATH.read_text())
+
+
+def _aed_cell(run, key, digits_key=None):
+    """One AED table cell: the value with every digit AED printed, or blank."""
+    if run is None:
+        return "*(not run)*"
+    value = run.get(key)
+    if value is None:
+        return "*(not run)*"
+    if key == "X_ohm" and run.get("L_H") is not None:
+        return f"{value!r} (L = {run['L_H']!r} H)"
+    return f"{value!r}"
+
+
+def _pct(aed, ours):
+    """Signed percent difference AED vs ours, or blank when AED is absent."""
+    if aed is None or ours == 0:
+        return ""
+    return f"{(aed - ours) / abs(ours):+.2%}"
+
+
+def _aed_columns(aed, m):
+    """The AED halves of both tables as a dict of pre-formatted strings."""
+    blank = {k: "" for k in (
+        "R100_lo", "X100_lo", "R0_lo", "X0_lo", "dR_lo", "dX_lo",
+        "R100_hi", "X100_hi", "R0_hi", "X0_hi", "dR_hi", "dX_hi",
+        "vs_R100", "vs_X100", "vs_R0", "vs_X0", "vs_dR", "vs_dX",
+        "elem_lo", "elem_hi", "order_lo", "order_hi", "passes_lo", "passes_hi",
+        "energy_lo", "energy_hi", "time_lo", "time_hi", "drive_lo", "drive_hi",
+        "skin_lo", "skin_hi", "title_note", "reading",
+    )}
+    if aed is None:
+        blank["title_note"] = "our half filled; AED halves blank — held privately"
+        return blank
+    lo, hi = aed.get("loworder"), aed.get("highorder")
+    meta = aed.get("_meta", {})
+    exact = m["closed_form"]
+    loaded, free = m["solve_loaded"], m["solve_free"]
+    c = dict(blank)
+    for tag, run in (("lo", lo), ("hi", hi)):
+        if run is None:
+            continue
+        r100, r0 = run.get("100"), run.get("0")
+        c[f"R100_{tag}"] = _aed_cell(r100, "R_ohm")
+        c[f"X100_{tag}"] = _aed_cell(r100, "X_ohm")
+        c[f"R0_{tag}"] = _aed_cell(r0, "R_ohm")
+        c[f"X0_{tag}"] = _aed_cell(r0, "X_ohm")
+        c[f"dR_{tag}"] = f"**{_aed_cell(run, 'dR_ohm')}**"
+        c[f"dX_{tag}"] = f"**{_aed_cell(run, 'dX_ohm')}**"
+    if lo is not None:
+        r100, r0 = lo.get("100") or {}, lo.get("0") or {}
+        c["vs_R100"] = _pct(r100.get("R_ohm"), loaded["R_ohm"])
+        c["vs_X100"] = _pct(r100.get("X_ohm"), loaded["X_ohm"])
+        c["vs_R0"] = "—" if free["R_ohm"] == 0 else _pct(r0.get("R_ohm"), free["R_ohm"])
+        c["vs_X0"] = _pct(r0.get("X_ohm"), free["X_ohm"])
+        if lo.get("dR_ohm") is not None:
+            c["vs_dR"] = (f"**{_pct(lo['dR_ohm'], m['delta_R_ohm'])}** (AED is "
+                          f"{_pct(lo['dR_ohm'], exact['delta_R_ohm'])} from the closed form; "
+                          f"ours {m['delta_R_rel_error']:+.2%})")
+        if lo.get("dX_ohm") is not None:
+            c["vs_dX"] = (f"{_pct(lo['dX_ohm'], m['delta_X_ohm'])} (AED ratio to closed form "
+                          f"{lo['dX_ohm'] / exact['delta_X_ohm']:.4f}; ours {m['delta_X_ratio']:.4f})")
+    if hi is not None and hi.get("fell_back_to_low_order"):
+        c["dR_hi"] = c["dX_hi"] = "*(fell back to low order — not a measurement)*"
+        c["order_hi"] = ("**not obtainable in Maxwell 3D AC Magnetic with a winding "
+                         "excitation** — `UseHighOrderShapeFunc=True` was set and ignored; "
+                         f"profile line at every pass: \"{hi.get('profile_message', '')}\"")
+        c["elem_hi"] = "identical to Zero Order, pass for pass"
+    def _mrow(tag, key, fmt):
+        blk = meta.get("loworder" if tag == "lo" else "highorder", {})
+        parts = []
+        for s in ("100", "0"):
+            d = blk.get(s)
+            if d:
+                parts.append(f"σ = {s}: " + fmt(d))
+        return "; ".join(parts)
+    c["elem_lo"] = _mrow("lo", None, lambda d: f"**{d['tets']:,}** tets, final matrix **{d['unknowns']:,}** unknowns ({d['unknowns'] / d['tets']:.2f}/tet)").replace(",", " ")
+    if meta.get("mesh_note"):
+        c["elem_lo"] += f". {meta['mesh_note']}"
+    c["order_lo"] = meta.get("formulation", "")
+    c["passes_lo"] = _mrow("lo", None, lambda d: f"{d['passes']} ({' → '.join(f'{n:,}' for n in d['pass_tets'])})").replace(",", " ")
+    c["passes_hi"] = _mrow("hi", None, lambda d: f"{d['passes']}, identical to Zero Order").replace(",", " ")
+    c["energy_lo"] = _mrow("lo", None, lambda d: f"**{d['energy_error_pct']}%** (delta {d['delta_energy_pct']}%), {d['total_energy_J']:.4e} J")
+    c["energy_hi"] = _mrow("hi", None, lambda d: f"{d['energy_error_pct']}% (identical)")
+    c["time_lo"] = _mrow("lo", None, lambda d: f"{d['wall']} wall, peak {d['peak_memory_GB']} GB")
+    c["time_hi"] = _mrow("hi", None, lambda d: f"{d['wall']} wall")
+    c["drive_lo"] = meta.get("excitation", "")
+    c["drive_hi"] = "same" if hi is not None else ""
+    c["skin_lo"] = "15.9 mm; seeded band ≥ 3 elements/δ in the top 2δ (`SEED_LENGTH = δ/3`)"
+    c["skin_hi"] = "same" if hi is not None else ""
+    c["title_note"] = "our half and the AED Zero Order half filled; First Order not obtainable"
+    c["reading"] = aed.get("_reading", "")
+    return c
+
+
+def _write_comparison(m, *, private: bool = False) -> Path:
+    """``COMPARISON.md`` (tracked, AED columns always blank) or, with
+    ``private=True``, ``COMPARISON_private.md`` (untracked) with the AED columns
+    filled from ``aed_results/``.
+
+    Ansys licence terms restrict disclosure of benchmark results, so the
+    tracked table never carries AED numbers (operator directive 2026-09-02);
+    the private sibling is gitignored and exists only on the operator's box.
 
     Every number below comes from ``m``, which came from this run — nothing is
     transcribed from a prior log, and the closed-form column is
@@ -152,14 +269,26 @@ def _write_comparison(m) -> Path:
     exact = m["closed_form"]
     loaded = m["solve_loaded"]
     free = m["solve_free"]
-    path = CASE_DIR / "COMPARISON.md"
+    aed = _load_aed_results() if private else None
+    c = _aed_columns(aed, m)
+    aed_note = (
+        "**PRIVATE — not tracked, do not commit or publish.** The AED columns are "
+        "read from `aed_results/ans1_aed_results.json` (provenance inside it; raw "
+        "`sigma*_{convergence,profile}.txt` exports alongside)."
+        if aed is not None else
+        "The AED columns are blank **by construction** in this tracked file: Ansys "
+        "licence terms restrict disclosure of benchmark results, so AED numbers "
+        "live only in the gitignored `aed_results/` and `COMPARISON_private.md` on "
+        "the operator's box."
+    )
+    path = CASE_DIR / ("COMPARISON_private.md" if private else "COMPARISON.md")
     path.write_text(
-        f"""# ANS-1 — comparison table (our half filled, both AED halves blank)
+        f"""# ANS-1 — comparison table ({c["title_note"]})
 
 Generated by `01_loop_over_lossy_slab_10MHz.py` on {m["generated_utc"]}; every
 number in the "Ours (FEM)" and "Dodd-Deeds closed form" columns is produced by
 that run — the closed form is evaluated from `utils/dodd_deeds.py` at run time,
-not transcribed. Re-run `./run_examples.sh -e ans:1` to regenerate.
+not transcribed. Re-run `./run_examples.sh -e ans:1` to regenerate. {aed_note}
 
 `SPEC.md` is the authority for the problem to be replicated. Fill the AED
 columns from the Maxwell 3D eddy-current solve of that spec, reporting **all**
@@ -179,12 +308,14 @@ the formulation and the element order AED actually used alongside each column.
 
 | Quantity | Dodd-Deeds closed form | Ours (FEM) | AED (Zero Order) | AED (First Order) | AED vs ours |
 |---|---|---|---|---|---|
-| R, σ_slab = 100 S/m [Ω] | — (closed form gives ΔZ only) | {loaded["R_ohm"]:+.7e} | | | |
-| X, σ_slab = 100 S/m [Ω] | — | {loaded["X_ohm"]:+.7e} | | | |
-| R, σ_slab = 0 [Ω] | — | {free["R_ohm"]:+.7e} | | | |
-| X, σ_slab = 0 [Ω] | — | {free["X_ohm"]:+.7e} | | | |
-| **ΔR** [Ω] | {exact["delta_R_ohm"]:+.7e} | **{m["delta_R_ohm"]:+.7e}** | | | |
-| ΔX [Ω] | {exact["delta_X_ohm"]:+.7e} | {m["delta_X_ohm"]:+.7e} | | | |
+| R, σ_slab = 100 S/m [Ω] | — (closed form gives ΔZ only) | {loaded["R_ohm"]:+.7e} | {c["R100_lo"]} | {c["R100_hi"]} | {c["vs_R100"]} |
+| X, σ_slab = 100 S/m [Ω] | — | {loaded["X_ohm"]:+.7e} | {c["X100_lo"]} | {c["X100_hi"]} | {c["vs_X100"]} |
+| R, σ_slab = 0 [Ω] | — | {free["R_ohm"]:+.7e} | {c["R0_lo"]} | {c["R0_hi"]} | {c["vs_R0"]} |
+| X, σ_slab = 0 [Ω] | — | {free["X_ohm"]:+.7e} | {c["X0_lo"]} | {c["X0_hi"]} | {c["vs_X0"]} |
+| **ΔR** [Ω] | {exact["delta_R_ohm"]:+.7e} | **{m["delta_R_ohm"]:+.7e}** | {c["dR_lo"]} | {c["dR_hi"]} | {c["vs_dR"]} |
+| ΔX [Ω] | {exact["delta_X_ohm"]:+.7e} | {m["delta_X_ohm"]:+.7e} | {c["dX_lo"]} | {c["dX_hi"]} | {c["vs_dX"]} |
+
+{c["reading"]}
 
 **ΔR is the gated row** — ours is within {m["delta_R_rel_error"]:.4%} of the
 closed form (ceiling {DELTA_R_RTOL:.0%}; 1.5834% on the `MAT-6` step-3 record)
@@ -221,13 +352,13 @@ ratio {m["ohmic_power_ratio"]:.4f}.
 
 | Item | Ours (FEM) | AED (Zero Order) | AED (First Order) |
 |---|---|---|---|
-| Elements | {m["n_cells"]} tetrahedra, lowest-order Nédélec edge elements (`N1curl`, degree 1) | | |
-| Basis order | Nedelec first kind, degree 1 (N1curl), 6 unknowns/tet | | |
-| Adaptive passes | n/a — fixed graded mesh | | |
-| Final energy error | n/a | | |
-| Solve time | {loaded["solve_seconds"]:.1f} s (loaded) + {free["solve_seconds"]:.1f} s (free) at `mpiexec -n {m["mpi_ranks"]}` | | |
-| Drive current I' | {m["current_A"]:.6f} A against the nominal {FEM_CURRENT_A:.1f} A | | |
-| Skin depth δ | {m["skin_depth_m"] * 1e3:.2f} mm = {m["skin_depth_over_a"]:.3f} a | | |
+| Elements | {m["n_cells"]} tetrahedra, lowest-order Nédélec edge elements (`N1curl`, degree 1) | {c["elem_lo"]} | {c["elem_hi"]} |
+| Basis order | Nedelec first kind, degree 1 (N1curl), 6 unknowns/tet (per-element local count) | {c["order_lo"]} | {c["order_hi"]} |
+| Adaptive passes | n/a — fixed graded mesh | {c["passes_lo"]} | {c["passes_hi"]} |
+| Final energy error | n/a | {c["energy_lo"]} | {c["energy_hi"]} |
+| Solve time | {loaded["solve_seconds"]:.1f} s (loaded) + {free["solve_seconds"]:.1f} s (free) at `mpiexec -n {m["mpi_ranks"]}` | {c["time_lo"]} | {c["time_hi"]} |
+| Drive current I' | {m["current_A"]:.6f} A against the nominal {FEM_CURRENT_A:.1f} A | {c["drive_lo"]} | {c["drive_hi"]} |
+| Skin depth δ | {m["skin_depth_m"] * 1e3:.2f} mm = {m["skin_depth_over_a"]:.3f} a | {c["skin_lo"]} | {c["skin_hi"]} |
 
 Mesh sizing (from the gate fixture): wire {m["mesh"]["resolution_wire"]} m,
 near field {m["mesh"]["resolution_near"]} m, far field
@@ -490,13 +621,18 @@ def main() -> None:
     if comm.rank == 0:
         metrics_path = _write_metrics(metrics)
         comparison_path = _write_comparison(metrics)
+        private_note = "no aed_results/ on this box — private table not written"
+        if AED_RESULTS_PATH.exists():
+            private_path = _write_comparison(metrics, private=True)
+            private_note = f"{private_path} — AED columns filled (untracked, never commit)"
         print(
             f"\n[paraview] wrote {xdmf_path}"
             f"\n[paraview] max |J| = {j_max:.6e} A/m² loaded, "
             f"{j_max_free:.6e} A/m² in the lossless control"
             f"\n[deliverable] {metrics_path}"
-            f"\n[deliverable] {comparison_path} — AED columns blank, awaiting "
-            f"the operator's Maxwell 3D replication of SPEC.md"
+            f"\n[deliverable] {comparison_path} — AED columns blank by construction "
+            f"(Ansys benchmark results are never tracked)"
+            f"\n[private] {private_note}"
             f"\n\nAll assertions hold. Total elapsed {total_seconds:.1f} s.",
             flush=True,
         )

@@ -22,7 +22,7 @@ adjudication input, not a formality.
       `docs/testing/logs/20260809T183731Z_ANS-1.log`, 70 s) reads
       ΔR = +3.2770406e-01 Ω, 1.5834% from the closed form and 1.4e-08 from
       the pin.
-- [ ] Operator replication in AED (goes to the dashboard Waiting-on-you list
+- [x] Operator replication in AED — **done 2026-09-01** (Maxwell 3D 2026.1.0, AC Magnetic, low-order pair; the higher-order pair is not obtainable — Maxwell falls back to low order with a winding excitation). **Results held privately**: Ansys licence terms restrict disclosure of benchmark results, so the numbers live only in the gitignored `aed_results/` and `COMPARISON_private.md` on the operator's box, never in this repository (goes to the dashboard Waiting-on-you list
       when the box above is checked)
 - [ ] Adjudication (next weekly review after AED numbers land)
 

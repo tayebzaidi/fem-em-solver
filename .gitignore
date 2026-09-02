@@ -118,3 +118,15 @@ Thumbs.db
 # sandbox blocks reads outside it) but never committed or pushed.
 docs/references/*.epub
 docs/references/jin-fem-3e/
+
+# Ansys Electronics Desktop benchmark results (operator directive 2026-09-02).
+# Ansys licence terms restrict disclosure of benchmark results, so nothing
+# AED-derived is ever committed to this public repository: the operator's AED
+# exports and the results JSON live only on the operator's box, the example
+# writes the AED-filled comparison table to an untracked sibling file, and the
+# weekly review's numeric adjudication goes to docs/private/. Tracked
+# COMPARISON.md files keep their AED columns blank by construction.
+examples/ansys_benchmarks/*/aed_results/
+examples/ansys_benchmarks/*/COMPARISON_private.md
+docs/private/*
+!docs/private/README.md

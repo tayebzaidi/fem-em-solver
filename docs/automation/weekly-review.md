@@ -98,7 +98,16 @@ mitigations.
      the top of the dashboard's Waiting-on-you list
      (`docs/status/dashboard.md`, daily-review.md step 7) — that list is how
      the operator learns about it.
-   - *Adjudicate:* if any `COMPARISON.md` gained AED numbers from the human
+   - **AED numbers are private (operator directive 2026-09-02).** Ansys
+     licence terms restrict disclosure of benchmark results, so they are
+     never in a tracked file: read them from the case's gitignored
+     `COMPARISON_private.md` / `aed_results/` on this box (absent on a fresh
+     clone), write the numeric adjudication to the gitignored
+     `docs/private/<case>-adjudication-<date>.md`, and put **only the
+     qualitative verdict** (agree / disagree / inconclusive, and what it
+     decides) into PROJECT_PLAN.md, the dashboard and the commit message —
+     no AED R/X/ΔZ values, tet counts, pass counts, energy errors or timings.
+   - *Adjudicate:* if any case gained AED numbers from the human
      operator since last week, adjudicate them now — agreements promote into
      §7 gates with the AED value as the reference; disagreements open a
      known-issues entry and a diagnosis chunk. A disagreement is a finding,

@@ -28,11 +28,11 @@ read-only digest for the human operator.
    column), Mixed Order not; please confirm the unknowns-per-tet figure AED
    prints. Ranks above `ANS-1`/`ANS-3`. **Adjudication is now the
    2026-09-02 weekly review's** — the Wednesday slot, not 09-06.
-2. 🟢 **`ANS-3` and `ANS-1` AED runs** — still yours, behind `ANS-4`. Both
-   scripts runnable and green; their `COMPARISON.md` tables carry the two
-   AED columns and a `Basis order` row. If you have **already** run either
-   at an unrecorded order, say which — the numbers stand as an
-   "order-unknown" column.
+2. 🟢 **`ANS-3` AED run** — still yours, behind `ANS-4`. Runnable and
+   green. **`ANS-1` is done** (item 7). Run the **low-order pair only**:
+   `ANS-1` showed Maxwell 3D AC Magnetic silently ignores the
+   higher-order shape-function flag with a winding excitation, so the
+   `ANS-5` order-sensitivity column does not exist for eddy-current cases.
 3. **Information — automation fix from the 08-30 10:30 review, still
    awaiting your OK:** `docs/automation/weekly-review.md` has a commit-first
    checkpoint (rotation committed before plan edits). Revert the paragraph
@@ -57,6 +57,22 @@ read-only digest for the human operator.
    than finding them, and says plainly that it found four and not five —
    they cover the four slots before the 02:15 weekly, which is the refill.
    Local `main` remains well ahead of origin (push is manual).
+7. ✅ FYI, no action — **`ANS-1` AED replication landed 2026-09-01 evening**
+   and its numbers are **held privately**: Ansys licence terms restrict
+   disclosure of benchmark results, so nothing AED-derived is tracked
+   (gitignored `aed_results/` + `COMPARISON_private.md`, which the example
+   regenerates from the results JSON; the weekly's numeric ruling goes to
+   gitignored `docs/private/`). The one commit that briefly held them was
+   rewritten out of local history before any push. **Adjudication is the
+   next weekly review's**, with two follow-ons for it: promoting `MAT-6`
+   step 8's 0.28% slab-refined fixture now that an external check exists,
+   and quantifying the filament-vs-finite-wire term in the closed form.
+8. 🔴 **Three scheduled slots were lost to an expired CLI login** — 22:30
+   and 00:00 implementer slots and the **02:15 Wednesday weekly** all died
+   at launch with `OAuth session expired and could not be refreshed`
+   (`logs/automation/20260902T{033001,050001,071501}Z_*.log`). You
+   re-logged in; an interactive session is running the missed weekly now
+   and the cron schedule resumes unchanged from the 03:00 daily.
 
 ## Honest current state (digest of §2 — no quantitative row moved this interval)
 
