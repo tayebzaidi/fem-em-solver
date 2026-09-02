@@ -1,0 +1,54 @@
+# Test Run
+- Chunk: MAT-8
+- Commit: f6aaf5c6b9f86d05021d680466aab1c585cea3e1
+- Time (UTC): 2026-09-02 12:36:01
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/validation/test_dodd_deeds_finite_wire.py -v --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  2 07:36 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/validation/test_dodd_deeds_finite_wire.py -v --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 7 items
+
+tests/validation/test_dodd_deeds_finite_wire.py::test_zero_wire_radius_is_the_filament_form_identically PASSED [ 14%]
+tests/validation/test_dodd_deeds_finite_wire.py::test_shrinking_wire_recovers_the_filament_at_second_order PASSED [ 28%]
+tests/validation/test_dodd_deeds_finite_wire.py::test_two_gauss_legendre_rule_orders_agree PASSED [ 42%]
+tests/validation/test_dodd_deeds_finite_wire.py::test_perfect_conductor_limit_matches_disc_averaged_image_mutual PASSED [ 57%]
+tests/validation/test_dodd_deeds_finite_wire.py::test_disc_averaged_image_mutual_is_quadrature_converged PASSED [ 71%]
+tests/validation/test_dodd_deeds_finite_wire.py::test_finite_wire_correction_at_the_mat6_fixture_is_recorded PASSED [ 85%]
+tests/validation/test_dodd_deeds_finite_wire.py::test_correction_approaches_the_mean_square_radius_limit_with_liftoff PASSED [100%]
+
+============================== 7 passed in 1.95s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 4

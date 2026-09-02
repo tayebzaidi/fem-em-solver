@@ -1,0 +1,60 @@
+# Test Run
+- Chunk: MAT-8
+- Commit: f6aaf5c6b9f86d05021d680466aab1c585cea3e1
+- Time (UTC): 2026-09-02 12:33:43
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 probe_mat8.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  2 07:33 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 probe_mat8.py'\'''
+filament  (0.32259614983743723-0.6158674858159631j) 0.75s
+r= 1.0e-04 rel=2.2222e-06 relR=1.8422e-06  0.04s
+r= 1.0e-05 rel=2.2222e-08 relR=1.8422e-08  0.04s
+r= 1.0e-06 rel=2.2222e-10 relR=1.8422e-10  0.05s
+elliptic fil : -1.9763138523193065e-08
+elliptic wire: -1.9786840203070904e-08
+  sigma=1e+12 dl=-1.9786725770e-08 rel=5.783e-06 loss=5.78e-06
+  sigma=1e+14 dl=-1.9786828760e-08 rel=5.783e-07 loss=5.78e-07
+  sigma=1e+16 dl=-1.9786839059e-08 rel=5.783e-08 loss=5.78e-08
+  sigma=1e+18 dl=-1.9786840089e-08 rel=5.783e-09 loss=5.78e-09
+  elliptic order 12: -1.97868402062244e-08
+  elliptic order 16: -1.97868402030709e-08
+  elliptic order 24: -1.97868402030729e-08
+  order 16: (0.32296789876395243-0.6167593452790603j)  0.04s
+  order 24: (0.32296789876395926-0.6167593452790606j)  0.05s
+CORRECTION at r=0.0025:
+  dR fil 3.22596150e-01  dR wire 3.22967899e-01 rel +0.115237%
+  dX fil -6.15867486e-01  dX wire -6.16759345e-01 rel +0.144814%
+liftoff sweep:
+  h=0.02  d=1.152366e-03
+  h=0.04  d=1.473159e-03
+  h=0.08  d=1.750262e-03
+TOTAL 1.44s
+
+## Exit
+- Status: 0
+- Elapsed (s): 4

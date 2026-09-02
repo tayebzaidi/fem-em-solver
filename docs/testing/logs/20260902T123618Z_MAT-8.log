@@ -1,0 +1,91 @@
+# Test Run
+- Chunk: MAT-8
+- Commit: f6aaf5c6b9f86d05021d680466aab1c585cea3e1
+- Time (UTC): 2026-09-02 12:36:18
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/validation/test_dodd_deeds_finite_wire.py -v -s --tb=short'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  2 07:36 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 mpiexec -n 1 python3 -m pytest tests/validation/test_dodd_deeds_finite_wire.py -v -s --tb=short'\'''
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /dolfinx-env/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pyproject.toml
+plugins: xdist-3.8.0, anyio-4.14.2
+collecting ... collected 7 items
+
+tests/validation/test_dodd_deeds_finite_wire.py::test_zero_wire_radius_is_the_filament_form_identically 
+  ΔZ filament   = (0.32259614983743723-0.6158674858159631j)
+  ΔZ r_wire = 0 = (0.3225961498374373-0.615867485815963j)
+  relative difference = 1.785e-16
+PASSED
+tests/validation/test_dodd_deeds_finite_wire.py::test_shrinking_wire_recovers_the_filament_at_second_order 
+  r_wire = 1e-04 m   |ΔZ_wire − ΔZ_fil|/|ΔZ_fil| = 2.2222e-06
+  r_wire = 1e-05 m   |ΔZ_wire − ΔZ_fil|/|ΔZ_fil| = 2.2222e-08
+  r_wire = 1e-06 m   |ΔZ_wire − ΔZ_fil|/|ΔZ_fil| = 2.2222e-10
+  decade ratios (second order ⇒ 100) = ['100.0001', '100.0002']
+PASSED
+tests/validation/test_dodd_deeds_finite_wire.py::test_two_gauss_legendre_rule_orders_agree 
+  16×16 = (0.32296789876395243-0.6167593452790603j)
+  24×24 = (0.32296789876395926-0.6167593452790606j)
+  relative = 9.819e-15
+PASSED
+tests/validation/test_dodd_deeds_finite_wire.py::test_perfect_conductor_limit_matches_disc_averaged_image_mutual 
+  ΔL image  (4-D elliptic disc average) = -1.9786840203e-08 H
+  ΔL Hankel (σ = 1e16, disc-averaged)   = -1.9786839059e-08 H
+  relative difference = 5.7833e-08
+  ΔL image, filament (for scale)        = -1.9763138523e-08 H
+PASSED
+tests/validation/test_dodd_deeds_finite_wire.py::test_disc_averaged_image_mutual_is_quadrature_converged 
+  order 12: ΔL = -1.97868402062244e-08 H
+  order 16: ΔL = -1.97868402030709e-08 H
+  order 24: ΔL = -1.97868402030729e-08 H
+PASSED
+tests/validation/test_dodd_deeds_finite_wire.py::test_finite_wire_correction_at_the_mat6_fixture_is_recorded 
+  MAT-6 fixture: f = 1.000e+07 Hz, a = 0.04 m, h = 0.02 m, σ = 100.0 S/m, r_wire = 0.0025 m (r/a = 0.0625)
+  ΔR filament  = 3.22596150e-01 Ω
+  ΔR finite wire = 3.22967899e-01 Ω    correction = +0.115237%
+  ΔX filament  = -6.15867486e-01 Ω
+  ΔX finite wire = -6.16759345e-01 Ω    correction = +0.144814%
+  for scale: MAT-6 FEM ΔR discrepancy is 1.58% (production) / 0.2829% (step-8 slab-refined fixture)
+PASSED
+tests/validation/test_dodd_deeds_finite_wire.py::test_correction_approaches_the_mean_square_radius_limit_with_liftoff 
+  closed-form h→∞ limit r_wire²/(2a²) = 1.953125e-03
+  h =   20.0 mm  ΔR correction = 1.152366e-03  gap to limit = 8.008e-04
+  h =   40.0 mm  ΔR correction = 1.473159e-03  gap to limit = 4.800e-04
+  h =   80.0 mm  ΔR correction = 1.750262e-03  gap to limit = 2.029e-04
+  h =  160.0 mm  ΔR correction = 1.889138e-03  gap to limit = 6.399e-05
+  h =  320.0 mm  ΔR correction = 1.936224e-03  gap to limit = 1.690e-05
+  h =  640.0 mm  ΔR correction = 1.945731e-03  gap to limit = 7.394e-06
+PASSED
+
+============================== 7 passed in 1.91s ===============================
+
+## Exit
+- Status: 0
+- Elapsed (s): 4

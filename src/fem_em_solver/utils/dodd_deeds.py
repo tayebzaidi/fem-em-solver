@@ -71,7 +71,9 @@ from .constants import MU_0
 __all__ = [
     "half_space_reflection_coefficient",
     "coil_impedance_change",
+    "coil_impedance_change_finite_wire",
     "image_limit_inductance_change",
+    "image_limit_inductance_change_finite_wire",
     "skin_depth",
 ]
 
@@ -221,6 +223,202 @@ def _integrate_oscillatory(
         im, _ = quad(lambda a: integrand(np.array(a)).imag, lo, hi, limit=200)
         total += re + 1j * im
     return complex(total)
+
+
+def _disc_quadrature(
+    coil_radius: float,
+    liftoff: float,
+    r_wire: float,
+    order: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Nodes/weights of a uniform average over the wire's circular cross-section.
+
+    The wire is a torus of minor radius ``r_wire`` whose centre-line is the
+    filament ``(ρ = a, z = h)``.  Its cross-section in the (ρ, z) half-plane is
+    a disc; a uniform current density over that disc is the standard
+    finite-wire model (Rosa & Grover; Jin 3e §2.5 discusses the same
+    cross-sectional average for wire self-inductance).
+
+    The rule is a *fixed* Gauss–Legendre product rule in polar coordinates
+    (``order`` nodes radially on ``[0, r_wire]`` × ``order`` nodes in ``θ`` on
+    ``[0, 2π]``), not an adaptive one.  ``scipy.integrate.dblquad`` on the
+    eq. (1) kernel converges slowly near the disc edge, where the integrand's
+    ρ-derivative is largest and the adaptive subdivision chases it; the
+    integrand is analytic in ``(ρ, θ)``, so Gauss–Legendre converges
+    geometrically instead.  Two rule orders agreeing is the convergence
+    evidence (asserted in the tests).
+
+    Returns ``(rho_nodes, z_nodes, weights)`` with ``weights`` summing to 1 —
+    i.e. already normalised by the disc area ``π r_wire²``.
+    """
+    if r_wire < 0.0:
+        raise ValueError(f"r_wire must be non-negative, got {r_wire!r}")
+    if r_wire >= coil_radius:
+        raise ValueError(
+            f"r_wire={r_wire!r} must be smaller than coil_radius={coil_radius!r}"
+        )
+    if r_wire >= liftoff:
+        raise ValueError(
+            f"r_wire={r_wire!r} must be smaller than liftoff={liftoff!r}: the "
+            "wire would intersect the half-space surface"
+        )
+    if order < 2:
+        raise ValueError(f"quadrature order must be >= 2, got {order!r}")
+
+    if r_wire == 0.0:
+        return (
+            np.array([coil_radius]),
+            np.array([liftoff]),
+            np.array([1.0]),
+        )
+
+    x_r, w_r = np.polynomial.legendre.leggauss(order)
+    x_t, w_t = np.polynomial.legendre.leggauss(order)
+    # ρ ∈ [0, r_wire]
+    rho = 0.5 * r_wire * (x_r + 1.0)
+    w_rho = 0.5 * r_wire * w_r
+    # θ ∈ [0, 2π]
+    theta = np.pi * (x_t + 1.0)
+    w_theta = np.pi * w_t
+
+    # dA = ρ dρ dθ, normalised by the disc area.
+    weights = (w_rho * rho)[:, None] * w_theta[None, :] / (np.pi * r_wire**2)
+    rho_nodes = coil_radius + rho[:, None] * np.cos(theta)[None, :]
+    z_nodes = liftoff + rho[:, None] * np.sin(theta)[None, :]
+    return rho_nodes.ravel(), z_nodes.ravel(), weights.ravel()
+
+
+def _finite_wire_form_factor(
+    alpha,
+    rho_nodes: np.ndarray,
+    z_nodes: np.ndarray,
+    weights: np.ndarray,
+) -> np.ndarray:
+    """``F(α) = ⟨ρ' J₁(αρ') e^{−αz'}⟩`` over the wire cross-section.
+
+    The generalisation of eq. (1) to a source filament at ``(a_s, h_s)`` and an
+    observation filament at ``(a_o, h_o)`` is
+
+        ΔZ = jωπμ₀ ∫₀^∞ Γ(α)·[a_s J₁(αa_s) e^{−αh_s}]·[a_o J₁(αa_o) e^{−αh_o}] dα
+
+    which is *separable* in source and observation.  Averaging over a uniform
+    current density on both the source and the observation disc therefore does
+    not need a 4-D quadrature: it is the same 2-D disc average applied twice,
+
+        ΔZ_wire = jωπμ₀ ∫₀^∞ Γ(α) F(α)² dα
+
+    with ``F`` the average defined here.  ``r_wire → 0`` collapses ``F`` to
+    ``a J₁(αa) e^{−αh}`` and the expression to eq. (1) exactly.
+    """
+    from scipy.special import j1
+
+    alpha = np.atleast_1d(np.asarray(alpha, dtype=float))
+    arg = alpha[:, None] * rho_nodes[None, :]
+    kernel = rho_nodes[None, :] * j1(arg) * np.exp(-alpha[:, None] * z_nodes[None, :])
+    return kernel @ weights
+
+
+def coil_impedance_change_finite_wire(
+    frequency_hz: float,
+    coil_radius: float,
+    liftoff: float,
+    sigma: float,
+    r_wire: float,
+    mu_r: float = 1.0,
+    n_oscillations: int = 400,
+    quadrature_order: int = 16,
+) -> complex:
+    """``ΔZ`` [Ω] of a *finite-cross-section* loop above a half-space.
+
+    Same geometry and conventions as :func:`coil_impedance_change`, except the
+    unit-turn loop is a wire of circular cross-section radius ``r_wire``
+    carrying a uniform current density, rather than a filament.  This is the
+    leading modelling term that :func:`coil_impedance_change` drops: it enters
+    at ``O((r_wire/a)²)`` and ``O((r_wire/h)²)``, so it is the floor under any
+    sub-percent ΔR comparison against a FEM model built with a *solid* wire.
+
+    ``r_wire = 0`` reproduces :func:`coil_impedance_change` term by term.
+
+    Parameters
+    ----------
+    r_wire : float
+        Wire cross-section radius [m].  Must be < ``coil_radius`` and
+        < ``liftoff``.
+    quadrature_order : int
+        Gauss–Legendre nodes per direction of the polar product rule over the
+        cross-section (see :func:`_disc_quadrature`).  16 is already converged
+        for ``r_wire/a ≲ 0.1``; the tests assert two orders agree.
+    """
+    if coil_radius <= 0.0:
+        raise ValueError(f"coil_radius must be positive, got {coil_radius!r}")
+    if liftoff <= 0.0:
+        raise ValueError(f"liftoff must be positive, got {liftoff!r}")
+    if sigma < 0.0:
+        raise ValueError(f"sigma must be non-negative, got {sigma!r}")
+
+    rho_nodes, z_nodes, weights = _disc_quadrature(
+        coil_radius, liftoff, r_wire, quadrature_order
+    )
+
+    def integrand(alpha: np.ndarray) -> np.ndarray:
+        gamma = np.atleast_1d(
+            half_space_reflection_coefficient(alpha, frequency_hz, sigma, mu_r)
+        )
+        form = _finite_wire_form_factor(alpha, rho_nodes, z_nodes, weights)
+        value = gamma * form**2
+        # ``_integrate_oscillatory`` feeds 0-d arrays and hands the result to
+        # ``quad``, which needs a scalar back.
+        return value if np.ndim(alpha) > 0 else value[0]
+
+    integral = _integrate_oscillatory(
+        integrand, coil_radius, liftoff, n_oscillations
+    )
+    omega = 2.0 * np.pi * frequency_hz
+    return complex(1j * omega * np.pi * MU_0 * integral)
+
+
+def image_limit_inductance_change_finite_wire(
+    coil_radius: float,
+    liftoff: float,
+    r_wire: float,
+    quadrature_order: int = 16,
+) -> float:
+    """``ΔL`` [H] of a finite-cross-section loop over a *perfect* conductor.
+
+    The finite-wire counterpart of :func:`image_limit_inductance_change`, and
+    like it computed entirely from the elliptic-integral ``A_φ`` of
+    :class:`~fem_em_solver.utils.analytical.AnalyticalSolutions` — no Bessel
+    functions, no Hankel integral.  Each source point of the cross-section
+    carries its own mirror ring at ``z = −h_s`` with reversed current, and the
+    inductance change is minus the *double* disc average of the ring-to-ring
+    mutual inductance::
+
+        ΔL = −⟨⟨ M(a_s, a_o, h_s + h_o) ⟩⟩,
+        M = 2π a_o A_φ(ρ = a_o, z = h_s + h_o ; loop radius a_s)
+
+    Unlike the Hankel form this does *not* factorise, so it is a genuine 4-D
+    average (``order⁴`` elliptic evaluations); that independence is the point —
+    it pins the ``jωπμ₀`` prefactor of the finite-wire form the same way
+    :func:`image_limit_inductance_change` pins eq. (1)'s.
+    """
+    from .analytical import AnalyticalSolutions
+
+    rho_nodes, z_nodes, weights = _disc_quadrature(
+        coil_radius, liftoff, r_wire, quadrature_order
+    )
+
+    total = 0.0
+    for a_s, h_s, w_s in zip(rho_nodes, z_nodes, weights):
+        points = np.zeros((rho_nodes.size, 3))
+        points[:, 0] = rho_nodes
+        points[:, 2] = h_s + z_nodes
+        a_phi = AnalyticalSolutions.circular_loop_vector_potential(
+            points, current=1.0, radius=float(a_s), loop_center=0.0
+        )[:, 1]
+        # φ̂ at (ρ, 0, ·) is +ŷ, so A_φ is the y component.
+        mutual = 2.0 * np.pi * rho_nodes * a_phi
+        total += w_s * float(np.dot(weights, mutual))
+    return -total
 
 
 def image_limit_inductance_change(coil_radius: float, liftoff: float) -> float:

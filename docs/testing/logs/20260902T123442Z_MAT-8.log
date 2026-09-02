@@ -1,0 +1,45 @@
+# Test Run
+- Chunk: MAT-8
+- Commit: f6aaf5c6b9f86d05021d680466aab1c585cea3e1
+- Time (UTC): 2026-09-02 12:34:42
+- Host: MCBMR-RAD02
+- OS: Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+- Python: Python 3.12.3
+- Docker Compose: Docker Compose version v5.4.0
+- Root Dir: /home/taz5297/Development/fem-em-solver
+- Working Dir: /home/taz5297/Development/fem-em-solver
+- COMPOSE_FILE: /home/taz5297/Development/fem-em-solver/docker/docker-compose.yml
+- Command: docker compose exec -T fem-em-solver bash -lc 'cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 probe_mat8.py'
+
+## Preflight
+\$ pwd
+/home/taz5297/Development/fem-em-solver
+
+\$ ls -la docker
+total 20
+drwxr-xr-x  3 taz5297 taz5297 4096 Aug 24 12:40 .
+drwxr-xr-x 16 taz5297 taz5297 4096 Sep  2 07:34 ..
+drwxr-xr-x  3 taz5297 taz5297 4096 Jul 29 22:20 .claude
+-rw-rw-r--  1 taz5297 taz5297  657 Aug 23 15:12 Dockerfile
+-rw-rw-r--  1 taz5297 taz5297 1449 Aug 24 12:40 docker-compose.yml
+
+\$ docker compose version
+Docker Compose version v5.4.0
+
+\$ docker compose config --services
+fem-em-solver
+
+## Output
++ bash -lc 'docker compose exec -T fem-em-solver bash -lc '\''cd /workspace && PYTHONPATH=/workspace/src timeout -k 30 120 python3 probe_mat8.py'\'''
+analytic h->inf limit r^2/(2a^2) = 1.95312500e-03
+  h=0.020  dR=1.152366e-03  dX=1.448135e-03  gapR=8.008e-04
+  h=0.040  dR=1.473159e-03  dX=1.660459e-03  gapR=4.800e-04
+  h=0.080  dR=1.750262e-03  dX=1.831411e-03  gapR=2.029e-04
+  h=0.160  dR=1.889138e-03  dX=1.915110e-03  gapR=6.399e-05
+  h=0.320  dR=1.936224e-03  dX=1.943367e-03  gapR=1.690e-05
+  h=0.640  dR=1.945731e-03  dX=1.951299e-03  gapR=7.394e-06
+TOTAL 0.62s
+
+## Exit
+- Status: 0
+- Elapsed (s): 3

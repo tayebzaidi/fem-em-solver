@@ -16017,3 +16017,83 @@ executor returned with nothing in flight.
   item 7 remains skippable), and that Flag 1 above may change what step 3f is
   *for*: with both the projector and the estimator degree excluded, a finer-mesh
   rung is no longer the only live candidate — the construction itself is.
+
+## 2026-09-02T12:38Z — `MAT-8` — outcome: `complete` (07:30 implementer slot)
+
+- **Preflight clean.** Tree clean at `f6aaf5c`, container Up 6 days, no
+  `attempt/*` or `recovered/*`. §9 items 1 and 2 already marked DONE, so this
+  slot took **item 3, `MAT-8`** — the first open item, no fallback used.
+- **Delegated** to the `implementer` agent, foreground, one chunk. Its report
+  was checked against the logs and the diff by this slot before committing;
+  every number below was re-read from the log by this slot, not taken from the
+  report.
+- **What landed.** `utils/dodd_deeds.py` gains
+  `coil_impedance_change_finite_wire`,
+  `image_limit_inductance_change_finite_wire` and two private helpers — **198
+  inserted lines, zero deletions**, so no existing caller or record can have
+  moved (`git diff --stat`, verified by this slot). New test module
+  `tests/validation/test_dodd_deeds_finite_wire.py`, 7 tests, no dolfinx import.
+- **The implementation insight worth keeping:** the generalised eq. (1) is
+  **separable** in source and observation filament, so averaging a uniform
+  current density over the wire's cross-section does **not** need a 4-D
+  quadrature — it is one 2-D disc average applied twice,
+  `ΔZ = jωπμ₀ ∫ Γ(α) F(α)² dα` with `F(α) = ⟨ρ' J₁(αρ') e^{−αz'}⟩_disc`. Fixed
+  Gauss–Legendre polar product rule (the item's `dblquad` trap was respected);
+  `r_wire = 0` degenerates to the single centre node. The elliptic PEC
+  reference used for anchor (ii) *is* a genuine 4-D average and shares no
+  algebra with it, so (ii) is an independent check rather than a tautology.
+- **Measured** (`20260902T123618Z_MAT-8.log:42–87`): `r_wire = 0` reproduces
+  the filament form to **1.785e-16**; (i) r→0 residuals **2.2222e-06 /
+  2.2222e-08 / 2.2222e-10** at r = 1e-4/1e-5/1e-6, decade ratios **100.0001 /
+  100.0002**; GL 16×16 vs 24×24 **9.819e-15**; (ii) PEC limit vs the 4-D
+  elliptic disc-averaged image mutual **5.7833e-08** (ΔL −1.9786839059e-08 vs
+  −1.9786840203e-08 H), spurious-loss ratio 5.78e-08; elliptic reference itself
+  converged to ~1e-11 (orders 12/16/24).
+- **(iii) The record everyone wanted** (`MAT-6` fixture: 10 MHz, a = 0.04,
+  h = 0.02, σ = 100, r_wire = 0.0025, r/a = 0.0625): ΔR 3.22596150e-01 →
+  3.22967899e-01 Ω, **+0.115237%**; ΔX −6.15867486e-01 → −6.16759345e-01 Ω,
+  **+0.144814%**. **It is 0.115%, not 0.5%.** Negligible against `MAT-6`'s
+  1.58% production discrepancy — but **≈ 41% of the 0.2829% step-8
+  slab-refined one**, so after a step-11 promotion the residual FEM error is
+  nearer 0.17% than 0.28%. **Flag for the review:** that is a consequence for
+  `MAT-6` step 11's framing, and this slot registered nothing on it — no gate,
+  no band, `MAT-6` still ✅ at 1.58%.
+- **Two deviations from the §9 item — flagged for the review, neither a
+  loosened bound.** (1) **Anchor (i) as scoped is arithmetically impossible.**
+  The r→0 residual *is* the leading finite-wire term and scales as exactly r²
+  (ratios above), so at r = 1e-4 it is 2.2e-6 and a 1e-8 bound there would
+  require the very correction the chunk exists to compute to be absent. The
+  plan's 1e-8 is asserted at the tightest radius (r = 1e-6, reads 2.2222e-10)
+  **plus** the second-order rate — strictly stronger than one tolerance, and
+  all three readings print. (2) **The scoped negative control's premise is
+  false.** The correction does not decay with lift-off; it *rises* monotonically
+  (1.152e-3 → 1.946e-3 across h = 20/40/80/160/320/640 mm) to the closed-form
+  limit **`r_wire²/(2a²)` = 1.953125e-03`**. The coupling's lift-off dependence
+  does vanish; the wire's own mean-square-radius shift does not, because it is a
+  property of the loop, not of the half-space. Replaced by four asserts —
+  monotone increase, every value below the closed form, monotone gap closure,
+  and agreement to 0.38% at h = 640 mm — i.e. a **closed-form anchor** where the
+  scoped control was only a monotonicity check. Both are documented verbatim in
+  the test docstrings with log filenames (MAG-10/MAG-15 precedent). This slot
+  judges both to strengthen the chunk, but the review owns the ruling.
+- **Tier — resolved by footer, against this slot's own spawn prompt.** The
+  measured window is **4 s** (pytest 1.91 s), so the row is declared **smoke**,
+  matching the §7 scoping. This slot's spawn prompt had echoed the §9 item's
+  "declare standard"; the governing rule is declare-from-the-footer and the
+  executor correctly pushed back. Note the `OPS-30` failure mode was the
+  opposite direction (a 37 s window labelled smoke), so a 4 s window under
+  "smoke" carries no tier-honesty exposure.
+- **Regression** `20260902T123643Z_MAT-8.log`: `14 passed, 3 skipped` alongside
+  `test_dodd_deeds_impedance.py` (the 3 skips are the complex-only FEM tests in
+  real mode), Status 0, 4 s. No new red, no known-issues entry needed.
+- **Cost.** Five harness windows, all foreground, `-n 1`, real mode,
+  `timeout -k 30 120`, repo-relative harness path: `…T123343Z` (cost probe, 4 s),
+  `…T123442Z` (lift-off asymptote probe, 3 s), `…T123601Z` (first suite, 4 s),
+  **`…T123618Z` (the record run, `-s`, 7 passed, 4 s)**, `…T123643Z`
+  (regression, 4 s). All Status 0, all footered. **18 s of compute for the
+  whole slot** — the cheapest closure in a long while.
+- **No denials this slot.** Commit message used the literal multi-line `-m`
+  route.
+- Next-attempt hypothesis: the 09:00 slot takes **§9 item 4 (`WF-6` step 3f₀`)**
+  — mesh-only, real mode, `-n 2`, independent. Landing it also unblocks item 7,
+  whose other half (item 2) landed at 06:00.
