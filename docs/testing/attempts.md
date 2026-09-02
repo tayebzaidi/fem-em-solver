@@ -18270,3 +18270,84 @@ executor returned with nothing in flight.
   estimator-degree rung) is now unblocked in the way its scoping assumed — it
   can call the packaged `post.project_to_cg1_restricted` directly and needs only
   a degree parameter, not a second copy of the helper.
+
+## 2026-09-02T02:05Z — `OPS-30` — outcome: `complete`
+
+- **Slot: 21:00 local scheduled implementer run.** Preflight clean:
+  `git status --porcelain` empty on `main` at `a946b34`, container
+  `fem-em-solver` Up 6 days, no `attempt/*` or `recovered/*` branch. §9 On-deck
+  **item 2** taken mechanically — item 1 (`WF-6` step 3e) carries the review's
+  `✅ **DONE**` prefix from the previous slot, so item 2 is the first not done
+  or blocked. Note `main` moved between slots: the human operator landed
+  `a946b34` (`ANS-1`, the AED half) after the 00:30 slot's `d1d072c`.
+- **Delegated to the `implementer` agent, foreground**, per protocol step 3
+  (`OPS-30` is none of the three specialist classes). The executor's report was
+  checked against the logs and the tree by this slot before anything below was
+  claimed; every number here is re-read from the log lines cited, not banked
+  from the report. Commit `bd49aa4` on `main`, tree clean after.
+- **What landed, and nothing else.** `petsc_options_prefix=` added at exactly
+  the two filed sites — `scripts/probes/mag13_step2b_recovery.py:180`
+  (`fem_em_probe_mag13_step2b_`) and `scripts/probes/post3_step3_debug.py:55`
+  (`fem_em_probe_post3_step3_`). Neither probe was modernised, refactored or
+  run; their value is their recorded output, per the scoping.
+- **Anchor met — the count identity in both directions**, measured live at
+  both ends (the negative control was *executed pre-fix*, not read from the
+  August log, which is stronger than the plan asked for):
+  - pre-fix `20260902T020122Z_OPS-30.log:37` `RESULT: files=82 calls=320
+    apis=22 methods=0 violations=2`, `:38` `SURVIVOR_STATUS=1`; same log `:60`
+    the gated roots `files=177 calls=484 apis=30 methods=7 violations=0`.
+    Status 0, **12 s**.
+  - post-fix `20260902T020238Z_OPS-30.log:35` `RESULT: files=82 calls=320
+    apis=22 methods=0 violations=0`, `:36` `SURVIVOR_STATUS=0`; `:58` the
+    gated roots **unchanged** at `177 / 484 / 30 … violations=0`; `:129`
+    `3 passed, 30 warnings in 23.82s`. Status 0, **37 s**.
+  - So: violations 2 → 0 at the two named sites, the `examples`+`scripts`
+    census unchanged at 82 / 320 / 22, and `src`+`tests` unchanged in both
+    census and `violations=0`. The sweep demonstrably reaches `scripts/` — it
+    reported 2 there with the sites still broken — so the plan's "a sweep that
+    reports 0 with a site still broken" **stop** condition did not arise.
+  - Tier **smoke**, `-n 1`, `timeout -k 30 120`, both windows foreground.
+    Total compute **49 s** against a predicted "well under 60 s".
+- **The pin, which was the named trap, moved in the same commit and was
+  strengthened rather than deleted — the review should look at this
+  deliberately.** `tests/environment/test_dolfinx_api_migration.py::
+  test_filed_survivors_outside_the_gated_roots_are_unchanged` asserted set
+  equality with the two survivors and goes red in either direction. Setting
+  `FILED_SURVIVORS = set()` *alone* would have weakened it (a sweep resolving
+  nothing outside `src`/`tests` would also find no violations) — which is the
+  plan's stop condition. Instead the empty set is floored twice: an
+  `examples`+`scripts` census floor (60 / 250 / 15 against the measured
+  82 / 320 / 22) and a **reachability floor of ≥ 2 resolved
+  `dolfinx.fem.petsc.LinearProblem` call sites under `scripts/probes`** — i.e.
+  the two migrated constructions must still parse and resolve for the empty
+  set to mean anything. Floors, not equalities, matching the module's existing
+  `MIN_FILES` convention. This slot's judgement is that this is a
+  strengthening, not a weakening, and therefore not the stop condition; the
+  review is invited to disagree, since the alternative reading (an empty pin
+  is inherently weaker) would demote the closure.
+- **Documented-census drift, recorded not edited.** §9 item 2 and the
+  known-issues entry cite the 2026-08-25 gated-root census as **434 call sites
+  over 29 APIs** (`20260825T200851Z_OPS-26.log`); today's tree reads **484 / 30**
+  at the same `violations=0`. The gate asserts floors, not equalities, so
+  nothing is red and nothing moved — the August reading was left intact as
+  history and the new figure recorded in the closure paragraph. A forward-looking
+  §9/known-issues re-record of 434/29 → 484/30 is a **review's** call, in the
+  `OPS-27`/`OPS-31` stale-record class.
+- **Scope held.** Two `petsc_options_prefix` arguments and one pinned set. No
+  band, tolerance, record or gate moved; no probe became runnable-and-verified;
+  `OPS-30` closes a filed 0.11 migration gap and nothing more. §7 `OPS-30`
+  flipped ⬜→✅ with the numbers, §9 item 2 prefixed `✅ **DONE 2026-09-01 21:00
+  slot**` with its scoping kept verbatim, the 2026-08-25 known-issues entry
+  re-headed `✅ CLOSED`, and both `test-results.md` rows auto-appended — all in
+  `bd49aa4` with the code and the logs.
+- **No denials this slot**, and the `git commit -F` path the previous entry
+  reported as unusable was not exercised (the executor used a literal `-m`).
+  That entry's request stands: the protocol's `git commit -F <file>` guidance is
+  stale for scheduled sessions and a review should correct it.
+- Next-attempt hypothesis: **§9 item 3 (`OPS-31`) is the 22:30 slot's** — a
+  `record-reconciler` job under the (1*) licence, one `ports:3` window at
+  `-t 400` (228 s measured in the `EX-36` leg), plus the `crontab` header line.
+  It is independent of everything landed here. Item 4 (`WF-6` step 3e′) then
+  covers 00:00 before the 2026-09-02 02:15 weekly refills the queue; it should
+  now import `post.project_to_cg1_restricted` from `post/faraday.py`, which
+  item 1 landed at `e949dfa`.
