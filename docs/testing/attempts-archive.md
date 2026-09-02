@@ -13030,3 +13030,2489 @@ step to *gating* those already-computed metrics on the field route (the
 `main` clean, nothing parked.
 
 ---
+## 2026-08-16T09:36Z — `PORT-5` step 1 — **complete**
+
+Scheduled implementer run, 04:30 CDT slot. Preflight clean, container Up,
+§9 On-deck item 1 taken as written.
+
+**What was done.** The prior slot's hypothesis was right: the wiring already
+existed — `run_n_port_sparameter_sweep` calls
+`summarize_sparameter_sanity(s_matrix)` at `sparameters.py:325` on both routes.
+So the step was scoped to *gating* the report the sweep already returns, not to
+wiring a call. Three cases added to
+`tests/validation/test_port_package_sparameters.py`, riding that module's
+existing module-scoped fixture: **no extra solves** (the trap the item named —
+one sweep, one summary) and the whole module still runs in ~149 s.
+
+**Measured, field route** (`result.sanity_report`, `is_placeholder=False`):
+
+| metric | measured | anchor | miss |
+|---|---|---|---|
+| `passivity_max_sigma` | 0.861449197 | `PORT-1` step 4 `‖S‖₂` 0.861449 | 1.97e-07 (band 1e-6) |
+| same vs `np.linalg.norm(S,2)` | — | identical quantity | < 1e-12 |
+| `‖S−Sᵀ‖/‖S‖` from `reciprocity_max_abs_delta` (=2.194793e-05, ×√2/‖S‖_F, exact for 2×2) | 2.549409e-05 | gated 2.5494e-05 | 9e-11 (band 5e-7) |
+| `passivity_max_column_power_sum` | 0.741345553 | ≤ 1 | — |
+| warnings | none | none | — |
+
+**Negative controls, both executed.** Deprecated heuristic through the same
+metrics: `passivity_max_sigma` 0.999985964171, `reciprocity_max_abs_delta`
+identically 0, separation from the field route's σ **0.138537** > the
+pre-stated 0.13. Asymmetrised copy (one off-diagonal +2× the abs warning
+threshold): delta 9.999344e-02, both reciprocity warnings fire; the untouched
+matrix still reports none.
+
+**One constant in the §9 item was wrong — corrected with its measurement, per
+the MAG-10/MAG-15 precedent.** The item quoted the heuristic's
+`passivity_max_sigma` as exactly `1.000000000000`. That is the *reaction-route*
+fixture's number (`PORT-1` step 2 iv, plan-archive) and the hand-built unitary
+S in `test_port_reaction_impedance.py` — different matrices. On this mesh the
+proximity heuristic's S is unitary only to 1.4036e-05. First run
+(`20260816T093226Z_PORT-5-step1.log`, **1 failed / 9 passed**, 150.5 s) failed
+exactly there and **passed both anchor cases at their pre-stated bands**; the
+premise assertion was rewritten as "unitary to 5e-5" with the measurement in a
+code comment. The discriminating assertion — the 0.13 separation — was never
+moved, and no tolerance in `sparameters.py` changed.
+
+**Logs.** `20260816T093226Z_PORT-5-step1.log` (first run, the corrected
+constant), `20260816T093556Z_PORT-5-step1-rerun.log` (**10 passed 149.1 s**,
+`-n 2`, standard tier, container wrap `timeout -k 30 500`; `-s` so the metric
+prints are on record). `tests/environment` first in both, complex mode +
+`FEM_EM_REQUIRE_COMPLEX=1`.
+
+**Plan edits in this commit.** §7 `PORT-5` ⚠️ → 🧪 with a step-1 ✅ entry (tier
+smoke → standard: 149 s is not a smoke run); §9 item 1 struck; §10 target 3's
+"`PORT-5`'s sweep-level path is untouched" clause discharged — what keeps that
+box unticked is now the fixture, not the route. No denial hit.
+
+**Hypothesis for the next attempt.** Item 2 (`ANS-3` runnable half) is next
+open and independent. Unrelated to it, one finding worth a review's attention:
+the §9 anchor error above came from a number transcribed across fixtures, and
+`passivity_max_sigma ≈ 1` appears in at least three places meaning three
+different matrices — a reviewer quoting a metric should name the fixture with
+it. `main` clean, nothing parked.
+
+---
+
+## 2026-08-16T11:15Z — `ANS-3` — **complete**
+
+Scheduled implementer run, 06:00 CDT slot. `main` clean at preflight,
+container Up 15 h. §9 item 1 (`PORT-5` step 1) was already struck by the
+04:30 run, so item 2 — the `ANS-3` runnable half — was the first open item.
+Executed the §7 entry verbatim; no fallback, no denial, nothing parked.
+
+**Outcome.** All gates green in **131 s** wall clock (128.1 s in-script) at
+`mpiexec -n 2` on 178 055 cells, heavy tier, container wrap
+`timeout -k 30 500`. Log
+`20260816T110354Z_ANS-3-runnable-half-n2.log`. Stage timings: mesh 35.9 s,
+2-column package sweep 46.3 s, export solve 21.4 s.
+
+**Numbers.** Reproduction of the `PORT-1` step-4 record inside `EX-20`'s
+pre-stated 1% band, misses ≤ **3.67e-06** — raw mutual 0.894543 (3.33e-07),
+corrected 0.939849 (3.23e-07), ‖S−Sᵀ‖/‖S‖ = 2.5494e-05 (3.67e-06),
+‖S‖₂ = 0.861449 (2.29e-07). Negative control executed and printed **first**:
+the raw rung is −10.55% against the unmoved 10% mutual band and is asserted
+to *fail* it (the `EX-20` inverted assertion); the corrected rung is −6.02%,
+inside. Im Z₂₁ = +1.110803269e+00 Ω vs ωM₁₂ = 1.241755 Ω;
+|Z₁₂−Z₂₁|/|Z₂₁| = 5.8309e-04, reported not gated.
+
+**Artifacts landed** in `examples/ansys_benchmarks/two_torus_gap_ports_10MHz/`:
+`03_two_torus_gap_ports_10MHz.py`, `metrics.json` (full complex 2×2 Z and S,
+ladder, identities, mesh/timings), `COMPARISON.md` (our columns filled, AED
+columns blank per SPEC), and the combined XDMF (untracked, as every
+`paraview_output/` is). Every geometry, drive, quadrature and correction
+constant is **imported** from `examples/ports/02_package_sparameter_sweep.py`
+(`EX-20`) and `fem_em_solver.ports.systematics` — the `ANS-1` rule, so the
+benchmark cannot drift from the gate.
+
+**Two deliberate departures from a literal `EX-20` copy**, both in scope:
+
+1. `EX-20`'s 45.7 s deprecated-heuristic control is **absent**. The §7
+   `ANS-3` entry names the raw rung as this case's negative control, and
+   dropping the heuristic is what brought the case in at 131 s rather than
+   ~180 s. The heuristic control still runs in `EX-20` itself.
+2. A same-stem guide page `03_two_torus_gap_ports_10MHz.md` was written,
+   which the entry did not ask for — §5.4's 2026-08-10 operator directive
+   requires one for every runnable example and the doc-reference checker
+   enforces it, so omitting it would have left a defect. `ANS-1` has one.
+
+**Incidental fix, landed in the same commit.** `scripts/run_examples.sh`
+issued a bare `timeout $TIMEOUT_S` inside the container — it was the last
+compute path in the repo still sending a plain TERM to an `mpiexec` job, the
+exact mode that wedged the container in `MAT-6` step 10 (2026-08-12). Now
+`timeout -k 30 $TIMEOUT_S`, matching the CLAUDE.md hard rule. Every `ans:`,
+`mri:`, `th:`, `mat:`, `mesh:` and `ports:` dispatch inherits it.
+
+**Doc-reference checker** (`20260816T110748Z_ANS-3-docrefs.log`): exit 1 with
+**24 stale-artifact violations, none from this case** — all are
+`examples/magnetostatics/` and `examples/mri/` `paraview_output/` references
+112–141 h old. Known and benign per the §7 `ANS-3` entry's own trap note. The
+guide pass is clean: 20 runnable examples, 20 checked against 3 required
+headings, 0 pending; `PASS: every runnable example has a guide with all
+required sections.`
+
+**Waiting-on-you, for the next daily review's dashboard.** The operator's AED
+replication of `two_torus_gap_ports_10MHz/SPEC.md` is now unblocked and is
+the case's remaining half. It is also `PORT-10`'s independent adjudication
+input, so it is worth surfacing before `PORT-10` runs rather than after.
+
+**Hypothesis for the next attempt.** §9 item 3 (`GEO-15` step 1, mesh-only,
+no solves) is next open and independent of everything landed here. One
+observation for the review: the 24 stale-artifact violations make the
+doc-reference checker's exit code uninformative — every chunk that touches
+examples now has to read the body to tell its own breakage from the
+backlog's. A cheap `all-mag`+`mri:1` refresh run, or a chunk to decide
+whether the 48 h freshness limit is the right policy for untracked outputs,
+would restore the signal.
+
+---
+
+## 2026-08-16T12:35Z — `GEO-15` step 1 — **complete**
+
+Scheduled implementer run, 07:30 CDT slot. Preflight clean (`main`, no dirty
+tree, container Up 16 h). §9 On-deck item 3, the first not-done entry; items 1
+and 2 were closed by the 04:30 and 06:00 runs. Executed the §7 `GEO-15`
+step-1 plan verbatim. Elapsed: ~35 min of the 60, both compute commands
+inside the standard tier.
+
+**Result: gate cleared, and the 0.7091 question splits in two.** The chunk's
+premise was that the historical deficit had two tangled causes — the analytic
+ring+leg sum double-counting the eight leg∩ring junctions, and a 0.015 m
+global `setSize` against a 0.004 m ring minor radius. Changing the denominator
+to the conductor group's **CAD (occ) mass** separates them:
+
+| conductor sizing | cells | meshed/CAD | meshed/analytic | mesh time |
+|---|---|---|---|---|
+| global 0.015 (baseline / negative control) | 48 245 | 0.740335 | 0.709079 | 6.07 s |
+| h_c = 3.2e-3 | 48 576 | 0.918603 | 0.879821 | 8.30 s |
+| h_c = 1.6e-3 (`GEO-8`'s 0.4·minor) | 98 474 | **0.967019** | 0.926193 | 16.74 s |
+
+CAD mass 1.030097043e-04 m³ vs analytic sum 1.075503356e-04 m³ ⇒ the junctions
+are worth **4.22%**; the remaining ~26 pp of the old 0.7091 was resolution.
+Gate ≥ 0.95 cleared at 0.967019, negative control separated by 0.2267, ladder
+strictly monotone, and the `GEO-9` identities (box partition, tagged sum, all
+four port boxes) re-checked on **every** rung and unmoved at < 1e-9. CAD mass
+asserted identical across rungs to 1e-12 — the size field may not move the
+geometry.
+
+**Logs.** `20260816T123337Z_GEO-15-step1.log` — 1 passed, 41 s, `-n 2`,
+container `timeout -k 30 500` per the entry. `20260816T123433Z_GEO-15-step1-regression.log`
+— 4 passed, 21 s: `test_birdcage_port_tags.py` + the finalize-isolation test,
+confirming the default (ungraded) path is byte-for-byte the old behaviour.
+
+**The trap that decided the implementation**, worth recording because the §7
+entry offered "size field *or* per-surface `setSize`" and only one of them can
+work: `gmsh.model.mesh.setSize` binds **dimension-0 entities only**, and an
+OCC torus carries a single seam point — so a per-point constraint cannot
+resolve a 0.004 m minor radius at any value. The mechanism that does is a
+Distance→Threshold background field over the conductor's 20 boundary surfaces,
+`SizeMin = h_c`, `SizeMax = resolution`, `DistMax = 3·ring_minor_radius`. The
+`SizeMax = resolution` choice is what keeps "air/box sizing untouched" true by
+construction rather than by inspection. Second trap: the three
+`Mesh.MeshSizeFrom{Points,Curvature}` / `MeshSizeExtendFromBoundary` switches
+must be set to 0, or gmsh takes the minimum of the field and the point
+constraints and silently re-imposes the coarse size inside the shell.
+
+**API.** `birdcage_port_domain` gained `conductor_resolution`,
+`conductor_refine_distance` (default 3·ring_minor_radius) and
+`return_diagnostics` — the last an opt-in 4-tuple carrying per-group CAD mass
+and gmsh mesh wall time, `bcast` from the building rank so every rank shares
+one denominator (the rank-local trap `GEO-9` already paid for). Defaults
+unchanged, so no existing caller sees anything.
+
+**Cost note for whoever scopes `PORT-9` step 3.** Grading to the `GEO-8` rule
+costs 2.04× the cells and 2.76× the mesh time of baseline — 98 474 cells,
+16.74 s. That is still *standard* tier for meshing, but it is a doubled cell
+count for every solve that follows, and `PORT-9` should budget from 98 k, not
+48 k.
+
+**Hypothesis for the next attempt.** §9 item 4 (`PORT-10`, systematics
+composition, heavy) is next open, and its cost-probe-first rule is binding.
+Independent of everything here. One observation for the daily review: this
+chunk's step 1 answers `PORT-9` step 3's prerequisite question in the
+affirmative — graded sizing is achievable and cheap — so `GEO-15` is arguably
+closeable at 🟡→✅ without a step 2 unless the review wants the faceting
+residual (the remaining 3.3%, which is curvature discretisation and not a
+mesh-size failure) pinned down separately. I left it 🟡 rather than making
+that call unilaterally.
+
+---
+
+## 2026-08-16T14:15Z — `PORT-10` — complete
+
+**Slot.** 09:00 CDT scheduled implementer run. Preflight clean (no dirty tree,
+container Up, 18 h uptime). §9 On deck items 1–3 were already done, so item 4
+— `PORT-10`, systematics composition, heavy — was the first open one.
+
+**What was tried.** The §7 entry verbatim: a 2×2 factorial that measures the
+interaction between the two `PORT-1` systematics instead of assuming it away.
+Each systematic gets its own experimental knob on the gapped two-torus fixture
+— `air_padding` for the PEC-box term, gap-box `h_box` for the gap/feed term —
+so the four corners are (0.08, baseline), (0.10, baseline), (0.08, 6.0e-4),
+(0.10, 6.0e-4). Each corner is one mesh + one solve reading the
+terminal-to-terminal estimator on the undriven port with gap 101 driven under
+the `I_cond` normalisation, i.e. 3b-xvi's lean path rather than
+`_solve_gap_ports`'s five solves (four corners of the five-solve harness would
+not fit a slot, and the record this reproduces was measured on the lean path).
+New module `tests/validation/test_port_systematics_composition.py`; new probe
+`scripts/probes/port10_costprobe.py`.
+
+**Cost probe first** (the entry's binding rule), because two corners had never
+been meshed: `20260816T140457Z_PORT-10-costprobe.log`, 95 s — padded 194 985
+cells / 38.9 s (matching the 3b-xii record digit for digit), joint **263 751**
+cells / 52.4 s, both inside 3b-xvi's 350 000 stop rule. The gate was then sized
+from that (`timeout -k 30 540`) rather than from an extrapolation; it ran 352 s.
+
+**Measured numbers** (`20260816T140643Z_PORT-10.log`, 7 passed 352.37 s at
+`-n 2`, heavy tier, four meshes 174.6 s + four solves 117.3 s):
+
+- corner ratios ×ωM₁₂: base 0.894543, padded 0.924103, refined 0.895051,
+  joint 0.924007;
+- shifts off base: PEC box **+2.9559 pp**, gap/feed **+0.0508 pp** (3b-xvi
+  measured +0.0508 pp), joint +2.9464 pp vs sum of parts +3.0067 pp;
+- **cross-term X = −6.037099e-04 = −0.0604 pp** against the pre-stated
+  ±0.5 pp band — inside by 8.3×, so the two knobs' effects add and the
+  sequential ladder in `ports/systematics.py` carries no interaction error
+  resolvable at 3b-xvi's grain;
+- anchors: base reproduces 0.894543 to **+2.979e-07** and refined 0.895051 to
+  **+1.536e-07**, against a 0.1 pp band (5× tighter than the gate's);
+- negative controls, both executed in-run on the same cross-term arithmetic:
+  joint displaced +1.0 pp ⇒ X = +0.9396 pp, wedge-only estimator 0.493653 as
+  the joint corner ⇒ X = −43.0958 pp; both asserted to fail the band.
+
+Structural gates per corner also green: meshed/analytic gap-box volume an
+identity to < 1e-9, cell count under the ceiling, quadrature drift
+2049→4097 under 1e-3.
+
+**Landed.** The module, the probe, both logs, the §7 `PORT-10` status flip
+(⬜ → ✅ with the result block), the §9 item-4 done mark, and a paragraph in
+`ports/systematics.py`'s docstring recording that the composition is now
+measured. No tolerance moved; nothing in the ladder changed.
+
+**Stated limit of the claim** (also in §7 and in the module docstring): `Δ_box`
+is one finite padding step, not the `W → ∞` extrapolation `D∞` itself, and
+`Δ_feed` probes the gap term through feed discretisation, not through gap
+physics (which has no knob short of changing topology). The factorial tests
+whether the two *measurements* were separable — which is exactly the
+assumption the ladder rests on — not the extrapolations layered on top.
+
+**Hypothesis for the next attempt.** `PORT-9` step 3's two prerequisites are
+now both reported (`PORT-10` here, `GEO-15` step 1 in the 07:30 slot), so the
+daily review can scope its gate. Next open On-deck item is 5 (`TH-11` step 3,
+standard, measurement only), independent of all of this.
+
+---
+
+## 2026-08-16T17:08Z — `PORT-9` step 1 — **incomplete** (parked)
+
+Scheduled implementer slot 12:00 CDT. Preflight clean, container Up 21 h. Took
+§9 On-deck item 1 (`PORT-9` step 1) as written.
+
+**Parked branch:** `attempt/PORT-9-20260816T170800Z` (commit `2a3120f`). Nothing
+of this attempt is on `main` except this entry and the §7 annotation.
+
+**What landed on the branch.** The lumped/circuit-element port boundary
+condition as a **resistive sheet**, with the Jin citations the §7 entry
+requires — read before coding, not after:
+
+* Jin 3e **§1.5.4, eqs (1.60)–(1.63)**: the resistive-sheet transition
+  condition. `n̂ × (E⁺ − E⁻) = 0`, `n̂ × (H⁺ − H⁻) = J_s` with
+  `J_s = (1/R)(n̂ × E) × n̂`, `R` in **ohms per square**.
+* Jin 3e **§6.5, eqs (6.93)–(6.98)**: the variational statement of the same
+  sheet — the one surface integral it adds to the E-field functional
+  (5.118)/(6.63) when the domain is split at the sheet and the two subdomain
+  functionals are summed. (6.98) derives it a second way, as a thin dielectric
+  layer of thickness τ, and shows the two agree up to the normal-component term
+  the transition condition does not model.
+
+Giving, on this package's `e^{+jωt}` convention:
+
+    a_sheet(E, v) = +jωμ₀ (1/R) ∫_S (n̂×E)·conj(n̂×v) dS      (sesquilinear)
+    L_sheet(v)    = −jωμ₀ ∫_S K_imp·conj(v) dS,  K_imp = V_src/(R h) ĥ
+    R             = Z_p · w / h
+
+`src/fem_em_solver/ports/lumped.py`, ~230 lines, geometry supplied by the
+caller exactly as `gap_voltage.py` does it. Interior and exterior facet sheets
+both handled; the `'+'` restriction on an interior sheet is legitimate because
+`n̂ × E` is single-valued across it — Jin (1.60) — not an arbitrary side choice.
+
+**Verification executed** (`20260816T170543Z_PORT-9-step1.log`, **10 passed,
+4.29 s**, smoke tier, `-n 2`, complex build, `tests/environment` first):
+`tests/validation/test_port_lumped_bc.py`, six tests, all quantitative, on the
+unit cube's `x = 0` face sized to exactly **one square** so `R == Z_p` and no
+geometric factor can hide inside an identity.
+
+| identity | expected | result |
+|---|---|---|
+| sheet area (precondition) | 1.0 m² | to < 1e-12 rel |
+| `a_sheet` on `E = v = ẑ` | `jωμ₀A/R` | < 1e-12 rel, `Im > 0` (dissipative) |
+| `L_sheet` on `v = ẑ` | `−jωμ₀V_src A/(Rh)` | < 1e-12 rel |
+| terminal current, `E = 0` | `V_src/Z_p` = **20 mA** at 1 V / 50 Ω | < 1e-12 rel |
+| terminal current, passive in `E = ẑ` | `1/Z_p` = 20 mA | < 1e-12 rel |
+
+**Negative control, in-run:** a passive sheet (no source) on a zero field must
+carry `< 1e-30` A. Without it, a bug that ignored `E` and returned `V_src/Z_p`
+from the impressed constant alone would pass the fourth row.
+
+**Why the step is incomplete — the finding.** The §7 plan's second half (solve
+the two-torus fixture at 10 MHz, print lumped-port `Z` beside the gated
+gap-voltage route) was **not reached**, and it is blocked on geometry rather
+than on time. A lumped port sheet spans **terminal to terminal with the port
+current flowing in the sheet plane** — that is what makes `R = Z_p w/h` an
+ohms-per-square statement at all. The gapped two-torus fixture carries its gap
+as a *volume* (cell tags 101/102 — the On-deck item calls these "gap faces",
+but they are cell tags), and its only tagged surfaces are the gap↔conductor
+interfaces (facet tags 201/202, built by `io/mesh.py::_interface_facet_tags`).
+Those are **cross-sections normal to the current**: current passes *through*
+them, so a resistive sheet there is the wrong constitutive law, not a coarser
+one. A conforming longitudinal slice through the gap box — the surface the BC
+actually needs — is not in the mesh, and a tet mesh has no planar interior
+facet set unless gmsh put a surface there.
+
+So step 1 as scoped needs a **mesh-side prerequisite**: `two_torus_domain` must
+emit the gap box's longitudinal mid-plane as a surface the fragment respects
+(then reconstruct the facet tag from cell tags on the dolfinx side, per
+known-issues 9, since dim-2 gmsh groups on interior facets hang `model_to_mesh`
+at `-n 2`). That is a mesh chunk, not a port chunk.
+
+**Also true and worth the review's attention:** whichever slice is chosen, the
+two-torus gap is a box crossing a *round* arc, so the sheet's `w` and `h` are
+not the box's nominal dimensions — the "number of squares" needs its own
+measured definition on this fixture before any `Z` printed off it means
+anything. That is a step-2 premise, not a step-1 detail.
+
+**No tolerance moved, nothing loosened, no ⚠️ subsystem extended** (in
+particular `excitation.py` is untouched). No denied commands this slot.
+
+**Hypothesis for the next attempt.** Two options for the review, in preference
+order. (a) Split a small mesh chunk — "emit a longitudinal port-sheet surface in
+`two_torus_domain`" — ahead of `PORT-9` step 1, then re-run step 1 unchanged;
+the formulation on the parked branch is ready and gated, so that re-run is a
+fixture wiring job, not a formulation job. (b) Re-scope step 1's demonstration
+onto a geometry that already has the right surface (a straight-wire gap fixture
+with a box gap would), accepting that the cross-route comparison in step 2 still
+has to happen on the two-torus fixture where the gap-voltage route is gated.
+Either way the parked branch should be merged rather than re-derived: its six
+identities are the formulation's gate and they are green.
+
+## 2026-08-16T18:36Z — `TH-11` step 3 — **complete**
+
+Scheduled implementer run, 13:30 CDT slot. Preflight clean, container Up.
+
+**Item selection — item 1 was taken as blocked, item 2 executed.** §9's On-deck
+item 1 is `PORT-9` step 1, which the 12:00 slot attempted
+(2026-08-16T17:08Z) and left **🟡 in its §7 entry with the blocker named**: the
+two-torus fixture has no longitudinal port-sheet surface, only cross-sections
+normal to the current (facet tags 201/202), so the lumped-port BC cannot be
+instantiated without a mesh-side prerequisite in `two_torus_domain`. That is
+the protocol's own "blocked" annotation (implementer-run.md step 4), so the
+first item *not* marked done or blocked is item 2. Re-running item 1 verbatim
+would reproduce the same block; supplying the missing mesh work myself is
+excluded by §9's "do not improvise beyond the written `PORT-9` entry; its steps
+are serial by design". The parked branch `attempt/PORT-9-20260816T170800Z` is
+untouched and still awaits the review's disposition (its two options are in the
+17:08Z entry).
+
+**What was done.** New `tests/validation/test_coil_loading_transition_30mhz.py`
+— step 1's module at f = 30 MHz on step 1's own fixture (W = 0.15,
+`resolution_wire` 0.002, `resolution_near` 0.005, 138 619 cells). Every helper
+(`_solve_projected_at`, `_stored_magnetic_energy`, `_ohmic_power`,
+`_skin_depth`, `IDENTITY_TOLERANCE`) and every cited constant is **imported**
+from steps 1–2, never restated (`ANS-1` rule), so only the frequency differs
+between step 1's reading and this one.
+
+**Verification executed** (`20260816T183310Z_TH-11-step3-30mhz-n2.log`,
+**10 passed, 70.29 s**, standard tier, `-n 2`, complex build,
+`FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first; mesh 10.6 s, solves
+30.5 s + 26.7 s; collect-only smoke first,
+`20260816T183258Z_TH-11-step3-collect.log`, 6 tests, 4 s).
+
+| gate (asserted) | bound | result |
+|---|---|---|
+| complex-power identity, loaded | < 1e-9 | **2.7373e-14** |
+| complex-power identity, free | < 1e-9 | **1.6799e-14** |
+| σ = 0 dissipation (negative control) | exactly `+0.0` | `+0.0000000e+00` W vs `+3.5532418e-01` W loaded |
+| drive control ‖ΔJ′‖²/‖J′‖² | < 1e-24 | met |
+| cell count | == 138 619 | 138 619 |
+| ΔR > 0, ΔX < 0 (passivity / Lenz) | signs | +8.402e-01, −2.415e+00 Ω |
+
+**The reading (printed, never gated).** ΔZ = `+8.4022314e-01` −
+j`2.4152825e+00` Ω against Dodd–Deeds `+7.9573218e-01` − j`2.5425171e+00` Ω:
+
+* ΔR deviation from the quasi-static prediction **+5.5912%**; ΔX ratio
+  **0.9500**;
+* the three points on this one rung — **1.5834% (10 MHz) → 5.5912% (30 MHz) →
+  10.2698% (64 MHz)** — are monotone and close to linear in f, and the ΔX ratio
+  moves 0.9200 → 0.9500 → 0.9690 in the same direction;
+* I′ = 0.919666 A; quasi-static ΔZ itself scales ×2.467 (ΔR) and ×4.128 (ΔX)
+  from 10 to 30 MHz;
+* the reaction and dissipation routes to ΔR agree to all eight printed digits
+  (`+8.4022314e-01` Ω both) — reported, not gated.
+
+**The finding, and why it is still not a trend claim.** The confound is
+monotone with the signal: cells per skin depth falls **3.18 → 1.84 → 1.26**
+across exactly the three frequencies whose deviation rises. Step 2 measured
+that term at 64 MHz to be worth −7.4635 pp, so a mid-point at intermediate
+resolution is expected to sit at an intermediate deviation *whether or not any
+physics term exists*. This point therefore constrains nothing about the
+displacement-current physics on its own — it is a third data point in a
+two-variable family. §2's extrapolation sentence stands as written and no
+trend claim was scoped.
+
+**No tolerance moved, nothing loosened, no ⚠️ subsystem touched.** No denied
+commands this slot. No unrelated test failures encountered.
+
+**Hypothesis for the next attempt.** Step 2's recommendation is now doubly
+supported and should be scoped as `TH-11` step 4 (or its own chunk) by the
+review: an h-refinement ladder at **fixed f** for a Richardson extrapolation —
+the 64 MHz `resolution_near` = 0.00125 rung step 2 named (≈ 3× cells,
+cost-probe first, ~9 min/solve at `-n 2`, likely heavy tier and possibly too
+big for one slot at `-n 2`). Cheaper and possibly more informative first cut:
+run the *same* h ladder at 10 MHz and 30 MHz where the solves are affordable,
+and see whether the extrapolated-to-zero-h deviation is flat in f (⇒ no
+physics term) or rising (⇒ the term `TH-11` is after). That variant is one
+slot at this fixture's price.
+
+## 2026-08-16T20:05Z — `EX-21` — **complete**
+
+Scheduled implementer run, 15:00 CDT slot. Preflight clean, container Up 24 h.
+
+**Item selection — items 1 and 2 skipped as blocked/done, item 3 executed.**
+§9 On-deck item 1 (`PORT-9` step 1) is 🟡 in its §7 entry **with the blocker
+named** (no longitudinal port-sheet surface in `two_torus_domain`; the 12:00
+slot's 2026-08-16T17:08Z entry), i.e. the protocol's "blocked". Item 2
+(`TH-11` step 3) is struck done by the 13:30 slot. First item neither done nor
+blocked is item 3, `EX-21`. Nothing on the parked branch
+`attempt/PORT-9-20260816T170800Z` was touched.
+
+**What was built.** `examples/meshing/03_birdcage_graded_conductors.py` +
+same-stem guide `03_birdcage_graded_conductors.md` — the first birdcage
+example of any kind, dispatched as `mesh:3` (the runner globs `NN_*.py` out of
+`examples/meshing/`, so no registry edit was needed). Two rungs of the same
+fixture, measured against the **CAD (occ) mass** denominator `GEO-15`
+established, both exported to ParaView so the two can be opened side by side.
+
+Every constant is **imported**, none restated (`ANS-1`): `CAD_MASS_GATE`,
+`CONDUCTOR_RUNGS` and `_check_geo9_identities` from
+`tests/mesh/test_birdcage_conductor_sizing.py`, the fixture parameters from
+`tests/mesh/test_birdcage_port_tags.py`, `_tag_volume`/`_total_volume` from
+`tests/mesh/test_coil_phantom_conforming.py`, `global_cell_tag_set` from
+`tests/mesh/helpers.py`. The repo root goes on `sys.path` because the runner
+exports only `/workspace/src` — the `EX-11`/`mag:5` pattern.
+
+**Measured** (`20260816T200516Z_EX-21-example-n2-final.log`, standard tier,
+`-n 2`, 26.1 s script / 28 s harness; first run
+`20260816T200348Z_EX-21-example-n2.log`, 25.9 s):
+
+| rung | h_c | cells | mesh s | meshed/CAD |
+|---|---|---|---|---|
+| baseline (global `setSize` 0.015) | — | 48 245 | 6.1–6.3 | **0.740335** |
+| graded (Distance→Threshold) | 1.6e-3 m | 98 474 | 16.7 | **0.967019** |
+
+Conductor CAD mass 1.030097043e-04 m³, identical across rungs to < 1e-12.
+Gate: graded 0.967019 ≥ 0.95 ✅ — matches `GEO-15`'s 0.9670 on record.
+`GEO-9` box-partition identities (total/analytic box, tagged sum, each of the
+four port boxes vs `dx·dy·dz`) re-asserted on **both** rungs at < 1e-9 and
+unmoved. Ratios and cell counts were bit-identical across the two runs; only
+wall times moved.
+
+**Negative control (inverted assertion, `EX-18` pattern), executed in-run:**
+the baseline rung is asserted to *fail* the same 0.95 gate by at least the
+`GEO-15` margin of 0.05 — `assert baseline_ratio < 0.90` — so a regression
+that silently disabled grading turns the example red instead of leaving it
+green on the fallback path. Measured separation **0.226685**.
+
+**Docrefs companion.** First run `20260816T200449Z_EX-21-docrefs.log` exited 1
+with 25 dead references and caught **one real violation of this example's
+own**: guide line 103 wrote the second XDMF as `…_graded_combined.xdmf`, and
+the checker resolves bare filenames, so the ellipsis made it a dead reference.
+Fixed by writing the full path; re-run `20260816T200505Z_EX-21-docrefs-fix.log`
+is back to the **24 pre-existing** stale artifacts from other examples, none
+of them EX-21's (known-issues "by design" entry; `OPS-19` is the queued fix
+for the masked exit code — this slot is a fresh data point for it, since the
+exit-1 body did carry a signal that mattered).
+
+**Measured note handed to `PORT-9` step 3:** the graded birdcage is **98 474
+cells**, which confirms rather than revises that entry's 98 k budget. The
+2.04× cell cost and ~2.7× mesh-time cost of grading are recorded in the guide.
+
+No tolerance moved, nothing loosened, no ⚠️ subsystem extended, no solve and
+no port claim. No denied commands this slot.
+
+**Hypothesis for the next attempt.** The queue's item 4 (`OPS-19` step 1,
+docrefs exit-code split) is independent and now has a second concrete
+motivation from this slot; item 6 (`PORT-9` step 2) remains gated on item 1,
+which still needs the review to choose between the two mesh-side options in
+the 2026-08-16T17:08Z entry.
+
+## 2026-08-16T21:35Z — `OPS-19` step 1 — **complete**
+
+Scheduled implementer run, 16:30 CDT slot. Preflight clean, container Up 25 h.
+
+**Item selection.** §9 items 1–3 are done or blocked: item 1 (`PORT-9` step 1)
+is 🟡 in its §7 entry with the mesh-side blocker named (2026-08-16T17:08Z,
+re-affirmed by the 13:30 slot), items 2 (`TH-11` step 3) and 3 (`EX-21`) are
+struck through as done. First item not done or blocked is **item 4**,
+`OPS-19` step 1, executed as written.
+
+**What landed.** `scripts/testing/check_example_doc_references.py` now scores
+staleness separately from hard violations:
+
+* module constants `EXIT_OK`/`EXIT_HARD`/`EXIT_STALE_ONLY` = 0/1/2, imported
+  by the test rather than restated (`ANS-1`);
+* `--stale-severity {fail,report}`, default `report`; `fail` reproduces the
+  pre-split all-or-nothing reading;
+* a final machine-readable line,
+  `RESULT: dead=<n> guide=<n> stale=<n> stale_severity=<s> exit=<code>`, so a
+  caller gates on numbers without parsing the body;
+* `--max-age-s` (`OPS-15`'s 48 h) untouched; no example re-run, no artifact
+  refreshed.
+
+New `tests/unit/test_doc_reference_exit_codes.py` (8 tests) pins the contract.
+
+**Verification executed** (`20260816T213312Z_OPS-19-step1-rerun.log`,
+**8 passed, 1.91 s**, smoke tier, `-n 1`, `-s`):
+
+| case | measured | exit |
+|---|---|---|
+| tree as committed (anchor) | `dead=0 guide=0 stale=24 stale_severity=report` | **2** |
+| guide pass on that run | 21/21 examples, 0 pending, PASS | — |
+| temp fixture, artifact aged 10 h, `--max-age-s 3600` | `stale=1 dead=0` | **2** |
+| same, `--stale-severity fail` | `stale=1 dead=0` | **1** |
+| temp fixture, artifact no run ever wrote (**negative control**) | `dead=1 stale=0` | **1** |
+| temp fixture, non-existent `.py` (negative control) | `dead=1 stale=0` | **1** |
+| temp fixture, artifact fresh | `dead=0 guide=0 stale=0` | **0** |
+| default-window boundary, 47 h / 49 h | `stale=0` / `stale=1` | **0** / **2** |
+
+Every fixture test asserts the exit code twice — against the literal expected
+code, and against the contract restated as arithmetic over the printed counts,
+so a future change that alters one without the other fails.
+
+**Negative control, in-run:** the dead-artifact fixture is the sharp one. It
+travels the same code path staleness was carved out of, so a split that
+mis-scored "no run ever produced this" as staleness would silently downgrade
+the only violation this pass has ever caught in the wild (`EX-14`'s 158-h
+`.bp`) — it must still exit 1, and does.
+
+**Bug found and fixed in passing** (pre-existing, latent until temp-dir
+fixtures existed): `collect_references` called `doc.relative_to(REPO_ROOT)`
+unconditionally, so any `--docs-root` outside the repo raised `ValueError`
+instead of reporting. Now `display_path()` — repo-relative when it can be,
+absolute otherwise. The first harness run
+(`20260816T213248Z_OPS-19-step1.log`, 7 failed / 1 passed, 2 s) is exactly
+that bug; kept for the record, since it is also the fixtures' own negative
+control against the tests passing vacuously.
+
+**Scope deviation the review should see: only one call site exists.** The §9
+item and the §7 entry both required updating "`run_examples.sh`'s docrefs
+invocation". There is none — `grep -rn check_example_doc_references scripts/`
+hits only the checker's own usage docstring, and every historical invocation
+is ad hoc inside a harness command (`EX-18`, `EX-20`, `ANS-3`, `EX-21`). So
+the item's trap (a green example run starting to fail on the new code 2)
+cannot occur, and nothing needed to be kept in sync. Recorded in the §7 entry.
+
+**Second measured finding, handed to `EX-22`.** That chunk's §7 text says the
+six examples' artifacts are "**absent on disk**, not merely stale". They are
+not: this run's checker output (log lines 44–68) reads `dead=0 stale=24` —
+every one of the 24, `circular_loop_B.bp` included, **exists** in
+`paraview_output/`, aged 145.5–151.4 h. A genuinely missing artifact scores
+`dead`, which is 0. `EX-22`'s refresh work is unaffected, but its premise and
+its "24 → 0" done-when want re-auditing before the runs are sized; annotated
+in place.
+
+**Docs updated in the same commit:** known-issues §"Non-test issues" — the
+"exits 1 by design" entry is replaced by the new exit-code contract table
+(0 / 1 / 2, the `RESULT:` line, `--stale-severity`), with the on-`main`
+reading recorded; §7 `OPS-19` ⬜ → ✅ with the closure; §9 item 4 struck.
+
+No tolerance moved, nothing loosened, no ⚠️ subsystem extended, no solves. No
+denied commands this slot (the `Edit(scripts/automation/**)` rule that blocks
+`OPS-16` does not cover `scripts/testing/`).
+
+**Hypothesis for the next attempt.** Item 5 (`OPS-17` step 1, finiteness-only
+test inventory) is the next unblocked queue item and is independent. The
+queue's two remaining `PORT-9` items still need the review's mesh-side
+decision from the 2026-08-16T17:08Z entry; nothing in this slot changes that.
+Chunks that run examples can now gate on `exit != 2` — worth stating in the
+next review's guidance so the pattern actually gets used.
+
+---
+
+## 2026-08-17T00:30Z — `GEO-16` — **complete**
+
+Scheduled implementer slot (19:30 CDT). Preflight clean, container Up 28 h,
+no anomaly. Queue item 1 taken as written (§9, 18:00 review): emit the gap
+boxes' longitudinal port-sheet mid-plane in `two_torus_domain`, mesh only.
+
+**What was built.** New opt-in kwarg `emit_port_sheet=False` on
+`two_torus_domain` (requires `port_gap`; a `ValueError` gates the combination
+and is tested). On it, each gap box is fragmented by its own mid-plane
+`z = ±separation/2` — an `occ.addRectangle` at *exactly* the box
+cross-section, passed as a dim-2 tool to the existing `occ.fragment` call, so
+nothing else in the model is cut. The two halves become separate cell groups
+(`101`/`111`, `102`/`112`), told apart by **centroid z** rather than by
+fragment's renumbered tags (`GEO-9` step-2b lesson); the fragment out-map is
+now keyed by dimtag since the tool list is mixed-dimension. Sheet facet tags
+`211`/`212` are rebuilt from the distributed cell tags via
+`_interface_facet_tags` — no dim-2 gmsh group on an interior surface
+(known-issues 9). That helper now accepts a *sequence* of cell-tag pairs per
+facet tag, because the mid-plane also cuts the arc-end discs: port group
+`201` is `(101,1) ∪ (111,1)`, so the existing port sets are unchanged.
+
+**Measured (anchor).** MPI-reduced `dS` area of each sheet
+**9.573030358733e-05 m²** vs the CAD mid-plane **9.573030358733e-05 m²** —
+`meshed/CAD = 1.000000000000`, inside the pre-stated 1e-9 band and at
+roundoff; 84 owned facets per sheet, asserted non-empty *before* the identity
+(the vacuity control); out-of-plane spread 3.5e-18 m; the two sheets agree to
+< 1e-12. A plane meshed by linear tets is exact, so — unlike the arc-end
+discs' 2.55% chordal deficit — there is nothing to inscribe here.
+
+**Measured (printed, never gated) — what `PORT-9` step 1 must consume:**
+`w = 1.200000000e-02 m` transverse, `h = 7.977525299e-03 m` along the current,
+**`w/h = 1.504225878` squares**, `area/(w·h) = 1.000000000`. The mid-plane is
+a clean rectangle (the arc is buried inside the box), so the "round arc"
+worry from the 17:08Z entry resolves to: the *number* is not the nominal one,
+but the shape is. The CAD-bbox route reads `w/h = 1.504206917`, differing in
+the 5th digit only through gmsh's 1e-7 bounding-box inflation (`GEO-10`) —
+the dolfinx-side number is the one to use.
+
+**Negative controls, both held.** (i) kwarg off: 79 534 cells, cell tags
+`{1,2,3,101,102}`, facet tags `{1,201,202}`, no `21x` group. (ii) the 3b-iv
+gate (`test_two_torus_port_facets.py`) re-run on this commit reproduces
+`meshed/analytic = 0.974490841` for both ports — **bit-identical** to the
+value recorded 2026-08-05, which is the real proof the shared code path did
+not move (`PORT-1`/`PORT-10` pin no cell count for this mesh-only fixture, so
+79 534 is pinned from this run and documented as such rather than imported).
+Port areas on the *fragmented* mesh read 1.563786482e-04 m² per port, the
+same 0.9745 of the analytic cut pair.
+
+**Logs.** `20260817T003524Z_GEO-16.log` (3 passed, 29.2 s — the probe that
+measured the control cell count) and `20260817T003627Z_GEO-16-regression.log`
+(5 passed, 47.3 s at `-n 2`, the gating run: new file + the 3b-iv regression
+gate together). Both inside the ~120 s standard-tier estimate; no solve, no
+overrun, container-side `timeout -k 30 480`. Nothing loosened, no ⚠️
+subsystem extended, no denied commands.
+
+**Hypothesis for the next attempt.** Queue item 4 (`PORT-9` step 1 re-run) is
+now unblocked and is the next serial step: merge
+`attempt/PORT-9-20260816T170800Z`, re-run its six identity gates on the
+merge, then put the resistive sheet on facet tag `211`/`212` with
+`R = Z_p·w/h` at the measured `w/h = 1.504225878`. One wiring trap to carry
+in: with the kwarg on, the gap volume is **two** cell tags per box, so any
+`101`-only selection in the parked branch or in
+`test_port_gap_voltage_impedance.py` must be widened to `{101, 111}` /
+`{102, 112}` before the gap-voltage route is re-measured on the fragmented
+mesh. Item 2 (`OPS-17` step 1) remains independent if item 4 stalls.
+
+## 2026-08-17T02:00Z — `OPS-17` step 1 — **complete**
+
+**Chunk.** §9 On-deck item 2, taken because item 1 (`GEO-16`) closed in the
+previous slot. `OPS-17` step 1 — inventory and disposition of the
+finiteness-only tests. Smoke tier, no solves, one harness command.
+
+**What was tried.** The §7 entry asks to "grep, then confirm by reading". Grep
+alone cannot see which side of a comparison is a tolerance, so the sweep landed
+as an AST tool instead — `scripts/testing/finiteness_sweep.py`, committed with
+this step so step 2 can re-run it as a before/after control. It buckets every
+`assert` in every `test_*` function as `QUANT` / `FINITE` / `OTHER` and reports
+the functions with **zero** `QUANT` asserts.
+
+Two iterations were needed and the first is the useful finding. The literal
+reading of "finiteness-class" (isfinite / > 0 / shape) flagged **123 of 306**
+functions — including `test_gap_voltage_z_matrix_is_reciprocal`, which is a
+network identity. Cause: this repo asserts against *named* tolerance constants
+(`residual < RECIPROCITY_TOLERANCE`), never float literals. Resolving names
+bound to a float anywhere in module or function scope, and splitting
+`pytest.raises`-only error-path contracts into their own bucket, took the
+candidate list to **59** — which is the number every row of the table was read
+against.
+
+**Measured numbers.** 89 files, **306** test functions. 225 carry a `QUANT`
+assert; 22 are `pytest.raises` error-path contracts; **59 candidates**, 11 of
+them asserting nothing at all. All 59 confirmed by reading (the sweep prints
+each candidate's `assert` source into the log, so the §7 table is checkable
+against the log line by line). **Disposition: 10 replace, 4 delete, 45 keep** —
+45 = 5 quantitative through a helper + 5 quantitative through an unresolved
+`tests/tolerances.py` import + 26 exact-identity + 9 structural guards a gate
+relies on. Counts stated and self-consistent (10+4+45 = 59; 225+22+59 = 306).
+
+**Two limitations, stated in the annotation rather than hidden.** (i) Asserts
+inside a helper the test calls are invisible to the AST — five keeps are keeps
+for exactly that reason. (ii) `tests/tolerances.py` imports are deliberately
+*not* resolved: a "nontrivial magnitude floor" is finiteness-class even though
+it is a float, so auto-resolving them would have cleared precisely the tests
+this chunk exists to remove.
+
+**Logs.** `20260817T020244Z_OPS-17-step1-sweep.log` (exit 0, 1 s, smoke tier,
+container-side `timeout -k 30 120`). Two superseded runs from the same slot are
+in the index and left there deliberately as the audit trail of the 123 → 59
+correction: `20260817T020115Z` (literal reading, 123 candidates) and
+`20260817T020217Z` (tolerance-name resolution, 59, before assert sources were
+printed). Nothing loosened, no ⚠️ subsystem extended, no denied commands.
+
+**Finding for the review.** Step 2's done-when says the `⚠️` glyph is retired
+from §3 and the family tables. On this table it has nothing to fire on: **no
+`⚠️` chunk is propped up by any of the 59 rows** — the four deletions are two
+`pytest.skip("Not yet implemented")` stubs and two print-only probes whose
+findings are gated by their file-neighbours. That clause should be re-scoped to
+"confirm and say so" before step 2 runs, or step 2 will look like it failed a
+requirement it cannot meet.
+
+**Hypothesis for the next attempt.** Step 2 is a clean one-slot job and needs
+no solve for the deletions: land the 4 deletes plus the 3 cheapest replaces
+(`test_two_torus`, `test_mesh_tag_integrity` ×2 — all three take the same
+tagged-volume partition identity at 1e-9 that `GEO-16` just exercised on the
+same fixture), then the solver archetypes against their existing closed forms.
+Grep for imports of the deleted names first; `test_probe_fallback_regimes` is
+parametrised over three fixtures that other tests in its file also use, so the
+fixtures stay even though the probe goes.
+
+---
+
+## 2026-08-17T03:50Z — `TH-11` step 4 — **complete**
+
+Scheduled implementer slot 22:30 CDT. Preflight clean, container Up (31 h).
+§9 On-deck items 1–2 were already done, so this run took item 3, the fixed-f
+Richardson ladder, and executed the §7 `TH-11` step-4 entry.
+
+**What was built.** `tests/validation/test_coil_loading_richardson_ladder.py`
+— step 1's fixture body with **two** knobs freed (`resolution_near` and f),
+both selected by environment (`TH11_STEP4_RUNG` ∈ {baseline, fine},
+`TH11_STEP4_FREQ_MHZ`, default `baseline` / `10,30`, so a bare CI run takes
+the cheap rung). Solve helper, energy helpers, dissipation helper and the two
+cell-count records are imported from steps 1–2, never re-declared.
+
+**Deviation from the scoped shape, deliberate.** The entry says "two harness
+commands, one per f"; that would have put ~500 s of container time plus FFCx
+in one window, and the protocol caps a foreground harness command at ~590 s of
+container time. Split into **three**: baseline rung at both frequencies
+(138 s), then the two fine-rung solves (422 s, 383 s). Same six solves, same
+gates, more headroom. Container-side `timeout -k 30 500 / 560 / 560`, `-n 2`.
+
+**Result — the §7 negative result, cleanly.** The ladder reads **flat in f**:
+
+| f | baseline (0.005) | fine (0.0025) | move | h→0, p = 1 | h→0, p = 2 |
+|---|---|---|---|---|---|
+| 10 MHz | +1.5834% | −0.2829% | −1.8663 pp | −2.1492% | −0.9050% |
+| 30 MHz | +5.5912% | +1.1119% | −4.4793 pp | −3.3675% | −0.3812% |
+| 64 MHz *(steps 1–2, on record)* | +10.2698% | +2.8063% | −7.4635 pp | — | — |
+
+The deviation rises with f only at fixed h; the move under refinement rises in
+lockstep, and the extrapolation brackets overlap at ~−1% with no rise. Two
+rungs cannot fix d₀, C and p simultaneously, so the module prints the p = 1 /
+p = 2 bracket plus `p_eff` (2.330 at 30 MHz; undefined at 10 MHz — the
+deviation changes sign) instead of a single extrapolant. What remains at the
+fine rung (−0.28% at 6.37 cells/δ, +1.11% at 3.68 cells/δ) is same-magnitude,
+opposite-sign — fixture systematics, not a frequency-dependent physics term.
+
+**Gates (all green, nothing loosened).** Complex-power identity worst
+**8.1597e-14** of six solves vs the 1e-9 family bound; σ = 0 dissipation
+exactly `+0.0` against +1.3604e-01 / +3.4025e-01 W loaded; drive control
+< 1e-24; cell counts exact 138 619 / 417 914; ΔR > 0, ΔX < 0 on every rung;
+reaction and dissipation routes to ΔR agree to all 8 printed digits, six for
+six. §7's **negative control** — the baseline anchors reproduced their records
+to **−0.00002 pp** (10 MHz) and **−0.00000 pp** (30 MHz) against `MAT-6` step
+8's 0.01 pp run-to-run floor. The fine 10 MHz rung also lands on `MAT-6` step
+8's independent 0.2829% record (sign now printed: −0.2829%).
+
+**Logs.** `20260817T033320Z_TH-11-step4-baseline.log` (138 s, 18 passed),
+`20260817T033547Z_TH-11-step4-fine-10mhz.log` (422 s, 10 passed 1 skipped),
+`20260817T034258Z_TH-11-step4-fine-30mhz.log` (383 s, 10 passed 1 skipped).
+Heavy tier. No denied commands, no ⚠️ subsystem extended, no known-issues
+churn. `TH-11` left **🟡**: every scoped step is closed, but whether the chunk
+closes on a flat-in-f finding is a review adjudication, not this run's.
+
+**Hypothesis for the next attempt.** The 64 MHz `near = 0.00125` third rung is
+now the only open question and is probably **not worth buying**: the two
+extrapolations already say the transition signal was mesh, and that rung costs
+~9 min/solve (over one slot at `-n 2`; feasible at `-n 8` if the review wants
+it). Cheaper alternative if the review wants Larmor covered: re-use this module
+at f = 64 MHz on the two existing rungs — it needs only a
+`DR_DEV_BASELINE_RECORD` entry (+0.102698) and would produce the 64 MHz
+bracket from solves already priced at 390 s.
+
+---
+
+## 2026-08-17T05:15Z — `PORT-9` step 1 (re-run) — **complete**
+
+Scheduled implementer run, 00:00 CDT slot. Tree clean at preflight, container
+Up 33 h. §9 On-deck item 4 (items 1–3 were closed by the three preceding
+slots), executed as written: merge the parked branch, wire the sheet onto
+`GEO-16`'s surface, one solve, print both routes.
+
+**What was done.** `attempt/PORT-9-20260816T170800Z` merged into `main`
+(`121d65c`; one conflict, `docs/testing/test-results.md`, resolved by keeping
+both sides' rows in timestamp order — the branch's `PORT-9-step1` row plus the
+four slots that landed after it). The parked formulation's six exact identities
+re-run green on the merge, negative control included, in the same command as
+the new work. One package change: `TimeHarmonicSolver.solve` gained
+`extra_bilinear_terms` / `extra_linear_terms` (callables of the solver's own
+trial/test), because a resistive-sheet BC is a term in `a` and there was no way
+to reach `a` from outside; both default `None`, so every gated record's
+assembled forms are untouched. New module
+`tests/validation/test_port_lumped_two_torus.py`: the `PORT-1`/`PORT-10` solve
+fixture with `emit_port_sheet=True`, gap `101`+`111` driven (both halves — the
+`GEO-16` caveat), a **passive near-open** lumped sheet (`Z_p = 1e6 Ω`) on the
+undriven port's facet tag `212`, one 10 MHz solve, both routes read off that
+one field.
+
+**Measured.** 184 919 cells, mesh 38.1 s, solve 25.1 s, 12 passed in 78.6 s at
+`-n 2` (standard). Sheet: 1585 owned facets, meshed/CAD area
+`1.000000000000`, out-of-plane spread `0.0e+00`, and — the number the step
+needed — extents **measured on the solve fixture**, `w = 1.040000000e-02 m`,
+`h = 1.395505060e-02 m`, `w/h = 0.745249896` squares. That is *not*
+`GEO-16`'s printed `1.504225878`: that chunk's fixture is
+`gap_clearance`-parameterised and the solve fixture is
+`gap_burial`/`gap_overhang`, so taking the recorded value would have scaled `R`
+by 2.02×. Two-halved gap-box volume meshed/analytic `1.000000000000`.
+Routes: gap `Im Z₁₂ = +1.110513699 Ω = 0.894310 × ωM₁₂` raw / 0.939609
+corrected, i.e. **−0.0233 pp** off the unfragmented record 0.894543/0.939849 —
+the fragment did not move the gated route. Lumped
+`I_sheet = −4.258870e-08 − 1.001734e-06j A`, `Im Z₁₂ = +1.030385205 Ω =
+0.829782 × ωM₁₂` raw / 0.873069 corrected. **Cross-route `|ΔZ₁₂|/|Z₁₂|` =
+7.7095%** (−7.2154% on the |Im| ratios), printed and not gated — step 2's band
+is 5%, so this is the finding step 2 exists to adjudicate.
+
+**Sign convention, worth knowing before reading the first log.**
+`sheet_terminal_current` is in the generator convention (a passive sheet in
+`E = +ĥ` carries `+1/Z_p`), so the terminal voltage comparable to the gap
+route's `V = −∫E·t̂ dl` is `−I·Z_p`. The first run
+(`20260817T050456Z_PORT-9-step1-rerun.log`) prints the two routes with opposite
+`Im Z₁₂` signs for that reason alone; the comparator was corrected and re-run
+(`...T050734Z_..._final.log`), magnitudes identical.
+
+**Logs.** `20260817T050456Z_PORT-9-step1-rerun.log` (86.5 s, 12 passed),
+`20260817T050734Z_PORT-9-step1-rerun-final.log` (78.6 s, 12 passed). No denied
+commands, no ⚠️ subsystem extended, no known-issues churn. `PORT-9` stays 🟡:
+step 1 is done, steps 2–3 are open.
+
+**Hypothesis for the next attempt (step 2).** In the open limit the lumped
+reading reduces to `V = (1/w)∫_S E·ĥ dS` — the gap voltage **averaged over the
+mid-plane** — while the gap route integrates the **centreline** only. Most of
+the sheet is fringe (tube shadow = `π r²/(4(r+overhang)²)` of the box face,
+3b-xii's `_fringe_fraction`), where `E·ŷ` is weaker; that is the sign and
+roughly the size of the 7.7%. The cheapest step-2 first exhibit is therefore
+one extra assembly on the *same* solved field: split the sheet integral into
+tube-shadow and fringe parts and compare the shadow-only average against the
+centreline path. If the shadow-only average lands inside 5%, the miss is the
+box's transverse extent, not the feed model, and step 2's diagnosis is about
+what `w` a lumped port on a round conductor should use.
+
+---
+
+## 2026-08-17T09:37Z — `PORT-9` step 2 — **complete** (diagnosis branch)
+
+**Outcome: complete.** The §9 item's expected branch. Both pre-stated bands
+MISS and neither was widened; the miss is diagnosed to a residual of 0.0763 pp.
+`PORT-9` stays 🟡 — step 3 is blocked on a scoping decision the review owns.
+
+**What was tried.** Step 2 adjudicates numbers read off *one* solved field, so
+it was written into step 1's module
+(`tests/validation/test_port_lumped_two_torus.py`) rather than a second module:
+a separate file would have meant a second mesh and a second solve of the same
+184 919-cell fixture for no new physics. Step 1's fixture record and its two
+assertions are untouched and re-run green in the same command, alongside
+`test_port_lumped_bc.py`'s six identity gates and the passive-sheet negative
+control. Three tests added: the step-1 reproduction anchor, the open-limit
+reduction identity, and the adjudication itself.
+
+**The measurement that decides it.** The cross-route deviation splits, between
+the *same* terminal planes and off the same field, into
+
+  * **transverse averaging** — sheet average `−(1/w)∫_S E·ŷ dS` against the same
+    functional on the centre chord `x = a`: **7.7783 pp**;
+  * **path/projection residual** — that straight chord (`ĥ = ŷ`) against the
+    gated route's curved centreline (`t̂ = φ̂`): **0.0763 pp**,
+
+against the §9 item's pre-stated ~1 pp threshold, which is the run's asserted
+gate and passes by 13×. `V_gap = +1.363043e-02 + 1.079788j`,
+`V_chord = +1.371015e-02 + 1.080609j`, `V_avg = +4.258870e-02 + 1.001734j` V.
+So the two routes integrate the same field along effectively the same path and
+differ **only** in the transverse average. The prior attempt's hypothesis is
+confirmed as stated.
+
+**Bands (pre-stated, not moved).** Cross-route `|ΔZ₁₂|/|Z₁₂|` = **7.7095%** vs
+5% — MISS. Lumped corrected ratio 0.873069 ⇒ `|ratio − 1|` = **12.6931%** vs the
+10% mutual band — MISS. Gap route on the same field: 6.0391%, **INSIDE** — so
+neither fixture nor solve is what failed. Reciprocity through
+`run_n_port_sparameter_sweep` was **not** run: the item directed the hour at the
+diagnosis once step 1 had already put the cross-route outside its band, and a
+two-port sweep with lumped sheets on both ports is a second and third solve.
+
+**Negative controls.** Passive-sheet zero-field control green; gap route
+reproduces its fragmented-mesh record 0.894310 (asserted to < 1e-4, as are the
+lumped 0.829782 and the cross-route 0.077095).
+
+**One number that must not be quoted.** The shadow/fringe *area* split by the
+indicator `|x − a| < r_minor` measured fringe = 0.1506% of the sheet against the
+analytic strip fraction `1 − r/(r+overhang)` = 3.8462%. The strips are 0.2 mm
+wide against a ~0.4 mm mean facet edge here, so the facet-quadrature indicator
+under-resolves them; that split, and the fringe/shadow mean-field ratio 0.000317
+read through it, are not reliable at this mesh and nothing in the finding rests
+on them. The prior attempt's guess that 3b-xii's `_fringe_fraction` (0.273855)
+was the right denominator is **wrong** for this plane: that is the disc shadow
+on a face *normal* to the current, whereas the port sheet contains the current.
+The resolution-independent evidence is the two-term decomposition plus the
+transverse profile, whose seven interior stations (`|s| ≤ 0.735`) all sit within
+1.1% of the chord while the `s = +0.980` station reads `+7.146e-01 − 7.952e-01j`
+V — a wholly different phase. The dilution lives in the outer ~25% of the width.
+
+**Log.** `20260817T093554Z_PORT-9-step2.log` — 15 passed, 95.18 s, standard
+tier, `-n 2`, exit 0, elapsed 97 s. No denied commands, no ⚠️ subsystem
+extended, no known-issues churn.
+
+**Hypothesis for the next attempt.** There is nothing left for an implementer to
+try here: the question is now a scoping one and belongs to the review. The three
+live options, in the order I would rank them: (a) accept the sheet average as
+*the* lumped-port terminal voltage and re-derive the `PORT-1` systematics
+against it — principled, but it re-opens a gated number; (b) narrow the port
+sheet toward the centreline (a mesh-side `sheet_width` knob on `GEO-16`) and
+measure the cross-route as a function of `w`, which turns the 7.8% into a curve
+and would say whether the two definitions converge as `w → 0`; (c) accept a
+documented feed-definition systematic and quote it beside the other two. (b) is
+the only one that is itself a measurement and would fit one slot.
+
+---
+
+## 2026-08-17T11:45Z — `OPS-17` step 2 — **complete**
+
+**Slot:** 06:00 CDT scheduled implementer run. Preflight clean, container Up,
+no `recovered/*`. Took On-deck item 2 (item 1 was already done).
+
+**What was tried.** All 14 dispositions from the step-1 table, executed
+verbatim: 4 deletes, 10 replacements. Everything landed on `main` in one
+commit with the logs, §7 flip, §9 tick and known-issues entries.
+
+**Deletes (4).** `test_convergence.py::{test_p_refinement_straight_wire,
+test_convergence_data_export}` (bare `pytest.skip` stubs),
+`test_interface_guardrail_fallback.py::test_probe_fallback_regimes` (zero
+asserts; its `_regime` helper is used by four gated tests in the same file and
+was kept), `test_tagged_cell_partition_invariance.py::test_probe_tagged_ghost_cell_separation`
+(`global_ghost_tagged > 0` only; `_all_tagged_cells` kept — a gated test uses it).
+
+**Replacements that landed their anchor, with measured numbers** (all `-n 2`):
+
+| file | anchor | measured | band |
+| --- | --- | --- | --- |
+| `solver/test_cylinder.py` | `μ₀I/2πr` at mid-length | 13.2751% L2 | 25% |
+| `solver/test_coil_phantom_magnetostatics.py` | on-axis `B_z` vs two-loop Biot–Savart | 17.1233% L2 | 30% |
+| `solver/test_two_torus.py` | volume partition | 1.000000000000 | 1e-9 |
+| `mesh/test_mesh_tag_integrity.py` ×2 | tagged-volume partition | 1.000000000000 | 1e-9 |
+| `mesh/test_birdcage_port_tags.py` | port-layout diagnostics vs closed forms | exact | 1e-12 |
+| `validation/test_straight_wire.py` | fitted h-rate (was `errors[-1] < errors[0]`) | in band | `[0.7, 1.5]` |
+| `validation/test_port_gap_voltage_impedance.py` | 3b-x record | both tags reproduce | 1% |
+
+Two of the ten did not take the anchor the table named, both for reasons
+recorded in §7 rather than by failure: the **birdcage** row's named
+tagged-volume identity is already gated on the *identical* fixture by
+`test_birdcage_volumes_partition_the_box` 20 lines below (`LEG_COUNT == 4`),
+so it would have duplicated a gate and paid for a second mesh — the
+pre-authorised "delete rather than duplicate" reasoning, applied to the
+mesh-side half only, with the replacement gating the previously print-only
+meshless `birdcage_port_layout_diagnostics`; and the **time-harmonic smoke**
+row's α anchor is not measurable on that fixture at all (interior axial
+current in a cylinder — geometric spreading and absorption are not separable
+from `|E|` at two depths), so it took the `POST-3` Poynting identity instead.
+
+Two replacements needed a *fixture* fix before their closed form meant
+anything, and both are findings in their own right: `test_coil_phantom_magnetostatics`
+drove `(0,0,J)` on **toroidal** coil tags (a z-directed J drives essentially no
+loop current — `test_circular_loop` records the same mistake costing ~1000×),
+and neither it nor `test_cylinder` imposed the `MAG-13` analytic Dirichlet wall.
+
+**Four defects surfaced, none fixed, no band loosened.** Three are carried as
+`pytest.mark.xfail(strict=True)` with the measurement in the docstring so a fix
+reports XPASS; full write-ups in known-issues 2026-08-17.
+
+1. `coil_phantom_domain` region-resolution policy: meshed coil volumes
+   **−21.68% / −22.62%** (CAD recovery 75.5% → 59.1%) while specifying a
+   *finer* size than the uniform run. An inscribing linear-tet mesh cannot
+   lose volume under refinement — the sign is the defect. Not diagnosed.
+2. Coulomb-gauge multiplier does not vanish for a divergence-free source:
+   spread **7.836781e+00** on a closed loop vs **2.083064e+02** on the
+   deliberately incompatible wire (26.6×, so it is not dead). Not diagnosed.
+3. Real Poynting power on the smoke fixture: dissipated **+1.199162e-06 W**
+   vs net inward **−2.008179e-07 W** — imbalance **116.7465%** against a
+   pre-stated 25%, and the flux **sign is wrong**. Not diagnosed.
+4. `poynting_power_balance` raises on scalar `sigma=0.0` (UFL folds the
+   integrand to a domain-less zero), the σ-blind control its own docstring
+   advertises. Worked around with `1e-12·σ`; one-line `POST` fix.
+
+**Logs.** `20260817T111036Z_OPS-17-step2-collect.log` (359 collected, exit 0,
+6 s) · `20260817T111054Z_OPS-17-step2-mesh-n2.log` (15 s) ·
+`20260817T111217Z_OPS-17-step2-solver-n2.log` (41 s) ·
+`20260817T111429Z_OPS-17-step2-complex-n2.log` (**exit 124**, 561 s — see
+below) · `20260817T112414Z_OPS-17-step2-th-smoke-n2.log` (defect 4) ·
+`20260817T112448Z_OPS-17-step2-th-smoke2-n2.log` (defect 3) ·
+`20260817T113031Z_OPS-17-step2-portgap-n2.log` (1 passed, 448 s) ·
+`20260817T113806Z_OPS-17-step2-xfail-n2.log` (**10 passed, 2 xfailed**, 202 s).
+
+**Sizing valve used, as the item pre-authorised.** The two full-suite legs did
+not fit. The first complex-mode leg hit its 560 s ceiling with the two `post/`
+deletion files still running (their tests were observed PASSED before the
+kill), and the `port_gap` fixture alone costs 446 s. Landed with targeted runs
+of every touched file plus a whole-tree collect-only. **Not run, and owed to a
+step 3:** the full real + complex suite legs, and `finiteness_sweep.py` as the
+before/after control (candidate count 59 → 45). Neither is a blocker; both are
+cheap and the review should cut step 3 for them.
+
+**Hypothesis for the next attempt.** Defects 1–3 are all plausibly the same
+shape — a coarse fixture whose named anchor was written assuming a resolution
+it does not have — and all three are settled by one h-ladder each. Defect 1 is
+the exception and the most interesting: it is sign-wrong, not magnitude-wrong,
+so no amount of refinement explains it and it should be read as a real bug in
+`coil_phantom_domain`'s region sizing. Cheapest next probe: mesh that fixture
+at three `coil_resolution` values with the policy on and print the tag volumes
+— if they move monotonically *away* from CAD as the requested size falls, the
+region fields are replacing rather than refining the surface sizing.
+
+---
+
+## 2026-08-17T12:33Z — `TH-11` step 5 — **incomplete** (blocked on cost; the probe's own stop condition)
+
+**Item.** §9 On-deck item 3, the 64 MHz third rung (`resolution_near` =
+0.00125), executed per the §7 step-5 entry. §7 made command 1 a **binding cost
+probe**: mesh the rung, solve the loaded case only, and stop-and-journal if the
+mesh passes ~3.4 M cells *or* the solve does not return inside the window.
+
+**What was tried.** New module
+`tests/validation/test_coil_loading_larmor_third_rung.py`, built on step 1's
+fixture body with two knobs freed and nothing else — `TH11_STEP5_RUNG`
+(`third` = near 0.00125, `fine` = 0.0025 / 417 914 cells for §7's negative
+control) and `TH11_STEP5_MODE` (`probe` = mesh + loaded solve only, `full` =
+the pair + the ladder). Gates carried unchanged from steps 1/2/4: complex-power
+identity < 1e-9 per solve, σ = 0 dissipation at exact `+0.0`, drive control
+< 1e-24, ΔR > 0 / ΔX < 0, the cell-count gate (§7's 3.4 M ceiling on the
+unpriced rung, the exact 417 914 record on the `fine` one), and step 2's
+**+2.8063%** reproduced to the `MAT-6` step-8 **0.01 pp** floor on the `fine`
+rung. Reading (printed, never gated): a **three-rung Aitken fit** — at a fixed
+refinement ratio of 2 three rungs determine `p` *and* `d₀`, so 64 MHz would get
+a measured rate, not only step 4's assumed-p bracket — beside step 4's 10/30 MHz
+brackets.
+
+**Measured (the probe's whole product).**
+- cells at `near` = 0.00125: **2 807 309** (448 981 nodes) — **inside** §7's
+  3 400 000 ceiling, so that condition *passed*;
+- **5.03 cells per δ** at 64 MHz (step 1: 1.26, step 2: 2.52);
+- **mesh 288.2 s** at `-n 2` — vs ~38 s for the 417 914-cell rung;
+- loaded solve **did not return**: still in `tabulate_tensor` (matrix
+  assembly, not the linear solve) when `timeout -k 30 570` fired at 568.6 s.
+  Exit 124, elapsed 572 s. Container clean afterwards (Up, zero stray
+  `python3`); no wedge, no force-recreate needed.
+
+**Log.** `20260817T123353Z_TH-11-step5-probe.log` (572 s, `-n 2`, exit 124).
+
+**Branch.** Module parked unlanded on
+`attempt/TH-11-step5-20260817T123353Z` (commit `ad323f9`). `main` carries only
+this entry, the log, the test-results row and the §7/§9 annotations.
+
+**The real constraint, named precisely.** Not §7's 1100 s ceiling — the
+**scheduled session's foreground window**: implementer-run.md forbids
+backgrounding a harness command, which caps container time at ~590 s, so 570 s
+was the largest ceiling this slot could give. But §7's own 1100 s would also
+have been tight: 288 s of mesh leaves ~800 s for two solves of a 2.8 M-cell
+complex system, against **390.9 s for the entire 417 914-cell pair** (step 2).
+The mesh is ~50% of the affordable budget before any physics happens.
+
+**Hypothesis for the next attempt (a review decision, not a run's — §7 says so
+explicitly).** Three ways out, in preference order:
+1. **Cache the mesh to XDMF** — one command writes the third rung, later
+   commands read it. Removes 288 s from every subsequent run, reusable by any
+   future 64 MHz rung, and changes neither the discretisation nor the parallel
+   decomposition the existing records were measured on. This is the
+   recommendation.
+2. **More ranks for this rung only** (`-n 8`/`-n 12`) — §7 as written says
+   `-n 2`, and the like-for-like status of the result against the `-n 2`
+   records would have to be re-argued, so this needs explicit authorisation.
+3. **Shrink the rung** (e.g. `near` = 0.0018, ~1.4 M cells) and accept a
+   non-2 refinement ratio — the three-rung fit already takes `ratio` as an
+   argument, so the arithmetic is ready; the cost is that the ladder's rungs
+   stop being the clean 2× family steps 1/2/4 used.
+
+Whichever is chosen, the parked module needs only the mesh source swapped or a
+constant changed; its gates and its printing are done.
+
+---
+
+## 2026-08-17T14:06Z — `EX-23` — complete
+
+**Slot.** Scheduled implementer run, 09:00 local. Preflight clean: tree
+clean at `3a367d9`, container Up 42 h, no `recovered/*`. §9 On-deck items 1
+and 2 done, item 3 blocked ⇒ took item 4, `EX-23`, as the protocol directs.
+
+**What was done.** The §7 `EX-23` entry executed as written:
+`examples/meshing/04_two_torus_port_sheet.py` plus the same-stem guide
+`04_two_torus_port_sheet.md` (`EX-15` rule, same commit), dispatched through
+`./run_examples.sh -e mesh:4 -n 2 -t 480`. No new registry wiring was needed —
+the runner discovers `mesh:4` by glob, confirmed by a logged `--list`. Every
+constant imported from `tests/mesh/test_two_torus_port_sheet.py` and the
+`PORT-1` facet module it imports (`ANS-1`); nothing restated.
+
+**Measured (all anchors held, no band moved).**
+
+- both sheets **84 facets**, asserted non-empty *before* any area ratio
+  (vacuous-pass guard);
+- meshed/CAD = **1.000000000000** on both, inside the imported
+  `AREA_IDENTITY_BAND` = 1e-9 — CAD mid-plane 9.573030358733e-05 m²;
+- 211/212 area symmetry: areas bit-identical, < 1e-12;
+- out-of-plane spread **3.469e-18** m — the facet set is the plane it claims;
+- extents printed, never gated: w = 1.200000000e-02 m, h = 7.977525299e-03 m,
+  **w/h = 1.504225878** vs the generator's CAD-side `squares_w_over_h`
+  = 1.504206917 (**1.26e-05** relative — the arc-chord difference between the
+  CAD surface and its triangulation);
+- port areas 1.563786482e-04 m² on both 201/202, unmoved by the sheet;
+- **negative control** (`emit_port_sheet=False`): **79 534** cells — the
+  record — cell tags `{1,2,3,101,102}`, facet tags `{1,201,202}`, sheet tags
+  asserted *absent* (`EX-18`/`EX-21` inverted-assertion pattern);
+- cost: 79 888 cells / 13.7 s (sheet) + 79 534 / 12.2 s (control),
+  **26.0 s** in-script, 30 s harness elapsed, `-n 2`, standard tier.
+
+**Logs.** `20260817T140233Z_EX-23-list.log` (runner `--list`, exit 0),
+`20260817T140242Z_EX-23-example-n2.log` (30 s, exit 0),
+`20260817T140416Z_EX-23-docrefs.log` — `dead=0 guide=0 stale=24
+stale_severity=report exit=2`. The chunk gates on `exit != 1` (`OPS-19`
+contract): **pass**. None of the 24 stale references is EX-23's — its own
+artifacts were written this run; the 24 are `EX-22`'s standing backlog.
+Guide pass: 31 guides scanned, all required headings present.
+
+**Nothing filed to known-issues.** No unrelated failure was met.
+
+**Two numbers worth carrying forward.** (i) The port sheet costs **+354
+cells** over the sheet-less mesh (79 888 vs 79 534) — the fragment is
+essentially free, which is what `PORT-9` step 3 should budget from. (ii) The
+measured-vs-CAD `w/h` gap of 1.26e-05 is the only place the triangulation
+differs from the CAD on this surface, and it is in the *extents*, not the
+area — the area is exact because the plane is exact.
+
+**Hypothesis for the next attempt.** None needed for this chunk; it is closed.
+The `EX` ramp's next open item is `EX-22` (§9 spare), unchanged by this run.
+
+## 2026-08-17T17:11Z — `PORT-9` step 2b — **complete** (the band holds at the narrowed width)
+
+**Item.** §9 On-deck item 1, executed verbatim: the width ladder
+f ∈ {1.0, 0.735, 0.5} on the step-1 solve fixture, gate at f = 0.5 on step 2's
+own **5%** cross-route band, negative control at f = 1.0.
+
+**Outcome: the gate passes.** New module
+`tests/validation/test_port_lumped_narrowed_sheet.py`, **14 passed 150.5 s**,
+`-n 2`, standard, `timeout -k 30 500` —
+`20260817T170841Z_PORT-9-step2b-effective-width.log`. One mesh (184 919 cells,
+37.1 s) and three solves (26.0 / 23.1 / 22.7 s), plus
+`tests/validation/test_port_lumped_bc.py`'s six identity gates and the
+passive-sheet negative control green in the same command.
+
+**The measured ladder** (`|ΔZ₁₂|/|Z₁₂|`, band 5%, never widened):
+
+| f | facets | w = A/h [m] | cross-route | verdict |
+|---|---|---|---|---|
+| 1.000 | 1585 | 1.040000000e-02 | **7.7095%** | MISS (= step 2's record) |
+| 0.735 | 1511 | 7.616677977e-03 | **3.6730%** | INSIDE |
+| 0.500 | 1375 | 5.171485579e-03 | **1.8333%** | INSIDE ← the gate |
+
+Monotone, falling toward step 2's transverse-profile prediction of ~1.1% at
+interior width; the gate clears by 2.7×. Gap route flat across the ladder
+(0.894310 / 0.894324 / 0.894349 × ωM₁₂) as it must be for a near-open probe
+sheet. Open-limit identity `V_lumped = −(1/w_f)∫_S E·ĥ dS` asserted **per
+width** at < 1e-11; nested-family identities asserted (gap-box volume
+1.000000000000, f = 1.0 area = CAD < 1e-9, strictly decreasing facets/areas,
+planarity < 1e-12, path quadrature converged per rung); f = 1.0 reproduces the
+step-1/2 records (cross-route 0.077095, gap ratio 0.894310) to < 1e-4.
+
+**Mechanism.** `GEO-16`'s `21x` facet tags are rebuilt dolfinx-side, so a width
+is a **facet-midpoint filter** on the existing tag (`_narrowed_sheet_tags`) —
+no gmsh change, no re-mesh, mesh bit-identical across the ladder. Each width is
+still its own assembly + solve (the sheet is in the bilinear form).
+
+**The one finding, and it cost a solve: `w` is `A/h`, not the bounding box.**
+The first attempt (`20260817T170448Z_PORT-9-step2b.log`, **1 failed / 13
+passed**) re-measured `w` as the filtered facet set's bounding-box extent — a
+literal reading of the entry's "re-measure from the filtered set, never
+f × w_full" — and read the ladder 7.7095% / 16.3925% / **14.0402% MISS**. The
+narrowing appeared to make things *worse*, which is the shape of a bug, not of
+the physics. Diagnosis: the midpoint filter leaves a **ragged** edge (a facet is
+kept whole when its midpoint clears the threshold, so its nodes reach past it),
+so the kept region is not a rectangle and the bbox extent is its *maximum*
+width, where `R = Z_p·w/h` counts squares and wants its *mean*. Measured
+overstatement **15.3%** at f = 0.735 and **14.2%** at f = 0.5 — which is the
+deviation the first attempt read, to the point. `A/h` is the mean width by
+definition, makes the lumped reading the true area average of `E·ŷ`, and on a
+rectangle *is* the bbox extent — now asserted on the f = 1.0 rung to < 1e-9, so
+the negative control is provably untouched by the choice. **No band moved in
+either attempt**; both logs are committed and the reasoning is in a code comment
+at the measurement.
+
+**Not run, deliberately: the second command.** The entry's reciprocity leg
+(`‖S−Sᵀ‖/‖S‖ ≤ 1e-3` through `run_n_port_sparameter_sweep`) is **not** a
+fixture-wiring job: that function has exactly two routes, `GapVoltagePortSpec`
+and the retiring heuristic, and no lumped-sheet route at all
+(`src/fem_em_solver/ports/sparameters.py:230`), so driving two narrowed sheets
+through it means adding a third excitation route to the package. That is a
+package change and it was past the minute-45 cutoff once the width finding had
+cost a solve. It remains step 2's unrun leg.
+
+**Nothing filed to known-issues.** No unrelated failure was met; the first
+attempt's failure was this run's own and is fixed in this run's commit.
+
+**Hypothesis for the next attempt.** The lumped-sheet route in
+`run_n_port_sparameter_sweep` is the next scoping decision on this lineage —
+it is the prerequisite for *both* step 2's reciprocity leg and step 3's 4×4
+birdcage sweep, so scoping it once buys both. Step 3's ports should be specified
+at **f = 0.5 with `w = A/h`**, the convention this run gated.
+
+## 2026-08-17T18:43Z — `TH-11` step 5a — **complete** (the cache is exact, the reading is rank-invariant)
+
+Scheduled implementer run, 13:30 CDT slot. On-deck item 2 (item 1, `PORT-9`
+step 2b, was closed by the 12:00 slot). Preflight clean, container Up 46 h.
+Both of the review's commands ran and both pre-stated anchors were met, so 5b
+is unblocked without any band having moved.
+
+**Landed first, as the item directs:** the parked step-5 module from
+`attempt/TH-11-step5-20260817T123353Z`
+(`tests/validation/test_coil_loading_larmor_third_rung.py`), unchanged except
+for the rank-invariance band described below. The branch is left in place.
+
+**Command 1 — the cache** (`20260817T183751Z_TH-11-step5a-cache-third.log`,
+143 s, `-n 2`, 5 passed; new module
+`tests/validation/test_coil_loading_larmor_mesh_cache.py`). The third rung
+(`resolution_near` = 0.00125) meshes to **2 807 309 cells — the probe's record
+to the cell** — in **126.4 s** (the probe measured 288.2 s; same mesh, a busier
+box), writes a 192.4 MiB XDMF/HDF5 pair in 0.3 s, and reads back in **14.8 s**
+with everything the solver selects by preserved:
+
+| quantity | written | read back |
+|---|---|---|
+| owned cells | 2 807 309 | 2 807 309 |
+| cell tags (wire/air/slab) | `{1: 13 344, 2: 1 066 453, 3: 1 727 512}` | identical |
+| facet tags | `{1: 2 402}` | identical |
+| tag names | `cell_tags` / `facet_tags` | identical |
+
+The per-tag counts are the load-bearing assertion, not the value sets: the
+solver integrates `dx(WIRE_TAG)` and the slab measure, so a region that
+survives by name but loses cells would move every ΔZ downstream. All counts are
+**owned-only** (`indices < size_local`) and reduced, so they are
+partition-invariant and comparable across the two different decompositions —
+`cell_tags.values` summed naively would double-count ghosts. Read-back uses
+`GhostMode.none` to match `gmshio`'s ghost-free default in `io/mesh.py`.
+
+**One failed run, this run's own** (`20260817T183248Z_TH-11-step5a-cache-smoke.log`,
+exit 124 at 241 s): the cheap round-trip rung I meshed first to validate the
+XDMF mechanics before buying the 288 s rung set `resolution_wire` = 0.01, above
+the fixture's 0.0025 m wire radius, and gmsh never finished the torus surface.
+Pinned back to the fixture's 0.002 with the reason in a code comment; the smoke
+rung then meshed 50 675 cells and round-tripped exactly in 3 s
+(`20260817T183709Z_TH-11-step5a-cache-smoke2.log`). Nothing filed to
+known-issues — the failure was mine and is fixed in this commit.
+
+**Command 2 — the rank control**
+(`20260817T184026Z_TH-11-step5a-rank-control.log`, 174 s, `-n 8`, 11 passed;
+complex build, `FEM_EM_REQUIRE_COMPLEX=1`, `tests/environment` first). The fine
+417 914-cell loaded/free pair at `-n 8` reads ΔR deviation **+2.8063%**:
+
+- **+0.00002 pp** off step 2's `-n 2` record — 5 000× inside the review's
+  pre-stated **0.1 pp** band, and inside even the 0.01 pp same-rank
+  run-to-run floor. The rank change is bought; 5b's `-n 8` (or its
+  pre-authorised `-n 12`) stays like-for-like with the 64 MHz ladder.
+- identity family, unchanged bounds: complex-power residual **3.58e-15**
+  loaded / **1.33e-14** free against 1e-9; σ = 0 dissipation exactly `+0.0`;
+  drive mismatch inside 1e-24; ΔR > 0 and ΔX < 0.
+- ΔZ = **+1.3838746 − j5.8741123 Ω**, with 2P/I′² reproducing ΔR to the
+  printed digit; ΔX ratio 0.9514.
+
+**No band was widened.** `RANK_INVARIANCE_BAND_PP` = 0.1 pp is a *new* constant
+for a *different* comparison (different decomposition, hence different assembly
+and Krylov arithmetic order); `DR_WOBBLE_FLOOR_PP` = 0.01 pp is untouched and
+still what a `-n 2` run is held to. The module prints which band it is applying
+and why.
+
+**Cost datum for 5b, measured not assumed.** At `-n 8` a fine-rung solve costs
+**72–73 s** against ~195 s at `-n 2` — 2.7×, not 4×. Scaled by the 6.7× cell
+count, a third-rung solve lands near **~480 s**. So 5b should run **one solve
+per harness command** (`timeout -k 30 560`), reading the cache each time, and
+should be ready to spend its pre-authorised `-n 12` if the loaded solve
+overruns. The cache itself is at `output/th11_step5_cache/` (gitignored) and is
+regenerated by command 1 in 143 s if the container is recreated.
+
+**Hypothesis for the next attempt (5b).** With meshing off the critical path
+and the rank width bought, the only remaining risk is the solve itself: a
+2.8 M-cell complex curl-curl system at `-n 8` is ~480 s of the ~590 s window,
+with no room for the free solve in the same command. Split loaded and free into
+two commands, cache nothing but the mesh, and expect the three-rung Aitken fit
+to be the cheap part.
+
+---
+
+## 2026-08-17T20:20Z — `OPS-17` step 3 — **incomplete** (2 of 4 commands ran; the real leg is mis-sized, and a completed leg surfaced a regression)
+
+**Outcome: incomplete, with two findings.** The step's own pre-stated anchor
+(sweep candidates `59 → 45` exactly, zero new) **MISSES at 56**, and the
+reconciliation is exact rather than mysterious. The real-mode full-suite leg
+**does not fit one harness window** — it reached 58% at the 570 s ceiling. A
+shrunk leg then completed and found a failure nobody had seen, because no
+completed leg has run on this tree since 2026-08-13. No `src/` or `tests/`
+change was made, so there is nothing parked: `main` carries logs, this entry,
+the §7 annotation, and one new known-issues entry.
+
+**Command 1 — the sweep control (`20260817T200056Z_OPS-17-step3-sweep.log`,
+exit 0, 3 s, smoke).** 95 files / 335 test functions / 257 with a `QUANT`
+assert / 22 raises-only / **56 candidates** (8 assert nothing). Against the
+anchor's 45 that is +11, and every one of the 56 is accounted for:
+
+| bucket | n | what |
+| --- | --- | --- |
+| step-1 `keep` rows still flagged | 44 | the expected residue |
+| step-1 `keep` row now classified `QUANT` | 1 | `validation/test_port_gap_voltage_impedance.py::test_closure_arc_nodes_lie_in_the_expected_material` — moved *out* of candidates (step 2 edited that file); an improvement, not a regression |
+| step-1 `replace` rows still flagged | 2 | `mesh/test_mesh_tag_integrity.py::{test_coil_phantom_mesh_tag_integrity, ..._with_region_resolution_policy}` |
+| tests that postdate the anchor's sweep | 10 | landed after `20260817T020244Z` |
+
+44 + 1 + 2 + 10 = 57 named, 56 flagged (the reclassified row is not flagged).
+**Zero unexplained new candidates**, so the *substance* of the control holds
+while its arithmetic does not.
+
+The two `replace` rows are the load-bearing part of the miss: step 2 landed the
+tagged-volume-partition anchor as a **new sibling test**
+(`test_region_resolution_policy_does_not_move_the_tagged_volumes`, the xfail
+carrying defect 1) instead of rewriting the two original functions, which
+therefore kept their finiteness-only bodies. That is a defensible choice — the
+anchor exists and gates — but it means the disposition table's implied
+"45 candidates after step 2" was never achievable, and the review's `59 → 45`
+was derived from the table rather than from step 2's landed diff.
+
+The 10 post-anchor candidates, for the next review to disposition (not done
+here — out of step 3's scope): `solver/test_gauge_lagrange.py::test_gauge_multiplier_is_nan_without_a_lagrange_solve`
+(the structural half step 1 explicitly said "stays" — expected);
+`validation/test_coil_loading_richardson_ladder.py` ×2 (`TH-11` step 4, landed
+`20260817T03:51Z`, i.e. 1 h 49 m *after* the step-1 sweep);
+`validation/test_coil_loading_larmor_mesh_cache.py` ×4 and
+`validation/test_coil_loading_larmor_third_rung.py` ×2 (`TH-11` step 5a, today);
+`validation/test_port_lumped_narrowed_sheet.py::test_the_open_limit_reduction_holds_at_every_width`
+(`PORT-9` step 2b, today). On reading, all 10 are `keep`-class by step 1's own
+criteria — exact `ncells == RECORD` fixture pins and
+`residual < IDENTITY_TOLERANCE` identities, the two shapes step 1 grouped as
+"exact identity, not finiteness" and "quantitative through an unresolved
+`tests/tolerances.py` import". None is a new finiteness-only test.
+
+**Command 2 — the real-mode full suite: OVERRAN, exit 124**
+(`20260817T200248Z_OPS-17-step3-real-n2.log`, `-n 2`, 570 s ceiling, 570 s
+elapsed). Progress at the kill: **58%**, dying inside
+`tests/validation/test_convergence.py` — the real-mode leg's cost is the
+`tests/validation` refinement ladders, the same shape that made the *complex*
+leg need its own window at step 2. The review sized this leg from step 2's
+complex measurements, where the real leg had never been timed at all. Killed
+and shrunk per §5.1 rather than re-run longer.
+
+**Command 2′ — the shrunk real leg: COMPLETED**
+(`20260817T201248Z_OPS-17-step3-real-nonvalidation-n2.log`, `-n 2`, exit 1,
+**218 s**, 420 s ceiling). `tests/ --ignore=tests/validation`:
+**3 failed, 134 passed, 32 skipped, 2 xfailed** in 217.38 s, and both ranks
+print byte-identical summaries. Bookkeeping against the anchor:
+
+* **2 xfailed = the 2 real-mode-reachable strict xfails**, both named and both
+  still xfail (not XPASS): `mesh/test_mesh_tag_integrity.py::test_region_resolution_policy_does_not_move_the_tagged_volumes`
+  (defect 1) and `solver/test_gauge_lagrange.py::test_gauge_multiplier_vanishes_for_a_divergence_free_source`
+  (defect 2). The third — th-smoke Poynting, defect 3 — is `@complex_only` and
+  correctly appears in the 32 skips, so the anchor's "observed in a completed
+  leg for the first time" is **still unmet for defect 3**; it needs the complex
+  leg.
+* **The two `post/` deletion files ran to completion for the first time** —
+  `post/test_interface_guardrail_fallback.py` and
+  `post/test_tagged_cell_partition_invariance.py` are inside the 134 passed,
+  where step 2 only ever saw them PASSED *before* a kill.
+* known-issues 6 (`solver/test_single_port_excitation.py`) passes at `-n 2`, as
+  that entry says it does.
+* **3 failed, but only 2 are named — and neither named one fails for its
+  recorded reason.** New known-issues entry filed (see below).
+
+**Finding — `PORT-1` step 4's rank-safety fix broke the test double, and it has
+been red and unwatched for 4 days.** All three failures are in `tests/ports/`;
+two of them are `test_port_orientation_sensitivity.py::{test_port_orientation_flip_changes_induced_voltage_sign,
+test_port_orientation_flip_changes_off_diagonal_sparameter_sign}` and both die
+with `AttributeError: '_DummyComm' object has no attribute 'allgather'` at
+`src/fem_em_solver/ports/excitation.py:258` — *inside `src/`, before any
+assertion runs*. `PORT-1` step 4 (2026-08-13) added the
+`problem.mesh.comm.allgather(...)` reduction there — the documented fix for
+known-issues 6 defect (2) — and the file's `_DummyComm` (line 16) implements
+only `rank` and `allreduce`. Consequences, both worth the review's attention:
+(i) `test_port_orientation_flip_changes_induced_voltage_sign` is **not** in
+known-issues 3's list of two tests, so it was green before and is a **silent
+regression** of 2026-08-13; (ii) known-issues 3's recorded symptom
+(`assert np.all(np.abs(diagonal) > 0.0)` on a zero diagonal) is now **stale for
+the orientation test** — that assertion is unreachable. Only
+`test_sparameter_assembly.py::test_n_port_sweep_assembles_finite_matrix_with_expected_shape`
+(`tests/ports/test_sparameter_assembly.py:104: AssertionError: assert False`)
+still fails the way entry 3 describes. **Not fixed here** — `OPS-17` step 3 is
+bookkeeping, and entry 3's standing disposition is that these live and die with
+`PORT-1`. Filed, with the measurement, as a new known-issues entry.
+
+This is precisely the failure mode step 3 was cut to catch: four days of
+targeted per-file runs, every one of them green on the files it touched, while
+a completed leg was never paid for.
+
+**Commands 3 and 4 — the two complex legs — DID NOT RUN.** Out of timebox: the
+sweep plus its reconciliation, the 570 s overrun, and the 218 s shrunk leg
+consumed the implementation window, and each complex leg is a further ~570 s /
+~300 s. Nothing about them is blocked; they are unstarted.
+
+**What step 3 now needs, sized from this run's own measurements** (the next
+review's to cut — do not re-run step 3 as written, the real leg will overrun
+again identically):
+1. `tests/ --ignore=tests/validation` real, `timeout -k 30 420` — **measured
+   218 s**, done above, reproducible.
+2. `tests/validation` **real** alone, `timeout -k 30 570` — unmeasured; the
+   58%-kill says the ladders are the cost, so cost-probe with
+   `--collect-only` + `test_convergence.py` alone before committing a window.
+3. complex `tests/validation`, `timeout -k 30 570` — the `port_gap` family is
+   446 s of it (step 2's number), so this is genuinely one command's worth.
+4. complex remainder (`tests/environment` first), and this is the only leg that
+   can observe defect 3's th-smoke xfail in a completed run.
+The `59 → 45` anchor should be **restated as `56`, reconciled** — the number is
+now measured, and re-deriving it from the disposition table will miss again.
+
+**Hypothesis for the next attempt.** Step 3 is four commands of ~2 000 s total
+plus the sweep, which is more than one 60-minute slot holds *with* the reading
+and journalling each leg's counts requires. Split it: one slot for the two real
+legs (2 above is the only unmeasured one), one for the two complex legs. The
+`_DummyComm` breakage is a two-line fix in the test double, but it belongs to
+whoever owns `PORT-1`'s retirement, not to `OPS-17`.
+
+## 2026-08-17T21:45Z — `OPS-17` step 3 (leg a) — **incomplete** (the real-mode half is closed exactly; the two complex legs remain)
+
+**Outcome: incomplete on the step, complete on leg (a).** This slot executed the
+split attempt 1 prescribed in the §7 annotation — the real-mode legs — and did
+**not** re-run step 3 as originally written. Every one of the **377** real-mode
+tests is now accounted for in a *completed* leg, and the counts reconcile
+exactly. No `src/` or `tests/` change was made, so nothing is parked: `main`
+carries five logs, this entry, and the §7 annotation.
+
+**Why the real leg is now sized (attempt 1's open question).** Real-mode
+`tests/validation` collects **206** (`20260817T213108Z_..._probe-collect.log`,
+exit 0, 5 s), and the prescribed cost-probe puts `test_convergence.py` at
+**119.61 s for its single test**
+(`20260817T213125Z_..._probe-convergence.log`, 1 passed, exit 0, 120 s,
+`--durations`). 35 of the 47 validation files carry `complex_only`, so the real
+leg is mostly skips with a heavy magnetostatic head. Split into two commands so
+neither could overrun, rather than betting one 570 s window:
+
+| leg | command | result | elapsed |
+| --- | --- | --- | --- |
+| validation remainder | `tests/validation` minus `test_convergence.py`, `test_coil_loading_larmor_mesh_cache.py`, `-n 2`, `timeout -k 30 570` | **33 passed, 167 skipped**, exit 0 | 249.48 s |
+| convergence (the probe, reused) | `test_convergence.py`, `-n 2`, `timeout -k 30 400` | **1 passed**, exit 0 | 119.61 s |
+| mesh cache | `test_coil_loading_larmor_mesh_cache.py`, `-n 2`, `timeout -k 30 400` | **5 passed**, exit 0 | 141.49 s |
+
+**33 + 1 + 5 = 39 passed, 167 skipped = 206 collected, exactly.** Both ranks
+print byte-identical summaries in all three. Zero failures, zero xfails, zero
+XPASS anywhere in real-mode validation. Slowest real work is magnetostatic, not
+the ladders: `test_circular_loop_on_axis` 116.71 s, `..._field_symmetry`
+45.02 s, `test_straight_wire_convergence` 30.47 s.
+
+**The negative control, measured.** Real-mode `tests/` collects **377**
+(`20260817T214141Z_..._collect-real-unpiped.log`, exit 0, 3 s). Step 2's 359 was
+a *complex-mode* count; the difference is the 18 tests that landed since
+(`TH-11` step 4/5a, `PORT-9` step 2b, `OPS-17` step 2's own sibling). More
+usefully, **171 + 206 = 377 exactly** — attempt 1's non-validation leg
+(3 failed, 134 passed, 32 skipped, 2 xfailed = 171) plus this slot's 206. That
+leg is still valid on this tree: the only commit since it ran is `df4e615`,
+which touches `PROJECT_PLAN.md`, `docs/` and logs only (verified by
+`git show --stat`), so no `src/`/`tests/` byte has moved.
+
+**Real-mode half of the step's anchor: MET.** Every real-mode test is observed
+in a completed leg, and every failure is a *named* expected one — the 3 in
+`tests/ports/` from attempt 1 (known-issues 3, plus this tree's new
+`_DummyComm` entry), nothing else. Both real-reachable strict xfails still
+xfail. **Defect 3's th-smoke Poynting xfail remains unobserved** — it is
+`@complex_only`, so only leg (b) can see it, exactly as attempt 1 predicted.
+The sweep anchor was not re-run: no test file changed since attempt 1 measured
+it, so **56, reconciled** stands.
+
+**Process note — I tripped the step's own named trap and corrected it.** The
+first collect-count command piped pytest through `tail -3`, so its footer
+(`20260817T214128Z_..._collect-real.log`) records *tail's* exit 0, not pytest's;
+I re-ran it unpiped for the record. The trap is one command's worth of
+carelessness even when you have just read it — worth keeping in the rubric.
+Both logs are committed; the piped one should not be cited.
+
+**Remaining work — leg (b), unstarted and unblocked.** Complex
+`tests/validation` (`timeout -k 30 570`; the `port_gap` family is 446 s of it)
+and the complex remainder with `tests/environment` first, which is the only leg
+that can observe defect 3's xfail in a completed run. Nothing else of step 3 is
+outstanding.
+
+**Hypothesis for the next attempt.** Leg (b) fits one slot on this evidence:
+real validation cost 510 s across three commands *including* two heavy
+magnetostatic files, and the complex leg's expensive family is already priced at
+446 s. Run complex `tests/validation` first (it carries `port_gap` and the
+defect-3 xfail's siblings), then the remainder; if the complex validation
+command threatens 570 s, split it the same way — `test_port_gap_*` alone, then
+the rest — rather than raising a ceiling.
+
+---
+
+## 2026-08-18T00:34Z — `TH-11` step 5b — **incomplete**
+
+**Slot:** 19:30 local implementer run (2026-08-17). **On-deck item 1**, taken as
+written. Tree clean at preflight, container Up. Parked on
+`attempt/TH-11-step5b-20260818T004000Z`; `main` carries this entry, the §7
+annotation and both logs only.
+
+**Outcome in one line: the third rung is not time-bound, it is
+memory-bound — the loaded solve at `-n 12` was OOM-killed with the container,
+and no 64 MHz reading was produced.**
+
+**What was built (parked, verified).** §7's 5b plan needs one solve per harness
+command, which the module could not do: `full` mode solves the pair in one
+fixture. So `test_coil_loading_larmor_third_rung.py` gained two axes —
+`TH11_STEP5_SOURCE` (`mesh` | `cache`, reading step 5a's XDMF) and two new
+`TH11_STEP5_MODE` values (`loaded` | `free`) that split the pair across two
+commands via a JSON record of the loaded solve's reduced scalars. The `free`
+command refuses a record whose rung or cell count differs from its own mesh.
+The one thing the split costs is the *form* of the drive control: the two `J′`
+fields never coexist in one process, so it degrades from the field-level
+`‖J′_l − J′_f‖²/‖J′‖²` at 1e-24 to their reduced scalars (`I′`, `‖J′‖²`) at a
+pre-stated `DRIVE_SCALAR_BAND` = 1e-12 — labelled weaker in the docstring, the
+print and the failure message, with the field-level form still running whenever
+one command does both solves. `NCELLS_THIRD` = 2 807 309 moved from the cache
+module to the step-5 module (the cache module now imports it), and the cell-count
+ceiling assert now runs on every rung rather than only on unrecorded ones.
+
+**Rehearsal — green, and it is a real result**
+(`20260818T003418Z_TH-11-step5b-rehearsal.log`, 288 s, `-n 8`, complex build;
+6 passed + 5 skipped then 11 passed). The split, run as two commands on the fine
+417 914-cell rung, reproduces step 5a's single-command record **exactly**:
+ΔZ = **+1.3838746 − j5.8741123 Ω**, ΔR deviation **+2.8063%** = **+0.00002 pp**
+off step 2's record — the same digits 5a measured at `-n 8`. Complex-power
+residual 7.5422e-15 loaded / 1.3527e-14 free against 1e-9; σ = 0 dissipation
+exactly `+0.0`; ΔX ratio 0.9514; `2P/I′²` reproducing ΔR to the printed digit.
+The two-command drive surrogate reads **0.000e+00** — the free command rebuilt a
+bitwise-identical drive, the strongest form that control can take. So the split
+is not an approximation of `full`; on this rung it is `full`, to the last digit.
+
+**The failure** (`20260818T003806Z_TH-11-step5b-third-loaded.log`, **exit 137**,
+518 s, `-n 12`). The cache read worked and is itself a datum: **2 807 309 cells
+read back in 21.7 s at `-n 12`**, 5.03 cells/δ — step 5a's cache is usable by a
+different rank count than wrote it, which 5a did not test. Then the loaded solve
+died. Exit 137 is SIGKILL, and it arrived at **518 s against a `timeout -k 30
+560`** — i.e. *before* the ceiling fired — and `docker compose ps` afterwards
+showed **no container at all**, not merely a dead `mpiexec`. A `timeout` kills
+the job, never the container; the cgroup OOM killer at `memory.max` =
+**64 GiB** does exactly this. I did not capture `memory.peak` (the container was
+gone), so this is the strong hypothesis rather than a measurement. Recovery was
+the known-issues procedure — `up -d --force-recreate` — and the container is Up
+with `memory.max` 64 GiB and 36 CPUs visible; nothing was left wedged.
+
+**`-n 12` was mine, and it is a named lesson.** §7 pre-authorises `-n 12` "if
+command 1 threatens the window", and at ~480 s projected + 15 s read + startup
+against 570 s it plainly did, so I took it. But rank count trades *time* for
+*memory*: more ranks means more ghost layers and more duplicated overhead, so
+`-n 12` is the wrong lever against a memory wall and may have caused it. The
+`-n 8` estimate would have been ~480 s and might have fit both budgets.
+
+**What this reframes for the review.** The 10:30 review chose (a) cache + (b)
+ranks over (c) shrink the rung, on the premise that the third rung's cost was
+*wall clock*. That premise is now wrong in kind: (a) is bought and works, but (b)
+does not help — and plausibly hurts — a 64 GiB ceiling, so **(c) shrinking the
+rung is the live option**, and the three-rung fit already takes a non-2 `ratio`
+argument for exactly this case. A rung at `near` ≈ 0.0018 (~1.4 M cells, half
+the memory) is the obvious candidate.
+
+**Hypothesis for the next attempt.** Re-run command 1 at **`-n 8`** first — one
+command, ~480 s, and if it survives it both produces the loaded record and
+measures the peak memory the decision needs (print `/sys/fs/cgroup/memory.peak`
+after the solve, which costs nothing). If it OOMs too, the rung does not fit this
+box at all and (c) becomes the review's call, not a run's — journal the peak and
+stop. The parked branch is ready for either: only the rank count and, for (c),
+`RESOLUTION_NEAR_THIRD` plus the fit's `ratio` would move.
+
+## 2026-08-18T02:16Z — `TH-11` step 5b attempt 2 — **incomplete** (the rung saturates the 64 GiB ceiling at `-n 8` too)
+
+**Slot:** 21:00 local implementer run (2026-08-17). **On-deck item 1**, taken as
+written; attempt 1 (19:30 slot) named the next move and this run executed it.
+Tree clean at preflight, container Up. Module parked on
+`attempt/TH-11-step5b-20260818T024200Z`; `main` carries this entry, the §7
+annotation, the log and its test-results row only.
+
+**Outcome in one line: attempt 1's hypothesis is answered and the answer closes
+the door — at `-n 8` the third-rung loaded solve drove `memory.peak` to
+`memory.max` exactly (64.00 GiB) and had still not returned when the
+container-side `timeout -k 30 560` fired, so neither rank count fits and §7's
+"the solve does not return inside the window" stop condition applies.**
+
+**What was run.** One command
+(`20260818T020143Z_TH-11-step5b-third-loaded-n8.log`, exit 137, harness elapsed
+**908 s**): the parked loaded/free split at `TH11_STEP5_SOURCE=cache`,
+`TH11_STEP5_MODE=loaded`, `TH11_STEP5_RUNG=third`, **`-n 8`**, complex build,
+`tests/environment` first. The only code change on top of the parked module is
+attempt 1's own instruction: a best-effort `_cgroup_memory()` /
+`_print_memory_peak()` pair that prints `/sys/fs/cgroup/memory.peak` against
+`memory.max` after the mesh/read and after each solve. A missing or unreadable
+cgroup file is not a test failure.
+
+**The measurement attempt 1 asked for, and it is decisive.**
+- After the cache read: **2.02 GiB of 64.00 GiB (3.2%)** — the mesh itself is
+  nothing.
+- After the run, from the *surviving* container: `memory.peak` =
+  68 719 480 832 B = **64.00 GiB**, against `memory.max` = 68 719 476 736 B.
+  The peak is the ceiling, to four bytes. `memory.current` had fallen back to
+  2.72 GiB.
+- **Attribution is clean.** The container was force-recreated after attempt 1's
+  OOM, and this slot read `memory.peak` = **12 570 624 B (12.0 MiB)** at
+  preflight, before the run. The 64 GiB peak therefore belongs to this solve
+  alone, not to any earlier job. (`memory.peak` does count page cache, but the
+  only file traffic is the 192 MiB XDMF pair — four orders short of explaining
+  it, so this is the solve's anon memory.)
+
+**What that reframes.** Attempt 1's `-n 12` OOM and this run's `-n 8` overrun
+are the *same wall*, not two failures. At `-n 12` the cgroup killer took the
+container; at `-n 8` the same 64 GiB ceiling was reached but reclaim held on,
+so the job survived as a very slow one and the `timeout` — not the killer —
+ended it. That also plausibly explains the harness's 908 s against a 560 s
+container ceiling: docker exec and teardown were themselves slow while the
+cgroup sat at its limit. So `-n 8` is not "safer on memory" than `-n 12`; it is
+the same peak with a different failure mode, and there is no rank count on this
+box that makes 2 807 309 cells affordable.
+
+**Bought en route.** The cache is now exercised at three different rank counts:
+2 807 309 cells read back in **14.8 s at `-n 2`** (5a), **21.7 s at `-n 12`**
+(attempt 1), **31.2 s at `-n 8`** (this run) — all exact. The read is not
+monotone in rank count, which is worth nothing on its own but means no rank
+count is disqualified by the read.
+
+**Stop condition, taken as written.** §7 step 5: "the solve does not return
+inside the window ⇒ journal the probe numbers and stop; shrinking the rung is
+the review's decision, not the run's" — and attempt 1's own next-step sentence
+says the same for the memory case. Both branches now point at **(c) shrink the
+rung**, and the decision is the review's. No 64 MHz reading exists; §2's
+extrapolation sentence is untouched.
+
+**For the review, sized.** The fine rung (417 914 cells) solves the pair inside
+one command; the third rung (2 807 309 cells, 6.7×) needs ≥ 64 GiB. Linear in
+cells that puts the ceiling near **~1.7–1.8 M cells** on this box — so
+`near ≈ 0.0018` (~1.4 M cells, the candidate attempt 1 already named) is inside
+it with margin, at the price of a non-2 refinement ratio the three-rung fit's
+`ratio` argument already takes. That is a review call, not a run's.
+
+**Hypothesis for the next attempt.** None for this rung: it does not fit. If the
+review adopts (c), the parked branch needs exactly two edits —
+`RESOLUTION_NEAR_THIRD` and the fit's `ratio` — plus a fresh cache command for
+the new rung, and the loaded/free split, the identity family and the memory
+print all carry over unchanged.
+
+**Denials/anomalies.** One process note: the harness command outran the Bash
+tool's 660 s ceiling and was moved to the background by the harness itself. The
+turn was **not** ended while it ran (implementer-run.md's rule) — it was polled
+to completion in-slot — but a command whose container ceiling is 560 s can
+still exceed 660 s of wall clock when the box is under memory pressure, so
+560 s is not a safe container ceiling for a foreground slot. **~480 s is.**
+
+---
+
+## 2026-08-18T03:30Z — `PORT-9` step 2c — **complete**
+
+**Item.** §9 On-deck **item 2**. Item 1 (`TH-11` step 5b) was skipped, not
+attempted: it failed twice in this interval (19:30 and 21:00 slots, both 🟡)
+and §9's "items that fail twice get rescoped by the review before they may
+reappear" applies; its §7 entry says in as many words that the stop condition
+fired and shrinking the rung is the review's call. Nothing about `TH-11` was
+touched.
+
+**Preflight.** Tree clean, container Up, no `recovered/*`, no parked branch
+needed.
+
+**What was tried.** The package change step 2b named as the blocker:
+`run_n_port_sparameter_sweep` had exactly two excitation routes and now has
+three. `ports/lumped.py` gained `LumpedSheetPortSpec` +
+`run_lumped_sheet_port_case` — every port's sheet in the bilinear form (L1),
+the driven port's impressed source in the load (L3), each port read on the
+generator convention `V = V_src − I·Z_p` off `sheet_terminal_current`; `Z`/`S`
+then go through the existing column-by-column path, so the new route reaches
+`sparameters_from_impedance` exactly as the gap route does. One additive field
+on `PortVoltageCurrentEstimate` (`path_voltage_v`, default `None`) carries the
+independent terminal-to-terminal path integral off the same solve, which is
+what makes the cross-route comparison readable inside the sweep. Passing both
+route specs at once is now an error. New module
+`tests/validation/test_port_lumped_sheet_sweep.py` drives the two-torus
+two-port sweep with step 2b's `f = 0.5` filter composed over **both** `21x`
+groups on one mesh.
+
+**Measured.**
+- **GATE — reciprocity through the sweep:** `‖S − Sᵀ‖/‖S‖ = 2.574249e-11`
+  against the pre-stated, unmoved **1e-3** (inside by 4×10⁷);
+  `‖Z − Zᵀ‖/‖Z‖ = 1.767820e-09`;
+  `Z₁₂ = +1.097173784e-02+1.111378170e+00j Ω` vs
+  `Z₂₁ = +1.096344984e-02+1.111387041e+00j Ω`.
+- **Cross-route inside the sweep:** 1.6079% (P1 driven) / 1.5950% (P2 driven),
+  inside step 2's unmoved 5% band; step 2b read 1.8333% at the same width under
+  the impressed-gap drive ⇒ **0.2254 / 0.2383 pp of drive dependence**.
+- **Sheets:** 1375 facets each, area 7.216834292e-05 m²,
+  `w = A/h = 5.171485579e-03 m` — step 2b's f = 0.5 record 5.171486e-03 m, so
+  the width convention crossed into the package unchanged — planar < 1e-12,
+  ragged (A/h < bbox 5.905570485e-03 m, asserted).
+- Printed, not gated: `σ_max(S) = 0.9869`, max column power sum 0.9740.
+- **Negative control:** `test_port_package_sparameters.py` +
+  `test_port_lumped_bc.py`, **16 passed 145.0 s** — `EX-20`'s
+  `‖S‖₂ = 0.861449` (1e-6) and `‖S − Sᵀ‖/‖S‖ = 2.5494e-05` (5e-7), the
+  heuristic route's separation gate, and step 1's six lumped identity gates all
+  green through the modified package. The new route moved neither existing one.
+
+**Logs.** `20260818T033643Z_PORT-9-step2c.log` (7 passed, 122.2 s, exit 0,
+`-n 2`, standard, `timeout -k 30 500`; 184 919 cells, mesh 39.0 s, sweep
+57.0 s) and `20260818T033925Z_PORT-9-step2c-control.log` (16 passed, 145.0 s,
+exit 0). Total compute 271 s, well inside the slot.
+
+**Two legs of the item not run as written** — both recorded in the §7 entry,
+neither a band that moved:
+1. "the sweep's port-1-driven solve reproduces step 2b's f = 0.5 records to
+   1e-4" is **not the same quantity** under this route: step 2b drove an
+   impressed gap current with a sheet on the undriven port only; the route
+   drives the sheet source with sheets on both ports, so the field differs by
+   construction. What survives drive normalisation (the cross-route ratio) is
+   reported above and is 0.23 pp off.
+2. "the gap-voltage sweep on the same mesh" needs `GapVoltagePortSpec` to
+   accept a gap box with **two** cell tags (`{101: (101, 111)}` after
+   `GEO-16`'s fragment) and it takes one; the control was run instead as the
+   gates that own the `EX-20` records, on their own mesh.
+
+**Hypothesis for the next attempt (step 3, birdcage).** The prerequisite is
+discharged — gate (i) can now run through the function it names. Two things
+this run learned that step 3 should carry: the lumped reading is
+drive-dependent at ~0.2 pp, so step 3's ports should quote the raw rung with
+the drive stated; and reciprocity through the sweep is essentially exact
+(1e-11) on a symmetric fixture, so on the birdcage it will measure meshing
+asymmetry, not the BC — gate (iii)'s C4 spread is the discriminating one.
+
+**Denials/anomalies.** None.
+
+**Observed mid-slot, not mine.** `docs/references/dolfinx-0.11-migration/`
+(README + `idioms-0.11.md`, `migration-map.md`, `release-notes.md`) appeared
+untracked *after* this run's clean preflight — operator-provided reference
+material, and `.gitignore` covers only `docs/references/*.epub` and
+`jin-fem-3e/`, so it shows as untracked on `main`. Left exactly as found
+(neither committed nor removed); flagged for the review to decide whether it
+is tracked or ignored, since as-is it will trip the next run's preflight.
+
+**Commit anomaly — this step's diff landed inside someone else's commit.** A
+concurrent *interactive* session committed
+`549fb36 docs(references): cache the OPS-18 DolfinX 0.7.2 -> 0.11 migration
+pack` at 22:44 local while this slot's files were staged, and its `git commit`
+without pathspecs swept the whole index: `549fb36` therefore contains this
+step's `src/fem_em_solver/ports/{lumped,sparameters,excitation}.py`,
+`tests/validation/test_port_lumped_sheet_sweep.py`, both harness logs,
+test-results.md, attempts.md and the §7/§9 edits, alongside the migration pack
+its message describes (that message says PROJECT_PLAN "must not be swept" — it
+was). Nothing is lost and `main` is clean; the history is simply mis-labelled.
+History was **not** rewritten: another session is live on this tree. The
+review can leave it or split `549fb36`. Process note: two sessions writing one
+index is a real hazard of running an interactive session inside a scheduled
+slot's window — `git commit -F <msg> -- <pathspecs>` would have contained it.
+
+**Correction to the note above (same slot).** The concurrent session then ran
+`git reset HEAD~1`, so `549fb36` no longer exists and its sweep was undone; the
+step-2c diff was re-committed by this run, alone and with explicit pathspecs,
+as **`a56b632 feat(PORT-9): step 2c ✅ — the lumped-sheet sweep route,
+reciprocal at 2.574e-11`** (8 files: the three `ports/` modules, the new test
+module, both logs, test-results.md, PROJECT_PLAN §7/§9). `6fa10c3` — the
+mis-labelled anomaly note — is the commit that carries this journal entry and
+can be read as slot bookkeeping. The tree this run leaves on `main` is clean
+of its own work; still uncommitted and deliberately untouched are the other
+session's `docs/references/README.md` edit and its untracked
+`docs/references/dolfinx-0.11-migration/` pack. The process point stands
+unchanged: pathspecs on every scheduled commit.
+
+---
+
+## 2026-08-18T05:30Z — `OPS-17` step 3 (leg b, attempt 3) — **incomplete** (both complex legs overran; the leg's one surprise is a cache artifact, not a regression)
+
+**Slot:** 00:00 local implementer run (2026-08-18). Tree clean at preflight;
+container was **not** Up (`ps` showed no rows) and was started with
+`docker compose -f docker/docker-compose.yml up -d` before any work. On-deck
+**item 3**, taken as written: item 1 (`TH-11` step 5b) is twice-failed
+(00:34Z, 02:16Z entries) and was skipped as this section's rescope rule
+directs; item 2 (`PORT-9` step 2c) is marked done. No `src/` or `tests/`
+change was made, so nothing is parked — `main` carries four logs, this entry,
+a known-issues entry and the §7 annotation.
+
+**Negative control: the collect count reconciles exactly.** Complex `tests/`
+collects **380** (`20260818T050048Z_OPS-17-step3c-collect-complex.log`, exit 0,
+6 s). Attempt 2's real-mode 377 was measured before `a56b632`, which added
+`tests/validation/test_port_lumped_sheet_sweep.py` — **3** test functions.
+**377 + 3 = 380**, zero unexplained. (Step 2's 359 remains the older complex
+count; the 21-test delta is attempt 2's 18 plus these 3.)
+
+**Both prescribed leg-(b) commands overran their ceilings.** Each was killed
+and shrunk per §5.1, never re-run longer:
+
+| leg | command | result | elapsed |
+| --- | --- | --- | --- |
+| complex `port_gap` pair | `tests/environment` + `test_port_gap_voltage_impedance.py` + `test_port_gap_voltage_padding.py`, `-n 2`, `timeout -k 30 570` | **exit 124 at 92%**, dying in `test_port_gap_voltage_padding.py` | 571 s |
+| complex remainder | `tests/environment` + `tests/ --ignore=tests/validation`, `-n 2`, `timeout -k 30 570` | **exit 124 at 75%**, dying in `tests/solver/test_convergence_diagnostics.py` | 570 s |
+
+Logs `20260818T050123Z_OPS-17-step3c-complex-portgap.log` and
+`20260818T051115Z_OPS-17-step3c-complex-remainder.log`. The review sized the
+`port_gap` family at 446 s from a step-2 measurement of
+`test_port_gap_voltage_impedance.py` **alone**; the padding sibling is not
+covered by that number and the pair does not fit one window. The remainder leg
+is the bigger miss: its real-mode twin cost **218 s** (attempt 1) and the
+complex twin did not finish 570 s — complex mode is >2.6× on the same test
+set, and the review's leg-(b) sizing inherited the real-mode intuition.
+
+**Directory progression of the killed remainder leg** (this is the useful
+sizing datum): `tests/environment` → `io` → `materials` → `mesh` → `ports` →
+`post` all ran to completion; the kill landed inside `tests/solver` at 75%.
+So the *only* unobserved complex non-validation directory is the tail of
+`tests/solver`.
+
+**Anchor status.** Unchanged from attempt 2 on the real half (closed). The
+complex half stays open: neither complex leg completed, so no complex leg can
+yet be cited for "every test observed in a completed leg". **Defect 3's
+th-smoke Poynting xfail was still not observed** — `tests/post` ran to
+completion in the killed remainder leg, but a killed run has no summary
+section, so its xfail cannot be read off the log.
+
+**The one surprise, and it is not a regression.**
+`tests/solver/test_coil_phantom_magnetostatics.py::test_coil_phantom_magnetostatics_matches_the_two_loop_closed_form`
+FAILED at 67% of the remainder leg — a test green in real mode whose gated
+quantity (17.1233% L2 vs 30%) is build-mode-independent. Re-run alone it fails
+in **14.09 s** with `RuntimeError: Failed just-in-time compilation of form:
+JIT compilation timed out, probably due to a failed previous compile`
+(`20260818T052132Z_OPS-17-step3c-coilphantom-complex.log`, exit 1, 15 s) —
+i.e. the *first* killed leg left a stale FFCx lock in `/root/.cache/fenics/`
+and poisoned the second. Filed as a non-test known-issues entry; **no chunk
+should be opened against that test on this evidence.** The three
+`tests/ports/` failures in the same leg are the named expected ones
+(known-issues 3 + the `_DummyComm` entry), and both strict mesh xfails still
+xfail.
+
+**Denials:** none. **Traps:** the pytest-pipe trap did not fire this slot (no
+command piped pytest).
+
+**Hypothesis for the next attempt.** Leg (b) is a **three-command** leg, not
+two, and the next attempt should clear the FFCx cache before the first
+command:
+1. complex `tests/environment` + `tests/ --ignore=tests/validation
+   --ignore=tests/solver`, then `tests/solver` alone — the 75% split point is
+   measured, and this also finally reads defect 3's xfail off a completed
+   `tests/post`;
+2. complex `test_port_gap_voltage_impedance.py` alone (`timeout -k 30 570`;
+   step 2 priced it at 448 s, so it fits and nothing else does);
+3. complex `tests/validation` minus both `port_gap` files — unmeasured, and on
+   this slot's evidence it should be cost-probed before a window is committed
+   to it.
+That is more than one slot's work at 570 s a command; the review may want to
+split leg (b) into (b1) the remainder and (b2) validation, and to record that
+**complex mode costs ~2.6× real mode on the same tests** so future sizings
+stop inheriting real-mode numbers.
+
+---
+
+## 2026-08-18T10:15Z — `TH-11` step 5c — **incomplete (memory wall reached at 0.99 M cells)**
+
+**Slot:** 04:30 CDT scheduled implementer run. **On deck item 1**, taken as
+written. **Branch parked:** `attempt/TH-11-step5c-20260818T101500Z` (the module
+edits only; `main` carries the three logs, the test-results rows and this
+entry).
+
+**What was tried.** §7's step-5c plan verbatim, off
+`attempt/TH-11-step5b-20260818T024200Z`: `RESOLUTION_NEAR_THIRD` 0.00125 →
+**0.0018**, `NCELLS_THIRD` renamed to `NCELLS_THIRD_UNAFFORDABLE` (the
+2 807 309-cell record kept on the books, nothing overwritten) with the new
+rung's count set `None` until measured, and the three-rung fit generalised.
+Three commands, each `timeout -k 30 480`, `~/.cache/fenics` cleared first.
+
+**Measured.**
+
+1. **Mesh + cache** (`20260818T093219Z_TH-11-step5c-cache.log`, 4 passed /
+   1 skipped, 44.7 s): the 0.0018 rung meshes to **994 258 cells** in
+   **37.5 s** at `-n 2` — well under the ~1.4 M the review's linear sizing
+   predicted, so gmsh's cell count is markedly sublinear in 1/h here. The 5a
+   round-trip identity holds **exactly**: 994 258 written and read back,
+   per-tag owned counts `{1: 3979, 2: 388863, 3: 601416}` and facet
+   `{1: 2408}` identical across write → read, tag names preserved. Cache
+   68.2 MiB, write 0.2 s, read-back 5.5 s.
+2. **Loaded solve at `-n 8` off the cache**
+   (`20260818T093314Z_TH-11-step5c-loaded-n8.log`, 2 passed / 5 skipped,
+   341.1 s): it **completed** — cache read 10.8 s, solve **320.5 s**, ΔR
+   reaction **+1.3628036e+00 Ω**, I′ = 0.935125 A, 3.50 cells/δ at 64 MHz.
+   The complex-power identity passed at its unchanged 1e-9. **But
+   `memory.peak` went 11.73 GiB after the cache read → 64.00 GiB of
+   `memory.max` = 64.00 GiB after the solve — 100.0% of the ceiling.**
+3. **Free solve + ladder at `-n 8`**
+   (`20260818T093919Z_TH-11-step5c-free-ladder-n8.log`, **exit 124** at
+   484 s): cache read 10.7 s, then the σ = 0 solve did not return inside
+   480 s and took SIGTERM at 479.2 s — against the *same-size* loaded solve's
+   320.5 s. No ΔZ, no bracket, no fit.
+
+**The finding, and it is §7's own named stop condition.** §7 step 5c: "if even
+~1.4 M cells drives `memory.peak` to the ceiling, journal the peak and stop."
+**0.99 M cells did** — 30% below the rung the review sized, and 2.8× below the
+rung 5b measured at the same 64.00 GiB. So the wall is **not linear in cells**:
+0.42 M fits comfortably, 0.99 M pegs the ceiling, 2.81 M OOMs. That is MUMPS
+factor fill-in, superlinear in the unknowns, and it also explains command 3 —
+a run that starts already at the ceiling spends its time in reclaim rather
+than arithmetic, which is why an identical-size solve went from 320 s to
+> 479 s. Between the two commands the container's peak is a monotone
+high-water mark, so command 3's "64.00 GiB after the cache read" is command
+2's number, not a fresh measurement; command 2's 11.73 → 64.00 GiB inside one
+process **is** fresh and is the load-bearing one.
+
+**Correction carried in the parked module, worth the review's attention.** The
+review's edit list said "the fit's non-2 `ratio`", but the ladder
+0.005 → 0.0025 → 0.0018 refines by **2 and then 1.389** — it is not a
+fixed-ratio ladder at all, and Aitken's Δ² (which `_three_rung_fit` used) is
+only valid for one. Substituting a single non-2 ratio would have returned a
+plausible wrong rate. The parked module replaces it with the general
+statement — `(d_c − d_m)/(d_m − d_f) = (h_c^p − h_m^p)/(h_m^p − h_f^p)`,
+solved for `p` by bisection on a monotone residual, then `C` and `d₀` — which
+reduces to the old formula exactly on a ratio-2 ladder, and passes the real
+ratio to `_richardson` too. Never exercised on data: command 3 died before the
+ladder printed.
+
+**Anchor status.** Identity family green on the one solve that completed
+(1e-9, unchanged, never widened). Negative controls not reached: the σ = 0
+dissipation control and the drive-scalar surrogate both need command 3, and
+the fine-rung reproduction control is the `fine` rung's, not run this slot.
+**No 64 MHz bracket exists and §2 is untouched.**
+
+**Denials:** none. **Container:** healthy after the kill — `Up`, zero stray
+`python3`, `memory.peak` 64.0002 GiB against `memory.max` 64.00 GiB. No
+force-recreate needed.
+
+**Hypothesis for the next attempt.** The degree-1 h-ladder cannot be extended
+at 64 MHz on this box: the affordable rung is ~0.4–0.6 M cells and the third
+rung would have to sit between 0.42 M and 0.99 M — a refinement ratio near
+1.2, whose difference signal is at the same scale as the 0.01 pp run-to-run
+floor, so the fit would be noise. §7's step-5c negative-result clause names
+the successor explicitly and this run's numbers confirm it: **`TH-12` is the
+remaining axis** (fewer cells at matched accuracy, which is a memory argument
+as much as an accuracy one), and its step 2 names exactly this swap. Recommend
+the review close step 5 as a measured negative rather than scoping a 5d.
+
+---
+
+## 2026-08-18T11:10Z — `TH-12` step 1 — **complete**
+
+**Slot** 06:00 CDT scheduled implementer run. **Item** §9 On-deck item 2
+(item 1, `TH-11` step 5c, is marked 🚫 with an explicit "do not re-run"; item 2
+is the first not-done-or-blocked entry). **Preflight** clean tree on `main`,
+container `Up`. **Tier** standard, `-n 2`, complex build, `timeout -k 30 400`.
+**Elapsed** 7 s of compute across the closing run; two runs total this slot.
+
+**What was done.** New gate
+`tests/validation/test_lossy_sphere_degree2.py`: `TH-10`'s lossy saline sphere
+(a = 0.05 m, εᵣ = 78, σ = 0.5 S/m) at 64 MHz on the **coarse** rung, solved at
+N1curl degree 1 and degree 2 from one module-scoped fixture so both orders see
+demonstrably the same mesh. The only source change is a `degree: int = 1`
+kwarg threaded through `_mesh_and_solve` in
+`tests/validation/test_lossy_sphere_fullwave.py` — default unchanged, so no
+recorded `TH-10` number moves and the two external callers
+(`test_geometry_floor_discriminator.py`, `examples/time_harmonic/06_...py`)
+keep their 4-tuple unpacking.
+
+**Measured** (`20260818T110442Z_TH-12-step1-sphere-degree2-rss.log`):
+
+| order | cells | DOFs | interior relL2 | power error | solve wall | peak RSS (summed) |
+|---|---|---|---|---|---|---|
+| 1 | 5 866 | 7 591 | 8.1541% | 8.3869% | 0.93 s | 388.2 MiB |
+| 2 | 5 866 | 39 634 | **0.1405%** | **0.0058%** | 4.03 s | 1 036.2 MiB |
+
+**Gate:** relL2 ≤ the degree-1 fine-rung record **3.643% at 17 670 cells**, at
+strictly fewer cells — passed at **0.1405%**, i.e. **25.9× the accuracy on
+3.01× fewer cells**. **Negative control:** degree 1 on the same rung reads
+8.3869% ohmic-power error against the recorded 8.387% — a **0.0001 pp** move,
+inside the pre-registered 0.002 pp reproduction band, so the fixture is pinned
+to `20260813T170337Z_TH-10-step4-power-n2.log` inside the same process.
+**Identity:** `|Im P|/Re P` = **0.000e+00** at both orders (the ohmic integrand
+½σE·Ē is real by construction; the `TH-1` `ufl.dot` conjugation slip would read
+as a nonzero imaginary power). Both accuracy digits are identical across the
+slot's two runs, which differ only in the memory instrument.
+
+**Cost reading (the deliverable).** Degree 2 costs 5.22× the DOFs but only
+**4.32× the wall time and 2.67× the memory** — sublinear on both axes on this
+fixture — for 58× the field accuracy at equal cells. Against the degree-1 fine
+rung the trade is 3.01× fewer cells at 25.9× the accuracy. No production-order
+decision is taken here; that is the weekly review's, per the entry's decision
+clause.
+
+**Identity-family note, deliberate.** The `TH-11` complex-power identity
+`Im Z = 4ω(W_m − W_e)/I′²` needs a *driven port*; this fixture has no source at
+all (imposed Dirichlet total field), so that family does not apply and is not
+restated. The 1e-9 bound is carried on the imaginary-power identity above,
+which is the one this fixture does have.
+
+**Instrument finding, matters for `TH-11`/`TH-12` step 2.**
+`/sys/fs/cgroup/memory.peak` is the container's **lifetime** high-water mark and
+is not resettable from inside a test: the slot's first run printed 64.000 GiB
+for a job whose real footprint is ~1 GiB, because a prior `TH-11` step-5c run
+had already touched `memory.max`. Every `memory.peak` number quoted for a job
+that did not itself recreate the container is therefore an upper bound on the
+container's history, not a measurement of that job. The second run switched to
+summed `ru_maxrss`, which is per process and starts fresh; that is what the
+table above quotes. Any future memory pricing should use the RSS route or a
+freshly recreated container.
+
+**Denials:** none. **Container:** healthy, `Up` throughout, no kill, no
+force-recreate.
+
+**Hypothesis for the next attempt.** `TH-12` step 2 (the coil at degree 2,
+heavy, serial on this) is now unblocked and is the highest-value follow-on: if
+degree 2 holds this accuracy-per-cell on the `TH-11` step-1 coil fixture, a
+degree-2 rung replaces the memory-infeasible 2 807 309-cell third rung outright
+and the 64 MHz h → 0 bracket becomes affordable — which is exactly the swap
+`TH-11` step 5c's negative result pointed at. The step's own cost probe (print
+DOFs and the MUMPS in-core estimate before solving) should be run against the
+RSS instrument, not `memory.peak`, for the reason above.
+
+## 2026-08-18T12:30Z — `OPS-17` step 3 (leg b1, attempt 1) — **incomplete** (command 1 completed; command 2 overran — and attempt 3's "cache artifact" call is overturned)
+
+**Slot:** 07:30 local, scheduled implementer run. **Item:** §9 On deck item 3
+(items 1 and 2 were 🚫 blocked and ✅ done respectively). **Base:** `93fc531`,
+clean tree, container `Up` 7 h. **Parked:** nothing — this leg made no `src/`
+or `tests/` change. **Denials:** none.
+
+### What was run
+
+FFCx cache cleared first as the rescope required (`rm -rf
+/root/.cache/fenics`, 112 entries removed).
+
+| # | Command | Ceiling | Exit | Elapsed | Result |
+|---|---|---|---|---|---|
+| 1 | complex `tests/environment` + `tests/ --ignore=tests/validation --ignore=tests/solver`, `-n 2` | `timeout -k 30 520` | 1 | **392.76 s** | **completed** — `3 failed, 122 passed, 1 xfailed` |
+| 2 | complex `tests/environment` + `tests/solver`, `-n 2` | `timeout -k 30 520` | 124 | 520 s | killed at **44%** |
+| 3 | complex `test_coil_phantom_magnetostatics.py` alone, warm cache | `timeout -k 30 300` | 1 | 13.92 s | FAILED, `Compilation failed on root node` |
+| 4 | same, **cold** cache (`rm -rf` immediately prior) | `timeout -k 30 300` | 124 | 301 s | FAILED **in 5.58 s**, then hung to SIGTERM |
+
+Logs: `20260818T123045Z_OPS-17-step3d-complex-nonsolver.log`,
+`20260818T123814Z_OPS-17-step3d-complex-solver.log`,
+`20260818T124712Z_OPS-17-step3d-coilphantom-complex.log`,
+`20260818T124742Z_OPS-17-step3d-coilphantom-complex-cleancache.log`.
+
+### Command 1 — the half that closed
+
+The anchor is met for everything outside `tests/solver` and `tests/validation`:
+`environment`, `io`, `materials`, `mesh`, `ports`, `post` and `unit` are now
+all observed in a **completed** complex leg. The three failures are exactly the
+named expected ones — the two `test_port_orientation_sensitivity.py`
+`_DummyComm` regressions and `test_sparameter_assembly.py`'s entry-3 zero
+diagonal. No unexplained failure.
+
+One count delta, **rank-dependent**: the ranks disagree by exactly one test.
+Rank A prints `3 failed, 122 passed, 1 xfailed`; rank B prints `4 failed, 121
+passed, 1 xfailed`. The extra is
+`tests/unit/test_paraview_combined_xdmf.py::test_combined_xdmf_is_single_grid_with_all_attributes`
+— `PASSED [ 99%]` on one rank and `FAILED [100%]` on the other, in the same
+run. Assertion:
+`assert {'imag_CellTags','real_F','imag_G','imag_F','real_CellTags','real_G'} == {'F','CellTags','G'}`.
+The complex XDMF writer splits attributes into `real_*`/`imag_*`; the test
+hard-codes the real-mode names. That is one defect (build-mode-blind test); the
+rank-dependence is a **second**, undiagnosed one. Known-issues entry filed, not
+fixed — this leg is bookkeeping, and the naming fix alone would leave the
+rank-dependence in place.
+
+**The rescope's own claim about defect 3 was wrong, and I did not fix it by
+accident.** It said command 1 "finally reads defect 3's th-smoke Poynting xfail
+off a completed `tests/post`". That xfail is in
+`tests/solver/test_time_harmonic_smoke.py`, which command 1 `--ignore`s by
+construction. The single xfail command 1 observed is a `tests/mesh`
+region-resolution one. Defect 3 remains unobserved and can only come off a
+completed `tests/solver`.
+
+### Command 2 — why the sizing rule did not transfer
+
+Exit 124 at 44%. Complex `tests/solver` **alone** does not fit 520 s, though
+real mode ran the same directory in 41 s (step 2). That is **> 12×**, not the
+2.6× the 03:00 review recorded — because `tests/solver` is exactly where the
+`@complex_only` skips *unskip*, so the two modes are not running the same work.
+**The 2.6× rule is only valid where both modes run the same tests; it must not
+be applied to `tests/solver`.** Measured split point: `test_boundary_condition_selection.py`,
+`test_coil_phantom_magnetostatics.py` and all 13 `test_convergence_diagnostics.py`
+cases completed; everything after that is unobserved.
+
+### The finding: attempt 3's adjudication was wrong
+
+Attempt 3 saw `test_coil_phantom_magnetostatics` FAIL, attributed it to a stale
+FFCx lock, and wrote "**open no chunk against that test on this evidence**". I
+cleared the cache exactly as instructed and the test still failed — so I priced
+the three cache states directly (commands 3 and 4 above, plus attempt 3's own
+number):
+
+| Cache state | Result | Message |
+|---|---|---|
+| poisoned by a kill mid-compile | FAILED 14.09 s | `JIT compilation timed out, probably due to a failed previous compile` |
+| warm from a completed leg | FAILED 13.92 s | `Compilation failed on root node` |
+| **cold** (`rm -rf` immediately prior) | FAILED **5.58 s** | `ComplexComparisonError: You can't compare complex numbers with max.` |
+
+The poisoned cache was **masking a pre-existing complex-mode defect, not
+manufacturing a spurious one**. The right reading of the cache-poisoning entry
+is "a killed run makes the *message* untrustworthy", not "makes the *failure*
+spurious" — after clearing you must still re-run and read the new message.
+Confirmed in passing, which that entry listed as unverified: `rm -rf
+/root/.cache/fenics` is sufficient; no `--force-recreate` was needed at any
+point. Both known-issues entries updated; the cache entry keeps its mechanism
+and loses its conclusion.
+
+The defect itself is **not diagnosed**: I ran command 4 with `--tb=line`, which
+printed only the UFL frame, so the offending expression is unlocalized. `grep`
+for `max_value`/`min_value`/`conditional(` across `src/` finds exactly one hit
+(`src/fem_em_solver/post/sar.py:286`) that this test does not exercise, so the
+comparison probably enters through a UFL/DolfinX helper rather than a literal
+call. **One command settles it:** this file alone, cold cache, `--tb=long`.
+
+### A second, budget-relevant observation
+
+Command 4 printed `1 failed in 5.58 s` and then **hung until SIGTERM at
+299.5 s**, ranks stuck in `MPI_Comm_dup`/`PetscCommDuplicate` — a
+non-collective raise out of form compilation, the 3b-xiii hang family. So a
+complex probe of this file costs a **full window**, not 6 s, until the raise is
+fixed or the file is marked. Anyone pricing that one-command diagnosis should
+budget for the hang.
+
+### Hypothesis for the next attempt
+
+The residual (b1) tail — complex `tests/solver` from
+`test_convergence_diagnostics.py` onward — is worth **less** run before the
+coil-phantom defect is dispositioned than after: every attempt will pay the
+~300 s exit hang and still not reach defect 3's xfail if the hang lands
+mid-directory. My recommendation to the review is to commission the
+`ComplexComparisonError` diagnosis as its own small chunk (one command, cold
+cache, `--tb=long`, then either fix the form or mark the file `@real_only` if
+the complex build never needs that magnetostatic path), and re-queue the (b1)
+tail behind it with **per-file** sizing rather than one directory command. Leg
+(b2) is untouched, independent, and unaffected by any of this.
+
+**Container:** healthy throughout, no wedge, no force-recreate; FFCx cache left
+**cleared** for the next slot.
+
+---
+
+## 2026-08-18T14:15Z — `OPS-17` step 3 leg (b1), attempt 2 — **complete**
+
+**Slot:** 09:00 local implementer run. **Tier:** standard, `-n 2`, complex
+build + `FEM_EM_REQUIRE_COMPLEX=1`. **Base:** clean `main` at `7219c94`.
+**Parked:** nothing — no `src/` or `tests/` change; this leg is bookkeeping.
+**Outcome: leg (b1) is closed**, and attempt 1's headline sizing rule is
+withdrawn.
+
+### What I ran
+
+Cache cleared first (`rm -rf /root/.cache/fenics`), then four harness commands:
+
+| # | Command | Log | Result |
+|---|---|---|---|
+| 1 | `tests/environment` + `test_time_harmonic_smoke.py` | `20260818T140102Z_OPS-17-step3e-complex-thsmoke.log` | **7 passed, 1 xfailed, 10.51 s**, exit 0 |
+| 2 | `tests/environment` + the 8 files after `test_convergence_diagnostics.py` | `20260818T140137Z_OPS-17-step3e-complex-solver-tail.log` | exit **124** at 61%, 480 s |
+| 3 | the 4 files after `test_gauge_penalty.py` | `20260818T140954Z_OPS-17-step3e-complex-solver-tail2.log` | **11 passed, 4.73 s**, exit 0 |
+| 4 | `test_gauge_penalty.py` alone | `20260818T141020Z_OPS-17-step3e-complex-gaugepenalty.log` | **8 passed, 20.33 s**, exit 0 |
+| 5 | `tests/environment` + **all** `tests/solver` minus the coil-phantom file | `20260818T141104Z_OPS-17-step3e-complex-solver-warm.log` | **46 passed, 2 xfailed, 111.22 s**, exit 0 |
+| 6 | collect-only, `tests/solver` + `tests/environment` | `20260818T141312Z_OPS-17-step3e-collect-solver.log` | **49 collected**, 0.41 s, exit 0 |
+
+### The close
+
+Command 5 is the closing leg: exit 0, **both ranks reporting identical
+counts** (no rank-dependent delta anywhere in this directory). Its 2 xfails are
+the expected pair — `test_time_harmonic_smoke_solve_conserves_real_power`
+(defect 3, and command 1 is the first time that xfail has ever been read off a
+*completed* complex leg; attempt 1's rescope wrongly expected command 1 to see
+it, but it lives in the directory that command `--ignore`d) and
+`test_gauge_multiplier_vanishes_for_a_divergence_free_source` (`MAG-17`).
+
+Counts reconcile with nothing left over: 49 collected = 48 in command 5 + the
+single `test_coil_phantom_magnetostatics` test, which is already observed
+FAILED in its own *completed* log from attempt 1 (`20260818T124712Z_...`,
+exit 1, 15 s) and carries two known-issues entries. I ignored that file
+deliberately — its raise hangs `mpiexec` ~300 s on exit, so including it would
+have cost the window and produced a footerless 124 for a test already observed.
+Non-validation complex = 126 (attempt 1 command 1) + 45 (`tests/solver`,
+`tests/environment` not double-counted) = **171**, exactly the 171 real-mode
+leg (a) observed; 380 − 171 = 209 = validation's 206 + step 2c's 3, which is
+leg (b2)'s scope. Anchor met.
+
+### The finding: ">12× real" was a cold cache, not `tests/solver`
+
+Attempt 1 concluded complex `tests/solver` is > 12× real mode and must be sized
+per file. That is wrong, and I withdrew it. Commands 2, 4 and 5 are a clean
+counterfactual triple at one commit: the cold-cache directory run died at 61%
+of 480 s inside `test_gauge_penalty.py`; that same file standalone on a warm
+cache is 8 passed in **20.33 s**; and the whole directory on a warm cache is
+**111.22 s** against real mode's 41 s — **~2.7×**, i.e. the recorded 2.6× rule,
+not a departure from it. The multiplier was **cold-cache FFCx JIT of complex
+forms**. The genuine cost sink is visible in command 5's durations:
+`test_cylinder`'s single closed-form test is 66.60 s of the 111 s.
+
+Two rules follow, both filed in known-issues under the cache-poisoning entry:
+a cold-cache death location says nothing about which test is expensive, and
+compilation and measurement must not share a window — size the first
+post-clear command as a throwaway warm-up.
+
+### Not fixed here
+
+The `ComplexComparisonError` and its exit hang, and the rank-dependent
+complex-blind XDMF test, keep their known-issues entries untouched. This leg
+was bookkeeping and fixed nothing.
+
+### Hypothesis for the next attempt
+
+Leg (b2) (complex validation, On-deck item 6) is now the **only** remaining
+part of `OPS-17` step 3, and it is unaffected by any of this. Its sizing should
+be re-derived under the corrected rule: with a warm cache it is plausibly
+cheaper than the rescope assumed, so the `--collect-only` cost probe it
+prescribes should be run *after* a warm-up command rather than immediately
+after the cache clear. My recommendation to the review stands from attempt 1
+on one point only — the `ComplexComparisonError` deserves its own small chunk
+(one command, cold cache, `--tb=long`) — but it is no longer a prerequisite for
+anything in `OPS-17`, since (b1) closed around it.
+
+**Container:** healthy throughout, no wedge, no force-recreate. FFCx cache left
+**warm** (deliberately — the next slot should note this before pricing).
+
+---
+
+## 2026-08-18T18:40Z — `TH-12` step 2, attempt 1 — **incomplete**
+
+**Slot:** 13:30 local implementer run. **Tier:** heavy budget, both commands
+landed inside standard, `-n 8`, complex build + `FEM_EM_REQUIRE_COMPLEX=1`.
+**Base:** clean `main` at `3817cf2`. **Parked:** nothing — the code is complete,
+correct and green as far as it ran, so it lands on `main`; only the degree-2
+solve is missing and it is now priced.
+
+### What I ran
+
+| # | Command | Log | Result |
+|---|---|---|---|
+| 1 | `TH12_STEP2_MODE=probe`, the mandatory cost probe + the degree-1 control | `20260818T183449Z_TH-12-step2-probe.log` | **12 passed, 5 skipped, 44.9 s**, exit 0 |
+| 2 | `TH12_STEP2_MODE=calibrate`, the memory-exponent rung | `20260818T183730Z_TH-12-step2-calibrate.log` | **5 passed, 13 skipped, 106.1 s**, exit 0 |
+
+New module `tests/validation/test_coil_loading_degree2.py`; the only `src/`-side
+change is a defaulted `degree: int = 1` keyword on `TH-11`'s
+`_solve_projected_at`, so no `TH-11` caller and no recorded number moves.
+
+### Controls, all green in-run
+
+Degree 1 on the baseline rung reproduces its recorded ΔR deviation **+1.5834%
+to −0.00002 pp** (floor 0.01 pp); complex-power identity residuals **1.5361e-14
+loaded / 5.9294e-15 free** against the unmoved 1e-9 family bound; σ = 0
+dissipation exactly `+0.0` W against a loaded `+1.3858364e-01` W; mesh exactly
+138 619 cells; drive mismatch under 1e-24. Same-process pinning per §7.
+
+### The finding: the probe's exponent was the thing deciding the step
+
+The probe priced degree 2 at **882 296 DOFs, 5.42× degree 1's 162 710**, off a
+measured degree-1 summed peak RSS of **6.63 GiB** (1.22 GiB of it pre-solve
+baseline). The §7 stop rule then fired — but on a *pre-registered guess* of
+exponent 1.5, projecting **69.49 GiB** against the 0.80·`memory.max` threshold
+of 51.20 GiB, while the linear end of the very same model read **30.54 GiB**.
+A model whose two ends straddle the threshold has not priced anything, so I
+measured the exponent instead of arguing about it: the `TH-11` fine rung at
+**unchanged element order** (417 914 cells, 486 694 DOFs, 2.991×) costs
+**21.78 GiB** of solve-attributable summed RSS against the baseline rung's
+5.41 GiB, fitting **p = 1.271** — reassuringly close to the N^(4/3) a 3D
+nested-dissection factorization is expected to store, and well below the 1.5
+guess. Degree 2 re-projects to **47.61 GiB, under the 51.20 GiB threshold**.
+
+The module constant is now the measured 1.271 with the fit and its log recorded
+in a code comment (the `MAG-10`/`MAG-15` precedent: a bound may move only with
+the measurement that moved it). This is a cost-probe threshold, not a physics
+gate — no assertion was loosened; the identity family, the σ = 0 control and
+the 0.01 pp reproduction floor are all at their unchanged bounds.
+
+### Why it stopped here
+
+The calibration finished at minute 49 of the timebox. A degree-2 solve is one
+~10-minute foreground command, which would have run past the 60-minute mark
+with no margin to recover a container if the 47.61 GiB projection is optimistic
+and it OOMs (`TH-11` step 5b wedged the box twice doing exactly this). The
+protocol's "no new implementation work after minute 45" made the call.
+
+### Hypothesis for the next attempt
+
+The next slot starts *at the solve*: one command,
+`TH12_STEP2_MODE=full`, `-n 8`, `timeout -k 30 900`, which re-runs the cheap
+degree-1 control (30 s of solve) and then the degree-2 pair — expect roughly
+4× that on the step-1 sphere's measured 4.32× wall ratio, so ~2-4 minutes of
+solve, and a peak near the projected 47.61 GiB. The module's own stop rule now
+lets it through, so no code change is needed. If it OOMs anyway, that is the
+measured answer to §7's question and the exponent model is what to report as
+wrong. If it completes, ΔR against step 4's h → 0 bracket [−2.1492%, −0.9050%]
+is the reading, printed and never gated, and the rung-swap decision is the
+review's.
+
+**Container:** healthy throughout, no wedge, no force-recreate. FFCx cache left
+**warm**, now including this module's degree-1 validation forms; the degree-2
+forms are still cold, so the next slot's first command pays their JIT and must
+not be read as per-test cost.
+
+## 2026-08-18T20:20Z — `TH-12` step 2, attempt 2 — **complete (the reading landed; one defect left failing)**
+
+**Slot:** 15:00 local, scheduled implementer run. **Chunk:** §9 On-deck item 1,
+`TH-12` step 2, taken as the first item not done or blocked. Preflight clean,
+container Up (19 h old, 15 h uptime), no anomaly.
+
+**One command, exactly as attempt 1's hypothesis specified:**
+`20260818T200059Z_TH-12-step2-full.log` — `TH12_STEP2_MODE=full`, `-n 8`,
+complex build, **`timeout -k 30 570`** (not the §9 annotation's 900: the Bash
+tool's foreground ceiling is 660 000 ms, and the protocol requires the
+container-side timeout to return a footer inside that window — 900 s would have
+orphaned the `mpiexec` job). **Exit 1, 546 s** — 24 s of margin under the kill,
+so the sizing was right but not generous. `2 failed, 11 passed, 1 skipped`.
+
+### The reading (§7's deliverable)
+
+| | degree 1 | degree 2 |
+|---|---|---|
+| DOFs | 162 710 | **882 296** (5.423×, exactly as probed) |
+| ΔR | +3.2770406e-01 Ω | +3.1985142e-01 Ω |
+| ΔR deviation | **+1.5834%** (record, reproduced to −0.00002 pp) | **−0.8508%** |
+| ΔX | −5.6657895e-01 Ω | −5.6252149e-01 Ω |
+| ΔX ratio | 0.9200 | 0.9134 |
+| solve wall (loaded + free) | 12.4 + 12.2 s | **235.4 + 266.4 s** (~20×) |
+| summed peak RSS | 6.66 GiB | **61.94 GiB** |
+| identity residual (loaded / free) | 8.0743e-15 / 8.7088e-15 | **4.5931e-09 / 3.0030e-09** |
+
+**Against step 4's h → 0 bracket [−2.1492%, −0.9050%]: outside, by 0.054 pp,
+past the *upper* edge.** §7 pre-registered that as the informative outcome, and
+it is informative *for* degree 2, not against it — the order change moved the
+deviation **−2.434 pp** on an unchanged coarse mesh, i.e. nearly the whole
+distance the degree-1 h-ladder said refinement should travel, and then a hair
+past. 0.054 pp is 5× the 0.01 pp run-to-run floor but 4% of the bracket's own
+1.24 pp width, and the bracket is Richardson-derived, not a closed form. ΔR was
+printed, never gated, per §7.
+
+### The cost model was optimistic — record this
+
+The calibrated projection (p = 1.271, fitted on a degree-1 rung pair) said
+**48.04 GiB** against the 51.20 GiB threshold, so the module let the solve
+through. The outturn was **61.94 GiB — 29% above the projection and 96.8% of
+`memory.max`.** It did not OOM, but there was ~2 GiB of headroom, and the 20%
+guard fraction is the only reason this slot did not end in a wedged container.
+**Fitting the memory exponent on a cells axis under-predicts the order axis**;
+1.271 should be treated as a floor for any future degree-2 pricing on this box.
+The wall-time model was wrong in the same direction and worse: §7 expected ~4×
+the degree-1 solve pair on the sphere's 4.32× ratio, and it was **~20×**.
+
+### The defect: the identity family fails at degree 2, and was not loosened
+
+`test_complex_power_identity_holds_at_this_order[loaded-2]` and `[free-2]` fail
+at 4.5931e-09 / 3.0030e-09 against the 1e-9 `TH-11` step-2f family bound, while
+the **degree-1 rows of the same run, same mesh, same process** sit at ~8e-15.
+Cause is legible from the printed energies and is not a reduction or fixture
+defect: `W_m` is unmoved (3.04e-08 → 3.13e-08 J) but `W_e` explodes
+**2.03e-13 → 7.16e-06 J**, 3.5e7×, so `Im Z = 4ω(W_m − W_e)/I′²` goes
+**+9.02 Ω → −2 117 Ω** and the identity becomes a subtraction of two 2 117 Ω
+numbers. The ungauged curl-curl operator's gradient null space is far richer at
+second order and irrotational content sits in `E` at an amplitude that swamps
+the magnetic term. It is **common-mode** — it cancels in loaded−free, so ΔX
+moves only 0.7% and ΔR not at all, and the reading above stands. What dies is
+the identity's *discriminating power* at this order on this fixture.
+
+Full entry in `docs/testing/known-issues.md` with three ranked dispositions
+((a) re-anchor on `Im ΔZ`, (b) measure the gradient content directly, (c) price
+a gauged second-order path), unassigned — it is the review's to scope. The
+module therefore **fails by default** (`TH12_STEP2_MODE` defaults to `full`);
+`probe` and `calibrate` modes stay green. Per the non-negotiables the bound was
+not widened: it is met at 1e-14 at degree 1 in the very same process, so
+widening it would hide the finding rather than record it.
+
+**Controls all green:** cells exactly 138 619; degree-1 anchor −0.00002 pp off
+its record; σ = 0 dissipation **+0.0** exactly at both orders; drive mismatch
+9.2e-35 / 1.0e-34.
+
+### Hypothesis for the review
+
+Two questions are now separable and neither is mine to answer. **(1) The swap:**
+degree 2 does buy a coarse-mesh ΔR of h → 0 quality, but at 61.94 GiB it is
+against the *same* wall that killed `TH-11` step 5b's third rung, so it
+replaces only a rung strictly coarser than this one — and the 64 MHz bracket,
+which needs ~2.5× the cells at fixed cells/δ, is **not** affordable at degree 2
+on this box either. The honest read is that this box has no route to the 64 MHz
+bracket at any (order, h) pair, which is a §2 statement, not a `TH-12` one.
+**(2) The defect:** disposition (a) is a cheap test change and is the one I
+would scope first, because `Im ΔZ` is what every downstream claim actually
+uses; but (b) is the one that would tell us whether the `W_e` explosion is
+benign bookkeeping or the same null-space pathology that bars degree 2 in the
+magnetostatic A-formulation. If it is the latter, degree 2 is not a production
+element order regardless of what accuracy-per-DOF says, and the weekly review's
+decision clause needs that answer before it fires.
+
+**Container:** healthy throughout — no OOM, no wedge, no force-recreate, ~2 GiB
+of headroom at peak. FFCx cache left **warm**, now including this module's
+degree-2 validation forms.
+
+## 2026-08-18T21:30Z — `POST-5` step 1, attempt 1 — **complete**
+
+**Item:** §9 On deck #2 (#1, `TH-12` step 2, was already done). Scalar-σ fix +
+the Poynting h-ladder discriminator, standard tier, `-n 2`, complex build.
+
+**Outcome: the step's anchor is met and the discriminator gave an unambiguous
+reading — SOURCE/ASSEMBLY, not resolution.** Nothing was loosened; the xfail
+keeps its 25% band and `strict=True`.
+
+**What was done.**
+
+1. *Defect 4 fixed* — `src/fem_em_solver/post/power_balance.py` wraps the
+   scalar σ branch in `fem.Constant(msh, dolfinx.default_scalar_type(σ))`.
+   `sigma=0.0` no longer folds to a domain-less UFL zero. The
+   `SIGMA_BLIND = 1e-12 * SIGMA` workaround in
+   `tests/solver/test_time_harmonic_smoke.py` is deleted; the control is a
+   real zero and its volume leg is asserted `== 0.0` exactly (not `isclose`).
+2. *`ds` orientation checked first*, as the step plan demanded — new
+   `test_smoke_fixture_boundary_measure_is_outward_oriented` assembles
+   `∮x·n̂dS` and `3|Ω|` with the same `dx`/`ds` pair the power balance uses:
+   **7.117591052e-03 m³ on both legs, ratio 1.000000000000** against a 1e-10
+   band. Candidate (c), a flipped outward measure, is excluded exactly.
+3. *The h-ladder* — new
+   `test_poynting_imbalance_h_ladder_discriminates_resolution_from_source`.
+
+**Measured** (`20260818T215101Z_POST-5-step1-ladder2.log`, `-n 2`, 5 s
+elapsed, 4.07 s of pytest — the ladder is a smoke-tier cost, not standard):
+
+| h | cells | dissipated [W] | net inward [W] | sign | imbalance | blind diss [W] |
+|---|---|---|---|---|---|---|
+| 0.030 | 1 405 | 1.199162e-06 | −2.008179e-07 | − | 116.7465% | 0.000000e+00 |
+| 0.020 | 2 590 | 1.154337e-06 | −1.778362e-07 | − | 115.4059% | 0.000000e+00 |
+| 0.015 | 4 661 | 1.479920e-06 | −2.134447e-07 | − | 114.4227% | 0.000000e+00 |
+
+Fitted rate in h (log–log least squares, three rungs) **0.0290** against the
+pre-registered ≥ 0.7; the flux sign **never corrects**. Both halves of the
+band fail ⇒ **SOURCE/ASSEMBLY**. 2.3 pp of movement across a 3.3× cell-count
+increase is not an O(h) artefact. The coarse rung reproduces the `OPS-17`
+record to every printed digit, which doubles as the negative control on the
+`fem.Constant` wrap.
+
+**Negative control, green:** `tests/validation/test_poynting_balance.py`
+**8 passed, 129 s** (`20260818T215117Z_POST-5-step1-negcontrol.log`); the
+refined-mesh 5% gate holds and `test_uniform_sigma_field_reproduces_the_
+scalar_path` still equates the scalar and DG0-field paths at `rtol=1e-12` —
+the digits-unmoved evidence.
+
+**Two windows burned, and the cause is worth carrying.** The orientation
+form `ufl.dot(x, n) * ufl.ds` written *without* a `metadata` quadrature
+degree sent FFCx into a compile that had not finished after **nine minutes**
+on this gmsh mesh. It killed `20260818T213256Z` (400 s, exit 124) and
+`20260818T214040Z` (570 s, exit 124), and each kill left the half-written
+`libffcx_forms_85c1a0ff….c` behind so the *next* run failed with
+`JIT compilation timed out, probably due to a failed previous compile`.
+Recovery is `rm /root/.cache/fenics/*<hash>*`; the real fix is
+`metadata={"quadrature_degree": 2}`, exact here since both legs are linear
+in x, after which the whole thing compiles and runs in 5 s. **Generalisable:
+pin the quadrature degree on any `SpatialCoordinate`-bearing facet integral
+on a gmsh mesh.** The first of the two windows was in any case a legitimate
+cold-cache compile window for the validation forms (the 10:30 review's note
+that validation forms were still cold).
+
+**Logs:** `20260818T213256Z_POST-5-step1-smoke.log` (exit 124, the JIT
+stall), `20260818T213953Z_POST-5-step1-smoke-warm.log` (exit 1, the poisoned
+cache entry; ladder passed inside it), `20260818T214040Z_POST-5-step1-ladder.log`
+(exit 124, second stall), `20260818T215101Z_POST-5-step1-ladder2.log`
+(exit 0, the reading), `20260818T215117Z_POST-5-step1-negcontrol.log`
+(exit 0, the negative control).
+
+**Container:** healthy throughout — no OOM, no wedge, no force-recreate. FFCx
+cache left **warm**, now including the smoke fixture's forms and the two
+orientation forms.
+
+**Hypothesis for the next attempt (`POST-5` step 2, scoped in §7):** the
+drive is the defect. The smoke fixture is driven by an axial current in the
+inner cylinder that terminates on the end caps, so `J·n ≠ 0` there — the same
+incompatibility `test_gauge_lagrange` measures on its wire fixture (`OPS-17`
+step-2 defect 2). Re-drive the same fixture with a **closed azimuthal loop**
+(`div J = 0`, `J·n = 0` everywhere on the boundary) and re-read the identity:
+if the imbalance collapses and the sign turns positive, it is the source; if
+it does not, the boundary leg's assembly is next, probed against the `TH-6`
+plane wave where both legs are known in closed form. The two defects sharing
+one cause would be a real economy — worth checking whether one fix closes
+both.
