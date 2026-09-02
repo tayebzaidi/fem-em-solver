@@ -16418,3 +16418,79 @@ executor returned with nothing in flight.
   as the next open item in order — the integral-form SAR identities off the
   primal field, independent of item 1 and running on the coarse 116 085-cell
   mesh, whose cell count this slot has just re-confirmed digit-exact.
+
+## 2026-09-02T21:45Z — `WF-6` step 3g — outcome: `complete` (16:30 implementer slot)
+
+- Preflight clean at `b68a1f0`, container Up 7 days, no `attempt/*` or
+  `recovered/*`. §9 On-deck items 1–3 were already struck done by the 12:00 /
+  13:30 / 15:00 slots, so **item 4 was the first open item** and was taken in
+  order — no fallback, no substitution. Delegated to the `implementer` agent,
+  spawned **foreground** with the harness/backgrounding rules restated in its
+  prompt; it returned with no window in flight. Every number below was
+  re-read from the log by this slot, not taken from the executor's report.
+- **Green on the first compute window, and the pre-registered clause is (a).**
+  `20260902T213441Z_WF-6-step3g.log` — **20 passed, 0 failed / Status 0 /
+  106 s** at `-n 2` complex with `tests/environment` first, standard tier
+  against the item's 100–125 s estimate (`:4830–4834`). A collect-only smoke
+  ran first, `20260902T213431Z_WF-6-step3g-collect.log`, 9 items, 4 s. New
+  module `tests/validation/test_birdcage_sar_integral.py` (436 lines);
+  **nothing under `src/`**.
+- **Anchor (i), asserted at rtol 1e-10 for all five drives — the partition
+  identity holds to every printed digit.** `Σ_j P_j^(k)` vs `P_phantom^(k)`
+  (`:4682–4687`): 5.637745667e-08 / 5.630901879e-08 / 5.646798644e-08 /
+  5.621308271e-08 W for k=0…3, and 3.796523707e-07 W for the step-2
+  quadrature drive — `sum` and `total` print identically in all five rows.
+  The gate-(i) drive's total reproduces **step 1's record 5.637745667e-08 W**
+  digit-for-digit, not merely inside `CG1_RECORD_RTOL` (the log names that
+  constant as 1e-03, `:4687`). Mesh is step 3's own: **116 085 cells**,
+  default resolution, `f = 1.000e+07 Hz`, degree 1, `quadrature_degree 4`,
+  `eps = 1e-09 m` (`:4678`); four solves at 6.54 / 5.81 / 5.87 / 5.96 s, no
+  mass solves, as priced.
+- **Anchor (ii), asserted ordering — the mis-paired 180° control is strictly
+  larger at every `k`, by two orders of magnitude.** 96.1655 / 97.4944 /
+  95.5869 % against the C4 means 1.0794 / 0.7449 / 0.6002 %, ratios
+  **89.088× / 130.890× / 159.272×** (`:4689–4691`). The item asked for an
+  ordering and no factor because nobody had measured this ceiling; the
+  factor is now measured and is nowhere near tight.
+- **The deliverable — twelve C4 pairs `|P_(j+1)^(k+1) − P_j^(k)| / P_j^(k)`,
+  printed not gated:** k=0→1 **0.7149 / 1.1908 / 1.4417 / 0.9703 %**, k=1→2
+  **1.5200 / 0.2132 / 0.3377 / 0.9086 %**, k=2→3 **1.0569 / 0.8355 / 0.2780 /
+  0.2302 %**; worst **1.5200 %**. Quadrature drive four-quadrant spread
+  **0.4641 %** (`:4692`). All twelve inside the imported, unmoved 5 % band ⇒
+  **verdict (a)**, printed as such by the test itself (`:4693`).
+- **What (a) means here, and the reading a review should check.** This is at
+  **fixed `h`** — step 3's own 116 085-cell mesh, the same four solves that
+  read 25.11–40.55 % through the pointwise primal route and 6.1–9.5 % through
+  the restricted CG1 estimator. The construction is the only thing that
+  changed, so 3g isolates the **construction** (a quadratic-in-`E` identity
+  read at sampled points inherits the fit's pointwise error) as the mechanism
+  steps 3–3f were hunting — not the code, not the projector (3b/3c), not the
+  estimator degree (3e′), and not the coarse mesh. **3f is not contradicted**:
+  it turned a different knob and its `h` finding stands; what 3g shows is that
+  the coarse mesh was never the binding constraint for an *integral*
+  statement. A review now has **two candidate constructions** for a first
+  coil-driven SAR gate — integral at 1.52 % on the coarse mesh (3g) vs
+  pointwise-restricted at 2.5–3.5 % on the fine one (3f) — and 3g is the
+  cheaper of the two by a whole mesh.
+- **Scope held exactly.** C4 only, no mirror identity, **no band or tolerance
+  moved, no gate registered**, no §2 claim; `WF-6` stays 🟡. The five step-3
+  primal SAR asserts stay red and untouched — 3g is a new module, so its
+  window exits 0 beside them, as the item intended. The known-issues step-3d
+  "Resolves with" row was journaled; **the entry stays OPEN**.
+- **Residual `main` reds unchanged at 11** (the 8 the review counts plus the
+  three `WF-6` step-3f `|B₁⁺|` names). No new red, no known-issues entry
+  opened this slot.
+- **Deviations: none.** One compute window plus one collect smoke, as scoped;
+  tier label declared from the footer (106 s = standard). No denials this
+  slot, no docker-socket denial (no example runner involved). Commit message
+  used the literal multi-line `-m` route.
+- Commit **`0ee5c18`** on `main` — module, both logs, test-results.md rows,
+  §7 `WF-6` row + step-3g blockquote annotation, known-issues row, and §9
+  On-deck item 4 struck done, all together. Tree clean after.
+- Next-attempt hypothesis: with items 1–4 done, the 19:30 slot takes **§9
+  item 5 (`PORT-13` step 1)** — the first solve on the 32-ring-port high-pass
+  layout, the queue's first heavy item (`-n 8`, `mesh:9`, 265 621 cells), so
+  it should cost-probe before committing to the full window. The review may
+  instead want to spend a slot on the choice 3g just created (integral vs
+  pointwise-restricted construction for the first coil-driven SAR gate) —
+  but that is a **review's** ruling, and no slot may register it.
