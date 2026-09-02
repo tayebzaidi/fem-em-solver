@@ -508,16 +508,19 @@ needs `-f docker/docker-compose.yml`.
 
 ---
 
+
+**Tier label for host-runner example legs (ruled 2026-09-02 weekly review).** An `EX-*` leg executed through `./run_examples.sh` is tiered by the per-window ceiling its §7 entry states, not by §5.1's 180 s pytest figure — write it as "standard (host-runner, ≤ 500 s window)"; a window past its stated ceiling is an overrun, a window past 180 s is not. Measured: `EX-30` 105 / 447 / 935 s, `EX-36` 141 / 228 / 182 s under the same label.
+
 ## 6. Phase map
 
 | Phase | Goal | Gating chunks | State |
 |---|---|---|---|
 | 0 | Infrastructure, packaging, CI, meshing | `OPS-1`, `OPS-2` | Done |
 | 1 | Magnetostatics + analytic validation | `MAG-1`…`MAG-6` | **Complete and trustworthy** |
-| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — every analytic gate closed (`TH-1`/`TH-6`/`TH-7`/`TH-8`/`TH-9` ✅); Larmor sphere `TH-10` ✅; coil trend `TH-11` ✅ closed on a measured negative (no 64 MHz h → 0 bracket fits the box, 2026-08-18); degree-2 `TH-12` steps 1–3 ✅, production order decided degree 1 for coil-fed solves (§10, 2026-08-23), `TH-13` discriminator open; `TH-2`/`TH-3` API hardening ⚠️ |
-| 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58% pinned / 1.5834% on the production projected drive, step 3; eddy-current regime); SAR gated on an **imposed** uniform field only (`MAT-4` steps 1+3: lossy-sphere closed form 3.5%, mass-averaging exact at 1 g/10 g) — coil-driven SAR and the C95.3 claim still open |
+| 2 | Time-harmonic Maxwell, complex materials, ABC/PML | `TH-1`…`TH-9` | In progress — every analytic gate closed (`TH-1`/`TH-6`/`TH-7`/`TH-8`/`TH-9` ✅); Larmor sphere `TH-10` ✅; coil trend `TH-11` ✅ closed on a measured negative (no 64 MHz h → 0 bracket fits the box, 2026-08-18); degree-2 `TH-12` ✅ (closed 2026-09-02 on the re-affirmed production-order clause: degree 1 coil-fed, degree 2 imposed-field), `TH-13` ✅ 2026-08-31 (the injector is the degree-1-only source projection; coil degree-2 identity reds stay open in known-issues); `TH-2`/`TH-3` API hardening ⚠️ |
+| 3 | Material models, phantoms, SAR | `MAT-1`…`MAT-6` | `MAT-2` ✅; `MAT-6` ✅ (ΔR to 1.58% pinned / 1.5834% on the production projected drive, step 3; eddy-current regime; **externally checked 2026-09-02 — `ANS-1` adjudicated AGREE against Maxwell 3D, numbers private**; step 11 promotes the 0.28% slab-refined fixture); SAR gated on an **imposed** uniform field only (`MAT-4` steps 1+3: lossy-sphere closed form 3.5%, mass-averaging exact at 1 g/10 g) — coil-driven SAR and the C95.3 claim still open |
 | 4 | Coil modeling, lumped elements, ports, S-params | `PORT-1`…`PORT-11` | `PORT-1` ✅ 2026-08-15 (field-derived S through the package, two-torus fixture only, two named systematics); `PORT-10` ✅ 08-16; **`PORT-9` ✅ 2026-08-25 at 10 MHz on the gapped 4-leg birdcage** — leg (d1′)'s geometric negative control passed on the power-wave route (displaced classes 6.2219 / 7.1142 / 2.8474% vs the tightened (iii′) 0.5%, reciprocity 2.259e-14 vs 1e-3, 2.466e+11× from the pre-fix 5.57e-03), no Larmor/resonance/tuning claim; history: steps 1–2c ✅ on the two-torus (lumped-sheet BC, 1.8333% cross-route, reciprocity 2.6e-11), step 3 on the gapped birdcage has two gated legs (c)/(d0) at 10 MHz (C4 spread 0.0152–0.0159% vs 5%, 50 Ω termination separates the classes 598× — re-recorded image-tagged on the 0.11 image 2026-08-24 by leg (d3c): 0.0359%, 253.2002×) and **leg (d) closed 2026-08-23 — the 4×4 passes all three gates** (reciprocity 2.495292352e-05 vs 1e-3, σ_max 0.862659137 ≤ 1, class spreads 0.0199 / 0.0180 / 0.0108% vs 5%, gate (iii) since tightened to 0.5%); leg (d1)'s geometric control ran 2026-08-23 and **found the route loses reciprocity (5.57e-03 vs 1e-3) once the fixture is asymmetric**; leg (d2) (asymmetric two-torus, 13:30 slot) traced it to the assembly — the readout *is* the source's adjoint (1.33e-10), the asymmetry is the terminated-`Z` per-column normalisation — and the 18:00 review ruled the power-wave S fix (leg (d3)) with the class re-record (d3b), (d1′) serial on (d3b); **`PORT-11` ✅ 2026-08-26 — the same three gates at 64 and 128 MHz on the same fixture** (64: 2.581325834e-14 / σ_max 0.999721388 / spreads 0.0573 / 0.0599 / 0.0370%; 128: 7.030990825e-15 / 0.998974779 / 0.1012 / 0.0916 / 0.0654%, cells/λ 12.5024 ≥ 10 enforced; audited COMPLIANT 18:00 review) — self-consistency identities only, no absolute-accuracy/resonance/tuning claim; `PORT-4`…`PORT-8` open |
-| 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 for excitation; both meshes (coil+phantom, birdcage) generate and are identity-gated in CI (`GEO-9`, 2026-08-03); the birdcage fixture is loaded (phantom inside) and since `GEO-18` ✅ 2026-08-22 has terminals and port sheets — the first B1+ chunk is **`WF-6` step 1, scoped 2026-08-29 10:30 review** (§10 subgoal 4; 10 MHz on the loaded F-small birdcage) |
+| 5 | Full MRI system: loaded birdcage, B1+, SAR maps | `WF-5`…`WF-8` | Blocked on Phases 2–4 for excitation; both meshes (coil+phantom, birdcage) generate and are identity-gated in CI (`GEO-9`, 2026-08-03); the birdcage fixture is loaded (phantom inside) and since `GEO-18` ✅ 2026-08-22 has terminals and port sheets — **`WF-6` steps 1–2b ✅ (2026-08-30/31): `\|B₁⁺\|` maps on the loaded F-small birdcage symmetry-gated at CG1 at 10, 64 and 128 MHz, in ParaView (`EX-38`/`39`/`40`), no homogeneity/absolute/tuning claim; coil-driven SAR is measured, not gated — steps 3–3e: the packaged phantom-restricted `E` estimator is honest (best-approximation and power anchors) and the five SAR identities still miss 5% at 6–9.5%, verdict (c), the ~1 cm phantom cells; step 3f (finer phantom rung, cheap) is the gate's next chance** |
 | 6 | Birdcage tuning at 64/128 MHz: mode spectrum, lumped capacitors, circuit co-simulation (the HFSS + Circuit split); production target: **32-port high-pass birdcage at 1.5 T** (§10 operator directive 2026-08-17); **fixture scale re-directed 2026-08-25 — two fixtures, F-small (today's 0.07 m gate fixture, records frozen) and F-human (≈ 0.15 m radius / 0.30 m long high-pass, the deliverable fixture); the `N ≤ 25` ceiling was arithmetic on the wrong radius and dissolves at human scale. Full directive in §10 Phase 6 — the 2026-08-30 weekly review must dispose of it, cost probe first** | subgoals owned by the weekly review (§10); mesh prerequisites `GEO-19` (16 legs, cost rung) + `GEO-20` (ring-gap ports) scoped 2026-08-23 | Not started — mesh prerequisites may run any time (CAD-identity gates); physics subgoals wait on `PORT-9`/`PORT-11` |
 | 7 | Implants: parametric implant geometry in the phantom, local SAR / near-implant hot spots | subgoals owned by the weekly review (§10) | Not started |
 | 8 | Thermal: Pennes bioheat driven by SAR | subgoals owned by the weekly review (§10) | Not started |
@@ -7577,6 +7580,104 @@ unachievable at ~1e-10 run-to-run noise; that ruling is the daily review's
 to re-make, and this review notes only that the upgrade is the week's
 largest non-physics sink.
 
+**Pace ledger, interval 2026-08-30 10:31 → 09-02 02:42 (2.68 days;
+measured 2026-09-02 by the Wednesday weekly review, run interactively
+after the scheduled 02:15 slot died on an expired CLI login; sources: 62
+commits `dc1af52..1939a63`, 34 attempts.md entries, +90 rows in
+test-results.md). The 08-30 weekly's own §10 pass was lost with its
+session (only its §7/known-issues/dashboard output was recovered,
+`dc1af52`), so this ledger also stands in for it.** **26 items reached
+§4-✅** (10 chunk closures — `PORT-12`, `ANS-4`, `EX-37`, `TH-13`, `ANS-5`,
+`EX-38`, `EX-39`, `EX-40`, `EX-36`, `OPS-30` — + 16 further gated steps),
+i.e. **9.7 items/day ≈ 68/week-equivalent** against the last measured
+week's 39; the interval is short and the mix is light (examples and
+re-runs), so read the rate as an upper bound, not a trend. Attribution:
+**subgoal 4 (B1+/SAR) 11** — `WF-6` steps 1d/2/2b/3/3b/3c/3d/3e (four of
+them measured negatives on the SAR side) + `EX-38`/`39`/`40`; element-order
+lineage (`TH-13` steps 1′/2/3a/3a‴/4) **5**; ports/benchmarks (`PORT-12`,
+`ANS-4`, `ANS-5`) **3** + the `ANS-1` AED half (operator); examples/infra
+(`EX-36` ×4 legs, `EX-37`, `OPS-30`) **7**. Physics share 16/26 = 62%.
+Slot ledger: 32 implementer slots scheduled, **30 fired**, 2 drained by
+design (09-01 15:00/16:30, a queue the daily review honestly left two
+short), **2 died on the expired login** (09-01 22:30, 09-02 00:00); of 8
+scheduled daily reviews 6 fired normally, 1 died on the CLI-version pin
+(09-01 18:00, re-run interactively) and today's 03:00 is pending; the
+weekly died on the login. **Governing-half losses again, and again
+launcher-side, not limits**: zero reviews died on usage limits this
+interval (the 2-of-3 baseline the agent-value clause was written against
+is gone), three sessions died on credentials/version — the class no
+in-repo mitigation reaches, and the dashboard is the only alarm.
+
+**Agent value, first measurement (weekly-review.md's 09-01 clause).**
+(a) Auditor: 6 audits of newly-✅ chunks since 08-31 (`EX-38`, `EX-39`,
+`EX-40`, `EX-36`, plus two legs), **0 demotions, 0 disagreements with the
+reviewer's own digit trace** — a catch rate of 0 on a sample where the
+reviewer also found nothing; not yet informative, keep. (b) Pathologist:
+1 ruling (09-01 03:00 review), six claims, **5 CONFIRMED / 1 OVERRULED /
+0 UNCOUNTABLE** — the overrule corrected a wrong kill-time reading before
+it entered a status; earning its keep. (c) Review completion: 0 of 8
+reviews died on limits (baseline 2 of 3) — the mitigation was the 02:00
+reset alignment, not the agents, but the agents did not make it worse.
+(d) Navigator: 3 sweeps this review (queue refill 09-01 18:00; anchors and
+archive candidates 09-02), **0 citation errors** on the ~40 citations the
+reviewer re-opened; one NOT FOUND was correct (the "ANS-3/ANS-4 scatter
+question" was a review-preamble coinage for `EX-37`'s measured 1e-8–5e-8
+run-to-run Z/S scatter, ruled below). (e) Example-runner: 4 delegated
+legs, 4 footered, 4 audited PASS, against an implementer baseline of one
+orphaned footerless window (09-01 00:00, pre-rule). **Verdict: all six
+stay at their tiers**; `implementer.md` lacks a "Last verified against"
+footer (flagged); the other footers are dated 08-31.
+
+**Rulings owed to this review (the 10:30 and 18:00 daily reviews' carry
+list), each now in §7:** `GEO-25` and `PORT-13` re-scoped with anchors,
+stop rules and prices (the lost 08-30 text re-written); `TH-13` step 3b
+**not scoped** — the `TH-12` production-order clause is re-affirmed with
+`TH-13` in hand and `TH-12` closes ✅, the coil degree-2 reds staying open
+in known-issues as the reopening condition; `WF-6`'s finer-*mesh* rung
+scoped as **step 3f** (costed cheap: the phantom is hundreds of cells, not
+`TH-11`'s millions), its absolute-convergence rung deferred behind 3f, a
+`MAG-20` third rung killed (epitaph); `ANS-2` **not commissioned** —
+subgoals 2–3 are closed but the B1+ maps are symmetry-gated only, and two
+cases already sit in the operator's single AED queue, so the trigger is
+"when `ANS-4`'s AED half lands"; the `EX-37` scatter question ruled: the
+`ANS-3`/`ANS-4` reproduction *controls* re-register at 1e-6 against the
+measured ≤ 5e-8 run-to-run scatter (a record-class change under the (1*)
+licence, 20× margin; no physics band moves); the `example-runner` tier
+vocabulary ruled (§5.4): host-runner example legs are tiered by their
+stated per-window ceiling, and "standard (host-runner, ≤ 500 s window)"
+is the label. **F-human disposition (owed since 08-30):** (1) the cost
+probe is `GEO-25` as re-scoped, blocking any Phase-6 date; (2) F-human is
+a parameter set on `birdcage_port_domain`, not a constructor; (3) the C16
+terminal-equality question was settled by `GEO-19` step C (the ratio gate
+[0.95, 1.0] is the C_N gate; the 1e-5 equality band was C4-only) and
+F-human inherits the ratio gate; (4) sequencing held — subgoal 4 ran on
+F-small as directed and was not blocked. **Private-data rule (operator
+directive 2026-09-02):** AED numbers never enter a tracked file; the
+weekly's numeric adjudications live in gitignored `docs/private/`.
+
+**Phase-5 exit assessment, 2026-09-02 (the arithmetic):** subgoals 1–3
+closed; subgoal 4 has its B1+ half **done to the honest bar** (symmetry
+identities at all three frequencies, pictures in ParaView, no homogeneity
+claim — and the Target box's "matches literature qualitatively" has no
+named literature value yet, which is the missing anchor) and its SAR
+half **measured, not gated** — four negative steps in three days located
+the estimator floor, exonerated the projector, built an honest restricted
+estimator, and left a 6–9.5% residual attributed to phantom resolution.
+Remaining at the landed grain: step 3e′ (queued) + step 3f (scoped) +
+one gate registration ≈ **3–4 items** for SAR, and **one item** to name
+the B1+ literature anchor (a review's, not an implementer's). At the
+measured 9.7 items/day that is < 1 day of fired slots; at the last
+measured *week's* 39/week it is < 1 week. **Exit ≈ 2026-09-05…09 on
+F-small** — the front of the 08-23 window (09-08…15), the first time the
+estimate has moved earlier, and it moved earlier because the SAR route
+turned out to be cheap once the estimator was understood. Two honest
+caveats: a step-3f verdict (b)/(c) sends the SAR gate back to a review
+with no date; and "Phase 5 exit" here means the *F-small* deliverable —
+the human-scale maps are Phase 6's, dated only after `GEO-25` prices
+them. The number honest people watch: **if step 3f has not printed by the
+2026-09-06 weekly, or printed (b)/(c), the SAR gate is not "one rung
+away" and that review re-plans it rather than extends.**
+
 **Phase 5 — loaded birdcage RF (current).** Subgoals, each with its
 validation target:
 
@@ -7722,6 +7823,27 @@ validation target:
    on `MAT-4` stands for 08-30; the fix is the B1+/SAR chunk, not an
    extension. Arithmetic: ≈ 6–8 steps at the landed grain, unmeasured
    pace for this work type ⇒ no date until the first step lands.
+   **Assessment 2026-09-02 (covering the lost 08-30 pass):** **11 items
+   in 2.7 days** — the subgoal went from "no chunk" to the most active
+   front. B1+: `WF-6` steps 1/1b/1c/1d/2/2b ✅ — `|B₁⁺|` C4-covariant at
+   the CG1 floor (~2%) at 10/64/128 MHz, quadrature drive by exact
+   superposition, the co/counter-rotating mirror identity, first ungated
+   CV (2.8–3.0%) and purity figures, three examples. SAR: steps 3/3b/3c/
+   3d/3e — the point-`E` estimator misses the same identities by 25–40%,
+   the global CG1 projection is a fit of the sheet edges (1876% phantom
+   residual), the phantom-restricted projection is honest (18.7%, power
+   to −3.5%) and packaged as `post.project_to_cg1_restricted`, and the
+   identities still miss at 6–9.5%. **The subgoal's two named targets
+   re-read:** the `MAT-4` C95.3 SAR claim now has a concrete route (step
+   3f → gate registration → `MAT-4` step 2 on the restricted estimator);
+   the B1+ "published birdcage homogeneity behaviour" target still names
+   **no literature value** — writing that anchor (a specific paper's CV or
+   profile for a loaded 4-leg low-pass birdcage at this fill factor) is
+   the subgoal's one non-implementer item and is assigned to the
+   2026-09-06 weekly. `MAT-4`'s one-month stall rule: it last moved
+   08-07 and would trip on 09-07; the fix is step 3f landing the gate its
+   step 2 needs, not an extension — if 3f prints (a), the daily review
+   queues `MAT-4` step 2 the same day.
 
 **Phase-5 exit assessment, 2026-08-09 (the arithmetic on record):** ports
 ≈ 1.7 wk (subgoal 2) + Larmor gates ≈ 1.5–2 wk (subgoal 3, partly
@@ -7939,6 +8061,10 @@ the easiest phase; the risk is validation data and the EM–thermal
 interface, not the solver. No dated estimate, same rule.
 
 **Epitaphs.**
+- *2026-09-02 — a `MAG-20` third h-rung, killed.* `MAG-20` closed with a
+  fitted rate inside its band on two-and-a-half rungs; a third rung would
+  sharpen a Phase-1 number that gates nothing on the mission's path this
+  quarter. Revive only if a Phase-5/6 magnetostatic control needs it.
 - *2026-08-23 — Phase 5 subgoal 3, second target: "the coil-loading trend
   vs frequency crossing out of the eddy-current regime", killed.* Eight
   gated items and two weeks showed the three-point trend was the
@@ -7999,6 +8125,25 @@ question, and two cases already wait on the operator's single AED queue.
 The next commission is the birdcage 4-port Z at 10 MHz (`ANS-4`) the week
 `PORT-9` leg (d) gates, and its 64 MHz sibling when `PORT-11` does;
 `ANS-2` stays reserved for subgoal 4.
+**Ramp check 2026-09-02 (weekly review; the 08-30 check was lost with
+its session): 34 runnable examples (+7 since 08-23), every phase at or
+above its ramp, no shortfall; census `dead=0 guide=0 stale=0 exit=0` at
+09-01 17:12Z — the first clean corpus-wide census since the 08-28
+rename.** Per phase, gating ✅ / quota / examples: Phase 1 **6 / 5 / 5**;
+Phase 2 **6 / 5 / 8** (`TH-13`, `TH-12` closed; +3 headroom); Phase 3
+**2 / 2 / 2** (no headroom for the third check running — `MAT-6` step 11
+and any `MAT-4` gate owe an example the day they land); Phase 4 **5 / 5 /
+5** (`PORT-9`/`10`/`11`/`12` + `PORT-1`; `ports:1`–`5`, exactly met, no
+headroom); Phase 5 **0 / 0 / 3** (`ports:6`–`8` are the ungated-but-
+identity-checked B1+ pictures, counted as headroom against the first
+`WF-6` ✅); mesh group 9. Every example has a footered green run inside
+the interval except `mesh:6`/`mesh:7` (newest run is the orphaned
+footerless 09-01 window; last footer 08-25) — **`EX-41`** opened.
+**Benchmarks:** `ANS-1` gained AED numbers and is **adjudicated AGREE**
+(§7; numbers private); `ANS-3`/`ANS-4` still wait on the operator's AED
+queue, low-order pair only; `OPS-32` ports the private-mode writer to
+both before either gains numbers; **no new case commissioned** (`ANS-2`'s
+trigger stated above).
 
 **Ratification, 2026-08-16.** The `PORT-9`/`PORT-10` scoping, `ANS-3`
 commissioning, plan prune, and attempts archival annotated "*weekly
