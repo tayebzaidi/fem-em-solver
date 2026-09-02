@@ -15940,3 +15940,80 @@ executor returned with nothing in flight.
   census gate to ignore age-only staleness, or queue a cheap
   `ports:4`/`ports:5`/`ans:4` refresh, because otherwise every future item
   carrying "census stays at zero" as an anchor inherits a failure it cannot fix.
+
+## 2026-09-02T11:15Z — `WF-6` step 3e′ — outcome: `complete` (06:00 implementer slot)
+
+- **Preflight clean.** Tree clean at `590ddf3` on `main`, container Up 6 days, no
+  `attempt/*`, no `recovered/*`. §9 item 2 taken as written (item 1 `OPS-31` was
+  marked ✅ DONE by the 04:30 slot); no fallback, no substitution.
+- **Delegated to `implementer`** (one executor, foreground, per protocol step 3),
+  which landed **`82ba0b7`**. This slot re-verified every load-bearing number
+  against the logs and the diff itself; **the report and the logs agree** on all
+  of them. Tree clean after.
+- **Anchors (i)–(vi), all asserted and all green on the first run**, re-traced
+  from `20260902T111000Z_WF-6-step3e-prime-verdict.log:4882–4904`:
+  (i) `‖P²_Ω E − E‖_Ω/‖E‖_Ω` **14.4724%** ≤ the imported CG1 18.7238% (the
+  degree-monotonicity theorem); (ii) `x² ê_x` **1.505524e-12** ≤ 1e-10 against
+  **6.659346e-02** for the *same source at degree 1* — a **10.6-decade** flip
+  where nine were pre-registered; (iii) `a + b × x` 1.363313e-12; (iv) pinned max
+  `|value|` exactly **0.000e+00** over owned + ghost at `-n 2`, with 1 004 free of
+  160 537 owned CG2 blocks / 481 611 dofs reported (CG1: 170 / 21 397 / 64 191);
+  (v) six CG2 solves `converged_reason` **2** in 39–48 its; (vi) every step-3d/3e
+  CG1 record reproduced unmoved in the same window at `CG1_RECORD_RTOL`.
+- **Printed verdict — (γ), and it is the deliverable.** The five identities read
+  **19.3491 / 17.2097 / 16.0699 / 14.4087 / 11.3230%** against CG1's
+  8.2868 / 9.4743 / 7.3477 / 6.8146 / 6.1185% — **worse by +5.2 to +11.1 pp**, so
+  the pre-registered arithmetic selects (γ). CG2 restricted phantom power
+  **5.519662942e-08 W**, −2.0945% from the primal record (CG1 read −3.51%), i.e.
+  the power *improved*. Controls both survive as asserted: **123.2927%** (CG1
+  123.6255%) and **327.6543%** (CG1 333.0778%).
+- ⚠️ **Flag 1 for the review — (γ)'s pre-registered *cause* is excluded by the
+  same run, so the clause and the reading diverge.** (γ) reads "the CG2
+  restriction is mis-assembled and anchors (i)/(ii) should have caught it." They
+  did not fire because there is nothing to catch: the degree-2 fit is strictly
+  better in the norm it minimises, reproduces both fields it contains to ~1e-12,
+  pins exactly, and improves the power. What is measured is that **a globally
+  better L² fit of `E` is pointwise worse for these C4 identities at these 51
+  points** — the CG1 fit's extra smoothing was flattering them. Projector (3b/3c)
+  *and* estimator degree (3e′) are now both excluded as the mechanism; verdict
+  (c)'s attribution to mesh `h` is neither confirmed nor refuted. The executor
+  added a *conditional printed line* carrying this caveat above the clause (no
+  assertion, no verdict function, no band touched) and wrote the candidates into
+  the known-issues step-3d row. **Adjudicating the identity-from-a-fitted-field
+  construction is a review's call, not a slot's** — and step 3f must now be read
+  knowing a better estimator can *raise* these numbers.
+- ⚠️ **Flag 2 — one deliberate deviation from the item, journaled in the code.**
+  The item said "the same two controls". The CG1 column interpolated its controls
+  onto the solve's `N1curl₁` space first, and the N1curl interpolant of `x² ê_x`
+  is **not** in `CG2³` — projecting it would have measured interpolation error
+  and failed anchor (ii) for a non-defect reason. The CG2 column therefore carries
+  both controls exactly on a `CG3³` source space and runs the *same* source at
+  degree 1 as well (one extra cheap solve, asserted > 1e-4), so the flip is
+  between two readings of **one** field rather than across two recipes. This slot
+  judges the deviation to *strengthen* anchor (ii) rather than weaken it — the
+  nine-decade separation became a same-source 10.6-decade one — but it is a
+  departure from the scoped text and the review owns the ruling.
+- **Cost:** standard tier, complex, `-n 2`, `timeout -k 30 600`, foreground.
+  `20260902T110503Z_WF-6-step3e-prime.log` **`5 failed, 82 passed` / Status 1 /
+  125 s** (with `tests/environment`); `…T111000Z_…-verdict.log` 121 s;
+  `…T110734Z_…-table.log` 99 s; `…T110451Z_…-collect.log` 5 s. The item predicted
+  ≈ 250–400 s and budgeted 600 s; **the measured window was 125 s** — CG2 was
+  7.50× the CG1 dofs at ~2× the iterations, and the restricted mass matrix is
+  identity outside 537 cells. The cost-wall fallback was never needed. Note the
+  125 s sits inside the 180 s standard ceiling, so **no tier-honesty flag here**
+  (unlike the 04:30 slot's).
+- **Scope held.** Nothing closed, `WF-6` stays 🟡, no band or tolerance moved, no
+  SAR gate registered, the five primal asserts stay red to the digit and the
+  module still exits 1. `src/` change is additive and default-preserving (a
+  keyword-only `degree: int = 1`); the test-module diff is pure addition (13 new
+  items, zero deletions — verified by this slot with `git show`).
+- **This slot's own commit:** the executor's commit did not mark §9 item 2 done,
+  which protocol step 4 requires; this slot marks it ✅ DONE alongside this entry.
+- **No denials this slot.** Commit messages used the literal multi-line `-m`
+  route.
+- Next-attempt hypothesis: **§9 item 3 (`MAT-8`)** is the 07:30 slot's — smoke,
+  `-n 1`, real mode, independent of everything above. Note for the review that
+  **item 7 is now unblocked on its item-2 half** (item 4 is still outstanding, so
+  item 7 remains skippable), and that Flag 1 above may change what step 3f is
+  *for*: with both the projector and the estimator degree excluded, a finer-mesh
+  rung is no longer the only live candidate — the construction itself is.

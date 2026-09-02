@@ -7294,7 +7294,8 @@ denied; write it relative.
    **Negative result:** a rung not reproducing at 1e-4 is a **fixture
    finding** — known-issues entry, no prose re-recorded, stop.
 
-2. **`WF-6` step 3e′ — the estimator-degree rung: the same five SAR
+2. **`WF-6` step 3e′ ✅ DONE 2026-09-02 (06:00 slot, `82ba0b7`) — the
+   estimator-degree rung: the same five SAR
    identities off a **CG2**-restricted `E`** (standard, complex, `-n 2`,
    `main`; independent of every other item; scoped by the 18:00 review —
    see the §7 step 3e′ bullet. **Step 3e landed at `e949dfa`:** import
