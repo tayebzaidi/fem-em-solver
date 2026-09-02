@@ -215,6 +215,7 @@ corrupting three other fixtures.
 
 ## Constraints
 
+- AED benchmark numbers are private (CLAUDE.md hard rules): read the gitignored `aed_results/` / `COMPARISON_private.md` / `docs/private/` files if you need context, but never copy a number from them into a tracked file, a journal entry or a commit message.
 - Never loosen a test bound or a done-when to make history look better.
 - known-issues.md discipline applies: failures observed but not fixed get an
   entry; entries leave only with the commit that fixes them.

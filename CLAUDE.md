@@ -79,6 +79,12 @@ that solves in the frequency domain needs the complex DolfinX build
   rank-local — reduce before asserting. Point evaluation goes through
   `post.evaluation.evaluate_vector_field_parallel`, never
   `f.eval(points, np.arange(n))`.
+- **Ansys (AED) benchmark numbers are private and never enter a tracked
+  file** — licence terms restrict disclosure. They live only in the gitignored
+  `examples/ansys_benchmarks/*/aed_results/`, `*/COMPARISON_private.md` and
+  `docs/private/`; quote none of them (R/X/ΔZ, tet counts, passes, energy
+  errors, timings) in plan annotations, journals or commit messages — the
+  qualitative verdict (agree / disagree / inconclusive) is all that goes public.
 - Commit code, tests, harness logs, and PROJECT_PLAN/known-issues updates
   together.
 - The project permission allowlist (.claude/settings.json) funnels all compute

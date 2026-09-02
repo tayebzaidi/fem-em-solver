@@ -195,3 +195,5 @@ answer prompts — a denied tool call is simply denied. Consequences:
 - If a genuinely needed command is denied, do not fight it: document the
   denial in your attempts.md entry so the daily review can propose an
   allowlist change to the human.
+
+- AED benchmark numbers are private (CLAUDE.md hard rules): read the gitignored `aed_results/` / `COMPARISON_private.md` / `docs/private/` files if you need context, but never copy a number from them into a tracked file, a journal entry or a commit message.
