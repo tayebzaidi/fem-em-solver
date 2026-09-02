@@ -184,11 +184,14 @@ answer prompts — a denied tool call is simply denied. Consequences:
   review — do not background it.
 - Read files with the Read/Grep/Glob tools, not `cat`/`sed`/`head` — the
   generic readers are not allowlisted, deliberately.
-- Multi-line commit messages: write the message to a file with the Write
-  tool and use `git commit -F <file>` (then delete the file via the same
-  commit's `git add` scope or leave it untracked in the scratch area).
-  Command substitution like `git commit -m "$(cat ...)"` is treated as
-  injection by the permission layer and will be denied.
+- Multi-line commit messages: use a **literal multi-line `-m` string**
+  (a quoted argument containing newlines). The older `git commit -F <file>`
+  route does not work in scheduled sessions — the 2026-09-01 19:30 slot found
+  `Write` denied for both `$TMPDIR` and `.git/`, so there is no writable
+  target for the message file (corrected by the 2026-09-02 03:00 review;
+  `CLAUDE.md`'s `-F` advice is for interactive sessions, where Write is
+  available). Command substitution like `git commit -m "$(cat ...)"` is
+  treated as injection by the permission layer and will be denied.
 - If a genuinely needed command is denied, do not fight it: document the
   denial in your attempts.md entry so the daily review can propose an
   allowlist change to the human.

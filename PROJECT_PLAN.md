@@ -592,7 +592,7 @@ re-deriving a closed step's diagnosis. (The older per-chunk log,
 | `OPS-27` | **Re-record the 0.7.2-era exact records the `OPS-18` re-record did not reach, version-tagged on the `GEO-16` precedent, and sweep for siblings** — two reds on `main` filed by the `OPS-26` census: `test_geometry_floor_discriminator.py` `RECORD_128_RELL2` = 0.01826 vs `OPS-18`'s 1.7686% (leg (c) finding 19) and `test_coil_loading_larmor_mesh_cache.py` `NCELLS_THIRD` = 2 807 309 vs 0.11's 2 808 204 (leg (d) finding 23, +0.032% mesher drift); `GEO-16`'s 79 534 → 79 070 was the first of the class. No band introduced; a `grep -rn '0\.7\.2' tests/` sweep (11 files) tabulated for a third site. Commissioned 2026-08-27 10:30 review. *Re-scoped 2026-08-27 18:00 review from the finished census: the class is **ten names / eight modules / five meshes** plus the relative-L2 pair, every 0.11 value already measured in a census log — split into **step 1** (cheap half: geomfloor, the 138 619 family, `mesh_cache`; ≈ 570 s) and **step 2** (expensive half: the 417 914 family, `combined_knobs`, `wire_resolution`; ≈ 1 440 s), independent; `box_truncation`'s suspected sixth mesh pending on a cheaper fixture. Rubrics: §9 items 1 and 2.* ***Step 1 ✅ 2026-08-27 (19:30 slot)** — the cheap half landed exactly as ruled: `RECORD_128_RELL2` 0.01826 → **0.017686** / `RECORD_128_SEPARATION` 57.31 → **59.16**, `NCELLS_BASELINE` 138_619 → **138_490**, `NCELLS_THIRD` 2_807_309 → **2_808_204**, every one an exact equality version-tagged with its 0.7.2 digit and its census log in-comment (`GEO-16` precedent), **no band anywhere and `git diff -- src/` empty**. All four anchors green from `main` in four foreground windows, 604 s total: geomfloor `12 passed / 46.45 s` (Status 0, 49 s, `-n 2` complex), richardson `FREQ_MHZ=10,30` **`25 passed` / 147.00 s** where the census read `2 failed, 23 passed` (Status 0, 149 s), probe + 30 MHz **`23 passed` / 149.09 s** where the census read `2 failed, 21 passed` (Status 0, 150 s), `mesh_cache` **real** `12 passed, 4 skipped / 254.75 s` where the census read `1 failed, 11 passed, 4 skipped` (Status 0, 256 s). Collected counts identical to the census runs (25 / 23 / 16), so exactly the six stale-record names flipped and no other name's status moved. **Finding 38 — the 138 619 family is ONE constant, not four:** `richardson_ladder`, `transition_30mhz` (and `degree2`) all *import* `test_coil_loading_larmor_probe.NCELLS_BASELINE`, so finding 30's "the unit of repair is the mesh, not the file" holds in its strongest form — one edit retired four reds, and a per-file sweep would have found nothing to edit in two of the three modules. **Finding 39 — the `0.7.2` completeness grep is confirmed empty:** `grep -rn '0\.7\.2' tests/` returns 26 hits over 11 files and **none** is one of this chunk's sites; every hit is either an already-swept record carrying both digits or prose. The demotion to a completeness check was right. **Finding 40 (scope note for step 2 / the review):** the value greps surface **prose** copies of these meshes in modules outside either step's scope — `138 619` in `test_coil_loading_degree2.py` (×5), `test_degree2_energy_mechanism.py`, `test_dodd_deeds_impedance.py` (×2), `test_dodd_deeds_projected_drive.py`, `test_dodd_deeds_reactance_box_size.py`, `test_dodd_deeds_reactance_box_truncation.py` (×3), `test_dodd_deeds_reactance_combined_knobs.py` (×3), `test_dodd_deeds_reactance_wire_resolution.py` (×3), `test_dodd_deeds_resistance_slab_resolution.py` — and `417 914` in `richardson_ladder` (×3). None is asserted (the `_dodd_deeds_` ones are growth-ratio *denominators* printed for scale, not records), so none was edited under this step's "five names, five files" scope; they are stale documentation and want a single prose sweep after step 2 lands, not an in-scope edit here.* ***Step 2 ✅ 2026-08-27 (21:00 slot) ⇒ chunk ✅** — the expensive half landed as ruled: `NCELLS_FINE` 417_914 → **418_888** (`slab_resolution`, `larmor_resolution`), `NCELLS_COMBINED` 697_401 → **697_926** (`combined_knobs`), and the `:268` literal 366_207 → **365_970** (`wire_resolution`); exact equalities, version-tagged, no band, `git diff -- src/` empty. Three anchors green from `main`, **1 523 s**, all Status 0: slab `-n 2` **16 passed / 479.37 s** (census `1 failed, 15 passed`), knobs `-n 8` **15 passed / 577.00 s** (census `1 failed, 14 passed`), wire-projected `-n 2` by node id **4 passed / 459.44 s** (census `1 failed, 3 passed`); collected counts identical (16 / 15 / 4). **Finding 41:** `third_rung:443` holds no constant — it imports `NCELLS_FINE` from `larmor_resolution`, so the rubric's five edits are **four**, and step 1's finding 38 (import aliases, not per-file records) repeats on a second family. **Finding 42:** `combined_knobs` reproduced inside its finding-32-widened 660 s window at 577.00 s (+1.5% on its census reading); all three anchors came in **above** their census elapsed (+11.5% / +1.5% / +5.8%), so the ≥ 1.5× rule stays a sizing rule. **Finding 43:** the negative control is name-and-status level only — an all-green run captures the prints the census log showed via failure capture. `larmor_resolution` and `third_rung` are edited but not re-run (same mesh value the slab run measured; `third_rung` is warm-cache-only 304 s at `-n 8`, finding 25) — their known-issues line is re-headed 🟡 "re-recorded, re-run owed to the next census". Retired: the leg (f) entry in full, the leg (g) `wire_resolution` entry. `box_truncation`'s suspected sixth mesh stays pending, fixture not opened.* ***Step 3 ✅ 2026-08-28 (16:30 slot) — the owed tail is closed.** Both re-runs green from `main` in two foreground windows, **719 s**, both Status 0 with identical rank streams: `test_coil_loading_larmor_resolution.py` `-n 2` complex **`17 passed` / 424.32 s** (`20260828T213049Z_OPS-27-step3-larmor-resolution.log`, 426 s) where the census read `1 failed, 16 passed`; `test_coil_loading_larmor_third_rung.py` `-n 8` complex `TH11_STEP5_RUNG=fine` **`18 passed` / 291.03 s** (`20260828T213807Z_OPS-27-step3-thirdrung.log`, 293 s) where the destubbed census read `1 failed, 17 passed`. **Collected counts identical to the census runs (17 / 18)**, so exactly the two stale-record names flipped and no other name's status moved — the `NCELLS_FINE == 418_888` equality and its imported alias (finding 41) are both executed green now, and both known-issues entries are RETIRED. **Finding 44 — the cold price feared for `third_rung` does not exist on the record.** Finding 25 inferred a "≥ 500 s cold" from a 300 s kill and a 304 s warm footer, and the rubric sized a 900 s window for it; the module returned at **291 s, below the warm figure**, with `larmor_resolution` having run first as ruled. So this slot again measured a *warm-fixture* price and the cold price is still unmeasured — the ≥ 500 s number should not be carried forward as if it were a measurement. **Finding 45 — the finding-40 prose sweep is not a mechanical substitution; three quarters of the copies must keep the 0.7.2 digit.** Of the 33 spaced-form `138 619` / `417 914` copies `tests/` carried at `ac7f03f`, **19 were re-recorded** (each written as the 0.11 value with the 0.7.2 digit kept in the same comment, so the *old* digit's count does not fall) across seven modules — `richardson_ladder` ×3, `larmor_resolution` ×5, `third_rung` ×2, `degree2` ×5, `dodd_deeds_impedance` ×2, `projected_drive`, `slab_resolution`; `grep -rno '138 490\|418 888' tests/` goes **14 → 33**, i.e. exactly 19 new sites — and the rest were deliberately left, in three kinds: (a) **dated result blocks** that narrate a 0.7.2 run (`slab_resolution` and `wire_resolution`'s log-cited ladder tables, `degree2`'s two `20260818T…` probe/calibration comments, `degree2_energy_mechanism`'s "`TH-12` step 2 measured"), (b) **executable growth denominators and the print strings and docstring ratios coupled to them** (`wire_resolution:263/266`, `combined_knobs:246/247` and its "5.03×", `box_truncation:334` and its "4.29×", `slab_resolution`'s `NCELLS_LANDED`, `box_size:75`'s "2.17× (138 619 → 300 591)") — moving the digit without moving the denominator makes the file inconsistent, and moving the denominator is a constant edit this step's negative control forbids, and (c) counts on meshes **the census never measured on 0.11** (`box_truncation`'s fixture, finding 36; `box_size`'s 300 591). So the residue is a *coupled-constant* job for whichever chunk re-prices those fixtures, not leftover prose. `git diff -- src/` empty; the seven edited modules `py_compile` clean (`20260828T214616Z_OPS-27-step3-prose-sweep-compile.log`, Status 0).* | ✅ | heavy (both steps — step 1 measured 256 s on its `mesh_cache` window, over the 180 s standard ceiling; label corrected 2026-08-28 03:00 audit) |
 | `OPS-28` | **Give `tests/ports/test_port_orientation_sensitivity.py`'s `_DummyComm` the `allgather` that `OPS-14`'s rank-safety reduction calls, then read the module's real assertions back against known-issues entry 3** — census leg (b) finding 12: a correct reduction outgrew a test double, a class step 1's static sweep cannot see. The reduction stays; the deprecated placeholder route stays runnable (`PORT-1` step 4's negative control). Commissioned 2026-08-27 10:30 review; full rubric in §9 item 3. ***✅ 2026-08-28, 22:30 implementer slot** — one added `staticmethod allgather(value) -> [value]` on `_DummyComm`, nine lines including its comment, `src/` untouched (`git diff -- src/` empty). Bracketed by measurement on the identical command (`tests/ports`, `-n 2`, real, smoke, `-k 30 120`): red baseline `3 failed, 14 passed in 1.50s` / Status 1 / 3 s, gate `2 failed, 15 passed in 0.79s` / Status 1 / 2 s. The sign-flip anchor is **green** — `V(P2) = +5.000000e-02 V` aligned vs `−5.000000e-02 V` flipped, magnitudes equal to `rel=1e-12`, coupling factor `+1.0e-01 → −1.0e-01`. The S-matrix name reaches its assertion for the first time since `OPS-14` and is **red there**, so entry 3 is re-dated, not retired — with a correction it measured: on that 2-port fake the diagonal is **not** zero (`S11 = S22 = 9.047e-01 − 1.289e-02j`); the **off-diagonal** is, because the undriven port is the matched one (`V = 5.000000e-02 = Z₀I` at `Z₀ = 50 Ω` ⇒ `b = 0` exactly). Entry 3's mechanism is confirmed, its old title was imprecise for this name, and its disposition is unchanged (`PORT-0`/`PORT-1`). The leg (b) `allgather` known-issues entry retires whole. Negative control: the other three `tests/ports` modules unchanged — `sparameter_assembly` still 3 passed / 1 failed (entry 3's other name), planner 3 and `port_definition` 8 green in both runs. Logs `20260828T033037Z_OPS-28-red-baseline.log`, `20260828T033055Z_OPS-28-gate.log`.* | ✅ | smoke |
 | `OPS-29` | **Rank-safe the `phantom_material` empty-tag check in `build_material_fields`** — the `OPS-13` defect survived 20 lines below its own fix; measured breaking `examples/mri/01_coil_phantom_fields.py` at `-n 12` (interactive session, 2026-08-28) | ✅ 2026-08-28 | smoke |
-| `OPS-30` | **Migrate the two filed `scripts/probes/` survivors to dolfinx 0.11** — `mag13_step2b_recovery.py:180` and `post3_step3_debug.py:55` construct `fem.petsc.LinearProblem` without 0.11's required `petsc_options_prefix`, so each raises `TypeError` on its first call. Filed (not fixed) by `OPS-26` step 1 2026-08-25 and pinned since by `test_filed_survivors_outside_the_gated_roots_are_unchanged`, which goes red in **either** direction — so the fix and the pin move in one commit. Scoped 2026-09-01 18:00 review, §9 item 2. **✅ 2026-09-01 21:00 slot** — a `petsc_options_prefix` at each site (`fem_em_probe_mag13_step2b_` / `fem_em_probe_post3_step3_`) and nothing else; the scripts were not modernised or re-run. Count identity in both directions, smoke, `-n 1`: the `examples`+`scripts` sweep went **2 → 0** violations with its census **unchanged** at 82 files / 320 resolved call sites / 22 APIs, while `src`+`tests` stayed 177 / 484 / 30 with `violations=0` (pre-fix `20260902T020122Z_OPS-30.log`, `SURVIVOR_STATUS=1`, 12 s; post-fix `20260902T020238Z_OPS-30.log`, `SURVIVOR_STATUS=0`, 3 passed, 37 s). Pin moved in the same commit and **strengthened, not deleted**: `FILED_SURVIVORS` is now the empty set, guarded by census floors over `examples`+`scripts` and a reachability floor of ≥ 2 resolved `dolfinx.fem.petsc.LinearProblem` sites under `scripts/probes` — so "no violations" can no longer be produced by a sweep that fails to reach the two migrated files | ✅ | smoke |
+| `OPS-30` | **Migrate the two filed `scripts/probes/` survivors to dolfinx 0.11** — `mag13_step2b_recovery.py:180` and `post3_step3_debug.py:55` construct `fem.petsc.LinearProblem` without 0.11's required `petsc_options_prefix`, so each raises `TypeError` on its first call. Filed (not fixed) by `OPS-26` step 1 2026-08-25 and pinned since by `test_filed_survivors_outside_the_gated_roots_are_unchanged`, which goes red in **either** direction — so the fix and the pin move in one commit. Scoped 2026-09-01 18:00 review, §9 item 2. **✅ 2026-09-01 21:00 slot** — a `petsc_options_prefix` at each site (`fem_em_probe_mag13_step2b_` / `fem_em_probe_post3_step3_`) and nothing else; the scripts were not modernised or re-run. Count identity in both directions, smoke, `-n 1`: the `examples`+`scripts` sweep went **2 → 0** violations with its census **unchanged** at 82 files / 320 resolved call sites / 22 APIs, while `src`+`tests` stayed 177 / 484 / 30 with `violations=0` (pre-fix `20260902T020122Z_OPS-30.log`, `SURVIVOR_STATUS=1`, 12 s; post-fix `20260902T020238Z_OPS-30.log`, `SURVIVOR_STATUS=0`, 3 passed, 37 s). Pin moved in the same commit and **strengthened, not deleted**: `FILED_SURVIVORS` is now the empty set, guarded by census floors over `examples`+`scripts` and a reachability floor of ≥ 2 resolved `dolfinx.fem.petsc.LinearProblem` sites under `scripts/probes` — so "no violations" can no longer be produced by a sweep that fails to reach the two migrated files. *Audited 2026-09-02 03:00 review — `auditor` PASS on seven of eight checks and DEMOTE on tier honesty: the closing window measured **37 s** (`20260902T020238Z_OPS-30.log:133`) against the 30 s smoke ceiling the row declared. The label was the 18:00 review's own scoping error (it wrote "smoke" beside `timeout -k 30 120` and "well under 60 s"), not a slot overrun — no wrapped ceiling was exceeded — so the row is **re-tiered to standard** on the `OPS-27` precedent (its 256 s window re-tiered the row, no demotion) and stays ✅: every §4 clause holds with the label corrected. Digits re-traced by the review: pre-fix `20260902T020122Z_OPS-30.log:37–38` `violations=2` / `SURVIVOR_STATUS=1`, `:60` gated roots 177 / 484 / 30 at `violations=0`, `:65` 12 s; post-fix `…020238Z_OPS-30.log:35–36` `violations=0` / `SURVIVOR_STATUS=0`, `:58` gated roots unchanged, `:129` `3 passed`, `:133` 37 s.* | ✅ | standard (re-tiered from smoke 2026-09-02, 37 s measured) |
 | `OPS-32` | **Private-mode comparison writers for `ANS-3` and `ANS-4`** — both `03_two_torus_gap_ports_10MHz.py` and `04_birdcage_four_port_10_64_128MHz.py` regenerate their tracked `COMPARISON.md` with `write_text`, exactly the shape that would have published `ANS-1`'s AED numbers; port `ANS-1`'s `aed_results/` reader + `private=True` writer pattern (`14305c5`) to both **before** either gains AED numbers, and re-register their in-script *reproduction controls* at **1e-6** against the measured ≤ 5e-8 run-to-run Z/S scatter (`EX-37`; the 2026-09-02 weekly's ruling, (1*) record licence — no physics band moves). Done-when: each example re-run exit 0 with the tracked table's AED cells blank by construction and, with a stub `aed_results/*.json` present locally (deleted after), an untracked `COMPARISON_private.md` filled; census `exit != 1`. Standard (`ans:3` 128 s, `ans:4` 125 s measured). Scoped 2026-09-02 weekly review | ⬜ | standard |
 | `OPS-31` | **Re-record the `ports:3` cross-route narrative to the 0.11 image** — the executed ladder is `7.7431% → 1.0986% → 1.9222%` and the asserted `STEP1_CROSS_ROUTE_RECORD` is 0.077431, while the example script, its guide, three test docstrings and this plan's §9 preamble all still narrate the v0.7.2 triple `7.7095% → 3.6730% → 1.8333%`. A tenth-of-the-`OPS-27`-class stale record, journaled by the `EX-36` leg (ports + ans) run 2026-09-01 and explicitly left to a review. Executor `record-reconciler`. Scoped 2026-09-01 18:00 review, §9 item 3 | ⬜ | standard |
 
@@ -5648,6 +5648,30 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > F-small at 10 MHz; no band moves in-slot; `WF-6` stays 🟡 whatever prints.
 > Negative result: the printed verdict is the deliverable — journal, stop.
 >
+> **Annotation, 2026-09-02 03:00 daily review — the knob named above does not
+> exist yet, so step 3f is not queueable as written.** `birdcage_port_domain`
+> (`src/fem_em_solver/io/mesh.py:3069`) takes one global `resolution`
+> (0.015, a gmsh `setSize` everywhere) and an optional `conductor_resolution`
+> Threshold field; `phantom_resolution` is a parameter of the *coil+phantom*
+> family's `coil_phantom_region_resolution_policy` (`mesh.py:2378`), not of
+> the birdcage constructor, and `build_four_port_sweep` reaches the mesh only
+> through `tests/mesh/test_birdcage_port_sheets._build`, which passes the
+> module constants `RESOLUTION` / `CONDUCTOR_RESOLUTION` and nothing else. The
+> phantom's ~1 cm cells are simply the global 0.015 (537 cells in a
+> π·0.03²·0.08 m³ cylinder ⇒ h ≈ 1.5 cm). Halving the *global* resolution
+> would refine air and coil too and is not the cheap rung the weekly costed.
+> **Step 3f₀ (scoped by this review, §9 item 4)** adds the knob:
+> `phantom_resolution: Optional[float] = None` on `birdcage_port_domain`, a
+> gmsh Constant/Box field over the phantom cylinder taken into the existing
+> `Min` of size fields, and a `phantom_resolution=` passthrough on `_build`
+> and `build_four_port_sweep` — mesh-only, real mode, with the no-op control
+> as the anchor (parameter absent ⇒ the 116 085-cell mesh reproduces at
+> 0.000e+00). Step 3f then runs at `phantom_resolution=0.0075` (one halving,
+> ≈ 8× ⇒ ≈ 4 300 phantom cells, +≈ 4 k cells overall, inside the weekly's
+> 5–10 k budget) and is serial on 3f₀ **and** 3e′ (§9 item 7). The
+> weekly's "0.01 → 0.005" is re-read as "0.015 → 0.0075"; the cost estimate
+> and the pre-registered (a)/(b)/(c) verdict are unchanged.
+>
 > **Rulings on the two rungs the 10:30 review carried to this weekly:** the
 > *absolute-convergence rung* (an h-ladder for the `|B₁⁺|` map itself) is
 > **deferred behind step 3f** — it turns the same knob, and 3f's anchor (i)
@@ -6983,133 +7007,104 @@ say so in the item. Items that fail twice get rescoped by the review before they
 may reappear. If every item is done or blocked, the drain instruction at the
 end of this section applies: **stop and journal**.
 
-Last reviewed **2026-09-01, 18:00 review**. Interval (since the 10:30
-review): **four slots, two landed and two correctly drained.** 12:00
-`EX-36` leg (ports + ans) (141 + 228 + 182 s, `example-runner`
-foreground): three `ports` windows green, `EX-18`'s `‖S − Sᵀ‖/‖S‖`
-3.1121e-05 and `‖S‖₂` 0.861357 reproduced to the digit, `ports:3`
-reproducing `STEP1_CROSS_ROUTE_RECORD` 0.077431 at 1e-4, and the
-post-census **`dead=0 guide=0 stale=0 exit=0`** — the **first clean
-corpus-wide census since the 08-28 rename** — so `EX-36` closed. 13:30
-`WF-6` step 3d (123 s): the phantom-restricted CG1 `E` estimator, every
-anchor green on the first run, verdict **(c)** and this time
-uncontradicted by its own diagnostics; nothing under `src/`. 15:00 and
-16:30 met a drained queue and **stopped and journalled**, exactly as the
-10:30 review predicted in writing — the correct outcome, not a failure;
-neither slot invented an item, and both cross-checked items 4–7 against
-`git log` rather than trusting their glyphs. Between slots the human
-operator landed three automation commits (`6501ad9` the Wednesday
-weekly, `54c8bd4`/`194a20c` the Fable 5.1 pin). Tree clean at `194a20c`,
-no `attempt/*`, no `recovered/*`, container Up 6 days.
+Last reviewed **2026-09-02, 03:00 review**. Interval (since the 18:00
+review): **four implementer slots scheduled, two landed, two died at
+launch.** 19:30 `WF-6` step 3e (122 s): the restricted `E` estimator
+packaged as `post.project_to_cg1_restricted`, every step-3d anchor
+reproduced through it to every printed digit (18.7238% vs the same-run
+global fit's 1876.1871%, separation 100.20× against the 50× floor;
+`20260902T003813Z_WF-6-step3e-table.log`, `5 failed, 69 passed` / Status
+1). 21:00 `OPS-30` (12 + 37 s): the two filed `scripts/probes/` 0.11
+survivors migrated, count identity in both directions, the pin
+strengthened. **22:30 and 00:00 never ran** — both launchers died with
+`OAuth session expired and could not be refreshed`
+(`logs/automation/20260902T033001Z_implementer.log`,
+`…T050001Z_implementer.log`, 73 bytes each), as did the 02:15 Wednesday
+weekly, which the human operator then ran interactively (`f9462f0` …
+`944be5a`) and which is the source of every new §7 anchor this queue
+draws on. The operator also landed `ANS-1`'s AED half (`14305c5`,
+numbers held privately, adjudicated AGREE by the weekly). Tree clean at
+`944be5a`, no `attempt/*`, no `recovered/*`, container Up 6 days.
 
-**Audit (§4).** One chunk changed to ✅ this interval — **`EX-36`** at
-`ae67b4c` — and the `auditor` returned **PASS** on all eight of its
-checks. Per the protocol's expiring re-verification clause the review
-re-traced the cited digits itself rather than banking the report:
-`20260901T170124Z_…precensus.log:43` `RESULT: dead=2 guide=0 stale=2
-stale_severity=report exit=1`, `20260901T171241Z_…postcensus.log:39`
-`RESULT: dead=0 guide=0 stale=0 stale_severity=report exit=0`,
-`20260901T170142Z_…-a.log:1402` `‖S − Sᵀ‖/‖S‖ = 3.1121e-05 (record
-3.1121e-05), ‖S‖₂ = 0.861357 (record 0.861357)`, and the three window
-footers `Status: 0` at 141 / 228 / 182 s. The closing commit touches
-`PROJECT_PLAN.md`, `attempts.md`, `test-results.md` and five logs and
-**nothing under `src/`, `tests/` or `examples/`**, so no band could have
-moved. **Nothing is demoted.** `WF-6` stays 🟡 (step 3d gated nothing —
-the restricted column is printed, not gated, by design).
+**Audit (§4).** Two chunks changed to ✅ this interval, both delegated to
+the `auditor` and both re-traced by the review itself per the expiring
+re-verification clause. **`OPS-30`** at `799f9b5`: PASS on seven checks,
+**DEMOTE on tier honesty** — the closing window measured **37 s**
+(`20260902T020238Z_OPS-30.log:133`) against the 30 s smoke ceiling the
+row declared. The review's ruling: the label was the 18:00 review's own
+scoping error (it wrote "smoke" beside `timeout -k 30 120` and "well
+under 60 s"), no wrapped ceiling was exceeded, and the `OPS-27` precedent
+re-tiered rather than demoted, so **the row is re-tiered to standard and
+stays ✅** with the audit note in §7; the numbers re-traced are
+`20260902T020122Z_OPS-30.log:37–38` (`violations=2`,
+`SURVIVOR_STATUS=1`), `:60` (177 / 484 / 30, `violations=0`), `:65`
+(12 s) and `…020238Z_OPS-30.log:35–36` (`violations=0`,
+`SURVIVOR_STATUS=0`), `:58`, `:129` (`3 passed`), `:133` (37 s).
+**`TH-12`** at `1939a63` (the weekly's ruling closure, 🟡 → ✅ on the
+re-affirmed production-order clause): **PASS** — the closing commit
+touches only `PROJECT_PLAN.md`, every step's log carries a footer, and
+the review re-traced step 1's sphere line itself
+(`20260818T110442Z_TH-12-step1-sphere-degree2-rss.log:252`: 5 866 cells,
+39 634 DOFs, relL2 0.1405%, power error 0.0058%, 4.03 s solve; footer
+Status 0 / 7 s). The two degree-2 *coil* identity reds stay open in
+known-issues as the re-opening condition, exactly as the row says.
+**Nothing is demoted.** `WF-6` stays 🟡 (step 3e packaged an estimator
+and registered no gate).
 
-**Two things the audit surfaced, both acted on here.** (1) The `EX-36`
-legs are labelled tier **standard** and their longest window measured
-**228 s**, above §5.1's literal 180 s standard ceiling — a repo-wide
-labelling convention for the host-runner `example-runner` family
-(`EX-30` ran 105 / 447 / 935 s under the same label), not something this
-closure introduced, and the per-window Bash ceilings were stated in the
-plan at 400–500 s. **Flagged to the 2026-09-02 weekly review**, which
-owns §5 vocabulary; nothing is re-tiered here and no ceiling moved. (2)
-The `ports:3` narrative ladder is stale against its own asserted
-constant — now **`OPS-31`**, §9 item 3.
+**Plan work this review.** (1) **`WF-6` step 3f is not queueable as the
+weekly wrote it**: `birdcage_port_domain` has no `phantom_resolution`
+parameter — that keyword belongs to the coil+phantom family's
+resolution policy — and the four-port sweep reaches the mesh only through
+`tests/mesh/test_birdcage_port_sheets._build`, which passes two module
+constants. The rubric says an item that cannot state its anchor is not
+ready, and writing the anchor is the better item: **step 3f₀** (the knob,
+mesh-only, with the no-op control as anchor) is scoped in the §7 step-3f
+annotation and queued as item 4; step 3f proper is item 7, serial on 3f₀
+and 3e′. (2) The 19:30 slot reported that implementer-run.md's
+`git commit -F <file>` guidance is unusable in scheduled sessions (Write
+denied for `$TMPDIR` and `.git/`); **corrected in that file** to the
+literal multi-line `-m` route both slots actually used. (3) The queue
+below is rebuilt from the weekly's anchors: eight items, six of them
+scoped by the weekly, each checked against the code before listing.
 
-**Plan work this review.** (1) **The item 4–7 glyph lag is fixed.** Two
-consecutive slots (15:00, 16:30) reported that §9 items 4–7 were complete
-but carried no ✅ and no strikethrough, and that a slot reading §9
-mechanically would be sent to item 4 to re-run a closed `EX-36` leg; both
-avoided it only by cross-checking `git log`. The queue below is rewritten
-from scratch, so the lag is retired at the source. (2) **Three new
-scoped entries**, all of them anchors this review can state today rather
-than deferrals: `WF-6` **step 3e** (promote `_project_to_cg1_restricted`
-into `post/`) and **step 3e′** (the estimator-degree rung), both named by
-the step-3d known-issues "Resolves with" row as a daily review's to
-scope; plus **`OPS-30`** (the two filed `scripts/probes/` 0.11 survivors)
-and **`OPS-31`** (the `ports:3` re-record). (3) **Every "2026-09-06
-weekly review" deferral in this section is re-pointed to
-**2026-09-02**:** `6501ad9` added a **Wednesday** 02:15 weekly by
-operator directive, and this review verified against the live spool that
-`15 2 * * 0,3` **is installed** — the mid-week weekly runs tomorrow, so
-the anchors owed by it (`GEO-25`, `PORT-13`, `PORT-4`…`PORT-8`, the
-`TH-12` production-order clause, `TH-13` step 3b, the `WF-6` finer-mesh
-rung, `ANS-2`/`ANS-3`/`ANS-4`) are four days nearer than the text said.
-The two §10 pace sentences at the end of this file keep their own dates —
-§10 is the weekly's, not this review's. (4) **The stale cross-route
-ladder is struck from this preamble**: item 1's old text quoted `PORT-9`
-step 2b as "7.7095 → 3.6730 → **1.8333%**" as if current, and the
-0.11-image reading is 7.7431 → 1.0986 → **1.9222%**. The dated §7 history
-of step 2b keeps its v0.7.2 figures as history; `OPS-31` reconciles the
-forward-looking sites.
+**Automation health.** 2 of 4 slots fired; both losses launcher-side
+(expired OAuth login), none on limits, and the login is restored — this
+review is the first scheduled session to run since. Foreground-executor
+rule 5 for 5 since written. No docker-socket denial this interval (3 of
+22 slots overall). The tracked `scripts/automation/crontab` header still
+says "Sunday 02:15" against the live `15 2 * * 0,3` (item 1's
+collateral). **Nothing is waiting on the human operator** beyond the
+standing `ANS-4` / `ANS-3` replication requests.
 
-**Automation health — both live blockers cleared, verified this
-review.** `194a20c` warned that both review roles were pinned to
-`claude-fable-5-1` while the local CLI was 2.1.250, which cannot send it,
-and that the next two exposures were the 02:15 Wednesday weekly and the
-03:00 daily. `claude --version` now reads **2.1.258** ≥ the required
-2.1.251, so that exposure is **retired**. `6501ad9` recorded that
-`scripts/automation/crontab` was **not installed** because
-`/var/spool/cron` is outside the sandbox's write scope; `crontab -l`
-shows the live spool already carries `15 2 * * 0,3`, so the Wednesday
-weekly **is** installed and the tracked file's header comment is the only
-thing lagging (harmless, and `OPS-31`'s slot may fix it as collateral).
-**Nothing is waiting on the human operator this interval.**
+**Example chunk (§5.4).** `TH-12`'s closure is a ruling on steps
+measured 08-18/19, and
+`examples/time_harmonic/07_element_order_lossy_sphere.py` already
+demonstrates degree 2 on the sphere; `OPS-30` closed a migration gap, not
+a physics gate. **No new example chunk.**
 
-**Example chunk (§5.4).** `EX-36` is the only chunk that closed, and it
-closed an artifact-freshness census, not a quantitative physics gate — it
-re-ran existing examples rather than gating a new capability. `WF-6` step
-3d gated nothing (printed, not gated, by design). **No new example
-chunk**, and none may be written for the restricted estimator until a
-gate is actually registered on it.
+**Residual `main` reds at `-n 2`: 8 deliberate/known**, unchanged — the
+two entry-3 names, `test_birdcage_volumes_partition_the_box`, and the five
+`WF-6` step-3 SAR asserts (step 3e kept all five red to the digit,
+`20260902T003813Z_WF-6-step3e-table.log:4965–5070`). Plus the two
+degree-2 coil identity tests at 1e-9, `-n 8` only. §2 is unchanged this
+interval.
 
-**Residual `main` reds at `-n 2`:** **8 deliberate/known**, unchanged
-this interval — the two entry-3 names, `test_birdcage_volumes_partition_
-the_box` (`GEO-21`'s floor entry), and the **five `WF-6` step-3 SAR
-identity asserts** (known-issues 🔴 OPEN 2026-08-31; step 3d kept all
-five exactly as written and red, at 25.1096 / 40.5462 / 30.0142 /
-38.6120 / 28.1459% to the digit). Plus the two degree-2 **coil** identity
-tests at 1e-9 — open, diagnosed, observed 2026-09-01, reachable only
-under `TH12_DEGREE2_HALF` at `-n 8`, so not part of the `-n 2` count.
-Every quantitative §2 claim stands; §2 is unchanged this interval.
-
-**Four items this queue, and the review says plainly that it found four
-and not five.** They cover the four slots before the **2026-09-02 02:15
-weekly** (19:30, 21:00, 22:30, 00:00), which is the refill — a spare
-buys 2¼ h of cover before a planning session that is now three days
-away instead of five, and §10-owned anchors are what a fifth item would
-have to be built from. A `plan-navigator` sweep of the whole of §7 this
-review returned **NOT FOUND** for any other entry carrying a written,
-anchor-bearing, unexecuted step: every one is either ✅, a bare row with
-no plan, or weekly-owned. So the four below were *scoped* here rather
-than *found*, and nothing was invented to reach five. **They are
-independent**: item 1 edits `src/fem_em_solver/post/` and the SAR test
-module's import; item 2 edits two `scripts/probes/` files and one
-environment test; item 3 edits example prose and docstrings; item 4 adds
-a column to the SAR test module. Items 1 and 4 touch the same module —
-**item 4 must re-read it as it stands**, since item 1 may have moved the
-helper out; both imports work and item 4 does not depend on item 1
-landing. Deliberately not queued, unchanged from the 10:30 review except
-for the date: `PORT-4`…`PORT-8`, `GEO-25`, `PORT-13`, `TH-13` step 3b,
-the `TH-12` production-order clause, `ANS-2`, `ANS-3`/`ANS-4`, `WF-6`'s
-absolute-convergence rung **and its finer-*mesh* rung**, a `MAG-20` third
-rung, `TH-13` steps 1/1′/2/3a/3a″/3a‴ as written (do not re-run
-`test_coil_loading_degree2.py` in `full` mode at any ceiling), the
-cellwise `E` estimator (struck by derivation), and any re-registration of
-the SAR band — all of them the **2026-09-02** weekly's, not this
-review's. `MAT-4` and `POST-1` still wait on the coil+phantom SAR path.
+**Eight items, independent unless the item says otherwise.** Items 1–6
+touch disjoint files: 1 example prose + guide + two test docstrings; 2 and
+7 the SAR test module (7 must re-read it as 2 leaves it); 3 a new closed
+form in `utils/dodd_deeds.py` and its test; 4 `io/mesh.py`, the port-sheet
+mesh test and the four-port test's builder; 5 two `ans` example scripts; 6
+logs only. Item 7 is serial on items 2 and 4 (**if either has not landed,
+skip it**); item 8 is the spare and the first heavy item. Deliberately not
+queued: `MAT-6` step 11 (heavy, `-n 8`, 900 s ceiling — the
+`record-reconciler` half and the fixture half want one slot each and a
+review to split them), `GEO-25` (three `mesh-probe` windows predicted
+5 + 12 + 30 min — the third alone breaches the 20-minute command ceiling,
+so the weekly should re-rung it at 0.07 / 0.10 / 0.125 or split the
+0.15 m rung into its own slot before it is listed), `ANS-2`, the
+absolute-convergence rung (deferred behind 3f by the weekly), `TH-13`
+steps as written, and any re-registration of the SAR band (a review's,
+and only after 3f prints (a)).
 
 **⚠️ Standing constraint on the compose allow — read before editing that
 file.** `docker-compose.yml` line 9 is `- ..:/workspace`, so write access
@@ -7139,142 +7134,7 @@ stays the fallback. **Allowlist trap (12:00 slot):** the harness entry is
 the repo-relative `scripts/testing/run_and_log.sh *` — an absolute path is
 denied; write it relative.
 
-1. ✅ **DONE 2026-09-02 00:30 slot** — landed green on the first run, every
-   anchor reproduced to every printed digit (separation 100.20× vs the 50×
-   floor; `20260902T003813Z_WF-6-step3e-table.log`, `5 failed, 69 passed` /
-   Status 1 / 122 s). See the §7 `WF-6` step-3e block. The scoping below is
-   kept verbatim as the record of what was asked for.
-
-   **`WF-6` step 3e — promote `_project_to_cg1_restricted` into `post/` as
-   the packaged subdomain-restricted `E` estimator** (standard, complex,
-   `-n 2`, `main`; independent; scoped this review — see the §7 step-3e
-   bullet). Move the helper verbatim from
-   `tests/validation/test_birdcage_sar_map.py` into
-   `src/fem_em_solver/post/faraday.py` beside `project_to_cg1`, exported
-   from `post/__init__.py` and `__all__` as **`project_to_cg1_restricted`**,
-   signature `(field, cell_tags, *, name, tag, ksp_rtol=1e-12,
-   return_diagnostics=False)` — the `return_diagnostics` default flips to
-   **off** to match `project_to_cg1`, and the test module becomes its first
-   caller with `return_diagnostics=True`. This is exactly the promotion
-   `WF-6` step 1d made for `project_to_cg1` on `B` after 1b measured it, and
-   the bar is the same: the readings are already on record.
-   **Anchors (asserted, all re-run through the packaged path — every one is
-   a step-3d record reproduced, not a new measurement):** (i) the
-   best-approximation inequality `‖P_Ω E − E‖_Ω/‖E‖_Ω` = **18.7238%**
-   against the global fit's **1876.1871%** on the same phantom, at
-   `CG1_RECORD_RTOL`; (ii) `a + b × x` restricted-projects to
-   **4.385695e-13** (anchor 1e-10) and `x² ê_x` to **3.741459e-01** (floor
-   `RESTRICTED_CONTROL_MIN_RESIDUAL` 1e-4); (iii) pinned dofs read exactly
-   **0.000e+00** (`RESTRICTED_PINNED_DOF_MAX`) over owned **and** ghost
-   blocks at `-n 2`, with **170** free of **21 397** owned blocks; (iv) all
-   six restricted solves `converged_reason` **2** in 21–25 its on 64 191
-   dofs; (v) the restricted phantom power **5.440097168e-08 W** and the
-   five identity readings **8.2868 / 9.4743 / 7.3477 / 6.8146 / 6.1185%**
-   with both controls **123.6255%** / **333.0778%**, all at
-   `CG1_RECORD_RTOL`. **Negative control:** the *global*
-   `post.project_to_cg1` on the same field and the same phantom still reads
-   **1876.1871%** — assert the packaged restricted figure is at least
-   **50×** below it (the measured separation is 100.20×, so 50× is
-   comfortably reachable and still an order clear of noise; do not assert
-   100× and buy a marginal red). **Collateral, and the second thing the
-   step-3d known-issues row asks a daily review for:** a docstring warning
-   on `post.project_to_cg1` that a *global* L² fit is **not** an `E`
-   estimator inside a low-field subdomain of a fixture carrying a
-   high-field region — 3c's finding, currently only in known-issues —
-   naming the 1876.1871% / 32.7802% domain table and pointing at the
-   restricted sibling. `B` callers are untouched by construction: no
-   signature, default, band or record of `project_to_cg1` moves.
-   **Tier / ranks / cost:** standard, `-n 2` complex with
-   `tests/environment` first, `timeout -k 30 400`; step 3d measured
-   **123 s** and this adds no solve, so expect **≈ 120–130 s**.
-   **Traps already paid for:** `locate_dofs_topological` on a *blocked*
-   space returns **block** indices — build the bc from a zero
-   `fem.Function` on the space, never a scalar `Constant`; take the pinned
-   complement over `size_local + num_ghosts`, not owned blocks alone (owned
-   only is precisely the defect `-n 2` exists to catch, and it would show
-   as a rank-dependent answer, not a crash); `cell_tags.find` is rank-local
-   and its ghost-inclusive view is what is wanted; `assemble_scalar` and
-   `cell_tags.values` are rank-local — reduce before asserting; no `<=` or
-   `ufl.max_value` on complex operands; `petsc_options_prefix` is required
-   in 0.11 and the moved code must keep a **unique** prefix (rename it off
-   `fem_em_wf6_step3d_restricted_mass_` to something not step-scoped);
-   pytest captures prints without `-s`; run foreground, Bash timeout
-   660000 ms; sweep `find /root/.cache/fenics -name '*.c' -size 0` and
-   delete **only** stubs if anything stalls in `MPI_Bcast`.
-   **Scope — what this does NOT close:** it packages an estimator, it does
-   **not** register a gate. The five primal SAR asserts stay exactly as
-   written and red, the module still exits 1, the SAR band does not move,
-   nothing is re-registered, no SAR claim comes into existence, and `WF-6`
-   stays **🟡**. Verdict (c) is unaffected: this is a code-location change
-   whose anchors are reproductions.
-   **Negative result:** any anchor not reproducing through the packaged
-   path is a **finding about the move**, not about physics — journal it in
-   the §7 step-3e bullet and known-issues, revert to the test-local helper,
-   and stop. Do not adjust a record to make the moved code agree with it.
-
-2. ✅ **DONE 2026-09-01 21:00 slot** — two `petsc_options_prefix` arguments
-   and one pinned set, nothing else. Count identity held in both directions:
-   the `examples`+`scripts` sweep went **2 → 0** violations with its census
-   unchanged (82 files / 320 call sites / 22 APIs) and `src`+`tests` stayed
-   177 / 484 / 30 at `violations=0`; the pre-fix negative control read
-   `SURVIVOR_STATUS=1` from the live sweep, not from the log
-   (`20260902T020122Z_OPS-30.log`, 12 s → `20260902T020238Z_OPS-30.log`,
-   3 passed, 37 s). The pin was **strengthened, not deleted**: empty expected
-   set plus census floors and a ≥ 2 resolved-`LinearProblem`-sites-under-
-   `scripts/probes` reachability floor. See the §7 `OPS-30` row. The scoping
-   below is kept verbatim as the record of what was asked for.
-
-   **`OPS-30` — migrate the two filed `scripts/probes/` survivors to
-   dolfinx 0.11** (smoke, `-n 1`, `main`; independent; scoped this review —
-   see the §7 row). `scripts/probes/mag13_step2b_recovery.py:180` and
-   `scripts/probes/post3_step3_debug.py:55` construct
-   `fem.petsc.LinearProblem` without 0.11's keyword-only
-   `petsc_options_prefix`, so each raises `TypeError` on its first call.
-   `OPS-26` step 1 filed them 2026-08-25 rather than repairing them in-slot
-   and they have sat since. Add a unique prefix at each site (e.g.
-   `fem_em_probe_mag13_step2b_` / `fem_em_probe_post3_step3_`) and nothing
-   else — these are one-off diagnostics kept for their write-ups, so **do
-   not modernise, refactor or re-run them**.
-   **Anchor (asserted):** the API-migration sweep. It currently resolves
-   **434 call sites over 29 APIs** with `violations=0` across `src/` and
-   `tests/` (`20260825T200851Z_OPS-26.log`) while the filed-survivor sweep
-   reports exactly **2** violations at the two named `file:line` sites
-   (`20260825T200918Z_OPS-26.log`, `Status: 1`, 4 s). After the fix the
-   survivor sweep must report **0** at those two sites, with the `src/` +
-   `tests/` count and its `violations=0` **unchanged** — a count identity
-   in both directions, not a finiteness check.
-   **The pin moves in the same commit — this is the trap that will
-   otherwise eat the slot.**
-   `tests/environment/test_dolfinx_api_migration.py::test_filed_survivors_
-   outside_the_gated_roots_are_unchanged` pins the survivor set at exactly
-   these two entries and is written to go **red in either direction**, so
-   fixing the scripts without updating the pin turns a green module red.
-   Read that test first, understand which direction it asserts, and land
-   the fix and the pin together.
-   **Negative control:** revert one of the two sites (or read the pre-fix
-   sweep from the log) — the sweep must report **1**, not 0. A sweep that
-   reports 0 with a site still broken means the sweep is not reaching
-   `scripts/`, which is itself the finding and a **stop**.
-   **Tier / ranks / cost:** smoke, `-n 1`, `timeout -k 30 120`; the
-   original sweeps ran **4 s** and this is a two-line edit plus one
-   environment module — expect **well under 60 s** of compute and most of
-   the slot in reading.
-   **Traps already paid for:** pytest captures prints without `-s`; run the
-   environment module through `run_and_log.sh` like everything else (a
-   pytest run that bypasses the harness is denied by the PreToolUse hook);
-   `-k a or b` splits into stray argv inside an already-quoted container
-   command; never pipe pytest through `grep` inside the harness command —
-   the footer would record the pipe's exit status, not pytest's.
-   **Scope:** two `petsc_options_prefix` arguments and one pinned set. It
-   does **not** make the probes runnable-and-verified — nobody executes
-   them, and their value is their recorded output; it closes a filed 0.11
-   migration gap, nothing more. No band, tolerance or record moves.
-   **Negative result:** if the pin cannot be updated without weakening what
-   it asserts, **stop** — leave the scripts as filed, journal why in
-   known-issues under the existing entry, and hand the pin's design back to
-   a review. Do not delete the pin to make the fix land.
-
-3. **`OPS-31` — re-record the `ports:3` cross-route narrative to the 0.11
+1. **`OPS-31` — re-record the `ports:3` cross-route narrative to the 0.11
    image** (standard, complex, `-n 2`, host runner; independent; scoped
    this review — see the §7 row). Executor: **`record-reconciler`**, under
    the (1*) licence: version-tagged environment-dependent records only,
@@ -7341,12 +7201,16 @@ denied; write it relative.
    **Negative result:** a rung not reproducing at 1e-4 is a **fixture
    finding** — known-issues entry, no prose re-recorded, stop.
 
-4. **`WF-6` step 3e′ — the estimator-degree rung: the same five SAR
+2. **`WF-6` step 3e′ — the estimator-degree rung: the same five SAR
    identities off a **CG2**-restricted `E`** (standard, complex, `-n 2`,
-   `main`; independent of items 1–3 — but it edits the same module as item
-   1, so **re-read that module as it stands** and import the restricted
-   helper from wherever it now lives; scoped this review — see the §7 step
-   3e′ bullet). Verdict (c) attributes step 3d's residual **6.1–9.5%** to
+   `main`; independent of every other item; scoped by the 18:00 review —
+   see the §7 step 3e′ bullet. **Step 3e landed at `e949dfa`:** import
+   `post.project_to_cg1_restricted` with `return_diagnostics=True` for the
+   CG1 column. The packaged helper builds a `("Lagrange", 1, (3,))` space
+   internally and takes no degree argument — add a keyword-only
+   `degree: int = 1` (default unchanged, so no CG1 caller or record moves)
+   rather than a second copy of the helper, and build the CG2 bc from a
+   zero `Function` on the CG2 space). Verdict (c) attributes step 3d's residual **6.1–9.5%** to
    the fixture's ~1 cm phantom cells reading a quadratic-in-`E` map, and
    nothing on this fixture has separated **estimator degree** from **mesh
    h**. This separates them for six mass solves and **no curl-curl solve**:
@@ -7424,6 +7288,242 @@ denied; write it relative.
    "Resolves with" row, keep every assert, stop. Anchor (i) or (ii) failing
    is a defect in the restriction to journal as such, not physics; a step-3d
    record not reproducing is a fixture finding, not a rescope.
+
+3. **`MAT-8` — the finite-wire correction to the Dodd–Deeds closed form**
+   (smoke by content, `-n 1`, real mode, `main`; independent; scoped
+   2026-09-02 weekly — see the §7 row). Add
+   `coil_impedance_change_finite_wire(f, a, h, sigma, r_wire)` to
+   `utils/dodd_deeds.py`: eq. (1) averaged over the uniform-current disc of
+   the wire cross-section (2-D quadrature over lift-off `h ± r` and radius
+   `a ± r`, the module's existing `mutual` kernel). The fixture is `MAT-6`'s
+   5 mm wire: cross-section spanning lift-off 17.5–22.5 mm and radius
+   37.5–42.5 mm, `r/a ≈ 0.06`.
+   **Anchors (asserted):** (i) `r_wire → 0` recovers the filament value to
+   **1e-8** relative at three radii 1e-4 / 1e-5 / 1e-6 m; (ii) the
+   perfect-conductor limit of the corrected form equals the disc-averaged
+   image mutual inductance from `utils/analytical.py` to **1e-6** — the same
+   constant-pinning check `MAT-6` step 1 used; (iii) the correction at
+   `r_wire = 0.0025` is **printed and recorded, ungated**, beside the FEM
+   ΔR readings 1.58% (production) / 0.28% (step-8 fixture) — whether it is
+   0.1% or 0.5% is the reading everyone wants.
+   **Negative control:** the correction decays with lift-off faster than
+   `(r/a)²` — assert monotone decrease of `|ΔR_wire − ΔR_filament|/ΔR_filament`
+   across three lift-offs (20, 40, 80 mm); a non-monotone sequence is a
+   quadrature defect, not physics.
+   **Tier / ranks / cost:** the arithmetic is < 10 s, but a pytest window on
+   this image carries ~10–20 s of import overhead — declare **standard**
+   and `timeout -k 30 120`, and write the §7 tier from the footer, not the
+   estimate (the `OPS-30` lesson: a 37 s window under a "smoke" label cost an
+   audit DEMOTE and a re-tier). `-n 1`, no complex mode needed (real closed
+   form).
+   **Traps already paid for:** `scipy.integrate.dblquad` on the `mutual`
+   kernel converges slowly near the disc edge — use a fixed Gauss–Legendre
+   product rule (≥ 16 × 16) and assert the two rule orders agree to 1e-9,
+   which is also anchor (i)'s convergence evidence; pytest captures prints
+   without `-s`; run through `run_and_log.sh` (`tests/validation` path, no
+   `tests/environment` needed in real mode).
+   **Scope:** a closed-form term and a record. No gate re-registers on it,
+   no band moves, `MAT-6` stays ✅ at its 1.58% headline until step 11
+   lands; the `ANS-1` private ruling is not touched.
+   **Negative result:** a limit not recovering is a bug in the quadrature —
+   journal in the §7 `MAT-8` row and known-issues, keep the asserts, stop.
+
+4. **`WF-6` step 3f₀ — the phantom-sizing knob on `birdcage_port_domain`**
+   (standard, `-n 2`, **real** mode, `main`; independent — mesh only, no
+   solve; scoped this review, see the §7 step-3f annotation). Add
+   `phantom_resolution: Optional[float] = None` to
+   `MeshGenerator.birdcage_port_domain` (`io/mesh.py:3069`) and to its
+   inner builder (`:3412`): a gmsh `Box` (or `Constant`-over-volume) size
+   field covering the phantom cylinder at `phantom_resolution`, combined
+   with the existing conductor Threshold field through the same `Min`
+   field, `None` meaning "leave the sizing exactly as it is". Thread a
+   `phantom_resolution=None` passthrough onto
+   `tests/mesh/test_birdcage_port_sheets._build` and
+   `tests/validation/test_port_birdcage_four_port.build_four_port_sweep`
+   (additive keywords, the `frequency_hz` / `reuse` precedent).
+   **Anchors (asserted, in a new test beside the port-sheet tests):**
+   (i) **the no-op control is the anchor:** with the parameter absent the
+   default four-port mesh reproduces its record — global cells **116 085**
+   and the phantom's **537** tag-3 cells — at **0.000e+00** relative, so
+   no existing record, gate or example can have moved; (ii) at
+   `phantom_resolution = 0.0075` the tag-3 cell count rises by a factor in
+   **[5, 12]** (the (0.015/0.0075)³ = 8× prediction with a wide band for
+   the size-field transition) and the cells *outside* tag 3 change by
+   **< 10%**; (iii) the scale-free CAD identities already gated —
+   `GEO-18`'s port-sheet area 1.120000000e-04 m² on all four ports and the
+   `GEO-19` volume partition 1.000000000000 — hold on the refined mesh.
+   **Negative control:** `phantom_resolution = 0.015` (equal to the global
+   sizing) must reproduce the default mesh's counts at 0.000e+00 as well —
+   a field that is present but inactive changes nothing; if it changes the
+   count, gmsh is honouring the field's *presence*, and the `None` path is
+   not a true no-op.
+   **Tier / ranks / cost:** standard, `-n 2` real, `timeout -k 30 300`.
+   The default mesh builds in the tens of seconds inside `WF-6`'s 122 s
+   window; three builds (default, 0.0075, 0.015) ⇒ expect **≈ 60–120 s**.
+   **Traps already paid for:** gmsh is serial — build on rank 0 and
+   broadcast exactly as the constructor already does; `cell_tags.values`
+   is rank-local, reduce the tag-3 count with `MPI.SUM` before asserting
+   (this is the defect `-n 2` exists to catch); do not touch
+   `conductor_resolution`'s Threshold (the `GEO-21` 4.8 mm floor ruling);
+   do not change any default; a 0-byte `.c` stub under
+   `/root/.cache/fenics` is a live lock (sweep
+   `find /root/.cache/fenics -name '*.c' -size 0`, delete stubs only).
+   **Scope:** a mesh parameter and its identity test. No solve, no
+   record, no gate, no default moves; `WF-6` stays 🟡; it does not answer
+   the finer-phantom question — that is item 7.
+   **Negative result:** the no-op control failing is a **stop** — journal
+   the cell-count delta in known-issues, revert, and hand the field design
+   back to a review; do not re-record 116 085 to make the parameter land.
+
+5. **`OPS-32` — private-mode comparison writers for `ANS-3` and `ANS-4`**
+   (standard, host runner, `-n 2` complex; independent; scoped 2026-09-02
+   weekly — see the §7 row). Port `ANS-1`'s `aed_results/` reader +
+   `private=True` writer pattern (`14305c5`,
+   `examples/ansys_benchmarks/loop_over_lossy_slab_10MHz/01_…py`) to
+   `03_two_torus_gap_ports_10MHz.py` and
+   `04_birdcage_four_port_10_64_128MHz.py`, so the tracked `COMPARISON.md`
+   keeps its AED cells blank **by construction** and an untracked
+   `COMPARISON_private.md` is written only when a results JSON is present.
+   In the same commit re-register both scripts' in-script *reproduction
+   controls* at **1e-6** against `EX-37`'s measured ≤ 5e-8 run-to-run Z/S
+   scatter (the weekly's (1*) record-licence ruling — a control's band, not
+   a physics band).
+   **Anchors (asserted, by re-running both examples):** (i) `ans:3`
+   reproduces `PORT-1`'s field-route `‖S − Sᵀ‖/‖S‖` and `ans:4` reproduces
+   `PORT-9`/`PORT-11`'s 4×4 records (reciprocity, σ_max, C4 spreads at 10 /
+   64 / 128 MHz) at the re-registered 1e-6, exit 0 both; (ii) with a
+   **stub** `aed_results/*.json` placed locally (obviously synthetic
+   values, deleted after the run), each example writes a filled
+   `COMPARISON_private.md` and `git status --porcelain` shows the tracked
+   `COMPARISON.md` **unchanged** and the private file **absent** from the
+   untracked list (`.gitignore` covers `aed_results/` and
+   `COMPARISON_private.md` since `14305c5`); (iii) the corpus census stays
+   `exit != 1`.
+   **Negative control:** with the stub present, a `COMPARISON.md` that
+   changes at all is the defect this chunk exists to prevent — that diff
+   is a **stop**, never a commit.
+   **Tier / ranks / cost:** standard, `./run_examples.sh ans:3,ans:4
+   -t 400`; measured 128 s + 125 s. Budget two windows (stub absent, stub
+   present) ⇒ ≈ 8–9 min of runner time.
+   **Traps already paid for:** the host runner's intermittent
+   `permission denied … /var/run/docker.sock` (3 of 22 slots) — fall back
+   to the inner command through `run_and_log.sh` and journal it; never
+   `git add` anything under `aed_results/` or a `COMPARISON_private.md`,
+   and never type an AED number into a tracked file — use values like 1.0
+   and 2.0 in the stub; the `EX-15` guide headings must stay contained
+   verbatim.
+   **Scope:** writer plumbing and a control band. No physics band, no gate,
+   no §2 claim; `ANS-3`/`ANS-4` stay at their statuses, still waiting on
+   the operator's AED halves.
+   **Negative result:** a reproduction control outside 1e-6 is a fixture
+   finding (known-issues, stop); the writer half can still land if the
+   control half is the only failure — say which landed.
+
+6. **`EX-41` — `mesh:6` and `mesh:7` get a footered run on the 0.11 image**
+   (standard, host runner; independent; opened 2026-09-02 weekly — see the
+   §7 row). Executor: **`example-runner`**, spawned **foreground** with the
+   rule stated in the prompt (a `./run_examples.sh` window still running
+   when the executor returns is the 2026-09-01 00:00 failure). Their
+   newest log, `20260901T050408Z_EX-36-leg-mesh-b.log`, is that orphaned
+   footerless window; both printed "All identities hold" inside it (58.6 s
+   / 94.8 s) but §4 wants a footer and an elapsed time, and the last
+   footered run is `20260825T213323Z_EX-30-mesh-run-6to7.log`.
+   **Anchors (asserted):** each example's own identity asserts, plus
+   `mesh:7`'s 12-port dual-family record reproduced to the digit against
+   that 08-25 footered log; census `exit != 1`.
+   **Negative control:** the per-example wall clocks printed inside the
+   footerless window (58.6 / 94.8 s) — a footered run far off them is a
+   fixture or image change worth a sentence in the journal.
+   **Tier / ranks / cost:** one window, `-e mesh:6,mesh:7 -t 400`, expect
+   ≈ 160 s plus census.
+   **Traps already paid for:** docker-socket denial fallback as in item 5;
+   `-n 2` real mode for mesh examples; the census reads staleness
+   (`exit 2`) as information, not failure.
+   **Scope:** two logs with footers and the chunk's closure. Nothing under
+   `src/`, no record moves.
+   **Negative result:** a cell count or identity differing from the 08-25
+   record is a `record-reconciler`-class finding — known-issues entry,
+   stop; do not re-record in this slot.
+
+7. **`WF-6` step 3f — the finer-phantom rung** (standard, `-n 2` complex,
+   `main`; **serial on item 2 (3e′) and item 4 (3f₀) — if either has not
+   landed on `main`, skip this item; if 3e′ printed verdict (α), this item
+   is blocked and the weekly re-plans**; scoped 2026-09-02 weekly, knob
+   corrected by the §7 step-3f annotation). Run the four-drive sweep
+   through `build_four_port_sweep(phantom_resolution=0.0075)` — one
+   halving of the phantom's 1.5 cm cells, ≈ 8× ⇒ ≈ 4 300 phantom cells,
+   +≈ 4 k overall — and read the five SAR identities off the restricted
+   CG1 `E` estimator on that mesh.
+   **Anchors (asserted):** (i) the coil-side records must not move — gate
+   (i) power accounting inside the unmoved 1e-2 band and the `|B₁⁺|` C4
+   identities within **0.5 pp** of their 10 MHz records (2.1870 / 2.1146 /
+   1.8911%) on the new mesh; a larger move is a fixture finding; (ii) the
+   restricted estimator's best-approximation inequality holds with residual
+   **≤ 18.7238%** and the `a + b × x` control ≤ 1e-10 on the new mesh;
+   (iii) the five SAR identities are **printed, not gated**, with the
+   verdict pre-registered by the weekly: **(a)** all five ≤ 5% ⇒ (c)
+   confirmed and a *review* may then register the first coil-driven SAR
+   gate; **(b)** they fall but stay > 5% ⇒ report the ratio (one halving
+   should roughly quarter a second-order residual, 6–9.5% → 1.5–2.5%);
+   **(c)** unchanged ⇒ neither degree nor h, a review re-reads the
+   identities.
+   **Negative control:** both step-3b controls asserted to **survive** on
+   the new mesh (CG1 restricted read 123.6255% / 333.0778% on the coarse
+   one).
+   **Tier / ranks / cost:** standard, `-n 2` complex with
+   `tests/environment` first, `timeout -k 30 600`; `PORT-11` step 1 priced
+   116 k cells at ≈ 25 s/solve at `-n 2`, so four solves + six restricted
+   mass solves on ≈ 120 k cells ⇒ **≈ 150–200 s**. If the first window
+   returns 124, do not raise the ceiling — drop to `-n 4` once and, if
+   that overruns too, stop and report the price.
+   **Traps already paid for:** everything in step 3e's list; the
+   `reuse=` path must **not** be used across resolutions (it would hand
+   back the coarse mesh); ghost-inclusive pinning at the new dof count;
+   `phantom_resolution` reaches the constructor only if item 4 threaded it
+   through `_build` — check the signature, do not monkeypatch constants.
+   **Scope:** one rung on F-small at 10 MHz. No band moves in-slot, no gate
+   is registered whatever prints, `WF-6` stays 🟡; the printed verdict is
+   the deliverable and the weekly's watch condition ("3f printed by
+   09-06").
+   **Negative result:** journal the verdict in the §7 step-3f bullet and
+   the step-3d known-issues "Resolves with" row, keep every assert, stop.
+
+8. **`PORT-13` step 1 — the first solve on the 32-ring-port high-pass
+   layout** (heavy, `-n 8` complex, `main`; independent; spare; scoped
+   2026-09-02 weekly — see the §7 row). One single-port solve on `mesh:9`
+   (16 legs, 32 ring-gap lumped-sheet ports, 265 621 cells, the `EX-35`
+   mesh reproduced at 0.000e+00 as the in-run control) at 10 MHz, degree
+   1, port P1 driven at 1 V with every other port terminated as `PORT-9`
+   leg (d) terminates them.
+   **Anchors (asserted):** (i) the three-way power accounting `WF-6` step
+   1 gate (i) uses — supplied vs dissipated + stored — inside the same
+   **1e-2** band; (ii) the open-circuit ring-port voltages on the 31
+   undriven ports read as a C16 pattern: the two ports diametrically
+   opposite P1 agree to `PORT-9`'s C4-class spread (≤ 5%), asserted, and
+   the full 32-vector is printed for step 2.
+   **Negative control:** the cell count reproduces `EX-35`'s 265 621 at
+   0.000e+00 before the solve (a different mesh is a `GEO-20` finding, not
+   a `PORT-13` result); and the driven port's own voltage reads 1 V to
+   1e-6 (the drive is applied where it is claimed).
+   **Tier / ranks / cost:** heavy, `-n 8`; priced from `PORT-11` step 1
+   (116 085 cells ≈ 25 s/solve at `-n 2`) scaled by 2.3× cells and
+   `MAT-6` step 10a's MUMPS fill growth (1.69× flops per 1.28× cells) ⇒
+   **≈ 3–6 min**. Report peak RSS against the 128 G cap. The weekly's
+   1200 s ceiling / 900 s stop rule cannot fit one foreground Bash window
+   (660 000 ms, footer inside it) — **set `timeout -k 30 590` and let 590 s
+   be the stop rule**; an overrun is the finding, journal it, do not
+   raise.
+   **Traps already paid for:** `-n 8` hides rank-local bugs — the port
+   readout must go through the `PORT-9` machinery that already ran at
+   `-n 2`, never a new reduction written in-slot; 32 ports at f = 0.5 need
+   the narrowed-sheet width convention `w = A/h`; a killed compile leaves a
+   0-byte stub (sweep and delete stubs only); harness foreground, Bash
+   timeout 660000 ms.
+   **Scope:** one solve, one identity, one price — no 32×32, no C16 gate,
+   no tuning, no resonance claim; a full S-matrix is 32 solves and is step
+   2, scoped by a review from step 1's price.
+   **Negative result:** a power-accounting miss or an overrun goes to
+   known-issues with the price; nothing else moves.
 
 *(The per-review journal — slot recap, completion audits, plan-work notes,
 §10 assessment — lives in the review commits and
