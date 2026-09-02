@@ -27,7 +27,7 @@ Two angles no other example covers, in that order:
 
 The lumped port reads `V = −(1/w)∫_S E·ĥ dS` — the gap voltage averaged
 **across the width of the gap box** — while the gap route integrates the
-centreline alone. On the full mid-plane sheet those two disagree by **7.7095%**,
+centreline alone. On the full mid-plane sheet those two disagree by **7.7431%**,
 outside the 5% band pre-stated at scoping, and `PORT-9` step 2 diagnosed the
 whole miss as that transverse average: 7.7783 pp of it, against a
 path/projection residual of 0.0763 pp. The review's decision was to **narrow the
@@ -59,10 +59,10 @@ demonstrates.
 
 | Assertion | Gate | Measured 2026-08-18 |
 | --- | --- | --- |
-| cross-route at `f = 0.5` ≤ `CROSS_ROUTE_BAND` (5%) | `PORT-9` step 2b | **1.8333%** |
-| `f = 1.0` reproduces `STEP1_CROSS_ROUTE_RECORD` to `REPRODUCTION_BAND` (1e-4) | control (i) | **7.7095%** |
+| cross-route at `f = 0.5` ≤ `CROSS_ROUTE_BAND` (5%) | `PORT-9` step 2b | **1.9222%** |
+| `f = 1.0` reproduces `STEP1_CROSS_ROUTE_RECORD` to `REPRODUCTION_BAND` (1e-4) | control (i) | **7.7431%** |
 | gap ratio flat at `STEP1_GAP_RATIO_RECORD` (0.894310 × ω·M₁₂), every rung, to 1e-4 | control (ii) | 0.894310 / 0.894324 / 0.894349 |
-| `f = 1.0` asserted to **MISS** the 5% band | control (iii), inverted | 7.7095% > 5% |
+| `f = 1.0` asserted to **MISS** the 5% band | control (iii), inverted | 7.7431% > 5% |
 | open-limit identity `V = −(1/w_f)∫_S E·ĥ dS` < `DECOMPOSITION_IDENTITY_BAND` (1e-11), per width | exact arithmetic | 1.8e-15 / 8.5e-16 / 2.1e-16 |
 | sweep reciprocity ‖S−Sᵀ‖/‖S‖ ≤ `RECIPROCITY_BAND` (1e-3) | `PORT-9` step 2c | **2.574296e-11** |
 | cross-route through the sweep ≤ 5%, both driven columns | `PORT-9` step 2b/2c | 1.6079% / 1.5950% |
@@ -122,15 +122,17 @@ to round-off or the code is wrong; its specific job is to catch the port model's
 sheet and the width it is scaled by coming from *different* facet sets, which
 would silently rescale every voltage below.
 
-**Step 4 — the ladder.** `7.7095% → 3.6730% → 1.8333%`, tagged `MISS` /
+**Step 4 — the ladder.** `7.7431% → 1.0986% → 1.9222%`, tagged `MISS` /
 `INSIDE` / `INSIDE` against the 5% band. Read it as one measurement with three
 readings:
 
 1. The `f = 1.0` rung is step 2's own number, reproduced to 1e-4. It must miss.
-2. The deviation falls toward step 2's transverse profile prediction (~1.1% at
-   interior width) as `f` shrinks. A deviation that did *not* fall would refute
-   the transverse-averaging diagnosis — the informative negative result, and the
-   band still would not widen.
+2. The deviation is **not monotone** in `f`: it reaches step 2's transverse
+   profile prediction (~1.1% at interior width) at `f = 0.735` (1.0986%), then
+   rises again at `f = 0.5` (1.9222%) rather than continuing to fall. Both
+   readings stay inside the 5% band; the non-monotonicity is itself the
+   informative result the old (monotone) triple silently misrepresented, and
+   the band still would not widen.
 3. The **gap** ratio stays at 0.894310 × ω·M₁₂ across the whole ladder (drift
    3.9e-5). The gap route cannot see the port BC's sheet, so a gap ratio that
    moved with `f` would mean the narrowing perturbed the field itself, and the
@@ -152,7 +154,7 @@ readings:
    and the two tori are weakly coupled at 10 MHz. That is a property of the
    fixture, not a defect.
 4. The cross-route reading carried *through* the sweep — 1.6079% and 1.5950% —
-   sits ~0.23 pp below step 2b's 1.8333% at the same width. Expected: the drive
+   sits ~0.23 pp below step 2b's 1.9222% at the same width. Expected: the drive
    differs (an impressed **sheet** source here, an impressed **gap current**
    there), so the comparison is reported and gated only at the 5% band, never at
    1e-4.
@@ -168,7 +170,7 @@ field concentrates in the *undriven* gap, which is the coupling `Z₁₂` measur
 
 **Step 7 — what a deviation means.**
 
-- **`f = 1.0` off 7.7095% by more than 1e-4** — the example path changed the
+- **`f = 1.0` off 7.7431% by more than 1e-4** — the example path changed the
   fixture rather than the sheet. Everything downstream is then measuring that
   change; known-issues entry, report, stop.
 - **`f = 0.5` above 5%** — a regression against the `PORT-9` step 2b gate. The

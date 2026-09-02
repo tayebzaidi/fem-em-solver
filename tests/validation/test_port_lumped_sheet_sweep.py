@@ -1,6 +1,6 @@
 """`PORT-9` step 2c — **the lumped-sheet route through the N-port sweep**.
 
-Step 2b closed step 2's cross-route gate at the narrowed sheet (1.8333% at
+Step 2b closed step 2's cross-route gate at the narrowed sheet (1.9222% at
 ``f = 0.5`` against the unmoved 5% band) but left one leg unrun: reciprocity
 ``‖S − Sᵀ‖/‖S‖ ≤ 1e-3`` **through**
 :func:`~fem_em_solver.ports.sparameters.run_n_port_sparameter_sweep`.  That
@@ -25,7 +25,7 @@ voltage against the independent terminal-to-terminal path integral off the
 *same* solve, now carried through the sweep in
 ``PortVoltageCurrentEstimate.path_voltage_v`` — is asserted against step 2's
 unmoved ``CROSS_ROUTE_BAND`` (5%) and *printed* beside step 2b's ``f = 0.5``
-record 1.8333%: the drive differs (an impressed sheet source here, an impressed
+record 1.9222%: the drive differs (an impressed sheet source here, an impressed
 gap current there), so the reproduction is reported, not gated at 1e-4.
 
 Cost: standard tier, ``-n 2``, one mesh (~40 s) and two solves (~25 s each).
@@ -85,7 +85,10 @@ from tests.validation.test_port_lumped_two_torus import (
 # same number `PORT-1` step 4 gated the gap-voltage sweep at.
 RECIPROCITY_BAND = 1.0e-3
 # Step 2b's gated rung, for the printed comparison only (the drive differs).
-STEP2B_CROSS_ROUTE_AT_HALF_WIDTH = 0.018333
+# Re-recorded (1*) 2026-09-02, `OPS-31`, from the `ports:3` anchor log
+# `20260902T093147Z_OPS-31.log:2245` on image tag v0.11.0 (dolfinx 0.11.0.post0,
+# gmsh 4.15.2), matching the same-run STEP1_CROSS_ROUTE_RECORD re-record.
+STEP2B_CROSS_ROUTE_AT_HALF_WIDTH = 0.019222      # (v0.7.2 read 0.018333)
 # The impressed terminal voltage of the driven sheet. Arbitrary — Z is a ratio
 # — but recorded, because every printed V and I below scales with it.
 DRIVE_VOLTAGE_V = 1.0 + 0.0j
@@ -296,7 +299,7 @@ def test_the_cross_route_reading_holds_inside_the_sweep(sheet_sweep):
     terminal-to-terminal path integral ``−∫E·t̂ dl``.  Their relative deviation
     at the undriven port is step 2's cross-route quantity — the drive
     normalisation cancels — and it is asserted against step 2's unmoved 5%
-    band.  Printed beside step 2b's ``f = 0.5`` record (1.8333%): the drive
+    band.  Printed beside step 2b's ``f = 0.5`` record (1.9222%): the drive
     here is the impressed *sheet* source rather than the impressed gap current,
     so the two need not agree to the 1e-4 grain, and the comparison is reported
     rather than gated.

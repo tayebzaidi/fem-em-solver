@@ -1,6 +1,6 @@
 """`PORT-9` step 2b — **the narrowed port sheet gates the cross-route band**.
 
-Step 2 (2026-08-17) measured a cross-route deviation of **7.7095%** between the
+Step 2 (2026-08-17) measured a cross-route deviation of **7.7431%** between the
 lumped-port route and the gated gap-voltage route on the two-torus fixture,
 outside the 5% band pre-stated at scoping, and *diagnosed* the miss: it is the
 transverse average over the port sheet, 7.7783 pp of it, against a
@@ -44,7 +44,7 @@ comment at the measurement, and the first attempt's log).
 cross-route ``|ΔZ₁₂|/|Z₁₂| ≤ 5%`` — step 2's own band, unmoved, now *expected*
 to hold; at every width the open-limit reduction
 ``V_lumped = −(1/w_f)∫_S E·ĥ dS`` to < 1e-11; and ``f = 1.0`` reproduces step
-2's **7.7095%** record to 1e-4 (a narrowing that moved the full-width answer
+2's **7.7431%** record to 1e-4 (a narrowing that moved the full-width answer
 would have changed the fixture, not the sheet).
 
 Cost: standard tier, ``-n 2``, one mesh (~40 s) and three solves (~25 s each).
@@ -458,7 +458,7 @@ def test_the_open_limit_reduction_holds_at_every_width(width_ladder):
 def test_full_width_reproduces_the_step_2_record(width_ladder):
     """**The negative control.**  ``f = 1.0`` is step 2's own measurement.
 
-    The whole mid-plane is the sheet step 2 read 7.7095% off.  If this rung
+    The whole mid-plane is the sheet step 2 read 7.7431% off.  If this rung
     moved, the narrowing machinery changed the *fixture* — the mesh, the drive,
     the solve — and the ladder below would be measuring that change rather than
     the width.  The gap route is checked at the same grain for the same reason.
@@ -482,7 +482,7 @@ def test_the_narrowed_sheet_gates_the_cross_route_band(width_ladder):
 
     Step 2's band — ``|dZ12|/|Z12| <= 5%`` between the two feed models on
     identical geometry — pre-stated at scoping, never widened, and missed at
-    7.7095% by the full-width sheet.  The diagnosis said the miss was the
+    7.7431% by the full-width sheet.  The diagnosis said the miss was the
     transverse average and nothing else; the review's decision was to narrow the
     port sheet to the interior width, where step 2's own profile put every
     station within 1.1% of the chord.  This asserts the consequence.

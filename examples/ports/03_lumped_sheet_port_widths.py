@@ -17,10 +17,11 @@ S-matrix assembled from lumped-sheet excitations).
    own assembly + solve (the BC surface is in the form). Off each solved field
    the lumped terminal voltage ``−I·Z_p`` and the gap route's path integral are
    both read, and their deviation is the cross-route quantity step 2 measured at
-   **7.7095%** on the full sheet — outside the 5% band pre-stated at scoping.
-   Narrowing the sheet to the interior width recovers the centreline voltage:
-   the measured ladder is ``7.7095% → 3.6730% → 1.8333%``, and the band never
-   moved.
+   **7.7431%** on the full sheet — outside the 5% band pre-stated at scoping.
+   Narrowing the sheet to the interior width brings the deviation inside the
+   band, but not monotonically: the measured ladder is
+   ``7.7431% → 1.0986% → 1.9222%`` (``f = 0.735`` sits below ``f = 0.5``), and
+   the band never moved.
 2. *The sweep* (`PORT-9` step 2c). At the gated width ``f = 0.5``, **both**
    sheets are narrowed and the two-port S-matrix is assembled through
    :func:`~fem_em_solver.ports.sparameters.run_n_port_sparameter_sweep` on the

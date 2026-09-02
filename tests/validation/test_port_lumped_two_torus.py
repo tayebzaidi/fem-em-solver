@@ -732,7 +732,7 @@ def test_the_open_limit_reduces_to_the_sheet_average(lumped_run):
 def test_the_cross_route_miss_is_the_transverse_average(lumped_run):
     """**Step 2's adjudication.**  Is the 7.71% miss the two feed definitions?
 
-    Step 1 measured a cross-route deviation of **7.7095%** against the 5% band
+    Step 1 measured a cross-route deviation of **7.7431%** against the 5% band
     pre-stated at scoping.  The band does not move; what step 2 owes is a
     diagnosis, and the §7 entry's hypothesis is specific enough to be falsified:
     the lumped route is the gap voltage *transversely averaged over the sheet*

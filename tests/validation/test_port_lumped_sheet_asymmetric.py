@@ -13,7 +13,7 @@ This module decides that on the cheapest possible asymmetric fixture: step
 2b/2c's **two-torus**, one mesh, sheets on both ports, but at **two different
 widths** — ``f = 0.5`` on port 1 and ``f = 0.735`` on port 2, both rungs of
 step 2b's own ladder, so no new geometry and each width's readout is already on
-record (cross-route 1.8333% / 3.6730%).  Two sweeps run on that one mesh:
+record (cross-route 1.9222% / 1.0986%).  Two sweeps run on that one mesh:
 
 * the **control** at ``f = 0.5 / 0.5`` — step 2c's configuration exactly,
   which must reproduce its 2.574249e-11 (anchor (a));
@@ -110,7 +110,7 @@ from tests.validation.test_port_lumped_sheet_sweep import (
 )
 
 # The two rungs of step 2b's ladder this leg puts on the two ports. Both are
-# gated widths with a recorded readout (1.8333% / 3.6730% cross-route), so the
+# gated widths with a recorded readout (1.9222% / 1.0986% cross-route), so the
 # asymmetry is entirely in *which facets each sheet owns* — same mesh, same
 # geometry, same solver.
 CONTROL_FRACTIONS = (0.5, 0.5)
