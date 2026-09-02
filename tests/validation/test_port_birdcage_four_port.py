@@ -216,7 +216,7 @@ def _circulant_classes(z_matrix):
     }
 
 
-def build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=None):
+def build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=None, phantom_resolution=None):
     """One mesh; four driven lumped-sheet solves at 50 Ohm; the assembled 4x4.
 
     The module fixture's body, lifted to module level so a consumer can run the
@@ -224,6 +224,12 @@ def build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=None):
     `ANS-1` import rule taken past constants to the construction itself
     (`EX-33` precedent, 2026-08-26; `EX-32` is the consumer). Additive: the
     fixture below is unchanged in behaviour and no gate reads the extra keys.
+
+    ``phantom_resolution`` is the third additive parameter (`WF-6` step 3f₀,
+    same precedent): ``None`` — every gate's value — passes ``None`` to
+    `_build` and so to `birdcage_port_domain`, which creates no size field at
+    all and leaves this sweep's mesh bit-for-bit what it was. It is ignored
+    when ``reuse`` is given, since then no mesh is built.
 
     ``frequency_hz`` defaults to `PORT-9`'s 10 MHz — the only frequency this
     module's gates run — and exists so that `WF-6` step 2b can drive the
@@ -251,7 +257,9 @@ def build_four_port_sweep(frequency_hz=FREQUENCY_HZ, reuse=None):
         diag = {"mesh_wall_time_s": 0.0}
         t_mesh = 0.0
     else:
-        msh, cell_tags, _facet_tags, diag, t_mesh = _build(True)
+        msh, cell_tags, _facet_tags, diag, t_mesh = _build(
+            True, phantom_resolution=phantom_resolution
+        )
         tdim = msh.topology.dim
         ncells = int(msh.topology.index_map(tdim).size_global)
         # Hoisted on every rank before any facet-restricted form (known-issues 9).

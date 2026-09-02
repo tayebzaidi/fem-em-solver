@@ -3087,6 +3087,7 @@ class MeshGenerator:
         resolution: float = 0.015,
         conductor_resolution: Optional[float] = None,
         conductor_refine_distance: Optional[float] = None,
+        phantom_resolution: Optional[float] = None,
         comm: MPI.Intracomm = MPI.COMM_WORLD,
         rank: int = 0,
         n_legs: Optional[int] = None,
@@ -3185,6 +3186,19 @@ class MeshGenerator:
             Width of the graded shell around the conductor [m]. Defaults to
             ``3 x ring_minor_radius``, which keeps the fine zone a thin skin
             rather than flooding the air box with small cells.
+        phantom_resolution : float, optional
+            `WF-6` step 3f₀. Target element size **inside the phantom
+            cylinder** [m]. ``None`` (default) leaves the sizing exactly as it
+            is — no field is created, so the mesh is bit-for-bit what it was.
+            When given, a gmsh ``Box`` field over the phantom's own bounding
+            box (``|z| <= phantom_height/2``, ``|x|,|y| <= phantom_radius``,
+            plus a hair of margin so the cylinder's own boundary is inside)
+            is set to `phantom_resolution` in and `resolution` out, and is
+            combined with the `conductor_resolution` Threshold through a
+            ``Min`` field, so neither knob can coarsen what the other
+            refines. Setting it equal to `resolution` is a no-op by
+            construction (the ``Min`` sees the same numbers) and is the
+            negative control the step 3f₀ test asserts.
         return_diagnostics : bool
             When True, return a fourth element: a dict with the **CAD (occ)
             mass** per physical group — the junction-double-count-free
@@ -3338,6 +3352,7 @@ class MeshGenerator:
                     resolution=resolution,
                     conductor_resolution=conductor_resolution,
                     conductor_refine_distance=conductor_refine_distance,
+                    phantom_resolution=phantom_resolution,
                 )
             except BaseException as exc:  # noqa: BLE001 — re-raised below, on every rank
                 build_error = exc
@@ -3422,6 +3437,7 @@ class MeshGenerator:
         emit_port_sheets: bool = False,
         conductor_resolution: Optional[float] = None,
         conductor_refine_distance: Optional[float] = None,
+        phantom_resolution: Optional[float] = None,
     ) -> Dict[str, object]:
         """Build the birdcage gmsh model on the calling rank (see `birdcage_port_domain`)."""
         gmsh.initialize()
@@ -3964,6 +3980,13 @@ class MeshGenerator:
         # The three MeshSizeFrom* switches must be off or gmsh takes the minimum
         # of the field and the point/curvature constraints, which would silently
         # re-impose the coarse global size inside the shell.
+        # `WF-6` step 3f₀ adds a second, independent size field (the phantom
+        # Box), so the two are collected here and combined through a `Min`
+        # below. With `phantom_resolution=None` the list holds at most the
+        # conductor Threshold and the tail reduces to the single
+        # `setAsBackgroundMesh(threshold_field)` this code has always made —
+        # the `None` path is a true no-op, asserted at 0.000e+00.
+        size_fields: List[int] = []
         if conductor_resolution is not None:
             refine_distance = (
                 3.0 * ring_minor_radius
@@ -3998,16 +4021,59 @@ class MeshGenerator:
             gmsh.model.mesh.field.setNumber(threshold_field, "SizeMax", resolution)
             gmsh.model.mesh.field.setNumber(threshold_field, "DistMin", 0.0)
             gmsh.model.mesh.field.setNumber(threshold_field, "DistMax", refine_distance)
-            gmsh.model.mesh.field.setAsBackgroundMesh(threshold_field)
-            gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
-            gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
-            gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
+            size_fields.append(threshold_field)
             print(
                 f"[birdcage-mesh] conductor grading: h_c={conductor_resolution:.6e} m "
                 f"over {len(conductor_surfaces)} surfaces, shell={refine_distance:.6e} m, "
                 f"h_global={resolution:.6e} m",
                 flush=True,
             )
+
+        # `WF-6` step 3f₀ — phantom sizing. A Box field is the cheapest thing
+        # that can hold: the phantom is an axis-aligned cylinder, so its own
+        # bounding box contains it exactly and nothing else of the geometry
+        # (the nearest metal is the legs at r = 0.07 m, well outside a 0.03 m
+        # phantom). The margin is one part in a thousand of the extent so the
+        # cylinder's own boundary points fall strictly inside VIn rather than
+        # on the Box face. VOut is the untouched global `resolution`, so with
+        # `phantom_resolution == resolution` the field is numerically constant
+        # at `resolution` and the `Min` below cannot move a single size.
+        if phantom_resolution is not None:
+            box_margin = 1.0e-3 * max(phantom_radius, 0.5 * phantom_height)
+            phantom_field = gmsh.model.mesh.field.add("Box")
+            gmsh.model.mesh.field.setNumber(phantom_field, "VIn", phantom_resolution)
+            gmsh.model.mesh.field.setNumber(phantom_field, "VOut", resolution)
+            gmsh.model.mesh.field.setNumber(phantom_field, "XMin", -phantom_radius - box_margin)
+            gmsh.model.mesh.field.setNumber(phantom_field, "XMax", phantom_radius + box_margin)
+            gmsh.model.mesh.field.setNumber(phantom_field, "YMin", -phantom_radius - box_margin)
+            gmsh.model.mesh.field.setNumber(phantom_field, "YMax", phantom_radius + box_margin)
+            gmsh.model.mesh.field.setNumber(
+                phantom_field, "ZMin", -0.5 * phantom_height - box_margin
+            )
+            gmsh.model.mesh.field.setNumber(
+                phantom_field, "ZMax", 0.5 * phantom_height + box_margin
+            )
+            gmsh.model.mesh.field.setNumber(phantom_field, "Thickness", 0.0)
+            size_fields.append(phantom_field)
+            print(
+                f"[birdcage-mesh] phantom sizing: h_p={phantom_resolution:.6e} m over "
+                f"r<={phantom_radius:.6e} m, |z|<={0.5 * phantom_height:.6e} m "
+                f"(+{box_margin:.3e} m margin), h_global={resolution:.6e} m",
+                flush=True,
+            )
+
+        if size_fields:
+            if len(size_fields) == 1:
+                background_field = size_fields[0]
+            else:
+                background_field = gmsh.model.mesh.field.add("Min")
+                gmsh.model.mesh.field.setNumbers(
+                    background_field, "FieldsList", size_fields
+                )
+            gmsh.model.mesh.field.setAsBackgroundMesh(background_field)
+            gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+            gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
+            gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
 
         mesh_start = time.perf_counter()
         gmsh.model.mesh.generate(3)
@@ -4032,6 +4098,7 @@ class MeshGenerator:
             "cad_mass_by_group": cad_mass_by_group,
             "mesh_wall_time_s": float(mesh_wall_time),
             "conductor_resolution_m": conductor_resolution,
+            "phantom_resolution_m": phantom_resolution,
             "ring_cad_mass_m3": float(ring_cad_mass),
             "ring_analytic_mass_m3": float(ring_analytic_mass),
             "port_sheet_cad": port_sheet_cad,

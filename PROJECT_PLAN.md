@@ -5765,6 +5765,42 @@ therefore one small `post/` addition plus a gate module. Degree 1, per the
 > weekly's "0.01 → 0.005" is re-read as "0.015 → 0.0075"; the cost estimate
 > and the pre-registered (a)/(b)/(c) verdict are unchanged.
 >
+> **Step 3f₀ ✅ 2026-09-02, 09:00 slot — the knob exists, its `None` path is a
+> measured no-op, and step 3f's mesh is priced.** `phantom_resolution:
+> Optional[float] = None` on `birdcage_port_domain` (`io/mesh.py`) and on
+> `_build_birdcage_port_model`: a gmsh `Box` field over the phantom's own
+> bounding box (`VIn = phantom_resolution`, `VOut = resolution`, margin
+> 1e-3 of the extent, `Thickness = 0`) combined with the existing conductor
+> `Distance→Threshold` through a new `Min` field. The conductor branch is
+> otherwise untouched (the `GEO-21` 4.8 mm floor ruling), and with one field
+> in the list the tail reduces to the single `setAsBackgroundMesh(threshold)`
+> this code has always made, so `None` creates **no field at all**. Additive
+> `phantom_resolution=` passthroughs on `tests/mesh/test_birdcage_port_sheets.
+> _build` and `…test_port_birdcage_four_port.build_four_port_sweep`
+> (`frequency_hz` / `reuse` precedent; ignored under `reuse`, which builds no
+> mesh). New module `tests/mesh/test_birdcage_phantom_resolution.py`, `1
+> passed in 83.94s`, `-n 2` real, standard tier, harness elapsed **86 s**,
+> Status 0 (`20260902T140410Z_WF-6-step3f0.log`) — three builds, ≈ 24–25 s of
+> gmsh each. **Every pre-registered anchor met.** *(i) The no-op control, the
+> anchor:* parameter absent ⇒ **116 085** cells and **537** tag-3 cells, both
+> at **0.000e+00** relative to the record, asserted at exact equality — no
+> existing record, gate or example moved. *(i′) Negative control:*
+> `phantom_resolution = 0.015`, equal to the global sizing, gives **116 085 /
+> 537** as well, so gmsh is not honouring the field's mere presence. *(ii) The
+> knob turned:* at `phantom_resolution = 0.0075` the tag-3 count goes **537 →
+> 2 746 = 5.1136×** (band [5, 12] around the (h/hₚ)³ = 8× prediction — the
+> shortfall is the Box's sharp transition and Netgen's optimise pass, not a
+> mis-sized field) with the cells *outside* tag 3 moving **1.9083%** (ceiling
+> 10%): total **116 085 → 120 499**, i.e. **+4 414 cells**, inside the
+> weekly's 5–10 k budget and confirming step 3f stays standard tier. *(iii)
+> Scale-free CAD identities on the refined mesh:* `GEO-18` sheet area
+> **1.120000000e-04 m² on all four ports** (1e-9 band) and the `GEO-19`
+> partition + air-box closure **1.000000000000**, on the negative control too;
+> the cell-tag set is unchanged. Tag-3 counts are `size_local`-restricted and
+> `MPI.SUM`-reduced (the reason for `-n 2`). No default moved, no band
+> touched, nothing solved; `WF-6` stays 🟡. **Step 3f is unblocked on the mesh
+> side** and remains serial on step 3e′.
+>
 > **Rulings on the two rungs the 10:30 review carried to this weekly:** the
 > *absolute-convergence rung* (an h-ladder for the `|B₁⁺|` map itself) is
 > **deferred behind step 3f** — it turns the same knob, and 3f's anchor (i)

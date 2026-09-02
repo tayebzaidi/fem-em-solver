@@ -77,8 +77,16 @@ PORT_LOWER = 100
 PORT_UPPER = 200
 
 
-def _build(emit_port_sheets):
-    """One graded, gapped birdcage rung, sheeted or not, with its wall time."""
+def _build(emit_port_sheets, phantom_resolution=None):
+    """One graded, gapped birdcage rung, sheeted or not, with its wall time.
+
+    ``phantom_resolution`` is `WF-6` step 3f₀'s additive keyword (the
+    `frequency_hz` / `reuse` precedent in
+    `tests/validation/test_port_birdcage_four_port.build_four_port_sweep`):
+    ``None``, the default every gate in this repo takes, passes ``None`` down
+    to `birdcage_port_domain` and so builds the identical mesh this helper has
+    always built.
+    """
     comm = MPI.COMM_WORLD
     started = time.perf_counter()
     mesh, cell_tags, facet_tags, diagnostics = MeshGenerator.birdcage_port_domain(
@@ -96,6 +104,7 @@ def _build(emit_port_sheets):
         air_padding=AIR_PADDING,
         resolution=RESOLUTION,
         conductor_resolution=CONDUCTOR_RESOLUTION,
+        phantom_resolution=phantom_resolution,
         comm=comm,
         return_diagnostics=True,
     )
