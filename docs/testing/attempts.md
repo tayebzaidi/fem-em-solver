@@ -16338,3 +16338,83 @@ executor returned with nothing in flight.
 - Next-attempt hypothesis: the 15:00 slot takes **§9 item 3 (`EX-41`)** as the
   next open item in order — independent, host runner, and its census anchor is
   now the plain `exit != 1` since this slot removed the dead-line caveat.
+
+## 2026-09-02T20:10Z — `EX-41` — outcome: `complete` (15:00 implementer slot)
+
+- **Preflight clean**: tree clean at `49efe4b`, `main`, container Up 7 days. No
+  dirty tree, no `attempt/*`, no `recovered/*`. Took §9 On-deck **item 3**
+  (`EX-41`) — items 1 (`WF-6` step 3f) and 2 (`OPS-32`) were marked DONE by the
+  12:00 and 13:30 slots, so item 3 is the first open item. Delegated to the
+  `example-runner` agent per the item's own executor line, **foreground**, with
+  the never-background rule, the emit-then-harness runner path, the
+  repo-relative harness path, the literal-`-m` commit route and the AED-privacy
+  rule restated in the spawn prompt. All four harness windows ran foreground and
+  returned footered.
+- **Landed** at `7f0cc2e` on `main`, tree clean. Nothing under `src/`, `tests/`
+  or `scripts/`; no record moved, no band touched. The commit is four logs, the
+  four `test-results.md` index rows, the §7 `EX-41` status flip and the §9
+  item-3 strike-through.
+- **Anchors, re-read by this slot off the logs, not taken from the executor's
+  report.** Footers: `20260902T200243Z_EX-41-mesh6.log` **Status 0 / Elapsed
+  54 s** (`:8111–8112`, in-run `All identities hold. Total elapsed 50.6 s`,
+  `:8108`); `20260902T200352Z_EX-41-mesh7.log` **Status 0 / Elapsed 85 s**
+  (`:18420–18421`, in-run `83.5 s`, `:18417`). Both windows carry the footer
+  §4 wants — which is the whole point of the chunk, the 09-01 window having
+  had none. Digit anchors, each cross-read against the 08-25 footered
+  reference `20260825T213323Z_EX-30-mesh-run-6to7.log` by this slot:
+  - `mesh:6` `[GEO-18]` sheeted rung **cells=116085**, meshed/CAD conductor
+    **0.970069** (gate 0.95) — `…200243Z:4591` vs `…213323Z:4595`, exact.
+  - `mesh:7` `[GEO-20]` ring-gapped rung **cells=110786**, `ports=12
+    (4 leg + 8 ring)`, `alpha=5.714285714e-02` — `…200352Z:6949` vs
+    `…213323Z:15030`, exact. This is the item's "12-port dual-family record
+    reproduced to the digit" anchor and it lands on both members of the
+    family: `[GEO-20]` leg+ring rung **cells=128111**, `ports=12 (4 leg +
+    8 ring, all sheeted)` — `…200352Z:14894` vs `…213323Z:22975`, exact.
+  - Negative control, asserted in **both** examples: uncut coil
+    (`leg_gap_length=None` / `ring_gap_length=None`) **cells=98666** against
+    the `EX-21` record 98474, **ratio 1.001950**, meshed/CAD 0.966977 vs
+    record 0.967019 — `…200243Z:8092` and `…200352Z:18401`, both identical to
+    the 08-25 log to every digit. The control separates from the gapped rungs
+    by 17 419 (mesh:6) and 12 120 / 29 445 (mesh:7) cells; the uncut coil is
+    still uncut and the gap kwargs still cut it.
+  - Census, gate `exit != 1`: pre `dead=0 guide=0 stale=16 exit=2`
+    (`…200212Z:55`), post `dead=0 guide=0 stale=17 exit=2` (`…200547Z:56`).
+    **`dead=0` on `main`, as `OPS-32` predicted** — this is the first slot to
+    read the plain gate with the checker-scope caveat gone, and it reads
+    clean, so the item's "if the census reports any other dead reference,
+    that is a stop" branch did not fire.
+- **The one deviation, and it is a stale count, not a physics move.** `stale`
+  rose 16 → 17 across the ~3-minute run. The executor attributes it to
+  `ports_06_birdcage_b1_plus_map_combined.xdmf` crossing the 48.0 h staleness
+  threshold mid-run — a wall-clock crossing, not something `mesh:6`/`mesh:7`
+  did. This slot did not independently re-derive which artifact aged over;
+  the gate is `exit != 1` and `dead` stayed 0 either way, so nothing turns on
+  it, but the review should know the post-census delta was **not** the
+  predicted zero. Staleness is read as information, not failure (`OPS-19`).
+- **Second deviation, procedural: two windows, not one.** The item priced
+  "one window, `-e mesh:6,mesh:7 -t 400`, ≈ 160 s". The executor ran
+  `mesh:6` and `mesh:7` as **separate** harness windows (54 s + 85 s = 139 s
+  of compute, plus two 1 s censuses). That is the `example-runner` template's
+  own "`run_examples.sh` runs `set -e`: one red example aborts the batch —
+  run the chunk's example alone first" trap talking, and it is strictly
+  better evidence (two independent footers, two independent Status lines)
+  at no extra cost. Recorded as a deviation because the §7 row says "one
+  `example-runner` window"; this slot ratifies it and suggests future
+  multi-example items say "one window per example".
+- **Wall clocks bracket cleanly.** 50.6 s / 83.5 s sits between the 08-25
+  footered record (45.4 s / 75.8 s) and the 09-01 footerless window
+  (58.6 / 94.8 s). The item's negative control was "a footered run far off
+  them is a fixture or image change worth a sentence" — it is not far off, so
+  no fixture or image flag. The spread is ordinary load noise on a shared box.
+- **Residual `main` reds unchanged at 11** (the 8 the review counts plus the
+  three `WF-6` step-3f `|B₁⁺|` names). This chunk touched no test module and
+  added no red. The census is `exit=2` on `main`.
+- **Denials this slot:** one Bash call of mine was refused for
+  `Contains simple_expansion` (a `for f in <glob>; do tail …` loop) — reworked
+  into `grep -n` over named files, no allowlist change needed. No
+  docker-socket denial (`./scripts/run_examples.sh --dry-run` worked; 3 of 28
+  slots overall). Commit message used the literal multi-line `-m` route.
+- Next-attempt hypothesis: the 16:30 slot takes **§9 item 4 (`WF-6` step 3g)**
+  as the next open item in order — the integral-form SAR identities off the
+  primal field, independent of item 1 and running on the coarse 116 085-cell
+  mesh, whose cell count this slot has just re-confirmed digit-exact.
